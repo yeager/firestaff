@@ -4041,3 +4041,21 @@ not used as its final verification.
   renaming. A bounded physical MD5 search and explicit large-original-file
   admission locate it; existing inner media hashes still authenticate launch.
   The real mixed `towns.zip`/IIGS CLI test retains FM Towns AUTO priority.
+
+- 2026-10-16: Applied native IIGS F0299 statistic/maximum-mana modifiers
+  and F0301 equipment activation during candidate selection, in original
+  Thing order. Lifecycle and visible champion fields retain modifier values;
+  torch/scroll/junk activation synchronizes both raw and decoded objects.
+  Original cancellation does not undo object activation. Real corridor walks
+  recruit ZED, CHANI and BORIS after ELIJA, verifying the original torch,
+  Moonstone and Rabbit's Foot across cancel/reselect/accept and later ticks.
+  Both original editions and raw PO/native 7z transports retain coverage.
+  This proves those original equipment cases, not every modifier or hero.
+  Twelve targeted tests pass without skips (13.59 s), including nine
+  original-media tests and three existing PC regressions. The rebuilt PC34
+  CLI first-world/turn probe and localization catalog check also pass.
+- 2026-10-16: Fixed the shared LE scroll icon getter to read Closed from
+  property bits 10..15 instead of text-reference bits. A real IIGS scroll
+  (Thing 0x1c00, text reference 33) reproduces the old wrong icon after the
+  original opening operation; the corrected getter returns open icon 30
+  while preserving its text reference. No replacement game payload is used.

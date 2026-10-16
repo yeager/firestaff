@@ -1,7 +1,10 @@
 - `DM1 IIGS interaction`: add native mirror selection, cancellation and
   resurrection, with original champion skills and possession ownership.
-  ELIJA is verified in both original editions; other champion coverage,
-  equipment bonuses, reincarnation and full gameplay remain unfinished.
+  ELIJA, ZED, CHANI and BORIS are verified in both original editions, including
+  torch, Moonstone and Rabbit's Foot effects. Other champion coverage,
+  reincarnation and full gameplay remain unfinished.
+- `DM1 scrolls`: opening a scroll now selects its open icon from the actual
+  Closed field, preserving the original text reference.
 - `DM1 media discovery`: retain FM Towns AUTO priority when its unchanged
   original ZIP is renamed beside an IIGS disk.
 - `DM1 IIGS startup`: both original editions can enter the first world from

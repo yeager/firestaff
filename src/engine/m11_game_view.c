@@ -34689,7 +34689,16 @@ static int m11_iigs_candidate_equipment(M11_GameViewState* state,
         if (type > 3 && THING_GET_CELL(thing) == ((direction+2)&3)) {
             unsigned allowed = dm1_v1_dungeon_get_object_allowed_slots_pc34(
                 state->world.things,thing);
-            if (type < 5 || type > 10 || !allowed) return 0;
+            if (type < 5 || type > 10 || !allowed ||
+                !state->world.things->rawThingData[type] ||
+                THING_GET_INDEX(thing) >= state->world.things->thingCounts[type] ||
+                dm1_v1_dungeon_get_object_icon_index_pc34(state->world.things,thing,direction) < 0) return 0;
+            {
+                int index = THING_GET_INDEX(thing);
+                if ((type == 5 && (!state->world.things->weapons || index >= state->world.things->weaponCount)) ||
+                    (type == 7 && (!state->world.things->scrolls || index >= state->world.things->scrollCount)) ||
+                    (type == 10 && (!state->world.things->junks || index >= state->world.things->junkCount))) return 0;
+            }
             if (type == 6) {
                 for (int slot = 2; slot <= 5; ++slot)
                     if (allowed & m11_v1_inventory_source_slot_box_mask(slot+8)) {
@@ -34813,6 +34822,102 @@ static int m11_iigs_select_front_candidate(M11_GameViewState* state)
         life->maxHealth = candidate.hp.maximum;
         life->maxStamina = candidate.stamina.maximum;
         life->maxMana = candidate.mana.maximum;
+    }
+    /* ReDMCSB REVIVE.C F0280:297-350 calls CHAMPION.C F0301:625-651
+     * in wall-chain order while the candidate is shown. F0299:327-487
+     * applies native modifiers before activation.
+     * DEFS.H MEDIA016 includes GS: cursed bit8, torch Lit bit15,
+     * SCROLL Closed bits10..15, JUNK ChargeCount bits14..15. */
+    {
+        struct ChampionState_Compat* champ = &state->world.party.champions[slot];
+        struct ChampionLifecycleState_Compat* life = &state->world.lifecycle.champions[slot];
+        static const int east[4] = {0,1,0,-1}, south[4] = {-1,0,1,0};
+        int direction = state->world.party.direction & 3;
+        int head = F0510_DUNGEON_GetSquareFirstThingIndex_Compat(state->world.dungeon,
+            state->world.party.mapIndex,state->world.party.mapX+east[direction],
+            state->world.party.mapY+south[direction]);
+        unsigned short thing;
+        int remaining = 65536;
+        if (head < 0 || head >= state->world.things->squareFirstThingCount) return 0;
+        thing = state->world.things->squareFirstThings[head];
+        while (thing != THING_NONE && thing != THING_ENDOFLIST && remaining-- > 0) {
+            int host = -1;
+            for (int i = 0; i < CHAMPION_SLOT_COUNT; ++i)
+                if (champ->inventory[i] == thing) { host = i; break; }
+            if (host >= 0) {
+                int sourceSlot = M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(host)-8;
+                int type = THING_GET_TYPE(thing);
+                if (sourceSlot < 0 || sourceSlot >= 30) return 0;
+                unsigned char* raw = state->world.things->rawThingData[type] +
+                    THING_GET_INDEX(thing)*(type == THING_TYPE_CONTAINER ? 8 : 4);
+                int icon = dm1_v1_dungeon_get_object_icon_index_pc34(state->world.things,thing,direction);
+                int stat = -1, modifier = 0;
+                /* F0299: curse takes priority over every positive bonus. */
+                if ((type == 5 || type == 6) && sourceSlot >= 0 && sourceSlot <= 12 && (raw[3]&1)) {
+                    stat = LIFECYCLE_STAT_LUCK; modifier = -3;
+                } else if (icon == 137 && sourceSlot < 30) {
+                    stat = LIFECYCLE_STAT_LUCK; modifier = 10;
+                } else if (sourceSlot == 1) {
+                    if (icon == 45) { stat = LIFECYCLE_STAT_STRENGTH; modifier = 5; }
+                    else {
+                        stat = LIFECYCLE_STAT_COUNT; /* maximum mana */
+                        if (icon >= 20 && icon <= 22) modifier = 4;
+                        else if (icon >= 58 && icon <= 66) {
+                            static const int mana[9] = {2,1,6,4,10,8,16,7,5};
+                            modifier = mana[icon-58];
+                        } else if (icon == 38) modifier = 1;
+                        else if (icon == 41) modifier = 2;
+                        else if (icon == 40) modifier = 4;
+                    }
+                } else if (sourceSlot == 4 && icon == 142) {
+                    stat = LIFECYCLE_STAT_STRENGTH; modifier = 10;
+                } else if (sourceSlot == 2 && icon == 104) {
+                    stat = LIFECYCLE_STAT_WISDOM; modifier = 10;
+                } else if (sourceSlot == 2 && icon == 140) {
+                    stat = LIFECYCLE_STAT_DEXTERITY; modifier = 10;
+                } else if (sourceSlot == 3 && icon == 141) {
+                    stat = LIFECYCLE_STAT_ANTIFIRE; modifier = 12;
+                } else if ((sourceSlot == 3 || sourceSlot == 10) && icon == 81) {
+                    stat = LIFECYCLE_STAT_DEXTERITY; modifier = 8;
+                } else if (sourceSlot == 10 && (icon == 10 || icon == 11)) {
+                    stat = LIFECYCLE_STAT_ANTIMAGIC; modifier = 15;
+                } else if (sourceSlot == 10 && icon == 122) {
+                    stat = LIFECYCLE_STAT_COUNT; modifier = 3;
+                }
+                if (modifier && stat == LIFECYCLE_STAT_COUNT)
+                    life->maxMana = (uint16_t)(life->maxMana+modifier);
+                else if (modifier && stat >= 0)
+                    for (int value = 0; value < 3; ++value)
+                        life->statistics[stat][value] = (uint8_t)(life->statistics[stat][value]+modifier);
+                /* F0301 activation follows modifier application. Cancel
+                 * F0282 never removes these wall-owned object side effects. */
+                if (sourceSlot < 2) {
+                    if (sourceSlot == 1 && (icon == 30 || icon == 31)) {
+                        raw[3] &= 3U;
+                        state->world.things->scrolls[THING_GET_INDEX(thing)].closed = 0;
+                    }
+                    if (icon == 4) {
+                        raw[3] |= 0x80U;
+                        state->world.things->weapons[THING_GET_INDEX(thing)].lit = 1;
+                    }
+                } else if (sourceSlot == 10) {
+                    if (icon == 12 || icon == 13) {
+                        raw[3] = (raw[3]&0x3fU)|0x40U;
+                        state->world.things->junks[THING_GET_INDEX(thing)].chargeCount = 1;
+                        state->world.magic.magicalLightAmount += 12; /* G0039[2] */
+                    } else if (icon == 10 || icon == 11) {
+                        raw[3] = (raw[3]&0x3fU)|0x40U;
+                        state->world.things->junks[THING_GET_INDEX(thing)].chargeCount = 1;
+                    }
+                }
+            }
+            thing = m11_raw_next_thing(state->world.things,thing);
+        }
+        for (int i = 0; i < CHAMPION_ATTR_COUNT; ++i) {
+            champ->attributes[i] = life->statistics[i+1][LIFECYCLE_STAT_CURRENT];
+            champ->attributeMaximums[i] = life->statistics[i+1][LIFECYCLE_STAT_MAXIMUM];
+        }
+        champ->mana.maximum = life->maxMana;
     }
     if (slot == 0) state->world.party.activeChampionIndex = 0;
     state->candidateMirrorOrdinal = ordinal; state->candidateMirrorPartyIndex = slot;

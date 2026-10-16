@@ -551,9 +551,10 @@ int dm1_v1_dungeon_get_object_icon_index_pc34(
         }
         break;
     case kIconScrollOpen:
-        /* ReDMCSB SCROLL.Closed is bits 10..15 of the property word. */
-        if ((((unsigned int)raw[2] >> 2) |
-             ((unsigned int)raw[3] << 6)) & 0x3fu) {
+        /* ReDMCSB DEFS.H:1445-1446 stores SCROLL.Closed in property
+         * bits 10..15; OBJECT.C F0033:185 tests that field. The lower
+         * ten bits are the text reference, including raw[2] in full. */
+        if ((raw[3] >> 2) & 0x3fu) {
             return iconIndex + 1;
         }
         break;

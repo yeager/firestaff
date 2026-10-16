@@ -231,6 +231,119 @@ cleanup:
     return result;
 }
 
+/* Additional original mirrors exercise F0299/F0301 with genuine possessions.
+ * CHANI Moonstone changes maximum mana, BORIS Rabbit's Foot changes Luck,
+ * ZED's original unlit torch becomes lit even when selection is canceled. */
+static int check_equipped_heroes(M11_GameViewState *view, uint8_t *frame) {
+    static const uint8_t routes[3][6][2]={
+        {{9,6},{9,5},{10,5}},
+        {{10,4},{11,4},{12,4},{13,4},{13,3},{14,3}},
+        {{14,4},{14,5},{14,6}}};
+    static const unsigned lengths[]={3,6,3}, ordinals[]={4,5,7}, directions[]={2,0,2};
+    static const uint8_t walls[][2]={{10,6},{14,2},{14,7}};
+    static const unsigned short chains[][5]={
+        {0x0c16,0x1812,0x1813,0x1459,0x1874},
+        {0x8c1d,0x9826,0x9827,0xa802,0x9828},
+        {0x0c1e,0x1829,0x182a,0x182b,0x2803}};
+    static const char *const names[]={"ZED","CHANI","BORIS"};
+    static const uint8_t statistics[][7]={{58,40,40,40,50,40,40},{57,37,47,57,37,47,37},{25,35,45,55,40,45,40}};
+    static const unsigned base_mana[]={10,17,28}, maximum_mana[]={10,20,28};
+    int result=0;
+    for (unsigned hero=0u; hero<3u; ++hero) {
+        int slot=(int)hero+1;
+        for (unsigned step=0u; step<lengths[hero]; ++step) {
+            int dx=(int)routes[hero][step][0]-view->world.party.mapX;
+            int dy=(int)routes[hero][step][1]-view->world.party.mapY;
+            int direction=dx>0 ? 1 : dx<0 ? 3 : dy>0 ? 2 : 0;
+            REQUIRE(abs(dx)+abs(dy)==1,"additional original hero route has adjacent source squares");
+            for (unsigned turn=0u; view->world.party.direction!=direction && turn<4u; ++turn)
+                (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_TURN_RIGHT);
+            for (unsigned tick=0u; tick<8u; ++tick) (void)M11_GameView_AdvanceIdleTick(view);
+            (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_UP);
+            REQUIRE(view->world.party.mapX==routes[hero][step][0] && view->world.party.mapY==routes[hero][step][1],
+                "native footsteps reach additional authentic equipment-bearing mirrors");
+        }
+        for (unsigned turn=0u; view->world.party.direction!=(int)directions[hero] && turn<4u; ++turn)
+            (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_TURN_RIGHT);
+        REQUIRE(M11_GameView_GetFrontMirrorOrdinal(view)==(int)ordinals[hero],"native wall matches independently decoded hero ordinal");
+        if (!hero) REQUIRE(!view->world.things->weapons[89].lit,"original ZED torch starts unlit");
+        for (unsigned attempt=0u; attempt<2u; ++attempt) {
+            (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_ACTION);
+            REQUIRE(view->candidateMirrorPanelActive && view->candidateMirrorPartyIndex==slot &&
+                view->world.party.championCount==slot+1 &&
+                memcmp(view->world.party.champions[slot].name,names[hero],strlen(names[hero]))==0,
+                "actual native mirror selects source-owned equipment-bearing champion");
+            REQUIRE(view->world.party.champions[slot].mana.current==base_mana[hero] &&
+                view->world.party.champions[slot].mana.maximum==maximum_mana[hero] &&
+                view->world.lifecycle.champions[slot].maxMana==maximum_mana[hero],
+                "native Moonstone changes maximum mana only and binds lifecycle before confirmation");
+            for (unsigned stat=0u; stat<7u; ++stat) {
+                unsigned bonus=hero==2u && stat==0u ? 10u : 0u;
+                REQUIRE(view->world.lifecycle.champions[slot].statistics[stat][LIFECYCLE_STAT_CURRENT]==statistics[hero][stat]+bonus &&
+                    view->world.lifecycle.champions[slot].statistics[stat][LIFECYCLE_STAT_MAXIMUM]==statistics[hero][stat]+bonus &&
+                    view->world.lifecycle.champions[slot].statistics[stat][LIFECYCLE_STAT_MINIMUM]==(stat ? 30u : 10u)+bonus,
+                    "native Rabbit's Foot modifies all three Luck rows without changing other source statistics");
+            }
+            { unsigned short thing=F0511_DUNGEON_GetSquareFirstThing_Compat(view->world.dungeon,view->world.things,0,walls[hero][0],walls[hero][1]);
+              for (unsigned i=0u; i<5u; ++i) {
+                  const uint8_t *raw;
+                  REQUIRE(thing==chains[hero][i],"tentative modifiers preserve exact original wall chain");
+                  raw=view->world.things->rawThingData[THING_GET_TYPE(thing)]+THING_GET_INDEX(thing)*s_thingDataByteCount[THING_GET_TYPE(thing)];
+                  thing=(unsigned short)(raw[0]|((unsigned)raw[1]<<8));
+              }
+              REQUIRE(thing==THING_ENDOFLIST,"source mirror contains exactly original five linked Things"); }
+            if (!hero) REQUIRE(view->world.things->weapons[89].lit &&
+                view->world.party.champions[slot].inventory[CHAMPION_SLOT_ACTION_HAND]==0x1459u,
+                "native F0301 lights original ZED torch in action hand before confirmation");
+            { uint32_t before=view->world.gameTick;
+              (void)M11_GameView_AdvanceIdleTick(view);
+              M11_GameView_Draw(view,frame,M11_FB_WIDTH,M11_FB_HEIGHT);
+              REQUIRE(view->world.gameTick==before,"candidate modal pauses source world advancement"); }
+            if (!attempt) {
+                (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_BACK);
+                REQUIRE(!view->candidateMirrorPanelActive && view->world.party.championCount==slot &&
+                    !view->world.lifecycle.champions[slot].maxMana,
+                    "cancel removes tentative champion and modified lifecycle row");
+                if (!hero) REQUIRE(view->world.things->weapons[89].lit,
+                    "original cancellation retains F0301 torch activation side effect");
+            } else (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_ACCEPT);
+        }
+        REQUIRE(!view->candidateMirrorPanelActive && view->world.party.championCount==slot+1 &&
+            view->world.party.champions[slot].mana.maximum==maximum_mana[hero],
+            "resurrection commits genuine native equipment modifiers once");
+        for (unsigned tick=0u; tick<8u; ++tick) (void)M11_GameView_AdvanceIdleTick(view);
+        REQUIRE(view->world.party.champions[slot].mana.maximum==maximum_mana[hero] &&
+            view->world.lifecycle.champions[slot].maxMana==maximum_mana[hero] &&
+            view->world.lifecycle.champions[slot].statistics[0][LIFECYCLE_STAT_MAXIMUM]==statistics[hero][0]+(hero==2u ? 10u : 0u) &&
+            view->world.lifecycle.champions[slot].statistics[0][LIFECYCLE_STAT_MINIMUM]==(hero==2u ? 20u : 10u),
+            "native idle lifecycle synchronization preserves committed maximum mana and Luck modifiers");
+    }
+    result=1;
+cleanup:
+    return result;
+}
+
+static int check_original_scroll_opening(M11_GameViewState *view) {
+    static const uint8_t original[]={0xfe,0xff,0x21,0x04};
+    struct DungeonThings_Compat *things=view->world.things;
+    uint8_t *raw=NULL; int result=0;
+    REQUIRE(things && things->scrollCount==35 && things->rawThingData[THING_TYPE_SCROLL],
+        "original native world carries its 35 source scrolls");
+    raw=things->rawThingData[THING_TYPE_SCROLL];
+    REQUIRE(memcmp(raw,original,4u)==0 && M11_GameView_GetObjectIconIndexForThing(view,0x1c00u)==31,
+        "authentic scroll zero starts closed with original text Thing33");
+    /* Original F0301 clears the six Closed bits of this actual native
+     * record; no replacement payload or relocated game object is created. */
+    raw[3]&=3u;
+    REQUIRE(raw[2]==0x21u && raw[3]==0u && ((unsigned)raw[2]|((unsigned)raw[3]<<8))==33u &&
+        M11_GameView_GetObjectIconIndexForThing(view,0x1c00u)==30,
+        "source-defined opening of original scroll preserves text33 and changes icon31 to30");
+    result=1;
+cleanup:
+    if (raw) memcpy(raw,original,4u);
+    return result;
+}
+
 static int check_session(const char *root, int version, const char *owner) {
     M11_GameViewState *view=calloc(1,sizeof(*view));
     uint8_t *frame=malloc((size_t)M11_FB_WIDTH*M11_FB_HEIGHT);
@@ -269,6 +382,7 @@ static int check_session(const char *root, int version, const char *owner) {
         { const M11_AssetSlot *slot=M11_AssetLoader_Load(&view->assetLoader,21u);
           REQUIRE(slot && slot->width==16u && slot->height==17u &&
               !M11_AssetLoader_Load(&view->assetLoader,12u),"actual startup selects native raster dispatch including index21"); }
+        REQUIRE(check_original_scroll_opening(view),"actual original scroll source-defined opening icon");
         for (int i=0; i<27; ++i) {
             struct DM1CreatureInfo_Compat row;
             REQUIRE(F0890d_ORCH_GetCreatureInfoForWorld_Compat(&view->world,i,&row) &&
@@ -309,6 +423,7 @@ static int check_session(const char *root, int version, const char *owner) {
             view->world.party.mapY==3 && view->world.party.direction==2,
             "ordinary backward input returns to authentic HoC entry after native movement cooldown");
         REQUIRE(check_recruitment(view,frame),"authentic native HoC champion recruitment through ordinary input");
+        REQUIRE(check_equipped_heroes(view,frame),"authentic native equipment modifier and activation lifecycle");
         M11_GameView_Shutdown(view); M11_GameView_Shutdown(view);
         REQUIRE(!view->active && !view->dm1IigsActive && !view->world.iigsCreatureProfileBound &&
             !view->assetLoader.iigsDm1,"repeated shutdown clears native runtime resources and profile");

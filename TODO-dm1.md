@@ -2102,7 +2102,17 @@ Native IIGS mirror selection, cancellation and resurrection now preserve
 original equipment ownership and bind all twenty gameplay skill experiences
 and seven lifecycle statistics. Both original editions exercise ELIJA through
 ordinary HoC movement, without a synthetic champion or relocation. This is
-partial recruitment coverage, not proof for all 24 champions. Remaining:
-native F0301/F0299 equipment bonuses and torch/scroll/neck activation,
-reincarnation/rename, full inventory/spell/interaction and scene consumers,
-intro/entrance and audible DOC playback. Visual parity remains deferred.
+partial recruitment coverage, not proof for all 24 champions.
+
+2026-10-16 equipment follow-up: native F0299/F0301 bonuses and activation
+are wired in original Thing order, including typed/raw object synchronization.
+Real walks to ZED, CHANI and BORIS verify torch activation, Moonstone maximum
+mana and Rabbit's Foot Luck through selection/cancel/accept and later ticks.
+An actual original scroll verifies its source-defined opening/icon operation.
+The 24 original mirror chains contain no scroll, Jewel Symal or Illumulet;
+their recruitment activation branches lack original runtime coverage. Other
+modifier branches and all remaining heroes also need authentic checks.
+Remaining: reincarnation/rename, full inventory/spell/interaction and scene
+consumers, intro/entrance and audible DOC playback. Native Draw still selects
+the brightest dungeon palette; torch/neck light presentation below HoC needs
+its source consumer. Visual parity remains deferred.
