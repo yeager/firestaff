@@ -1973,14 +1973,22 @@ Remaining native IIGS startup work:
   SYSTEM/START to one volume. The preservation archive has six byte-identical
   graphics/world sources, but only two original START/program owners. A shared
   graphics digest alone cannot admit a complete edition.
-- Wire the independent IIGS graphics reader/decoder into an explicitly native
-  startup profile after its original-media verification. The shared envelope
+- Wire the original-media-verified IIGS graphics reader/decoder into an
+  explicitly native startup profile. The shared envelope
   follows MEMORY.C F0479:1330/1361-1381; native raster commands follow
   EXPAND.C F0466:324-845. Do not route IIGS through the FM Towns bitmap decoder.
   Keep record 21 as a native bitmap and record 12 as the unused native font.
-- Adapt the native LE 0x8104 dungeon wrapper/structures while retaining the
-  MSB-first compressed stream in DECOMPDU.C:258-392 (including XBA at 380).
+- Connect the original-media-verified native LE 0x8104 dungeon intake to the
+  explicitly native startup profile. It reuses the MSB-first FTL stream
+  decoder (DECOMPDU.C:258-392, including XBA at 380) and the shared full LE
+  world parser; preserve the authentic checksum trailer rather than applying
+  the older BE route's edition-specific subtraction.
 - Obtain native palette/aspect/UI metadata from each authenticated executable.
+  Read-only source/binary comparison found the GS DATA.C:211-230 entrance,
+  interface and six-level dungeon palettes at file offsets 57647, 57679 and
+  57711 in both original G20E/G21E programs. These are candidate locations,
+  not runtime metadata admission; validate full table extents and native
+  executable ownership before wiring them.
   STARTUP2.C:571-577 excludes IIGS from Atari's 558-562 metadata loads;
   authentic IIGS 558/562 are placeholders, not usable replacement tables.
 - Follow STARTUP1.C:192-205, STARTUP2.C:1381-1393, GSTHINGS.C F2179 and

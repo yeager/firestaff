@@ -3862,3 +3862,30 @@ not used as its final verification.
   dimensions and intact boundary canaries. Both source disks and their archive
   retain their original identities. Native Windows/Linux media execution is
   unverified; the module is not connected to playable runtime admission.
+
+- 2026-10-16: Added bounded native Apple IIGS dungeon intake for original
+  GAME/BONUS files. The LE 0x8104 wrapper is validated before writing caller
+  output, with 1 MiB input/output limits and overlapping buffers rejected.
+  Reused the unchanged MSB-first FTL decompressor and existing full LE world
+  parser rather than duplicating section/Thing decoding. The native checksum
+  trailer is retained and required by this original-media intake; generic
+  save/dungeon checksum policies are unchanged. ReDMCSB LOADSAVE.C F0434:
+  1853-1923/1937-2088, DECOMPDU.C F0455:258-392, READWRIT.C F0421:265-293,
+  and DEFS.H MAP:1046-1116 establish wrapper, stream, sections and byte order.
+  Both original G20E/G21E disks pass GAME/BONUS body hashes derived by an
+  independent bit-at-a-time source oracle, checksum validation, full shared
+  parsing of every map/Thing count, and source-owned starting coordinates.
+  Main expands to 33444 bytes, 14 maps, starting (1,3), south; bonus expands
+  to 6562 bytes, 3 maps, starting (4,1), south. Original-derived truncated
+  streams, checksum-only bit changes, trailer omission, foreign byte order,
+  oversized declared lengths and insufficient capacity reject with cleared
+  outputs and intact boundary canaries. Independent source review found no
+  blocker. Final CMake original-media tests passed dungeon (0.26 s), graphics
+  (0.10 s) and ProDOS intake (0.88 s), with no media skip. An initial test
+  incorrectly expected the world parser to retain a save-specific tail copy;
+  source inspection corrected that assertion to the actual loaded extent. The
+  native decode output itself remains complete and byte-hash verified.
+  Runtime admission, native startup, audio and Windows/Linux original-media
+  execution remain unverified. No playable IIGS support is advertised.
+  The rebuilt Firestaff application linked successfully; the new reader remains
+  outside runtime platform admission.

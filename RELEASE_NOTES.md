@@ -1,3 +1,6 @@
+- `DM1 data intake`: decode original Apple IIGS main/bonus dungeon files
+  in bounded memory and validate their complete native world/checksum data.
+  Playable IIGS startup remains unfinished.
 - `DM1 data intake`: add a separate Apple IIGS native bitmap decoder.
   Palette selection and playable IIGS startup remain unfinished.
 - `DM1 data intake`: read original Apple IIGS ProDOS files in memory through
