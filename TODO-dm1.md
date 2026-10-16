@@ -291,6 +291,17 @@ regression passed and checks the step-5 offsets. This fixes the identified
 asset-coordinate mismatch; it does not establish native display cadence,
 physical-window smoothness, or full title/entrance parity.
 
+2026-10-16 DM1 PC movement/input reports remain open: an authentic PC34 test
+now recruits two champions from distinct HoC C127 sensors and verifies that
+ordinary clicks at both source-space status boxes switch the active champion.
+Native SDL-window clicks, host/window-to-source mapping on the user's display,
+and the reported inability to switch champions still need direct runtime
+reproduction. The DM1 V1 main loop intentionally advances the source world at
+the original 200 ms tick (five ticks per second); this is not evidence of
+movement interpolation or scanout latency. Profile a real accepted movement
+on the target PC before changing the source-owned viewport cadence. Viewport
+wall raster and motion parity against DOSBox-X remain incomplete.
+
 2026-10-15 PC34 first-view comparison: the authentic `DM.EXE` and `DATA`
 files from the user's English PC34 ZIP were run in DOSBox-X and compared with
 Firestaff direct launch using the same archive. Both captured C007 pages are

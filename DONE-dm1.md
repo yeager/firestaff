@@ -1,3 +1,11 @@
+- 2026-10-16: Extended the authentic PC34 HoC C127/C162 test with two living
+  champions admitted through distinct original mirror sensors. Ordinary left
+  clicks on both DM1 PC status boxes select champion 0 then champion 1 through
+  the production pointer dispatcher. The real PC34 archive test passes. This
+  verifies source-space hit routing and champion selection; it does not yet
+  reproduce a native-window click on the user's machine or establish general
+  mouse-coordinate/HiDPI parity.
+
 - 2026-10-15: Reproduced offline selected roots being silently replaced in
   saved settings. Preserve the durable selection separately from admitted
   runtime roots; default recovery no longer overwrites it. Saved /dm1 leaves

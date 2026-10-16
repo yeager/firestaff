@@ -204,7 +204,35 @@ int main(void)
         restored.glyphByteCount != first.glyphByteCount ||
         memcmp(restored.glyphBytes, first.glyphBytes, (size_t)first.glyphByteCount) != 0 ||
         fontHash != hash_pixels(font->pixels, (int)font->width * (int)font->height)) goto fail_restore;
-    printf("ok: real PC34 C162 clears only C127=%d while rotated to C127=%d; M648/C10 restores text=%d\n",
+
+    /* Exercise the actual PC34 status-box pointer routes with two living
+     * champions admitted from distinct original C127 sensors. Repositioning
+     * only supplies each authentic mirror pose; all portrait and champion
+     * records still come from the original dungeon and normal mirror owner. */
+    draw_at(&state, &mirrorA, framebuffer);
+    if (M11_GameView_HandlePointerButton(&state, 112, 83,
+            M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
+        !state.candidateMirrorPanelActive ||
+        M11_GameView_HandlePointerButton(&state, 130, 115,
+            M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
+        state.world.party.championCount != 1) goto fail_a;
+    draw_at(&state, &mirrorB, framebuffer);
+    if (M11_GameView_HandlePointerButton(&state, 112, 83,
+            M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
+        !state.candidateMirrorPanelActive ||
+        M11_GameView_HandlePointerButton(&state, 130, 115,
+            M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
+        state.world.party.championCount != 2) goto fail_b;
+    if (M11_GameView_HandlePointerButton(&state, 21, 14,
+            M11_DM1_MOUSE_MASK_LEFT) != M11_GAME_INPUT_REDRAW ||
+        state.world.party.activeChampionIndex != 0 ||
+        M11_GameView_HandlePointerButton(&state, 90, 14,
+            M11_DM1_MOUSE_MASK_LEFT) != M11_GAME_INPUT_REDRAW ||
+        state.world.party.activeChampionIndex != 1) {
+        fprintf(stderr, "two original PC34 champion status clicks did not switch 0 -> 1\n");
+        goto fail;
+    }
+    printf("ok: real PC34 C162 clears only C127=%d while rotated to C127=%d; M648/C10 restores text=%d; status clicks switch champion 0->1\n",
            mirrorA.ordinal, mirrorB.ordinal, text.textIndex);
     M11_GameView_Shutdown(&state);
     return 0;
