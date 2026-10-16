@@ -5549,8 +5549,13 @@ static int m11_play_dm1_i34e_title_anim_if_available(
     int userAborted = 0;
     Uint32 userAbortEventType = 0u;
     Sint32 userAbortKey = 0;
+    Sint32 userAbortScancode = 0;
+    Uint32 userAbortWindowId = 0u;
+    Uint64 userAbortTimestamp = 0u;
+    Uint8 userAbortRepeat = 0u;
     Uint8 userAbortButton = 0u;
     int autotestQuitInjected = 0;
+    int autotestKeyInjected = 0;
     if (!version || !version->versionId ||
         strcmp(version->versionId, "pc34-en") != 0 ||
         !m11_dm1_i34e_title_read_authentic(menuState, version, &data, &size))
@@ -5673,6 +5678,32 @@ static int m11_play_dm1_i34e_title_anim_if_available(
             m11_capture_dm1_authenticated_startup_frame("i34e-title-mid");
         else if (frames == 53u)
             m11_capture_dm1_authenticated_startup_frame("i34e-title-final");
+        if (!autotestKeyInjected && getenv("FIRESTAFF_AUTOTEST") &&
+            getenv("FIRESTAFF_AUTOTEST_DM1_TITLE_KEY_AFTER_FRAME") &&
+            strcmp(getenv("FIRESTAFF_AUTOTEST_DM1_TITLE_KEY_AFTER_FRAME"),
+                   "1") == 0 && frames == 1u) {
+            memset(&event, 0, sizeof(event));
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+            event.type = SDL_EVENT_KEY_DOWN;
+            event.key.key = SDLK_RIGHT;
+            event.key.scancode = SDL_SCANCODE_RIGHT;
+            event.key.windowID = SDL_GetWindowID(M11_Render_GetWindow());
+            event.key.timestamp = SDL_GetTicks();
+            event.key.repeat = 0;
+#else
+            event.type = SDL_KEYDOWN;
+            event.key.keysym.sym = SDLK_RIGHT;
+            event.key.keysym.scancode = SDL_SCANCODE_RIGHT;
+            event.key.windowID = SDL_GetWindowID(M11_Render_GetWindow());
+            event.key.timestamp = SDL_GetTicks();
+            event.key.repeat = 0;
+#endif
+            if (SDL_PushEvent(&event)) {
+                autotestKeyInjected = 1;
+                fprintf(stderr,
+                        "AUTOTEST: DM1 I34E title key injected after first rendered frame\n");
+            }
+        }
         if (!autotestQuitInjected && getenv("FIRESTAFF_AUTOTEST") &&
             getenv("FIRESTAFF_AUTOTEST_DM1_TITLE_QUIT_AFTER_FRAME") &&
             strcmp(getenv("FIRESTAFF_AUTOTEST_DM1_TITLE_QUIT_AFTER_FRAME"),
@@ -5704,27 +5735,47 @@ static int m11_play_dm1_i34e_title_anim_if_available(
                     break;
                 }
 #if SDL_VERSION_ATLEAST(3, 0, 0)
+                if (event.type == SDL_EVENT_KEY_DOWN) {
+                    if (g_m11_debug_startup_detail)
+                        fprintf(stderr,
+                                "firestaff: startup-input-ignore game=dm1 phase=anim-title reason=startup-key event=%u window=%u timestamp=%llu key=%d scancode=%d repeat=%u frame=%u\n",
+                                (unsigned)event.type,
+                                (unsigned)event.key.windowID,
+                                (unsigned long long)event.key.timestamp,
+                                (int)event.key.key,
+                                (int)event.key.scancode,
+                                (unsigned)event.key.repeat, frames);
+                    continue;
+                }
                 if (frame.break_allowed &&
-                    (event.type == SDL_EVENT_KEY_DOWN ||
-                     event.type == SDL_EVENT_MOUSE_BUTTON_DOWN)) {
+                    event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
                     abortAnimation = 1;
                     userAbortEventType = event.type;
-                    if (event.type == SDL_EVENT_KEY_DOWN)
-                        userAbortKey = event.key.key;
-                    else
-                        userAbortButton = event.button.button;
+                    userAbortButton = event.button.button;
+                    userAbortWindowId = event.button.windowID;
+                    userAbortTimestamp = event.button.timestamp;
                     break;
                 }
 #else
+                if (event.type == SDL_KEYDOWN) {
+                    if (g_m11_debug_startup_detail)
+                        fprintf(stderr,
+                                "firestaff: startup-input-ignore game=dm1 phase=anim-title reason=startup-key event=%u window=%u timestamp=%llu key=%d scancode=%d repeat=%u frame=%u\n",
+                                (unsigned)event.type,
+                                (unsigned)event.key.windowID,
+                                (unsigned long long)event.key.timestamp,
+                                (int)event.key.keysym.sym,
+                                (int)event.key.keysym.scancode,
+                                (unsigned)event.key.repeat, frames);
+                    continue;
+                }
                 if (frame.break_allowed &&
-                    (event.type == SDL_KEYDOWN ||
-                     event.type == SDL_MOUSEBUTTONDOWN)) {
+                    event.type == SDL_MOUSEBUTTONDOWN) {
                     abortAnimation = 1;
                     userAbortEventType = event.type;
-                    if (event.type == SDL_KEYDOWN)
-                        userAbortKey = event.key.keysym.sym;
-                    else
-                        userAbortButton = event.button.button;
+                    userAbortButton = event.button.button;
+                    userAbortWindowId = event.button.windowID;
+                    userAbortTimestamp = event.button.timestamp;
                     break;
                 }
 #endif
@@ -5756,8 +5807,10 @@ static int m11_play_dm1_i34e_title_anim_if_available(
     }
     if (userAborted && g_m11_debug_startup_detail)
         fprintf(stderr,
-                "firestaff: startup-source-abort game=dm1 platform=pc34 phase=anim-title event=%u key=%d button=%u frame=%u source-counter-units=%llu\n",
-                (unsigned)userAbortEventType, (int)userAbortKey,
+                "firestaff: startup-source-abort game=dm1 platform=pc34 phase=anim-title event=%u window=%u timestamp=%llu key=%d scancode=%d repeat=%u button=%u frame=%u source-counter-units=%llu\n",
+                (unsigned)userAbortEventType, (unsigned)userAbortWindowId,
+                (unsigned long long)userAbortTimestamp, (int)userAbortKey,
+                (int)userAbortScancode, (unsigned)userAbortRepeat,
                 (unsigned)userAbortButton, frames,
                 (unsigned long long)counterUnits);
     if (g_m11_debug_startup_detail)

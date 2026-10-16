@@ -454,6 +454,31 @@ if ! grep -Fq "dm1 platform=PC edition=pc34-en matched source=$pair_only_data_ro
     exit 1
 fi
 echo "PASS: DM1 skips absent optional SWSH, runs I34E title and selector, then reaches PC 3.4 runtime"
+repeat_title_output="$(FIRESTAFF_AUTOTEST=1 \
+   FIRESTAFF_AUTOTEST_DM1_TITLE_KEY_AFTER_FRAME=1 \
+   HOME="$missing_swsh_home" XDG_CONFIG_HOME="$missing_swsh_home" \
+   APPDATA="$missing_swsh_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+   SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+   --game dm1 --platform pc --data-dir "$pair_only_data_root" \
+   --debug --duration 12000 2>&1)" || {
+    printf '%s\n' "$repeat_title_output" >&2
+    echo "FAIL: DM1 startup key regression process failed" >&2
+    exit 1
+}
+if ! grep -Fq \
+       'AUTOTEST: DM1 I34E title key injected after first rendered frame' \
+       <<<"$repeat_title_output" ||
+   ! grep -Fq \
+       'startup-input-ignore game=dm1 phase=anim-title reason=startup-key' \
+       <<<"$repeat_title_output" ||
+   ! grep -Fq \
+       'startup-source-complete game=dm1 platform=pc34 phase=anim-title frames=53' \
+       <<<"$repeat_title_output"; then
+    printf '%s\n' "$repeat_title_output" >&2
+    echo "FAIL: DM1 startup key prematurely aborted the authentic animation" >&2
+    exit 1
+fi
+echo "PASS: PC34 title animation ignores a fresh keydown and plays all 53 source frames"
 repeat_selector_output="$(FIRESTAFF_AUTOTEST_SELECTOR_INPUT=key:return-repeat \
    HOME="$missing_swsh_home" XDG_CONFIG_HOME="$missing_swsh_home" \
    APPDATA="$missing_swsh_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
