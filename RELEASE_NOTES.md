@@ -1,3 +1,8 @@
+- `DM1 IIGS progression`: execute floor sensors and door events, descend
+  from the Hall of Champions with native monster ownership, and apply
+  torch-dependent dungeon palettes. Complete IIGS gameplay remains unfinished.
+- `DM1 lighting`: ordinary objects in a hand no longer invalidate torch
+  lighting; the calculation follows original torch charge rules.
 - `DM1 IIGS interaction`: add native mirror selection, cancellation and
   resurrection, with original champion skills and possession ownership.
   ELIJA, ZED, CHANI and BORIS are verified in both original editions, including

@@ -44,7 +44,7 @@ int main(void)
                     &things, hands, &receipt) && receipt.valid &&
                     receipt.torchLightPower[0] == 6 &&
                     receipt.torchLightPower[1] == 0,
-                "F0337 reads light only from raw-authenticated lit C05 torches");
+                "F0337 reads raw-authenticated C05 torch charge and ignores other weapon types");
     raw[3] ^= 0x80u;
     ok &= check(dm1_v1_dungeon_light_admit_f0337_pc34(
                     &things, hands, &receipt) && !receipt.valid,

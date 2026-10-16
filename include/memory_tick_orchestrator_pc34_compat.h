@@ -475,6 +475,12 @@ int F0196_DM1_GROUP_InitializeActiveGroups_Compat(
 int F0195_DM1_GROUP_AddAllActiveGroups_Compat(
     struct GameWorld_Compat* world);
 
+/* NEWMAP.C F0003: transactional outgoing F0194 / incoming F0195 owner
+ * handoff without advancing time. Caller supplies destination coordinates
+ * in world->party; failure preserves group/timeline ownership. */
+int F0003_WORLD_TransitionPartyMap_Compat(
+    struct GameWorld_Compat* world, int destinationMapIndex);
+
 /* ================================================================
  *  Group B — Tick Orchestrator (F0884-F0886)
  * ================================================================ */

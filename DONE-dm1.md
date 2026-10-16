@@ -4059,3 +4059,28 @@ not used as its final verification.
   (Thing 0x1c00, text reference 33) reproduces the old wrong icon after the
   original opening operation; the corrected getter returns open icon 30
   while preserving its text reference. No replacement game payload is used.
+
+- 2026-10-16: Connected native IIGS movement and idle to the live source
+  queue instead of the observation-only generic command path. The original
+  pressure plate at (6,9) now schedules its real door event, opens (5,9),
+  and permits ordinary corridor movement to the level-one stairs. Native
+  map changes use the existing transactional F0194/F0195 handoff without an
+  extra tick; all fifteen original destination groups retain source IDs,
+  positions, types and GS profiles on arrival. New C37 events run on a later
+  tick rather than moving those groups immediately during arrival.
+- 2026-10-16: Restored native periodic torch decay and selected the actual
+  GS dungeon palette from an admitted F0337 light result. Both original
+  editions, raw PO/native 7z and restarts verify first descent, torch fuel,
+  a genuinely dimmer palette row, all sixteen published dungeon colors and
+  all sixteen independent interface colors through the existing RGB6 getter.
+  Shared F0337 admission preserves corrupt/duplicate torch rejection while
+  ordinary bounded hand objects contribute zero; original unlit charged
+  torch data verifies the source's charge-only calculation. Native audio
+  requests explicitly remain silent until the DOC path is implemented.
+  This is functional progression/light coverage, not full campaign support
+  or original-screen visual parity.
+  Fifteen targeted tests pass without skips (16.30 s): nine original-media
+  tests and six existing PC regressions, including movement, F0195 and light
+  admission. The rebuilt PC34 CLI first-world/turn probe and localization
+  catalog check also pass. Build output contains no C compiler warnings;
+  existing local SDL deployment/linker warnings remain environmental.

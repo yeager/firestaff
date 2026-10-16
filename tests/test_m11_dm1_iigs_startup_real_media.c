@@ -3,6 +3,7 @@
 #include "asset_find_by_hash.h"
 #include "asset_status_m12.h"
 #include "memory_dungeon_dat_pc34_compat.h"
+#include "dm1_v1_dungeon_light_admission_f0337_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "render_sdl_m11.h"
 #include <stdint.h>
@@ -344,6 +345,130 @@ cleanup:
     return result;
 }
 
+static int check_original_hand_light(const M11_GameViewState *view) {
+    const unsigned short hands[8]={0x1459,0x1812,THING_NONE,THING_NONE,THING_NONE,THING_NONE,THING_NONE,THING_NONE};
+    DM1_V1_DungeonLightReceiptF0337Pc34 receipt; int result=0;
+    REQUIRE(view->world.things->weapons[89].type==2u && !view->world.things->weapons[89].lit &&
+        view->world.things->weapons[89].chargeCount==15u && view->world.things->armours[18].type==32u,
+        "pure light admission uses actual original unlit charged torch and nonweapon armour records");
+    REQUIRE(dm1_v1_dungeon_light_admit_f0337_pc34(view->world.things,hands,&receipt) && receipt.valid &&
+        receipt.torchLightPower[0]==15 && receipt.torchLightPower[1]==0,
+        "source F0337 counts held torch charge without Lit gate and accepts authentic nonweapon hand as zero");
+    result=1;
+cleanup:
+    return result;
+}
+static int check_native_palette(M11_GameViewState *view, uint8_t *frame, int level_one) {
+    static const int power_amount[]={0,5,12,24,33,40,46,51,59,68,76,82,89,94,97,100};
+    static const int thresholds[]={99,75,50,25,1,0};
+    struct DungeonViewLight_Compat light; uint8_t palette[256][3];
+    int expected=0, result=0; unsigned draws=view->dm1IigsDrawCount;
+    REQUIRE(F0890b_ORCH_ComputeDungeonViewLight_Compat(&view->world,&light),
+        "actual original native world admits complete F0337 light receipt");
+    if (level_one) {
+        unsigned charge=view->world.things->weapons[89].chargeCount;
+        int total=power_amount[charge]+view->world.magic.magicalLightAmount;
+        if (total<=0) expected=5; else while (thresholds[expected]>total) ++expected;
+        REQUIRE(!light.forcedBrightMap && light.totalLightAmount==total &&
+            light.litTorchCount==(charge ? 1 : 0),"native level-one lighting uses live original torch charge and magical light");
+    } else REQUIRE(light.forcedBrightMap,"source difficulty-zero HoC forces brightest palette");
+    REQUIRE(light.paletteIndex==expected,"native light receipt matches independent original power/threshold tables");
+    M11_GameView_Draw(view,frame,M11_FB_WIDTH,M11_FB_HEIGHT);
+    REQUIRE(view->dm1IigsDrawCount==draws+1u && M11_Render_CopyIndexedPaletteRgb6(palette),
+        "actual native Draw publishes admitted light-dependent indexed palette");
+    for (unsigned i=0u; i<32u; ++i) {
+        uint16_t rgb=i<16u ? view->dm1IigsInstallation.metadata.interface_palette[i] :
+            view->dm1IigsInstallation.metadata.dungeon_palettes[expected][i-16u];
+        for (unsigned channel=0u; channel<3u; ++channel) {
+            unsigned nibble=(rgb>>(8u-4u*channel))&15u;
+            REQUIRE(palette[i][channel]==(uint8_t)((nibble<<2)|(nibble>>2)),
+                "renderer retains native interface colors and selected original dungeon RGB4 palette row");
+        }
+    }
+    result=1;
+cleanup:
+    return result;
+}
+static int check_first_descent(M11_GameViewState *view, uint8_t *frame) {
+    static const uint8_t route[][2]={{15,6},{15,7},{15,8},{15,9},{14,9},{13,9},{12,9},
+        {11,9},{10,9},{9,9},{8,9},{7,9},{6,9},{5,9},{4,9},{4,10},{4,11},{4,12},{4,13},{4,14},{4,15},{3,15}};
+    int result=0;
+    REQUIRE(view->world.party.mapIndex==0 && view->world.party.mapX==14 && view->world.party.mapY==6 &&
+        view->world.party.championCount==4 && view->world.dungeon->maps[0].difficulty==0 &&
+        view->world.dungeon->maps[1].difficulty==1,"four original heroes begin native first descent from BORIS");
+    REQUIRE(check_native_palette(view,frame,0),"actual HoC presentation uses native forced-bright palette");
+    for (unsigned step=0u; step<sizeof(route)/sizeof(route[0]); ++step) {
+        int dx=(int)route[step][0]-view->world.party.mapX;
+        int dy=(int)route[step][1]-view->world.party.mapY;
+        int direction=dx>0 ? 1 : dx<0 ? 3 : dy>0 ? 2 : 0;
+        REQUIRE(abs(dx)+abs(dy)==1,"original stair route uses adjacent source squares");
+        for (unsigned turn=0u; view->world.party.direction!=direction && turn<4u; ++turn)
+            (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_TURN_RIGHT);
+        for (unsigned tick=0u; tick<8u; ++tick) (void)M11_GameView_AdvanceIdleTick(view);
+        if (step==13u) REQUIRE((view->world.dungeon->tiles[0].squareData[5*19+9]&7u)==0u,
+            "ordinary party pressure sensor at six-nine opens original exit door before passage");
+        (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_UP);
+        if (step+1u<sizeof(route)/sizeof(route[0]))
+            REQUIRE(view->world.party.mapIndex==0 && view->world.party.mapX==route[step][0] &&
+                view->world.party.mapY==route[step][1],"ordinary native footsteps pass authentic source door toward exit stairs");
+    }
+    if (view->world.party.mapIndex==0 && view->world.party.mapX==3 && view->world.party.mapY==15)
+        (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_USE_STAIRS);
+    REQUIRE(view->world.party.mapIndex==1 && view->world.partyMapIndex==1 &&
+        view->world.party.mapX==3 && view->world.party.mapY==1 && view->world.party.direction==0 &&
+        view->world.iigsCreatureProfileBound,"native stairs preserve original offset-mapped level-one arrival and north facing");
+    { static const int original_groups[][4]={
+        {9,10,1,19},
+        {8,10,3,18},
+        {170,6,4,13},
+        {154,6,5,24},
+        {169,10,6,2},
+        {7,6,8,24},
+        {2,6,11,5},
+        {0,6,13,4},
+        {160,6,16,16},
+        {153,6,20,29},
+        {1,6,22,5},
+        {5,10,24,13},
+        {3,10,27,2},
+        {6,10,27,20},
+        {4,6,31,9}};
+      REQUIRE(view->world.newPartyMapIndex==-1 && view->world.creatureAICount==15,
+          "native level transition consumes pending map change and activates all fifteen original map-one groups");
+      for (unsigned group=0u; group<15u; ++group) {
+          const struct CreatureAIState_Compat *active=NULL;
+          for (int i=0; i<view->world.creatureAICount; ++i)
+              if (view->world.creatureAI[i].reserved0==original_groups[group][0]) {
+                  REQUIRE(!active,"each original native group has one active owner");
+                  active=&view->world.creatureAI[i];
+              }
+          REQUIRE(active && active->groupMapIndex==1 && active->creatureType==original_groups[group][1] &&
+              active->groupMapX==original_groups[group][2] && active->groupMapY==original_groups[group][3] &&
+              view->world.things->groups[active->reserved0].creatureType==active->creatureType &&
+              F0890e_ORCH_GetCreatureProfileForWorld_Compat(&view->world,active->creatureType)->baseHealth==
+                  view->dm1IigsInstallation.metadata.creature_info[active->creatureType].base_health,
+              "active group identity, position and behavior owner match independent native map-one C04 oracle");
+      }
+    }
+    /* A fresh charge15 torch selects row0, which would hide a renderer
+     * hardcoded to brightest. Advance the actual world, bounded by one
+     * native512-tick fuel interval, until source fuel crosses that boundary. */
+    { unsigned initial=view->world.things->weapons[89].chargeCount;
+      for (unsigned ticks=0u; view->world.things->weapons[89].chargeCount==15u && ticks<520u; ++ticks)
+          (void)M11_GameView_AdvanceIdleTick(view);
+      REQUIRE(view->world.things->weapons[89].chargeCount>0u &&
+          view->world.things->weapons[89].chargeCount<15u &&
+          (initial<15u || view->world.things->weapons[89].chargeCount==14u),
+          "ordinary native ticks cross original torch fuel boundary without replacing game state");
+      { struct DungeonViewLight_Compat dimmed;
+        REQUIRE(F0890b_ORCH_ComputeDungeonViewLight_Compat(&view->world,&dimmed) && dimmed.paletteIndex>0,
+            "authentic level-one torch decay selects a nonbright palette and exposes fixed-row-zero rendering"); } }
+    REQUIRE(check_native_palette(view,frame,1),"actual level-one native Draw selects source light-dependent palette");
+    result=1;
+cleanup:
+    return result;
+}
+
 static int check_session(const char *root, int version, const char *owner) {
     M11_GameViewState *view=calloc(1,sizeof(*view));
     uint8_t *frame=malloc((size_t)M11_FB_WIDTH*M11_FB_HEIGHT);
@@ -382,6 +507,7 @@ static int check_session(const char *root, int version, const char *owner) {
         { const M11_AssetSlot *slot=M11_AssetLoader_Load(&view->assetLoader,21u);
           REQUIRE(slot && slot->width==16u && slot->height==17u &&
               !M11_AssetLoader_Load(&view->assetLoader,12u),"actual startup selects native raster dispatch including index21"); }
+        REQUIRE(check_original_hand_light(view),"original native hand light admission semantics");
         REQUIRE(check_original_scroll_opening(view),"actual original scroll source-defined opening icon");
         for (int i=0; i<27; ++i) {
             struct DM1CreatureInfo_Compat row;
@@ -424,6 +550,7 @@ static int check_session(const char *root, int version, const char *owner) {
             "ordinary backward input returns to authentic HoC entry after native movement cooldown");
         REQUIRE(check_recruitment(view,frame),"authentic native HoC champion recruitment through ordinary input");
         REQUIRE(check_equipped_heroes(view,frame),"authentic native equipment modifier and activation lifecycle");
+        REQUIRE(check_first_descent(view,frame),"actual native first descent and functional lighting");
         M11_GameView_Shutdown(view); M11_GameView_Shutdown(view);
         REQUIRE(!view->active && !view->dm1IigsActive && !view->world.iigsCreatureProfileBound &&
             !view->assetLoader.iigsDm1,"repeated shutdown clears native runtime resources and profile");

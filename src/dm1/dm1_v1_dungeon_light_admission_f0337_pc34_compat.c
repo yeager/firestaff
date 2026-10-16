@@ -1,4 +1,5 @@
 #include "dm1_v1_dungeon_light_admission_f0337_pc34_compat.h"
+#include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 
 #include <string.h>
 
@@ -40,9 +41,23 @@ int dm1_v1_dungeon_light_admit_f0337_pc34(
         int index;
         int prior;
         if (thing == THING_NONE || thing == THING_ENDOFLIST) continue;
-        if (THING_GET_TYPE(thing) != THING_TYPE_WEAPON) return 1;
+        for (prior = 0; prior < i; ++prior) {
+            if (handThings[prior] == thing) return 1;
+        }
+        if (THING_GET_TYPE(thing) != THING_TYPE_WEAPON) {
+            /* PANEL.C F0337:379-385 gives ordinary held objects zero
+             * light. Keep the bounded source owner, without rejecting
+             * every other hand's torch or the party's magical light. */
+            if (THING_GET_TYPE(thing) < THING_TYPE_ARMOUR ||
+                THING_GET_TYPE(thing) > THING_TYPE_JUNK ||
+                !(raw = dm1_v1_dungeon_get_thing_data_pc34(things, thing)) ||
+                dm1_v1_dungeon_get_object_type_pc34(things, thing) < 0) return 1;
+            receipt.rawFingerprint ^= f0337_hash(raw);
+            receipt.rawFingerprint *= 16777619u;
+            continue;
+        }
         if (!things || !things->loaded || !things->weapons ||
-            !things->rawThingData[THING_TYPE_WEAPON]) continue;
+            !things->rawThingData[THING_TYPE_WEAPON]) return 1;
         index = (int)THING_GET_INDEX(thing);
         if (index < 0 || index >= things->weaponCount ||
             index >= things->thingCounts[THING_TYPE_WEAPON]) return 1;
@@ -53,12 +68,11 @@ int dm1_v1_dungeon_light_admit_f0337_pc34(
             weapon->type != (unsigned char)(bits & 0x7fu) ||
             weapon->chargeCount != (unsigned char)((bits >> 10) & 0x0fu) ||
             weapon->lit != (unsigned char)((bits >> 15) & 1u)) return 1;
-        for (prior = 0; prior < i; ++prior) {
-            if (handThings[prior] == thing) return 1;
-        }
         receipt.rawFingerprint ^= f0337_hash(raw);
         receipt.rawFingerprint *= 16777619u;
-        if (weapon->type == 2 && weapon->lit && weapon->chargeCount > 0) {
+        /* PANEL.C F0337:379-382 uses F0032's base torch type and charge;
+         * OBJECT.C F0032:121-148 does not inspect the dynamic Lit flag. */
+        if (weapon->type == 2 && weapon->chargeCount > 0) {
             receipt.torchLightPower[i] = weapon->chargeCount;
         }
     }

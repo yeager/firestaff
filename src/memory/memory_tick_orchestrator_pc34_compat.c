@@ -11910,7 +11910,7 @@ int F0195_DM1_GROUP_AddAllActiveGroups_Compat(
 /* ReDMCSB NEWMAP.C F0003 changes the party map between GROUP.C F0194 and
  * F0195.  Both sides write source-owned state (C04 and the event heap), so
  * stage the complete ownership boundary before publishing it to M10. */
-static int orch_transition_party_map_f0194_f0195_compat(
+int F0003_WORLD_TransitionPartyMap_Compat(
     struct GameWorld_Compat* world,
     int destinationMapIndex)
 {
@@ -15510,7 +15510,7 @@ int F0884_ORCH_AdvanceOneTick_Compat(
                  * map.  Its authenticated ACTIVE_GROUP/timeline state stays
                  * intact until an actual F0003 handoff occurs. */
                 world->newPartyMapIndex = -1;
-            } else if (!orch_transition_party_map_f0194_f0195_compat(
+            } else if (!F0003_WORLD_TransitionPartyMap_Compat(
                            world, world->newPartyMapIndex)) {
                 return ORCH_FAIL;
             }

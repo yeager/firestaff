@@ -15535,6 +15535,9 @@ static void m11_audio_emit_source_sound_with_volume(
     if (!state) {
         return;
     }
+    /* Native GS DOC playback is not wired yet. Never route native sample
+     * requests through the PC, Amiga, Atari or Towns decoder/backend. */
+    if (state->dm1IigsActive) return;
     if (m11_is_dm1_source_kind(state->sourceKind)) {
         if (state->assetLoader.atariStDm1) {
             (void)M11_Audio_EmitDm1AtariSoundResident(&state->audioState,
@@ -18730,10 +18733,18 @@ static int m11_try_stairs_transition(M11_GameViewState* state) {
         return 0;
     }
 
-    state->world.party.mapIndex = stairs.toMapIndex;
-    state->world.party.mapX = stairs.newMapX;
-    state->world.party.mapY = stairs.newMapY;
-    state->world.party.direction = stairs.newDirection;
+    {
+        struct PartyState_Compat before = state->world.party;
+        state->world.party.mapIndex = stairs.toMapIndex;
+        state->world.party.mapX = stairs.newMapX;
+        state->world.party.mapY = stairs.newMapY;
+        state->world.party.direction = stairs.newDirection;
+        if (state->dm1IigsActive &&
+            !F0003_WORLD_TransitionPartyMap_Compat(&state->world,stairs.toMapIndex)) {
+            state->world.party = before;
+            return 0;
+        }
+    }
 
     if (state->dm1MusicSourceBound) {
         DM1_V1_F0740F0743MusicReceiptPc34 musicReceipt;
@@ -31913,9 +31924,10 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
     }
     if (state->dm1IigsActive && state->candidateMirrorPanelActive)
         return M11_GAME_INPUT_IGNORED;
-    if (state->dm1IigsActive)
-        return m11_apply_tick(state, CMD_NONE, "WAIT")
-            ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+    if (state->dm1IigsActive) {
+        (void)m11_process_dm1_v1_pipeline_tick(state,"WAIT");
+        return M11_GAME_INPUT_REDRAW;
+    }
     /* F0349's synchronous source command does not run the game loop while
      * waiting. The host pumps events and services the source clock instead. */
     if (state->v1FoodCommandPending) return M11_GAME_INPUT_IGNORED;
@@ -32486,12 +32498,14 @@ static void m11_publish_dm1_v1_movement_outcome(M11_GameViewState* state)
 static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
                                             const char* actionLabel) {
     struct PartyState_Compat beforeParty;
+    struct Dm1V1MovementPipelinePc34Compat beforePipeline;
     int pipelineProcessed;
     if (!state || !state->active) {
         return 0;
     }
 
     beforeParty = state->world.party;
+    beforePipeline = state->dm1V1MovementPipeline;
     memset(&state->lastDm1V1MovementPipelineResult, 0,
            sizeof(state->lastDm1V1MovementPipelineResult));
 
@@ -32527,6 +32541,23 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
     }
 
     state->world.gameTick++;
+    /* GAMELOOP.C:60-68 processes the next-loop native map handoff at
+     * the clock already advanced before the preceding player input
+     * (124-219). F0195's new C37 events must remain at arrival time + 1,
+     * rather than becoming due during this arrival's timeline pass. */
+    if (state->dm1IigsActive &&
+        state->world.party.mapIndex != state->world.partyMapIndex &&
+        !F0003_WORLD_TransitionPartyMap_Compat(&state->world,state->world.party.mapIndex)) {
+        --state->world.gameTick;
+        state->world.party = beforeParty;
+        state->dm1V1MovementPipeline = beforePipeline;
+        m11_set_status(state,actionLabel,"NATIVE MAP HANDOFF REJECTED");
+        return 0;
+    }
+    /* GAMELOOP.C:124-126 burns native hand torches after GameTime++;
+     * the source movement queue does not invoke the generic tick wrapper. */
+    if (state->dm1IigsActive)
+        F0890_ORCH_ApplyPeriodicEffects_Compat(&state->world,&state->lastTickResult);
     if (state->dm1MusicSourceBound && state->dm1MusicOn) {
         DM1_V1_F0740F0743MusicReceiptPc34 musicReceipt;
         (void)dm1_v1_f0743_update_music_pc34(
@@ -34691,7 +34722,7 @@ static int m11_iigs_candidate_equipment(M11_GameViewState* state,
                 state->world.things,thing);
             if (type < 5 || type > 10 || !allowed ||
                 !state->world.things->rawThingData[type] ||
-                THING_GET_INDEX(thing) >= state->world.things->thingCounts[type] ||
+                (int)THING_GET_INDEX(thing) >= state->world.things->thingCounts[type] ||
                 dm1_v1_dungeon_get_object_icon_index_pc34(state->world.things,thing,direction) < 0) return 0;
             {
                 int index = THING_GET_INDEX(thing);
@@ -36106,7 +36137,6 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         /* Native first-world scope: feed real WORLD commands without
          * entering PC-specific spell/inventory/save or startup overlays.
          * LOADSAVE.C F0434 starts GS at its native party coordinates. */
-        uint8_t nativeCommand;
         if (state->candidateMirrorPanelActive) {
             if (input == M12_MENU_INPUT_BACK)
                 return M11_GameView_CancelMirrorCandidate(state) ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
@@ -36118,22 +36148,14 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         if (M11_GameView_IsPaused(state)) return M11_GAME_INPUT_IGNORED;
         if (input == M12_MENU_INPUT_ACTION || input == M12_MENU_INPUT_ACCEPT)
             return M11_GameView_SelectFrontMirrorCandidate(state) ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
-        switch (input) {
-        case M12_MENU_INPUT_UP:
-            nativeCommand = m11_forward_command_for_direction(state->world.party.direction); break;
-        case M12_MENU_INPUT_DOWN:
-            nativeCommand = m11_backward_command_for_direction(state->world.party.direction); break;
-        case M12_MENU_INPUT_LEFT:
-        case M12_MENU_INPUT_TURN_LEFT: nativeCommand = CMD_TURN_LEFT; break;
-        case M12_MENU_INPUT_RIGHT:
-        case M12_MENU_INPUT_TURN_RIGHT: nativeCommand = CMD_TURN_RIGHT; break;
-        case M12_MENU_INPUT_STRAFE_LEFT:
-            nativeCommand = m11_strafe_left_command_for_direction(state->world.party.direction); break;
-        case M12_MENU_INPUT_STRAFE_RIGHT:
-            nativeCommand = m11_strafe_right_command_for_direction(state->world.party.direction); break;
-        default: return M11_GAME_INPUT_IGNORED;
+        if (input == M12_MENU_INPUT_USE_STAIRS) {
+            if (!m11_try_stairs_transition(state)) return M11_GAME_INPUT_IGNORED;
+            return M11_GAME_INPUT_REDRAW;
         }
-        return m11_apply_tick(state, nativeCommand, "MOVE")
+        /* Source F0380/F0366/F0276 must apply the same-owner native
+         * WORLD sensor effects; the generic tick emits observations only.
+         * This queue consumes no PC graphics or startup metadata. */
+        return m11_apply_dm1_v1_pipeline_tick(state,input,"MOVE")
             ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
     }
     if (m11_dm1_v1_blocks_host_map_overlay(state)) {
@@ -71817,9 +71839,20 @@ static void m11_iigs_draw_first_world(M11_GameViewState* state,
                 state->world.party.direction) & 1;
     unsigned wallBase = 77U + 13U * map->wallSet;
     int i, depth, side, x, y;
+    struct DungeonViewLight_Compat light;
+    /* PANEL.C F0337:367-432 selects a native GS palette row from the
+     * source world's map difficulty, retained torches and magical light.
+     * Never turn a rejected light owner into a guessed dark palette. */
+    if (!m11_dm1_dungeon_view_light(state,&light) ||
+        light.paletteIndex < 0 || light.paletteIndex >= 6) {
+        fprintf(stderr,"firestaff: dm1 iigs native draw rejected: dungeon light ownership invalid\n");
+        memset(framebuffer,0,(size_t)width*(size_t)height);
+        (void)M11_Render_SetIndexedPaletteRgb6(rgb6);
+        return;
+    }
     for (i = 0; i < 32; ++i) {
         uint16_t color = i < 16 ? metadata->interface_palette[i] :
-                                 metadata->dungeon_palettes[0][i-16];
+                                 metadata->dungeon_palettes[light.paletteIndex][i-16];
         unsigned r = (color >> 8) & 15, g = (color >> 4) & 15, b = color & 15;
         rgb6[i][0] = (unsigned char)((r << 2) | (r >> 2));
         rgb6[i][1] = (unsigned char)((g << 2) | (g >> 2));

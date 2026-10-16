@@ -2113,6 +2113,18 @@ The 24 original mirror chains contain no scroll, Jewel Symal or Illumulet;
 their recruitment activation branches lack original runtime coverage. Other
 modifier branches and all remaining heroes also need authentic checks.
 Remaining: reincarnation/rename, full inventory/spell/interaction and scene
-consumers, intro/entrance and audible DOC playback. Native Draw still selects
-the brightest dungeon palette; torch/neck light presentation below HoC needs
-its source consumer. Visual parity remains deferred.
+consumers, intro/entrance and audible DOC playback. Visual parity remains
+deferred.
+
+2026-10-16 first-descent follow-up: native movement/idle now uses the live
+source movement queue, including floor effects and timeline dispatch. The
+original HoC exit sensor opens its door; the real stairs reach map 1 with
+all fifteen original C04 owners and native profiles. The existing F0194/F0195
+transaction owns the map handoff; arrival events remain due on the following
+tick. Native periodic effects retain 512-tick torch decay. Native Draw uses
+the admitted F0337 light row from GS metadata, with interface colors separate.
+Original-media checks distinguish a dimmer row from the old forced row 0.
+The shared light admission now accepts bounded ordinary hand objects as zero
+light and uses torch charge without an extra Lit condition, as F0337 does.
+Remaining interaction, scene, intro and DOC gaps above are still open;
+timeline-driven transfers and further levels need authentic runtime checks.
