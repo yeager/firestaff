@@ -3469,6 +3469,21 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(
         strcmp(getenv("FIRESTAFF_AUTOTEST_ENTRANCE_INPUT"), "key:return") == 0) {
         static const char freshReturn[] = "key:return";
         (void)m11_push_script_event_token(freshReturn, sizeof(freshReturn) - 1u);
+    } else if (allowHeadlessTimeout &&
+               getenv("FIRESTAFF_AUTOTEST_ENTRANCE_INPUT") &&
+               strcmp(getenv("FIRESTAFF_AUTOTEST_ENTRANCE_INPUT"),
+                      "key:return-repeat") == 0) {
+        SDL_Event repeatedReturn;
+        memset(&repeatedReturn, 0, sizeof(repeatedReturn));
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+        repeatedReturn.type = SDL_EVENT_KEY_DOWN;
+        repeatedReturn.key.key = SDLK_RETURN;
+#else
+        repeatedReturn.type = SDL_KEYDOWN;
+        repeatedReturn.key.keysym.sym = SDLK_RETURN;
+#endif
+        repeatedReturn.key.repeat = 1;
+        (void)SDL_PushEvent(&repeatedReturn);
     }
     if (g_m11_intro_delay_fast_forward) {
         return M11_ENTRANCE_COMMAND_ENTER;
@@ -3483,6 +3498,15 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(
             if (ev.type == SDL_EVENT_QUIT) return M11_ENTRANCE_COMMAND_QUIT;
             /* ReDMCSB ENTRANCE.C:850-883 accepts a fresh Return while waiting
              * at the entrance; Space remains inert on the PC/F20 path. */
+            if (!mouseOnly && ev.type == SDL_EVENT_KEY_DOWN &&
+                ev.key.repeat) {
+                if (g_m11_debug_startup_detail) {
+                    fprintf(stderr,
+                            "firestaff: startup-input-ignore game=dm1 phase=entrance reason=key-repeat key=%d\n",
+                            (int)ev.key.key);
+                }
+                continue;
+            }
             if (!mouseOnly && ev.type == SDL_EVENT_KEY_DOWN) {
                 M11_EntranceCommand keyCommand =
                     m11_entrance_command_path_from_source_command(
@@ -3520,6 +3544,14 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(
             if (ev.type == SDL_QUIT) return M11_ENTRANCE_COMMAND_QUIT;
             /* ReDMCSB ENTRANCE.C:850-883 accepts a fresh Return while waiting
              * at the entrance; Space remains inert on the PC/F20 path. */
+            if (!mouseOnly && ev.type == SDL_KEYDOWN && ev.key.repeat) {
+                if (g_m11_debug_startup_detail) {
+                    fprintf(stderr,
+                            "firestaff: startup-input-ignore game=dm1 phase=entrance reason=key-repeat key=%d\n",
+                            (int)ev.key.keysym.sym);
+                }
+                continue;
+            }
             if (!mouseOnly && ev.type == SDL_KEYDOWN) {
                 M11_EntranceCommand keyCommand =
                     m11_entrance_command_path_from_source_command(
@@ -5778,6 +5810,21 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
         if (g_m11_debug_startup_detail)
             fprintf(stderr,
                     "firestaff: startup-source-wait game=dm1 platform=pc34 phase=selector action=await-enter-or-click\n");
+        if (getenv("FIRESTAFF_AUTOTEST_SELECTOR_INPUT") &&
+            strcmp(getenv("FIRESTAFF_AUTOTEST_SELECTOR_INPUT"),
+                   "key:return-repeat") == 0) {
+            SDL_Event repeatedReturn;
+            memset(&repeatedReturn, 0, sizeof(repeatedReturn));
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+            repeatedReturn.type = SDL_EVENT_KEY_DOWN;
+            repeatedReturn.key.key = SDLK_RETURN;
+#else
+            repeatedReturn.type = SDL_KEYDOWN;
+            repeatedReturn.key.keysym.sym = SDLK_RETURN;
+#endif
+            repeatedReturn.key.repeat = 1;
+            (void)SDL_PushEvent(&repeatedReturn);
+        }
         for (;;) {
             SDL_Event event;
             int accepted = 0;
@@ -5799,6 +5846,14 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
                 if (keyDown && (event.key.key == SDLK_RETURN ||
                                 event.key.key == SDLK_KP_ENTER ||
                                 event.key.key == SDLK_E)) {
+                    if (event.key.repeat) {
+                        if (g_m11_debug_startup_detail) {
+                            fprintf(stderr,
+                                    "firestaff: startup-input-ignore game=dm1 phase=selector reason=key-repeat key=%d\n",
+                                    (int)event.key.key);
+                        }
+                        continue;
+                    }
                     accepted = 1;
                     break;
                 }

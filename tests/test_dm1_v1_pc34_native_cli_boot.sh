@@ -454,6 +454,26 @@ if ! grep -Fq "dm1 platform=PC edition=pc34-en matched source=$pair_only_data_ro
     exit 1
 fi
 echo "PASS: DM1 skips absent optional SWSH, runs I34E title and selector, then reaches PC 3.4 runtime"
+repeat_selector_output="$(FIRESTAFF_AUTOTEST_SELECTOR_INPUT=key:return-repeat \
+   HOME="$missing_swsh_home" XDG_CONFIG_HOME="$missing_swsh_home" \
+   APPDATA="$missing_swsh_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+   SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+   --game dm1 --platform pc --data-dir "$pair_only_data_root" \
+   --debug --duration 12000 2>&1)" || {
+    printf '%s\n' "$repeat_selector_output" >&2
+    echo "FAIL: repeat-key selector regression process failed" >&2
+    exit 1
+}
+if ! grep -Fq \
+       'startup-input-ignore game=dm1 phase=selector reason=key-repeat' \
+       <<<"$repeat_selector_output" ||
+   grep -Fq 'startup-source-input game=dm1 platform=pc34 phase=selector command=enter' \
+       <<<"$repeat_selector_output"; then
+    printf '%s\n' "$repeat_selector_output" >&2
+    echo "FAIL: keyboard autorepeat incorrectly opened the DM1 selector entrance" >&2
+    exit 1
+fi
+echo "PASS: PC34 selector entrance ignores keyboard autorepeat and waits for a fresh command"
 python3 - "$missing_swsh_root" <<'PY'
 from pathlib import Path
 import shutil
