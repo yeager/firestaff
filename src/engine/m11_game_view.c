@@ -26483,13 +26483,23 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                     return 0;
                 int found = m11_find_unique_loose_sibling(parent, dungeonMember,
                                                           dungeonPath, sizeof(dungeonPath));
+                if (found == 1 && dm1Pc34Graphics &&
+                    !asset_file_matches_md5(dungeonPath,
+                                            dm1DefaultDungeonMd5)) {
+                    /* A mixed PC34 tree may contain a same-name dungeon
+                     * from another edition at the selected graphics root.
+                     * It is not this install's companion merely because its
+                     * filename matches. */
+                    found = 0;
+                }
                 /* PC34 already admits renamed original dungeon payloads.
-                 * Keep that compatibility within the selected parent only;
+                 * Keep that compatibility within the selected install tree;
                  * an ambiguous native filename never triggers this fallback. */
                 if (found == 0 && (dm1Pc34Graphics || dm1Amiga36LanguageWorld)) {
                     char renamed[1][ASSET_PATH_MAX];
                     if (asset_collect_files_by_md5(parent,
-                        dm1DefaultDungeonMd5, renamed, 1U, 0) != 1)
+                        dm1DefaultDungeonMd5, renamed, 1U,
+                        dm1Pc34Graphics ? 32 : 0) != 1)
                         return 0;
                     snprintf(dungeonPath, sizeof(dungeonPath), "%s", renamed[0]);
                 } else if (found != 1) return 0;
@@ -39819,6 +39829,20 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
     if (!state->showDebugHUD) {
         ActionAreaRoutePc34Compat sourceRoute;
 
+        /* F0389's champion icon remains a valid selection while another
+         * champion's action menu is open.  Those icon cells overlap the
+         * action rows, so give only a different champion's icon priority;
+         * the current champion keeps the row/gap ownership below. */
+        if (state->actingChampionOrdinal != 0 &&
+            action_area_routes_GetTouchMatrixInvariant() &&
+            m11_resolve_action_icon_pointer(state, x, y, &sourceRoute) &&
+            state->actingChampionOrdinal !=
+                (unsigned int)(sourceRoute.championIndex + 1) &&
+            M11_GameView_SetActingChampion(state,
+                                           sourceRoute.championIndex)) {
+            return M11_GAME_INPUT_REDRAW;
+        }
+
         /* When in action-menu mode, clicks on the three action
          * rows drive F0391_MENUS_DidClickTriggerAction: the
          * chosen action is resolved against the ActionList, the
@@ -39913,7 +39937,8 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             action_area_routes_GetTouchMatrixInvariant() &&
             m11_resolve_action_icon_pointer(state, x, y, &sourceRoute)) {
             int slotHit = sourceRoute.championIndex;
-            /* Toggle: click on already-acting champion clears. */
+            /* Clicking another visible action icon changes the acting
+             * champion directly. Clicking the current icon clears it. */
             if (state->actingChampionOrdinal ==
                     (unsigned int)(slotHit + 1)) {
                 M11_GameView_ClearActingChampion(state);

@@ -225,7 +225,8 @@ PY
         printf '%s\n' "$mixed_output" >&2
         exit 1
     }
-    if ! grep -Fq "LOADING DUNGEON: [$expected_pc_dungeon]" <<<"$mixed_output" ||
+    if ! grep -Fq "dungeonPath=$expected_pc_dungeon" <<<"$mixed_output" ||
+       ! grep -Fq "DM1 READY: gameId=dm1" <<<"$mixed_output" ||
        ! grep -Fq "graphicsPath=$mixed_root/GRAPHICS.DAT" <<<"$mixed_output" ||
        ! grep -Fq 'phase=dm1-runtime' <<<"$mixed_output" ||
        ! grep -Fq 'levelLoaded=1' <<<"$mixed_output"; then
@@ -385,7 +386,7 @@ if ! grep -Fq \
         "dm1 platform=PC edition=pc34-en matched source=$mixed_media_pc34/DATA/GRAPHICS.DAT" \
         <<< "$mixed_media_output" ||
    ! grep -Fq \
-        "LOADING DUNGEON: [$mixed_media_pc34/DATA/DUNGEON.DAT]" \
+        "dungeonPath=$mixed_media_pc34/DATA/DUNGEON.DAT" \
         <<< "$mixed_media_output" ||
    ! grep -Fq "dataDir=$mixed_media_pc34/DATA" <<< "$mixed_media_output" ||
    ! grep -Fq 'handoff=pc-img3' <<< "$mixed_media_output" ||
@@ -427,7 +428,7 @@ cp "$runtime_data_root/GRAPHICS.DAT" "$runtime_data_root/DUNGEON.DAT" \
    "$missing_swsh_root/data/TITLE" \
    "$missing_swsh_root/data/SELECTOR" \
    "$pair_only_data_root/"
-missing_swsh_output="$(HOME="$missing_swsh_home" XDG_CONFIG_HOME="$missing_swsh_home" \
+missing_swsh_output="$(FIRESTAFF_AUTOTEST=1 HOME="$missing_swsh_home" XDG_CONFIG_HOME="$missing_swsh_home" \
    APPDATA="$missing_swsh_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
    --game dm1 --platform pc --data-dir "$pair_only_data_root" \

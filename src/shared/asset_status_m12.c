@@ -4512,9 +4512,37 @@ static int m12_dm1_default_dungeon_identity(const char* graphics,
                 m12_dm1_world_name(graphicsMd5, language), dungeon, ASSET_PATH_MAX)) return 0;
     } else {
         int found;
+        char siblingMd5[33];
         if (!FSP_ParentDir(parent, sizeof(parent), graphics)) return 0;
         found = FSP_FindUniqueFileIgnoreCase(parent,
             m12_dm1_world_name(graphicsMd5, language), dungeon, ASSET_PATH_MAX);
+        if (found == 1) {
+            const char* siblingMatch;
+            if (!asset_file_md5_hex(dungeon, siblingMd5)) {
+                found = 0;
+            } else {
+                siblingMatch = strstr(allowed, siblingMd5);
+                if (!siblingMatch ||
+                    (siblingMatch != allowed && siblingMatch[-1] != ';') ||
+                    (siblingMatch[32] != '\0' && siblingMatch[32] != ';')) {
+                    found = 0;
+                }
+            }
+        }
+        /* A PC-34 install can have authenticated loose GRAPHICS.DAT at its
+         * selected root while the matching original DUNGEON.DAT remains in
+         * the nested DOS package. Ignore a same-name sibling unless its hash
+         * belongs to the selected graphics edition; then accept only one
+         * unique catalogued dungeon hash from the install tree. */
+        if (found == 0 &&
+            (strcmp(graphicsMd5, "fa6b1aa29e191418713bf2cda93d962e") == 0 ||
+             strcmp(graphicsMd5, "f934d97e43e1ba6e5159839acbcd0611") == 0)) {
+            char candidates[1][ASSET_PATH_MAX];
+            if (asset_collect_files_by_md5(parent, allowed, candidates, 1U, 32) == 1) {
+                m12_copy_string(dungeon, ASSET_PATH_MAX, candidates[0]);
+                found = 1;
+            }
+        }
         if (found == 0 &&
             (strcmp(graphicsMd5, "fa6b1aa29e191418713bf2cda93d962e") == 0 ||
              strcmp(graphicsMd5, "f934d97e43e1ba6e5159839acbcd0611") == 0 ||

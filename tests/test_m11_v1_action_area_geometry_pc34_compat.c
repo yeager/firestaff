@@ -286,6 +286,44 @@ static void test_action_pointer_routes_consume_source_matrix(void)
     M11_GameView_Shutdown(&state);
 }
 
+static void test_action_icon_switches_acting_champion(void)
+{
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    memset(&state, 0, sizeof(state));
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    M11_GameView_Init(&state);
+    state.active = 1;
+    state.world.party.championCount = 2;
+    state.world.party.champions[0].present = 1;
+    state.world.party.champions[0].hp.current = 100;
+    state.world.party.champions[0].hp.maximum = 100;
+    state.world.party.champions[1].present = 1;
+    state.world.party.champions[1].hp.current = 100;
+    state.world.party.champions[1].hp.maximum = 100;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    state.world.party.champions[1].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    weapons[0].type = 8; /* PC34 dagger ActionSet. */
+    things.loaded = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    state.world.things = &things;
+
+    check_int("first action icon selects champion A",
+              M11_GameView_HandlePointer(&state, 233, 86, 1),
+              M11_GAME_INPUT_REDRAW);
+    check_int("champion A is acting", (int)state.actingChampionOrdinal, 1);
+    check_int("second action icon switches to champion B",
+              M11_GameView_HandlePointer(&state, 255, 97, 1),
+              M11_GAME_INPUT_REDRAW);
+    check_int("champion B is acting", (int)state.actingChampionOrdinal, 2);
+    M11_GameView_Shutdown(&state);
+}
+
 /* TODO(DM1-HUD-legacy-probe): these status/champion geometry accessors were
  * retired from M11 and have no current implementation.  Re-enable these two
  * cases only when a source-owned public probe API is restored; action/spell
@@ -422,6 +460,7 @@ int main(void)
     test_action_result_and_pass_zones();
     test_spell_area_boxes_stay_source_locked();
     test_action_pointer_routes_consume_source_matrix();
+    test_action_icon_switches_acting_champion();
     printf("test_m11_v1_action_area_geometry_pc34_compat: %d/%d assertions passed\n",
            g_assertions - g_failures, g_assertions);
     return g_failures == 0 ? 0 : 1;
