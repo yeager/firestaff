@@ -1,3 +1,20 @@
+# Firestaff v3.0.384
+
+## User-facing changes
+
+- `DM1 PC champion selection`: make clicks on a champion's portrait/name select that champion even where the narrower ready-hand target overlaps the status box. Preserve separate inventory-toggle regions.
+- `DM1 PC selector`: prevent held-key repeat from skipping selector choices, and wait for the native selector to finish before continuing a direct CLI launch.
+- `DM1 PC input`: reject stale entrance clicks after the scene changes. `--debug` reports input-to-present timing for startup and motion diagnostics.
+- `DM1 Apple IIGS audio and collisions`: add the original C01 cue for audible floor sensors and stage wall-bump damage with its native DOC sound cue.
+
+## Developer changes
+
+- `DM1 PC34 mouse routing`: add regression coverage from authentic HoC PC34 data for consecutive portrait/name champion switches, including overlapping hand zones.
+- `DM1 Apple IIGS runtime`: add original-media checks for sensor cues and wall-bump state/timing; retain native-world ownership through those events.
+- `DM1 PC diagnostics`: add real-media motion/presentation checks for input-to-present timing and stale entrance events.
+- `DM1/DM2 original media catalog tests`: verify shared catalog ownership across authentic installed editions, including French DOS DM2; original game data remains outside Git and packaged releases.
+- `Release metadata`: update the project version, release notes and reproducible SPDX source SBOM for v3.0.384.
+
 # Firestaff v3.0.383
 
 ## User-facing changes

@@ -12,6 +12,7 @@
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_movement_pc34_compat.h"
+#include "dm1_v1_mouse_routes_pc34_compat.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -684,6 +685,10 @@ int main(void) {
     int i;
     int candidateA;
     int candidateB;
+    int clickSpace;
+    int clickZone;
+    int clickCommand;
+    M11_GameInputResult leaderClick;
     unsigned short bHpMaxBefore;
     unsigned short bStaMaxBefore;
     unsigned short bManaMaxBefore;
@@ -873,6 +878,33 @@ int main(void) {
     CHECK(state.world.things->sensors[mirrorB.sensorIndex].sensorType ==
               DM1_SENSOR_DISABLED,
           "C161 should disable mirror B's original sensor owner");
+
+    /* COMMAND.C G0447 sends the two real status/name rectangles to C012 and
+     * C013; F0367 routes a name hit to F0368. Exercise that route only after
+     * both champions have been recruited from this original dungeon, then
+     * switch back to prove consecutive portrait/name clicks keep changing
+     * the live leader. */
+    CHECK(state.world.party.champions[0].hp.current > 0 &&
+          state.world.party.champions[1].hp.current > 0,
+          "both source-recruited champions should be alive for leader clicks");
+    clickCommand = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+        DM1_V1_MOUSE_LIST_INTERFACE_PC34, 80, 14,
+        DM1_V1_MOUSE_MASK_LEFT_PC34, &clickSpace, &clickZone);
+    CHECK(clickCommand == 13 && clickSpace == DM1_V1_MOUSE_SPACE_SCREEN_PC34 &&
+          clickZone == 152,
+          "C013 name click should resolve before overlapping G0455 hand boxes");
+    leaderClick = M11_GameView_HandlePointerButton(
+        &state, 80, 14, DM1_V1_MOUSE_MASK_LEFT_PC34);
+    CHECK(leaderClick == M11_GAME_INPUT_REDRAW &&
+          state.world.party.activeChampionIndex == 1 &&
+          state.inventoryPanelActive == 0,
+          "C013 portrait/name click should select champion two without opening inventory");
+    leaderClick = M11_GameView_HandlePointerButton(
+        &state, 10, 14, DM1_V1_MOUSE_MASK_LEFT_PC34);
+    CHECK(leaderClick == M11_GAME_INPUT_REDRAW &&
+          state.world.party.activeChampionIndex == 0 &&
+          state.inventoryPanelActive == 0,
+          "C012 portrait/name click should switch back to champion one");
 
     /* CHEST.C F0334 must publish the open G0425 slots before the host
      * snapshot serializes the world chain. Use original chest residents. */
