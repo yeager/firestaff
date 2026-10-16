@@ -1888,3 +1888,12 @@ world startup are covered; wrong or missing language files reject without
 borrowing English. Full source-language graphics selection via G2004 remains
 open, as does language-only inventory without the standard world. These
 world-loading results do not establish full translated or visual parity.
+
+2026-10-16 direct Atari ST disk coverage: the shared 1.0a/1.0b/1.1
+original-media regression now selects an unwrapped uppercase-extension STX
+beside an independent identical disk copy and its wrapped archive. CLI checks
+require the expected graphics identity and loaded world; CLI and M12 loading
+both require graphics and dungeon paths rooted in the explicitly selected disk.
+The separate wrapped route retains interactive Hall of Champions, C127 selection
+and movement checks. Raw-STX interactive entrance/Hall completion and complete
+platform startup coverage remain open; loading-only probes do not prove them.

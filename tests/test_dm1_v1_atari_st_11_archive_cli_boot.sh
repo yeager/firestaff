@@ -103,6 +103,45 @@ if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu" ||
     exit 1
 fi
 
+# Select an unwrapped original disk explicitly, with an independent identical
+# copy and the already staged archive beside it. Both entry points must retain
+# the selected physical owner rather than a hash-equivalent neighbouring file.
+selected_stx="$stage/selected.STX"
+cp "$stx" "$selected_stx"
+cp "$stx" "$stage/000-duplicate.stx"
+for entry_point in cli menu; do
+    direct_args=(--boot-probe --boot-probe-frames 2 --duration 0)
+    if [[ "$entry_point" == menu ]]; then
+        direct_args=(--menu --script enter,enter,enter --duration 1000)
+    fi
+    direct_disk=$(FIRESTAFF_CONFIG_PATH="$stage/direct-$entry_point.toml" \
+        FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --game dm1 --platform atari-st --data-dir "$selected_stx" --debug \
+        "${direct_args[@]}" 2>&1) || {
+        printf '%s\n' "$direct_disk" >&2
+        exit 1
+    }
+    if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$direct_disk" ||
+       ! grep -Fq 'handoff=atari-st-dmcsb1' <<<"$direct_disk" ||
+       ! grep -Fq "graphicsPath=$selected_stx::GRAPHICS.DAT" <<<"$direct_disk" ||
+       ! grep -Fq "dungeonPath=$selected_stx::DUNGEON.DAT" <<<"$direct_disk"; then
+        printf '%s\n' "$direct_disk" >&2
+        echo "FAIL: Atari ST $edition $entry_point lost the explicitly selected STX owner" >&2
+        exit 1
+    fi
+    if [[ "$entry_point" == cli ]] &&
+       { ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=dm1' <<<"$direct_disk" ||
+         ! grep -Fq 'phase=dm1-runtime' <<<"$direct_disk" ||
+         ! grep -Fq "assetMd5=$expected_graphics_md5" <<<"$direct_disk" ||
+         ! grep -Fq 'levelLoaded=1' <<<"$direct_disk"; }; then
+        printf '%s\n' "$direct_disk" >&2
+        echo "FAIL: Atari ST $edition direct STX did not load its original world" >&2
+        exit 1
+    fi
+done
+echo "PASS: authentic Atari ST $edition direct STX retains its owner through CLI and M12 loading"
+
 bash "$(dirname "${BASH_SOURCE[0]}")/verify_dm1_atari_first_hall_handoff.sh" \
     "$app" "$outer" "English v$edition"
 

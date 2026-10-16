@@ -3648,3 +3648,15 @@ not used as its final verification.
   full five-game corpus cases remained intentionally skipped. Refreshed
   startup-menu catalogs change source references only. Independent review
   found no blocker. No original media is committed.
+
+- 2026-10-16: Added direct original STX selection regression coverage for
+  Atari ST 1.0a/1.0b/1.1. Both CLI and M12 loading retain the explicitly chosen
+  uppercase-extension disk's graphics/world paths beside an independent
+  identical copy and its wrapped archive. CLI also checks the edition's
+  authenticated graphics hash and loaded runtime world. Final serial CTest
+  passed all three editions, including the existing wrapped-media interactive
+  Hall/C127 confirmation/movement route; no original-media skips occurred.
+  The separate five-edition original-media Atari startup run passed 5/5
+  (336.53 s), including German 1.2 and French 1.3. Direct raw-STX interactive
+  entrance/Hall completion is not established by the loading-only checks.
+  Independent read-only review found no blocker. No runtime change was needed.

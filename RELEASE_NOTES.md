@@ -2,6 +2,10 @@
 
 ## User-facing changes
 
+- `DM1 Atari disk regression coverage`: check direct STX selection through
+  CLI and launcher loading with duplicate neighbouring originals, retaining
+  exact graphics/world provenance for the chosen disk.
+
 - `DM1 Amiga 3.6 languages`: load the chosen original French/German dungeon
   from the selected disk, archive or loose installation. Validate its original
   compressed bytes and report missing language files before launch.
