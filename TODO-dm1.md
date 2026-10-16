@@ -773,7 +773,10 @@ parity.
   these tests do not establish pixel parity or HiDPI behavior. The original A22 German 910,058-byte UAE-1ADF now passes file and
   startup admission. The bounded reader retains sector-presence metadata;
   no missing raw-track sector is synthesized. CLI and M12 tests run F0437,
-  F0441 and reach runtime with the unchanged original disk in ZIP transport.
+  F0441 and reach runtime with the unchanged original disk. The strengthened
+  M12 regression requires an active loaded first Hall through both ZIP and
+  direct UAE-1ADF, with exact selected-file provenance; an accepted launch
+  transaction alone no longer satisfies its menu checks.
   The four-file gate binds graphics 0679e39da9dcc2e855cb33c6c64ddcb5,
   dungeon 59e332cf47852d5c7c88a9538f0adcea,
   dm e8fc5da52d69aa61b8b5ac7b2e294ebd and

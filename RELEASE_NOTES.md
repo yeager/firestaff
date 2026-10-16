@@ -1,3 +1,5 @@
+- `DM1 verification`: require an active first Hall of Champions after Amiga
+  2.2 German menu startup through both the original disk and ZIP transport.
 - `DM1 media selection`: preserve directly selected Atari disks with mixed-case
   extensions when an identical neighboring disk is present during a full scan.
 - `DM1 verification`: exercise Hall champion selection and movement through

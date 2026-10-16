@@ -3796,3 +3796,18 @@ not used as its final verification.
   disk bytes; no synthetic game payloads or runtime disk extraction were added.
   Independent review found no blocker. Localization consistency and diff
   whitespace checks passed; redacted patch Gitleaks found no leaks.
+
+- 2026-10-16: Strengthened the original Amiga 2.2 German startup regression.
+  Its previous menu branch stopped at an accepted launch and checked source
+  preflight logs. Actual ZIP and direct UAE-1ADF menu sessions now require an
+  active DM1 runtime, authenticated original graphics, a loaded world, completed
+  startup handoff and first Hall frame at map 0 (1,3), direction 2, no champions.
+  Both routes retain the exact selected owner's graphics and dungeon paths.
+  Each route has isolated HOME/config/probe paths. The original 910058-byte
+  disk's SHA-256 is checked before staging and again for direct and wrapped
+  copies after execution; runtime continues to read media in bounded memory.
+  The existing direct CLI boot assertions remain in the same test. Independent
+  review found no blocker. This proves startup integration, not champion choice,
+  movement, native display/audio timing or visual parity for A22G.
+  Final original-media CTest passed (32.78 s), without a missing-media skip.
+  Bash syntax, diff whitespace and redacted patch Gitleaks checks passed.
