@@ -357,6 +357,92 @@ cleanup:
     if (dir[0]) rmdir(dir);
     return result==0;
 }
+static int check_atari_mixed_extension_selection(const char* root, const char* original) {
+    unsigned char* image=NULL;
+    size_t imageSize=0U;
+    char dir[FSP_PATH_MAX]={0}, duplicate[FSP_PATH_MAX]={0};
+    char selectedUpper[FSP_PATH_MAX]={0}, selectedMixed[FSP_PATH_MAX]={0};
+    char member[ASSET_PATH_MAX], expectedGraphics[ASSET_PATH_MAX], expectedDungeon[ASSET_PATH_MAX];
+    char imageMd5[33];
+    char* last=NULL;
+    char* cursor;
+    M12_AssetStatus* status=NULL;
+    M12_StartupMenuState* menu=NULL;
+    M12_StartupMenuInitOptions options;
+    int result=1, menuInitialized=0;
+    if (!original || !FSP_FileExists(original)) {
+        puts("SKIP: authentic Atari archive unavailable for mixed-extension source selection");
+        return 1;
+    }
+    REQUIRE(asset_find_by_md5(original,"9ce2eaf7a9e78620e3f17594437caffa",member,sizeof(member),0),
+        "locate authentic ST12 graphics within original disk");
+    for (cursor=member; (cursor=strstr(cursor,"::"))!=NULL; cursor+=2) last=cursor;
+    REQUIRE(last && strstr(member,".stx::"),"original graphics locator identifies its native STX image");
+    *last='\0';
+    REQUIRE(asset_read_path_alloc(member,&image,&imageSize) && imageSize>0U &&
+        asset_file_md5_hex(member,imageMd5),"read unchanged original STX image into bounded memory");
+    REQUIRE(FSP_JoinPath(dir,sizeof(dir),root,"atari-mixed-extension") && FSP_CreateDirectory(dir) &&
+        FSP_JoinPath(duplicate,sizeof(duplicate),dir,"000-duplicate.stx") &&
+        FSP_JoinPath(selectedUpper,sizeof(selectedUpper),dir,"Z-selected.STX") &&
+        FSP_JoinPath(selectedMixed,sizeof(selectedMixed),dir,"Z-selected.StX") &&
+        write_original_bytes(duplicate,image,imageSize) && write_original_bytes(selectedUpper,image,imageSize) &&
+        asset_file_matches_md5(duplicate,imageMd5) && asset_file_matches_md5(selectedUpper,imageMd5),
+        "stage two byte-identical original STX copies with earlier sibling ordering");
+    status=SDL_calloc(1,sizeof(*status));
+    REQUIRE(status,"allocate isolated direct STX inventory");
+    for (int phase=0; phase<2; ++phase) {
+        const char* selected=phase==0 ? selectedUpper : selectedMixed;
+        if (phase) REQUIRE(rename(selectedUpper,selectedMixed)==0,"rename only task-owned selected STX extension");
+        REQUIRE(snprintf(expectedGraphics,sizeof(expectedGraphics),"%s::GRAPHICS.DAT",selected)<(int)sizeof(expectedGraphics) &&
+            snprintf(expectedDungeon,sizeof(expectedDungeon),"%s::DUNGEON.DAT",selected)<(int)sizeof(expectedDungeon),
+            "construct exact selected original STX member paths");
+        for (int mode=0; mode<2; ++mode) {
+            const M12_AssetVersionStatus* owner;
+            int graphicsReported=0, dungeonReported=0;
+            if (mode) M12_AssetStatus_Scan(status,selected);
+            else M12_AssetStatus_ScanGame(status,selected,"dm1");
+            owner=M12_AssetStatus_GetFirstMatchedVersion(status,"dm1");
+            if (!M12_AssetStatus_GameAvailable(status,"dm1") || !owner ||
+                strcmp(owner->matchedPath,expectedGraphics)!=0)
+                fprintf(stderr,"selected STX mismatch: phase=%d scan=%d available=%d owner=%s\n",phase,mode,
+                    M12_AssetStatus_GameAvailable(status,"dm1"),owner ? owner->matchedPath : "none");
+            REQUIRE(M12_AssetStatus_GameAvailable(status,"dm1") && owner &&
+                strcmp(owner->versionId,"st12-en")==0 && strcmp(owner->matchedPath,expectedGraphics)==0,
+                "both scan APIs retain explicitly selected original STX for uppercase and mixed extension");
+            for (size_t i=0; i<M12_AssetStatus_GetRequiredFileCount(status,"dm1"); ++i) {
+                const M12_AssetRequiredFileStatus* required=M12_AssetStatus_GetRequiredFile(status,"dm1",i);
+                const char* reported=required->sourcePath[0] ? required->sourcePath : required->matchedPath;
+                if (strcmp(required->roleId,"graphics")==0)
+                    graphicsReported=required->matched && strcmp(reported,expectedGraphics)==0 &&
+                        strcmp(required->matchedHash,"9ce2eaf7a9e78620e3f17594437caffa")==0;
+                if (strcmp(required->roleId,"dungeon")==0)
+                    dungeonReported=required->matched && strcmp(reported,expectedDungeon)==0 &&
+                        strcmp(required->matchedHash,"050fb2cfded1b502ec2c53956b94c5bd")==0;
+            }
+            REQUIRE(graphicsReported && dungeonReported,"selected original STX reports its own graphics and dungeon");
+        }
+        if (phase) {
+            const M12_AssetVersionStatus* owner;
+            menu=SDL_calloc(1,sizeof(*menu));
+            REQUIRE(menu,"allocate ordinary mixed-extension launcher");
+            memset(&options,0,sizeof(options)); options.skipScreenshotGalleryScan=1;
+            M12_StartupMenu_InitWithOptions(menu,selected,NULL,&options); menuInitialized=1;
+            owner=M12_AssetStatus_GetFirstMatchedVersion(&menu->assetStatus,"dm1");
+            REQUIRE(M12_AssetStatus_GameAvailable(&menu->assetStatus,"dm1") && owner &&
+                strcmp(owner->versionId,"st12-en")==0 && strcmp(owner->matchedPath,expectedGraphics)==0,
+                "ordinary unscoped M12 init preserves exact selected mixed-extension original STX");
+        }
+    }
+    result=0;
+cleanup:
+    if (menuInitialized) M12_StartupMenu_Destroy(menu);
+    SDL_free(menu); SDL_free(status); free(image);
+    if (selectedMixed[0]) unlink(selectedMixed);
+    if (selectedUpper[0]) unlink(selectedUpper);
+    if (duplicate[0]) unlink(duplicate);
+    if (dir[0]) rmdir(dir);
+    return result==0;
+}
 static int check_atari_virtual_dungeon_compatibility(const char* root, const char* original,
     const char* pcOriginal, const unsigned char* pcDungeon, size_t pcDungeonSize) {
     static const char* const hashes[]={"9ce2eaf7a9e78620e3f17594437caffa",
@@ -1362,6 +1448,8 @@ int main(void) {
         "multilingual loose selection retains its exact original owner");
     REQUIRE(check_atari_virtual_dungeon_compatibility(root,atari,original,bytes[1],sizes[1]),
         "selected native ZIP retains compatible original dungeon ownership");
+    REQUIRE(check_atari_mixed_extension_selection(root,atari),
+        "selected native STX retains source ownership independently of extension case");
     result=0; puts("PASS: original ZIP and loose media reject stale selected graphics and sibling fallback");
 cleanup:
     if(gameInitialized) M11_GameView_Shutdown(game);

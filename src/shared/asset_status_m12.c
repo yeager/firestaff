@@ -5553,10 +5553,10 @@ static int m12_admit_explicit_dm1_atari_image(M12_AssetStatus* status,
     }
     extension = strrchr(requestedPath, '.');
     if (!extension ||
-        !(strcmp(extension, ".st") == 0 || strcmp(extension, ".ST") == 0 ||
-          strcmp(extension, ".stx") == 0 || strcmp(extension, ".STX") == 0 ||
-          strcmp(extension, ".msa") == 0 || strcmp(extension, ".MSA") == 0 ||
-          strcmp(extension, ".zip") == 0 || strcmp(extension, ".ZIP") == 0)) {
+        !(m12_ascii_equals_ignore_case(extension, ".st") ||
+          m12_ascii_equals_ignore_case(extension, ".stx") ||
+          m12_ascii_equals_ignore_case(extension, ".msa") ||
+          m12_ascii_equals_ignore_case(extension, ".zip"))) {
         return 0;
     }
     for (i = 0U; i < g_games[gameIndex].versionCount; ++i) {

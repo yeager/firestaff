@@ -1944,3 +1944,11 @@ remains open.
 English rejection followed by completed German snapshot admission. Production
 language gates remain unchanged. Confirm the resulting Actions matrix before
 claiming Windows/Linux/macOS execution of this corrected test.
+
+2026-10-16 mixed-case Atari selection: full inventory now restores the selected
+DM1 .StX owner rather than losing it after a same-hash neighboring disk wins
+initial discovery. Original ST12 coverage checks both scanner APIs and ordinary
+M12 initialization; actual ST11 full-menu startup reaches the first active Hall.
+Mixed-case ST/MSA preservation inputs and other editions retain separate corpus
+coverage requirements. Check the analogous CSB extension predicate during the
+CSB phase; the DM1 reproduction does not establish CSB runtime behavior.

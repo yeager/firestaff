@@ -3776,6 +3776,23 @@ not used as its final verification.
   Independent source review found no blocker; no game runtime behavior changed.
   Other champions, routes, platforms and visual parity remain unproven.
   Final rebuilt-binary regressions passed for all three editions without media
-  skips: 1.1 (111.76 s), 1.0b (107.27 s) and 1.0a (see recorded CTest log).
+  skips: 1.1 (111.76 s), 1.0b (107.27 s) and 1.0a (107.03 s).
   Each regression executes both archive and direct-disk interactive routes.
   Bash syntax, diff whitespace and redacted patch Gitleaks checks passed.
+
+- 2026-10-16: Reproduced a full-inventory DM1 rejection for a selected original
+  Z-selected.StX beside an identical earlier-sorted disk. The uppercase STX
+  control and both selected-game CLI cases worked; full Scan alone dropped
+  the mixed-case owner. The real-media regression reproduced phase 1/full Scan
+  unavailable with no retained owner before the fix. DM1's explicit Atari
+  admission now uses the existing case-insensitive extension predicate while
+  retaining complete-file authentication and exact selected-file ownership.
+  Rebuilt original-media test passed (10.33 s), with the original Amiga demo
+  supplied and no missing-media skips. Both scan APIs and ordinary M12 full
+  initialization retain exact original ST12 graphics/dungeon paths and hashes.
+  An actual ordinary menu session without --game also reached active original
+  ST11 Hall runtime at map 0 (1,3), direction 2, no champions, using the selected
+  mixed-case disk for both required files. Copies contain unchanged original
+  disk bytes; no synthetic game payloads or runtime disk extraction were added.
+  Independent review found no blocker. Localization consistency and diff
+  whitespace checks passed; redacted patch Gitleaks found no leaks.

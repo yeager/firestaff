@@ -1,3 +1,5 @@
+- `DM1 media selection`: preserve directly selected Atari disks with mixed-case
+  extensions when an identical neighboring disk is present during a full scan.
 - `DM1 verification`: exercise Hall champion selection and movement through
   both preservation archives and directly selected Atari ST original disks.
 - `CI`: update the launcher-options handoff test for authenticated language
