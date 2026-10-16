@@ -1936,3 +1936,8 @@ APIs reject wrong original bytes, missing SWOOSH and arbitrary child directory
 names; standalone original EUDATA transport behavior remains covered. Source:
 FILENAME.C:45-51 and IBMIO.C G8102:2411-2413. Full desktop/platform coverage
 remains open.
+
+2026-10-16 CI handoff seed: launcher-option tests now explicitly exercise stale
+English rejection followed by completed German snapshot admission. Production
+language gates remain unchanged. Confirm the resulting Actions matrix before
+claiming Windows/Linux/macOS execution of this corrected test.

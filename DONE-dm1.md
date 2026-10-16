@@ -3738,3 +3738,15 @@ not used as its final verification.
   root cases. Redacted patch Gitleaks found no leaks. Independent source review
   found no blocker; the existing strict loaders and source ownership guards
   remain authoritative.
+
+- 2026-10-16: Diagnosed Actions 38834758390's identical launcher-options
+  failure on Linux, macOS and Windows. The metadata-only handoff seed selected
+  German while retaining an English inventory snapshot. Rebuilt locally and
+  reproduced the failure, then corrected only the test: assert stale English
+  rejection before admitting a completed German snapshot and checking the
+  existing runtime options. Handoff and font/artpack settings tests passed
+  2/2 (0.70 s). Independent review found no blocker; production admission is
+  unchanged. Original-media startup results above remain separate evidence.
+  The separate cancellation CTest also passed (45.09 s) with the locally
+  configured corpus. All three launcher-settings tests from the failing CI
+  step now pass locally. Redacted patch Gitleaks found no leaks.

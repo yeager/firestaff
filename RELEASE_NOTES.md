@@ -1,3 +1,5 @@
+- `CI`: update the launcher-options handoff test for authenticated language
+  snapshots and explicitly retain rejection of stale scan results.
 # Firestaff v3.0.382
 
 ## User-facing changes

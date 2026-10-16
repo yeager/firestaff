@@ -325,6 +325,13 @@ static void test_launch_intent_carries_options(void) {
     seed_dm1_state(&state);
     seed_distinctive_settings(&state);
 
+    /* German settings require a completed German inventory snapshot. This
+     * metadata-only handoff test must retain the production stale-scan gate. */
+    state.assetStatus.dm1DungeonLanguage = 0;
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    check(intent.valid == 0,
+          "GetLaunchIntent rejects stale English inventory for German settings");
+    state.assetStatus.dm1DungeonLanguage = 2;
     intent = M12_StartupMenu_GetLaunchIntent(&state);
     check(intent.valid == 1, "GetLaunchIntent(valid) for seeded DM1");
     check(intent.launcherOptionsBound == 1,
