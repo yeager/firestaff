@@ -1,3 +1,5 @@
+- `DM1 data intake`: read original IIGS executable-owned startup tables and
+  add explicit native font rendering. Game selection/startup remains unfinished.
 - `DM1 data intake`: connect authenticated Apple IIGS bitmaps to an explicit
   M11 graphics profile with owned source memory and the existing asset cache.
   This does not enable IIGS game selection or startup.

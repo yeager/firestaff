@@ -21,6 +21,8 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <limits.h>
 
 const int g_m11_font_graphic_candidates[M11_FONT_GRAPHIC_CANDIDATE_COUNT] = {
     M11_FONT_GRAPHIC_INDEX_PC34,
@@ -86,6 +88,7 @@ int M11_Font_LoadFromGraphicsDat(
     if (!font || !fileState || !runtimeState) {
         return 0;
     }
+    font->iigsNative = 0;
 
     fs = (struct MemoryGraphicsDatState_Compat*)fileState;
     rt = (struct MemoryGraphicsDatRuntimeState_Compat*)runtimeState;
@@ -260,6 +263,79 @@ int M11_Font_LoadFromRawBitmap(M11_FontState* font,
 
 int M11_Font_IsLoaded(const M11_FontState* font) {
     return font && font->loaded;
+}
+
+int M11_Font_LoadIigsFromRawBitmap(M11_FontState* font,
+    const unsigned char* bitmap, size_t byteCount)
+{
+    if (!M11_Font_LoadFromRawBitmap(font, M11_FONT_GRAPHIC_INDEX_LEGACY,
+                                  bitmap, byteCount)) return 0;
+    font->iigsNative = 1;
+    return 1;
+}
+
+static int m11_iigs_font_target(const M11_FontState* font,
+    unsigned char* framebuffer, int width, int height,
+    unsigned char foreground, int background)
+{
+    return font && font->loaded && font->iigsNative && framebuffer &&
+        width > 0 && height > 0 &&
+        (size_t)height <= SIZE_MAX / (size_t)width &&
+        foreground <= 15 && background >= 0 && background <= 15;
+}
+
+static void m11_iigs_glyph(const M11_FontState* font, unsigned char* framebuffer,
+    int width, int height, int64_t x, int64_t baseline,
+    unsigned char ch, unsigned char foreground, int background)
+{
+    /* ReDMCSB TEXT.C F0040 GS:1094 character offset;1115 mask 0x10;
+     * 1185 row stride 0x80;1207 six-pixel advance. The sixth pixel is
+     * explicitly background, including when the glyph starts on an odd X. */
+    int row, col;
+    for (row = 0; row < 6; ++row) {
+        int64_t y = baseline - 4 + row;
+        if (y < 0 || y >= height) continue;
+        for (col = 0; col < 6; ++col) {
+            int64_t px = x + col;
+            unsigned char bits = font->bitmap[row * 128 + ch];
+            if (px < 0 || px >= width) continue;
+            framebuffer[(size_t)y * (size_t)width + (size_t)px] =
+                col < 5 && (bits & (0x10U >> col)) ?
+                    foreground : (unsigned char)background;
+        }
+    }
+}
+
+int M11_Font_DrawIigsChar(const M11_FontState* font, unsigned char* framebuffer,
+    int fbWidth, int fbHeight, int dstX, int baselineY,
+    unsigned char ch, unsigned char fgColor, int bgColor)
+{
+    if (ch >= 128 || !m11_iigs_font_target(font, framebuffer,
+            fbWidth, fbHeight, fgColor, bgColor)) return 0;
+    m11_iigs_glyph(font, framebuffer, fbWidth, fbHeight, dstX, baselineY,
+                   ch, fgColor, bgColor);
+    return 6;
+}
+
+int M11_Font_DrawIigsString(const M11_FontState* font, unsigned char* framebuffer,
+    int fbWidth, int fbHeight, int dstX, int baselineY,
+    const char* text, unsigned char fgColor, int bgColor)
+{
+    size_t count = 0, i;
+    if (!text || !m11_iigs_font_target(font, framebuffer,
+            fbWidth, fbHeight, fgColor, bgColor)) return 0;
+    /* Native F0040 treats every nonzero byte as a glyph, including LF.
+     * Reject unsupported codes before changing any destination pixels. */
+    while (text[count]) {
+        if ((unsigned char)text[count] >= 128 || count >= (size_t)INT_MAX / 6U)
+            return 0;
+        ++count;
+    }
+    for (i = 0; i < count; ++i)
+        m11_iigs_glyph(font, framebuffer, fbWidth, fbHeight,
+            (int64_t)dstX + (int64_t)i * 6, baselineY,
+            (unsigned char)text[i], fgColor, bgColor);
+    return (int)(count * 6U);
 }
 
 int M11_Font_GetPixel(const M11_FontState* font, int x, int y) {

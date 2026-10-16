@@ -1983,7 +1983,11 @@ Remaining native IIGS startup work:
   decoder (DECOMPDU.C:258-392, including XBA at 380) and the shared full LE
   world parser; preserve the authentic checksum trailer rather than applying
   the older BE route's edition-specific subtraction.
-- Obtain native palette/aspect/UI metadata from each authenticated executable.
+- Connect the original-program-verified native metadata reader to the GS
+  runtime profile, rather than the Amiga M558 adapter. It now copies startup
+  palettes, 17 UI boxes, 70 mandatory indices, object coordinates/aspects,
+  native remaps and all 147 selected wall/floor/door/button frames. Creature
+  and projectile aspect/replacement tables remain separate unfinished inputs.
   Read-only source/binary comparison found the GS DATA.C:211-230 entrance,
   interface and six-level dungeon palettes at file offsets 57647, 57679 and
   57711 in both original G20E/G21E programs. These are candidate locations,
@@ -1999,9 +2003,33 @@ Remaining native IIGS startup work:
   record 557 unchanged into G1103: 768 bytes, MD5
   c2e4a7671e51524d85e25430be5ba818. TEXT.C:1094-1207 uses six rows of
   128 character bytes, glyph bits 4..0, a sixth background pixel, advance 6
-  and top baseline-4. Reuse raw-font storage, but add explicit GS metrics;
-  generic DrawChar advances 8 and the CEDT helper subtracts character 32.
+  and top baseline-4. Explicit GS font binding/rendering now preserves these
+  metrics and rejects unsupported codes; wire it into the native UI/text
+  consumers. Generic DrawChar and CEDT metrics remain independent.
 - Follow STARTUP1.C:192-205, STARTUP2.C:1381-1393, GSTHINGS.C F2179 and
   SWSHIIGS.C for SDL startup. Native audio and first active Hall/input checks
   remain unfinished. Do not advertise a playable IIGS platform until its own
   CLI and M12 execution proves that state with unchanged originals.
+
+2026-10-16 IIGS integration map: reuse existing M12_ARCH_APPLE_IIGS
+(menu_startup_m12.h), existing platform display names, asset_status_m12.c
+catalogue/scans and main_loop_m11.c launch handoff. Complete-owner recovery
+must collect every matching graphics candidate, then authenticate that same
+PO chain's program, SYSTEM/START and main world before publishing readiness.
+M11 initialization, the metadata cache and the ornament world reread all need
+explicit GS dispatch; current BE/Towns flags and the Amiga M558 adapter are
+incompatible. Keep FM Towns as AUTO default. Native audio, creature/projectile
+metadata and source timing still need work before whole-platform startup proof.
+
+2026-10-16 native GS audio source audit: SOUND.C F0062:767-791 and
+F2189:809-856 use BE16 sample length plus signed 8-bit PCM, converted to
+DOC unsigned bytes with zero remapped to one and a separate stop marker.
+DATA.C:478-533 owns 34 event specs; later effects use records 563-574, while
+538/548 are unused placeholders. Do not decode only the legacy 533-555 range
+or borrow an Atari RLE/Paula/PIT cadence. F0060:933-1050 uses 15 stereo voice
+pairs, native distance/master-volume quantization and DOC frequency increments.
+Next steps: authenticate program-owned event/volume tables, verify each used
+original sample, then implement native stereo phase/mix transport. Confirm the
+DOC board clock against primary hardware documentation before fixing Hz. The
+existing SDL transport patterns are reusable; other platforms' complete
+playback wrappers are not native GS timing/voice substitutes.

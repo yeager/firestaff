@@ -3919,3 +3919,33 @@ not used as its final verification.
   assumptions, not an incorrect runtime world/source. Independent review
   confirmed the owner/hash assertions remain intact. Localization consistency,
   shell syntax and diff whitespace checks passed.
+
+- 2026-10-16: Added original-executable-owned IIGS startup metadata and native
+  interface text primitives. Exact G20E/G21E program identities gate bounded
+  LE/byte reads into fixed copied metadata; no original input pointers,
+  runtime extraction or peer-platform tables are retained. All 24 serialized
+  fields (2493 bytes) match independently source-located originals, including
+  RGB4 startup/six-light palettes, 17 UI boxes, 70 mandatory indices, object
+  aspects/coordinates, native 0..15 palette remaps and 147 selected frames.
+  The hypothesized Amiga M558 base was disproved by source/binary comparison;
+  the reader uses actual GS program offsets. Source: DATA.C:119-244 and
+  DUNVIEW.C:780-930/1042-1302/1534-1535/1593-1623.
+  Native TEXT.C F0040:1094-1207 rendering uses authenticated bank record 557
+  through caller-owned source authentication, six rows, five foreground bits
+  plus background spacing, baseline-4 and advance 6. Explicit binding and a
+  native font flag preserve generic font policies; clipping uses wide coordinate
+  math and unsupported strings/colors reject before painting. LF remains glyph
+  10 in this primitive. All 128 original glyphs, copied-font lifetime, odd-X
+  placement, extreme/clipped coordinates and canaries pass the independent
+  TEXT.C raster oracle. Generic PC/CEDT math probes use the same GS bytes
+  only to check helper isolation, not to claim those platforms' media parity.
+  Independent metadata/font source/ownership reviews found no blocker. Six
+  original-media CTests passed (2.16 s), including all previous IIGS intake
+  layers and an authentic PC34 C027 text-source gate. No media skip occurred;
+  original program/bank/disk identities remain unchanged. The rebuilt app
+  links successfully. Creature/projectile metadata, native audio, complete
+  source-owner admission and actual GS CLI/M12 startup remain open.
+  Existing DM1/CSB/DM2 original-media CLI startup diagnostics also passed
+  (215.00 s). Localization consistency, shell syntax, whitespace checks and
+  redacted staged Gitleaks passed. Windows/Linux original-media execution and
+  complete IIGS runtime startup remain unverified.

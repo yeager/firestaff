@@ -46,6 +46,7 @@ extern const int g_m11_font_graphic_candidates[M11_FONT_GRAPHIC_CANDIDATE_COUNT]
 typedef struct {
     int loaded;
     int graphicIndex;
+    int iigsNative;
     unsigned char bitmap[M11_FONT_BITMAP_BYTES];
 } M11_FontState;
 
@@ -68,6 +69,20 @@ int M11_Font_LoadFromRawBitmap(M11_FontState* font,
                                const unsigned char* bitmap,
                                size_t byteCount);
 int M11_Font_IsLoaded(const M11_FontState* font);
+/* Bind original GS M653 raw bytes after the caller authenticates its source
+ * bank. This does not infer a platform or authenticate arbitrary font bytes. */
+int M11_Font_LoadIigsFromRawBitmap(M11_FontState* font,
+    const unsigned char* bitmap, size_t byteCount);
+/* TEXT.C F0040 GS: five glyph bits plus one background pixel, six rows,
+ * top=baselineY-4, advance=6. Codes 0..127; newline is glyph 10, not layout.
+ * Colors are palette indices 0..15. Returns advance, or zero on error.
+ * Strings are validated before drawing; clipping preserves logical advance. */
+int M11_Font_DrawIigsChar(const M11_FontState* font, unsigned char* framebuffer,
+    int fbWidth, int fbHeight, int dstX, int baselineY,
+    unsigned char ch, unsigned char fgColor, int bgColor);
+int M11_Font_DrawIigsString(const M11_FontState* font, unsigned char* framebuffer,
+    int fbWidth, int fbHeight, int dstX, int baselineY,
+    const char* text, unsigned char fgColor, int bgColor);
 int M11_Font_FindGraphicIndex(void* runtimeState);
 int M11_Font_ResolvedGraphicIndex(const M11_FontState* font);
 int M11_Font_GetPixel(const M11_FontState* font, int x, int y);
