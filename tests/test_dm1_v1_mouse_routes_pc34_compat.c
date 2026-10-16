@@ -97,7 +97,10 @@ int main(void) {
               2,
               "party resting wake route count");
 
-    assert_route(DM1_V1_MOUSE_LIST_INTERFACE_PC34, 0, 20,
+    /* The four narrow C187..C190 status-bar routes precede the nested
+     * C211..C218 action-hand routes so they cannot be swallowed by their
+     * shared champion status-box geometry. */
+    assert_route(DM1_V1_MOUSE_LIST_INTERFACE_PC34, 4, 20,
                  DM1_V1_MOUSE_SPACE_SCREEN_PC34, 211,
                  DM1_V1_MOUSE_MASK_LEFT_PC34, "interface hand route");
     assert_route(DM1_V1_MOUSE_LIST_MOVEMENT_PC34, 0, 1,
