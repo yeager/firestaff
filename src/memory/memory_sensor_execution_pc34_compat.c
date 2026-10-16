@@ -361,6 +361,28 @@ static int sensor_square_has_existing_floor_weight(
     return 0;
 }
 
+static int sensor_square_has_existing_group(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex, int mapX, int mapY)
+{
+    int sftIdx;
+    unsigned short thingRef;
+    int safety = 0;
+    if (!dungeon || !things || !things->loaded) return 0;
+    sftIdx = sensor_find_sft_index(dungeon, mapIndex, mapX, mapY);
+    if (sftIdx < 0 || sftIdx >= things->squareFirstThingCount) return 0;
+    thingRef = things->squareFirstThings[sftIdx];
+    while (thingRef != THING_NONE && thingRef != THING_ENDOFLIST && safety++ < 64) {
+        int type, index;
+        unsigned short nextThing = sensor_step_thing(things, thingRef, &type, &index);
+        (void)index;
+        if (type == THING_TYPE_GROUP) return 1;
+        thingRef = nextThing;
+    }
+    return 0;
+}
+
 int F0717_SENSOR_EnumerateOnSquare_Compat(
     const struct DungeonDatState_Compat* dungeon,
     const struct DungeonThings_Compat* things,
@@ -604,6 +626,69 @@ int F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
     return sensor_process_party_enter_leave(
         dungeon, things, mapIndex, mapX, mapY, triggerEvent, party,
         leaderHandThing, outList);
+}
+
+int F0720_SENSOR_CountAudiblePartyPass_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex, int mapX, int mapY, int triggerEvent, int partySquare,
+    const struct PartyState_Compat* party, unsigned short leaderHandThing,
+    int* outCount)
+{
+    struct SensorOnSquare_Compat sensors[SENSOR_ENUM_CAPACITY];
+    struct PartyPossessionContext_Compat possession;
+    struct FloorSensorContext_Compat context;
+    int count, i;
+    if (!outCount || !dungeon || !things || !party ||
+        (triggerEvent != SENSOR_EVENT_WALK_ON &&
+         triggerEvent != SENSOR_EVENT_WALK_OFF)) return 0;
+    *outCount = 0;
+    memset(&context, 0, sizeof(context));
+    context.mapX = mapX;
+    context.mapY = mapY;
+    context.thingType = DM1_TRIGGER_SOURCE_PARTY;
+    context.objectType = -1;
+    context.partyDirection = party->direction;
+    context.partyChampionCount = party->championCount;
+    context.isAddition = triggerEvent == SENSOR_EVENT_WALK_ON;
+    context.partyOnSquare = partySquare ? 1 : 0;
+    if (mapIndex < 0 || mapIndex >= (int)dungeon->header.mapCount ||
+        !dungeon->maps || !dungeon->tiles ||
+        mapX < 0 || mapY < 0 || mapX >= dungeon->maps[mapIndex].width ||
+        mapY >= dungeon->maps[mapIndex].height ||
+        !dungeon->tiles[mapIndex].squareData) return 0;
+    context.squareType =
+        (dungeon->tiles[mapIndex].squareData[
+            mapX * dungeon->maps[mapIndex].height + mapY] &
+            DUNGEON_SQUARE_MASK_TYPE) >> 5;
+    /* F0276 checks pre-existing floor weight before walking the sensor
+     * chain. A party pass does not qualify for creature/object-only C004/C007. */
+    context.squareHasGroup = sensor_square_has_existing_group(
+        dungeon, things, mapIndex, mapX, mapY);
+    context.squareHasObject = sensor_square_has_existing_floor_weight(
+        dungeon, things, mapIndex, mapX, mapY) && !context.squareHasGroup;
+    count = F0717_SENSOR_EnumerateOnSquare_Compat(
+        dungeon, things, mapIndex, mapX, mapY, sensors);
+    for (i = 0; i < count && i < SENSOR_ENUM_CAPACITY; ++i) {
+        const struct DungeonSensor_Compat* sensor;
+        struct SensorTriggerResult_Compat result;
+        if (sensors[i].sensorIndex < 0 ||
+            sensors[i].sensorIndex >= things->sensorCount ||
+            !things->sensors) continue;
+        sensor = &things->sensors[sensors[i].sensorIndex];
+        if (!sensor->audible) continue;
+        if (sensor->sensorType == DM1_SENSOR_FLOOR_PARTY_POSSESSION) {
+            if (!sensor_build_party_possession_context(
+                    things, party, leaderHandThing, &possession)) continue;
+            context.partyHasObjectType = F0274_SENSOR_IsObjectInPartyPossession_Compat(
+                sensor->sensorData, &possession);
+        }
+        /* F0722 preserves F0276's RevertEffect/HOLD ordering. Unmodelled
+         * sensor classes produce no receipt, rather than a guessed sound. */
+        if (F0722_SENSOR_EvaluateFloor_Compat(sensor, &context, &result) &&
+            result.triggered && result.audible) ++*outCount;
+    }
+    return 1;
 }
 
 int F0714_SENSOR_ListDeserialize_Compat(

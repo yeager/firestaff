@@ -15545,6 +15545,20 @@ static void m11_iigs_request_sound(M11_GameViewState* state,
     else m11_iigs_play_pending((unsigned)nativeIndex,volume,state);
 }
 
+static void m11_iigs_request_sensor_sound(M11_GameViewState* state,
+    const struct PartyState_Compat* listener, int x, int y)
+{
+    DM1_V1_IigsSoundVolume volume;
+    if (!state || !listener || !state->dm1IigsActive ||
+        !dm1_v1_iigs_audio_volume(&state->dm1IigsAudioMetadata,
+            listener->mapX, listener->mapY, (unsigned)listener->direction,
+            x, y, &volume)) return;
+    /* MOVESENS.C F0276 requests C01 with prioritized mode while F0267
+     * still owns the current party tuple; F0065 arbitrates at loop flush. */
+    (void)dm1_v1_iigs_audio_pending_merge(
+        &state->dm1IigsPendingSounds, 1u, volume);
+}
+
 static void m11_audio_emit_source_sound_with_volume(
     M11_GameViewState* state,
     int soundIndex,
@@ -32631,6 +32645,46 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
         m11_set_status(state, actionLabel, "PIPELINE REJECTED");
         m11_publish_dm1_v1_movement_outcome(state);
         return 0;
+    }
+
+    if (state->dm1IigsActive && state->world.things &&
+        (state->lastDm1V1MovementPipelineResult.core.turnApplied ||
+         state->lastDm1V1MovementPipelineResult.core.stepApplied)) {
+        const struct Dm1V1MovementCommandCoreResultPc34Compat* core =
+            &state->lastDm1V1MovementPipelineResult.core;
+        int audibleCount = 0;
+        int i;
+        /* F0267/F0276 walks the source square before the destination. Use
+         * the pipeline's final tuple after any pit/teleporter replay, and
+         * read source sensors before any M11 actuator can mutate them. */
+        if (!core->sourceStairsWalkOffSkipped &&
+            F0720_SENSOR_CountAudiblePartyPass_Compat(
+                state->world.dungeon, state->world.things,
+                core->sourceMapIndex, core->sourceMapX, core->sourceMapY,
+                SENSOR_EVENT_WALK_OFF,
+                core->sourceMapIndex == state->world.party.mapIndex &&
+                core->sourceMapX == state->world.party.mapX &&
+                core->sourceMapY == state->world.party.mapY, &beforeParty,
+                state->leaderHandObjectPresent ? state->leaderHandThing : THING_NONE,
+                &audibleCount)) {
+            for (i = 0; i < audibleCount; ++i)
+                m11_iigs_request_sensor_sound(state, &beforeParty,
+                                              core->sourceMapX, core->sourceMapY);
+        }
+        if (F0720_SENSOR_CountAudiblePartyPass_Compat(
+                state->world.dungeon, state->world.things,
+                state->world.party.mapIndex, state->world.party.mapX,
+                state->world.party.mapY, SENSOR_EVENT_WALK_ON,
+                core->sourceMapIndex == state->world.party.mapIndex &&
+                core->sourceMapX == state->world.party.mapX &&
+                core->sourceMapY == state->world.party.mapY,
+                &state->world.party,
+                state->leaderHandObjectPresent ? state->leaderHandThing : THING_NONE,
+                &audibleCount)) {
+            for (i = 0; i < audibleCount; ++i)
+                m11_iigs_request_sensor_sound(state, &state->world.party,
+                    state->world.party.mapX, state->world.party.mapY);
+        }
     }
 
     /* CLIKMENU.C blocked wall/door steps use the source metallic thud

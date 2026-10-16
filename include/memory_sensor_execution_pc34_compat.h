@@ -186,4 +186,13 @@ int F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
     unsigned short leaderHandThing,
     struct SensorEffectList_Compat* outList);
 
+/* Read-only F0276 sound receipt for a party square pass. The caller retains
+ * the triggering coordinates and requests C01 once per audible trigger. */
+int F0720_SENSOR_CountAudiblePartyPass_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex, int mapX, int mapY, int triggerEvent, int partySquare,
+    const struct PartyState_Compat* party, unsigned short leaderHandThing,
+    int* outCount);
+
 #endif

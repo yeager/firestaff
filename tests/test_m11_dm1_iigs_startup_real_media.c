@@ -416,7 +416,22 @@ static int check_first_descent(M11_GameViewState *view, uint8_t *frame) {
                 !view->audioState.playedMarkerCount,
                 "actual original exit-door rattle retains target five-nine and native front-one-square stereo attenuation");
         }
-        (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_UP);
+        if (step==12u) {
+            DM1_V1_IigsDocSnapshot before,after;
+            int audible=0;
+            REQUIRE(F0720_SENSOR_CountAudiblePartyPass_Compat(view->world.dungeon,
+                view->world.things,0,6,9,SENSOR_EVENT_WALK_ON,0,&view->world.party,
+                THING_NONE,&audible) && audible==1 &&
+                M11_Audio_GetDm1IigsSnapshot(&view->audioState,&before),
+                "original exit pressure sensor is one audible party-enter trigger");
+            (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_UP);
+            REQUIRE(M11_Audio_GetDm1IigsSnapshot(&view->audioState,&after) &&
+                after.triggers==before.triggers+1u && after.latest_pair[1]>=0 &&
+                after.left[after.latest_pair[1]]==255u &&
+                after.right[after.latest_pair[1]]==255u &&
+                !view->audioState.playedMarkerCount,
+                "original audible floor sensor requests local prioritized DOC C01 on entry");
+        } else (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_UP);
         if (step+1u<sizeof(route)/sizeof(route[0]))
             REQUIRE(view->world.party.mapIndex==0 && view->world.party.mapX==route[step][0] &&
                 view->world.party.mapY==route[step][1],"ordinary native footsteps pass authentic source door toward exit stairs");

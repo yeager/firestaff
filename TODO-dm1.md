@@ -2166,8 +2166,10 @@ sound IDs and original channel lookup. Both original editions verify complete
 PCM against an independent scalar oracle, residency and ownership; SDL dummy
 transport verifies format, volume, callback progress, pause/resume and teardown.
 This closes the previously unbound DOC-backend gap for the wired requests.
-Remaining: F0268 audible/source-owner receipt for C01, original-runtime
-projectile/creature sound scenarios and actual hardware recording comparisons.
+Original party-enter audible floor sensor C01 now has a native request at its
+triggering square; the Hall exit pressure plate is covered with original media.
+Remaining: wall-click and WORLD object/group audible sensor receipts, original-
+runtime projectile/creature sound scenarios and hardware recording comparisons.
 The old host metallic/switch substitutes are deliberately not used for GS.
 The native wall-bump path now uses F0286 and the WORLD pending combat/F0889
 boundary in source order; original-media tests cover the living ELIJA collision.

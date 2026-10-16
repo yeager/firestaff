@@ -4174,3 +4174,12 @@ not used as its final verification.
   The original-media startup test passes for both 2.0 and 2.1 editions with
   SDL dummy audio. Audible sensor C01 and full campaign/hardware parity remain
   open.
+
+- 2026-10-16: Routed authenticated Apple IIGS audible party floor sensors to
+  native prioritized DOC C01 requests at the triggering square. The receipt
+  reevaluates RevertEffect/HOLD in sensor list order for source and final
+  destination passes, including pit/teleporter replay, and retains the
+  correct party-square predicate for same-square turns. Both original 2.0
+  and 2.1 media verify the Hall exit pressure plate at (6,9) through ordinary
+  input, with one local stereo C01 trigger. Wall-click and object/group
+  audible sensor paths remain open.
