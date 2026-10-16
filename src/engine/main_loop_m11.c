@@ -2339,6 +2339,34 @@ static void m11_debug_motion_presented(const M11_GameViewState* state,
     g_m11_debug_motion.superseded = 0;
 }
 
+static void m11_debug_pointer_dispatch(const M11_GameViewState* state,
+                                       const char* eventName,
+                                       int windowX,
+                                       int windowY,
+                                       int mapped,
+                                       int sourceX,
+                                       int sourceY,
+                                       int buttonMask,
+                                       int activeChampionBefore,
+                                       int inputResult) {
+    if (!state || !state->debugMovementTraceEnabled ||
+        strcmp(state->sourceId, "dm1") != 0) return;
+    if (!mapped) {
+        fprintf(stderr,
+                "firestaff: dm1-pointer event=%s window=%d,%d mapped=no "
+                "button-mask=0x%x active-champion=%d result=not-dispatched\n",
+                eventName, windowX, windowY, buttonMask,
+                state->world.party.activeChampionIndex);
+        return;
+    }
+    fprintf(stderr,
+            "firestaff: dm1-pointer event=%s window=%d,%d source=%d,%d "
+            "button-mask=0x%x active-champion=%d->%d champions=%d result=%d\n",
+            eventName, windowX, windowY, sourceX, sourceY, buttonMask,
+            activeChampionBefore, state->world.party.activeChampionIndex,
+            state->world.party.championCount, inputResult);
+}
+
 static void m11_draw_game_frame_for_loop(M11_GameViewState* state,
                                            int debug,
                                            double* drawMs,
@@ -10110,20 +10138,29 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 }
                 continue;
             }
-            if (gameViewResult &&
-                m11_map_window_pointer_to_game_source(gameView,
-                                                       (int)ev.button.x,
-                                                       (int)ev.button.y,
-                                                       &mappedX,
-                                                       &mappedY)) {
-                *gameViewResult = M11_GameView_HandlePointerButton(
+            if (gameViewResult) {
+                const int windowX = (int)ev.button.x;
+                const int windowY = (int)ev.button.y;
+                const int buttonMask = ev.button.button == SDL_BUTTON_RIGHT
+                    ? DM1_V1_MOUSE_MASK_RIGHT_PC34
+                    : DM1_V1_MOUSE_MASK_LEFT_PC34;
+                const int activeChampionBefore =
+                    gameView->world.party.activeChampionIndex;
+                const int pointerMapped =
+                    m11_map_window_pointer_to_game_source(
+                        gameView, windowX, windowY, &mappedX, &mappedY);
+                if (pointerMapped) {
+                    *gameViewResult = M11_GameView_HandlePointerButton(
+                        gameView, mappedX, mappedY, buttonMask);
+                }
+                m11_debug_pointer_dispatch(
                     gameView,
-                    mappedX,
-                    mappedY,
-                    ev.button.button == SDL_BUTTON_RIGHT
-                        ? DM1_V1_MOUSE_MASK_RIGHT_PC34
-                        : DM1_V1_MOUSE_MASK_LEFT_PC34);
-                if (*gameViewResult != M11_GAME_INPUT_IGNORED) {
+                    ev.button.button == SDL_BUTTON_RIGHT ? "down-right" : "down-left",
+                    windowX, windowY, pointerMapped, mappedX, mappedY,
+                    buttonMask, activeChampionBefore,
+                    pointerMapped ? *gameViewResult : -1);
+                if (pointerMapped &&
+                    *gameViewResult != M11_GAME_INPUT_IGNORED) {
                     return M12_MENU_INPUT_NONE;
                 }
             }
@@ -10673,20 +10710,29 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 }
                 continue;
             }
-            if (gameViewResult &&
-                m11_map_window_pointer_to_game_source(gameView,
-                                                       ev.button.x,
-                                                       ev.button.y,
-                                                       &mappedX,
-                                                       &mappedY)) {
-                *gameViewResult = M11_GameView_HandlePointerButton(
+            if (gameViewResult) {
+                const int windowX = ev.button.x;
+                const int windowY = ev.button.y;
+                const int buttonMask = ev.button.button == SDL_BUTTON_RIGHT
+                    ? DM1_V1_MOUSE_MASK_RIGHT_PC34
+                    : DM1_V1_MOUSE_MASK_LEFT_PC34;
+                const int activeChampionBefore =
+                    gameView->world.party.activeChampionIndex;
+                const int pointerMapped =
+                    m11_map_window_pointer_to_game_source(
+                        gameView, windowX, windowY, &mappedX, &mappedY);
+                if (pointerMapped) {
+                    *gameViewResult = M11_GameView_HandlePointerButton(
+                        gameView, mappedX, mappedY, buttonMask);
+                }
+                m11_debug_pointer_dispatch(
                     gameView,
-                    mappedX,
-                    mappedY,
-                    ev.button.button == SDL_BUTTON_RIGHT
-                        ? DM1_V1_MOUSE_MASK_RIGHT_PC34
-                        : DM1_V1_MOUSE_MASK_LEFT_PC34);
-                if (*gameViewResult != M11_GAME_INPUT_IGNORED) {
+                    ev.button.button == SDL_BUTTON_RIGHT ? "down-right" : "down-left",
+                    windowX, windowY, pointerMapped, mappedX, mappedY,
+                    buttonMask, activeChampionBefore,
+                    pointerMapped ? *gameViewResult : -1);
+                if (pointerMapped &&
+                    *gameViewResult != M11_GAME_INPUT_IGNORED) {
                     return M12_MENU_INPUT_NONE;
                 }
             }
