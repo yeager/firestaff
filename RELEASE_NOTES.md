@@ -1,3 +1,6 @@
+- `DM1 data intake`: validate complete IIGS installations from a single native
+  disk and decode native sound data/volume rules. IIGS launch and playback
+  remain unfinished.
 - `DM1 data intake`: read original IIGS executable-owned startup tables and
   add explicit native font rendering. Game selection/startup remains unfinished.
 - `DM1 data intake`: connect authenticated Apple IIGS bitmaps to an explicit

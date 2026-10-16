@@ -2033,3 +2033,18 @@ original sample, then implement native stereo phase/mix transport. Confirm the
 DOC board clock against primary hardware documentation before fixing Hz. The
 existing SDL transport patterns are reusable; other platforms' complete
 playback wrappers are not native GS timing/voice substitutes.
+
+2026-10-16 IIGS prerequisites: same-disk installation ownership and native audio
+metadata/PCM/volume/pending rules now pass original-media tests. Next connect
+complete owners to catalogue/CLI/M12 selection, then native game-view metadata
+and input. Creature/projectile tables, DOC cadence/15-pair stereo transport,
+actual audible playback and first active Hall movement remain unverified.
+The helpers alone must not mark IIGS playable. Installation candidate-overflow
+and allocation-failure injection are additional test gaps.
+
+2026-10-16 ScummVM source reconnaissance: PC and Amiga use distinct wall banks,
+layout/clipping and palette handling. Check HoC material/parity and completed
+composition/presentation against ReDMCSB before changing rendering. ScummVM's
+20 ms VBlank assumption and altered command-queue cooldown semantics are not
+cross-platform original timing evidence; no new runtime bug was proven by
+this read-only comparison.

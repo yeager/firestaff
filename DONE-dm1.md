@@ -3949,3 +3949,17 @@ not used as its final verification.
   (215.00 s). Localization consistency, shell syntax, whitespace checks and
   redacted staged Gitleaks passed. Windows/Linux original-media execution and
   complete IIGS runtime startup remain unverified.
+
+- 2026-10-16: Added native IIGS sound-data primitives and complete installation
+  ownership discovery. Both G20/G21 original programs supply 34 event specs
+  and the native stereo distance table; sound records use BE sample counts,
+  signed-to-DOC conversion, zero remapping and a terminal stop byte. Native
+  master quantization and pending-event rules follow SOUND.C. Installation
+  selection collects all graphics candidates before requiring authenticated
+  program, START, graphics and main world from the exact same PO owner.
+  Seven original-media CTests passed without skips (1.70 s), including both
+  new tests and prior ProDOS/graphics/world/font/cache checks. The sound oracle
+  covers all 34 events and 22 original zero-remap samples; installation tests
+  reject missing companions and BONUS substituted for the main world beside
+  complete original installations. Independent source reviews found no blocker.
+  This does not provide a mixer, establish audible timing, or admit IIGS launch.
