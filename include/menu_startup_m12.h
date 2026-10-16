@@ -692,6 +692,7 @@ typedef struct M12_StartupMenuState {
     int dataDirScanActive;
     int dataDirScanCancelRequested;
     int dataDirScanCancelled;
+    int dm1LanguageRescanPending;
     M12_AssetScanProgress dataDirScanProgress;
     void* dataDirScanJob;
     M12_DM1HoCPresentedCaptureReceipt dm1HoCPresentedCaptureReceipt;
@@ -712,6 +713,8 @@ typedef struct M12_StartupMenuInitOptions {
     int scanAllGames;
     M12_AssetStatusScanProgressFn scanProgressFn;
     void* scanProgressUserData;
+    int hasLanguageOverride;
+    int languageOverride;
 } M12_StartupMenuInitOptions;
 
 void M12_StartupMenu_Init(M12_StartupMenuState* state);

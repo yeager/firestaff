@@ -2,6 +2,10 @@
 
 ## User-facing changes
 
+- `DM1 language-only installations`: scan the requested French/German original
+  world for PC multilingual and Amiga 3.6, without requiring the English world.
+  Menu language changes rescan the same source before enabling launch.
+
 - `DM1 Atari disk regression coverage`: check direct STX selection through
   CLI and launcher loading with duplicate neighbouring originals, retaining
   exact graphics/world provenance for the chosen disk.

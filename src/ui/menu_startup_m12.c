@@ -94,6 +94,10 @@ typedef struct M12_DataDirScanJob {
     SDL_AtomicInt cancelRequested;
     SDL_AtomicInt done;
     int result;
+    int dm1DungeonLanguage;
+    int languageRescan;
+    int returnView;
+    int returnNavLevel;
     char dataDir[M12_ASSET_DATA_DIR_CAPACITY];
     char selectedDataDir[M12_ASSET_DATA_DIR_CAPACITY];
     M12_AssetStatus assetStatus;
@@ -709,6 +713,16 @@ static void m12_sync_l10n_language(const M12_StartupMenuState* state) {
     }
     fs_l10n_set_language(m12_fs_language_from_menu_index(index));
 }
+
+/* ReDMCSB FILENAME.C:44-52,84-104 selects EN/FR/DE native worlds.
+ * UI locale indexes are independent of this three-way media policy. */
+static int m12_dm1_dungeon_language(const M12_StartupMenuState* state) {
+    int index=state ? state->gameOptions[0].languageIndex : 0;
+    if (index==M12_UI_LANGUAGE_AUTO_INDEX) index=m12_resolved_locale_index(index);
+    return index==2 ? 1 : index==3 ? 2 : 0;
+}
+
+static void m12_request_dm1_language_scan(M12_StartupMenuState* state);
 
 static void m12_cycle_game_opt_with_mode(M12_GameOptions* opts, int row, int delta, int presentationMode) {
     if (!opts) {
@@ -2440,6 +2454,7 @@ static int SDLCALL m12_data_dir_scan_thread(void* data) {
     scanOptions.progressFn = m12_data_dir_scan_job_progress_callback;
     scanOptions.progressUserData = job;
     scanOptions.honorRequestedDataDir = 1;
+    scanOptions.dm1DungeonLanguage = job->dm1DungeonLanguage;
     job->result = M12_AssetStatus_ScanWithOptions(&job->assetStatus,
                                                   job->dataDir,
                                                   &scanOptions);
@@ -2671,7 +2686,7 @@ static void m12_preserve_selected_data_directory(M12_StartupMenuState* state,
 }
 
 static int m12_begin_async_data_dir_scan(M12_StartupMenuState* state,
-                                         const char* dataDir) {
+                                         const char* dataDir, int languageRescan) {
     M12_DataDirScanJob* job;
     char canonicalDataDir[M12_ASSET_DATA_DIR_CAPACITY];
     if (!state || !dataDir || dataDir[0] == '\0') {
@@ -2681,7 +2696,10 @@ static int m12_begin_async_data_dir_scan(M12_StartupMenuState* state,
         m12_show_data_dir_result_popup(state, 0);
         return 0;
     }
-    if (!m12_canonicalize_data_directory(dataDir, canonicalDataDir,
+    if (languageRescan) {
+        if (strlen(dataDir)>=sizeof(canonicalDataDir)) return 0;
+        snprintf(canonicalDataDir,sizeof(canonicalDataDir),"%s",dataDir);
+    } else if (!m12_canonicalize_data_directory(dataDir, canonicalDataDir,
                                          sizeof(canonicalDataDir))) {
         if (m12_data_directory_access_denied(dataDir)) {
             m12_show_selected_directory_access_denied(state, dataDir);
@@ -2704,16 +2722,20 @@ static int m12_begin_async_data_dir_scan(M12_StartupMenuState* state,
     }
     job = (M12_DataDirScanJob*)calloc(1U, sizeof(*job));
     if (!job) {
-        return M12_StartupMenu_SetDataDirectory(state, canonicalDataDir);
+        return languageRescan ? 0 : M12_StartupMenu_SetDataDirectory(state, canonicalDataDir);
     }
     job->mutex = SDL_CreateMutex();
     if (!job->mutex) {
         m12_free_data_dir_scan_job(job);
-        return M12_StartupMenu_SetDataDirectory(state, canonicalDataDir);
+        return languageRescan ? 0 : M12_StartupMenu_SetDataDirectory(state, canonicalDataDir);
     }
+    job->dm1DungeonLanguage=m12_dm1_dungeon_language(state);
+    job->languageRescan=languageRescan;
+    job->returnView=state->view;
+    job->returnNavLevel=(int)g_nav_level;
     snprintf(job->dataDir, sizeof(job->dataDir), "%s", canonicalDataDir);
-    /* Persist and scan the resolved physical path regardless of the picker
-     * spelling, so future scans keep targeting the same folder. */
+    /* Folder picks retain their resolved path. A language rescan keeps the
+     * existing file, virtual member or offline root without parent promotion. */
     m12_copy_persisted_data_directory(canonicalDataDir,
                                       job->selectedDataDir,
                                       sizeof(job->selectedDataDir));
@@ -2738,9 +2760,27 @@ static int m12_begin_async_data_dir_scan(M12_StartupMenuState* state,
         state->dataDirScanJob = NULL;
         state->dataDirScanActive = 0;
         m12_free_data_dir_scan_job(job);
-        return M12_StartupMenu_SetDataDirectory(state, dataDir);
+        return languageRescan ? 0 : M12_StartupMenu_SetDataDirectory(state, dataDir);
     }
     return 1;
+}
+
+static void m12_request_dm1_language_scan(M12_StartupMenuState* state) {
+    const char* root;
+    if (!state || state->deferredScanPending ||
+        (state->assetStatus.dm1DungeonLanguage==m12_dm1_dungeon_language(state) &&
+         !state->dataDirScanJob)) return;
+    if (state->dataDirScanJob) {
+        const M12_DataDirScanJob* job=(const M12_DataDirScanJob*)state->dataDirScanJob;
+        if (job->dm1DungeonLanguage==m12_dm1_dungeon_language(state) &&
+            !state->dm1LanguageRescanPending) return;
+        state->dm1LanguageRescanPending=1;
+        m12_cancel_data_dir_scan(state);
+        return;
+    }
+    root=state->selectedDataDir[0] ? state->selectedDataDir :
+        M12_AssetStatus_GetDataDir(&state->assetStatus);
+    if (root && root[0]) (void)m12_begin_async_data_dir_scan(state,root,1);
 }
 
 int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
@@ -2791,6 +2831,7 @@ int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
     scanOptions.progressUserData = state;
     scanOptions.cancelFlag = &state->dataDirScanCancelRequested;
     scanOptions.honorRequestedDataDir = 1;
+    scanOptions.dm1DungeonLanguage = m12_dm1_dungeon_language(state);
     /* Keep the currently admitted game set live until the replacement scan
      * completes.  ScanWithOptions publishes an empty cancelled status on
      * cancellation, so scanning directly into state->assetStatus would make
@@ -4472,9 +4513,10 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
     }
     memset(&gameScanOptions, 0, sizeof(gameScanOptions));
     gameScanOptions.looseFilesOnly = looseFilesOnlyAssetScan ? 1 : 0;
+    gameScanOptions.dm1DungeonLanguage = m12_dm1_dungeon_language(state);
     gameScanOptions.progressFn = progressFn;
     gameScanOptions.progressUserData = progressUserData;
-    gameScan = (looseFilesOnlyAssetScan || progressFn) ? &gameScanOptions : NULL;
+    gameScan = &gameScanOptions;
     /* The interactive launcher needs availability for every game. A saved
      * data/<game> leaf still points at the shared collection, so promote only
      * the scan root while keeping the user's selected leaf in the config. */
@@ -4488,6 +4530,7 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
         }
         memset(&scanOptions, 0, sizeof(scanOptions));
         scanOptions.honorRequestedDataDir = 1;
+        scanOptions.dm1DungeonLanguage = m12_dm1_dungeon_language(state);
         scanOptions.progressFn = progressFn;
         scanOptions.progressUserData = progressUserData;
         (void)M12_AssetStatus_ScanWithOptions(&state->assetStatus,
@@ -4519,6 +4562,7 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
                                               sizeof(allGamesRoot));
                     memset(&scanOptions, 0, sizeof(scanOptions));
                     scanOptions.honorRequestedDataDir = 1;
+                    scanOptions.dm1DungeonLanguage = m12_dm1_dungeon_language(state);
                     scanOptions.progressFn = progressFn;
                     scanOptions.progressUserData = progressUserData;
                     (void)M12_AssetStatus_ScanWithOptions(
@@ -4537,6 +4581,7 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
             M12_AssetStatusScanOptions scanOptions;
             memset(&scanOptions, 0, sizeof(scanOptions));
             scanOptions.honorRequestedDataDir = 1;
+            scanOptions.dm1DungeonLanguage = m12_dm1_dungeon_language(state);
             scanOptions.progressFn = progressFn;
             scanOptions.progressUserData = progressUserData;
             (void)M12_AssetStatus_ScanWithOptions(&state->assetStatus,
@@ -4557,6 +4602,7 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
          * generic scanner otherwise promotes a saved game leaf to its
          * parent before the fallback policy can inspect the result. */
         scanOptions.honorRequestedDataDir = 1;
+        scanOptions.dm1DungeonLanguage = m12_dm1_dungeon_language(state);
         scanOptions.progressFn = progressFn;
         scanOptions.progressUserData = progressUserData;
         (void)M12_AssetStatus_ScanWithOptions(&state->assetStatus,
@@ -4590,7 +4636,7 @@ startup_scan_complete:
                                                 gameId,
                                                 gameScan);
         } else {
-            M12_AssetStatus_Scan(&defaultStatus, NULL);
+            (void)M12_AssetStatus_ScanWithOptions(&defaultStatus, NULL, gameScan);
         }
         defaultReadyCount = m12_asset_ready_game_count(&defaultStatus);
         /* Recover only when the configured root had no usable media. */
@@ -4619,7 +4665,7 @@ startup_scan_complete:
                                                     gameId,
                                                     gameScan);
             } else {
-                M12_AssetStatus_Scan(&fallbackStatus, resolvedDataDir);
+                (void)M12_AssetStatus_ScanWithOptions(&fallbackStatus, resolvedDataDir, gameScan);
             }
             fallbackReadyCount = m12_asset_ready_game_count(&fallbackStatus);
             if (M12_MenuDataRoot_ShouldUseCandidate(
@@ -4646,6 +4692,12 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
     hasExplicitDataDirOverride =
         (dataDirOverride && dataDirOverride[0] != '\0') ? 1 : 0;
     M12_Config_Load(&config, dataDirOverride);
+    if (options && options->hasLanguageOverride) {
+        int language=m12_clamp_index(options->languageOverride,M12_UI_LANGUAGE_COUNT);
+        config.languageExplicit=language!=M12_UI_LANGUAGE_AUTO_INDEX;
+        config.languageIndex=language;
+        for (gi=0; gi<M12_CONFIG_GAME_COUNT; ++gi) config.gameLanguageIndex[gi]=language;
+    }
     if (!config.languageExplicit) {
         int systemLanguageIndex =
             m12_menu_index_from_fs_language(fs_l10n_detect_system_language());
@@ -4991,6 +5043,10 @@ void M12_StartupMenu_RunDeferredScan(M12_StartupMenuState* state,
     state->deferredScanPending = 0;
     M12_Config_Load(&config, state->deferredDataDir[0] ? state->deferredDataDir : NULL);
     snprintf(config.dataDir, sizeof(config.dataDir), "%s", state->deferredDataDir);
+    config.languageExplicit=state->languageExplicit;
+    config.languageIndex=state->settings.languageIndex;
+    for (int gi=0; gi<M12_CONFIG_GAME_COUNT; ++gi)
+        config.gameLanguageIndex[gi]=state->gameOptions[gi].languageIndex;
     m12_scan_startup_asset_status(state,
                                   &config,
                                   state->deferredHasExplicitDataDir,
@@ -6379,7 +6435,8 @@ static const char* m12_missing_dm1_language_file(
     if (!version || !version->matched) return NULL;
     amiga36=strcmp(version->matchedMd5,"7f9458e4a3972d06e649a6fa85a7f34b")==0;
     if (!amiga36 && strcmp(version->matchedMd5,"f934d97e43e1ba6e5159839acbcd0611")!=0) return NULL;
-    language=M12_StartupMenu_GetLanguageCode(state->gameOptions[0].languageIndex);
+    language=M12_StartupMenu_GetLanguageCode(
+        m12_resolved_locale_index(state->gameOptions[0].languageIndex));
     name=dm1_v1_multilang_dungeon_name(language);
     if (strcmp(name,"DUNGEON.DAT")==0) return NULL;
     md5=amiga36 ? dm1_v1_amiga36_multilang_dungeon_md5(language) :
@@ -6762,6 +6819,7 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                     state->gameOptions[gi].languageIndex = state->settings.languageIndex;
                 }
             }
+            m12_request_dm1_language_scan(state);
             break;
         case M12_SETTINGS_ROW_GRAPHICS:
                 (void)delta;
@@ -6858,7 +6916,7 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                     if (!FSP_DirExists(defaultOriginals)) {
                         (void)FSP_CreateDirectoryRecursive(defaultOriginals);
                     }
-                    (void)m12_begin_async_data_dir_scan(state, defaultOriginals);
+                    (void)m12_begin_async_data_dir_scan(state, defaultOriginals, 0);
                 }
             } else {
                 m12_begin_data_dir_browse(state);
@@ -7509,6 +7567,8 @@ static void m12_startup_menu_handle_input(M12_StartupMenuState* state,
                     } else {
                         m12_cycle_game_opt_with_mode(&state->gameOptions[gi],
                                            state->gameOptSelectedRow, -1, pmode);
+                        if (gi==0 && state->gameOptSelectedRow==M12_GAME_OPT_ROW_LANGUAGE)
+                            m12_request_dm1_language_scan(state);
                     }
                     /* Re-read pmode after potential presentation change */
                     pmode = state->gameOptions[gi].presentationModeIndex;
@@ -7534,6 +7594,8 @@ static void m12_startup_menu_handle_input(M12_StartupMenuState* state,
                     } else {
                         m12_cycle_game_opt_with_mode(&state->gameOptions[gi],
                                            state->gameOptSelectedRow, 1, pmode);
+                        if (gi==0 && state->gameOptSelectedRow==M12_GAME_OPT_ROW_LANGUAGE)
+                            m12_request_dm1_language_scan(state);
                     }
                     /* Re-read pmode after potential presentation change */
                     pmode = state->gameOptions[gi].presentationModeIndex;
@@ -7725,6 +7787,8 @@ static void m12_startup_menu_handle_input(M12_StartupMenuState* state,
                     } else {
                         m12_cycle_game_opt_with_mode(&state->gameOptions[gi],
                                            state->gameOptSelectedRow, 1, pmode);
+                        if (gi==0 && state->gameOptSelectedRow==M12_GAME_OPT_ROW_LANGUAGE)
+                            m12_request_dm1_language_scan(state);
                     }
                     /* Re-read pmode after potential presentation change */
                     pmode = state->gameOptions[gi].presentationModeIndex;
@@ -8019,6 +8083,7 @@ static void m12_startup_menu_handle_input(M12_StartupMenuState* state,
                         }
                     }
                     state->languagePopupOpen = 0;
+                    m12_request_dm1_language_scan(state);
                     return;
                 case M12_MENU_INPUT_BACK:
                     state->languagePopupOpen = 0;
@@ -10329,6 +10394,13 @@ int M12_StartupMenu_GetLaunchGate(
         }
     }
     gate.dataReady = gate.boot.dataReady;
+    if (entry->gameId && strcmp(entry->gameId,"dm1")==0 &&
+        (state->assetStatus.dm1DungeonLanguage!=m12_dm1_dungeon_language(state) ||
+         state->dm1LanguageRescanPending)) {
+        gate.dataReady=gate.boot.dataReady=0;
+        gate.boot.statusLabel=m12_tr(state,"SCANNING GAME DATA");
+        gate.boot.detailLabel=m12_tr(state,"GAME AVAILABILITY WAS NOT UPDATED");
+    }
     gate.versionReady = gate.boot.versionReady;
     gate.fullStartGraphicsReady = gate.boot.fullStartGraphicsReady;
     gate.startupContractReady = gate.boot.startupContractReady;
@@ -13969,7 +14041,7 @@ static int m12_update_data_dir_dialog(M12_StartupMenuState* state) {
     state->dataDirPickerActive = 0;
     if (job->result == M12_FOLDER_DIALOG_SELECTED &&
         !m12_data_directory_dialog_token_is_placeholder(job->path)) {
-        (void)m12_begin_async_data_dir_scan(state, job->path);
+        (void)m12_begin_async_data_dir_scan(state, job->path, 0);
     } else {
         m12_show_data_dir_result_popup(state, 0);
         /* m12_begin_data_dir_browse captured the view that opened the
@@ -14013,7 +14085,12 @@ int M12_StartupMenu_Update(M12_StartupMenuState* state) {
         changed = 1;
     }
     if (SDL_GetAtomicInt(&job->done)) {
+        char restartRoot[M12_ASSET_DATA_DIR_CAPACITY]={0};
+        int returnView=job->returnView, returnNavLevel=job->returnNavLevel;
+        int languageMismatch=job->dm1DungeonLanguage!=m12_dm1_dungeon_language(state);
         int threadStatus = 0;
+        if (languageMismatch || state->dm1LanguageRescanPending)
+            snprintf(restartRoot,sizeof(restartRoot),"%s",job->selectedDataDir);
         SDL_WaitThread(job->thread, &threadStatus);
         (void)threadStatus;
         state->dataDirScanProgress =
@@ -14024,7 +14101,7 @@ int M12_StartupMenu_Update(M12_StartupMenuState* state) {
          * when the completed worker did not observe it. */
         state->dataDirScanCancelled = state->dataDirScanProgress.cancelled ||
             state->dataDirScanCancelRequested ||
-            SDL_GetAtomicInt(&job->cancelRequested);
+            SDL_GetAtomicInt(&job->cancelRequested) || languageMismatch;
         if (state->dataDirScanCancelled) {
             state->dataDirScanProgress.cancelRequested = 1;
             state->dataDirScanProgress.cancelled = 1;
@@ -14035,7 +14112,10 @@ int M12_StartupMenu_Update(M12_StartupMenuState* state) {
             m12_preserve_selected_data_directory(state,
                                                  job->selectedDataDir);
             m12_apply_completed_asset_scan(state);
-            m12_show_completed_data_dir_scan_message(state);
+            if (job->languageRescan) {
+                state->view=job->returnView;
+                g_nav_level=(M12_NavLevel)job->returnNavLevel;
+            } else m12_show_completed_data_dir_scan_message(state);
         } else {
             char line3[160];
             m12_format_data_dir_line(state, line3, sizeof(line3));
@@ -14053,6 +14133,12 @@ int M12_StartupMenu_Update(M12_StartupMenuState* state) {
                 line3);
         }
         m12_free_data_dir_scan_job(job);
+        state->dm1LanguageRescanPending=0;
+        if (restartRoot[0] && m12_begin_async_data_dir_scan(state,restartRoot,1)) {
+            M12_DataDirScanJob* replacement=(M12_DataDirScanJob*)state->dataDirScanJob;
+            replacement->returnView=returnView;
+            replacement->returnNavLevel=returnNavLevel;
+        }
         changed = 1;
     }
     return changed;
@@ -14888,6 +14974,11 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
     intent.rendererBackend = M12_StartupMenu_GetRendererBackend(state);
     intent.rendererBackendAvailable = M12_StartupMenu_RendererBackendAvailable(intent.rendererBackend);
     intent.options = state->gameOptions[gi];
+    if (intent.gameId && strcmp(intent.gameId, "dm1") == 0) {
+        /* Use the same effective AUTO language as the inventory snapshot. */
+        intent.options.languageIndex =
+            m12_resolved_locale_index(intent.options.languageIndex);
+    }
     intent.artpackPath = state->settings.artpackPath[0] ?
         state->settings.artpackPath : NULL;
     intent.options.versionIndex = selectedVersionIndex;

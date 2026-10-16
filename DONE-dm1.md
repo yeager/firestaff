@@ -3668,3 +3668,23 @@ not used as its final verification.
   world. ReDMCSB FILENAME.C:44-52,84-104 explicitly selects DUNGEONF.DAT.
   This is diagnostic evidence for the open scan-policy fix, not a fixed bug
   or a claim of language-only support.
+
+- 2026-10-16: Fixed the reproduced PCML/A36 language-only admission gap.
+  Explicit scan options and immutable result snapshots carry the chosen
+  EN/FR/DE world policy through same-owner authentication, file reports and
+  runtime preparation. CLI language overrides apply before initial scanning.
+  Menu language changes rescan asynchronously; pending or stale-language
+  snapshots cannot launch, and outdated worker results are discarded. AUTO
+  resolves consistently for scanning, final file checks and runtime intents.
+  ReDMCSB FILENAME.C:44-52,84-104 defines the language-specific world names.
+  Original-media focused CTest passed 3/3 (41.79 s, no missing-media skips),
+  covering PCML/A36 FR/DE without English, missing/wrong worlds, exact owner
+  receipts, ordinary menu input, asynchronous language switching and stale
+  worker rejection. Actual CLI boot and menu launches start the original PCML
+  FR/DE worlds without English; the menu checks require runtime receipts and
+  exact world paths, not exit status alone. English still rejects when absent.
+  The scoped DM1/CSB/DM2 startup diagnostics suite passed (222.02 s).
+  Cancellation passed; two full five-game corpus checks intentionally skipped.
+  Catalog validation passed; the 21 catalog changes contain source references
+  only. Independent scanner/menu review found no remaining blocker after the
+  AUTO export correction. Complete language/platform support remains open.

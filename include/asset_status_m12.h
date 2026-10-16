@@ -88,12 +88,17 @@ typedef struct {
     const int* cancelFlag;
     int honorRequestedDataDir;
     int looseFilesOnly;
+    /* Original DM1 world language: 0 English (default), 1 French, 2 German.
+     * Independent of launcher/UI language indexes. */
+    int dm1DungeonLanguage;
 } M12_AssetStatusScanOptions;
 
 typedef struct {
     char dataDir[M12_ASSET_DATA_DIR_CAPACITY];
     char legacyFallbackDir[M12_ASSET_DATA_DIR_CAPACITY];
     int dm1Available;
+    /* Immutable language policy used to produce this scan snapshot. */
+    int dm1DungeonLanguage;
     int csbAvailable;
     int dm2Available;
     int nexusAvailable;

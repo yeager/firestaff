@@ -10928,6 +10928,11 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             scanConfig.languageIndex = o->languageOverride;
         }
         memset(&menuInitOptions, 0, sizeof(menuInitOptions));
+        /* Admission must use the requested original-world language on the
+         * first scan, before selecting an edition or reporting availability. */
+        menuInitOptions.hasLanguageOverride =
+            o->languageOverride >= 0 && o->languageOverride < 20;
+        menuInitOptions.languageOverride = o->languageOverride;
         menuInitOptions.skipScreenshotGalleryScan = o->bootProbe ? 1 : 0;
         /* A diagnostic launch uses the same bounded, authenticated media
          * admission as ordinary startup, including persisted/default ZIPs. */

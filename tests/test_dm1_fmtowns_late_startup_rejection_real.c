@@ -198,8 +198,22 @@ static int amiga36_language_menu_worlds(M11_GameViewState* game,
         menu->gameOptions[0].versionIndex=M12_AssetStatus_FindVersionIndex("dm1","amiga36-multi");
         menu->gameOptions[0].presentationModeIndex=M12_PRESENTATION_V1_ORIGINAL;
         menu->settings.rendererBackendIndex=M12_RENDERER_BACKEND_SOFTWARE;
+        if (!source) {
+            REQUIRE(unlink(english)==0,"remove only staged English A36 world");
+            M12_AssetStatus_ScanGame(&menu->assetStatus,graphics,"dm1");
+            REQUIRE(!M12_AssetStatus_GameAvailable(&menu->assetStatus,"dm1"),
+                "default A36 scan stays English-strict beside French/German worlds");
+        }
         for (int language=0; language<2; ++language) {
+            M12_AssetStatusScanOptions scanOptions;
+            memset(&scanOptions,0,sizeof(scanOptions));
+            scanOptions.dm1DungeonLanguage=language+1;
             menu->gameOptions[0].languageIndex=language==0 ? 2 : 3;
+            M12_AssetStatus_ScanGameWithOptions(&menu->assetStatus,
+                source ? originalArchive : graphics,"dm1",&scanOptions);
+            REQUIRE(M12_AssetStatus_GameAvailable(&menu->assetStatus,"dm1") &&
+                menu->assetStatus.dm1DungeonLanguage==language+1,
+                "chosen A36 language scan admits its own original world without English");
             REQUIRE(M11_GameView_OpenSelectedMenuEntry(game,menu) && game->active &&
                 game->assetLoader.dm1Amiga36 && M11_GameView_GetBootProbeReceipt(game,&receipt) &&
                 receipt.levelLoaded && asset_file_matches_md5(game->dungeonPath,hashes[language]) &&
@@ -248,6 +262,8 @@ static int amiga36_language_menu_worlds(M11_GameViewState* game,
                 M11_GameView_Shutdown(game); M11_GameView_Init(game);
             }
         }
+        if (!source) REQUIRE(write_original_bytes(english,standard,standardSize),
+            "restore only staged English A36 world after language-only checks");
     }
     result=0;
 cleanup:

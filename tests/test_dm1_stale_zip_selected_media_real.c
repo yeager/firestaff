@@ -8,6 +8,7 @@
 #include "asset_status_m12.h"
 #include "config_m12.h"
 #include "fs_portable_compat.h"
+#include "firestaff_l10n.h"
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
 #include <SDL3/SDL.h>
@@ -622,6 +623,7 @@ static int check_missing_pc_language_feedback(const char* selected, int language
     int ok;
     if (!menu) return 0;
     memset(&options,0,sizeof(options)); options.skipScreenshotGalleryScan=1;
+    options.hasLanguageOverride=1; options.languageOverride=language;
     M12_StartupMenu_InitWithOptions(menu,selected,"dm1",&options);
     menu->view=M12_MENU_VIEW_MAIN; menu->selectedIndex=0;
     menu->gameOptions[0].architectureIndex=automatic ? M12_ARCH_AUTO : M12_ARCH_PC;
@@ -650,6 +652,7 @@ static int check_multilingual_loose_selection(const char* root, const char* orig
     char languageWorlds[2][FSP_PATH_MAX]={{0}};
     unsigned char* foreignDungeon=NULL; size_t foreignSize=0;
     M12_StartupMenuState* menu=NULL;
+    M12_StartupMenuState* languageMenu=NULL;
     M11_GameViewState* game=NULL;
     M12_StartupMenuInitOptions options;
     M11_BootProbeReceipt receipt;
@@ -674,6 +677,7 @@ static int check_multilingual_loose_selection(const char* root, const char* orig
     menu=SDL_calloc(1,sizeof(*menu)); game=SDL_calloc(1,sizeof(*game));
     REQUIRE(menu && game,"allocate multilingual launcher and runtime");
     memset(&options,0,sizeof(options)); options.skipScreenshotGalleryScan=1;
+    options.hasLanguageOverride=1; options.languageOverride=0;
     M12_StartupMenu_InitWithOptions(menu,selected,"dm1",&options);
     index=M12_AssetStatus_FindVersionIndex("dm1","pc34-multi");
     englishIndex=M12_AssetStatus_FindVersionIndex("dm1","pc34-en");
@@ -729,6 +733,9 @@ static int check_multilingual_loose_selection(const char* root, const char* orig
         REQUIRE(FSP_JoinPath(multiAlias,sizeof(multiAlias),dir,"multi-original.zip") &&
             symlink(multi,multiAlias)==0,"stage unchanged multilingual archive for language handoff");
         for (int language=0; language<2; ++language) {
+            M12_AssetStatusScanOptions chosenLanguageScan;
+            memset(&chosenLanguageScan,0,sizeof(chosenLanguageScan));
+            chosenLanguageScan.dm1DungeonLanguage=language+1;
             REQUIRE(FSP_JoinPath(languageWorlds[language],sizeof(languageWorlds[language]),dir,names[language]) &&
                 asset_find_by_md5(multi,hashes[language],foreignPath,sizeof(foreignPath),0) &&
                 asset_read_path_alloc(foreignPath,&foreignDungeon,&foreignSize) &&
@@ -748,8 +755,8 @@ static int check_multilingual_loose_selection(const char* root, const char* orig
             free(foreignDungeon); foreignDungeon=NULL;
             for (int virtualOwner=0; virtualOwner<2; ++virtualOwner) {
                 const char* owner=virtualOwner ? multiAlias : selected;
-                M12_AssetStatus_ScanGame(&menu->assetStatus,owner,"dm1");
                 menu->gameOptions[0].languageIndex=language==0 ? 2 : 3;
+                M12_AssetStatus_ScanGameWithOptions(&menu->assetStatus,owner,"dm1",&chosenLanguageScan);
                 REQUIRE(M11_GameView_OpenSelectedMenuEntry(game,menu) && game->active &&
                     M11_GameView_GetBootProbeReceipt(game,&receipt) && receipt.levelLoaded,
                     "menu French/German option starts the selected original multilingual world");
@@ -759,19 +766,107 @@ static int check_multilingual_loose_selection(const char* root, const char* orig
                     "multilingual menu handoff consumes selected language dungeon from its own loose/ZIP owner");
                 M11_GameView_Shutdown(game); M11_GameView_Init(game);
             }
+            /* A language-only installation has no English world in its own
+             * loose owner. Keep the original English ZIP solely as the real
+             * startup companion; it must not lend a dungeon to this owner. */
+            {
+                M12_AssetStatusScanOptions languageScan;
+                REQUIRE(unlink(dungeon)==0 && unlink(multiAlias)==0,
+                    "remove only staged English world and multilingual archive alias");
+                for (int fullScan=0; fullScan<2; ++fullScan) {
+                    if (fullScan) M12_AssetStatus_Scan(&menu->assetStatus,selected);
+                    else M12_AssetStatus_ScanGame(&menu->assetStatus,selected,"dm1");
+                    REQUIRE(!M12_AssetStatus_GameAvailable(&menu->assetStatus,"dm1") &&
+                        !M12_AssetStatus_GetVersion(&menu->assetStatus,"dm1",(size_t)englishIndex)->matched,
+                        "default English scan cannot borrow a sibling world for language-only selected graphics");
+                }
+                memset(&languageScan,0,sizeof(languageScan));
+                languageScan.dm1DungeonLanguage=language+1;
+                for (int fullScan=0; fullScan<2; ++fullScan) {
+                    int reportedDungeon=0;
+                    if (fullScan) M12_AssetStatus_ScanWithOptions(&menu->assetStatus,selected,&languageScan);
+                    else M12_AssetStatus_ScanGameWithOptions(&menu->assetStatus,selected,"dm1",&languageScan);
+                    version=M12_AssetStatus_GetVersion(&menu->assetStatus,"dm1",(size_t)index);
+                    REQUIRE(M12_AssetStatus_GameAvailable(&menu->assetStatus,"dm1") &&
+                        menu->assetStatus.dm1DungeonLanguage==language+1 && version && version->matched &&
+                        strcmp(version->matchedPath,selected)==0 &&
+                        !M12_AssetStatus_GetVersion(&menu->assetStatus,"dm1",(size_t)englishIndex)->matched,
+                        "language-aware scan admits exact multilingual graphics without a standard English world");
+                    for (size_t role=0; role<M12_AssetStatus_GetRequiredFileCount(&menu->assetStatus,"dm1"); ++role) {
+                        const M12_AssetRequiredFileStatus* required=M12_AssetStatus_GetRequiredFile(&menu->assetStatus,"dm1",role);
+                        const char* source=required->sourcePath[0] ? required->sourcePath : required->matchedPath;
+                        if (strcmp(required->roleId,"dungeon")==0)
+                            reportedDungeon=required->matched && strcmp(source,languageWorlds[language])==0 &&
+                                strcmp(required->matchedHash,hashes[language])==0;
+                    }
+                    REQUIRE(reportedDungeon,
+                        "language-aware scan reports the exact original selected-language world");
+                }
+                if (language==0) {
+                    M12_StartupMenuInitOptions languageOptions;
+                    memset(&languageOptions,0,sizeof(languageOptions));
+                    languageOptions.skipScreenshotGalleryScan=1;
+                    languageOptions.hasLanguageOverride=1;
+                    languageOptions.languageOverride=2;
+                    languageMenu=SDL_calloc(1,sizeof(*languageMenu));
+                    REQUIRE(languageMenu,"allocate initial French-only menu policy check");
+                    M12_StartupMenu_InitWithOptions(languageMenu,selected,"dm1",&languageOptions);
+                    version=M12_AssetStatus_GetVersion(&languageMenu->assetStatus,"dm1",(size_t)index);
+                    REQUIRE(languageMenu->gameOptions[0].languageIndex==2 &&
+                        languageMenu->assetStatus.dm1DungeonLanguage==1 &&
+                        M12_AssetStatus_GameAvailable(&languageMenu->assetStatus,"dm1") &&
+                        version && version->matched && strcmp(version->matchedPath,selected)==0,
+                        "initial language override applies before first scan of French-only original installation");
+                    M12_StartupMenu_Destroy(languageMenu); SDL_free(languageMenu); languageMenu=NULL;
+                }
+                menu->view=M12_MENU_VIEW_GAME_OPTIONS; menu->selectedIndex=0; menu->activatedIndex=0;
+                menu->gameCardFlowStage=2; menu->gameOptSelectedRow=M12_GAME_OPT_ROW_COUNT;
+                menu->launchRequested=0; menu->messageIsMissingGameData=0;
+                menu->gameOptions[0].architectureIndex=M12_ARCH_PC;
+                menu->gameOptions[0].versionIndex=index;
+                menu->gameOptions[0].languageIndex=language==0 ? 2 : 3;
+                M12_StartupMenu_HandleInput(menu,M12_MENU_INPUT_ACCEPT);
+                REQUIRE(menu->launchRequested && M12_StartupMenu_GetLaunchIntent(menu).valid &&
+                    M11_GameView_OpenSelectedMenuEntry(game,menu) && game->active &&
+                    M11_GameView_GetBootProbeReceipt(game,&receipt) && receipt.levelLoaded &&
+                    strcmp(receipt.bootAssetMd5,"f934d97e43e1ba6e5159839acbcd0611")==0 &&
+                    strcmp(game->dungeonPath,languageWorlds[language])==0 &&
+                    asset_file_matches_md5(game->dungeonPath,hashes[language]),
+                    "ordinary menu Launch input starts original French/German-only installation");
+                M11_GameView_Shutdown(game); M11_GameView_Init(game);
+                REQUIRE(asset_read_path_alloc(languageWorlds[language],&foreignDungeon,&foreignSize) &&
+                    unlink(languageWorlds[language])==0,
+                    "remove only selected-language world while retaining original English startup ZIP");
+                M12_AssetStatus_ScanGameWithOptions(&menu->assetStatus,selected,"dm1",&languageScan);
+                REQUIRE(!M12_AssetStatus_GameAvailable(&menu->assetStatus,"dm1") &&
+                    !M12_StartupMenu_GetLaunchIntent(menu).valid &&
+                    !M11_GameView_OpenSelectedMenuEntry(game,menu) && !game->active,
+                    "language-only installation cannot borrow English or another language when its world is absent");
+                menu->launchRequested=0; menu->view=M12_MENU_VIEW_GAME_OPTIONS;
+                menu->gameOptSelectedRow=M12_GAME_OPT_ROW_COUNT;
+                M12_StartupMenu_HandleInput(menu,M12_MENU_INPUT_ACCEPT);
+                REQUIRE(!menu->launchRequested,
+                    "ordinary menu Launch input blocks missing chosen language without sibling substitution");
+                REQUIRE(write_original_bytes(languageWorlds[language],foreignDungeon,foreignSize) &&
+                    write_original_bytes(dungeon,dungeonBytes,dungeonSize) && symlink(multi,multiAlias)==0,
+                    "restore unchanged original language world, standard world and task archive alias");
+                free(foreignDungeon); foreignDungeon=NULL;
+                M12_AssetStatus_ScanGameWithOptions(&menu->assetStatus,selected,"dm1",&chosenLanguageScan);
+                menu->launchRequested=1;
+            }
             /* A previously scanned French/German selection must not fall
              * back to English when only its task-owned dungeon disappears. */
             REQUIRE(asset_read_path_alloc(languageWorlds[language],&foreignDungeon,&foreignSize) &&
                 write_original_bytes(languageWorlds[language],dungeonBytes,dungeonSize),
                 "replace only staged language file with unchanged different original English bytes");
-            M12_AssetStatus_ScanGame(&menu->assetStatus,selected,"dm1");
+            M12_AssetStatus_ScanGameWithOptions(&menu->assetStatus,selected,"dm1",&chosenLanguageScan);
             REQUIRE(!M11_GameView_OpenSelectedMenuEntry(game,menu) && !game->active,
                 "selected-language hash gate rejects a different original under the expected filename");
             REQUIRE(check_missing_pc_language_feedback(selected,language==0 ? 2 : 3,names[language],0) &&
                 check_missing_pc_language_feedback(selected,language==0 ? 2 : 3,names[language],1),
                 "menu reports the exact invalid chosen-language file before requesting launch");
             REQUIRE(unlink(languageWorlds[language])==0,"remove only staged selected-language dungeon");
-            M12_AssetStatus_ScanGame(&menu->assetStatus,selected,"dm1");
+            M12_AssetStatus_ScanGameWithOptions(&menu->assetStatus,selected,"dm1",&chosenLanguageScan);
             REQUIRE(!M11_GameView_OpenSelectedMenuEntry(game,menu) && !game->active,
                 "missing chosen-language dungeon rejects without English or archive substitution");
             REQUIRE(!M12_StartupMenu_GetLaunchIntent(menu).valid &&
@@ -783,12 +878,71 @@ static int check_multilingual_loose_selection(const char* root, const char* orig
             free(foreignDungeon); foreignDungeon=NULL;
             REQUIRE(rename(languageWorlds[language],renamed)==0,
                 "rename only staged original chosen-language dungeon");
+            M12_AssetStatus_ScanGameWithOptions(&menu->assetStatus,selected,"dm1",&chosenLanguageScan);
             REQUIRE(M11_GameView_OpenSelectedMenuEntry(game,menu) && game->active &&
                 strcmp(game->dungeonPath,renamed)==0 && asset_file_matches_md5(game->dungeonPath,hashes[language]),
                 "renamed chosen-language original resolves by hash within selected loose owner only");
             M11_GameView_Shutdown(game); M11_GameView_Init(game);
             REQUIRE(rename(renamed,languageWorlds[language])==0,
                 "restore staged original chosen-language filename");
+        }
+        {
+            char scanRoot[M12_ASSET_DATA_DIR_CAPACITY];
+            uint64_t deadline;
+            snprintf(scanRoot,sizeof(scanRoot),"%s",menu->selectedDataDir[0] ?
+                menu->selectedDataDir : M12_AssetStatus_GetDataDir(&menu->assetStatus));
+            menu->view=M12_MENU_VIEW_GAME_OPTIONS; menu->selectedIndex=0; menu->activatedIndex=0;
+            menu->gameCardFlowStage=2; menu->gameOptSelectedRow=M12_GAME_OPT_ROW_LANGUAGE;
+            menu->gameOptions[0].architectureIndex=M12_ARCH_PC;
+            menu->gameOptions[0].versionIndex=index;
+            menu->gameOptions[0].languageIndex=3;
+            menu->launchRequested=0; menu->messageIsMissingGameData=0;
+            M12_StartupMenu_HandleInput(menu,M12_MENU_INPUT_LEFT);
+            REQUIRE(menu->gameOptions[0].languageIndex==2 && menu->dataDirScanActive &&
+                menu->dataDirScanJob && !menu->launchRequested &&
+                !M12_StartupMenu_GetLaunchIntent(menu).valid,
+                "ordinary German-to-French option input blocks launch while original-media scan is pending");
+            /* A language request can become stale before worker publication.
+             * The old French result must never replace the German snapshot. */
+            menu->gameOptions[0].languageIndex=3;
+            deadline=SDL_GetTicks()+30000U;
+            while (menu->dataDirScanJob && SDL_GetTicks()<deadline) {
+                M12_StartupMenu_Update(menu);
+                REQUIRE(menu->assetStatus.dm1DungeonLanguage!=1,
+                    "stale French worker cannot publish after the requested language changed");
+                if (menu->dataDirScanJob) SDL_Delay(1);
+            }
+            REQUIRE(!menu->dataDirScanJob && !menu->dataDirScanActive &&
+                menu->assetStatus.dm1DungeonLanguage==2 &&
+                menu->view==M12_MENU_VIEW_GAME_OPTIONS,
+                "replacement worker completes the latest requested German language");
+            menu->gameOptSelectedRow=M12_GAME_OPT_ROW_LANGUAGE;
+            M12_StartupMenu_HandleInput(menu,M12_MENU_INPUT_LEFT);
+            REQUIRE(menu->gameOptions[0].languageIndex==2 && menu->dataDirScanJob,
+                "ordinary French request can restart after a stale worker was rejected");
+            deadline=SDL_GetTicks()+30000U;
+            while (menu->dataDirScanJob && SDL_GetTicks()<deadline) {
+                M12_StartupMenu_Update(menu);
+                if (menu->dataDirScanJob) SDL_Delay(1);
+            }
+            version=M12_AssetStatus_GetVersion(&menu->assetStatus,"dm1",(size_t)index);
+            REQUIRE(!menu->dataDirScanJob && !menu->dataDirScanActive &&
+                !menu->dataDirScanCancelled && !menu->dm1LanguageRescanPending &&
+                menu->assetStatus.dm1DungeonLanguage==1 &&
+                menu->view==M12_MENU_VIEW_GAME_OPTIONS &&
+                strcmp(menu->selectedDataDir,scanRoot)==0 &&
+                strcmp(M12_AssetStatus_GetDataDir(&menu->assetStatus),scanRoot)==0 &&
+                version && version->matched && strcmp(version->matchedPath,selected)==0,
+                "completed asynchronous French scan restores options and exact selected original owner/root");
+            menu->gameOptSelectedRow=M12_GAME_OPT_ROW_COUNT;
+            M12_StartupMenu_HandleInput(menu,M12_MENU_INPUT_ACCEPT);
+            REQUIRE(menu->launchRequested && M12_StartupMenu_GetLaunchIntent(menu).valid &&
+                M11_GameView_OpenSelectedMenuEntry(game,menu) && game->active &&
+                M11_GameView_GetBootProbeReceipt(game,&receipt) && receipt.levelLoaded &&
+                strcmp(game->dungeonPath,languageWorlds[0])==0 &&
+                asset_file_matches_md5(game->dungeonPath,hashes[0]),
+                "completed ordinary language-change scan launches exact original French world");
+            M11_GameView_Shutdown(game); M11_GameView_Init(game);
         }
         REQUIRE(unlink(multiAlias)==0,"remove only task language archive link");
         multiAlias[0]='\0';
@@ -799,6 +953,20 @@ static int check_multilingual_loose_selection(const char* root, const char* orig
             asset_file_matches_md5(game->dungeonPath,"766450c940651fc021c92fe5d0d0b3a6"),
             "unsupported original language retains the English dungeon");
         M11_GameView_Shutdown(game); M11_GameView_Init(game);
+        {
+            M12_AssetStatusScanOptions autoScan;
+            M12_LaunchIntent autoIntent;
+            FS_Language systemLanguage=fs_l10n_detect_system_language();
+            memset(&autoScan,0,sizeof(autoScan));
+            autoScan.dm1DungeonLanguage=systemLanguage==FS_LANG_FR ? 1 :
+                systemLanguage==FS_LANG_DE ? 2 : 0;
+            menu->gameOptions[0].languageIndex=(M12_StartupMenu_GetLanguageCount()-1);
+            M12_AssetStatus_ScanGameWithOptions(&menu->assetStatus,selected,"dm1",&autoScan);
+            autoIntent=M12_StartupMenu_GetLaunchIntent(menu);
+            REQUIRE(autoIntent.valid && autoIntent.options.languageIndex!=(M12_StartupMenu_GetLanguageCount()-1) &&
+                autoIntent.launcherOptions.languageIndex==autoIntent.options.languageIndex,
+                "AUTO resolves the same original-world language before runtime intent export");
+        }
         menu->gameOptions[0].languageIndex=0;
         M12_AssetStatus_ScanGame(&menu->assetStatus,selected,"dm1");
     }
@@ -856,6 +1024,8 @@ static int check_multilingual_loose_selection(const char* root, const char* orig
     result=0;
 cleanup:
     if(initialized) M11_GameView_Shutdown(game);
+    if(languageMenu) M12_StartupMenu_Destroy(languageMenu);
+    SDL_free(languageMenu);
     if(menu) M12_StartupMenu_Destroy(menu);
     SDL_free(game); SDL_free(menu); free(foreignDungeon);
     for (int language=0; language<2; ++language)

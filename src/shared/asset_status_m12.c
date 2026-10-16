@@ -212,12 +212,15 @@ static void m12_scan_publish_cancelled_status(M12_AssetStatus* status,
                                               const char* requestedDataDir,
                                               const char* legacyFallbackDir) {
     M12_AssetScanProgress progress;
+    int language;
     int i;
     if (!status) {
         return;
     }
     progress = status->scanProgress;
+    language = status->dm1DungeonLanguage;
     memset(status, 0, sizeof(*status));
+    status->dm1DungeonLanguage = language;
     status->scanProgress = progress;
     FirestaffTheronMedia_Init(&status->theronMedia);
     if (requestedDataDir && requestedDataDir[0] != '\0') {
@@ -1122,10 +1125,39 @@ static int m12_admit_dm1_fmtowns_archive(
 static const char* m12_dm1_loose_dungeon_md5(const char* graphicsMd5);
 static int m12_dm1_dungeon_compatible(const char* graphicsMd5,
                                             const char* dungeonMd5);
-static int m12_dm1_amiga36_package_ready(const char* graphics);
+static int m12_dm1_scan_language(const M12_AssetStatusScanOptions* options) {
+    return options && options->dm1DungeonLanguage >= 1 && options->dm1DungeonLanguage <= 2
+        ? options->dm1DungeonLanguage : 0;
+}
+
+/* FILENAME.C F0745:84-104 applies only to I34M/A36M world names. */
+static const char* m12_dm1_world_name(const char* graphicsMd5, int language) {
+    if (!graphicsMd5) return "DUNGEON.DAT";
+    if (strcmp(graphicsMd5, "491ca939f9abb33ceeb26619b841fe91") == 0) return "DemoDun.dat";
+    if (strcmp(graphicsMd5, "f934d97e43e1ba6e5159839acbcd0611") == 0 ||
+        strcmp(graphicsMd5, "7f9458e4a3972d06e649a6fa85a7f34b") == 0)
+        return dm1_v1_multilang_dungeon_name(language == 1 ? "FR" : language == 2 ? "DE" : "EN");
+    return "DUNGEON.DAT";
+}
+
+static const char* m12_dm1_world_hashes(const char* graphicsMd5, int language) {
+    if (!graphicsMd5) return NULL;
+    const char* code = language == 1 ? "FR" : language == 2 ? "DE" : "EN";
+    if (language == 1 || language == 2) {
+        if (strcmp(graphicsMd5, "f934d97e43e1ba6e5159839acbcd0611") == 0)
+            return dm1_v1_pc34_multilang_dungeon_md5(code);
+        if (strcmp(graphicsMd5, "7f9458e4a3972d06e649a6fa85a7f34b") == 0)
+            return dm1_v1_amiga36_multilang_dungeon_md5(code);
+    }
+    return m12_dm1_loose_dungeon_md5(graphicsMd5);
+}
+
+static int m12_dm1_default_dungeon_identity(const char* graphics,
+    const char* graphicsMd5, char dungeon[ASSET_PATH_MAX], char actualMd5[33], int language);
+static int m12_dm1_amiga36_package_ready(const char* graphics, int language);
 static int m12_dm1_complete_default_owner(const char* graphics,
                                         const char* graphicsMd5,
-                                        char dungeon[ASSET_PATH_MAX]);
+                                        char dungeon[ASSET_PATH_MAX], int language);
 
 static int m12_dm1_towns_graphics_language(const char* md5) {
     if (md5 && strcmp(md5, "c10c512f63461ebe79b5ac365115b61b") == 0) return 0;
@@ -1228,8 +1260,7 @@ static int m12_admit_dm1_amiga_archive_packages(
             size_t graphicsSize = 0U;
             size_t dungeonSize = 0U;
             size_t versionIndex;
-            size_t matchedPackageIndex = 0U;
-            int packageMatched = 0;
+                    int packageMatched = 0;
             for (size_t packageIndex = 0U;
                  packageIndex < sizeof(packages) / sizeof(packages[0]);
                  ++packageIndex) {
@@ -1262,31 +1293,14 @@ static int m12_admit_dm1_amiga_archive_packages(
                     continue;
                 }
                 packageMatched = 1;
-                matchedPackageIndex = packageIndex;
                 break;
             }
             if (!packageMatched) continue;
             m12_bytes_md5_hex(graphics, graphicsSize, md5);
             free(graphics);
-            if (strcmp(packages[matchedPackageIndex].dungeonName,
-                       "DUNGEON.DAT") == 0) {
-                m12_copy_string(virtualDungeon, sizeof(virtualDungeon),
-                                virtualGraphics);
-                char* leaf = NULL;
-                char* cursor = virtualDungeon;
-                while ((cursor = strstr(cursor, "GRAPHICS.DAT")) != NULL) {
-                    leaf = cursor;
-                    cursor += strlen("GRAPHICS.DAT");
-                }
-                if (!leaf) continue;
-                memcpy(leaf, "DUNGEON.DAT", sizeof("DUNGEON.DAT"));
-            } else {
-                int written = snprintf(virtualDungeon, sizeof(virtualDungeon),
-                                       "%s::%s", candidates[candidateIndex],
-                                       packages[matchedPackageIndex].dungeonName);
-                if (written < 0 || (size_t)written >= sizeof(virtualDungeon))
-                    continue;
-            }
+            if (!csb_v1_amiga_selected_companion(virtualGraphics,
+                    m12_dm1_world_name(md5, status->dm1DungeonLanguage),
+                    virtualDungeon, sizeof(virtualDungeon))) continue;
             if (!asset_read_virtual_path_alloc(virtualDungeon, &dungeon,
                                                &dungeonSize) ||
                 dungeonSize == 0U) {
@@ -1309,7 +1323,7 @@ static int m12_admit_dm1_amiga_archive_packages(
                     /* TITLE.C F0437 startup companions must be ready before
                      * replacing an already complete directory-discovered owner. */
                     if (!m12_dm1_complete_default_owner(virtualGraphics, md5,
-                                                        checkedDungeon)) continue;
+                                                        checkedDungeon, status->dm1DungeonLanguage)) continue;
                     size_t requiredIndex;
                     version->matched = 1;
                     m12_copy_string(version->matchedPath,
@@ -1558,11 +1572,11 @@ static int m12_admit_dm1_atari_st_nested_archive(
 /* LOADSAVE.C F0435:2336-2375 keeps a default world in its selected
  * installation. The archive reader preserves the final member directory. */
 static int m12_dm1_default_dungeon_owner(const char* graphics, const char* graphicsMd5,
-                                         char dungeon[ASSET_PATH_MAX], char dungeonMd5[33]) {
-    const char* allowed = m12_dm1_loose_dungeon_md5(graphicsMd5);
+                                         char dungeon[ASSET_PATH_MAX], char dungeonMd5[33], int language) {
+    const char* allowed = m12_dm1_world_hashes(graphicsMd5, language);
     const char* match;
     if (!allowed || !graphics) return 0;
-    if (!m12_dm1_complete_default_owner(graphics, graphicsMd5, dungeon)) return 0;
+    if (!m12_dm1_complete_default_owner(graphics, graphicsMd5, dungeon, language)) return 0;
     if (!asset_file_md5_hex(dungeon, dungeonMd5) ||
         !m12_dm1_dungeon_compatible(graphicsMd5, dungeonMd5)) return 0;
     match = strstr(allowed, dungeonMd5);
@@ -1605,6 +1619,14 @@ static void m12_publish_dm1_required_owner(M12_AssetStatus* status, int gameInde
          strcmp(version->matchedMd5, "fa6b1aa29e191418713bf2cda93d962e") != 0) ||
         (strcmp(version->versionId, "pc34-multi") == 0 &&
          strcmp(version->matchedMd5, "f934d97e43e1ba6e5159839acbcd0611") != 0)) return;
+    for (i = 0U; nativeDungeonHashes && i < status->requiredFileCounts[gameIndex]; ++i) {
+        M12_AssetRequiredFileStatus* required = &status->requiredFiles[gameIndex][i];
+        if (required->roleId && strcmp(required->roleId, "dungeon") == 0 &&
+            status->dm1DungeonLanguage != 0 &&
+            (strcmp(version->matchedMd5, "f934d97e43e1ba6e5159839acbcd0611") == 0 ||
+             strcmp(version->matchedMd5, "7f9458e4a3972d06e649a6fa85a7f34b") == 0))
+            required->label = m12_dm1_world_name(version->matchedMd5, status->dm1DungeonLanguage);
+    }
     if (finalValidation) {
         /* A failed final companion read must not leave an earlier owner's
          * matched dungeon receipt behind when media changes during a scan. */
@@ -1618,7 +1640,7 @@ static void m12_publish_dm1_required_owner(M12_AssetStatus* status, int gameInde
     separator = strstr(version->matchedPath, "::");
     if (nativeDungeonHashes) {
         if (!m12_dm1_default_dungeon_owner(version->matchedPath,
-                version->matchedMd5, dungeon, nativeDungeonMd5)) return;
+                version->matchedMd5, dungeon, nativeDungeonMd5, status->dm1DungeonLanguage)) return;
         dungeonHash = nativeDungeonMd5;
     } else {
         dungeonHash = strcmp(version->versionId, "fmtowns-en") == 0
@@ -4377,20 +4399,14 @@ static int m12_dm1_pc34_multi_has_startup_media(
 static const char s_m12_a36_dungeon_hashes[] =
     "30028fb6a301ecb20127ef0b3af32b05;c0e1bf1b9c5578681879d624bb28e663;59e332cf47852d5c7c88a9538f0adcea";
 
-static int m12_dm1_amiga36_package_ready(const char* graphics) {
+static int m12_dm1_amiga36_package_ready(const char* graphics, int language) {
     char companion[ASSET_PATH_MAX], dungeonMd5[33];
-    const char* match;
-    if (!graphics ||
-        !asset_file_matches_md5(graphics, "7f9458e4a3972d06e649a6fa85a7f34b") ||
-        !csb_v1_amiga_selected_companion(graphics, "VDEO.FTL", companion,
-                                        sizeof(companion)) ||
-        !asset_file_matches_md5(companion, "d86f045085481448f6ae3db8d3d640d2") ||
-        !csb_v1_amiga_selected_companion(graphics, "DUNGEON.DAT", companion,
-                                        sizeof(companion)) ||
-        !asset_file_md5_hex(companion, dungeonMd5)) return 0;
-    match = strstr(s_m12_a36_dungeon_hashes, dungeonMd5);
-    return match && (match == s_m12_a36_dungeon_hashes || match[-1] == ';') &&
-        (match[32] == '\0' || match[32] == ';');
+    return graphics &&
+        asset_file_matches_md5(graphics, "7f9458e4a3972d06e649a6fa85a7f34b") &&
+        csb_v1_amiga_selected_companion(graphics, "VDEO.FTL", companion, sizeof(companion)) &&
+        asset_file_matches_md5(companion, "d86f045085481448f6ae3db8d3d640d2") &&
+        m12_dm1_default_dungeon_identity(graphics, "7f9458e4a3972d06e649a6fa85a7f34b",
+            companion, dungeonMd5, language);
 }
 
 /* ReDMCSB LOADSAVE.C F0435:2336-2343 opens the selected installation's
@@ -4439,24 +4455,24 @@ static int m12_dm1_dungeon_compatible(const char* graphicsMd5,
 /* LOADSAVE.C F0435 keeps the default world beside its selected graphics.
  * Verify that role independently from TITLE.C startup companions. */
 static int m12_dm1_default_dungeon_identity(const char* graphics,
-    const char* graphicsMd5, char dungeon[ASSET_PATH_MAX], char actualMd5[33]) {
+    const char* graphicsMd5, char dungeon[ASSET_PATH_MAX], char actualMd5[33], int language) {
     char parent[FSP_PATH_MAX];
-    const char* allowed = m12_dm1_loose_dungeon_md5(graphicsMd5);
+    const char* allowed = m12_dm1_world_hashes(graphicsMd5, language);
     const char* match;
-    int demo = graphicsMd5 &&
-        strcmp(graphicsMd5, "491ca939f9abb33ceeb26619b841fe91") == 0;
     if (!allowed || !graphics) return 0;
     if (strstr(graphics, "::")) {
         if (!csb_v1_amiga_selected_companion(graphics,
-                demo ? "DemoDun.dat" : "DUNGEON.DAT", dungeon, ASSET_PATH_MAX)) return 0;
+                m12_dm1_world_name(graphicsMd5, language), dungeon, ASSET_PATH_MAX)) return 0;
     } else {
         int found;
         if (!FSP_ParentDir(parent, sizeof(parent), graphics)) return 0;
         found = FSP_FindUniqueFileIgnoreCase(parent,
-            demo ? "DemoDun.dat" : "DUNGEON.DAT", dungeon, ASSET_PATH_MAX);
+            m12_dm1_world_name(graphicsMd5, language), dungeon, ASSET_PATH_MAX);
         if (found == 0 &&
             (strcmp(graphicsMd5, "fa6b1aa29e191418713bf2cda93d962e") == 0 ||
-             strcmp(graphicsMd5, "f934d97e43e1ba6e5159839acbcd0611") == 0)) {
+             strcmp(graphicsMd5, "f934d97e43e1ba6e5159839acbcd0611") == 0 ||
+             ((language == 1 || language == 2) &&
+              strcmp(graphicsMd5, "7f9458e4a3972d06e649a6fa85a7f34b") == 0))) {
             char renamed[1][ASSET_PATH_MAX];
             if (asset_collect_files_by_md5(parent, allowed, renamed, 1U, 0) != 1)
                 return 0;
@@ -4474,7 +4490,7 @@ static int m12_dm1_default_dungeon_identity(const char* graphics,
 /* Return a static filename only after its selected default world is known.
  * Admission and diagnostics share the original TITLE.C F0437 pairing table. */
 static const char* m12_dm1_missing_startup_companion(const char* graphics,
-    const char* graphicsMd5, const char* dungeonMd5) {
+    const char* graphicsMd5, const char* dungeonMd5, int language) {
     static const struct { const char* graphics; const char* swoosh; } amiga[] = {
         {"491ca939f9abb33ceeb26619b841fe91", "28d406007e99b0ae8da0c6f7fc7f183b"},
         {"6a2f135b53c2220f0251fa103e2a6e7e", "a0ffbcc7ae8cecac03128ddb32887ef4"},
@@ -4484,7 +4500,7 @@ static const char* m12_dm1_missing_startup_companion(const char* graphics,
     };
     size_t i;
     if (strcmp(graphicsMd5, "7f9458e4a3972d06e649a6fa85a7f34b") == 0)
-        return m12_dm1_amiga36_package_ready(graphics) ? NULL : "VDEO.FTL";
+        return m12_dm1_amiga36_package_ready(graphics, language) ? NULL : "VDEO.FTL";
     if (strcmp(graphicsMd5, "f934d97e43e1ba6e5159839acbcd0611") == 0)
         return m12_dm1_pc34_multi_has_startup_media(graphics) ? NULL : "SWOOSH";
     /* A22G shares A20F's SWSH only with its exact game/dungeon tuple. */
@@ -4510,10 +4526,10 @@ static const char* m12_dm1_missing_startup_companion(const char* graphics,
 
 static int m12_dm1_complete_default_owner(const char* graphics,
                                         const char* graphicsMd5,
-                                        char dungeon[ASSET_PATH_MAX]) {
+                                        char dungeon[ASSET_PATH_MAX], int language) {
     char actualMd5[33];
-    return m12_dm1_default_dungeon_identity(graphics, graphicsMd5, dungeon, actualMd5) &&
-        !m12_dm1_missing_startup_companion(graphics, graphicsMd5, actualMd5);
+    return m12_dm1_default_dungeon_identity(graphics, graphicsMd5, dungeon, actualMd5, language) &&
+        !m12_dm1_missing_startup_companion(graphics, graphicsMd5, actualMd5, language);
 }
 
 static const char* m12_effective_required_md5(const M12_RequiredFileSpec* spec) {
@@ -5245,13 +5261,13 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
                 if (!m12_dm1_loose_dungeon_md5(md5) || !rootMatched[rootIndex][i]) continue;
                 /* Keep a complete discovered owner. Enumerate duplicates only
                  * when its own world/startup companions cannot launch. */
-                if (m12_dm1_complete_default_owner(rootMatchedPaths[rootIndex][i], md5, dungeon))
+                if (m12_dm1_complete_default_owner(rootMatchedPaths[rootIndex][i], md5, dungeon, status->dm1DungeonLanguage))
                     continue;
                 candidates = calloc(256U, sizeof(*candidates));
                 count = candidates ? asset_collect_paths_by_md5(
                     roots[rootIndex], md5, candidates, 256U, 32) : -1;
                 for (candidate = 0; candidate < count; ++candidate) {
-                    if (m12_dm1_complete_default_owner(candidates[candidate], md5, dungeon)) {
+                    if (m12_dm1_complete_default_owner(candidates[candidate], md5, dungeon, status->dm1DungeonLanguage)) {
                         m12_copy_string(rootMatchedPaths[rootIndex][i],
                             sizeof(rootMatchedPaths[rootIndex][i]), candidates[candidate]);
                         rootMatched[rootIndex][i] = found = 1;
@@ -5344,7 +5360,7 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
                 }
                 if (strcmp(gameSpec->gameId, "dm1") == 0 &&
                     strcmp(md5, "7f9458e4a3972d06e649a6fa85a7f34b") == 0 &&
-                    !m12_dm1_amiga36_package_ready(rootMatchedPaths[rootIndex][i])) continue;
+                    !m12_dm1_amiga36_package_ready(rootMatchedPaths[rootIndex][i], status->dm1DungeonLanguage)) continue;
                 version->matched = 1;
                 matchedAny = 1;
                 m12_copy_string(version->matchedPath,
@@ -6201,7 +6217,7 @@ static void m12_select_dm1_loose_file(M12_AssetStatus* status, int gameIndex,
          * materialization when its programs or language dungeon are absent. */
         ownerReady = 1;
     } else {
-        ownerReady = m12_dm1_complete_default_owner(selected, md5, dungeon);
+        ownerReady = m12_dm1_complete_default_owner(selected, md5, dungeon, status->dm1DungeonLanguage);
     }
     for (i = 0U; i < g_games[gameIndex].versionCount; ++i) {
         M12_AssetVersionStatus* version = &status->versions[gameIndex][i];
@@ -6277,10 +6293,14 @@ static void m12_report_dm1_selected_files(M12_AssetStatus* status,
     }
     if (m12_dm1_loose_dungeon_md5(md5)) {
         char dungeon[ASSET_PATH_MAX], dungeonMd5[33];
-        int valid = m12_dm1_default_dungeon_identity(graphics, md5, dungeon, dungeonMd5);
+        int valid = m12_dm1_default_dungeon_identity(graphics, md5, dungeon, dungeonMd5, status->dm1DungeonLanguage);
         for (i = 0U; i < status->requiredFileCounts[gameIndex]; ++i) {
             M12_AssetRequiredFileStatus* file = &status->requiredFiles[gameIndex][i];
             if (!file->roleId || strcmp(file->roleId, "dungeon") != 0) continue;
+            if (status->dm1DungeonLanguage != 0 &&
+                (strcmp(md5, "f934d97e43e1ba6e5159839acbcd0611") == 0 ||
+                 strcmp(md5, "7f9458e4a3972d06e649a6fa85a7f34b") == 0))
+                file->label = m12_dm1_world_name(md5, status->dm1DungeonLanguage);
             file->matched = valid;
             file->matchedPath[0] = file->sourcePath[0] = file->matchedHash[0] = '\0';
             if (valid) {
@@ -6291,7 +6311,7 @@ static void m12_report_dm1_selected_files(M12_AssetStatus* status,
             break;
         }
         if (valid) {
-            const char* missing = m12_dm1_missing_startup_companion(graphics, md5, dungeonMd5);
+            const char* missing = m12_dm1_missing_startup_companion(graphics, md5, dungeonMd5, status->dm1DungeonLanguage);
             if (missing && status->requiredFileCounts[gameIndex] < M12_ASSET_MAX_REQUIRED_FILES_PER_GAME) {
                 M12_AssetRequiredFileStatus* file = &status->requiredFiles[gameIndex]
                     [status->requiredFileCounts[gameIndex]++];
@@ -6404,8 +6424,12 @@ static int m12_fill_required_files(M12_AssetStatus* status,
             const M12_AssetVersionStatus* owner =
                 m12_first_matched_required_version(status, gameIndex, spec);
             char dungeon[ASSET_PATH_MAX];
+            if (status->dm1DungeonLanguage != 0 &&
+                (strcmp(owner->matchedMd5, "f934d97e43e1ba6e5159839acbcd0611") == 0 ||
+                 strcmp(owner->matchedMd5, "7f9458e4a3972d06e649a6fa85a7f34b") == 0))
+                fileStatus->label = m12_dm1_world_name(owner->matchedMd5, status->dm1DungeonLanguage);
             if (m12_dm1_complete_default_owner(owner->matchedPath,
-                                             owner->matchedMd5, dungeon)) {
+                                             owner->matchedMd5, dungeon, status->dm1DungeonLanguage)) {
                 fileStatus->matched = 1;
                 m12_copy_string(fileStatus->matchedPath, sizeof(fileStatus->matchedPath), dungeon);
                 (void)asset_file_md5_hex(dungeon, fileStatus->matchedHash);
@@ -6652,7 +6676,7 @@ static void m12_apply_required_game_availability(M12_AssetStatus* status,
                 m12_dm1_loose_dungeon_md5(version->matchedMd5)) {
                 char dungeon[ASSET_PATH_MAX], md5[33];
                 if (!m12_dm1_default_dungeon_owner(version->matchedPath,
-                        version->matchedMd5, dungeon, md5)) {
+                        version->matchedMd5, dungeon, md5, status->dm1DungeonLanguage)) {
                     fprintf(stderr, "firestaff: DM1 %s virtual dungeon owner rejected: %s\n",
                             version->versionId, version->matchedPath);
                     version->matched = 0;
@@ -6684,7 +6708,7 @@ static void m12_apply_required_game_availability(M12_AssetStatus* status,
                 }
             }
             if (version->matched && strcmp(version->versionId, "amiga36-multi") == 0 &&
-                !m12_dm1_amiga36_package_ready(version->matchedPath)) {
+                !m12_dm1_amiga36_package_ready(version->matchedPath, status->dm1DungeonLanguage)) {
                 version->matched = 0;
                 version->matchedPath[0] = version->matchedMd5[0] = '\0';
                 rejected = 1;
@@ -7663,6 +7687,7 @@ static int m12_scan_explicit_file_request(M12_AssetStatus* status,
     (void)options;
 #endif
     memset(status, 0, sizeof(*status));
+    status->dm1DungeonLanguage = m12_dm1_scan_language(options);
     FirestaffTheronMedia_Init(&status->theronMedia);
     if (FSP_ParentDir(parent, sizeof(parent), requestedDataDir)) {
         m12_copy_string(status->dataDir, sizeof(status->dataDir), parent);
@@ -7924,6 +7949,7 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
     if (!status) {
         return 0;
     }
+    status->dm1DungeonLanguage = m12_dm1_scan_language(options);
     /* Fresh full scan: drop missing-extractor diagnostics from any previous
      * pass so the launcher only reports archives skipped by this scan. */
     asset_scan_clear_missing_extractor_diagnostics();
@@ -8034,6 +8060,7 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
         return 1;
     }
     memset(status, 0, sizeof(*status));
+    status->dm1DungeonLanguage = m12_dm1_scan_language(options);
     m12_scan_progress_init(&status->scanProgress);
     progressCtx.status = status;
     FirestaffTheronMedia_Init(&status->theronMedia);
@@ -8426,9 +8453,10 @@ void M12_AssetStatus_ScanGameWithOptions(
     }
     gameIndex = m12_game_index_from_id(gameId);
     if (gameIndex < 0) {
-        M12_AssetStatus_Scan(status, requestedDataDir);
+        (void)M12_AssetStatus_ScanWithOptions(status, requestedDataDir, options);
         return;
     }
+    status->dm1DungeonLanguage = m12_dm1_scan_language(options);
     if (gameId && strcmp(gameId, "theron") == 0) {
         if (m12_reuse_verified_theron_refresh(status, requestedDataDir)) {
             return;
@@ -8469,6 +8497,7 @@ void M12_AssetStatus_ScanGameWithOptions(
     }
 
     memset(status, 0, sizeof(*status));
+    status->dm1DungeonLanguage = m12_dm1_scan_language(options);
     FirestaffTheronMedia_Init(&status->theronMedia);
     m12_scan_progress_init(&status->scanProgress);
     progressCtx.status = status;
@@ -8878,7 +8907,7 @@ int M12_AssetStatus_PrepareDM1RuntimeVersion(
     version = &status->versions[gameIndex][versionIndex];
     if (!version->matched || !version->matchedPath[0]) return 0;
     if (strcmp(versionId, "amiga36-multi") == 0 &&
-        !m12_dm1_amiga36_package_ready(version->matchedPath)) return 0;
+        !m12_dm1_amiga36_package_ready(version->matchedPath, status->dm1DungeonLanguage)) return 0;
     if (strcmp(versionId, "fmtowns-en") == 0 ||
         strcmp(versionId, "fmtowns-ja") == 0) {
         return M12_AssetStatus_MaterializeDM1FmtownsRuntimeVersion(
