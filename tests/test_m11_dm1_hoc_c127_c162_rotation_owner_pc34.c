@@ -232,7 +232,20 @@ int main(void)
         fprintf(stderr, "two original PC34 champion status clicks did not switch 0 -> 1\n");
         goto fail;
     }
-    printf("ok: real PC34 C162 clears only C127=%d while rotated to C127=%d; M648/C10 restores text=%d; status clicks switch champion 0->1\n",
+    /* ReDMCSB COMMAND.C:484-488 G0455 binds the visible champion names
+     * (C159..C162, y=0..6) to C016..C019. Exercise the exact top strip the
+     * macOS report describes, in addition to the broader C012..C015 status
+     * surface above. */
+    if (M11_GameView_HandlePointerButton(&state, 21, 3,
+            M11_DM1_MOUSE_MASK_LEFT) != M11_GAME_INPUT_REDRAW ||
+        state.world.party.activeChampionIndex != 0 ||
+        M11_GameView_HandlePointerButton(&state, 90, 3,
+            M11_DM1_MOUSE_MASK_LEFT) != M11_GAME_INPUT_REDRAW ||
+        state.world.party.activeChampionIndex != 1) {
+        fprintf(stderr, "two original PC34 champion name clicks did not switch 0 -> 1\n");
+        goto fail;
+    }
+    printf("ok: real PC34 C162 clears only C127=%d while rotated to C127=%d; M648/C10 restores text=%d; status and name clicks switch champion 0->1\n",
            mirrorA.ordinal, mirrorB.ordinal, text.textIndex);
     M11_GameView_Shutdown(&state);
     return 0;
