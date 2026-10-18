@@ -3,10 +3,10 @@
 2026-10-18 current-source no-argument launcher regression:
 `tests/test_firestaff_cli_startup_diagnostics_real_media.sh` now starts the
 local build without `--game` using authentic DM1 DOS, CSB Amiga and DM2 DOS
-archives in an isolated data root. The full original-media diagnostics script
-passed. The no-game route reports `game=none mode=menu`, discovers all three
-games and never hands off to gameplay. SDL dummy video/audio does not verify
-native display or physical input.
+archives in an isolated default `~/.firestaff/data/{dm1,csb,dm2}` tree. The
+no-game route reports `game=none mode=menu`, discovers all three games, runs
+the menu loop to its no-launch exit, and never hands off to gameplay. SDL
+dummy video/audio does not verify native display or physical input.
 
 2026-10-19: the registered CTest for that original-media diagnostics matrix
 passed through CTest with the installed authentic archives in 219 seconds.
