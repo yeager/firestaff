@@ -1,3 +1,12 @@
+2026-10-19 current-source original-media CSB Amiga 3.5 CTRaw startup retest:
+`csb_v1_amiga35_ctraw_native_cli_boot`, `csb_v1_amiga35_ctraw_native_menu_boot`,
+`csb_v1_amiga35_ctraw_multilingual_menu_boot` and
+`csb_v1_amiga35_ctraw_direct_raw_menu_boot` passed 4/4 in 147.63 seconds.
+The direct CLI and all three M12 routes reached authenticated loaded runtime
+and movement from the original CTRaw archive or byte-preserving staged forms.
+SDL dummy output verifies these startup handoffs, not native display, audio or
+physical input parity.
+
 2026-10-18 v3.0.386 original-media CLI/menu retest: `test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh returns` passed the authentic CSB FM Towns, Atari ST and Amiga routes. Direct `--game csb` exits after Return to Menu without reopening the launcher, and every tested return scan found DM1, CSB and DM2. The diagnostics regression also passed the mixed-installation AUTO preference for original FM Towns over Amiga. These runs used the published arm64 binary with SDL dummy output; physical display/input and complete platform parity remain open.
 
 # Firestaff TODO — CSB
