@@ -2,10 +2,10 @@
   original Amiga 3.6 and related platform media. Its A36 language coverage
   reaches the exact authenticated French and German dungeon from both loose
   files and the original ZIP through M11 direct runtime and M12, and rejects
-  a mismatched world. Updated the public platform status to distinguish those
-  routes from English direct-CLI coverage. CLI edition selection for French/
-  German, source-language graphics, hardware output and wider parity remain
-  open.
+  a mismatched world. The original-media CLI regression also passes with
+  `--lang fr` and `--lang de`, selecting the corresponding original A36
+  dungeon from the specified ZIP. Source-language graphics, hardware output
+  and wider parity remain open.
 
 - 2026-10-18: Extended the isolated DM1 PC selector test input to send one
   fresh Enter through the ordinary SDL event path after the original closed

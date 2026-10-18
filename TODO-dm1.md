@@ -22,6 +22,11 @@ the native C696 entrance zones, 64 two-pixel door steps and fifteen palette
 steps. SDL dummy output does not establish original-emulator frame alignment,
 native audio, full gameplay or display parity.
 
+2026-10-18 Amiga 3.6 language startup: the original-media regression now also
+starts the hash-verified French and German dungeon files through direct CLI
+`--lang fr` / `--lang de`, M11 direct runtime handoff and the M12 menu. The
+source-language graphics selection through G2004 remains open.
+
 2026-10-18 v3.0.386 original-media CLI/menu retest: `test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh returns` passed the authentic DM1 PC, FM Towns, Atari ST and Amiga routes. The direct `--game dm1` route also exits after Return to Menu instead of reopening the launcher, and every tested return scan found DM1, CSB and DM2. `test_firestaff_cli_startup_diagnostics_real_media.sh` passed the FM Towns default-selection and original PC34/Towns title-cadence checks. These runs used the published arm64 binary with SDL dummy output; physical display, input latency and complete platform parity remain open.
 
 2026-10-18 Apple IIGS startup retest: `test_firestaff_iigs_cli_real_media.sh`
