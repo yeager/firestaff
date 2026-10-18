@@ -1,3 +1,11 @@
+2026-10-18 French DOS ZIP startup retest: the published arm64 binary passed
+`test_dm1_v1_dos_fr_zip_cli_boot.sh` with the authentic repacked
+`Dungeon-Master_DOS_FR_EUDATA.zip`. Direct CLI and M12 launch reached the
+native IMG3 runtime and accepted a source-owned movement step. The original
+RAR 2.0 wrapper remains unsupported; the repacked ZIP and extracted original
+files are supported paths. SDL dummy output does not establish native display,
+input-latency or audio parity.
+
 2026-10-18 Amiga 3.6 startup retest: the published arm64 binary passed
 `test_dm1_v1_amiga36_original_media_cli_boot.sh` against the authentic
 `Dungeon-Master_Amiga_36.zip`. Direct CLI archive and discovered-directory

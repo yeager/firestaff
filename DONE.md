@@ -7,6 +7,11 @@
   load the same runtime catalogs as in-tree builds. `m12_data_dir_cancel`
   passed on macOS with the configured original-media collection.
 
+- 2026-10-18: The authentic repacked DM1 French DOS ZIP passed direct CLI and
+  M12 startup, IMG3 handoff and a source-owned movement step. RAR 2.0 itself
+  remains unsupported; the ZIP and manually extracted original files are the
+  supported paths.
+
 - 2026-10-15: Re-ran the original FM Towns direct-exit matrix for DM1,
   CSB and DM2 on the macOS build containing `66854d163`. Each `--game`
   session reached its source-owned runtime and exited after the in-game
