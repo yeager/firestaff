@@ -495,7 +495,7 @@ if [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
             'enter,right,enter,enter,wait:1000,click:100:100,key:enter,wait:300,back,wait:10,enter' \
             45000 \
             'startup-frame game=csb .*phase=inactive .*level-loaded=1 map=0 party=9,0 dir=2 champions=0' \
-            'CSB READY: gameId=csb dataDir=.*variant=csb-amiga-a31m .*handoff=a31m-titl-dat' \
+            'CSB READY: gameId=csb dataDir=.*variant=(?:csb-amiga-a31m.*handoff=a31m-titl-dat|csb-amiga-a31e.*handoff=a31e-appb-bjeload-c03)' \
             "$amiga_data_root" 320 200 csb-amiga
     else
         if [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
