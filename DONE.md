@@ -1,5 +1,12 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-18: M12 scan progress now translates the `search root` and
+  `matching editions` phases instead of exposing their internal English task
+  names. The locale regression checks the English and Swedish labels. CTest
+  now supplies the source `po/` directory explicitly, so out-of-source builds
+  load the same runtime catalogs as in-tree builds. `m12_data_dir_cancel`
+  passed on macOS with the configured original-media collection.
+
 - 2026-10-15: Re-ran the original FM Towns direct-exit matrix for DM1,
   CSB and DM2 on the macOS build containing `66854d163`. Each `--game`
   session reached its source-owned runtime and exited after the in-game

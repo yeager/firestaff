@@ -1222,7 +1222,13 @@ static void check_modern_scan_progress_standalone_render(void) {
                      0, "enumerating ZIP candidates"),
                  "CHECKING ORIGINAL FILE CANDIDATES") == 0);
     CHECK(strcmp(M12_StartupMenu_ScanTaskDisplayForLocale(
+                     0, "search root"),
+                 "CHECKING ORIGINAL FILE CANDIDATES") == 0);
+    CHECK(strcmp(M12_StartupMenu_ScanTaskDisplayForLocale(
                      0, "authenticating ZIP candidate"),
+                 "MATCHING GAME VERSIONS") == 0);
+    CHECK(strcmp(M12_StartupMenu_ScanTaskDisplayForLocale(
+                     0, "matching editions"),
                  "MATCHING GAME VERSIONS") == 0);
     CHECK(strcmp(M12_StartupMenu_ScanTaskDisplayForLocale(
                      0, "ZIP directory incomplete"),
@@ -1234,7 +1240,29 @@ static void check_modern_scan_progress_standalone_render(void) {
 }
 
 static void check_scan_progress_uses_display_names(void) {
+    static const struct {
+        const char* task;
+        const char* englishLabel;
+    } scanTasks[] = {
+        {"starting", "STARTING"},
+        {"checking cached resume paths", "CHECKING CACHED RESUME PATHS"},
+        {"checking direct launch path", "CHECKING DIRECT LAUNCH PATH"},
+        {"checking explicit file request", "CHECKING EXPLICIT FILE REQUEST"},
+        {"building search roots", "BUILDING SEARCH ROOTS"},
+        {"checking original file candidates", "CHECKING ORIGINAL FILE CANDIDATES"},
+        {"search root", "CHECKING ORIGINAL FILE CANDIDATES"},
+        {"enumerating ZIP candidates", "CHECKING ORIGINAL FILE CANDIDATES"},
+        {"matching editions", "MATCHING GAME VERSIONS"},
+        {"matching game versions", "MATCHING GAME VERSIONS"},
+        {"authenticating ZIP candidate", "MATCHING GAME VERSIONS"},
+        {"matching required files", "MATCHING REQUIRED FILES"},
+        {"materializing launch cache", "MATERIALIZING LAUNCH CACHE"},
+        {"refreshing media metadata", "REFRESHING MEDIA METADATA"},
+        {"ZIP directory incomplete", "SCANNING GAME DATA"},
+        {"ZIP inventory incomplete", "SCANNING GAME DATA"},
+    };
     int languageIndex;
+    size_t taskIndex;
     const char* dm1 = M12_StartupMenu_GameDisplayTitleForLocale(0, "dm1");
     const char* csb = M12_StartupMenu_GameDisplayTitleForLocale(0, "csb");
     const char* dm2 = M12_StartupMenu_GameDisplayTitleForLocale(0, "dm2");
@@ -1265,6 +1293,25 @@ static void check_scan_progress_uses_display_names(void) {
     CHECK(strcmp(M12_StartupMenu_ScanTaskDisplayForLocale(
                      1, "matching game versions"),
                  "MATCHAR SPELVERSIONER") == 0);
+    CHECK(strcmp(M12_StartupMenu_ScanTaskDisplayForLocale(
+                     1, "search root"),
+                 "KONTROLLERAR KANDIDATER FÖR ORIGINALFILER") == 0);
+    CHECK(strcmp(M12_StartupMenu_ScanTaskDisplayForLocale(
+                     1, "matching editions"),
+                 "MATCHAR SPELVERSIONER") == 0);
+
+    for (taskIndex = 0U;
+         taskIndex < sizeof(scanTasks) / sizeof(scanTasks[0]); ++taskIndex) {
+        const char* translatedLabel = M12_StartupMenu_TranslateForLocale(
+            1, scanTasks[taskIndex].englishLabel);
+        CHECK(strcmp(M12_StartupMenu_ScanTaskDisplayForLocale(
+                         0, scanTasks[taskIndex].task),
+                     scanTasks[taskIndex].englishLabel) == 0);
+        CHECK(translatedLabel && strcmp(
+                  M12_StartupMenu_ScanTaskDisplayForLocale(
+                      1, scanTasks[taskIndex].task),
+                  translatedLabel) == 0);
+    }
 
     for (languageIndex = 0; languageIndex < 19; ++languageIndex) {
         CHECK(strcmp(M12_StartupMenu_GameDisplayTitleForLocale(

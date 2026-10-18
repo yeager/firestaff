@@ -55405,7 +55405,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_data_dir_cancel.c")
         COMMAND test_m12_data_dir_cancel
     )
     set(_m12_data_dir_cancel_environment
-        "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/data-dir-cancel-scratch;SDL_VIDEODRIVER=dummy")
+        "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/data-dir-cancel-scratch;SDL_VIDEODRIVER=dummy;FIRESTAFF_LOCALE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/po")
     if(IS_DIRECTORY "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1" AND
        IS_DIRECTORY "${FIRESTAFF_WORKSPACE_DATA_DIR}/csb" AND
        IS_DIRECTORY "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2" AND
