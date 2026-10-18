@@ -1868,14 +1868,6 @@ without restoring versions, availability or runtime directories. Batch diagnosti
 lookup chooses one graphics path per catalog hash; this does not prove complete
 intra-archive duplicate diagnostics or directory-selected/mixed-edition messages.
 
-Source-audited next intake case (not yet reproduced with original media):
-`m12_explicit_path_is_archive` treats ST/STX/MSA as precise disk roots but omits
-ADF. Explicit ADF input can therefore promote to its parent and skip native
-owner scoping before late preservation-package admission. Reproduce using an
-unchanged original OFS ADF beside another canonical ready Amiga archive, then
-verify the selected physical owner and failure isolation. Do not infer raw/MFM
-ADF support from an OFS intake fix.
-
 2026-10-16 explicit ADF ownership: direct original Amiga 3.6 disk selection
 previously launched a neighboring canonical Amiga 2.0 archive. DM1 intake now
 keeps the selected OFS disk as its source root; shared CSB/DM2 per-game search
