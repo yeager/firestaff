@@ -48,28 +48,28 @@ msgstr ""
 msgid "CHECK DUNGEON.DAT"
 msgstr ""
 
-#: src/engine/main_loop_m11.c:455 src/engine/main_loop_m11.c:7596
-#: src/engine/main_loop_m11.c:7619 src/ui/menu_startup_m12.c:1102
+#: src/engine/main_loop_m11.c:455 src/engine/main_loop_m11.c:7602
+#: src/engine/main_loop_m11.c:7625 src/ui/menu_startup_m12.c:1102
 msgid "ESC RETURNS TO MENU"
 msgstr ""
 
-#: src/engine/main_loop_m11.c:7592 src/engine/main_loop_m11.c:7615
+#: src/engine/main_loop_m11.c:7598 src/engine/main_loop_m11.c:7621
 msgid "CSB UTILITY DISK NOT READY"
 msgstr ""
 
-#: src/engine/main_loop_m11.c:7594
+#: src/engine/main_loop_m11.c:7600
 msgid "VERIFIED FM TOWNS CSB MEDIA REQUIRED"
 msgstr ""
 
-#: src/engine/main_loop_m11.c:7617
+#: src/engine/main_loop_m11.c:7623
 msgid "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:279 src/ui/menu_startup_m12.c:6143
+#: src/ui/menu_startup_m12.c:279 src/ui/menu_startup_m12.c:6161
 msgid "ACCESSIBILITY"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:279 src/ui/menu_startup_m12.c:6140
+#: src/ui/menu_startup_m12.c:279 src/ui/menu_startup_m12.c:6158
 msgid "AUDIO"
 msgstr ""
 
@@ -82,12 +82,12 @@ msgstr ""
 msgid "GAME"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:279 src/ui/menu_startup_m12.c:6125
-#: src/ui/menu_startup_m12.c:11265
+#: src/ui/menu_startup_m12.c:279 src/ui/menu_startup_m12.c:6143
+#: src/ui/menu_startup_m12.c:11283
 msgid "GRAPHICS"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:280 src/ui/menu_startup_m12.c:6146
+#: src/ui/menu_startup_m12.c:280 src/ui/menu_startup_m12.c:6164
 msgid "ONLINE"
 msgstr ""
 
@@ -267,7 +267,7 @@ msgstr ""
 
 #: src/ui/menu_startup_m12.c:486 src/ui/menu_startup_m12.c:492
 #: src/ui/menu_startup_m12.c:514 src/ui/menu_startup_m12.c:517
-#: src/ui/menu_startup_m12.c:5590 src/ui/menu_startup_m12.c:5734
+#: src/ui/menu_startup_m12.c:5608 src/ui/menu_startup_m12.c:5752
 msgid "AUTO"
 msgstr ""
 
@@ -354,7 +354,7 @@ msgstr ""
 #: src/ui/menu_startup_m12.c:496 src/ui/menu_startup_m12.c:512
 #: src/ui/menu_startup_m12.c:518 src/ui/menu_startup_m12.c:520
 #: src/ui/menu_startup_m12.c:521 src/ui/menu_startup_m12.c:522
-#: src/ui/menu_startup_m12.c:5720 src/ui/menu_startup_m12.c:5825
+#: src/ui/menu_startup_m12.c:5738 src/ui/menu_startup_m12.c:5843
 msgid "OFF"
 msgstr ""
 
@@ -411,8 +411,8 @@ msgstr ""
 msgid "AVAILABLE"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:515 src/ui/menu_startup_m12.c:11290
-#: src/ui/menu_startup_m12.c:13455 src/ui/menu_startup_render_modern_m12.c:2126
+#: src/ui/menu_startup_m12.c:515 src/ui/menu_startup_m12.c:11308
+#: src/ui/menu_startup_m12.c:13473 src/ui/menu_startup_render_modern_m12.c:2126
 msgid "UNAVAILABLE"
 msgstr ""
 
@@ -525,14 +525,14 @@ msgid "REMASTERED"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:814 src/ui/menu_startup_m12.c:835
-#: src/ui/menu_startup_m12.c:10705 src/ui/menu_startup_m12.c:11148
+#: src/ui/menu_startup_m12.c:10723 src/ui/menu_startup_m12.c:11166
 #: src/ui/menu_startup_render_modern_m12.c:1543
 #: src/ui/menu_startup_render_modern_m12.c:2778
 msgid "DUNGEON MASTER"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:815 src/ui/menu_startup_m12.c:845
-#: src/ui/menu_startup_m12.c:10707 src/ui/menu_startup_m12.c:11162
+#: src/ui/menu_startup_m12.c:10725 src/ui/menu_startup_m12.c:11180
 #: src/ui/menu_startup_render_modern_m12.c:1544
 #: src/ui/menu_startup_render_modern_m12.c:2781
 msgid "CHAOS STRIKES BACK"
@@ -559,16 +559,16 @@ msgstr ""
 msgid "CSB UTILITY DISK — HINT ORACLE"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:822 src/ui/menu_startup_m12.c:12234
-#: src/ui/menu_startup_m12.c:12237 src/ui/menu_startup_render_modern_m12.c:1901
+#: src/ui/menu_startup_m12.c:822 src/ui/menu_startup_m12.c:12252
+#: src/ui/menu_startup_m12.c:12255 src/ui/menu_startup_render_modern_m12.c:1901
 #: src/ui/menu_startup_render_modern_m12.c:2174
 msgid "MUSEUM OF LORE"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:823 src/ui/menu_startup_m12.c:9039
-#: src/ui/menu_startup_m12.c:9608 src/ui/menu_startup_m12.c:10901
-#: src/ui/menu_startup_m12.c:12269 src/ui/menu_startup_m12.c:12272
-#: src/ui/menu_startup_m12.c:12417
+#: src/ui/menu_startup_m12.c:823 src/ui/menu_startup_m12.c:9057
+#: src/ui/menu_startup_m12.c:9626 src/ui/menu_startup_m12.c:10919
+#: src/ui/menu_startup_m12.c:12287 src/ui/menu_startup_m12.c:12290
+#: src/ui/menu_startup_m12.c:12435
 msgid "SETTINGS"
 msgstr ""
 
@@ -788,8 +788,8 @@ msgstr ""
 msgid "CHRISTOPHE FONTANEL DOCUMENTED VITAL HISTORY"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:869 src/ui/menu_startup_m12.c:12251
-#: src/ui/menu_startup_m12.c:12254
+#: src/ui/menu_startup_m12.c:869 src/ui/menu_startup_m12.c:12269
+#: src/ui/menu_startup_m12.c:12272
 msgid "CREDITS"
 msgstr ""
 
@@ -933,8 +933,8 @@ msgstr ""
 msgid "PERSISTED OPTIONS"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:1093 src/ui/menu_startup_m12.c:11263
-#: src/ui/menu_startup_m12.c:13467
+#: src/ui/menu_startup_m12.c:1093 src/ui/menu_startup_m12.c:11281
+#: src/ui/menu_startup_m12.c:13485
 msgid "LANGUAGE"
 msgstr ""
 
@@ -958,8 +958,8 @@ msgstr ""
 msgid "CHANGES SAVE IMMEDIATELY TO CONFIG"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:1099 src/ui/menu_startup_m12.c:11589
-#: src/ui/menu_startup_m12.c:11631
+#: src/ui/menu_startup_m12.c:1099 src/ui/menu_startup_m12.c:11607
+#: src/ui/menu_startup_m12.c:11649
 msgid "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
 msgstr ""
 
@@ -967,7 +967,7 @@ msgstr ""
 msgid "ENTER OR ESC RETURNS TO MENU"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:1101 src/ui/menu_startup_m12.c:9049
+#: src/ui/menu_startup_m12.c:1101 src/ui/menu_startup_m12.c:9067
 msgid "READY TO LAUNCH"
 msgstr ""
 
@@ -1041,11 +1041,11 @@ msgstr ""
 msgid "RESTART WITH THE OPTION, THEN RESCAN GAME DATA"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:1997 src/ui/menu_startup_m12.c:9619
+#: src/ui/menu_startup_m12.c:1997 src/ui/menu_startup_m12.c:9637
 msgid "Dungeon Master"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:1999 src/ui/menu_startup_m12.c:9619
+#: src/ui/menu_startup_m12.c:1999 src/ui/menu_startup_m12.c:9637
 msgid "Chaos Strikes Back"
 msgstr ""
 
@@ -1057,7 +1057,7 @@ msgstr ""
 msgid "Dungeon Master Nexus"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:2006 src/ui/menu_startup_m12.c:9620
+#: src/ui/menu_startup_m12.c:2006 src/ui/menu_startup_m12.c:9638
 msgid "Theron's Quest"
 msgstr ""
 
@@ -1104,13 +1104,13 @@ msgstr ""
 
 #: src/ui/menu_startup_m12.c:2050 src/ui/menu_startup_m12.c:2405
 #: src/ui/menu_startup_m12.c:2514 src/ui/menu_startup_m12.c:2767
-#: src/ui/menu_startup_m12.c:2871 src/ui/menu_startup_m12.c:10449
-#: src/ui/menu_startup_m12.c:14223
+#: src/ui/menu_startup_m12.c:2871 src/ui/menu_startup_m12.c:10467
+#: src/ui/menu_startup_m12.c:14241
 msgid "SCANNING GAME DATA"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:2090 src/ui/menu_startup_m12.c:3437
-#: src/ui/menu_startup_m12.c:5841 src/ui/menu_startup_m12.c:6081
+#: src/ui/menu_startup_m12.c:5859 src/ui/menu_startup_m12.c:6099
 msgid "NOT SET"
 msgstr ""
 
@@ -1139,8 +1139,8 @@ msgstr ""
 msgid "ALLOW ACCESS IN SYSTEM SETTINGS, THEN RESCAN"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:2315 src/ui/menu_startup_m12.c:10383
-#: src/ui/menu_startup_m12.c:10508
+#: src/ui/menu_startup_m12.c:2315 src/ui/menu_startup_m12.c:10401
+#: src/ui/menu_startup_m12.c:10526
 msgid "TITLE START AVAILABLE"
 msgstr ""
 
@@ -1161,12 +1161,12 @@ msgid "WAITING FOR CURRENT FILE CHECK TO FINISH"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:2682 src/ui/menu_startup_m12.c:2899
-#: src/ui/menu_startup_m12.c:14180
+#: src/ui/menu_startup_m12.c:14198
 msgid "DATA SCAN CANCELLED"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:2683 src/ui/menu_startup_m12.c:2902
-#: src/ui/menu_startup_m12.c:10451 src/ui/menu_startup_m12.c:14183
+#: src/ui/menu_startup_m12.c:10469 src/ui/menu_startup_m12.c:14201
 msgid "GAME AVAILABILITY WAS NOT UPDATED"
 msgstr ""
 
@@ -1175,11 +1175,11 @@ msgid "DATA DIRECTORY NOT FOUND"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:2721 src/ui/menu_startup_m12.c:2856
-#: src/ui/menu_startup_m12.c:2903 src/ui/menu_startup_m12.c:14184
+#: src/ui/menu_startup_m12.c:2903 src/ui/menu_startup_m12.c:14202
 msgid "CHOOSE AN EXISTING FOLDER"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:2900 src/ui/menu_startup_m12.c:14181
+#: src/ui/menu_startup_m12.c:2900 src/ui/menu_startup_m12.c:14199
 msgid "DATA SCAN FAILED"
 msgstr ""
 
@@ -1211,7 +1211,7 @@ msgstr ""
 msgid "CHECK QUICK RESUME SAVE"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:3078 src/ui/menu_startup_m12.c:13756
+#: src/ui/menu_startup_m12.c:3078 src/ui/menu_startup_m12.c:13774
 msgid "NO SAVES FOUND"
 msgstr ""
 
@@ -1247,12 +1247,12 @@ msgstr ""
 msgid "THE LAUNCHER WILL RESCAN AFTER SELECTION"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:3436 src/ui/menu_startup_m12.c:6015
+#: src/ui/menu_startup_m12.c:3436 src/ui/menu_startup_m12.c:6033
 msgid "CUSTOM MUSIC"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:3441 src/ui/menu_startup_m12.c:3450
-#: src/ui/menu_startup_m12.c:13991 src/ui/menu_startup_m12.c:13996
+#: src/ui/menu_startup_m12.c:14009 src/ui/menu_startup_m12.c:14014
 msgid "CUSTOM MUSIC FOLDER UNCHANGED"
 msgstr ""
 
@@ -1275,7 +1275,7 @@ msgid "SELECT A BROAD TTF OR OTF FONT"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:3478 src/ui/menu_startup_m12.c:3486
-#: src/ui/menu_startup_m12.c:14028
+#: src/ui/menu_startup_m12.c:14046
 msgid "UNICODE FONT UNCHANGED"
 msgstr ""
 
@@ -1288,587 +1288,587 @@ msgid "SELECT A .FSART FILE"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:3536 src/ui/menu_startup_m12.c:3544
-#: src/ui/menu_startup_m12.c:14069
+#: src/ui/menu_startup_m12.c:14087
 msgid "V2.2 ARTPACK UNCHANGED"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5818
+#: src/ui/menu_startup_m12.c:5836
 msgid "NEEDS LOGIN"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5820 src/ui/menu_startup_m12.c:11581
-#: src/ui/menu_startup_m12.c:11626
+#: src/ui/menu_startup_m12.c:5838 src/ui/menu_startup_m12.c:11599
+#: src/ui/menu_startup_m12.c:11644
 msgid "READY"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5822
+#: src/ui/menu_startup_m12.c:5840
 msgid "BACKEND PENDING"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5847
+#: src/ui/menu_startup_m12.c:5865
 msgid "SET"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5864 src/ui/menu_startup_m12.c:6077
+#: src/ui/menu_startup_m12.c:5882 src/ui/menu_startup_m12.c:6095
 msgid "EDITING"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5969
+#: src/ui/menu_startup_m12.c:5987
 msgid "SCALE"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5970 src/ui/menu_startup_m12.c:13515
+#: src/ui/menu_startup_m12.c:5988 src/ui/menu_startup_m12.c:13533
 msgid "ASPECT RATIO"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5971
+#: src/ui/menu_startup_m12.c:5989
 msgid "PIXEL SNAP"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5972
+#: src/ui/menu_startup_m12.c:5990
 msgid "FILTER"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5973
+#: src/ui/menu_startup_m12.c:5991
 msgid "VSYNC"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5974
+#: src/ui/menu_startup_m12.c:5992
 msgid "FPS OVERLAY"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5975
+#: src/ui/menu_startup_m12.c:5993
 msgid "VIEWPORT STYLE"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5976
+#: src/ui/menu_startup_m12.c:5994
 msgid "INPUT MODE"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5978
+#: src/ui/menu_startup_m12.c:5996
 msgid "TOUCH CONTROLS"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5979
+#: src/ui/menu_startup_m12.c:5997
 msgid "MOVEMENT MODE"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5980
+#: src/ui/menu_startup_m12.c:5998
 msgid "SMOOTH TURN PAN"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5981
+#: src/ui/menu_startup_m12.c:5999
 msgid "DATA DIRECTORY"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5982
+#: src/ui/menu_startup_m12.c:6000
 msgid "ORIGINAL DATA"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5983
+#: src/ui/menu_startup_m12.c:6001
 msgid "DEBUG OVERLAY"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5984
+#: src/ui/menu_startup_m12.c:6002
 msgid "DEVELOPER GATES"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5985
+#: src/ui/menu_startup_m12.c:6003
 msgid "MASTER VOLUME"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5986
+#: src/ui/menu_startup_m12.c:6004
 msgid "MUSIC VOLUME"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5987
+#: src/ui/menu_startup_m12.c:6005
 msgid "SFX VOLUME"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5988
+#: src/ui/menu_startup_m12.c:6006
 msgid "MUTE AUDIO"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5989
+#: src/ui/menu_startup_m12.c:6007
 msgid "AUDIO DEVICE"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5990
+#: src/ui/menu_startup_m12.c:6008
 msgid "BRIGHTNESS"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5991
+#: src/ui/menu_startup_m12.c:6009
 msgid "FONT SCALE"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5992
+#: src/ui/menu_startup_m12.c:6010
 msgid "UNICODE FONT"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5993
+#: src/ui/menu_startup_m12.c:6011
 msgid "HIGH CONTRAST"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5994
+#: src/ui/menu_startup_m12.c:6012
 msgid "COLORBLIND"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5995
+#: src/ui/menu_startup_m12.c:6013
 msgid "AUTO PAUSE"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5996
+#: src/ui/menu_startup_m12.c:6014
 msgid "THEME"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5997
+#: src/ui/menu_startup_m12.c:6015
 msgid "BACKGROUND"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5998
+#: src/ui/menu_startup_m12.c:6016
 msgid "QUICK RESUME"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:5999
+#: src/ui/menu_startup_m12.c:6017
 msgid "V2.2 ARTPACK"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6000
+#: src/ui/menu_startup_m12.c:6018
 msgid "RETROACHIEVEMENTS"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6001
+#: src/ui/menu_startup_m12.c:6019
 msgid "RETROACHIEVEMENTS HARDCORE"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6002
+#: src/ui/menu_startup_m12.c:6020
 msgid "RETROACHIEVEMENTS USER"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6003
+#: src/ui/menu_startup_m12.c:6021
 msgid "RETROACHIEVEMENTS API TOKEN"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6004
+#: src/ui/menu_startup_m12.c:6022
 msgid "RETROACHIEVEMENTS SERVER"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6005 src/ui/menu_startup_m12.c:13711
+#: src/ui/menu_startup_m12.c:6023 src/ui/menu_startup_m12.c:13729
 msgid "SAVE BROWSER"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6006
+#: src/ui/menu_startup_m12.c:6024
 msgid "SESSION TIMER"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6007
+#: src/ui/menu_startup_m12.c:6025
 msgid "MINIMAP"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6008
+#: src/ui/menu_startup_m12.c:6026
 msgid "AUTOMAP"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6009
+#: src/ui/menu_startup_m12.c:6027
 msgid "COMBAT LOG"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6010
+#: src/ui/menu_startup_m12.c:6028
 msgid "SOUNDTRACK"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6011
+#: src/ui/menu_startup_m12.c:6029
 msgid "AMBIENT SOUND"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6012
+#: src/ui/menu_startup_m12.c:6030
 msgid "AMBIENT VOLUME"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6013
+#: src/ui/menu_startup_m12.c:6031
 msgid "UI SCALE"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6014
+#: src/ui/menu_startup_m12.c:6032
 msgid "UI FONT"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6016
+#: src/ui/menu_startup_m12.c:6034
 msgid "CUSTOM DUNGEONS"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6017
+#: src/ui/menu_startup_m12.c:6035
 msgid "SCREENSHOTS"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6018
+#: src/ui/menu_startup_m12.c:6036
 msgid "ARTPACK"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6019
+#: src/ui/menu_startup_m12.c:6037
 msgid "STREAMER MODE"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6023
+#: src/ui/menu_startup_m12.c:6041
 msgid "EXPORT DM1 PC34 SAVE"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6024
+#: src/ui/menu_startup_m12.c:6042
 msgid "EXPORT SAVE MANIFEST"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6025
+#: src/ui/menu_startup_m12.c:6043
 msgid "IMPORT SAVE MANIFEST"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6086
+#: src/ui/menu_startup_m12.c:6104
 msgid "OPEN..."
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6104
+#: src/ui/menu_startup_m12.c:6122
 msgid "WRITE PC34..."
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6105
+#: src/ui/menu_startup_m12.c:6123
 msgid "WRITE..."
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6106
+#: src/ui/menu_startup_m12.c:6124
 msgid "READ..."
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6122
+#: src/ui/menu_startup_m12.c:6140
 msgid "GENERAL"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6128 src/ui/menu_startup_m12.c:13406
+#: src/ui/menu_startup_m12.c:6146 src/ui/menu_startup_m12.c:13424
 msgid "RENDERER"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6131
+#: src/ui/menu_startup_m12.c:6149
 msgid "INPUT"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6134
+#: src/ui/menu_startup_m12.c:6152
 msgid "DATA"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6137
+#: src/ui/menu_startup_m12.c:6155
 msgid "DEBUG"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6148
+#: src/ui/menu_startup_m12.c:6166
 msgid "APPEARANCE"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6667 src/ui/menu_startup_m12.c:6722
-#: src/ui/menu_startup_m12.c:11582 src/ui/menu_startup_m12.c:11627
+#: src/ui/menu_startup_m12.c:6685 src/ui/menu_startup_m12.c:6740
+#: src/ui/menu_startup_m12.c:11600 src/ui/menu_startup_m12.c:11645
 msgid "DATA FILES NOT FOUND"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6722
+#: src/ui/menu_startup_m12.c:6740
 msgid "ENTER FOR GAME MENU"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6723
+#: src/ui/menu_startup_m12.c:6741
 msgid "THIS GAME IS NOT SUPPORTED YET"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6835
+#: src/ui/menu_startup_m12.c:6853
 msgid "NO DM1 SAVES FOUND"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:6836
+#: src/ui/menu_startup_m12.c:6854
 msgid "SAVE OR IMPORT DM1 FIRST"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:7264
+#: src/ui/menu_startup_m12.c:7282
 msgid "LOADING SAVE"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:7304
+#: src/ui/menu_startup_m12.c:7322
 msgid "IMPORTING PARTY"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:7343
+#: src/ui/menu_startup_m12.c:7361
 msgid "IMPORT DM1 PARTY TO CSB?"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:7345
+#: src/ui/menu_startup_m12.c:7363
 msgid "ENTER IMPORTS / ESC CANCELS"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:7357
+#: src/ui/menu_startup_m12.c:7375
 msgid "ESC SETTINGS"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:7361
+#: src/ui/menu_startup_m12.c:7379
 msgid "ENTER LOAD   ACTION IMPORTS TO CSB   SAVE EXPORTS PC34   ESC SETTINGS"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:7363
+#: src/ui/menu_startup_m12.c:7381
 msgid "ENTER LOAD   ESC SETTINGS"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:8834 src/ui/menu_startup_m12.c:9046
+#: src/ui/menu_startup_m12.c:8852 src/ui/menu_startup_m12.c:9064
 msgid "NO SOURCE"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:9042
+#: src/ui/menu_startup_m12.c:9060
 msgid "SELECT TO VERIFY ORIGINAL DATA"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:9051
+#: src/ui/menu_startup_m12.c:9069
 msgid "MISSING OR MISMATCHED"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:9608 src/ui/menu_startup_render_modern_m12.c:2102
+#: src/ui/menu_startup_m12.c:9626 src/ui/menu_startup_render_modern_m12.c:2102
 msgid "EXTRAS"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:9608
+#: src/ui/menu_startup_m12.c:9626
 msgid "PLAY"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:9608
+#: src/ui/menu_startup_m12.c:9626
 msgid "QUIT"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:9612
+#: src/ui/menu_startup_m12.c:9630
 msgid "Start or continue a game"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:9613
+#: src/ui/menu_startup_m12.c:9631
 msgid "Display, video, audio and controls"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:9614
+#: src/ui/menu_startup_m12.c:9632
 msgid "Museum, bestiary, spell reference and more"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:9615
+#: src/ui/menu_startup_m12.c:9633
 msgid "Exit Firestaff"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:9620
+#: src/ui/menu_startup_m12.c:9638
 msgid "DM Nexus"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:9620
+#: src/ui/menu_startup_m12.c:9638
 msgid "Dungeon Master II"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:9629
+#: src/ui/menu_startup_m12.c:9647
 msgid "V1 / V2.0 / V2.1 / V2.2"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:9630 src/ui/menu_startup_m12.c:9631
+#: src/ui/menu_startup_m12.c:9648 src/ui/menu_startup_m12.c:9649
 msgid "V1 / V2"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:9632
+#: src/ui/menu_startup_m12.c:9650
 msgid "V1 / SATURN CAPTURE GATED"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:9633
+#: src/ui/menu_startup_m12.c:9651
 msgid "V1 Only (Phase 1)"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:9636 src/ui/menu_startup_m12.c:9637
-#: src/ui/menu_startup_m12.c:9638 src/ui/menu_startup_m12.c:9639
-#: src/ui/menu_startup_m12.c:9640
+#: src/ui/menu_startup_m12.c:9654 src/ui/menu_startup_m12.c:9655
+#: src/ui/menu_startup_m12.c:9656 src/ui/menu_startup_m12.c:9657
+#: src/ui/menu_startup_m12.c:9658
 msgid "No data files"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:10384
+#: src/ui/menu_startup_m12.c:10402
 msgid "MENU AND CAPTURE PROOFS NOT READY"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:10385
+#: src/ui/menu_startup_m12.c:10403
 msgid "TITLE START"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:10386
+#: src/ui/menu_startup_m12.c:10404
 msgid "VERIFIED SOURCE DATA"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:10512
+#: src/ui/menu_startup_m12.c:10530
 msgid "VERIFIED TITLE START; MENU AND CAPTURE STILL GATED"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:10550
+#: src/ui/menu_startup_m12.c:10568
 msgid "New Game (Original)"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:10551
+#: src/ui/menu_startup_m12.c:10569
 msgid "New Game (Original + Filters)"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:10552
+#: src/ui/menu_startup_m12.c:10570
 msgid "New Game (Original 10x Upscale)"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:10553
+#: src/ui/menu_startup_m12.c:10571
 msgid "Continue Saved Game"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:10554
+#: src/ui/menu_startup_m12.c:10572
 msgid "New Game (Modern Graphics)"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:10562
+#: src/ui/menu_startup_m12.c:10580
 msgid "Museum of Lore"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:10563
+#: src/ui/menu_startup_m12.c:10581
 msgid "Manual / Docs"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:10564
+#: src/ui/menu_startup_m12.c:10582
 msgid "Bestiary"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:10565
+#: src/ui/menu_startup_m12.c:10583
 msgid "Spell Reference"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:10566
+#: src/ui/menu_startup_m12.c:10584
 msgid "Map Viewer"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:10567
+#: src/ui/menu_startup_m12.c:10585
 msgid "Item Encyclopedia"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:10568
+#: src/ui/menu_startup_m12.c:10586
 msgid "Changelog"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:10569
+#: src/ui/menu_startup_m12.c:10587
 msgid "Screenshot Gallery"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:10598
+#: src/ui/menu_startup_m12.c:10616
 msgid "NO DATA SOURCE YET"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:10671
+#: src/ui/menu_startup_m12.c:10689
 msgid "Up/Down Navigate  |  Enter Select"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:10695
+#: src/ui/menu_startup_m12.c:10713
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Select"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:10724
+#: src/ui/menu_startup_m12.c:10742
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Start"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:10748
+#: src/ui/menu_startup_m12.c:10766
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Open"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:10892
+#: src/ui/menu_startup_m12.c:10910
 msgid "< > Switch tab   Up/Down Navigate   Enter Change"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:11550 src/ui/menu_startup_render_modern_m12.c:2320
+#: src/ui/menu_startup_m12.c:11568 src/ui/menu_startup_render_modern_m12.c:2320
 msgid "NO SUPPORTED NATIVE PLATFORM"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:11551
+#: src/ui/menu_startup_m12.c:11569
 msgid "ESC BACK"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:11569
+#: src/ui/menu_startup_m12.c:11587
 msgid "V2.1 UPSCALED"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:13383
+#: src/ui/menu_startup_m12.c:13401
 msgid "GAME OPTIONS"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:13420
+#: src/ui/menu_startup_m12.c:13438
 msgid "ARCHITECTURE"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:13433
+#: src/ui/menu_startup_m12.c:13451
 msgid "VERSION"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:13454
+#: src/ui/menu_startup_m12.c:13472
 msgid "PATCH"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:13480
+#: src/ui/menu_startup_m12.c:13498
 msgid "CHEATS"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:13493
+#: src/ui/menu_startup_m12.c:13511
 msgid "SPEED"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:13505
+#: src/ui/menu_startup_m12.c:13523
 msgid "ENABLE CHEATS TO UNLOCK SPEED / HOTKEYS"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:13527
+#: src/ui/menu_startup_m12.c:13545
 msgid "LOCKED BY V1 ORIGINAL MODE"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:13537
+#: src/ui/menu_startup_m12.c:13555
 msgid "RESOLUTION"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:13551
+#: src/ui/menu_startup_m12.c:13569
 msgid "LOCKED BY V2.0 FILTERED MODE"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:13572
+#: src/ui/menu_startup_m12.c:13590
 msgid "> DATA FILES NOT FOUND"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:13574
+#: src/ui/menu_startup_m12.c:13592
 msgid "> RENDERER UNAVAILABLE"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:13575
+#: src/ui/menu_startup_m12.c:13593
 msgid "> LAUNCH"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:13588
+#: src/ui/menu_startup_m12.c:13606
 msgid "ESC: BACK  ARROWS: NAVIGATE  ENTER: SELECT"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:13986
+#: src/ui/menu_startup_m12.c:14004
 msgid "CUSTOM MUSIC FOLDER SELECTED"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:13992
+#: src/ui/menu_startup_m12.c:14010
 msgid "NO FOLDER SELECTED"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:13997
+#: src/ui/menu_startup_m12.c:14015
 msgid "FOLDER MISSING OR PATH TOO LONG"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:14022
+#: src/ui/menu_startup_m12.c:14040
 msgid "UNICODE FONT SELECTED"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:14030 src/ui/menu_startup_m12.c:14071
+#: src/ui/menu_startup_m12.c:14048 src/ui/menu_startup_m12.c:14089
 msgid "NO FILE SELECTED"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:14031 src/ui/menu_startup_m12.c:14072
+#: src/ui/menu_startup_m12.c:14049 src/ui/menu_startup_m12.c:14090
 msgid "FILE PATH TOO LONG"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:14056
+#: src/ui/menu_startup_m12.c:14074
 msgid "V2.2 ARTPACK SELECTED"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:14062
+#: src/ui/menu_startup_m12.c:14080
 msgid "V2.2 ARTPACK REJECTED"
 msgstr ""
 
