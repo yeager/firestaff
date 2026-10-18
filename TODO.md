@@ -9,8 +9,9 @@ the menu loop to its no-launch exit, and never hands off to gameplay. SDL
 dummy video/audio does not verify native display or physical input.
 
 2026-10-19: the registered CTest for that original-media diagnostics matrix
-passed through CTest with the installed authentic archives in 219 seconds.
-Raise its timeout from 240 to 300 seconds to leave headroom for slower hosts.
+passed through CTest with the installed authentic archives in 224.47 seconds.
+Its timeout was raised from 240 to 300 seconds to leave headroom for slower
+hosts.
 
 2026-10-15 fresh original-media startup diagnostics retest on the Mac mini M4:
 `test_firestaff_cli_startup_diagnostics_real_media.sh` passed for DM1, CSB and
