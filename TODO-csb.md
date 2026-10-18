@@ -1,3 +1,9 @@
+2026-10-19 current-source original-media CSB Amiga startup retest:
+`csb_v1_amiga_native_cli_boot` passed in 67.44 seconds with the installed
+authentic Amiga expansion and FTL ZIP packages. Both M12 input routes reached
+their tested runtime handoff. SDL dummy output does not verify native Amiga
+display, audible playback or physical input parity.
+
 2026-10-19 current-source original-media CSB Atari STX startup retest:
 `csb_v1_atari_stx_native_cli_boot` passed in 137.17 seconds with the installed
 authentic STX package. It verified automatic edition discovery, the Atari
