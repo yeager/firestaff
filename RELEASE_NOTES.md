@@ -1,3 +1,36 @@
+# Firestaff v3.0.385
+
+## User-facing changes
+
+- `DM1 PC34 champion selection`: fix portrait/name clicks so they select the champion without stealing adjacent hand and inventory controls.
+- `DM1 PC34 selector`: restore the native Resume and Credits actions in the M12 selector flow.
+- `DM1 PC34 startup`: prevent held-key repeats from skipping title choices and honor the source title's interrupt outcome.
+- `DM1 Amiga HD startup`: admit authenticated HD media through the launcher and CLI.
+- `DM1 Amiga Quick Resume`: offer authenticated backup-only saves and load them read-only.
+- `DM1 media discovery`: prevent loose graphics and dungeon files from combining different installations.
+- `CLI without --game`: prevent Firestaff from entering DM1 automatically and keep the start menu visible.
+- `Start menu selection`: fix localized game selection when no game was requested explicitly.
+- `DM2 Macintosh Japanese media`: reject Japanese graphics-only media from the English application-backed startup path.
+- `--debug startup timing`: add separate presentation-stage output for input-to-present diagnostics.
+
+## Developer changes
+
+- `DM1 PC34 mouse routing`: add authentic-media checks for consecutive champion portrait/name selection and overlapping hand regions, including HiDPI pointer scaling.
+- `DM1 PC34 selector and startup`: verify Resume clicks, selector Enter input, title interruption, held-key suppression and source-owned selector completion.
+- `DM1 Amiga Quick Resume`: verify original backup-only save admission and read-only loading through the launcher path.
+- `DM1 Amiga HD media`: add authenticated startup coverage for the native HD edition.
+- `DM1 media ownership`: add a check that verifies loose graphics/dungeon pairs remain in one original installation.
+- `CLI startup`: verify that a no-game invocation remains in the menu and that game-data scan status is present in the Swedish catalog.
+- `DM2 Macintosh media gate`: verify the Japanese archive's graphics identity and HFS resource boundary against the English startup requirements.
+- `Startup timing diagnostics`: split host presentation measurements into named stages and add real-media checks for motion diagnostics.
+- `Localization catalogs`: update source references in the startup-menu template and all translated catalogs.
+- `Release metadata`: update the project version, embedded changelog and reproducible SPDX source SBOM for v3.0.385.
+
+## Known limitations
+
+- `DM1 visual parity`: full viewport, animation, audio and input-latency parity remains unverified across all native platforms; tests using original media and SDL dummy output do not establish physical HiDPI or display-scanout behavior.
+- `DM2 Japanese Macintosh`: playable Japanese support remains unavailable because the original media lacks the application resources required by the supported English Mac startup path.
+
 # Firestaff v3.0.384
 
 ## User-facing changes
