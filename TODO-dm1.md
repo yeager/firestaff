@@ -1,5 +1,13 @@
 2026-10-18 v3.0.386 original-media CLI/menu retest: `test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh returns` passed the authentic DM1 PC, FM Towns, Atari ST and Amiga routes. The direct `--game dm1` route also exits after Return to Menu instead of reopening the launcher, and every tested return scan found DM1, CSB and DM2. `test_firestaff_cli_startup_diagnostics_real_media.sh` passed the FM Towns default-selection and original PC34/Towns title-cadence checks. These runs used the published arm64 binary with SDL dummy output; physical display, input latency and complete platform parity remain open.
 
+2026-10-18 Apple IIGS startup retest: `test_firestaff_iigs_cli_real_media.sh`
+passed for original G20E and G21E ProDOS media. Direct CLI reaches
+`dm1-iigs-runtime` with the first world loaded and accepts the native keyboard
+turn probe. M12 also reaches the same first-world handoff for each edition.
+The original media archive hash is checked before and after. SDL dummy output
+does not verify physical presentation; the title/entrance sequence and audible
+DOC playback are still open.
+
 # Firestaff TODO — DM1
 
 2026-10-15 offline-selection recovery: configured/selected path intent now
@@ -133,13 +141,15 @@ oracle. Archive/directory CLI and M12 startup checks pass. Keep actual
 gameplay viewport, audible output and original-emulator alignment separate
 from this completed entrance-scene verification.
 
-Completion scope: the current catalogue has sixteen editions on four source
-platforms; that inventory does not prove all DM1 platforms are supported.
-Apple IIGS 2.0/2.1 original ProDOS contents are now authenticated and readable
-through the native media APIs, but remain unadmitted by the game catalogue.
+Completion scope: catalogue entries and authenticated files do not by
+themselves prove complete platform support. Apple IIGS 2.0/2.1 now reach the
+first world through direct CLI and M12 start-menu launch using the original
+ProDOS owners; intro/entrance, audible DOC playback, and complete gameplay
+remain open as recorded below. The test does not establish visual parity.
 Sharp X68000 and SNES media archive names also exist locally; their content
 and native runtime/startup gaps still need investigation. Do not infer playable
-support from file intake or claim all-platform support from this inventory.
+campaign support from file intake or claim all-platform support from this
+bounded route.
 PC-9821 support remains excluded by user instruction. Native Windows/Linux
 and a physically active HiDPI display require separate execution evidence.
 

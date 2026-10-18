@@ -17,7 +17,7 @@ static const char* const g_changelogLines[] = {
     "====================",
     "",
     "V" FIRESTAFF_VERSION_NUMBER "  (2026-10-18)",
-    "  - Original-media startup retests cover DM1, CSB and DM2 CLI/menu routes across tested platforms.",
+    "  - Original-media startup retests cover DM1, CSB, DM2 and Apple IIGS CLI/menu routes across tested platforms.",
     "  - DM2 FM Towns default selection reaches New Game with the original title palette and first champion handoff.",
     "  - Physical display, input and full visual parity remain unverified by SDL dummy output.",
     "",
