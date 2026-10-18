@@ -1,3 +1,12 @@
+- 2026-10-18: Ran `dm1_fmtowns_late_startup_rejection_real` against the
+  original Amiga 3.6 and related platform media. Its A36 language coverage
+  reaches the exact authenticated French and German dungeon from both loose
+  files and the original ZIP through M11 direct runtime and M12, and rejects
+  a mismatched world. Updated the public platform status to distinguish those
+  routes from English direct-CLI coverage. CLI edition selection for French/
+  German, source-language graphics, hardware output and wider parity remain
+  open.
+
 - 2026-10-18: Extended the isolated DM1 PC selector test input to send one
   fresh Enter through the ordinary SDL event path after the original closed
   selector is presented. The authentic offline-root diagnostic now exercises

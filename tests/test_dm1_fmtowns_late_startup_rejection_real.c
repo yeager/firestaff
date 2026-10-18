@@ -221,6 +221,24 @@ static int amiga36_language_menu_worlds(M11_GameViewState* game,
                     strcmp(game->dungeonPath,files[language])==0),
                 "loose/ZIP A36 menu starts the exact chosen original language world");
             M11_GameView_Shutdown(game); M11_GameView_Init(game);
+            {
+                M11_GameLaunchSpec direct;
+                memset(&direct,0,sizeof(direct));
+                direct.title="DUNGEON MASTER"; direct.gameId=direct.sourceId="dm1";
+                direct.dataDir=dir; direct.verifiedAssetPath=graphics;
+                direct.verifiedAssetMd5="7f9458e4a3972d06e649a6fa85a7f34b";
+                direct.sourceKind=M11_GAME_SOURCE_BUILTIN_CATALOG;
+                direct.presentationMode=M12_PRESENTATION_V1_ORIGINAL;
+                direct.rendererBackend=M12_RENDERER_BACKEND_SOFTWARE;
+                direct.languageIndex=language==0 ? 2 : 3;
+                REQUIRE(M11_GameView_Start(game,&direct) && game->active &&
+                    game->assetLoader.dm1Amiga36 &&
+                    M11_GameView_GetBootProbeReceipt(game,&receipt) && receipt.levelLoaded &&
+                    asset_file_matches_md5(game->dungeonPath,hashes[language]) &&
+                    strcmp(game->dungeonPath,files[language])==0,
+                    "direct A36 startup selects the exact original French/German world");
+                M11_GameView_Shutdown(game); M11_GameView_Init(game);
+            }
             if (!source) {
                 M11_GameLaunchSpec direct;
                 memset(&direct,0,sizeof(direct));
