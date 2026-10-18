@@ -97,7 +97,9 @@ dm1_combined_root=
 default_home=
 uppercase_game_root=
 offline_home=
-trap 'rm -rf "$combined_root" "$csb_mixed_root" "$csb_combined_root" "$dm1_combined_root" "$default_home" "$uppercase_game_root" "$offline_home"' EXIT
+all_games_root=
+all_games_home=
+trap 'rm -rf "$combined_root" "$csb_mixed_root" "$csb_combined_root" "$dm1_combined_root" "$default_home" "$uppercase_game_root" "$offline_home" "$all_games_root" "$all_games_home"' EXIT
 
 # Exercise the real default path layout without --data-dir and without
 # inheriting a developer's saved config. Stage only links to the original
@@ -117,6 +119,45 @@ link_default_game_archive dm2 "$mac_archive"
 link_default_game_archive dm2 "$towns_archive"
 link_default_game_archive dm1 "$dm1_towns_archive"
 link_default_game_archive csb "$csb_towns_archive"
+
+# A normal app start with no game selection must open the launcher and discover
+# every installed game. Use only links to authentic archives and an isolated
+# user/config root so saved media choices cannot mask a scanner regression.
+if [ -f "$dm1_pc_archive" ] && [ -f "$csb_amiga_archive" ] && [ -f "$dos_archive" ]; then
+    all_games_root=$(mktemp -d "${PWD}/.firestaff-no-game-all-games.XXXXXX")
+    all_games_home=$(mktemp -d "${PWD}/.firestaff-no-game-home.XXXXXX")
+    mkdir -p "$all_games_root/dm1" "$all_games_root/csb" "$all_games_root/dm2"
+    ln -s "$dm1_pc_archive" "$all_games_root/dm1/$(basename "$dm1_pc_archive")"
+    ln -s "$csb_amiga_archive" "$all_games_root/csb/$(basename "$csb_amiga_archive")"
+    ln -s "$dos_archive" "$all_games_root/dm2/$(basename "$dos_archive")"
+    no_game_output=$(HOME="$all_games_home" USERPROFILE="$all_games_home" \
+        XDG_CONFIG_HOME="$all_games_home/.config" \
+        APPDATA="$all_games_home/AppData" \
+        FIRESTAFF_CONFIG_PATH="$all_games_home/config.toml" \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --data-dir "$all_games_root" --verbose --debug --duration 1000 2>&1) || {
+        printf '%s\n' "$no_game_output" >&2
+        exit 1
+    }
+    printf '%s\n' "$no_game_output" | grep -Fq 'startup game=none mode=menu' || {
+        printf 'FAIL: no-game startup did not stay in the launcher\n%s\n' \
+            "$no_game_output" >&2
+        exit 1
+    }
+    for game_id in dm1 csb dm2; do
+        printf '%s\n' "$no_game_output" | grep -Fq "firestaff: $game_id available=yes" || {
+            printf 'FAIL: no-game startup did not discover authentic %s media\n%s\n' \
+                "$game_id" "$no_game_output" >&2
+            exit 1
+        }
+    done
+    if printf '%s\n' "$no_game_output" | grep -Fq 'launch phase=game-handoff'; then
+        printf 'FAIL: no-game startup entered a game handoff\n%s\n' \
+            "$no_game_output" >&2
+        exit 1
+    fi
+    echo 'PASS: no-game startup opens the launcher and discovers authentic DM1, CSB and DM2 media'
+fi
 
 for game_id in dm1 csb dm2; do
     if [ -d "$default_data_root/$game_id" ]; then
