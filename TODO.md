@@ -1,5 +1,12 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-18 current-source no-argument launcher retest: started the local build
+without `--game`, with authentic DM1 DOS, CSB Amiga and DM2 DOS archives
+available under an isolated data root. Startup reported `game=none mode=menu`
+and marked all three games available; no game handoff occurred. This verifies
+the default launcher choice and real-media discovery on this Mac host using
+SDL dummy video/audio. It does not verify native display or physical input.
+
 2026-10-15 fresh original-media startup diagnostics retest on the Mac mini M4:
 `test_firestaff_cli_startup_diagnostics_real_media.sh` passed for DM1, CSB and
 DM2. It verified bare `--game` discovery from each per-game data directory,
