@@ -1,3 +1,10 @@
+2026-10-19 current-source original-media DM1 PC34 startup retest:
+`dm1_v1_pc34_native_cli_boot` passed in 408.29 seconds with the installed
+authentic DOS archive. It covered direct CLI, M12 startup, PC34 intro and
+save-route checks, scripted keyboard/mouse input, V1/V2 presentation and
+1920x1080 launch sizing. SDL dummy output does not verify native window
+presentation, physical input latency or GPU behavior.
+
 2026-10-18 Amiga 2.x startup retest: the original software archive passed
 `test_dm1_v1_amiga21_22_english_archive_cli_boot.sh` for English 2.1 and 2.2,
 including authenticated ADF, graphics, SWSH, dungeon, title and entrance
