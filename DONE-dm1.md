@@ -1,3 +1,11 @@
+- 2026-10-18: Re-ran the authentic Amiga 2.0 French and German CLI/menu
+  startup tests plus the French F0437/F0441 media receipt test against the
+  original software archives. All four CTest cases passed. French and German
+  ADF bytes are hash-checked before test-only ZIP repacking; M12 selects each
+  original edition and reaches its paired dungeon. Updated the public platform
+  matrix to include both languages. This verifies startup handoff, not wider
+  gameplay, native audio or presentation parity.
+
 - 2026-10-18: Ran `dm1_fmtowns_late_startup_rejection_real` against the
   original Amiga 3.6 and related platform media. Its A36 language coverage
   reaches the exact authenticated French and German dungeon from both loose
