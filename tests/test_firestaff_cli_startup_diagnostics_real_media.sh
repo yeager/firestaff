@@ -512,6 +512,7 @@ if [ -f "$dm1_pc_archive" ]; then
             FIRESTAFF_CONFIG_PATH="$offline_home/config.toml" \
             FIRESTAFF_ORIGINALS_DIR="$offline_default" FIRESTAFF_DATA= \
             FIRESTAFF_AUTOTEST_ENTRANCE_INPUT=key:return \
+            FIRESTAFF_AUTOTEST_SELECTOR_INPUT=key:return \
             FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$offline_home/runtime.json" \
             SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
                 "$firestaff_cli" "$@"

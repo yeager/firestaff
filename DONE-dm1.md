@@ -1,3 +1,13 @@
+- 2026-10-18: Extended the isolated DM1 PC selector test input to send one
+  fresh Enter through the ordinary SDL event path after the original closed
+  selector is presented. The authentic offline-root diagnostic now exercises
+  the complete PC34 fallback through runtime and one accepted movement, while
+  preserving the user's unavailable selected root. The full real-media startup
+  diagnostics pass for DM1, CSB and DM2. The complete authentic PC34 CLI/menu
+  startup, source-animation, selector-input, HoC capture and debug-performance
+  matrix also passes. This is test coverage, not a change to interactive
+  selector behavior or a claim of full platform parity.
+
 - 2026-10-18: Fixed the authentic Amiga HD start being rejected because the
   retail Amiga 2.0 SWSH companion is absent from that installed-disk image.
   The launcher now exempts only the exact nested `[HD]` ADF owner with the

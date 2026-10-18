@@ -6005,6 +6005,12 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
 #endif
             repeatedReturn.key.repeat = 1;
             (void)SDL_PushEvent(&repeatedReturn);
+        } else if (getenv("FIRESTAFF_AUTOTEST_SELECTOR_INPUT") &&
+                   strcmp(getenv("FIRESTAFF_AUTOTEST_SELECTOR_INPUT"),
+                          "key:return") == 0) {
+            static const char freshReturn[] = "key:return";
+            (void)m11_push_script_event_token(
+                freshReturn, sizeof(freshReturn) - 1u);
         }
         for (;;) {
             SDL_Event event;
