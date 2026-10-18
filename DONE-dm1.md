@@ -1,3 +1,10 @@
+- 2026-10-19: Fixed the shared startup intro scan meter ending below 100% and
+  disappearing when the scan worker finished. Its total now matches the three
+  shared phases and three phases per game, and the intro keeps the final
+  completed or cancelled snapshot visible for the remaining intro frames. The
+  scan completion contract now checks the exact step count. This is launcher
+  progress feedback, not game-platform parity evidence.
+
 - 2026-10-18: Re-ran the authentic Amiga 2.0 French and German CLI/menu
   startup tests plus the French F0437/F0441 media receipt test against the
   original software archives. All four CTest cases passed. French and German

@@ -142,7 +142,9 @@ static void m12_scan_progress_init(M12_AssetScanProgress* progress) {
     }
     memset(progress, 0, sizeof(*progress));
     progress->active = 1;
-    progress->totalSteps = 4U + (size_t)M12_ASSET_GAME_COUNT * 3U;
+    /* A complete inventory has three shared phases plus three phases per
+     * game. The earlier explicit-file preflight is reset before this scan. */
+    progress->totalSteps = 3U + (size_t)M12_ASSET_GAME_COUNT * 3U;
     snprintf(progress->currentTask, sizeof(progress->currentTask),
              "starting");
 }

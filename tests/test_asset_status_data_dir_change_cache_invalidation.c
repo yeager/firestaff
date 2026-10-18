@@ -430,6 +430,9 @@ static void check_scan_progress_complete_contract(const char* homeRoot,
               "progress complete: scan must no longer be active");
     check_int(progress && progress->completedSteps == progress->totalSteps,
               "progress complete: completed steps must reach total steps");
+    check_int(progress && progress->totalSteps ==
+                  3U + (size_t)M12_ASSET_GAME_COUNT * 3U,
+              "progress complete: total must match shared and per-game phases");
     check_int(probe.callbacks >= progress->totalSteps,
               "progress complete: callback must cover coarse scan steps");
 }

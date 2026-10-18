@@ -865,6 +865,9 @@ static int SDLCALL m11_intro_scan_thread(void* data) {
     M12_StartupMenu_RunDeferredScan(job->menuState,
                                     m11_intro_scan_progress_callback,
                                     job);
+    if (job->mutex) SDL_LockMutex(job->mutex);
+    job->progress = job->menuState->assetStatus.scanProgress;
+    if (job->mutex) SDL_UnlockMutex(job->mutex);
     SDL_SetAtomicInt(&job->done, 1);
     return 0;
 }
@@ -1038,7 +1041,7 @@ static int m11_play_firestaff_startup_intro(M12_StartupMenuState* menuState) {
                                 (uint32_t)(elapsed < effectiveDuration ? elapsed : effectiveDuration - 1),
                                 effectiveDuration,
                                 FIRESTAFF_VERSION_NUMBER);
-        if (scanActive && !scanDone) {
+        if (scanActive) {
             M12_AssetScanProgress snap;
             if (scanJob.mutex) SDL_LockMutex(scanJob.mutex);
             snap = scanJob.progress;
