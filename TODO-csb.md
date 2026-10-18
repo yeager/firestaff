@@ -1,3 +1,10 @@
+2026-10-19 current-source original-media CSB FM Towns startup retest:
+`csb_v1_fmtowns_native_cli_boot` passed in 148.65 seconds with the installed
+authentic Japanese/English archive. The test covered direct startup, source
+intro/menu handoff, first loaded map, and M12 selection at both 320x200 and
+1920x1080. SDL dummy output does not verify native display, audible output or
+physical input parity.
+
 2026-10-19 current-source original-media CSB Amiga 3.5 CTRaw startup retest:
 `csb_v1_amiga35_ctraw_native_cli_boot`, `csb_v1_amiga35_ctraw_native_menu_boot`,
 `csb_v1_amiga35_ctraw_multilingual_menu_boot` and
