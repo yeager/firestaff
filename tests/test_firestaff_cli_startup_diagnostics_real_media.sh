@@ -130,15 +130,22 @@ if [ -f "$dm1_pc_archive" ] && [ -f "$csb_amiga_archive" ] && [ -f "$dos_archive
     ln -s "$dm1_pc_archive" "$all_games_root/dm1/$(basename "$dm1_pc_archive")"
     ln -s "$csb_amiga_archive" "$all_games_root/csb/$(basename "$csb_amiga_archive")"
     ln -s "$dos_archive" "$all_games_root/dm2/$(basename "$dos_archive")"
+    set +e
     no_game_output=$(HOME="$all_games_home" USERPROFILE="$all_games_home" \
         XDG_CONFIG_HOME="$all_games_home/.config" \
         APPDATA="$all_games_home/AppData" \
         FIRESTAFF_CONFIG_PATH="$all_games_home/config.toml" \
+        FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
         SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
         --data-dir "$all_games_root" --verbose --debug --duration 1000 2>&1) || {
-        printf '%s\n' "$no_game_output" >&2
-        exit 1
+        no_game_status=$?
     }
+    set -e
+    if [ "${no_game_status:-0}" -ne 1 ]; then
+        printf 'FAIL: no-game startup did not run the launcher without launching a game (status %s)\n%s\n' \
+            "${no_game_status:-0}" "$no_game_output" >&2
+        exit 1
+    fi
     printf '%s\n' "$no_game_output" | grep -Fq 'startup game=none mode=menu' || {
         printf 'FAIL: no-game startup did not stay in the launcher\n%s\n' \
             "$no_game_output" >&2
@@ -156,6 +163,12 @@ if [ -f "$dm1_pc_archive" ] && [ -f "$csb_amiga_archive" ] && [ -f "$dos_archive
             "$no_game_output" >&2
         exit 1
     fi
+    printf '%s\n' "$no_game_output" | \
+        grep -Fq 'launch smoke failed: no launch reached before exit' || {
+        printf 'FAIL: no-game startup did not finish the menu loop\n%s\n' \
+            "$no_game_output" >&2
+        exit 1
+    }
     echo 'PASS: no-game startup opens the launcher and discovers authentic DM1, CSB and DM2 media'
 fi
 
