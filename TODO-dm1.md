@@ -1,3 +1,11 @@
+2026-10-18 Amiga 2.x startup retest: the original software archive passed
+`test_dm1_v1_amiga21_22_english_archive_cli_boot.sh` for English 2.1 and 2.2,
+including authenticated ADF, graphics, SWSH, dungeon, title and entrance
+receipts, direct CLI startup and M12 handoff. Its German 2.2 disk passed
+`test_dm1_v1_amiga22_german_archive_cli_boot.sh` through direct CLI, ZIP-backed
+menu, and direct-disk menu routes. The headless tests establish the first
+runtime pose, not full gameplay, physical audio or presentation parity.
+
 2026-10-18 French DOS ZIP startup retest: the published arm64 binary passed
 `test_dm1_v1_dos_fr_zip_cli_boot.sh` with the authentic repacked
 `Dungeon-Master_DOS_FR_EUDATA.zip`. Direct CLI and M12 launch reached the

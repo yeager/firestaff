@@ -12,6 +12,11 @@
   remains unsupported; the ZIP and manually extracted original files are the
   supported paths.
 
+- 2026-10-18: Original DM1 Amiga 2.1/2.2 English ADFs passed authenticated
+  media checks, native title/entrance startup, direct CLI and M12 handoff.
+  Original Amiga 2.2 German passed the same startup boundary through ZIP and
+  direct-disk routes. These checks verify initial runtime only.
+
 - 2026-10-15: Re-ran the original FM Towns direct-exit matrix for DM1,
   CSB and DM2 on the macOS build containing `66854d163`. Each `--game`
   session reached its source-owned runtime and exited after the in-game
