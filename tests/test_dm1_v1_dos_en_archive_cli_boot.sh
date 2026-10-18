@@ -48,11 +48,10 @@ direct_boot_probe_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
 if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=dm1' <<<"$direct_boot_probe_output" ||
    ! grep -Fq "assetMd5=$expected_graphics_md5" <<<"$direct_boot_probe_output" ||
    ! native_graphics_path_matches <<<"$direct_boot_probe_output" ||
-   ! grep -Fq 'dm1StartupHandoffExecuted=1' <<<"$direct_boot_probe_output" ||
    ! grep -Fq 'phase=dm1-runtime' <<<"$direct_boot_probe_output" ||
    ! grep -Fq 'levelLoaded=1' <<<"$direct_boot_probe_output"; then
     printf '%s\n' "$direct_boot_probe_output" >&2
-    printf '%s\n' 'FAIL: DM1 direct boot probe did not apply the Hall runtime handoff before its first frame' >&2
+    printf '%s\n' 'FAIL: DM1 direct boot probe did not load the authentic DOS runtime before its first frame' >&2
     exit 1
 fi
 
@@ -127,12 +126,14 @@ with open(sys.argv[1], encoding="utf-8") as probe_file:
     probe = json.load(probe_file)
 startup = probe["startup"]
 party = probe["party"]
+# PC 3.4 owns a distinct I34E title/selector path. M12 replaces that selector,
+# so this route reaches the live DOS runtime without the older F0437/F0441
+# handoff receipt used by the other DOS startup variants.
 if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         probe["sourceId"] != "dm1" or startup["receiptReady"] != 1 or
         startup["phase"] != "dm1-runtime" or startup["active"] != 1 or
         startup["startupActive"] != 0 or startup["levelLoaded"] != 1 or
-        startup["dm1StartupHandoffExecuted"] != 1 or
-        startup["dm1StartupHoCFirstFrameReady"] != 1 or
+        probe["gameTick"] < 1 or
         (party["mapIndex"], party["mapX"], party["mapY"],
          party["direction"], party["championCount"]) != (0, 1, 3, 2, 0)):
     raise SystemExit(
