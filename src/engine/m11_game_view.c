@@ -16002,6 +16002,66 @@ static int m11_dm1_c13_visible_runtime_handoff_consume_transition(
     return 1;
 }
 
+/* ReDMCSB LOADSAVE.C F0435:2555-2584 opens the selected Amiga DAT save,
+ * then opens its language-matched BAK only when opening DAT fails. The
+ * original promotes BAK by renaming it over DAT (LOADSAVE.C:2901-2908);
+ * Firestaff keeps source media read-only and therefore only returns the
+ * sibling path for loading. */
+static char* m11_dm1_amiga_backup_sibling_path(const char* path)
+{
+    static const char* const basenames[] = {
+        "DMGAME.DAT", "DMGAMEF.DAT", "DMGAMEG.DAT"
+    };
+    size_t length;
+    size_t basenameLength;
+    size_t i;
+    const char* basename;
+    const char* separator;
+    const char* virtualSeparator = NULL;
+    char* backupPath;
+
+    if (!path || path[0] == '\0') return NULL;
+    length = strlen(path);
+    basename = strrchr(path, '/');
+    separator = strrchr(path, '\\');
+    if (separator && (!basename || separator > basename)) basename = separator;
+    separator = path;
+    while ((separator = strstr(separator, "::")) != NULL) {
+        virtualSeparator = separator + 1;
+        separator += 2;
+    }
+    if (virtualSeparator && (!basename || virtualSeparator > basename)) {
+        basename = virtualSeparator;
+    }
+    basename = basename ? basename + 1 : path;
+    basenameLength = length - (size_t)(basename - path);
+    for (i = 0U; i < sizeof(basenames) / sizeof(basenames[0]); ++i) {
+        size_t j;
+        if (strlen(basenames[i]) != basenameLength) continue;
+        for (j = 0U; j < basenameLength; ++j) {
+            unsigned char actual = (unsigned char)basename[j];
+            unsigned char expected = (unsigned char)basenames[i][j];
+            if (actual >= 'a' && actual <= 'z') actual -= 'a' - 'A';
+            if (actual != expected) break;
+        }
+        if (j != basenameLength) continue;
+        backupPath = (char*)malloc(length + 1U);
+        if (!backupPath) return NULL;
+        memcpy(backupPath, path, length + 1U);
+        backupPath[length - 3U] = basename[basenameLength - 3U] >= 'a' &&
+                                  basename[basenameLength - 3U] <= 'z'
+            ? 'b' : 'B';
+        backupPath[length - 2U] = basename[basenameLength - 2U] >= 'a' &&
+                                  basename[basenameLength - 2U] <= 'z'
+            ? 'a' : 'A';
+        backupPath[length - 1U] = basename[basenameLength - 1U] >= 'a' &&
+                                  basename[basenameLength - 1U] <= 'z'
+            ? 'k' : 'K';
+        return backupPath;
+    }
+    return NULL;
+}
+
 int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
                                  const char* path,
                                  int* outUsedBackup)
@@ -16013,6 +16073,7 @@ int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
     DM1OriginalSaveClassifyResult originalSave;
     int usedBackup = 0;
     int loadedOriginalPc34 = 0;
+    int primaryBytesRead;
     int rc;
     uint8_t *virtualSaveBytes = NULL;
     size_t virtualSaveByteCount = 0u;
@@ -16040,12 +16101,29 @@ int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
     /* ReDMCSB LOADSAVE.C F0435:2665-2827 authenticates the retained Amiga
      * bytes equally for a loose save and an archive::disk.adf::FILE member.
      * Other formats retain the established PC34/native route below. */
-    if (asset_read_path_alloc(path, &virtualSaveBytes, &virtualSaveByteCount)) {
+    primaryBytesRead = asset_read_path_alloc(
+        path, &virtualSaveBytes, &virtualSaveByteCount);
+    if (primaryBytesRead) {
         const int adopted = M11_GameView_LoadDm1OriginalAmigaSaveBytes(
             state, virtualSaveBytes, virtualSaveByteCount, path);
         free(virtualSaveBytes);
         if (adopted) {
             return 1;
+        }
+    } else {
+        char* backupPath = m11_dm1_amiga_backup_sibling_path(path);
+        if (backupPath && asset_read_path_alloc(
+                backupPath, &virtualSaveBytes, &virtualSaveByteCount)) {
+            const int adopted = M11_GameView_LoadDm1OriginalAmigaSaveBytes(
+                state, virtualSaveBytes, virtualSaveByteCount, backupPath);
+            free(virtualSaveBytes);
+            free(backupPath);
+            if (adopted) {
+                if (outUsedBackup) *outUsedBackup = 1;
+                return 1;
+            }
+        } else {
+            free(backupPath);
         }
     }
 

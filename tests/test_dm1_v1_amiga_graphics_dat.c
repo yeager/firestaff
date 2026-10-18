@@ -598,6 +598,9 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
     size_t inner_size = 0u;
     size_t adf_size = 0u;
     RealSaveDiskReceipt receipt;
+    M11_GameViewState backup_view;
+    char backup_virtual_save_path[1024];
+    int backup_used = 0;
     FILE *stream;
 
     if (!archive || !archive[0]) {
@@ -898,6 +901,25 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
           receipt.backup_f0435.dungeon_expected_checksum ==
               receipt.backup_f0435.dungeon_actual_checksum,
           "real_save_backup_f0435_and_f0434");
+    CHECK(snprintf(backup_virtual_save_path,
+                   sizeof(backup_virtual_save_path), "%s::%s::%s::DMGAMEG.BAK",
+                   archive, save_zip, save_adf) > 0 &&
+              strlen(backup_virtual_save_path) <
+                  sizeof(backup_virtual_save_path),
+          "real_save_backup_virtual_path_fits");
+    M11_GameView_Init(&backup_view);
+    backup_view.active = 1;
+    strcpy(backup_view.sourceId, "dm1");
+    CHECK(M11_GameView_LoadDm1SavePath(&backup_view,
+                                       backup_virtual_save_path,
+                                       &backup_used) == 1 &&
+              backup_used == 0 &&
+              backup_view.world.gameTick ==
+                  receipt.backup_f0435.game_time &&
+              backup_view.dm1ViewportRuntimeOrigin ==
+                  DM1_V1_VIEWPORT_RUNTIME_ORIGIN_ORIGINAL_SAVE_AMIGA,
+          "real_save_backup_amiga_m11_loads_nested_virtual_path");
+    M11_GameView_Shutdown(&backup_view);
     free(receipt.primary_bytes);
 }
 

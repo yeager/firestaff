@@ -1949,12 +1949,15 @@ to built-in DM1 catalogue entries. Worker creation failures use the existing
 failure dialog with the original return view; allocation-failure injection and
 native OS thread failures remain unexecuted integration cases.
 
-2026-10-16 native Amiga launcher integration: supported format-5 save copies
-now use the existing strict Amiga reader in the browser, Continue and physical
-M11 resume path. Exact DMGAME/DMGAMEF/DMGAMEG DAT/BAK names are discovery hints;
-header, all five parts and dungeon-tail authentication remain required.
-Explicit original backup copies resume; automatic native Amiga backup selection
-and promotion remain separate deferred work. Other Amiga save formats and
+2026-10-18 native Amiga launcher backup fallback: ReDMCSB LOADSAVE.C
+F0435:2555-2584 opens the language-matched BAK when opening DAT fails, then
+renames the backup over the primary at F0435:2901-2908. M11 now retries the
+matching DMGAME/DMGAMEF/DMGAMEG BAK path only when reading DAT fails. Firestaff
+keeps original media read-only and does not perform ReDMCSB's promotion rename.
+The authentic Amiga v2.0 test verifies that the real nested BAK is accepted by
+M11, while a real backup-only ADF launch still needs an end-to-end fixture or
+capture; do not claim that fallback path proven yet. Header, all five parts and
+dungeon-tail authentication remain required. Other Amiga save formats and
 nonzero-active-group corpus coverage remain open. Audit the PC multilingual
 DMSAVEF/DMSAVEG browser filename variants against authentic saves separately.
 
