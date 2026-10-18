@@ -1,3 +1,10 @@
+# Firestaff v3.0.386
+
+## Developer changes
+
+- `CSB Amiga startup regression`: add a real-media case that verifies authenticated A31M and A31E launches use their matching source handoffs.
+- `Release metadata`: update the project version and reproducible SPDX source SBOM for v3.0.386.
+
 # Firestaff v3.0.385
 
 ## User-facing changes
