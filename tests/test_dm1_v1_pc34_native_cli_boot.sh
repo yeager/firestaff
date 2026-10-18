@@ -517,6 +517,24 @@ if ! grep -Fq \
     exit 1
 fi
 echo "PASS: PC34 selector R selects the existing DM1 Quick Resume launch intent"
+resume_click_status=0
+resume_click_output="$(FIRESTAFF_AUTOTEST_SELECTOR_INPUT=click:resume \
+   HOME="$missing_swsh_home" XDG_CONFIG_HOME="$missing_swsh_home" \
+   APPDATA="$missing_swsh_home" FIRESTAFF_CONFIG_PATH="$missing_swsh_home/config.toml" \
+   SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+   --game dm1 --platform pc --data-dir "$archive" \
+   --save "$missing_swsh_root/no-save.DAT" --debug --duration 12000 2>&1)" || resume_click_status=$?
+if ! grep -Fq \
+       'startup-source-input game=dm1 platform=pc34 phase=selector command=resume' \
+       <<<"$resume_click_output" ||
+   grep -Fq \
+       'startup-source-input game=dm1 platform=pc34 phase=selector command=enter' \
+       <<<"$resume_click_output"; then
+    printf '%s\n' "$resume_click_output" >&2
+    echo "FAIL: PC34 selector Resume hitbox did not choose Quick Resume (exit $resume_click_status)" >&2
+    exit 1
+fi
+echo "PASS: PC34 selector Resume hitbox selects the existing DM1 Quick Resume launch intent"
 credits_status=0
 credits_output="$(FIRESTAFF_AUTOTEST_SELECTOR_INPUT=credits-then-enter \
    HOME="$missing_swsh_home" XDG_CONFIG_HOME="$missing_swsh_home" \

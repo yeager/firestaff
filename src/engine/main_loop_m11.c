@@ -6077,6 +6077,15 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
                 freshResume, sizeof(freshResume) - 1u);
         } else if (getenv("FIRESTAFF_AUTOTEST_SELECTOR_INPUT") &&
                    strcmp(getenv("FIRESTAFF_AUTOTEST_SELECTOR_INPUT"),
+                          "click:resume") == 0) {
+            /* ReDMCSB SELECTOR.C:960 places the 14x13 Resume hitbox at
+             * source (243,78); the dummy 960x540 window maps its center to
+             * window (723,227). */
+            static const char resumeClick[] = "click:723:227";
+            (void)m11_push_script_event_token(
+                resumeClick, sizeof(resumeClick) - 1u);
+        } else if (getenv("FIRESTAFF_AUTOTEST_SELECTOR_INPUT") &&
+                   strcmp(getenv("FIRESTAFF_AUTOTEST_SELECTOR_INPUT"),
                           "credits-then-enter") == 0) {
             /* The dummy test window is 960x540 with a 2.7x 320x200 surface
              * centered at x=48, so this lands inside the source CREDITS box. */
