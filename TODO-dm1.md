@@ -1,3 +1,10 @@
+2026-10-19 current-source original-media DM1 Atari ST startup retest:
+`dm1_v1_atari_st_archive_cli_boot` passed in 80.41 seconds with the installed
+authentic Atari ST 1.2 ZIP. The M12 route reached the dungeon and accepted
+the scripted movement sequence before the final 500-frame runtime probe.
+SDL dummy output does not verify native Atari display, audio or physical
+input parity.
+
 2026-10-19 current-source original-media DM1 FM Towns startup retest:
 `dm1_v1_fmtowns_archive_cli_boot` passed in 278.45 seconds with the installed
 authentic Japanese/English ZIP. It covered AUTO/explicit English and Japanese
