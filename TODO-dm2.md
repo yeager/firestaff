@@ -1,3 +1,9 @@
+2026-10-19 current-source original-media DM2 DOS startup retest:
+`dm2_v1_dos_native_cli_boot` passed in 113.92 seconds with the installed
+authentic DOS ZIP. Both explicit PC selection and AUTO from an isolated
+per-user data root passed through the M12 title/New Game route. SDL dummy
+output does not verify native display, audible output or physical input.
+
 2026-10-19 current-source original-media DM2 FM Towns startup retest:
 `dm2_v1_fmtowns_native_cli_boot` passed in 375.56 seconds with the installed
 authentic FM Towns archive. It verified bare `--game dm2` selection from the
