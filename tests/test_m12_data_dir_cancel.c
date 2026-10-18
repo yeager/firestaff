@@ -11,6 +11,8 @@
 #include "menu_hit_m12.h"
 #include "asset_status_m12.h"
 #include "fs_portable_compat.h"
+#include "config_m12.h"
+#include "firestaff_l10n.h"
 
 #include <SDL3/SDL_dialog.h>
 #include <SDL3/SDL_init.h>
@@ -1293,6 +1295,38 @@ static void check_scan_progress_uses_display_names(void) {
     }
 }
 
+static int expected_auto_language_index(FS_Language language) {
+    switch (language) {
+        case FS_LANG_SV: return 1;
+        case FS_LANG_FR: return 2;
+        case FS_LANG_DE: return 3;
+        case FS_LANG_JA: return 4;
+        case FS_LANG_ZH: return 5;
+        case FS_LANG_CS: return 6;
+        case FS_LANG_DA: return 7;
+        case FS_LANG_ES: return 8;
+        case FS_LANG_FI: return 9;
+        case FS_LANG_HU: return 10;
+        case FS_LANG_IT: return 11;
+        case FS_LANG_KO: return 12;
+        case FS_LANG_NL: return 13;
+        case FS_LANG_NO: return 14;
+        case FS_LANG_PL: return 15;
+        case FS_LANG_PT: return 16;
+        case FS_LANG_RU: return 17;
+        case FS_LANG_TR: return 18;
+        case FS_LANG_ID: return 19;
+        case FS_LANG_EN:
+        case FS_LANG_COUNT:
+        default: return 0;
+    }
+}
+
+static void check_auto_language_matches_startup_scan(void) {
+    CHECK(M12_Config_GetAutoLanguageIndex() ==
+          expected_auto_language_index(fs_l10n_detect_system_language()));
+}
+
 int main(void) {
     char previousConfigPath[FSP_PATH_MAX] = {0};
     char previousOriginalsDir[FSP_PATH_MAX] = {0};
@@ -1330,6 +1364,7 @@ int main(void) {
     check_active_scan_renders_progress_bar();
     check_modern_scan_progress_standalone_render();
     check_scan_progress_uses_display_names();
+    check_auto_language_matches_startup_scan();
     SDL_Quit();
 
     if (hadConfigPath) {

@@ -21,7 +21,8 @@ main() in src/shared/firestaff_main_m11.c:
    - Menu state carries asset status forward for TITLE path resolution
 
 4. PO Translation Loading
-   - Based on M12_Config_GetAutoLanguageIndex(), loads po/startup-menu.<lang>.po
+   - Automatic language selection uses the shared system-locale detector. On macOS it reads the user's preferred language from CoreFoundation, so the initial scan progress and launcher menu use the same locale even when the app inherits English shell variables.
+   - Loads po/startup-menu.<lang>.po for the detected or explicitly selected language.
 
 5. Accessibility Enable: fs_ax_set_enabled(1)  (always on for now)
 

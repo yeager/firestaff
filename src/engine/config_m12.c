@@ -1,5 +1,6 @@
 #include "config_m12.h"
 #include "fs_portable_compat.h"
+#include "firestaff_l10n.h"
 
 #include <ctype.h>
 #include <errno.h>
@@ -136,101 +137,35 @@ static const char* m12_presentation_mode_id(int index) {
     }
 }
 
-static int m12_starts_with_lang(const char* value, const char* langCode) {
-    size_t i;
-    if (!value || !langCode) {
-        return 0;
-    }
-    for (i = 0U; langCode[i] != '\0'; ++i) {
-        if (value[i] == '\0') {
-            return 0;
-        }
-        if (tolower((unsigned char)value[i]) != tolower((unsigned char)langCode[i])) {
-            return 0;
-        }
-    }
-    /* LANGUAGE is a colon-separated preference list on GNU/Linux.  Steam's
-     * Game Mode can retain LANG=en_US while LANGUAGE contains the Deck UI
-     * locale (for example sv_SE:en), so the first explicit preference is a
-     * valid locale boundary too. */
-    return value[i] == '\0' || value[i] == '_' || value[i] == '-' ||
-           value[i] == '.' || value[i] == '@' || value[i] == ':';
-}
-
 int M12_Config_GetAutoLanguageIndex(void) {
-    const char* candidates[] = {
-        getenv("LC_ALL"),
-        getenv("LC_MESSAGES"),
-        getenv("LANGUAGE"),
-        getenv("LANG")
-    };
-    size_t i;
-    for (i = 0U; i < sizeof(candidates) / sizeof(candidates[0]); ++i) {
-        const char* value = candidates[i];
-        if (!value || value[0] == '\0') {
-            continue;
-        }
-        if (m12_starts_with_lang(value, "en")) {
-            return 0;
-        }
-        if (m12_starts_with_lang(value, "sv")) {
-            return 1;
-        }
-        if (m12_starts_with_lang(value, "fr")) {
-            return 2;
-        }
-        if (m12_starts_with_lang(value, "de")) {
-            return 3;
-        }
-        if (m12_starts_with_lang(value, "ja")) {
-            return 4;
-        }
-        if (m12_starts_with_lang(value, "zh")) {
-            return 5;
-        }
-        if (m12_starts_with_lang(value, "cs")) {
-            return 6;
-        }
-        if (m12_starts_with_lang(value, "da")) {
-            return 7;
-        }
-        if (m12_starts_with_lang(value, "es")) {
-            return 8;
-        }
-        if (m12_starts_with_lang(value, "fi")) {
-            return 9;
-        }
-        if (m12_starts_with_lang(value, "hu")) {
-            return 10;
-        }
-        if (m12_starts_with_lang(value, "it")) {
-            return 11;
-        }
-        if (m12_starts_with_lang(value, "ko")) {
-            return 12;
-        }
-        if (m12_starts_with_lang(value, "nl")) {
-            return 13;
-        }
-        if (m12_starts_with_lang(value, "no") ||
-            m12_starts_with_lang(value, "nb") ||
-            m12_starts_with_lang(value, "nn")) {
-            return 14;
-        }
-        if (m12_starts_with_lang(value, "pl")) {
-            return 15;
-        }
-        if (m12_starts_with_lang(value, "pt")) {
-            return 16;
-        }
-        if (m12_starts_with_lang(value, "ru")) {
-            return 17;
-        }
-        if (m12_starts_with_lang(value, "tr")) {
-            return 18;
-        }
+    /* Use the same OS locale source as the startup menu. On macOS GUI
+     * launches often inherit English shell variables even when the user's
+     * preferred language is Swedish, which used to make the initial scan
+     * progress appear in English while the menu itself was translated. */
+    switch (fs_l10n_detect_system_language()) {
+        case FS_LANG_SV: return 1;
+        case FS_LANG_FR: return 2;
+        case FS_LANG_DE: return 3;
+        case FS_LANG_JA: return 4;
+        case FS_LANG_ZH: return 5;
+        case FS_LANG_CS: return 6;
+        case FS_LANG_DA: return 7;
+        case FS_LANG_ES: return 8;
+        case FS_LANG_FI: return 9;
+        case FS_LANG_HU: return 10;
+        case FS_LANG_IT: return 11;
+        case FS_LANG_KO: return 12;
+        case FS_LANG_NL: return 13;
+        case FS_LANG_NO: return 14;
+        case FS_LANG_PL: return 15;
+        case FS_LANG_PT: return 16;
+        case FS_LANG_RU: return 17;
+        case FS_LANG_TR: return 18;
+        case FS_LANG_ID: return 19;
+        case FS_LANG_EN:
+        case FS_LANG_COUNT:
+        default: return 0;
     }
-    return 0;
 }
 
 int M12_Config_FindDefaultUnicodeFontPath(char* out, size_t outSize) {

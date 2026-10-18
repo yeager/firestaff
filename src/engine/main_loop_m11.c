@@ -11200,6 +11200,12 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     g_m11_phase_duration_expired = 0;
     runtimeOptions = opts ? *opts : defaults;
     g_m11_debug_startup_detail = 0;
+    /* A direct launch always names a concrete game. Treat a stale caller flag
+     * without a game id as a launcher request so an ordinary app start can
+     * never inherit the default DM1 card as an implicit launch selection. */
+    if (!runtimeOptions.gameId || !runtimeOptions.gameId[0]) {
+        runtimeOptions.directLaunch = 0;
+    }
     /* Keep the public options boundary consistent with the CLI parser:
      * requesting the interactive launcher always disables direct launch. */
     if (runtimeOptions.menuRequested) {
@@ -11271,9 +11277,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         runtimeOptions.architectureOverride = M12_ARCH_AUTO;
     o = &runtimeOptions;
     g_m11_debug_startup_detail = o->debug ? 1 : 0;
-    if (o->verbose && m11_is_supported_game_id(o->gameId)) {
+    if (o->verbose) {
         fprintf(stderr, "firestaff: startup game=%s mode=%s platform=%s data=%s\n",
-                o->gameId, o->directLaunch ? "direct" : "menu",
+                o->gameId ? o->gameId : "none",
+                o->directLaunch ? "direct" : "menu",
                 o->architectureOverride == M12_ARCH_AUTO ? "auto" :
                     M12_Architecture_Label(o->architectureOverride),
                 o->dataDir && o->dataDir[0] ? o->dataDir : "default search roots");
