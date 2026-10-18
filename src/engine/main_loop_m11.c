@@ -5849,13 +5849,70 @@ static int m11_play_dm1_i34e_title_anim_if_available(
 }
 
 /* I34E's SELECTOR is the source-owned screen immediately following ANIM
- * TITLE. A direct `--game dm1` launch maps to its Enter choice. Reconstruct
- * only that route from authenticated SELECTOR + GRAPHICS.DAT media; the M12
- * interactive launcher keeps its own input/menu lifecycle. SELECTOR.C
- * F8360 and VIDEODRV.C G8148 own the pixels, frame cadence and palette. */
+ * TITLE. A direct `--game dm1` launch preserves its Enter, Resume and Quit
+ * choices. Reconstruct the selector from authenticated SELECTOR + GRAPHICS.DAT
+ * media; the M12 interactive launcher keeps its own input/menu lifecycle.
+ * SELECTOR.C F8360 and VIDEODRV.C G8148 own the pixels, frame cadence and
+ * palette. */
+static int m11_show_dm1_i34e_selector_credits(
+    M11_AssetLoader *loader,
+    const unsigned char *closedFrame,
+    const unsigned char entrancePalette[256][3]) {
+    const M11_AssetSlot *credits;
+    unsigned char creditsPalette[256][3];
+    if (!loader || !closedFrame || !entrancePalette ||
+        !(credits = M11_AssetLoader_Load(loader, 5u)) ||
+        !credits->pixels || credits->width != 320u ||
+        credits->height != 200u) {
+        return 0;
+    }
+    memset(creditsPalette, 0, sizeof(creditsPalette));
+    memcpy(creditsPalette,
+           G9013_auc_VgaPaletteSpecial_Compat
+               [VGA_PALETTE_PC34_SPECIAL_CREDITS],
+           16u * 3u);
+    if (M11_Render_SetIndexedPaletteRgb8(creditsPalette) != M11_RENDER_OK ||
+        M11_Render_PresentIndexed(credits->pixels, credits->width,
+                                  credits->height) != M11_RENDER_OK) {
+        return 0;
+    }
+    m11_capture_dm1_authenticated_startup_frame("i34e-selector-credits");
+    for (;;) {
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            if (m11_event_requests_window_close(&event)) {
+                g_m11_startup_intro_quit_requested = 1;
+                return M11_ENTRANCE_COMMAND_QUIT;
+            }
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+            if ((event.type == SDL_EVENT_KEY_DOWN && !event.key.repeat) ||
+                event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+#else
+            if ((event.type == SDL_KEYDOWN && !event.key.repeat) ||
+                event.type == SDL_MOUSEBUTTONDOWN) {
+#endif
+                if (M11_Render_SetIndexedPaletteRgb8(entrancePalette) !=
+                        M11_RENDER_OK ||
+                    M11_Render_PresentIndexed(closedFrame, M11_FB_WIDTH,
+                                               M11_FB_HEIGHT) !=
+                        M11_RENDER_OK) {
+                    return 0;
+                }
+                m11_capture_dm1_authenticated_startup_frame(
+                    "i34e-selector-credits-return");
+                return 1;
+            }
+        }
+        if (m11_phase_duration_expired() || m11_intro_wait_for_focus()) {
+            return M11_ENTRANCE_COMMAND_QUIT;
+        }
+        SDL_Delay(1u);
+    }
+}
+
 static int m11_play_dm1_i34e_selector_enter_if_available(
     M11_GameViewState *gameView,
-    const M12_StartupMenuState *menuState,
+    M12_StartupMenuState *menuState,
     const M12_AssetVersionStatus *version) {
     static const char selectorMd5[] = "165ae5438ce2686ae62f2fbb61f3e831";
     M11_AssetLoader loader;
@@ -5988,6 +6045,7 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
     if (g_m11_dm1_direct_cli_launch &&
         !getenv("FIRESTAFF_EXIT_AFTER_LAUNCH") &&
         !getenv("FIRESTAFF_AUTOTEST")) {
+        int resumeSelected = 0;
         if (g_m11_debug_startup_detail)
             fprintf(stderr,
                     "firestaff: startup-source-wait game=dm1 platform=pc34 phase=selector action=await-enter-or-click\n");
@@ -6011,6 +6069,26 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
             static const char freshReturn[] = "key:return";
             (void)m11_push_script_event_token(
                 freshReturn, sizeof(freshReturn) - 1u);
+        } else if (getenv("FIRESTAFF_AUTOTEST_SELECTOR_INPUT") &&
+                   strcmp(getenv("FIRESTAFF_AUTOTEST_SELECTOR_INPUT"),
+                          "key:r") == 0) {
+            static const char freshResume[] = "key:r";
+            (void)m11_push_script_event_token(
+                freshResume, sizeof(freshResume) - 1u);
+        } else if (getenv("FIRESTAFF_AUTOTEST_SELECTOR_INPUT") &&
+                   strcmp(getenv("FIRESTAFF_AUTOTEST_SELECTOR_INPUT"),
+                          "credits-then-enter") == 0) {
+            /* The dummy test window is 960x540 with a 2.7x 320x200 surface
+             * centered at x=48, so this lands inside the source CREDITS box. */
+            static const char creditsClick[] = "click:720:510";
+            static const char creditsDismiss[] = "key:return";
+            static const char enterAfterCredits[] = "key:return";
+            (void)m11_push_script_event_token(
+                creditsClick, sizeof(creditsClick) - 1u);
+            (void)m11_push_script_event_token(
+                creditsDismiss, sizeof(creditsDismiss) - 1u);
+            (void)m11_push_script_event_token(
+                enterAfterCredits, sizeof(enterAfterCredits) - 1u);
         }
         for (;;) {
             SDL_Event event;
@@ -6018,6 +6096,7 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
             while (SDL_PollEvent(&event)) {
                 int keyDown = 0;
                 int enterClick = 0;
+                int creditsClick = 0;
                 if (m11_event_requests_window_close(&event)) {
                     g_m11_startup_intro_quit_requested = 1;
                     result = M11_ENTRANCE_COMMAND_QUIT;
@@ -6050,6 +6129,20 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
                     result = M11_ENTRANCE_COMMAND_QUIT;
                     goto done;
                 }
+                if (keyDown && event.key.key == SDLK_R) {
+                    if (menuState->quickResumeAvailable &&
+                        strcmp(menuState->quickResumeGameId, "dm1") == 0 &&
+                        menuState->quickResumeSavePath[0] != '\0') {
+                        resumeSelected = 1;
+                        accepted = 1;
+                        break;
+                    }
+                    if (g_m11_debug_startup_detail) {
+                        fprintf(stderr,
+                                "firestaff: startup-input-ignore game=dm1 phase=selector reason=resume-unavailable\n");
+                    }
+                    continue;
+                }
 #if SDL_VERSION_ATLEAST(3, 0, 0)
                 if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN &&
 #else
@@ -6063,7 +6156,36 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
                         sourceX >= 243 && sourceX < 257 &&
                         sourceY >= 46 && sourceY < 59) {
                         enterClick = 1;
+                    } else if (sourceX >= 243 && sourceX < 257 &&
+                               sourceY >= 78 && sourceY < 91 &&
+                               menuState->quickResumeAvailable &&
+                               strcmp(menuState->quickResumeGameId, "dm1") == 0 &&
+                               menuState->quickResumeSavePath[0] != '\0') {
+                        resumeSelected = 1;
+                        accepted = 1;
+                        break;
+                    } else if (sourceX >= 243 && sourceX < 257 &&
+                               sourceY >= 111 && sourceY < 124) {
+                        g_m11_startup_intro_quit_requested = 1;
+                        result = M11_ENTRANCE_COMMAND_QUIT;
+                        goto done;
+                    } else if (sourceX >= 248 && sourceX < 294 &&
+                               sourceY >= 186 && sourceY < 200) {
+                        creditsClick = 1;
                     }
+                }
+                if (creditsClick) {
+                    int creditsResult = m11_show_dm1_i34e_selector_credits(
+                        &loader, frame, palette);
+                    if (creditsResult == M11_ENTRANCE_COMMAND_QUIT) {
+                        result = M11_ENTRANCE_COMMAND_QUIT;
+                        goto done;
+                    }
+                    if (g_m11_debug_startup_detail) {
+                        fprintf(stderr,
+                                "firestaff: startup-source-input game=dm1 platform=pc34 phase=selector command=credits-return\n");
+                    }
+                    continue;
                 }
                 if (enterClick) {
                     accepted = 1;
@@ -6076,6 +6198,26 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
                 goto done;
             }
             SDL_Delay(1u);
+        }
+        if (resumeSelected) {
+            menuState->quickResumeLaunchRequested = 1;
+            (void)M11_Audio_EmitSourceSoundIndex(
+                &gameView->audioState, 1);
+            while (!M11_Audio_SfxDrained(&gameView->audioState)) {
+                if (M11_Render_PumpEvents()) {
+                    g_m11_startup_intro_quit_requested = 1;
+                    result = M11_ENTRANCE_COMMAND_QUIT;
+                    goto done;
+                }
+                SDL_Delay(1u);
+            }
+            if (g_m11_debug_startup_detail) {
+                fprintf(stderr,
+                        "firestaff: startup-source-input game=dm1 platform=pc34 phase=selector command=resume save=%s\n",
+                        menuState->quickResumeSavePath);
+            }
+            result = 1;
+            goto done;
         }
         if (g_m11_debug_startup_detail)
             fprintf(stderr,

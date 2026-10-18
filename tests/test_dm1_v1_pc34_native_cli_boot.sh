@@ -499,6 +499,41 @@ if ! grep -Fq \
     exit 1
 fi
 echo "PASS: PC34 selector entrance ignores keyboard autorepeat and waits for a fresh command"
+resume_status=0
+resume_output="$(FIRESTAFF_AUTOTEST_SELECTOR_INPUT=key:r \
+   HOME="$missing_swsh_home" XDG_CONFIG_HOME="$missing_swsh_home" \
+   APPDATA="$missing_swsh_home" FIRESTAFF_CONFIG_PATH="$missing_swsh_home/config.toml" \
+   SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+   --game dm1 --platform pc --data-dir "$archive" \
+   --save "$missing_swsh_root/no-save.DAT" --debug --duration 12000 2>&1)" || resume_status=$?
+if ! grep -Fq \
+       'startup-source-input game=dm1 platform=pc34 phase=selector command=resume' \
+       <<<"$resume_output" ||
+   grep -Fq \
+       'startup-source-input game=dm1 platform=pc34 phase=selector command=enter' \
+       <<<"$resume_output"; then
+    printf '%s\n' "$resume_output" >&2
+    echo "FAIL: PC34 selector Resume did not choose Firestaff's DM1 Quick Resume route (exit $resume_status)" >&2
+    exit 1
+fi
+echo "PASS: PC34 selector R selects the existing DM1 Quick Resume launch intent"
+credits_status=0
+credits_output="$(FIRESTAFF_AUTOTEST_SELECTOR_INPUT=credits-then-enter \
+   HOME="$missing_swsh_home" XDG_CONFIG_HOME="$missing_swsh_home" \
+   APPDATA="$missing_swsh_home" FIRESTAFF_CONFIG_PATH="$missing_swsh_home/config.toml" \
+   SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+   --game dm1 --platform pc --data-dir "$archive" --debug --duration 12000 2>&1)" || credits_status=$?
+if ! grep -Fq \
+       'startup-source-input game=dm1 platform=pc34 phase=selector command=credits-return' \
+       <<<"$credits_output" ||
+   ! grep -Fq \
+       'startup-source-input game=dm1 platform=pc34 phase=selector command=enter' \
+       <<<"$credits_output"; then
+    printf '%s\n' "$credits_output" >&2
+    echo "FAIL: PC34 selector Credits did not return to the closed selector before Enter (exit $credits_status)" >&2
+    exit 1
+fi
+echo "PASS: PC34 selector Credits shows the original page, returns to the selector and then enters"
 python3 - "$missing_swsh_root" <<'PY'
 from pathlib import Path
 import shutil
