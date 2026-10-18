@@ -1955,9 +1955,11 @@ renames the backup over the primary at F0435:2901-2908. M11 now retries the
 matching DMGAME/DMGAMEF/DMGAMEG BAK path only when reading DAT fails. Firestaff
 keeps original media read-only and does not perform ReDMCSB's promotion rename.
 The authentic Amiga v2.0 test verifies that the real nested BAK is accepted by
-M11, while a real backup-only ADF launch still needs an end-to-end fixture or
-capture; do not claim that fallback path proven yet. Header, all five parts and
-dungeon-tail authentication remain required. Other Amiga save formats and
+M11 and exercises DAT-missing fallback end to end: it renames only the primary
+file's directory entry in an in-memory-derived ADF copy, then confirms M11
+loads the unchanged authentic BAK and reports backup use. The temporary test
+image is deleted. Header, all five parts and dungeon-tail authentication
+remain required. Other Amiga save formats and
 nonzero-active-group corpus coverage remain open. Audit the PC multilingual
 DMSAVEF/DMSAVEG browser filename variants against authentic saves separately.
 

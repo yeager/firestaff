@@ -28,6 +28,11 @@ static uint16_t test_read_be16(const uint8_t *bytes) {
     return (uint16_t)(((uint16_t)bytes[0] << 8) | bytes[1]);
 }
 
+static uint32_t test_read_be32(const uint8_t *bytes) {
+    return ((uint32_t)bytes[0] << 24) | ((uint32_t)bytes[1] << 16) |
+           ((uint32_t)bytes[2] << 8) | bytes[3];
+}
+
 /* F0434 stores map descriptors, the compact per-column table, SFT and text
  * ahead of DB0..DB15.  This test-only cursor intentionally follows the A20
  * big-endian header itself, so a host-endian loader cannot accidentally make
@@ -600,7 +605,12 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
     RealSaveDiskReceipt receipt;
     M11_GameViewState backup_view;
     char backup_virtual_save_path[1024];
+    const char backup_only_adf_path[] = "dm1-amiga-backup-only-test.adf";
+    char backup_only_save_path[256];
     int backup_used = 0;
+    int primary_name_changed = 0;
+    FILE *backup_only_stream;
+    size_t block_number;
     FILE *stream;
 
     if (!archive || !archive[0]) {
@@ -628,7 +638,6 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
                                               real_save_disk_visitor,
                                               &receipt) >= 0,
           "real_save_adf_visit");
-    free(adf);
     printf("AMIGA-SAVE-DISK files=%u payload_bytes=%zu\n",
            receipt.file_count, receipt.byte_count);
     CHECK(receipt.file_count == 2u && receipt.byte_count == 98004u,
@@ -920,6 +929,56 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
                   DM1_V1_VIEWPORT_RUNTIME_ORIGIN_ORIGINAL_SAVE_AMIGA,
           "real_save_backup_amiga_m11_loads_nested_virtual_path");
     M11_GameView_Shutdown(&backup_view);
+
+    /* Derive a backup-only ADF test image from the original disk in memory:
+     * rename only the primary DAT directory entry, preserving the authentic
+     * BAK payload and every disk block. M11 then has to resolve DAT -> BAK. */
+    for (block_number = 2U; block_number < adf_size / 512U;
+         ++block_number) {
+        uint8_t *block = adf + block_number * 512U;
+        if (test_read_be32(block) == 2U &&
+            test_read_be32(block + 4U) == (uint32_t)block_number &&
+            test_read_be32(block + 508U) == UINT32_C(0xfffffffd) &&
+            block[432U] == 11U &&
+            memcmp(block + 433U, "DMGAMEG.DAT", 11U) == 0) {
+            block[433U] = 'X';
+            primary_name_changed = 1;
+            break;
+        }
+    }
+    CHECK(primary_name_changed,
+          "real_save_backup_only_fixture_hides_primary_name");
+    backup_only_stream = fopen(backup_only_adf_path, "wb");
+    CHECK(backup_only_stream != NULL,
+          "real_save_backup_only_fixture_open");
+    if (backup_only_stream) {
+        const int wrote = fwrite(adf, 1U, adf_size, backup_only_stream) ==
+                          adf_size;
+        const int closed = fclose(backup_only_stream) == 0;
+        CHECK(wrote && closed, "real_save_backup_only_fixture_write");
+        if (wrote && closed && primary_name_changed &&
+            snprintf(backup_only_save_path, sizeof(backup_only_save_path),
+                     "%s::DMGAMEG.DAT", backup_only_adf_path) > 0 &&
+            strlen(backup_only_save_path) < sizeof(backup_only_save_path)) {
+            M11_GameViewState backup_only_view;
+            int automatic_backup_used = 0;
+            M11_GameView_Init(&backup_only_view);
+            backup_only_view.active = 1;
+            strcpy(backup_only_view.sourceId, "dm1");
+            CHECK(M11_GameView_LoadDm1SavePath(
+                      &backup_only_view, backup_only_save_path,
+                      &automatic_backup_used) == 1 &&
+                      automatic_backup_used == 1 &&
+                      backup_only_view.world.gameTick ==
+                          receipt.backup_f0435.game_time &&
+                      backup_only_view.dm1ViewportRuntimeOrigin ==
+                          DM1_V1_VIEWPORT_RUNTIME_ORIGIN_ORIGINAL_SAVE_AMIGA,
+                  "real_save_backup_only_amiga_m11_falls_back_to_bak");
+            M11_GameView_Shutdown(&backup_only_view);
+        }
+    }
+    remove(backup_only_adf_path);
+    free(adf);
     free(receipt.primary_bytes);
 }
 
