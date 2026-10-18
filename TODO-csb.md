@@ -1,3 +1,9 @@
+2026-10-19 current-source original-media CSB Atari STX startup retest:
+`csb_v1_atari_stx_native_cli_boot` passed in 137.17 seconds with the installed
+authentic STX package. It verified automatic edition discovery, the Atari
+M12 start route and scripted title/menu input. SDL dummy output does not
+verify native Atari display, audio or physical input parity.
+
 2026-10-19 current-source original-media CSB FM Towns startup retest:
 `csb_v1_fmtowns_native_cli_boot` passed in 148.65 seconds with the installed
 authentic Japanese/English archive. The test covered direct startup, source
