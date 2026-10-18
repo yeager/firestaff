@@ -1,3 +1,12 @@
+- 2026-10-18: Re-ran the authentic DM2 native CLI/start-menu boot gates on
+  the current source for DOS English, Macintosh English and Amiga English;
+  all three passed. The authentic FM Towns Japanese full CLI/menu route also
+  passed on this source during the same work session, including bare
+  `--game dm2` AUTO selection from a mixed original-media collection, the
+  native New Game menu and first-party runtime. These SDL dummy-driver checks
+  establish the tested startup/runtime routes and original-media binding; they
+  do not establish native window/input behavior or visual parity.
+
 - 2026-10-15: Discover a complete later loose installation when the first
   graphics copy with the same hash lacks its dungeon. The native boot owner
   and M12 use one shared same-parent pair finder. The common ordinary-file
