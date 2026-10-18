@@ -1,3 +1,10 @@
+2026-10-19 current-source original-media DM1 FM Towns startup retest:
+`dm1_v1_fmtowns_archive_cli_boot` passed in 278.45 seconds with the installed
+authentic Japanese/English ZIP. It covered AUTO/explicit English and Japanese
+CLI routes, M12 language/menu selection at 1920x1080, and a 720-frame V1
+input/runtime probe. SDL dummy output does not verify native display, audio
+or physical input parity.
+
 2026-10-19 current-source original-media DM1 PC34 startup retest:
 `dm1_v1_pc34_native_cli_boot` passed in 408.29 seconds with the installed
 authentic DOS archive. It covered direct CLI, M12 startup, PC34 intro and
