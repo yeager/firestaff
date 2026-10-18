@@ -1,3 +1,9 @@
+2026-10-19 current-source original-media DM1 Amiga 3.6 startup retest:
+`dm1_v1_amiga36_original_media_cli_boot` passed in 25.61 seconds with the
+installed authentic Amiga 3.6 ZIP. It verified explicit German CLI startup
+and M12 menu launch. The test does not establish native Amiga display, audio
+or physical input parity.
+
 2026-10-19 current-source original-media DM1 Atari ST startup retest:
 `dm1_v1_atari_st_archive_cli_boot` passed in 80.41 seconds with the installed
 authentic Atari ST 1.2 ZIP. The M12 route reached the dungeon and accepted
