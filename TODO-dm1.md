@@ -1,3 +1,11 @@
+2026-10-18 Amiga 3.6 startup retest: the published arm64 binary passed
+`test_dm1_v1_amiga36_original_media_cli_boot.sh` against the authentic
+`Dungeon-Master_Amiga_36.zip`. Direct CLI archive and discovered-directory
+routes and the M12 handoff reached the first runtime pose. The test verified
+the native C696 entrance zones, 64 two-pixel door steps and fifteen palette
+steps. SDL dummy output does not establish original-emulator frame alignment,
+native audio, full gameplay or display parity.
+
 2026-10-18 v3.0.386 original-media CLI/menu retest: `test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh returns` passed the authentic DM1 PC, FM Towns, Atari ST and Amiga routes. The direct `--game dm1` route also exits after Return to Menu instead of reopening the launcher, and every tested return scan found DM1, CSB and DM2. `test_firestaff_cli_startup_diagnostics_real_media.sh` passed the FM Towns default-selection and original PC34/Towns title-cadence checks. These runs used the published arm64 binary with SDL dummy output; physical display, input latency and complete platform parity remain open.
 
 2026-10-18 Apple IIGS startup retest: `test_firestaff_iigs_cli_real_media.sh`
