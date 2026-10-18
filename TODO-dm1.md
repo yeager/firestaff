@@ -1943,15 +1943,15 @@ native OS thread failures remain unexecuted integration cases.
 
 2026-10-18 native Amiga launcher backup fallback: ReDMCSB LOADSAVE.C
 F0435:2555-2584 opens the language-matched BAK when opening DAT fails, then
-renames the backup over the primary at F0435:2901-2908. M11 now retries the
-matching DMGAME/DMGAMEF/DMGAMEG BAK path only when reading DAT fails. Firestaff
-keeps original media read-only and does not perform ReDMCSB's promotion rename.
-The authentic Amiga v2.0 test verifies that the real nested BAK is accepted by
-M11 and exercises DAT-missing fallback end to end: it renames only the primary
-file's directory entry in an in-memory-derived ADF copy, then confirms M11
-loads the unchanged authentic BAK and reports backup use. The temporary test
-image is deleted. Header, all five parts and dungeon-tail authentication
-remain required. Other Amiga save formats and
+renames the backup over the primary at F0435:2901-2908. M11 and M12 now share
+the matching DMGAME/DMGAMEF/DMGAMEG BAK path resolver. M12 offers Continue from
+that sibling only when reading the configured DAT fails; an existing but
+rejected DAT does not unlock the backup. Firestaff keeps original media
+read-only and does not perform ReDMCSB's promotion rename. Authentic Amiga v2.0
+tests verify the nested BAK is accepted by M11 and that M12 recognizes a
+backup-only virtual disk made by changing only the primary file's directory
+entry in an in-memory-derived ADF copy. Header, all five parts and dungeon-tail
+authentication remain required. Other Amiga save formats and
 nonzero-active-group corpus coverage remain open. Audit the PC multilingual
 DMSAVEF/DMSAVEG browser filename variants against authentic saves separately.
 

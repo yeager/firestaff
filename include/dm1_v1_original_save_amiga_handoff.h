@@ -176,6 +176,14 @@ int dm1_v1_original_save_amiga_f0435_receipt_bytes(
     size_t size,
     Dm1V1AmigaSaveF0435Receipt *out_receipt);
 
+/* ReDMCSB LOADSAVE.C F0435:2555-2584 derives the language-matched Amiga
+ * backup by replacing the selected DMGAME*.DAT name with DMGAME*.BAK, and
+ * probes it only when the primary file cannot be opened. This path helper
+ * also handles archive::disk.adf::FILE locators. The returned path is
+ * malloc-owned by the caller; NULL means the path is not a supported DAT
+ * name or allocation failed. */
+char *dm1_v1_original_save_amiga_backup_sibling_path(const char *path);
+
 /* Decodes only GLOBAL_DATA after authenticating the complete original save.
  * The source byte buffer is never modified or written to disk. */
 int dm1_v1_original_save_amiga_f0435_global_data_bytes(

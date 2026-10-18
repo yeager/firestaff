@@ -3618,6 +3618,24 @@ static int m12_is_valid_dm1_quicksave_path(const char* path) {
             amigaReceipt.header_authenticated &&
             amigaReceipt.body_authenticated &&
             amigaReceipt.tail_authenticated) return 1;
+    } else {
+        char *backupPath =
+            dm1_v1_original_save_amiga_backup_sibling_path(path);
+        if (backupPath && asset_read_path_alloc(
+                backupPath, &virtualBytes, &virtualByteCount)) {
+            memset(&amigaReceipt, 0, sizeof(amigaReceipt));
+            rc = dm1_v1_original_save_amiga_f0435_receipt_bytes(
+                virtualBytes, virtualByteCount, &amigaReceipt);
+            free(virtualBytes);
+            if (rc == DM1_V1_AMIGA_SAVE_F0435_OK &&
+                amigaReceipt.header_authenticated &&
+                amigaReceipt.body_authenticated &&
+                amigaReceipt.tail_authenticated) {
+                free(backupPath);
+                return 1;
+            }
+        }
+        free(backupPath);
     }
 
     memset(&world, 0, sizeof(world));

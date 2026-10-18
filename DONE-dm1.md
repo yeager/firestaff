@@ -663,6 +663,24 @@
 
 # Firestaff DONE — DM1
 
+- 2026-10-18: Refreshed the POT/PO source references after earlier startup
+  edits so `po/update.sh --check` and the required localization CI job pass.
+  The 21 changed catalogs retain identical message IDs and translations; only
+  source line references moved.
+
+- 2026-10-18: M12 Quick Resume now recognizes ReDMCSB's Amiga automatic
+  backup when the selected `DMGAME*.DAT` member is absent. The M11 and M12
+  paths share a `::`-aware sibling resolver; M12 authenticates the backup with
+  the same complete F0435 header/body/tail receipt and only tries it after the
+  primary cannot be read. A real Amiga v2.0 save disk test hides the primary
+  by changing its directory-entry name in an in-memory-derived ADF copy, then
+  verifies that the M12 Continue row keeps the missing-DAT locator for the
+  existing M11 loader. A separate original-media M11 test loads the unchanged
+  authentic BAK and reports backup use. The test removes its temporary ADF.
+  `m12_quick_resume_gate` passes with original media. This proves the menu
+  admission and loader fallback boundary; it does not expand coverage to other
+  Amiga save formats or Atari/PC multilingual backup variants.
+
 - 2026-10-13: Corrected the English/Japanese FM Towns title zoom palette from
   ReDMCSB `TITLE.C:362-367`: the original installs both C13_DUNGEON and
   C14_MASTER before drawing any zoom frame. Firestaff had left color index 15

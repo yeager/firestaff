@@ -6,7 +6,9 @@
 #include "csb_v1_save_import_path_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
 #include "dm1_v1_save_load.h"
+#include "dm1_v1_original_save_amiga_handoff.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
+#include "firestaff_zip_extract.h"
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_session_fixture.h"
 #include "memory_savegame_pc34_native_export_pc34_compat.h"
@@ -53,9 +55,133 @@ static int expect(int cond, const char* msg) {
     return 1;
 }
 
+static uint32_t test_read_be32(const uint8_t* bytes) {
+    return ((uint32_t)bytes[0] << 24) | ((uint32_t)bytes[1] << 16) |
+           ((uint32_t)bytes[2] << 8) | (uint32_t)bytes[3];
+}
+
+static int test_amiga_backup_sibling_path(void) {
+    char* backup = dm1_v1_original_save_amiga_backup_sibling_path(
+        "/saves/DMGAMEG.DAT");
+    int ok = expect(backup && strcmp(backup, "/saves/DMGAMEG.BAK") == 0,
+                    "loose Amiga save path should resolve language-matched backup");
+    free(backup);
+    backup = dm1_v1_original_save_amiga_backup_sibling_path(
+        "archive.zip::disk.adf::DMGAMEF.DAT");
+    ok = expect(backup && strcmp(backup,
+                    "archive.zip::disk.adf::DMGAMEF.BAK") == 0,
+                 "nested virtual Amiga save path should resolve sibling member") && ok;
+    free(backup);
+    backup = dm1_v1_original_save_amiga_backup_sibling_path(
+        "archive.zip::disk.adf::DMGAME.DAT");
+    ok = expect(backup && strcmp(backup,
+                    "archive.zip::disk.adf::DMGAME.BAK") == 0,
+                 "default-language Amiga save should resolve its backup") && ok;
+    free(backup);
+    backup = dm1_v1_original_save_amiga_backup_sibling_path(
+        "archive.zip::disk.adf::DMSAVE.DAT");
+    ok = expect(backup == NULL,
+                 "non-Amiga save names should not resolve Amiga backup") && ok;
+    free(backup);
+    return ok;
+}
+
 static void force_dm1_available(M12_StartupMenuState* state);
 
-static int test_real_amiga_virtual_save_quick_resume(void) {
+static int test_real_amiga_backup_only_quick_resume(
+    const char* archive, const char* scratch_root) {
+    static const char save_zip[] =
+        "Dungeon Master v2.0 (1988)(FTL)[save disk].zip";
+    static const char save_adf[] =
+        "Dungeon Master v2.0 (1988)(FTL)[save disk].adf";
+    uint8_t* inner = NULL;
+    uint8_t* adf = NULL;
+    size_t inner_size = 0u;
+    size_t adf_size = 0u;
+    size_t block_number;
+    int primary_name_changed = 0;
+    int result = 0;
+    char adf_path[2048] = {0};
+    char virtual_path[4096];
+    int path_length;
+    FILE* stream = NULL;
+    M12_StartupMenuState state;
+    M12_LaunchIntent intent;
+
+    if (!firestaff_zip_extract_by_suffix(archive, save_zip, &inner,
+                                         &inner_size) &&
+        firestaff_zip_extract_memory_by_suffix(
+            inner, inner_size, save_adf, &adf, &adf_size) == 0) {
+        for (block_number = 2U; block_number < adf_size / 512U;
+             ++block_number) {
+            uint8_t* block = adf + block_number * 512U;
+            if (test_read_be32(block) == 2U &&
+                test_read_be32(block + 4U) == (uint32_t)block_number &&
+                test_read_be32(block + 508U) == UINT32_C(0xfffffffd) &&
+                block[432U] == 11U &&
+                memcmp(block + 433U, "DMGAMEG.DAT", 11U) == 0) {
+                block[433U] = 'X';
+                primary_name_changed = 1;
+                break;
+            }
+        }
+    }
+    if (!expect(inner != NULL && adf != NULL && primary_name_changed,
+                "original Amiga save disk should yield a backup-only test locator")) {
+        goto cleanup;
+    }
+    path_length = snprintf(adf_path, sizeof(adf_path),
+                           "%s/dm1-amiga-backup-only-quick-resume.adf",
+                           scratch_root);
+    if (path_length < 0 || (size_t)path_length >= sizeof(adf_path)) {
+        result = expect(0, "backup-only Amiga virtual save path should fit");
+        goto cleanup;
+    }
+    path_length = snprintf(virtual_path, sizeof(virtual_path), "%s::DMGAMEG.DAT",
+                           adf_path);
+    if (path_length < 0 || (size_t)path_length >= sizeof(virtual_path)) {
+        result = expect(0, "backup-only Amiga virtual save path should fit");
+        goto cleanup;
+    }
+    stream = fopen(adf_path, "wb");
+    if (!expect(stream != NULL, "backup-only Amiga test disk should open")) {
+        goto cleanup;
+    }
+    {
+        int wrote = fwrite(adf, 1U, adf_size, stream) == adf_size;
+        int closed = fclose(stream) == 0;
+        stream = NULL;
+        if (!expect(wrote && closed,
+                "backup-only Amiga test disk should preserve original backup bytes")) {
+            goto cleanup;
+        }
+    }
+
+    M12_Config_SetLastSavePath(virtual_path);
+    M12_StartupMenu_InitWithDataDir(&state, "firestaff-test-no-assets", NULL);
+    force_dm1_available(&state);
+    if (!expect(state.quickResumeAvailable == 1 &&
+                strcmp(state.quickResumeGameId, "dm1") == 0 &&
+                strcmp(state.quickResumeSavePath, virtual_path) == 0,
+                "M12 should offer Continue when only authentic Amiga BAK exists")) {
+        goto cleanup;
+    }
+    state.selectedIndex = -1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    result = expect(intent.valid == 1 && intent.savePath &&
+                    strcmp(intent.savePath, virtual_path) == 0,
+                    "Amiga backup Continue should retain missing DAT locator for M11");
+
+cleanup:
+    if (stream) fclose(stream);
+    if (adf_path[0] != '\0') remove(adf_path);
+    free(inner);
+    free(adf);
+    return result;
+}
+
+static int test_real_amiga_virtual_save_quick_resume(const char* scratch_root) {
     const char* archive = getenv("FIRESTAFF_DM1_AMIGA_V20_ARCHIVE");
     static const char save_zip[] =
         "Dungeon Master v2.0 (1988)(FTL)[save disk].zip";
@@ -93,9 +219,12 @@ static int test_real_amiga_virtual_save_quick_resume(void) {
     state.selectedIndex = -1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     intent = M12_StartupMenu_GetLaunchIntent(&state);
-    return expect(intent.valid == 1 && intent.savePath &&
-                  strcmp(intent.savePath, virtual_path) == 0,
-                  "Amiga Continue intent must retain the in-memory virtual path");
+    if (!expect(intent.valid == 1 && intent.savePath &&
+                strcmp(intent.savePath, virtual_path) == 0,
+                "Amiga Continue intent must retain the in-memory virtual path")) {
+        return 0;
+    }
+    return test_real_amiga_backup_only_quick_resume(archive, scratch_root);
 }
 
 static void force_dm1_available(M12_StartupMenuState* state) {
@@ -922,7 +1051,8 @@ int main(void) {
         return 1;
     }
 
-    if (!test_real_amiga_virtual_save_quick_resume()) return 1;
+    if (!test_amiga_backup_sibling_path()) return 1;
+    if (!test_real_amiga_virtual_save_quick_resume(tmpTemplate)) return 1;
 
     M12_Config_SetLastSavePath("");
     M12_StartupMenu_InitWithDataDir(&state, "firestaff-test-no-assets", NULL);

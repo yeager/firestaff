@@ -64,6 +64,61 @@ static void free_unpublished_world(struct GameWorld_Compat *world)
     memset(world, 0, sizeof(*world));
 }
 
+char *dm1_v1_original_save_amiga_backup_sibling_path(const char *path)
+{
+    static const char *const basenames[] = {
+        "DMGAME.DAT", "DMGAMEF.DAT", "DMGAMEG.DAT"
+    };
+    size_t length;
+    size_t basename_length;
+    size_t i;
+    const char *basename;
+    const char *separator;
+    const char *virtual_separator = NULL;
+    char *backup_path;
+
+    if (!path || path[0] == '\0') return NULL;
+    length = strlen(path);
+    basename = strrchr(path, '/');
+    separator = strrchr(path, '\\');
+    if (separator && (!basename || separator > basename)) basename = separator;
+    separator = path;
+    while ((separator = strstr(separator, "::")) != NULL) {
+        virtual_separator = separator + 1;
+        separator += 2;
+    }
+    if (virtual_separator && (!basename || virtual_separator > basename)) {
+        basename = virtual_separator;
+    }
+    basename = basename ? basename + 1 : path;
+    basename_length = length - (size_t)(basename - path);
+    for (i = 0U; i < sizeof(basenames) / sizeof(basenames[0]); ++i) {
+        size_t j;
+        if (strlen(basenames[i]) != basename_length) continue;
+        for (j = 0U; j < basename_length; ++j) {
+            unsigned char actual = (unsigned char)basename[j];
+            unsigned char expected = (unsigned char)basenames[i][j];
+            if (actual >= 'a' && actual <= 'z') actual -= 'a' - 'A';
+            if (actual != expected) break;
+        }
+        if (j != basename_length) continue;
+        backup_path = (char *)malloc(length + 1U);
+        if (!backup_path) return NULL;
+        memcpy(backup_path, path, length + 1U);
+        backup_path[length - 3U] = basename[basename_length - 3U] >= 'a' &&
+                                   basename[basename_length - 3U] <= 'z'
+            ? 'b' : 'B';
+        backup_path[length - 2U] = basename[basename_length - 2U] >= 'a' &&
+                                   basename[basename_length - 2U] <= 'z'
+            ? 'a' : 'A';
+        backup_path[length - 1U] = basename[basename_length - 1U] >= 'a' &&
+                                   basename[basename_length - 1U] <= 'z'
+            ? 'k' : 'K';
+        return backup_path;
+    }
+    return NULL;
+}
+
 static uint32_t fingerprint_bytes(const uint8_t *bytes, size_t byte_count)
 {
     uint32_t hash = 2166136261u;
