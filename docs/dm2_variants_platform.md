@@ -69,11 +69,14 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   HFS catalogue. `DMFiles/Dungeon.dat`, `Graphics.dat`, and `md.dat` remain
   owned by the original ZIP and are never unpacked to the game-data directory.
 - The retail version has a hash-paired boot receipt and uses the 39,411-byte
-  big-endian dungeon. The Japanese Mac multi-track archive is now
-  readable through its authentic late Apple_HFS partition and
-  case-preserving catalogue as a media-only gate; it remains a preservation
-  input, not a launchable variant, until its Japanese graphics/dungeon pair
-  and runtime are source-locked. French Mac remains preservation-only.
+  big-endian dungeon. The Japanese Mac multi-track archive is readable through
+  its authentic late Apple_HFS partition and case-preserving catalogue. Its
+  known `GRAPHICS.DAT` hash is `283d5456c4f676609489e200219605bb`; its HFS
+  catalogue has four movie resources but no application forks, `md.dat` music
+  map, or Mac sound resources. The Japanese archive therefore remains a
+  preservation input, not a launchable variant; a Japanese boot/runtime owner
+  and authenticated dungeon-pair receipt are still missing. French Mac remains
+  preservation-only.
 - The Mac dungeon reader keeps the ZIP/HFS source bytes intact and carries the
   68k word order through the authenticated column, ground-stack and record-link
   accessors. The retail ZIP passes the source record-graph and start-pose

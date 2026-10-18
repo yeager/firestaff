@@ -12065,7 +12065,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_japanese_media_real
     target_include_directories(test_dm2_v1_mac_japanese_media_real PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(test_dm2_v1_mac_japanese_media_real PRIVATE
-        firestaff_zip_extract firestaff_fmtowns_disc firestaff_zlib)
+        firestaff_zip_extract firestaff_fmtowns_disc firestaff_zlib firestaff_m12)
     add_test(NAME dm2_v1_mac_japanese_media_real
         COMMAND test_dm2_v1_mac_japanese_media_real)
     set_tests_properties(dm2_v1_mac_japanese_media_real PROPERTIES

@@ -1,5 +1,13 @@
 # Firestaff TODO — DM2
 
+Japanese Macintosh launch support remains open. The authentic multi-track ZIP
+has a catalogued Japanese `GRAPHICS.DAT` and a readable 37,957-byte dungeon,
+but its HFS catalogue has no application forks, `md.dat` music map, or Mac
+sound resources. `--game dm2 --platform mac` rejects this isolated archive.
+The English Mac runtime cannot be selected from the Japanese graphics hash;
+establish the Japanese startup/application and audio ownership from source and
+original media before admitting it as playable.
+
 2026-10-15 orphan-first loose graphics discovery is verified with two authentic
 copies on DOS, Macintosh, FM Towns and Amiga. Selected orphan rejection also
 passes with the untouched canonical original ZIP beside the selected graphics. More than 256 matching graphics

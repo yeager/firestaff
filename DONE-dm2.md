@@ -1,3 +1,11 @@
+- 2026-10-18: Strengthen the authentic Japanese Macintosh media gate. It now
+  verifies the catalogued Japanese `GRAPHICS.DAT` MD5 and the actual HFS
+  resource boundary: four movie resources are present, while the application
+  forks, `md.dat` music map and Mac sound resources are absent. This confirms
+  the Japanese disc cannot enter the current English application-backed Mac
+  startup path by graphics hash alone. The original archive passes the focused
+  real-media test; playable Japanese Mac support remains open.
+
 - 2026-10-18: Re-ran the authentic DM2 native CLI/start-menu boot gates on
   the current source for DOS English, Macintosh English and Amiga English;
   all three passed. The authentic FM Towns Japanese full CLI/menu route also
