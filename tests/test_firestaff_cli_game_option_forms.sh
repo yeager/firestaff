@@ -1,6 +1,7 @@
 #!/bin/sh
 # Keep pasted macOS rich-text commands and conventional --option=value
-# invocations on the same parser path as the documented --game <id> form.
+# invocations on the same parser path as --game <id>. Also guard the ordinary
+# no-game app start against accidentally entering a DM1 direct launch.
 
 set -eu
 
@@ -30,6 +31,52 @@ check_form --width 1 --height 4096 --version
 check_form --duration -1 --version
 check_form --duration 0 --version
 check_form --boot-probe-frames 0 --version
+
+check_default_startup_stays_in_menu() {
+    scratch=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-default-startup.XXXXXX") || exit 1
+    mkdir -p "$scratch/data"
+    set +e
+    output=$(HOME="$scratch" \
+        FIRESTAFF_CONFIG_PATH="$scratch/startup-menu.toml" \
+        FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+        FIRESTAFF_SKIP_INTRO=1 \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        "$firestaff_bin" --verbose --duration 0 --data-dir "$scratch/data" 2>&1)
+    status=$?
+    set -e
+    if [ "$status" -ne 1 ]; then
+        printf 'fail: starting without --game should stay in the menu (expected the no-launch exit, got status %s)\n%s\n' \
+            "$status" "$output" >&2
+        rm -rf "$scratch"
+        exit 1
+    fi
+    case "$output" in
+        *'startup game=none mode=menu'*) ;;
+        *)
+            printf 'fail: no-game startup did not select the launcher menu\n%s\n' "$output" >&2
+            rm -rf "$scratch"
+            exit 1
+            ;;
+    esac
+    case "$output" in
+        *'launch phase=game-handoff'*)
+            printf 'fail: no-game startup entered a game handoff\n%s\n' "$output" >&2
+            rm -rf "$scratch"
+            exit 1
+            ;;
+    esac
+    case "$output" in
+        *'launch smoke failed: no launch reached before exit'*) ;;
+        *)
+            printf 'fail: no-game startup did not reach the expected menu-only exit\n%s\n' "$output" >&2
+            rm -rf "$scratch"
+            exit 1
+            ;;
+    esac
+    rm -rf "$scratch"
+}
+
+check_default_startup_stays_in_menu
 
 check_invalid_integer_value() {
     option=$1
