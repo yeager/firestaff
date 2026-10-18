@@ -4633,6 +4633,18 @@ static const char* m12_dm1_missing_startup_companion(const char* graphics,
         {"b35931b55db649a1bd2d415b61b29801", "658db79c6bb87f3ab09eb7005cd91313"}
     };
     size_t i;
+    /* ReDMCSB STARTUP2.C:1384 and 1444-1447 show the retail A20 path's
+     * F0437 title and F0441 entrance. Firestaff's authenticated [HD] ADF
+     * owner intentionally takes the direct IMG2 runtime route in
+     * m11_selected_dm1_is_amiga_hd(), so that specific original medium does
+     * not need the retail SWSH title companion. Keep this exception bound to
+     * its exact nested original member and authenticated A20 graphics hash. */
+    if (strcmp(graphicsMd5, "6a2f135b53c2220f0251fa103e2a6e7e") == 0 &&
+        graphics && strstr(graphics,
+            "::Dungeon Master (1988)(FTL)[HD].zip::"
+            "Dungeon Master (1988)(FTL)[HD].adf::")) {
+        return NULL;
+    }
     if (strcmp(graphicsMd5, "7f9458e4a3972d06e649a6fa85a7f34b") == 0)
         return m12_dm1_amiga36_package_ready(graphics, language) ? NULL : "VDEO.FTL";
     if (strcmp(graphicsMd5, "f934d97e43e1ba6e5159839acbcd0611") == 0)

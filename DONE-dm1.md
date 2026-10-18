@@ -1,3 +1,12 @@
+- 2026-10-18: Fixed the authentic Amiga HD start being rejected because the
+  retail Amiga 2.0 SWSH companion is absent from that installed-disk image.
+  The launcher now exempts only the exact nested `[HD]` ADF owner with the
+  authenticated A20 graphics/world pair; ordinary A20 media still follows
+  ReDMCSB's `STARTUP2.C:1384,1444-1447` title/entrance path and requires its
+  matching SWSH. The Amiga HD CLI/M12 menu/input matrix, standard Amiga 2.0
+  SWSH/title/entrance matrix, and authentic missing-companion rejection matrix
+  all pass against original media. This does not claim visual/audio parity.
+
 - 2026-10-16: Extended the authentic PC34 HoC C127/C162 test with two living
   champions admitted through distinct original mirror sensors. Ordinary left
   clicks on both DM1 PC status boxes select champion 0 then champion 1 through
