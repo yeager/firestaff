@@ -1,3 +1,5 @@
+2026-10-18 v3.0.386 original-media CLI/menu retest: `test_dm2_v1_fmtowns_native_cli_boot.sh` passed the reported bare `--game dm2` AUTO route with authentic DOS, Amiga, Macintosh and FM Towns media installed. FM Towns reached the New Game menu within 40 seconds; the presented 320x200 menu RGB matched the independently decoded original `TITLE/0/4` digest `367b54aa92b46d6e`; the normal M12 loop then reached the first champion with original assets and no core fallbacks. `test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh returns` also passed DM2 DOS, Macintosh, Amiga and FM Towns direct-start/return coverage. SDL dummy output does not establish physical MacBook Pro M5 HiDPI presentation or input behavior; the reported native-display failure remains open.
+
 # Firestaff TODO — DM2
 
 Japanese Macintosh launch support remains open. The authentic multi-track ZIP

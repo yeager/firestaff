@@ -1,3 +1,5 @@
+2026-10-18 v3.0.386 original-media CLI/menu retest: `test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh returns` passed the authentic DM1 PC, FM Towns, Atari ST and Amiga routes. The direct `--game dm1` route also exits after Return to Menu instead of reopening the launcher, and every tested return scan found DM1, CSB and DM2. `test_firestaff_cli_startup_diagnostics_real_media.sh` passed the FM Towns default-selection and original PC34/Towns title-cadence checks. These runs used the published arm64 binary with SDL dummy output; physical display, input latency and complete platform parity remain open.
+
 # Firestaff TODO — DM1
 
 2026-10-15 offline-selection recovery: configured/selected path intent now
