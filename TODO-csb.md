@@ -1,3 +1,10 @@
+2026-10-19 current-source mixed-original-media CSB M12 menu retest:
+`csb_v1_fmtowns_m12_auto_mixed_real_media` passed in 367.44 seconds. With
+authentic FM Towns, Atari ST and Amiga media installed together, AUTO and the
+M12 cards selected their expected original-media routes; explicit platform
+constraints were also exercised. SDL dummy output verifies launcher routing
+and scripted input, not native display, audio or physical input parity.
+
 2026-10-19 current-source original-media CSB Amiga startup retest:
 `csb_v1_amiga_native_cli_boot` passed in 67.44 seconds with the installed
 authentic Amiga expansion and FTL ZIP packages. Both M12 input routes reached

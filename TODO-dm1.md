@@ -1,3 +1,21 @@
+2026-10-19 current-source DM1 M12 platform-card regression:
+`dm1_v1_m12_auto_multi_platform_menu` passed in 90.07 seconds against the
+installed originals. AUTO selected FM Towns; the tested M12 platform cards
+launched PC34, Atari ST 1.2, Amiga 2.0 and FM Towns source routes. The SDL
+dummy run verifies launcher handoffs and scripted runtime input, not native
+display or physical input/audio behavior.
+
+2026-10-19 current-source DM1 Atari ST original-media matrix:
+`dm1_v1_atari_st_archive_cli_boot`, `dm1_v1_atari_st_11_archive_cli_boot`,
+`dm1_v1_atari_st_10b_archive_cli_boot`,
+`dm1_v1_atari_st_10a_archive_cli_boot`,
+`dm1_v1_atari_st_de_archive_cli_boot` and
+`dm1_v1_atari_st_fr_archive_cli_boot` passed 6/6 in 288.96 seconds. The
+English 1.0a, 1.0b, 1.1 and 1.2, German 1.2, and French 1.3 packages reached
+their authentic CLI/M12 startup routes with source-owned Hall/input checks.
+SDL dummy output does not verify native Atari display, audio or physical
+input parity.
+
 2026-10-19 current-source original-media DM1 Amiga 3.6 startup retest:
 `dm1_v1_amiga36_original_media_cli_boot` passed in 25.61 seconds with the
 installed authentic Amiga 3.6 ZIP. It verified explicit German CLI startup
