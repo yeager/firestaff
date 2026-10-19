@@ -1,3 +1,13 @@
+# Firestaff v3.0.393
+
+## Developer changes
+
+- `DM2 Macintosh French startup verification`: add an original-media CLI regression that follows the selected Macintosh retail files through the New Game route, verifies the first champion loads without core fallbacks, and confirms Back exits the direct game launch.
+
+## Known limitations
+
+- `DM2 Macintosh French startup verification`: the loose extracted installation does not contain the HFS CD startup movie; that movie remains covered through the separate CD-image route. SDL dummy video and audio do not establish native display, audio output, or physical input parity.
+
 # Firestaff v3.0.392
 
 ## User-facing changes
