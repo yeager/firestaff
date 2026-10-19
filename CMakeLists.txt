@@ -27923,7 +27923,7 @@ endif()
         COMMAND test_m12_quick_resume_preference_real)
     set_tests_properties(m12_quick_resume_preference_real PROPERTIES
         SKIP_RETURN_CODE 77 TIMEOUT 30
-        ENVIRONMENT "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/resume-preference-scratch;SDL_VIDEODRIVER=dummy"
+        ENVIRONMENT "FIRESTAFF_DM1_AMIGA_V20_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Amiga_EN_Version-20.zip;TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/resume-preference-scratch;SDL_VIDEODRIVER=dummy"
         LABELS "dm1;amiga;real-media;menu;skip-safe")
 
     add_executable(test_m12_quick_resume_gate
