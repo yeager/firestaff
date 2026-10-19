@@ -1722,9 +1722,11 @@ I34E title and the selector Enter transition before FIRES; the authentic
 `dm1_v1_pc34_native_cli_boot` test verifies this path against PC34 media. An
 authentic DOSBox run from the extracted PC 3.4 distribution showed the same
 program order. Captures are in local scratch only and do not claim an M5 or
-release comparison. Remaining work: implement the legacy selector's
-interactive Resume/Quit/Credits choices where appropriate, then compare the
-first runtime viewport against the original DOS capture. The existing
+release comparison. The selector already supports Resume, Credits/return,
+Quit by keyboard/window close, and its source Quit hitbox; authenticated
+original-media regression coverage now exercises keyboard Quit and the Quit
+hitbox alongside the existing Resume and Credits routes. Compare the first
+runtime viewport against the original DOS capture separately. The existing
 C001/Entrance timing captures remain valid Firestaff measurements, but are
 not original-I34E parity evidence.
 

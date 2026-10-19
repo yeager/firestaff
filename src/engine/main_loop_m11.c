@@ -6079,6 +6079,21 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
             (void)m11_push_script_event_token(
                 freshResume, sizeof(freshResume) - 1u);
         } else if (getenv("FIRESTAFF_AUTOTEST_SELECTOR_INPUT") &&
+                   (strcmp(getenv("FIRESTAFF_AUTOTEST_SELECTOR_INPUT"),
+                           "key:q") == 0 ||
+                    strcmp(getenv("FIRESTAFF_AUTOTEST_SELECTOR_INPUT"),
+                           "key:escape") == 0)) {
+            const char *quitKey = getenv("FIRESTAFF_AUTOTEST_SELECTOR_INPUT");
+            (void)m11_push_script_event_token(quitKey, strlen(quitKey));
+        } else if (getenv("FIRESTAFF_AUTOTEST_SELECTOR_INPUT") &&
+                   strcmp(getenv("FIRESTAFF_AUTOTEST_SELECTOR_INPUT"),
+                          "click:quit") == 0) {
+            /* ReDMCSB SELECTOR.C places Quit at source (243,111); the dummy
+             * 960x540 window maps the center of that 14x13 box to 723,316. */
+            static const char quitClick[] = "click:723:316";
+            (void)m11_push_script_event_token(
+                quitClick, sizeof(quitClick) - 1u);
+        } else if (getenv("FIRESTAFF_AUTOTEST_SELECTOR_INPUT") &&
                    strcmp(getenv("FIRESTAFF_AUTOTEST_SELECTOR_INPUT"),
                           "click:resume") == 0) {
             /* ReDMCSB SELECTOR.C:960 places the 14x13 Resume hitbox at
@@ -6137,6 +6152,11 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
                 }
                 if (keyDown && (event.key.key == SDLK_ESCAPE ||
                                 event.key.key == SDLK_Q)) {
+                    if (g_m11_debug_startup_detail) {
+                        fprintf(stderr,
+                                "firestaff: startup-source-input game=dm1 platform=pc34 phase=selector command=quit source=keyboard key=%d\n",
+                                (int)event.key.key);
+                    }
                     g_m11_startup_intro_quit_requested = 1;
                     result = M11_ENTRANCE_COMMAND_QUIT;
                     goto done;
@@ -6178,6 +6198,10 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
                         break;
                     } else if (sourceX >= 243 && sourceX < 257 &&
                                sourceY >= 111 && sourceY < 124) {
+                        if (g_m11_debug_startup_detail) {
+                            fprintf(stderr,
+                                    "firestaff: startup-source-input game=dm1 platform=pc34 phase=selector command=quit source=hitbox\n");
+                        }
                         g_m11_startup_intro_quit_requested = 1;
                         result = M11_ENTRANCE_COMMAND_QUIT;
                         goto done;

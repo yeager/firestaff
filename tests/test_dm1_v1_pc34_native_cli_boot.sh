@@ -552,6 +552,29 @@ if ! grep -Fq \
     exit 1
 fi
 echo "PASS: PC34 selector Credits shows the original page, returns to the selector and then enters"
+for selector_quit in key:q key:escape click:quit; do
+    selector_quit_output="$(FIRESTAFF_AUTOTEST_SELECTOR_INPUT="$selector_quit" \
+       HOME="$missing_swsh_home" XDG_CONFIG_HOME="$missing_swsh_home" \
+       APPDATA="$missing_swsh_home" FIRESTAFF_CONFIG_PATH="$missing_swsh_home/config.toml" \
+       SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+       --game dm1 --platform pc --data-dir "$archive" \
+       --debug --duration 12000 2>&1)" || {
+        printf '%s\n' "$selector_quit_output" >&2
+        echo "FAIL: PC34 selector Quit route failed for $selector_quit" >&2
+        exit 1
+    }
+    if ! grep -Fq \
+           "startup-source-input game=dm1 platform=pc34 phase=selector command=quit" \
+           <<<"$selector_quit_output" ||
+       grep -Fq 'startup-source-input game=dm1 platform=pc34 phase=selector command=enter' \
+           <<<"$selector_quit_output" ||
+       grep -Fq 'launch phase=runtime-entered game=dm1' <<<"$selector_quit_output"; then
+        printf '%s\n' "$selector_quit_output" >&2
+        echo "FAIL: PC34 selector Quit did not exit before dungeon runtime for $selector_quit" >&2
+        exit 1
+    fi
+    echo "PASS: authentic PC34 selector Quit route exits before runtime via $selector_quit"
+done
 python3 - "$missing_swsh_root" <<'PY'
 from pathlib import Path
 import shutil
