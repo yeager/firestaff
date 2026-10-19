@@ -113,7 +113,9 @@ FIRESTAFF_NEXUS_TRACE_SMPC_READ_FRAME_MAX, and
 FIRESTAFF_NEXUS_TRACE_SMPC_READ_LIMIT bound it. V2 records emulation frame,
 reading CPU, SMPC output register and value, plus the SH-2 ID/IF pipeline PCs
 and opcodes. It never copies game data, extracts media, or becomes a
-Firestaff runtime dependency.
+Firestaff runtime dependency. The raw-capture launcher forwards this optional
+trace path to the external emulator and records its SHA-256 in the capture
+manifest when the trace is produced.
 
 `scripts/analyze_nexus_smpc_read_trace.py` is the corresponding fail-closed
 consumer receipt. It reads `DM.BIN` directly from the supplied CUE in memory,
