@@ -190,12 +190,13 @@ Rendered frames 40000 and 40079 also compare byte-identically. This closes
 only the tested masks/window: the event trace does not prove the Saturn game
 consumed those signals, and no menu or gameplay meaning is inferred.
 
-For a diagnostic pass, `FIRESTAFF_NEXUS_TRACE_SMPC_PIPELINE_DEBUG=1` selects
-Mednafen's debugger CPU loop in the external capture build so `PC_ID` and
-`PC_IF` are populated. This is not an admission override: the analyzer still
-requires the captured pipeline opcode to match the authenticated `DM.BIN`
-word. The first JP smoke receipt populated nonzero PCs but failed that match,
-so it remains rejected rather than being reinterpreted as an input consumer.
+For a diagnostic pass, set `FIRESTAFF_NEXUS_TRACE_SMPC_PIPELINE_DEBUG=1` when
+invoking the raw-capture launcher. It selects Mednafen's debugger CPU loop in
+the external capture build so `PC_ID` and `PC_IF` are populated. This is not an
+admission override: the analyzer still requires the captured pipeline opcode
+to match the authenticated `DM.BIN` word. The first JP smoke receipt populated
+nonzero PCs but failed that match, so it remains rejected rather than being
+reinterpreted as an input consumer.
 
 A follow-up JP capture at frames 1000--1079 enabled the version-locked
 WorkRAMH snapshot hook for frame 1020, during the same 20-frame START pulse.

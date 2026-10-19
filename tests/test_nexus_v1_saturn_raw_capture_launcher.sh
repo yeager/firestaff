@@ -196,9 +196,10 @@ Path(sys.argv[1]).write_text(
     "#!/bin/sh\n# FIRESTAFF_NEXUS_TRACE_OUTPUT\n"
     "printf 'authenticated-test-trace' > \"$FIRESTAFF_NEXUS_TRACE_OUTPUT\"\n"
     "printf 'FIRESTAFF_NEXUS_SMPC_READ_TRACE_V2\\n' > \"$FIRESTAFF_NEXUS_TRACE_SMPC_READS\"\n"
-    "printf 'bounds=%s-%s limit=%s\\n' \"$FIRESTAFF_NEXUS_TRACE_SMPC_READ_FRAME_MIN\" "
+    "printf 'bounds=%s-%s limit=%s debug=%s\\n' \"$FIRESTAFF_NEXUS_TRACE_SMPC_READ_FRAME_MIN\" "
     "\"$FIRESTAFF_NEXUS_TRACE_SMPC_READ_FRAME_MAX\" "
-    "\"$FIRESTAFF_NEXUS_TRACE_SMPC_READ_LIMIT\" >> \"$FIRESTAFF_NEXUS_TRACE_SMPC_READS\"\n",
+    "\"$FIRESTAFF_NEXUS_TRACE_SMPC_READ_LIMIT\" "
+    "\"$FIRESTAFF_NEXUS_TRACE_SMPC_PIPELINE_DEBUG\" >> \"$FIRESTAFF_NEXUS_TRACE_SMPC_READS\"\n",
     encoding="utf-8",
 )
 os.chmod(sys.argv[1], 0o755)
@@ -207,13 +208,14 @@ FIRESTAFF_NEXUS_TRACE_SMPC_READS="$smpc_trace" \
 FIRESTAFF_NEXUS_TRACE_SMPC_READ_FRAME_MIN=12 \
 FIRESTAFF_NEXUS_TRACE_SMPC_READ_FRAME_MAX=16 \
 FIRESTAFF_NEXUS_TRACE_SMPC_READ_LIMIT=128 \
+FIRESTAFF_NEXUS_TRACE_SMPC_PIPELINE_DEBUG=1 \
 "$launcher" --operator-only --launch --mednafen "$smpc_fake" \
   --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
   --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
   --trace "$tmp_dir/trace-smpc.raw" --validator /usr/bin/true \
   --manifest "$tmp_dir/manifest-smpc.txt" >/dev/null
 grep -Fxq 'FIRESTAFF_NEXUS_SMPC_READ_TRACE_V2' "$smpc_trace"
-grep -Fxq 'bounds=12-16 limit=128' "$smpc_trace"
+grep -Fxq 'bounds=12-16 limit=128 debug=1' "$smpc_trace"
 grep -Fq "FIRESTAFF_NEXUS_TRACE_SMPC_READS_sha256=$(shasum -a 256 "$smpc_trace" | awk '{print $1}')" \
   "$tmp_dir/manifest-smpc.txt"
 
