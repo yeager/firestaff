@@ -1,3 +1,26 @@
+# Firestaff v3.0.392
+
+## User-facing changes
+
+- `DM1 PC34 combat`: activate creature groups after map transitions and preserve their movement links so the first HoC encounter can move and fight correctly.
+- `DM1 PC34 champion status`: refresh live carry capacity and use each platform's stamina capacity when calculating champion status.
+
+## Developer changes
+
+- `DM1 PC34 original-media combat verification`: exercise the HoC route through the SDL event loop and assert creature movement, combat damage, experience awards, and champion load behavior with authentic media.
+- `DM1 Amiga spell panel verification`: compare spell panel pixels using the Amiga framebuffer's encoded palette levels.
+- `DM1 and CSB startup evidence`: update platform records with original-media retests and full-library scan timing.
+- `Release metadata`: update the project version and reproducible SPDX source SBOM for v3.0.392.
+
+## Known limitations
+
+- `DM1 combat parity`: authentic PC34 coverage verifies the first HoC encounter and selected champion state; it does not establish full gameplay parity across all platforms.
+- `Original-media parity`: startup and bounded runtime checks do not establish complete visual parity or physical display, input, and audio-output behavior.
+
+## Release assets
+
+This release includes macOS arm64, macOS x86_64, Windows x86_64, Linux x86_64, Linux arm64, Steam Deck x86_64, iOS arm64 (.ipa for AltStore Classic sideload), and Android arm64 (.apk) packages. Steam Deck provides both a pacman package and an AppImage; use the x86_64 packages, not the Linux ARM64 artifact. The iOS .ipa can be sideloaded via AltStore Classic without an Apple Developer account. Original Dungeon Master game data is not included.
+
 # Firestaff v3.0.391
 
 ## User-facing changes
