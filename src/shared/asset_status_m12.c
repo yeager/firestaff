@@ -94,6 +94,7 @@ static const M12_AssetVersionStatus* m12_first_matched_version(
 static int m12_path_is_virtual_asset(const char* path);
 static void m12_copy_string(char* out, size_t outSize, const char* value);
 static int m12_ascii_equals_ignore_case(const char* a, const char* b);
+static int m12_ascii_contains_ignore_case(const char* text, const char* needle);
 static int m12_read_file_bytes(const char* path,
                                unsigned char** outData,
                                size_t* outSize);
@@ -1775,6 +1776,9 @@ static int m12_dm2_collect_zip_candidate(M12_Dm2ZipCandidates* list,
                                          const char* name) {
     char path[M12_ASSET_DATA_DIR_CAPACITY];
     if (!m12_ascii_equals_ignore_case(strrchr(name, '.'), ".zip")) return 1;
+    /* PC-9821 is deliberately unsupported. Do not spend startup time opening
+     * and authenticating its known package during automatic discovery. */
+    if (m12_ascii_contains_ignore_case(name, "PC-9821")) return 1;
     if (!FSP_JoinPath(path, sizeof(path), directory, name)) return -3;
     if (!FSP_FileExists(path)) return 1;
     for (size_t i = 0u; i < list->count; ++i)
@@ -2925,6 +2929,21 @@ static int m12_ascii_equals_ignore_case(const char* a, const char* b) {
         ++b;
     }
     return *a == '\0' && *b == '\0';
+}
+
+static int m12_ascii_contains_ignore_case(const char* text, const char* needle) {
+    size_t needleLength;
+    if (!text || !needle || !needle[0]) return 0;
+    needleLength = strlen(needle);
+    for (; *text; ++text) {
+        size_t i;
+        for (i = 0; i < needleLength; ++i) {
+            if (!text[i] || m12_char_lower((unsigned char)text[i]) !=
+                            m12_char_lower((unsigned char)needle[i])) break;
+        }
+        if (i == needleLength) return 1;
+    }
+    return 0;
 }
 
 static const char* m12_path_leaf(const char* path) {
