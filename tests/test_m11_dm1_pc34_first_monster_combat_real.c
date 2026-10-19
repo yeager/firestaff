@@ -182,6 +182,10 @@ int main(void)
         return 1;
     }
     for (int round = 0; round < 4; ++round) {
+        const int32_t ninjaXpBefore =
+            state.world.lifecycle.champions[0].skills20[1].experience;
+        const int32_t fightXpBefore =
+            state.world.lifecycle.champions[0].skills20[9].experience;
         /* ReDMCSB MENU.C:803-840, F0391 selects an action-list row and
          * dispatches F0407 before clearing the acting champion. */
         if (!M11_GameView_GetV1ActionIconCellZone(0,
@@ -209,6 +213,24 @@ int main(void)
             (void)M11_GameView_AdvanceIdleTick(&state);
         first = F0511_DUNGEON_GetSquareFirstThing_Compat(state.world.dungeon,
             state.world.things, 1, 6, 2);
+        /* ReDMCSB MENU.C:382-390,427-440 maps the visible first action to
+         * PUNCH (index 6), 8 base experience, skill 9 (FIGHT). CHAMPION.C:
+         * 874-895 mirrors that award to base skill 1 (NINJA). Map difficulty,
+         * elapsed-combat and hit outcome scale the amount, but both entries
+         * must receive the same positive award through the live action route. */
+        if (state.world.lifecycle.champions[0].skills20[1].experience <=
+                ninjaXpBefore ||
+            state.world.lifecycle.champions[0].skills20[9].experience <=
+                fightXpBefore ||
+            state.world.lifecycle.champions[0].skills20[1].experience -
+                ninjaXpBefore !=
+            state.world.lifecycle.champions[0].skills20[9].experience -
+                fightXpBefore) {
+            fputs("FAIL: live PUNCH did not award matching Ninja/Fight XP\n",
+                  stderr);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
         if (first != (round < 3 ? 0x10a9u : THING_ENDOFLIST)) {
             fprintf(stderr, "FAIL: source group #169 round %d left thing %04x\n",
                 round + 1, first);
