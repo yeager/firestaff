@@ -163,97 +163,149 @@ int main(void)
     if (state.world.party.mapIndex != 1 || state.world.party.mapX != 6 ||
         state.world.party.mapY != 1 || state.world.party.direction != 2 ||
         state.world.party.champions[0].hp.current != 47 ||
-        first != 0x10a9u || state.world.things->groupCount <= 169 ||
+        state.world.things->groupCount <= 169 ||
         state.world.things->groups[169].slot != THING_ENDOFLIST) {
         fputs("FAIL: first-door passage lost original pose or group #169\n", stderr);
         M11_GameView_Shutdown(&state);
         return 1;
     }
-    /* ReDMCSB CLIKMENU.C:300-323, F0366: a live group in the front square
-     * blocks forward movement and schedules its adjacent-party reaction. */
-    (void)M11_GameView_HandleInput(&state, M12_MENU_INPUT_UP);
-    for (tick = 0; tick < 5; ++tick)
-        (void)M11_GameView_AdvanceIdleTick(&state);
-    if (state.world.party.mapX != 6 || state.world.party.mapY != 1 ||
-        F0511_DUNGEON_GetSquareFirstThing_Compat(state.world.dungeon,
-            state.world.things, 1, 6, 2) != 0x10a9u) {
-        fputs("FAIL: original group did not block forward movement\n", stderr);
-        M11_GameView_Shutdown(&state);
-        return 1;
-    }
-    for (int round = 0; round < 4; ++round) {
-        const int32_t ninjaXpBefore =
-            state.world.lifecycle.champions[0].skills20[1].experience;
-        const int32_t fightXpBefore =
-            state.world.lifecycle.champions[0].skills20[9].experience;
-        /* ReDMCSB MENU.C:803-840, F0391 selects an action-list row and
-         * dispatches F0407 before clearing the acting champion. */
-        if (!M11_GameView_GetV1ActionIconCellZone(0,
-                &clickX, &clickY, &clickW, &clickH) ||
-            M11_GameView_HandlePointerButton(&state,
-                clickX + clickW / 2, clickY + clickH / 2,
-                M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
-            state.actingChampionOrdinal != 1 ||
-            !M11_GameView_GetActingActionIndices(&state, actions) ||
-            actions[0] != 6 || actions[1] != 7 || actions[2] != 8) {
-            fputs("FAIL: pointer click did not open first champion action list\n", stderr);
-            M11_GameView_Shutdown(&state);
-            return 1;
+    {
+        int group169Active = 0;
+        int group169X = -1;
+        int group169Y = -1;
+        for (i = 0; i < (size_t)state.world.creatureAICount; ++i) {
+            const struct CreatureAIState_Compat* ai = &state.world.creatureAI[i];
+            if (ai->reserved0 == 169 && ai->groupMapIndex == 1) {
+                group169Active = 1;
+                group169X = ai->groupMapX;
+                group169Y = ai->groupMapY;
+                break;
+            }
         }
-        if (!M11_GameView_GetV1ActionMenuRowZone(0,
-                &clickX, &clickY, &clickW, &clickH) ||
-            M11_GameView_HandlePointerButton(&state,
-                clickX + clickW / 2, clickY + clickH / 2,
-                M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED) {
-            fputs("FAIL: pointer click did not dispatch first-monster action\n", stderr);
-            M11_GameView_Shutdown(&state);
-            return 1;
-        }
-        for (tick = 0; tick < 30; ++tick)
-            (void)M11_GameView_AdvanceIdleTick(&state);
-        first = F0511_DUNGEON_GetSquareFirstThing_Compat(state.world.dungeon,
-            state.world.things, 1, 6, 2);
-        /* ReDMCSB MENU.C:382-390,427-440 maps the visible first action to
-         * PUNCH (index 6), 8 base experience, skill 9 (FIGHT). CHAMPION.C:
-         * 874-895 mirrors that award to base skill 1 (NINJA). Map difficulty,
-         * elapsed-combat and hit outcome scale the amount, but both entries
-         * must receive the same positive award through the live action route. */
-        if (state.world.lifecycle.champions[0].skills20[1].experience <=
-                ninjaXpBefore ||
-            state.world.lifecycle.champions[0].skills20[9].experience <=
-                fightXpBefore ||
-            state.world.lifecycle.champions[0].skills20[1].experience -
-                ninjaXpBefore !=
-            state.world.lifecycle.champions[0].skills20[9].experience -
-                fightXpBefore) {
-            fputs("FAIL: live PUNCH did not award matching Ninja/Fight XP\n",
+        if (!group169Active || state.world.pc34ActiveGroupSourceCount <= 0) {
+            fputs("FAIL: entering original map 1 did not activate group #169\n",
                   stderr);
             M11_GameView_Shutdown(&state);
             return 1;
         }
-        if (first != (round < 3 ? 0x10a9u : THING_ENDOFLIST)) {
-            fprintf(stderr, "FAIL: source group #169 round %d left thing %04x\n",
-                round + 1, first);
+        first = F0511_DUNGEON_GetSquareFirstThing_Compat(state.world.dungeon,
+            state.world.things, 1, group169X, group169Y);
+        if (first != 0x10a9u) {
+            fputs("FAIL: activated original group #169 lost its map square\n",
+                  stderr);
             M11_GameView_Shutdown(&state);
             return 1;
         }
     }
-    for (int step = 0; step < 2; ++step) {
-        if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_UP) ==
-            M11_GAME_INPUT_IGNORED) {
-            fputs("FAIL: cleared monster passage input ignored\n", stderr);
+    /* On original map 1, the active C37 event can move group #169 while the
+     * party crosses the floor boundary. Walk into its source square, then
+     * confirm the live group blocks the next forward step. */
+    (void)M11_GameView_HandleInput(&state, M12_MENU_INPUT_UP);
+    for (tick = 0; tick < 5; ++tick)
+        (void)M11_GameView_AdvanceIdleTick(&state);
+    if (state.world.party.mapX != 6 || state.world.party.mapY != 2) {
+        fputs("FAIL: party could not enter the original floor before group #169\n",
+              stderr);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    (void)M11_GameView_HandleInput(&state, M12_MENU_INPUT_UP);
+    for (tick = 0; tick < 5; ++tick)
+        (void)M11_GameView_AdvanceIdleTick(&state);
+    if (state.world.party.mapX != 6 || state.world.party.mapY != 2 ||
+        F0511_DUNGEON_GetSquareFirstThing_Compat(state.world.dungeon,
+            state.world.things, 1, 6, 3) != 0x10a9u) {
+        fputs("FAIL: original group did not block forward movement\n", stderr);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    {
+        int round = 0;
+        first = F0511_DUNGEON_GetSquareFirstThing_Compat(state.world.dungeon,
+            state.world.things, 1, 6, 3);
+        while (round < 12 && first == 0x10a9u) {
+            const int32_t ninjaXpBefore =
+                state.world.lifecycle.champions[0].skills20[1].experience;
+            const int32_t fightXpBefore =
+                state.world.lifecycle.champions[0].skills20[9].experience;
+            /* ReDMCSB MENU.C:803-840, F0391 selects an action-list row and
+             * dispatches F0407 before clearing the acting champion. */
+            if (!M11_GameView_GetV1ActionIconCellZone(0,
+                    &clickX, &clickY, &clickW, &clickH) ||
+                M11_GameView_HandlePointerButton(&state,
+                    clickX + clickW / 2, clickY + clickH / 2,
+                    M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
+                state.actingChampionOrdinal != 1 ||
+                !M11_GameView_GetActingActionIndices(&state, actions) ||
+                actions[0] != 6 || actions[1] != 7 || actions[2] != 8) {
+                fputs("FAIL: pointer click did not open first champion action list\n", stderr);
+                M11_GameView_Shutdown(&state);
+                return 1;
+            }
+            if (!M11_GameView_GetV1ActionMenuRowZone(0,
+                    &clickX, &clickY, &clickW, &clickH) ||
+                M11_GameView_HandlePointerButton(&state,
+                    clickX + clickW / 2, clickY + clickH / 2,
+                    M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED) {
+                fputs("FAIL: pointer click did not dispatch first-monster action\n", stderr);
+                M11_GameView_Shutdown(&state);
+                return 1;
+            }
+            for (tick = 0; tick < 30; ++tick)
+                (void)M11_GameView_AdvanceIdleTick(&state);
+            first = F0511_DUNGEON_GetSquareFirstThing_Compat(state.world.dungeon,
+                state.world.things, 1, 6, 3);
+            /* ReDMCSB MENU.C:382-390,427-440 maps the visible first action to
+             * PUNCH (index 6), 8 base experience, skill 9 (FIGHT). CHAMPION.C:
+             * 874-895 mirrors that award to base skill 1 (NINJA). Map difficulty,
+             * elapsed-combat and hit outcome scale the amount, but both entries
+             * must receive the same positive award through the live action route. */
+            if (state.world.lifecycle.champions[0].skills20[1].experience <=
+                    ninjaXpBefore ||
+                state.world.lifecycle.champions[0].skills20[9].experience <=
+                    fightXpBefore ||
+                state.world.lifecycle.champions[0].skills20[1].experience -
+                    ninjaXpBefore !=
+                state.world.lifecycle.champions[0].skills20[9].experience -
+                    fightXpBefore) {
+                fputs("FAIL: live PUNCH did not award matching Ninja/Fight XP\n",
+                      stderr);
+                M11_GameView_Shutdown(&state);
+                return 1;
+            }
+            if (first != 0x10a9u &&
+                state.world.things->groups[169].health[0] != 0) {
+                fprintf(stderr,
+                    "FAIL: source group #169 round %d left thing %04x with HP %u\n",
+                    round + 1, first,
+                    state.world.things->groups[169].health[0]);
+                M11_GameView_Shutdown(&state);
+                return 1;
+            }
+            ++round;
+        }
+        if (state.world.things->groups[169].health[0] != 0) {
+            fputs("FAIL: bounded authentic action sequence did not clear group #169\n",
+                  stderr);
             M11_GameView_Shutdown(&state);
             return 1;
         }
-        for (tick = 0; tick < 5; ++tick)
-            (void)M11_GameView_AdvanceIdleTick(&state);
-        if (state.world.party.mapIndex != 1 || state.world.party.mapX != 6 ||
-            state.world.party.mapY != step + 2 ||
-            state.world.party.direction != 2) {
-            fputs("FAIL: cleared monster passage did not admit forward movement\n", stderr);
-            M11_GameView_Shutdown(&state);
-            return 1;
-        }
+    }
+    if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_UP) ==
+        M11_GAME_INPUT_IGNORED) {
+        fputs("FAIL: cleared monster passage input ignored\n", stderr);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    for (tick = 0; tick < 5; ++tick)
+        (void)M11_GameView_AdvanceIdleTick(&state);
+    if (state.world.party.mapIndex != 1 || state.world.party.mapX != 6 ||
+        state.world.party.mapY != 3 || state.world.party.direction != 2) {
+        fprintf(stderr, "FAIL: cleared monster passage pose=%d:%d,%d dir=%d\n",
+            state.world.party.mapIndex, state.world.party.mapX,
+            state.world.party.mapY, state.world.party.direction);
+        M11_GameView_Shutdown(&state);
+        return 1;
     }
     (void)M11_GameView_HandleInput(&state, M12_MENU_INPUT_UP);
     for (tick = 0; tick < 5; ++tick)

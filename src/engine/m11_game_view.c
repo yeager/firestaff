@@ -18831,7 +18831,7 @@ static int m11_try_stairs_transition(M11_GameViewState* state) {
         state->world.party.mapX = stairs.newMapX;
         state->world.party.mapY = stairs.newMapY;
         state->world.party.direction = stairs.newDirection;
-        if (state->dm1IigsActive &&
+        if (m11_is_dm1_source_kind(state->sourceKind) &&
             !F0003_WORLD_TransitionPartyMap_Compat(&state->world,stairs.toMapIndex)) {
             state->world.party = before;
             return 0;
@@ -32778,17 +32778,18 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
     }
 
     state->world.gameTick++;
-    /* GAMELOOP.C:60-68 processes the next-loop native map handoff at
-     * the clock already advanced before the preceding player input
-     * (124-219). F0195's new C37 events must remain at arrival time + 1,
-     * rather than becoming due during this arrival's timeline pass. */
-    if (state->dm1IigsActive &&
+    /* ReDMCSB GAMELOOP.C:60-68 enters NEWMAP.C F0003 on every map change,
+     * not only on the native IIGS renderer. F0195's new C37 group events
+     * remain at arrival time + 1, so they cannot fire during this arrival's
+     * timeline pass. Without this handoff PC34 groups on later maps never
+     * become active and cannot move or attack. */
+    if (m11_is_dm1_source_kind(state->sourceKind) &&
         state->world.party.mapIndex != state->world.partyMapIndex &&
         !F0003_WORLD_TransitionPartyMap_Compat(&state->world,state->world.party.mapIndex)) {
         --state->world.gameTick;
         state->world.party = beforeParty;
         state->dm1V1MovementPipeline = beforePipeline;
-        m11_set_status(state,actionLabel,"NATIVE MAP HANDOFF REJECTED");
+        m11_set_status(state,actionLabel,"DM1 MAP HANDOFF REJECTED");
         return 0;
     }
     /* GAMELOOP.C:124-126 burns native hand torches after GameTime++;
