@@ -93,6 +93,13 @@ The original media archive hash is checked before and after. SDL dummy output
 does not verify physical presentation; the title/entrance sequence and audible
 DOC playback are still open.
 
+2026-10-19 current-source Apple IIGS startup recheck: both
+`firestaff_iigs_cli_real_media` and `m11_dm1_iigs_startup_real_media` passed
+against the original G20E/G21E ProDOS media. Direct CLI and M12 startup covered
+both editions; the native M11 input probe also stepped in the Hall. The source
+archive hash remained unchanged. This confirms the existing first-world
+handoff, not the unfinished IIGS intro, audible DOC playback or full campaign.
+
 # Firestaff TODO — DM1
 
 2026-10-19 PC34 motion diagnostic retest:
