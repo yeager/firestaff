@@ -26981,11 +26981,12 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                     ? "amiga-img2"
                     : "pc-img3";
             fprintf(stderr,
-                    "DM1 READY: gameId=dm1 dataDir=%s handoff=%s graphicsPath=%s dungeonPath=%s\n",
+                    "DM1 READY: gameId=dm1 dataDir=%s handoff=%s graphicsPath=%s dungeonPath=%s f0306FirstOperandFirst=%u\n",
                     spec->dataDir ? spec->dataDir : "(null)", handoff,
                     state->assetLoader.graphicsDatPath[0]
                         ? state->assetLoader.graphicsDatPath : "(none)",
-                    dungeonPath);
+                    dungeonPath,
+                    (unsigned int)state->world.pc34F0306FirstOperandFirst);
         }
         /* FM Towns owns its startup in EDM/JDM and the legacy IMG2
          * GRAPHICS.DAT.  Admit the native startup receipt only from the

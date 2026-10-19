@@ -37,7 +37,8 @@ probe() {
     grep -Fq 'dm1StartupHandoffExecuted=1' <<<"$output" &&
     grep -Fq 'platform=amiga-v36 phase=entrance-door frame=64/64 step-pixels=2 vblanks=2' <<<"$output" &&
     grep -Fq 'platform=amiga-v36 frames=15 driver=d86f045085481448f6ae3db8d3d640d2' <<<"$output" &&
-    grep -Fq "startup-f0441-authenticated-handoff game=dm1 platform=amiga-v36 graphics=$expected_md5 input=keyboard+mouse palette=rgb4 visual-parity=unverified" <<<"$output"
+    grep -Fq "startup-f0441-authenticated-handoff game=dm1 platform=amiga-v36 graphics=$expected_md5 input=keyboard+mouse palette=rgb4 visual-parity=unverified" <<<"$output" &&
+    grep -Fq 'f0306FirstOperandFirst=0' <<<"$output"
 }
 
 probe cli-archive --debug --game dm1 --platform amiga --data-dir "$archive" \
@@ -55,6 +56,7 @@ probe_language() {
     grep -Fq "asset-language-remap game=dm1 platform=amiga-v36 requested=4 resolved=$resolved language=$language" <<<"$output" &&
     grep -Fq "startup-f0441-authenticated-handoff game=dm1 platform=amiga-v36 graphics=$expected_md5" <<<"$output" &&
     grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=dm1' <<<"$output" &&
+    grep -Fq 'f0306FirstOperandFirst=0' <<<"$output" &&
     grep -Fq 'phase=dm1-runtime ' <<<"$output"
 }
 
