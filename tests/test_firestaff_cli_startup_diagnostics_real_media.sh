@@ -163,6 +163,48 @@ if [ -f "$dm1_towns_archive" ] && [ -f "$csb_towns_archive" ] &&
         exit 1
     }
     echo 'PASS: no-game startup opens the launcher and discovers authentic DM1, CSB and DM2 media from ~/.firestaff/data'
+
+    # A single-file preference must be promoted to its shared collection root
+    # by the ordinary no-game launcher. This uses an actual original archive;
+    # explicit --data-dir file requests remain scoped to their selected source.
+    single_file_config="$default_home/single-file-menu-config.toml"
+    printf 'data_dir = "%s"\n' "$dm1_towns_archive" > "$single_file_config"
+    set +e
+    single_file_output=$(HOME="$default_home" USERPROFILE="$default_home" \
+        XDG_CONFIG_HOME="$default_home/.config" \
+        APPDATA="$default_home/AppData" \
+        FIRESTAFF_CONFIG_PATH="$single_file_config" \
+        FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --verbose --debug --duration 1000 2>&1) || {
+        single_file_status=$?
+    }
+    set -e
+    if [ "${single_file_status:-0}" -ne 1 ]; then
+        printf 'FAIL: persisted single-file startup did not remain in the launcher (status %s)\n%s\n' \
+            "${single_file_status:-0}" "$single_file_output" >&2
+        exit 1
+    fi
+    printf '%s\n' "$single_file_output" | grep -Fq 'startup game=none mode=menu' || {
+        printf 'FAIL: persisted single-file startup did not stay in the launcher\n%s\n' \
+            "$single_file_output" >&2
+        exit 1
+    }
+    for game_id in dm1 csb dm2; do
+        printf '%s\n' "$single_file_output" | \
+            grep -Fq "firestaff: $game_id available=yes" || {
+            printf 'FAIL: persisted single-file startup did not discover authentic %s media\n%s\n' \
+                "$game_id" "$single_file_output" >&2
+            exit 1
+        }
+    done
+    if printf '%s\n' "$single_file_output" | \
+        grep -Fq 'launch phase=game-handoff'; then
+        printf 'FAIL: persisted single-file startup entered a game handoff\n%s\n' \
+            "$single_file_output" >&2
+        exit 1
+    fi
+    printf 'PASS: persisted original media file still discovers DM1, CSB and DM2 from the collection menu\n'
 fi
 
 for game_id in dm1 csb dm2; do
