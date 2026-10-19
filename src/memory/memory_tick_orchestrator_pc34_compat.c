@@ -12208,7 +12208,15 @@ static int orch_link_existing_group_to_square_compat(
     if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) return 0;
 
     group = &world->things->groups[groupIndex];
-    group->next = world->things->squareFirstThings[sftIndex];
+    /* F0209 authenticates the raw C04 identity before every later C37/C38
+     * event. Keep its next-Thing word synchronized before publishing the
+     * group at the destination square. */
+    if (!orch_set_next_thing_compat(
+            world->things,
+            orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex),
+            world->things->squareFirstThings[sftIndex])) {
+        return 0;
+    }
     world->things->squareFirstThings[sftIndex] =
         orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex);
 
@@ -12515,7 +12523,6 @@ static int orch_link_existing_group_to_square_head_only_compat(
     int mapX,
     int mapY)
 {
-    struct DungeonGroup_Compat* group;
     int sftIndex;
 
     if (!world || !world->dungeon || !world->things) return 0;
@@ -12524,8 +12531,13 @@ static int orch_link_existing_group_to_square_head_only_compat(
         world->dungeon, mapIndex, mapX, mapY);
     if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) return 0;
 
-    group = &world->things->groups[groupIndex];
-    group->next = world->things->squareFirstThings[sftIndex];
+    /* Match the decoded and raw C04 links for F0209's next source event. */
+    if (!orch_set_next_thing_compat(
+            world->things,
+            orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex),
+            world->things->squareFirstThings[sftIndex])) {
+        return 0;
+    }
     world->things->squareFirstThings[sftIndex] =
         orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex);
     return 1;

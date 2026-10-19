@@ -1268,12 +1268,14 @@ parity.
 - Extend original-media combat parity beyond the current PC 3.4 live route.
   Its authentic first-door transition now runs NEWMAP.C F0003 on every DM1
   runtime platform, activating original map-1 group 169 and its C37 behavior
-  event instead of leaving the later map without active groups. The test
-  fights that group through production pointer input, checks the paired
-  Ninja/Fight XP awards against MENU.C and CHAMPION.C, and walks through the
-  cleared square. It does not compare exact damage/RNG against an original
-  executable capture, and the group's naturally scheduled C38-C41 party
-  attack remains unverified. Extend startup sentinel proof to remaining
+  event instead of leaving the later map without active groups. Group moves
+  now synchronize the C04 next-Thing link to both the decoded owner and raw
+  source record, allowing F0209 to authenticate and continue later C37/C38
+  events. The PC34 test verifies that the real group approaches and damages
+  the party, then uses production pointer input for PUNCH and checks equal
+  Ninja/Fight XP awards against MENU.C and CHAMPION.C. Exact damage/RNG still
+  needs an original executable capture; Amiga/Atari/Towns combat routes need
+  equivalent original-media tests. Extend startup sentinel proof to remaining
   editions and actual launcher UI routes; completed regression evidence is in
   DONE-dm1.md.
   English and German Atari ST 1.2, French Atari ST 1.3, and English Atari ST
@@ -1519,12 +1521,11 @@ Reviewed 2026-08-29. Only open work is listed here.
   branches; the newly forwarded M10 receipt follows that call, but its
   overlap/priority behavior on those transports still needs original-media
   verification.
-  The PC 3.4 first-monster test now crosses the authentic map boundary and
-  verifies that F0195 activates original group 169 and queues its behavior
-  events. Player attacks and XP are exercised through the live pointer route,
-  but this still does not prove that the group's C38-C41 event naturally
-  reaches F0207 or emits the expected attack sound. Its coordinates and
-  recruitment sequence have not been verified for the FM Towns dungeon.
+  The PC 3.4 first-monster test now verifies F0195 activation, group movement,
+  natural party damage through the C37/C38 sequence, and a player PUNCH with
+  paired XP. It does not verify the exact F0207 sound ordinal or waveform.
+  Its coordinates and recruitment sequence have not been verified for the FM
+  Towns dungeon.
   The FM Towns EN/JA sound test instead
   relocates the party in memory and constructs F0064 receipts from an
   original C04 and PCM; it cannot establish a scheduled F0207 attack.
