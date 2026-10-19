@@ -8,6 +8,15 @@ tests now click the actual top-row name boxes at y=3 and switch the active
 champion 0→1→0. The test uses ReDMCSB-owned coordinates and original media;
 SDL dummy input does not establish native M5 event delivery or HiDPI mapping.
 
+2026-10-19 current-source PC34 combat recheck:
+`m11_dm1_pc34_first_monster_combat_real` passed against the authentic DOS
+archive. From the original HoC start, production movement reaches the first
+map-one group; the original group moves into the forward cell and damages the
+party, then a real pointer-driven PUNCH awards matching Ninja/Fight XP. The
+test also confirms live F0309 capacity is used after stamina and wound changes.
+This verifies the exercised PC34 path, not physical input, every combat type,
+or complete platform parity.
+
 2026-10-19 current-source DM1 M12 platform-card regression:
 `dm1_v1_m12_auto_multi_platform_menu` passed in 90.07 seconds against the
 installed originals. AUTO selected FM Towns; the tested M12 platform cards
