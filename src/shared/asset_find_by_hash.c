@@ -957,6 +957,7 @@ static int is_kryoflux_raw_track_path(const char *path) {
     }
     return track_begin < side_begin - 1U;
 }
+#endif
 
 static int is_external_archive_path(const char *path) {
     return is_external_tar_archive_path(path) ||
@@ -1160,6 +1161,7 @@ static int md5_list_contains_large_whole_file_hash(const char *const *md5List,
  * This is intentionally narrower than a generic .bin rejection.  Renamed
  * loose payloads and non-track archive members remain hash-first.
  */
+#if !defined(_WIN32) || defined(FIRESTAFF_HAS_NATIVE_7Z)
 static int numbered_cd_track_payload_number(const char *path, int *outTrack) {
     const char *track;
     const char *digits;
