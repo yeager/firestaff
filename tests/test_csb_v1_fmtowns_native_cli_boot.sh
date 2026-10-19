@@ -6,6 +6,7 @@ firestaff_cli="${1:?Firestaff executable is required}"
 data_dir="${FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR:-$HOME/.firestaff/data/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip}"
 language="${FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE:-en}"
 user_save="${FIRESTAFF_CSB_FMTOWNS_USER_SAVE:-}"
+loose_data_root="${FIRESTAFF_CSB_FMTOWNS_LOOSE_DATA_ROOT:-$HOME/.firestaff/data/csb/fmtowns_iso}"
 edition_arg=""
 expected_media="$data_dir"
 scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
@@ -543,6 +544,41 @@ if (probe["launchedEver"] != 1 or probe["sourceId"] != "csb" or
     raise SystemExit(f"FAIL: scaled CSB FM Towns M12 did not reach the original MINI.DAT party: {probe}")
 PY
 echo "PASS: CSB FM Towns $language M12 FIT route maps the original C004 Enter button in a 1920x1080 window"
+
+# The scanner can select a loose required file directly. Preserve the
+# authenticated F31 owner when --data-dir names GRAPHICS.DAT or DUNGEON.DAT,
+# including both language-private trees. This exercises the visible M12
+# launch handoff, not only the direct boot API.
+if [ "$language" = "ja" ]; then
+    loose_selected_dir="$loose_data_root/CJDATA"
+else
+    loose_selected_dir="$loose_data_root/CDATA"
+fi
+for loose_selected_name in GRAPHICS.DAT DUNGEON.DAT; do
+    loose_selected_file="$loose_selected_dir/$loose_selected_name"
+    if [ ! -f "$loose_selected_file" ]; then
+        continue
+    fi
+    loose_menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+        FIRESTAFF_EXIT_AFTER_LAUNCH=1 SDL_VIDEODRIVER=dummy \
+        SDL_AUDIODRIVER=dummy run_firestaff \
+        --menu --game csb --data-dir "$loose_selected_file" \
+        --platform fm-towns $edition_arg --debug \
+        --script enter,enter,enter --duration 1000 2>&1)" || {
+        printf '%s\n' "$loose_menu_output" >&2
+        echo "FAIL: CSB FM Towns M12 rejected selected loose $loose_selected_name" >&2
+        exit 1
+    }
+    case "$loose_menu_output" in
+        *"variant=csb-fmtowns-$language"*"handoff=f31-title-anm"*"phase=csb-fmtowns-title"*"animation=title-anm"*) ;;
+        *)
+            echo "FAIL: CSB FM Towns M12 lost the selected loose $loose_selected_name owner" >&2
+            printf '%s\n' "$loose_menu_output" >&2
+            exit 1
+            ;;
+    esac
+    echo "PASS: CSB FM Towns $language M12 launches from selected loose $loose_selected_name"
+done
 
 if [ -n "$user_save" ]; then
     menu_resume_probe="$isolated_home/menu-resume-runtime.json"

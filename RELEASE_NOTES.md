@@ -1,3 +1,10 @@
+# Unreleased changes
+
+## CSB
+
+- `FM Towns loose-file startup`: accept authenticated English and Japanese launches when `--data-dir` points directly to the original `GRAPHICS.DAT` or `DUNGEON.DAT` file.
+- `FM Towns start-menu regression`: verify both loose-file launch paths reach the original F31 title using authentic media.
+
 # Firestaff v3.0.390
 
 ## Developer changes

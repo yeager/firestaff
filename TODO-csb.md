@@ -40,9 +40,21 @@ Loose English duplicate candidates have complete bounded enumeration up to
 256 paths. Native-container English and A33M title rescue retain their
 existing eight-candidate search limit; arbitrary large preservation packages
 need separate completeness/ownership coverage.
-The final loose-file selector pin currently covers English A31/A35 only;
-non-English/Atari/FM Towns explicit-file selector boundaries still require
-their own authenticated package audit.
+The final loose-file selector pin covers English A31/A35, and the 2026-10-19
+FM Towns retest now covers English and Japanese direct `GRAPHICS.DAT` and
+`DUNGEON.DAT` M12 launches with authentic loose media. Atari ST and other
+non-English explicit-file selector boundaries still require their own
+authenticated package audit.
+
+2026-10-19 current-source loose FM Towns launch regression:
+`csb_v1_fmtowns_native_cli_boot` passed against the authentic F31 archive and
+loose disc tree. English M12 launches that selected `CDATA/GRAPHICS.DAT` and
+`CDATA/DUNGEON.DAT` now reach the source-owned F31 title. Japanese selected
+file starts for both `CJDATA/GRAPHICS.DAT` and `CJDATA/DUNGEON.DAT` also reach
+the title. The full English regression verified the M12 path through the
+authentic MINI.DAT party and the C28 closed Entrance in original, modern and
+custom presentation modes. SDL dummy output does not prove native display,
+physical input or audio parity.
 
 2026-10-14 mixed-original-media AUTO/start-menu retest on the Mac mini M4,
 current source: `csb_v1_fmtowns_m12_auto_mixed_real_media` passed in 321.96

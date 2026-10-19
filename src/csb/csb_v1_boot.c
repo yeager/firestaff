@@ -2953,11 +2953,39 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
     const char *executable_name;
     const char *utility_name;
 
+    if (!profile || !data_dir || !data_dir[0] ||
+        (requested_variant != CSB_V1_VARIANT_FMTOWNS_EN &&
+         requested_variant != CSB_V1_VARIANT_FMTOWNS_JA)) {
+        return 0;
+    }
+    /* --data-dir may name the scanner's selected loose file itself. Such a
+     * GRAPHICS.DAT/DUNGEON.DAT is not a ZIP or CD image: authenticate it for
+     * the requested language, then recover the FM Towns disc root above
+     * CDATA/CJDATA so the loose-tree path can bind its sibling files. */
+    if (FSP_FileExists(data_dir) && !FSP_DirExists(data_dir)) {
+        graphics_md5 = requested_variant == CSB_V1_VARIANT_FMTOWNS_JA
+            ? "761d6fc588b31aeaaa9caf3725e111b9"
+            : "405b757038eea3c263e60f240854d6de";
+        dungeon_md5 = requested_variant == CSB_V1_VARIANT_FMTOWNS_JA
+            ? "7ca51c17ef8bd542ca5f0273672ec1a5"
+            : "83c56cf1b779e7460a55c9299ebeb04b";
+        if (asset_file_matches_md5(data_dir, graphics_md5) ||
+            asset_file_matches_md5(data_dir, dungeon_md5)) {
+            if (!FSP_ParentDir(selected_data_directory,
+                               sizeof(selected_data_directory), data_dir) ||
+                !FSP_ParentDir(disc_root, sizeof(disc_root),
+                               selected_data_directory) ||
+                !FSP_DirExists(disc_root)) {
+                return 0;
+            }
+            data_dir = disc_root;
+        }
+    }
+
     /* A selected FM Towns ZIP is a source container, not a directory.  Read
      * its original IMG/BIN member into bounded RAM and expose the selected
      * CDATA/CJDATA files as memory-owned runtime assets. */
-    if (profile && data_dir && data_dir[0] && FSP_FileExists(data_dir) &&
-        !FSP_DirExists(data_dir)) {
+    if (FSP_FileExists(data_dir) && !FSP_DirExists(data_dir)) {
         uint8_t *image = NULL;
         size_t image_size = 0u;
         uint8_t *cue = NULL;
@@ -2979,10 +3007,6 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
         const CSB_V1_FmtownsCdFile *utility_entry;
         const char *executable_name;
         const char *mini_name;
-        if (requested_variant != CSB_V1_VARIANT_FMTOWNS_EN &&
-            requested_variant != CSB_V1_VARIANT_FMTOWNS_JA) {
-            return 0;
-        }
         if (firestaff_zip_extract_by_suffix(data_dir, ".cue", &cue,
                                             &cue_size) != 0) {
             snprintf(cue_member, sizeof(cue_member),
@@ -3157,11 +3181,6 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
         return 1;
     }
 
-    if (!profile || !data_dir || !data_dir[0] ||
-        (requested_variant != CSB_V1_VARIANT_FMTOWNS_EN &&
-         requested_variant != CSB_V1_VARIANT_FMTOWNS_JA)) {
-        return 0;
-    }
     directory = requested_variant == CSB_V1_VARIANT_FMTOWNS_JA
         ? "CJDATA" : "CDATA";
     graphics_md5 = requested_variant == CSB_V1_VARIANT_FMTOWNS_JA
@@ -3194,6 +3213,24 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
                               directory)) {
                 return 0;
             }
+        }
+    }
+    if (!graphics_path[0]) {
+        /* M12 preserves the source installation root for a verified loose
+         * F31 file. In that layout the selected package is directly below
+         * the root as CDATA/CJDATA; its TITLE.ANM and program companions are
+         * siblings of those directories. */
+        if (FSP_JoinPath(candidate_root, sizeof(candidate_root), data_dir,
+                         directory) &&
+            FSP_JoinPath(graphics_path, sizeof(graphics_path), candidate_root,
+                         "GRAPHICS.DAT") &&
+            FSP_JoinPath(dungeon_path, sizeof(dungeon_path), candidate_root,
+                         "DUNGEON.DAT") &&
+            asset_file_matches_md5(graphics_path, graphics_md5) &&
+            asset_file_matches_md5(dungeon_path, dungeon_md5)) {
+            csb_v1_boot_copy(disc_root, sizeof(disc_root), data_dir);
+            csb_v1_boot_copy(selected_data_directory,
+                             sizeof(selected_data_directory), candidate_root);
         }
     }
     if (!graphics_path[0]) {
