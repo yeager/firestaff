@@ -155,17 +155,6 @@ static int square_element(const M11_GameViewState* state, int x, int y) {
 
 static void clear_party(M11_GameViewState* state);
 
-static void draw_at(M11_GameViewState* state,
-                    const HocMirrorPosePc34* pose,
-                    unsigned char* framebuffer) {
-    state->world.party.mapIndex = 0;
-    state->world.party.mapX = pose->x;
-    state->world.party.mapY = pose->y;
-    state->world.party.direction = pose->direction;
-    memset(framebuffer, 0, kFramebufferWidth * kFramebufferHeight);
-    M11_GameView_Draw(state, framebuffer, kFramebufferWidth, kFramebufferHeight);
-}
-
 static int find_two_mirrors(const M11_GameViewState* state,
                             HocMirrorPosePc34* first,
                             HocMirrorPosePc34* second) {
@@ -229,12 +218,12 @@ static int find_two_mirrors(const M11_GameViewState* state,
     return 0;
 }
 
-/* Derive, then replay, a route from the retail PC34 launch tuple.  BFS uses
- * F0702 against the loaded DUNGEON.DAT; replay uses only the public M11 input
- * owner, so no test teleport can conceal a production movement failure. */
-static int drive_from_pc34_launch_to_mirror(M11_GameViewState* state,
-                                            const HocMirrorPosePc34* target,
-                                            unsigned char* framebuffer) {
+/* Derive, then replay, a route from the current authentic party pose. BFS
+ * uses F0702 against the loaded DUNGEON.DAT; replay uses only the public M11
+ * input owner, so no test teleport can conceal a movement failure. */
+static int drive_pc34_pose_to_mirror(M11_GameViewState* state,
+                                     const HocMirrorPosePc34* target,
+                                     unsigned char* framebuffer) {
     enum { MAX_NODES = 32 * 32 * 4, MAX_ROUTE = MAX_NODES };
     static const int moves[6] = { MOVE_FORWARD, MOVE_RIGHT, MOVE_BACKWARD,
                                   MOVE_LEFT, MOVE_TURN_RIGHT, MOVE_TURN_LEFT };
@@ -251,7 +240,15 @@ static int drive_from_pc34_launch_to_mirror(M11_GameViewState* state,
     if (width > 32 || height > 32) return 0;
     for (node = 0; node < MAX_NODES; ++node) { prev[node] = -2; via[node] = -1; }
 #define NODE_ID(px, py, pd) ((((py) * width + (px)) << 2) | ((pd) & 3))
-    node = NODE_ID(1, 3, DIR_SOUTH); prev[node] = -1; queue[tail++] = node;
+    if (state->world.party.mapIndex != 0 ||
+        state->world.party.mapX < 0 || state->world.party.mapY < 0 ||
+        state->world.party.mapX >= width || state->world.party.mapY >= height) {
+        return 0;
+    }
+    node = NODE_ID(state->world.party.mapX, state->world.party.mapY,
+                   state->world.party.direction);
+    prev[node] = -1;
+    queue[tail++] = node;
     while (head < tail) {
         struct PartyState_Compat party = state->world.party;
         int x, y, d, mi;
@@ -291,8 +288,6 @@ static int drive_from_pc34_launch_to_mirror(M11_GameViewState* state,
         }
         putchar('\n');
     }
-    state->world.party.mapIndex = 0; state->world.party.mapX = 1;
-    state->world.party.mapY = 3; state->world.party.direction = DIR_SOUTH;
     DM1_V1_MovementPipeline_InitPc34Compat(&state->dm1V1MovementPipeline);
     while (routeCount > 0) {
         int expectedAction = route[--routeCount];
@@ -774,7 +769,7 @@ int main(void) {
     state.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
     if (failures) goto done_state;
 
-    CHECK(drive_from_pc34_launch_to_mirror(&state, &mirrorA, framebuffer),
+    CHECK(drive_pc34_pose_to_mirror(&state, &mirrorA, framebuffer),
           "real collision/input route should reach mirror A from PC34 launch");
     CHECK(M11_GameView_GetFrontMirrorOrdinal(&state) == mirrorA.ordinal,
           "front mirror A ordinal should come from source sensorData");
@@ -820,11 +815,24 @@ int main(void) {
               DM1_SENSOR_DISABLED,
           "C160 should disable mirror A's original sensor owner");
 
-    draw_at(&state, &mirrorB, framebuffer);
+    CHECK(drive_pc34_pose_to_mirror(&state, &mirrorB, framebuffer),
+          "production movement from the resurrected first champion should reach mirror B");
+    if (failures) goto done_state;
     CHECK(M11_GameView_GetFrontMirrorOrdinal(&state) == mirrorB.ordinal,
-          "front mirror B ordinal should come from source sensorData");
-    CHECK(M11_GameView_SelectFrontMirrorCandidate(&state) == 1,
-          "mirror B C127 should open a second live candidate panel");
+          "movement to mirror B should expose its source sensorData ordinal");
+    {
+        M11_Dm1HoCMirrorHostPresentationReceipt presented;
+        memset(&presented, 0, sizeof(presented));
+        M11_GameView_GetDm1HoCMirrorHostPresentationReceipt(&presented);
+        CHECK(presented.valid && presented.portraitWidth > 0 &&
+              presented.portraitHeight > 0 &&
+              M11_GameView_HandlePointerButton(
+                  &state,
+                  presented.portraitDestinationX + presented.portraitWidth / 2,
+                  presented.portraitDestinationY + presented.portraitHeight / 2,
+                  DM1_V1_MOUSE_MASK_LEFT_PC34) == M11_GAME_INPUT_REDRAW,
+              "original mirror B portrait click should open the second candidate");
+    }
     candidateB = state.candidateMirrorPartyIndex;
     CHECK(state.candidateMirrorPanelActive == 1 &&
           state.candidateMirrorOrdinal == mirrorB.ordinal &&
@@ -880,27 +888,55 @@ int main(void) {
           "C161 should disable mirror B's original sensor owner");
 
     /* COMMAND.C G0447 sends the two real status/name rectangles to C012 and
-     * C013; F0367 routes a name hit to F0368. Exercise that route only after
-     * both champions have been recruited from this original dungeon, then
-     * switch back to prove consecutive portrait/name clicks keep changing
-     * the live leader. */
+     * C013; F0367 routes a name hit to F0368. The actual name row is y=0..6;
+     * y=10..27 overlaps the hand-slot boxes and must not be used as a name
+     * click. Exercise the name row after both champions have been recruited
+     * from this original dungeon, then switch back to prove consecutive
+     * clicks keep changing the live leader. */
     CHECK(state.world.party.champions[0].hp.current > 0 &&
           state.world.party.champions[1].hp.current > 0,
           "both source-recruited champions should be alive for leader clicks");
     clickCommand = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
-        DM1_V1_MOUSE_LIST_INTERFACE_PC34, 80, 14,
+        DM1_V1_MOUSE_LIST_INTERFACE_PC34, 80, 3,
         DM1_V1_MOUSE_MASK_LEFT_PC34, &clickSpace, &clickZone);
+    if (clickCommand != 13 || clickSpace != DM1_V1_MOUSE_SPACE_SCREEN_PC34 ||
+        clickZone != 152) {
+        fprintf(stderr,
+                "DM1 HoC champion click route mismatch: command=%d space=%d zone=%d pose=%d,%d,d%d inventory=%d candidate=%d champions=%d\n",
+                clickCommand, clickSpace, clickZone, state.world.party.mapX,
+                state.world.party.mapY, state.world.party.direction,
+                state.inventoryPanelActive, state.candidateMirrorPanelActive,
+                state.world.party.championCount);
+    }
     CHECK(clickCommand == 13 && clickSpace == DM1_V1_MOUSE_SPACE_SCREEN_PC34 &&
           clickZone == 152,
           "C013 name click should resolve before overlapping G0455 hand boxes");
     leaderClick = M11_GameView_HandlePointerButton(
-        &state, 80, 14, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        &state, 80, 3, DM1_V1_MOUSE_MASK_LEFT_PC34);
+    if (leaderClick != M11_GAME_INPUT_REDRAW ||
+        state.world.party.activeChampionIndex != 1 ||
+        state.inventoryPanelActive != 0) {
+        fprintf(stderr,
+                "DM1 HoC champion 2 click mismatch: result=%d active=%d inventory=%d candidate=%d champions=%d\n",
+                leaderClick, state.world.party.activeChampionIndex,
+                state.inventoryPanelActive, state.candidateMirrorPanelActive,
+                state.world.party.championCount);
+    }
     CHECK(leaderClick == M11_GAME_INPUT_REDRAW &&
           state.world.party.activeChampionIndex == 1 &&
           state.inventoryPanelActive == 0,
           "C013 portrait/name click should select champion two without opening inventory");
     leaderClick = M11_GameView_HandlePointerButton(
-        &state, 10, 14, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        &state, 10, 3, DM1_V1_MOUSE_MASK_LEFT_PC34);
+    if (leaderClick != M11_GAME_INPUT_REDRAW ||
+        state.world.party.activeChampionIndex != 0 ||
+        state.inventoryPanelActive != 0) {
+        fprintf(stderr,
+                "DM1 HoC champion 1 click mismatch: result=%d active=%d inventory=%d candidate=%d champions=%d\n",
+                leaderClick, state.world.party.activeChampionIndex,
+                state.inventoryPanelActive, state.candidateMirrorPanelActive,
+                state.world.party.championCount);
+    }
     CHECK(leaderClick == M11_GAME_INPUT_REDRAW &&
           state.world.party.activeChampionIndex == 0 &&
           state.inventoryPanelActive == 0,

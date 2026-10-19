@@ -1,3 +1,13 @@
+2026-10-19 current-source PC34 HoC movement/champion-input retest:
+`m11_dm1_hoc_c127_resurrect_reincarnate_full_pc34` passed against the
+authentic PC34 archive. The real movement input route reaches a first C127,
+recruits its champion, then follows a second BFS-derived route through M11
+movement input to another original C127 and recruits again. The second mirror
+is no longer reached by assigning the party pose directly. C013/C012 pointer
+tests now click the actual top-row name boxes at y=3 and switch the active
+champion 0→1→0. The test uses ReDMCSB-owned coordinates and original media;
+SDL dummy input does not establish native M5 event delivery or HiDPI mapping.
+
 2026-10-19 current-source DM1 M12 platform-card regression:
 `dm1_v1_m12_auto_multi_platform_menu` passed in 90.07 seconds against the
 installed originals. AUTO selected FM Towns; the tested M12 platform cards
