@@ -116,6 +116,7 @@ Triggers on `v*` tags or manual `workflow_dispatch`. Jobs:
 7. **Publish** — creates/updates the GitHub Release
    - Downloads all platform artifacts
    - Generates release notes from `RELEASE_NOTES.md`
+   - Validates the committed SPDX source SBOM against the release version and attaches it as `Firestaff-X.Y.Z-sbom.spdx.json`
    - Creates combined SHA-256 checksum manifest
    - Uploads all artifacts to the GitHub Release
 
@@ -134,7 +135,7 @@ All platform builds pin SDL3 to `release-3.2.14` via the `SDL3_TAG` environment 
 | iOS | `.ipa` | arm64 |
 | Android | `.apk` | arm64 |
 
-Each platform artifact set includes a `.sha256` checksum file. A combined `all-assets.sha256` manifest covers every artifact in the release.
+Each platform artifact set includes a `.sha256` checksum file. The release also includes the version-matched SPDX source SBOM. A combined `all-assets.sha256` manifest covers every artifact in the release, including the SBOM.
 
 ## Pre-commit Hooks (Lefthook)
 
