@@ -1,5 +1,10 @@
 # Unreleased changes
 
+## DM1
+
+- `Amiga 3.6 localized graphics`: use ReDMCSB's G2004 table for ten shared English graphic IDs with French and German originals.
+- `Amiga 3.6 language verification`: check all ten source mappings, compare the seven original bitmap records and verify the localized entrance record through CLI.
+
 ## CSB
 
 - `FM Towns loose-file startup`: accept authenticated English and Japanese launches when `--data-dir` points directly to the original `GRAPHICS.DAT` or `DUNGEON.DAT` file.

@@ -26927,6 +26927,18 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             M11_GameView_Shutdown(state);
             return 0;
         }
+        /* ReDMCSB MEMORY.C F0608 applies G2004 to every graphics-size/load
+         * request in I34M/A36M. The A36 world is already selected above;
+         * bind the same language's translated graphics bank before drawing. */
+        if (state->assetLoader.dm1Amiga36 &&
+            !M11_AssetLoader_SetDm1Amiga36Language(
+                &state->assetLoader,
+                M12_StartupMenu_GetLanguageCode(spec->languageIndex))) {
+            fprintf(stderr,
+                    "firestaff: DM1 A36 localized graphics selection failed before first draw\n");
+            M11_GameView_Shutdown(state);
+            return 0;
+        }
         /* LOADSAVE.C F0434:2040-2074 adds G0236 pools on a new game,
          * never while importing a save. I34 uses compiled DUNGEON.C tables;
          * earlier/platform-specific admission remains separate. */

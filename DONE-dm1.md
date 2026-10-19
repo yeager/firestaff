@@ -4265,3 +4265,11 @@ not used as its final verification.
   source's modeled 70 Hz; adding frames would diverge from I34E timing.
   Native mouse click acceptance, slower-than-source user preference, first
   dungeon pose parity and motion presentation latency remain open.
+- 2026-10-19: Implemented ReDMCSB `MEMORY.C:F0608` / G2004 localized graphic
+  selection for the ten shared Amiga 3.6 English indices. M11 now resolves
+  them to the original French or German records selected with the dungeon
+  language, before loading or querying dimensions. The authentic Amiga 3.6
+  archive test checks all ten source index mappings and compares the seven
+  corresponding decoded bitmap records for EN/FR/DE; the CLI test checks the
+  localized entrance graphic through the production launch route. This verifies source asset
+  selection, not complete translation or visual parity.

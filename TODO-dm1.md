@@ -52,7 +52,8 @@ native audio, full gameplay or display parity.
 2026-10-18 Amiga 3.6 language startup: the original-media regression now also
 starts the hash-verified French and German dungeon files through direct CLI
 `--lang fr` / `--lang de`, M11 direct runtime handoff and the M12 menu. The
-source-language graphics selection through G2004 remains open.
+matching source-language graphics selection through G2004 was implemented
+and checked against original records on 2026-10-19 (see the entry below).
 
 2026-10-18 v3.0.386 original-media CLI/menu retest: `test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh returns` passed the authentic DM1 PC, FM Towns, Atari ST and Amiga routes. The direct `--game dm1` route also exits after Return to Menu instead of reopening the launcher, and every tested return scan found DM1, CSB and DM2. `test_firestaff_cli_startup_diagnostics_real_media.sh` passed the FM Towns default-selection and original PC34/Towns title-cadence checks. These runs used the published arm64 binary with SDL dummy output; physical display, input latency and complete platform parity remain open.
 
@@ -76,6 +77,16 @@ unavailable. ReDMCSB and Firestaff both bind movement to the source-controlled
 tick/input loop. This does not explain the reported display lag on the user's
 MacBook; native-display input-to-present timing and an original-executable
 comparison remain open. No tick cadence change is justified by this evidence.
+
+2026-10-19 Amiga 3.6 localized graphics: ReDMCSB `MEMORY.C:F0608` selects one
+of ten G2004 source graphics by `G2000_Language`. The shared M11 asset loader
+now applies the exact original English/French/German index table to both size
+queries and loads after authentic A36 binding and before the first runtime
+draw. The authentic A36 graphics test checks all ten source index mappings
+and compares the seven bitmap records against their corresponding original
+graphics for each language; the CLI test also checks the entrance record
+remap during French/German startup. This closes the G2004 graphics-selection
+gap, not translated text or visual parity.
 
 2026-10-19 ReDMCSB DM1 timing-profile audit (static evidence; runtime cadence
 still unverified): `GAMELOOP.C:46-50` selects a maximum count of 12 for the
@@ -2007,8 +2018,9 @@ compressed originals. Authenticate those exact retained bytes before native
 decoding and retain their full declared decompressed lengths, as for the same
 payloads in the earlier French/German releases. Original ADF, ZIP and loose
 world startup are covered; wrong or missing language files reject without
-borrowing English. Full source-language graphics selection via G2004 remains
-open. Explicit language inventory now admits supported originals without the
+borrowing English. Full source-language graphics selection via G2004 is now
+implemented and covered by the Amiga 3.6 original-media graphics test above.
+Explicit language inventory now admits supported originals without the
 standard world, using the scan policy described above. These world-loading results do not establish full translated or visual parity.
 
 2026-10-16 direct Atari ST disk coverage: the shared 1.0a/1.0b/1.1

@@ -428,6 +428,52 @@ int M11_AssetLoader_IsReady(const M11_AssetLoader* loader) {
     return loader && loader->initialized;
 }
 
+int M11_AssetLoader_SetDm1Amiga36Language(M11_AssetLoader* loader,
+                                         const char* languageCode) {
+    int language = 0;
+    if (!loader || !loader->initialized || !loader->dm1Amiga36 ||
+        loader->cacheUsed != 0) return 0;
+    if (languageCode && (strcmp(languageCode, "FR") == 0 ||
+                         strcmp(languageCode, "fr") == 0)) language = 1;
+    else if (languageCode && (strcmp(languageCode, "DE") == 0 ||
+                              strcmp(languageCode, "de") == 0)) language = 2;
+    loader->dm1Amiga36Language = language;
+    return 1;
+}
+
+unsigned int M11_AssetLoader_ResolveDm1Amiga36GraphicIndex(
+    unsigned int graphicIndex, int language) {
+    static const unsigned short localized[10][3] = {
+        {4u, 728u, 738u}, {6u, 729u, 739u}, {27u, 730u, 740u},
+        {30u, 731u, 741u}, {31u, 732u, 742u}, {32u, 733u, 743u},
+        {40u, 734u, 744u}, {694u, 735u, 745u},
+        {699u, 736u, 746u}, {700u, 737u, 747u}
+    };
+    if (language < 1 || language > 2) return graphicIndex;
+    for (size_t index = 0u; index < sizeof(localized) / sizeof(localized[0]);
+         ++index) {
+        if (graphicIndex == localized[index][0]) {
+            return localized[index][language];
+        }
+    }
+    return graphicIndex;
+}
+
+static unsigned int m11_resolve_dm1_amiga36_graphic_index(
+    const M11_AssetLoader* loader, unsigned int graphicIndex) {
+    unsigned int resolved;
+    if (!loader || !loader->dm1Amiga36) return graphicIndex;
+    resolved = M11_AssetLoader_ResolveDm1Amiga36GraphicIndex(
+        graphicIndex, loader->dm1Amiga36Language);
+    if (resolved != graphicIndex && getenv("FIRESTAFF_ASSET_TRACE")) {
+        fprintf(stderr,
+                "asset-language-remap game=dm1 platform=amiga-v36 requested=%u resolved=%u language=%s\n",
+                graphicIndex, resolved,
+                loader->dm1Amiga36Language == 1 ? "fr" : "de");
+    }
+    return resolved;
+}
+
 int M11_AssetLoader_QuerySize(const M11_AssetLoader* loader,
                               unsigned int graphicIndex,
                               unsigned short* outWidth,
@@ -436,6 +482,7 @@ int M11_AssetLoader_QuerySize(const M11_AssetLoader* loader,
     if (!loader || !loader->initialized) {
         return 0;
     }
+    graphicIndex = m11_resolve_dm1_amiga36_graphic_index(loader, graphicIndex);
     if (loader->iigsDm1) {
         if (graphicIndex>=575U) {
             if (outWidth) *outWidth=0;
@@ -608,6 +655,7 @@ const M11_AssetSlot* M11_AssetLoader_Load(M11_AssetLoader* loader,
     if (!loader || !loader->initialized) {
         return NULL;
     }
+    graphicIndex = m11_resolve_dm1_amiga36_graphic_index(loader, graphicIndex);
     traceAssets = (getenv("FIRESTAFF_ASSET_TRACE") != NULL);
 
     /* Check cache first */

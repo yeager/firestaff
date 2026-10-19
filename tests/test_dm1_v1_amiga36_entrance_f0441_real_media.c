@@ -3,6 +3,7 @@
 #include "firestaff_zip_extract.h"
 #include "asset_status_m12.h"
 #include "asset_find_by_hash.h"
+#include "asset_loader_m11.h"
 #include "fs_portable_compat.h"
 #include <SDL3/SDL.h>
 
@@ -169,6 +170,83 @@ done:
     return ok;
 }
 
+static int check_localized_graphics(const SelectedMedia* media)
+{
+    static const char *const languages[] = {"EN", "FR", "DE"};
+    static const unsigned short indices[10][3] = {
+        {4u,728u,738u}, {6u,729u,739u}, {27u,730u,740u},
+        {30u,731u,741u}, {31u,732u,742u}, {32u,733u,743u},
+        {40u,734u,744u}, {694u,735u,745u},
+        {699u,736u,746u}, {700u,737u,747u}
+    };
+    for (int language = 0; language < 3; ++language) {
+        M11_AssetLoader selected = {0}, original = {0};
+        for (int row = 0; row < 10; ++row) {
+            if (M11_AssetLoader_ResolveDm1Amiga36GraphicIndex(
+                    indices[row][0], language) != indices[row][language]) {
+                fprintf(stderr,
+                        "FAIL: original A36 G2004 mapping language=%s base=%u expected=%u\n",
+                        languages[language], indices[row][0],
+                        indices[row][language]);
+                return 0;
+            }
+        }
+        if (!M11_AssetLoader_InitFromBuffer(&selected, media->graphics,
+                                             (long)media->graphics_bytes) ||
+            !selected.dm1Amiga36 ||
+            !M11_AssetLoader_SetDm1Amiga36Language(
+                &selected, languages[language]) ||
+            !M11_AssetLoader_InitFromBuffer(&original, media->graphics,
+                                             (long)media->graphics_bytes)) {
+            M11_AssetLoader_Shutdown(&selected);
+            M11_AssetLoader_Shutdown(&original);
+            return 0;
+        }
+        /* The first seven table entries are bitmap records consumed by this
+         * renderer. The last three are not exposed as bitmap records by the
+         * current decoder; verify their exact source index mapping above
+         * without manufacturing test assets for them. */
+        for (int row = 0; row < 7; ++row) {
+            const unsigned short sourceIndex = indices[row][language];
+            unsigned short width = 0u, height = 0u;
+            const M11_AssetSlot *actual = M11_AssetLoader_Load(
+                &selected, indices[row][0]);
+            const M11_AssetSlot *expected = M11_AssetLoader_Load(
+                &original, sourceIndex);
+            if (!actual || !expected || actual->graphicIndex != sourceIndex ||
+                !M11_AssetLoader_QuerySize(&selected, indices[row][0],
+                                           &width, &height) ||
+                actual->width != expected->width ||
+                actual->height != expected->height || width != expected->width ||
+                height != expected->height ||
+                memcmp(actual->pixels, expected->pixels,
+                       (size_t)expected->width * expected->height) != 0) {
+                fprintf(stderr,
+                        "FAIL: original A36 G2004 bitmap language=%s base=%u expected=%u actual=%p/%u expected-slot=%p sizes=%ux%u/%ux%u query=%ux%u\n",
+                        languages[language], indices[row][0], sourceIndex,
+                        (const void *)actual, actual ? actual->graphicIndex : 0u,
+                        (const void *)expected,
+                        actual ? actual->width : 0u, actual ? actual->height : 0u,
+                        expected ? expected->width : 0u,
+                        expected ? expected->height : 0u, width, height);
+                M11_AssetLoader_Shutdown(&selected);
+                M11_AssetLoader_Shutdown(&original);
+                return 0;
+            }
+        }
+        if (M11_AssetLoader_SetDm1Amiga36Language(&selected, "EN")) {
+            M11_AssetLoader_Shutdown(&selected);
+            M11_AssetLoader_Shutdown(&original);
+            fputs("FAIL: A36 language changed after cached source graphics\n", stderr);
+            return 0;
+        }
+        M11_AssetLoader_Shutdown(&selected);
+        M11_AssetLoader_Shutdown(&original);
+    }
+    puts("PASS: all ten original A36 G2004 IDs map correctly; seven bitmap records decode byte-identically for English/French/German");
+    return 1;
+}
+
 int main(void) {
     const char *archive = getenv("FIRESTAFF_DM1_AMIGA36_ARCHIVE");
     uint8_t *adf = NULL;
@@ -212,6 +290,7 @@ int main(void) {
         fprintf(stderr, "FAIL: authentic A36 F0441 receipt rejected\n");
         goto cleanup;
     }
+    if (!check_localized_graphics(&media)) goto cleanup;
     if (!dm1_v1_amiga36_entrance_bind_driver(&receipt,
             media.driver, media.driver_bytes) || !receipt.a36_fade_valid ||
         strcmp(receipt.a36_driver_md5, "d86f045085481448f6ae3db8d3d640d2")) {

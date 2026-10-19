@@ -44,21 +44,22 @@ probe cli-archive --debug --game dm1 --platform amiga --data-dir "$archive" \
     --boot-probe --boot-probe-frames 2 --duration 0
 
 probe_language() {
-    local output language=$1 dungeon=$2
-    output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --debug \
+    local output language=$1 dungeon=$2 resolved=$3
+    output=$(FIRESTAFF_ASSET_TRACE=1 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --debug \
         --game dm1 --platform amiga --lang "$language" --data-dir "$archive" \
         --boot-probe --boot-probe-frames 2 --duration 0 2>&1) || {
         printf '%s\n' "$output" >&2
         return 1
     }
     grep -Fq "dungeonPath=$archive::Dungeon Master Amiga 3.6.adf::$dungeon" <<<"$output" &&
+    grep -Fq "asset-language-remap game=dm1 platform=amiga-v36 requested=4 resolved=$resolved language=$language" <<<"$output" &&
     grep -Fq "startup-f0441-authenticated-handoff game=dm1 platform=amiga-v36 graphics=$expected_md5" <<<"$output" &&
     grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=dm1' <<<"$output" &&
     grep -Fq 'phase=dm1-runtime ' <<<"$output"
 }
 
-probe_language fr DUNGEONF.DAT
-probe_language de DUNGEONG.DAT
+probe_language fr DUNGEONF.DAT 728
+probe_language de DUNGEONG.DAT 738
 
 mkdir -p "$scan_root/dm1"
 ln -s "$archive" "$scan_root/dm1/Dungeon-Master_Amiga_36.zip"

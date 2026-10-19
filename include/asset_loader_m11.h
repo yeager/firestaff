@@ -74,6 +74,9 @@ typedef struct {
     /* DM1 Amiga 3.6 reuses the PC 0x8001 table envelope, but its entries are
      * expanded by ReDMCSB EXPAND.C F0466 rather than the PC IMG3 decoder. */
     int dm1Amiga36;
+    /* ReDMCSB MEMORY.C F0608 maps ten shared English graphic IDs to the
+     * selected Amiga 3.6 language bank. 0/1/2 are English/French/German. */
+    int dm1Amiga36Language;
 
     /* DM1 Atari ST DMCSB1 source.  563-record container with Atari-LZW;
      * decoded items share the IMG1 pixel format with the Amiga path. */
@@ -166,6 +169,13 @@ void M11_AssetLoader_Shutdown(M11_AssetLoader* loader);
 
 /* Check whether the loader is ready. */
 int M11_AssetLoader_IsReady(const M11_AssetLoader* loader);
+
+/* Select the localized G2004 graphics bank for an admitted Amiga 3.6 loader.
+ * The selection is immutable once graphics have been cached. */
+int M11_AssetLoader_SetDm1Amiga36Language(M11_AssetLoader* loader,
+                                         const char* languageCode);
+unsigned int M11_AssetLoader_ResolveDm1Amiga36GraphicIndex(
+    unsigned int graphicIndex, int language);
 
 /* Query the width and height of a graphic index without loading it.
    Returns 1 on success. */
