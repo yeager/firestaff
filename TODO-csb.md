@@ -1,3 +1,12 @@
+2026-10-19 current-source real-media launcher/rescan integration:
+`return_to_menu_rescans_dm1_csb_dm2_real_media` passed its full `returns`
+matrix, including CSB FM Towns, Atari ST and Amiga routes. Direct `--game
+csb` exits after Return to Menu; menu-launched sessions return to the launcher
+and rescan authentic DM1/CSB/DM2 availability. The companion
+`m12_dm1_csb_shared_collection_real_media` test passed the mixed collection
+scan. These SDL dummy-driver runs verify the tested launch/input transitions,
+not native display, audio or physical input parity.
+
 2026-10-19 current-source mixed-original-media CSB M12 menu retest:
 `csb_v1_fmtowns_m12_auto_mixed_real_media` passed in 367.44 seconds. With
 authentic FM Towns, Atari ST and Amiga media installed together, AUTO and the
