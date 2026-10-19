@@ -1,3 +1,14 @@
+# Firestaff v3.0.394
+
+## Developer changes
+
+- `Startup archive scan`: reuse the completed inner-file digest inventory for duplicate-hash lookups in nested 7z/Amiga disk images, avoiding repeated filesystem decoding while preserving distinct matching paths.
+- `Startup archive scan verification`: cover duplicate hashes across two nested ADF images and confirm cached lookups return both distinct virtual paths.
+
+## Known limitations
+
+- Full-library startup scanning still takes about 20 seconds on the tested Mac mini M4 collection; the measured run used authentic local game media and does not establish timing on other machines or storage devices.
+
 # Firestaff v3.0.393
 
 ## Developer changes

@@ -5379,6 +5379,10 @@ static int external_adf_cache_find(const char *archive_path,
                                    const char *expected_md5,
                                    char *out_path, int out_path_len,
                                    int *out_complete);
+static int external_adf_cache_collect_matches(
+    const char *archive_path, const char *adf_entry,
+    const char *const *md5_list, int md5_count,
+    char out_paths[][ASSET_PATH_MAX], int matched[], int *out_complete);
 static void external_adf_cache_store_file(const char *archive_path,
                                           const char *adf_entry,
                                           const char *name,
@@ -5714,6 +5718,15 @@ static int native_7z_member_list_visitor(const char *name,
                 }
                 if (matches->found_count >= matches->md5_count || cacheComplete)
                     return 0;
+            } else {
+                int cachedMatches = external_adf_cache_collect_matches(
+                    matches->archive_path, name, matches->md5_list,
+                    matches->md5_count, matches->out_paths,
+                    matches->matched, &cacheComplete);
+                if (cacheComplete) {
+                    matches->found_count += cachedMatches;
+                    return 0;
+                }
             }
         }
 #endif
@@ -6025,7 +6038,8 @@ static int external_adf_cache_find(const char *archive_path,
     size_t prefix_len;
     int i;
     if (out_complete) *out_complete = 0;
-    if (!s_scan_cache || !expected_md5 ||
+    if (!s_scan_cache || s_scan_cache->count >= SCAN_CACHE_MAX ||
+        !expected_md5 ||
         !external_adf_cache_prefix(archive_path, adf_entry, prefix,
                                    sizeof(prefix)) ||
         stat(archive_path, &st) != 0) {
@@ -6064,6 +6078,64 @@ static int external_adf_cache_find(const char *archive_path,
     return 0;
 }
 
+/* Duplicate-hash callers need every distinct inner path, not one cached
+ * representative. When the ADF completion marker is still trustworthy, the
+ * cache inventory contains the full filesystem result and can satisfy those
+ * slots without decoding the same disk image again. A full cache may have
+ * evicted records, so it is never treated as a complete inventory. */
+#ifdef FIRESTAFF_HAS_NATIVE_7Z
+static int external_adf_cache_collect_matches(
+    const char *archive_path, const char *adf_entry,
+    const char *const *md5_list, int md5_count,
+    char out_paths[][ASSET_PATH_MAX], int matched[], int *out_complete) {
+    char prefix[sizeof(((ScanCacheEntry_I *)0)->path)];
+    char marker[sizeof(((ScanCacheEntry_I *)0)->path)];
+    char archive_md5[33];
+    struct stat st;
+    size_t prefix_len;
+    int found_count = 0;
+    int i;
+    if (out_complete) *out_complete = 0;
+    if (!s_scan_cache || s_scan_cache->count >= SCAN_CACHE_MAX ||
+        !md5_list || md5_count <= 0 || !out_paths || !matched ||
+        !external_adf_cache_prefix(archive_path, adf_entry, prefix,
+                                   sizeof(prefix)) ||
+        snprintf(marker, sizeof(marker), "%s@firestaff-adf-complete-v1",
+                 prefix) >= (int)sizeof(marker) ||
+        stat(archive_path, &st) != 0 ||
+        !scache_lookup(s_scan_cache, marker, (int64_t)st.st_mtime,
+                       (int64_t)st.st_size, archive_md5)) {
+        return 0;
+    }
+    prefix_len = strlen(prefix);
+    if (out_complete) *out_complete = 1;
+    for (i = 0; i < s_scan_cache->count; ++i) {
+        const ScanCacheEntry_I *entry = &s_scan_cache->entries[i];
+        size_t path_len = strlen(entry->path);
+        int index;
+        if (entry->mtime != (int64_t)st.st_mtime ||
+            entry->size != (int64_t)st.st_size ||
+            path_len <= prefix_len ||
+            strncmp(entry->path, prefix, prefix_len) != 0 ||
+            strcmp(entry->path, marker) == 0) {
+            continue;
+        }
+        index = md5_list_match_index(entry->md5, md5_list, matched,
+                                     md5_count);
+        if (index < 0 ||
+            !copy_nested_virtual_match_path(archive_path, adf_entry,
+                                            entry->path + prefix_len,
+                                            out_paths[index], ASSET_PATH_MAX)) {
+            continue;
+        }
+        matched[index] = 1;
+        ++found_count;
+        if (found_count >= md5_count) break;
+    }
+    return found_count;
+}
+#endif
+
 static void external_adf_cache_store_file(const char *archive_path,
                                           const char *adf_entry,
                                           const char *name,
@@ -6088,7 +6160,7 @@ static void external_adf_cache_mark_complete(const char *archive_path,
     char marker[sizeof(((ScanCacheEntry_I *)0)->path)];
     char archive_md5[33];
     struct stat st;
-    if (!s_scan_cache ||
+    if (!s_scan_cache || s_scan_cache->count >= SCAN_CACHE_MAX ||
         !external_adf_cache_prefix(archive_path, adf_entry, prefix,
                                    sizeof(prefix)) ||
         snprintf(marker, sizeof(marker), "%s@firestaff-adf-complete-v1",

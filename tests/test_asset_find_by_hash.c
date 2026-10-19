@@ -592,6 +592,7 @@ static void cleanup_fixture(void) {
     remove("asset_find_by_hash_test_tmp/chaos.st");
     remove("asset_find_by_hash_test_tmp/chaos.msa");
     remove("asset_find_by_hash_test_tmp/nested_amiga.adf");
+    remove("asset_find_by_hash_test_tmp/nested_amiga_second.adf");
     RMDIR("asset_find_by_hash_test_tmp/nested");
     RMDIR("asset_find_by_hash_test_tmp");
 }
@@ -1447,10 +1448,13 @@ int main(void) {
      * OFS ADF. The scanner must hash the filesystem member, then materialize
      * that same member rather than treating the disk image as an opaque file. */
     if (write_adf_fixture("asset_find_by_hash_test_tmp/nested_amiga.adf") &&
+        write_adf_fixture("asset_find_by_hash_test_tmp/nested_amiga_second.adf") &&
         system("command -v 7zz >/dev/null 2>&1 && "
                "(cd asset_find_by_hash_test_tmp && "
-               "7zz a -t7z nested_amiga.adf.7z nested_amiga.adf >/dev/null 2>&1)") == 0) {
+               "7zz a -t7z nested_amiga.adf.7z nested_amiga.adf "
+               "nested_amiga_second.adf >/dev/null 2>&1)") == 0) {
         remove("asset_find_by_hash_test_tmp/nested_amiga.adf");
+        remove("asset_find_by_hash_test_tmp/nested_amiga_second.adf");
         memset(outPath, 0, sizeof(outPath));
         if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
                                outPath, (int)sizeof(outPath), 2) ||
@@ -1471,7 +1475,8 @@ int main(void) {
          * independent launcher queries must reuse those verified inner-file
          * digests instead of decompressing this solid 7z again. */
         if (!scan_cache_has_entry("nested_amiga.adf.7z::nested_amiga.adf::GRAPHICS.DAT") ||
-            !scan_cache_has_entry("nested_amiga.adf.7z::nested_amiga.adf::@firestaff-adf-complete-v1")) {
+            !scan_cache_has_entry("nested_amiga.adf.7z::nested_amiga.adf::@firestaff-adf-complete-v1") ||
+            !scan_cache_has_entry("nested_amiga.adf.7z::nested_amiga_second.adf::@firestaff-adf-complete-v1")) {
             cleanup_fixture();
             fprintf(stderr, "nested 7z/ADF inner-file cache was not recorded\n");
             return 1;
@@ -1498,9 +1503,42 @@ int main(void) {
                     matched[0], matched[1], outPaths[1]);
             return 1;
         }
+        {
+            const char* duplicateHashes[] = {md5Upper, md5Upper, NULL};
+            int duplicateCount;
+            int first0;
+            int second0;
+            int first1;
+            int second1;
+            memset(outPaths, 0, sizeof(outPaths));
+            memset(matched, 0, sizeof(matched));
+            duplicateCount = asset_find_all_by_md5_list(
+                "asset_find_by_hash_test_tmp/nested_amiga.adf.7z",
+                duplicateHashes, outPaths, matched, 2, 2);
+            first0 = path_has_virtual_entry(outPaths[0], "nested_amiga.adf.7z",
+                                            "nested_amiga.adf::GRAPHICS.DAT");
+            second0 = path_has_virtual_entry(outPaths[0], "nested_amiga.adf.7z",
+                                             "nested_amiga_second.adf::GRAPHICS.DAT");
+            first1 = path_has_virtual_entry(outPaths[1], "nested_amiga.adf.7z",
+                                            "nested_amiga.adf::GRAPHICS.DAT");
+            second1 = path_has_virtual_entry(outPaths[1], "nested_amiga.adf.7z",
+                                             "nested_amiga_second.adf::GRAPHICS.DAT");
+            if (duplicateCount != 2 ||
+                !matched[0] || !matched[1] ||
+                strcmp(outPaths[0], outPaths[1]) == 0 ||
+                !((first0 && second1) || (second0 && first1))) {
+                cleanup_fixture();
+                fprintf(stderr,
+                        "cached nested 7z/ADF lookup did not preserve duplicate hashes: count=%d matched=%d,%d paths=%s | %s roles=%d,%d,%d,%d\n",
+                        duplicateCount, matched[0], matched[1],
+                        outPaths[0], outPaths[1], first0, second0, first1, second1);
+                return 1;
+            }
+        }
     }
     remove("asset_find_by_hash_test_tmp/nested_amiga.adf.7z");
     remove("asset_find_by_hash_test_tmp/nested_amiga.adf");
+    remove("asset_find_by_hash_test_tmp/nested_amiga_second.adf");
 
     /* CSB Amiga media is also commonly supplied as ZIP → ADF.  ZIP has an
      * in-process reader for flat members, but the nested disk filesystem must
