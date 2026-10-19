@@ -133,6 +133,8 @@ IBMIO BIOS/PIT callback, and gates the source game tick on the four callbacks.
 The host's millisecond scheduler uses a nominal 55 ms callback (the source
 period is 65,536 / 1,193,182 seconds, about 54.925 ms); the input-wait test
 checks the 219/220 ms boundary and confirms independent 20 ms E0017 delivery.
+The authentic PC34 first-monster harness also asserts that a direct M11
+launch without a catalog hash receipt selects the PC34 timing profile.
 This is a quantized source model, not a measured original-PC34 repeated-step
 trace. Compare repeated-step traces against the original PC34 executable
 before claiming movement-timing parity; the 60-FPS presentation diagnostic

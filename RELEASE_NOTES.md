@@ -9,7 +9,7 @@
 ## Developer changes
 
 - `DM1 PC34 original-media combat verification`: exercise the HoC route through the SDL event loop and assert creature movement, combat damage, experience awards, and champion load behavior with authentic media.
-- `DM1 PC34 timing verification`: test the four-callback 219/220 ms input-wait boundary and ensure E0017 remains on its separate 20 ms cadence.
+- `DM1 PC34 timing verification`: test the four-callback 219/220 ms input-wait boundary, ensure E0017 remains on its separate 20 ms cadence, and assert the direct original-media M11 launch selects PC34 timing without a launcher hash receipt.
 - `DM1 Amiga spell panel verification`: compare spell panel pixels using the Amiga framebuffer's encoded palette levels.
 - `DM1 and CSB startup evidence`: update platform records with original-media retests and full-library scan timing.
 - `Release metadata`: update the project version and reproducible SPDX source SBOM for v3.0.392.
