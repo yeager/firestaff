@@ -48,13 +48,13 @@ authenticated package audit.
 
 2026-10-19 current-source loose FM Towns launch regression:
 `csb_v1_fmtowns_native_cli_boot` passed against the authentic F31 archive and
-loose disc tree. English M12 launches that selected `CDATA/GRAPHICS.DAT` and
-`CDATA/DUNGEON.DAT` now reach the source-owned F31 title. Japanese selected
-file starts for both `CJDATA/GRAPHICS.DAT` and `CJDATA/DUNGEON.DAT` also reach
-the title. The full English regression verified the M12 path through the
-authentic MINI.DAT party and the C28 closed Entrance in original, modern and
-custom presentation modes. SDL dummy output does not prove native display,
-physical input or audio parity.
+loose disc tree. English CLI and M12 launches that selected
+`CDATA/GRAPHICS.DAT` and `CDATA/DUNGEON.DAT` now reach the source-owned F31
+title. Japanese CLI and M12 selected-file starts for both
+`CJDATA/GRAPHICS.DAT` and `CJDATA/DUNGEON.DAT` also reach the title. The full
+English regression verified the M12 path through the authentic MINI.DAT party
+and the C28 closed Entrance in original, modern and custom presentation modes.
+SDL dummy output does not prove native display, physical input or audio parity.
 
 2026-10-14 mixed-original-media AUTO/start-menu retest on the Mac mini M4,
 current source: `csb_v1_fmtowns_m12_auto_mixed_real_media` passed in 321.96

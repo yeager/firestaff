@@ -4,10 +4,11 @@
   launcher resolves CDATA/CJDATA and its disc-root title/program companions.
   The FM Towns reselector also handles the source installation root that M12
   passes for loose media. The full authentic English CLI/menu regression
-  passed through the original MINI.DAT party and verified the closed Entrance
-  in all three presentation modes. Separate Japanese original-media M12 runs
-  passed for both selected files. This is functional startup evidence using
-  SDL dummy output, not physical display or audio parity.
+  passed for both CLI and M12 paths, through the original MINI.DAT party, and
+  verified the closed Entrance in all three presentation modes. Separate
+  Japanese original-media CLI and M12 runs passed for both selected files.
+  This is functional startup evidence using SDL dummy output, not physical
+  display or audio parity.
 
 - 2026-10-15: English Amiga inventory now checks all collected loose graphics
   candidates before choosing a complete original package (bounded to 256,

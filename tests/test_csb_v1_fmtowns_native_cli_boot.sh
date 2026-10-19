@@ -578,6 +578,26 @@ for loose_selected_name in GRAPHICS.DAT DUNGEON.DAT; do
             ;;
     esac
     echo "PASS: CSB FM Towns $language M12 launches from selected loose $loose_selected_name"
+
+    loose_cli_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy run_firestaff \
+        --game csb --data-dir "$loose_selected_file" \
+        --platform fm-towns $edition_arg --boot-probe \
+        --boot-probe-frames 2 --boot-probe-expect-startup-active 1 \
+        --boot-probe-expect-runtime-tick-max 0 --duration 0 2>&1)" || {
+        printf '%s\n' "$loose_cli_output" >&2
+        echo "FAIL: CSB FM Towns CLI rejected selected loose $loose_selected_name" >&2
+        exit 1
+    }
+    case "$loose_cli_output" in
+        *"variant=csb-fmtowns-$language"*"phase=csb-fmtowns-title"*"startupAnimation=title-anm"*) ;;
+        *)
+            echo "FAIL: CSB FM Towns CLI lost the selected loose $loose_selected_name owner" >&2
+            printf '%s\n' "$loose_cli_output" >&2
+            exit 1
+            ;;
+    esac
+    echo "PASS: CSB FM Towns $language CLI launches from selected loose $loose_selected_name"
 done
 
 if [ -n "$user_save" ]; then
