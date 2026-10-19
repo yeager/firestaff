@@ -1,5 +1,18 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-19 full-library no-selection launch check on the Mac mini M4:
+starting the current build with `--menu --debug --data-dir
+~/.firestaff/data` and no `--game` reported `game=none mode=menu`, found
+authentic original data for DM1, CSB, DM2, Nexus and Theron's Quest, and made
+no game-handoff. The local `m11_direct_launch_prepare_all_games` CTest also
+passed against the installed original-media collection. The no-selection
+scanner reported completion at about 27 seconds on both initial and repeated
+runs; the second run took 57.18 seconds total with a 30-second menu duration,
+so the measured scan accounts for most of that startup delay. These checks
+used SDL dummy video/audio and confirm availability/menu state, not native
+window interaction or first gameplay frames for all five titles. Treat the
+long full-library scan as an open startup-performance gap.
+
 2026-10-19 current-source original-media CLI startup matrix:
 `ctest --test-dir .codex-scratch/scan-locale-build-xcode -j 2
 --output-on-failure -R '^(dm1|csb|dm2)_v1_.*native_cli_boot$'` passed 11/11
