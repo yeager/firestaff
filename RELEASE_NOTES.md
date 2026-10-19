@@ -2,9 +2,11 @@
 
 ## User-facing changes
 
+- `Default launcher startup`: fix the no-game path to enter the collection menu and scan neighboring installations when preferences remember a single archive file.
 - `DM1 PC34 combat`: activate creature groups after map transitions and preserve their movement links so the first HoC encounter can move and fight correctly.
 - `DM1 PC34 champion status`: refresh live carry capacity and use each platform's stamina capacity when calculating champion status.
 - `DM1 PC34 timing`: use the source's three-count BIOS/PIT callback cadence for input waits and gameplay ticks, independently of the 20 ms display VBlank.
+- `DM1 Amiga 3.6 timing`: correct startup ticks to match the source cadence.
 
 ## Developer changes
 
@@ -12,12 +14,14 @@
 - `DM1 PC34 timing verification`: test the four-callback 219/220 ms input-wait boundary, ensure E0017 remains on its separate 20 ms cadence, and assert the direct original-media M11 launch selects PC34 timing without a launcher hash receipt.
 - `DM1 Amiga spell panel verification`: compare spell panel pixels using the Amiga framebuffer's encoded palette levels.
 - `DM1 and CSB startup evidence`: update platform records with original-media retests and full-library scan timing.
+- `Default launcher scan regression`: verify persisted single-file preferences promote to the shared game-data collection while explicit CLI file paths remain scoped.
 - `Release metadata`: update the project version and reproducible SPDX source SBOM for v3.0.392.
 
 ## Known limitations
 
 - `DM1 combat parity`: authentic PC34 coverage verifies the first HoC encounter and selected champion state; it does not establish full gameplay parity across all platforms.
 - `DM1 PC34 timing`: the 55 ms host callback period is quantized from the 54.925 ms PIT period; repeated-step timing has not yet been compared with the original executable.
+- `Startup scan latency`: scanning the full installed collection takes about 34 seconds on the Mac mini M4; this release restores game discovery but does not make the scan faster.
 - `Original-media parity`: startup and bounded runtime checks do not establish complete visual parity or physical display, input, and audio-output behavior.
 
 ## Release assets

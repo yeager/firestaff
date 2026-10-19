@@ -83,6 +83,9 @@ static int m12_asset_ready_game_count(const M12_AssetStatus* status);
 static void m12_parent_game_data_root(const char* dataDir,
                                       char* outPath,
                                       size_t outPathSize);
+static void m12_common_game_data_root(const char* dataDir,
+                                      char* outPath,
+                                      size_t outPathSize);
 static void SDLCALL m12_unicode_font_dialog_callback(
     void* userdata, const char* const* filelist, int filter);
 static void SDLCALL m12_artpack_dialog_callback(
@@ -4599,6 +4602,40 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
             state->assetStatus.scanProgress.cancelled ||
             m12_asset_ready_game_count(&state->assetStatus) > 0) return;
         goto startup_scan_complete;
+    }
+    /* A remembered single-media selection is a useful launch source, but a
+     * no-game menu scan must include its neighboring game folders.  Keep an
+     * explicit --data-dir file request scoped to that file; only promote the
+     * persisted selection used by the ordinary all-games launcher. */
+    if (scanAllGames && !hasExplicitDataDirOverride && config->dataDir[0] &&
+        FSP_FileExists(config->dataDir) && !FSP_DirExists(config->dataDir)) {
+        char selectedFileRoot[M12_ASSET_DATA_DIR_CAPACITY];
+        char allGamesRoot[M12_ASSET_DATA_DIR_CAPACITY];
+        M12_AssetStatusScanOptions scanOptions;
+        if (FSP_ParentDir(selectedFileRoot, sizeof(selectedFileRoot),
+                          config->dataDir)) {
+            m12_parent_game_data_root(selectedFileRoot, allGamesRoot,
+                                      sizeof(allGamesRoot));
+            if (strcmp(allGamesRoot, selectedFileRoot) == 0) {
+                m12_common_game_data_root(selectedFileRoot, allGamesRoot,
+                                          sizeof(allGamesRoot));
+            }
+            if (!allGamesRoot[0]) {
+                snprintf(allGamesRoot, sizeof(allGamesRoot), "%s",
+                         selectedFileRoot);
+            }
+            memset(&scanOptions, 0, sizeof(scanOptions));
+            scanOptions.honorRequestedDataDir = 1;
+            scanOptions.dm1DungeonLanguage = m12_dm1_dungeon_language(state);
+            scanOptions.progressFn = progressFn;
+            scanOptions.progressUserData = progressUserData;
+            (void)M12_AssetStatus_ScanWithOptions(&state->assetStatus,
+                                                  allGamesRoot,
+                                                  &scanOptions);
+            if (state->assetStatus.scanProgress.cancelled ||
+                m12_asset_ready_game_count(&state->assetStatus) > 0) return;
+            goto startup_scan_complete;
+        }
     }
     if (hasExplicitDataDirOverride) {
         if (gameId && gameId[0] != '\0' && !scanAllGames) {

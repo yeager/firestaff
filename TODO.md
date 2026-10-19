@@ -1,5 +1,14 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-19 persisted single-file launcher selection: the no-game startup now
+promotes a remembered media file to its surrounding collection root, so the
+default launcher can discover neighboring DM1, CSB and DM2 installations.
+An explicit file-valued `--data-dir` remains scoped to that selected source.
+Verified with an isolated config pointing at the authentic DM1 Amiga 3.6 ZIP;
+the default launch stayed in `mode=menu`, found DM1/CSB/DM2, and did not hand
+off to a game. The full collection scan still takes about 34 seconds on the
+Mac mini M4, so startup responsiveness remains an open issue.
+
 2026-10-19 full-library no-selection launch check on the Mac mini M4:
 starting the current build with `--menu --debug --data-dir
 ~/.firestaff/data` and no `--game` reported `game=none mode=menu`, found
