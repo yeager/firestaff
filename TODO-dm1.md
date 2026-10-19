@@ -77,6 +77,23 @@ tick/input loop. This does not explain the reported display lag on the user's
 MacBook; native-display input-to-present timing and an original-executable
 comparison remain open. No tick cadence change is justified by this evidence.
 
+2026-10-19 ReDMCSB DM1 timing-profile audit (static evidence; runtime cadence
+still unverified): `GAMELOOP.C:46-50` selects a maximum count of 12 for the
+`MEDIA722` set, which includes PC34 (`I34E`/`I34M`) and Amiga 3.6 (`A36M`).
+For PC34, `IO.C:F0782` adds `G2163_` to the wait count, and
+`IO.C:3898` obtains that increment from the PC IO driver callback;
+`IBMIO.C:F8114` returns 3. Its default IRQ path installs the callback from
+`IBMIO.C:F8117` and invokes it from the timer handler while `G8028_` is zero.
+That source path reaches the threshold in four timer callbacks. Amiga's
+`VBLANK.C:F0577` increments once per actual blank and reaches the same profile
+threshold after twelve blanks. Firestaff currently initializes the shared
+DM1 timing model to 10 counts at 20 ms, then applies a separate 12-count/16 ms
+override only to FM Towns; it does not select a PC34 or A36M cadence here.
+This is a source-profile mismatch candidate, not a verified cause of movement
+or presentation lag. Compare timed repeated-step traces against matching
+original PC34 and Amiga 3.6 executables before changing the runtime clock; the
+existing 60-FPS presentation diagnostic does not measure that game-tick rate.
+
 2026-10-15 offline-selection recovery: configured/selected path intent now
 survives missing media and scanner recovery. The Settings path remains the
 remembered preference; runtime access uses published scanner ownership.
