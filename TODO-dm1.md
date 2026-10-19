@@ -1,3 +1,15 @@
+2026-10-19 default no-game startup and scan latency check: launching the
+current build with no `--game` against the installed original-data collection
+reported `startup game=none mode=menu`; it produced neither a DM1 READY record
+nor a game-handoff, so it did not implicitly start DM1. The complete five-game
+scan took 27.3 seconds with the user's persistent scan cache and about 41.5
+seconds with an isolated cold cache; the process used about one CPU core while
+hashing. The scan did reach its menu-mode startup and authenticated original
+media, but this is an open responsiveness gap. Keep exact admission and all
+game availability checks; investigate safe cache reuse or incremental scan
+presentation before claiming startup latency is resolved. Measurements used
+SDL's dummy video driver and do not measure native presentation.
+
 2026-10-19 current-source real-media launcher/rescan integration:
 `return_to_menu_rescans_dm1_csb_dm2_real_media` passed its full `returns`
 matrix, including DM1 PC34, FM Towns, Atari ST and Amiga 3.6 routes. Direct
