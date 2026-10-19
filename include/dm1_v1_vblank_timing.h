@@ -97,6 +97,13 @@ typedef struct {
      * Tracks sub-VBlank time between updates. */
     uint32_t vblankAccumulatorMs;
 
+    /* PC34 IO.C:F0782 advances the input-wait count by G2163_ (3) from
+     * the IBMIO BIOS/PIT callback. Keep this separate from the 20 ms E0017
+     * display VBlank clock. Millisecond host updates quantize the nominal
+     * 65,536 / 1,193,182 s callback period to 55 ms. */
+    uint32_t pc34PitAccumulatorMs;
+    int pc34PitInputWait;
+
     /* Movement cooldown gates (mirrors of G0310/G0311).
      * Decremented once per game tick, not per VBlank.
      * While > 0, movement commands are held in queue.
@@ -134,6 +141,10 @@ void DM1_V1_VBlankTiming_ConfigureFmTowns(DM1_V1_VBlankTimingState* state);
 /* ReDMCSB GAMELOOP.C:46-50 selects 12 VBlanks for Amiga 3.6.  Its PAL
  * VBLANK.C:F0577 cadence is 50 Hz, so one source game tick is 240 ms. */
 void DM1_V1_VBlankTiming_ConfigureAmiga36(DM1_V1_VBlankTimingState* state);
+
+/* Use the IBMIO default BIOS/PIT callback cadence and +3 input-wait count.
+ * Call after Init for original PC34; display VBlank remains 20 ms. */
+void DM1_V1_VBlankTiming_ConfigurePc34(DM1_V1_VBlankTimingState* state);
 
 /* Simulate VBlank interrupts for the given elapsed milliseconds.
  * Call this every frame with real wall-clock delta.

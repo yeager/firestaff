@@ -127,10 +127,16 @@ path: `IO.C:F0782` adds `G2163_` to the wait count, `IO.C:3898` obtains that
 increment from the PC IO driver callback, and `IBMIO.C:F8114` returns 3.
 Its default IRQ path installs the callback from `IBMIO.C:F8117` and invokes
 it from the timer handler while `G8028_` is zero, reaching the 12-count
-threshold in four callbacks. A source-informed PC34 timer cadence is not yet
-implemented or measured. Compare repeated-step traces against the original
-PC34 executable before claiming movement-timing parity; the 60-FPS
-presentation diagnostic does not measure game-tick rate.
+threshold in four callbacks. PC34 now keeps this input-wait counter separate
+from E0017's 20 ms display VBlank, adds three count units on each default
+IBMIO BIOS/PIT callback, and gates the source game tick on the four callbacks.
+The host's millisecond scheduler uses a nominal 55 ms callback (the source
+period is 65,536 / 1,193,182 seconds, about 54.925 ms); the input-wait test
+checks the 219/220 ms boundary and confirms independent 20 ms E0017 delivery.
+This is a quantized source model, not a measured original-PC34 repeated-step
+trace. Compare repeated-step traces against the original PC34 executable
+before claiming movement-timing parity; the 60-FPS presentation diagnostic
+does not measure game-tick rate.
 
 2026-10-19 F0309/F0312 live capacity refresh: ReDMCSB `CHAMPION.C` F0312
 calls F0309 while building every shield-strength contribution. Firestaff had

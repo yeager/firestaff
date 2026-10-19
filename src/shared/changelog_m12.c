@@ -20,6 +20,7 @@ static const char* const g_changelogLines[] = {
     "  - DM1 PC 3.4 restores explicitly selected original saves after the I34E Resume selector.",
     "  - CSB FM Towns launches authenticated English and Japanese editions from direct GRAPHICS.DAT or DUNGEON.DAT selections.",
     "  - DM1 Amiga 3.6 selects French and German graphics through the original G2004 mapping.",
+    "  - DM1 PC 3.4 gameplay waits for the source BIOS/PIT callback cadence, independently of display VBlank timing.",
     "  - Original-media checks cover PC 3.4 Resume, both CSB loose-file routes and all ten DM1 language mappings.",
     "  - Seven mapped DM1 records are bitmap-compared; three are verified for source index selection only.",
     "",

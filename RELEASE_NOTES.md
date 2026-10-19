@@ -4,10 +4,12 @@
 
 - `DM1 PC34 combat`: activate creature groups after map transitions and preserve their movement links so the first HoC encounter can move and fight correctly.
 - `DM1 PC34 champion status`: refresh live carry capacity and use each platform's stamina capacity when calculating champion status.
+- `DM1 PC34 timing`: use the source's three-count BIOS/PIT callback cadence for input waits and gameplay ticks, independently of the 20 ms display VBlank.
 
 ## Developer changes
 
 - `DM1 PC34 original-media combat verification`: exercise the HoC route through the SDL event loop and assert creature movement, combat damage, experience awards, and champion load behavior with authentic media.
+- `DM1 PC34 timing verification`: test the four-callback 219/220 ms input-wait boundary and ensure E0017 remains on its separate 20 ms cadence.
 - `DM1 Amiga spell panel verification`: compare spell panel pixels using the Amiga framebuffer's encoded palette levels.
 - `DM1 and CSB startup evidence`: update platform records with original-media retests and full-library scan timing.
 - `Release metadata`: update the project version and reproducible SPDX source SBOM for v3.0.392.
@@ -15,6 +17,7 @@
 ## Known limitations
 
 - `DM1 combat parity`: authentic PC34 coverage verifies the first HoC encounter and selected champion state; it does not establish full gameplay parity across all platforms.
+- `DM1 PC34 timing`: the 55 ms host callback period is quantized from the 54.925 ms PIT period; repeated-step timing has not yet been compared with the original executable.
 - `Original-media parity`: startup and bounded runtime checks do not establish complete visual parity or physical display, input, and audio-output behavior.
 
 ## Release assets

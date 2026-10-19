@@ -58,6 +58,14 @@ void DM1_V1_VBlankTiming_ConfigureAmiga36(DM1_V1_VBlankTimingState* state)
     state->maxVBlankCount = DM1_V1_MAX_VBLANK_COUNT_LATER;
 }
 
+void DM1_V1_VBlankTiming_ConfigurePc34(DM1_V1_VBlankTimingState* state)
+{
+    if (!state) return;
+    state->pc34PitAccumulatorMs = 0u;
+    state->pc34PitInputWait = 1;
+    state->maxVBlankCount = DM1_V1_MAX_VBLANK_COUNT_LATER;
+}
+
 void DM1_V1_VBlankTiming_ConfigurePlatformHost(
     DM1_V1_VBlankTimingState* state,
     const DM1_V1_PlatformTimingHostPc34 *host)
@@ -80,6 +88,23 @@ int DM1_V1_VBlankTiming_Update(DM1_V1_VBlankTimingState* state,
 
     state->vblankAccumulatorMs += elapsedMs;
 
+    /* ReDMCSB IO.C:F0782 adds G2163_ to G0317; IBMIO.C:F8114 returns 3.
+     * The default IBMIO PIT reload is the BIOS 18.2 Hz cadence (65,536 /
+     * 1,193,182 s), quantized to 55 ms because M11 supplies integer ms.
+     * It gates PC34's input wait only; it never fabricates E0017 VBlanks. */
+    if (state->pc34PitInputWait) {
+        state->pc34PitAccumulatorMs += elapsedMs;
+        while (state->pc34PitAccumulatorMs >= 55u) {
+            state->pc34PitAccumulatorMs -= 55u;
+            state->vblankCount = (int16_t)(state->vblankCount + 3);
+            if (state->vblankCount >= state->maxVBlankCount &&
+                !state->stopWaitingForInput) {
+                state->stopWaitingForInput = 1;
+                tickReached = 1;
+            }
+        }
+    }
+
     /* Simulate VBlank interrupts at the configured rate.
      * PAL = 20ms, FM Towns = 16ms.  For each period elapsed,
      * increment the VBlank counter like F0577 on real hardware. */
@@ -90,10 +115,11 @@ int DM1_V1_VBlankTiming_Update(DM1_V1_VBlankTimingState* state,
         if (!dm1_v1_e0017_vertical_blank_pc34(&state->platformTiming)) {
             break;
         }
-        state->vblankCount++;
+        if (!state->pc34PitInputWait) state->vblankCount++;
 
         /* F0577: if (G0317 >= G0318) G0321 = TRUE */
-        if (state->vblankCount >= state->maxVBlankCount) {
+        if (!state->pc34PitInputWait &&
+            state->vblankCount >= state->maxVBlankCount) {
             if (!state->stopWaitingForInput) {
                 state->stopWaitingForInput = 1;
                 tickReached = 1;

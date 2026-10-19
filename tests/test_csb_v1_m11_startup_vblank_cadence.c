@@ -62,6 +62,41 @@ int main(void) {
         ++failures;
     }
     memset(&view, 0, sizeof(view));
+    strcpy(view.sourceId, "dm1");
+    DM1_V1_VBlankTiming_Init(&view.vblankTiming);
+    DM1_V1_VBlankTiming_ConfigurePc34(&view.vblankTiming);
+    expect_interval(view.vblankTiming.vblankPeriodMs, 20u,
+                    "DM1 PC34 preserves the source display VBlank cadence");
+    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 220u,
+                    "DM1 PC34 gates gameplay on four 55 ms PIT callbacks");
+    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 200), 110u,
+                    "DM1 PC34 speed setting scales its source cadence");
+    if (DM1_V1_VBlankTiming_Update(&view.vblankTiming, 219u) ||
+        view.vblankTiming.vblankCount != 9 ||
+        view.vblankTiming.platformTiming.source_tick != 10u) {
+        fprintf(stderr,
+                "FAIL: PC34 input wait must use three counts per PIT callback while E0017 stays at 20 ms\n");
+        ++failures;
+    }
+    if (!DM1_V1_VBlankTiming_Update(&view.vblankTiming, 1u) ||
+        view.vblankTiming.vblankCount != 12 ||
+        view.vblankTiming.platformTiming.source_tick != 11u) {
+        fprintf(stderr,
+                "FAIL: PC34 input wait must stop on callback four without changing E0017 cadence\n");
+        ++failures;
+    }
+    DM1_V1_VBlankTiming_ResetForNewTick(&view.vblankTiming);
+    if (DM1_V1_VBlankTiming_Update(&view.vblankTiming, 54u) ||
+        view.vblankTiming.vblankCount != 0) {
+        fprintf(stderr, "FAIL: PC34 input counter must reset while PIT phase continues\n");
+        ++failures;
+    }
+    if (DM1_V1_VBlankTiming_Update(&view.vblankTiming, 1u) ||
+        view.vblankTiming.vblankCount != 3) {
+        fprintf(stderr, "FAIL: PC34 next tick must begin with PIT callback count three\n");
+        ++failures;
+    }
+    memset(&view, 0, sizeof(view));
     expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 200u,
                     "non-Amiga 3.6 gameplay retains its source tick");
 

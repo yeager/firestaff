@@ -244,6 +244,16 @@ uint32_t M11_GameView_IdleTickIntervalMs(const M11_GameViewState* gameView,
                 (uint32_t)speedMultiplier;
         }
     }
+    if (gameView && gameView->sourceId[0] != '\0' &&
+        strcmp(gameView->sourceId, "dm1") == 0 &&
+        gameView->vblankTiming.pc34PitInputWait) {
+        /* ReDMCSB IO.C:F0782 adds 3 per IBMIO callback; GAMELOOP.C selects
+         * 12 for PC34 media, so four nominal 55 ms BIOS/PIT callbacks gate
+         * each source tick. */
+        const uint32_t sourceInterval = 220u;
+        return (sourceInterval * 100u + (uint32_t)speedMultiplier / 2u) /
+            (uint32_t)speedMultiplier;
+    }
     return (uint32_t)((200 * 100 + speedMultiplier / 2) / speedMultiplier);
 }
 

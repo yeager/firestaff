@@ -26884,6 +26884,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
      * use the second-operand result documented for THINK C 5 and MPW IIGS. */
     state->world.pc34F0306FirstOperandFirst =
         (state->assetLoader.atariStDm1 || spec->dm1Fmtowns) ? 1 : 0;
+    if (dm1Pc34Graphics && !state->assetLoader.atariStDm1 &&
+        !state->assetLoader.legacyDm1 && !spec->dm1Fmtowns) {
+        DM1_V1_VBlankTiming_ConfigurePc34(&state->vblankTiming);
+    }
     if (state->assetLoader.dm1Amiga36) {
         DM1_V1_VBlankTiming_ConfigureAmiga36(&state->vblankTiming);
     }
