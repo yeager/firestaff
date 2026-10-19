@@ -13,6 +13,7 @@
 int main(void)
 {
     const char *archive = getenv("FIRESTAFF_DM1_PC34_ARCHIVE");
+    const char *shieldText = getenv("FIRESTAFF_TEST_PARTY_SHIELD");
     M11_GameViewState state;
     static const M12_MenuInput route_to_c127[] = {
         M12_MENU_INPUT_UP, M12_MENU_INPUT_UP, M12_MENU_INPUT_UP,
@@ -50,6 +51,14 @@ int main(void)
     unsigned short first;
     int clickX, clickY, clickW, clickH;
     uint32_t attackBeforeDoor;
+    unsigned short initialChampionHp;
+    unsigned int naturalDamage;
+    long partyShieldDefense = shieldText ? strtol(shieldText, NULL, 10) : 0;
+
+    if (partyShieldDefense < 0 || partyShieldDefense > 100) {
+        fputs("FAIL: test party shield must be between 0 and 100\n", stderr);
+        return 2;
+    }
 
     if (!archive || !archive[0]) {
         puts("SKIP: FIRESTAFF_DM1_PC34_ARCHIVE is not set");
@@ -108,6 +117,7 @@ int main(void)
         M11_GameView_Shutdown(&state);
         return 1;
     }
+    initialChampionHp = state.world.party.champions[0].hp.current;
     for (i = 0u; i < sizeof(route_to_scroll) / sizeof(route_to_scroll[0]); ++i) {
         M11_GameInputResult result =
             M11_GameView_HandleInput(&state, route_to_scroll[i]);
@@ -148,6 +158,11 @@ int main(void)
                 (void)M11_GameView_AdvanceIdleTick(&state);
         }
     }
+    /* Controlled in-memory spell state lets the same original group attack
+     * exercise the live M11 body-shield snapshot layer. F0446 uses the same
+     * 0..100 range for party ShieldDefense (ReDMCSB ENDGAME.C:805-812). */
+    state.world.magic.partyShieldDefense =
+        (unsigned short)partyShieldDefense;
     attackBeforeDoor = state.world.lifecycle.lastCreatureAttackTime;
     if (M11_GameView_HandlePointerButton(&state, 167, 81,
             M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED) {
@@ -169,7 +184,8 @@ int main(void)
         state.world.party.mapY < 0 || state.world.party.mapY >=
             (int)state.world.dungeon->maps[1].height ||
         state.world.party.direction != 2 ||
-        state.world.party.champions[0].hp.current >= 47 ||
+        (partyShieldDefense == 0 &&
+         state.world.party.champions[0].hp.current >= initialChampionHp) ||
         state.world.lifecycle.lastCreatureAttackTime == attackBeforeDoor ||
         state.world.things->groupCount <= 169 ||
         state.world.things->groups[169].health[0] == 0) {
@@ -178,6 +194,10 @@ int main(void)
         M11_GameView_Shutdown(&state);
         return 1;
     }
+    naturalDamage = state.world.party.champions[0].hp.current < initialChampionHp
+        ? (unsigned int)(initialChampionHp -
+                         state.world.party.champions[0].hp.current)
+        : 0u;
     {
         int group169Active = 0;
         int group169StateKind = -1;
@@ -319,6 +339,7 @@ int main(void)
         *champ = saved;
     }
     M11_GameView_Shutdown(&state);
-    puts("PASS: authentic PC34 first-door natural monster attack and combat input");
+    printf("PASS: authentic PC34 first-door natural monster attack and combat input naturalDamage=%u partyShield=%ld\n",
+           naturalDamage, partyShieldDefense);
     return 0;
 }

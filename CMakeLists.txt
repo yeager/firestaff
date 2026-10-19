@@ -12837,7 +12837,9 @@ if(BUILD_TESTING)
             target_compile_options(test_m11_dm1_pc34_first_monster_combat_real PRIVATE -Wall -Wextra -O2)
         endif()
         add_test(NAME m11_dm1_pc34_first_monster_combat_real
-            COMMAND test_m11_dm1_pc34_first_monster_combat_real)
+            COMMAND bash
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_pc34_first_monster_shield_layers_real.sh"
+                $<TARGET_FILE:test_m11_dm1_pc34_first_monster_combat_real>)
         set_tests_properties(m11_dm1_pc34_first_monster_combat_real PROPERTIES
             SKIP_RETURN_CODE 77
             ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"

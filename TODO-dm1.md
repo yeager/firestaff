@@ -12,10 +12,12 @@ SDL dummy input does not establish native M5 event delivery or HiDPI mapping.
 `m11_dm1_pc34_first_monster_combat_real` passed against the authentic DOS
 archive. From the original HoC start, production movement reaches the first
 map-one group; the original group moves into the forward cell and damages the
-party, then a real pointer-driven PUNCH awards matching Ninja/Fight XP. The
-test also confirms live F0309 capacity is used after stamina and wound changes.
-This verifies the exercised PC34 path, not physical input, every combat type,
-or complete platform parity.
+party, then a real pointer-driven PUNCH awards matching Ninja/Fight XP. A
+repeat through the same original route verifies the live M11 body-shield
+snapshot: the exact first attack falls from 28 HP damage to 17 with
+`partyShieldDefense=100`. The test also confirms live F0309 capacity is used
+after stamina and wound changes. This verifies that physical PC34 path, not
+physical input, every combat type, or complete platform parity.
 
 2026-10-19 current-source DM1 M12 platform-card regression:
 `dm1_v1_m12_auto_multi_platform_menu` passed in 90.07 seconds against the

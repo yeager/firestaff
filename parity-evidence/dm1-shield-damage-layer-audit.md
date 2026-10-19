@@ -74,3 +74,13 @@ impact with either party shield 200 or recipient shield 200. Both produce
 86 HP and consume the projectile through AdvanceProjectilesOnce. This
 proves a live snapshot/impact connection in a controlled existing fixture,
 not original-media fire damage or emulator parity.
+
+2026-10-19 original PC34 physical-attack integration: the real HoC combat
+route now runs twice against the same DOS archive and map-one group. Its
+natural first attack changes from 28 HP damage with no party shield to 17
+with the source-range maximum `partyShieldDefense=100`. Movement, group
+approach/attack, party damage, subsequent pointer-driven PUNCH and XP remain
+asserted in both runs. This closes one physical M11 body-shield path. The
+controlled spell value is set in memory; no original spell animation or
+duration is claimed. Sharp/fire/magic, YA, M10 dispatch and independently
+derived exact attack damage remain open.
