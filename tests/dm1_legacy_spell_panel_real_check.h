@@ -15,6 +15,10 @@ static void legacy_spell_glyph(unsigned char *frame, const M11_FontState *font,
     }
 }
 
+static unsigned char legacy_spell_amiga_palette_pixel(int pixel, int level) {
+    return (unsigned char)((level << 4) | (pixel & 0x0f));
+}
+
 /* Invoke on a fresh, disposable native session: this deliberately changes
  * party fixtures and presentation mode, not original game assets. */
 static int check_legacy_spell_panel_real(M11_GameViewState *state) {
@@ -27,10 +31,15 @@ static int check_legacy_spell_panel_real(M11_GameViewState *state) {
     const M11_AssetSlot *lines = M11_AssetLoader_Load(&state->assetLoader, 11);
     unsigned char actual[64000], expected[64000];
     int atari = state->assetLoader.atariStDm1;
+    int amiga = !atari && state->assetLoader.legacyDm1 &&
+        state->assetLoader.legacyBigEndian;
+    int amigaPaletteLevel = amiga
+        ? M11_GameView_GetDungeonPaletteIndex(state) + 1 : 0;
     if ((!atari && !(state->assetLoader.legacyDm1 && state->assetLoader.legacyBigEndian)) ||
         !state->originalFontAvailable || !background || !lines ||
         !background->pixels || !lines->pixels || background->width != 96 ||
-        background->height != 33 || lines->width != 96 || lines->height != 36) {
+        background->height != 33 || lines->width != 96 || lines->height != 36 ||
+        (amiga && (amigaPaletteLevel < 1 || amigaPaletteLevel > 6))) {
         fputs("FAIL: legacy spell original C00996x33/C01196x36/font admission\n", stderr);
         return 0;
     }
@@ -74,6 +83,14 @@ static int check_legacy_spell_panel_real(M11_GameViewState *state) {
         for (int i=0; i<2; ++i)
             legacy_spell_glyph(expected,&state->originalFont,241+9*i,70,
                 state->dm1SpellCasting.input[caster].symbols[i],4,0);
+        /* The authentic Amiga palette pass encodes the dungeon row into the
+         * framebuffer's high nibble after all UI layers are drawn. Compare
+         * the final presented values, not the pre-palette indices. */
+        if (amiga) for (int y=42; y<75; ++y) for (int x=224; x<320; ++x) {
+            const int pixel = y * 320 + x;
+            expected[pixel] = legacy_spell_amiga_palette_pixel(
+                expected[pixel], amigaPaletteLevel);
+        }
         M11_GameView_Draw(state,actual,320,200);
         for (int y=42; y<75; ++y) for (int x=224; x<320; ++x)
             if (actual[y*320+x]!=expected[y*320+x]) {
@@ -85,12 +102,15 @@ static int check_legacy_spell_panel_real(M11_GameViewState *state) {
     state->spellPanelOpen = 0;
     memset(actual, 15, sizeof(actual));
     M11_GameView_Draw(state, actual, 320, 200);
-    for (int y=42; y<75; ++y) for (int x=224; x<320; ++x)
-        if (actual[y*320+x] != 0) {
+    for (int y=42; y<75; ++y) for (int x=224; x<320; ++x) {
+        const unsigned char expectedBlack = amiga
+            ? legacy_spell_amiga_palette_pixel(0, amigaPaletteLevel) : 0;
+        if (actual[y*320+x] != expectedBlack) {
             fprintf(stderr,"FAIL: closed legacy spell panel retains pixel%d,%d=%u\n",
                     x,y,actual[y*320+x]);
             return 0;
         }
+    }
     puts("PASS: 24 original-media legacy spell panel pixel comparisons and closed-panel clear");
     return 1;
 }
