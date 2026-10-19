@@ -34,16 +34,22 @@ int main(void)
 
     ok &= expect_int("F0306 above half keeps value",
         DM1_V1_ChampionStats_StaminaAdjustedValuePc34Compat(60, 100, 500), 500);
-    ok &= expect_int("F0306 below half uses halved value in second term",
-        DM1_V1_ChampionStats_StaminaAdjustedValuePc34Compat(45, 100, 500), 475);
+    ok &= expect_int("F0306 PC34 uses pre-shift value in second term",
+        DM1_V1_ChampionStats_StaminaAdjustedValuePc34Compat(45, 100, 500), 700);
+    ok &= expect_int("F0306 Atari/FM Towns uses halved value in second term",
+        DM1_V1_ChampionStats_StaminaAdjustedValueForSourcePc34Compat(
+            45, 100, 500, 1), 475);
 
     champion = make_champion();
     ok &= expect_int("F0309 base strength maximum load rounded",
         DM1_V1_ChampionStats_MaximumLoadPc34Compat(&champion), 500);
 
     champion.stats[DM1_STAT_STAMINA] = 45;
-    ok &= expect_int("F0309 low stamina reduces maximum load then rounds",
-        DM1_V1_ChampionStats_MaximumLoadPc34Compat(&champion), 480);
+    ok &= expect_int("F0309 PC34 applies its original low-stamina result",
+        DM1_V1_ChampionStats_MaximumLoadPc34Compat(&champion), 700);
+    ok &= expect_int("F0309 PC34 keeps the source compiler result",
+        DM1_V1_ChampionStats_MaximumLoadForSourcePc34Compat(
+            &champion, 1), 480);
 
     champion = make_champion();
     champion.wounds = DM1_WOUND_LEGS;

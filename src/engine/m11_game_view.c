@@ -17869,7 +17869,9 @@ static void m11_dm1_refresh_carried_loads(M11_GameViewState* state)
             int feetIcon = dm1_v1_dungeon_get_object_icon_index_pc34(
                 state->world.things, champ->inventory[CHAMPION_SLOT_FEET],
                 state->world.party.direction);
-            champ->maxLoad = F0309_CHAMPION_GetMaximumLoad_Compat(champ, feetIcon);
+            champ->maxLoad = F0309_CHAMPION_GetMaximumLoadForSource_Compat(
+                champ, feetIcon,
+                state->world.pc34F0306FirstOperandFirst);
         }
     }
 }

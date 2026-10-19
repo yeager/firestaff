@@ -2851,12 +2851,13 @@ int F0312_CHAMPION_HandStrengthBaseline_Compat(
      * cached maxLoad can be stale after stamina, wounds, strength or feet
      * equipment changes, so derive it from the current source state here. */
     if (world && world->things && world->things->loaded) {
-        maxLoad = (int)F0309_CHAMPION_GetMaximumLoad_Compat(
+        maxLoad = (int)F0309_CHAMPION_GetMaximumLoadForSource_Compat(
             champion,
             dm1_v1_dungeon_get_object_icon_index_pc34(
                 world->things,
                 champion->inventory[CHAMPION_SLOT_FEET],
-                world->party.direction));
+                world->party.direction),
+            world->pc34F0306FirstOperandFirst);
     } else {
         /* Partial, data-free M10 callers have no source object tables from
          * which to resolve footwear. Preserve their established fallback;
@@ -3139,9 +3140,11 @@ static int orch_iigs_bump_wound_defense_compat(
             /* F0313:1345 calls F0312 once per shield per wound slot,
              * BEFORE that slot's random vitality and old-wound penalty.
              * A shield is armour, so F0312's weapon-skill branch is absent. */
-            strengthChampion.maxLoad = F0309_CHAMPION_GetMaximumLoad_Compat(champion,
+            strengthChampion.maxLoad = F0309_CHAMPION_GetMaximumLoadForSource_Compat(
+                champion,
                 dm1_v1_dungeon_get_object_icon_index_pc34(world->things,
-                    champion->inventory[CHAMPION_SLOT_FEET],world->party.direction));
+                    champion->inventory[CHAMPION_SLOT_FEET],world->party.direction),
+                world->pc34F0306FirstOperandFirst);
             strengthChampion.attributes[CHAMPION_ATTR_STRENGTH] +=
                 F0732_COMBAT_RngRandom_Compat(rng,16);
             ++*rngCalls;

@@ -92,9 +92,14 @@ const char* DM1_V1_ChampionStats_SkillNamePc34Compat(int skill);
 int DM1_V1_ChampionStats_StaminaAdjustedValuePc34Compat(int currentStamina,
                                           int maximumStamina,
                                           int value);
+int DM1_V1_ChampionStats_StaminaAdjustedValueForSourcePc34Compat(
+    int currentStamina, int maximumStamina, int value,
+    int firstOperandFirst);
 int DM1_V1_ChampionStats_StatisticColorPc34Compat(int currentValue, int maximumValue);
 int DM1_V1_ChampionStats_ChampionStatisticColorPc34Compat(const DM1_V1_ChampionStatsPc34* champion, int stat);
 int DM1_V1_ChampionStats_MaximumLoadPc34Compat(const DM1_V1_ChampionStatsPc34* champion);
+int DM1_V1_ChampionStats_MaximumLoadForSourcePc34Compat(
+    const DM1_V1_ChampionStatsPc34* champion, int firstOperandFirst);
 int DM1_V1_ChampionStats_MovementTicksPc34Compat(const DM1_V1_ChampionStatsPc34* champion);
 int DM1_V1_ChampionStats_MovementStaminaCostPc34Compat(const DM1_V1_ChampionStatsPc34* champion);
 int DM1_V1_ChampionStats_LoadColorPc34Compat(const DM1_V1_ChampionStatsPc34* champion);

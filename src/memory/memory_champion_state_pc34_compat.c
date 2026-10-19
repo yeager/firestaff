@@ -114,6 +114,15 @@ static unsigned short mirror_text_decode_value(const unsigned char* packed,
 unsigned short F0309_CHAMPION_GetMaximumLoad_Compat(
     const struct ChampionState_Compat* champ, int feetIconIndex)
 {
+    /* Default direct/PC34 callers follow the original Turbo C++ operand order. */
+    return F0309_CHAMPION_GetMaximumLoadForSource_Compat(
+        champ, feetIconIndex, 0);
+}
+
+unsigned short F0309_CHAMPION_GetMaximumLoadForSource_Compat(
+    const struct ChampionState_Compat* champ, int feetIconIndex,
+    int firstOperandFirst)
+{
     DM1_V1_ChampionStatsPc34 source = {0};
     if (!champ) return 0;
     /* ReDMCSB CHAMPION.C F0309:1157-1177: share the full existing
@@ -123,7 +132,8 @@ unsigned short F0309_CHAMPION_GetMaximumLoad_Compat(
     source.maxStats[DM1_STAT_STAMINA] = champ->stamina.maximum;
     source.wounds = champ->wounds;
     source.feetIconIndex = feetIconIndex;
-    return (unsigned short)DM1_V1_ChampionStats_MaximumLoadPc34Compat(&source);
+    return (unsigned short)DM1_V1_ChampionStats_MaximumLoadForSourcePc34Compat(
+        &source, firstOperandFirst);
 }
 
 static void apply_mirror_candidate_values(struct ChampionState_Compat* champ) {

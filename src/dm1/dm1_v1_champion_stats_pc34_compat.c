@@ -188,14 +188,24 @@ const char* DM1_V1_ChampionStats_SkillNamePc34Compat(int skill) {
 int DM1_V1_ChampionStats_StaminaAdjustedValuePc34Compat(int currentStamina,
                                           int maximumStamina,
                                           int value) {
+    return DM1_V1_ChampionStats_StaminaAdjustedValueForSourcePc34Compat(
+        currentStamina, maximumStamina, value, 0);
+}
+
+int DM1_V1_ChampionStats_StaminaAdjustedValueForSourcePc34Compat(
+    int currentStamina, int maximumStamina, int value,
+    int firstOperandFirst) {
     int halfMaximumStamina = maximumStamina >> 1;
 
-    /* ReDMCSB CHAMPION.C:1078-1104 / F0306. The assignment shift is
-       intentional: the original uses the halved value for both terms. */
+    /* ReDMCSB CHAMPION.C:1078-1104 / F0306 documents compiler-dependent
+       operand order. Megamax Atari and High-C FM Towns use the halved value
+       in both terms; PC34, Amiga 3.6 and IIGS use the pre-shift value in the
+       second term. */
     if (halfMaximumStamina > 0 && currentStamina < halfMaximumStamina) {
-        value >>= 1;
-        return value + (int)(((long)value * (long)currentStamina) /
-                             halfMaximumStamina);
+        int halfValue = value >> 1;
+        int scaled = firstOperandFirst ? halfValue : value;
+        return halfValue + (int)(((long)scaled * (long)currentStamina) /
+                                 halfMaximumStamina);
     }
     return value;
 }
@@ -222,6 +232,12 @@ int DM1_V1_ChampionStats_ChampionStatisticColorPc34Compat(const DM1_V1_ChampionS
 }
 
 int DM1_V1_ChampionStats_MaximumLoadPc34Compat(const DM1_V1_ChampionStatsPc34* champion) {
+    /* PC 3.4 uses Turbo C++'s documented second-operand-first result. */
+    return DM1_V1_ChampionStats_MaximumLoadForSourcePc34Compat(champion, 0);
+}
+
+int DM1_V1_ChampionStats_MaximumLoadForSourcePc34Compat(
+    const DM1_V1_ChampionStatsPc34* champion, int firstOperandFirst) {
     int maximumLoad;
 
     if (!champion) return 0;
@@ -229,10 +245,10 @@ int DM1_V1_ChampionStats_MaximumLoadPc34Compat(const DM1_V1_ChampionStatsPc34* c
     /* ReDMCSB CHAMPION.C:1157-1177 / F0309. Units are the original
        tenths-of-kilogram load units used by the champion panel. */
     maximumLoad = (champion->stats[DM1_STAT_STRENGTH] << 3) + 100;
-    maximumLoad = DM1_V1_ChampionStats_StaminaAdjustedValuePc34Compat(
+    maximumLoad = DM1_V1_ChampionStats_StaminaAdjustedValueForSourcePc34Compat(
         champion->stats[DM1_STAT_STAMINA],
         champion->maxStats[DM1_STAT_STAMINA],
-        maximumLoad);
+        maximumLoad, firstOperandFirst);
 
     if (champion->wounds) {
         maximumLoad -= maximumLoad >> ((champion->wounds & DM1_WOUND_LEGS) ? 2 : 3);

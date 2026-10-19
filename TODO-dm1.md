@@ -139,11 +139,16 @@ read the previous `maxLoad` cache in its M11 defender and orchestration paths;
 it could therefore calculate with stale capacity after stamina, wounds,
 strength or feet equipment changed. F0312 now derives capacity from the live
 champion fields and authenticated feet icon, and M11 refreshes the cached
-capacity at each completed DM1 source tick for every DM1 profile. The original
-PC34 HoC test changes the real champion's stamina and leg wound, verifies the
-stale-cache F0312 result against a fresh F0309 value, and checks the post-tick
-cache. Natural first-monster movement, damage, and PUNCH XP still pass. Other
-platforms' source profiles and shield/throw runtime scenarios remain open.
+capacity at each completed DM1 source tick for every DM1 profile. ReDMCSB
+`CHAMPION.C:F0306` also documents compiler-specific expression evaluation:
+Megamax Atari and High-C FM Towns use the halved value in the second term;
+PC34, Amiga 3.6 and IIGS use the original value there. Firestaff now selects
+that formula by the active world profile in both the cache and F0312 paths.
+The focused unit test checks both formula variants, and the original PC34 HoC
+test changes the real champion's stamina and leg wound, verifies the live
+F0312 result and post-tick cache, and retains natural first-monster movement,
+damage and PUNCH XP checks. Authentic runtime checks for the Atari/FMTowns
+formula variants and shield/throw scenarios remain open.
 
 2026-10-15 offline-selection recovery: configured/selected path intent now
 survives missing media and scanner recovery. The Settings path remains the

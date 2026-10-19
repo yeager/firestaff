@@ -290,8 +290,8 @@ int main(void)
         champ->maxLoad = 1u;
         withStaleCache = F0312_CHAMPION_HandStrengthBaseline_Compat(
             &state.world, champ, 0, 80);
-        expectedMaxLoad = F0309_CHAMPION_GetMaximumLoad_Compat(champ,
-                                                               feetIcon);
+        expectedMaxLoad = F0309_CHAMPION_GetMaximumLoadForSource_Compat(
+            champ, feetIcon, state.world.pc34F0306FirstOperandFirst);
         champ->maxLoad = (unsigned short)expectedMaxLoad;
         withFreshCache = F0312_CHAMPION_HandStrengthBaseline_Compat(
             &state.world, champ, 0, 80);
@@ -303,10 +303,11 @@ int main(void)
         }
         champ->maxLoad = 1u;
         (void)M11_GameView_AdvanceIdleTick(&state);
-        expectedMaxLoad = F0309_CHAMPION_GetMaximumLoad_Compat(
+        expectedMaxLoad = F0309_CHAMPION_GetMaximumLoadForSource_Compat(
             champ, dm1_v1_dungeon_get_object_icon_index_pc34(
                 state.world.things, champ->inventory[CHAMPION_SLOT_FEET],
-                state.world.party.direction));
+                state.world.party.direction),
+            state.world.pc34F0306FirstOperandFirst);
         if ((int)champ->maxLoad != expectedMaxLoad) {
             fputs("FAIL: DM1 PC34 did not refresh cached F0309 maxLoad\n",
                   stderr);
