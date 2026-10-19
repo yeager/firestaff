@@ -2,11 +2,13 @@
 
 ## User-facing changes
 
+- `DM1 PC34 Resume`: restore an explicitly selected original save after the I34E selector instead of entering a fresh game.
 - `CSB FM Towns loose-file startup`: admit authenticated English or Japanese editions when `--data-dir` points directly to the original `GRAPHICS.DAT` or `DUNGEON.DAT` file.
 - `DM1 Amiga 3.6 localized graphics`: load the French and German original graphic records selected by ReDMCSB's G2004 mapping.
 
 ## Developer changes
 
+- `DM1 PC34 Resume verification`: use an original PC34 save to compare direct `--save` startup with selector Resume, including restored party pose and elapsed save tick.
 - `CSB FM Towns loose-file startup verification`: check both direct file paths reach the original F31 title with authentic media.
 - `DM1 Amiga 3.6 language verification`: check all ten source mappings, compare seven original bitmap records for English, French and German, and verify localized entrance selection through CLI.
 

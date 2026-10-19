@@ -535,6 +535,95 @@ if ! grep -Fq \
     exit 1
 fi
 echo "PASS: PC34 selector Resume hitbox selects the existing DM1 Quick Resume launch intent"
+
+# Real PC34 saves are operator-staged outside the repository. When available,
+# verify both the direct CLI `--save` contract and the selector's Resume input
+# against the same original bytes; never manufacture a save to satisfy this
+# integration route.
+authentic_pc34_save=${FIRESTAFF_DM1_PC34_AUTHENTIC_SAVE:-}
+if [[ -n "$authentic_pc34_save" ]]; then
+    if [[ ! -f "$authentic_pc34_save" ]]; then
+        printf 'FAIL: configured original PC34 save is missing: %s\n' \
+            "$authentic_pc34_save" >&2
+        exit 1
+    fi
+    authentic_pc34_save_hash=$(shasum -a 256 "$authentic_pc34_save")
+    direct_save_probe="$test_scratch/dm1-pc34-authentic-save-direct-$$.json"
+    direct_save_output=$(FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$direct_save_probe" \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --game dm1 --platform pc --data-dir "$archive" \
+        --save "$authentic_pc34_save" --debug --boot-probe \
+        --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
+        --duration 0 2>&1) || {
+            printf '%s\n' "$direct_save_output" >&2
+            exit 1
+        }
+    if ! grep -Fq "RESUME: loaded save from $authentic_pc34_save" \
+            <<<"$direct_save_output"; then
+        printf '%s\n' "$direct_save_output" >&2
+        echo 'FAIL: direct DM1 --save did not load the original PC34 save' >&2
+        exit 1
+    fi
+    selector_save_probe="$test_scratch/dm1-pc34-authentic-save-selector-$$.json"
+    selector_save_output=$(FIRESTAFF_AUTOTEST_SELECTOR_INPUT=key:r \
+        FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$selector_save_probe" \
+        HOME="$missing_swsh_home" XDG_CONFIG_HOME="$missing_swsh_home" \
+        APPDATA="$missing_swsh_home" \
+        FIRESTAFF_CONFIG_PATH="$missing_swsh_home/config.toml" \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --game dm1 --platform pc --data-dir "$archive" \
+        --save "$authentic_pc34_save" --debug --duration 15000 2>&1) || {
+            printf '%s\n' "$selector_save_output" >&2
+            exit 1
+        }
+    if ! grep -Fq \
+            'startup-source-input game=dm1 platform=pc34 phase=selector command=resume' \
+            <<<"$selector_save_output" ||
+       ! grep -Fq "RESUME: loaded save from $authentic_pc34_save" \
+            <<<"$selector_save_output"; then
+        printf '%s\n' "$selector_save_output" >&2
+        echo 'FAIL: PC34 selector Resume did not restore the original save' >&2
+        exit 1
+    fi
+    python3 - "$direct_save_probe" "$selector_save_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    direct = json.load(probe_file)
+with open(sys.argv[2], encoding="utf-8") as probe_file:
+    selector = json.load(probe_file)
+for name, probe in (("direct", direct), ("selector", selector)):
+    startup = probe["startup"]
+    if (probe["launchedEver"] != 1 or probe["sourceId"] != "dm1" or
+            startup["phase"] != "dm1-runtime" or startup["levelLoaded"] != 1):
+        raise SystemExit(f"FAIL: authentic PC34 {name} Resume missed runtime: {probe}")
+direct_party = direct["party"]
+selector_party = selector["party"]
+for key in ("mapIndex", "mapX", "mapY", "direction", "championCount"):
+    if direct_party.get(key) != selector_party.get(key):
+        raise SystemExit(
+            "FAIL: direct and selector Resume restored different original PC34 "
+            f"pose at {key}: direct={direct_party} selector={selector_party}"
+        )
+# The selector takes time to animate before the caller enters F0435, and the
+# live timer advances after restoration. Compare a bounded interval rather
+# than requiring an impossible identical observation tick.
+if not (direct["gameTick"] <= selector["gameTick"] <= direct["gameTick"] + 120):
+    raise SystemExit(
+        "FAIL: selector Resume did not retain the direct original PC34 save tick "
+        f"within startup elapsed time: direct={direct['gameTick']} "
+        f"selector={selector['gameTick']}"
+    )
+print("PASS: direct CLI and I34E selector Resume restore the same original PC34 pose")
+PY
+    rm -f "$direct_save_probe" "$selector_save_probe"
+    if [[ "$authentic_pc34_save_hash" != "$(shasum -a 256 "$authentic_pc34_save")" ]]; then
+        echo 'FAIL: original PC34 save changed during Resume verification' >&2
+        exit 1
+    fi
+fi
+
 credits_status=0
 credits_output="$(FIRESTAFF_AUTOTEST_SELECTOR_INPUT=credits-then-enter \
    HOME="$missing_swsh_home" XDG_CONFIG_HOME="$missing_swsh_home" \

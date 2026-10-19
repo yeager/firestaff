@@ -7545,6 +7545,38 @@ static int m11_open_requested_launch_impl(M11_GameViewState* gameView,
                 &dm1HandoffContext, menuState->quickResumeSavePath,
                 used_backup);
         }
+        /* ReDMCSB I34E runs its own ANIM/TITLE/SELECTOR path and therefore
+         * bypasses the shared F0435 startup transaction above. Its selector
+         * Resume choice still means LOADSAVE.C F0435: restore the explicitly
+         * selected PC34 save after the verified dungeon has been opened. */
+        if (launchEntry && launchEntry->gameId &&
+            strcmp(launchEntry->gameId, "dm1") == 0 &&
+            menuState->quickResumeAvailable &&
+            menuState->quickResumeLaunchRequested &&
+            menuState->quickResumeSavePath[0] != '\0' &&
+            strstr(menuState->quickResumeSavePath, "::") == NULL) {
+            int versionIndex = m11_selected_dm1_launch_version_index(
+                menuState, launchEntry);
+            const M12_AssetVersionStatus* selectedVersion = versionIndex >= 0
+                ? M12_AssetStatus_GetVersion(&menuState->assetStatus, "dm1",
+                                             (size_t)versionIndex)
+                : NULL;
+            if (selectedVersion && selectedVersion->versionId &&
+                strcmp(selectedVersion->versionId, "pc34-en") == 0 &&
+                M12_AssetStatus_GetVersionArchitecture(
+                    "dm1", (size_t)versionIndex) == M12_ARCH_PC) {
+                int used_backup = 0;
+                if (!M11_GameView_LoadDm1SavePath(
+                        gameView, menuState->quickResumeSavePath,
+                        &used_backup)) {
+                    m11_set_launch_failed_message(menuState);
+                    return 0;
+                }
+                (void)m11_dm1_host_log_resume_loaded(
+                    &dm1HandoffContext, menuState->quickResumeSavePath,
+                    used_backup);
+            }
+        }
         /* A direct CLI launch can select a concrete FM Towns archive before
          * M12 has populated its card-version index.  At this point
          * OpenSelectedMenuEntry has parsed the original disc in memory, so
@@ -7850,7 +7882,14 @@ int M11_PrepareDirectLaunchForGame(M12_StartupMenuState* menuState,
             menuState->selectedIndex = i;
             menuState->activatedIndex = i;
             menuState->launchRequested = 1;
-            menuState->quickResumeLaunchRequested = 0;
+            /* An explicit --save is a direct Resume request too.  Preserve
+             * only the path bound to this game; ordinary discovered saves
+             * remain opt-in and do not change direct --game new-game startup. */
+            menuState->quickResumeLaunchRequested =
+                menuState->quickResumeAvailable &&
+                menuState->quickResumeSavePath[0] != '\0' &&
+                menuState->quickResumeGameId[0] != '\0' &&
+                strcmp(menuState->quickResumeGameId, gameId) == 0;
             /* A direct CLI launch still goes through the M12 launch intent,
              * whose generic V2.2 gate quite rightly refuses CSB unless every
              * reviewed CSB material is installed.  The CSB presentation
