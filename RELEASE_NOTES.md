@@ -1,3 +1,15 @@
+# Firestaff v3.0.389
+
+## User-facing changes
+
+- `Startup intro scan progress`: fix the progress display so it stays visible until the deferred game-data scan finishes and reaches its completed state.
+
+## Developer changes
+
+- `M12 game-data scan progress`: update the total to count the three shared scan phases and three phases per game.
+- `Startup menu catalogs`: update extracted source references across the language catalogs after the startup progress code moved.
+- `DM1, CSB and DM2 verification`: add original-media launcher and DM1 PC34 motion diagnostic results; physical display, input, audio output and GPU scanout remain unverified.
+
 # Firestaff v3.0.387
 
 ## Developer changes
