@@ -66,6 +66,17 @@ DOC playback are still open.
 
 # Firestaff TODO — DM1
 
+2026-10-19 PC34 motion diagnostic retest:
+`dm1_motion_present_diagnostics_real_media` passed against authentic DOS 3.4
+media. On this host with SDL dummy output and `--debug-full-redraw`, the
+20-second manual trace reached approximately 60 presented frames/s, 15–17%
+CPU per core and 0.3–1.2 ms from completed source movement to Draw. The dummy
+present call waited about 11–17 ms per frame; GPU use and physical scanout were
+unavailable. ReDMCSB and Firestaff both bind movement to the source-controlled
+tick/input loop. This does not explain the reported display lag on the user's
+MacBook; native-display input-to-present timing and an original-executable
+comparison remain open. No tick cadence change is justified by this evidence.
+
 2026-10-15 offline-selection recovery: configured/selected path intent now
 survives missing media and scanner recovery. The Settings path remains the
 remembered preference; runtime access uses published scanner ownership.

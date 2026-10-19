@@ -1,5 +1,14 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-19 current-source no-argument launcher retest:
+`firestaff_cli_startup_diagnostics_real_media` passed in 224.29 seconds with
+authentic DM1, CSB and DM2 archives. Starting with no game selection stayed in
+`game=none mode=menu`, discovered all three games from the isolated default
+`~/.firestaff/data/{dm1,csb,dm2}` layout, and completed the menu loop without a
+game handoff. The same test checked DM2 FM Towns AUTO selection and explicit
+platform resolution. SDL dummy video/audio verifies CLI/menu state, not native
+window display or physical input.
+
 2026-10-18 current-source no-argument launcher regression:
 `tests/test_firestaff_cli_startup_diagnostics_real_media.sh` now starts the
 local build without `--game` using authentic DM1 DOS, CSB Amiga and DM2 DOS
