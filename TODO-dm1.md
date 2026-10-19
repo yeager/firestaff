@@ -116,22 +116,21 @@ graphics for each language; the CLI test also checks the entrance record
 remap during French/German startup. This closes the G2004 graphics-selection
 gap, not translated text or visual parity.
 
-2026-10-19 ReDMCSB DM1 timing-profile audit (static evidence; runtime cadence
-still unverified): `GAMELOOP.C:46-50` selects a maximum count of 12 for the
-`MEDIA722` set, which includes PC34 (`I34E`/`I34M`) and Amiga 3.6 (`A36M`).
-For PC34, `IO.C:F0782` adds `G2163_` to the wait count, and
-`IO.C:3898` obtains that increment from the PC IO driver callback;
-`IBMIO.C:F8114` returns 3. Its default IRQ path installs the callback from
-`IBMIO.C:F8117` and invokes it from the timer handler while `G8028_` is zero.
-That source path reaches the threshold in four timer callbacks. Amiga's
-`VBLANK.C:F0577` increments once per actual blank and reaches the same profile
-threshold after twelve blanks. Firestaff currently initializes the shared
-DM1 timing model to 10 counts at 20 ms, then applies a separate 12-count/16 ms
-override only to FM Towns; it does not select a PC34 or A36M cadence here.
-This is a source-profile mismatch candidate, not a verified cause of movement
-or presentation lag. Compare timed repeated-step traces against matching
-original PC34 and Amiga 3.6 executables before changing the runtime clock; the
-existing 60-FPS presentation diagnostic does not measure that game-tick rate.
+2026-10-19 ReDMCSB DM1 timing-profile audit: `GAMELOOP.C:46-50` selects a
+maximum count of 12 for the `MEDIA722` set, which includes PC34 (`I34E`/`I34M`)
+and Amiga 3.6 (`A36M`). Amiga's `VBLANK.C:F0577` increments once per actual
+PAL blank. Firestaff now configures A36M at 20 ms per blank and 12 blanks per
+source tick, and its gameplay idle interval follows that 240 ms cadence (with
+the existing speed multiplier applied). The focused cadence test checks the
+239/240 ms boundary and speed scaling. PC34 remains a separate unresolved
+path: `IO.C:F0782` adds `G2163_` to the wait count, `IO.C:3898` obtains that
+increment from the PC IO driver callback, and `IBMIO.C:F8114` returns 3.
+Its default IRQ path installs the callback from `IBMIO.C:F8117` and invokes
+it from the timer handler while `G8028_` is zero, reaching the 12-count
+threshold in four callbacks. A source-informed PC34 timer cadence is not yet
+implemented or measured. Compare repeated-step traces against the original
+PC34 executable before claiming movement-timing parity; the 60-FPS
+presentation diagnostic does not measure game-tick rate.
 
 2026-10-19 F0309/F0312 live capacity refresh: ReDMCSB `CHAMPION.C` F0312
 calls F0309 while building every shield-strength contribution. Firestaff had

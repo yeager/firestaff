@@ -40,6 +40,31 @@ int main(void) {
     expect_interval(M11_GameView_IdleTickIntervalMs(&view, 200), 100u,
                     "ordinary gameplay still follows speed multiplier");
 
+    strcpy(view.sourceId, "dm1");
+    view.assetLoader.dm1Amiga36 = 1;
+    DM1_V1_VBlankTiming_Init(&view.vblankTiming);
+    DM1_V1_VBlankTiming_ConfigureAmiga36(&view.vblankTiming);
+    expect_interval(view.vblankTiming.vblankPeriodMs, 20u,
+                    "DM1 Amiga 3.6 uses the PAL 50 Hz source period");
+    expect_interval((uint32_t)view.vblankTiming.maxVBlankCount, 12u,
+                    "DM1 Amiga 3.6 waits for the source's twelve VBlanks");
+    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 240u,
+                    "DM1 Amiga 3.6 gameplay advances every 240 ms");
+    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 200), 120u,
+                    "DM1 Amiga 3.6 speed setting scales its source cadence");
+    if (DM1_V1_VBlankTiming_Update(&view.vblankTiming, 239u)) {
+        fprintf(stderr, "FAIL: Amiga 3.6 tick fired before twelve PAL VBlanks\n");
+        ++failures;
+    }
+    if (!DM1_V1_VBlankTiming_Update(&view.vblankTiming, 1u) ||
+        view.vblankTiming.vblankCount != 12) {
+        fprintf(stderr, "FAIL: Amiga 3.6 tick did not fire on its twelfth PAL VBlank\n");
+        ++failures;
+    }
+    memset(&view, 0, sizeof(view));
+    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 200u,
+                    "non-Amiga 3.6 gameplay retains its source tick");
+
     view.sourceKind = M11_GAME_SOURCE_DM2_BOOT;
     view.dm2State.startup_menu_active = 1;
     if (!M11_GameView_DropsIdleCatchupForStartup(&view)) {

@@ -231,6 +231,19 @@ uint32_t M11_GameView_IdleTickIntervalMs(const M11_GameViewState* gameView,
 
     if (speedMultiplier < 50) speedMultiplier = 50;
     if (speedMultiplier > 400) speedMultiplier = 400;
+    if (gameView && gameView->sourceId[0] != '\0' &&
+        strcmp(gameView->sourceId, "dm1") == 0 &&
+        gameView->assetLoader.dm1Amiga36) {
+        /* ReDMCSB GAMELOOP.C:46-50 uses 12 waits for A36M; VBLANK.C:F0577
+         * advances once per PAL blank. Keep the gameplay clock at 12*20ms. */
+        const uint32_t sourceInterval =
+            gameView->vblankTiming.vblankPeriodMs *
+            (uint32_t)gameView->vblankTiming.maxVBlankCount;
+        if (sourceInterval > 0u) {
+            return (sourceInterval * 100u + (uint32_t)speedMultiplier / 2u) /
+                (uint32_t)speedMultiplier;
+        }
+    }
     return (uint32_t)((200 * 100 + speedMultiplier / 2) / speedMultiplier);
 }
 

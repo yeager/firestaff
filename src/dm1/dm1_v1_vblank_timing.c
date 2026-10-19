@@ -51,6 +51,13 @@ void DM1_V1_VBlankTiming_ConfigureFmTowns(DM1_V1_VBlankTimingState* state)
     state->maxVBlankCount = DM1_V1_MAX_VBLANK_COUNT_LATER;
 }
 
+void DM1_V1_VBlankTiming_ConfigureAmiga36(DM1_V1_VBlankTimingState* state)
+{
+    if (!state) return;
+    state->vblankPeriodMs = DM1_V1_PAL_VBLANK_MS;
+    state->maxVBlankCount = DM1_V1_MAX_VBLANK_COUNT_LATER;
+}
+
 void DM1_V1_VBlankTiming_ConfigurePlatformHost(
     DM1_V1_VBlankTimingState* state,
     const DM1_V1_PlatformTimingHostPc34 *host)

@@ -131,6 +131,10 @@ void DM1_V1_VBlankTiming_Init(DM1_V1_VBlankTimingState* state);
  * Call after Init but before the first Update. */
 void DM1_V1_VBlankTiming_ConfigureFmTowns(DM1_V1_VBlankTimingState* state);
 
+/* ReDMCSB GAMELOOP.C:46-50 selects 12 VBlanks for Amiga 3.6.  Its PAL
+ * VBLANK.C:F0577 cadence is 50 Hz, so one source game tick is 240 ms. */
+void DM1_V1_VBlankTiming_ConfigureAmiga36(DM1_V1_VBlankTimingState* state);
+
 /* Simulate VBlank interrupts for the given elapsed milliseconds.
  * Call this every frame with real wall-clock delta.
  * Returns 1 if a game tick boundary was reached (stopWaitingForInput
