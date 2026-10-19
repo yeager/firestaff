@@ -426,16 +426,19 @@ regression passed and checks the step-5 offsets. This fixes the identified
 asset-coordinate mismatch; it does not establish native display cadence,
 physical-window smoothness, or full title/entrance parity.
 
-2026-10-16 DM1 PC movement/input reports remain open: an authentic PC34 test
-now recruits two champions from distinct HoC C127 sensors and verifies that
-ordinary clicks at both source-space status boxes switch the active champion.
-Native SDL-window clicks, host/window-to-source mapping on the user's display,
-and the reported inability to switch champions still need direct runtime
-reproduction. The DM1 V1 main loop intentionally advances the source world at
-the original 200 ms tick (five ticks per second); this is not evidence of
-movement interpolation or scanout latency. Profile a real accepted movement
-on the target PC before changing the source-owned viewport cadence. Viewport
-wall raster and motion parity against DOSBox-X remain incomplete.
+2026-10-19 DM1 PC movement/input follow-up: the authentic PC34 CLI regression
+now runs two HoC recruits through SDL_PushEvent and the ordinary main-loop
+event pump. `--debug` records `(80,3)` switching active champion 0→1 and
+`(10,3)` switching 1→0 after source-space mapping; the current-source test
+passes against the installed original PC34 ZIP. The selector's synchronous
+Enter wait uses its existing test hook, while every subsequent key and mouse
+input traverses the production SDL queue. This closes automated event-loop
+coverage, not physical M5 Retina input/display verification. The DM1 V1 main
+loop intentionally advances the source world at the original 200 ms tick
+(five ticks per second); this is not evidence of movement interpolation or
+scanout latency. Profile a real accepted movement on the target PC before
+changing the source-owned viewport cadence. Viewport wall raster and motion
+parity against DOSBox-X remain incomplete.
 
 The I34E direct `--game dm1 --platform pc` route now stops at the closed
 selector until Enter/E or a click on its original Enter hitbox; M12 New Game

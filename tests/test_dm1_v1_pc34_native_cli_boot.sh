@@ -1295,6 +1295,39 @@ if nonblack < 25000 or colours < 10:
 print(f"PASS: authentic PC-34 C007 visible nonblack={nonblack} colours={colours}")
 PY
 
+# Exercise the same SDL event-queue route used by an ordinary desktop mouse.
+# The C-level HoC test above proves source geometry, while this direct CLI run
+# proves event polling, window-to-source mapping, and consecutive champion
+# changes after two original C127 mirrors have been recruited. SELECTOR.C is
+# synchronously waiting before the main loop can dispatch scripted events, so
+# use its narrow test hook for the one Enter that leaves the selector; all
+# later movement and clicks go through SDL_PushEvent and the normal event pump.
+native_hoc_keys='key:kp5,key:kp5,key:kp5,key:kp5,key:kp5,key:kp1,key:kp1,key:kp1,key:kp2,key:kp2,key:kp2,key:kp2,key:kp2,key:kp1,key:kp1,key:kp5,key:kp1,key:kp1,key:kp5,key:kp1,key:kp1,key:kp1,key:kp1,key:kp1,key:kp2,key:kp1,key:kp6,key:kp6,click:112:83'
+native_hoc_route=$(python3 -c 'import sys; tokens=sys.argv[1].split(","); print(",".join(token+(",wait:30" if token.startswith("key:") else ",wait:5" if token.startswith("click:") else "") for token in tokens))' "$native_hoc_keys")
+native_hoc_route+=',click:130:115,wait:5,key:kp2,wait:30,key:kp1,wait:30,key:kp1,wait:30,key:kp1,wait:30,key:kp1,wait:30,click:112:82,wait:5,click:130:115,wait:5,click:80:3,wait:5,click:10:3,wait:5'
+native_hoc_dispatch_log="$test_scratch/dm1-pc34-native-hoc-dispatch-$$.log"
+native_hoc_dispatch_output=$(FIRESTAFF_AUTOTEST_SELECTOR_INPUT=key:return \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --presentation-mode v1 --width 320 --height 200 \
+    --game dm1 --platform pc --data-dir "$archive" --debug \
+    --script "wait-game-runtime,$native_hoc_route" --duration 30000 \
+    2>&1) || {
+        printf '%s\n' "$native_hoc_dispatch_output" >&2
+        exit 1
+    }
+printf '%s\n' "$native_hoc_dispatch_output" > "$native_hoc_dispatch_log"
+if ! grep -Fq \
+    'dm1-pointer event=down-left window=80,3 source=80,3 button-mask=0x2 active-champion=0->1 champions=2 result=1' \
+    "$native_hoc_dispatch_log" ||
+   ! grep -Fq \
+    'dm1-pointer event=down-left window=10,3 source=10,3 button-mask=0x2 active-champion=1->0 champions=2 result=1' \
+    "$native_hoc_dispatch_log"; then
+    printf '%s\n' "$native_hoc_dispatch_output" >&2
+    printf '%s\n' 'FAIL: normal DM1 PC SDL event loop did not switch champions 0->1->0 from the name row' >&2
+    exit 1
+fi
+echo 'PASS: authentic PC-34 SDL mouse event loop recruited two HoC champions and switched 0->1->0'
+
 # Keep debug performance telemetry parseable on a real-media gameplay path.
 # SDL's dummy backend validates instrumentation only; it is not evidence of
 # desktop/GPU frame rate.
