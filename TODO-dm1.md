@@ -154,8 +154,11 @@ that formula by the active world profile in both the cache and F0312 paths.
 The focused unit test checks both formula variants, and the original PC34 HoC
 test changes the real champion's stamina and leg wound, verifies the live
 F0312 result and post-tick cache, and retains natural first-monster movement,
-damage and PUNCH XP checks. Authentic runtime checks for the Atari/FMTowns
-formula variants and shield/throw scenarios remain open.
+damage and PUNCH XP checks. The original-media `m11_dm1_source_f0306_real`
+test also recruits an authentic Atari ST and FM Towns mirror champion, enters
+the low-stamina branch, distinguishes the two F0306 formulas through F0312,
+and verifies the idle-tick F0309 cache for both source profiles. Runtime
+coverage for Amiga 3.6/IIGS and authentic shield/throw scenarios remains open.
 
 2026-10-15 offline-selection recovery: configured/selected path intent now
 survives missing media and scanner recovery. The Settings path remains the

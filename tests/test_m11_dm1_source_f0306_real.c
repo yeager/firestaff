@@ -15,7 +15,7 @@ static int verify_source_profile(const char *platform, const char *archive,
     M11_GameViewState state;
     struct ChampionState_Compat *live;
     unsigned short expectedMaxLoad;
-    unsigned short secondOperandMaxLoad;
+    unsigned short alternateMaxLoad;
     unsigned short originalStamina;
     unsigned short originalWounds;
     unsigned short originalMaxLoad;
@@ -99,10 +99,10 @@ static int verify_source_profile(const char *platform, const char *archive,
         state.world.things, live->inventory[CHAMPION_SLOT_FEET],
         state.world.party.direction);
     expectedMaxLoad = F0309_CHAMPION_GetMaximumLoadForSource_Compat(
-        live, feetIcon, 1);
-    secondOperandMaxLoad = F0309_CHAMPION_GetMaximumLoadForSource_Compat(
-        live, feetIcon, 0);
-    if (expectedMaxLoad == secondOperandMaxLoad) {
+        live, feetIcon, expectedFirstOperandFirst);
+    alternateMaxLoad = F0309_CHAMPION_GetMaximumLoadForSource_Compat(
+        live, feetIcon, !expectedFirstOperandFirst);
+    if (expectedMaxLoad == alternateMaxLoad) {
         fprintf(stderr,
                 "FAIL: %s authentic champion state does not distinguish the F0306 profiles\n",
                 platform);
@@ -137,16 +137,16 @@ static int verify_source_profile(const char *platform, const char *archive,
         live, dm1_v1_dungeon_get_object_icon_index_pc34(
             state.world.things, live->inventory[CHAMPION_SLOT_FEET],
             state.world.party.direction), expectedFirstOperandFirst);
-    secondOperandMaxLoad = F0309_CHAMPION_GetMaximumLoadForSource_Compat(
+    alternateMaxLoad = F0309_CHAMPION_GetMaximumLoadForSource_Compat(
         live, dm1_v1_dungeon_get_object_icon_index_pc34(
             state.world.things, live->inventory[CHAMPION_SLOT_FEET],
-            state.world.party.direction), 0);
+            state.world.party.direction), !expectedFirstOperandFirst);
     if ((int)live->maxLoad != (int)expectedMaxLoad ||
-        live->maxLoad == secondOperandMaxLoad) {
+        live->maxLoad == alternateMaxLoad) {
         fprintf(stderr,
-                "FAIL: %s idle runtime did not cache first-operand-first F0309 (got %u expected %u, second %u)\n",
+                "FAIL: %s idle runtime did not cache its source-profile F0309 (got %u expected %u, alternate %u)\n",
                 platform, (unsigned)live->maxLoad,
-                (unsigned)expectedMaxLoad, (unsigned)secondOperandMaxLoad);
+                (unsigned)expectedMaxLoad, (unsigned)alternateMaxLoad);
         M11_GameView_Shutdown(&state);
         return 1;
     }
