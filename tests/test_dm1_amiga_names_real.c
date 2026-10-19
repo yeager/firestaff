@@ -41,6 +41,7 @@ int main(void) {
     spec.dataDir = runtime; spec.verifiedAssetPath = version->matchedPath;
     spec.verifiedAssetMd5 = version->matchedMd5;
     if (!M11_GameView_Start(state, &spec) || !state->dm1ObjectNameTableValid ||
+        state->world.pc34F0306FirstOperandFirst != 0 ||
         !state->assetLoader.legacyDm1 || !state->assetLoader.legacyBigEndian) goto done;
     /* CHAMPION.C F0303:729-738: policy follows the selected edition,
      * not the archive's HD label or the shared Amiga graphics decoder. */

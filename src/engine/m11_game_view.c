@@ -26877,9 +26877,11 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
      * media admitted through the native DMCSB1 graphics loader. */
     state->world.pc34PreserveMegamaxF0307Bug =
         state->assetLoader.atariStDm1 ? 1 : 0;
-    /* ReDMCSB CHAMPION.C F0306 BUGX_XX: Megamax Atari and High-C FM
-     * Towns binaries evaluate the mutating first operand first.  DM1 PC
-     * 3.4 and Aztec-built Amiga 2.x retain second-operand semantics. */
+    /* ReDMCSB CHAMPION.C F0306 BUGX_XX records compiler-specific evaluation
+     * order. In DM1, Megamax Atari ST and High-C FM Towns use the first
+     * operand first; PC 3.4 and Aztec-built Amiga 2.x use the second operand
+     * first. The other supported DM1 profiles (Amiga 3.6 and Apple IIGS) also
+     * use the second-operand result documented for THINK C 5 and MPW IIGS. */
     state->world.pc34F0306FirstOperandFirst =
         (state->assetLoader.atariStDm1 || spec->dm1Fmtowns) ? 1 : 0;
     state->mirrorCatalogAvailable = 0;

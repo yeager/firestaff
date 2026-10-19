@@ -66,7 +66,8 @@ int main(void)
     M11_GameView_Init(&state);
     if (!M11_GameView_StartDm1(&state, archive) || !state.world.dungeon ||
         !state.world.things || state.world.dungeon->header.mapCount < 1 ||
-        state.world.things->scrollCount != 35) {
+        state.world.things->scrollCount != 35 ||
+        state.world.pc34F0306FirstOperandFirst != 0) {
         fputs("FAIL: canonical PC34 dungeon did not load\n", stderr);
         M11_GameView_Shutdown(&state);
         return 1;

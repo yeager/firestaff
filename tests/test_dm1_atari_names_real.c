@@ -51,6 +51,7 @@ int main(int argc, char **argv) {
         spec.dataDir = container;
     }
     if (!M11_GameView_Start(state, &spec) || !state->assetLoader.atariStDm1 ||
+        state->world.pc34F0306FirstOperandFirst != 1 ||
         state->world.skillAccumulatorPolicy != DM1_SKILL_ACCUMULATOR_SIGNED_EARLY) {
         fputs("FAIL: authentic Atari M564 name binding\n", stderr);
         goto done;

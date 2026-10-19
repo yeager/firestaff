@@ -269,7 +269,8 @@ static void check_original_media(void)
         /* Production startup binds the original EDM/JDM program and selected
          * graphics owner. No decoded media or driver substitute is installed. */
         started = M11_GameView_Start(state, &spec);
-        if (!started || !state->dm1FmtownsStartupReceiptValid ||
+        if (!started || state->world.pc34F0306FirstOperandFirst != 1 ||
+            !state->dm1FmtownsStartupReceiptValid ||
             state->dm1FmtownsStartupReceipt.language != (japanese ? DM1_FMTOWNS_LANG_JP : DM1_FMTOWNS_LANG_EN) ||
             strcmp(state->dm1FmtownsStartupReceipt.game_program_name, japanese ? "JDM.EXP" : "EDM.EXP") ||
             strcmp(state->dm1FmtownsStartupReceipt.game_program_md5, japanese
