@@ -46,6 +46,19 @@ The English Mac runtime cannot be selected from the Japanese graphics hash;
 establish the Japanese startup/application and audio ownership from source and
 original media before admitting it as playable.
 
+2026-10-20 authentic Macintosh French SIT startup: the supplied original
+`Dungeon-Master-II-Skullkeep_Mac_FR.sit`, extracted with `unar` outside the
+repository, contains the retail `DMFiles` directory and original Macintosh
+resource forks. `test_dm2_v1_mac_fr_native_cli_boot.sh` now checks this real
+installation through `--game dm2 --platform mac`: M12 reaches the first
+champion with the original Macintosh graphics/dungeon, reports real assets with
+no core fallbacks, and exits on Back. The extracted data files remain
+byte-identical. This directory does not bind the HFS CD `Title.MooV` startup
+movie; the complete CD-image movie route remains separately covered by
+`test_dm2_v1_mac_native_cli_boot.sh`. The short boot-probe-only attempt was
+inconclusive because it ended before the real Macintosh start-menu sequence;
+use the full scripted runtime test for this route.
+
 2026-10-15 orphan-first loose graphics discovery is verified with two authentic
 copies on DOS, Macintosh, FM Towns and Amiga. Selected orphan rejection also
 passes with the untouched canonical original ZIP beside the selected graphics. More than 256 matching graphics

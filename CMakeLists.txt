@@ -4136,6 +4136,17 @@ if(BUILD_TESTING)
         TIMEOUT 240
     )
     add_test(
+        NAME dm2_v1_mac_fr_native_cli_boot
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_fr_native_cli_boot.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(dm2_v1_mac_fr_native_cli_boot PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;dm2;macintosh;french;startup;cli;real-media;native;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_FR_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2-extras/mac-fr/Dungeon Master II;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy"
+        TIMEOUT 120
+    )
+    add_test(
         NAME dm2_v1_mac_reject_foreign_dos_resume
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_reject_foreign_dos_resume.sh"
             "$<TARGET_FILE:firestaff>"

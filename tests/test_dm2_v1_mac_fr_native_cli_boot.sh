@@ -1,0 +1,77 @@
+#!/usr/bin/env sh
+set -eu
+. "$(dirname "$0")/lib/portable_sha256.sh"
+
+app=${1:?usage: test_dm2_v1_mac_fr_native_cli_boot.sh <firestaff>}
+mac_root=${FIRESTAFF_DM2_MAC_FR_DIR:-"$HOME/.firestaff/data/dm2-extras/mac-fr/Dungeon Master II"}
+dmfiles="$mac_root/DMFiles"
+if [ ! -x "$app" ]; then
+    echo 'SKIP: Firestaff executable is unavailable'
+    exit 77
+fi
+if [ ! -f "$dmfiles/Graphics.dat" ] || [ ! -f "$dmfiles/Dungeon.dat" ] ||
+   [ ! -f "$dmfiles/md.dat" ] || [ ! -f "$dmfiles/qstrat.dat" ]; then
+    echo 'SKIP: authentic extracted DM2 Macintosh French files are not staged'
+    exit 77
+fi
+
+scratch_root=${FIRESTAFF_TEST_SCRATCH:-"${TMPDIR:-/tmp}"}
+mkdir -p "$scratch_root"
+scratch=$(mktemp -d "$scratch_root/dm2-mac-fr-startup.XXXXXX")
+cleanup() {
+    rc=$?
+    if [ "$rc" -ne 0 ] && [ -f "$scratch/startup.log" ]; then
+        cat "$scratch/startup.log" >&2
+    fi
+    rm -rf "$scratch"
+}
+trap cleanup EXIT HUP INT TERM
+
+graphics_before=$(firestaff_sha256_file "$dmfiles/Graphics.dat")
+dungeon_before=$(firestaff_sha256_file "$dmfiles/Dungeon.dat")
+music_before=$(firestaff_sha256_file "$dmfiles/md.dat")
+strings_before=$(firestaff_sha256_file "$dmfiles/qstrat.dat")
+unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR FIRESTAFF_EXIT_AFTER_LAUNCH
+if ! FIRESTAFF_CONFIG_PATH="$scratch/config.toml" \
+     FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+     FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$scratch/runtime.json" \
+     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+     --game dm2 --platform mac --data-dir "$mac_root" \
+     --width 320 --height 200 \
+     --script 'wait:1200,key:enter,wait:30,click:115:65,wait:30,click:112:130,wait-game-runtime,back' \
+     --duration 70000 --debug >"$scratch/startup.log" 2>&1; then
+    echo 'FAIL: authentic extracted DM2 Macintosh French files did not start' >&2
+    exit 1
+fi
+python3 - "$scratch/runtime.json" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as stream:
+    probe = json.load(stream)
+startup = probe.get("startup", {})
+movie = probe.get("dm2Startup", {})
+party = probe.get("party", {})
+frame = probe.get("dm2RuntimeFrame", {})
+script = probe.get("script", {})
+if (
+    probe.get("sourceId") != "dm2"
+    or movie.get("platform") != 4
+    or startup.get("phase") != "dm2-runtime"
+    or startup.get("startupActive") != 0
+    or startup.get("levelLoaded") != 1
+    or party.get("championCount") != 1
+    or frame != {"accepted": 1, "realAssets": 1,
+                 "noCoreFallbacks": 1, "fallbackDraws": 0}
+    or script.get("waitFramesRemaining") != 0
+    or script.get("pending") != 0
+):
+    raise SystemExit(f"FAIL: authentic Mac data did not reach runtime: {probe}")
+print("PASS: authentic extracted DM2 Macintosh files reach the first real-asset runtime")
+PY
+
+[ "$graphics_before" = "$(firestaff_sha256_file "$dmfiles/Graphics.dat")" ]
+[ "$dungeon_before" = "$(firestaff_sha256_file "$dmfiles/Dungeon.dat")" ]
+[ "$music_before" = "$(firestaff_sha256_file "$dmfiles/md.dat")" ]
+[ "$strings_before" = "$(firestaff_sha256_file "$dmfiles/qstrat.dat")" ]
+echo 'PASS: original DM2 Macintosh files remain byte-identical'
