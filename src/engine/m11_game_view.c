@@ -17861,7 +17861,11 @@ static void m11_dm1_refresh_carried_loads(M11_GameViewState* state)
         struct ChampionState_Compat* champ = &state->world.party.champions[c];
         if (!champ->present) continue;
         champ->load = loads[c];
-        if (state->dm1IigsActive) {
+        /* F0309 is derived from current strength, stamina, wounds and feet
+         * equipment for every DM1 source profile, not only IIGS. Keep the
+         * serialized/runtime cache current after any ownership or stat
+         * transaction; F0312 also recomputes it at point of use. */
+        {
             int feetIcon = dm1_v1_dungeon_get_object_icon_index_pc34(
                 state->world.things, champ->inventory[CHAMPION_SLOT_FEET],
                 state->world.party.direction);
@@ -33248,6 +33252,10 @@ static int m11_apply_tick_with_attack_action(M11_GameViewState* state,
     /* DM1 V1: reset VBlank counter for next tick and decrement movement
      * cooldowns, matching GAMELOOP.C top-of-loop (G0317=0, G0321=FALSE)
      * and end-of-loop (G0310--, G0311--). */
+    /* F0309-derived maxLoad changes with stamina, wounds, strength and feet
+     * equipment. Refresh it after every completed source tick so HUD/load
+     * consumers never observe the previous tick's cache. */
+    m11_dm1_refresh_carried_loads(state);
     m11_decrement_action_disabled_ticks(state);
     DM1_V1_VBlankTiming_ResetForNewTick(&state->vblankTiming);
     return 1;
@@ -57679,65 +57687,6 @@ static int m11_defender_armour_defense_for_thing(
         world, thing, useSharpDefense, outDefense, outIsShield, outWeight);
 }
 
-static int m11_f0312_stamina_adjusted_value(
-    const struct GameWorld_Compat* world,
-    const struct ChampionState_Compat* champion,
-    int value)
-{
-    int currentStamina;
-    int halfMaximumStamina;
-    if (!champion) return value;
-    currentStamina = (int)champion->stamina.current;
-    halfMaximumStamina = (int)champion->stamina.maximum >> 1;
-    return F0306_CHAMPION_GetStaminaAdjustedValueForSource_Compat(
-        currentStamina, halfMaximumStamina, value,
-        world && world->pc34F0306FirstOperandFirst != 0);
-}
-
-static int m11_f0312_hand_strength_baseline(
-    const struct GameWorld_Compat* world,
-    const struct ChampionState_Compat* champion,
-    int handWoundIndex,
-    int objectWeight)
-{
-    int strength;
-    int maxLoad;
-    int oneSixteenthMaximumLoad;
-    int loadThreshold;
-
-    if (!champion) return 0;
-
-    /* ReDMCSB CHAMPION.C F0312 lines 1264-1306 starts with RANDOM(16)
-     * plus current strength, adjusts for held-object weight, stamina, and
-     * hand wounds, then returns bounded strength >> 1.  M11 projectile
-     * defender snapshots keep the same non-random baseline as M10. */
-    strength = (int)champion->attributes[CHAMPION_ATTR_STRENGTH];
-    maxLoad = (int)champion->maxLoad;
-    if (maxLoad <= 0) {
-        maxLoad = (strength << 3) + 100;
-    }
-    oneSixteenthMaximumLoad = maxLoad >> 4;
-    if (objectWeight <= oneSixteenthMaximumLoad) {
-        strength += objectWeight - 12;
-    } else {
-        loadThreshold =
-            oneSixteenthMaximumLoad + ((oneSixteenthMaximumLoad - 12) >> 1);
-        if (objectWeight <= loadThreshold) {
-            strength += (objectWeight - oneSixteenthMaximumLoad) >> 1;
-        } else {
-            strength -= (objectWeight - loadThreshold) << 1;
-        }
-    }
-    strength = m11_f0312_stamina_adjusted_value(world, champion, strength);
-    if ((champion->wounds & (1u << handWoundIndex)) != 0) {
-        strength >>= 1;
-    }
-    strength >>= 1;
-    if (strength < 0) return 0;
-    if (strength > 100) return 100;
-    return strength;
-}
-
 static void m11_fill_defender_wound_defense_baseline(
     const struct GameWorld_Compat* world,
     const struct ChampionState_Compat* champion,
@@ -57775,7 +57724,7 @@ static void m11_fill_defender_wound_defense_baseline(
                         &shieldDefense, &isShield, &shieldWeight) &&
                     isShield) {
                     int handStrength =
-                        m11_f0312_hand_strength_baseline(
+                        F0312_CHAMPION_HandStrengthBaseline_Compat(
                             world, champion, s_handWoundIndexes[hand], shieldWeight);
                     baseline +=
                         ((handStrength + shieldDefense) *

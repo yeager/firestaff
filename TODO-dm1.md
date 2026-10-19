@@ -133,6 +133,18 @@ or presentation lag. Compare timed repeated-step traces against matching
 original PC34 and Amiga 3.6 executables before changing the runtime clock; the
 existing 60-FPS presentation diagnostic does not measure that game-tick rate.
 
+2026-10-19 F0309/F0312 live capacity refresh: ReDMCSB `CHAMPION.C` F0312
+calls F0309 while building every shield-strength contribution. Firestaff had
+read the previous `maxLoad` cache in its M11 defender and orchestration paths;
+it could therefore calculate with stale capacity after stamina, wounds,
+strength or feet equipment changed. F0312 now derives capacity from the live
+champion fields and authenticated feet icon, and M11 refreshes the cached
+capacity at each completed DM1 source tick for every DM1 profile. The original
+PC34 HoC test changes the real champion's stamina and leg wound, verifies the
+stale-cache F0312 result against a fresh F0309 value, and checks the post-tick
+cache. Natural first-monster movement, damage, and PUNCH XP still pass. Other
+platforms' source profiles and shield/throw runtime scenarios remain open.
+
 2026-10-15 offline-selection recovery: configured/selected path intent now
 survives missing media and scanner recovery. The Settings path remains the
 remembered preference; runtime access uses published scanner ownership.

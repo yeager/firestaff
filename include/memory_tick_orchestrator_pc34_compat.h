@@ -638,6 +638,14 @@ int F0888_ORCH_GetChampionF0312SkillBonus_Compat(
     const struct GameWorld_Compat* world,
     int championIndex,
     int weaponClass);
+/* ReDMCSB CHAMPION.C F0312's deterministic strength component, including a
+ * fresh F0309 capacity calculation from current champion source state.
+ * The random 0..15 term remains owned by the caller. */
+int F0312_CHAMPION_HandStrengthBaseline_Compat(
+    const struct GameWorld_Compat* world,
+    const struct ChampionState_Compat* champion,
+    int handWoundIndex,
+    int objectWeight);
 int F0888_ORCH_GetChampionActionHandWeaponClass_Compat(
     const struct GameWorld_Compat* world,
     int championIndex);

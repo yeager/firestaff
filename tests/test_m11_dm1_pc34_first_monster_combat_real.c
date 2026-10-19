@@ -2,6 +2,8 @@
 #include "m11_game_view.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
+#include "memory_tick_orchestrator_pc34_compat.h"
+#include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "menu_input_m12.h"
 
@@ -266,6 +268,52 @@ int main(void)
             M11_GameView_Shutdown(&state);
             return 1;
         }
+    }
+    {
+        struct ChampionState_Compat saved = state.world.party.champions[0];
+        struct ChampionState_Compat *champ =
+            &state.world.party.champions[0];
+        int feetIcon;
+        int expectedMaxLoad;
+        int withStaleCache;
+        int withFreshCache;
+
+        /* F0309 feeds F0312 from live stamina, wounds and footwear. Exercise
+         * the real loaded HoC champion after changing those source fields,
+         * and ensure neither the M11 cache nor an F0312 call relies on its
+         * previous maxLoad value. */
+        champ->stamina.current = champ->stamina.maximum / 4u;
+        champ->wounds = (unsigned short)(champ->wounds | (1u << 4));
+        feetIcon = dm1_v1_dungeon_get_object_icon_index_pc34(
+            state.world.things, champ->inventory[CHAMPION_SLOT_FEET],
+            state.world.party.direction);
+        champ->maxLoad = 1u;
+        withStaleCache = F0312_CHAMPION_HandStrengthBaseline_Compat(
+            &state.world, champ, 0, 80);
+        expectedMaxLoad = F0309_CHAMPION_GetMaximumLoad_Compat(champ,
+                                                               feetIcon);
+        champ->maxLoad = (unsigned short)expectedMaxLoad;
+        withFreshCache = F0312_CHAMPION_HandStrengthBaseline_Compat(
+            &state.world, champ, 0, 80);
+        if (withStaleCache != withFreshCache) {
+            fputs("FAIL: F0312 used stale maxLoad after live stat changes\n",
+                  stderr);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+        champ->maxLoad = 1u;
+        (void)M11_GameView_AdvanceIdleTick(&state);
+        expectedMaxLoad = F0309_CHAMPION_GetMaximumLoad_Compat(
+            champ, dm1_v1_dungeon_get_object_icon_index_pc34(
+                state.world.things, champ->inventory[CHAMPION_SLOT_FEET],
+                state.world.party.direction));
+        if ((int)champ->maxLoad != expectedMaxLoad) {
+            fputs("FAIL: DM1 PC34 did not refresh cached F0309 maxLoad\n",
+                  stderr);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+        *champ = saved;
     }
     M11_GameView_Shutdown(&state);
     puts("PASS: authentic PC34 first-door natural monster attack and combat input");

@@ -2829,7 +2829,7 @@ static int orch_defender_armour_defense_for_thing_compat(
         world, thing, useSharpDefense, outDefense, outIsShield, outWeight);
 }
 
-static int orch_f0312_hand_strength_baseline_compat(
+int F0312_CHAMPION_HandStrengthBaseline_Compat(
     const struct GameWorld_Compat* world,
     const struct ChampionState_Compat* champion,
     int handWoundIndex,
@@ -2847,9 +2847,22 @@ static int orch_f0312_hand_strength_baseline_compat(
      * hand wounds, then returns bounded strength >> 1.  M10 snapshots are
      * deterministic, so this caches the same non-random baseline only. */
     strength = (int)champion->attributes[CHAMPION_ATTR_STRENGTH];
-    maxLoad = (int)champion->maxLoad;
-    if (maxLoad <= 0) {
-        maxLoad = (strength << 3) + 100;
+    /* CHAMPION.C F0312 calls F0309 for every shield contribution. The
+     * cached maxLoad can be stale after stamina, wounds, strength or feet
+     * equipment changes, so derive it from the current source state here. */
+    if (world && world->things && world->things->loaded) {
+        maxLoad = (int)F0309_CHAMPION_GetMaximumLoad_Compat(
+            champion,
+            dm1_v1_dungeon_get_object_icon_index_pc34(
+                world->things,
+                champion->inventory[CHAMPION_SLOT_FEET],
+                world->party.direction));
+    } else {
+        /* Partial, data-free M10 callers have no source object tables from
+         * which to resolve footwear. Preserve their established fallback;
+         * actual DM1 worlds always take the authentic F0309 path above. */
+        maxLoad = (int)champion->maxLoad;
+        if (maxLoad <= 0) maxLoad = (strength << 3) + 100;
     }
     oneSixteenthMaximumLoad = maxLoad >> 4;
     if (objectWeight <= oneSixteenthMaximumLoad) {
@@ -2911,7 +2924,7 @@ static void orch_fill_defender_wound_defense_baseline_compat(
                         &shieldDefense, &isShield, &shieldWeight) &&
                     isShield) {
                     int handStrength =
-                        orch_f0312_hand_strength_baseline_compat(
+                        F0312_CHAMPION_HandStrengthBaseline_Compat(
                             world, champion, s_handWoundIndexes[hand], shieldWeight);
                     baseline +=
                         ((handStrength + shieldDefense) *
@@ -3132,7 +3145,7 @@ static int orch_iigs_bump_wound_defense_compat(
             strengthChampion.attributes[CHAMPION_ATTR_STRENGTH] +=
                 F0732_COMBAT_RngRandom_Compat(rng,16);
             ++*rngCalls;
-            strength = orch_f0312_hand_strength_baseline_compat(world,
+            strength = F0312_CHAMPION_HandStrengthBaseline_Compat(world,
                 &strengthChampion,hand,weight);
             baseline += ((strength+defense)*factors[slot]) >> (hand == slot ? 4 : 5);
         }
