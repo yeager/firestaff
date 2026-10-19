@@ -20,6 +20,20 @@ default data root, the natural source title sequence, the M12 New Game route
 and first champion runtime handoff. The SDL dummy run verifies the tested
 CLI/menu transitions, not native display or physical input behavior.
 
+2026-10-19 FM Towns intro timing investigation: the authentic HME-242 SWOOSH
+and TITLE streams contain 228 and 1,344 Timer-A ticks respectively. At the
+source Timer-A period of 16,632 microseconds, the combined original animation
+is about 26.14 seconds. The current-source debug trace reached the last TITLE
+frame at 26.2 seconds and the first runtime handoff at 29.9 seconds. This
+matches the media timing and the SKProject `DM2_SHOW_MENU_SCREEN` event loop;
+`SKWINSPX/src/v5/startend.cpp` also waits one second after leaving that menu
+before `DM2_GAME_LOAD`. The reported roughly 30-second startup therefore is
+not, by itself, evidence that Firestaff is slowing the original animation.
+Do not accelerate or bypass it without contrary original-executable evidence.
+The reported native M5 hang/display/input behavior remains open; SDL dummy
+verification does not reproduce it. Source reference:
+[SKProject startend.cpp](https://github.com/gbsphenx/skproject/blob/2c59a2c5a7978923ff5c822c15c3479e4d448493/SKWINSPX/src/v5/startend.cpp#L249-L347).
+
 2026-10-18 v3.0.386 original-media CLI/menu retest: `test_dm2_v1_fmtowns_native_cli_boot.sh` passed the reported bare `--game dm2` AUTO route with authentic DOS, Amiga, Macintosh and FM Towns media installed. FM Towns reached the New Game menu within 40 seconds; the presented 320x200 menu RGB matched the independently decoded original `TITLE/0/4` digest `367b54aa92b46d6e`; the normal M12 loop then reached the first champion with original assets and no core fallbacks. `test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh returns` also passed DM2 DOS, Macintosh, Amiga and FM Towns direct-start/return coverage. SDL dummy output does not establish physical MacBook Pro M5 HiDPI presentation or input behavior; the reported native-display failure remains open.
 
 # Firestaff TODO — DM2
