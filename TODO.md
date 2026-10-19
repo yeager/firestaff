@@ -1,5 +1,19 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-19 current-source original-media CLI startup matrix:
+`ctest --test-dir .codex-scratch/scan-locale-build-xcode -j 2
+--output-on-failure -R '^(dm1|csb|dm2)_v1_.*native_cli_boot$'` passed 11/11
+in 885.86 seconds. The matrix covered DM1 PC34; CSB Atari STX, Amiga, FM
+Towns and Amiga 3.5 CTRaw, plus the in-memory hint-oracle utility; and DM2
+DOS English/French, Macintosh, Amiga and FM Towns. The companion
+`test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh` also exited 0 against
+the installed originals, including DM1/CSB/DM2 return-to-launcher flows,
+direct-game exit behavior and CSB media removal/addition reflected by a fresh
+scan. Both runs used a local macOS build with SDL dummy video/audio and
+authentic data from `~/.firestaff/data`; they do not establish native display,
+physical input/audio, or Windows/Linux runtime behavior. DM1's other admitted
+platforms are not covered by this 11-test CTest selection.
+
 2026-10-19 current-source no-argument launcher retest:
 `firestaff_cli_startup_diagnostics_real_media` passed in 224.29 seconds with
 authentic DM1, CSB and DM2 archives. Starting with no game selection stayed in
