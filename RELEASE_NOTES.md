@@ -1,14 +1,23 @@
-# Unreleased changes
+# Firestaff v3.0.391
 
-## DM1
+## User-facing changes
 
-- `Amiga 3.6 localized graphics`: use ReDMCSB's G2004 table for ten shared English graphic IDs with French and German originals.
-- `Amiga 3.6 language verification`: check all ten source mappings, compare the seven original bitmap records and verify the localized entrance record through CLI.
+- `CSB FM Towns loose-file startup`: admit authenticated English or Japanese editions when `--data-dir` points directly to the original `GRAPHICS.DAT` or `DUNGEON.DAT` file.
+- `DM1 Amiga 3.6 localized graphics`: load the French and German original graphic records selected by ReDMCSB's G2004 mapping.
 
-## CSB
+## Developer changes
 
-- `FM Towns loose-file startup`: accept authenticated English and Japanese launches when `--data-dir` points directly to the original `GRAPHICS.DAT` or `DUNGEON.DAT` file.
-- `FM Towns start-menu regression`: verify both loose-file launch paths reach the original F31 title using authentic media.
+- `CSB FM Towns loose-file startup verification`: check both direct file paths reach the original F31 title with authentic media.
+- `DM1 Amiga 3.6 language verification`: check all ten source mappings, compare seven original bitmap records for English, French and German, and verify localized entrance selection through CLI.
+
+## Known limitations
+
+- `DM1 Amiga 3.6 graphics decoding`: the current bitmap decoder can compare seven of the ten mapped records; the remaining three are verified for source index selection only.
+- `Original-media parity`: these authenticated startup and asset checks do not establish complete visual or gameplay parity across all platforms.
+
+## Release assets
+
+This release includes macOS arm64, macOS x86_64, Windows x86_64, Linux x86_64, Linux arm64, Steam Deck x86_64, iOS arm64 (.ipa for AltStore Classic sideload), and Android arm64 (.apk) packages. Steam Deck provides both a pacman package and an AppImage; use the x86_64 packages, not the Linux ARM64 artifact. The iOS .ipa can be sideloaded via AltStore Classic without an Apple Developer account. Original Dungeon Master game data is not included.
 
 # Firestaff v3.0.390
 
