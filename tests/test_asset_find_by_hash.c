@@ -566,6 +566,8 @@ static void cleanup_fixture(void) {
     remove("asset_find_by_hash_test_tmp/archive.7z");
     remove("asset_find_by_hash_test_tmp/packed.7z");
     remove("asset_find_by_hash_test_tmp/kryoflux_tracks.7z");
+    remove("asset_find_by_hash_test_tmp/cd_track_payloads.7z");
+    remove("asset_find_by_hash_test_tmp/archived_cue_manifest.7z");
     remove("asset_find_by_hash_test_tmp/ordinary_raw_member.7z");
     remove("asset_find_by_hash_test_tmp/nested_atari.st.7z");
     remove("asset_find_by_hash_test_tmp/nested_atari.msa.7z");
@@ -574,6 +576,8 @@ static void cleanup_fixture(void) {
     remove("asset_find_by_hash_test_tmp/renamed_tar.payload");
     remove("asset_find_by_hash_test_tmp/packed_payload.bin");
     remove("asset_find_by_hash_test_tmp/79.1.raw");
+    remove("asset_find_by_hash_test_tmp/Chaos (Track 03).bin");
+    remove("asset_find_by_hash_test_tmp/disc.cue");
     remove("asset_find_by_hash_test_tmp/capture.raw");
     remove("asset_find_by_hash_test_tmp/GRAPHICS.DAT.gz");
     remove("asset_find_by_hash_test_tmp/disc.iso");

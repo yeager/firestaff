@@ -223,6 +223,11 @@ typedef struct {
     ScanCacheEntry_I *entries;
     int count;
     int capacity;
+    /* Slot values are entry indexes plus one; zero means empty.  ZIP scans
+     * consult this table once per archive member, so a linear walk through
+     * every cached member made later full-library scans quadratic. */
+    int *pathIndex;
+    int pathIndexCapacity;
     int dirty;
 } ScanCache_I;
 
@@ -262,7 +267,63 @@ static void scache_ensure_dir(void) {
 static void scache_init(ScanCache_I *c) {
     if (!c) return;
     free(c->entries);
+    free(c->pathIndex);
     memset(c, 0, sizeof(*c));
+}
+
+static uint32_t scache_path_hash(const char *path) {
+    uint32_t hash = 2166136261U;
+    const unsigned char *cursor = (const unsigned char *)path;
+    while (*cursor) {
+        hash = (hash ^ *cursor++) * 16777619U;
+    }
+    return hash;
+}
+
+static int scache_index_rebuild(ScanCache_I *c, int minimumCapacity) {
+    int capacity = 1024;
+    int *slots;
+    int entryIndex;
+    if (!c || minimumCapacity < 0) return 0;
+    while (capacity < minimumCapacity * 2 && capacity <= INT_MAX / 2) {
+        capacity *= 2;
+    }
+    if (capacity < minimumCapacity * 2) return 0;
+    slots = (int *)calloc((size_t)capacity, sizeof(*slots));
+    if (!slots) return 0;
+    for (entryIndex = 0; entryIndex < c->count; ++entryIndex) {
+        size_t slot = (size_t)scache_path_hash(c->entries[entryIndex].path) &
+                      (size_t)(capacity - 1);
+        while (slots[slot] != 0) {
+            int existingIndex = slots[slot] - 1;
+            /* Preserve the historical first-entry lookup if an old cache
+             * file contains duplicate paths. */
+            if (strcmp(c->entries[existingIndex].path,
+                       c->entries[entryIndex].path) == 0) break;
+            slot = (slot + 1U) & (size_t)(capacity - 1);
+        }
+        if (slots[slot] == 0) slots[slot] = entryIndex + 1;
+    }
+    free(c->pathIndex);
+    c->pathIndex = slots;
+    c->pathIndexCapacity = capacity;
+    return 1;
+}
+
+static int scache_index_find(const ScanCache_I *c, const char *path) {
+    size_t slot;
+    size_t start;
+    if (!c || !path || !c->pathIndex || c->pathIndexCapacity <= 0) return -1;
+    slot = (size_t)scache_path_hash(path) &
+           (size_t)(c->pathIndexCapacity - 1);
+    start = slot;
+    while (c->pathIndex[slot] != 0) {
+        int entryIndex = c->pathIndex[slot] - 1;
+        if (strcmp(c->entries[entryIndex].path, path) == 0) return entryIndex;
+        slot = (slot + 1U) & (size_t)(c->pathIndexCapacity - 1);
+        if (slot == start) break;
+    }
+    return -1;
 }
 
 static int scache_reserve(ScanCache_I *c, int required) {
@@ -311,6 +372,7 @@ static int scache_load(ScanCache_I *c) {
         c->count++;
     }
     fclose(f);
+    (void)scache_index_rebuild(c, c->count);
     return 0;
 }
 
@@ -334,6 +396,13 @@ static int scache_lookup(const ScanCache_I *c,
                          const char *path, int64_t mt, int64_t sz,
                          char out[33]) {
     int i;
+    if (c && c->pathIndex) {
+        i = scache_index_find(c, path);
+        if (i < 0 || c->entries[i].mtime != mt || c->entries[i].size != sz)
+            return 0;
+        memcpy(out, c->entries[i].md5, 33);
+        return 1;
+    }
     for (i = 0; i < c->count; i++) {
         if (strcmp(c->entries[i].path, path) == 0 &&
             c->entries[i].mtime == mt && c->entries[i].size == sz) {
@@ -383,13 +452,30 @@ static void scache_put(ScanCache_I *c,
                        const char *path, int64_t mt, int64_t sz,
                        const char *md5) {
     int i;
-    for (i = 0; i < c->count; i++) {
-        if (strcmp(c->entries[i].path, path) == 0) {
-            c->entries[i].mtime = mt;
-            c->entries[i].size = sz;
-            memcpy(c->entries[i].md5, md5, 33);
+    if (c && c->pathIndex &&
+        c->pathIndexCapacity > 0 && c->count + 1 > c->pathIndexCapacity / 2) {
+        (void)scache_index_rebuild(c, c->count + 1);
+    }
+    if (c && c->pathIndex) {
+        i = scache_index_find(c, path);
+        if (i >= 0) {
+            ScanCacheEntry_I *e = &c->entries[i];
+            e->mtime = mt;
+            e->size = sz;
+            memcpy(e->md5, md5, 33);
             c->dirty = 1;
             return;
+        }
+    } else {
+        for (i = 0; i < c->count; i++) {
+            if (strcmp(c->entries[i].path, path) == 0) {
+                ScanCacheEntry_I *e = &c->entries[i];
+                e->mtime = mt;
+                e->size = sz;
+                memcpy(e->md5, md5, 33);
+                c->dirty = 1;
+                return;
+            }
         }
     }
     if (c->count < SCAN_CACHE_MAX && scache_reserve(c, c->count + 1)) {
@@ -400,6 +486,22 @@ static void scache_put(ScanCache_I *c,
         e->path[pathLen] = '\0';
         e->mtime = mt; e->size = sz;
         memcpy(e->md5, md5, 33);
+        if (!c->pathIndex ||
+            c->pathIndexCapacity <= 0 ||
+            c->count > c->pathIndexCapacity / 2) {
+            if (!scache_index_rebuild(c, c->count)) {
+                free(c->pathIndex);
+                c->pathIndex = NULL;
+                c->pathIndexCapacity = 0;
+            }
+        } else {
+            size_t slot = (size_t)scache_path_hash(e->path) &
+                          (size_t)(c->pathIndexCapacity - 1);
+            while (c->pathIndex[slot] != 0) {
+                slot = (slot + 1U) & (size_t)(c->pathIndexCapacity - 1);
+            }
+            c->pathIndex[slot] = c->count;
+        }
         c->dirty = 1;
     } else if (c->count > 0) {
         /* A full cache must keep accepting current libraries.  Deterministic
@@ -414,6 +516,12 @@ static void scache_put(ScanCache_I *c,
         e->mtime = mt;
         e->size = sz;
         memcpy(e->md5, md5, 33);
+        if (c->pathIndex &&
+            !scache_index_rebuild(c, c->count)) {
+            free(c->pathIndex);
+            c->pathIndex = NULL;
+            c->pathIndexCapacity = 0;
+        }
         c->dirty = 1;
     }
 }
@@ -819,6 +927,7 @@ static int is_atari_msa_path(const char *path) {
     return has_case_suffix(path, ".msa");
 }
 
+#if !defined(_WIN32) || defined(FIRESTAFF_HAS_NATIVE_7Z)
 /* KryoFlux streams store one raw flux track per file as
  * "<track>.<side>.raw" (for example "79.1.raw").  That transport is not an
  * ISO image and its individual track files cannot directly contain a named
@@ -827,7 +936,6 @@ static int is_atari_msa_path(const char *path) {
  * game file: an Amiga set can contain hundreds of them beside an already
  * usable .adf.  This deliberately applies only to archive members; a plain
  * top-level .raw keeps the existing ISO/BIN image path. */
-#ifndef _WIN32
 static int is_kryoflux_raw_track_path(const char *path) {
     size_t length;
     size_t side_begin;
@@ -849,7 +957,6 @@ static int is_kryoflux_raw_track_path(const char *path) {
     }
     return track_begin < side_begin - 1U;
 }
-#endif /* !_WIN32 */
 
 static int is_external_archive_path(const char *path) {
     return is_external_tar_archive_path(path) ||
@@ -1053,7 +1160,6 @@ static int md5_list_contains_large_whole_file_hash(const char *const *md5List,
  * This is intentionally narrower than a generic .bin rejection.  Renamed
  * loose payloads and non-track archive members remain hash-first.
  */
-#ifndef _WIN32
 static int numbered_cd_track_payload_number(const char *path, int *outTrack) {
     const char *track;
     const char *digits;
@@ -1084,7 +1190,7 @@ static int numbered_cd_track_payload_number(const char *path, int *outTrack) {
     }
     return 0;
 }
-#endif /* !_WIN32 */
+#endif
 
 /* These helpers are only called from the POSIX-only external-archive
  * scan paths (#ifndef _WIN32 block around line 2963). Guard the
@@ -5265,6 +5371,114 @@ static int scan_atari_stx_by_md5_list(const char *stx_path,
 }
 
 #ifdef FIRESTAFF_HAS_NATIVE_7Z
+#ifndef _WIN32
+static int external_adf_cache_find(const char *archive_path,
+                                   const char *adf_entry,
+                                   const char *expected_md5,
+                                   char *out_path, int out_path_len,
+                                   int *out_complete);
+static void external_adf_cache_store_file(const char *archive_path,
+                                          const char *adf_entry,
+                                          const char *name,
+                                          const char *md5);
+static void external_adf_cache_mark_complete(const char *archive_path,
+                                             const char *adf_entry);
+#endif
+
+typedef struct {
+    const char *archive;
+    const char *adf;
+    const char *expected_md5;
+    char matched_name[ASSET_PATH_MAX];
+    int found;
+} Native7zAdfSingleMatch;
+
+static int native_7z_adf_single_cache_visitor(const char *name,
+                                               const uint8_t *bytes,
+                                               size_t byte_count,
+                                               void *user_data) {
+    Native7zAdfSingleMatch *match = (Native7zAdfSingleMatch *)user_data;
+    char md5[33];
+    if (!match || !name || !bytes || byte_count == 0U) return -1;
+    asset_memory_md5_hex(bytes, byte_count, md5);
+#ifndef _WIN32
+    external_adf_cache_store_file(match->archive, match->adf, name, md5);
+#endif
+    if (strcmp(md5, match->expected_md5) == 0 &&
+        (!match->found || strcmp(name, match->matched_name) < 0) &&
+        strlen(name) < sizeof(match->matched_name)) {
+        memcpy(match->matched_name, name, strlen(name) + 1U);
+        match->found = 1;
+    }
+    return 0;
+}
+
+typedef struct {
+    const char *archive;
+    const char *adf;
+    const char *const *md5_list;
+    int md5_count;
+    char (*out_paths)[ASSET_PATH_MAX];
+    int *matched;
+    int found_count;
+} Native7zAdfListMatch;
+
+static int native_7z_adf_list_cache_visitor(const char *name,
+                                             const uint8_t *bytes,
+                                             size_t byte_count,
+                                             void *user_data) {
+    Native7zAdfListMatch *matches = (Native7zAdfListMatch *)user_data;
+    char md5[33];
+    int index;
+    if (!matches || !name || !bytes || byte_count == 0U) return -1;
+    asset_memory_md5_hex(bytes, byte_count, md5);
+#ifndef _WIN32
+    external_adf_cache_store_file(matches->archive, matches->adf, name, md5);
+#endif
+    collect_matching_path(md5, matches->archive, matches->adf, name);
+    index = md5_list_match_index(md5, matches->md5_list, matches->matched,
+                                 matches->md5_count);
+    if (index >= 0 && !matches->matched[index] &&
+        copy_nested_virtual_match_path(matches->archive, matches->adf, name,
+                                       matches->out_paths[index],
+                                       ASSET_PATH_MAX)) {
+        matches->matched[index] = 1;
+        ++matches->found_count;
+    }
+    return 0;
+}
+
+static void native_7z_member_md5(const char *archive_path,
+                                 const char *member_name,
+                                 const uint8_t *bytes,
+                                 size_t byte_count,
+                                 char out_md5[33]) {
+    char cache_key[sizeof(((ScanCacheEntry_I *)0)->path)];
+    struct stat archive_stat;
+    int key_length;
+    if (!out_md5) return;
+    out_md5[0] = '\0';
+    key_length = snprintf(cache_key, sizeof(cache_key), "%s::%s",
+                          archive_path ? archive_path : "",
+                          member_name ? member_name : "");
+    if (s_scan_cache && archive_path && member_name &&
+        key_length >= 0 && (size_t)key_length < sizeof(cache_key) &&
+        stat(archive_path, &archive_stat) == 0 &&
+        scache_lookup(s_scan_cache, cache_key,
+                      (int64_t)archive_stat.st_mtime,
+                      (int64_t)archive_stat.st_size, out_md5)) {
+        return;
+    }
+    asset_memory_md5_hex(bytes, byte_count, out_md5);
+    if (s_scan_cache && archive_path && member_name && out_md5[0] &&
+        key_length >= 0 && (size_t)key_length < sizeof(cache_key) &&
+        stat(archive_path, &archive_stat) == 0) {
+        scache_put(s_scan_cache, cache_key,
+                   (int64_t)archive_stat.st_mtime,
+                   (int64_t)archive_stat.st_size, out_md5);
+    }
+}
+
 /* Keep supported nested disk traversal in process: the returned virtual path
  * names the original archive/member/file triple and no game-data file is
  * materialized on disk. */
@@ -5331,25 +5545,51 @@ static int native_7z_member_md5_visitor(const char *name,
     Native7zMd5Match *match = (Native7zMd5Match *)user_data;
     char actual_md5[33];
     char candidate[ASSET_PATH_MAX];
+    int track;
     if (!match || !name || !bytes || byte_count == 0u) return -1;
-    asset_memory_md5_hex(bytes, byte_count, actual_md5);
+    if (has_case_suffix(name, ".cue") || is_kryoflux_raw_track_path(name))
+        return 0;
+    if (numbered_cd_track_payload_number(name, &track) &&
+        (track != 2 ||
+         !is_known_large_whole_file_hash(match->expected_md5))) return 0;
+    native_7z_member_md5(match->archive_path, name, bytes, byte_count,
+                         actual_md5);
     if (strcmp(actual_md5, match->expected_md5) == 0 &&
         copy_virtual_match_path(match->archive_path, name, candidate,
                                 (int)sizeof(candidate))) {
         native_7z_record_candidate(match, candidate);
     }
     if (is_prodos_path(name) || is_amiga_disk_payload(name, bytes, byte_count)) {
-        AdfSingleMatch nested;
+        Native7zAdfSingleMatch nested;
         int visit_result;
         memset(&nested, 0, sizeof(nested));
+        nested.archive = match->archive_path;
+        nested.adf = name;
         nested.expected_md5 = match->expected_md5;
+#ifndef _WIN32
+        {
+            char cachedPath[ASSET_PATH_MAX];
+            int cacheComplete = 0;
+            if (external_adf_cache_find(match->archive_path, name,
+                                        match->expected_md5, cachedPath,
+                                        (int)sizeof(cachedPath),
+                                        &cacheComplete)) {
+                native_7z_record_candidate(match, cachedPath);
+                return 0;
+            }
+            if (cacheComplete) return 0;
+        }
+#endif
         visit_result = (is_prodos_path(name) ? firestaff_prodos_visit_files :
                         firestaff_amiga_adf_visit_ofs_files)(
-            bytes, byte_count, adf_find_single_visitor, &nested);
+            bytes, byte_count, native_7z_adf_single_cache_visitor, &nested);
+#ifndef _WIN32
+        if (visit_result >= 0)
+            external_adf_cache_mark_complete(match->archive_path, name);
+#endif
         if (visit_result >= 0 && nested.found &&
-            native_7z_copy_nested_virtual_match_path(
-                match->archive_path, name, nested.name, candidate,
-                (int)sizeof(candidate))) {
+            native_7z_copy_nested_virtual_match_path(match->archive_path, name,
+                nested.matched_name, candidate, (int)sizeof(candidate))) {
             native_7z_record_candidate(match, candidate);
         }
     }
@@ -5408,8 +5648,16 @@ static int native_7z_member_list_visitor(const char *name,
     Native7zListMatch *matches = (Native7zListMatch *)user_data;
     char actual_md5[33];
     int index;
+    int track;
     if (!matches || !name || !bytes || byte_count == 0u) return -1;
-    asset_memory_md5_hex(bytes, byte_count, actual_md5);
+    if (has_case_suffix(name, ".cue") || is_kryoflux_raw_track_path(name))
+        return 0;
+    if (numbered_cd_track_payload_number(name, &track) &&
+        (track != 2 ||
+         !md5_list_contains_large_whole_file_hash(matches->md5_list,
+                                                   matches->md5_count))) return 0;
+    native_7z_member_md5(matches->archive_path, name, bytes, byte_count,
+                         actual_md5);
     collect_matching_path(actual_md5, matches->archive_path, name, NULL);
     index = md5_list_match_index(actual_md5, matches->md5_list, NULL,
                                  matches->md5_count);
@@ -5422,23 +5670,59 @@ static int native_7z_member_list_visitor(const char *name,
     }
     if (matches->found_count < matches->md5_count &&
         (is_prodos_path(name) || is_amiga_disk_payload(name, bytes, byte_count))) {
-        AdfListMatch nested;
-        char disk_path[ASSET_PATH_MAX];
+        Native7zAdfListMatch nested;
         int visit_result;
-        if (!copy_virtual_match_path(matches->archive_path, name, disk_path,
-                                     (int)sizeof(disk_path))) {
-            return -1;
-        }
         memset(&nested, 0, sizeof(nested));
-        nested.container = disk_path;
+        nested.archive = matches->archive_path;
+        nested.adf = name;
         nested.md5_list = matches->md5_list;
         nested.md5_count = matches->md5_count;
         nested.out_paths = matches->out_paths;
         nested.matched = matches->matched;
+#ifndef _WIN32
+        {
+            int cacheComplete = 0;
+            int hashIndex;
+            int duplicateHashes = 0;
+            char cachedPath[ASSET_PATH_MAX];
+            for (hashIndex = 0; hashIndex < matches->md5_count; ++hashIndex) {
+                int priorIndex;
+                for (priorIndex = 0; priorIndex < hashIndex; ++priorIndex) {
+                    if (strcmp(matches->md5_list[priorIndex],
+                               matches->md5_list[hashIndex]) == 0) {
+                        duplicateHashes = 1;
+                        break;
+                    }
+                }
+            }
+            if (!duplicateHashes) {
+                for (hashIndex = 0; hashIndex < matches->md5_count; ++hashIndex) {
+                    if (matches->matched[hashIndex]) continue;
+                    cacheComplete = 0;
+                    if (external_adf_cache_find(matches->archive_path, name,
+                            matches->md5_list[hashIndex], cachedPath,
+                            (int)sizeof(cachedPath), &cacheComplete)) {
+                        if (copy_match_path(cachedPath,
+                                matches->out_paths[hashIndex], ASSET_PATH_MAX)) {
+                            matches->matched[hashIndex] = 1;
+                            ++matches->found_count;
+                        }
+                    }
+                    if (!cacheComplete) break;
+                }
+                if (matches->found_count >= matches->md5_count || cacheComplete)
+                    return 0;
+            }
+        }
+#endif
         visit_result = (is_prodos_path(name) ? firestaff_prodos_visit_files :
                         firestaff_amiga_adf_visit_ofs_files)(
-            bytes, byte_count, adf_find_list_visitor, &nested);
-        if (visit_result >= 0) matches->found_count += nested.found_count;
+            bytes, byte_count, native_7z_adf_list_cache_visitor, &nested);
+#ifndef _WIN32
+        if (visit_result >= 0)
+            external_adf_cache_mark_complete(matches->archive_path, name);
+#endif
+        matches->found_count += nested.found_count;
     }
     if (matches->found_count < matches->md5_count &&
         (is_atari_stx_path(name) || is_atari_st_path(name) ||

@@ -1,13 +1,25 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-19 full-library scan cache follow-up: the persistent digest cache now
+uses indexed path lookups instead of walking every cached member for each
+archive entry. Native 7z entries and nested Amiga ADF contents also reuse
+digests while validating the source archive's size and modification time.
+Two no-game debug starts against the installed 436-file, 4.3 GiB original-media
+collection completed in 20.98 and 18.00 seconds, including the requested
+one-second menu duration; the earlier runs took about 27 seconds for the scan.
+The complete original-media DM1/CSB/DM2 CLI diagnostics passed in 268.36
+seconds. The scan still delays the interactive menu, and these headless runs
+do not establish native video/audio or physical-input behavior.
+
 2026-10-19 persisted single-file launcher selection: the no-game startup now
 promotes a remembered media file to its surrounding collection root, so the
 default launcher can discover neighboring DM1, CSB and DM2 installations.
 An explicit file-valued `--data-dir` remains scoped to that selected source.
 Verified with an isolated config pointing at the authentic DM1 Amiga 3.6 ZIP;
 the default launch stayed in `mode=menu`, found DM1/CSB/DM2, and did not hand
-off to a game. The full collection scan still takes about 34 seconds on the
-Mac mini M4, so startup responsiveness remains an open issue.
+off to a game. Startup responsiveness remains an open issue because the full
+collection scan still takes 18 to 21 seconds in the current Mac mini M4 debug
+runs.
 
 2026-10-19 full-library no-selection launch check on the Mac mini M4:
 starting the current build with `--menu --debug --data-dir
