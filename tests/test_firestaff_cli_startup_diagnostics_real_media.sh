@@ -13,6 +13,8 @@ csb_towns_archive=${FIRESTAFF_CSB_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/csb/Du
 csb_amiga_archive=${FIRESTAFF_CSB_AMIGA_ARCHIVE:-"$HOME/.firestaff/data/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip"}
 csb_atari_archive=${FIRESTAFF_CSB_ATARI_ARCHIVE:-"$HOME/.firestaff/data/csb/chaos_strikes_back_ftl.zip"}
 csb_towns_loose_root=${FIRESTAFF_CSB_FMTOWNS_LOOSE_ROOT:-"$HOME/.firestaff/data/csb/fmtowns_iso"}
+nexus_iso=${FIRESTAFF_NEXUS_ISO:-"$HOME/.firestaff/data/nexus/Dungeon Master Nexus (English).iso"}
+theron_track02=${FIRESTAFF_THERON_TRACK02:-"$HOME/.firestaff/data/theron/TQUS02.bin"}
 
 if [ ! -x "$firestaff_cli" ] || [ ! -f "$mac_archive" ] ||
    [ ! -f "$towns_archive" ]; then
@@ -117,6 +119,8 @@ link_default_game_archive dm2 "$mac_archive"
 link_default_game_archive dm2 "$towns_archive"
 link_default_game_archive dm1 "$dm1_towns_archive"
 link_default_game_archive csb "$csb_towns_archive"
+link_default_game_archive nexus "$nexus_iso"
+link_default_game_archive theron "$theron_track02"
 
 # A normal app start with no game selection must open the launcher and discover
 # every installed game from the default ~/.firestaff/data tree. Use only links
@@ -151,6 +155,20 @@ if [ -f "$dm1_towns_archive" ] && [ -f "$csb_towns_archive" ] &&
             exit 1
         }
     done
+    if [ -f "$nexus_iso" ]; then
+        printf '%s\n' "$no_game_output" | grep -Fq 'firestaff: nexus available=yes' || {
+            printf 'FAIL: no-game startup did not discover authentic Nexus media\n%s\n' \
+                "$no_game_output" >&2
+            exit 1
+        }
+    fi
+    if [ -f "$theron_track02" ]; then
+        printf '%s\n' "$no_game_output" | grep -Fq 'firestaff: theron available=yes' || {
+            printf 'FAIL: no-game startup did not discover authentic Theron media\n%s\n' \
+                "$no_game_output" >&2
+            exit 1
+        }
+    fi
     if printf '%s\n' "$no_game_output" | grep -Fq 'launch phase=game-handoff'; then
         printf 'FAIL: no-game startup entered a game handoff\n%s\n' \
             "$no_game_output" >&2
@@ -162,7 +180,7 @@ if [ -f "$dm1_towns_archive" ] && [ -f "$csb_towns_archive" ] &&
             "$no_game_output" >&2
         exit 1
     }
-    echo 'PASS: no-game startup opens the launcher and discovers authentic DM1, CSB and DM2 media from ~/.firestaff/data'
+    echo 'PASS: no-game startup opens the launcher and discovers authentic DM1, CSB, DM2, Nexus and Theron media when installed'
 
     # A single-file preference must be promoted to its shared collection root
     # by the ordinary no-game launcher. This uses an actual original archive;
