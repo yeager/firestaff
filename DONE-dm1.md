@@ -1,3 +1,14 @@
+- 2026-10-20: Added and ran an authentic Amiga v2.0 combat regression through
+  the production M12 menu handoff. It verifies the selected original
+  GRAPHICS.DAT identity, starts the original Amiga dungeon, recruits C127
+  through pointer input, follows the real Hall/HoC route and first door, then
+  observes group 169 enter attack behavior and damage the party. A production
+  pointer action also dispatches PUNCH and checks its matching Ninja/Fight XP
+  awards against the live encounter. The focused CTest passes with the
+  installed original archive. Exact damage/RNG and original-emulator timing
+  remain unverified; this is bounded Amiga 2.0 combat coverage, not full
+  Amiga gameplay parity.
+
 - 2026-10-19: Fixed the shared startup intro scan meter ending below 100% and
   disappearing when the scan worker finished. Its total now matches the three
   shared phases and three phases per game, and the intro keeps the final

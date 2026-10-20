@@ -1358,9 +1358,12 @@ parity.
   source record, allowing F0209 to authenticate and continue later C37/C38
   events. The PC34 test verifies that the real group approaches and damages
   the party, then uses production pointer input for PUNCH and checks equal
-  Ninja/Fight XP awards against MENU.C and CHAMPION.C. Exact damage/RNG still
-  needs an original executable capture; Amiga/Atari/Towns combat routes need
-  equivalent original-media tests. Extend startup sentinel proof to remaining
+  Ninja/Fight XP awards against MENU.C and CHAMPION.C. Authentic Amiga v2.0
+  now has a separate M12 launcher-route regression through Hall selection,
+  the first-door transition and group 169's live attack, including player
+  PUNCH and paired XP. Exact damage/RNG still needs an original executable
+  capture; Atari/Towns combat routes need equivalent original-media tests.
+  Extend startup sentinel proof to remaining
   editions and actual launcher UI routes; completed regression evidence is in
   DONE-dm1.md.
   English and German Atari ST 1.2, French Atari ST 1.3, and English Atari ST
