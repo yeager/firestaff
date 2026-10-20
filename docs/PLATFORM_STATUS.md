@@ -5,6 +5,20 @@ operational status matrix. It separates media recognition, verified runtime
 slices and end-to-end playability. A row marked as supported does not mean
 that every menu, save format or visual parity gate is complete.
 
+On 2026-10-20, the current `main` commit `f97398d8` passed another local
+original-media startup sweep. DM1 passed the Atari ST 1.2, Amiga 3.6, English
+DOS and FM Towns native CLI suites. Its mixed-library M12 test selected
+FM Towns automatically and reached authenticated first runtime frames for
+Atari ST, Amiga and DOS. CSB passed the Amiga, Atari STX and FM Towns native
+CLI suites, including Atari's source C200 entrance event and the FM Towns
+English `MINI.DAT` party. The DM1, CSB and DM2 return-to-menu matrix also
+passed its configured original-media sessions, including availability
+rescans, direct-CLI exit behavior, return during rescans, and discovery after
+adding or removing media. `firestaff_cli_game_option_forms` passed its normal
+no-game startup guard and CLI spelling checks. These runs use SDL dummy
+video/audio and local original archives; they verify bounded startup and
+launcher behavior, not native display, sound output or full visual parity.
+
 ## Status terms
 
 | Status | Meaning |
