@@ -1,3 +1,16 @@
+# Firestaff v3.0.396
+
+## Developer changes
+
+- `DM2 Macintosh archive discovery`: reuse the DM2 Macintosh HFS profile already authenticated by the general ZIP scan instead of decompressing the same retail archive again.
+- `DM2 Macintosh startup verification`: exercise the authentic archive through title playback, champion selection, first runtime frame, movement, AUTO selection and direct-launch exit.
+- `Release metadata`: update the project version and reproducible SPDX source SBOM for v3.0.396.
+
+## Known limitations
+
+- `Startup scan latency`: the full authentic collection scan measured 14,596 ms on the Mac mini M4 after this change, down from 16,088 ms immediately before it. The scan still delays the menu; timing on other machines and storage devices is unverified.
+- `DM2 Macintosh presentation`: the authentic startup test used SDL dummy video and audio; native display, physical input, audio output and visual parity remain unverified.
+
 # Firestaff v3.0.395
 
 ## Developer changes
