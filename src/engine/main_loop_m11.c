@@ -895,28 +895,40 @@ static int m11_intro_scan_progress_callback(
                 progress->currentTask,
                 progress->currentPath[0] ? progress->currentPath : "(none)");
     }
-    if (!job->autotestQuitInjected && getenv("FIRESTAFF_AUTOTEST") &&
-        getenv("FIRESTAFF_AUTOTEST_QUIT_DURING_SCAN") &&
-        strcmp(getenv("FIRESTAFF_AUTOTEST_QUIT_DURING_SCAN"), "1") == 0) {
-        SDL_Event event;
-        SDL_Window* window = M11_Render_GetWindow();
-        memset(&event, 0, sizeof(event));
-        if (window) {
+    {
+        const char* dm2InflateQuit =
+            getenv("FIRESTAFF_AUTOTEST_QUIT_DURING_DM2_IMAGE_INFLATE");
+        int quitDuringDm2Inflate = dm2InflateQuit &&
+            strcmp(dm2InflateQuit, "1") == 0 && progress &&
+            strcmp(progress->currentGameId, "dm2") == 0 &&
+            strcmp(progress->currentTask,
+                   "reading original DM2 disc image") == 0 &&
+            progress->currentStepPercent > 0U;
+        int quitDuringAnyScan = getenv("FIRESTAFF_AUTOTEST_QUIT_DURING_SCAN") &&
+            strcmp(getenv("FIRESTAFF_AUTOTEST_QUIT_DURING_SCAN"), "1") == 0;
+        if (!job->autotestQuitInjected && getenv("FIRESTAFF_AUTOTEST") &&
+            (quitDuringAnyScan || quitDuringDm2Inflate)) {
+            SDL_Event event;
+            SDL_Window* window = M11_Render_GetWindow();
+            memset(&event, 0, sizeof(event));
+            if (window) {
 #if SDL_VERSION_ATLEAST(3, 0, 0)
-            event.type = SDL_EVENT_WINDOW_CLOSE_REQUESTED;
-            event.window.windowID = SDL_GetWindowID(window);
+                event.type = SDL_EVENT_WINDOW_CLOSE_REQUESTED;
+                event.window.windowID = SDL_GetWindowID(window);
 #else
-            event.type = SDL_WINDOWEVENT;
-            event.window.windowID = SDL_GetWindowID(window);
-            event.window.event = SDL_WINDOWEVENT_CLOSE;
+                event.type = SDL_WINDOWEVENT;
+                event.window.windowID = SDL_GetWindowID(window);
+                event.window.event = SDL_WINDOWEVENT_CLOSE;
 #endif
-            if (SDL_PushEvent(&event)) {
-                job->autotestQuitInjected = 1;
-                (void)FSP_SetEnv("FIRESTAFF_AUTOTEST_SCAN_QUIT_INJECTED",
-                                 "1", 1);
-                if (g_m11_debug_startup_detail) {
-                    fprintf(stderr,
-                            "firestaff: autotest injected window-close during startup intro asset scan\n");
+                if (SDL_PushEvent(&event)) {
+                    job->autotestQuitInjected = 1;
+                    (void)FSP_SetEnv("FIRESTAFF_AUTOTEST_SCAN_QUIT_INJECTED",
+                                     "1", 1);
+                    if (g_m11_debug_startup_detail) {
+                        fprintf(stderr, quitDuringDm2Inflate
+                            ? "firestaff: autotest injected window-close during DM2 disc image inflate\n"
+                            : "firestaff: autotest injected window-close during startup intro asset scan\n");
+                    }
                 }
             }
         }

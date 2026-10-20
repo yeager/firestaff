@@ -7,9 +7,11 @@ the partial profile before game availability can be published. The new
 `m12_dm2_archive_scan_cancel_real_media` CTest cancelled the installed
 Macintosh retail archive during inflation in 6.72 seconds; the normal
 `test_dm2_v1_mac_boot_real_media` profile and boot test passed in 2.13 seconds.
-Both use authentic local game media. This verifies scanner cancellation and
-normal profile loading; native UI responsiveness on slower hosts still needs
-runtime confirmation.
+Both use authentic local game media. The no-game intro's original-media
+diagnostic also closes the window after DM2 disc-image inflation has begun and
+requires the scan to cancel before any game handoff. This verifies scanner
+cancellation and normal profile loading; native UI responsiveness on slower
+hosts still needs runtime confirmation.
 
 2026-10-20 unchanged-file scan hashing: named version candidates now use the
 same metadata-validated physical-file digest cache as recursive discovery,

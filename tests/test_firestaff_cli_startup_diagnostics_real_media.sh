@@ -175,6 +175,58 @@ PYINTRO
     echo 'PASS: no-game startup scans during the intro and cancels cleanly on window close'
 fi
 
+# Make sure a close event is still serviced while the large original DM2 CUE
+# image is inflating, not only between archive candidates. The image scan runs
+# on the intro worker while the renderer keeps pumping native window events.
+if [ -f "$dm1_towns_archive" ] && [ -f "$csb_towns_archive" ] &&
+   [ -f "$towns_archive" ] && [ -f "$mac_archive" ]; then
+    set +e
+    dm2_inflate_close_output=$(python3 - "$firestaff_cli" "$default_home" \
+        "$default_data_root" <<'PYDM2INFLATE'
+import os, subprocess, sys
+app, home, data_root = sys.argv[1:]
+env = os.environ.copy()
+env.update({
+    'HOME': home,
+    'USERPROFILE': home,
+    'XDG_CONFIG_HOME': os.path.join(home, '.config'),
+    'APPDATA': os.path.join(home, 'AppData'),
+    'FIRESTAFF_CONFIG_PATH': os.path.join(home, 'dm2-inflate-close.toml'),
+    'FIRESTAFF_DATA': data_root,
+    'FIRESTAFF_AUTOTEST': '1',
+    'FIRESTAFF_AUTOTEST_QUIT_DURING_DM2_IMAGE_INFLATE': '1',
+    'SDL_VIDEODRIVER': 'dummy',
+    'SDL_AUDIODRIVER': 'dummy',
+})
+try:
+    result = subprocess.run([app, '--debug'], env=env, capture_output=True,
+                            text=True, timeout=90)
+except subprocess.TimeoutExpired as error:
+    for chunk in (error.stdout, error.stderr):
+        if chunk:
+            sys.stdout.write(chunk.decode(errors='replace') if isinstance(chunk, bytes)
+                             else chunk)
+    sys.exit(124)
+sys.stdout.write(result.stdout)
+sys.stdout.write(result.stderr)
+sys.exit(result.returncode)
+PYDM2INFLATE
+    ) || dm2_inflate_close_status=$?
+    set -e
+    if [ "${dm2_inflate_close_status:-0}" -ne 0 ] ||
+       ! printf '%s\n' "$dm2_inflate_close_output" | \
+            grep -Fq 'task=reading original DM2 disc image path=' ||
+       ! printf '%s\n' "$dm2_inflate_close_output" | \
+            grep -Fq 'autotest injected window-close during DM2 disc image inflate' ||
+       printf '%s\n' "$dm2_inflate_close_output" | \
+            grep -Fq 'launch phase=game-handoff'; then
+        printf 'FAIL: DM2 image-inflate window close did not cancel startup (status %s)\n%s\n' \
+            "${dm2_inflate_close_status:-0}" "$dm2_inflate_close_output" >&2
+        exit 1
+    fi
+    echo 'PASS: no-game startup cancels DM2 disc-image inflation on window close'
+fi
+
 # A normal app start with no game selection must open the launcher and discover
 # every installed game from the default ~/.firestaff/data tree. Use only links
 # to authentic archives and an isolated home/config root.
