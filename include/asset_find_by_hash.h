@@ -171,13 +171,15 @@ void asset_scan_cache_batch_begin(void);
 void asset_scan_cache_batch_end(void);
 
 /* Read a previously verified virtual-member MD5 from the active scan cache.
- * The containing archive's current size and modification time must still
- * match the cache receipt. Returns zero when no current receipt is available. */
+ * The containing archive's current size, modification/change timestamps, and
+ * file identity must still match the cache receipt. Returns zero when no
+ * current receipt is available. */
 int asset_scan_cache_lookup_virtual_md5(const char *virtualPath,
                                         char outMd5[33]);
 /* Store a scanner receipt for a virtual member/derived media identity. The
- * key is bound to the current containing archive size and modification time,
- * using the same freshness contract as ordinary cached member digests. */
+ * key is bound to the current containing archive's size, modification/change
+ * timestamps, and file identity, using the same freshness contract as
+ * ordinary cached member digests. */
 int asset_scan_cache_store_virtual_md5(const char *virtualPath,
                                        const char md5[33]);
 

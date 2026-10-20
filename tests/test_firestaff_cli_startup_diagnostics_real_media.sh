@@ -13,6 +13,7 @@ csb_towns_archive=${FIRESTAFF_CSB_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/csb/Du
 csb_amiga_archive=${FIRESTAFF_CSB_AMIGA_ARCHIVE:-"$HOME/.firestaff/data/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip"}
 csb_atari_archive=${FIRESTAFF_CSB_ATARI_ARCHIVE:-"$HOME/.firestaff/data/csb/chaos_strikes_back_ftl.zip"}
 csb_towns_loose_root=${FIRESTAFF_CSB_FMTOWNS_LOOSE_ROOT:-"$HOME/.firestaff/data/csb/fmtowns_iso"}
+csb_amiga33_loose_root=${FIRESTAFF_CSB_AMIGA33_LOOSE_ROOT:-"$HOME/.firestaff/data/csb/amiga33-original"}
 nexus_iso=${FIRESTAFF_NEXUS_ISO:-"$HOME/.firestaff/data/nexus/Dungeon Master Nexus (English).iso"}
 theron_track02=${FIRESTAFF_THERON_TRACK02:-"$HOME/.firestaff/data/theron/TQUS02.bin"}
 
@@ -99,7 +100,85 @@ dm1_combined_root=
 default_home=
 uppercase_game_root=
 offline_home=
-trap 'rm -rf "$combined_root" "$csb_mixed_root" "$csb_combined_root" "$dm1_combined_root" "$default_home" "$uppercase_game_root" "$offline_home"' EXIT
+cache_replacement_root=
+trap 'rm -rf "$combined_root" "$csb_mixed_root" "$csb_combined_root" "$dm1_combined_root" "$default_home" "$uppercase_game_root" "$offline_home" "$cache_replacement_root"' EXIT
+
+# A cached physical-file hash must not survive replacing an authentic game
+# file with another original edition of the same size while preserving its
+# modification timestamp. CSB's Towns and Amiga 3.3 DUNGEON.DAT files are both
+# 2098 bytes but have distinct known hashes. Keep the source archives pristine
+# and put the two original files at one temporary path to exercise the real
+# persistent scanner cache.
+csb_towns_graphics="$csb_towns_loose_root/CDATA/GRAPHICS.DAT"
+csb_towns_dungeon="$csb_towns_loose_root/CDATA/DUNGEON.DAT"
+csb_amiga33_dungeon="$csb_amiga33_loose_root/Dungeon.DAT"
+if [ -f "$csb_towns_graphics" ] && [ -f "$csb_towns_dungeon" ] &&
+   [ -f "$csb_amiga33_dungeon" ] &&
+   [ "$(wc -c < "$csb_towns_dungeon" | tr -d ' ')" = \
+     "$(wc -c < "$csb_amiga33_dungeon" | tr -d ' ')" ]; then
+    cache_replacement_root=$(mktemp -d "${PWD}/.firestaff-cache-replacement.XXXXXX")
+    cache_replacement_data="$cache_replacement_root/data"
+    cache_replacement_home="$cache_replacement_root/home"
+    mkdir -p "$cache_replacement_data" "$cache_replacement_home"
+    cp "$csb_towns_graphics" "$cache_replacement_data/GRAPHICS.DAT"
+    cp "$csb_towns_dungeon" "$cache_replacement_data/DUNGEON.DAT"
+    replacement_scan=$(HOME="$cache_replacement_home" \
+        FIRESTAFF_CONFIG_PATH="$cache_replacement_home/config.toml" \
+        "$firestaff_cli" --scan-data --data-dir "$cache_replacement_data" \
+        --verbose 2>&1) || {
+        printf '%s\n' "$replacement_scan" >&2
+        exit 1
+    }
+    printf '%s\n' "$replacement_scan" | python3 -c '
+import re
+import sys
+trace = sys.stdin.read()
+summary = trace.split("Data dir:", 1)[1]
+block = summary.split("Chaos Strikes Back", 1)[1].split("Dungeon Master II", 1)[0]
+match = re.search(r"DUNGEON\.DAT\s+FOUND[^\n]*\n\s+md5: ([0-9a-f]{32})", block)
+if match is None or match.group(1) != "83c56cf1b779e7460a55c9299ebeb04b":
+    raise SystemExit("FAIL: authentic CSB FM Towns dungeon hash was not scanned")
+'
+    replacement_scan=$(HOME="$cache_replacement_home" \
+        FIRESTAFF_CONFIG_PATH="$cache_replacement_home/config.toml" \
+        "$firestaff_cli" --scan-data --data-dir "$cache_replacement_data" \
+        --verbose 2>&1) || {
+        printf '%s\n' "$replacement_scan" >&2
+        exit 1
+    }
+    printf '%s\n' "$replacement_scan" | python3 -c '
+import re
+import sys
+trace = sys.stdin.read()
+summary = trace.split("Data dir:", 1)[1]
+block = summary.split("Chaos Strikes Back", 1)[1].split("Dungeon Master II", 1)[0]
+match = re.search(r"DUNGEON\.DAT\s+FOUND[^\n]*\n\s+md5: ([0-9a-f]{32})", block)
+if match is None or match.group(1) != "83c56cf1b779e7460a55c9299ebeb04b":
+    raise SystemExit("FAIL: authentic CSB hash changed after loading a persisted scan cache")
+'
+    cat "$csb_amiga33_dungeon" > "$cache_replacement_data/DUNGEON.DAT"
+    touch -r "$csb_towns_dungeon" "$cache_replacement_data/DUNGEON.DAT"
+    replacement_scan=$(HOME="$cache_replacement_home" \
+        FIRESTAFF_CONFIG_PATH="$cache_replacement_home/config.toml" \
+        "$firestaff_cli" --scan-data --data-dir "$cache_replacement_data" \
+        --verbose 2>&1) || {
+        printf '%s\n' "$replacement_scan" >&2
+        exit 1
+    }
+    printf '%s\n' "$replacement_scan" | python3 -c '
+import re
+import sys
+trace = sys.stdin.read()
+summary = trace.split("Data dir:", 1)[1]
+block = summary.split("Chaos Strikes Back", 1)[1].split("Dungeon Master II", 1)[0]
+match = re.search(r"DUNGEON\.DAT\s+FOUND[^\n]*\n\s+md5: ([0-9a-f]{32})", block)
+if match is None or match.group(1) != "6695d2acebce49f95db1d8f3a5c733de":
+    raise SystemExit(
+        "FAIL: scanner reused the old CSB Towns dungeon digest after authentic same-size replacement"
+    )
+'
+    echo 'PASS: authentic CSB scan cache invalidates same-size replacement with preserved mtime'
+fi
 
 # Exercise the real default path layout without --data-dir and without
 # inheriting a developer's saved config. Stage only links to the original

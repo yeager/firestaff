@@ -1,5 +1,16 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-20 authentic scan-cache replacement: the persistent hash cache keyed
+only on path, second-resolution mtime, and byte size. Replacing CSB FM Towns
+`DUNGEON.DAT` with the authentic Amiga 3.3 file (same 2098-byte size and
+restored Towns mtime) reproduced a stale hash in `--scan-data --verbose`.
+Cache receipts now include mtime/ctime precision, device, inode, and size in a
+versioned cache file. A repeated-start test then exposed a second defect: the
+reader treated the inode field as the beginning of the digest. It now parses
+all eight delimiters and accepts only exactly 32 hexadecimal digest characters.
+The real-media regression checks a warm persisted read before replacing the
+Towns file in place with the same-size Amiga original.
+
 2026-10-20 DM2 archive-scan cancellation: the M12 DM2 ZIP profile now passes
 scan progress into the inflater for the CUE-selected original disc image.
 Closing or cancelling during that large decode stops extraction and discards

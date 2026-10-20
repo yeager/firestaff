@@ -214,8 +214,13 @@ static void md5_body(AssetMd5Ctx *ctx, const unsigned char *block) {
 
 typedef struct {
     char     path[512];
-    int64_t  mtime;
+    int64_t  mtimeSec;
+    int64_t  mtimeNsec;
+    int64_t  ctimeSec;
+    int64_t  ctimeNsec;
     int64_t  size;
+    uint64_t device;
+    uint64_t inode;
     char     md5[33];
 } ScanCacheEntry_I;
 
@@ -239,10 +244,48 @@ static const char *scache_home(void) {
     return h;
 }
 
+static void scache_stat_times(const struct stat *st,
+                              int64_t *mtimeSec, int64_t *mtimeNsec,
+                              int64_t *ctimeSec, int64_t *ctimeNsec) {
+    if (!st) return;
+#if defined(__APPLE__)
+    if (mtimeSec) *mtimeSec = (int64_t)st->st_mtimespec.tv_sec;
+    if (mtimeNsec) *mtimeNsec = (int64_t)st->st_mtimespec.tv_nsec;
+    if (ctimeSec) *ctimeSec = (int64_t)st->st_ctimespec.tv_sec;
+    if (ctimeNsec) *ctimeNsec = (int64_t)st->st_ctimespec.tv_nsec;
+#elif defined(_WIN32)
+    if (mtimeSec) *mtimeSec = (int64_t)st->st_mtime;
+    if (mtimeNsec) *mtimeNsec = 0;
+    if (ctimeSec) *ctimeSec = (int64_t)st->st_ctime;
+    if (ctimeNsec) *ctimeNsec = 0;
+#else
+    if (mtimeSec) *mtimeSec = (int64_t)st->st_mtim.tv_sec;
+    if (mtimeNsec) *mtimeNsec = (int64_t)st->st_mtim.tv_nsec;
+    if (ctimeSec) *ctimeSec = (int64_t)st->st_ctim.tv_sec;
+    if (ctimeNsec) *ctimeNsec = (int64_t)st->st_ctim.tv_nsec;
+#endif
+}
+
+static int scache_entry_matches_stat(const ScanCacheEntry_I *entry,
+                                     const struct stat *st) {
+    int64_t mtimeSec, mtimeNsec, ctimeSec, ctimeNsec;
+    if (!entry || !st) return 0;
+    scache_stat_times(st, &mtimeSec, &mtimeNsec, &ctimeSec, &ctimeNsec);
+    return entry->mtimeSec == mtimeSec &&
+           entry->mtimeNsec == mtimeNsec &&
+           entry->ctimeSec == ctimeSec &&
+           entry->ctimeNsec == ctimeNsec &&
+           entry->size == (int64_t)st->st_size &&
+           entry->device == (uint64_t)st->st_dev &&
+           entry->inode == (uint64_t)st->st_ino;
+}
+
 static int scache_path(char *buf, size_t len) {
     const char *h = scache_home();
     if (!h) return -1;
-    snprintf(buf, len, "%s/.firestaff/cache/asset_scan_cache.dat", h);
+    /* The v2 records include nanosecond timestamps and file identity. Do not
+     * reinterpret the older seconds-and-size-only cache as complete evidence. */
+    snprintf(buf, len, "%s/.firestaff/cache/asset_scan_cache_v2.dat", h);
     return 0;
 }
 
@@ -346,7 +389,7 @@ static int scache_reserve(ScanCache_I *c, int required) {
 }
 
 static int scache_load(ScanCache_I *c) {
-    char p[512]; FILE *f; char line[640];
+    char p[512]; FILE *f; char line[800];
     scache_init(c);
     if (scache_path(p, sizeof(p)) != 0) return -1;
     f = fopen(p, "rb");
@@ -359,16 +402,35 @@ static int scache_load(ScanCache_I *c) {
         char *t2 = strchr(t1+1, '\t');
         if (!t2) continue;
         char *t3 = strchr(t2+1, '\t');
-        if (!t3) continue;
+        char *t4;
+        char *t5;
+        char *t6;
+        char *t7;
+        char *t8;
+        if (!t3 || !(t4 = strchr(t3 + 1, '\t')) ||
+            !(t5 = strchr(t4 + 1, '\t')) ||
+            !(t6 = strchr(t5 + 1, '\t')) ||
+            !(t7 = strchr(t6 + 1, '\t')) ||
+            !(t8 = strchr(t7 + 1, '\t'))) continue;
         size_t pl = (size_t)(t1 - line);
         if (pl >= sizeof(e->path)) continue;
         memcpy(e->path, line, pl); e->path[pl] = '\0';
-        e->mtime = strtoll(t1+1, NULL, 10);
-        e->size = strtoll(t2+1, NULL, 10);
-        size_t ml = strlen(t3+1);
-        while (ml > 0 && (t3[ml]=='\n'||t3[ml]=='\r')) ml--;
-        if (ml < 32) continue;
-        memcpy(e->md5, t3+1, 32); e->md5[32] = '\0';
+        e->mtimeSec = strtoll(t1+1, NULL, 10);
+        e->mtimeNsec = strtoll(t2+1, NULL, 10);
+        e->ctimeSec = strtoll(t3+1, NULL, 10);
+        e->ctimeNsec = strtoll(t4+1, NULL, 10);
+        e->size = strtoll(t5+1, NULL, 10);
+        e->device = (uint64_t)strtoull(t6+1, NULL, 10);
+        e->inode = (uint64_t)strtoull(t7+1, NULL, 10);
+        size_t ml = strlen(t8+1);
+        size_t hashIndex;
+        while (ml > 0 && (t8[ml]=='\n'||t8[ml]=='\r')) ml--;
+        if (ml != 32) continue;
+        for (hashIndex = 0; hashIndex < 32; ++hashIndex) {
+            if (!isxdigit((unsigned char)t8[1 + hashIndex])) break;
+        }
+        if (hashIndex != 32) continue;
+        memcpy(e->md5, t8+1, 32); e->md5[32] = '\0';
         c->count++;
     }
     fclose(f);
@@ -385,27 +447,31 @@ static int scache_save(const ScanCache_I *c) {
     if (!f) return -1;
     for (i = 0; i < c->count; i++) {
         const ScanCacheEntry_I *e = &c->entries[i];
-        fprintf(f, "%s\t%lld\t%lld\t%s\n",
-                e->path, (long long)e->mtime, (long long)e->size, e->md5);
+        fprintf(f, "%s\t%lld\t%lld\t%lld\t%lld\t%lld\t%llu\t%llu\t%s\n",
+                e->path, (long long)e->mtimeSec, (long long)e->mtimeNsec,
+                (long long)e->ctimeSec, (long long)e->ctimeNsec,
+                (long long)e->size, (unsigned long long)e->device,
+                (unsigned long long)e->inode, e->md5);
     }
     fclose(f);
     return 0;
 }
 
 static int scache_lookup(const ScanCache_I *c,
-                         const char *path, int64_t mt, int64_t sz,
+                         const char *path, const struct stat *st,
                          char out[33]) {
     int i;
+    if (!c || !path || !st || !out) return 0;
     if (c && c->pathIndex) {
         i = scache_index_find(c, path);
-        if (i < 0 || c->entries[i].mtime != mt || c->entries[i].size != sz)
+        if (i < 0 || !scache_entry_matches_stat(&c->entries[i], st))
             return 0;
         memcpy(out, c->entries[i].md5, 33);
         return 1;
     }
     for (i = 0; i < c->count; i++) {
         if (strcmp(c->entries[i].path, path) == 0 &&
-            c->entries[i].mtime == mt && c->entries[i].size == sz) {
+            scache_entry_matches_stat(&c->entries[i], st)) {
             memcpy(out, c->entries[i].md5, 33);
             return 1;
         }
@@ -439,8 +505,7 @@ static int scache_inventory_lookup(const ScanCache_I *c, const char *root,
             (root_len > 1 && entry->path[root_len] != '/' && entry->path[root_len] != '\0' &&
              !(entry->path[root_len] == ':' && entry->path[root_len + 1] == ':')) ||
             stat(entry->path, &st) != 0 ||
-            entry->mtime != (int64_t)st.st_mtime ||
-            entry->size != (int64_t)st.st_size) continue;
+            !scache_entry_matches_stat(entry, &st)) continue;
         if (strlen(entry->path) >= (size_t)out_path_len) continue;
         memcpy(out_path, entry->path, strlen(entry->path) + 1U);
         return 1;
@@ -449,9 +514,12 @@ static int scache_inventory_lookup(const ScanCache_I *c, const char *root,
 }
 
 static void scache_put(ScanCache_I *c,
-                       const char *path, int64_t mt, int64_t sz,
+                       const char *path, const struct stat *st,
                        const char *md5) {
     int i;
+    int64_t mtimeSec, mtimeNsec, ctimeSec, ctimeNsec;
+    if (!c || !path || !st || !md5) return;
+    scache_stat_times(st, &mtimeSec, &mtimeNsec, &ctimeSec, &ctimeNsec);
     if (c && c->pathIndex &&
         c->pathIndexCapacity > 0 && c->count + 1 > c->pathIndexCapacity / 2) {
         (void)scache_index_rebuild(c, c->count + 1);
@@ -460,8 +528,13 @@ static void scache_put(ScanCache_I *c,
         i = scache_index_find(c, path);
         if (i >= 0) {
             ScanCacheEntry_I *e = &c->entries[i];
-            e->mtime = mt;
-            e->size = sz;
+            e->mtimeSec = mtimeSec;
+            e->mtimeNsec = mtimeNsec;
+            e->ctimeSec = ctimeSec;
+            e->ctimeNsec = ctimeNsec;
+            e->size = (int64_t)st->st_size;
+            e->device = (uint64_t)st->st_dev;
+            e->inode = (uint64_t)st->st_ino;
             memcpy(e->md5, md5, 33);
             c->dirty = 1;
             return;
@@ -470,8 +543,13 @@ static void scache_put(ScanCache_I *c,
         for (i = 0; i < c->count; i++) {
             if (strcmp(c->entries[i].path, path) == 0) {
                 ScanCacheEntry_I *e = &c->entries[i];
-                e->mtime = mt;
-                e->size = sz;
+                e->mtimeSec = mtimeSec;
+                e->mtimeNsec = mtimeNsec;
+                e->ctimeSec = ctimeSec;
+                e->ctimeNsec = ctimeNsec;
+                e->size = (int64_t)st->st_size;
+                e->device = (uint64_t)st->st_dev;
+                e->inode = (uint64_t)st->st_ino;
                 memcpy(e->md5, md5, 33);
                 c->dirty = 1;
                 return;
@@ -484,7 +562,13 @@ static void scache_put(ScanCache_I *c,
         if (pathLen >= sizeof(e->path)) pathLen = sizeof(e->path) - 1;
         memcpy(e->path, path, pathLen);
         e->path[pathLen] = '\0';
-        e->mtime = mt; e->size = sz;
+        e->mtimeSec = mtimeSec;
+        e->mtimeNsec = mtimeNsec;
+        e->ctimeSec = ctimeSec;
+        e->ctimeNsec = ctimeNsec;
+        e->size = (int64_t)st->st_size;
+        e->device = (uint64_t)st->st_dev;
+        e->inode = (uint64_t)st->st_ino;
         memcpy(e->md5, md5, 33);
         if (!c->pathIndex ||
             c->pathIndexCapacity <= 0 ||
@@ -513,8 +597,13 @@ static void scache_put(ScanCache_I *c,
         while (*p) hash = ((hash << 5) + hash) ^ *p++;
         e = &c->entries[hash % (unsigned long)c->count];
         snprintf(e->path, sizeof(e->path), "%s", path);
-        e->mtime = mt;
-        e->size = sz;
+        e->mtimeSec = mtimeSec;
+        e->mtimeNsec = mtimeNsec;
+        e->ctimeSec = ctimeSec;
+        e->ctimeNsec = ctimeNsec;
+        e->size = (int64_t)st->st_size;
+        e->device = (uint64_t)st->st_dev;
+        e->inode = (uint64_t)st->st_ino;
         memcpy(e->md5, md5, 33);
         if (c->pathIndex &&
             !scache_index_rebuild(c, c->count)) {
@@ -561,9 +650,7 @@ static int file_md5(const char *path, char outHex[33]) {
     if (s_scan_cache) {
         struct stat st;
         if (stat(path, &st) == 0) {
-            if (scache_lookup(s_scan_cache, path,
-                              (int64_t)st.st_mtime, (int64_t)st.st_size,
-                              outHex)) {
+            if (scache_lookup(s_scan_cache, path, &st, outHex)) {
                 /* A cached hash must not turn a now-inaccessible file into
                  * an available game. macOS privacy grants can change while
                  * stat() still succeeds, so validate open permission even
@@ -580,9 +667,7 @@ static int file_md5(const char *path, char outHex[33]) {
                 return 1;
             }
             if (file_md5_raw(path, outHex)) {
-                scache_put(s_scan_cache, path,
-                           (int64_t)st.st_mtime, (int64_t)st.st_size,
-                           outHex);
+                scache_put(s_scan_cache, path, &st, outHex);
                 return 1;
             }
             return 0;
@@ -2089,12 +2174,9 @@ static int scan_zip_by_md5_list(const char *zipPath, const char *const *md5List,
     uint16_t i;
     int foundCount = 0;
     struct stat zipStat;
-    int64_t zipMtime = 0, zipSize = 0;
     int haveZipStat = 0;
 
     if (s_scan_cache && stat(zipPath, &zipStat) == 0) {
-        zipMtime = (int64_t)zipStat.st_mtime;
-        zipSize = (int64_t)zipStat.st_size;
         haveZipStat = 1;
     }
 
@@ -2194,7 +2276,7 @@ static int scan_zip_by_md5_list(const char *zipPath, const char *const *md5List,
             if (haveZipStat && s_scan_cache) {
                 snprintf(cacheKey, sizeof(cacheKey), "%s::%s", zipPath, name);
                 cached = scache_lookup(s_scan_cache, cacheKey,
-                                       zipMtime, zipSize, hex);
+                                       &zipStat, hex);
             }
             if (!cached) {
                 if (method == 0U) {
@@ -2209,7 +2291,7 @@ static int scan_zip_by_md5_list(const char *zipPath, const char *const *md5List,
                 }
                 if (haveZipStat && s_scan_cache) {
                     snprintf(cacheKey, sizeof(cacheKey), "%s::%s", zipPath, name);
-                    scache_put(s_scan_cache, cacheKey, zipMtime, zipSize, hex);
+                    scache_put(s_scan_cache, cacheKey, &zipStat, hex);
                 }
             }
         }
@@ -4067,8 +4149,7 @@ static int external_entry_md5(const char *archivePath, const char *entryName,
     if (s_scan_cache && stat(archivePath, &st) == 0 && keyLength >= 0 &&
         (size_t)keyLength < sizeof(cacheKey)) {
         cacheable = 1;
-        if (scache_lookup(s_scan_cache, cacheKey, (int64_t)st.st_mtime,
-                          (int64_t)st.st_size, outHex)) {
+        if (scache_lookup(s_scan_cache, cacheKey, &st, outHex)) {
             return 1;
         }
     }
@@ -4088,8 +4169,7 @@ static int external_entry_md5(const char *archivePath, const char *entryName,
     if (!ok) return 0;
     md5_final(&ctx, outHex);
     if (cacheable) {
-        scache_put(s_scan_cache, cacheKey, (int64_t)st.st_mtime,
-                   (int64_t)st.st_size, outHex);
+        scache_put(s_scan_cache, cacheKey, &st, outHex);
     }
     return 1;
 }
@@ -5470,18 +5550,14 @@ static void native_7z_member_md5(const char *archive_path,
     if (s_scan_cache && archive_path && member_name &&
         key_length >= 0 && (size_t)key_length < sizeof(cache_key) &&
         stat(archive_path, &archive_stat) == 0 &&
-        scache_lookup(s_scan_cache, cache_key,
-                      (int64_t)archive_stat.st_mtime,
-                      (int64_t)archive_stat.st_size, out_md5)) {
+        scache_lookup(s_scan_cache, cache_key, &archive_stat, out_md5)) {
         return;
     }
     asset_memory_md5_hex(bytes, byte_count, out_md5);
     if (s_scan_cache && archive_path && member_name && out_md5[0] &&
         key_length >= 0 && (size_t)key_length < sizeof(cache_key) &&
         stat(archive_path, &archive_stat) == 0) {
-        scache_put(s_scan_cache, cache_key,
-                   (int64_t)archive_stat.st_mtime,
-                   (int64_t)archive_stat.st_size, out_md5);
+        scache_put(s_scan_cache, cache_key, &archive_stat, out_md5);
     }
 }
 
@@ -5510,8 +5586,7 @@ static int native_7z_cache_collect_matches(
         return 0;
     }
 #ifndef _WIN32
-    if (scache_lookup(s_scan_cache, marker, (int64_t)st.st_mtime,
-                      (int64_t)st.st_size, cached_md5)) {
+    if (scache_lookup(s_scan_cache, marker, &st, cached_md5)) {
         *out_complete = 1;
     }
 #endif
@@ -5522,8 +5597,7 @@ static int native_7z_cache_collect_matches(
         const char *suffix;
         size_t suffix_len;
         int index;
-        if (entry->mtime != (int64_t)st.st_mtime ||
-            entry->size != (int64_t)st.st_size ||
+        if (!scache_entry_matches_stat(entry, &st) ||
             path_len <= prefix_len ||
             strncmp(entry->path, prefix, prefix_len) != 0) {
             continue;
@@ -5558,8 +5632,7 @@ static void native_7z_cache_mark_complete(const char *archive_path) {
         stat(archive_path, &st) != 0) {
         return;
     }
-    scache_put(s_scan_cache, marker, (int64_t)st.st_mtime,
-               (int64_t)st.st_size, marker_md5);
+    scache_put(s_scan_cache, marker, &st, marker_md5);
 #else
     (void)archive_path;
 #endif
@@ -6172,8 +6245,7 @@ static int external_adf_cache_find(const char *archive_path,
      * the enclosing archive timestamp once the current marker is present. */
     for (i = 0; i < s_scan_cache->count; ++i) {
         const ScanCacheEntry_I *entry = &s_scan_cache->entries[i];
-        if (entry->mtime != (int64_t)st.st_mtime ||
-            entry->size != (int64_t)st.st_size) {
+        if (!scache_entry_matches_stat(entry, &st)) {
             continue;
         }
         if (strcmp(entry->path, marker) == 0) {
@@ -6219,8 +6291,7 @@ static int external_adf_cache_collect_matches(
         snprintf(marker, sizeof(marker), "%s@firestaff-adf-complete-v1",
                  prefix) >= (int)sizeof(marker) ||
         stat(archive_path, &st) != 0 ||
-        !scache_lookup(s_scan_cache, marker, (int64_t)st.st_mtime,
-                       (int64_t)st.st_size, archive_md5)) {
+        !scache_lookup(s_scan_cache, marker, &st, archive_md5)) {
         return 0;
     }
     prefix_len = strlen(prefix);
@@ -6229,8 +6300,7 @@ static int external_adf_cache_collect_matches(
         const ScanCacheEntry_I *entry = &s_scan_cache->entries[i];
         size_t path_len = strlen(entry->path);
         int index;
-        if (entry->mtime != (int64_t)st.st_mtime ||
-            entry->size != (int64_t)st.st_size ||
+        if (!scache_entry_matches_stat(entry, &st) ||
             path_len <= prefix_len ||
             strncmp(entry->path, prefix, prefix_len) != 0 ||
             strcmp(entry->path, marker) == 0) {
@@ -6266,8 +6336,7 @@ static void external_adf_cache_store_file(const char *archive_path,
         stat(archive_path, &st) != 0) {
         return;
     }
-    scache_put(s_scan_cache, key, (int64_t)st.st_mtime, (int64_t)st.st_size,
-               md5);
+    scache_put(s_scan_cache, key, &st, md5);
 }
 
 static void external_adf_cache_mark_complete(const char *archive_path,
@@ -6285,8 +6354,7 @@ static void external_adf_cache_mark_complete(const char *archive_path,
         !file_md5(archive_path, archive_md5)) {
         return;
     }
-    scache_put(s_scan_cache, marker, (int64_t)st.st_mtime, (int64_t)st.st_size,
-               archive_md5);
+    scache_put(s_scan_cache, marker, &st, archive_md5);
 }
 
 typedef struct {
@@ -7214,9 +7282,7 @@ int asset_scan_cache_lookup_virtual_md5(const char *virtualPath,
     memcpy(archivePath, virtualPath, archiveLength);
     archivePath[archiveLength] = '\0';
     if (stat(archivePath, &archiveStat) != 0 ||
-        !scache_lookup(s_scan_cache, virtualPath,
-                       (int64_t)archiveStat.st_mtime,
-                       (int64_t)archiveStat.st_size, outMd5)) {
+        !scache_lookup(s_scan_cache, virtualPath, &archiveStat, outMd5)) {
         return 0;
     }
     /* Preserve the privacy gate used by physical-file cache hits. A cached
@@ -7258,8 +7324,7 @@ int asset_scan_cache_store_virtual_md5(const char *virtualPath,
         if (!fp) return 0;
         fclose(fp);
     }
-    scache_put(s_scan_cache, virtualPath, (int64_t)archiveStat.st_mtime,
-               (int64_t)archiveStat.st_size, md5);
+    scache_put(s_scan_cache, virtualPath, &archiveStat, md5);
     return 1;
 }
 
