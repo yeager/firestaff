@@ -19,6 +19,18 @@ no-game startup guard and CLI spelling checks. These runs use SDL dummy
 video/audio and local original archives; they verify bounded startup and
 launcher behavior, not native display, sound output or full visual parity.
 
+Also on 2026-10-20, fresh isolated configurations started the application
+without `--game` against a shared root containing only links to the installed
+original DM1, CSB and DM2 data. The normal M12 main-menu keyboard flow selected
+each game and reached its real-data runtime: DM1 selected FM Towns and loaded
+HoC map 0 at (1,3); CSB selected FM Towns and loaded its `MINI.DAT` party on
+map 4 at (22,18); DM2 selected FM Towns, completed all 225 original title
+frames, reached the first champion on map 0 at (1,8), and accepted a turn.
+The logs began with `startup game=none mode=menu` and recorded each actual
+M12 game handoff. These SDL dummy sessions verify the previously untested
+no-CLI-game main-menu selection path and bounded runtime entry, not native
+presentation or audio output.
+
 ## Status terms
 
 | Status | Meaning |
