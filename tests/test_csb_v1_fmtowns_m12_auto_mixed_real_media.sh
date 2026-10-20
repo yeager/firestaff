@@ -83,9 +83,10 @@ PY
 # Select the non-default Atari edition from the same mixed original-media
 # collection through M12. There is deliberately no --platform argument: the
 # visible platform card must override the FM Towns AUTO choice and keep the
-# Atari source owner through its original C200 entrance. Wait for the real
-# runtime transition instead of injecting a timed click after the intro; that
-# click can land on a runtime control and does not prove the handoff.
+# Atari source owner through its original C200 entrance. Let its source-owned
+# startup sequence reach the entrance, click the original button, then wait
+# for the runtime receipt instead of treating the launcher handoff as a
+# successful game start.
 FIRESTAFF_CONFIG_PATH="$scratch/atari-config.toml" \
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$scratch/atari-runtime.json" \
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
@@ -93,8 +94,8 @@ HOME="$scratch" XDG_CONFIG_HOME="$scratch" APPDATA="$scratch" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
     "$app" --width 960 --height 600 --menu --game csb \
     --data-dir "$collection_root" --debug \
-    --script 'wait20,click:586:131,wait20,click:729:202,wait20,click:225:202,wait-game-runtime' \
-    --duration 30000 >"$scratch/atari-firestaff.log" 2>&1 || {
+    --script 'wait20,click:586:131,wait20,click:729:202,wait20,click:225:202,wait:3600,click:813:156,wait-game-runtime' \
+    --duration 120000 >"$scratch/atari-firestaff.log" 2>&1 || {
         cat "$scratch/atari-firestaff.log" >&2
         exit 1
     }
