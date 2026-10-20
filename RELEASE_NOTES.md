@@ -4,14 +4,14 @@
 
 - `Startup scan speed`: reuse verified file hashes for unchanged named game data. On the tested Mac mini M4, the warm five-game scan fell from about 10 seconds to about 8.3 seconds.
 - `DM1 PC34 title input`: mouse clicks no longer skip ANIM/TITLE; keyboard interruption still follows each original `BR` record.
-- `DM2 media scanning`: release large cue-selected disc images after profile checks instead of retaining their freed heap storage, reducing memory held after a complete collection scan.
+- `DM2 image scan mapping`: use temporary virtual mappings for large cue-selected disc images during profile checks, then release the mappings when the probes finish.
 - `No-game startup`: scan the selected collection while the branded startup intro plays, with the menu still gated on authentic media verification.
 - `DM1, CSB and DM2 startup`: this release adds original-media coverage for the title picker and first runtime handoff.
 
 ## Developer changes
 
 - `Startup scan hashing`: use the scanner's metadata-validated physical-file cache for direct version candidates, while keeping MD5 as the authenticity gate.
-- `DM2 startup cancellation`: poll scan progress while inflating the original cue-selected disc image, so a cancelled M12 scan stops inside large archives instead of waiting for the full image.
+- `DM2 startup cancellation`: update the archive-reading loop to poll scan progress during image inflation, so a cancelled M12 scan stops before a large image finishes.
 - `DM2 original-media cancellation test`: add an M12 real-media regression that cancels the installed Macintosh retail archive during image inflation and verifies no availability is published; the normal Macintosh boot-profile test still passes.
 - `DM2 no-game startup close`: verify that the branded intro keeps pumping window events and cancels the background collection scan while a real DM2 disc image is inflating.
 - `Authentic media hash cache freshness`: bind persistent scan digests to file identity, nanosecond modification/change times, size, device, and inode so same-size original-edition replacement cannot retain stale game availability.
@@ -21,7 +21,7 @@
 - `DM1 PC34 input fidelity`: compare ReDMCSB's keyboard-only `F0539_INPUT_Cconis` title interrupt against the authentic I34E media and cover mouse-click rejection in the PC34 CLI/menu regression.
 - `DM1, CSB and DM2 collection-menu startup`: add an original-media regression that starts from the no-game menu, selects each title, and verifies handoff into the authentic runtime state.
 - `No-game collection scan`: defer startup admission into the intro, report scan paths in `--debug` after progress begins, and verify clean cancellation on window close.
-- `DM1 PC34 startup timing`: `--debug` separates the source-paced selector door animation from the authentic sound-completion wait after the final frame.
+- `DM1 PC34 startup timing`: change `--debug` output to distinguish the source-paced selector door animation from the authentic sound-completion wait after the final frame.
 - `DM2 original-media scan`: reuse the CUE-selected image between Macintosh HFS and FM Towns probes instead of inflating the same ZIP member twice.
 - `DM2 original-media scan`: use a memory mapping for the large CUE-selected image and preserve its allocator ownership through FM Towns profile cleanup.
 - `Runtime startup evidence`: validate the first DM1 HoC frame, the CSB party and viewport state, and DM2 completion of its 225-frame title sequence before the first champion loads.
