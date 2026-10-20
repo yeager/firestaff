@@ -1931,7 +1931,13 @@ platform/version mismatch recovery remain; completed scans recover unavailable
 saved editions before interaction. Deferred or cancelled scans must not infer
 absence before inventory is known. Deferred original-media tests retain installed
 Multilanguage and recover English only when the selected edition is absent.
-Equivalent manual edition-row interaction evidence for CSB/DM2 remains open.
+Original-media pointer routes now cover CSB Amiga and DM2 DOS through the
+platform and presentation cards: `csb_v1_amiga_adf_archive_cli_boot` and
+`dm2_v1_dos_native_cli_boot` both pass on the installed data. Their scripted
+mouse-only routes prove card selection and launch acceptance for those two
+platforms, while keyboard routes separately cover runtime handoff. Pointer
+selection across the remaining CSB/DM2 platform and language choices remains
+open; menu-state fixtures alone do not establish those original-media routes.
 
 ### Loose selected graphics ownership (2026-10-15)
 
