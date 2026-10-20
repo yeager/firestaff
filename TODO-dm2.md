@@ -38,6 +38,17 @@ verification does not reproduce it. Source reference:
 
 # Firestaff TODO — DM2
 
+2026-10-20 M12 Macintosh retail launch and scan reuse: the full authentic
+collection scan now reuses the DM2 Macintosh HFS profile already authenticated
+by the general ZIP pass instead of reopening the same 561 MiB retail archive
+for a second admission pass. The M4 full-scan phase measured 14,596 ms after
+the change versus 16,088 ms immediately before it. The authentic
+`dm2_v1_mac_native_cli_boot` script passed against the original Mac ZIP through
+the M12 platform selection, Title.MooV, mirror selection, first runtime frame,
+two source-owned moves, AUTO selection and Back/exit path; the source archive
+hash was unchanged. Tests used SDL dummy video/audio, so native Mac display,
+physical input/audio and visual parity remain unverified.
+
 Japanese Macintosh launch support remains open. The authentic multi-track ZIP
 has a catalogued Japanese `GRAPHICS.DAT` and a readable 37,957-byte dungeon,
 but its HFS catalogue has no application forks, `md.dat` music map, or Mac

@@ -2099,6 +2099,27 @@ static int m12_admit_dm2_mac_archive(M12_AssetStatus* status,
         "Dungeon-Master-II-Skullkeep_Mac_EN";
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
         strcmp(g_games[gameIndex].gameId, "dm2") != 0) return 0;
+    /* The general DM2 ZIP pass above already calls the source boot scanner,
+     * which recognizes the HFS retail profile and records its verified
+     * virtual GRAPHICS.DAT path. Reuse that receipt here instead of inflating
+     * the same BIN/Mac ZIP a second time just to publish the outer owner. */
+    for (vi = 0; vi < g_games[gameIndex].versionCount; ++vi) {
+        M12_AssetVersionStatus* version = &status->versions[gameIndex][vi];
+        const char* separator;
+        size_t archiveLength;
+        if (!version->matched || !version->versionId ||
+            strcmp(version->versionId, "mac-en-retail") != 0 ||
+            !(separator = strstr(version->matchedPath, "::"))) continue;
+        archiveLength = (size_t)(separator - version->matchedPath);
+        if (archiveLength == 0U ||
+            archiveLength >= sizeof(status->runtimeDataDirs[gameIndex])) {
+            continue;
+        }
+        memcpy(status->runtimeDataDirs[gameIndex], version->matchedPath,
+               archiveLength);
+        status->runtimeDataDirs[gameIndex][archiveLength] = '\0';
+        return 1;
+    }
     for (r = 0; r < (rootCount ? rootCount : 1u); ++r) {
         char candidateRoots[2][M12_ASSET_DATA_DIR_CAPACITY];
         size_t candidateRootCount = 0U;

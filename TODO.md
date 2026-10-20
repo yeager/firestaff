@@ -1,5 +1,17 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-20 current-source scan profiling: on the authentic 436-file, 4.3 GiB
+collection, the complete five-game scan fell from 16,088 ms to 14,596 ms after
+M12 began reusing the already authenticated DM2 Macintosh HFS ZIP profile
+instead of reopening the same archive in a second admission pass. This is a
+1,492 ms reduction in the measured scan phase; the full scan still delays the
+menu, and headless timing does not establish native presentation or input.
+`m11_direct_launch_prepare_all_games` passed with 219 assertions, no failures
+and three scoped skips. The authentic DM2 Macintosh M12 route also reached
+runtime through the title movie and mirror selection, moved twice, passed AUTO
+selection and Back/exit checks, and preserved the original archive. The
+Nexus title gate and other per-game/per-platform runtime gaps remain open.
+
 2026-10-19 full-library scan cache follow-up: the persistent digest cache now
 uses indexed path lookups instead of walking every cached member for each
 archive entry. Native 7z entries and nested Amiga ADF contents also reuse
