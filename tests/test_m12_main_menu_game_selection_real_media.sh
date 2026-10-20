@@ -30,8 +30,9 @@ run_game_picker_case() {
     local game_archive=$2
     local navigation=$3
     local edition=$4
+    local input_method=${5:-keyboard}
     local home="$scratch/$game_id-home"
-    local log="$scratch/$game_id.log"
+    local log="$scratch/$game_id-$input_method.log"
     local archive_hash
 
     mkdir -p "$home"
@@ -42,7 +43,7 @@ run_game_picker_case() {
     FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     HOME="$home" XDG_CONFIG_HOME="$home" APPDATA="$home" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
-        "$app" --debug --data-dir "$data_root" \
+        "$app" --debug --width 1920 --height 1080 --data-dir "$data_root" \
         --script "$navigation" --duration 90000 >"$log" 2>&1 || {
             cat "$log" >&2
             return 1
@@ -62,8 +63,8 @@ run_game_picker_case() {
         printf 'FAIL: original %s archive changed during menu launch\n' "$game_id" >&2
         return 1
     fi
-    printf 'PASS: no-game M12 main menu selected %s and handed off its authentic %s edition\n' \
-        "$game_id" "$edition"
+    printf 'PASS: no-game M12 main menu %s selected %s and handed off its authentic %s edition\n' \
+        "$input_method" "$game_id" "$edition"
 }
 
 run_game_picker_case dm1 "$dm1_archive" \
@@ -72,3 +73,10 @@ run_game_picker_case csb "$csb_archive" \
     'wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en
 run_game_picker_case dm2 "$dm2_archive" \
     'wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-ja
+
+run_game_picker_case dm1 "$dm1_archive" \
+    'wait20,click:700:262,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en mouse
+run_game_picker_case csb "$csb_archive" \
+    'wait20,click:1190:262,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en mouse
+run_game_picker_case dm2 "$dm2_archive" \
+    'wait20,click:1680:262,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-ja mouse
