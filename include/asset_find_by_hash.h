@@ -170,4 +170,10 @@ int asset_external_archive_tool_available(const char *archivePath);
 void asset_scan_cache_batch_begin(void);
 void asset_scan_cache_batch_end(void);
 
+/* Read a previously verified virtual-member MD5 from the active scan cache.
+ * The containing archive's current size and modification time must still
+ * match the cache receipt. Returns zero when no current receipt is available. */
+int asset_scan_cache_lookup_virtual_md5(const char *virtualPath,
+                                        char outMd5[33]);
+
 #endif /* ASSET_FIND_BY_HASH_H */

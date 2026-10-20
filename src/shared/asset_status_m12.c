@@ -854,6 +854,7 @@ static int m12_path_md5_hex(const char* path, char outHex[33]) {
     size_t byteCount = 0U;
     if (!path || !outHex) return 0;
     if (!m12_path_is_virtual_asset(path)) return m12_file_md5_hex(path, outHex);
+    if (asset_scan_cache_lookup_virtual_md5(path, outHex)) return 1;
     if (!asset_read_virtual_path_alloc(path, &bytes, &byteCount) ||
         byteCount == 0U) {
         free(bytes);

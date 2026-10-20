@@ -1482,15 +1482,23 @@ int main(void) {
             fprintf(stderr, "nested 7z/ADF digest inventory was not recorded\n");
             return 1;
         }
-        memset(outPath, 0, sizeof(outPath));
-        if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
-                               outPath, (int)sizeof(outPath), 2) ||
-            !path_has_virtual_entry(outPath, "nested_amiga.adf.7z",
-                                    "nested_amiga.adf::GRAPHICS.DAT")) {
-            cleanup_fixture();
-            fprintf(stderr, "nested 7z/ADF cached filesystem lookup failed: %s\n",
-                    outPath);
-            return 1;
+        {
+            char cachedMd5[33];
+            asset_scan_cache_batch_begin();
+            memset(outPath, 0, sizeof(outPath));
+            if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
+                                   outPath, (int)sizeof(outPath), 2) ||
+                !path_has_virtual_entry(outPath, "nested_amiga.adf.7z",
+                                        "nested_amiga.adf::GRAPHICS.DAT") ||
+                !asset_scan_cache_lookup_virtual_md5(outPath, cachedMd5) ||
+                strcmp(cachedMd5, "08c53652f85abfe8a075d5de4d3c8287") != 0) {
+                asset_scan_cache_batch_end();
+                cleanup_fixture();
+                fprintf(stderr, "nested 7z/ADF cached virtual digest lookup failed: %s\n",
+                        outPath);
+                return 1;
+            }
+            asset_scan_cache_batch_end();
         }
         memset(outPaths, 0, sizeof(outPaths));
         memset(matched, 0, sizeof(matched));

@@ -7195,6 +7195,45 @@ void asset_scan_cache_batch_end(void) {
     }
 }
 
+int asset_scan_cache_lookup_virtual_md5(const char *virtualPath,
+                                        char outMd5[33]) {
+    const char *separator;
+    char archivePath[ASSET_PATH_MAX];
+    struct stat archiveStat;
+    FILE *fp;
+    size_t archiveLength;
+    if (!outMd5) return 0;
+    outMd5[0] = '\0';
+    if (!s_scan_cache || !virtualPath ||
+        !(separator = strstr(virtualPath, "::"))) return 0;
+    archiveLength = (size_t)(separator - virtualPath);
+    if (archiveLength == 0U || archiveLength >= sizeof(archivePath) ||
+        strlen(virtualPath) >= sizeof(((ScanCacheEntry_I *)0)->path)) {
+        return 0;
+    }
+    memcpy(archivePath, virtualPath, archiveLength);
+    archivePath[archiveLength] = '\0';
+    if (stat(archivePath, &archiveStat) != 0 ||
+        !scache_lookup(s_scan_cache, virtualPath,
+                       (int64_t)archiveStat.st_mtime,
+                       (int64_t)archiveStat.st_size, outMd5)) {
+        return 0;
+    }
+    /* Preserve the privacy gate used by physical-file cache hits. A cached
+     * digest must not keep an archive available after macOS revokes access. */
+    fp = fopen(archivePath, "rb");
+    if (!fp) {
+        int errorCode = errno;
+        outMd5[0] = '\0';
+        if (asset_scan_access_denied_errno(errorCode)) {
+            record_access_denied_file_parent(archivePath);
+        }
+        return 0;
+    }
+    fclose(fp);
+    return 1;
+}
+
 /* ── Public API ───────────────────────────────────────────────── */
 
 int asset_find_by_md5(const char *searchDir, const char *expectedMd5,

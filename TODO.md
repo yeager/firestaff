@@ -1,5 +1,19 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-20 virtual-member digest reuse: M12 source-sidecar checks now consult
+the active scan's verified virtual-path MD5 receipt before decoding a member
+again. A receipt is accepted only while the enclosing archive's size and
+modification time still match and the archive remains readable. The focused
+`asset_find_by_hash` regression passed, and the authentic original-media CLI
+startup diagnostics passed for the installed collection: the launcher found
+all five games, DM1/CSB/DM2 platform routes resolved, and no-game startup stayed
+in the menu. A follow-up menu scan measured 12,252 ms (12,048 ms on repeat)
+with the persistent scan cache already warm; these timings do not prove a cold
+scan improvement, and the menu still waits about 12 seconds on this M4 setup.
+Nexus still lacks its original Saturn title-capture gate for an interactive
+menu handoff; Theron and all native presentation/input/audio routes retain
+their separate runtime gaps.
+
 2026-10-20 current-source scan profiling: on the authentic 436-file, 4.3 GiB
 collection, the complete five-game scan fell from 16,088 ms to 14,596 ms after
 M12 began reusing the already authenticated DM2 Macintosh HFS ZIP profile
