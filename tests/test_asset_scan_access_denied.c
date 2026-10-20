@@ -183,7 +183,7 @@ int main(void) {
             (int)sizeof(firestaffDir) ||
         snprintf(cacheDir, sizeof(cacheDir), "%s/cache", firestaffDir) >=
             (int)sizeof(cacheDir) ||
-        snprintf(cachePath, sizeof(cachePath), "%s/asset_scan_cache.dat",
+        snprintf(cachePath, sizeof(cachePath), "%s/asset_scan_cache_v2.dat",
                  cacheDir) >= (int)sizeof(cachePath)) {
         fprintf(stderr, "FAIL: could not prepare isolated scanner home\n");
         rmdir(home);
