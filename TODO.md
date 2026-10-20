@@ -13,6 +13,22 @@ authentic DM2 Mac, FM Towns, and renamed-ZIP CTests passed (573.63 seconds).
 The image still occupies memory while its HFS/CD structure is parsed, and the
 first collection scan still blocks menu interaction for about ten seconds.
 
+2026-10-20 post-mapping startup scan timing: the current M4 build ran
+`firestaff --scan-data --debug` twice against the installed original-media
+collection in 9.98 s and 9.96 s wall time (9.13 s user CPU and about 0.82 s
+system CPU each). All five games reported READY in both runs. This confirms
+that reducing retained heap did not remove the synchronous first-scan delay;
+startup still spends nearly all elapsed time in CPU work before the menu is
+interactive. These are repeat warm-cache measurements, not a cold-cache or
+cross-platform benchmark. A four-second `sample` captured most main-thread
+work in `m12_admit_dm2_directory_zips` and `dm2_v1_boot_scan_assets`, nested
+inside ZIP deflate (`mz_inflate`/`tinfl_decompress`); another substantial
+slice was version-candidate MD5 hashing. The profile reported 415 MiB physical
+footprint at capture and 1.1 GiB peak, so mapped ownership reduced retained
+heap after scanning but did not remove the peak working-set cost. Profile
+sample counts are evidence for where to investigate, not exact elapsed-time
+percentages.
+
 2026-10-20 DM2 CUE image reuse: the explicit ZIP reader now shares one
 cue-selected original image between the Macintosh HFS probe and the FM Towns
 disc probe. The pre-change sample showed separate full ZIP inflations beneath
