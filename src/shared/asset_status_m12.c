@@ -5899,13 +5899,13 @@ static void m12_admit_csb_amiga31_english_program_package(
     static const char *const hashes[] = {
         "21197b1d4994fd835c403d5a33dcac2b", "291e1bc6803e3dc4b974c60117ca5d68"
     };
-    enum { LIMIT = 256, VIRTUAL_LIMIT = 8 };
+    enum { LIMIT = 256, VIRTUAL_LIMIT = LIMIT + 1 };
     char (*paths)[ASSET_PATH_MAX];
     size_t edition, rootIndex;
     int explicitFile = requestedDataDir && FSP_FileExists(requestedDataDir) &&
         !FSP_DirExists(requestedDataDir);
     if (!status || gameIndex < 0 || strcmp(g_games[gameIndex].gameId, "csb")) return;
-    paths = calloc(LIMIT, sizeof(*paths));
+    paths = calloc(VIRTUAL_LIMIT, sizeof(*paths));
     if (!paths) {
         fprintf(stderr, "firestaff: media-discovery-incomplete game=csb path=%s reason=allocation\n",
                 rootCount ? roots[0] : status->dataDir);
@@ -5932,8 +5932,10 @@ static void m12_admit_csb_amiga31_english_program_package(
             int count = asset_collect_files_by_md5(root, hashes[edition],
                                                       paths, LIMIT, 32);
             int pass, candidate;
-            /* Ordinary copies have complete bounded enumeration. Keep the
-             * existing eight-candidate native-container scan separately. */
+            /* Ordinary copies have complete bounded enumeration. Search
+             * containers to the same capacity plus one sentinel so an
+             * oversized archive fails closed instead of selecting an
+             * arbitrary early member. */
             if (count < 0) {
                 fprintf(stderr, "firestaff: media-discovery-incomplete game=csb path=%s reason=%s\n",
                         root, count == -2 ? "candidate-limit" : "allocation");
@@ -5944,10 +5946,16 @@ static void m12_admit_csb_amiga31_english_program_package(
                     for (candidate = 0; candidate < VIRTUAL_LIMIT; ++candidate)
                         virtualHashes[candidate] = hashes[edition];
                     virtualHashes[VIRTUAL_LIMIT] = NULL;
-                    memset(paths, 0, LIMIT * sizeof(*paths));
-                    (void)asset_find_all_by_md5_list(root, virtualHashes,
+                    memset(paths, 0, VIRTUAL_LIMIT * sizeof(*paths));
+                    count = asset_find_all_by_md5_list(root, virtualHashes,
                         paths, matched, VIRTUAL_LIMIT, 32);
-                    count = VIRTUAL_LIMIT;
+                    /* A full sentinel vector proves this root exceeds the
+                     * accepted candidate limit. */
+                    if (count >= VIRTUAL_LIMIT) {
+                        fprintf(stderr, "firestaff: media-discovery-incomplete game=csb path=%s reason=candidate-limit\n",
+                                root);
+                        break;
+                    }
                 }
                 for (candidate = 0; candidate < count; ++candidate) {
                     if ((pass && (!matched[candidate] ||
@@ -5989,21 +5997,36 @@ static void m12_admit_csb_amiga31_title_package(
     versionIndex = M12_AssetStatus_FindVersionIndex("csb", "amiga31-multi");
     if (versionIndex < 0) return;
     for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
-        enum { M12_AMIGA31_TITLE_CANDIDATE_LIMIT = 8 };
-        const char* titleHashes[M12_AMIGA31_TITLE_CANDIDATE_LIMIT + 1U];
-        char titlePaths[M12_AMIGA31_TITLE_CANDIDATE_LIMIT][ASSET_PATH_MAX];
-        int titleMatched[M12_AMIGA31_TITLE_CANDIDATE_LIMIT];
+        enum { M12_AMIGA31_TITLE_CANDIDATE_LIMIT = 256,
+               M12_AMIGA31_TITLE_SCAN_LIMIT = M12_AMIGA31_TITLE_CANDIDATE_LIMIT + 1 };
+        const char* titleHashes[M12_AMIGA31_TITLE_SCAN_LIMIT + 1U];
+        char (*titlePaths)[ASSET_PATH_MAX];
+        int *titleMatched;
         int titleIndex;
-        for (titleIndex = 0; titleIndex < M12_AMIGA31_TITLE_CANDIDATE_LIMIT;
+        titlePaths = calloc(M12_AMIGA31_TITLE_SCAN_LIMIT, sizeof(*titlePaths));
+        titleMatched = calloc(M12_AMIGA31_TITLE_SCAN_LIMIT, sizeof(*titleMatched));
+        if (!titlePaths || !titleMatched) {
+            free(titlePaths);
+            free(titleMatched);
+            fprintf(stderr, "firestaff: media-discovery-incomplete game=csb path=%s reason=allocation\n",
+                    roots[rootIndex]);
+            continue;
+        }
+        for (titleIndex = 0; titleIndex < M12_AMIGA31_TITLE_SCAN_LIMIT;
              ++titleIndex) {
             titleHashes[titleIndex] = titleMd5;
         }
-        titleHashes[M12_AMIGA31_TITLE_CANDIDATE_LIMIT] = NULL;
-        memset(titlePaths, 0, sizeof(titlePaths));
-        memset(titleMatched, 0, sizeof(titleMatched));
+        titleHashes[M12_AMIGA31_TITLE_SCAN_LIMIT] = NULL;
         (void)asset_find_all_by_md5_list(
             roots[rootIndex], titleHashes, titlePaths, titleMatched,
-            M12_AMIGA31_TITLE_CANDIDATE_LIMIT, 32);
+            M12_AMIGA31_TITLE_SCAN_LIMIT, 32);
+        if (titleMatched[M12_AMIGA31_TITLE_CANDIDATE_LIMIT]) {
+            fprintf(stderr, "firestaff: media-discovery-incomplete game=csb path=%s reason=candidate-limit\n",
+                    roots[rootIndex]);
+            free(titlePaths);
+            free(titleMatched);
+            continue;
+        }
         for (titleIndex = 0; titleIndex < M12_AMIGA31_TITLE_CANDIDATE_LIMIT;
              ++titleIndex) {
         const char* titlePath = titlePaths[titleIndex];
@@ -6060,10 +6083,14 @@ static void m12_admit_csb_amiga31_title_package(
                 m12_copy_string(status->versions[gameIndex][versionIndex].matchedMd5,
                                 sizeof(status->versions[gameIndex][versionIndex].matchedMd5),
                                 graphicsMd5);
+                free(titlePaths);
+                free(titleMatched);
                 return;
             }
         }
         }
+        free(titlePaths);
+        free(titleMatched);
     }
 }
 

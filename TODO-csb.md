@@ -64,10 +64,12 @@ Windows/Linux behavior, English A31/A35 action-name presentation and visual
 parity remain separate verification work. English A31/A35 required-program
 admission is enforced at M12 and native boot; original A35E positive/negative
 coverage is in `csb_v1_amiga35_english_package_real_media`.
-Loose English duplicate candidates have complete bounded enumeration up to
-256 paths. Native-container English and A33M title rescue retain their
-existing eight-candidate search limit; arbitrary large preservation packages
-need separate completeness/ownership coverage.
+Loose and native-container English duplicate candidates use bounded
+enumeration with a 256-path limit and a sentinel overflow check. A33M archive
+title rescue uses the same bound, keeps its buffers off the stack, and rejects
+oversized candidate sets with a `media-discovery-incomplete` diagnostic. The
+`csb_v1_amiga31_title_archive_candidates_real_media` test exercises an
+authentic A33M title inside an ADF placed after nine unrelated title matches.
 The final loose-file selector pin covers English A31/A35, and the 2026-10-19
 FM Towns retest now covers English and Japanese direct `GRAPHICS.DAT` and
 `DUNGEON.DAT` M12 launches with authentic loose media. Atari ST and other

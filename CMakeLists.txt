@@ -63303,6 +63303,8 @@ if(BUILD_TESTING AND UNIX)
         "Original CSB Amiga 3.5 English loose files for startup package verification")
     set(FIRESTAFF_CSB_AMIGA_MULTI_LOOSE_MEDIA "" CACHE PATH
         "Original CSB Amiga multilingual loose files for selected-owner verification")
+    set(FIRESTAFF_CSB_AMIGA_MULTI_ADF "" CACHE FILEPATH
+        "Original CSB Amiga multilingual ADF for archive candidate-bound verification")
     add_test(NAME csb_v1_amiga35_english_package_real_media
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_amiga35_english_package_real_media.sh
             $<TARGET_FILE:firestaff> "${FIRESTAFF_CSB_AMIGA35_ENGLISH_LOOSE_MEDIA}"
@@ -63310,6 +63312,13 @@ if(BUILD_TESTING AND UNIX)
     set_tests_properties(csb_v1_amiga35_english_package_real_media PROPERTIES
         SKIP_RETURN_CODE 77 TIMEOUT 120
         LABELS "csb;amiga;real-media;case-sensitive;cli;menu;startup;skip-safe")
+    add_test(NAME csb_v1_amiga31_title_archive_candidates_real_media
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_amiga31_title_archive_candidates.sh
+            $<TARGET_FILE:firestaff> "${FIRESTAFF_CSB_AMIGA_MULTI_LOOSE_MEDIA}"
+            "${FIRESTAFF_CSB_AMIGA_MULTI_ADF}")
+    set_tests_properties(csb_v1_amiga31_title_archive_candidates_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 120
+        LABELS "csb;amiga;real-media;archive;startup;skip-safe")
     set(FIRESTAFF_DM1_PC34_LOOSE_INSTALL "" CACHE PATH
         "Original DM1 PC 3.4 installation for loose startup path verification")
     add_test(NAME dm1_v1_pc34_loose_startup_paths_real_media

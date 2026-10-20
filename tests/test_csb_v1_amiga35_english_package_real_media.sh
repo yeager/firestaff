@@ -52,6 +52,19 @@ PYDATA
         echo 'FAIL: overflow published an arbitrary partial CSB owner' >&2; exit 1
     fi
     echo 'PASS: 257 original CSB graphics copies fail closed with candidate-limit diagnostic'
+    python3 - "$scratch/media" "$scratch/capacity.zip" <<'PYZIP'
+import pathlib,sys,zipfile
+source,out=map(pathlib.Path,sys.argv[1:])
+graphics=next(p for p in source.iterdir() if p.is_file() and p.name.lower()=='graphics.dat')
+with zipfile.ZipFile(out,'w',compression=zipfile.ZIP_STORED) as z:
+    for i in range(257): z.write(graphics,f'copies/{i:03d}/Graphics.DAT')
+PYZIP
+    "$app" --scan-data --game csb --data-dir "$scratch/capacity.zip" > "$scratch/capacity-archive.log" 2>&1
+    grep -Fq "media-discovery-incomplete game=csb path=$scratch/capacity.zip reason=candidate-limit" "$scratch/capacity-archive.log"
+    if grep -Eq 'Chaos Strikes Back +READY|Amiga 3\.5 English +FOUND' "$scratch/capacity-archive.log"; then
+        echo 'FAIL: archive overflow published an arbitrary partial CSB owner' >&2; exit 1
+    fi
+    echo 'PASS: 257 original CSB archive members fail closed with candidate-limit diagnostic'
 }
 if [[ ${FIRESTAFF_CSB_TEST_CAPACITY_ONLY:-0} == 1 ]]; then capacity_check; exit 0; fi
 "$app" --width 320 --height 200 --game csb --platform amiga --data-dir "$scratch/media" \
