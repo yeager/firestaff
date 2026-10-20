@@ -2,6 +2,7 @@
 
 ## User-facing changes
 
+- `Startup scan speed`: reuse verified file hashes for unchanged named game data. On the tested Mac mini M4, the warm five-game scan fell from about 10 seconds to about 8.3 seconds.
 - `DM1 PC34 title input`: mouse clicks no longer skip ANIM/TITLE; keyboard interruption still follows each original `BR` record.
 - `DM2 media scanning`: release large cue-selected disc images after profile checks instead of retaining their freed heap storage, reducing memory held after a complete collection scan.
 - `No-game startup`: scan the selected collection while the branded startup intro plays, with the menu still gated on authentic media verification.
@@ -9,6 +10,8 @@
 
 ## Developer changes
 
+- `Startup scan hashing`: use the scanner's metadata-validated physical-file cache for direct version candidates, while keeping MD5 as the authenticity gate.
+- `Startup menu catalogs`: refresh source references and merged locale catalogs for the PC34 startup-diagnostic text changes.
 - `DM1 PC34 input fidelity`: compare ReDMCSB's keyboard-only `F0539_INPUT_Cconis` title interrupt against the authentic I34E media and cover mouse-click rejection in the PC34 CLI/menu regression.
 - `DM1, CSB and DM2 collection-menu startup`: add an original-media regression that starts from the no-game menu, selects each title, and verifies handoff into the authentic runtime state.
 - `No-game collection scan`: defer startup admission into the intro, report scan paths in `--debug` after progress begins, and verify clean cancellation on window close.

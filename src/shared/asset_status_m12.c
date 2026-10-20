@@ -4913,7 +4913,11 @@ static int m12_try_match_version_fast_candidates(
                 if (!FSP_JoinPath(path, sizeof(path), dir, spec->names[nameIndex])) {
                     continue;
                 }
-                if (m12_file_md5_matches_spec(path, md5)) {
+                /* Fast named candidates are ordinary files. Use the same
+                 * metadata-validated physical-file hash cache as the
+                 * recursive finder; recomputing each large DAT here made
+                 * every startup scan hash the same unchanged files again. */
+                if (asset_file_matches_md5(path, md5)) {
                     m12_copy_string(matchedPath, M12_ASSET_DATA_DIR_CAPACITY, path);
                     m12_copy_string(matchedMd5, M12_ASSET_MD5_CAPACITY, md5);
                     if (matchedRootIndex) {

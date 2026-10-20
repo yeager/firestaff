@@ -17,6 +17,7 @@ static const char* const g_changelogLines[] = {
     "====================",
     "",
     "V" FIRESTAFF_VERSION_NUMBER "  (2026-10-20)",
+    "  - Startup scans reuse verified hashes for unchanged named game-data files; warm five-game scans take about 8.3 seconds on the tested M4.",
     "  - DM1 PC34 title ignores mouse clicks; keyboard interruption still follows the original ANIM BR records.",
     "  - No-game startup now scans the selected collection during the branded intro and waits for authentic media verification before opening game selection.",
     "  - Closing the window during the intro scan cancels discovery before any game handoff.",

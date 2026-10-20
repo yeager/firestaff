@@ -1,5 +1,18 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-20 unchanged-file scan hashing: named version candidates now use the
+same metadata-validated physical-file digest cache as recursive discovery,
+instead of re-reading each unchanged DAT directly during every startup scan.
+On the Mac mini M4 with the installed original collection, three warm
+`--scan-data --debug` runs completed in 8.308, 8.297 and 8.308 seconds and
+reported all five games READY. The immediately preceding two warm runs took
+9.98 and 9.96 seconds; this is a local comparison, not a cold-cache or
+cross-platform result. A 3-second post-change `sample` now puts the leading
+work in the authentic DM2 FM Towns ZIP image inflate; sample counts indicate
+where the sampled interval spent time, not full-run elapsed percentages. The
+full scan still blocks first menu interaction for about 8.3 seconds on this
+setup, and the remaining archive decode still needs investigation.
+
 2026-10-20 DM2 disc-image scan memory: the original Mac English BIN in
 `Dungeon-Master-II-Skullkeep_Mac_EN (1).zip` expands to 758,851,632 bytes.
 `sample` traced its M12 DM2 profile path through `zip_extract_impl`; standard
