@@ -57,8 +57,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          # Version validation needs the current commit and release tags only.
-          fetch-depth: 1
+          # Fetch full history and tags without a shallow SHA-to-tag refspec
+          # collision on tag-push events.
+          fetch-depth: 0
           fetch-tags: true
 
       - id: release
@@ -712,10 +713,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          # The publisher only needs the current source and tag refs for
-          # release validation/changelog links; avoid fetching every branch
-          # and the full repository history on this final job.
-          fetch-depth: 1
+          # The publisher needs the release tag and previous tags; a full fetch
+          # also avoids the SHA-to-tag refspec collision on tag-push events.
+          fetch-depth: 0
           fetch-tags: true
 
       - name: Validate and stage SPDX source SBOM
