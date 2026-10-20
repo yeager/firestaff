@@ -4667,12 +4667,12 @@ static int m12_dm1_dungeon_compatible(const char* graphicsMd5,
 }
 
 /* ReDMCSB LOADSAVE.C F0435 resolves the dungeon owned by the selected game
- * installation. A matching file elsewhere below a broad search root cannot
- * complete an orphan GRAPHICS.DAT: that would combine two installations and
- * can hide a later complete original copy. Preserve renamed-world discovery,
- * but admit only a unique catalogued hash from the graphics file's own
- * directory. */
-static int m12_dm1_find_same_directory_dungeon(
+ * installation. Keep discovery inside the selected graphics directory tree
+ * and accept only one catalogued world hash. This supports the authentic PC
+ * extraction layout where GRAPHICS.DAT is at the chosen root while its
+ * matching DUNGEON.DAT remains under dos_extract; a wrong same-name sibling
+ * must not hide that unique original world. */
+static int m12_dm1_find_unique_root_dungeon(
     const char* graphics, const char* allowedHashes,
     char dungeon[ASSET_PATH_MAX]) {
     char graphicsParent[FSP_PATH_MAX];
@@ -4705,12 +4705,6 @@ static int m12_dm1_find_same_directory_dungeon(
             return 0;
         }
         for (i = 0; i < count; ++i) {
-            char candidateParent[FSP_PATH_MAX];
-            if (!FSP_ParentDir(candidateParent, sizeof(candidateParent),
-                               candidates[i]) ||
-                strcmp(candidateParent, graphicsParent) != 0) {
-                continue;
-            }
             if (selected[0] && strcmp(selected, candidates[i]) != 0) {
                 free(candidates);
                 return 0;
@@ -4740,12 +4734,11 @@ static int m12_dm1_default_dungeon_identity(const char* graphics,
                 m12_dm1_world_name(graphicsMd5, language), dungeon, ASSET_PATH_MAX)) return 0;
     } else {
         int found;
-        int namedSiblingPresent = 0;
+        int namedSiblingMatches = 0;
         char siblingMd5[33];
         if (!FSP_ParentDir(parent, sizeof(parent), graphics)) return 0;
         found = FSP_FindUniqueFileIgnoreCase(parent,
             m12_dm1_world_name(graphicsMd5, language), dungeon, ASSET_PATH_MAX);
-        namedSiblingPresent = found == 1;
         if (found == 1) {
             const char* siblingMatch;
             if (!asset_file_md5_hex(dungeon, siblingMd5)) {
@@ -4756,27 +4749,21 @@ static int m12_dm1_default_dungeon_identity(const char* graphics,
                     (siblingMatch != allowed && siblingMatch[-1] != ';') ||
                     (siblingMatch[32] != '\0' && siblingMatch[32] != ';')) {
                     found = 0;
+                } else {
+                    namedSiblingMatches = 1;
                 }
             }
         }
-        /* A renamed PC34 world may share the graphics owner's directory, but
-         * a matching dungeon in a nested sibling installation cannot make
-         * this graphics copy launchable. */
-        if (found == 0 && !namedSiblingPresent &&
-            (strcmp(graphicsMd5, "fa6b1aa29e191418713bf2cda93d962e") == 0 ||
-             strcmp(graphicsMd5, "f934d97e43e1ba6e5159839acbcd0611") == 0)) {
-            if (m12_dm1_find_same_directory_dungeon(graphics, allowed,
-                                                    dungeon)) {
-                found = 1;
-            }
-        }
-        if (found == 0 && !namedSiblingPresent &&
+        /* Only PC34 and the split Japanese Towns package allow renamed world
+         * discovery. If the named sibling has the wrong edition hash, search
+         * the selected installation tree and accept only a unique match. */
+        if (found == 0 && !namedSiblingMatches &&
             (strcmp(graphicsMd5, "fa6b1aa29e191418713bf2cda93d962e") == 0 ||
              strcmp(graphicsMd5, "f934d97e43e1ba6e5159839acbcd0611") == 0 ||
              ((language == 1 || language == 2) &&
               strcmp(graphicsMd5, "7f9458e4a3972d06e649a6fa85a7f34b") == 0))) {
-            if (!m12_dm1_find_same_directory_dungeon(graphics, allowed,
-                                                     dungeon))
+            if (!m12_dm1_find_unique_root_dungeon(graphics, allowed,
+                                                  dungeon))
                 return 0;
         } else if (found != 1) return 0;
     }
