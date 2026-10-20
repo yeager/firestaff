@@ -80,6 +80,10 @@ typedef struct {
 } DM2_V1_MacMedia;
 
 int dm2_v1_mac_media_read_zip(const char *zip_path, DM2_V1_MacMedia *out);
+/* Parse the selected original CD image already read from its owning ZIP.
+ * The image remains caller-owned; returned HFS forks are caller-owned. */
+int dm2_v1_mac_media_read_image(const uint8_t *image, size_t image_size,
+                                DM2_V1_MacMedia *out);
 void dm2_v1_mac_media_free(DM2_V1_MacMedia *media);
 
 #endif

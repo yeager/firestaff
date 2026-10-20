@@ -18,6 +18,7 @@ static const char* const g_changelogLines[] = {
     "",
     "V" FIRESTAFF_VERSION_NUMBER "  (2026-10-20)",
     "  - From the no-game collection menu, authentic DM1, CSB and DM2 media now verify through title selection into the first original-runtime state.",
+    "  - DM2 reuses each CUE-selected image between its Macintosh HFS and FM Towns scan probes instead of inflating it twice.",
     "  - Startup checks confirm the DM1 HoC frame, CSB party and viewport, and DM2 completion of all 225 original title frames before its first champion.",
     "  - The new original-media startup regression checks that selected game archives remain unchanged and that the runtime uses no fallbacks.",
     "  - CSB FM Towns scan progress advances during authentication of the original image inside the retail ZIP, and cancellation stops decompression.",

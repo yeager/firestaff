@@ -77,8 +77,9 @@ static int dm2_v1_boot_query_creature_ai_flags(
                : -1;
 }
 
-static int dm2_v1_boot_load_mac_zip(DM2_V1_BootProfile *profile,
-                                    const char *base) {
+static int dm2_v1_boot_load_mac_zip_with_image(
+    DM2_V1_BootProfile *profile, const char *base,
+    const uint8_t *selected_image, size_t selected_image_size) {
     static const char *names[] = {
         "Dungeon-Master-II-Skullkeep_Mac_EN.zip"
     };
@@ -98,7 +99,12 @@ static int dm2_v1_boot_load_mac_zip(DM2_V1_BootProfile *profile,
     for (size_t c = 0; c < i; ++c) {
         DM2_V1_MacMedia media;
         if (!FSP_FileExists(candidates[c]) ||
-            dm2_v1_mac_media_read_zip(candidates[c], &media) != 0) continue;
+            (selected_image
+                 ? dm2_v1_mac_media_read_image(selected_image,
+                                               selected_image_size, &media)
+                 : dm2_v1_mac_media_read_zip(candidates[c], &media)) != 0) {
+            continue;
+        }
         profile->graphics_mem = media.graphics;
         profile->graphics_mem_size = media.graphics_size;
         profile->dungeon_mem = media.dungeon;
@@ -172,6 +178,12 @@ static int dm2_v1_boot_load_mac_zip(DM2_V1_BootProfile *profile,
         return 1;
     }
     return 0;
+}
+
+static int dm2_v1_boot_load_mac_zip(DM2_V1_BootProfile *profile,
+                                    const char *base)
+{
+    return dm2_v1_boot_load_mac_zip_with_image(profile, base, NULL, 0u);
 }
 
 static uint16_t dm2_v1_boot_read_le16(const uint8_t *data)
@@ -2772,8 +2784,10 @@ static void copy_parent_dir(char dst[512], const char *path) {
 
 /* ── FM Towns disc image loading from ZIP ───────────────────────────── */
 
-static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
-                                                     const char *data_dir)
+static void dm2_v1_boot_load_fmtowns_disc_from_zip_with_image(
+    DM2_V1_BootProfile *profile, const char *data_dir,
+    uint8_t **reused_image, size_t reused_image_size,
+    const uint32_t *reused_track_starts, int reused_track_count)
 {
     static const char archive_name[] =
         "Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip";
@@ -2785,6 +2799,8 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
     size_t cue_size = 0;
     uint8_t *img_data = NULL;
     size_t img_size = 0;
+    uint32_t track_starts[9] = {0};
+    int track_count = 0;
 
     /* DMWeb's animation inventory
      * (http://dmweb.free.fr/community/documentation/file-formats/animations/)
@@ -2844,8 +2860,14 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
         snprintf(zip_path, sizeof(zip_path), "%s/%s", data_dir, archive_name);
     }
 
-    if (firestaff_zip_extract_by_suffix(zip_path, ".cue",
-                                        &cue_data, &cue_size) != 0) {
+    if (reused_image && *reused_image) {
+        if (reused_track_count < 3 || !reused_track_starts) return;
+        memcpy(track_starts, reused_track_starts, sizeof(track_starts));
+        track_count = reused_track_count;
+        img_data = *reused_image;
+        img_size = reused_image_size;
+    } else if (firestaff_zip_extract_by_suffix(zip_path, ".cue",
+                                               &cue_data, &cue_size) != 0) {
         /* An explicit file never authorizes a sibling or parent medium. */
         if (explicit_zip) return;
         snprintf(zip_path, sizeof(zip_path), "%s", nested_zip_path);
@@ -2868,27 +2890,29 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
         }
     }
 
-    uint32_t track_starts[9] = {0};
-    int track_count = fmtowns_cue_parse_track_starts(
-        (const char *)cue_data, cue_size, track_starts, 9);
-    if (!fmtowns_cue_parse_image_member((const char *)cue_data, cue_size,
-                                        image_member, sizeof(image_member))) {
+    if (!(reused_image && *reused_image)) {
+        track_count = fmtowns_cue_parse_track_starts(
+            (const char *)cue_data, cue_size, track_starts, 9);
+        if (!fmtowns_cue_parse_image_member((const char *)cue_data, cue_size,
+                                            image_member, sizeof(image_member))) {
+            free(cue_data);
+            return;
+        }
         free(cue_data);
-        return;
-    }
-    free(cue_data);
-    if (track_count < 3) return;
+        if (track_count < 3) return;
 
-    /* The CUE sheet, rather than ZIP member order or a suffix, owns the
-     * selected MODE1/2352 image.  This keeps a multi-image archive from
-     * silently binding another disc while still retaining every byte in RAM. */
-    if (firestaff_zip_extract_by_name(zip_path, image_member,
-                                      &img_data, &img_size) != 0)
-        return;
+        /* The CUE sheet, rather than ZIP member order or a suffix, owns the
+         * selected MODE1/2352 image. This keeps a multi-image archive from
+         * silently binding another disc while retaining the original bytes. */
+        if (firestaff_zip_extract_by_name(zip_path, image_member,
+                                          &img_data, &img_size) != 0)
+            return;
+    }
 
     strncpy(profile->fmtowns_zip_path, zip_path,
             sizeof(profile->fmtowns_zip_path) - 1);
     profile->fmtowns_disc_image = img_data;
+    if (reused_image && *reused_image == img_data) *reused_image = NULL;
     profile->fmtowns_disc_image_size = img_size;
     memcpy(profile->fmtowns_cdda_track_starts, track_starts,
            sizeof(profile->fmtowns_cdda_track_starts));
@@ -3293,6 +3317,13 @@ static void dm2_v1_boot_load_fmtowns_loose_media(
     profile->fmtowns_animation_streams_verified = 1;
 }
 
+static void dm2_v1_boot_load_fmtowns_disc_from_zip(
+    DM2_V1_BootProfile *profile, const char *data_dir)
+{
+    dm2_v1_boot_load_fmtowns_disc_from_zip_with_image(
+        profile, data_dir, NULL, 0u, NULL, 0);
+}
+
 typedef struct {
     const char *name;
     uint8_t *bytes;
@@ -3631,6 +3662,52 @@ static int dm2_v1_boot_load_pc_dos_archive(DM2_V1_BootProfile *profile,
     return 1;
 }
 
+/* Read a ZIP's cue-owned data image once for the Mac HFS and FM Towns
+ * readers. The cue sheet remains authoritative for both the selected image
+ * and track starts; this only shares the decoded original bytes in memory. */
+static int dm2_v1_boot_read_explicit_zip_cue_image(
+    const char *archive, uint8_t **out_image, size_t *out_image_size,
+    uint32_t out_track_starts[9], int *out_track_count)
+{
+    uint8_t *cue = NULL;
+    size_t cue_size = 0u;
+    char image_member[512];
+
+    if (!archive || !out_image || !out_image_size || !out_track_starts ||
+        !out_track_count) return 0;
+    *out_image = NULL;
+    *out_image_size = 0u;
+    *out_track_count = 0;
+    memset(out_track_starts, 0, 9u * sizeof(out_track_starts[0]));
+    if (firestaff_zip_extract_by_suffix(archive, ".cue", &cue,
+                                        &cue_size) != 0) {
+        free(cue);
+        return 0;
+    }
+    *out_track_count = fmtowns_cue_parse_track_starts(
+        (const char *)cue, cue_size, out_track_starts, 9);
+    if (!fmtowns_cue_parse_image_member((const char *)cue, cue_size,
+                                        image_member, sizeof(image_member))) {
+        free(cue);
+        return 0;
+    }
+    free(cue);
+    if (firestaff_zip_extract_by_name(archive, image_member, out_image,
+                                      out_image_size) != 0) {
+        free(*out_image);
+        *out_image = NULL;
+        *out_image_size = 0u;
+        return 0;
+    }
+    if (!*out_image || *out_image_size == 0u) {
+        free(*out_image);
+        *out_image = NULL;
+        *out_image_size = 0u;
+        return 0;
+    }
+    return 1;
+}
+
 /* Every reader receives the same explicit archive. Failed readers may own
  * partial disc/movie buffers, so release them before trying another format.
  * Platform identity is the authenticated DAT pair, never the outer name. */
@@ -3638,14 +3715,37 @@ static int dm2_v1_boot_load_explicit_zip(DM2_V1_BootProfile *profile,
                                          const char *archive)
 {
     char save_root[sizeof(profile->save_root)];
+    uint8_t *cue_image = NULL;
+    size_t cue_image_size = 0u;
+    uint32_t cue_track_starts[9] = {0};
+    int cue_track_count = 0;
+    int cue_image_loaded = 0;
     int reader;
     memcpy(save_root, profile->save_root, sizeof(save_root));
     for (reader = 0; reader < 4; ++reader) {
         int reader_family;
         switch (reader) {
             case 0: (void)dm2_v1_boot_load_pc_dos_archive(profile, archive); break;
-            case 1: (void)dm2_v1_boot_load_mac_zip(profile, archive); break;
-            case 2: dm2_v1_boot_load_fmtowns_disc_from_zip(profile, archive); break;
+            case 1:
+                cue_image_loaded = dm2_v1_boot_read_explicit_zip_cue_image(
+                    archive, &cue_image, &cue_image_size, cue_track_starts,
+                    &cue_track_count);
+                if (cue_image_loaded) {
+                    (void)dm2_v1_boot_load_mac_zip_with_image(
+                        profile, archive, cue_image, cue_image_size);
+                } else {
+                    (void)dm2_v1_boot_load_mac_zip(profile, archive);
+                }
+                break;
+            case 2:
+                if (cue_image_loaded) {
+                    dm2_v1_boot_load_fmtowns_disc_from_zip_with_image(
+                        profile, archive, &cue_image, cue_image_size,
+                        cue_track_starts, cue_track_count);
+                } else {
+                    dm2_v1_boot_load_fmtowns_disc_from_zip(profile, archive);
+                }
+                break;
             case 3: (void)dm2_v1_boot_load_amiga_installer_from_zip(profile, archive); break;
         }
         /* A recognised pair from another platform is not authority for this
@@ -3662,12 +3762,15 @@ static int dm2_v1_boot_load_explicit_zip(DM2_V1_BootProfile *profile,
                     : md5_matches(profile->graphics_md5, "1c940ea95703eaea0ecdf84d17e954b9");
         if (reader_family && profile->graphics_path[0] && profile->dungeon_path[0] &&
             dm2_v1_boot_asset_hash_pair_supported(profile->graphics_md5,
-                                                  profile->dungeon_md5))
+                                                  profile->dungeon_md5)) {
+            free(cue_image);
             return 1;
+        }
         dm2_v1_boot_cleanup(profile);
         dm2_v1_boot_profile_init(profile);
         memcpy(profile->save_root, save_root, sizeof(save_root));
     }
+    free(cue_image);
     return 0;
 }
 

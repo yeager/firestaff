@@ -38,6 +38,18 @@ verification does not reproduce it. Source reference:
 
 # Firestaff TODO — DM2
 
+2026-10-20 explicit ZIP probe sharing: the Macintosh HFS reader and FM Towns
+disc reader now consume the same CUE-selected BIN buffer when M12 probes one
+archive for both platform families. The CUE remains the authority for the
+image member and track starts; platform selection still requires the existing
+authentic DAT hash pair and Towns startup receipts. This removes duplicate
+inflation of a candidate image without changing its identity gate. The
+installed original-media DM2 Macintosh, FM Towns and renamed-ZIP directory
+tests passed. One warm full scan measured 10.206 s after the change; its
+12.788 s pre-change measurement was a single run, so a stable timing gain is
+not established. Broader cold-scan and native-platform verification remain
+open.
+
 2026-10-20 M12 Macintosh retail launch and scan reuse: the full authentic
 collection scan now reuses the DM2 Macintosh HFS profile already authenticated
 by the general ZIP pass instead of reopening the same 561 MiB retail archive

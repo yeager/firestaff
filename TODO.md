@@ -1,5 +1,16 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-20 DM2 CUE image reuse: the explicit ZIP reader now shares one
+cue-selected original image between the Macintosh HFS probe and the FM Towns
+disc probe. The pre-change sample showed separate full ZIP inflations beneath
+`dm2_v1_mac_media_read_zip` and `dm2_v1_boot_load_fmtowns_disc_from_zip`; the
+post-change sample showed a single image inflation followed by both parsers.
+The authenticated installed-media scan still reported DM1, CSB and DM2 READY.
+Its one warm timing changed from 12.788 s to 10.206 s, which is not enough
+repeated evidence to claim a stable wall-clock gain. The original-media DM2
+Mac, FM Towns and renamed-ZIP directory tests passed (575 s total). The full
+launcher scan remains synchronous and still delays first menu interaction.
+
 2026-10-20 DM2 directory ZIP scan audit: removed the second DOS-only sweep of
 three canonical archive names. The earlier bounded inventory already visits
 every ZIP in each scan root and its `dm2` child, and authenticates each archive

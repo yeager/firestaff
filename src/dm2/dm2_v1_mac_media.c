@@ -384,18 +384,13 @@ int dm2_v1_mac_resource_type_at(const uint8_t *fork, size_t fork_size,
 }
 
 int dm2_v1_mac_media_read_zip(const char *zip_path, DM2_V1_MacMedia *out) {
-    uint8_t *image = NULL, *cat = NULL, *cue = NULL;
-    size_t image_size = 0, cue_size = 0, cat_size;
+    uint8_t *image = NULL, *cue = NULL;
+    size_t image_size = 0, cue_size = 0;
     char image_member[512];
-    MacDisk disk;
-    uint32_t alloc_size, catalog_size, file_size;
-    uint16_t alloc_start, cat_start;
-    Extent extents[3], resource_extents[3];
-    uint32_t resource_size;
-    int rc = -1;
+    int rc;
     if (!zip_path || !out) return -1;
     memset(out, 0, sizeof(*out));
-    /* The original CUE owns the data-image name.  A multi-track archive can
+    /* The original CUE owns the data-image name. A multi-track archive can
      * contain several BINs, so selecting the first suffix match would make
      * the HFS reader depend on ZIP member order rather than source media. */
     if (firestaff_zip_extract_by_suffix(zip_path, ".cue", &cue, &cue_size) != 0 ||
@@ -404,9 +399,27 @@ int dm2_v1_mac_media_read_zip(const char *zip_path, DM2_V1_MacMedia *out) {
         firestaff_zip_extract_by_name(zip_path, image_member, &image,
                                       &image_size) != 0) {
         free(cue);
+        free(image);
         return -1;
     }
     free(cue);
+    rc = dm2_v1_mac_media_read_image(image, image_size, out);
+    free(image);
+    return rc;
+}
+
+int dm2_v1_mac_media_read_image(const uint8_t *image, size_t image_size,
+                                DM2_V1_MacMedia *out) {
+    uint8_t *cat = NULL;
+    size_t cat_size;
+    MacDisk disk;
+    uint32_t alloc_size, catalog_size, file_size;
+    uint16_t alloc_start, cat_start;
+    Extent extents[3], resource_extents[3];
+    uint32_t resource_size;
+    int rc = -1;
+    if (!image || image_size == 0u || !out) return -1;
+    memset(out, 0, sizeof(*out));
     if (locate_hfs(image, image_size, &disk, &alloc_size, &alloc_start,
                    &catalog_size, &cat_start) != 0) goto done;
     cat_size = catalog_size;
@@ -487,7 +500,7 @@ int dm2_v1_mac_media_read_zip(const char *zip_path, DM2_V1_MacMedia *out) {
     }
     rc = 0;
 done:
-    free(cat); free(image);
+    free(cat);
     if (rc != 0) dm2_v1_mac_media_free(out);
     return rc;
 }

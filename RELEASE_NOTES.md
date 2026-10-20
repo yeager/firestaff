@@ -7,6 +7,7 @@
 ## Developer changes
 
 - `DM1, CSB and DM2 collection-menu startup`: add an original-media regression that starts from the no-game menu, selects each title, and verifies handoff into the authentic runtime state.
+- `DM2 original-media scan`: reuse the CUE-selected image between Macintosh HFS and FM Towns probes instead of inflating the same ZIP member twice.
 - `Runtime startup evidence`: validate the first DM1 HoC frame, the CSB party and viewport state, and DM2 completion of its 225-frame title sequence before the first champion loads.
 - `Original-media integrity`: confirm the real-media startup checks leave installed game archives unchanged and use no runtime fallbacks.
 - `Release metadata`: update the project version, embedded changelog and reproducible SPDX source SBOM for v3.0.399.
