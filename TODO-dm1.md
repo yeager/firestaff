@@ -1,3 +1,14 @@
+2026-10-20 authentic DM1 PC-34 startup/Hall regression rerun:
+`dm1_v1_pc34_native_cli_boot` passed with the installed DOS 3.4 ZIP. The
+original-media run covered clean quit from the first I34E and SWSH frames,
+ANIM/TITLE timing and selector-door progression, direct CLI and M12 launch,
+Resume/Credits/Quit routes, Original and Modern HoC entry, and real mouse
+recruitment plus champion switching 0→1→0. The full-redraw diagnostics also
+reported frame rate, CPU/frame timing and explicit GPU availability. The
+archive remained the source of the selected PC-34 graphics and dungeon. SDL
+dummy video/audio does not verify native Mac input delivery, audible output,
+or display parity.
+
 2026-10-20 authentic Amiga 2.2 German startup:
 `dm1_v1_amiga22_german_archive_cli_boot` passed against the original A22G disk
 extracted from the installed 7z archive. Its 910,058-byte ADF remained
