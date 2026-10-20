@@ -398,6 +398,33 @@ if [ -f "$data_dir" ]; then
         cat "$default_log" >&2
         exit 1
     fi
+    case "$data_dir" in
+        *FM-Towns_JA-EN*.zip)
+            python3 - "$default_log" "$(basename "$default_archive")" <<'PY'
+import re
+import sys
+
+log_path, archive_name = sys.argv[1:]
+progress = []
+with open(log_path, encoding="utf-8", errors="replace") as stream:
+    for line in stream:
+        match = re.search(
+            r"scan elapsed-ms=\d+ progress=(\d+)% game=csb "
+            r"task=authenticating ZIP candidate path=(.*)$", line.rstrip())
+        if match and "/csb/" in match.group(2) and match.group(2).endswith(archive_name):
+            progress.append(int(match.group(1)))
+if len(set(progress)) < 2 or progress[-1] <= progress[0]:
+    raise SystemExit(
+        "FAIL: authentic CSB FM Towns ZIP admission did not advance the menu scan bar"
+        f" (progress samples: {progress})")
+if any(after < before for before, after in zip(progress, progress[1:])):
+    raise SystemExit(
+        "FAIL: CSB FM Towns ZIP scan progress moved backward"
+        f" (progress samples: {progress})")
+print("PASS: authentic CSB FM Towns ZIP extraction advanced the M12 scan progress")
+PY
+            ;;
+    esac
     echo 'PASS: CSB start menu discovers authentic FM Towns data from ~/.firestaff/data/csb without --data-dir'
 
     # Follow the same per-user discovery path through the normal M12 title,

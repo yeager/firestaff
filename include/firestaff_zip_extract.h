@@ -8,6 +8,10 @@
 extern "C" {
 #endif
 
+typedef int (*FirestaffZipExtractProgressFn)(uint64_t completedBytes,
+                                              uint64_t totalBytes,
+                                              void* userData);
+
 /* Extract a single entry from a ZIP archive by filename suffix match.
  * Scans the central directory for the first entry whose name ends with
  * the given suffix (case-insensitive).  Handles both stored (method 0)
@@ -29,6 +33,14 @@ int firestaff_zip_extract_by_name(const char *zip_path,
                                   const char *filename,
                                   uint8_t **out_data,
                                   size_t *out_size);
+
+/* Same extraction as firestaff_zip_extract_by_name, with bounded progress
+ * callbacks while stored/deflated member bytes are copied. A callback return
+ * of zero stops extraction and returns -2; ordinary errors still return -1. */
+int firestaff_zip_extract_by_name_with_progress(
+    const char *zip_path, const char *filename,
+    uint8_t **out_data, size_t *out_size,
+    FirestaffZipExtractProgressFn progressFn, void *userData);
 
 /* Same bounded stored/deflate ZIP extraction, but from an already resident
  * byte buffer.  This is for nested game media and never creates a file. */

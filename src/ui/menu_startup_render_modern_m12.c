@@ -1736,7 +1736,8 @@ static void draw_data_scan_overlay(M12_ModernCanvas* c,
         return;
     }
     if (progress->totalSteps > 0U) {
-        percent = (int)((progress->completedSteps * 100U) /
+        percent = (int)((progress->completedSteps * 100U +
+                         progress->currentStepPercent) /
                         progress->totalSteps);
     }
     if (percent < 0) percent = 0;
@@ -2680,7 +2681,8 @@ static void draw_message_view(M12_ModernCanvas* c, const M12_StartupMenuState* s
             int barH = 18;
             int fillW;
             if (progress->totalSteps > 0U) {
-                scanProgress = (int)((progress->completedSteps * 100U) /
+                scanProgress = (int)((progress->completedSteps * 100U +
+                                      progress->currentStepPercent) /
                                      progress->totalSteps);
             }
             if (scanProgress < 0) scanProgress = 0;

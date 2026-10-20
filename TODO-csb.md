@@ -1,3 +1,15 @@
+2026-10-20 CSB FM Towns startup scan progress:
+The no-game M12 scan previously held one progress value while authenticating
+the original 507 MB CD image inside the FM Towns ZIP. The native ZIP reader now
+reports bounded decompressed-byte progress to the M12 progress bar and stops
+when the scan callback cancels. The original-media
+`csb_v1_fmtowns_native_cli_boot` test verifies monotonic bar movement during
+default `~/.firestaff/data/csb` discovery and then completes the New Game
+route. `firestaff_zip_extract_unit` also verifies 40 monotonic progress
+callbacks and cancellation against the installed authentic CSB archive. The
+archive remained unchanged. This improves feedback and cancellation; it does
+not shorten the time required to authenticate the compressed disc image.
+
 2026-10-19 current-source real-media launcher/rescan integration:
 `return_to_menu_rescans_dm1_csb_dm2_real_media` passed its full `returns`
 matrix, including CSB FM Towns, Atari ST and Amiga routes. Direct `--game

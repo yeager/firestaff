@@ -27015,6 +27015,8 @@ endif()
         NAME firestaff_zip_extract_unit
         COMMAND test_firestaff_zip_extract
     )
+    set_tests_properties(firestaff_zip_extract_unit PROPERTIES
+        ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip")
 
     # ── Accessibility manifest writer unit test ────────────────────
     # Locks the fs_ax_* JSON contract used by both M11 game-view and

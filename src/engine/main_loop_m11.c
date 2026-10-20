@@ -550,8 +550,12 @@ static int m11_scan_progress_callback(const M12_AssetScanProgress* progress,
     if (!ctx || (!ctx->framebuffer && !ctx->modernRgba)) return 1;
     if (ctx->debug && progress) {
         fprintf(stderr,
-                "firestaff: scan elapsed-ms=%llu game=%s task=%s path=%s\n",
+                "firestaff: scan elapsed-ms=%llu progress=%zu%% game=%s task=%s path=%s\n",
                 (unsigned long long)(SDL_GetTicks() - ctx->startedMs),
+                progress->totalSteps > 0U
+                    ? (progress->completedSteps * 100U +
+                       progress->currentStepPercent) / progress->totalSteps
+                    : 0U,
                 progress->currentGameId[0] ? progress->currentGameId : "all",
                 progress->currentTask,
                 progress->currentPath[0] ? progress->currentPath : "(none)");
@@ -909,7 +913,8 @@ static void m11_draw_intro_progress_bar(unsigned char* rgba,
     (void)elapsedMs;
     if (!rgba || w <= 0 || h <= 0) return;
     if (progress && progress->totalSteps > 0) {
-        pct = (progress->completedSteps * 100) / progress->totalSteps;
+        pct = (progress->completedSteps * 100U +
+               progress->currentStepPercent) / progress->totalSteps;
         if (pct > 100) pct = 100;
     }
     panelW = w < 440 ? w - 32 : 408;

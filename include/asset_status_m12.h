@@ -73,6 +73,7 @@ typedef struct {
     int complete;
     size_t totalSteps;
     size_t completedSteps;
+    unsigned int currentStepPercent;
     char currentGameId[16];
     char currentTask[64];
     char currentPath[M12_ASSET_DATA_DIR_CAPACITY];

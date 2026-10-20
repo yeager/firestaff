@@ -166,6 +166,7 @@ static int m12_scan_progress_update(M12_ScanProgressContext* ctx,
     if (advanceStep && progress->completedSteps < progress->totalSteps) {
         ++progress->completedSteps;
     }
+    progress->currentStepPercent = 0U;
     snprintf(progress->currentTask, sizeof(progress->currentTask),
              "%s", task ? task : "");
     snprintf(progress->currentGameId, sizeof(progress->currentGameId),
@@ -178,6 +179,32 @@ static int m12_scan_progress_update(M12_ScanProgressContext* ctx,
     }
     if (ctx->options && ctx->options->progressFn &&
         !ctx->options->progressFn(progress, ctx->options->progressUserData)) {
+        progress->cancelRequested = 1;
+    }
+    if (progress->cancelRequested) {
+        progress->active = 0;
+        progress->cancelled = 1;
+        progress->complete = 0;
+        return 0;
+    }
+    return 1;
+}
+
+static int m12_scan_progress_set_step_percent(M12_ScanProgressContext* ctx,
+                                               unsigned int percent) {
+    M12_AssetScanProgress* progress;
+    if (!ctx || !ctx->status) return 1;
+    progress = &ctx->status->scanProgress;
+    if (percent > 100U) percent = 100U;
+    if (progress->currentStepPercent == percent) return 1;
+    progress->currentStepPercent = percent;
+    if (ctx->options && ctx->options->cancelFlag &&
+        *ctx->options->cancelFlag) {
+        progress->cancelRequested = 1;
+    }
+    if (ctx->options && ctx->options->progressFn &&
+        !ctx->options->progressFn(progress,
+                                  ctx->options->progressUserData)) {
         progress->cancelRequested = 1;
     }
     if (progress->cancelRequested) {
@@ -203,6 +230,7 @@ static void m12_scan_progress_finish(M12_AssetStatus* status,
     progress->active = 0;
     progress->cancelled = cancelled ? 1 : 0;
     progress->complete = complete ? 1 : 0;
+    progress->currentStepPercent = 0U;
     if (complete && progress->completedSteps < progress->totalSteps) {
         progress->completedSteps = progress->totalSteps;
     }
@@ -2363,9 +2391,21 @@ static int m12_csb_fmtowns_archive_stage(const char* archivePath,
  * bounded allocations only.  The older stage-to-path helper remains for
  * development materializers, but normal admission must not create a game
  * image in /tmp or beside the source archive. */
+static int m12_csb_fmtowns_zip_progress(uint64_t completedBytes,
+                                        uint64_t totalBytes,
+                                        void* userData) {
+    unsigned int percent;
+    if (totalBytes == 0U) return 1;
+    percent = (unsigned int)((completedBytes * 100U) / totalBytes);
+    if (percent > 100U) percent = 100U;
+    return m12_scan_progress_set_step_percent(
+        (M12_ScanProgressContext*)userData, percent);
+}
+
 static int m12_csb_fmtowns_archive_read_image(
     const char* archivePath, uint8_t** outImage, size_t* outImageSize,
-    CSB_V1_FmtownsCdLayout* layout) {
+    CSB_V1_FmtownsCdLayout* layout,
+    M12_ScanProgressContext* progress) {
     uint8_t* image = NULL;
     size_t imageSize = 0U;
     uint8_t* cue = NULL;
@@ -2376,6 +2416,7 @@ static int m12_csb_fmtowns_archive_read_image(
     char alternateImageMember[M12_ASSET_DATA_DIR_CAPACITY];
     char* extension;
     int pathLength;
+    int zipResult;
     if (!archivePath || !outImage || !outImageSize || !layout) return 0;
     *outImage = NULL;
     *outImageSize = 0U;
@@ -2403,8 +2444,11 @@ static int m12_csb_fmtowns_archive_read_image(
         free(cue);
         return 0;
     }
-    if (firestaff_zip_extract_by_name(archivePath, imageMember, &image,
-                                     &imageSize) != 0 &&
+    zipResult = firestaff_zip_extract_by_name_with_progress(
+        archivePath, imageMember, &image, &imageSize,
+        progress ? m12_csb_fmtowns_zip_progress : NULL, progress);
+    if (zipResult == -2) return 0;
+    if (zipResult != 0 &&
         !asset_read_virtual_path_alloc(imagePath, &image, &imageSize)) {
         /* CUE filenames are case-insensitive on the source DOS filesystem.
          * The preserved RAR spells the BIN suffix in lowercase while its CUE
@@ -2498,7 +2542,8 @@ static const M12_AssetVersionStatus* m12_first_matched_version(
 static int m12_admit_csb_fmtowns_archive(M12_AssetStatus* status,
                                          int gameIndex,
                                          const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
-                                         size_t rootCount) {
+                                         size_t rootCount,
+                                         M12_ScanProgressContext* progress) {
     static const char* const archiveNames[] = {
         "Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip",
         "Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN (1).zip",
@@ -2556,8 +2601,15 @@ static int m12_admit_csb_fmtowns_archive(M12_AssetStatus* status,
                                (int)sizeof(archivePath)) {
                     continue;
                 }
+                if (!m12_scan_progress_update(progress,
+                                              "authenticating ZIP candidate",
+                                              "csb", archivePath, 0)) {
+                    return admitted;
+                }
                 if (!m12_csb_fmtowns_archive_read_image(
-                        archivePath, &image, &imageSize, &layout)) {
+                        archivePath, &image, &imageSize, &layout, progress)) {
+                    if (status->scanProgress.cancelRequested ||
+                        status->scanProgress.cancelled) return admitted;
                     continue;
                 }
                 for (languageIndex = 0U; languageIndex < 2U; ++languageIndex) {
@@ -8360,7 +8412,13 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
              * CUE and audio tracks are required by the native F0719 route.
              * ReDMCSB TOWNSIO.C F0719 and ANIM.C F2275. */
             csbFmtownsAdmitted = m12_admit_csb_fmtowns_archive(status, i,
-                roots, rootCount) || csbFmtownsAdmitted;
+                roots, rootCount, &progressCtx) || csbFmtownsAdmitted;
+            if (status->scanProgress.cancelRequested ||
+                status->scanProgress.cancelled) {
+                m12_scan_publish_cancelled_status(status, requestedDataDir,
+                                                  legacyFallbackSnapshot);
+                return 0;
+            }
         }
         m12_fill_game_versions(status,
                                i,
@@ -8805,7 +8863,10 @@ void M12_AssetStatus_ScanGameWithOptions(
             csbFmtownsAdmitted = m12_admit_csb_fmtowns_loose_tree(
                 status, gameIndex, roots, rootCount);
             csbFmtownsAdmitted = m12_admit_csb_fmtowns_archive(
-                status, gameIndex, roots, rootCount) || csbFmtownsAdmitted;
+                status, gameIndex, roots, rootCount, &progressCtx) ||
+                csbFmtownsAdmitted;
+            if (status->scanProgress.cancelRequested ||
+                status->scanProgress.cancelled) return;
         }
         m12_fill_game_versions(status,
                                    gameIndex,

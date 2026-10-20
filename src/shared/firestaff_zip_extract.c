@@ -43,7 +43,9 @@ static int zip_extract_impl(const char *zip_path,
                             const char *pattern,
                             ZipMatchMode mode,
                             uint8_t **out_data,
-                            size_t *out_size)
+                            size_t *out_size,
+                            FirestaffZipExtractProgressFn progressFn,
+                            void *progressUserData)
 {
     FILE *fp;
     long fileSize;
@@ -133,6 +135,13 @@ static int zip_extract_impl(const char *zip_path,
             uint16_t localNameLen, localExtraLen;
             uint32_t dataOffset;
             uint8_t *buf;
+            uint64_t progressStep = (uint64_t)uncompressedSize / 40U;
+            uint64_t nextProgress;
+
+            if (progressStep < 1024U * 1024U) progressStep = 1024U * 1024U;
+            if (progressStep > 16U * 1024U * 1024U)
+                progressStep = 16U * 1024U * 1024U;
+            nextProgress = progressStep;
 
             if (fseek(fp, (long)localOffset, SEEK_SET) != 0 ||
                 fread(local, 1, sizeof(local), fp) != sizeof(local) ||
@@ -148,9 +157,32 @@ static int zip_extract_impl(const char *zip_path,
 
             if (method == 0) {
                 /* Stored */
-                if (fseek(fp, (long)dataOffset, SEEK_SET) != 0 ||
-                    fread(buf, 1, uncompressedSize, fp) != uncompressedSize) {
+                if (fseek(fp, (long)dataOffset, SEEK_SET) != 0) {
                     free(buf); fclose(fp); return -1;
+                }
+                if (!progressFn) {
+                    if (fread(buf, 1, uncompressedSize, fp) != uncompressedSize) {
+                        free(buf); fclose(fp); return -1;
+                    }
+                } else {
+                    uint32_t copied = 0U;
+                    while (copied < uncompressedSize) {
+                        size_t chunk = uncompressedSize - copied;
+                        if (chunk > 1024U * 1024U) chunk = 1024U * 1024U;
+                        if (fread(buf + copied, 1U, chunk, fp) != chunk) {
+                            free(buf); fclose(fp); return -1;
+                        }
+                        copied += (uint32_t)chunk;
+                        if ((uint64_t)copied >= nextProgress ||
+                            copied == uncompressedSize) {
+                            if (!progressFn(copied, uncompressedSize,
+                                            progressUserData)) {
+                                free(buf); fclose(fp); return -2;
+                            }
+                            while (nextProgress <= copied)
+                                nextProgress += progressStep;
+                        }
+                    }
                 }
             } else if (method == 8) {
                 /* Deflate */
@@ -190,6 +222,17 @@ static int zip_extract_impl(const char *zip_path,
                         free(buf); fclose(fp); return -1;
                     }
                     produced = uncompressedSize - zs.avail_out;
+                    if (progressFn &&
+                        ((uint64_t)produced >= nextProgress ||
+                         produced == uncompressedSize)) {
+                        if (!progressFn(produced, uncompressedSize,
+                                        progressUserData)) {
+                            inflateEnd(&zs);
+                            free(buf); fclose(fp); return -2;
+                        }
+                        while (nextProgress <= produced)
+                            nextProgress += progressStep;
+                    }
                 } while (ret != Z_STREAM_END &&
                          (remaining > 0 || zs.avail_in > 0));
                 inflateEnd(&zs);
@@ -219,7 +262,7 @@ int firestaff_zip_extract_by_suffix(const char *zip_path,
                                     size_t *out_size)
 {
     return zip_extract_impl(zip_path, suffix, ZIP_MATCH_SUFFIX,
-                            out_data, out_size);
+                            out_data, out_size, NULL, NULL);
 }
 
 int firestaff_zip_extract_by_name(const char *zip_path,
@@ -228,7 +271,17 @@ int firestaff_zip_extract_by_name(const char *zip_path,
                                   size_t *out_size)
 {
     return zip_extract_impl(zip_path, filename, ZIP_MATCH_BASENAME,
-                            out_data, out_size);
+                            out_data, out_size, NULL, NULL);
+}
+
+int firestaff_zip_extract_by_name_with_progress(
+    const char *zip_path, const char *filename,
+    uint8_t **out_data, size_t *out_size,
+    FirestaffZipExtractProgressFn progressFn, void *userData) {
+    if (!progressFn) return firestaff_zip_extract_by_name(
+        zip_path, filename, out_data, out_size);
+    return zip_extract_impl(zip_path, filename, ZIP_MATCH_BASENAME,
+                            out_data, out_size, progressFn, userData);
 }
 
 int firestaff_zip_extract_memory_by_suffix(const uint8_t *zip_data,

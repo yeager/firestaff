@@ -2378,7 +2378,8 @@ static void m12_format_data_scan_progress_line(
         return;
     }
     if (progress && progress->totalSteps > 0U) {
-        pct = (progress->completedSteps * 100U) / progress->totalSteps;
+        pct = (progress->completedSteps * 100U +
+               progress->currentStepPercent) / progress->totalSteps;
         if (pct > 100U) {
             pct = 100U;
         }
@@ -14269,7 +14270,8 @@ void M12_StartupMenu_DrawScanProgressLocalized(
     memset(framebuffer, 0,
            (size_t)framebufferWidth * (size_t)framebufferHeight);
     if (progress && progress->totalSteps > 0U) {
-        pct = (progress->completedSteps * 100U) / progress->totalSteps;
+        pct = (progress->completedSteps * 100U +
+               progress->currentStepPercent) / progress->totalSteps;
         if (pct > 100U) pct = 100U;
     }
     snprintf(line1, sizeof(line1), "%s",
