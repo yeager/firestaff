@@ -1936,44 +1936,6 @@ static int m12_admit_dm2_directory_zips(
     return ok;
 }
 
-/* A game-specific directory is allowed to hold several original DM2 media
- * packages.  Register each known DOS package independently of the FM Towns
- * disc rather than letting whichever scanner happened to run last become the
- * runtime owner.  The command line and the launcher select an architecture
- * only after this inventory is complete.  Every candidate still passes the
- * native GRAPHICS.DAT + DUNGEON.DAT hash gate in m12_admit_dm2_zip_profile;
- * names merely bound the otherwise-expensive archive search. */
-static void m12_admit_dm2_pc_dos_archives_in_roots(
-    M12_AssetStatus* status,
-    int gameIndex,
-    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
-    size_t rootCount) {
-    static const char* const archiveNames[] = {
-        "Dungeon-Master-II-Skullkeep_DOS_EN.zip",
-        "Dungeon-Master-II-Skullkeep_DOS_FR.zip",
-        "Dungeon-Master-II-Skullkeep_DOS_DE.zip"
-    };
-    size_t rootIndex;
-    size_t archiveIndex;
-    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
-        strcmp(g_games[gameIndex].gameId, "dm2") != 0) {
-        return;
-    }
-    for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
-        for (archiveIndex = 0U;
-             archiveIndex < sizeof(archiveNames) / sizeof(archiveNames[0]);
-             ++archiveIndex) {
-            char candidate[M12_ASSET_DATA_DIR_CAPACITY];
-            snprintf(candidate, sizeof(candidate), "%s/%s", roots[rootIndex],
-                     archiveNames[archiveIndex]);
-            (void)m12_admit_dm2_zip_profile(status, gameIndex, candidate, 0);
-            snprintf(candidate, sizeof(candidate), "%s/dm2/%s", roots[rootIndex],
-                     archiveNames[archiveIndex]);
-            (void)m12_admit_dm2_zip_profile(status, gameIndex, candidate, 0);
-        }
-    }
-}
-
 /* The Amiga release is a nested installer, not a ZIP with visible DAT
  * members.  Let the DM2 boot owner perform its bounded RAM-only transport
  * read, then copy only the verified identity receipt into M12.  M12 must not
@@ -8915,8 +8877,6 @@ void M12_AssetStatus_ScanGameWithOptions(
                                                    roots, rootCount, requestedDataDir);
                 (void)m12_admit_dm2_mac_archive(status, gameIndex,
                                                  roots, rootCount, requestedDataDir);
-                m12_admit_dm2_pc_dos_archives_in_roots(status, gameIndex,
-                                                        roots, rootCount);
 #endif
             }
         }

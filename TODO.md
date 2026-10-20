@@ -1,5 +1,15 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-20 DM2 directory ZIP scan audit: removed the second DOS-only sweep of
+three canonical archive names. The earlier bounded inventory already visits
+every ZIP in each scan root and its `dm2` child, and authenticates each archive
+through the same exact DM2 boot-profile hash gate. The rebuilt `firestaff`
+target passed, and `dm2_v1_renamed_zip_directory_real_media` passed against the
+installed original archives (73.23 seconds), confirming renamed ZIP discovery
+still works. This focused test does not establish a measurable full-scan speedup
+or complete DM2 platform parity; the broader startup and runtime gaps below
+remain open.
+
 2026-10-20 virtual-member digest reuse: M12 source-sidecar checks now consult
 the active scan's verified virtual-path MD5 receipt before decoding a member
 again. A receipt is accepted only while the enclosing archive's size and
