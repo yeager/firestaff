@@ -6008,6 +6008,8 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
     int selectorVsyncOverride = 0;
     uint64_t vblankStartMs;
     uint64_t selectorStartMs;
+    uint64_t doorAnimationEndMs = 0u;
+    uint64_t selectorCompleteMs = 0u;
     uint64_t previousDoorPresentMs = 0u;
     int result = 0;
 
@@ -6433,6 +6435,7 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
                 ++doorSoundCount;
         }
     }
+    doorAnimationEndMs = m11_intro_active_ticks();
     while (!M11_Audio_SfxDrained(&gameView->audioState)) {
         SDL_Event event;
         if (M11_Render_PumpEvents()) {
@@ -6457,14 +6460,17 @@ static int m11_play_dm1_i34e_selector_enter_if_available(
         }
         SDL_Delay(1u);
     }
+    selectorCompleteMs = m11_intro_active_ticks();
     result = M11_ENTRANCE_COMMAND_ENTER;
     if (g_m11_debug_startup_detail)
-        fprintf(stderr, "firestaff: startup-source-complete game=dm1 platform=pc34 phase=selector graphics=%s entrance=%ux%u left-door=%ux%u right-door=%ux%u selector-view=%ux%u frames=%u source-vblanks=%u elapsed-ms=%llu modeled-vblank-hz=%u switch-event-queued=%d door-events-queued=%u snd3-events-loaded=%d handoff=fires command=enter\n",
+        fprintf(stderr, "firestaff: startup-source-complete game=dm1 platform=pc34 phase=selector graphics=%s entrance=%ux%u left-door=%ux%u right-door=%ux%u selector-view=%ux%u frames=%u source-vblanks=%u elapsed-ms=%llu door-animation-ms=%llu post-animation-audio-wait-ms=%llu modeled-vblank-hz=%u switch-event-queued=%d door-events-queued=%u snd3-events-loaded=%d handoff=fires command=enter\n",
                 graphicsPath, (unsigned)entrance->width,
                 (unsigned)entrance->height, (unsigned)left->width,
                 (unsigned)left->height, (unsigned)right->width,
                 (unsigned)right->height, 224u, 136u, steps, steps,
-                (unsigned long long)(m11_intro_active_ticks() - selectorStartMs),
+                (unsigned long long)(selectorCompleteMs - selectorStartMs),
+                (unsigned long long)(doorAnimationEndMs - selectorStartMs),
+                (unsigned long long)(selectorCompleteMs - doorAnimationEndMs),
                 DM1_V1_VGA_VBLANK_HZ, switchSoundQueued,
                 doorSoundCount, gameView->audioState.originalSnd3LoadedCount);
 done:

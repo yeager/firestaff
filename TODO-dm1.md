@@ -30,6 +30,19 @@ are not a cold-cache comparison. One full deferred scan reached 100% after
 stable wall-time gain. Native display, input and scan responsiveness on macOS
 remain unverified.
 
+2026-10-20 PC34 selector timing diagnostic: ReDMCSB `SELECTOR.C` calls
+`F8353_WaitVerticalBlank` once per `F8360` door frame, then calls
+`F8323_WaitSoundPlayComplete` after the door loop. The original-media
+`dm1_v1_pc34_native_cli_boot` run presented all 32 source-sized frames at
+16–17 ms intervals and completed the visible animation in 518 ms with the
+SDL dummy driver. It then waited 308 ms for the authentic SND3 switch/door
+effects to drain, for an 826 ms total selector handoff. `--debug` now reports
+door-animation time and post-animation audio wait separately; the regression
+checks their sum and the 70 Hz source cadence. This matches the source ordering
+and gives a more precise diagnosis of the reported roughly one-second
+Entrance sequence. It does not establish native M4/M5 display or audible
+timing; no animation cadence change is justified by the dummy-driver trace.
+
 2026-10-19 current-source real-media launcher/rescan integration:
 `return_to_menu_rescans_dm1_csb_dm2_real_media` passed its full `returns`
 matrix, including DM1 PC34, FM Towns, Atari ST and Amiga 3.6 routes. Direct

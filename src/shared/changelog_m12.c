@@ -19,6 +19,7 @@ static const char* const g_changelogLines[] = {
     "V" FIRESTAFF_VERSION_NUMBER "  (2026-10-20)",
     "  - No-game startup now scans the selected collection during the branded intro and waits for authentic media verification before opening game selection.",
     "  - Closing the window during the intro scan cancels discovery before any game handoff.",
+    "  - DM1 PC34 debug timing separates the 32-frame selector door animation from the original sound-completion wait.",
     "  - DM2 collection scans release large CUE-selected image mappings after profile checks instead of retaining freed heap storage.",
     "  - From the no-game collection menu, authentic DM1, CSB and DM2 media now verify through title selection into the first original-runtime state.",
     "  - DM2 reuses each CUE-selected image between its Macintosh HFS and FM Towns scan probes instead of inflating it twice.",

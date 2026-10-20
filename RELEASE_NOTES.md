@@ -10,6 +10,7 @@
 
 - `DM1, CSB and DM2 collection-menu startup`: add an original-media regression that starts from the no-game menu, selects each title, and verifies handoff into the authentic runtime state.
 - `No-game collection scan`: defer startup admission into the intro, report scan paths in `--debug` after progress begins, and verify clean cancellation on window close.
+- `DM1 PC34 startup timing`: `--debug` separates the source-paced selector door animation from the authentic sound-completion wait after the final frame.
 - `DM2 original-media scan`: reuse the CUE-selected image between Macintosh HFS and FM Towns probes instead of inflating the same ZIP member twice.
 - `DM2 original-media scan`: use a memory mapping for the large CUE-selected image and preserve its allocator ownership through FM Towns profile cleanup.
 - `Runtime startup evidence`: validate the first DM1 HoC frame, the CSB party and viewport state, and DM2 completion of its 225-frame title sequence before the first champion loads.

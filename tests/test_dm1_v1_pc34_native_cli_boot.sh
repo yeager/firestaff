@@ -305,20 +305,25 @@ print(
     "(default IBMIO PIT cadence; original initial phase/CPU remain unmeasured)")
 selector = re.search(
     r"startup-source-complete game=dm1 platform=pc34 phase=selector .*"
-    r"frames=(\d+) source-vblanks=(\d+) elapsed-ms=(\d+) modeled-vblank-hz=(\d+)",
+    r"frames=(\d+) source-vblanks=(\d+) elapsed-ms=(\d+) "
+    r"door-animation-ms=(\d+) post-animation-audio-wait-ms=(\d+) "
+    r"modeled-vblank-hz=(\d+)",
     sys.argv[1])
 if not selector:
     raise SystemExit("FAIL: authentic PC-34 selector Enter timing receipt was missing")
-door_frames, door_vblanks, door_elapsed_ms, vblank_hz = map(int, selector.groups())
+door_frames, door_vblanks, total_ms, animation_ms, audio_wait_ms, vblank_hz = \
+    map(int, selector.groups())
 expected_ms = door_frames * 1000 / vblank_hz
 if (door_frames <= 1 or door_vblanks != door_frames or vblank_hz != 70 or
-        door_elapsed_ms + 20 < expected_ms):
+        animation_ms + 20 < expected_ms or animation_ms > expected_ms + 250 or
+        total_ms != animation_ms + audio_wait_ms):
     raise SystemExit(
         f"FAIL: PC-34 selector door cadence diverged from 70 Hz VGA waits: "
         f"{selector.groups()}")
 print(
     f"PASS: I34E selector door used {door_frames} source-sized steps at "
-    f"{vblank_hz} Hz in {door_elapsed_ms} ms")
+    f"{vblank_hz} Hz in {animation_ms} ms; post-animation audio wait "
+    f"was {audio_wait_ms} ms (total selector handoff {total_ms} ms)")
 sound = re.search(
     r"startup-source-complete game=dm1 platform=pc34 phase=selector .*"
     r"switch-event-queued=(\d+) door-events-queued=(\d+) snd3-events-loaded=(\d+)",
