@@ -499,6 +499,7 @@ typedef struct {
     char    fmtowns_zip_path[512];
     uint8_t *fmtowns_disc_image;
     size_t   fmtowns_disc_image_size;
+    int      fmtowns_disc_image_is_mapped;
     /* Loose extracted HME-242 files are still original media. Keep their
      * bounded bytes when no raw CD image is available, so native startup
      * does not require an archive-side substitute. */

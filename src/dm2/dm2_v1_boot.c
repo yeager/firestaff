@@ -42,6 +42,7 @@
 #include "dm2_v1_music_map.h"
 #include "dm2_v1_cdda_cd_dat.h"
 #include "dm2_v1_mac_media.h"
+#include "firestaff_zip_extract.h"
 #include "dm2_v1_startup_menu.h"
 #include "dm2_v1_startup_presentation.h"
 #include "dm2_v1_viewport_renderer.h"
@@ -51,11 +52,24 @@
 #include "dm2_v1_fmtowns_cdda_music.h"
 #include "dm2_v1_dos_intro_mve_owner.h"
 #include "firestaff_amiga_adf.h"
-#include "firestaff_zip_extract.h"
 #include "firestaff_fmtowns_disc.h"
 #include "fs_portable_compat.h"
 #include <stdlib.h>
 #include <string.h>
+
+static void dm2_v1_boot_release_fmtowns_disc_image(
+    DM2_V1_BootProfile *profile) {
+    if (!profile) return;
+    if (profile->fmtowns_disc_image_is_mapped) {
+        firestaff_zip_free_mapped(profile->fmtowns_disc_image,
+                                  profile->fmtowns_disc_image_size);
+    } else {
+        free(profile->fmtowns_disc_image);
+    }
+    profile->fmtowns_disc_image = NULL;
+    profile->fmtowns_disc_image_size = 0u;
+    profile->fmtowns_disc_image_is_mapped = 0;
+}
 
 static uint32_t dm2_v1_boot_packaged_capture_hash_step(uint32_t hash,
                                                         uint32_t value);
@@ -2787,7 +2801,8 @@ static void copy_parent_dir(char dst[512], const char *path) {
 static void dm2_v1_boot_load_fmtowns_disc_from_zip_with_image(
     DM2_V1_BootProfile *profile, const char *data_dir,
     uint8_t **reused_image, size_t reused_image_size,
-    const uint32_t *reused_track_starts, int reused_track_count)
+    const uint32_t *reused_track_starts, int reused_track_count,
+    int reused_image_is_mapped)
 {
     static const char archive_name[] =
         "Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip";
@@ -2912,6 +2927,8 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip_with_image(
     strncpy(profile->fmtowns_zip_path, zip_path,
             sizeof(profile->fmtowns_zip_path) - 1);
     profile->fmtowns_disc_image = img_data;
+    profile->fmtowns_disc_image_is_mapped =
+        reused_image && *reused_image == img_data && reused_image_is_mapped;
     if (reused_image && *reused_image == img_data) *reused_image = NULL;
     profile->fmtowns_disc_image_size = img_size;
     memcpy(profile->fmtowns_cdda_track_starts, track_starts,
@@ -2945,9 +2962,7 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip_with_image(
          * through the PC-DOS static startup route. */
         if (dm2_v1_fmtowns_disc_startup_plan(img_data, img_size, &probe,
                                              &profile->fmtowns_startup_plan) != 0) {
-            free(profile->fmtowns_disc_image);
-            profile->fmtowns_disc_image = NULL;
-            profile->fmtowns_disc_image_size = 0u;
+            dm2_v1_boot_release_fmtowns_disc_image(profile);
             profile->fmtowns_zip_path[0] = '\0';
             memset(profile->fmtowns_cdda_track_starts, 0,
                    sizeof(profile->fmtowns_cdda_track_starts));
@@ -2972,9 +2987,7 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip_with_image(
                     &twanim_data, &twanim_size) != 0 ||
                 !twanim_data || twanim_size != 72184u) {
                 free(twanim_data);
-                free(profile->fmtowns_disc_image);
-                profile->fmtowns_disc_image = NULL;
-                profile->fmtowns_disc_image_size = 0u;
+                dm2_v1_boot_release_fmtowns_disc_image(profile);
                 profile->fmtowns_zip_path[0] = '\0';
                 memset(profile->fmtowns_cdda_track_starts, 0,
                        sizeof(profile->fmtowns_cdda_track_starts));
@@ -2986,9 +2999,7 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip_with_image(
                 !dm2_v1_boot_parse_fmtowns_p3(
                     twanim_data, twanim_size, &profile->fmtowns_twanim_p3)) {
                 free(twanim_data);
-                free(profile->fmtowns_disc_image);
-                profile->fmtowns_disc_image = NULL;
-                profile->fmtowns_disc_image_size = 0u;
+                dm2_v1_boot_release_fmtowns_disc_image(profile);
                 profile->fmtowns_zip_path[0] = '\0';
                 memset(profile->fmtowns_cdda_track_starts, 0,
                        sizeof(profile->fmtowns_cdda_track_starts));
@@ -3033,9 +3044,7 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip_with_image(
             free(animation_data);
         }
         if (animation_index != 3) {
-            free(profile->fmtowns_disc_image);
-            profile->fmtowns_disc_image = NULL;
-            profile->fmtowns_disc_image_size = 0u;
+            dm2_v1_boot_release_fmtowns_disc_image(profile);
             profile->fmtowns_zip_path[0] = '\0';
             memset(profile->fmtowns_cdda_track_starts, 0,
                    sizeof(profile->fmtowns_cdda_track_starts));
@@ -3070,9 +3079,7 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip_with_image(
                     &skull_data, &skull_size) != 0 ||
                 !skull_data || skull_size != 374416u) {
                 free(skull_data);
-                free(profile->fmtowns_disc_image);
-                profile->fmtowns_disc_image = NULL;
-                profile->fmtowns_disc_image_size = 0u;
+                dm2_v1_boot_release_fmtowns_disc_image(profile);
                 profile->fmtowns_zip_path[0] = '\0';
                 memset(profile->fmtowns_cdda_track_starts, 0,
                        sizeof(profile->fmtowns_cdda_track_starts));
@@ -3084,9 +3091,7 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip_with_image(
                 !dm2_v1_boot_parse_fmtowns_p3(
                     skull_data, skull_size, &profile->fmtowns_skull_p3)) {
                 free(skull_data);
-                free(profile->fmtowns_disc_image);
-                profile->fmtowns_disc_image = NULL;
-                profile->fmtowns_disc_image_size = 0u;
+                dm2_v1_boot_release_fmtowns_disc_image(profile);
                 profile->fmtowns_zip_path[0] = '\0';
                 memset(profile->fmtowns_cdda_track_starts, 0,
                        sizeof(profile->fmtowns_cdda_track_starts));
@@ -3321,7 +3326,7 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(
     DM2_V1_BootProfile *profile, const char *data_dir)
 {
     dm2_v1_boot_load_fmtowns_disc_from_zip_with_image(
-        profile, data_dir, NULL, 0u, NULL, 0);
+        profile, data_dir, NULL, 0u, NULL, 0, 0);
 }
 
 typedef struct {
@@ -3692,15 +3697,15 @@ static int dm2_v1_boot_read_explicit_zip_cue_image(
         return 0;
     }
     free(cue);
-    if (firestaff_zip_extract_by_name(archive, image_member, out_image,
-                                      out_image_size) != 0) {
-        free(*out_image);
+    if (firestaff_zip_extract_by_name_mapped(archive, image_member, out_image,
+                                             out_image_size) != 0) {
+        firestaff_zip_free_mapped(*out_image, *out_image_size);
         *out_image = NULL;
         *out_image_size = 0u;
         return 0;
     }
     if (!*out_image || *out_image_size == 0u) {
-        free(*out_image);
+        firestaff_zip_free_mapped(*out_image, *out_image_size);
         *out_image = NULL;
         *out_image_size = 0u;
         return 0;
@@ -3741,7 +3746,7 @@ static int dm2_v1_boot_load_explicit_zip(DM2_V1_BootProfile *profile,
                 if (cue_image_loaded) {
                     dm2_v1_boot_load_fmtowns_disc_from_zip_with_image(
                         profile, archive, &cue_image, cue_image_size,
-                        cue_track_starts, cue_track_count);
+                        cue_track_starts, cue_track_count, 1);
                 } else {
                     dm2_v1_boot_load_fmtowns_disc_from_zip(profile, archive);
                 }
@@ -3763,14 +3768,14 @@ static int dm2_v1_boot_load_explicit_zip(DM2_V1_BootProfile *profile,
         if (reader_family && profile->graphics_path[0] && profile->dungeon_path[0] &&
             dm2_v1_boot_asset_hash_pair_supported(profile->graphics_md5,
                                                   profile->dungeon_md5)) {
-            free(cue_image);
+            firestaff_zip_free_mapped(cue_image, cue_image_size);
             return 1;
         }
         dm2_v1_boot_cleanup(profile);
         dm2_v1_boot_profile_init(profile);
         memcpy(profile->save_root, save_root, sizeof(save_root));
     }
-    free(cue_image);
+    firestaff_zip_free_mapped(cue_image, cue_image_size);
     return 0;
 }
 
@@ -16086,9 +16091,7 @@ void dm2_v1_boot_cleanup(DM2_V1_BootProfile *profile) {
     profile->amiga_titl_byte_count = 0u;
     profile->amiga_enda_byte_count = 0u;
     profile->amiga_animation_media_verified = 0;
-    free(profile->fmtowns_disc_image);
-    profile->fmtowns_disc_image = NULL;
-    profile->fmtowns_disc_image_size = 0u;
+    dm2_v1_boot_release_fmtowns_disc_image(profile);
     free(profile->fmtowns_twanim_bytes);
     free(profile->fmtowns_skull_bytes);
     free(profile->fmtowns_swoosh_bytes);

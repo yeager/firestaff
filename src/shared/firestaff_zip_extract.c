@@ -3,6 +3,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#if defined(_WIN32)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#elif defined(__unix__) || defined(__APPLE__)
+#include <sys/mman.h>
+#endif
 
 #ifdef FIRESTAFF_HAS_ZLIB
 #include <zlib.h>
@@ -39,13 +45,46 @@ typedef enum {
     ZIP_MATCH_BASENAME
 } ZipMatchMode;
 
+static uint8_t *zip_mapped_allocate(size_t size) {
+    if (size == 0U) return NULL;
+#if defined(_WIN32)
+    return (uint8_t *)VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE,
+                                   PAGE_READWRITE);
+#elif defined(__unix__) || defined(__APPLE__)
+    void *memory = mmap(NULL, size, PROT_READ | PROT_WRITE,
+                        MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    return memory == MAP_FAILED ? NULL : (uint8_t *)memory;
+#else
+    (void)size;
+    return NULL;
+#endif
+}
+
+void firestaff_zip_free_mapped(uint8_t *data, size_t size) {
+    if (!data || size == 0U) return;
+#if defined(_WIN32)
+    (void)VirtualFree(data, 0U, MEM_RELEASE);
+#elif defined(__unix__) || defined(__APPLE__)
+    (void)munmap(data, size);
+#else
+    (void)data;
+    (void)size;
+#endif
+}
+
+static void zip_output_free(uint8_t *data, size_t size, int mapped) {
+    if (mapped) firestaff_zip_free_mapped(data, size);
+    else free(data);
+}
+
 static int zip_extract_impl(const char *zip_path,
                             const char *pattern,
                             ZipMatchMode mode,
                             uint8_t **out_data,
                             size_t *out_size,
                             FirestaffZipExtractProgressFn progressFn,
-                            void *progressUserData)
+                            void *progressUserData,
+                            int mapOutput)
 {
     FILE *fp;
     long fileSize;
@@ -152,17 +191,21 @@ static int zip_extract_impl(const char *zip_path,
             localExtraLen = zr_u16le(local + 28);
             dataOffset = localOffset + 30U + localNameLen + localExtraLen;
 
-            buf = (uint8_t *)malloc((size_t)uncompressedSize);
+            buf = mapOutput
+                ? zip_mapped_allocate((size_t)uncompressedSize)
+                : (uint8_t *)malloc((size_t)uncompressedSize);
             if (!buf) { fclose(fp); return -1; }
 
             if (method == 0) {
                 /* Stored */
                 if (fseek(fp, (long)dataOffset, SEEK_SET) != 0) {
-                    free(buf); fclose(fp); return -1;
+                    zip_output_free(buf, (size_t)uncompressedSize, mapOutput);
+                    fclose(fp); return -1;
                 }
                 if (!progressFn) {
                     if (fread(buf, 1, uncompressedSize, fp) != uncompressedSize) {
-                        free(buf); fclose(fp); return -1;
+                        zip_output_free(buf, (size_t)uncompressedSize, mapOutput);
+                        fclose(fp); return -1;
                     }
                 } else {
                     uint32_t copied = 0U;
@@ -170,14 +213,16 @@ static int zip_extract_impl(const char *zip_path,
                         size_t chunk = uncompressedSize - copied;
                         if (chunk > 1024U * 1024U) chunk = 1024U * 1024U;
                         if (fread(buf + copied, 1U, chunk, fp) != chunk) {
-                            free(buf); fclose(fp); return -1;
+                            zip_output_free(buf, (size_t)uncompressedSize, mapOutput);
+                            fclose(fp); return -1;
                         }
                         copied += (uint32_t)chunk;
                         if ((uint64_t)copied >= nextProgress ||
                             copied == uncompressedSize) {
                             if (!progressFn(copied, uncompressedSize,
                                             progressUserData)) {
-                                free(buf); fclose(fp); return -2;
+                                zip_output_free(buf, (size_t)uncompressedSize, mapOutput);
+                                fclose(fp); return -2;
                             }
                             while (nextProgress <= copied)
                                 nextProgress += progressStep;
@@ -194,11 +239,13 @@ static int zip_extract_impl(const char *zip_path,
                 int ret;
 
                 if (fseek(fp, (long)dataOffset, SEEK_SET) != 0) {
-                    free(buf); fclose(fp); return -1;
+                    zip_output_free(buf, (size_t)uncompressedSize, mapOutput);
+                    fclose(fp); return -1;
                 }
                 memset(&zs, 0, sizeof(zs));
                 if (inflateInit2(&zs, -MAX_WBITS) != Z_OK) {
-                    free(buf); fclose(fp); return -1;
+                    zip_output_free(buf, (size_t)uncompressedSize, mapOutput);
+                    fclose(fp); return -1;
                 }
                 zs.next_out = buf;
                 zs.avail_out = uncompressedSize;
@@ -209,7 +256,8 @@ static int zip_extract_impl(const char *zip_path,
                                            : (size_t)remaining;
                         if (fread(inBuf, 1, chunk, fp) != chunk) {
                             inflateEnd(&zs);
-                            free(buf); fclose(fp); return -1;
+                            zip_output_free(buf, (size_t)uncompressedSize, mapOutput);
+                            fclose(fp); return -1;
                         }
                         remaining -= (uint32_t)chunk;
                         zs.next_in = inBuf;
@@ -219,7 +267,8 @@ static int zip_extract_impl(const char *zip_path,
                     if (ret != Z_OK && ret != Z_STREAM_END &&
                         ret != Z_BUF_ERROR) {
                         inflateEnd(&zs);
-                        free(buf); fclose(fp); return -1;
+                        zip_output_free(buf, (size_t)uncompressedSize, mapOutput);
+                        fclose(fp); return -1;
                     }
                     produced = uncompressedSize - zs.avail_out;
                     if (progressFn &&
@@ -228,7 +277,8 @@ static int zip_extract_impl(const char *zip_path,
                         if (!progressFn(produced, uncompressedSize,
                                         progressUserData)) {
                             inflateEnd(&zs);
-                            free(buf); fclose(fp); return -2;
+                            zip_output_free(buf, (size_t)uncompressedSize, mapOutput);
+                            fclose(fp); return -2;
                         }
                         while (nextProgress <= produced)
                             nextProgress += progressStep;
@@ -237,13 +287,16 @@ static int zip_extract_impl(const char *zip_path,
                          (remaining > 0 || zs.avail_in > 0));
                 inflateEnd(&zs);
                 if (produced != uncompressedSize) {
-                    free(buf); fclose(fp); return -1;
+                    zip_output_free(buf, (size_t)uncompressedSize, mapOutput);
+                    fclose(fp); return -1;
                 }
 #else
-                free(buf); fclose(fp); return -1;
+                zip_output_free(buf, (size_t)uncompressedSize, mapOutput);
+                fclose(fp); return -1;
 #endif
             } else {
-                free(buf); fclose(fp); return -1;
+                zip_output_free(buf, (size_t)uncompressedSize, mapOutput);
+                fclose(fp); return -1;
             }
 
             fclose(fp);
@@ -262,7 +315,7 @@ int firestaff_zip_extract_by_suffix(const char *zip_path,
                                     size_t *out_size)
 {
     return zip_extract_impl(zip_path, suffix, ZIP_MATCH_SUFFIX,
-                            out_data, out_size, NULL, NULL);
+                            out_data, out_size, NULL, NULL, 0);
 }
 
 int firestaff_zip_extract_by_name(const char *zip_path,
@@ -271,7 +324,15 @@ int firestaff_zip_extract_by_name(const char *zip_path,
                                   size_t *out_size)
 {
     return zip_extract_impl(zip_path, filename, ZIP_MATCH_BASENAME,
-                            out_data, out_size, NULL, NULL);
+                            out_data, out_size, NULL, NULL, 0);
+}
+
+int firestaff_zip_extract_by_name_mapped(const char *zip_path,
+                                         const char *filename,
+                                         uint8_t **out_data,
+                                         size_t *out_size) {
+    return zip_extract_impl(zip_path, filename, ZIP_MATCH_BASENAME,
+                            out_data, out_size, NULL, NULL, 1);
 }
 
 int firestaff_zip_extract_by_name_with_progress(
@@ -281,7 +342,7 @@ int firestaff_zip_extract_by_name_with_progress(
     if (!progressFn) return firestaff_zip_extract_by_name(
         zip_path, filename, out_data, out_size);
     return zip_extract_impl(zip_path, filename, ZIP_MATCH_BASENAME,
-                            out_data, out_size, progressFn, userData);
+                            out_data, out_size, progressFn, userData, 0);
 }
 
 int firestaff_zip_extract_memory_by_suffix(const uint8_t *zip_data,

@@ -1,5 +1,18 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-20 DM2 disc-image scan memory: the original Mac English BIN in
+`Dungeon-Master-II-Skullkeep_Mac_EN (1).zip` expands to 758,851,632 bytes.
+`sample` traced its M12 DM2 profile path through `zip_extract_impl`; standard
+heap frees retained large empty regions after the five-game scan. The CUE-owned
+image now uses an OS memory mapping, and the DM2 profile records whether it owns
+that mapping so cleanup uses the matching release operation. On the same warm
+M4 collection, process RSS after scanning fell from 1,236,640 KiB to 471,664
+KiB (about 747 MiB); this is a single local measurement, not a platform-wide
+benchmark. All five authentic installations still reported READY, and the
+authentic DM2 Mac, FM Towns, and renamed-ZIP CTests passed (573.63 seconds).
+The image still occupies memory while its HFS/CD structure is parsed, and the
+first collection scan still blocks menu interaction for about ten seconds.
+
 2026-10-20 DM2 CUE image reuse: the explicit ZIP reader now shares one
 cue-selected original image between the Macintosh HFS probe and the FM Towns
 disc probe. The pre-change sample showed separate full ZIP inflations beneath

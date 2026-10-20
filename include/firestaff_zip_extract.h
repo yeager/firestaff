@@ -34,6 +34,16 @@ int firestaff_zip_extract_by_name(const char *zip_path,
                                   uint8_t **out_data,
                                   size_t *out_size);
 
+/* Extract one member to a temporary memory mapping. This is for large
+ * original disc images whose bytes are consumed in place and then released;
+ * it does not write game data to disk. Release the returned buffer with
+ * firestaff_zip_free_mapped(). */
+int firestaff_zip_extract_by_name_mapped(const char *zip_path,
+                                         const char *filename,
+                                         uint8_t **out_data,
+                                         size_t *out_size);
+void firestaff_zip_free_mapped(uint8_t *data, size_t size);
+
 /* Same extraction as firestaff_zip_extract_by_name, with bounded progress
  * callbacks while stored/deflated member bytes are copied. A callback return
  * of zero stops extraction and returns -2; ordinary errors still return -1. */
