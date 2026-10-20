@@ -321,7 +321,7 @@ combined_auto=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     exit 1
 }
 case "$combined_auto" in
-    *"startup game=dm2 mode=direct platform=auto"*"platform=FM Towns edition=fmtowns-ja matched source="*"platform=Macintosh edition=mac-en-retail matched source="*"selected game=dm2 platform=FM Towns edition=fmtowns-ja source="*) ;;
+    *"startup game=dm2 mode=direct platform=auto"*"selected game=dm2 platform=FM Towns edition=fmtowns-ja source="*"platform=FM Towns edition=fmtowns-ja matched source="*"platform=Macintosh edition=mac-en-retail matched source="*) ;;
     *) echo "FAIL: DM2 AUTO did not prefer FM Towns when Mac retail was also present" >&2; exit 1 ;;
 esac
 combined_mac=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
