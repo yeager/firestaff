@@ -38,6 +38,9 @@ typedef struct DM2_V1_GdatWallM11CommandPlan DM2_V1_GdatWallM11CommandPlan;
 typedef struct DM2_V1_GdatDoorOverlayM11CommandPlan DM2_V1_GdatDoorOverlayM11CommandPlan;
 typedef struct DM2_V1_HudPartyState DM2_V1_HudPartyState;
 typedef struct DM2_V1_DoorRenderPlan DM2_V1_DoorRenderPlan;
+typedef int (*DM2_V1_BootScanProgressFn)(uint64_t completedBytes,
+                                         uint64_t totalBytes,
+                                         void* userData);
 struct DM2_V1_StartupHostReceipt;
 struct DM2_V1_SessionState;
 struct DM2_V1_StartupExecution;
@@ -1827,6 +1830,12 @@ int dm2_v1_boot_find_loose_pair(const char* root, const char* graphics_md5,
 
 int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
                             const char *data_dir);
+
+/* As above, with bounded progress callbacks while a large ZIP-owned disc
+ * image is inflated. Returns -2 when the callback cancels the scan. */
+int dm2_v1_boot_scan_assets_with_progress(
+    DM2_V1_BootProfile *profile, const char *data_dir,
+    DM2_V1_BootScanProgressFn progressFn, void* userData);
 
 /* Source: skproject/SKULLWIN/dm2data.cpp tblMusicsMap and
  * SKULLWIN/c_sound.cpp DM2_GET_MUSIC_INDEX_FROM_MODLIST. Returns 1 only

@@ -11,6 +11,8 @@
 ## Developer changes
 
 - `Startup scan hashing`: use the scanner's metadata-validated physical-file cache for direct version candidates, while keeping MD5 as the authenticity gate.
+- `DM2 startup cancellation`: poll scan progress while inflating the original cue-selected disc image, so a cancelled M12 scan stops inside large archives instead of waiting for the full image.
+- `DM2 original-media cancellation test`: add an M12 real-media regression that cancels the installed Macintosh retail archive during image inflation and verifies no availability is published; the normal Macintosh boot-profile test still passes.
 - `Startup menu catalogs`: refresh source references and merged locale catalogs for the PC34 startup-diagnostic text changes.
 - `DM1 PC34 input fidelity`: compare ReDMCSB's keyboard-only `F0539_INPUT_Cconis` title interrupt against the authentic I34E media and cover mouse-click rejection in the PC34 CLI/menu regression.
 - `DM1, CSB and DM2 collection-menu startup`: add an original-media regression that starts from the no-game menu, selects each title, and verifies handoff into the authentic runtime state.

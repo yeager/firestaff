@@ -1,5 +1,16 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-20 DM2 archive-scan cancellation: the M12 DM2 ZIP profile now passes
+scan progress into the inflater for the CUE-selected original disc image.
+Closing or cancelling during that large decode stops extraction and discards
+the partial profile before game availability can be published. The new
+`m12_dm2_archive_scan_cancel_real_media` CTest cancelled the installed
+Macintosh retail archive during inflation in 6.72 seconds; the normal
+`test_dm2_v1_mac_boot_real_media` profile and boot test passed in 2.13 seconds.
+Both use authentic local game media. This verifies scanner cancellation and
+normal profile loading; native UI responsiveness on slower hosts still needs
+runtime confirmation.
+
 2026-10-20 unchanged-file scan hashing: named version candidates now use the
 same metadata-validated physical-file digest cache as recursive discovery,
 instead of re-reading each unchanged DAT directly during every startup scan.

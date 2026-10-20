@@ -3672,7 +3672,8 @@ static int dm2_v1_boot_load_pc_dos_archive(DM2_V1_BootProfile *profile,
  * and track starts; this only shares the decoded original bytes in memory. */
 static int dm2_v1_boot_read_explicit_zip_cue_image(
     const char *archive, uint8_t **out_image, size_t *out_image_size,
-    uint32_t out_track_starts[9], int *out_track_count)
+    uint32_t out_track_starts[9], int *out_track_count,
+    DM2_V1_BootScanProgressFn progressFn, void* progressUserData)
 {
     uint8_t *cue = NULL;
     size_t cue_size = 0u;
@@ -3697,12 +3698,17 @@ static int dm2_v1_boot_read_explicit_zip_cue_image(
         return 0;
     }
     free(cue);
-    if (firestaff_zip_extract_by_name_mapped(archive, image_member, out_image,
-                                             out_image_size) != 0) {
-        firestaff_zip_free_mapped(*out_image, *out_image_size);
-        *out_image = NULL;
-        *out_image_size = 0u;
-        return 0;
+    {
+        int extractResult =
+            firestaff_zip_extract_by_name_mapped_with_progress(
+                archive, image_member, out_image, out_image_size,
+                progressFn, progressUserData);
+        if (extractResult != 0) {
+            firestaff_zip_free_mapped(*out_image, *out_image_size);
+            *out_image = NULL;
+            *out_image_size = 0u;
+            return extractResult == -2 ? -2 : 0;
+        }
     }
     if (!*out_image || *out_image_size == 0u) {
         firestaff_zip_free_mapped(*out_image, *out_image_size);
@@ -3717,7 +3723,9 @@ static int dm2_v1_boot_read_explicit_zip_cue_image(
  * partial disc/movie buffers, so release them before trying another format.
  * Platform identity is the authenticated DAT pair, never the outer name. */
 static int dm2_v1_boot_load_explicit_zip(DM2_V1_BootProfile *profile,
-                                         const char *archive)
+                                         const char *archive,
+                                         DM2_V1_BootScanProgressFn progressFn,
+                                         void* progressUserData)
 {
     char save_root[sizeof(profile->save_root)];
     uint8_t *cue_image = NULL;
@@ -3734,7 +3742,14 @@ static int dm2_v1_boot_load_explicit_zip(DM2_V1_BootProfile *profile,
             case 1:
                 cue_image_loaded = dm2_v1_boot_read_explicit_zip_cue_image(
                     archive, &cue_image, &cue_image_size, cue_track_starts,
-                    &cue_track_count);
+                    &cue_track_count, progressFn, progressUserData);
+                if (cue_image_loaded == -2) {
+                    firestaff_zip_free_mapped(cue_image, cue_image_size);
+                    dm2_v1_boot_cleanup(profile);
+                    dm2_v1_boot_profile_init(profile);
+                    memcpy(profile->save_root, save_root, sizeof(save_root));
+                    return -2;
+                }
                 if (cue_image_loaded) {
                     (void)dm2_v1_boot_load_mac_zip_with_image(
                         profile, archive, cue_image, cue_image_size);
@@ -3779,8 +3794,9 @@ static int dm2_v1_boot_load_explicit_zip(DM2_V1_BootProfile *profile,
     return 0;
 }
 
-int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
-                            const char *data_dir) {
+int dm2_v1_boot_scan_assets_with_progress(
+    DM2_V1_BootProfile *profile, const char *data_dir,
+    DM2_V1_BootScanProgressFn progressFn, void* progressUserData) {
     char path[512];
     char save_root[sizeof(profile->save_root)];
     int explicit_zip;
@@ -3812,7 +3828,10 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
      * discovers user-supplied files by hash first so launch does not
      * depend on PC install names or directory layout. */
     if (explicit_zip) {
-        if (!dm2_v1_boot_load_explicit_zip(profile, base)) return -1;
+        int loadResult = dm2_v1_boot_load_explicit_zip(
+            profile, base, progressFn, progressUserData);
+        if (loadResult == -2) return -2;
+        if (!loadResult) return -1;
     } else if (explicit_loose) {
         char selected_md5[33];
         if (!asset_file_md5_hex(base, selected_md5) ||
@@ -4128,6 +4147,11 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
         return 0;  /* success */
     }
     return -1;  /* missing assets */
+}
+
+int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
+                            const char *data_dir) {
+    return dm2_v1_boot_scan_assets_with_progress(profile, data_dir, NULL, NULL);
 }
 
 int dm2_v1_boot_dos_intro_mve_readonly(

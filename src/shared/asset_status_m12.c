@@ -1752,13 +1752,41 @@ static int m12_dm2_profile_has_exact_zip_owner(
         strncmp(profile->dungeon_path + n, "::", 2u) == 0;
 }
 
+typedef struct {
+    M12_ScanProgressContext* scan;
+    const char* archive;
+    int started;
+} M12_Dm2ArchiveProgressContext;
+
+static int m12_dm2_archive_extract_progress(uint64_t completedBytes,
+                                            uint64_t totalBytes,
+                                            void* userData) {
+    M12_Dm2ArchiveProgressContext* context =
+        (M12_Dm2ArchiveProgressContext*)userData;
+    unsigned int percent;
+    if (!context || !context->scan || totalBytes == 0u) return 0;
+    if (!context->started) {
+        if (!m12_scan_progress_update(context->scan,
+                "reading original DM2 disc image", "dm2",
+                context->archive, 0)) return 0;
+        context->started = 1;
+    }
+    percent = completedBytes >= totalBytes
+        ? 100U
+        : (unsigned int)(completedBytes * 100U / totalBytes);
+    return m12_scan_progress_set_step_percent(context->scan, percent);
+}
+
 /* Directory inventory registers DOS candidates without erasing other ports.
  * An explicit ZIP selection instead owns the entire result, including failure. */
 static int m12_admit_dm2_zip_profile(M12_AssetStatus* status, int gameIndex,
-                                      const char* archive, int exclusive) {
+                                      const char* archive, int exclusive,
+                                      M12_ScanProgressContext* progress) {
     size_t i;
     int admitted = 0;
+    int scanResult;
     DM2_V1_BootProfile profile;
+    M12_Dm2ArchiveProgressContext archiveProgress;
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
         strcmp(g_games[gameIndex].gameId, "dm2") != 0 || !archive ||
         !FSP_FileExists(archive) ||
@@ -1772,7 +1800,18 @@ static int m12_admit_dm2_zip_profile(M12_AssetStatus* status, int gameIndex,
         status->runtimeDataDirs[gameIndex][0] = '\0';
     }
     dm2_v1_boot_profile_init(&profile);
-    if (dm2_v1_boot_scan_assets(&profile, archive) == 0 &&
+    memset(&archiveProgress, 0, sizeof(archiveProgress));
+    archiveProgress.scan = progress;
+    archiveProgress.archive = archive;
+    scanResult = dm2_v1_boot_scan_assets_with_progress(
+        &profile, archive,
+        progress ? m12_dm2_archive_extract_progress : NULL,
+        progress ? &archiveProgress : NULL);
+    if (scanResult == -2) {
+        dm2_v1_boot_cleanup(&profile);
+        return -1;
+    }
+    if (scanResult == 0 &&
         m12_dm2_profile_has_exact_zip_owner(&profile, archive)) {
         for (i = 0u; i < g_games[gameIndex].versionCount; ++i) {
             M12_AssetVersionStatus* version = &status->versions[gameIndex][i];
@@ -1957,7 +1996,11 @@ static int m12_admit_dm2_directory_zips(
                 ok = 0;
                 break;
             }
-            (void)m12_admit_dm2_zip_profile(status, gameIndex, list->paths[i], 0);
+            if (m12_admit_dm2_zip_profile(status, gameIndex, list->paths[i],
+                                           0, progress) < 0) {
+                ok = 0;
+                break;
+            }
         }
     }
     free(list);
@@ -9045,8 +9088,12 @@ void M12_AssetStatus_ScanGameWithOptions(
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING
             if (requestedDataDir && FSP_FileExists(requestedDataDir) &&
                 m12_ascii_equals_ignore_case(strrchr(requestedDataDir, '.'), ".zip")) {
-                (void)m12_admit_dm2_zip_profile(status, gameIndex,
-                                                requestedDataDir, 1);
+                if (m12_admit_dm2_zip_profile(status, gameIndex,
+                        requestedDataDir, 1, &progressCtx) < 0) {
+                    m12_scan_publish_cancelled_status(status, requestedDataDir,
+                                                      gameId);
+                    return;
+                }
             } else
 #endif
             {

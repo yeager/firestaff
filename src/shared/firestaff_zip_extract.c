@@ -335,6 +335,16 @@ int firestaff_zip_extract_by_name_mapped(const char *zip_path,
                             out_data, out_size, NULL, NULL, 1);
 }
 
+int firestaff_zip_extract_by_name_mapped_with_progress(
+    const char *zip_path, const char *filename,
+    uint8_t **out_data, size_t *out_size,
+    FirestaffZipExtractProgressFn progressFn, void *userData) {
+    if (!progressFn) return firestaff_zip_extract_by_name_mapped(
+        zip_path, filename, out_data, out_size);
+    return zip_extract_impl(zip_path, filename, ZIP_MATCH_BASENAME,
+                            out_data, out_size, progressFn, userData, 1);
+}
+
 int firestaff_zip_extract_by_name_with_progress(
     const char *zip_path, const char *filename,
     uint8_t **out_data, size_t *out_size,

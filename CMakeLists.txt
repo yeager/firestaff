@@ -47172,6 +47172,27 @@ if(BUILD_TESTING)
     )
 endif()
 
+# ── DM2 original-archive cancellation during ZIP inflation ────────────
+if(BUILD_TESTING AND TARGET firestaff_m12)
+    add_executable(test_m12_dm2_archive_scan_cancel_real_media
+        tests/test_m12_dm2_archive_scan_cancel_real_media.c)
+    target_include_directories(test_m12_dm2_archive_scan_cancel_real_media
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_m12_dm2_archive_scan_cancel_real_media
+        PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_m12_dm2_archive_scan_cancel_real_media
+            PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME m12_dm2_archive_scan_cancel_real_media
+        COMMAND test_m12_dm2_archive_scan_cancel_real_media)
+    set_tests_properties(m12_dm2_archive_scan_cancel_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;dm2;m12;startup;cancel;real-media;skip-safe"
+        ENVIRONMENT
+            "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE}")
+endif()
+
 # ── Theron V1 Phase 7 — Track 02 Bank Probe ───────────────────────
 if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(firestaff_theron_v1_track02_bank_probe

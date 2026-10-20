@@ -42,6 +42,12 @@ int firestaff_zip_extract_by_name_mapped(const char *zip_path,
                                          const char *filename,
                                          uint8_t **out_data,
                                          size_t *out_size);
+/* Mapped variant of _with_progress. A callback return of zero stops the
+ * extraction and returns -2; the output mapping is released on cancellation. */
+int firestaff_zip_extract_by_name_mapped_with_progress(
+    const char *zip_path, const char *filename,
+    uint8_t **out_data, size_t *out_size,
+    FirestaffZipExtractProgressFn progressFn, void *userData);
 void firestaff_zip_free_mapped(uint8_t *data, size_t size);
 
 /* Same extraction as firestaff_zip_extract_by_name, with bounded progress

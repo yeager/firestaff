@@ -2039,6 +2039,8 @@ static const char* m12_scan_task_for_locale(int localeIndex,
     if (strcmp(task, "checking original file candidates") == 0 ||
         strcmp(task, "search root") == 0 || strcmp(task, "enumerating ZIP candidates") == 0)
         return m12_translate_for_locale(locale, "CHECKING ORIGINAL FILE CANDIDATES");
+    if (strcmp(task, "reading original DM2 disc image") == 0)
+        return m12_translate_for_locale(locale, "CHECKING ORIGINAL FILE CANDIDATES");
     if (strcmp(task, "matching editions") == 0 ||
         strcmp(task, "matching game versions") == 0 || strcmp(task, "authenticating ZIP candidate") == 0)
         return m12_translate_for_locale(locale, "MATCHING GAME VERSIONS");
