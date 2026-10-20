@@ -1,3 +1,24 @@
+# Firestaff v3.0.398
+
+## User-facing changes
+
+- `CSB FM Towns scan progress`: update the launcher progress bar while authenticating the large original image inside the retail ZIP, and support cancellation during decompression.
+
+## Developer changes
+
+- `DM1, CSB and DM2 game picker`: verify keyboard and mouse selection launches against installed original media through both the CLI and the collection menu.
+- `CSB Atari startup verification`: update authentic mixed-menu tests to follow the original C200 route through the entrance.
+- `CSB FM Towns archive extraction`: verify bounded, monotonic progress callbacks for the original 507 MB image and confirm cancellation leaves the archive unchanged.
+- `DM1 PC34 and DM2 startup evidence`: verify authentic startup checks and document current scan behavior and remaining parity gaps.
+- `DM2 DOS archive discovery`: remove the redundant M12 probe of named PC ZIPs after the general archive scan.
+- `Startup menu catalogs`: update canonical source references and merged translations for all 20 supported locales.
+- `Release metadata`: update the project version, embedded changelog and reproducible SPDX source SBOM for v3.0.398.
+
+## Known limitations
+
+- `CSB FM Towns scan duration`: progress and cancellation are now visible, but authentic image authentication still takes time; this change does not reduce decompression time.
+- `Original-media startup`: SDL dummy video and audio checks do not establish native display, physical input, sound output, or complete game parity.
+
 # Firestaff v3.0.397
 
 ## Developer changes
