@@ -12865,6 +12865,21 @@ if(BUILD_TESTING)
             LABELS "dm1;dos;pc34;real-media;combat;skip-safe")
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_csb_fmtowns_scan_cache_real.c")
+        add_executable(test_m12_csb_fmtowns_scan_cache_real
+            tests/test_m12_csb_fmtowns_scan_cache_real.c)
+        target_link_libraries(test_m12_csb_fmtowns_scan_cache_real PRIVATE firestaff_m12)
+        if(NOT MSVC)
+            target_compile_options(test_m12_csb_fmtowns_scan_cache_real PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(NAME m12_csb_fmtowns_scan_cache_real
+            COMMAND test_m12_csb_fmtowns_scan_cache_real)
+        set_tests_properties(m12_csb_fmtowns_scan_cache_real PROPERTIES
+            SKIP_RETURN_CODE 77
+            ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/csb-fmtowns-scan-cache;USERPROFILE=${CMAKE_CURRENT_BINARY_DIR}/test-home/csb-fmtowns-scan-cache;XDG_CONFIG_HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/csb-fmtowns-scan-cache/.config;APPDATA=${CMAKE_CURRENT_BINARY_DIR}/test-home/csb-fmtowns-scan-cache/AppData"
+            LABELS "csb;fm-towns;real-media;scan-cache;startup;skip-safe")
+    endif()
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_amiga20_first_monster_combat_real.c")
         add_executable(test_m11_dm1_amiga20_first_monster_combat_real
             tests/test_m11_dm1_amiga20_first_monster_combat_real.c)

@@ -175,5 +175,10 @@ void asset_scan_cache_batch_end(void);
  * match the cache receipt. Returns zero when no current receipt is available. */
 int asset_scan_cache_lookup_virtual_md5(const char *virtualPath,
                                         char outMd5[33]);
+/* Store a scanner receipt for a virtual member/derived media identity. The
+ * key is bound to the current containing archive size and modification time,
+ * using the same freshness contract as ordinary cached member digests. */
+int asset_scan_cache_store_virtual_md5(const char *virtualPath,
+                                       const char md5[33]);
 
 #endif /* ASSET_FIND_BY_HASH_H */

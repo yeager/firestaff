@@ -7234,6 +7234,35 @@ int asset_scan_cache_lookup_virtual_md5(const char *virtualPath,
     return 1;
 }
 
+int asset_scan_cache_store_virtual_md5(const char *virtualPath,
+                                       const char md5[33]) {
+    const char *separator;
+    char archivePath[ASSET_PATH_MAX];
+    struct stat archiveStat;
+    size_t archiveLength;
+    if (!s_scan_cache || !virtualPath || !md5 ||
+        !(separator = strstr(virtualPath, "::"))) return 0;
+    archiveLength = (size_t)(separator - virtualPath);
+    if (archiveLength == 0U || archiveLength >= sizeof(archivePath) ||
+        strlen(virtualPath) >= sizeof(((ScanCacheEntry_I *)0)->path)) return 0;
+    for (size_t i = 0U; i < 32U; ++i) {
+        const char c = md5[i];
+        if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))) return 0;
+    }
+    if (md5[32] != '\0') return 0;
+    memcpy(archivePath, virtualPath, archiveLength);
+    archivePath[archiveLength] = '\0';
+    if (stat(archivePath, &archiveStat) != 0) return 0;
+    {
+        FILE *fp = fopen(archivePath, "rb");
+        if (!fp) return 0;
+        fclose(fp);
+    }
+    scache_put(s_scan_cache, virtualPath, (int64_t)archiveStat.st_mtime,
+               (int64_t)archiveStat.st_size, md5);
+    return 1;
+}
+
 /* ── Public API ───────────────────────────────────────────────── */
 
 int asset_find_by_md5(const char *searchDir, const char *expectedMd5,
