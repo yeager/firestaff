@@ -18,15 +18,17 @@ and direct-disk start-menu routes reached the first Hall frame at the expected
 original pose. SDL dummy verifies these CLI/menu handoffs, not native display,
 sound output or sustained campaign play.
 
-2026-10-20 no-game startup and scan latency recheck: the real-media diagnostics
-left `--game` unset, entered `mode=menu`, discovered original data for all five
-games, and did not hand off to a game. Two runs with the persistent scan cache
-already warm measured 12.252 and 12.048 seconds; these are not a cold-cache
-comparison and do not prove the recent virtual-member digest reuse caused the
-change. The synchronous scan still delays initial menu interaction. Continue
-profiling archive admission while preserving exact media ownership and all
-game-availability checks. SDL dummy video/audio does not measure native
-presentation or input.
+2026-10-20 no-game startup scan: full collection admission is deferred until
+the branded startup intro and its progress panel, so original archive checks
+overlap that presentation. The launcher still waits for the complete scan
+before accepting a game choice; direct `--game` startup remains synchronous so
+its edition is authenticated before launch. A real-media close test confirms
+that closing during the intro scan cancels before a game handoff. Two warm
+cache no-game runs measured 12.252 and 12.048 seconds before this change; they
+are not a cold-cache comparison. One full deferred scan reached 100% after
+9.242 seconds with the local cache warm; this single run does not establish a
+stable wall-time gain. Native display, input and scan responsiveness on macOS
+remain unverified.
 
 2026-10-19 current-source real-media launcher/rescan integration:
 `return_to_menu_rescans_dm1_csb_dm2_real_media` passed its full `returns`

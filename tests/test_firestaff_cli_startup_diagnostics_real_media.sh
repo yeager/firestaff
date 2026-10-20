@@ -122,6 +122,59 @@ link_default_game_archive csb "$csb_towns_archive"
 link_default_game_archive nexus "$nexus_iso"
 link_default_game_archive theron "$theron_track02"
 
+# The default no-game start now overlaps collection discovery with the branded
+# intro. Close during the real scan to prove that the window remains responsive
+# and that the worker observes cancellation before the launcher can publish
+# unauthenticated availability or enter a game.
+if [ -f "$dm1_towns_archive" ] && [ -f "$csb_towns_archive" ] &&
+   [ -f "$towns_archive" ]; then
+    set +e
+    intro_scan_output=$(python3 - "$firestaff_cli" "$default_home" \
+        "$default_data_root" <<'PYINTRO'
+import os, subprocess, sys
+app, home, data_root = sys.argv[1:]
+env = os.environ.copy()
+env.update({
+    'HOME': home,
+    'USERPROFILE': home,
+    'XDG_CONFIG_HOME': os.path.join(home, '.config'),
+    'APPDATA': os.path.join(home, 'AppData'),
+    'FIRESTAFF_CONFIG_PATH': os.path.join(home, 'intro-scan-config.toml'),
+    'FIRESTAFF_DATA': data_root,
+    'FIRESTAFF_AUTOTEST': '1',
+    'FIRESTAFF_AUTOTEST_QUIT_DURING_SCAN': '1',
+    'SDL_VIDEODRIVER': 'dummy',
+    'SDL_AUDIODRIVER': 'dummy',
+})
+try:
+    result = subprocess.run([app, '--debug'], env=env, capture_output=True,
+                            text=True, timeout=90)
+except subprocess.TimeoutExpired as error:
+    for chunk in (error.stdout, error.stderr):
+        if chunk:
+            sys.stdout.write(chunk.decode(errors='replace') if isinstance(chunk, bytes)
+                             else chunk)
+    sys.exit(124)
+sys.stdout.write(result.stdout)
+sys.stdout.write(result.stderr)
+sys.exit(result.returncode)
+PYINTRO
+    ) || intro_scan_status=$?
+    set -e
+    if [ "${intro_scan_status:-0}" -ne 0 ] ||
+       ! printf '%s\n' "$intro_scan_output" | \
+            grep -Fq 'autotest injected window-close during startup intro asset scan' ||
+       ! printf '%s\n' "$intro_scan_output" | \
+            grep -Fq 'firestaff: scan elapsed-ms=' ||
+       printf '%s\n' "$intro_scan_output" | \
+            grep -Fq 'launch phase=game-handoff'; then
+        printf 'FAIL: no-game intro scan did not remain cancellable and game-free (status %s)\n%s\n' \
+            "${intro_scan_status:-0}" "$intro_scan_output" >&2
+        exit 1
+    fi
+    echo 'PASS: no-game startup scans during the intro and cancels cleanly on window close'
+fi
+
 # A normal app start with no game selection must open the launcher and discover
 # every installed game from the default ~/.firestaff/data tree. Use only links
 # to authentic archives and an isolated home/config root.

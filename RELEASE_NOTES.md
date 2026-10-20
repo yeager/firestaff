@@ -3,11 +3,13 @@
 ## User-facing changes
 
 - `DM2 media scanning`: release large cue-selected disc images after profile checks instead of retaining their freed heap storage, reducing memory held after a complete collection scan.
-- `DM1, CSB and DM2 startup`: this release adds verification coverage without changing player-facing behavior.
+- `No-game startup`: scan the selected collection while the branded startup intro plays, with the menu still gated on authentic media verification.
+- `DM1, CSB and DM2 startup`: this release adds original-media coverage for the title picker and first runtime handoff.
 
 ## Developer changes
 
 - `DM1, CSB and DM2 collection-menu startup`: add an original-media regression that starts from the no-game menu, selects each title, and verifies handoff into the authentic runtime state.
+- `No-game collection scan`: defer startup admission into the intro, report scan paths in `--debug` after progress begins, and verify clean cancellation on window close.
 - `DM2 original-media scan`: reuse the CUE-selected image between Macintosh HFS and FM Towns probes instead of inflating the same ZIP member twice.
 - `DM2 original-media scan`: use a memory mapping for the large CUE-selected image and preserve its allocator ownership through FM Towns profile cleanup.
 - `Runtime startup evidence`: validate the first DM1 HoC frame, the CSB party and viewport state, and DM2 completion of its 225-frame title sequence before the first champion loads.
@@ -17,6 +19,7 @@
 ## Known limitations
 
 - The real-media regression uses SDL dummy video and audio; it does not establish native display, physical input, sound output, or full gameplay parity.
+- The collection menu remains unavailable until all requested media checks finish; the scan now overlaps the startup intro but is not fully backgrounded after the intro.
 - The startup checks cover bounded first-runtime handoff for the selected editions, not every platform-specific intro or complete game behavior.
 
 # Firestaff v3.0.398

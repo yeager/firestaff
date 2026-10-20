@@ -873,13 +873,54 @@ typedef struct {
     M12_AssetScanProgress progress;
     SDL_AtomicInt done;
     SDL_AtomicInt cancelRequested;
+    int autotestQuitInjected;
     Uint64 startedMs;
 } M11_IntroScanJob;
+
+static int g_m11_debug_startup_detail = 0;
 
 static int m11_intro_scan_progress_callback(
     const M12_AssetScanProgress* progress, void* userData) {
     M11_IntroScanJob* job = (M11_IntroScanJob*)userData;
     if (!job || !progress) return 1;
+    if (g_m11_debug_startup_detail) {
+        fprintf(stderr,
+                "firestaff: scan elapsed-ms=%llu progress=%zu%% game=%s task=%s path=%s\n",
+                (unsigned long long)(SDL_GetTicks() - job->startedMs),
+                progress->totalSteps > 0U
+                    ? (progress->completedSteps * 100U +
+                       progress->currentStepPercent) / progress->totalSteps
+                    : 0U,
+                progress->currentGameId[0] ? progress->currentGameId : "all",
+                progress->currentTask,
+                progress->currentPath[0] ? progress->currentPath : "(none)");
+    }
+    if (!job->autotestQuitInjected && getenv("FIRESTAFF_AUTOTEST") &&
+        getenv("FIRESTAFF_AUTOTEST_QUIT_DURING_SCAN") &&
+        strcmp(getenv("FIRESTAFF_AUTOTEST_QUIT_DURING_SCAN"), "1") == 0) {
+        SDL_Event event;
+        SDL_Window* window = M11_Render_GetWindow();
+        memset(&event, 0, sizeof(event));
+        if (window) {
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+            event.type = SDL_EVENT_WINDOW_CLOSE_REQUESTED;
+            event.window.windowID = SDL_GetWindowID(window);
+#else
+            event.type = SDL_WINDOWEVENT;
+            event.window.windowID = SDL_GetWindowID(window);
+            event.window.event = SDL_WINDOWEVENT_CLOSE;
+#endif
+            if (SDL_PushEvent(&event)) {
+                job->autotestQuitInjected = 1;
+                (void)FSP_SetEnv("FIRESTAFF_AUTOTEST_SCAN_QUIT_INJECTED",
+                                 "1", 1);
+                if (g_m11_debug_startup_detail) {
+                    fprintf(stderr,
+                            "firestaff: autotest injected window-close during startup intro asset scan\n");
+                }
+            }
+        }
+    }
     if (job->mutex) SDL_LockMutex(job->mutex);
     job->progress = *progress;
     if (job->mutex) SDL_UnlockMutex(job->mutex);
@@ -1047,6 +1088,7 @@ static int m11_play_firestaff_startup_intro(M12_StartupMenuState* menuState) {
         scanJob.mutex = SDL_CreateMutex();
         SDL_SetAtomicInt(&scanJob.done, 0);
         SDL_SetAtomicInt(&scanJob.cancelRequested, 0);
+        scanJob.autotestQuitInjected = 0;
         scanJob.startedMs = SDL_GetTicks();
         scanThread = SDL_CreateThread(m11_intro_scan_thread, "IntroScan", &scanJob);
         scanActive = scanThread != NULL;
@@ -2171,7 +2213,6 @@ static int g_m11_intro_delay_fast_forward = 0;
 static int g_m11_startup_intro_quit_requested = 0;
 static int g_m11_dm1_i34e_intro_preplayed = 0;
 static int g_m11_dm1_direct_cli_launch = 0;
-static int g_m11_debug_startup_detail = 0;
 static Uint32 g_m11_phase_duration_started_ms;
 static int g_m11_phase_duration_ms = -1;
 static int g_m11_phase_duration_expired;
@@ -11654,10 +11695,14 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             (o->menuRequested &&
              (!o->dataDir || o->dataDir[0] == '\0' ||
               FSP_DirExists(o->dataDir)));
-        /* The launcher must make real-data availability visible before it
-         * lets a player choose a game or platform. The scanner reads archive
-         * members in place; it does not unpack game data to disk. */
-        menuInitOptions.skipAssetScan = 0;
+        /* With no game selected, overlap full collection admission with the
+         * branded startup intro. The intro displays scan progress and waits
+         * for authenticated availability before the menu accepts a choice.
+         * Explicit game launches remain synchronous because platform
+         * overrides need a matched edition before they can be applied. */
+        menuInitOptions.skipAssetScan =
+            menuInitOptions.scanAllGames && (!o->gameId || !o->gameId[0]) &&
+            !o->bootProbe;
         scanCtx.framebuffer = launcherFramebuffer;
         scanCtx.modernRgba = modernRgba;
         scanCtx.width = M11_LAUNCHER_FB_WIDTH;
@@ -11677,24 +11722,6 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                         o->dataDir,
                                         o->gameId,
                                         &menuInitOptions);
-        if (o->verbose) {
-            static const char* const gameIds[] = {
-                "dm1", "csb", "dm2", "nexus", "theron"
-            };
-            size_t gameIndex;
-            /* A requested game only sets the initial M12 selection. The
-             * interactive menu scans the collection, so report every game
-             * it scanned instead of hiding sibling availability. */
-            for (gameIndex = 0U;
-                 gameIndex < sizeof(gameIds) / sizeof(gameIds[0]);
-                 ++gameIndex) {
-                if (o->menuRequested || !o->gameId ||
-                    strcmp(o->gameId, gameIds[gameIndex]) == 0) {
-                    m11_verbose_original_media(&menuState.assetStatus,
-                                               gameIds[gameIndex]);
-                }
-            }
-        }
         if (o->languageOverride >= 0 && o->languageOverride < 20) {
             static const char* const languageCodes[] = {
                 "en", "sv", "fr", "de", "ja", "zh", "cs", "da", "es", "fi",
@@ -11940,6 +11967,23 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                         &fallbackCtx);
         if (!quitRequested && !o->directLaunch)
             M12_StartupMenu_FinalizeDeferredScanMessages(&menuState);
+    }
+    if (o->verbose) {
+        static const char* const gameIds[] = {
+            "dm1", "csb", "dm2", "nexus", "theron"
+        };
+        size_t gameIndex;
+        /* Report after any deferred no-game scan so availability and selected
+         * source receipts describe the authenticated collection. */
+        for (gameIndex = 0U;
+             gameIndex < sizeof(gameIds) / sizeof(gameIds[0]);
+             ++gameIndex) {
+            if (o->menuRequested || !o->gameId ||
+                strcmp(o->gameId, gameIds[gameIndex]) == 0) {
+                m11_verbose_original_media(&menuState.assetStatus,
+                                           gameIds[gameIndex]);
+            }
+        }
     }
     M11_ApplyStartupMenuRuntime(&menuState);
     /* Query the applied renderer state, after saved settings and CLI
