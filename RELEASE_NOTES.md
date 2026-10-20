@@ -5,6 +5,7 @@
 - `M12 virtual asset hashing`: reuse verified hashes from the active asset scan for nested archive members, avoiding a second 7z/ADF decode when M12 checks source-owned files.
 - `Virtual asset hash verification`: cover cached nested-member lookup and preserve archive freshness checks.
 - `Startup scan profiling`: add the current warm-cache timings to the evidence ledger and mark cold-cache performance as unverified.
+- `In-app changelog`: sync the v3.0.397 nested-member hash reuse and current scan timing into the launcher history.
 - `Release metadata`: update the project version and reproducible SPDX source SBOM for v3.0.397.
 
 ## Known limitations
