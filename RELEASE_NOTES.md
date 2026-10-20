@@ -1,3 +1,14 @@
+# Firestaff v3.0.395
+
+## Developer changes
+
+- `Startup 7z archive inventory`: reuse a complete, unchanged archive hash inventory for later positive and missing-file lookups, avoiding repeated solid-archive decoding while keeping nested Amiga and ProDOS traversal covered.
+- `Startup 7z cache verification`: verify duplicate hashes resolve to both distinct nested paths and that a complete inventory answers after archive reads are denied.
+
+## Known limitations
+
+- Full-library startup scanning still took about 16 seconds in the latest measured run on the authentic Mac mini M4 game-data collection; this change helps repeated archive lookups and does not establish a faster first scan on other systems.
+
 # Firestaff v3.0.394
 
 ## Developer changes

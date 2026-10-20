@@ -5485,6 +5485,86 @@ static void native_7z_member_md5(const char *archive_path,
     }
 }
 
+/* Completed native 7z walks already have a digest for each visited member
+ * and, on POSIX builds, each supported inner ADF file. Reuse those positive
+ * receipts before asking the solid LZMA2 decoder to reopen the archive. */
+static int native_7z_cache_collect_matches(
+    const char *archive_path, const char *const *md5_list, int md5_count,
+    char out_paths[][ASSET_PATH_MAX], int matched[], int *out_complete) {
+    char prefix[sizeof(((ScanCacheEntry_I *)0)->path)];
+    char marker[sizeof(((ScanCacheEntry_I *)0)->path)];
+    char cached_md5[33];
+    struct stat st;
+    size_t prefix_len;
+    int found_count = 0;
+    int i;
+    if (out_complete) *out_complete = 0;
+    if (!s_scan_cache || s_scan_cache->count >= SCAN_CACHE_MAX ||
+        !archive_path || !md5_list || md5_count <= 0 || !out_paths ||
+        !matched || !out_complete ||
+        snprintf(prefix, sizeof(prefix), "%s::", archive_path) >=
+            (int)sizeof(prefix) ||
+        snprintf(marker, sizeof(marker), "%s@firestaff-7z-complete-v1",
+                 archive_path) >= (int)sizeof(marker) ||
+        stat(archive_path, &st) != 0) {
+        return 0;
+    }
+#ifndef _WIN32
+    if (scache_lookup(s_scan_cache, marker, (int64_t)st.st_mtime,
+                      (int64_t)st.st_size, cached_md5)) {
+        *out_complete = 1;
+    }
+#endif
+    prefix_len = strlen(prefix);
+    for (i = 0; i < s_scan_cache->count; ++i) {
+        const ScanCacheEntry_I *entry = &s_scan_cache->entries[i];
+        size_t path_len = strlen(entry->path);
+        const char *suffix;
+        size_t suffix_len;
+        int index;
+        if (entry->mtime != (int64_t)st.st_mtime ||
+            entry->size != (int64_t)st.st_size ||
+            path_len <= prefix_len ||
+            strncmp(entry->path, prefix, prefix_len) != 0) {
+            continue;
+        }
+        suffix = "@firestaff-adf-complete-v1";
+        suffix_len = strlen(suffix);
+        if (path_len >= suffix_len &&
+            strcmp(entry->path + path_len - suffix_len, suffix) == 0) {
+            continue;
+        }
+        index = md5_list_match_index(entry->md5, md5_list, matched,
+                                     md5_count);
+        if (index < 0 ||
+            !copy_match_path(entry->path, out_paths[index], ASSET_PATH_MAX)) {
+            continue;
+        }
+        matched[index] = 1;
+        ++found_count;
+    }
+    return found_count;
+}
+
+static void native_7z_cache_mark_complete(const char *archive_path) {
+#ifndef _WIN32
+    static const char marker_md5[33] = "00000000000000000000000000000000";
+    char marker[sizeof(((ScanCacheEntry_I *)0)->path)];
+    struct stat st;
+    if (!s_scan_cache || s_scan_cache->count >= SCAN_CACHE_MAX ||
+        !archive_path ||
+        snprintf(marker, sizeof(marker), "%s@firestaff-7z-complete-v1",
+                 archive_path) >= (int)sizeof(marker) ||
+        stat(archive_path, &st) != 0) {
+        return;
+    }
+    scache_put(s_scan_cache, marker, (int64_t)st.st_mtime,
+               (int64_t)st.st_size, marker_md5);
+#else
+    (void)archive_path;
+#endif
+}
+
 /* Keep supported nested disk traversal in process: the returned virtual path
  * names the original archive/member/file triple and no game-data file is
  * materialized on disk. */
@@ -5530,6 +5610,7 @@ typedef struct {
     const char *expected_md5;
     char candidate[ASSET_PATH_MAX];
     int found;
+    int cache_inventory_complete;
 } Native7zMd5Match;
 
 static void native_7z_record_candidate(Native7zMd5Match *match,
@@ -5593,6 +5674,7 @@ static int native_7z_member_md5_visitor(const char *name,
         if (visit_result >= 0)
             external_adf_cache_mark_complete(match->archive_path, name);
 #endif
+        if (visit_result < 0) match->cache_inventory_complete = 0;
         if (visit_result >= 0 && nested.found &&
             native_7z_copy_nested_virtual_match_path(match->archive_path, name,
                 nested.matched_name, candidate, (int)sizeof(candidate))) {
@@ -5603,6 +5685,7 @@ static int native_7z_member_md5_visitor(const char *name,
         is_atari_msa_path(name)) {
         AdfSingleMatch nested;
         int visit_result;
+        match->cache_inventory_complete = 0;
         memset(&nested, 0, sizeof(nested));
         nested.expected_md5 = match->expected_md5;
         visit_result = native_7z_atari_disk_visit(
@@ -5622,17 +5705,34 @@ static int scan_native_7z_members_by_md5(const char *archive_path,
                                          char *out_path, int out_path_len,
                                          int *archive_supported) {
     Native7zMd5Match match;
+    const char *md5_list[2];
+    char cached_path[1][ASSET_PATH_MAX];
+    int cached_matched[1] = {0};
+    int cache_complete = 0;
     if (archive_supported) *archive_supported = 0;
     if (!archive_path || !expected_md5 || !out_path || out_path_len <= 0) {
         return 0;
     }
+    md5_list[0] = expected_md5;
+    md5_list[1] = NULL;
+    (void)native_7z_cache_collect_matches(
+        archive_path, md5_list, 1, cached_path, cached_matched,
+        &cache_complete);
+    if (cached_matched[0] || cache_complete) {
+        if (archive_supported) *archive_supported = 1;
+        return cached_matched[0] &&
+               copy_match_path(cached_path[0], out_path, out_path_len);
+    }
     memset(&match, 0, sizeof(match));
     match.archive_path = archive_path;
     match.expected_md5 = expected_md5;
+    match.cache_inventory_complete = 1;
     if (!firestaff_7z_visit_files(archive_path, native_7z_member_md5_visitor,
                                   &match)) {
         return 0;
     }
+    if (match.cache_inventory_complete)
+        native_7z_cache_mark_complete(archive_path);
     if (archive_supported) *archive_supported = 1;
     return match.found && copy_match_path(match.candidate, out_path,
                                           out_path_len);
@@ -5645,6 +5745,7 @@ typedef struct {
     char (*out_paths)[ASSET_PATH_MAX];
     int *matched;
     int found_count;
+    int cache_inventory_complete;
 } Native7zListMatch;
 
 static int native_7z_member_list_visitor(const char *name,
@@ -5674,8 +5775,7 @@ static int native_7z_member_list_visitor(const char *name,
             ++matches->found_count;
         }
     }
-    if (matches->found_count < matches->md5_count &&
-        (is_prodos_path(name) || is_amiga_disk_payload(name, bytes, byte_count))) {
+    if (is_prodos_path(name) || is_amiga_disk_payload(name, bytes, byte_count)) {
         Native7zAdfListMatch nested;
         int visit_result;
         memset(&nested, 0, sizeof(nested));
@@ -5737,14 +5837,15 @@ static int native_7z_member_list_visitor(const char *name,
         if (visit_result >= 0)
             external_adf_cache_mark_complete(matches->archive_path, name);
 #endif
+        if (visit_result < 0) matches->cache_inventory_complete = 0;
         matches->found_count += nested.found_count;
     }
-    if (matches->found_count < matches->md5_count &&
-        (is_atari_stx_path(name) || is_atari_st_path(name) ||
-         is_atari_msa_path(name))) {
+    if (is_atari_stx_path(name) || is_atari_st_path(name) ||
+        is_atari_msa_path(name)) {
         AdfListMatch nested;
         char disk_path[ASSET_PATH_MAX];
         int visit_result;
+        matches->cache_inventory_complete = 0;
         if (!copy_virtual_match_path(matches->archive_path, name, disk_path,
                                      (int)sizeof(disk_path))) {
             return -1;
@@ -5768,6 +5869,8 @@ static int scan_native_7z_members_by_md5_list(
     const char *archive_path, const char *const *md5_list, int md5_count,
     char out_paths[][ASSET_PATH_MAX], int matched[], int *archive_supported) {
     Native7zListMatch matches;
+    int cache_complete = 0;
+    int cached_count;
     int i;
     if (archive_supported) *archive_supported = 0;
     if (!archive_path || !md5_list || md5_count <= 0 || md5_count > 64 ||
@@ -5780,14 +5883,27 @@ static int scan_native_7z_members_by_md5_list(
     matches.md5_count = md5_count;
     matches.out_paths = out_paths;
     matches.matched = matched;
+    matches.cache_inventory_complete = 1;
     for (i = 0; i < md5_count; ++i) {
         if (matched[i]) ++matches.found_count;
+    }
+    cached_count = native_7z_cache_collect_matches(
+        archive_path, md5_list, md5_count, out_paths, matched,
+        &cache_complete);
+    matches.found_count += cached_count;
+    if (cache_complete || matches.found_count >= matches.md5_count) {
+        if (archive_supported) *archive_supported = 1;
+        return matches.found_count;
     }
     if (!firestaff_7z_visit_files(archive_path, native_7z_member_list_visitor,
                                   &matches)) {
         return 0;
     }
     if (archive_supported) *archive_supported = 1;
+    if (matches.found_count < matches.md5_count &&
+        matches.cache_inventory_complete) {
+        native_7z_cache_mark_complete(archive_path);
+    }
     return matches.found_count;
 }
 

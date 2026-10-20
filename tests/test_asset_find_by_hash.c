@@ -1476,9 +1476,10 @@ int main(void) {
          * digests instead of decompressing this solid 7z again. */
         if (!scan_cache_has_entry("nested_amiga.adf.7z::nested_amiga.adf::GRAPHICS.DAT") ||
             !scan_cache_has_entry("nested_amiga.adf.7z::nested_amiga.adf::@firestaff-adf-complete-v1") ||
-            !scan_cache_has_entry("nested_amiga.adf.7z::nested_amiga_second.adf::@firestaff-adf-complete-v1")) {
+            !scan_cache_has_entry("nested_amiga.adf.7z::nested_amiga_second.adf::@firestaff-adf-complete-v1") ||
+            !scan_cache_has_entry("nested_amiga.adf.7z@firestaff-7z-complete-v1")) {
             cleanup_fixture();
-            fprintf(stderr, "nested 7z/ADF inner-file cache was not recorded\n");
+            fprintf(stderr, "nested 7z/ADF digest inventory was not recorded\n");
             return 1;
         }
         memset(outPath, 0, sizeof(outPath));
@@ -1503,6 +1504,16 @@ int main(void) {
                     matched[0], matched[1], outPaths[1]);
             return 1;
         }
+#ifndef _WIN32
+        /* A complete inventory must answer without reopening an unchanged
+         * archive. Removing read permission makes any accidental decoder
+         * fallback fail while leaving its stat identity intact. */
+        if (chmod("asset_find_by_hash_test_tmp/nested_amiga.adf.7z", 0000) != 0) {
+            cleanup_fixture();
+            fprintf(stderr, "could not lock nested 7z cache fixture\n");
+            return 1;
+        }
+#endif
         {
             const char* duplicateHashes[] = {md5Upper, md5Upper, NULL};
             int duplicateCount;
@@ -1535,6 +1546,13 @@ int main(void) {
                 return 1;
             }
         }
+#ifndef _WIN32
+        if (chmod("asset_find_by_hash_test_tmp/nested_amiga.adf.7z", 0600) != 0) {
+            cleanup_fixture();
+            fprintf(stderr, "could not restore nested 7z cache fixture permissions\n");
+            return 1;
+        }
+#endif
     }
     remove("asset_find_by_hash_test_tmp/nested_amiga.adf.7z");
     remove("asset_find_by_hash_test_tmp/nested_amiga.adf");
