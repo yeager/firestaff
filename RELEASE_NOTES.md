@@ -1,3 +1,21 @@
+# Firestaff v3.0.399
+
+## User-facing changes
+
+- `DM1, CSB and DM2 startup`: this release adds verification coverage without changing player-facing behavior.
+
+## Developer changes
+
+- `DM1, CSB and DM2 collection-menu startup`: add an original-media regression that starts from the no-game menu, selects each title, and verifies handoff into the authentic runtime state.
+- `Runtime startup evidence`: validate the first DM1 HoC frame, the CSB party and viewport state, and DM2 completion of its 225-frame title sequence before the first champion loads.
+- `Original-media integrity`: confirm the real-media startup checks leave installed game archives unchanged and use no runtime fallbacks.
+- `Release metadata`: update the project version, embedded changelog and reproducible SPDX source SBOM for v3.0.399.
+
+## Known limitations
+
+- The real-media regression uses SDL dummy video and audio; it does not establish native display, physical input, sound output, or full gameplay parity.
+- The startup checks cover bounded first-runtime handoff for the selected editions, not every platform-specific intro or complete game behavior.
+
 # Firestaff v3.0.398
 
 ## User-facing changes
