@@ -527,6 +527,34 @@ if ! grep -Fq \
     exit 1
 fi
 echo "PASS: PC34 title animation accepts keydown because its authentic BR record allows interruption"
+mouse_title_output="$(FIRESTAFF_AUTOTEST=1 \
+   FIRESTAFF_AUTOTEST_DM1_TITLE_MOUSE_AFTER_FRAME=1 \
+   HOME="$missing_swsh_home" XDG_CONFIG_HOME="$missing_swsh_home" \
+   APPDATA="$missing_swsh_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+   SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+   --game dm1 --platform pc --data-dir "$pair_only_data_root" \
+   --debug --duration 12000 2>&1)" || {
+    printf '%s\n' "$mouse_title_output" >&2
+    echo "FAIL: DM1 startup mouse regression process failed" >&2
+    exit 1
+}
+if ! grep -Fq \
+       'AUTOTEST: DM1 I34E title mouse click injected after first rendered frame' \
+       <<<"$mouse_title_output" ||
+   ! grep -Fq \
+       'startup-input-ignore game=dm1 phase=anim-title reason=source-keyboard-only button=1 break-allowed=1 frame=1' \
+       <<<"$mouse_title_output" ||
+   ! grep -Fq \
+       'startup-source-complete game=dm1 platform=pc34 phase=anim-title frames=53' \
+       <<<"$mouse_title_output" ||
+   grep -Fq \
+       'startup-source-abort game=dm1 platform=pc34 phase=anim-title' \
+       <<<"$mouse_title_output"; then
+    printf '%s\n' "$mouse_title_output" >&2
+    echo "FAIL: PC34 title mouse click incorrectly interrupted keyboard-only ANIM input" >&2
+    exit 1
+fi
+echo "PASS: PC34 title ignores mouse clicks even when authentic BR permits keyboard interruption"
 repeat_selector_output="$(FIRESTAFF_AUTOTEST_SELECTOR_INPUT=key:return-repeat \
    HOME="$missing_swsh_home" XDG_CONFIG_HOME="$missing_swsh_home" \
    APPDATA="$missing_swsh_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \

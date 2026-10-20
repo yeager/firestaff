@@ -167,6 +167,17 @@ handoff, not the unfinished IIGS intro, audible DOC playback or full campaign.
 
 # Firestaff TODO — DM1
 
+2026-10-20 PC34 I34E TITLE input ownership: ReDMCSB `ANIM.C:2113-2114`
+checks `F0539_INPUT_Cconis` before allowing an interrupted frame, and PC34
+`IO2.C:179-185` defines that call as keyboard-buffer presence. Firestaff now
+ignores mouse clicks during the TITLE stream even on frames whose authentic
+`BR` record permits a keyboard interrupt. The original-media
+`dm1_v1_pc34_native_cli_boot` regression injects a click on the first frame,
+asserts the 53-frame TITLE completes, and separately confirms an allowed
+keyboard press still interrupts it. The complete PC34 CLI/M12/HoC input
+matrix passed with the DOS retail ZIP. SDL dummy does not verify native Mac
+mouse delivery or display parity.
+
 2026-10-19 PC34 motion diagnostic retest:
 `dm1_motion_present_diagnostics_real_media` passed against authentic DOS 3.4
 media. On this host with SDL dummy output and `--debug-full-redraw`, the

@@ -2,12 +2,14 @@
 
 ## User-facing changes
 
+- `DM1 PC34 title input`: mouse clicks no longer skip ANIM/TITLE; keyboard interruption still follows each original `BR` record.
 - `DM2 media scanning`: release large cue-selected disc images after profile checks instead of retaining their freed heap storage, reducing memory held after a complete collection scan.
 - `No-game startup`: scan the selected collection while the branded startup intro plays, with the menu still gated on authentic media verification.
 - `DM1, CSB and DM2 startup`: this release adds original-media coverage for the title picker and first runtime handoff.
 
 ## Developer changes
 
+- `DM1 PC34 input fidelity`: compare ReDMCSB's keyboard-only `F0539_INPUT_Cconis` title interrupt against the authentic I34E media and cover mouse-click rejection in the PC34 CLI/menu regression.
 - `DM1, CSB and DM2 collection-menu startup`: add an original-media regression that starts from the no-game menu, selects each title, and verifies handoff into the authentic runtime state.
 - `No-game collection scan`: defer startup admission into the intro, report scan paths in `--debug` after progress begins, and verify clean cancellation on window close.
 - `DM1 PC34 startup timing`: `--debug` separates the source-paced selector door animation from the authentic sound-completion wait after the final frame.

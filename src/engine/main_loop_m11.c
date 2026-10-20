@@ -5625,9 +5625,9 @@ static int m11_play_dm1_i34e_title_anim_if_available(
     Uint32 userAbortWindowId = 0u;
     Uint64 userAbortTimestamp = 0u;
     Uint8 userAbortRepeat = 0u;
-    Uint8 userAbortButton = 0u;
     int autotestQuitInjected = 0;
     int autotestKeyInjected = 0;
+    int autotestMouseInjected = 0;
     if (!version || !version->versionId ||
         strcmp(version->versionId, "pc34-en") != 0 ||
         !m11_dm1_i34e_title_read_authentic(menuState, version, &data, &size))
@@ -5792,6 +5792,32 @@ static int m11_play_dm1_i34e_title_anim_if_available(
                         "AUTOTEST: DM1 I34E title quit injected after first rendered frame\n");
             }
         }
+        if (!autotestMouseInjected && getenv("FIRESTAFF_AUTOTEST") &&
+            getenv("FIRESTAFF_AUTOTEST_DM1_TITLE_MOUSE_AFTER_FRAME") &&
+            strcmp(getenv("FIRESTAFF_AUTOTEST_DM1_TITLE_MOUSE_AFTER_FRAME"),
+                   "1") == 0 && frames == 1u) {
+            memset(&event, 0, sizeof(event));
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+            event.type = SDL_EVENT_MOUSE_BUTTON_DOWN;
+            event.button.button = SDL_BUTTON_LEFT;
+            event.button.x = 100.0f;
+            event.button.y = 100.0f;
+            event.button.windowID = SDL_GetWindowID(M11_Render_GetWindow());
+            event.button.timestamp = SDL_GetTicks();
+#else
+            event.type = SDL_MOUSEBUTTONDOWN;
+            event.button.button = SDL_BUTTON_LEFT;
+            event.button.x = 100;
+            event.button.y = 100;
+            event.button.windowID = SDL_GetWindowID(M11_Render_GetWindow());
+            event.button.timestamp = SDL_GetTicks();
+#endif
+            if (SDL_PushEvent(&event)) {
+                autotestMouseInjected = 1;
+                fprintf(stderr,
+                        "AUTOTEST: DM1 I34E title mouse click injected after first rendered frame\n");
+            }
+        }
         for (;;) {
             if (m11_phase_duration_expired() || m11_intro_wait_for_focus()) {
                 step = M11_ENTRANCE_COMMAND_QUIT; break;
@@ -5829,14 +5855,15 @@ static int m11_play_dm1_i34e_title_anim_if_available(
                                 (unsigned)event.key.repeat, frames);
                     continue;
                 }
-                if (frame.break_allowed &&
-                    event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-                    abortAnimation = 1;
-                    userAbortEventType = event.type;
-                    userAbortButton = event.button.button;
-                    userAbortWindowId = event.button.windowID;
-                    userAbortTimestamp = event.button.timestamp;
-                    break;
+                /* ReDMCSB ANIM.C:2113-2114 checks F0539 only; IO2.C:179-185
+                 * binds it to keyboard input. A mouse click cannot end TITLE. */
+                if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+                    if (g_m11_debug_startup_detail)
+                        fprintf(stderr,
+                                "firestaff: startup-input-ignore game=dm1 phase=anim-title reason=source-keyboard-only button=%u break-allowed=%u frame=%u\n",
+                                (unsigned)event.button.button,
+                                (unsigned)frame.break_allowed, frames);
+                    continue;
                 }
 #else
                 if (event.type == SDL_KEYDOWN) {
@@ -5861,14 +5888,15 @@ static int m11_play_dm1_i34e_title_anim_if_available(
                                 (unsigned)event.key.repeat, frames);
                     continue;
                 }
-                if (frame.break_allowed &&
-                    event.type == SDL_MOUSEBUTTONDOWN) {
-                    abortAnimation = 1;
-                    userAbortEventType = event.type;
-                    userAbortButton = event.button.button;
-                    userAbortWindowId = event.button.windowID;
-                    userAbortTimestamp = event.button.timestamp;
-                    break;
+                /* ReDMCSB ANIM.C:2113-2114 checks F0539 only; IO2.C:179-185
+                 * binds it to keyboard input. A mouse click cannot end TITLE. */
+                if (event.type == SDL_MOUSEBUTTONDOWN) {
+                    if (g_m11_debug_startup_detail)
+                        fprintf(stderr,
+                                "firestaff: startup-input-ignore game=dm1 phase=anim-title reason=source-keyboard-only button=%u break-allowed=%u frame=%u\n",
+                                (unsigned)event.button.button,
+                                (unsigned)frame.break_allowed, frames);
+                    continue;
                 }
 #endif
 #if SDL_VERSION_ATLEAST(3, 0, 0)
@@ -5899,11 +5927,10 @@ static int m11_play_dm1_i34e_title_anim_if_available(
     }
     if (userAborted && g_m11_debug_startup_detail)
         fprintf(stderr,
-                "firestaff: startup-source-abort game=dm1 platform=pc34 phase=anim-title event=%u window=%u timestamp=%llu key=%d scancode=%d repeat=%u button=%u frame=%u source-counter-units=%llu\n",
+                "firestaff: startup-source-abort game=dm1 platform=pc34 phase=anim-title event=%u window=%u timestamp=%llu key=%d scancode=%d repeat=%u frame=%u source-counter-units=%llu\n",
                 (unsigned)userAbortEventType, (unsigned)userAbortWindowId,
                 (unsigned long long)userAbortTimestamp, (int)userAbortKey,
-                (int)userAbortScancode, (unsigned)userAbortRepeat,
-                (unsigned)userAbortButton, frames,
+                (int)userAbortScancode, (unsigned)userAbortRepeat, frames,
                 (unsigned long long)counterUnits);
     if (g_m11_debug_startup_detail)
         fprintf(stderr, "firestaff: startup-source-complete game=dm1 platform=pc34 phase=anim-title frames=%u source-counter-units=%llu elapsed-ms=%llu timing-model=ibmio-default-pit callback-decrement=3 pit-input-hz=1193182 pit-divisor=65536\n",
