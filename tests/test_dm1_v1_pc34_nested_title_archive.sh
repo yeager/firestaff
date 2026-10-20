@@ -31,15 +31,15 @@ import sys
 
 match = re.search(
     r"startup-source-complete game=dm1 platform=pc34 phase=anim-title "
-    r"frames=(\d+) source-vblanks=(\d+) elapsed-ms=(\d+)",
+    r"frames=(\d+) source-counter-units=(\d+) elapsed-ms=(\d+)",
     sys.argv[1])
 if not match:
     raise SystemExit("FAIL: authentic nested PC-34 I34E title did not complete")
-frames, source_vblanks, elapsed_ms = map(int, match.groups())
-if frames != 53 or source_vblanks < frames * 5 or elapsed_ms <= 0:
+frames, source_counter_units, elapsed_ms = map(int, match.groups())
+if frames != 53 or source_counter_units != frames or elapsed_ms <= 0:
     raise SystemExit(
         f"FAIL: nested PC-34 title cadence mismatch: {match.groups()}")
 print(
     f"PASS: nested PC-34 TITLE presented {frames} original frames, "
-    f"{source_vblanks} source VBlanks in {elapsed_ms} ms")
+    f"{source_counter_units} source counter units in {elapsed_ms} ms")
 PY

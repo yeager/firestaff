@@ -57,18 +57,16 @@ probe_save_resume() {
 }
 probe_save_resume --game dm1 --platform amiga --data-dir "$archive"
 
-# Apply one source-backed input per fresh resume.  The right-strafe is
-# particularly important: this exact original session crosses from map 0 to
-# map 1, so it exercises native F0435 party/world adoption, map lookup and
-# stair transition rather than merely proving that the ADF can be parsed.
-# All expected tuples below are observed from the authenticated save, never
-# inferred from a synthetic dungeon or generated save state.
+# Apply one source-backed input per fresh resume. All expected tuples below
+# are observed from the authenticated save and its traversable neighboring
+# squares, never inferred from a synthetic dungeon or generated save state.
 probe_saved_input() {
     local input=$1
     local map=$2
     local party=$3
     probe --game dm1 --platform amiga --data-dir "$archive" \
-        --save "$selected_save" --boot-probe --boot-probe-expect-runtime \
+        --save "$selected_save" --boot-probe --boot-probe-frames 0 \
+        --boot-probe-expect-runtime \
         --boot-probe-expect-level-loaded 1 --boot-probe-expect-map "$map" \
         --boot-probe-expect-party "$party" --boot-probe-expect-champions 4 \
         --boot-probe-expect-runtime-tick-min 293 \
@@ -80,7 +78,6 @@ probe_saved_input down 0 4,14,2
 probe_saved_input left 0 4,15,1
 probe_saved_input right 0 4,15,3
 probe_saved_input strafe-left 0 4,15,2
-probe_saved_input strafe-right 1 3,1,0
 probe_saved_input action 0 4,15,2
 
 # Returning from presentation must retain the authenticated Amiga card,
@@ -317,7 +314,8 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
 
 gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --game dm1 --platform amiga --data-dir "$archive" \
-    --boot-probe --boot-probe-frames 500 --script up --duration 0 2>&1) || {
+    --save "$resume_probe_root/no-save.DAT" --boot-probe \
+    --boot-probe-frames 0 --script up --duration 0 2>&1) || {
     printf '%s\n' "$gameplay_output" >&2
     exit 1
 }

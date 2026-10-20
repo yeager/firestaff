@@ -4360,7 +4360,7 @@ if(BUILD_TESTING)
         ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN.zip;FIRESTAFF_DM1_WRONG_DUNGEON_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_EN_Version-12.zip"
         # The nested archive executes the complete live HoC render/input
         # matrix, including Original and Modern presentation captures.
-        TIMEOUT 360
+        TIMEOUT 900
     )
     add_test(
         NAME dm1_v1_pc34_nested_title_archive

@@ -362,6 +362,26 @@ mixed_media_pc34="$mixed_media_data/dos_extract/Dungeon-Master_DOS_EN_Version-34
 mixed_media_probe="$mixed_media_home/runtime.json"
 mkdir -p "$mixed_media_pc34"
 cp -R "$missing_swsh_root/data/." "$mixed_media_pc34/"
+mixed_media_pc34_data=$(python3 - "$mixed_media_pc34" <<'PY'
+from hashlib import md5
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+graphics_hash = "fa6b1aa29e191418713bf2cda93d962e"
+dungeon_hash = "766450c940651fc021c92fe5d0d0b3a6"
+pairs = []
+for graphics in root.rglob("GRAPHICS.DAT"):
+    dungeon = graphics.parent / "DUNGEON.DAT"
+    if (graphics.is_file() and dungeon.is_file() and
+            md5(graphics.read_bytes()).hexdigest() == graphics_hash and
+            md5(dungeon.read_bytes()).hexdigest() == dungeon_hash):
+        pairs.append(graphics.parent)
+if len(pairs) != 1:
+    raise SystemExit(f"FAIL: expected one authentic PC-34 pair, found {pairs}")
+print(pairs[0])
+PY
+)
 archive_source_dir=$(cd "$(dirname "$archive")" && pwd)
 for sibling_archive in "$archive_source_dir"/*.zip; do
     [[ -f "$sibling_archive" ]] || continue
@@ -383,12 +403,12 @@ mixed_media_output="$(
     exit 1
 }
 if ! grep -Fq \
-        "dm1 platform=PC edition=pc34-en matched source=$mixed_media_pc34/DATA/GRAPHICS.DAT" \
+        "dm1 platform=PC edition=pc34-en matched source=$mixed_media_pc34_data/GRAPHICS.DAT" \
         <<< "$mixed_media_output" ||
    ! grep -Fq \
-        "dungeonPath=$mixed_media_pc34/DATA/DUNGEON.DAT" \
+        "dungeonPath=$mixed_media_pc34_data/DUNGEON.DAT" \
         <<< "$mixed_media_output" ||
-   ! grep -Fq "dataDir=$mixed_media_pc34/DATA" <<< "$mixed_media_output" ||
+   ! grep -Fq "dataDir=$mixed_media_pc34_data" <<< "$mixed_media_output" ||
    ! grep -Fq 'handoff=pc-img3' <<< "$mixed_media_output" ||
    ! grep -Fq 'phase=dm1-runtime' <<< "$mixed_media_output" ||
    ! grep -Fq 'levelLoaded=1' <<< "$mixed_media_output"; then
@@ -424,9 +444,32 @@ print("PASS: prepared an isolated missing-SWSH test copy from the original archi
 PY
 pair_only_data_root="$missing_swsh_root/pc34-pair"
 mkdir -p "$pair_only_data_root"
+title_path=$(python3 - "$missing_swsh_root/data" TITLE <<'PY'
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+matches = [path for path in root.rglob("*")
+           if path.is_file() and path.name.casefold() == sys.argv[2].casefold()]
+if len(matches) != 1:
+    raise SystemExit(f"FAIL: expected one authentic {sys.argv[2]} asset; found {matches}")
+print(matches[0])
+PY
+)
+selector_path=$(python3 - "$missing_swsh_root/data" SELECTOR <<'PY'
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+matches = [path for path in root.rglob("*")
+           if path.is_file() and path.name.casefold() == sys.argv[2].casefold()]
+if len(matches) != 1:
+    raise SystemExit(f"FAIL: expected one authentic {sys.argv[2]} asset; found {matches}")
+print(matches[0])
+PY
+)
 cp "$runtime_data_root/GRAPHICS.DAT" "$runtime_data_root/DUNGEON.DAT" \
-   "$missing_swsh_root/data/TITLE" \
-   "$missing_swsh_root/data/SELECTOR" \
+   "$title_path" "$selector_path" \
    "$pair_only_data_root/"
 missing_swsh_output="$(FIRESTAFF_AUTOTEST=1 HOME="$missing_swsh_home" XDG_CONFIG_HOME="$missing_swsh_home" \
    APPDATA="$missing_swsh_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
@@ -941,8 +984,13 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
 # The authentic PC-3.4 dungeon starts at (map=0,x=1,y=3,dir=2).  A native
 # `up` input advances to y=4; this proves the selected archive has reached
 # the actual M11 movement route rather than only a title/startup receipt.
-gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --game dm1 --platform pc --data-dir "$archive" --boot-probe --boot-probe-frames 500 \
+movement_home="$test_scratch/dm1-pc34-movement-home-$$"
+mkdir -p "$movement_home"
+gameplay_output=$(HOME="$movement_home" XDG_CONFIG_HOME="$movement_home" \
+    APPDATA="$movement_home" FIRESTAFF_CONFIG_PATH="$movement_home/config.toml" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --game dm1 --platform pc --data-dir "$archive" \
+    --boot-probe --boot-probe-frames 0 \
     --script up --duration 0 2>&1) || {
     printf '%s\n' "$gameplay_output" >&2
     exit 1
@@ -962,9 +1010,12 @@ probe_runtime_input() {
     local input=$1
     local expected_party=$2
     local output
-    output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    output=$(HOME="$movement_home" XDG_CONFIG_HOME="$movement_home" \
+        APPDATA="$movement_home" FIRESTAFF_CONFIG_PATH="$movement_home/config.toml" \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
         --game dm1 --platform pc --data-dir "$archive" \
-        --boot-probe --boot-probe-frames 500 --script "$input" --duration 0 2>&1) || {
+        --boot-probe \
+        --boot-probe-frames 0 --script "$input" --duration 0 2>&1) || {
         printf '%s\n' "$output" >&2
         return 1
     }
@@ -987,9 +1038,12 @@ probe_runtime_input action 1,3,2
 # ReDMCSB COMMAND.C:107-112 G0448 and 323-328 G0463 map C070's
 # x=263..289/y=125..145 arrow to C003 forward movement. Exercise that
 # source mouse route with the authenticated PC 3.4 ZIP at native 320x200.
-mouse_move_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+mouse_move_output=$(HOME="$movement_home" XDG_CONFIG_HOME="$movement_home" \
+    APPDATA="$movement_home" FIRESTAFF_CONFIG_PATH="$movement_home/config.toml" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --game dm1 --platform pc --data-dir "$archive" --width 320 --height 200 \
-    --boot-probe --boot-probe-frames 500 --script 'click:275:135' \
+    --boot-probe --boot-probe-frames 0 \
+    --script 'click:275:135' \
     --duration 0 2>&1) || {
     printf '%s\n' "$mouse_move_output" >&2
     exit 1
@@ -1014,9 +1068,11 @@ if [[ "$mouse_hoc_route" == *key:* ]]; then
     printf '%s\n' 'FAIL: PC-34 Hall mouse route still contains keyboard input' >&2
     exit 1
 fi
-mouse_hoc_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+mouse_hoc_output=$(HOME="$movement_home" XDG_CONFIG_HOME="$movement_home" \
+    APPDATA="$movement_home" FIRESTAFF_CONFIG_PATH="$movement_home/config.toml" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --game dm1 --platform pc --data-dir "$archive" --width 320 --height 200 \
-    --boot-probe --boot-probe-frames 500 \
+    --boot-probe --boot-probe-frames 0 \
     --script "$mouse_hoc_route,click:130:115,wait5" --duration 0 2>&1) || {
     printf '%s\n' "$mouse_hoc_output" >&2
     exit 1
@@ -1049,7 +1105,9 @@ cleanup_hoc_capture() {
     find "$hoc_modern_capture_dir" -depth -delete
 }
 trap cleanup_hoc_capture EXIT HUP INT TERM
-hoc_output=$(FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$hoc_capture_dir" \
+hoc_output=$(HOME="$movement_home" XDG_CONFIG_HOME="$movement_home" \
+    APPDATA="$movement_home" FIRESTAFF_CONFIG_PATH="$movement_home/config.toml" \
+    FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$hoc_capture_dir" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --presentation-mode v1 --width 320 --height 200 \
     --game dm1 --platform pc --data-dir "$archive" \
@@ -1111,7 +1169,9 @@ PY
 # physical 1920x1080 point (744,464), which maps to source (112,83) inside
 # the 1600x1000 presentation rectangle. This protects the normal SDL pointer
 # transform, rather than merely the boot probe's 320x200 convenience route.
-hoc_scaled_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+hoc_scaled_output=$(HOME="$movement_home" XDG_CONFIG_HOME="$movement_home" \
+    APPDATA="$movement_home" FIRESTAFF_CONFIG_PATH="$movement_home/config.toml" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --presentation-mode v1 --width 1920 --height 1080 --scale-mode 4 \
     --game dm1 --platform pc --data-dir "$archive" \
     --boot-probe --boot-probe-frames 720 \
@@ -1130,7 +1190,9 @@ fi
 # Modern changes the render target, but it must not change the original
 # source-coordinate hit route.  Use the same real PC3.4 archive and physical
 # 16:9 click; this caught variants where C040 worked only in Original mode.
-hoc_modern_output=$(FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$hoc_modern_capture_dir" \
+hoc_modern_output=$(HOME="$movement_home" XDG_CONFIG_HOME="$movement_home" \
+    APPDATA="$movement_home" FIRESTAFF_CONFIG_PATH="$movement_home/config.toml" \
+    FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$hoc_modern_capture_dir" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --presentation-mode v20 --width 1920 --height 1080 --scale-mode 4 \
     --game dm1 --platform pc --data-dir "$archive" \
@@ -1198,7 +1260,9 @@ PY
 # the pending C127 candidate and close the panel through the normal REVIVE.C
 # path.  Keep this separate from the open assertion above so a broken click
 # transform cannot be hidden by the first portrait dispatch.
-hoc_confirm_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+hoc_confirm_output=$(HOME="$movement_home" XDG_CONFIG_HOME="$movement_home" \
+    APPDATA="$movement_home" FIRESTAFF_CONFIG_PATH="$movement_home/config.toml" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --presentation-mode v1 --width 320 --height 200 \
     --game dm1 --platform pc --data-dir "$archive" \
     --boot-probe --boot-probe-frames 720 \
@@ -1220,7 +1284,9 @@ fi
 # live revive panel.  C040 intentionally retains C017's inventory backing
 # state, so that state alone is not a dispatch observation; the visible C040
 # ownership is the source-relevant assertion.
-hoc_source_coordinate_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+hoc_source_coordinate_output=$(HOME="$movement_home" XDG_CONFIG_HOME="$movement_home" \
+    APPDATA="$movement_home" FIRESTAFF_CONFIG_PATH="$movement_home/config.toml" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --presentation-mode v1 --width 320 --height 200 \
     --game dm1 --platform pc --data-dir "$archive" \
     --boot-probe --boot-probe-frames 720 \
@@ -1239,7 +1305,9 @@ fi
 # after C160 has recruited the mirror candidate. Keep this a live PC3.4 CLI
 # route: it guards the reported HoC state where panel clicks looked accepted
 # but never opened the champion inventory.
-hoc_inventory_output=$(FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$hoc_inventory_capture_dir" \
+hoc_inventory_output=$(HOME="$movement_home" XDG_CONFIG_HOME="$movement_home" \
+    APPDATA="$movement_home" FIRESTAFF_CONFIG_PATH="$movement_home/config.toml" \
+    FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$hoc_inventory_capture_dir" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --presentation-mode v1 --width 320 --height 200 \
     --game dm1 --platform pc --data-dir "$archive" \
@@ -1306,7 +1374,12 @@ native_hoc_keys='key:kp5,key:kp5,key:kp5,key:kp5,key:kp5,key:kp1,key:kp1,key:kp1
 native_hoc_route=$(python3 -c 'import sys; tokens=sys.argv[1].split(","); print(",".join(token+(",wait:30" if token.startswith("key:") else ",wait:5" if token.startswith("click:") else "") for token in tokens))' "$native_hoc_keys")
 native_hoc_route+=',click:130:115,wait:5,key:kp2,wait:30,key:kp1,wait:30,key:kp1,wait:30,key:kp1,wait:30,key:kp1,wait:30,click:112:82,wait:5,click:130:115,wait:5,click:80:3,wait:5,click:10:3,wait:5'
 native_hoc_dispatch_log="$test_scratch/dm1-pc34-native-hoc-dispatch-$$.log"
-native_hoc_dispatch_output=$(FIRESTAFF_AUTOTEST_SELECTOR_INPUT=key:return \
+native_hoc_home="$test_scratch/dm1-pc34-native-hoc-home-$$"
+mkdir -p "$native_hoc_home"
+native_hoc_dispatch_output=$(HOME="$native_hoc_home" \
+    XDG_CONFIG_HOME="$native_hoc_home" APPDATA="$native_hoc_home" \
+    FIRESTAFF_CONFIG_PATH="$native_hoc_home/config.toml" \
+    FIRESTAFF_AUTOTEST_SELECTOR_INPUT=key:return \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --presentation-mode v1 --width 320 --height 200 \
     --game dm1 --platform pc --data-dir "$archive" --debug \
