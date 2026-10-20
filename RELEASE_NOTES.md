@@ -10,7 +10,7 @@
 
 ## Known limitations
 
-- `Startup scan latency`: the complete authentic five-game scan still takes about 12 seconds on the tested Mac mini M4 with a warm persistent cache; cold-cache and other-platform timings remain unverified.
+- `Startup scan latency`: `--scan-data --debug` took 27.90 seconds cold and 12.35 seconds warm on the authentic five-game collection on the tested Mac mini M4; other platforms remain unmeasured.
 - `Original-media startup`: SDL dummy video/audio checks verify discovery and selected CLI routes, not native display, physical input, sound output, or complete game parity.
 
 # Firestaff v3.0.396

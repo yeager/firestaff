@@ -10,6 +10,12 @@ all five games, DM1/CSB/DM2 platform routes resolved, and no-game startup stayed
 in the menu. A follow-up menu scan measured 12,252 ms (12,048 ms on repeat)
 with the persistent scan cache already warm; these timings do not prove a cold
 scan improvement, and the menu still waits about 12 seconds on this M4 setup.
+An isolated-home `--scan-data --debug` run with the same authentic collection
+on the v3.0.397 build measured 27.90 seconds with a cold cache and 12.35 seconds
+on the warm repeat; all five games reported READY. A 20-second macOS sample
+recorded 638 of 1,795 samples inside `m12_fill_game_versions`; nested 7z→ADF
+and CAPS/MFM decoding were among its hot paths. The cold run has no comparable
+pre-change baseline, so it does not establish a cold-cache regression or gain.
 Nexus still lacks its original Saturn title-capture gate for an interactive
 menu handoff; Theron and all native presentation/input/audio routes retain
 their separate runtime gaps.
