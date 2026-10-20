@@ -1,3 +1,17 @@
+# Firestaff v3.0.397
+
+## Developer changes
+
+- `M12 virtual asset hashing`: reuse verified hashes from the active asset scan for nested archive members, avoiding a second 7z/ADF decode when M12 checks source-owned files.
+- `Virtual asset hash verification`: cover cached nested-member lookup and preserve archive freshness checks.
+- `Startup scan profiling`: add the current warm-cache timings to the evidence ledger and mark cold-cache performance as unverified.
+- `Release metadata`: update the project version and reproducible SPDX source SBOM for v3.0.397.
+
+## Known limitations
+
+- `Startup scan latency`: the complete authentic five-game scan still takes about 12 seconds on the tested Mac mini M4 with a warm persistent cache; cold-cache and other-platform timings remain unverified.
+- `Original-media startup`: SDL dummy video/audio checks verify discovery and selected CLI routes, not native display, physical input, sound output, or complete game parity.
+
 # Firestaff v3.0.396
 
 ## Developer changes
