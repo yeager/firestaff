@@ -409,6 +409,17 @@ for commit `3fd0f5886`.
   Other DM1 editions, remaining DM2 platforms, Nexus
   and Theron still need equivalent evidence. Keep this separate from visual
   parity.
+  On 2026-10-20, `m12_main_menu_runtime_real_media` passed 1/1 in 297.93
+  seconds against the installed original FM Towns archives. It starts with no
+  game selected, uses the visible M12 keyboard card flow, and checks the first
+  active runtime for DM1, CSB and DM2. DM1 reaches its HoC first frame; CSB
+  loads the original MINI.DAT party and a nonzero viewport receipt; DM2
+  completes all 225 original FM Towns title frames, loads the first champion,
+  and accepts a runtime frame with no core fallbacks. The check also hashes
+  each original archive before and after launch. This closes the no-game
+  main-menu-to-runtime gap for these three default FM Towns editions. It does
+  not establish physical input/display parity or coverage for every edition;
+  Nexus and Theron remain outside this ownership scope.
 
 - Extend F0219 current-cell collision coverage to original-media encounters,
   half-square creature footprints, nonmaterial/Black Flame cases and inactive
