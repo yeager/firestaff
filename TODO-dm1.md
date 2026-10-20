@@ -1,3 +1,12 @@
+2026-10-20 authentic Amiga 2.2 German startup:
+`dm1_v1_amiga22_german_archive_cli_boot` passed against the original A22G disk
+extracted from the installed 7z archive. Its 910,058-byte ADF remained
+byte-identical through ZIP transport and startup. Direct
+`--game dm1 --platform amiga` reached the authenticated runtime; both ZIP-backed
+and direct-disk start-menu routes reached the first Hall frame at the expected
+original pose. SDL dummy verifies these CLI/menu handoffs, not native display,
+sound output or sustained campaign play.
+
 2026-10-20 no-game startup and scan latency recheck: the real-media diagnostics
 left `--game` unset, entered `mode=menu`, discovered original data for all five
 games, and did not hand off to a game. Two runs with the persistent scan cache
@@ -888,14 +897,12 @@ original hashes and sizes for `GRAPHICS.DAT`, `Dungeon.dat`, `dm` and `swoosh`.
 It passes on the Mac mini M4. A byte-preserving ZIP transport probe recognizes
 the shared German graphics/dungeon files as `amiga20-de`, then fails its
 runtime handoff because the disk's `swoosh` is the French A20F hash rather than
-the German A20G hash. The disk is still marked “Original (Not working)”; this
-reader does not admit or claim playable A22G support. It establishes safe
-source-file recovery and keeps the edition-authentication gate intact. The
-in-process 7z scanner now examines nested Amiga ADF members and retains
-`archive::disk::file` provenance. A direct scan of the complete preservation
-archive finds its original Amiga graphics and dungeon files but cannot launch
-from the mixed disk set; no runtime-support claim follows from archive
-discovery alone.
+the German A20G hash. This probe established safe source-file recovery and
+kept the edition-authentication gate intact; a later exact A22G startup profile
+and its direct-CLI/menu routes are verified in the 2026-10-20 entry above. The
+in-process 7z scanner examines nested Amiga ADF members and retains
+`archive::disk::file` provenance. Discovery from the complete mixed
+preservation archive alone still does not select a unique playable disk.
 
 2026-10-12 FTL decompression bounds: ReDMCSB `DECOMPDU.C`
 `F0455_FLOPPY_DecompressDungeon` establishes the MSB-first token grammar for
@@ -2069,9 +2076,10 @@ verified world receipts, and missing A20 SWSH/A36 VDEO.FTL. Default-world
 identity and startup-companion readiness are separate shared checks; the report
 reuses both without restoring availability or edition matches. Original-data
 menu input identifies the actual missing role. Both scan APIs, explicit runtime
-rejection, restored native starts and mixed surviving-owner reports pass. A22G
-normal/alternate tuple equivalence is source-reviewed; original runtime coverage
-for that tuple and equivalent virtual-archive diagnostics remain open.
+rejection, restored native starts and mixed surviving-owner reports pass. The
+A22G `a22g-four-files` tuple now has original-media CLI and start-menu coverage;
+source-reviewed alternate-tuple equivalence and its virtual-archive diagnostic
+remain open.
 
 2026-10-16 explicit archive diagnostic follow-up: selected unavailable DM1
 archives now recover independently authenticated original graphics within that
