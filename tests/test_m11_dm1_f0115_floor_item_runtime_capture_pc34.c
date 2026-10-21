@@ -102,7 +102,9 @@ int main(void)
     const char* dataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
     M11_GameViewState state;
     M11_Dm1F0115FloorItemRuntimeCaptureReceipt receipt;
+    M11_Dm1FloorItemHostPresentationReceipt stalePresentation;
     unsigned char framebuffer[320 * 200];
+    int originalAssetsAvailable;
 
     if (!dataDir || !dataDir[0]) {
         puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
@@ -133,6 +135,43 @@ int main(void)
         receipt.presentation.graphicsId <= 0 ||
         receipt.presentation.assetWidth <= 0 || receipt.presentation.assetHeight <= 0) {
         fprintf(stderr, "real D0C F0115 material did not reach final M11 capture\n");
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+
+    /* A floor-item click target belongs to the most recently rendered
+     * frame. If the next frame cannot draw the original material, the old
+     * coordinates must not remain interactive. Keep the real source pose
+     * and Thing chain; only withdraw the renderer binding for one frame. */
+    stalePresentation = receipt.presentation;
+    originalAssetsAvailable = state.assetsAvailable;
+    state.assetsAvailable = 0;
+    state.world.gameTick += 1u;
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&state, framebuffer, 320, 200);
+    (void)M11_GameView_HandlePointer(
+        &state,
+        stalePresentation.destinationX + stalePresentation.destinationW / 2,
+        stalePresentation.destinationY + stalePresentation.destinationH / 2,
+        1);
+    if (M11_GameView_GetV1LeaderHandThing(&state) != THING_NONE) {
+        fprintf(stderr,
+                "stale floor-item hit target remained active after its source material disappeared\n");
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+
+    /* Restore the real media and obtain a fresh frame-local target before
+     * proving the authentic source item still picks up normally. */
+    state.assetsAvailable = originalAssetsAvailable;
+    state.world.gameTick += 1u;
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&state, framebuffer, 320, 200);
+    memset(&receipt, 0, sizeof(receipt));
+    M11_GameView_GetDm1F0115FloorItemRuntimeCaptureReceipt(&receipt);
+    if (!receipt.valid || !receipt.presentation.floorItemLane ||
+        receipt.runtimeTick != state.world.gameTick) {
+        fprintf(stderr, "real floor-item target did not refresh after source material returned\n");
         M11_GameView_Shutdown(&state);
         return 1;
     }
