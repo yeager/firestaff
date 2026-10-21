@@ -53,6 +53,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(__APPLE__)
+#include <TargetConditionals.h>
+#endif
+
 #ifdef _WIN32
 #include <direct.h>
 #include <process.h>
@@ -747,9 +751,9 @@ static void check_data_dir_picker_cancel_does_not_re_show_no_data(void) {
 }
 
 /* ------------------------------------------------------------------------- */
-/* Scenario 6: a no-op rescan via M12_StartupMenu_SetDataDirectory must
- * surface the "NO VERIFIED DATA" result popup exactly once,
- * and dismissal must return cleanly to MAIN. */
+/* Scenario 6: rescanning an empty directory via
+ * M12_StartupMenu_SetDataDirectory must surface the actionable no-game-data
+ * popup once, and dismissal must return cleanly to MAIN. */
 
 static void check_rescan_with_empty_dir_shows_no_data_result_once(void) {
     M12_StartupMenuState state;
@@ -775,8 +779,17 @@ static void check_rescan_with_empty_dir_shows_no_data_result_once(void) {
     CHECK(state.dataDirPickerActive == 0);
     line1 = state.messageLine1 ? state.messageLine1 : "";
     line2 = state.messageLine2 ? state.messageLine2 : "";
-    CHECK(strcmp(line1, "DATA DIRECTORY UPDATED") == 0);
-    CHECK(strcmp(line2, "NO VERIFIED DATA") == 0);
+    CHECK(strcmp(line1, "NO GAME DATA FOUND") == 0);
+#if defined(__ANDROID__)
+    CHECK(strcmp(line2,
+                 "COPY GAME FILES TO Documents/Firestaff/data USING A FILE MANAGER") == 0);
+#elif defined(__APPLE__) && TARGET_OS_IOS
+    CHECK(strcmp(line2,
+                 "USE THE FILES APP TO COPY GAME FILES TO Firestaff/data IN THIS APP") == 0);
+#else
+    CHECK(strcmp(line2,
+                 "COPY ORIGINAL GAME FILES INTO THE DATA DIRECTORY") == 0);
+#endif
     CHECK(state.messageLine3 && has_text_prefix(state.messageLine3, "DATA DIR:"));
 
     /* Repeated ACKs while the result popup is open must not stack a
@@ -840,11 +853,11 @@ static void check_quick_resume_unavailable_shows_missing_popup_once(void) {
 }
 
 /* ------------------------------------------------------------------------- */
-/* Scenario 8: changing the configured data root from a complete synthetic
- * recursive layout to a partial layout must clear stale availability for
- * multiple games and route each game card through the centralized required
- * file popup. This keeps the folder-picker/config path tied to
- * M12_AssetStatus_Scan rather than filename or prior-state shortcuts. */
+/* Scenario 8: changing the configured data root from a synthetic recursive
+ * DM1 layout to a partial layout must clear stale DM1 availability and route
+ * each card through the centralized required-file popup. The DM2 byte blobs
+ * deliberately are not valid runtime media, so cache validation must reject
+ * them instead of advertising a launchable game. */
 
 static void check_data_root_switch_partial_required_pairs_for_dm1_dm2(void) {
     M12_StartupMenuState state;
@@ -909,11 +922,11 @@ static void check_data_root_switch_partial_required_pairs_for_dm1_dm2(void) {
     CHECK(state.view == M12_MENU_VIEW_MAIN);
     CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), fullRoot) == 0);
     CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "dm1") == 1);
-    CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "dm2") == 1);
+    CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "dm2") == 0);
     dm1Entry = M12_StartupMenu_GetEntry(&state, 0);
     dm2Entry = M12_StartupMenu_GetEntry(&state, 2);
     CHECK(dm1Entry && dm1Entry->available == 1);
-    CHECK(dm2Entry && dm2Entry->available == 1);
+    CHECK(dm2Entry && dm2Entry->available == 0);
 
     CHECK(M12_StartupMenu_SetDataDirectory(&state, partialRoot) == 1);
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
