@@ -84,6 +84,15 @@ int dm2_v1_mac_media_read_zip(const char *zip_path, DM2_V1_MacMedia *out);
  * The image remains caller-owned; returned HFS forks are caller-owned. */
 int dm2_v1_mac_media_read_image(const uint8_t *image, size_t image_size,
                                 DM2_V1_MacMedia *out);
+/* Read one loose QuickTime movie and its original Resource Manager fork.
+ * Resource forks may be stored as a native filesystem fork or in an
+ * AppleDouble sidecar; no source file is modified. All returned buffers are
+ * owned by the caller. */
+int dm2_v1_mac_media_read_loose_movie(
+    const char *movie_path,
+    uint8_t **out_data, size_t *out_data_size,
+    uint8_t **out_resource, size_t *out_resource_size,
+    uint8_t **out_moov, size_t *out_moov_size);
 void dm2_v1_mac_media_free(DM2_V1_MacMedia *media);
 
 #endif

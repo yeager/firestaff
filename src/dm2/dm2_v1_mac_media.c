@@ -5,6 +5,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdio.h>
+
+#if defined(__APPLE__) || defined(__linux__)
+#include <sys/types.h>
+#include <sys/xattr.h>
+#endif
 
 /* Macintosh CDs in the verified DM2 set are raw MODE1/2352 images.  HFS is
  * addressed in 512-byte logical blocks inside the 2048-byte user area. */
@@ -15,6 +21,172 @@ static uint16_t be16(const uint8_t *p) { return (uint16_t)(((uint16_t)p[0] << 8)
 static uint32_t be32(const uint8_t *p) {
     return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
            ((uint32_t)p[2] << 8) | p[3];
+}
+
+static int copy_resource_type(const uint8_t *fork, size_t fork_size,
+                              const char wanted_type[4],
+                              uint8_t **out, size_t *out_size);
+
+static int read_loose_file(const char *path, uint8_t **out, size_t *out_size) {
+    FILE *file;
+    long length;
+    uint8_t *bytes;
+    size_t read_size;
+    if (!path || !out || !out_size) return -1;
+    *out = NULL;
+    *out_size = 0u;
+    file = fopen(path, "rb");
+    if (!file) return -1;
+    if (fseek(file, 0, SEEK_END) != 0 || (length = ftell(file)) <= 0 ||
+        (unsigned long)length > 64ul * 1024ul * 1024ul ||
+        fseek(file, 0, SEEK_SET) != 0) {
+        fclose(file);
+        return -1;
+    }
+    bytes = (uint8_t *)malloc((size_t)length);
+    if (!bytes) { fclose(file); return -1; }
+    read_size = fread(bytes, 1u, (size_t)length, file);
+    fclose(file);
+    if (read_size != (size_t)length) { free(bytes); return -1; }
+    *out = bytes;
+    *out_size = read_size;
+    return 0;
+}
+
+static int read_xattr_fork(const char *path, const char *name,
+                           uint8_t **out, size_t *out_size) {
+#if defined(__APPLE__) || defined(__linux__)
+    ssize_t length;
+    uint8_t *bytes;
+    ssize_t copied;
+    if (!path || !name || !out || !out_size) return -1;
+#if defined(__APPLE__)
+    length = getxattr(path, name, NULL, 0u, 0u, 0);
+#else
+    length = getxattr(path, name, NULL, 0u);
+#endif
+    if (length <= 0 || (unsigned long long)length > 64ull * 1024ull * 1024ull)
+        return -1;
+    bytes = (uint8_t *)malloc((size_t)length);
+    if (!bytes) return -1;
+#if defined(__APPLE__)
+    copied = getxattr(path, name, bytes, (size_t)length, 0u, 0);
+#else
+    copied = getxattr(path, name, bytes, (size_t)length);
+#endif
+    if (copied != length) { free(bytes); return -1; }
+    *out = bytes;
+    *out_size = (size_t)length;
+    return 0;
+#else
+    (void)path; (void)name; (void)out; (void)out_size;
+    return -1;
+#endif
+}
+
+static int read_appledouble_fork(const char *path,
+                                 uint8_t **out, size_t *out_size) {
+    char sidecar[4096];
+    const char *separator;
+    size_t parent_length;
+    uint8_t *container = NULL;
+    size_t container_size = 0u;
+    uint16_t entries;
+    size_t i;
+    if (!path || !out || !out_size) return -1;
+    separator = strrchr(path, '/');
+#if defined(_WIN32)
+    {
+        const char *backslash = strrchr(path, '\\');
+        if (!separator || (backslash && backslash > separator)) separator = backslash;
+    }
+#endif
+    parent_length = separator ? (size_t)(separator - path) + 1u : 0u;
+    if (parent_length + 2u + strlen(path + parent_length) + 1u > sizeof(sidecar))
+        return -1;
+    memcpy(sidecar, path, parent_length);
+    sidecar[parent_length] = '.';
+    sidecar[parent_length + 1u] = '_';
+    strcpy(sidecar + parent_length + 2u, path + parent_length);
+    if (read_loose_file(sidecar, &container, &container_size) != 0 ||
+        container_size < 26u || be32(container) != UINT32_C(0x00051607) ||
+        be32(container + 4u) != UINT32_C(0x00020000)) {
+        free(container);
+        return -1;
+    }
+    entries = be16(container + 24u);
+    if ((size_t)entries > (container_size - 26u) / 12u) {
+        free(container);
+        return -1;
+    }
+    for (i = 0u; i < entries; ++i) {
+        const uint8_t *entry = container + 26u + i * 12u;
+        uint32_t id = be32(entry);
+        uint32_t offset = be32(entry + 4u);
+        uint32_t length = be32(entry + 8u);
+        if (id != 2u) continue; /* AppleDouble resource fork */
+        if (offset > container_size || length > container_size - offset ||
+            length == 0u || length > 64u * 1024u * 1024u) {
+            free(container);
+            return -1;
+        }
+        *out = (uint8_t *)malloc(length);
+        if (!*out) { free(container); return -1; }
+        memcpy(*out, container + offset, length);
+        *out_size = length;
+        free(container);
+        return 0;
+    }
+    free(container);
+    return -1;
+}
+
+int dm2_v1_mac_media_read_loose_movie(
+    const char *movie_path,
+    uint8_t **out_data, size_t *out_data_size,
+    uint8_t **out_resource, size_t *out_resource_size,
+    uint8_t **out_moov, size_t *out_moov_size) {
+    uint8_t *data = NULL;
+    size_t data_size = 0u;
+    uint8_t *resource = NULL;
+    size_t resource_size = 0u;
+    uint8_t *moov = NULL;
+    size_t moov_size = 0u;
+    if (out_data) *out_data = NULL;
+    if (out_data_size) *out_data_size = 0u;
+    if (out_resource) *out_resource = NULL;
+    if (out_resource_size) *out_resource_size = 0u;
+    if (out_moov) *out_moov = NULL;
+    if (out_moov_size) *out_moov_size = 0u;
+    if (!movie_path || !out_data || !out_data_size || !out_resource ||
+        !out_resource_size || !out_moov || !out_moov_size ||
+        read_loose_file(movie_path, &data, &data_size) != 0) return -1;
+#if defined(__APPLE__)
+    if (read_xattr_fork(movie_path, "com.apple.ResourceFork",
+                        &resource, &resource_size) != 0)
+        (void)read_appledouble_fork(movie_path, &resource, &resource_size);
+#elif defined(__linux__)
+    if (read_xattr_fork(movie_path, "user.com.apple.ResourceFork",
+                        &resource, &resource_size) != 0 &&
+        read_xattr_fork(movie_path, "com.apple.ResourceFork",
+                        &resource, &resource_size) != 0)
+        (void)read_appledouble_fork(movie_path, &resource, &resource_size);
+#else
+    (void)read_appledouble_fork(movie_path, &resource, &resource_size);
+#endif
+    if (!resource || resource_size == 0u ||
+        copy_resource_type(resource, resource_size, "moov", &moov,
+                           &moov_size) != 0) {
+        free(data); free(resource); free(moov);
+        return -1;
+    }
+    *out_data = data;
+    *out_data_size = data_size;
+    *out_resource = resource;
+    *out_resource_size = resource_size;
+    *out_moov = moov;
+    *out_moov_size = moov_size;
+    return 0;
 }
 
 static int mac_name_equal(const uint8_t *name, size_t name_len,

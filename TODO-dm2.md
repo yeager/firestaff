@@ -1,3 +1,15 @@
+2026-10-21 loose Macintosh QuickTime startup: authenticated loose English Mac
+DAT pairs now probe their sibling `Title.MooV` and retain its original data
+fork plus the `moov` Resource Manager resource. The resource fork is read from
+the host xattr or an AppleDouble `._Title.MooV` sidecar; the original movie
+files are never rewritten. The extracted authentic SIT install reached
+`movieComplete=1`, `movieRejected=0`, then the first DM2 runtime frame through
+the native-fork path. A second full startup passed using an AppleDouble
+sidecar built around the same original resource-fork bytes. The focused
+`dm2_v1_mac_loose_title_movie_real` gate passed with both real-media layouts.
+This covers the English Macintosh retail loose-install startup movie; it does
+not establish native display/audio parity or Japanese Macintosh support.
+
 2026-10-21 current-source real-media launcher/rescan integration:
 `return_to_menu_rescans_dm1_csb_dm2_real_media` passed its full `returns`
 matrix on the current source, including DM2 DOS, Macintosh, Amiga and FM Towns

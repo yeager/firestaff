@@ -12178,6 +12178,11 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_quicktime_real.c")
         SKIP_RETURN_CODE 77
         ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE}"
         LABELS "dm2;macintosh;quicktime;real-media;in-memory;native;skip-safe")
+    add_test(NAME dm2_v1_mac_loose_title_movie_real
+        COMMAND test_dm2_v1_mac_quicktime_real)
+    set_tests_properties(dm2_v1_mac_loose_title_movie_real PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "dm2;macintosh;quicktime;resource-fork;loose-media;real-media;skip-safe")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_swoosh_native_real.c")

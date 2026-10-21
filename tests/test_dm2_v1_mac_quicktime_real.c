@@ -23,15 +23,20 @@ static int is_audio_codec(uint32_t codec)
 int main(void)
 {
     const char *zip = getenv("FIRESTAFF_DM2_MAC_EN_ZIP");
+    const char *loose_title = getenv("FIRESTAFF_DM2_MAC_LOOSE_TITLE_MOVIE");
     DM2_V1_MacMedia media;
     unsigned index;
-    if (!zip || !zip[0]) {
-        puts("SKIP: DM2 Mac ZIP environment is not set");
+    int checked_zip = 0;
+    if ((!zip || !zip[0]) && (!loose_title || !loose_title[0])) {
+        puts("SKIP: DM2 Mac ZIP and loose Title.MooV inputs are not set");
         return 77;
     }
     memset(&media, 0, sizeof(media));
-    if (dm2_v1_mac_media_read_zip(zip, &media) != 0) return 1;
-    for (index = 0u; index < DM2_V1_MAC_MOVIE_COUNT; ++index) {
+    if (zip && zip[0]) {
+        if (dm2_v1_mac_media_read_zip(zip, &media) != 0) return 1;
+        checked_zip = 1;
+    }
+    for (index = 0u; checked_zip && index < DM2_V1_MAC_MOVIE_COUNT; ++index) {
         DM2_V1_MacMovieView view;
         DM2_V1_MacQuickTimeInfo info;
         DM2_V1_MacQuickTimeSample video, audio;
@@ -76,5 +81,45 @@ int main(void)
         dm2_v1_mac_movie_view_free(&view);
     }
     dm2_v1_mac_media_free(&media);
+    if (loose_title && loose_title[0]) {
+        uint8_t *data = NULL, *resource = NULL, *moov = NULL;
+        size_t data_size = 0u, resource_size = 0u, moov_size = 0u;
+        DM2_V1_MacMovieView view;
+        DM2_V1_MacQuickTimeInfo info;
+        DM2_V1_MacQuickTimeSample video, audio;
+        memset(&view, 0, sizeof(view));
+        memset(&info, 0, sizeof(info));
+        memset(&video, 0, sizeof(video));
+        memset(&audio, 0, sizeof(audio));
+        if (dm2_v1_mac_media_read_loose_movie(
+                loose_title, &data, &data_size, &resource, &resource_size,
+                &moov, &moov_size) != 0 ||
+            dm2_v1_mac_movie_view_build(data, data_size, moov, moov_size,
+                                       &view) != 0 ||
+            !dm2_v1_mac_quicktime_inspect(view.bytes, view.size, &info) ||
+            info.width != 320u || info.height != 200u ||
+            info.video_sample_count < 12u ||
+            info.audio_sample_count == 0u ||
+            !dm2_v1_mac_quicktime_video_sample(view.bytes, view.size, 0u,
+                                                &video) ||
+            !dm2_v1_mac_quicktime_audio_sample(view.bytes, view.size, 0u,
+                                                &audio) ||
+            video.sample_size == 0u || video.sample_data < view.bytes ||
+            video.sample_data + video.sample_size > view.bytes + view.size ||
+            audio.sample_size == 0u || audio.sample_data < view.bytes ||
+            audio.sample_data + audio.sample_size > view.bytes + view.size) {
+            fprintf(stderr, "authentic loose Macintosh Title.MooV was not admitted: %s\n",
+                    loose_title);
+            free(data); free(resource); free(moov);
+            dm2_v1_mac_movie_view_free(&view);
+            return 1;
+        }
+        printf("PASS: authentic loose Macintosh Title.MooV with resource fork: "
+               "%ux%u frames=%u data=%zu resource=%zu\n",
+               info.width, info.height, info.video_sample_count,
+               data_size, resource_size);
+        free(data); free(resource); free(moov);
+        dm2_v1_mac_movie_view_free(&view);
+    }
     return 0;
 }

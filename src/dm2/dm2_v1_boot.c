@@ -3996,6 +3996,59 @@ int dm2_v1_boot_scan_assets_with_progress(
         }
     }
 
+    /* Extracted Macintosh installs keep QuickTime's two movie forks beside
+     * the authenticated DAT pair. Load the original Title.MooV and its
+     * Resource Manager `moov` resource from the filesystem fork (or an
+     * AppleDouble sidecar), so a loose retail install follows the same intro
+     * path as the HFS CD image. This only reads the original files. */
+    if (profile->assets_verified &&
+        profile->platform == DM2_PLATFORM_MAC_EN &&
+        profile->graphics_path[0] && !strstr(profile->graphics_path, "::")) {
+        static const char *const movie_names[DM2_V1_MAC_MOVIE_COUNT] = {
+            "Title.MooV", "Story.MooV", "Swoosh.MooV",
+            "Credits.MooV", "Ending.MooV"
+        };
+        char movie_dir[512];
+        size_t movie_index;
+        copy_parent_dir(movie_dir, profile->graphics_path);
+        for (movie_index = 0u; movie_index < DM2_V1_MAC_MOVIE_COUNT;
+             ++movie_index) {
+            char movie_path[1024];
+            uint8_t *movie_data = NULL;
+            uint8_t *movie_resource = NULL;
+            uint8_t *movie_moov = NULL;
+            size_t movie_data_size = 0u;
+            size_t movie_resource_size = 0u;
+            size_t movie_moov_size = 0u;
+            if (snprintf(movie_path, sizeof(movie_path), "%s/%s", movie_dir,
+                         movie_names[movie_index]) >= (int)sizeof(movie_path) ||
+                dm2_v1_mac_media_read_loose_movie(
+                    movie_path, &movie_data, &movie_data_size,
+                    &movie_resource, &movie_resource_size,
+                    &movie_moov, &movie_moov_size) != 0) {
+                free(movie_data);
+                free(movie_resource);
+                free(movie_moov);
+                continue;
+            }
+            profile->mac_movie_data[movie_index] = movie_data;
+            profile->mac_movie_data_size[movie_index] = movie_data_size;
+            profile->mac_movie_resource[movie_index] = movie_resource;
+            profile->mac_movie_resource_size[movie_index] = movie_resource_size;
+            profile->mac_movie_moov[movie_index] = movie_moov;
+            profile->mac_movie_moov_size[movie_index] = movie_moov_size;
+            profile->mac_movie_present_mask |= 1u << movie_index;
+            profile->mac_movie_resource_present_mask |= 1u << movie_index;
+            profile->mac_movie_moov_present_mask |= 1u << movie_index;
+            if (dm2_v1_mac_movie_view_build(
+                    movie_data, movie_data_size, movie_moov,
+                    movie_moov_size,
+                    &profile->mac_movie_view[movie_index]) == 0) {
+                profile->mac_movie_view_present_mask |= 1u << movie_index;
+            }
+        }
+    }
+
     /* The PC retail boot starts outside SKULL.EXE: DM2.BAT dispatches
      * IBMIOP, whose authenticated presentation members include the original
      * Interplay MVE intro.  GRAPHICS.DAT lives one DATA directory lower, so
