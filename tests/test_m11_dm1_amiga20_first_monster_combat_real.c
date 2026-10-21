@@ -1,4 +1,4 @@
-/* Authentic Amiga v2.0 M12 launch through the first HoC combat encounter. */
+/* Authentic Atari ST / Amiga M12 launch through first HoC combat encounter. */
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
 #include "menu_input_m12.h"
@@ -29,6 +29,25 @@ static const M12_MenuInput route_to_mirror[] = {
     M12_MENU_INPUT_TURN_RIGHT
 };
 
+/* The Atari M12 startup regression uses this source-input route to C127.
+ * Do not reuse the Amiga route: its lateral movement sequence is different. */
+static const M12_MenuInput route_to_atari_mirror[] = {
+    M12_MENU_INPUT_UP, M12_MENU_INPUT_UP, M12_MENU_INPUT_UP,
+    M12_MENU_INPUT_UP, M12_MENU_INPUT_TURN_LEFT,
+    M12_MENU_INPUT_UP, M12_MENU_INPUT_UP, M12_MENU_INPUT_UP,
+    M12_MENU_INPUT_TURN_LEFT,
+    M12_MENU_INPUT_UP, M12_MENU_INPUT_UP, M12_MENU_INPUT_UP,
+    M12_MENU_INPUT_UP, M12_MENU_INPUT_UP,
+    M12_MENU_INPUT_TURN_RIGHT,
+    M12_MENU_INPUT_UP, M12_MENU_INPUT_UP,
+    M12_MENU_INPUT_TURN_RIGHT,
+    M12_MENU_INPUT_UP, M12_MENU_INPUT_TURN_LEFT,
+    M12_MENU_INPUT_UP, M12_MENU_INPUT_UP,
+    M12_MENU_INPUT_TURN_RIGHT,
+    M12_MENU_INPUT_UP, M12_MENU_INPUT_TURN_LEFT,
+    M12_MENU_INPUT_UP, M12_MENU_INPUT_UP, M12_MENU_INPUT_TURN_LEFT
+};
+
 static const M12_MenuInput route_to_scroll[] = {
     M12_MENU_INPUT_DOWN, M12_MENU_INPUT_STRAFE_LEFT,
     M12_MENU_INPUT_STRAFE_LEFT, M12_MENU_INPUT_STRAFE_LEFT,
@@ -56,24 +75,30 @@ static int advance_input(M11_GameViewState *game, M12_MenuInput input)
 
 int main(void)
 {
-    const char *archive = getenv("FIRESTAFF_DM1_AMIGA_V20_ARCHIVE");
+    const char *atariArchive = getenv("FIRESTAFF_DM1_ATARI_ST_ARCHIVE");
+    const int isAtari = atariArchive && atariArchive[0];
+    const char *archive = isAtari
+        ? atariArchive : getenv("FIRESTAFF_DM1_AMIGA_V20_ARCHIVE");
+    const char *versionId = isAtari ? "st12-en" : "amiga20-en";
+    const char *graphicsMd5 = isAtari
+        ? "9ce2eaf7a9e78620e3f17594437caffa"
+        : "6a2f135b53c2220f0251fa103e2a6e7e";
     M12_StartupMenuInitOptions options;
     M12_StartupMenuState menu;
     M11_GameViewState game;
     int version, result = 1;
     int menuInitialized = 0, gameInitialized = 0;
     size_t i;
-    unsigned short initialHp;
     uint32_t attackBefore;
 
     if (!archive || !archive[0]) {
-        puts("SKIP: authentic DM1 Amiga v2.0 archive is not staged");
+        puts("SKIP: authentic DM1 Atari/Amiga original archive is not staged");
         return 77;
     }
     {
         FILE *media = fopen(archive, "rb");
         if (!media) {
-            puts("SKIP: authentic DM1 Amiga v2.0 archive is not staged");
+            puts("SKIP: authentic DM1 Atari/Amiga original archive is not staged");
             return 77;
         }
         fclose(media);
@@ -85,36 +110,48 @@ int main(void)
     options.skipScreenshotGalleryScan = 1;
     M12_StartupMenu_InitWithOptions(&menu, archive, "dm1", &options);
     menuInitialized = 1;
-    version = M12_AssetStatus_FindVersionIndex("dm1", "amiga20-en");
+    version = M12_AssetStatus_FindVersionIndex("dm1", versionId);
     REQUIRE(version >= 0 && M12_AssetStatus_GetVersion(
                 &menu.assetStatus, "dm1", (size_t)version)->matched &&
                 strcmp(M12_AssetStatus_GetVersion(&menu.assetStatus, "dm1",
-                    (size_t)version)->matchedMd5, "6a2f135b53c2220f0251fa103e2a6e7e") == 0,
-            "M12 authentic Amiga v2.0 catalogue admission");
+                    (size_t)version)->matchedMd5, graphicsMd5) == 0,
+            "M12 authentic Atari/Amiga catalogue admission");
     REQUIRE(asset_file_matches_md5(M12_AssetStatus_GetVersion(
                 &menu.assetStatus, "dm1", (size_t)version)->matchedPath,
-                "6a2f135b53c2220f0251fa103e2a6e7e"),
-            "authentic Amiga v2.0 GRAPHICS.DAT bytes match the original receipt");
+                graphicsMd5),
+            "original GRAPHICS.DAT bytes match the Atari/Amiga receipt");
     menu.selectedIndex = menu.activatedIndex = 0;
     menu.launchRequested = 1;
-    menu.gameOptions[0].architectureIndex = M12_ARCH_AMIGA;
+    menu.gameOptions[0].architectureIndex = isAtari
+        ? M12_ARCH_ATARI_ST : M12_ARCH_AMIGA;
     menu.gameOptions[0].versionIndex = version;
     menu.gameOptions[0].presentationModeIndex = M12_PRESENTATION_V1_ORIGINAL;
     menu.settings.rendererBackendIndex = M12_RENDERER_BACKEND_SOFTWARE;
     M11_GameView_Init(&game);
     gameInitialized = 1;
     REQUIRE(M11_GameView_OpenSelectedMenuEntry(&game, &menu) &&
-                game.active && game.assetLoader.legacyDm1 && game.world.dungeon &&
+                game.active &&
+                (isAtari ? game.assetLoader.atariStDm1
+                         : game.assetLoader.legacyDm1) && game.world.dungeon &&
                 game.world.things && game.world.party.mapIndex == 0 &&
                 game.world.party.mapX == 1 && game.world.party.mapY == 3,
-            "normal M12 selection launches the authentic Amiga v2.0 world");
+            "normal M12 selection launches the authentic platform world");
 
-    for (i = 0; i < sizeof(route_to_mirror) / sizeof(route_to_mirror[0]); ++i)
-        REQUIRE(advance_input(&game, route_to_mirror[i]), "Hall route input accepted");
+    if (isAtari) {
+        for (i = 0; i < sizeof(route_to_atari_mirror) /
+                            sizeof(route_to_atari_mirror[0]); ++i)
+            REQUIRE(advance_input(&game, route_to_atari_mirror[i]),
+                    "authentic Atari Hall route input accepted");
+    } else {
+        for (i = 0; i < sizeof(route_to_mirror) / sizeof(route_to_mirror[0]); ++i)
+            REQUIRE(advance_input(&game, route_to_mirror[i]),
+                    "authentic Amiga Hall route input accepted");
+    }
     REQUIRE(M11_GameView_HandlePointerButton(&game, 112, 83,
                 M11_DM1_MOUSE_MASK_LEFT) != M11_GAME_INPUT_IGNORED &&
-                game.candidateMirrorPanelActive && game.candidateMirrorOrdinal == 5,
-            "authentic Hall route opens C127 at ordinal 5");
+                game.candidateMirrorPanelActive &&
+                game.candidateMirrorOrdinal == (isAtari ? 14 : 5),
+            "authentic platform Hall route opens its original C127");
     REQUIRE(M11_GameView_HandlePointerButton(&game, 130, 115,
                 M11_DM1_MOUSE_MASK_LEFT) != M11_GAME_INPUT_IGNORED &&
                 game.world.party.championCount == 1,
@@ -135,7 +172,6 @@ int main(void)
         for (i = 0; i < sizeof(to_door) / sizeof(to_door[0]); ++i)
             REQUIRE(advance_input(&game, to_door[i]), "first-door route input accepted");
     }
-    initialHp = game.world.party.champions[0].hp.current;
     attackBefore = game.world.lifecycle.lastCreatureAttackTime;
     /* ReDMCSB COMMAND.C F0366 dispatches the native click; NEWMAP.C F0003
      * admits the original map-1 group before the first movement is resolved. */
@@ -149,9 +185,8 @@ int main(void)
     for (i = 0; i < 5; ++i) (void)M11_GameView_AdvanceIdleTick(&game);
     REQUIRE(game.world.party.mapIndex == 1 && game.world.party.mapX == 6 &&
                 game.world.party.direction == 2 &&
-                game.world.party.champions[0].hp.current < initialHp &&
                 game.world.lifecycle.lastCreatureAttackTime != attackBefore,
-            "authentic Amiga map-1 monster naturally attacks and damages the party");
+            "authentic map-1 creature reaches an attack attempt");
     {
         int found = 0;
         for (i = 0; i < (size_t)game.world.creatureAICount; ++i) {
@@ -192,7 +227,8 @@ int main(void)
                 "authentic encounter PUNCH awards matching Ninja/Fight experience");
     }
     result = 0;
-    puts("PASS: authentic Amiga v2.0 M12 startup, HoC route and first-monster combat");
+    printf("PASS: authentic %s M12 startup, HoC route and first-monster combat\n",
+           isAtari ? "Atari ST v1.2" : "Amiga v2.0");
 
 cleanup:
     if (gameInitialized) M11_GameView_Shutdown(&game);

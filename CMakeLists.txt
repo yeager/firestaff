@@ -12677,24 +12677,39 @@ if(BUILD_TESTING)
         )
     endif()
 
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_real_alcove_item_runtime_pc34.c")
-        add_executable(test_m11_dm1_real_alcove_item_runtime_pc34
-            tests/test_m11_dm1_real_alcove_item_runtime_pc34.c)
-        target_link_libraries(test_m11_dm1_real_alcove_item_runtime_pc34 PRIVATE firestaff_m12 firestaff_m11)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_real_alcove_item_runtime.c")
+        add_executable(test_m11_dm1_real_alcove_item_runtime_atari_st
+            tests/test_m11_dm1_real_alcove_item_runtime.c)
+        target_link_libraries(test_m11_dm1_real_alcove_item_runtime_atari_st PRIVATE firestaff_m12 firestaff_m11)
         if(NOT MSVC)
-            target_compile_options(test_m11_dm1_real_alcove_item_runtime_pc34 PRIVATE -Wall -Wextra -O2)
+            target_compile_options(test_m11_dm1_real_alcove_item_runtime_atari_st PRIVATE -Wall -Wextra -O2)
         endif()
         add_test(
-            NAME m11_dm1_real_alcove_item_runtime_pc34
-            COMMAND test_m11_dm1_real_alcove_item_runtime_pc34
+            NAME m11_dm1_real_alcove_item_runtime_atari_st
+            COMMAND test_m11_dm1_real_alcove_item_runtime_atari_st
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         )
-        set_tests_properties(m11_dm1_real_alcove_item_runtime_pc34 PROPERTIES
-            # The PC 3.4 dungeon has no wall chain containing both an alcove
-            # sensor and an item.  Atari ST 1.2 does contain the original
-            # source-owned fixture and exercises the same native M11 path.
+        set_tests_properties(m11_dm1_real_alcove_item_runtime_atari_st PROPERTIES
             ENVIRONMENT "FIRESTAFF_DM1_DATA_DIR=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_EN_Version-12.zip"
             LABELS "dm1;atari-st;real-media;in-memory;objects;inventory;skip-safe"
+            SKIP_RETURN_CODE 77)
+
+        add_executable(test_m11_dm1_real_alcove_item_runtime_amiga20
+            tests/test_m11_dm1_real_alcove_item_runtime.c)
+        target_compile_definitions(test_m11_dm1_real_alcove_item_runtime_amiga20
+            PRIVATE M11_DM1_REAL_MEDIA_PLATFORM_AMIGA20=1)
+        target_link_libraries(test_m11_dm1_real_alcove_item_runtime_amiga20 PRIVATE firestaff_m12 firestaff_m11)
+        if(NOT MSVC)
+            target_compile_options(test_m11_dm1_real_alcove_item_runtime_amiga20 PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME m11_dm1_real_alcove_item_runtime_amiga20
+            COMMAND test_m11_dm1_real_alcove_item_runtime_amiga20
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+        set_tests_properties(m11_dm1_real_alcove_item_runtime_amiga20 PROPERTIES
+            ENVIRONMENT "FIRESTAFF_DM1_DATA_DIR=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Amiga_EN_Version-20.zip"
+            LABELS "dm1;amiga;amiga20;real-media;in-memory;objects;inventory;skip-safe"
             SKIP_RETURN_CODE 77)
     endif()
 
@@ -12910,6 +12925,21 @@ if(BUILD_TESTING)
             SKIP_RETURN_CODE 77
             ENVIRONMENT "FIRESTAFF_DM1_AMIGA_V20_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Amiga_EN_Version-20.zip;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy"
             LABELS "dm1;amiga;amiga20;real-media;combat;startup;skip-safe")
+
+        add_executable(test_m11_dm1_atari_st_first_monster_combat_real
+            tests/test_m11_dm1_amiga20_first_monster_combat_real.c)
+        target_link_libraries(test_m11_dm1_atari_st_first_monster_combat_real
+            PRIVATE firestaff_m11)
+        if(NOT MSVC)
+            target_compile_options(test_m11_dm1_atari_st_first_monster_combat_real
+                PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(NAME m11_dm1_atari_st_first_monster_combat_real
+            COMMAND test_m11_dm1_atari_st_first_monster_combat_real)
+        set_tests_properties(m11_dm1_atari_st_first_monster_combat_real PROPERTIES
+            SKIP_RETURN_CODE 77
+            ENVIRONMENT "FIRESTAFF_DM1_ATARI_ST_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_EN_Version-12.zip;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy"
+            LABELS "dm1;atari-st;real-media;combat;startup;skip-safe")
     endif()
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_source_f0306_real.c")

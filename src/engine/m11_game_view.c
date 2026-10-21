@@ -43033,9 +43033,14 @@ static const int g_wallOrnamentBox[4] = { 96, 127, 35, 63 };
 static int m11_dm1_alcove_item_hit_test(int x, int y) {
     const M11_Dm1FloorItemHostPresentationReceipt *receipt =
         &s_m11_dm1_alcove_item_host_presentation_receipt;
+    /* Source renderers may either report a PC34 F0791 zone or a native
+     * F0132 destination rectangle.  Both receipts describe the final visible
+     * alcove-object pixels and therefore own the corresponding hit box. */
+    const int sourceBlitOwnsHitBox = receipt->usesF0791Blit ||
+        receipt->sourceZone == -1;
 
     return receipt->valid && !receipt->floorItemLane &&
-           receipt->usesF0791Blit && receipt->destinationW > 0 &&
+           sourceBlitOwnsHitBox && receipt->destinationW > 0 &&
            receipt->destinationH > 0 &&
            x >= receipt->destinationX &&
            x < receipt->destinationX + receipt->destinationW &&

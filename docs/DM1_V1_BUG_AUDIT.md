@@ -401,8 +401,8 @@ panel is open, leaving only the candidate portrait graphic visible.
   `unlink → capacity check → link`, restoring the old list member exactly if
   the destination is full. Pickup rejects a coordinate whose cell does not
   own the object, rather than manufacturing a carried object.
-- **Evidence:** `dm1_v1_object_interaction_source_lock`; the actual PC34 ZIP
-  handoff companion is `m11_dm1_real_alcove_item_runtime_pc34`.
+- **Evidence:** `dm1_v1_object_interaction_source_lock`; authentic Atari ST
+  1.2 and Amiga 2.0 handoff tests cover the original-media alcove object.
 
 ## Notes
 

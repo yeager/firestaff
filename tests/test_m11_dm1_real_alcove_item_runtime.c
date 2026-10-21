@@ -33,13 +33,39 @@ static int start_real_dm1_corpus(M11_GameViewState *state, const char *path)
     if (!state || !path || !path[0]) return 0;
     if (stat(path, &st) == 0 && S_ISREG(st.st_mode)) {
         M12_StartupMenuState menu;
+        M12_StartupMenuInitOptions options;
+        int version;
         int opened;
 
-        M12_StartupMenu_InitWithDataDir(&menu, path, "dm1");
-        if (!M11_PrepareDirectLaunchForGame(&menu, "dm1")) {
+        /* CMake stages the untouched Atari ST 1.2 ZIP for this regression.
+         * A generic direct launch selects the PC34 profile by default, so
+         * explicitly select the archive's authentic platform before the
+         * M12 -> M11 handoff. */
+        memset(&options, 0, sizeof(options));
+        options.skipScreenshotGalleryScan = 1;
+        M12_StartupMenu_InitWithOptions(&menu, path, "dm1", &options);
+#if defined(M11_DM1_REAL_MEDIA_PLATFORM_AMIGA20)
+        version = M12_AssetStatus_FindVersionIndex("dm1", "amiga20-en");
+        if (version >= 0 && M12_AssetStatus_GetVersion(
+                &menu.assetStatus, "dm1", (size_t)version)->matched) {
+            menu.gameOptions[0].architectureIndex = M12_ARCH_AMIGA;
+        }
+#else
+        version = M12_AssetStatus_FindVersionIndex("dm1", "st12-en");
+        if (version >= 0 && M12_AssetStatus_GetVersion(
+                &menu.assetStatus, "dm1", (size_t)version)->matched) {
+            menu.gameOptions[0].architectureIndex = M12_ARCH_ATARI_ST;
+        }
+#endif
+        if (version < 0 || !M12_AssetStatus_GetVersion(
+                &menu.assetStatus, "dm1", (size_t)version)->matched) {
             M12_StartupMenu_Destroy(&menu);
             return 0;
         }
+        menu.selectedIndex = menu.activatedIndex = 0;
+        menu.launchRequested = 1;
+        menu.gameOptions[0].versionIndex = version;
+        menu.gameOptions[0].presentationModeIndex = M12_PRESENTATION_V1_ORIGINAL;
         opened = M11_GameView_OpenSelectedMenuEntry(state, &menu);
         M12_StartupMenu_Destroy(&menu);
         return opened;
@@ -237,9 +263,15 @@ int main(void)
                             ++renderedAlcoveItemsOnWalls;
                         }
                     }
+                    /* PC34 uses F0791/C2500 zones; Atari and Amiga source
+                     * renderers report the final native F0132 rectangle. */
+                    {
+                        const int sourceBlitMatches = receipt.usesF0791Blit
+                            ? receipt.sourceZone >= 2548
+                            : receipt.sourceZone == -1;
                     if (receipt.valid && !receipt.floorItemLane &&
-                        receipt.usesF0791Blit && receipt.transparentColor == 10 &&
-                        receipt.sourceZone >= 2548 && receipt.destinationW > 0 &&
+                        sourceBlitMatches && receipt.transparentColor == 10 &&
+                        receipt.destinationW > 0 &&
                         receipt.destinationH > 0 && receipt.graphicsId > 0 &&
                         front_square_is_wall(&state, mapIndex, x, y, direction)) {
                         int clickX = receipt.destinationX + receipt.destinationW / 2;
@@ -369,6 +401,7 @@ int main(void)
                                receipt.sourceZone);
                         M11_GameView_Shutdown(&state);
                         return 0;
+                    }
                     }
                 }
             }
