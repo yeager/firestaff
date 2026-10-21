@@ -37,10 +37,9 @@ static int start_real_dm1_corpus(M11_GameViewState *state, const char *path)
         int version;
         int opened;
 
-        /* CMake stages the untouched Atari ST 1.2 ZIP for this regression.
-         * A generic direct launch selects the PC34 profile by default, so
-         * explicitly select the archive's authentic platform before the
-         * M12 -> M11 handoff. */
+        /* A generic direct launch selects the PC34 profile by default, so
+         * choose the exact catalog edition and architecture for this
+         * authentic archive before the M12 -> M11 handoff. */
         memset(&options, 0, sizeof(options));
         options.skipScreenshotGalleryScan = 1;
         M12_StartupMenu_InitWithOptions(&menu, path, "dm1", &options);
@@ -49,6 +48,18 @@ static int start_real_dm1_corpus(M11_GameViewState *state, const char *path)
         if (version >= 0 && M12_AssetStatus_GetVersion(
                 &menu.assetStatus, "dm1", (size_t)version)->matched) {
             menu.gameOptions[0].architectureIndex = M12_ARCH_AMIGA;
+        }
+#elif defined(M11_DM1_REAL_MEDIA_PLATFORM_FMTOWNS)
+        version = M12_AssetStatus_FindVersionIndex("dm1", "fmtowns-en");
+        if (version >= 0 && M12_AssetStatus_GetVersion(
+                &menu.assetStatus, "dm1", (size_t)version)->matched) {
+            menu.gameOptions[0].architectureIndex = M12_ARCH_FM_TOWNS;
+        }
+#elif defined(M11_DM1_REAL_MEDIA_PLATFORM_IIGS)
+        version = M12_AssetStatus_FindVersionIndex("dm1", "iigs21-en");
+        if (version >= 0 && M12_AssetStatus_GetVersion(
+                &menu.assetStatus, "dm1", (size_t)version)->matched) {
+            menu.gameOptions[0].architectureIndex = M12_ARCH_APPLE_IIGS;
         }
 #else
         version = M12_AssetStatus_FindVersionIndex("dm1", "st12-en");
@@ -213,15 +224,17 @@ int main(void)
         fputs("configured DM1 corpus is unavailable\n", stderr);
         return 1;
     }
-    /* OBJECT.C F0031 resolves display names from M564 by icon index.  A
-     * verified original-media launch must therefore own the decoded table,
-     * rather than falling back to the legacy subtype-name bridge. */
+    /* OBJECT.C F0031 resolves PC/ST/Amiga display names from M564 by icon
+     * index. Apple IIGS has a distinct native name source and must not be
+     * rejected for lacking that later PC-family object table. */
+#if !defined(M11_DM1_REAL_MEDIA_PLATFORM_IIGS)
     if (!state.dm1ObjectNameTableValid ||
         state.dm1ObjectNames[0][0] == '\0') {
         fprintf(stderr, "DM1 M564 object-name table was not loaded\n");
         M11_GameView_Shutdown(&state);
         return 1;
     }
+#endif
     state.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
     state.world.party.championCount = 1;
     state.world.party.activeChampionIndex = 0;
@@ -343,9 +356,13 @@ int main(void)
                             }
                             pickedIconIndex = dm1_v1_dungeon_get_object_icon_index_pc34(
                                 state.world.things, picked, 0);
+#if defined(M11_DM1_REAL_MEDIA_PLATFORM_IIGS)
+                            if (pickedIconIndex < 0) {
+#else
                             if (!state.dm1ObjectNameTableValid ||
                                 pickedIconIndex < 0 ||
                                 state.dm1ObjectNames[pickedIconIndex][0] == '\0') {
+#endif
                                 fprintf(stderr, "real placed item lost its M564 name\n");
                                 M11_GameView_Shutdown(&state);
                                 return 1;

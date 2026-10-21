@@ -12678,39 +12678,45 @@ if(BUILD_TESTING)
     endif()
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_real_alcove_item_runtime.c")
-        add_executable(test_m11_dm1_real_alcove_item_runtime_atari_st
-            tests/test_m11_dm1_real_alcove_item_runtime.c)
-        target_link_libraries(test_m11_dm1_real_alcove_item_runtime_atari_st PRIVATE firestaff_m12 firestaff_m11)
-        if(NOT MSVC)
-            target_compile_options(test_m11_dm1_real_alcove_item_runtime_atari_st PRIVATE -Wall -Wextra -O2)
-        endif()
-        add_test(
-            NAME m11_dm1_real_alcove_item_runtime_atari_st
-            COMMAND test_m11_dm1_real_alcove_item_runtime_atari_st
-            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-        )
-        set_tests_properties(m11_dm1_real_alcove_item_runtime_atari_st PROPERTIES
-            ENVIRONMENT "FIRESTAFF_DM1_DATA_DIR=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_EN_Version-12.zip"
-            LABELS "dm1;atari-st;real-media;in-memory;objects;inventory;skip-safe"
-            SKIP_RETURN_CODE 77)
+        function(firestaff_add_dm1_alcove_real_media_test suffix definition archive env_name labels)
+            set(target "test_m11_dm1_real_alcove_item_runtime_${suffix}")
+            set(test_name "m11_dm1_real_alcove_item_runtime_${suffix}")
+            add_executable(${target} tests/test_m11_dm1_real_alcove_item_runtime.c)
+            target_link_libraries(${target} PRIVATE firestaff_m12 firestaff_m11)
+            if(definition)
+                target_compile_definitions(${target} PRIVATE "${definition}=1")
+            endif()
+            if(NOT MSVC)
+                target_compile_options(${target} PRIVATE -Wall -Wextra -O2)
+            endif()
+            if(suffix STREQUAL "iigs")
+                add_test(NAME ${test_name}
+                    COMMAND bash
+                        "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_iigs_alcove_real_media.sh"
+                        $<TARGET_FILE:${target}>
+                    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+            else()
+                add_test(NAME ${test_name} COMMAND ${target}
+                    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+            endif()
+            set_tests_properties(${test_name} PROPERTIES
+                ENVIRONMENT "${env_name}=${archive}"
+                LABELS "${labels};real-media;in-memory;objects;inventory;skip-safe"
+                SKIP_RETURN_CODE 77)
+        endfunction()
 
-        add_executable(test_m11_dm1_real_alcove_item_runtime_amiga20
-            tests/test_m11_dm1_real_alcove_item_runtime.c)
-        target_compile_definitions(test_m11_dm1_real_alcove_item_runtime_amiga20
-            PRIVATE M11_DM1_REAL_MEDIA_PLATFORM_AMIGA20=1)
-        target_link_libraries(test_m11_dm1_real_alcove_item_runtime_amiga20 PRIVATE firestaff_m12 firestaff_m11)
-        if(NOT MSVC)
-            target_compile_options(test_m11_dm1_real_alcove_item_runtime_amiga20 PRIVATE -Wall -Wextra -O2)
-        endif()
-        add_test(
-            NAME m11_dm1_real_alcove_item_runtime_amiga20
-            COMMAND test_m11_dm1_real_alcove_item_runtime_amiga20
-            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-        )
-        set_tests_properties(m11_dm1_real_alcove_item_runtime_amiga20 PROPERTIES
-            ENVIRONMENT "FIRESTAFF_DM1_DATA_DIR=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Amiga_EN_Version-20.zip"
-            LABELS "dm1;amiga;amiga20;real-media;in-memory;objects;inventory;skip-safe"
-            SKIP_RETURN_CODE 77)
+        firestaff_add_dm1_alcove_real_media_test(atari_st ""
+            "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_EN_Version-12.zip"
+            FIRESTAFF_DM1_DATA_DIR "dm1;atari-st")
+        firestaff_add_dm1_alcove_real_media_test(amiga20 M11_DM1_REAL_MEDIA_PLATFORM_AMIGA20
+            "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Amiga_EN_Version-20.zip"
+            FIRESTAFF_DM1_DATA_DIR "dm1;amiga;amiga20")
+        firestaff_add_dm1_alcove_real_media_test(iigs M11_DM1_REAL_MEDIA_PLATFORM_IIGS
+            "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Game,Dungeon_Master,Apple_IIGS,Software.7z"
+            FIRESTAFF_DM1_IIGS_SOFTWARE_ARCHIVE "dm1;apple-iigs")
+        firestaff_add_dm1_alcove_real_media_test(fmtowns M11_DM1_REAL_MEDIA_PLATFORM_FMTOWNS
+            "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_FM-Towns_JA-EN.zip"
+            FIRESTAFF_DM1_DATA_DIR "dm1;fm-towns")
     endif()
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_source_item_name_guard.c")
