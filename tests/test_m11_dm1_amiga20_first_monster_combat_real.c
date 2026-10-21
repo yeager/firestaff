@@ -90,6 +90,8 @@ int main(void)
     int menuInitialized = 0, gameInitialized = 0;
     size_t i;
     uint32_t attackBefore;
+    unsigned short initialChampionHp;
+    unsigned int naturalDamage;
 
     if (!archive || !archive[0]) {
         puts("SKIP: authentic DM1 Atari/Amiga original archive is not staged");
@@ -232,13 +234,14 @@ int main(void)
         for (i = 0; i < sizeof(to_door) / sizeof(to_door[0]); ++i)
             REQUIRE(advance_input(&game, to_door[i]), "first-door route input accepted");
     }
-    attackBefore = game.world.lifecycle.lastCreatureAttackTime;
     /* ReDMCSB COMMAND.C F0366 dispatches the native click; NEWMAP.C F0003
      * admits the original map-1 group before the first movement is resolved. */
     REQUIRE(M11_GameView_HandlePointerButton(&game, 167, 81,
                 M11_DM1_MOUSE_MASK_LEFT) != M11_GAME_INPUT_IGNORED,
             "production pointer input opens the authentic first door");
     for (i = 0; i < 30; ++i) (void)M11_GameView_AdvanceIdleTick(&game);
+    initialChampionHp = game.world.party.champions[0].hp.current;
+    attackBefore = game.world.lifecycle.lastCreatureAttackTime;
     REQUIRE(M11_GameView_HandleInput(&game, M12_MENU_INPUT_UP) !=
                 M11_GAME_INPUT_IGNORED,
             "production movement crosses the first-door passage");
@@ -247,6 +250,10 @@ int main(void)
                 game.world.party.direction == 2 &&
                 game.world.lifecycle.lastCreatureAttackTime != attackBefore,
             "authentic map-1 creature reaches an attack attempt");
+    REQUIRE(game.world.party.champions[0].hp.current < initialChampionHp,
+            "authentic first monster attack deals damage to the champion");
+    naturalDamage = (unsigned int)(initialChampionHp -
+        game.world.party.champions[0].hp.current);
     {
         int found = 0;
         for (i = 0; i < (size_t)game.world.creatureAICount; ++i) {
@@ -287,8 +294,8 @@ int main(void)
                 "authentic encounter PUNCH awards matching Ninja/Fight experience");
     }
     result = 0;
-    printf("PASS: authentic %s M12 startup, HoC route and first-monster combat\n",
-           isAtari ? "Atari ST v1.2" : "Amiga v2.0");
+    printf("PASS: authentic %s M12 startup, HoC route and first-monster combat naturalDamage=%u\n",
+           isAtari ? "Atari ST v1.2" : "Amiga v2.0", naturalDamage);
 
 cleanup:
     if (gameInitialized) M11_GameView_Shutdown(&game);
