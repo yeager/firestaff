@@ -85,7 +85,9 @@ for token in up up up up turn-left up up up turn-left \
     m12_hoc_route+=",wait30,$token"
 done
 m12_hoc_route+=',wait30,click:384:236,wait10,click:420:300,wait30,key:kp6,wait60'
-HOME="$menu_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+HOME="$menu_home" XDG_CONFIG_HOME="$menu_home/.config" \
+APPDATA="$menu_home" FIRESTAFF_CONFIG_PATH="$menu_home/config.toml" \
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_probe_json" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
     --platform atari-st --data-dir "$archive" \

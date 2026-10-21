@@ -4466,10 +4466,11 @@ if(BUILD_TESTING)
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_dos_en_archive_cli_boot.sh
             $<TARGET_FILE:firestaff>
     )
+    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-dos")
     set_tests_properties(dm1_v1_dos_en_archive_cli_boot PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "dm1;dos;english;real-media;archive;native;cli;menu;startup;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM1_DOS_EN_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN.zip"
+        ENVIRONMENT "FIRESTAFF_DM1_DOS_EN_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN.zip;HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-dos;XDG_CONFIG_HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-dos;APPDATA=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-dos;FIRESTAFF_CONFIG_PATH=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-dos/config.toml"
         # This real-media CLI matrix exercises the native archive path,
         # three presentation modes, and both direct and menu startup. Keep
         # enough bounded time for the full DM1 PC startup/runtime matrix;
@@ -11999,9 +12000,14 @@ endif()
         if(NOT MSVC)
             target_compile_options(${_pool_probe_exe} PRIVATE -Wall -Wextra -O2)
         endif()
+        if(_pool_probe_exe STREQUAL "firestaff_dm1_v1_hoc_real_party_top_row_hand_slots_runtime_probe")
+            set(_pool_probe_data "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip")
+        else()
+            set(_pool_probe_data "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}")
+        endif()
         add_test(
             NAME ${_pool_probe_exe}
-            COMMAND ${_pool_probe_exe} "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
+            COMMAND ${_pool_probe_exe} "${_pool_probe_data}"
         )
         set_tests_properties(${_pool_probe_exe} PROPERTIES TIMEOUT 600 PROCESSORS 2)
     endif()

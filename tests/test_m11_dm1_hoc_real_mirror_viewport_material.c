@@ -16,27 +16,20 @@ static int open_game(const char* dataPath, M11_GameViewState* game)
 
 static int expected_backing_graphic_for_f0107_view(int viewWallIndex)
 {
-    /* DUNVIEW.C:805-819 G0190_auc_Graphic558_WallOrnamentDerivedBitmapIndexIncrement
-     * for MEDIA720 (PC34/I34E) is a 14-entry table indexed by the F0107
-     * view-wall index:
-     *   D3L2/D3R2/D3L/D3R = 0
-     *   D3L/D3R front     = 0
-     *   D2L right / D2R left = 1
-     *   D2L/D2R front     = 1 / 1 / 2  (view 5..9 = 1,1,1,2,2)
-     *   D1L/D1R depth     = 3
-     *   D1L/D1R front     = 3, 4, 4
-     * For the C346 champion-mirror route the source blit selects
-     *   backingGraphicIndex = 345 + G0190[view]
-     * The prior 345/346-only formula was a stale two-value approximation
-     * that flagged every viewIndex above the D3 side pair as wrong. */
-    static const int increments[14] = {
-        0, 0, 0, 0, 1, 1, 1, 2, 2, 3, 3, 3, 4, 4
+    /* DUNVIEW.C F0107 increments the selected native bitmap when it moves
+     * from a side wall to a front wall. G0190 is only added to the derived
+     * cache key; it must not be added to the native GRAPHICS.DAT index.
+     * The C346 mirror backing at global ornament 43 therefore selects
+     * 345 + this native side/front offset. */
+    static const int nativeOffsets[13] = {
+        0, 0, 1, 1, 1,
+        0, 0, 1, 1, 1,
+        0, 0, 1
     };
-    /* Internal rows 13/14 are MEDIA720 item-696 C1004 anchors, not G0205
-     * indices. Both consume the base D3 derived ornament C345. */
-    if (viewWallIndex == 13 || viewWallIndex == 14) return 345;
-    if (viewWallIndex < 0 || viewWallIndex >= 14) return 345;
-    return 345 + increments[viewWallIndex];
+    /* Internal rows 13/14 are MEDIA720 item-696 C1004 anchors, not F0107
+     * native bitmap offsets. Both consume the base D3 C345 bitmap. */
+    if (viewWallIndex < 0 || viewWallIndex >= 13) return 345;
+    return 345 + nativeOffsets[viewWallIndex];
 }
 
 int main(int argc, char** argv)
