@@ -2565,3 +2565,13 @@ F0439 constructs C255 inline; STARTEND.C F0797 is the equivalent helper used
 by other builds and is not called on this path. Exact F0128 pixel parity,
 native GS cadence, credits/bonus/resume commands, source audio sequencing,
 and visual parity remain open. This is not a full IIGS entrance parity claim.
+
+2026-10-21 IIGS ZIP launch verification: the original preservation Software.7z
+is unpacked only by the test harness and its seven unchanged source disks are
+repacked into a private ZIP. M11 admission, direct CLI boot probes, native
+first-world ownership and restart/input checks pass from that ZIP with
+external archive tools disabled. The user's original 7z remains byte-identical.
+The built-in 7z reader does not enumerate this multi-member solid archive, so
+runtime use of that exact 7z still requires the explicit external archive-tools
+option; ZIP is the tested native route. Failure diagnostics now identify the
+IIGS startup stage and selected owner when debug HUD tracing is enabled.

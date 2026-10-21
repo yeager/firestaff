@@ -9,11 +9,13 @@
 - `DM1 Apple IIGS entrance`: bind the scene to same-disk G20/G21 program, graphics, dungeon and SYSTEM/START identities; render ENTRANCE.C F0439's inline C255 map with the native IIGS wall/material compositor; use source entrance/door graphics, the authenticated palette and the existing 31-step door compositor. Exact F0128 pixel parity is not asserted.
 - `DM1 original-media startup evidence`: record verified M12 menu selection and first-runtime handoffs across authentic FM Towns, PC, Atari ST, Amiga and Apple IIGS media, while retaining explicit unverified gameplay-parity gaps.
 - `Apple IIGS input regression`: exercise the mouse-only entrance handoff from both authentic editions and assert the closed frame, click coordinates, final door frame and authenticated runtime handoff.
+- `Apple IIGS ZIP startup`: verify direct CLI and M11 startup from a ZIP containing byte-identical original ProDOS disks, with external archive tools disabled; debug traces identify the failing startup stage and selected source owner.
 - `Release metadata`: update the project version and reproducible SPDX source SBOM for v3.0.403.
 
 ## Known limitations
 
 - The Apple IIGS entrance map and camera now follow F0439's C255 setup, but exact F0128 pixels, native VBL cadence, credits/bonus/resume flow and audio sequencing remain unverified. IIGS F0439 constructs C255 inline; F0797 is not called on this branch.
+- The built-in 7z reader does not enumerate this multi-member solid preservation archive. Use a ZIP copy of the original disks, or explicitly enable external archive tools for that 7z archive.
 - Original-media tests use SDL dummy video and audio and do not establish physical display, audible playback or full gameplay parity.
 
 # Firestaff v3.0.402

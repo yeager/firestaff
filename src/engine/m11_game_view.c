@@ -27583,6 +27583,7 @@ int M11_GameView_StartIigs(M11_GameViewState* state,
     size_t graphicsSize = 0, programSize = 0, startSize = 0, dungeonSize = 0;
     size_t expandedSize = 0, produced = 0;
     char root[ASSET_PATH_MAX];
+    const char *failureStage = "input";
     int result = 0, debugHUD;
     if (!state || !selectedRoot || !selectedRoot[0] ||
         strlen(selectedRoot) >= sizeof(root)) return 0;
@@ -27591,39 +27592,56 @@ int M11_GameView_StartIigs(M11_GameViewState* state,
     M11_GameView_Shutdown(state);
     M11_GameView_Init(state);
     state->showDebugHUD = debugHUD;
+#define M11_IIGS_REQUIRE(condition, stage) do { \
+        if (!(condition)) { failureStage = (stage); goto cleanup; } \
+    } while (0)
     /* This is native first-world startup, not a PC/Towns title shortcut.
      * ReDMCSB LOADSAVE.C F0434 owns GAME and the program's G0243 tables.
      * Reauthenticate retained bytes after discovery, including both native
      * executable siblings, before any initialized world becomes active. */
-    if (dm1_v1_iigs_installation_find(root, expectedVersion, &installation) != 1 ||
-        !asset_read_path_alloc(installation.graphics_path, &graphics, &graphicsSize) ||
-        !asset_read_path_alloc(installation.program_path, &program, &programSize) ||
-        !dm1_v1_iigs_metadata_read(program, programSize, &metadata) ||
-        metadata.program_version != installation.metadata.program_version ||
-        !asset_read_path_alloc(installation.start_path, &start, &startSize) ||
-        startSize != 14603U || !asset_memory_matches_md5(start, startSize,
-            "3bcae225346ac24fb1975aa6d93f0fa6") ||
-        !asset_read_path_alloc(installation.dungeon_path, &dungeon, &dungeonSize) ||
-        dungeonSize != 25006U || !asset_memory_matches_md5(dungeon, dungeonSize,
-            "e10959de5ce74e48a17e2cc84d1c0b92") ||
-        !dm1_v1_iigs_dungeon_query(dungeon, dungeonSize, &expandedSize)) goto cleanup;
+    M11_IIGS_REQUIRE(dm1_v1_iigs_installation_find(
+        root, expectedVersion, &installation) == 1, "installation-discovery");
+    M11_IIGS_REQUIRE(asset_read_path_alloc(installation.graphics_path,
+        &graphics, &graphicsSize) && graphicsSize == 398713U &&
+        asset_memory_matches_md5(graphics, graphicsSize,
+            "1045a36952e64eb2bc7b4c7b2965b112"), "graphics-reload");
+    M11_IIGS_REQUIRE(asset_read_path_alloc(installation.program_path,
+        &program, &programSize) && dm1_v1_iigs_metadata_read(
+            program, programSize, &metadata) && metadata.program_version ==
+            installation.metadata.program_version, "program-reload");
+    M11_IIGS_REQUIRE(asset_read_path_alloc(installation.start_path,
+        &start, &startSize) && startSize == 14603U &&
+        asset_memory_matches_md5(start, startSize,
+            "3bcae225346ac24fb1975aa6d93f0fa6"), "system-start-reload");
+    M11_IIGS_REQUIRE(asset_read_path_alloc(installation.dungeon_path,
+        &dungeon, &dungeonSize) && dungeonSize == 25006U &&
+        asset_memory_matches_md5(dungeon, dungeonSize,
+            "e10959de5ce74e48a17e2cc84d1c0b92") &&
+        dm1_v1_iigs_dungeon_query(dungeon, dungeonSize, &expandedSize),
+        "dungeon-reload");
     expanded = malloc(expandedSize);
-    if (!expanded || !dm1_v1_iigs_dungeon_decode(dungeon, dungeonSize,
-            expanded, expandedSize, &produced, &worldReceipt) ||
-        produced != expandedSize || worldReceipt.dungeon_id != 10U ||
-        !M11_AssetLoader_InitDm1IigsFromBuffer(&state->assetLoader,
-            graphics, (long)graphicsSize)) goto cleanup;
+    M11_IIGS_REQUIRE(expanded && dm1_v1_iigs_dungeon_decode(
+            dungeon, dungeonSize, expanded, expandedSize, &produced,
+            &worldReceipt) && produced == expandedSize &&
+        worldReceipt.dungeon_id == 10U &&
+        M11_AssetLoader_InitDm1IigsFromBuffer(&state->assetLoader,
+            graphics, (long)graphicsSize), "world-or-graphics-init");
     state->assetsAvailable = 1;
     /* F0036/F0039 native icon banks: seven 16-column, two-row
      * 16x16 strips. Authenticate through the selected native bank profile. */
     for (unsigned iconBank = 42; iconBank <= 48; ++iconBank) {
         const M11_AssetSlot* icons = M11_AssetLoader_Load(&state->assetLoader,iconBank);
-        if (!icons || icons->width != 256 || icons->height != 32) goto cleanup;
+        if (!icons || icons->width != 256 || icons->height != 32) {
+            failureStage = "icon-graphics";
+            goto cleanup;
+        }
     }
+    failureStage = "world-init";
     if (!F0882G_WORLD_InitFromIigsDungeonDatBuffer_Compat(expanded,
             (int)expandedSize, 0xF1A5U, metadata.creature_info, 27U,
             &state->world)) goto cleanup;
     state->active = 1;
+    failureStage = "font-bind";
     if (!F0506_DUNGEON_ReserveFreshPc34Pools_Compat(state->world.dungeon,
             state->world.things) || !m11_dm1_bind_original_font(state)) goto cleanup;
     /* G0236's allocation increments are identical under native GS MEDIA365
@@ -27660,11 +27678,13 @@ int M11_GameView_StartIigs(M11_GameViewState* state,
              installation.graphics_path);
     state->mirrorCatalogAvailable = F0652_CHAMPION_BuildMirrorCatalog_Compat(
         state->world.things, &state->mirrorCatalog) > 0;
+    failureStage = "world-hash";
     if (!F0891_ORCH_WorldHash_Compat(&state->world, &state->lastWorldHash))
         goto cleanup;
     /* Bind only this authenticated program/bank; own sample copies before
      * releasing the source buffers. Device failure stays silent, never PC. */
     M11_Audio_Shutdown(&state->audioState);
+    failureStage = "audio-init";
     if (!dm1_v1_iigs_audio_metadata_read(program,programSize,&state->dm1IigsAudioMetadata) ||
         !M11_Audio_InitDm1Iigs(&state->audioState,program,programSize,graphics,graphicsSize)) goto cleanup;
     state->dm1MusicSourceBound = 0;
@@ -27677,8 +27697,13 @@ int M11_GameView_StartIigs(M11_GameViewState* state,
         state->world.party.mapY, state->world.party.direction);
     result = 1;
 cleanup:
+    if (!result && debugHUD)
+        fprintf(stderr,
+            "firestaff: startup-source-rejected game=dm1 platform=apple-iigs stage=%s root=%s version=%d\n",
+            failureStage, root, expectedVersion);
     free(expanded); free(dungeon); free(start); free(program); free(graphics);
     if (!result) M11_GameView_Shutdown(state);
+#undef M11_IIGS_REQUIRE
     return result;
 }
 

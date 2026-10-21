@@ -29,10 +29,17 @@ for version in 2.0 2.1; do
         echo "FAIL: original IIGS $version disk identity" >&2; exit 1;
     }
 done
+# The installation/runtime path is tested with ZIP because it is the native
+# archive format. Preserve each member byte-for-byte in private test scratch.
+mkdir "$scratch/original-members"
+7zz x -y "$archive" "-o$scratch/original-members" >/dev/null
+(cd "$scratch/original-members" &&
+    7zz a -tzip -mx=0 "$scratch/Software-original.zip" ./* >/dev/null)
 cp "$scratch/original-2.0.po" "$scratch/media.po"
 (cd "$scratch" && 7zz a -tzip -mx=0 unlabelled.zip media.po >/dev/null)
 unset FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS
-"$probe" "$scratch/original-2.0.po" "$scratch/original-2.1.po" "$archive" "$scratch/unlabelled.zip" "$scratch"
+"$probe" "$scratch/original-2.0.po" "$scratch/original-2.1.po" \
+    "$scratch/Software-original.zip" "$scratch/unlabelled.zip" "$scratch"
 [[ $(firestaff_sha256_file "$archive") == "$before" ]] || {
     echo 'FAIL: source IIGS archive changed' >&2; exit 1;
 }

@@ -63,6 +63,18 @@ for version in 20 21; do
     assert_trace 'startup-input-source mouse x=777 y=140 command=1' "$scratch/g$version-entrance.log"
     assert_trace 'phase=entrance-door frame=31/31 source-vblanks=1' "$scratch/g$version-entrance.log"
     assert_trace "startup-f0441-authenticated-handoff game=dm1 platform=apple-iigs version=$version" "$scratch/g$version-entrance.log"
+    (cd "$scratch" && 7zz a -tzip -mx=0 "g$version-original.zip" "g$version.po" >/dev/null)
+    FIRESTAFF_CONFIG_PATH="$scratch/g$version-zip.toml" SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        "$app" --game dm1 --platform apple-iigs --data-dir "$scratch/g$version-original.zip" \
+        --debug --boot-probe --boot-probe-frames 4 --script turn-right \
+        --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
+        --boot-probe-expect-asset-md5 1045a36952e64eb2bc7b4c7b2965b112 \
+        >"$scratch/g$version-zip.log" 2>&1 || {
+            cat "$scratch/g$version-zip.log"; exit 1;
+        }
+    assert_trace 'DM1 IIGS READY:' "$scratch/g$version-zip.log"
+    assert_trace "platformHandoff=iigs-g$version-native" "$scratch/g$version-zip.log"
+    assert_trace 'runtime game=dm1 startup-phase=dm1-iigs-runtime' "$scratch/g$version-zip.log"
     FIRESTAFF_CONFIG_PATH="$scratch/g$version-menu.toml" SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
         FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
         "$app" --menu --game dm1 --platform iigs --data-dir "$scratch/g$version.po" \
@@ -94,4 +106,4 @@ else
     echo 'SKIP: optional original FM Towns AUTO-priority comparison unavailable'
 fi
 [[ $(firestaff_sha256_file "$archive") == "$before" ]]
-echo 'PASS: original G20/G21 title, F0439 C255 entrance viewport and F0441 mouse-gated door startup run through direct CLI and selected M12 menu; GS F0128 pixel parity and GS F0129 remain unverified'
+echo 'PASS: original G20/G21 title, ZIP-wrapped CLI startup, F0439 C255 entrance viewport and F0441 mouse-gated door startup run through direct CLI and selected M12 menu; GS F0128 pixel parity and GS F0129 remain unverified'

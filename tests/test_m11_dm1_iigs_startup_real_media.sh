@@ -29,8 +29,16 @@ for version in 2.0 2.1; do
         echo "FAIL: original IIGS $version disk identity" >&2; exit 1;
     }
 done
+# The application runtime uses its native ZIP reader for this original
+# preservation set. Repackage every unchanged member from the source 7z only
+# in private test scratch; do not make native gameplay depend on host 7z tools.
+mkdir "$scratch/original-members"
+7zz x -y "$archive" "-o$scratch/original-members" >/dev/null
+(cd "$scratch/original-members" &&
+    7zz a -tzip -mx=0 "$scratch/Software-original.zip" ./* >/dev/null)
 unset FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS
-"$probe" "$scratch/original-2.0.po" "$scratch/original-2.1.po" "$archive" "$scratch"
+"$probe" "$scratch/original-2.0.po" "$scratch/original-2.1.po" \
+    "$scratch/Software-original.zip" "$scratch"
 [[ $(firestaff_sha256_file "$archive") == "$before" ]] || {
     echo 'FAIL: source IIGS archive changed' >&2; exit 1;
 }
