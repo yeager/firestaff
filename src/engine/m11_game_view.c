@@ -36621,6 +36621,19 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             if (!m11_try_stairs_transition(state)) return M11_GAME_INPUT_IGNORED;
             return M11_GAME_INPUT_REDRAW;
         }
+        /* ReDMCSB CLIKVIEW.C F0373/F0374 own floor-object pickup/drop for
+         * every DM1 edition. The IIGS command branch must not fall through
+         * to WORLD movement for these object actions. Keep the same
+         * source-owned Thing-chain and mouse-hand transactions used by the
+         * other native DM1 editions. */
+        if (input == M12_MENU_INPUT_PICKUP_ITEM) {
+            (void)M11_GameView_PickupItem(state);
+            return M11_GAME_INPUT_REDRAW;
+        }
+        if (input == M12_MENU_INPUT_DROP_ITEM) {
+            (void)M11_GameView_DropItem(state);
+            return M11_GAME_INPUT_REDRAW;
+        }
         /* Source F0380/F0366/F0276 must apply the same-owner native
          * WORLD sensor effects; the generic tick emits observations only.
          * This queue consumes no PC graphics or startup metadata. */

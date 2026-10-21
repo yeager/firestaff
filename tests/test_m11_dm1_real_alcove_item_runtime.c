@@ -158,6 +158,107 @@ static int square_contains_thing_exactly_once(const M11_GameViewState *state,
     return count == 1 && guard < 64;
 }
 
+#if defined(M11_DM1_REAL_MEDIA_PLATFORM_FMTOWNS) || \
+    defined(M11_DM1_REAL_MEDIA_PLATFORM_IIGS)
+static int exercise_real_item_transaction(
+    M11_GameViewState *state,
+    const M11_Dm1FloorItemHostPresentationReceipt *presentation,
+    const char *route)
+{
+    unsigned short picked;
+    unsigned int allowedSlots;
+    int targetSlot = -1;
+    int targetBox;
+    int iconIndex;
+    int clickX;
+    int clickY;
+    DM1_V1_InventorySlotBoxZonePc34 targetZone;
+    M11_GameInputResult result;
+
+    if (!state || !presentation || !presentation->valid ||
+        presentation->destinationW <= 0 || presentation->destinationH <= 0) {
+        return 0;
+    }
+    clickX = presentation->destinationX + presentation->destinationW / 2;
+    clickY = presentation->destinationY + presentation->destinationH / 2;
+    result = M11_GameView_HandlePointer(state, clickX, clickY, 1);
+    picked = DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state);
+    if (result != M11_GAME_INPUT_REDRAW || picked == THING_NONE) {
+        fprintf(stderr,
+                "real %s item was not pickable at (%d,%d) size=%dx%d result=%d hand=%u inventory=%d\n",
+                route, clickX, clickY, presentation->destinationW,
+                presentation->destinationH, result, (unsigned int)picked,
+                state->inventoryPanelActive);
+        return 0;
+    }
+
+    allowedSlots = dm1_v1_dungeon_get_object_allowed_slots_pc34(
+        state->world.things, picked);
+    if (allowedSlots & 0x0200u) {
+        targetSlot = CHAMPION_SLOT_HAND_LEFT;
+    } else if (allowedSlots & 0x0040u) {
+        targetSlot = CHAMPION_SLOT_QUIVER_1;
+    } else if (allowedSlots & 0x0080u) {
+        targetSlot = CHAMPION_SLOT_QUIVER_2;
+    } else if (allowedSlots & 0x0100u) {
+        targetSlot = CHAMPION_SLOT_POUCH_1;
+    } else if (allowedSlots & 0xffffu) {
+        targetSlot = CHAMPION_SLOT_BACKPACK_1;
+    }
+    targetBox = dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(
+        targetSlot);
+    if (targetSlot < 0 || targetBox <= 0 ||
+        !dm1_v1_inventory_source_slot_box_zone_pc34(targetBox, &targetZone) ||
+        !M11_GameView_ToggleInventoryPanel(state)) {
+        fprintf(stderr, "real %s item inventory panel/slot unavailable\n", route);
+        return 0;
+    }
+
+    result = M11_GameView_HandlePointer(
+        state, DM1_VIEWPORT_X + targetZone.x + targetZone.w / 2,
+        DM1_VIEWPORT_Y + targetZone.y + targetZone.h / 2, 1);
+    if (result != M11_GAME_INPUT_REDRAW ||
+        DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != THING_NONE ||
+        state->world.party.champions[0].inventory[targetSlot] != picked) {
+        fprintf(stderr, "real %s item did not enter legal source slot\n", route);
+        return 0;
+    }
+    iconIndex = dm1_v1_dungeon_get_object_icon_index_pc34(
+        state->world.things, picked, 0);
+#if defined(M11_DM1_REAL_MEDIA_PLATFORM_IIGS)
+    if (iconIndex < 0) {
+#else
+    if (!state->dm1ObjectNameTableValid || iconIndex < 0 ||
+        state->dm1ObjectNames[iconIndex][0] == '\0') {
+#endif
+        fprintf(stderr, "real %s placed item lost its source name/icon\n", route);
+        return 0;
+    }
+
+    result = M11_GameView_HandlePointer(
+        state, DM1_VIEWPORT_X + targetZone.x + targetZone.w / 2,
+        DM1_VIEWPORT_Y + targetZone.y + targetZone.h / 2, 1);
+    if (result != M11_GAME_INPUT_REDRAW ||
+        state->world.party.champions[0].inventory[targetSlot] != THING_NONE ||
+        DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != picked ||
+        !M11_GameView_DropItem(state) ||
+        DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != THING_NONE ||
+        !square_contains_thing_exactly_once(
+            state, state->world.party.mapIndex, state->world.party.mapX,
+            state->world.party.mapY, picked)) {
+        fprintf(stderr,
+                "real %s item did not return to the hand and drop once on the floor\n",
+                route);
+        return 0;
+    }
+    printf("ok: real DM1 %s pickup/place/drop thing=%u map=%d party=(%d,%d,%d)\n",
+           route, (unsigned int)picked, state->world.party.mapIndex,
+           state->world.party.mapX, state->world.party.mapY,
+           state->world.party.direction);
+    return 1;
+}
+#endif
+
 /* Diagnostic ownership audit for the real corpus.  A wall alcove can only
  * present F0115 material when its raw square chain contains both a map-local
  * G0192 ornament sensor and an ordinary item Thing.  Keep this in the
@@ -420,6 +521,32 @@ int main(void)
                         return 0;
                     }
                     }
+#if defined(M11_DM1_REAL_MEDIA_PLATFORM_FMTOWNS) || \
+    defined(M11_DM1_REAL_MEDIA_PLATFORM_IIGS)
+                    /* Some authentic Towns/IIGS campaigns have no wall
+                     * alcove whose Thing chain also contains an item. Use a
+                     * naturally rendered original floor item instead; do
+                     * not create a test-only Thing or alter source media. */
+                    {
+                        M11_Dm1FloorItemHostPresentationReceipt floorReceipt;
+                        memset(&floorReceipt, 0, sizeof(floorReceipt));
+                        M11_GameView_GetDm1FloorItemHostPresentationReceipt(
+                            &floorReceipt);
+                        if (floorReceipt.valid && floorReceipt.floorItemLane &&
+                            floorReceipt.destinationW > 0 &&
+                            floorReceipt.destinationH > 0 &&
+                            floorReceipt.graphicsId > 0) {
+                            if (!exercise_real_item_transaction(
+                                    &state, &floorReceipt,
+                                    "native floor-item")) {
+                                M11_GameView_Shutdown(&state);
+                                return 1;
+                            }
+                            M11_GameView_Shutdown(&state);
+                            return 0;
+                        }
+                    }
+#endif
                 }
             }
         }
@@ -430,7 +557,7 @@ int main(void)
          * F0115 for C0x0000_CELL_ORDER_ALCOVE.  Preserve a skip when a
          * selected source lacks that combination: this gate must never
          * manufacture an item just to obtain a renderer receipt. */
-        puts("SKIP: selected DM1 corpus has no alcove-object wall-chain fixture");
+        puts("SKIP: selected DM1 corpus has no alcove-object or drawable floor-item fixture");
         M11_GameView_Shutdown(&state);
         return 77;
     }

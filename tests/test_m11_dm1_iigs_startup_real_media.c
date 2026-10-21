@@ -847,6 +847,56 @@ cleanup:
     return result;
 }
 
+static int check_native_floor_item_roundtrip(M11_GameViewState *view,
+                                             uint8_t *frame) {
+#define REQUIRE_NATIVE_ITEM(c, m) do { \
+    if (!(c)) { fprintf(stderr, "FAIL: %s\n", (m)); return 0; } \
+} while (0)
+    const unsigned champion = 1u;
+    const unsigned short original_item = 0x1459u;
+    REQUIRE_NATIVE_ITEM(view->world.party.champions[champion]
+                .inventory[CHAMPION_SLOT_ACTION_HAND] == original_item &&
+            original_thing_owners(view, original_item) == 1,
+        "original IIGS torch starts in exactly one source-owned champion slot");
+    (void)M11_GameView_HandleInput(view, M12_MENU_INPUT_CHAMPION_2_INVENTORY);
+    REQUIRE_NATIVE_ITEM(view->inventoryPanelActive &&
+            M11_GameView_HandlePointerButton(view, 70, 94,
+                DM1_V1_MOUSE_MASK_LEFT_PC34) == M11_GAME_INPUT_REDRAW &&
+            view->leaderHandObjectPresent &&
+            view->leaderHandThing == original_item &&
+            view->world.party.champions[champion]
+                .inventory[CHAMPION_SLOT_ACTION_HAND] == THING_NONE &&
+            original_thing_owners(view, original_item) == 1,
+        "native IIGS action-hand click moves the original torch to the mouse hand");
+    REQUIRE_NATIVE_ITEM(M11_GameView_HandlePointerButton(view, 214, 40,
+                DM1_V1_MOUSE_MASK_LEFT_PC34) == M11_GAME_INPUT_REDRAW &&
+            !view->inventoryPanelActive && view->leaderHandObjectPresent,
+        "native inventory closes while retaining the original mouse-held torch");
+    (void)M11_GameView_HandleInput(view, M12_MENU_INPUT_DROP_ITEM);
+    REQUIRE_NATIVE_ITEM(!view->leaderHandObjectPresent &&
+            original_thing_owners(view, original_item) == 1,
+        "ordinary DM1 drop input transfers the original torch to the dungeon");
+    REQUIRE_NATIVE_ITEM(M11_GameView_HandleInput(view,
+                M12_MENU_INPUT_PICKUP_ITEM) == M11_GAME_INPUT_REDRAW &&
+            view->leaderHandObjectPresent &&
+            view->leaderHandThing == original_item &&
+            original_thing_owners(view, original_item) == 1,
+        "ordinary DM1 pickup input recovers the same original torch from the party square");
+    (void)M11_GameView_HandleInput(view, M12_MENU_INPUT_CHAMPION_2_INVENTORY);
+    REQUIRE_NATIVE_ITEM(view->inventoryPanelActive &&
+            M11_GameView_HandlePointerButton(view, 70, 94,
+                DM1_V1_MOUSE_MASK_LEFT_PC34) == M11_GAME_INPUT_REDRAW &&
+            !view->leaderHandObjectPresent &&
+            view->world.party.champions[champion]
+                .inventory[CHAMPION_SLOT_ACTION_HAND] == original_item &&
+            original_thing_owners(view, original_item) == 1,
+        "original IIGS torch returns to its source champion slot without loss or duplication");
+    (void)M11_GameView_HandlePointerButton(view, 214, 40,
+        DM1_V1_MOUSE_MASK_LEFT_PC34);
+#undef REQUIRE_NATIVE_ITEM
+    return 1;
+}
+
 static int check_linflas_capacity(const char *root, int version) {
     static const uint8_t route[][2]={{1,4},{1,5},{1,6},{1,7},{2,7},{3,7},{4,7},{4,6},{4,5},{4,4},
         {4,3},{4,2},{5,2},{6,2},{6,3},{7,3},{8,3},{8,4},{9,4},{9,5},{9,6},{9,7},{9,8},{9,9},{10,9},{11,9},{12,9}};
@@ -1173,6 +1223,7 @@ static int check_session(const char *root, int version, const char *owner) {
         REQUIRE(check_first_descent(view,frame),"actual native first descent and functional lighting");
         REQUIRE(check_iigs_creature_combat(view),"authentic IIGS monster approaches and damages the naturally routed party");
         REQUIRE(check_native_inventory(view,frame),"actual native inventory source transactions and modifier inverse");
+        REQUIRE(check_native_floor_item_roundtrip(view,frame),"original IIGS torch drop, floor pickup and champion-hand roundtrip");
         M11_GameView_Shutdown(view); M11_GameView_Shutdown(view);
         REQUIRE(!view->active && !view->dm1IigsActive && !view->world.iigsCreatureProfileBound &&
             !view->assetLoader.iigsDm1,"repeated shutdown clears native runtime resources and profile");
