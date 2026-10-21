@@ -13761,8 +13761,14 @@ static int orch_handle_creature_reaction_event_compat(
         DM1_V1_F0179_CreatureAspectUpdateReceipt_PC34 aspectReceipt;
         int creatureIndex = ev->aux2 - DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
 
+        /* GROUP.C:2344 clears the attack latch when C38 is the continuing
+         * attack event; line 2415 instead passes F0207's result on a fresh
+         * attack. F0810's action distinguishes those two paths. Always
+         * setting the latch here strands a living group in its first attack
+         * animation and suppresses every later attack. */
         if (!F0179_DM1_GROUP_GetCreatureAspectUpdateTime_Compat(
-                &activeGroup, group, &ctx.creatureInfo, creatureIndex, 1,
+                &activeGroup, group, &ctx.creatureInfo, creatureIndex,
+                behavior.actionKind == DM1_ACTION_ATTACK,
                 world->gameTick, &world->masterRng, &aspectReceipt) ||
             !aspectReceipt.valid) {
             return 0;

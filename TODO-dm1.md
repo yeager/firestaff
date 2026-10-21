@@ -1,3 +1,15 @@
+2026-10-21 DM1 PC34 repeated combat: the live C38 continuation passed
+`is_attacking=1` to F0179 even when F0810 selected no new attack. That kept
+ACTIVE_GROUP.Aspect's 0x80 attack latch set, so group #169 could remain in its
+first attack state without attacking again. The M10 bridge now derives the
+F0179 flag from the source behavior action, matching ReDMCSB GROUP.C:2344 and
+2415. The authentic PC34 test now requires another group #169 attack emission
+within 1,500 source ticks after the player's action; it passes. First-combat
+real-media checks also pass on Amiga 2.0, Atari ST 1.2, and FM Towns, and the
+IIGS startup/door/combat regression passes. Only the PC34 test currently
+asserts repeated attacks; wider repeated-combat parity remains open. Visual
+parity is still deferred.
+
 2026-10-21 IIGS HoC door and monster regression: the native IIGS pointer
 handler accepted mirror and inventory clicks but omitted the original C080
 D1C door-button zone. ReDMCSB CLIKVIEW.C F0377 uses that source box to dispatch

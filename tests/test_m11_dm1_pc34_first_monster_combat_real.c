@@ -51,8 +51,12 @@ int main(void)
     unsigned short first;
     int clickX, clickY, clickW, clickH;
     uint32_t attackBeforeDoor;
+    uint32_t attackAfterFirstEncounter;
+    uint32_t encounterTickStart;
     unsigned short initialChampionHp;
+    unsigned short hpAfterFirstEncounter;
     unsigned int naturalDamage;
+    int repeatedGroup169Attacks = 0;
     long partyShieldDefense = shieldText ? strtol(shieldText, NULL, 10) : 0;
 
     if (partyShieldDefense < 0 || partyShieldDefense > 100) {
@@ -338,8 +342,56 @@ int main(void)
         }
         *champ = saved;
     }
+    /* F0207 attacks once when the source creature enters its attack
+     * animation. ReDMCSB GROUP.C:2344 then clears the C38 attack latch so the
+     * per-creature timeline can attack again. Prove the recurrence while the
+     * original group is still alive, after exercising the player's action
+     * path. A full shield keeps this long source-time probe from ending the
+     * run through champion death. */
+    if (state.world.things->groups[169].health[0] == 0) {
+        fputs("FAIL: first monster died before the repeated-attack probe\n",
+              stderr);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    attackAfterFirstEncounter = state.world.lifecycle.lastCreatureAttackTime;
+    encounterTickStart = state.world.gameTick;
+    hpAfterFirstEncounter = state.world.party.champions[0].hp.current;
+    state.world.magic.partyShieldDefense = 100u;
+    for (tick = 0; tick < 1500; ++tick) {
+        int emissionIndex;
+        if (state.partyDead || state.world.partyDead) break;
+        (void)M11_GameView_AdvanceIdleTick(&state);
+        for (emissionIndex = 0;
+             emissionIndex < state.lastTickResult.emissionCount;
+             ++emissionIndex) {
+            const struct TickEmission_Compat *emission =
+                &state.lastTickResult.emissions[emissionIndex];
+            if (emission->kind == EMIT_CREATURE_ATTACK &&
+                emission->payload[0] == 169) {
+                ++repeatedGroup169Attacks;
+            }
+        }
+    }
+    if (state.world.lifecycle.lastCreatureAttackTime <=
+            attackAfterFirstEncounter || repeatedGroup169Attacks == 0) {
+        fprintf(stderr,
+            "FAIL: source group #169 did not attack again in 21 seconds "
+            "(attacks=%d group=%u hp=%u->%u gameTick=%u->%u "
+            "attackTick=%u->%u)\n",
+            repeatedGroup169Attacks,
+            (unsigned int)state.world.things->groups[169].health[0],
+            (unsigned int)hpAfterFirstEncounter,
+            (unsigned int)state.world.party.champions[0].hp.current,
+            (unsigned int)encounterTickStart,
+            (unsigned int)state.world.gameTick,
+            (unsigned int)attackAfterFirstEncounter,
+            (unsigned int)state.world.lifecycle.lastCreatureAttackTime);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
     M11_GameView_Shutdown(&state);
-    printf("PASS: authentic PC34 first-door natural monster attack and combat input naturalDamage=%u partyShield=%ld\n",
+    printf("PASS: authentic PC34 first-door repeated natural monster attacks and combat input naturalDamage=%u partyShield=%ld\n",
            naturalDamage, partyShieldDefense);
     return 0;
 }
