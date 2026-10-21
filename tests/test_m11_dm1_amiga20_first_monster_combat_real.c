@@ -73,6 +73,16 @@ static int advance_input(M11_GameViewState *game, M12_MenuInput input)
     return 1;
 }
 
+static unsigned int group_health_total(const struct DungeonGroup_Compat *group)
+{
+    unsigned int total = 0;
+    unsigned int i;
+    if (!group) return 0;
+    for (i = 0; i <= group->count && i < 4u; ++i)
+        total += group->health[i];
+    return total;
+}
+
 int main(void)
 {
     const char *atariArchive = getenv("FIRESTAFF_DM1_ATARI_ST_ARCHIVE");
@@ -331,8 +341,11 @@ int main(void)
     {
         unsigned char actions[3];
         int x, y, w, h;
+        unsigned int monsterHpBeforePunch =
+            group_health_total(&game.world.things->groups[169]);
         const int32_t ninjaXp = game.world.lifecycle.champions[0].skills20[1].experience;
         const int32_t fightXp = game.world.lifecycle.champions[0].skills20[9].experience;
+        int punchAttempts = 1;
         /* ReDMCSB MENU.C F0391/F0407 dispatches the visible PUNCH action;
          * MENU.C and CHAMPION.C award matching Fight/Ninja experience. */
         REQUIRE(M11_GameView_GetV1ActionIconCellZone(0, &x, &y, &w, &h) &&
@@ -347,6 +360,45 @@ int main(void)
                         M11_DM1_MOUSE_MASK_LEFT) != M11_GAME_INPUT_IGNORED,
                 "production pointer input dispatches PUNCH against the live encounter");
         for (i = 0; i < 5; ++i) (void)M11_GameView_AdvanceIdleTick(&game);
+        /* A source PUNCH can legitimately miss. MENU.C F0407 still spends
+         * stamina and awards reduced experience on that path, so keep using
+         * the actual pointer action after its native cooldown until a hit is
+         * observed. This tests that combat can deal damage without treating
+         * one random miss as a platform regression. */
+        while (group_health_total(&game.world.things->groups[169]) >=
+                   monsterHpBeforePunch && punchAttempts < 24) {
+            for (i = 0; i < 32 && game.actionDisabledTicks[0] > 0; ++i)
+                (void)M11_GameView_AdvanceIdleTick(&game);
+            if (!M11_GameView_GetV1ActionIconCellZone(0, &x, &y, &w, &h) ||
+                M11_GameView_HandlePointerButton(&game, x + w / 2,
+                    y + h / 2, M11_DM1_MOUSE_MASK_LEFT) ==
+                    M11_GAME_INPUT_IGNORED ||
+                !M11_GameView_GetActingActionIndices(&game, actions) ||
+                actions[0] != 6 ||
+                !M11_GameView_GetV1ActionMenuRowZone(0, &x, &y, &w, &h) ||
+                M11_GameView_HandlePointerButton(&game, x + w / 2,
+                    y + h / 2, M11_DM1_MOUSE_MASK_LEFT) ==
+                    M11_GAME_INPUT_IGNORED) {
+                fprintf(stderr,
+                    "FAIL: authentic %s PUNCH could not be repeated after a miss\n",
+                    isAtari ? "Atari ST" : isTowns ? "FM Towns" : "Amiga");
+                goto cleanup;
+            }
+            ++punchAttempts;
+            for (i = 0; i < 5; ++i)
+                (void)M11_GameView_AdvanceIdleTick(&game);
+        }
+        if (group_health_total(&game.world.things->groups[169]) >=
+                monsterHpBeforePunch) {
+            fprintf(stderr,
+                "FAIL: authentic %s PUNCH did not reduce group #169 HP "
+                "after %d real attempts (%u -> %u)\n",
+                isAtari ? "Atari ST" : isTowns ? "FM Towns" : "Amiga",
+                punchAttempts,
+                monsterHpBeforePunch,
+                group_health_total(&game.world.things->groups[169]));
+            goto cleanup;
+        }
         REQUIRE(game.world.lifecycle.champions[0].skills20[1].experience > ninjaXp &&
                     game.world.lifecycle.champions[0].skills20[9].experience > fightXp &&
                     game.world.lifecycle.champions[0].skills20[1].experience - ninjaXp ==

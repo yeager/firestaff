@@ -10,6 +10,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static unsigned int group_health_total(const struct DungeonGroup_Compat *group)
+{
+    unsigned int total = 0;
+    unsigned int i;
+    if (!group) return 0;
+    for (i = 0; i <= group->count && i < 4u; ++i)
+        total += group->health[i];
+    return total;
+}
+
 int main(void)
 {
     const char *archive = getenv("FIRESTAFF_DM1_PC34_ARCHIVE");
@@ -56,6 +66,8 @@ int main(void)
     unsigned short initialChampionHp;
     unsigned short hpAfterFirstEncounter;
     unsigned int naturalDamage;
+    unsigned int monsterHpBeforePunch;
+    unsigned int monsterHpAfterPunch;
     int repeatedGroup169Attacks = 0;
     long partyShieldDefense = shieldText ? strtol(shieldText, NULL, 10) : 0;
 
@@ -253,6 +265,8 @@ int main(void)
             state.world.lifecycle.champions[0].skills20[1].experience;
         const int32_t fightXpBefore =
             state.world.lifecycle.champions[0].skills20[9].experience;
+        monsterHpBeforePunch = group_health_total(
+            &state.world.things->groups[169]);
         /* ReDMCSB MENU.C:803-840, F0391 selects an action-list row and
          * dispatches F0407 before clearing the acting champion. */
         if (!M11_GameView_GetV1ActionIconCellZone(0,
@@ -278,6 +292,8 @@ int main(void)
         }
         for (tick = 0; tick < 5; ++tick)
             (void)M11_GameView_AdvanceIdleTick(&state);
+        monsterHpAfterPunch = group_health_total(
+            &state.world.things->groups[169]);
         /* ReDMCSB MENU.C:382-390,427-440 maps the visible first action to
          * PUNCH (index 6), 8 base experience, skill 9 (FIGHT). CHAMPION.C:
          * 874-895 mirrors that award to base skill 1 (NINJA). */
@@ -291,6 +307,14 @@ int main(void)
                 fightXpBefore) {
             fputs("FAIL: live PUNCH did not award matching Ninja/Fight XP\n",
                   stderr);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+        if (monsterHpAfterPunch >= monsterHpBeforePunch) {
+            fprintf(stderr,
+                    "FAIL: authentic PC34 PUNCH awarded XP but did not "
+                    "reduce group #169 HP (%u -> %u)\n",
+                    monsterHpBeforePunch, monsterHpAfterPunch);
             M11_GameView_Shutdown(&state);
             return 1;
         }

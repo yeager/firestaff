@@ -2644,3 +2644,13 @@ does not substitute Amiga or PC data. All five platform checks pass locally
 against the installed original media. This closes the first-encounter combat
 coverage gap for these editions, not complete campaign/runtime parity. Visual
 parity and the other unresolved platform interactions remain separate work.
+
+2026-10-21 melee damage assertion: first-encounter tests now compare the full
+original group's HP before and after player PUNCH. Amiga and FM Towns can
+legitimately miss the first attack while still producing the source-defined
+reduced experience award, so their real pointer-driven action is repeated only
+after its native cooldown until a hit is observed. The test fails if the action
+cannot be repeated or no hit lands within 24 attempts. PC34's authenticated
+first PUNCH currently hits and is checked directly. Four installed editions
+pass this combat-damage check; this proves that damage can land in the tested
+first encounter and does not prove complete combat parity.
