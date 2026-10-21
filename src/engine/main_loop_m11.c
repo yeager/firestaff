@@ -8335,14 +8335,11 @@ int M11_PrepareDirectLaunchForGame(M12_StartupMenuState* menuState,
             menuState->selectedIndex = i;
             menuState->activatedIndex = i;
             menuState->launchRequested = 1;
-            /* An explicit --save is a direct Resume request too.  Preserve
-             * only the path bound to this game; ordinary discovered saves
-             * remain opt-in and do not change direct --game new-game startup. */
-            menuState->quickResumeLaunchRequested =
-                menuState->quickResumeAvailable &&
-                menuState->quickResumeSavePath[0] != '\0' &&
-                menuState->quickResumeGameId[0] != '\0' &&
-                strcmp(menuState->quickResumeGameId, gameId) == 0;
+            /* `--game` requests this game directly. A save discovered from
+             * launcher config is only a Resume candidate and must not turn
+             * that request into an implicit load. The explicit --save path
+             * is bound to the launch intent later in Phase A. */
+            menuState->quickResumeLaunchRequested = 0;
             /* A direct CLI launch still goes through the M12 launch intent,
              * whose generic V2.2 gate quite rightly refuses CSB unless every
              * reviewed CSB material is installed.  The CSB presentation

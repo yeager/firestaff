@@ -498,6 +498,15 @@ static void run_real_data_handoff_if_available(void) {
             M12_StartupMenu_Destroy(&menu);
             continue;
         }
+        /* A previously discovered Continue candidate stays opt-in when the
+         * user explicitly launches a game by id. The durable save path may
+         * belong to another source build and must not block a new-game start. */
+        menu.quickResumeAvailable = 1;
+        snprintf(menu.quickResumeGameId, sizeof(menu.quickResumeGameId), "%s",
+                 kCases[i].gameId);
+        snprintf(menu.quickResumeSavePath, sizeof(menu.quickResumeSavePath),
+                 "%s", "/tmp/firestaff-stale-auto-resume.sav");
+        menu.quickResumeLaunchRequested = 1;
         if (autoMatchedVersion->matchedMd5[0] != '\0') {
             snprintf(expectedAssetMd5, sizeof(expectedAssetMd5), "%s",
                      autoMatchedVersion->matchedMd5);
