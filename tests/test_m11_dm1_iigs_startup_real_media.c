@@ -3,6 +3,7 @@
 #include "asset_find_by_hash.h"
 #include "asset_status_m12.h"
 #include "memory_dungeon_dat_pc34_compat.h"
+#include "memory_movement_pc34_compat.h"
 #include "dm1_v1_dungeon_light_admission_f0337_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "render_sdl_m11.h"
@@ -491,6 +492,157 @@ static int check_first_descent(M11_GameViewState *view, uint8_t *frame) {
     result=1;
 cleanup:
     return result;
+}
+
+/* Route from the authentic IIGS stair arrival to the closest active map-one
+ * creature. BFS uses the production movement planner for collision rules;
+ * replay uses ordinary M11 inputs and never writes party coordinates. */
+static int check_iigs_creature_combat(M11_GameViewState *view) {
+    enum { MAX_NODES=32*32*4, MAX_ROUTE=MAX_NODES };
+    static const int moves[6]={MOVE_FORWARD,MOVE_RIGHT,MOVE_BACKWARD,
+        MOVE_LEFT,MOVE_TURN_RIGHT,MOVE_TURN_LEFT};
+    static const M12_MenuInput inputs[6]={M12_MENU_INPUT_UP,
+        M12_MENU_INPUT_STRAFE_RIGHT,M12_MENU_INPUT_DOWN,
+        M12_MENU_INPUT_STRAFE_LEFT,M12_MENU_INPUT_TURN_RIGHT,
+        M12_MENU_INPUT_TURN_LEFT};
+    int queue[MAX_NODES],previous[MAX_NODES],via[MAX_NODES],route[MAX_ROUTE];
+    const struct DungeonMapDesc_Compat *map;
+    int width,height,head=0,tail=0,goal=-1,routeCount=0,node,targetGroup=-1;
+    uint32_t attackBefore;
+    unsigned hpBefore=0u;
+    if (!view || view->world.party.mapIndex!=1 ||
+        !view->world.dungeon || !view->world.things) return 0;
+    map=&view->world.dungeon->maps[1]; width=map->width; height=map->height;
+    if (width>32 || height>32 || width<=0 || height<=0) return 0;
+    /* The authentic stair arrival (3,1) is behind the first-level door.
+     * Walk the original corridor to (6,0), face its source button door at
+     * (6,1), and open it through the ordinary viewport pointer route. */
+    {
+        static const M12_MenuInput opening_route[]={M12_MENU_INPUT_UP,
+            M12_MENU_INPUT_TURN_RIGHT,M12_MENU_INPUT_UP,M12_MENU_INPUT_UP,
+            M12_MENU_INPUT_UP,M12_MENU_INPUT_TURN_RIGHT};
+        unsigned short door=F0511_DUNGEON_GetSquareFirstThing_Compat(
+            view->world.dungeon,view->world.things,1,6,1);
+        int vx,vy,vw,vh;
+        if (view->world.party.mapX!=3 || view->world.party.mapY!=1 ||
+            view->world.party.direction!=0 || THING_GET_TYPE(door)!=THING_TYPE_DOOR ||
+            THING_GET_INDEX(door)>=view->world.things->doorCount ||
+            !view->world.things->doors[THING_GET_INDEX(door)].button) {
+            fprintf(stderr,"FAIL: original IIGS group door/button route is unavailable\n");
+            return 0;
+        }
+        for (unsigned step=0;step<sizeof(opening_route)/sizeof(opening_route[0]);++step) {
+            (void)M11_GameView_HandleInput(view,opening_route[step]);
+            for (unsigned tick=0;tick<8u;++tick)
+                (void)M11_GameView_AdvanceIdleTick(view);
+        }
+        if (!M11_GameView_GetViewportRect(&vx,&vy,&vw,&vh)) return 0;
+        if (view->world.party.mapX!=6 || view->world.party.mapY!=0 ||
+            view->world.party.direction!=2 ||
+            M11_GameView_HandlePointerButton(view,vx+168,vy+48,
+                DM1_V1_MOUSE_MASK_LEFT_PC34)==M11_GAME_INPUT_IGNORED) {
+            fprintf(stderr,"FAIL: natural IIGS route did not reach/click original group door\n");
+            return 0;
+        }
+        for (unsigned tick=0;tick<16u;++tick)
+            (void)M11_GameView_AdvanceIdleTick(view);
+        if ((view->world.dungeon->tiles[1].squareData[6*height+1]&7u)!=0u &&
+            (view->world.dungeon->tiles[1].squareData[6*height+1]&7u)!=1u &&
+            (view->world.dungeon->tiles[1].squareData[6*height+1]&7u)!=5u) {
+            fprintf(stderr,"FAIL: authentic IIGS button click did not open group door\n");
+            return 0;
+        }
+    }
+#define IIGS_NODE(x,y,d) ((((y)*width+(x))<<2)|((d)&3))
+    for (node=0;node<MAX_NODES;++node) { previous[node]=-2; via[node]=-1; }
+    node=IIGS_NODE(view->world.party.mapX,view->world.party.mapY,
+                    view->world.party.direction);
+    previous[node]=-1; queue[tail++]=node;
+    while (head<tail && goal<0) {
+        struct PartyState_Compat party=view->world.party;
+        int x,y,d;
+        node=queue[head++]; d=node&3; x=(node>>2)%width; y=(node>>2)/width;
+        for (int ai=0;ai<view->world.creatureAICount;++ai) {
+            const struct CreatureAIState_Compat *active=&view->world.creatureAI[ai];
+            if (active->groupMapIndex==1 &&
+                abs(active->groupMapX-x)+abs(active->groupMapY-y)==1) {
+                goal=node; targetGroup=active->reserved0; break;
+            }
+        }
+        if (goal>=0) break;
+        party.mapIndex=1; party.mapX=x; party.mapY=y; party.direction=d;
+        for (int mi=0;mi<6;++mi) {
+            struct MovementResult_Compat result;
+            int next;
+            if (!F0702_MOVEMENT_TryMove_Compat(view->world.dungeon,&party,
+                                                moves[mi],&result) ||
+                result.newMapIndex!=1 || result.newMapX<0 || result.newMapY<0 ||
+                result.newMapX>=width || result.newMapY>=height) continue;
+            next=IIGS_NODE(result.newMapX,result.newMapY,result.newDirection);
+            if (previous[next]!=-2 || tail>=MAX_NODES) continue;
+            previous[next]=node; via[next]=mi; queue[tail++]=next;
+        }
+    }
+    if (goal<0) {
+        fprintf(stderr,"IIGS route: no adjacent group start=%d,%d active=%d map=%dx%d reached=%d\n",
+            view->world.party.mapX,view->world.party.mapY,
+            view->world.creatureAICount,width,height,tail);
+        for (int yy=0;yy<4;++yy) for (int xx=2;xx<7;++xx) {
+            unsigned char sq=view->world.dungeon->tiles[1].squareData[xx*height+yy];
+            fprintf(stderr," tile(%d,%d)=%02x",xx,yy,sq);
+            if (xx==6) fputc('\n',stderr);
+        }
+        for (int ai=0;ai<view->world.creatureAICount;++ai) {
+            const struct CreatureAIState_Compat *active=&view->world.creatureAI[ai];
+            fprintf(stderr," group=%d map=%d pos=%d,%d state=%d\n",
+                active->reserved0,active->groupMapIndex,active->groupMapX,
+                active->groupMapY,active->stateKind);
+        }
+        return 0;
+    }
+    while (previous[goal]>=0 && routeCount<MAX_ROUTE) {
+        route[routeCount++]=via[goal]; goal=previous[goal];
+    }
+    attackBefore=view->world.lifecycle.lastCreatureAttackTime;
+    for (unsigned c=0;c<view->world.party.championCount;++c)
+        hpBefore+=view->world.party.champions[c].hp.current;
+    while (routeCount>0) {
+        struct PartyState_Compat before=view->world.party;
+        int ticks,action=route[--routeCount];
+        (void)M11_GameView_HandleInput(view,inputs[action]);
+        for (ticks=0;ticks<8 && before.mapX==view->world.party.mapX &&
+             before.mapY==view->world.party.mapY &&
+             before.direction==view->world.party.direction;++ticks)
+            (void)M11_GameView_AdvanceIdleTick(view);
+        if (before.mapX==view->world.party.mapX &&
+            before.mapY==view->world.party.mapY &&
+            before.direction==view->world.party.direction) {
+            fprintf(stderr,"IIGS route: rejected action=%d pose=%d,%d,d%d\n",
+                action,view->world.party.mapX,view->world.party.mapY,
+                view->world.party.direction);
+            return 0;
+        }
+    }
+    for (unsigned ticks=0;ticks<8192u;++ticks) {
+        unsigned hpAfter=0u;
+        (void)M11_GameView_AdvanceIdleTick(view);
+        for (unsigned c=0;c<view->world.party.championCount;++c)
+            hpAfter+=view->world.party.champions[c].hp.current;
+        if (view->world.lifecycle.lastCreatureAttackTime!=attackBefore &&
+            hpAfter<hpBefore && targetGroup>=0 &&
+            targetGroup<view->world.things->groupCount &&
+            view->world.things->groups[targetGroup].behavior==DM1_BEHAVIOR_ATTACK)
+            return 1;
+    }
+    fprintf(stderr,"FAIL: authentic IIGS group %d no damage after route pose=%d,%d,d%d tick=%u attack=%u->%u hp=%u->",
+        targetGroup,view->world.party.mapX,view->world.party.mapY,
+        view->world.party.direction,(unsigned)view->world.gameTick,
+        (unsigned)attackBefore,(unsigned)view->world.lifecycle.lastCreatureAttackTime,hpBefore);
+    for (unsigned c=0;c<view->world.party.championCount;++c)
+        fprintf(stderr,"%s%u",c?",":"",view->world.party.champions[c].hp.current);
+    fputc('\n',stderr);
+    return 0;
+#undef IIGS_NODE
 }
 
 static int original_thing_owners(const M11_GameViewState *view, unsigned short identity) {
@@ -985,6 +1137,7 @@ static int check_session(const char *root, int version, const char *owner) {
         REQUIRE(check_native_wall_bump(view),"authentic native wall collision damage and source sound");
         REQUIRE(check_equipped_heroes(view,frame),"authentic native equipment modifier and activation lifecycle");
         REQUIRE(check_first_descent(view,frame),"actual native first descent and functional lighting");
+        REQUIRE(check_iigs_creature_combat(view),"authentic IIGS monster approaches and damages the naturally routed party");
         REQUIRE(check_native_inventory(view,frame),"actual native inventory source transactions and modifier inverse");
         M11_GameView_Shutdown(view); M11_GameView_Shutdown(view);
         REQUIRE(!view->active && !view->dm1IigsActive && !view->world.iigsCreatureProfileBound &&
@@ -1040,6 +1193,6 @@ int main(int argc, char **argv) {
     if (!check_archive_scan(argv[3]) || !check_rejections(argv[1],argv[4]) ||
         !asset_file_matches_md5(argv[1],"15e3f954f408612fd2f15a474a182f9f") ||
         !asset_file_matches_md5(argv[2],"d38f00e5ad8516553c5cba3214b29bef")) return 1;
-    puts("PASS: authentic IIGS M11 native startup, ownership, input and restart lifecycle; visual/audio parity unverified");
+    puts("PASS: authentic IIGS M11 native startup, HoC monster combat, ownership, input and restart lifecycle; visual/audio parity unverified");
     return 0;
 }

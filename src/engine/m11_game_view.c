@@ -39050,6 +39050,24 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         if (!state->inventoryPanelActive && !state->candidateMirrorPanelActive &&
             (buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) && x >= 96 && x <= 127 && y >= 68 && y <= 96)
             handled = M11_GameView_SelectFrontMirrorCandidate(state);
+        /* ReDMCSB CLIKVIEW.C F0377 routes C080's source D1C door-button
+         * zone to F0268/F0715. The native IIGS pointer table above does not
+         * contain the legacy PC mouse zones, so route this explicit original
+         * front-door button through the shared source door toggle. */
+        if (!handled && !state->candidateMirrorPanelActive &&
+            !state->inventoryPanelActive &&
+            (buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34)) {
+            int viewportX, viewportY, viewportW, viewportH;
+            static const int kDoorButtonD1CBox[4] = {160,175,44,52};
+            if (M11_GameView_GetViewportRect(&viewportX,&viewportY,
+                                              &viewportW,&viewportH) &&
+                viewportW>0 && viewportH>0 &&
+                x-viewportX>=kDoorButtonD1CBox[0] &&
+                x-viewportX<=kDoorButtonD1CBox[1] &&
+                y-viewportY>=kDoorButtonD1CBox[2] &&
+                y-viewportY<=kDoorButtonD1CBox[3])
+                return m11_process_v1_c080_click(state,x,y);
+        }
         return handled ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
     }
     int slot;

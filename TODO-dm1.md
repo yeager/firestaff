@@ -1,3 +1,17 @@
+2026-10-21 IIGS HoC door and monster regression: the native IIGS pointer
+handler accepted mirror and inventory clicks but omitted the original C080
+D1C door-button zone. ReDMCSB CLIKVIEW.C F0377 uses that source box to dispatch
+the shared door toggle. IIGS now forwards clicks in that zone through the
+existing source-owned C080 path. The real-media startup test follows the
+original stair arrival through map one's corridor, clicks its authentic
+button door, then derives a collision-aware route from the loaded IIGS map to
+the nearest active creature. Against both authentic IIGS 2.0 and 2.1 images,
+original group 169 attacks and party HP falls from 202 to 179. The IIGS real
+media test passes after the change; PC34, Amiga 2.0 and Atari ST 1.2 first
+monster controls also pass. This confirms native combat input and damage for
+the tested route, not complete combat or viewport parity; visual checks remain
+deferred. Original media stays outside Git.
+
 2026-10-21 Apple IIGS startup follow-up: selected direct and M12 launches now
 read the authenticated G20/G21 installation and play the native `C001`
 `GRAPHICS.GAME` title raster through an 18-frame, nominal-60-Hz F0437 zoom
