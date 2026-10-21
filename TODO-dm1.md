@@ -41,6 +41,13 @@ the installed Amiga software archive does not contain that demo package.
 Demo startup therefore remains unverified with authentic media; no substitute
 payload was created.
 
+2026-10-21 Atari outer-archive startup follow-up:
+`dm1_v1_atari_st_outer_archive_cli_boot` passed against the authentic Atari ST
+preservation ZIP. It exercised the nested ZIP/STX CLI route, the M12 platform
+selection route, and a native movement probe at the expected first-Hall pose.
+The test verified the outer archive remained the selected owner and that no
+Amiga archive took over the launch.
+
 2026-10-20 authentic DM1 PC-34 startup/Hall regression rerun:
 `dm1_v1_pc34_native_cli_boot` passed with the installed DOS 3.4 ZIP. The
 original-media run covered clean quit from the first I34E and SWSH frames,

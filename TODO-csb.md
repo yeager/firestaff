@@ -16,6 +16,20 @@ Atari STX and Amiga ADF/source archives. These startup/menu routes used SDL
 dummy video and audio; native display, audible output and physical input
 remain unverified.
 
+2026-10-21 additional original-media startup coverage:
+`csb_v1_hint_oracle_native_7z_cli_boot`,
+`csb_v1_hint_oracle_native_cli_boot`,
+`csb_v1_atari_nested_zip_cli_boot`,
+`csb_v1_amiga33_loose_folder_cli_boot`,
+`csb_v1_amiga_adf_archive_cli_boot`, and
+`csb_v1_fmtowns_native_cli_boot` passed. These cover the authentic 7z hint
+oracle utility route, nested Atari archive, loose Amiga 3.3 files, Amiga ADF
+archive, and FM Towns startup through the New Game flow. The final Towns test
+reached the first runtime frame after the native title/menu sequence. The two
+Hint Oracle tests accepted the original Atari R1 campaign and utility STX
+media, including the 7z member path. SDL dummy still does not prove native
+display, audio output, or physical input.
+
 2026-10-21 no-game main-menu selection:
 `test_m12_main_menu_game_selection_real_media` passed both keyboard and mouse
 selection of CSB from the no-game launcher, beginning with
