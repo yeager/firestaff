@@ -1,3 +1,15 @@
+2026-10-21 Apple IIGS startup-route audit: original G20E/G21E CLI and M12
+first-world checks pass, but this is not the native F0437/F0441 startup. In
+`main_loop_m11.c`, selected IIGS launches explicitly set
+`use_dm1_transaction=0` and `use_generic_launch=1`; that avoids feeding ProDOS
+and the GS runtime through the PC34/A20 handoff, but also bypasses the native
+title and entrance callbacks. ReDMCSB `STARTUP2.C:1381-1393,1443-1449` and
+`TITLE.C` define the IIGS-owned sequence. Implement a GS-specific selected-
+launch transaction using authenticated IIGS media, native C001 graphics and
+GS palette/VBlank behavior before changing that route. Current dummy-driver
+tests establish first-world startup only; native title, entrance, presentation
+and physical input remain unverified.
+
 2026-10-21 DM1 Quick Resume handoff: M12 passed Firestaff's own `FSM11QS1`
 envelope to the original-save-only F0435 reader, so valid Firestaff saves
 could not resume from the launcher. `M11_GameView_LoadDm1SavePath` now routes
