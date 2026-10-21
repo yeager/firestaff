@@ -326,6 +326,11 @@ int dm1_item_sprite_blit_plan(DM1_ItemSpriteBlitPlan *out_plan,
     DM1_ItemSpriteBlitPlan plan;
     int zoneX = 0;
     int zoneY = 0;
+    int is_alcove;
+    int view_cell;
+    int depth;
+    int scale_units;
+    int coordinate_scale_index;
 
     if (!out_plan || thingType < 0 || paneW <= 0 || paneH <= 0 ||
         spriteW <= 0 || spriteH <= 0) {
@@ -338,7 +343,9 @@ int dm1_item_sprite_blit_plan(DM1_ItemSpriteBlitPlan *out_plan,
         return 0;
     }
     plan.aspect_index = dm1_item_aspect_index(thingType, subtype);
-    plan.use_mirror =
+    is_alcove = sourceZoneRow >= 2548 && sourceZoneRow < 2569;
+    view_cell = is_alcove ? 4 : relativeCell;
+    plan.use_mirror = !is_alcove &&
         (plan.aspect_index >= 0 &&
          (dm1_object_aspect_graphic_info(plan.aspect_index) & 0x0001u) &&
          (relativeCell == 1 || relativeCell == 3)) ? 1 : 0;
@@ -347,11 +354,37 @@ int dm1_item_sprite_blit_plan(DM1_ItemSpriteBlitPlan *out_plan,
     /* ReDMCSB DUNVIEW.C F0115 lines 4820-5075 resolves object aspect,
      * optional right-cell mirroring, G2030 scale bucket, G0217 pile shift,
      * and C2500 source row before the F0791 C10-transparent blit. */
-    plan.scale_index =
-        dm1_viewport_3d_object_source_scale_index(depthIndex, relativeCell);
+    /* ReDMCSB DUNVIEW.C F0115 MEDIA508 PC34 branch (4868-4905) has
+     * three object sizes: native at D0 and D1 back cells, D2=20/32 at D1
+     * front and D2 back cells, and D3=16/32 elsewhere. Its five-entry
+     * G2030 table belongs to the MEDIA721 native-platform branch, not PC34.
+     * Alcoves pass C04_VIEW_CELL_ALCOVE (4) to F0115 regardless of the
+     * Thing's absolute cell, which is also relevant to the scale selection. */
+    depth = depthIndex;
+    if (depth < 0) depth = 0;
+    if (depth > 3) depth = 3;
+    if (depth == 0 || (depth == 1 && view_cell >= 2)) {
+        plan.scale_index = 0; /* native, C0 shift set */
+        scale_units = 32;
+    } else if (depth == 1 || (depth == 2 && view_cell >= 2)) {
+        plan.scale_index = 1; /* D2 derived bitmap, C1 shift set */
+        scale_units = 20;
+    } else {
+        plan.scale_index = 2; /* D3 derived bitmap, C2 shift set */
+        scale_units = 16;
+    }
+    coordinate_scale_index = dm1_viewport_3d_object_source_scale_index(
+        depth, view_cell);
     plan.draw_w = spriteW *
-        dm1_viewport_3d_object_source_scale_units(plan.scale_index) / 32;
-    plan.draw_h = (plan.draw_w * spriteH) / spriteW;
+        scale_units / 32;
+    if (scale_units != 32 && (spriteW & 1) == 0) {
+        /* F0129 derives pixel width from rounded byte width. Keeping the
+         * result even is essential: an odd width shifts packed 4bpp rows. */
+        plan.draw_w = ((((spriteW / 2) * scale_units +
+                        (scale_units >> 1)) >> 5) << 1);
+    }
+    plan.draw_h = scale_units == 32 ? spriteH :
+        ((spriteH * scale_units + (scale_units >> 1)) >> 5);
     if (plan.draw_h > paneH) {
         plan.draw_h = paneH;
         plan.draw_w = (plan.draw_h * spriteW) / spriteH;
@@ -364,8 +397,7 @@ int dm1_item_sprite_blit_plan(DM1_ItemSpriteBlitPlan *out_plan,
         return 0;
     }
 
-    plan.shift_set = (plan.scale_index + 1) >> 1;
-    if (plan.shift_set > 2) plan.shift_set = 2;
+    plan.shift_set = plan.scale_index;
     dm1_viewport_3d_object_pile_shift_indices(pileIndex,
                                               &plan.shift_x_index,
                                               &plan.shift_y_index);
@@ -381,7 +413,7 @@ int dm1_item_sprite_blit_plan(DM1_ItemSpriteBlitPlan *out_plan,
                                                       &zoneX,
                                                       &zoneY)) ||
          (sourceZoneRow < 0 &&
-          dm1_viewport_3d_c2500_object_zone_point(plan.scale_index,
+          dm1_viewport_3d_c2500_object_zone_point(coordinate_scale_index,
                                                   relativeCell,
                                                   &zoneX,
                                                   &zoneY)))) {

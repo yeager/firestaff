@@ -302,44 +302,44 @@ static void test_item_sprite_metadata_ownership(void)
                "G0209 GraphicInfo mirror flag");
     expect_int("item.blit_plan.source.transparent", plan.transparent_color, 10,
                "DUNVIEW.C F0115 item blit uses C10 transparency");
-    expect_int("item.blit_plan.source.scale", plan.scale_index, 1,
-               "G2030 object source scale bucket");
-    expect_int("item.blit_plan.source.shift_set", plan.shift_set, 1,
-               "G0223 object pile shift set");
+    expect_int("item.blit_plan.source.scale", plan.scale_index, 0,
+               "MEDIA508 DUNVIEW.C:4868-4872 D1 back cell uses native bitmap");
+    expect_int("item.blit_plan.source.shift_set", plan.shift_set, 0,
+               "MEDIA508 DUNVIEW.C:4870 native path uses C0 shift set");
     expect_int("item.blit_plan.source.shift_x", plan.shift_x_index, 2,
                "G0217 pile x shift index");
     expect_int("item.blit_plan.source.shift_y", plan.shift_y_index, 5,
                "G0217 pile y shift index");
-    expect_int("item.blit_plan.source.x", plan.draw_x, 141,
+    expect_int("item.blit_plan.source.x", plan.draw_x, 136,
                "C2500 row 8 cell 2 plus pile shift");
-    expect_int("item.blit_plan.source.y", plan.draw_y, 125,
+    expect_int("item.blit_plan.source.y", plan.draw_y, 113,
                "C2500 row 8 cell 2 plus pile shift");
-    expect_int("item.blit_plan.source.w", plan.draw_w, 21,
-               "G2030 object source scale units");
-    expect_int("item.blit_plan.source.h", plan.draw_h, 21,
-               "source aspect-preserving scaled height");
+    expect_int("item.blit_plan.source.w", plan.draw_w, 32,
+               "MEDIA508 DUNVIEW.C:4868-4872 native pixel width");
+    expect_int("item.blit_plan.source.h", plan.draw_h, 32,
+               "MEDIA508 DUNVIEW.C:4868-4872 native source height");
 
     expect_int("item.blit_plan.fallback.ok",
                dm1_item_sprite_blit_plan(&plan, 5, 0, 0, 3, 3, -1,
                                          0, 33, 100, 50, 60, 30,
                                          32, 16), 1,
                "fallback pane placement remains DM1-owned");
-    expect_int("item.blit_plan.fallback.scale", plan.scale_index, 4,
-               "D3 object source scale bucket");
+    expect_int("item.blit_plan.fallback.scale", plan.scale_index, 2,
+               "MEDIA508 DUNVIEW.C D3 objects use 16/32 scale");
     expect_int("item.blit_plan.fallback.shift_set", plan.shift_set, 2,
                "D3 object pile shift set");
     expect_int("item.blit_plan.fallback.shift_x", plan.shift_x_index, 3,
                "G0217 pile x shift index");
     expect_int("item.blit_plan.fallback.shift_y", plan.shift_y_index, 0,
                "G0217 pile y shift index");
-    expect_int("item.blit_plan.fallback.x", plan.draw_x, 115,
+    expect_int("item.blit_plan.fallback.x", plan.draw_x, 113,
                "fallback pane x plus relative-cell/pile shift");
-    expect_int("item.blit_plan.fallback.y", plan.draw_y, 70,
+    expect_int("item.blit_plan.fallback.y", plan.draw_y, 68,
                "fallback pane y plus relative-cell/pile shift");
-    expect_int("item.blit_plan.fallback.w", plan.draw_w, 12,
-               "G2030 scaled fallback width");
-    expect_int("item.blit_plan.fallback.h", plan.draw_h, 6,
-               "aspect-preserving fallback height");
+    expect_int("item.blit_plan.fallback.w", plan.draw_w, 16,
+               "MEDIA508 DUNVIEW.C F0129 byte-rounded D3 width");
+    expect_int("item.blit_plan.fallback.h", plan.draw_h, 8,
+               "MEDIA508 DUNVIEW.C F0129 independently rounded D3 height");
 
     expect_int("item.blit_plan.mirror.ok",
                dm1_item_sprite_blit_plan(&plan, 10, 39, 3, 0, 1, 8,
@@ -379,22 +379,22 @@ static void test_item_sprite_blit_plan_ownership(void)
                "DUNVIEW.C F0115 right-cell mirror flag not active");
     expect_int("item.blit.fallback.transparent", plan.transparent_color, 10,
                "DUNVIEW.C F0791 C10 transparent blit");
-    expect_int("item.blit.fallback.scale", plan.scale_index, 2,
-               "DUNVIEW.C G2030 object scale bucket");
+    expect_int("item.blit.fallback.scale", plan.scale_index, 1,
+               "MEDIA508 DUNVIEW.C F0115 D1 front uses D2 scale");
     expect_int("item.blit.fallback.shift_set", plan.shift_set, 1,
                "DUNVIEW.C G0223 shift set from source scale");
     expect_int("item.blit.fallback.shift_x_index", plan.shift_x_index, 2,
                "DUNVIEW.C G0217 pile shift X index");
     expect_int("item.blit.fallback.shift_y_index", plan.shift_y_index, 5,
                "DUNVIEW.C G0217 pile shift Y index");
-    expect_int("item.blit.fallback.x", plan.draw_x, 36,
+    expect_int("item.blit.fallback.x", plan.draw_x, 35,
                "DUNVIEW.C F0115 fallback pane X with G0223 shift");
-    expect_int("item.blit.fallback.y", plan.draw_y, 75,
+    expect_int("item.blit.fallback.y", plan.draw_y, 74,
                "DUNVIEW.C F0115 fallback pane Y with G0223 shift");
-    expect_int("item.blit.fallback.w", plan.draw_w, 18,
-               "DUNVIEW.C G2030 18/32 object scale");
-    expect_int("item.blit.fallback.h", plan.draw_h, 9,
-               "DUNVIEW.C G2030 aspect-preserving object scale");
+    expect_int("item.blit.fallback.w", plan.draw_w, 20,
+               "MEDIA508 DUNVIEW.C F0129 rounds byte width at 20/32");
+    expect_int("item.blit.fallback.h", plan.draw_h, 10,
+               "MEDIA508 DUNVIEW.C F0129 rounds height at 20/32");
 
     memset(&plan, 0, sizeof(plan));
     expect_int("item.blit.c2500.ok",
@@ -415,22 +415,22 @@ static void test_item_sprite_blit_plan_ownership(void)
                "DUNVIEW.C G0209 mirror-on-right flag");
     expect_int("item.blit.c2500.transparent", plan.transparent_color, 10,
                "DUNVIEW.C F0791 C10 transparent blit");
-    expect_int("item.blit.c2500.scale", plan.scale_index, 1,
-               "DUNVIEW.C G2030 front-half object scale bucket");
-    expect_int("item.blit.c2500.shift_set", plan.shift_set, 1,
+    expect_int("item.blit.c2500.scale", plan.scale_index, 0,
+               "MEDIA508 DUNVIEW.C D1 back cell uses native bitmap");
+    expect_int("item.blit.c2500.shift_set", plan.shift_set, 0,
                "DUNVIEW.C G0223 shift set from source scale");
     expect_int("item.blit.c2500.shift_x_index", plan.shift_x_index, 0,
                "DUNVIEW.C G0217 pile shift X index");
     expect_int("item.blit.c2500.shift_y_index", plan.shift_y_index, 6,
                "DUNVIEW.C G0217 pile shift Y index");
-    expect_int("item.blit.c2500.x", plan.draw_x, 66,
+    expect_int("item.blit.c2500.x", plan.draw_x, 60,
                "DUNVIEW.C F0115 C2500 row 8 cell 3 X plus G0223 shift");
-    expect_int("item.blit.c2500.y", plan.draw_y, 104,
+    expect_int("item.blit.c2500.y", plan.draw_y, 97,
                "DUNVIEW.C F0115 C2500 row 8 cell 3 Y plus G0223 shift");
-    expect_int("item.blit.c2500.w", plan.draw_w, 21,
-               "DUNVIEW.C G2030 21/32 object scale");
-    expect_int("item.blit.c2500.h", plan.draw_h, 10,
-               "DUNVIEW.C G2030 aspect-preserving object scale");
+    expect_int("item.blit.c2500.w", plan.draw_w, 32,
+               "MEDIA508 DUNVIEW.C F0115 native pixel width");
+    expect_int("item.blit.c2500.h", plan.draw_h, 16,
+               "MEDIA508 DUNVIEW.C F0115 native pixel height");
 
     expect_int("item.blit.invalid_null",
                dm1_item_sprite_blit_plan(NULL, 7, 0, 0, 0, 1, -1,
@@ -447,6 +447,56 @@ static void test_item_sprite_blit_plan_ownership(void)
                                          0, 0, 0, 0, 100, 70, 32, 16),
                0,
                "non-object THING type guard");
+}
+
+static void test_item_sprite_pc34_source_scale_matrix(void)
+{
+    DM1_ItemSpriteBlitPlan plan;
+
+    expect_int("item.pc34.d1.front.plan",
+               dm1_item_sprite_blit_plan(&plan, 5, 0, 0, 0, 1, 8,
+                                         0, 33, 0, 33, 224, 136, 32, 32),
+               1, "ReDMCSB PC34 D1 front object plan");
+    expect_int("item.pc34.d1.front.scale", plan.scale_index, 1,
+               "DUNVIEW.C:4881-4886 PC34 D1 front uses D2 20/32");
+    expect_int("item.pc34.d1.front.size", plan.draw_w * 100 + plan.draw_h,
+               2020, "F0129 rounds 16-byte width and height independently");
+
+    expect_int("item.pc34.d1.back.plan",
+               dm1_item_sprite_blit_plan(&plan, 5, 0, 2, 0, 1, 8,
+                                         0, 33, 0, 33, 224, 136, 32, 32),
+               1, "ReDMCSB PC34 D1 back object plan");
+    expect_int("item.pc34.d1.back.scale", plan.scale_index, 0,
+               "DUNVIEW.C:4868-4872 D1 back uses native bitmap");
+    expect_int("item.pc34.d1.back.size", plan.draw_w * 100 + plan.draw_h,
+               3232, "native bitmap dimensions stay unchanged");
+
+    expect_int("item.pc34.d2.front.plan",
+               dm1_item_sprite_blit_plan(&plan, 5, 0, 0, 0, 2, 5,
+                                         0, 33, 0, 33, 224, 136, 32, 32),
+               1, "ReDMCSB PC34 D2 front object plan");
+    expect_int("item.pc34.d2.front.scale", plan.scale_index, 2,
+               "DUNVIEW.C:4887-4891 PC34 D2 front uses D3 16/32");
+    expect_int("item.pc34.d2.front.size", plan.draw_w * 100 + plan.draw_h,
+               1616, "F0129 produces byte-aligned 16x16 D3 bitmap");
+
+    expect_int("item.pc34.d2.back.plan",
+               dm1_item_sprite_blit_plan(&plan, 5, 0, 2, 0, 2, 5,
+                                         0, 33, 0, 33, 224, 136, 32, 32),
+               1, "ReDMCSB PC34 D2 back object plan");
+    expect_int("item.pc34.d2.back.scale", plan.scale_index, 1,
+               "DUNVIEW.C:4881-4886 PC34 D2 back uses D2 20/32");
+    expect_int("item.pc34.d2.back.size", plan.draw_w * 100 + plan.draw_h,
+               2020, "F0129 produces byte-aligned 20x20 D2 bitmap");
+
+    expect_int("item.pc34.alcove.plan",
+               dm1_item_sprite_blit_plan(&plan, 9, 0, 1, 0, 1, 2548,
+                                         0, 33, 0, 33, 224, 136, 32, 32),
+               1, "ReDMCSB PC34 C2548 alcove object plan");
+    expect_int("item.pc34.alcove.scale", plan.scale_index, 0,
+               "DUNVIEW.C:4808-4824 alcove invokes F0115 with C04");
+    expect_int("item.pc34.alcove.mirror", plan.use_mirror, 0,
+               "DUNVIEW.C:4863-4865 alcove object image is never flipped");
 }
 
 static void test_source_evidence_mentions_required_anchors(void)
@@ -498,6 +548,7 @@ int main(void)
     test_item_pile_zone_flip_and_transparency_contract();
     test_item_sprite_metadata_ownership();
     test_item_sprite_blit_plan_ownership();
+    test_item_sprite_pc34_source_scale_matrix();
     test_source_evidence_mentions_required_anchors();
 
     if (g_failures) {

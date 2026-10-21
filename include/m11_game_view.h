@@ -3339,6 +3339,9 @@ typedef struct M11_Dm1FloorItemHostPresentationReceipt {
     int usesF0791Blit;
     int sourceZone;
     int sourceZoneRow;
+    /* PC34 F0115 material decisions used for F0129 derived item bitmaps. */
+    int sourceScaleIndex;
+    int sourceMirrored;
     int destinationX;
     int destinationY;
     int destinationW;

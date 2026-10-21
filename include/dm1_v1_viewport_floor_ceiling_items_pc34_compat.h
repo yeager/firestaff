@@ -136,6 +136,9 @@ typedef struct DM1_ItemSpriteBlitPlan {
     int aspect_index;
     int use_mirror;
     int transparent_color;
+    /* PC34 F0115 bitmap route: 0=native, 1=D2 (20/32), 2=D3 (16/32).
+     * This is distinct from the five G2030 scale buckets used by native
+     * MEDIA721 renderers. */
     int scale_index;
     int shift_set;
     int shift_x_index;

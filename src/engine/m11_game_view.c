@@ -50844,6 +50844,8 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
             materialReceipt.source_zone;
         presentation->sourceZoneRow =
             effectiveSourceZoneRow;
+        presentation->sourceScaleIndex = plan.scale_index;
+        presentation->sourceMirrored = plan.use_mirror;
         presentation->destinationX = plan.draw_x;
         presentation->destinationY = plan.draw_y;
         presentation->destinationW = plan.draw_w;
@@ -50855,16 +50857,52 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
             plan.draw_w, plan.draw_h);
         presentation->destinationBeforeFNV1a = destinationBeforeFNV1a;
     }
-    if (plan.use_mirror) {
-        M11_AssetLoader_BlitScaledMirror(slot, framebuffer, fbW, fbH,
-                                         plan.draw_x, plan.draw_y,
-                                         plan.draw_w, plan.draw_h,
-                                         effectiveTransparentColor);
-    } else {
-        M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
-                                   plan.draw_x, plan.draw_y,
-                                   plan.draw_w, plan.draw_h,
-                                   effectiveTransparentColor);
+    {
+        const unsigned char *palette = plan.scale_index == 1
+            ? DM1_FloorOrnPalette_D2
+            : plan.scale_index == 2 ? DM1_FloorOrnPalette_D3 : NULL;
+        const int scaled = plan.scale_index != 0;
+        int dy;
+
+        /* ReDMCSB BLTSHRNK.C F0129 does not use the generic left-edge
+         * nearest sampler in M11_AssetLoader_BlitScaled. Its 16.16 source
+         * step is half-pixel biased, it maps colors through G0214 (D2) or
+         * G0213 (D3), then F0130 flips the derived bitmap when needed. This
+         * source path produces byte-rounded widths and independent heights
+         * in dm1_item_sprite_blit_plan above. */
+        for (dy = 0; dy < plan.draw_h; ++dy) {
+            const int fbY = plan.draw_y + dy;
+            uint64_t sourceY = (unsigned)dy;
+            if (fbY < 0 || fbY >= fbH) continue;
+            if (scaled) {
+                const uint64_t step =
+                    ((uint64_t)slot->height << 16) / (unsigned)plan.draw_h;
+                sourceY = (step / 2u + 32767u + (uint64_t)dy * step) >> 16;
+            }
+            if (sourceY >= slot->height) continue;
+            for (int dx = 0; dx < plan.draw_w; ++dx) {
+                const int fbX = plan.draw_x + dx;
+                uint64_t sourceX = (unsigned)dx;
+                unsigned char pixel;
+                if (fbX < 0 || fbX >= fbW) continue;
+                if (scaled) {
+                    const uint64_t step =
+                        ((uint64_t)slot->width << 16) / (unsigned)plan.draw_w;
+                    const int sampleX = plan.use_mirror
+                        ? plan.draw_w - 1 - dx : dx;
+                    sourceX = (step / 2u + 32767u +
+                               (uint64_t)sampleX * step) >> 16;
+                } else if (plan.use_mirror) {
+                    sourceX = (unsigned)slot->width - 1u - (unsigned)dx;
+                }
+                if (sourceX >= slot->width) continue;
+                pixel = slot->pixels[sourceY * slot->width + sourceX];
+                if (palette) pixel = palette[pixel & 0x0fu];
+                if (effectiveTransparentColor >= 0 &&
+                    pixel == (unsigned char)effectiveTransparentColor) continue;
+                framebuffer[fbY * fbW + fbX] = pixel;
+            }
+        }
     }
     if (presentation) {
         presentation->destinationAfterFNV1a = m11_framebuffer_rect_fnv1a(
@@ -75059,7 +75097,7 @@ int M11_GameView_ProbeDrawDm1FloorItemHostReceipt(
     return m11_draw_item_sprite_material(
         state, framebuffer, framebufferWidth, framebufferHeight,
         M11_VIEWPORT_X + 32, M11_VIEWPORT_Y + 32, 32, 20,
-        THING_TYPE_WEAPON, 0, 0, 0, 0, 0, 0, 10, 1, 1);
+        THING_TYPE_WEAPON, 0, 0, 0, 1, 0, 0, 10, 1, 1);
 }
 
 int M11_GameView_ProbeDrawDm1AlcoveItemForFloorItemReceipt(
