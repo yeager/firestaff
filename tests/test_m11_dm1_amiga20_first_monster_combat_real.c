@@ -163,6 +163,66 @@ int main(void)
                 game.world.party.mapY == 15 && game.world.party.direction == 0,
             "authentic production movement reaches the HoC route");
     {
+        unsigned char framebuffer[320 * 200];
+        M11_Dm1WallOrnamentHostPresentationReceipt receipt;
+        const M11_AssetSlot *source;
+        const unsigned char *frame;
+        unsigned int coordinateSet;
+        int checkedPixels = 0;
+        int indexedMatches = 0;
+        int x;
+        int y;
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&game, framebuffer, 320, 200);
+        memset(&receipt, 0, sizeof(receipt));
+        M11_GameView_GetDm1WallOrnamentHostPresentationReceipt(&receipt);
+        REQUIRE(receipt.valid && receipt.globalOrnamentIndex >= 0 &&
+                    receipt.globalOrnamentIndex < 60 &&
+                    receipt.viewWallIndex == 10 && receipt.width > 0 &&
+                    receipt.height > 0 && receipt.destinationX >= 0 &&
+                    receipt.destinationY >= 0 &&
+                    receipt.destinationX + receipt.width <= 320 &&
+                    receipt.destinationY + receipt.height <= 200,
+                "authentic HoC wall ornament is presented inside the viewport");
+        REQUIRE(receipt.graphicIndex ==
+                    121 + receipt.globalOrnamentIndex * 2,
+                "MEDIA009 F0107 selects the authentic back-facing source bitmap");
+        coordinateSet = game.dm1NativeWallCoordinateSets[
+            receipt.globalOrnamentIndex];
+        REQUIRE(coordinateSet < 8,
+                "HoC ornament selects a valid native coordinate set");
+        source = M11_AssetLoader_Load(&game.assetLoader,
+                                      (unsigned int)receipt.graphicIndex);
+        frame = game.dm1NativeWallFrames[coordinateSet][receipt.viewWallIndex];
+        REQUIRE(source && source->loaded && source->pixels &&
+                    source->width == (unsigned int)frame[4] * 2u &&
+                    source->height == frame[5] &&
+                    receipt.width == (int)frame[1] - (int)frame[0] + 1 &&
+                    receipt.height == (int)frame[3] - (int)frame[2] + 1,
+                "HoC ornament dimensions come from native MEDIA009 data");
+        /* View 10 uses the native unscaled, unflipped bitmap. Compare every
+         * opaque source pixel with the actual M11 framebuffer so a valid
+         * receipt cannot hide a no-draw, wrong-index, or corrupt blit. */
+        for (y = 0; y < receipt.height; ++y) {
+            for (x = 0; x < receipt.width; ++x) {
+                unsigned char pixel = source->pixels[
+                    y * (int)source->width + x];
+                if (pixel == 10) continue;
+                {
+                    unsigned char actual = framebuffer[
+                        (receipt.destinationY + y) * 320 +
+                        receipt.destinationX + x];
+                    if (actual == (unsigned char)(16u | pixel)) ++indexedMatches;
+                }
+                ++checkedPixels;
+            }
+        }
+        REQUIRE(checkedPixels > 0,
+                "authentic HoC ornament has visible source pixels");
+        REQUIRE(indexedMatches == checkedPixels,
+                "HoC viewport pixels match the authentic platform bitmap");
+    }
+    {
         static const M12_MenuInput to_door[] = {
             M12_MENU_INPUT_STRAFE_LEFT, M12_MENU_INPUT_UP,
             M12_MENU_INPUT_STRAFE_RIGHT, M12_MENU_INPUT_STRAFE_RIGHT,
