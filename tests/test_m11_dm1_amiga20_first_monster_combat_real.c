@@ -95,6 +95,8 @@ int main(void)
     uint32_t attackBefore;
     unsigned short initialChampionHp;
     unsigned int naturalDamage;
+    uint32_t attackAfterFirstEncounter;
+    int repeatedGroup169Attacks = 0;
 
     if (!archive || !archive[0]) {
         puts("SKIP: authentic DM1 original archive is not staged");
@@ -351,10 +353,38 @@ int main(void)
                     game.world.lifecycle.champions[0].skills20[9].experience - fightXp,
                 "authentic encounter PUNCH awards matching Ninja/Fight experience");
     }
+    /* Keep the original group alive and prove that the live source attack
+     * timeline re-enters F0207 after its first C38 attack on each authentic
+     * platform edition. The PC34-only regression does not cover these native
+     * Atari/Amiga/FMTowns paths. */
+    REQUIRE(game.world.things->groups[169].health[0] != 0,
+            "authentic group 169 remains alive before recurrence probe");
+    attackAfterFirstEncounter = game.world.lifecycle.lastCreatureAttackTime;
+    game.world.magic.partyShieldDefense = 100u;
+    for (i = 0; i < 1500; ++i) {
+        int emissionIndex;
+        if (game.partyDead || game.world.partyDead) break;
+        (void)M11_GameView_AdvanceIdleTick(&game);
+        for (emissionIndex = 0;
+             emissionIndex < game.lastTickResult.emissionCount;
+             ++emissionIndex) {
+            const struct TickEmission_Compat *emission =
+                &game.lastTickResult.emissions[emissionIndex];
+            if (emission->kind == EMIT_CREATURE_ATTACK &&
+                emission->payload[0] == 169) {
+                ++repeatedGroup169Attacks;
+            }
+        }
+    }
+    REQUIRE(game.world.things->groups[169].health[0] != 0 &&
+                game.world.lifecycle.lastCreatureAttackTime >
+                    attackAfterFirstEncounter &&
+                repeatedGroup169Attacks > 0,
+            "authentic group 169 emits a later source-timeline attack");
     result = 0;
-    printf("PASS: authentic %s M12 startup, HoC route and first-monster combat naturalDamage=%u\n",
+    printf("PASS: authentic %s M12 startup, HoC route and repeated first-monster combat naturalDamage=%u repeatedAttacks=%d\n",
            isAtari ? "Atari ST v1.2" : isTowns ? "FM Towns English"
-           : "Amiga v2.0", naturalDamage);
+           : "Amiga v2.0", naturalDamage, repeatedGroup169Attacks);
 
 cleanup:
     if (gameInitialized) M11_GameView_Shutdown(&game);

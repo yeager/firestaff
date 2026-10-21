@@ -509,7 +509,10 @@ static int check_iigs_creature_combat(M11_GameViewState *view) {
     const struct DungeonMapDesc_Compat *map;
     int width,height,head=0,tail=0,goal=-1,routeCount=0,node,targetGroup=-1;
     uint32_t attackBefore;
+    uint32_t attackAfterFirst;
     unsigned hpBefore=0u;
+    int firstAttackSeen=0;
+    int repeatedAttacks=0;
     if (!view || view->world.party.mapIndex!=1 ||
         !view->world.dungeon || !view->world.things) return 0;
     map=&view->world.dungeon->maps[1]; width=map->width; height=map->height;
@@ -631,8 +634,39 @@ static int check_iigs_creature_combat(M11_GameViewState *view) {
         if (view->world.lifecycle.lastCreatureAttackTime!=attackBefore &&
             hpAfter<hpBefore && targetGroup>=0 &&
             targetGroup<view->world.things->groupCount &&
-            view->world.things->groups[targetGroup].behavior==DM1_BEHAVIOR_ATTACK)
-            return 1;
+            view->world.things->groups[targetGroup].behavior==DM1_BEHAVIOR_ATTACK) {
+            firstAttackSeen=1;
+            break;
+        }
+    }
+    if (firstAttackSeen && targetGroup>=0 &&
+        targetGroup<view->world.things->groupCount &&
+        view->world.things->groups[targetGroup].health[0]!=0) {
+        /* After proving real native damage, protect the party so the
+         * recurrence probe measures the original group timeline instead of
+         * ending early through champion death. */
+        view->world.magic.partyShieldDefense=100u;
+        attackAfterFirst=view->world.lifecycle.lastCreatureAttackTime;
+        for (unsigned tick=0u;tick<1500u;++tick) {
+            (void)M11_GameView_AdvanceIdleTick(view);
+            for (int emissionIndex=0;
+                 emissionIndex<view->lastTickResult.emissionCount;
+                 ++emissionIndex) {
+                const struct TickEmission_Compat *emission=
+                    &view->lastTickResult.emissions[emissionIndex];
+                if (emission->kind==EMIT_CREATURE_ATTACK &&
+                    emission->payload[0]==targetGroup) ++repeatedAttacks;
+            }
+            if (view->world.lifecycle.lastCreatureAttackTime>
+                    attackAfterFirst && repeatedAttacks>0 &&
+                view->world.things->groups[targetGroup].health[0]!=0)
+                return 1;
+        }
+        fprintf(stderr,"FAIL: authentic IIGS group %d did not attack again in 21 seconds (attacks=%d tick=%u attack=%u->%u)\n",
+            targetGroup,repeatedAttacks,(unsigned)view->world.gameTick,
+            (unsigned)attackAfterFirst,
+            (unsigned)view->world.lifecycle.lastCreatureAttackTime);
+        return 0;
     }
     fprintf(stderr,"FAIL: authentic IIGS group %d no damage after route pose=%d,%d,d%d tick=%u attack=%u->%u hp=%u->",
         targetGroup,view->world.party.mapX,view->world.party.mapY,

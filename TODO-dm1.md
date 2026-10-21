@@ -3,12 +3,13 @@
 ACTIVE_GROUP.Aspect's 0x80 attack latch set, so group #169 could remain in its
 first attack state without attacking again. The M10 bridge now derives the
 F0179 flag from the source behavior action, matching ReDMCSB GROUP.C:2344 and
-2415. The authentic PC34 test now requires another group #169 attack emission
-within 1,500 source ticks after the player's action; it passes. First-combat
-real-media checks also pass on Amiga 2.0, Atari ST 1.2, and FM Towns, and the
-IIGS startup/door/combat regression passes. Only the PC34 test currently
-asserts repeated attacks; wider repeated-combat parity remains open. Visual
-parity is still deferred.
+2415. Authentic PC34, Amiga 2.0, Atari ST 1.2, FM Towns, and IIGS tests now
+require a later attack from a still-living original group within 1,500 source
+ticks after the first encounter; all five pass. The other editions use their
+own authentic media and native runtime routes. This verifies repeated attack
+events for the tested groups, not full combat balance or every creature
+species. Reported wall, item, viewport, and animation defects remain open;
+visual parity work is still deferred.
 
 2026-10-21 IIGS HoC door and monster regression: the native IIGS pointer
 handler accepted mirror and inventory clicks but omitted the original C080
