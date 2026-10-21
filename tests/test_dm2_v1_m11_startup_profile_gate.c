@@ -3856,6 +3856,8 @@ int main(void) {
                     new_game_expected_door_ornate_count >= 0 &&
                     new_game_world_owner.preselection_local_graphics.valid &&
                     new_game_world_owner.preselection_local_graphics.map == 0 &&
+                    new_game_world_owner.source_weather_chain_valid &&
+                    new_game_world_owner.source_weather_chain.zone_index == 2 &&
                     new_game_world_owner.preselection_local_graphics.wall_count ==
                         (uint8_t)new_game_expected_wall_count &&
                     new_game_world_owner.preselection_local_graphics.floor_count ==
@@ -3873,7 +3875,7 @@ int main(void) {
                            sizeof(new_game_expected_door_ornate_gfx)) == 0 &&
                     new_game_world_owner.preselection_local_graphics.source_list_hash != 0u &&
                     !profile->source_game_load_session_ready,
-                "M11 retains the authentic File_header wall, floor and door graphics lists for the entrance map");
+                "M11 retains authentic File_header graphics lists and binds map-0 weather zone 2 for the entrance map");
     expect_true(profile &&
                     dm2_v1_game_load_world_owner_materialize_preselection_light(
                         &new_game_world_owner) &&

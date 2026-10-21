@@ -1,3 +1,15 @@
+- 2026-10-21: Verified the authentic DOS EN fresh-game weather path. The
+  private GAME_LOAD owner applies the source cold-weather transition before
+  dungeon arrangement, carries one LCG through weather and the original 28
+  `RANDDIR` arrangement draws, and transfers the resulting state into the
+  runtime session. The M11 real-media gate passed with the original DOS ZIP,
+  including 32 owned `0x54` timer dispatches; it now also asserts that loading
+  the entrance map's local graphics binds its authentic weather zone 2.
+  `dm2_v1_arrange_rng_receipt_real_data` independently passed on the same
+  original archive and verified unchanged source dungeon bytes. This proof is
+  specific to DOS EN; other DM2 editions and full outdoor-weather play remain
+  open in TODO.
+
 - 2026-10-18: Strengthen the authentic Japanese Macintosh media gate. It now
   verifies the catalogued Japanese `GRAPHICS.DAT` MD5 and the actual HFS
   resource boundary: four movie resources are present, while the application
