@@ -1,3 +1,24 @@
+# Firestaff v3.0.402
+
+## User-facing changes
+
+- `DM1 PC34 projectiles`: change dungeon viewport scaling to use the projectile's current kinetic energy with bounded source-derived sizing.
+- `DM1 quick resume`: restore the saved runtime sidecar when a Firestaff quicksave is resumed through the startup handoff.
+
+## Developer changes
+
+- `DM1 projectile runtime`: update viewport materialization to carry native projectile kinetic energy and aspect identity into the source-compatible sprite scale plan; extend runtime receipts and PC34 regression coverage.
+- `DM1 resume diagnostics`: update `--debug` output with startup rejection details and test the actual DM1 quicksave load and sidecar restoration path.
+- `Startup menu translations`: update source references in all startup-menu catalogs and the translation template.
+- `Original-media startup evidence`: update DM1, CSB and DM2 records with verified M12 startup routes and explicit remaining parity gaps. These checks do not claim complete gameplay parity.
+- `No-data popup regression`: update assertions to match current launcher guidance and cover malformed DM2 media behavior.
+- `Release metadata`: update the project version, embedded changelog and reproducible SPDX source SBOM for v3.0.402.
+
+## Known limitations
+
+- These changes do not establish complete DM1 visual or gameplay parity. Runtime scaling and resume behavior are covered by focused regression gates; native display, audio and cross-platform gameplay still require separate verification.
+- Original-media startup checks use SDL dummy video and audio and do not establish physical input, audible playback or full game compatibility.
+
 # Firestaff v3.0.401
 
 ## User-facing changes
