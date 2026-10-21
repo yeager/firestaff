@@ -25,6 +25,14 @@ archives. `firestaff_iigs_cli_real_media` and
 software archive. These SDL dummy runs verify the named startup/metadata
 routes, not native display, audio output, or physical input parity.
 
+2026-10-21 no-game main-menu selection:
+`test_m12_main_menu_game_selection_real_media` passed both keyboard and mouse
+selection of DM1 from the no-game launcher, beginning with
+`startup game=none mode=menu` and handing off to the authentic FM Towns
+edition. The isolated data root exposed only DM1, CSB and DM2 originals; the
+test verified the selected DM1 archive remained unchanged. SDL dummy output
+does not prove native display or physical input parity.
+
 2026-10-20 authentic DM1 PC-34 startup/Hall regression rerun:
 `dm1_v1_pc34_native_cli_boot` passed with the installed DOS 3.4 ZIP. The
 original-media run covered clean quit from the first I34E and SWSH frames,

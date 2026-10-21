@@ -55,6 +55,14 @@ real assets and no core fallbacks, and the test verified the extracted files
 remained byte-identical. SDL dummy does not verify native Macintosh display,
 sound output or physical input.
 
+2026-10-21 no-game main-menu selection:
+`test_m12_main_menu_game_selection_real_media` passed both keyboard and mouse
+selection of DM2 from the no-game launcher, beginning with
+`startup game=none mode=menu` and handing off to the authentic FM Towns
+Japanese edition. The isolated data root exposed only DM1, CSB and DM2
+originals; the test verified the selected DM2 archive remained unchanged.
+SDL dummy output does not prove native display or physical input parity.
+
 2026-10-20 explicit ZIP probe sharing: the Macintosh HFS reader and FM Towns
 disc reader now consume the same CUE-selected BIN buffer when M12 probes one
 archive for both platform families. The CUE remains the authority for the
