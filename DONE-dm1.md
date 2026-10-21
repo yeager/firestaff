@@ -1,3 +1,8 @@
+- 2026-10-21: Atari ST v1.2 authentic first-combat coverage now distinguishes
+  a legitimate first attack miss from a broken damage path. The HoC regression
+  waits for a later source group-169 attack and requires actual party HP loss;
+  three consecutive runs passed against the original archive. This does not
+  establish full combat RNG or damage parity.
 - 2026-10-20: Added and ran an authentic Amiga v2.0 combat regression through
   the production M12 menu handoff. It verifies the selected original
   GRAPHICS.DAT identity, starts the original Amiga dungeon, recruits C127

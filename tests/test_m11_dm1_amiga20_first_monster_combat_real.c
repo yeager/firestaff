@@ -322,6 +322,31 @@ int main(void)
         REQUIRE(game.world.party.champions[0].hp.current < initialChampionHp,
                 "authentic first monster attack deals damage to the champion");
     }
+    if (isAtari) {
+        int landedAttack = 0;
+        for (i = 0; i < 4000 &&
+                    !landedAttack;
+             ++i) {
+            int emissionIndex;
+            int group169Attacked = 0;
+            const unsigned short hpBeforeTick =
+                game.world.party.champions[0].hp.current;
+            (void)M11_GameView_AdvanceIdleTick(&game);
+            for (emissionIndex = 0;
+                 emissionIndex < game.lastTickResult.emissionCount;
+                 ++emissionIndex) {
+                const struct TickEmission_Compat *emission =
+                    &game.lastTickResult.emissions[emissionIndex];
+                if (emission->kind == EMIT_CREATURE_ATTACK &&
+                    emission->payload[0] == 169) group169Attacked = 1;
+            }
+            landedAttack = group169Attacked &&
+                game.world.party.champions[0].hp.current < hpBeforeTick;
+        }
+        REQUIRE(landedAttack &&
+                    game.world.party.champions[0].hp.current < initialChampionHp,
+                "authentic Atari ST creature eventually lands a repeated attack");
+    }
     naturalDamage = (unsigned int)(initialChampionHp -
         game.world.party.champions[0].hp.current);
     {

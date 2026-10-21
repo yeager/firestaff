@@ -11,6 +11,14 @@ events for the tested groups, not full combat balance or every creature
 species. Reported wall, item, viewport, and animation defects remain open;
 visual parity work is still deferred.
 
+2026-10-21 Atari ST first-combat damage follow-up: the first authentic group
+169 attack can miss, so the real-media regression now continues source ticks
+until a later emitted attack lands or 4,000 ticks expire. Three consecutive
+Atari ST v1.2 runs landed damage (12 HP in this deterministic route); Amiga
+v2.0 and FM Towns still pass their independent authentic-media routes. This
+proves a repeated natural hit for the tested Atari encounter, not full combat
+damage or RNG parity.
+
 2026-10-21 IIGS HoC door and monster regression: the native IIGS pointer
 handler accepted mirror and inventory clicks but omitted the original C080
 D1C door-button zone. ReDMCSB CLIKVIEW.C F0377 uses that source box to dispatch
@@ -210,11 +218,11 @@ authentic archives. The shared legacy test now snapshots HP/attack time before
 the 30-tick post-door wait; the prior assertion took its baseline after Amiga
 and Atari had already processed the first attack. Amiga took damage in this
 route. Atari entered the authentic attack behavior and recorded an attack
-attempt, but that deterministic attempt missed; the Atari test therefore does
-not claim damage from one randomized attack. This proves neither repeated
-attack cadence nor the user's reported viewport pixels. The first-monster
-matrix still has no equivalent FM Towns or IIGS combat route. Presented-frame
-coverage for the reported symptoms remains unverified on all platforms.
+attempt, but that deterministic attempt missed. The regression now continues
+the authentic Atari route until a later group-169 attack reduces party HP;
+three consecutive runs pass. This proves a later natural hit, not source RNG
+parity or the user's reported viewport pixels. Presented-frame coverage for
+the reported symptoms remains unverified on all platforms.
 
 2026-10-19 current-source DM1 M12 platform-card regression:
 `dm1_v1_m12_auto_multi_platform_menu` passed in 90.07 seconds against the
