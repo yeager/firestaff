@@ -8,6 +8,23 @@ but the local collection has no authentic PC34 save, so loading and restoring
 one through that selector remains unverified. SDL dummy does not establish
 native display, audio output, or physical input parity.
 
+2026-10-21 original-edition startup follow-up:
+`dm1_v1_atari_st_11_archive_cli_boot`, `dm1_v1_atari_st_10a_archive_cli_boot`,
+`dm1_v1_atari_st_10b_archive_cli_boot`,
+`dm1_v1_atari_st_de_archive_cli_boot`,
+`dm1_v1_atari_st_fr_archive_cli_boot`,
+`dm1_v1_amiga36_original_media_cli_boot`,
+`dm1_v1_amiga20_french_archive_cli_boot`,
+`dm1_v1_amiga20_german_archive_cli_boot`,
+`dm1_v1_amiga22_german_archive_cli_boot`,
+`dm1_v1_amiga21_22_english_archive_cli_boot`,
+`dm1_v1_dos_en_archive_cli_boot`, `dm1_v1_dos_fr_zip_cli_boot`, and
+`dm1_v1_pc34_nested_archive_cli_boot` passed against the installed original
+archives. `firestaff_iigs_cli_real_media` and
+`dm1_v1_iigs_startup_data_real_media` also passed against the original IIGS
+software archive. These SDL dummy runs verify the named startup/metadata
+routes, not native display, audio output, or physical input parity.
+
 2026-10-20 authentic DM1 PC-34 startup/Hall regression rerun:
 `dm1_v1_pc34_native_cli_boot` passed with the installed DOS 3.4 ZIP. The
 original-media run covered clean quit from the first I34E and SWSH frames,

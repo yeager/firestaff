@@ -46,6 +46,15 @@ authentic DOS, Macintosh, Amiga, and FM Towns startup routes, including the
 long FM Towns title and New Game path through the first champion. SDL dummy
 does not establish native display, audio output, or physical input parity.
 
+2026-10-21 French original-media startup follow-up:
+`dm2_v1_dos_fr_native_cli_boot` passed from the authentic DOS French archive.
+The French Macintosh CLI test passed after extracting the authentic
+`Dungeon-Master-II-Skullkeep_Mac_FR.sit` into ignored task scratch and pointing
+it at those original files; the route reached the first runtime frame with
+real assets and no core fallbacks, and the test verified the extracted files
+remained byte-identical. SDL dummy does not verify native Macintosh display,
+sound output or physical input.
+
 2026-10-20 explicit ZIP probe sharing: the Macintosh HFS reader and FM Towns
 disc reader now consume the same CUE-selected BIN buffer when M12 probes one
 archive for both platform families. The CUE remains the authority for the
