@@ -177,11 +177,17 @@ Towns media. Those checks cover one encounter and bitmap decoding, not the
 reported viewport pixels. Reproduce each symptom with each platform's own
 retail media before changing a shared path: Atari ST uses the MEDIA009 native
 wall route, Amiga has its legacy-big-endian route, FM Towns has IMAGE2 assets,
-and PC34 uses C696 zone composition. An Atari ST first-monster test target is
-now registered using the Atari-specific route and original archive, but its
-current-source run result has not yet been recorded. The first-monster test
-matrix currently has no equivalent FM Towns or IIGS combat route. Presented-
-frame coverage for the reported symptoms remains unverified on all platforms.
+and PC34 uses C696 zone composition. On 2026-10-21, the current-source PC34,
+Amiga v2.0 and Atari ST v1.2 first-monster tests all passed against their
+authentic archives. The shared legacy test now snapshots HP/attack time before
+the 30-tick post-door wait; the prior assertion took its baseline after Amiga
+and Atari had already processed the first attack. Amiga took damage in this
+route. Atari entered the authentic attack behavior and recorded an attack
+attempt, but that deterministic attempt missed; the Atari test therefore does
+not claim damage from one randomized attack. This proves neither repeated
+attack cadence nor the user's reported viewport pixels. The first-monster
+matrix still has no equivalent FM Towns or IIGS combat route. Presented-frame
+coverage for the reported symptoms remains unverified on all platforms.
 
 2026-10-19 current-source DM1 M12 platform-card regression:
 `dm1_v1_m12_auto_multi_platform_menu` passed in 90.07 seconds against the
@@ -1500,8 +1506,9 @@ parity.
   now has a separate M12 launcher-route regression through Hall selection,
   the first-door transition and group 169's live attack, including player
   PUNCH and paired XP. Exact damage/RNG still needs an original executable
-  capture. The Atari ST first-monster test target is registered and needs an
-  original-media run; FM Towns and IIGS need equivalent combat-route coverage.
+  capture. Atari ST v1.2's current-source first-monster route now passes with
+  the authentic archive and proves attack behavior, but its one sampled attack
+  misses. FM Towns and IIGS need equivalent combat-route coverage.
   Extend startup sentinel proof to remaining
   editions and actual launcher UI routes; completed regression evidence is in
   DONE-dm1.md.
