@@ -1,3 +1,20 @@
+# Firestaff v3.0.400
+
+## User-facing changes
+
+- `CSB Amiga 3.5 English startup`: fix AUTO selection to choose the authenticated English disk when the original CTRaw archive contains both English and multilingual disks.
+
+## Developer changes
+
+- `CSB Amiga 3.5 media discovery`: resolve the edition's unique authenticated graphics digest directly from virtual archive members, then verify its same-disk startup programs. The repeated-digest batch lookup returned no virtual match for the 257-entry candidate probe.
+- `CSB original-media regression`: verify six authentic CTRaw file identities, the English package companions, automatic edition selection and four original-media CLI/menu boot routes.
+- `CSB FM Towns progress regression`: update the task-label match while requiring monotonic progress from the authentic image scan.
+- `Release metadata`: update the project version, embedded changelog and reproducible SPDX source SBOM for v3.0.400.
+
+## Known limitations
+
+- Startup-route verification uses SDL dummy video and audio. It does not establish native Amiga display, physical input, audible playback or complete game parity.
+
 # Firestaff v3.0.399
 
 ## User-facing changes

@@ -1,3 +1,16 @@
+- 2026-10-21: The original CSB Amiga 3.5 CTRaw archive contains English and
+  multilingual disks, but AUTO previously failed to admit the English disk.
+  The package gate submitted 257 repeated copies of one digest to a batched
+  virtual-file lookup; that API deduplicated the request and returned no
+  match. Discovery now resolves the edition-specific graphics digest
+  directly, then verifies English APPB.FTL and BJELoad_R beside that disk.
+  Six authentic files were hash-checked in both CTRaw disks, and the original
+  archive passed direct CSB scanning with English selected. Four authentic
+  CLI/menu startup routes passed: AUTO, explicit Amiga, multilingual Amiga,
+  and direct raw. The FM Towns progress regression also passed after updating
+  its task-label match. These SDL dummy-driver checks verify startup routing,
+  not native display, audio or physical-input parity.
+
 - 2026-10-19: CSB FM Towns M12 now accepts `--data-dir` paths naming the
   selected original `GRAPHICS.DAT` or `DUNGEON.DAT` directly. F31 English and
   Japanese files are authenticated against the requested edition before the

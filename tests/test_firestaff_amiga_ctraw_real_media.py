@@ -30,7 +30,8 @@ def main():
             [sevenzip, "x", "-so", "-bd", str(archive), member],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         try:
-            checked = subprocess.run([str(probe), edition], stdin=source.stdout, check=False)
+            checked = subprocess.run([str(probe), edition, str(archive)],
+                                     stdin=source.stdout, check=False)
             source.stdout.close()
             _, diagnostics = source.communicate()
         except BaseException:

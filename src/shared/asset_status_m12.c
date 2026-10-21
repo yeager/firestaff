@@ -5946,13 +5946,13 @@ static void m12_admit_csb_amiga31_english_program_package(
     static const char *const hashes[] = {
         "21197b1d4994fd835c403d5a33dcac2b", "291e1bc6803e3dc4b974c60117ca5d68"
     };
-    enum { LIMIT = 256, VIRTUAL_LIMIT = LIMIT + 1 };
+    enum { LIMIT = 256 };
     char (*paths)[ASSET_PATH_MAX];
     size_t edition, rootIndex;
     int explicitFile = requestedDataDir && FSP_FileExists(requestedDataDir) &&
         !FSP_DirExists(requestedDataDir);
     if (!status || gameIndex < 0 || strcmp(g_games[gameIndex].gameId, "csb")) return;
-    paths = calloc(VIRTUAL_LIMIT, sizeof(*paths));
+    paths = calloc(LIMIT, sizeof(*paths));
     if (!paths) {
         fprintf(stderr, "firestaff: media-discovery-incomplete game=csb path=%s reason=allocation\n",
                 rootCount ? roots[0] : status->dataDir);
@@ -5974,8 +5974,6 @@ static void m12_admit_csb_amiga31_english_program_package(
         version = &status->versions[gameIndex][versionIndex];
         for (rootIndex = 0u; rootIndex < (explicitFile ? 1u : rootCount) && !admitted; ++rootIndex) {
             const char *root = explicitFile ? requestedDataDir : roots[rootIndex];
-            const char *virtualHashes[VIRTUAL_LIMIT + 1];
-            int matched[VIRTUAL_LIMIT] = {0};
             int count = asset_collect_files_by_md5(root, hashes[edition],
                                                       paths, LIMIT, 32);
             int pass, candidate;
@@ -5990,23 +5988,17 @@ static void m12_admit_csb_amiga31_english_program_package(
             }
             for (pass = 0; pass < 2 && !admitted; ++pass) {
                 if (pass) {
-                    for (candidate = 0; candidate < VIRTUAL_LIMIT; ++candidate)
-                        virtualHashes[candidate] = hashes[edition];
-                    virtualHashes[VIRTUAL_LIMIT] = NULL;
-                    memset(paths, 0, VIRTUAL_LIMIT * sizeof(*paths));
-                    count = asset_find_all_by_md5_list(root, virtualHashes,
-                        paths, matched, VIRTUAL_LIMIT, 32);
-                    /* A full sentinel vector proves this root exceeds the
-                     * accepted candidate limit. */
-                    if (count >= VIRTUAL_LIMIT) {
-                        fprintf(stderr, "firestaff: media-discovery-incomplete game=csb path=%s reason=candidate-limit\n",
-                                root);
-                        break;
-                    }
+                    /* This edition digest identifies exactly one original
+                     * Amiga graphics payload. The batched list API cannot
+                     * enumerate one digest by repeating it 257 times; that
+                     * request is deduplicated before container traversal.
+                     * Resolve the single authenticated virtual member and
+                     * let the package gate validate its same-disk programs. */
+                    count = asset_find_by_md5(root, hashes[edition],
+                                              paths[0], ASSET_PATH_MAX, 0);
                 }
                 for (candidate = 0; candidate < count; ++candidate) {
-                    if ((pass && (!matched[candidate] ||
-                         !m12_path_is_virtual_asset(paths[candidate]))) ||
+                    if ((pass && !m12_path_is_virtual_asset(paths[candidate])) ||
                         !csb_v1_amiga_english_package_ready(paths[candidate], ids[edition]) ||
                         (edition == 0u && !m12_csb_amiga31_startup_media_ready(
                             paths[candidate], ids[edition]))) continue;

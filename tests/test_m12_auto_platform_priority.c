@@ -137,9 +137,11 @@ int main(void)
     {
         int a31e = M12_AssetStatus_FindVersionIndex("csb", "amiga31-en");
         int a31m = M12_AssetStatus_FindVersionIndex("csb", "amiga31-multi");
+        int a35e = M12_AssetStatus_FindVersionIndex("csb", "amiga35-en");
+        int a35m = M12_AssetStatus_FindVersionIndex("csb", "amiga35-multi");
         int selected;
         memset(&status, 0, sizeof(status));
-        if (a31e < 0 || a31m < 0) {
+        if (a31e < 0 || a31m < 0 || a35e < 0 || a35m < 0) {
             fprintf(stderr, "FAIL: missing CSB Amiga catalogue identities\n");
             return 1;
         }
@@ -151,8 +153,17 @@ int main(void)
             fprintf(stderr, "FAIL: Amiga did not select verified A31E before A31M\n");
             return 1;
         }
+        memset(&status, 0, sizeof(status));
+        status.versions[1][a35e].matched = 1;
+        status.versions[1][a35m].matched = 1;
+        selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+            &status, "csb", M12_ARCH_AMIGA);
+        if (selected != a35e) {
+            fprintf(stderr, "FAIL: Amiga did not select verified A35E before A35M\n");
+            return 1;
+        }
     }
-    puts("PASS: CSB Amiga selection admits verified native A31E");
+    puts("PASS: CSB Amiga selection admits verified native A31E and A35E");
     {
         static const char *const pc98_versions[] = {
             "pc98-ja-demo"
