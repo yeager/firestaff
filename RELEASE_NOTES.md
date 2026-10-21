@@ -1,3 +1,10 @@
+# Firestaff v3.0.403
+
+## Developer changes
+
+- `DM1 original-media startup evidence`: record verified M12 menu selection and first-runtime handoffs across authentic FM Towns, PC, Atari ST, Amiga and Apple IIGS media, while retaining explicit unverified gameplay-parity gaps.
+- `Release metadata`: update the project version and reproducible SPDX source SBOM for v3.0.403.
+
 # Firestaff v3.0.402
 
 ## User-facing changes
