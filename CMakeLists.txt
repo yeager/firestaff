@@ -4160,7 +4160,7 @@ if(BUILD_TESTING)
     set_tests_properties(dm2_v1_mac_fr_native_cli_boot PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm2;macintosh;french;startup;cli;real-media;native;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM2_MAC_FR_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2-extras/mac-fr/Dungeon Master II;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy"
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_FR_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2-extras/mac-fr/Dungeon Master II;FIRESTAFF_DM2_MAC_FR_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_FR.sit;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy"
         TIMEOUT 120
     )
     add_test(

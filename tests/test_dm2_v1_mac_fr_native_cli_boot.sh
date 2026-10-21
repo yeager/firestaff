@@ -4,28 +4,50 @@ set -eu
 
 app=${1:?usage: test_dm2_v1_mac_fr_native_cli_boot.sh <firestaff>}
 mac_root=${FIRESTAFF_DM2_MAC_FR_DIR:-"$HOME/.firestaff/data/dm2-extras/mac-fr/Dungeon Master II"}
+archive=${FIRESTAFF_DM2_MAC_FR_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_Mac_FR.sit"}
 dmfiles="$mac_root/DMFiles"
 if [ ! -x "$app" ]; then
     echo 'SKIP: Firestaff executable is unavailable'
     exit 77
 fi
-if [ ! -f "$dmfiles/Graphics.dat" ] || [ ! -f "$dmfiles/Dungeon.dat" ] ||
-   [ ! -f "$dmfiles/md.dat" ] || [ ! -f "$dmfiles/qstrat.dat" ]; then
-    echo 'SKIP: authentic extracted DM2 Macintosh French files are not staged'
-    exit 77
-fi
 
 scratch_root=${FIRESTAFF_TEST_SCRATCH:-"${TMPDIR:-/tmp}"}
 mkdir -p "$scratch_root"
-scratch=$(mktemp -d "$scratch_root/dm2-mac-fr-startup.XXXXXX")
+scratch=""
 cleanup() {
     rc=$?
-    if [ "$rc" -ne 0 ] && [ -f "$scratch/startup.log" ]; then
+    if [ "$rc" -ne 0 ] && [ -n "$scratch" ] && [ -f "$scratch/startup.log" ]; then
         cat "$scratch/startup.log" >&2
     fi
-    rm -rf "$scratch"
+    if [ -n "$scratch" ] && [ -d "$scratch" ]; then
+        find "$scratch" -depth -delete
+    fi
 }
 trap cleanup EXIT HUP INT TERM
+
+if [ ! -f "$dmfiles/Graphics.dat" ] || [ ! -f "$dmfiles/Dungeon.dat" ] ||
+   [ ! -f "$dmfiles/md.dat" ] || [ ! -f "$dmfiles/qstrat.dat" ]; then
+    if [ -f "$archive" ] && command -v unar >/dev/null 2>&1; then
+        scratch=$(mktemp -d "$scratch_root/dm2-mac-fr-startup.XXXXXX")
+        if unar -q -o "$scratch" "$archive" >/dev/null 2>&1; then
+            extracted_root="$scratch/Dungeon Master II"
+            extracted_files="$extracted_root/DMFiles"
+            if [ -f "$extracted_files/Graphics.dat" ] &&
+               [ -f "$extracted_files/Dungeon.dat" ] &&
+               [ -f "$extracted_files/md.dat" ] &&
+               [ -f "$extracted_files/qstrat.dat" ]; then
+                mac_root=$extracted_root
+                dmfiles=$extracted_files
+            fi
+        fi
+    fi
+fi
+
+if [ ! -f "$dmfiles/Graphics.dat" ] || [ ! -f "$dmfiles/Dungeon.dat" ] ||
+   [ ! -f "$dmfiles/md.dat" ] || [ ! -f "$dmfiles/qstrat.dat" ]; then
+    echo 'SKIP: authentic extracted DM2 Macintosh French files or source archive are not staged'
+    exit 77
+fi
 
 graphics_before=$(firestaff_sha256_file "$dmfiles/Graphics.dat")
 dungeon_before=$(firestaff_sha256_file "$dmfiles/Dungeon.dat")
