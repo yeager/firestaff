@@ -1,11 +1,11 @@
-2026-10-19 current-source real-media launcher/rescan integration:
+2026-10-21 current-source real-media launcher/rescan integration:
 `return_to_menu_rescans_dm1_csb_dm2_real_media` passed its full `returns`
-matrix, including DM2 DOS, Macintosh, Amiga and FM Towns routes. Menu-launched
-sessions returned to the launcher and rescanned authentic DM1/CSB/DM2
-availability; direct `--game dm2` exit behavior was also verified. The
-companion `m12_dm1_csb_shared_collection_real_media` test passed the mixed
-collection scan. These SDL dummy-driver runs verify tested launch/input
-transitions, not native display, audio or physical input parity.
+matrix on the current source, including DM2 DOS, Macintosh, Amiga and FM Towns
+routes. Menu-launched sessions returned to the launcher and rescanned
+authentic DM1/CSB/DM2 availability; direct `--game dm2` exit behavior was also
+verified. This run completed in 1435.20 seconds with no test failures. SDL
+dummy-driver output verifies tested launch/input transitions, not native
+display, audio or physical input parity.
 
 2026-10-19 current-source original-media DM2 DOS startup retest:
 `dm2_v1_dos_native_cli_boot` passed in 113.92 seconds with the installed

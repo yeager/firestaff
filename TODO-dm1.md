@@ -127,14 +127,14 @@ and gives a more precise diagnosis of the reported roughly one-second
 Entrance sequence. It does not establish native M4/M5 display or audible
 timing; no animation cadence change is justified by the dummy-driver trace.
 
-2026-10-19 current-source real-media launcher/rescan integration:
+2026-10-21 current-source real-media launcher/rescan integration:
 `return_to_menu_rescans_dm1_csb_dm2_real_media` passed its full `returns`
-matrix, including DM1 PC34, FM Towns, Atari ST and Amiga 3.6 routes. Direct
-`--game dm1` exits after Return to Menu; menu-launched sessions return to the
-launcher and rescan authentic DM1/CSB/DM2 availability. The companion
-`m12_dm1_csb_shared_collection_real_media` test passed the mixed collection
-scan. These SDL dummy-driver runs verify the tested launch/input transitions,
-not native display, audio or physical input parity.
+matrix on the current source, including DM1 PC34, FM Towns, Atari ST and Amiga
+3.6 routes. Direct `--game dm1` exits after Return to Menu; menu-launched
+sessions return to the launcher and rescan authentic DM1/CSB/DM2 availability.
+This run completed in 1435.20 seconds with no test failures. The matrix does
+not include IIGS, and its SDL dummy-driver runs verify the tested launch/input
+transitions, not native display, audio or physical input parity.
 
 2026-10-19 current-source PC34 HoC movement/champion-input retest:
 `m11_dm1_hoc_c127_resurrect_reincarnate_full_pc34` passed against the
