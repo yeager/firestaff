@@ -1,3 +1,15 @@
+2026-10-22 PC34 SDL-loop combat receipt: the current Firestaff app was run
+with `--game dm1 --platform pc --debug`, the authentic DOS 3.4 archive, and
+SDL's dummy video/audio drivers. The source HoC route reached map one's first
+group; normal SDL clicks opened the action cell and selected its first row.
+The app reported `ANFALL` / `SLAG UTFÖRT`, 3 damage, and total group health
+48817→48814. A subsequent production-loop tick emitted a creature attack and
+8 champion damage (party health 47→39). This verifies one PC34
+encounter through the app's SDL event and tick loops; it does not establish
+native M5 input/display/audio, creature movement while distant, other editions,
+or full combat parity. `--debug` now logs DM1 attack, damage, movement, and
+health receipts at pointer actions and combat ticks. No combat logic changed.
+
 2026-10-21 DM1 PC34 repeated combat: the live C38 continuation passed
 `is_attacking=1` to F0179 even when F0810 selected no new attack. That kept
 ACTIVE_GROUP.Aspect's 0x80 attack latch set, so group #169 could remain in its
@@ -194,17 +206,18 @@ snapshot: the exact first attack falls from 28 HP damage to 17 with
 after stamina and wound changes. This verifies that physical PC34 path, not
 physical input, every combat type, or complete platform parity.
 
-2026-10-21 user PC HoC screenshot and combat follow-up: the seven screenshots
+2026-10-21 user PC HoC screenshot follow-up: the seven screenshots
 in `~/a` show a retained/overlapped title-selection image, unreadable wall
 inscriptions, a wall button rendered as a hole, an item with vertical striping,
 and an incorrect-looking door composition. Keep these as external evidence;
 do not copy original game assets or user screenshots into the repository. The
 current-source `m11_dm1_pc34_first_monster_combat_real` target was rebuilt and
 rerun against the authentic DOS archive on this date; it still passes the
-scripted first map-one encounter (the creature approaches and damages the
-party, and PUNCH dispatches). That narrow test does not reproduce or disprove
-the reported in-game monster behavior. Capture the exact live map, creature,
-and idle/action sequence before changing the source-owned F0209/F0207 route.
+scripted first map-one encounter. The follow-up SDL-loop receipt above now
+verifies one PC34 in-app attack and monster damage path, but does not reproduce
+native M5 input/display/audio or creature movement while distant. Capture the
+exact live map, creature, and idle/action sequence before changing the
+source-owned F0209/F0207 route.
 
 The authentic Amiga v2.0 first-monster test also passes on current source, and
 `dm1_v1_legacy_graphics_real_corpus` passes against original Amiga v2.0 and FM

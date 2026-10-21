@@ -2441,6 +2441,60 @@ static void m11_debug_motion_presented(const M11_GameViewState* state,
     g_m11_debug_motion.superseded = 0;
 }
 
+static void m11_debug_dm1_combat_receipt(const M11_GameViewState* state,
+                                         const char* eventName,
+                                         int onlyCombatEvents) {
+    int damageDealt = 0;
+    int championDamage = 0;
+    int creatureAttacks = 0;
+    int creatureMoves = 0;
+    unsigned int groupHealth = 0;
+    unsigned int partyHealth = 0;
+    int i;
+    if (!state || !state->debugMovementTraceEnabled ||
+        strcmp(state->sourceId, "dm1") != 0) return;
+    for (i = 0; i < state->lastTickResult.emissionCount; ++i) {
+        const struct TickEmission_Compat *emission =
+            &state->lastTickResult.emissions[i];
+        if (emission->kind == EMIT_DAMAGE_DEALT && emission->payload[2] > 0)
+            damageDealt += (int)emission->payload[2];
+        else if (emission->kind == EMIT_CHAMPION_DAMAGED)
+            championDamage += (int)emission->payload[2];
+        else if (emission->kind == EMIT_CREATURE_ATTACK)
+            ++creatureAttacks;
+        else if (emission->kind == EMIT_CREATURE_MOVED)
+            ++creatureMoves;
+    }
+    if (onlyCombatEvents && !damageDealt && !championDamage &&
+        !creatureAttacks && !creatureMoves) return;
+    if (state->world.things && state->world.things->groups) {
+        int group;
+        for (group = 0; group < state->world.things->groupCount; ++group) {
+            const struct DungeonGroup_Compat *creatures =
+                &state->world.things->groups[group];
+            int creature;
+            for (creature = 0; creature <= (int)creatures->count && creature < 4;
+                 ++creature)
+                groupHealth += creatures->health[creature];
+        }
+    }
+    for (i = 0; i < state->world.party.championCount && i < CHAMPION_MAX_PARTY;
+         ++i)
+        partyHealth += state->world.party.champions[i].hp.current;
+    fprintf(stderr,
+            "firestaff: dm1-combat event=%s tick=%u "
+            "last-action=\"%s\" last-outcome=\"%s\" "
+            "last-tick-emissions=%d dealt-damage=%d creature-attacks=%d "
+            "creature-moves=%d champion-damage=%d group-health-total=%u "
+            "party-health-total=%u\n",
+            eventName ? eventName : "unknown",
+            (unsigned int)state->world.gameTick,
+            state->lastAction[0] ? state->lastAction : "(none)",
+            state->lastOutcome[0] ? state->lastOutcome : "(none)",
+            state->lastTickResult.emissionCount, damageDealt, creatureAttacks,
+            creatureMoves, championDamage, groupHealth, partyHealth);
+}
+
 static void m11_debug_pointer_dispatch(const M11_GameViewState* state,
                                        const char* eventName,
                                        int windowX,
@@ -2467,6 +2521,12 @@ static void m11_debug_pointer_dispatch(const M11_GameViewState* state,
             eventName, windowX, windowY, sourceX, sourceY, buttonMask,
             activeChampionBefore, state->world.party.activeChampionIndex,
             state->world.party.championCount, inputResult);
+    m11_debug_dm1_combat_receipt(state,
+                                 eventName ? eventName : "pointer-unknown", 0);
+}
+
+static void m11_debug_dm1_combat_tick(const M11_GameViewState* state) {
+    m11_debug_dm1_combat_receipt(state, "tick", 1);
 }
 
 static void m11_draw_game_frame_for_loop(M11_GameViewState* state,
@@ -13440,7 +13500,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         {
             int dm2TimedMediaRedraw = 0;
             while (gameView.active && idleAccumulatorMs >= (uint32_t)gameTickInterval) {
-                if (M11_GameView_AdvanceIdleTick(&gameView) == M11_GAME_INPUT_REDRAW) {
+                M11_GameInputResult tickResult =
+                    M11_GameView_AdvanceIdleTick(&gameView);
+                m11_debug_dm1_combat_tick(&gameView);
+                if (tickResult == M11_GAME_INPUT_REDRAW) {
                     if (gameView.sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
                         gameView.dm2State.startup_menu_active &&
                         (gameView.dm2FmtownsTitleBound ||
