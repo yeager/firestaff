@@ -46,6 +46,14 @@ typedef enum {
     DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1_PC34 = 5
 } DM1OriginalSaveShape;
 
+/* LOADSAVE.C F0435 platform IDs and the shared Amiga 3.6 / PC34 format ID.
+ * These are part of the authenticated original save header, not host OS IDs. */
+enum {
+    DM1_ORIGINAL_SAVE_FORMAT_AMIGA36_PC34 = 5,
+    DM1_ORIGINAL_SAVE_PLATFORM_AMIGA = 3,
+    DM1_ORIGINAL_SAVE_PLATFORM_PC = 9
+};
+
 typedef enum {
     DM1_ORIGINAL_SAVE_READY_ABSENT = 0,
     DM1_ORIGINAL_SAVE_READY_CLASSIFIED_HEADER_ONLY = 1,

@@ -16008,6 +16008,47 @@ static int m11_dm1_c13_visible_runtime_handoff_consume_transition(
     return 1;
 }
 
+/* Retail F0435 saves carry their original game platform in the save header.
+ * ReDMCSB LOADSAVE.C checks that field against G0527_i_Platform before it
+ * loads the save parts. The runtime adapters below are format-specific too:
+ * PC34 IMG3 and Amiga A20/A36 worlds cannot be adopted by another platform's
+ * renderer/runtime merely because both use a DM1 dungeon. */
+static int m11_dm1_target_is_pc34_save_profile(
+    const M11_GameViewState* state)
+{
+    return state && !state->assetLoader.atariStDm1 &&
+        !state->assetLoader.legacyDm1 && !state->assetLoader.dm1Amiga36 &&
+        !state->assetLoader.iigsDm1 && !state->dm1FmtownsStartupReceiptValid;
+}
+
+static int m11_dm1_target_is_amiga_save_profile(
+    const M11_GameViewState* state)
+{
+    return state && (state->assetLoader.dm1Amiga36 ||
+        (state->assetLoader.legacyDm1 &&
+         state->assetLoader.legacyBigEndian));
+}
+
+static int m11_dm1_original_save_bytes_blocked_for_target(
+    const M11_GameViewState* state, const uint8_t* bytes, size_t size)
+{
+    DM1OriginalSaveClassifyResult originalSave;
+    if (!state || !bytes || !size ||
+        !dm1_v1_original_save_classify_bytes(bytes, size, &originalSave)) {
+        return 0;
+    }
+    if (originalSave.shape == DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1_PC34) {
+        return !m11_dm1_target_is_pc34_save_profile(state);
+    }
+    /* The Amiga F0435 materializer is the only supported importer for this
+     * shared format family. If it rejected the bytes, do not hand them to
+     * the generic loader (including through a .BAK fallback). */
+    return originalSave.shape ==
+               DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_COMPAT_FAMILY &&
+           originalSave.format_id ==
+               DM1_ORIGINAL_SAVE_FORMAT_AMIGA36_PC34;
+}
+
 int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
                                  const char* path,
                                  int* outUsedBackup)
@@ -16069,10 +16110,16 @@ int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
     if (primaryBytesRead) {
         const int adopted = M11_GameView_LoadDm1OriginalAmigaSaveBytes(
             state, virtualSaveBytes, virtualSaveByteCount, path);
-        free(virtualSaveBytes);
         if (adopted) {
+            free(virtualSaveBytes);
             return 1;
         }
+        if (m11_dm1_original_save_bytes_blocked_for_target(
+                state, virtualSaveBytes, virtualSaveByteCount)) {
+            free(virtualSaveBytes);
+            return 0;
+        }
+        free(virtualSaveBytes);
     } else {
         char* backupPath =
             dm1_v1_original_save_amiga_backup_sibling_path(path);
@@ -16080,12 +16127,20 @@ int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
                 backupPath, &virtualSaveBytes, &virtualSaveByteCount)) {
             const int adopted = M11_GameView_LoadDm1OriginalAmigaSaveBytes(
                 state, virtualSaveBytes, virtualSaveByteCount, backupPath);
-            free(virtualSaveBytes);
-            free(backupPath);
             if (adopted) {
+                free(virtualSaveBytes);
+                free(backupPath);
                 if (outUsedBackup) *outUsedBackup = 1;
                 return 1;
             }
+            if (m11_dm1_original_save_bytes_blocked_for_target(
+                    state, virtualSaveBytes, virtualSaveByteCount)) {
+                free(virtualSaveBytes);
+                free(backupPath);
+                return 0;
+            }
+            free(virtualSaveBytes);
+            free(backupPath);
         } else {
             free(backupPath);
         }
@@ -16094,14 +16149,27 @@ int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
     memset(&loadedWorld, 0, sizeof(loadedWorld));
     memset(&originalSave, 0, sizeof(originalSave));
     if (dm1_v1_original_save_classify_file(path, &originalSave) &&
-        originalSave.shape == DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1_PC34 &&
-        originalSave.pc34_importer_candidate) {
+        originalSave.shape == DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1_PC34) {
+        if (!m11_dm1_target_is_pc34_save_profile(state) ||
+            !originalSave.pc34_importer_candidate) {
+            F0883_WORLD_Free_Compat(&loadedWorld);
+            return 0;
+        }
         rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(
             path, &state->world, &loadedWorld, NULL, NULL);
         if (rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
             loadedOriginalPc34 = 1;
             memset(&saveHeader, 0, sizeof(saveHeader));
         }
+    } else if (originalSave.shape ==
+                   DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_COMPAT_FAMILY &&
+               originalSave.format_id ==
+                   DM1_ORIGINAL_SAVE_FORMAT_AMIGA36_PC34) {
+        /* The A20 importer above owns only Amiga-platform F0435 saves. A
+         * failed/foreign format-5 save must not fall through to the generic
+         * DM1 reader, which would bypass ReDMCSB's platform gate. */
+        F0883_WORLD_Free_Compat(&loadedWorld);
+        return 0;
     } else {
         rc = DM1_LoadGameWithBackup(path, &loadedWorld, &saveHeader,
                                     &usedBackup);
@@ -16181,6 +16249,8 @@ int M11_GameView_LoadDm1OriginalPc34SaveBytes(M11_GameViewState* state,
     memset(&originalSave, 0, sizeof(originalSave));
     if (!dm1_v1_original_save_classify_bytes(bytes, size, &originalSave) ||
         originalSave.shape != DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1_PC34 ||
+        originalSave.platform != DM1_ORIGINAL_SAVE_PLATFORM_PC ||
+        !m11_dm1_target_is_pc34_save_profile(state) ||
         !originalSave.pc34_importer_candidate ||
         dm1_v1_original_save_pc34_handoff_materialize_runtime_from_bytes(
             bytes, size, &state->world, &loadedWorld, NULL, NULL) !=
@@ -16235,7 +16305,8 @@ int M11_GameView_LoadDm1OriginalAmigaSaveBytes(M11_GameViewState* state,
 
     if (!state || !state->active || !bytes || size == 0u ||
         !DM1_SaveResumeSourceAllowed(state->sourceId) ||
-        state->candidateMirrorPanelActive) {
+        state->candidateMirrorPanelActive ||
+        !m11_dm1_target_is_amiga_save_profile(state)) {
         return 0;
     }
     memset(&loadedWorld, 0, sizeof(loadedWorld));
