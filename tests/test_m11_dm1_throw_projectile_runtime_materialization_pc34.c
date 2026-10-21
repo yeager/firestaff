@@ -306,16 +306,24 @@ int main(int argc, char** argv)
         (!projectileArt && (receipt.graphicsId != material.graphic_index ||
                            receipt.objectAspectIndex != material.aspect_index)) ||
         receipt.destinationW <= 0 || receipt.destinationH <= 0 ||
-        receipt.assetWidth <= 0 || receipt.assetHeight <= 0) {
+        receipt.assetWidth <= 0 || receipt.assetHeight <= 0 ||
+        (projectileArt &&
+         (receipt.kineticEnergy != projectile->kineticEnergy ||
+          receipt.scaleUnits != dm1_v1_projectile_scale_units_for_energy(
+              0, 0, receipt.projectileAspectIndex,
+              projectile->kineticEnergy)))) {
         fprintf(stderr,
                 "live thrown object did not reach object-material viewport receipt "
-                "(valid=%d object=%d gfx=%d/%d aspect=%d/%d)\n",
+                "(valid=%d object=%d gfx=%d/%d aspect=%d/%d ke=%d/%d scale=%d)\n",
                 receipt.valid,
                 receipt.objectMaterial,
                 receipt.graphicsId,
                 material.graphic_index,
                 receipt.objectAspectIndex,
-                material.aspect_index);
+                material.aspect_index,
+                receipt.kineticEnergy,
+                projectile->kineticEnergy,
+                receipt.scaleUnits);
         M11_GameView_Shutdown(&state);
         return 1;
     }

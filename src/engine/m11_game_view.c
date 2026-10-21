@@ -41161,6 +41161,11 @@ static int m11_draw_projectile_sprite_ex(const M11_GameViewState* state,
         s_m11_dm1_projectile_host_presentation_receipt.destinationH = plan.draw_h;
         s_m11_dm1_projectile_host_presentation_receipt.assetWidth = (int)slot->width;
         s_m11_dm1_projectile_host_presentation_receipt.assetHeight = (int)slot->height;
+        s_m11_dm1_projectile_host_presentation_receipt.projectileAspectIndex =
+            projectileAspectIndex;
+        s_m11_dm1_projectile_host_presentation_receipt.kineticEnergy =
+            kineticEnergy;
+        s_m11_dm1_projectile_host_presentation_receipt.scaleUnits = plan.scale_units;
     }
     return 1;
 }

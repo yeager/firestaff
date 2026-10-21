@@ -3512,6 +3512,9 @@ typedef struct M11_Dm1ProjectileHostPresentationReceipt {
     int destinationH;
     int assetWidth;
     int assetHeight;
+    int projectileAspectIndex;
+    int kineticEnergy;
+    int scaleUnits;
 } M11_Dm1ProjectileHostPresentationReceipt;
 
 void M11_GameView_GetDm1ProjectileHostPresentationReceipt(
