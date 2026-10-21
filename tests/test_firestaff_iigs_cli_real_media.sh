@@ -52,6 +52,16 @@ for version in 20 21; do
     title_line=$(grep -n -F 'startup-source-complete game=dm1 platform=apple-iigs phase=title-f0437' "$scratch/g$version-direct.log" | cut -d: -f1)
     world_line=$(grep -n -F 'DM1 IIGS READY:' "$scratch/g$version-direct.log" | cut -d: -f1)
     [[ $title_line -lt $world_line ]] || { echo 'FAIL: IIGS title did not precede world handoff' >&2; exit 1; }
+    FIRESTAFF_CONFIG_PATH="$scratch/g$version-entrance.toml" SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        FIRESTAFF_AUTOTEST=1 FIRESTAFF_AUTOTEST_ENTRANCE_INPUT=mouse:enter \
+        "$app" --game dm1 --platform apple-iigs --data-dir "$scratch/g$version.po" \
+        --debug --duration 3000 >"$scratch/g$version-entrance.log" 2>&1 || {
+            cat "$scratch/g$version-entrance.log"; exit 1;
+        }
+    assert_trace 'phase=entrance-f0441 state=closed input=mouse-only' "$scratch/g$version-entrance.log"
+    assert_trace 'startup-input-source mouse x=777 y=140 command=1' "$scratch/g$version-entrance.log"
+    assert_trace 'phase=entrance-door frame=31/31 source-vblanks=1' "$scratch/g$version-entrance.log"
+    assert_trace "startup-f0441-authenticated-handoff game=dm1 platform=apple-iigs version=$version" "$scratch/g$version-entrance.log"
     FIRESTAFF_CONFIG_PATH="$scratch/g$version-menu.toml" SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
         FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
         "$app" --menu --game dm1 --platform iigs --data-dir "$scratch/g$version.po" \
@@ -83,4 +93,4 @@ else
     echo 'SKIP: optional original FM Towns AUTO-priority comparison unavailable'
 fi
 [[ $(firestaff_sha256_file "$archive") == "$before" ]]
-echo 'PASS: original G20/G21 media title stage precedes native world handoff; selected M12 menu startup and dungeon input paths remain covered; GS F0129 visual parity and F0441 entrance unverified'
+echo 'PASS: original G20/G21 title and F0441 mouse-gated door startup run through direct CLI and selected M12 menu; native GS C255 and GS F0129 parity remain unverified'

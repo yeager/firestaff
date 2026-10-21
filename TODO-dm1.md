@@ -2551,3 +2551,16 @@ The native wall-bump path now uses F0286 and the WORLD pending combat/F0889
 boundary in source order; original-media tests cover the living ELIJA collision.
 Nominal clock 7159090 Hz and fixed host headroom remain explicit profiles.
 Hardware reference: https://www.brutaldeluxe.fr/documentation/cortland/v4_13_EnsoniqDOC.pdf
+
+2026-10-21 IIGS native entrance follow-up: after F0437 and opening the
+selected G20/G21 world, Firestaff now presents the original C004 entrance
+page with C002/C003 closed doors, waits for a fresh mouse click in the native
+Enter region, and runs the 31 F0438 door frames at nominal 60 Hz. Palette words
+come from the authenticated DUNGEON.MASTER metadata; door/entrance pixels come
+from the selected original GRAPHICS.GAME. Direct CLI and selected M12 menu
+tests exercise both original editions and require the mouse route to dispatch
+C200 before the final frame. This closes the previous title-to-world path
+that skipped F0441. The aperture currently uses the live Firestaff world view
+instead of ENTRANCE.C F0797's exact 5x5 C255 micro-dungeon; native GS cadence,
+credits/bonus/resume commands, source audio sequencing, and visual parity are
+still open. It is not a full IIGS entrance parity claim.

@@ -3638,6 +3638,35 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(
         strcmp(getenv("FIRESTAFF_AUTOTEST_ENTRANCE_INPUT"), "key:return") == 0) {
         static const char freshReturn[] = "key:return";
         (void)m11_push_script_event_token(freshReturn, sizeof(freshReturn) - 1u);
+    } else if (allowHeadlessTimeout && mouseOnly &&
+               getenv("FIRESTAFF_AUTOTEST_ENTRANCE_INPUT") &&
+               strcmp(getenv("FIRESTAFF_AUTOTEST_ENTRANCE_INPUT"),
+                      "mouse:enter") == 0) {
+        int windowWidth = M11_Render_GetWindowWidth();
+        int windowHeight = M11_Render_GetWindowHeight();
+        float scale = (float)windowWidth / (float)M11_FB_WIDTH;
+        float heightScale = (float)windowHeight / (float)M11_FB_HEIGHT;
+        float x, y;
+        if (heightScale < scale) scale = heightScale;
+        x = ((float)windowWidth - (float)M11_FB_WIDTH * scale) * 0.5f +
+            270.0f * scale;
+        y = ((float)windowHeight - (float)M11_FB_HEIGHT * scale) * 0.5f +
+            52.0f * scale;
+        memset(&ev, 0, sizeof(ev));
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+        ev.type = SDL_EVENT_MOUSE_BUTTON_DOWN;
+        ev.button.timestamp = SDL_GetTicksNS();
+        ev.button.button = SDL_BUTTON_LEFT;
+        ev.button.x = x;
+        ev.button.y = y;
+#else
+        ev.type = SDL_MOUSEBUTTONDOWN;
+        ev.button.timestamp = SDL_GetTicks();
+        ev.button.button = SDL_BUTTON_LEFT;
+        ev.button.x = (int)x;
+        ev.button.y = (int)y;
+#endif
+        (void)SDL_PushEvent(&ev);
     } else if (allowHeadlessTimeout &&
                getenv("FIRESTAFF_AUTOTEST_ENTRANCE_INPUT") &&
                strcmp(getenv("FIRESTAFF_AUTOTEST_ENTRANCE_INPUT"),
@@ -3708,6 +3737,12 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(
                         m11_entrance_route_window_pointer((int)ev.button.x,
                                                           (int)ev.button.y,
                                                           ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT);
+                    if (g_m11_debug_startup_detail) {
+                        fprintf(stderr,
+                            "firestaff: startup-input-source mouse x=%d y=%d command=%d\n",
+                            (int)ev.button.x, (int)ev.button.y,
+                            (int)pointerCommand);
+                    }
                     if (pointerCommand != M11_ENTRANCE_COMMAND_NONE) return pointerCommand;
                 }
                 continue;
@@ -3759,6 +3794,11 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(
                         m11_entrance_route_window_pointer(ev.button.x,
                                                           ev.button.y,
                                                           ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT);
+                    if (g_m11_debug_startup_detail) {
+                        fprintf(stderr,
+                            "firestaff: startup-input-source mouse x=%d y=%d command=%d\n",
+                            ev.button.x, ev.button.y, (int)pointerCommand);
+                    }
                     if (pointerCommand != M11_ENTRANCE_COMMAND_NONE) return pointerCommand;
                 }
                 continue;
@@ -7089,6 +7129,157 @@ cleanup:
     return result;
 }
 
+/* ReDMCSB STARTUP2.C enters ENTRANCE.C F0441 after opening the selected
+ * dungeon. The original GS page uses the native C004/C002/C003 records and
+ * waits for a fresh mouse click on the Enter button before F0438 opens the
+ * doors. Its transient entrance viewport is rendered from the live game
+ * frame here; the native 5x5 C255 renderer and exact GS VBlank cadence remain
+ * separate parity work. */
+static int m11_play_dm1_iigs_entrance_f0441(
+    const M12_StartupMenuState* menuState, const M12_MenuEntry* entry,
+    M11_GameViewState* gameView, int bootProbe) {
+    DM1_V1_IigsInstallation installation;
+    const M12_AssetVersionStatus* version;
+    const M11_AssetSlot* entrance;
+    const M11_AssetSlot* leftDoor;
+    const M11_AssetSlot* rightDoor;
+    EntranceCompatCompositePixels pixels;
+    unsigned char* page;
+    unsigned char* dungeonFrame;
+    unsigned char paletteRgb4[256][3] = {{0}};
+    int versionIndex;
+    int expectedVersion;
+    M11_EntranceCommand command;
+    Uint64 started;
+    int quitRequested = 0;
+
+    if (!m11_selected_dm1_is_iigs(menuState, entry)) return 1;
+    if (bootProbe || getenv("FIRESTAFF_EXIT_AFTER_LAUNCH")) return -1;
+    if (!gameView || !gameView->active) return 0;
+    versionIndex = m11_selected_dm1_launch_version_index(menuState, entry);
+    version = versionIndex >= 0 ? M12_AssetStatus_GetVersion(
+        &menuState->assetStatus, "dm1", (size_t)versionIndex) : NULL;
+    expectedVersion = version && version->versionId
+        ? (strcmp(version->versionId, "iigs20-en") == 0 ? 20 :
+           strcmp(version->versionId, "iigs21-en") == 0 ? 21 : 0)
+        : 0;
+    if (!version || !expectedVersion ||
+        dm1_v1_iigs_installation_find(version->matchedPath,
+            expectedVersion, &installation) != 1) return 0;
+
+    entrance = M11_AssetLoader_Load(&gameView->assetLoader, 4u);
+    leftDoor = M11_AssetLoader_Load(&gameView->assetLoader, 2u);
+    rightDoor = M11_AssetLoader_Load(&gameView->assetLoader, 3u);
+    page = M11_Render_GetFramebuffer();
+    dungeonFrame = (unsigned char*)malloc((size_t)M11_FB_BYTES);
+    if (!entrance || entrance->width != 320u || entrance->height != 200u ||
+        !leftDoor || leftDoor->width != 128u || leftDoor->height != 161u ||
+        !rightDoor || rightDoor->width != 128u || rightDoor->height != 161u ||
+        !page || !dungeonFrame) {
+        free(dungeonFrame);
+        return 0;
+    }
+
+    /* Keep the renderer's current original-world view in the source-owned
+     * C004 aperture. No generated artwork or substitute game data is used. */
+    M11_GameView_Draw(gameView, dungeonFrame, M11_FB_WIDTH, M11_FB_HEIGHT);
+    memset(page, 0, (size_t)M11_FB_BYTES);
+    memcpy(page, entrance->pixels, 320u * 200u);
+    for (unsigned int row = 0u; row < 136u; ++row) {
+        memcpy(page + (size_t)(33u + row) * 320u,
+               dungeonFrame + (size_t)(33u + row) * 320u, 224u);
+    }
+    if (!m11_draw_entrance_closed_doors_asset(gameView, page)) {
+        free(dungeonFrame);
+        return 0;
+    }
+    for (unsigned int i = 0u; i < 16u; ++i) {
+        uint16_t color = installation.metadata.entrance_palette[i];
+        paletteRgb4[i][0] = (unsigned char)((color >> 8) & 15u);
+        paletteRgb4[i][1] = (unsigned char)((color >> 4) & 15u);
+        paletteRgb4[i][2] = (unsigned char)(color & 15u);
+    }
+    for (unsigned int i = 16u; i < 256u; ++i) {
+        paletteRgb4[i][0] = paletteRgb4[i & 15u][0];
+        paletteRgb4[i][1] = paletteRgb4[i & 15u][1];
+        paletteRgb4[i][2] = paletteRgb4[i & 15u][2];
+    }
+    M11_Render_SetV2PresentationActive(0);
+    M11_Render_SetModernPresentationActive(0);
+    if (M11_Render_SetIndexedPaletteRgb4(paletteRgb4) != M11_RENDER_OK ||
+        M11_Render_PresentIndexed(page, 320, 200) != M11_RENDER_OK) {
+        free(dungeonFrame);
+        return 0;
+    }
+    if (g_m11_debug_startup_detail) {
+        fprintf(stderr,
+            "firestaff: startup-source-frame game=dm1 platform=apple-iigs phase=entrance-f0441 state=closed input=mouse-only viewport=live-world source=C004+C002+C003\n");
+    }
+
+    /* IIGS ENTRANCE.C sets no primary keyboard table. Requiring a fresh
+     * source-space mouse click also prevents the launcher click from being
+     * reused as C200. Headless verification uses the existing bounded
+     * dummy-video auto-enter path. */
+    do {
+        command = m11_wait_for_redmcsb_entrance_command(-1, 1);
+    } while (command != M11_ENTRANCE_COMMAND_ENTER &&
+             command != M11_ENTRANCE_COMMAND_QUIT);
+    if (command == M11_ENTRANCE_COMMAND_QUIT) {
+        free(dungeonFrame);
+        return 2;
+    }
+    (void)M11_Audio_EmitSourceSoundIndex(&gameView->audioState, 1);
+    if (m11_delay_ms_with_intro_event_pump(400u)) {
+        free(dungeonFrame);
+        return 2;
+    }
+    pixels.entranceScreen = entrance->pixels;
+    pixels.entranceWidth = entrance->width;
+    pixels.entranceHeight = entrance->height;
+    pixels.dungeonFrame = dungeonFrame;
+    pixels.dungeonFrameWidth = M11_FB_WIDTH;
+    pixels.dungeonFrameHeight = M11_FB_HEIGHT;
+    pixels.leftDoor = leftDoor->pixels;
+    pixels.leftDoorWidth = leftDoor->width;
+    pixels.leftDoorHeight = leftDoor->height;
+    pixels.rightDoor = rightDoor->pixels;
+    pixels.rightDoorWidth = rightDoor->width;
+    pixels.rightDoorHeight = rightDoor->height;
+    started = m11_intro_active_ticks();
+    for (unsigned int frame = 1u;
+         frame <= ENTRANCE_Compat_GetDoorAnimationStepCount(); ++frame) {
+        EntranceCompatDoorStep door;
+        if (!ENTRANCE_Compat_GetDoorAnimationStep(frame, &door) ||
+            !ENTRANCE_Compat_CompositeDoorOpeningFrame(
+                page, 320u, 200u, &pixels, &door)) {
+            free(dungeonFrame);
+            return 0;
+        }
+        if (door.soundRattle)
+            (void)M11_Audio_EmitSourceSoundIndex(&gameView->audioState, 2);
+        if (M11_Render_PresentIndexed(page, 320, 200) != M11_RENDER_OK ||
+            m11_wait_for_intro_active_tick(
+                started + ((Uint64)frame * 1000u + 30u) / 60u,
+                &quitRequested)) {
+            free(dungeonFrame);
+            return quitRequested ? 2 : 0;
+        }
+        if (g_m11_debug_startup_detail &&
+            (frame == 1u || frame == 16u || frame == 31u)) {
+            fprintf(stderr,
+                "firestaff: startup-source-frame game=dm1 platform=apple-iigs phase=entrance-door frame=%u/31 source-vblanks=1\n",
+                frame);
+        }
+    }
+    free(dungeonFrame);
+    if (g_m11_debug_startup_detail) {
+        fprintf(stderr,
+            "firestaff: startup-f0441-authenticated-handoff game=dm1 platform=apple-iigs version=%d graphics=%s input=mouse-only doors=31\n",
+            expectedVersion, installation.graphics_path);
+    }
+    return 1;
+}
+
 static int m11_selected_dm1_is_atari(const M12_StartupMenuState* menuState,
                                      const M12_MenuEntry* entry) {
     int versionIndex =
@@ -7602,6 +7793,31 @@ static int m11_open_requested_launch_impl(M11_GameViewState* gameView,
         /* Theron's Quest has no source -- no intro needed. */
     }
     if (M11_GameView_OpenSelectedMenuEntry(gameView, menuState)) {
+        if (m11_selected_dm1_is_iigs(menuState, launchEntry) &&
+            launchEntry && launchEntry->gameId &&
+            strcmp(launchEntry->gameId, "dm1") == 0) {
+            const int entranceResult =
+                m11_play_dm1_iigs_entrance_f0441(menuState, launchEntry,
+                                                  gameView, bootProbe);
+            if (entranceResult == 2) {
+                M11_GameView_Shutdown(gameView);
+                M11_GameView_Init(gameView);
+                menuState->launchRequested = 0;
+                menuState->shouldExit = 1;
+                return 1;
+            }
+            if (entranceResult == 0) {
+                M11_GameView_Shutdown(gameView);
+                M11_GameView_Init(gameView);
+                m11_set_launch_failed_message(menuState);
+                return 0;
+            }
+            if (entranceResult == 1) {
+                gameView->dm1StartupIntroBypassed = 0;
+                gameView->dm1StartupHandoffExecuted = 1;
+                gameView->startedFromLauncher = 1;
+            }
+        }
         if (m11_selected_dm1_is_amiga36(menuState, launchEntry) &&
             launchEntry && launchEntry->gameId &&
             strcmp(launchEntry->gameId, "dm1") == 0) {
