@@ -7291,6 +7291,15 @@ static int m11_selected_dm1_is_atari(const M12_StartupMenuState* menuState,
            M12_ARCH_ATARI_ST;
 }
 
+static int m11_selected_dm1_is_amiga(const M12_StartupMenuState* menuState,
+                                     const M12_MenuEntry* entry) {
+    int versionIndex =
+        m11_selected_dm1_launch_version_index(menuState, entry);
+    return versionIndex >= 0 &&
+           M12_AssetStatus_GetVersionArchitecture(
+               "dm1", (size_t)versionIndex) == M12_ARCH_AMIGA;
+}
+
 static int m11_selected_dm1_is_amiga_hd(const M12_StartupMenuState* menuState,
                                         const M12_MenuEntry* entry) {
     int versionIndex =
@@ -7720,17 +7729,15 @@ static int m11_open_requested_launch_impl(M11_GameViewState* gameView,
     }
     if (launchEntry && launchEntry->gameId &&
         strcmp(launchEntry->gameId, "dm1") == 0 &&
+        m11_selected_dm1_is_amiga(menuState, launchEntry) &&
         menuState->quickResumeAvailable &&
         menuState->quickResumeLaunchRequested &&
         menuState->quickResumeSavePath[0] != '\0' &&
         strstr(menuState->quickResumeSavePath, "::") != NULL) {
-        /* An original A20 save selected from ZIP -> ADF has already passed
-         * M12's F0435 admission.  LOADSAVE.C F0435 restores it directly;
-         * it does not replay the DOS TITLE/ENTRANCE transaction whose
-         * PC34-only capture receipt would reject the Amiga byte layout.
-         * Keep the media path virtual: OpenSelectedMenuEntry forwards it to
-         * M11's in-memory Amiga loader, which authenticates it again before
-         * replacing the live world. */
+        /* An original Amiga save selected from ZIP -> ADF belongs to the
+         * Amiga F0435 route. Keep it virtual for the Amiga in-memory loader;
+         * never let an unrelated FM Towns/Atari edition bypass its own
+         * source-visible startup because a stale cross-platform save exists. */
         dm1RouteReceipt.use_dm1_transaction = 0;
         dm1RouteReceipt.use_generic_launch = 1;
     }
@@ -7970,6 +7977,7 @@ static int m11_open_requested_launch_impl(M11_GameViewState* gameView,
         }
         if (launchEntry && launchEntry->gameId &&
             strcmp(launchEntry->gameId, "dm1") == 0 &&
+            m11_selected_dm1_is_amiga(menuState, launchEntry) &&
             menuState->quickResumeAvailable &&
             menuState->quickResumeLaunchRequested &&
             menuState->quickResumeSavePath[0] != '\0' &&
