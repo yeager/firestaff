@@ -412,9 +412,13 @@ int DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(
             break;
 
         case DM1_V1_F0128_ELEMENT_PIT:
-            /* F0104 pit bitmaps when the pit is not flagged visible
-             * (F0116:6453-6458); then the thing pass. */
-            if (!sq->pitOrTeleporterVisible) {
+        {
+            const int isD3 = cls->square >= DM1_V1_F0128_VIEW_SQUARE_D3L2 &&
+                             cls->square <= DM1_V1_F0128_VIEW_SQUARE_D3C;
+            /* ReDMCSB DUNVIEW.C F0676/F0678 draws D3 pit material only
+             * when M554 is clear. F0679..F0684 (D2..D0) always blit the
+             * pit and choose visible/invisible source art from M554. */
+            if (!isD3 || !sq->pitOrTeleporterVisible) {
                 if (!push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0104_PIT,
                                0, 0, 0, 0)) {
                     return 0;
@@ -429,6 +433,7 @@ int DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(
                 return 0;
             }
             break;
+        }
 
         case DM1_V1_F0128_ELEMENT_TELEPORTER:
             /* Things first, then the F0113 field: real

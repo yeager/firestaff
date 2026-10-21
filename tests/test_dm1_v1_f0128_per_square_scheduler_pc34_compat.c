@@ -342,6 +342,71 @@ static void test_field_after_things(void)
                0, "fail-closed: field before things violates source order");
 }
 
+static void test_floor_pit_material_scheduling(void)
+{
+    DM1_V1_F0128SchedulerSquarePc34 squares[DM1_V1_F0128_VIEW_SQUARE_COUNT];
+    DM1_V1_F0128SchedulerPlanPc34 plan;
+    const int depth3[] = {
+        DM1_V1_F0128_VIEW_SQUARE_D3L2, DM1_V1_F0128_VIEW_SQUARE_D3R2,
+        DM1_V1_F0128_VIEW_SQUARE_D3L, DM1_V1_F0128_VIEW_SQUARE_D3R,
+        DM1_V1_F0128_VIEW_SQUARE_D3C
+    };
+    int i;
+
+    all_corridor(squares);
+    for (i = 0; i < (int)(sizeof(depth3) / sizeof(depth3[0])); ++i) {
+        squares[depth3[i]].element = DM1_V1_F0128_ELEMENT_PIT;
+        squares[depth3[i]].pitOrTeleporterVisible = 0;
+    }
+    expect_int("build.d3_pit.ok",
+               DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(squares, &plan),
+               1, "visible D3 pit uses the D3 material callback");
+    for (i = 0; i < (int)(sizeof(depth3) / sizeof(depth3[0])); ++i) {
+        expect_int("d3_pit.visible.material",
+                   count_op_for_square(&plan, depth3[i], DM1_V1_F0128_STEP_F0104_PIT),
+                   1, "ReDMCSB F0676-F0678 draws D3 pit when M554 is clear");
+        squares[depth3[i]].pitOrTeleporterVisible = 1;
+    }
+    expect_int("build.d3_invisible_pit.ok",
+               DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(squares, &plan),
+               1, "invisible D3 pit follows the source's no-blit path");
+    for (i = 0; i < (int)(sizeof(depth3) / sizeof(depth3[0])); ++i) {
+        expect_int("d3_pit.invisible.no_material",
+                   count_op_for_square(&plan, depth3[i], DM1_V1_F0128_STEP_F0104_PIT),
+                   0, "D3 source code omits the pit blit when M554 is set");
+    }
+
+    all_corridor(squares);
+    squares[DM1_V1_F0128_VIEW_SQUARE_D2C].element = DM1_V1_F0128_ELEMENT_PIT;
+    squares[DM1_V1_F0128_VIEW_SQUARE_D2C].pitOrTeleporterVisible = 0;
+    expect_int("build.d2_visible_pit.ok",
+               DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(squares, &plan),
+               1, "visible D2 pit builds");
+    expect_int("d2_visible_pit.material",
+               count_op_for_square(&plan, DM1_V1_F0128_VIEW_SQUARE_D2C,
+                                   DM1_V1_F0128_STEP_F0104_PIT),
+               1, "D2 source route always draws the selected pit graphic");
+    squares[DM1_V1_F0128_VIEW_SQUARE_D2C].pitOrTeleporterVisible = 1;
+    expect_int("build.d2_invisible_pit.ok",
+               DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(squares, &plan),
+               1, "invisible D2 pit builds");
+    expect_int("d2_invisible_pit.material",
+               count_op_for_square(&plan, DM1_V1_F0128_VIEW_SQUARE_D2C,
+                                   DM1_V1_F0128_STEP_F0104_PIT),
+               1, "D2 source route draws the invisible pit graphic");
+
+    all_corridor(squares);
+    squares[DM1_V1_F0128_VIEW_SQUARE_D0C].element = DM1_V1_F0128_ELEMENT_PIT;
+    squares[DM1_V1_F0128_VIEW_SQUARE_D0C].pitOrTeleporterVisible = 1;
+    expect_int("build.d0_invisible_pit.ok",
+               DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(squares, &plan),
+               1, "invisible D0 pit builds through F0127");
+    expect_int("d0_invisible_pit.material",
+               count_op_for_square(&plan, DM1_V1_F0128_VIEW_SQUARE_D0C,
+                                   DM1_V1_F0128_STEP_F0104_PIT),
+               1, "D0 source route always draws the invisible pit graphic");
+}
+
 /* F0127 is a distinct terminal route: its visible D0C teleporter cannot be
  * accepted by a broad near-distance field pass.  The field belongs after the
  * exact C0x0021 F0115 thing order, just as the live M11 D0 consumer does. */
@@ -874,6 +939,7 @@ static void test_source_transaction_dispatch(void)
 
 int main(void)
 {
+    test_floor_pit_material_scheduling();
     test_class_table();
     test_corridor_scene_visit_order();
     test_field_after_things();

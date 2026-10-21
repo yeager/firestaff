@@ -65159,12 +65159,11 @@ static void m11_dm1_f0128_scheduler_input_from_cell(
 {
     out->element = m11_dm1_f0128_scheduler_element_for_cell(
         state, cell, relForward);
-    /* SquareAspect[M554] (DUNGEON.C F0172): pit bit 0x04 clear = the pit
-     * shows; teleporter bit 0x04 set = the blue haze shows (dmweb
-     * dungeon format; dm1_v1_floor_pit/dm1_v1_field_teleporter masks). */
+    /* SquareAspect[M554] (DUNGEON.C F0172) is the raw pit-invisible bit
+     * 0x04. DUNVIEW.C selects the invisible asset when set at D2..D0. */
     if (cell->elementType == DUNGEON_ELEMENT_PIT) {
         out->pitOrTeleporterVisible =
-            !dm1_v1_floor_pit_square_uses_invisible_pc34(cell->square);
+            dm1_v1_floor_pit_square_uses_invisible_pc34(cell->square);
     } else if (cell->elementType == DUNGEON_ELEMENT_TELEPORTER) {
         out->pitOrTeleporterVisible =
             (cell->square & DM1_FIELD_TELEPORTER_VISIBLE_MASK_PC34) != 0 &&

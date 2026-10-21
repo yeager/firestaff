@@ -13046,6 +13046,23 @@ if(BUILD_TESTING)
             LABELS "dm1;dos;pc34;real-media;in-memory;objects;skip-safe")
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_floor_pit_runtime_capture_pc34.c")
+        add_executable(test_m11_dm1_floor_pit_runtime_capture_pc34
+            tests/test_m11_dm1_floor_pit_runtime_capture_pc34.c)
+        target_link_libraries(test_m11_dm1_floor_pit_runtime_capture_pc34 PRIVATE firestaff_m12 firestaff_m11)
+        if(NOT MSVC)
+            target_compile_options(test_m11_dm1_floor_pit_runtime_capture_pc34 PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME m11_dm1_floor_pit_runtime_capture_pc34
+            COMMAND test_m11_dm1_floor_pit_runtime_capture_pc34
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+        set_tests_properties(m11_dm1_floor_pit_runtime_capture_pc34 PROPERTIES
+            ENVIRONMENT "FIRESTAFF_DM1_DATA_DIR=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
+            LABELS "dm1;dos;pc34;real-media;runtime-render;floor-pit")
+    endif()
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_f0115_c15_runtime_capture_pc34.c")
         add_executable(test_dm1_v1_fresh_pc34_pools tests/test_dm1_v1_fresh_pc34_pools.c)
         target_link_libraries(test_dm1_v1_fresh_pc34_pools PRIVATE firestaff_m10)
