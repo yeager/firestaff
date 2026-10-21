@@ -58,6 +58,15 @@ data root exposed only DM1, CSB and DM2 originals; both tests verified the
 selected DM1 archive remained unchanged. SDL dummy output does not prove
 native display, physical input, or audio parity.
 
+2026-10-21 DM1 mixed-library platform-menu regression:
+`dm1_v1_m12_auto_multi_platform_menu` passed against the installed original
+FM Towns, PC 3.4, Atari ST 1.2, and Amiga 2.0 archives. It verified that AUTO
+selects FM Towns by default, the M12 platform menu launches the chosen PC,
+Atari ST, and Amiga edition, and keyboard selection from AUTO reaches PC 3.4.
+The corresponding direct CLI launches also reached their authenticated first
+runtime frame. This covers the tested start-menu and edition handoffs only;
+SDL dummy does not prove native display, audio output, or physical input.
+
 2026-10-21 Amiga HD/demo follow-up:
 `dm1_v1_amiga_hd_archive_cli_boot` passed against the authentic Amiga HD ZIP.
 `dm1_v1_amiga_demo_archive_cli_boot` skipped because the required original
