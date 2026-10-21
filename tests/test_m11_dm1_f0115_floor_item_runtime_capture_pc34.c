@@ -1,8 +1,10 @@
 #include "m11_game_view.h"
 #include "main_loop_m11.h"
 #include "menu_startup_m12.h"
+#include "asset_loader_m11.h"
 
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -97,6 +99,16 @@ static int find_real_floor_item_pose(M11_GameViewState* state,
     return 0;
 }
 
+static uint32_t real_asset_fnv1a(const unsigned char* pixels, size_t count)
+{
+    uint32_t hash = UINT32_C(2166136261);
+    size_t i;
+    for (i = 0; i < count; ++i) {
+        hash = (hash ^ pixels[i]) * UINT32_C(16777619);
+    }
+    return hash;
+}
+
 int main(void)
 {
     const char* dataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
@@ -105,6 +117,7 @@ int main(void)
     M11_Dm1FloorItemHostPresentationReceipt stalePresentation;
     unsigned char framebuffer[320 * 200];
     int originalAssetsAvailable;
+    const M11_AssetSlot* apple;
 
     if (!dataDir || !dataDir[0]) {
         puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
@@ -121,6 +134,18 @@ int main(void)
         M11_GameView_Shutdown(&state);
         puts("skip: real PC34 corpus has no drawable D0C F0115 floor item");
         return 0;
+    }
+    /* Oracle: ReDMCSB IMAGE2.C F0689's MEDIA707 I34E decode of the authentic
+     * DOS 3.4 GRAPHICS.DAT record 561, flattened to 16x5 indexed pixels. */
+    apple = M11_AssetLoader_Load(&state.assetLoader, 561u);
+    if (!apple || apple->width != 16u || apple->height != 5u ||
+        real_asset_fnv1a(apple->pixels,
+                        (size_t)apple->width * apple->height) !=
+            UINT32_C(0xc8072551)) {
+        M11_GameView_Shutdown(&state);
+        fputs("real PC34 graphic 561 differs from the ReDMCSB I34E IMG3 decode\n",
+              stderr);
+        return 1;
     }
     state.world.gameTick += 1u;
     memset(framebuffer, 0, sizeof(framebuffer));

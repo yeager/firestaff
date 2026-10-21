@@ -1,3 +1,27 @@
+2026-10-22 screenshot and framebuffer follow-up: the seven HoC PC screenshots
+in `/Users/bosse/a/` show broken wall inscriptions and an apple floor object
+with vertical background stripes; door and alcove visuals also need source
+comparison. The authentic PC34 F0115 capture reaches the original item at map
+1, party `(0,2,d1)`, graphics index 561. The open-pit capture finds 1,458
+original pit pixels in the final indexed framebuffer with none occluded. These
+tests confirm source material reaches the renderer, not that displayed pixels
+match ReDMCSB. The screenshots do not establish a trapdoor-specific failure
+pose. Still open: reproduce the affected positions from authentic PC34 map
+data, compare output pixels against ReDMCSB, then extend the regressions to the
+other DM1 editions. No visual-parity claim is made.
+
+2026-10-22 PC34 decoder check: ReDMCSB `IMAGE2.C` has a 32-pixel row-stride
+branch for `MEDIA551` (F20E/F20J/F31E/F31J), but the DOS PC34 `I34E` build
+uses the later `MEDIA707` IMG3 decoder with even-pixel stride. Firestaff's
+loader also uses even-pixel stride, so the real 16x5 graphic 561 does not
+establish a row-layout bug. The proposed 32-pixel fix was reverted before
+commit. A new real-media regression checks graphic 561's decoded 80 pixels
+against an independent `MEDIA707` reference decode (`FNV-1a c8072551`). This
+rules out a mismatch in this asset's decoded pixels, but not other graphics or
+later object/wall composition. Continue comparing IMG3 run handling and the
+compositor against the `MEDIA707` branch. The screenshot defects and trapdoor
+report remain open.
+
 2026-10-22 PC34 SDL-loop combat receipt: the current Firestaff app was run
 with `--game dm1 --platform pc --debug`, the authentic DOS 3.4 archive, and
 SDL's dummy video/audio drivers. The source HoC route reached map one's first
