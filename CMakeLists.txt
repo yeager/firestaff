@@ -4481,10 +4481,11 @@ if(BUILD_TESTING)
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_atari_st_archive_cli_boot.sh
             $<TARGET_FILE:firestaff>
     )
+    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-atari-st")
     set_tests_properties(dm1_v1_atari_st_archive_cli_boot PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "dm1;atari-st;real-media;native;cli;menu;startup;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM1_ATARI_ST_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_EN_Version-12.zip"
+        ENVIRONMENT "FIRESTAFF_DM1_ATARI_ST_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_EN_Version-12.zip;HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-atari-st;XDG_CONFIG_HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-atari-st;APPDATA=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-atari-st;FIRESTAFF_CONFIG_PATH=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-atari-st/config.toml"
         TIMEOUT 120
     )
     add_test(
@@ -4643,10 +4644,11 @@ if(BUILD_TESTING)
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_fmtowns_archive_cli_boot.sh
             $<TARGET_FILE:firestaff>
     )
+    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-fmtowns")
     set_tests_properties(dm1_v1_fmtowns_archive_cli_boot PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "dm1;fmtowns;real-media;native;cli;menu;startup;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_FM-Towns_JA-EN.zip"
+        ENVIRONMENT "FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_FM-Towns_JA-EN.zip;HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-fmtowns;XDG_CONFIG_HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-fmtowns;APPDATA=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-fmtowns;FIRESTAFF_CONFIG_PATH=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-fmtowns/config.toml"
         # Both original programs run independent seven-command matrices from
         # a 256 MB ZIP-held optical disc.  A cold, rotational or contention-
         # limited disk can take more than four minutes merely to read and
