@@ -6837,12 +6837,23 @@ static int m11_dm1_host_load_resume_save_path(void* user,
                                               const char* save_path,
                                               int* out_used_backup) {
     M11_DM1StartupHandoffContext* ctx = (M11_DM1StartupHandoffContext*)user;
+    int loaded;
     if (!ctx || !ctx->gameView) {
         return 0;
     }
-    return M11_GameView_LoadDm1SavePath(ctx->gameView,
-                                        save_path,
-                                        out_used_backup);
+    loaded = M11_GameView_LoadDm1SavePath(ctx->gameView,
+                                           save_path,
+                                           out_used_backup);
+    if (!loaded && g_m11_debug_startup_detail) {
+        fprintf(stderr,
+                "firestaff: dm1-resume-rejected source=%s action=%s outcome=%s candidate-panel=%d path=%s\n",
+                ctx->gameView->sourceId[0] ? ctx->gameView->sourceId : "(none)",
+                ctx->gameView->lastAction[0] ? ctx->gameView->lastAction : "(none)",
+                ctx->gameView->lastOutcome[0] ? ctx->gameView->lastOutcome : "(none)",
+                ctx->gameView->candidateMirrorPanelActive,
+                save_path ? save_path : "(none)");
+    }
+    return loaded;
 }
 
 static int m11_dm1_host_log_resume_loaded(void* user,
@@ -12267,6 +12278,14 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                        o->dataDir,
                                        o->bootProbe)) {
             g_m11_dm1_direct_cli_launch = 0;
+            if (g_m11_debug_startup_detail &&
+                (gameView.lastAction[0] || gameView.lastOutcome[0])) {
+                fprintf(stderr,
+                        "firestaff: launch-rejected game=%s action=%s outcome=%s\n",
+                        o->gameId ? o->gameId : "(none)",
+                        gameView.lastAction[0] ? gameView.lastAction : "(none)",
+                        gameView.lastOutcome[0] ? gameView.lastOutcome : "(none)");
+            }
             fprintf(stderr, "firestaff: direct launch failed for --game %s\n", o->gameId);
             runRc = 3;
             goto cleanup;

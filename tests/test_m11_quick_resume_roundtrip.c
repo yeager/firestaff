@@ -279,7 +279,7 @@ int main(void) {
     DM1OriginalSaveClassifyResult exportedPc34;
     int mapIndex, mapX, mapY, direction;
     const unsigned short leaderHandThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 1U);
-    const unsigned short openChestThing = (unsigned short)((THING_TYPE_CONTAINER << 10) | 2U);
+    unsigned short openChestThing = THING_NONE;
     unsigned int revealedCell = (17U * 32U) + 9U;
     unsigned int currentCell;
 
@@ -316,6 +316,16 @@ int main(void) {
                 "direct generic DM1 start should report game-view intro bypass")) return 1;
     if (!expect(view.inspectTitle[0] == '\0' && view.inspectDetail[0] == '\0',
                 "DM1 start must not render Firestaff-only HoC help text")) return 1;
+
+    /* Tie the runtime sidecar reference to a container decoded from the
+     * authentic PC34 dungeon data. This startup test has no party yet, so it
+     * exercises sidecar persistence directly rather than opening a chest. */
+    if (view.world.things && view.world.things->containers &&
+        view.world.things->containerCount > 0) {
+        openChestThing = (unsigned short)(THING_TYPE_CONTAINER << 10);
+    }
+    if (!expect(openChestThing != THING_NONE,
+                "authentic PC34 media should provide a decoded container reference")) return 1;
 
     /* COMMAND.C C140 reaches the native DM1 F0433 save route, whereas F9
      * below owns Firestaff's quicksave envelope. Exercise the actual visible
@@ -398,9 +408,14 @@ int main(void) {
     view.leaderHandIconIndex = -1;
     view.v1OpenChestThing = openChestThing;
     view.v1OpenChestOpenedByEye = 1;
+    view.v1OpenChestOpenedByEye = 1;
     if (!expect(F0891_ORCH_WorldHash_Compat(&view.world, &view.lastWorldHash),
                 "world hash refresh should succeed before save")) return 1;
     if (!expect(M11_GameView_QuickSave(&view), "quick save should write valid state")) return 1;
+    if (!expect(M11_GameView_LoadDm1SavePath(&view, savePath, NULL),
+                "DM1 startup resume owner should accept Firestaff quicksave envelope")) return 1;
+    if (!expect(M11_GameView_GetV1OpenChestThing(&view) == openChestThing,
+                "DM1 startup resume owner should restore quicksave sidecar state")) return 1;
     mapIndex = view.world.party.mapIndex;
     mapX = view.world.party.mapX;
     mapY = view.world.party.mapY;

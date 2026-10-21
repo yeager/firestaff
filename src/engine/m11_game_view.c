@@ -8656,7 +8656,9 @@ static int m11_load_quicksave_explored_bits(M11_GameViewState *state,
 }
 
 static int m11_write_quicksave_v1_runtime(const M11_GameViewState *state,
-                                          const char *path)
+                                          const char *path,
+                                          unsigned short openChestThing,
+                                          int openChestOpenedByEye)
 {
     DM1_V1_RuntimeSidecarPc34 sidecar;
 
@@ -8666,8 +8668,8 @@ static int m11_write_quicksave_v1_runtime(const M11_GameViewState *state,
     memset(&sidecar, 0, sizeof(sidecar));
     sidecar.leaderHandObjectPresent = state->leaderHandObjectPresent;
     sidecar.leaderHandThing = state->leaderHandThing;
-    sidecar.openChestThing = state->v1OpenChestThing;
-    sidecar.openChestOpenedByEye = state->v1OpenChestOpenedByEye;
+    sidecar.openChestThing = openChestThing;
+    sidecar.openChestOpenedByEye = openChestOpenedByEye;
     sidecar.candidateMirrorOrdinal = state->candidateMirrorOrdinal;
     sidecar.candidateMirrorPartyIndex = state->candidateMirrorPartyIndex;
     sidecar.candidateMirrorPanelActive = state->candidateMirrorPanelActive;
@@ -16030,6 +16032,23 @@ int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
     }
     if (!DM1_SaveResumeSourceAllowed(state->sourceId)) {
         return 0;
+    }
+    /* M12's Resume row reaches this source-owned entry point for both retail
+     * F0435 saves and Firestaff's own M11 quicksave envelope.  The latter is
+     * identified by its authenticated header and must use the world-hash
+     * verifier; sending it to DM1_LoadGameWithBackup rejects a valid saved
+     * session before the launcher can resume it.  Keep virtual media and all
+     * non-FSM11QS1 files on their existing original-format readers below. */
+    if (strstr(path, "::") == NULL) {
+        FILE* quickSave = fopen(path, "rb");
+        unsigned char magic[sizeof(g_m11_quicksave_magic)];
+        int isQuickSave = quickSave &&
+            fread(magic, 1U, sizeof(magic), quickSave) == sizeof(magic) &&
+            memcmp(magic, g_m11_quicksave_magic, sizeof(magic)) == 0;
+        if (quickSave) fclose(quickSave);
+        if (isQuickSave) {
+            return m11_game_view_load_quicksave_path(state, path);
+        }
     }
     if (state->candidateMirrorPanelActive) {
         /* ReDMCSB COMMAND.C F0380 gates the C140 save/load command surface
@@ -31197,6 +31216,8 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
     int blobSize;
     int bytesWritten = 0;
     unsigned char header[M11_QUICKSAVE_HEADER_SIZE];
+    unsigned short savedOpenChestThing = THING_NONE;
+    int savedOpenChestOpenedByEye = 0;
 
     if (!state || !state->active) {
         return 0;
@@ -31369,6 +31390,8 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
      * Firestaff keeps the explored-cell presentation state in a sidecar so
      * quick-resume can restore reveal progress alongside the source-locked
      * world blob. */
+    savedOpenChestThing = state->v1OpenChestThing;
+    savedOpenChestOpenedByEye = state->v1OpenChestOpenedByEye;
     /* CHEST.C F0334:112-133 materializes G0425 into the container chain.
      * The host snapshot serializes that chain, not the transient panel.
      * Close it before snapshotting so removed or inserted residents cannot
@@ -31416,7 +31439,8 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
         m11_set_status(state, "SAVE", "EXPLORED STATE FAILED");
         return 0;
     }
-    if (!m11_write_quicksave_v1_runtime(state, path)) {
+    if (!m11_write_quicksave_v1_runtime(
+            state, path, savedOpenChestThing, savedOpenChestOpenedByEye)) {
         m11_set_status(state, "SAVE", "V1 RUNTIME STATE FAILED");
         return 0;
     }
@@ -31518,12 +31542,22 @@ static int m11_game_view_load_quicksave_path(M11_GameViewState* state,
     }
 
     memset(&loadedWorld, 0, sizeof(loadedWorld));
-    if (!F0898_WORLD_Deserialize_Compat(&loadedWorld, blob, blobSize, NULL) ||
-        !F0891_ORCH_WorldHash_Compat(&loadedWorld, &loadedHash) ||
-        loadedHash != expectedHash) {
+    if (!F0898_WORLD_Deserialize_Compat(&loadedWorld, blob, blobSize, NULL)) {
         F0883_WORLD_Free_Compat(&loadedWorld);
         free(blob);
-        m11_set_status(state, "LOAD", "SAVE VERIFY FAILED");
+        m11_set_status(state, "LOAD", "SAVE DATA INVALID");
+        return 0;
+    }
+    if (!F0891_ORCH_WorldHash_Compat(&loadedWorld, &loadedHash)) {
+        F0883_WORLD_Free_Compat(&loadedWorld);
+        free(blob);
+        m11_set_status(state, "LOAD", "SAVE HASH UNAVAILABLE");
+        return 0;
+    }
+    if (loadedHash != expectedHash) {
+        F0883_WORLD_Free_Compat(&loadedWorld);
+        free(blob);
+        m11_set_status(state, "LOAD", "SAVE HASH MISMATCH");
         return 0;
     }
     free(blob);

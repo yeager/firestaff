@@ -1,3 +1,14 @@
+2026-10-21 DM1 Quick Resume handoff: M12 passed Firestaff's own `FSM11QS1`
+envelope to the original-save-only F0435 reader, so valid Firestaff saves
+could not resume from the launcher. `M11_GameView_LoadDm1SavePath` now routes
+that authenticated envelope through the world deserializer and hash check;
+retail save files still use their existing F0435 readers. The quicksave path
+also retains the open-chest reference in its runtime sidecar while F0334
+flushes the container into the saved world. `test_m11_quick_resume_roundtrip`
+passes with the authentic PC 3.4 archive for Firestaff and original PC34 save
+flows. An older local Firestaff save deserialized but failed the current world
+hash check and remains rejected; integrity checks were not relaxed.
+
 2026-10-21 original-media CLI/menu regression matrix:
 `dm1_v1_pc34_native_cli_boot`, `dm1_v1_atari_st_archive_cli_boot`,
 `dm1_v1_amiga_v20_archive_cli_boot`, and `dm1_v1_fmtowns_archive_cli_boot`
