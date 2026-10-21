@@ -75090,14 +75090,16 @@ int M11_GameView_ProbeDrawDm1FloorItemHostReceipt(
     M11_GameViewState* state,
     unsigned char* framebuffer,
     int framebufferWidth,
-    int framebufferHeight)
+    int framebufferHeight,
+    int thingType,
+    int subtype)
 {
     /* ReDMCSB DUNVIEW.C F0115:4567-4577 processes the object pass before
      * creature/projectile passes. This invokes that same M11 object blitter. */
     return m11_draw_item_sprite_material(
         state, framebuffer, framebufferWidth, framebufferHeight,
         M11_VIEWPORT_X + 32, M11_VIEWPORT_Y + 32, 32, 20,
-        THING_TYPE_WEAPON, 0, 0, 0, 1, 0, 0, 10, 1, 1);
+        thingType, subtype, 0, 0, 1, 0, 0, 10, 1, 1);
 }
 
 int M11_GameView_ProbeDrawDm1AlcoveItemForFloorItemReceipt(

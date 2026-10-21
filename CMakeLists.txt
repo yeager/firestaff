@@ -12681,6 +12681,10 @@ if(BUILD_TESTING)
             COMMAND test_m11_dm1_floor_item_host_presentation_receipt
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         )
+        set_tests_properties(m11_dm1_floor_item_host_presentation_receipt PROPERTIES
+            SKIP_RETURN_CODE 77
+            ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
+            LABELS "dm1;dos;pc34;real-media;objects;skip-safe")
     endif()
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_real_alcove_item_runtime.c")

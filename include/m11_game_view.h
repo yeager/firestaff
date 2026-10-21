@@ -3449,7 +3449,9 @@ int M11_GameView_ProbeDrawDm1FloorItemHostReceipt(
     M11_GameViewState* state,
     unsigned char* framebuffer,
     int framebufferWidth,
-    int framebufferHeight);
+    int framebufferHeight,
+    int thingType,
+    int subtype);
 int M11_GameView_ProbeDrawDm1AlcoveItemForFloorItemReceipt(
     M11_GameViewState* state,
     unsigned char* framebuffer,
