@@ -1,14 +1,16 @@
-2026-10-21 Apple IIGS startup-route audit: original G20E/G21E CLI and M12
-first-world checks pass, but this is not the native F0437/F0441 startup. In
-`main_loop_m11.c`, selected IIGS launches explicitly set
-`use_dm1_transaction=0` and `use_generic_launch=1`; that avoids feeding ProDOS
-and the GS runtime through the PC34/A20 handoff, but also bypasses the native
-title and entrance callbacks. ReDMCSB `STARTUP2.C:1381-1393,1443-1449` and
-`TITLE.C` define the IIGS-owned sequence. Implement a GS-specific selected-
-launch transaction using authenticated IIGS media, native C001 graphics and
-GS palette/VBlank behavior before changing that route. Current dummy-driver
-tests establish first-world startup only; native title, entrance, presentation
-and physical input remain unverified.
+2026-10-21 Apple IIGS startup follow-up: selected direct and M12 launches now
+read the authenticated G20/G21 installation and play the native `C001`
+`GRAPHICS.GAME` title raster through an 18-frame, nominal-60-Hz F0437 zoom
+before opening the first world. The C001 frame and IIGS RGB4 zoom palette are
+covered by `dm1_v1_iigs_graphics_real_media` against both original disk images.
+The `dm1_v1_iigs_graphics_real_media` and `firestaff_iigs_cli_real_media`
+CTest cases pass against both original disk images. The CLI test asserts title
+frame 18 and F0437 completion precede `DM1 IIGS READY` for direct and M12
+launches.
+Current zoom sampling is explicitly nearest-neighbour and does not reproduce
+the GS-specific F0129 scaler; palette fade stages, PRESENTS/MASTER overlays,
+F0441 entrance, and hardware visual/input parity remain open. This is a
+partial startup stage, not complete native startup parity.
 
 2026-10-21 DM1 Quick Resume handoff: M12 passed Firestaff's own `FSM11QS1`
 envelope to the original-save-only F0435 reader, so valid Firestaff saves

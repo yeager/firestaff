@@ -313,6 +313,7 @@ if(BUILD_TESTING)
         tests/test_dm1_v1_iigs_graphics_real_media.c
         src/shared/firestaff_prodos.c
         src/dm1/dm1_v1_iigs_graphics_dat.c
+        src/dm1/dm1_v1_iigs_title_f0437.c
         src/dm1/dm1_v1_legacy_graphics_dat.c)
     target_include_directories(test_dm1_v1_iigs_graphics_real_media PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/include")
@@ -6935,6 +6936,7 @@ add_library(firestaff_m10 STATIC
     src/dm1/dm1_v1_atari_st_graphics_dat.c
     src/dm1/dm1_v1_fmtowns_graphics_dat.c
     src/dm1/dm1_v1_iigs_graphics_dat.c
+    src/dm1/dm1_v1_iigs_title_f0437.c
     src/dm1/dm1_v1_iigs_dungeon.c
     src/dm1/dm1_v1_iigs_metadata.c
     src/dm1/dm1_v1_iigs_audio.c

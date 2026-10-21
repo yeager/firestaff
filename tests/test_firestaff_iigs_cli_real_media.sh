@@ -40,13 +40,30 @@ for version in 20 21; do
         }
     assert_trace "platformHandoff=iigs-g$version-native" "$scratch/g$version-cli.log"
     assert_trace 'party=1,3,3' "$scratch/g$version-cli.log"
+    FIRESTAFF_CONFIG_PATH="$scratch/g$version-direct.toml" SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+        "$app" --game dm1 --platform apple-iigs --data-dir "$scratch/g$version.po" \
+        --debug --duration 3000 >"$scratch/g$version-direct.log" 2>&1 || {
+            cat "$scratch/g$version-direct.log"; exit 1;
+        }
+    assert_trace 'startup-source-frame game=dm1 platform=apple-iigs phase=title-f0437 frame=18/18 input=ignored' "$scratch/g$version-direct.log"
+    assert_trace 'startup-source-complete game=dm1 platform=apple-iigs phase=title-f0437 frames=18 cadence-hz=60 sampling=nearest-neighbour-approx' "$scratch/g$version-direct.log"
+    assert_trace 'DM1 IIGS READY:' "$scratch/g$version-direct.log"
+    title_line=$(grep -n -F 'startup-source-complete game=dm1 platform=apple-iigs phase=title-f0437' "$scratch/g$version-direct.log" | cut -d: -f1)
+    world_line=$(grep -n -F 'DM1 IIGS READY:' "$scratch/g$version-direct.log" | cut -d: -f1)
+    [[ $title_line -lt $world_line ]] || { echo 'FAIL: IIGS title did not precede world handoff' >&2; exit 1; }
     FIRESTAFF_CONFIG_PATH="$scratch/g$version-menu.toml" SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
         FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
         "$app" --menu --game dm1 --platform iigs --data-dir "$scratch/g$version.po" \
         --debug --script enter,enter,enter --duration 3000 >"$scratch/g$version-menu.log" 2>&1 || {
             cat "$scratch/g$version-menu.log"; exit 1;
         }
+    assert_trace 'startup-source-frame game=dm1 platform=apple-iigs phase=title-f0437 frame=18/18 input=ignored' "$scratch/g$version-menu.log"
+    assert_trace 'startup-source-complete game=dm1 platform=apple-iigs phase=title-f0437 frames=18 cadence-hz=60 sampling=nearest-neighbour-approx' "$scratch/g$version-menu.log"
     assert_trace "DM1 IIGS READY: version=$version graphicsPath=$scratch/g$version.po::GRAPHICS.GAME" "$scratch/g$version-menu.log"
+    title_line=$(grep -n -F 'startup-source-complete game=dm1 platform=apple-iigs phase=title-f0437' "$scratch/g$version-menu.log" | cut -d: -f1)
+    world_line=$(grep -n -F 'DM1 IIGS READY:' "$scratch/g$version-menu.log" | cut -d: -f1)
+    [[ $title_line -lt $world_line ]] || { echo 'FAIL: M12 IIGS title did not precede world handoff' >&2; exit 1; }
     [[ $(firestaff_sha256_file "$scratch/g$version.po") == "$expected" ]]
 done
 towns=${FIRESTAFF_DM1_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"}
@@ -66,4 +83,4 @@ else
     echo 'SKIP: optional original FM Towns AUTO-priority comparison unavailable'
 fi
 [[ $(firestaff_sha256_file "$archive") == "$before" ]]
-echo 'PASS: both original IIGS editions reach native CLI input and M12 menu startup; intro/audio/visual parity unverified'
+echo 'PASS: original G20/G21 media title stage precedes native world handoff; selected M12 menu startup and dungeon input paths remain covered; GS F0129 visual parity and F0441 entrance unverified'

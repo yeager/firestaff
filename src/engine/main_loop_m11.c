@@ -59,6 +59,9 @@
 #include "dm1_v1_amiga_title_f0437.h"
 #include "dm1_v1_amiga_entrance_f0441.h"
 #include "dm1_v1_amiga_graphics_dat.h"
+#include "dm1_v1_iigs_graphics_dat.h"
+#include "dm1_v1_iigs_installation.h"
+#include "dm1_v1_iigs_title_f0437.h"
 #include "dm1_v1_amiga_palette_fade.h"
 #include "screenshot_m11.h"
 #include "v1_swsh_intro_pathfinder_pc34_compat.h"
@@ -6999,6 +7002,93 @@ static int m11_selected_dm1_is_iigs(const M12_StartupMenuState* menuState,
                M12_ARCH_APPLE_IIGS;
 }
 
+/* ReDMCSB TITLE.C F0437, MEDIA351 (G20E/G21E), lines 185-214, and
+ * STARTUP2.C MEDIA274, lines 1391-1392: play native C001 before
+ * LOADSAVE/F0434 opens the first world. Key and pointer input is
+ * consumed by the intro event pump while no game view is active. The title
+ * zoom's host scaler is currently nearest-neighbour, not GS F0129 parity. */
+static int m11_play_dm1_iigs_title_f0437(
+    const M12_StartupMenuState* menuState, const M12_MenuEntry* entry,
+    int bootProbe) {
+    DM1_V1_IigsInstallation installation;
+    const M12_AssetVersionStatus* version;
+    int versionIndex;
+    int expectedVersion;
+    uint8_t *graphics=NULL, *title=NULL, *framebuffer;
+    size_t graphicsSize=0u;
+    uint16_t width=0u,height=0u;
+    uint16_t palette[16];
+    uint64_t started;
+    uint8_t rgb4[256][3]={{0}};
+    int quitRequested=0;
+    int result=0;
+
+    if (!m11_selected_dm1_is_iigs(menuState,entry)) return 1;
+    if (bootProbe) return 1;
+    versionIndex=m11_selected_dm1_launch_version_index(menuState,entry);
+    version=versionIndex>=0 ? M12_AssetStatus_GetVersion(
+        &menuState->assetStatus,"dm1",(size_t)versionIndex) : NULL;
+    if (!version || !version->versionId) goto cleanup;
+    expectedVersion=strcmp(version->versionId,"iigs20-en")==0 ? 20 :
+                    strcmp(version->versionId,"iigs21-en")==0 ? 21 : 0;
+    if (!expectedVersion || dm1_v1_iigs_installation_find(
+            version->matchedPath,expectedVersion,&installation)!=1 ||
+        !asset_read_path_alloc(installation.graphics_path,&graphics,
+                               &graphicsSize)) goto cleanup;
+    title=(uint8_t*)malloc(320u*200u);
+    framebuffer=M11_Render_GetFramebuffer();
+    if (!title || !framebuffer || !dm1_v1_iigs_graphics_decode(
+            graphics,graphicsSize,1u,title,320u*200u,&width,&height) ||
+        width!=320u || height!=200u) goto cleanup;
+
+    M11_Render_SetV2PresentationActive(0);
+    M11_Render_SetModernPresentationActive(0);
+    started=SDL_GetTicks();
+    if (!dm1_v1_iigs_title_f0437_compose(title,0u,framebuffer,palette))
+        goto cleanup;
+    for (unsigned int i=0u;i<16u;++i) {
+        rgb4[i][0]=(uint8_t)((palette[i]>>8)&15u);
+        rgb4[i][1]=(uint8_t)((palette[i]>>4)&15u);
+        rgb4[i][2]=(uint8_t)(palette[i]&15u);
+    }
+    for (unsigned int i=16u;i<256u;++i) {
+        rgb4[i][0]=rgb4[i&15u][0];
+        rgb4[i][1]=rgb4[i&15u][1];
+        rgb4[i][2]=rgb4[i&15u][2];
+    }
+    if (M11_Render_SetIndexedPaletteRgb4(rgb4)!=M11_RENDER_OK) goto cleanup;
+    for (unsigned int frame=0u;frame<DM1_V1_IIGS_TITLE_ZOOM_FRAMES;++frame) {
+        const Uint64 deadline=started+((Uint64)(frame+1u)*1000u+30u)/60u;
+        if (m11_wait_for_intro_active_tick((Uint64)deadline,&quitRequested)) {
+            if (quitRequested) result=2;
+            goto cleanup;
+        }
+        if (!dm1_v1_iigs_title_f0437_compose(title,frame,framebuffer,palette))
+            goto cleanup;
+        if (M11_Render_PresentIndexed(framebuffer,320,200)!=M11_RENDER_OK)
+            goto cleanup;
+        if (g_m11_debug_startup_detail)
+            fprintf(stderr,"firestaff: startup-source-frame game=dm1 platform=apple-iigs phase=title-f0437 frame=%u/18 input=ignored\n",frame+1u);
+    }
+    for (unsigned int hold=1u;hold<=2u;++hold) {
+        if (m11_wait_for_intro_active_tick(
+                started+((Uint64)(DM1_V1_IIGS_TITLE_ZOOM_FRAMES+hold)*1000u+30u)/60u,
+                &quitRequested)) {
+            if (quitRequested) result=2;
+            goto cleanup;
+        }
+    }
+    if (g_m11_debug_startup_detail)
+        fprintf(stderr,"firestaff: startup-source-complete game=dm1 platform=apple-iigs phase=title-f0437 frames=18 cadence-hz=60 sampling=nearest-neighbour-approx source=%s graphics=%s\n",
+            version->versionId,installation.graphics_path);
+    result=1;
+cleanup:
+    if (!result && g_m11_debug_startup_detail)
+        fprintf(stderr,"firestaff: startup-source-rejected game=dm1 platform=apple-iigs phase=title-f0437\n");
+    free(title); free(graphics);
+    return result;
+}
+
 static int m11_selected_dm1_is_atari(const M12_StartupMenuState* menuState,
                                      const M12_MenuEntry* entry) {
     int versionIndex =
@@ -7414,6 +7504,19 @@ static int m11_open_requested_launch_impl(M11_GameViewState* gameView,
     if (m11_selected_dm1_is_iigs(menuState, launchEntry)) {
         dm1RouteReceipt.use_dm1_transaction = 0;
         dm1RouteReceipt.use_generic_launch = 1;
+        {
+            const int titleResult=m11_play_dm1_iigs_title_f0437(
+                menuState,launchEntry,bootProbe);
+            if (titleResult==2) {
+                menuState->launchRequested=0;
+                menuState->shouldExit=1;
+                return 1;
+            }
+            if (!titleResult) {
+                m11_set_launch_failed_message(menuState);
+                return 0;
+            }
+        }
     }
     if (m11_selected_dm1_is_atari(menuState, launchEntry)) {
         dm1RouteReceipt.use_dm1_transaction = 0;
