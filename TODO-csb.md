@@ -34,9 +34,11 @@ display, audio output, or physical input.
 `test_m12_main_menu_game_selection_real_media` passed both keyboard and mouse
 selection of CSB from the no-game launcher, beginning with
 `startup game=none mode=menu` and handing off to the authentic FM Towns
-English edition. The isolated data root exposed only DM1, CSB and DM2
-originals; the test verified the selected CSB archive remained unchanged.
-SDL dummy output does not prove native display or physical input parity.
+English edition. The current-source `test_m12_main_menu_runtime_real_media`
+rerun also reached the first authentic CSB runtime from that no-game menu.
+The isolated data root exposed only DM1, CSB and DM2 originals; both tests
+verified the selected CSB archive remained unchanged. SDL dummy output does not
+prove native display, physical input, or audio parity.
 
 2026-10-20 CSB FM Towns startup scan progress:
 The no-game M12 scan previously held one progress value while authenticating

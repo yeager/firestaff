@@ -59,9 +59,13 @@ sound output or physical input.
 `test_m12_main_menu_game_selection_real_media` passed both keyboard and mouse
 selection of DM2 from the no-game launcher, beginning with
 `startup game=none mode=menu` and handing off to the authentic FM Towns
-Japanese edition. The isolated data root exposed only DM1, CSB and DM2
-originals; the test verified the selected DM2 archive remained unchanged.
-SDL dummy output does not prove native display or physical input parity.
+Japanese edition. The current-source `test_m12_main_menu_runtime_real_media`
+rerun also reached its authentic first party from that no-game menu, and
+`dm2_v1_fmtowns_native_cli_boot` passed the bare `--game dm2` default route,
+including a mixed original-media collection and a saved PC preference. The
+isolated data root exposed only DM1, CSB and DM2 originals; the menu tests
+verified the selected DM2 archive remained unchanged. SDL dummy output does
+not prove native display, physical input, or audio parity.
 
 2026-10-20 explicit ZIP probe sharing: the Macintosh HFS reader and FM Towns
 disc reader now consume the same CUE-selected BIN buffer when M12 probes one
