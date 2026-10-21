@@ -171,6 +171,15 @@ party, and PUNCH dispatches). That narrow test does not reproduce or disprove
 the reported in-game monster behavior. Capture the exact live map, creature,
 and idle/action sequence before changing the source-owned F0209/F0207 route.
 
+The authentic Amiga v2.0 first-monster test also passes on current source, and
+`dm1_v1_legacy_graphics_real_corpus` passes against original Amiga v2.0 and FM
+Towns media. Those checks cover one encounter and bitmap decoding, not the
+reported viewport pixels. Reproduce each symptom with each platform's own
+retail media before changing a shared path: Atari ST uses the MEDIA009 native
+wall route, Amiga has its legacy-big-endian route, FM Towns has IMAGE2 assets,
+and PC34 uses C696 zone composition. Atari ST still lacks an equivalent
+first-monster combat and presented-frame regression in this set.
+
 2026-10-19 current-source DM1 M12 platform-card regression:
 `dm1_v1_m12_auto_multi_platform_menu` passed in 90.07 seconds against the
 installed originals. AUTO selected FM Towns; the tested M12 platform cards
