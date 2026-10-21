@@ -4284,3 +4284,18 @@ not used as its final verification.
   corresponding decoded bitmap records for EN/FR/DE; the CLI test checks the
   localized entrance graphic through the production launch route. This verifies source asset
   selection, not complete translation or visual parity.
+
+- 2026-10-21: Stabilized DM1 real-media test isolation across DOS and Atari ST.
+  DOS now gets a private HOME/config path, preventing a user's saved game from
+  changing the expected first-world position. The Atari ST HoC route also gets
+  a fresh config so stale window dimensions cannot invalidate its scripted
+  portrait click. Corrected the PC34 HoC mirror material test to distinguish
+  F0107's native side/front bitmap offset from G0190's derived-cache offset,
+  and bound its party/HUD probe directly to the PC34 archive instead of
+  scanning a mixed-edition data directory. Verification: the 17-test DM1
+  archive startup matrix had 14 passes, two profile-contaminated failures and
+  one demo edition skip; isolated DOS and Atari ST reruns both passed.
+  Authentic first-monster combat passed on PC34, Amiga 2.0 and
+  Atari ST; the PC34 mirror material and four-champion HUD/hand-slot probes
+  passed. These tests verify selected startup and runtime slices, not complete
+  cross-platform parity.
