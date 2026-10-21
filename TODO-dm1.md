@@ -1,3 +1,13 @@
+2026-10-21 original-media CLI/menu regression matrix:
+`dm1_v1_pc34_native_cli_boot`, `dm1_v1_atari_st_archive_cli_boot`,
+`dm1_v1_amiga_v20_archive_cli_boot`, and `dm1_v1_fmtowns_archive_cli_boot`
+passed 4/4 from the current source build. The tests used the installed original
+PC 3.4, Atari ST 1.2, Amiga 2.0, and FM Towns archives and exercised their
+covered direct and M12 launch routes. PC34 selector Resume input is covered,
+but the local collection has no authentic PC34 save, so loading and restoring
+one through that selector remains unverified. SDL dummy does not establish
+native display, audio output, or physical input parity.
+
 2026-10-20 authentic DM1 PC-34 startup/Hall regression rerun:
 `dm1_v1_pc34_native_cli_boot` passed with the installed DOS 3.4 ZIP. The
 original-media run covered clean quit from the first I34E and SWSH frames,

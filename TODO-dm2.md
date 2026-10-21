@@ -38,6 +38,14 @@ verification does not reproduce it. Source reference:
 
 # Firestaff TODO — DM2
 
+2026-10-21 original-media CLI/menu regression matrix:
+`dm2_v1_dos_native_cli_boot`, `dm2_v1_mac_native_cli_boot`,
+`dm2_v1_amiga_native_cli_boot`, and `dm2_v1_fmtowns_native_cli_boot` passed
+4/4 from the current source build. The tests exercised the installed
+authentic DOS, Macintosh, Amiga, and FM Towns startup routes, including the
+long FM Towns title and New Game path through the first champion. SDL dummy
+does not establish native display, audio output, or physical input parity.
+
 2026-10-20 explicit ZIP probe sharing: the Macintosh HFS reader and FM Towns
 disc reader now consume the same CUE-selected BIN buffer when M12 probes one
 archive for both platform families. The CUE remains the authority for the

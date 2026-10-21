@@ -1,3 +1,12 @@
+2026-10-21 original-media CLI/menu regression matrix:
+`csb_v1_amiga35_ctraw_native_cli_boot`,
+`csb_v1_amiga35_ctraw_native_menu_boot`,
+`csb_v1_atari_original_archive_cli_boot`, and
+`csb_v1_fmtowns_native_cli_boot` passed 4/4 from the current source build.
+The tested routes used the installed authentic Amiga 3.5 CTRaw, Atari ST, and
+FM Towns media; the CTRaw pair covered both direct and M12 startup. SDL dummy
+does not establish native display, audio output, or physical input parity.
+
 2026-10-20 CSB FM Towns startup scan progress:
 The no-game M12 scan previously held one progress value while authenticating
 the original 507 MB CD image inside the FM Towns ZIP. The native ZIP reader now
