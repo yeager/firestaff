@@ -2621,3 +2621,13 @@ The built-in 7z reader does not enumerate this multi-member solid archive, so
 runtime use of that exact 7z still requires the explicit external archive-tools
 option; ZIP is the tested native route. Failure diagnostics now identify the
 IIGS startup stage and selected owner when debug HUD tracing is enabled.
+
+2026-10-21 first-encounter platform check: the authentic DM1 HoC route now
+verifies first-door pointer activation, arrival at original group 169, native
+creature attack behavior and player PUNCH experience on PC 3.4, Amiga 2.0,
+Atari ST 1.2, FM Towns English and Apple IIGS 2.0/2.1. FM Towns uses its
+authenticated ZIP through M12 and its own source graphics identity; the test
+does not substitute Amiga or PC data. All five platform checks pass locally
+against the installed original media. This closes the first-encounter combat
+coverage gap for these editions, not complete campaign/runtime parity. Visual
+parity and the other unresolved platform interactions remain separate work.

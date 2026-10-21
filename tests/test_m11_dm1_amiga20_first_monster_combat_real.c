@@ -1,4 +1,4 @@
-/* Authentic Atari ST / Amiga M12 launch through first HoC combat encounter. */
+/* Authentic Atari ST / Amiga / FM Towns M12 launch through first HoC combat. */
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
 #include "menu_input_m12.h"
@@ -76,12 +76,15 @@ static int advance_input(M11_GameViewState *game, M12_MenuInput input)
 int main(void)
 {
     const char *atariArchive = getenv("FIRESTAFF_DM1_ATARI_ST_ARCHIVE");
+    const char *townsArchive = getenv("FIRESTAFF_DM1_FMTOWNS_ARCHIVE");
     const int isAtari = atariArchive && atariArchive[0];
-    const char *archive = isAtari
-        ? atariArchive : getenv("FIRESTAFF_DM1_AMIGA_V20_ARCHIVE");
-    const char *versionId = isAtari ? "st12-en" : "amiga20-en";
-    const char *graphicsMd5 = isAtari
-        ? "9ce2eaf7a9e78620e3f17594437caffa"
+    const int isTowns = !isAtari && townsArchive && townsArchive[0];
+    const char *archive = isAtari ? atariArchive : isTowns ? townsArchive
+        : getenv("FIRESTAFF_DM1_AMIGA_V20_ARCHIVE");
+    const char *versionId = isAtari ? "st12-en" : isTowns ? "fmtowns-en"
+        : "amiga20-en";
+    const char *graphicsMd5 = isAtari ? "9ce2eaf7a9e78620e3f17594437caffa"
+        : isTowns ? "c10c512f63461ebe79b5ac365115b61b"
         : "6a2f135b53c2220f0251fa103e2a6e7e";
     M12_StartupMenuInitOptions options;
     M12_StartupMenuState menu;
@@ -94,13 +97,13 @@ int main(void)
     unsigned int naturalDamage;
 
     if (!archive || !archive[0]) {
-        puts("SKIP: authentic DM1 Atari/Amiga original archive is not staged");
+        puts("SKIP: authentic DM1 original archive is not staged");
         return 77;
     }
     {
         FILE *media = fopen(archive, "rb");
         if (!media) {
-            puts("SKIP: authentic DM1 Atari/Amiga original archive is not staged");
+            puts("SKIP: authentic DM1 original archive is not staged");
             return 77;
         }
         fclose(media);
@@ -117,15 +120,15 @@ int main(void)
                 &menu.assetStatus, "dm1", (size_t)version)->matched &&
                 strcmp(M12_AssetStatus_GetVersion(&menu.assetStatus, "dm1",
                     (size_t)version)->matchedMd5, graphicsMd5) == 0,
-            "M12 authentic Atari/Amiga catalogue admission");
-    REQUIRE(asset_file_matches_md5(M12_AssetStatus_GetVersion(
+            "M12 authentic platform catalogue admission");
+    REQUIRE(isTowns || asset_file_matches_md5(M12_AssetStatus_GetVersion(
                 &menu.assetStatus, "dm1", (size_t)version)->matchedPath,
                 graphicsMd5),
-            "original GRAPHICS.DAT bytes match the Atari/Amiga receipt");
+            "original GRAPHICS.DAT bytes match the platform receipt");
     menu.selectedIndex = menu.activatedIndex = 0;
     menu.launchRequested = 1;
-    menu.gameOptions[0].architectureIndex = isAtari
-        ? M12_ARCH_ATARI_ST : M12_ARCH_AMIGA;
+    menu.gameOptions[0].architectureIndex = isAtari ? M12_ARCH_ATARI_ST
+        : isTowns ? M12_ARCH_FM_TOWNS : M12_ARCH_AMIGA;
     menu.gameOptions[0].versionIndex = version;
     menu.gameOptions[0].presentationModeIndex = M12_PRESENTATION_V1_ORIGINAL;
     menu.settings.rendererBackendIndex = M12_RENDERER_BACKEND_SOFTWARE;
@@ -134,6 +137,7 @@ int main(void)
     REQUIRE(M11_GameView_OpenSelectedMenuEntry(&game, &menu) &&
                 game.active &&
                 (isAtari ? game.assetLoader.atariStDm1
+                         : isTowns ? game.dm1FmtownsStartupReceiptValid
                          : game.assetLoader.legacyDm1) && game.world.dungeon &&
                 game.world.things && game.world.party.mapIndex == 0 &&
                 game.world.party.mapX == 1 && game.world.party.mapY == 3,
@@ -164,7 +168,7 @@ int main(void)
     REQUIRE(game.world.party.mapIndex == 0 && game.world.party.mapX == 4 &&
                 game.world.party.mapY == 15 && game.world.party.direction == 0,
             "authentic production movement reaches the HoC route");
-    {
+    if (!isTowns) {
         unsigned char framebuffer[320 * 200];
         M11_Dm1WallOrnamentHostPresentationReceipt receipt;
         const M11_AssetSlot *source;
@@ -349,7 +353,8 @@ int main(void)
     }
     result = 0;
     printf("PASS: authentic %s M12 startup, HoC route and first-monster combat naturalDamage=%u\n",
-           isAtari ? "Atari ST v1.2" : "Amiga v2.0", naturalDamage);
+           isAtari ? "Atari ST v1.2" : isTowns ? "FM Towns English"
+           : "Amiga v2.0", naturalDamage);
 
 cleanup:
     if (gameInitialized) M11_GameView_Shutdown(&game);

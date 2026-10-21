@@ -12952,6 +12952,13 @@ if(BUILD_TESTING)
             SKIP_RETURN_CODE 77
             ENVIRONMENT "FIRESTAFF_DM1_ATARI_ST_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_EN_Version-12.zip;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy"
             LABELS "dm1;atari-st;real-media;combat;startup;skip-safe")
+
+        add_test(NAME m11_dm1_fmtowns_first_monster_combat_real
+            COMMAND test_m11_dm1_amiga20_first_monster_combat_real)
+        set_tests_properties(m11_dm1_fmtowns_first_monster_combat_real PROPERTIES
+            SKIP_RETURN_CODE 77
+            ENVIRONMENT "FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_FM-Towns_JA-EN.zip;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy"
+            LABELS "dm1;fm-towns;real-media;combat;startup;skip-safe")
     endif()
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_source_f0306_real.c")
