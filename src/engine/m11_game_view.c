@@ -72407,6 +72407,72 @@ static void m11_iigs_draw_first_world(M11_GameViewState* state,
     ++state->dm1IigsDrawCount;
 }
 
+/* ReDMCSB ENTRANCE.C F0439 constructs a transient 5x5 C255 map before its
+ * F0128 call; IIGS does not call STARTEND.C F0797. Render that source map
+ * through the same native IIGS wall/material path used by the live dungeon,
+ * without changing the loaded campaign dungeon or its party position. */
+int M11_GameView_RenderDm1IigsEntranceC255(
+    M11_GameViewState* state, uint8_t* viewport_pixels,
+    size_t viewport_pixel_count, int viewport_stride)
+{
+    struct DungeonDatState_Compat micro_dungeon;
+    struct DungeonMapDesc_Compat micro_map;
+    struct DungeonMapTiles_Compat micro_tiles;
+    struct DungeonDatState_Compat* saved_dungeon;
+    unsigned char squares[25] = {0};
+    unsigned char frame[320 * 200];
+    int saved_map_index, saved_map_x, saved_map_y, saved_direction;
+    uint32_t saved_draw_count;
+    int y;
+
+    if (!state || !state->active || !state->dm1IigsActive ||
+        !state->world.dungeon || !viewport_pixels || viewport_stride < 224 ||
+        viewport_pixel_count < (size_t)viewport_stride * 136u) return 0;
+
+    /* MAP.C stores squares column-major. F0439 opens offsets 10..14
+     * (x=2, all y) and offset 7 (x=1,y=2), using C01 corridor bytes. */
+    for (y = 0; y < 5; ++y) squares[2 * 5 + y] = 32u;
+    squares[1 * 5 + 2] = 32u;
+    memset(&micro_dungeon, 0, sizeof(micro_dungeon));
+    memset(&micro_map, 0, sizeof(micro_map));
+    memset(&micro_tiles, 0, sizeof(micro_tiles));
+    micro_dungeon.header.mapCount = 1u;
+    micro_dungeon.maps = &micro_map;
+    micro_dungeon.tiles = &micro_tiles;
+    micro_dungeon.loaded = 1;
+    micro_dungeon.tilesLoaded = 1;
+    micro_map.width = 5u;
+    micro_map.height = 5u;
+    micro_map.floorSet = 0u;
+    micro_map.wallSet = 0u;
+    micro_tiles.squareData = squares;
+    micro_tiles.squareCount = 25;
+
+    saved_dungeon = state->world.dungeon;
+    saved_map_index = state->world.party.mapIndex;
+    saved_map_x = state->world.party.mapX;
+    saved_map_y = state->world.party.mapY;
+    saved_direction = state->world.party.direction;
+    saved_draw_count = state->dm1IigsDrawCount;
+    state->world.dungeon = &micro_dungeon;
+    state->world.party.mapIndex = 0;
+    state->world.party.mapX = 2;
+    state->world.party.mapY = 0;
+    state->world.party.direction = 2; /* F0128 faces south. */
+    m11_iigs_draw_first_world(state, frame, 320, 200);
+    state->world.dungeon = saved_dungeon;
+    state->world.party.mapIndex = saved_map_index;
+    state->world.party.mapX = saved_map_x;
+    state->world.party.mapY = saved_map_y;
+    state->world.party.direction = saved_direction;
+    state->dm1IigsDrawCount = saved_draw_count;
+
+    for (y = 0; y < 136; ++y)
+        memcpy(viewport_pixels + (size_t)y * (size_t)viewport_stride,
+               frame + (size_t)(33 + y) * 320u, 224u);
+    return 1;
+}
+
 static void m11_game_view_draw_source(M11_GameViewState* state,
                        unsigned char* framebuffer,
                        int framebufferWidth,

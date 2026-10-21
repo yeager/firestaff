@@ -59,6 +59,7 @@ for version in 20 21; do
             cat "$scratch/g$version-entrance.log"; exit 1;
         }
     assert_trace 'phase=entrance-f0441 state=closed input=mouse-only' "$scratch/g$version-entrance.log"
+    assert_trace 'viewport=f0439-c255 source=F0441+C004+C002+C003' "$scratch/g$version-entrance.log"
     assert_trace 'startup-input-source mouse x=777 y=140 command=1' "$scratch/g$version-entrance.log"
     assert_trace 'phase=entrance-door frame=31/31 source-vblanks=1' "$scratch/g$version-entrance.log"
     assert_trace "startup-f0441-authenticated-handoff game=dm1 platform=apple-iigs version=$version" "$scratch/g$version-entrance.log"
@@ -93,4 +94,4 @@ else
     echo 'SKIP: optional original FM Towns AUTO-priority comparison unavailable'
 fi
 [[ $(firestaff_sha256_file "$archive") == "$before" ]]
-echo 'PASS: original G20/G21 title and F0441 mouse-gated door startup run through direct CLI and selected M12 menu; native GS C255 and GS F0129 parity remain unverified'
+echo 'PASS: original G20/G21 title, F0439 C255 entrance viewport and F0441 mouse-gated door startup run through direct CLI and selected M12 menu; GS F0128 pixel parity and GS F0129 remain unverified'

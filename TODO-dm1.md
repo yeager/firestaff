@@ -2553,14 +2553,15 @@ Nominal clock 7159090 Hz and fixed host headroom remain explicit profiles.
 Hardware reference: https://www.brutaldeluxe.fr/documentation/cortland/v4_13_EnsoniqDOC.pdf
 
 2026-10-21 IIGS native entrance follow-up: after F0437 and opening the
-selected G20/G21 world, Firestaff now presents the original C004 entrance
-page with C002/C003 closed doors, waits for a fresh mouse click in the native
-Enter region, and runs the 31 F0438 door frames at nominal 60 Hz. Palette words
-come from the authenticated DUNGEON.MASTER metadata; door/entrance pixels come
-from the selected original GRAPHICS.GAME. Direct CLI and selected M12 menu
-tests exercise both original editions and require the mouse route to dispatch
-C200 before the final frame. This closes the previous title-to-world path
-that skipped F0441. The aperture currently uses the live Firestaff world view
-instead of ENTRANCE.C F0797's exact 5x5 C255 micro-dungeon; native GS cadence,
-credits/bonus/resume commands, source audio sequencing, and visual parity are
-still open. It is not a full IIGS entrance parity claim.
+selected G20/G21 world, Firestaff presents the original C004 entrance page
+with C002/C003 closed doors, waits for a fresh mouse click in the native Enter
+region, and runs the 31 F0438 door frames at nominal 60 Hz. F0439's inline
+column-major C255 map is rendered from the selected original GRAPHICS.GAME
+through the native IIGS wall/material compositor; the loaded campaign map and
+party pose are restored immediately after rendering. Direct CLI and selected
+M12 menu tests exercise both original editions and require the C255 route and
+mouse click to dispatch C200 before the final frame. ReDMCSB IIGS ENTRANCE.C
+F0439 constructs C255 inline; STARTEND.C F0797 is the equivalent helper used
+by other builds and is not called on this path. Exact F0128 pixel parity,
+native GS cadence, credits/bonus/resume commands, source audio sequencing,
+and visual parity remain open. This is not a full IIGS entrance parity claim.

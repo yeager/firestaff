@@ -7130,11 +7130,8 @@ cleanup:
 }
 
 /* ReDMCSB STARTUP2.C enters ENTRANCE.C F0441 after opening the selected
- * dungeon. The original GS page uses the native C004/C002/C003 records and
- * waits for a fresh mouse click on the Enter button before F0438 opens the
- * doors. Its transient entrance viewport is rendered from the live game
- * frame here; the native 5x5 C255 renderer and exact GS VBlank cadence remain
- * separate parity work. */
+ * dungeon. The original GS page uses native C004/C002/C003 records and
+ * F0439's transient C255 viewport while waiting for a fresh mouse click. */
 static int m11_play_dm1_iigs_entrance_f0441(
     const M12_StartupMenuState* menuState, const M12_MenuEntry* entry,
     M11_GameViewState* gameView, int bootProbe) {
@@ -7180,14 +7177,18 @@ static int m11_play_dm1_iigs_entrance_f0441(
         return 0;
     }
 
-    /* Keep the renderer's current original-world view in the source-owned
-     * C004 aperture. No generated artwork or substitute game data is used. */
-    M11_GameView_Draw(gameView, dungeonFrame, M11_FB_WIDTH, M11_FB_HEIGHT);
+    /* IIGS F0439 constructs a transient C255 micro-map; render it from the
+     * authenticated original graphics bank without exposing the campaign map. */
+    if (!M11_GameView_RenderDm1IigsEntranceC255(
+            gameView, dungeonFrame, M11_FB_BYTES, M11_FB_WIDTH)) {
+        free(dungeonFrame);
+        return 0;
+    }
     memset(page, 0, (size_t)M11_FB_BYTES);
     memcpy(page, entrance->pixels, 320u * 200u);
     for (unsigned int row = 0u; row < 136u; ++row) {
         memcpy(page + (size_t)(33u + row) * 320u,
-               dungeonFrame + (size_t)(33u + row) * 320u, 224u);
+               dungeonFrame + (size_t)row * 320u, 224u);
     }
     if (!m11_draw_entrance_closed_doors_asset(gameView, page)) {
         free(dungeonFrame);
@@ -7213,7 +7214,7 @@ static int m11_play_dm1_iigs_entrance_f0441(
     }
     if (g_m11_debug_startup_detail) {
         fprintf(stderr,
-            "firestaff: startup-source-frame game=dm1 platform=apple-iigs phase=entrance-f0441 state=closed input=mouse-only viewport=live-world source=C004+C002+C003\n");
+            "firestaff: startup-source-frame game=dm1 platform=apple-iigs phase=entrance-f0441 state=closed input=mouse-only viewport=f0439-c255 source=F0441+C004+C002+C003\n");
     }
 
     /* IIGS ENTRANCE.C sets no primary keyboard table. Requiring a fresh

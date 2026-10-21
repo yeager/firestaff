@@ -2355,6 +2355,11 @@ void M11_GameView_Draw(M11_GameViewState* state,
                        unsigned char* framebuffer,
                        int framebufferWidth,
                        int framebufferHeight);
+/* Render ReDMCSB ENTRANCE.C F0439's transient south-facing C255 map into a
+ * 224x136 viewport buffer without mutating the loaded campaign map. */
+int M11_GameView_RenderDm1IigsEntranceC255(
+    M11_GameViewState* state, uint8_t* viewport_pixels,
+    size_t viewport_pixel_count, int viewport_stride);
 /* Returns F31J C06's independently verified native selector surface. */
 int M11_GameView_GetCsbFmtownsUtilityJapaneseFrame(
     const M11_GameViewState *state, const uint8_t **out_pixels,

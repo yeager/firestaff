@@ -6,14 +6,14 @@
 
 ## Developer changes
 
-- `DM1 Apple IIGS entrance`: bind the scene to same-disk G20/G21 program, graphics, dungeon and SYSTEM/START identities; use source entrance/door graphics, the authenticated palette and the existing 31-step door compositor. The entrance viewport is a live-world composite and is not asserted as exact F0797 parity.
+- `DM1 Apple IIGS entrance`: bind the scene to same-disk G20/G21 program, graphics, dungeon and SYSTEM/START identities; render ENTRANCE.C F0439's inline C255 map with the native IIGS wall/material compositor; use source entrance/door graphics, the authenticated palette and the existing 31-step door compositor. Exact F0128 pixel parity is not asserted.
 - `DM1 original-media startup evidence`: record verified M12 menu selection and first-runtime handoffs across authentic FM Towns, PC, Atari ST, Amiga and Apple IIGS media, while retaining explicit unverified gameplay-parity gaps.
 - `Apple IIGS input regression`: exercise the mouse-only entrance handoff from both authentic editions and assert the closed frame, click coordinates, final door frame and authenticated runtime handoff.
 - `Release metadata`: update the project version and reproducible SPDX source SBOM for v3.0.403.
 
 ## Known limitations
 
-- The Apple IIGS entrance viewport uses the current live-world frame; exact source F0797/C255 entrance composition, native VBL cadence, credits/bonus/resume flow and audio sequencing remain unverified.
+- The Apple IIGS entrance map and camera now follow F0439's C255 setup, but exact F0128 pixels, native VBL cadence, credits/bonus/resume flow and audio sequencing remain unverified. IIGS F0439 constructs C255 inline; F0797 is not called on this branch.
 - Original-media tests use SDL dummy video and audio and do not establish physical display, audible playback or full gameplay parity.
 
 # Firestaff v3.0.402
