@@ -177,8 +177,11 @@ Towns media. Those checks cover one encounter and bitmap decoding, not the
 reported viewport pixels. Reproduce each symptom with each platform's own
 retail media before changing a shared path: Atari ST uses the MEDIA009 native
 wall route, Amiga has its legacy-big-endian route, FM Towns has IMAGE2 assets,
-and PC34 uses C696 zone composition. Atari ST still lacks an equivalent
-first-monster combat and presented-frame regression in this set.
+and PC34 uses C696 zone composition. An Atari ST first-monster test target is
+now registered using the Atari-specific route and original archive, but its
+current-source run result has not yet been recorded. The first-monster test
+matrix currently has no equivalent FM Towns or IIGS combat route. Presented-
+frame coverage for the reported symptoms remains unverified on all platforms.
 
 2026-10-19 current-source DM1 M12 platform-card regression:
 `dm1_v1_m12_auto_multi_platform_menu` passed in 90.07 seconds against the
@@ -1497,7 +1500,8 @@ parity.
   now has a separate M12 launcher-route regression through Hall selection,
   the first-door transition and group 169's live attack, including player
   PUNCH and paired XP. Exact damage/RNG still needs an original executable
-  capture; Atari/Towns combat routes need equivalent original-media tests.
+  capture. The Atari ST first-monster test target is registered and needs an
+  original-media run; FM Towns and IIGS need equivalent combat-route coverage.
   Extend startup sentinel proof to remaining
   editions and actual launcher UI routes; completed regression evidence is in
   DONE-dm1.md.
