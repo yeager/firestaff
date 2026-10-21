@@ -159,6 +159,18 @@ snapshot: the exact first attack falls from 28 HP damage to 17 with
 after stamina and wound changes. This verifies that physical PC34 path, not
 physical input, every combat type, or complete platform parity.
 
+2026-10-21 user PC HoC screenshot and combat follow-up: the seven screenshots
+in `~/a` show a retained/overlapped title-selection image, unreadable wall
+inscriptions, a wall button rendered as a hole, an item with vertical striping,
+and an incorrect-looking door composition. Keep these as external evidence;
+do not copy original game assets or user screenshots into the repository. The
+current-source `m11_dm1_pc34_first_monster_combat_real` target was rebuilt and
+rerun against the authentic DOS archive on this date; it still passes the
+scripted first map-one encounter (the creature approaches and damages the
+party, and PUNCH dispatches). That narrow test does not reproduce or disprove
+the reported in-game monster behavior. Capture the exact live map, creature,
+and idle/action sequence before changing the source-owned F0209/F0207 route.
+
 2026-10-19 current-source DM1 M12 platform-card regression:
 `dm1_v1_m12_auto_multi_platform_menu` passed in 90.07 seconds against the
 installed originals. AUTO selected FM Towns; the tested M12 platform cards
