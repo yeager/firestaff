@@ -227,7 +227,8 @@ static int verify_receipt_and_glyph_pixels(
                             kFramebufferWidth + plan.textX +
                         glyphOffset * DM1_V1_INSCRIPTION_GLYPH_WIDTH + xx;
                     if (source != DM1_V1_INSCRIPTION_TRANSPARENT_COLOR &&
-                        framebuffer[pixel] != source) {
+                        framebuffer[pixel] != (unsigned char)(0x10u |
+                                                             (source & 0x0fu))) {
                         fprintf(stderr,
                                 "glyph mismatch text=%d line=%d glyph=%d xy=(%d,%d) source=%u got=%u\n",
                                 pose->textStringIndex, line, glyph,
@@ -346,6 +347,18 @@ int main(void)
         memset(framebuffer, 0, sizeof(framebuffer));
         M11_GameView_Draw(&state, framebuffer, kFramebufferWidth,
                           kFramebufferHeight);
+        /* M11_AssetLoader_Load returns an LRU cache slot. Drawing the full
+         * viewport can evict M648, so reacquire its slot before comparing
+         * the final framebuffer against the immutable source raster. */
+        font = M11_AssetLoader_Load(&state.assetLoader,
+                                    DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34);
+        if (!font || !font->pixels ||
+            font->width != DM1_V1_INSCRIPTION_FONT_WIDTH_PC34 ||
+            font->height != DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34) {
+            fprintf(stderr, "real PC34 M648 material was evicted and not reloadable\n");
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
         if (!verify_receipt_and_glyph_pixels(&state, &poses[i], framebuffer,
                                              font)) {
             M11_Dm1InscriptionHostPresentationReceipt receipt;
@@ -395,6 +408,13 @@ int main(void)
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&state, framebuffer, kFramebufferWidth,
                               kFramebufferHeight);
+            font = M11_AssetLoader_Load(&state.assetLoader,
+                                        DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34);
+            if (!font || !font->pixels) {
+                fprintf(stderr, "real PC34 M648 material did not reload for translation check\n");
+                M11_GameView_Shutdown(&state);
+                return 1;
+            }
             memset(&translatedReceipt, 0, sizeof(translatedReceipt));
             M11_GameView_GetDm1InscriptionHostPresentationReceipt(
                 &translatedReceipt);
@@ -411,10 +431,11 @@ int main(void)
              * five-pixel raster is inset one pixel in the 8x8 M648 cell. */
             for (row = 0; row < 7; ++row) {
                 for (col = 0; col < 5; ++col) {
-                    unsigned char want =
-                        (capital_a_diaeresis[row] & (1u << (4 - col)))
-                            ? ink : framebuffer[(kViewportY + 41 + row) * 320 +
-                                                89 + col];
+                    unsigned char want = (unsigned char)(0x10u | ink);
+                    if (!(capital_a_diaeresis[row] & (1u << (4 - col)))) {
+                        want = framebuffer[(kViewportY + 41 + row) * 320 +
+                                           89 + col];
+                    }
                     if ((capital_a_diaeresis[row] & (1u << (4 - col))) &&
                         framebuffer[(kViewportY + 41 + row) * 320 + 89 + col] !=
                             want) {
@@ -438,6 +459,8 @@ int main(void)
     state.world.party.direction = noTextPose.direction;
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&state, framebuffer, kFramebufferWidth, kFramebufferHeight);
+    font = M11_AssetLoader_Load(&state.assetLoader,
+                                DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34);
     memset(&clearedReceipt, 0, sizeof(clearedReceipt));
     M11_GameView_GetDm1InscriptionHostPresentationReceipt(&clearedReceipt);
     if (clearedReceipt.valid || clearedReceipt.fontGraphicIndex != 0 ||
