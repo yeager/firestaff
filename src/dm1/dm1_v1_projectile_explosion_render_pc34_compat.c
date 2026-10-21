@@ -370,6 +370,22 @@ int dm1_v1_projectile_scale_units(int depthIndex, int relativeCell) {
     return DM1_ProjectileScales[idx];
 }
 
+int dm1_v1_projectile_scale_units_for_energy(int depthIndex, int relativeCell,
+                                             int aspectIndex,
+                                             int kineticEnergy) {
+    int scale = dm1_v1_projectile_scale_units(depthIndex, relativeCell);
+    unsigned int graphicInfo;
+    if (aspectIndex < 0 || aspectIndex >= DM1_PROJECTILE_ASPECT_COUNT ||
+        kineticEnergy < 0 || kineticEnergy > 255) return scale;
+    graphicInfo = DM1_ProjectileAspects[aspectIndex].graphicInfo;
+    if ((graphicInfo & 0x0100u) == 0u ||
+        (depthIndex <= 0 && kineticEnergy == 255)) return scale;
+    /* ReDMCSB DUNVIEW.C F0115: MEDIA720 PC34 uses max(2, scale *
+     * min(96, kineticEnergy + 1) / 256); other variants omit the floor. */
+    scale = (scale * ((kineticEnergy + 1 < 96) ? kineticEnergy + 1 : 96)) >> 8;
+    return scale < 2 ? 2 : scale;
+}
+
 /* F0142_DUNGEON_GetProjectileAspect — subtype to aspect index mapping. */
 int F0142_DUNGEON_GetProjectileAspect(int subtype) {
     switch (subtype) {
@@ -440,7 +456,8 @@ int dm1_v1_projectile_d4_far_box(int relSide,
     return 1;
 }
 
-int dm1_v1_projectile_sprite_blit_plan(DM1_ProjectileSpriteBlitPlan *out_plan,
+int dm1_v1_projectile_sprite_blit_plan_for_energy(
+                                       DM1_ProjectileSpriteBlitPlan *out_plan,
                                        int graphicIndex,
                                        int depthIndex,
                                        int relativeCell,
@@ -455,7 +472,9 @@ int dm1_v1_projectile_sprite_blit_plan(DM1_ProjectileSpriteBlitPlan *out_plan,
                                        int paneW,
                                        int paneH,
                                        int spriteW,
-                                       int spriteH)
+                                       int spriteH,
+                                       int aspectIndex,
+                                       int kineticEnergy)
 {
     DM1_ProjectileSpriteBlitPlan plan;
     int zoneX = 0;
@@ -476,7 +495,8 @@ int dm1_v1_projectile_sprite_blit_plan(DM1_ProjectileSpriteBlitPlan *out_plan,
     /* ReDMCSB DUNVIEW.C F0115 lines 5635-5897 restores the projectile
      * view cell, resolves C2900 through the current view square/cell,
      * applies G0215 projectile scaling, and blits with transparent C10. */
-    plan.scale_units = dm1_v1_projectile_scale_units(depthIndex, relativeCell);
+    plan.scale_units = dm1_v1_projectile_scale_units_for_energy(
+        depthIndex, relativeCell, aspectIndex, kineticEnergy);
     plan.draw_w = spriteW * plan.scale_units / 32;
     plan.draw_h = spriteH * plan.scale_units / 32;
     if (plan.draw_w < 3) plan.draw_w = 3;
@@ -560,6 +580,20 @@ int dm1_v1_projectile_sprite_blit_plan(DM1_ProjectileSpriteBlitPlan *out_plan,
 
     *out_plan = plan;
     return 1;
+}
+
+int dm1_v1_projectile_sprite_blit_plan(DM1_ProjectileSpriteBlitPlan *out_plan,
+                                       int graphicIndex, int depthIndex,
+                                       int relativeCell, int flipFlags,
+                                       int sourceZoneRow, int viewportX,
+                                       int viewportY, int viewportW,
+                                       int viewportH, int paneX, int paneY,
+                                       int paneW, int paneH, int spriteW,
+                                       int spriteH) {
+    return dm1_v1_projectile_sprite_blit_plan_for_energy(
+        out_plan, graphicIndex, depthIndex, relativeCell, flipFlags,
+        sourceZoneRow, viewportX, viewportY, viewportW, viewportH,
+        paneX, paneY, paneW, paneH, spriteW, spriteH, -1, 255);
 }
 
 

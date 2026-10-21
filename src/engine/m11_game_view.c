@@ -949,7 +949,9 @@ static int m11_draw_projectile_sprite_ex(const M11_GameViewState* state,
                                          int flipFlags,
                                          int sourceZoneRow,
                                          int transparentColor,
-                                         int usesF0791Blit);
+                                         int usesF0791Blit,
+                                         int projectileAspectIndex,
+                                         int kineticEnergy);
 static int m11_draw_explosion_sprite(const M11_GameViewState* state,
                                      unsigned char* framebuffer,
                                      int framebufferWidth,
@@ -3867,7 +3869,9 @@ static int m11_csb_viewport_projectile_sprite_drawer(
         blit->flip_flags,
         blit->source_zone_row,
         blit->transparent_color,
-        blit->uses_f0791_blit);
+        blit->uses_f0791_blit,
+        -1,
+        255);
 }
 
 static int m11_csb_viewport_projectile_object_sprite_drawer(
@@ -40483,6 +40487,7 @@ typedef struct M11_ViewportCell {
     int firstProjectileSubtype;
     int firstProjectileUsesObjectMaterial;
     int firstProjectileObjectAspectIndex;
+    int firstProjectileKineticEnergy;
     /* First projectile direction relative to party facing.
      * 0 = moving away from party, 1 = moving right, 2 = toward party,
      * 3 = moving left.  -1 if no projectile or direction unknown.
@@ -40504,6 +40509,7 @@ typedef struct M11_ViewportCell {
     int projectileSubtypes[M11_MAX_CELL_PROJECTILES];
     int projectileUsesObjectMaterial[M11_MAX_CELL_PROJECTILES];
     int projectileObjectAspectIndices[M11_MAX_CELL_PROJECTILES];
+    int projectileKineticEnergies[M11_MAX_CELL_PROJECTILES];
     int projectileRelDirs[M11_MAX_CELL_PROJECTILES];
     int projectileCells[M11_MAX_CELL_PROJECTILES];
     int projectileFlipFlags[M11_MAX_CELL_PROJECTILES];
@@ -40577,6 +40583,8 @@ static int m11_viewport_cell_projectile_sample(
         cell->projectileUsesObjectMaterial[index];
     outSample->firstProjectileObjectAspectIndex =
         cell->projectileObjectAspectIndices[index];
+    outSample->firstProjectileKineticEnergy =
+        cell->projectileKineticEnergies[index];
     outSample->firstProjectileRelDir = cell->projectileRelDirs[index];
     outSample->firstProjectileCell = cell->projectileCells[index];
     outSample->firstProjectileFlipFlags = cell->projectileFlipFlags[index];
@@ -40864,6 +40872,8 @@ static int m11_build_dm1_viewport_materialization_decision(
             cell->projectileUsesObjectMaterial[renderIndex] =
                 material.uses_object_aspect;
             cell->projectileObjectAspectIndices[renderIndex] = material.aspect_index;
+            cell->projectileKineticEnergies[renderIndex] =
+                outDecision->liveRenderableProjectileKineticEnergies[projectileIndex];
             cell->projectileRelDirs[renderIndex] = projectileRelDir;
             /* DUNVIEW.C F0115:5635-5900 indexes C2900 and packed draw
              * order by view cell, not the absolute C14 dungeon cell. */
@@ -40896,6 +40906,8 @@ static int m11_build_dm1_viewport_materialization_decision(
                     firstProjectile.firstProjectileUsesObjectMaterial;
                 cell->firstProjectileObjectAspectIndex =
                     firstProjectile.firstProjectileObjectAspectIndex;
+                cell->firstProjectileKineticEnergy =
+                    firstProjectile.firstProjectileKineticEnergy;
                 cell->firstProjectileRelDir = firstProjectile.firstProjectileRelDir;
                 cell->firstProjectileCell = firstProjectile.firstProjectileCell;
                 cell->firstProjectileFlipFlags = firstProjectile.firstProjectileFlipFlags;
@@ -41048,7 +41060,9 @@ static int m11_draw_projectile_sprite(const M11_GameViewState* state,
                                         flipFlags,
                                         sourceZoneRow,
                                         -1,
-                                        0);
+                                        0,
+                                        -1,
+                                        255);
 }
 
 static int m11_draw_projectile_sprite_ex(const M11_GameViewState* state,
@@ -41062,7 +41076,9 @@ static int m11_draw_projectile_sprite_ex(const M11_GameViewState* state,
                                          int flipFlags,
                                          int sourceZoneRow,
                                          int transparentColor,
-                                         int usesF0791Blit) {
+                                        int usesF0791Blit,
+                                        int projectileAspectIndex,
+                                        int kineticEnergy) {
     const M11_AssetSlot* slot;
     DM1_ProjectileSpriteBlitPlan plan;
     int effectiveTransparentColor;
@@ -41078,7 +41094,7 @@ static int m11_draw_projectile_sprite_ex(const M11_GameViewState* state,
      * with dimensions but no pixel payload is not source material. */
     if (!slot || !slot->loaded || !slot->pixels ||
         slot->width == 0 || slot->height == 0) return 0;
-    if (!dm1_v1_projectile_sprite_blit_plan(
+    if (!dm1_v1_projectile_sprite_blit_plan_for_energy(
             &plan,
             gfxIndex,
             depthIndex,
@@ -41094,7 +41110,9 @@ static int m11_draw_projectile_sprite_ex(const M11_GameViewState* state,
             w,
             h,
             (int)slot->width,
-            (int)slot->height)) {
+            (int)slot->height,
+            projectileAspectIndex,
+            kineticEnergy)) {
         return 0;
     }
     /* ReDMCSB DUNVIEW.C F0115 uses F0791/C10 for CSB C2900 projectile
@@ -41255,10 +41273,13 @@ static int m11_draw_viewport_projectile_sprite(
             cell->firstProjectileObjectAspectIndex, depthIndex,
             cell->firstProjectileCell, cell->relSide, sourceZoneRow);
     } else {
-        rendered = m11_draw_projectile_sprite(
+        rendered = m11_draw_projectile_sprite_ex(
             state, framebuffer, framebufferWidth, framebufferHeight, x, y, w, h,
             cell->firstProjectileGfxIndex, depthIndex, cell->firstProjectileRelDir,
-            cell->firstProjectileCell, cell->firstProjectileFlipFlags, sourceZoneRow);
+            cell->firstProjectileCell, cell->firstProjectileFlipFlags, sourceZoneRow,
+            -1, 0,
+            cell->firstProjectileObjectAspectIndex,
+            cell->firstProjectileKineticEnergy);
     }
     if (!rendered || capture->owner != state ||
         capture->runtimeTick != state->world.gameTick ||

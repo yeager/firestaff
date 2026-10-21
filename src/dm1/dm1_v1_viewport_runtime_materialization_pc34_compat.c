@@ -302,6 +302,8 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
                     projectile->cell;
                 decision.liveRenderableProjectileDirections[renderIndex] =
                     projectile->direction;
+                decision.liveRenderableProjectileKineticEnergies[renderIndex] =
+                    projectile->kineticEnergy;
                 decision.liveRenderableProjectileAssociatedThings[renderIndex] =
                     (unsigned short)projectile->reserved1;
             }

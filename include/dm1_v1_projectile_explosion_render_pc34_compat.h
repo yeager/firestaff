@@ -223,6 +223,11 @@ int dm1_v1_thrown_object_projectile_blit_plan_pc34(
 int dm1_v1_projectile_flip_flags(int aspectIndex, int relativeDir,
                                  int relativeCell, int mapX, int mapY);
 int dm1_v1_projectile_scale_units(int depthIndex, int relativeCell);
+/* ReDMCSB DUNVIEW.C F0115 G0215 depth scale with G0210's optional
+ * SCALE_WITH_KINETIC_ENERGY factor (MEDIA720 PC34). */
+int dm1_v1_projectile_scale_units_for_energy(int depthIndex, int relativeCell,
+                                             int aspectIndex,
+                                             int kineticEnergy);
 int F0142_DUNGEON_GetProjectileAspect(int subtype);
 int dm1_v1_projectile_subtype_to_aspect(int subtype);
 int dm1_v1_projectile_renderable_pc34(int projectileCount,
@@ -265,6 +270,16 @@ int dm1_v1_projectile_sprite_blit_plan(DM1_ProjectileSpriteBlitPlan *out_plan,
                                        int paneH,
                                        int spriteW,
                                        int spriteH);
+int dm1_v1_projectile_sprite_blit_plan_for_energy(
+                                       DM1_ProjectileSpriteBlitPlan *out_plan,
+                                       int graphicIndex, int depthIndex,
+                                       int relativeCell, int flipFlags,
+                                       int sourceZoneRow, int viewportX,
+                                       int viewportY, int viewportW,
+                                       int viewportH, int paneX, int paneY,
+                                       int paneW, int paneH, int spriteW,
+                                       int spriteH, int aspectIndex,
+                                       int kineticEnergy);
 
 /* ── Explosion rendering queries ─────────────────────────────────── */
 

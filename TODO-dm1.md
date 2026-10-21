@@ -485,9 +485,11 @@ not a champion portrait; the native F0115 correction now has original-pixel
 and real Hall-walk coverage on A20E/ST12. Positive F0142 thrown-object
 aspects now have native G0209/G0218/Y47 original-pixel coverage and real
 champion-recruitment/waterskin-pickup/throw replays on both originals.
-Implement and verify the separate native G0210 projectile family, its
-kinetic-energy scaling and original-emulator frame comparisons. The actual
-A20E cast capture still shows a separate cyan/orange rectangle over the
+Native G0210 projectile selection and MEDIA720 PC34 kinetic-energy scaling
+now reach the M11 viewport; unit coverage checks depth, maximum energy,
+non-kinetic aspects and the two-unit scale floor. Original-media and
+frame-aligned emulator comparison remain open. The actual A20E cast capture
+still shows a separate cyan/orange rectangle over the
 lower floor outside the corrected projectile: identify its owning draw
 receipt before changing its material route. Atari's corresponding cast
 capture does not show that rectangle. Complete native viewport parity

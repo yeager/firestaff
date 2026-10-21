@@ -823,6 +823,17 @@ static void test_projectile_sprite_blit_plan(void) {
     DM1_ProjectileSpriteBlitPlan plan;
     printf("  projectile sprite blit plan...\n");
 
+    ASSERT_EQ(dm1_v1_projectile_scale_units_for_energy(0, 0, 10, 255),
+              32, "D0 maximum-energy spell keeps native size");
+    ASSERT_EQ(dm1_v1_projectile_scale_units_for_energy(0, 0, 10, 95),
+              12, "D0 fireball uses bounded kinetic scaling");
+    ASSERT_EQ(dm1_v1_projectile_scale_units_for_energy(1, 0, 3, 95),
+              7, "D1 back lightning uses depth and kinetic scaling");
+    ASSERT_EQ(dm1_v1_projectile_scale_units_for_energy(1, 0, 3, 0),
+              2, "MEDIA720 PC34 kinetic scale has a two-unit floor");
+    ASSERT_EQ(dm1_v1_projectile_scale_units_for_energy(1, 0, 0, 0),
+              21, "non-kinetic projectile keeps depth-only scaling");
+
     memset(&plan, 0, sizeof(plan));
     ASSERT_EQ(dm1_v1_projectile_sprite_blit_plan(&plan,
                                                  DM1_GFX_FIRST_PROJECTILE + 28,

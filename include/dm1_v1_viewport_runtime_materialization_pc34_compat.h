@@ -99,6 +99,8 @@ typedef struct DM1_V1_ViewportRuntimeMaterializationDecisionPc34 {
         DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_MAX_RENDERABLE_PROJECTILES];
     int liveRenderableProjectileDirections[
         DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_MAX_RENDERABLE_PROJECTILES];
+    int liveRenderableProjectileKineticEnergies[
+        DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_MAX_RENDERABLE_PROJECTILES];
     unsigned short liveRenderableProjectileAssociatedThings[
         DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_MAX_RENDERABLE_PROJECTILES];
     int liveExplosionCount;

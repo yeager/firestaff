@@ -53,6 +53,7 @@ static void seed_live_effects(DM1_V1_ViewportRuntimeMaterializationInputPc34 *in
     projectiles->entries[0].mapY = 12;
     projectiles->entries[0].cell = 3;
     projectiles->entries[0].direction = 1;
+    projectiles->entries[0].kineticEnergy = 73;
     projectiles->entries[0].reserved1 =
         (int)((THING_TYPE_WEAPON << 10) | 12);
     explosions->count = 1;
@@ -176,7 +177,9 @@ int main(void)
 
         projectiles.entries[0].reserved1 = THING_NONE;
         CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c) &&
-              d1c.admittedLiveProjectileCount == 1 && d1c.projectileZone >= 0,
+              d1c.admittedLiveProjectileCount == 1 && d1c.projectileZone >= 0 &&
+              d1c.liveRenderableProjectileCount == 1 &&
+              d1c.liveRenderableProjectileKineticEnergies[0] == 73,
               "native C14 admits only verified PC34 GRAPHICS.DAT material");
 
         projectiles.entries[0].mapX = 12;
