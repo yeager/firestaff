@@ -1,3 +1,23 @@
+# Firestaff v3.0.401
+
+## User-facing changes
+
+- `Startup verification`: no game behavior changes are included in this release. The changes since v3.0.400 expand original-media coverage and tighten the DM2 DOS EN weather-zone assertion.
+
+## Developer changes
+
+- `DM1 original-media startup matrix`: verify direct and M12 startup routes across PC 3.4, Atari ST editions, Amiga editions, FM Towns, Apple IIGS and outer preservation archives; record the missing authentic PC34 save and Amiga demo as coverage gaps.
+- `CSB original-media startup matrix`: verify authentic Atari ST/STX, Amiga 3.1/3.3/3.5, FM Towns, loose-folder, nested ZIP, ADF and CTRaw routes, plus keyboard and mouse selection from the no-game menu.
+- `DM2 original-media startup matrix`: verify authentic DOS, Macintosh, Amiga and FM Towns startup routes, including French DOS/Mac and no-game menu selection.
+- `DM2 fresh-game weather`: the authentic DOS EN startup gate now asserts weather zone 2 after entrance-map graphics load. The real-media RNG receipt separately verifies the cold-weather prefix, 28 source `RANDDIR` arrangement draws and unchanged original dungeon bytes.
+- `Release metadata`: update the project version, embedded changelog and reproducible SPDX source SBOM for v3.0.401.
+
+## Known limitations
+
+- Startup tests use SDL dummy video and audio. They do not establish native display, physical input, audible playback or full gameplay parity.
+- The fresh-game weather and map-zone chain is verified for DOS EN only. Equivalent fresh-game checks for FM Towns, Macintosh, Amiga and French editions, and full outdoor-weather behavior, remain open.
+- The DM1 PC34 selector test has no authentic save available for a resume-load check; the authentic Amiga demo package is also unavailable. These gaps remain unverified rather than replaced with synthetic media.
+
 # Firestaff v3.0.400
 
 ## User-facing changes
