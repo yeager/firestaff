@@ -65,7 +65,7 @@ static int advance_input(M11_GameViewState *game, M12_MenuInput input)
 {
     int tick;
     if (M11_GameView_HandleInput(game, input) == M11_GAME_INPUT_IGNORED) {
-        fprintf(stderr, "FAIL: authentic Amiga route input ignored (%d)\n", input);
+        fprintf(stderr, "FAIL: authentic platform route input ignored (%d)\n", input);
         return 0;
     }
     for (tick = 0; tick < 5; ++tick)
