@@ -43030,14 +43030,17 @@ static const int g_wallOrnamentBox[4] = { 96, 127, 35, 63 };
  * material below C05's generic wall-ornament rectangle.  Keep the C05 box
  * for bare ornaments and sensors, but let the rendered original material
  * own the object interaction zone. */
-static int m11_dm1_alcove_item_hit_test(int x, int y) {
+static int m11_dm1_alcove_item_hit_test(
+    const M11_GameViewState *state, int x, int y) {
     const M11_Dm1FloorItemHostPresentationReceipt *receipt =
         &s_m11_dm1_alcove_item_host_presentation_receipt;
     /* Source renderers may either report a PC34 F0791 zone or a native
      * F0132 destination rectangle.  Both receipts describe the final visible
      * alcove-object pixels and therefore own the corresponding hit box. */
-    const int sourceBlitOwnsHitBox = receipt->usesF0791Blit ||
-        receipt->sourceZone == -1;
+    const int dm1Source = state && strcmp(state->sourceId, "dm1") == 0 &&
+        m11_is_dm1_source_kind(state->sourceKind);
+    const int sourceBlitOwnsHitBox = dm1Source &&
+        (receipt->usesF0791Blit || receipt->sourceZone == -1);
 
     return receipt->valid && !receipt->floorItemLane &&
            sourceBlitOwnsHitBox && receipt->destinationW > 0 &&
@@ -43400,7 +43403,7 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
     facingViAltar = m11_dm1_front_wall_is_vi_altar(state, &frontCell);
     facingWall = frontCell.valid &&
                  frontCell.elementType == DUNGEON_ELEMENT_WALL;
-    alcoveItemHit = facingAlcove && m11_dm1_alcove_item_hit_test(x, y);
+    alcoveItemHit = facingAlcove && m11_dm1_alcove_item_hit_test(state, x, y);
 
     /* ── Door button (CLIKVIEW.C:356-390) ── */
     if (frontCell.valid && frontCell.elementType == DUNGEON_ELEMENT_DOOR &&
