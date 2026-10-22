@@ -542,12 +542,13 @@ int main(void)
         SDL_free(view);
     }
 
-    /* The persisted collection route must retain CSB's authenticated Amiga
-     * edition too. The standalone Amiga test proves its full title-to-runtime
-     * path; this route specifically proves that reopening the root and
-     * selecting the edition in M12 preserves the native M11 boot profile. */
+    /* The persisted collection route must retain CSB's authenticated A31M
+     * edition too. The selected original ZIP contains a multilingual A31M
+     * disk, despite its historical `_Amiga_EN` filename; assert the edition
+     * identified from its original GRAPHICS.DAT and program hashes. The
+     * standalone A31E test covers the distinct English-only release. */
     if (!failures) {
-        const char* versionId = "amiga31-en";
+        const char* versionId = "amiga31-multi";
         int versionIndex = M12_AssetStatus_FindVersionIndex("csb", versionId);
         const M12_AssetVersionStatus* version = versionIndex < 0 ? NULL :
             M12_AssetStatus_GetVersion(&menu->assetStatus, "csb",
@@ -575,7 +576,7 @@ int main(void)
                   strcmp(intent.gameId, "csb") == 0 &&
                   strcmp(intent.versionId, versionId) == 0 &&
                   intent.options.architectureIndex == M12_ARCH_AMIGA,
-                  "persisted collection root preserves explicit CSB Amiga 3.1");
+                  "persisted collection root preserves explicit CSB Amiga 3.1 multilingual");
             view = (M11_GameViewState*)SDL_calloc(1, sizeof(*view));
             CHECK(view != NULL, "allocate CSB Amiga game view");
             if (view) {
@@ -586,8 +587,8 @@ int main(void)
                 CHECK(view->active && view->startedFromLauncher &&
                       view->sourceKind == kinds[1] &&
                       strcmp(view->sourceId, "csb") == 0 && profile &&
-                      profile->variant_id == CSB_V1_VARIANT_AMIGA31_EN,
-                      "CSB Amiga handoff retains its native A31E boot profile");
+                      profile->variant_id == CSB_V1_VARIANT_AMIGA31_MULTI,
+                      "CSB Amiga handoff retains its native A31M boot profile");
                 M11_GameView_Shutdown(view);
                 SDL_free(view);
             }
