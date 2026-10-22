@@ -60680,10 +60680,11 @@ void M11_GameView_DrawLeaderHandCursor(const M11_GameViewState* state,
                     ((x & 1) == 0)
                         ? (pointerBitmap[y * 9 + (x / 2)] >> 4)
                         : pointerBitmap[y * 9 + (x / 2)]);
-                /* IO.C F0702 registers the 18x18 bitmap with hotspot (8,6).
-                 * pointerX/pointerY names that hotspot, not its top-left. */
+                /* ReDMCSB IO.C:2184-2185 registers this 18x18 bitmap with
+                 * hotspot (8,8). pointerX/pointerY names that hotspot, not
+                 * the cursor bitmap's top-left. */
                 const int dstX = state->pointerX - 8 + x;
-                const int dstY = state->pointerY - 6 + y;
+                const int dstY = state->pointerY - 8 + y;
                 if (pixel == REDMCSB_F0702_TRANSPARENT_COLOR_PC34 ||
                     dstX < 0 || dstX >= framebufferWidth ||
                     dstY < 0 || dstY >= framebufferHeight) {

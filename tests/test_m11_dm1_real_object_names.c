@@ -1,8 +1,33 @@
 #include "m11_game_view.h"
+#include "screenshot_m11.h"
+#include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+static void capture_dm1_hand_cursor_if_requested(
+    const unsigned char *framebuffer)
+{
+    const char *directory = getenv("FIRESTAFF_DM1_HAND_CURSOR_CAPTURE_DIR");
+    unsigned char palette[256 * 3];
+    char path[1024];
+    int i;
+
+    if (!directory || !directory[0]) return;
+    for (i = 0; i < 256; ++i) {
+        const unsigned char *color = G9010_auc_VgaPaletteAll_Compat[0][i & 15];
+        palette[i * 3] = color[0];
+        palette[i * 3 + 1] = color[1];
+        palette[i * 3 + 2] = color[2];
+    }
+    if (!M11_Screenshot_Capture(framebuffer, 320, 200, palette, directory,
+                                path, (int)sizeof(path))) {
+        fprintf(stderr, "could not capture DM1 held-object cursor\n");
+        return;
+    }
+    fprintf(stderr, "DM1 held-object cursor capture: %s\n", path);
+}
 
 static int rect_is_color(const unsigned char *framebuffer,
                          int x0, int y0, int width, int height,
@@ -32,6 +57,7 @@ int main(void)
     unsigned char framebuffer[320 * 200];
     unsigned char foreign_font[M11_FONT_BITMAP_BYTES];
     size_t cursorPixels = 0u;
+    int cursorMinY = 200;
     int slotX = 0;
     int slotY = 0;
     int slotW = 0;
@@ -175,18 +201,22 @@ int main(void)
     state.pointerY = 80;
     M11_GameView_DrawLeaderHandCursor(&state, framebuffer,
                                       320, 200);
-    for (y = state.pointerY - 6;
-         y < state.pointerY - 6 + 18 && y < 200; ++y) {
+    capture_dm1_hand_cursor_if_requested(framebuffer);
+    for (y = state.pointerY - 8;
+         y < state.pointerY - 8 + 18 && y < 200; ++y) {
         int x;
         for (x = state.pointerX - 8;
              x < state.pointerX - 8 + 18 && x < 320; ++x) {
             if (framebuffer[y * 320 + x] != 0u) {
                 ++cursorPixels;
+                if (y < cursorMinY) cursorMinY = y;
             }
         }
     }
-    if (cursorPixels == 0u) {
-        fprintf(stderr, "real F0702 held-object cursor did not write pixels\n");
+    if (cursorPixels == 0u || cursorMinY != state.pointerY - 8) {
+        fprintf(stderr,
+                "real F0702 cursor hotspot mismatch: pixels=%zu top=%d expected=%d\n",
+                cursorPixels, cursorMinY, state.pointerY - 8);
         M11_GameView_Shutdown(&state);
         return 1;
     }

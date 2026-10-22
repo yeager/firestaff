@@ -1,3 +1,11 @@
+2026-10-22 PC34 held-object cursor hotspot: ReDMCSB IO.C F0702 registers the
+18x18 object pointer with hotspot (8,8) at the IODRV_09 call (2184-2185).
+Firestaff had placed the software cursor with a vertical offset of 6; it now
+uses the source hotspot. The authentic PC34 leader-hand test asserts the
+rendered cursor reaches pointerY-8 and passes against the installed archive.
+This corrects cursor placement only; the striped held-object appearance,
+reported viewport defects, and other DM1 editions remain open.
+
 2026-10-22 IIGS functional-route retest: `m11_dm1_iigs_startup_real_media`
 passed against the installed original IIGS software archive. Its real-media
 route exercises the C080 door button, naturally routed movement and champion
