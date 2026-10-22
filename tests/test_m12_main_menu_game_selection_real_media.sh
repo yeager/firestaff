@@ -31,12 +31,13 @@ run_game_picker_case() {
     local navigation=$3
     local edition=$4
     local input_method=${5:-keyboard}
+    local platform=${6:-FM Towns}
     local home="$scratch/$game_id-home"
     local log="$scratch/$game_id-$input_method.log"
-    local archive_hash
+    local source_hash
 
     mkdir -p "$home"
-    archive_hash=$(firestaff_sha256_file "$game_archive")
+    source_hash=$(firestaff_sha256_file "$game_archive")
     FIRESTAFF_CONFIG_PATH="$home/config.toml" \
     FIRESTAFF_DATA="$data_root" \
     FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
@@ -54,17 +55,17 @@ run_game_picker_case() {
         cat "$log" >&2
         return 1
     fi
-    if ! grep -Fq "launch phase=game-handoff mode=menu game=$game_id platform=FM Towns edition=$edition source=" "$log"; then
-        printf 'FAIL: no-game main-menu selection did not launch authentic %s FM Towns media\n' "$game_id" >&2
+    if ! grep -Fq "launch phase=game-handoff mode=menu game=$game_id platform=$platform edition=$edition source=$game_archive" "$log"; then
+        printf 'FAIL: no-game main-menu selection did not launch authentic %s %s media from %s\n' "$game_id" "$platform" "$game_archive" >&2
         cat "$log" >&2
         return 1
     fi
-    if [[ $(firestaff_sha256_file "$game_archive") != "$archive_hash" ]]; then
-        printf 'FAIL: original %s archive changed during menu launch\n' "$game_id" >&2
+    if [[ $(firestaff_sha256_file "$game_archive") != "$source_hash" ]]; then
+        printf 'FAIL: original %s source changed during menu launch\n' "$game_id" >&2
         return 1
     fi
-    printf 'PASS: no-game M12 main menu %s selected %s and handed off its authentic %s edition\n' \
-        "$input_method" "$game_id" "$edition"
+    printf 'PASS: no-game M12 main menu %s selected %s and handed off its authentic %s %s edition\n' \
+        "$input_method" "$game_id" "$platform" "$edition"
 }
 
 run_game_picker_case dm1 "$dm1_archive" \
@@ -73,6 +74,26 @@ run_game_picker_case csb "$csb_archive" \
     'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en
 run_game_picker_case dm2 "$dm2_archive" \
     'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-ja
+
+# Nexus and Theron use their original loose media in this data root. These
+# cases exercise the same five-game launcher selector without requiring the
+# user's separate archive tools or extracting/copying game data.
+nexus_source="$data_root/nexus/DM.BIN"
+theron_source="$data_root/theron/TQUS02.bin"
+if [[ -f "$nexus_source" ]]; then
+    run_game_picker_case nexus "$nexus_source" \
+        'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
+        nexus-saturn-jp keyboard Saturn
+else
+    echo 'SKIP: authentic Nexus Saturn DM.BIN is unavailable'
+fi
+if [[ -f "$theron_source" ]]; then
+    run_game_picker_case theron "$theron_source" \
+        'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
+        pce-en keyboard 'PC Engine'
+else
+    echo 'SKIP: authentic Theron PC Engine TQUS02.bin is unavailable'
+fi
 
 run_game_picker_case dm1 "$dm1_archive" \
     'wait-scan-complete,wait20,click:700:262,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en mouse

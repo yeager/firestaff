@@ -1,5 +1,15 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-22 authentic five-game main-menu selection: the M12 original-media
+game-picker regression now checks keyboard selection and source-bound launch
+handoff for all five games. `m12_main_menu_game_selection_real_media` passed
+1/1 in 189.98 seconds against the installed originals: DM1, CSB and DM2 FM
+Towns; Nexus Saturn JP; and Theron PC Engine EN. Mouse selection remains
+covered for DM1, CSB and DM2. The test hashes each selected original source
+before and after launch to ensure scanning does not modify it. The SDL-dummy
+test exits at handoff, so it does not prove native presentation, Nexus's
+title-to-menu transition, or complete gameplay for Nexus or Theron.
+
 2026-10-22 five-game CLI selection diagnostics: the shared supported-game
 predicate omitted Nexus and Theron even though their slots and direct launch
 paths are catalogued. Unqualified `--game nexus` and `--game theron` could
