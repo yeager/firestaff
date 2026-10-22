@@ -34,7 +34,12 @@ report remain open.
 561, which is 16x5 and is not the apple. ReDMCSB F7019/G0237 maps junk subtype
 29 (apple) to graphic 526. The regression now checks this mapping and labels
 the graphic-561 decoder check separately. It still does not render an apple
-in the reported pose or establish the striped-background cause.
+in the reported pose or establish the striped-background cause. Follow-up
+coverage now renders the original HoC apple at map 0 `(2,11)`, removes it for
+one comparison frame, and verifies all 79 C10-transparent pixels match the
+underlying framebuffer. The isolated PC34 sprite blit preserves transparency;
+the user's screenshot's bars may belong to the dungeon background or another
+composition layer, which remains unverified.
 
 2026-10-22 PC34 SDL-loop combat receipt: the current Firestaff app was run
 with `--game dm1 --platform pc --debug`, the authentic DOS 3.4 archive, and

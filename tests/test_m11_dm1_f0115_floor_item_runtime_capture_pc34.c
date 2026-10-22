@@ -111,6 +111,110 @@ static uint32_t real_asset_fnv1a(const unsigned char* pixels, size_t count)
     return hash;
 }
 
+static int verify_real_apple_transparency(M11_GameViewState* state,
+                                          unsigned char* framebuffer)
+{
+    const struct DungeonDatState_Compat* dungeon = state->world.dungeon;
+    struct DungeonThings_Compat* things = state->world.things;
+    unsigned char withApple[320 * 200];
+    unsigned char withoutApple[320 * 200];
+    int mapIndex;
+
+    if (!dungeon || !things || !things->junks) return 0;
+    for (mapIndex = 0; mapIndex < (int)dungeon->header.mapCount; ++mapIndex) {
+        const struct DungeonMapDesc_Compat* map = &dungeon->maps[mapIndex];
+        int x;
+        for (x = 0; x < (int)map->width; ++x) {
+            int y;
+            for (y = 0; y < (int)map->height; ++y) {
+                const unsigned short first = F0511_DUNGEON_GetSquareFirstThing_Compat(
+                    dungeon, things, mapIndex, x, y);
+                const int sftIndex = F0510_DUNGEON_GetSquareFirstThingIndex_Compat(
+                    dungeon, mapIndex, x, y);
+                const int thingIndex = (int)THING_GET_INDEX(first);
+                M11_Dm1F0115FloorItemRuntimeCaptureReceipt receipt;
+                const M11_AssetSlot* apple;
+                unsigned short savedFirst;
+                int row;
+                int transparentPixels = 0;
+                int paintedPixels = 0;
+
+                /* Isolate one original HoC apple so this check compares the
+                 * renderer's real C10 holes with the same frame underneath. */
+                if (sftIndex < 0 || THING_GET_TYPE(first) != THING_TYPE_JUNK ||
+                    thingIndex >= things->junkCount ||
+                    things->junks[thingIndex].type != 29 ||
+                    F0512_DUNGEON_GetThingNext_Compat(things, first) !=
+                        THING_ENDOFLIST) {
+                    continue;
+                }
+                for (int direction = 0; direction < 4; ++direction) {
+                    state->world.partyMapIndex = mapIndex;
+                    state->world.newPartyMapIndex = mapIndex;
+                    state->world.party.mapIndex = mapIndex;
+                    state->world.party.mapX = x;
+                    state->world.party.mapY = y;
+                    state->world.party.direction = direction;
+                    ++state->world.gameTick;
+                    memset(framebuffer, 0, 320 * 200);
+                    M11_GameView_Draw(state, framebuffer, 320, 200);
+                    memset(&receipt, 0, sizeof(receipt));
+                    M11_GameView_GetDm1F0115FloorItemRuntimeCaptureReceipt(&receipt);
+                    if (!receipt.valid || !receipt.presentation.floorItemLane ||
+                        receipt.presentation.graphicsId != 526) {
+                        continue;
+                    }
+
+                    apple = M11_AssetLoader_Load(&state->assetLoader, 526u);
+                    if (!apple || apple->width != 19u || apple->height != 13u ||
+                        receipt.presentation.assetWidth != (int)apple->width ||
+                        receipt.presentation.assetHeight != (int)apple->height ||
+                        receipt.presentation.destinationW != (int)apple->width ||
+                        receipt.presentation.destinationH != (int)apple->height ||
+                        receipt.presentation.transparentColor != 10) {
+                        return 0;
+                    }
+                    memcpy(withApple, framebuffer, sizeof(withApple));
+                    savedFirst = things->squareFirstThings[sftIndex];
+                    things->squareFirstThings[sftIndex] = THING_ENDOFLIST;
+                    ++state->world.gameTick;
+                    memset(withoutApple, 0, sizeof(withoutApple));
+                    M11_GameView_Draw(state, withoutApple, 320, 200);
+                    things->squareFirstThings[sftIndex] = savedFirst;
+
+                    for (row = 0; row < (int)apple->height; ++row) {
+                        int col;
+                        for (col = 0; col < (int)apple->width; ++col) {
+                            const int px = receipt.presentation.destinationX + col;
+                            const int py = receipt.presentation.destinationY + row;
+                            const unsigned char source =
+                                apple->pixels[row * apple->width + col];
+                            const int offset = py * 320 + px;
+                            if (source == 10u) {
+                                ++transparentPixels;
+                                if (withApple[offset] != withoutApple[offset]) {
+                                    fprintf(stderr,
+                                            "PC34 apple transparency painted a C10 source pixel at %d,%d\n",
+                                            col, row);
+                                    return 0;
+                                }
+                            } else if (withApple[offset] != withoutApple[offset]) {
+                                ++paintedPixels;
+                            }
+                        }
+                    }
+                    if (!transparentPixels || !paintedPixels) return 0;
+                    printf("real PC34 apple transparency: map=%d square=(%d,%d) "
+                           "graphic=526 C10 holes=%d painted=%d\n",
+                           mapIndex, x, y, transparentPixels, paintedPixels);
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 int main(void)
 {
     const char* dataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
@@ -170,6 +274,13 @@ int main(void)
         receipt.presentation.graphicsId != 561 ||
         receipt.presentation.assetWidth <= 0 || receipt.presentation.assetHeight <= 0) {
         fprintf(stderr, "real D0C F0115 material did not reach final M11 capture\n");
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+
+    if (!verify_real_apple_transparency(&state, framebuffer)) {
+        fprintf(stderr,
+                "authentic PC34 apple did not preserve transparent pixels over its dungeon background\n");
         M11_GameView_Shutdown(&state);
         return 1;
     }
