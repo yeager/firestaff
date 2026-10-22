@@ -764,9 +764,7 @@ static void m11_debug_trace_startup_frame(M11_DebugStartupTrace* trace,
         ? gameId : (gameView ? gameView->sourceId : NULL);
     int changed;
     if (!trace || !gameView || !tracedGameId || !gameView->active ||
-        (strcmp(tracedGameId, "dm1") != 0 &&
-         strcmp(tracedGameId, "csb") != 0 &&
-         strcmp(tracedGameId, "dm2") != 0) ||
+        !m11_is_supported_game_id(tracedGameId) ||
         !M11_GameView_GetStartupTraceReceipt(gameView, &current)) {
         return;
     }

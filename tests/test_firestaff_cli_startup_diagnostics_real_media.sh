@@ -433,7 +433,7 @@ for game_id in dm1 csb dm2 nexus theron; do
             APPDATA="$default_home/AppData" \
             FIRESTAFF_CONFIG_PATH="$default_home/config.toml" \
             SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
-            --game "$game_id" --verbose --boot-probe \
+            --game "$game_id" --verbose --debug --boot-probe \
             --boot-probe-frames 0 2>&1) || {
             printf '%s\n' "$default_output" >&2
             exit 1
@@ -441,11 +441,13 @@ for game_id in dm1 csb dm2 nexus theron; do
         if ! printf '%s\n' "$default_output" | \
                 grep -Fq "startup game=$game_id mode=direct platform=auto data=default search roots" ||
            ! printf '%s\n' "$default_output" | \
-                grep -Fq "selected game=$game_id platform=$expected_platform" ||
+                grep -Fq "launch phase=game-handoff mode=direct game=$game_id platform=$expected_platform edition=" ||
            ! printf '%s\n' "$default_output" | \
                 grep -Fq "$default_data_root/$game_id/" ||
            ! printf '%s\n' "$default_output" | \
                 grep -Fq "launch phase=runtime-entered game=$game_id" ||
+           ! printf '%s\n' "$default_output" | \
+                grep -Fq "startup-frame game=$game_id " ||
            ! printf '%s\n' "$default_output" | \
                 grep -Fq "FIRESTAFF BOOT PROBE READY: gameId=$game_id "; then
             printf '%s\n' "$default_output" >&2
@@ -453,7 +455,7 @@ for game_id in dm1 csb dm2 nexus theron; do
                 "$game_id" >&2
             exit 1
         fi
-        printf 'PASS: bare --game %s resolves original %s media and reaches the runtime handoff from ~/.firestaff/data/%s\n' \
+        printf 'PASS: bare --game %s resolves original %s media and reports its source-bound startup trace from ~/.firestaff/data/%s\n' \
             "$game_id" "$expected_platform" "$game_id"
     fi
 done
