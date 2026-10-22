@@ -1112,3 +1112,11 @@ Reviewed 2026-08-29. Completed work only.
   Atari ST and Amiga A31M media into their original first runtime states.
   Pointer launches also emit the selected-platform debug handoff and startup
   frame trace, matching keyboard launches.
+- 2026-10-22: Fixed native 7z discovery for full media inventories. The
+  launcher can send more than 64 known hashes when scanning a game root; the
+  native 7z walker has no fixed-size hash arrays, so its former limit caused
+  valid multi-member archives to be reported as requiring an external
+  extractor. The authentic CSB Atari ST archive now scans without that false
+  diagnostic. `m12_csb_native_7z_archive_scan` passes against the installed
+  original archive. This covers archive discovery, not full Atari runtime
+  parity.

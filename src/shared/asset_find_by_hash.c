@@ -5946,7 +5946,11 @@ static int scan_native_7z_members_by_md5_list(
     int cached_count;
     int i;
     if (archive_supported) *archive_supported = 0;
-    if (!archive_path || !md5_list || md5_count <= 0 || md5_count > 64 ||
+    /* Full media inventory can pass every known version hash at once. Unlike
+     * the legacy tar/LHA helpers this walker owns no fixed-size hash arrays,
+     * so an artificial 64-entry cap must not make a supported 7z archive look
+     * like it needs an external extractor. */
+    if (!archive_path || !md5_list || md5_count <= 0 ||
         !out_paths || !matched) {
         return 0;
     }
