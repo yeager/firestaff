@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 set -eu
 
+. "$(dirname "$0")/lib/portable_sha256.sh"
+
 app=${1:?usage: test_csb_v1_fmtowns_m12_auto_mixed_real_media.sh <firestaff> <csb-data-root>}
 collection_root=${2:?usage: test_csb_v1_fmtowns_m12_auto_mixed_real_media.sh <firestaff> <csb-data-root>}
 towns_archive="$collection_root/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"
@@ -419,3 +421,61 @@ for result, label in checks:
 
 print("PASS: bare mixed-media CSB direct CLI selected authentic FM Towns and reached F31 title")
 PY
+
+# A normal installation stores each game's originals under the per-user
+# .firestaff/data tree. Verify direct CLI startup discovers that root without
+# either --data-dir or --platform, even when several real CSB editions exist.
+default_home="$scratch/default-cli-home"
+default_game_root="$default_home/.firestaff/data/csb"
+mkdir -p "$default_home/.firestaff/data"
+ln -s "$collection_root" "$default_game_root"
+default_cli_log="$scratch/default-root-direct-cli.log"
+archive_sha_before=$(firestaff_sha256_file "$towns_archive")
+(
+    unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
+    FIRESTAFF_CONFIG_PATH="$default_home/config.toml" \
+    FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    HOME="$default_home" XDG_CONFIG_HOME="$default_home" APPDATA="$default_home" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        "$app" --width 320 --height 200 --game csb --debug --verbose \
+        --boot-probe --boot-probe-frames 2 \
+        --boot-probe-expect-startup-active 1 --duration 0 \
+        >"$default_cli_log" 2>&1 || {
+            cat "$default_cli_log" >&2
+            exit 1
+        }
+)
+python3 - "$default_cli_log" "$default_game_root" "$(basename "$towns_archive")" <<'PY'
+import sys
+
+log_path, game_root, archive_name = sys.argv[1:]
+with open(log_path, encoding="utf-8") as stream:
+    trace = stream.read()
+
+archive = f"{game_root}/{archive_name}"
+source_path = f"{archive}::CDATA/GRAPHICS.DAT"
+checks = (
+    (f"launch phase=game-handoff mode=direct game=csb "
+     f"platform=FM Towns edition=fmtowns-en source={source_path}" in trace,
+     "default per-user data root and FM Towns AUTO selection"),
+    (f"CSB READY: gameId=csb dataDir={archive} variant=csb-fmtowns-en "
+     "route=startup handoff=f31-title-anm handoffHash=6fc7d5b9" in trace,
+     "authentic F31 startup handoff"),
+    ("assetMd5=405b757038eea3c263e60f240854d6de" in trace,
+     "original FM Towns graphics identity"),
+    ("phase=csb-fmtowns-title" in trace and "startupActive=1" in trace and
+     "levelLoaded=0" in trace,
+     "source-owned F31 title startup state"),
+)
+for result, label in checks:
+    if not result:
+        raise SystemExit(f"FAIL: default-root CSB direct CLI lost {label}:\n{trace}")
+
+print("PASS: CSB direct CLI discovered authentic FM Towns in the default per-user data root")
+PY
+archive_sha_after=$(firestaff_sha256_file "$towns_archive")
+if [ "$archive_sha_before" != "$archive_sha_after" ]; then
+    echo 'FAIL: CSB direct CLI modified the original FM Towns archive' >&2
+    exit 1
+fi
+echo 'PASS: CSB default-root direct CLI left original game data unchanged'
