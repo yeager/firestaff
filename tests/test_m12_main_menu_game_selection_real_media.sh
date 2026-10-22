@@ -91,6 +91,42 @@ run_game_picker_case csb "$csb_archive" \
     'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
     fmtowns-en keyboard-leaf 'FM Towns' "$data_root/dm2"
 
+# The documented per-user collection must also open the all-games launcher
+# when neither --game nor --data-dir is supplied. Link the real collection
+# into a disposable HOME so the test exercises the default lookup without
+# changing the user's configuration or copying original media.
+default_home="$scratch/default-root-home"
+default_log="$scratch/default-root.log"
+default_hash=$(firestaff_sha256_file "$dm2_archive")
+mkdir -p "$default_home/.firestaff"
+ln -s "$data_root" "$default_home/.firestaff/data"
+(
+    unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
+    FIRESTAFF_CONFIG_PATH="$default_home/config.toml" \
+    FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+    HOME="$default_home" XDG_CONFIG_HOME="$default_home" \
+    APPDATA="$default_home" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        "$app" --debug --width 1920 --height 1080 \
+        --script 'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
+        --duration 90000
+) >"$default_log" 2>&1 || {
+    cat "$default_log" >&2
+    exit 1
+}
+if ! grep -Fq 'startup game=none mode=menu' "$default_log" ||
+   ! grep -Fq "launch phase=game-handoff mode=menu game=dm2 platform=FM Towns edition=fmtowns-ja source=$default_home/.firestaff/data/dm2/$(basename "$dm2_archive")::DATA/GRAPHICS.DAT" "$default_log"; then
+    echo 'FAIL: default .firestaff/data menu did not launch authentic DM2 FM Towns media' >&2
+    cat "$default_log" >&2
+    exit 1
+fi
+if [[ $(firestaff_sha256_file "$dm2_archive") != "$default_hash" ]]; then
+    echo 'FAIL: default .firestaff/data menu changed the original DM2 archive' >&2
+    exit 1
+fi
+echo 'PASS: default .firestaff/data opened the no-game menu and launched authentic DM2 FM Towns'
+
 # Nexus and Theron use their original loose media in this data root. These
 # cases exercise the same five-game launcher selector without requiring the
 # user's separate archive tools or extracting/copying game data.
