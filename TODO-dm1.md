@@ -1,3 +1,13 @@
+2026-10-22 current-source original-media startup/menu retest: the focused
+CTest selection `^(dm1_v1_pc34_native_cli_boot|dm1_v1_atari_st_archive_cli_boot|dm1_v1_amiga_v20_archive_cli_boot|dm1_v1_fmtowns_archive_cli_boot|dm1_v1_m12_auto_multi_platform_menu|m12_main_menu_game_selection_real_media|m12_main_menu_runtime_real_media)$`
+passed 7/7. It exercised direct PC34, Atari ST, Amiga 2.0 and FM Towns
+launches, DM1 AUTO selection from a mixed-media collection, and no-game menu
+selection/runtime handoff for DM1, CSB and DM2. The separate IIGS startup and
+five-edition first-monster combat real-media tests also pass. These SDL dummy
+routes establish the tested startup and gameplay transitions only; native
+display/input, visual parity, every edition and full-campaign support remain
+unverified.
+
 2026-10-22 Atari ST F0348 action-hand route: `M11_GameView_UseItem` built a
 second champion-consumable state without carrying the authenticated graphics
 identity, so stat potions used from a champion's hand fell back to PC34 rules.
