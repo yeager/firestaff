@@ -1255,6 +1255,8 @@ static void check_scan_progress_uses_display_names(void) {
         {"matching editions", "MATCHING GAME VERSIONS"},
         {"matching game versions", "MATCHING GAME VERSIONS"},
         {"authenticating ZIP candidate", "MATCHING GAME VERSIONS"},
+        {"authenticating CSB FM Towns image", "MATCHING GAME VERSIONS"},
+        {"reusing verified FM Towns media receipt", "MATCHING GAME VERSIONS"},
         {"matching required files", "MATCHING REQUIRED FILES"},
         {"materializing launch cache", "MATERIALIZING LAUNCH CACHE"},
         {"refreshing media metadata", "REFRESHING MEDIA METADATA"},
@@ -1298,6 +1300,12 @@ static void check_scan_progress_uses_display_names(void) {
                  "KONTROLLERAR KANDIDATER FÖR ORIGINALFILER") == 0);
     CHECK(strcmp(M12_StartupMenu_ScanTaskDisplayForLocale(
                      1, "matching editions"),
+                 "MATCHAR SPELVERSIONER") == 0);
+    CHECK(strcmp(M12_StartupMenu_ScanTaskDisplayForLocale(
+                     1, "authenticating CSB FM Towns image"),
+                 "MATCHAR SPELVERSIONER") == 0);
+    CHECK(strcmp(M12_StartupMenu_ScanTaskDisplayForLocale(
+                     1, "reusing verified FM Towns media receipt"),
                  "MATCHAR SPELVERSIONER") == 0);
 
     for (taskIndex = 0U;

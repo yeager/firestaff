@@ -2042,7 +2042,10 @@ static const char* m12_scan_task_for_locale(int localeIndex,
     if (strcmp(task, "reading original DM2 disc image") == 0)
         return m12_translate_for_locale(locale, "CHECKING ORIGINAL FILE CANDIDATES");
     if (strcmp(task, "matching editions") == 0 ||
-        strcmp(task, "matching game versions") == 0 || strcmp(task, "authenticating ZIP candidate") == 0)
+        strcmp(task, "matching game versions") == 0 ||
+        strcmp(task, "authenticating ZIP candidate") == 0 ||
+        strcmp(task, "authenticating CSB FM Towns image") == 0 ||
+        strcmp(task, "reusing verified FM Towns media receipt") == 0)
         return m12_translate_for_locale(locale, "MATCHING GAME VERSIONS");
     if (strcmp(task, "matching required files") == 0)
         return m12_translate_for_locale(locale, "MATCHING REQUIRED FILES");
