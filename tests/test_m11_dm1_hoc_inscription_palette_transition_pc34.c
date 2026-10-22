@@ -374,13 +374,23 @@ static int verify_f0107_wall_patch(
             const int sourceX = flipped
                 ? 160 - 1 - (kInscriptionPatchSourceX + x)
                 : kInscriptionPatchSourceX + x;
-            const unsigned char expected = wall->pixels[
-                (kInscriptionPatchSourceY + y) * (int)wall->width + sourceX];
+            /* DRAWVIEW F0097's PC34 presenter ORs 0x10 into every C007
+             * source pixel when copying to the final viewport page. Compare
+             * the finalized VGA index, not the pre-present raw source byte. */
+            const unsigned char expected = (unsigned char)(0x10u |
+                (wall->pixels[(kInscriptionPatchSourceY + y) *
+                    (int)wall->width + sourceX] & 0x0fu));
             if (glyph_is_opaque_at(&material, font, screenX, screenY)) {
                 continue;
             }
             ++compared;
             if (withText[screenY * kFramebufferWidth + screenX] != expected) {
+                fprintf(stderr,
+                        "F0107 patch pixel mismatch dst=(%d,%d) src=(%d,%d) "
+                        "flip=%d expected=%u actual=%u\n",
+                        screenX, screenY, sourceX,
+                        kInscriptionPatchSourceY + y, flipped, expected,
+                        withText[screenY * kFramebufferWidth + screenX]);
                 return 0;
             }
         }
@@ -476,15 +486,23 @@ int main(void)
             }
             draw_pose(&state, &inscriptions[i], withText);
             M11_GameView_GetDm1InscriptionHostPresentationReceipt(&receipt);
-            if (receipt.textStringIndex != textIndex ||
-                !receipt_has_authenticated_source_span(&state, &receipt, font) ||
-                !verify_c10_preserves_d1c_wall(&state, &receipt, font,
-                                                baseline, withText) ||
-                !verify_f0107_wall_patch(&state, &receipt, font, withText)) {
-                fprintf(stderr, "M648/C10 palette material mismatch at HoC transition %d/%d\n",
-                        i, transition);
-                M11_GameView_Shutdown(&state);
-                return 1;
+            {
+                const int sourceMatches = receipt_has_authenticated_source_span(
+                    &state, &receipt, font);
+                const int c10Preserves = verify_c10_preserves_d1c_wall(
+                    &state, &receipt, font, baseline, withText);
+                const int wallPatchMatches = verify_f0107_wall_patch(
+                    &state, &receipt, font, withText);
+                if (receipt.textStringIndex != textIndex || !sourceMatches ||
+                    !c10Preserves || !wallPatchMatches) {
+                    fprintf(stderr,
+                            "M648/C10 mismatch HoC inscription=%d transition=%d "
+                            "receipt=%d expected=%d source=%d c10=%d wall-patch=%d\n",
+                            i, transition, receipt.textStringIndex, textIndex,
+                            sourceMatches, c10Preserves, wallPatchMatches);
+                    M11_GameView_Shutdown(&state);
+                    return 1;
+                }
             }
             draw_pose(&state, &clearCorridors[transition], before);
             M11_GameView_GetDm1InscriptionHostPresentationReceipt(&cleared);
