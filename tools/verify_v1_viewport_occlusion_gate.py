@@ -87,22 +87,59 @@ def main() -> int:
         start, _end, body = find_function(text, fn)
         if "int maxVisibleForward" not in body.split("{")[0]:
             raise AssertionError(f"{label}: {fn} does not accept maxVisibleForward")
-        gate_token = ("runtime_rel_forward > maxVisibleForward"
-                      if "runtime_rel_forward > maxVisibleForward" in body
-                      else "relForward > maxVisibleForward")
-        require_before(body, gate_token, "m11_sample_viewport_cell", label)
+        if label == "stairs":
+            # MEDIA009 is admitted by iterating the bounded range directly;
+            # the other DM1 editions iterate source render plans and must
+            # reject out-of-range plans before sampling the map cell.
+            require_before(
+                body,
+                "for (int forward = minVisibleForward; forward <= maxVisibleForward; ++forward)",
+                "m11_sample_viewport_cell",
+                "stairs MEDIA009 range gate",
+            )
+            plan_start = body.find(
+                "planCount = dm1_v1_stairs_render_plan_count_pc34()"
+            )
+            if plan_start < 0:
+                raise AssertionError("stairs: missing source render-plan branch")
+            plan_body = body[plan_start:]
+            require_before(
+                plan_body,
+                "plan.relForward > maxVisibleForward",
+                "m11_sample_viewport_cell",
+                "stairs source-plan range gate",
+            )
+        else:
+            gate_token = next(
+                (token for token in (
+                    "spec->runtime_rel_forward > maxVisibleForward",
+                    "plan.relForward > maxVisibleForward",
+                    "relForward > maxVisibleForward",
+                ) if token in body),
+                None,
+            )
+            if gate_token is None:
+                raise AssertionError(f"{label}: missing forward-range guard")
+            require_before(body, gate_token, "m11_sample_viewport_cell", label)
         ok.append(f"{label} gate before sampling: m11_game_view.c:{line_no(text, start)}")
 
     start, _end, body = find_function(text, "m11_draw_viewport")
     # F0128 now owns raster order through its verified per-square callback.
-    # The viewport may sample visibility and admit the plan, but must not
-    # revive the former primitive-family batches after source dispatch.
-    if "maxVisibleForward = visibility.max_visible_forward;" not in body:
-        raise AssertionError("m11_draw_viewport does not derive maxVisibleForward from the lane-visibility receipt")
+    # The viewport computes the lane receipt before building/admitting the
+    # plan; draw helpers receive that receipt through their raster-phase
+    # context instead of a global maxVisibleForward local.
+    require_before(body, "visibility = m11_dm1_lane_visibility(cells);",
+                   "m11_dm1_f0128_build_live_view_plan", "F0128 visibility admission")
     require_before(body, "m11_dm1_f0128_build_live_view_plan",
                    "m11_dm1_f0128_dispatch_live_view_plan", "F0128 admission")
     require_before(body, "m11_dm1_f0128_dispatch_live_view_plan",
                    "if (!dm1F0128PlanDispatched)", "F0128 fail-closed gate")
+    phase_start, _phase_end, phase_body = find_function(
+        text, "m11_dm1_f0128_dispatch_raster_phase")
+    require_before(phase_body, "dispatch.visibility = visibility;",
+                   "DM1_V1_F0128_PerSquareSchedulerDispatchPc34Compat",
+                   "F0128 raster visibility handoff")
+    ok.append(f"F0128 lane receipt handoff: m11_game_view.c:{line_no(text, phase_start)}")
     callback_start, _callback_end, callback = find_function(
         text, "m11_dm1_f0128_execute_source_step")
     callback_owner = {
