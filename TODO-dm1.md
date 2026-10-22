@@ -10,6 +10,14 @@ pose. Still open: reproduce the affected positions from authentic PC34 map
 data, compare output pixels against ReDMCSB, then extend the regressions to the
 other DM1 editions. No visual-parity claim is made.
 
+2026-10-22 DM1 edition interaction retest: authentic Atari ST 1.2, Amiga 2.0,
+and FM Towns archives passed their real alcove-item pickup, inventory, and
+drop tests. The IIGS alcove test skipped because the installed archive has no
+source-owned alcove/item fixture for that interaction. These tests exercise
+separate platform loaders and object-transfer behavior, not raster output;
+they do not determine whether the reported graphic defects reproduce on those
+editions.
+
 2026-10-22 PC34 decoder check: ReDMCSB `IMAGE2.C` has a 32-pixel row-stride
 branch for `MEDIA551` (F20E/F20J/F31E/F31J), but the DOS PC34 `I34E` build
 uses the later `MEDIA707` IMG3 decoder with even-pixel stride. Firestaff's
@@ -21,6 +29,12 @@ rules out a mismatch in this asset's decoded pixels, but not other graphics or
 later object/wall composition. Continue comparing IMG3 run handling and the
 compositor against the `MEDIA707` branch. The screenshot defects and trapdoor
 report remain open.
+
+2026-10-22 F0115 test-scope correction: the floor-item pose captures graphic
+561, which is 16x5 and is not the apple. ReDMCSB F7019/G0237 maps junk subtype
+29 (apple) to graphic 526. The regression now checks this mapping and labels
+the graphic-561 decoder check separately. It still does not render an apple
+in the reported pose or establish the striped-background cause.
 
 2026-10-22 PC34 SDL-loop combat receipt: the current Firestaff app was run
 with `--game dm1 --platform pc --debug`, the authentic DOS 3.4 archive, and

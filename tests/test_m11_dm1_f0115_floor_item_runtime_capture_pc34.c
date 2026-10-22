@@ -2,6 +2,8 @@
 #include "main_loop_m11.h"
 #include "menu_startup_m12.h"
 #include "asset_loader_m11.h"
+#include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
+#include "memory_dungeon_dat_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -117,7 +119,7 @@ int main(void)
     M11_Dm1FloorItemHostPresentationReceipt stalePresentation;
     unsigned char framebuffer[320 * 200];
     int originalAssetsAvailable;
-    const M11_AssetSlot* apple;
+    const M11_AssetSlot* capturedItemGraphic;
 
     if (!dataDir || !dataDir[0]) {
         puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
@@ -135,12 +137,20 @@ int main(void)
         puts("skip: real PC34 corpus has no drawable D0C F0115 floor item");
         return 0;
     }
-    /* Oracle: ReDMCSB IMAGE2.C F0689's MEDIA707 I34E decode of the authentic
-     * DOS 3.4 GRAPHICS.DAT record 561, flattened to 16x5 indexed pixels. */
-    apple = M11_AssetLoader_Load(&state.assetLoader, 561u);
-    if (!apple || apple->width != 16u || apple->height != 5u ||
-        real_asset_fnv1a(apple->pixels,
-                        (size_t)apple->width * apple->height) !=
+    /* ReDMCSB F7019/G0237 maps junk subtype 29 (apple) to aspect 27 and
+     * I34E's first native graphic 526. The pose selected above renders
+     * graphic 561, so keep its decoder oracle separate from apple mapping. */
+    if (dm1_item_sprite_index(THING_TYPE_JUNK, 29) != 526u) {
+        M11_GameView_Shutdown(&state);
+        fputs("ReDMCSB PC34 apple graphic mapping changed\n", stderr);
+        return 1;
+    }
+    capturedItemGraphic = M11_AssetLoader_Load(&state.assetLoader, 561u);
+    if (!capturedItemGraphic || capturedItemGraphic->width != 16u ||
+        capturedItemGraphic->height != 5u ||
+        real_asset_fnv1a(capturedItemGraphic->pixels,
+                        (size_t)capturedItemGraphic->width *
+                            capturedItemGraphic->height) !=
             UINT32_C(0xc8072551)) {
         M11_GameView_Shutdown(&state);
         fputs("real PC34 graphic 561 differs from the ReDMCSB I34E IMG3 decode\n",
@@ -157,7 +167,7 @@ int main(void)
         receipt.materialFNV1a == 0u || !receipt.presentation.valid ||
         !receipt.presentation.floorItemLane ||
         !receipt.presentation.usesF0791Blit ||
-        receipt.presentation.graphicsId <= 0 ||
+        receipt.presentation.graphicsId != 561 ||
         receipt.presentation.assetWidth <= 0 || receipt.presentation.assetHeight <= 0) {
         fprintf(stderr, "real D0C F0115 material did not reach final M11 capture\n");
         M11_GameView_Shutdown(&state);
