@@ -1,8 +1,9 @@
-/* Real DM1 F0115 alcove-object presentation regression.
+/* Real DM1 F0115 alcove/floor-item presentation and interaction regression.
  *
  * F0121/F0124 call F0115 after F0107's real alcove wall material.  This
- * walks every loaded DM1 map/party pose and requires one genuine C2548
- * object blit to reach the dedicated wall-alcove receipt. */
+ * walks original maps and party poses for wall-alcove items; PC34, FM Towns,
+ * and IIGS may use a naturally rendered floor item when their campaign has
+ * no visible wall-alcove item fixture. */
 
 #include "m11_game_view.h"
 #include "main_loop_m11.h"
@@ -60,6 +61,12 @@ static int start_real_dm1_corpus(M11_GameViewState *state, const char *path)
         if (version >= 0 && M12_AssetStatus_GetVersion(
                 &menu.assetStatus, "dm1", (size_t)version)->matched) {
             menu.gameOptions[0].architectureIndex = M12_ARCH_APPLE_IIGS;
+        }
+#elif defined(M11_DM1_REAL_MEDIA_PLATFORM_PC34)
+        version = M12_AssetStatus_FindVersionIndex("dm1", "pc34-en");
+        if (version >= 0 && M12_AssetStatus_GetVersion(
+                &menu.assetStatus, "dm1", (size_t)version)->matched) {
+            menu.gameOptions[0].architectureIndex = M12_ARCH_PC;
         }
 #else
         version = M12_AssetStatus_FindVersionIndex("dm1", "st12-en");
@@ -159,7 +166,8 @@ static int square_contains_thing_exactly_once(const M11_GameViewState *state,
 }
 
 #if defined(M11_DM1_REAL_MEDIA_PLATFORM_FMTOWNS) || \
-    defined(M11_DM1_REAL_MEDIA_PLATFORM_IIGS)
+    defined(M11_DM1_REAL_MEDIA_PLATFORM_IIGS) || \
+    defined(M11_DM1_REAL_MEDIA_PLATFORM_PC34)
 static int exercise_real_item_transaction(
     M11_GameViewState *state,
     const M11_Dm1FloorItemHostPresentationReceipt *presentation,
@@ -176,7 +184,8 @@ static int exercise_real_item_transaction(
     M11_GameInputResult result;
 
     if (!state || !presentation || !presentation->valid ||
-        presentation->destinationW <= 0 || presentation->destinationH <= 0) {
+        presentation->destinationW <= 0 || presentation->destinationH <= 0 ||
+        presentation->transparentColor != 10) {
         return 0;
     }
     clickX = presentation->destinationX + presentation->destinationW / 2;
@@ -522,11 +531,13 @@ int main(void)
                     }
                     }
 #if defined(M11_DM1_REAL_MEDIA_PLATFORM_FMTOWNS) || \
-    defined(M11_DM1_REAL_MEDIA_PLATFORM_IIGS)
-                    /* Some authentic Towns/IIGS campaigns have no wall
-                     * alcove whose Thing chain also contains an item. Use a
-                     * naturally rendered original floor item instead; do
-                     * not create a test-only Thing or alter source media. */
+    defined(M11_DM1_REAL_MEDIA_PLATFORM_IIGS) || \
+    defined(M11_DM1_REAL_MEDIA_PLATFORM_PC34)
+                    /* Use an item from an original rendered floor square
+                     * when no wall-alcove object is visible in this pose.
+                     * This keeps PC34 and editions without a wall fixture on
+                     * the same real pickup/inventory/drop route; do not
+                     * manufacture a Thing or alter source media. */
                     {
                         M11_Dm1FloorItemHostPresentationReceipt floorReceipt;
                         memset(&floorReceipt, 0, sizeof(floorReceipt));

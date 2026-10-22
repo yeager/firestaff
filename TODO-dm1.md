@@ -9,6 +9,18 @@ image unchanged. This verifies one DOS PC34 D1C route only; D2/D3 derived
 button scales and other DM1 editions remain unverified. The screenshot's other
 viewport, inscription, item, alcove and pit issues remain open.
 
+2026-10-22 PC34 real item interaction coverage: the authentic PC34 archive
+contains no wall-alcove item fixture for the existing alcove interaction
+route, so that route previously skipped instead of exercising PC34. The test
+now selects PC 3.4 explicitly and falls back to a naturally rendered original
+floor item. It picks the item up, places it in a legal inventory slot, returns
+it to the leader hand, and drops it back onto the floor exactly once; the
+material receipt must identify C10 transparency. The PC34, Atari ST 1.2,
+Amiga 2.0, and FM Towns real-media routes pass. IIGS 2.1 correctly skips
+because its loaded original campaign has no wall-alcove or visible floor-item
+fixture for this route. This covers item transactions in four editions, not
+the reported wall-alcove image, held-item pixels, or visual parity.
+
 2026-10-22 screenshot and framebuffer follow-up: the seven HoC PC screenshots
 in `/Users/bosse/a/` show broken wall inscriptions and an apple floor object
 with vertical background stripes; door and alcove visuals also need source

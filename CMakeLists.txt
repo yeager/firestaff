@@ -12715,6 +12715,9 @@ if(BUILD_TESTING)
                 SKIP_RETURN_CODE 77)
         endfunction()
 
+        firestaff_add_dm1_alcove_real_media_test(pc34 M11_DM1_REAL_MEDIA_PLATFORM_PC34
+            "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
+            FIRESTAFF_DM1_DATA_DIR "dm1;dos;pc34")
         firestaff_add_dm1_alcove_real_media_test(atari_st ""
             "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_EN_Version-12.zip"
             FIRESTAFF_DM1_DATA_DIR "dm1;atari-st")
