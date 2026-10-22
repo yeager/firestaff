@@ -6,6 +6,15 @@ party, inventory transactions, and a torch floor/hand roundtrip. This is
 functional evidence for that IIGS campaign route; it does not verify visual
 parity, every IIGS edition, or full-campaign behavior.
 
+2026-10-22 original-media startup matrix: `dm1_v1_pc34_native_cli_boot`,
+`dm1_v1_atari_st_archive_cli_boot`, `dm1_v1_amiga_v20_archive_cli_boot`, and
+`dm1_v1_fmtowns_archive_cli_boot` all passed against their installed original
+archives. Together with the IIGS real-media route above, this verifies the
+tested first-start and selected gameplay transitions on PC 3.4, Atari ST 1.2,
+Amiga 2.0, FM Towns, and the installed IIGS archive. The CLI/menu checks use
+SDL dummy video/audio; they do not verify physical display, input, pixel
+parity, or every supported edition.
+
 2026-10-22 PC34 F0110 D1C door-button correction: the authenticated PC34
 button graphic is 16x19 pixels, while ReDMCSB's D1C F0791 zone is 16x9.
 F0791 clips the native bitmap to that zone; it does not shrink all 19 rows.
