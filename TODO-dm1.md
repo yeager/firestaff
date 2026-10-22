@@ -1,3 +1,11 @@
+2026-10-22 IIGS functional-route retest: `m11_dm1_iigs_startup_real_media`
+passed against the installed original IIGS software archive. Its real-media
+route exercises the C080 door button, naturally routed movement and champion
+recruitment, first descent, a living creature approaching and damaging the
+party, inventory transactions, and a torch floor/hand roundtrip. This is
+functional evidence for that IIGS campaign route; it does not verify visual
+parity, every IIGS edition, or full-campaign behavior.
+
 2026-10-22 PC34 F0110 D1C door-button correction: the authenticated PC34
 button graphic is 16x19 pixels, while ReDMCSB's D1C F0791 zone is 16x9.
 F0791 clips the native bitmap to that zone; it does not shrink all 19 rows.
@@ -1622,7 +1630,9 @@ parity.
   PUNCH and paired XP. Exact damage/RNG still needs an original executable
   capture. Atari ST v1.2's current-source first-monster route now passes with
   the authentic archive and proves attack behavior, but its one sampled attack
-  misses. FM Towns and IIGS need equivalent combat-route coverage.
+  misses. Equivalent FM Towns and IIGS attack routes were later covered by
+  their real-media tests; those results do not establish complete combat
+  parity.
   Extend startup sentinel proof to remaining
   editions and actual launcher UI routes; completed regression evidence is in
   DONE-dm1.md.
