@@ -68,15 +68,16 @@ editions remain unverified. The screenshot's other viewport, inscription,
 item, alcove and pit issues remain open.
 
 2026-10-22 PC34 F0129 distant door-button sampling: ReDMCSB
-`BLTSHRNK.C:F0129_VIDEO_BlitShrinkWithPaletteChanges` uses 16.16 source
-ratios with a half-pixel starting phase. Firestaff's generic left-edge
-nearest-neighbour sampler shifted source pixels in the reduced D2C and D3C
-button images. The button renderer now uses the source F0129 sampling sequence
-for D2C, D3C, and D3R while leaving unrelated sprite scaling unchanged. The
-authentic PC34 HoC framebuffer regression checks D2C and D3C pixels against
-that sequence and verifies C10 transparency; both routes pass. D3R and original
-runtime pixel comparison remain unverified, and this does not establish full
-door or viewport parity.
+`BLTSHRNK.C:F0129_VIDEO_BlitShrinkWithPaletteChanges` selects the PC34
+`MEDIA712_I34E` path, which calls F0720/F0721 with 6.6 source ratios and a
+half-step starting phase. Firestaff's generic left-edge nearest-neighbour
+sampler shifted source pixels in the reduced D2C and D3C button images. The
+button renderer now uses the PC34 6.6 sampling sequence for D2C, D3C, and D3R
+while leaving unrelated sprite scaling unchanged. The authentic PC34 HoC
+framebuffer regression checks D2C and D3C pixels against that sequence and
+verifies C10 transparency; both routes pass. D3R and original runtime pixel
+comparison remain unverified, and this does not establish full door or
+viewport parity.
 
 2026-10-22 PC34 real item interaction coverage: the authentic PC34 archive
 contains no wall-alcove item fixture for the existing alcove interaction

@@ -46597,9 +46597,9 @@ static void m11_blit_scaled_palette_map(const M11_AssetSlot* slot,
     }
 }
 
-/* ReDMCSB BLTSHRNK.C F0129:202-390 derives the reduced PC34 door-button
- * images with 16.16 source steps and a half-pixel starting phase. Keep this
- * sampler separate from the other nearest-neighbour sprite paths: the
+/* ReDMCSB BLTSHRNK.C F0129's MEDIA712_I34E path derives reduced PC34 button
+ * images through F0720/F0721 using 6.6 source steps and a half-step start.
+ * Keep this sampler separate from the other nearest-neighbour sprite paths: the
  * 12x6 D2C and 6x4 D3 buttons lose source pixels with left-edge sampling. */
 static void m11_blit_f0129_palette_map_pc34(
     const M11_AssetSlot* slot,
@@ -46623,18 +46623,18 @@ static void m11_blit_f0129_palette_map_pc34(
         return;
     }
 
-    xStep = (uint32_t)(((uint64_t)slot->width << 16) / (uint32_t)dstW);
-    yStep = (uint32_t)(((uint64_t)slot->height << 16) / (uint32_t)dstH);
-    /* F0129 initializes each accumulator to half a step plus 0x7fff. */
-    yPosition = (yStep >> 1) + UINT32_C(0x7fff);
+    xStep = (uint32_t)(((uint64_t)slot->width << 6) / (uint32_t)dstW);
+    yStep = (uint32_t)(((uint64_t)slot->height << 6) / (uint32_t)dstH);
+    /* F0720/F0721 initialize each 6.6 accumulator to half one source step. */
+    yPosition = yStep >> 1;
     for (dy = 0; dy < dstH; ++dy, yPosition += yStep) {
-        const uint32_t sy = yPosition >> 16;
+        const uint32_t sy = yPosition >> 6;
         const int fbY = dstY + dy;
-        uint32_t xPosition = (xStep >> 1) + UINT32_C(0x7fff);
+        uint32_t xPosition = xStep >> 1;
         int dx;
         if (fbY < 0 || fbY >= fbH || sy >= slot->height) continue;
         for (dx = 0; dx < dstW; ++dx, xPosition += xStep) {
-            const uint32_t sx = xPosition >> 16;
+            const uint32_t sx = xPosition >> 6;
             const int fbX = dstX + dx;
             unsigned char pixel;
             if (fbX < 0 || fbX >= fbW || sx >= slot->width) continue;

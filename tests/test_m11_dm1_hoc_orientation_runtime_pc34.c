@@ -338,8 +338,8 @@ static int exercise_real_f0110_button_pixels(
     return 0;
 }
 
-/* Compare the distant D2C/D3C button in the final framebuffer with the
- * F0129 Q16 sampling sequence in ReDMCSB BLTSHRNK.C:202-390. */
+/* Compare distant D2C/D3C buttons in the final framebuffer with ReDMCSB
+ * BLTSHRNK.C's MEDIA712_I34E F0720/F0721 6.6 sampling sequence. */
 static int exercise_real_f0129_button_pixels(
     M11_GameViewState *state,
     unsigned char *withButton,
@@ -388,12 +388,12 @@ static int exercise_real_f0129_button_pixels(
                             const int dstH = (int)frame->bottom_y -
                                 (int)frame->top_y + 1;
                             const uint32_t xStep = (uint32_t)(
-                                ((uint64_t)button->width << 16) / (uint32_t)dstW);
+                                ((uint64_t)button->width << 6) / (uint32_t)dstW);
                             const uint32_t yStep = (uint32_t)(
-                                ((uint64_t)button->height << 16) / (uint32_t)dstH);
+                                ((uint64_t)button->height << 6) / (uint32_t)dstH);
                             int changedPixels = 0;
                             int transparentPixels = 0;
-                            uint32_t yPosition = (yStep >> 1) + UINT32_C(0x7fff);
+                            uint32_t yPosition = yStep >> 1;
                             int dy;
                             if (partyX < 0 || partyY < 0 ||
                                 partyX >= (int)map->width ||
@@ -423,13 +423,12 @@ static int exercise_real_f0129_button_pixels(
 
                             for (dy = 0; dy < dstH; ++dy,
                                  yPosition += yStep) {
-                                const uint32_t sy = yPosition >> 16;
-                                uint32_t xPosition = (xStep >> 1) +
-                                    UINT32_C(0x7fff);
+                                const uint32_t sy = yPosition >> 6;
+                                uint32_t xPosition = xStep >> 1;
                                 int dx;
                                 for (dx = 0; dx < dstW;
                                      ++dx, xPosition += xStep) {
-                                    const uint32_t sx = xPosition >> 16;
+                                    const uint32_t sx = xPosition >> 6;
                                     const unsigned char source =
                                         button->pixels[(size_t)sy * button->width + sx];
                                     const int px = VIEWPORT_X +
