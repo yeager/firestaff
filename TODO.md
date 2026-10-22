@@ -1,5 +1,17 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-22 authentic CSB/DM2 CLI startup retest: the current-source CTest
+selection `^(csb_v1_.*native_cli_boot|dm2_v1_.*native_cli_boot)$` passed
+11/11 against installed original media. It covers CSB Atari STX, Amiga,
+FM Towns, Amiga 3.5 CTRaw and Hint Oracle, plus DM2 DOS English/French,
+Macintosh English/French, Amiga and FM Towns. The suite verifies the listed
+CLI startup routes; only the Atari STX case carries the `menu` label, so this
+does not establish M12 menu coverage for every edition. SDL dummy video/audio
+does not prove native display, physical input, or full gameplay. The separate
+DM1 authentic menu test passes PC, Atari ST, Amiga and FM Towns, and its combat
+tests pass for those editions plus IIGS; complete five-game menu coverage
+remains open.
+
 2026-10-20 authentic scan-cache replacement: the persistent hash cache keyed
 only on path, second-resolution mtime, and byte size. Replacing CSB FM Towns
 `DUNGEON.DAT` with the authentic Amiga 3.3 file (same 2098-byte size and
