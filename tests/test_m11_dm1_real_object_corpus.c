@@ -84,7 +84,21 @@ static int check_original_chests(M11_GameViewState *state)
                     }
                 }
             }
-            DM1_V1_M11Runtime_CloseOpenChestPc34Compat(state);
+            /* Exercise the player-facing inventory toggle that shuts the
+             * source chest panel, rather than committing through the test
+             * helper.  The original chest chain below is the persistence
+             * oracle for CHEST.C F0334. */
+            if (M11_GameView_HandleInput(state,
+                                         M12_MENU_INPUT_INVENTORY_TOGGLE) !=
+                    M11_GAME_INPUT_REDRAW ||
+                state->inventoryPanelActive ||
+                DM1_V1_M11Runtime_GetOpenChestThingPc34Compat(state) !=
+                    THING_NONE) {
+                fprintf(stderr,
+                        "chest=%d inventory-toggle did not close the original chest panel\n",
+                        c);
+                return 0;
+            }
             next = state->world.things->containers[c].slot;
             for (i = 0; i < count; ++i) {
                 if (next != contents[i]) {
@@ -99,6 +113,9 @@ static int check_original_chests(M11_GameViewState *state)
                 unsigned short other = (unsigned short)((THING_TYPE_CONTAINER << 10) | otherIndex);
                 unsigned short otherHead = state->world.things->containers[otherIndex].slot;
                 int x, y, w, h;
+                /* The player-facing toggle above closed both chest and
+                 * inventory. Reopen the panel before the owner-switch case. */
+                state->inventoryPanelActive = 1;
                 if (!DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(state) ||
                     !M11_GameView_GetV1ChestSlotBoxZone(0, &x, &y, &w, &h)) return 0;
                 (void)M11_GameView_HandlePointer(state, x + w / 2, 33 + y + h / 2, 1);
