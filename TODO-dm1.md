@@ -1,3 +1,11 @@
+2026-10-22 PC34 chest shutdown input coverage: the authentic DOS 3.4 real
+object corpus now closes each original chest through the ordinary inventory
+toggle, then checks that all visible residents remain in the original
+container chain. The current-source test passed with 43 original residents;
+the same run also checked 976 original object records. This covers the
+inventory-toggle route only. Other chest shutdown routes and owner transitions
+on additional DM1 editions still need original-media coverage.
+
 2026-10-22 current-source original-media startup/menu retest: the focused
 CTest selection `^(dm1_v1_pc34_native_cli_boot|dm1_v1_atari_st_archive_cli_boot|dm1_v1_amiga_v20_archive_cli_boot|dm1_v1_fmtowns_archive_cli_boot|dm1_v1_m12_auto_multi_platform_menu|m12_main_menu_game_selection_real_media|m12_main_menu_runtime_real_media)$`
 passed 7/7. It exercised direct PC34, Atari ST, Amiga 2.0 and FM Towns
@@ -1906,8 +1914,10 @@ Reviewed 2026-08-29. Only open work is listed here.
   full save/resume fidelity. This existing limitation is separate from the
   corrected live G0425 slot persistence and same-slot release handling.
 
-- Verify DM1 chest shutdown paths and extend owner-transition evidence
-  beyond the original PC3.4 corpus; save/resume remains separately deferred.
+- Extend DM1 chest shutdown and owner-transition evidence beyond the original
+  PC3.4 corpus. The authentic PC34 object corpus now closes each chest through
+  the normal inventory toggle and verifies its original resident chain.
+  Save/resume remains separately deferred.
 
 - Extend original-media inventory interaction verification to chest contents,
   scroll text/pixel equality and supported editions beyond PC3.4. Original
