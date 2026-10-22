@@ -2806,6 +2806,8 @@ first encounter and does not prove complete combat parity.
 cell (3,14), beside the first stairs, is rendered from PC34 GRAPHICS.DAT and
 can be collected through the real C080/C05 pointer route. The original C127
 mirror route admits a champion before the authentic C013 storage sensor is
-clicked; the test confirms the same original Thing moves into the leader hand
-and leaves its wall cell. This verifies the critical pickup interaction, not
-the lighting level after entering the next dungeon floor.
+clicked; the same original Thing then moves into the leader hand and leaves
+its wall cell. The C508 action-hand transaction equips it, after which the
+original F0337 light calculation reports level 100 and palette row 0 on map 1.
+This proves pickup, equip, and destination-map light calculation with PC34
+data; a full timed stairs traversal remains separate runtime coverage.

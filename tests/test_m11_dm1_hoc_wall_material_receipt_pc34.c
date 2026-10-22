@@ -550,7 +550,62 @@ static int verify_hoc_stair_torch_pickup(
         fputs("PC34 HoC stair TORCH remained in wall after C080 pickup\n", stderr);
         return 0;
     }
-    puts("ok: original PC34 HoC stair TORCH can be picked up through C080");
+    /* C080 picks the wall Thing up into the mouse hand. The actual F0337
+     * light calculation reads champion hand slots, so equip the torch in
+     * the source C508 action-hand slot before descending. */
+    {
+        int slotX = 0, slotY = 0, slotW = 0, slotH = 0;
+        int zoneResult;
+        int clickResult;
+        /* This fixture opens the source panel directly so it can focus on
+         * the genuine C508 pointer transaction after C127 admission. */
+        state->inventoryPanelActive = 1;
+        state->dm1InventoryChampionOrdinal =
+            state->world.party.activeChampionIndex + 1;
+        zoneResult = M11_GameView_GetV1InventorySourceSlotBoxZone(
+            9, &slotX, &slotY, &slotW, &slotH);
+        clickResult = zoneResult ? M11_GameView_HandlePointerButton(
+            state, slotX + slotW / 2, 33 + slotY + slotH / 2,
+            DM1_V1_MOUSE_MASK_LEFT_PC34) : M11_GAME_INPUT_IGNORED;
+        if (!zoneResult || clickResult != M11_GAME_INPUT_REDRAW ||
+            state->leaderHandObjectPresent ||
+            state->world.party.champions[
+                state->world.party.activeChampionIndex]
+                .inventory[CHAMPION_SLOT_ACTION_HAND] != torch) {
+            fputs("PC34 HoC stair TORCH could not be equipped in C508\n", stderr);
+            return 0;
+        }
+    }
+    /* The torch matters because the first descent is dark.  Exercise the
+     * same live party inventory and F0337 light calculation on the
+     * destination map; the source stair transition changes map ownership,
+     * not the leader's hand Thing. */
+    if (state->world.dungeon->header.mapCount < 2 ||
+        state->world.dungeon->maps[1].width == 0 ||
+        state->world.dungeon->maps[1].height == 0) {
+        fputs("PC34 HoC first dark floor is unavailable for torch-light check\n",
+              stderr);
+        return 0;
+    }
+    state->world.party.mapIndex = 1;
+    state->world.party.mapX = 0;
+    state->world.party.mapY = 0;
+    if (M11_GameView_GetDungeonPaletteIndex(state) >= 5 ||
+        M11_GameView_GetLightLevel(state) <= 0) {
+        fprintf(stderr,
+                "PC34 HoC stair TORCH did not provide light on map 1: level=%d palette=%d\n",
+                M11_GameView_GetLightLevel(state),
+                M11_GameView_GetDungeonPaletteIndex(state));
+        return 0;
+    }
+    printf("ok: original PC34 HoC stair TORCH pickup and C508 equip carry light to map 1: level=%d palette=%d\n",
+           M11_GameView_GetLightLevel(state), M11_GameView_GetDungeonPaletteIndex(state));
+    state->world.party.mapIndex = 0;
+    state->world.party.mapX = 4;
+    state->world.party.mapY = 13;
+    state->world.party.direction = 2;
+    state->inventoryPanelActive = 0;
+    state->dm1InventoryChampionOrdinal = 0;
     return 1;
 }
 
