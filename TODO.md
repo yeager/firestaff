@@ -1,5 +1,18 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-22 five-game CLI selection diagnostics: the shared supported-game
+predicate omitted Nexus and Theron even though their slots and direct launch
+paths are catalogued. Unqualified `--game nexus` and `--game theron` could
+therefore retain a stale saved platform, and `--verbose`/`--debug` omitted
+their selected-edition and launch-handoff receipts. The predicate now covers
+all five game IDs. The original-media `firestaff_cli_startup_diagnostics_real_media`
+CTest passed 1/1 in 254.75 seconds after extending its per-game CLI loop to all
+five games. A separate authentic boot-probe matrix reached the runtime handoff
+for DM1, CSB, DM2, Nexus and Theron; debug output now includes Nexus Saturn
+and Theron PC Engine edition/source receipts. These SDL-dummy probes use zero
+runtime frames and establish CLI selection and handoff only, not native
+presentation, interactive input or complete gameplay parity.
+
 2026-10-22 current-source launch verification: the focused real-media main-menu
 selection/runtime CTests passed 5/5 for DM1/CSB/DM2 game selection and runtime,
 Nexus startup-menu source and Saturn-card startup, and Theron's Track 02 scan

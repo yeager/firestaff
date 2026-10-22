@@ -7576,7 +7576,8 @@ static int m11_game_option_slot(const char *gameId) {
 static int m11_is_supported_game_id(const char *gameId) {
     return gameId &&
         (strcmp(gameId, "dm1") == 0 || strcmp(gameId, "csb") == 0 ||
-         strcmp(gameId, "dm2") == 0);
+         strcmp(gameId, "dm2") == 0 || strcmp(gameId, "nexus") == 0 ||
+         strcmp(gameId, "theron") == 0);
 }
 
 static int m11_open_requested_launch_impl(M11_GameViewState* gameView,

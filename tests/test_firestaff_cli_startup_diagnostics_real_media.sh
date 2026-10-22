@@ -421,8 +421,13 @@ if [ -f "$dm1_towns_archive" ] && [ -f "$csb_towns_archive" ] &&
     printf 'PASS: persisted original media file still discovers DM1, CSB and DM2 from the collection menu\n'
 fi
 
-for game_id in dm1 csb dm2; do
+for game_id in dm1 csb dm2 nexus theron; do
     if [ -d "$default_data_root/$game_id" ]; then
+        case "$game_id" in
+            dm1|csb|dm2) expected_platform='FM Towns' ;;
+            nexus) expected_platform='Saturn' ;;
+            theron) expected_platform='PC Engine' ;;
+        esac
         default_output=$(HOME="$default_home" USERPROFILE="$default_home" \
             XDG_CONFIG_HOME="$default_home/.config" \
             APPDATA="$default_home/AppData" \
@@ -436,16 +441,20 @@ for game_id in dm1 csb dm2; do
         if ! printf '%s\n' "$default_output" | \
                 grep -Fq "startup game=$game_id mode=direct platform=auto data=default search roots" ||
            ! printf '%s\n' "$default_output" | \
-                grep -Fq "selected game=$game_id platform=FM Towns" ||
+                grep -Fq "selected game=$game_id platform=$expected_platform" ||
            ! printf '%s\n' "$default_output" | \
-                grep -Fq "$default_data_root/$game_id/"; then
+                grep -Fq "$default_data_root/$game_id/" ||
+           ! printf '%s\n' "$default_output" | \
+                grep -Fq "launch phase=runtime-entered game=$game_id" ||
+           ! printf '%s\n' "$default_output" | \
+                grep -Fq "FIRESTAFF BOOT PROBE READY: gameId=$game_id "; then
             printf '%s\n' "$default_output" >&2
-            printf 'FAIL: bare --game %s did not resolve original media from the default per-game data directory\n' \
+            printf 'FAIL: bare --game %s did not report the selected original media and reach its runtime handoff from the default per-game data directory\n' \
                 "$game_id" >&2
             exit 1
         fi
-        printf 'PASS: bare --game %s resolves original FM Towns media from ~/.firestaff/data/%s\n' \
-            "$game_id" "$game_id"
+        printf 'PASS: bare --game %s resolves original %s media and reaches the runtime handoff from ~/.firestaff/data/%s\n' \
+            "$game_id" "$expected_platform" "$game_id"
     fi
 done
 
