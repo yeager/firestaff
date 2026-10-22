@@ -7822,6 +7822,24 @@ does not switch to a neighboring copy.
 ## Known limitations
 
 - Debug scan summaries report game availability and the selected data root; `--verbose` remains the diagnostic mode for the detailed candidate-file list. Original-media startup tests use SDL dummy video and audio and do not establish physical display, input or full gameplay parity.
+# Firestaff v3.0.408
+
+## User-facing changes
+
+- `DM1 HoC stair torch`: no game behavior changes are included; this release adds original-media regression coverage for the critical torch route.
+
+## Developer changes
+
+- `DM1 HoC critical torch`: verify the original PC34 torch beside the first stairs is rendered from GRAPHICS.DAT, picked up through C080/C05, equipped through C508, and retained through the authentic stairs input into the first dark level. F0337 reports light level 100 after the real map transition.
+- `DM1 renderer test isolation`: bind the selected original PC34 archive directly so a mixed-edition data folder cannot change the test's selected media.
+- `Original-media launch evidence`: record current menu and CLI handoff checks, while stating that SDL dummy startup routes do not establish native display, input or complete gameplay parity.
+- `Release metadata`: update the project version, embedded changelog and reproducible SPDX source SBOM for v3.0.408.
+
+## Known limitations
+
+- This release does not claim complete DM1 HoC parity. Other reported wall-art, object-rendering, trap-door, door-button and combat issues require separate original-media or native-runtime verification.
+- The focused PC34 checks use SDL dummy video and audio; they do not establish visual parity or audible output on physical hardware.
+
 # Firestaff v3.0.407
 
 ## Developer changes

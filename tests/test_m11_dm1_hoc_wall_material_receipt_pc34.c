@@ -576,10 +576,9 @@ static int verify_hoc_stair_torch_pickup(
             return 0;
         }
     }
-    /* The torch matters because the first descent is dark.  Exercise the
-     * same live party inventory and F0337 light calculation on the
-     * destination map; the source stair transition changes map ownership,
-     * not the leader's hand Thing. */
+    /* The torch matters because the first descent is dark. Use the original
+     * PC34 stairs transition rather than assigning the destination level in
+     * the fixture, then exercise F0337 with the same live party inventory. */
     if (state->world.dungeon->header.mapCount < 2 ||
         state->world.dungeon->maps[1].width == 0 ||
         state->world.dungeon->maps[1].height == 0) {
@@ -587,18 +586,24 @@ static int verify_hoc_stair_torch_pickup(
               stderr);
         return 0;
     }
-    state->world.party.mapIndex = 1;
-    state->world.party.mapX = 0;
-    state->world.party.mapY = 0;
-    if (M11_GameView_GetDungeonPaletteIndex(state) >= 5 ||
+    state->world.party.mapIndex = 0;
+    state->world.party.mapX = 3;
+    state->world.party.mapY = 15;
+    state->inventoryPanelActive = 0;
+    state->dm1InventoryChampionOrdinal = 0;
+    if (M11_GameView_HandleInput(state, M12_MENU_INPUT_USE_STAIRS) !=
+            M11_GAME_INPUT_REDRAW ||
+        state->world.party.mapIndex != 1 ||
+        M11_GameView_GetDungeonPaletteIndex(state) >= 5 ||
         M11_GameView_GetLightLevel(state) <= 0) {
         fprintf(stderr,
-                "PC34 HoC stair TORCH did not provide light on map 1: level=%d palette=%d\n",
+                "PC34 HoC stair transition/TORCH did not provide light on map 1: map=%d level=%d palette=%d\n",
+                state->world.party.mapIndex,
                 M11_GameView_GetLightLevel(state),
                 M11_GameView_GetDungeonPaletteIndex(state));
         return 0;
     }
-    printf("ok: original PC34 HoC stair TORCH pickup and C508 equip carry light to map 1: level=%d palette=%d\n",
+    printf("ok: original PC34 HoC stair transition, TORCH pickup, and C508 equip carry light to map 1: level=%d palette=%d\n",
            M11_GameView_GetLightLevel(state), M11_GameView_GetDungeonPaletteIndex(state));
     state->world.party.mapIndex = 0;
     state->world.party.mapX = 4;

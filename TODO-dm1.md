@@ -2809,5 +2809,8 @@ mirror route admits a champion before the authentic C013 storage sensor is
 clicked; the same original Thing then moves into the leader hand and leaves
 its wall cell. The C508 action-hand transaction equips it, after which the
 original F0337 light calculation reports level 100 and palette row 0 on map 1.
-This proves pickup, equip, and destination-map light calculation with PC34
-data; a full timed stairs traversal remains separate runtime coverage.
+The regression now uses the real PC34 stairs command from the original stairs
+cell at (3,15), rather than assigning map 1 in the fixture, and verifies that
+the same equipped torch provides light after the actual transition. This
+confirms the route needed to carry light into the first dark level; it does not
+establish complete gameplay parity.

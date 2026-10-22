@@ -14,6 +14,13 @@
   remain unverified; this is bounded Amiga 2.0 combat coverage, not full
   Amiga gameplay parity.
 
+- 2026-10-22: Extended the authentic PC34 HoC wall-torch regression through
+  the original stairs input path. The original torch at (3,14) is clicked
+  from the adjacent party position, moved into the C508 action hand, and kept
+  across the real down-stairs transition at (3,15); the original F0337 light
+  calculation then reports level 100 on map 1. This verifies the critical
+  torch route into the first dark level, not full campaign parity.
+
 - 2026-10-19: Fixed the shared startup intro scan meter ending below 100% and
   disappearing when the scan worker finished. Its total now matches the three
   shared phases and three phases per game, and the intro keeps the final
