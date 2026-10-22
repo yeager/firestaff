@@ -46597,6 +46597,59 @@ static void m11_blit_scaled_palette_map(const M11_AssetSlot* slot,
     }
 }
 
+/* ReDMCSB BLTSHRNK.C F0129:202-390 derives the reduced PC34 door-button
+ * images with 16.16 source steps and a half-pixel starting phase. Keep this
+ * sampler separate from the other nearest-neighbour sprite paths: the
+ * 12x6 D2C and 6x4 D3 buttons lose source pixels with left-edge sampling. */
+static void m11_blit_f0129_palette_map_pc34(
+    const M11_AssetSlot* slot,
+    unsigned char* framebuffer,
+    int fbW,
+    int fbH,
+    int dstX,
+    int dstY,
+    int dstW,
+    int dstH,
+    int transparentColor,
+    const unsigned char paletteMap[16]) {
+    uint32_t xStep;
+    uint32_t yStep;
+    uint32_t yPosition;
+    int dy;
+
+    if (!slot || !slot->loaded || !slot->pixels || !framebuffer ||
+        slot->width == 0u || slot->height == 0u ||
+        dstW <= 0 || dstH <= 0) {
+        return;
+    }
+
+    xStep = (uint32_t)(((uint64_t)slot->width << 16) / (uint32_t)dstW);
+    yStep = (uint32_t)(((uint64_t)slot->height << 16) / (uint32_t)dstH);
+    /* F0129 initializes each accumulator to half a step plus 0x7fff. */
+    yPosition = (yStep >> 1) + UINT32_C(0x7fff);
+    for (dy = 0; dy < dstH; ++dy, yPosition += yStep) {
+        const uint32_t sy = yPosition >> 16;
+        const int fbY = dstY + dy;
+        uint32_t xPosition = (xStep >> 1) + UINT32_C(0x7fff);
+        int dx;
+        if (fbY < 0 || fbY >= fbH || sy >= slot->height) continue;
+        for (dx = 0; dx < dstW; ++dx, xPosition += xStep) {
+            const uint32_t sx = xPosition >> 16;
+            const int fbX = dstX + dx;
+            unsigned char pixel;
+            if (fbX < 0 || fbX >= fbW || sx >= slot->width) continue;
+            pixel = slot->pixels[(size_t)sy * slot->width + sx];
+            if (transparentColor >= 0 &&
+                pixel == (unsigned char)transparentColor) {
+                continue;
+            }
+            if (paletteMap) pixel = paletteMap[pixel & 0x0fu];
+            framebuffer[fbY * fbW + fbX] =
+                (unsigned char)(0x10u | (pixel & 0x0fu));
+        }
+    }
+}
+
 static void m11_blit_scaled_palette_map_region(const M11_AssetSlot* slot,
                                                int srcX,
                                                int srcY,
@@ -49883,12 +49936,12 @@ static void m11_draw_dm1_center_door_buttons(const M11_GameViewState* state,
                     dstW, dstH, 10, paletteMap);
             } else {
                 /* D2/D3 use ReDMCSB's derived, palette-adjusted F0129
-                 * button bitmaps; keep their reduced destination sampling. */
-                m11_blit_scaled_palette_map(slot,
-                                            framebuffer, fbW, fbH,
-                                            M11_VIEWPORT_X + frame->left_x,
-                                            M11_VIEWPORT_Y + frame->top_y,
-                                            dstW, dstH, 10, paletteMap);
+                 * button bitmaps; preserve F0129's centered Q16 sampling. */
+                m11_blit_f0129_palette_map_pc34(
+                    slot, framebuffer, fbW, fbH,
+                    M11_VIEWPORT_X + frame->left_x,
+                    M11_VIEWPORT_Y + frame->top_y,
+                    dstW, dstH, 10, paletteMap);
             }
         }
     }
@@ -49937,15 +49990,15 @@ static void m11_draw_dm1_d3r_door_button(const M11_GameViewState* state,
         return;
     }
     /* G0208[0][C0_VIEW_DOOR_BUTTON_D3R], ReDMCSB F0110. */
-    m11_blit_scaled_palette_map(slot,
-                                framebuffer, fbW, fbH,
-                                M11_VIEWPORT_X + frame->left_x,
-                                M11_VIEWPORT_Y + frame->top_y,
-                                (int)frame->right_x - (int)frame->left_x + 1,
-                                (int)frame->bottom_y - (int)frame->top_y + 1,
-                                10,
-                                dm1_v1_viewport_get_door_button_palette_remap_pc34(
-                                    DM1_VIEW_DOOR_BUTTON_D3R));
+    m11_blit_f0129_palette_map_pc34(
+        slot, framebuffer, fbW, fbH,
+        M11_VIEWPORT_X + frame->left_x,
+        M11_VIEWPORT_Y + frame->top_y,
+        (int)frame->right_x - (int)frame->left_x + 1,
+        (int)frame->bottom_y - (int)frame->top_y + 1,
+        10,
+        dm1_v1_viewport_get_door_button_palette_remap_pc34(
+            DM1_VIEW_DOOR_BUTTON_D3R));
 }
 
 static M11_DM1ZoneBlit m11_dm1_side_door_blit_from_plan(

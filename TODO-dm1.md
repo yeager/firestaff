@@ -63,9 +63,20 @@ Firestaff now copies the top 16x9 source region for D1C, preserving C10
 transparency. The real PC34 HoC test finds an original button door and checks
 the final framebuffer against both the original graphic and a button-disabled
 comparison: 13 visible pixels match and 127 C10 pixels leave the underlying
-image unchanged. This verifies one DOS PC34 D1C route only; D2/D3 derived
-button scales and other DM1 editions remain unverified. The screenshot's other
-viewport, inscription, item, alcove and pit issues remain open.
+image unchanged. This verifies one DOS PC34 D1C route only; D3R and other DM1
+editions remain unverified. The screenshot's other viewport, inscription,
+item, alcove and pit issues remain open.
+
+2026-10-22 PC34 F0129 distant door-button sampling: ReDMCSB
+`BLTSHRNK.C:F0129_VIDEO_BlitShrinkWithPaletteChanges` uses 16.16 source
+ratios with a half-pixel starting phase. Firestaff's generic left-edge
+nearest-neighbour sampler shifted source pixels in the reduced D2C and D3C
+button images. The button renderer now uses the source F0129 sampling sequence
+for D2C, D3C, and D3R while leaving unrelated sprite scaling unchanged. The
+authentic PC34 HoC framebuffer regression checks D2C and D3C pixels against
+that sequence and verifies C10 transparency; both routes pass. D3R and original
+runtime pixel comparison remain unverified, and this does not establish full
+door or viewport parity.
 
 2026-10-22 PC34 real item interaction coverage: the authentic PC34 archive
 contains no wall-alcove item fixture for the existing alcove interaction

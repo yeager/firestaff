@@ -13,12 +13,14 @@
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
 enum {
     FRAMEBUFFER_WIDTH = 320,
     FRAMEBUFFER_HEIGHT = 200,
+    VIEWPORT_X = 0,
     VIEWPORT_Y = 33,
     VIEWPORT_WIDTH = 224,
     VIEWPORT_HEIGHT = 136
@@ -336,6 +338,146 @@ static int exercise_real_f0110_button_pixels(
     return 0;
 }
 
+/* Compare the distant D2C/D3C button in the final framebuffer with the
+ * F0129 Q16 sampling sequence in ReDMCSB BLTSHRNK.C:202-390. */
+static int exercise_real_f0129_button_pixels(
+    M11_GameViewState *state,
+    unsigned char *withButton,
+    unsigned char *withoutButton,
+    DM1_ViewDoorButtonIndex viewIndex,
+    int forwardDistance)
+{
+    const struct DungeonMapDesc_Compat *map;
+    const M11_AssetSlot *button;
+    const DM1_WallFrame *frame;
+    const unsigned char *paletteMap;
+    int doorX;
+
+    if (!state || !state->world.dungeon || !state->world.things ||
+        state->world.dungeon->header.mapCount <= 0) return 0;
+    map = &state->world.dungeon->maps[0];
+    button = M11_AssetLoader_Load(&state->assetLoader, 315u);
+    frame = dm1_v1_viewport_get_door_button_frame_pc34(1, viewIndex);
+    paletteMap = dm1_v1_viewport_get_door_button_palette_remap_pc34(viewIndex);
+    if (!button || !button->loaded || !button->pixels ||
+        button->width != 16u || button->height != 19u || !frame ||
+        !paletteMap || forwardDistance < 1 || forwardDistance > 2) return 0;
+
+    for (doorX = 0; doorX < (int)map->width; ++doorX) {
+        int doorY;
+        for (doorY = 0; doorY < (int)map->height; ++doorY) {
+            unsigned short thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+                state->world.dungeon, state->world.things, 0, doorX, doorY);
+            int safety = 0;
+            while (thing != THING_NONE && thing != THING_ENDOFLIST &&
+                   safety++ < 64) {
+                if (THING_GET_TYPE(thing) == THING_TYPE_DOOR) {
+                    const int doorIndex = (int)THING_GET_INDEX(thing);
+                    if (doorIndex >= 0 &&
+                        doorIndex < state->world.things->doorCount &&
+                        state->world.things->doors[doorIndex].button) {
+                        int direction;
+                        for (direction = 0; direction < 4; ++direction) {
+                            const int partyX = doorX -
+                                (forwardDistance + 1) * step_x(direction);
+                            const int partyY = doorY -
+                                (forwardDistance + 1) * step_y(direction);
+                            M11_Dm1F0128PerSquareSchedulerReceipt receipt;
+                            const int dstW = (int)frame->right_x -
+                                (int)frame->left_x + 1;
+                            const int dstH = (int)frame->bottom_y -
+                                (int)frame->top_y + 1;
+                            const uint32_t xStep = (uint32_t)(
+                                ((uint64_t)button->width << 16) / (uint32_t)dstW);
+                            const uint32_t yStep = (uint32_t)(
+                                ((uint64_t)button->height << 16) / (uint32_t)dstH);
+                            int changedPixels = 0;
+                            int transparentPixels = 0;
+                            uint32_t yPosition = (yStep >> 1) + UINT32_C(0x7fff);
+                            int dy;
+                            if (partyX < 0 || partyY < 0 ||
+                                partyX >= (int)map->width ||
+                                partyY >= (int)map->height) continue;
+                            state->world.party.mapIndex = 0;
+                            state->world.party.mapX = partyX;
+                            state->world.party.mapY = partyY;
+                            state->world.party.direction = direction;
+                            memset(withButton, 0,
+                                   FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT);
+                            M11_GameView_Draw(state, withButton,
+                                              FRAMEBUFFER_WIDTH,
+                                              FRAMEBUFFER_HEIGHT);
+                            memset(&receipt, 0, sizeof(receipt));
+                            M11_GameView_GetDm1F0128PerSquareSchedulerReceipt(
+                                &receipt);
+                            if (!receipt.sourcePlanDispatched ||
+                                receipt.doorButtonCallbackStepCount <= 0) continue;
+
+                            state->world.things->doors[doorIndex].button = 0;
+                            memset(withoutButton, 0,
+                                   FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT);
+                            M11_GameView_Draw(state, withoutButton,
+                                              FRAMEBUFFER_WIDTH,
+                                              FRAMEBUFFER_HEIGHT);
+                            state->world.things->doors[doorIndex].button = 1;
+
+                            for (dy = 0; dy < dstH; ++dy,
+                                 yPosition += yStep) {
+                                const uint32_t sy = yPosition >> 16;
+                                uint32_t xPosition = (xStep >> 1) +
+                                    UINT32_C(0x7fff);
+                                int dx;
+                                for (dx = 0; dx < dstW;
+                                     ++dx, xPosition += xStep) {
+                                    const uint32_t sx = xPosition >> 16;
+                                    const unsigned char source =
+                                        button->pixels[(size_t)sy * button->width + sx];
+                                    const int px = VIEWPORT_X +
+                                        frame->left_x + dx;
+                                    const int py = VIEWPORT_Y +
+                                        frame->top_y + dy;
+                                    const int offset = py * FRAMEBUFFER_WIDTH + px;
+                                    if (source == 10u) {
+                                        ++transparentPixels;
+                                        if (withButton[offset] !=
+                                            withoutButton[offset]) return 0;
+                                    } else if (withButton[offset] !=
+                                               withoutButton[offset]) {
+                                        const unsigned char expected =
+                                            (unsigned char)(0x10u |
+                                                (paletteMap[source & 0x0fu] & 0x0fu));
+                                        if (withButton[offset] != expected) {
+                                            fprintf(stderr,
+                                                "F0129 button mismatch view=%d map=0 door=%d,%d pixel=%d,%d expected=%u actual=%u\n",
+                                                (int)viewIndex, doorX, doorY,
+                                                dx, dy, expected,
+                                                withButton[offset]);
+                                            return 0;
+                                        }
+                                        ++changedPixels;
+                                    }
+                                }
+                            }
+                            if (changedPixels > 0 && transparentPixels > 0) {
+                                printf("real PC34 F0129 button pixels: view=%d door=(%d,%d) party=(%d,%d,d%d) changed=%d transparent=%d\n",
+                                       (int)viewIndex, doorX, doorY,
+                                       partyX, partyY, direction,
+                                       changedPixels, transparentPixels);
+                                return 1;
+                            }
+                        }
+                    }
+                }
+                thing = F0512_DUNGEON_GetThingNext_Compat(
+                    state->world.things, thing);
+            }
+        }
+    }
+    fprintf(stderr, "no authentic HoC F0129 button pixels for view=%d\n",
+            (int)viewIndex);
+    return 0;
+}
+
 /* Locate a real PC 3.4 square whose F0127 span admits D0C F0115_MAIN.
  * Only the transient party presentation tuple changes; dungeon bytes remain
  * untouched and the callback receipt proves consumption of the mounted map. */
@@ -608,6 +750,13 @@ int main(void)
     }
     if (!exercise_real_f0110_button_pixels(&state, framebuffer,
                                             withoutButton)) {
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    if (!exercise_real_f0129_button_pixels(
+            &state, framebuffer, withoutButton, DM1_VIEW_DOOR_BUTTON_D2C, 1) ||
+        !exercise_real_f0129_button_pixels(
+            &state, framebuffer, withoutButton, DM1_VIEW_DOOR_BUTTON_D3C, 2)) {
         M11_GameView_Shutdown(&state);
         return 1;
     }
