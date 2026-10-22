@@ -7792,3 +7792,18 @@ does not switch to a neighboring copy.
 - Keep precise DM1 missing-world/startup-file diagnostics for explicitly selected
   archives, including the generic full scan's fallback path. Verified member
   receipts remain tied to the selected archive; incomplete games stay blocked.
+# Firestaff v3.0.405
+
+## User-facing changes
+
+- `No-game startup`: keep the branded intro and launcher responsive while original game data is scanned in the background; display localized scan progress and defer launch until verification finishes.
+
+## Developer changes
+
+- `M12 startup scan`: isolate background discovery state from live menu state, publish verified asset status only after scan completion, and cancel/join discovery before a user-selected data scan begins.
+- `Startup translations`: refresh source references for the startup-menu catalogs and verify all supported catalogs.
+- `Release metadata`: update the project version and reproducible SPDX source SBOM for v3.0.405.
+
+## Known limitations
+
+- Original-media startup verification uses SDL dummy video and audio. It does not establish physical display, audible playback or full gameplay parity.
