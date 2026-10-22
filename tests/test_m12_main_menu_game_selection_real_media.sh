@@ -32,19 +32,21 @@ run_game_picker_case() {
     local edition=$4
     local input_method=${5:-keyboard}
     local platform=${6:-FM Towns}
-    local home="$scratch/$game_id-home"
+    local menu_data_root=${7:-$data_root}
+    local home="$scratch/$game_id-$input_method-home"
     local log="$scratch/$game_id-$input_method.log"
     local source_hash
 
     mkdir -p "$home"
     source_hash=$(firestaff_sha256_file "$game_archive")
     FIRESTAFF_CONFIG_PATH="$home/config.toml" \
-    FIRESTAFF_DATA="$data_root" \
+    FIRESTAFF_DATA="$menu_data_root" \
     FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
     FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     HOME="$home" XDG_CONFIG_HOME="$home" APPDATA="$home" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
-        "$app" --debug --width 1920 --height 1080 --data-dir "$data_root" \
+        "$app" --debug --width 1920 --height 1080 \
+        --data-dir "$menu_data_root" \
         --script "$navigation" --duration 90000 >"$log" 2>&1 || {
             cat "$log" >&2
             return 1
@@ -74,6 +76,14 @@ run_game_picker_case csb "$csb_archive" \
     'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en
 run_game_picker_case dm2 "$dm2_archive" \
     'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-ja
+
+# Users may select one per-game folder as the collection root. The launcher
+# must still discover sibling game folders instead of limiting the menu to
+# the selected folder. Keep the source files in their documented layout and
+# launch an authentic DM2 archive from the sibling directory.
+run_game_picker_case dm2 "$dm2_archive" \
+    'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
+    fmtowns-ja keyboard-leaf 'FM Towns' "$data_root/dm1"
 
 # Nexus and Theron use their original loose media in this data root. These
 # cases exercise the same five-game launcher selector without requiring the
