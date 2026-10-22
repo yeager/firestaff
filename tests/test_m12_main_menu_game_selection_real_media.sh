@@ -84,6 +84,12 @@ run_game_picker_case dm2 "$dm2_archive" \
 run_game_picker_case dm2 "$dm2_archive" \
     'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
     fmtowns-ja keyboard-leaf 'FM Towns' "$data_root/dm1"
+run_game_picker_case dm1 "$dm1_archive" \
+    'wait-scan-complete,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
+    fmtowns-en keyboard-leaf 'FM Towns' "$data_root/csb"
+run_game_picker_case csb "$csb_archive" \
+    'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
+    fmtowns-en keyboard-leaf 'FM Towns' "$data_root/dm2"
 
 # Nexus and Theron use their original loose media in this data root. These
 # cases exercise the same five-game launcher selector without requiring the
