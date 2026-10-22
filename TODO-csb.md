@@ -1,3 +1,12 @@
+2026-10-22 mixed original-media direct CLI default: the CSB AUTO regression
+now also starts bare `--game csb` from a collection containing authentic
+FM Towns, Atari ST and Amiga editions, with no `--platform` override. It
+requires the direct handoff to select FM Towns, retain the original F31 title
+and graphics identity, and reach `csb-fmtowns-title`. The full mixed-media
+test passed against the installed original archives. This closes the direct
+CLI default-selection coverage gap; it does not verify native display or
+physical input.
+
 2026-10-21 original-media CLI/menu regression matrix:
 `csb_v1_amiga35_ctraw_native_cli_boot`,
 `csb_v1_amiga35_ctraw_native_menu_boot`,

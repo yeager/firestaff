@@ -963,7 +963,14 @@ static void check_return_rescan_uses_real_five_game_corpus(void) {
                                    &coverage);
     CHECK((coverage.gameMask & 0x1fU) == 0x1fU);
     for (i = 0U; i < sizeof(ids) / sizeof(ids[0]); ++i) {
-        CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, ids[i]) == 1);
+        int available = M12_AssetStatus_GameAvailable(
+            &state.assetStatus, ids[i]);
+        if (available != 1) {
+            fprintf(stderr,
+                    "FAIL: authentic five-game return rescan did not admit %s\n",
+                    ids[i]);
+        }
+        CHECK(available == 1);
     }
     M12_StartupMenu_Destroy(&state);
 
