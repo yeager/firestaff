@@ -10665,7 +10665,7 @@ int M12_StartupMenu_GetLaunchGate(
         gate.dataReady = gate.boot.dataReady = 0;
         gate.boot.statusLabel = m12_tr(state, "SCANNING GAME DATA");
         gate.boot.detailLabel = m12_tr(state,
-                                       "GAME AVAILABILITY IS BEING CHECKED");
+                                       "CHECKING ORIGINAL FILE CANDIDATES");
     }
     if (entry->sourceKind==M12_MENU_SOURCE_BUILTIN_CATALOG &&
         entry->gameId && strcmp(entry->gameId,"dm1")==0 &&
