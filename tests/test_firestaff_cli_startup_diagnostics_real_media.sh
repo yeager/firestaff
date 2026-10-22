@@ -339,6 +339,18 @@ if [ -f "$dm1_towns_archive" ] && [ -f "$csb_towns_archive" ] &&
             exit 1
         }
     done
+    printf '%s\n' "$no_game_output" | \
+        grep -Fq 'firestaff: scan complete elapsed-ms=' || {
+        printf 'FAIL: --debug did not report the deferred startup scan completion\n%s\n' \
+            "$no_game_output" >&2
+        exit 1
+    }
+    printf '%s\n' "$no_game_output" | \
+        grep -Fq 'result=completed games=dm1:yes,csb:yes,dm2:yes' || {
+        printf 'FAIL: deferred startup scan summary did not report original game availability\n%s\n' \
+            "$no_game_output" >&2
+        exit 1
+    }
     if [ -f "$nexus_iso" ]; then
         printf '%s\n' "$no_game_output" | grep -Fq 'firestaff: nexus available=yes' || {
             printf 'FAIL: no-game startup did not discover authentic Nexus media\n%s\n' \

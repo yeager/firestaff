@@ -115,6 +115,7 @@ typedef struct M12_DeferredStartupScanJob {
     SDL_AtomicInt cancelRequested;
     SDL_AtomicInt done;
     int result;
+    uint64_t startedMs;
     int hasExplicitDataDir;
     int scanAllGames;
     int looseFilesOnly;
@@ -4878,6 +4879,7 @@ int M12_StartupMenu_BeginDeferredScan(M12_StartupMenuState* state) {
     }
     job = (M12_DeferredStartupScanJob*)calloc(1U, sizeof(*job));
     if (!job) return 0;
+    job->startedMs = SDL_GetTicks();
     job->mutex = SDL_CreateMutex();
     if (!job->mutex) {
         m12_free_deferred_startup_scan_job(job);
@@ -14344,6 +14346,32 @@ static int m12_update_deferred_startup_scan(M12_StartupMenuState* state) {
     state->deferredScanJob = NULL;
     state->deferredScanActive = 0;
     state->deferredScanProgress = job->scanState.assetStatus.scanProgress;
+    if (state->debugStartup) {
+        static const char* const gameIds[] = {
+            "dm1", "csb", "dm2", "nexus", "theron"
+        };
+        const M12_AssetStatus* status = &job->scanState.assetStatus;
+        const int cancelled = state->deferredScanProgress.cancelled ? 1 : 0;
+        const char* result = !job->result ? "failed" :
+            (cancelled ? "cancelled" : "completed");
+        size_t gameIndex;
+        fprintf(stderr,
+                "firestaff: scan complete elapsed-ms=%llu result=%s games=",
+                (unsigned long long)(SDL_GetTicks() - job->startedMs), result);
+        for (gameIndex = 0U;
+             gameIndex < sizeof(gameIds) / sizeof(gameIds[0]);
+             ++gameIndex) {
+            if (gameIndex) fputc(',', stderr);
+            fprintf(stderr, "%s:%s", gameIds[gameIndex],
+                    M12_AssetStatus_GameAvailable(status, gameIds[gameIndex])
+                        ? "yes" : "no");
+        }
+        fprintf(stderr, " original-candidate=%s data=%s\n",
+                M12_AssetStatus_HasOriginalFileCandidate(status)
+                    ? "yes" : "no",
+                M12_AssetStatus_GetDataDir(status)[0]
+                    ? M12_AssetStatus_GetDataDir(status) : "(none)");
+    }
     if (job->result && !state->deferredScanProgress.cancelled) {
         char canonicalDataDir[M12_ASSET_DATA_DIR_CAPACITY];
         const char* scannedDataDir;

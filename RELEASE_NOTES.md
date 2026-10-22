@@ -7807,3 +7807,18 @@ does not switch to a neighboring copy.
 ## Known limitations
 
 - Original-media startup verification uses SDL dummy video and audio. It does not establish physical display, audible playback or full gameplay parity.
+
+# Firestaff v3.0.406
+
+## User-facing changes
+
+- `Startup diagnostics`: add a `--debug` completion summary for deferred game-data scans, including elapsed time, cancellation status and per-game availability.
+
+## Developer changes
+
+- `Launcher scan diagnostics`: add the completion summary to the isolated scan result and verify it through the real-media CLI startup regression. Report missing games separately from cancellation and failure.
+- `Release metadata`: update the project version and reproducible SPDX source SBOM for v3.0.406.
+
+## Known limitations
+
+- Debug scan summaries report game availability and the selected data root; `--verbose` remains the diagnostic mode for the detailed candidate-file list. Original-media startup tests use SDL dummy video and audio and do not establish physical display, input or full gameplay parity.

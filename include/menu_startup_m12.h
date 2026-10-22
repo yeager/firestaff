@@ -700,6 +700,7 @@ typedef struct M12_StartupMenuState {
     unsigned int dm1HoCPresentedCaptureLaunchSerial;
     int deferredScanPending;
     int deferredScanActive;
+    int debugStartup;
     M12_AssetScanProgress deferredScanProgress;
     void* deferredScanJob;
     char deferredDataDir[M12_ASSET_DATA_DIR_CAPACITY];

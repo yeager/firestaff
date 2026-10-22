@@ -12142,6 +12142,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                         o->dataDir,
                                         o->gameId,
                                         &menuInitOptions);
+        menuState.debugStartup = o->debug ? 1 : 0;
         if (o->languageOverride >= 0 && o->languageOverride < 20) {
             static const char* const languageCodes[] = {
                 "en", "sv", "fr", "de", "ja", "zh", "cs", "da", "es", "fi",
