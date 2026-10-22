@@ -64,6 +64,25 @@ int main(void)
     ok &= expect_contains("source evidence food table",
                           dm1_inventory_consumables_source_evidence_pc34(),
                           "DUNGEON.C:428-436");
+    ok &= expect_contains("source evidence Atari F0348 variants",
+                          dm1_inventory_consumables_source_evidence_pc34(),
+                          "S1.1 uses strict 120/180 thresholds and cap 250");
+    ok &= expect_int("Atari ST 1.0a graphics profile",
+                     dm1_inventory_statistic_rules_for_graphics_md5_pc34(
+                         "b3cfd84e44cdf07ce2eeba47e87f772b"),
+                     DM1_CONSUMABLE_STAT_RULES_ATARI_ST_10);
+    ok &= expect_int("Atari ST 1.0b graphics profile",
+                     dm1_inventory_statistic_rules_for_graphics_md5_pc34(
+                         "7eee396993745e8af212f44d75ff6c1a"),
+                     DM1_CONSUMABLE_STAT_RULES_ATARI_ST_10);
+    ok &= expect_int("Atari ST 1.1 graphics profile",
+                     dm1_inventory_statistic_rules_for_graphics_md5_pc34(
+                         "5095a13692702235d2e74f6b2b1367a9"),
+                     DM1_CONSUMABLE_STAT_RULES_ATARI_ST_11);
+    ok &= expect_int("Atari ST 1.2 graphics profile",
+                     dm1_inventory_statistic_rules_for_graphics_md5_pc34(
+                         "9ce2eaf7a9e78620e3f17594437caffa"),
+                     DM1_CONSUMABLE_STAT_RULES_PC34_PLUS);
 
     ok &= expect_int("apple amount", dm1_inventory_food_amount_from_icon_pc34(168), 500);
     ok &= expect_int("dragon steak amount", dm1_inventory_food_amount_from_icon_pc34(175), 1400);
@@ -144,6 +163,34 @@ int main(void)
                                  potion == 7 ? expectedKu[v] : expected[v]);
             }
         }
+    }
+    {
+        DM1ConsumableChampionPc34 early = base_champion();
+        early.statisticRules = DM1_CONSUMABLE_STAT_RULES_ATARI_ST_10;
+        early.statistic[DM1_CONSUMABLE_STAT_DEXTERITY] = 249;
+        ok &= expect_int("S1.0 ROS potion accepted",
+                         dm1_inventory_consume_potion_pc34(&early, 6, 100, 0, 0, &r), 1);
+        ok &= expect_int("S1.0 F0348 uses uncapped positive delta",
+                         early.statistic[DM1_CONSUMABLE_STAT_DEXTERITY], 255);
+
+        early = base_champion();
+        early.statisticRules = DM1_CONSUMABLE_STAT_RULES_ATARI_ST_11;
+        early.statistic[DM1_CONSUMABLE_STAT_DEXTERITY] = 180;
+        ok &= expect_int("S1.1 ROS potion accepted",
+                         dm1_inventory_consume_potion_pc34(&early, 6, 100, 0, 0, &r), 1);
+        ok &= expect_int("S1.1 F0348 second threshold is greater than 180",
+                         early.statistic[DM1_CONSUMABLE_STAT_DEXTERITY], 187);
+        early.statisticRules = DM1_CONSUMABLE_STAT_RULES_ATARI_ST_11;
+        early.statistic[DM1_CONSUMABLE_STAT_DEXTERITY] = 181;
+        ok &= expect_int("S1.1 ROS potion above threshold accepted",
+                         dm1_inventory_consume_potion_pc34(&early, 6, 100, 0, 0, &r), 1);
+        ok &= expect_int("S1.1 F0348 applies 120/180 thresholds and cap 250",
+                         early.statistic[DM1_CONSUMABLE_STAT_DEXTERITY], 185);
+        early.statistic[DM1_CONSUMABLE_STAT_DEXTERITY] = 249;
+        ok &= expect_int("S1.1 ROS potion at cap accepted",
+                         dm1_inventory_consume_potion_pc34(&early, 6, 100, 0, 0, &r), 1);
+        ok &= expect_int("S1.1 F0348 caps at 250",
+                         early.statistic[DM1_CONSUMABLE_STAT_DEXTERITY], 250);
     }
     ok &= expect_int("ROS potion", dm1_inventory_consume_potion_pc34(&c, 6, 80, 0, 0, &r), 1);
     ok &= expect_int("ROS dexterity delta", c.statistic[DM1_CONSUMABLE_STAT_DEXTERITY], 42);

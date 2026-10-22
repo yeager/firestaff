@@ -61174,6 +61174,9 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state) {
     consumableChampion.water = champ->water;
     consumableChampion.wounds = champ->wounds;
     consumableChampion.poisonDose = champ->poisonDose;
+    consumableChampion.statisticRules =
+        dm1_inventory_statistic_rules_for_graphics_md5_pc34(
+            state->bootAssetMd5);
     consumableChampion.shieldDefense = state->world.lifecycle.champions[champ - state->world.party.champions].shieldDefense;
 
     if ((thingType == THING_TYPE_JUNK || thingType == THING_TYPE_POTION) &&

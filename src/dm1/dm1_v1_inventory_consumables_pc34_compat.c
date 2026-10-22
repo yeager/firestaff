@@ -34,16 +34,42 @@ static int clamp_max_pc34(int value, int maximum)
     return value > maximum ? maximum : value;
 }
 
-static int16_t adjust_statistic_f0348_pc34(int current, int delta)
+DM1ConsumableStatisticRulesPc34
+dm1_inventory_statistic_rules_for_graphics_md5_pc34(const char* graphicsMd5)
 {
-    /* ReDMCSB PANEL.C F0348:1713-1741, PC3.4 and S1.2+:
-     * thresholds are strict; add one after the positive-delta shifts. */
-    if (current > 120) {
+    if (!graphicsMd5) return DM1_CONSUMABLE_STAT_RULES_PC34_PLUS;
+    if (strcmp(graphicsMd5, "b3cfd84e44cdf07ce2eeba47e87f772b") == 0 ||
+        strcmp(graphicsMd5, "7eee396993745e8af212f44d75ff6c1a") == 0) {
+        return DM1_CONSUMABLE_STAT_RULES_ATARI_ST_10;
+    }
+    if (strcmp(graphicsMd5, "5095a13692702235d2e74f6b2b1367a9") == 0) {
+        return DM1_CONSUMABLE_STAT_RULES_ATARI_ST_11;
+    }
+    return DM1_CONSUMABLE_STAT_RULES_PC34_PLUS;
+}
+
+static int16_t adjust_statistic_f0348_pc34(int current, int delta,
+                                            DM1ConsumableStatisticRulesPc34 rules)
+{
+    int maximum = 170;
+    /* ReDMCSB PANEL.C F0348:1713-1741 has three historical branches:
+     * S1.0 caps at 255 without diminishing gains; S1.1 uses 120/180 and
+     * cap 250; S1.2+ uses 120/150 and cap 170. */
+    if (rules == DM1_CONSUMABLE_STAT_RULES_ATARI_ST_10) {
+        maximum = 255;
+    } else if (rules == DM1_CONSUMABLE_STAT_RULES_ATARI_ST_11) {
+        maximum = 250;
+        if (current > 120) {
+            delta >>= 1;
+            if (current > 180) delta >>= 1;
+            ++delta;
+        }
+    } else if (current > 120) {
         delta >>= 1;
         if (current > 150) delta >>= 1;
         ++delta;
     }
-    return (int16_t)clamp_max_pc34(current + delta, 170);
+    return (int16_t)clamp_max_pc34(current + delta, maximum);
 }
 
 static int max_int_pc34(int a, int b)
@@ -65,6 +91,7 @@ static void clear_result(DM1ConsumableResultPc34* outResult)
 const char* dm1_inventory_consumables_source_evidence_pc34(void)
 {
     return
+        "PANEL.C:1695-1741 F0348 uses edition-owned stat rules: S1.0 has no diminishing thresholds and cap 255, S1.1 uses strict 120/180 thresholds and cap 250, and S1.2+ uses strict 120/150 thresholds and cap 170; "
         "PANEL.C:1743-1785 F0349 declares mouth-consumption locals; "
         "PANEL.C:1824-1844 gates mouth-allowed objects, water/waterskin charge use, and leader-hand removal; "
         "PANEL.C:1850-1917 applies potion effects and converts all potions to C20 empty flask without clearing Power; "
@@ -166,16 +193,16 @@ int dm1_inventory_consume_potion_pc34(DM1ConsumableChampionPc34* champion,
 
     switch (potionType) {
     case DM1_POTION_ROS_PC34:
-        champion->statistic[DM1_CONSUMABLE_STAT_DEXTERITY] = adjust_statistic_f0348_pc34(champion->statistic[DM1_CONSUMABLE_STAT_DEXTERITY], adjusted);
+        champion->statistic[DM1_CONSUMABLE_STAT_DEXTERITY] = adjust_statistic_f0348_pc34(champion->statistic[DM1_CONSUMABLE_STAT_DEXTERITY], adjusted, champion->statisticRules);
         break;
     case DM1_POTION_KU_PC34:
-        champion->statistic[DM1_CONSUMABLE_STAT_STRENGTH] = adjust_statistic_f0348_pc34(champion->statistic[DM1_CONSUMABLE_STAT_STRENGTH], (potionPower / 35) + 5);
+        champion->statistic[DM1_CONSUMABLE_STAT_STRENGTH] = adjust_statistic_f0348_pc34(champion->statistic[DM1_CONSUMABLE_STAT_STRENGTH], (potionPower / 35) + 5, champion->statisticRules);
         break;
     case DM1_POTION_DANE_PC34:
-        champion->statistic[DM1_CONSUMABLE_STAT_WISDOM] = adjust_statistic_f0348_pc34(champion->statistic[DM1_CONSUMABLE_STAT_WISDOM], adjusted);
+        champion->statistic[DM1_CONSUMABLE_STAT_WISDOM] = adjust_statistic_f0348_pc34(champion->statistic[DM1_CONSUMABLE_STAT_WISDOM], adjusted, champion->statisticRules);
         break;
     case DM1_POTION_NETA_PC34:
-        champion->statistic[DM1_CONSUMABLE_STAT_VITALITY] = adjust_statistic_f0348_pc34(champion->statistic[DM1_CONSUMABLE_STAT_VITALITY], adjusted);
+        champion->statistic[DM1_CONSUMABLE_STAT_VITALITY] = adjust_statistic_f0348_pc34(champion->statistic[DM1_CONSUMABLE_STAT_VITALITY], adjusted, champion->statisticRules);
         break;
     case DM1_POTION_ANTIVENIN_PC34:
         champion->poisonDose = 0;

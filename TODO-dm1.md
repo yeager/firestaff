@@ -6,6 +6,15 @@ rendered cursor reaches pointerY-8 and passes against the installed archive.
 This corrects cursor placement only; the striped held-object appearance,
 reported viewport defects, and other DM1 editions remain open.
 
+2026-10-22 Atari ST F0348 potion-stat rules: M12-authenticated original
+GRAPHICS.DAT identities now select the edition's ReDMCSB PANEL.C:1695-1741
+behavior. Atari 1.0a/1.0b use the original 255 cap without diminishing gains;
+1.1 uses strict 120/180 thresholds and cap 250; 1.2+ keeps the 120/150 and
+170 rules. The live M11 mouth transaction supplies the selected graphics MD5
+to the consumable calculation. The focused unit test passes with threshold
+and cap cases. A real Atari 1.0/1.1 potion-consumption campaign route remains
+unverified; this does not claim full early-edition gameplay parity.
+
 2026-10-22 IIGS functional-route retest: `m11_dm1_iigs_startup_real_media`
 passed against the installed original IIGS software archive. Its real-media
 route exercises the C080 door button, naturally routed movement and champion

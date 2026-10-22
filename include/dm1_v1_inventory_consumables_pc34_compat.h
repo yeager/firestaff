@@ -25,6 +25,12 @@ enum {
 };
 
 typedef enum {
+    DM1_CONSUMABLE_STAT_RULES_PC34_PLUS = 0,
+    DM1_CONSUMABLE_STAT_RULES_ATARI_ST_10 = 1,
+    DM1_CONSUMABLE_STAT_RULES_ATARI_ST_11 = 2
+} DM1ConsumableStatisticRulesPc34;
+
+typedef enum {
     DM1_CONSUMABLE_RESULT_NONE = 0,
     DM1_CONSUMABLE_RESULT_WATER_JUNK,
     DM1_CONSUMABLE_RESULT_FOOD_JUNK,
@@ -44,6 +50,7 @@ typedef struct {
     int16_t water;
     uint16_t wounds;
     uint16_t poisonDose;
+    DM1ConsumableStatisticRulesPc34 statisticRules;
 } DM1ConsumableChampionPc34;
 
 typedef struct {
@@ -66,6 +73,8 @@ typedef struct {
 } DM1ConsumableMouthAnimationFramePc34;
 
 const char* dm1_inventory_consumables_source_evidence_pc34(void);
+DM1ConsumableStatisticRulesPc34
+dm1_inventory_statistic_rules_for_graphics_md5_pc34(const char* graphicsMd5);
 int dm1_inventory_food_amount_from_icon_pc34(int iconIndex);
 int dm1_inventory_junk_food_icon_from_type_pc34(int junkType);
 
