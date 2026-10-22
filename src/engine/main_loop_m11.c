@@ -481,6 +481,12 @@ static void m11_set_launch_failed_message(M12_StartupMenuState* menuState) {
         menuState, "ESC RETURNS TO MENU");
 }
 
+static void m11_draw_intro_progress_bar(unsigned char* rgba,
+                                        int w, int h,
+                                        const M12_AssetScanProgress* progress,
+                                        Uint64 elapsedMs,
+                                        int languageIndex);
+
 static void m11_draw_launcher_legacy(const M12_StartupMenuState* menuState,
                                      unsigned char* launcherFramebuffer) {
     if (!menuState || !launcherFramebuffer) {
@@ -507,10 +513,27 @@ static void m11_draw_launcher(const M12_StartupMenuState* menuState,
                               unsigned char* launcherFramebuffer,
                               unsigned char* modernRgba,
                               int useModern) {
+    M12_AssetScanProgress scanProgress;
     if (useModern && modernRgba) {
         m11_draw_launcher_modern(menuState, modernRgba);
     } else if (launcherFramebuffer) {
         m11_draw_launcher_legacy(menuState, launcherFramebuffer);
+    }
+    if (menuState && menuState->deferredScanActive &&
+        M12_StartupMenu_GetDeferredScanProgress(menuState, &scanProgress)) {
+        if (useModern && modernRgba) {
+            m11_draw_intro_progress_bar(modernRgba,
+                                        M11_LAUNCHER_MODERN_WIDTH,
+                                        M11_LAUNCHER_MODERN_HEIGHT,
+                                        &scanProgress,
+                                        SDL_GetTicks(),
+                                        menuState->settings.languageIndex);
+        } else if (launcherFramebuffer) {
+            M12_StartupMenu_DrawScanProgressOverlayLocalized(
+                &scanProgress, menuState->settings.languageIndex,
+                launcherFramebuffer, M11_LAUNCHER_FB_WIDTH,
+                M11_LAUNCHER_FB_HEIGHT);
+        }
     }
 }
 
@@ -870,90 +893,7 @@ static void m11_debug_log_launch_selection(
                 ? version->matchedPath : "unknown");
 }
 
-typedef struct {
-    M12_StartupMenuState* menuState;
-    SDL_Mutex* mutex;
-    M12_AssetScanProgress progress;
-    SDL_AtomicInt done;
-    SDL_AtomicInt cancelRequested;
-    int autotestQuitInjected;
-    Uint64 startedMs;
-} M11_IntroScanJob;
-
 static int g_m11_debug_startup_detail = 0;
-
-static int m11_intro_scan_progress_callback(
-    const M12_AssetScanProgress* progress, void* userData) {
-    M11_IntroScanJob* job = (M11_IntroScanJob*)userData;
-    if (!job || !progress) return 1;
-    if (g_m11_debug_startup_detail) {
-        fprintf(stderr,
-                "firestaff: scan elapsed-ms=%llu progress=%zu%% game=%s task=%s path=%s\n",
-                (unsigned long long)(SDL_GetTicks() - job->startedMs),
-                progress->totalSteps > 0U
-                    ? (progress->completedSteps * 100U +
-                       progress->currentStepPercent) / progress->totalSteps
-                    : 0U,
-                progress->currentGameId[0] ? progress->currentGameId : "all",
-                progress->currentTask,
-                progress->currentPath[0] ? progress->currentPath : "(none)");
-    }
-    {
-        const char* dm2InflateQuit =
-            getenv("FIRESTAFF_AUTOTEST_QUIT_DURING_DM2_IMAGE_INFLATE");
-        int quitDuringDm2Inflate = dm2InflateQuit &&
-            strcmp(dm2InflateQuit, "1") == 0 && progress &&
-            strcmp(progress->currentGameId, "dm2") == 0 &&
-            strcmp(progress->currentTask,
-                   "reading original DM2 disc image") == 0 &&
-            progress->currentStepPercent > 0U;
-        int quitDuringAnyScan = getenv("FIRESTAFF_AUTOTEST_QUIT_DURING_SCAN") &&
-            strcmp(getenv("FIRESTAFF_AUTOTEST_QUIT_DURING_SCAN"), "1") == 0;
-        if (!job->autotestQuitInjected && getenv("FIRESTAFF_AUTOTEST") &&
-            (quitDuringAnyScan || quitDuringDm2Inflate)) {
-            SDL_Event event;
-            SDL_Window* window = M11_Render_GetWindow();
-            memset(&event, 0, sizeof(event));
-            if (window) {
-#if SDL_VERSION_ATLEAST(3, 0, 0)
-                event.type = SDL_EVENT_WINDOW_CLOSE_REQUESTED;
-                event.window.windowID = SDL_GetWindowID(window);
-#else
-                event.type = SDL_WINDOWEVENT;
-                event.window.windowID = SDL_GetWindowID(window);
-                event.window.event = SDL_WINDOWEVENT_CLOSE;
-#endif
-                if (SDL_PushEvent(&event)) {
-                    job->autotestQuitInjected = 1;
-                    (void)FSP_SetEnv("FIRESTAFF_AUTOTEST_SCAN_QUIT_INJECTED",
-                                     "1", 1);
-                    if (g_m11_debug_startup_detail) {
-                        fprintf(stderr, quitDuringDm2Inflate
-                            ? "firestaff: autotest injected window-close during DM2 disc image inflate\n"
-                            : "firestaff: autotest injected window-close during startup intro asset scan\n");
-                    }
-                }
-            }
-        }
-    }
-    if (job->mutex) SDL_LockMutex(job->mutex);
-    job->progress = *progress;
-    if (job->mutex) SDL_UnlockMutex(job->mutex);
-    return SDL_GetAtomicInt(&job->cancelRequested) == 0;
-}
-
-static int SDLCALL m11_intro_scan_thread(void* data) {
-    M11_IntroScanJob* job = (M11_IntroScanJob*)data;
-    if (!job || !job->menuState) return 1;
-    M12_StartupMenu_RunDeferredScan(job->menuState,
-                                    m11_intro_scan_progress_callback,
-                                    job);
-    if (job->mutex) SDL_LockMutex(job->mutex);
-    job->progress = job->menuState->assetStatus.scanProgress;
-    if (job->mutex) SDL_UnlockMutex(job->mutex);
-    SDL_SetAtomicInt(&job->done, 1);
-    return 0;
-}
 
 static void m11_draw_intro_progress_bar(unsigned char* rgba,
                                         int w, int h,
@@ -976,7 +916,9 @@ static void m11_draw_intro_progress_bar(unsigned char* rgba,
     panelW = w < 440 ? w - 32 : 408;
     panelH = 48;
     panelX = (w - panelW) / 2;
-    panelY = h - 68;
+    /* Keep the overlay above the menu footer; the startup animation and
+     * launcher share this renderer but use different screen heights. */
+    panelY = h * 74 / 100;
     if (panelY < 0) panelY = 0;
     {
         int px, py;
@@ -1047,9 +989,11 @@ static int m11_play_firestaff_startup_intro(M12_StartupMenuState* menuState) {
     char resourcePath[1024];
     const char* basePath;
     Uint64 started;
-    M11_IntroScanJob scanJob;
-    SDL_Thread* scanThread = NULL;
+    Uint64 scanStarted = 0;
     int scanActive = 0;
+    int autotestQuitInjected = 0;
+    int haveLastProgress = 0;
+    M12_AssetScanProgress lastProgress;
 
     rgba = (unsigned char*)malloc((size_t)M12_STARTUP_INTRO_WIDTH *
                                   (size_t)M12_STARTUP_INTRO_HEIGHT * 4U);
@@ -1097,70 +1041,105 @@ static int m11_play_firestaff_startup_intro(M12_StartupMenuState* menuState) {
     (void)M12_StartupIntro_LoadBackground(resourcePath);
 #endif
 
-    memset(&scanJob, 0, sizeof(scanJob));
     if (menuState && menuState->deferredScanPending) {
-        scanJob.menuState = menuState;
-        scanJob.mutex = SDL_CreateMutex();
-        SDL_SetAtomicInt(&scanJob.done, 0);
-        SDL_SetAtomicInt(&scanJob.cancelRequested, 0);
-        scanJob.autotestQuitInjected = 0;
-        scanJob.startedMs = SDL_GetTicks();
-        scanThread = SDL_CreateThread(m11_intro_scan_thread, "IntroScan", &scanJob);
-        scanActive = scanThread != NULL;
+        scanActive = M12_StartupMenu_BeginDeferredScan(menuState);
     }
 
     started = SDL_GetTicks();
+    scanStarted = started;
+    memset(&lastProgress, 0, sizeof(lastProgress));
     for (;;) {
         Uint64 elapsed = SDL_GetTicks() - started;
-        int scanDone = !scanActive || SDL_GetAtomicInt(&scanJob.done);
         uint32_t effectiveDuration = M12_STARTUP_INTRO_DURATION_MS;
-        if (!scanDone && elapsed >= M12_STARTUP_INTRO_DURATION_MS) {
-            effectiveDuration = (uint32_t)elapsed + 1000;
-        }
-        if (scanDone && elapsed >= M12_STARTUP_INTRO_DURATION_MS) {
-            break;
-        }
         M12_StartupIntro_Render(rgba,
                                 M12_STARTUP_INTRO_WIDTH,
                                 M12_STARTUP_INTRO_HEIGHT,
-                                (uint32_t)(elapsed < effectiveDuration ? elapsed : effectiveDuration - 1),
+                                (uint32_t)(elapsed < effectiveDuration
+                                               ? elapsed
+                                               : effectiveDuration - 1),
                                 effectiveDuration,
                                 FIRESTAFF_VERSION_NUMBER);
         if (scanActive) {
             M12_AssetScanProgress snap;
-            if (scanJob.mutex) SDL_LockMutex(scanJob.mutex);
-            snap = scanJob.progress;
-            if (scanJob.mutex) SDL_UnlockMutex(scanJob.mutex);
+            (void)M12_StartupMenu_GetDeferredScanProgress(menuState, &snap);
             m11_draw_intro_progress_bar(rgba,
                                         M12_STARTUP_INTRO_WIDTH,
                                         M12_STARTUP_INTRO_HEIGHT,
                                         &snap,
                                         elapsed,
                                         menuState ? menuState->settings.languageIndex : 0);
+            if (g_m11_debug_startup_detail &&
+                (!haveLastProgress ||
+                 snap.completedSteps != lastProgress.completedSteps ||
+                 snap.currentStepPercent != lastProgress.currentStepPercent ||
+                 strcmp(snap.currentTask, lastProgress.currentTask) != 0 ||
+                 strcmp(snap.currentPath, lastProgress.currentPath) != 0)) {
+                fprintf(stderr,
+                        "firestaff: scan elapsed-ms=%llu progress=%zu%% game=%s task=%s path=%s\n",
+                        (unsigned long long)(SDL_GetTicks() - scanStarted),
+                        snap.totalSteps > 0U
+                            ? (snap.completedSteps * 100U +
+                               snap.currentStepPercent) / snap.totalSteps
+                            : 0U,
+                        snap.currentGameId[0] ? snap.currentGameId : "all",
+                        snap.currentTask,
+                        snap.currentPath[0] ? snap.currentPath : "(none)");
+            }
+            lastProgress = snap;
+            haveLastProgress = 1;
+            {
+                const char* quitAny =
+                    getenv("FIRESTAFF_AUTOTEST_QUIT_DURING_SCAN");
+                const char* quitDm2 =
+                    getenv("FIRESTAFF_AUTOTEST_QUIT_DURING_DM2_IMAGE_INFLATE");
+                int requestAny = quitAny && strcmp(quitAny, "1") == 0;
+                int requestDm2 = quitDm2 && strcmp(quitDm2, "1") == 0 &&
+                    strcmp(snap.currentGameId, "dm2") == 0 &&
+                    strcmp(snap.currentTask,
+                           "reading original DM2 disc image") == 0 &&
+                    snap.currentStepPercent > 0U;
+                if (!autotestQuitInjected && getenv("FIRESTAFF_AUTOTEST") &&
+                    (requestAny || requestDm2)) {
+                    SDL_Event event;
+                    SDL_Window* window = M11_Render_GetWindow();
+                    memset(&event, 0, sizeof(event));
+                    if (window) {
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+                        event.type = SDL_EVENT_WINDOW_CLOSE_REQUESTED;
+                        event.window.windowID = SDL_GetWindowID(window);
+#else
+                        event.type = SDL_WINDOWEVENT;
+                        event.window.windowID = SDL_GetWindowID(window);
+                        event.window.event = SDL_WINDOWEVENT_CLOSE;
+#endif
+                        if (SDL_PushEvent(&event)) {
+                            autotestQuitInjected = 1;
+                            (void)FSP_SetEnv(
+                                "FIRESTAFF_AUTOTEST_SCAN_QUIT_INJECTED",
+                                "1", 1);
+                            if (g_m11_debug_startup_detail) {
+                                fprintf(stderr, requestDm2
+                                    ? "firestaff: autotest injected window-close during DM2 disc image inflate\n"
+                                    : "firestaff: autotest injected window-close during startup intro asset scan\n");
+                            }
+                        }
+                    }
+                }
+            }
         }
         (void)M11_Render_PresentRGBA(rgba,
                                      M12_STARTUP_INTRO_WIDTH,
                                      M12_STARTUP_INTRO_HEIGHT);
         if (M11_Render_PumpEvents()) {
-            if (scanThread) {
-                /* A window close must not wait for a complete originals scan.
-                 * The scanner checks this at its next progress boundary. */
-                SDL_SetAtomicInt(&scanJob.cancelRequested, 1);
-                SDL_WaitThread(scanThread, NULL);
-            }
-            if (scanJob.mutex) SDL_DestroyMutex(scanJob.mutex);
+            /* Cancellation is observed at the next scan progress boundary;
+             * state destruction joins the isolated worker during cleanup. */
+            M12_StartupMenu_CancelDeferredScan(menuState);
             free(rgba);
             return 1;
         }
+        if (elapsed >= M12_STARTUP_INTRO_DURATION_MS) break;
         SDL_Delay(33U);
     }
-    if (scanThread) {
-        SDL_WaitThread(scanThread, NULL);
-        /* The worker owns only scan results. Publish dialogs after joining
-         * it, when the launcher state is again owned by the UI thread. */
-        M12_StartupMenu_FinalizeDeferredScanMessages(menuState);
-    }
-    if (scanJob.mutex) SDL_DestroyMutex(scanJob.mutex);
     free(rgba);
     return 0;
 }
@@ -12389,33 +12368,37 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         goto cleanup;
     }
     if (menuState.deferredScanPending && !quitRequested) {
-        M11_ScanProgressContext fallbackCtx;
-        fallbackCtx.framebuffer = launcherFramebuffer;
-        fallbackCtx.modernRgba = modernRgba;
-        fallbackCtx.width = M11_LAUNCHER_FB_WIDTH;
-        fallbackCtx.height = M11_LAUNCHER_FB_HEIGHT;
-        fallbackCtx.languageIndex = menuState.settings.languageIndex;
-        fallbackCtx.colorblindMode = menuState.settings.colorblindMode;
-        fallbackCtx.uiScale = menuState.settings.uiScale;
-        fallbackCtx.debug = o->debug;
-        fallbackCtx.useModern = useModern;
-        fallbackCtx.quitRequested = &quitRequested;
-        fallbackCtx.autotestQuitInjected = 0;
-        fallbackCtx.returnMenuRescan = 0;
-        fallbackCtx.startedMs = SDL_GetTicks();
-        M12_StartupMenu_RunDeferredScan(&menuState,
-                                        m11_scan_progress_callback,
-                                        &fallbackCtx);
-        if (!quitRequested && !o->directLaunch)
-            M12_StartupMenu_FinalizeDeferredScanMessages(&menuState);
+        if (!M12_StartupMenu_BeginDeferredScan(&menuState)) {
+            M11_ScanProgressContext fallbackCtx;
+            fallbackCtx.framebuffer = launcherFramebuffer;
+            fallbackCtx.modernRgba = modernRgba;
+            fallbackCtx.width = M11_LAUNCHER_FB_WIDTH;
+            fallbackCtx.height = M11_LAUNCHER_FB_HEIGHT;
+            fallbackCtx.languageIndex = menuState.settings.languageIndex;
+            fallbackCtx.colorblindMode = menuState.settings.colorblindMode;
+            fallbackCtx.uiScale = menuState.settings.uiScale;
+            fallbackCtx.debug = o->debug;
+            fallbackCtx.useModern = useModern;
+            fallbackCtx.quitRequested = &quitRequested;
+            fallbackCtx.autotestQuitInjected = 0;
+            fallbackCtx.returnMenuRescan = 0;
+            fallbackCtx.startedMs = SDL_GetTicks();
+            M12_StartupMenu_RunDeferredScan(&menuState,
+                                            m11_scan_progress_callback,
+                                            &fallbackCtx);
+            if (!quitRequested && !o->directLaunch)
+                M12_StartupMenu_FinalizeDeferredScanMessages(&menuState);
+        }
     }
-    if (o->verbose) {
+    /* Terminal boot probes exit before the interactive loop. Their selected
+     * edition is already known from the completed direct-game scan, so emit
+     * the detailed file list here; ordinary no-game scans report after the
+     * asynchronous result has been published. */
+    if (o->verbose && o->bootProbe && !menuState.deferredScanActive) {
         static const char* const gameIds[] = {
             "dm1", "csb", "dm2", "nexus", "theron"
         };
         size_t gameIndex;
-        /* Report after any deferred no-game scan so availability and selected
-         * source receipts describe the authenticated collection. */
         for (gameIndex = 0U;
              gameIndex < sizeof(gameIds) / sizeof(gameIds[0]);
              ++gameIndex) {
@@ -13049,8 +13032,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     int autotestMotionEventInjected = 0;
 
     while (!quitRequested && !menuState.shouldExit &&
-           !M11_RunDurationHasElapsed(o->durationMs, (Uint32)start,
-                                     (Uint32)now)) {
+           (!M11_RunDurationHasElapsed(o->durationMs, (Uint32)start,
+                                      (Uint32)now) ||
+            ((o->verbose || o->debug) && menuState.deferredScanActive))) {
 #if SDL_VERSION_ATLEAST(3, 2, 0)
         const Uint64 loopStartNs = SDL_GetTicksNS();
 #else
@@ -13716,6 +13700,21 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         }
     }
 
+    if (o->verbose) {
+        static const char* const gameIds[] = {
+            "dm1", "csb", "dm2", "nexus", "theron"
+        };
+        size_t gameIndex;
+        for (gameIndex = 0U;
+             gameIndex < sizeof(gameIds) / sizeof(gameIds[0]);
+             ++gameIndex) {
+            if (o->menuRequested || !o->gameId ||
+                strcmp(o->gameId, gameIds[gameIndex]) == 0) {
+                m11_verbose_original_media(&menuState.assetStatus,
+                                           gameIds[gameIndex]);
+            }
+        }
+    }
     if (failIfNoLaunch && !launchedEver) {
         fprintf(stderr, "firestaff: launch smoke failed: no launch reached before exit\n");
         runRc = 3;

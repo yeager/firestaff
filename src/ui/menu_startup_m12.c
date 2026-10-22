@@ -86,6 +86,8 @@ static void m12_parent_game_data_root(const char* dataDir,
 static void m12_common_game_data_root(const char* dataDir,
                                       char* outPath,
                                       size_t outPathSize);
+static void m12_cancel_deferred_startup_scan_and_join(
+    M12_StartupMenuState* state);
 static void SDLCALL m12_unicode_font_dialog_callback(
     void* userdata, const char* const* filelist, int filter);
 static void SDLCALL m12_artpack_dialog_callback(
@@ -106,6 +108,24 @@ typedef struct M12_DataDirScanJob {
     M12_AssetStatus assetStatus;
     M12_AssetScanProgress progress;
 } M12_DataDirScanJob;
+
+typedef struct M12_DeferredStartupScanJob {
+    SDL_Thread* thread;
+    SDL_Mutex* mutex;
+    SDL_AtomicInt cancelRequested;
+    SDL_AtomicInt done;
+    int result;
+    int hasExplicitDataDir;
+    int scanAllGames;
+    int looseFilesOnly;
+    char gameId[16];
+    M12_Config config;
+    /* The worker receives a deliberately small, isolated scan state. It must
+     * never mutate the live menu state while the launcher is drawing or
+     * handling input. */
+    M12_StartupMenuState scanState;
+    M12_AssetScanProgress progress;
+} M12_DeferredStartupScanJob;
 
 typedef struct M12_FolderDialogJob {
     SDL_AtomicInt refs;
@@ -2708,6 +2728,10 @@ static int m12_begin_async_data_dir_scan(M12_StartupMenuState* state,
         m12_show_data_dir_result_popup(state, 0);
         return 0;
     }
+    if (languageRescan && state->deferredScanActive) {
+        state->dm1LanguageRescanPending = 1;
+        return 1;
+    }
     if (languageRescan) {
         if (strlen(dataDir)>=sizeof(canonicalDataDir)) {
             m12_show_language_scan_result(state,0,returnView,returnNavLevel);
@@ -2731,6 +2755,7 @@ static int m12_begin_async_data_dir_scan(M12_StartupMenuState* state,
                                  line3);
         return 0;
     }
+    m12_cancel_deferred_startup_scan_and_join(state);
     if (state->dataDirScanActive || state->dataDirScanJob) {
         m12_cancel_data_dir_scan(state);
         return 0;
@@ -2797,6 +2822,10 @@ static void m12_request_dm1_language_scan(M12_StartupMenuState* state) {
     if (!state || state->deferredScanPending ||
         (state->assetStatus.dm1DungeonLanguage==m12_dm1_dungeon_language(state) &&
          !state->dataDirScanJob)) return;
+    if (state->deferredScanActive) {
+        state->dm1LanguageRescanPending = 1;
+        return;
+    }
     if (state->dataDirScanJob) {
         const M12_DataDirScanJob* job=(const M12_DataDirScanJob*)state->dataDirScanJob;
         if (job->dm1DungeonLanguage==m12_dm1_dungeon_language(state) &&
@@ -2866,6 +2895,7 @@ int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
                                  line3);
         return 0;
     }
+    m12_cancel_deferred_startup_scan_and_join(state);
     /* Keep the resolved physical path in the settings row and config. The
      * dialog may return a relative path or an alias such as /tmp, while the
      * scanner and future launches must target the same resolved directory. */
@@ -4779,6 +4809,136 @@ startup_scan_complete:
             }
         }
     }
+}
+
+static int m12_deferred_startup_scan_progress(
+    const M12_AssetScanProgress* progress,
+    void* userData) {
+    M12_DeferredStartupScanJob* job =
+        (M12_DeferredStartupScanJob*)userData;
+    if (!job || !progress) return 1;
+    if (job->mutex) SDL_LockMutex(job->mutex);
+    job->progress = *progress;
+    if (job->mutex) SDL_UnlockMutex(job->mutex);
+    return SDL_GetAtomicInt(&job->cancelRequested) == 0;
+}
+
+static int SDLCALL m12_deferred_startup_scan_thread(void* userData) {
+    M12_DeferredStartupScanJob* job =
+        (M12_DeferredStartupScanJob*)userData;
+    if (!job) return 1;
+    m12_scan_startup_asset_status(
+        &job->scanState,
+        &job->config,
+        job->hasExplicitDataDir,
+        job->gameId[0] ? job->gameId : NULL,
+        job->scanAllGames,
+        job->looseFilesOnly,
+        m12_deferred_startup_scan_progress,
+        job);
+    if (job->mutex) SDL_LockMutex(job->mutex);
+    job->progress = job->scanState.assetStatus.scanProgress;
+    if (job->mutex) SDL_UnlockMutex(job->mutex);
+    job->result = 1;
+    SDL_SetAtomicInt(&job->done, 1);
+    return 0;
+}
+
+static void m12_free_deferred_startup_scan_job(
+    M12_DeferredStartupScanJob* job) {
+    if (!job) return;
+    if (job->mutex) SDL_DestroyMutex(job->mutex);
+    free(job);
+}
+
+static void m12_cancel_deferred_startup_scan_and_join(
+    M12_StartupMenuState* state) {
+    M12_DeferredStartupScanJob* job;
+    int threadStatus = 0;
+    if (!state) return;
+    state->deferredScanPending = 0;
+    job = (M12_DeferredStartupScanJob*)state->deferredScanJob;
+    if (!job) {
+        state->deferredScanActive = 0;
+        return;
+    }
+    SDL_SetAtomicInt(&job->cancelRequested, 1);
+    if (job->thread) SDL_WaitThread(job->thread, &threadStatus);
+    (void)threadStatus;
+    state->deferredScanJob = NULL;
+    state->deferredScanActive = 0;
+    m12_free_deferred_startup_scan_job(job);
+}
+
+int M12_StartupMenu_BeginDeferredScan(M12_StartupMenuState* state) {
+    M12_DeferredStartupScanJob* job;
+    int gameIndex;
+    if (!state || !state->deferredScanPending || state->deferredScanJob) {
+        return 0;
+    }
+    job = (M12_DeferredStartupScanJob*)calloc(1U, sizeof(*job));
+    if (!job) return 0;
+    job->mutex = SDL_CreateMutex();
+    if (!job->mutex) {
+        m12_free_deferred_startup_scan_job(job);
+        return 0;
+    }
+    M12_Config_Load(&job->config,
+                    state->deferredDataDir[0]
+                        ? state->deferredDataDir : NULL);
+    snprintf(job->config.dataDir, sizeof(job->config.dataDir), "%s",
+             state->deferredDataDir);
+    job->config.languageExplicit = state->languageExplicit;
+    job->config.languageIndex = state->settings.languageIndex;
+    for (gameIndex = 0; gameIndex < M12_CONFIG_GAME_COUNT; ++gameIndex) {
+        job->config.gameLanguageIndex[gameIndex] =
+            state->gameOptions[gameIndex].languageIndex;
+    }
+    job->hasExplicitDataDir = state->deferredHasExplicitDataDir;
+    job->scanAllGames = state->deferredScanAllGames;
+    job->looseFilesOnly = state->deferredLooseFilesOnly;
+    if (state->deferredGameId[0]) {
+        snprintf(job->gameId, sizeof(job->gameId), "%s",
+                 state->deferredGameId);
+    }
+    job->scanState.settings.languageIndex = state->settings.languageIndex;
+    job->scanState.gameOptions[0].languageIndex =
+        state->gameOptions[0].languageIndex;
+    SDL_SetAtomicInt(&job->cancelRequested, 0);
+    SDL_SetAtomicInt(&job->done, 0);
+    state->deferredScanProgress = job->progress;
+    state->deferredScanJob = job;
+    state->deferredScanActive = 1;
+    state->deferredScanPending = 0;
+    job->thread = SDL_CreateThread(m12_deferred_startup_scan_thread,
+                                   "m12-startup-scan", job);
+    if (!job->thread) {
+        state->deferredScanJob = NULL;
+        state->deferredScanActive = 0;
+        state->deferredScanPending = 1;
+        m12_free_deferred_startup_scan_job(job);
+        return 0;
+    }
+    return 1;
+}
+
+void M12_StartupMenu_CancelDeferredScan(M12_StartupMenuState* state) {
+    M12_DeferredStartupScanJob* job;
+    if (!state || !state->deferredScanJob) return;
+    job = (M12_DeferredStartupScanJob*)state->deferredScanJob;
+    SDL_SetAtomicInt(&job->cancelRequested, 1);
+}
+
+int M12_StartupMenu_GetDeferredScanProgress(
+    const M12_StartupMenuState* state,
+    M12_AssetScanProgress* outProgress) {
+    const M12_DeferredStartupScanJob* job;
+    if (!state || !outProgress || !state->deferredScanJob) return 0;
+    job = (const M12_DeferredStartupScanJob*)state->deferredScanJob;
+    if (job->mutex) SDL_LockMutex(job->mutex);
+    *outProgress = job->progress;
+    if (job->mutex) SDL_UnlockMutex(job->mutex);
+    return 1;
 }
 
 static void m12_apply_loaded_config(M12_StartupMenuState* state,
@@ -10501,6 +10661,12 @@ int M12_StartupMenu_GetLaunchGate(
         }
     }
     gate.dataReady = gate.boot.dataReady;
+    if (state->deferredScanActive) {
+        gate.dataReady = gate.boot.dataReady = 0;
+        gate.boot.statusLabel = m12_tr(state, "SCANNING GAME DATA");
+        gate.boot.detailLabel = m12_tr(state,
+                                       "GAME AVAILABILITY IS BEING CHECKED");
+    }
     if (entry->sourceKind==M12_MENU_SOURCE_BUILTIN_CATALOG &&
         entry->gameId && strcmp(entry->gameId,"dm1")==0 &&
         (state->assetStatus.dm1DungeonLanguage!=m12_dm1_dungeon_language(state) ||
@@ -14163,6 +14329,50 @@ static int m12_update_data_dir_dialog(M12_StartupMenuState* state) {
     return 1;
 }
 
+static int m12_update_deferred_startup_scan(M12_StartupMenuState* state) {
+    M12_DeferredStartupScanJob* job;
+    int threadStatus = 0;
+    M12_Config config;
+    if (!state || !state->deferredScanJob) return 0;
+    job = (M12_DeferredStartupScanJob*)state->deferredScanJob;
+    if (job->mutex) SDL_LockMutex(job->mutex);
+    state->deferredScanProgress = job->progress;
+    if (job->mutex) SDL_UnlockMutex(job->mutex);
+    if (!SDL_GetAtomicInt(&job->done)) return 1;
+    if (job->thread) SDL_WaitThread(job->thread, &threadStatus);
+    (void)threadStatus;
+    state->deferredScanJob = NULL;
+    state->deferredScanActive = 0;
+    state->deferredScanProgress = job->scanState.assetStatus.scanProgress;
+    if (job->result && !state->deferredScanProgress.cancelled) {
+        char canonicalDataDir[M12_ASSET_DATA_DIR_CAPACITY];
+        const char* scannedDataDir;
+        state->assetStatus = job->scanState.assetStatus;
+        scannedDataDir = M12_AssetStatus_GetDataDir(&state->assetStatus);
+        if (job->config.dataDir[0] &&
+            !m12_data_directory_dialog_token_is_placeholder(job->config.dataDir)) {
+            snprintf(state->selectedDataDir, sizeof(state->selectedDataDir),
+                     "%s", job->config.dataDir);
+        } else if (m12_canonicalize_data_directory(
+                       scannedDataDir, canonicalDataDir,
+                       sizeof(canonicalDataDir))) {
+            snprintf(state->selectedDataDir, sizeof(state->selectedDataDir),
+                     "%s", canonicalDataDir);
+        }
+        config = job->config;
+        config.v22_modern_assets_installed =
+            M12_AssetStatus_V22ModernAssetsInstalled(&state->assetStatus);
+        M12_Config_Save(&config);
+        m12_apply_completed_asset_scan(state);
+        m12_finalize_scan_messages(state);
+        if (state->dm1LanguageRescanPending) {
+            m12_request_dm1_language_scan(state);
+        }
+    }
+    m12_free_deferred_startup_scan_job(job);
+    return 1;
+}
+
 int M12_StartupMenu_Update(M12_StartupMenuState* state) {
     M12_DataDirScanJob* job;
     int changed;
@@ -14177,6 +14387,9 @@ int M12_StartupMenu_Update(M12_StartupMenuState* state) {
         changed = 1;
     }
     if (m12_update_data_dir_dialog(state)) {
+        changed = 1;
+    }
+    if (m12_update_deferred_startup_scan(state)) {
         changed = 1;
     }
     job = (M12_DataDirScanJob*)state->dataDirScanJob;
@@ -14257,12 +14470,13 @@ int M12_StartupMenu_Update(M12_StartupMenuState* state) {
     return changed;
 }
 
-void M12_StartupMenu_DrawScanProgressLocalized(
+static void m12_draw_scan_progress_localized(
     const M12_AssetScanProgress* progress,
     int languageIndex,
     unsigned char* framebuffer,
     int framebufferWidth,
-    int framebufferHeight) {
+    int framebufferHeight,
+    int clearFramebuffer) {
     size_t pct = 0U;
     int cardX, cardY, cardW, cardH;
     int barX, barY, barW, barH, fillW;
@@ -14272,8 +14486,10 @@ void M12_StartupMenu_DrawScanProgressLocalized(
     if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0) {
         return;
     }
-    memset(framebuffer, 0,
-           (size_t)framebufferWidth * (size_t)framebufferHeight);
+    if (clearFramebuffer) {
+        memset(framebuffer, 0,
+               (size_t)framebufferWidth * (size_t)framebufferHeight);
+    }
     if (progress && progress->totalSteps > 0U) {
         pct = (progress->completedSteps * 100U +
                progress->currentStepPercent) / progress->totalSteps;
@@ -14367,6 +14583,26 @@ void M12_StartupMenu_DrawScanProgressLocalized(
     }
 }
 
+void M12_StartupMenu_DrawScanProgressLocalized(
+    const M12_AssetScanProgress* progress,
+    int languageIndex,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight) {
+    m12_draw_scan_progress_localized(progress, languageIndex, framebuffer,
+                                     framebufferWidth, framebufferHeight, 1);
+}
+
+void M12_StartupMenu_DrawScanProgressOverlayLocalized(
+    const M12_AssetScanProgress* progress,
+    int languageIndex,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight) {
+    m12_draw_scan_progress_localized(progress, languageIndex, framebuffer,
+                                     framebufferWidth, framebufferHeight, 0);
+}
+
 void M12_StartupMenu_DrawScanProgress(const M12_AssetScanProgress* progress,
                                       unsigned char* framebuffer,
                                       int framebufferWidth,
@@ -14378,6 +14614,7 @@ void M12_StartupMenu_DrawScanProgress(const M12_AssetScanProgress* progress,
 
 void M12_StartupMenu_Destroy(M12_StartupMenuState* state) {
     M12_DataDirScanJob* job;
+    M12_DeferredStartupScanJob* deferredJob;
     M12_FolderDialogJob* musicDialogJob;
     M12_FolderDialogJob* dataDialogJob;
     M12_FolderDialogJob* unicodeFontDialogJob;
@@ -14402,19 +14639,30 @@ void M12_StartupMenu_Destroy(M12_StartupMenuState* state) {
     m12_release_folder_dialog_job(musicDialogJob);
     m12_release_folder_dialog_job(unicodeFontDialogJob);
     m12_release_folder_dialog_job(artpackDialogJob);
+    deferredJob = (M12_DeferredStartupScanJob*)state->deferredScanJob;
+    if (deferredJob) {
+        SDL_SetAtomicInt(&deferredJob->cancelRequested, 1);
+        if (deferredJob->thread) {
+            int threadStatus = 0;
+            SDL_WaitThread(deferredJob->thread, &threadStatus);
+            (void)threadStatus;
+        }
+        state->deferredScanJob = NULL;
+        state->deferredScanActive = 0;
+        m12_free_deferred_startup_scan_job(deferredJob);
+    }
     job = (M12_DataDirScanJob*)state->dataDirScanJob;
-    if (!job) {
-        return;
+    if (job) {
+        SDL_SetAtomicInt(&job->cancelRequested, 1);
+        if (job->thread) {
+            int threadStatus = 0;
+            SDL_WaitThread(job->thread, &threadStatus);
+            (void)threadStatus;
+        }
+        state->dataDirScanJob = NULL;
+        state->dataDirScanActive = 0;
+        m12_free_data_dir_scan_job(job);
     }
-    SDL_SetAtomicInt(&job->cancelRequested, 1);
-    if (job->thread) {
-        int threadStatus = 0;
-        SDL_WaitThread(job->thread, &threadStatus);
-        (void)threadStatus;
-    }
-    state->dataDirScanJob = NULL;
-    state->dataDirScanActive = 0;
-    m12_free_data_dir_scan_job(job);
 }
 
 static int m12_theron_campaign_media_identity_matches(

@@ -699,6 +699,9 @@ typedef struct M12_StartupMenuState {
     /* Successful M12 publication only; zero/cleared receipts always retry. */
     unsigned int dm1HoCPresentedCaptureLaunchSerial;
     int deferredScanPending;
+    int deferredScanActive;
+    M12_AssetScanProgress deferredScanProgress;
+    void* deferredScanJob;
     char deferredDataDir[M12_ASSET_DATA_DIR_CAPACITY];
     char deferredGameId[16];
     int deferredLooseFilesOnly;
@@ -728,6 +731,14 @@ void M12_StartupMenu_InitWithOptions(M12_StartupMenuState* state,
 void M12_StartupMenu_RunDeferredScan(M12_StartupMenuState* state,
                                      M12_AssetStatusScanProgressFn progressFn,
                                      void* progressUserData);
+/* Start the deferred startup scan without blocking the launcher thread. The
+ * isolated result is published by M12_StartupMenu_Update after the worker
+ * completes. */
+int M12_StartupMenu_BeginDeferredScan(M12_StartupMenuState* state);
+void M12_StartupMenu_CancelDeferredScan(M12_StartupMenuState* state);
+int M12_StartupMenu_GetDeferredScanProgress(
+    const M12_StartupMenuState* state,
+    M12_AssetScanProgress* outProgress);
 /* UI thread only, after a deferred scan worker has completed and joined,
  * or after synchronous RescanAllGames returns. Never call from the worker.
  * Pending, incomplete and cancelled scans do not publish modal messages. */
@@ -792,6 +803,12 @@ void M12_StartupMenu_DrawScanProgress(const M12_AssetScanProgress* progress,
                                       int framebufferWidth,
                                       int framebufferHeight);
 void M12_StartupMenu_DrawScanProgressLocalized(
+    const M12_AssetScanProgress* progress,
+    int languageIndex,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight);
+void M12_StartupMenu_DrawScanProgressOverlayLocalized(
     const M12_AssetScanProgress* progress,
     int languageIndex,
     unsigned char* framebuffer,
