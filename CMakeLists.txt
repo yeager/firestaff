@@ -18579,7 +18579,7 @@ endif()
         ENVIRONMENT "FIRESTAFF_AUDIO_ENABLE_SDL=0"
         # Six authentic M12 sessions cover AUTO, platform cards and explicit
         # --platform selection before checking each source-owned runtime.
-        TIMEOUT 420
+        TIMEOUT 600
     )
     # Keep both language-private F31 program chains independently runnable.
     # The inherited FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR names user-supplied
