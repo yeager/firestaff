@@ -1,6 +1,4 @@
 #include "m11_game_view.h"
-#include "main_loop_m11.h"
-#include "menu_startup_m12.h"
 #include "asset_loader_m11.h"
 #include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
@@ -9,24 +7,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 
 static int start_real_dm1_corpus(M11_GameViewState* state, const char* path)
 {
-    struct stat st;
     if (!state || !path || !path[0]) return 0;
-    if (stat(path, &st) == 0 && S_ISREG(st.st_mode)) {
-        M12_StartupMenuState menu;
-        int opened;
-        M12_StartupMenu_InitWithDataDir(&menu, path, "dm1");
-        if (!M11_PrepareDirectLaunchForGame(&menu, "dm1")) {
-            M12_StartupMenu_Destroy(&menu);
-            return 0;
-        }
-        opened = M11_GameView_OpenSelectedMenuEntry(state, &menu);
-        M12_StartupMenu_Destroy(&menu);
-        return opened;
-    }
+    /* This is a renderer/material regression, not a launcher-selection test.
+     * Load the explicitly selected PC34 archive directly so unrelated
+     * installed editions cannot change the startup-menu default. */
     return M11_GameView_StartDm1(state, path);
 }
 
