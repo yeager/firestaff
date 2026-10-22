@@ -334,6 +334,7 @@ int dm1_v1_explosion_sprite_blit_plan(DM1_ExplosionSpriteBlitPlan *out_plan,
 
 typedef struct DM1_F0115ThingRouteInputPc34 {
     unsigned short thing;
+    int sensorType; /* -1 for non-sensors or an unavailable sensor record */
     int mirrorTextStringOrdinal;
 } DM1_F0115ThingRouteInputPc34;
 

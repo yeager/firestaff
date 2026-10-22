@@ -16,6 +16,7 @@
 #include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
+#include "dm1_v1_sensor_trigger_pc34_compat.h"
 
 #include <string.h>
 
@@ -148,15 +149,18 @@ int dm1_v1_thing_type_is_floor_item_pc34(int thingType)
 int dm1_v1_hall_candidate_payload_control_thing_pc34(
     int mapIndex,
     int thingType,
+    int sensorType,
     int mirrorTextStringOrdinal)
 {
     if (mapIndex != 0) {
         return 0;
     }
-    if (thingType == THING_TYPE_SENSOR) {
+    if (thingType == THING_TYPE_SENSOR &&
+        sensorType == DM1_SENSOR_WALL_CHAMPION_PORTRAIT) {
         /* ReDMCSB REVIVE.C F0280 lines 297-349 consumes objects from
          * the front Hall mirror square into candidate champion inventory.
-         * Map-0 C02/C03 controls before an object mark that source payload. */
+         * Other wall sensors share squares with real items (for example
+         * HoC's stair torch) and do not make those items mirror payload. */
         return 1;
     }
     if (thingType == THING_TYPE_TEXTSTRING && mirrorTextStringOrdinal >= 0) {

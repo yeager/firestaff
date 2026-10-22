@@ -121,6 +121,7 @@ int dm1_v1_thing_type_is_floor_item_pc34(int thingType);
 int dm1_v1_hall_candidate_payload_control_thing_pc34(
     int mapIndex,
     int thingType,
+    int sensorType,
     int mirrorTextStringOrdinal);
 int dm1_v1_front_mirror_c127_ordinal_pc34(
     int mapIndex,

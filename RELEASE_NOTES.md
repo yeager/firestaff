@@ -1,20 +1,26 @@
-# Firestaff v3.0.403
+# Firestaff v3.0.404
 
 ## User-facing changes
 
-- `DM1 Apple IIGS startup`: show an authenticated native entrance scene after selecting an original G20/G21 installation, and open its doors from a fresh mouse click before handing off to the runtime.
+- `DM1 dungeon objects`: preserve authentic HoC wall objects when ordinary wall sensors share their Thing chain; the stair torch now remains an F0115 candidate, and its wall ornament is verified against the original PC34 graphics.
+- `DM1 combat and movement`: restore recurring PC34 monster attacks and verify attack damage across original editions. Corrected floor-pit visibility, native floor-item interaction, door-button clicks, object pixels and direct-launch behavior.
+- `DM1 Apple IIGS`: add a native title-to-entrance route for original G20/G21 installations, including mouse-operated doors and runtime handoff.
+- `DM2 Macintosh`: boot the French Macintosh edition from authentic StuffIt media and load loose title-movie forks.
+- `CSB startup scan`: update progress labels for localized display and preserve the selected platform through startup.
 
 ## Developer changes
 
+- `DM1 HoC rendering`: scope mirror-payload filtering to C127 controls or identified mirror text. Ordinary C001/C013 wall sensors no longer hide original objects. The PC34 stair torch test checks its live F0115 item candidate and exact original GRAPHICS.DAT wall pixels.
+- `DM1 visual and combat regressions`: test real PC34 apple pixels and transparency, trap-door presentation, wall inscriptions, door material and button input, object transfer, and first-monster attacks with damage. Add cross-edition attack and legacy wall-art checks.
 - `DM1 Apple IIGS entrance`: bind the scene to same-disk G20/G21 program, graphics, dungeon and SYSTEM/START identities; render ENTRANCE.C F0439's inline C255 map with the native IIGS wall/material compositor; use source entrance/door graphics, the authenticated palette and the existing 31-step door compositor. Exact F0128 pixel parity is not asserted.
-- `DM1 original-media startup evidence`: record verified M12 menu selection and first-runtime handoffs across authentic FM Towns, PC, Atari ST, Amiga and Apple IIGS media, while retaining explicit unverified gameplay-parity gaps.
-- `Apple IIGS input regression`: exercise the mouse-only entrance handoff from both authentic editions and assert the closed frame, click coordinates, final door frame and authenticated runtime handoff.
-- `Apple IIGS ZIP startup`: verify direct CLI and M11 startup from a ZIP containing byte-identical original ProDOS disks, with external archive tools disabled; debug traces identify the failing startup stage and selected source owner.
-- `Release metadata`: update the project version and reproducible SPDX source SBOM for v3.0.403.
+- `Original-media startup`: verify M12 selection and runtime handoffs across FM Towns, PC, Atari ST, Amiga, Apple IIGS and French Macintosh media; reject saves from a mismatched platform and ignore stale resume state for direct launches.
+- `Apple IIGS input and ZIP regressions`: exercise entrance clicks and runtime handoff from both authentic editions, and verify byte-identical ProDOS disks inside ZIP media without external archive tools.
+- `Release metadata`: update the project version and reproducible SPDX source SBOM for v3.0.404.
 
 ## Known limitations
 
-- The Apple IIGS entrance map and camera now follow F0439's C255 setup, but exact F0128 pixels, native VBL cadence, credits/bonus/resume flow and audio sequencing remain unverified. IIGS F0439 constructs C255 inline; F0797 is not called on this branch.
+- The Apple IIGS entrance map and camera follow F0439's C255 setup, but exact F0128 pixels, native VBL cadence, credits/bonus/resume flow and audio sequencing remain unverified. IIGS F0439 constructs C255 inline; F0797 is not called on this branch.
+- Original-media tests use SDL dummy video and audio. They do not establish physical display, audible playback or full campaign parity on every machine.
 - The built-in 7z reader does not enumerate this multi-member solid preservation archive. Use a ZIP copy of the original disks, or explicitly enable external archive tools for that 7z archive.
 - Original-media tests use SDL dummy video and audio and do not establish physical display, audible playback or full gameplay parity.
 

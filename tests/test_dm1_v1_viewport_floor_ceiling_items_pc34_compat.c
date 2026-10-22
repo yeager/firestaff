@@ -248,16 +248,19 @@ static void test_item_sprite_metadata_ownership(void)
                "text strings are controls, not floor items");
 
     expect_int("hoc.payload.sensor.map0",
-               dm1_v1_hall_candidate_payload_control_thing_pc34(0, 3, -1), 1,
-               "REVIVE.C F0280 map-0 mirror control before payload item");
+               dm1_v1_hall_candidate_payload_control_thing_pc34(0, 3, 127, -1), 1,
+               "REVIVE.C F0280 C127 mirror control before payload item");
+    expect_int("hoc.payload.ordinary_sensor.map0",
+               dm1_v1_hall_candidate_payload_control_thing_pc34(0, 3, 13, -1), 0,
+               "ordinary HoC wall sensors do not hide source items");
     expect_int("hoc.payload.mirror_text.map0",
-               dm1_v1_hall_candidate_payload_control_thing_pc34(0, 2, 7), 1,
+               dm1_v1_hall_candidate_payload_control_thing_pc34(0, 2, -1, 7), 1,
                "REVIVE.C F0280 map-0 mirror text before payload item");
     expect_int("hoc.payload.plain_text.map0",
-               dm1_v1_hall_candidate_payload_control_thing_pc34(0, 2, -1), 0,
+               dm1_v1_hall_candidate_payload_control_thing_pc34(0, 2, -1, -1), 0,
                "plain text is not a mirror payload control");
     expect_int("hoc.payload.sensor.map1",
-               dm1_v1_hall_candidate_payload_control_thing_pc34(1, 3, -1), 0,
+               dm1_v1_hall_candidate_payload_control_thing_pc34(1, 3, 127, -1), 0,
                "payload hiding is Hall of Champions map-0 scoped");
     expect_int("hoc.c127.front.wall",
                dm1_v1_front_mirror_c127_ordinal_pc34(0, 0, 2, 127, 13, 24, 1),

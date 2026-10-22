@@ -760,6 +760,7 @@ int dm1_v1_f0115_thing_layer_receipt_pc34(
     }
     for (i = 0; i < thingCount; ++i) {
         routeThings[i].thing = thingRefs[i];
+        routeThings[i].sensorType = -1;
         routeThings[i].mirrorTextStringOrdinal = -1;
     }
     return dm1_v1_f0115_thing_route_receipt_pc34(
@@ -950,7 +951,13 @@ int dm1_v1_f0115_world_candidates_pc34(
            routeThingCount < (int)(sizeof(routeThings) / sizeof(routeThings[0]))) {
         int type = THING_GET_TYPE(thing);
         int index = THING_GET_INDEX(thing);
+        int sensorType = -1;
         int mirrorOrdinal = -1;
+
+        if (type == THING_TYPE_SENSOR && world->things->sensors &&
+            index >= 0 && index < world->things->sensorCount) {
+            sensorType = world->things->sensors[index].sensorType;
+        }
 
         if (type == THING_TYPE_TEXTSTRING && mirrorOrdinalLookup &&
             world->things->textStrings && index >= 0 &&
@@ -958,6 +965,7 @@ int dm1_v1_f0115_world_candidates_pc34(
             mirrorOrdinal = mirrorOrdinalLookup(mirrorUser, index);
         }
         routeThings[routeThingCount].thing = thing;
+        routeThings[routeThingCount].sensorType = sensorType;
         routeThings[routeThingCount].mirrorTextStringOrdinal = mirrorOrdinal;
         ++routeThingCount;
         thing = F0512_DUNGEON_GetThingNext_Compat(world->things, thing);
@@ -1056,6 +1064,7 @@ int dm1_v1_f0115_thing_route_receipt_pc34(
             }
             if (dm1_v1_hall_candidate_payload_control_thing_pc34(
                     mapIndex, (int)THING_GET_TYPE(thing),
+                    things[i].sensorType,
                     things[i].mirrorTextStringOrdinal)) {
                 seenHallPayloadControl = 1;
                 break;
@@ -1079,7 +1088,8 @@ int dm1_v1_f0115_thing_route_receipt_pc34(
         ++outReceipt->total;
         type = (int)THING_GET_TYPE(thing);
         if (dm1_v1_hall_candidate_payload_control_thing_pc34(
-                mapIndex, type, things[i].mirrorTextStringOrdinal)) {
+                mapIndex, type, things[i].sensorType,
+                things[i].mirrorTextStringOrdinal)) {
             seenHallPayloadControl = 1;
         }
         switch (type) {
@@ -1164,7 +1174,8 @@ int dm1_v1_f0115_thing_route_receipt_pc34(
      * floor/effect sprites. drawableTotal carries only F0115 drawable
      * layers, so callers do not keep false content counts after suppression.
      * REVIVE.C F0280 lines 297-349 consumes Hall mirror candidate payloads
-     * from the same square chain; those C02/C03 controls mark following
-     * objects as champion data, not DUNVIEW floor items. */
+     * from the same square chain; an actual C127 mirror control or mapped
+     * mirror text marks the following objects as champion data. Ordinary
+     * wall sensors remain independent of F0115 item visibility. */
     return 1;
 }

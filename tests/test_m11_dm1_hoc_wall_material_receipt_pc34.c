@@ -4,6 +4,7 @@
 
 #include "dm1_v1_champion_mirror_pc34_compat.h"
 #include "dm1_v1_graphic_ids_pc34_compat.h"
+#include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_ornament_cache_owner_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "dm1_v1_wall_ornament_pc34_compat.h"
@@ -359,6 +360,124 @@ static int verify_all_ordinary_hoc_wall_ornaments(
     return 0;
 }
 
+/* The torch beside the first HoC stairs is a map-owned wall ornament with
+ * an associated source Thing and sensor chain. Verify its exact GRAPHICS.DAT
+ * material at the actual wall cell; a generic ornament sample could miss it. */
+static int verify_hoc_stair_torch_wall_asset(
+    M11_GameViewState *state,
+    unsigned char *framebuffer)
+{
+    const struct DungeonMapDesc_Compat *map;
+    unsigned short thing;
+    int torchFound = 0;
+    int y;
+
+    if (!state || !state->world.dungeon || !state->world.things ||
+        state->world.dungeon->header.mapCount <= 0) return 0;
+    map = &state->world.dungeon->maps[0];
+    if (map->width <= 3 || map->height <= 15 ||
+        ((state->world.dungeon->tiles[0].squareData[
+             3 * (int)map->height + 14] & DUNGEON_SQUARE_MASK_TYPE) >> 5) !=
+             DUNGEON_ELEMENT_WALL ||
+        ((state->world.dungeon->tiles[0].squareData[
+             3 * (int)map->height + 15] & DUNGEON_SQUARE_MASK_TYPE) >> 5) !=
+             DUNGEON_ELEMENT_STAIRS) {
+        fputs("PC34 HoC stair/torch fixture does not match the original map\n", stderr);
+        return 0;
+    }
+
+    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        state->world.dungeon, state->world.things, 0, 3, 14);
+    for (int guard = 0; thing != THING_NONE && thing != THING_ENDOFLIST &&
+         guard < 64; ++guard) {
+        if (THING_GET_TYPE(thing) == THING_TYPE_WEAPON &&
+            dm1_v1_dungeon_get_object_icon_index_pc34(
+                state->world.things, thing, 0) == 4) {
+            torchFound = 1;
+            break;
+        }
+        thing = F0512_DUNGEON_GetThingNext_Compat(state->world.things, thing);
+    }
+    if (!torchFound) {
+        fputs("PC34 HoC stair wall has no original TORCH Thing\n", stderr);
+        return 0;
+    }
+
+    /* From the adjacent original corridor pose, this wall is in the D1R
+     * sample. Its C013 storage sensor must not hide the real F0115 object. */
+    {
+        int itemX = -1, itemY = -1, element = -1;
+        int itemCount = 0, summaryCount = 0;
+        state->world.party.mapIndex = 0;
+        state->world.party.mapX = 4;
+        state->world.party.mapY = 13;
+        state->world.party.direction = 2;
+        if (!M11_GameView_ProbeViewportFloorItemCounts(
+                state, 1, 1, &itemX, &itemY, &element,
+                &itemCount, &summaryCount) ||
+            itemX != 3 || itemY != 14 || element != DUNGEON_ELEMENT_WALL ||
+            itemCount != 1 || summaryCount != 1) {
+            fprintf(stderr,
+                    "HoC stair TORCH was filtered from F0115 candidates: cell=(%d,%d) element=%d items=%d summary=%d\n",
+                    itemX, itemY, element, itemCount, summaryCount);
+            return 0;
+        }
+    }
+
+    for (y = 0; y < (int)map->height; ++y) {
+        int x;
+        for (x = 0; x < (int)map->width; ++x) {
+            int direction;
+            const unsigned char partySquare =
+                state->world.dungeon->tiles[0].squareData[
+                    x * (int)map->height + y];
+            const int partyElement =
+                (partySquare & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+            if (partyElement != DUNGEON_ELEMENT_CORRIDOR &&
+                partyElement != DUNGEON_ELEMENT_STAIRS) continue;
+            for (direction = 0; direction < 4; ++direction) {
+                int forward;
+                state->world.party.mapIndex = 0;
+                state->world.party.mapX = x;
+                state->world.party.mapY = y;
+                state->world.party.direction = direction;
+                for (forward = 1; forward <= 3; ++forward) {
+                    int side;
+                    for (side = -1; side <= 1; ++side) {
+                        int mapX = -1, mapY = -1, element = -1;
+                        int ordinal = -1, portrait = -1, inscription = -1;
+                        M11_Dm1WallOrnamentHostPresentationReceipt receipt;
+                        if (!M11_GameView_ProbeViewportRenderMetadata(
+                                state, forward, side, &mapX, &mapY, &element,
+                                &ordinal, &portrait, &inscription, NULL) ||
+                            mapX != 3 || mapY != 14 ||
+                            element != DUNGEON_ELEMENT_WALL || ordinal <= 0 ||
+                            portrait >= 0 || inscription >= 0) continue;
+
+                        memset(framebuffer, 0,
+                               kFramebufferWidth * kFramebufferHeight);
+                        M11_GameView_Draw(state, framebuffer,
+                                          kFramebufferWidth, kFramebufferHeight);
+                        memset(&receipt, 0, sizeof(receipt));
+                        M11_GameView_GetDm1WallOrnamentHostPresentationReceipt(
+                            &receipt);
+                        if (receipt.valid && receipt.globalOrnamentIndex == 32 &&
+                            verify_wall_ornament_pixel(state, framebuffer,
+                                                      &receipt)) {
+                            printf("ok: critical PC34 HoC stair TORCH wall ornament rendered from original GRAPHICS.DAT at party=(%d,%d,d%d)\n",
+                                   x, y, direction);
+                            return 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    fputs("critical PC34 HoC stair TORCH wall ornament was not rendered from original media\n",
+          stderr);
+    return 0;
+}
+
 int main(void)
 {
     const char *dataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
@@ -451,6 +570,10 @@ int main(void)
     }
     if (!verify_front_mirror_backing_pixel(&state, framebuffer, mirrorRenderIndex)) {
         fprintf(stderr, "real PC34 C127 presented without exact C346/C026 pixels\n");
+        goto fail;
+    }
+    if (!verify_hoc_stair_torch_wall_asset(&state, framebuffer)) {
+        fprintf(stderr, "real PC34 HoC stair torch wall material was not presented by M11\n");
         goto fail;
     }
     if (!verify_all_ordinary_hoc_wall_ornaments(&state, framebuffer)) {

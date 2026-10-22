@@ -744,7 +744,7 @@ static void test_f0141_f0032_f0033_raw_object_icon_path(void)
               "F0141 scroll G0237 index");
     ASSERT_EQ(dm1_v1_dungeon_get_object_icon_index_pc34(&things, scrollThing, 0), 30,
               "F0033 open scroll icon");
-    scroll[2] = 0x04u;
+    scroll[3] = 0x04u;
     ASSERT_EQ(dm1_v1_dungeon_get_object_icon_index_pc34(&things, scrollThing, 0), 31,
               "F0033 closed scroll icon");
 
@@ -1286,10 +1286,20 @@ static void test_f0115_thing_layer_receipt_filters_static_effects(void) {
 static void test_f0115_thing_route_receipt_filters_hoc_payload_items(void) {
     DM1_F0115ThingLayerReceiptPc34 receipt;
     DM1_F0115ThingRouteInputPc34 things[] = {
-        { make_thing(THING_TYPE_TEXTSTRING, 7, 2), 7 },
-        { make_thing(THING_TYPE_WEAPON, 3, 2), -1 },
-        { make_thing(THING_TYPE_JUNK, 4, 2), -1 },
-        { THING_ENDOFLIST, -1 }
+        { make_thing(THING_TYPE_TEXTSTRING, 7, 2), -1, 7 },
+        { make_thing(THING_TYPE_WEAPON, 3, 2), -1, -1 },
+        { make_thing(THING_TYPE_JUNK, 4, 2), -1, -1 },
+        { THING_ENDOFLIST, -1, -1 }
+    };
+    DM1_F0115ThingRouteInputPc34 hoc_torch[] = {
+        { make_thing(THING_TYPE_SENSOR, 1, 2), 13, -1 },
+        { make_thing(THING_TYPE_WEAPON, 0, 2), -1, -1 },
+        { THING_ENDOFLIST, -1, -1 }
+    };
+    DM1_F0115ThingRouteInputPc34 hoc_mirror_payload[] = {
+        { make_thing(THING_TYPE_SENSOR, 1, 2), 127, -1 },
+        { make_thing(THING_TYPE_WEAPON, 0, 2), -1, -1 },
+        { THING_ENDOFLIST, -1, -1 }
     };
 
     printf("  F0115 thing route receipt filters HoC mirror payload items...\n");
@@ -1324,6 +1334,23 @@ static void test_f0115_thing_route_receipt_filters_hoc_payload_items(void) {
     ASSERT_EQ(receipt.visibleFloorItemThings[0],
               make_thing(THING_TYPE_WEAPON, 3, 2),
               "first visible route item preserved");
+
+    ASSERT_EQ(dm1_v1_f0115_thing_route_receipt_pc34(
+                  hoc_torch, 3, -1, 0, 0, 0, &receipt),
+              1, "ordinary HoC wall sensor and original item are accepted");
+    ASSERT_EQ(receipt.items, 1,
+              "ordinary wall sensor does not suppress the stair torch");
+    ASSERT_EQ(receipt.visibleFloorItemThings[0],
+              make_thing(THING_TYPE_WEAPON, 0, 2),
+              "wall torch remains an F0115 item candidate");
+
+    ASSERT_EQ(dm1_v1_f0115_thing_route_receipt_pc34(
+                  hoc_mirror_payload, 3, -1, 0, 0, 0, &receipt),
+              1, "C127 mirror payload is accepted");
+    ASSERT_EQ(receipt.items, 0,
+              "C127 mirror payload objects are not rendered as loose items");
+    ASSERT_EQ(receipt.ignoredHallPayloadItems, 1,
+              "only C127 payload suppresses the candidate item");
 }
 
 
