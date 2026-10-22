@@ -2801,3 +2801,11 @@ cannot be repeated or no hit lands within 24 attempts. PC34's authenticated
 first PUNCH currently hits and is checked directly. Four installed editions
 pass this combat-damage check; this proves that damage can land in the tested
 first encounter and does not prove complete combat parity.
+
+2026-10-22 PC34 HoC stair torch interaction: the original TORCH Thing at map
+cell (3,14), beside the first stairs, is rendered from PC34 GRAPHICS.DAT and
+can be collected through the real C080/C05 pointer route. The original C127
+mirror route admits a champion before the authentic C013 storage sensor is
+clicked; the test confirms the same original Thing moves into the leader hand
+and leaves its wall cell. This verifies the critical pickup interaction, not
+the lighting level after entering the next dungeon floor.

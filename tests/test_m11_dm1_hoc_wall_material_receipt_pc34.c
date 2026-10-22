@@ -478,6 +478,82 @@ static int verify_hoc_stair_torch_wall_asset(
     return 0;
 }
 
+/* The original torch only helps on the dark level if the player can actually
+ * take it from the wall. Exercise the real PC34 C080 pointer path at the
+ * wall's C05 target and require the original Thing to reach the leader hand. */
+static int verify_hoc_stair_torch_pickup(
+    M11_GameViewState *state,
+    unsigned char *framebuffer)
+{
+    unsigned short torch = THING_NONE;
+    unsigned short thing;
+    int mirrorOrdinal = -1;
+    int torchStillStored = 0;
+
+    if (!state || !state->world.dungeon || !state->world.things) return 0;
+    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        state->world.dungeon, state->world.things, 0, 3, 14);
+    for (int guard = 0; thing != THING_NONE && thing != THING_ENDOFLIST &&
+         guard < 64; ++guard) {
+        if (THING_GET_TYPE(thing) == THING_TYPE_WEAPON &&
+            dm1_v1_dungeon_get_object_icon_index_pc34(
+                state->world.things, thing, 0) == 4) {
+            torch = thing;
+            break;
+        }
+        thing = F0512_DUNGEON_GetThingNext_Compat(state->world.things, thing);
+    }
+    if (torch == THING_NONE) return 0;
+
+    /* A source C013 storage sensor ignores wall clicks until a champion is
+     * leading. Admit one through the original HoC C127 mirror path so the
+     * test exercises playable runtime state, not a fabricated roster. */
+    if (!find_front_mirror(state, framebuffer, &mirrorOrdinal) ||
+        !M11_GameView_SelectFrontMirrorCandidate(state) ||
+        !M11_GameView_ConfirmMirrorCandidate(state, 0) ||
+        state->world.party.activeChampionIndex < 0 ||
+        state->world.party.championCount < 1) {
+        fputs("PC34 HoC TORCH test could not admit an original C127 champion\n",
+              stderr);
+        return 0;
+    }
+
+    /* ReDMCSB C080's C05 wall zone touches sensors on the front wall cell. */
+    state->world.party.mapIndex = 0;
+    state->world.party.mapX = 4;
+    state->world.party.mapY = 14;
+    state->world.party.direction = 3;
+    memset(framebuffer, 0, kFramebufferWidth * kFramebufferHeight);
+    M11_GameView_Draw(state, framebuffer,
+                      kFramebufferWidth, kFramebufferHeight);
+    if (M11_GameView_HandlePointerButton(
+            state, 112, 82, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+            M11_GAME_INPUT_REDRAW ||
+        DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != torch ||
+        M11_GameView_GetObjectIconIndexForThing(state, torch) != 4) {
+        fprintf(stderr,
+                "PC34 HoC stair TORCH click did not put original Thing %u in leader hand\n",
+                (unsigned int)torch);
+        return 0;
+    }
+    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        state->world.dungeon, state->world.things, 0, 3, 14);
+    for (int guard = 0; thing != THING_NONE && thing != THING_ENDOFLIST &&
+         guard < 64; ++guard) {
+        if (thing == torch) {
+            torchStillStored = 1;
+            break;
+        }
+        thing = F0512_DUNGEON_GetThingNext_Compat(state->world.things, thing);
+    }
+    if (torchStillStored) {
+        fputs("PC34 HoC stair TORCH remained in wall after C080 pickup\n", stderr);
+        return 0;
+    }
+    puts("ok: original PC34 HoC stair TORCH can be picked up through C080");
+    return 1;
+}
+
 int main(void)
 {
     const char *dataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
@@ -574,6 +650,10 @@ int main(void)
     }
     if (!verify_hoc_stair_torch_wall_asset(&state, framebuffer)) {
         fprintf(stderr, "real PC34 HoC stair torch wall material was not presented by M11\n");
+        goto fail;
+    }
+    if (!verify_hoc_stair_torch_pickup(&state, framebuffer)) {
+        fprintf(stderr, "real PC34 HoC stair torch could not be picked up through M11\n");
         goto fail;
     }
     if (!verify_all_ordinary_hoc_wall_ornaments(&state, framebuffer)) {
