@@ -198,8 +198,19 @@ static int verify_real_apple_transparency(M11_GameViewState* state,
                                             col, row);
                                     return 0;
                                 }
-                            } else if (withApple[offset] != withoutApple[offset]) {
-                                ++paintedPixels;
+                            } else {
+                                const unsigned char expected = (unsigned char)(
+                                    0x10u | (source & 0x0fu));
+                                if (withApple[offset] != expected) {
+                                    fprintf(stderr,
+                                            "PC34 apple pixel mismatch at %d,%d: source=%u expected=%u actual=%u\n",
+                                            col, row, source, expected,
+                                            withApple[offset]);
+                                    return 0;
+                                }
+                                if (withApple[offset] != withoutApple[offset]) {
+                                    ++paintedPixels;
+                                }
                             }
                         }
                     }
