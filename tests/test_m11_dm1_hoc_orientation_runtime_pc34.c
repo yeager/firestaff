@@ -347,10 +347,23 @@ static int exercise_real_f0129_button_pixels(
     DM1_ViewDoorButtonIndex viewIndex,
     int forwardDistance)
 {
+    /* Hand-expanded from the PC34 F0720/F0721 6.6 accumulator for the
+     * authenticated 16x19 C080 source. These fixed sequences keep the
+     * expected pixels independent from the production sampling formula. */
+    static const unsigned char d2cSourceX[12] = {
+        0, 1, 3, 4, 5, 7, 8, 9, 11, 12, 13, 15
+    };
+    static const unsigned char d2cSourceY[6] = {1, 4, 7, 11, 14, 17};
+    static const unsigned char d3cSourceX[6] = {1, 3, 6, 9, 11, 14};
+    static const unsigned char d3cSourceY[4] = {2, 7, 11, 16};
     const struct DungeonMapDesc_Compat *map;
     const M11_AssetSlot *button;
     const DM1_WallFrame *frame;
     const unsigned char *paletteMap;
+    const unsigned char *expectedSourceX;
+    const unsigned char *expectedSourceY;
+    int expectedWidth;
+    int expectedHeight;
     int doorX;
 
     if (!state || !state->world.dungeon || !state->world.things ||
@@ -359,9 +372,17 @@ static int exercise_real_f0129_button_pixels(
     button = M11_AssetLoader_Load(&state->assetLoader, 315u);
     frame = dm1_v1_viewport_get_door_button_frame_pc34(1, viewIndex);
     paletteMap = dm1_v1_viewport_get_door_button_palette_remap_pc34(viewIndex);
+    expectedSourceX = viewIndex == DM1_VIEW_DOOR_BUTTON_D2C
+        ? d2cSourceX : d3cSourceX;
+    expectedSourceY = viewIndex == DM1_VIEW_DOOR_BUTTON_D2C
+        ? d2cSourceY : d3cSourceY;
+    expectedWidth = viewIndex == DM1_VIEW_DOOR_BUTTON_D2C ? 12 : 6;
+    expectedHeight = viewIndex == DM1_VIEW_DOOR_BUTTON_D2C ? 6 : 4;
     if (!button || !button->loaded || !button->pixels ||
         button->width != 16u || button->height != 19u || !frame ||
-        !paletteMap || forwardDistance < 1 || forwardDistance > 2) return 0;
+        !paletteMap || forwardDistance < 1 || forwardDistance > 2 ||
+        (int)frame->right_x - (int)frame->left_x + 1 != expectedWidth ||
+        (int)frame->bottom_y - (int)frame->top_y + 1 != expectedHeight) return 0;
 
     for (doorX = 0; doorX < (int)map->width; ++doorX) {
         int doorY;
@@ -387,13 +408,8 @@ static int exercise_real_f0129_button_pixels(
                                 (int)frame->left_x + 1;
                             const int dstH = (int)frame->bottom_y -
                                 (int)frame->top_y + 1;
-                            const uint32_t xStep = (uint32_t)(
-                                ((uint64_t)button->width << 6) / (uint32_t)dstW);
-                            const uint32_t yStep = (uint32_t)(
-                                ((uint64_t)button->height << 6) / (uint32_t)dstH);
                             int changedPixels = 0;
                             int transparentPixels = 0;
-                            uint32_t yPosition = yStep >> 1;
                             int dy;
                             if (partyX < 0 || partyY < 0 ||
                                 partyX >= (int)map->width ||
@@ -421,14 +437,11 @@ static int exercise_real_f0129_button_pixels(
                                               FRAMEBUFFER_HEIGHT);
                             state->world.things->doors[doorIndex].button = 1;
 
-                            for (dy = 0; dy < dstH; ++dy,
-                                 yPosition += yStep) {
-                                const uint32_t sy = yPosition >> 6;
-                                uint32_t xPosition = xStep >> 1;
+                            for (dy = 0; dy < dstH; ++dy) {
+                                const unsigned int sy = expectedSourceY[dy];
                                 int dx;
-                                for (dx = 0; dx < dstW;
-                                     ++dx, xPosition += xStep) {
-                                    const uint32_t sx = xPosition >> 6;
+                                for (dx = 0; dx < dstW; ++dx) {
+                                    const unsigned int sx = expectedSourceX[dx];
                                     const unsigned char source =
                                         button->pixels[(size_t)sy * button->width + sx];
                                     const int px = VIEWPORT_X +
