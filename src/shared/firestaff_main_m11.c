@@ -566,11 +566,18 @@ static int run_data_scan(const char* dataDir, int verbose) {
         int missing = asset_scan_missing_extractor_count();
         if (missing > 0) {
             int i;
-            printf("\nExternal archives skipped (no extractor installed):\n");
+            printf("\nExternal archive candidates skipped:\n");
             for (i = 0; i < missing; ++i) {
-                printf("  %s\n    install one of: %s\n",
-                       asset_scan_missing_extractor_path(i),
-                       asset_scan_missing_extractor_tools(i));
+                const char* archivePath =
+                    asset_scan_missing_extractor_path(i);
+                if (asset_external_archive_tool_available(archivePath)) {
+                    printf("  %s\n    restart with --enable-external-archive-tools to scan\n",
+                           archivePath);
+                } else {
+                    printf("  %s\n    install one of: %s\n",
+                           archivePath,
+                           asset_scan_missing_extractor_tools(i));
+                }
             }
         }
     }

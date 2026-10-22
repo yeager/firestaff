@@ -1,5 +1,12 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-22 external archive scan diagnosis: the final `--scan-data` summary
+called skipped archives "no extractor installed" even when `7zz`, `7z`, or
+`bsdtar` was available and the scan had skipped it because external tools were
+not enabled. The summary now checks each candidate and prints the correct
+action. A real scan of `~/.firestaff/data` had all five games READY and
+reproduced this message for optional archives.
+
 2026-10-22 authentic five-game main-menu selection: the M12 original-media
 game-picker regression now checks keyboard selection and source-bound launch
 handoff for all five games. `m12_main_menu_game_selection_real_media` passed
