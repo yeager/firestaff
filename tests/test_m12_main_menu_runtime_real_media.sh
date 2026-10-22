@@ -106,8 +106,8 @@ PY
 }
 
 run_main_menu_runtime_case dm1 "$dm1_archive" fmtowns-en \
-    'wait20,key:enter,wait20,key:enter,wait20,key:enter' 60000
+    'wait-scan-complete,wait20,key:enter,wait20,key:enter,wait20,key:enter' 60000
 run_main_menu_runtime_case csb "$csb_archive" fmtowns-en \
-    'wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait700,click:52:110,wait10,click:250:50,wait240' 60000
+    'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait700,click:52:110,wait10,click:250:50,wait240' 60000
 run_main_menu_runtime_case dm2 "$dm2_archive" fmtowns-ja \
-    'wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait:2400,click:115:65,click:100:60' 90000
+    'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait:2400,click:115:65,click:100:60' 90000

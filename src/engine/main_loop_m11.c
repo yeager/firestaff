@@ -2921,7 +2921,8 @@ static int m11_dm1_amiga_present_entrance_palette(
 static int m11_delay_ms_with_intro_event_pump(unsigned int delayMs);
 static M12_MenuInput m11_next_script_input(const char** cursor,
                                           int* outWaitFrames,
-                                          int* outWaitForRuntime);
+                                          int* outWaitForRuntime,
+                                          int* outWaitForScan);
 static M12_MenuInput m11_map_script_token(const char* token, size_t len);
 static int m11_push_script_event_token(const char* token, size_t len);
 static int m11_script_event_token_is_valid(const char* token, size_t len);
@@ -10382,7 +10383,8 @@ static M12_MenuInput m11_held_motion_input_from_keyboard(const M11_GameViewState
 
 static M12_MenuInput m11_next_script_input(const char** cursor,
                                           int* outWaitFrames,
-                                          int* outWaitForRuntime) {
+                                          int* outWaitForRuntime,
+                                          int* outWaitForScan) {
     const char* start;
     const char* end;
     if (outWaitFrames) {
@@ -10390,6 +10392,9 @@ static M12_MenuInput m11_next_script_input(const char** cursor,
     }
     if (outWaitForRuntime) {
         *outWaitForRuntime = 0;
+    }
+    if (outWaitForScan) {
+        *outWaitForScan = 0;
     }
     if (!cursor || !*cursor) {
         return M12_MENU_INPUT_NONE;
@@ -10411,6 +10416,16 @@ static M12_MenuInput m11_next_script_input(const char** cursor,
         strncmp(start, "wait-game-runtime", sizeof("wait-game-runtime") - 1U) == 0) {
         if (outWaitForRuntime) {
             *outWaitForRuntime = 1;
+        }
+        return M12_MENU_INPUT_NONE;
+    }
+    /* Startup selection tests must not send input against the deliberately
+     * unavailable cards while authenticated collection discovery is active. */
+    if ((size_t)(end - start) == sizeof("wait-scan-complete") - 1U &&
+        strncmp(start, "wait-scan-complete",
+                sizeof("wait-scan-complete") - 1U) == 0) {
+        if (outWaitForScan) {
+            *outWaitForScan = 1;
         }
         return M12_MENU_INPUT_NONE;
     }
@@ -12002,6 +12017,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     const char* scriptCursor = o->script;
     int scriptWaitFramesRemaining = 0;
     int scriptWaitForRuntime = 0;
+    int scriptWaitForScan = 0;
     unsigned char* launcherFramebuffer = NULL;
     unsigned char* modernRgba = NULL;
     int useModern = 0;
@@ -13141,6 +13157,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         }
         lastLoopTick = now;
 
+        if (scriptWaitForScan && !menuState.deferredScanActive) {
+            scriptWaitForScan = 0;
+        }
         if (scriptWaitForRuntime) {
             M11_BootProbeReceipt runtimeReceipt;
             memset(&runtimeReceipt, 0, sizeof(runtimeReceipt));
@@ -13151,16 +13170,21 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         }
         if (scriptWaitForRuntime) {
             input = M12_MENU_INPUT_NONE;
+        } else if (scriptWaitForScan) {
+            input = M12_MENU_INPUT_NONE;
         } else if (scriptWaitFramesRemaining > 0) {
             --scriptWaitFramesRemaining;
         } else if (scriptCursor && *scriptCursor != '\0') {
             int waitFrames = 0;
             int waitForRuntime = 0;
+            int waitForScan = 0;
             input = m11_next_script_input(&scriptCursor,
                                           &waitFrames,
-                                          &waitForRuntime);
+                                          &waitForRuntime,
+                                          &waitForScan);
             scriptWaitFramesRemaining = waitFrames;
             scriptWaitForRuntime = waitForRuntime;
+            scriptWaitForScan = waitForScan;
         }
         int menuPointerChanged = 0;
         if (!autotestMotionEventInjected && input == M12_MENU_INPUT_NONE &&

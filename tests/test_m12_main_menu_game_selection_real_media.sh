@@ -68,15 +68,15 @@ run_game_picker_case() {
 }
 
 run_game_picker_case dm1 "$dm1_archive" \
-    'wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en
+    'wait-scan-complete,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en
 run_game_picker_case csb "$csb_archive" \
-    'wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en
+    'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en
 run_game_picker_case dm2 "$dm2_archive" \
-    'wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-ja
+    'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-ja
 
 run_game_picker_case dm1 "$dm1_archive" \
-    'wait20,click:700:262,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en mouse
+    'wait-scan-complete,wait20,click:700:262,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en mouse
 run_game_picker_case csb "$csb_archive" \
-    'wait20,click:1190:262,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en mouse
+    'wait-scan-complete,wait20,click:1190:262,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en mouse
 run_game_picker_case dm2 "$dm2_archive" \
-    'wait20,click:1680:262,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-ja mouse
+    'wait-scan-complete,wait20,click:1680:262,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-ja mouse
