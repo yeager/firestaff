@@ -1,3 +1,11 @@
+2026-10-23 PC34 wrong-edition startup rejection: the authentic PC 3.4
+GRAPHICS.DAT paired only with an authentic Atari ST 1.2 DUNGEON.DAT is now
+covered through both the no-game startup menu scan and direct `--game dm1`
+CLI. The menu reports `dm1:no`; direct PC launch reports the game unavailable
+and emits no DM1 READY receipt. The existing mixed-media case still verifies
+that a matching PC dungeon is selected when both originals are present. This
+verifies edition-pair admission only, not other editions' rejection matrices.
+
 2026-10-22 PC34 chest shutdown input coverage: the authentic DOS 3.4 real
 object corpus now closes each original chest through the ordinary inventory
 toggle, then checks that all visible residents remain in the original

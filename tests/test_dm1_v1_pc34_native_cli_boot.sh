@@ -197,6 +197,46 @@ print(f"PASS: decoded authentic Atari STX DUNGEON.DAT {actual}")
 PY
 fi
 if [[ -n "$wrong_dungeon" && -f "$wrong_dungeon" ]]; then
+    wrong_only_root="$test_scratch/dm1-pc34-wrong-dungeon-only-$$"
+    mkdir -p "$wrong_only_root"
+    cp "$runtime_data_root/GRAPHICS.DAT" "$wrong_only_root/GRAPHICS.DAT"
+    cp "$wrong_dungeon" "$wrong_only_root/DUNGEON.DAT"
+
+    # The menu must not mark an authenticated PC graphics file ready when
+    # the only adjacent dungeon belongs to another original edition.
+    wrong_only_menu_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        "$app" --menu --data-dir "$wrong_only_root" \
+        --script wait-scan-complete --duration 8000 --debug --verbose 2>&1)" || {
+        printf '%s\n' "$wrong_only_menu_output" >&2
+        exit 1
+    }
+    if ! grep -Fq 'scan complete elapsed-ms=' <<<"$wrong_only_menu_output" ||
+       ! grep -Fq 'games=dm1:no,csb:no,dm2:no,nexus:no,theron:no' <<<"$wrong_only_menu_output" ||
+       ! grep -Fq "firestaff: dm1 available=no scan-owner=$wrong_only_root" <<<"$wrong_only_menu_output" ||
+       ! grep -Fq 'platform=PC edition=pc34-en not matched' <<<"$wrong_only_menu_output" ||
+       grep -Fq 'launch phase=game-handoff' <<<"$wrong_only_menu_output"; then
+        printf '%s\n' "$wrong_only_menu_output" >&2
+        echo 'FAIL: startup menu admitted PC34 graphics with only an original Atari dungeon' >&2
+        exit 1
+    fi
+    echo 'PASS: menu rejects original PC34 graphics paired only with an original Atari dungeon'
+
+    wrong_only_cli_status=0
+    wrong_only_cli_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        "$app" --game dm1 --platform pc --data-dir "$wrong_only_root" \
+        --debug --verbose --boot-probe --boot-probe-frames 0 2>&1)" ||
+        wrong_only_cli_status=$?
+    if (( wrong_only_cli_status == 0 )) ||
+       ! grep -Fq 'firestaff: dm1 available=no' <<<"$wrong_only_cli_output" ||
+       ! grep -Fq 'game unavailable for --game: dm1' <<<"$wrong_only_cli_output" ||
+       grep -Fq 'DM1 READY: gameId=dm1' <<<"$wrong_only_cli_output"; then
+        printf '%s\n' "$wrong_only_cli_output" >&2
+        echo 'FAIL: direct DM1 PC CLI admitted an original dungeon from another edition' >&2
+        exit 1
+    fi
+    echo 'PASS: direct PC34 CLI rejects an original Atari dungeon without a matching PC dungeon'
+    rm -rf "$wrong_only_root"
+
     mixed_root="$test_scratch/dm1-pc34-mixed-dungeon-$$"
     mixed_pc_root="$mixed_root/dos_extract/Dungeon-Master_DOS_EN_Version-34"
     mkdir -p "$mixed_pc_root"
