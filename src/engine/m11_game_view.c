@@ -49862,15 +49862,32 @@ static void m11_draw_dm1_center_door_buttons(const M11_GameViewState* state,
         /* ReDMCSB DUNVIEW.C F0110 line 4163 selects G0208[button][view],
          * then lines 4204-4207 blit C0_DOOR_BUTTON with C10 transparency.
          * Geometry and derived D2/D3 remaps are owned by dm1_v1_viewport_3d. */
-        m11_blit_scaled_palette_map(slot,
-                                    framebuffer, fbW, fbH,
-                                    M11_VIEWPORT_X + frame->left_x,
-                                    M11_VIEWPORT_Y + frame->top_y,
-                                    (int)frame->right_x - (int)frame->left_x + 1,
-                                    (int)frame->bottom_y - (int)frame->top_y + 1,
-                                    10,
-                                    dm1_v1_viewport_get_door_button_palette_remap_pc34(
-                                        viewIndex));
+        {
+            const int dstW = (int)frame->right_x - (int)frame->left_x + 1;
+            const int dstH = (int)frame->bottom_y - (int)frame->top_y + 1;
+            const unsigned char *paletteMap =
+                dm1_v1_viewport_get_door_button_palette_remap_pc34(viewIndex);
+            if (viewIndex == DM1_VIEW_DOOR_BUTTON_D1C) {
+                /* PC34 F0110 passes the native 16x19 C315 bitmap to the
+                 * 16x9 D1C F0791 zone. ReDMCSB VIDEO.C F0132 clips the
+                 * bitmap at the zone; it does not shrink all 19 rows into
+                 * nine. Preserve the original top nine rows and C10 holes. */
+                m11_blit_scaled_palette_map_region(
+                    slot, 0, 0, dstW, dstH,
+                    framebuffer, fbW, fbH,
+                    M11_VIEWPORT_X + frame->left_x,
+                    M11_VIEWPORT_Y + frame->top_y,
+                    dstW, dstH, 10, paletteMap);
+            } else {
+                /* D2/D3 use ReDMCSB's derived, palette-adjusted F0129
+                 * button bitmaps; keep their reduced destination sampling. */
+                m11_blit_scaled_palette_map(slot,
+                                            framebuffer, fbW, fbH,
+                                            M11_VIEWPORT_X + frame->left_x,
+                                            M11_VIEWPORT_Y + frame->top_y,
+                                            dstW, dstH, 10, paletteMap);
+            }
+        }
     }
 }
 

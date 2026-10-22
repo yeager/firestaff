@@ -10,6 +10,7 @@
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 #include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
+#include "dm1_v1_viewport_3d_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -194,6 +195,147 @@ static int exercise_real_f0128_door_pass1(
     return 0;
 }
 
+/* Verify the actual F0110 button pixels in the final PC34 page. Callback
+ * receipts alone do not detect a bad scale, transparency key, palette pass,
+ * or a later F0111 overwrite. Compare a button-enabled render with the same
+ * original door temporarily lacking its button, then validate every visible
+ * source pixel against authentic GRAPHICS.DAT graphic 315. */
+static int exercise_real_f0110_button_pixels(
+    M11_GameViewState *state, unsigned char *withButton,
+    unsigned char *withoutButton)
+{
+    int mapIndex;
+    const M11_AssetSlot *button;
+    const DM1_WallFrame *frame = dm1_v1_viewport_get_door_button_frame_pc34(
+        1, DM1_VIEW_DOOR_BUTTON_D1C);
+
+    if (!state || !state->world.dungeon || !state->world.things || !frame) {
+        return 0;
+    }
+    button = M11_AssetLoader_Load(&state->assetLoader, 315u);
+    if (!button || !button->loaded || !button->pixels ||
+        button->width != 16u || button->height != 19u) {
+        fprintf(stderr,
+                "real PC34 F0110 button graphic 315 unavailable: slot=%p loaded=%d pixels=%p size=%ux%u\n",
+                (const void *)button, button ? button->loaded : 0,
+                button ? (const void *)button->pixels : NULL,
+                button ? button->width : 0u, button ? button->height : 0u);
+        return 0;
+    }
+    for (mapIndex = 0;
+         mapIndex < (int)state->world.dungeon->header.mapCount;
+         ++mapIndex) {
+        const struct DungeonMapDesc_Compat *map =
+            &state->world.dungeon->maps[mapIndex];
+        int x;
+        for (x = 0; x < (int)map->width; ++x) {
+            int y;
+            for (y = 0; y < (int)map->height; ++y) {
+                unsigned short thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+                    state->world.dungeon, state->world.things,
+                    mapIndex, x, y);
+                int safety = 0;
+                while (thing != THING_NONE && thing != THING_ENDOFLIST &&
+                       safety++ < 64) {
+                    if (THING_GET_TYPE(thing) == THING_TYPE_DOOR) {
+                        const int doorIndex = (int)THING_GET_INDEX(thing);
+                        if (doorIndex >= 0 &&
+                            doorIndex < state->world.things->doorCount &&
+                            state->world.things->doors[doorIndex].button) {
+                            int direction;
+                            for (direction = 0; direction < 4; ++direction) {
+                                const int partyX = x - step_x(direction);
+                                const int partyY = y - step_y(direction);
+                                M11_Dm1F0128PerSquareSchedulerReceipt receipt;
+                                int transparentPixels = 0;
+                                int visiblePixels = 0;
+                                int changedPixels = 0;
+                                int dy;
+                                if (partyX < 0 || partyY < 0 ||
+                                    partyX >= (int)map->width ||
+                                    partyY >= (int)map->height) {
+                                    continue;
+                                }
+                                state->world.party.mapIndex = mapIndex;
+                                state->world.party.mapX = partyX;
+                                state->world.party.mapY = partyY;
+                                state->world.party.direction = direction;
+                                memset(withButton, 0,
+                                       FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT);
+                                M11_GameView_Draw(state, withButton,
+                                                  FRAMEBUFFER_WIDTH,
+                                                  FRAMEBUFFER_HEIGHT);
+                                memset(&receipt, 0, sizeof(receipt));
+                                M11_GameView_GetDm1F0128PerSquareSchedulerReceipt(
+                                    &receipt);
+                                if (!receipt.sourcePlanDispatched ||
+                                    receipt.doorButtonCallbackStepCount <= 0) {
+                                    continue;
+                                }
+                                state->world.things->doors[doorIndex].button = 0;
+                                memset(withoutButton, 0,
+                                       FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT);
+                                M11_GameView_Draw(state, withoutButton,
+                                                  FRAMEBUFFER_WIDTH,
+                                                  FRAMEBUFFER_HEIGHT);
+                                state->world.things->doors[doorIndex].button = 1;
+                                for (dy = 0; dy < 9; ++dy) {
+                                    int dx;
+                                    for (dx = 0; dx < 16; ++dx) {
+                                        /* F0110 D1C consumes the native
+                                         * 16x19 graphic through a 16x9
+                                         * F0791 zone: it clips rows 9..18,
+                                         * it does not shrink the bitmap. */
+                                        const unsigned char source =
+                                            button->pixels[dy * (int)button->width + dx];
+                                        const int px = frame->left_x + dx;
+                                        const int py = VIEWPORT_Y + frame->top_y + dy;
+                                        const int offset = py * FRAMEBUFFER_WIDTH + px;
+                                        if (source == 10u) {
+                                            ++transparentPixels;
+                                            if (withButton[offset] != withoutButton[offset]) {
+                                                fprintf(stderr,
+                                                        "F0110 C10 transparency mismatch map=%d door=%d,%d pixel=%d,%d\n",
+                                                        mapIndex, x, y, dx, dy);
+                                                return 0;
+                                            }
+                                        } else {
+                                            const unsigned char expected =
+                                                (unsigned char)(0x10u | (source & 0x0fu));
+                                            ++visiblePixels;
+                                            if (withButton[offset] != withoutButton[offset]) {
+                                                ++changedPixels;
+                                                if (withButton[offset] != expected) {
+                                                    fprintf(stderr,
+                                                            "F0110 source pixel mismatch map=%d door=%d,%d button=%d,%d expected=%u actual=%u\n",
+                                                            mapIndex, x, y, dx, dy,
+                                                            expected, withButton[offset]);
+                                                    return 0;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                if (changedPixels > 0 && transparentPixels > 0) {
+                                    printf("real PC34 F0110 button pixels: map=%d door=(%d,%d) party=(%d,%d,d%d) visible=%d changed=%d transparent=%d\n",
+                                           mapIndex, x, y, partyX, partyY,
+                                           direction, visiblePixels, changedPixels,
+                                           transparentPixels);
+                                    return 1;
+                                }
+                            }
+                        }
+                    }
+                    thing = F0512_DUNGEON_GetThingNext_Compat(
+                        state->world.things, thing);
+                }
+            }
+        }
+    }
+    fputs("no real PC34 door-button frame exposed visible F0110 pixels\n", stderr);
+    return 0;
+}
+
 /* Locate a real PC 3.4 square whose F0127 span admits D0C F0115_MAIN.
  * Only the transient party presentation tuple changes; dungeon bytes remain
  * untouched and the callback receipt proves consumption of the mounted map. */
@@ -370,6 +512,7 @@ int main(void)
     const char *data_dir = getenv("FIRESTAFF_DM1_DATA_DIR");
     M11_GameViewState state;
     unsigned char framebuffer[FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT];
+    unsigned char withoutButton[FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT];
     unsigned char expected_hoc_graphics[512];
     static const M12_PresentationMode kV2Modes[] = {
         M12_PRESENTATION_V20_FILTERED,
@@ -460,6 +603,11 @@ int main(void)
     if (!exercise_real_f0128_door_pass1(&state, framebuffer)) {
         fprintf(stderr,
                 "real PC34 door pass 1/F0111 material never executed through the F0128 callback\n");
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    if (!exercise_real_f0110_button_pixels(&state, framebuffer,
+                                            withoutButton)) {
         M11_GameView_Shutdown(&state);
         return 1;
     }

@@ -1,3 +1,14 @@
+2026-10-22 PC34 F0110 D1C door-button correction: the authenticated PC34
+button graphic is 16x19 pixels, while ReDMCSB's D1C F0791 zone is 16x9.
+F0791 clips the native bitmap to that zone; it does not shrink all 19 rows.
+Firestaff now copies the top 16x9 source region for D1C, preserving C10
+transparency. The real PC34 HoC test finds an original button door and checks
+the final framebuffer against both the original graphic and a button-disabled
+comparison: 13 visible pixels match and 127 C10 pixels leave the underlying
+image unchanged. This verifies one DOS PC34 D1C route only; D2/D3 derived
+button scales and other DM1 editions remain unverified. The screenshot's other
+viewport, inscription, item, alcove and pit issues remain open.
+
 2026-10-22 screenshot and framebuffer follow-up: the seven HoC PC screenshots
 in `/Users/bosse/a/` show broken wall inscriptions and an apple floor object
 with vertical background stripes; door and alcove visuals also need source
