@@ -375,3 +375,47 @@ mixed_direct_cli_platform atari-st "Atari ST" st20-21-en csb-st20-21-en \
 mixed_direct_cli_platform amiga "Amiga" amiga31-multi csb-amiga-a31m \
     a31m-titl-dat 2601fbe2 titl-dat 61fbfd56887c94adc26888a9491c6611 \
     "$amiga_archive_link" "$amiga_source"
+
+# Bare direct launch must apply the same FM Towns AUTO preference as the
+# launcher when competing authentic editions are installed. Keep this
+# separate from the explicit platform cases above so a CLI default regression
+# cannot be hidden by a caller-supplied --platform.
+auto_cli_log="$scratch/auto-direct-cli.log"
+FIRESTAFF_CONFIG_PATH="$scratch/auto-direct-cli-config.toml" \
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+HOME="$scratch" XDG_CONFIG_HOME="$scratch" APPDATA="$scratch" \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+    "$app" --width 320 --height 200 --game csb \
+    --data-dir "$amiga_media_root" --debug \
+    --boot-probe --boot-probe-frames 2 \
+    --boot-probe-expect-startup-active 1 --duration 0 \
+    >"$auto_cli_log" 2>&1 || {
+        cat "$auto_cli_log" >&2
+        exit 1
+    }
+python3 - "$auto_cli_log" "$towns_archive_link" "$towns_source" <<'PY'
+import sys
+
+log_path, archive, source_path = sys.argv[1:]
+with open(log_path, encoding="utf-8") as stream:
+    trace = stream.read()
+
+checks = (
+    (f"launch phase=game-handoff mode=direct game=csb "
+     f"platform=FM Towns edition=fmtowns-en source={source_path}" in trace,
+     "FM Towns AUTO selection"),
+    (f"CSB READY: gameId=csb dataDir={archive} variant=csb-fmtowns-en "
+     "route=startup handoff=f31-title-anm handoffHash=6fc7d5b9" in trace,
+     "authentic F31 startup handoff"),
+    ("assetMd5=405b757038eea3c263e60f240854d6de" in trace,
+     "original FM Towns graphics identity"),
+    ("phase=csb-fmtowns-title" in trace and "startupActive=1" in trace and
+     "levelLoaded=0" in trace,
+     "source-owned F31 title startup state"),
+)
+for result, label in checks:
+    if not result:
+        raise SystemExit(f"FAIL: bare CSB direct CLI lost {label}:\n{trace}")
+
+print("PASS: bare mixed-media CSB direct CLI selected authentic FM Towns and reached F31 title")
+PY
