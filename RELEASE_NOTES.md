@@ -7822,3 +7822,15 @@ does not switch to a neighboring copy.
 ## Known limitations
 
 - Debug scan summaries report game availability and the selected data root; `--verbose` remains the diagnostic mode for the detailed candidate-file list. Original-media startup tests use SDL dummy video and audio and do not establish physical display, input or full gameplay parity.
+# Firestaff v3.0.407
+
+## Developer changes
+
+- `M12 real-media menu tests`: wait for deferred game-data discovery before keyboard or mouse selection, so the test exercises the verified menu instead of exhausting scripted input during the scan.
+- `Startup-menu catalogs`: update source references and merged translations for the scripted scan-wait support.
+
+## Known limitations
+
+- `Original-media verification`: headless startup checks do not establish physical display or audible parity on every platform. Nexus Saturn still needs an admitted authentic presentation capture before its menu can be considered verified.
+
+# Firestaff v3.0.404
