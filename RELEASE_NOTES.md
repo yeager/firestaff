@@ -7832,7 +7832,7 @@ does not switch to a neighboring copy.
 
 - `DM1 HoC critical torch`: verify the original PC34 torch beside the first stairs is rendered from GRAPHICS.DAT, picked up through C080/C05, equipped through C508, and retained through the authentic stairs input into the first dark level. F0337 reports light level 100 after the real map transition.
 - `DM1 renderer test isolation`: bind the selected original PC34 archive directly so a mixed-edition data folder cannot change the test's selected media.
-- `Original-media launch evidence`: record current menu and CLI handoff checks, while stating that SDL dummy startup routes do not establish native display, input or complete gameplay parity.
+- `Original-media launch evidence`: add entries for menu discovery and CLI game handoff, and document that SDL dummy startup routes do not establish native display, input or complete gameplay parity.
 - `Release metadata`: update the project version, embedded changelog and reproducible SPDX source SBOM for v3.0.408.
 
 ## Known limitations
