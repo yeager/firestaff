@@ -9,6 +9,28 @@
 #include "dm1_v1_atari_st_graphics_dat.h"
 #include "dm1_v1_legacy_graphics_dat.h"
 #include "dm1_v1_throw_shoot_pc34_compat.h"
+#include "dm1_v1_inventory_consumables_pc34_compat.h"
+
+static int dm1_legacy_expected_stat_after_potion(
+    int current, int delta, DM1ConsumableStatisticRulesPc34 rules)
+{
+    int maximum = 170;
+    if (rules == DM1_CONSUMABLE_STAT_RULES_ATARI_ST_10) {
+        maximum = 255;
+    } else if (rules == DM1_CONSUMABLE_STAT_RULES_ATARI_ST_11) {
+        maximum = 250;
+        if (current > 120) {
+            delta >>= 1;
+            if (current > 180) delta >>= 1;
+            ++delta;
+        }
+    } else if (current > 120) {
+        delta >>= 1;
+        if (current > 150) delta >>= 1;
+        ++delta;
+    }
+    return current + delta > maximum ? maximum : current + delta;
+}
 
 static int enter_legacy_rune_by_mouse(M11_GameViewState *state, int rune)
 {
@@ -660,14 +682,24 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             }
                             DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
                         }
-                        /* ReDMCSB PANEL.C F0348:1695-1741: S1.2+/Amiga gains
-                           above 150 are quartered, incremented, then capped at 170.
-                           Only party statistics are staged; potion power is original. */
+                        /* ReDMCSB PANEL.C F0348:1695-1741: the selected
+                           original edition owns the stat thresholds and cap.
+                           Exercise both F0349 mouth input and M11_GameView_UseItem
+                           with the same authentic dungeon potion record. */
                         for (int type = 6; type <= 9; ++type) {
                             const int attrs[] = {CHAMPION_ATTR_DEXTERITY, CHAMPION_ATTR_STRENGTH,
                                                  CHAMPION_ATTR_WISDOM, CHAMPION_ATTR_VITALITY};
                             unsigned short potion = THING_NONE;
                             int power = 0, attr = attrs[type - 6];
+                            int potionIndex;
+                            int baseline;
+                            int delta;
+                            int expected;
+                            DM1ConsumableStatisticRulesPc34 rules =
+                                dm1_inventory_statistic_rules_for_graphics_md5_pc34(
+                                    state->bootAssetMd5);
+                            unsigned char savedRaw[4];
+                            struct DungeonPotion_Compat savedPotion;
                             for (int r = 0; r < state->world.things->thingCounts[THING_TYPE_POTION]; ++r) {
                                 unsigned short candidate = (unsigned short)((THING_TYPE_POTION << 10) | r);
                                 const unsigned char *bytes = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, candidate);
@@ -675,10 +707,23 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                                     (bytes[3] & 127) == type) { potion = candidate; power = bytes[2]; break; }
                             }
                             if (potion == THING_NONE) { fprintf(stderr, "FAIL: missing original stat potion %d\n", type); return 0; }
-                            int baseline = getenv("FIRESTAFF_VERIFY_LIVING_CASTER") ? 169 : 151;
-                            int delta = type == 7 ? power / 35 + 5 : power / 25 + 8;
-                            int expected = baseline + (delta >> 2) + 1;
-                            if (expected > 170) expected = 170;
+                            potionIndex = (int)THING_GET_INDEX(potion);
+                            baseline = getenv("FIRESTAFF_VERIFY_LIVING_CASTER") ? 169 :
+                                (rules == DM1_CONSUMABLE_STAT_RULES_ATARI_ST_11 &&
+                                 (type == 7 || type == 9) ? 181 : 151);
+                            delta = type == 7 ? power / 35 + 5 : power / 25 + 8;
+                            expected = dm1_legacy_expected_stat_after_potion(
+                                baseline, delta, rules);
+                            {
+                                const unsigned char *raw =
+                                    dm1_v1_dungeon_get_thing_data_pc34(
+                                        state->world.things, potion);
+                                if (!raw || potionIndex < 0 ||
+                                    potionIndex >= state->world.things->potionCount)
+                                    return 0;
+                                memcpy(savedRaw, raw, sizeof(savedRaw));
+                                savedPotion = state->world.things->potions[potionIndex];
+                            }
                             unsigned short leaderStat = state->world.party.champions[0].attributes[attr];
                             unsigned short oldStat = state->world.party.champions[1].attributes[attr];
                             state->world.party.champions[1].attributes[attr] = (unsigned short)baseline;
@@ -694,6 +739,43 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             }
                             state->world.party.champions[1].attributes[attr] = oldStat;
                             DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
+
+                            /* Restore this original thing, then consume it
+                               through the distinct active-hand command path. */
+                            memcpy((void *)bytes, savedRaw, sizeof(savedRaw));
+                            state->world.things->potions[potionIndex] = savedPotion;
+                            {
+                                int savedActive = state->world.party.activeChampionIndex;
+                                unsigned short savedRight = state->world.party.champions[1]
+                                    .inventory[CHAMPION_SLOT_HAND_RIGHT];
+                                state->world.party.champions[1].attributes[attr] =
+                                    (unsigned short)baseline;
+                                state->world.party.champions[1]
+                                    .inventory[CHAMPION_SLOT_HAND_RIGHT] = potion;
+                                state->world.party.activeChampionIndex = 1;
+                                if (!M11_GameView_UseItem(state)) {
+                                    fprintf(stderr,
+                                        "FAIL: original stat potion active-hand use %d\n",
+                                        type);
+                                    return 0;
+                                }
+                                bytes = dm1_v1_dungeon_get_thing_data_pc34(
+                                    state->world.things, potion);
+                                if (!bytes || (bytes[3] & 127) != 20 ||
+                                    state->world.party.champions[1].attributes[attr] != expected ||
+                                    state->world.party.champions[0].attributes[attr] != leaderStat) {
+                                    fprintf(stderr,
+                                        "FAIL: original stat potion active-hand rules %d\n",
+                                        type);
+                                    return 0;
+                                }
+                                memcpy((void *)bytes, savedRaw, sizeof(savedRaw));
+                                state->world.things->potions[potionIndex] = savedPotion;
+                                state->world.party.champions[1].attributes[attr] = oldStat;
+                                state->world.party.champions[1]
+                                    .inventory[CHAMPION_SLOT_HAND_RIGHT] = savedRight;
+                                state->world.party.activeChampionIndex = savedActive;
+                            }
                         }
                         unsigned short deathExtra = THING_NONE;
                         for (int restorative = 11; restorative <= 14; restorative += restorative == 11 ? 2 : 1)

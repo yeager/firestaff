@@ -38,7 +38,23 @@ int main(int argc, char **argv) {
     spec.sourceId = "dm1";
     spec.dataDir = path;
     if (argc == 2) {
-        if (!asset_find_by_md5(path, argv[1], selected, sizeof(selected), 8)) goto done;
+        const char *explicitGraphics =
+            getenv("FIRESTAFF_DM1_ATARI_GRAPHICS_PATH");
+        if (explicitGraphics && explicitGraphics[0]) {
+            char selectedMd5[33];
+            if (strlen(explicitGraphics) >= sizeof(selected) ||
+                !asset_file_md5_hex(explicitGraphics, selectedMd5) ||
+                strcmp(selectedMd5, argv[1]) != 0) {
+                fprintf(stderr,
+                        "FAIL: explicit Atari GRAPHICS.DAT identity mismatch path=%s\n",
+                        explicitGraphics);
+                goto done;
+            }
+            snprintf(selected, sizeof(selected), "%s", explicitGraphics);
+        } else if (!asset_find_by_md5(path, argv[1], selected,
+                                      sizeof(selected), 8)) {
+            goto done;
+        }
         spec.verifiedAssetPath = selected;
         spec.verifiedAssetMd5 = argv[1];
         snprintf(container, sizeof(container), "%s", selected);
@@ -54,6 +70,11 @@ int main(int argc, char **argv) {
         state->world.pc34F0306FirstOperandFirst != 1 ||
         state->world.skillAccumulatorPolicy != DM1_SKILL_ACCUMULATOR_SIGNED_EARLY) {
         fputs("FAIL: authentic Atari M564 name binding\n", stderr);
+        goto done;
+    }
+    if (argc == 2 && strcmp(state->bootAssetMd5, argv[1]) != 0) {
+        fprintf(stderr, "FAIL: selected Atari profile hash %s != %s\n",
+                state->bootAssetMd5, argv[1]);
         goto done;
     }
     {

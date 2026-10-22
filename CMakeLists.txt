@@ -12764,6 +12764,18 @@ if(BUILD_TESTING)
         LABELS "dm1;amiga;real-media;objects;skip-safe")
     target_link_libraries(test_dm1_atari_names_real PRIVATE firestaff_m12 firestaff_m11)
     add_test(NAME dm1_atari_names_real COMMAND test_dm1_atari_names_real)
+    add_test(NAME dm1_atari_st_11_consumables_real
+        COMMAND test_dm1_atari_names_real 5095a13692702235d2e74f6b2b1367a9)
+    set_tests_properties(dm1_atari_st_11_consumables_real PROPERTIES
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "SDL_AUDIODRIVER=dummy;FIRESTAFF_DM1_ATARI_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Game,Dungeon_Master,Atari_ST,Software.7z"
+        LABELS "dm1;atari-st;v1.1;consumables;real-media;inventory;skip-safe")
+    add_test(NAME dm1_atari_st_10a_consumables_real
+        COMMAND test_dm1_atari_names_real b3cfd84e44cdf07ce2eeba47e87f772b)
+    set_tests_properties(dm1_atari_st_10a_consumables_real PROPERTIES
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "SDL_AUDIODRIVER=dummy;FIRESTAFF_DM1_ATARI_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Game,Dungeon_Master,Atari_ST,Software.7z;FIRESTAFF_DM1_ATARI_GRAPHICS_PATH=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Game,Dungeon_Master,Atari_ST,Software.7z::Floppy Disks STX/Dungeon Master for Atati ST v1.0 (English) 1987-12-08.stx::GRAPHICS.DAT"
+        LABELS "dm1;atari-st;v1.0;consumables;real-media;inventory;skip-safe")
     add_test(NAME dm1_atari_de_names_real COMMAND test_dm1_atari_names_real 2bdc5f431f84c0ece738f54dbd787c3b)
     add_test(NAME dm1_atari_fr_names_real COMMAND test_dm1_atari_names_real 0d7af44dd14f383464288abdcec76afc)
     set_tests_properties(dm1_atari_de_names_real PROPERTIES SKIP_RETURN_CODE 77

@@ -1,3 +1,15 @@
+2026-10-22 Atari ST F0348 action-hand route: `M11_GameView_UseItem` built a
+second champion-consumable state without carrying the authenticated graphics
+identity, so stat potions used from a champion's hand fell back to PC34 rules.
+It now selects the same Atari 1.0/1.1/1.2 profile as the mouth-click route.
+Real-media tests exercise both input paths with original stat-potion records
+from Atari ST 1.0a, 1.1 and 1.2, and assert the boot graphics hash used by the
+runtime. All three edition routes and the focused consumable unit test pass.
+The Atari 1.0a regression binds its exact STX member because the enclosing
+preservation archive also contains a separate automation-disk MSA with the
+same graphics identity. These are authenticated runtime transactions; natural
+campaign potion discovery/use across every Atari revision remains unverified.
+
 2026-10-22 PC34 held-object cursor hotspot: ReDMCSB IO.C F0702 registers the
 18x18 object pointer with hotspot (8,8) at the IODRV_09 call (2184-2185).
 Firestaff had placed the software cursor with a vertical offset of 6; it now
@@ -12,8 +24,10 @@ behavior. Atari 1.0a/1.0b use the original 255 cap without diminishing gains;
 1.1 uses strict 120/180 thresholds and cap 250; 1.2+ keeps the 120/150 and
 170 rules. The live M11 mouth transaction supplies the selected graphics MD5
 to the consumable calculation. The focused unit test passes with threshold
-and cap cases. A real Atari 1.0/1.1 potion-consumption campaign route remains
-unverified; this does not claim full early-edition gameplay parity.
+and cap cases. A natural Atari 1.0/1.1 campaign route from potion discovery to
+use remains unverified; authenticated real-media runtime transactions now
+cover both mouth-click and active-hand potion use. This does not claim complete
+early-edition gameplay parity.
 
 2026-10-22 IIGS functional-route retest: `m11_dm1_iigs_startup_real_media`
 passed against the installed original IIGS software archive. Its real-media

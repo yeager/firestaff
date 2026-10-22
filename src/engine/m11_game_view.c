@@ -24289,6 +24289,9 @@ static int m11_apply_source_potion_effect_pc34(
     sourceChampion.maximumStamina = (int16_t)champ->stamina.maximum;
     sourceChampion.currentMana = (int16_t)champ->mana.current;
     sourceChampion.maximumMana = (int16_t)champ->mana.maximum;
+    sourceChampion.statisticRules =
+        dm1_inventory_statistic_rules_for_graphics_md5_pc34(
+            state->bootAssetMd5);
     sourceChampion.shieldDefense =
         state->world.lifecycle.champions[champ - state->world.party.champions].shieldDefense;
     sourceChampion.wounds = champ->wounds;
