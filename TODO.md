@@ -1,5 +1,15 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-22 authentic return-to-menu and rescan retest: the current-source
+CTest selection `^return_to_menu_rescans_(dm1_csb_dm2|selected_archive|removed_archive|media_mutations)_real_media$`
+passed 4/4 in 1463.60 seconds against installed original media. The broad
+DM1/CSB/DM2 route covers menu return and rescanning across DM1 PC, FM Towns,
+Atari ST and Amiga, CSB FM Towns and Amiga, and DM2 PC and Amiga. The focused
+tests cover selected-archive changes, removed archives, and media mutations.
+This verifies the tested local SDL-dummy launcher flows, not native display or
+physical input. GitHub Actions run 39707573248 for the source commit also
+completed successfully on Ubuntu, macOS and Windows.
+
 2026-10-22 authentic CSB/DM2 CLI startup retest: the current-source CTest
 selection `^(csb_v1_.*native_cli_boot|dm2_v1_.*native_cli_boot)$` passed
 11/11 against installed original media. It covers CSB Atari STX, Amiga,
