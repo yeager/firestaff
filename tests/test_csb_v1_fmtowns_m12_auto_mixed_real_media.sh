@@ -47,7 +47,7 @@ with open(log_path, encoding="utf-8") as stream:
 with open(probe_path, encoding="utf-8") as stream:
     probe = json.load(stream)
 
-for platform, edition in (("Amiga", "amiga31-en"),
+for platform, edition in (("Amiga", "amiga31-multi"),
                            ("Atari ST", "st20-21-en")):
     if re.search(rf"csb platform={re.escape(platform)} edition={edition} "
                  r"matched source=", trace) is None:
