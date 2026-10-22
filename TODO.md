@@ -1,5 +1,22 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-22 current-source launch verification: the focused real-media main-menu
+selection/runtime CTests passed 5/5 for DM1/CSB/DM2 game selection and runtime,
+Nexus startup-menu source and Saturn-card startup, and Theron's Track 02 scan
+receipt. `m11_direct_launch_prepare_all_games` passed against the complete
+installed original-media collection, including all five selected-entry
+handoffs and the authentic Theron level-0 party. A separate 12-test CLI matrix
+passed for DM1 PC34/Amiga/Atari ST/FM Towns, CSB Atari ST/Amiga/FM Towns
+(English and Japanese), and DM2 DOS/Macintosh/Amiga/FM Towns. These CTests use
+SDL dummy video/audio and establish their scripted launch/runtime contracts;
+they do not prove native display/input or complete gameplay. Nexus remains
+blocked after its authentic title because the retail PLRD-to-FACE roster join
+and menu consumer are not source-bound. Theron reaches its authentic runtime
+state but its dungeon presenter remains fail-closed without a verified Saturn
+VDC/VCE capture. The local full-library scan reported all five games ready in
+8.88 seconds; this is one warm M4 measurement, and scan responsiveness remains
+open.
+
 2026-10-22 authentic return-to-menu and rescan retest: the current-source
 CTest selection `^return_to_menu_rescans_(dm1_csb_dm2|selected_archive|removed_archive|media_mutations)_real_media$`
 passed 4/4 in 1463.60 seconds against installed original media. The broad
