@@ -1,5 +1,19 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-23 current-source original-media launch retest: a focused CTest run
+passed 10/10 selected launch checks against the installed `.firestaff/data`
+collection. It covered authentic five-game CLI selection diagnostics, the
+five-game no-game main-menu picker (keyboard, DM1/CSB/DM2 mouse selection,
+default-root discovery, sibling-folder discovery, and Nexus/Theron handoff),
+DM1 PC34, CSB Amiga, and DM2 DOS direct startup, DM1/CSB/DM2/Theron main-menu
+runtime entry, Nexus Saturn-card discovery launch, and all-game launch
+preparation. One separate Theron rendering capture test was skipped because
+the active-dungeon VDC-state, SAT and VDC-I/O capture files are not present;
+the authentic `TQUS02.bin` game data is present. These SDL-dummy runs establish
+only their scripted launch and runtime receipts. Nexus's title-to-menu path,
+native window/input behavior, complete gameplay parity, and the synchronous
+full-library scan delay remain open.
+
 2026-10-23 Nexus title-window input capture: a matched authentic JP Saturn
 A-input/no-input pair on the M4 confirms that the retail `TM.BIN` controller
 reader observes A at four source-verified SH-2 PCs during frames 10510--10511.
