@@ -924,7 +924,7 @@ msgstr "LAUNCHER-DESTINATIONER"
 
 #: src/ui/menu_startup_m12.c:1114
 msgid "DATA DIR"
-msgstr "DATAKAT"
+msgstr "DATAMAPP"
 
 #: src/ui/menu_startup_m12.c:1115
 msgid "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
@@ -986,7 +986,7 @@ msgstr "SPELDATA HITTADES INTE"
 
 #: src/ui/menu_startup_m12.c:1130
 msgid "CHECK FIRESTAFF DATA DIR"
-msgstr "KONTROLLERA FIRESTAFF DATAKAT"
+msgstr "KONTROLLERA FIRESTAFFS DATAMAPP"
 
 #: src/ui/menu_startup_m12.c:1131
 msgid "ORIGINAL FILES NOT FOUND"

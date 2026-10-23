@@ -178,7 +178,7 @@ static void check_swedish_missing_media_uses_full_title(void) {
     CHECK(state.messageLine1 && strstr(state.messageLine1,
                                       "SPELDATA HITTADES INTE") != NULL);
     CHECK(state.messageLine1 && strstr(state.messageLine1, "DM2") == NULL);
-    CHECK(state.messageLine3 && strstr(state.messageLine3, "DATAKAT:") != NULL);
+    CHECK(state.messageLine3 && strstr(state.messageLine3, "DATAMAPP:") != NULL);
     M12_StartupMenu_Destroy(&state);
 }
 
