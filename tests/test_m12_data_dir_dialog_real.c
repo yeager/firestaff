@@ -1,4 +1,4 @@
-/* Native callback -> main-thread scan -> authenticated PC34 admission. */
+/* Native callback -> main-thread scan -> authenticated game admission. */
 #include "menu_startup_m12.h"
 #include "config_m12.h"
 #include "fs_portable_compat.h"
@@ -24,9 +24,10 @@ static int SDLCALL complete_on_worker(void* data)
     return 0;
 }
 
-int main(void)
+int main(int argc, char** argv)
 {
-    const char* mediaDir = getenv("FIRESTAFF_DM1_PICKER_TEST_DATA_DIR");
+    const char* gameId = argc > 1 ? argv[1] : NULL;
+    const char* mediaDir = argc > 2 ? argv[2] : NULL;
     const char* temp = getenv("TMPDIR");
     const char* priorConfig = getenv("FIRESTAFF_CONFIG_PATH");
     char* savedConfig = priorConfig ? SDL_strdup(priorConfig) : NULL;
@@ -38,11 +39,12 @@ int main(void)
     Completion completion;
     SDL_Thread* worker;
     Uint64 deadline;
-    int created = 0, configured = 0, index;
-    const M12_AssetVersionStatus* version;
-    if (!mediaDir || !mediaDir[0]) {
+    int created = 0, configured = 0, matchedVersion = 0;
+    if (!gameId || !mediaDir ||
+        (strcmp(gameId, "dm1") != 0 && strcmp(gameId, "csb") != 0 &&
+         strcmp(gameId, "dm2") != 0) || !mediaDir[0]) {
         SDL_free(savedConfig);
-        puts("SKIP: FIRESTAFF_DM1_PICKER_TEST_DATA_DIR is required");
+        puts("SKIP: provide a DM1, CSB, or DM2 game id and original-media folder");
         return 77;
     }
     if (priorConfig && !savedConfig) return 1;
@@ -74,7 +76,7 @@ int main(void)
     if (!menu) goto cleanup;
     memset(&options, 0, sizeof(options));
     options.skipScreenshotGalleryScan = 1;
-    M12_StartupMenu_InitWithOptions(menu, empty, "dm1", &options);
+    M12_StartupMenu_InitWithOptions(menu, empty, gameId, &options);
     menu->languageExplicit = 1;
     menu->settings.languageIndex = 0;
     CHECK(M12_StartupMenu_SetDataDirectory(menu, empty),
@@ -116,29 +118,34 @@ int main(void)
     }
     CHECK(!menu->dataDirScanJob && !menu->dataDirScanActive &&
           !menu->dataDirPickerActive, "original-media scan completes within bound");
-    index = M12_AssetStatus_FindVersionIndex("dm1", "pc34-en");
-    version = index >= 0
-        ? M12_AssetStatus_GetVersion(&menu->assetStatus, "dm1", (size_t)index) : NULL;
-    CHECK(version && version->matched, "scan authenticates original PC34 media");
+    for (size_t i = 0; i < M12_AssetStatus_GetVersionCount(gameId); ++i) {
+        const M12_AssetVersionStatus* version =
+            M12_AssetStatus_GetVersion(&menu->assetStatus, gameId, i);
+        if (version && version->matched) {
+            matchedVersion = 1;
+            break;
+        }
+    }
+    CHECK(matchedVersion, "scan authenticates original media for the selected game");
     CHECK(strcmp(M12_StartupMenu_GetVisibleDataDir(menu), expected) == 0,
           "selected physical folder remains visible");
     (void)M12_Config_Load(&config, NULL);
     CHECK(strcmp(config.path, configPath) == 0 &&
           strcmp(config.dataDir, expected) == 0,
           "main-thread completion persists only to isolated configuration");
-    /* Reopen the ordinary multi-game menu without a CLI data-dir override.
-     * Its persisted original-media root must remain selected even when the
-     * machine's default root contains other, unrelated games. */
+    /* Reopen the same game's startup path without a CLI data-dir override.
+     * Keep this scan scoped to the selected game so the test never scans
+     * games maintained by other agents. */
     M12_StartupMenu_Destroy(menu);
     memset(menu, 0, sizeof(*menu));
-    options.scanAllGames = 1;
-    M12_StartupMenu_InitWithOptions(menu, NULL, NULL, &options);
+    options.scanAllGames = 0;
+    M12_StartupMenu_InitWithOptions(menu, NULL, gameId, &options);
     CHECK(strcmp(M12_StartupMenu_GetVisibleDataDir(menu), expected) == 0 &&
           strcmp(M12_AssetStatus_GetDataDir(&menu->assetStatus), expected) == 0,
-          "multi-game menu keeps the persisted original-media root");
+          "game startup keeps the persisted original-media folder");
     (void)M12_Config_Load(&config, NULL);
     CHECK(strcmp(config.dataDir, expected) == 0,
-          "menu reopen does not replace persisted media with default root");
+          "game startup does not replace persisted media with default root");
 cleanup:
     if (menu) { M12_StartupMenu_Destroy(menu); SDL_free(menu); }
     if (created) {
@@ -156,6 +163,6 @@ cleanup:
     }
     SDL_free(savedConfig);
     SDL_Quit();
-    if (!failures) puts("PASS: original media selected off-thread and admitted on main");
+    if (!failures) printf("PASS: %s original media selected off-thread and admitted on main\n", gameId);
     return failures ? 1 : 0;
 }

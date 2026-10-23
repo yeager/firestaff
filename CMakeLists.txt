@@ -55533,11 +55533,19 @@ if(BUILD_TESTING)
     if(NOT MSVC)
         target_compile_options(test_m12_data_dir_dialog_real PRIVATE -Wall -Wextra -O2)
     endif()
-    add_test(NAME m12_data_dir_dialog_real COMMAND test_m12_data_dir_dialog_real)
-    set_tests_properties(m12_data_dir_dialog_real PROPERTIES
-        SKIP_RETURN_CODE 77 TIMEOUT 90
-        ENVIRONMENT "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/data-dialog-scratch;SDL_VIDEODRIVER=dummy"
-        LABELS "dm1;pc34;real-media;in-memory;menu;skip-safe")
+    foreach(_m12_picker_game IN ITEMS dm1 csb dm2)
+        add_test(
+            NAME m12_data_dir_dialog_${_m12_picker_game}_real
+            COMMAND test_m12_data_dir_dialog_real
+                ${_m12_picker_game}
+                "${FIRESTAFF_WORKSPACE_DATA_DIR}/${_m12_picker_game}"
+        )
+        set_tests_properties(m12_data_dir_dialog_${_m12_picker_game}_real PROPERTIES
+            SKIP_RETURN_CODE 77 TIMEOUT 90
+            ENVIRONMENT "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/data-dialog-scratch;SDL_VIDEODRIVER=dummy"
+            LABELS "${_m12_picker_game};real-media;in-memory;menu;skip-safe"
+        )
+    endforeach()
 
     # Opt-in original-media gate for persisted M12 root to M11 launch.
     add_executable(test_m12_persisted_root_original_handoff
