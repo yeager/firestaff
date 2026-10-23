@@ -1062,7 +1062,7 @@ mkdir -p "$movement_home"
 gameplay_output=$(HOME="$movement_home" XDG_CONFIG_HOME="$movement_home" \
     APPDATA="$movement_home" FIRESTAFF_CONFIG_PATH="$movement_home/config.toml" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --game dm1 --platform pc --data-dir "$archive" \
+    --game dm1 --platform pc --data-dir "$archive" --debug \
     --boot-probe --boot-probe-frames 0 \
     --script up --duration 0 2>&1) || {
     printf '%s\n' "$gameplay_output" >&2
@@ -1070,7 +1070,9 @@ gameplay_output=$(HOME="$movement_home" XDG_CONFIG_HOME="$movement_home" \
 }
 if ! grep -Fq 'phase=dm1-runtime' <<<"$gameplay_output" ||
    ! grep -Fq 'levelLoaded=1' <<<"$gameplay_output" ||
-   ! grep -Fq 'map=0 party=1,4,2' <<<"$gameplay_output"; then
+   ! grep -Fq 'map=0 party=1,4,2' <<<"$gameplay_output" ||
+   ! grep -Fq 'game-action game=dm1 tick=1 input=forward result=1' <<<"$gameplay_output" ||
+   ! grep -Fq 'action="FRAMÅT" outcome="GRUPP FLYTTAD" party=1,4' <<<"$gameplay_output"; then
     printf '%s\n' "$gameplay_output" >&2
     printf '%s\n' 'FAIL: authentic DM1 PC-34 up input did not reach native movement' >&2
     exit 1

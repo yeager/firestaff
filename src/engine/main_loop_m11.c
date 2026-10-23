@@ -2506,6 +2506,272 @@ static void m11_debug_dm1_combat_tick(const M11_GameViewState* state) {
     m11_debug_dm1_combat_receipt(state, "tick", 1);
 }
 
+static const char* m11_debug_input_name(M12_MenuInput input) {
+    switch (input) {
+        case M12_MENU_INPUT_UP: return "forward";
+        case M12_MENU_INPUT_DOWN: return "backward";
+        case M12_MENU_INPUT_STRAFE_LEFT: return "strafe-left";
+        case M12_MENU_INPUT_STRAFE_RIGHT: return "strafe-right";
+        case M12_MENU_INPUT_TURN_LEFT: return "turn-left";
+        case M12_MENU_INPUT_TURN_RIGHT: return "turn-right";
+        case M12_MENU_INPUT_ACTION: return "action";
+        case M12_MENU_INPUT_CYCLE_CHAMPION: return "cycle-champion";
+        case M12_MENU_INPUT_REST_TOGGLE: return "rest-toggle";
+        case M12_MENU_INPUT_USE_STAIRS: return "use-stairs";
+        case M12_MENU_INPUT_PICKUP_ITEM: return "pickup";
+        case M12_MENU_INPUT_DROP_ITEM: return "drop";
+        case M12_MENU_INPUT_USE_ITEM: return "use-item";
+        case M12_MENU_INPUT_SPELL_CAST: return "spell-cast";
+        case M12_MENU_INPUT_SPELL_CLEAR: return "spell-clear";
+        case M12_MENU_INPUT_SPELL_RUNE_1: return "spell-rune-1";
+        case M12_MENU_INPUT_SPELL_RUNE_2: return "spell-rune-2";
+        case M12_MENU_INPUT_SPELL_RUNE_3: return "spell-rune-3";
+        case M12_MENU_INPUT_SPELL_RUNE_4: return "spell-rune-4";
+        case M12_MENU_INPUT_SPELL_RUNE_5: return "spell-rune-5";
+        case M12_MENU_INPUT_SPELL_RUNE_6: return "spell-rune-6";
+        case M12_MENU_INPUT_MAP_TOGGLE: return "map-toggle";
+        case M12_MENU_INPUT_INVENTORY_TOGGLE: return "inventory-toggle";
+        case M12_MENU_INPUT_SAVE_GAME: return "save";
+        case M12_MENU_INPUT_FREEZE_TOGGLE: return "freeze-toggle";
+        case M12_MENU_INPUT_DISK_MENU: return "disk-menu";
+        case M12_MENU_INPUT_CHAMPION_1_INVENTORY: return "champion-1-inventory";
+        case M12_MENU_INPUT_CHAMPION_2_INVENTORY: return "champion-2-inventory";
+        case M12_MENU_INPUT_CHAMPION_3_INVENTORY: return "champion-3-inventory";
+        case M12_MENU_INPUT_CHAMPION_4_INVENTORY: return "champion-4-inventory";
+        case M12_MENU_INPUT_LEADER_INVENTORY: return "leader-inventory";
+        case M12_MENU_INPUT_MAC_WALL_LEFT: return "wall-left";
+        case M12_MENU_INPUT_MAC_WALL_CENTER: return "wall-center";
+        case M12_MENU_INPUT_MAC_WALL_RIGHT: return "wall-right";
+        case M12_MENU_INPUT_MAC_OPEN_GAME: return "open-game";
+        case M12_MENU_INPUT_BACK: return "back";
+        case M12_MENU_INPUT_ACCEPT: return "accept";
+        case M12_MENU_INPUT_VALUE_LEFT: return "value-left";
+        case M12_MENU_INPUT_VALUE_RIGHT: return "value-right";
+        case M12_MENU_INPUT_GRAPHICS_POPUP: return "graphics-popup";
+        default: return "other";
+    }
+}
+
+static const char* m11_debug_emission_name(uint8_t kind) {
+    switch (kind) {
+        case EMIT_DAMAGE_DEALT: return "damage-dealt";
+        case EMIT_SOUND_REQUEST: return "sound";
+        case EMIT_XP_AWARD: return "experience";
+        case EMIT_KILL_NOTIFY: return "kill";
+        case EMIT_DOOR_STATE: return "door-state";
+        case EMIT_PARTY_MOVED: return "party-moved";
+        case EMIT_CHAMPION_DOWN: return "champion-down";
+        case EMIT_GAME_WON: return "game-won";
+        case EMIT_PARTY_DEAD: return "party-dead";
+        case EMIT_SPELL_EFFECT: return "spell-effect";
+        case EMIT_PARTY_FELL: return "party-fell";
+        case EMIT_PARTY_TELEPORTED: return "party-teleported";
+        case EMIT_SENSOR_EFFECT: return "sensor";
+        case EMIT_ACTION_DISABLED: return "action-disabled";
+        case EMIT_CREATURE_ATTACK: return "monster-attack";
+        case EMIT_CHAMPION_DAMAGED: return "champion-damaged";
+        case EMIT_CHAMPION_DAMAGE_HIDDEN: return "champion-damage-hidden";
+        case EMIT_TEXT_MESSAGE: return "message";
+        case EMIT_ACTION_ENABLED: return "action-enabled";
+        case EMIT_CREATURE_MOVED: return "monster-moved";
+        case EMIT_LEVEL_UP: return "level-up";
+        default: return "unknown";
+    }
+}
+
+static struct {
+    unsigned int launchSerial;
+    int initialized;
+    size_t groupCapacity;
+    unsigned int* groupHealth;
+    unsigned int championHealth[CHAMPION_MAX_PARTY];
+} g_m11_debug_health_snapshot;
+
+/* Print source-world events only when the game tick actually emits them. This
+ * keeps --debug useful during combat and ordinary play without per-frame spam.
+ * The payload is intentionally retained verbatim so logs can be compared with
+ * the source-engine event stream during parity work. */
+static void m11_debug_game_events(const M11_GameViewState* state) {
+    int i;
+    if (!state || !state->debugMovementTraceEnabled || !state->active) return;
+    if (g_m11_debug_health_snapshot.launchSerial != g_m11_sync_launch_serial) {
+        g_m11_debug_health_snapshot.initialized = 0;
+        memset(g_m11_debug_health_snapshot.championHealth, 0,
+               sizeof(g_m11_debug_health_snapshot.championHealth));
+        g_m11_debug_health_snapshot.launchSerial = g_m11_sync_launch_serial;
+    }
+    if (state->world.things && state->world.things->groups) {
+        int groupCount = state->world.things->groupCount;
+        if (groupCount < 0 || groupCount > 65536) groupCount = 0;
+        if ((size_t)groupCount > g_m11_debug_health_snapshot.groupCapacity) {
+            unsigned int* grown = (unsigned int*)realloc(
+                g_m11_debug_health_snapshot.groupHealth,
+                (size_t)groupCount * 4U * sizeof(unsigned int));
+            if (grown) {
+                g_m11_debug_health_snapshot.groupHealth = grown;
+                g_m11_debug_health_snapshot.groupCapacity =
+                    (size_t)groupCount;
+            }
+        }
+        if ((size_t)groupCount > g_m11_debug_health_snapshot.groupCapacity)
+            groupCount = 0;
+        for (i = 0; i < groupCount; ++i) {
+            const struct DungeonGroup_Compat* group =
+                &state->world.things->groups[i];
+            int creature;
+            for (creature = 0; creature < 4; ++creature) {
+                unsigned int health = creature <= (int)group->count
+                    ? group->health[creature] : 0U;
+                unsigned int previous =
+                    g_m11_debug_health_snapshot.groupHealth[(size_t)i * 4U +
+                                                             (size_t)creature];
+                if (g_m11_debug_health_snapshot.initialized &&
+                    health != previous) {
+                    fprintf(stderr,
+                            "firestaff: game-health game=%s tick=%u "
+                            "target=monster group=%d creature=%d type=%u "
+                            "hp=%u->%u delta=%+d\n",
+                            state->sourceId[0] ? state->sourceId : "unknown",
+                            (unsigned int)state->world.gameTick, i, creature,
+                            (unsigned int)group->creatureType, previous, health,
+                            (int)health - (int)previous);
+                }
+                g_m11_debug_health_snapshot.groupHealth[(size_t)i * 4U +
+                                                         (size_t)creature] = health;
+            }
+        }
+    }
+    for (i = 0; i < state->world.party.championCount &&
+                i < CHAMPION_MAX_PARTY; ++i) {
+        unsigned int health = state->world.party.champions[i].hp.current;
+        unsigned int previous = g_m11_debug_health_snapshot.championHealth[i];
+        if (g_m11_debug_health_snapshot.initialized && health != previous) {
+            fprintf(stderr,
+                    "firestaff: game-health game=%s tick=%u "
+                    "target=champion index=%d hp=%u->%u delta=%+d\n",
+                    state->sourceId[0] ? state->sourceId : "unknown",
+                    (unsigned int)state->world.gameTick, i, previous, health,
+                    (int)health - (int)previous);
+        }
+        g_m11_debug_health_snapshot.championHealth[i] = health;
+    }
+    g_m11_debug_health_snapshot.initialized = 1;
+    for (i = 0; i < state->lastTickResult.emissionCount; ++i) {
+        const struct TickEmission_Compat* event =
+            &state->lastTickResult.emissions[i];
+        char detail[160];
+        detail[0] = '\0';
+        switch (event->kind) {
+            case EMIT_DAMAGE_DEALT:
+                snprintf(detail, sizeof(detail),
+                         "champion=%d group=%d amount-field=%d outcome-code=%d",
+                         event->payload[0], event->payload[1],
+                         event->payload[2], event->payload[3]);
+                break;
+            case EMIT_CREATURE_ATTACK:
+                snprintf(detail, sizeof(detail),
+                         "group=%d monster=%d damage-or-projectile=%d ranged=%d",
+                         event->payload[0], event->payload[1],
+                         event->payload[2], event->payload[3]);
+                break;
+            case EMIT_CREATURE_MOVED:
+                snprintf(detail, sizeof(detail),
+                         "group=%d monster-type=%d map-x=%d map-y=%d",
+                         event->payload[0], event->payload[1],
+                         event->payload[2], event->payload[3]);
+                break;
+            case EMIT_CHAMPION_DAMAGED:
+                snprintf(detail, sizeof(detail),
+                         "champion=%d cell=%d damage=%d wound-mask=%d",
+                         event->payload[0], event->payload[1],
+                         event->payload[2], event->payload[3]);
+                break;
+            case EMIT_DOOR_STATE:
+                snprintf(detail, sizeof(detail), "map-x=%d map-y=%d state=%d map=%d",
+                         event->payload[0], event->payload[1],
+                         event->payload[2], event->payload[3]);
+                break;
+            case EMIT_ACTION_DISABLED:
+                snprintf(detail, sizeof(detail),
+                         "champion=%d ticks=%d action=%d slot=%d",
+                         event->payload[0], event->payload[1],
+                         event->payload[2], event->payload[3]);
+                break;
+            case EMIT_ACTION_ENABLED:
+                snprintf(detail, sizeof(detail),
+                         "champion=%d action=%d arg2=%d arg3=%d",
+                         event->payload[0], event->payload[1],
+                         event->payload[2], event->payload[3]);
+                break;
+            case EMIT_SPELL_EFFECT:
+                snprintf(detail, sizeof(detail),
+                         "champion=%d target=%d outcome=%d packed-power-skill-xp=%d",
+                         event->payload[0], event->payload[1],
+                         event->payload[2], event->payload[3]);
+                break;
+            default:
+                snprintf(detail, sizeof(detail), "fields=see-payload");
+                break;
+        }
+        fprintf(stderr,
+                "firestaff: game-event game=%s tick=%u type=%s "
+                "detail={%s} payload=%d,%d,%d,%d action=\"%s\" outcome=\"%s\" "
+                "party=%d,%d dir=%d champions=%d active-champion=%d\n",
+                state->sourceId[0] ? state->sourceId : "unknown",
+                (unsigned int)state->world.gameTick,
+                m11_debug_emission_name(event->kind),
+                detail,
+                event->payload[0], event->payload[1],
+                event->payload[2], event->payload[3],
+                state->lastAction[0] ? state->lastAction : "(none)",
+                state->lastOutcome[0] ? state->lastOutcome : "(none)",
+                state->world.party.mapX, state->world.party.mapY,
+                state->world.party.direction,
+                state->world.party.championCount,
+                state->world.party.activeChampionIndex);
+    }
+}
+
+static void m11_debug_game_action(const M11_GameViewState* state,
+                                  M12_MenuInput input,
+                                  M11_GameInputResult result) {
+    if (!state || !state->debugMovementTraceEnabled || !state->active) return;
+    fprintf(stderr,
+            "firestaff: game-action game=%s tick=%u input=%s result=%d "
+            "action=\"%s\" outcome=\"%s\" party=%d,%d dir=%d "
+            "active-champion=%d\n",
+            state->sourceId[0] ? state->sourceId : "unknown",
+            (unsigned int)state->world.gameTick, m11_debug_input_name(input),
+            (int)result,
+            state->lastAction[0] ? state->lastAction : "(none)",
+            state->lastOutcome[0] ? state->lastOutcome : "(none)",
+            state->world.party.mapX, state->world.party.mapY,
+            state->world.party.direction,
+            state->world.party.activeChampionIndex);
+    m11_debug_game_events(state);
+}
+
+static void m11_debug_game_pointer(const M11_GameViewState* state,
+                                   const char* eventName,
+                                   int sourceX,
+                                   int sourceY,
+                                   M11_GameInputResult result) {
+    if (!state || !state->debugMovementTraceEnabled || !state->active) return;
+    fprintf(stderr,
+            "firestaff: game-action game=%s tick=%u input=%s point=%d,%d "
+            "result=%d action=\"%s\" outcome=\"%s\" party=%d,%d dir=%d "
+            "active-champion=%d\n",
+            state->sourceId[0] ? state->sourceId : "unknown",
+            (unsigned int)state->world.gameTick,
+            eventName ? eventName : "pointer", sourceX, sourceY, (int)result,
+            state->lastAction[0] ? state->lastAction : "(none)",
+            state->lastOutcome[0] ? state->lastOutcome : "(none)",
+            state->world.party.mapX, state->world.party.mapY,
+            state->world.party.direction,
+            state->world.party.activeChampionIndex);
+    m11_debug_game_events(state);
+}
+
 static void m11_draw_game_frame_for_loop(M11_GameViewState* state,
                                            int debug,
                                            double* drawMs,
@@ -8562,6 +8828,7 @@ static void m11_phase_a_advance_boot_probe_frames(M11_GameViewState* gameView,
     }
     for (i = 0; i < frameCount; ++i) {
         M11_GameInputResult result = M11_GameView_AdvanceIdleTick(gameView);
+        m11_debug_game_events(gameView);
         if ((result == M11_GAME_INPUT_REDRAW &&
              /* FM Towns DM2 advances TWANIM from its Timer-A receipt in
               * AdvanceIdleTick.  Rendering every intermediate title tick
@@ -8864,6 +9131,7 @@ static int m11_phase_a_apply_boot_probe_script(M11_GameViewState* gameView,
             continue;
         }
         result = M11_GameView_HandleInput(gameView, input);
+        m11_debug_game_action(gameView, input, result);
         applied++;
         if (result == M11_GAME_INPUT_REDRAW) {
             M11_GameView_Draw(gameView,
@@ -10044,8 +10312,11 @@ static int m11_apply_boot_probe_event_token(M11_GameViewState* gameView,
         }
         if (outResult) {
             *outResult = M11_GameView_HandleInput(gameView, input);
+            m11_debug_game_action(gameView, input, *outResult);
         } else {
-            (void)M11_GameView_HandleInput(gameView, input);
+            M11_GameInputResult inputResult =
+                M11_GameView_HandleInput(gameView, input);
+            m11_debug_game_action(gameView, input, inputResult);
         }
         return 1;
     }
@@ -10077,6 +10348,10 @@ static int m11_apply_boot_probe_event_token(M11_GameViewState* gameView,
             *outResult = release_result != M11_GAME_INPUT_IGNORED
                 ? release_result : press_result;
         }
+        m11_debug_game_pointer(
+            gameView, "pointer-click", x, y,
+            release_result != M11_GAME_INPUT_IGNORED
+                ? release_result : press_result);
         return 1;
     }
     if (sscanf(buffer, "move:%d:%d", &x, &y) == 2) {
@@ -10973,6 +11248,13 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     windowX, windowY, pointerMapped, mappedX, mappedY,
                     buttonMask, activeChampionBefore,
                     pointerMapped ? *gameViewResult : -1);
+                if (pointerMapped) {
+                    m11_debug_game_pointer(
+                        gameView,
+                        ev.button.button == SDL_BUTTON_RIGHT
+                            ? "pointer-right" : "pointer-left",
+                        mappedX, mappedY, *gameViewResult);
+                }
                 if (pointerMapped &&
                     *gameViewResult != M11_GAME_INPUT_IGNORED) {
                     return M12_MENU_INPUT_NONE;
@@ -12678,11 +12960,18 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         if (menuState.shouldExit || g_m11_phase_duration_expired)
             goto cleanup;
         launchedEver = 1;
+        /* Direct launches and bounded boot probes run before the interactive
+         * loop sets this flag. Enable the same in-game event trace immediately
+         * after the native handoff so scripted and live play share diagnostics. */
+        gameView.debugMovementTraceEnabled = o->debug ? 1 : 0;
+        if (o->debug) m11_debug_game_events(&gameView);
         if (o->verbose && m11_is_supported_game_id(o->gameId)) {
             M11_BootProbeReceipt startupReceipt;
+            int hasStartupReceipt = M11_GameView_GetBootProbeReceipt(
+                &gameView, &startupReceipt);
             fprintf(stderr, "firestaff: launch phase=runtime-entered game=%s\n",
                     o->gameId);
-            if (M11_GameView_GetBootProbeReceipt(&gameView, &startupReceipt))
+            if (hasStartupReceipt)
                 fprintf(stderr, "firestaff: runtime game=%s startup-phase=%s animation=%s active=%d\n",
                         o->gameId, startupReceipt.startupPhase,
                         startupReceipt.startupAnimation,
@@ -13248,6 +13537,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                         &menuState, &gameView, "menu");
                     m11_debug_trace_startup_frame(
                         &debugStartupTrace, &gameView, o->gameId);
+                    m11_debug_game_events(&gameView);
                     /* Startup and Entrance can run synchronously inside the
                      * menu loop. Exclude that time from active-loop metrics. */
                     m11_reset_debug_perf_window(
@@ -13305,6 +13595,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                                 o->dataDir) &&
                     gameView.active) {
                     launchedEver = 1;
+                    if (o->debug) {
+                        gameView.debugMovementTraceEnabled = 1;
+                        m11_debug_game_events(&gameView);
+                    }
                     gameFrameNeedsPresent = 1;
                     if (exitAfterLaunch) {
                         break;
@@ -13369,6 +13663,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     input = M12_MENU_INPUT_NONE;
                 } else {
                     result = M11_GameView_HandleInput(&gameView, input);
+                    m11_debug_game_action(&gameView, input, result);
                 }
                 if (o->debug && input == M12_MENU_INPUT_BACK &&
                     gameView.sourceId[0] &&
@@ -13414,6 +13709,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                                     o->dataDir) &&
                         gameView.active) {
                         launchedEver = 1;
+                        if (o->debug) {
+                            gameView.debugMovementTraceEnabled = 1;
+                            m11_debug_game_events(&gameView);
+                        }
                         gameFrameNeedsPresent = 1;
                         if (exitAfterLaunch) {
                             break;
@@ -13481,6 +13780,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                 &menuState, &gameView, "menu");
                             m11_debug_trace_startup_frame(
                                 &debugStartupTrace, &gameView, o->gameId);
+                            m11_debug_game_events(&gameView);
                             /* Startup and Entrance can run synchronously
                              * inside the menu loop. Exclude that time from
                              * active-loop metrics. */
@@ -13511,6 +13811,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 M11_GameInputResult tickResult =
                     M11_GameView_AdvanceIdleTick(&gameView);
                 m11_debug_dm1_combat_tick(&gameView);
+                m11_debug_game_events(&gameView);
                 if (tickResult == M11_GAME_INPUT_REDRAW) {
                     if (gameView.sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
                         gameView.dm2State.startup_menu_active &&
