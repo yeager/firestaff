@@ -1,5 +1,14 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-23 isolated DM1 launcher retest: the new
+`m12_main_menu_dm1_only_real_media` CTest passed against the installed
+original FM Towns archive. With only that archive exposed under the documented
+`~/.firestaff/data/dm1` tree and no `--game` or `--data-dir`, the launcher
+remained in the no-game menu, reported DM1 ready and the other four games
+unavailable, and handed off to the authentic English FM Towns edition. The
+source archive hash was unchanged. SDL dummy drivers verify the scripted menu
+handoff, not native display/input or the full DM1 runtime.
+
 2026-10-23 v3.0.409 original-media launcher retest: the current-source
 `m12_main_menu_game_selection_real_media` CTest passed in 350.54 seconds. It
 selected all five games from the no-game menu using authentic media, covered
