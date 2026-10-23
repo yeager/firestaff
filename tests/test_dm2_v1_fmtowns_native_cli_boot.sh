@@ -45,7 +45,7 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
 # before applying the same platform-card and New Game inputs.
 auto_menu_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --menu --game dm2 --data-dir "$archive" --verbose \
+    --menu --game dm2 --data-dir "$archive" --debug --verbose \
     --script 'key:enter,key:enter,key:enter' --duration 1000 2>&1) || {
     printf '%s\n' "$auto_menu_output" >&2
     exit 1

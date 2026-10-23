@@ -90,8 +90,14 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
+#include <psapi.h>
 #elif defined(__APPLE__) || defined(__linux__)
 #include <sys/resource.h>
+#if defined(__APPLE__)
+#include <mach/mach.h>
+#elif defined(__linux__)
+#include <unistd.h>
+#endif
 #endif
 
 #include <SDL3/SDL.h>
@@ -2252,6 +2258,53 @@ static int m11_process_cpu_seconds(double* seconds) {
                (double)usage.ru_stime.tv_sec +
                (double)usage.ru_stime.tv_usec / 1000000.0;
     return 1;
+#else
+    return 0;
+#endif
+}
+
+static int m11_process_memory_bytes(uint64_t* residentBytes,
+                                   uint64_t* virtualBytes) {
+    if (!residentBytes || !virtualBytes) return 0;
+#if defined(_WIN32)
+    {
+        PROCESS_MEMORY_COUNTERS_EX counters;
+        memset(&counters, 0, sizeof(counters));
+        counters.cb = sizeof(counters);
+        if (!GetProcessMemoryInfo(GetCurrentProcess(),
+                (PROCESS_MEMORY_COUNTERS*)&counters, sizeof(counters)))
+            return 0;
+        *residentBytes = (uint64_t)counters.WorkingSetSize;
+        *virtualBytes = (uint64_t)counters.PrivateUsage;
+        return 1;
+    }
+#elif defined(__APPLE__)
+    {
+        mach_task_basic_info_data_t info;
+        mach_msg_type_number_t count = MACH_TASK_BASIC_INFO_COUNT;
+        if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO,
+                      (task_info_t)&info, &count) != KERN_SUCCESS)
+            return 0;
+        *residentBytes = (uint64_t)info.resident_size;
+        *virtualBytes = (uint64_t)info.virtual_size;
+        return 1;
+    }
+#elif defined(__linux__)
+    {
+        FILE* statm = fopen("/proc/self/statm", "r");
+        unsigned long long virtualPages = 0;
+        unsigned long long residentPages = 0;
+        long pageSize;
+        int readOk;
+        if (!statm) return 0;
+        readOk = fscanf(statm, "%llu %llu", &virtualPages, &residentPages);
+        fclose(statm);
+        pageSize = sysconf(_SC_PAGESIZE);
+        if (readOk != 2 || pageSize <= 0) return 0;
+        *residentBytes = (uint64_t)residentPages * (uint64_t)pageSize;
+        *virtualBytes = (uint64_t)virtualPages * (uint64_t)pageSize;
+        return 1;
+    }
 #else
     return 0;
 #endif
@@ -12527,7 +12580,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             return 2;
         }
     }
-    if (o->verbose && !o->debug && m11_is_supported_game_id(o->gameId)) {
+    if (o->verbose && m11_is_supported_game_id(o->gameId)) {
         int slot = m11_game_option_slot(o->gameId);
         int selected = menuState.gameOptions[slot].versionIndex;
         const M12_AssetVersionStatus* version = selected >= 0
@@ -13975,6 +14028,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             if (elapsedMs >= 5000.0) {
                 double cpuNow = 0.0;
                 const int cpuNowAvailable = m11_process_cpu_seconds(&cpuNow);
+                uint64_t residentBytes = 0;
+                uint64_t virtualBytes = 0;
+                const int memoryAvailable = m11_process_memory_bytes(
+                    &residentBytes, &virtualBytes);
                 double cpuPercent = -1.0;
                 if (perfCpuAvailable && cpuNowAvailable &&
                     elapsedMs > 0.0 && cpuNow >= perfCpuWindowStart) {
@@ -13990,15 +14047,24 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 else fprintf(stderr, "unavailable");
                 fprintf(stderr,
                         " target-loop-fps=%.2f loops-per-sec=%.1f "
-                        "loop-ms-max=%.2f "
+                        "process-rss-bytes=",
+                        interval ? 1000.0 / (double)interval : 0.0,
+                        (double)perfLoopCount * 1000.0 / elapsedMs);
+                if (memoryAvailable) fprintf(stderr, "%llu",
+                    (unsigned long long)residentBytes);
+                else fprintf(stderr, "unavailable");
+                fprintf(stderr, " process-virtual-bytes=");
+                if (memoryAvailable) fprintf(stderr, "%llu",
+                    (unsigned long long)virtualBytes);
+                else fprintf(stderr, "unavailable");
+                fprintf(stderr,
+                        " loop-ms-max=%.2f "
                         "loop-over-budget-count=%llu game-ticks-per-sec=%.2f "
                         "game-frames-rendered-per-sec=%.2f game-frames-presented-per-sec=%.2f "
                         "source-draw-count=%llu presented-frame-count=%llu "
                         "frame-compose-present-call-ms-avg=%.2f "
                         "frame-compose-present-call-ms-max=%.2f "
                         "gpu-utilization=unavailable\n",
-                        interval ? 1000.0 / (double)interval : 0.0,
-                        (double)perfLoopCount * 1000.0 / elapsedMs,
                         perfLoopMaxMs,
                         (unsigned long long)perfOverBudgetLoops,
                         (double)perfGameTickCount * 1000.0 / elapsedMs,

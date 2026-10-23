@@ -82,7 +82,7 @@ static void usage(const char* prog) {
             "  --boot-probe-expect-dm1-hoc-full-graphics Fail unless DM1 HoC full graphics receipt is ready\n"
             "  --boot-probe-expect-dm1-hoc-release-app-capture Fail unless DM1 HoC release/app capture is ready\n"
             "  --verbose, -v       List startup platforms, catalogue files and media selection\n"
-            "  --debug             Trace startup, actions, world events, HP changes and timing\n"
+            "  --debug             Trace startup, actions, world events, HP, CPU, memory and timing\n"
             "  --debug-full-redraw Re-render the active game every loop for an FPS stress check\n"
             "  --fullscreen        Run in fullscreen mode\n"
             "  --no-vsync          Disable vertical sync\n"

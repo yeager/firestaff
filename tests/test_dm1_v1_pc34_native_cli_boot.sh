@@ -840,7 +840,7 @@ auto_cli_probe_json="$auto_cli_home/runtime.json"
 auto_cli_output="$(HOME="$auto_cli_home" XDG_CONFIG_HOME="$auto_cli_home" \
     APPDATA="$auto_cli_home" FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$auto_cli_probe_json" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --game dm1 --data-dir "$archive" --verbose --boot-probe \
+    --game dm1 --data-dir "$archive" --debug --verbose --boot-probe \
     --boot-probe-frames 120 --duration 0 2>&1)" || {
     printf '%s\n' "$auto_cli_output" >&2
     exit 1

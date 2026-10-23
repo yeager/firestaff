@@ -8204,6 +8204,9 @@ target_sources(firestaff PRIVATE
 # pull) so the linker resolves M12 symbols referenced from M11-transitively
 # pulled objects in both directions.
 target_link_libraries(firestaff PRIVATE firestaff_m12 firestaff_m12 SDL3::SDL3)
+if(WIN32)
+    target_link_libraries(firestaff PRIVATE psapi)
+endif()
 target_compile_definitions(firestaff PRIVATE
     FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 if(NOT MSVC)
