@@ -1,3 +1,13 @@
+2026-10-23 current-source first-monster combat retest:
+`m11_dm1_pc34_first_monster_combat_real`,
+`m11_dm1_amiga20_first_monster_combat_real`,
+`m11_dm1_atari_st_first_monster_combat_real`, and
+`m11_dm1_fmtowns_first_monster_combat_real` passed 4/4 against the installed
+authentic PC 3.4, Amiga 2.0, Atari ST 1.2, and FM Towns archives. This
+revalidates the covered startup-to-first-monster combat routes on the current
+source. The tests use SDL dummy video/audio and do not establish native input,
+display, or visual parity.
+
 2026-10-23 PC34 HoC stair-torch CTest wiring: `m11_dm1_hoc_wall_material_receipt_pc34`
 now receives the configured original PC34 archive and returns CTest's skip
 code when the archive is absent. Its previous configuration omitted the media
