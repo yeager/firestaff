@@ -160,17 +160,31 @@ if (launch is None or runtime is None or complete is None or
     raise SystemExit(
         f"FAIL: ordinary {game_id} launch did not reach its source handoff and runtime before rescanning")
 
-for scanned_game in ("dm1", "csb", "dm2", "nexus", "theron"):
+scan_root = data_path
+if not os.path.isdir(scan_root):
+    scan_root = os.path.dirname(os.path.dirname(scan_root))
+
+expected_available = {
+    "dm1": 1,
+    "csb": 1,
+    "dm2": 1,
+    "nexus": int(
+        os.path.isfile(os.path.join(scan_root, "nexus", "DM.BIN")) and
+        os.path.isfile(os.path.join(scan_root, "nexus", "MENU.BPK"))),
+    "theron": int(any(
+        os.path.isfile(os.path.join(scan_root, "theron", name))
+        for name in ("TQUS02.bin", "TQJP02.bin"))),
+}
+
+for scanned_game, expected in expected_available.items():
     match = re.search(
         rf"return-menu rescan game={scanned_game} available=(\d+)", trace)
-    if match is None or match.group(1) not in ("0", "1"):
+    if match is None or int(match.group(1)) != expected:
         raise SystemExit(
-            f"FAIL: {game_id} return-to-menu rescan omitted valid "
-            f"{scanned_game} availability: {match.group(1) if match else 'missing'}")
-    if scanned_game in ("dm1", "csb", "dm2") and match.group(1) != "1":
-        raise SystemExit(
-            f"FAIL: {game_id} return-to-menu did not rediscover authentic "
-            f"{scanned_game} media")
+            f"FAIL: {game_id} return-to-menu rescan reported "
+            f"{scanned_game} available="
+            f"{match.group(1) if match else 'missing'}, expected {expected} "
+            f"from original media in {scan_root}")
 
 if (probe.get("launchedEver") != 1 or probe.get("active") != 0 or
         probe.get("script") != {"waitFramesRemaining": 0, "pending": 0}):
