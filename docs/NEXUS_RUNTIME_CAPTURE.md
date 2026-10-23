@@ -1439,6 +1439,37 @@ transport only. RAM-to-VDP2 ownership and semantic admission remain blocked.
 The BIOS, disc, raw capture and traces remain on TRV2 under
 `/home/trv2/work/firestaff-nexus-menu-transition-20260928/runs/title-mapd-cd-ram-source-13294-20260928/`.
 
+## Matched A-input and no-input title-window capture, 2026-10-23
+
+A fresh 40-frame comparison used the authenticated Japanese BIOS
+`dcfef4b99605f872b6c3b6d05c045385cdea3d1b702906a0ed930df7bcb7deac`, the
+Japanese retail CUE `878b3bc223bb56e99626dbaa2946d17fb349a2a67a10cd4423742d8ab30b8699`,
+and instrumented Mednafen 1.32.1 builds on the Mac mini M4. The A run
+scheduled mask
+`0x20` for frames 10510--10511; the control scheduled no input in frames
+10500--10539. Both raw captures contain 40 frames and have the same SHA-256
+`5f038b424de4564e7a354190d0f24ab79fee3b989d02e0297a6ac3693b82affd`.
+The comparator confirms all eight captured VDP1/VDP2 regions are identical.
+
+The A-side SMPC trace records four reads of controller port `0x10` per frame
+from master-SH-2 PCs `0x0601456c`, `0x06014582`, `0x06014594` and
+`0x060145b0`. All four return `0x10` while A is held (frames 10510--10511)
+and return `0x00` before and after. The matched no-input trace returns `0x00`
+at all four PCs for those frames. Each observed pipeline instruction word
+matches the corresponding bytes in retail `TM.BIN` extracted from the CUE;
+`TM.BIN` SHA-256 is
+`d87485fe6eba1f6e9fbbf487f5fcdd994911136905e6172e5bb5bc0122407eb6`.
+This binds the controller read to the authentic retail reader. It does not
+show a menu action: the VDP state remains byte-identical during this title
+window, so the Nexus title-to-menu handoff is still blocked pending a capture
+of the actual interactive menu and its source-owned transition.
+
+The A capture and traces remain under
+`/Volumes/Extern-disk/nexus-saturn-capture/run-codex-menu-a-state-20261019/`;
+the no-input control remains under
+`/Volumes/Extern-disk/nexus-saturn-capture/run-codex-menu-noinput-smpc-control-20261023/`.
+These external reference captures are not Firestaff renderer output.
+
 ## Source references
 
 The byte-format baseline is the [DMWeb Nexus file-format documentation](http://dmweb.free.fr/community/documentation/dungeon-master-nexus/file-formats/),

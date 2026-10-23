@@ -1,5 +1,14 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-23 Nexus title-window input capture: a matched authentic JP Saturn
+A-input/no-input pair on the M4 confirms that the retail `TM.BIN` controller
+reader observes A at four source-verified SH-2 PCs during frames 10510--10511.
+Both 40-frame raw captures are byte-identical across all eight VDP1/VDP2
+regions, so this title window provides no evidence of a menu action or title
+transition. The interactive Nexus start-menu handoff remains unresolved; the
+capture hashes, source binding and limits are recorded in
+`docs/NEXUS_RUNTIME_CAPTURE.md`.
+
 2026-10-22 external archive scan diagnosis: the final `--scan-data` summary
 called skipped archives "no extractor installed" even when `7zz`, `7z`, or
 `bsdtar` was available and the scan had skipped it because external tools were
