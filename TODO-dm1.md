@@ -1,3 +1,12 @@
+2026-10-23 PC34 HoC champion-switch retest:
+`m11_dm1_hoc_c127_resurrect_reincarnate_full_pc34` passed against the
+installed original PC34 archive. After recruiting two champions through the
+authentic HoC mirror route, the test clicks their real C012/C013 name rows and
+checks live leader changes in both directions. Its same original-world route
+also covers resurrection, reincarnation, and quicksave/resume. This confirms
+the tested PC34 input/runtime path; it does not verify native mouse delivery
+or visual parity.
+
 2026-10-23 current-source first-monster combat retest:
 `m11_dm1_pc34_first_monster_combat_real`,
 `m11_dm1_amiga20_first_monster_combat_real`,
