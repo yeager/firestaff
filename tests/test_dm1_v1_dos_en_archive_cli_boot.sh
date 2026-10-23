@@ -106,6 +106,36 @@ if ! grep -Fq "DM1 READY: gameId=dm1" "$default_log" ||
     exit 1
 fi
 echo 'PASS: DM1 AUTO start menu discovers authentic DOS media from ~/.firestaff/data/dm1 without --data-dir'
+
+# The bare direct CLI route must use the same default per-user root as the
+# menu. This isolated HOME contains only the authentic DOS package, so AUTO
+# cannot silently pass by selecting another platform's media.
+default_direct_log="$default_home/direct-cli.log"
+(
+    unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
+    HOME="$default_home" XDG_CONFIG_HOME="$default_home/.config" \
+    APPDATA="$default_home" FIRESTAFF_CONFIG_PATH="$default_home/config.toml" \
+    FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --game dm1 --debug --verbose --boot-probe --boot-probe-frames 2 \
+        --duration 0
+) >"$default_direct_log" 2>&1 || {
+    cat "$default_direct_log" >&2
+    exit 1
+}
+if ! grep -Fq 'startup game=dm1 mode=direct platform=auto data=default search roots' \
+        "$default_direct_log" ||
+   ! grep -Fq "launch phase=game-handoff mode=direct game=dm1 platform=PC edition=pc34-en source=$default_archive" \
+        "$default_direct_log" ||
+   ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=dm1' "$default_direct_log" ||
+   ! grep -Fq "assetMd5=$expected_graphics_md5" "$default_direct_log" ||
+   ! grep -Fq 'phase=dm1-runtime' "$default_direct_log" ||
+   ! grep -Fq 'levelLoaded=1' "$default_direct_log"; then
+    printf '%s\n' 'FAIL: DM1 bare direct CLI did not reach authentic DOS runtime from ~/.firestaff/data/dm1' >&2
+    cat "$default_direct_log" >&2
+    exit 1
+fi
+echo 'PASS: bare DM1 direct CLI reaches authentic DOS runtime from ~/.firestaff/data/dm1'
 find "$default_home" -depth -delete
 
 # Keep the actual M12 -> DOS menu handoff running through the first playable
