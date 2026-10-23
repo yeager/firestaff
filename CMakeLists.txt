@@ -223,7 +223,7 @@ if(BUILD_TESTING)
     set_tests_properties(m12_main_menu_runtime_real_media PROPERTIES
         SKIP_RETURN_CODE 77 TIMEOUT 600
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
-        LABELS "m12;dm1;csb;dm2;main-menu;game-selection;runtime;real-media;skip-safe")
+        LABELS "m12;dm1;csb;dm2;theron;main-menu;game-selection;runtime;real-media;skip-safe")
 
     add_test(NAME firestaff_iigs_cli_real_media
         COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_iigs_cli_real_media.sh"

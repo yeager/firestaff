@@ -8,6 +8,7 @@ data_root=${2:?usage: test_m12_main_menu_runtime_real_media.sh <firestaff> <data
 dm1_archive="$data_root/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"
 csb_archive="$data_root/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"
 dm2_archive="$data_root/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"
+theron_track02="$data_root/theron/TQUS02.bin"
 if [[ ! -x "$app" || ! -f "$dm1_archive" || ! -f "$csb_archive" || ! -f "$dm2_archive" ]]; then
     echo 'SKIP: authentic DM1, CSB and DM2 FM Towns archives are required'
     exit 77
@@ -31,6 +32,7 @@ run_main_menu_runtime_case() {
     local edition=$3
     local navigation=$4
     local duration_ms=$5
+    local platform=${6:-FM Towns}
     local home="$scratch/$game_id-home"
     local log="$scratch/$game_id.log"
     local probe="$scratch/$game_id-runtime.json"
@@ -52,7 +54,7 @@ run_main_menu_runtime_case() {
             }
 
     if ! grep -Fq 'startup game=none mode=menu' "$log" ||
-       ! grep -Fq "launch phase=game-handoff mode=menu game=$game_id platform=FM Towns edition=$edition source=" "$log"; then
+       ! grep -Fq "launch phase=game-handoff mode=menu game=$game_id platform=$platform edition=$edition source=" "$log"; then
         printf 'FAIL: no-game M12 menu did not select and start authentic %s %s media\n' \
             "$game_id" "$edition" >&2
         cat "$log" >&2
@@ -93,6 +95,12 @@ elif game_id == "dm2":
             (party.get("mapIndex"), party.get("mapX"), party.get("mapY"),
              party.get("direction"), party.get("championCount")) != (0, 1, 8, 0, 1)):
         raise SystemExit(f"FAIL: DM2 menu start missed its authentic first party: {probe}")
+elif game_id == "theron":
+    if (startup.get("phase") != "theron-runtime" or
+            probe.get("bootAssetMd5") != "f23601102138f87c33025877767ebf76" or
+            (party.get("mapIndex"), party.get("mapX"), party.get("mapY"),
+             party.get("direction"), party.get("championCount")) != (0, 1, 0, 0, 2)):
+        raise SystemExit(f"FAIL: Theron menu start missed its authenticated Track 02 runtime: {probe}")
 else:
     raise SystemExit(f"FAIL: unsupported game in real-media menu test: {game_id}")
 
@@ -111,3 +119,11 @@ run_main_menu_runtime_case csb "$csb_archive" fmtowns-en \
     'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait700,click:52:110,wait10,click:250:50,wait240' 60000
 run_main_menu_runtime_case dm2 "$dm2_archive" fmtowns-ja \
     'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait:2400,click:115:65,click:100:60' 90000
+
+if [[ -f "$theron_track02" ]]; then
+    run_main_menu_runtime_case theron "$theron_track02" pce-en \
+        'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait30,enter,enter,down,down,down,down,down,down,enter,down,enter,tab' \
+        90000 'PC Engine'
+else
+    echo 'SKIP: authentic Theron US Track 02 is unavailable'
+fi

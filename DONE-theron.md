@@ -1,5 +1,21 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-23 — reach Theron runtime from the no-game main menu
+
+- Extended `m12_main_menu_runtime_real_media` with a Theron case that starts
+  with no `--game` hint, selects Theron from the five-game launcher by
+  keyboard, authenticates the user's original US Track 02 BIN, and follows
+  the native startup choices to the bounded runtime. The check binds the
+  Track 02 MD5, `theron-runtime` phase, loaded level, and observed party pose.
+- Ran the route against the v3.0.409 macOS ARM64 release executable and the
+  user's real `~/.firestaff/data` collection. It reached map 0 at (1,0),
+  facing north, with two champions; the original Track 02 hash was unchanged.
+  This verifies the Firestaff launch route, not original-game pose parity.
+- Nexus remains a separate blocker: its authenticated menu selection reaches
+  the Saturn title but the campaign path remains capture-gated until the real
+  MENU.BPK/PRS3 consumer has an admitted capture. No synthetic menu assets are
+  used to bypass that gate.
+
 ## 2026-10-10 — verify US dungeon labels against retail media
 
 - Corrected six treasure-name source offsets and the dungeon-name section's
