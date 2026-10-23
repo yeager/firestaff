@@ -29,6 +29,25 @@ without source keys retain their fallback lanes and are reported as partial.
 Reference:
 [SKProject `skguivwp.cpp`](https://github.com/gbsphenx/skproject/blob/2c59a2c5a7978923ff5c822c15c3479e4d448493/SKWINSPX/src/v5/skguivwp.cpp).
 
+2026-10-23 flying-item painter order remains open: SKProject's
+`DM2_DRAW_STATIC_OBJECT` draws flying items at their source 5x5 display-order
+slot (including the creature-associated queue immediately after a creature
+draws). Firestaff currently renders its projectile plan after the complete
+indoor item/creature walk. The projectile slot snapshot retains `mapX`,
+`mapY`, and `cell`, but `DM2_V1_DrainedProjectile` drops `cell`, and
+`dm2_runtime_populate_projectiles` then hands only map coordinates and screen
+coordinates to the viewport projectile row. The existing source cell/pass
+helper can prove the viewport cell from map coordinates, but this is not yet
+evidence for the original 5x5 display slot. Do not sort projectiles by
+`depth` or infer a 5x5 slot from screen pixels. Preserve the source `cell`
+through the drain and establish its exact relation to the source display slot
+before integrating projectiles into the indoor painter scheduler. Until then,
+the separate projectile pass is a known source-order parity gap.
+References: `include/dm2_v1_projectile_pc34_compat.h`,
+`src/dm2/dm2_v1_projectile_pc34_compat.c`,
+`src/dm2/dm2_v1_runtime.c::dm2_runtime_populate_projectiles`, and SKProject
+`SKWINSPX/src/v5/skguivwp.cpp::DM2_DRAW_STATIC_OBJECT`.
+
 2026-10-21 loose Macintosh QuickTime startup: authenticated loose English Mac
 DAT pairs now probe their sibling `Title.MooV` and retain its original data
 fork plus the `moov` Resource Manager resource. The resource fork is read from
