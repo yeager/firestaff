@@ -28,6 +28,16 @@ edition cases, and the focused F0348 unit regression passes for 1.0a, 1.0b,
 preservation archive. This closes the integrated 1.0b consumable route for
 that test scenario; it does not establish full edition or campaign parity.
 
+2026-10-24 early Atari consumables follow-up: after rebuilding the stale local
+`test_dm1_atari_names_real` target from the current source, both
+`dm1_atari_st_10a_consumables_real` and
+`dm1_atari_st_11_consumables_real` passed against the installed original Atari
+preservation archive (51.60 and 52.12 seconds). The 1.0a test explicitly binds
+its original STX graphics member so the same archive's automation-disk MSA
+cannot supply the selected graphics identity. These results verify the tested
+M564/name and potion interactions for the three covered early editions; they
+do not establish full edition or campaign parity.
+
 2026-10-23 PC34 HoC stair-torch CTest wiring: `m11_dm1_hoc_wall_material_receipt_pc34`
 now receives the configured original PC34 archive and returns CTest's skip
 code when the archive is absent. Its previous configuration omitted the media
