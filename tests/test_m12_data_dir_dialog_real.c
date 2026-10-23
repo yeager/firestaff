@@ -47,10 +47,15 @@ int main(int argc, char** argv)
         puts("SKIP: provide a DM1, CSB, or DM2 game id and original-media folder");
         return 77;
     }
+    if (!FSP_DirExists(mediaDir)) {
+        SDL_free(savedConfig);
+        printf("SKIP: original-media folder is unavailable for %s: %s\n",
+               gameId, mediaDir);
+        return 77;
+    }
     if (priorConfig && !savedConfig) return 1;
-    CHECK(FSP_DirExists(mediaDir) &&
-          FSP_ResolvePhysicalPath(expected, sizeof(expected), mediaDir),
-          "selected original-media folder exists");
+    CHECK(FSP_ResolvePhysicalPath(expected, sizeof(expected), mediaDir),
+          "selected original-media folder resolves physically");
     if (failures) goto cleanup;
     if (!temp || !temp[0]) temp = "build";
     CHECK(FSP_CreateDirectoryRecursive(temp), "create task-local scratch parent");
