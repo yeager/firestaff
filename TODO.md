@@ -1,5 +1,21 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-23 cold five-game startup scan retest: a fresh isolated-home
+`firestaff --scan-data --debug --data-dir ~/.firestaff/data` run took 19.20 s
+wall time (17.60 s user CPU, 1.41 s system CPU) on the Mac mini M4 and reported
+DM1, CSB, DM2, Nexus and Theron READY. A no-game launcher run against the same
+original-media root reported `scan complete elapsed-ms=19552` with all five
+games ready. Its SDL dummy render loop continued at about 60 FPS during the
+scan; the process used about 1.4--1.5 cores in the sampled windows and GPU
+utilization was unavailable under the dummy driver. A five-second macOS
+`sample` placed the main-thread cost in hash-list asset discovery, including
+native 7z member traversal and Amiga ADF CAPS/MFM decoding, plus ISO-file MD5
+work. This confirms the cold scan delays the selectable game list while the
+intro/progress loop continues rendering. The next performance work should
+reduce repeated archive/member admission without weakening original-media
+hash checks or losing edition discovery. This is one cold run on one host, not
+a cross-platform benchmark.
+
 2026-10-23 isolated DM1 launcher retest: the new
 `m12_main_menu_dm1_only_real_media` CTest passed against the installed
 original FM Towns archive. With only that archive exposed under the documented
