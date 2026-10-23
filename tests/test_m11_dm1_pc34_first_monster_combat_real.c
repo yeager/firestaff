@@ -144,6 +144,26 @@ int main(void)
         }
         for (tick = 0; tick < 5; ++tick)
             (void)M11_GameView_AdvanceIdleTick(&state);
+        /* The authentic PC34 Hall route steps on the C003 floor-party plate
+         * at (6,9), which opens the door in (5,9). Reaching the next cell
+         * through production movement verifies both F0276 activation and
+         * the door transition without assigning the party pose in the test. */
+        if (i == 13u &&
+            (state.world.party.mapIndex != 0 ||
+             state.world.party.mapX != 6 || state.world.party.mapY != 9)) {
+            fputs("FAIL: authentic route did not activate the Hall floor plate at (6,9)\n",
+                  stderr);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+        if (i == 14u &&
+            (state.world.party.mapIndex != 0 ||
+             state.world.party.mapX != 5 || state.world.party.mapY != 9)) {
+            fputs("FAIL: authentic route did not pass through the opened Hall door at (5,9)\n",
+                  stderr);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
     }
     if (state.world.party.mapIndex != 0 || state.world.party.mapX != 4 ||
         state.world.party.mapY != 15 || state.world.party.direction != 0) {
