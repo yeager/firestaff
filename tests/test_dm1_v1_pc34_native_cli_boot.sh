@@ -1496,6 +1496,8 @@ perf_output=$(HOME="$perf_home" XDG_CONFIG_HOME="$perf_home" \
     }
 if ! grep -Eq 'firestaff: perf game=dm1 active=1 .*process-cpu-of-one-core-percent=([0-9]+\.[0-9]+|unavailable)' \
         <<< "$perf_output" ||
+   ! grep -Eq 'process-rss-bytes=[1-9][0-9]*' <<< "$perf_output" ||
+   ! grep -Eq 'process-virtual-bytes=[1-9][0-9]*' <<< "$perf_output" ||
    ! grep -Fq 'game-frames-rendered-per-sec=' <<< "$perf_output" ||
    ! grep -Fq 'target-loop-fps=' <<< "$perf_output" ||
    ! grep -Fq 'debug-full-redraw=1' <<< "$perf_output" ||
