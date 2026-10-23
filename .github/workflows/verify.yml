@@ -203,6 +203,11 @@ jobs:
             cmake --build build --parallel
           fi
 
+      - name: Run portable debug performance telemetry regression
+        run: |
+          ctest --test-dir build --output-on-failure --no-tests=error \
+            --timeout 20 -R '^firestaff_debug_perf_metrics$'
+
       - name: Build launcher settings regressions
         run: |
           cmake --build build --parallel 2 --target \
