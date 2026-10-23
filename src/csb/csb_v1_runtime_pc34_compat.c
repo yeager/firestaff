@@ -11292,10 +11292,10 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
                 record->mapX,
                 record->mapY,
                 creature_cell);
-            if (champion_index < 0) {
-                champion_index =
-                    csb_v1_runtime_first_living_champion(&profile->party_state);
-            }
+            /* ReDMCSB CHAMPION.C F0286 returns CM1_CHAMPION_NONE when the
+             * party is no longer in one of F0229's ordered attack cells.
+             * Do not turn that missed target into an attack on an arbitrary
+             * living champion. */
             if (champion_index < 0) return;
             csb_v1_runtime_set_active_group_direction_creature(
                 profile,

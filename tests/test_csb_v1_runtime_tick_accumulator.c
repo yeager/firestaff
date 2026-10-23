@@ -1717,6 +1717,37 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
               profile.timeline_queue.events[c38_event_index].priority ==
                   (uint8_t)(255 - 21),
           "bounded C38 requeue uses C09 AttackTicks and movement priority");
+    {
+        const unsigned short champion0_health =
+            profile.party_state.Champions[0].CurrentHealth;
+        const unsigned short champion1_health =
+            profile.party_state.Champions[1].CurrentHealth;
+        const uint32_t requests_before = profile.audio_runtime.totalRequests;
+
+        /* The queued group remains at (1,1), but the party has moved away
+         * before this C38 dispatch. F0286 must report no target, even though
+         * the runtime still contains living champions. */
+        profile.party_x = 20;
+        profile.party_y = 20;
+        queue_square_event(
+            &profile,
+            DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0,
+            DM1_EFFECT_SET,
+            1,
+            1);
+        CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+              "C38 with no champion in the current attack cells dispatches");
+        CHECK(profile.party_state.Champions[0].CurrentHealth ==
+                  champion0_health &&
+                  profile.party_state.Champions[1].CurrentHealth ==
+                  champion1_health,
+              "C38 with no current target does not damage an arbitrary living champion");
+        CHECK(profile.audio_runtime.totalRequests == requests_before &&
+                  (profile.active_group_state[0].aspect[0] & 0x80u) == 0u,
+              "C38 with no current target emits no attack presentation");
+        profile.party_x = 1;
+        profile.party_y = 2;
+    }
     profile.party_state.Champions[0].Cell = 0;
     profile.party_state.Champions[1].Cell = 2;
     profile.party_state.Champions[0].CurrentHealth = 2;
