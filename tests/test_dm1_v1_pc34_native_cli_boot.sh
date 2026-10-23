@@ -1469,12 +1469,16 @@ if ! grep -Fq \
     "$native_hoc_dispatch_log" ||
    ! grep -Fq \
     'dm1-pointer event=down-left window=10,3 source=10,3 button-mask=0x2 active-champion=1->0 champions=2 result=1' \
-    "$native_hoc_dispatch_log"; then
+    "$native_hoc_dispatch_log" ||
+   ! grep -Fq 'game-action game=dm1 tick=' "$native_hoc_dispatch_log" ||
+   ! grep -Fq 'input=pointer-left' "$native_hoc_dispatch_log" ||
+   ! grep -Fq 'game-health game=dm1 tick=' "$native_hoc_dispatch_log" ||
+   ! grep -Fq 'target=champion' "$native_hoc_dispatch_log"; then
     printf '%s\n' "$native_hoc_dispatch_output" >&2
-    printf '%s\n' 'FAIL: normal DM1 PC SDL event loop did not switch champions 0->1->0 from the name row' >&2
+    printf '%s\n' 'FAIL: normal DM1 PC SDL debug loop missed champion switching, pointer actions, or source health changes' >&2
     exit 1
 fi
-echo 'PASS: authentic PC-34 SDL mouse event loop recruited two HoC champions and switched 0->1->0'
+echo 'PASS: authentic PC-34 SDL debug loop logs pointer actions, champion switching, and source health changes'
 
 # Keep debug performance telemetry parseable on a real-media gameplay path.
 # SDL's dummy backend validates instrumentation only; it is not evidence of

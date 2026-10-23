@@ -2929,3 +2929,10 @@ native viewport through C080, while inventory and champion controls keep
 their native GS hit tables. Both IIGS editions pass. No IIGS wall-art
 assertion is made. This still does not establish complete DM1 gameplay parity
 across all platforms.
+
+2026-10-24 PC34 debug event coverage: the authentic native SDL HoC regression
+also requires `--debug` to report champion selection and pointer actions, plus
+the source health change from the original resurrection route. This checks
+that gameplay diagnostics include actions and health transitions in addition
+to the existing five-second process CPU, RSS, virtual-memory, and frame
+telemetry. It does not claim that every combat event is covered by this test.
