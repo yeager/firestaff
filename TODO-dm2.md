@@ -34,15 +34,17 @@ Reference:
 slot (including the creature-associated queue immediately after a creature
 draws). Firestaff currently renders its projectile plan after the complete
 indoor item/creature walk. The projectile slot snapshot retains `mapX`,
-`mapY`, and `cell`, but `DM2_V1_DrainedProjectile` drops `cell`, and
-`dm2_runtime_populate_projectiles` then hands only map coordinates and screen
-coordinates to the viewport projectile row. The existing source cell/pass
-helper can prove the viewport cell from map coordinates, but this is not yet
-evidence for the original 5x5 display slot. Do not sort projectiles by
-`depth` or infer a 5x5 slot from screen pixels. Preserve the source `cell`
-through the drain and establish its exact relation to the source display slot
-before integrating projectiles into the indoor painter scheduler. Until then,
-the separate projectile pass is a known source-order parity gap.
+`mapY`, and `cell`. Firestaff now carries those values through
+`DM2_V1_DrainedProjectile`, the runtime viewport handoff, and the projectile
+render plan. The existing source cell/pass helper can prove the viewport cell
+from map coordinates, but this is not yet evidence for the original 5x5 display
+slot. Do not sort projectiles by `depth` or infer a 5x5 slot from screen
+pixels. Establish the exact relation between the retained source `cell` and
+the source display slot before integrating projectiles into the indoor painter
+scheduler. Until then, the separate projectile pass is a known source-order
+parity gap. `dm2_v1_projectile_step_pc34_compat` verifies the drain retains the
+slot's source cell/map position, and `dm2_v1_item_projectile_rect14_render_plan`
+verifies the viewport render plan retains it.
 References: `include/dm2_v1_projectile_pc34_compat.h`,
 `src/dm2/dm2_v1_projectile_pc34_compat.c`,
 `src/dm2/dm2_v1_runtime.c::dm2_runtime_populate_projectiles`, and SKProject

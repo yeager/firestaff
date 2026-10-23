@@ -156,6 +156,7 @@ typedef struct {
     int  owner_kind;        /* PROJECTILE_OWNER_* */
     int  owner_index;       /* creature instance id or champion idx */
     int  map_x, map_y;      /* world coords */
+    int  cell;              /* source 0..3; retained for viewport ordering */
     int  direction;         /* 0=N, 1=E, 2=S, 3=W */
     int  pixel_x, pixel_y;  /* framebuffer pixel coords (for M11 draw) */
     int  frame;             /* animation frame (0..7) */

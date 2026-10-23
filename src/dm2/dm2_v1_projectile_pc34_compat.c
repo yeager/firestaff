@@ -264,6 +264,7 @@ int dm2_v1_projectile_drain_to_m11(DM2_V1_DrainedProjectile *out_list,
         out->owner_index = p->ownerIndex;
         out->map_x = p->mapX;
         out->map_y = p->mapY;
+        out->cell = p->cell;
         out->direction = p->direction;
         out->pixel_x = drain_pixel_x(p->mapX, p->mapY, p->cell);
         out->pixel_y = drain_pixel_y(p->mapX, p->mapY, p->cell);
@@ -307,6 +308,20 @@ int dm2_v1_projectile_dispatch_synthetic(int category, int subtype,
     }
     s_dispatch_count++;
     return slot;
+}
+
+int dm2_v1_projectile_test_set_slot_cell(int slot_index, int cell)
+{
+    if (slot_index < 0 || slot_index >= PROJECTILE_LIST_CAPACITY ||
+        cell < 0 || cell > 3) {
+        return 0;
+    }
+    ensure_init();
+    struct ProjectileInstance_Compat *p =
+        &s_projectile_list.entries[slot_index];
+    if (p->reserved3 == 0) return 0;
+    p->cell = cell;
+    return 1;
 }
 #endif
 

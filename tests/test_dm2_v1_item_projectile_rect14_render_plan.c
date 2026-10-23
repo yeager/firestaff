@@ -146,6 +146,10 @@ int main(void)
     viewport.projectiles[0].screen_x = 100;
     viewport.projectiles[0].screen_y = 80;
     viewport.projectiles[0].render_kind = DM2_V1_PROJECTILE_RENDER_MISSILE;
+    viewport.projectiles[0].source_position_valid = 1;
+    viewport.projectiles[0].source_map_x = 23;
+    viewport.projectiles[0].source_map_y = 17;
+    viewport.projectiles[0].source_cell = 3;
 
     base_projectile_index = dm2_v1_viewport_projectile_graphic_index(
         0x0d, 0x02, 1);
@@ -162,7 +166,11 @@ int main(void)
           projectile_plan.projectiles[0].rect14_lateral_offset == -8 &&
           projectile_plan.projectiles[0].rect14_flip_mirror == 1 &&
           projectile_plan.projectiles[0].rect14_row_hash != 0u &&
-          projectile_plan.projectiles[0].rect14_placement_hash != 0u);
+          projectile_plan.projectiles[0].rect14_placement_hash != 0u &&
+          projectile_plan.projectiles[0].source_position_valid == 1 &&
+          projectile_plan.projectiles[0].source_map_x == 23 &&
+          projectile_plan.projectiles[0].source_map_y == 17 &&
+          projectile_plan.projectiles[0].source_cell == 3);
 
     CHECK("Rect14 projectile asset blit uses source-stretched destination",
           dm2_v1_viewport_projectile_asset_blit(

@@ -73,6 +73,7 @@ extern int dm2_v1_projectile_test_set_slot_energy(int slot_index,
                                                     int kinetic_energy,
                                                     int step_energy,
                                                     int first_grace);
+extern int dm2_v1_projectile_test_set_slot_cell(int slot_index, int cell);
 
 /* Helper: dispatch via the synthetic API then override energy.
  * The public synthetic dispatch sets kineticEnergy=100, stepEnergy=8
@@ -319,7 +320,7 @@ static int test_multiple_slots_mixed(void) {
 static int test_step_and_drain_count(void) {
     reset_state();
     /* 3 slots: A survives, B despawns, C survives. */
-    dispatch_with_energy_test(PROJECTILE_CATEGORY_KINETIC,
+    int slot_a = dispatch_with_energy_test(PROJECTILE_CATEGORY_KINETIC,
                                 DM2_PROJ_SUBTYPE_KINETIC_ARROW,
                                 10, 10, 0, 0, 50, 5, 0);
     dispatch_with_energy_test(PROJECTILE_CATEGORY_MAGICAL,
@@ -331,8 +332,12 @@ static int test_step_and_drain_count(void) {
 
     DM2_V1_DrainedProjectile drained[8];
     DM2_V1_ProjectileStepResult step;
+    if (slot_a < 0 ||
+        !dm2_v1_projectile_test_set_slot_cell(slot_a, 3)) return 0;
     int n = dm2_v1_projectile_step_and_drain(drained, 8, &step);
-    return n == 2 && step.slots_alive_after == 2;
+    return n == 2 && step.slots_alive_after == 2 &&
+        drained[0].slot_index == slot_a && drained[0].map_x == 10 &&
+        drained[0].map_y == 10 && drained[0].cell == 3;
 }
 
 /* ── 10. STEP_AND_DRAIN_PRESERVES ──────────────────────────────

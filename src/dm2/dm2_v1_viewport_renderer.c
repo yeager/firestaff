@@ -5535,6 +5535,12 @@ int dm2_v1_viewport_build_projectile_render_plan(
         row->depth = src->depth;
         row->center_x = src->screen_x;
         row->center_y = src->screen_y;
+        row->source_position_valid = src->source_position_valid;
+        if (src->source_position_valid) {
+            row->source_map_x = src->source_map_x;
+            row->source_map_y = src->source_map_y;
+            row->source_cell = src->source_cell;
+        }
         row->gdat_index = dm2_v1_viewport_projectile_graphic_index(
             category,
             src->projectile_type,

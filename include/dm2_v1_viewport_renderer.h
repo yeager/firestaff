@@ -1594,6 +1594,10 @@ typedef struct {
     uint8_t  render_kind;     /* DM2_V1_PROJECTILE_RENDER_* */
     uint8_t  object_direction;/* skproject ObjectID::Dir() source direction */
     uint8_t  frame_class;     /* DM2_V1_PROJECTILE_FRAME_CLASS_* */
+    uint8_t  source_position_valid;
+    int16_t  source_map_x;
+    int16_t  source_map_y;
+    int8_t   source_cell;     /* original F0810 cell 0..3; no inferred slot */
 } DM2_Projectile;
 
 typedef struct {
@@ -1621,6 +1625,10 @@ typedef struct {
     int rect14_flip_mirror;
     uint32_t rect14_row_hash;
     uint32_t rect14_placement_hash;
+    int source_position_valid;
+    int source_map_x;
+    int source_map_y;
+    int source_cell;
 } DM2_V1_ProjectileRender;
 
 typedef struct {

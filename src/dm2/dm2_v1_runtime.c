@@ -4781,6 +4781,10 @@ static void dm2_runtime_populate_projectiles(DM2_V1_ViewportState *viewport,
             (uint8_t)(src->category == PROJECTILE_CATEGORY_MAGICAL ? 0x0d : 0x10);
         dst->projectile_type = (uint8_t)(src->subtype & 0xff);
         dst->frame_index = (uint8_t)(src->frame & 0xff);
+        dst->source_position_valid = 1;
+        dst->source_map_x = (int16_t)src->map_x;
+        dst->source_map_y = (int16_t)src->map_y;
+        dst->source_cell = (int8_t)src->cell;
         dst->depth = 0;
         dst->screen_x = (int16_t)src->pixel_x;
         dst->screen_y = (int16_t)src->pixel_y;
