@@ -1595,6 +1595,7 @@ typedef struct {
     uint8_t  object_direction;/* skproject ObjectID::Dir() source direction */
     uint8_t  frame_class;     /* DM2_V1_PROJECTILE_FRAME_CLASS_* */
     uint8_t  source_position_valid;
+    int16_t  source_map_index;
     int16_t  source_map_x;
     int16_t  source_map_y;
     int8_t   source_cell;     /* original F0810 cell 0..3; no inferred slot */
@@ -1626,9 +1627,15 @@ typedef struct {
     uint32_t rect14_row_hash;
     uint32_t rect14_placement_hash;
     int source_position_valid;
+    int source_map_index;
     int source_map_x;
     int source_map_y;
     int source_cell;
+    int source_static_object_order_valid;
+    int source_static_object_cell;
+    int source_static_object_pass;
+    int source_static_object_position_5x5;
+    int source_static_object_display_index;
 } DM2_V1_ProjectileRender;
 
 typedef struct {

@@ -36,18 +36,26 @@ draws). Firestaff currently renders its projectile plan after the complete
 indoor item/creature walk. The projectile slot snapshot retains `mapX`,
 `mapY`, and `cell`. Firestaff now carries those values through
 `DM2_V1_DrainedProjectile`, the runtime viewport handoff, and the projectile
-render plan. The existing source cell/pass helper can prove the viewport cell
-from map coordinates, but this is not yet evidence for the original 5x5 display
-slot. Do not sort projectiles by `depth` or infer a 5x5 slot from screen
-pixels. Establish the exact relation between the retained source `cell` and
-the source display slot before integrating projectiles into the indoor painter
-scheduler. Until then, the separate projectile pass is a known source-order
-parity gap. `dm2_v1_projectile_step_pc34_compat` verifies the drain retains the
-slot's source cell/map position, and `dm2_v1_item_projectile_rect14_render_plan`
-verifies the viewport render plan retains it.
+render plan. DB14's draw slot is derived independently: SKProject
+`DM2_QUERY_OBJECT_5x5_POS` reads `table1d268e` using the missile `ObjectID`
+direction, then rotates that position into view space. Firestaff's projectile
+render plan now carries the source map index, proves its `table1d7029` cell and
+pass, and derives the matching 5x5 position/display index. It also excludes
+projectiles whose source map index differs from the rendered dungeon level.
+F0810's `cell` remains separate movement-state evidence and is not used as the
+5x5 draw slot. The draw rows are not yet merged into the indoor painter walk:
+`DM2_DRAW_STATIC_OBJECT` may redraw missiles from its seven-slot lookback
+after a creature is drawn, so a single sorted projectile event is not a full
+parity implementation. Keep the current pass until that source case is
+represented and tested. `dm2_v1_projectile_step_pc34_compat` verifies the drain
+retains source map/cell fields, and
+`dm2_v1_item_projectile_rect14_render_plan` verifies map admission and the
+derived source draw key.
 References: `include/dm2_v1_projectile_pc34_compat.h`,
 `src/dm2/dm2_v1_projectile_pc34_compat.c`,
 `src/dm2/dm2_v1_runtime.c::dm2_runtime_populate_projectiles`, and SKProject
+`SKWINSPX/src/v5/skgdtqdb.cpp::DM2_QUERY_OBJECT_5x5_POS`,
+`SKWINSPX/src/v5/dm2data.cpp::table1d268e`,
 `SKWINSPX/src/v5/skguivwp.cpp::DM2_DRAW_STATIC_OBJECT`.
 
 2026-10-21 loose Macintosh QuickTime startup: authenticated loose English Mac

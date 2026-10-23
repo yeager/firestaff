@@ -80,6 +80,10 @@ int main(void)
 
     memset(framebuffer, 0, sizeof(framebuffer));
     setup_viewport(&viewport, framebuffer);
+    viewport.party_x = 10;
+    viewport.party_y = 10;
+    viewport.party_dir = 0;
+    viewport.dungeon_level = 0;
 
     /* Item with frame_index 0 selects Rect14 row 0. */
     viewport.item_count = 2;
@@ -147,9 +151,17 @@ int main(void)
     viewport.projectiles[0].screen_y = 80;
     viewport.projectiles[0].render_kind = DM2_V1_PROJECTILE_RENDER_MISSILE;
     viewport.projectiles[0].source_position_valid = 1;
-    viewport.projectiles[0].source_map_x = 23;
-    viewport.projectiles[0].source_map_y = 17;
+    viewport.projectiles[0].source_map_index = 0;
+    viewport.projectiles[0].source_map_x = 10;
+    viewport.projectiles[0].source_map_y = 9;
     viewport.projectiles[0].source_cell = 3;
+
+    viewport.projectiles[0].source_map_index = 1;
+    CHECK("projectile from another source map is not admitted",
+          dm2_v1_viewport_build_projectile_render_plan(
+              &viewport, &projectile_plan) &&
+          projectile_plan.projectile_count == 0);
+    viewport.projectiles[0].source_map_index = 0;
 
     base_projectile_index = dm2_v1_viewport_projectile_graphic_index(
         0x0d, 0x02, 1);
@@ -168,9 +180,30 @@ int main(void)
           projectile_plan.projectiles[0].rect14_row_hash != 0u &&
           projectile_plan.projectiles[0].rect14_placement_hash != 0u &&
           projectile_plan.projectiles[0].source_position_valid == 1 &&
-          projectile_plan.projectiles[0].source_map_x == 23 &&
-          projectile_plan.projectiles[0].source_map_y == 17 &&
-          projectile_plan.projectiles[0].source_cell == 3);
+          projectile_plan.projectiles[0].source_map_index == 0 &&
+          projectile_plan.projectiles[0].source_map_x == 10 &&
+          projectile_plan.projectiles[0].source_map_y == 9 &&
+          projectile_plan.projectiles[0].source_cell == 3 &&
+          projectile_plan.projectiles[0].source_static_object_order_valid == 1 &&
+          projectile_plan.projectiles[0].source_static_object_cell == 3 &&
+          projectile_plan.projectiles[0].source_static_object_pass ==
+              dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(3) &&
+          projectile_plan.projectiles[0].source_static_object_position_5x5 == 6 &&
+          projectile_plan.projectiles[0].source_static_object_display_index ==
+              dm2_v1_viewport_static_object_display_index(3, 6));
+
+    viewport.party_dir = 3;
+    viewport.projectiles[0].source_map_x = 9;
+    viewport.projectiles[0].source_map_y = 10;
+    CHECK("missile ObjectID direction rotates into the view slot",
+          dm2_v1_viewport_build_projectile_render_plan(
+              &viewport, &projectile_plan) &&
+          projectile_plan.projectile_count == 1 &&
+          projectile_plan.projectiles[0].source_static_object_order_valid == 1 &&
+          projectile_plan.projectiles[0].source_static_object_cell == 3 &&
+          projectile_plan.projectiles[0].source_static_object_position_5x5 == 8 &&
+          projectile_plan.projectiles[0].source_static_object_display_index ==
+              dm2_v1_viewport_static_object_display_index(3, 8));
 
     CHECK("Rect14 projectile asset blit uses source-stretched destination",
           dm2_v1_viewport_projectile_asset_blit(

@@ -322,7 +322,7 @@ static int test_step_and_drain_count(void) {
     /* 3 slots: A survives, B despawns, C survives. */
     int slot_a = dispatch_with_energy_test(PROJECTILE_CATEGORY_KINETIC,
                                 DM2_PROJ_SUBTYPE_KINETIC_ARROW,
-                                10, 10, 0, 0, 50, 5, 0);
+                                10, 10, 2, 0, 50, 5, 0);
     dispatch_with_energy_test(PROJECTILE_CATEGORY_MAGICAL,
                                 DM2_PROJ_SUBTYPE_MAGICAL_FIREBALL,
                                 11, 11, 0, 1, 2, 10, 0);
@@ -336,7 +336,8 @@ static int test_step_and_drain_count(void) {
         !dm2_v1_projectile_test_set_slot_cell(slot_a, 3)) return 0;
     int n = dm2_v1_projectile_step_and_drain(drained, 8, &step);
     return n == 2 && step.slots_alive_after == 2 &&
-        drained[0].slot_index == slot_a && drained[0].map_x == 10 &&
+        drained[0].slot_index == slot_a && drained[0].map_index == 2 &&
+        drained[0].map_x == 10 &&
         drained[0].map_y == 10 && drained[0].cell == 3;
 }
 

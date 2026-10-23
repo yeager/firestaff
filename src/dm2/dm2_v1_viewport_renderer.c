@@ -5496,6 +5496,9 @@ int dm2_v1_viewport_build_projectile_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_ProjectileRenderPlan *out_plan)
 {
+    static const int8_t missile_position_5x5_by_direction[4] = {
+        6, 8, 18, 16
+    };
     if (!out_plan) {
         return 0;
     }
@@ -5515,6 +5518,12 @@ int dm2_v1_viewport_build_projectile_render_plan(
         DM2_V1_ProjectileRender *row;
         int category;
 
+        /* A projectile on a different source map cannot be visible in this
+         * dungeon frame even when its local x/y happen to overlap. */
+        if (src->source_position_valid &&
+            src->source_map_index != s->dungeon_level) {
+            continue;
+        }
         if (src->screen_x < 0 || src->screen_x >= dm2_v1_viewport_draw_width(s) ||
             src->screen_y < 0 || src->screen_y >= dm2_v1_viewport_draw_height(s) ||
             out_plan->projectile_count >= DM2_MAX_PROJECTILES) {
@@ -5537,9 +5546,39 @@ int dm2_v1_viewport_build_projectile_render_plan(
         row->center_y = src->screen_y;
         row->source_position_valid = src->source_position_valid;
         if (src->source_position_valid) {
+            int source_cell;
+            int source_pass;
+            int relative_direction =
+                (src->direction - s->party_dir) & 3;
             row->source_map_x = src->source_map_x;
             row->source_map_y = src->source_map_y;
+            row->source_map_index = src->source_map_index;
             row->source_cell = src->source_cell;
+            row->source_static_object_cell = -1;
+            row->source_static_object_pass = -1;
+            row->source_static_object_position_5x5 = -1;
+            row->source_static_object_display_index = -1;
+            /* SKProject DM2_QUERY_OBJECT_5x5_POS uses table1d268e for
+             * DB_CATEGORY_MISSILE (DB14), then rotates the anchor into view
+             * direction. Keep this draw-slot key separate from F0810's
+             * 0..3 movement cell carried above. */
+            if (src->source_cell >= 0 && src->source_cell <= 3 &&
+                dm2_v1_viewport_static_object_cell_for_map(
+                    src->source_map_x, src->source_map_y, s->party_dir,
+                    s->party_x, s->party_y, &source_cell, &source_pass)) {
+                int position_5x5 =
+                    missile_position_5x5_by_direction[relative_direction];
+                int display_index =
+                    dm2_v1_viewport_static_object_display_index(
+                        source_cell, position_5x5);
+                if (display_index >= 0) {
+                    row->source_static_object_order_valid = 1;
+                    row->source_static_object_cell = source_cell;
+                    row->source_static_object_pass = source_pass;
+                    row->source_static_object_position_5x5 = position_5x5;
+                    row->source_static_object_display_index = display_index;
+                }
+            }
         }
         row->gdat_index = dm2_v1_viewport_projectile_graphic_index(
             category,

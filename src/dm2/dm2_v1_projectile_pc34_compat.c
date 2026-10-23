@@ -262,6 +262,7 @@ int dm2_v1_projectile_drain_to_m11(DM2_V1_DrainedProjectile *out_list,
         out->subtype = p->projectileSubtype;
         out->owner_kind = p->ownerKind;
         out->owner_index = p->ownerIndex;
+        out->map_index = p->mapIndex;
         out->map_x = p->mapX;
         out->map_y = p->mapY;
         out->cell = p->cell;
