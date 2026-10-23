@@ -1,23 +1,33 @@
-2026-10-23 indoor viewport draw interleaving source gap: SKProject
+2026-10-23 indoor viewport draw interleaving: implemented from SKProject
 `SKWINSPX/src/v5/skguivwp.cpp::DM2_DRAW_DUNGEON_TILES` walks the 20 entries
-of `table1d7029` and draws each visible cell's static objects or creature
-before advancing to the next cell (source lines 6956-6960, 7088-7094,
-7124-7169). Firestaff's indoor path in
-`src/dm2/dm2_v1_viewport_renderer.c` calls `dm2_v1_render_items` for the
-entire viewport before `dm2_v1_render_creatures` (around lines 10399-10409).
-Both plans carry source-pass evidence, but independent sorting does not
-reproduce the source's mixed cell order. This is a concrete source-code
-ordering mismatch that can change sprite occlusion; it is not yet confirmed
-as the cause of a reported screenshot or a measured pixel mismatch.
+of `table1d7029`, issuing static-object or creature draws before advancing to
+the next cell (source lines 6956-6960, 7088-7094, 7124-7169). Within a cell,
+`DM2_DRAW_STATIC_OBJECT` walks the source display-order slots: it draws the
+put-down item first, the creature occupying that slot next, then flying items
+(lines 4358-4366, 4385-4415, 4418-4443). Firestaff's indoor path in
+`src/dm2/dm2_v1_viewport_renderer.c` calls `dm2_v1_render_items` for the whole
+viewport before `dm2_v1_render_creatures` (around lines 10399-10409). The
+indoor path now builds both plans once and runs one painter-order scheduler.
+Admitted items derive their source slot from the static-object plan even when
+Rect14 owns final placement; proven events sort by source pass, display slot,
+item draw slot/record ordinal, and item-before-creature at a shared slot.
+Unknown rows remain stable in their item or creature fallback lane. The
+receipt marks the ordering partial whenever such rows exist, and leaves their
+pass/display keys unset. Creature material receipts are reset once before the
+combined walk and accumulate across all interleaved creature rows.
 
-The correction needs one frame-level scheduler over both plans, ordered by
-authenticated `table1d7029` pass and the source within-cell order. Preserve
-unknown placements without inventing a pass, and initialize/accumulate
-material counts and final presentation receipts once per frame. Do not invoke
-the current public item/creature render functions once per pass: each builds
-its own plan, and the creature path resets material receipts. Add a focused
-overlap-order regression and extend an authentic DOS/FM Towns runtime gate to
-check the combined per-row order and retained receipts before claiming parity.
+`dm2_v1_creature_occupancy_flying_item` covers mixed order, shared-slot
+precedence, Rect14-bound item key derivation, unknown fallback stability and
+retained item/creature material receipts. `dm2_v1_draw_item_source_placement`
+continues to cover the existing source placement contract. These focused unit
+tests do not verify native display pixels or prove ordering for rows lacking
+source keys; the runtime receipt reports that limitation explicitly.
+
+Remaining parity work: authentic DOS/FM Towns runtime gates should assert the
+combined order and retained receipts before claiming runtime parity. Rows
+without source keys retain their fallback lanes and are reported as partial.
+Reference:
+[SKProject `skguivwp.cpp`](https://github.com/gbsphenx/skproject/blob/2c59a2c5a7978923ff5c822c15c3479e4d448493/SKWINSPX/src/v5/skguivwp.cpp).
 
 2026-10-21 loose Macintosh QuickTime startup: authenticated loose English Mac
 DAT pairs now probe their sibling `Title.MooV` and retain its original data

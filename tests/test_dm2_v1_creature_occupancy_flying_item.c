@@ -12,6 +12,25 @@
 static int checks;
 static int passed;
 
+static int fetch_test_sprite(void *user,
+                             int gdat_index,
+                             const uint8_t **out_pixels,
+                             int *out_w,
+                             int *out_h,
+                             int *out_stride)
+{
+    static const uint8_t pixels[4] = { 1u, 0u, 2u, 3u };
+    (void)user;
+    if (gdat_index == 0 || !out_pixels || !out_w || !out_h || !out_stride) {
+        return -1;
+    }
+    *out_pixels = pixels;
+    *out_w = 2;
+    *out_h = 2;
+    *out_stride = 2;
+    return 0;
+}
+
 #define CHECK(label, condition) do { \
     ++checks; \
     if (condition) ++passed; \
@@ -256,7 +275,7 @@ static void test_occupancy_ordering(void)
           plan.creature_count == 2 &&
           plan.creatures[0].occupancy_5x5 == 6 &&
           plan.creatures[0].occupancy_display_index == 7 &&
-          plan.creatures[0].source_pass == 17 &&
+          plan.creatures[0].source_pass == 14 &&
           plan.creatures[1].occupancy_5x5 == 18 &&
           plan.creatures[1].occupancy_display_index == 18 &&
           plan.creatures[0].object_id == 0x4402u &&
@@ -272,6 +291,187 @@ static void test_occupancy_ordering(void)
           plan.creatures[1].object_id == 0x4402u);
 }
 
+static void setup_admitted_item(DM2_V1_ViewportState *s,
+                                int item_index,
+                                int cell,
+                                int category,
+                                int direction,
+                                int draw_slot,
+                                int record_ordinal,
+                                int rect14)
+{
+    DM2_ItemSprite *item = &s->items[item_index];
+    DM2_V1_StaticObjectSourcePlan source_plan;
+    int pass = dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(cell);
+
+    memset(item, 0, sizeof(*item));
+    item->item_category = (uint8_t)category;
+    item->item_type = (uint8_t)(0x20 + item_index);
+    item->screen_x = (int16_t)(80 + item_index * 8);
+    item->screen_y = 88;
+    item->direction = (uint8_t)direction;
+    item->source_g1_weapon = category == 0x10;
+    item->source_g1_container = category == 0x14;
+    item->source_gdat_field = 0;
+    item->source_static_object_admitted = 1;
+    item->source_static_object_cell = (uint8_t)cell;
+    item->source_static_object_pass = (int8_t)pass;
+    item->source_static_object_draw_slot = (uint8_t)draw_slot;
+    item->source_static_object_record_ordinal = (uint16_t)record_ordinal;
+    if (dm2_v1_viewport_static_object_source_plan(
+            cell, pass, category, direction, 0, draw_slot, s->party_dir,
+            (uint16_t)record_ordinal,
+            dm2_v1_viewport_static_object_visibility_bit(direction,
+                                                         s->party_dir),
+            &source_plan)) {
+        item->source_static_object_clip_rect_id =
+            (uint16_t)(source_plan.clip_rect_id & 0x7fffu);
+    }
+    if (rect14) {
+        item->source_static_object_rect14_applied = 1;
+        item->source_static_object_rect14_scale64 = 0x20;
+        item->source_static_object_rect14_row_hash = 0x11111111u;
+        item->source_static_object_rect14_placement_hash = 0x22222222u;
+    }
+}
+
+static void test_indoor_item_creature_draw_order(void)
+{
+    static const uint8_t rect14_rows[1][14] = {
+        { 6, 0, 0x11, 0x11, 0x11, 0x11, 64, 64, 64, 64, 0, 0, 0, 0 }
+    };
+    DM2_V1_ViewportState s;
+    DM2_V1_ItemRenderPlan items;
+    DM2_V1_CreatureRenderPlan creatures;
+    DM2_V1_IndoorDrawOrderReceipt receipt;
+    uint8_t fb[DM2_VP_WIDTH * DM2_VP_HEIGHT];
+
+    memset(fb, 0, sizeof(fb));
+    dm2_v1_viewport_init(&s, fb, DM2_VP_WIDTH);
+    dm2_v1_viewport_set_party(&s, 0, 10, 10);
+    dm2_v1_viewport_set_gdat_interface_rect14(&s, &rect14_rows[0][0], 1,
+                                               0x1234u);
+    s.item_count = 6;
+    /* This is Rect14-bound. Scheduler must still derive the static source
+     * slot instead of relying on source_static_object_placement_valid. */
+    setup_admitted_item(&s, 0, 6, 0x10, 0, 0, 7, 1);
+    setup_admitted_item(&s, 1, 3, 0x10, 0, 2, 9, 0);
+    setup_admitted_item(&s, 2, 3, 0x10, 0, 2, 4, 0);
+    memset(&s.items[3], 0, sizeof(s.items[3]));
+    s.items[3].item_category = 0x10;
+    s.items[3].item_type = 0x30;
+    s.items[3].screen_x = 120;
+    s.items[3].screen_y = 88;
+    memset(&s.items[4], 0, sizeof(s.items[4]));
+    s.items[4].item_category = 0x10;
+    s.items[4].item_type = 0x31;
+    s.items[4].screen_x = 128;
+    s.items[4].screen_y = 88;
+    /* The low-level geometry helper accepts ordinal 0, but the authenticated
+     * static-object delivery gate defines it as unavailable. Keep it in the
+     * fallback lane rather than treating it as a source ordering key. */
+    setup_admitted_item(&s, 5, 3, 0x10, 0, 1, 0, 0);
+
+    s.creature_count = 2;
+    memset(s.creatures, 0, sizeof(s.creatures));
+    s.creatures[0].creature_type = 7;
+    s.creatures[0].frame_index = 0;
+    s.creatures[0].screen_x = 96;
+    s.creatures[0].screen_y = 88;
+    s.creatures[0].direction = 0;
+    s.creatures[0].source_kind = 2;
+    s.creatures[0].source_v5_field = 1;
+    s.creatures[0].source_material_proven = 1;
+    s.creatures[0].map_x = 10;
+    s.creatures[0].map_y = 9;
+    s.creatures[1] = s.creatures[0];
+    s.creatures[1].frame_index = 1;
+    s.creatures[1].map_x = 0;
+    s.creatures[1].map_y = 0;
+
+    CHECK("mixed-order plans build from the admitted source rows",
+          dm2_v1_viewport_build_item_render_plan(&s, &items) == 1 &&
+          dm2_v1_viewport_build_creature_render_plan(&s, &creatures) == 1 &&
+          items.item_count == 6 && creatures.creature_count == 2);
+    CHECK("Rect14 row does not erase the independently derived item slot",
+          items.items[0].rect14_applied == 1 &&
+          items.items[0].source_static_object_placement_valid == 0);
+
+    CHECK("source scheduler returns a partial receipt for unknown rows",
+          dm2_v1_viewport_build_indoor_draw_order(
+              &s, &items, &creatures, &receipt) == 1 &&
+          receipt.valid == 1 && receipt.partial == 1 &&
+          receipt.event_count == 8 && receipt.source_ordered_count == 4 &&
+          receipt.fallback_item_count == 3 &&
+          receipt.fallback_creature_count == 1);
+    CHECK("pass, display slot, item draw slot/ordinal and shared-slot order",
+          receipt.events[0].kind == DM2_V1_INDOOR_DRAW_ORDER_ITEM &&
+          receipt.events[0].source_pass == 14 &&
+          receipt.events[0].display_index == 7 &&
+          receipt.events[1].kind == DM2_V1_INDOOR_DRAW_ORDER_ITEM &&
+          receipt.events[1].source_pass == 17 &&
+          receipt.events[1].source_record_ordinal == 4 &&
+          receipt.events[2].kind == DM2_V1_INDOOR_DRAW_ORDER_ITEM &&
+          receipt.events[2].source_record_ordinal == 9 &&
+          receipt.events[3].kind == DM2_V1_INDOOR_DRAW_ORDER_CREATURE &&
+          receipt.events[3].source_pass == 17 &&
+          receipt.events[3].display_index == 7);
+    CHECK("unknown rows keep stable item-then-creature fallback lanes",
+          receipt.events[4].kind == DM2_V1_INDOOR_DRAW_ORDER_ITEM &&
+          receipt.events[4].plan_index == 3 &&
+          receipt.events[4].source_key_proven == 0 &&
+          receipt.events[4].source_pass == -1 &&
+          receipt.events[5].kind == DM2_V1_INDOOR_DRAW_ORDER_ITEM &&
+          receipt.events[5].plan_index == 4 &&
+          receipt.events[5].source_key_proven == 0 &&
+          receipt.events[6].kind == DM2_V1_INDOOR_DRAW_ORDER_ITEM &&
+          receipt.events[6].plan_index == 5 &&
+          receipt.events[6].source_key_proven == 0 &&
+          receipt.events[6].source_pass == -1 &&
+          receipt.events[7].kind == DM2_V1_INDOOR_DRAW_ORDER_CREATURE &&
+          receipt.events[7].plan_index == 1 &&
+          receipt.events[7].source_key_proven == 0);
+}
+
+static void test_indoor_render_receipts_accumulate(void)
+{
+    DM2_V1_ViewportState s;
+    uint8_t fb[DM2_VP_WIDTH * DM2_VP_HEIGHT];
+
+    memset(fb, 0, sizeof(fb));
+    dm2_v1_viewport_init(&s, fb, DM2_VP_WIDTH);
+    s.item_count = 1;
+    s.items[0].item_category = 0x10;
+    s.items[0].item_type = 0x22;
+    s.items[0].screen_x = 96;
+    s.items[0].screen_y = 88;
+    s.creature_count = 1;
+    s.creatures[0].creature_type = 7;
+    s.creatures[0].source_kind = 1;
+    s.creatures[0].source_material_proven = 1;
+    s.creatures[0].gdat_image_field = 0x12;
+    s.creatures[0].screen_x = 112;
+    s.creatures[0].screen_y = 88;
+    dm2_v1_viewport_set_asset_provider(&s, fetch_test_sprite, NULL);
+
+    dm2_v1_render_indoor_items_and_creatures(&s);
+    CHECK("item and creature material receipts survive one merged render",
+          s.asset_item_drawn_count == 1 &&
+          s.asset_creature_drawn_count == 1 &&
+          s.item_material_drawn_count == 1 &&
+          s.creature_material_drawn_count == 1 &&
+          s.last_item_render_valid == 1 &&
+          s.last_creature_render_valid == 1);
+    CHECK("combined receipt exposes the partial fallback ordering",
+          s.last_indoor_draw_order_receipt.valid == 1 &&
+          s.last_indoor_draw_order_receipt.partial == 1 &&
+          s.last_indoor_draw_order_receipt.event_count == 2 &&
+          s.last_frame_composition.indoor_draw_order_valid == 1 &&
+          s.last_frame_composition.indoor_draw_order_partial == 1 &&
+          s.last_frame_composition.indoor_draw_order_fallback_item_count == 1 &&
+          s.last_frame_composition.indoor_draw_order_fallback_creature_count == 1);
+}
+
 int main(void)
 {
     test_creature_occupancy_5x5();
@@ -281,6 +481,8 @@ int main(void)
     test_flying_item_field();
     test_v5_render_route();
     test_occupancy_ordering();
+    test_indoor_item_creature_draw_order();
+    test_indoor_render_receipts_accumulate();
     printf("DM2 V1 creature occupancy and flying item: %d/%d passed\n",
            passed, checks);
     return passed == checks ? 0 : 1;

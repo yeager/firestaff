@@ -812,6 +812,12 @@ typedef struct {
     int scene_control_command_consumed;
     int creature_command_consumed;
     int item_command_consumed;
+    int indoor_draw_order_valid;
+    int indoor_draw_order_partial;
+    int indoor_draw_order_event_count;
+    int indoor_draw_order_source_ordered_count;
+    int indoor_draw_order_fallback_item_count;
+    int indoor_draw_order_fallback_creature_count;
     int hud_top_bar_material_consumed;
     int hud_top_bar_command_consumed;
     int hud_status_panel_material_consumed;
@@ -1523,6 +1529,33 @@ typedef struct {
     int item_count;
 } DM2_V1_ItemRenderPlan;
 
+/* One indoor painter event. Unknown rows use source_key_proven=0 and carry
+ * no inferred pass or display slot. */
+#define DM2_V1_MAX_INDOOR_DRAW_ORDER_EVENTS \
+    (DM2_MAX_ITEMS_PER_SQ + DM2_MAX_CREATURES_PER_SQ)
+#define DM2_V1_INDOOR_DRAW_ORDER_ITEM     1u
+#define DM2_V1_INDOOR_DRAW_ORDER_CREATURE 2u
+typedef struct {
+    uint8_t kind;
+    uint8_t source_key_proven;
+    uint16_t plan_index;
+    int16_t source_pass;
+    int16_t display_index;
+    uint16_t source_draw_slot;
+    uint16_t source_record_ordinal;
+} DM2_V1_IndoorDrawOrderEvent;
+
+typedef struct {
+    int valid;
+    int partial;
+    int event_count;
+    int source_ordered_count;
+    int fallback_item_count;
+    int fallback_creature_count;
+    DM2_V1_IndoorDrawOrderEvent events[
+        DM2_V1_MAX_INDOOR_DRAW_ORDER_EVENTS];
+} DM2_V1_IndoorDrawOrderReceipt;
+
 typedef struct {
     DM2_V1_ItemRender item;
     int item_present;
@@ -1899,6 +1932,7 @@ typedef struct {
         last_creature_presentation_command;
     DM2_V1_ViewportItemMaterialCommand last_item_presentation_command;
     DM2_V1_ViewportFrameCompositionReceipt last_frame_composition;
+    DM2_V1_IndoorDrawOrderReceipt last_indoor_draw_order_receipt;
     DM2_V1_ViewportM11FrameReceipt last_m11_frame_receipt;
     int last_door_button_asset_blit_valid;
     int last_door_button_asset_src_w;
@@ -2473,6 +2507,11 @@ int dm2_v1_viewport_creature_asset_blit(
 int dm2_v1_viewport_build_item_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_ItemRenderPlan *out_plan);
+int dm2_v1_viewport_build_indoor_draw_order(
+    const DM2_V1_ViewportState *s,
+    const DM2_V1_ItemRenderPlan *item_plan,
+    const DM2_V1_CreatureRenderPlan *creature_plan,
+    DM2_V1_IndoorDrawOrderReceipt *out_receipt);
 int dm2_v1_viewport_build_carried_item_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_CarriedItemRenderPlan *out_plan);
@@ -2523,6 +2562,7 @@ void dm2_v1_render_wall_ornaments(DM2_V1_ViewportState *s);
 void dm2_v1_render_doors(DM2_V1_ViewportState *s);
 void dm2_v1_render_creatures(DM2_V1_ViewportState *s);
 void dm2_v1_render_items(DM2_V1_ViewportState *s);
+void dm2_v1_render_indoor_items_and_creatures(DM2_V1_ViewportState *s);
 void dm2_v1_render_creature_possession_items(DM2_V1_ViewportState *s);
 void dm2_v1_render_carried_item(DM2_V1_ViewportState *s);
 void dm2_v1_render_projectiles(DM2_V1_ViewportState *s);

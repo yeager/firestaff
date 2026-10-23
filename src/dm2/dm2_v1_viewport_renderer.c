@@ -5075,6 +5075,209 @@ int dm2_v1_viewport_build_item_render_plan(
     return 1;
 }
 
+static int dm2_v1_indoor_draw_order_before(
+    const DM2_V1_IndoorDrawOrderEvent *a,
+    const DM2_V1_IndoorDrawOrderEvent *b)
+{
+    if (a->source_pass != b->source_pass) {
+        return a->source_pass < b->source_pass;
+    }
+    if (a->display_index != b->display_index) {
+        return a->display_index < b->display_index;
+    }
+    /* DM2_DRAW_STATIC_OBJECT calls DRAW_PUT_DOWN_ITEM before drawing the
+     * creature occupying the same source display slot. */
+    if (a->kind != b->kind) {
+        return a->kind == DM2_V1_INDOOR_DRAW_ORDER_ITEM;
+    }
+    if (a->kind == DM2_V1_INDOOR_DRAW_ORDER_ITEM) {
+        if (a->source_draw_slot != b->source_draw_slot) {
+            return a->source_draw_slot < b->source_draw_slot;
+        }
+        if (a->source_record_ordinal != b->source_record_ordinal) {
+            return a->source_record_ordinal < b->source_record_ordinal;
+        }
+    }
+    return a->plan_index < b->plan_index;
+}
+
+static int dm2_v1_indoor_item_draw_key(
+    const DM2_V1_ViewportState *s,
+    const DM2_V1_ItemRender *item,
+    int *out_pass,
+    int *out_display_index)
+{
+    DM2_V1_StaticObjectSourcePlan source_plan;
+    int expected_pass;
+    int display_index;
+
+    if (!s || !item || !item->source_static_object_admitted ||
+        item->source_static_object_record_ordinal == 0u ||
+        item->source_static_object_pass < 0 ||
+        item->source_static_object_pass !=
+            dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(
+                item->source_static_object_cell)) {
+        return 0;
+    }
+    expected_pass = item->source_static_object_pass;
+    if (!dm2_v1_viewport_static_object_source_plan(
+            item->source_static_object_cell,
+            expected_pass,
+            item->item_category,
+            item->direction,
+            item->source_gdat_field == 4,
+            item->source_static_object_draw_slot,
+            s->party_dir,
+            (uint16_t)item->source_static_object_record_ordinal,
+            dm2_v1_viewport_static_object_visibility_bit(
+                item->direction, s->party_dir),
+            &source_plan) ||
+        (int)(source_plan.clip_rect_id & 0x7fffu) !=
+            item->source_static_object_clip_rect_id) {
+        return 0;
+    }
+    display_index = dm2_v1_viewport_static_object_display_index(
+        item->source_static_object_cell, source_plan.position_5x5);
+    if (display_index < 0) return 0;
+    if (out_pass) *out_pass = expected_pass;
+    if (out_display_index) *out_display_index = display_index;
+    return 1;
+}
+
+static int dm2_v1_indoor_creature_draw_key(
+    const DM2_V1_ViewportState *s,
+    const DM2_V1_CreatureRender *creature,
+    int *out_pass,
+    int *out_display_index)
+{
+    int cell;
+    int pass;
+    int display_index;
+
+    if (!s || !creature || creature->occupancy_5x5 < 0 ||
+        creature->occupancy_display_index < 0 || creature->source_pass < 0 ||
+        !dm2_v1_viewport_static_object_cell_for_map(
+            creature->map_x, creature->map_y, s->party_dir,
+            s->party_x, s->party_y, &cell, &pass) ||
+        pass != creature->source_pass) {
+        return 0;
+    }
+    display_index = dm2_v1_viewport_static_object_display_index(
+        cell, creature->occupancy_5x5);
+    if (display_index < 0 ||
+        display_index != creature->occupancy_display_index) {
+        return 0;
+    }
+    if (out_pass) *out_pass = pass;
+    if (out_display_index) *out_display_index = display_index;
+    return 1;
+}
+
+int dm2_v1_viewport_build_indoor_draw_order(
+    const DM2_V1_ViewportState *s,
+    const DM2_V1_ItemRenderPlan *item_plan,
+    const DM2_V1_CreatureRenderPlan *creature_plan,
+    DM2_V1_IndoorDrawOrderReceipt *out_receipt)
+{
+    DM2_V1_IndoorDrawOrderEvent ordered[
+        DM2_V1_MAX_INDOOR_DRAW_ORDER_EVENTS];
+    DM2_V1_IndoorDrawOrderEvent fallback_items[DM2_MAX_ITEMS_PER_SQ];
+    DM2_V1_IndoorDrawOrderEvent fallback_creatures[
+        DM2_MAX_CREATURES_PER_SQ];
+    int ordered_count = 0;
+    int fallback_item_count = 0;
+    int fallback_creature_count = 0;
+    int item_count;
+    int creature_count;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!s || !item_plan || !creature_plan) return 0;
+
+    item_count = item_plan->item_count;
+    if (item_count < 0) item_count = 0;
+    if (item_count > DM2_MAX_ITEMS_PER_SQ) item_count = DM2_MAX_ITEMS_PER_SQ;
+    creature_count = creature_plan->creature_count;
+    if (creature_count < 0) creature_count = 0;
+    if (creature_count > DM2_MAX_CREATURES_PER_SQ) {
+        creature_count = DM2_MAX_CREATURES_PER_SQ;
+    }
+
+    for (int i = 0; i < item_count; ++i) {
+        const DM2_V1_ItemRender *item = &item_plan->items[i];
+        DM2_V1_IndoorDrawOrderEvent event;
+        int source_pass;
+        int display_index;
+        memset(&event, 0, sizeof(event));
+        event.kind = DM2_V1_INDOOR_DRAW_ORDER_ITEM;
+        event.plan_index = (uint16_t)i;
+        event.source_pass = -1;
+        event.display_index = -1;
+        event.source_draw_slot = (uint16_t)item->source_static_object_draw_slot;
+        event.source_record_ordinal =
+            (uint16_t)item->source_static_object_record_ordinal;
+        if (dm2_v1_indoor_item_draw_key(s, item, &source_pass,
+                                        &display_index)) {
+            event.source_key_proven = 1;
+            event.source_pass = (int16_t)source_pass;
+            event.display_index = (int16_t)display_index;
+            ordered[ordered_count++] = event;
+        } else {
+            fallback_items[fallback_item_count++] = event;
+        }
+    }
+    for (int i = 0; i < creature_count; ++i) {
+        const DM2_V1_CreatureRender *creature =
+            &creature_plan->creatures[i];
+        DM2_V1_IndoorDrawOrderEvent event;
+        int source_pass;
+        int display_index;
+        memset(&event, 0, sizeof(event));
+        event.kind = DM2_V1_INDOOR_DRAW_ORDER_CREATURE;
+        event.plan_index = (uint16_t)i;
+        event.source_pass = -1;
+        event.display_index = -1;
+        if (dm2_v1_indoor_creature_draw_key(s, creature, &source_pass,
+                                            &display_index)) {
+            event.source_key_proven = 1;
+            event.source_pass = (int16_t)source_pass;
+            event.display_index = (int16_t)display_index;
+            ordered[ordered_count++] = event;
+        } else {
+            fallback_creatures[fallback_creature_count++] = event;
+        }
+    }
+
+    /* Stable insertion sort preserves source-plan order for equal keys. */
+    for (int i = 1; i < ordered_count; ++i) {
+        DM2_V1_IndoorDrawOrderEvent event = ordered[i];
+        int j = i;
+        while (j > 0 &&
+               dm2_v1_indoor_draw_order_before(&event, &ordered[j - 1])) {
+            ordered[j] = ordered[j - 1];
+            --j;
+        }
+        ordered[j] = event;
+    }
+
+    out_receipt->valid = 1;
+    out_receipt->source_ordered_count = ordered_count;
+    out_receipt->fallback_item_count = fallback_item_count;
+    out_receipt->fallback_creature_count = fallback_creature_count;
+    out_receipt->partial = fallback_item_count != 0 ||
+                           fallback_creature_count != 0;
+    out_receipt->event_count = ordered_count + fallback_item_count +
+                               fallback_creature_count;
+    memcpy(out_receipt->events, ordered,
+           (size_t)ordered_count * sizeof(ordered[0]));
+    memcpy(out_receipt->events + ordered_count, fallback_items,
+           (size_t)fallback_item_count * sizeof(fallback_items[0]));
+    memcpy(out_receipt->events + ordered_count + fallback_item_count,
+           fallback_creatures,
+           (size_t)fallback_creature_count * sizeof(fallback_creatures[0]));
+    return 1;
+}
+
 int dm2_v1_viewport_build_carried_item_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_CarriedItemRenderPlan *out_plan)
@@ -7372,41 +7575,13 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
 
 /* ── Creatures ───────────────────────────────────────────────────── */
 
-void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
+static void dm2_v1_render_creature_row(DM2_V1_ViewportState *s,
+                                      const DM2_V1_CreatureRender *c,
+                                      int i)
 {
-    if (!s || !s->framebuffer) return;
     uint8_t *vp = s->framebuffer;
     int stride = s->fb_stride;
-    DM2_V1_CreatureRenderPlan plan;
-
-    /* DM2 creature rendering:
-     * skproject SKWIN/SkWinCore.cpp lines 10557-10619 routes creature
-     * records through QUERY_DUNGEON_MAP_CHIP_PICT(cls1, cls2) before
-     * DRAW_CHIP_OF_MAGIC_MAP. This pass asks the boot-owned asset provider
-     * for that map-chip bitmap; missing GDAT material remains no-draw. */
-
-    if (!dm2_v1_viewport_build_creature_render_plan(s, &plan)) {
-        return;
-    }
-    s->last_creature_asset_blit_valid = 0;
-    s->last_creature_render_valid = 0;
-    s->last_creature_draw_order = -1;
-    memset(&s->last_creature_asset_render, 0,
-           sizeof(s->last_creature_asset_render));
-    memset(&s->last_creature_asset_blit, 0,
-           sizeof(s->last_creature_asset_blit));
-    memset(&s->last_creature_render, 0,
-           sizeof(s->last_creature_render));
-    s->last_creature_asset_src_w = 0;
-    s->last_creature_asset_src_h = 0;
-    s->last_creature_asset_src_stride = 0;
-    s->creature_material_drawn_count = 0;
-    memset(s->creature_material_gdat_indices, 0,
-           sizeof(s->creature_material_gdat_indices));
-
-    for (int i = 0; i < plan.creature_count; i++) {
-        const DM2_V1_CreatureRender *c = &plan.creatures[i];
-        int drawn_asset = 0;
+    int drawn_asset = 0;
 
         s->last_creature_render_valid = 1;
         s->last_creature_render = *c;
@@ -7466,7 +7641,7 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
                                 pixels, src_w, src_h, src_stride))) {
                         dm2_v1_block_source_material(
                             s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CREATURE);
-                        continue;
+                        return;
                     }
                 } else if (c->source_kind == 2 &&
                     (!s->g1_creature_map_chip_materials ||
@@ -7478,7 +7653,7 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
                         s->active_asset_palette_hash))) {
                     dm2_v1_block_source_material(
                         s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CREATURE);
-                    continue;
+                    return;
                 }
                 if (c->source_kind == 2 &&
                     s->g1_scene_creature_material_ready &&
@@ -7497,7 +7672,7 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
                          s->g1_scene_creature_material_palette_hash)) {
                     dm2_v1_block_source_material(
                         s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CREATURE);
-                    continue;
+                    return;
                 }
                 if (dm2_v1_viewport_creature_asset_blit(c,
                                                         src_w,
@@ -7557,8 +7732,48 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
              * graphics that the original cannot render. */
             dm2_v1_block_source_material(
                 s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CREATURE);
-            continue;
+            return;
         }
+
+    }
+
+static void dm2_v1_reset_creature_render_receipts(DM2_V1_ViewportState *s)
+{
+    s->last_creature_asset_blit_valid = 0;
+    s->last_creature_render_valid = 0;
+    s->last_creature_draw_order = -1;
+    memset(&s->last_creature_asset_render, 0,
+           sizeof(s->last_creature_asset_render));
+    memset(&s->last_creature_asset_blit, 0,
+           sizeof(s->last_creature_asset_blit));
+    memset(&s->last_creature_render, 0,
+           sizeof(s->last_creature_render));
+    s->last_creature_asset_src_w = 0;
+    s->last_creature_asset_src_h = 0;
+    s->last_creature_asset_src_stride = 0;
+    s->creature_material_drawn_count = 0;
+    memset(s->creature_material_gdat_indices, 0,
+           sizeof(s->creature_material_gdat_indices));
+}
+
+void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
+{
+    if (!s || !s->framebuffer) return;
+    DM2_V1_CreatureRenderPlan plan;
+
+    /* DM2 creature rendering:
+     * skproject SKWIN/SkWinCore.cpp lines 10557-10619 routes creature
+     * records through QUERY_DUNGEON_MAP_CHIP_PICT(cls1, cls2) before
+     * DRAW_CHIP_OF_MAGIC_MAP. This pass asks the boot-owned asset provider
+     * for that map-chip bitmap; missing GDAT material remains no-draw. */
+
+    if (!dm2_v1_viewport_build_creature_render_plan(s, &plan)) {
+        return;
+    }
+    dm2_v1_reset_creature_render_receipts(s);
+
+    for (int i = 0; i < plan.creature_count; i++) {
+        dm2_v1_render_creature_row(s, &plan.creatures[i], i);
     }
 }
 
@@ -7578,39 +7793,26 @@ static void dm2_v1_viewport_note_item_material(DM2_V1_ViewportState *s,
     s->item_material_drawn_count = i + 1;
 }
 
-void dm2_v1_render_items(DM2_V1_ViewportState *s)
+static void dm2_v1_render_item_row(DM2_V1_ViewportState *s,
+                                      const DM2_V1_ItemRender *it,
+                                      int i)
 {
-    if (!s || !s->framebuffer) return;
     uint8_t *vp = s->framebuffer;
     int stride = s->fb_stride;
-    DM2_V1_ItemRenderPlan plan;
-
-    /* DM2 item rendering:
-     * skproject SKWIN/SkWinCore.cpp lines 10523-10549 draws floor items
-     * through QUERY_DUNGEON_MAP_CHIP_PICT(cls1, cls2) and
-     * DRAW_CHIP_OF_MAGIC_MAP. The category must be carried by the original
-     * record; an absent category has no source-owned GDAT image. */
-
-    if (!dm2_v1_viewport_build_item_render_plan(s, &plan)) {
-        return;
-    }
-
-    for (int i = 0; i < plan.item_count; i++) {
-        const DM2_V1_ItemRender *it = &plan.items[i];
-        const DM2_V1_G1SceneStaticItemMaterial *direct_static_material =
-            dm2_v1_viewport_find_g1_scene_static_item_material(s, it);
-        int drawn_asset = 0;
-        const int direct_g1_scene_material =
-            direct_static_material != NULL ||
-            (s->g1_scene_item_material_ready &&
-             s->g1_scene_item_material_pixels &&
-             s->g1_scene_item_material_pixel_hash != 0u &&
-             it->item_category == s->g1_scene_item_material_category &&
-             it->item_type == s->g1_scene_item_material_type &&
-             it->gdat_index == s->g1_scene_item_material_gdat_index &&
-             it->object_id == s->g1_scene_item_material_object_id &&
-             it->map_x == s->g1_scene_item_material_map_x &&
-             it->map_y == s->g1_scene_item_material_map_y);
+    int drawn_asset = 0;
+    const DM2_V1_G1SceneStaticItemMaterial *direct_static_material =
+        dm2_v1_viewport_find_g1_scene_static_item_material(s, it);
+    const int direct_g1_scene_material =
+        direct_static_material != NULL ||
+        (s->g1_scene_item_material_ready &&
+         s->g1_scene_item_material_pixels &&
+         s->g1_scene_item_material_pixel_hash != 0u &&
+         it->item_category == s->g1_scene_item_material_category &&
+         it->item_type == s->g1_scene_item_material_type &&
+         it->gdat_index == s->g1_scene_item_material_gdat_index &&
+         it->object_id == s->g1_scene_item_material_object_id &&
+         it->map_x == s->g1_scene_item_material_map_x &&
+         it->map_y == s->g1_scene_item_material_map_y);
 
         s->last_item_render_valid = 1;
         s->last_item_asset_blit_valid = 0;
@@ -7636,7 +7838,7 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
              it->source_gdat_field == 0xf9)) {
             dm2_v1_block_source_material(
                 s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM);
-            continue;
+            return;
         }
         if ((it->source_g1_weapon || it->source_g1_container ||
              it->source_g1_misc) &&
@@ -7658,7 +7860,7 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
                    s->g1_scene_item_material_raw4_receipt_hash)))) {
             dm2_v1_block_source_material(
                 s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM);
-            continue;
+            return;
         }
 
         {
@@ -7708,7 +7910,7 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
                              pixels, src_w, src_h, src_stride)))) {
                     dm2_v1_block_source_material(
                         s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM);
-                    continue;
+                    return;
                 }
                 if (it->source_g1_container && it->source_gdat_field == 0xf9 &&
                     (!s->g1_container_map_chip_materials ||
@@ -7721,7 +7923,7 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
                              pixels, src_w, src_h, src_stride)))) {
                     dm2_v1_block_source_material(
                         s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM);
-                    continue;
+                    return;
                 }
                 if (dm2_v1_viewport_item_asset_blit(it,
                                                     src_w,
@@ -7773,7 +7975,69 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
             /* DRAW_MAP_CHIP draws only the queried GDAT image. */
             dm2_v1_block_source_material(
                 s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM);
-            continue;
+            return;
+        }
+
+    }
+
+void dm2_v1_render_items(DM2_V1_ViewportState *s)
+{
+    if (!s || !s->framebuffer) return;
+    DM2_V1_ItemRenderPlan plan;
+
+    /* DM2 item rendering:
+     * skproject SKWIN/SkWinCore.cpp lines 10523-10549 draws floor items
+     * through QUERY_DUNGEON_MAP_CHIP_PICT(cls1, cls2) and
+     * DRAW_CHIP_OF_MAGIC_MAP. The category must be carried by the original
+     * record; an absent category has no source-owned GDAT image. */
+
+    if (!dm2_v1_viewport_build_item_render_plan(s, &plan)) {
+        return;
+    }
+
+    for (int i = 0; i < plan.item_count; i++) {
+        dm2_v1_render_item_row(s, &plan.items[i], i);
+    }
+}
+
+void dm2_v1_render_indoor_items_and_creatures(DM2_V1_ViewportState *s)
+{
+    DM2_V1_ItemRenderPlan item_plan;
+    DM2_V1_CreatureRenderPlan creature_plan;
+    DM2_V1_IndoorDrawOrderReceipt receipt;
+
+    if (!s || !s->framebuffer ||
+        !dm2_v1_viewport_build_item_render_plan(s, &item_plan) ||
+        !dm2_v1_viewport_build_creature_render_plan(s, &creature_plan) ||
+        !dm2_v1_viewport_build_indoor_draw_order(
+            s, &item_plan, &creature_plan, &receipt)) {
+        return;
+    }
+
+    /* Clear creature receipts once for this combined pass; each interleaved
+     * creature row then appends to the same frame-owned material list. */
+    dm2_v1_reset_creature_render_receipts(s);
+    s->last_indoor_draw_order_receipt = receipt;
+    s->last_frame_composition.indoor_draw_order_valid = receipt.valid;
+    s->last_frame_composition.indoor_draw_order_partial = receipt.partial;
+    s->last_frame_composition.indoor_draw_order_event_count =
+        receipt.event_count;
+    s->last_frame_composition.indoor_draw_order_source_ordered_count =
+        receipt.source_ordered_count;
+    s->last_frame_composition.indoor_draw_order_fallback_item_count =
+        receipt.fallback_item_count;
+    s->last_frame_composition.indoor_draw_order_fallback_creature_count =
+        receipt.fallback_creature_count;
+
+    for (int i = 0; i < receipt.event_count; ++i) {
+        const DM2_V1_IndoorDrawOrderEvent *event = &receipt.events[i];
+        if (event->kind == DM2_V1_INDOOR_DRAW_ORDER_ITEM &&
+            event->plan_index < item_plan.item_count) {
+            dm2_v1_render_item_row(s, &item_plan.items[event->plan_index], i);
+        } else if (event->kind == DM2_V1_INDOOR_DRAW_ORDER_CREATURE &&
+                   event->plan_index < creature_plan.creature_count) {
+            dm2_v1_render_creature_row(
+                s, &creature_plan.creatures[event->plan_index], i);
         }
     }
 }
@@ -9845,6 +10109,8 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     memset(&s->last_item_presentation_command, 0,
            sizeof(s->last_item_presentation_command));
     memset(&s->last_frame_composition, 0, sizeof(s->last_frame_composition));
+    memset(&s->last_indoor_draw_order_receipt, 0,
+           sizeof(s->last_indoor_draw_order_receipt));
     memset(&s->last_m11_frame_receipt, 0, sizeof(s->last_m11_frame_receipt));
     s->asset_creature_drawn_count = 0;
     s->fallback_creature_drawn_count = 0;
@@ -10395,8 +10661,9 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
             }
         }
 
-        /* 5. Floor items */
-        dm2_v1_render_items(s);
+        /* 5–6. Floor items and creatures share the source-owned indoor
+         * table1d7029 painter walk. */
+        dm2_v1_render_indoor_items_and_creatures(s);
         if (s->source_materials_required &&
             s->last_item_presentation_command.valid) {
             s->last_frame_composition.item_presentation_stage = 7;
@@ -10405,8 +10672,6 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
                 s->last_item_presentation_command;
         }
 
-        /* 6. Creatures */
-        dm2_v1_render_creatures(s);
         if (s->source_materials_required &&
             s->last_creature_presentation_command.valid) {
             s->last_frame_composition.creature_presentation_stage = 6;
