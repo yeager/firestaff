@@ -1,3 +1,24 @@
+2026-10-23 indoor viewport draw interleaving source gap: SKProject
+`SKWINSPX/src/v5/skguivwp.cpp::DM2_DRAW_DUNGEON_TILES` walks the 20 entries
+of `table1d7029` and draws each visible cell's static objects or creature
+before advancing to the next cell (source lines 6956-6960, 7088-7094,
+7124-7169). Firestaff's indoor path in
+`src/dm2/dm2_v1_viewport_renderer.c` calls `dm2_v1_render_items` for the
+entire viewport before `dm2_v1_render_creatures` (around lines 10399-10409).
+Both plans carry source-pass evidence, but independent sorting does not
+reproduce the source's mixed cell order. This is a concrete source-code
+ordering mismatch that can change sprite occlusion; it is not yet confirmed
+as the cause of a reported screenshot or a measured pixel mismatch.
+
+The correction needs one frame-level scheduler over both plans, ordered by
+authenticated `table1d7029` pass and the source within-cell order. Preserve
+unknown placements without inventing a pass, and initialize/accumulate
+material counts and final presentation receipts once per frame. Do not invoke
+the current public item/creature render functions once per pass: each builds
+its own plan, and the creature path resets material receipts. Add a focused
+overlap-order regression and extend an authentic DOS/FM Towns runtime gate to
+check the combined per-row order and retained receipts before claiming parity.
+
 2026-10-21 loose Macintosh QuickTime startup: authenticated loose English Mac
 DAT pairs now probe their sibling `Title.MooV` and retain its original data
 fork plus the `moov` Resource Manager resource. The resource fork is read from
