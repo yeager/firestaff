@@ -400,8 +400,10 @@ for commit `3fd0f5886`.
   startup diagnostics read the saved root and matched DM1, CSB and DM2 original
   graphics and dungeon files. This verifies the Data Directory picker and
   persisted selection, but not native Custom Music, Unicode Font or Artpack
-  dialogs. The separate `test_m12_data_dir_dialog_real` still covers the
-  asynchronous result callback, main-thread admission and menu reconstruction.
+  dialogs. `test_m12_data_dir_dialog_real` now covers the asynchronous result
+  callback, main-thread admission and reopening with the saved per-game folder
+  for authentic DM1, CSB and DM2 data. Each case skips cleanly when its local
+  original-media folder is unavailable in CI.
 
 - Extend COLORBLIND beyond the modern launcher and its scan overlay into
   explicitly host-owned in-game UI/HUD layers. M12 now applies the selected

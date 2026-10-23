@@ -1,5 +1,13 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-23: Extended the native data-directory callback regression from DM1
+  PC 3.4 to authentic DM1, CSB and DM2 media under `~/.firestaff/data/<game>`.
+  Each case exercises worker-thread result delivery, main-thread scan and
+  admission, persistence of the selected game folder, and reopening the same
+  game's startup path. All three passed locally. The test returns CTest's skip
+  code when the original-media folder is absent, so CI does not require
+  licensed game files. Gitleaks found no secrets; no original media was added.
+
 - 2026-10-18: M12 scan progress now translates the `search root` and
   `matching editions` phases instead of exposing their internal English task
   names. The locale regression checks the English and Swedish labels. CTest
