@@ -498,6 +498,16 @@ M12 startup coverage gap; native M5 Retina/input verification remains open.
   M5 HiDPI/input behavior remains unverified. Do not change dungeon projection
   or assets without that comparison.
 
+- The retail DOS HUD status pane is now admitted with its own image-local
+  palette, as stored by the DOS GDAT, instead of being rejected when it differs
+  from `INTERFACE_GENERAL/0`. Source-native HUD composition is enabled for DOS
+  EN/FR alongside Macintosh. The six authentic-media DM2 CLI boot regressions
+  pass for DOS EN/FR, Mac EN/FR, Amiga, and FM Towns, including screenshot
+  region checks and runtime frame ownership. This verifies complete nonblank
+  regions and source material consumption; it does not establish visual parity
+  with every platform capture. The Amiga IMG3 decoder still needs a source-based
+  odd-width review before Amiga can use the same optimized HUD route.
+
 - Verify bare `--game dm2` on the reported MacBook Pro M5 Retina display with
   the mixed original-media collection: log logical and drawable dimensions,
   then click New Game and the first mirror with native mouse input. A local

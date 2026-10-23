@@ -13212,7 +13212,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
          ((rt->boot->platform == DM2_PLATFORM_MAC_EN ||
            rt->boot->platform == DM2_PLATFORM_MAC_FR) &&
           viewport.hud_party_valid && hud_material_plan.valid &&
-          hud_material_plan.mac_native_layout))) {
+          hud_material_plan.mac_native_layout) ||
+         (viewport.hud_party_valid && hud_material_plan.valid &&
+          hud_material_plan.source_native_layout))) {
         dm2_v1_viewport_set_asset_loader(
             &viewport, dm2_v1_boot_asset_loader(rt->boot));
         viewport.asset_profile = rt->boot;

@@ -75,6 +75,7 @@ typedef struct DM2_V1_GdatHudM11Command {
 
 typedef struct DM2_V1_GdatHudM11CommandPlan {
     int valid;
+    int source_native_layout;
     int mac_native_layout;
     int command_count;
     uint32_t command_hash;
@@ -181,7 +182,20 @@ int dm2_v1_gdat_hud_m11_command_plan_build_mac_move_arrows(
     const DM2_V1_AssetLoader *loader,
     const DM2_V1_ViewportRect destinations[6],
     DM2_V1_GdatHudM11CommandPlan *out_plan);
+int dm2_v1_gdat_hud_m11_command_plan_build_source_move_arrows(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_ViewportRect destinations[6],
+    DM2_V1_GdatHudM11CommandPlan *out_plan);
 int dm2_v1_gdat_hud_m11_command_plan_build_mac_native(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_ViewportRect arrow_destinations[6],
+    const DM2_V1_HudPartyState *party,
+    const DM2_V1_ViewportRect portrait_destinations[4],
+    uint32_t portrait_table_hash,
+    const DM2_V1_ViewportRect status_pane_destinations[4],
+    uint32_t status_pane_table_hash,
+    DM2_V1_GdatHudM11CommandPlan *out_plan);
+int dm2_v1_gdat_hud_m11_command_plan_build_source_native(
     const DM2_V1_AssetLoader *loader,
     const DM2_V1_ViewportRect arrow_destinations[6],
     const DM2_V1_HudPartyState *party,

@@ -9246,21 +9246,21 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
         return;
     }
     if (s->source_materials_required && s->gdat_hud_material_plan &&
-        s->gdat_hud_material_plan->mac_native_layout) {
-        const DM2_V1_GdatHudM11CommandPlan *mac_plan =
+        s->gdat_hud_material_plan->source_native_layout) {
+        const DM2_V1_GdatHudM11CommandPlan *source_plan =
             s->gdat_hud_material_plan;
-        if (!mac_plan->valid || mac_plan->command_count < 6 ||
-            mac_plan->command_count > DM2_V1_GDAT_HUD_M11_COMMAND_MAX ||
-            mac_plan->command_hash == 0u ||
-            mac_plan->command_hash !=
-                dm2_v1_gdat_hud_m11_command_plan_hash(mac_plan)) {
+        if (!source_plan->valid || source_plan->command_count < 6 ||
+            source_plan->command_count > DM2_V1_GDAT_HUD_M11_COMMAND_MAX ||
+            source_plan->command_hash == 0u ||
+            source_plan->command_hash !=
+                dm2_v1_gdat_hud_m11_command_plan_hash(source_plan)) {
             dm2_v1_block_source_material(
                 s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
             return;
         }
         for (int arrow = 0; arrow < 6; ++arrow) {
             const DM2_V1_GdatHudM11Command *command =
-                &mac_plan->commands[arrow];
+                &source_plan->commands[arrow];
             if (command->kind != DM2_V1_GDAT_HUD_M11_COMMAND_MOVE_ARROW ||
                 command->destination_rect_id != (uint16_t)(40 + arrow) ||
                 command->gdat_category != DM2_GDAT_CATEGORY_INTERFACE_GENERAL ||
@@ -9287,16 +9287,18 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                 s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
             return;
         }
-        for (int i = 6; i < mac_plan->command_count; ++i) {
+        for (int i = 6; i < source_plan->command_count; ++i) {
             const DM2_V1_GdatHudM11Command *command =
-                &mac_plan->commands[i];
+                &source_plan->commands[i];
             int hero_slot;
             int expected_field;
             DM2_V1_BootExpandedRectReceipt rect_receipt;
             DM2_V1_GdatImageMetadata metadata;
             DM2_V1_InterfacePalette source_interface_palette;
+            uint8_t source_image_palette[16];
             uint8_t palette16[16];
             uint32_t palette_hash = 0u;
+            uint32_t source_image_palette_hash = 0u;
             memset(&rect_receipt, 0, sizeof(rect_receipt));
             memset(&metadata, 0, sizeof(metadata));
             if (command->kind ==
@@ -9320,17 +9322,36 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
             }
             expected_field = s->hud_party.champions[hero_slot].current_hp == 0
                 ? 1 : s->hud_party.status_hero_index == hero_slot ? 9 : 0;
-            if (!dm2_v1_asset_load_interface_palette(
+            /* SKProject skguidrw.cpp::DM2_DRAW_PLAYER_3STAT_PANE selects
+             * INTERFACE_GENERAL/2/field for this state. Validate that image's
+             * own GDAT palette: retail DOS stores a palette here which is
+             * deliberately different from INTERFACE_GENERAL/0's palette. */
+            memset(&source_interface_palette, 0,
+                   sizeof(source_interface_palette));
+            if (s->asset_loader->big_endian) {
+                if (!dm2_v1_asset_load_interface_palette(
+                        s->asset_loader,
+                        DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+                        DM2_GDAT_INTERFACE_PALETTE_FIELD,
+                        &source_interface_palette) ||
+                    source_interface_palette.hash == 0u) {
+                    dm2_v1_block_source_material(
+                        s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+                    return;
+                }
+                memcpy(source_image_palette,
+                       source_interface_palette.palette16,
+                       sizeof(source_image_palette));
+            } else if (!dm2_v1_asset_load_image_local_palette(
                     s->asset_loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
-                    0, DM2_GDAT_INTERFACE_PALETTE_FIELD,
-                    &source_interface_palette) ||
-                source_interface_palette.hash == 0u) {
+                    2, command->gdat_field, source_image_palette,
+                    &source_image_palette_hash) ||
+                source_image_palette_hash == 0u) {
                 dm2_v1_block_source_material(
                     s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
                 return;
             }
-            memcpy(palette16, source_interface_palette.palette16,
-                   sizeof(palette16));
+            memcpy(palette16, source_image_palette, sizeof(palette16));
             palette_hash = dm2_v1_weather_pixels_hash(
                 palette16, 16, 1, 16);
             if (command->gdat_category !=
@@ -9355,6 +9376,8 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                 !dm2_v1_asset_load_image_metadata(
                     s->asset_loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
                     2, expected_field, &metadata) ||
+                memcmp(command->palette16, source_image_palette,
+                       sizeof(source_image_palette)) != 0 ||
                 metadata.bits_per_pixel != 4u ||
                 metadata.width != (uint16_t)command->width ||
                 metadata.height != (uint16_t)command->height ||
@@ -9431,9 +9454,9 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
         }
     }
 
-    const int mac_native_hud = s->source_materials_required &&
+    const int source_native_hud = s->source_materials_required &&
         s->gdat_hud_material_plan &&
-        s->gdat_hud_material_plan->mac_native_layout;
+        s->gdat_hud_material_plan->source_native_layout;
     /* SKProject c_gui_draw.cpp:390-411 crops INTERFACE_GENERAL/6/heroIndex
      * by the hero's relative direction for RECT 0x5e. Its field zero is
      * therefore not a full-width top bar. c_gui_draw.cpp:1732-1768 uses
@@ -9443,19 +9466,19 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
      * SKProject c_events.cpp:2684-2724 uses INTERFACE_GENERAL/5/11 only on
      * a spell failure at RECT 92, not as a persistent action strip.
      * Do not stretch these source images into generic chrome rectangles. */
-    if (!fmtowns_unmapped_chrome && !mac_native_hud && !dm2_v1_render_hud_core_asset(s,
+    if (!fmtowns_unmapped_chrome && !source_native_hud && !dm2_v1_render_hud_core_asset(s,
                                       &plan.top_bar_rect,
                                       plan.top_bar_gdat_index)) {
         dm2_v1_block_source_material(
             s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
     }
-    if (!fmtowns_unmapped_chrome && !mac_native_hud && !dm2_v1_render_hud_core_asset(s,
+    if (!fmtowns_unmapped_chrome && !source_native_hud && !dm2_v1_render_hud_core_asset(s,
                                       &plan.action_strip_rect,
                                       plan.action_strip_gdat_index)) {
         dm2_v1_block_source_material(
             s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
     }
-    if (!fmtowns_unmapped_chrome && !mac_native_hud && !dm2_v1_render_hud_core_asset(s,
+    if (!fmtowns_unmapped_chrome && !source_native_hud && !dm2_v1_render_hud_core_asset(s,
                                       &plan.gold_box_rect,
                                       plan.gold_box_gdat_index)) {
         dm2_v1_block_source_material(
@@ -9467,7 +9490,7 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
      * route below owns that draw; never substitute its old generic icon row. */
 
     if (!plan.outdoor) {
-        if (!fmtowns_unmapped_chrome && !mac_native_hud && !dm2_v1_render_hud_core_asset(s,
+        if (!fmtowns_unmapped_chrome && !source_native_hud && !dm2_v1_render_hud_core_asset(s,
                                           &plan.portrait_panel_rect,
                                           plan.portrait_panel_gdat_index)) {
             dm2_v1_block_source_material(

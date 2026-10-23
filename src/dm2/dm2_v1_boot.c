@@ -8643,14 +8643,13 @@ int dm2_v1_boot_gdat_scene_m11_apply_light_palette(
     return 1;
 }
 
-static int dm2_v1_boot_gdat_hud_mac_move_arrow_plan(
+static int dm2_v1_boot_gdat_hud_source_move_arrow_plan(
     DM2_V1_BootProfile *profile,
     DM2_V1_GdatHudM11CommandPlan *out_plan)
 {
     DM2_V1_BootGraphicsDat *gfx;
     DM2_V1_ViewportRect destinations[6];
-    if (!profile || profile->platform != DM2_PLATFORM_MAC_EN ||
-        !profile->graphics_dat || !out_plan) return 0;
+    if (!profile || !profile->graphics_dat || !out_plan) return 0;
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
     for (int arrow = 0; arrow < 6; ++arrow) {
         DM2_V1_InterfaceRect source_rect;
@@ -8660,8 +8659,16 @@ static int dm2_v1_boot_gdat_hud_mac_move_arrow_plan(
         destinations[arrow] = (DM2_V1_ViewportRect){
             source_rect.x, source_rect.y, source_rect.w, source_rect.h };
     }
-    return dm2_v1_gdat_hud_m11_command_plan_build_mac_move_arrows(
+    return dm2_v1_gdat_hud_m11_command_plan_build_source_move_arrows(
         &gfx->loader, destinations, out_plan);
+}
+
+static int dm2_v1_boot_gdat_hud_source_native_platform(DM2_Platform platform)
+{
+    return platform == DM2_PLATFORM_PC_EN ||
+        platform == DM2_PLATFORM_PC_FR ||
+        platform == DM2_PLATFORM_MAC_EN ||
+        platform == DM2_PLATFORM_MAC_FR;
 }
 
 int dm2_v1_boot_gdat_hud_m11_command_plan(
@@ -8680,9 +8687,9 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
     if (out_plan) memset(out_plan, 0, sizeof(*out_plan));
     if (!profile || !profile->graphics_dat || !party || !out_plan) return 0;
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    if (profile->platform == DM2_PLATFORM_MAC_EN) {
+    if (dm2_v1_boot_gdat_hud_source_native_platform(profile->platform)) {
         DM2_V1_ViewportRect arrow_destinations[6];
-        if (!dm2_v1_boot_gdat_hud_mac_move_arrow_plan(
+        if (!dm2_v1_boot_gdat_hud_source_move_arrow_plan(
                 profile, out_plan)) return 0;
         for (int arrow = 0; arrow < 6; ++arrow)
             arrow_destinations[arrow] = out_plan->commands[arrow].destination;
@@ -8719,7 +8726,13 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
             if (status_pane_destinations[slot].w <= 0 ||
                 status_pane_destinations[slot].h <= 0) return 0;
         }
-        return dm2_v1_gdat_hud_m11_command_plan_build_mac_native(
+        if (profile->platform == DM2_PLATFORM_MAC_EN) {
+            return dm2_v1_gdat_hud_m11_command_plan_build_mac_native(
+                &gfx->loader, arrow_destinations, party,
+                portrait_destinations, table_hash, status_pane_destinations,
+                status_pane_table_hash, out_plan);
+        }
+        return dm2_v1_gdat_hud_m11_command_plan_build_source_native(
             &gfx->loader, arrow_destinations, party,
             portrait_destinations, table_hash, status_pane_destinations,
             status_pane_table_hash, out_plan);
@@ -8937,8 +8950,8 @@ int dm2_v1_boot_gdat_hud_static_m11_command_plan(
 
     if (out_plan) memset(out_plan, 0, sizeof(*out_plan));
     if (!profile || !profile->graphics_dat || !out_plan) return 0;
-    if (profile->platform == DM2_PLATFORM_MAC_EN)
-        return dm2_v1_boot_gdat_hud_mac_move_arrow_plan(profile, out_plan);
+    if (dm2_v1_boot_gdat_hud_source_native_platform(profile->platform))
+        return dm2_v1_boot_gdat_hud_source_move_arrow_plan(profile, out_plan);
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
     return dm2_v1_gdat_hud_m11_command_plan_build(
         &gfx->loader, is_outdoor, out_plan);
