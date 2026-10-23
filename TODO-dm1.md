@@ -38,6 +38,17 @@ cannot supply the selected graphics identity. These results verify the tested
 M564/name and potion interactions for the three covered early editions; they
 do not establish full edition or campaign parity.
 
+2026-10-24 early Atari startup and inventory retest: the configured current
+build passed `dm1_v1_atari_st_10a_archive_cli_boot`,
+`dm1_v1_atari_st_10b_archive_cli_boot`, and
+`dm1_v1_atari_st_11_archive_cli_boot` against the installed original
+preservation archive. Each exercised its authenticated version through the
+archive-backed CLI startup/menu route. In the same CTest selection,
+`dm1_atari_st_10a_consumables_real`, `dm1_atari_st_10b_consumables_real`, and
+`dm1_atari_st_11_consumables_real` all passed. The six tests completed 6/6 in
+484.48 seconds. SDL dummy startup checks establish the exercised source and
+menu handoff, not native display or complete campaign parity.
+
 2026-10-23 PC34 HoC stair-torch CTest wiring: `m11_dm1_hoc_wall_material_receipt_pc34`
 now receives the configured original PC34 archive and returns CTest's skip
 code when the archive is absent. Its previous configuration omitted the media
