@@ -1245,6 +1245,21 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_g1_flying_item_source_r
              COMMAND test_dm2_v1_g1_flying_item_source_receipt)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_g1_visible_missile_chains.c")
+    add_executable(test_dm2_v1_g1_visible_missile_chains
+        tests/test_dm2_v1_g1_visible_missile_chains.c)
+    target_include_directories(test_dm2_v1_g1_visible_missile_chains PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_g1_visible_missile_chains PRIVATE
+            -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    target_link_libraries(test_dm2_v1_g1_visible_missile_chains PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    add_test(NAME dm2_v1_g1_visible_missile_chains
+             COMMAND test_dm2_v1_g1_visible_missile_chains)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_gdat_hud_summary_m11_receipt.c")
     add_executable(test_dm2_v1_gdat_hud_summary_m11_receipt
         tests/test_dm2_v1_gdat_hud_summary_m11_receipt.c)

@@ -1,9 +1,12 @@
 
 #ifndef FIRESTAFF_DM2_V1_DUNGEON_LOADER_H
 #define FIRESTAFF_DM2_V1_DUNGEON_LOADER_H
+#include <stddef.h>
 #include <stdint.h>
 
 #include "dm2_v1_asset_loader.h"
+
+struct DM2_V1_RecordPoolSet;
 
 /* DM2: The Legend of Skullkeep (1993)
  * Uses enhanced dungeon.dat format:
@@ -889,6 +892,31 @@ typedef struct {
     uint32_t record_hash;
 } DM2_V1_G1DirectMissileReceipt;
 
+/* A bounded snapshot of one live DB14 (Missile) record found by following a
+ * source tile root and its c_record w0 chain. `object_id` is the full source
+ * ObjectID/record handle; its top two bits are the DB14 direction subtype
+ * consumed by DM2_QUERY_OBJECT_5x5_POS. The ordinal is one-based within that
+ * tile's source record chain. This is evidence only and does not draw. */
+typedef struct {
+    uint16_t object_id;
+    int16_t map;
+    int16_t x;
+    int16_t y;
+    uint32_t chain_ordinal;
+    uint16_t missile_object;
+    uint8_t energy_remaining;
+    uint8_t energy_remaining2;
+    uint16_t timer_index;
+    uint8_t view_position_5x5;
+    uint8_t object_direction_subtype;
+    uint32_t raw_record_hash;
+} DM2_V1_G1MissileChainSnapshot;
+
+typedef struct {
+    int16_t x;
+    int16_t y;
+} DM2_V1_G1VisibleMapCell;
+
 /* Source: SKULLWIN/c_gui_vp.cpp:3545-3770, c_record.cpp:203-279,
  * dm2data.cpp:487.  This is selector evidence only; it never authorizes a
  * pixel decode or viewport draw. */
@@ -1463,6 +1491,21 @@ typedef struct DM2_V1_DungeonData {
 int dm2_v1_g1_direct_missile_receipt(const DM2_V1_DungeonData *d,
                                      uint16_t object_id,
                                      DM2_V1_G1DirectMissileReceipt *out);
+/* Snapshots DB14 records from caller ordered visible cells (at most the
+ * source's 20 table1d7029 cells), preserving cell and chain order. G1 formats
+ * without persisted w0 links use one root record per tile. Malformed chains,
+ * cycles, pool mismatches, duplicate cells, or capacity exhaustion fail
+ * closed and erase partial output. */
+int dm2_v1_g1_snapshot_visible_missile_chains(
+    const DM2_V1_DungeonData *dungeon,
+    const struct DM2_V1_RecordPoolSet *record_pools,
+    int map,
+    const DM2_V1_G1VisibleMapCell *visible_cells,
+    size_t visible_cell_count,
+    uint8_t view_direction,
+    DM2_V1_G1MissileChainSnapshot *out_snapshots,
+    size_t snapshot_capacity,
+    size_t *out_count);
 int dm2_v1_g1_flying_item_selector_receipt(
     const DM2_V1_DungeonData *d, const DM2_V1_AssetLoader *loader,
     const DM2_V1_G1DirectMissileReceipt *missile,
