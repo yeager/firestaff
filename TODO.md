@@ -402,8 +402,9 @@ for commit `3fd0f5886`.
   persisted selection, but not native Custom Music, Unicode Font or Artpack
   dialogs. `test_m12_data_dir_dialog_real` now covers the asynchronous result
   callback, main-thread admission and reopening with the saved per-game folder
-  for authentic DM1, CSB and DM2 data. Each case skips cleanly when its local
-  original-media folder is unavailable in CI.
+  for authentic DM1, CSB and DM2 data. It also checks that the automatically
+  selected edition is authenticated and remains selected after reopening. Each
+  case skips cleanly when its local original-media folder is unavailable in CI.
 
 - Extend COLORBLIND beyond the modern launcher and its scan overlay into
   explicitly host-owned in-game UI/HUD layers. M12 now applies the selected

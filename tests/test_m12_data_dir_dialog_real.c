@@ -33,13 +33,14 @@ int main(int argc, char** argv)
     char* savedConfig = priorConfig ? SDL_strdup(priorConfig) : NULL;
     char scratch[FSP_PATH_MAX] = {0}, empty[FSP_PATH_MAX], configPath[FSP_PATH_MAX];
     char expected[FSP_PATH_MAX], leaf[96], configTemp[FSP_PATH_MAX];
+    char selectedVersionId[64] = {0};
     M12_StartupMenuState* menu = NULL;
     M12_StartupMenuInitOptions options;
     M12_Config config;
     Completion completion;
     SDL_Thread* worker;
     Uint64 deadline;
-    int created = 0, configured = 0, matchedVersion = 0;
+    int created = 0, configured = 0, matchedVersion = 0, gameSlot;
     if (!gameId || !mediaDir ||
         (strcmp(gameId, "dm1") != 0 && strcmp(gameId, "csb") != 0 &&
          strcmp(gameId, "dm2") != 0) || !mediaDir[0]) {
@@ -47,6 +48,8 @@ int main(int argc, char** argv)
         puts("SKIP: provide a DM1, CSB, or DM2 game id and original-media folder");
         return 77;
     }
+    gameSlot = strcmp(gameId, "dm1") == 0 ? 0 :
+               strcmp(gameId, "csb") == 0 ? 1 : 2;
     if (!FSP_DirExists(mediaDir)) {
         SDL_free(savedConfig);
         printf("SKIP: original-media folder is unavailable for %s: %s\n",
@@ -132,6 +135,20 @@ int main(int argc, char** argv)
         }
     }
     CHECK(matchedVersion, "scan authenticates original media for the selected game");
+    if (menu->gameOptions[gameSlot].versionIndex >= 0 &&
+        (size_t)menu->gameOptions[gameSlot].versionIndex <
+            M12_AssetStatus_GetVersionCount(gameId)) {
+        const M12_AssetVersionStatus* selectedVersion =
+            M12_AssetStatus_GetVersion(&menu->assetStatus, gameId,
+                (size_t)menu->gameOptions[gameSlot].versionIndex);
+        if (selectedVersion && selectedVersion->matched &&
+            selectedVersion->versionId) {
+            snprintf(selectedVersionId, sizeof(selectedVersionId), "%s",
+                     selectedVersion->versionId);
+        }
+    }
+    CHECK(selectedVersionId[0] != '\0',
+          "automatic platform selection targets authenticated media");
     CHECK(strcmp(M12_StartupMenu_GetVisibleDataDir(menu), expected) == 0,
           "selected physical folder remains visible");
     (void)M12_Config_Load(&config, NULL);
@@ -148,6 +165,19 @@ int main(int argc, char** argv)
     CHECK(strcmp(M12_StartupMenu_GetVisibleDataDir(menu), expected) == 0 &&
           strcmp(M12_AssetStatus_GetDataDir(&menu->assetStatus), expected) == 0,
           "game startup keeps the persisted original-media folder");
+    if (menu->gameOptions[gameSlot].versionIndex >= 0 &&
+        (size_t)menu->gameOptions[gameSlot].versionIndex <
+            M12_AssetStatus_GetVersionCount(gameId)) {
+        const M12_AssetVersionStatus* selectedVersion =
+            M12_AssetStatus_GetVersion(&menu->assetStatus, gameId,
+                (size_t)menu->gameOptions[gameSlot].versionIndex);
+        CHECK(selectedVersion && selectedVersion->matched &&
+              selectedVersion->versionId && selectedVersionId[0] &&
+              strcmp(selectedVersion->versionId, selectedVersionId) == 0,
+              "reopening retains the same authenticated edition selection");
+    } else {
+        CHECK(0, "reopening retains the same authenticated edition selection");
+    }
     (void)M12_Config_Load(&config, NULL);
     CHECK(strcmp(config.dataDir, expected) == 0,
           "game startup does not replace persisted media with default root");
