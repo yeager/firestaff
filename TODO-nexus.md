@@ -5,6 +5,28 @@ in the Nexus capture and reverse-engineering records.
 
 ## Available local retail media
 
+2026-10-23 direct-start diagnostic recheck: the installed English Saturn CUE
+and original media root selected the authenticated `nexus-saturn-en-fan-v2`
+image, loaded `TITLE.CG`, `STABG.BIN`, `LOGOBG.DG2` and all 20 `FACE.BIN`
+records, then completed the title animation. The startup receipt remains
+`status=blocked`, `levelLoaded=0`, `menu=0`, with
+`menu-bpk-prs3-capture-required`. The old `runtime-entered` phase label was
+therefore false for this title-only state; the pending source change reports
+`title-entered`, and the updated original-media CLI checks require the blocked
+receipt and reject a runtime claim. This diagnostic correction does not make the
+Nexus menu or playable level available. The M4 runtime binary predates the
+source edit; rebuilding and running the updated regression on the dedicated
+build host remains outstanding because `trv2` does not resolve on this host.
+
+The current `nexus_v1_bpk_archive_runtime_upload_plan` already decodes PRS3
+payloads for bounded evidence, but explicitly emits no drawable pixels and
+keeps each row blocked. A successful PRS3 decode alone does not establish
+Saturn PALT/CRAM ownership, VDP1 upload framing or destination semantics. The
+startup gate separately requires the menu text consumer and its VDP2 placement.
+Next evidence must bind the post-title menu's input transition and these
+source-owned consumers from the same authentic Saturn session; do not bypass
+the gate by drawing decoded surfaces or substitute generated menu material.
+
 The staged JP retail set supplies the CUE, nine BIN tracks, CDDA WAV tracks,
 and the original ZIP package.  The disc itself does **not** contain a Saturn
 VDP1/VDP2 VRAM dump, CRAM dump, register snapshot, or frame/timing capture.
