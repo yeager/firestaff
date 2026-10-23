@@ -4266,6 +4266,15 @@ if(BUILD_TESTING)
         )
     endif()
     add_test(
+        NAME firestaff_debug_perf_metrics
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_debug_perf_metrics.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(firestaff_debug_perf_metrics PROPERTIES
+        LABELS "cli;debug;performance;no-media-required;cross-platform"
+        TIMEOUT 20
+    )
+    add_test(
         NAME dm1_motion_present_diagnostics_real_media
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_motion_present_diagnostics_real_media.sh"
             "$<TARGET_FILE:firestaff>"
