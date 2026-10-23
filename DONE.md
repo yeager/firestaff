@@ -1,5 +1,11 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-23: Added a real-media regression for launching the main menu with
+  only CSB installed under `~/.firestaff/data/csb` and no CLI game selection.
+  The scripted menu route selected authentic FM Towns CSB and reached its
+  first loaded dungeon runtime at `(4, 22, 18)`. The original archive hash
+  remained unchanged. The test skips when the licensed archive is unavailable.
+
 - 2026-10-23: Extended the authentic Apple IIGS DM1 regression so both
   original G20 and G21 editions must complete title playback, the mouse-gated
   entrance and door animation, and the M12 handoff into an active loaded
