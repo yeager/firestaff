@@ -153,7 +153,7 @@ static void check_launcher_quick_resume(const char *data_dir,
         snprintf(firestaff_dir, sizeof(firestaff_dir), "%s/.firestaff",
                  home_template) <= 0 ||
         snprintf(cache_dir, sizeof(cache_dir), "%s/cache", firestaff_dir) <= 0 ||
-        snprintf(cache_path, sizeof(cache_path), "%s/asset_scan_cache.dat",
+        snprintf(cache_path, sizeof(cache_path), "%s/asset_scan_cache_v2.dat",
                  cache_dir) <= 0 ||
         snprintf(save_path, sizeof(save_path), "%s/CSBGAME-JP.DAT",
                  corpus_dir) <= 0) {
