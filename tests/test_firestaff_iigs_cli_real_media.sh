@@ -76,17 +76,35 @@ for version in 20 21; do
     assert_trace "platformHandoff=iigs-g$version-native" "$scratch/g$version-zip.log"
     assert_trace 'runtime game=dm1 startup-phase=dm1-iigs-runtime' "$scratch/g$version-zip.log"
     FIRESTAFF_CONFIG_PATH="$scratch/g$version-menu.toml" SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
-        FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+        FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_AUTOTEST=1 \
+        FIRESTAFF_AUTOTEST_ENTRANCE_INPUT=mouse:enter \
+        FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$scratch/g$version-menu-runtime.json" \
         "$app" --menu --game dm1 --platform iigs --data-dir "$scratch/g$version.po" \
-        --debug --script enter,enter,enter --duration 3000 >"$scratch/g$version-menu.log" 2>&1 || {
+        --debug --script enter,enter,enter --duration 6000 >"$scratch/g$version-menu.log" 2>&1 || {
             cat "$scratch/g$version-menu.log"; exit 1;
         }
     assert_trace 'startup-source-frame game=dm1 platform=apple-iigs phase=title-f0437 frame=18/18 input=ignored' "$scratch/g$version-menu.log"
     assert_trace 'startup-source-complete game=dm1 platform=apple-iigs phase=title-f0437 frames=18 cadence-hz=60 sampling=nearest-neighbour-approx' "$scratch/g$version-menu.log"
     assert_trace "DM1 IIGS READY: version=$version graphicsPath=$scratch/g$version.po::GRAPHICS.GAME" "$scratch/g$version-menu.log"
+    assert_trace "startup-f0441-authenticated-handoff game=dm1 platform=apple-iigs version=$version" "$scratch/g$version-menu.log"
     title_line=$(grep -n -F 'startup-source-complete game=dm1 platform=apple-iigs phase=title-f0437' "$scratch/g$version-menu.log" | cut -d: -f1)
     world_line=$(grep -n -F 'DM1 IIGS READY:' "$scratch/g$version-menu.log" | cut -d: -f1)
     [[ $title_line -lt $world_line ]] || { echo 'FAIL: M12 IIGS title did not precede world handoff' >&2; exit 1; }
+    python3 - "$version" "$scratch/g$version-menu-runtime.json" <<'PY'
+import json
+import sys
+
+version, probe_path = sys.argv[1:]
+with open(probe_path, encoding="utf-8") as source:
+    probe = json.load(source)
+startup = probe["startup"]
+if (probe.get("launchedEver") != 1 or probe.get("active") != 1 or
+        probe.get("sourceId") != "dm1" or startup.get("receiptReady") != 1 or
+        startup.get("startupActive") != 0 or startup.get("levelLoaded") != 1 or
+        startup.get("phase") != "dm1-iigs-runtime"):
+    raise SystemExit(f"FAIL: IIGS G{version} menu handoff missed active dungeon runtime: {probe}")
+print(f"PASS: IIGS G{version} M12 menu reached active dungeon runtime")
+PY
     [[ $(firestaff_sha256_file "$scratch/g$version.po") == "$expected" ]]
 done
 towns=${FIRESTAFF_DM1_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"}
@@ -106,4 +124,4 @@ else
     echo 'SKIP: optional original FM Towns AUTO-priority comparison unavailable'
 fi
 [[ $(firestaff_sha256_file "$archive") == "$before" ]]
-echo 'PASS: original G20/G21 title, ZIP-wrapped CLI startup, F0439 C255 entrance viewport and F0441 mouse-gated door startup run through direct CLI and selected M12 menu; GS F0128 pixel parity and GS F0129 remain unverified'
+echo 'PASS: original G20/G21 title, ZIP-wrapped CLI startup, F0439 C255 entrance viewport and F0441 mouse-gated door startup reach runtime through direct CLI and selected M12 menu; GS F0128 pixel parity and GS F0129 remain unverified'

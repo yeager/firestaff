@@ -1,5 +1,12 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-23: Extended the authentic Apple IIGS DM1 regression so both
+  original G20 and G21 editions must complete title playback, the mouse-gated
+  entrance and door animation, and the M12 handoff into an active loaded
+  dungeon. The runtime probe confirms the IIGS-specific phase and loaded level.
+  `firestaff_iigs_cli_real_media` passed locally in 28.18 seconds using the
+  originals under `~/.firestaff/data/dm1`; source archive hashes stayed intact.
+
 - 2026-10-23: Extended the native data-directory callback regression from DM1
   PC 3.4 to authentic DM1, CSB and DM2 media under `~/.firestaff/data/<game>`.
   Each case exercises worker-thread result delivery, main-thread scan and
