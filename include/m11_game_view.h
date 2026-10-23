@@ -1971,6 +1971,9 @@ typedef struct {
     uint8_t dm2DosMvePaletteRgb6[256u][3u];
     uint32_t dm2DosMvePresentationIndex;
     uint64_t dm2DosMvePresentationTimeUs;
+    uint32_t dm2DosMveCopiedPresentationIndex;
+    int dm2DosMveFrameDecoded;
+    int dm2DosMveCopiedFrameValid;
     int dm2DosMveIntroActive;
     int dm2DosMveIntroRejected;
     int dm2DosMveIntroComplete;

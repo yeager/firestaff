@@ -2184,6 +2184,7 @@ static int m11_dm2_dos_mve_sink(void *context, const uint8_t *pixels,
            sizeof(state->dm2DosMvePaletteRgb6));
     state->dm2DosMvePresentationIndex = presentation_index;
     state->dm2DosMvePresentationTimeUs = presentation_time_us;
+    state->dm2DosMveFrameDecoded = 1;
     return 1;
 }
 
@@ -2205,6 +2206,8 @@ static int m11_dm2_bind_dos_intro(M11_GameViewState *state)
         return 1;
     }
     now_us = SDL_GetTicksNS() / UINT64_C(1000);
+    state->dm2DosMveFrameDecoded = 0;
+    state->dm2DosMveCopiedFrameValid = 0;
     if (!m11_dm2_mve_presenter_open(&state->dm2DosMvePresenter, bytes,
                                     byte_count, now_us,
                                     m11_dm2_dos_mve_sink, state)) {
@@ -2499,6 +2502,18 @@ static int m11_dm2_present_dos_intro(M11_GameViewState *state,
         return -1;
     }
 render_paused_frame:
+    /* The MVE stream owns a new source page only when its presentation
+     * boundary advances. Keep the last indexed framebuffer/palette between
+     * those boundaries instead of rescaling the same 320x200 page at every
+     * 16-ms host scheduler wakeup. Input, audio clocking and SDL presents
+     * continue at their existing cadence; this only skips duplicate source
+     * pixel conversion. */
+    if (state->dm2DosMveFrameDecoded &&
+        state->dm2DosMveCopiedFrameValid &&
+        state->dm2DosMveCopiedPresentationIndex ==
+            state->dm2DosMvePresentationIndex) {
+        return 1;
+    }
     if (M11_Render_SetIndexedPaletteRgb6(state->dm2DosMvePaletteRgb6) !=
         M11_RENDER_OK) {
         state->dm2DosMveFailureCode = M11_DM2_MVE_FAILURE_PRESENT_CALLBACK;
@@ -2516,6 +2531,9 @@ render_paused_frame:
                                         (size_t)source_x];
         }
     }
+    state->dm2DosMveCopiedFrameValid = state->dm2DosMveFrameDecoded;
+    state->dm2DosMveCopiedPresentationIndex =
+        state->dm2DosMvePresentationIndex;
     return 1;
 }
 
