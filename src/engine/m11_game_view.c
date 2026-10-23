@@ -39064,24 +39064,24 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             }
         }
         if (!state->inventoryPanelActive && !state->candidateMirrorPanelActive &&
-            (buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) && x >= 96 && x <= 127 && y >= 68 && y <= 96)
+            (buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) &&
+            x >= 96 && x <= 127 && y >= 68 && y <= 96)
             handled = M11_GameView_SelectFrontMirrorCandidate(state);
-        /* ReDMCSB CLIKVIEW.C F0377 routes C080's source D1C door-button
-         * zone to F0268/F0715. The native IIGS pointer table above does not
-         * contain the legacy PC mouse zones, so route this explicit original
-         * front-door button through the shared source door toggle. */
+        /* ReDMCSB COMMAND.C G0448 sends left clicks in the complete dungeon
+         * viewport to C080; F0377 then checks its frame-owned C00..C05 zones
+         * for piles, the front wall, mirrors and door buttons. IIGS shares
+         * this command contract even though its inventory hit table is native
+         * and separate. Restrict the handoff to the live viewport so screen
+         * chrome and champion controls keep their own handlers. */
         if (!handled && !state->candidateMirrorPanelActive &&
             !state->inventoryPanelActive &&
             (buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34)) {
             int viewportX, viewportY, viewportW, viewportH;
-            static const int kDoorButtonD1CBox[4] = {160,175,44,52};
             if (M11_GameView_GetViewportRect(&viewportX,&viewportY,
                                               &viewportW,&viewportH) &&
                 viewportW>0 && viewportH>0 &&
-                x-viewportX>=kDoorButtonD1CBox[0] &&
-                x-viewportX<=kDoorButtonD1CBox[1] &&
-                y-viewportY>=kDoorButtonD1CBox[2] &&
-                y-viewportY<=kDoorButtonD1CBox[3])
+                x>=viewportX && x<viewportX+viewportW &&
+                y>=viewportY && y<viewportY+viewportH)
                 return m11_process_v1_c080_click(state,x,y);
         }
         return handled ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
@@ -72743,6 +72743,16 @@ static void m11_game_view_draw_source(M11_GameViewState* state,
         return;
     }
     if (state && state->active && state->dm1IigsActive) {
+        /* The native GS first-world renderer does not publish the PC34 F0115
+         * pile rectangles. Retire any prior edition's frame-local targets
+         * before an IIGS C080 click can consult them. */
+        memset(s_m11_dm1_rendered_pile_targets, 0,
+               sizeof(s_m11_dm1_rendered_pile_targets));
+        s_m11_dm1_rendered_pile_target_count = 0;
+        memset(&s_m11_dm1_floor_item_host_presentation_receipt, 0,
+               sizeof(s_m11_dm1_floor_item_host_presentation_receipt));
+        memset(&s_m11_dm1_alcove_item_host_presentation_receipt, 0,
+               sizeof(s_m11_dm1_alcove_item_host_presentation_receipt));
         if (state->world.dungeon && state->world.dungeon->maps &&
             state->world.party.mapIndex >= 0 &&
             state->world.party.mapIndex < state->world.dungeon->header.mapCount)

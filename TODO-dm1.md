@@ -2845,19 +2845,24 @@ the same equipped torch provides light after the actual transition. This
 confirms the route needed to carry light into the first dark level; it does not
 establish complete gameplay parity.
 
-2026-10-23 HoC stair torch cross-platform interaction: new original-media M12
-to M11 regressions for Atari ST 1.2 and Amiga 2.0 verify the authentic map-0
-wall at (3,14), stairs at (3,15), ornament sensor 0x4c98, storage sensor
-0x4c07, and TORCH Thing 0x5463. Both tests admit an original C127 champion,
-pick up the wall torch through C080, equip it in the action hand, descend via
-the original stairs command, and require positive F0337-backed light on map 1.
-Both CTests pass against the installed unchanged archives. This establishes
-that interaction chain for these two editions; it does not prove their wall
-pixels or extend the result to every DM1 platform.
+2026-10-23 HoC stair torch cross-platform interaction: original-media M12 to
+M11 regressions now cover Atari ST 1.2, Amiga 2.0, and FM Towns. They verify
+the map-0 wall at (3,14), stairs at (3,15), ornament sensor 0x4c98, storage
+sensor 0x4c07, and TORCH Thing 0x5463. Each test admits an original C127
+champion, picks up the wall torch through C080, equips it in the action hand,
+descends through the original stairs command, and requires positive F0337
+light on map 1. All three CTests pass against the installed unchanged
+archives. They establish interaction for these editions and do not assert
+wall pixels.
 
-The same authentic wall Thing and sensor chain exist in IIGS 2.0/2.1, but the
-current native pointer C080 route returns ignored and the generic pickup
-command redraws without transferring the Thing. FM Towns likewise lacks a
-bound wall-ornament asset receipt for this location. Keep IIGS wall-torch
-pickup/equip and FM Towns wall-asset binding open; do not claim full
-cross-platform torch support from the passing PC34, Atari ST and Amiga tests.
+The IIGS startup regression also covers both original 2.0 and 2.1 software.
+After recruiting ELIJA and walking the authentic HoC corridor to the stair
+wall, it verifies both sensors and Thing 0x5463, picks up the torch with a
+viewport click, equips it through the native inventory route, and descends via
+the original stairs command. F0337 reports positive light on map 1. The test
+first reproduced the missing pickup: the native pointer handler only
+forwarded the D1C door-button rectangle. It now routes left clicks within the
+native viewport through C080, while inventory and champion controls keep
+their native GS hit tables. Both IIGS editions pass. No IIGS wall-art
+assertion is made. This still does not establish complete DM1 gameplay parity
+across all platforms.

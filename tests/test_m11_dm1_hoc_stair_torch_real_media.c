@@ -36,6 +36,11 @@ static int start_corpus(M11_GameViewState *state, const char *archive)
     if (version >= 0 && M12_AssetStatus_GetVersion(&menu.assetStatus,
             "dm1", (size_t)version)->matched)
         menu.gameOptions[0].architectureIndex = M12_ARCH_AMIGA;
+#elif defined(M11_DM1_TORCH_FMTOWNS)
+    version = M12_AssetStatus_FindVersionIndex("dm1", "fmtowns-en");
+    if (version >= 0 && M12_AssetStatus_GetVersion(&menu.assetStatus,
+            "dm1", (size_t)version)->matched)
+        menu.gameOptions[0].architectureIndex = M12_ARCH_FM_TOWNS;
 #else
     version = M12_AssetStatus_FindVersionIndex("dm1", "st12-en");
     if (version >= 0 && M12_AssetStatus_GetVersion(&menu.assetStatus,

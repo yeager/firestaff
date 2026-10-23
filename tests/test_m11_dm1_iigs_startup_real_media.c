@@ -897,6 +897,101 @@ static int check_native_floor_item_roundtrip(M11_GameViewState *view,
     return 1;
 }
 
+/* This original HoC torch is linked to the wall at (3,14), beside the first
+ * stair at (3,15). ReDMCSB COMMAND.C G0448 and CLIKVIEW.C F0377 route viewport
+ * clicks through the current rendered zones; C508 owns the later inventory
+ * transfer. Keep this native wall transaction separate from the already-
+ * covered party-floor roundtrip above. */
+static int check_native_hoc_stair_torch(const char *root, int version,
+                                        M11_GameViewState *view,
+                                        uint8_t *frame) {
+    static const uint8_t route[][2] = {
+        {9,8},{9,9},{8,9},{7,9},{6,9},{5,9},{4,9},
+        {4,10},{4,11},{4,12},{4,13},{4,14}
+    };
+    unsigned short thing;
+    int result = 0;
+#define REQUIRE_TORCH(c, m) do { if (!(c)) { fprintf(stderr,"FAIL: %s\n",m); goto cleanup; } } while (0)
+    REQUIRE_TORCH(M11_GameView_StartIigs(view, root, version) &&
+        view->dm1IigsActive && view->world.party.mapIndex == 0,
+        "restart authentic IIGS HoC before stair torch test");
+    REQUIRE_TORCH(check_recruitment(view, frame),
+        "admit an original champion before native wall-object interaction");
+    for (size_t step = 0; step < sizeof(route) / sizeof(route[0]); ++step) {
+        int dx = (int)route[step][0] - view->world.party.mapX;
+        int dy = (int)route[step][1] - view->world.party.mapY;
+        int direction = dx > 0 ? 1 : dx < 0 ? 3 : dy > 0 ? 2 : 0;
+        REQUIRE_TORCH(abs(dx) + abs(dy) == 1,
+            "native stair torch approach follows adjacent original map squares");
+        for (unsigned turn = 0; view->world.party.direction != direction && turn < 4; ++turn)
+            (void)M11_GameView_HandleInput(view, M12_MENU_INPUT_TURN_RIGHT);
+        for (unsigned tick = 0; tick < 8; ++tick)
+            (void)M11_GameView_AdvanceIdleTick(view);
+        (void)M11_GameView_HandleInput(view, M12_MENU_INPUT_UP);
+        REQUIRE_TORCH(view->world.party.mapX == route[step][0] &&
+            view->world.party.mapY == route[step][1],
+            "ordinary native movement reaches each original stair approach square");
+    }
+    for (unsigned turn = 0; view->world.party.direction != 3 && turn < 4; ++turn)
+        (void)M11_GameView_HandleInput(view, M12_MENU_INPUT_TURN_RIGHT);
+    REQUIRE_TORCH(view->world.dungeon->maps[0].width > 3 &&
+        view->world.dungeon->maps[0].height > 15,
+        "authentic IIGS HoC contains stair torch coordinates");
+    {
+        int saw_ornament = 0, saw_storage = 0;
+        thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+            view->world.dungeon, view->world.things, 0, 3, 14);
+        for (int guard = 0; thing != THING_NONE && thing != THING_ENDOFLIST && guard < 64; ++guard) {
+            if (THING_GET_TYPE(thing) == THING_TYPE_SENSOR) {
+                const int index = THING_GET_INDEX(thing);
+                if (index >= 0 && index < view->world.things->sensorCount &&
+                    index == 152 && view->world.things->sensors[index].sensorType == 0 &&
+                    view->world.things->sensors[index].ornamentOrdinal == 7)
+                    saw_ornament = 1;
+                if (index >= 0 && index < view->world.things->sensorCount &&
+                    index == 7 && view->world.things->sensors[index].sensorType == 13 &&
+                    view->world.things->sensors[index].sensorData == 4 &&
+                    view->world.things->sensors[index].ornamentOrdinal == 8)
+                    saw_storage = 1;
+            }
+            if (thing == 0x5463u) break;
+            thing = F0512_DUNGEON_GetThingNext_Compat(view->world.things, thing);
+        }
+        REQUIRE_TORCH(saw_ornament && saw_storage,
+            "original IIGS stair torch chain retains both wall sensors");
+    }
+    REQUIRE_TORCH(thing == 0x5463u,
+        "original HoC wall Thing 0x5463 is present beside the stair");
+    REQUIRE_TORCH(view->world.party.mapX == 4 && view->world.party.mapY == 14 &&
+        view->world.party.direction == 3,
+        "native route faces original wall torch from adjacent corridor cell");
+    memset(frame, 0, (size_t)M11_FB_WIDTH * M11_FB_HEIGHT);
+    M11_GameView_Draw(view, frame, M11_FB_WIDTH, M11_FB_HEIGHT);
+    REQUIRE_TORCH(M11_GameView_HandlePointerButton(view, 112, 82,
+            DM1_V1_MOUSE_MASK_LEFT_PC34) == M11_GAME_INPUT_REDRAW &&
+        view->leaderHandObjectPresent && view->leaderHandThing == thing,
+        "native C080 front-wall click picks up the original stair torch");
+    (void)M11_GameView_HandleInput(view, M12_MENU_INPUT_CHAMPION_1_INVENTORY);
+    REQUIRE_TORCH(view->inventoryPanelActive &&
+        M11_GameView_HandlePointerButton(view, 70, 94,
+            DM1_V1_MOUSE_MASK_LEFT_PC34) == M11_GAME_INPUT_REDRAW &&
+        !view->leaderHandObjectPresent &&
+        view->world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] == thing,
+        "native IIGS inventory equips the original wall torch in an action hand");
+    (void)M11_GameView_HandlePointerButton(view, 214, 40,
+        DM1_V1_MOUSE_MASK_LEFT_PC34);
+    view->world.party.mapX = 3;
+    view->world.party.mapY = 15;
+    REQUIRE_TORCH(M11_GameView_HandleInput(view, M12_MENU_INPUT_USE_STAIRS) ==
+            M11_GAME_INPUT_REDRAW && view->world.party.mapIndex == 1 &&
+            M11_GameView_GetLightLevel(view) > 0,
+        "original IIGS stair descent retains positive torch light on the next level");
+    result = 1;
+cleanup:
+#undef REQUIRE_TORCH
+    return result;
+}
+
 static int check_linflas_capacity(const char *root, int version) {
     static const uint8_t route[][2]={{1,4},{1,5},{1,6},{1,7},{2,7},{3,7},{4,7},{4,6},{4,5},{4,4},
         {4,3},{4,2},{5,2},{6,2},{6,3},{7,3},{8,3},{8,4},{9,4},{9,5},{9,6},{9,7},{9,8},{9,9},{10,9},{11,9},{12,9}};
@@ -1224,6 +1319,7 @@ static int check_session(const char *root, int version, const char *owner) {
         REQUIRE(check_iigs_creature_combat(view),"authentic IIGS monster approaches and damages the naturally routed party");
         REQUIRE(check_native_inventory(view,frame),"actual native inventory source transactions and modifier inverse");
         REQUIRE(check_native_floor_item_roundtrip(view,frame),"original IIGS torch drop, floor pickup and champion-hand roundtrip");
+        REQUIRE(check_native_hoc_stair_torch(root,version,view,frame),"authentic HoC stair torch remains usable before first descent");
         M11_GameView_Shutdown(view); M11_GameView_Shutdown(view);
         REQUIRE(!view->active && !view->dm1IigsActive && !view->world.iigsCreatureProfileBound &&
             !view->assetLoader.iigsDm1,"repeated shutdown clears native runtime resources and profile");
@@ -1278,6 +1374,6 @@ int main(int argc, char **argv) {
     if (!check_archive_scan(argv[3]) || !check_rejections(argv[1],argv[4]) ||
         !asset_file_matches_md5(argv[1],"15e3f954f408612fd2f15a474a182f9f") ||
         !asset_file_matches_md5(argv[2],"d38f00e5ad8516553c5cba3214b29bef")) return 1;
-    puts("PASS: authentic IIGS M11 native startup, HoC monster combat, ownership, input and restart lifecycle; visual/audio parity unverified");
+    puts("PASS: authentic IIGS M11 startup, HoC combat, stair torch pickup/light, ownership and restart; visual/audio parity unverified");
     return 0;
 }
