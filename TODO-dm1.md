@@ -17,6 +17,17 @@ revalidates the covered startup-to-first-monster combat routes on the current
 source. The tests use SDL dummy video/audio and do not establish native input,
 display, or visual parity.
 
+2026-10-23 Atari ST 1.0b potion coverage: added the authentic-media CTest
+`dm1_atari_st_10b_consumables_real` using the original 1.0b GRAPHICS.DAT
+identity from the installed Atari preservation archive. It exercises the
+existing M11 mouth-consumption and active-hand paths against original dungeon
+potion records, as the 1.0a and 1.1 cases do. CMake registers all three early
+edition cases, and the focused F0348 unit regression passes for 1.0a, 1.0b,
+1.1, and 1.2. The new integrated 1.0b real-media case has not yet run because
+the existing local build required rebuilding the full M10/DM2 dependency
+graph; verify it on the dedicated build host when available. Do not treat CTest
+registration or the unit test as proof of this integrated route.
+
 2026-10-23 PC34 HoC stair-torch CTest wiring: `m11_dm1_hoc_wall_material_receipt_pc34`
 now receives the configured original PC34 archive and returns CTest's skip
 code when the archive is absent. Its previous configuration omitted the media
