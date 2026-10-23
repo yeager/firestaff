@@ -54,6 +54,18 @@ retains source map/cell fields, and
 `dm2_v1_item_projectile_rect14_render_plan` verifies map admission and the
 derived candidate draw key while asserting that source-order validity remains
 false until the direction provenance is proven.
+
+More fundamental runtime integration is also still missing: production writes
+to `g_dm2_projectile_drain_count` do not exist. The runtime initializes that
+count to zero, reads it into the viewport, and exposes the cache, but does not
+call `dm2_v1_projectile_step_and_drain` or `dm2_v1_projectile_drain_to_m11`.
+Those drain functions are currently exercised only by tests and probes. As a
+result, the candidate draw rows do not currently receive live production
+projectiles. Before claiming projectile-render parity, bind the runtime's
+authenticated tile-rooted DB14 records and source timers to the viewport
+handoff, preserve their ObjectID direction and chain ordinal, and then model
+the normal and seven-slot creature-associated replay events from
+`DM2_DRAW_STATIC_OBJECT`.
 References: `include/dm2_v1_projectile_pc34_compat.h`,
 `src/dm2/dm2_v1_projectile_pc34_compat.c`,
 `src/dm2/dm2_v1_runtime.c::dm2_runtime_populate_projectiles`, and SKProject
