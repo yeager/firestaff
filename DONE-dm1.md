@@ -21,6 +21,14 @@
   calculation then reports level 100 on map 1. This verifies the critical
   torch route into the first dark level, not full campaign parity.
 
+- 2026-10-23: Connected `m11_dm1_hoc_wall_material_receipt_pc34` to the
+  configured original PC34 archive in CTest. Before this change, the test had
+  no media path and returned success when its environment variable was empty,
+  so CTest could report a false pass. It now reports a skip when the archive is
+  unavailable. The rebuilt CTest passed against the installed original archive,
+  checking the wall material, C080 pickup, C508 equip, source stairs transition
+  and positive F0337 light on the first dark level.
+
 - 2026-10-19: Fixed the shared startup intro scan meter ending below 100% and
   disappearing when the scan worker finished. Its total now matches the three
   shared phases and three phases per game, and the intro keeps the final

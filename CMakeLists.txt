@@ -13483,6 +13483,11 @@ if(BUILD_TESTING)
             COMMAND test_m11_dm1_hoc_wall_material_receipt_pc34
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         )
+        set_tests_properties(m11_dm1_hoc_wall_material_receipt_pc34 PROPERTIES
+            ENVIRONMENT "FIRESTAFF_DM1_DATA_DIR=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
+            SKIP_RETURN_CODE 77
+            TIMEOUT 120
+            LABELS "dm1;dos;pc34;real-media;hoc;torch;interaction;in-memory;skip-safe")
     endif()
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_hoc_orientation_runtime_pc34.c")

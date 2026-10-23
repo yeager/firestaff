@@ -1,3 +1,15 @@
+2026-10-23 PC34 HoC stair-torch CTest wiring: `m11_dm1_hoc_wall_material_receipt_pc34`
+now receives the configured original PC34 archive and returns CTest's skip
+code when the archive is absent. Its previous configuration omitted the media
+path, allowing an empty-input pass. The rebuilt test passed against the
+installed original archive and verified wall-art provenance, C080 pickup,
+C508 equip, the F0364 stairs route, and F0337 light level 100 on map 1. Source
+reference: ReDMCSB `CLIKVIEW.C:F0373` (78-128, pickup into leader hand),
+`CLIKVIEW.C:F0376` (409-415, platform hit zones),
+`CLIKMENU.C:F0364` (124-145, stair transition), and `PANEL.C:F0337`
+(329-432, torch-derived palette level). The source route and media are now
+covered by the actual CTest invocation; pixel parity is outside this test.
+
 2026-10-23 PC34 wrong-edition startup rejection: the authentic PC 3.4
 GRAPHICS.DAT paired only with an authentic Atari ST 1.2 DUNGEON.DAT is now
 covered through both the no-game startup menu scan and direct `--game dm1`

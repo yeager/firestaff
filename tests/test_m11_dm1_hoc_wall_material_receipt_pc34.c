@@ -634,7 +634,7 @@ int main(void)
 
     if (!dataDir || !dataDir[0]) {
         puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
-        return 0;
+        return 77;
     }
     M11_GameView_Init(&state);
     if (!M11_GameView_StartDm1(&state, dataDir)) {

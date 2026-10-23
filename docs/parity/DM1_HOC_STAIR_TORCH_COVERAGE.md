@@ -31,7 +31,10 @@ shared C080 handler; its native inventory and champion controls remain owned
 by their GS tables. The harness covers original-media interaction and light
 only, not IIGS wall pixels.
 
-Reference point: `tests/test_m11_dm1_hoc_wall_material_receipt_pc34.c` covers
-the corresponding PC34 wall-art and C080/C508 interaction path using the
-original PC34 archive. Keep the PC34 graphics assertion scoped to PC34's
-bound `GRAPHICS.DAT` material.
+`m11_dm1_hoc_wall_material_receipt_pc34` supplies the configured original
+PC34 ZIP to `tests/test_m11_dm1_hoc_wall_material_receipt_pc34.c`; CTest marks
+the case skipped when that archive is not installed. The route checks the
+PC34 wall-art receipt, C080 pickup, C508 equip, original stairs transition and
+F0337 light on map 1. Keep the graphics assertion scoped to PC34's bound
+`GRAPHICS.DAT` material. The ReDMCSB transaction points are
+`CLIKVIEW.C:F0373`, `CLIKVIEW.C:F0376`, `CLIKMENU.C:F0364` and `PANEL.C:F0337`.
