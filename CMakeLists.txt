@@ -12695,6 +12695,31 @@ if(BUILD_TESTING)
             LABELS "dm1;dos;pc34;real-media;objects;skip-safe")
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_hoc_stair_torch_real_media.c")
+        foreach(platform IN ITEMS atari_st amiga20)
+            set(target "test_m11_dm1_hoc_stair_torch_${platform}")
+            add_executable(${target} tests/test_m11_dm1_hoc_stair_torch_real_media.c)
+            target_link_libraries(${target} PRIVATE firestaff_m12 firestaff_m11)
+            if(platform STREQUAL "amiga20")
+                target_compile_definitions(${target} PRIVATE M11_DM1_TORCH_AMIGA20=1)
+                set(archive "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Amiga_EN_Version-20.zip")
+                set(labels "dm1;amiga;amiga20")
+            else()
+                set(archive "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_EN_Version-12.zip")
+                set(labels "dm1;atari-st")
+            endif()
+            if(NOT MSVC)
+                target_compile_options(${target} PRIVATE -Wall -Wextra -O2)
+            endif()
+            add_test(NAME "m11_dm1_hoc_stair_torch_${platform}" COMMAND ${target}
+                WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+            set_tests_properties("m11_dm1_hoc_stair_torch_${platform}" PROPERTIES
+                ENVIRONMENT "FIRESTAFF_DM1_DATA_DIR=${archive}"
+                SKIP_RETURN_CODE 77 TIMEOUT 120
+                LABELS "${labels};hoc;torch;interaction;real-media;in-memory;skip-safe")
+        endforeach()
+    endif()
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_real_alcove_item_runtime.c")
         function(firestaff_add_dm1_alcove_real_media_test suffix definition archive env_name labels)
             set(target "test_m11_dm1_real_alcove_item_runtime_${suffix}")
