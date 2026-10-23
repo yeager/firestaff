@@ -23,6 +23,7 @@ static unsigned int group_health_total(const struct DungeonGroup_Compat *group)
 int main(void)
 {
     const char *archive = getenv("FIRESTAFF_DM1_PC34_ARCHIVE");
+    const char *originalSave = getenv("FIRESTAFF_DM1_PC34_ORIGINAL_SAVE");
     const char *shieldText = getenv("FIRESTAFF_TEST_PARTY_SHIELD");
     M11_GameViewState state;
     static const M12_MenuInput route_to_c127[] = {
@@ -87,6 +88,52 @@ int main(void)
             return 77;
         }
         fclose(media);
+    }
+    /* When a real PC34 save is available, verify F0435 restores the saved
+     * four-champion formation cells from each 319-byte C2 champion record.
+     * The source writes Direction at byte 28 and Cell at byte 29; losing the
+     * latter collapses the whole party into cell zero and breaks melee reach. */
+    if (originalSave && originalSave[0]) {
+        M11_GameViewState resumed;
+        unsigned int formationCells = 0u;
+        int slot;
+        FILE *save = fopen(originalSave, "rb");
+        if (!save) {
+            fprintf(stderr, "FAIL: authentic PC34 save is unavailable: %s\n",
+                    originalSave);
+            return 1;
+        }
+        fclose(save);
+        M11_GameView_Init(&resumed);
+        if (!M11_GameView_StartDm1(&resumed, archive) ||
+            !M11_GameView_LoadDm1SavePath(&resumed, originalSave, NULL) ||
+            resumed.world.party.championCount != 4) {
+            fprintf(stderr,
+                    "FAIL: authentic PC34 save did not restore four champions (%s %s)\n",
+                    resumed.lastAction, resumed.lastOutcome);
+            M11_GameView_Shutdown(&resumed);
+            return 1;
+        }
+        for (slot = 0; slot < resumed.world.party.championCount; ++slot) {
+            const unsigned int cell = resumed.world.party.champions[slot].cell;
+            if (cell > 3u || (formationCells & (1u << cell)) != 0u) {
+                fprintf(stderr,
+                        "FAIL: authentic PC34 save has invalid/duplicate champion cell %u at slot %d\n",
+                        cell, slot);
+                M11_GameView_Shutdown(&resumed);
+                return 1;
+            }
+            formationCells |= 1u << cell;
+        }
+        if (formationCells != 0x0fu) {
+            fprintf(stderr,
+                    "FAIL: authentic PC34 save restored incomplete formation mask 0x%x\n",
+                    formationCells);
+            M11_GameView_Shutdown(&resumed);
+            return 1;
+        }
+        M11_GameView_Shutdown(&resumed);
+        puts("PASS: authentic PC34 save restores all four source champion cells");
     }
     M11_GameView_Init(&state);
     if (!M11_GameView_StartDm1(&state, archive) || !state.world.dungeon ||

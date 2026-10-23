@@ -106,6 +106,7 @@ static void write_original_champion(unsigned char* dst) {
     memcpy(dst + 0, "TIGGY", 5u);
     memcpy(dst + 8, "APPRENTICE", 10u);
     dst[28] = DIR_EAST;
+    dst[29] = 3u; /* ReDMCSB DEFS.H CHAMPION::Cell follows Direction. */
     wr16le(dst + 52, 44u);
     wr16le(dst + 54, 55u);
     wr16le(dst + 56, 66u);
@@ -475,6 +476,8 @@ int main(void) {
                        "TIGGY   ",
                        CHAMPION_NAME_LENGTH) == 0,
                 "original PC34 resumed champion name should match PARTY")) return 1;
+    if (!expect(originalResumed.world.party.champions[0].cell == 3u,
+                "original PC34 resumed champion cell should match the C2 record")) return 1;
     if (!expect(originalResumed.world.dungeon != NULL &&
                 originalResumed.world.things != NULL &&
                 originalResumed.world.ownsDungeon == 1,

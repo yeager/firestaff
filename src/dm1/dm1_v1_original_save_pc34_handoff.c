@@ -3791,6 +3791,7 @@ static int dm1_original_save_corpus_admit_discovered_bytes(
 #define DM1_PC34_CHAMPION_NAME_OFFSET 0u
 #define DM1_PC34_CHAMPION_TITLE_OFFSET 8u
 #define DM1_PC34_CHAMPION_DIRECTION_OFFSET 28u
+#define DM1_PC34_CHAMPION_CELL_OFFSET 29u
 #define DM1_PC34_CHAMPION_ATTRIBUTES_OFFSET 48u
 #define DM1_PC34_CHAMPION_WOUNDS_OFFSET 50u
 #define DM1_PC34_CHAMPION_POISON_EVENT_COUNT_OFFSET 42u
@@ -4217,6 +4218,10 @@ static void import_original_pc34_champion(const uint8_t *src,
     memcpy(champ->title, src + DM1_PC34_CHAMPION_TITLE_OFFSET,
            CHAMPION_TITLE_LENGTH);
     champ->direction = src[DM1_PC34_CHAMPION_DIRECTION_OFFSET];
+    /* ReDMCSB DEFS.H CHAMPION stores Direction followed by Cell; F0435
+     * restores the complete fixed C2 record. Keep the saved formation cell,
+     * which F0402 uses for melee reach and F0177 target-cell selection. */
+    champ->cell = src[DM1_PC34_CHAMPION_CELL_OFFSET];
     champ->actionIndex = src[DM1_PC34_CHAMPION_ACTION_INDEX_OFFSET];
     champ->poisonDose = src[DM1_PC34_CHAMPION_POISON_EVENT_COUNT_OFFSET];
     champ->wounds = read_u16_le(src + DM1_PC34_CHAMPION_WOUNDS_OFFSET);
@@ -4281,7 +4286,8 @@ static int validate_original_pc34_champion_block(const uint8_t *src)
     };
     int i;
 
-    if (!src || src[DM1_PC34_CHAMPION_DIRECTION_OFFSET] > 3u) {
+    if (!src || src[DM1_PC34_CHAMPION_DIRECTION_OFFSET] > 3u ||
+        src[DM1_PC34_CHAMPION_CELL_OFFSET] > 3u) {
         return SAVEGAME_PC34_ERROR_BAD_SIZE;
     }
     /* ReDMCSB DEFS.H stores Current/MaximumHealth, Stamina and Mana as
