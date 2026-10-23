@@ -1,5 +1,17 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-23 v3.0.409 original-media launcher retest: the current-source
+`m12_main_menu_game_selection_real_media` CTest passed in 350.54 seconds. It
+selected all five games from the no-game menu using authentic media, covered
+keyboard selection for DM1, CSB, DM2, Nexus and Theron, mouse selection for
+DM1/CSB/DM2, and repeated launches with each DM1/CSB/DM2 game directory as the
+selected scan root. Source archives retained their original hashes. The
+updated `m12_main_menu_runtime_real_media` CTest passed in 301.52 seconds and
+reached authentic first runtime states for DM1, CSB, DM2 and Theron. Nexus is
+still absent from this first-runtime matrix; its menu-selection/handoff test
+does not prove entry into an active game. These SDL-dummy results do not prove
+native display/input, full gameplay parity, or full Nexus runtime startup.
+
 2026-10-23 current-source original-media launch retest: a focused CTest run
 passed 10/10 selected launch checks against the installed `.firestaff/data`
 collection. It covered authentic five-game CLI selection diagnostics, the
