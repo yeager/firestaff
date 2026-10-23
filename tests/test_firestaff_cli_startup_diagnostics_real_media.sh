@@ -345,8 +345,15 @@ if [ -f "$dm1_towns_archive" ] && [ -f "$csb_towns_archive" ] &&
             "$no_game_output" >&2
         exit 1
     }
+    expected_scan_games='dm1:yes,csb:yes,dm2:yes'
+    if [ -f "$nexus_iso" ]; then
+        expected_scan_games="$expected_scan_games,nexus:yes"
+    fi
+    if [ -f "$theron_track02" ]; then
+        expected_scan_games="$expected_scan_games,theron:yes"
+    fi
     printf '%s\n' "$no_game_output" | \
-        grep -Fq 'result=completed games=dm1:yes,csb:yes,dm2:yes' || {
+        grep -Fq "result=completed games=$expected_scan_games" || {
         printf 'FAIL: deferred startup scan summary did not report original game availability\n%s\n' \
             "$no_game_output" >&2
         exit 1
