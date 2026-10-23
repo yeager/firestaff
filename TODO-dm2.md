@@ -39,9 +39,11 @@ indoor item/creature walk. The projectile slot snapshot retains `mapX`,
 render plan. DB14's draw slot is derived independently: SKProject
 `DM2_QUERY_OBJECT_5x5_POS` reads `table1d268e` using the missile `ObjectID`
 direction, then rotates that position into view space. Firestaff's projectile
-render plan now carries the source map index, proves its `table1d7029` cell and
-pass, and derives the matching 5x5 position/display index. It also excludes
-projectiles whose source map index differs from the rendered dungeon level.
+render plan now carries the source map index and derives a candidate
+`table1d7029` cell/pass plus 5x5 position/display index. It excludes projectiles
+whose source map index differs from the rendered dungeon level. The candidate
+is not source-order proof: Firestaff currently supplies F0810's movement
+direction, and its equivalence to DB14 `ObjectID.Dir()` has not been established.
 F0810's `cell` remains separate movement-state evidence and is not used as the
 5x5 draw slot. The draw rows are not yet merged into the indoor painter walk:
 `DM2_DRAW_STATIC_OBJECT` may redraw missiles from its seven-slot lookback
@@ -50,7 +52,8 @@ parity implementation. Keep the current pass until that source case is
 represented and tested. `dm2_v1_projectile_step_pc34_compat` verifies the drain
 retains source map/cell fields, and
 `dm2_v1_item_projectile_rect14_render_plan` verifies map admission and the
-derived source draw key.
+derived candidate draw key while asserting that source-order validity remains
+false until the direction provenance is proven.
 References: `include/dm2_v1_projectile_pc34_compat.h`,
 `src/dm2/dm2_v1_projectile_pc34_compat.c`,
 `src/dm2/dm2_v1_runtime.c::dm2_runtime_populate_projectiles`, and SKProject

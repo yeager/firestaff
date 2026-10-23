@@ -184,7 +184,8 @@ int main(void)
           projectile_plan.projectiles[0].source_map_x == 10 &&
           projectile_plan.projectiles[0].source_map_y == 9 &&
           projectile_plan.projectiles[0].source_cell == 3 &&
-          projectile_plan.projectiles[0].source_static_object_order_valid == 1 &&
+          projectile_plan.projectiles[0].source_static_object_order_valid == 0 &&
+          projectile_plan.projectiles[0].source_static_object_order_candidate_valid == 1 &&
           projectile_plan.projectiles[0].source_static_object_cell == 3 &&
           projectile_plan.projectiles[0].source_static_object_pass ==
               dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(3) &&
@@ -199,7 +200,8 @@ int main(void)
           dm2_v1_viewport_build_projectile_render_plan(
               &viewport, &projectile_plan) &&
           projectile_plan.projectile_count == 1 &&
-          projectile_plan.projectiles[0].source_static_object_order_valid == 1 &&
+          projectile_plan.projectiles[0].source_static_object_order_valid == 0 &&
+          projectile_plan.projectiles[0].source_static_object_order_candidate_valid == 1 &&
           projectile_plan.projectiles[0].source_static_object_cell == 3 &&
           projectile_plan.projectiles[0].source_static_object_position_5x5 == 8 &&
           projectile_plan.projectiles[0].source_static_object_display_index ==

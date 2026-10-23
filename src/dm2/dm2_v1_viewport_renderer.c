@@ -5572,7 +5572,11 @@ int dm2_v1_viewport_build_projectile_render_plan(
                     dm2_v1_viewport_static_object_display_index(
                         source_cell, position_5x5);
                 if (display_index >= 0) {
-                    row->source_static_object_order_valid = 1;
+                    /* F0810 movement direction is not yet proven identical
+                     * to DB14 ObjectID.Dir(), which SKProject uses for this
+                     * lookup. Preserve the useful derived key as a candidate
+                     * without claiming source-order evidence. */
+                    row->source_static_object_order_candidate_valid = 1;
                     row->source_static_object_cell = source_cell;
                     row->source_static_object_pass = source_pass;
                     row->source_static_object_position_5x5 = position_5x5;

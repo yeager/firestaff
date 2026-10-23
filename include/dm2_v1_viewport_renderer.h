@@ -1632,6 +1632,7 @@ typedef struct {
     int source_map_y;
     int source_cell;
     int source_static_object_order_valid;
+    int source_static_object_order_candidate_valid;
     int source_static_object_cell;
     int source_static_object_pass;
     int source_static_object_position_5x5;
