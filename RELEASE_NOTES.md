@@ -1,3 +1,17 @@
+# Firestaff v3.0.409
+
+## User-facing changes
+
+- `DM1 PC34 door buttons`: use ReDMCSB's centered F0129 sampling for reduced D2/D3 button images, aligning their rendered pixels with the original click targets.
+- `Native 7z game-data scanning`: remove the artificial 64-hash limit so the scanner can match complete edition inventories, and distinguish disabled external archive tools from missing tools in scan output.
+- `--debug startup trace`: add source startup frames and launch handoff receipts to supported game-session diagnostics.
+
+## Developer changes
+
+- `DM1 PC34 F0129 regressions`: add real-media checks for the original reduced-button source samples, the D2/D3 rendering path and the chest-close input route.
+- `M12 game-data roots`: add real-media checks for per-game `.firestaff/data` roots, DM1 and CSB direct launch, CSB-only menu startup, authenticated edition retention and menu-to-runtime transitions.
+- `Release metadata`: update the project version and reproducible SPDX source SBOM for v3.0.409.
+
 # Firestaff v3.0.404
 
 ## User-facing changes
