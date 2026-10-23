@@ -33,6 +33,10 @@ int main(void)
     DM2_V1_InterfaceHudLayout hud_layout;
     DM2_V1_GdatImageMetadata floor_metadata;
     DM2_V1_GdatImageMetadata ceiling_metadata;
+    DM2_ImageFormat status_pane_format = DM2_IMG_FMT_UNKNOWN;
+    uint8_t *status_pane_pixels = NULL;
+    int status_pane_width = 0;
+    int status_pane_height = 0;
     DM2_V1_GdatSceneM11CommandPlan scene_plan;
     DM2_V1_GdatSceneQueryBlitRectReceipt rect_receipt;
     DM2_V1_BootExpandedRectReceipt rect7_receipt;
@@ -85,6 +89,15 @@ int main(void)
                "the authenticated Amiga GDAT exposes its native 16-colour interface palette");
         expect(graphics_loader.gdat_version == 5u && graphics_loader.big_endian,
                "the original Amiga scene is admitted as big-endian GDAT v5");
+        status_pane_pixels = dm2_v1_asset_load_image_field(
+            &graphics_loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 2, 0,
+            &status_pane_width, &status_pane_height, &status_pane_format);
+        expect(status_pane_pixels && status_pane_width == 77 &&
+                   status_pane_height == 37 &&
+                   status_pane_format == DM2_IMG_FMT_IMG3,
+               "the original Amiga 3-stat pane composes its IMG3 overlay with the tracked underlay");
+        dm2_v1_asset_free_pixels(status_pane_pixels);
+        status_pane_pixels = NULL;
         floor_metadata_ok = dm2_v1_asset_load_image_metadata(
                    &graphics_loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 2,
                    DM2_GDAT_GFXSET_FLOOR, &floor_metadata);

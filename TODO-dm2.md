@@ -505,8 +505,13 @@ M12 startup coverage gap; native M5 Retina/input verification remains open.
   pass for DOS EN/FR, Mac EN/FR, Amiga, and FM Towns, including screenshot
   region checks and runtime frame ownership. This verifies complete nonblank
   regions and source material consumption; it does not establish visual parity
-  with every platform capture. The Amiga IMG3 decoder still needs a source-based
-  odd-width review before Amiga can use the same optimized HUD route.
+  with every platform capture. Amiga IMG3 entries mapped in
+  `dtRaw8/0/0/0` now compose the source overlay with its tracked underlay via
+  `DM2_DECODE_IMG3_OVERLAY`; a real-media test covers
+  `INTERFACE_GENERAL/2/0` (77x37). Amiga still uses its prior HUD renderer:
+  enabling the generic source-native route removes source panel background
+  draws and fails the top-HUD coverage check. Map those panel draws to the
+  original Amiga source before enabling that route.
 
 - Verify bare `--game dm2` on the reported MacBook Pro M5 Retina display with
   the mixed original-media collection: log logical and drawable dimensions,

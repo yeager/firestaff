@@ -919,6 +919,11 @@ static int dm2_img3_emit_run(uint8_t *padded,
     while (count > 0) {
         int n;
         int i;
+        /* SKProject's DECODE_IMG3_UNDERLAY loops while its linear source
+         * offset is below maxofs, then may consume a run whose encoded
+         * duration extends beyond that final scanline. Its destination has
+         * guard storage; our tightly sized raster stops at the image edge. */
+        if (pos && *pos >= total) return 1;
         if (!padded || !pos || !line_left || width <= 0 ||
             even_width < width || *line_left <= 0) {
             return 0;
@@ -942,7 +947,8 @@ static int dm2_img3_emit_run(uint8_t *padded,
         *pos += (size_t)n;
         *line_left -= n;
         count -= n;
-        if (*line_left == 0 && *pos < total) {
+        if (*line_left == 0) {
+            if (*pos >= total) return 1;
             *pos += (size_t)(even_width - width);
             *line_left = width;
         }
@@ -4612,6 +4618,41 @@ uint8_t *dm2_v1_asset_load_image_field(const DM2_V1_AssetLoader *loader,
                                        out_width, out_height, out_format);
 }
 
+static int dm2_v1_asset_find_underlay_raw_index(
+    const DM2_V1_AssetLoader *loader,
+    uint16_t image_raw_index,
+    uint16_t *out_underlay_raw_index)
+{
+    const uint8_t *pairs;
+    size_t pair_bytes = 0u;
+    size_t low = 0u;
+    size_t high;
+
+    if (out_underlay_raw_index) *out_underlay_raw_index = 0xffffu;
+    if (!loader || !out_underlay_raw_index) return 0;
+    pairs = dm2_v1_asset_load_typed_sized(
+        loader, 0, 0, DM2_GDAT_ENTRY_TYPE_RAW8, 0, &pair_bytes);
+    if (!pairs || pair_bytes < 4u || (pair_bytes & 3u) != 0u) return 0;
+    high = pair_bytes / 4u;
+    while (low < high) {
+        size_t middle = low + ((high - low) >> 1);
+        const uint8_t *pair = pairs + middle * 4u;
+        uint16_t candidate = img_rd16(pair, loader->big_endian);
+        if (image_raw_index < candidate) {
+            high = middle;
+        } else if (image_raw_index > candidate) {
+            low = middle + 1u;
+        } else {
+            uint16_t underlay = img_rd16(pair + 2u, loader->big_endian);
+            if (underlay == 0xffffu || underlay >= loader->raw_data_count)
+                return 0;
+            *out_underlay_raw_index = underlay;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 uint8_t *dm2_v1_asset_load_raw_image(const DM2_V1_AssetLoader *loader,
                                       uint16_t raw_index,
                                       int *out_width, int *out_height,
@@ -4621,6 +4662,7 @@ uint8_t *dm2_v1_asset_load_raw_image(const DM2_V1_AssetLoader *loader,
     uint16_t cx;
     uint16_t cy;
     uint16_t bpp;
+    uint16_t underlay_raw_index;
     int width;
     int height;
     int offset_y;
@@ -4666,6 +4708,61 @@ uint8_t *dm2_v1_asset_load_raw_image(const DM2_V1_AssetLoader *loader,
                                          out_format)
             : dm2_decode_fmtowns_img2_c4(raw, raw_size, width, height,
                                          out_format);
+        if (!pixels) return NULL;
+        if (out_width) *out_width = width;
+        if (out_height) *out_height = height;
+        return pixels;
+    }
+
+    /* SKProject c_gdatfile.cpp::DM2_TRACK_UNDERLAY resolves dtRaw8/0/0/0
+     * before EXTRACT_GDAT_IMAGE calls DECODE_IMG3_OVERLAY. The overlay's
+     * transparent runs copy pixels from that companion image; treating the
+     * overlay as a standalone six-colour underlay rejects valid Amiga data. */
+    if (loader->gdat_version == 5u &&
+        dm2_v1_asset_find_underlay_raw_index(
+            loader, raw_index, &underlay_raw_index)) {
+        const uint8_t *underlay_raw;
+        size_t underlay_raw_size = 0u;
+        uint16_t underlay_cx;
+        uint16_t underlay_cy;
+        uint16_t underlay_bpp;
+        int underlay_width;
+        int underlay_height;
+        int underlay_offset_y;
+        uint8_t *underlay_pixels = NULL;
+
+        underlay_raw = dm2_v1_load_gdat_raw_data(
+            loader, underlay_raw_index, &underlay_raw_size);
+        if (!underlay_raw || underlay_raw_size < DM2_IMG3_HEADER_SIZE)
+            return NULL;
+        underlay_cx = img_rd16(underlay_raw, loader->big_endian);
+        underlay_cy = img_rd16(underlay_raw + 2u, loader->big_endian);
+        underlay_width = (int)(underlay_cx & 0x03ffu);
+        underlay_height = (int)(underlay_cy & 0x03ffu);
+        underlay_offset_y = dm2_img3_signed_offset(underlay_cy);
+        if (underlay_width < width || underlay_height < height ||
+            !dm2_img3_raw_bits_per_pixel(
+                underlay_raw, underlay_raw_size, &underlay_bpp,
+                loader->big_endian)) return NULL;
+        if (underlay_offset_y == -32) {
+            underlay_pixels = dm2_decode_uncompressed_image(
+                underlay_raw, underlay_raw_size, underlay_width,
+                underlay_height, (int)underlay_bpp, NULL);
+        } else if (underlay_offset_y == 31) {
+            underlay_pixels = dm2_decode_img9_c8(
+                underlay_raw, underlay_raw_size, underlay_width,
+                underlay_height, NULL);
+        } else {
+            underlay_pixels = dm2_decode_img3_c4(
+                underlay_raw, underlay_raw_size, underlay_width,
+                underlay_height, NULL);
+        }
+        if (!underlay_pixels) return NULL;
+        pixels = dm2_v1_decode_img3_overlay(
+            raw, raw_size, underlay_pixels,
+            (size_t)underlay_width * (size_t)underlay_height,
+            width, height, out_format);
+        free(underlay_pixels);
         if (!pixels) return NULL;
         if (out_width) *out_width = width;
         if (out_height) *out_height = height;
