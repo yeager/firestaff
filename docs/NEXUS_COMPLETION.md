@@ -1,21 +1,23 @@
 # Nexus: verified completion status
 
-## Japanese startup VDP2 trace — 2026-10-24
+## Japanese date/time setup VDP2 trace — 2026-10-24
 
-Ymir `--debug` captures from the hash-verified Japanese retail CUE and IPL
-identify a date/time setup frame with NBG0 at VRAM `0x000000` and NBG1 at
-`0x020000`, both 512×256 8bpp bitmaps. The frame-105 filtered trace replays
+Ymir `--debug` captures from a session configured with the hash-verified
+Japanese retail CUE and IPL show a date/time setup frame with NBG0 at VRAM
+`0x000000` and NBG1 at `0x020000`, both 512×256 8bpp bitmaps. The frame-105
+filtered trace replays
 all 128 KiB of NBG1 with zero mismatches; the frame-118 CRAM trace contains
 272 writes and zero drops. The captured NBG0 bytes form Japanese date/time
 text and a cursor, while NBG1 contains UI box shapes.
 
 The source analyzer now checks both layers against hash-verified retail
 assets. Frames 105, 118, 278, and 295 all have zero exact bitmap source joins;
-the startup frames also have no exact tested palette match. The source join
-remains unbound and semantic admission remains blocked. These emulator memory
-observations do not establish asset ownership or renderer permission, and do
-not change Nexus completion status. Full evidence and reproduction commands
-are in `docs/NEXUS_RUNTIME_CAPTURE.md`.
+the setup frames also have no exact tested palette match. The source join
+remains unbound and semantic admission remains blocked. No source-PC or disc-
+read evidence ties this screen to Nexus, and the capture does not prove that the
+game booted. Treat it as a pre-game/system setup state, not a game startup
+witness. It does not change Nexus completion status. Full evidence and
+reproduction commands are in `docs/NEXUS_RUNTIME_CAPTURE.md`.
 
 ## Structure1Fb floor-decoration boundary — 2026-09-29
 

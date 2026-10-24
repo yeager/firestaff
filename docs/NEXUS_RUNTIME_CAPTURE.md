@@ -1541,7 +1541,7 @@ python3 scripts/analyze_nexus_vdp2_bitmap_source.py \
   --data-dir /Volumes/Extern-disk/FirestaffUserData/data/nexus
 ```
 
-## Ymir authentic startup bitmap and CRAM traces, frames 105 and 118, 2026-10-24
+## Ymir Japanese date/time setup bitmap and CRAM traces, frames 105 and 118, 2026-10-24
 
 Two additional bundles were captured from the authentic Japanese retail CUE
 and IPL identified above using Ymir `--debug`. The frame-105 bundle filters
@@ -1559,8 +1559,10 @@ NBG0 as a 512×256 8bpp bitmap at VRAM `0x000000` with BMPNA palette selector
 0, and NBG1 as a 512×256 8bpp bitmap at `0x020000` with selector 1. The
 captured NBG0 bytes, decoded with the captured CRAM, visibly form the Japanese
 date/time setup text and cursor; NBG1 contains the corresponding box shapes.
-These are observations of captured memory, not source ownership or renderer
-admission.
+The trace does not bind this screen to Nexus code or assets and does not prove
+that the retail game booted; treat it as a pre-game/system setup state until a
+source-PC or disc-read trace establishes otherwise. These observations do not
+provide Nexus startup/menu parity or authorize renderer admission.
 
 `analyze_nexus_vdp2_bitmap_source.py` now compares both active bitmap layers
 against the hash-verified retail source corpus. For both frames 105 and 118 it
@@ -1568,9 +1570,9 @@ reports zero exact source matches on either layer, `source_join=unbound`, and
 `semantic_admission=blocked`. Its longest byte runs are partial only (35 bytes
 from TITLE.BIN maps 1/3 on NBG0; 118 bytes from TITLE.BIN map 4 and 99 bytes
 from MENU.BPK on NBG1). The tested TITLE, MENU, STABG, and 1,266 DGN palette
-anchors have no exact or word-swapped CRAM match. This evidence advances the
-startup display investigation while leaving source identity, palette owner,
-and production rendering unresolved.
+anchors have no exact or word-swapped CRAM match. This advances emulator-state
+inspection but leaves game boot, source identity, palette owner, and production
+rendering unresolved. Do not count this as a game startup/menu witness.
 
 The complete bitmap bundle and CRAM bundle, including raw register, VRAM,
 CRAM, trace, and screenshots, are retained at:
