@@ -34,6 +34,7 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --boot-probe \
     --boot-probe-frames 0 \
     --script 'enter,enter,down,down,down,down,down,down,enter,down,enter,tab' \
+    --debug \
     --boot-probe-expect-runtime \
     --boot-probe-expect-level-loaded 1 \
     --boot-probe-expect-party 1,0,0 \
@@ -73,12 +74,14 @@ run_pose_probe() {
     local script=$2
     local expected_party=$3
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --width 320 --height 224 \
         --game theron \
         --theron-native us \
         --data-dir "$data_root" \
         --boot-probe \
         --boot-probe-frames 0 \
         --script "$script" \
+        --debug \
         --boot-probe-expect-runtime \
         --boot-probe-expect-level-loaded 1 \
         --boot-probe-expect-party "$expected_party" \
@@ -93,20 +96,29 @@ turn_output=$(mktemp "$scratch_root/firestaff-theron-us-turn.XXXXXX")
 move_output=$(mktemp "$scratch_root/firestaff-theron-us-move.XXXXXX")
 forward_blocked_output=$(mktemp "$scratch_root/firestaff-theron-us-forward-blocked.XXXXXX")
 turn_left_output=$(mktemp "$scratch_root/firestaff-theron-us-turn-left.XXXXXX")
-trap 'rm -f "$output" "$baseline_output" "$turn_output" "$move_output" "$forward_blocked_output" "$turn_left_output"; rm -rf "$us_only_root"' EXIT
+mouse_turn_left_output=$(mktemp "$scratch_root/firestaff-theron-us-mouse-turn-left.XXXXXX")
+mouse_back_output=$(mktemp "$scratch_root/firestaff-theron-us-mouse-back.XXXXXX")
+trap 'rm -f "$output" "$baseline_output" "$turn_output" "$move_output" "$forward_blocked_output" "$turn_left_output" "$mouse_turn_left_output" "$mouse_back_output"; rm -rf "$us_only_root"' EXIT
 run_pose_probe "$baseline_output" "$startup_script" '1,0,0'
 run_pose_probe "$turn_output" "$startup_script,right" '1,0,1'
 run_pose_probe "$move_output" "$startup_script,down" '1,1,0'
 run_pose_probe "$forward_blocked_output" "$startup_script,up" '1,0,0'
 run_pose_probe "$turn_left_output" "$startup_script,left" '1,0,3'
+run_pose_probe "$mouse_turn_left_output" "$startup_script,click:204:172" '1,0,3'
+run_pose_probe "$mouse_back_output" "$startup_script,click:248:195" '1,1,0'
 if ! grep -Fq 'party=1,0,0 champions=2 runtimeTick=0' "$baseline_output" ||
    ! grep -Fq 'party=1,0,1 champions=2 runtimeTick=0' "$turn_output" ||
    ! grep -Fq 'party=1,1,0 champions=2 runtimeTick=1' "$move_output" ||
    ! grep -Fq 'party=1,0,0 champions=2 runtimeTick=0' "$forward_blocked_output" ||
-   ! grep -Fq 'party=1,0,3 champions=2 runtimeTick=0' "$turn_left_output"; then
+   ! grep -Fq 'party=1,0,3 champions=2 runtimeTick=0' "$turn_left_output" ||
+   ! grep -Fq 'party=1,0,3 champions=2 runtimeTick=0' "$mouse_turn_left_output" ||
+   ! grep -Fq 'party=1,1,0 champions=2 runtimeTick=1' "$mouse_back_output" ||
+   ! grep -Fq 'pointer-click point=204,160' "$mouse_turn_left_output" ||
+   ! grep -Fq 'pointer-click point=248,183' "$mouse_back_output"; then
     cat "$baseline_output" "$turn_output" "$move_output" \
-        "$forward_blocked_output" "$turn_left_output" >&2
-    printf '%s\n' 'FAIL: authentic Theron USA input did not match source-owned turn, movement, and blocked-boundary pose/tick behavior' >&2
+        "$forward_blocked_output" "$turn_left_output" \
+        "$mouse_turn_left_output" "$mouse_back_output" >&2
+    printf '%s\n' 'FAIL: authentic Theron USA keyboard and mouse input did not match source-backed pose/tick behavior' >&2
     exit 1
 fi
 
@@ -140,4 +152,4 @@ if [[ $wrong_region_rc -ne 2 ]] ||
     exit 1
 fi
 
-printf '%s\n' 'PASS: authentic Theron USA raw BIN reaches runtime; isolated turns, one-step movement, and blocked boundary movement match source-owned pose/tick behavior'
+printf '%s\n' 'PASS: authentic Theron USA raw BIN reaches runtime; keyboard turns/movement and mouse turn/back controls match source-backed pose/tick behavior'

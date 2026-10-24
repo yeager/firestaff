@@ -7,26 +7,29 @@
   and keypad 1/3 and 4/6 provide the same actions. Startup arrows still
   navigate Theron's menus. The focused input regression passed three loops on
   TRV2.
-- Mouse buttons 1/2 currently map to Button I/II. Dungeon clicks do not use
-  pointer position to select movement, inventory or champion controls, and
-  Button II does not perform a standalone dungeon action. The retail Theron
-  interface is controller-only, so authentic point captures do not establish
-  host mouse bounds. The original framebuffer/layout is not yet connected to
-  a validated native gameplay view. DM1 zones cannot be copied blindly onto
-  Theron's differently sized PCE layout; create and test an explicitly
-  Firestaff-owned mouse overlay after the native authenticated view is ready.
+- The native dungeon draw now includes a visible, Firestaff-owned 3x2 mouse
+  panel for turn-left/forward/turn-right and step-left/back/step-right. Its six
+  buttons dispatch the same native Theron inputs as the keyboard and normalize
+  pointer coordinates across presentation sizes. The panel uses explicit host
+  UI bounds rather than borrowing DM1's pointer table or claiming original
+  Theron hitboxes. Button II remains cancel/back.
 - The source-locked captures do identify six original movement-panel command
   points: turn-left `$7B/$8F`, forward `$8A/$8F`, turn-right `$98/$8F`,
   step-left `$7B/$A5`, backward `$8A/$A5`, and step-right `$98/$A5`. These are
   internal PCE cursor samples, not rectangle boundaries or host-space pixels.
-  Use them to align visible Firestaff-owned targets with the authentic panel
-  after the live native view and its coordinate transform are source-bound.
+  They establish the original command order only.
+- On TRV2, `theron_v1_m11_launcher_handoff_boundary` passed three consecutive
+  loops, checking all six controls with 320x200 and 640x400 pointer coordinates
+  and verifying the drawn panel. Its small test map verifies dispatch only.
+  `theron_v1_raw_bin_runtime_boot` passed once with `--debug` and authentic US
+  `TQUS02.bin`: mouse turn-left changed the loaded party to direction 3, and
+  mouse Back moved it from `(1,0)` to `(1,1)` with one runtime tick.
 - Remaining work: bind Theron's original graphics and layout in the native
-  renderer, implement visible Firestaff-owned mouse targets for its six
-  movement actions, then verify coordinate scaling and dispatch in an
-  interactive native real-media run. The authentic point captures do not
-  define the host hitbox bounds. User requirement remains open until keyboard
-  and mouse both support ordinary dungeon play.
+  state-driven renderer, then verify that mouse movement is visible in an
+  interactive native real-media run. The current authenticated screen route
+  can display a frozen capture rather than a state-driven frame, so the input
+  overlay and passing dispatch tests do not establish complete visual
+  playability.
 
 ## 2026-10-24 — authenticated snapshot renders; state pairing remains open
 
