@@ -188,6 +188,14 @@ int main(void) {
           M12_MENU_INPUT_TURN_LEFT);
     CHECK(M11_TheronGameplayInputFromKeycode(SDLK_E) ==
           M12_MENU_INPUT_TURN_RIGHT);
+    CHECK(M11_TheronGameplayInputFromKeycode(SDLK_HOME) ==
+          M12_MENU_INPUT_TURN_LEFT);
+    CHECK(M11_TheronGameplayInputFromKeycode(SDLK_END) ==
+          M12_MENU_INPUT_TURN_RIGHT);
+    CHECK(M11_TheronGameplayInputFromKeycode(SDLK_KP_4) ==
+          M12_MENU_INPUT_TURN_LEFT);
+    CHECK(M11_TheronGameplayInputFromKeycode(SDLK_KP_6) ==
+          M12_MENU_INPUT_TURN_RIGHT);
     CHECK(M11_TheronMouseButtonToInput(SDL_BUTTON_LEFT) ==
           M12_MENU_INPUT_ACCEPT);
     /* Button II cancels; it is not a world-tick action. A physical middle

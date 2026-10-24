@@ -27,9 +27,14 @@
   surface, not source-verified world-pointing behavior.
 - Dungeon clicks outside the explicit 4x3 host controls are now ignored
   instead of being converted into Button I / a wait tick. Regression coverage
-  confirms that an unmapped click leaves the source party position, direction,
-  and tick count unchanged. Authentic Theron target hitboxes and a
-  state-driven view remain open.
+  and an authentic USA Track 02 `--debug` runtime loop confirm an unmapped
+  click leaves the party pose and tick count unchanged. Authentic Theron
+  target hitboxes and a state-driven view remain open.
+- The `--debug` boot-probe key path now uses the loaded-dungeon gameplay
+  mapping, matching the native SDL path rather than startup navigation. The
+  authentic USA Track 02 loop checks left/right arrow sidestepping and Q/E,
+  Home, and keypad-6 turning; the focused launcher/input contract also checks
+  keycode aliases for Home/End and keypad 4/6.
 
 ## 2026-10-24 — complete Theron keyboard and mouse playability
 

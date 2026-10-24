@@ -10537,6 +10537,8 @@ static int m11_script_keycode_from_name(const char* name) {
     if (strcmp(name, "down") == 0) return SDLK_DOWN;
     if (strcmp(name, "left") == 0) return SDLK_LEFT;
     if (strcmp(name, "right") == 0) return SDLK_RIGHT;
+    if (strcmp(name, "home") == 0) return SDLK_HOME;
+    if (strcmp(name, "end") == 0) return SDLK_END;
     if (strcmp(name, "enter") == 0 || strcmp(name, "return") == 0) return SDLK_RETURN;
     if (strcmp(name, "kp-enter") == 0) return SDLK_KP_ENTER;
     if (strcmp(name, "kp-1") == 0 || strcmp(name, "kp1") == 0) return SDLK_KP_1;
@@ -10908,8 +10910,11 @@ static M12_MenuInput m11_boot_probe_key_input(const M11_GameViewState* gameView,
         return csbInput;
     }
     if (m11_game_view_is_theron(gameView)) {
-        M12_MenuInput theronInput =
-            M11_TheronNavigationInputFromKeycode(keycode);
+        const int gameplayInput =
+            m11_game_view_supports_held_motion_input(gameView);
+        M12_MenuInput theronInput = gameplayInput
+            ? M11_TheronGameplayInputFromKeycode(keycode)
+            : M11_TheronNavigationInputFromKeycode(keycode);
         if (theronInput != M12_MENU_INPUT_NONE) {
             return theronInput;
         }

@@ -96,6 +96,10 @@ turn_output=$(mktemp "$scratch_root/firestaff-theron-us-turn.XXXXXX")
 move_output=$(mktemp "$scratch_root/firestaff-theron-us-move.XXXXXX")
 forward_blocked_output=$(mktemp "$scratch_root/firestaff-theron-us-forward-blocked.XXXXXX")
 turn_left_output=$(mktemp "$scratch_root/firestaff-theron-us-turn-left.XXXXXX")
+keyboard_right_output=$(mktemp "$scratch_root/firestaff-theron-us-keyboard-right.XXXXXX")
+keyboard_left_output=$(mktemp "$scratch_root/firestaff-theron-us-keyboard-left.XXXXXX")
+turn_alias_left_output=$(mktemp "$scratch_root/firestaff-theron-us-turn-alias-left.XXXXXX")
+turn_alias_right_output=$(mktemp "$scratch_root/firestaff-theron-us-turn-alias-right.XXXXXX")
 mouse_turn_left_output=$(mktemp "$scratch_root/firestaff-theron-us-mouse-turn-left.XXXXXX")
 mouse_turn_right_output=$(mktemp "$scratch_root/firestaff-theron-us-mouse-turn-right.XXXXXX")
 mouse_forward_output=$(mktemp "$scratch_root/firestaff-theron-us-mouse-forward.XXXXXX")
@@ -103,13 +107,19 @@ mouse_back_output=$(mktemp "$scratch_root/firestaff-theron-us-mouse-back.XXXXXX"
 mouse_step_pair_output=$(mktemp "$scratch_root/firestaff-theron-us-mouse-step-pair.XXXXXX")
 mouse_next_output=$(mktemp "$scratch_root/firestaff-theron-us-mouse-next.XXXXXX")
 mouse_wait_output=$(mktemp "$scratch_root/firestaff-theron-us-mouse-wait.XXXXXX")
+mouse_unmapped_output=$(mktemp "$scratch_root/firestaff-theron-us-mouse-unmapped.XXXXXX")
 mouse_item_drop_output=$(mktemp "$scratch_root/firestaff-theron-us-mouse-item-drop.XXXXXX")
-trap 'rm -f "$output" "$baseline_output" "$turn_output" "$move_output" "$forward_blocked_output" "$turn_left_output" "$mouse_turn_left_output" "$mouse_turn_right_output" "$mouse_forward_output" "$mouse_back_output" "$mouse_step_pair_output" "$mouse_next_output" "$mouse_wait_output" "$mouse_item_drop_output"; rm -rf "$us_only_root"' EXIT
+trap 'rm -f "$output" "$baseline_output" "$turn_output" "$move_output" "$forward_blocked_output" "$turn_left_output" "$keyboard_right_output" "$keyboard_left_output" "$turn_alias_left_output" "$turn_alias_right_output" "$mouse_turn_left_output" "$mouse_turn_right_output" "$mouse_forward_output" "$mouse_back_output" "$mouse_step_pair_output" "$mouse_next_output" "$mouse_wait_output" "$mouse_unmapped_output" "$mouse_item_drop_output"; rm -rf "$us_only_root"' EXIT
 run_pose_probe "$baseline_output" "$startup_script" '1,0,0'
-run_pose_probe "$turn_output" "$startup_script,right" '1,0,1'
+run_pose_probe "$turn_output" "$startup_script,key:e" '1,0,1'
 run_pose_probe "$move_output" "$startup_script,down" '1,1,0'
 run_pose_probe "$forward_blocked_output" "$startup_script,up" '1,0,0'
-run_pose_probe "$turn_left_output" "$startup_script,left" '1,0,3'
+run_pose_probe "$turn_left_output" "$startup_script,key:q" '1,0,3'
+run_pose_probe "$keyboard_right_output" "$startup_script,down,key:right" '2,1,0'
+run_pose_probe "$keyboard_left_output" \
+    "$startup_script,down,key:right,key:left" '1,1,0'
+run_pose_probe "$turn_alias_left_output" "$startup_script,key:home" '1,0,3'
+run_pose_probe "$turn_alias_right_output" "$startup_script,key:kp6" '1,0,1'
 run_pose_probe "$mouse_turn_left_output" "$startup_script,click:204:144" '1,0,3'
 run_pose_probe "$mouse_turn_right_output" "$startup_script,click:292:144" '1,0,1'
 run_pose_probe "$mouse_forward_output" "$startup_script,down,click:248:144" '1,0,0'
@@ -118,14 +128,19 @@ run_pose_probe "$mouse_step_pair_output" \
     "$startup_script,down,click:292:163,click:204:163" '1,1,0'
 run_pose_probe "$mouse_next_output" "$startup_script,click:204:182" '1,0,0'
 run_pose_probe "$mouse_wait_output" "$startup_script,click:292:201" '1,0,0'
+run_pose_probe "$mouse_unmapped_output" "$startup_script,click:100:80" '1,0,0'
 run_pose_probe "$mouse_item_drop_output" \
-    "$startup_script,down,down,left,click:248:182,click:292:182,click:204:201" \
+    "$startup_script,down,down,key:q,click:248:182,click:292:182,click:204:201" \
     '1,2,3'
 if ! grep -Fq 'party=1,0,0 champions=2 runtimeTick=0' "$baseline_output" ||
    ! grep -Fq 'party=1,0,1 champions=2 runtimeTick=0' "$turn_output" ||
    ! grep -Fq 'party=1,1,0 champions=2 runtimeTick=1' "$move_output" ||
    ! grep -Fq 'party=1,0,0 champions=2 runtimeTick=0' "$forward_blocked_output" ||
    ! grep -Fq 'party=1,0,3 champions=2 runtimeTick=0' "$turn_left_output" ||
+   ! grep -Fq 'party=2,1,0 champions=2 runtimeTick=2' "$keyboard_right_output" ||
+   ! grep -Fq 'party=1,1,0 champions=2 runtimeTick=3' "$keyboard_left_output" ||
+   ! grep -Fq 'party=1,0,3 champions=2 runtimeTick=0' "$turn_alias_left_output" ||
+   ! grep -Fq 'party=1,0,1 champions=2 runtimeTick=0' "$turn_alias_right_output" ||
    ! grep -Fq 'party=1,0,3 champions=2 runtimeTick=0' "$mouse_turn_left_output" ||
    ! grep -Fq 'party=1,0,1 champions=2 runtimeTick=0' "$mouse_turn_right_output" ||
    ! grep -Fq 'party=1,0,0 champions=2 runtimeTick=2' "$mouse_forward_output" ||
@@ -134,6 +149,8 @@ if ! grep -Fq 'party=1,0,0 champions=2 runtimeTick=0' "$baseline_output" ||
    ! grep -Fq 'party=1,0,0 champions=2 runtimeTick=0' "$mouse_next_output" ||
    ! grep -Fq 'theronActiveChampion=0' "$mouse_next_output" ||
    ! grep -Fq 'party=1,0,0 champions=2 runtimeTick=1' "$mouse_wait_output" ||
+   ! grep -Fq 'party=1,0,0 champions=2 runtimeTick=0' "$mouse_unmapped_output" ||
+   ! grep -Fq 'input=pointer-click point=100,68 result=0' "$mouse_unmapped_output" ||
    ! grep -Fq 'party=1,2,3 champions=2 runtimeTick=2' "$mouse_item_drop_output" ||
    ! grep -Fq 'pointer-click point=248,170 result=1 action="ITEM" outcome="ITEM PICKED UP"' "$mouse_item_drop_output" ||
    ! grep -Fq 'pointer-click point=292,170 result=1 action="ITEM" outcome="SANDALS"' "$mouse_item_drop_output" ||
@@ -148,10 +165,12 @@ if ! grep -Fq 'party=1,0,0 champions=2 runtimeTick=0' "$baseline_output" ||
    ! grep -Fq 'pointer-click point=248,151' "$mouse_back_output"; then
     cat "$baseline_output" "$turn_output" "$move_output" \
         "$forward_blocked_output" "$turn_left_output" \
+        "$keyboard_right_output" "$keyboard_left_output" \
+        "$turn_alias_left_output" "$turn_alias_right_output" \
         "$mouse_turn_left_output" "$mouse_back_output" \
         "$mouse_turn_right_output" "$mouse_forward_output" \
         "$mouse_step_pair_output" \
-        "$mouse_next_output" "$mouse_wait_output" \
+        "$mouse_next_output" "$mouse_wait_output" "$mouse_unmapped_output" \
         "$mouse_item_drop_output" >&2
     printf '%s\n' 'FAIL: authentic Theron USA keyboard and mouse input did not match source-backed pose/tick behavior' >&2
     exit 1
