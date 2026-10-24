@@ -46,6 +46,15 @@ jobs:
       - name: Reject BIOS, firmware and original game media
         run: bash scripts/verify_no_original_media_tracked.sh
 
+  paired-capture-diff-tool:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install Pillow
+        run: bash scripts/ci/install_apt_packages.sh python3-pil
+      - name: Verify source-state-bound paired capture diffs
+        run: python3 tests/test_paired_capture_diff.py
+
   nexus-tooling-regressions:
     runs-on: ubuntu-24.04
     steps:
