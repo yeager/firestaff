@@ -10,8 +10,16 @@ if ! grep -Fq 'TheronTraceInstructionPC >= 0x4002' "$patch_file" ||
    ! grep -Fq 'FIRESTAFF_THERON_STAGE2_OPCODE_FETCH_TRACE' "$patch_file" ||
    ! grep -Fq 'stage2_opcode_fetch sequence=%u logical_pc=%04x physical_pc=%06x mpr_slot=%u mpr_bank=%02x opcode=%02x' "$patch_file" ||
    ! grep -Fq 'TheronTraceInstructionPhysicalPC, mpr_slot, mpr_bank, b1);' "$patch_file" ||
+   ! grep -Fq 'TheronTraceInstructionPC >= 0x46b8' "$patch_file" ||
+   ! grep -Fq 'TheronTraceInstructionPC <= 0x46c9' "$patch_file" ||
+   ! grep -Fq 'TheronTraceInstructionPC >= 0x5e4d' "$patch_file" ||
+   ! grep -Fq 'TheronTraceInstructionPC >= 0x5e7d' "$patch_file" ||
+   ! grep -Fq 'FIRESTAFF_THERON_STAGE2_VCE_CALL_TRACE' "$patch_file" ||
+   ! grep -Fq 'RdMem(0x1c)' "$patch_file" ||
+   ! grep -Fq 'RdMem(0x1d)' "$patch_file" ||
+   ! grep -Fq 'stream_pointer=%04x stream_pos=%04x window=' "$patch_file" ||
    ! grep -Fq 'FIRESTAFF_PATCH_TAB_CONTEXT' "$build_script"; then
-    printf 'FAIL: Fast-core probe is missing its bounded PC/mapping fields or direct b1 record\n' >&2
+    printf 'FAIL: Fast-core probe is missing opcode, VCE-call, or stream-cursor fields\n' >&2
     exit 1
 fi
 
@@ -39,5 +47,5 @@ if ! awk '
     exit 1
 fi
 
-printf 'PASS: bounded PCE Fast stage-2 opcode probe is wired after PC/MPR capture and records dispatched b1\n'
-printf 'LIMIT: this probe records executed opcode bytes only; it does not prove source-byte origin or gameplay\n'
+printf 'PASS: bounded PCE Fast probe records dispatched opcodes and VCE handler stream-cursor windows\n'
+printf 'LIMIT: the trace still needs source-origin and screen-state correlation before native presentation\n'

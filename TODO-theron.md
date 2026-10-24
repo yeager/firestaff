@@ -29,6 +29,18 @@ incorrect. This establishes an authentic static palette route, but not which
 startup or dungeon screen invokes it, nor any pixel/tile semantics. See
 [`theron-stage2-static-vce-palette-20261024.md`](docs/source-lock/theron-stage2-static-vce-palette-20261024.md).
 
+## 2026-10-24 — Reference probe can capture VCE call-site stream context
+
+Extended the optional, bounded Mednafen PCE Fast disassembly probe to record
+the executed opcode, CPU mapping, stream pointer, and nearby bytes while the
+authentic US/JP Stage-2 palette handler and callee run. The probe patch passes
+its repository wiring check and compiled in a task-owned TRV2 source copy; no
+gameplay was run in the emulator. This is evidence-gathering tooling only. It
+does not establish that the handler is reached by an authentic gameplay
+screen, identify graphics ownership, or change Firestaff's native renderer.
+The native presentation still needs an authenticated stream-to-screen join
+before palette or graphics behavior can be implemented safely.
+
 ## Earlier 2026-10-24 — TRV2 headless native loop had no Theron frames
 
 A Debug Firestaff executable built from the current source commit on TRV2 and
