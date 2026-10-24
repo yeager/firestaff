@@ -1,5 +1,10 @@
 # Theron Capture Readiness
 
+Firestaff runs Theron's Quest in its native C/SDL runtime. Mednafen is used
+only as an external reference instrument for authentic original-game behavior
+and data capture; it is never part of the shipped runtime or a substitute for
+native Firestaff gameplay.
+
 ## 2026-10-24 — current evidence boundary
 
 Three current-source Firestaff `--debug` runs on TRV2 passed with authentic JP
@@ -12,21 +17,22 @@ These checks establish Firestaff runtime admission and source-record
 candidates only; they do not prove original-game movement, pit semantics or
 visual parity.
 
-A separate authentic JP Mednafen save state was visibly in dungeon gameplay,
-but its active map and party coordinates are not joined to Track 02. Host-key
-input reached the PCE pad interface, but no game command-consumer receipt
-proved movement. The available `pce_fast` build autoloaded the state but did
-not emit the VDC snapshot required by the capture helper, so that attempt is
-not a complete capture manifest. This is separate from the US cold-start
-attempt below, which remained on the System Card screen. Do not promote either
-result to original-game parity. The pit consumer remains blocked; see the
+An authentic JP Mednafen state was visibly in dungeon gameplay, but its active
+map and party coordinates are not joined to Track 02. The latest isolated
+autoload attempt produced raw VDC and RAM snapshots, but had no verified input
+delivery, command-consumer receipt, or CD transition. The capture helper
+therefore rejected the bundle as incomplete. An earlier host-key attempt
+reached the PCE pad interface but did not prove movement. A separate US
+cold-start attempt remained on the System Card screen. These are reference
+diagnostics only; do not promote them to original-game parity. The pit
+consumer remains blocked; see the
 [pit evidence gap](source-lock/theron-disassembly/theron-pit-gate-evidence-gap-20261024.md).
 
-Next capture work is to use a snapshot-capable `pce_fast` build, capture a
-controlled input with same-session command-consumer, party-pose and active-map
-receipts, and bind the executing pit query/caller to its physical bank and
-authentic Track 02 record. Keep game media and private emulator artifacts on
-the operator's machine.
+Next reference-capture work is to verify a controlled input with same-session
+command-consumer, party-pose and active-map receipts, then bind the executing
+pit query/caller to its physical bank and authentic Track 02 record. Keep game
+media and private emulator artifacts on the operator's machine. Continue
+implementing and validating gameplay in Firestaff's native runtime.
 
 ## 2026-10-24 — selected title-menu action hold remains unverified
 
