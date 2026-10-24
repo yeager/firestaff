@@ -25,6 +25,10 @@
 - `Five-game startup diagnostics`: verify startup summaries for all five games and distinguish the Nexus title from a playable runtime.
 - `Debug performance telemetry`: add portable CPU and memory regression coverage and run it through the cross-platform CI workflow.
 - `Paired capture diff`: add a shared state-bound image comparison tool and report format for all five games, with per-manifest native frame geometry, source-state hashes, region metrics and difference masks.
+- `Five-game test sweep`: add a command-line tool that discovers and runs CTest groups for DM1, CSB, DM2, Theron and Nexus, preserving test names and distinguishing partial runs and skips.
+- `Real-media boot sweep`: add a tool that runs supported CLI boot routes per game and platform, preserves selected asset hashes and receipts, and reports missing media and blocked startup separately.
+- `Parity evidence`: add dated test-inventory and real-media boot reports, including the DM2 Macintosh missing-media route and Nexus title-compositor blocker; the reports describe diagnostic evidence, not parity.
+- `Nexus Ymir observation`: add a retail-media Ymir 0.4.1 startup capture and document that it does not establish Firestaff rendering or game parity.
 - `Cross-platform CI`: use Ninja for macOS builds and cache C/C++ compilation results on macOS and Linux to speed up repeated verification runs.
 - `Startup-menu catalogs`: update gettext source references and translated catalogs for the current startup diagnostics.
 - `Release metadata`: bump the project version and update the SPDX source SBOM for v3.0.410.
