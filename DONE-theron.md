@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-24 — use the configured SDL driver for capture module discovery
+
+- The Mednafen capture helper now passes its selected SDL video driver and a
+  dummy audio driver to the `-help` module probe. When the video-driver
+  selection is empty, it preserves SDL's native interactive default. This
+  lets headless capture hosts discover `pce_fast` without depending on a
+  display while keeping desktop capture behavior intact.
+- On TRV2, the actual isolated instrumented Mednafen binary listed `pce_fast`
+  in three consecutive headless help probes. `bash -n` and `git diff --check`
+  passed. This changes reference-capture tooling only; Firestaff's native
+  runtime remains emulator-free.
+
 ## 2026-10-24 — clarify native runtime and reference-capture limit
 
 - Reaffirmed that Firestaff runs Theron's Quest in its native C/SDL runtime;

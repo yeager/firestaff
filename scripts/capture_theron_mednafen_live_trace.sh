@@ -528,7 +528,18 @@ require_mednafen_module() {
     # contain the requested core. Some macOS builds expose only `pce`; passing
     # `pce_fast` to those builds otherwise leaves an expensive, empty capture
     # with no trustworthy runtime receipt.
-    help_output=$("$mednafen_bin" -help 2>&1 || true)
+    # The module probe initializes SDL on some Mednafen builds. Reuse the
+    # capture driver's selection so headless hosts use the configured dummy
+    # driver instead of failing before the module list is printed.
+    if [[ -n "$capture_sdl_video_driver" ]]; then
+        help_output=$(SDL_VIDEODRIVER="$capture_sdl_video_driver" \
+                      SDL_AUDIODRIVER=dummy \
+                      "$mednafen_bin" -help 2>&1 || true)
+    else
+        # An empty driver selects SDL's native default on interactive hosts.
+        help_output=$(SDL_AUDIODRIVER=dummy \
+                      "$mednafen_bin" -help 2>&1 || true)
+    fi
     if printf '%s\n' "$help_output" |
        awk -v requested="$requested" '
            /^ Emulation modules:/ {
