@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -43,6 +44,26 @@ def _required_text(value: Any, label: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ManifestError(f"{label} must be a non-empty string")
     return value.strip()
+
+
+def _safe_filename_component(value: Any, label: str) -> str:
+    name = _required_text(value, label)
+    if name in {".", ".."} or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", name):
+        raise ManifestError(
+            f"{label} must be a filename-safe identifier using letters, digits, dot, "
+            "underscore, or hyphen"
+        )
+    return name
+
+
+def _safe_output_file(out_dir: Path, filename: str) -> Path:
+    output_root = out_dir.resolve()
+    output_path = (output_root / filename).resolve()
+    try:
+        output_path.relative_to(output_root)
+    except ValueError as exc:
+        raise ManifestError(f"output file resolves outside the output directory: {output_path}") from exc
+    return output_path
 
 
 def _resolve_input(base: Path, entry: Any, label: str) -> Path:
@@ -164,7 +185,7 @@ def _validate_region(region: Any, image_size: tuple[int, int], index: int) -> di
     label = f"regions[{index}]"
     if not isinstance(region, dict):
         raise ManifestError(f"{label} must be an object")
-    name = _required_text(region.get("name"), f"{label}.name")
+    name = _safe_filename_component(region.get("name"), f"{label}.name")
     bounds = [region.get(field) for field in ("x", "y", "width", "height")]
     if any(not isinstance(value, int) or isinstance(value, bool) for value in bounds):
         raise ManifestError(f"{label} x, y, width, and height must be integers")
@@ -237,7 +258,7 @@ def compare_manifest(manifest_path: Path, out_dir: Path,
     if not isinstance(regions, list) or not regions:
         raise ManifestError("regions must be a non-empty list")
     region_names = [
-        _required_text(region.get("name"), f"regions[{index}].name")
+        _safe_filename_component(region.get("name"), f"regions[{index}].name")
         if isinstance(region, dict) else ""
         for index, region in enumerate(regions)
     ]
@@ -275,7 +296,7 @@ def compare_manifest(manifest_path: Path, out_dir: Path,
         label = f"captures[{capture_index}]"
         if not isinstance(capture, dict):
             raise ManifestError(f"{label} must be an object")
-        capture_id = _required_text(capture.get("id"), f"{label}.id")
+        capture_id = _safe_filename_component(capture.get("id"), f"{label}.id")
         if capture_id in capture_ids:
             raise ManifestError(f"duplicate capture id: {capture_id}")
         capture_ids.add(capture_id)
@@ -315,11 +336,14 @@ def compare_manifest(manifest_path: Path, out_dir: Path,
             for index, region in enumerate(regions)
         ]
         region_reports = []
-        for region in normalized_regions:
-            mask_name = f"{capture_id}.{region['name']}.mask.png"
+        for region_index, region in enumerate(normalized_regions):
+            mask_name = (
+                f"capture{capture_index:04d}.region{region_index:04d}."
+                f"{capture_id}.{region['name']}.mask.png"
+            )
             region_reports.append(
                 _diff_region(reference_image, firestaff_image, region, tolerance,
-                             out_dir / mask_name)
+                             _safe_output_file(out_dir, mask_name))
             )
         report["captures"].append({
             "id": capture_id,
@@ -336,7 +360,7 @@ def compare_manifest(manifest_path: Path, out_dir: Path,
             },
             "regions": region_reports,
         })
-    report_path = out_dir / "paired_capture_report.json"
+    report_path = _safe_output_file(out_dir, "paired_capture_report.json")
     report["reportPath"] = str(report_path)
     report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return report

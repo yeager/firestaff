@@ -162,6 +162,39 @@ class PairedCaptureDiffTests(unittest.TestCase):
         with self.assertRaisesRegex(ManifestError, "not ignored"):
             compare_manifest(self.manifest, unsafe_output)
 
+    def test_rejects_capture_id_path_traversal(self) -> None:
+        self.data["captures"][0]["id"] = "../escape"
+        self._write_manifest()
+        with self.assertRaisesRegex(ManifestError, "captures\[0\]\.id must be a filename-safe"):
+            compare_manifest(self.manifest, self.report_dir)
+
+    def test_rejects_region_name_path_traversal(self) -> None:
+        self.data["regions"][0]["name"] = "../escape"
+        self._write_manifest()
+        with self.assertRaisesRegex(ManifestError, "regions\[0\]\.name must be a filename-safe"):
+            compare_manifest(self.manifest, self.report_dir)
+
+    @unittest.skipIf(sys.platform == "win32", "symlink creation may require elevated privileges")
+    def test_rejects_report_symlink_outside_output_directory(self) -> None:
+        self.report_dir.mkdir()
+        outside = self.root / "outside-report.json"
+        outside.write_text("preserve", encoding="utf-8")
+        (self.report_dir / "paired_capture_report.json").symlink_to(outside)
+        with self.assertRaisesRegex(ManifestError, "resolves outside the output directory"):
+            compare_manifest(self.manifest, self.report_dir)
+        self.assertEqual(outside.read_text(encoding="utf-8"), "preserve")
+
+    @unittest.skipIf(sys.platform == "win32", "symlink creation may require elevated privileges")
+    def test_rejects_mask_symlink_outside_output_directory(self) -> None:
+        self.report_dir.mkdir()
+        outside = self.root / "outside-mask.png"
+        outside.write_text("preserve", encoding="utf-8")
+        mask = self.report_dir / "capture0000.region0000.hoc-entry.viewport.mask.png"
+        mask.symlink_to(outside)
+        with self.assertRaisesRegex(ManifestError, "resolves outside the output directory"):
+            compare_manifest(self.manifest, self.report_dir)
+        self.assertEqual(outside.read_text(encoding="utf-8"), "preserve")
+
 
 if __name__ == "__main__":
     unittest.main()

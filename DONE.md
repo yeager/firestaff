@@ -2208,3 +2208,7 @@ only. Active work is in `TODO.md` and `TODO-<game>.md`.
   evidence-based score promotion. Family means and the total now derive from
   the same nine target scores; version-profile counts are not treated as
   independent parity evidence.
+- Hardened the shared paired-capture diff writer: capture/region identifiers
+  cannot contain path separators, generated mask filenames are index-unique,
+  and resolved mask/report paths must remain inside the approved output
+  directory. Negative tests cover traversal names and pre-existing symlinks.

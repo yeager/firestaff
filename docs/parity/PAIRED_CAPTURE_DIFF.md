@@ -86,6 +86,8 @@ python3 tools/paired_capture_diff.py \
 The output includes one red/white PNG mask per region and
 `paired_capture_report.json` with source-image hashes, evidence hashes, matched
 state fields, declared frame geometry, and per-region differing-pixel counts.
+Capture IDs and region names are restricted to filename-safe identifiers, and
+generated files are resolved within the approved output directory.
 For all five games, adapters should use state fields available for that exact
 checkpoint and must leave unknown coordinates unknown. For example, a title
 screen pair can compare startup phase and scene identity; it must not invent a
