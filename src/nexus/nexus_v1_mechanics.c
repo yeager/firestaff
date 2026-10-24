@@ -640,6 +640,20 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
         }
     }
 
+    /* Retail movement has no meaningful consumer until a DGN level and a
+     * placed party pose are both available. Preserve queued input and the
+     * session tick while the title/startup route still owns the view. */
+    if (!saturn_actions &&
+        (!engine->level_loaded || engine->current_level.width <= 0 ||
+         engine->current_level.width > NEXUS_MAX_MAP_SIZE ||
+         engine->current_level.height <= 0 ||
+         engine->current_level.height > NEXUS_MAX_MAP_SIZE ||
+         st->map_index < 0 || st->map_index >= NEXUS_MAX_LEVELS ||
+         st->party_x < 0 || st->party_x >= engine->current_level.width ||
+         st->party_y < 0 || st->party_y >= engine->current_level.height)) {
+        return needs_redraw;
+    }
+
     if (st->move_cooldown_ticks > 0) {
         st->move_cooldown_ticks--;
         return 0;
