@@ -25,7 +25,9 @@ SDL_VIDEODRIVER=dummy \
 Theron in Firestaff uses `WASD` for movement. Mouse button 1 is Button I and
 mouse button 2 is Button II. On touch devices, a short tap is Button I and a
 long press (500 ms) is Button II. Touch must use the same Firestaff input route
-as the mouse; it must not create separate game mechanics.
+as the mouse; it must not create separate game mechanics. In Firestaff,
+Button II cancels startup selection and does not advance a dungeon tick by
+itself.
 
 ## Mednafen on macOS
 

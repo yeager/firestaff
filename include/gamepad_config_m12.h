@@ -80,6 +80,7 @@ typedef struct {
     SDL_JoystickID   instanceId;     /* SDL instance id (0 = none) */
     char             name[128];      /* human-readable controller name */
     SDL_Gamepad*     handle;         /* open SDL handle (NULL = none) */
+    int              subsystemInitialized; /* owned SDL gamepad subsystem ref */
 } M12_GamepadStatus;
 
 /* ── Profile ────────────────────────────────────────────────────────── */

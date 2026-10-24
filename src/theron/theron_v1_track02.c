@@ -2138,6 +2138,168 @@ Theron_Track02SignalStatus theron_v1_track02_decode_4bpp_palette(
     return THERON_TRACK02_SIGNAL_OK;
 }
 
+static int stage2_raw_offset_for_cpu_address(
+    Theron_Track02Variant variant,
+    uint16_t cpu_address,
+    size_t *out_raw_offset) {
+    size_t stage2_raw_start;
+    size_t user_offset;
+    size_t raw_sector;
+    size_t raw_in_sector;
+
+    if (out_raw_offset) *out_raw_offset = 0u;
+    if (!out_raw_offset || cpu_address < 0x4000u) return 0;
+    if (variant == THERON_TRACK02_VARIANT_US_BIN) {
+        stage2_raw_start = 0x2bed90u;
+    } else if (variant == THERON_TRACK02_VARIANT_JP_BIN) {
+        stage2_raw_start = 0x2be460u;
+    } else {
+        return 0;
+    }
+
+    user_offset = (size_t)(cpu_address - 0x4000u);
+    raw_sector = user_offset / TQR_RAW_SECTOR_USER_DATA_BYTES;
+    raw_in_sector = user_offset % TQR_RAW_SECTOR_USER_DATA_BYTES;
+    *out_raw_offset = stage2_raw_start +
+        raw_sector * TQR_RAW_SECTOR_BYTES + raw_in_sector;
+    return 1;
+}
+
+/* Source binding: docs/source-lock/theron-stage2-static-vce-palette-20261024.md
+ * records the raw-sector-adjusted US/JP bytes and call targets. The US
+ * disassembly is theron-us-stage2-huc6280.asm lines 4535-4555; the equivalent
+ * JP routine is checked against the authenticated JP BIN in the test below. */
+Theron_Track02SignalStatus theron_v1_track02_read_stage2_vce_palette(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02Stage2VcePalette *out_palette) {
+    static const uint8_t dispatch_handler_prefix[13] = {
+        0xc8u, 0xb1u, 0x1cu, 0xd0u, 0x07u, 0xa9u, 0x13u,
+        0x20u, 0xb7u, 0x3au, 0x80u, 0x03u, 0x20u
+    };
+    static const uint8_t us_vce_routine[18] = {
+        0xa9u, 0xe0u, 0x8du, 0x02u, 0x04u, 0xa9u, 0x00u,
+        0x8du, 0x03u, 0x04u, 0xe3u, 0x5fu, 0x5eu, 0x04u,
+        0x04u, 0x40u, 0x00u, 0x60u
+    };
+    static const uint8_t jp_vce_routine[18] = {
+        0xa9u, 0xe0u, 0x8du, 0x02u, 0x04u, 0xa9u, 0x00u,
+        0x8du, 0x03u, 0x04u, 0xe3u, 0x8fu, 0x5eu, 0x04u,
+        0x04u, 0x40u, 0x00u, 0x60u
+    };
+    const uint8_t *expected_routine;
+    Theron_Track02Variant variant;
+    uint8_t dispatch_table[85u * 2u];
+    uint8_t handler[15];
+    uint8_t routine[18];
+    size_t dispatch_raw_offset;
+    size_t handler_raw_offset;
+    size_t routine_raw_offset;
+    size_t dispatch_user_offset = 0u;
+    size_t handler_user_offset = 0u;
+    size_t routine_user_offset = 0u;
+    size_t payload_raw_offset;
+    size_t payload_user_offset = 0u;
+    uint16_t routine_address;
+    uint16_t payload_address;
+    uint16_t handler_target;
+    Theron_Track02SignalStatus status;
+
+    if (out_palette) memset(out_palette, 0, sizeof(*out_palette));
+    if (!track02_data || track02_size == 0u || !md5_hex || !out_palette) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+    variant = theron_v1_track02_variant_for_md5(md5_hex);
+    if (variant != THERON_TRACK02_VARIANT_US_BIN &&
+        variant != THERON_TRACK02_VARIANT_JP_BIN) {
+        return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
+    }
+    expected_routine = variant == THERON_TRACK02_VARIANT_US_BIN
+        ? us_vce_routine : jp_vce_routine;
+    routine_address = variant == THERON_TRACK02_VARIANT_US_BIN
+        ? 0x5e4du : 0x5e7du;
+
+    if (!stage2_raw_offset_for_cpu_address(variant, 0x410du,
+                                           &dispatch_raw_offset) ||
+        !stage2_raw_offset_for_cpu_address(variant, 0x46b8u,
+                                           &handler_raw_offset) ||
+        !stage2_raw_offset_for_cpu_address(variant, routine_address,
+                                           &routine_raw_offset)) {
+        return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
+    }
+    status = theron_v1_track02_copy_raw_user_data_range(
+        track02_data, track02_size, md5_hex, dispatch_raw_offset,
+        sizeof(dispatch_table), dispatch_table, sizeof(dispatch_table),
+        &dispatch_user_offset);
+    if (status != THERON_TRACK02_SIGNAL_OK ||
+        rd16le(dispatch_table + 53u * 2u) != 0x46b8u) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+
+    status = theron_v1_track02_copy_raw_user_data_range(
+        track02_data, track02_size, md5_hex, handler_raw_offset,
+        sizeof(handler), handler, sizeof(handler), &handler_user_offset);
+    handler_target = variant == THERON_TRACK02_VARIANT_US_BIN
+        ? 0x5e4du : 0x5e7du;
+    if (status != THERON_TRACK02_SIGNAL_OK ||
+        memcmp(handler, dispatch_handler_prefix,
+               sizeof(dispatch_handler_prefix)) != 0 ||
+        handler[13] != (uint8_t)(handler_target & 0xffu) ||
+        handler[14] != (uint8_t)(handler_target >> 8u)) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+
+    status = theron_v1_track02_copy_raw_user_data_range(
+        track02_data, track02_size, md5_hex, routine_raw_offset,
+        sizeof(routine), routine, sizeof(routine), &routine_user_offset);
+    if (status != THERON_TRACK02_SIGNAL_OK ||
+        memcmp(routine, expected_routine, sizeof(routine)) != 0) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    payload_address = rd16le(routine + 11u);
+    if (payload_address != (uint16_t)(routine_address + sizeof(routine)) ||
+        !stage2_raw_offset_for_cpu_address(variant, payload_address,
+                                           &payload_raw_offset) ||
+        payload_raw_offset != routine_raw_offset + sizeof(routine)) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+
+    out_palette->variant = variant;
+    out_palette->vce_palette_start_index = 0x00e0u;
+    out_palette->vce_palette_entry_count = 32u;
+    out_palette->routine_raw_offset = routine_raw_offset;
+    out_palette->routine_user_data_offset = routine_user_offset;
+    out_palette->payload_raw_offset = payload_raw_offset;
+    status = theron_v1_track02_copy_raw_user_data_range(
+        track02_data, track02_size, md5_hex, payload_raw_offset,
+        sizeof(out_palette->payload), out_palette->payload,
+        sizeof(out_palette->payload), &payload_user_offset);
+    if (status != THERON_TRACK02_SIGNAL_OK) {
+        memset(out_palette, 0, sizeof(*out_palette));
+        return status;
+    }
+    out_palette->payload_user_data_offset = payload_user_offset;
+    out_palette->payload_byte_count = sizeof(out_palette->payload);
+    out_palette->payload_checksum = tqr_hash_bytes(
+        out_palette->payload, sizeof(out_palette->payload));
+    for (size_t group = 0u;
+         group < THERON_TRACK02_STAGE2_VCE_PALETTE_GROUP_COUNT; ++group) {
+        status = theron_v1_track02_decode_4bpp_palette(
+            out_palette->payload + group * THERON_TRACK02_4BPP_PALETTE_BYTES,
+            THERON_TRACK02_4BPP_PALETTE_BYTES,
+            &out_palette->groups[group]);
+        if (status != THERON_TRACK02_SIGNAL_OK) {
+            memset(out_palette, 0, sizeof(*out_palette));
+            return status;
+        }
+    }
+    out_palette->dispatch_entry_verified = 1;
+    out_palette->routine_verified = 1;
+    out_palette->payload_verified = 1;
+    return THERON_TRACK02_SIGNAL_OK;
+}
+
 Theron_Track02SignalStatus theron_v1_track02_inspect_4bpp_palette_window(
     const uint8_t *track02_data,
     size_t track02_size,

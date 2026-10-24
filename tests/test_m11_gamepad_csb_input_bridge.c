@@ -1,9 +1,9 @@
-/* CSB controller bridge regression.
+/* Shared M11 controller bridge regression.
  *
  * The SDL event loop resolves a configured gamepad button/axis to an M12
  * action, then this shared M11 mapper emits the same source input token that
- * CSB's COMMAND.C keyboard and mouse routes consume.  Keep this device layer
- * independent from a live controller so every build can verify it.
+ * game-specific input routes consume. Keep this device layer independent
+ * from a live controller so every build can verify it.
  */
 
 #include "main_loop_m11.h"
@@ -29,6 +29,7 @@ static void expect_button(const M12_GamepadMap *map, SDL_GamepadButton button,
 
 int main(void) {
     M12_GamepadMap map;
+    M12_GamepadStatus status = {0};
 
     M12_GamepadMap_SetDefaults(&map);
     CHECK(map.enabled == 1);
@@ -38,6 +39,18 @@ int main(void) {
     CHECK(M11_GamepadEnabledForInputMode(3, 1) == 1);
     CHECK(M11_GamepadEnabledForInputMode(99, 1) == 1);
     CHECK(M11_GamepadEnabledForInputMode(3, 0) == 0);
+
+    /* Controller routing must initialize SDL's gamepad subsystem before
+     * asking SDL for attached devices, and release only its own reference. */
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    CHECK(SDL_WasInit(SDL_INIT_GAMEPAD) == 0);
+    M12_GamepadStatus_Update(&status);
+    CHECK(status.subsystemInitialized == 1);
+    CHECK((SDL_WasInit(SDL_INIT_GAMEPAD) & SDL_INIT_GAMEPAD) != 0);
+    M12_GamepadStatus_Close(&status);
+    CHECK(status.subsystemInitialized == 0);
+    CHECK(SDL_WasInit(SDL_INIT_GAMEPAD) == 0);
+#endif
 
     /* ReDMCSB GAMELOOP.C consumes held commands on its source input
      * boundary.  DM1, DM2 and CSB participate in this sampler; a controller
@@ -69,6 +82,12 @@ int main(void) {
           M12_MENU_INPUT_LEFT);
     CHECK(M11_GamepadActionToMenuInput(M12_ACTION_STRAFE_RIGHT, 0) ==
           M12_MENU_INPUT_RIGHT);
+    /* Theron's use-item command is distinct from generic Action, which is a
+     * wait/tick in its native runtime. */
+    CHECK(M11_GamepadActionToMenuInput(M12_ACTION_USE_ITEM, 1) ==
+          M12_MENU_INPUT_USE_ITEM);
+    CHECK(M11_GamepadActionToMenuInput(M12_ACTION_USE_ITEM, 0) ==
+          M12_MENU_INPUT_USE_ITEM);
     CHECK(M11_GamepadAxisToMenuInput(SDL_GAMEPAD_AXIS_LEFTY,
                                      M12_AXIS_ROLE_MOVE, -16000, 1) ==
           M12_MENU_INPUT_UP);
@@ -118,10 +137,10 @@ int main(void) {
           M12_MENU_INPUT_RIGHT);
     CHECK(M11_TheronMouseButtonToInput(SDL_BUTTON_LEFT) ==
           M12_MENU_INPUT_ACCEPT);
-    /* Button II is the ordinary mouse's right button.  A physical middle
+    /* Button II cancels; it is not a world-tick action. A physical middle
      * button is not mouse button 1/2 and must remain inert. */
     CHECK(M11_TheronMouseButtonToInput(SDL_BUTTON_RIGHT) ==
-          M12_MENU_INPUT_ACTION);
+          M12_MENU_INPUT_BACK);
     CHECK(M11_TheronMouseButtonToInput(SDL_BUTTON_MIDDLE) ==
           M12_MENU_INPUT_NONE);
     /* Pointer motion is deliberately not a source command.  The live SDL
@@ -130,7 +149,7 @@ int main(void) {
      * between objects as a selection cursor. */
     CHECK(M11_TheronMouseButtonToInput(0) == M12_MENU_INPUT_NONE);
     CHECK(M11_TheronTouchButtonInput(0) == M12_MENU_INPUT_ACCEPT);
-    CHECK(M11_TheronTouchButtonInput(1) == M12_MENU_INPUT_ACTION);
+    CHECK(M11_TheronTouchButtonInput(1) == M12_MENU_INPUT_BACK);
 
     if (failures) return 1;
     puts("PASS: m11_gamepad_csb_input_bridge");

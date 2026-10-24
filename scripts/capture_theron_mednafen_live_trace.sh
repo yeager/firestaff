@@ -528,7 +528,18 @@ require_mednafen_module() {
     # contain the requested core. Some macOS builds expose only `pce`; passing
     # `pce_fast` to those builds otherwise leaves an expensive, empty capture
     # with no trustworthy runtime receipt.
-    help_output=$("$mednafen_bin" -help 2>&1 || true)
+    # The module probe initializes SDL on some Mednafen builds. Reuse the
+    # capture driver's selection so headless hosts use the configured dummy
+    # driver instead of failing before the module list is printed.
+    if [[ -n "$capture_sdl_video_driver" ]]; then
+        help_output=$(SDL_VIDEODRIVER="$capture_sdl_video_driver" \
+                      SDL_AUDIODRIVER=dummy \
+                      "$mednafen_bin" -help 2>&1 || true)
+    else
+        # An empty driver selects SDL's native default on interactive hosts.
+        help_output=$(SDL_AUDIODRIVER=dummy \
+                      "$mednafen_bin" -help 2>&1 || true)
+    fi
     if printf '%s\n' "$help_output" |
        awk -v requested="$requested" '
            /^ Emulation modules:/ {
@@ -1998,10 +2009,10 @@ transition_command_consumer_post_dispatch_source_read_count=$(if [[ -s "$command
 transition_dungeon_bank_da=unavailable
 transition_dungeon_bank_db=unavailable
 transition_runtime_2038=unavailable
-transition_current_level_2031=unavailable
-transition_party_direction_203f=unavailable
-transition_party_x_2040=unavailable
-transition_party_y_2041=unavailable
+transition_ram_2031=unavailable
+transition_ram_203f=unavailable
+transition_ram_2040=unavailable
+transition_ram_2041=unavailable
 transition_ram_snapshot=$main_ram_snapshot
 if [[ "$capture_mednafen_module" == pce_fast ]]; then
     transition_ram_snapshot=$pce_fast_main_ram_snapshot
@@ -2015,10 +2026,13 @@ if [[ -f "$transition_ram_snapshot" ]] &&
     transition_dungeon_bank_da=$(od -An -tx1 -j 218 -N 1 "$transition_ram_snapshot" | tr -d '[:space:]')
     transition_dungeon_bank_db=$(od -An -tx1 -j 219 -N 1 "$transition_ram_snapshot" | tr -d '[:space:]')
     transition_runtime_2038=$(od -An -tx1 -j 56 -N 1 "$transition_ram_snapshot" | tr -d '[:space:]')
-    transition_current_level_2031=$(od -An -tx1 -j 49 -N 1 "$transition_ram_snapshot" | tr -d '[:space:]')
-    transition_party_direction_203f=$(od -An -tx1 -j 63 -N 1 "$transition_ram_snapshot" | tr -d '[:space:]')
-    transition_party_x_2040=$(od -An -tx1 -j 64 -N 1 "$transition_ram_snapshot" | tr -d '[:space:]')
-    transition_party_y_2041=$(od -An -tx1 -j 65 -N 1 "$transition_ram_snapshot" | tr -d '[:space:]')
+    # Keep these candidate bytes opaque until a source-backed consumer joins
+    # them to level or party state. In particular, $203F also changes during
+    # no-input execution and is not established as a facing-direction field.
+    transition_ram_2031=$(od -An -tx1 -j 49 -N 1 "$transition_ram_snapshot" | tr -d '[:space:]')
+    transition_ram_203f=$(od -An -tx1 -j 63 -N 1 "$transition_ram_snapshot" | tr -d '[:space:]')
+    transition_ram_2040=$(od -An -tx1 -j 64 -N 1 "$transition_ram_snapshot" | tr -d '[:space:]')
+    transition_ram_2041=$(od -An -tx1 -j 65 -N 1 "$transition_ram_snapshot" | tr -d '[:space:]')
 fi
 {
     printf '%s\n' 'source=authentic-mednafen-transition-receipt'
@@ -2100,10 +2114,10 @@ fi
     printf 'dungeon_bank_20da=%s\n' "$transition_dungeon_bank_da"
     printf 'dungeon_bank_20db=%s\n' "$transition_dungeon_bank_db"
     printf 'runtime_byte_2038=%s\n' "$transition_runtime_2038"
-    printf 'current_level_2031=%s\n' "$transition_current_level_2031"
-    printf 'party_direction_203f=%s\n' "$transition_party_direction_203f"
-    printf 'party_x_2040=%s\n' "$transition_party_x_2040"
-    printf 'party_y_2041=%s\n' "$transition_party_y_2041"
+    printf 'ram_2031=%s\n' "$transition_ram_2031"
+    printf 'ram_203f=%s\n' "$transition_ram_203f"
+    printf 'ram_2040=%s\n' "$transition_ram_2040"
+    printf 'ram_2041=%s\n' "$transition_ram_2041"
     printf 'scripted_pce_input_events=%s\n' "$transition_scripted_input_count"
     if [[ "$capture_mednafen_module" == pce ]]; then
         printf 'vdc_vram_snapshot_bytes=65536\n'

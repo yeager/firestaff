@@ -270,7 +270,8 @@ static int resolve_theron_native_track02(
      * its exact regional digest before directory scanning. JP Rev. 1 has a
      * second authentic representation: the CUE's INDEX 01 ISO, byte-bound
      * against the raw BIN and its original split archive members. */
-    if ((FSP_FileExists(requestedDataDir) ||
+    if (requestedDataDir &&
+        (FSP_FileExists(requestedDataDir) ||
          strstr(requestedDataDir, "::") != NULL) &&
         m12_file_md5_hex(requestedDataDir, direct_md5) &&
         (strcmp(direct_md5, expected_md5) == 0 ||

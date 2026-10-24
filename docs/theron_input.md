@@ -5,20 +5,31 @@ move forward/backward and step left/right. Firestaff's Theron route accepts
 both SDL scancodes and keycodes, so W/A/S/D also work on macOS layouts or
 input paths that do not populate scancodes.
 
+Theron gameplay runs in Firestaff's native C/SDL runtime. External emulators
+are research instruments only and do not run or replace the game in Firestaff.
+
 ## PC Engine button mapping
 
 | PCE Button | Keyboard (primary) | Keyboard (alt) |
 |------------|-------------------|----------------|
 | D-pad Up   | Up Arrow          | W              |
 | D-pad Down | Down Arrow        | S              |
-| D-pad Left | Left Arrow, A     | Home, Q        |
-| D-pad Right| Right Arrow, D    | End, E         |
+| D-pad Left | Left Arrow        | Home, Q        |
+| D-pad Right| Right Arrow       | End, E         |
 | Button I   | Mouse 1, short touch | Z, Return, Space |
 | Button II  | Mouse 2, long touch  | X, Escape         |
 | Run        | Return            |                |
 | Select     | —                 |                |
 
 ## Startup menu
+
+These are Firestaff's native-runtime bindings, not a PC Engine timing model.
+On 2026-10-24, separate SDL key-down events advanced authentic JP media from
+title through stage select and Soul Room into a loaded dungeon. A continuous
+3–5 second hold has not been verified in Firestaff. The retail manual
+documents Button I as the menu selection control but gives no multi-second
+timing rule. See [DMWeb and Greatstone references](DMWEB_REFERENCE.md) and
+the dated evidence in [TODO-theron.md](../TODO-theron.md).
 
 | Action              | Keys                        |
 |---------------------|-----------------------------|
@@ -31,14 +42,21 @@ input paths that do not populate scancodes.
 
 ## In-dungeon
 
+Turn input reports `BLOCKED` and leaves facing unchanged if the bounded
+source-actuator event queue cannot reserve the events required by the turn.
+The runtime receipt does not request a redraw in that case. This is a
+fail-closed queue-capacity guarantee, not evidence about the original game's
+actuator timing or retail queue capacity; see the 2026-10-24 entry in
+[`DONE-theron.md`](../DONE-theron.md).
+
 | Action         | Keys                              |
 |----------------|-----------------------------------|
 | Move forward   | Up Arrow, W                       |
 | Move backward  | Down Arrow, S                     |
 | Step left      | A                                 |
 | Step right     | D                                 |
-| Turn left      | Left Arrow, A, Home, Q            |
-| Turn right     | Right Arrow, D, End, E            |
+| Turn left      | Left Arrow, Home, Q               |
+| Turn right     | Right Arrow, End, E               |
 | Wait (tick)    | Return, Space                     |
 | Next champion  | Tab                               |
 | Pick up facing item | G                            |
@@ -47,11 +65,25 @@ input paths that do not populate scancodes.
 
 ## Notes
 
-- Arrow Left/Right and Home/End/Q/E rotate. A/D use the original lower-panel
-  `$06/$04` side-step commands. The mapping is intentionally different even
-  though A/D also appear as alternate PC Engine D-pad bindings above.
+- Arrow Left/Right and Home/End/Q/E rotate. A/D use the source-backed lower
+  movement-panel side-step commands `$06/$04`.
 - Mouse button 1/2 are direct Button I/II bindings. A short touch emits
-  Button I; a long touch emits Button II, including during startup.
+  Button I; a long touch emits Button II, including during startup. Button II
+  cancels startup selection and does not advance a dungeon tick. The retail
+  manual also describes holding Button II with a direction key as simplified
+  movement; Firestaff's native direction keys already issue those movement
+  commands directly.
+- Mouse buttons 1/2 map to Button I/II, but the dungeon route does not use the
+  pointer coordinates to select movement, inventory or champion controls.
+  Button II is a cancel/modifier and does not perform a standalone dungeon
+  action. This does not provide DM1-style clickable controls. Theron's native
+  dungeon layout is not yet rendered from authenticated graphics, and the
+  captured original input points do not establish complete region boundaries.
+  The turn and forward point captures are recorded in
+  [`theron-original-turn-command-capture-2026-08-21.md`](source-lock/theron-original-turn-command-capture-2026-08-21.md)
+  and
+  [`theron-original-forward-command-capture-2026-08-21.md`](source-lock/theron-original-forward-command-capture-2026-08-21.md).
+  Do not substitute DM1 hit regions or guessed coordinates.
 - Run and Select have no keyboard binding (no gameplay use currently).
 - Gamepad input follows the SDL3 gamepad mapping (D-pad, A/B buttons) where
   the selected input mode permits gamepad events.
@@ -72,7 +104,10 @@ input paths that do not populate scancodes.
   Firestaff `.tqsv` container remains fixture/tooling data and is neither
   advertised nor accepted by the production Continue route.
 
-## Mednafen macOS capture profile
+## Historical external reference-capture notes
+
+The following notes describe an external research setup only. It is not used
+to run Theron in Firestaff.
 
 The recommended macOS profile assigns PCE Button I to `Z` and Button II to `X`.
 This avoids keyboard-layout-dependent punctuation. Comma and period are valid

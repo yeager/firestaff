@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-24 — initialize SDL's native gamepad subsystem
+
+`M12_GamepadStatus_Update` now initializes SDL's gamepad subsystem before
+enumerating controllers, and `M12_GamepadStatus_Close` releases the matching
+subsystem reference. The focused `m11_gamepad_csb_input_bridge` regression
+passed three consecutive runs on TRV2, and the native Firestaff target built
+successfully. A native Debug run with authentic Japanese Rev. 1 Track 02 and an
+isolated virtual controller reached the loaded Theron runtime and advanced
+native ticks. This verifies the SDL controller path; it does not close the
+separate keyboard/mouse parity request or establish visual gameplay parity.
+
 ## 2026-10-24 — keep authenticated CLI-check output in its build directory
 
 - The real-capture CLI check now creates and removes its temporary log beside
@@ -7,6 +18,188 @@
   It no longer falls back to `/tmp`.
 - `bash -n tests/test_theron_v1_cli_authenticated_capture.sh` and
   `git diff --check` pass.
+
+
+## 2026-10-24 — source-bound Stage-2 VCE palette in US and JP media
+
+The `$46B8` dispatch handler and regional calls (`$5E4D` US, `$5E7D` JP)
+were compared against the authenticated raw Track 02 images with MODE1/2352
+sector framing applied. Each target contains the exact VCE routine that
+writes 64 bytes to palette entries `$E0..$FF`; the US and JP payloads are
+identical and decode as 32 HuC6260 colors. This resolves a false mismatch
+caused by using contiguous-file offsets across raw sectors. The evidence is
+static source/media proof only: which screen invokes the command and how its
+pixels use these colors remain unverified. See
+[`theron-stage2-static-vce-palette-20261024.md`](docs/source-lock/theron-stage2-static-vce-palette-20261024.md).
+
+## 2026-10-24 — native input reaches a loaded dungeon and starts game ticks
+
+A local macOS Debug build ran the native Firestaff C/SDL application with
+authentic Japanese Rev. 1 `TQJP02.bin` copied from TRV2 into the ignored local
+game-data directory. Firestaff's SDL script input advanced from title to
+stage select, opened the Soul Room, moved the cursor to the forcefield entry,
+and entered the dungeon. All three repeated runs reported `level-loaded=1`,
+map 0, party `(1,0)`, `THERON READY`, and nonzero native game ticks and
+rendered frames. The reported champion count varied between one and two
+across the runs. Measured intervals reported 2.80–3.00 game ticks/s,
+4.99–5.19 rendered frames/s, and 4.99–5.19 presented frames/s. The native
+presented capture was black, so this closes the startup/input/tick-loop gap
+only; it does not establish playable visual parity. The input was a sequence
+of discrete SDL key-down events, not a continuous long button hold. Original
+graphics, palette, and tile mapping remain the next required rendering work.
+
+## Earlier 2026-10-24 — TRV2 headless native run documented the presentation block
+
+Built Firestaff from the current source commit on TRV2 and ran three 15-second
+Debug sessions through Firestaff's own C/SDL runtime with authentic Japanese
+Rev. 1 Track 02 data. All three admitted the hash-verified media and kept the
+host loop active at about 62.5 iterations per second. All three reported zero
+Theron game ticks, zero rendered game frames, and zero presented frames. The
+three Firestaff-owned 320x200 presented-surface captures were black. The
+session used SDL's dummy driver because TRV2 has no active graphical display;
+these results prove native startup and the render gate, not visible gameplay.
+The verified Track 02 record still lacks a bound original graphics bank, so
+the native renderer correctly refuses to substitute synthetic visuals. The
+next required work is authentic graphics-bank binding and decoding followed
+by nonzero native game-frame evidence.
+
+## 2026-10-24 — native pit guard and unresolved event queue bounded
+
+The native movement path checks authenticated source pits before creature
+combat, matching the read-only admission gate. It leaves pit and fall
+semantics unresolved. Repeated pending floor-party events targeting an
+authenticated pit are coalesced only when the source occurrence and event
+fields match, without changing the source or runtime tile.
+
+On TRV2, a checksummed source snapshot built the focused test and the native
+Firestaff executable. The real-media test passed three loops; each loop found
+18 pit-target actuator occurrences in both US and JP Track 02 and repeated
+each trigger 128 times while asserting exactly one pending occurrence event
+and an unchanged source tile. No authentic active creature shared a pit tile,
+so the conditional no-combat mutation check was not exercised. Three native
+JP `--debug --boot-probe` runs reached `theron-runtime` with 291 source
+objects, four loaded dungeon levels, and 455 nonzero source tiles. They
+reported `frames=0` and `runtimeTick=0`; startup/data admission is not gameplay
+or presentation parity. The remaining original pit consumer, fall destination,
+combat interaction, and dungeon rendering are still unresolved.
+
+## 2026-10-24 — fresh native debug build reaches JP runtime
+
+Built Firestaff from a clean clone of commit `2748eed3db4a3a9d7b1db2e1522b050440b3e0a2`
+on TRV2 with `-j1`, then ran the native `--debug --boot-probe` route three
+times against the authentic JP Rev. 1 Track 02 media. All three runs reported
+`phase=theron-runtime`, `levelLoaded=1`, party `(1,0,0)`, two champions, 291
+source objects, four loaded dungeon levels, and 455 nonzero source tiles. The
+probe reported `frames=0` and `runtimeTick=0`, so this proves a clean native
+build and bounded data admission, not interactive gameplay or presentation.
+The task-specific `/dev/shm` source and build directory was removed after the
+loops; the original media remained in place.
+
+## 2026-10-24 — native Button II cancel behavior
+
+Corrected the native Theron mapping so right mouse and long touch send Button
+II's documented cancel input rather than the host wait/tick command. The
+runtime now leaves the world tick unchanged for Button II; direction keys
+continue to perform the manual's simplified forward/back/turn commands
+directly. The focused input-mapping and runtime-input regressions cover the
+mapping and unchanged tick receipt. See
+`docs/source-lock/theron-button-ii-manual-source-lock.md`.
+
+This does not establish parity for all Button I item transactions, combined
+physical-button sampling, or other gameplay systems.
+
+## ✅ 2026-10-24 native Theron default-data launch guard
+
+Fixed a null-path crash in `resolve_theron_native_track02()`: the explicit
+loose-file probe now checks `requestedDataDir` before calling `strstr`. A
+native `--debug` boot probe using the default `FIRESTAFF_DATA` path and
+authentic JP Rev. 1 Track 02 passed three repeated loops on TRV2. Each reached
+`theron-runtime` with two champions, 291 source objects, and four loaded
+dungeon levels. This verifies native startup and authenticated data
+admission, not complete game or visual parity.
+
+## 2026-10-24 — use the configured SDL driver for capture module discovery
+
+- The Mednafen capture helper now passes its selected SDL video driver and a
+  dummy audio driver to the `-help` module probe. When the video-driver
+  selection is empty, it preserves SDL's native interactive default. This
+  lets headless capture hosts discover `pce_fast` without depending on a
+  display while keeping desktop capture behavior intact.
+- On TRV2, the actual isolated instrumented Mednafen binary listed `pce_fast`
+  in three consecutive headless help probes. `bash -n` and `git diff --check`
+  passed. This changes reference-capture tooling only; Firestaff's native
+  runtime remains emulator-free.
+
+## 2026-10-24 — identify the stale PCE Fast reference binary
+
+- The Oct. 24 PCE Fast capture binary was assembled from an older capture
+  source copy and does not contain the current scripted PCE Fast input hook
+  applied by `scripts/build_mednafen_theron_irq2_trace.sh`. Its neutral
+  controller reads therefore do not establish whether the planned input
+  reached the original game loop.
+- The next reference run must use a fresh isolated build from the current
+  builder and verify the replay plan, scheduled event, applied mask and
+  matching controller reads. This is capture-tool provenance; Firestaff's
+  Theron runtime remains native C/SDL.
+
+## 2026-10-24 — clarify native runtime and reference-capture limit
+
+- Reaffirmed that Firestaff runs Theron's Quest in its native C/SDL runtime;
+  Mednafen is only an external reverse-engineering/reference tool.
+- A private JP autoload attempt emitted raw VDC and RAM snapshots but lacked
+  verified input delivery, a game-command consumer receipt, and a CD
+  transition. The capture helper rejected the bundle. No movement, visual
+  parity, or gameplay claim follows from those snapshots.
+- Updated the project, platform, and capture status plus the open-work ledger
+  to preserve this evidence boundary. No emulator dependency was added to
+  Firestaff runtime.
+
+## 2026-10-24 — verify an authentic JP debug runtime and bound pit candidates
+
+- On TRV2, three consecutive current-source Firestaff `--debug` runs using
+  authentic JP Rev. 1 Track 02 (MD5
+  `b7afb338ad31be1025b53f9aff12d73a`) reached the bounded runtime with the
+  level loaded, party at `(2,3,0)`, two champions, 291 source objects and four
+  loaded dungeon levels. This verifies the native debug route only; it is not
+  an original-emulator comparison or complete gameplay evidence.
+- The real-media `test_theron_v1_track02_dungeon_loader` passed three
+  consecutive TRV2 runs and reports raw pit-record candidates for all seven
+  dungeon sources in JP and US Track 02. The test binds source bytes and
+  candidate floor positions, but no candidate has been joined to the active
+  map and party coordinates in an original gameplay state. Pit behavior stays
+  fail-closed.
+- A private authentic JP Mednafen save state visibly showed dungeon gameplay.
+  Its active map and party coordinates remain unjoined. PCE pad input values
+  were observed during host-key input, but there was no game command-consumer
+  receipt to prove movement. A separate baseline autoload emitted the required
+  VDC/RAM snapshots but had no verified input or CD transition; a host-input
+  capture failed to emit VDC snapshots. The capture helper rejected both
+  incomplete bundles. Emulator media, state and traces remain on TRV2.
+
+## 2026-10-24 — report failed source-actuator turn reservations
+
+- Routed all four left/right input variants through one receipt helper. If the
+  original turn command cannot reserve its source-actuator events, the input
+  now reports `BLOCKED`, leaves the party direction unchanged and requests no
+  redraw.
+- Added a focused regression for all four controls with the actuator queue at
+  capacity. The test passed three consecutive loops on TRV2. Its constructed
+  full-queue fixture verifies error reporting only; it does not establish
+  retail actuator behavior or raise the Theron parity status.
+
+## 2026-10-24 — fail closed when authenticated VDC replay fails
+
+- The Theron dungeon render status now reports success for an intentional
+  no-draw path, replays a loaded authenticated VDC/VCE screen through the
+  source-owned consumer, and reports failure if that replay cannot be
+  reconstructed. The boot facade clears its output instead of presenting a
+  stale frame after an authenticated replay failure.
+- Verified on TRV2 with the authentic `selection.trace` VDC/VCE/VRAM/SAT and
+  VDC I/O capture components: `theron_v1_vram_trace_real_capture` passed three
+  consecutive runs, including fault injection that removes the authenticated
+  SAT after a successful render.
+- This proves capture replay failure reporting only. It does not establish
+  original-game visual parity, gameplay parity, or complete Theron support.
 
 ## 2026-10-23 — reach Theron runtime from the no-game main menu
 
@@ -7342,23 +7535,31 @@ metadata and locally staged CD-DA tracks.
   Firestaff therefore keeps source-bound doors fail-closed until the real
   button consumer and its exact state transition have been captured.
 
-# 2026-08-21 Track 02 pits' real OPEN gate
+# 2026-10-24 withdrawn Theron pit-gate attribution
 
-- ✅ Original movement code `$C332–$C347` classifies map type `$40` as a pit
-  and enters the fall route only when levitation is zero, `OPEN` (`$08`) is
-  set, and `IMAGINARY` (`$01`) is zero. A closed, imaginary, or levitated pit
-  continues without a fall. Both the movement query and mutating runtime path
-  now use this gate.
-- ✅ The complete real corpus verifies 165 closed/passable and 132
-  open/fail-closed US pits, and 166 closed/passable and 130 open/fail-closed
-  JP pits. At least one real movement outcome of each kind is run per
-  available dungeon bank. The same open original tile is also tested with
-  levitation and must then be passable, as specified by the `$AB` gate. No
-  constructed pit tiles or fallback maps are used.
-- 🔒 An open, real pit is still blocked before damage and level fall. The
-  original gate is proven, but the T700 stat mutation and destination
-  transition consumer are not. The fixture pit's older damage behavior is
-  therefore not used on a source-verified level.
+- The former `$C332-$C347` OPEN/IMAGINARY/levitation claim is unsupported by
+  the checked-in Theron evidence and has been removed from the source-backed
+  behavior. The authenticated Stage-2 listing does not establish that address
+  range as the runtime pit consumer; no same-session bank mapping or execution
+  receipt binds it to the pit path.
+- Source-backed Track 02 pit-family tiles now remain blocked for every
+  attribute and levitation state. Source-backed floor-actuator events
+  targeting pits remain unresolved and are coalesced by source occurrence,
+  without tile mutation. Source-less fixture
+  behavior is kept separate. This avoids promoting DM1/CSB movement logic
+  into Theron.
+- The real-media `theron_v1_track02_dungeon_loader` CTest passed three
+  consecutive TRV2 runs with US Track 02 MD5
+  `f23601102138f87c33025877767ebf76` and JP Track 02 MD5
+  `b7afb338ad31be1025b53f9aff12d73a`. It checks blocked movement across the
+  loaded source pit tiles and both levitation states, unchanged party/transition
+  state, and an authentic delayed actuator event that remains unresolved
+  without changing its target tile. The test reports raw pit attribute-nibble
+  counts and one source-coordinate capture candidate per edition/dungeon
+  without assigning meaning to the tile attributes or candidate map identity.
+- The remaining code-window, runtime mapping, fall damage, and destination
+  transition gaps are documented in
+  `docs/source-lock/theron-disassembly/theron-pit-gate-evidence-gap-20261024.md`.
 
 # 2026-08-21 Live startup and Continue preserve authentic dungeon data
 
@@ -8399,3 +8600,35 @@ T900/original inventory semantics. No synthetic media was used.
   runs on trv2 and directly reported both authentic regional BIN identities.
   This is static source correspondence only; it does not prove runtime bank
   mapping, table ownership, creature spawning, or gameplay semantics.
+
+## 2026-10-24 — keep unjoined BaseRAM bytes semantically opaque
+
+- The live Mednafen receipt now labels `$2031` and `$203F-$2041` by raw RAM
+  address instead of asserting current-level or party-pose meaning. Runtime
+  writer samples show `$203F` cycling at similar rates with and without held
+  input; its gameplay consumer remains unidentified.
+- Updated the capture-script contract test for the current bounded consumer
+  read trace, including its narrow target-writer sampling exception. The
+  focused script test passed three consecutive runs; `bash -n` and
+  `git diff --check` also pass.
+- This improves evidence labeling only. Level/party semantics and their join
+  to the authenticated map remain open.
+
+## 2026-10-24 — make the runtime event-capacity regression exercise a real source actuator
+
+- The turn-capacity fixture now includes an authentic reverted Formicia
+  floor-party actuator record and its matching live source object. This makes
+  the intended removal event reach the full event queue; the regression checks
+  that a blocked turn preserves both party pose and the existing queue.
+- `theron_v1_boot_runtime_input` passed three consecutive runs on trv2. This
+  repairs test-fixture coverage only and does not establish gameplay parity.
+
+## Documentation status refresh — 2026-10-24
+
+- Updated the current documentation map and Theron technical-reference
+  summary to match bounded authentic JP/US routes and seven-dungeon
+  source-only coverage.
+- Marked the older 24-hour readiness PASS as a historical local check set;
+  the original-emulator multi-second menu-action hold, original presentation,
+  save semantics, campaign progression and end-to-end gameplay remain open.
+- Historical source-lock records remain dated evidence and were not rewritten.

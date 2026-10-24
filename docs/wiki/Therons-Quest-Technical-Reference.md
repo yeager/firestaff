@@ -1,11 +1,23 @@
 # Theron's Quest Technical Reference
 
-> **Status reviewed 2026-09-09.** Firestaff reads the supplied PC Engine CD
-> media natively: the Japanese Rev 1 route reaches title, stage, Soul Room
-> and Akutuba, while the US CloneCD ZIP reaches title and scripted Soul Room
-> startup. Campaign transitions, save semantics, bitmap/palette binding and
-> full gameplay remain evidence-gated. Capture tools mentioned below are
-> research provenance only and are never a Firestaff runtime dependency.
+> **Status reviewed 2026-10-24.** Firestaff reads authentic PC Engine CD
+> Track 02 media through bounded JP and US native routes. The JP Rev 1 route
+> reaches title, stage, Soul Room and Akutuba; US routes include direct and
+> M12 startup, an authentic Continue-to-dungeon-2 path, and a MODE1/2048
+> Akutuba forcefield handoff. Source-only loaders cover all seven dungeons
+> in both regions, but do not prove their original runtime semantics. The
+> reported 3–5 second hold on the selected title-menu action remains untested
+> in a visibly confirmed original-emulator menu. Three current-source JP
+> `--debug` runs reach Firestaff's bounded runtime; this does not prove the
+> original emulator's movement, pit semantics or visual output. A separate
+> authentic JP emulator save state shows dungeon gameplay, but its active map,
+> party pose and input-to-command route are not joined. Campaign progression,
+> native save persistence, original presentation and full gameplay remain
+> evidence-gated. Capture tools are research provenance only and are never a
+> Firestaff runtime dependency. See the
+> [current platform status](../PLATFORM_STATUS.md#therons-quest),
+> [capture readiness](../THERON_CAPTURE_READINESS.md) and
+> [input notes](../theron_input.md).
 
 ## Door movement boundary
 
@@ -13,6 +25,16 @@ Movement does not implicitly open a closed or locked door. The explicit
 door-use route performs the state transition and key validation; this keeps
 source-bound Track 02 object state transactional and fail-closed. A stair
 query likewise returns `STAIRS` only when the destination level is resident.
+
+## Turn input receipt boundary
+
+Left and right turn inputs share one receipt path. If the bounded
+source-actuator event queue cannot reserve the turn's events, the runtime
+returns `BLOCKED`, preserves the party pose, and requests no redraw. A focused
+full-queue regression covers all four turn bindings. This proves error
+reporting and transactional failure handling only; it does not establish
+retail actuator timing, queue capacity, or broader turn parity. See the
+[input notes](../theron_input.md) and [verified work log](../../DONE-theron.md).
 
 ## r30 emulator/capture boundary
 
@@ -167,13 +189,25 @@ or stamina rules. Query, movement and the public pit handler remain blocked
 until the original T700 pit consumer is joined to the source level/object
 receipt. Synthetic fixture levels retain the existing probe-only behavior.
 
-> **Status reviewed 2026-08-13.** JP/US Track 02 identity and several loader
+> **Historical status note (2026-08-13).** JP/US Track 02 identity and several loader
 > receipts are real-data verified. Game-owned dungeon handoff, object/level
 > semantics and bitmap/palette binding remain open. The verified startup
 > boundary does not establish the Firestaff `$2600` consumer or gameplay
 > semantics.
 
 ## Scope
+
+**Current capture boundary (reviewed 2026-10-24):** Original-emulator menu
+input remains an evidence gap. Earlier JP `pce_fast` captures advanced with
+ordinary Space/Button I after a four-second RUN hold; the operator reports
+that the selected menu action itself must be held for 3–5 seconds. The latest
+US emulator attempt stayed on System Card 3.0 and did not test that hold. See
+the current
+[capture readiness](../THERON_CAPTURE_READINESS.md) and
+[input notes](../theron_input.md). DMWeb provides retail edition and manual
+references. Greatstone's Theron material covers a CSBWin custom-dungeon
+conversion, not retail PC Engine data. Neither reference establishes this
+input timing.
 
 Theron's Quest is a PC Engine CD target. Firestaff accepts original Track 02
 media through a strict CUE/BIN handoff and verifies known media identities. It

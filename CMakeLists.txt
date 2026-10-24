@@ -55221,9 +55221,9 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_gamepad_config_m12.c"
     )
 endif()
 
-# CSB consumes the common M11 gamepad tokens through its source-backed
-# COMMAND.C route. Keep the SDL default map -> M11 token bridge independently
-# testable, including gameplay/menu context and axis dead-zone behavior.
+# Game-specific runtimes consume the common M11 gamepad tokens through their
+# own input routes. Keep the SDL default map -> M11 token bridge independently
+# testable, including Theron's distinct use-item command.
 if(BUILD_TESTING AND
    EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_gamepad_csb_input_bridge.c")
     add_executable(test_m11_gamepad_csb_input_bridge
@@ -55242,7 +55242,7 @@ if(BUILD_TESTING AND
     add_test(NAME m11_gamepad_csb_input_bridge
              COMMAND test_m11_gamepad_csb_input_bridge)
     set_tests_properties(m11_gamepad_csb_input_bridge PROPERTIES
-        LABELS "csb;input;gamepad;steamdeck")
+        LABELS "csb;theron;input;gamepad;steamdeck")
 endif()
 
 # M11 input scale boundary contract for the source-to-screen

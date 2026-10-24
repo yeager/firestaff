@@ -877,7 +877,7 @@ if ! grep -Fq 'if [[ "$capture_mednafen_module" == pce ]]; then' "$script" ||
    ! grep -Fq 'vdc_io_writes=unavailable' "$script" ||
    ! grep -Fq 'vdc_io_trace_limit=unavailable' "$script" ||
    ! grep -Fq 'transition_ram_snapshot=$pce_fast_main_ram_snapshot' "$script" ||
-   ! grep -Fq 'party_y_2041=$(od -An -tx1 -j 65 -N 1 "$transition_ram_snapshot"' "$script"; then
+   ! grep -Fq 'transition_ram_2041=$(od -An -tx1 -j 65 -N 1 "$transition_ram_snapshot"' "$script"; then
     printf '%s\n' 'FAIL: capture snapshots must match the selected Mednafen core' >&2
     exit 1
 fi
@@ -1107,12 +1107,16 @@ if ! grep -Fq 'dungeon_bank_20da=%s' "$script" ||
     printf 'FAIL: capture receipt must retain original dungeon-bank selector bytes\n' >&2
     exit 1
 fi
-if ! grep -Fq 'party_direction_203f=%s' "$script" ||
-   ! grep -Fq 'current_level_2031=%s' "$script" ||
-   ! grep -Fq 'party_x_2040=%s' "$script" ||
-   ! grep -Fq 'party_y_2041=%s' "$script" ||
+if ! grep -Fq 'ram_203f=%s' "$script" ||
+   ! grep -Fq 'ram_2031=%s' "$script" ||
+   ! grep -Fq 'ram_2040=%s' "$script" ||
+   ! grep -Fq 'ram_2041=%s' "$script" ||
+   grep -Fq 'party_direction_203f=%s' "$script" ||
+   grep -Fq 'current_level_2031=%s' "$script" ||
+   grep -Fq 'party_x_2040=%s' "$script" ||
+   grep -Fq 'party_y_2041=%s' "$script" ||
    ! grep -Fq 'runtime_byte_2038=%s' "$script"; then
-    printf '%s\n' 'FAIL: live transition receipt must preserve raw party-position provenance' >&2
+    printf '%s\n' 'FAIL: live transition receipt must keep unjoined RAM bytes semantically opaque' >&2
     exit 1
 fi
 party_ram_trace_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_snapshot.patch"
@@ -1134,7 +1138,8 @@ if [[ ! -f "$party_ram_consumer_read_patch" ]] ||
    ! grep -Fq 'TheronTraceMainRAMConsumerRead(A, physical_address, value)' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'static unsigned per_offset[8192] = {};' "$party_ram_consumer_read_patch" ||
-   ! grep -Fq 'count >= 65536 || per_offset[offset] >= 16' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'count >= 65536 || (per_offset[offset] >= 16 && !target_writer_read)' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'const bool target_writer_read = TheronTraceInstructionPC >= 0xEA80' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'physical_address < 0x1F0000 || physical_address >= 0x1F8000' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'offset = physical_address & 0x1FFF' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'reader_physical_pc=%06x reader_code_bytes=%s' "$party_ram_consumer_read_patch" ||

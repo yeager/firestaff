@@ -3102,6 +3102,60 @@ static Theron_V1_Object *theron_v1_world_live_source_actuator(
     return NULL;
 }
 
+/* Theron pit consumer evidence remains unresolved; see
+ * docs/source-lock/theron-disassembly/theron-pit-gate-evidence-gap-20261024.md.
+ * Bound repeated source events for that map family without inferring effect. */
+static int track02_target_is_authenticated_pit(
+    const Theron_V1_World *world, int dungeon_id, int level_index,
+    unsigned int x, unsigned int y)
+{
+    const Theron_V1_Level *level;
+    if (!world || dungeon_id < 1 || dungeon_id > THERON_DUNGEON_COUNT ||
+        level_index < 0 || level_index >= THERON_MAX_LEVELS_PER_DUNGEON ||
+        !world->level_loaded[dungeon_id - 1][level_index])
+        return 0;
+    level = &world->levels[dungeon_id - 1][level_index];
+    return level->source_header_verified && x < (unsigned int)level->width &&
+        y < (unsigned int)level->height &&
+        theron_tile_type(level->source_tiles[y][x]) == THERON_TILE_PIT;
+}
+
+static int track02_unresolved_pit_event_already_queued(
+    const Theron_V1_World *world,
+    const Theron_V1_SourceObjectRecord *source,
+    const Theron_Actuator *actuator,
+    const Theron_ActuatorPartyEvent *result)
+{
+    if (!source || !actuator || !result || actuator->local_effect ||
+        !track02_target_is_authenticated_pit(
+            world, source->dungeon_id, source->level,
+            actuator->target_x, actuator->target_y))
+        return 0;
+    for (unsigned int i = 0; i < world->source_actuator_event_count; ++i) {
+        const Theron_V1_SourceActuatorEvent *pending =
+            &world->source_actuator_events[i];
+        if (pending->dungeon_id == source->dungeon_id &&
+            pending->level == source->level &&
+            pending->source_ref == source->source_ref &&
+            pending->source_index == source->source_index &&
+            pending->source_x == source->x &&
+            pending->source_y == source->y &&
+            pending->target_x == actuator->target_x &&
+            pending->target_y == actuator->target_y &&
+            pending->target_facing == actuator->target_facing &&
+            pending->effect == result->resolved_effect &&
+            pending->local_effect == 0u &&
+            pending->sound == actuator->sound &&
+            pending->delay == actuator->delay &&
+            pending->local_multiple == actuator->local_multiple &&
+            track02_target_is_authenticated_pit(
+                world, pending->dungeon_id, pending->level,
+                pending->target_x, pending->target_y))
+            return 1;
+    }
+    return 0;
+}
+
 int theron_v1_world_queue_track02_party_events(
     Theron_V1_World *world, int level, int x, int y,
     int is_addition, int party_already_on_square,
@@ -3114,7 +3168,9 @@ int theron_v1_world_queue_track02_party_events(
         level >= THERON_MAX_LEVELS_PER_DUNGEON || x < 0 ||
         x >= THERON_MAX_MAP_SIZE || y < 0 || y >= THERON_MAX_MAP_SIZE ||
         party_direction > 3u || world->party.champion_count < 0 ||
-        world->party.champion_count > THERON_MAX_CHAMPIONS)
+        world->party.champion_count > THERON_MAX_CHAMPIONS ||
+        world->source_actuator_event_count >
+            THERON_MAX_SOURCE_ACTUATOR_EVENTS)
         return -1;
 
     /* First pass keeps publication atomic if the bounded queue is full. */
@@ -3133,6 +3189,10 @@ int theron_v1_world_queue_track02_party_events(
             theron_v1_track02_actuator_evaluate_party_event(
                 &actuator, is_addition, party_already_on_square,
                 world->party.champion_count, party_direction, &event) != 0)
+            continue;
+        if (event.triggered &&
+            track02_unresolved_pit_event_already_queued(
+                world, source, &actuator, &event))
             continue;
         needed += event.triggered != 0u;
     }
@@ -3157,6 +3217,9 @@ int theron_v1_world_queue_track02_party_events(
                 &actuator, is_addition, party_already_on_square,
                 world->party.champion_count, party_direction, &result) != 0 ||
             !result.triggered)
+            continue;
+        if (track02_unresolved_pit_event_already_queued(
+                world, source, &actuator, &result))
             continue;
         event = &world->source_actuator_events[
             world->source_actuator_event_count++];
@@ -3708,10 +3771,8 @@ static void theron_v1_world_dispatch_source_actuator_events(
                         }
                     }
                 }
-            } else if ((source_tile >> 5) == THERON_TILE_PIT ||
-                       (source_tile >> 5) == THERON_TILE_FAKEWALL) {
-                const uint8_t open_mask =
-                    (source_tile >> 5) == THERON_TILE_PIT ? 0x08u : 0x04u;
+            } else if ((source_tile >> 5) == THERON_TILE_FAKEWALL) {
+                const uint8_t open_mask = 0x04u;
                 uint8_t runtime_tile;
                 uint8_t effect = event.effect;
                 if (theron_v1_world_track02_runtime_tile(
@@ -3731,6 +3792,10 @@ static void theron_v1_world_dispatch_source_actuator_events(
                             event.target_x, event.target_y, runtime_tile))
                         consumed = 1;
                 }
+            } else if ((source_tile >> 5) == THERON_TILE_PIT) {
+                /* Track 02 attributes are byte-authentic, but the Theron
+                 * actuator's pit-bit consumer is unresolved. Keep this event
+                 * queued without changing the runtime tile. */
             } else if ((source_tile >> 5) == THERON_TILE_WALL ||
                        (source_tile >> 5) == THERON_TILE_OPEN) {
                 const int wall =

@@ -1,6 +1,6 @@
 --- a/src/pce_fast/huc6280.cpp
 +++ b/src/pce_fast/huc6280.cpp
-@@ -978,7 +978,37 @@
+@@ -978,7 +978,77 @@
 FIRESTAFF_PATCH_TAB_CONTEXT  TheronTraceStage2MPR1(GetRealPC(), X_local, Y_local, P_local,
 FIRESTAFF_PATCH_TAB_CONTEXT                        HU_ZNFlags);
 FIRESTAFF_PATCH_TAB_CONTEXT  b1 = RdAtPC();
@@ -32,6 +32,46 @@ FIRESTAFF_PATCH_TAB_CONTEXT  b1 = RdAtPC();
 +	            stage2_opcode_sequence++, TheronTraceInstructionPC,
 +	            TheronTraceInstructionPhysicalPC, mpr_slot, mpr_bank, b1);
 +	    fflush(stage2_opcode_trace);
++	   }
++	  }
++	  if((TheronTraceInstructionPC >= 0x46b8 &&
++	      TheronTraceInstructionPC <= 0x46c9) ||
++	     (TheronTraceInstructionPC >= 0x5e4d &&
++	      TheronTraceInstructionPC <= 0x5e5e) ||
++	     (TheronTraceInstructionPC >= 0x5e7d &&
++	      TheronTraceInstructionPC <= 0x5e8e))
++	  {
++	   static FILE *vce_call_trace;
++	   static unsigned vce_call_sequence;
++	   static bool vce_call_trace_checked;
++	   if(!vce_call_trace_checked)
++	   {
++	    vce_call_trace_checked = true;
++	    const char *path = getenv("FIRESTAFF_THERON_STAGE2_VCE_CALL_TRACE");
++	    if(path && *path)
++	    {
++	     vce_call_trace = fopen(path, "w");
++	     if(vce_call_trace)
++	      fputs("source=mednafen-pce-fast-vce-call-probe-v1\n", vce_call_trace);
++	    }
++	   }
++	   if(vce_call_trace && vce_call_sequence < 512)
++	   {
++	    const unsigned mpr_slot = TheronTraceInstructionPC >> 13;
++	    const unsigned stream_pointer = RdMem(0x1c) | (RdMem(0x1d) << 8);
++	    const unsigned stream_pos = (stream_pointer + Y_local) & 0xffff;
++	    fprintf(vce_call_trace,
++	      "theron_vce_route_step sequence=%u logical_pc=%04x physical_pc=%06x opcode=%02x mpr_slot=%u mpr_bank=%02x a=%02x x=%02x y=%02x stream_pointer=%04x stream_pos=%04x window=%02x%02x%02x%02x%02x%02x\n",
++	      vce_call_sequence++, TheronTraceInstructionPC,
++	      TheronTraceInstructionPhysicalPC, b1, mpr_slot, HuCPU.MPR[mpr_slot],
++	      HU_A, X_local, Y_local, stream_pointer, stream_pos,
++	      (unsigned)RdMem((stream_pos + 0xffff) & 0xffff),
++	      (unsigned)RdMem(stream_pos),
++	      (unsigned)RdMem((stream_pos + 1) & 0xffff),
++	      (unsigned)RdMem((stream_pos + 2) & 0xffff),
++	      (unsigned)RdMem((stream_pos + 3) & 0xffff),
++	      (unsigned)RdMem((stream_pos + 4) & 0xffff));
++	    fflush(vce_call_trace);
 +	   }
 +	  }
 FIRESTAFF_PATCH_BLANK_CONTEXT

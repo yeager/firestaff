@@ -1,3 +1,9 @@
+## Unreleased changes
+
+- `Theron's Quest Button II`: right mouse and long touch now cancel startup
+  selection and do not advance the dungeon tick, matching the retail manual.
+  Native direction keys already provide its simplified-movement commands.
+
 # Firestaff v3.0.410
 
 ## User-facing changes

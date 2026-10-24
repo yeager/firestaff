@@ -188,6 +188,10 @@ evidence.
 
 - **Save body layout:** SRM/save correlation and the complete body layout are
   not sufficiently source-locked.
+- **Original/Firestaff paired capture:** the shared v2 comparator now requires
+  hash-bound authentic-media and `--debug` build receipts per checkpoint, but
+  a same-state original-versus-Firestaff image pair and reviewed receipt
+  producers are still missing.
 - **Startup media:** authentic decoding and pixel evidence for Track 02
   startup art, text, and audio are missing.
 - **Post-$3800 chain:** the continuation consumer after the authenticated

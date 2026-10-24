@@ -16,6 +16,8 @@
  */
 
 #include "theron_v1_boot.h"
+#include "theron_v1_track02_actuator.h"
+#include "theron_v1_track02_thing_data.h"
 #include "theron_v1_world.h"
 #include "menu_input_m12.h"
 
@@ -277,6 +279,87 @@ static int test_original_turn_and_strafe_commands(void)
     return 1;
 }
 
+static int test_turn_event_capacity_failure_reports_blocked(void)
+{
+    /* Authentic Formicia floor-party actuator record with RevertEffect set.
+     * Its removal event is guaranteed to trigger for any turn direction. */
+    static const uint8_t reverted_party_actuator_raw[8] = {
+        0xfe, 0xff, 0x03, 0x01, 0x60, 0x02, 0xa0, 0x21
+    };
+    static const int turn_inputs[] = {
+        M12_MENU_INPUT_TURN_LEFT,
+        M12_MENU_INPUT_TURN_RIGHT,
+        M12_MENU_INPUT_LEFT,
+        M12_MENU_INPUT_RIGHT
+    };
+    Theron_V1_World world;
+    Theron_V1_BootRuntimeInputReceipt receipt;
+    int i;
+
+    TEST("Turn event-capacity failure reports blocked without mutation");
+    for (i = 0; i < (int)(sizeof(turn_inputs) / sizeof(turn_inputs[0])); ++i) {
+        Theron_V1_SourceObjectRecord *source;
+        Theron_V1_Object *live_actuator;
+
+        setup_open_room(&world);
+        world.source_object_count = 1u;
+        source = &world.source_objects[0];
+        source->dungeon_id = world.current_dungeon;
+        source->level = world.current_level;
+        source->x = world.party.leader_x;
+        source->y = world.party.leader_y;
+        source->source_ref = 1u;
+        source->source_index = 1u;
+        source->category = THERON_CAT_ACTUATOR;
+        source->raw_size = 8u;
+        memcpy(source->raw, reverted_party_actuator_raw,
+               sizeof(reverted_party_actuator_raw));
+        world.object_count = 1;
+        live_actuator = &world.objects[0];
+        live_actuator->type = THERON_OBJTYPE_SOURCE_ACTUATOR;
+        live_actuator->dungeon_id = source->dungeon_id;
+        live_actuator->level = source->level;
+        live_actuator->x = source->x;
+        live_actuator->y = source->y;
+        live_actuator->source_ref = source->source_ref;
+        live_actuator->source_index = source->source_index;
+        live_actuator->state = TQ_ACT_FLOOR_PARTY;
+        world.party.champion_count = 1;
+        world.source_actuator_event_count =
+            THERON_MAX_SOURCE_ACTUATOR_EVENTS;
+        world.source_actuator_events[
+            THERON_MAX_SOURCE_ACTUATOR_EVENTS - 1u].source_ref = 0xbeefu;
+
+        ASSERT(theron_v1_boot_runtime_handle_m12_input(
+                   &world, NULL, turn_inputs[i], &receipt) == 1,
+               "turn input should fill a receipt on queue failure");
+        ASSERT(receipt.handled == 1 && receipt.blocked == 1 &&
+               receipt.turned == 0,
+               "failed turn should be reported as blocked");
+        ASSERT(receipt.result ==
+                   THERON_V1_BOOT_RUNTIME_INPUT_RESULT_IGNORED,
+               "failed turn should not request a redraw");
+        ASSERT(world.party.leader_dir == THERON_DIR_NORTH &&
+               receipt.party_dir == THERON_DIR_NORTH,
+               "failed turn should preserve the party direction");
+        ASSERT(world.source_actuator_event_count ==
+                   THERON_MAX_SOURCE_ACTUATOR_EVENTS,
+               "failed turn should not publish a partial event queue");
+        ASSERT(world.source_actuator_events[
+                   THERON_MAX_SOURCE_ACTUATOR_EVENTS - 1u].source_ref ==
+                   0xbeefu,
+               "failed turn should not overwrite the full queue");
+        ASSERT(receipt.party_x == 3 && receipt.party_y == 3 &&
+               receipt.tick_count == 10,
+               "failed turn should return the current world receipt");
+        ASSERT(strcmp(receipt.status_scope, "TURN") == 0 &&
+               strcmp(receipt.status, "BLOCKED") == 0,
+               "failed turn should expose the blocked turn status");
+    }
+    PASS();
+    return 1;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Movement
  * ══════════════════════════════════════════════════════════════════════ */
@@ -403,6 +486,24 @@ static int test_wait_tick(void)
             M12_MENU_INPUT_ACTION, &receipt) == 1,
            "ACTION should succeed");
     ASSERT(receipt.tick_count == 12, "tick should increment again");
+    PASS();
+    return 1;
+}
+
+static int test_button_ii_does_not_tick_world(void)
+{
+    Theron_V1_World world;
+    Theron_V1_BootRuntimeInputReceipt receipt;
+
+    TEST("Button II cancel does not advance the dungeon world tick");
+    setup_open_room(&world);
+    ASSERT(theron_v1_boot_runtime_handle_m12_input(&world, NULL,
+            M12_MENU_INPUT_BACK, &receipt) == 1,
+           "BACK should be handled");
+    ASSERT(receipt.tick_count == 10, "BACK must leave tick unchanged");
+    ASSERT(receipt.waited == 0, "BACK must not report a wait");
+    ASSERT(receipt.result == THERON_V1_BOOT_RUNTIME_INPUT_RESULT_IGNORED,
+           "BACK must not request a redraw");
     PASS();
     return 1;
 }
@@ -614,11 +715,13 @@ int main(void)
     test_turn_left();
     test_turn_right();
     test_original_turn_and_strafe_commands();
+    test_turn_event_capacity_failure_reports_blocked();
     test_move_forward();
     test_move_backward();
     test_move_blocked();
     test_exit_dungeon();
     test_wait_tick();
+    test_button_ii_does_not_tick_world();
     test_idle_tick();
     test_pickup_routes_to_front_cell();
     test_source_inventory_selection_cycles_verified_slots();
