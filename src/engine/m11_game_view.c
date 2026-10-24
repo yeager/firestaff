@@ -39258,9 +39258,13 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         if ((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0) {
             M12_MenuInput control_input =
                 m11_theron_mouse_control_input_at(state, x, y);
-            return M11_GameView_HandleInput(
-                state, control_input != M12_MENU_INPUT_NONE
-                    ? control_input : M12_MENU_INPUT_ACCEPT);
+            /* Only the explicit host control panel has defined pointer
+             * semantics. Theron's PCE controller cursor samples do not
+             * establish world-space mouse hit targets; treating every other
+             * click as Button I would silently advance a wait tick. */
+            return control_input != M12_MENU_INPUT_NONE
+                ? M11_GameView_HandleInput(state, control_input)
+                : M11_GAME_INPUT_IGNORED;
         }
         if ((buttonMask & DM1_V1_MOUSE_MASK_RIGHT_PC34) != 0) {
             return M11_GameView_HandleInput(state, M12_MENU_INPUT_BACK);
