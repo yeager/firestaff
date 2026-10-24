@@ -1,8 +1,9 @@
-- 2026-10-24: Rebuilt `m11_dm1_pc34_first_monster_combat_real` from the current
-  source after confirming the installed original DOS 3.4 archive was present.
-  The authentic startup-to-first-monster combat regression passed. This
-  verifies its PC34 scenario only, not the reported full viewport, item-art,
-  champion-input, campaign or all-platform parity.
+- 2026-10-24: Rebuilt the DM1 combat test targets from current source and ran
+  `ctest -R '^m11_dm1_.*first_monster_combat_real$'`; all five passed against
+  installed original media: PC34, Amiga 2.0, Atari ST 1.2, FM Towns and Amiga
+  3.6. These tests verify their startup-to-first-monster combat scenarios, not
+  native rendering, every input path, full campaign or complete platform
+  parity.
 
 - 2026-10-24: Restored the DM1 FM Towns entrance-door correction for fast
   computers. ReDMCSB `ENTRANCE.C:F0438` documents BUG0_71: one VBlank per door
