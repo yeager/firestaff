@@ -55,9 +55,13 @@ semantics remain specific to a connected Saturn ControlPad.
 
 The retail game tick now accepts only the six basic movement commands
 (forward/backward, turn left/right, and strafe left/right) against the
-authenticated DGN grid. Other retail mechanics remain fail-closed: this does
-not enable item use, inventory, spells, pause, combat, sensors, doors, or level
-transitions.
+authenticated DGN grid. Item use, inventory, spells, combat, sensors, doors,
+and level transitions remain fail-closed.
+
+In a loaded Nexus dungeon, Space toggles Firestaff's host pause. The mapping
+follows the retail Start button's observed pause/resume behavior in Ymir; it
+freezes Firestaff's session tick and host audio until Space is pressed again.
+This does not reproduce the retail `PAUSE` graphic or menu.
 
 For desktop mouse movement, Firestaff uses the authentic Nexus viewport
 rectangle parsed from `DM.BIN` as a host control surface. Left-click the upper

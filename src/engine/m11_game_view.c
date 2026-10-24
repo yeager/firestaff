@@ -31934,7 +31934,8 @@ void M11_GameView_SetPauseReason(M11_GameViewState* state,
     unsigned int previous;
     int paused;
     if (!state) return;
-    reason &= M11_GAME_PAUSE_REASON_TIMER | M11_GAME_PAUSE_REASON_FOCUS;
+    reason &= M11_GAME_PAUSE_REASON_TIMER | M11_GAME_PAUSE_REASON_FOCUS |
+              M11_GAME_PAUSE_REASON_INPUT;
     if (!reason) return;
     previous = state->pauseReasons;
     if (enabled) state->pauseReasons |= reason;
@@ -36700,6 +36701,25 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return M11_GAME_INPUT_REDRAW;
         }
         return M11_GAME_INPUT_IGNORED;
+    }
+
+    /* The retail Nexus Start button pauses and resumes gameplay. Space is
+     * Firestaff's host ACTION key; handle it before the generic pause guard
+     * so the same key can resume the session. Keep pause independent from
+     * focus loss and session-timer pause reasons. */
+    if (state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN &&
+        state->nexusState.level_loaded &&
+        !state->nexusState.title_active &&
+        !state->nexusState.startup_save_select_active &&
+        !state->nexusState.champion_select_active &&
+        input == M12_MENU_INPUT_ACTION) {
+        const int pause_enabled =
+            (state->pauseReasons & M11_GAME_PAUSE_REASON_INPUT) == 0u;
+        M11_GameView_SetPauseReason(state,
+                                    M11_GAME_PAUSE_REASON_INPUT,
+                                    pause_enabled);
+        m11_set_status(state, "NEXUS", pause_enabled ? "PAUSED" : "ACTIVE");
+        return M11_GAME_INPUT_REDRAW;
     }
 
     if (M11_GameView_IsPaused(state)) return M11_GAME_INPUT_IGNORED;
