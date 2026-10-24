@@ -1572,10 +1572,11 @@ screen, menu, HUD, or viewport owner, and does not authorize rendering.
 The standalone `vdp2-memory-write-bundle.txt` format is accepted directly by
 `analyze_nexus_vdp2_bitmap_source.py`. The reader checks the bundle-complete
 receipt, exact CSV row count, trace frame interval no later than the snapshot,
-memory address and width bounds, and the VDP2 register/VRAM/CRAM sizes. Ymir
-captures the receipt, registers, VRAM, CRAM, and trace in one emulator-thread
-callback. The authentic Japanese retail run used `--debug`, the Japanese IPL
-SHA-256 `dcfef4b99605f872b6c3b6d05c045385cdea3d1b702906a0ed930df7bcb7deac`,
+memory address, width, and value bounds, plus VDP2 register, VRAM, and CRAM
+sizes. Ymir captures the receipt, registers, VRAM, CRAM, and trace in one
+emulator-thread callback. The authentic Japanese retail run used `--debug` and
+the Japanese IPL SHA-256
+`dcfef4b99605f872b6c3b6d05c045385cdea3d1b702906a0ed930df7bcb7deac`,
 and the retail CUE SHA-256
 `878b3bc223bb56e99626dbaa2946d17fb349a2a67a10cd4423742d8ab30b8699`.
 

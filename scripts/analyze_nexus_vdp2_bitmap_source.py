@@ -312,7 +312,8 @@ def ymir_bundle_frame(bundle: Path) -> tuple[dict[str, bytes], int, str]:
                 limit = (512 * 1024 if space == "VRAM" else
                          4096 if space == "CRAM" else 0)
                 if (limit == 0 or width not in (1, 2) or address < 0 or
-                        address + width > limit or value >= 1 << (width * 8)):
+                        address + width > limit or value < 0 or
+                        value >= 1 << (width * 8)):
                     raise ValueError("Ymir VDP2 trace contains an invalid memory write")
         except (KeyError, TypeError, ValueError) as error:
             raise ValueError("Ymir VDP2 trace does not match its frame receipt") from error
