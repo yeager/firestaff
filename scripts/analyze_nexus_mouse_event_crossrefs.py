@@ -28,13 +28,14 @@ MOUSE_SOURCE_PATH_OFFSET = 0x387FC
 # same SH-2 image as the event strings above; they are not source symbols.
 MOUSE_REGION_SETUP_SITE = 0x16588
 MOUSE_REGION_REGISTER_ROUTINE = 0x24AD0
-MOUSE_REGION_CALLBACK_DISPATCH = 0x24B22
-MOUSE_REGION_CALLBACK_STORE = 0x24B14
 MOUSE_REGION_CALLBACK_SLOT_LOAD = 0x24B08
 MOUSE_REGION_CALLBACK_LOAD = 0x24B2E
 MOUSE_REGION_CALLBACK_CALL = 0x24B36
 MOUSE_REGION_ACTIVE_FLAG_LOAD = 0x24B26
 MOUSE_REGION_ACTIVE_FLAG_TEST = 0x24B2A
+MOUSE_REGION_ACTIVE_FLAG_BRANCH = 0x24B2C
+MOUSE_REGION_CALLBACK_NULL_TEST = 0x24B32
+MOUSE_REGION_CALLBACK_NULL_BRANCH = 0x24B34
 
 
 def resolve_dm_bin(explicit: Path | None) -> Path:
@@ -81,6 +82,22 @@ def mov_l_pc_literal(data: bytes, instruction_offset: int) -> tuple[int, int] | 
     return (opcode >> 8) & 0xF, read_be32(data, literal_offset)
 
 
+def read_be16(data: bytes, offset: int) -> int | None:
+    if offset < 0 or offset + 2 > len(data):
+        return None
+    return int.from_bytes(data[offset : offset + 2], "big")
+
+
+def bt_target(instruction_offset: int, opcode: int) -> int | None:
+    """Resolve a SH-2 BT/BF target (the branch base is PC+4)."""
+    if opcode >> 8 not in (0x89, 0x8B):
+        return None
+    displacement = opcode & 0xFF
+    if displacement & 0x80:
+        displacement -= 0x100
+    return instruction_offset + 4 + displacement * 2
+
+
 def report_mouse_region_registration(data: bytes) -> bool:
     """Verify the retail hit-region registration and indirect callback path."""
     expected_setup = (
@@ -104,12 +121,12 @@ def report_mouse_region_registration(data: bytes) -> bool:
         if (register, value) != (expected_register, expected_value):
             valid = False
 
-    call_opcode = int.from_bytes(data[0x16590:0x16592], "big")
+    call_opcode = read_be16(data, 0x16590)
     if call_opcode != 0x420B:
         print(f"mouse_region_setup_call=invalid opcode=0x{call_opcode:04x}")
         valid = False
     else:
-        print("mouse_region_setup_call=JSR @R2 at file_offset=0x001590")
+        print("mouse_region_setup_call=JSR @R2 at file_offset=0x016590")
 
     # The registration routine stores the supplied R6 callback in the global
     # callback slot. The dispatch routine checks its active flag, then calls
@@ -119,22 +136,43 @@ def report_mouse_region_registration(data: bytes) -> bool:
         data, MOUSE_REGION_CALLBACK_SLOT_LOAD)
     callback_slot = mov_l_pc_literal(data, MOUSE_REGION_CALLBACK_LOAD)
     active_flag = mov_l_pc_literal(data, MOUSE_REGION_ACTIVE_FLAG_LOAD)
-    callback_store_opcode = int.from_bytes(
-        data[MOUSE_REGION_CALLBACK_STORE : MOUSE_REGION_CALLBACK_STORE + 2], "big")
-    active_test_opcode = int.from_bytes(
-        data[MOUSE_REGION_ACTIVE_FLAG_TEST : MOUSE_REGION_ACTIVE_FLAG_TEST + 2], "big")
-    callback_call_opcode = int.from_bytes(
-        data[MOUSE_REGION_CALLBACK_CALL : MOUSE_REGION_CALLBACK_CALL + 2], "big")
-    if (not callback_store_slot or callback_store_slot[0] != 4 or
+    # R6 is saved at the top of this routine's 8-byte stack frame. The
+    # registration path reloads that value from @R15 and writes it to the
+    # callback slot. Check the stack setup, load, null-test/branch and its
+    # delay-slot store together; checking only the final store opcode would
+    # also accept an unrelated R3 value.
+    registration_path = (
+        read_be16(data, 0x24AD8) == 0x7FF8,  # add #-8,R15
+        read_be16(data, 0x24ADC) == 0x2F62,  # mov.l R6,@R15
+        read_be16(data, 0x24B0A) == 0x60F2,  # mov.l @R15,R0
+        read_be16(data, 0x24B0C) == 0x2008,  # tst R0,R0
+        read_be16(data, 0x24B0E) == 0x8902,  # bt to 0x24B16
+        bt_target(0x24B0E, read_be16(data, 0x24B0E) or 0) == 0x24B16,
+        read_be16(data, 0x24B10) == 0x63F2,  # delay slot: mov.l @R15,R3
+        read_be16(data, 0x24B12) == 0xA002,  # bra to 0x24B18
+        read_be16(data, 0x24B14) == 0x2432,  # delay slot: mov.l R3,@R4
+        read_be16(data, 0x24B16) == 0xE100,
+        read_be16(data, 0x24B18) == 0x2412,
+        read_be16(data, 0x24B1A) == 0x7F08,  # add #8,R15
+    )
+    active_test_opcode = read_be16(data, MOUSE_REGION_ACTIVE_FLAG_TEST)
+    active_branch_opcode = read_be16(data, MOUSE_REGION_ACTIVE_FLAG_BRANCH)
+    callback_null_test = read_be16(data, MOUSE_REGION_CALLBACK_NULL_TEST)
+    callback_null_branch = read_be16(data, MOUSE_REGION_CALLBACK_NULL_BRANCH)
+    callback_call_opcode = read_be16(data, MOUSE_REGION_CALLBACK_CALL)
+    if (not all(registration_path) or
+        not callback_store_slot or callback_store_slot[0] != 4 or
         not callback_slot or callback_slot[0] != 2 or
         callback_store_slot[1] != callback_slot[1] or
         not active_flag or active_flag[0] != 3):
-        print("mouse_region_callback_dispatch=invalid global pointer loads")
+        print("mouse_region_callback_dispatch=invalid registration provenance or global pointer loads")
         valid = False
-    elif (callback_store_opcode, active_test_opcode, callback_call_opcode) != (
-        0x2432, 0x2008, 0x4E0B
-    ):
-        print("mouse_region_callback_dispatch=invalid instruction sequence")
+    elif (active_test_opcode, active_branch_opcode,
+          callback_null_test, callback_null_branch, callback_call_opcode) != (
+        0x2008, 0x8922, 0x2EE8, 0x8901, 0x4E0B
+    ) or bt_target(MOUSE_REGION_ACTIVE_FLAG_BRANCH, active_branch_opcode or 0) != 0x24B74 \
+      or bt_target(MOUSE_REGION_CALLBACK_NULL_BRANCH, callback_null_branch or 0) != 0x24B3A:
+        print("mouse_region_callback_dispatch=invalid active-test, branch-target, or callback-call sequence")
         valid = False
     else:
         print(f"mouse_region_registration_r6_callback_slot=0x{callback_slot[1]:08x}")
