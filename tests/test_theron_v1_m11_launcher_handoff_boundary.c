@@ -231,6 +231,44 @@ static void run_theron_pointer_and_button_input_contract(void) {
         }
     }
 
+    {
+        Theron_V1_World world;
+        M11_GameInputResult result;
+        theron_v1_world_init(&world);
+        world.party.champion_count = 1;
+        world.party.champions[0].alive = 1;
+        world.current_dungeon = THERON_DUNGEON_1_AKUTUBA;
+        world.current_level = 0;
+        world.level_loaded[0][0] = 1;
+        world.levels[0][0].width = 8;
+        world.levels[0][0].height = 8;
+        world.party.leader_x = 3;
+        world.party.leader_y = 3;
+        world.party.leader_dir = THERON_DIR_NORTH;
+        memset(&view, 0, sizeof(view));
+        view.active = 1;
+        view.sourceKind = M11_GAME_SOURCE_THERON_TRACK02;
+        view.theronWorld = &world;
+        view.theronState.startup_phase = THERON_STARTUP_PHASE_IN_DUNGEON;
+        view.theronState.level_loaded = 1;
+        view.theronState.party_x = 3;
+        view.theronState.party_y = 3;
+        view.theronState.party_dir = THERON_DIR_NORTH;
+        view.theronState.tick_count = 7;
+        view.presentationWidth = 320;
+        view.presentationHeight = 200;
+        result = M11_GameView_HandlePointerButton(
+            &view, 100, 80, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        expect_true(result == M11_GAME_INPUT_IGNORED &&
+                        view.theronState.party_x == 3 &&
+                        view.theronState.party_y == 3 &&
+                        view.theronState.party_dir == THERON_DIR_NORTH &&
+                        view.theronState.tick_count == 7 &&
+                        world.party.leader_x == 3 && world.party.leader_y == 3 &&
+                        view.lastAction[0] == '\0',
+                    "unmapped dungeon click does not become a wait tick");
+    }
+
     memset(&view, 0, sizeof(view));
     view.active = 1;
     view.sourceKind = M11_GAME_SOURCE_THERON_TRACK02;
