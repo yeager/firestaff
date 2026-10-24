@@ -1,0 +1,63 @@
+UpdateCTestConfiguration  from :/home/trv2/work/firestaff-parity-debug-20261024/.build-debug/DartConfiguration.tcl
+Parse Config file:/home/trv2/work/firestaff-parity-debug-20261024/.build-debug/DartConfiguration.tcl
+Test project /home/trv2/work/firestaff-parity-debug-20261024/.build-debug
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 2709
+    Start 2709: nexus_v1_title_mapd_cd_ram_source_real
+
+2709: Test command: /usr/bin/bash "/home/trv2/work/firestaff-parity-debug-20261024/tests/test_nexus_v1_title_mapd_cd_ram_source_real.sh"
+2709: Working Directory: /home/trv2/work/firestaff-parity-debug-20261024/.build-debug
+2709: Test timeout computed to be: 1500
+2709: SKIP: no authenticated Nexus MAPD CD-to-RAM capture
+1/3 Test #2709: nexus_v1_title_mapd_cd_ram_source_real .......***Skipped   0.02 sec
+test 2710
+    Start 2710: nexus_v1_title_mapd_cram_same_session_real
+
+2710: Test command: /usr/bin/bash "/home/trv2/work/firestaff-parity-debug-20261024/tests/test_nexus_v1_title_mapd_cram_same_session_real.sh"
+2710: Working Directory: /home/trv2/work/firestaff-parity-debug-20261024/.build-debug
+2710: Test timeout computed to be: 1500
+2710: SKIP: no hash-bound Nexus MAPD palette RAM-to-CRAM capture
+2/3 Test #2710: nexus_v1_title_mapd_cram_same_session_real ...***Skipped   0.02 sec
+test 2711
+    Start 2711: nexus_v1_title_mapd_vdp2_transfer_real
+
+2711: Test command: /usr/bin/bash "/home/trv2/work/firestaff-parity-debug-20261024/tests/test_nexus_v1_title_mapd_vdp2_transfer_real.sh"
+2711: Working Directory: /home/trv2/work/firestaff-parity-debug-20261024/.build-debug
+2711: Test timeout computed to be: 1500
+2711: SKIP: no hash-bound Nexus MAPD-to-VDP2 transfer capture
+3/3 Test #2711: nexus_v1_title_mapd_vdp2_transfer_real .......***Skipped   0.02 sec
+
+The following tests passed:
+	nexus_v1_title_mapd_cd_ram_source_real
+	nexus_v1_title_mapd_cram_same_session_real
+	nexus_v1_title_mapd_vdp2_transfer_real
+
+100% tests passed, 0 tests failed out of 3
+
+Label Time Summary:
+cd              =   0.02 sec*proc (1 test)
+cram            =   0.02 sec*proc (1 test)
+mapd            =   0.05 sec*proc (3 tests)
+nexus           =   0.05 sec*proc (3 tests)
+palette         =   0.03 sec*proc (2 tests)
+ram             =   0.03 sec*proc (2 tests)
+real-capture    =   0.05 sec*proc (3 tests)
+real_data       =   0.05 sec*proc (3 tests)
+registers       =   0.02 sec*proc (1 test)
+saturn          =   0.05 sec*proc (3 tests)
+timing          =   0.03 sec*proc (2 tests)
+title           =   0.05 sec*proc (3 tests)
+vdp2            =   0.02 sec*proc (1 test)
+vram            =   0.02 sec*proc (1 test)
+
+Total Test time (real) =   0.23 sec
+
+The following tests did not run:
+	2709 - nexus_v1_title_mapd_cd_ram_source_real (Skipped)
+	2710 - nexus_v1_title_mapd_cram_same_session_real (Skipped)
+	2711 - nexus_v1_title_mapd_vdp2_transfer_real (Skipped)

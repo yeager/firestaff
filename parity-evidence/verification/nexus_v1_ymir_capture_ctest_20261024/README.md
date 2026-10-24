@@ -28,13 +28,17 @@ capture inputs and selected display framebuffer. Binary dumps and game media
 remain in the existing local evidence/data directories and are not duplicated
 here.
 
-The separate `nexus_v1_title_same_session_capture_real` gate was skipped. Its
-verbose log states that TRV2 has no complete hash-bound same-session Nexus
-title capture. The capture must bind real CD FIFO reads, SH-2 source writes and
+Four trace-dependent gates were skipped: `nexus_v1_title_same_session_capture_real`,
+`nexus_v1_title_mapd_cd_ram_source_real`,
+`nexus_v1_title_mapd_cram_same_session_real`, and
+`nexus_v1_title_mapd_vdp2_transfer_real`. The verbose logs preserve each exact
+reason: no complete hash-bound same-session title capture, no authenticated
+MAPD CD-to-RAM capture, no hash-bound MAPD palette RAM-to-CRAM capture, and no
+hash-bound MAPD-to-VDP2 transfer capture, respectively. The capture must bind real CD FIFO reads, SH-2 source writes and
 instruction reads, VDP2 writes/registers, and the full VDP1/VDP2 state. The
 standard root `/home/trv2/.firestaff/external/nexus-capture` currently has no
-capture subdirectories. Producing that trace is the next concrete evidence
-gap for admitting the retail title source path.
+capture subdirectories. Producing those traces is the next concrete evidence gap for admitting the retail
+title source path.
 
 The build used the shared source snapshot based on revision `dd79c4f18`; that
 snapshot contained concurrent uncommitted changes. Passing these tests
