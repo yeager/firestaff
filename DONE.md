@@ -2223,6 +2223,10 @@ only. Active work is in `TODO.md` and `TODO-<game>.md`.
   Atari ST as unsupported. The focused unsupported-platform CLI test passes;
   this check validates game/platform compatibility, not the presence or
   integrity of installed media.
+- The unsupported-platform CLI regression now exercises the shared guard for
+  DM1/CSB/DM2: CSB+PC and DM1+Saturn are rejected, alongside DM2+Atari and the
+  removed DM2 PC-9821 aliases, in both direct and `--menu` forms. The
+  Xcode-built arm64 binary passed the expanded test before media scanning.
 - The `--dm1-fmtowns-ja` and `--csb-fmtowns-ja` edition switches now reject a
   missing or mismatched game/platform pair during CLI validation rather than
   after Phase A begins. This preserves the `-1` internal platform sentinel as

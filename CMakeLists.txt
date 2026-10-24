@@ -4384,7 +4384,7 @@ if(BUILD_TESTING)
             "${Python3_EXECUTABLE}"
     )
     set_tests_properties(dm2_unsupported_platform_cli PROPERTIES
-        LABELS "dm2;cli;platform-policy"
+        LABELS "dm1;csb;dm2;cli;platform-policy"
         ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip;FIRESTAFF_DM2_REMOVED_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_PC-9821_JA.zip;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/removed-platform-scratch"
         TIMEOUT 30
     )
