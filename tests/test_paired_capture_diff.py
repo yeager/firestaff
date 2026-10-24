@@ -237,6 +237,23 @@ class PairedCaptureDiffTests(unittest.TestCase):
         with self.assertRaisesRegex(ManifestError, "debug build id does not match"):
             compare_manifest(self.manifest, self.report_dir)
 
+    def test_requires_capture_build_id_to_match_manifest_build_id(self) -> None:
+        self.data["firestaffBuildId"] = "different-build"
+        self._write_manifest()
+        with self.assertRaisesRegex(
+                ManifestError,
+                "debug build id does not match manifest firestaffBuildId"):
+            compare_manifest(self.manifest, self.report_dir)
+
+    def test_rejects_non_utf8_provenance_receipt(self) -> None:
+        self.debug_receipt.write_bytes(bytes((0xff,)))
+        self.data["captures"][0]["provenance"]["firestaffDebug"]["receipt"]["sha256"] = self._sha(
+            self.debug_receipt
+        )
+        self._write_manifest()
+        with self.assertRaisesRegex(ManifestError, "provenance receipt is not valid JSON"):
+            compare_manifest(self.manifest, self.report_dir)
+
     def test_rejects_noncanonical_dimensions(self) -> None:
         Image.new("RGB", (640, 400), (0, 0, 0)).save(self.reference)
         self.data["captures"][0]["reference"]["sha256"] = self._sha(self.reference)
