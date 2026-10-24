@@ -139,7 +139,7 @@ def _audit_frame(
     frame = frame_rows[0]["frame"]
     audit = FrameAudit(frame=frame)
     returns: list[int] = []
-    seen_addresses: set[int] = set()
+    seen_states: set[tuple[int, tuple[int, ...]]] = set()
 
     for expected_index, row in enumerate(frame_rows):
         if row["frame"] != frame:
@@ -150,11 +150,12 @@ def _audit_frame(
                 f"got {row['index']}"
             )
         address = row["address"]
-        if address in seen_addresses:
+        state_key = (address, tuple(returns))
+        if state_key in seen_states:
             raise TraceError(
                 f"frame {frame}: command loop at 0x{address:05x}"
             )
-        seen_addresses.add(address)
+        seen_states.add(state_key)
         audit.addresses.append(address)
         if include_draw_state:
             audit.command_records.append((
@@ -466,8 +467,8 @@ def audit_runtime_capture(
             ),
             "first_offset_difference_index": first_offset_difference,
             "classification": (
-                "agreement" if same_offsets and same_draw_state
-                else "no-candidate-chain-reaches-copr" if not scan_chain
+                "candidate-scan-selects-no-chain" if not scan_chain
+                else "agreement" if same_offsets and same_draw_state
                 else "candidate-scan-selects-a-different-chain"
             ),
             "candidate_scan_error": candidate_scan_error,

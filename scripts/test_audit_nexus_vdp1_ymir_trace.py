@@ -83,6 +83,18 @@ class YmirVdp1TraceTests(unittest.TestCase):
         self.assertEqual(report["selected_frame"]["records"], 6)
         self.assertEqual(report["selected_frame"]["draws"], 3)
 
+    def test_same_subroutine_can_be_called_twice(self):
+        rows = [
+            csv_row(651, 0, 0x00, 0x0009),
+            csv_row(651, 1, 0x20, 0x2002, link=0x14),
+            csv_row(651, 2, 0xA0, 0x3000),
+            csv_row(651, 3, 0x40, 0x2002, link=0x14),
+            csv_row(651, 4, 0xA0, 0x3000),
+            csv_row(651, 5, 0x60, 0x8000),
+        ]
+        report = self.run_trace(encode(rows), 651)
+        self.assertEqual(report["selected_frame"]["records"], 6)
+
     def test_rejects_nonzero_dispatch_root_and_broken_link(self):
         nonzero = [
             csv_row(649, 0, 0x20, 0x000A),
@@ -120,6 +132,7 @@ class YmirVdp1TraceTests(unittest.TestCase):
         command(0x140, 0x0002)
         command(0x160, 0x0002)
         command(0x180, 0x1001, link=0x8)
+        command(0x200, 0x8000)
         root_commands = []
         for offset in (0x00, 0x20, 0x40, 0x60):
             words = tuple(
@@ -158,7 +171,7 @@ class YmirVdp1TraceTests(unittest.TestCase):
         self.assertEqual(paired["aligned_exact_record_matches"], 4)
         self.assertTrue(paired["same_ordered_command_records"])
 
-        regions["vdp1-state"] = "copr:0x1"
+        regions["vdp1-state"] = "copr:0x40"
         with patch(
             "audit_nexus_vdp1_ymir_trace.iter_frame_regions_file",
             side_effect=capture_frames,
@@ -171,7 +184,7 @@ class YmirVdp1TraceTests(unittest.TestCase):
             without_candidate = audit_runtime_capture(Path("fixture.raw"), 1, 0)
         self.assertEqual(
             without_candidate["comparison"]["classification"],
-            "no-candidate-chain-reaches-copr",
+            "candidate-scan-selects-no-chain",
         )
 
 
