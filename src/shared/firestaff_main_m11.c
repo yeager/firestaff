@@ -1136,6 +1136,20 @@ int main(int argc, char** argv) {
         opts.directLaunch = 0;
     }
 
+    /* Reject impossible direct game/platform pairs before asset discovery,
+     * which can otherwise spend time scanning archives for an edition that
+     * does not exist in the launch catalogue. */
+    if (opts.directLaunch && opts.gameId &&
+        opts.architectureOverride != M12_ARCH_AUTO &&
+        !M12_AssetStatus_GameSupportsArchitecture(
+            opts.gameId, opts.architectureOverride)) {
+        fprintf(stderr,
+                "firestaff: game '%s' has no launchable version for --platform %s\n",
+                opts.gameId,
+                M12_Architecture_Label(opts.architectureOverride));
+        return 2;
+    }
+
     if (!((theronVramSnapshot == NULL && theronVceSnapshot == NULL &&
            theronVdcStateSnapshot == NULL && theronVdcSatSnapshot == NULL &&
            theronVdcIoTrace == NULL) ||

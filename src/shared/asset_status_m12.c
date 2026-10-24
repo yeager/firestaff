@@ -9995,6 +9995,20 @@ static int m12_version_is_launchable(const char *gameId,
     return 1;
 }
 
+int M12_AssetStatus_GameSupportsArchitecture(const char* gameId,
+                                             int architecture) {
+    const M12_GameVersionSpec* spec = m12_find_game_spec(gameId);
+    size_t i;
+    if (!spec || architecture == M12_ARCH_AUTO) return 0;
+    for (i = 0U; i < spec->versionCount; ++i) {
+        if (spec->versions[i].architecture == architecture &&
+            m12_version_is_launchable(gameId, &spec->versions[i])) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 /* The DMWeb preservation collection selected as one source contains several
  * Atari releases, including a cracked MSA image alongside the catalogued
  * English STX release. Prefer the explicitly authenticated ST 1.1 STX when

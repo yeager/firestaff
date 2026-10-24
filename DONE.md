@@ -2216,3 +2216,9 @@ only. Active work is in `TODO.md` and `TODO-<game>.md`.
   receipt to its exact capture ID and image SHA-256. The diff tool rejects
   reused state receipts for another checkpoint or frame; tests cover valid
   receipts and both mismatch cases across the shared five-game schema.
+- Direct `--game` launches now check the static edition catalogue before
+  scanning media and return an error when the requested platform has no
+  launchable edition. For example, `--game dm2 --platform atari` exits with
+  status 2 and identifies Atari ST as unsupported. The focused unsupported
+  platform CLI test passes; this check validates game/platform compatibility,
+  not the presence or integrity of installed media.
