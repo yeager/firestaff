@@ -1139,7 +1139,7 @@ int main(int argc, char** argv) {
     /* Reject impossible direct game/platform pairs before asset discovery,
      * which can otherwise spend time scanning archives for an edition that
      * does not exist in the launch catalogue. */
-    if (opts.directLaunch && opts.gameId &&
+    if (opts.gameId &&
         opts.architectureOverride != M12_ARCH_AUTO &&
         !M12_AssetStatus_GameSupportsArchitecture(
             opts.gameId, opts.architectureOverride)) {

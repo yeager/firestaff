@@ -42,15 +42,20 @@ for platform in pc98 pc-98 pc9821 pc-9821; do
         esac
     done
 done
-if output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --game dm2 --platform atari --data-dir "$archive" --duration 0 2>&1); then
-    echo 'FAIL: unsupported DM2 Atari ST platform was accepted' >&2
-    exit 1
-fi
-case "$output" in
-    *"firestaff: game 'dm2' has no launchable version for --platform Atari ST"*) ;;
-    *) printf '%s\n' "$output" >&2; exit 1 ;;
-esac
+for route in direct menu; do
+    menu_arg=
+    if [ "$route" = menu ]; then menu_arg=--menu; fi
+    if output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --game dm2 --platform atari --data-dir "$archive" \
+        $menu_arg --duration 0 2>&1); then
+        echo "FAIL: unsupported DM2 Atari ST platform was accepted ($route)" >&2
+        exit 1
+    fi
+    case "$output" in
+        *"firestaff: game 'dm2' has no launchable version for --platform Atari ST"*) ;;
+        *) printf '%s\n' "$output" >&2; exit 1 ;;
+    esac
+done
 removed_archive=${FIRESTAFF_DM2_REMOVED_ARCHIVE:-}
 if [ -n "$removed_archive" ] && [ -f "$removed_archive" ]; then
     check_removed_archive() {
