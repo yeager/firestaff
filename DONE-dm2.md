@@ -1,3 +1,14 @@
+- 2026-10-24: Launcher media discovery now counts only versions with a runtime
+  launch route when publishing per-game availability. Recognized PC-9801
+  preservation media remains visible as a matched catalogue entry but cannot
+  enable the DM2 start-menu card or redirect the runtime data directory. The
+  macOS arm64 `firestaff_m12` target compiled successfully, and the unsigned
+  app's recursive scan of the installed authentic media still reports DM1,
+  CSB and DM2 ready. No authentic PC-9801 demo was present for a direct scan
+  regression; unit-test targets were disabled in this Xcode configuration.
+  This verifies scanner code and supported-media discovery, not PC-9801 media
+  recognition or gameplay parity.
+
 - 2026-10-21: Verified the authentic DOS EN fresh-game weather path. The
   private GAME_LOAD owner applies the source cold-weather transition before
   dungeon arrangement, carries one LCG through weather and the original 28
