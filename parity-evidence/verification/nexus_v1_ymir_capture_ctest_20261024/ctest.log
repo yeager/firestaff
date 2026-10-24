@@ -1,0 +1,18 @@
+Test project /home/trv2/work/firestaff-parity-debug-20261024/.build-debug
+    Start 2720: nexus_v1_ymir_runtime_capture_authentic
+1/2 Test #2720: nexus_v1_ymir_runtime_capture_authentic ...........   Passed    1.66 sec
+    Start 2721: nexus_v1_ymir_title_color_calculation_authentic
+2/2 Test #2721: nexus_v1_ymir_title_color_calculation_authentic ...   Passed    0.45 sec
+
+100% tests passed, 0 tests failed out of 2
+
+Label Time Summary:
+capture-only           =   2.12 sec*proc (2 tests)
+color-calculation      =   0.45 sec*proc (1 test)
+nexus                  =   2.12 sec*proc (2 tests)
+real-capture           =   2.12 sec*proc (2 tests)
+runtime-composition    =   1.66 sec*proc (1 test)
+saturn                 =   2.12 sec*proc (2 tests)
+title                  =   0.45 sec*proc (1 test)
+
+Total Test time (real) =   2.26 sec
