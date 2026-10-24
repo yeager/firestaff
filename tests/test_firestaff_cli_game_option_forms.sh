@@ -177,6 +177,26 @@ check_invalid_game --game nonsense
 check_invalid_game --game=unknown
 check_invalid_game --game --version
 
+check_missing_value() {
+    option=$1
+    diagnostic=$2
+    output=$("$firestaff_bin" "$option" 2>&1) && {
+        printf 'fail: missing %s value was accepted\n%s\n' "$option" "$output" >&2
+        exit 1
+    }
+    case "$output" in
+        *"$diagnostic"*) ;;
+        *)
+            printf 'fail: missing %s value did not produce the documented diagnostic\n%s\n' \
+                "$option" "$output" >&2
+            exit 1
+            ;;
+    esac
+}
+
+check_missing_value --game '--game requires dm1, csb, dm2, nexus, or theron'
+check_missing_value --platform '--platform requires a value:'
+
 for scale in 0 1 2 3 4 5 1x 2x 3x 4x fit stretch; do
     check_form --scale-mode "$scale" --version
 done

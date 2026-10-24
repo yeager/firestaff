@@ -1,5 +1,72 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-24 five-game direct CLI retest: the authentic-media
+`firestaff_cli_startup_diagnostics_real_media` CTest passed in 246 seconds,
+covering DM1, CSB, DM2, Nexus and Theron. It verifies selected source media,
+boot phases, debug diagnostics and launcher/configuration behavior. One earlier
+run failed the DM2 FM Towns TWANIM timing/frame assertion; an isolated replay
+recorded all 224 intermediate frames and source completion at 26.2 seconds,
+and this complete rerun passed. The earlier failure did not reproduce; the
+test uses SDL dummy video/audio and is not native display or audio evidence.
+
+2026-10-24 five-game main-menu selection retest: the authentic-media
+`m12_main_menu_game_selection_real_media` CTest passed in 248 seconds. It
+verified keyboard and mouse selection for all five titles, the three priority
+games from default `~/.firestaff/data`, and sibling discovery when the selected
+data folder is one game's directory. Test cases retain isolated config files
+while sharing the identity-bound scan cache for unchanged source paths; this
+keeps the complete menu matrix inside its CI timeout without weakening media
+authentication.
+
+2026-10-24 DM2 FM Towns warm scan reuse: after a full directory-discovery
+boot-profile scan proves the exact HME-242 `DATA/GRAPHICS.DAT` and
+`DATA/DUNGEON.DAT` pair, M12 can reuse those member MD5 receipts while the
+source ZIP file identity and timestamps remain unchanged. Explicitly selected
+archives still run the full boot scanner. The authentic `dm2_v1_fmtowns_native_cli_boot`
+test passed with both cold and warm `--scan-data` runs and the full New Game
+route (390 seconds on this machine). This avoids rescanning that same Towns
+disc image on repeat directory scans; other DM2 archives are still checked.
+
+2026-10-24 startup/CLI audit: expanded the DM1/CSB/DM2 unsupported-platform
+test to cover every currently unsupported platform pairing in both direct and
+menu-request modes. The 24-case live CLI matrix rejected each pair before
+startup or scan diagnostics, and `dm2_unsupported_platform_cli` passed against
+the configured build. With all five original-media directories installed,
+`--scan-data --debug` found all five games READY in 26.9 seconds on a fresh
+isolated cache and 8.9 seconds on the warm repeat. A five-second warm-run
+sample placed most active samples in DM2 ZIP profile admission and zlib image
+inflation. The full scan still delays the first selectable menu; reducing that
+work without weakening source authentication remains open. This scan-only
+check does not prove native menu input or gameplay parity.
+
+2026-10-24 authentic launch-flow recheck: DM1's mixed-edition
+`dm1_v1_m12_auto_multi_platform_menu` test reached its first runtime through
+FM Towns AUTO, bare `--game dm1`, explicit CLI selection of PC/Atari ST/Amiga,
+and M12 selection of Atari ST, Amiga and PC. The authentic source-owned
+edition handoffs were checked for each route. The `direct-exit` mode of
+`test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh` also passed for DM1,
+CSB and DM2: each direct `--game` launch exits after Return to Menu without
+opening the launcher. Both checks use SDL dummy video/audio; they do not prove
+native input/presentation or full gameplay parity.
+
+2026-10-24 fresh Xcode arm64 launcher verification: the Xcode 27.1 Release
+binary passed `test_m12_main_menu_game_selection_real_media.sh` against the
+installed originals. The no-game menu selected all five games by keyboard;
+mouse selection passed for DM1, CSB, DM2, Nexus and Theron. DM1/CSB/DM2 also
+passed default `~/.firestaff/data` discovery and single-game-folder scan-root
+cases. The script checked each original source archive hash before and after
+handoff. `test_m12_main_menu_runtime_real_media.sh` then reached the first
+authentic runtime from the menu for DM1, CSB, DM2 and Theron. Nexus remains
+verified only through menu handoff, not active-game runtime. Both runs use SDL
+dummy video/audio and do not prove native presentation/input or full gameplay
+parity.
+
+2026-10-24 startup scan diagnostics: `--debug` scan progress now includes
+`delta-ms`, the time since the preceding distinct progress snapshot, alongside
+total elapsed time. This makes long gaps between scanner updates visible next
+to the current game, task and path; it does not by itself reduce scan time.
+The cold five-game scan measurement below remains an open performance issue.
+
 2026-10-23 cold five-game startup scan retest: a fresh isolated-home
 `firestaff --scan-data --debug --data-dir ~/.firestaff/data` run took 19.20 s
 wall time (17.60 s user CPU, 1.41 s system CPU) on the Mac mini M4 and reported

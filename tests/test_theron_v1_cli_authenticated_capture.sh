@@ -30,7 +30,13 @@ if [[ $(wc -c <"$vram") -ne 65536 || $(wc -c <"$vce") -ne 1024 ||
     exit 1
 fi
 
-output=$(mktemp "${TMPDIR:-/tmp}/firestaff-theron-capture-cli.XXXXXX")
+scratch_root=${FIRESTAFF_TEST_SCRATCH:-$PWD}
+mkdir -p "$scratch_root"
+if [[ ! -w "$scratch_root" ]]; then
+    printf 'FAIL: test scratch directory is not writable: %s\n' "$scratch_root" >&2
+    exit 1
+fi
+output=$(mktemp "$scratch_root/firestaff-theron-capture-cli.XXXXXX")
 trap 'rm -f "$output"' EXIT
 
 if SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \

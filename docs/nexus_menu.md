@@ -20,7 +20,9 @@ asset gate.
 This is a host-side state/input route, not proof of Saturn menu presentation.
 The current startup layout helpers are compatibility hit regions; they are
 not claimed as retail screen coordinates. `MENU.BPK`, FONT256/S2D mapping,
-palette ownership, and VDP1/VDP2 placement remain capture-gated.
+palette ownership, and VDP1/VDP2 placement remain capture-gated. Open
+PR #19 corrects a capture-only NBG1 tile-address decoder, but does not bind
+those tiles to menu text or a retail menu consumer.
 
 ---
 

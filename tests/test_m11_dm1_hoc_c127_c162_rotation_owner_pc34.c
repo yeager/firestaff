@@ -139,8 +139,6 @@ static int find_two_mirrors(const M11_GameViewState *state,
 int main(void)
 {
     const char *dataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
-    const char *home;
-    char defaultDataDir[1024];
     M11_GameViewState state;
     HocPosePc34 text, mirrorA, mirrorB;
     M11_Dm1InscriptionHostPresentationReceipt first, receipt, restored;
@@ -151,15 +149,14 @@ int main(void)
     int candidateIndex;
 
     if (!dataDir || !dataDir[0]) {
-        home = getenv("HOME");
-        if (!home || !home[0]) return 0;
-        snprintf(defaultDataDir, sizeof(defaultDataDir), "%s/.firestaff/data/dm1", home);
-        dataDir = defaultDataDir;
+        puts("SKIP: FIRESTAFF_DM1_DATA_DIR must point to authentic PC34 media");
+        return 77;
     }
     M11_GameView_Init(&state);
     if (!M11_GameView_StartDm1(&state, dataDir)) {
+        fprintf(stderr, "FAIL: could not start authentic PC34 media from %s\n", dataDir);
         M11_GameView_Shutdown(&state);
-        return getenv("FIRESTAFF_DM1_DATA_DIR") ? 1 : 0;
+        return 1;
     }
     state.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
     state.world.party.championCount = 0;

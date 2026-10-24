@@ -42,6 +42,58 @@ for platform in pc98 pc-98 pc9821 pc-9821; do
         esac
     done
 done
+for route in direct menu; do
+    menu_arg=
+    if [ "$route" = menu ]; then menu_arg=--menu; fi
+    if output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --game dm2 --platform atari --data-dir "$archive" \
+        $menu_arg --duration 0 2>&1); then
+        echo "FAIL: unsupported DM2 Atari ST platform was accepted ($route)" >&2
+        exit 1
+    fi
+    case "$output" in
+        *"firestaff: game 'dm2' has no launchable version for --platform Atari ST"*) ;;
+        *) printf '%s\n' "$output" >&2; exit 1 ;;
+    esac
+done
+
+# Keep the shared game/platform compatibility guard covered for the other
+# priority titles as well: CSB had no DOS release, and DM1 has no Saturn
+# release. These fail before the media scan on both direct and menu routes.
+expect_unsupported_pair() {
+    game=$1
+    platform=$2
+    platform_label=$3
+    for route in direct menu; do
+        menu_arg=
+        if [ "$route" = menu ]; then menu_arg=--menu; fi
+        if output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+            --game "$game" --platform "$platform" --data-dir "$archive" \
+            $menu_arg --duration 0 2>&1); then
+            echo "FAIL: unsupported platform $platform was accepted for $game ($route)" >&2
+            exit 1
+        fi
+        case "$output" in
+            *"firestaff: game '$game' has no launchable version for --platform $platform_label"*) ;;
+            *) printf '%s\n' "$output" >&2; exit 1 ;;
+        esac
+    done
+}
+
+expect_unsupported_pair csb pc PC
+expect_unsupported_pair dm1 saturn Saturn
+expect_unsupported_pair dm1 mac Macintosh
+expect_unsupported_pair dm1 pce 'PC Engine'
+expect_unsupported_pair csb mac Macintosh
+expect_unsupported_pair csb pce 'PC Engine'
+expect_unsupported_pair csb saturn Saturn
+expect_unsupported_pair csb apple-iigs 'Apple IIGS'
+expect_unsupported_pair dm2 atari-st 'Atari ST'
+expect_unsupported_pair dm2 pce 'PC Engine'
+expect_unsupported_pair dm2 saturn Saturn
+expect_unsupported_pair dm2 apple-iigs 'Apple IIGS'
+echo 'PASS: unsupported DM1/CSB/DM2 platforms are rejected for direct and menu launches'
+
 removed_archive=${FIRESTAFF_DM2_REMOVED_ARCHIVE:-}
 if [ -n "$removed_archive" ] && [ -f "$removed_archive" ]; then
     check_removed_archive() {

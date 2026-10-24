@@ -976,7 +976,12 @@ int main(int argc, char** argv) {
             opts.bootProbeExpectDm1HoCReleaseAppCapture = 1;
             continue;
         }
-        if (is_game_option_name(a) && i + 1 < argc) {
+        if (is_game_option_name(a)) {
+            if (i + 1 >= argc) {
+                fprintf(stderr,
+                        "firestaff: --game requires dm1, csb, dm2, nexus, or theron\n");
+                return 2;
+            }
             const char* gameId = argv[++i];
             if (!is_game_id(gameId)) {
                 fprintf(stderr,
@@ -998,7 +1003,12 @@ int main(int argc, char** argv) {
             opts.directLaunch = 1;
             continue;
         }
-        if (strcmp(a, "--platform") == 0 && i + 1 < argc) {
+        if (strcmp(a, "--platform") == 0) {
+            if (i + 1 >= argc) {
+                fprintf(stderr,
+                        "firestaff: --platform requires a value: auto, pc (dos), amiga, atari-st (atari), fm-towns (fmtowns), mac, pce, saturn, or apple-iigs (iigs)\n");
+                return 2;
+            }
             if (!parse_architecture(argv[++i], &opts.architectureOverride)) {
                 fprintf(stderr,
                         "firestaff: --platform must be auto, pc (dos), amiga, atari-st (atari), fm-towns (fmtowns), mac, pce, saturn, or apple-iigs (iigs)\n");
@@ -1124,6 +1134,35 @@ int main(int argc, char** argv) {
     }
     if (opts.menuRequested) {
         opts.directLaunch = 0;
+    }
+
+    if (opts.dm1FmtownsJapanese &&
+        (!opts.gameId || strcmp(opts.gameId, "dm1") != 0 ||
+         opts.architectureOverride != M12_ARCH_FM_TOWNS)) {
+        fprintf(stderr,
+                "firestaff: --dm1-fmtowns-ja requires --game dm1 and --platform fm-towns\n");
+        return 2;
+    }
+    if (opts.csbFmtownsJapanese &&
+        (!opts.gameId || strcmp(opts.gameId, "csb") != 0 ||
+         opts.architectureOverride != M12_ARCH_FM_TOWNS)) {
+        fprintf(stderr,
+                "firestaff: --csb-fmtowns-ja requires --game csb and --platform fm-towns\n");
+        return 2;
+    }
+
+    /* Reject impossible direct game/platform pairs before asset discovery,
+     * which can otherwise spend time scanning archives for an edition that
+     * does not exist in the launch catalogue. */
+    if (opts.gameId &&
+        opts.architectureOverride > M12_ARCH_AUTO &&
+        !M12_AssetStatus_GameSupportsArchitecture(
+            opts.gameId, opts.architectureOverride)) {
+        fprintf(stderr,
+                "firestaff: game '%s' has no launchable version for --platform %s\n",
+                opts.gameId,
+                M12_Architecture_Label(opts.architectureOverride));
+        return 2;
     }
 
     if (!((theronVramSnapshot == NULL && theronVceSnapshot == NULL &&

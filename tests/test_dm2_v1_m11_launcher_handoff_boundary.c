@@ -487,6 +487,32 @@ static void run_real_m12_dm2_handoff_if_available(void) {
                 view.dm2State.tick_count == initialTick,
                 "startup draw cannot enter or age the dungeon runtime");
 
+    if (view.dm2DosMveIntroActive && view.dm2DosMveCopiedFrameValid &&
+        view.dm2DosMvePresenter.next_presentation_index <
+            view.dm2DosMvePresenter.boundary_count) {
+        unsigned char retainedMovieFrame[M11_FB_BYTES];
+        const uint64_t savedClockOrigin = view.dm2DosMvePresenter.clock_origin_us;
+        const uint64_t savedLastHostTime = view.dm2DosMvePresenter.last_host_time_us;
+        const uint64_t hostNow = SDL_GetTicksNS() / UINT64_C(1000);
+        const uint32_t nextIndex = view.dm2DosMvePresenter.next_presentation_index;
+        const uint64_t nextSourceTime =
+            view.dm2DosMvePresenter.boundaries[nextIndex].presentation_time_us;
+        const uint64_t framePeriod = view.dm2DosMvePresenter.frame_period_us;
+        memcpy(retainedMovieFrame, framebuffer, sizeof(retainedMovieFrame));
+        /* Hold the next MVE deadline safely ahead so the second host draw must
+         * retain, rather than decode, the previously submitted source page. */
+        view.dm2DosMvePresenter.clock_origin_us =
+            hostNow + framePeriod * 20u - nextSourceTime;
+        view.dm2DosMvePresenter.last_host_time_us = hostNow;
+        M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+        expect_true(view.dm2DosMvePresenter.next_presentation_index == nextIndex &&
+                        memcmp(retainedMovieFrame, framebuffer,
+                               sizeof(retainedMovieFrame)) == 0,
+                    "DM2 DOS MVE keeps the last source page visible between host redraws");
+        view.dm2DosMvePresenter.clock_origin_us = savedClockOrigin;
+        view.dm2DosMvePresenter.last_host_time_us = savedLastHostTime;
+    }
+
     {
         unsigned char timerFrame[320 * 200];
         M11_ForcedPauseDialogLayout layout;

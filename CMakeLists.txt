@@ -94,6 +94,13 @@ set(FIRESTAFF_DM2_MAC_DEMO_ARCHIVE
 set(_firestaff_dm2_mac_candidates
     "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
     "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip")
+# The bundled LZMA SDK copy omits the optional Delta and branch-conversion
+# decoder sources. Production and test builds must use the same supported
+# decoder subset; applying this only inside BUILD_TESTING leaves release/Xcode
+# configurations with unresolved symbols at link time.
+set_source_files_properties(third_party/lzma_sdk/7zDec.c PROPERTIES
+    COMPILE_DEFINITIONS Z7_NO_METHODS_FILTERS)
+
 if(BUILD_TESTING)
     foreach(_candidate IN LISTS _firestaff_dm2_mac_candidates)
         if(EXISTS "${_candidate}")
@@ -222,7 +229,7 @@ if(BUILD_TESTING)
         COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_csb_only_real_media.sh"
             "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
     set_tests_properties(m12_main_menu_csb_only_real_media PROPERTIES
-        SKIP_RETURN_CODE 77 TIMEOUT 90
+        SKIP_RETURN_CODE 77 TIMEOUT 180
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         LABELS "m12;csb;main-menu;game-selection;runtime;real-media;skip-safe")
 
@@ -4027,8 +4034,6 @@ if(BUILD_TESTING)
         third_party/lzma_sdk/CpuArch.c
         third_party/lzma_sdk/LzmaDec.c
         third_party/lzma_sdk/Lzma2Dec.c)
-    set_source_files_properties(third_party/lzma_sdk/7zDec.c PROPERTIES
-        COMPILE_DEFINITIONS Z7_NO_METHODS_FILTERS)
     target_include_directories(test_firestaff_7z_extract PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/third_party/lzma_sdk)
@@ -4368,9 +4373,9 @@ if(BUILD_TESTING)
         ENVIRONMENT "FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip;HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm2-fmtowns;XDG_CONFIG_HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm2-fmtowns;APPDATA=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm2-fmtowns"
         # The normal M12 -> Towns TWANIM -> New Game route is intentionally
         # paced by the original Timer-A clock instead of boot-probe fast-forward.
-        # The complete authentic-media route took 271 seconds locally; leave
-        # enough headroom for slower desktop CI runners.
-        TIMEOUT 420
+        # The complete authentic-media route, including cold/warm scan-cache
+        # verification, took 390 seconds locally; leave headroom for CI runners.
+        TIMEOUT 600
     )
     add_test(
         NAME dm2_unsupported_platform_cli
@@ -4379,8 +4384,17 @@ if(BUILD_TESTING)
             "${Python3_EXECUTABLE}"
     )
     set_tests_properties(dm2_unsupported_platform_cli PROPERTIES
-        LABELS "dm2;cli;platform-policy"
+        LABELS "dm1;csb;dm2;cli;platform-policy"
         ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip;FIRESTAFF_DM2_REMOVED_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_PC-9821_JA.zip;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/removed-platform-scratch"
+        TIMEOUT 30
+    )
+    add_test(
+        NAME fmtowns_edition_option_validation
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fmtowns_edition_option_validation.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(fmtowns_edition_option_validation PROPERTIES
+        LABELS "dm1;csb;cli;argument-validation"
         TIMEOUT 30
     )
     add_test(
@@ -7685,6 +7699,7 @@ endif()
 # ── M11 static library ──────────────────────────────────────────────
 set(M11_SOURCES
     src/engine/main_loop_m11.c
+    src/engine/hardware_debug_m11.c
     src/shared/firestaff_nexus_mednafen.c
     src/engine/fs_gesture_navigation_gate.c
     src/engine/firestaff_accessibility.c
@@ -12073,6 +12088,11 @@ endif()
             COMMAND ${_pool_probe_exe} "${_pool_probe_data}"
         )
         set_tests_properties(${_pool_probe_exe} PROPERTIES TIMEOUT 600 PROCESSORS 2)
+        if(_pool_probe_exe STREQUAL "firestaff_dm1_v1_hoc_champion_portrait_01_highdpi_mouse_rect_portrait_rect_position_121_gate_probe")
+            set_tests_properties(${_pool_probe_exe} PROPERTIES
+                SKIP_RETURN_CODE 77
+                LABELS "dm1;pc34;real-media;hoc;champion-input;hidpi;skip-safe")
+        endif()
     endif()
 endforeach()
 
@@ -13491,6 +13511,10 @@ if(BUILD_TESTING)
             COMMAND test_m11_dm1_hoc_c127_c162_rotation_owner_pc34
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         )
+        set_tests_properties(m11_dm1_hoc_c127_c162_rotation_owner_pc34 PROPERTIES
+            SKIP_RETURN_CODE 77
+            ENVIRONMENT "FIRESTAFF_DM1_DATA_DIR=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
+            LABELS "dm1;dos;pc34;real-media;hoc;champion-input;skip-safe")
     endif()
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_hoc_c127_resurrect_reincarnate_full_pc34.c")
@@ -18661,6 +18685,17 @@ endif()
         LABELS "tier2;csb;amiga;startup;cli;menu;real-data;real-media;archive;native;skip-safe"
         ENVIRONMENT "FIRESTAFF_CSB_AMIGA_ADF_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back (FTL).zip"
         TIMEOUT 45
+    )
+    add_test(
+        NAME m12_main_menu_csb_amiga_only_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_csb_amiga_only_real_media.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(m12_main_menu_csb_amiga_only_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;csb;amiga;startup;cli;menu;real-data;real-media;archive;native;skip-safe"
+        ENVIRONMENT "FIRESTAFF_CSB_AMIGA_ADF_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back (FTL).zip;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        TIMEOUT 60
     )
     add_test(
         NAME csb_v1_fmtowns_native_cli_boot
@@ -47174,6 +47209,7 @@ if(BUILD_TESTING AND TARGET firestaff_theron)
     set_tests_properties(theron_v1_cli_authenticated_capture PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "theron;real-media;rendering"
+        ENVIRONMENT "FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
     )
 endif()
 

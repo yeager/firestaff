@@ -1,5 +1,32 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-24: Rebuilt the current-source `firestaff` executable and reran
+  `test_m12_main_menu_game_selection_real_media`; all 16 menu routes passed.
+  Keyboard and mouse selected DM1, CSB and DM2 from the five-game launcher,
+  and both input methods selected Nexus and Theron. Keyboard routes also
+  selected DM1/CSB/DM2 when each game's own directory was the scan root, and
+  the default `~/.firestaff/data` root launched all three without CLI game or
+  data-dir options. Original media hashes stayed unchanged. SDL dummy verifies
+  launcher input and handoff, not native presentation or full gameplay.
+
+- 2026-10-24: The current Xcode-built macOS arm64 executable accepted direct
+  `--game <id> --debug --boot-probe --boot-probe-frames 2 --duration 0`
+  launches against all five authentic installed data folders. The selected
+  defaults were DM1 FM Towns EN, CSB FM Towns EN, DM2 FM Towns JA, Theron's
+  Quest PC Engine US and Nexus Saturn JA. Each emitted a game-handoff receipt
+  and exited successfully. The short probe reached DM1's runtime but only the
+  title/startup phases for the other games; it does not prove they reach an
+  active dungeon or establish native display/audio parity.
+
+- 2026-10-24: Rebuilt the current macOS arm64 launcher and reran the no-game
+  M12 main-menu selection matrix against the installed authentic media.
+  Keyboard and mouse selection each handed off to the expected original
+  edition for DM1, CSB, DM2, Nexus and Theron's Quest. The DM1/CSB/DM2 routes
+  also passed with each individual game directory used as the scan root, and
+  with the ordinary `~/.firestaff/data` root and no `--game` or `--data-dir`.
+  These are authentic-media launcher handoff checks under SDL's dummy display;
+  they do not establish native display parity or complete gameplay parity.
+
 - 2026-10-23: Added a real-media regression for launching the main menu with
   only CSB installed under `~/.firestaff/data/csb` and no CLI game selection.
   The scripted menu route selected authentic FM Towns CSB and reached its
@@ -2216,3 +2243,38 @@ only. Active work is in `TODO.md` and `TODO-<game>.md`.
   receipt to its exact capture ID and image SHA-256. The diff tool rejects
   reused state receipts for another checkpoint or frame; tests cover valid
   receipts and both mismatch cases across the shared five-game schema.
+- Explicit game/platform pairs now check the static edition catalogue before
+  scanning media and return an error when the requested platform has no
+  launchable edition, both for direct launches and `--menu --game` selection.
+  For example, `--game dm2 --platform atari` exits with status 2 and identifies
+  Atari ST as unsupported. The focused unsupported-platform CLI test passes;
+  this check validates game/platform compatibility, not the presence or
+  integrity of installed media.
+- The unsupported-platform CLI regression now exercises the shared guard for
+  DM1/CSB/DM2: CSB+PC and DM1+Saturn are rejected, alongside DM2+Atari and the
+  removed DM2 PC-9821 aliases, in both direct and `--menu` forms. The
+  Xcode-built arm64 binary passed the expanded test before media scanning.
+- The `--dm1-fmtowns-ja` and `--csb-fmtowns-ja` edition switches now reject a
+  missing or mismatched game/platform pair during CLI validation rather than
+  after Phase A begins. This preserves the `-1` internal platform sentinel as
+  Auto for ordinary game launches. Focused edition-option and DM2 unsupported-
+  platform CTests both pass.
+- The authentic CSB-only M12 test now backs out of platform selection, returns
+  to the game list, reselects CSB, and requires exactly one handoff to the
+  original FM Towns English edition. The current-source run reached the
+  authentic first runtime twice and confirmed the source archive hash was
+  unchanged. This is SDL dummy input/runtime coverage, not native display or
+  physical input parity.
+- The DM1-only M12 menu regression now also backs out of the FM Towns platform
+  picker and reselects DM1. The current Xcode arm64 binary passed both the
+  default `.firestaff/data/dm1` startup and the Back/reselect route against the
+  authentic FM Towns archive; each route checked that the original archive
+  remained unchanged, and reselection produced exactly one game handoff. SDL
+  dummy input does not verify native display or physical input.
+- The `BUILD_TESTING=OFF` Xcode generator configuration now gives the bundled
+  7z decoder the same supported feature subset as normal test builds. Previously
+  the decoder's `Z7_NO_METHODS_FILTERS` definition was set only inside the test
+  block, so an arm64 Xcode production build linked against missing Delta/branch
+  conversion symbols. Xcode 27.1 now builds the Release `firestaff` target on
+  arm64, and its version and early CLI argument checks pass. The target is a
+  command-line executable, so code signing is not required for this compile.

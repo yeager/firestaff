@@ -1337,16 +1337,20 @@ The test passes with NBG1 enabled in character/tilemap mode and keeps
 separate 512x256/8bpp bitmap decoder correctly rejects it; this prevents a
 character map from being mislabeled as a bitmap or a menu surface.
 
-The corrected TileFetcher address units were also checked against the
-authentic Japanese Nexus startup capture
-`nexus_v1_startup_render_27518_20261009/capture.raw` (SHA-256
-`1eaa507e314b60f1cc123dd6eb9fbcff4e635dcd1ea5b6cb7aeb16d12e33baae`). On
-frame 0, the NBG1 map registers at `0x44/0x46` both select plane `0x17`;
-the captured visible name-table span is `0x5c000..0x5db9c`, and charno
-`0x1000` selects character bytes at `0x20000`. The runtime decoder test passes
-on this same frame and reports 64 unique visited cells for its 64x64-pixel
-window. This validates raw capture address decoding only; the NBG1 consumer
-still has no joined Nexus asset owner and remains blocked from host rendering.
+The corrected TileFetcher address units were checked in the open
+[PR #19](https://github.com/yeager/firestaff/pull/19) against an authentic
+Japanese Nexus startup capture. For NBG1, MAP1A/MAP1B at register offsets
+`0x44/0x46` select plane `0x17`; with `PLSZ=0` and `MPOFN=0`, the name-table
+base is `0x5c000` bytes after wrapping the 18-bit Saturn word address and
+converting it to bytes. The visible 64×64-pixel window visits 64 unique cells.
+The observed `charno=0x1000` selects character bytes at `0x20000` using
+Saturn's 32-byte character-number stride. The runtime decoder test checks the
+64×64 window at (0, 0) and its 64 unique name-table cells. It does not establish
+full-frame traversal or authenticate the capture by itself.
+
+This is capture transport/address validation only. It does not bind an asset,
+text code, CLUT owner, menu placement or display consumer. `renderer_permitted`
+remains zero and production readiness remains unchanged.
 
 VDP1 replay also has an atomic sequence lane for a complete bounded command
 window. Every mode-1 command must pass the existing exact DGN image/CLUT join;
@@ -1390,6 +1394,17 @@ is carried into the sequence compositor and every command must match it.
 This proves command-list framing and display-origin state only; mesh camera
 transform, face selection and culling remain blocked.
 
+## Ymir debug tooling
+
+The external [Ymir PR #961](https://github.com/ymir-emu/Ymir/pull/961) adds a
+bounded VDP1 command-trace window, CSV export, and frame/command-context
+memory dumps. It was exercised with the authentic Japanese Nexus disc under
+`--debug`; one date-setup run exported 305 command rows across 105 frames.
+The trace is useful for disassembly and frame selection, but it has not been
+joined to a same-frame source asset, Firestaff renderer output or a retail
+menu/HUD/viewport owner. Ymir remains an external development tool, never a
+Firestaff runtime dependency. The PR is open and has not been released.
+
 ## Mednafen generic VDP1 state and bus-order handoff
 
 The generic Mednafen candidate now emits an optional `state=` line after
@@ -1406,6 +1421,18 @@ validator, VDP1 command-sequence probe and VDP2 tilemap capture-only probe
 pass against it. This proves a replayable VDP1 command-state corridor, not
 yet a MENU.BPK/FONT256, HUD or DGN scene owner; semantic admission remains
 blocked.
+
+## Japanese FONT256 character-source identity
+
+The VDP2 character-source join accepts both the hash-verified European
+`FONT256.S2D` extraction and the authentic Japanese retail file recorded in
+`scripts/fixtures/nexus_v1_disc_file_hashes.py`. The Japanese file is parsed
+using its own SCR descriptors; hash acceptance does not assert that its font
+is present in a captured frame. In the authenticated Japanese capture,
+frame 142 yields only one of four exact VRAM span matches and no CRAM palette
+match. The source join therefore remains unbound, text-consumer ownership is
+unknown, and semantic admission remains blocked. DMWeb's SCR format notes
+guide parsing; they do not supply the missing runtime binding.
 
 | Route | Magic | Evidence still required |
 |---|---|---|
@@ -1481,11 +1508,42 @@ the no-input control remains under
 `/Volumes/Extern-disk/nexus-saturn-capture/run-codex-menu-noinput-smpc-control-20261023/`.
 These external reference captures are not Firestaff renderer output.
 
+## Ymir VDP2 bitmap/source join, frame 278, 2026-10-24
+
+The new Ymir memory bundle reader accepts a Ymir dump directory directly in
+`analyze_nexus_vdp2_bitmap_source.py`. It checks the frame receipt against the
+register snapshot, requires a completed trace with commands for that frame,
+and validates the VDP2 register, VRAM, and CRAM lengths before decoding. Run
+it with the authenticated Japanese retail corpus:
+
+```sh
+python3 scripts/analyze_nexus_vdp2_bitmap_source.py \
+  /Volumes/Extern-disk/nexus-saturn-capture/run-ymir-vdp1-bundle-20261024 \
+  --data-dir /Volumes/Extern-disk/FirestaffUserData/data/nexus
+```
+
+The source CUE SHA-256 is
+`878b3bc223bb56e99626dbaa2946d17fb349a2a67a10cd4423742d8ab30b8699`. The
+authentic frame receipt identifies frame 278; its VDP2 registers enable NBG1
+8-bit bitmap mode at VRAM byte offset `0x020000` for a 512x256 span. The
+bounded join finds no exact match among the decoded retail menu, font, title,
+and level palette sources. The longest reported partial spans are 118 bytes
+from `TITLE.BIN` map 4 and 99 bytes from `MENU.BPK`; palettes do not match
+CRAM. The analyzer therefore reports `source_join=unbound` and
+`semantic_admission=blocked`. This Ymir boot state does not identify the date
+screen, menu, HUD, or viewport owner, and does not authorize rendering.
+
 ## Source references
 
 The byte-format baseline is the [DMWeb Nexus file-format documentation](http://dmweb.free.fr/community/documentation/dungeon-master-nexus/file-formats/),
 including the [ITEM.IBS description](http://dmweb.free.fr/community/documentation/dungeon-master-nexus/item.ibs-file/)
 and [DGN documentation](http://dmweb.free.fr/community/documentation/dungeon-master-nexus/dgn-files/).
-Disassembly and runtime ownership must be established from the Saturn program
-and an execution capture; inferred offsets or host screenshots must not be
-promoted to production semantics.
+Use [Greatstone SCK](http://greatstone.free.fr/dm/) to cross-check authentic
+DM-family asset extraction and documented byte formats; the reviewed page
+inventory is in [DMWeb and Greatstone Reference](DMWEB_REFERENCE.md). Neither
+reference establishes Saturn VDP register behavior or proves a retail runtime
+consumer. The NBG1 address-unit correction above is instead grounded in the
+Ymir/Mednafen hardware trace and authentic capture. Disassembly and runtime
+ownership must be established from the Saturn program and an execution
+capture; inferred offsets or host screenshots must not be promoted to
+production semantics.
