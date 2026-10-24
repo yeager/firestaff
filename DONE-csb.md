@@ -1144,3 +1144,8 @@ Reviewed 2026-08-29. Completed work only.
   original ZIP, including title selection, authentic MINI.DAT launch, scan
   progress, and three closed-Entrance presentation modes. This is startup and
   first-scene evidence, not full campaign or visual-parity coverage.
+- 2026-10-24: The no-game M12 menu test for CSB Amiga ZIP-to-ADF media now
+  verifies the authentic first runtime after its Amiga startup, using the
+  source-visible click/continue input sequence. It checks the initial party
+  position, runtime receipt, viewport hash, one handoff, and unchanged original
+  archive hash; the local M4 run passed.
