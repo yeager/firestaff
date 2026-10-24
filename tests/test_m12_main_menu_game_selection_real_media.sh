@@ -16,6 +16,8 @@ fi
 scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$scratch_root"
 scratch=$(mktemp -d "$scratch_root/m12-main-game-picker.XXXXXX")
+scan_cache_home="$scratch/shared-scan-cache-home"
+mkdir -p "$scan_cache_home"
 cleanup() {
     if [[ ${FIRESTAFF_KEEP_TEST_SCRATCH:-0} == 1 ]]; then
         echo "TEST SCRATCH PRESERVED: $scratch"
@@ -39,11 +41,13 @@ run_game_picker_case() {
 
     mkdir -p "$home"
     source_hash=$(firestaff_sha256_file "$game_archive")
+    # Keep each config isolated while sharing the identity-bound asset cache
+    # for the same original-media paths across the picker matrix.
     FIRESTAFF_CONFIG_PATH="$home/config.toml" \
     FIRESTAFF_DATA="$menu_data_root" \
     FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
     FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
-    HOME="$home" XDG_CONFIG_HOME="$home" APPDATA="$home" \
+    HOME="$scan_cache_home" XDG_CONFIG_HOME="$home" APPDATA="$home" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
         "$app" --debug --width 1920 --height 1080 \
         --data-dir "$menu_data_root" \
@@ -101,6 +105,7 @@ run_default_root_game_picker_case() {
     local navigation=$3
     local edition=$4
     local home="$scratch/default-root-$game_id-home"
+    local data_home="$scratch/default-data-home"
     local log="$scratch/default-root-$game_id.log"
     local graphics_member='DATA/GRAPHICS.DAT'
     local source_path
@@ -109,16 +114,18 @@ run_default_root_game_picker_case() {
     if [[ "$game_id" == csb ]]; then
         graphics_member='CDATA/GRAPHICS.DAT'
     fi
-    source_path="$home/.firestaff/data/$game_id/$(basename "$game_archive")::$graphics_member"
+    source_path="$data_home/.firestaff/data/$game_id/$(basename "$game_archive")::$graphics_member"
     source_hash=$(firestaff_sha256_file "$game_archive")
-    mkdir -p "$home/.firestaff"
-    ln -s "$data_root" "$home/.firestaff/data"
+    mkdir -p "$home" "$data_home/.firestaff"
+    if [[ ! -e "$data_home/.firestaff/data" ]]; then
+        ln -s "$data_root" "$data_home/.firestaff/data"
+    fi
     (
         unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
         FIRESTAFF_CONFIG_PATH="$home/config.toml" \
         FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
         FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
-        HOME="$home" XDG_CONFIG_HOME="$home" APPDATA="$home" \
+        HOME="$data_home" XDG_CONFIG_HOME="$home" APPDATA="$home" \
         SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
             "$app" --debug --width 1920 --height 1080 \
             --script "$navigation" --duration 90000
