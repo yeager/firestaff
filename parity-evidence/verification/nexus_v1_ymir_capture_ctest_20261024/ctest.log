@@ -1,0 +1,32 @@
+Test project /home/trv2/work/firestaff-parity-debug-20261024/.build-debug
+    Start 2708: nexus_v1_title_same_session_capture_real
+1/4 Test #2708: nexus_v1_title_same_session_capture_real ..........***Skipped   0.02 sec
+    Start 2719: nexus_v1_ymir_priority_compositor_authentic
+2/4 Test #2719: nexus_v1_ymir_priority_compositor_authentic .......   Passed    2.40 sec
+    Start 2720: nexus_v1_ymir_runtime_capture_authentic
+3/4 Test #2720: nexus_v1_ymir_runtime_capture_authentic ...........   Passed    1.76 sec
+    Start 2721: nexus_v1_ymir_title_color_calculation_authentic
+4/4 Test #2721: nexus_v1_ymir_title_color_calculation_authentic ...   Passed    0.48 sec
+
+100% tests passed, 0 tests failed out of 4
+
+Label Time Summary:
+capture-only           =   4.64 sec*proc (3 tests)
+color-calculation      =   0.48 sec*proc (1 test)
+cram                   =   0.02 sec*proc (1 test)
+nexus                  =   4.66 sec*proc (4 tests)
+priority               =   2.40 sec*proc (1 test)
+real-capture           =   4.66 sec*proc (4 tests)
+real_data              =   0.02 sec*proc (1 test)
+registers              =   0.02 sec*proc (1 test)
+runtime-composition    =   1.76 sec*proc (1 test)
+saturn                 =   4.66 sec*proc (4 tests)
+timing                 =   0.02 sec*proc (1 test)
+title                  =   0.50 sec*proc (2 tests)
+vdp1                   =   0.02 sec*proc (1 test)
+vdp2                   =   0.02 sec*proc (1 test)
+
+Total Test time (real) =   4.84 sec
+
+The following tests did not run:
+	2708 - nexus_v1_title_same_session_capture_real (Skipped)

@@ -1,0 +1,20 @@
+Test project /home/trv2/work/firestaff-parity-debug-20261024/.build-debug
+    Start 2912: nexus_v1_title_res_corpus_receipt_real
+1/4 Test #2912: nexus_v1_title_res_corpus_receipt_real ..........   Passed    0.10 sec
+    Start 2914: nexus_v1_title_titl_pp_payload_admission_real
+2/4 Test #2914: nexus_v1_title_titl_pp_payload_admission_real ...   Passed    0.02 sec
+    Start 2916: nexus_v1_title_dgt2_pp_payload_admission_real
+3/4 Test #2916: nexus_v1_title_dgt2_pp_payload_admission_real ...   Passed    0.04 sec
+    Start 2918: nexus_v1_title_mapd_tibg_admission_real
+4/4 Test #2918: nexus_v1_title_mapd_tibg_admission_real .........   Passed    0.03 sec
+
+100% tests passed, 0 tests failed out of 4
+
+Label Time Summary:
+nexus        =   0.19 sec*proc (4 tests)
+real_data    =   0.19 sec*proc (4 tests)
+saturn       =   0.19 sec*proc (4 tests)
+skip_safe    =   0.19 sec*proc (4 tests)
+title        =   0.19 sec*proc (4 tests)
+
+Total Test time (real) =   0.35 sec

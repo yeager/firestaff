@@ -1,0 +1,12 @@
+{
+  "schema": "firestaff.nexus.ymir_vdp1_state_observation.v1",
+  "source": "Ymir VDP1 register-panel screenshot",
+  "screenshot": "../nexus_v1_ymir_trial_20261018/synchronized-loaded-bkr-20261019c/screenshots/vdp1-registers.png",
+  "screenshot_sha256": "ed5af99c35c1c46fb30627fcca5046261968845501b5f642db9f2708c3122c1d",
+  "capture_context": "Ymir remained paused after the controlled frame step; the screenshot followed the raw memory dumps in the same paused session.",
+  "return_address": "0xffffffff",
+  "current_display_framebuffer": 0,
+  "draw_framebuffer_selector": 1,
+  "draw_framebuffer_source": "https://github.com/ymir-emu/Ymir/blob/44bd8ea497b07e84cdbcec3a3405f11e52f67112/libs/ymir-core/include/ymir/hw/vdp/vdp_state.hpp",
+  "framebuffer_dump_order_source": "https://github.com/ymir-emu/Ymir/blob/44bd8ea497b07e84cdbcec3a3405f11e52f67112/libs/ymir-core/src/ymir/hw/vdp/vdp.cpp"
+}

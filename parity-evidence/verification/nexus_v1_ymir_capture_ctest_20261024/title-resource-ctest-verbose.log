@@ -1,0 +1,66 @@
+UpdateCTestConfiguration  from :/home/trv2/work/firestaff-parity-debug-20261024/.build-debug/DartConfiguration.tcl
+Parse Config file:/home/trv2/work/firestaff-parity-debug-20261024/.build-debug/DartConfiguration.tcl
+Test project /home/trv2/work/firestaff-parity-debug-20261024/.build-debug
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 2912
+    Start 2912: nexus_v1_title_res_corpus_receipt_real
+
+2912: Test command: /usr/bin/bash "/home/trv2/work/firestaff-parity-debug-20261024/tests/test_nexus_v1_title_res_corpus_receipt_real.sh" "/home/trv2/work/firestaff-parity-debug-20261024/.build-debug/test_nexus_v1_title_res_corpus_receipt"
+2912: Working Directory: /home/trv2/work/firestaff-parity-debug-20261024/.build-debug
+2912: Environment variables:
+2912:  FIRESTAFF_NEXUS_CUE=/home/trv2/.firestaff/data/nexus/Dungeon Master Nexus (Japan).cue
+2912: Test timeout computed to be: 1500
+2912: PASS nexus_v1_title_res_corpus_receipt (real)
+1/4 Test #2912: nexus_v1_title_res_corpus_receipt_real ..........   Passed    0.09 sec
+test 2914
+    Start 2914: nexus_v1_title_titl_pp_payload_admission_real
+
+2914: Test command: /usr/bin/bash "/home/trv2/work/firestaff-parity-debug-20261024/tests/test_nexus_v1_title_titl_pp_payload_admission_real.sh" "/home/trv2/work/firestaff-parity-debug-20261024/.build-debug/test_nexus_v1_title_titl_pp_payload_admission"
+2914: Working Directory: /home/trv2/work/firestaff-parity-debug-20261024/.build-debug
+2914: Environment variables:
+2914:  FIRESTAFF_NEXUS_CUE=/home/trv2/.firestaff/data/nexus/Dungeon Master Nexus (Japan).cue
+2914: Test timeout computed to be: 1500
+2914: PASS nexus_v1_title_titl_pp_payload_admission (real)
+2/4 Test #2914: nexus_v1_title_titl_pp_payload_admission_real ...   Passed    0.03 sec
+test 2916
+    Start 2916: nexus_v1_title_dgt2_pp_payload_admission_real
+
+2916: Test command: /usr/bin/bash "/home/trv2/work/firestaff-parity-debug-20261024/tests/test_nexus_v1_title_dgt2_pp_payload_admission_real.sh" "/home/trv2/work/firestaff-parity-debug-20261024/.build-debug/test_nexus_v1_title_dgt2_pp_payload_admission"
+2916: Working Directory: /home/trv2/work/firestaff-parity-debug-20261024/.build-debug
+2916: Environment variables:
+2916:  FIRESTAFF_NEXUS_CUE=/home/trv2/.firestaff/data/nexus/Dungeon Master Nexus (Japan).cue
+2916: Test timeout computed to be: 1500
+2916: PASS nexus_v1_title_dgt2_pp_payload_admission (real)
+3/4 Test #2916: nexus_v1_title_dgt2_pp_payload_admission_real ...   Passed    0.04 sec
+test 2918
+    Start 2918: nexus_v1_title_mapd_tibg_admission_real
+
+2918: Test command: /usr/bin/bash "/home/trv2/work/firestaff-parity-debug-20261024/tests/test_nexus_v1_title_mapd_tibg_admission_real.sh" "/home/trv2/work/firestaff-parity-debug-20261024/.build-debug/test_nexus_v1_title_mapd_tibg_admission"
+2918: Working Directory: /home/trv2/work/firestaff-parity-debug-20261024/.build-debug
+2918: Environment variables:
+2918:  FIRESTAFF_NEXUS_CUE=/home/trv2/.firestaff/data/nexus/Dungeon Master Nexus (Japan).cue
+2918: Test timeout computed to be: 1500
+2918: PASS nexus_v1_title_mapd_tibg_admission (real)
+4/4 Test #2918: nexus_v1_title_mapd_tibg_admission_real .........   Passed    0.02 sec
+
+The following tests passed:
+	nexus_v1_title_res_corpus_receipt_real
+	nexus_v1_title_titl_pp_payload_admission_real
+	nexus_v1_title_dgt2_pp_payload_admission_real
+	nexus_v1_title_mapd_tibg_admission_real
+
+100% tests passed, 0 tests failed out of 4
+
+Label Time Summary:
+nexus        =   0.18 sec*proc (4 tests)
+real_data    =   0.18 sec*proc (4 tests)
+saturn       =   0.18 sec*proc (4 tests)
+skip_safe    =   0.18 sec*proc (4 tests)
+title        =   0.18 sec*proc (4 tests)
+
+Total Test time (real) =   0.37 sec
