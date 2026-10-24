@@ -15,11 +15,18 @@
   a validated native gameplay view. DM1 zones cannot be copied blindly onto
   Theron's differently sized PCE layout; create and test an explicitly
   Firestaff-owned mouse overlay after the native authenticated view is ready.
+- The source-locked captures do identify six original movement-panel command
+  points: turn-left `$7B/$8F`, forward `$8A/$8F`, turn-right `$98/$8F`,
+  step-left `$7B/$A5`, backward `$8A/$A5`, and step-right `$98/$A5`. These are
+  internal PCE cursor samples, not rectangle boundaries or host-space pixels.
+  Use them to align visible Firestaff-owned targets with the authentic panel
+  after the live native view and its coordinate transform are source-bound.
 - Remaining work: bind Theron's original graphics and layout in the native
-  renderer, recover the original input-region boundaries from source/runtime
-  evidence, then implement and verify DM1-style mouse zones on the native
-  presentation. User requirement remains open until keyboard and mouse both
-  support ordinary dungeon play.
+  renderer, implement visible Firestaff-owned mouse targets for its six
+  movement actions, then verify coordinate scaling and dispatch in an
+  interactive native real-media run. The authentic point captures do not
+  define the host hitbox bounds. User requirement remains open until keyboard
+  and mouse both support ordinary dungeon play.
 
 ## 2026-10-24 — authenticated snapshot renders; state pairing remains open
 

@@ -80,7 +80,12 @@ actuator timing or retail queue capacity; see the 2026-10-24 entry in
   Button II is a cancel/modifier and does not perform a standalone dungeon
   action. This does not provide DM1-style clickable controls. Theron's native
   dungeon layout is not yet rendered from authenticated graphics, and the
-  captured original input points do not establish complete region boundaries.
+  original movement-panel captures identify only six internal PCE cursor
+  samples, not host-space coordinates or hitbox bounds: turn-left `$7B/$8F`,
+  forward `$8A/$8F`, turn-right `$98/$8F`, step-left `$7B/$A5`, backward
+  `$8A/$A5`, and step-right `$98/$A5`. Use these points to align visible
+  Firestaff-owned click targets only after the live native layout and
+  coordinate transform are bound.
   The turn and forward point captures are recorded in
   [`theron-original-turn-command-capture-2026-08-21.md`](source-lock/theron-original-turn-command-capture-2026-08-21.md)
   and
