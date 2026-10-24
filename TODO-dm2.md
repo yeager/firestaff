@@ -588,6 +588,24 @@ M12 startup coverage gap; native M5 Retina/input verification remains open.
   draws and fails the top-HUD coverage check. Map those panel draws to the
   original Amiga source before enabling that route.
 
+- 2026-10-24: the user reports that the DM2 Amiga HUD and viewport are very
+  broken. A fresh authentic-media M4 debug capture reaches map 0 at (1,8),
+  facing north, with an accepted frame, real assets, zero fallback draws,
+  zero blocked materials and five HUD blits. The presented frame still has
+  visibly corrupted scene/UI graphics, so these receipts and the current
+  nonblack-region checks do not prove visual correctness. Keep this report
+  open. Source comparison points to `SKULLWIN/c_querydb.cpp::
+  DM2_QUERY_GDAT_IMAGE_LOCALPAL`, which returns the final 16 bytes of a 4-bit
+  image record. A diagnostic attempt to apply the Amiga C4 floor/ceiling tails
+  directly as indices into its authenticated 16-color `PalIRGB` bank produced
+  a black viewport: the source palette tail contains values above 15 (for
+  example 167, 201, 169, 155 and 199). That attempt was reverted. Resolve the
+  Amiga C4-to-display palette mapping against GreatStone's extracted Amiga
+  assets and the DMWeb graphics-format notes before changing this path again;
+  add per-platform visual checks that detect the observed corruption instead
+  of accepting nonblack pixel counts alone. Capture:
+  `.codex-scratch/dm2-amiga-debug/frame.png`.
+
 - Verify bare `--game dm2` on the reported MacBook Pro M5 Retina display with
   the mixed original-media collection: log logical and drawable dimensions,
   then click New Game and the first mirror with native mouse input. A local
