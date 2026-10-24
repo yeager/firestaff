@@ -177,6 +177,8 @@ M12_MenuInput M11_StartupSettingsHorizontalKeyInput(
    uses the same direction layout. Mouse button 1/2 are Button I/II, and a
    short/long touch is the same Button I/II pair. */
 M12_MenuInput M11_TheronNavigationInputFromScancode(int scancode);
+/* Nexus D-pad-compatible turn aliases, restricted by the caller to Nexus. */
+M12_MenuInput M11_NexusMovementInputFromScancode(int scancode);
 M12_MenuInput M11_TheronNavigationInputFromKeycode(int keycode);
 M12_MenuInput M11_TheronGameplayInputFromScancode(int scancode);
 M12_MenuInput M11_TheronGameplayInputFromKeycode(int keycode);

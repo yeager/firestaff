@@ -104,6 +104,22 @@ M12_MenuInput M11_TheronNavigationInputFromScancode(int scancode)
     }
 }
 
+M12_MenuInput M11_NexusMovementInputFromScancode(int scancode)
+{
+    /* Saturn D-pad left/right turn during Nexus movement mode. W/S remain
+     * forward/back, while A/D and the arrow keys both offer familiar turns. */
+    switch ((SDL_Scancode)scancode) {
+        case SDL_SCANCODE_A:
+        case SDL_SCANCODE_LEFT:
+            return M12_MENU_INPUT_TURN_LEFT;
+        case SDL_SCANCODE_D:
+        case SDL_SCANCODE_RIGHT:
+            return M12_MENU_INPUT_TURN_RIGHT;
+        default:
+            return M12_MENU_INPUT_NONE;
+    }
+}
+
 M12_MenuInput M11_TheronNavigationInputFromKeycode(int keycode)
 {
     /* SDL normally supplies both fields.  Keep a keycode fallback for
