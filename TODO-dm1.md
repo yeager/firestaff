@@ -1,3 +1,13 @@
+2026-10-24 PC34 held-object cursor stripe regression:
+`M11_GameView_DrawLeaderHandCursor` read an unmasked low nibble for odd
+columns. Transparent color C therefore became 0xCC and was written to the
+framebuffer as vertical stripes. The cursor now masks the low nibble, and
+`m11_dm1_real_object_names` uses the authentic HoC apple from the installed
+PC34 DUNGEON.DAT and checks every F0702 cursor pixel against its real icon
+atlas on a contrasting framebuffer. The real-media test passes and the
+captured apple cursor is clean. The shared packed-cursor route is fixed;
+independent visual confirmation on other editions remains outstanding.
+
 2026-10-24 PC34 wall-item coverage audit: the authentic-media alcove test used
 to return as soon as it found a floor item, before scanning later dungeon
 maps for wall-alcove items. It now scans the full original campaign before

@@ -1,6 +1,8 @@
 #include "m11_game_view.h"
 #include "screenshot_m11.h"
 #include "vga_palette_pc34_compat.h"
+#include "dm1_v1_graphic_ids_pc34_compat.h"
+#include "redmcsb_f0702_build_object_mouse_pointer_icon_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -70,6 +72,7 @@ int main(void)
     int statusDestinationY = 0;
     int statusDestinationW = 0;
     int statusDestinationH = 0;
+    int expectedCursorMinY = 200;
     int y;
 
     if (!data_dir || !data_dir[0]) {
@@ -96,24 +99,41 @@ int main(void)
         M11_GameView_Shutdown(&state);
         return 1;
     }
-    if (!state.world.things || state.world.things->weaponCount <= 0) {
-        fprintf(stderr, "DM1 real DUNGEON.DAT contains no weapon record\n");
+    if (!state.world.things || state.world.things->junkCount <= 0) {
+        fprintf(stderr, "DM1 real DUNGEON.DAT contains no junk record\n");
         M11_GameView_Shutdown(&state);
         return 1;
     }
 
+    /* Use an authentic HoC apple Thing, not a synthetic type-only Thing:
+     * reported held-object striping must be checked on the same source icon
+     * that appears in the user's screenshots. */
+    thing = THING_NONE;
+    {
+        int i;
+        for (i = 0; i < state.world.things->junkCount; ++i) {
+            if (state.world.things->junks[i].type == 29) {
+                thing = (unsigned short)((THING_TYPE_JUNK << 10) | i);
+                break;
+            }
+        }
+    }
+    if (thing == THING_NONE) {
+        fprintf(stderr, "DM1 real DUNGEON.DAT contains no authentic apple\n");
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
     /* ReDMCSB OBJECT.C F0031/F0033 resolves the visible name from the
      * icon-indexed M564 stream, not from the decoded subtype catalog. */
-    thing = (unsigned short)(THING_TYPE_WEAPON << 10);
     if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(&state, thing)) {
-        fprintf(stderr, "could not move first real weapon to leader hand\n");
+        fprintf(stderr, "could not move real HoC apple to leader hand\n");
         M11_GameView_Shutdown(&state);
         return 1;
     }
     memset(name, 0, sizeof(name));
     if (!DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(
             &state, name, (int)sizeof(name)) || name[0] == '\0' ||
-        strncmp(name, "WEAPON ", 7) == 0) {
+        strncmp(name, "JUNK ", 5) == 0) {
         fprintf(stderr, "real M564 leader-hand name invalid: '%s'\n", name);
         M11_GameView_Shutdown(&state);
         return 1;
@@ -193,30 +213,79 @@ int main(void)
     state.originalFontAvailable = 1;
 
     /* ReDMCSB IO.C F0702 replaces the host arrow with the held source
-     * object. Verify the final indexed framebuffer, not merely the transient
-     * leader-hand state or the name resolver. */
-    memset(framebuffer, 0, sizeof(framebuffer));
+     * object. Verify every output pixel against the original icon atlas on a
+     * contrasting framebuffer; this catches packed-nibble transparency
+     * errors that a nonempty-cursor check misses. */
+    memset(framebuffer, 1, sizeof(framebuffer));
     state.pointerPositionKnown = 1;
     state.pointerX = 120;
     state.pointerY = 80;
     M11_GameView_DrawLeaderHandCursor(&state, framebuffer,
                                       320, 200);
+    {
+        DM1_V1_ObjectIconSourceZonePc34 zone;
+        const int icon = DM1_V1_M11Runtime_GetLeaderHandObjectIconIndexPc34Compat(&state);
+        const M11_AssetSlot* atlas;
+        int row;
+        if (!dm1_v1_object_icon_source_zone_pc34(icon, &zone) ||
+            !(atlas = M11_AssetLoader_Load(&state.assetLoader,
+                                           (unsigned int)zone.graphic_index)) ||
+            !atlas->pixels) {
+            fprintf(stderr, "authentic HoC apple icon atlas could not be loaded\n");
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+        for (row = 0; row < REDMCSB_F0702_POINTER_HEIGHT_PC34; ++row) {
+            int col;
+            for (col = 0; col < REDMCSB_F0702_POINTER_WIDTH_PC34; ++col) {
+                unsigned char expected = 1u;
+                const int dstX = state.pointerX - 8 + col;
+                const int dstY = state.pointerY - 8 + row;
+                if (col >= 2 && row >= 2 && col < 18 && row < 18) {
+                    const int shadowX = col - 2;
+                    const int shadowY = row - 2;
+                    if (shadowX < 16 && shadowY < 16 &&
+                        (atlas->pixels[(zone.y + shadowY) * atlas->width +
+                                       zone.x + shadowX] & 0x0f) != 12u) {
+                        expected = 0u;
+                    }
+                }
+                if (col < 16 && row < 16) {
+                    const unsigned char source = (unsigned char)(
+                        atlas->pixels[(zone.y + row) * atlas->width +
+                                      zone.x + col] & 0x0f);
+                    if (source != 12u) expected = source;
+                }
+                if (framebuffer[dstY * 320 + dstX] != expected) {
+                    fprintf(stderr,
+                            "real F0702 apple cursor pixel mismatch at %d,%d: expected=%u actual=%u\n",
+                            col, row, (unsigned int)expected,
+                            (unsigned int)framebuffer[dstY * 320 + dstX]);
+                    M11_GameView_Shutdown(&state);
+                    return 1;
+                }
+                if (expected != 1u && dstY < expectedCursorMinY) {
+                    expectedCursorMinY = dstY;
+                }
+            }
+        }
+    }
     capture_dm1_hand_cursor_if_requested(framebuffer);
     for (y = state.pointerY - 8;
          y < state.pointerY - 8 + 18 && y < 200; ++y) {
         int x;
         for (x = state.pointerX - 8;
              x < state.pointerX - 8 + 18 && x < 320; ++x) {
-            if (framebuffer[y * 320 + x] != 0u) {
+            if (framebuffer[y * 320 + x] != 1u) {
                 ++cursorPixels;
                 if (y < cursorMinY) cursorMinY = y;
             }
         }
     }
-    if (cursorPixels == 0u || cursorMinY != state.pointerY - 8) {
+    if (cursorPixels == 0u || cursorMinY != expectedCursorMinY) {
         fprintf(stderr,
                 "real F0702 cursor hotspot mismatch: pixels=%zu top=%d expected=%d\n",
-                cursorPixels, cursorMinY, state.pointerY - 8);
+                cursorPixels, cursorMinY, expectedCursorMinY);
         M11_GameView_Shutdown(&state);
         return 1;
     }
@@ -328,7 +397,7 @@ int main(void)
     }
 
     M11_GameView_Shutdown(&state);
-    printf("ok: real DM1 M564 leader-hand name = %s; F0702 cursor pixels=%zu; floor pickup -> mouse hand\n",
+    printf("ok: real DM1 HoC apple M564 name = %s; F0702 cursor pixels=%zu; floor pickup -> mouse hand\n",
            name, cursorPixels);
     return 0;
 }
