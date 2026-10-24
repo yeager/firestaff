@@ -7,8 +7,11 @@ Ymir 0.4.1 with `--debug`. The evidence and paired screenshots are in
 [`parity-evidence/verification/keyboard-mouse-debug-20261024/`](../parity-evidence/verification/keyboard-mouse-debug-20261024/README.md).
 
 The isolated Ymir ControlPad profile mapped `W/S/A/D` to Saturn D-pad
-up/down/left/right, `J` to A, `O` to Z, and `F` to Start. In the retail
-dungeon view, W moved forward, A turned left, D turned right, and F displayed
+up/down/left/right, `J` to A, `O` to Z, and `F` to Start. In a fresh profile
+with an empty BUP, F opened the title menu and S selected `CONTINUE`; a Right
+shoulder event (keyboard R in that profile) did not change the menu selection.
+Pressing J left the selected Continue row unchanged; no save-list transition
+was observed in this empty-BUP profile. In the retail dungeon view, W moved forward, A turned left, D turned right, and F displayed
 the game's `PAUSE` overlay. O entered the game's hand-cursor mode; W moved the
 cursor upward in that mode. The captures show real game output from the retail
 media, not generated or synthetic game state.
