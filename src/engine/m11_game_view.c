@@ -60792,7 +60792,7 @@ void M11_GameView_DrawLeaderHandCursor(const M11_GameViewState* state,
                 const unsigned char pixel = (unsigned char)(
                     ((x & 1) == 0)
                         ? (pointerBitmap[y * 9 + (x / 2)] >> 4)
-                        : pointerBitmap[y * 9 + (x / 2)]);
+                        : (pointerBitmap[y * 9 + (x / 2)] & 0x0f));
                 /* ReDMCSB IO.C:2184-2185 registers this 18x18 bitmap with
                  * hotspot (8,8). pointerX/pointerY names that hotspot, not
                  * the cursor bitmap's top-left. */
