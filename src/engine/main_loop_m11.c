@@ -959,6 +959,7 @@ static int g_m11_debug_startup_detail = 0;
 typedef struct {
     int hasLastProgress;
     Uint64 startedMs;
+    Uint64 lastProgressMs;
     M12_AssetScanProgress lastProgress;
 } M11_DebugScanProgressTrace;
 
@@ -971,7 +972,9 @@ static void m11_debug_reset_scan_progress_trace(void) {
 
 static void m11_debug_log_scan_progress(const M12_AssetScanProgress* progress) {
     M11_DebugScanProgressTrace* trace = &g_m11_debug_scan_progress_trace;
+    Uint64 nowMs;
     if (!g_m11_debug_startup_detail || !progress) return;
+    nowMs = SDL_GetTicks();
     if (!trace->hasLastProgress ||
         progress->completedSteps != trace->lastProgress.completedSteps ||
         progress->currentStepPercent !=
@@ -980,10 +983,14 @@ static void m11_debug_log_scan_progress(const M12_AssetScanProgress* progress) {
         strcmp(progress->currentGameId,
                trace->lastProgress.currentGameId) != 0 ||
         strcmp(progress->currentPath, trace->lastProgress.currentPath) != 0) {
-        if (!trace->hasLastProgress) trace->startedMs = SDL_GetTicks();
+        if (!trace->hasLastProgress) {
+            trace->startedMs = nowMs;
+            trace->lastProgressMs = nowMs;
+        }
         fprintf(stderr,
-                "firestaff: scan elapsed-ms=%llu progress=%zu%% game=%s task=%s path=%s\n",
-                (unsigned long long)(SDL_GetTicks() - trace->startedMs),
+                "firestaff: scan elapsed-ms=%llu delta-ms=%llu progress=%zu%% game=%s task=%s path=%s\n",
+                (unsigned long long)(nowMs - trace->startedMs),
+                (unsigned long long)(nowMs - trace->lastProgressMs),
                 progress->totalSteps > 0U
                     ? (progress->completedSteps * 100U +
                        progress->currentStepPercent) / progress->totalSteps
@@ -991,6 +998,7 @@ static void m11_debug_log_scan_progress(const M12_AssetScanProgress* progress) {
                 progress->currentGameId[0] ? progress->currentGameId : "all",
                 progress->currentTask,
                 progress->currentPath[0] ? progress->currentPath : "(none)");
+        trace->lastProgressMs = nowMs;
         trace->lastProgress = *progress;
         trace->hasLastProgress = 1;
     }

@@ -1,5 +1,11 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-24 startup scan diagnostics: `--debug` scan progress now includes
+`delta-ms`, the time since the preceding distinct progress snapshot, alongside
+total elapsed time. This makes long gaps between scanner updates visible next
+to the current game, task and path; it does not by itself reduce scan time.
+The cold five-game scan measurement below remains an open performance issue.
+
 2026-10-23 cold five-game startup scan retest: a fresh isolated-home
 `firestaff --scan-data --debug --data-dir ~/.firestaff/data` run took 19.20 s
 wall time (17.60 s user CPU, 1.41 s system CPU) on the Mac mini M4 and reported
