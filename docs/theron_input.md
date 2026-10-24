@@ -63,11 +63,16 @@ actuator timing or retail queue capacity; see the 2026-10-24 entry in
 | Drop last picked source item | P                    |
 | Use facing door | U                                |
 
-The native dungeon view also shows a six-button Firestaff mouse panel in its
-lower-right corner. Click **TURN L**, **FORWARD**, or **TURN R** on the top
-row; click **STEP L**, **BACK**, or **STEP R** on the bottom row. The buttons
-dispatch the same native Theron input tokens as the matching keyboard
-controls. The panel scales with the game's presentation size.
+The native dungeon view also shows a twelve-button Firestaff mouse panel in
+its lower-right corner. Its first two rows provide **TURN L**, **FORWARD**,
+**TURN R**, **STEP L**, **BACK**, and **STEP R**. The remaining buttons are
+**NEXT** champion, **PICKUP**, select the next source-backed **ITEM**, **DROP**
+the selected source item, **USE** the object ahead, and **WAIT** one tick.
+These buttons send the same native Theron input tokens as the corresponding
+keyboard actions. Their captions use the active Theron translation catalog.
+The panel scales with the game's presentation size. Japanese and Chinese
+captions use ASCII romanizations because the native small font does not
+contain CJK glyphs.
 
 ## Notes
 
@@ -75,21 +80,21 @@ controls. The panel scales with the game's presentation size.
   commands `$06/$04`; Q/E, Home/End and keypad 4/6 turn. Startup menu arrows
   retain their navigation behavior. This matches Firestaff's ordinary DM1
   dungeon keyboard layout while preserving Theron's native command tokens.
-- Mouse button 1 selects a visible movement-panel control during dungeon
+- Mouse button 1 selects a visible movement or action control during dungeon
   play. Mouse button 2 remains Button II (cancel in startup and back/exit in
   gameplay); it does not advance a dungeon tick. A short touch emits Button I
   and a long touch emits Button II, including during startup. The retail
   manual also describes holding Button II with a direction key as simplified
   movement; Firestaff's native direction keys already issue those movement
   commands directly.
-- The six host-panel bounds are Firestaff UI and do not reuse DM1's
+- The host-panel bounds are Firestaff UI and do not reuse DM1's
   C007..C116 pointer tables. The original movement-panel captures identify
   six internal PCE cursor samples, not desktop hitboxes or host coordinates:
   turn-left `$7B/$8F`, forward `$8A/$8F`, turn-right `$98/$8F`, step-left
   `$7B/$A5`, backward `$8A/$A5`, and step-right `$98/$A5`. The samples
-  informed the control order only. Native state-driven Theron graphics and
-  complete visual parity remain open; the overlay does not replace that
-  renderer work.
+  informed the movement-control order only. Native state-driven Theron
+  graphics and complete visual parity remain open; the overlay does not
+  replace that renderer work.
   The turn and forward point captures are recorded in
   [`theron-original-turn-command-capture-2026-08-21.md`](source-lock/theron-original-turn-command-capture-2026-08-21.md)
   and

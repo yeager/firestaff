@@ -1,3 +1,31 @@
+## 2026-10-25 — PCE Fast left-input and VDC comparison
+
+- Replayed the preserved authentic Japanese Ak-Tu-Ba dungeon state on TRV2
+  with scripted `left@1:60` input and bounded PCE Fast controller/VDC tracing.
+  The scripted-input receipt confirms the left mask `0x0080` was applied and
+  read by the non-System Card controller poll at `$44D2` (witness sequence
+  1792). The close-time bytes at `$2031` and `$203F-$2041` match the earlier
+  forward-input capture. A same-duration no-input replay from the same state
+  provides a stronger VDC comparison: the 512-byte SAT snapshots differ only
+  in the low bytes of the first two words (UP `44 00 34 00`, LEFT
+  `b8 00 20 00`, idle `b8 00 98 00`); all remaining SAT bytes match. The
+  corresponding 64 KiB VRAM snapshots differ only at offsets 65025 and 65027
+  for UP versus idle, and at 65027 for LEFT versus idle, within the SAT
+  region. This proves an input-associated change in one SAT entry's data, but
+  does not identify that entry as the party sprite or establish world
+  movement. Disassembly of the matching authentic JP Track 02 code window
+  resolves the entry's role more narrowly: runtime `$D65F` indexes sprite
+  coordinates from `$2E7A,X` and `$2E3A,X`; for `X=0`, it writes the former
+  plus `$40` into SAT word `$7F00` and the latter plus `$20` into `$7F01`.
+  The close-time RAM snapshots match those source fields: idle `$2E3A/$2E7A`
+  are `78/78`, left is `00/78`, and up is `14/04`, matching the first SAT
+  entry after the VDC's coordinate offsets. This binds the moving entry to
+  Theron's on-screen cursor coordinates, but not to a world target or party
+  movement. No authenticated CD-to-RAM receipt or gameplay transition was
+  produced. Keep original pointer hit targets and interactive state-driven
+  dungeon rendering open; the Firestaff mouse panel remains a host control
+  surface, not source-verified world-pointing behavior.
+
 ## 2026-10-24 — complete Theron keyboard and mouse playability
 
 - Native keyboard input already reaches the Theron movement and action facade;
@@ -7,23 +35,30 @@
   and keypad 1/3 and 4/6 provide the same actions. Startup arrows still
   navigate Theron's menus. The focused input regression passed three loops on
   TRV2.
-- The native dungeon draw now includes a visible, Firestaff-owned 3x2 mouse
-  panel for turn-left/forward/turn-right and step-left/back/step-right. Its six
-  buttons dispatch the same native Theron inputs as the keyboard and normalize
-  pointer coordinates across presentation sizes. The panel uses explicit host
-  UI bounds rather than borrowing DM1's pointer table or claiming original
-  Theron hitboxes. Button II remains cancel/back.
+- The native dungeon draw includes a visible, Firestaff-owned 4x3 mouse
+  panel. Alongside the six movement controls, it exposes the native actions
+  already available from the keyboard: next champion, source-backed item
+  pickup/selection/drop/use, and wait. A shared control table drives drawing
+  and hit-testing; the controls use host UI bounds rather than borrowing
+  DM1's pointer table or claiming original Theron hitboxes. Button II remains
+  cancel/back.
 - The source-locked captures do identify six original movement-panel command
   points: turn-left `$7B/$8F`, forward `$8A/$8F`, turn-right `$98/$8F`,
   step-left `$7B/$A5`, backward `$8A/$A5`, and step-right `$98/$A5`. These are
   internal PCE cursor samples, not rectangle boundaries or host-space pixels.
   They establish the original command order only.
-- On TRV2, `theron_v1_m11_launcher_handoff_boundary` passed three consecutive
-  loops, checking all six controls with 320x200 and 640x400 pointer coordinates
-  and verifying the drawn panel. Its small test map verifies dispatch only.
-  `theron_v1_raw_bin_runtime_boot` passed once with `--debug` and authentic US
-  `TQUS02.bin`: mouse turn-left changed the loaded party to direction 3, and
-  mouse Back moved it from `(1,0)` to `(1,1)` with one runtime tick.
+- On TRV2, `theron_v1_m11_launcher_handoff_boundary` and
+  `m11_gamepad_csb_input_bridge` each passed three consecutive loops after the
+  4x3 panel change. The pointer test covers all twelve controls with 320x200
+  and 640x400 coordinates. Its small test map verifies host input routing
+  only, not item availability or game-mechanics parity.
+  `theron_v1_raw_bin_runtime_boot` passed three loops with `--debug` and
+  authentic US `TQUS02.bin`: keyboard movement/turning and mouse forward/back,
+  both turns, both side-steps, champion cycling, and wait produced the
+  expected native state. On that same authentic image, the mouse also picked
+  up SANDALS at the real level-0 item tile, selected the source-backed item,
+  and dropped it on the party's validated floor square. Mouse USE still needs
+  an authentic target case for gameplay-effect verification.
 - Remaining work: bind Theron's original graphics and layout in the native
   state-driven renderer, then verify that mouse movement is visible in an
   interactive native real-media run. The current authenticated screen route

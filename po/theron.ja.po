@@ -30,6 +30,46 @@ msgstr "南"
 msgid "WEST"
 msgstr "西"
 
+#. Theron host mouse control label
+msgid "TURN L"
+msgstr "HIDARI"
+
+#. Theron host mouse control label
+msgid "FORWARD"
+msgstr "MAE"
+
+#. Theron host mouse control label
+msgid "TURN R"
+msgstr "MIGI"
+
+#. Theron host mouse control label
+msgid "STEP L"
+msgstr "YOKO-L"
+
+#. Theron host mouse control label
+msgid "BACK"
+msgstr "USHIRO"
+
+#. Theron host mouse control label
+msgid "STEP R"
+msgstr "YOKO-R"
+
+#. Theron host mouse control label
+msgid "NEXT"
+msgstr "TSUGI"
+
+#. Theron host mouse control label
+msgid "PICKUP"
+msgstr "TORU"
+
+#. Theron host mouse control label
+msgid "ITEM"
+msgstr "ITEM"
+
+#. Theron host mouse control label
+msgid "WAIT"
+msgstr "MATSU"
+
 #. Stairs
 msgid "STAIRS"
 msgstr "階段"

@@ -27,6 +27,8 @@ jobs:
       - uses: actions/checkout@v5
       - name: Install GNU gettext
         run: bash scripts/ci/install_apt_packages.sh gettext
+      - name: Verify unfiltered translation updates preserve Theron Indonesian
+        run: python3 scripts/test_translations_other_theron.py
       - name: Verify source-generated and canonical POT/PO catalogs
         run: bash po/update.sh --check
       - name: Verify build-tree MO catalog generation

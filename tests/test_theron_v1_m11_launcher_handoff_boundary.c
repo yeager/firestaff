@@ -98,14 +98,48 @@ static void run_theron_pointer_and_button_input_contract(void) {
         int party_x;
         int party_y;
         int party_dir;
+        int active_slot;
+        M11_GameInputResult expected_result;
+        const char *expected_action;
+        const char *expected_outcome;
         const char *label;
     } mouse_controls[] = {
-        { 204, 160, 3, 3, THERON_DIR_WEST, "mouse overlay turns left" },
-        { 248, 160, 3, 2, THERON_DIR_NORTH, "mouse overlay moves forward" },
-        { 292, 160, 3, 3, THERON_DIR_EAST, "mouse overlay turns right" },
-        { 204, 183, 2, 3, THERON_DIR_NORTH, "mouse overlay steps left" },
-        { 248, 183, 3, 4, THERON_DIR_NORTH, "mouse overlay moves backward" },
-        { 292, 183, 4, 3, THERON_DIR_NORTH, "mouse overlay steps right" }
+        { 204, 132, 3, 3, THERON_DIR_WEST, 0, M11_GAME_INPUT_REDRAW,
+          NULL, NULL,
+          "mouse overlay turns left" },
+        { 248, 132, 3, 2, THERON_DIR_NORTH, 0, M11_GAME_INPUT_REDRAW,
+          NULL, NULL,
+          "mouse overlay moves forward" },
+        { 292, 132, 3, 3, THERON_DIR_EAST, 0, M11_GAME_INPUT_REDRAW,
+          NULL, NULL,
+          "mouse overlay turns right" },
+        { 204, 151, 2, 3, THERON_DIR_NORTH, 0, M11_GAME_INPUT_REDRAW,
+          NULL, NULL,
+          "mouse overlay steps left" },
+        { 248, 151, 3, 4, THERON_DIR_NORTH, 0, M11_GAME_INPUT_REDRAW,
+          NULL, NULL,
+          "mouse overlay moves backward" },
+        { 292, 151, 4, 3, THERON_DIR_NORTH, 0, M11_GAME_INPUT_REDRAW,
+          NULL, NULL,
+          "mouse overlay steps right" },
+        { 204, 170, 3, 3, THERON_DIR_NORTH, 1, M11_GAME_INPUT_REDRAW,
+          NULL, NULL,
+          "mouse overlay cycles champion" },
+        { 248, 170, 3, 3, THERON_DIR_NORTH, 0, M11_GAME_INPUT_IGNORED,
+          "ITEM", "NOTHING TO PICK UP",
+          "mouse overlay requests source-backed pickup" },
+        { 292, 170, 3, 3, THERON_DIR_NORTH, 0, M11_GAME_INPUT_IGNORED,
+          "ITEM", "NO SOURCE ITEM",
+          "mouse overlay selects source-backed item" },
+        { 204, 189, 3, 3, THERON_DIR_NORTH, 0, M11_GAME_INPUT_IGNORED,
+          "ITEM", "NO SELECTED SOURCE ITEM",
+          "mouse overlay drops selected source item" },
+        { 248, 189, 3, 3, THERON_DIR_NORTH, 0, M11_GAME_INPUT_IGNORED,
+          "USE", "NOTHING USABLE AHEAD",
+          "mouse overlay uses front object" },
+        { 292, 189, 3, 3, THERON_DIR_NORTH, 0, M11_GAME_INPUT_REDRAW,
+          NULL, NULL,
+          "mouse overlay waits one tick" }
     };
     unsigned char framebuffer[320 * 200];
     size_t control_index;
@@ -144,6 +178,10 @@ static void run_theron_pointer_and_button_input_contract(void) {
             M11_GameInputResult result;
 
             theron_v1_world_init(&world);
+            world.party.champion_count = 2;
+            world.party.active_slot = 0;
+            world.party.champions[0].alive = 1;
+            world.party.champions[1].alive = 1;
             world.current_dungeon = THERON_DUNGEON_1_AKUTUBA;
             world.current_level = 0;
             world.level_loaded[0][0] = 1;
@@ -175,13 +213,20 @@ static void run_theron_pointer_and_button_input_contract(void) {
                 &view, mouse_controls[control_index].x * input_scale,
                 mouse_controls[control_index].y * input_scale,
                 DM1_V1_MOUSE_MASK_LEFT_PC34);
-            expect_true(result == M11_GAME_INPUT_REDRAW &&
+            expect_true(result == mouse_controls[control_index].expected_result &&
                             view.theronState.party_x ==
                                 mouse_controls[control_index].party_x &&
                             view.theronState.party_y ==
                                 mouse_controls[control_index].party_y &&
                             view.theronState.party_dir ==
-                                mouse_controls[control_index].party_dir,
+                                mouse_controls[control_index].party_dir &&
+                            world.party.active_slot ==
+                                mouse_controls[control_index].active_slot &&
+                            (!mouse_controls[control_index].expected_action ||
+                             (strcmp(view.lastAction,
+                                     mouse_controls[control_index].expected_action) == 0 &&
+                              strcmp(view.lastOutcome,
+                                     mouse_controls[control_index].expected_outcome) == 0)),
                         mouse_controls[control_index].label);
         }
     }
@@ -193,8 +238,8 @@ static void run_theron_pointer_and_button_input_contract(void) {
     view.theronState.level_loaded = 1;
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
-    expect_true(framebuffer[149 * 320 + 182] != 0,
-                "Theron dungeon render draws the visible mouse movement overlay");
+    expect_true(framebuffer[123 * 320 + 182] != 0,
+                "Theron dungeon render draws the visible mouse action panel");
 }
 
 static void init_menu_without_gallery(M12_StartupMenuState* state,

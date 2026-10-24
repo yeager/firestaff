@@ -30,6 +30,46 @@ msgstr "SUD"
 msgid "WEST"
 msgstr "OUEST"
 
+#. Theron host mouse control label
+msgid "TURN L"
+msgstr "TOUR G"
+
+#. Theron host mouse control label
+msgid "FORWARD"
+msgstr "AVANCER"
+
+#. Theron host mouse control label
+msgid "TURN R"
+msgstr "TOUR D"
+
+#. Theron host mouse control label
+msgid "STEP L"
+msgstr "PAS G"
+
+#. Theron host mouse control label
+msgid "BACK"
+msgstr "RECULER"
+
+#. Theron host mouse control label
+msgid "STEP R"
+msgstr "PAS D"
+
+#. Theron host mouse control label
+msgid "NEXT"
+msgstr "SUIVANT"
+
+#. Theron host mouse control label
+msgid "PICKUP"
+msgstr "PRENDRE"
+
+#. Theron host mouse control label
+msgid "ITEM"
+msgstr "OBJET"
+
+#. Theron host mouse control label
+msgid "WAIT"
+msgstr "ATTENTE"
+
 #. Stairs
 msgid "STAIRS"
 msgstr "ESCALIER"
@@ -56,7 +96,7 @@ msgstr "LÂCHER"
 
 #. Inventory / item action
 msgid "USE"
-msgstr "UTILISER"
+msgstr "UTIL."
 
 #. Combat action
 msgid "ATTACK"

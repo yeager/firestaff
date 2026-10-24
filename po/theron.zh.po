@@ -30,6 +30,46 @@ msgstr "南"
 msgid "WEST"
 msgstr "西"
 
+#. Theron host mouse control label
+msgid "TURN L"
+msgstr "ZUO"
+
+#. Theron host mouse control label
+msgid "FORWARD"
+msgstr "QIAN"
+
+#. Theron host mouse control label
+msgid "TURN R"
+msgstr "YOU"
+
+#. Theron host mouse control label
+msgid "STEP L"
+msgstr "ZUO BU"
+
+#. Theron host mouse control label
+msgid "BACK"
+msgstr "HOU"
+
+#. Theron host mouse control label
+msgid "STEP R"
+msgstr "YOU BU"
+
+#. Theron host mouse control label
+msgid "NEXT"
+msgstr "XIA YI"
+
+#. Theron host mouse control label
+msgid "PICKUP"
+msgstr "NA"
+
+#. Theron host mouse control label
+msgid "ITEM"
+msgstr "ITEM"
+
+#. Theron host mouse control label
+msgid "WAIT"
+msgstr "DENG"
+
 #. Stairs
 msgid "STAIRS"
 msgstr "楼梯"

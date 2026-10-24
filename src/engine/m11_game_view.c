@@ -37939,18 +37939,52 @@ static M11_GameInputResult m11_theron_handle_startup_pointer(
     return m11_theron_apply_startup_action_host_receipt(state, &receipt);
 }
 
-/* Firestaff-owned desktop controls for Theron's six movement-panel actions.
+/* Firestaff-owned desktop controls for Theron's native runtime inputs.
  * The retail PCE game is controller-only; these bounds belong to this visible
  * host overlay and are not inferred from the original's internal cursor
- * samples. Keep this logical 320x200 layout aligned with its drawing helper. */
+ * samples. Keep this logical 320x200 layout aligned with its drawing helper.
+ * The action buttons call the same runtime facade as their keyboard aliases. */
 enum {
     M11_THERON_MOUSE_CANVAS_W = 320,
     M11_THERON_MOUSE_CANVAS_H = 200,
     M11_THERON_MOUSE_PANEL_X = 182,
-    M11_THERON_MOUSE_PANEL_Y = 149,
+    M11_THERON_MOUSE_PANEL_Y = 123,
     M11_THERON_MOUSE_CELL_W = 44,
-    M11_THERON_MOUSE_CELL_H = 23
+    M11_THERON_MOUSE_CELL_H = 19,
+    M11_THERON_MOUSE_ROWS = 4,
+    M11_THERON_MOUSE_COLUMNS = 3
 };
+
+static const M12_MenuInput g_m11_theron_mouse_inputs
+    [M11_THERON_MOUSE_ROWS][M11_THERON_MOUSE_COLUMNS] = {
+        { M12_MENU_INPUT_TURN_LEFT, M12_MENU_INPUT_UP,
+          M12_MENU_INPUT_TURN_RIGHT },
+        { M12_MENU_INPUT_STRAFE_LEFT, M12_MENU_INPUT_DOWN,
+          M12_MENU_INPUT_STRAFE_RIGHT },
+        { M12_MENU_INPUT_CYCLE_CHAMPION, M12_MENU_INPUT_PICKUP_ITEM,
+          M12_MENU_INPUT_INVENTORY_TOGGLE },
+        { M12_MENU_INPUT_DROP_ITEM, M12_MENU_INPUT_USE_ITEM,
+          M12_MENU_INPUT_ACCEPT }
+    };
+
+static const char *m11_theron_mouse_control_label(int row, int column)
+{
+    static const char *const labels[M11_THERON_MOUSE_ROWS]
+                                      [M11_THERON_MOUSE_COLUMNS] = {
+        { "TURN L", "FORWARD", "TURN R" },
+        { "STEP L", "BACK", "STEP R" },
+        { "NEXT", "PICKUP", "ITEM" },
+        { "DROP", "USE", "WAIT" }
+    };
+    const char *source;
+
+    if (row < 0 || row >= M11_THERON_MOUSE_ROWS || column < 0 ||
+        column >= M11_THERON_MOUSE_COLUMNS) {
+        return "";
+    }
+    source = labels[row][column];
+    return fs_po_gettext_in_domain("theron", source);
+}
 
 static M12_MenuInput m11_theron_mouse_control_input_at(
     const M11_GameViewState *state, int x, int y)
@@ -37970,9 +38004,11 @@ static M12_MenuInput m11_theron_mouse_control_input_at(
     logical_x = (int)((int64_t)x * M11_THERON_MOUSE_CANVAS_W / width);
     logical_y = (int)((int64_t)y * M11_THERON_MOUSE_CANVAS_H / height);
     if (logical_x < M11_THERON_MOUSE_PANEL_X ||
-        logical_x >= M11_THERON_MOUSE_PANEL_X + 3 * M11_THERON_MOUSE_CELL_W ||
+        logical_x >= M11_THERON_MOUSE_PANEL_X +
+                         M11_THERON_MOUSE_COLUMNS * M11_THERON_MOUSE_CELL_W ||
         logical_y < M11_THERON_MOUSE_PANEL_Y ||
-        logical_y >= M11_THERON_MOUSE_PANEL_Y + 2 * M11_THERON_MOUSE_CELL_H) {
+        logical_y >= M11_THERON_MOUSE_PANEL_Y +
+                         M11_THERON_MOUSE_ROWS * M11_THERON_MOUSE_CELL_H) {
         return M12_MENU_INPUT_NONE;
     }
 
@@ -37980,22 +38016,7 @@ static M12_MenuInput m11_theron_mouse_control_input_at(
              M11_THERON_MOUSE_CELL_W;
     row = (logical_y - M11_THERON_MOUSE_PANEL_Y) /
           M11_THERON_MOUSE_CELL_H;
-    if (row == 0) {
-        switch (column) {
-        case 0: return M12_MENU_INPUT_TURN_LEFT;
-        case 1: return M12_MENU_INPUT_UP;
-        case 2: return M12_MENU_INPUT_TURN_RIGHT;
-        default: break;
-        }
-    } else if (row == 1) {
-        switch (column) {
-        case 0: return M12_MENU_INPUT_STRAFE_LEFT;
-        case 1: return M12_MENU_INPUT_DOWN;
-        case 2: return M12_MENU_INPUT_STRAFE_RIGHT;
-        default: break;
-        }
-    }
-    return M12_MENU_INPUT_NONE;
+    return g_m11_theron_mouse_inputs[row][column];
 }
 
 static int m11_csb_fmtowns_inventory_slot_rectangle(
@@ -39210,8 +39231,8 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
      * so moving over an object never selects or hops between objects.  During
      * startup Button I still needs the source-space menu hit test; Button II
      * cancels startup selection and has no standalone dungeon action. In a
-     * loaded dungeon, left clicks on the visible Firestaff-owned six-button
-     * panel select its host-defined movement controls; other left clicks
+     * loaded dungeon, left clicks on the visible Firestaff-owned twelve-button
+     * panel select its host-defined movement/action controls; other left clicks
      * retain Button I's wait/tick action. The panel bounds are not original
      * PCE hitboxes. The retail manual (printed p. 5; see
      * docs/source-lock/theron-button-ii-manual-source-lock.md) specifies it
@@ -72217,10 +72238,6 @@ static void m11_theron_draw_mouse_controls(
     int framebufferWidth,
     int framebufferHeight)
 {
-    static const char *const labels[2][3] = {
-        { "TURN L", "FORWARD", "TURN R" },
-        { "STEP L", "BACK", "STEP R" }
-    };
     int row;
     int column;
     int scale;
@@ -72238,10 +72255,13 @@ static void m11_theron_draw_mouse_controls(
      * its own pixels with the source framebuffer; its hitboxes use the same
      * normalized layout in m11_theron_mouse_control_input_at(). */
     scale = framebufferWidth / M11_THERON_MOUSE_CANVAS_W;
+    if (framebufferHeight / M11_THERON_MOUSE_CANVAS_H < scale) {
+        scale = framebufferHeight / M11_THERON_MOUSE_CANVAS_H;
+    }
     if (scale < 1) scale = 1;
     label_style.scale = scale;
-    for (row = 0; row < 2; ++row) {
-        for (column = 0; column < 3; ++column) {
+    for (row = 0; row < M11_THERON_MOUSE_ROWS; ++row) {
+        for (column = 0; column < M11_THERON_MOUSE_COLUMNS; ++column) {
             const int logical_x = M11_THERON_MOUSE_PANEL_X +
                                   column * M11_THERON_MOUSE_CELL_W;
             const int logical_y = M11_THERON_MOUSE_PANEL_Y +
@@ -72256,8 +72276,19 @@ static void m11_theron_draw_mouse_controls(
                            framebufferHeight / M11_THERON_MOUSE_CANVAS_H;
             const int cell_width = x1 - x0;
             const int cell_height = y1 - y0;
-            const int text_width = (int)strlen(labels[row][column]) *
-                                   6 * scale;
+            const char *label = m11_theron_mouse_control_label(row, column);
+            size_t label_byte;
+            int label_glyphs = 0;
+            int text_width;
+
+            /* m11_draw_text advances one fixed-width glyph per UTF-8
+             * codepoint, so center localized labels by glyphs, not bytes. */
+            for (label_byte = 0; label[label_byte] != '\0'; ++label_byte) {
+                if (((unsigned char)label[label_byte] & 0xc0u) != 0x80u) {
+                    ++label_glyphs;
+                }
+            }
+            text_width = label_glyphs * 6 * scale;
 
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           x0, y0, cell_width, cell_height, M11_COLOR_BLACK);
@@ -72267,7 +72298,7 @@ static void m11_theron_draw_mouse_controls(
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           x0 + (cell_width - text_width) / 2,
                           y0 + (cell_height - 7 * scale) / 2,
-                          labels[row][column], &label_style);
+                          label, &label_style);
         }
     }
 }

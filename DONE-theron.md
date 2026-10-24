@@ -1,24 +1,34 @@
 # Firestaff DONE — Theron's Quest
 
-## 2026-10-24 — Firestaff-owned Theron mouse movement panel
+## 2026-10-25 — fit localized Theron mouse-panel captions
 
-The native loaded-dungeon view draws a visible six-button movement panel.
-Its three-by-two host-UI layout dispatches turn-left, forward, turn-right,
-step-left, backward and step-right through the same M11 input route as the
-keyboard. Pointer coordinates normalize between 320x200 and 640x400
-presentations. The original PC Engine command-point captures informed button
-ordering only; they do not define these Firestaff hitboxes.
+Mouse-panel strings now use the active Theron catalog with labels limited to
+seven font glyphs, matching each 44-pixel control cell. Japanese and Chinese
+captions use short ASCII romanizations because M11's small host font has no
+CJK glyphs. Only overlong DROP/USE translations were shortened; the other
+locales' existing action wording remains unchanged. `bash po/validate_po_layout.sh`,
+`bash po/update.sh --check`, and `git diff --check` pass.
+
+## 2026-10-24 — Firestaff-owned Theron mouse action panel
+
+The native loaded-dungeon view draws a visible twelve-button panel for six
+movement commands, champion cycling, pickup, item selection, drop, use and
+wait. Its shared four-by-three host-UI layout dispatches through the same M11
+input route as the keyboard. Pointer coordinates normalize between 320x200
+and 640x400 presentations. The original PC Engine command-point captures
+informed movement-button ordering only; they do not define these Firestaff
+hitboxes.
 
 On TRV2, `theron_v1_m11_launcher_handoff_boundary` passed three consecutive
 runs, including all six input actions at both presentation sizes and a draw
-check for the visible controls. `theron_v1_raw_bin_runtime_boot` passed once
+checks for every control. `theron_v1_raw_bin_runtime_boot` passed three loops
 with `--debug` and authentic US `TQUS02.bin` (MD5
-`f23601102138f87c33025877767ebf76`): a mouse turn-left click changed the
-loaded party's direction to west, and a mouse Back click moved it from
-`(1,0)` to `(1,1)` while advancing one runtime tick. This verifies native
-input dispatch with real media, not the remaining live rendering gap: the
-current Theron viewport can still show a frozen capture rather than a
-state-driven dungeon frame.
+`f23601102138f87c33025877767ebf76`): mouse turn-left/right, forward/back,
+step-left/right, champion cycling, wait, SANDALS pickup, source-item
+selection and drop produced the expected native states and ticks. This
+verifies native input dispatch with real media, not the remaining live
+rendering gap: the current Theron viewport can still show a frozen capture
+rather than a state-driven dungeon frame.
 
 ## 2026-10-24 — match DM1's dungeon keyboard layout
 
