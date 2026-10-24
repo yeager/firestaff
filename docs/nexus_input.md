@@ -16,11 +16,14 @@ the game's `PAUSE` overlay. O entered the game's hand-cursor mode; W moved the
 cursor upward in that mode. The captures show real game output from the retail
 media, not generated or synthetic game state.
 
-The Ymir profile used a ControlPad. A desktop mouse click did not produce a
-separately attributable game action, so this run does not establish Saturn
-Shuttle Mouse compatibility or Firestaff mouse behavior. The attack,
-inventory, spell, champion-selection, and other non-movement button semantics
-were not established by these captures.
+The ControlPad profile's desktop click did not produce a separately
+attributable game action. A separate fresh profile configured Ymir port 1 as
+`ShuttleMouse`: after entering mouse-capture mode, a mouse-button event was
+followed by the retail title leaving its menu for the intro presentation. The
+ShuttleMouse BUP remained blank. This limited title-flow result does not prove
+pointer-coordinate targeting, in-dungeon mouse actions, or Firestaff mouse
+behavior. Attack, inventory, spell, champion-selection, and other
+non-movement button semantics remain unverified by these captures.
 
 ## Firestaff keyboard routing
 
