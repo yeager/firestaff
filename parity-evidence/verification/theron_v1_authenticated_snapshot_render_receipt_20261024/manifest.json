@@ -111,7 +111,17 @@
       },
       "fieldSemanticsJoinedToWorld": false,
       "mainRamSha256": "909e9fae11955465b6c665665650b50aa8f6844cf5bd9d05ee7905fadd0955c3",
-      "transition": "missing"
+      "transition": "missing",
+      "mainRamConsumer": {
+        "readCount": 65536,
+        "directReadsOfCandidateOffsets": {
+          "2031": 0,
+          "203f": 0,
+          "2040": 0,
+          "2041": 0
+        },
+        "transition": "missing"
+      }
     },
     "firestaffBootProbe": {
       "level": 0,

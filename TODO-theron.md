@@ -25,8 +25,9 @@
   `party_y_2041=03`; the VDC-I/O snapshot boundary is sequence 65536 at
   timestamp 40176 (`vdc-io` SHA-256
   `c14cfd4d20fab26c6175d0f5c8cbac4e86d806a0f85e2ddee907c753cdb28aec`). The
-  capture reports `transition=missing`. The Firestaff boot probe instead
-  reports level 0 and party `(1,0,dir0)`. The offsets still lack a
+  capture retained 65,536 main-RAM consumer reads with no direct reads of
+  those four candidate offsets, and reports `transition=missing`. The Firestaff boot probe instead reports
+  level 0 and party `(1,0,dir0)`. The offsets still lack a
   source-backed consumer join, so treat these only as conflicting candidate
   state fields. They confirm that this render has not been joined to the
   Firestaff world; no original-emulator screenshot was paired with this exact

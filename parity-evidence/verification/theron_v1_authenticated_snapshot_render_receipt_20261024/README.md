@@ -26,8 +26,10 @@ also retained an 8 KiB main-RAM snapshot (SHA-256
 capture summary reports raw bytes `current_level_2031=02`,
 `party_direction_203f=01`, `party_x_2040=02`, and `party_y_2041=03` beside the
 VDC snapshot boundary. These fields have not been joined to the live world
-through a source-backed consumer trace. The capture reports
-`transition=missing`. The Firestaff boot probe instead
+through a source-backed consumer trace. The same capture retained 65,536
+main-RAM consumer reads but none directly read those four candidate offsets;
+its transition receipt is `missing`. The
+Firestaff boot probe instead
 reported level 0 and party `(1,0,dir0)`. These are different candidate states,
 so the rendered snapshot cannot be called a render of that Firestaff world.
 No original-emulator screenshot was paired with the Firestaff frame. This
