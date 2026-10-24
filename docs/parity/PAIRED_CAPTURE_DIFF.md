@@ -18,6 +18,17 @@ side's exact image SHA-256. The tool verifies both file hashes and all state
 and image bindings before comparing pixels. This prevents a valid state receipt
 from being reused with an unrelated image or checkpoint.
 
+Every checkpoint pair also requires a `provenance` object. Its
+`authenticMedia.receipt` is a hash-verified JSON receipt that asserts
+`authentic: true` and the exact media `identity` named by the manifest.
+`firestaffDebug.receipt` is a separately hash-verified JSON runtime receipt
+that asserts `debug: true` and the exact `buildId` named by the manifest;
+`firestaffDebug.enabled` must be `true`. This makes the debug build and
+authentic-data basis reviewable for every pair. A valid receipt only verifies
+what it explicitly asserts; reviewers must still inspect how the receipt was
+produced. Synthetic test fixtures may exercise the validator but are never
+evidence of game or platform parity.
+
 `frameSize` declares the exact width and height for a capture pair. It supports
 platform-native layouts, including 320x200 DOS/Atari ST/Amiga views, 320x224
 Saturn compositions, and 256x224 PC Engine frames. Both images must already
@@ -44,6 +55,23 @@ Example manifest:
   "captures": [
     {
       "id": "hoc-entry",
+      "provenance": {
+        "authenticMedia": {
+          "identity": "verified-edition-media-id",
+          "receipt": {
+            "path": "private-authentic-media-receipt.json",
+            "sha256": "<64-hex-digest>"
+          }
+        },
+        "firestaffDebug": {
+          "enabled": true,
+          "buildId": "git-commit-or-build-id",
+          "receipt": {
+            "path": "private-firestaff-debug-receipt.json",
+            "sha256": "<64-hex-digest>"
+          }
+        }
+      },
       "reference": {
         "path": "original-hoc-entry.png",
         "sha256": "<64-hex-digest>",
@@ -88,7 +116,8 @@ python3 tools/paired_capture_diff.py \
 
 The output includes one red/white PNG mask per region and
 `paired_capture_report.json` with source-image hashes, evidence hashes, matched
-state fields, declared frame geometry, and per-region differing-pixel counts.
+state fields, media/debug provenance receipt hashes, declared frame geometry,
+and per-region differing-pixel counts.
 Capture IDs and region names are restricted to filename-safe identifiers, and
 generated files are resolved within the approved output directory.
 For all five games, adapters should use state fields available for that exact

@@ -1,3 +1,18 @@
+## 2026-10-24 — require authentic-media and debug receipts in paired captures
+
+- The shared `paired_capture_diff.py` v2 manifest now requires a separately
+  hash-bound authentic-media receipt and Firestaff debug-runtime receipt for
+  every checkpoint pair. It checks the declared media identity, explicit
+  `authentic=true`, `debug=true`, and matching debug build ID before producing
+  pixel metrics. Its report preserves both receipt hashes.
+- The validator and malformed-receipt cases pass in three repeated loops;
+  `test_platform_status_matrix.py` also passes three loops. Unit-test images
+  are synthetic validator fixtures only and provide no Theron parity evidence.
+- This makes capture provenance harder to omit but does not authenticate a
+  receipt's producer or supply the still-missing same-state original/Firestaff
+  frame pair. Review the receipt-producing route and retain the original
+  gameplay presentation and source-state join as open gaps.
+
 ## 2026-10-24 — original-emulator visual pair remains open
 
 - The available TRV2 `firestaff` executable was built from commit `3f6f575`

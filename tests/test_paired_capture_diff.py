@@ -23,6 +23,14 @@ class PairedCaptureDiffTests(unittest.TestCase):
         self.firestaff = self.root / "firestaff.png"
         self.reference_state = self.root / "reference-state.json"
         self.firestaff_state = self.root / "firestaff-state.json"
+        self.media_receipt = self.root / "media-receipt.json"
+        self.debug_receipt = self.root / "debug-receipt.json"
+        self.media_receipt.write_text(json.dumps({
+            "authentic": True, "identity": "test-authentic-media-id",
+        }), encoding="utf-8")
+        self.debug_receipt.write_text(json.dumps({
+            "debug": True, "buildId": "test-build",
+        }), encoding="utf-8")
         Image.new("RGB", (320, 200), (0, 0, 0)).save(self.reference)
         frame = Image.new("RGB", (320, 200), (0, 0, 0))
         frame.putpixel((1, 34), (40, 20, 10))
@@ -52,6 +60,23 @@ class PairedCaptureDiffTests(unittest.TestCase):
             ],
             "captures": [{
                 "id": "hoc-entry",
+                "provenance": {
+                    "authenticMedia": {
+                        "identity": "test-authentic-media-id",
+                        "receipt": {
+                            "path": "media-receipt.json",
+                            "sha256": self._sha(self.media_receipt),
+                        },
+                    },
+                    "firestaffDebug": {
+                        "enabled": True,
+                        "buildId": "test-build",
+                        "receipt": {
+                            "path": "debug-receipt.json",
+                            "sha256": self._sha(self.debug_receipt),
+                        },
+                    },
+                },
                 "reference": {
                     "path": "reference.png",
                     "sha256": self._sha(self.reference),
@@ -108,6 +133,11 @@ class PairedCaptureDiffTests(unittest.TestCase):
         self.assertIn("does not claim", report["claim"])
         capture = report["captures"][0]
         self.assertEqual(capture["state"]["position.x"], 5)
+        self.assertEqual(capture["provenance"]["debugBuildId"], "test-build")
+        self.assertEqual(
+            capture["provenance"]["authenticMediaReceipt"]["sha256"],
+            self._sha(self.media_receipt),
+        )
         viewport, hud = capture["regions"]
         self.assertEqual(viewport["differingPixels"], 1)
         self.assertEqual(hud["differingPixels"], 0)
@@ -171,6 +201,40 @@ class PairedCaptureDiffTests(unittest.TestCase):
         )
         self._write_manifest()
         with self.assertRaisesRegex(ManifestError, "state evidence mismatch at captureId"):
+            compare_manifest(self.manifest, self.report_dir)
+
+    def test_requires_hash_bound_authentic_media_receipt(self) -> None:
+        self.data["captures"][0]["provenance"]["authenticMedia"]["receipt"]["sha256"] = "0" * 64
+        self._write_manifest()
+        with self.assertRaisesRegex(ManifestError, "authenticMedia.receipt SHA-256 mismatch"):
+            compare_manifest(self.manifest, self.report_dir)
+
+    def test_rejects_media_receipt_that_does_not_assert_authenticity(self) -> None:
+        self.media_receipt.write_text(json.dumps({
+            "authentic": False, "identity": "test-authentic-media-id",
+        }), encoding="utf-8")
+        self.data["captures"][0]["provenance"]["authenticMedia"]["receipt"]["sha256"] = self._sha(
+            self.media_receipt
+        )
+        self._write_manifest()
+        with self.assertRaisesRegex(ManifestError, "must assert authentic=true"):
+            compare_manifest(self.manifest, self.report_dir)
+
+    def test_requires_debug_mode_and_matching_build_receipt(self) -> None:
+        self.data["captures"][0]["provenance"]["firestaffDebug"]["enabled"] = False
+        self._write_manifest()
+        with self.assertRaisesRegex(ManifestError, "firestaffDebug.enabled must be true"):
+            compare_manifest(self.manifest, self.report_dir)
+
+        self.data["captures"][0]["provenance"]["firestaffDebug"]["enabled"] = True
+        self.debug_receipt.write_text(json.dumps({
+            "debug": True, "buildId": "different-build",
+        }), encoding="utf-8")
+        self.data["captures"][0]["provenance"]["firestaffDebug"]["receipt"]["sha256"] = self._sha(
+            self.debug_receipt
+        )
+        self._write_manifest()
+        with self.assertRaisesRegex(ManifestError, "debug build id does not match"):
             compare_manifest(self.manifest, self.report_dir)
 
     def test_rejects_noncanonical_dimensions(self) -> None:
