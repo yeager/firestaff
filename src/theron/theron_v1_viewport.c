@@ -252,19 +252,19 @@ static int theron_vp_source_tile_mapping_ready(const Theron_V1_Viewport *vp) {
  * Dungeon rendering
  * ══════════════════════════════════════════════════════════════════════ */
 
-void theron_vp_render_dungeon(Theron_V1_Viewport *vp,
+int theron_vp_render_dungeon(Theron_V1_Viewport *vp,
                                const Theron_V1_World *world) {
-    if (!vp || !vp->initialized || !world) return;
+    if (!vp || !vp->initialized || !world) return 0;
 
     /* Verified Track 02 bytes are authoritative. When no source-locked
      * tile bank is bound, block generated dungeon tiles/fallback font.
      * The boot path already refuses to reach this function in that state;
      * this is a viewport-level defense-in-depth guard. */
     if (vp->synthetic_rendering_blocked || vp->palette.tile_count <= 0) {
-        return;
+        return 0;
     }
     if (!theron_vp_source_tile_mapping_ready(vp)) {
-        return;
+        return 0;
     }
 
     /* A tile bank alone is not a level handoff.  Do not fall back to the
@@ -275,7 +275,7 @@ void theron_vp_render_dungeon(Theron_V1_Viewport *vp,
         world->current_level < 0 ||
         world->current_level >= THERON_MAX_LEVELS_PER_DUNGEON ||
         !world->level_loaded[world->current_dungeon - 1][world->current_level]) {
-        return;
+        return 0;
     }
 
     /* The level-to-tile bank mapping has not yet been observed in an
@@ -285,7 +285,7 @@ void theron_vp_render_dungeon(Theron_V1_Viewport *vp,
 
     /* Get party position and direction */
     const Theron_V1_Champion *theron = theron_v1_party_leader_c(&world->party);
-    if (!theron) return;
+    if (!theron) return 0;
 
     /* Party direction comes only from the admitted level header or the
      * mutable party pose.  Do not derive a facing direction from a tick or
@@ -386,6 +386,7 @@ void theron_vp_render_dungeon(Theron_V1_Viewport *vp,
             }
         }
     }
+    return 1;
 }
 
 /* ══════════════════════════════════════════════════════════════════════

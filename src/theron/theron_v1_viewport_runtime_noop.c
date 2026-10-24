@@ -209,7 +209,7 @@ THERON_FIXTURE_OVERRIDEABLE void theron_vp_set_synthetic_rendering_blocked(Thero
     vp->synthetic_rendering_blocked = blocked ? 1 : 0;
 }
 
-THERON_FIXTURE_OVERRIDEABLE void theron_vp_render_dungeon(Theron_V1_Viewport *vp,
+THERON_FIXTURE_OVERRIDEABLE int theron_vp_render_dungeon(Theron_V1_Viewport *vp,
                               const Theron_V1_World *world) {
     (void)world;
     /* An explicit VDC/VCE capture is already a source-owned screen-space
@@ -218,9 +218,9 @@ THERON_FIXTURE_OVERRIDEABLE void theron_vp_render_dungeon(Theron_V1_Viewport *vp
      * the production route byte-for-byte tied to the authenticated VDC
      * screen while assigning no cell to the still-unproven dungeon
      * square/object model. */
-    if (vp && vp->vram_trace_loaded) {
-        (void)theron_v1_vram_trace_render_authenticated_screen(vp);
-    }
+    if (!vp || !vp->initialized) return 0;
+    if (!vp->vram_trace_loaded) return 1;
+    return theron_v1_vram_trace_render_authenticated_screen(vp) > 0;
 }
 
 THERON_FIXTURE_OVERRIDEABLE void theron_vp_render_ui(Theron_V1_Viewport *vp,

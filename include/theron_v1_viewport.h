@@ -198,8 +198,10 @@ void theron_vp_set_synthetic_rendering_blocked(Theron_V1_Viewport *vp,
  *
  * Candidate source locations only; no tile-selection semantics are admitted.
  */
-void theron_vp_render_dungeon(Theron_V1_Viewport *vp,
-                              const Theron_V1_World *world);
+/* Returns 1 when the available render route completed or intentionally drew
+ * nothing; returns 0 when an authenticated screen capture failed to render. */
+int theron_vp_render_dungeon(Theron_V1_Viewport *vp,
+                             const Theron_V1_World *world);
 
 /* ══════════════════════════════════════════════════════════════════════
  * UI chrome rendering

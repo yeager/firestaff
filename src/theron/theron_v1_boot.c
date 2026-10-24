@@ -6448,7 +6448,15 @@ int theron_v1_boot_runtime_render_frame(Theron_V1_World *world,
     }
     /* THQUEST.ASM T560/T600/T800 runtime owns dungeon draw, UI draw, and
      * optional V2 HUD overlay before M11 presents the indexed viewport. */
-    theron_vp_render_dungeon(viewport, world);
+    if (!theron_vp_render_dungeon(viewport, world)) {
+        if (authenticated_viewport_capture) {
+            fprintf(stderr,
+                    "THERON RENDER BLOCKED: authenticated VDC screen replay failed\n");
+            memset(framebuffer, 0,
+                   (size_t)framebuffer_width * (size_t)framebuffer_height);
+            return 0;
+        }
+    }
     theron_vp_render_ui(viewport, world, TQR_UI_ALL);
     theron_v1_boot_runtime_render_v2_hud(world,
                                          viewport,
