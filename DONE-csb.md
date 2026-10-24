@@ -1130,3 +1130,11 @@ Reviewed 2026-08-29. Completed work only.
   diagnostic. `m12_csb_native_7z_archive_scan` passes against the installed
   original archive. This covers archive discovery, not full Atari runtime
   parity.
+- 2026-10-24: Kept CSB startup animation timing tied to each source platform
+  across host refresh rates. PC/VGA uses its source VBlank cadence, Atari ST
+  and Amiga use 20 ms PAL VBlank steps, and FM Towns keeps its Timer-A cadence.
+  Atari ST and Amiga title/Entrance advancement now consume the same 20 ms
+  scheduler interval instead of the 55 ms gameplay tick. Boundary regressions
+  check both 50 Hz title clocks and the Amiga two-VBlank door-step timing.
+  Host 30/60/120 Hz measurements remain a separate native-display
+  verification.

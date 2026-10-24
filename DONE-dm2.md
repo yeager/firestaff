@@ -963,3 +963,11 @@ Reviewed 2026-08-29. Completed work only.
   by their locked SHA-256 identities across the original and duplicate-suffixed
   filenames. This keeps retail boot coverage on the full archive and the
   negative admission test on the demo when both share a basename.
+- 2026-10-24: DM2 startup now keeps elapsed scheduler ticks across delayed
+  host presents for its source-timed MVE, QuickTime, FM Towns, and Amiga
+  animation paths. Overdue source steps can be consumed in order before the
+  next host present, so low display refresh does not stretch the intro timeline.
+  The 16 ms and 20 ms source scheduler intervals remain independent of game
+  speed and host refresh. The DOS MVE presenter regression now simulates a
+  delayed host with five overdue frames and checks source frame and audio order.
+  Native-display 30/60/120 Hz capture remains pending.

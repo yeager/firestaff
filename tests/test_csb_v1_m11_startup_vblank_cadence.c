@@ -102,8 +102,8 @@ int main(void) {
 
     view.sourceKind = M11_GAME_SOURCE_DM2_BOOT;
     view.dm2State.startup_menu_active = 1;
-    if (!M11_GameView_DropsIdleCatchupForStartup(&view)) {
-        fprintf(stderr, "FAIL: DM2 startup must not batch source media ticks\n");
+    if (M11_GameView_DropsIdleCatchupForStartup(&view)) {
+        fprintf(stderr, "FAIL: DM2 startup must retain elapsed source-media ticks\n");
         ++failures;
     }
     expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 16u,
@@ -112,7 +112,7 @@ int main(void) {
                     "DM2 startup ignores gameplay speed multiplier");
     view.dm2FmtownsTitleBound = 1;
     if (M11_GameView_DropsIdleCatchupForStartup(&view)) {
-        fprintf(stderr, "FAIL: DM2 timed title must catch up to elapsed host time\n");
+        fprintf(stderr, "FAIL: DM2 Towns timed title must retain host-time debt\n");
         ++failures;
     }
     view.dm2FmtownsTitleBound = 0;
@@ -124,6 +124,10 @@ int main(void) {
         view.dm2FmtownsTitleBound = 1;
         expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 20u,
                         "DM2 Amiga title uses the source 50 Hz VBlank cadence");
+        if (M11_GameView_DropsIdleCatchupForStartup(&view)) {
+            fprintf(stderr, "FAIL: DM2 Amiga title must retain host-time debt\n");
+            ++failures;
+        }
         view.dm2FmtownsTitleBound = 0;
         view.dm2BootProfile = NULL;
     }
@@ -207,6 +211,13 @@ int main(void) {
         profile.variant_id = CSB_V1_VARIANT_AMIGA35_EN;
         expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 20u,
                         "Amiga startup follows the source 50 Hz VBlank cadence");
+        profile.variant_id = CSB_V1_VARIANT_ST20_EN;
+        expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 20u,
+                        "Atari ST startup follows the source 50 Hz VBlank cadence");
+        view.csbState.startup_title_active = 0;
+        view.csbState.startup_entrance_active = 1;
+        expect_interval(M11_GameView_IdleTickIntervalMs(&view, 400), 20u,
+                        "Atari ST Entrance keeps the source cadence at every game speed");
         view.csbFmtownsTitleBound = 0;
         view.csbState.startup_title_active = 0;
         view.csbBootProfile = NULL;

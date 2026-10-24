@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define CHECK(condition) do { \
     if (!(condition)) { \
@@ -108,6 +109,23 @@ int main(void)
         presenter.final_frame_host_time_us + presenter.frame_period_us));
     CHECK(m11_dm2_mve_presenter_advance(&presenter,
                                         1000u + 217u * 83328u) == 0);
+    m11_dm2_mve_presenter_close(&presenter);
+    memset(&sink, 0, sizeof(sink));
+    sink.palette_hash = 2166136261u;
+    CHECK(m11_dm2_mve_presenter_open(&presenter, bytes, size, 1000u,
+                                     sink_present, &sink) == 1);
+    CHECK(m11_dm2_mve_presenter_advance(&presenter, 1000u) == 1);
+    {
+        const uint64_t delayed_host_time = 1000u + 5u * 83328u;
+        for (index = 1u; index <= 5u; ++index)
+            CHECK(m11_dm2_mve_presenter_advance(
+                      &presenter, delayed_host_time) == 1);
+        CHECK(m11_dm2_mve_presenter_advance(
+                  &presenter, delayed_host_time) == 0);
+        CHECK(sink.count == 6u && sink.last_index == 5u &&
+              sink.last_time_us == 5u * 83328u &&
+              presenter.audio.queued_source_packets == 6u);
+    }
 cleanup:
     m11_dm2_mve_presenter_close(&presenter);
     dm2_v1_boot_cleanup(&boot);

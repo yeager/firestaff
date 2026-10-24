@@ -14434,7 +14434,13 @@ static void m11_csb_startup_tick_receipt_to_m11(
             state->csbAtariStAnimationVblRemainder = 0u;
             state->csbAtariStAnimationFrameBound = 0;
         } else {
-            m11_csb_advance_atari_st_vblank(state, profile->tick_ms);
+            /* Atari startup idles use 20 ms source VBlank scheduler steps;
+             * profile->tick_ms is the 55 ms gameplay cadence. */
+            m11_csb_advance_atari_st_vblank(
+                state,
+                state->csbState.startup_title_active ||
+                        state->csbState.startup_entrance_active
+                    ? 20u : profile->tick_ms);
             m11_csb_play_due_atari_st_animation_sounds(state);
             (void)m11_csb_complete_atari_st_runtime_handoff(state);
         }
@@ -32376,7 +32382,11 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
              * discipline alive after FTLCODE enters the dungeon too. This
              * owns only palette-switch scheduling; the regular CSB runtime
              * tick below remains the sole owner of game simulation. */
-            m11_csb_advance_atari_st_vblank(state, csb_profile->tick_ms);
+            m11_csb_advance_atari_st_vblank(
+                state,
+                state->csbState.startup_title_active ||
+                        state->csbState.startup_entrance_active
+                    ? 20u : csb_profile->tick_ms);
         }
         if ((csb_profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
              csb_profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
@@ -32392,7 +32402,11 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         state->csbState.startup_title_active &&
         !state->csbStartupRuntimeAssetSession) {
             if (!state->csbAmigaAppbSelectionActive) {
-                m11_csb_advance_amiga_titl(state, csb_profile->tick_ms);
+                /* M11_GameView_IdleTickIntervalMs selects the Amiga's
+                 * 20 ms PAL source VBlank during startup. The profile's
+                 * 55 ms field is its gameplay tick and must not scale the
+                 * title stream's clock. */
+                m11_csb_advance_amiga_titl(state, 20u);
                 if (state->csbAmigaTitlVbl >= 606u) {
                     (void)m11_csb_prepare_amiga_appb_selection(state);
                 }
@@ -32408,7 +32422,7 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
              * advancing one visual door frame per host idle call. */
             if (state->csbState.startup_entrance_opening_active) {
                 int elapsed = state->csbState.startup_entrance_opening_delay_ticks +
-                    (int)csb_profile->tick_ms;
+                    20;
                 while (elapsed >= 40 &&
                        state->csbState.startup_entrance_opening_step < 32) {
                     elapsed -= 40;

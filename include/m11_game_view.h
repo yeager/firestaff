@@ -1790,8 +1790,8 @@ typedef struct {
     int csbFmtownsGameMusicPlayingTrack;
     int csbFmtownsGameMusicCountdown;
     int csbFmtownsGameMusicPending;
-    /* Atari ST ANIMATE.SCR runs at 50 VBlanks/sec while the shared CSB
-     * startup state advances at its source-owned 55 ms cadence. Keep the
+    /* Atari ST ANIMATE.SCR runs at 50 VBlanks/sec while its startup scheduler
+     * advances in 20 ms source steps. Keep the
      * fractional conversion and last source framebuffer here, not in a
      * PC34 title wrapper or generic host animation. */
     uint32_t csbAtariStAnimationVbl;

@@ -238,6 +238,14 @@ uint32_t M11_GameView_IdleTickIntervalMs(const M11_GameViewState* gameView,
              * source interval independent of the host display's refresh. */
             return 20u;
         }
+        if (profile &&
+            (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+             profile->variant_id == CSB_V1_VARIANT_ST21_EN)) {
+            /* BASE.C's VBL handler runs at the Atari ST's 50 Hz source
+             * cadence. Use 20 ms host scheduler steps during title and
+             * Entrance instead of treating each VGA tick as a PAL blank. */
+            return 20u;
+        }
         /* TITLE.C F0437's waits are source VBlank waits.  Each tick in the
          * CSB title sequence corresponds to one M526_WaitVerticalBlank call.
          * On VGA mode 13h that polls 0x3DA at ~70 Hz = 14ms per VBlank.
@@ -280,11 +288,11 @@ int M11_GameView_DropsIdleCatchupForStartup(const M11_GameViewState* gameView)
     if (!gameView) return 0;
     if (gameView->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
         gameView->dm2State.startup_menu_active) {
-        /* TWANIM and the Amiga VBlank player carry source frame durations.
-         * Keep their clock aligned to elapsed host time when presentation
-         * takes longer than one scheduler quantum. The Mac movie and other
-         * startup paths still require one presented step at a time. */
-        return !gameView->dm2FmtownsTitleBound;
+        /* DM2 movie and animation steps advance in Draw against absolute
+         * source deadlines. Keep elapsed scheduler debt so a slow or low-Hz
+         * host can decode overdue source steps in order before the next
+         * present, instead of stretching the intro to the display cadence. */
+        return 0;
     }
     /* CSB startup advances one source VBlank per elapsed source interval.
      * Keep accumulator debt across a blocking present so 30/60/120 Hz host
@@ -3496,12 +3504,14 @@ static int m11_intro_wait_for_focus(void) {
 }
 
 
-static unsigned int m11_v20_startup_remaining_delay_ms(
+static unsigned int m11_startup_remaining_delay_ms(
     unsigned int source_delay_ms,
     Uint64 presentation_started_ms)
 {
-    if (!dm1_v2_presentation_mode_is_v20() ||
-        presentation_started_ms == 0U) {
+    /* Source waits start when a frame is submitted. A VSync-backed present
+     * consumes part of that interval; sleeping the full source duration
+     * afterward would make startup cadence depend on host refresh rate. */
+    if (presentation_started_ms == 0U) {
         return source_delay_ms;
     }
     return dm1_v20_startup_presentation_remaining_delay_ms_pc34(
@@ -4297,10 +4307,8 @@ static int m11_play_redmcsb_entrance_transition_impl(
                 previousFmtownsDoorPresentationMs = presentationStartedMs;
                 fmtownsDoorFrameOrdinal = 0U;
             } else {
-                delayMs = amigaReceiptValid
-                    ? command.delay_ms
-                    : m11_v20_startup_remaining_delay_ms(
-                          command.delay_ms, presentationStartedMs);
+                delayMs = m11_startup_remaining_delay_ms(
+                    command.delay_ms, presentationStartedMs);
             }
             if (!amigaReceiptValid &&
                 mediaReceipt->platform ==
@@ -5639,6 +5647,7 @@ static int m11_play_dm1_amiga_swsh_if_available(
     unsigned int sourceFrames = 0u;
     unsigned int sourceVblanks = 0u;
     Uint64 audioStartedAt = 0u;
+    Uint64 sourcePresentationStartedMs = 0u;
     const unsigned int vblankMs = 20u;
     const Uint64 sourceSoundDurationMs =
         ((Uint64)DM1_V1_AMIGA_SWSH_SOUND_BYTES *
@@ -5678,6 +5687,7 @@ static int m11_play_dm1_amiga_swsh_if_available(
     }
     memset(palette, 0, sizeof(palette));
     m11_swsh_indexed_to_rgba(indexed, rgba, palette);
+    sourcePresentationStartedMs = m11_intro_active_ticks();
     if (M11_Render_PresentRGBA(rgba, DM1_V1_AMIGA_SWSH_WIDTH,
                                DM1_V1_AMIGA_SWSH_HEIGHT) != M11_RENDER_OK) {
         goto cleanup;
@@ -5688,6 +5698,9 @@ static int m11_play_dm1_amiga_swsh_if_available(
             vblankMs)) {
         goto cleanup;
     }
+    /* The two-frame launcher handoff is host synchronization, not a
+     * source-owned SWSH palette interval. */
+    sourcePresentationStartedMs = 0u;
     memset(&audio, 0, sizeof(audio));
     g_m11_intro_local_audio = &audio;
     if (M11_Audio_Init(&audio)) {
@@ -5724,12 +5737,17 @@ static int m11_play_dm1_amiga_swsh_if_available(
                 (unsigned char)((value & 0x0fu) * 17u);
         } else {
             m11_swsh_indexed_to_rgba(indexed, rgba, palette);
+            sourcePresentationStartedMs = m11_intro_active_ticks();
             if (M11_Render_PresentRGBA(rgba, DM1_V1_AMIGA_SWSH_WIDTH,
                                        DM1_V1_AMIGA_SWSH_HEIGHT) !=
                     M11_RENDER_OK ||
-                m11_delay_ms_with_intro_event_pump(value * vblankMs)) {
+                m11_delay_ms_with_intro_event_pump(
+                    m11_startup_remaining_delay_ms(
+                        value * vblankMs,
+                        sourcePresentationStartedMs))) {
                 goto cleanup;
             }
+            sourcePresentationStartedMs = 0u;
             sourceVblanks += value;
             ++sourceFrames;
         }
@@ -5898,6 +5916,7 @@ static int m11_play_ftl_swoosh_for_game_if_available(
       unsigned int sourceFrames = 0U;
       unsigned int sourceVblanks = 0U;
       Uint64 sourceStartedMs = m11_intro_active_ticks();
+      Uint64 sourcePresentationStartedMs = 0U;
       /* SWSH.C:10-14 starts the immutable V0901005 Dosound program before
        * it mutates a single palette register.  It is deliberately scoped to
        * DM1: CSB owns a different F0908 DMA source path.  A media receipt
@@ -5954,14 +5973,20 @@ static int m11_play_ftl_swoosh_for_game_if_available(
                   ? dm1Media.swsh_vblank_ms
                   : SWSH_COMPAT_RUNTIME_VBLANK_MS;
           m11_swsh_indexed_to_rgba(screenFbIndexed, screenRgba, swshPalette);
+          sourcePresentationStartedMs = m11_intro_active_ticks();
           if (M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH,
                                      M11_FB_HEIGHT) != M11_RENDER_OK) {
               goto cleanup;
           }
           m11_autotest_dm1_swsh_quit_after_first_frame();
           if (!m11_prepare_swsh_source_clock_after_launcher_handoff(
-                  screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT, vblankMs) ||
-              m11_delay_ms_with_intro_event_pump(initialHoldMs)) {
+                  screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT, vblankMs)) {
+              goto cleanup;
+          }
+          /* The host prelude above is synchronization and does not consume
+           * SWSH.C's source initial hold. */
+          sourcePresentationStartedMs = 0U;
+          if (m11_delay_ms_with_intro_event_pump(initialHoldMs)) {
               goto cleanup;
           }
       }
@@ -5976,6 +6001,7 @@ static int m11_play_ftl_swoosh_for_game_if_available(
               SWSH_Compat_ConvertPcSwooshRgbWordToRgb8(step.colorValue,
                                                        swshPalette[step.colorIndex & 0x0FU]);
               m11_swsh_indexed_to_rgba(screenFbIndexed, screenRgba, swshPalette);
+              sourcePresentationStartedMs = m11_intro_active_ticks();
               if (M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH,
                                          M11_FB_HEIGHT) != M11_RENDER_OK) {
                   goto cleanup;
@@ -5990,12 +6016,19 @@ static int m11_play_ftl_swoosh_for_game_if_available(
                * the WAIT_VBLANKS branch never had a palette to "re-render"
                * because every SET_PALETTE_COLOR step renders its own frame. */
               sourceVblanks += step.vblankCount;
-              if (m11_delay_ms_with_intro_event_pump(
-                      hasDm1Media ?
-                          m11_startup_media_swsh_wait_ms(&dm1Media, step.vblankCount) :
-                          SWSH_Compat_GetRuntimeDelayMsForVblankCount(
-                              step.vblankCount))) {
-                  goto cleanup;
+              {
+                  const unsigned int sourceWaitMs = hasDm1Media
+                      ? m11_startup_media_swsh_wait_ms(&dm1Media,
+                                                        step.vblankCount)
+                      : SWSH_Compat_GetRuntimeDelayMsForVblankCount(
+                            step.vblankCount);
+                  const unsigned int remainingWaitMs =
+                      m11_startup_remaining_delay_ms(
+                          sourceWaitMs, sourcePresentationStartedMs);
+                  sourcePresentationStartedMs = 0U;
+                  if (m11_delay_ms_with_intro_event_pump(remainingWaitMs)) {
+                      goto cleanup;
+                  }
               }
           } else if (step.kind == SWSH_COMPAT_SOURCE_EVENT_RUN_START_PROGRAM) {
               /* No palette was queued between the previous SET_PALETTE_COLOR
@@ -6216,7 +6249,7 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
          * post-zoom waits and the final guard individually, so do not add
          * an aggregate delay after this loop. */
         if (command.pre_present_delay_ms > 0U) {
-            const unsigned int delayMs = m11_v20_startup_remaining_delay_ms(
+            const unsigned int delayMs = m11_startup_remaining_delay_ms(
                 command.pre_present_delay_ms, presentationStartedMs);
             const Uint64 waitStartedMs = m11_intro_active_ticks();
             requestedWaitMs += delayMs;
@@ -6298,7 +6331,7 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
             m11_capture_dm1_startup_presented_frame(&dm1Media, phase);
         }
         if (command.post_present_delay_ms > 0U) {
-            const unsigned int delayMs = m11_v20_startup_remaining_delay_ms(
+            const unsigned int delayMs = m11_startup_remaining_delay_ms(
                 command.post_present_delay_ms, presentationStartedMs);
             const Uint64 waitStartedMs = m11_intro_active_ticks();
             requestedWaitMs += delayMs;
@@ -14445,10 +14478,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     }
                 }
                 idleAccumulatorMs -= (uint32_t)gameTickInterval;
-                /* DM2 non-Towns decoders own timestamped frames and keep one
-                 * draw per host step. Source-ticked CSB startup retains idle
-                 * debt and catches up before this loop presents the latest
-                 * composed frame. */
+                /* Source-ticked DM2 media and CSB startup retain elapsed
+                 * scheduler debt. They consume overdue source steps in order
+                 * and present the latest composed frame after catch-up. */
                 if (M11_GameView_DropsIdleCatchupForStartup(&gameView)) {
                     idleAccumulatorMs = 0;
                     break;

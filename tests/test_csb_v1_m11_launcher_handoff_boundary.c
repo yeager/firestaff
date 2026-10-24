@@ -622,6 +622,13 @@ static void expect_amiga_prison_entrance_handoff(M11_GameViewState *view,
                 "Amiga C407 Enter starts F0441 and its authenticated F0709 C01 cue");
     while (view->csbState.startup_entrance_active && ticks++ < 64) {
         (void)M11_GameView_AdvanceIdleTick(view);
+        if (ticks == 1) {
+            expect_true(view->csbState.startup_entrance_opening_step == 1,
+                        "Amiga door holds its first composite for one PAL VBlank");
+        } else if (ticks == 2) {
+            expect_true(view->csbState.startup_entrance_opening_step == 2,
+                        "Amiga door advances after two 20 ms PAL scheduler ticks");
+        }
     }
     profile = (const CSB_V1_BootProfile *)view->csbBootProfile;
     expect_true(ticks < 64 && profile && profile->runtime.state == CSB_STATE_GAME &&
@@ -3180,7 +3187,7 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
         for (tick = 0; tick < 800 && view.csbState.startup_title_active;
              ++tick) {
             const unsigned int expected_vbl =
-                (unsigned int)(((unsigned long)(tick + 1) * 55u * 50u) /
+                (unsigned int)(((unsigned long)(tick + 1) * 20u * 50u) /
                                1000u);
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&view, framebuffer, 320, 200);
@@ -3188,11 +3195,8 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
                 animation_pixels_visible = 1;
             }
             (void)M11_GameView_AdvanceIdleTick(&view);
-            /* ANIM.C waits source VBlanks (not host render frames). M11's
-             * 55ms V1 clock therefore advances the Atari script at exactly
-             * floor(ticks * 55ms * 50Hz), with the preserved remainder.
-             * This catches a second per-frame advance or a shortened title
-             * before the FTLCODE handoff is allowed. */
+            /* ANIM.C waits source VBlanks (not host render frames). M11 uses
+             * one 20ms scheduler step per Atari 50Hz source interval. */
             expect_true(view.csbAtariStAnimationVbl == expected_vbl ||
                             !view.csbState.startup_title_active,
                         "Atari ST title retains its 50Hz source VBlank cadence");
@@ -3337,16 +3341,16 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
         expect_true(exact_rgb4,
                     "A31M TITL.DAT RGB4 registers reach host pixels without VGA quantization");
     }
-    /* The native title has one VBlank clock owner.  The first M11 idle call
-     * arms the clock and the next two 55 ms M11 ticks yield floor(110*50/1000)
-     * = 5 VBlanks, rather than advancing both an inherited PC34 receipt and
-     * the native APPA.C/ANIM.C route. */
+    /* The native title has one VBlank clock owner. The first M11 idle call
+     * arms the clock; two further 20 ms scheduler ticks yield one 50 Hz
+     * VBlank, rather than scaling source animation by the 55 ms gameplay
+     * interval or advancing an inherited PC34 receipt as well. */
     expect_true(M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_REDRAW &&
                 M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_REDRAW &&
                 M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_REDRAW &&
                 view.csbAmigaTitlClockStarted &&
-                view.csbAmigaTitlVbl == 5u &&
-                view.csbAmigaTitlVblRemainder == 500u &&
+                view.csbAmigaTitlVbl == 2u &&
+                view.csbAmigaTitlVblRemainder == 0u &&
                 view.csbAmigaTitlAppliedDeltaCount == 0u,
                 "A31M TITL.DAT advances at one 50 Hz VBlank cadence");
     while (view.csbState.startup_title_active &&

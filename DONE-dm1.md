@@ -4329,3 +4329,10 @@ not used as its final verification.
   Atari ST; the PC34 mirror material and four-champion HUD/hand-slot probes
   passed. These tests verify selected startup and runtime slices, not complete
   cross-platform parity.
+- 2026-10-24: DM1 source startup waits now subtract time spent in a display
+  present before waiting out the remaining source interval. This covers the
+  PC34 Entrance door's 55 ms step, PC34 title frames, shared Entrance waits,
+  and Atari ST/Amiga SWSH palette timing. The timing probe covers 8, 17 and
+  33 ms present costs and verifies that a present past the source deadline
+  adds no extra delay. A 30 Hz present remains quantized by the display's
+  retrace; physical 30/60/120 Hz capture remains pending.
