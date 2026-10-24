@@ -11,6 +11,7 @@ match is evidence, never permission to render or assign ownership.
 from __future__ import annotations
 
 import argparse
+import csv
 import hashlib
 from pathlib import Path
 
@@ -254,7 +255,7 @@ def dgn_structure2_palettes(assets: dict[str, bytes]) -> list[tuple[str, bytes]]
 
 
 def ymir_bundle_frame(bundle: Path) -> tuple[dict[str, bytes], int]:
-    """Read one complete Ymir memory dump whose frame receipt matches its VDP snapshot."""
+    """Read one complete Ymir VDP2 dump and bind it to its captured frame."""
     def receipt(path: Path, expected_format: str) -> dict[str, str]:
         values: dict[str, str] = {}
         for line in path.read_text(encoding="ascii").splitlines():
@@ -268,22 +269,69 @@ def ymir_bundle_frame(bundle: Path) -> tuple[dict[str, bytes], int]:
             raise ValueError(f"unsupported {path.name} format")
         return values
 
-    capture = receipt(bundle / "vdp1-capture-bundle.txt",
-                      "ymir-vdp1-capture-bundle-v1")
-    snapshot = receipt(bundle / "vdp-register-snapshot.txt",
-                       "ymir-vdp-register-snapshot-v1")
-    try:
-        frame = int(capture["capture_frame_index"])
-        snapshot_frame = int(snapshot["vdp1_frame_index"])
-        register_bytes = int(snapshot["vdp2_register_bytes"])
-        rows_for_frame = int(capture["trace_rows_for_capture_frame"])
-    except (KeyError, ValueError) as error:
-        raise ValueError("Ymir frame receipt is incomplete or malformed") from error
-    if (frame < 0 or snapshot_frame != frame or
-            capture.get("trace_file_complete") != "1" or
-            rows_for_frame < 1 or register_bytes != 512 or
-            snapshot.get("register_byte_order") != "big_endian"):
-        raise ValueError("Ymir bundle receipts do not identify one complete VDP frame")
+    if (bundle / "vdp2-memory-write-bundle.txt").is_file():
+        capture = receipt(bundle / "vdp2-memory-write-bundle.txt",
+                          "ymir-vdp2-memory-write-bundle-v1")
+        try:
+            frame = int(capture["current_vdp1_frame_index"])
+            expected_rows = int(capture["trace_rows"])
+            dropped = int(capture["trace_dropped_total"])
+            first_frame = int(capture["first_vdp1_frame_index"])
+            last_frame = int(capture["last_vdp1_frame_index"])
+        except (KeyError, ValueError) as error:
+            raise ValueError("Ymir VDP2 memory receipt is incomplete or malformed") from error
+        if (frame < 0 or first_frame < 0 or first_frame > frame or
+                last_frame != frame or expected_rows < 1 or dropped != 0 or
+                capture.get("bundle_complete") != "1" or
+                capture.get("trace_file_complete") != "1" or
+                capture.get("vdp2_vram_file_complete") != "1" or
+                capture.get("vdp2_cram_file_complete") != "1"):
+            raise ValueError("Ymir VDP2 receipt does not identify one complete frame snapshot")
+        try:
+            with (bundle / "vdp2-memory-write-trace.csv").open(
+                    encoding="ascii", newline="") as stream:
+                rows = list(csv.DictReader(stream))
+        except (OSError, UnicodeError) as error:
+            raise ValueError("Ymir VDP2 write trace is unreadable") from error
+        if len(rows) != expected_rows or not rows:
+            raise ValueError("Ymir VDP2 write trace row count does not match its receipt")
+        if any(row.get("vdp1_frame") == "unknown" for row in rows):
+            raise ValueError("Ymir VDP2 trace contains writes without frame identity")
+        try:
+            frame_indexes = [int(row["vdp1_frame"]) for row in rows]
+            frame_rows = [row for row in rows
+                          if int(row["vdp1_frame"]) == frame]
+            if (min(frame_indexes) != first_frame or
+                    max(frame_indexes) != last_frame or not frame_rows):
+                raise ValueError("Ymir VDP2 trace frame range does not match its receipt")
+            for row in rows:
+                space = row["memory"]
+                address = int(row["address"], 16)
+                width = int(row["width"])
+                value = int(row["value"], 16)
+                limit = 512 * 1024 if space == "VRAM" else 4096 if space == "CRAM" else 0
+                if (limit == 0 or width not in (1, 2) or address < 0 or
+                        address + width > limit or value >= 1 << (width * 8)):
+                    raise ValueError("Ymir VDP2 trace contains an invalid memory write")
+        except (KeyError, ValueError) as error:
+            raise ValueError("Ymir VDP2 trace does not match its frame receipt") from error
+    else:
+        capture = receipt(bundle / "vdp1-capture-bundle.txt",
+                          "ymir-vdp1-capture-bundle-v1")
+        snapshot = receipt(bundle / "vdp-register-snapshot.txt",
+                           "ymir-vdp-register-snapshot-v1")
+        try:
+            frame = int(capture["capture_frame_index"])
+            snapshot_frame = int(snapshot["vdp1_frame_index"])
+            register_bytes = int(snapshot["vdp2_register_bytes"])
+            rows_for_frame = int(capture["trace_rows_for_capture_frame"])
+        except (KeyError, ValueError) as error:
+            raise ValueError("Ymir frame receipt is incomplete or malformed") from error
+        if (frame < 0 or snapshot_frame != frame or
+                capture.get("trace_file_complete") != "1" or
+                rows_for_frame < 1 or register_bytes != 512 or
+                snapshot.get("register_byte_order") != "big_endian"):
+            raise ValueError("Ymir bundle receipts do not identify one complete VDP frame")
     expected = {
         "vdp2-regs": ("vdp2-registers.bin", 512),
         "vdp2-vram": ("vdp2-vram.bin", 512 * 1024),

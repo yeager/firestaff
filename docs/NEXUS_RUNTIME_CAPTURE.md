@@ -1507,6 +1507,40 @@ CRAM. The analyzer therefore reports `source_join=unbound` and
 `semantic_admission=blocked`. This Ymir boot state does not identify the date
 screen, menu, HUD, or viewport owner, and does not authorize rendering.
 
+## Ymir synchronized VDP2 memory bundle, frame 295, 2026-10-24
+
+The standalone `vdp2-memory-write-bundle.txt` format is accepted directly by
+`analyze_nexus_vdp2_bitmap_source.py`. The reader checks the bundle-complete
+receipt, exact CSV row count, frame range, writes for the snapshot frame,
+memory address and width bounds, and the VDP2 register/VRAM/CRAM sizes. Ymir
+captures the receipt, registers, VRAM, CRAM, and trace in one emulator-thread
+callback. The authentic Japanese retail run used `--debug`, the Japanese IPL
+SHA-256 `dcfef4b99605f872b6c3b6d05c045385cdea3d1b702906a0ed930df7bcb7deac`,
+and the retail CUE SHA-256
+`878b3bc223bb56e99626dbaa2946d17fb349a2a67a10cd4423742d8ab30b8699`.
+
+The exported receipt binds frame 295 to 17,280 trace rows across frames
+205–295, with zero dropped writes; 172 rows belong to frame 295. The final
+VRAM and CRAM snapshots match replay of the last write to each of 192 unique
+written byte locations. The dump decodes NBG1 as an 8-bit bitmap at byte
+offset `0x020000`, 512×256. Against the authentic Japanese retail corpus,
+the longest exact byte runs remain partial (118 bytes from `TITLE.BIN` map 4
+and 99 bytes from `MENU.BPK`); there are no exact bitmap or title, menu,
+STABG, or DGN palette matches in CRAM. Firestaff reports
+`source_join=unbound` and `semantic_admission=blocked`. The emulator showed
+the Japanese date/time setup screen, but no date-screen, menu, HUD, or
+viewport ownership is inferred from the coincident bitmap contents.
+
+The complete external bundle and screenshot are retained under
+`/Volumes/Extern-disk/nexus-saturn-capture/run-ymir-vdp2-memory-bundle-20261024-frame295/`.
+Re-run the analysis against the authentic local corpus with:
+
+```sh
+python3 scripts/analyze_nexus_vdp2_bitmap_source.py \
+  /Volumes/Extern-disk/nexus-saturn-capture/run-ymir-vdp2-memory-bundle-20261024-frame295 \
+  --data-dir /Volumes/Extern-disk/FirestaffUserData/data/nexus
+```
+
 ## Source references
 
 The byte-format baseline is the [DMWeb Nexus file-format documentation](http://dmweb.free.fr/community/documentation/dungeon-master-nexus/file-formats/),
