@@ -1,3 +1,15 @@
+2026-10-24 PC34 wall-item coverage audit: the authentic-media alcove test used
+to return as soon as it found a floor item, before scanning later dungeon
+maps for wall-alcove items. It now scans the full original campaign before
+using that fallback. The installed PC34 corpus has no wall square containing
+both an alcove ornament sensor and an item Thing, so this test still verifies
+only the authentic floor-item interaction on PC34. The separate
+`m11_dm1_hoc_wall_material_receipt_pc34` test passes and verifies the original
+HoC stair torch's GRAPHICS.DAT provenance, host render receipt, pickup/equip,
+and light-carry route; it does not prove pixel parity for alcoves, inscriptions,
+buttons, or other wall objects. A PC34 original-versus-Firestaff capture set
+for those reported wall defects remains open.
+
 2026-10-24 Amiga 3.6 first-monster combat coverage:
 The authentic-media CTest `m11_dm1_amiga36_first_monster_combat_real` now
 drives the Amiga 3.6 owner through its normal M12 launch, HoC route, first

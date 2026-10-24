@@ -323,6 +323,15 @@ int main(void)
     int renderedAlcoveItemsOnWalls = 0;
     int sourceAlcoveItemSquares = 0;
     unsigned char sourceMapAudited[32] = {0};
+#if defined(M11_DM1_REAL_MEDIA_PLATFORM_FMTOWNS) || \
+    defined(M11_DM1_REAL_MEDIA_PLATFORM_IIGS) || \
+    defined(M11_DM1_REAL_MEDIA_PLATFORM_PC34)
+    int haveFloorItemFallback = 0;
+    int floorFallbackMap = 0;
+    int floorFallbackX = 0;
+    int floorFallbackY = 0;
+    int floorFallbackDirection = 0;
+#endif
 
     if (!dataDir || !dataDir[0]) {
         puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
@@ -543,18 +552,19 @@ int main(void)
                         memset(&floorReceipt, 0, sizeof(floorReceipt));
                         M11_GameView_GetDm1FloorItemHostPresentationReceipt(
                             &floorReceipt);
-                        if (floorReceipt.valid && floorReceipt.floorItemLane &&
+                        if (!haveFloorItemFallback && floorReceipt.valid &&
+                            floorReceipt.floorItemLane &&
                             floorReceipt.destinationW > 0 &&
                             floorReceipt.destinationH > 0 &&
                             floorReceipt.graphicsId > 0) {
-                            if (!exercise_real_item_transaction(
-                                    &state, &floorReceipt,
-                                    "native floor-item")) {
-                                M11_GameView_Shutdown(&state);
-                                return 1;
-                            }
-                            M11_GameView_Shutdown(&state);
-                            return 0;
+                            /* Do not stop at an easy floor-item fixture. Scan
+                             * every original map first so a later real wall
+                             * alcove cannot be hidden by this fallback. */
+                            haveFloorItemFallback = 1;
+                            floorFallbackMap = mapIndex;
+                            floorFallbackX = x;
+                            floorFallbackY = y;
+                            floorFallbackDirection = direction;
                         }
                     }
 #endif
@@ -562,6 +572,34 @@ int main(void)
             }
         }
     }
+
+#if defined(M11_DM1_REAL_MEDIA_PLATFORM_FMTOWNS) || \
+    defined(M11_DM1_REAL_MEDIA_PLATFORM_IIGS) || \
+    defined(M11_DM1_REAL_MEDIA_PLATFORM_PC34)
+    if (sourceAlcoveItemSquares == 0 && haveFloorItemFallback) {
+        M11_Dm1FloorItemHostPresentationReceipt floorReceipt;
+        state.world.party.mapIndex = floorFallbackMap;
+        state.world.party.mapX = floorFallbackX;
+        state.world.party.mapY = floorFallbackY;
+        state.world.party.direction = floorFallbackDirection;
+        ++state.world.gameTick;
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&state, framebuffer,
+                          kFramebufferWidth, kFramebufferHeight);
+        memset(&floorReceipt, 0, sizeof(floorReceipt));
+        M11_GameView_GetDm1FloorItemHostPresentationReceipt(&floorReceipt);
+        if (!floorReceipt.valid || !floorReceipt.floorItemLane ||
+            !exercise_real_item_transaction(&state, &floorReceipt,
+                                            "native floor-item")) {
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+        puts("note: full authentic DM1 corpus scan found no wall-alcove item "
+             "squares; floor-item route is fallback only");
+        M11_GameView_Shutdown(&state);
+        return 0;
+    }
+#endif
 
     if (sourceAlcoveItemSquares == 0) {
         /* ReDMCSB DUNVIEW.C F0124 passes the wall square's first Thing to
