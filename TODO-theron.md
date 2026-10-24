@@ -25,12 +25,12 @@
   and 640x400 coordinates. Its small test map verifies host input routing
   only, not item availability or game-mechanics parity.
   `theron_v1_raw_bin_runtime_boot` passed three loops with `--debug` and
-  authentic US `TQUS02.bin`: keyboard movement/turning and mouse turn-left,
-  back-step, champion cycling, and wait produced the expected native state.
-  On that same authentic image, the mouse also picked up SANDALS at the real
-  level-0 item tile, selected the source-backed item, and dropped it on the
-  party's validated floor square. Mouse USE still needs an authentic target
-  case for gameplay-effect verification.
+  authentic US `TQUS02.bin`: keyboard movement/turning and mouse forward/back,
+  both turns, both side-steps, champion cycling, and wait produced the
+  expected native state. On that same authentic image, the mouse also picked
+  up SANDALS at the real level-0 item tile, selected the source-backed item,
+  and dropped it on the party's validated floor square. Mouse USE still needs
+  an authentic target case for gameplay-effect verification.
 - Remaining work: bind Theron's original graphics and layout in the native
   state-driven renderer, then verify that mouse movement is visible in an
   interactive native real-media run. The current authenticated screen route
