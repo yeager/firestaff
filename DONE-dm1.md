@@ -1,3 +1,9 @@
+- 2026-10-24: Rebuilt `m11_dm1_pc34_first_monster_combat_real` from the current
+  source after confirming the installed original DOS 3.4 archive was present.
+  The authentic startup-to-first-monster combat regression passed. This
+  verifies its PC34 scenario only, not the reported full viewport, item-art,
+  champion-input, campaign or all-platform parity.
+
 - 2026-10-24: Restored the DM1 FM Towns entrance-door correction for fast
   computers. ReDMCSB `ENTRANCE.C:F0438` documents BUG0_71: one VBlank per door
   step can make the doors open too quickly. The 31 visible frames now use
