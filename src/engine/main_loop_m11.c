@@ -2680,9 +2680,53 @@ static struct {
     unsigned int launchSerial;
     int initialized;
     size_t groupCapacity;
-    unsigned int* groupHealth;
+    int groupCount;
+    int mapIndex;
+    int partyMapX;
+    int partyMapY;
+    struct {
+        unsigned short next;
+        unsigned short slot;
+        unsigned char creatureType;
+        unsigned int health[4];
+    }* groups;
     unsigned int championHealth[CHAMPION_MAX_PARTY];
 } g_m11_debug_health_snapshot;
+
+static struct {
+    unsigned int launchSerial;
+    int valid;
+    uint64_t fingerprint;
+} g_m11_debug_emission_snapshot;
+
+static uint64_t m11_debug_tick_emission_fingerprint(
+    const M11_GameViewState* state) {
+    uint64_t hash = UINT64_C(1469598103934665603);
+    int i;
+    int j;
+#define M11_DEBUG_HASH_WORD(value) do { \
+        uint32_t word_ = (uint32_t)(value); \
+        int byte_; \
+        for (byte_ = 0; byte_ < 4; ++byte_) { \
+            hash ^= (uint8_t)(word_ >> (byte_ * 8)); \
+            hash *= UINT64_C(1099511628211); \
+        } \
+    } while (0)
+    M11_DEBUG_HASH_WORD(state->sourceKind);
+    M11_DEBUG_HASH_WORD(state->lastTickResult.preTick);
+    M11_DEBUG_HASH_WORD(state->lastTickResult.postTick);
+    M11_DEBUG_HASH_WORD(state->lastTickResult.worldHashPost);
+    M11_DEBUG_HASH_WORD(state->lastTickResult.emissionCount);
+    for (i = 0; i < state->lastTickResult.emissionCount; ++i) {
+        const struct TickEmission_Compat* event =
+            &state->lastTickResult.emissions[i];
+        M11_DEBUG_HASH_WORD(event->kind);
+        M11_DEBUG_HASH_WORD(event->payloadSize);
+        for (j = 0; j < 4; ++j) M11_DEBUG_HASH_WORD(event->payload[j]);
+    }
+#undef M11_DEBUG_HASH_WORD
+    return hash;
+}
 
 /* The compatibility world and TickResult below are authoritative for DM1
  * only. CSB and DM2 own separate boot runtimes; emit their own state rather
@@ -2697,12 +2741,18 @@ static void m11_debug_native_game_state(const M11_GameViewState* state,
             int map;
             int x;
             int y;
+            int level;
         } CsbGroupSnapshot;
         static unsigned int snapshotLaunchSerial;
         static int snapshotInitialized;
         static uint16_t previousGroupCount;
+        static int previousLevel;
+        static int previousPartyX;
+        static int previousPartyY;
+        static int previousPartyZ;
         static CsbGroupSnapshot previousGroups[CSB_V1_RUNTIME_ACTIVE_GROUP_CAP];
         static uint16_t previousChampionDamage[CSB_V1_MAX_CHAMPIONS];
+        static int16_t previousChampionHealth[CSB_V1_MAX_CHAMPIONS];
         const CSB_V1_BootProfile* boot =
             (const CSB_V1_BootProfile*)state->csbBootProfile;
         const CSB_V1_RuntimeProfile* runtime = &boot->runtime;
@@ -2722,13 +2772,35 @@ static void m11_debug_native_game_state(const M11_GameViewState* state,
                     pending += runtime->champion_pending_damage[i];
                 fprintf(stderr, "%u\n", pending);
             }
+            fprintf(stderr,
+                    "firestaff: game-debug-capabilities game=csb "
+                    "source=csb-runtime actions=observed "
+                    "monster-movement=active-group-position "
+                    "player-attack=unavailable "
+                    "monster-health=unavailable "
+                    "champion-health=source-party-state\n");
         }
         if (snapshotLaunchSerial != g_m11_sync_launch_serial) {
             snapshotLaunchSerial = g_m11_sync_launch_serial;
             snapshotInitialized = 0;
             previousGroupCount = 0;
+            previousLevel = runtime->current_level;
+            previousPartyX = runtime->party_x;
+            previousPartyY = runtime->party_y;
+            previousPartyZ = runtime->party_z;
             memset(previousGroups, 0, sizeof(previousGroups));
             memset(previousChampionDamage, 0, sizeof(previousChampionDamage));
+            memset(previousChampionHealth, 0, sizeof(previousChampionHealth));
+        }
+        if (snapshotInitialized &&
+            (previousLevel != runtime->current_level ||
+             previousPartyX != runtime->party_x ||
+             previousPartyY != runtime->party_y ||
+             previousPartyZ != runtime->party_z)) {
+            /* A changed party location can put a different set of active
+             * groups into the runtime snapshot. Do not compare across it. */
+            snapshotInitialized = 0;
+            previousGroupCount = 0;
         }
         {
             CsbGroupSnapshot current[CSB_V1_RUNTIME_ACTIVE_GROUP_CAP];
@@ -2736,6 +2808,8 @@ static void m11_debug_native_game_state(const M11_GameViewState* state,
             int i;
             if (currentCount > CSB_V1_RUNTIME_ACTIVE_GROUP_CAP)
                 currentCount = CSB_V1_RUNTIME_ACTIVE_GROUP_CAP;
+            if (snapshotInitialized && currentCount != previousGroupCount)
+                snapshotInitialized = 0;
             memset(current, 0, sizeof(current));
             for (i = 0; i < currentCount; ++i) {
                 const CSB_V1_RuntimeActiveGroupState* group =
@@ -2745,25 +2819,30 @@ static void m11_debug_native_game_state(const M11_GameViewState* state,
                 current[i].map = group->map_index;
                 current[i].x = group->map_x;
                 current[i].y = group->map_y;
+                current[i].level = runtime->current_level;
                 for (prior = 0; snapshotInitialized &&
                      prior < previousGroupCount; ++prior) {
                     if (previousGroups[prior].thing == current[i].thing) break;
                 }
                 if (snapshotInitialized && prior < previousGroupCount &&
-                    (previousGroups[prior].map != current[i].map ||
+                    (previousGroups[prior].level != current[i].level ||
+                     previousGroups[prior].map != current[i].map ||
                      previousGroups[prior].x != current[i].x ||
                      previousGroups[prior].y != current[i].y)) {
                     fprintf(stderr,
                             "firestaff: game-event game=csb tick=%u "
-                            "type=monster-moved group-thing=%u map=%d "
+                            "type=monster-moved group-thing=%u level=%d map=%d "
                             "from=%d,%d to=%d,%d\n",
-                            runtime->game_time, current[i].thing,
+                            runtime->game_time, current[i].thing, current[i].level,
                             current[i].map, previousGroups[prior].x,
                             previousGroups[prior].y, current[i].x, current[i].y);
                 }
             }
             for (i = 0; i < CSB_V1_MAX_CHAMPIONS; ++i) {
                 const uint16_t damage = runtime->champion_pending_damage[i];
+                const int16_t health = runtime->party_state_valid &&
+                    i < runtime->champion_count
+                    ? runtime->party_state.Champions[i].CurrentHealth : 0;
                 if (snapshotInitialized && damage != previousChampionDamage[i])
                     fprintf(stderr,
                             "firestaff: game-event game=csb tick=%u "
@@ -2772,10 +2851,22 @@ static void m11_debug_native_game_state(const M11_GameViewState* state,
                             runtime->game_time, i, damage,
                             previousChampionDamage[i]);
                 previousChampionDamage[i] = damage;
+                if (snapshotInitialized && i < runtime->champion_count &&
+                    health != previousChampionHealth[i])
+                    fprintf(stderr,
+                            "firestaff: game-health game=csb tick=%u "
+                            "target=champion index=%d hp=%d->%d delta=%+d\n",
+                            runtime->game_time, i, previousChampionHealth[i],
+                            health, (int)health - previousChampionHealth[i]);
+                previousChampionHealth[i] = health;
             }
             memcpy(previousGroups, current,
                    (size_t)currentCount * sizeof(current[0]));
             previousGroupCount = currentCount;
+            previousLevel = runtime->current_level;
+            previousPartyX = runtime->party_x;
+            previousPartyY = runtime->party_y;
+            previousPartyZ = runtime->party_z;
             snapshotInitialized = 1;
         }
     } else if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
@@ -2797,6 +2888,14 @@ static void m11_debug_native_game_state(const M11_GameViewState* state,
                     "outdoor=%d champions=unavailable\n",
                     tick, world->current_level, world->party_x, world->party_y,
                     world->party_dir, world->outdoor);
+        if (reportSummary)
+            fprintf(stderr,
+                    "firestaff: game-debug-capabilities game=dm2 "
+                    "source=dm2-runtime actions=observed "
+                    "player-attack=source-receipt "
+                    "monster-damage=source-hp-receipt "
+                    "monster-movement=unavailable "
+                    "champion-health=unavailable\n");
         if (receiptLaunchSerial != g_m11_sync_launch_serial) {
             receiptLaunchSerial = g_m11_sync_launch_serial;
             haveWieldReceipt = 0;
@@ -2843,6 +2942,13 @@ static void m11_debug_native_game_state(const M11_GameViewState* state,
             previousDamageReceipt = damageReceipt;
             haveCreatureDamageReceipt = 1;
         }
+    } else if (reportSummary && strcmp(state->sourceId, "dm1") == 0) {
+        fprintf(stderr,
+                "firestaff: game-debug-capabilities game=dm1 "
+                "source=compatibility-world actions=observed "
+                "player-attack=tick-emissions monster-attack=tick-emissions "
+                "monster-movement=tick-emissions "
+                "monster-health=world-snapshot champion-health=world-snapshot\n");
     }
 }
 
@@ -2875,12 +2981,17 @@ static void m11_debug_game_events(const M11_GameViewState* state) {
     if (state->world.things && state->world.things->groups) {
         int groupCount = state->world.things->groupCount;
         if (groupCount < 0 || groupCount > 65536) groupCount = 0;
+        if (g_m11_debug_health_snapshot.initialized &&
+            (state->world.party.mapIndex != g_m11_debug_health_snapshot.mapIndex ||
+             state->world.party.mapX != g_m11_debug_health_snapshot.partyMapX ||
+             state->world.party.mapY != g_m11_debug_health_snapshot.partyMapY ||
+             groupCount != g_m11_debug_health_snapshot.groupCount))
+            g_m11_debug_health_snapshot.initialized = 0;
         if ((size_t)groupCount > g_m11_debug_health_snapshot.groupCapacity) {
-            unsigned int* grown = (unsigned int*)realloc(
-                g_m11_debug_health_snapshot.groupHealth,
-                (size_t)groupCount * 4U * sizeof(unsigned int));
+            void* grown = realloc(g_m11_debug_health_snapshot.groups,
+                (size_t)groupCount * sizeof(*g_m11_debug_health_snapshot.groups));
             if (grown) {
-                g_m11_debug_health_snapshot.groupHealth = grown;
+                g_m11_debug_health_snapshot.groups = grown;
                 g_m11_debug_health_snapshot.groupCapacity =
                     (size_t)groupCount;
             }
@@ -2890,14 +3001,19 @@ static void m11_debug_game_events(const M11_GameViewState* state) {
         for (i = 0; i < groupCount; ++i) {
             const struct DungeonGroup_Compat* group =
                 &state->world.things->groups[i];
+            const int sameGroup = g_m11_debug_health_snapshot.initialized &&
+                g_m11_debug_health_snapshot.groups[i].next == group->next &&
+                g_m11_debug_health_snapshot.groups[i].slot == group->slot &&
+                g_m11_debug_health_snapshot.groups[i].creatureType ==
+                    group->creatureType;
             int creature;
             for (creature = 0; creature < 4; ++creature) {
                 unsigned int health = creature <= (int)group->count
                     ? group->health[creature] : 0U;
                 unsigned int previous =
-                    g_m11_debug_health_snapshot.groupHealth[(size_t)i * 4U +
-                                                             (size_t)creature];
+                    g_m11_debug_health_snapshot.groups[i].health[creature];
                 if (g_m11_debug_health_snapshot.initialized &&
+                    sameGroup &&
                     health != previous) {
                     fprintf(stderr,
                             "firestaff: game-health game=%s tick=%u "
@@ -2908,10 +3024,19 @@ static void m11_debug_game_events(const M11_GameViewState* state) {
                             (unsigned int)group->creatureType, previous, health,
                             (int)health - (int)previous);
                 }
-                g_m11_debug_health_snapshot.groupHealth[(size_t)i * 4U +
-                                                         (size_t)creature] = health;
+                g_m11_debug_health_snapshot.groups[i].health[creature] = health;
             }
+            g_m11_debug_health_snapshot.groups[i].next = group->next;
+            g_m11_debug_health_snapshot.groups[i].slot = group->slot;
+            g_m11_debug_health_snapshot.groups[i].creatureType =
+                group->creatureType;
         }
+        g_m11_debug_health_snapshot.groupCount = groupCount;
+        g_m11_debug_health_snapshot.mapIndex = state->world.party.mapIndex;
+        g_m11_debug_health_snapshot.partyMapX = state->world.party.mapX;
+        g_m11_debug_health_snapshot.partyMapY = state->world.party.mapY;
+    } else {
+        g_m11_debug_health_snapshot.initialized = 0;
     }
     for (i = 0; i < state->world.party.championCount &&
                 i < CHAMPION_MAX_PARTY; ++i) {
@@ -2928,6 +3053,21 @@ static void m11_debug_game_events(const M11_GameViewState* state) {
         g_m11_debug_health_snapshot.championHealth[i] = health;
     }
     g_m11_debug_health_snapshot.initialized = 1;
+    if (g_m11_debug_emission_snapshot.launchSerial !=
+        g_m11_sync_launch_serial) {
+        g_m11_debug_emission_snapshot.launchSerial =
+            g_m11_sync_launch_serial;
+        g_m11_debug_emission_snapshot.valid = 0;
+    }
+    if (state->lastTickResult.emissionCount > 0) {
+        const uint64_t fingerprint =
+            m11_debug_tick_emission_fingerprint(state);
+        if (g_m11_debug_emission_snapshot.valid &&
+            g_m11_debug_emission_snapshot.fingerprint == fingerprint)
+            return;
+        g_m11_debug_emission_snapshot.fingerprint = fingerprint;
+        g_m11_debug_emission_snapshot.valid = 1;
+    }
     for (i = 0; i < state->lastTickResult.emissionCount; ++i) {
         const struct TickEmission_Compat* event =
             &state->lastTickResult.emissions[i];

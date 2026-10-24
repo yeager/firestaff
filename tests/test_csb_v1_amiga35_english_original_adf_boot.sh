@@ -106,6 +106,9 @@ if ! grep -Eq 'csbViewportHash=[1-9][0-9]*' <<< "$runtime_output"; then
     exit 1
 fi
 if ! grep -Fq 'game-action game=csb tick=native input=forward' <<< "$runtime_output" ||
+   ! grep -Fq 'game-debug-capabilities game=csb source=csb-runtime' <<< "$runtime_output" ||
+   ! grep -Fq 'player-attack=unavailable monster-health=unavailable' <<< "$runtime_output" ||
+   ! grep -Fq 'champion-health=source-party-state' <<< "$runtime_output" ||
    ! grep -Fq 'game-state game=csb source=csb-runtime tick=' <<< "$runtime_output" ||
    ! grep -Fq 'party=9,1,0 dir=2' <<< "$runtime_output"; then
     printf 'FAIL: CSB debug action did not report the source runtime party state\n%s\n' \

@@ -1473,6 +1473,7 @@ if ! grep -Fq \
     "$native_hoc_dispatch_log" ||
    ! grep -Fq 'game-action game=dm1 tick=' "$native_hoc_dispatch_log" ||
    ! grep -Fq 'input=pointer-left' "$native_hoc_dispatch_log" ||
+   ! grep -Fq 'game-debug-capabilities game=dm1 source=compatibility-world' "$native_hoc_dispatch_log" ||
    ! grep -Fq 'game-health game=dm1 tick=' "$native_hoc_dispatch_log" ||
    ! grep -Fq 'target=champion' "$native_hoc_dispatch_log"; then
     printf '%s\n' "$native_hoc_dispatch_output" >&2

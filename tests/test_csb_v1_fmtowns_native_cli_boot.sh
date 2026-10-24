@@ -130,7 +130,7 @@ for mode in v1 v20 v21; do
 case "$mode" in v1) expected_mode=0;; v20) expected_mode=1;; v21) expected_mode=2;; esac
 runtime_output="$(SDL_VIDEODRIVER=dummy run_firestaff \
     --presentation-mode "$mode" \
-    --width 320 --height 200 --scale-mode 4 --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg \
+    --width 320 --height 200 --scale-mode 4 --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg --debug \
     --boot-probe --boot-probe-frames 1200 \
     --script 'wait700,click:52:110,wait10,click:250:50,wait240' \
     --boot-probe-expect-phase inactive --boot-probe-expect-runtime \
@@ -151,6 +151,14 @@ esac
 
 if ! printf '%s\n' "$runtime_output" | grep -Fq "presentationMode=$expected_mode "; then
     printf '%s\n' "$runtime_output" >&2; exit 1
+fi
+if ! printf '%s\n' "$runtime_output" | grep -Fq \
+    'game-debug-capabilities game=csb source=csb-runtime' ||
+   ! printf '%s\n' "$runtime_output" | grep -Fq \
+    'champion-health=source-party-state'; then
+    printf '%s\n' "$runtime_output" >&2
+    echo 'FAIL: CSB --debug omitted authoritative runtime/health coverage' >&2
+    exit 1
 fi
 done
 
