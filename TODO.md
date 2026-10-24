@@ -1,5 +1,17 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-24 fresh Xcode arm64 launcher verification: the Xcode 27.1 Release
+binary passed `test_m12_main_menu_game_selection_real_media.sh` against the
+installed originals. The no-game menu selected all five games by keyboard;
+mouse selection passed for DM1, CSB, DM2, Nexus and Theron. DM1/CSB/DM2 also
+passed default `~/.firestaff/data` discovery and single-game-folder scan-root
+cases. The script checked each original source archive hash before and after
+handoff. `test_m12_main_menu_runtime_real_media.sh` then reached the first
+authentic runtime from the menu for DM1, CSB, DM2 and Theron. Nexus remains
+verified only through menu handoff, not active-game runtime. Both runs use SDL
+dummy video/audio and do not prove native presentation/input or full gameplay
+parity.
+
 2026-10-24 startup scan diagnostics: `--debug` scan progress now includes
 `delta-ms`, the time since the preceding distinct progress snapshot, alongside
 total elapsed time. This makes long gaps between scanner updates visible next
