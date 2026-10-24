@@ -21,6 +21,9 @@
 extern "C" {
 #endif
 
+/* Emit host, CPU, display, and renderer diagnostics for --debug. */
+void M11_Debug_LogHardware(void);
+
 /* Options passed to the Phase-A stub loop. */
 typedef struct {
     int windowWidth;       /* Default: 640 */

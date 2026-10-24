@@ -13028,8 +13028,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         strcmp(SDL_GetCurrentVideoDriver(), "dummy") == 0) {
         (void)M11_Render_HandleResize(o->windowWidth, o->windowHeight);
     }
-
-    launcherFramebuffer = (unsigned char*)calloc((size_t)M11_LAUNCHER_FB_WIDTH,
+    if (o->debug) M11_Debug_LogHardware(); launcherFramebuffer = (unsigned char*)calloc((size_t)M11_LAUNCHER_FB_WIDTH,
                                                  (size_t)M11_LAUNCHER_FB_HEIGHT);
     if (!launcherFramebuffer) {
         M11_Render_Shutdown();

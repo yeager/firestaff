@@ -51,7 +51,7 @@ fi
 
 rm -rf "$STAGE_DIR"
 mkdir -p "$MACOS_DIR" "$RESOURCES_DIR" "$FRAMEWORKS_DIR" "$DMG_DIR"
-mkdir -p "$RESOURCES_DIR/scripts"
+mkdir -p "$RESOURCES_DIR/scripts" "$CONTENTS_DIR/po"
 
 cp "$BIN_SRC" "$MACOS_DIR/Firestaff"
 cp -R "$ARTPACK_STUDIO_APP_SRC" "$STAGE_DIR/Firestaff Artpack Studio.app"
@@ -103,6 +103,7 @@ fi
 cp "$ROOT/assets/branding/firestaff-startup-intro.ppm" "$RESOURCES_DIR/firestaff-startup-intro.ppm"
 cp "$ROOT/assets/branding/firestaff-startup-dungeon-v2.ppm" "$RESOURCES_DIR/firestaff-startup-dungeon-v2.ppm"
 cp "$ROOT/assets/cards/platforms/platforms.ppm" "$RESOURCES_DIR/firestaff-platform-cards.ppm"
+cp "$ROOT"/po/startup-menu.*.po "$CONTENTS_DIR/po/"
 
 cat > "$CONTENTS_DIR/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>

@@ -7685,6 +7685,7 @@ endif()
 # ── M11 static library ──────────────────────────────────────────────
 set(M11_SOURCES
     src/engine/main_loop_m11.c
+    src/engine/hardware_debug_m11.c
     src/shared/firestaff_nexus_mednafen.c
     src/engine/fs_gesture_navigation_gate.c
     src/engine/firestaff_accessibility.c
