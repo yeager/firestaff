@@ -103,10 +103,17 @@ Required game data must block launch:
 ## Build
 
 ```bash
-TMPDIR=/dev/shm cmake -S . -B .codex-scratch/build -G Ninja -DCMAKE_BUILD_TYPE=Debug
-TMPDIR=/dev/shm cmake --build .codex-scratch/build -j1
-TMPDIR=/dev/shm ctest --test-dir .codex-scratch/build -j2 --output-on-failure
+TMPDIR=/dev/shm cmake -S . -B .codex-scratch/build -G Ninja \
+  -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=OFF
+TMPDIR=/dev/shm cmake --build .codex-scratch/build --target firestaff -j1
+./.codex-scratch/build/firestaff --scan-data
 ```
+
+This is the quick application build. The default CTest inventory defines
+thousands of standalone executables and can make an unqualified
+`cmake --build` compile much more than the application. For tests, configure
+a separate build with `-DBUILD_TESTING=ON`, build the specific test targets
+you need, then run their CTest names with `ctest -R '<test-name>'`.
 
 Requires SDL3. On macOS: `brew install sdl3`
 
