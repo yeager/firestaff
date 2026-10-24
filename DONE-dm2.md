@@ -1002,3 +1002,11 @@ Reviewed 2026-08-29. Completed work only.
   SDL's dummy display; native-display playback and refresh-rate captures remain
   unverified. The startup ownership follows
   `SKWINSPX/src/v5/startend.cpp::DM2_INIT` and its `SHOW_MENU_SCREEN` loop.
+- 2026-10-24: On an M4 Mac, the authentic DM2 DOS, Amiga, and FM Towns CLI and
+  M12 start-menu runtime tests all passed against the installed original
+  archives. DOS reached New Game and the first runtime through the ordinary
+  menu, with the source HUD and dungeon aperture present. Amiga reached its
+  first runtime through the normal 50 Hz startup and passed its input matrix.
+  FM Towns AUTO selected the authentic edition with DOS, Amiga, and Mac media
+  also installed, then reached the first runtime through the normal loop. These
+  SDL dummy-display checks do not establish native-display refresh parity.
