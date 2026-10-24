@@ -1,3 +1,23 @@
+## 2026-10-25 — PCE Fast left-input and VDC comparison
+
+- Replayed the preserved authentic Japanese Ak-Tu-Ba dungeon state on TRV2
+  with scripted `left@1:60` input and bounded PCE Fast controller/VDC tracing.
+  The scripted-input receipt confirms the left mask `0x0080` was applied and
+  read by the non-System Card controller poll at `$44D2` (witness sequence
+  1792). The close-time bytes at `$2031` and `$203F-$2041` match the earlier
+  forward-input capture. A same-duration no-input replay from the same state
+  provides a stronger VDC comparison: the 512-byte SAT snapshots differ only
+  in the low bytes of the first two words (UP `44 00 34 00`, LEFT
+  `b8 00 20 00`, idle `b8 00 98 00`); all remaining SAT bytes match. The
+  corresponding 64 KiB VRAM snapshots differ only at offsets 65025 and 65027
+  for UP versus idle, and at 65027 for LEFT versus idle, within the SAT
+  region. This proves an input-associated change in one SAT entry's data, but
+  does not identify that entry as the party sprite or establish world
+  movement. No authenticated CD-to-RAM receipt or gameplay transition was
+  produced. Keep original pointer hit targets and interactive state-driven
+  dungeon rendering open; the Firestaff mouse panel remains a host control
+  surface, not source-verified world-pointing behavior.
+
 ## 2026-10-24 — complete Theron keyboard and mouse playability
 
 - Native keyboard input already reaches the Theron movement and action facade;
