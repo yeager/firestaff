@@ -32,7 +32,7 @@ def put_mov_l_pc(data: bytearray, offset: int, register: int,
 
 
 def retail_mouse_registration_fixture() -> bytearray:
-    data = bytearray(0x39000)
+    data = bytearray(0x3B000)
     for offset, register, value, literal in (
         (0x16588, 6, trace.DM_BASE + 0x164A8, 0x16680),
         (0x1658A, 5, trace.DM_BASE + 0x3850C, 0x16684),
@@ -78,6 +78,11 @@ def retail_mouse_registration_fixture() -> bytearray:
                  0x06024288, 0x16690)
     put_mov_l_pc(data, trace.MOUSE_CALLBACK_MODE2_DISPATCH, 2,
                  0x06024288, 0x16694)
+    for event_id, (name, string_offset) in trace.MOUSE_CALLBACK_EVENT_NAMES.items():
+        pointer_offset = trace.EVENT_NAME_POINTER_TABLE_OFFSET + event_id * 4
+        data[pointer_offset : pointer_offset + 4] = (
+            trace.DM_BASE + string_offset).to_bytes(4, "big")
+        data[string_offset : string_offset + len(name) + 1] = name + b"\0"
     return data
 
 
@@ -113,15 +118,26 @@ class NexusMouseCallbackTraceTests(unittest.TestCase):
         put_u16(data, 0x24B36, 0x4E0A)
         self.assertFalse(self.report(data)[0])
 
-    def test_mode_gated_event_ids_are_reported_without_names(self) -> None:
+    def test_mode_gated_event_ids_resolve_retail_names(self) -> None:
         data = retail_mouse_registration_fixture()
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
             valid = trace.report_mouse_callback_event_ids(data)
         self.assertTrue(valid)
         self.assertIn("event_mode_0_id=13", output.getvalue())
+        self.assertIn("event_mode_0_name=EV_EXIT_INV", output.getvalue())
         self.assertIn("event_mode_2_id=44", output.getvalue())
-        self.assertIn("event_names_and_gameplay_effects=unbound", output.getvalue())
+        self.assertIn("event_mode_2_name=EV_INV_EQUIP", output.getvalue())
+        self.assertIn("gameplay_effects=unbound", output.getvalue())
+
+    def test_event_name_pointer_mismatch_is_rejected(self) -> None:
+        data = retail_mouse_registration_fixture()
+        put_u16(data, trace.EVENT_NAME_POINTER_TABLE_OFFSET + 13 * 4,
+                0x0000)
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            valid = trace.report_mouse_callback_event_ids(data)
+        self.assertFalse(valid)
 
     def test_event_submission_mode_change_is_rejected(self) -> None:
         data = retail_mouse_registration_fixture()

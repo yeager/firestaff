@@ -112,17 +112,21 @@ slot; the paired dispatcher checks its active flag and makes an indirect call
 through that slot. A second verified path at `DM.BIN:0x164a8` reads fields at
 object offsets 100 and 104. When the first field is 6, submode 0 queues numeric
 event 13 and submode 2 queues numeric event 44 to `0x06024288`; submode 1 does
-not queue either event. The numeric event names and the state changes made by
-the later consumer remain unresolved. This trace therefore does not establish
-the action assigned to any hit rectangle and is not enough to implement
-pointer clicks. The analyzer checks the branch targets, event values, and
-queue target against the hash-verified Japanese retail `DM.BIN`.
+not queue either event. The retail event-name pointer table maps ID 13 to
+`EV_EXIT_INV` and ID 44 to `EV_INV_EQUIP`. Their downstream state changes and
+the action assigned to any hit rectangle remain unresolved, so this trace is
+not enough to implement inventory clicks. The analyzer checks the branch
+targets, event values, queue target, and name pointers against the
+hash-verified Japanese retail `DM.BIN`.
 
 ## Mouse and remaining input work
 
 Nexus has startup pointer handling, viewport mouse movement, keyboard
 movement, and the authentic retail cursor sprite in the captured viewport.
-Pointer activation actions are still not bound to retail callback evidence.
+The keyboard supports forward/backward movement, turning, strafing, pointer
+mode, and pointer movement. The mouse supports the six-cell desktop movement
+pad and direct pointer positioning. Inventory, attack, spell, and item-use
+clicks remain inert until their retail callback consumers are established.
 The existing logical click-route helpers require pre-resolved targets and do
 not establish how viewport pixels map to Nexus actions. The orange retail
 cursor and D-pad movement are captured, while desktop mouse movement in

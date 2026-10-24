@@ -19,6 +19,11 @@ DM_BASE = 0x06010000
 DM_SHA256 = "3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124"
 EVENT_TABLE_OFFSET = 0x36D04
 EVENT_TABLE_END = 0x37024
+EVENT_NAME_POINTER_TABLE_OFFSET = 0x3ADC4
+MOUSE_CALLBACK_EVENT_NAMES = {
+    13: (b"EV_EXIT_INV", 0x36DB8),
+    44: (b"EV_INV_EQUIP", 0x36F68),
+}
 HIT_RECT_TABLE_OFFSET = 0x38000
 HIT_RECT_TABLE_SUBSET_OFFSET = HIT_RECT_TABLE_OFFSET + 8 * 8
 MOUSE_SOURCE_PATH_OFFSET = 0x387FC
@@ -38,9 +43,9 @@ MOUSE_REGION_CALLBACK_NULL_TEST = 0x24B32
 MOUSE_REGION_CALLBACK_NULL_BRANCH = 0x24B34
 
 # The registered callback has a secondary path for mouse-region objects in
-# interaction class 6. It submits two numeric event IDs for object modes 0 and
-# 2. The adjacent EV_* strings are not enough to assign names to those IDs;
-# preserve the numeric values until the event consumer is decoded.
+# interaction class 6. It submits two event IDs for object modes 0 and 2.
+# Verify their names through the retail pointer table, but do not infer the
+# downstream state changes from those names alone.
 MOUSE_CALLBACK_MODE_CHECK = 0x16548
 MOUSE_CALLBACK_MODE0_EVENT = 0x1656A
 MOUSE_CALLBACK_MODE2_EVENT = 0x1657E
@@ -195,9 +200,10 @@ def report_mouse_region_registration(data: bytes) -> bool:
 def report_mouse_callback_event_ids(data: bytes) -> bool:
     """Verify the callback's mode-gated numeric event submissions.
 
-    This does not bind the event IDs to names or game actions. It only checks
-    the retail SH-2 path which reads object fields 100/104 and passes IDs 13/44
-    to the event dispatcher for modes 0/2.
+    It checks the retail SH-2 path which reads object fields 100/104, passes
+    IDs 13/44 to the event dispatcher for modes 0/2, and resolves those IDs
+    through the retail event-name pointer table. The names do not establish
+    the downstream state changes.
     """
     words = {
         0x16548: 0xE064,  # mov #100,r0
@@ -243,12 +249,30 @@ def report_mouse_callback_event_ids(data: bytes) -> bool:
                   f"decoded={decoded}")
             valid = False
 
+    event_names: dict[int, str] = {}
+    for event_id, (expected_name, expected_string_offset) in MOUSE_CALLBACK_EVENT_NAMES.items():
+        pointer_offset = EVENT_NAME_POINTER_TABLE_OFFSET + event_id * 4
+        pointer = (int.from_bytes(bytes(data[pointer_offset:pointer_offset + 4]), "big")
+                   if pointer_offset + 4 <= len(data) else None)
+        expected_pointer = DM_BASE + expected_string_offset
+        end = bytes(data).find(b"\0", expected_string_offset)
+        actual_name = (data[expected_string_offset:end]
+                       if end >= 0 else b"")
+        if pointer != expected_pointer or actual_name != expected_name:
+            print(f"mouse_callback_event_name=invalid id={event_id} "
+                  f"pointer={('none' if pointer is None else f'0x{pointer:08x}')} "
+                  f"name={actual_name!r}")
+            valid = False
+        else:
+            event_names[event_id] = expected_name.decode("ascii")
+
     if valid:
         print("mouse_callback_object_mode_field_offset=100 value=6")
         print("mouse_callback_submode_field_offset=104 event_mode_0_id=13 "
-              "event_mode_2_id=44 event_mode_1=no-submit")
+              f"event_mode_0_name={event_names[13]} event_mode_2_id=44 "
+              f"event_mode_2_name={event_names[44]} event_mode_1=no-submit")
         print("mouse_callback_event_dispatch_target=0x06024288 "
-              "event_names_and_gameplay_effects=unbound")
+              "event_names=verified gameplay_effects=unbound")
     return valid
 
 
@@ -321,8 +345,8 @@ def main() -> int:
         return 1
 
     print("interpretation=verified retail hit-region registration and callback transport; "
-          "verified numeric callback event submissions; event names and resulting "
-          "gameplay actions remain unbound")
+          "verified callback event IDs and retail names; downstream gameplay "
+          "actions remain unbound")
     return 0
 
 
