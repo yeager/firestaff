@@ -1,5 +1,26 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-24 DM2 FM Towns warm scan reuse: after a full directory-discovery
+boot-profile scan proves the exact HME-242 `DATA/GRAPHICS.DAT` and
+`DATA/DUNGEON.DAT` pair, M12 can reuse those member MD5 receipts while the
+source ZIP file identity and timestamps remain unchanged. Explicitly selected
+archives still run the full boot scanner. The authentic `dm2_v1_fmtowns_native_cli_boot`
+test passed with both cold and warm `--scan-data` runs and the full New Game
+route (390 seconds on this machine). This avoids rescanning that same Towns
+disc image on repeat directory scans; other DM2 archives are still checked.
+
+2026-10-24 startup/CLI audit: expanded the DM1/CSB/DM2 unsupported-platform
+test to cover every currently unsupported platform pairing in both direct and
+menu-request modes. The 24-case live CLI matrix rejected each pair before
+startup or scan diagnostics, and `dm2_unsupported_platform_cli` passed against
+the configured build. With all five original-media directories installed,
+`--scan-data --debug` found all five games READY in 26.9 seconds on a fresh
+isolated cache and 8.9 seconds on the warm repeat. A five-second warm-run
+sample placed most active samples in DM2 ZIP profile admission and zlib image
+inflation. The full scan still delays the first selectable menu; reducing that
+work without weakening source authentication remains open. This scan-only
+check does not prove native menu input or gameplay parity.
+
 2026-10-24 authentic launch-flow recheck: DM1's mixed-edition
 `dm1_v1_m12_auto_multi_platform_menu` test reached its first runtime through
 FM Towns AUTO, bare `--game dm1`, explicit CLI selection of PC/Atari ST/Amiga,
