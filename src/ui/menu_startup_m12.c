@@ -2185,6 +2185,14 @@ static void m12_show_missing_game_data_file_popup(M12_StartupMenuState* state,
     if (!state) {
         return;
     }
+    /* A deferred startup scan publishes availability only when its complete
+     * snapshot is ready. Do not turn that temporary empty snapshot into a
+     * missing-media error if the player reaches a game card early. Leave the
+     * card in place so scan progress remains visible and the choice can be
+     * retried against the finished snapshot. */
+    if (state->deferredScanActive) {
+        return;
+    }
     gameIndex = m12_entry_index_for_game_id(state, gameId);
     snprintf(line1, sizeof(line1), "%s %s", m12_game_display_title(state, gameId), m12_text(state, M12_TEXT_GAME_DATA_NOT_FOUND));
     if (filename) snprintf(line2, sizeof(line2), "%s", filename);
@@ -11753,6 +11761,7 @@ static void m12_draw_game_card_flow_view(const M12_StartupMenuState* state,
     int boxX;
     int boxY;
     int ready = 0;
+    int scanning = 0;
     int version = -1;
     char position[32];
     const char* heading;
@@ -11781,6 +11790,7 @@ static void m12_draw_game_card_flow_view(const M12_StartupMenuState* state,
         return;
     }
     if (state->gameCardFlowStage == 0) {
+        scanning = state->deferredScanActive;
         ready = M12_AssetStatus_GameAvailable(&state->assetStatus,
                                                entry->gameId) &&
                 M12_AssetStatus_GameHasMatchedArchitecture(
@@ -11807,8 +11817,9 @@ static void m12_draw_game_card_flow_view(const M12_StartupMenuState* state,
         m12_draw_sparse_center_box(framebuffer, framebufferWidth,
                                    framebufferHeight, framebufferWidth - 16, 56,
                                    entry->title, selectedLabel,
-                                   ready ? m12_tr(state, "READY")
-                                         : m12_tr(state, "DATA FILES NOT FOUND"),
+                                   scanning ? m12_tr(state, "SCANNING GAME DATA")
+                                            : ready ? m12_tr(state, "READY")
+                                                    : m12_tr(state, "DATA FILES NOT FOUND"),
                                    M12_COLOR_WHITE);
         if (framebufferHeight >= 80 && framebufferWidth >= 240) {
             m12_draw_centered_text(
@@ -11830,8 +11841,8 @@ static void m12_draw_game_card_flow_view(const M12_StartupMenuState* state,
     snprintf(position, sizeof(position), "%d / %d", selected + 1, cardCount);
     m12_draw_frame(framebuffer, framebufferWidth, framebufferHeight,
                    boxX, boxY, boxW, boxH,
-                   ready ? M12_COLOR_YELLOW : M12_COLOR_LIGHT_RED,
-                   ready ? m12_game_card_fill(entry->gameId) : M12_COLOR_BLACK);
+                   (ready || scanning) ? M12_COLOR_YELLOW : M12_COLOR_LIGHT_RED,
+                   (ready || scanning) ? m12_game_card_fill(entry->gameId) : M12_COLOR_BLACK);
     m12_draw_centered_text(framebuffer, framebufferWidth, framebufferHeight,
                            boxY + 10, entry->title, &g_textMediumShadow);
     m12_draw_centered_text(framebuffer, framebufferWidth, framebufferHeight,
@@ -11852,9 +11863,10 @@ static void m12_draw_game_card_flow_view(const M12_StartupMenuState* state,
     }
     m12_draw_centered_text(framebuffer, framebufferWidth, framebufferHeight,
                            boxY + boxH - 20,
-                           ready ? m12_tr(state, "READY")
-                                 : m12_tr(state, "DATA FILES NOT FOUND"),
-                           ready ? &g_textSmallAccent : &g_textSmallMuted);
+                           scanning ? m12_tr(state, "SCANNING GAME DATA")
+                                    : ready ? m12_tr(state, "READY")
+                                            : m12_tr(state, "DATA FILES NOT FOUND"),
+                           (ready || scanning) ? &g_textSmallAccent : &g_textSmallMuted);
     m12_draw_centered_text(framebuffer, framebufferWidth, framebufferHeight,
                            framebufferHeight - 12,
                            m12_tr(state, "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"),

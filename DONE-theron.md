@@ -1,5 +1,14 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-24 — keep authenticated CLI-check output in its build directory
+
+- The real-capture CLI check now creates and removes its temporary log beside
+  the tested Firestaff executable, within the task-specific build directory.
+  It no longer falls back to `/tmp`.
+- `bash -n tests/test_theron_v1_cli_authenticated_capture.sh` and
+  `git diff --check` pass.
+
+
 ## 2026-10-24 — source-bound Stage-2 VCE palette in US and JP media
 
 The `$46B8` dispatch handler and regional calls (`$5E4D` US, `$5E7D` JP)

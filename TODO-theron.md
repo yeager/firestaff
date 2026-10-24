@@ -1,33 +1,42 @@
-## 2026-10-24 — native dungeon loop runs, but the presented image is black
+## 2026-10-24 — authenticated snapshot renders; state pairing remains open
 
-A local macOS Debug build ran Firestaff's C/SDL application with the
-hash-verified Japanese Rev. 1 `TQJP02.bin` copied from the user's TRV2 data
-directory into the ignored local game-data directory. Using Firestaff's own
-SDL script input, two Return actions opened stage select and the Soul Room;
-seven Down actions moved the Soul Room cursor to the forcefield entry, and a
-final Return entered the dungeon. Three repeated runs all reported
-`level-loaded=1`, map 0, party `(1,0)`, `THERON READY`, and nonzero native game
-ticks and rendered frames. The reported champion count varied between one
-and two across these runs. Measured intervals reported 2.80–3.00 game
-ticks/s, 4.99–5.19 rendered frames/s, and 4.99–5.19 presented frames/s. A
-Firestaff-owned presented-surface capture was visually black (SHA-256
-`160ee7a7f88cd678205f9aceced67995f35203c647f6fc71ec104f556bdcd733`). This
-proves the native input/start/tick route reaches a loaded dungeon, but it does
-not make the game visually playable. The input script sent separate SDL
-key-down events; it did not model a continuous 3–5 second button hold. Keep
-fallback visuals disabled. Bind and decode authentic graphics, palette, and
-tile-mapping data before treating the native presentation as complete.
+- Three TRV2 Firestaff `--debug` runtime loops accepted the authentic US Track
+  02 BIN (MD5 `f23601102138f87c33025877767ebf76`) and the hash-allowlisted
+  `selection.trace` VDC bundle. Each boot probe loaded Ak-Tu-Ba dungeon 1,
+  level 0 (32x27, entrance (4,0)), four dungeon levels, 291 source objects,
+  four verified source headers, 455 non-zero source tiles, and two champions
+  at map 0, position (1,0). The bounded movement pipeline remained idle and
+  `gameTick=0`.
+- The five-file authentic capture bundle was accepted by the production CLI
+  route. All three runs emitted identical 320x200 source and presented frames
+  (SHA-256
+  `cdcb9d4f4247d72f6fa9f28dd28571153c718984fae8dd581553729d3317df47`), with
+  35,452 non-black pixels. Capture hashes, FNV allowlist tuple, relevant source
+  file hashes, and invocation are recorded in
+  `parity-evidence/verification/theron_v1_authenticated_snapshot_render_receipt_20261024/`.
+- The earlier all-black receipt in
+  `parity-evidence/verification/theron_v1_debug_render_receipt_20261024/`
+  came from a no-snapshot invocation of an exported TRV2 source snapshot whose
+  renderer and capture-loader files differ from this checkout. It remains a
+  valid historical no-snapshot diagnostic, not evidence that the authenticated
+  capture route currently renders black.
+- The same close-time TRV2 capture also reports raw BaseRAM fields
+  `current_level_2031=02`, `party_direction_203f=01`, `party_x_2040=02`, and
+  `party_y_2041=03`; the VDC-I/O snapshot boundary is sequence 65536 at
+  timestamp 40176 (`vdc-io` SHA-256
+  `c14cfd4d20fab26c6175d0f5c8cbac4e86d806a0f85e2ddee907c753cdb28aec`). The
+  capture retained 65,536 main-RAM consumer reads with no direct reads of
+  those four candidate offsets, and reports `transition=missing`. The original
+  three-loop Firestaff probe reported level 0 and party `(1,0,dir0)`. A
+  follow-up three-loop `--debug` route reached party `(2,3,dir1)`, three
+  champions, and `gameTick=17`; each presented frame retained the same
+  snapshot-render SHA-256. The x/y/direction raw candidate bytes therefore
+  match that route, but Firestaff still loaded level 0 and `$2031=02` has no
+  source-backed world meaning. This is only a candidate pose match, not a
+  same-level/world join. No original-emulator screenshot was paired with the
+  Firestaff frame; rendering remains screen-space evidence only.
 
-A follow-up native Debug run on trv2 used Xvfb only as the SDL display and
-xdotool to send separate Return/Down taps to Firestaff; it did not run an
-emulator. With the hash-verified JP Rev. 1 Track 02 BIN, the sequence
-Return, Return, seven Down taps, Return reached `theron-runtime`, loaded map
-0, and advanced 73 native game ticks during the 18-second run. The final
-receipt reported party `(1,0)`, north, and one champion. This confirms the
-native menu-to-runtime input path on Linux as well as macOS; it does not close
-the authentic graphics-to-dungeon renderer gap or establish complete parity.
-
-## 2026-10-24 — Static Stage-2 palette is bound; screen route remains open
+## 2026-10-10 — instrument PCE Fast CPU VWR commits
 
 The US `$46B8` handler calls `$5E4D`; JP calls `$5E7D`. Both authentic Track
 02 images contain the matching regional routine and identical 64-byte VCE

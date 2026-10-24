@@ -47209,6 +47209,7 @@ if(BUILD_TESTING AND TARGET firestaff_theron)
     set_tests_properties(theron_v1_cli_authenticated_capture PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "theron;real-media;rendering"
+        ENVIRONMENT "FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
     )
 endif()
 
