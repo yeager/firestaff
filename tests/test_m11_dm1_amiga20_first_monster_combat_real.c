@@ -1,4 +1,4 @@
-/* Authentic Atari ST / Amiga / FM Towns M12 launch through first HoC combat. */
+/* Authentic Amiga 2.x/3.6, Atari ST, and FM Towns M12 HoC combat routes. */
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
 #include "menu_input_m12.h"
@@ -87,14 +87,18 @@ int main(void)
 {
     const char *atariArchive = getenv("FIRESTAFF_DM1_ATARI_ST_ARCHIVE");
     const char *townsArchive = getenv("FIRESTAFF_DM1_FMTOWNS_ARCHIVE");
+    const char *amiga36Archive = getenv("FIRESTAFF_DM1_AMIGA36_ARCHIVE");
     const int isAtari = atariArchive && atariArchive[0];
     const int isTowns = !isAtari && townsArchive && townsArchive[0];
+    const int isAmiga36 = !isAtari && !isTowns &&
+        amiga36Archive && amiga36Archive[0];
     const char *archive = isAtari ? atariArchive : isTowns ? townsArchive
-        : getenv("FIRESTAFF_DM1_AMIGA_V20_ARCHIVE");
+        : isAmiga36 ? amiga36Archive : getenv("FIRESTAFF_DM1_AMIGA_V20_ARCHIVE");
     const char *versionId = isAtari ? "st12-en" : isTowns ? "fmtowns-en"
-        : "amiga20-en";
+        : isAmiga36 ? "amiga36-multi" : "amiga20-en";
     const char *graphicsMd5 = isAtari ? "9ce2eaf7a9e78620e3f17594437caffa"
         : isTowns ? "c10c512f63461ebe79b5ac365115b61b"
+        : isAmiga36 ? "7f9458e4a3972d06e649a6fa85a7f34b"
         : "6a2f135b53c2220f0251fa103e2a6e7e";
     M12_StartupMenuInitOptions options;
     M12_StartupMenuState menu;
@@ -150,6 +154,7 @@ int main(void)
                 game.active &&
                 (isAtari ? game.assetLoader.atariStDm1
                          : isTowns ? game.dm1FmtownsStartupReceiptValid
+                         : isAmiga36 ? game.assetLoader.dm1Amiga36
                          : game.assetLoader.legacyDm1) && game.world.dungeon &&
                 game.world.things && game.world.party.mapIndex == 0 &&
                 game.world.party.mapX == 1 && game.world.party.mapY == 3,
@@ -180,7 +185,7 @@ int main(void)
     REQUIRE(game.world.party.mapIndex == 0 && game.world.party.mapX == 4 &&
                 game.world.party.mapY == 15 && game.world.party.direction == 0,
             "authentic production movement reaches the HoC route");
-    if (!isTowns) {
+    if (!isTowns && !isAmiga36) {
         unsigned char framebuffer[320 * 200];
         M11_Dm1WallOrnamentHostPresentationReceipt receipt;
         const M11_AssetSlot *source;
@@ -278,7 +283,8 @@ int main(void)
         fprintf(stderr,
                 "combat diagnostic: platform=%s party=(%d,%d,%d,%d) "
                 "tick=%u attack=%u before=%u hp=%u initialHp=%u",
-                isAtari ? "atari-st" : "amiga",
+                isAtari ? "atari-st" : isTowns ? "fmtowns"
+                    : isAmiga36 ? "amiga36" : "amiga20",
                 game.world.party.mapIndex, game.world.party.mapX,
                 game.world.party.mapY, game.world.party.direction,
                 (unsigned int)game.world.gameTick,
@@ -406,7 +412,8 @@ int main(void)
                     M11_GAME_INPUT_IGNORED) {
                 fprintf(stderr,
                     "FAIL: authentic %s PUNCH could not be repeated after a miss\n",
-                    isAtari ? "Atari ST" : isTowns ? "FM Towns" : "Amiga");
+                    isAtari ? "Atari ST" : isTowns ? "FM Towns"
+                        : isAmiga36 ? "Amiga 3.6" : "Amiga");
                 goto cleanup;
             }
             ++punchAttempts;
@@ -418,7 +425,8 @@ int main(void)
             fprintf(stderr,
                 "FAIL: authentic %s PUNCH did not reduce group #169 HP "
                 "after %d real attempts (%u -> %u)\n",
-                isAtari ? "Atari ST" : isTowns ? "FM Towns" : "Amiga",
+                isAtari ? "Atari ST" : isTowns ? "FM Towns"
+                    : isAmiga36 ? "Amiga 3.6" : "Amiga",
                 punchAttempts,
                 monsterHpBeforePunch,
                 group_health_total(&game.world.things->groups[169]));
@@ -461,7 +469,8 @@ int main(void)
     result = 0;
     printf("PASS: authentic %s M12 startup, HoC route and repeated first-monster combat naturalDamage=%u repeatedAttacks=%d\n",
            isAtari ? "Atari ST v1.2" : isTowns ? "FM Towns English"
-           : "Amiga v2.0", naturalDamage, repeatedGroup169Attacks);
+           : isAmiga36 ? "Amiga 3.6" : "Amiga v2.0",
+           naturalDamage, repeatedGroup169Attacks);
 
 cleanup:
     if (gameInitialized) M11_GameView_Shutdown(&game);

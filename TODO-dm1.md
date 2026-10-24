@@ -1,3 +1,13 @@
+2026-10-24 Amiga 3.6 first-monster combat coverage:
+The authentic-media CTest `m11_dm1_amiga36_first_monster_combat_real` now
+drives the Amiga 3.6 owner through its normal M12 launch, HoC route, first
+creature attack, champion damage, PUNCH damage, and a later source-timeline
+attack. It passed against the installed original Amiga 3.6 ZIP. The shared
+combat matrix also passed PC34, Amiga 2.0, Atari ST 1.2, and FM Towns in the
+same configured build. The Amiga 3.6 case deliberately does not assert the
+older Amiga MEDIA009 wall-bitmap mapping. SDL dummy execution verifies these
+source-backed runtime routes, not native display/input or full game parity.
+
 2026-10-24 DM1 cross-platform startup and combat regression retest:
 The configured CTest build passed five authentic-media tests: Atari ST and
 FM Towns CLI startup, plus first-monster combat on Amiga 2.0, Atari ST 1.2,
