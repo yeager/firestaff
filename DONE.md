@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-24: Rebuilt the current-source `firestaff` executable and reran
+  `test_m12_main_menu_game_selection_real_media`; all 16 menu routes passed.
+  Keyboard and mouse selected DM1, CSB and DM2 from the five-game launcher,
+  and both input methods selected Nexus and Theron. Keyboard routes also
+  selected DM1/CSB/DM2 when each game's own directory was the scan root, and
+  the default `~/.firestaff/data` root launched all three without CLI game or
+  data-dir options. Original media hashes stayed unchanged. SDL dummy verifies
+  launcher input and handoff, not native presentation or full gameplay.
+
 - 2026-10-24: The current Xcode-built macOS arm64 executable accepted direct
   `--game <id> --debug --boot-probe --boot-probe-frames 2 --duration 0`
   launches against all five authentic installed data folders. The selected
