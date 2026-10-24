@@ -1,5 +1,16 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-24 Nexus Japanese startup VDP2 investigation: authentic Ymir `--debug`
+captures at frames 105 and 118 show NBG0 date/time text and cursor pixels plus
+NBG1 UI box shapes. Both are 512×256 8bpp bitmap layers. Filtered traces have
+zero drops, and byte-wise replay reconstructs the captured 128 KiB NBG1 span.
+The retail-source analyzer now checks both layers, but exact bitmap and tested
+palette joins remain absent; `source_join=unbound` and
+`semantic_admission=blocked`. Next priorities are disassembling the Japanese
+startup writer/source path, binding encoded glyph and palette ownership to
+authentic assets, and capturing a source-bound transition into the menu/HUD.
+Do not enable production rendering from the coincident bitmap contents.
+
 2026-10-24 five-game main-menu selection retest: the authentic-media
 `m12_main_menu_game_selection_real_media` CTest passed in 248 seconds. It
 verified keyboard and mouse selection for all five titles, the three priority
