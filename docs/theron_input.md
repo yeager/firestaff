@@ -1,4 +1,4 @@
-# Theron's Quest — Keyboard Controls
+# Theron's Quest — Keyboard and Mouse Controls
 
 Theron's Quest (PC Engine) has six movement-panel commands: turn left/right,
 move forward/backward and step left/right. Firestaff's Theron route accepts
@@ -63,29 +63,33 @@ actuator timing or retail queue capacity; see the 2026-10-24 entry in
 | Drop last picked source item | P                    |
 | Use facing door | U                                |
 
+The native dungeon view also shows a six-button Firestaff mouse panel in its
+lower-right corner. Click **TURN L**, **FORWARD**, or **TURN R** on the top
+row; click **STEP L**, **BACK**, or **STEP R** on the bottom row. The buttons
+dispatch the same native Theron input tokens as the matching keyboard
+controls. The panel scales with the game's presentation size.
+
 ## Notes
 
 - During loaded gameplay, arrows and A/D issue the source-backed side-step
   commands `$06/$04`; Q/E, Home/End and keypad 4/6 turn. Startup menu arrows
   retain their navigation behavior. This matches Firestaff's ordinary DM1
   dungeon keyboard layout while preserving Theron's native command tokens.
-- Mouse button 1/2 are direct Button I/II bindings. A short touch emits
-  Button I; a long touch emits Button II, including during startup. Button II
-  cancels startup selection and does not advance a dungeon tick. The retail
+- Mouse button 1 selects a visible movement-panel control during dungeon
+  play. Mouse button 2 remains Button II (cancel in startup and back/exit in
+  gameplay); it does not advance a dungeon tick. A short touch emits Button I
+  and a long touch emits Button II, including during startup. The retail
   manual also describes holding Button II with a direction key as simplified
   movement; Firestaff's native direction keys already issue those movement
   commands directly.
-- Mouse buttons 1/2 map to Button I/II, but the dungeon route does not use the
-  pointer coordinates to select movement, inventory or champion controls.
-  Button II is a cancel/modifier and does not perform a standalone dungeon
-  action. This does not provide DM1-style clickable controls. Theron's native
-  dungeon layout is not yet rendered from authenticated graphics, and the
-  original movement-panel captures identify only six internal PCE cursor
-  samples, not host-space coordinates or hitbox bounds: turn-left `$7B/$8F`,
-  forward `$8A/$8F`, turn-right `$98/$8F`, step-left `$7B/$A5`, backward
-  `$8A/$A5`, and step-right `$98/$A5`. Use these points to align visible
-  Firestaff-owned click targets only after the live native layout and
-  coordinate transform are bound.
+- The six host-panel bounds are Firestaff UI and do not reuse DM1's
+  C007..C116 pointer tables. The original movement-panel captures identify
+  six internal PCE cursor samples, not desktop hitboxes or host coordinates:
+  turn-left `$7B/$8F`, forward `$8A/$8F`, turn-right `$98/$8F`, step-left
+  `$7B/$A5`, backward `$8A/$A5`, and step-right `$98/$A5`. The samples
+  informed the control order only. Native state-driven Theron graphics and
+  complete visual parity remain open; the overlay does not replace that
+  renderer work.
   The turn and forward point captures are recorded in
   [`theron-original-turn-command-capture-2026-08-21.md`](source-lock/theron-original-turn-command-capture-2026-08-21.md)
   and

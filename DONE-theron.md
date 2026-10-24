@@ -1,5 +1,25 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-24 — Firestaff-owned Theron mouse movement panel
+
+The native loaded-dungeon view draws a visible six-button movement panel.
+Its three-by-two host-UI layout dispatches turn-left, forward, turn-right,
+step-left, backward and step-right through the same M11 input route as the
+keyboard. Pointer coordinates normalize between 320x200 and 640x400
+presentations. The original PC Engine command-point captures informed button
+ordering only; they do not define these Firestaff hitboxes.
+
+On TRV2, `theron_v1_m11_launcher_handoff_boundary` passed three consecutive
+runs, including all six input actions at both presentation sizes and a draw
+check for the visible controls. `theron_v1_raw_bin_runtime_boot` passed once
+with `--debug` and authentic US `TQUS02.bin` (MD5
+`f23601102138f87c33025877767ebf76`): a mouse turn-left click changed the
+loaded party's direction to west, and a mouse Back click moved it from
+`(1,0)` to `(1,1)` while advancing one runtime tick. This verifies native
+input dispatch with real media, not the remaining live rendering gap: the
+current Theron viewport can still show a frozen capture rather than a
+state-driven dungeon frame.
+
 ## 2026-10-24 — match DM1's dungeon keyboard layout
 
 Loaded-dungeon Theron input now maps arrows and A/D to side-steps, Q/E to
@@ -10,7 +30,8 @@ Startup arrows retain Theron's menu navigation. The focused
 both the test target and native Firestaff target built. A native C/SDL Debug
 run with authentic JP Track 02 logged these inputs into Theron's loaded-dungeon
 movement path. This verifies keyboard dispatch, not full visual/gameplay
-parity. Mouse pointer zones remain open; mouse buttons still map Button I/II.
+parity. The visible mouse movement panel and its real-media dispatch are
+recorded above.
 
 ## 2026-10-24 — initialize SDL's native gamepad subsystem
 
@@ -20,8 +41,8 @@ subsystem reference. The focused `m11_gamepad_csb_input_bridge` regression
 passed three consecutive runs on TRV2, and the native Firestaff target built
 successfully. A native Debug run with authentic Japanese Rev. 1 Track 02 and an
 isolated virtual controller reached the loaded Theron runtime and advanced
-native ticks. This verifies the SDL controller path; it does not close the
-separate keyboard/mouse parity request or establish visual gameplay parity.
+native ticks. This verifies the SDL controller path, not complete visual
+gameplay parity.
 
 ## 2026-10-24 — keep authenticated CLI-check output in its build directory
 

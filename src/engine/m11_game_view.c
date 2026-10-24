@@ -37939,6 +37939,65 @@ static M11_GameInputResult m11_theron_handle_startup_pointer(
     return m11_theron_apply_startup_action_host_receipt(state, &receipt);
 }
 
+/* Firestaff-owned desktop controls for Theron's six movement-panel actions.
+ * The retail PCE game is controller-only; these bounds belong to this visible
+ * host overlay and are not inferred from the original's internal cursor
+ * samples. Keep this logical 320x200 layout aligned with its drawing helper. */
+enum {
+    M11_THERON_MOUSE_CANVAS_W = 320,
+    M11_THERON_MOUSE_CANVAS_H = 200,
+    M11_THERON_MOUSE_PANEL_X = 182,
+    M11_THERON_MOUSE_PANEL_Y = 149,
+    M11_THERON_MOUSE_CELL_W = 44,
+    M11_THERON_MOUSE_CELL_H = 23
+};
+
+static M12_MenuInput m11_theron_mouse_control_input_at(
+    const M11_GameViewState *state, int x, int y)
+{
+    int width = state ? state->presentationWidth : 0;
+    int height = state ? state->presentationHeight : 0;
+    int logical_x;
+    int logical_y;
+    int column;
+    int row;
+
+    if (width <= 0) width = M11_THERON_MOUSE_CANVAS_W;
+    if (height <= 0) height = M11_THERON_MOUSE_CANVAS_H;
+    if (x < 0 || y < 0 || x >= width || y >= height) {
+        return M12_MENU_INPUT_NONE;
+    }
+    logical_x = (int)((int64_t)x * M11_THERON_MOUSE_CANVAS_W / width);
+    logical_y = (int)((int64_t)y * M11_THERON_MOUSE_CANVAS_H / height);
+    if (logical_x < M11_THERON_MOUSE_PANEL_X ||
+        logical_x >= M11_THERON_MOUSE_PANEL_X + 3 * M11_THERON_MOUSE_CELL_W ||
+        logical_y < M11_THERON_MOUSE_PANEL_Y ||
+        logical_y >= M11_THERON_MOUSE_PANEL_Y + 2 * M11_THERON_MOUSE_CELL_H) {
+        return M12_MENU_INPUT_NONE;
+    }
+
+    column = (logical_x - M11_THERON_MOUSE_PANEL_X) /
+             M11_THERON_MOUSE_CELL_W;
+    row = (logical_y - M11_THERON_MOUSE_PANEL_Y) /
+          M11_THERON_MOUSE_CELL_H;
+    if (row == 0) {
+        switch (column) {
+        case 0: return M12_MENU_INPUT_TURN_LEFT;
+        case 1: return M12_MENU_INPUT_UP;
+        case 2: return M12_MENU_INPUT_TURN_RIGHT;
+        default: break;
+        }
+    } else if (row == 1) {
+        switch (column) {
+        case 0: return M12_MENU_INPUT_STRAFE_LEFT;
+        case 1: return M12_MENU_INPUT_DOWN;
+        case 2: return M12_MENU_INPUT_STRAFE_RIGHT;
+        default: break;
+        }
+    }
+    return M12_MENU_INPUT_NONE;
+}
+
 static int m11_csb_fmtowns_inventory_slot_rectangle(
     const M11_GameViewState *state, int source_slot_box,
     int *out_x, int *out_y, int *out_width, int *out_height)
@@ -39150,8 +39209,11 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
      * table.  Keep pointer motion as position-only state (HandlePointerMove)
      * so moving over an object never selects or hops between objects.  During
      * startup Button I still needs the source-space menu hit test; Button II
-     * cancels startup selection and has no standalone dungeon action. The
-     * retail manual (printed p. 5; see
+     * cancels startup selection and has no standalone dungeon action. In a
+     * loaded dungeon, left clicks on the visible Firestaff-owned six-button
+     * panel select its host-defined movement controls; other left clicks
+     * retain Button I's wait/tick action. The panel bounds are not original
+     * PCE hitboxes. The retail manual (printed p. 5; see
      * docs/source-lock/theron-button-ii-manual-source-lock.md) specifies it
      * as a modifier when combined with a direction input. Once the dungeon
      * is live Button I enters the authenticated Theron input facade directly.
@@ -39173,7 +39235,11 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             return M11_GAME_INPUT_IGNORED;
         }
         if ((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0) {
-            return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT);
+            M12_MenuInput control_input =
+                m11_theron_mouse_control_input_at(state, x, y);
+            return M11_GameView_HandleInput(
+                state, control_input != M12_MENU_INPUT_NONE
+                    ? control_input : M12_MENU_INPUT_ACCEPT);
         }
         if ((buttonMask & DM1_V1_MOUSE_MASK_RIGHT_PC34) != 0) {
             return M11_GameView_HandleInput(state, M12_MENU_INPUT_BACK);
@@ -72145,6 +72211,67 @@ static int m11_theron_install_authenticated_vce_palette(
     return M11_Render_SetIndexedPaletteRgb6(rgb6) == M11_RENDER_OK;
 }
 
+static void m11_theron_draw_mouse_controls(
+    const M11_GameViewState *state,
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    static const char *const labels[2][3] = {
+        { "TURN L", "FORWARD", "TURN R" },
+        { "STEP L", "BACK", "STEP R" }
+    };
+    int row;
+    int column;
+    int scale;
+    M11_TextStyle label_style = g_text_small;
+
+    if (!state || !framebuffer || framebufferWidth <= 0 ||
+        framebufferHeight <= 0 || state->sourceKind !=
+            M11_GAME_SOURCE_THERON_TRACK02 ||
+        state->theronState.startup_phase != THERON_STARTUP_PHASE_IN_DUNGEON ||
+        !state->theronState.level_loaded) {
+        return;
+    }
+
+    /* The overlay is host UI in Firestaff's logical 320x200 canvas. Scale
+     * its own pixels with the source framebuffer; its hitboxes use the same
+     * normalized layout in m11_theron_mouse_control_input_at(). */
+    scale = framebufferWidth / M11_THERON_MOUSE_CANVAS_W;
+    if (scale < 1) scale = 1;
+    label_style.scale = scale;
+    for (row = 0; row < 2; ++row) {
+        for (column = 0; column < 3; ++column) {
+            const int logical_x = M11_THERON_MOUSE_PANEL_X +
+                                  column * M11_THERON_MOUSE_CELL_W;
+            const int logical_y = M11_THERON_MOUSE_PANEL_Y +
+                                  row * M11_THERON_MOUSE_CELL_H;
+            const int x0 = logical_x * framebufferWidth /
+                           M11_THERON_MOUSE_CANVAS_W;
+            const int y0 = logical_y * framebufferHeight /
+                           M11_THERON_MOUSE_CANVAS_H;
+            const int x1 = (logical_x + M11_THERON_MOUSE_CELL_W) *
+                           framebufferWidth / M11_THERON_MOUSE_CANVAS_W;
+            const int y1 = (logical_y + M11_THERON_MOUSE_CELL_H) *
+                           framebufferHeight / M11_THERON_MOUSE_CANVAS_H;
+            const int cell_width = x1 - x0;
+            const int cell_height = y1 - y0;
+            const int text_width = (int)strlen(labels[row][column]) *
+                                   6 * scale;
+
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x0, y0, cell_width, cell_height, M11_COLOR_BLACK);
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          x0, y0, cell_width, cell_height,
+                          M11_COLOR_LIGHT_GRAY);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          x0 + (cell_width - text_width) / 2,
+                          y0 + (cell_height - 7 * scale) / 2,
+                          labels[row][column], &label_style);
+        }
+    }
+}
+
 void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
                                     int framebufferWidth,
@@ -73089,6 +73216,8 @@ static void m11_game_view_draw_source(M11_GameViewState* state,
         if (state->theronState.dungeon_capture_required) {
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           18, 18, "TRACK02 CAPTURE REQUIRED", &g_text_title);
+            m11_theron_draw_mouse_controls(state, framebuffer,
+                                           framebufferWidth, framebufferHeight);
             m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
                                 framebufferHeight);
             g_drawState = NULL;
@@ -73132,6 +73261,8 @@ static void m11_game_view_draw_source(M11_GameViewState* state,
             memset(framebuffer, 0,
                    (size_t)framebufferWidth * (size_t)framebufferHeight);
         }
+        m11_theron_draw_mouse_controls(state, framebuffer,
+                                       framebufferWidth, framebufferHeight);
         m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
                             framebufferHeight);
         g_drawState = NULL;
