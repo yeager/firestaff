@@ -8,9 +8,12 @@ native Firestaff gameplay.
 ## 2026-10-24 — current evidence boundary
 
 Three current-source Firestaff `--debug` runs on TRV2 passed with authentic JP
-Rev. 1 Track 02 (MD5 `b7afb338ad31be1025b53f9aff12d73a`). Each reached the
-bounded native runtime with the level loaded, party `(2,3,0)`, two champions,
-291 source objects and four loaded dungeon levels. The
+Rev. 1 Track 02 (MD5 `b7afb338ad31be1025b53f9aff12d73a`) through the default
+`FIRESTAFF_DATA` directory and `--theron-native jp`. Each reached
+`phase=theron-runtime` with the level loaded, party `(1,0,0)`, two champions,
+291 source objects and four loaded dungeon levels. This also verifies the
+null-safe default-data path when no `--data-dir` argument is supplied. The
+separate movement regression remains recorded below. The
 `test_theron_v1_track02_dungeon_loader` real-media test also passed three
 loops and reported pit-record candidates across all seven JP/US dungeons.
 These checks establish Firestaff runtime admission and source-record
@@ -28,13 +31,13 @@ diagnostics only; do not promote them to original-game parity. The pit
 consumer remains blocked; see the
 [pit evidence gap](source-lock/theron-disassembly/theron-pit-gate-evidence-gap-20261024.md).
 
-The Oct. 24 `pce_fast` reference binary came from an older capture-builder
-source copy and did not contain the current scripted PCE Fast input hook.
-Consequently its input attempt cannot verify scheduled gameplay input; the
-host-key trace recorded neutral PCE pad values and no game-command receipt.
-Rebuild with `scripts/build_mednafen_theron_irq2_trace.sh` before another
-scripted-input capture, then require the plan, event, apply, and controller
-read receipts to agree before interpreting gameplay state.
+The fresh clean-source Oct. 24 `pce_fast` reference binary contains the
+scripted-input hook. A bounded replay from the authentic JP state recorded
+one non-System-Card controller poll but no matching replay-plan/event/apply
+or game-command-consumer receipt, and the capture helper rejected the bundle.
+This provides no evidence of movement. Before interpreting any later
+reference capture, require plan, event, apply, and controller-read receipts
+to agree. Firestaff gameplay continues to run in the native C/SDL runtime.
 
 Next reference-capture work is to verify a controlled input with same-session
 command-consumer, party-pose and active-map receipts, then bind the executing

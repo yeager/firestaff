@@ -1,3 +1,17 @@
+## 2026-10-24 — native default-data Theron launch verified
+
+The native `--theron-native jp` path could dereference a null explicit data
+path when using `FIRESTAFF_DATA`. A TRV2 GDB trace localized the crash to
+`strstr(requestedDataDir, "::")` in `resolve_theron_native_track02()`. The
+explicit-file probe now checks that the path exists before inspecting it.
+The native Firestaff binary was rebuilt with `-j1`; three repeated `--debug`
+boot probes using authentic JP Rev. 1 Track 02 all reached
+`phase=theron-runtime` with two champions, 291 source objects, and four
+loaded dungeon levels. This verifies native startup and real-data admission,
+not complete rendering, gameplay, or save parity. The dungeon renderer
+remains fail-closed until authentic tile/material ownership and projection
+semantics are established.
+
 ## 2026-10-24 — original US emulator title input remains unverified
 
 Latest evidence update: a separate authentic JP emulator save state visibly
@@ -5,12 +19,13 @@ opens dungeon gameplay, but it is not joined to a source map or party
 coordinates. Host-key input produced PCE pad values without a game
 command-consumer receipt. A separate baseline autoload emitted VDC/RAM
 snapshots but had no verified input or CD transition; a host-input attempt
-failed to emit required VDC snapshots. The Oct. 24 `pce_fast` binary was built
-from an older capture-source copy and lacks the current scripted PCE Fast
-input hook. Rebuild through `scripts/build_mednafen_theron_irq2_trace.sh`,
-then require matching replay-plan/event/apply and controller-read receipts.
-Keep these reference captures separate from the US cold-start session below,
-which remained on the System Card screen.
+failed to emit required VDC snapshots. A fresh clean-source `pce_fast`
+reference build now contains the scripted-input hook. Its bounded replay
+from the authentic JP state recorded one non-System-Card controller poll but
+no matching replay-plan/event/apply or game-command-consumer receipt, so the
+capture was rejected and establishes no movement. Keep this reference-only
+result separate from the US cold-start session below, which remained on the
+System Card screen.
 
 The native path is independently verified: three current-source Firestaff
 `--debug` runs with authentic JP Rev. 1 Track 02 reached runtime, with the
@@ -20,11 +35,11 @@ and emitted pit-record candidates for all seven JP and US dungeons. Neither
 result proves original movement or pit behavior. The candidate positions have
 not been joined to the emulator state's active map and party coordinates.
 
-Next: rebuild or select a capture-capable `pce_fast` emulator that emits the
-required VDC snapshots; capture a controlled input with a game command
+Next reference-only work: capture a controlled input with a game command
 consumer, party pose and active map in the same session; then bind any pit
 query/caller to the executing bank, MPR mapping and authentic Track 02 record.
-Keep pit behavior blocked until that source/runtime join exists.
+Keep pit behavior blocked until that source/runtime join exists. Firestaff
+gameplay itself continues to run in the native C/SDL runtime.
 
 Turn-input receipt audit: all four left/right controls now report a failed
 source-actuator queue reservation as blocked instead of claiming a turn. The

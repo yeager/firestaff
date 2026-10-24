@@ -1,5 +1,15 @@
 # Firestaff DONE — Theron's Quest
 
+## ✅ 2026-10-24 native Theron default-data launch guard
+
+Fixed a null-path crash in `resolve_theron_native_track02()`: the explicit
+loose-file probe now checks `requestedDataDir` before calling `strstr`. A
+native `--debug` boot probe using the default `FIRESTAFF_DATA` path and
+authentic JP Rev. 1 Track 02 passed three repeated loops on TRV2. Each reached
+`theron-runtime` with two champions, 291 source objects, and four loaded
+dungeon levels. This verifies native startup and authenticated data
+admission, not complete game or visual parity.
+
 ## 2026-10-24 — use the configured SDL driver for capture module discovery
 
 - The Mednafen capture helper now passes its selected SDL video driver and a
