@@ -2234,3 +2234,10 @@ only. Active work is in `TODO.md` and `TODO-<game>.md`.
   authentic first runtime twice and confirmed the source archive hash was
   unchanged. This is SDL dummy input/runtime coverage, not native display or
   physical input parity.
+- The `BUILD_TESTING=OFF` Xcode generator configuration now gives the bundled
+  7z decoder the same supported feature subset as normal test builds. Previously
+  the decoder's `Z7_NO_METHODS_FILTERS` definition was set only inside the test
+  block, so an arm64 Xcode production build linked against missing Delta/branch
+  conversion symbols. Xcode 27.1 now builds the Release `firestaff` target on
+  arm64, and its version and early CLI argument checks pass. The target is a
+  command-line executable, so code signing is not required for this compile.

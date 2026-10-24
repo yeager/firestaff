@@ -94,6 +94,13 @@ set(FIRESTAFF_DM2_MAC_DEMO_ARCHIVE
 set(_firestaff_dm2_mac_candidates
     "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
     "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip")
+# The bundled LZMA SDK copy omits the optional Delta and branch-conversion
+# decoder sources. Production and test builds must use the same supported
+# decoder subset; applying this only inside BUILD_TESTING leaves release/Xcode
+# configurations with unresolved symbols at link time.
+set_source_files_properties(third_party/lzma_sdk/7zDec.c PROPERTIES
+    COMPILE_DEFINITIONS Z7_NO_METHODS_FILTERS)
+
 if(BUILD_TESTING)
     foreach(_candidate IN LISTS _firestaff_dm2_mac_candidates)
         if(EXISTS "${_candidate}")
@@ -4027,8 +4034,6 @@ if(BUILD_TESTING)
         third_party/lzma_sdk/CpuArch.c
         third_party/lzma_sdk/LzmaDec.c
         third_party/lzma_sdk/Lzma2Dec.c)
-    set_source_files_properties(third_party/lzma_sdk/7zDec.c PROPERTIES
-        COMPILE_DEFINITIONS Z7_NO_METHODS_FILTERS)
     target_include_directories(test_firestaff_7z_extract PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/third_party/lzma_sdk)
