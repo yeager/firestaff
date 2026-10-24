@@ -26,10 +26,11 @@ int main(void)
         return 1;
     }
 
-    /* A retail source identity alone is not an action receipt.  Exercise the
-     * actual production tick boundary so queued input cannot move an
-     * unplaced party or advance gameplay timers before Saturn ownership is
-     * bound. */
+    /* A retail source identity alone is not an action receipt.  The six
+     * basic movement commands have separate Ymir capture evidence, so they
+     * may consume a tick; without a loaded DGN map they still must not move
+     * the fixture pose.  Other actions remain closed until their Saturn
+     * ownership is bound. */
     memset(&engine, 0, sizeof(engine));
     memset(&mechanics, 0, sizeof(mechanics));
     engine.source = NEXUS_SRC_ISO;
@@ -39,9 +40,19 @@ int main(void)
         nexus_mechanics_tick(&mechanics, &engine) != 0 ||
         mechanics.party_x != 7 || mechanics.party_y != 9 ||
         mechanics.party_dir != 0 ||
-        mechanics.total_ticks != 0 || mechanics.input_count != 1) {
+        mechanics.total_ticks != 1 || mechanics.input_count != 0) {
         fprintf(stderr,
-                "FAIL: retail-source Nexus mechanics tick mutated world state without a Saturn action receipt\n");
+                "FAIL: retail movement escaped its DGN pose boundary\n");
+        return 1;
+    }
+
+    if (nexus_mechanics_push_command(&mechanics, NEXUS_CMD_INTERACT) != 0 ||
+        nexus_mechanics_tick(&mechanics, &engine) != 0 ||
+        mechanics.party_x != 7 || mechanics.party_y != 9 ||
+        mechanics.party_dir != 0 ||
+        mechanics.total_ticks != 1 || mechanics.input_count != 0) {
+        fprintf(stderr,
+                "FAIL: unsupported retail Nexus action escaped the Saturn receipt gate\n");
         return 1;
     }
 
