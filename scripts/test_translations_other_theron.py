@@ -82,6 +82,8 @@ class TheronTranslationUpdateTests(unittest.TestCase):
         captions = translations_other.THERON_MOUSE["zh"]
         self.assertNotEqual(captions["TURN L"], captions["STEP L"])
         self.assertNotEqual(captions["TURN R"], captions["STEP R"])
+        self.assertLessEqual(len(captions["TURN L"]), 7)
+        self.assertLessEqual(len(captions["TURN R"]), 7)
         self.assertLessEqual(len(captions["STEP L"]), 7)
         self.assertLessEqual(len(captions["STEP R"]), 7)
 
