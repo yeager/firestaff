@@ -274,7 +274,7 @@ The Saturn's DMDF (data) and DGN (dungeon geometry) formats are documented elsew
 | **CSBwin** | <https://github.com/zelurker/CSB> | Paul Stevens' CSB port to C++ (open source) |
 | **SKWIN** | <https://github.com/gbsphenx/skproject/releases> | DM2 Windows port |
 | **sck** | <http://greatstone.free.fr/dm/t_download.html> | Pierre Monnot's asset extraction tool (Java) |
-| **Theron's Quest US instruction manual scan** | <https://www.tg-16.com/contributors/bernie/Dungeon_Master/Dungeon_Master.pdf> | Retail startup, Button I menu selection, stage selection, gameplay controls and between-stage saving; it gives no multi-second menu-button timing. DMWeb's edition page also hosts the original booklet scan. |
+| **Theron's Quest US instruction manual scan** | <https://www.tg-16.com/contributors/bernie/Dungeon_Master/Dungeon_Master.pdf> | Printed page 5 defines Button II as Cancel and describes holding it with a direction key for simplified movement; Button I selects menu entries. The manual gives no multi-second menu-button timing. DMWeb's edition page also hosts the original booklet scan. |
 | **DMFiles Shared OneDrive** | <https://1drv.ms/f/s!AsBu7boYHQokbYK3rjKY0b5_ra8> | Community-maintained OneDrive with custom dungeons, clones, games, tools |
 | **DM Forums** | <https://www.dungeon-master.com/forum/> | Active community forum (now ~25 years old) |
 | **DM Wiki** | <http://dmwiki.atomas.com/> | CSBwin-focused wiki |

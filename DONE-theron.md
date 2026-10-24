@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-24 — native Button II cancel behavior
+
+Corrected the native Theron mapping so right mouse and long touch send Button
+II's documented cancel input rather than the host wait/tick command. The
+runtime now leaves the world tick unchanged for Button II; direction keys
+continue to perform the manual's simplified forward/back/turn commands
+directly. The focused input-mapping and runtime-input regressions cover the
+mapping and unchanged tick receipt. See
+`docs/source-lock/theron-button-ii-manual-source-lock.md`.
+
+This does not establish parity for all Button I item transactions, combined
+physical-button sampling, or other gameplay systems.
+
 ## ✅ 2026-10-24 native Theron default-data launch guard
 
 Fixed a null-path crash in `resolve_theron_native_track02()`: the explicit

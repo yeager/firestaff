@@ -39150,8 +39150,11 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
      * table.  Keep pointer motion as position-only state (HandlePointerMove)
      * so moving over an object never selects or hops between objects.  During
      * startup Button I still needs the source-space menu hit test; Button II
-     * is the source action command.  Once the dungeon is live both buttons
-     * enter the authenticated Theron input facade directly.
+     * cancels startup selection and has no standalone dungeon action. The
+     * retail manual (printed p. 5; see
+     * docs/source-lock/theron-button-ii-manual-source-lock.md) specifies it
+     * as a modifier when combined with a direction input. Once the dungeon
+     * is live Button I enters the authenticated Theron input facade directly.
      *
      * Source lock: THQUEST.ASM T400/T520/T560/T600/T700 owns the startup,
      * movement and action boundaries.  Do not route these events through the
@@ -39165,7 +39168,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             }
             if ((buttonMask & DM1_V1_MOUSE_MASK_RIGHT_PC34) != 0) {
                 return M11_GameView_HandleInput(
-                    state, M12_MENU_INPUT_ACTION);
+                    state, M12_MENU_INPUT_BACK);
             }
             return M11_GAME_INPUT_IGNORED;
         }
@@ -39173,7 +39176,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT);
         }
         if ((buttonMask & DM1_V1_MOUSE_MASK_RIGHT_PC34) != 0) {
-            return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACTION);
+            return M11_GameView_HandleInput(state, M12_MENU_INPUT_BACK);
         }
         return M11_GAME_INPUT_IGNORED;
     }

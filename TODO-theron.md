@@ -435,6 +435,16 @@ dynamic receipt binds any candidate sector to the runtime bank. See
 
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-24 — native Button II semantics corrected from the retail manual
+
+Button II now maps to cancel and no longer advances the native dungeon tick
+when sent by right mouse or long touch. The manual's simplified movement
+combination needs no second native mode because direction keys already issue
+those four commands directly. `Return` and `Space` remain Firestaff wait/tick
+shortcuts. See `docs/source-lock/theron-button-ii-manual-source-lock.md`.
+This control correction does not close broader input, item-use, transition,
+combat, or presentation parity.
+
 ## 2026-10-24 — Native runtime and latest capture boundary
 
 Firestaff must run Theron's Quest in its native C/SDL runtime. Mednafen is an

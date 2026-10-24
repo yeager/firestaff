@@ -462,6 +462,24 @@ static int test_wait_tick(void)
     return 1;
 }
 
+static int test_button_ii_does_not_tick_world(void)
+{
+    Theron_V1_World world;
+    Theron_V1_BootRuntimeInputReceipt receipt;
+
+    TEST("Button II cancel does not advance the dungeon world tick");
+    setup_open_room(&world);
+    ASSERT(theron_v1_boot_runtime_handle_m12_input(&world, NULL,
+            M12_MENU_INPUT_BACK, &receipt) == 1,
+           "BACK should be handled");
+    ASSERT(receipt.tick_count == 10, "BACK must leave tick unchanged");
+    ASSERT(receipt.waited == 0, "BACK must not report a wait");
+    ASSERT(receipt.result == THERON_V1_BOOT_RUNTIME_INPUT_RESULT_IGNORED,
+           "BACK must not request a redraw");
+    PASS();
+    return 1;
+}
+
 static int test_idle_tick(void)
 {
     Theron_V1_World world;
@@ -675,6 +693,7 @@ int main(void)
     test_move_blocked();
     test_exit_dungeon();
     test_wait_tick();
+    test_button_ii_does_not_tick_world();
     test_idle_tick();
     test_pickup_routes_to_front_cell();
     test_source_inventory_selection_cycles_verified_slots();

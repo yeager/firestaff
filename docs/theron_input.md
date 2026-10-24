@@ -72,7 +72,11 @@ actuator timing or retail queue capacity; see the 2026-10-24 entry in
   `$06/$04` side-step commands. The mapping is intentionally different even
   though A/D also appear as alternate PC Engine D-pad bindings above.
 - Mouse button 1/2 are direct Button I/II bindings. A short touch emits
-  Button I; a long touch emits Button II, including during startup.
+  Button I; a long touch emits Button II, including during startup. Button II
+  cancels startup selection and does not advance a dungeon tick. The retail
+  manual also describes holding Button II with a direction key as simplified
+  movement; Firestaff's native direction keys already issue those movement
+  commands directly.
 - Run and Select have no keyboard binding (no gameplay use currently).
 - Gamepad input follows the SDL3 gamepad mapping (D-pad, A/B buttons) where
   the selected input mode permits gamepad events.

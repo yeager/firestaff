@@ -132,21 +132,20 @@ M12_MenuInput M11_TheronNavigationInputFromKeycode(int keycode)
 M12_MenuInput M11_TheronMouseButtonToInput(int button)
 {
     if (button == SDL_BUTTON_LEFT) return M12_MENU_INPUT_ACCEPT;
-    /* The user-facing Theron contract is ordinary mouse button 1/2:
-     * SDL left/right.  SDL_BUTTON_MIDDLE is a third physical button and
-     * must stay inert; treating it as Button II made a middle click
-     * unexpectedly advance the source tick.  Mouse motion is deliberately
-     * handled by HandlePointerMove, not by a hit-test: moving the pointer
-     * must never select or hop between objects. */
+    /* Theron's Quest Instruction Manual, printed p. 5, assigns Button II to
+     * cancel and to the held simplified-movement modifier; it is not a
+     * world-tick command. See docs/source-lock/
+     * theron-button-ii-manual-source-lock.md. Keep Button II on an ordinary
+     * right mouse button; SDL_BUTTON_MIDDLE remains inert. */
     if (button == SDL_BUTTON_RIGHT) {
-        return M12_MENU_INPUT_ACTION;
+        return M12_MENU_INPUT_BACK;
     }
     return M12_MENU_INPUT_NONE;
 }
 
 M12_MenuInput M11_TheronTouchButtonInput(int longPress)
 {
-    return longPress ? M12_MENU_INPUT_ACTION : M12_MENU_INPUT_ACCEPT;
+    return longPress ? M12_MENU_INPUT_BACK : M12_MENU_INPUT_ACCEPT;
 }
 
 int M11_GamepadEnabledForInputMode(int inputModeIndex, int configuredEnabled)

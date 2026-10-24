@@ -118,10 +118,10 @@ int main(void) {
           M12_MENU_INPUT_RIGHT);
     CHECK(M11_TheronMouseButtonToInput(SDL_BUTTON_LEFT) ==
           M12_MENU_INPUT_ACCEPT);
-    /* Button II is the ordinary mouse's right button.  A physical middle
+    /* Button II cancels; it is not a world-tick action. A physical middle
      * button is not mouse button 1/2 and must remain inert. */
     CHECK(M11_TheronMouseButtonToInput(SDL_BUTTON_RIGHT) ==
-          M12_MENU_INPUT_ACTION);
+          M12_MENU_INPUT_BACK);
     CHECK(M11_TheronMouseButtonToInput(SDL_BUTTON_MIDDLE) ==
           M12_MENU_INPUT_NONE);
     /* Pointer motion is deliberately not a source command.  The live SDL
@@ -130,7 +130,7 @@ int main(void) {
      * between objects as a selection cursor. */
     CHECK(M11_TheronMouseButtonToInput(0) == M12_MENU_INPUT_NONE);
     CHECK(M11_TheronTouchButtonInput(0) == M12_MENU_INPUT_ACCEPT);
-    CHECK(M11_TheronTouchButtonInput(1) == M12_MENU_INPUT_ACTION);
+    CHECK(M11_TheronTouchButtonInput(1) == M12_MENU_INPUT_BACK);
 
     if (failures) return 1;
     puts("PASS: m11_gamepad_csb_input_bridge");
