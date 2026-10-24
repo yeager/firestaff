@@ -1,3 +1,13 @@
+- 2026-10-24: Restored the DM1 FM Towns entrance-door correction for fast
+  computers. ReDMCSB `ENTRANCE.C:F0438` documents BUG0_71: one VBlank per door
+  step can make the doors open too quickly. The 31 visible frames now use
+  three 60 Hz VBlank intervals per step, about 1.55 seconds total. The
+  original FM Towns archive test passed its English and Japanese M12 routes
+  and measured 45–60 ms between frames (1.45–1.80 seconds overall). The later
+  gameplay-input matrix in that long script was stopped after these relevant
+  checks passed; this verifies startup cadence, not all FM Towns input or
+  visual parity.
+
 - 2026-10-21: Atari ST v1.2 authentic first-combat coverage now distinguishes
   a legitimate first attack miss from a broken damage path. The HoC regression
   waits for a later source group-169 attack and requires actual party HP loss;
