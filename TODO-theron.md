@@ -4,15 +4,18 @@
   Its task-specific profile maps PCE I, II, and RUN to keyboard codes 91, 90,
   and 40; these differ from the global profile, so global hotkey assumptions
   are unsafe.
-- Repeated four-second RUN and confirm inputs did not produce a visible
-  transition from the Theron's Quest title screen to a file-selection or
-  gameplay screen. The existing save file was not changed and no new save was
-  written. This attempt is not gameplay evidence.
-- Repeat from a fresh authenticated US session using the known `pce_fast`
-  capture route. Confirm the title menu is visible before holding the selected
-  game action, then capture the file and dungeon screens with the same-session
-  controller and RAM receipts. Do not infer pit semantics from this title
-  attempt.
+- Repeated four-second RUN and confirm inputs in the normal-`pce` window did
+  not reach file selection. An F10 reset visibly returned to the authentic
+  System Card 3.0 screen; two further four-second RUN holds, separated by more
+  than twenty seconds, left `JUST A MOMENT...` on screen. The existing save
+  file was unchanged and no new save was written. This is not gameplay
+  evidence.
+- The user clarified that the selected game-menu action itself must be held
+  for several seconds. Repeat from an isolated authenticated US `pce_fast`
+  session using the known capture route. First verify that the Theron menu is
+  visible, then hold its selected action and capture the file and dungeon
+  screens with same-session controller and RAM receipts. Do not infer pit
+  semantics from this boot attempt.
 
 ## 2026-10-24 — require authentic-media and debug receipts in paired captures
 
