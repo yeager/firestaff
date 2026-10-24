@@ -30,7 +30,8 @@ if [[ $(wc -c <"$vram") -ne 65536 || $(wc -c <"$vce") -ne 1024 ||
     exit 1
 fi
 
-output=$(mktemp "${TMPDIR:-/tmp}/firestaff-theron-capture-cli.XXXXXX")
+app_dir=$(cd -- "$(dirname -- "$app")" && pwd)
+output=$(mktemp "$app_dir/firestaff-theron-capture-cli.XXXXXX")
 trap 'rm -f "$output"' EXIT
 
 if SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
