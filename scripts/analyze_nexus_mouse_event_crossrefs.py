@@ -23,6 +23,19 @@ HIT_RECT_TABLE_OFFSET = 0x38000
 HIT_RECT_TABLE_SUBSET_OFFSET = HIT_RECT_TABLE_OFFSET + 8 * 8
 MOUSE_SOURCE_PATH_OFFSET = 0x387FC
 
+# Retail mouse hit-region setup discovered by following the direct
+# MOV.L-literal references to the DM.BIN table. These are file offsets in the
+# same SH-2 image as the event strings above; they are not source symbols.
+MOUSE_REGION_SETUP_SITE = 0x16588
+MOUSE_REGION_REGISTER_ROUTINE = 0x24AD0
+MOUSE_REGION_CALLBACK_DISPATCH = 0x24B22
+MOUSE_REGION_CALLBACK_STORE = 0x24B14
+MOUSE_REGION_CALLBACK_SLOT_LOAD = 0x24B08
+MOUSE_REGION_CALLBACK_LOAD = 0x24B2E
+MOUSE_REGION_CALLBACK_CALL = 0x24B36
+MOUSE_REGION_ACTIVE_FLAG_LOAD = 0x24B26
+MOUSE_REGION_ACTIVE_FLAG_TEST = 0x24B2A
+
 
 def resolve_dm_bin(explicit: Path | None) -> Path:
     if explicit is not None:
@@ -51,6 +64,84 @@ def mov_l_literal_pointer_xrefs(data: bytes, target_offset: int) -> list[tuple[i
         if 0 <= literal_offset <= len(data) - 4 and read_be32(data, literal_offset) == target_address:
             refs.append((instruction_offset, opcode, literal_offset))
     return refs
+
+
+def mov_l_pc_literal(data: bytes, instruction_offset: int) -> tuple[int, int] | None:
+    """Return (register, value) for one SH-2 MOV.L @(disp,PC),Rn."""
+    if instruction_offset < 0 or instruction_offset + 2 > len(data):
+        return None
+    opcode = int.from_bytes(data[instruction_offset : instruction_offset + 2], "big")
+    if opcode >> 12 != 0xD:
+        return None
+    pc = DM_BASE + instruction_offset
+    literal_address = ((pc + 4) & ~3) + (opcode & 0xFF) * 4
+    literal_offset = literal_address - DM_BASE
+    if literal_offset < 0 or literal_offset + 4 > len(data):
+        return None
+    return (opcode >> 8) & 0xF, read_be32(data, literal_offset)
+
+
+def report_mouse_region_registration(data: bytes) -> bool:
+    """Verify the retail hit-region registration and indirect callback path."""
+    expected_setup = (
+        (0x16588, 6, DM_BASE + 0x164A8),  # R6: callback code
+        (0x1658A, 5, DM_BASE + 0x3850C),  # R5: companion retail table
+        (0x1658C, 4, DM_BASE + 0x38040),  # R4: hit rectangles, entries 8+
+        (0x1658E, 2, DM_BASE + MOUSE_REGION_REGISTER_ROUTINE),
+    )
+    valid = True
+    resolved: list[tuple[int, int, int]] = []
+    for instruction_offset, expected_register, expected_value in expected_setup:
+        decoded = mov_l_pc_literal(data, instruction_offset)
+        if decoded is None:
+            print(f"mouse_region_setup=invalid instruction=0x{instruction_offset:06x}")
+            valid = False
+            continue
+        register, value = decoded
+        resolved.append((instruction_offset, register, value))
+        print(f"mouse_region_setup_movl=insn:0x{instruction_offset:06x} "
+              f"R{register}=0x{value:08x}")
+        if (register, value) != (expected_register, expected_value):
+            valid = False
+
+    call_opcode = int.from_bytes(data[0x16590:0x16592], "big")
+    if call_opcode != 0x420B:
+        print(f"mouse_region_setup_call=invalid opcode=0x{call_opcode:04x}")
+        valid = False
+    else:
+        print("mouse_region_setup_call=JSR @R2 at file_offset=0x001590")
+
+    # The registration routine stores the supplied R6 callback in the global
+    # callback slot. The dispatch routine checks its active flag, then calls
+    # that stored function pointer. Validate the relevant instructions and
+    # resolve the two global addresses instead of inferring from a source path.
+    callback_store_slot = mov_l_pc_literal(
+        data, MOUSE_REGION_CALLBACK_SLOT_LOAD)
+    callback_slot = mov_l_pc_literal(data, MOUSE_REGION_CALLBACK_LOAD)
+    active_flag = mov_l_pc_literal(data, MOUSE_REGION_ACTIVE_FLAG_LOAD)
+    callback_store_opcode = int.from_bytes(
+        data[MOUSE_REGION_CALLBACK_STORE : MOUSE_REGION_CALLBACK_STORE + 2], "big")
+    active_test_opcode = int.from_bytes(
+        data[MOUSE_REGION_ACTIVE_FLAG_TEST : MOUSE_REGION_ACTIVE_FLAG_TEST + 2], "big")
+    callback_call_opcode = int.from_bytes(
+        data[MOUSE_REGION_CALLBACK_CALL : MOUSE_REGION_CALLBACK_CALL + 2], "big")
+    if (not callback_store_slot or callback_store_slot[0] != 4 or
+        not callback_slot or callback_slot[0] != 2 or
+        callback_store_slot[1] != callback_slot[1] or
+        not active_flag or active_flag[0] != 3):
+        print("mouse_region_callback_dispatch=invalid global pointer loads")
+        valid = False
+    elif (callback_store_opcode, active_test_opcode, callback_call_opcode) != (
+        0x2432, 0x2008, 0x4E0B
+    ):
+        print("mouse_region_callback_dispatch=invalid instruction sequence")
+        valid = False
+    else:
+        print(f"mouse_region_registration_r6_callback_slot=0x{callback_slot[1]:08x}")
+        print(f"mouse_region_dispatch_active_flag=0x{active_flag[1]:08x}")
+        print("mouse_region_dispatch=active-flag-guarded indirect JSR @R14 "
+              "after loading callback slot")
+    return valid
 
 
 def event_string_offsets(data: bytes) -> list[tuple[int, bytes]]:
@@ -114,7 +205,12 @@ def main() -> int:
         print(f"data_symbol={label} file_offset=0x{offset:06x} "
               f"direct_mov_l_literal_xrefs={rendered}")
 
-    print("interpretation=direct-reference inventory only; no event-to-command or gameplay action is admitted")
+    if not report_mouse_region_registration(data):
+        print("NEXUS_MOUSE_REGION_REGISTRATION_INVALID: retail instruction path changed")
+        return 1
+
+    print("interpretation=verified retail hit-region registration and callback transport; "
+          "callback semantics and resulting gameplay actions remain unbound")
     return 0
 
 

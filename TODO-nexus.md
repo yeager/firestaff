@@ -136,7 +136,11 @@ on the PRS3 menu capture. See
   `scripts/analyze_nexus_mouse_event_crossrefs.py`: the hash-verified English
   DM.BIN has no direct PC-relative literal references to the 60 event-name
   strings, while its HUD table's subtable at `0x38040` is referenced. This
-  does not resolve indirect dispatch or identify a mouse command, so it does
-  not open the action gate. Capture the producer-to-callback path and a
-  resulting gameplay-state write before implementing it.
+  scan is supplemented by a verified SH-2 path that registers the hit-region
+  table with a callback and later dispatches indirectly through that callback
+  slot. The individual hit-region actions and resulting gameplay-state writes
+  are still unbound, so this does not open the action gate. Trace the callback
+  to its event targets and same-session gameplay-state writes before wiring
+  Nexus mouse gameplay.
   See `parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`.
+  See also `parity-evidence/verification/nexus-mouse-callback-dispatch-20261024/README.md`.

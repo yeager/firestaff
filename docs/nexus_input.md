@@ -63,10 +63,21 @@ mouse routes as Nexus parity.
 current English retail image, none of the 60 event-name strings has a direct
 literal-pointer reference. The image does reference the HUD hit-rectangle
 subtable beginning at file offset `0x38040`, and `yam\\mouse.c` appears in a
-separate source-path reference. This is only a direct-reference inventory:
-indirect tables, generated pointers, and runtime callback dispatch are not
-resolved, so it does not establish that mouse events are unused or bind them
-to game commands.
+separate source-path reference. The string scan alone cannot resolve indirect
+tables or generated pointers. The callback trace below follows one path beyond
+those string references, but it still does not bind individual hit regions to
+game commands.
+
+The analyzer now also verifies one retail registration and dispatch chain.
+SH-2 instructions at `DM.BIN:0x16588` load a callback at runtime address
+`0x060264a8`, a companion table at `0x0604850c`, and the hit rectangles at
+`0x06048040` (`DM.BIN:0x38040`), then call the setup routine at
+`0x06034ad0`. That routine stores the supplied callback pointer in a global
+slot; the paired dispatcher checks its active flag and makes an indirect call
+through that slot. This proves that the retail program registers and invokes
+a callback associated with the authentic hit-region data. The callback's
+state transitions and the action assigned to individual rectangles are still
+unresolved, so this evidence is not enough to implement click actions.
 
 ## Mouse and remaining input work
 
