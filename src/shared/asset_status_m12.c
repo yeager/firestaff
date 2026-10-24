@@ -106,6 +106,8 @@ static int m12_read_csb_fmtowns_staged_image(const char* path,
 static void m12_init_version_metadata(M12_AssetStatus* status);
 static void m12_init_required_file_metadata(M12_AssetStatus* status,
                                             int gameIndex);
+static int m12_version_is_launchable(const char* gameId,
+                                     const M12_VersionSpec* version);
 
 static int m12_explicit_path_is_archive(const char* path) {
     const char* extension;
@@ -5718,14 +5720,19 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
                     strcmp(md5, "7f9458e4a3972d06e649a6fa85a7f34b") == 0 &&
                     !m12_dm1_amiga36_package_ready(rootMatchedPaths[rootIndex][i], status->dm1DungeonLanguage)) continue;
                 version->matched = 1;
-                matchedAny = 1;
+                /* Preservation-only matches belong in the inventory but
+                 * cannot make a game selectable without a launch route. */
+                if (m12_version_is_launchable(gameSpec->gameId, spec)) {
+                    matchedAny = 1;
+                }
                 m12_copy_string(version->matchedPath,
                                 sizeof(version->matchedPath),
                                 rootMatchedPaths[rootIndex][i]);
                 m12_copy_string(version->matchedMd5,
                                 sizeof(version->matchedMd5),
                                 md5);
-                if (strcmp(gameSpec->gameId, "dm2") == 0 &&
+                if (m12_version_is_launchable(gameSpec->gameId, spec) &&
+                    strcmp(gameSpec->gameId, "dm2") == 0 &&
                     !m12_path_is_virtual_asset(version->matchedPath)) {
                     /* The verified DM2 install is allowed to keep its own
                      * original layout.  In particular, a DOS install can
@@ -5751,12 +5758,13 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
                                         sizeof(status->runtimeDataDirs[gameIndex]),
                                         roots[rootIndex]);
                     }
-                } else {
+                } else if (m12_version_is_launchable(gameSpec->gameId, spec)) {
                     m12_copy_string(status->runtimeDataDirs[gameIndex],
                                     sizeof(status->runtimeDataDirs[gameIndex]),
                                     roots[rootIndex]);
                 }
-                if (dataDirResolvedToMatchedRoot && !*dataDirResolvedToMatchedRoot && !userExplicitDataDir) {
+                if (m12_version_is_launchable(gameSpec->gameId, spec) &&
+                    dataDirResolvedToMatchedRoot && !*dataDirResolvedToMatchedRoot && !userExplicitDataDir) {
                     /* Runtime source path: when the saved/default data_dir is the
                      * preferred ~/.firestaff/originals but the verified PC34 files
                      * only exist in the legacy ~/.firestaff/data tree, launch must
@@ -9243,25 +9251,45 @@ void M12_AssetStatus_RequestCancel(M12_AssetStatus* status) {
 
 int M12_AssetStatus_GameAvailable(const M12_AssetStatus* status,
                                   const char* gameId) {
+    const M12_GameVersionSpec* gameSpec;
+    int gameIndex;
+    int available;
+    int hasMatchedVersion = 0;
+    int hasLaunchableVersion = 0;
+    size_t i;
     if (!status || !gameId) {
         return 0;
     }
     if (strcmp(gameId, "dm1") == 0) {
-        return status->dm1Available;
+        available = status->dm1Available;
+    } else if (strcmp(gameId, "csb") == 0) {
+        available = status->csbAvailable;
+    } else if (strcmp(gameId, "dm2") == 0) {
+        available = status->dm2Available;
+    } else if (strcmp(gameId, "nexus") == 0) {
+        available = status->nexusAvailable;
+    } else if (strcmp(gameId, "theron") == 0) {
+        available = status->theronAvailable;
+    } else {
+        return 0;
     }
-    if (strcmp(gameId, "csb") == 0) {
-        return status->csbAvailable;
+    if (!available) return 0;
+
+    /* Custom admission paths may publish availability before all version
+     * receipts exist. Preserve that established behavior for an empty
+     * catalogue snapshot, but once matched editions are present, require at
+     * least one with a runtime launch boundary. */
+    gameIndex = m12_game_index_from_id(gameId);
+    gameSpec = m12_find_game_spec(gameId);
+    if (gameIndex < 0 || !gameSpec) return available;
+    for (i = 0U; i < gameSpec->versionCount; ++i) {
+        if (!status->versions[gameIndex][i].matched) continue;
+        hasMatchedVersion = 1;
+        if (m12_version_is_launchable(gameId, &gameSpec->versions[i])) {
+            hasLaunchableVersion = 1;
+        }
     }
-    if (strcmp(gameId, "dm2") == 0) {
-        return status->dm2Available;
-    }
-    if (strcmp(gameId, "nexus") == 0) {
-        return status->nexusAvailable;
-    }
-    if (strcmp(gameId, "theron") == 0) {
-        return status->theronAvailable;
-    }
-    return 0;
+    return hasMatchedVersion ? hasLaunchableVersion : available;
 }
 
 const char* M12_AssetStatus_GetCSBLaunchBlockReason(

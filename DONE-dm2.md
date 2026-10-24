@@ -1,3 +1,25 @@
+- 2026-10-24: Rebuilt the current-source DM2 launcher and ran the authentic
+  DOS PC34 direct-start action probes against the original English ZIP. All
+  seven source-state checks passed: up/down/left/right, both strafes and
+  action. They verify the expected map-0 party pose, accepted real-asset
+  runtime frame without core fallbacks, and the debug capability receipts for
+  player attack, monster damage/movement and world state. This covers the
+  tested input and startup route, not actual damage results, complete combat
+  parity or viewport pixel parity.
+
+- 2026-10-24: Launcher media discovery now counts only versions with a runtime
+  launch route when publishing per-game availability. Recognized PC-9801
+  preservation media remains visible as a matched catalogue entry but cannot
+  enable the DM2 start-menu card or redirect the runtime data directory. The
+  `M12_AssetStatus_GameAvailable` boundary also cross-checks matched editions,
+  so a stale availability flag cannot enable a card for preservation-only
+  media. The macOS arm64 `firestaff_m12` target and unsigned app compiled, the
+  boot-readiness regression passed with an unsupported-only DM2 match, and the
+  app's recursive scan of installed authentic media still reports DM1, CSB,
+  DM2, Nexus and Theron ready. No authentic PC-9801 demo was present for a
+  direct scan regression. This verifies menu availability and supported-media
+  discovery, not PC-9801 recognition or gameplay parity.
+
 - 2026-10-21: Verified the authentic DOS EN fresh-game weather path. The
   private GAME_LOAD owner applies the source cold-weather transition before
   dungeon arrangement, carries one LCG through weather and the original 28

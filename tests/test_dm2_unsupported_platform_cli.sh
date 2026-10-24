@@ -82,7 +82,17 @@ expect_unsupported_pair() {
 
 expect_unsupported_pair csb pc PC
 expect_unsupported_pair dm1 saturn Saturn
-echo 'PASS: CSB/PC and DM1/Saturn are rejected for direct and menu launches'
+expect_unsupported_pair dm1 mac Macintosh
+expect_unsupported_pair dm1 pce 'PC Engine'
+expect_unsupported_pair csb mac Macintosh
+expect_unsupported_pair csb pce 'PC Engine'
+expect_unsupported_pair csb saturn Saturn
+expect_unsupported_pair csb apple-iigs 'Apple IIGS'
+expect_unsupported_pair dm2 atari-st 'Atari ST'
+expect_unsupported_pair dm2 pce 'PC Engine'
+expect_unsupported_pair dm2 saturn Saturn
+expect_unsupported_pair dm2 apple-iigs 'Apple IIGS'
+echo 'PASS: unsupported DM1/CSB/DM2 platforms are rejected for direct and menu launches'
 
 removed_archive=${FIRESTAFF_DM2_REMOVED_ARCHIVE:-}
 if [ -n "$removed_archive" ] && [ -f "$removed_archive" ]; then

@@ -1511,7 +1511,7 @@ screen, menu, HUD, or viewport owner, and does not authorize rendering.
 
 The standalone `vdp2-memory-write-bundle.txt` format is accepted directly by
 `analyze_nexus_vdp2_bitmap_source.py`. The reader checks the bundle-complete
-receipt, exact CSV row count, frame range, writes for the snapshot frame,
+receipt, exact CSV row count, frame interval, writes for the snapshot frame,
 memory address and width bounds, and the VDP2 register/VRAM/CRAM sizes. Ymir
 captures the receipt, registers, VRAM, CRAM, and trace in one emulator-thread
 callback. The authentic Japanese retail run used `--debug`, the Japanese IPL
