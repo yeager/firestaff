@@ -36703,10 +36703,10 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         return M11_GAME_INPUT_IGNORED;
     }
 
-    /* The retail Nexus Start button pauses and resumes gameplay. Space is
-     * Firestaff's host ACTION key; handle it before the generic pause guard
-     * so the same key can resume the session. Keep pause independent from
-     * focus loss and session-timer pause reasons. */
+    /* Ymir evidence shows the retail Nexus Start button entering PAUSE; the
+     * retail resume input is unverified. Space is Firestaff's host ACTION key;
+     * handle it before the generic pause guard so the same key can resume the
+     * host session. Keep pause independent from focus loss and timer pausing. */
     if (state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN &&
         state->nexusState.level_loaded &&
         !state->nexusState.title_active &&
