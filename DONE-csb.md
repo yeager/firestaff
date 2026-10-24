@@ -1,3 +1,13 @@
+- 2026-10-24: CSB startup title and Entrance now retain elapsed source-VBlank
+  debt across a blocking host presentation. The loop advances all due source
+  ticks and composes the newest state once, allowing intermediate frames to
+  drop when presentation runs below the source cadence. PC/VGA remains at its
+  source 70 Hz, FM Towns keeps its Timer-A accumulator, and Amiga startup now
+  wakes at its PAL 50 Hz interval. The focused
+  `csb_v1_m11_startup_vblank_cadence` test passes. This verifies scheduler
+  policy and platform intervals; native 30/60/120 Hz display measurements and
+  visual/audio parity remain outstanding.
+
 - 2026-10-21: The original CSB Amiga 3.5 CTRaw archive contains English and
   multilingual disks, but AUTO previously failed to admit the English disk.
   The package gate submitted 257 repeated copies of one digest to a batched

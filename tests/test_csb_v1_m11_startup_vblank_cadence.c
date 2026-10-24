@@ -139,8 +139,8 @@ int main(void) {
     view.csbState.startup_title_active = 1;
     view.csbState.startup_title_source_step = 1;
     view.csbState.startup_title_frame = 0;
-    if (!M11_GameView_DropsIdleCatchupForStartup(&view)) {
-        fprintf(stderr, "FAIL: CSB title must not batch invisible catch-up frames\n");
+    if (M11_GameView_DropsIdleCatchupForStartup(&view)) {
+        fprintf(stderr, "FAIL: CSB title must retain source-clock debt across host presents\n");
         ++failures;
     }
     expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100),
@@ -172,8 +172,8 @@ int main(void) {
 
     view.csbState.startup_title_active = 0;
     view.csbState.startup_entrance_active = 1;
-    if (!M11_GameView_DropsIdleCatchupForStartup(&view)) {
-        fprintf(stderr, "FAIL: CSB entrance must not batch invisible catch-up frames\n");
+    if (M11_GameView_DropsIdleCatchupForStartup(&view)) {
+        fprintf(stderr, "FAIL: CSB entrance must retain source-clock debt across host presents\n");
         ++failures;
     }
     expect_interval(M11_GameView_IdleTickIntervalMs(&view, 400),
@@ -204,6 +204,9 @@ int main(void) {
         view.csbFmtownsTitleBound = 1;
         expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 16u,
                         "FM Towns title wakes for its Timer-A accumulator");
+        profile.variant_id = CSB_V1_VARIANT_AMIGA35_EN;
+        expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 20u,
+                        "Amiga startup follows the source 50 Hz VBlank cadence");
         view.csbFmtownsTitleBound = 0;
         view.csbState.startup_title_active = 0;
         view.csbBootProfile = NULL;

@@ -229,6 +229,15 @@ uint32_t M11_GameView_IdleTickIntervalMs(const M11_GameViewState* gameView,
              * the original Timer-A period instead of rounding title frames. */
             return 16u;
         }
+        if (profile &&
+            (profile->variant_id == CSB_V1_VARIANT_AMIGA31_EN ||
+             profile->variant_id == CSB_V1_VARIANT_AMIGA31_MULTI ||
+             profile->variant_id == CSB_V1_VARIANT_AMIGA35_EN ||
+             profile->variant_id == CSB_V1_VARIANT_AMIGA35_MULTI)) {
+            /* ReDMCSB's Amiga startup waits on PAL VBlank (50 Hz). Keep the
+             * source interval independent of the host display's refresh. */
+            return 20u;
+        }
         /* TITLE.C F0437's waits are source VBlank waits.  Each tick in the
          * CSB title sequence corresponds to one M526_WaitVerticalBlank call.
          * On VGA mode 13h that polls 0x3DA at ~70 Hz = 14ms per VBlank.
@@ -277,9 +286,10 @@ int M11_GameView_DropsIdleCatchupForStartup(const M11_GameViewState* gameView)
          * startup paths still require one presented step at a time. */
         return !gameView->dm2FmtownsTitleBound;
     }
-    return gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
-        (gameView->csbState.startup_title_active ||
-         gameView->csbState.startup_entrance_active);
+    /* CSB startup advances one source VBlank per elapsed source interval.
+     * Keep accumulator debt across a blocking present so 30/60/120 Hz host
+     * displays cannot slow the original title and entrance timeline. */
+    return 0;
 }
 
 static int m11_should_use_modern_launcher(const M12_StartupMenuState* menuState) {
@@ -14406,6 +14416,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         }
         {
             int dm2TimedMediaRedraw = 0;
+            int csbStartupSourceRedraw = 0;
             while (gameView.active && idleAccumulatorMs >= (uint32_t)gameTickInterval) {
                 M11_GameInputResult tickResult =
                     M11_GameView_AdvanceIdleTick(&gameView);
@@ -14417,6 +14428,16 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                         (gameView.dm2FmtownsTitleBound ||
                          gameView.dm2FmtownsTitleFinished)) {
                         dm2TimedMediaRedraw = 1;
+                    } else if (gameView.sourceKind ==
+                                   M11_GAME_SOURCE_CSB_BOOT &&
+                               (gameView.csbState.startup_title_active ||
+                                gameView.csbState.startup_entrance_active)) {
+                        /* Retain source VBlank debt and compose only the
+                         * newest state after catch-up. Intermediate startup
+                         * frames are intentionally dropped when the host
+                         * display cannot present at the source rate. */
+                        csbStartupSourceRedraw = 1;
+                        gameFrameNeedsPresent = 1;
                     } else {
                         m11_draw_game_frame_for_loop(&gameView, o->debug,
                             &perfLoopDrawMs, &perfLoopDrawCount);
@@ -14424,15 +14445,21 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     }
                 }
                 idleAccumulatorMs -= (uint32_t)gameTickInterval;
-                /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0806 place a visible
-                 * raster between source VBlank waits. Preserve one presented
-                 * step there; the source-timed DM2 streams may catch up. */
+                /* DM2 non-Towns decoders own timestamped frames and keep one
+                 * draw per host step. Source-ticked CSB startup retains idle
+                 * debt and catches up before this loop presents the latest
+                 * composed frame. */
                 if (M11_GameView_DropsIdleCatchupForStartup(&gameView)) {
                     idleAccumulatorMs = 0;
                     break;
                 }
             }
             if (dm2TimedMediaRedraw) {
+                m11_draw_game_frame_for_loop(&gameView, o->debug,
+                    &perfLoopDrawMs, &perfLoopDrawCount);
+                gameFrameNeedsPresent = 1;
+            }
+            if (csbStartupSourceRedraw) {
                 m11_draw_game_frame_for_loop(&gameView, o->debug,
                     &perfLoopDrawMs, &perfLoopDrawCount);
                 gameFrameNeedsPresent = 1;
