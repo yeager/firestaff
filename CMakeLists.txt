@@ -67,6 +67,10 @@ add_custom_target(firestaff_gettext_catalogs ALL
 # expands it into a CTest environment/command.  This must precede the large
 # target inventory below; defining it later leaves early Nexus real-data
 # tests with an empty `/nexus` path at configure time.
+# Initialize CTest before optional media discovery so quick application-only
+# configurations can skip test-fixture hashing entirely.
+include(CTest)
+
 if(NOT DEFINED FIRESTAFF_WORKSPACE_DATA_DIR)
     set(FIRESTAFF_WORKSPACE_DATA_DIR "$ENV{HOME}/.firestaff/data")
 endif()
@@ -90,26 +94,23 @@ set(FIRESTAFF_DM2_MAC_DEMO_ARCHIVE
 set(_firestaff_dm2_mac_candidates
     "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
     "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip")
-foreach(_candidate IN LISTS _firestaff_dm2_mac_candidates)
-    if(EXISTS "${_candidate}")
-        file(SHA256 "${_candidate}" _candidate_sha256)
-        if(_candidate_sha256 STREQUAL
-           "dfea2fe53988784bc1525d6ad90ab881d260b74cd6a855e0eb35d04001ecfe5b")
-            set(FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE "${_candidate}")
-        elseif(_candidate_sha256 STREQUAL
-               "c9e875967f9eb1be654fc05b6bf335bb118bcdb38933fbef056857a63d69a723")
-            set(FIRESTAFF_DM2_MAC_DEMO_ARCHIVE "${_candidate}")
+if(BUILD_TESTING)
+    foreach(_candidate IN LISTS _firestaff_dm2_mac_candidates)
+        if(EXISTS "${_candidate}")
+            file(SHA256 "${_candidate}" _candidate_sha256)
+            if(_candidate_sha256 STREQUAL
+               "dfea2fe53988784bc1525d6ad90ab881d260b74cd6a855e0eb35d04001ecfe5b")
+                set(FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE "${_candidate}")
+            elseif(_candidate_sha256 STREQUAL
+                   "c9e875967f9eb1be654fc05b6bf335bb118bcdb38933fbef056857a63d69a723")
+                set(FIRESTAFF_DM2_MAC_DEMO_ARCHIVE "${_candidate}")
+            endif()
         endif()
-    endif()
-endforeach()
+    endforeach()
+endif()
 unset(_firestaff_dm2_mac_candidates)
 unset(_candidate)
 unset(_candidate_sha256)
-
-# The first optional Nexus test targets are declared before the historical
-# CTest include later in this file. Initialize CTest here so their add_test()
-# calls are registered instead of silently disappearing from the test plan.
-include(CTest)
 
 if(BUILD_TESTING)
     add_test(

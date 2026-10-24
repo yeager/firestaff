@@ -17,52 +17,52 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: src/engine/main_loop_m11.c:466
+#: src/engine/main_loop_m11.c:469
 msgid "NEXUS LOAD FAILED"
 msgstr "NEXUS LOAD FAILED"
 
-#: src/engine/main_loop_m11.c:468
+#: src/engine/main_loop_m11.c:471
 msgid "CHECK ISO/BIN OR EXTRACTED FILES"
 msgstr "CHECK ISO/BIN OR EXTRACTED FILES"
 
-#: src/engine/main_loop_m11.c:475
+#: src/engine/main_loop_m11.c:478
 msgid "THERON STARTUP FAILED"
 msgstr "THERON STARTUP FAILED"
 
-#: src/engine/main_loop_m11.c:477
+#: src/engine/main_loop_m11.c:480
 msgid "VERIFY CUE/BIN AND STARTUP DETAILS"
 msgstr "VERIFY CUE/BIN AND STARTUP DETAILS"
 
-#: src/engine/main_loop_m11.c:495
+#: src/engine/main_loop_m11.c:498
 msgid "CSB LOAD FAILED"
 msgstr "CSB LOAD FAILED"
 
-#: src/engine/main_loop_m11.c:497
+#: src/engine/main_loop_m11.c:500
 msgid "CHECK GRAPHICS/DUNGEON DATA"
 msgstr "CHECK GRAPHICS/DUNGEON DATA"
 
-#: src/engine/main_loop_m11.c:500
+#: src/engine/main_loop_m11.c:503
 msgid "DUNGEON LOAD FAILED"
 msgstr "DUNGEON LOAD FAILED"
 
-#: src/engine/main_loop_m11.c:502
+#: src/engine/main_loop_m11.c:505
 msgid "CHECK DUNGEON.DAT"
 msgstr "CHECK DUNGEON.DAT"
 
-#: src/engine/main_loop_m11.c:505 src/engine/main_loop_m11.c:9225
-#: src/engine/main_loop_m11.c:9248 src/ui/menu_startup_m12.c:1126
+#: src/engine/main_loop_m11.c:508 src/engine/main_loop_m11.c:9240
+#: src/engine/main_loop_m11.c:9263 src/ui/menu_startup_m12.c:1126
 msgid "ESC RETURNS TO MENU"
 msgstr "ESC RETURNS TO MENU"
 
-#: src/engine/main_loop_m11.c:9221 src/engine/main_loop_m11.c:9244
+#: src/engine/main_loop_m11.c:9236 src/engine/main_loop_m11.c:9259
 msgid "CSB UTILITY DISK NOT READY"
 msgstr "CSB UTILITY DISK NOT READY"
 
-#: src/engine/main_loop_m11.c:9223
+#: src/engine/main_loop_m11.c:9238
 msgid "VERIFIED FM TOWNS CSB MEDIA REQUIRED"
 msgstr "VERIFIED FM TOWNS CSB MEDIA REQUIRED"
 
-#: src/engine/main_loop_m11.c:9246
+#: src/engine/main_loop_m11.c:9261
 msgid "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED"
 msgstr "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED"
 

@@ -228,10 +228,15 @@ Build from source when a suitable package is not available:
 ```bash
 git clone https://github.com/yeager/firestaff.git
 cd firestaff
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
-cmake --build build --parallel
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=OFF
+cmake --build build --target firestaff --parallel
 ./build/firestaff --scan-data
 ```
+
+This builds the game without registering the large CTest suite or hashing
+test-only game archives during configuration. To configure the full test
+suite, use `-DBUILD_TESTING=ON` in a separate build directory, then build the
+specific test targets you need before running them with `ctest`.
 
 Firestaff requires CMake, a C11 compiler and SDL3. On macOS, SDL3 is available
 through Homebrew:
