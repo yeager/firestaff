@@ -50,6 +50,16 @@ close-time VDC/VCE snapshots are therefore not evidence for native gameplay
 rendering. Continue implementation and verification in Firestaff's native
 C/SDL path; use emulator traces only to resolve original-data semantics.
 
+## 2026-10-24 — Native gamepad Use Item dispatch corrected
+
+The shared M11 gamepad mapper now preserves `M12_ACTION_USE_ITEM` as
+`M12_MENU_INPUT_USE_ITEM`. It previously translated this action to generic
+`M12_MENU_INPUT_ACTION`, which the Theron native runtime handles as wait/tick.
+The mapped token now reaches Theron's existing front-object use route, which
+continues to fail closed when original object semantics are not authenticated.
+The bridge regression passes three repeated runs. This fixes host input
+translation only; it does not establish retail T900/item-use parity.
+
 ## Earlier 2026-10-24 — TRV2 headless native loop had no Theron frames
 
 A Debug Firestaff executable built from the current source commit on TRV2 and

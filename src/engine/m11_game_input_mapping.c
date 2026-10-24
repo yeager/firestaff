@@ -36,7 +36,9 @@ M12_MenuInput M11_GamepadActionToMenuInput(M12_InputAction action,
         case M12_ACTION_SPELL_RUNE_6: return M12_MENU_INPUT_SPELL_RUNE_6;
         case M12_ACTION_SPELL_CAST: return M12_MENU_INPUT_SPELL_CAST;
         case M12_ACTION_SPELL_CLEAR: return M12_MENU_INPUT_SPELL_CLEAR;
-        case M12_ACTION_USE_ITEM: return M12_MENU_INPUT_ACTION;
+        /* Preserve this dedicated command: Theron's native runtime routes
+         * USE_ITEM to its front-object handler, while ACTION is wait/tick. */
+        case M12_ACTION_USE_ITEM: return M12_MENU_INPUT_USE_ITEM;
         case M12_ACTION_MAP_TOGGLE: return M12_MENU_INPUT_MAP_TOGGLE;
         case M12_ACTION_INVENTORY_TOGGLE: return M12_MENU_INPUT_INVENTORY_TOGGLE;
         case M12_ACTION_QUICK_SAVE: return M12_MENU_INPUT_SAVE_GAME;

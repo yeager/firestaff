@@ -1,9 +1,9 @@
-/* CSB controller bridge regression.
+/* Shared M11 controller bridge regression.
  *
  * The SDL event loop resolves a configured gamepad button/axis to an M12
  * action, then this shared M11 mapper emits the same source input token that
- * CSB's COMMAND.C keyboard and mouse routes consume.  Keep this device layer
- * independent from a live controller so every build can verify it.
+ * game-specific input routes consume. Keep this device layer independent
+ * from a live controller so every build can verify it.
  */
 
 #include "main_loop_m11.h"
@@ -69,6 +69,12 @@ int main(void) {
           M12_MENU_INPUT_LEFT);
     CHECK(M11_GamepadActionToMenuInput(M12_ACTION_STRAFE_RIGHT, 0) ==
           M12_MENU_INPUT_RIGHT);
+    /* Theron's use-item command is distinct from generic Action, which is a
+     * wait/tick in its native runtime. */
+    CHECK(M11_GamepadActionToMenuInput(M12_ACTION_USE_ITEM, 1) ==
+          M12_MENU_INPUT_USE_ITEM);
+    CHECK(M11_GamepadActionToMenuInput(M12_ACTION_USE_ITEM, 0) ==
+          M12_MENU_INPUT_USE_ITEM);
     CHECK(M11_GamepadAxisToMenuInput(SDL_GAMEPAD_AXIS_LEFTY,
                                      M12_AXIS_ROLE_MOVE, -16000, 1) ==
           M12_MENU_INPUT_UP);
