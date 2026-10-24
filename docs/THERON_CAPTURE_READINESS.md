@@ -1,5 +1,33 @@
 # Theron Capture Readiness
 
+## 2026-10-24 — current evidence boundary
+
+Three current-source Firestaff `--debug` runs on TRV2 passed with authentic JP
+Rev. 1 Track 02 (MD5 `b7afb338ad31be1025b53f9aff12d73a`). Each reached the
+bounded native runtime with the level loaded, party `(2,3,0)`, two champions,
+291 source objects and four loaded dungeon levels. The
+`test_theron_v1_track02_dungeon_loader` real-media test also passed three
+loops and reported pit-record candidates across all seven JP/US dungeons.
+These checks establish Firestaff runtime admission and source-record
+candidates only; they do not prove original-game movement, pit semantics or
+visual parity.
+
+A separate authentic JP Mednafen save state was visibly in dungeon gameplay,
+but its active map and party coordinates are not joined to Track 02. Host-key
+input reached the PCE pad interface, but no game command-consumer receipt
+proved movement. The available `pce_fast` build autoloaded the state but did
+not emit the VDC snapshot required by the capture helper, so that attempt is
+not a complete capture manifest. This is separate from the US cold-start
+attempt below, which remained on the System Card screen. Do not promote either
+result to original-game parity. The pit consumer remains blocked; see the
+[pit evidence gap](source-lock/theron-disassembly/theron-pit-gate-evidence-gap-20261024.md).
+
+Next capture work is to use a snapshot-capable `pce_fast` build, capture a
+controlled input with same-session command-consumer, party-pose and active-map
+receipts, and bind the executing pit query/caller to its physical bank and
+authentic Track 02 record. Keep game media and private emulator artifacts on
+the operator's machine.
+
 ## 2026-10-24 — selected title-menu action hold remains unverified
 
 The user reports that starting from the original game's menu requires holding

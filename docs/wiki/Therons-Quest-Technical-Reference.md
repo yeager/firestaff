@@ -7,8 +7,12 @@
 > Akutuba forcefield handoff. Source-only loaders cover all seven dungeons
 > in both regions, but do not prove their original runtime semantics. The
 > reported 3–5 second hold on the selected title-menu action remains untested
-> in a visibly confirmed original-emulator menu. Campaign progression, native
-> save persistence, original presentation and full gameplay remain
+> in a visibly confirmed original-emulator menu. Three current-source JP
+> `--debug` runs reach Firestaff's bounded runtime; this does not prove the
+> original emulator's movement, pit semantics or visual output. A separate
+> authentic JP emulator save state shows dungeon gameplay, but its active map,
+> party pose and input-to-command route are not joined. Campaign progression,
+> native save persistence, original presentation and full gameplay remain
 > evidence-gated. Capture tools are research provenance only and are never a
 > Firestaff runtime dependency. See the
 > [current platform status](../PLATFORM_STATUS.md#therons-quest),

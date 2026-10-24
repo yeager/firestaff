@@ -1,5 +1,27 @@
 ## 2026-10-24 — original US emulator title input remains unverified
 
+Latest evidence update: a separate authentic JP emulator save state visibly
+opens dungeon gameplay, but it is not joined to a source map or party
+coordinates. Host-key input produced PCE pad values without a game
+command-consumer receipt, and the available `pce_fast` build lacks the VDC
+snapshot output required for a complete capture manifest. Keep this evidence
+separate from the US cold-start session below, which remained on the System
+Card screen.
+
+The native path is independently verified: three current-source Firestaff
+`--debug` runs with authentic JP Rev. 1 Track 02 reached runtime, with the
+level loaded, party `(2,3,0)`, two champions, 291 source objects and four
+loaded dungeon levels. The real-media dungeon-loader test passed three loops
+and emitted pit-record candidates for all seven JP and US dungeons. Neither
+result proves original movement or pit behavior. The candidate positions have
+not been joined to the emulator state's active map and party coordinates.
+
+Next: rebuild or select a capture-capable `pce_fast` emulator that emits the
+required VDC snapshots; capture a controlled input with a game command
+consumer, party pose and active map in the same session; then bind any pit
+query/caller to the executing bank, MPR mapping and authentic Track 02 record.
+Keep pit behavior blocked until that source/runtime join exists.
+
 Turn-input receipt audit: all four left/right controls now report a failed
 source-actuator queue reservation as blocked instead of claiming a turn. The
 focused regression passed three loops on TRV2. Its full-queue setup validates

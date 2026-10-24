@@ -1,5 +1,26 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-24 — verify an authentic JP debug runtime and bound pit candidates
+
+- On TRV2, three consecutive current-source Firestaff `--debug` runs using
+  authentic JP Rev. 1 Track 02 (MD5
+  `b7afb338ad31be1025b53f9aff12d73a`) reached the bounded runtime with the
+  level loaded, party at `(2,3,0)`, two champions, 291 source objects and four
+  loaded dungeon levels. This verifies the native debug route only; it is not
+  an original-emulator comparison or complete gameplay evidence.
+- The real-media `test_theron_v1_track02_dungeon_loader` passed three
+  consecutive TRV2 runs and reports raw pit-record candidates for all seven
+  dungeon sources in JP and US Track 02. The test binds source bytes and
+  candidate floor positions, but no candidate has been joined to the active
+  map and party coordinates in an original gameplay state. Pit behavior stays
+  fail-closed.
+- A private authentic JP Mednafen save state visibly showed dungeon gameplay.
+  Its active map and party coordinates remain unjoined. PCE pad input values
+  were observed during host-key input, but there was no game command-consumer
+  receipt to prove movement. The capture helper also rejected that emulator
+  build because it emitted no required VDC snapshot, so this is not a complete
+  capture manifest. Emulator media, state and traces remain on TRV2.
+
 ## 2026-10-24 — report failed source-actuator turn reservations
 
 - Routed all four left/right input variants through one receipt helper. If the
