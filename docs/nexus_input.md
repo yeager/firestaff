@@ -58,9 +58,10 @@ The retail game tick now accepts only the six basic movement commands
 authenticated DGN grid. Item use, inventory, spells, combat, sensors, doors,
 and level transitions remain fail-closed.
 
-In a loaded Nexus dungeon, Space toggles Firestaff's host pause. The mapping
-follows the retail Start button's observed pause/resume behavior in Ymir; it
-freezes Firestaff's session tick and host audio until Space is pressed again.
+In a loaded Nexus dungeon, Space toggles Firestaff's host pause. Ymir evidence
+records that the retail Start button displayed the `PAUSE` overlay; whether
+retail gameplay resumes on a second press remains unverified. Firestaff's host
+pause freezes the session tick and host audio until Space is pressed again.
 This does not reproduce the retail `PAUSE` graphic or menu.
 
 For desktop mouse movement, Firestaff uses the authentic Nexus viewport
