@@ -340,10 +340,12 @@ int nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
     if (out_receipt) *out_receipt = receipt;
     if (!framebuffer || !capture_bytes ||
         source_x < 0 || source_y < 0 || width <= 0 || height <= 0 ||
-        source_x + width > 512 || source_y + height > 512 ||
+        source_x > 512 || source_y > 512 ||
+        width > 512 - source_x || height > 512 - source_y ||
         destination_x < 0 || destination_y < 0 ||
-        destination_x + width > NEXUS_FB_W ||
-        destination_y + height > NEXUS_FB_H ||
+        destination_x > NEXUS_FB_W || destination_y > NEXUS_FB_H ||
+        width > NEXUS_FB_W - destination_x ||
+        height > NEXUS_FB_H - destination_y ||
         !nexus_v1_saturn_runtime_capture_frame(
             capture_bytes, capture_byte_count, frame_index, &frame) ||
         !frame.valid || !frame.vdp2_vram || !frame.vdp2_cram ||
@@ -370,6 +372,7 @@ int nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
                                     registers.byte_order) & 0x3fU;
     map_b = read_register16_ordered(frame.vdp2_registers, 0x46U,
                                     registers.byte_order) & 0x3fU;
+    map_offset = (mpofn >> 4U) & 7U;
     bpp = registers.nbg1_colour_code == 0 ? 4 : 8;
     /* This is the smallest fully specified Mednafen TileFetcher lane:
      * PNDSize=0, CharSize=0, PlaneSize=0 and identical A/B maps. */
@@ -379,7 +382,6 @@ int nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
         if (out_register_receipt) *out_register_receipt = registers;
         return 0;
     }
-    map_offset = (mpofn >> 4U) & 7U;
     receipt.valid = 1;
     receipt.capture_only = 1;
     receipt.layer_registers_verified = 1;
@@ -397,10 +399,13 @@ int nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
             frame.vdp2_cram + x * 2, registers.byte_order);
     for (y = 0; y < height; ++y) {
         for (x = 0; x < width; ++x) {
-            int tile_x = source_x + x;
-            int tile_y = source_y + y;
+            int tile_x = source_x + x + registers.nbg1_scroll_x;
+            int tile_y = source_y + y + registers.nbg1_scroll_y;
             int map_index = ((tile_y >> 3) & 0x3f) * 64 +
                 ((tile_x >> 3) & 0x3f);
+            /* Match the bounded TileFetcher address derivation mirrored by
+             * scripts/analyze_nexus_vdp2_composition.py::
+             * visible_character_spans (name_word wrap and byte conversion). */
             uint32_t name_word_address =
                 ((((uint32_t)map_offset << 6U) + map_a) << 13U) +
                 (uint32_t)map_index * 2U;

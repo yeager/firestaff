@@ -91,6 +91,21 @@ static int run_external_tilemap_capture(void)
     }
     nexus_fb_init(&framebuffer);
     nexus_fb_clear(&framebuffer);
+    if (nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
+            &framebuffer, capture, (size_t)file_size, frame_index,
+            INT_MAX, 0, 1, 1, 0, 0, &frame, &registers, &receipt) ||
+        nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
+            &framebuffer, capture, (size_t)file_size, frame_index,
+            0, INT_MAX, 1, 1, 0, 0, &frame, &registers, &receipt) ||
+        nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
+            &framebuffer, capture, (size_t)file_size, frame_index,
+            0, 0, 1, 1, INT_MAX, 0, &frame, &registers, &receipt) ||
+        nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
+            &framebuffer, capture, (size_t)file_size, frame_index,
+            0, 0, 1, 1, 0, INT_MAX, &frame, &registers, &receipt)) {
+        free(capture);
+        return 0;
+    }
     memset(&frame, 0, sizeof(frame));
     memset(&registers, 0, sizeof(registers));
     memset(&receipt, 0, sizeof(receipt));
@@ -213,6 +228,28 @@ int main(void)
         free(blob);
         return 1;
     }
+    /* NBG1 SCXIN1 (0x80) and SCYIN1 (0x84) offset the name-table lookup.
+     * Put the only visible character at map cell (1,1) and require an 8x8
+     * source scroll to select it. */
+    le16(vdp2_vram + 2, 0U);
+    le16(vdp2_vram + (65U * 4U), 0U);
+    le16(vdp2_vram + (65U * 4U) + 2U, 8U);
+    le16(vdp2_regs + 0x80U, 8U);
+    le16(vdp2_regs + 0x84U, 8U);
+    nexus_fb_clear(&framebuffer);
+    memset(&registers, 0, sizeof(registers));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
+            &framebuffer, blob, blob_size, 0U, 0, 0, 1, 1, 27, 37,
+            NULL, &registers, &receipt) || !receipt.valid ||
+        registers.nbg1_scroll_x != 8U || registers.nbg1_scroll_y != 8U ||
+        framebuffer.color_buffer[37 * NEXUS_FB_W + 27] != 0x11U) {
+        fprintf(stderr, "FAIL: NBG1 scroll is not applied to tile fetch\n");
+        free(blob);
+        return 1;
+    }
+    le16(vdp2_regs + 0x80U, 0U);
+    le16(vdp2_regs + 0x84U, 0U);
     /* The upstream Mednafen candidate serializes every Saturn word in
      * big-endian bus order. Exercise the same capture-only decoder with that
      * representation so the local little-endian fixture cannot mask a
