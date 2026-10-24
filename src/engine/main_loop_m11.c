@@ -2640,6 +2640,168 @@ static struct {
     unsigned int championHealth[CHAMPION_MAX_PARTY];
 } g_m11_debug_health_snapshot;
 
+/* The compatibility world and TickResult below are authoritative for DM1
+ * only. CSB and DM2 own separate boot runtimes; emit their own state rather
+ * than presenting the stale DM1 mirror as if it described those games. */
+static void m11_debug_native_game_state(const M11_GameViewState* state,
+                                       int reportSummary) {
+    if (!state || !state->debugMovementTraceEnabled || !state->active) return;
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        state->csbBootProfile) {
+        typedef struct {
+            uint16_t thing;
+            int map;
+            int x;
+            int y;
+        } CsbGroupSnapshot;
+        static unsigned int snapshotLaunchSerial;
+        static int snapshotInitialized;
+        static uint16_t previousGroupCount;
+        static CsbGroupSnapshot previousGroups[CSB_V1_RUNTIME_ACTIVE_GROUP_CAP];
+        static uint16_t previousChampionDamage[CSB_V1_MAX_CHAMPIONS];
+        const CSB_V1_BootProfile* boot =
+            (const CSB_V1_BootProfile*)state->csbBootProfile;
+        const CSB_V1_RuntimeProfile* runtime = &boot->runtime;
+        if (reportSummary) {
+            fprintf(stderr,
+                    "firestaff: game-state game=csb source=csb-runtime "
+                    "tick=%u level=%d party=%d,%d,%d dir=%d champions=%d "
+                    "leader=%d pending-champion-damage=",
+                    runtime->game_time, runtime->current_level,
+                    runtime->party_x, runtime->party_y, runtime->party_z,
+                    runtime->party_dir, runtime->champion_count,
+                    runtime->leader_index);
+            {
+                unsigned int pending = 0;
+                int i;
+                for (i = 0; i < CSB_V1_MAX_CHAMPIONS; ++i)
+                    pending += runtime->champion_pending_damage[i];
+                fprintf(stderr, "%u\n", pending);
+            }
+        }
+        if (snapshotLaunchSerial != g_m11_sync_launch_serial) {
+            snapshotLaunchSerial = g_m11_sync_launch_serial;
+            snapshotInitialized = 0;
+            previousGroupCount = 0;
+            memset(previousGroups, 0, sizeof(previousGroups));
+            memset(previousChampionDamage, 0, sizeof(previousChampionDamage));
+        }
+        {
+            CsbGroupSnapshot current[CSB_V1_RUNTIME_ACTIVE_GROUP_CAP];
+            uint16_t currentCount = runtime->active_group_state_count;
+            int i;
+            if (currentCount > CSB_V1_RUNTIME_ACTIVE_GROUP_CAP)
+                currentCount = CSB_V1_RUNTIME_ACTIVE_GROUP_CAP;
+            memset(current, 0, sizeof(current));
+            for (i = 0; i < currentCount; ++i) {
+                const CSB_V1_RuntimeActiveGroupState* group =
+                    &runtime->active_group_state[i];
+                int prior;
+                current[i].thing = group->group_thing;
+                current[i].map = group->map_index;
+                current[i].x = group->map_x;
+                current[i].y = group->map_y;
+                for (prior = 0; snapshotInitialized &&
+                     prior < previousGroupCount; ++prior) {
+                    if (previousGroups[prior].thing == current[i].thing) break;
+                }
+                if (snapshotInitialized && prior < previousGroupCount &&
+                    (previousGroups[prior].map != current[i].map ||
+                     previousGroups[prior].x != current[i].x ||
+                     previousGroups[prior].y != current[i].y)) {
+                    fprintf(stderr,
+                            "firestaff: game-event game=csb tick=%u "
+                            "type=monster-moved group-thing=%u map=%d "
+                            "from=%d,%d to=%d,%d\n",
+                            runtime->game_time, current[i].thing,
+                            current[i].map, previousGroups[prior].x,
+                            previousGroups[prior].y, current[i].x, current[i].y);
+                }
+            }
+            for (i = 0; i < CSB_V1_MAX_CHAMPIONS; ++i) {
+                const uint16_t damage = runtime->champion_pending_damage[i];
+                if (snapshotInitialized && damage != previousChampionDamage[i])
+                    fprintf(stderr,
+                            "firestaff: game-event game=csb tick=%u "
+                            "type=champion-pending-damage champion=%d "
+                            "amount=%u previous=%u\n",
+                            runtime->game_time, i, damage,
+                            previousChampionDamage[i]);
+                previousChampionDamage[i] = damage;
+            }
+            memcpy(previousGroups, current,
+                   (size_t)currentCount * sizeof(current[0]));
+            previousGroupCount = currentCount;
+            snapshotInitialized = 1;
+        }
+    } else if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
+               state->dm2World) {
+        static unsigned int receiptLaunchSerial;
+        static int haveWieldReceipt;
+        static int haveCreatureDamageReceipt;
+        static DM2_V1_RuntimeWieldAttackReceipt previousWieldReceipt;
+        static DM2_V1_RuntimeCreatureDamageReceipt previousDamageReceipt;
+        const DM2_V1_GameState* world =
+            (const DM2_V1_GameState*)state->dm2World;
+        DM2_V1_RuntimeWieldAttackReceipt wieldReceipt;
+        DM2_V1_RuntimeCreatureDamageReceipt damageReceipt;
+        const int tick = dm2_v1_runtime_get_tick_count();
+        if (reportSummary)
+            fprintf(stderr,
+                    "firestaff: game-state game=dm2 source=dm2-world "
+                    "tick=%d level=%d party=%d,%d dir=%d "
+                    "outdoor=%d champions=unavailable\n",
+                    tick, world->current_level, world->party_x, world->party_y,
+                    world->party_dir, world->outdoor);
+        if (receiptLaunchSerial != g_m11_sync_launch_serial) {
+            receiptLaunchSerial = g_m11_sync_launch_serial;
+            haveWieldReceipt = 0;
+            haveCreatureDamageReceipt = 0;
+            memset(&previousWieldReceipt, 0, sizeof(previousWieldReceipt));
+            memset(&previousDamageReceipt, 0, sizeof(previousDamageReceipt));
+        }
+        memset(&wieldReceipt, 0, sizeof(wieldReceipt));
+        if (dm2_v1_runtime_last_wield_attack_receipt(&wieldReceipt) &&
+            wieldReceipt.valid &&
+            (!haveWieldReceipt || memcmp(&wieldReceipt,
+                                         &previousWieldReceipt,
+                                         sizeof(wieldReceipt)) != 0)) {
+            fprintf(stderr,
+                    "firestaff: game-combat game=dm2 tick=%d type=player-attack "
+                    "admitted=%d creature-resolved=%d creature=%d "
+                    "hit=%d miss=%d raw-damage=%d final-damage=%d "
+                    "hp-applied=%d fail-closed=%d\n",
+                    tick, wieldReceipt.command_admitted,
+                    wieldReceipt.creature_resolved,
+                    (int)wieldReceipt.creature_record,
+                    wieldReceipt.calculation_hit, wieldReceipt.calculation_miss,
+                    (int)wieldReceipt.raw_damage,
+                    (int)wieldReceipt.final_damage, wieldReceipt.hp_applied,
+                    wieldReceipt.calculation_fail_closed);
+            previousWieldReceipt = wieldReceipt;
+            haveWieldReceipt = 1;
+        }
+        memset(&damageReceipt, 0, sizeof(damageReceipt));
+        if (dm2_v1_runtime_last_creature_damage_receipt(&damageReceipt) &&
+            damageReceipt.valid &&
+            (!haveCreatureDamageReceipt || memcmp(&damageReceipt,
+                                                  &previousDamageReceipt,
+                                                  sizeof(damageReceipt)) != 0)) {
+            fprintf(stderr,
+                    "firestaff: game-combat game=dm2 tick=%d type=monster-damaged "
+                    "creature=%d creature-type=%d damage=%d hp=%d->%d "
+                    "wound=%d lethal=%d deallocated=%d drops=%d\n",
+                    tick, (int)damageReceipt.creature_record,
+                    damageReceipt.creature_type, damageReceipt.pending_damage,
+                    damageReceipt.hp_before, damageReceipt.hp_after,
+                    damageReceipt.wound_applied, damageReceipt.lethal,
+                    damageReceipt.deallocated, damageReceipt.drops_placed);
+            previousDamageReceipt = damageReceipt;
+            haveCreatureDamageReceipt = 1;
+        }
+    }
+}
+
 /* Print source-world events only when the game tick actually emits them. This
  * keeps --debug useful during combat and ordinary play without per-frame spam.
  * The payload is intentionally retained verbatim so logs can be compared with
@@ -2647,6 +2809,19 @@ static struct {
 static void m11_debug_game_events(const M11_GameViewState* state) {
     int i;
     if (!state || !state->debugMovementTraceEnabled || !state->active) return;
+    m11_debug_native_game_state(state, 0);
+    if (state->sourceKind != M11_GAME_SOURCE_BUILTIN_CATALOG &&
+        state->sourceKind != M11_GAME_SOURCE_CUSTOM_DUNGEON &&
+        state->sourceKind != M11_GAME_SOURCE_DIRECT_DUNGEON) {
+        const char* game = state->sourceId[0] ? state->sourceId : "unknown";
+        if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT ||
+            state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) return;
+        fprintf(stderr,
+                "firestaff: game-event-stream game=%s source=native-runtime "
+                "status=unavailable reason=compatibility-tick-result-is-not-authoritative\n",
+                game);
+        return;
+    }
     if (g_m11_debug_health_snapshot.launchSerial != g_m11_sync_launch_serial) {
         g_m11_debug_health_snapshot.initialized = 0;
         memset(g_m11_debug_health_snapshot.championHealth, 0,
@@ -2789,6 +2964,20 @@ static void m11_debug_game_action(const M11_GameViewState* state,
                                   M12_MenuInput input,
                                   M11_GameInputResult result) {
     if (!state || !state->debugMovementTraceEnabled || !state->active) return;
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT ||
+        state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        fprintf(stderr,
+                "firestaff: game-action game=%s tick=native input=%s "
+                "result=%d action=\"%s\" outcome=\"%s\" "
+                "compatibility-world=not-authoritative\n",
+                state->sourceId[0] ? state->sourceId : "unknown",
+                m11_debug_input_name(input), (int)result,
+                state->lastAction[0] ? state->lastAction : "(none)",
+                state->lastOutcome[0] ? state->lastOutcome : "(none)");
+        m11_debug_native_game_state(state, 1);
+        m11_debug_game_events(state);
+        return;
+    }
     fprintf(stderr,
             "firestaff: game-action game=%s tick=%u input=%s result=%d "
             "action=\"%s\" outcome=\"%s\" party=%d,%d dir=%d "
@@ -2801,6 +2990,7 @@ static void m11_debug_game_action(const M11_GameViewState* state,
             state->world.party.mapX, state->world.party.mapY,
             state->world.party.direction,
             state->world.party.activeChampionIndex);
+    m11_debug_native_game_state(state, 1);
     m11_debug_game_events(state);
 }
 
@@ -2810,6 +3000,21 @@ static void m11_debug_game_pointer(const M11_GameViewState* state,
                                    int sourceY,
                                    M11_GameInputResult result) {
     if (!state || !state->debugMovementTraceEnabled || !state->active) return;
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT ||
+        state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        fprintf(stderr,
+                "firestaff: game-action game=%s tick=native input=%s "
+                "point=%d,%d result=%d action=\"%s\" outcome=\"%s\" "
+                "compatibility-world=not-authoritative\n",
+                state->sourceId[0] ? state->sourceId : "unknown",
+                eventName ? eventName : "pointer", sourceX, sourceY,
+                (int)result,
+                state->lastAction[0] ? state->lastAction : "(none)",
+                state->lastOutcome[0] ? state->lastOutcome : "(none)");
+        m11_debug_native_game_state(state, 1);
+        m11_debug_game_events(state);
+        return;
+    }
     fprintf(stderr,
             "firestaff: game-action game=%s tick=%u input=%s point=%d,%d "
             "result=%d action=\"%s\" outcome=\"%s\" party=%d,%d dir=%d "
@@ -2822,6 +3027,7 @@ static void m11_debug_game_pointer(const M11_GameViewState* state,
             state->world.party.mapX, state->world.party.mapY,
             state->world.party.direction,
             state->world.party.activeChampionIndex);
+    m11_debug_native_game_state(state, 1);
     m11_debug_game_events(state);
 }
 
@@ -13530,7 +13736,6 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         int menuPointerChanged = 0;
         if (!autotestMotionEventInjected && input == M12_MENU_INPUT_NONE &&
             getenv("FIRESTAFF_AUTOTEST") && gameView.active &&
-            strcmp(gameView.sourceId, "dm1") == 0 &&
             g_m11_debug_motion.observedSerial >= 5) {
             const char* eventToken =
                 getenv("FIRESTAFF_AUTOTEST_MOTION_EVENT");
@@ -13540,7 +13745,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 autotestMotionEventInjected = 1;
                 if (o->debug) {
                     fprintf(stderr,
-                            "firestaff: autotest input-event-injected game=dm1 token=%s\n",
+                            "firestaff: autotest input-event-injected game=%s token=%s\n",
+                            gameView.sourceId[0] ? gameView.sourceId : "unknown",
                             eventToken);
                 }
             }

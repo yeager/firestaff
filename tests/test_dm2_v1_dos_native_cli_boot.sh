@@ -291,7 +291,7 @@ probe_input() {
     input=$1
     expected_party=$2
     output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-        --game dm2 --platform pc --data-dir "$archive" --boot-probe \
+        --game dm2 --platform pc --data-dir "$archive" --debug --boot-probe \
         --boot-probe-frames 100 --script "key:enter,key:enter,key:enter,$input" \
         --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
         --duration 0 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
@@ -299,6 +299,13 @@ probe_input() {
         *'assetMd5=25247ede4dabb6a71e5dabdfbcd5907d'*'phase=dm2-runtime'*'levelLoaded=1'*"party=$expected_party"*'dm2FrameAccepted=1'*'dm2RealAssets=1'*'dm2NoCoreFallbacks=1'*'dm2FallbackDraws=0'*) ;;
         *) printf '%s\n' "$output" >&2; exit 1 ;;
     esac
+    if ! printf '%s\n' "$output" | grep -Fq 'game-action game=dm2 tick=native' ||
+       ! printf '%s\n' "$output" | grep -Fq 'compatibility-world=not-authoritative' ||
+       ! printf '%s\n' "$output" | grep -Fq 'game-state game=dm2 source=dm2-world tick=' ||
+       ! printf '%s\n' "$output" | grep -Fq 'outdoor=0 champions=unavailable'; then
+        printf '%s\n' "$output" >&2
+        exit 1
+    fi
 }
 
 # These positions/directions are observed from the retail DOS new-game route.

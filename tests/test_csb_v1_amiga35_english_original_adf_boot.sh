@@ -105,6 +105,13 @@ if ! grep -Eq 'csbViewportHash=[1-9][0-9]*' <<< "$runtime_output"; then
     printf 'FAIL: A35E runtime did not publish a nonzero viewport receipt\n%s\n' "$runtime_output" >&2
     exit 1
 fi
+if ! grep -Fq 'game-action game=csb tick=native input=forward' <<< "$runtime_output" ||
+   ! grep -Fq 'game-state game=csb source=csb-runtime tick=' <<< "$runtime_output" ||
+   ! grep -Fq 'party=9,1,0 dir=2' <<< "$runtime_output"; then
+    printf 'FAIL: CSB debug action did not report the source runtime party state\n%s\n' \
+        "$runtime_output" >&2
+    exit 1
+fi
 echo 'PASS: original A35E CLI consumes its first movement and renders the native viewport'
 
 # The no-platform route must resolve this original Amiga edition from the
