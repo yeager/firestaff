@@ -1337,6 +1337,21 @@ The test passes with NBG1 enabled in character/tilemap mode and keeps
 separate 512x256/8bpp bitmap decoder correctly rejects it; this prevents a
 character map from being mislabeled as a bitmap or a menu surface.
 
+The corrected TileFetcher address units were checked in the open
+[PR #19](https://github.com/yeager/firestaff/pull/19) against an authentic
+Japanese Nexus startup capture. For NBG1, MAP1A/MAP1B at register offsets
+`0x44/0x46` select plane `0x17`; with `PLSZ=0` and `MPOFN=0`, the name-table
+base is `0x5c000` bytes after wrapping the 18-bit Saturn word address and
+converting it to bytes. The visible 64×64-pixel window visits 64 unique cells.
+The observed `charno=0x1000` selects character bytes at `0x20000` using
+Saturn's 32-byte character-number stride. The runtime decoder test passes on
+authentic startup frame 0. A full 320×224 decode visits 1,120 cells and writes
+zero opaque pixels, matching the transparent reference frame.
+
+This is capture transport/address validation only. It does not bind an asset,
+text code, CLUT owner, menu placement or display consumer. `renderer_permitted`
+remains zero and production readiness remains unchanged.
+
 VDP1 replay also has an atomic sequence lane for a complete bounded command
 window. Every mode-1 command must pass the existing exact DGN image/CLUT join;
 the sequence additionally requires captured clip state (User Clip or System
@@ -1378,6 +1393,17 @@ Local-Coordinate records and the first display origin `(160,112)`. The origin
 is carried into the sequence compositor and every command must match it.
 This proves command-list framing and display-origin state only; mesh camera
 transform, face selection and culling remain blocked.
+
+## Ymir debug tooling
+
+The external [Ymir PR #961](https://github.com/ymir-emu/Ymir/pull/961) adds a
+bounded VDP1 command-trace window, CSV export, and frame/command-context
+memory dumps. It was exercised with the authentic Japanese Nexus disc under
+`--debug`; one date-setup run exported 305 command rows across 105 frames.
+The trace is useful for disassembly and frame selection, but it has not been
+joined to a same-frame source asset, Firestaff renderer output or a retail
+menu/HUD/viewport owner. Ymir remains an external development tool, never a
+Firestaff runtime dependency. The PR is open and has not been released.
 
 ## Mednafen generic VDP1 state and bus-order handoff
 
@@ -1475,6 +1501,12 @@ These external reference captures are not Firestaff renderer output.
 The byte-format baseline is the [DMWeb Nexus file-format documentation](http://dmweb.free.fr/community/documentation/dungeon-master-nexus/file-formats/),
 including the [ITEM.IBS description](http://dmweb.free.fr/community/documentation/dungeon-master-nexus/item.ibs-file/)
 and [DGN documentation](http://dmweb.free.fr/community/documentation/dungeon-master-nexus/dgn-files/).
-Disassembly and runtime ownership must be established from the Saturn program
-and an execution capture; inferred offsets or host screenshots must not be
-promoted to production semantics.
+Use [Greatstone SCK](http://greatstone.free.fr/dm/) to cross-check authentic
+DM-family asset extraction and documented byte formats; the reviewed page
+inventory is in [DMWeb and Greatstone Reference](DMWEB_REFERENCE.md). Neither
+reference establishes Saturn VDP register behavior or proves a retail runtime
+consumer. The NBG1 address-unit correction above is instead grounded in the
+Ymir/Mednafen hardware trace and authentic capture. Disassembly and runtime
+ownership must be established from the Saturn program and an execution
+capture; inferred offsets or host screenshots must not be promoted to
+production semantics.

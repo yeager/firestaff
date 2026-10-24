@@ -1,7 +1,18 @@
 # Firestaff TODO — Nexus
 
-Reviewed 2026-09-29. Only open work is listed here; completed evidence belongs
+Reviewed 2026-10-24. Only open work is listed here; completed evidence belongs
 in the Nexus capture and reverse-engineering records.
+
+## Current evidence boundary
+
+The NBG1 capture-only tilemap decoder has a corrected TileFetcher address path
+in [PR #19](https://github.com/yeager/firestaff/pull/19). Focused tests and an
+authentic Japanese startup frame verify name-table byte addressing, character
+stride and unique-cell counts. The PR is still open. This does not bind the
+NBG1 data to FONT256, MENU.BPK or a retail text/display consumer, and does not
+change menu, HUD, viewport or production-readiness gates. Keep the next work
+focused on a same-session retail source-to-display join and the interactive
+title-to-menu transition.
 
 ## Available local retail media
 
