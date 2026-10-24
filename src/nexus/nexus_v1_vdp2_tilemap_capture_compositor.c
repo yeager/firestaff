@@ -112,16 +112,22 @@ int nexus_v1_vdp2_capture_composite_nbg1_tilemap(
         input->map_columns > 1024 || input->map_rows > 1024 ||
         input->source_tile_x != 0 || input->source_tile_y != 0 ||
         input->destination_x < 0 || input->destination_y < 0 ||
-        input->destination_x + input->map_columns * 8 > NEXUS_FB_W ||
-        input->destination_y + input->map_rows * 8 > NEXUS_FB_H ||
+        input->destination_x > NEXUS_FB_W ||
+        input->destination_y > NEXUS_FB_H ||
+        input->map_columns * 8 > NEXUS_FB_W - input->destination_x ||
+        input->map_rows * 8 > NEXUS_FB_H - input->destination_y ||
         input->vdp2_registers_size < (int)NEXUS_V1_VDP2_TILEMAP_REGISTERS_BYTES ||
         input->capture_cram_size != 4096 || input->source_cram_size != 4096 ||
         input->capture_name_table_size != input->map_columns * input->map_rows * 4 ||
         input->source_name_table_size != input->map_columns * input->map_rows * 4 ||
         input->capture_character_generator_size <= 0 ||
         input->source_character_generator_size !=
-            input->capture_character_generator_size ||
-        !input->source_hash_verified || !input->original_saturn_capture_verified ||
+            input->capture_character_generator_size) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (!input->source_hash_verified ||
+        !input->original_saturn_capture_verified ||
         !input->transparent_index_zero_verified) {
         *out_receipt = receipt;
         return 0;
@@ -323,6 +329,7 @@ int nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
     int bpp;
     int x;
     int y;
+    uint8_t visited_tiles[64 * 64] = {0};
 
     memset(&frame, 0, sizeof(frame));
     memset(&registers, 0, sizeof(registers));
@@ -333,10 +340,12 @@ int nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
     if (out_receipt) *out_receipt = receipt;
     if (!framebuffer || !capture_bytes ||
         source_x < 0 || source_y < 0 || width <= 0 || height <= 0 ||
-        source_x + width > 512 || source_y + height > 512 ||
+        source_x > 512 || source_y > 512 ||
+        width > 512 - source_x || height > 512 - source_y ||
         destination_x < 0 || destination_y < 0 ||
-        destination_x + width > NEXUS_FB_W ||
-        destination_y + height > NEXUS_FB_H ||
+        destination_x > NEXUS_FB_W || destination_y > NEXUS_FB_H ||
+        width > NEXUS_FB_W - destination_x ||
+        height > NEXUS_FB_H - destination_y ||
         !nexus_v1_saturn_runtime_capture_frame(
             capture_bytes, capture_byte_count, frame_index, &frame) ||
         !frame.valid || !frame.vdp2_vram || !frame.vdp2_cram ||
@@ -363,18 +372,16 @@ int nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
                                     registers.byte_order) & 0x3fU;
     map_b = read_register16_ordered(frame.vdp2_registers, 0x46U,
                                     registers.byte_order) & 0x3fU;
+    map_offset = (mpofn >> 4U) & 7U;
     bpp = registers.nbg1_colour_code == 0 ? 4 : 8;
     /* This is the smallest fully specified Mednafen TileFetcher lane:
      * PNDSize=0, CharSize=0, PlaneSize=0 and identical A/B maps. */
     if ((pncn1 & 0x8000U) != 0U || (plsz & 0x000cU) != 0U ||
-        map_a != map_b || map_a >= 0x20U ||
-        (((uint32_t)(map_a) << 13U) + 0x1000U) >
-            frame.vdp2_vram_size) {
+        map_a != map_b || map_a >= 0x20U) {
         if (out_frame_receipt) *out_frame_receipt = frame;
         if (out_register_receipt) *out_register_receipt = registers;
         return 0;
     }
-    map_offset = (mpofn >> 4U) & 7U;
     receipt.valid = 1;
     receipt.capture_only = 1;
     receipt.layer_registers_verified = 1;
@@ -392,40 +399,49 @@ int nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
             frame.vdp2_cram + x * 2, registers.byte_order);
     for (y = 0; y < height; ++y) {
         for (x = 0; x < width; ++x) {
-            int tile_x = source_x + x;
-            int tile_y = source_y + y;
+            int tile_x = source_x + x + registers.nbg1_scroll_x;
+            int tile_y = source_y + y + registers.nbg1_scroll_y;
             int map_index = ((tile_y >> 3) & 0x3f) * 64 +
                 ((tile_x >> 3) & 0x3f);
-            uint32_t map_address = (((uint32_t)map_offset << 6U) + map_a) *
-                0x2000U + (uint32_t)map_index * 4U;
+            /* Match the bounded TileFetcher address derivation mirrored by
+             * scripts/analyze_nexus_vdp2_composition.py::
+             * visible_character_spans (name_word wrap and byte conversion). */
+            uint32_t name_word_address =
+                ((((uint32_t)map_offset << 6U) + map_a) << 13U) +
+                (uint32_t)map_index * 2U;
+            uint32_t map_address =
+                (name_word_address & 0x3ffffU) * 2U;
             uint16_t attr = read_vram16_ordered(
                 frame.vdp2_vram + map_address, registers.byte_order);
             uint16_t charno = read_vram16_ordered(
                 frame.vdp2_vram + map_address + 2U, registers.byte_order);
             int palno = attr & 0x7f;
-            int tile_bytes = bpp == 4 ? 32 : 64;
-            uint32_t char_address = (uint32_t)charno * (uint32_t)tile_bytes;
+            uint32_t char_address = ((uint32_t)charno << 5U) & 0x7ffffU;
             int px = tile_x & 7;
             int py = tile_y & 7;
             uint8_t index;
             int palette_index;
             int destination;
-            if (char_address + (uint32_t)tile_bytes > frame.vdp2_vram_size)
-                continue;
             if ((attr & 0x4000U) != 0U) px = 7 - px;
             if ((attr & 0x8000U) != 0U) py = 7 - py;
             if (bpp == 4) {
-                uint8_t packed = frame.vdp2_vram[char_address +
-                    (uint32_t)py * 4U + (uint32_t)(px / 2)];
+                uint32_t pixel_address = (char_address +
+                    (uint32_t)py * 4U + (uint32_t)(px / 2)) & 0x7ffffU;
+                uint8_t packed = frame.vdp2_vram[pixel_address];
                 index = (uint8_t)((px & 1) == 0 ? packed >> 4 : packed & 0xf);
                 palette_index = palno * 16 + index;
             } else {
-                index = frame.vdp2_vram[char_address + (uint32_t)py * 8U +
-                    (uint32_t)px];
+                uint32_t pixel_address = (char_address +
+                    (uint32_t)py * 8U + (uint32_t)px) & 0x7ffffU;
+                index = frame.vdp2_vram[pixel_address];
                 palette_index = ((palno * 16) & ~255) + index;
             }
             destination = (destination_y + y) * NEXUS_FB_W +
                 destination_x + x;
+            if (!visited_tiles[map_index]) {
+                visited_tiles[map_index] = 1U;
+                ++receipt.tiles_decoded;
+            }
             if (index == 0U) {
                 ++receipt.transparent_pixels;
             } else {
