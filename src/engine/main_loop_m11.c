@@ -11159,22 +11159,6 @@ static int m11_dm1_v1_input_is_immediate_turn(M12_MenuInput input) {
     return DM1_V1_InputMenuTokenIsImmediateTurnPc34Compat((int)input);
 }
 
-/* Nexus uses the Saturn D-pad's left/right inputs as turns in its
- * movement mode. The authentic Ymir retail session confirmed W moves forward
- * and A turns left. Map the reciprocal D key to the Saturn right turn while
- * leaving DM1's established A/D strafe mapping unchanged. */
-static M12_MenuInput m11_nexus_wasd_turn_input(
-    const M11_GameViewState* gameView,
-    SDL_Scancode scancode) {
-    if (!gameView ||
-        gameView->sourceKind != M11_GAME_SOURCE_NEXUS_DGN) {
-        return M12_MENU_INPUT_NONE;
-    }
-    if (scancode == SDL_SCANCODE_A) return M12_MENU_INPUT_TURN_LEFT;
-    if (scancode == SDL_SCANCODE_D) return M12_MENU_INPUT_TURN_RIGHT;
-    return M12_MENU_INPUT_NONE;
-}
-
 static M12_MenuInput m11_motion_input_from_scancode(SDL_Scancode scancode) {
     int action = M11_Input_ActionForScancode(scancode);
     if (!m11_input_action_is_motion(action)) {
@@ -11337,6 +11321,8 @@ static M12_MenuInput m11_held_motion_input_from_keyboard(const M11_GameViewState
                     ? M11_TheronGameplayInputFromScancode((int)preferred[i])
                     : m11_game_view_is_dm1(gameView)
                     ? M11_DM1V1_NavigationInputFromScancode((int)preferred[i])
+                    : gameView->sourceKind == M11_GAME_SOURCE_NEXUS_DGN
+                    ? M11_NexusMovementInputFromScancode((int)preferred[i])
                     : M12_MENU_INPUT_NONE;
             if (input == M12_MENU_INPUT_NONE) {
                 input = m11_motion_input_from_scancode(preferred[i]);
@@ -12087,7 +12073,10 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 m11_game_view_supports_held_motion_input(gameView) &&
                 ev.key.repeat) {
                 M12_MenuInput repeatInput =
-                    m11_game_view_is_theron(gameView)
+                    gameView->sourceKind == M11_GAME_SOURCE_NEXUS_DGN
+                        ? M11_NexusMovementInputFromScancode(
+                              (int)ev.key.scancode)
+                        : m11_game_view_is_theron(gameView)
                         ? M11_TheronGameplayInputFromScancode(
                               (int)ev.key.scancode)
                         : M11_DM1V1_NavigationInputFromScancode(
@@ -12140,8 +12129,9 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                         return mappedInput;
                     }
                 }
-                mappedInput = m11_nexus_wasd_turn_input(
-                    gameView, ev.key.scancode);
+                mappedInput = gameView->sourceKind == M11_GAME_SOURCE_NEXUS_DGN
+                    ? M11_NexusMovementInputFromScancode(ev.key.scancode)
+                    : M12_MENU_INPUT_NONE;
                 if (mappedInput != M12_MENU_INPUT_NONE) return mappedInput;
                 mappedInput = m11_motion_input_from_scancode(ev.key.scancode);
                 if (mappedInput != M12_MENU_INPUT_NONE) {
@@ -12662,7 +12652,10 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 m11_game_view_supports_held_motion_input(gameView) &&
                 ev.key.repeat) {
                 M12_MenuInput repeatInput =
-                    m11_game_view_is_theron(gameView)
+                    gameView->sourceKind == M11_GAME_SOURCE_NEXUS_DGN
+                        ? M11_NexusMovementInputFromScancode(
+                              (int)ev.key.keysym.scancode)
+                        : m11_game_view_is_theron(gameView)
                         ? M11_TheronGameplayInputFromScancode(
                               (int)ev.key.keysym.scancode)
                         : M11_DM1V1_NavigationInputFromScancode(
@@ -12712,8 +12705,10 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                         return mappedInput;
                     }
                 }
-                mappedInput = m11_nexus_wasd_turn_input(
-                    gameView, ev.key.keysym.scancode);
+                mappedInput = gameView->sourceKind == M11_GAME_SOURCE_NEXUS_DGN
+                    ? M11_NexusMovementInputFromScancode(
+                          ev.key.keysym.scancode)
+                    : M12_MENU_INPUT_NONE;
                 if (mappedInput != M12_MENU_INPUT_NONE) return mappedInput;
                 mappedInput = m11_motion_input_from_scancode(ev.key.keysym.scancode);
                 if (mappedInput != M12_MENU_INPUT_NONE) {

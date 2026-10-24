@@ -119,6 +119,19 @@ int main(void) {
           M12_MENU_INPUT_LEFT);
     CHECK(M11_TheronNavigationInputFromScancode(SDL_SCANCODE_KP_6) ==
           M12_MENU_INPUT_RIGHT);
+
+    /* Nexus follows the retail Saturn D-pad turn behavior on both WASD and
+     * arrow-key layouts; the caller scopes this mapping to Nexus only. */
+    CHECK(M11_NexusMovementInputFromScancode(SDL_SCANCODE_A) ==
+          M12_MENU_INPUT_TURN_LEFT);
+    CHECK(M11_NexusMovementInputFromScancode(SDL_SCANCODE_D) ==
+          M12_MENU_INPUT_TURN_RIGHT);
+    CHECK(M11_NexusMovementInputFromScancode(SDL_SCANCODE_LEFT) ==
+          M12_MENU_INPUT_TURN_LEFT);
+    CHECK(M11_NexusMovementInputFromScancode(SDL_SCANCODE_RIGHT) ==
+          M12_MENU_INPUT_TURN_RIGHT);
+    CHECK(M11_NexusMovementInputFromScancode(SDL_SCANCODE_UP) ==
+          M12_MENU_INPUT_NONE);
     CHECK(M11_TheronNavigationInputFromKeycode(SDLK_W) ==
           M12_MENU_INPUT_UP);
     CHECK(M11_TheronNavigationInputFromKeycode(SDLK_S) ==

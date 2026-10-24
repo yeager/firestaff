@@ -25,9 +25,9 @@ were not established by these captures.
 ## Firestaff keyboard routing
 
 The M11 host maps W/S to forward/backward and Q/E to left/right turns. For
-Nexus only, A/D are aliases for left/right turn, matching the observed retail
-ControlPad behavior. This preserves DM1's A/D strafe mapping. Left/right arrow
-keys and shoulder bindings remain the strafe inputs.
+Nexus only, A/D and left/right arrows are aliases for left/right turn,
+matching the observed retail ControlPad behavior. This preserves DM1's A/D
+and arrow strafe mappings. Shoulder bindings remain the strafe inputs.
 
 The Nexus movement-only `M11_GameView_HandleInput` route accepts movement
 commands. The Nexus mechanics action gate remains fail-closed for unproven
