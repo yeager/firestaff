@@ -18,6 +18,15 @@ key-down events; it did not model a continuous 3–5 second button hold. Keep
 fallback visuals disabled. Bind and decode authentic graphics, palette, and
 tile-mapping data before treating the native presentation as complete.
 
+A follow-up native Debug run on trv2 used Xvfb only as the SDL display and
+xdotool to send separate Return/Down taps to Firestaff; it did not run an
+emulator. With the hash-verified JP Rev. 1 Track 02 BIN, the sequence
+Return, Return, seven Down taps, Return reached `theron-runtime`, loaded map
+0, and advanced 73 native game ticks during the 18-second run. The final
+receipt reported party `(1,0)`, north, and one champion. This confirms the
+native menu-to-runtime input path on Linux as well as macOS; it does not close
+the authentic graphics-to-dungeon renderer gap or establish complete parity.
+
 ## 2026-10-24 — Static Stage-2 palette is bound; screen route remains open
 
 The US `$46B8` handler calls `$5E4D`; JP calls `$5E7D`. Both authentic Track
