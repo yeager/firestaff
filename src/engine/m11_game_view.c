@@ -59206,7 +59206,15 @@ static int m11_spawn_csb_champion_projectile(
             &projectileSlot)) {
         return 0;
     }
-    (void)projectileSlot;
+    if (state->debugMovementTraceEnabled) {
+        fprintf(stderr,
+                "firestaff: game-action game=csb tick=%u type=projectile-launch "
+                "champion=%d action=%u slot=%d subtype=%d category=%d "
+                "attack=%d attack-type=%d poison=%d\n",
+                (unsigned int)state->world.gameTick, championIndex,
+                (unsigned int)actionIndex, projectileSlot, projectileSubtype,
+                projectileCategory, attack, attackTypeCode, poisonAttack);
+    }
     return 1;
 }
 

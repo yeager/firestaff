@@ -341,6 +341,7 @@ struct DM2_V1_RuntimeState {
     int dynamic_move_successes;
     uint64_t creature_movement_sequence;
     DM2_V1_RuntimeCreatureMovementReceipt last_creature_movement;
+    DM2_V1_RuntimeCreatureMovementReceipt creature_movement_history[64];
     int dynamic_move_last_failure;
     int dynamic_move_pending_source_map;
     int dynamic_move_pending_source_x;
@@ -685,6 +686,7 @@ static int g_dm2_last_asset_projectile_count = 0;
 static int g_dm2_last_fallback_projectile_count = 0;
 static DM2_V1_RuntimeProjectileRenderReceipt g_dm2_last_projectile_render;
 static DM2_V1_RuntimeMissileImpactReceipt g_dm2_last_missile_impact;
+static uint64_t g_dm2_missile_impact_sequence;
 static DM2_V1_RuntimeCreatureDamageReceipt g_dm2_last_creature_damage;
 static DM2_V1_RuntimeWieldAttackReceipt g_dm2_last_wield_attack;
 static int g_dm2_last_asset_hud_portrait_count = 0;
@@ -3317,6 +3319,7 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     memset(&g_dm2_frame_ownership, 0, sizeof(g_dm2_frame_ownership));
     memset(&g_dm2_last_missile_impact, 0,
            sizeof(g_dm2_last_missile_impact));
+    g_dm2_missile_impact_sequence = 0;
     memset(&g_dm2_last_creature_damage, 0,
            sizeof(g_dm2_last_creature_damage));
     /* A NULL profile is the explicit runtime-release path.  In particular,
@@ -7923,6 +7926,8 @@ static int dm2_runtime_process_moverec_timer(
             movement->to_map = (int16_t)map;
             movement->to_x = (int16_t)x;
             movement->to_y = (int16_t)y;
+            rt->creature_movement_history[(movement->sequence - 1u) % 64u] =
+                *movement;
         }
     }
     if (rt->dynamic_move_pending_record == record_handle)
@@ -11137,6 +11142,8 @@ static int dm2_runtime_step_missile_timer(
                 dungeon_record[0] = 0xffu; dungeon_record[1] = 0xffu;
             }
             g_dm2_last_missile_impact.missile_consumed = 1;
+            g_dm2_last_missile_impact.sequence =
+                ++g_dm2_missile_impact_sequence;
             dm2_v1_record_pool_set_free(&pool_backup);
             free(caii_backup);
             free(raw_backup);
@@ -16903,6 +16910,8 @@ void dm2_v1_runtime_clear_new_game_party_state(void) {
     g_dm2_runtime.creature_movement_sequence = 0;
     memset(&g_dm2_runtime.last_creature_movement, 0,
            sizeof(g_dm2_runtime.last_creature_movement));
+    memset(g_dm2_runtime.creature_movement_history, 0,
+           sizeof(g_dm2_runtime.creature_movement_history));
     g_dm2_last_wield_death_drop_count = 0;
     g_dm2_last_wield_death_drop_iterations = 0;
     g_dm2_last_wield_death_drop_alloc_failures = 0;
@@ -17033,6 +17042,33 @@ int dm2_v1_runtime_last_creature_movement_receipt(
     }
     *out_receipt = g_dm2_runtime.last_creature_movement;
     return 1;
+}
+
+size_t dm2_v1_runtime_creature_movement_receipts_since(
+    uint64_t *inout_sequence, DM2_V1_RuntimeCreatureMovementReceipt *out,
+    size_t capacity, uint64_t *out_dropped) {
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    uint64_t cursor, oldest, latest;
+    size_t count = 0;
+    if (out_dropped) *out_dropped = 0;
+    if (!inout_sequence || (!out && capacity != 0)) return 0;
+    cursor = *inout_sequence;
+    latest = rt->creature_movement_sequence;
+    oldest = latest > 64u ? latest - 63u : (latest ? 1u : 0u);
+    if (cursor + 1u < oldest) {
+        if (out_dropped) *out_dropped = oldest - cursor - 1u;
+        cursor = oldest - 1u;
+    }
+    while (cursor < latest && count < capacity) {
+        uint64_t sequence = cursor + 1u;
+        DM2_V1_RuntimeCreatureMovementReceipt event =
+            rt->creature_movement_history[(sequence - 1u) % 64u];
+        if (event.sequence != sequence) break;
+        out[count++] = event;
+        cursor = sequence;
+    }
+    *inout_sequence = cursor;
+    return count;
 }
 
 int dm2_v1_runtime_get_source_aura_of_speed(uint8_t *out_value) {

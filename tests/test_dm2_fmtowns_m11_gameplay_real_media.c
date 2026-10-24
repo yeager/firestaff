@@ -258,8 +258,11 @@ static int exercise_remote_creature_moverec(
 {
     DM2_V1_GameState *game;
     DM2_V1_RuntimeCreatureRecordReceipt creature_record;
+    DM2_V1_RuntimeCreatureMovementReceipt previous_movement, movement;
     DM2_V1_LightSourceIdentity before_light, after_light;
     DM2_V1_SourceTimer timer;
+    uint64_t movement_cursor = 0, movement_dropped = 0;
+    size_t movement_count;
     int16_t creature, occupant;
     int before;
 
@@ -281,6 +284,9 @@ static int exercise_remote_creature_moverec(
         occupant != DM2_V1_RECORD_HANDLE_NULL)
         return 0;
     dm2_v1_runtime_set_position(0, 2, 8, 1);
+    memset(&previous_movement, 0, sizeof(previous_movement));
+    if (dm2_v1_runtime_last_creature_movement_receipt(&previous_movement))
+        movement_cursor = previous_movement.sequence;
     memset(&before_light, 0, sizeof(before_light));
     if (!dm2_v1_runtime_light_source_identity(&before_light) ||
         !before_light.valid)
@@ -298,7 +304,14 @@ static int exercise_remote_creature_moverec(
         return 0;
     dm2_v1_runtime_tick();
     memset(&after_light, 0, sizeof(after_light));
-    return dm2_v1_runtime_dynamic_move_successes() == before + 1 &&
+    memset(&movement, 0, sizeof(movement));
+    movement_count = dm2_v1_runtime_creature_movement_receipts_since(
+        &movement_cursor, &movement, 1, &movement_dropped);
+    return movement_count == 1 && movement_dropped == 0 &&
+        movement.sequence > previous_movement.sequence &&
+        movement.record_handle == creature && movement.to_map == 3 &&
+        movement.to_x == 8 && movement.to_y == 4 &&
+        dm2_v1_runtime_dynamic_move_successes() == before + 1 &&
         dm2_v1_runtime_query_creature_at(3, 8, 4, &occupant) &&
         occupant == creature && game->current_level == 0 &&
         game->party_x == 2 && game->party_y == 8 && game->party_dir == 1 &&

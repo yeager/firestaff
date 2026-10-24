@@ -2774,10 +2774,10 @@ static void m11_debug_native_game_state(const M11_GameViewState* state,
             }
             fprintf(stderr,
                     "firestaff: game-debug-capabilities game=csb "
-                    "source=csb-runtime actions=observed "
+                    "source=csb-runtime actions=melee-and-projectile-launch "
                     "monster-movement=active-group-position "
-                    "player-attack=source-melee-receipt "
-                    "monster-health=source-melee-hp-receipt "
+                    "player-attack=melee-and-projectile-launch "
+                    "monster-health=melee-only-receipt "
                     "champion-health=source-party-state\n");
         }
         if (snapshotLaunchSerial != g_m11_sync_launch_serial) {
@@ -2880,11 +2880,13 @@ static void m11_debug_native_game_state(const M11_GameViewState* state,
         static uint64_t lastCreatureMovementSequence;
         static DM2_V1_RuntimeWieldAttackReceipt previousWieldReceipt;
         static DM2_V1_RuntimeCreatureDamageReceipt previousDamageReceipt;
+        static uint64_t lastMissileImpactSequence;
         const DM2_V1_GameState* world =
             (const DM2_V1_GameState*)state->dm2World;
         DM2_V1_RuntimeWieldAttackReceipt wieldReceipt;
         DM2_V1_RuntimeCreatureDamageReceipt damageReceipt;
-        DM2_V1_RuntimeCreatureMovementReceipt movementReceipt;
+        DM2_V1_RuntimeCreatureMovementReceipt movementReceipts[64];
+        uint64_t movementDropped = 0;
         const int tick = dm2_v1_runtime_get_tick_count();
         if (reportSummary)
             fprintf(stderr,
@@ -2896,10 +2898,10 @@ static void m11_debug_native_game_state(const M11_GameViewState* state,
         if (reportSummary)
             fprintf(stderr,
                     "firestaff: game-debug-capabilities game=dm2 "
-                    "source=dm2-runtime actions=observed "
-                    "player-attack=source-receipt "
-                    "monster-damage=source-hp-receipt "
-                    "monster-movement=source-moverec-commit "
+                    "source=dm2-runtime actions=partial-observed "
+                    "player-attack=wield-source-receipt "
+                    "monster-damage=think-and-missile-source-receipts "
+                    "monster-movement=committed-ring-64 "
                     "champion-health=source-party-state\n");
         if (receiptLaunchSerial != g_m11_sync_launch_serial) {
             receiptLaunchSerial = g_m11_sync_launch_serial;
@@ -2907,6 +2909,7 @@ static void m11_debug_native_game_state(const M11_GameViewState* state,
             haveCreatureDamageReceipt = 0;
             memset(&previousWieldReceipt, 0, sizeof(previousWieldReceipt));
             memset(&previousDamageReceipt, 0, sizeof(previousDamageReceipt));
+            lastMissileImpactSequence = 0;
             memset(previousHeroes, 0, sizeof(previousHeroes));
             heroSnapshotCount = 0;
             haveHeroSnapshot = 0;
@@ -2959,33 +2962,37 @@ static void m11_debug_native_game_state(const M11_GameViewState* state,
                 }
             }
         }
-        memset(&movementReceipt, 0, sizeof(movementReceipt));
-        if (dm2_v1_runtime_last_creature_movement_receipt(&movementReceipt) &&
-            movementReceipt.sequence > lastCreatureMovementSequence) {
-            if (lastCreatureMovementSequence != 0 &&
-                movementReceipt.sequence > lastCreatureMovementSequence + 1u) {
+        {
+            size_t movementCount =
+                dm2_v1_runtime_creature_movement_receipts_since(
+                    &lastCreatureMovementSequence, movementReceipts,
+                    sizeof(movementReceipts) / sizeof(movementReceipts[0]),
+                    &movementDropped);
+            size_t movementIndex;
+            if (movementDropped)
                 fprintf(stderr,
                         "firestaff: game-event game=dm2 tick=%d "
-                        "type=monster-movement-gap skipped=%llu\n",
-                        tick,
-                        (unsigned long long)(movementReceipt.sequence -
-                            lastCreatureMovementSequence - 1u));
+                        "type=monster-movement-gap dropped=%llu\n",
+                        tick, (unsigned long long)movementDropped);
+            for (movementIndex = 0; movementIndex < movementCount;
+                 ++movementIndex) {
+                const DM2_V1_RuntimeCreatureMovementReceipt *movementReceipt =
+                    &movementReceipts[movementIndex];
+                fprintf(stderr,
+                        "firestaff: game-event game=dm2 tick=%u "
+                        "type=monster-moved creature=%d type-id=%u "
+                        "from=%d,%d,%d to=%d,%d,%d sequence=%llu\n",
+                        movementReceipt->game_tick,
+                        (int)movementReceipt->record_handle,
+                        (unsigned int)movementReceipt->creature_type,
+                        (int)movementReceipt->from_map,
+                        (int)movementReceipt->from_x,
+                        (int)movementReceipt->from_y,
+                        (int)movementReceipt->to_map,
+                        (int)movementReceipt->to_x,
+                        (int)movementReceipt->to_y,
+                        (unsigned long long)movementReceipt->sequence);
             }
-            fprintf(stderr,
-                    "firestaff: game-event game=dm2 tick=%u "
-                    "type=monster-moved creature=%d type-id=%u "
-                    "from=%d,%d,%d to=%d,%d,%d sequence=%llu\n",
-                    movementReceipt.game_tick,
-                    (int)movementReceipt.record_handle,
-                    (unsigned int)movementReceipt.creature_type,
-                    (int)movementReceipt.from_map,
-                    (int)movementReceipt.from_x,
-                    (int)movementReceipt.from_y,
-                    (int)movementReceipt.to_map,
-                    (int)movementReceipt.to_x,
-                    (int)movementReceipt.to_y,
-                    (unsigned long long)movementReceipt.sequence);
-            lastCreatureMovementSequence = movementReceipt.sequence;
         }
         memset(&wieldReceipt, 0, sizeof(wieldReceipt));
         if (dm2_v1_runtime_last_wield_attack_receipt(&wieldReceipt) &&
@@ -3025,6 +3032,31 @@ static void m11_debug_native_game_state(const M11_GameViewState* state,
                     damageReceipt.deallocated, damageReceipt.drops_placed);
             previousDamageReceipt = damageReceipt;
             haveCreatureDamageReceipt = 1;
+        }
+        {
+            DM2_V1_RuntimeMissileImpactReceipt missileReceipt;
+            memset(&missileReceipt, 0, sizeof(missileReceipt));
+            if (dm2_v1_runtime_last_missile_impact_receipt(&missileReceipt) &&
+                missileReceipt.valid &&
+                missileReceipt.sequence > lastMissileImpactSequence) {
+                fprintf(stderr,
+                        "firestaff: game-combat game=dm2 tick=%d "
+                        "type=missile-impact missile=%d creature=%d "
+                        "creature-type=%d destination-hit=%d attack-completed=%d "
+                        "hp-applied=%d damage=%d hp-after=%d consumed=%d "
+                        "rescheduled=%d\n",
+                        tick, (int)missileReceipt.missile_record,
+                        (int)missileReceipt.creature_record,
+                        missileReceipt.creature_type,
+                        missileReceipt.destination_hit,
+                        missileReceipt.attack_completed,
+                        missileReceipt.hp_applied,
+                        missileReceipt.damage_amount,
+                        missileReceipt.damage_hp_word_after,
+                        missileReceipt.missile_consumed,
+                        missileReceipt.damage_rescheduled);
+                lastMissileImpactSequence = missileReceipt.sequence;
+            }
         }
     } else if (reportSummary && strcmp(state->sourceId, "dm1") == 0) {
         fprintf(stderr,

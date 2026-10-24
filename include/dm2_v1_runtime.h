@@ -28,6 +28,7 @@
  */
 
 #include <stdint.h>
+#include <stddef.h>
 #include "dm2_v1_boot.h"
 #include "dm2_v1_proceed_timers_pc34_compat.h"
 #include "dm2_v1_spell_cast_player.h"
@@ -840,6 +841,7 @@ int dm2_v1_runtime_last_projectile_render_receipt(
  * renderer state: it is set only after the authenticated STEP_MISSILE owner
  * resolves a destination creature and runs ATTACK_CREATURE. */
 typedef struct DM2_V1_RuntimeMissileImpactReceipt {
+    uint64_t sequence;
     int valid;
     int destination_hit;
     int attack_completed;
@@ -1610,6 +1612,11 @@ int dm2_v1_runtime_get_source_hero_state(
  * moved in this session. Sequence increases once per committed movement. */
 int dm2_v1_runtime_last_creature_movement_receipt(
     DM2_V1_RuntimeCreatureMovementReceipt *out_receipt);
+/* Drain committed movement receipts after *inout_sequence, oldest first.
+ * Returns count copied; advances cursor to each returned event. */
+size_t dm2_v1_runtime_creature_movement_receipts_since(
+    uint64_t *inout_sequence, DM2_V1_RuntimeCreatureMovementReceipt *out,
+    size_t capacity, uint64_t *out_dropped);
 /* Read-only owner receipt for savegames1.b_04 (Aura of Speed). */
 int dm2_v1_runtime_get_source_aura_of_speed(uint8_t *out_value);
 /* Returns -1 without mutation: c_hero item links require the original DB

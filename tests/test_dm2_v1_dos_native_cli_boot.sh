@@ -302,8 +302,9 @@ probe_input() {
     if ! printf '%s\n' "$output" | grep -Fq 'game-action game=dm2 tick=native' ||
        ! printf '%s\n' "$output" | grep -Fq 'compatibility-world=not-authoritative' ||
        ! printf '%s\n' "$output" | grep -Fq 'game-debug-capabilities game=dm2 source=dm2-runtime' ||
-       ! printf '%s\n' "$output" | grep -Fq 'player-attack=source-receipt' ||
-       ! printf '%s\n' "$output" | grep -Fq 'monster-damage=source-hp-receipt' ||
+       ! printf '%s\n' "$output" | grep -Fq 'player-attack=wield-source-receipt' ||
+       ! printf '%s\n' "$output" | grep -Fq 'monster-damage=think-and-missile-source-receipts' ||
+       ! printf '%s\n' "$output" | grep -Fq 'monster-movement=committed-ring-64' ||
        ! printf '%s\n' "$output" | grep -Fq 'game-state game=dm2 source=dm2-world tick=' ||
        ! printf '%s\n' "$output" | grep -Fq 'outdoor=0 champions=unavailable'; then
         printf '%s\n' "$output" >&2
