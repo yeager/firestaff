@@ -1,0 +1,39 @@
+UpdateCTestConfiguration  from :/home/trv2/work/firestaff-parity-debug-20261024/.build-debug/DartConfiguration.tcl
+Parse Config file:/home/trv2/work/firestaff-parity-debug-20261024/.build-debug/DartConfiguration.tcl
+Test project /home/trv2/work/firestaff-parity-debug-20261024/.build-debug
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 2708
+    Start 2708: nexus_v1_title_same_session_capture_real
+
+2708: Test command: /usr/bin/bash "/home/trv2/work/firestaff-parity-debug-20261024/tests/test_nexus_v1_title_same_session_capture_real.sh"
+2708: Working Directory: /home/trv2/work/firestaff-parity-debug-20261024/.build-debug
+2708: Test timeout computed to be: 1500
+2708: SKIP: no complete hash-bound same-session Nexus title capture
+1/1 Test #2708: nexus_v1_title_same_session_capture_real ...***Skipped   0.02 sec
+
+The following tests passed:
+	nexus_v1_title_same_session_capture_real
+
+100% tests passed, 0 tests failed out of 1
+
+Label Time Summary:
+cram            =   0.02 sec*proc (1 test)
+nexus           =   0.02 sec*proc (1 test)
+real-capture    =   0.02 sec*proc (1 test)
+real_data       =   0.02 sec*proc (1 test)
+registers       =   0.02 sec*proc (1 test)
+saturn          =   0.02 sec*proc (1 test)
+timing          =   0.02 sec*proc (1 test)
+title           =   0.02 sec*proc (1 test)
+vdp1            =   0.02 sec*proc (1 test)
+vdp2            =   0.02 sec*proc (1 test)
+
+Total Test time (real) =   0.16 sec
+
+The following tests did not run:
+	2708 - nexus_v1_title_same_session_capture_real (Skipped)
