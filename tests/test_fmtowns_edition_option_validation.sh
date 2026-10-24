@@ -36,5 +36,17 @@ expect_rejected \
 expect_rejected \
     'firestaff: --csb-fmtowns-ja requires --game csb and --platform fm-towns' \
     --game csb --csb-fmtowns-ja --platform auto
+expect_rejected \
+    'firestaff: --csb-utility-disk requires --platform fm-towns' \
+    --csb-utility-disk --platform atari-st
+expect_rejected \
+    'firestaff: --csb-utility-disk requires --platform fm-towns' \
+    --platform atari-st --csb-utility-disk
+expect_rejected \
+    'firestaff: --csb-utility-disk requires --platform fm-towns' \
+    --csb-utility-disk --amiga
+expect_rejected \
+    'firestaff: --csb-utility-disk requires --platform fm-towns' \
+    --amiga --csb-utility-disk
 
-echo 'PASS: mismatched FM Towns edition options are rejected before media scanning'
+echo 'PASS: mismatched FM Towns edition and utility options are rejected before media scanning'

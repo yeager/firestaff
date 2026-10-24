@@ -2285,3 +2285,8 @@ only. Active work is in `TODO.md` and `TODO-<game>.md`.
   conversion symbols. Xcode 27.1 now builds the Release `firestaff` target on
   arm64, and its version and early CLI argument checks pass. The target is a
   command-line executable, so code signing is not required for this compile.
+- The CSB FM Towns utility disk option now validates explicit platform
+  conflicts during CLI parsing for both argument orders. `--csb-utility-disk`
+  still selects FM Towns when no platform is specified, and conflicting Atari
+  ST or Amiga selections fail before media scanning. The focused
+  `fmtowns_edition_option_validation` test covers both conflicts and orders.

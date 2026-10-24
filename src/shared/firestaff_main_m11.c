@@ -699,6 +699,7 @@ int main(int argc, char** argv) {
     int verbose = 0;
     int debug = 0;
     int debugFullRedraw = 0;
+    int platformOverrideSpecified = 0;
     int theronAuthenticatedFallback = 0;
     int enableExternalArchiveTools = 0;
     const char* theronVramSnapshot = NULL;
@@ -793,7 +794,6 @@ int main(int argc, char** argv) {
         if (strcmp(a, "--csb-utility-disk") == 0) {
             opts.csbFmtownsUtilityDisk = 1;
             opts.gameId = "csb";
-            opts.architectureOverride = M12_ARCH_FM_TOWNS;
             opts.directLaunch = 1;
             continue;
         }
@@ -1015,10 +1015,12 @@ int main(int argc, char** argv) {
                         "firestaff: --platform must be auto, pc (dos), amiga, atari-st (atari), fm-towns (fmtowns), mac, pce, saturn, or apple-iigs (iigs)\n");
                 return 2;
             }
+            platformOverrideSpecified = 1;
             continue;
         }
         if (strcmp(a, "--fm-towns") == 0) {
             opts.architectureOverride = M12_ARCH_FM_TOWNS;
+            platformOverrideSpecified = 1;
             continue;
         }
         if (strcmp(a, "--csb-fmtowns-ja") == 0) {
@@ -1033,6 +1035,7 @@ int main(int argc, char** argv) {
         }
         if (strcmp(a, "--amiga") == 0) {
             opts.architectureOverride = M12_ARCH_AMIGA;
+            platformOverrideSpecified = 1;
             continue;
         }
         if (strcmp(a, "--save") == 0 && i + 1 < argc) {
@@ -1266,6 +1269,15 @@ int main(int argc, char** argv) {
         (!opts.gameId || strcmp(opts.gameId, "csb") != 0)) {
         fprintf(stderr, "firestaff: --csb-utility-disk requires CSB FM Towns media\n");
         return 2;
+    }
+    if (opts.csbFmtownsUtilityDisk && platformOverrideSpecified &&
+        opts.architectureOverride != M12_ARCH_FM_TOWNS) {
+        fprintf(stderr,
+                "firestaff: --csb-utility-disk requires --platform fm-towns\n");
+        return 2;
+    }
+    if (opts.csbFmtownsUtilityDisk) {
+        opts.architectureOverride = M12_ARCH_FM_TOWNS;
     }
     if (opts.savePath && !opts.csbHintOracle && !opts.gameId) {
         fprintf(stderr, "firestaff: --save requires --game <id>\n");
