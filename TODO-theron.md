@@ -1,3 +1,19 @@
+## 2026-10-24 — original US emulator title input remains unverified
+
+- The active original US session is running Mednafen's normal `pce` module.
+  Its task-specific profile maps PCE I, II, and RUN to keyboard codes 91, 90,
+  and 40; these differ from the global profile, so global hotkey assumptions
+  are unsafe.
+- Repeated four-second RUN and confirm inputs did not produce a visible
+  transition from the Theron's Quest title screen to a file-selection or
+  gameplay screen. The existing save file was not changed and no new save was
+  written. This attempt is not gameplay evidence.
+- Repeat from a fresh authenticated US session using the known `pce_fast`
+  capture route. Confirm the title menu is visible before holding the selected
+  game action, then capture the file and dungeon screens with the same-session
+  controller and RAM receipts. Do not infer pit semantics from this title
+  attempt.
+
 ## 2026-10-24 — require authentic-media and debug receipts in paired captures
 
 - The shared `paired_capture_diff.py` v2 manifest now requires a separately
