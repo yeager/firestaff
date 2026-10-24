@@ -16,6 +16,7 @@
  */
 
 #include "theron_v1_boot.h"
+#include "theron_v1_track02_actuator.h"
 #include "theron_v1_track02_thing_data.h"
 #include "theron_v1_world.h"
 #include "menu_input_m12.h"
@@ -280,6 +281,11 @@ static int test_original_turn_and_strafe_commands(void)
 
 static int test_turn_event_capacity_failure_reports_blocked(void)
 {
+    /* Authentic Formicia floor-party actuator record with RevertEffect set.
+     * Its removal event is guaranteed to trigger for any turn direction. */
+    static const uint8_t reverted_party_actuator_raw[8] = {
+        0xfe, 0xff, 0x03, 0x01, 0x60, 0x02, 0xa0, 0x21
+    };
     static const int turn_inputs[] = {
         M12_MENU_INPUT_TURN_LEFT,
         M12_MENU_INPUT_TURN_RIGHT,
@@ -293,6 +299,7 @@ static int test_turn_event_capacity_failure_reports_blocked(void)
     TEST("Turn event-capacity failure reports blocked without mutation");
     for (i = 0; i < (int)(sizeof(turn_inputs) / sizeof(turn_inputs[0])); ++i) {
         Theron_V1_SourceObjectRecord *source;
+        Theron_V1_Object *live_actuator;
 
         setup_open_room(&world);
         world.source_object_count = 1u;
@@ -301,10 +308,27 @@ static int test_turn_event_capacity_failure_reports_blocked(void)
         source->level = world.current_level;
         source->x = world.party.leader_x;
         source->y = world.party.leader_y;
+        source->source_ref = 1u;
+        source->source_index = 1u;
         source->category = THERON_CAT_ACTUATOR;
         source->raw_size = 8u;
+        memcpy(source->raw, reverted_party_actuator_raw,
+               sizeof(reverted_party_actuator_raw));
+        world.object_count = 1;
+        live_actuator = &world.objects[0];
+        live_actuator->type = THERON_OBJTYPE_SOURCE_ACTUATOR;
+        live_actuator->dungeon_id = source->dungeon_id;
+        live_actuator->level = source->level;
+        live_actuator->x = source->x;
+        live_actuator->y = source->y;
+        live_actuator->source_ref = source->source_ref;
+        live_actuator->source_index = source->source_index;
+        live_actuator->state = TQ_ACT_FLOOR_PARTY;
+        world.party.champion_count = 1;
         world.source_actuator_event_count =
-            THERON_MAX_SOURCE_ACTUATOR_EVENTS - 1u;
+            THERON_MAX_SOURCE_ACTUATOR_EVENTS;
+        world.source_actuator_events[
+            THERON_MAX_SOURCE_ACTUATOR_EVENTS - 1u].source_ref = 0xbeefu;
 
         ASSERT(theron_v1_boot_runtime_handle_m12_input(
                    &world, NULL, turn_inputs[i], &receipt) == 1,
@@ -319,8 +343,12 @@ static int test_turn_event_capacity_failure_reports_blocked(void)
                receipt.party_dir == THERON_DIR_NORTH,
                "failed turn should preserve the party direction");
         ASSERT(world.source_actuator_event_count ==
-                   THERON_MAX_SOURCE_ACTUATOR_EVENTS - 1u,
+                   THERON_MAX_SOURCE_ACTUATOR_EVENTS,
                "failed turn should not publish a partial event queue");
+        ASSERT(world.source_actuator_events[
+                   THERON_MAX_SOURCE_ACTUATOR_EVENTS - 1u].source_ref ==
+                   0xbeefu,
+               "failed turn should not overwrite the full queue");
         ASSERT(receipt.party_x == 3 && receipt.party_y == 3 &&
                receipt.tick_count == 10,
                "failed turn should return the current world receipt");

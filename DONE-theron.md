@@ -8594,6 +8594,15 @@ T900/original inventory semantics. No synthetic media was used.
 - This improves evidence labeling only. Level/party semantics and their join
   to the authenticated map remain open.
 
+## 2026-10-24 — make the runtime event-capacity regression exercise a real source actuator
+
+- The turn-capacity fixture now includes an authentic reverted Formicia
+  floor-party actuator record and its matching live source object. This makes
+  the intended removal event reach the full event queue; the regression checks
+  that a blocked turn preserves both party pose and the existing queue.
+- `theron_v1_boot_runtime_input` passed three consecutive runs on trv2. This
+  repairs test-fixture coverage only and does not establish gameplay parity.
+
 ## Documentation status refresh — 2026-10-24
 
 - Updated the current documentation map and Theron technical-reference
