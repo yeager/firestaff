@@ -1337,6 +1337,17 @@ The test passes with NBG1 enabled in character/tilemap mode and keeps
 separate 512x256/8bpp bitmap decoder correctly rejects it; this prevents a
 character map from being mislabeled as a bitmap or a menu surface.
 
+The corrected TileFetcher address units were also checked against the
+authentic Japanese Nexus startup capture
+`nexus_v1_startup_render_27518_20261009/capture.raw` (SHA-256
+`1eaa507e314b60f1cc123dd6eb9fbcff4e635dcd1ea5b6cb7aeb16d12e33baae`). On
+frame 0, the NBG1 map registers at `0x44/0x46` both select plane `0x17`;
+the captured visible name-table span is `0x5c000..0x5db9c`, and charno
+`0x1000` selects character bytes at `0x20000`. The runtime decoder test passes
+on this same frame and reports 64 unique visited cells for its 64x64-pixel
+window. This validates raw capture address decoding only; the NBG1 consumer
+still has no joined Nexus asset owner and remains blocked from host rendering.
+
 VDP1 replay also has an atomic sequence lane for a complete bounded command
 window. Every mode-1 command must pass the existing exact DGN image/CLUT join;
 the sequence additionally requires captured clip state (User Clip or System

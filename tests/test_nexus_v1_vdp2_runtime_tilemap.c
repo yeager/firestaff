@@ -1,5 +1,6 @@
 #include "nexus_v1_vdp2_tilemap_capture_compositor.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -46,6 +47,48 @@ static int run_external_tilemap_capture(void)
         return 0;
     }
     fclose(file);
+    if (!nexus_v1_saturn_runtime_capture_frame(
+            capture, (size_t)file_size, frame_index, &frame) ||
+        !frame.valid) {
+        free(capture);
+        return 0;
+    }
+    {
+        Nexus_V1_Vdp2TilemapCaptureInput bounds_input;
+        memset(&bounds_input, 0, sizeof(bounds_input));
+        bounds_input.capture_name_table = frame.vdp2_vram;
+        bounds_input.capture_name_table_size = 4;
+        bounds_input.capture_character_generator = frame.vdp2_vram;
+        bounds_input.capture_character_generator_size = 64;
+        bounds_input.capture_cram = frame.vdp2_cram;
+        bounds_input.capture_cram_size = (int)frame.vdp2_cram_size;
+        bounds_input.vdp2_registers = frame.vdp2_registers;
+        bounds_input.vdp2_registers_size = (int)frame.vdp2_register_size;
+        bounds_input.register_byte_order = frame.vdp2_word_order;
+        bounds_input.source_name_table = frame.vdp2_vram;
+        bounds_input.source_name_table_size = 4;
+        bounds_input.source_character_generator = frame.vdp2_vram;
+        bounds_input.source_character_generator_size = 64;
+        bounds_input.source_cram = frame.vdp2_cram;
+        bounds_input.source_cram_size = (int)frame.vdp2_cram_size;
+        bounds_input.map_columns = 1;
+        bounds_input.map_rows = 1;
+        bounds_input.destination_x = INT_MAX;
+        if (nexus_v1_vdp2_capture_composite_nbg1_tilemap(
+                &framebuffer, &bounds_input, &receipt) || receipt.valid ||
+            receipt.renderer_permitted) {
+            free(capture);
+            return 0;
+        }
+        bounds_input.destination_x = 0;
+        bounds_input.destination_y = INT_MAX;
+        if (nexus_v1_vdp2_capture_composite_nbg1_tilemap(
+                &framebuffer, &bounds_input, &receipt) || receipt.valid ||
+            receipt.renderer_permitted) {
+            free(capture);
+            return 0;
+        }
+    }
     nexus_fb_init(&framebuffer);
     nexus_fb_clear(&framebuffer);
     memset(&frame, 0, sizeof(frame));
@@ -56,7 +99,8 @@ static int run_external_tilemap_capture(void)
         0, 0, 64, 64, 0, 0, &frame, &registers, &receipt) &&
         frame.valid && registers.valid && registers.nbg1_enabled &&
         !registers.nbg1_bitmap_mode && receipt.valid && receipt.capture_only &&
-        !receipt.renderer_permitted && receipt.original_saturn_capture_verified;
+        !receipt.renderer_permitted && receipt.original_saturn_capture_verified &&
+        receipt.tiles_decoded == 64;
     free(capture);
     return ok;
 }
@@ -142,7 +186,8 @@ int main(void)
     /* The same frame must also be decodable as a raw capture-only consumer;
      * this path intentionally does not grant source or host-composition
      * admission. */
-    le16(vdp2_vram + 2, 4U);
+    /* VDP2 character numbers advance in 32-byte units, including at 8bpp. */
+    le16(vdp2_vram + 2, 8U);
     le16(vdp2_regs + 0x3c, 0U);
     le16(vdp2_regs + 0x44, 0U);
     le16(vdp2_regs + 0x46, 0U);
@@ -168,7 +213,7 @@ int main(void)
     be16(vdp2_regs + 0x44, 0x0000U);
     be16(vdp2_regs + 0x46, 0x0000U);
     be16(vdp2_vram + 0, 0U);
-    be16(vdp2_vram + 2, 4U);
+    be16(vdp2_vram + 2, 8U);
     nexus_fb_clear(&framebuffer);
     memset(&registers, 0, sizeof(registers));
     memset(&receipt, 0, sizeof(receipt));
