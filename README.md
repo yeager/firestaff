@@ -38,7 +38,7 @@ separates source/disassembly evidence, real-media receipts and open routes.
 | Chaos Strikes Back | Amiga, Atari ST and FM Towns startup routes have real-media coverage. FM Towns uses its own authenticated entrance palette and MINI.DAT bootstrap state. Campaign, saves and presentation parity are still being completed. |
 | Dungeon Master II: Skullkeep | DOS, Amiga, FM Towns and Macintosh have real-media startup and selected runtime coverage. Amiga reaches its initial GDAT-backed M11 frame through the normal start menu with source movement covered. Broader input, save, native display/audio and dungeon-composition parity remain open per edition. |
 | DM Nexus | Saturn disc parsing and native MAPD title rendering work from the original CUE/BIN; later menu, HUD and dungeon presentation remain capture-gated. |
-| Theron's Quest | Firestaff runs Theron in its native C/SDL runtime; emulators are external reference tools only. Authentic US and Japanese Track 02 media reach bounded native routes, and source-only loaders verify all seven dungeons in both regions. Three current-source JP `--debug` runs reached Firestaff's bounded runtime. A separate authentic JP emulator save state visibly shows dungeon gameplay, but its active map, party coordinates and controlled movement are not joined. A baseline autoload emitted VDC/RAM snapshots but no verified input or CD transition; another host-input attempt lacked VDC snapshots. The Oct. 24 reference binary also came from a stale capture-builder source copy and lacked the current scripted PCE Fast input hook, so its input traces cannot verify scheduled input. The fresh US reference-emulator cold-start remained at the System Card screen, so the requested multi-second menu hold is still unverified. In the earlier Japanese emulator route, LOAD GAME returned to the Akutuba selection map, but its 2-KiB BRAM matched the known empty menu-only image, so native save persistence is unverified. Full native presentation, transitions and gameplay remain evidence-gated. |
+| Theron's Quest | Firestaff runs Theron in its native C/SDL runtime. Authentic US and Japanese Track 02 media reach bounded native routes, and source-only loaders verify all seven dungeons in both regions. On 2026-10-24, three repeated native macOS Debug runs used Firestaff's SDL input path to advance through stage select and Soul Room into a loaded dungeon; they reported nonzero native ticks and rendered frames. The Firestaff-presented capture remained black, so the game is not yet visually playable. Authentic graphics-bank binding, tile mapping, palette, transitions, combat, audio and save parity remain open. |
 
 ### Dungeon Master II: Skullkeep
 
@@ -99,15 +99,16 @@ cancels startup selection and does not advance the dungeon tick by itself.
 
 Firestaff runs Theron's Quest through its native C/SDL runtime and admits
 hash-verified US or Japanese Track 02 data with `--theron-native us` or
-`--theron-native jp`. This does not yet produce a playable native game. A
-three-loop Debug run against authentic Japanese Rev. 1 data kept the SDL host
-loop active, but reported zero Theron game ticks, zero rendered frames and
-zero presented frames. Firestaff's native presented-surface capture was black
-in all three runs. The original graphics-bank binding and dungeon renderer
-remain unavailable, so Firestaff keeps fallback visuals disabled. Startup
-receipts and source-only verification of all seven dungeon records establish
-data admission, not complete gameplay or platform parity. Native movement,
-transitions, combat, audio, presentation and save parity remain open.
+`--theron-native jp`. A native macOS Debug run with authentic Japanese Rev. 1
+data advanced through stage select and Soul Room into a loaded dungeon using
+Firestaff's SDL input path. The runtime reported about 2.8 game ticks/s and
+5 rendered/presented frames/s in one interval. Its presented-surface capture
+was still black: the original graphics-bank binding, palette and dungeon tile
+mapping are not yet connected to the renderer. This confirms native startup,
+input and tick-loop progress, not a visually playable game or complete parity.
+Source-only verification of all seven dungeon records establishes data
+admission, not campaign parity. Native movement, transitions, combat, audio,
+presentation and save parity remain open.
 README screenshots are Firestaff-rendered only; original-emulator captures
 are not presented as Firestaff output. See the
 [platform status](docs/PLATFORM_STATUS.md) and

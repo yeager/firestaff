@@ -1,6 +1,22 @@
 # Firestaff DONE — Theron's Quest
 
-## 2026-10-24 — repeated native SDL run documents the remaining presentation block
+## 2026-10-24 — native input reaches a loaded dungeon and starts game ticks
+
+A local macOS Debug build ran the native Firestaff C/SDL application with
+authentic Japanese Rev. 1 `TQJP02.bin` copied from TRV2 into the ignored local
+game-data directory. Firestaff's SDL script input advanced from title to
+stage select, opened the Soul Room, moved the cursor to the forcefield entry,
+and entered the dungeon. All three repeated runs reported `level-loaded=1`,
+map 0, party `(1,0)`, `THERON READY`, and nonzero native game ticks and
+rendered frames. The reported champion count varied between one and two
+across the runs. Measured intervals reported 2.80–3.00 game ticks/s,
+4.99–5.19 rendered frames/s, and 4.99–5.19 presented frames/s. The native
+presented capture was black, so this closes the startup/input/tick-loop gap
+only; it does not establish playable visual parity. The input was a sequence
+of discrete SDL key-down events, not a continuous long button hold. Original
+graphics, palette, and tile mapping remain the next required rendering work.
+
+## Earlier 2026-10-24 — TRV2 headless native run documented the presentation block
 
 Built Firestaff from the current source commit on TRV2 and ran three 15-second
 Debug sessions through Firestaff's own C/SDL runtime with authentic Japanese

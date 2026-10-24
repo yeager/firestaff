@@ -5,7 +5,27 @@ only as an external reference instrument for authentic original-game behavior
 and data capture; it is never part of the shipped runtime or a substitute for
 native Firestaff gameplay.
 
-## 2026-10-24 — native full-loop presentation check
+## 2026-10-24 — native menu input reaches the dungeon, presentation remains black
+
+A local macOS Debug build ran Firestaff's native C/SDL application with
+authentic Japanese Rev. 1 `TQJP02.bin` copied from the user's TRV2 data
+directory into the ignored local game-data directory. Firestaff's own SDL
+script input selected a stage, opened the Soul Room, moved its cursor to the
+forcefield entry, and entered a loaded dungeon. All three repeated runs
+reported `level-loaded=1`, map 0, party `(1,0)`, `THERON READY`, and nonzero
+game ticks and rendered frames. The reported champion count varied between
+one and two. Measured intervals reported `game-ticks-per-sec=2.80–3.00`,
+`game-frames-rendered-per-sec=4.99–5.19`, and
+`game-frames-presented-per-sec=4.99–5.19`. The Firestaff-presented 1600x1000
+capture remained black (SHA-256
+`160ee7a7f88cd678205f9aceced67995f35203c647f6fc71ec104f556bdcd733`). This
+verifies native startup, input, dungeon admission, and tick/render loop
+activity, but not visible playability. The scripted inputs were discrete
+key-down events and do not verify a continuous 3–5 second button hold. No
+emulator was used to run Theron. The next parity work is to bind authentic
+graphics, palette, and tile mapping into the production native renderer.
+
+## Earlier 2026-10-24 — TRV2 headless native full-loop presentation check
 
 Firestaff was built from source commit `d43df8905e22a207696f4439bde7afb02b808b53`
 on TRV2 and run three times for 15 seconds through the native application

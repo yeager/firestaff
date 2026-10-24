@@ -5,6 +5,9 @@ move forward/backward and step left/right. Firestaff's Theron route accepts
 both SDL scancodes and keycodes, so W/A/S/D also work on macOS layouts or
 input paths that do not populate scancodes.
 
+Theron gameplay runs in Firestaff's native C/SDL runtime. External emulators
+are research instruments only and do not run or replace the game in Firestaff.
+
 ## PC Engine button mapping
 
 | PCE Button | Keyboard (primary) | Keyboard (alt) |
@@ -20,19 +23,13 @@ input paths that do not populate scancodes.
 
 ## Startup menu
 
-These are Firestaff's native-runtime bindings. They must not be read as a
-verified timing specification for the original PC Engine menu. For original
-Mednafen captures, first hold RUN until the Theron title menu is visibly
-present. Then navigate to the desired entry and hold its Button I selection
-for several seconds (use the operator-requested 3–5 second window) before
-concluding that the selection failed. The latest US `pce` session did not
-reach the title menu, so it did not test this action. Prior JP `pce_fast`
-captures advanced with ordinary Space/Button I; a fresh capture still needs
-to verify the longer hold explicitly. Keep this emulator procedure separate
-from Firestaff's native key handling and from the retail manual, which
-documents Button I as the menu selection control but does not specify a
-multi-second hold. See [DMWeb and Greatstone references](DMWEB_REFERENCE.md)
-and the dated evidence in [TODO-theron.md](../TODO-theron.md).
+These are Firestaff's native-runtime bindings, not a PC Engine timing model.
+On 2026-10-24, separate SDL key-down events advanced authentic JP media from
+title through stage select and Soul Room into a loaded dungeon. A continuous
+3–5 second hold has not been verified in Firestaff. The retail manual
+documents Button I as the menu selection control but gives no multi-second
+timing rule. See [DMWeb and Greatstone references](DMWEB_REFERENCE.md) and
+the dated evidence in [TODO-theron.md](../TODO-theron.md).
 
 | Action              | Keys                        |
 |---------------------|-----------------------------|
@@ -97,7 +94,10 @@ actuator timing or retail queue capacity; see the 2026-10-24 entry in
   Firestaff `.tqsv` container remains fixture/tooling data and is neither
   advertised nor accepted by the production Continue route.
 
-## Mednafen macOS capture profile
+## Historical external reference-capture notes
+
+The following notes describe an external research setup only. It is not used
+to run Theron in Firestaff.
 
 The recommended macOS profile assigns PCE Button I to `Z` and Button II to `X`.
 This avoids keyboard-layout-dependent punctuation. Comma and period are valid

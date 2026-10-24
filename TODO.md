@@ -61,17 +61,15 @@ verified only through menu handoff, not active-game runtime. Both runs use SDL
 dummy video/audio and do not prove native presentation/input or full gameplay
 parity.
 
-2026-10-24 Theron emulator menu follow-up: existing JP `pce_fast` captures
-reached the title after a four-second RUN hold and advanced with ordinary
-Space/Button I. The user reports the selected menu action must also be held
-for 3–5 seconds; this timing remains unverified. The latest US interactive
-attempt remained at System Card 3.0 and never exposed the Theron menu. Next,
-use an isolated authenticated `pce_fast` profile, visually confirm the menu,
-hold the selected Button I action, and capture same-session input and screen
-receipts. DMWeb's edition/manual pages and Greatstone SCK inform provenance
-and extraction, not input timing or retail runtime semantics. See
-[`docs/THERON_CAPTURE_READINESS.md`](docs/THERON_CAPTURE_READINESS.md) and
-[`docs/theron_input.md`](docs/theron_input.md).
+2026-10-24 Theron native menu route: a local macOS Debug run with authentic JP
+Rev 1 Track 02 used Firestaff's SDL input path to reach a loaded dungeon and
+reported nonzero game ticks and rendered frames; its presented image was
+black. The script sent discrete key-down events, not a continuous 3–5 second
+hold. Continue native implementation and connect authentic graphics, palette
+and tile mapping to the renderer. Do not use an emulator to run the game in
+Firestaff. DMWeb's edition/manual pages and Greatstone SCK inform provenance
+and media handling. See [`docs/THERON_CAPTURE_READINESS.md`](docs/THERON_CAPTURE_READINESS.md)
+and [`docs/theron_input.md`](docs/theron_input.md).
 
 2026-10-24 startup scan diagnostics: `--debug` scan progress now includes
 `delta-ms`, the time since the preceding distinct progress snapshot, alongside

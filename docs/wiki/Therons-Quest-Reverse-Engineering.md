@@ -4,16 +4,17 @@
 bounded original startup transport. It is media evidence, not proof of
 Firestaff's semantic runtime.
 
-**Menu-input status (2026-10-24):** earlier JP `pce_fast` emulator captures
-reached the title after a four-second RUN hold and advanced with ordinary
-Space/Button I. The operator reports that the selected title-menu action
-should itself be held for 3–5 seconds. The latest US `pce` attempt stayed on
-the System Card screen, so this hold has not yet been tested in a visibly
-confirmed Theron menu. Keep the original-emulator timing separate from
-Firestaff's native input bindings; see [Theron input notes](../theron_input.md)
+**Native input and runtime status (2026-10-24):** an authentic JP Rev 1
+Track 02 run through Firestaff's native C/SDL runtime advanced from stage
+select through the Soul Room into a loaded dungeon. One native interval
+reported 2.79 game ticks/s and 4.99 rendered/presented frames/s. The native
+presented capture was black, so visual playability remains open. The run used
+separate SDL key-down events and does not verify a continuous 3–5 second
+button hold. Firestaff gameplay runs natively; external emulator behavior is
+not used as a substitute for its runtime. See [Theron input notes](../theron_input.md)
 and [capture readiness](../THERON_CAPTURE_READINESS.md). DMWeb's original
-edition/manual references and Greatstone SCK's extraction corpus are useful
-context, but neither replaces same-session input and screen receipts.
+edition/manual references and Greatstone SCK's extraction corpus inform
+provenance and media handling.
 
 Theron's Quest is the PC Engine CD / TurboGrafx-CD "light" spin-off of Dungeon
 Master. Unlike DM1, CSB, and DM2, **there is no reconstructed reference
