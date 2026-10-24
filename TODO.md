@@ -12,6 +12,15 @@ parity. Next priorities are proving game boot with source-PC/disc-read evidence,
 then disassembling source writers and binding glyph/palette ownership before
 capturing a source-bound menu/HUD. Do not enable rendering from coincidence.
 
+2026-10-24 five-game direct CLI retest: the authentic-media
+`firestaff_cli_startup_diagnostics_real_media` CTest passed in 246 seconds,
+covering DM1, CSB, DM2, Nexus and Theron. It verifies selected source media,
+boot phases, debug diagnostics and launcher/configuration behavior. One earlier
+run failed the DM2 FM Towns TWANIM timing/frame assertion; an isolated replay
+recorded all 224 intermediate frames and source completion at 26.2 seconds,
+and this complete rerun passed. The earlier failure did not reproduce; the
+test uses SDL dummy video/audio and is not native display or audio evidence.
+
 2026-10-24 five-game main-menu selection retest: the authentic-media
 `m12_main_menu_game_selection_real_media` CTest passed in 248 seconds. It
 verified keyboard and mouse selection for all five titles, the three priority
