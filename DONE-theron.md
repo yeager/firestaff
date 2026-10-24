@@ -1,5 +1,19 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-24 — fail closed when authenticated VDC replay fails
+
+- The Theron dungeon render status now reports success for an intentional
+  no-draw path, replays a loaded authenticated VDC/VCE screen through the
+  source-owned consumer, and reports failure if that replay cannot be
+  reconstructed. The boot facade clears its output instead of presenting a
+  stale frame after an authenticated replay failure.
+- Verified on TRV2 with the authentic `selection.trace` VDC/VCE/VRAM/SAT and
+  VDC I/O capture components: `theron_v1_vram_trace_real_capture` passed three
+  consecutive runs, including fault injection that removes the authenticated
+  SAT after a successful render.
+- This proves capture replay failure reporting only. It does not establish
+  original-game visual parity, gameplay parity, or complete Theron support.
+
 ## 2026-10-23 — reach Theron runtime from the no-game main menu
 
 - Extended `m12_main_menu_runtime_real_media` with a Theron case that starts

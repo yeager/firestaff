@@ -28,6 +28,7 @@
 #include "theron_v1_dungeon_progression.h"
 #include "theron_v1_palette.h"
 #include "theron_v1_track02_font_glyphs.h"
+#include "theron_v1_vram_trace_loader.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -254,7 +255,13 @@ static int theron_vp_source_tile_mapping_ready(const Theron_V1_Viewport *vp) {
 
 int theron_vp_render_dungeon(Theron_V1_Viewport *vp,
                                const Theron_V1_World *world) {
-    if (!vp || !vp->initialized || !world) return 0;
+    if (!vp || !vp->initialized) return 0;
+    if (vp->vram_trace_loaded) {
+        return theron_v1_vram_trace_render_authenticated_screen(vp) > 0;
+    }
+    /* A missing admitted world means this route intentionally draws nothing;
+     * retain the already authenticated source screen as a successful no-op. */
+    if (!world) return 1;
 
     /* Verified Track 02 bytes are authoritative. When no source-locked
      * tile bank is bound, block generated dungeon tiles/fallback font.
