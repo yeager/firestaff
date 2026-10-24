@@ -92,7 +92,8 @@ source item on the party square, and U uses a door in the facing cell.
 Keypad 8/2/4/6 provides the same four directions. Left and right mouse
 buttons are Button I and Button II; mouse motion only moves the normal pointer
 and never changes the selected object or jumps between controls. On touch
-screens, a short touch is Button I and a long touch is Button II.
+screens, a short touch is Button I and a long touch is Button II. Button II
+cancels startup selection and does not advance the dungeon tick by itself.
 
 ### Theron's Quest runtime status
 

@@ -349,6 +349,9 @@ pointer that jumps between visible objects. The mouse continuously reports its
 current position in the source-mapped 320x200 view; a mouse-move event selects
 no object. Mouse button 1 (left) is PC Engine Button I and mouse button 2
 (right) is Button II. The physical middle button is deliberately unbound.
+Button II cancels startup selection and does not advance the native dungeon
+tick by itself; it is also the original control's simplified-movement
+modifier when combined with a direction key.
 
 In the dungeon, the keyboard is:
 
