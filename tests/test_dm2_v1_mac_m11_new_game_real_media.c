@@ -315,7 +315,8 @@ static int exercise_authentic_active_mac_creature(
                     if (!dm2_v1_runtime_last_missile_impact_receipt(&impact) ||
                         !impact.valid || !impact.destination_hit ||
                         !impact.hp_applied ||
-                        !impact.missile_consumed || impact.damage_amount <= 0 ||
+                        !impact.missile_consumed || impact.sequence == 0 ||
+                        impact.damage_amount <= 0 ||
                         impact.damage_hp_word_after <= 0) {
                         return 0;
                     }
@@ -413,6 +414,7 @@ static int exercise_authentic_active_mac_creature(
                             if (!dm2_v1_runtime_last_missile_impact_receipt(
                                     &repeat_impact) || !repeat_impact.valid ||
                                 !repeat_impact.destination_hit ||
+                                repeat_impact.sequence <= impact.sequence ||
                                 !repeat_impact.missile_consumed) {
                                 printf("Mac repeat Lightning %d impact rejected valid %d hit %d consumed %d missile %d creature %d damage %d hp %d resched %d\n",
                                        shot, repeat_impact.valid,

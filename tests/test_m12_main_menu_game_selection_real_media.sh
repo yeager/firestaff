@@ -166,6 +166,21 @@ else
     echo 'SKIP: authentic Theron PC Engine TQUS02.bin is unavailable'
 fi
 
+# Exercise mouse hit testing for all five game cards. Nexus and Theron occupy
+# the second row in the 3-by-2 game-card grid; keyboard-only coverage would
+# miss a broken mouse rectangle or a mismatch between the drawn and clickable
+# card positions.
+if [[ -f "$nexus_source" ]]; then
+    run_game_picker_case nexus "$nexus_source" \
+        'wait-scan-complete,wait20,click:700:728,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
+        nexus-saturn-jp mouse Saturn
+fi
+if [[ -f "$theron_source" ]]; then
+    run_game_picker_case theron "$theron_source" \
+        'wait-scan-complete,wait20,click:1190:728,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
+        pce-en mouse 'PC Engine'
+fi
+
 run_game_picker_case dm1 "$dm1_archive" \
     'wait-scan-complete,wait20,click:700:262,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en mouse
 run_game_picker_case csb "$csb_archive" \

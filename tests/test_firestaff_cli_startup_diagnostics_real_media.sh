@@ -430,9 +430,13 @@ fi
 
 for game_id in dm1 csb dm2 nexus theron; do
     if [ -d "$default_data_root/$game_id" ]; then
+        expected_launch_phase='runtime-entered'
         case "$game_id" in
             dm1|csb|dm2) expected_platform='FM Towns' ;;
-            nexus) expected_platform='Saturn' ;;
+            nexus)
+                expected_platform='Saturn'
+                expected_launch_phase='title-entered'
+                ;;
             theron) expected_platform='PC Engine' ;;
         esac
         default_output=$(HOME="$default_home" USERPROFILE="$default_home" \
@@ -452,7 +456,7 @@ for game_id in dm1 csb dm2 nexus theron; do
            ! printf '%s\n' "$default_output" | \
                 grep -Fq "$default_data_root/$game_id/" ||
            ! printf '%s\n' "$default_output" | \
-                grep -Fq "launch phase=runtime-entered game=$game_id" ||
+                grep -Fq "launch phase=$expected_launch_phase game=$game_id" ||
            ! printf '%s\n' "$default_output" | \
                 grep -Fq "startup-frame game=$game_id " ||
            ! printf '%s\n' "$default_output" | \
@@ -460,6 +464,18 @@ for game_id in dm1 csb dm2 nexus theron; do
             printf '%s\n' "$default_output" >&2
             printf 'FAIL: bare --game %s did not report the selected original media and reach its runtime handoff from the default per-game data directory\n' \
                 "$game_id" >&2
+            exit 1
+        fi
+        if [ "$game_id" = nexus ] && {
+            ! printf '%s\n' "$default_output" | \
+                grep -Fq 'NEXUS STARTUP RECEIPT: status=blocked gameId=nexus';
+            ! printf '%s\n' "$default_output" | \
+                grep -Fq 'title=1 levelLoaded=0 menu=0 blocker=menu-bpk-prs3-capture-required';
+            printf '%s\n' "$default_output" | \
+                grep -Fq 'launch phase=runtime-entered game=nexus';
+        }; then
+            printf '%s\n' "$default_output" >&2
+            printf 'FAIL: bare --game nexus reported playable runtime without a loaded level or admitted menu\n' >&2
             exit 1
         fi
         printf 'PASS: bare --game %s resolves original %s media and reports its source-bound startup trace from ~/.firestaff/data/%s\n' \

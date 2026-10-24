@@ -277,6 +277,65 @@ static void emit(struct TickResult_Compat* r, uint8_t kind,
     e->payload[3] = d;
 }
 
+void DM1_RuntimeEventReceiptPublish_Compat(
+    struct GameWorld_Compat* world,
+    const DM1RuntimeEventReceipt_Compat* source)
+{
+    DM1RuntimeEventReceipt_Compat* destination;
+    uint64_t sequence;
+    if (!world || !source) return;
+    sequence = ++world->dm1RuntimeEventSequence;
+    if (world->dm1RuntimeEventCount < DM1_RUNTIME_EVENT_RECEIPT_CAPACITY)
+        ++world->dm1RuntimeEventCount;
+    else
+        ++world->dm1RuntimeEventDropped;
+    destination = &world->dm1RuntimeEvents[
+        (size_t)((sequence - 1u) % DM1_RUNTIME_EVENT_RECEIPT_CAPACITY)];
+    *destination = *source;
+    destination->sequence = sequence;
+    destination->gameTick = world->gameTick;
+}
+
+size_t DM1_RuntimeEventReceiptsSince_Compat(
+    const struct GameWorld_Compat* world,
+    uint64_t* inOutSequence,
+    DM1RuntimeEventReceipt_Compat* outReceipts,
+    size_t capacity,
+    uint64_t* outDropped)
+{
+    uint64_t cursor;
+    uint64_t oldest;
+    uint64_t next;
+    size_t count = 0;
+    uint64_t dropped = 0;
+    if (outDropped) *outDropped = 0;
+    if (!world || !inOutSequence || (!outReceipts && capacity)) return 0;
+    cursor = *inOutSequence;
+    oldest = world->dm1RuntimeEventCount
+        ? world->dm1RuntimeEventSequence - world->dm1RuntimeEventCount + 1u
+        : world->dm1RuntimeEventSequence + 1u;
+    if (cursor + 1u < oldest) {
+        dropped = oldest - (cursor + 1u);
+        cursor = oldest - 1u;
+    }
+    next = cursor + 1u;
+    while (next <= world->dm1RuntimeEventSequence && count < capacity) {
+        const DM1RuntimeEventReceipt_Compat* event =
+            &world->dm1RuntimeEvents[
+                (size_t)((next - 1u) % DM1_RUNTIME_EVENT_RECEIPT_CAPACITY)];
+        if (event->sequence != next) {
+            ++dropped;
+            ++next;
+            continue;
+        }
+        outReceipts[count++] = *event;
+        ++next;
+    }
+    *inOutSequence = next - 1u;
+    if (outDropped) *outDropped = dropped;
+    return count;
+}
+
 /* GROUP.C F0179 can request sound while it mutates an ACTIVE_GROUP aspect.
  * Preserve the source ordering, but publish the request only after the
  * surrounding reaction/fanout transaction has committed. */
@@ -7878,6 +7937,8 @@ authenticated_projectile_scan_complete:
                 int creatureProperties = 0;
                 int originalGroupCount = (int)group->count;
                 int associatedWeaponType = -1;
+                int creatureHpBefore = creatureIndex <= 3
+                    ? group->health[creatureIndex] : 0;
 
                 orch_build_precheck_projectile_instance_compat(
                     projectile, index, &compatProjectile);
@@ -7921,6 +7982,28 @@ authenticated_projectile_scan_complete:
                 combatOutcome = (outcome == 2) ? COMBAT_OUTCOME_KILLED_ALL_CREATURES :
                     ((outcome == 1) ? COMBAT_OUTCOME_KILLED_SOME_CREATURES :
                                       COMBAT_OUTCOME_KILLED_NO_CREATURES);
+                if (compatProjectile.ownerKind == PROJECTILE_OWNER_CHAMPION) {
+                    DM1RuntimeEventReceipt_Compat receipt;
+                    memset(&receipt, 0, sizeof(receipt));
+                    receipt.kind = DM1_RUNTIME_EVENT_PLAYER_ATTACK;
+                    receipt.mapIndex = mapIndex;
+                    receipt.groupIndex = (int)(group - world->things->groups);
+                    receipt.creatureIndex = creatureIndex;
+                    receipt.creatureType = group->creatureType;
+                    receipt.championIndex = compatProjectile.ownerIndex;
+                    receipt.outcome = combatOutcome;
+                    receipt.damage = precheckPlan.damageApplied;
+                    receipt.hpBefore = creatureHpBefore;
+                    receipt.hpAfter = precheckPlan.shouldWriteGroup
+                        ? (int)precheckPlan.newHealth[creatureIndex]
+                        : (creatureIndex <= (int)group->count
+                            ? (int)group->health[creatureIndex] : 0);
+                    receipt.fromX = compatProjectile.mapX;
+                    receipt.fromY = compatProjectile.mapY;
+                    receipt.toX = mapX;
+                    receipt.toY = mapY;
+                    DM1_RuntimeEventReceiptPublish_Compat(world, &receipt);
+                }
                 memset(&aftermath, 0, sizeof(aftermath));
                 if (dm1_v1_projectile_creature_precheck_aftermath_pc34(
                         &precheckPlan, &compatProjectile, creatureAttributes,
@@ -12797,6 +12880,21 @@ static int orch_apply_creature_tick_group_move_f0267_compat(
         (applyPlan.activeMapX != ev->mapX || applyPlan.activeMapY != ev->mapY)) {
         (void)F0209_DM1_GROUP_CommitMoveHistory_Compat(
             world, groupIndex, ev->mapX, ev->mapY);
+        {
+            DM1RuntimeEventReceipt_Compat receipt;
+            memset(&receipt, 0, sizeof(receipt));
+            receipt.kind = DM1_RUNTIME_EVENT_CREATURE_MOVED;
+            receipt.mapIndex = applyPlan.activeMapIndex;
+            receipt.groupIndex = groupIndex;
+            receipt.creatureIndex = -1;
+            receipt.creatureType = group->creatureType;
+            receipt.championIndex = -1;
+            receipt.fromX = ev->mapX;
+            receipt.fromY = ev->mapY;
+            receipt.toX = applyPlan.activeMapX;
+            receipt.toY = applyPlan.activeMapY;
+            DM1_RuntimeEventReceiptPublish_Compat(world, &receipt);
+        }
     }
 
     emit(result, EMIT_CREATURE_MOVED,
@@ -13268,6 +13366,26 @@ static int orch_apply_f0207_creature_attack_compat(
             (void)dm1_v1_c14_pool_rollback_pc34(&c14);
             return 0;
         }
+        {
+            DM1RuntimeEventReceipt_Compat receipt;
+            memset(&receipt, 0, sizeof(receipt));
+            receipt.kind = DM1_RUNTIME_EVENT_CREATURE_PROJECTILE_LAUNCHED;
+            receipt.mapIndex = ev->mapIndex;
+            receipt.groupIndex = ev->aux0;
+            receipt.creatureIndex = creatureIndex;
+            receipt.creatureType = group->creatureType;
+            receipt.championIndex = -1;
+            receipt.outcome = COMBAT_OUTCOME_INVALID;
+            receipt.attackPower = behavior->projectileAttack;
+            receipt.damage = 0;
+            receipt.hpBefore = -1;
+            receipt.hpAfter = -1;
+            receipt.fromX = ev->mapX;
+            receipt.fromY = ev->mapY;
+            receipt.toX = world->party.mapX;
+            receipt.toY = world->party.mapY;
+            DM1_RuntimeEventReceiptPublish_Compat(world, &receipt);
+        }
         emit(result, EMIT_CREATURE_ATTACK, ev->aux0, creatureIndex, slot, 1);
         orch_emit_f0207_attack_sound_compat(group, ev, result);
         return 1;
@@ -13364,6 +13482,25 @@ static int orch_apply_f0207_creature_attack_compat(
              * onto PartyState.activeChampionIndex. */
             orch_stage_champion_combat_compat(world, targetChampion,
                                               targetCell, &combat);
+        }
+        {
+            DM1RuntimeEventReceipt_Compat receipt;
+            memset(&receipt, 0, sizeof(receipt));
+            receipt.kind = DM1_RUNTIME_EVENT_CREATURE_ATTACK;
+            receipt.mapIndex = ev->mapIndex;
+            receipt.groupIndex = ev->aux0;
+            receipt.creatureIndex = creatureIndex;
+            receipt.creatureType = group->creatureType;
+            receipt.championIndex = targetChampion;
+            receipt.outcome = combat.outcome;
+            receipt.damage = combat.damageApplied;
+            receipt.hpBefore = world->party.champions[targetChampion].hp.current;
+            receipt.hpAfter = -1; /* F0889 applies staged damage later in this tick. */
+            receipt.fromX = ev->mapX;
+            receipt.fromY = ev->mapY;
+            receipt.toX = world->party.mapX;
+            receipt.toY = world->party.mapY;
+            DM1_RuntimeEventReceiptPublish_Compat(world, &receipt);
         }
         emit(result, EMIT_CREATURE_ATTACK, ev->aux0, creatureIndex,
              combat.damageApplied, 0);
@@ -14510,6 +14647,33 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                             &creatureSnapshot, targetDirection,
                             aftermathPlan.outcome);
                     }
+                    {
+                        DM1RuntimeEventReceipt_Compat receipt;
+                        const struct DungeonGroup_Compat* liveGroup =
+                            &world->things->groups[groupIndex];
+                        memset(&receipt, 0, sizeof(receipt));
+                        receipt.kind = DM1_RUNTIME_EVENT_PLAYER_ATTACK;
+                        receipt.mapIndex = world->party.mapIndex;
+                        receipt.groupIndex = groupIndex;
+                        receipt.creatureIndex = creatureIndex;
+                        receipt.creatureType = creatureSnapshot.creatureType;
+                        receipt.championIndex = (int)input->commandArg1;
+                        receipt.outcome = applyOutcome != COMBAT_OUTCOME_INVALID
+                            ? applyOutcome : combatResult.outcome;
+                        receipt.damage = combatResult.damageApplied;
+                        receipt.hpBefore = creatureSnapshot.healthBefore;
+                        receipt.hpAfter = damageApplyPlan.shouldApplyDamage &&
+                                damageApplyPlan.damageApplied >=
+                                    creatureSnapshot.healthBefore
+                            ? 0
+                            : (creatureIndex <= (int)liveGroup->count
+                                ? (int)liveGroup->health[creatureIndex] : 0);
+                        receipt.fromX = world->party.mapX;
+                        receipt.fromY = world->party.mapY;
+                        receipt.toX = world->party.mapX;
+                        receipt.toY = world->party.mapY;
+                        DM1_RuntimeEventReceiptPublish_Compat(world, &receipt);
+                    }
                     if (runtimeApplyPlan.shouldEmitDamageDealt) {
                         emit(result, EMIT_DAMAGE_DEALT,
                              runtimeApplyPlan.emitChampionIndex,
@@ -15569,6 +15733,7 @@ void F0889_ORCH_ApplyPendingDamage_Compat(
         (void)orch_read_pending_damage_receipt_compat(
             world->pendingChampionCombatTargetReceipt[i], NULL, &targetCell);
         if (world->party.champions[i].present) {
+            int hpBefore = world->party.champions[i].hp.current;
             F0737_COMBAT_ApplyDamageToChampion_Compat(
                 pending, &world->party.champions[i], &killed);
             if (pending->poisonAttackPending > 0) {
@@ -15578,6 +15743,25 @@ void F0889_ORCH_ApplyPendingDamage_Compat(
             emit(result, EMIT_CHAMPION_DAMAGED, i, targetCell,
                  pending->damageApplied, pending->woundMaskAdded);
             if (killed) emit(result, EMIT_CHAMPION_DOWN, i, 0, 0, 0);
+            {
+                DM1RuntimeEventReceipt_Compat receipt;
+                memset(&receipt, 0, sizeof(receipt));
+                receipt.kind = DM1_RUNTIME_EVENT_CHAMPION_DAMAGED;
+                receipt.mapIndex = world->party.mapIndex;
+                receipt.groupIndex = -1;
+                receipt.creatureIndex = -1;
+                receipt.creatureType = -1;
+                receipt.championIndex = i;
+                receipt.outcome = pending->outcome;
+                receipt.damage = pending->damageApplied;
+                receipt.hpBefore = hpBefore;
+                receipt.hpAfter = world->party.champions[i].hp.current;
+                receipt.fromX = world->party.mapX;
+                receipt.fromY = world->party.mapY;
+                receipt.toX = world->party.mapX;
+                receipt.toY = world->party.mapY;
+                DM1_RuntimeEventReceiptPublish_Compat(world, &receipt);
+            }
         }
         memset(pending, 0, sizeof(*pending));
         world->pendingChampionCombatTargetReceipt[i] = 0;
@@ -15598,6 +15782,7 @@ void F0889_ORCH_ApplyPendingDamage_Compat(
         }
         if (idx >= 0 && idx < CHAMPION_MAX_PARTY) {
             int killed = 0;
+            int hpBefore = world->party.champions[idx].hp.current;
             F0737_COMBAT_ApplyDamageToChampion_Compat(
                 &world->pendingCombat, &world->party.champions[idx], &killed);
             if (world->pendingCombat.poisonAttackPending > 0) {
@@ -15608,6 +15793,25 @@ void F0889_ORCH_ApplyPendingDamage_Compat(
                  world->pendingCombat.damageApplied,
                  world->pendingCombat.woundMaskAdded);
             if (killed) emit(result, EMIT_CHAMPION_DOWN, idx, 0, 0, 0);
+            {
+                DM1RuntimeEventReceipt_Compat receipt;
+                memset(&receipt, 0, sizeof(receipt));
+                receipt.kind = DM1_RUNTIME_EVENT_CHAMPION_DAMAGED;
+                receipt.mapIndex = world->party.mapIndex;
+                receipt.groupIndex = -1;
+                receipt.creatureIndex = -1;
+                receipt.creatureType = -1;
+                receipt.championIndex = idx;
+                receipt.outcome = world->pendingCombat.outcome;
+                receipt.damage = world->pendingCombat.damageApplied;
+                receipt.hpBefore = hpBefore;
+                receipt.hpAfter = world->party.champions[idx].hp.current;
+                receipt.fromX = world->party.mapX;
+                receipt.fromY = world->party.mapY;
+                receipt.toX = world->party.mapX;
+                receipt.toY = world->party.mapY;
+                DM1_RuntimeEventReceiptPublish_Compat(world, &receipt);
+            }
         }
         memset(&world->pendingCombat, 0, sizeof(world->pendingCombat));
         world->pendingCombatTargetReceipt = 0;

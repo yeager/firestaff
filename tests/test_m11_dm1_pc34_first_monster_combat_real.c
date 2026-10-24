@@ -20,6 +20,87 @@ static unsigned int group_health_total(const struct DungeonGroup_Compat *group)
     return total;
 }
 
+typedef struct {
+    uint64_t cursor;
+    uint64_t dropped;
+    unsigned int playerAttacks;
+    unsigned int playerDamage;
+    unsigned int monsterMoves;
+    unsigned int monsterAttacks;
+    unsigned int group169Attacks;
+    unsigned int championDamage;
+    unsigned int championHpLoss;
+    int sequenceError;
+} RuntimeEventAudit;
+
+static void collect_runtime_events(const struct GameWorld_Compat* world,
+                                   RuntimeEventAudit* audit)
+{
+    DM1RuntimeEventReceipt_Compat events[DM1_RUNTIME_EVENT_RECEIPT_CAPACITY];
+    uint64_t dropped = 0;
+    size_t count;
+    size_t i;
+    if (!world || !audit) return;
+    do {
+        count = DM1_RuntimeEventReceiptsSince_Compat(
+            world, &audit->cursor, events,
+            sizeof(events) / sizeof(events[0]), &dropped);
+        audit->dropped += dropped;
+        for (i = 0; i < count; ++i) {
+            const DM1RuntimeEventReceipt_Compat* event = &events[i];
+            if (event->sequence != audit->cursor - count + i + 1u)
+                audit->sequenceError = 1;
+            switch (event->kind) {
+            case DM1_RUNTIME_EVENT_PLAYER_ATTACK:
+                ++audit->playerAttacks;
+                if (event->damage > 0 && event->groupIndex == 169)
+                    ++audit->playerDamage;
+                break;
+            case DM1_RUNTIME_EVENT_CREATURE_MOVED:
+                ++audit->monsterMoves;
+                break;
+            case DM1_RUNTIME_EVENT_CREATURE_ATTACK:
+                ++audit->monsterAttacks;
+                if (event->groupIndex == 169) ++audit->group169Attacks;
+                break;
+            case DM1_RUNTIME_EVENT_CHAMPION_DAMAGED:
+                ++audit->championDamage;
+                if (event->damage > 0 && event->hpAfter < event->hpBefore)
+                    ++audit->championHpLoss;
+                break;
+            default:
+                break;
+            }
+        }
+    } while (count == sizeof(events) / sizeof(events[0]));
+}
+
+static M11_GameInputResult audited_input(M11_GameViewState* state,
+                                         M12_MenuInput input,
+                                         RuntimeEventAudit* audit)
+{
+    M11_GameInputResult result = M11_GameView_HandleInput(state, input);
+    collect_runtime_events(&state->world, audit);
+    return result;
+}
+
+static M11_GameInputResult audited_pointer(M11_GameViewState* state,
+                                          int x, int y, int buttonMask,
+                                          RuntimeEventAudit* audit)
+{
+    M11_GameInputResult result = M11_GameView_HandlePointerButton(
+        state, x, y, buttonMask);
+    collect_runtime_events(&state->world, audit);
+    return result;
+}
+
+static void audited_idle_tick(M11_GameViewState* state,
+                              RuntimeEventAudit* audit)
+{
+    (void)M11_GameView_AdvanceIdleTick(state);
+    collect_runtime_events(&state->world, audit);
+}
+
 int main(void)
 {
     const char *archive = getenv("FIRESTAFF_DM1_PC34_ARCHIVE");
@@ -70,6 +151,7 @@ int main(void)
     unsigned int monsterHpBeforePunch;
     unsigned int monsterHpAfterPunch;
     int repeatedGroup169Attacks = 0;
+    RuntimeEventAudit eventAudit = {0};
     long partyShieldDefense = shieldText ? strtol(shieldText, NULL, 10) : 0;
 
     if (partyShieldDefense < 0 || partyShieldDefense > 100) {
@@ -153,28 +235,28 @@ int main(void)
      * the CLI script has identical tick timing. Start from the source
      * bootstrap pose; no save or pose is fabricated. */
     for (tick = 0; tick < 5; ++tick)
-        (void)M11_GameView_AdvanceIdleTick(&state);
+        audited_idle_tick(&state, &eventAudit);
     for (i = 0u; i < sizeof(route_to_c127) / sizeof(route_to_c127[0]); ++i) {
         M11_GameInputResult result =
-            M11_GameView_HandleInput(&state, route_to_c127[i]);
+            audited_input(&state, route_to_c127[i], &eventAudit);
         if (result == M11_GAME_INPUT_IGNORED) {
             fputs("FAIL: authentic PC34 Hall route input was ignored\n", stderr);
             M11_GameView_Shutdown(&state);
             return 1;
         }
         for (tick = 0; tick < 5; ++tick)
-            (void)M11_GameView_AdvanceIdleTick(&state);
+            audited_idle_tick(&state, &eventAudit);
     }
-    if (M11_GameView_HandlePointerButton(&state, 112, 83,
-            M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
+    if (audited_pointer(&state, 112, 83, M11_DM1_MOUSE_MASK_LEFT,
+            &eventAudit) == M11_GAME_INPUT_IGNORED ||
         !state.candidateMirrorPanelActive ||
         state.candidateMirrorOrdinal != 5) {
         fputs("FAIL: source route did not open C127 ordinal 5\n", stderr);
         M11_GameView_Shutdown(&state);
         return 1;
     }
-    if (M11_GameView_HandlePointerButton(&state, 130, 115,
-            M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
+    if (audited_pointer(&state, 130, 115, M11_DM1_MOUSE_MASK_LEFT,
+            &eventAudit) == M11_GAME_INPUT_IGNORED ||
         state.world.party.championCount != 1) {
         fputs("FAIL: C040 did not recruit the authentic C127 candidate\n", stderr);
         M11_GameView_Shutdown(&state);
@@ -183,14 +265,14 @@ int main(void)
     initialChampionHp = state.world.party.champions[0].hp.current;
     for (i = 0u; i < sizeof(route_to_scroll) / sizeof(route_to_scroll[0]); ++i) {
         M11_GameInputResult result =
-            M11_GameView_HandleInput(&state, route_to_scroll[i]);
+            audited_input(&state, route_to_scroll[i], &eventAudit);
         if (result == M11_GAME_INPUT_IGNORED) {
             fputs("FAIL: authentic Hall route to scroll was ignored\n", stderr);
             M11_GameView_Shutdown(&state);
             return 1;
         }
         for (tick = 0; tick < 5; ++tick)
-            (void)M11_GameView_AdvanceIdleTick(&state);
+            audited_idle_tick(&state, &eventAudit);
         /* The authentic PC34 Hall route steps on the C003 floor-party plate
          * at (6,9), which opens the door in (5,9). Reaching the next cell
          * through production movement verifies both F0276 activation and
@@ -231,14 +313,14 @@ int main(void)
             M12_MENU_INPUT_TURN_RIGHT
         };
         for (i = 0; i < sizeof(to_first_door) / sizeof(to_first_door[0]); ++i) {
-            if (M11_GameView_HandleInput(&state, to_first_door[i]) ==
+            if (audited_input(&state, to_first_door[i], &eventAudit) ==
                 M11_GAME_INPUT_IGNORED) {
                 fputs("FAIL: authentic first-door route input ignored\n", stderr);
                 M11_GameView_Shutdown(&state);
                 return 1;
             }
             for (tick = 0; tick < 5; ++tick)
-                (void)M11_GameView_AdvanceIdleTick(&state);
+                audited_idle_tick(&state, &eventAudit);
         }
     }
     /* Controlled in-memory spell state lets the same original group attack
@@ -247,22 +329,22 @@ int main(void)
     state.world.magic.partyShieldDefense =
         (unsigned short)partyShieldDefense;
     attackBeforeDoor = state.world.lifecycle.lastCreatureAttackTime;
-    if (M11_GameView_HandlePointerButton(&state, 167, 81,
-            M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED) {
+    if (audited_pointer(&state, 167, 81, M11_DM1_MOUSE_MASK_LEFT,
+            &eventAudit) == M11_GAME_INPUT_IGNORED) {
         fputs("FAIL: authentic first-door button click ignored\n", stderr);
         M11_GameView_Shutdown(&state);
         return 1;
     }
     for (tick = 0; tick < 30; ++tick)
-        (void)M11_GameView_AdvanceIdleTick(&state);
-    if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_UP) ==
+        audited_idle_tick(&state, &eventAudit);
+    if (audited_input(&state, M12_MENU_INPUT_UP, &eventAudit) ==
         M11_GAME_INPUT_IGNORED) {
         fputs("FAIL: first-door passage input ignored\n", stderr);
         M11_GameView_Shutdown(&state);
         return 1;
     }
     for (tick = 0; tick < 5; ++tick)
-        (void)M11_GameView_AdvanceIdleTick(&state);
+        audited_idle_tick(&state, &eventAudit);
     if (state.world.party.mapIndex != 1 || state.world.party.mapX != 6 ||
         state.world.party.mapY < 0 || state.world.party.mapY >=
             (int)state.world.dungeon->maps[1].height ||
@@ -338,9 +420,9 @@ int main(void)
          * dispatches F0407 before clearing the acting champion. */
         if (!M11_GameView_GetV1ActionIconCellZone(0,
                 &clickX, &clickY, &clickW, &clickH) ||
-            M11_GameView_HandlePointerButton(&state,
+            audited_pointer(&state,
                 clickX + clickW / 2, clickY + clickH / 2,
-                M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED ||
+                M11_DM1_MOUSE_MASK_LEFT, &eventAudit) == M11_GAME_INPUT_IGNORED ||
             state.actingChampionOrdinal != 1 ||
             !M11_GameView_GetActingActionIndices(&state, actions) ||
             actions[0] != 6 || actions[1] != 7 || actions[2] != 8) {
@@ -350,15 +432,15 @@ int main(void)
         }
         if (!M11_GameView_GetV1ActionMenuRowZone(0,
                 &clickX, &clickY, &clickW, &clickH) ||
-            M11_GameView_HandlePointerButton(&state,
+            audited_pointer(&state,
                 clickX + clickW / 2, clickY + clickH / 2,
-                M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED) {
+                M11_DM1_MOUSE_MASK_LEFT, &eventAudit) == M11_GAME_INPUT_IGNORED) {
             fputs("FAIL: pointer click did not dispatch first-monster action\n", stderr);
             M11_GameView_Shutdown(&state);
             return 1;
         }
         for (tick = 0; tick < 5; ++tick)
-            (void)M11_GameView_AdvanceIdleTick(&state);
+            audited_idle_tick(&state, &eventAudit);
         monsterHpAfterPunch = group_health_total(
             &state.world.things->groups[169]);
         /* ReDMCSB MENU.C:382-390,427-440 maps the visible first action to
@@ -419,7 +501,7 @@ int main(void)
             return 1;
         }
         champ->maxLoad = 1u;
-        (void)M11_GameView_AdvanceIdleTick(&state);
+        audited_idle_tick(&state, &eventAudit);
         expectedMaxLoad = F0309_CHAMPION_GetMaximumLoadForSource_Compat(
             champ, dm1_v1_dungeon_get_object_icon_index_pc34(
                 state.world.things, champ->inventory[CHAMPION_SLOT_FEET],
@@ -452,7 +534,7 @@ int main(void)
     for (tick = 0; tick < 1500; ++tick) {
         int emissionIndex;
         if (state.partyDead || state.world.partyDead) break;
-        (void)M11_GameView_AdvanceIdleTick(&state);
+        audited_idle_tick(&state, &eventAudit);
         for (emissionIndex = 0;
              emissionIndex < state.lastTickResult.emissionCount;
              ++emissionIndex) {
@@ -481,8 +563,32 @@ int main(void)
         M11_GameView_Shutdown(&state);
         return 1;
     }
+    if (eventAudit.dropped != 0 || eventAudit.sequenceError ||
+        eventAudit.playerAttacks == 0 || eventAudit.playerDamage == 0 ||
+        eventAudit.monsterMoves == 0 || eventAudit.monsterAttacks == 0 ||
+        eventAudit.group169Attacks == 0 ||
+        (naturalDamage > 0 && eventAudit.championHpLoss == 0)) {
+        fprintf(stderr,
+            "FAIL: authentic PC34 debug receipts missed runtime events "
+            "(dropped=%llu sequenceError=%d player=%u playerDamage=%u "
+            "monsterMove=%u monsterAttack=%u group169=%u championDamage=%u "
+            "championHpLoss=%u naturalDamage=%u)\n",
+            (unsigned long long)eventAudit.dropped, eventAudit.sequenceError,
+            eventAudit.playerAttacks, eventAudit.playerDamage,
+            eventAudit.monsterMoves, eventAudit.monsterAttacks,
+            eventAudit.group169Attacks, eventAudit.championDamage,
+            eventAudit.championHpLoss, naturalDamage);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
     M11_GameView_Shutdown(&state);
-    printf("PASS: authentic PC34 first-door repeated natural monster attacks and combat input naturalDamage=%u partyShield=%ld\n",
+    printf("PASS: authentic PC34 combat and debug receipts "
+           "player=%u playerDamage=%u monsterMoves=%u monsterAttacks=%u "
+           "group169Attacks=%u championHpLoss=%u naturalDamage=%u "
+           "partyShield=%ld\n",
+           eventAudit.playerAttacks, eventAudit.playerDamage,
+           eventAudit.monsterMoves, eventAudit.monsterAttacks,
+           eventAudit.group169Attacks, eventAudit.championHpLoss,
            naturalDamage, partyShieldDefense);
     return 0;
 }

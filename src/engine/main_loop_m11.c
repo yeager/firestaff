@@ -2533,58 +2533,64 @@ static void m11_debug_motion_presented(const M11_GameViewState* state,
     g_m11_debug_motion.superseded = 0;
 }
 
+static struct {
+    unsigned int launchSerial;
+    uint64_t sequence;
+} g_m11_debug_dm1_runtime_receipts;
+
 static void m11_debug_dm1_combat_receipt(const M11_GameViewState* state,
                                          const char* eventName,
                                          int onlyCombatEvents) {
-    int damageDealt = 0;
-    int championDamage = 0;
-    int creatureAttacks = 0;
-    int creatureMoves = 0;
-    unsigned int groupHealth = 0;
-    unsigned int partyHealth = 0;
-    int i;
+    DM1RuntimeEventReceipt_Compat receipts[DM1_RUNTIME_EVENT_RECEIPT_CAPACITY];
+    uint64_t dropped = 0;
+    size_t count;
+    size_t i;
+    (void)eventName;
+    (void)onlyCombatEvents;
     if (!state || !state->debugMovementTraceEnabled ||
         strcmp(state->sourceId, "dm1") != 0) return;
-    for (i = 0; i < state->lastTickResult.emissionCount; ++i) {
-        const struct TickEmission_Compat *emission =
-            &state->lastTickResult.emissions[i];
-        if (emission->kind == EMIT_DAMAGE_DEALT && emission->payload[2] > 0)
-            damageDealt += (int)emission->payload[2];
-        else if (emission->kind == EMIT_CHAMPION_DAMAGED)
-            championDamage += (int)emission->payload[2];
-        else if (emission->kind == EMIT_CREATURE_ATTACK)
-            ++creatureAttacks;
-        else if (emission->kind == EMIT_CREATURE_MOVED)
-            ++creatureMoves;
+    if (g_m11_debug_dm1_runtime_receipts.launchSerial !=
+        g_m11_sync_launch_serial) {
+        g_m11_debug_dm1_runtime_receipts.launchSerial =
+            g_m11_sync_launch_serial;
+        g_m11_debug_dm1_runtime_receipts.sequence = 0;
     }
-    if (onlyCombatEvents && !damageDealt && !championDamage &&
-        !creatureAttacks && !creatureMoves) return;
-    if (state->world.things && state->world.things->groups) {
-        int group;
-        for (group = 0; group < state->world.things->groupCount; ++group) {
-            const struct DungeonGroup_Compat *creatures =
-                &state->world.things->groups[group];
-            int creature;
-            for (creature = 0; creature <= (int)creatures->count && creature < 4;
-                 ++creature)
-                groupHealth += creatures->health[creature];
+    count = DM1_RuntimeEventReceiptsSince_Compat(
+        &state->world, &g_m11_debug_dm1_runtime_receipts.sequence,
+        receipts, sizeof(receipts) / sizeof(receipts[0]), &dropped);
+    if (dropped)
+        fprintf(stderr,
+                "firestaff: game-event game=dm1 "
+                "type=runtime-receipt-gap source=reDMCSB-derived-simulation "
+                "dropped=%llu\n", (unsigned long long)dropped);
+    for (i = 0; i < count; ++i) {
+        const DM1RuntimeEventReceipt_Compat* receipt = &receipts[i];
+        const char* type = "unknown";
+        switch (receipt->kind) {
+            case DM1_RUNTIME_EVENT_PLAYER_ATTACK: type = "player-attack"; break;
+            case DM1_RUNTIME_EVENT_CREATURE_MOVED: type = "monster-moved"; break;
+            case DM1_RUNTIME_EVENT_CREATURE_ATTACK: type = "monster-attack"; break;
+            case DM1_RUNTIME_EVENT_CHAMPION_DAMAGED: type = "champion-damaged"; break;
+            case DM1_RUNTIME_EVENT_CREATURE_PROJECTILE_LAUNCHED:
+                type = "monster-projectile-launch";
+                break;
+            default: break;
         }
+        fprintf(stderr,
+                "firestaff: game-event game=dm1 tick=%u type=%s "
+                "source=reDMCSB-derived-simulation sequence=%llu "
+                "map=%d group=%d creature=%d creature-type=%d champion=%d "
+                "outcome=%d attack-power=%d damage=%d hp=%d->%d "
+                "from=%d,%d to=%d,%d\n",
+                receipt->gameTick, type,
+                (unsigned long long)receipt->sequence, receipt->mapIndex,
+                receipt->groupIndex, receipt->creatureIndex,
+                receipt->creatureType, receipt->championIndex,
+                receipt->outcome, receipt->attackPower, receipt->damage,
+                receipt->hpBefore,
+                receipt->hpAfter, receipt->fromX, receipt->fromY,
+                receipt->toX, receipt->toY);
     }
-    for (i = 0; i < state->world.party.championCount && i < CHAMPION_MAX_PARTY;
-         ++i)
-        partyHealth += state->world.party.champions[i].hp.current;
-    fprintf(stderr,
-            "firestaff: dm1-combat event=%s tick=%u "
-            "last-action=\"%s\" last-outcome=\"%s\" "
-            "last-tick-emissions=%d dealt-damage=%d creature-attacks=%d "
-            "creature-moves=%d champion-damage=%d group-health-total=%u "
-            "party-health-total=%u\n",
-            eventName ? eventName : "unknown",
-            (unsigned int)state->world.gameTick,
-            state->lastAction[0] ? state->lastAction : "(none)",
-            state->lastOutcome[0] ? state->lastOutcome : "(none)",
-            state->lastTickResult.emissionCount, damageDealt, creatureAttacks,
-            creatureMoves, championDamage, groupHealth, partyHealth);
 }
 
 static void m11_debug_pointer_dispatch(const M11_GameViewState* state,
@@ -3079,10 +3085,13 @@ static void m11_debug_native_game_state(const M11_GameViewState* state,
     } else if (reportSummary && strcmp(state->sourceId, "dm1") == 0) {
         fprintf(stderr,
                 "firestaff: game-debug-capabilities game=dm1 "
-                "source=compatibility-world actions=observed "
-                "player-attack=tick-emissions monster-attack=tick-emissions "
-                "monster-movement=tick-emissions "
-                "monster-health=world-snapshot champion-health=world-snapshot\n");
+                "source=reDMCSB-derived-simulation "
+                "events=sequenced-runtime-receipts "
+                "player-attack=F0231-mutation "
+                "monster-attack=F0207-resolution "
+                "monster-movement=F0209-commit "
+                "champion-health=F0889-application "
+                "monster-health=F0190-mutation\n");
     }
 }
 
@@ -3094,6 +3103,10 @@ static void m11_debug_game_events(const M11_GameViewState* state) {
     int i;
     if (!state || !state->debugMovementTraceEnabled || !state->active) return;
     m11_debug_native_game_state(state, 0);
+    if (strcmp(state->sourceId, "dm1") == 0) {
+        m11_debug_dm1_combat_receipt(state, "tick", 0);
+        return;
+    }
     if (state->sourceKind != M11_GAME_SOURCE_BUILTIN_CATALOG &&
         state->sourceKind != M11_GAME_SOURCE_CUSTOM_DUNGEON &&
         state->sourceKind != M11_GAME_SOURCE_DIRECT_DUNGEON) {
@@ -13611,8 +13624,17 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             M11_BootProbeReceipt startupReceipt;
             int hasStartupReceipt = M11_GameView_GetBootProbeReceipt(
                 &gameView, &startupReceipt);
-            fprintf(stderr, "firestaff: launch phase=runtime-entered game=%s\n",
-                    o->gameId);
+            const char *launchPhase = "runtime-entered";
+            if (hasStartupReceipt) {
+                if (strcmp(o->gameId, "nexus") == 0 &&
+                    strcmp(startupReceipt.startupPhase, "nexus-title") == 0 &&
+                    startupReceipt.startupActive &&
+                    !startupReceipt.levelLoaded) {
+                    launchPhase = "title-entered";
+                }
+            }
+            fprintf(stderr, "firestaff: launch phase=%s game=%s\n",
+                    launchPhase, o->gameId);
             if (hasStartupReceipt)
                 fprintf(stderr, "firestaff: runtime game=%s startup-phase=%s animation=%s active=%d\n",
                         o->gameId, startupReceipt.startupPhase,

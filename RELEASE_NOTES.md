@@ -1,3 +1,40 @@
+# Firestaff v3.0.410
+
+## User-facing changes
+
+- `DM1 Apple IIGS HoC stair torch`: restore pickup of the torch beside the final stair so it can light the dark next level.
+- `DM1 PC34 party setup`: restore the source-backed champion formation when starting a new party.
+- `DM1 FM Towns entrance`: change the entrance-door cadence to follow the original source steps.
+- `CSB creature attacks`: correct eligible-target resolution when an attack record omits a direct champion target.
+- `DM2 DOS and Macintosh HUD`: correct source HUD layout and bind Macintosh movement palettes to the active source state.
+- `DM2 DOS and Macintosh dungeon view`: change draw order to interleave indoor items and creatures, read GDAT overlays with their source underlays, and bind visible missiles to source positions.
+- `DM2 DOS intro`: change frame scaling to skip duplicate source frames and keep the title sequence on original timing.
+- `DM1, CSB and DM2 startup`: change timing to keep source animations and entrances independent of host display refresh, including overdue DM2 source frames.
+- `--debug`: add reporting for game selection and source startup state, process CPU and memory measurements, and observed gameplay actions and combat events for supported runtimes.
+- `Nexus --game startup`: change phase reporting to label the retail title as title entry and keep runtime status blocked until a level or admitted menu is evidenced.
+- `Swedish startup menu`: correct game-data directory labels and refresh localized scan-message references.
+
+## Developer changes
+
+- `M12 all-game selection`: verify authentic keyboard and mouse selection for DM1, CSB, DM2, Nexus and Theron's Quest, including default and per-game data roots.
+- `M12 DM2 navigation`: verify that Back from the platform picker returns to the game list and that selecting DM2 again reaches its authentic FM Towns runtime.
+- `CSB Amiga 3.5 startup`: verify the original English ADF through ZIP transport, direct CLI startup, native movement and source-backed debug state.
+- `DM1 combat receipts`: publish sequenced runtime receipts for player attacks, monster movement and attacks, projectile launches and champion damage; verify receipts and shield-reduced damage with authentic PC34 data.
+- `DM1 cross-platform routes`: add authentic regression evidence for Atari 1.0b consumables, Amiga 3.6 combat, IIGS stair-torch pickup and the HoC pressure-plate route.
+- `DM2 Macintosh combat`: verify monotonic source missile-impact sequences across repeated Lightning attacks.
+- `Five-game startup diagnostics`: verify startup summaries for all five games and distinguish the Nexus title from a playable runtime.
+- `Debug performance telemetry`: add portable CPU and memory regression coverage and run it through the cross-platform CI workflow.
+- `Paired capture diff`: add a shared state-bound image comparison tool and report format for all five games, with per-manifest native frame geometry, source-state hashes, region metrics and difference masks.
+- `Startup-menu catalogs`: update gettext source references and translated catalogs for the current startup diagnostics.
+- `Release metadata`: bump the project version and update the SPDX source SBOM for v3.0.410.
+
+## Known limitations
+
+- `DM2 dungeon rendering`: DOS and Macintosh corrections are evidence-scoped; they do not establish complete viewport or HUD parity on every supported edition.
+- `Nexus runtime`: the Saturn title remains capture-gated until the source menu presentation is admitted; startup handoff is not evidence of a playable level.
+- `Original-media tests`: SDL dummy output verifies routing and state receipts, not physical display timing, audible output or complete campaign parity.
+- `DM1, CSB, DM2 and Theron's Quest`: these changes do not claim complete cross-platform game parity; remaining gaps are recorded in the per-game status and TODO files.
+
 # Firestaff v3.0.409
 
 ## User-facing changes

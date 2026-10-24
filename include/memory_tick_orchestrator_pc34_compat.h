@@ -251,6 +251,38 @@ struct TickResult_Compat {
     struct TickEmission_Compat emissions[TICK_EMISSION_CAPACITY];
 };
 
+/* Transient, sequenced receipts published at DM1 runtime mutation boundaries.
+ * These describe the ReDMCSB-derived simulation state transitions; they are
+ * separate from TickResult emissions and are never serialized as game data. */
+#define DM1_RUNTIME_EVENT_RECEIPT_CAPACITY 128
+typedef enum DM1RuntimeEventReceiptKind_Compat {
+    DM1_RUNTIME_EVENT_PLAYER_ATTACK = 1,
+    DM1_RUNTIME_EVENT_CREATURE_MOVED = 2,
+    DM1_RUNTIME_EVENT_CREATURE_ATTACK = 3,
+    DM1_RUNTIME_EVENT_CHAMPION_DAMAGED = 4,
+    DM1_RUNTIME_EVENT_CREATURE_PROJECTILE_LAUNCHED = 5
+} DM1RuntimeEventReceiptKind_Compat;
+
+typedef struct DM1RuntimeEventReceipt_Compat {
+    uint64_t sequence;
+    uint32_t gameTick;
+    int32_t kind;
+    int32_t mapIndex;
+    int32_t groupIndex;
+    int32_t creatureIndex;
+    int32_t creatureType;
+    int32_t championIndex;
+    int32_t outcome;
+    int32_t attackPower;
+    int32_t damage;
+    int32_t hpBefore;
+    int32_t hpAfter;
+    int32_t fromX;
+    int32_t fromY;
+    int32_t toX;
+    int32_t toY;
+} DM1RuntimeEventReceipt_Compat;
+
 struct DungeonViewLight_Compat {
     int totalLightAmount;
     int paletteIndex; /* 0 = brightest, 5 = darkest */
@@ -381,9 +413,26 @@ struct GameWorld_Compat {
      * executable/compiler, not by dungeon data or a player preference. */
     int32_t                            pc34F0306FirstOperandFirst;
 
+    /* Debug/diagnostic receipt stream. It is transient and deliberately
+     * excluded from source save serialization and deterministic world hash. */
+    uint64_t                            dm1RuntimeEventSequence;
+    uint64_t                            dm1RuntimeEventDropped;
+    uint32_t                            dm1RuntimeEventCount;
+    DM1RuntimeEventReceipt_Compat      dm1RuntimeEvents[DM1_RUNTIME_EVENT_RECEIPT_CAPACITY];
+
     /* Phase 19 state is tracked via timeline chains, explosion slots
        and sensor toggling (see D5). */
 };
+
+size_t DM1_RuntimeEventReceiptsSince_Compat(
+    const struct GameWorld_Compat* world,
+    uint64_t* inOutSequence,
+    DM1RuntimeEventReceipt_Compat* outReceipts,
+    size_t capacity,
+    uint64_t* outDropped);
+void DM1_RuntimeEventReceiptPublish_Compat(
+    struct GameWorld_Compat* world,
+    const DM1RuntimeEventReceipt_Compat* source);
 
 /* ================================================================
  *  Group A — Construct / Destruct / Clone (F0880-F0883, F0880b)

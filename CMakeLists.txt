@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 3.0.409 LANGUAGES C)
+project(Firestaff VERSION 3.0.410 LANGUAGES C)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
@@ -4404,6 +4404,17 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "dm1;pc34;real-media;native;cli;startup;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_DM1_WRONG_DUNGEON_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_EN_Version-12.zip"
+    )
+    add_test(
+        NAME dm1_runtime_debug_receipts_real_media
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_runtime_debug_receipts_real_media.sh
+            $<TARGET_FILE:firestaff>
+    )
+    set_tests_properties(dm1_runtime_debug_receipts_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        TIMEOUT 60
+        LABELS "dm1;pc34;real-media;debug;combat-provenance;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
     )
     add_test(
         NAME dm1_v1_pc34_nested_archive_cli_boot
@@ -37508,6 +37519,17 @@ if(NOT TARGET test_memory_tick_orchestrator_f0303_skill_query_pc34_compat)
         COMMAND test_memory_tick_orchestrator_f0303_skill_query_pc34_compat
     )
 endif()
+
+add_executable(test_dm1_runtime_event_receipts_pc34_compat
+    tests/test_dm1_runtime_event_receipts_pc34_compat.c)
+target_link_libraries(test_dm1_runtime_event_receipts_pc34_compat PRIVATE
+    firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(test_dm1_runtime_event_receipts_pc34_compat PRIVATE
+        -Wall -Wextra -O2)
+endif()
+add_test(NAME dm1_runtime_event_receipts_pc34_compat
+    COMMAND test_dm1_runtime_event_receipts_pc34_compat)
 
 add_executable(test_dm1_v1_torch_drain_f0338_pc34_compat
     tests/test_dm1_v1_torch_drain_f0338_pc34_compat.c

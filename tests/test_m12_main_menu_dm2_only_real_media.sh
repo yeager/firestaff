@@ -92,3 +92,62 @@ if [[ $(firestaff_sha256_file "$archive") != "$archive_hash" ]]; then
     exit 1
 fi
 echo 'PASS: default .firestaff/data/dm2 discovery launched authentic DM2 without CLI game selection'
+
+# Backing out of the platform picker must return to the game list. Reopening
+# DM2 must still bind the real FM Towns edition and complete the normal runtime
+# handoff; a stale picker stage or selection must not launch anything early.
+back_home="$scratch/back-home"
+back_dm2_root="$back_home/.firestaff/data/dm2"
+mkdir -p "$back_dm2_root"
+ln -s "$archive" "$back_dm2_root/$(basename "$archive")"
+back_probe="$scratch/back-runtime.json"
+back_log="$scratch/back-firestaff.log"
+(
+    unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
+    FIRESTAFF_CONFIG_PATH="$back_home/config.toml" \
+    FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$back_probe" \
+    HOME="$back_home" XDG_CONFIG_HOME="$back_home" APPDATA="$back_home" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        "$app" --debug --width 320 --height 200 \
+        --script 'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:escape,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait:2400,click:115:65,click:100:60' \
+        --duration 50000
+) >"$back_log" 2>&1 || {
+    cat "$back_log" >&2
+    exit 1
+}
+
+if [[ $(grep -Fc 'launch phase=game-handoff' "$back_log") != 1 ]] ||
+   ! grep -Fq "launch phase=game-handoff mode=menu game=dm2 platform=FM Towns edition=fmtowns-ja source=$back_dm2_root/$(basename "$archive")" "$back_log"; then
+    echo 'FAIL: backing out of DM2 platform selection did not return cleanly to the game list and launch FM Towns after reselection' >&2
+    grep -E 'startup game=|game-handoff|error|failed' "$back_log" >&2 || true
+    exit 1
+fi
+
+python3 - "$back_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as source:
+    probe = json.load(source)
+startup = probe["startup"]
+title = probe.get("dm2FmtownsStartup", {})
+frame = probe.get("dm2RuntimeFrame", {})
+party = probe["party"]
+if (probe.get("launchedEver") != 1 or probe.get("active") != 1 or
+        probe.get("sourceId") != "dm2" or
+        startup.get("phase") != "dm2-runtime" or
+        startup.get("levelLoaded") != 1 or
+        title.get("titleFinished") != 1 or title.get("frameIndex") != 225 or
+        frame != {"accepted": 1, "realAssets": 1,
+                  "noCoreFallbacks": 1, "fallbackDraws": 0} or
+        (party.get("mapIndex"), party.get("mapX"), party.get("mapY"),
+         party.get("direction"), party.get("championCount")) != (0, 1, 8, 0, 1)):
+    raise SystemExit(f"FAIL: Back/reselect route missed authentic FM Towns runtime: {probe}")
+print("PASS: backing out of DM2 platform choice and reselecting reaches authentic FM Towns runtime")
+PY
+
+if [[ $(firestaff_sha256_file "$archive") != "$archive_hash" ]]; then
+    echo 'FAIL: original DM2 archive changed during Back/reselect menu launch' >&2
+    exit 1
+fi
