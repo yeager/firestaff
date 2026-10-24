@@ -18,6 +18,20 @@ key-down events; it did not model a continuous 3–5 second button hold. Keep
 fallback visuals disabled. Bind and decode authentic graphics, palette, and
 tile-mapping data before treating the native presentation as complete.
 
+## 2026-10-24 — Stage-2 palette call target is not bound to the listed body
+
+The authenticated US/JP Track 02 images contain the same 13-byte `$46B8`
+handler prefix at `0x2bf448` / `0x2beb18` (FNV-1a `1e9975ff`) and dispatch
+index 53. The US call target is `$5E4D`; JP calls `$5E7D`. The bytes at the
+linearly mapped target offsets `0x2c0bdd` / `0x2c02dd` do not match a verified
+palette routine in the current Stage-2 listing; the listed US routine bytes
+were not found in either Track 02 BIN or Track 19 ISO. Each caller and target
+share MPR2, and the caller does not remap it, so a simple bank change cannot
+explain the mismatch. Keep this palette out of native game state until the
+listing provenance or an authentic copy/transform into the caller's live
+MPR2 window is proven. See
+[`theron-stage2-static-palette-source-gap-20261024.md`](docs/source-lock/theron-stage2-static-palette-source-gap-20261024.md).
+
 ## Earlier 2026-10-24 — TRV2 headless native loop had no Theron frames
 
 A Debug Firestaff executable built from the current source commit on TRV2 and

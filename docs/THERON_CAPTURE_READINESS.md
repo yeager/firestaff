@@ -24,6 +24,10 @@ activity, but not visible playability. The scripted inputs were discrete
 key-down events and do not verify a continuous 3–5 second button hold. No
 emulator was used to run Theron. The next parity work is to bind authentic
 graphics, palette, and tile mapping into the production native renderer.
+One candidate Stage-2 palette call is additionally blocked: authenticated
+US/JP `$46B8` callers target `$5E4D` / `$5E7D`, but their same-window bytes
+do not match a verified palette body in the current listing. See the
+[source-boundary note](source-lock/theron-stage2-static-palette-source-gap-20261024.md).
 
 ## Earlier 2026-10-24 — TRV2 headless native full-loop presentation check
 
