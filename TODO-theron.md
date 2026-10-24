@@ -27,8 +27,10 @@
   `theron_v1_raw_bin_runtime_boot` passed three loops with `--debug` and
   authentic US `TQUS02.bin`: keyboard movement/turning and mouse turn-left,
   back-step, champion cycling, and wait produced the expected native state.
-  Pickup, item selection, drop, and use controls still need an authentic
-  source-backed item/target path for gameplay-effect verification.
+  On that same authentic image, the mouse also picked up SANDALS at the real
+  level-0 item tile, selected the source-backed item, and dropped it on the
+  party's validated floor square. Mouse USE still needs an authentic target
+  case for gameplay-effect verification.
 - Remaining work: bind Theron's original graphics and layout in the native
   state-driven renderer, then verify that mouse movement is visible in an
   interactive native real-media run. The current authenticated screen route

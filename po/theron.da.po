@@ -35,6 +35,46 @@ msgstr "SYD"
 msgid "WEST"
 msgstr "VEST"
 
+#. Theron host mouse control label
+msgid "TURN L"
+msgstr "TURN L"
+
+#. Theron host mouse control label
+msgid "FORWARD"
+msgstr "FORWARD"
+
+#. Theron host mouse control label
+msgid "TURN R"
+msgstr "TURN R"
+
+#. Theron host mouse control label
+msgid "STEP L"
+msgstr "STEP L"
+
+#. Theron host mouse control label
+msgid "BACK"
+msgstr "BACK"
+
+#. Theron host mouse control label
+msgid "STEP R"
+msgstr "STEP R"
+
+#. Theron host mouse control label
+msgid "NEXT"
+msgstr "NEXT"
+
+#. Theron host mouse control label
+msgid "PICKUP"
+msgstr "PICKUP"
+
+#. Theron host mouse control label
+msgid "ITEM"
+msgstr "ITEM"
+
+#. Theron host mouse control label
+msgid "WAIT"
+msgstr "WAIT"
+
 #. Stairs
 msgid "STAIRS"
 msgstr "TRAPPE"

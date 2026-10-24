@@ -31,6 +31,46 @@ msgstr "SÖDER"
 msgid "WEST"
 msgstr "VÄST"
 
+#. Theron host mouse control label
+msgid "TURN L"
+msgstr "SVÄNG V"
+
+#. Theron host mouse control label
+msgid "FORWARD"
+msgstr "FRAMÅT"
+
+#. Theron host mouse control label
+msgid "TURN R"
+msgstr "SVÄNG H"
+
+#. Theron host mouse control label
+msgid "STEP L"
+msgstr "SIDSTEG V"
+
+#. Theron host mouse control label
+msgid "BACK"
+msgstr "BAKÅT"
+
+#. Theron host mouse control label
+msgid "STEP R"
+msgstr "SIDSTEG H"
+
+#. Theron host mouse control label
+msgid "NEXT"
+msgstr "NÄSTA"
+
+#. Theron host mouse control label
+msgid "PICKUP"
+msgstr "PLOCKA"
+
+#. Theron host mouse control label
+msgid "ITEM"
+msgstr "FÖREMÅL"
+
+#. Theron host mouse control label
+msgid "WAIT"
+msgstr "VÄNTA"
+
 #. Stairs
 msgid "STAIRS"
 msgstr "TRAPPA"

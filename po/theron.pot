@@ -45,6 +45,46 @@ msgstr ""
 msgid "WEST"
 msgstr ""
 
+#. Theron host mouse control label
+msgid "TURN L"
+msgstr ""
+
+#. Theron host mouse control label
+msgid "FORWARD"
+msgstr ""
+
+#. Theron host mouse control label
+msgid "TURN R"
+msgstr ""
+
+#. Theron host mouse control label
+msgid "STEP L"
+msgstr ""
+
+#. Theron host mouse control label
+msgid "BACK"
+msgstr ""
+
+#. Theron host mouse control label
+msgid "STEP R"
+msgstr ""
+
+#. Theron host mouse control label
+msgid "NEXT"
+msgstr ""
+
+#. Theron host mouse control label
+msgid "PICKUP"
+msgstr ""
+
+#. Theron host mouse control label
+msgid "ITEM"
+msgstr ""
+
+#. Theron host mouse control label
+msgid "WAIT"
+msgstr ""
+
 #. Stairs
 msgid "STAIRS"
 msgstr ""

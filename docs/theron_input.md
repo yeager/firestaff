@@ -69,7 +69,8 @@ its lower-right corner. Its first two rows provide **TURN L**, **FORWARD**,
 **NEXT** champion, **PICKUP**, select the next source-backed **ITEM**, **DROP**
 the selected source item, **USE** the object ahead, and **WAIT** one tick.
 These buttons send the same native Theron input tokens as the corresponding
-keyboard actions. The panel scales with the game's presentation size.
+keyboard actions. Their captions use the active Theron translation catalog.
+The panel scales with the game's presentation size.
 
 ## Notes
 

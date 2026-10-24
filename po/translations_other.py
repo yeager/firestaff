@@ -427,7 +427,7 @@ FIRESTAFF.update({
 })
 
 # Apply script helper
-def apply_other_translations(domain, lang_table):
+def apply_other_translations(domain, lang_table, only_keys=None):
     """For each (lang, dict) pair, write the table to po/<domain>.<lang>.po.
     Uses msgstr=msgid fallback for keys not in the table.
     """
@@ -462,12 +462,12 @@ def apply_other_translations(domain, lang_table):
                         continue
                     j += 1
                 if j < len(lines) and lines[j].startswith('msgstr "'):
-                    if m in table:
+                    if m in table and (only_keys is None or m in only_keys):
                         translation = table[m]
                         escaped = translation.replace('\\', '\\\\').replace('"', '\\"')
                         lines[j] = f'msgstr "{escaped}"'
                         updated += 1
-                    elif lines[j] == 'msgstr ""':
+                    elif lines[j] == 'msgstr ""' and only_keys is None:
                         escaped = m.replace('\\', '\\\\').replace('"', '\\"')
                         lines[j] = f'msgstr "{escaped}"'
                 i += 1
@@ -1060,6 +1060,8 @@ CSB.update({
 THERON_EN = {k: k for k in [
     'NORTH', 'EAST', 'SOUTH', 'WEST', 'STAIRS', 'PIT', 'TELEPORTER',
     'DOOR', 'PICK UP', 'DROP', 'USE', 'ATTACK', 'DEFEND', 'CAST SPELL',
+    'TURN L', 'FORWARD', 'TURN R', 'STEP L', 'BACK', 'STEP R', 'NEXT',
+    'PICKUP', 'ITEM', 'WAIT',
     'NO FOCUS', 'PRESS ENTER ON A REAL FRONT-CELL TARGET',
     'UNKNOWN', 'NONE', 'SAVE GAME', 'LOAD GAME', 'SHOP',
     'NOT ENOUGH GOLD', 'PURCHASED %s FOR %d GOLD',
@@ -1078,6 +1080,9 @@ THERON = {'en': THERON_EN}
 
 THERON['sv'] = {k: v for k, v in {
     'NORTH': 'NORR', 'EAST': 'ÖST', 'SOUTH': 'SÖDER', 'WEST': 'VÄSTER',
+    'TURN L': 'SVÄNG V', 'FORWARD': 'FRAMÅT', 'TURN R': 'SVÄNG H',
+    'STEP L': 'SIDSTEG V', 'BACK': 'BAKÅT', 'STEP R': 'SIDSTEG H',
+    'NEXT': 'NÄSTA', 'PICKUP': 'PLOCKA', 'ITEM': 'FÖREMÅL', 'WAIT': 'VÄNTA',
     'STAIRS': 'TRAPPA', 'PIT': 'GROP', 'TELEPORTER': 'TELEPORTÖR',
     'DOOR': 'DÖRR', 'PICK UP': 'PLOCKA UPP', 'DROP': 'SLÄPP',
     'USE': 'ANVÄND', 'ATTACK': 'ANFALL', 'DEFEND': 'FÖRSVAR',
@@ -1112,6 +1117,9 @@ THERON['sv'] = {k: v for k, v in {
 
 THERON['fr'] = {k: v for k, v in {
     'NORTH': 'NORD', 'EAST': 'EST', 'SOUTH': 'SUD', 'WEST': 'OUEST',
+    'TURN L': 'TOUR G', 'FORWARD': 'AVANCER', 'TURN R': 'TOUR D',
+    'STEP L': 'PAS G', 'BACK': 'RECULER', 'STEP R': 'PAS D',
+    'NEXT': 'SUIVANT', 'PICKUP': 'PRENDRE', 'ITEM': 'OBJET', 'WAIT': 'ATTENDRE',
     'STAIRS': 'ESCALIER', 'PIT': 'GOUFFRE', 'TELEPORTER': 'TÉLÉPORTEUR',
     'DOOR': 'PORTE', 'PICK UP': 'RAMASSER', 'DROP': 'LÂCHER',
     'USE': 'UTILISER', 'ATTACK': 'ATTAQUER', 'DEFEND': 'DÉFENDRE',
@@ -1146,6 +1154,9 @@ THERON['fr'] = {k: v for k, v in {
 
 THERON['de'] = {k: v for k, v in {
     'NORTH': 'NORD', 'EAST': 'OST', 'SOUTH': 'SÜD', 'WEST': 'WEST',
+    'TURN L': 'LINKS', 'FORWARD': 'VOR', 'TURN R': 'RECHTS',
+    'STEP L': 'SCHRITT L', 'BACK': 'ZURÜCK', 'STEP R': 'SCHRITT R',
+    'NEXT': 'WEITER', 'PICKUP': 'NEHMEN', 'ITEM': 'GEGENSTAND', 'WAIT': 'WARTEN',
     'STAIRS': 'TREPPE', 'PIT': 'GRUBE', 'TELEPORTER': 'TELEPORTER',
     'DOOR': 'TÜR', 'PICK UP': 'AUFNEHMEN', 'DROP': 'FALLEN LASSEN',
     'USE': 'BENUTZEN', 'ATTACK': 'ANGREIFEN', 'DEFEND': 'VERTEIDIGEN',
@@ -1181,6 +1192,9 @@ THERON['de'] = {k: v for k, v in {
 
 THERON['ja'] = {k: v for k, v in {
     'NORTH': '北', 'EAST': '東', 'SOUTH': '南', 'WEST': '西',
+    'TURN L': '左旋回', 'FORWARD': '前進', 'TURN R': '右旋回',
+    'STEP L': '左移動', 'BACK': '後退', 'STEP R': '右移動',
+    'NEXT': '次へ', 'PICKUP': '拾う', 'ITEM': 'アイテム', 'WAIT': '待機',
     'STAIRS': '階段', 'PIT': '落とし穴', 'TELEPORTER': 'テレポーター',
     'DOOR': '扉', 'PICK UP': '拾う', 'DROP': '落とす',
     'USE': '使う', 'ATTACK': '攻撃', 'DEFEND': '防御',
@@ -1213,6 +1227,9 @@ THERON['ja'] = {k: v for k, v in {
 
 THERON['zh'] = {k: v for k, v in {
     'NORTH': '北', 'EAST': '东', 'SOUTH': '南', 'WEST': '西',
+    'TURN L': '左转', 'FORWARD': '前进', 'TURN R': '右转',
+    'STEP L': '左移', 'BACK': '后退', 'STEP R': '右移',
+    'NEXT': '下一位', 'PICKUP': '拾取', 'ITEM': '物品', 'WAIT': '等待',
     'STAIRS': '楼梯', 'PIT': '坑', 'TELEPORTER': '传送器',
     'DOOR': '门', 'PICK UP': '拾取', 'DROP': '掉落',
     'USE': '使用', 'ATTACK': '攻击', 'DEFEND': '防御',
@@ -1253,6 +1270,7 @@ THERON.update({
     'hu': {k: k for k in THERON_EN},
     'ko': {k: k for k in THERON_EN},
     'tr': {k: k for k in THERON_EN},
+    'id': {k: k for k in THERON_EN},
 })
 
 
@@ -1615,6 +1633,10 @@ if __name__ == '__main__':
         'nexus': NEXUS,
         'csb': CSB,
         'theron': THERON,
+        'theron-mouse': (THERON, {
+            'TURN L', 'FORWARD', 'TURN R', 'STEP L', 'BACK', 'STEP R',
+            'NEXT', 'PICKUP', 'ITEM', 'WAIT',
+        }),
         'startup-menu': STARTUP_MENU,
     }
     if len(sys.argv) > 1:
@@ -1625,7 +1647,9 @@ if __name__ == '__main__':
                 sys.exit(1)
             selected[arg] = domains[arg]
         domains = selected
-    for domain, table in domains.items():
-        count = apply_other_translations(domain, table)
+    for domain, config in domains.items():
+        table, only_keys = config if isinstance(config, tuple) else (config, None)
+        output_domain = 'theron' if domain == 'theron-mouse' else domain
+        count = apply_other_translations(output_domain, table, only_keys)
         print(f"{domain}: applied {count} translations across "
               f"{len(table)} locales")

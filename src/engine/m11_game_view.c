@@ -37967,13 +37967,24 @@ static const M12_MenuInput g_m11_theron_mouse_inputs
           M12_MENU_INPUT_ACCEPT }
     };
 
-static const char *const g_m11_theron_mouse_labels
-    [M11_THERON_MOUSE_ROWS][M11_THERON_MOUSE_COLUMNS] = {
+static const char *m11_theron_mouse_control_label(int row, int column)
+{
+    static const char *const labels[M11_THERON_MOUSE_ROWS]
+                                      [M11_THERON_MOUSE_COLUMNS] = {
         { "TURN L", "FORWARD", "TURN R" },
         { "STEP L", "BACK", "STEP R" },
         { "NEXT", "PICKUP", "ITEM" },
         { "DROP", "USE", "WAIT" }
     };
+    const char *source;
+
+    if (row < 0 || row >= M11_THERON_MOUSE_ROWS || column < 0 ||
+        column >= M11_THERON_MOUSE_COLUMNS) {
+        return "";
+    }
+    source = labels[row][column];
+    return fs_po_gettext_in_domain("theron", source);
+}
 
 static M12_MenuInput m11_theron_mouse_control_input_at(
     const M11_GameViewState *state, int x, int y)
@@ -72265,9 +72276,19 @@ static void m11_theron_draw_mouse_controls(
                            framebufferHeight / M11_THERON_MOUSE_CANVAS_H;
             const int cell_width = x1 - x0;
             const int cell_height = y1 - y0;
-            const int text_width =
-                (int)strlen(g_m11_theron_mouse_labels[row][column]) *
-                6 * scale;
+            const char *label = m11_theron_mouse_control_label(row, column);
+            size_t label_byte;
+            int label_glyphs = 0;
+            int text_width;
+
+            /* m11_draw_text advances one fixed-width glyph per UTF-8
+             * codepoint, so center localized labels by glyphs, not bytes. */
+            for (label_byte = 0; label[label_byte] != '\0'; ++label_byte) {
+                if (((unsigned char)label[label_byte] & 0xc0u) != 0x80u) {
+                    ++label_glyphs;
+                }
+            }
+            text_width = label_glyphs * 6 * scale;
 
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           x0, y0, cell_width, cell_height, M11_COLOR_BLACK);
@@ -72277,8 +72298,7 @@ static void m11_theron_draw_mouse_controls(
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           x0 + (cell_width - text_width) / 2,
                           y0 + (cell_height - 7 * scale) / 2,
-                          g_m11_theron_mouse_labels[row][column],
-                          &label_style);
+                          label, &label_style);
         }
     }
 }
