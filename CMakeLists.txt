@@ -18678,6 +18678,17 @@ endif()
         TIMEOUT 45
     )
     add_test(
+        NAME m12_main_menu_csb_amiga_only_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_csb_amiga_only_real_media.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(m12_main_menu_csb_amiga_only_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;csb;amiga;startup;cli;menu;real-data;real-media;archive;native;skip-safe"
+        ENVIRONMENT "FIRESTAFF_CSB_AMIGA_ADF_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back (FTL).zip;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        TIMEOUT 60
+    )
+    add_test(
         NAME csb_v1_fmtowns_native_cli_boot
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_native_cli_boot.sh"
             "$<TARGET_FILE:firestaff>"
