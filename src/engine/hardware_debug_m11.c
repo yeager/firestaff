@@ -3,6 +3,7 @@
 #include "render_sdl_m11.h"
 
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_gpu.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
