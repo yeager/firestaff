@@ -63,3 +63,40 @@ if [[ $(firestaff_sha256_file "$archive") != "$archive_hash" ]]; then
     exit 1
 fi
 echo 'PASS: default .firestaff/data/dm1 discovery launched authentic DM1 FM Towns from the no-game menu'
+
+# Escape from the platform picker, return to the game card and select DM1
+# again. The earlier CSB/DM2 tests cover this shared menu edge for their own
+# game cards; keep DM1's single-game discovery route under the same regression.
+back_home="$scratch/back-home"
+back_dm1_root="$back_home/.firestaff/data/dm1"
+mkdir -p "$back_dm1_root"
+ln -s "$archive" "$back_dm1_root/$(basename "$archive")"
+back_log="$scratch/back-firestaff.log"
+(
+    unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
+    FIRESTAFF_CONFIG_PATH="$back_home/config.toml" \
+    FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+    HOME="$back_home" XDG_CONFIG_HOME="$back_home" APPDATA="$back_home" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        "$app" --debug --width 320 --height 200 \
+        --script 'wait-scan-complete,wait20,key:enter,wait20,key:escape,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
+        --duration 60000
+) >"$back_log" 2>&1 || {
+    grep -E 'startup game=|scan complete|game-handoff|error|failed' "$back_log" >&2 || true
+    exit 1
+}
+
+if [[ $(grep -Fc 'launch phase=game-handoff' "$back_log") != 1 ]] ||
+   ! grep -Fq 'startup game=none mode=menu' "$back_log" ||
+   ! grep -Fq "launch phase=game-handoff mode=menu game=dm1 platform=FM Towns edition=fmtowns-en source=$back_dm1_root/$(basename "$archive")::DATA/GRAPHICS.DAT" "$back_log"; then
+    echo 'FAIL: backing out of DM1 platform selection did not return to the game list and launch exactly once after reselection' >&2
+    grep -E 'startup game=|game-handoff|error|failed' "$back_log" >&2 || true
+    exit 1
+fi
+
+if [[ $(firestaff_sha256_file "$archive") != "$archive_hash" ]]; then
+    echo 'FAIL: original DM1 archive changed during Back/reselect menu launch' >&2
+    exit 1
+fi
+echo 'PASS: backing out of DM1 platform choice and reselecting hands off once to authentic FM Towns media'

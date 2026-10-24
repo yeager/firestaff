@@ -2234,6 +2234,12 @@ only. Active work is in `TODO.md` and `TODO-<game>.md`.
   authentic first runtime twice and confirmed the source archive hash was
   unchanged. This is SDL dummy input/runtime coverage, not native display or
   physical input parity.
+- The DM1-only M12 menu regression now also backs out of the FM Towns platform
+  picker and reselects DM1. The current Xcode arm64 binary passed both the
+  default `.firestaff/data/dm1` startup and the Back/reselect route against the
+  authentic FM Towns archive; each route checked that the original archive
+  remained unchanged, and reselection produced exactly one game handoff. SDL
+  dummy input does not verify native display or physical input.
 - The `BUILD_TESTING=OFF` Xcode generator configuration now gives the bundled
   7z decoder the same supported feature subset as normal test builds. Previously
   the decoder's `Z7_NO_METHODS_FILTERS` definition was set only inside the test
