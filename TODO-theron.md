@@ -1,5 +1,11 @@
 ## 2026-10-24 — original US emulator title input remains unverified
 
+Turn-input receipt audit: all four left/right controls now report a failed
+source-actuator queue reservation as blocked instead of claiming a turn. The
+focused regression passed three loops on TRV2. Its full-queue setup validates
+receipt/error handling only; original turn behavior and the outstanding
+authenticated gameplay gaps remain unchanged.
+
 Documentation synchronization: the documentation index and technical wiki
 now summarize the current bounded JP/US routes, seven-dungeon source-only
 coverage and unresolved original-emulator menu hold. The 24-hour readiness

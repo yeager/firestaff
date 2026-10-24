@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-24 — report failed source-actuator turn reservations
+
+- Routed all four left/right input variants through one receipt helper. If the
+  original turn command cannot reserve its source-actuator events, the input
+  now reports `BLOCKED`, leaves the party direction unchanged and requests no
+  redraw.
+- Added a focused regression for all four controls with the actuator queue at
+  capacity. The test passed three consecutive loops on TRV2. Its constructed
+  full-queue fixture verifies error reporting only; it does not establish
+  retail actuator behavior or raise the Theron parity status.
+
 ## 2026-10-24 — fail closed when authenticated VDC replay fails
 
 - The Theron dungeon render status now reports success for an intentional

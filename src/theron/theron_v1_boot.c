@@ -5772,6 +5772,38 @@ static int theron_v1_boot_runtime_turn_original_command(
     return 1;
 }
 
+static void theron_v1_boot_runtime_fill_turn_input_receipt(
+    Theron_V1_World *world,
+    uint8_t command_type,
+    const char *success_status,
+    Theron_V1_BootRuntimeInputReceipt *receipt)
+{
+    int turned = theron_v1_boot_runtime_turn_original_command(
+        world,
+        command_type,
+        &receipt->party_x,
+        &receipt->party_y,
+        &receipt->party_dir,
+        &receipt->tick_count);
+
+    if (!turned) {
+        theron_v1_boot_runtime_world_receipt(
+            world,
+            &receipt->party_x,
+            &receipt->party_y,
+            &receipt->party_dir,
+            &receipt->tick_count);
+    }
+    receipt->handled = 1;
+    receipt->turned = turned ? 1 : 0;
+    receipt->blocked = turned ? 0 : 1;
+    receipt->result = turned
+        ? THERON_V1_BOOT_RUNTIME_INPUT_RESULT_REDRAW
+        : THERON_V1_BOOT_RUNTIME_INPUT_RESULT_IGNORED;
+    receipt->status_scope = "TURN";
+    receipt->status = turned ? success_status : "BLOCKED";
+}
+
 static int theron_v1_boot_runtime_move_original_command(
     Theron_V1_World *world,
     uint8_t command_type,
@@ -5852,59 +5884,29 @@ int theron_v1_boot_runtime_handle_m12_input_with_inventory_slot(
     /* Arrow Left/Right produce turns (same as Home/End/Q/E).  A/D use the
      * separately captured lower-row Theron movement commands $06/$04. */
     if (m12_input == M12_MENU_INPUT_TURN_LEFT) {
-        (void)theron_v1_boot_runtime_turn_original_command(
-            world, THERON_ORIGINAL_COMMAND_TURN_LEFT,
-            &out_receipt->party_x,
-            &out_receipt->party_y,
-            &out_receipt->party_dir,
-            &out_receipt->tick_count);
-        out_receipt->handled = 1;
-        out_receipt->turned = 1;
-        out_receipt->result = THERON_V1_BOOT_RUNTIME_INPUT_RESULT_REDRAW;
-        out_receipt->status_scope = "TURN";
-        out_receipt->status = "LEFT";
+        theron_v1_boot_runtime_fill_turn_input_receipt(
+            world, THERON_ORIGINAL_COMMAND_TURN_LEFT, "LEFT", out_receipt);
         return 1;
     }
     if (m12_input == M12_MENU_INPUT_TURN_RIGHT) {
-        (void)theron_v1_boot_runtime_turn_original_command(
-            world, THERON_ORIGINAL_COMMAND_TURN_RIGHT,
-            &out_receipt->party_x,
-            &out_receipt->party_y,
-            &out_receipt->party_dir,
-            &out_receipt->tick_count);
-        out_receipt->handled = 1;
-        out_receipt->turned = 1;
-        out_receipt->result = THERON_V1_BOOT_RUNTIME_INPUT_RESULT_REDRAW;
-        out_receipt->status_scope = "TURN";
-        out_receipt->status = "RIGHT";
+        theron_v1_boot_runtime_fill_turn_input_receipt(
+            world, THERON_ORIGINAL_COMMAND_TURN_RIGHT, "RIGHT", out_receipt);
         return 1;
     }
     if (m12_input == M12_MENU_INPUT_LEFT) {
-        (void)theron_v1_boot_runtime_turn_original_command(
-            world, THERON_ORIGINAL_COMMAND_TURN_LEFT,
-            &out_receipt->party_x,
-            &out_receipt->party_y,
-            &out_receipt->party_dir,
-            &out_receipt->tick_count);
-        out_receipt->handled = 1;
-        out_receipt->turned = 1;
-        out_receipt->result = THERON_V1_BOOT_RUNTIME_INPUT_RESULT_REDRAW;
-        out_receipt->status_scope = "TURN";
-        out_receipt->status = "LEFT (ARROW)";
+        theron_v1_boot_runtime_fill_turn_input_receipt(
+            world,
+            THERON_ORIGINAL_COMMAND_TURN_LEFT,
+            "LEFT (ARROW)",
+            out_receipt);
         return 1;
     }
     if (m12_input == M12_MENU_INPUT_RIGHT) {
-        (void)theron_v1_boot_runtime_turn_original_command(
-            world, THERON_ORIGINAL_COMMAND_TURN_RIGHT,
-            &out_receipt->party_x,
-            &out_receipt->party_y,
-            &out_receipt->party_dir,
-            &out_receipt->tick_count);
-        out_receipt->handled = 1;
-        out_receipt->turned = 1;
-        out_receipt->result = THERON_V1_BOOT_RUNTIME_INPUT_RESULT_REDRAW;
-        out_receipt->status_scope = "TURN";
-        out_receipt->status = "RIGHT (ARROW)";
+        theron_v1_boot_runtime_fill_turn_input_receipt(
+            world,
+            THERON_ORIGINAL_COMMAND_TURN_RIGHT,
+            "RIGHT (ARROW)",
+            out_receipt);
         return 1;
     }
     if (m12_input == M12_MENU_INPUT_STRAFE_LEFT ||

@@ -16,6 +16,7 @@
  */
 
 #include "theron_v1_boot.h"
+#include "theron_v1_track02_thing_data.h"
 #include "theron_v1_world.h"
 #include "menu_input_m12.h"
 
@@ -273,6 +274,60 @@ static int test_original_turn_and_strafe_commands(void)
     ASSERT(receipt.moved == 1 && receipt.party_x == 3 &&
            receipt.party_y == 3 && receipt.party_dir == THERON_DIR_NORTH,
            "original command $04 should step east without turning");
+    PASS();
+    return 1;
+}
+
+static int test_turn_event_capacity_failure_reports_blocked(void)
+{
+    static const int turn_inputs[] = {
+        M12_MENU_INPUT_TURN_LEFT,
+        M12_MENU_INPUT_TURN_RIGHT,
+        M12_MENU_INPUT_LEFT,
+        M12_MENU_INPUT_RIGHT
+    };
+    Theron_V1_World world;
+    Theron_V1_BootRuntimeInputReceipt receipt;
+    int i;
+
+    TEST("Turn event-capacity failure reports blocked without mutation");
+    for (i = 0; i < (int)(sizeof(turn_inputs) / sizeof(turn_inputs[0])); ++i) {
+        Theron_V1_SourceObjectRecord *source;
+
+        setup_open_room(&world);
+        world.source_object_count = 1u;
+        source = &world.source_objects[0];
+        source->dungeon_id = world.current_dungeon;
+        source->level = world.current_level;
+        source->x = world.party.leader_x;
+        source->y = world.party.leader_y;
+        source->category = THERON_CAT_ACTUATOR;
+        source->raw_size = 8u;
+        world.source_actuator_event_count =
+            THERON_MAX_SOURCE_ACTUATOR_EVENTS - 1u;
+
+        ASSERT(theron_v1_boot_runtime_handle_m12_input(
+                   &world, NULL, turn_inputs[i], &receipt) == 1,
+               "turn input should fill a receipt on queue failure");
+        ASSERT(receipt.handled == 1 && receipt.blocked == 1 &&
+               receipt.turned == 0,
+               "failed turn should be reported as blocked");
+        ASSERT(receipt.result ==
+                   THERON_V1_BOOT_RUNTIME_INPUT_RESULT_IGNORED,
+               "failed turn should not request a redraw");
+        ASSERT(world.party.leader_dir == THERON_DIR_NORTH &&
+               receipt.party_dir == THERON_DIR_NORTH,
+               "failed turn should preserve the party direction");
+        ASSERT(world.source_actuator_event_count ==
+                   THERON_MAX_SOURCE_ACTUATOR_EVENTS - 1u,
+               "failed turn should not publish a partial event queue");
+        ASSERT(receipt.party_x == 3 && receipt.party_y == 3 &&
+               receipt.tick_count == 10,
+               "failed turn should return the current world receipt");
+        ASSERT(strcmp(receipt.status_scope, "TURN") == 0 &&
+               strcmp(receipt.status, "BLOCKED") == 0,
+               "failed turn should expose the blocked turn status");
+    }
     PASS();
     return 1;
 }
@@ -614,6 +669,7 @@ int main(void)
     test_turn_left();
     test_turn_right();
     test_original_turn_and_strafe_commands();
+    test_turn_event_capacity_failure_reports_blocked();
     test_move_forward();
     test_move_backward();
     test_move_blocked();
