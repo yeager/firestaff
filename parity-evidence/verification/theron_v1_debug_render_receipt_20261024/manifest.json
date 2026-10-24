@@ -1,0 +1,99 @@
+{
+  "schema": "firestaff.parity.theron_v1_debug_render_receipt.v1",
+  "date": "2026-10-24",
+  "status": "BLOCKED_SOURCE_GRAPHICS",
+  "scope": "authentic Track 02 dungeon-load and Firestaff debug-render diagnostic only",
+  "game": "theron",
+  "platform": "pce-cd",
+  "edition": "us",
+  "authenticTrack02Md5": "f23601102138f87c33025877767ebf76",
+  "firestaffBuild": {
+    "mode": "Debug",
+    "binarySha256": "28bad3c4b41c08cc112b52ddd2e3a3e345cb330de52306bb3fc4693a5f1811af",
+    "sourceCommit": null,
+    "sourceCommitNote": "The exported TRV2 build tree had no Git metadata."
+  },
+  "iterations": 3,
+  "invocation": [
+    "--debug",
+    "--game", "theron",
+    "--width", "320",
+    "--height", "200",
+    "--data-dir", "<user-data>/theron",
+    "--theron-native", "us",
+    "--boot-probe",
+    "--boot-probe-frames", "0",
+    "--script", "enter,enter,down,down,down,down,down,down,enter,down,enter",
+    "--duration", "0"
+  ],
+  "bootReceipt": {
+    "sourceId": "theron",
+    "phase": "theron-runtime",
+    "levelLoaded": true,
+    "map": 0,
+    "party": [1, 0, 0],
+    "champions": 2,
+    "runtimeTick": 0,
+    "sourceObjects": 291,
+    "dungeonLevelsLoaded": 4,
+    "dungeonSourceHeaders": 4,
+    "dungeonSourceNonzeroTiles": 455,
+    "track02ItemNameBanks": 7,
+    "track19NameBankReady": true,
+    "track19ItemMappingProven": true
+  },
+  "runtimeProbe": {
+    "schema": "firestaff_m11_autotest_runtime_probe.v1",
+    "launchedEver": 1,
+    "active": 1,
+    "lastAction": "BOOT",
+    "lastOutcome": "THERON RUNTIME (TRACK 02 DUNGEON)",
+    "gameTick": 0,
+    "party": {
+      "mapIndex": 0,
+      "mapX": 1,
+      "mapY": 0,
+      "direction": 0,
+      "championCount": 2
+    },
+    "pipeline": {
+      "dequeued": 0,
+      "command": 0,
+      "turnApplied": 0,
+      "stepApplied": 0,
+      "movementBlocked": 0,
+      "anyMovementOccurred": 0,
+      "anyTurnOccurred": 0,
+      "viewportDirty": 0
+    }
+  },
+  "debugOutput": {
+    "track02LevelLoadsObservedPerRun": 11,
+    "fallbackAssetsUsed": false,
+    "sourceGraphicsStatus": "later original graphics bank is not captured yet; fallback visuals stay disabled"
+  },
+  "screenshot": {
+    "path": "presented-black.bmp",
+    "sha256": "a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f",
+    "bytes": 192054,
+    "width": 320,
+    "height": 200,
+    "nonBlackPixels": 0,
+    "sourceAndPresentedImagesIdentical": true,
+    "allThreeRunsIdentical": true,
+    "realFirestaffRuntimeCapture": true
+  },
+  "pairedOriginalFrame": null,
+  "authenticatedVdcVceSnapshotPair": false,
+  "nonClaims": [
+    "No original-emulator frame was paired with the Firestaff frame.",
+    "No gameplay tick or movement was observed.",
+    "No viewport drawing or visual parity is proven.",
+    "The black diagnostic image is not a gameplay screenshot and must not be promoted as one.",
+    "No synthetic artwork or original game-media bytes are included."
+  ],
+  "artifactStorage": {
+    "rawRunLogs": "private TRV2 shared-memory storage; not committed",
+    "originalGameData": "remains in the user's .firestaff/data/theron directory on TRV2"
+  }
+}

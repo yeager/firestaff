@@ -1,3 +1,24 @@
+## 2026-10-24 — authentic Track 02 dungeon load still renders black
+
+- Three TRV2 Firestaff debug runs used the authentic US Track 02 image
+  (`f23601102138f87c33025877767ebf76`) and loaded Ak-Tu-Ba dungeon 1, level 0.
+  Each receipt reports a 32x27 level, entrance (4,0), four loaded dungeon
+  levels, 291 source objects, four verified source headers, 455 non-zero
+  source tiles, and two champions at map 0, position (1,0). The bounded input
+  and movement pipeline has no activity and `gameTick=0`.
+- Each real Firestaff `--debug` run emitted the same all-black 320x200 frame
+  (SHA-256
+  `a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f`). The
+  app reports that the later original graphics bank was not captured and
+  fallback visuals remain disabled. The executable's SHA-256 and the exact
+  invocation are recorded in
+  `parity-evidence/verification/theron_v1_debug_render_receipt_20261024/`.
+- This is authentic loader/runtime evidence, not a screenshot-parity pass. No
+  original-emulator frame is paired with this Firestaff state, and no
+  authenticated VDC/VCE snapshot pair was supplied. Keep viewport drawing
+  closed until original graphics state is captured and bound to the runtime;
+  do not replace it with synthetic art.
+
 ## 2026-10-24 — original-emulator visual pair remains open
 
 - The available TRV2 `firestaff` executable was built from commit `3f6f575`
