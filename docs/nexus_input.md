@@ -128,8 +128,11 @@ against those bounds, reads the event and slot fields, and queues them to
 The verified consumer at file offset `0x21c84` has special branches only for
 event IDs 38, 39, 40, 49, 52, 56, and 57. IDs 13 and 44 take its generic
 diagnostic path, which resolves the event name and emits `bad event data`.
-This queue path therefore does not establish an inventory mutation; locate the
-separate retail owner (if any) before enabling production equipment clicks.
+The separate mouse-motion poller filters for event 46 before it calls the
+hit-region scanner; it does not consume event 44 as a second pointer action.
+The verified queue consumers do not establish an inventory mutation. No
+event-44-specific champion/inventory state writer has been identified, so
+production equipment clicks remain disabled pending a source-bound owner.
 
 ## Mouse and remaining input work
 

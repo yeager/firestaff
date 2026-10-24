@@ -146,9 +146,11 @@ on the PRS3 menu capture. See
   0--7 through the retail bounds scanner at `0x24ed6`. Bind that event's
   consumer to authentic champion/inventory runtime writes before opening the
   production equipment-click route. The verified consumer at `0x21c84`
-  special-cases only IDs 38, 39, 40, 49, 52, and 56/57; IDs 13 and 44 reach
-  its generic `bad event data` diagnostic. Continue searching for the separate
-  retail state owner before enabling the equipment route.
+  special-cases only IDs 38, 39, 40, 49, 52, 56, and 57; IDs 13 and 44 reach
+  its generic `bad event data` diagnostic. The separate mouse poller filters
+  for event 46 before it invokes the hit scanner; it does not separately
+  consume event 44. Continue searching for the state owner before enabling
+  equipment clicks.
   Trace the queue consumer and same-session gameplay-state writes before
   wiring pointer actions.
   See `parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`.

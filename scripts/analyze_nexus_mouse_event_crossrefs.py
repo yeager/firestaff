@@ -128,6 +128,16 @@ def bt_target(instruction_offset: int, opcode: int) -> int | None:
     return instruction_offset + 4 + displacement * 2
 
 
+def bsr_target(instruction_offset: int, opcode: int) -> int | None:
+    """Resolve a SH-2 BSR target (12-bit displacement, base PC+4)."""
+    if opcode >> 12 != 0xB:
+        return None
+    displacement = opcode & 0x0FFF
+    if displacement & 0x0800:
+        displacement -= 0x1000
+    return instruction_offset + 4 + displacement * 2
+
+
 def report_mouse_region_registration(data: bytes) -> bool:
     """Verify the retail hit-region registration and indirect callback path."""
     expected_setup = (
@@ -405,6 +415,39 @@ def report_mouse_event_queue_fallback(data: bytes) -> bool:
     return valid
 
 
+def report_mouse_motion_event_gate(data: bytes) -> bool:
+    """Verify mouse motion events are the only inputs reaching the hit scanner."""
+    expected_words = {
+        0x250EE: 0x6042,  # read queued event ID
+        0x250F0: 0x882E,  # cmp/eq #46,r0
+        0x250F2: 0x8B14,  # bf past mouse processing unless ID 46
+        0x2511A: 0xBEDC,  # bsr to the 0x34ed6 table hit scanner
+        0x2511C: 0x0009,  # delay-slot nop
+    }
+    valid = True
+    for offset, expected in expected_words.items():
+        actual = read_be16(data, offset)
+        if actual != expected:
+            print(f"mouse_motion_event_gate=invalid file_offset=0x{offset:06x} "
+                  f"expected=0x{expected:04x} actual="
+                  f"{('none' if actual is None else f'0x{actual:04x}')}")
+            valid = False
+    if bt_target(0x250F2, 0x8B14) != 0x2511E:
+        print("mouse_motion_event_gate=invalid nonmouse branch target")
+        valid = False
+    if bsr_target(0x2511A, 0xBEDC) != 0x24ED6:
+        print("mouse_motion_event_gate=invalid hit-scanner call target")
+        valid = False
+    if mov_l_pc_literal(data, 0x250F4) != (2, 0x060242D6):
+        print(f"mouse_motion_event_gate=invalid queue-pop call "
+              f"decoded={mov_l_pc_literal(data, 0x250F4)}")
+        valid = False
+    if valid:
+        print("mouse_motion_event_gate=event_46_only_then_retail_hit_scanner")
+        print("mouse_motion_event_44_is_not_a_separate_mouse_poller_input")
+    return valid
+
+
 def event_string_offsets(data: bytes) -> list[tuple[int, bytes]]:
     pool = data[EVENT_TABLE_OFFSET:EVENT_TABLE_END]
     result: list[tuple[int, bytes]] = []
@@ -477,6 +520,9 @@ def main() -> int:
         return 1
     if not report_mouse_event_queue_fallback(data):
         print("NEXUS_MOUSE_EVENT_QUEUE_CONSUMER_INVALID: retail consumer changed")
+        return 1
+    if not report_mouse_motion_event_gate(data):
+        print("NEXUS_MOUSE_MOTION_EVENT_GATE_INVALID: retail poller changed")
         return 1
 
     print("interpretation=verified retail hit-region registration and callback transport; "

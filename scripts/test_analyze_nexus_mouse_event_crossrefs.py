@@ -109,6 +109,12 @@ def retail_mouse_registration_fixture() -> bytearray:
     put_mov_l_pc(data, 0x21D98, 3, 0x060241B4, 0x21ED8)
     put_mov_l_pc(data, 0x21DA4, 3, 0x060476A4, 0x21EDC)
     put_mov_l_pc(data, 0x21DAA, 2, 0x06023DB4, 0x21EE0)
+    for offset, opcode in {
+        0x250EE: 0x6042, 0x250F0: 0x882E, 0x250F2: 0x8B14,
+        0x2511A: 0xBEDC, 0x2511C: 0x0009,
+    }.items():
+        put_u16(data, offset, opcode)
+    put_mov_l_pc(data, 0x250F4, 2, 0x060242D6, 0x25150)
     diagnostic_format = b"bad event data ($%x:%s)\n\0"
     data[trace.EVENT_BAD_DATA_FORMAT_OFFSET:
          trace.EVENT_BAD_DATA_FORMAT_OFFSET + len(diagnostic_format)] = diagnostic_format
@@ -210,6 +216,22 @@ class NexusMouseCallbackTraceTests(unittest.TestCase):
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
             valid = trace.report_mouse_event_queue_fallback(data)
+        self.assertFalse(valid)
+
+    def test_mouse_poller_filters_to_event_46_before_hit_scan(self) -> None:
+        data = retail_mouse_registration_fixture()
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            valid = trace.report_mouse_motion_event_gate(data)
+        self.assertTrue(valid)
+        self.assertIn("event_46_only_then_retail_hit_scanner", output.getvalue())
+
+    def test_mouse_poller_event_filter_change_is_rejected(self) -> None:
+        data = retail_mouse_registration_fixture()
+        put_u16(data, 0x250F0, 0x882D)
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            valid = trace.report_mouse_motion_event_gate(data)
         self.assertFalse(valid)
 
 
