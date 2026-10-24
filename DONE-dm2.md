@@ -1,3 +1,12 @@
+- 2026-10-24: Rebuilt the current-source DM2 launcher and ran the authentic
+  DOS PC34 direct-start action probes against the original English ZIP. All
+  seven source-state checks passed: up/down/left/right, both strafes and
+  action. They verify the expected map-0 party pose, accepted real-asset
+  runtime frame without core fallbacks, and the debug capability receipts for
+  player attack, monster damage/movement and world state. This covers the
+  tested input and startup route, not actual damage results, complete combat
+  parity or viewport pixel parity.
+
 - 2026-10-24: Launcher media discovery now counts only versions with a runtime
   launch route when publishing per-game availability. Recognized PC-9801
   preservation media remains visible as a matched catalogue entry but cannot
