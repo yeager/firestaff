@@ -3,10 +3,11 @@
 Latest evidence update: a separate authentic JP emulator save state visibly
 opens dungeon gameplay, but it is not joined to a source map or party
 coordinates. Host-key input produced PCE pad values without a game
-command-consumer receipt, and the available `pce_fast` build lacks the VDC
-snapshot output required for a complete capture manifest. Keep this evidence
-separate from the US cold-start session below, which remained on the System
-Card screen.
+command-consumer receipt. A separate baseline autoload emitted VDC/RAM
+snapshots but had no verified input or CD transition; a host-input attempt
+failed to emit required VDC snapshots. Keep these reference captures separate
+from the US cold-start session below, which remained on the System Card
+screen.
 
 The native path is independently verified: three current-source Firestaff
 `--debug` runs with authentic JP Rev. 1 Track 02 reached runtime, with the

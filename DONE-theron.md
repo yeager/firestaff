@@ -41,9 +41,10 @@
 - A private authentic JP Mednafen save state visibly showed dungeon gameplay.
   Its active map and party coordinates remain unjoined. PCE pad input values
   were observed during host-key input, but there was no game command-consumer
-  receipt to prove movement. The capture helper also rejected that emulator
-  build because it emitted no required VDC snapshot, so this is not a complete
-  capture manifest. Emulator media, state and traces remain on TRV2.
+  receipt to prove movement. A separate baseline autoload emitted the required
+  VDC/RAM snapshots but had no verified input or CD transition; a host-input
+  capture failed to emit VDC snapshots. The capture helper rejected both
+  incomplete bundles. Emulator media, state and traces remain on TRV2.
 
 ## 2026-10-24 — report failed source-actuator turn reservations
 
