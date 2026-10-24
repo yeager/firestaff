@@ -132,4 +132,11 @@ on the PRS3 menu capture. See
   mode. Firestaff maps A/D to Nexus turns while preserving DM1's A/D strafe
   behavior, but the native cursor action contract, desktop mouse-to-game route,
   and attack, inventory, spell, and champion-selection semantics remain open.
+  Static SH-2 triage is now reproducible with
+  `scripts/analyze_nexus_mouse_event_crossrefs.py`: the hash-verified English
+  DM.BIN has no direct PC-relative literal references to the 60 event-name
+  strings, while its HUD table's subtable at `0x38040` is referenced. This
+  does not resolve indirect dispatch or identify a mouse command, so it does
+  not open the action gate. Capture the producer-to-callback path and a
+  resulting gameplay-state write before implementing it.
   See `parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`.
