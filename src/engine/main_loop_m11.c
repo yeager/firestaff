@@ -16,6 +16,8 @@
 #include "firestaff_version.h"
 #include "menu_hit_m12.h"
 #include "m11_game_view.h"
+#include "nexus_v1_engine.h"
+#include "nexus_v1_hud_hit_rects.h"
 #include "dm1_entrance_m11.h"
 #include "firestaff_po_loader.h"
 #include "firestaff_accessibility.h"
@@ -1378,7 +1380,9 @@ static void m11_sync_source_object_cursor(const M11_GameViewState* gameView) {
     int shouldHide;
 
     shouldHide = gameView && gameView->active &&
-        (gameView->sourceKind == M11_GAME_SOURCE_BUILTIN_CATALOG ||
+        ((gameView->sourceKind == M11_GAME_SOURCE_NEXUS_DGN &&
+          gameView->nexusState.hand_pointer_active) ||
+         gameView->sourceKind == M11_GAME_SOURCE_BUILTIN_CATALOG ||
          gameView->sourceKind == M11_GAME_SOURCE_CUSTOM_DUNGEON ||
          gameView->sourceKind == M11_GAME_SOURCE_DIRECT_DUNGEON ||
          gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT) &&
@@ -1432,6 +1436,8 @@ static int m11_present_game_frame(const M11_GameViewState* gameView,
     /* The original object cursor is painted into the source framebuffer.
      * Keep the host arrow from covering it while an item is in G4055. */
     m11_sync_source_object_cursor(gameView);
+    M11_GameView_DrawNexusPointerOverlay(
+        gameView, M11_Render_GetFramebuffer(), M11_FB_WIDTH, M11_FB_HEIGHT);
 
     if (outPresentedFrame) {
         *outPresentedFrame = NULL;
@@ -2677,6 +2683,7 @@ static const char* m11_debug_input_name(M12_MenuInput input) {
         case M12_MENU_INPUT_INVENTORY_TOGGLE: return "inventory-toggle";
         case M12_MENU_INPUT_SAVE_GAME: return "save";
         case M12_MENU_INPUT_FREEZE_TOGGLE: return "freeze-toggle";
+        case M12_MENU_INPUT_NEXUS_POINTER_TOGGLE: return "nexus-pointer-toggle";
         case M12_MENU_INPUT_DISK_MENU: return "disk-menu";
         case M12_MENU_INPUT_CHAMPION_1_INVENTORY: return "champion-1-inventory";
         case M12_MENU_INPUT_CHAMPION_2_INVENTORY: return "champion-2-inventory";
@@ -3391,6 +3398,8 @@ static void m11_draw_game_frame_for_loop(M11_GameViewState* state,
                                            Uint64* drawCount) {
     const Uint64 start = debug ? SDL_GetPerformanceCounter() : 0;
     M11_GameView_Draw(state, M11_Render_GetFramebuffer(), M11_FB_WIDTH, M11_FB_HEIGHT);
+    M11_GameView_DrawNexusPointerOverlay(
+        state, M11_Render_GetFramebuffer(), M11_FB_WIDTH, M11_FB_HEIGHT);
     ++*drawCount;
     if (debug) {
         const Uint64 completed = SDL_GetPerformanceCounter();
@@ -10636,7 +10645,14 @@ static int m11_game_view_supports_held_motion_input(
      * label from disabling normal held WASD/arrow input. */
     if (!M11_InputSourceSupportsHeldMotion(gameView->sourceId,
                                            gameView->active)) {
-        return 0;
+        if (gameView->sourceKind != M11_GAME_SOURCE_NEXUS_DGN ||
+            !gameView->nexusState.level_loaded ||
+            gameView->nexusState.title_active ||
+            gameView->nexusState.startup_save_select_active ||
+            gameView->nexusState.champion_select_active) {
+            return 0;
+        }
+        return 1;
     }
     return !m11_game_view_is_csb(gameView) ||
            (!gameView->csbState.startup_title_active &&
@@ -11248,7 +11264,7 @@ static M12_MenuInput m11_held_motion_input_from_gamepad(
     return M12_MENU_INPUT_NONE;
 }
 
-static M12_MenuInput m11_held_motion_input_from_keyboard(const M11_GameViewState* gameView) {
+static M12_MenuInput m11_held_motion_input_from_keyboard(M11_GameViewState* gameView) {
     int count = 0;
     int i;
 #if SDL_VERSION_ATLEAST(3, 0, 0)
@@ -11290,9 +11306,28 @@ static M12_MenuInput m11_held_motion_input_from_keyboard(const M11_GameViewState
         SDL_SCANCODE_PERIOD
     };
 
-    if (!keys || count <= 0) {
-        return M12_MENU_INPUT_NONE;
+    /* In the verified retail hand-pointer mode, D-pad direction moves the
+     * cursor and must not be translated through the DM1 movement layout. */
+    if (gameView && gameView->sourceKind == M11_GAME_SOURCE_NEXUS_DGN &&
+        gameView->nexusState.hand_pointer_active) {
+        static const SDL_Scancode pointerPreferred[] = {
+            SDL_SCANCODE_UP, SDL_SCANCODE_DOWN,
+            SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT
+        };
+        for (i = 0; i < (int)(sizeof(pointerPreferred) /
+                              sizeof(pointerPreferred[0])); ++i) {
+            int sc = (int)pointerPreferred[i];
+            if (keys && sc >= 0 && sc < count && keys[sc]) {
+                if (gameView->nexusState.hand_pointer_repeat_ticks++ % 3 == 0) {
+                    return M11_NexusPointerInputFromScancode(sc);
+                }
+                return M12_MENU_INPUT_NONE;
+            }
+        }
+        gameView->nexusState.hand_pointer_repeat_ticks = 0;
     }
+
+    if (!keys || count <= 0) return M12_MENU_INPUT_NONE;
     for (i = 0; i < (int)(sizeof(preferred) / sizeof(preferred[0])); i++) {
         int sc = (int)preferred[i];
         if (sc >= 0 && sc < count && keys[sc]) {
@@ -11842,6 +11877,23 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                                        (int)ev.motion.y,
                                                        &mappedX,
                                                        &mappedY)) {
+                if (gameView->sourceKind == M11_GAME_SOURCE_NEXUS_DGN &&
+                    gameView->nexusState.hand_pointer_active &&
+                    gameView->nexusEngine &&
+                    gameView->nexusEngine->hud_hit_rect_count ==
+                        NEXUS_HIT_RECT_COUNT) {
+                    const Nexus_HitRect *viewport =
+                        &gameView->nexusEngine->hud_hit_rects[
+                            NEXUS_HIT_VIEWPORT];
+                    if (mappedX >= viewport->x1 && mappedX < viewport->x2 &&
+                        mappedY >= viewport->y1 && mappedY < viewport->y2) {
+                        gameView->nexusState.hand_pointer_x = mappedX;
+                        gameView->nexusState.hand_pointer_y = mappedY;
+                        gameView->nexusState.hand_pointer_position_known = 1;
+                        *gameViewResult = M11_GAME_INPUT_REDRAW;
+                        return M12_MENU_INPUT_NONE;
+                    }
+                }
                 *gameViewResult = M11_GameView_HandlePointerMove(
                     gameView,
                     mappedX,
@@ -12114,6 +12166,15 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     }
                     if (mappedInput != M12_MENU_INPUT_NONE) {
                         return mappedInput;
+                    }
+                } else if (gameView->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) {
+                    mappedInput = M11_NexusPointerToggleInputFromScancode(
+                        (int)ev.key.scancode);
+                    if (mappedInput != M12_MENU_INPUT_NONE) return mappedInput;
+                    if (gameView->nexusState.hand_pointer_active) {
+                        mappedInput = M11_NexusPointerInputFromScancode(
+                            (int)ev.key.scancode);
+                        if (mappedInput != M12_MENU_INPUT_NONE) return mappedInput;
                     }
                 } else if (m11_game_view_is_dm1(gameView)) {
                     if (m11_dm1_sdl_key_to_menu_input(
@@ -12437,6 +12498,23 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                                        ev.motion.y,
                                                        &mappedX,
                                                        &mappedY)) {
+                if (gameView->sourceKind == M11_GAME_SOURCE_NEXUS_DGN &&
+                    gameView->nexusState.hand_pointer_active &&
+                    gameView->nexusEngine &&
+                    gameView->nexusEngine->hud_hit_rect_count ==
+                        NEXUS_HIT_RECT_COUNT) {
+                    const Nexus_HitRect *viewport =
+                        &gameView->nexusEngine->hud_hit_rects[
+                            NEXUS_HIT_VIEWPORT];
+                    if (mappedX >= viewport->x1 && mappedX < viewport->x2 &&
+                        mappedY >= viewport->y1 && mappedY < viewport->y2) {
+                        gameView->nexusState.hand_pointer_x = mappedX;
+                        gameView->nexusState.hand_pointer_y = mappedY;
+                        gameView->nexusState.hand_pointer_position_known = 1;
+                        *gameViewResult = M11_GAME_INPUT_REDRAW;
+                        return M12_MENU_INPUT_NONE;
+                    }
+                }
                 *gameViewResult = M11_GameView_HandlePointerMove(
                     gameView,
                     mappedX,
@@ -12690,6 +12768,15 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     }
                     if (mappedInput != M12_MENU_INPUT_NONE) {
                         return mappedInput;
+                    }
+                } else if (gameView->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) {
+                    mappedInput = M11_NexusPointerToggleInputFromScancode(
+                        (int)ev.key.keysym.scancode);
+                    if (mappedInput != M12_MENU_INPUT_NONE) return mappedInput;
+                    if (gameView->nexusState.hand_pointer_active) {
+                        mappedInput = M11_NexusPointerInputFromScancode(
+                            (int)ev.key.keysym.scancode);
+                        if (mappedInput != M12_MENU_INPUT_NONE) return mappedInput;
                     }
                 } else if (m11_game_view_is_dm1(gameView)) {
                     if (m11_dm1_sdl_key_to_menu_input(

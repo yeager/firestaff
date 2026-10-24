@@ -55,7 +55,9 @@ typedef enum {
     /* Macintosh File/Open Game.  This remains distinct from quickload:
      * it opens a source-save chooser which imports only the exact original
      * SKSave candidate the user selects. */
-    M12_MENU_INPUT_MAC_OPEN_GAME
+    M12_MENU_INPUT_MAC_OPEN_GAME,
+    /* Host-only Nexus cursor mode; distinct from source pause/freeze. */
+    M12_MENU_INPUT_NEXUS_POINTER_TOGGLE
 } M12_MenuInput;
 
 #endif

@@ -135,6 +135,69 @@ static int g_epx_present_h = 0;
 static unsigned char *g_epx_second_present_buffer = NULL;
 static int g_epx_second_present_w = 0;
 static int g_epx_second_present_h = 0;
+#define M11_NEXT_RGBA_OVERLAY_MAX 64
+static unsigned char g_next_rgba_overlay[M11_NEXT_RGBA_OVERLAY_MAX * M11_NEXT_RGBA_OVERLAY_MAX * 4];
+static int g_next_rgba_overlay_w = 0;
+static int g_next_rgba_overlay_h = 0;
+static int g_next_rgba_overlay_x = 0;
+static int g_next_rgba_overlay_y = 0;
+
+int M11_Render_SetNextIndexedRgbaOverlay(const unsigned char* rgba,
+                                          int overlayWidth,
+                                          int overlayHeight,
+                                          int logicalX,
+                                          int logicalY) {
+    if (!rgba || overlayWidth <= 0 || overlayHeight <= 0 ||
+        overlayWidth > M11_NEXT_RGBA_OVERLAY_MAX ||
+        overlayHeight > M11_NEXT_RGBA_OVERLAY_MAX) {
+        g_next_rgba_overlay_w = 0;
+        g_next_rgba_overlay_h = 0;
+        return M11_RENDER_ERR_INVALID_ARG;
+    }
+    memcpy(g_next_rgba_overlay, rgba,
+           (size_t)overlayWidth * (size_t)overlayHeight * 4u);
+    g_next_rgba_overlay_w = overlayWidth;
+    g_next_rgba_overlay_h = overlayHeight;
+    g_next_rgba_overlay_x = logicalX;
+    g_next_rgba_overlay_y = logicalY;
+    return M11_RENDER_OK;
+}
+
+static void m11_apply_next_indexed_rgba_overlay(int logicalWidth,
+                                                 int logicalHeight,
+                                                 int uploadW,
+                                                 int uploadH) {
+    int y, x;
+    if (g_next_rgba_overlay_w <= 0 || g_next_rgba_overlay_h <= 0 ||
+        logicalWidth <= 0 || logicalHeight <= 0 || uploadW <= 0 || uploadH <= 0) {
+        return;
+    }
+    for (y = 0; y < g_next_rgba_overlay_h; ++y) {
+        const int logicalY = g_next_rgba_overlay_y + y;
+        const int dstY = (int)(((int64_t)logicalY * uploadH) / logicalHeight);
+        if (logicalY < 0 || logicalY >= logicalHeight || dstY < 0 || dstY >= uploadH) continue;
+        for (x = 0; x < g_next_rgba_overlay_w; ++x) {
+            const int logicalX = g_next_rgba_overlay_x + x;
+            const int dstX = (int)(((int64_t)logicalX * uploadW) / logicalWidth);
+            const unsigned char* src;
+            unsigned char* dst;
+            unsigned int alpha;
+            int channel;
+            if (logicalX < 0 || logicalX >= logicalWidth || dstX < 0 || dstX >= uploadW) continue;
+            src = &g_next_rgba_overlay[((size_t)y * (size_t)g_next_rgba_overlay_w + (size_t)x) * 4u];
+            if (src[3] == 0) continue;
+            dst = &g_state.presentBuffer[((size_t)dstY * (size_t)uploadW + (size_t)dstX) * 4u];
+            alpha = src[3];
+            for (channel = 0; channel < 3; ++channel) {
+                dst[channel] = (unsigned char)(((unsigned int)src[channel] * alpha +
+                    (unsigned int)dst[channel] * (255u - alpha) + 127u) / 255u);
+            }
+            dst[3] = 255;
+        }
+    }
+    g_next_rgba_overlay_w = 0;
+    g_next_rgba_overlay_h = 0;
+}
 
 static Uint64 m11_present_timing_now(void) {
     return g_present_timing_enabled ? SDL_GetPerformanceCounter() : 0;
@@ -1829,6 +1892,8 @@ int M11_Render_PresentIndexedToResolution(const unsigned char* framebuffer,
                                           uploadH);
     }
     m11_apply_v2_filters_rgba_post(uploadW, uploadH);
+    m11_apply_next_indexed_rgba_overlay(logicalWidth, logicalHeight,
+                                        uploadW, uploadH);
     g_last_present_timing.framebufferConvertMs =
         m11_present_timing_elapsed_ms(stageStart);
     g_last_present_timing.width = uploadW;
@@ -2141,6 +2206,8 @@ int M11_Render_PresentIndexed(const unsigned char* framebuffer,
         }
     }
     m11_apply_v2_filters_rgba_post(uploadW, uploadH);
+    m11_apply_next_indexed_rgba_overlay(logicalWidth, logicalHeight,
+                                        uploadW, uploadH);
     g_last_present_timing.framebufferConvertMs =
         m11_present_timing_elapsed_ms(stageStart);
     g_last_present_timing.width = uploadW;

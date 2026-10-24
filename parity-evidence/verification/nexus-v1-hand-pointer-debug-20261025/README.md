@@ -53,6 +53,19 @@ from the hit rectangles. The retail callback/action mapping is still
 unresolved in
 [`nexus-mouse-callback-dispatch-20261024`](../nexus-mouse-callback-dispatch-20261024/).
 
-These are authentic retail captures, not Firestaff screenshots or proof of
-Firestaff parity. The current Firestaff runtime still lacks Nexus hand-pointer
-mode, cursor rendering, and verified mouse-action routing.
+## Cursor texture join
+
+A Ymir `--debug` VDP1 command capture from the same retail title identifies
+the hand sprite as a 16×16, 4bpp texture. The command at VDP1 VRAM `0x12e0`
+reads 128 bytes from source byte address `0x7df00`; those bytes match
+hash-verified `ITEM.IBS` image 65 at offset `0x5380`. The captured VDP1 CLUT
+resolves to retail `ITEM.IBS` palette 6. Firestaff composes this source image
+and palette as a separate RGBA overlay so it does not replace the dungeon's
+indexed palette. The verified retail file hash is recorded in
+[`docs/VERIFIED_HASHES.md`](../../../docs/VERIFIED_HASHES.md).
+
+The screenshots in this directory remain authentic retail captures, not
+Firestaff screenshots or proof of full parity. Firestaff now has a host Z
+toggle, arrow-key and mouse-motion pointer positioning, and the source-joined
+hand sprite. Desktop mouse motion is a Firestaff host behavior; retail mouse
+motion and pointer click/action routing remain unverified.

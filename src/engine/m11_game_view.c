@@ -32727,6 +32727,10 @@ int M11_GameView_Dm1V1SourceTickReadyForInput(const M11_GameViewState* state) {
     if (!state || !state->active) {
         return 0;
     }
+    if (state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN &&
+        state->nexusState.level_loaded) {
+        return 1;
+    }
     return state->vblankTiming.stopWaitingForInput ? 1 : 0;
 }
 
@@ -36979,6 +36983,27 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         if (state->nexusState.startup_save_select_active) {
             return m11_nexus_startup_handle_save_input(state, input);
         }
+        if (input == M12_MENU_INPUT_NEXUS_POINTER_TOGGLE) {
+            if (!state->nexusState.level_loaded ||
+                state->nexusState.title_active) {
+                return M11_GAME_INPUT_IGNORED;
+            }
+            state->nexusState.hand_pointer_active =
+                !state->nexusState.hand_pointer_active;
+            if (state->nexusState.hand_pointer_active &&
+                !state->nexusState.hand_pointer_position_known &&
+                state->nexusEngine &&
+                state->nexusEngine->hud_hit_rect_count == NEXUS_HIT_RECT_COUNT) {
+                const Nexus_HitRect *viewport =
+                    &state->nexusEngine->hud_hit_rects[NEXUS_HIT_VIEWPORT];
+                state->nexusState.hand_pointer_x =
+                    viewport->x1 + (viewport->x2 - viewport->x1) / 2;
+                state->nexusState.hand_pointer_y =
+                    viewport->y1 + (viewport->y2 - viewport->y1) / 2;
+                state->nexusState.hand_pointer_position_known = 1;
+            }
+            return M11_GAME_INPUT_REDRAW;
+        }
         if (state->nexusState.champion_select_active) {
             Nexus_V1_StartupHostActionReceipt receipt;
             Nexus_V1_StartupDrawCommand startup_commands[80];
@@ -37018,6 +37043,40 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 return M11_GAME_INPUT_RETURN_TO_MENU;
             }
             return result;
+        }
+        if (state->nexusState.hand_pointer_active &&
+            (input == M12_MENU_INPUT_UP || input == M12_MENU_INPUT_DOWN ||
+             input == M12_MENU_INPUT_LEFT || input == M12_MENU_INPUT_RIGHT)) {
+            const Nexus_HitRect *viewport = NULL;
+            int x, y;
+            if (state->nexusEngine->hud_hit_rect_count !=
+                    NEXUS_HIT_RECT_COUNT ||
+                !state->nexusState.hand_pointer_position_known) {
+                return M11_GAME_INPUT_IGNORED;
+            }
+            viewport = &state->nexusEngine->hud_hit_rects[NEXUS_HIT_VIEWPORT];
+            x = state->nexusState.hand_pointer_x;
+            y = state->nexusState.hand_pointer_y;
+            switch (input) {
+                case M12_MENU_INPUT_UP: --y; break;
+                case M12_MENU_INPUT_DOWN: ++y; break;
+                case M12_MENU_INPUT_LEFT: --x; break;
+                case M12_MENU_INPUT_RIGHT: ++x; break;
+                default: break;
+            }
+            if (x < viewport->x1 || x >= viewport->x2 ||
+                y < viewport->y1 || y >= viewport->y2) {
+                return M11_GAME_INPUT_IGNORED;
+            }
+            state->nexusState.hand_pointer_x = x;
+            state->nexusState.hand_pointer_y = y;
+            return M11_GAME_INPUT_REDRAW;
+        }
+        if (state->nexusState.hand_pointer_active &&
+            input == M12_MENU_INPUT_ACTION) {
+            /* The retail manual binds A to pointer actions, but the active
+             * Saturn callback's per-region meanings remain unresolved. */
+            return M11_GAME_INPUT_IGNORED;
         }
         if (input == M12_MENU_INPUT_BACK) {
             m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
@@ -38245,6 +38304,9 @@ static M11_GameInputResult m11_nexus_handle_gameplay_pointer(
 
     local_x = x - viewport->x1;
     local_y = y - viewport->y1;
+    if (state->nexusState.hand_pointer_active) {
+        return M11_GAME_INPUT_IGNORED;
+    }
     if (local_x < (viewport->x2 - viewport->x1) / 3) {
         input = local_y < (viewport->y2 - viewport->y1) * 2 / 3
             ? M12_MENU_INPUT_TURN_LEFT : M12_MENU_INPUT_STRAFE_LEFT;
@@ -39733,6 +39795,20 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         }
     }
     if (state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) {
+        const Nexus_HitRect *viewport = NULL;
+        if (state->nexusEngine &&
+            state->nexusEngine->hud_hit_rect_count == NEXUS_HIT_RECT_COUNT) {
+            viewport = &state->nexusEngine->hud_hit_rects[NEXUS_HIT_VIEWPORT];
+        }
+        if (viewport && x >= viewport->x1 && x < viewport->x2 &&
+            y >= viewport->y1 && y < viewport->y2) {
+            state->nexusState.hand_pointer_x = x;
+            state->nexusState.hand_pointer_y = y;
+            state->nexusState.hand_pointer_position_known = 1;
+            if (state->nexusState.hand_pointer_active) {
+                return M11_GAME_INPUT_REDRAW;
+            }
+        }
         /* Startup has first refusal above. During gameplay, only the left
          * desktop button drives the Nexus viewport control surface; never
          * fall through to DM1's unrelated object or HUD click routes. */
@@ -74944,6 +75020,75 @@ void M11_GameView_Draw(M11_GameViewState* state,
                               framebufferWidth, framebufferHeight);
     m11_draw_session_timer_overlay(state, framebuffer,
                                    framebufferWidth, framebufferHeight);
+}
+
+void M11_GameView_DrawNexusPointerOverlay(const M11_GameViewState* state,
+                                          unsigned char* framebuffer,
+                                          int framebufferWidth,
+                                          int framebufferHeight) {
+    unsigned char rgba[16 * 16 * 4];
+    const Nexus_V1_Engine *engine;
+    const Nexus_HitRect *viewport;
+    const uint8_t *texels;
+    const uint16_t *palette;
+    int x0, y0, y, x;
+
+    if (!state || !framebuffer || framebufferWidth <= 0 ||
+        framebufferHeight <= 0 ||
+        state->sourceKind != M11_GAME_SOURCE_NEXUS_DGN ||
+        !state->nexusState.hand_pointer_active ||
+        !state->nexusState.hand_pointer_position_known ||
+        !(engine = state->nexusEngine) ||
+        !engine->item_ibs_runtime_source.source_bound ||
+        !engine->item_ibs_runtime_source.parsed_bank_valid ||
+        engine->item_ibs_runtime_source.fallback_visuals_permitted ||
+        state->nexusState.hand_pointer_x < 0 ||
+        state->nexusState.hand_pointer_x >= framebufferWidth ||
+        state->nexusState.hand_pointer_y < 0 ||
+        state->nexusState.hand_pointer_y >= framebufferHeight) {
+        return;
+    }
+
+    /* Ymir `--debug` VDP1 capture: command at VRAM 0x12e0 reads 128 bytes
+     * from 0x7df00, exactly matching hash-verified retail ITEM.IBS image 65
+     * at 0x5380. Ymir's command resolves its source CLUT to retail palette 6. */
+    if (NEXUS_V1_ITEM_IBS_BYTES != 0x18800 ||
+        NEXUS_V1_ITEM_IBS_REGULAR_IMAGE_COUNT <= 65 ||
+        NEXUS_V1_ITEM_IBS_PALETTE_COUNT <= 6 ||
+        !engine->hud_geometry_bound ||
+        engine->hud_hit_rect_count != NEXUS_HIT_RECT_COUNT) {
+        return;
+    }
+    viewport = &engine->hud_hit_rects[NEXUS_HIT_VIEWPORT];
+    if (state->nexusState.hand_pointer_x < viewport->x1 ||
+        state->nexusState.hand_pointer_x >= viewport->x2 ||
+        state->nexusState.hand_pointer_y < viewport->y1 ||
+        state->nexusState.hand_pointer_y >= viewport->y2) {
+        return;
+    }
+    memset(rgba, 0, sizeof(rgba));
+    texels = engine->item_ibs_bank.regular_image_texels[65];
+    palette = engine->item_ibs_bank.palette_bgr555[6];
+    for (y = 0; y < 16; ++y) {
+        for (x = 0; x < 16; ++x) {
+            const uint8_t packed = texels[y * 8 + x / 2];
+            const uint8_t color_index = (uint8_t)((x & 1)
+                ? (packed & 0x0fU) : (packed >> 4));
+            const uint16_t bgr555 = palette[color_index];
+            unsigned char *pixel = &rgba[(y * 16 + x) * 4];
+            if (color_index == 0U) continue;
+            pixel[0] = (unsigned char)(((bgr555 & 0x1fU) << 3) |
+                                        ((bgr555 & 0x1fU) >> 2));
+            pixel[1] = (unsigned char)((((bgr555 >> 5) & 0x1fU) << 3) |
+                                        (((bgr555 >> 5) & 0x1fU) >> 2));
+            pixel[2] = (unsigned char)((((bgr555 >> 10) & 0x1fU) << 3) |
+                                        (((bgr555 >> 10) & 0x1fU) >> 2));
+            pixel[3] = 255U;
+        }
+    }
+    x0 = state->nexusState.hand_pointer_x - 8;
+    y0 = state->nexusState.hand_pointer_y - 8;
+    (void)M11_Render_SetNextIndexedRgbaOverlay(rgba, 16, 16, x0, y0);
 }
 
 /* ── Creature animation implementation ── */

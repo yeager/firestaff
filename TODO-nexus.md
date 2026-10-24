@@ -130,8 +130,8 @@ on the PRS3 menu capture. See
 - Finish Nexus keyboard and mouse gameplay routing. Retail Ymir captures now
   confirm forward movement, left/right turns, Start-to-pause, and the Z cursor
   mode. Firestaff maps A/D to Nexus turns while preserving DM1's A/D strafe
-  behavior, but the native cursor action contract, desktop mouse-to-game route,
-  and attack, inventory, spell, and champion-selection semantics remain open.
+  behavior. The native cursor action contract and attack, inventory, spell,
+  and champion-selection semantics remain open.
   Static SH-2 triage is now reproducible with
   `scripts/analyze_nexus_mouse_event_crossrefs.py`: the hash-verified English
   DM.BIN has no direct PC-relative literal references to the 60 event-name
@@ -144,3 +144,7 @@ on the PRS3 menu capture. See
   Nexus mouse gameplay.
   See `parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`.
   See also `parity-evidence/verification/nexus-mouse-callback-dispatch-20261024/README.md`.
+  Firestaff now has a host Z toggle, logical pointer motion through keyboard
+  arrows or mouse movement, and the authentic retail hand sprite joined from
+  ITEM.IBS image 65/palette 6 against Ymir VDP1 capture. Pointer click actions
+  remain open until their retail source joins are captured.
