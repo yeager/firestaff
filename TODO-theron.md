@@ -26,12 +26,15 @@
   timestamp 40176 (`vdc-io` SHA-256
   `c14cfd4d20fab26c6175d0f5c8cbac4e86d806a0f85e2ddee907c753cdb28aec`). The
   capture retained 65,536 main-RAM consumer reads with no direct reads of
-  those four candidate offsets, and reports `transition=missing`. The Firestaff boot probe instead reports
-  level 0 and party `(1,0,dir0)`. The offsets still lack a
-  source-backed consumer join, so treat these only as conflicting candidate
-  state fields. They confirm that this render has not been joined to the
-  Firestaff world; no original-emulator screenshot was paired with this exact
-  Firestaff frame. Rendering evidence remains screen-space only.
+  those four candidate offsets, and reports `transition=missing`. The original
+  three-loop Firestaff probe reported level 0 and party `(1,0,dir0)`. A
+  follow-up three-loop `--debug` route reached party `(2,3,dir1)`, three
+  champions, and `gameTick=17`; each presented frame retained the same
+  snapshot-render SHA-256. The x/y/direction raw candidate bytes therefore
+  match that route, but Firestaff still loaded level 0 and `$2031=02` has no
+  source-backed world meaning. This is only a candidate pose match, not a
+  same-level/world join. No original-emulator screenshot was paired with the
+  Firestaff frame; rendering remains screen-space evidence only.
 
 ## 2026-10-10 — instrument PCE Fast CPU VWR commits for source attribution
 

@@ -28,13 +28,16 @@ capture summary reports raw bytes `current_level_2031=02`,
 VDC snapshot boundary. These fields have not been joined to the live world
 through a source-backed consumer trace. The same capture retained 65,536
 main-RAM consumer reads but none directly read those four candidate offsets;
-its transition receipt is `missing`. The
-Firestaff boot probe instead
-reported level 0 and party `(1,0,dir0)`. These are different candidate states,
-so the rendered snapshot cannot be called a render of that Firestaff world.
-No original-emulator screenshot was paired with the Firestaff frame. This
-receipt proves authentic capture admission and non-black screen-space
-rendering only. It does not prove gameplay or visual parity.
+its transition receipt is `missing`. The original three-loop Firestaff probe
+reported level 0 and party `(1,0,dir0)`. A follow-up three-loop `--debug` route
+reached party `(2,3,dir1)`, three champions, and `gameTick=17`; each presented
+frame retained the same snapshot-render SHA-256. The x/y/direction raw
+candidate bytes therefore match that route, but Firestaff still loaded level 0
+and `$2031=02` has no source-backed world meaning. This is only a candidate
+pose match, not a same-level or same-world join. No original-emulator
+screenshot was paired with the Firestaff frame. The receipt proves authentic
+capture admission and non-black screen-space rendering only. It does not prove
+gameplay or visual parity.
 
 Reproduction on TRV2, repeated three times with separate output directories:
 
@@ -58,3 +61,11 @@ FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$out/runtime.json" \
     --script enter,enter,down,down,down,down,down,down,enter,down,enter \
     --duration 0 --width 320 --height 224
 ```
+
+The candidate-pose follow-up was repeated three times with this route script
+and `--boot-probe --boot-probe-frames 2 --boot-probe-expect-party 2,3,1`:
+`down,down,down,down,enter,enter,enter,down,down,down,down,down,down,enter,down,enter,up,right,down,left,up,up,right`.
+
+It produced party `(2,3,dir1)`, three champions, `gameTick=17`, and the same
+presented-frame SHA-256 on each run. Firestaff still loaded level 0; this is a
+pose-candidate match only.

@@ -133,6 +133,24 @@
       }
     },
     "sameWorldStateProven": false,
-    "note": "The capture summary labels these BaseRAM offsets as candidate runtime fields, but a source-backed consumer trace has not joined them to the loaded world. Their differing values also do not identify the captured screen as the Firestaff boot-probe world."
+    "note": "The capture summary labels these BaseRAM offsets as candidate runtime fields, but a source-backed consumer trace has not joined them to the loaded world. Their differing values also do not identify the captured screen as the Firestaff boot-probe world.",
+    "candidatePoseReplay": {
+      "iterations": 3,
+      "routeScript": "down,down,down,down,enter,enter,enter,down,down,down,down,down,down,enter,down,enter,up,right,down,left,up,up,right",
+      "expectedParty": "2,3,1",
+      "observedParty": {
+        "mapIndex": 0,
+        "x": 2,
+        "y": 3,
+        "direction": 1,
+        "champions": 3
+      },
+      "gameTick": 17,
+      "loadedRuntimeLevel": 0,
+      "captureCandidatePoseBytesMatch": true,
+      "allPresentedFrameSha256": "cdcb9d4f4247d72f6fa9f28dd28571153c718984fae8dd581553729d3317df47",
+      "sameLevelOrWorldProven": false,
+      "note": "This replay matches the capture summary raw x/y/direction candidate bytes, but the Firestaff world loaded level 0 while the original capture only reports unverified current_level_2031=02. The capture transition is missing and those RAM field semantics are not bound to the live world."
+    }
   }
 }
