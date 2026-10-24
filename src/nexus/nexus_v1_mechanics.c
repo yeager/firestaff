@@ -643,7 +643,7 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
     /* Retail movement has no meaningful consumer until a DGN level and a
      * placed party pose are both available. Preserve queued input and the
      * session tick while the title/startup route still owns the view. */
-    if (!saturn_actions &&
+    if (engine->source != NEXUS_SRC_NONE &&
         (!engine->level_loaded || engine->current_level.width <= 0 ||
          engine->current_level.width > NEXUS_MAX_MAP_SIZE ||
          engine->current_level.height <= 0 ||
