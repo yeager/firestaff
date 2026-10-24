@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare an authentic NBG1 bitmap span with decoded retail source pixels.
+"""Compare authentic NBG0/NBG1 bitmap spans with decoded retail source pixels.
 
 The VDP2 register receipt identifies the active bitmap geometry, while this
 tool performs only bounded byte-domain joins against authenticated retail
@@ -280,8 +280,8 @@ def ymir_bundle_frame(bundle: Path) -> tuple[dict[str, bytes], int]:
             last_frame = int(capture["last_vdp1_frame_index"])
         except (KeyError, ValueError) as error:
             raise ValueError("Ymir VDP2 memory receipt is incomplete or malformed") from error
-        if (frame < 0 or first_frame < 0 or first_frame > frame or
-                last_frame != frame or expected_rows < 1 or dropped != 0 or
+        if (frame < 0 or first_frame < 0 or first_frame > last_frame or
+                last_frame > frame or expected_rows < 1 or dropped != 0 or
                 capture.get("bundle_complete") != "1" or
                 capture.get("trace_file_complete") != "1" or
                 capture.get("vdp2_vram_file_complete") != "1" or
@@ -299,10 +299,8 @@ def ymir_bundle_frame(bundle: Path) -> tuple[dict[str, bytes], int]:
             raise ValueError("Ymir VDP2 trace contains writes without frame identity")
         try:
             frame_indexes = [int(row["vdp1_frame"]) for row in rows]
-            frame_rows = [row for row in rows
-                          if int(row["vdp1_frame"]) == frame]
             if (min(frame_indexes) != first_frame or
-                    max(frame_indexes) != last_frame or not frame_rows):
+                    max(frame_indexes) != last_frame or last_frame > frame):
                 raise ValueError("Ymir VDP2 trace frame range does not match its receipt")
             for row in rows:
                 space = row["memory"]
@@ -438,35 +436,48 @@ def main() -> int:
     bgon = read_u16(registers, 0x20, byte_order)
     chctla = read_u16(registers, 0x28, byte_order)
     bmpna = read_u16(registers, 0x2C, byte_order)
-    if not (bgon & 0x02) or not (chctla & 0x0200):
-        print("NEXUS_VDP2_BITMAP_SOURCE_INVALID: NBG1 bitmap mode is not active")
+    mpo = read_u16(registers, 0x3C, byte_order)
+    layers: list[tuple[str, int, int, int]] = []
+    # NBG0 and NBG1 each use their own register fields in CHCTLA/MPOFN.
+    # This comparator admits only the captured 512x256, 8bpp bitmap mode.
+    if bgon & 0x01 and chctla & 0x0002:
+        if (chctla & 0x000C) != 0 or (chctla & 0x0030) != 0x0010:
+            print("NEXUS_VDP2_BITMAP_SOURCE_INVALID: unsupported NBG0 geometry")
+            return 1
+        layers.append(("NBG0", mpo & 7, bmpna & 7, 0x01))
+    if bgon & 0x02 and chctla & 0x0200:
+        if ((chctla >> 10) & 3) != 0 or ((chctla >> 12) & 3) != 1:
+            print("NEXUS_VDP2_BITMAP_SOURCE_INVALID: unsupported NBG1 geometry")
+            return 1
+        layers.append(("NBG1", (mpo >> 4) & 7, (bmpna >> 8) & 7, 0x02))
+    if not layers:
+        print("NEXUS_VDP2_BITMAP_SOURCE_INVALID: no supported bitmap layer is active")
         return 1
-    bitmap_size = 512 * 256  # BMSize code 0, 8bpp; guarded by the receipt below.
-    if ((chctla >> 10) & 3) != 0 or ((chctla >> 12) & 3) != 1:
-        print("NEXUS_VDP2_BITMAP_SOURCE_INVALID: unsupported NBG1 geometry")
-        return 1
-    map_offset = (read_u16(registers, 0x3C, byte_order) >> 4) & 7
-    byte_offset = map_offset * 0x20000
-    bitmap = frame["vdp2-vram"][byte_offset:byte_offset + bitmap_size]
-    if len(bitmap) != bitmap_size:
-        print("NEXUS_VDP2_BITMAP_SOURCE_INVALID: bitmap span outside VRAM")
-        return 1
-
-    print(f"frame={frame_index} register_byte_order={byte_order} "
-          f"NBG1_bitmap_offset=0x{byte_offset:06x} bytes={len(bitmap)}")
-    print(f"NBG1_bmpna=0x{bmpna:04x} colour_code=1 bitmap_size_code=0")
+    bitmap_size = 512 * 256
     exact = 0
-    ranked: list[tuple[int, str, int, int]] = []
-    for name, source in sources:
-        full = bitmap.find(source) if source and any(source) else -1
-        if full >= 0:
-            exact += 1
-            print(f"exact_match={name} bitmap_offset=0x{full:06x} bytes={len(source)}")
-        run, source_offset, target_offset = longest_nonzero_match(source, bitmap)
-        if run:
-            ranked.append((run, name, source_offset, target_offset))
-    for run, name, source_offset, target_offset in sorted(ranked, reverse=True)[:8]:
-        print(f"partial_match={name} bytes={run} source_offset=0x{source_offset:x} bitmap_offset=0x{target_offset:x}")
+    for layer, map_offset, palette, _ in layers:
+        byte_offset = map_offset * 0x20000
+        bitmap = frame["vdp2-vram"][byte_offset:byte_offset + bitmap_size]
+        if len(bitmap) != bitmap_size:
+            print(f"NEXUS_VDP2_BITMAP_SOURCE_INVALID: {layer} span outside VRAM")
+            return 1
+        print(f"frame={frame_index} register_byte_order={byte_order} "
+              f"{layer}_bitmap_offset=0x{byte_offset:06x} bytes={len(bitmap)}")
+        print(f"{layer}_bmpna_palette={palette} colour_code=1 bitmap_size_code=0")
+        ranked: list[tuple[int, str, int, int]] = []
+        layer_exact = 0
+        for name, source in sources:
+            full = bitmap.find(source) if source and any(source) else -1
+            if full >= 0:
+                exact += 1
+                layer_exact += 1
+                print(f"exact_match={layer}:{name} bitmap_offset=0x{full:06x} bytes={len(source)}")
+            run, source_offset, target_offset = longest_nonzero_match(source, bitmap)
+            if run:
+                ranked.append((run, name, source_offset, target_offset))
+        for run, name, source_offset, target_offset in sorted(ranked, reverse=True)[:8]:
+            print(f"{layer}_partial_match={name} bytes={run} source_offset=0x{source_offset:x} bitmap_offset=0x{target_offset:x}")
+        print(f"{layer}_exact_source_matches={layer_exact}")
     cram = frame["vdp2-cram"]
     palette_swap = b"".join(title_palette[offset:offset + 2][::-1]
                              for offset in range(0, len(title_palette), 2))

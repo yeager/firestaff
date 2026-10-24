@@ -1511,7 +1511,7 @@ screen, menu, HUD, or viewport owner, and does not authorize rendering.
 
 The standalone `vdp2-memory-write-bundle.txt` format is accepted directly by
 `analyze_nexus_vdp2_bitmap_source.py`. The reader checks the bundle-complete
-receipt, exact CSV row count, frame interval, writes for the snapshot frame,
+receipt, exact CSV row count, trace frame interval no later than the snapshot,
 memory address and width bounds, and the VDP2 register/VRAM/CRAM sizes. Ymir
 captures the receipt, registers, VRAM, CRAM, and trace in one emulator-thread
 callback. The authentic Japanese retail run used `--debug`, the Japanese IPL
@@ -1538,6 +1538,54 @@ Re-run the analysis against the authentic local corpus with:
 ```sh
 python3 scripts/analyze_nexus_vdp2_bitmap_source.py \
   /Volumes/Extern-disk/nexus-saturn-capture/run-ymir-vdp2-memory-bundle-20261024-frame295 \
+  --data-dir /Volumes/Extern-disk/FirestaffUserData/data/nexus
+```
+
+## Ymir authentic startup bitmap and CRAM traces, frames 105 and 118, 2026-10-24
+
+Two additional bundles were captured from the authentic Japanese retail CUE
+and IPL identified above using Ymir `--debug`. The frame-105 bundle filters
+VRAM writes to `0x020000–0x040000`; it contains 164,924 rows from frames 24–31,
+zero dropped rows, and a complete 128 KiB NBG1 bitmap snapshot. Replaying all
+trace writes byte by byte in trace order reproduces that region exactly. The
+snapshot is later than the last filtered write, so the receipt correctly binds
+the full trace interval to the snapshot frame rather than requiring a write in
+the snapshot frame.
+
+The frame-118 bundle filters CRAM writes to `0x000–0x1000`; it contains 272
+rows from frame 24 and zero dropped rows. The two snapshots have identical
+NBG1 VRAM regions and CRAM bytes. Interpreting the captured registers identifies
+NBG0 as a 512×256 8bpp bitmap at VRAM `0x000000` with BMPNA palette selector
+0, and NBG1 as a 512×256 8bpp bitmap at `0x020000` with selector 1. The
+captured NBG0 bytes, decoded with the captured CRAM, visibly form the Japanese
+date/time setup text and cursor; NBG1 contains the corresponding box shapes.
+These are observations of captured memory, not source ownership or renderer
+admission.
+
+`analyze_nexus_vdp2_bitmap_source.py` now compares both active bitmap layers
+against the hash-verified retail source corpus. For both frames 105 and 118 it
+reports zero exact source matches on either layer, `source_join=unbound`, and
+`semantic_admission=blocked`. Its longest byte runs are partial only (35 bytes
+from TITLE.BIN maps 1/3 on NBG0; 118 bytes from TITLE.BIN map 4 and 99 bytes
+from MENU.BPK on NBG1). The tested TITLE, MENU, STABG, and 1,266 DGN palette
+anchors have no exact or word-swapped CRAM match. This evidence advances the
+startup display investigation while leaving source identity, palette owner,
+and production rendering unresolved.
+
+The complete bitmap bundle and CRAM bundle, including raw register, VRAM,
+CRAM, trace, and screenshots, are retained at:
+
+- `/Volumes/Extern-disk/nexus-saturn-capture/run-ymir-vdp2-startup-bitmap-20261024/`
+- `/Volumes/Extern-disk/nexus-saturn-capture/run-ymir-vdp2-startup-cram-20261024/`
+
+Re-run against the authentic corpus with:
+
+```sh
+python3 scripts/analyze_nexus_vdp2_bitmap_source.py \
+  /Volumes/Extern-disk/nexus-saturn-capture/run-ymir-vdp2-startup-bitmap-20261024 \
+  --data-dir /Volumes/Extern-disk/FirestaffUserData/data/nexus
+python3 scripts/analyze_nexus_vdp2_bitmap_source.py \
+  /Volumes/Extern-disk/nexus-saturn-capture/run-ymir-vdp2-startup-cram-20261024 \
   --data-dir /Volumes/Extern-disk/FirestaffUserData/data/nexus
 ```
 
