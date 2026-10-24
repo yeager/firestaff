@@ -27,6 +27,19 @@ MOUSE_CALLBACK_EVENT_NAMES = {
 HIT_RECT_TABLE_OFFSET = 0x38000
 HIT_RECT_TABLE_SUBSET_OFFSET = HIT_RECT_TABLE_OFFSET + 8 * 8
 MOUSE_SOURCE_PATH_OFFSET = 0x387FC
+MOUSE_ACTION_RECT_TABLE_OFFSET = 0x3850C
+MOUSE_ACTION_RECT_TABLE_COUNT = 8
+MOUSE_ACTION_RECT_RECORD_SIZE = 12
+MOUSE_ACTION_RECT_RECORDS = (
+    (0x0101, 0x0068, 0x0111, 0x0078, 44, 0),
+    (0x0120, 0x0068, 0x0130, 0x0078, 44, 1),
+    (0x0110, 0x0048, 0x0120, 0x0058, 44, 2),
+    (0x0110, 0x005B, 0x0120, 0x006B, 44, 3),
+    (0x0111, 0x0073, 0x0121, 0x0083, 44, 4),
+    (0x0110, 0x0088, 0x0120, 0x0098, 44, 5),
+    (0x00F8, 0x0050, 0x0108, 0x0060, 44, 6),
+    (0x00FC, 0x0088, 0x010C, 0x0098, 44, 7),
+)
 
 # Retail mouse hit-region setup discovered by following the direct
 # MOV.L-literal references to the DM.BIN table. These are file offsets in the
@@ -276,6 +289,51 @@ def report_mouse_callback_event_ids(data: bytes) -> bool:
     return valid
 
 
+def report_mouse_inventory_hit_regions(data: bytes) -> bool:
+    """Verify the retail inventory hit rectangles and event queue dispatch."""
+    valid = True
+    for index, expected in enumerate(MOUSE_ACTION_RECT_RECORDS):
+        offset = MOUSE_ACTION_RECT_TABLE_OFFSET + index * MOUSE_ACTION_RECT_RECORD_SIZE
+        actual = tuple(read_be16(data, offset + field * 2) for field in range(6))
+        if actual != expected:
+            print(f"mouse_inventory_hit_region=invalid index={index} "
+                  f"expected={expected} actual={actual}")
+            valid = False
+    # Retail SH-2 bounds scan: compare pointer x/y with each 12-byte record,
+    # then load event id at +8 and argument at +10 before calling 0x06024288.
+    expected_words = {
+        0x24EE2: 0x62E1,  # MOV.W @R14,R2 (x1)
+        0x24EE4: 0x3247,  # CMP/GT R4,R2
+        0x24EE8: 0x85E2,  # MOV.W @(4,R14),R0 (x2)
+        0x24EEA: 0x3407,  # CMP/GT R0,R4
+        0x24EEE: 0x85E1,  # MOV.W @(2,R14),R0 (y1)
+        0x24EF0: 0x3057,  # CMP/GT R0,R5
+        0x24EF4: 0x85E3,  # MOV.W @(6,R14),R0 (y2)
+        0x24EF6: 0x3507,  # CMP/GT R0,R5
+        0x24EFC: 0x85E5,  # MOV.W @(10,R14),R0 (event argument)
+        0x24EFE: 0x6503,  # MOV R0,R5
+        0x24F00: 0x85E4,  # MOV.W @(8,R14),R0 (event id)
+        0x24F02: 0x4D0B,  # JSR @R13
+        0x24F04: 0x6403,  # delay slot: MOV R0,R4
+    }
+    for offset, expected in expected_words.items():
+        actual = read_be16(data, offset)
+        if actual != expected:
+            print(f"mouse_inventory_dispatch=invalid file_offset=0x{offset:06x} "
+                  f"expected=0x{expected:04x} actual="
+                  f"{('none' if actual is None else f'0x{actual:04x}')}")
+            valid = False
+    queue_writer = mov_l_pc_literal(data, 0x24EDC)
+    if queue_writer != (13, 0x06024288):
+        print(f"mouse_inventory_queue_target=invalid decoded={queue_writer}")
+        valid = False
+    if valid:
+        print("mouse_inventory_hit_regions=8 event=44(EV_INV_EQUIP) "
+              "arguments=inventory_slots_0_to_7")
+        print("mouse_inventory_hit_region_dispatch=retail_bounds_scan_and_queued_event_verified")
+    return valid
+
+
 def event_string_offsets(data: bytes) -> list[tuple[int, bytes]]:
     pool = data[EVENT_TABLE_OFFSET:EVENT_TABLE_END]
     result: list[tuple[int, bytes]] = []
@@ -342,6 +400,9 @@ def main() -> int:
         return 1
     if not report_mouse_callback_event_ids(data):
         print("NEXUS_MOUSE_CALLBACK_EVENT_PATH_INVALID: retail callback path changed")
+        return 1
+    if not report_mouse_inventory_hit_regions(data):
+        print("NEXUS_MOUSE_INVENTORY_HIT_PATH_INVALID: retail hit path changed")
         return 1
 
     print("interpretation=verified retail hit-region registration and callback transport; "

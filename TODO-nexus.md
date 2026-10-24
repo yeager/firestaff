@@ -141,7 +141,11 @@ on the PRS3 menu capture. See
   slot. A second retail callback trace verifies object fields 100/104 and
   queues numeric events 13/44 to `0x06024288` in two modes. The retail
   pointer table names these `EV_EXIT_INV` and `EV_INV_EQUIP`; downstream
-  effects remain unbound. This does not open the action gate.
+  effects remain unbound. The eight authentic action rectangles at
+  `DM.BIN:0x3850c` are verified to queue `EV_INV_EQUIP` with slot arguments
+  0--7 through the retail bounds scanner at `0x24ed6`. Bind that event's
+  consumer to authentic champion/inventory runtime writes before opening the
+  production equipment-click route.
   Trace the queue consumer and same-session gameplay-state writes before
   wiring pointer actions.
   See `parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`.

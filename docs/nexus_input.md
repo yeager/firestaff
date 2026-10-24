@@ -119,6 +119,16 @@ not enough to implement inventory clicks. The analyzer checks the branch
 targets, event values, queue target, and name pointers against the
 hash-verified Japanese retail `DM.BIN`.
 
+The same retail image contains an eight-entry action-rectangle table at file
+offset `0x3850c`. Each 12-byte record stores `(x1, y1, x2, y2, event, slot)`;
+the eight authentic records all use event 44 and slot arguments 0 through 7.
+The SH-2 hit scanner at file offset `0x24ed6` compares pointer coordinates
+against those bounds, reads the event and slot fields, and queues them to
+`0x06024288`. This binds the rectangles to `EV_INV_EQUIP` with a slot argument.
+It does not yet prove how the queued event mutates champion inventory or which
+Firestaff runtime state is the matching retail owner, so production equipment
+clicks remain disabled.
+
 ## Mouse and remaining input work
 
 Nexus has startup pointer handling, viewport mouse movement, keyboard

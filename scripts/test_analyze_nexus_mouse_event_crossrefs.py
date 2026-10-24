@@ -83,6 +83,19 @@ def retail_mouse_registration_fixture() -> bytearray:
         data[pointer_offset : pointer_offset + 4] = (
             trace.DM_BASE + string_offset).to_bytes(4, "big")
         data[string_offset : string_offset + len(name) + 1] = name + b"\0"
+    for index, row in enumerate(trace.MOUSE_ACTION_RECT_RECORDS):
+        offset = trace.MOUSE_ACTION_RECT_TABLE_OFFSET + index * trace.MOUSE_ACTION_RECT_RECORD_SIZE
+        for field, value in enumerate(row):
+            put_u16(data, offset + field * 2, value)
+    for offset, opcode in {
+        0x24EE2: 0x62E1, 0x24EE4: 0x3247, 0x24EE8: 0x85E2,
+        0x24EEA: 0x3407, 0x24EEE: 0x85E1, 0x24EF0: 0x3057,
+        0x24EF4: 0x85E3, 0x24EF6: 0x3507, 0x24EFC: 0x85E5,
+        0x24EFE: 0x6503, 0x24F00: 0x85E4, 0x24F02: 0x4D0B,
+        0x24F04: 0x6403,
+    }.items():
+        put_u16(data, offset, opcode)
+    put_mov_l_pc(data, 0x24EDC, 13, 0x06024288, 0x25080)
     return data
 
 
@@ -145,6 +158,23 @@ class NexusMouseCallbackTraceTests(unittest.TestCase):
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
             valid = trace.report_mouse_callback_event_ids(data)
+        self.assertFalse(valid)
+
+    def test_retail_inventory_regions_dispatch_equip_slots(self) -> None:
+        data = retail_mouse_registration_fixture()
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            valid = trace.report_mouse_inventory_hit_regions(data)
+        self.assertTrue(valid)
+        self.assertIn("event=44(EV_INV_EQUIP)", output.getvalue())
+        self.assertIn("inventory_slots_0_to_7", output.getvalue())
+
+    def test_inventory_hit_event_id_mismatch_is_rejected(self) -> None:
+        data = retail_mouse_registration_fixture()
+        put_u16(data, trace.MOUSE_ACTION_RECT_TABLE_OFFSET + 8, 13)
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            valid = trace.report_mouse_inventory_hit_regions(data)
         self.assertFalse(valid)
 
 
