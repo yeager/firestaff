@@ -38174,6 +38174,50 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
     return M11_GAME_INPUT_IGNORED;
 }
 
+/* Firestaff's desktop mouse uses the authentic Nexus viewport rectangle as
+ * a directional control surface.  This is a host-input layout, not a claim
+ * about Saturn mouse semantics: the retail manual and Ymir captures verify
+ * the movement commands, while the Saturn hit-table's individual callback
+ * actions remain unresolved. */
+static M11_GameInputResult m11_nexus_handle_gameplay_pointer(
+    M11_GameViewState *state, int x, int y)
+{
+    const Nexus_HitRect *viewport;
+    int local_x, local_y;
+    M12_MenuInput input;
+
+    if (!state || state->sourceKind != M11_GAME_SOURCE_NEXUS_DGN ||
+        !state->nexusEngine || !state->nexusEngine->mechanics ||
+        !state->nexusEngine->level_loaded ||
+        state->nexusState.title_active ||
+        state->nexusState.startup_save_select_active ||
+        state->nexusState.champion_select_active ||
+        state->nexusEngine->hud_hit_rect_count != NEXUS_HIT_RECT_COUNT) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    viewport = &state->nexusEngine->hud_hit_rects[NEXUS_HIT_VIEWPORT];
+    if (x < viewport->x1 || x >= viewport->x2 ||
+        y < viewport->y1 || y >= viewport->y2) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    local_x = x - viewport->x1;
+    local_y = y - viewport->y1;
+    if (local_x < (viewport->x2 - viewport->x1) / 3) {
+        input = local_y < (viewport->y2 - viewport->y1) * 2 / 3
+            ? M12_MENU_INPUT_TURN_LEFT : M12_MENU_INPUT_STRAFE_LEFT;
+    } else if (local_x >= (viewport->x2 - viewport->x1) * 2 / 3) {
+        input = local_y < (viewport->y2 - viewport->y1) * 2 / 3
+            ? M12_MENU_INPUT_TURN_RIGHT : M12_MENU_INPUT_STRAFE_RIGHT;
+    } else {
+        input = local_y < (viewport->y2 - viewport->y1) / 2
+            ? M12_MENU_INPUT_UP : M12_MENU_INPUT_DOWN;
+    }
+
+    return M11_GameView_HandleInput(state, input);
+}
+
 static M11_GameInputResult m11_dm2_startup_enter_credits(
     M11_GameViewState *state)
 {
@@ -39642,6 +39686,15 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         if (nexusStartupPointer != M11_GAME_INPUT_IGNORED) {
             return nexusStartupPointer;
         }
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) {
+        /* Startup has first refusal above. During gameplay, only the left
+         * desktop button drives the Nexus viewport control surface; never
+         * fall through to DM1's unrelated object or HUD click routes. */
+        if ((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+        return m11_nexus_handle_gameplay_pointer(state, x, y);
     }
     if (buttonMask & (DM1_V1_MOUSE_MASK_LEFT_PC34 |
                       DM1_V1_MOUSE_MASK_RIGHT_PC34)) {

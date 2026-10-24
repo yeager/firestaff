@@ -53,10 +53,19 @@ W/S move forward/backward, A/D and left/right arrows strafe, and Q/E or
 Home/End turn. This is a host keyboard layout; Saturn D-pad left/right turn
 semantics remain specific to a connected Saturn ControlPad.
 
-The Nexus movement-only `M11_GameView_HandleInput` route accepts movement
-commands. The Nexus mechanics action gate remains fail-closed for unproven
-retail actions. Do not treat the shared DM1 action, inventory, spell, pause, or
-mouse routes as Nexus parity.
+The retail game tick now accepts only the six basic movement commands
+(forward/backward, turn left/right, and strafe left/right) against the
+authenticated DGN grid. Other retail mechanics remain fail-closed: this does
+not enable item use, inventory, spells, pause, combat, sensors, doors, or level
+transitions.
+
+For desktop mouse movement, Firestaff uses the authentic Nexus viewport
+rectangle parsed from `DM.BIN` as a host control surface. Left-click the upper
+left/right thirds to turn, the lower left/right thirds to strafe, and the upper
+or lower center third to move forward or backward. This is a Firestaff desktop
+mapping into the same six keyboard movement commands; it does not claim to
+reproduce Saturn ShuttleMouse or retail hit-table callback behavior. Clicks
+outside that viewport and right-clicks do not enter DM1 gameplay routes.
 
 `scripts/analyze_nexus_mouse_event_crossrefs.py` inventories direct SH-2
 `MOV.L @(disp,PC),Rn` references in the hash-verified retail `DM.BIN`. In the
@@ -81,13 +90,13 @@ unresolved, so this evidence is not enough to implement click actions.
 
 ## Mouse and remaining input work
 
-Nexus has startup pointer handling, but Firestaff does not yet have an
-authenticated Nexus gameplay route from desktop pointer coordinates to retail
-cursor actions or world commands. The existing logical click-route helpers
-require pre-resolved targets and do not establish how viewport pixels map to
-Nexus actions.
+Nexus has startup pointer handling and now has desktop mouse movement mapped to
+the verified basic movement command set. Firestaff still does not have an
+authenticated Nexus gameplay route from pointer coordinates to cursor actions,
+inventory/magic panels, or world interactions. The existing logical
+click-route helpers require pre-resolved targets and do not establish how
+viewport pixels map to Nexus actions.
 
 Next work must bind the documented cursor and non-movement controls to
-same-session retail input and state traces, then implement desktop mouse
-control against those observed semantics. Keep unsupported actions inert until
-their retail consumers are identified.
+same-session retail input and state traces. Keep unsupported actions inert
+until their retail consumers are identified.
