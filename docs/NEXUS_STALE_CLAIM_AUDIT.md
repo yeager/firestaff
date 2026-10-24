@@ -30,8 +30,9 @@ calls it “implemented”. Promotion requires source-owned byte identity and an
 authenticated Saturn/Mednafen capture of consumer, destination, and timing.
 A missing capture means blank/no-draw or no-op, not a synthetic replacement.
 
-DMWeb and Greatstone are used for byte and format rules. They do not by
-themselves prove VDP1/VDP2 composition or runtime semantics.
+DMWeb's Nexus-specific pages document selected byte layouts. Greatstone is
+used only for applicable DM-family comparisons; it is not a Nexus format
+source. Neither reference proves VDP1/VDP2 composition or runtime semantics.
 
 See also `TODO.md`: `NEXUS-SATURN-PRESENTATION-HANDOFF`,
 `NEXUS-MENU-SEQUENCE-CAPTURE` and `NEXUS-HUD-SATURN-DISPATCH-CAPTURE`.

@@ -116,6 +116,18 @@ static int run_external_tilemap_capture(void)
         !registers.nbg1_bitmap_mode && receipt.valid && receipt.capture_only &&
         !receipt.renderer_permitted && receipt.original_saturn_capture_verified &&
         receipt.tiles_decoded == 64;
+    if (!ok) {
+        fprintf(stderr,
+            "NBG1 capture decode rejected: frame=%u frame_valid=%d "
+            "registers_valid=%d enabled=%d bitmap=%d bpp=%d "
+            "receipt_valid=%d capture_only=%d renderer=%d tiles=%d "
+            "transparent=%d written=%d\n",
+            frame_index, frame.valid, registers.valid, registers.nbg1_enabled,
+            registers.nbg1_bitmap_mode, registers.nbg1_colour_code,
+            receipt.valid, receipt.capture_only, receipt.renderer_permitted,
+            receipt.tiles_decoded, receipt.transparent_pixels,
+            receipt.written_pixels);
+    }
     free(capture);
     return ok;
 }

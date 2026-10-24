@@ -7,8 +7,8 @@
  * entries (Dm1V1QueuedCommandPc34Compat) so the existing V1 input
  * pipeline handles the actual command dispatch.
  *
- * Saturn NEXUS.BIN touch/joypad input layer is not admitted: the supplied
- * European corpus contains no NEXUS.BIN input receipt.
+ * No retail Saturn input-dispatch consumer is admitted. Controller reports
+ * have not been joined to the retail program's action dispatch.
  *         Saturn SDK JOYPAD API (SMP-SONY Japan)
  *         ReDMCSB COMMAND.C:108-113 (mouse movement zones C001-C006)
  *         ReDMCSB COMMAND.C:254-291 (keyboard tables for C001..C006)
@@ -141,7 +141,7 @@ int nexus_v2_touch_runtime_translation_count(void) {
 const char *nexus_v2_touch_runtime_source_evidence(void) {
     return
         "Nexus V2 Touch Runtime — Phase 6 source-lock\n"
-        "Saturn NEXUS.BIN touch/joypad input layer: absent from supplied corpus; not admitted\n"
+        "No authenticated retail Saturn input-dispatch consumer receipt; affordance route remains probe-only\n"
         "Source: Saturn SDK JOYPAD API (SMP-SONY Japan)\n"
         "Source: ReDMCSB COMMAND.C:108-113 (mouse movement zones C001-C006)\n"
         "Source: ReDMCSB COMMAND.C:254-291 (keyboard tables for C001..C006)\n"

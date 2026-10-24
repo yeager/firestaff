@@ -1252,8 +1252,12 @@ either executable to a captured command or source span.
 
 The first positive runtime source join is retained outside the repository at
 `/Volumes/Extern-disk/nexus-saturn-capture/run-codex-vdp1-source-read-20260810`.
-The authenticated J-BIOS/English-media capture has 600 raw VDP1/VDP2 frames.
-Its bounded SH-2 source-write trace contains a complete 16,384-byte
+The SH-2 source-write trace SHA-256 is
+`91819bcdad6ee9c34f3cced80926d0efc855e2fc09c4bceeb48d0ea2944431b4`; the
+English merged ISO used for the runtime join has SHA-256
+`00431dfad48b44d4457300bcc62d8af6bfb5edcad149313e75db8de6bbddd581`. The
+authenticated J-BIOS/English-media capture has 600 raw VDP1/VDP2 frames. Its
+bounded SH-2 source-write trace contains a complete 16,384-byte
 `TM.BIN` chunk loaded to `0x06027000` by runtime PC `0x00205f18`; the strict
 analyzer resolves the chunk to ISO offset `0xd89800`, member offset
 `0x17000`, and reports `retail_runtime_source_join=verified`. Reproduce it
@@ -1261,9 +1265,17 @@ with:
 
 ```sh
 python3 scripts/analyze_nexus_sh2_source_trace.py \
+  --require-member TM.BIN \
+  --require-destination-range 0x06027000:0x0602b000 \
+  --require-pc 0x00205f18 \
   "/Volumes/Extern-disk/nexus-saturn-capture/media/Dungeon Master Nexus (English) - Merged.iso" \
   "/Volumes/Extern-disk/nexus-saturn-capture/run-codex-vdp1-source-read-20260810/sh2-source-writes.trace"
 ```
+
+The same exact 16 KiB chunk also occurs in the authenticated Japanese retail
+CUE at ISO offset `0xdc1800`; this alternate source-corpus lookup does not
+change the capture's English-media provenance and does not prove the Japanese
+runtime executed this chunk.
 
 This proves retail `TM.BIN` bytes entered runtime RAM during the capture. The
 same witness still has no exact VDP1 command-to-retail-file owner
@@ -1477,6 +1489,54 @@ transport only. RAM-to-VDP2 ownership and semantic admission remain blocked.
 The BIOS, disc, raw capture and traces remain on TRV2 under
 `/home/trv2/work/firestaff-nexus-menu-transition-20260928/runs/title-mapd-cd-ram-source-13294-20260928/`.
 
+## JP title-screen START follow-up and SH-2 branch trace, 2026-10-02
+
+A separate authentic-media run shows the retail title screen after a single
+START pulse. The input capture uses the Japanese BIOS and Japanese retail CUE
+hashes above, starts at frame 42509, and schedules mask `0x10` for one frame at
+42809. The rendered frames at 42808, 42809, 42810, 42869, and 43108 are
+retained in the capture manifest; frame 42869 shows the Nexus title and
+`PRESS START BUTTON`, and frame 43108 still shows the title after 299 frames.
+The frame-42869 PPM SHA-256 is
+`acacec7595eaae5175b15253a63345daeae5b1613b17865779cf6c06818d37f9`; the
+frame-43108 PPM SHA-256 is
+`e47c9b0685d7a81bb4526a86b846bdecca7b79ff13d770002907182e2016253f`. The
+matched control-follow-up has the same PPM hashes at both frames and the same
+600-frame raw capture hash
+`0bcf7126e458782169b9d73b59325790643acf01962b32c909327c573c073f8f`.
+The control-follow-up's only START pulse is at its initial frame, so this
+comparison establishes no lasting presentation change from the later input
+pulse, but does not identify the menu action consumer.
+
+An independent cold-start pair captured 70 raw frames from absolute frames
+42860--42929, with START mask `0x10` for one frame at 42869 in the input run
+and no input in the control. Both manifests bind the same authenticated
+Japanese BIOS and retail CUE. Their complete raw VDP1/VDP2 streams are
+byte-identical (SHA-256
+`f6e905f19a34125414f74e3daab64fd91b744361d2c80084e7d08e9d6734ae57`,
+110,434,202 bytes). The input branch trace records `R2=0x10` at frame 42870
+versus `R2=0` in control; at the observed `PC=0x06039290` both runs retain
+`T=0`, `taken=0`, and the same `opcode=0x8d5d`. The trace therefore shows a
+transient register difference, not a taken START branch or a visual
+transition. Its branch-trace SHA-256 values are
+`1d3f0ec113b0383cfc65c76482f89220ff4878572628ebf20bead43245a6ad01`
+(input) and
+`8933f0358b0ffcb943e40bd4700eb5e56bf9da83b46b250564f3291663e74c30`
+(control). Under `scripts/analyze_nexus_tm_bin_vdp_owner.py`'s static
+`DM.BIN` load base `0x06010040`, this PC maps to file offset `0x29250`. The
+hash-verified Japanese `DM.BIN`
+(`3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124`)
+contains opcode `0x8903` at that offset, not the runtime-traced `0x8d5d`.
+This direct mapping therefore does not bind the branch to a retail code span;
+relocation or runtime code provenance remains unknown. The input/action
+consumer and title-to-menu transition remain unverified.
+
+The rendered frames are in
+`/home/trv2/work/firestaff-nexus-title-start-pair-real15/`; the branch pair is
+in `/home/trv2/work/firestaff-nexus-start-branch-trace-20261002/`. These
+captures are supporting negative evidence only; they do not authorize title,
+menu, HUD, or viewport renderer admission.
+
 ## Matched A-input and no-input title-window capture, 2026-10-23
 
 A fresh 40-frame comparison used the authenticated Japanese BIOS
@@ -1532,6 +1592,91 @@ from `TITLE.BIN` map 4 and 99 bytes from `MENU.BPK`; palettes do not match
 CRAM. The analyzer therefore reports `source_join=unbound` and
 `semantic_admission=blocked`. This Ymir boot state does not identify the date
 screen, menu, HUD, or viewport owner, and does not authorize rendering.
+
+## Ymir synchronized VDP2 memory bundle, frame 295, 2026-10-24
+
+The standalone `vdp2-memory-write-bundle.txt` format is accepted directly by
+`analyze_nexus_vdp2_bitmap_source.py`. The reader checks the bundle-complete
+receipt, exact CSV row count, trace frame interval no later than the snapshot,
+memory address, width, and value bounds, plus VDP2 register, VRAM, and CRAM
+sizes. Ymir captures the receipt, registers, VRAM, CRAM, and trace in one
+emulator-thread callback. The authentic Japanese retail run used `--debug` and
+the Japanese IPL SHA-256
+`dcfef4b99605f872b6c3b6d05c045385cdea3d1b702906a0ed930df7bcb7deac`,
+and the retail CUE SHA-256
+`878b3bc223bb56e99626dbaa2946d17fb349a2a67a10cd4423742d8ab30b8699`.
+
+The exported receipt binds frame 295 to 17,280 trace rows across frames
+205–295, with zero dropped writes; 172 rows belong to frame 295. The final
+VRAM and CRAM snapshots match replay of the last write to each of 192 unique
+written byte locations. The dump decodes NBG1 as an 8-bit bitmap at byte
+offset `0x020000`, 512×256. Against the authentic Japanese retail corpus,
+the longest exact byte runs remain partial (118 bytes from `TITLE.BIN` map 4
+and 99 bytes from `MENU.BPK`); there are no exact bitmap or title, menu,
+STABG, or DGN palette matches in CRAM. Firestaff reports
+`source_join=unbound` and `semantic_admission=blocked`. The emulator showed
+the Japanese date/time setup screen, but no date-screen, menu, HUD, or
+viewport ownership is inferred from the coincident bitmap contents.
+
+The complete external bundle and screenshot are retained under
+`/Volumes/Extern-disk/nexus-saturn-capture/run-ymir-vdp2-memory-bundle-20261024-frame295/`.
+Re-run the analysis against the authentic local corpus with:
+
+```sh
+python3 scripts/analyze_nexus_vdp2_bitmap_source.py \
+  /Volumes/Extern-disk/nexus-saturn-capture/run-ymir-vdp2-memory-bundle-20261024-frame295 \
+  --data-dir /Volumes/Extern-disk/FirestaffUserData/data/nexus
+```
+
+## Ymir Japanese date/time setup bitmap and CRAM traces, frames 105 and 118, 2026-10-24
+
+Two additional bundles were captured from the authentic Japanese retail CUE
+and IPL identified above using Ymir `--debug`. The frame-105 bundle filters
+VRAM writes to `0x020000–0x040000`; it contains 164,924 rows from frames 24–31,
+zero dropped rows, and a complete 128 KiB NBG1 bitmap snapshot. Replaying all
+trace writes byte by byte in trace order reproduces that region exactly. The
+snapshot is later than the last filtered write, so the receipt correctly binds
+the full trace interval to the snapshot frame rather than requiring a write in
+the snapshot frame.
+
+The frame-118 bundle filters CRAM writes to `0x000–0x1000`; it contains 272
+rows from frame 24 and zero dropped rows. The two snapshots have identical
+NBG1 VRAM regions and CRAM bytes. Interpreting the captured registers identifies
+NBG0 as a 512×256 8bpp bitmap at VRAM `0x000000` with BMPNA palette selector
+0, and NBG1 as a 512×256 8bpp bitmap at `0x020000` with selector 1. The
+captured NBG0 bytes, decoded with the captured CRAM, visibly form the Japanese
+date/time setup text and cursor; NBG1 contains the corresponding box shapes.
+The trace does not bind this screen to Nexus code or assets and does not prove
+that the retail game booted; treat it as a pre-game/system setup state until a
+source-PC or disc-read trace establishes otherwise. These observations do not
+provide Nexus startup/menu parity or authorize renderer admission.
+
+`analyze_nexus_vdp2_bitmap_source.py` now compares both active bitmap layers
+against the hash-verified retail source corpus. For both frames 105 and 118 it
+reports zero exact source matches on either layer, `source_join=unbound`, and
+`semantic_admission=blocked`. Its longest byte runs are partial only (35 bytes
+from TITLE.BIN maps 1/3 on NBG0; 118 bytes from TITLE.BIN map 4 and 99 bytes
+from MENU.BPK on NBG1). The tested TITLE, MENU, STABG, and 1,266 DGN palette
+anchors have no exact or word-swapped CRAM match. This advances emulator-state
+inspection but leaves game boot, source identity, palette owner, and production
+rendering unresolved. Do not count this as a game startup/menu witness.
+
+The complete bitmap bundle and CRAM bundle, including raw register, VRAM,
+CRAM, trace, and screenshots, are retained at:
+
+- `/Volumes/Extern-disk/nexus-saturn-capture/run-ymir-vdp2-startup-bitmap-20261024/`
+- `/Volumes/Extern-disk/nexus-saturn-capture/run-ymir-vdp2-startup-cram-20261024/`
+
+Re-run against the authentic corpus with:
+
+```sh
+python3 scripts/analyze_nexus_vdp2_bitmap_source.py \
+  /Volumes/Extern-disk/nexus-saturn-capture/run-ymir-vdp2-startup-bitmap-20261024 \
+  --data-dir /Volumes/Extern-disk/FirestaffUserData/data/nexus
+python3 scripts/analyze_nexus_vdp2_bitmap_source.py \
+  /Volumes/Extern-disk/nexus-saturn-capture/run-ymir-vdp2-startup-cram-20261024 \
+  --data-dir /Volumes/Extern-disk/FirestaffUserData/data/nexus
+```
 
 ## Source references
 

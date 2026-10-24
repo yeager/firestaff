@@ -13,9 +13,12 @@ absence as loose files is not permission to create host placeholders.
 
 ### Dungeon Levels (.DGN) — 16 files, 4.1 MB
 LEV00.DGN through LEV15.DGN. Each 148-321 KB.
-These are the dungeon level data files — equivalent to DM1 DUNGEON.DAT
-but split per level. Likely contain square types, thing lists, creature
-placement, wall sets per level.
+DMWeb describes each DGN as a complete level file: `LEV00.DGN` is the
+non-playable entrance shown during the title sequence, and `LEV01.DGN` through
+`LEV15.DGN` are playable levels; `LEV01.DGN` is the Hall of Champions.
+Structure1B is a 64×64 grid with eight bytes per cell. Treat those as the
+documented file roles and grid layout, not as proof that Firestaff has bound
+the Saturn level loader, tile semantics, or presentation consumer.
 
 ### Creature/Monster Models (.MNS) — 30 files, 1.5 MB
 Named after DM1 creatures: SCORPION, MUMMY, GHOST, ROCKPILE, SCREAMER,
@@ -29,7 +32,8 @@ SNDLEV00-15.MAP (66-90 bytes each): sound mapping tables.
 
 ### Video (.AVI) — 3 files, 101 MB
 DMV0.AVI (34 MB), DMV1.AVI (28 MB), DMV2.AVI (39 MB).
-FMV cutscenes — intro, ending, possibly mid-game.
+Their runtime playback roles and decoder/presentation path have not been
+established from the current source joins.
 
 ### Level Supplementary (.BIN + .BIN) — 32 files
 SLEV00-15.BIN (2-12 KB): per-level task candidates with bounded SH-2/source receipts; event meaning unproven.

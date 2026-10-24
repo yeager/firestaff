@@ -106,11 +106,8 @@ void nexus_v2_apply_lighting(uint32_t *rgba, int w, int h,
 
 const char *nexus_v2_lighting_source_evidence(void) {
     return
-        "Nexus V2.2: dynamic lighting, torch flicker, spell flash, distance attenuation\n"
-        "  Saturn VDP1/VDP2 lighting receipt: absent from supplied corpus; not admitted\n"
-        "  Source: DMDF level data \u2014 per-tile light emission values (DGN format)\n"
-        "  Source: ReDMCSB LIGHT.C F0380 (light radius, flicker timing)\n"
-        "  Source: ReDMCSB COMMAND.C F0209 (spell-light colour binding)\n"
-        "  Source: ReDMCSB DUNGEON.C (torch position tracking in party state)\n"
-        "  Source: NEXUS.BIN (Saturn DM.BIN light table, VDP1/VDP2 palette)";
+        "Nexus V2 lighting: procedural diagnostic effect only\n"
+        "No authenticated retail Saturn VDP1/VDP2 lighting consumer receipt\n"
+        "DMDF/DGN records are source data; no light-consumer binding is established\n"
+        "ReDMCSB lighting routines are DM/CSB comparisons, not Saturn source evidence\n";
 }

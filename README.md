@@ -36,7 +36,7 @@ separates source/disassembly evidence, real-media receipts and open routes.
 | Dungeon Master | PC DOS, Atari ST, Amiga and FM Towns startup and selected dungeon routes have real-media coverage. The PC 3.4 Hall of Champions candidate panel is rendered from authenticated C040/C026 assets. Further gameplay and visual parity work continues. |
 | Chaos Strikes Back | Amiga, Atari ST and FM Towns startup routes have real-media coverage. FM Towns uses its own authenticated entrance palette and MINI.DAT bootstrap state. Campaign, saves and presentation parity are still being completed. |
 | Dungeon Master II: Skullkeep | DOS, Amiga, FM Towns and Macintosh have real-media startup and selected runtime coverage. Amiga reaches its initial GDAT-backed M11 frame through the normal start menu with source movement covered. Broader input, save, native display/audio and dungeon-composition parity remain open per edition. |
-| DM Nexus | Saturn disc parsing and native MAPD title rendering work from the original CUE/BIN. NBG1 tile-address decoding has a capture-only fix under review; menu, HUD and dungeon presentation remain capture-gated. |
+| DM Nexus | Saturn disc parsing and bounded MAPD title-asset presentation work from the original CUE/BIN. NBG1 tile-address decoding has a capture-only fix under review. Full title composition and title-to-menu transition remain unverified; later menu, HUD and dungeon presentation remain capture-gated. |
 | Theron's Quest | Firestaff runs Theron in its native C/SDL runtime. Authentic US and Japanese Track 02 media reach bounded native routes, and source-only loaders verify all seven dungeons in both regions. Three repeated native macOS runs reached a loaded dungeon with nonzero ticks and presented frames; the Firestaff-presented capture was nonblack, but has not been paired with an original-emulator capture. Authentic graphics-bank binding, tile mapping, palette, transitions, combat, audio and save parity remain open. |
 
 ### Dungeon Master II: Skullkeep
@@ -278,11 +278,12 @@ In the startup menu, **Settings → Audio → Music Volume → Off** disables
 music while preserving sound effects and UI audio. `--no-music` applies the
 same choice for a direct CLI launch; `--music` explicitly re-enables it.
 
-Nexus renders the admitted retail MAPD title sequence natively from the
-original CUE/BIN. A separate NBG1 tilemap decoder fix is under review in
-[PR #19](https://github.com/yeager/firestaff/pull/19); its authentic-frame test
-does not establish menu, HUD or dungeon composition. Those production routes
-remain fail-closed until their own real Saturn consumer evidence exists.
+Nexus presents admitted retail MAPD title assets from the original CUE/BIN.
+This bounded asset route does not claim full Saturn title composition or the
+title-to-menu transition. PR #19 contains a capture-only NBG1 tilemap decoder
+fix with an authentic-frame test; it does not establish menu, HUD or dungeon
+composition. Those production routes remain fail-closed until their own real
+Saturn consumer evidence exists.
 Firestaff never delegates Nexus startup or gameplay to Mednafen (or another
 emulator); emulator tooling is used only outside the product to obtain and
 validate capture evidence.

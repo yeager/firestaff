@@ -7,8 +7,8 @@ game's level-to-track selector.
 ## Current strict status
 
 The old `2 + (level / 2)` mapping was a host assumption. The retained
-DM.BIN/disassembly and the DMWeb/Greatstone format references used by this
-repository do not identify a source-owned table or executing consumer that
+DM.BIN/disassembly and DMWeb's Nexus-specific format references do not identify
+a source-owned table or executing consumer that
 binds a dungeon level to one of those CDDA tracks. Firestaff therefore returns
 `-1` from `nexus_v1_cd_track_for_level()` and
 `nexus_v1_audio_cd_track_for_level_receipt()` until that binding is captured.

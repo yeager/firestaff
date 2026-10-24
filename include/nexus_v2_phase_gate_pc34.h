@@ -5,165 +5,52 @@
 extern "C" {
 #endif
 
-/* ============================================================
- * Nexus V2 Phase 0 - V1 Compatibility Lock
- * ============================================================
+/* Nexus presentation-gate experiment.
  *
- * This header defines the compile-time and runtime gates that
- * isolate Nexus V1 game logic (DMDF/DGN loading, Saturn BIOS
- * boot, dungeon rendering, mechanics, save/load) from V2
- * presentation code (smooth movement, dynamic lighting, HUD
- * overlay, touch/controller affordances, upscaler, particles,
- * atmosphere).
+ * This gate is a local test/configuration scaffold. Enabling a V2 domain
+ * permits its diagnostic helper to run; it does not admit retail Saturn
+ * behavior or authorize production rendering. Production adapters remain
+ * fail-closed until authentic consumer and presentation evidence is joined.
  *
- * Phase 0 rule: V1 Nexus code compiles cleanly WITHOUT any unverified
- * Saturn presentation code being active. The V2 probe library
- * (firestaff_nexus_v2) MUST NOT alter V1 game-logic behaviour.
- *
- * Source-lock anchors (Saturn DM Nexus + ReDMCSB Common Toolchains):
- * - nexus_v1_iso_reader.c     Saturn ISO 9660 directory + DMDF parsing
- * - nexus_v1_dmdf_model.c     DMDF (Dungeon Master Data Format) decoder
- * - nexus_v1_dungeon.c        DGN level loader, 16 levels
- * - nexus_v1_engine.c         V1 engine singleton (data + state)
- * - nexus_v1_game.c           game state receipt; start selector unknown
- * - nexus_v1_champions.c      authenticated PLRD source rows
- * - nexus_v1_creatures.c      CRET/MNS source receipts; AI/render gated
- * - nexus_v1_movement.c       NEXUS_CMD_* source labels; producer unbound
- * - nexus_v1_combat.c         diagnostic melee/spell tables only
- * - nexus_v1_magic.c          diagnostic rune/mana tables only
- * - nexus_v1_inventory.c      source records; action consumer unbound
- * - nexus_v1_save_load.c      native save receipt; Saturn owner unbound
- * - nexus_v1_sound.c          SLEV/SAL/SDDRVS source receipts only
- * - nexus_v1_rasterizer.c     host raster probe; Saturn submit no-draw
- * - nexus_v1_palette.c        256-color VGA palette
- * - nexus_v1_math3d.c         3D math (vec3, mat4, project)
- * - nexus_v1_launcher.c       singleton engine lifecycle
- * - nexus_v1_compat_gate.c    V1-source-locked read gate
- *
- * V2 modules (presentation only, never mutate V1 state):
- * - nexus_v2_config.c                mode + upscale + filter config
- * - nexus_v2_render_pipeline.c       V1 framebuffer -> V2 RGBA
- * - nexus_v2_upscaler.c               EPX + bilinear filter
- * - nexus_v2_smooth_movement.c       visual walk/turn/stairs interp
- * - nexus_v2_lighting.c              per-vertex torch/spell lighting
- * - nexus_v2_particles.c             particle systems
- * - nexus_v2_atmosphere.c            fog + AO + reflective floors
- * - nexus_v2_hud_overlay.c           minimap + damage numbers
- * - nexus_v2_touch_controller_affordance.c  touch swipe / edge strafe
- *
- * Saturn-specific references:
- * - NEXUS.C / NEXUS2.C           DM Nexus engine lifecycle
- * - NEXUS.BIN                    Saturn game binary
- * - ReDMCSB boot/disk loading    parallels
- * - THQUEST.ASM T400/T520/T560   Theron's Quest boot (sister game)
- * - HuC6260/HuC6270 VDC/VCE      Saturn video chip datasheet
+ * DMWeb documents bounded Nexus data formats and files. The authenticated
+ * retail corpus includes DM.BIN and LEV00.DGN through LEV15.DGN, but does not
+ * bind the executable entry point, startup/menu owner, input, HUD, lighting,
+ * movement timing, or complete VDP1/VDP2 presentation path. Greatstone and
+ * ReDMCSB are comparisons for applicable DM-family behavior, not Saturn
+ * Nexus runtime evidence. Theron's Quest references are a separate platform.
  */
 
 /* ============================================================
- * Phase domains - each domain is classified as V1-source-locked
- * or V2-presentation-eligible.
+ * Phase domains. The historical names describe this diagnostic scaffold;
+ * they do not establish that corresponding retail paths exist in Firestaff.
  *
- * V1-source-locked domains MUST NOT have their behaviour altered
- * by any V2 code. V2-presentation-eligible domains MAY be exercised by
- * isolated probes when v2PresentationEnabled is true, but production
- * presentation remains behind its authenticated Saturn capture boundary.
- * V2 code MUST NOT change the underlying V1 game-logic state.
+ * Domains retain the historical names used by the probe API. The two
+ * toggles gate local diagnostic paths only; a positive decision is not a
+ * claim that the corresponding retail consumer has been reproduced.
  * ============================================================ */
 
 typedef enum {
-    /* V1-source-locked gameplay domains */
+    /* Legacy diagnostic domains; none implies a verified retail consumer. */
     NEXUS_V2_PHASE_DOMAIN_DMDF_DGN_LOADING = 0,
-        /* nexus_v1_dmdf_model.c + nexus_v1_dungeon.c -
-         * DMDF format parsing, 16-level DGN loader, square types,
-         * first-thing chain walk. V2 must not reinterpret layout. */
-
     NEXUS_V2_PHASE_DOMAIN_SATURN_ISO_READER = 1,
-        /* nexus_v1_iso_reader.c - ISO 9660 directory + DMDF
-         * interleaving, file seek/read via Saturn BIOS / host shim. */
-
     NEXUS_V2_PHASE_DOMAIN_GAME_STATE_INIT = 2,
-        /* nexus_v1_game.c + nexus_v1_launcher.c - state init,
-         * Saturn start selector/pose is unknown; level and CDDA receipts are
-         * source evidence only until their consumers are captured. */
-
     NEXUS_V2_PHASE_DOMAIN_CHAMPION_PARTY = 3,
-        /* nexus_v1_champions.c - authenticated PLRD source rows and FACE
-         * provenance. Party stats, provisions and resurrect consumers remain
-         * capture-gated. */
-
     NEXUS_V2_PHASE_DOMAIN_CREATURE_AI = 4,
-        /* nexus_v1_creatures.c + nexus_v1_combat.c - creature groups
-         * (MNS files), AI behavior, melee/spell combat, drops.
-         * Source-locked to original DM Nexus + ReDMCSB parallels. */
-
     NEXUS_V2_PHASE_DOMAIN_SPELL_MAGIC = 5,
-        /* nexus_v1_magic.c - spell casting, rune UI, mana, projectile
-         * spells (NUKE / FLAME / HEAL / etc). */
-
     NEXUS_V2_PHASE_DOMAIN_MOVEMENT = 6,
-        /* nexus_v1_movement.c - NEXUS_CMD_FORWARD/BACKWARD/TURN_*
-         * /STRAFE_* + F0365/F0366 analogues + collision response. */
-
     NEXUS_V2_PHASE_DOMAIN_SAVE_LOAD = 7,
-        /* nexus_v1_save_load.c - V1 save/load round-trip (CDL format).
-         * V2 config persistence is explicitly separate and gated. */
-
     NEXUS_V2_PHASE_DOMAIN_SOUND_DRIVER = 8,
-        /* nexus_v1_sound.c - Saturn SCSP sound driver, MNS-driven
-         * SFX + CD audio track 2-9. */
-
     NEXUS_V2_PHASE_DOMAIN_RASTERIZER = 9,
-        /* nexus_v1_rasterizer.c - 320x200 indexed framebuffer, 9-square
-         * viewport. The framebuffer layout is V1 source-locked; V2
-         * upscaling happens on the V2 side. */
-
     NEXUS_V2_PHASE_DOMAIN_INVENTORY = 10,
-        /* nexus_v1_inventory.c - inventory + chest pickup, weight,
-         * encumbrance, item identification. */
-
-    /* V2-presentation-eligible domains */
     NEXUS_V2_PHASE_DOMAIN_RENDER_PRESENTATION = 11,
-        /* nexus_v2_render_pipeline.c - 320x200 indexed -> RGBA upscale
-         * + lighting + particles + atmosphere. */
-
     NEXUS_V2_PHASE_DOMAIN_SMOOTH_MOVEMENT_PRESENTATION = 12,
-        /* nexus_v2_smooth_movement.c - visual walk/turn/stairs
-         * interpolation. V1 tick (55ms) is preserved exactly;
-         * V2 only interpolates the visual state. */
-
     NEXUS_V2_PHASE_DOMAIN_DYNAMIC_LIGHTING_PRESENTATION = 13,
-        /* nexus_v2_lighting.c - per-vertex torch/spell lighting.
-         * V1 tile lighting stays in the V1 rasterizer. */
-
     NEXUS_V2_PHASE_DOMAIN_HUD_OVERLAY = 14,
-        /* nexus_v2_hud_overlay.c - minimap, damage numbers, journal,
-         * achievements. */
-
     NEXUS_V2_PHASE_DOMAIN_PARTICLE_EFFECTS = 15,
-        /* nexus_v2_particles.c - particle systems, weather, fire. */
-
     NEXUS_V2_PHASE_DOMAIN_ATMOSPHERE = 16,
-        /* nexus_v2_atmosphere.c - fog, ambient occlusion, reflective
-         * floors, camera bob, screen shake. */
-
     NEXUS_V2_PHASE_DOMAIN_INPUT_PRESENTATION = 17,
-        /* nexus_v2_touch_controller_affordance.c - V2 touch swipe,
-         * edge strafe, D-pad, dual analog stick. V1 mouse/touch/click
-         * parity preserved. */
-
     NEXUS_V2_PHASE_DOMAIN_CONFIG_PRESENTATION = 18,
-        /* nexus_v2_config.c - mode toggle, upscale factor, filter,
-         * widescreen, render width/height, smooth movement, dynamic
-         * lighting, texture filtering, ambient occlusion, particles,
-         * fog, reflective floors, enhanced creatures, camera bob,
-         * screen shake, weather, enhanced audio, minimap, damage
-         * numbers, journal, achievements, footstep audio. Persists
-         * via M12 settings (separate from V1 save/load payload). */
-
     NEXUS_V2_PHASE_DOMAIN_UPSCALER = 19,
-        /* nexus_v2_upscaler.c - EPX + bilinear upscale.
-         * V1 rasterizer output is consumed read-only. */
-
     NEXUS_V2_PHASE_DOMAIN_COUNT
 } NEXUS_V2_PhaseDomain;
 
@@ -182,9 +69,9 @@ typedef struct {
  * ============================================================ */
 
 typedef struct {
-    int v1SourceLocked;       /* 1 = V1 must own this domain */
-    int v2PresentationAllowed; /* 1 = V2 may present (if v2PresentationEnabled) */
-    const char* sourceAnchor;  /* ReDMCSB / CSBWin / NEXUS.C reference */
+    int v1SourceLocked;       /* legacy classification; not retail ownership */
+    int v2PresentationAllowed; /* local diagnostic toggle result */
+    const char* sourceAnchor;  /* Evidence label; not an executable/source claim */
     const char* rule;          /* human-readable rule */
 } NEXUS_V2_PhaseGateDecision;
 

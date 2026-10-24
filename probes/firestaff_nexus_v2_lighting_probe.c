@@ -24,7 +24,8 @@
  *
  *   6. Null-args are safe
  *
- *   7. Source evidence references NEXUS.BIN / VDP1 / VDP2 / ReDMCSB
+ *   7. Source evidence marks the effect diagnostic-only and notes the missing
+ *      authenticated Saturn VDP1/VDP2 lighting consumer receipt
  *
  *   8. NEXUS_MAX_LIGHTS constant pinned
  *
@@ -35,12 +36,8 @@
  * Usage:
  *   SDL_VIDEODRIVER=dummy ./firestaff_nexus_v2_lighting_probe
  *
- * Source references:
- *   Saturn NEXUS.BIN            VDP1 polygon lighting / VDP2 shadow layer
- *   DMDF level data             per-tile light emission values (DGN format)
- *   ReDMCSB LIGHT.C F0380       light radius, flicker timing
- *   ReDMCSB COMMAND.C F0209     spell-light colour binding
- *   ReDMCSB DUNGEON.C           torch position tracking in party state
+ * Evidence boundary: this is a diagnostic math probe. It does not establish
+ * retail Saturn lighting, palette, or VDP ownership.
  */
 
 #include "nexus_v2_lighting.h"
@@ -241,15 +238,12 @@ static void check_source_evidence(void)
 {
     const char *e = nexus_v2_lighting_source_evidence();
     check(e != 0 && e[0] != 0, "evidence: present + non-empty");
-    check(e && strstr(e, "NEXUS.BIN") != 0, "evidence: NEXUS.BIN");
-    check(e && strstr(e, "VDP1") != 0, "evidence: VDP1 (Saturn VDP1)");
-    check(e && strstr(e, "VDP2") != 0, "evidence: VDP2 (Saturn VDP2)");
-    check(e && strstr(e, "LIGHT.C") != 0, "evidence: ReDMCSB LIGHT.C");
-    check(e && strstr(e, "F0380") != 0, "evidence: F0380 (light radius, flicker)");
-    check(e && strstr(e, "COMMAND.C") != 0, "evidence: ReDMCSB COMMAND.C");
-    check(e && strstr(e, "F0209") != 0, "evidence: F0209 (spell-light binding)");
-    check(e && strstr(e, "DUNGEON.C") != 0, "evidence: ReDMCSB DUNGEON.C");
-    check(e && strstr(e, "DMDF") != 0, "evidence: DMDF (DGN format)");
+    check(e && strstr(e, "diagnostic effect only") != 0,
+          "evidence: diagnostic effect only");
+    check(e && strstr(e, "No authenticated retail Saturn VDP1/VDP2 lighting consumer receipt") != 0,
+          "evidence: no authenticated Saturn lighting consumer");
+    check(e && strstr(e, "NEXUS.BIN") == 0,
+          "evidence: no fictitious retail binary name");
 }
 
 int main(void)

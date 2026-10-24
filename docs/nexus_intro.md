@@ -12,18 +12,22 @@
 
 ---
 
-## 1. Intro Sequence — Original Saturn
+## 1. Startup Sequence — Original Saturn
 
-The original Saturn version has NO traditional intro movie in the Firestaff
-implementation sense. The disc contains FMV files (DMV0-2.AVI) but the startup
-sequence is:
+The complete retail startup sequence and the runtime roles of the AVI members
+are not yet verified. The authenticated Track 1 corpus establishes the
+following bounded facts:
 
-1. Saturn BIOS boots from CD
-2. SYSTEM.CNF points to NEXUS.BIN entry point
-3. `nexus_v1_init()` runs source discovery and retains verified receipts
+1. Saturn firmware starts the authentic retail disc.
+2. The verified Track 1 filesystem contains `DM.BIN` and `LEV00.DGN` through
+   `LEV15.DGN`; an entry point named `NEXUS.BIN` or a `SYSTEM.CNF` handoff has
+   not been verified and must not be assumed.
+3. Firestaff's `nexus_v1_init()` runs source discovery and retains verified
+   receipts.
 4. Saturn's title route is capture-observed, but Firestaff's presentation
    remains closed; no host cropping or synthetic title is used
-5. FMV cutscenes play DURING gameplay at specific triggers (not at startup)
+5. The runtime roles and playback triggers of `DMV0.AVI` through `DMV2.AVI`
+   have not been established from source or an authenticated execution trace.
 
 ---
 
@@ -37,8 +41,8 @@ The disc image contains three AVI files on Track 1 (ISO):
 | DMV1.AVI | Mid-game cutscene? | AVI |
 | DMV2.AVI | Ending cutscene? | AVI |
 
-These are Sega Format AVI files (not standard AVI), likely using
-Sega/MPEG1 or similar codec adapted for Saturn CD-ROM.
+Their byte format and playback path have not been established. Do not infer a
+codec or presentation role from the `.AVI` extension.
 
 ---
 
@@ -48,8 +52,9 @@ Sega/MPEG1 or similar codec adapted for Saturn CD-ROM.
 
 - No AVI decoder in the codebase
 - No nexus_v1_fmv_play() or equivalent function
-- The DMV files are referenced in NEXUS_FILE_CLASSIFICATION.md but
-  no decoder/player exists in src/nexus/
+- The DMV files are inventoried in `NEXUS_FILE_CLASSIFICATION.md`, but no
+  authenticated runtime consumer or decoder/player is established in
+  `src/nexus/`.
 - FMV playback requires: AVI demuxer + codec decode + VDP1/VDP2 blit
 
 ---

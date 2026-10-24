@@ -20,8 +20,10 @@ is a Sega Saturn 3D polygon remake of DM1.
   operator captures available outside the repository
 - Track 1 (133 MB): MODE1/2352 — game data (Saturn filesystem, ISO 9660)
 - Track 2-9 (~95 MB): AUDIO — CD music (Red Book Audio)
-- No original source code or ReDMCSB equivalent. DMWeb, Greatstone, static
-  disassembly, and instrumented Saturn captures are the reference evidence.
+- No original source code or ReDMCSB equivalent. Use DMWeb's Nexus-specific
+  format pages, Greatstone only for applicable DM-family comparisons, and
+  static disassembly plus instrumented Saturn captures for runtime evidence.
+  Greatstone does not document the Saturn Nexus retail build.
 
 ## Challenges
 

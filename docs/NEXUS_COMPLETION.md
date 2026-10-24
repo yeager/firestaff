@@ -16,6 +16,33 @@ interpretation for the captured NBG1 layer, not an asset owner, text-page map,
 menu composition, HUD, viewport, or production rendering. The Menu gate stays
 at 3/8 and production readiness stays at 0%.
 
+## Japanese date/time setup VDP2 trace — 2026-10-24
+
+Ymir `--debug` captures from a session configured with the hash-verified
+Japanese retail CUE and IPL show a date/time setup frame with NBG0 at VRAM
+`0x000000` and NBG1 at `0x020000`, both 512×256 8bpp bitmaps. The frame-105
+filtered trace replays
+all 128 KiB of NBG1 with zero mismatches; the frame-118 CRAM trace contains
+272 writes and zero drops. The captured NBG0 bytes form Japanese date/time
+text and a cursor, while NBG1 contains UI box shapes.
+
+The source analyzer now checks both layers against hash-verified retail
+assets. Frames 105, 118, 278, and 295 all have zero exact bitmap source joins;
+the setup frames also have no exact tested palette match. The source join
+remains unbound and semantic admission remains blocked. No source-PC or disc-
+read evidence ties this screen to Nexus, and the capture does not prove that the
+game booted. Treat it as a pre-game/system setup state, not a game startup
+witness. It does not change Nexus completion status. Full evidence and
+reproduction commands are in `docs/NEXUS_RUNTIME_CAPTURE.md`.
+
+The separate authenticated English-media run does have a positive loader
+source witness: runtime PC `0x00205f18` wrote an exact 16 KiB `TM.BIN` chunk
+to `0x06027000`. Rechecking the same captured chunk against the Japanese retail
+CUE also finds it at ISO offset `0xdc1800`, but that source-corpus lookup does
+not make the runtime capture Japanese-media evidence. Neither capture binds
+that code to the rendered title/menu or a gameplay transition. Nexus completion
+therefore remains unverified.
+
 ## Structure1Fb floor-decoration boundary — 2026-09-29
 
 The production mechanics loader no longer classifies every authentic

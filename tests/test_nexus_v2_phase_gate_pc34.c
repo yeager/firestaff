@@ -13,7 +13,8 @@
  *  - CONFIG_PRESENTATION additionally requires v2ConfigPersistenceEnabled
  *  - nexus_v2_phase_gate_v2_active() returns 1 only when v2PresentationEnabled=1
  *  - All 20 domain names are non-NULL
- *  - Source evidence references NEXUS.C / NEXUS2.C / nexus_v1_*
+ *  - Source evidence names verified retail data and leaves runtime ownership
+ *    unbound
  *  - Unknown domains default to V1-locked
  *  - Default config has both toggles off
  *  - Phase domain count is 20 (NEXUS_V2_PHASE_DOMAIN_COUNT)
@@ -269,22 +270,13 @@ static void check_source_evidence(void)
 
     check_true("evidence.present", e != 0);
     check_true("evidence.nonempty", e && e[0] != 0);
-    check_true("evidence.nexus_iso_reader", strstr(e, "nexus_v1_iso_reader") != 0);
-    check_true("evidence.nexus_dmdf_model", strstr(e, "nexus_v1_dmdf_model") != 0);
-    check_true("evidence.nexus_dungeon", strstr(e, "nexus_v1_dungeon") != 0);
-    check_true("evidence.nexus_engine", strstr(e, "nexus_v1_engine") != 0);
-    check_true("evidence.nexus_game", strstr(e, "nexus_v1_game") != 0);
-    check_true("evidence.nexus_champions", strstr(e, "nexus_v1_champions") != 0);
-    check_true("evidence.nexus_movement", strstr(e, "nexus_v1_movement") != 0);
-    check_true("evidence.nexus_save_load", strstr(e, "nexus_v1_save_load") != 0);
-    check_true("evidence.nexus_rasterizer", strstr(e, "nexus_v1_rasterizer") != 0);
-    check_true("evidence.NEXUS.C", strstr(e, "NEXUS.C") != 0);
-    check_true("evidence.NEXUS2.C", strstr(e, "NEXUS2.C") != 0);
-    check_true("evidence.NEXUS.BIN", strstr(e, "NEXUS.BIN") != 0);
-    check_true("evidence.F0365", strstr(e, "F0365") != 0);
-    check_true("evidence.F0366", strstr(e, "F0366") != 0);
-    check_true("evidence.F0380", strstr(e, "F0380") != 0);
-    check_true("evidence.HuC6260", strstr(e, "HuC6260") != 0);
+    check_true("evidence.real_disc_members",
+        strstr(e, "DM.BIN") != 0 && strstr(e, "LEV00.DGN") != 0);
+    check_true("evidence.runtime_unbound",
+        strstr(e, "executable entry point and runtime consumers remain unbound") != 0);
+    check_true("evidence.input_hud_lighting_gated",
+        strstr(e, "no Saturn input, HUD, lighting") != 0);
+    check_true("evidence.no_fictitious_binary_name", strstr(e, "NEXUS.BIN") == 0);
 }
 
 static void check_decision_metadata(void)

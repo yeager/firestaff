@@ -40,7 +40,8 @@
  *
  *  13. null-args are safe across all entry points
  *
- *  14. source-evidence references NEXUS.BIN / VDP1 / VDP2 / ReDMCSB
+ *  14. source evidence identifies a diagnostic overlay with no authenticated
+ *      retail Saturn HUD-to-VDP placement receipt
  *
  * Exit codes:
  *   0  - all checks passed
@@ -49,12 +50,8 @@
  * Usage:
  *   SDL_VIDEODRIVER=dummy ./firestaff_nexus_v2_hud_overlay_probe
  *
- * Source references:
- *   Saturn NEXUS.BIN           HUD surface data
- *   DMDF parser documentation (DMDF/DGN level format)
- *   Saturn SDK VDP1/VDP2       bitmap surfaces, background layers
- *   ReDMCSB PANEL.C            champion status refresh
- *   ReDMCSB DUNGEON.C          party stat bar refresh timing
+ * Evidence boundary: this probe validates only a procedural test overlay,
+ * not the retail Saturn HUD or its VDP placement.
  */
 
 #include "nexus_v2_hud_overlay.h"
@@ -350,12 +347,12 @@ static void check_source_evidence(void)
 {
     const char *e = nexus_v2_hud_source_evidence();
     check(e != 0 && e[0] != 0, "evidence: present + non-empty");
-    check(e && strstr(e, "NEXUS.BIN") != 0, "evidence: NEXUS.BIN");
-    check(e && strstr(e, "VDP1") != 0, "evidence: VDP1 (Saturn)");
-    check(e && strstr(e, "VDP2") != 0, "evidence: VDP2 (Saturn)");
-    check(e && strstr(e, "DMDF") != 0, "evidence: DMDF (DGN format)");
-    check(e && strstr(e, "PANEL.C") != 0, "evidence: ReDMCSB PANEL.C");
-    check(e && strstr(e, "DUNGEON.C") != 0, "evidence: ReDMCSB DUNGEON.C");
+    check(e && strstr(e, "procedural diagnostic/test overlay only") != 0,
+          "evidence: diagnostic overlay only");
+    check(e && strstr(e, "No authenticated retail Saturn HUD-to-VDP widget-placement receipt") != 0,
+          "evidence: no authenticated Saturn HUD consumer");
+    check(e && strstr(e, "NEXUS.BIN") == 0,
+          "evidence: no fictitious retail binary name");
 }
 
 int main(void)

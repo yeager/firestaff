@@ -9572,8 +9572,9 @@ endif()
 # Verifies: domain classification (11 V1-source-locked + 9 V2-eligible),
 # V1-source-locked domains stay V1-locked regardless of V2 toggles,
 # V2-eligible domains blocked when V2 off, CONFIG_PRESENTATION requires
-# both V2 and config-persistence toggles, source evidence references
-# NEXUS.C / NEXUS2.C / nexus_v1_*, null-arg safety, default V1-only.
+# both V2 and config-persistence toggles. Source evidence identifies
+# authenticated DM.BIN and LEV00-LEV15.DGN membership; executable ownership,
+# runtime entry point, and input/HUD/lighting consumers remain unbound.
 add_executable(firestaff_nexus_v2_phase0_v1_compatibility_lock_probe
     probes/firestaff_nexus_v2_phase0_v1_compatibility_lock_probe.c
     src/nexus/nexus_v2_phase_gate_pc34.c)
@@ -9768,8 +9769,8 @@ endif()
 # Verifies: init defaults, light add/remove with NEXUS_MAX_LIGHTS=16,
 # tick advances torch_flicker_phase + recomputes flickering light intensity,
 # apply_lighting is in-place + deterministic for same inputs, null-arg safety,
-# source evidence references NEXUS.BIN/VDP1/VDP2/ReDMCSB LIGHT.C F0380 +
-# COMMAND.C F0209 + DUNGEON.C + DMDF.
+# The probe exercises diagnostic math only; no Saturn lighting consumer
+# receipt or retail pixel behavior is asserted.
 add_executable(firestaff_nexus_v2_lighting_probe
     probes/firestaff_nexus_v2_lighting_probe.c
     src/nexus/nexus_v2_lighting.c)
@@ -9784,15 +9785,9 @@ endif()
 # Nexus V2 Phase 6 — Touch/Controller Affordance Probe
 # Headless: no game assets, no SDL rendering required.
 # Verifies: API surface (16 affordances, NONE marker, name round-trip),
-# movement command mapping (NEXUS_CMD_FORWARD..STRAFE_RIGHT), input kind
-# classification (touch vs controller), V2 presentation route (accepted=1
-# when v2PresentationEnabled=1), V1 parity guard (rejected when disabled),
-# NONE affordance handling, route idempotency, Saturn-specific behavior
-# (right stick turn only, left stick strafe), cross-game shape consistency
-# with DM1/DM2/CSB sibling affordances, source evidence, route kind
-# constants (V1_SOURCE=0, V2_PRESENTATION=1).
-# Source: nexus_v2_touch_controller_affordance.c,
-#         nexus_v1_movement.h:NEXUS_CMD_*, ReDMCSB CLIKMENU/COMMAND/GAMELOOP.
+# experimental local command-ID mapping, input-kind labels, diagnostic toggle,
+# stable category counts, and explicit absence of a retail input-dispatch
+# receipt. The helper is not evidence of Saturn controls or DM-family parity.
 add_executable(firestaff_nexus_v2_touch_controller_affordance_probe
     probes/firestaff_nexus_v2_touch_controller_affordance_probe.c
     src/nexus/nexus_v2_touch_controller_affordance.c
@@ -43755,8 +43750,8 @@ if(BUILD_TESTING)
     # Verifies: init defaults, light add/remove with NEXUS_MAX_LIGHTS=16,
     # tick advances torch_flicker_phase + recomputes flickering light intensity,
     # apply_lighting is in-place + deterministic for same inputs, null-arg safety,
-    # source evidence references NEXUS.BIN/VDP1/VDP2/ReDMCSB LIGHT.C F0380 +
-    # COMMAND.C F0209 + DUNGEON.C + DMDF.
+    # The test exercises diagnostic math only; no Saturn lighting consumer
+    # receipt or retail pixel behavior is asserted.
     add_executable(test_nexus_v2_lighting
         tests/test_nexus_v2_lighting_pc34.c
         src/nexus/nexus_v2_lighting.c

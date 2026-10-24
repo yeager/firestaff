@@ -18,7 +18,8 @@
  *   into it. This separates launcher concerns (data discovery, profile
  *   validation) from engine concerns (tick, render, save/load).
  *
- * Source: DM Nexus (Saturn) boot flow, NEXUS.C / NEXUS2.C engine
+ * Source: Saturn retail boot flow; executable and complete engine lifecycle
+ * remain unbound to the current source and capture receipts.
  * lifecycle, ReDMCSB boot/disk loading references.
  */
 

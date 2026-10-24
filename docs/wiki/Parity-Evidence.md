@@ -132,8 +132,8 @@ N/E/X/U/S are selected at absolute frames 13294, 13334, 13375, 13415 and
 13455, then 17,920 big-endian words match the five real 64×28 planes exactly
 at VDP2 VRAM `0x05c000–0x05dbff`. The fail-closed verifier binds the retail
 Track 1 member, cached SH-2 selector trace, VDP2 writer trace and raw state to
-their manifest hashes. Firestaff's bounded native title renderer consumes the
-same admitted MAPD/TITLE.CG plane and palette corpus; this does not promote
+their manifest hashes. Firestaff's bounded MAPD asset presentation consumes
+the same admitted MAPD/TITLE.CG plane and palette corpus; this does not promote
 the separate Saturn menu, HUD or dungeon compositors, whose material ownership
 remains fail-closed.
 

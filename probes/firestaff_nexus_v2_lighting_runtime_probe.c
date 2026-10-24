@@ -3,13 +3,10 @@
  * Phase 4 lighting runtime wire-up verification probe for Nexus V2.
  * Mirrors dm2_v2_lighting_runtime_probe pattern (sibling DM2 V2 wire-up).
  *
- * Source-lock:
- *   Saturn NEXUS.BIN VDP1 polygon lighting
- *   Saturn NEXUS.BIN VDP2 shadow layer
- *   DMDF level data (per-tile light emission values)
- *   ReDMCSB LIGHT.C F0380 (light radius + flicker timing)
- *   ReDMCSB COMMAND.C F0209 (spell-light colour binding)
- *   ReDMCSB DUNGEON.C (torch position tracking in party state)
+ * Evidence boundary:
+ *   This probe covers diagnostic runtime lifecycle only. There is no
+ *   authenticated Saturn VDP1/VDP2 lighting consumer receipt, and DM-family
+ *   references do not establish Nexus retail behavior.
  *
  * Coverage (24 assertions):
  *   1.  init/shutdown lifecycle
@@ -57,8 +54,8 @@ static int g_failures = 0;
 
 int main(void) {
     printf("Nexus V2 Lighting Runtime Wire-up — Phase 4 headless probe\n");
-    printf("Source: Saturn NEXUS.BIN VDP1/VDP2 lighting, DMDF DGN format,\n"
-           "        ReDMCSB LIGHT.C F0380, COMMAND.C F0209, DUNGEON.C\n");
+    printf("Evidence: diagnostic lighting only; no authenticated retail Saturn\n"
+           "          VDP1/VDP2 lighting consumer receipt\n");
 
     /* 1. init/shutdown lifecycle */
     nexus_v2_lighting_runtime_init();

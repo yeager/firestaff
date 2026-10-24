@@ -28,7 +28,7 @@ extern "C" {
  *   skproject/SKULLWIN/c_creature.cpp (DM2 smooth-movement sibling)
  *   skproject/SKWIN/SkWinCore.cpp (ease-out cubic / ease-in-out cubic)
  *   ReDMCSB GAMELOOP.C:47-50 (V1 tick cadence 55ms)
- *   Saturn NEXUS.BIN (Saturn-specific interpolation timing)
+ *   No authenticated retail Saturn movement-to-presentation timing receipt
  * ================================================================ */
 
 /* ── Lifecycle ─────────────────────────────────────────────────── */

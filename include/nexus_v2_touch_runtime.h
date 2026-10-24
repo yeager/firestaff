@@ -24,7 +24,7 @@ extern "C" {
  * mouse/touch/click route matrix is the sole input path.
  *
  * Source-lock anchors:
- *   Saturn NEXUS.BIN touch/joypad input layer
+ *   No authenticated retail Saturn input-dispatch consumer receipt
  *   Saturn SDK JOYPAD API (SMP-SONY Japan)
  *   ReDMCSB COMMAND.C:108-113 (mouse movement zones C001-C006)
  *   ReDMCSB COMMAND.C:254-291 (keyboard tables for C001..C006)
