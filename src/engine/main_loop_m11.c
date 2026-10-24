@@ -747,6 +747,9 @@ static void m11_verbose_original_media(const M12_AssetStatus* status,
 typedef struct {
     int valid;
     Uint64 startedMs;
+    Uint64 previousPerfCounter;
+    double previousCpuSeconds;
+    int previousCpuAvailable;
     M11_BootProbeReceipt previous;
     int dm2TitleBound;
     int dm2TitleFinished;
@@ -761,6 +764,10 @@ typedef struct {
 
 static int m11_game_option_slot(const char *gameId);
 static int m11_is_supported_game_id(const char *gameId);
+static int m11_process_cpu_seconds(double* seconds);
+static int m11_process_memory_bytes(uint64_t* residentBytes,
+                                   uint64_t* virtualBytes);
+static double m11_counter_milliseconds(Uint64 ticks);
 
 static void m11_debug_trace_startup_frame(M11_DebugStartupTrace* trace,
                                           const M11_GameViewState* gameView,
@@ -769,6 +776,13 @@ static void m11_debug_trace_startup_frame(M11_DebugStartupTrace* trace,
     const char* tracedGameId = gameId && gameId[0]
         ? gameId : (gameView ? gameView->sourceId : NULL);
     int changed;
+    double cpuNow = 0.0;
+    double cpuPercent = -1.0;
+    uint64_t residentBytes = 0;
+    uint64_t virtualBytes = 0;
+    int cpuAvailable;
+    int memoryAvailable;
+    Uint64 perfNow;
     if (!trace || !gameView || !tracedGameId || !gameView->active ||
         !m11_is_supported_game_id(tracedGameId) ||
         !M11_GameView_GetStartupTraceReceipt(gameView, &current)) {
@@ -816,11 +830,38 @@ static void m11_debug_trace_startup_frame(M11_DebugStartupTrace* trace,
           gameView->dm2MacMovieDecoder.frame_index !=
               trace->dm2MacMovieFrameIndex));
     if (!changed) return;
+    cpuAvailable = m11_process_cpu_seconds(&cpuNow);
+    memoryAvailable = m11_process_memory_bytes(
+        &residentBytes, &virtualBytes);
+    perfNow = SDL_GetPerformanceCounter();
     if (!trace->valid) trace->startedMs = SDL_GetTicks();
+    if (trace->valid && trace->previousCpuAvailable && cpuAvailable &&
+        cpuNow >= trace->previousCpuSeconds &&
+        perfNow > trace->previousPerfCounter) {
+        const double elapsedMs = m11_counter_milliseconds(
+            perfNow - trace->previousPerfCounter);
+        if (elapsedMs > 0.0) {
+            cpuPercent = (cpuNow - trace->previousCpuSeconds) *
+                         100000.0 / elapsedMs;
+        }
+    }
     fprintf(stderr,
-            "firestaff: startup-frame game=%s elapsed-ms=%llu source=%s phase=%s active=%d frame=%d animation=%s animation-active=%d title-frame=%d/%d title-ready=%d dm1-phases=%d%d%d%d dm2-fmtowns-title={bound:%d finished:%d rejected:%d swoosh:%d frame:%u/%u ticks-remaining:%u} dm2-mac-movie={active:%d complete:%d rejected:%d frame:%u} level-loaded=%d map=%d party=%d,%d dir=%d champions=%d\n",
+            "firestaff: startup-frame game=%s elapsed-ms=%llu process-cpu-of-one-core-percent=",
             tracedGameId,
-            (unsigned long long)(SDL_GetTicks() - trace->startedMs),
+            (unsigned long long)(SDL_GetTicks() - trace->startedMs));
+    if (cpuPercent >= 0.0) fprintf(stderr, "%.1f", cpuPercent);
+    else fprintf(stderr, "unavailable");
+    fprintf(stderr,
+            " process-rss-bytes=");
+    if (memoryAvailable) fprintf(stderr, "%llu",
+        (unsigned long long)residentBytes);
+    else fprintf(stderr, "unavailable");
+    fprintf(stderr, " process-virtual-bytes=");
+    if (memoryAvailable) fprintf(stderr, "%llu",
+        (unsigned long long)virtualBytes);
+    else fprintf(stderr, "unavailable");
+    fprintf(stderr,
+            " source=%s phase=%s active=%d frame=%d animation=%s animation-active=%d title-frame=%d/%d title-ready=%d dm1-phases=%d%d%d%d dm2-fmtowns-title={bound:%d finished:%d rejected:%d swoosh:%d frame:%u/%u ticks-remaining:%u} dm2-mac-movie={active:%d complete:%d rejected:%d frame:%u} level-loaded=%d map=%d party=%d,%d dir=%d champions=%d\n",
             current.sourceId[0] ? current.sourceId : "unknown",
             current.startupPhase[0] ? current.startupPhase : "unknown",
             current.startupActive,
@@ -851,6 +892,9 @@ static void m11_debug_trace_startup_frame(M11_DebugStartupTrace* trace,
             current.partyY,
             current.partyDir,
             current.championCount);
+    trace->previousPerfCounter = perfNow;
+    trace->previousCpuSeconds = cpuNow;
+    trace->previousCpuAvailable = cpuAvailable;
     trace->previous = current;
     if (gameView->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
         trace->dm2TitleBound = gameView->dm2FmtownsTitleBound;
@@ -8754,6 +8798,12 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
     M11_GameViewState* previousView = g_m11_intro_game_view;
     M11_AudioState* previousAudio = g_m11_intro_local_audio;
     Uint64 previousPausedMs = g_m11_intro_paused_ms;
+    const int debug = g_m11_debug_startup_detail;
+    const Uint64 startupStartedCounter = debug
+        ? SDL_GetPerformanceCounter() : 0;
+    double startupCpuStarted = 0.0;
+    const int startupCpuStartedAvailable = debug &&
+        m11_process_cpu_seconds(&startupCpuStarted);
     int result;
     if (menuState && menuState->launchRequested) {
         /* A previous session's pixels cannot authorize this launch, including
@@ -8768,6 +8818,40 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
     ++g_m11_sync_launch_serial;
     result = m11_open_requested_launch_impl(gameView, menuState,
                                             idleAccumulatorMs, dataDir, bootProbe);
+    if (debug) {
+        const Uint64 startupEndedCounter = SDL_GetPerformanceCounter();
+        const double startupElapsedMs = m11_counter_milliseconds(
+            startupEndedCounter - startupStartedCounter);
+        double startupCpuEnded = 0.0;
+        const int startupCpuEndedAvailable =
+            m11_process_cpu_seconds(&startupCpuEnded);
+        uint64_t residentBytes = 0;
+        uint64_t virtualBytes = 0;
+        const int memoryAvailable = m11_process_memory_bytes(
+            &residentBytes, &virtualBytes);
+        double cpuPercent = -1.0;
+        if (startupCpuStartedAvailable && startupCpuEndedAvailable &&
+            startupElapsedMs > 0.0 && startupCpuEnded >= startupCpuStarted) {
+            cpuPercent = (startupCpuEnded - startupCpuStarted) *
+                         100000.0 / startupElapsedMs;
+        }
+        fprintf(stderr,
+                "firestaff: startup-cost game=%s result=%d elapsed-ms=%.1f process-cpu-of-one-core-percent=",
+                gameView && gameView->sourceId[0]
+                    ? gameView->sourceId : "unknown",
+                result, startupElapsedMs);
+        if (cpuPercent >= 0.0) fprintf(stderr, "%.1f", cpuPercent);
+        else fprintf(stderr, "unavailable");
+        fprintf(stderr, " process-rss-bytes=");
+        if (memoryAvailable) fprintf(stderr, "%llu",
+            (unsigned long long)residentBytes);
+        else fprintf(stderr, "unavailable");
+        fprintf(stderr, " process-virtual-bytes=");
+        if (memoryAvailable) fprintf(stderr, "%llu",
+            (unsigned long long)virtualBytes);
+        else fprintf(stderr, "unavailable");
+        fprintf(stderr, "\n");
+    }
     /* Source-faithful title and entrance helpers may run synchronously before
      * the main frame loop. A finite CLI duration still owns that run budget;
      * turn its expiry into a clean process exit rather than a launch error. */
