@@ -3,7 +3,6 @@
 #include "render_sdl_m11.h"
 
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_gpu.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -103,7 +102,7 @@ void M11_Debug_LogHardware(void) {
     const SDL_DisplayMode* mode = NULL;
     const char* displayName = NULL;
     const char* rendererName = NULL;
-    const char* gpuName = NULL;
+    int gpuDeviceAvailable = 0;
     int windowWidth = 0, windowHeight = 0;
     int drawableWidth = 0, drawableHeight = 0;
     int logicalCpus;
@@ -129,7 +128,7 @@ void M11_Debug_LogHardware(void) {
         rendererName = SDL_GetRendererName(renderer);
         effectiveVsyncKnown = SDL_GetRenderVSync(renderer, &effectiveVsync);
         if (properties) {
-            SDL_GPUDevice* gpu = (SDL_GPUDevice*)SDL_GetPointerProperty(
+            void* gpu = SDL_GetPointerProperty(
                 properties, SDL_PROP_RENDERER_GPU_DEVICE_POINTER, NULL);
             rendererMaxTextureSize = (int)SDL_GetNumberProperty(
                 properties, SDL_PROP_RENDERER_MAX_TEXTURE_SIZE_NUMBER, -1);
@@ -139,13 +138,7 @@ void M11_Debug_LogHardware(void) {
                 properties, SDL_PROP_RENDERER_HDR_ENABLED_BOOLEAN, 0);
             rendererOutputColorspace = (int)SDL_GetNumberProperty(
                 properties, SDL_PROP_RENDERER_OUTPUT_COLORSPACE_NUMBER, -1);
-            if (gpu) {
-                SDL_PropertiesID gpuProperties =
-                    SDL_GetGPUDeviceProperties(gpu);
-                if (gpuProperties)
-                    gpuName = SDL_GetStringProperty(
-                        gpuProperties, SDL_PROP_GPU_DEVICE_NAME_STRING, NULL);
-            }
+            gpuDeviceAvailable = gpu != NULL;
         }
 #endif
     }
@@ -260,14 +253,14 @@ void M11_Debug_LogHardware(void) {
     if (mode) fprintf(stderr, "%.3f", (double)mode->refresh_rate);
     else fprintf(stderr, "unavailable");
     fprintf(stderr,
-            " pixel-density=%.3f pixel-format=%s window=%dx%d drawable=%dx%d drawable-scale=%.3fx%.3f renderer=%s gpu-device=%s gpu-utilization=unavailable renderer-max-texture-size=%d hdr-known=%d hdr-enabled=%d output-colorspace=0x%x video-driver=%s requested-vsync=%d effective-vsync-known=%d effective-vsync=%d\n",
+            " pixel-density=%.3f pixel-format=%s window=%dx%d drawable=%dx%d drawable-scale=%.3fx%.3f renderer=%s gpu-device-pointer=%d gpu-device-name=unavailable-through-sdl gpu-utilization=unavailable renderer-max-texture-size=%d hdr-known=%d hdr-enabled=%d output-colorspace=0x%x video-driver=%s requested-vsync=%d effective-vsync-known=%d effective-vsync=%d\n",
             mode ? (double)mode->pixel_density : 0.0,
             pixelFormat ? pixelFormat : "unavailable",
             windowWidth, windowHeight, drawableWidth, drawableHeight,
             windowWidth > 0 ? (double)drawableWidth / windowWidth : 0.0,
             windowHeight > 0 ? (double)drawableHeight / windowHeight : 0.0,
             rendererName ? rendererName : "unavailable",
-            gpuName ? gpuName : "unavailable",
+            gpuDeviceAvailable,
             rendererMaxTextureSize, rendererHdrKnown, rendererHdrEnabled,
             rendererOutputColorspace,
             SDL_GetCurrentVideoDriver() ? SDL_GetCurrentVideoDriver() : "unknown",
