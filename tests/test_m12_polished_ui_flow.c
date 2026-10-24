@@ -241,6 +241,27 @@ int main(void) {
     if (!expect(state.view == M12_MENU_VIEW_MAIN && state.launchRequested == 0,
                 "DM2 platform cards should close before the next menu scenario")) return 1;
 
+    /* A deferred startup scan can temporarily report no media. Confirming
+     * that game's platform card must retain the selection without showing a
+     * false missing-media popup. */
+    state.assetStatus.dm2Available = 0;
+    state.deferredScanActive = 1;
+    state.selectedIndex = 2;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    if (!expect(state.view == M12_MENU_VIEW_GAME_OPTIONS &&
+                state.gameCardFlowStage == 0,
+                "unscanned DM2 should open its platform card while scan is active")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    if (!expect(state.view == M12_MENU_VIEW_GAME_OPTIONS &&
+                state.gameCardFlowStage == 0 && state.launchRequested == 0,
+                "active scan must suppress false missing-media popup and retain selection")) return 1;
+    state.deferredScanActive = 0;
+    state.assetStatus.dm2Available = 1;
+    force_menu_game_available(&state, 2, "dm2", "SKULLKEEP");
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    if (!expect(state.view == M12_MENU_VIEW_MAIN,
+                "scan-time platform card should close back to the game list")) return 1;
+
     force_dm1_available(&state);
     state.selectedIndex = 0;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);

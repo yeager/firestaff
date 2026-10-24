@@ -2185,6 +2185,14 @@ static void m12_show_missing_game_data_file_popup(M12_StartupMenuState* state,
     if (!state) {
         return;
     }
+    /* A deferred startup scan publishes availability only when its complete
+     * snapshot is ready. Do not turn that temporary empty snapshot into a
+     * missing-media error if the player reaches a game card early. Leave the
+     * card in place so scan progress remains visible and the choice can be
+     * retried against the finished snapshot. */
+    if (state->deferredScanActive) {
+        return;
+    }
     gameIndex = m12_entry_index_for_game_id(state, gameId);
     snprintf(line1, sizeof(line1), "%s %s", m12_game_display_title(state, gameId), m12_text(state, M12_TEXT_GAME_DATA_NOT_FOUND));
     if (filename) snprintf(line2, sizeof(line2), "%s", filename);
