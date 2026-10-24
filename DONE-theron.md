@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-24 — initialize SDL's native gamepad subsystem
+
+`M12_GamepadStatus_Update` now initializes SDL's gamepad subsystem before
+enumerating controllers, and `M12_GamepadStatus_Close` releases the matching
+subsystem reference. The focused `m11_gamepad_csb_input_bridge` regression
+passed three consecutive runs on TRV2, and the native Firestaff target built
+successfully. A native Debug run with authentic Japanese Rev. 1 Track 02 and an
+isolated virtual controller reached the loaded Theron runtime and advanced
+native ticks. This verifies the SDL controller path; it does not close the
+separate keyboard/mouse parity request or establish visual gameplay parity.
+
 ## 2026-10-24 — keep authenticated CLI-check output in its build directory
 
 - The real-capture CLI check now creates and removes its temporary log beside

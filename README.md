@@ -85,15 +85,20 @@ Focused real-media checks and their current boundaries are documented in
 and the [DM2 FM Towns wiki guide](docs/wiki/DM2-FMTowns-Guide.md).
 
 Theron's Quest uses ordinary desktop controls in Firestaff: Up/W moves
-forward, Down/S moves backward, and Left/A and Right/D turn while held.
+forward, Down/S moves backward, Left/Right turn, and A/D step sideways while
+held. Home/Q and End/E are alternate turn keys.
 Tab selects the next living member of the Soul Room party and G picks up a
 source-verified item in the facing cell. P drops that explicitly selected
 source item on the party square, and U uses a door in the facing cell.
-Keypad 8/2/4/6 provides the same four directions. Left and right mouse
-buttons are Button I and Button II; mouse motion only moves the normal pointer
-and never changes the selected object or jumps between controls. On touch
-screens, a short touch is Button I and a long touch is Button II. Button II
-cancels startup selection and does not advance the dungeon tick by itself.
+Keypad 8/2/4/6 provides forward, backward and turns. Mouse buttons 1 and 2 map
+to Theron Button I and Button II. In the dungeon, clicks do not use their
+coordinates to choose movement, inventory or champion controls; Button II
+does not perform a standalone dungeon action. Theron does not yet have
+DM1-style clickable controls. The native dungeon image and a source-backed
+control layout must be recovered before those mouse controls can be added.
+Mouse motion only moves the pointer. On touch screens, a short touch is Button
+I and a long touch is Button II. Button II cancels startup selection and does
+not advance the dungeon tick by itself.
 
 ### Theron's Quest runtime status
 

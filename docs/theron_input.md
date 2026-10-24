@@ -14,8 +14,8 @@ are research instruments only and do not run or replace the game in Firestaff.
 |------------|-------------------|----------------|
 | D-pad Up   | Up Arrow          | W              |
 | D-pad Down | Down Arrow        | S              |
-| D-pad Left | Left Arrow, A     | Home, Q        |
-| D-pad Right| Right Arrow, D    | End, E         |
+| D-pad Left | Left Arrow        | Home, Q        |
+| D-pad Right| Right Arrow       | End, E         |
 | Button I   | Mouse 1, short touch | Z, Return, Space |
 | Button II  | Mouse 2, long touch  | X, Escape         |
 | Run        | Return            |                |
@@ -55,8 +55,8 @@ actuator timing or retail queue capacity; see the 2026-10-24 entry in
 | Move backward  | Down Arrow, S                     |
 | Step left      | A                                 |
 | Step right     | D                                 |
-| Turn left      | Left Arrow, A, Home, Q            |
-| Turn right     | Right Arrow, D, End, E            |
+| Turn left      | Left Arrow, Home, Q               |
+| Turn right     | Right Arrow, End, E               |
 | Wait (tick)    | Return, Space                     |
 | Next champion  | Tab                               |
 | Pick up facing item | G                            |
@@ -65,15 +65,25 @@ actuator timing or retail queue capacity; see the 2026-10-24 entry in
 
 ## Notes
 
-- Arrow Left/Right and Home/End/Q/E rotate. A/D use the original lower-panel
-  `$06/$04` side-step commands. The mapping is intentionally different even
-  though A/D also appear as alternate PC Engine D-pad bindings above.
+- Arrow Left/Right and Home/End/Q/E rotate. A/D use the source-backed lower
+  movement-panel side-step commands `$06/$04`.
 - Mouse button 1/2 are direct Button I/II bindings. A short touch emits
   Button I; a long touch emits Button II, including during startup. Button II
   cancels startup selection and does not advance a dungeon tick. The retail
   manual also describes holding Button II with a direction key as simplified
   movement; Firestaff's native direction keys already issue those movement
   commands directly.
+- Mouse buttons 1/2 map to Button I/II, but the dungeon route does not use the
+  pointer coordinates to select movement, inventory or champion controls.
+  Button II is a cancel/modifier and does not perform a standalone dungeon
+  action. This does not provide DM1-style clickable controls. Theron's native
+  dungeon layout is not yet rendered from authenticated graphics, and the
+  captured original input points do not establish complete region boundaries.
+  The turn and forward point captures are recorded in
+  [`theron-original-turn-command-capture-2026-08-21.md`](source-lock/theron-original-turn-command-capture-2026-08-21.md)
+  and
+  [`theron-original-forward-command-capture-2026-08-21.md`](source-lock/theron-original-forward-command-capture-2026-08-21.md).
+  Do not substitute DM1 hit regions or guessed coordinates.
 - Run and Select have no keyboard binding (no gameplay use currently).
 - Gamepad input follows the SDL3 gamepad mapping (D-pad, A/B buttons) where
   the selected input mode permits gamepad events.
