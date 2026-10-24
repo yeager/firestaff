@@ -3392,10 +3392,12 @@ Reviewed 2026-08-29. Completed work only.
   `Dungeon-Master_Amiga_36.zip` under the external user data directory; no game
   data was added to the repository. `dm1_v1_amiga36_original_media_cli_boot`
   passes for both `--game dm1 --platform amiga` and the start-menu route with
-  that ZIP. Both reach a loaded runtime and report the authentic asset hash.
-- This does not implement or verify Amiga 3.6 F0437 title playback, F0441
-  entrance playback, viewport parity, or native HiDPI behavior. Those remain
-  open in TODO.
+  that ZIP. It checks the authentic asset hash, English/French/German dungeon
+  selection, the authenticated F0441 handoff, all 64 two-pixel entrance-door
+  steps, and the first runtime party position. The M12 route also confirms a
+  fresh Return press reaches the runtime after launch input is drained.
+- Amiga 3.6 F0437 title playback, original-frame and audio alignment, viewport
+  parity, and native HiDPI behavior remain unverified in TODO.
 
 - 2026-10-15: Final offline-selection verification passed on the exact built binary: full original-media CLI startup suite (214.31 s), both targeted CTest cases (26.02 s), and translation catalog consistency check. Physical volume unmount and macOS permission-dialog interaction remain separate manual checks.
 
@@ -4343,3 +4345,9 @@ not used as its final verification.
   33 ms present costs and verifies that a present past the source deadline
   adds no extra delay. A 30 Hz present remains quantized by the display's
   retrace; physical 30/60/120 Hz capture remains pending.
+- 2026-10-24: Re-ran the authentic DM1 Amiga 3.6 and Atari ST 1.2 startup
+  matrices on the M4 against the installed original archives. The Amiga test
+  passed CLI language selection and the M12 F0441 entrance/runtime route; the
+  Atari test passed the M12 Hall C127 choice, first HoC runtime state, and
+  native input matrix. SDL dummy-display coverage does not prove native display
+  or visual parity.
