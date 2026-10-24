@@ -23,10 +23,14 @@ be identified from this binary. The executable, original game data, emulator,
 and raw run logs remain on TRV2 or in private task scratch; no original game
 media or BIOS bytes are included here.
 
-This receipt proves an authentic Track 02 dungeon-load boundary and confirms
-that Firestaff currently fails closed to a black viewport without source-backed
-VDC/VCE data. It does not prove drawing, movement, gameplay, or visual parity.
-Do not promote `presented-black.bmp` as a gameplay screenshot.
+This historical no-snapshot receipt proves an authentic Track 02 dungeon-load
+boundary and confirms that this particular invocation, which supplied no
+source-backed VDC/VCE snapshot, rendered a black viewport. The separate
+authenticated snapshot render receipt in
+`parity-evidence/verification/theron_v1_authenticated_snapshot_render_receipt_20261024/`
+records a later non-black frame from the authenticated capture route. Neither
+receipt proves movement, gameplay, or visual parity. Do not promote
+`presented-black.bmp` as a gameplay screenshot.
 
 Reproduction command on TRV2, repeated three times:
 

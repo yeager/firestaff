@@ -1,41 +1,30 @@
-## 2026-10-24 — authentic Track 02 dungeon load still renders black
+## 2026-10-24 — authenticated snapshot renders; state pairing remains open
 
-- Three TRV2 Firestaff debug runs used the authentic US Track 02 image
-  (`f23601102138f87c33025877767ebf76`) and loaded Ak-Tu-Ba dungeon 1, level 0.
-  Each receipt reports a 32x27 level, entrance (4,0), four loaded dungeon
-  levels, 291 source objects, four verified source headers, 455 non-zero
-  source tiles, and two champions at map 0, position (1,0). The bounded input
-  and movement pipeline has no activity and `gameTick=0`.
-- Each real Firestaff `--debug` run emitted the same all-black 320x200 frame
+- Three TRV2 Firestaff `--debug` runtime loops accepted the authentic US Track
+  02 BIN (MD5 `f23601102138f87c33025877767ebf76`) and the hash-allowlisted
+  `selection.trace` VDC bundle. Each boot probe loaded Ak-Tu-Ba dungeon 1,
+  level 0 (32x27, entrance (4,0)), four dungeon levels, 291 source objects,
+  four verified source headers, 455 non-zero source tiles, and two champions
+  at map 0, position (1,0). The bounded movement pipeline remained idle and
+  `gameTick=0`.
+- The five-file authentic capture bundle was accepted by the production CLI
+  route. All three runs emitted identical 320x200 source and presented frames
   (SHA-256
-  `a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f`). The
-  app reports that the later original graphics bank was not captured and
-  fallback visuals remain disabled. The executable's SHA-256 and the exact
-  invocation are recorded in
-  `parity-evidence/verification/theron_v1_debug_render_receipt_20261024/`.
-- This is authentic loader/runtime evidence, not a screenshot-parity pass. No
-  original-emulator frame is paired with this Firestaff state, and no
-  authenticated VDC/VCE snapshot pair was supplied. Keep viewport drawing
-  closed until original graphics state is captured and bound to the runtime;
-  do not replace it with synthetic art.
-
-## 2026-10-24 — original-emulator visual pair remains open
-
-- The available TRV2 `firestaff` executable was built from commit `3f6f575`
-  dated 2026-09-17. It rejects both `--debug` and the current Theron
-  `--theron-native` option before opening game media. No runtime route or
-  capture was produced; this attempt is not parity evidence.
-- A separate current-source TRV2 build accepted `--debug`. Three direct
-  Theron US boot-probe loops against the authentic Track 02 BIN (MD5
-  `f23601102138f87c33025877767ebf76`) reached the same receipt: runtime phase,
-  map 0, party (1,0), two champions, 291 source objects, and four loaded
-  dungeon levels. The logs remain in private TRV2 cache. SDL dummy output and
-  zero runtime frames provide no screenshot or original-emulator pair, so this
-  verifies runtime admission only, not visual or gameplay parity.
-- Capture a matching original-emulator frame and state receipt, then pair it
-  with a Firestaff `--debug` runtime capture using the paired-capture v2
-  contract. Keep unknown original coordinates unknown until debugger evidence
-  supplies them.
+  `cdcb9d4f4247d72f6fa9f28dd28571153c718984fae8dd581553729d3317df47`), with
+  35,452 non-black pixels. Capture hashes, FNV allowlist tuple, relevant source
+  file hashes, and invocation are recorded in
+  `parity-evidence/verification/theron_v1_authenticated_snapshot_render_receipt_20261024/`.
+- The earlier all-black receipt in
+  `parity-evidence/verification/theron_v1_debug_render_receipt_20261024/`
+  came from a no-snapshot invocation of an exported TRV2 source snapshot whose
+  renderer and capture-loader files differ from this checkout. It remains a
+  valid historical no-snapshot diagnostic, not evidence that the authenticated
+  capture route currently renders black.
+- The captured VDC screen has not been joined to the Firestaff runtime's world
+  coordinates, and no original-emulator frame has been paired with this exact
+  rendered state. This proves authentic capture admission and non-black
+  screen-space rendering only; it does not prove gameplay, movement, or visual
+  parity. Keep source positions unknown until the original state is bound.
 
 ## 2026-10-10 — instrument PCE Fast CPU VWR commits for source attribution
 

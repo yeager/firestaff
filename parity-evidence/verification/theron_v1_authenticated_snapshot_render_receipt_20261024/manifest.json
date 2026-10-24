@@ -1,0 +1,78 @@
+{
+  "schema": "firestaff.parity.theron_v1_authenticated_snapshot_render_receipt.v1",
+  "date": "2026-10-24",
+  "status": "AUTHENTICATED_SCREEN_RENDERED_STATE_PAIR_OPEN",
+  "scope": "authentic snapshot admission and screen-space rendering only",
+  "game": "theron",
+  "platform": "pce-cd",
+  "edition": "us",
+  "track02Md5": "f23601102138f87c33025877767ebf76",
+  "firestaffBuild": {
+    "mode": "Debug",
+    "binarySha256": "c1c32f73b4df7b7a6aeb8b2152adbecfa0b12ec8b0ec6a50dc3a9eaa9af380a9",
+    "sourceCommit": null,
+    "sourceTreeNote": "TRV2 source snapshot has no Git metadata; the listed relevant source files match the current checkout by SHA-256."
+  },
+  "matchingSourceFiles": {
+    "src/shared/firestaff_main_m11.c": "bed19bd59708bae3a83be315e5ffbb624d6b3e0a90c11c0bcce32b3734a093fa",
+    "src/theron/theron_v1_viewport_runtime_noop.c": "6107a81cd39614bb5de671ff5a3932b8066625d9bdba386c5972bdff15066112",
+    "src/theron/theron_v1_vram_trace_loader.c": "7876b9aef3d5759115574c16d1712665c39ae9668e782c4e6f28c74aa727d107",
+    "src/engine/m11_game_view.c": "2d182bfe3320a7b9d6e2d1daf14cc9718dc11736ed3e22e1928d88b32319e22a"
+  },
+  "captureBundle": {
+    "privatePrefix": "/home/trv2/firestaff-theron-evidence/capture/selection.trace",
+    "origin": "authentic US Akutuba-save replay",
+    "allowlistedTupleFnv1a": {
+      "vram": "59ef2648",
+      "vce": "6fb303b5",
+      "vdcState": "21d291e3",
+      "sat": "f8cc0675",
+      "vdcIo": "49d2ae18"
+    },
+    "files": {
+      "vram": {"bytes": 65536, "sha256": "4bf7a7b8fe1d37a072b4eb1201c5c466cd8068f0dce3e3a3e209f1b39ccf679b"},
+      "vce": {"bytes": 1024, "sha256": "2263486eb8c1e2cdc822a655b4a7da01f4f9a27c73987a8f19bb822e454ada45"},
+      "vdcState": {"bytes": 116, "sha256": "2390ae5ddbd036b47bfbb5b64d497327169ab9528e2f9207232b68aaaf69e1f8"},
+      "sat": {"bytes": 512, "sha256": "62d7a999ec39b6e2a99752e773b8a878c96503e669a1e847c81de911b4ec7082"},
+      "vdcIo": {"bytes": 10116865, "sha256": "c14cfd4d20fab26c6175d0f5c8cbac4e86d806a0f85e2ddee907c753cdb28aec"}
+    },
+    "admittedByCurrentCaptureLoader": true
+  },
+  "iterations": 3,
+  "runtime": {
+    "phase": "theron-runtime",
+    "levelLoaded": true,
+    "dungeon": 1,
+    "level": 0,
+    "levelWidth": 32,
+    "levelHeight": 27,
+    "entrance": [4, 0],
+    "party": {"mapIndex": 0, "x": 1, "y": 0, "direction": 0, "champions": 2},
+    "gameTick": 0,
+    "sourceObjects": 291,
+    "dungeonLevelsLoaded": 4,
+    "dungeonSourceHeaders": 4,
+    "dungeonSourceNonzeroTiles": 455,
+    "inputPipelineIdle": true,
+    "movementOccurred": false
+  },
+  "renderedFrame": {
+    "sha256": "cdcb9d4f4247d72f6fa9f28dd28571153c718984fae8dd581553729d3317df47",
+    "bytes": 192054,
+    "width": 320,
+    "height": 200,
+    "nonBlackPixels": 35452,
+    "allThreeRunsIdentical": true,
+    "sourceAndPresentedImagesIdentical": true,
+    "storage": "private TRV2 /dev/shm; no image committed"
+  },
+  "pairedOriginalFrame": null,
+  "captureStateJoinedToFirestaffWorld": false,
+  "parityClaim": false,
+  "nonClaims": [
+    "No original-emulator screenshot was paired with this Firestaff frame.",
+    "The captured source screen has not been joined to Firestaff dungeon coordinates.",
+    "No gameplay tick, movement, or behavioral parity is proven.",
+    "No synthetic artwork or original game-media bytes are included."
+  ]
+}
