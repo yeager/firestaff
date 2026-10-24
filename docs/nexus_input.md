@@ -69,9 +69,14 @@ viewport rectangle; mouse motion positions it directly in that rectangle.
 The hand sprite is sourced from the hash-verified retail ITEM.IBS image 65 and
 palette 6, joined against Ymir `--debug` VDP1 texture capture. Mouse movement
 and the six keyboard movement commands remain available with pointer mode off.
-Pointer clicks and A/B/Y/C/L/R actions remain inert until their retail
-consumers are traced. Item use, inventory, spells, combat, sensors, doors, and
-level transitions remain fail-closed.
+The authentic `DM.BIN` movement-pad rectangle is also wired as a six-cell
+desktop movement surface: the upper row maps to turn left, forward, and turn
+right; the lower row maps to strafe left, backward, and strafe right. This
+host mapping uses the retail rectangle but does not claim to reproduce the
+unresolved callback's cell semantics. Clicks elsewhere and hand-pointer clicks
+remain inert. A/B/Y/C/L/R actions remain inert until their retail consumers
+are traced. Item use, inventory, spells, combat, sensors, doors, and level
+transitions remain fail-closed.
 
 In a loaded Nexus dungeon, Space toggles Firestaff's host pause. Ymir evidence
 records that the retail Start button displayed the `PAUSE` overlay; whether
@@ -79,14 +84,14 @@ retail gameplay resumes on a second press remains unverified. Firestaff's host
 pause freezes the session tick and host audio until Space is pressed again.
 This does not reproduce the retail `PAUSE` graphic or menu.
 
-With pointer mode off, Firestaff uses the authentic Nexus viewport rectangle
-parsed from `DM.BIN` as a host control surface. Left-click the upper
-left/right thirds to turn, the lower left/right thirds to strafe, and the upper
-or lower center third to move forward or backward. This is a Firestaff desktop
-mapping into the same six keyboard movement commands; it does not claim to
-reproduce Saturn ShuttleMouse or retail hit-table callback behavior. With
-pointer mode on, mouse motion moves the logical hand pointer and clicks remain
-inert while callback semantics are unresolved.
+With pointer mode off, left-click within the authentic Nexus movement-pad
+rectangle parsed from `DM.BIN` to send the corresponding desktop movement
+command: the upper row maps to turn left, forward, and turn right; the lower
+row maps to strafe left, backward, and strafe right. This host mapping uses a
+retail rectangle but does not claim to reproduce Saturn ShuttleMouse or the
+retail callback's unresolved cell semantics. Other buttons and clicks outside
+the pad do nothing. With pointer mode on, mouse motion moves the logical hand
+pointer and mouse clicks remain inert while callback semantics are unresolved.
 
 `scripts/analyze_nexus_mouse_event_crossrefs.py` inventories direct SH-2
 `MOV.L @(disp,PC),Rn` references in the hash-verified retail `DM.BIN`. In the
