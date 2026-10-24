@@ -109,6 +109,7 @@ static void run_theron_pointer_and_button_input_contract(void) {
     };
     unsigned char framebuffer[320 * 200];
     size_t control_index;
+    int input_scale;
 
     memset(&view, 0, sizeof(view));
     view.active = 1;
@@ -136,52 +137,53 @@ static void run_theron_pointer_and_button_input_contract(void) {
     for (control_index = 0;
          control_index < sizeof(mouse_controls) / sizeof(mouse_controls[0]);
          ++control_index) {
-        Theron_V1_World world;
-        int map_x;
-        int map_y;
-        const int input_scale = (control_index & 1u) ? 2 : 1;
-        M11_GameInputResult result;
+        for (input_scale = 1; input_scale <= 2; ++input_scale) {
+            Theron_V1_World world;
+            int map_x;
+            int map_y;
+            M11_GameInputResult result;
 
-        theron_v1_world_init(&world);
-        world.current_dungeon = THERON_DUNGEON_1_AKUTUBA;
-        world.current_level = 0;
-        world.level_loaded[0][0] = 1;
-        world.levels[0][0].width = 8;
-        world.levels[0][0].height = 8;
-        world.levels[0][0].start_x = 3;
-        world.levels[0][0].start_y = 3;
-        world.levels[0][0].start_dir = THERON_DIR_NORTH;
-        for (map_y = 0; map_y < 8; ++map_y) {
-            for (map_x = 0; map_x < 8; ++map_x) {
-                world.levels[0][0].squares[map_y][map_x] =
-                    (map_x == 0 || map_x == 7 || map_y == 0 || map_y == 7)
-                        ? 0u : 1u;
+            theron_v1_world_init(&world);
+            world.current_dungeon = THERON_DUNGEON_1_AKUTUBA;
+            world.current_level = 0;
+            world.level_loaded[0][0] = 1;
+            world.levels[0][0].width = 8;
+            world.levels[0][0].height = 8;
+            world.levels[0][0].start_x = 3;
+            world.levels[0][0].start_y = 3;
+            world.levels[0][0].start_dir = THERON_DIR_NORTH;
+            for (map_y = 0; map_y < 8; ++map_y) {
+                for (map_x = 0; map_x < 8; ++map_x) {
+                    world.levels[0][0].squares[map_y][map_x] =
+                        (map_x == 0 || map_x == 7 || map_y == 0 || map_y == 7)
+                            ? 0u : 1u;
+                }
             }
-        }
-        world.party.leader_x = 3;
-        world.party.leader_y = 3;
-        world.party.leader_dir = THERON_DIR_NORTH;
+            world.party.leader_x = 3;
+            world.party.leader_y = 3;
+            world.party.leader_dir = THERON_DIR_NORTH;
 
-        memset(&view, 0, sizeof(view));
-        view.active = 1;
-        view.sourceKind = M11_GAME_SOURCE_THERON_TRACK02;
-        view.theronWorld = &world;
-        view.theronState.startup_phase = THERON_STARTUP_PHASE_IN_DUNGEON;
-        view.theronState.level_loaded = 1;
-        view.presentationWidth = 320 * input_scale;
-        view.presentationHeight = 200 * input_scale;
-        result = M11_GameView_HandlePointerButton(
-            &view, mouse_controls[control_index].x * input_scale,
-            mouse_controls[control_index].y * input_scale,
-            DM1_V1_MOUSE_MASK_LEFT_PC34);
-        expect_true(result == M11_GAME_INPUT_REDRAW &&
-                        view.theronState.party_x ==
-                            mouse_controls[control_index].party_x &&
-                        view.theronState.party_y ==
-                            mouse_controls[control_index].party_y &&
-                        view.theronState.party_dir ==
-                            mouse_controls[control_index].party_dir,
-                    mouse_controls[control_index].label);
+            memset(&view, 0, sizeof(view));
+            view.active = 1;
+            view.sourceKind = M11_GAME_SOURCE_THERON_TRACK02;
+            view.theronWorld = &world;
+            view.theronState.startup_phase = THERON_STARTUP_PHASE_IN_DUNGEON;
+            view.theronState.level_loaded = 1;
+            view.presentationWidth = 320 * input_scale;
+            view.presentationHeight = 200 * input_scale;
+            result = M11_GameView_HandlePointerButton(
+                &view, mouse_controls[control_index].x * input_scale,
+                mouse_controls[control_index].y * input_scale,
+                DM1_V1_MOUSE_MASK_LEFT_PC34);
+            expect_true(result == M11_GAME_INPUT_REDRAW &&
+                            view.theronState.party_x ==
+                                mouse_controls[control_index].party_x &&
+                            view.theronState.party_y ==
+                                mouse_controls[control_index].party_y &&
+                            view.theronState.party_dir ==
+                                mouse_controls[control_index].party_dir,
+                        mouse_controls[control_index].label);
+        }
     }
 
     memset(&view, 0, sizeof(view));
