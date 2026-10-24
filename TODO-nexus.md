@@ -6,13 +6,19 @@ and reverse-engineering records and in [DONE-nexus.md](DONE-nexus.md).
 
 ## Current evidence boundary
 
-PR #19 adds the corrected NBG1 TileFetcher address path and a scroll-offset
+PR #19 merged the corrected NBG1 TileFetcher address path and a scroll-offset
 regression. Its focused test verifies the bounded name-table fetch behavior;
-the PR remains under review. This does not bind the
+this does not bind the
 NBG1 data to FONT256, MENU.BPK or a retail text/display consumer, and does not
 change menu, HUD, viewport or production-readiness gates. Keep the next work
 focused on a same-session retail source-to-display join and the interactive
 title-to-menu transition.
+
+The 2026-10-24 direct-CLI check against authenticated Japanese retail
+`DM.BIN` confirms the same remaining start gap: the title reaches its ready
+frame, but no menu or level is loaded and the startup receipt remains blocked
+on the PRS3 menu capture. See
+[`parity-evidence/verification/nexus_cli_direct_start_block_20261024/README.md`](parity-evidence/verification/nexus_cli_direct_start_block_20261024/README.md).
 
 - Capture the actual interactive title/menu transition and its input contract,
   including the display consumer that places menu and face material.
