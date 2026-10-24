@@ -1,5 +1,14 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-24 DM2 FM Towns warm scan reuse: after a full directory-discovery
+boot-profile scan proves the exact HME-242 `DATA/GRAPHICS.DAT` and
+`DATA/DUNGEON.DAT` pair, M12 can reuse those member MD5 receipts while the
+source ZIP file identity and timestamps remain unchanged. Explicitly selected
+archives still run the full boot scanner. The authentic `dm2_v1_fmtowns_native_cli_boot`
+test passed with both cold and warm `--scan-data` runs and the full New Game
+route (390 seconds on this machine). This avoids rescanning that same Towns
+disc image on repeat directory scans; other DM2 archives are still checked.
+
 2026-10-24 startup/CLI audit: expanded the DM1/CSB/DM2 unsupported-platform
 test to cover every currently unsupported platform pairing in both direct and
 menu-request modes. The 24-case live CLI matrix rejected each pair before
