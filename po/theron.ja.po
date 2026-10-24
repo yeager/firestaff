@@ -32,43 +32,43 @@ msgstr "西"
 
 #. Theron host mouse control label
 msgid "TURN L"
-msgstr "左旋回"
+msgstr "HIDARI"
 
 #. Theron host mouse control label
 msgid "FORWARD"
-msgstr "前進"
+msgstr "MAE"
 
 #. Theron host mouse control label
 msgid "TURN R"
-msgstr "右旋回"
+msgstr "MIGI"
 
 #. Theron host mouse control label
 msgid "STEP L"
-msgstr "左移動"
+msgstr "YOKO-L"
 
 #. Theron host mouse control label
 msgid "BACK"
-msgstr "後退"
+msgstr "USHIRO"
 
 #. Theron host mouse control label
 msgid "STEP R"
-msgstr "右移動"
+msgstr "YOKO-R"
 
 #. Theron host mouse control label
 msgid "NEXT"
-msgstr "次へ"
+msgstr "TSUGI"
 
 #. Theron host mouse control label
 msgid "PICKUP"
-msgstr "拾う"
+msgstr "TORU"
 
 #. Theron host mouse control label
 msgid "ITEM"
-msgstr "アイテム"
+msgstr "ITEM"
 
 #. Theron host mouse control label
 msgid "WAIT"
-msgstr "待機"
+msgstr "MATSU"
 
 #. Stairs
 msgid "STAIRS"

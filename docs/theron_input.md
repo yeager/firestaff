@@ -70,7 +70,9 @@ its lower-right corner. Its first two rows provide **TURN L**, **FORWARD**,
 the selected source item, **USE** the object ahead, and **WAIT** one tick.
 These buttons send the same native Theron input tokens as the corresponding
 keyboard actions. Their captions use the active Theron translation catalog.
-The panel scales with the game's presentation size.
+The panel scales with the game's presentation size. Japanese and Chinese
+captions use ASCII romanizations because the native small font does not
+contain CJK glyphs.
 
 ## Notes
 

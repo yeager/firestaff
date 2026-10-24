@@ -111,7 +111,7 @@ msgstr "JATUH"
 
 #. Inventory / item action
 msgid "USE"
-msgstr "PENGGUNAAN"
+msgstr "PAKAI"
 
 #. Combat action
 msgid "ATTACK"

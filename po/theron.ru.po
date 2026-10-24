@@ -101,7 +101,7 @@ msgstr "БРОСИТЬ"
 
 #. Inventory / item action
 msgid "USE"
-msgstr "ИСПОЛЬЗОВАТЬ"
+msgstr "USE"
 
 #. Combat action
 msgid "ATTACK"

@@ -1081,7 +1081,7 @@ THERON = {'en': THERON_EN}
 THERON['sv'] = {k: v for k, v in {
     'NORTH': 'NORR', 'EAST': 'ÖST', 'SOUTH': 'SÖDER', 'WEST': 'VÄSTER',
     'TURN L': 'SVÄNG V', 'FORWARD': 'FRAMÅT', 'TURN R': 'SVÄNG H',
-    'STEP L': 'SIDSTEG V', 'BACK': 'BAKÅT', 'STEP R': 'SIDSTEG H',
+    'STEP L': 'STEG V', 'BACK': 'BAKÅT', 'STEP R': 'STEG H',
     'NEXT': 'NÄSTA', 'PICKUP': 'PLOCKA', 'ITEM': 'FÖREMÅL', 'WAIT': 'VÄNTA',
     'STAIRS': 'TRAPPA', 'PIT': 'GROP', 'TELEPORTER': 'TELEPORTÖR',
     'DOOR': 'DÖRR', 'PICK UP': 'PLOCKA UPP', 'DROP': 'SLÄPP',
@@ -1119,10 +1119,10 @@ THERON['fr'] = {k: v for k, v in {
     'NORTH': 'NORD', 'EAST': 'EST', 'SOUTH': 'SUD', 'WEST': 'OUEST',
     'TURN L': 'TOUR G', 'FORWARD': 'AVANCER', 'TURN R': 'TOUR D',
     'STEP L': 'PAS G', 'BACK': 'RECULER', 'STEP R': 'PAS D',
-    'NEXT': 'SUIVANT', 'PICKUP': 'PRENDRE', 'ITEM': 'OBJET', 'WAIT': 'ATTENDRE',
+    'NEXT': 'SUIVANT', 'PICKUP': 'PRENDRE', 'ITEM': 'OBJET', 'WAIT': 'ATTENTE',
     'STAIRS': 'ESCALIER', 'PIT': 'GOUFFRE', 'TELEPORTER': 'TÉLÉPORTEUR',
     'DOOR': 'PORTE', 'PICK UP': 'RAMASSER', 'DROP': 'LÂCHER',
-    'USE': 'UTILISER', 'ATTACK': 'ATTAQUER', 'DEFEND': 'DÉFENDRE',
+    'USE': 'UTIL.', 'ATTACK': 'ATTAQUER', 'DEFEND': 'DÉFENDRE',
     'CAST SPELL': 'LANCER SORT', 'NO FOCUS': 'AUCUNE CIBLE',
     'PRESS ENTER ON A REAL FRONT-CELL TARGET':
         'APPUYEZ SUR ENTRÉE SUR UNE VRAIE CIBLE AVANT',
@@ -1155,11 +1155,11 @@ THERON['fr'] = {k: v for k, v in {
 THERON['de'] = {k: v for k, v in {
     'NORTH': 'NORD', 'EAST': 'OST', 'SOUTH': 'SÜD', 'WEST': 'WEST',
     'TURN L': 'LINKS', 'FORWARD': 'VOR', 'TURN R': 'RECHTS',
-    'STEP L': 'SCHRITT L', 'BACK': 'ZURÜCK', 'STEP R': 'SCHRITT R',
-    'NEXT': 'WEITER', 'PICKUP': 'NEHMEN', 'ITEM': 'GEGENSTAND', 'WAIT': 'WARTEN',
+    'STEP L': 'SCHR L', 'BACK': 'ZURÜCK', 'STEP R': 'SCHR R',
+    'NEXT': 'WEITER', 'PICKUP': 'NEHMEN', 'ITEM': 'OBJEKT', 'WAIT': 'WARTEN',
     'STAIRS': 'TREPPE', 'PIT': 'GRUBE', 'TELEPORTER': 'TELEPORTER',
-    'DOOR': 'TÜR', 'PICK UP': 'AUFNEHMEN', 'DROP': 'FALLEN LASSEN',
-    'USE': 'BENUTZEN', 'ATTACK': 'ANGREIFEN', 'DEFEND': 'VERTEIDIGEN',
+    'DOOR': 'TÜR', 'PICK UP': 'AUFNEHMEN', 'DROP': 'ABLEGEN',
+    'USE': 'NUTZ', 'ATTACK': 'ANGREIFEN', 'DEFEND': 'VERTEIDIGEN',
     'CAST SPELL': 'ZAUBER WIRKEN', 'NO FOCUS': 'KEIN FOKUS',
     'PRESS ENTER ON A REAL FRONT-CELL TARGET':
         'DRÜCKE ENTER AUF EIN ECHTES VORDERZIEL',
@@ -1192,9 +1192,9 @@ THERON['de'] = {k: v for k, v in {
 
 THERON['ja'] = {k: v for k, v in {
     'NORTH': '北', 'EAST': '東', 'SOUTH': '南', 'WEST': '西',
-    'TURN L': '左旋回', 'FORWARD': '前進', 'TURN R': '右旋回',
-    'STEP L': '左移動', 'BACK': '後退', 'STEP R': '右移動',
-    'NEXT': '次へ', 'PICKUP': '拾う', 'ITEM': 'アイテム', 'WAIT': '待機',
+    'TURN L': 'HIDARI', 'FORWARD': 'MAE', 'TURN R': 'MIGI',
+    'STEP L': 'YOKO-L', 'BACK': 'USHIRO', 'STEP R': 'YOKO-R',
+    'NEXT': 'TSUGI', 'PICKUP': 'TORU', 'ITEM': 'ITEM', 'WAIT': 'MATSU',
     'STAIRS': '階段', 'PIT': '落とし穴', 'TELEPORTER': 'テレポーター',
     'DOOR': '扉', 'PICK UP': '拾う', 'DROP': '落とす',
     'USE': '使う', 'ATTACK': '攻撃', 'DEFEND': '防御',
@@ -1227,9 +1227,9 @@ THERON['ja'] = {k: v for k, v in {
 
 THERON['zh'] = {k: v for k, v in {
     'NORTH': '北', 'EAST': '东', 'SOUTH': '南', 'WEST': '西',
-    'TURN L': '左转', 'FORWARD': '前进', 'TURN R': '右转',
-    'STEP L': '左移', 'BACK': '后退', 'STEP R': '右移',
-    'NEXT': '下一位', 'PICKUP': '拾取', 'ITEM': '物品', 'WAIT': '等待',
+    'TURN L': 'ZUO', 'FORWARD': 'QIAN', 'TURN R': 'YOU',
+    'STEP L': 'ZUO', 'BACK': 'HOU', 'STEP R': 'YOU',
+    'NEXT': 'XIA YI', 'PICKUP': 'NA', 'ITEM': 'ITEM', 'WAIT': 'DENG',
     'STAIRS': '楼梯', 'PIT': '坑', 'TELEPORTER': '传送器',
     'DOOR': '门', 'PICK UP': '拾取', 'DROP': '掉落',
     'USE': '使用', 'ATTACK': '攻击', 'DEFEND': '防御',
@@ -1272,6 +1272,24 @@ THERON.update({
     'tr': {k: k for k in THERON_EN},
     'id': {k: k for k in THERON_EN},
 })
+
+# The shared M11 font has no CJK glyphs. Keep the Theron panel's Japanese and
+# Chinese captions in ASCII romanization, and shorten the only inherited action
+# captions that exceed a 44-pixel host control cell. Other existing DROP/USE
+# translations remain untouched by this panel-only generator.
+THERON_MOUSE = {
+    lang: {key: value for key, value in table.items()
+           if key in {'TURN L', 'FORWARD', 'TURN R', 'STEP L', 'BACK',
+                      'STEP R', 'NEXT', 'PICKUP', 'ITEM', 'WAIT'}}
+    for lang, table in THERON.items()
+}
+THERON_MOUSE['fr']['USE'] = THERON['fr']['USE']
+THERON_MOUSE['de']['DROP'] = THERON['de']['DROP']
+THERON_MOUSE['de']['USE'] = THERON['de']['USE']
+THERON_MOUSE['nl']['DROP'] = 'AFLEG'
+THERON_MOUSE['nl']['USE'] = 'GEBRUIK'
+THERON_MOUSE['ru']['USE'] = 'USE'
+THERON_MOUSE['id']['USE'] = 'PAKAI'
 
 
 # =========================================================================
@@ -1633,9 +1651,9 @@ if __name__ == '__main__':
         'nexus': NEXUS,
         'csb': CSB,
         'theron': THERON,
-        'theron-mouse': (THERON, {
+        'theron-mouse': (THERON_MOUSE, {
             'TURN L', 'FORWARD', 'TURN R', 'STEP L', 'BACK', 'STEP R',
-            'NEXT', 'PICKUP', 'ITEM', 'WAIT',
+            'NEXT', 'PICKUP', 'ITEM', 'DROP', 'USE', 'WAIT',
         }),
         'startup-menu': STARTUP_MENU,
     }

@@ -32,43 +32,43 @@ msgstr "西"
 
 #. Theron host mouse control label
 msgid "TURN L"
-msgstr "左转"
+msgstr "ZUO"
 
 #. Theron host mouse control label
 msgid "FORWARD"
-msgstr "前进"
+msgstr "QIAN"
 
 #. Theron host mouse control label
 msgid "TURN R"
-msgstr "右转"
+msgstr "YOU"
 
 #. Theron host mouse control label
 msgid "STEP L"
-msgstr "左移"
+msgstr "ZUO"
 
 #. Theron host mouse control label
 msgid "BACK"
-msgstr "后退"
+msgstr "HOU"
 
 #. Theron host mouse control label
 msgid "STEP R"
-msgstr "右移"
+msgstr "YOU"
 
 #. Theron host mouse control label
 msgid "NEXT"
-msgstr "下一位"
+msgstr "XIA YI"
 
 #. Theron host mouse control label
 msgid "PICKUP"
-msgstr "拾取"
+msgstr "NA"
 
 #. Theron host mouse control label
 msgid "ITEM"
-msgstr "物品"
+msgstr "ITEM"
 
 #. Theron host mouse control label
 msgid "WAIT"
-msgstr "等待"
+msgstr "DENG"
 
 #. Stairs
 msgid "STAIRS"

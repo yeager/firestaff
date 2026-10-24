@@ -45,7 +45,7 @@ msgstr "SVÄNG H"
 
 #. Theron host mouse control label
 msgid "STEP L"
-msgstr "SIDSTEG V"
+msgstr "STEG V"
 
 #. Theron host mouse control label
 msgid "BACK"
@@ -53,7 +53,7 @@ msgstr "BAKÅT"
 
 #. Theron host mouse control label
 msgid "STEP R"
-msgstr "SIDSTEG H"
+msgstr "STEG H"
 
 #. Theron host mouse control label
 msgid "NEXT"

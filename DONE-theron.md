@@ -1,5 +1,14 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-25 — fit localized Theron mouse-panel captions
+
+Mouse-panel strings now use the active Theron catalog with labels limited to
+seven font glyphs, matching each 44-pixel control cell. Japanese and Chinese
+captions use short ASCII romanizations because M11's small host font has no
+CJK glyphs. Only overlong DROP/USE translations were shortened; the other
+locales' existing action wording remains unchanged. `bash po/validate_po_layout.sh`,
+`bash po/update.sh --check`, and `git diff --check` pass.
+
 ## 2026-10-24 — Firestaff-owned Theron mouse movement panel
 
 The native loaded-dungeon view draws a visible six-button movement panel.

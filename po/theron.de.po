@@ -44,7 +44,7 @@ msgstr "RECHTS"
 
 #. Theron host mouse control label
 msgid "STEP L"
-msgstr "SCHRITT L"
+msgstr "SCHR L"
 
 #. Theron host mouse control label
 msgid "BACK"
@@ -52,7 +52,7 @@ msgstr "ZURÜCK"
 
 #. Theron host mouse control label
 msgid "STEP R"
-msgstr "SCHRITT R"
+msgstr "SCHR R"
 
 #. Theron host mouse control label
 msgid "NEXT"
@@ -64,7 +64,7 @@ msgstr "NEHMEN"
 
 #. Theron host mouse control label
 msgid "ITEM"
-msgstr "GEGENSTAND"
+msgstr "OBJEKT"
 
 #. Theron host mouse control label
 msgid "WAIT"
@@ -92,11 +92,11 @@ msgstr "AUFNEHMEN"
 
 #. Inventory / item action
 msgid "DROP"
-msgstr "FALLEN LASSEN"
+msgstr "ABLEGEN"
 
 #. Inventory / item action
 msgid "USE"
-msgstr "BENUTZEN"
+msgstr "NUTZ"
 
 #. Combat action
 msgid "ATTACK"

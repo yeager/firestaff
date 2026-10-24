@@ -68,7 +68,7 @@ msgstr "OBJET"
 
 #. Theron host mouse control label
 msgid "WAIT"
-msgstr "ATTENDRE"
+msgstr "ATTENTE"
 
 #. Stairs
 msgid "STAIRS"
@@ -96,7 +96,7 @@ msgstr "LÂCHER"
 
 #. Inventory / item action
 msgid "USE"
-msgstr "UTILISER"
+msgstr "UTIL."
 
 #. Combat action
 msgid "ATTACK"

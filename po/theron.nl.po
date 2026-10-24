@@ -97,11 +97,11 @@ msgstr "OPPAKKEN"
 
 #. Inventory / item action
 msgid "DROP"
-msgstr "NEERLEGGEN"
+msgstr "AFLEG"
 
 #. Inventory / item action
 msgid "USE"
-msgstr "GEBRUIKEN"
+msgstr "GEBRUIK"
 
 #. Combat action
 msgid "ATTACK"
