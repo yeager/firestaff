@@ -20,6 +20,8 @@ DM_SHA256 = "3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124"
 EVENT_TABLE_OFFSET = 0x36D04
 EVENT_TABLE_END = 0x37024
 EVENT_NAME_POINTER_TABLE_OFFSET = 0x3ADC4
+EVENT_QUEUE_CONSUMER_OFFSET = 0x21C84
+EVENT_BAD_DATA_FORMAT_OFFSET = 0x376A4
 MOUSE_CALLBACK_EVENT_NAMES = {
     13: (b"EV_EXIT_INV", 0x36DB8),
     44: (b"EV_INV_EQUIP", 0x36F68),
@@ -334,6 +336,75 @@ def report_mouse_inventory_hit_regions(data: bytes) -> bool:
     return valid
 
 
+def report_mouse_event_queue_fallback(data: bytes) -> bool:
+    """Verify the current event consumer's special cases and generic fallback."""
+    valid = True
+    # These are the only event IDs with branches in the queue loop. IDs 13 and
+    # 44 take the fallback, which resolves a name and reports bad event data.
+    expected_words = {
+        0x21CAE: 0x8826,  # cmp/eq #38,r0
+        0x21CB0: 0x8B01,  # bf 0x21cb6
+        0x21CB6: 0x8827,  # cmp/eq #39,r0
+        0x21CB8: 0x8941,  # bt 0x21d3e
+        0x21CBA: 0x8828,  # cmp/eq #40,r0
+        0x21CBC: 0x8945,  # bt 0x21d4a
+        0x21CBE: 0x8831,  # cmp/eq #49,r0
+        0x21CC0: 0x8949,  # bt 0x21d56
+        0x21CC2: 0x8834,  # cmp/eq #52,r0
+        0x21CC4: 0x8905,  # bt 0x21cd2
+        0x21CC6: 0x8838,  # cmp/eq #56,r0
+        0x21CC8: 0x894A,  # bt 0x21d60
+        0x21CCA: 0x8839,  # cmp/eq #57,r0
+        0x21CCC: 0x895C,  # bt 0x21d88
+        0x21CCE: 0xA063,  # bra 0x21d98, generic fallback
+        0x21D98: 0xD34F,  # name lookup function address
+        0x21D9A: 0x430B,  # jsr @r3
+        0x21D9C: 0x64B3,  # event ID -> lookup argument
+        0x21D9E: 0xE519,  # diagnostic argument length
+        0x21DA4: 0xD34D,  # format string address
+        0x21DAA: 0xD24D,  # diagnostic function address
+        0x21DAC: 0x420B,  # jsr @r2
+        0x21DAE: 0xE400,  # delay slot: diagnostic context 0
+    }
+    for offset, expected in expected_words.items():
+        actual = read_be16(data, offset)
+        if actual != expected:
+            print(f"mouse_event_queue_consumer=invalid file_offset=0x{offset:06x} "
+                  f"expected=0x{expected:04x} actual="
+                  f"{('none' if actual is None else f'0x{actual:04x}')}")
+            valid = False
+    for offset, expected_target in ((0x21CC8, 0x21D60),
+                                    (0x21CCC, 0x21D88),
+                                    (0x21CCE, 0x21D98)):
+        opcode = read_be16(data, offset)
+        target = (bt_target(offset, opcode) if offset != 0x21CCE else
+                  offset + 4 + (((opcode & 0xFFF) ^ 0x800) - 0x800) * 2
+                  if opcode is not None and opcode >> 12 == 0xA else None)
+        if target != expected_target:
+            print(f"mouse_event_queue_branch=invalid file_offset=0x{offset:06x} "
+                  f"target={target}")
+            valid = False
+    for offset, expected in ((0x21D98, (3, 0x060241B4)),
+                             (0x21DA4, (3, 0x060476A4)),
+                             (0x21DAA, (2, 0x06023DB4))):
+        if mov_l_pc_literal(data, offset) != expected:
+            print(f"mouse_event_queue_fallback_literal=invalid "
+                  f"file_offset=0x{offset:06x} "
+                  f"decoded={mov_l_pc_literal(data, offset)}")
+            valid = False
+    format_end = bytes(data).find(b"\0", EVENT_BAD_DATA_FORMAT_OFFSET)
+    format_string = (bytes(data[EVENT_BAD_DATA_FORMAT_OFFSET:format_end])
+                     if format_end >= 0 else b"")
+    if format_string != b"bad event data ($%x:%s)\n":
+        print(f"mouse_event_queue_fallback_format=invalid value={format_string!r}")
+        valid = False
+    if valid:
+        print("mouse_event_queue_special_case_ids=38,39,40,49,52,56,57")
+        print("mouse_event_ids_13_44_consumer=generic_bad_event_diagnostic "
+              "gameplay_state_effect=not_verified")
+    return valid
+
+
 def event_string_offsets(data: bytes) -> list[tuple[int, bytes]]:
     pool = data[EVENT_TABLE_OFFSET:EVENT_TABLE_END]
     result: list[tuple[int, bytes]] = []
@@ -403,6 +474,9 @@ def main() -> int:
         return 1
     if not report_mouse_inventory_hit_regions(data):
         print("NEXUS_MOUSE_INVENTORY_HIT_PATH_INVALID: retail hit path changed")
+        return 1
+    if not report_mouse_event_queue_fallback(data):
+        print("NEXUS_MOUSE_EVENT_QUEUE_CONSUMER_INVALID: retail consumer changed")
         return 1
 
     print("interpretation=verified retail hit-region registration and callback transport; "

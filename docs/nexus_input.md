@@ -125,9 +125,11 @@ the eight authentic records all use event 44 and slot arguments 0 through 7.
 The SH-2 hit scanner at file offset `0x24ed6` compares pointer coordinates
 against those bounds, reads the event and slot fields, and queues them to
 `0x06024288`. This binds the rectangles to `EV_INV_EQUIP` with a slot argument.
-It does not yet prove how the queued event mutates champion inventory or which
-Firestaff runtime state is the matching retail owner, so production equipment
-clicks remain disabled.
+The verified consumer at file offset `0x21c84` has special branches only for
+event IDs 38, 39, 40, 49, 52, 56, and 57. IDs 13 and 44 take its generic
+diagnostic path, which resolves the event name and emits `bad event data`.
+This queue path therefore does not establish an inventory mutation; locate the
+separate retail owner (if any) before enabling production equipment clicks.
 
 ## Mouse and remaining input work
 

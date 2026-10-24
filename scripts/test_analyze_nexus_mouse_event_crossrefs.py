@@ -96,6 +96,22 @@ def retail_mouse_registration_fixture() -> bytearray:
     }.items():
         put_u16(data, offset, opcode)
     put_mov_l_pc(data, 0x24EDC, 13, 0x06024288, 0x25080)
+    for offset, opcode in {
+        0x21CAE: 0x8826, 0x21CB0: 0x8B01, 0x21CB6: 0x8827,
+        0x21CB8: 0x8941, 0x21CBA: 0x8828, 0x21CBC: 0x8945,
+        0x21CBE: 0x8831, 0x21CC0: 0x8949, 0x21CC2: 0x8834,
+        0x21CC4: 0x8905, 0x21CC6: 0x8838, 0x21CC8: 0x894A,
+        0x21CCA: 0x8839, 0x21CCC: 0x895C, 0x21CCE: 0xA063,
+        0x21D9A: 0x430B, 0x21D9C: 0x64B3, 0x21D9E: 0xE519,
+        0x21DAC: 0x420B, 0x21DAE: 0xE400,
+    }.items():
+        put_u16(data, offset, opcode)
+    put_mov_l_pc(data, 0x21D98, 3, 0x060241B4, 0x21ED8)
+    put_mov_l_pc(data, 0x21DA4, 3, 0x060476A4, 0x21EDC)
+    put_mov_l_pc(data, 0x21DAA, 2, 0x06023DB4, 0x21EE0)
+    diagnostic_format = b"bad event data ($%x:%s)\n\0"
+    data[trace.EVENT_BAD_DATA_FORMAT_OFFSET:
+         trace.EVENT_BAD_DATA_FORMAT_OFFSET + len(diagnostic_format)] = diagnostic_format
     return data
 
 
@@ -175,6 +191,25 @@ class NexusMouseCallbackTraceTests(unittest.TestCase):
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
             valid = trace.report_mouse_inventory_hit_regions(data)
+        self.assertFalse(valid)
+
+    def test_event_queue_fallback_does_not_claim_gameplay_effect(self) -> None:
+        data = retail_mouse_registration_fixture()
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            valid = trace.report_mouse_event_queue_fallback(data)
+        self.assertTrue(valid)
+        self.assertIn("mouse_event_queue_special_case_ids=38,39,40,49,52,56,57",
+                      output.getvalue())
+        self.assertIn("mouse_event_ids_13_44_consumer=generic_bad_event_diagnostic",
+                      output.getvalue())
+
+    def test_event_queue_consumer_change_is_rejected(self) -> None:
+        data = retail_mouse_registration_fixture()
+        put_u16(data, 0x21CCE, 0xA062)
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            valid = trace.report_mouse_event_queue_fallback(data)
         self.assertFalse(valid)
 
 
