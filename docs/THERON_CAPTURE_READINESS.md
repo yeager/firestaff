@@ -28,6 +28,14 @@ diagnostics only; do not promote them to original-game parity. The pit
 consumer remains blocked; see the
 [pit evidence gap](source-lock/theron-disassembly/theron-pit-gate-evidence-gap-20261024.md).
 
+The Oct. 24 `pce_fast` reference binary came from an older capture-builder
+source copy and did not contain the current scripted PCE Fast input hook.
+Consequently its input attempt cannot verify scheduled gameplay input; the
+host-key trace recorded neutral PCE pad values and no game-command receipt.
+Rebuild with `scripts/build_mednafen_theron_irq2_trace.sh` before another
+scripted-input capture, then require the plan, event, apply, and controller
+read receipts to agree before interpreting gameplay state.
+
 Next reference-capture work is to verify a controlled input with same-session
 command-consumer, party-pose and active-map receipts, then bind the executing
 pit query/caller to its physical bank and authentic Track 02 record. Keep game

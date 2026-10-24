@@ -5,9 +5,12 @@ opens dungeon gameplay, but it is not joined to a source map or party
 coordinates. Host-key input produced PCE pad values without a game
 command-consumer receipt. A separate baseline autoload emitted VDC/RAM
 snapshots but had no verified input or CD transition; a host-input attempt
-failed to emit required VDC snapshots. Keep these reference captures separate
-from the US cold-start session below, which remained on the System Card
-screen.
+failed to emit required VDC snapshots. The Oct. 24 `pce_fast` binary was built
+from an older capture-source copy and lacks the current scripted PCE Fast
+input hook. Rebuild through `scripts/build_mednafen_theron_irq2_trace.sh`,
+then require matching replay-plan/event/apply and controller-read receipts.
+Keep these reference captures separate from the US cold-start session below,
+which remained on the System Card screen.
 
 The native path is independently verified: three current-source Firestaff
 `--debug` runs with authentic JP Rev. 1 Track 02 reached runtime, with the

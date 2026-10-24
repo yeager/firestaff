@@ -12,6 +12,18 @@
   passed. This changes reference-capture tooling only; Firestaff's native
   runtime remains emulator-free.
 
+## 2026-10-24 — identify the stale PCE Fast reference binary
+
+- The Oct. 24 PCE Fast capture binary was assembled from an older capture
+  source copy and does not contain the current scripted PCE Fast input hook
+  applied by `scripts/build_mednafen_theron_irq2_trace.sh`. Its neutral
+  controller reads therefore do not establish whether the planned input
+  reached the original game loop.
+- The next reference run must use a fresh isolated build from the current
+  builder and verify the replay plan, scheduled event, applied mask and
+  matching controller reads. This is capture-tool provenance; Firestaff's
+  Theron runtime remains native C/SDL.
+
 ## 2026-10-24 — clarify native runtime and reference-capture limit
 
 - Reaffirmed that Firestaff runs Theron's Quest in its native C/SDL runtime;
