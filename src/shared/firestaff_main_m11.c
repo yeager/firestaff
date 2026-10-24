@@ -976,7 +976,12 @@ int main(int argc, char** argv) {
             opts.bootProbeExpectDm1HoCReleaseAppCapture = 1;
             continue;
         }
-        if (is_game_option_name(a) && i + 1 < argc) {
+        if (is_game_option_name(a)) {
+            if (i + 1 >= argc) {
+                fprintf(stderr,
+                        "firestaff: --game requires dm1, csb, dm2, nexus, or theron\n");
+                return 2;
+            }
             const char* gameId = argv[++i];
             if (!is_game_id(gameId)) {
                 fprintf(stderr,
@@ -998,7 +1003,12 @@ int main(int argc, char** argv) {
             opts.directLaunch = 1;
             continue;
         }
-        if (strcmp(a, "--platform") == 0 && i + 1 < argc) {
+        if (strcmp(a, "--platform") == 0) {
+            if (i + 1 >= argc) {
+                fprintf(stderr,
+                        "firestaff: --platform requires a value: auto, pc (dos), amiga, atari-st (atari), fm-towns (fmtowns), mac, pce, saturn, or apple-iigs (iigs)\n");
+                return 2;
+            }
             if (!parse_architecture(argv[++i], &opts.architectureOverride)) {
                 fprintf(stderr,
                         "firestaff: --platform must be auto, pc (dos), amiga, atari-st (atari), fm-towns (fmtowns), mac, pce, saturn, or apple-iigs (iigs)\n");
