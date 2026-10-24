@@ -1,4 +1,4 @@
-# Theron's Quest — Keyboard and Mouse Controls
+# Theron's Quest — Keyboard Controls
 
 Theron's Quest (PC Engine) has six movement-panel commands: turn left/right,
 move forward/backward and step left/right. Firestaff's Theron route accepts
@@ -8,22 +8,18 @@ input paths that do not populate scancodes.
 Theron gameplay runs in Firestaff's native C/SDL runtime. External emulators
 are research instruments only and do not run or replace the game in Firestaff.
 
-## Dungeon keyboard mapping
+## PC Engine button mapping
 
-| Action | Primary keys | Alternatives |
-|---|---|---|
-| Move forward | Up Arrow | W, keypad 5/8 |
-| Move backward | Down Arrow | S, keypad 2 |
-| Step left | Left Arrow | A, keypad 1 |
-| Step right | Right Arrow | D, keypad 3 |
-| Turn left | Q | Home, keypad 4 |
-| Turn right | E | End, keypad 6 |
-| Button I | Mouse 1 | Z, Return, Space, short touch |
-| Button II | Mouse 2 | X, Escape, long touch |
-
-At startup, Left/Right remain menu-navigation keys. Once the dungeon is
-loaded, keyboard movement follows the same familiar layout as DM1 while each
-key still enters Theron's native command path.
+| PCE Button | Keyboard (primary) | Keyboard (alt) |
+|------------|-------------------|----------------|
+| D-pad Up   | Up Arrow          | W              |
+| D-pad Down | Down Arrow        | S              |
+| D-pad Left | Q                 | Home, keypad 4 |
+| D-pad Right| E                 | End, keypad 6  |
+| Button I   | Mouse 1, short touch | Z, Return, Space |
+| Button II  | Mouse 2, long touch  | X, Escape         |
+| Run        | Return            |                |
+| Select     | —                 |                |
 
 ## Startup menu
 
@@ -69,9 +65,10 @@ actuator timing or retail queue capacity; see the 2026-10-24 entry in
 
 ## Notes
 
-- Left/Right/A/D and keypad 1/3 issue the source-backed side-step commands
-  `$06/$04`. Q/E, Home/End and keypad 4/6 turn, matching the ordinary DM1
-  dungeon keyboard layout.
+- During loaded gameplay, arrows and A/D issue the source-backed side-step
+  commands `$06/$04`; Q/E, Home/End and keypad 4/6 turn. Startup menu arrows
+  retain their navigation behavior. This matches Firestaff's ordinary DM1
+  dungeon keyboard layout while preserving Theron's native command tokens.
 - Mouse button 1/2 are direct Button I/II bindings. A short touch emits
   Button I; a long touch emits Button II, including during startup. Button II
   cancels startup selection and does not advance a dungeon tick. The retail
@@ -81,10 +78,9 @@ actuator timing or retail queue capacity; see the 2026-10-24 entry in
 - Mouse buttons 1/2 map to Button I/II, but the dungeon route does not use the
   pointer coordinates to select movement, inventory or champion controls.
   Button II is a cancel/modifier and does not perform a standalone dungeon
-  action. This does not provide DM1-style clickable controls. The full native
-  dungeon view and control layout are not yet bound to authenticated graphics,
-  and the original controller-selected movement points do not establish host
-  mouse-region boundaries. The retail interface has no original mouse route.
+  action. This does not provide DM1-style clickable controls. Theron's native
+  dungeon layout is not yet rendered from authenticated graphics, and the
+  captured original input points do not establish complete region boundaries.
   The turn and forward point captures are recorded in
   [`theron-original-turn-command-capture-2026-08-21.md`](source-lock/theron-original-turn-command-capture-2026-08-21.md)
   and

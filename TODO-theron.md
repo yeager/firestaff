@@ -2,25 +2,24 @@
 
 - Native keyboard input already reaches the Theron movement and action facade;
   discrete key events also reached a loaded dungeon and advanced native ticks
-  in the 2026-10-24 Debug runs recorded below. Loaded-dungeon movement now
-  follows DM1's key layout: arrows/A/D sidestep and Q/E/Home/End turn; startup
-  arrows retain their menu-navigation behavior. A fresh native Debug run with
-  authentic JP media logged strafe-left, turn-left/right and side-step
-  commands from those keyboard inputs; the focused input regression passed
-  three loops.
+  in the 2026-10-24 Debug runs recorded below. Loaded-dungeon keyboard mapping
+  now matches the familiar DM1 layout: arrows/A/D sidestep, Q/E/Home/End turn,
+  and keypad 1/3 and 4/6 provide the same actions. Startup arrows still
+  navigate Theron's menus. The focused input regression passed three loops on
+  TRV2.
 - Mouse buttons 1/2 currently map to Button I/II. Dungeon clicks do not use
   pointer position to select movement, inventory or champion controls, and
   Button II does not perform a standalone dungeon action. The retail Theron
-  manual describes a controller-only interface; it has no original mouse
-  route. Authentic controller-selected points identify the six movement
-  commands, but do not specify host mouse bounds. The product's complete
-  native dungeon view is not yet composed from authenticated graphics, so
-  clickable movement, inventory and champion controls cannot be positioned
-  safely yet.
-- Remaining work: finish the authenticated native dungeon view, derive mouse
-  targets from its displayed control layout, then implement and verify
-  DM1-style pointer controls on that native presentation. User requirement
-  remains open until keyboard and mouse both support ordinary dungeon play.
+  interface is controller-only, so authentic point captures do not establish
+  host mouse bounds. The original framebuffer/layout is not yet connected to
+  a validated native gameplay view. DM1 zones cannot be copied blindly onto
+  Theron's differently sized PCE layout; create and test an explicitly
+  Firestaff-owned mouse overlay after the native authenticated view is ready.
+- Remaining work: bind Theron's original graphics and layout in the native
+  renderer, recover the original input-region boundaries from source/runtime
+  evidence, then implement and verify DM1-style mouse zones on the native
+  presentation. User requirement remains open until keyboard and mouse both
+  support ordinary dungeon play.
 
 ## 2026-10-24 — authenticated snapshot renders; state pairing remains open
 
