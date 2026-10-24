@@ -41,6 +41,15 @@ screen, identify graphics ownership, or change Firestaff's native renderer.
 The native presentation still needs an authenticated stream-to-screen join
 before palette or graphics behavior can be implemented safely.
 
+A second bounded JP cold-start reference run reached the regional callee at
+`$5E7D`, but its live stream pointer stayed `$0000`; it did not execute the
+expected `$46B8` dispatch or produce a source-bound screen transition. The
+host-key injection was attempted, but no command-consumer receipt, CD IRQ, or
+authenticated CD-to-RAM transfer was recorded before the trace limit. Its
+close-time VDC/VCE snapshots are therefore not evidence for native gameplay
+rendering. Continue implementation and verification in Firestaff's native
+C/SDL path; use emulator traces only to resolve original-data semantics.
+
 ## Earlier 2026-10-24 — TRV2 headless native loop had no Theron frames
 
 A Debug Firestaff executable built from the current source commit on TRV2 and
