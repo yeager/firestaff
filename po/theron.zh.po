@@ -44,7 +44,7 @@ msgstr "YOU"
 
 #. Theron host mouse control label
 msgid "STEP L"
-msgstr "ZUO"
+msgstr "ZUO BU"
 
 #. Theron host mouse control label
 msgid "BACK"
@@ -52,7 +52,7 @@ msgstr "HOU"
 
 #. Theron host mouse control label
 msgid "STEP R"
-msgstr "YOU"
+msgstr "YOU BU"
 
 #. Theron host mouse control label
 msgid "NEXT"
