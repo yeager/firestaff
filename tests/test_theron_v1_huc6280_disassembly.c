@@ -55,7 +55,46 @@ static void verify_jp_spawn_caller_targets(const char *path,
     assert(caller[0x1au] == 0x60u);
 }
 
-static void verify(const char *env_name, const char *name, int variant,
+static void verify_stage2_vce_palette(const char *path,
+                                      Theron_Track02Variant variant,
+                                      const char *md5_hex) {
+    FILE *file = fopen(path, "rb");
+    long file_size;
+    uint8_t *bytes;
+    Theron_Track02Stage2VcePalette palette;
+    Theron_Track02SignalStatus status;
+
+    assert(file != NULL);
+    assert(fseek(file, 0L, SEEK_END) == 0);
+    file_size = ftell(file);
+    assert(file_size > 0L);
+    assert(fseek(file, 0L, SEEK_SET) == 0);
+    bytes = (uint8_t *)malloc((size_t)file_size);
+    assert(bytes != NULL);
+    assert(fread(bytes, 1u, (size_t)file_size, file) == (size_t)file_size);
+    assert(fclose(file) == 0);
+
+    status = theron_v1_track02_read_stage2_vce_palette(
+        bytes, (size_t)file_size, md5_hex, &palette);
+    free(bytes);
+    assert(status == THERON_TRACK02_SIGNAL_OK);
+    assert(palette.variant == variant);
+    assert(palette.dispatch_entry_verified);
+    assert(palette.routine_verified);
+    assert(palette.payload_verified);
+    assert(palette.vce_palette_start_index == 0x00e0u);
+    assert(palette.vce_palette_entry_count == 32u);
+    assert(palette.payload_byte_count ==
+           THERON_TRACK02_STAGE2_VCE_PALETTE_BYTES);
+    assert(palette.payload_checksum == 0x591d332bu);
+    assert(palette.payload_raw_offset == palette.routine_raw_offset + 18u);
+    assert(palette.groups[0].valid && palette.groups[1].valid);
+    assert(palette.groups[0].nonblack_entry_count == 16u);
+    assert(palette.groups[1].nonblack_entry_count == 15u);
+}
+
+static void verify(const char *env_name, const char *name,
+                   Theron_Track02Variant variant,
                    const char *label) {
     char fallback[512];
     Theron_V1Huc6280DisassemblyReceipt receipt;
@@ -131,8 +170,8 @@ static void verify(const char *env_name, const char *name, int variant,
         assert(receipt.vce_palette_caller_fnv1a == 0xb3b3ccbbU);
         if (variant == THERON_TRACK02_VARIANT_US_BIN ||
             variant == THERON_TRACK02_VARIANT_JP_BIN) {
-            assert(receipt.vce_palette_consumer_address -
-                       receipt.vce_palette_caller_address ==
+            assert((uint32_t)(receipt.vce_palette_consumer_address -
+                              receipt.vce_palette_caller_address) ==
                    receipt.vce_palette_consumer_file_offset -
                        receipt.vce_palette_caller_file_offset);
         }
@@ -232,6 +271,10 @@ static void verify(const char *env_name, const char *name, int variant,
            (variant == THERON_TRACK02_VARIANT_US_BIN ? 0x58cd4b73u :
             variant == THERON_TRACK02_VARIANT_JP_BIN ? 0x788df8e7u :
             0x46360d97u));
+    if (variant == THERON_TRACK02_VARIANT_US_BIN ||
+        variant == THERON_TRACK02_VARIANT_JP_BIN) {
+        verify_stage2_vce_palette(path, variant, receipt.source_md5);
+    }
     printf("PASS: authentic %s HuC6280 disassembly source md5=%s fragment=%08x",
            label, receipt.source_md5, (unsigned)receipt.fragment_fnv1a);
     if (receipt.stage2_dispatch_table_verified) {

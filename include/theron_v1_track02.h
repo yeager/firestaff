@@ -563,6 +563,32 @@ typedef struct {
     int valid;
 } Theron_Track02Palette4Bpp;
 
+#define THERON_TRACK02_STAGE2_VCE_PALETTE_BYTES 64u
+#define THERON_TRACK02_STAGE2_VCE_PALETTE_GROUP_COUNT 2u
+
+/* Source-bound static Stage-2 palette routine and payload. This receipt
+ * verifies the $46B8 dispatch entry, the regional VCE routine, and the 32
+ * authentic colors written at VCE index $E0. It proves static bytes and
+ * transfer semantics only; it does not prove which screen invokes the
+ * command or bind pixels to this palette. */
+typedef struct {
+    Theron_Track02Variant variant;
+    uint16_t vce_palette_start_index;
+    uint16_t vce_palette_entry_count;
+    size_t routine_raw_offset;
+    size_t routine_user_data_offset;
+    size_t payload_raw_offset;
+    size_t payload_user_data_offset;
+    size_t payload_byte_count;
+    uint32_t payload_checksum;
+    uint8_t payload[THERON_TRACK02_STAGE2_VCE_PALETTE_BYTES];
+    Theron_Track02Palette4Bpp groups[
+        THERON_TRACK02_STAGE2_VCE_PALETTE_GROUP_COUNT];
+    int dispatch_entry_verified;
+    int routine_verified;
+    int payload_verified;
+} Theron_Track02Stage2VcePalette;
+
 typedef struct {
     int valid;
     unsigned int route_bit;
@@ -598,6 +624,15 @@ Theron_Track02SignalStatus theron_v1_track02_decode_4bpp_palette(
     const uint8_t *palette_bytes,
     size_t palette_size,
     Theron_Track02Palette4Bpp *out_palette);
+
+/* Read the authentic US or JP Stage-2 VCE palette routine and its adjacent
+ * 64-byte payload from a hash-verified raw Track 02 BIN. Mode1/2352 physical
+ * offsets are sector-adjusted; caller-provided offsets are not accepted. */
+Theron_Track02SignalStatus theron_v1_track02_read_stage2_vce_palette(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02Stage2VcePalette *out_palette);
 
 Theron_Track02SignalStatus theron_v1_track02_colorize_startup_bitmap_route(
     const Theron_Track02StartupBitmapAtlasRoute *indexed_route,

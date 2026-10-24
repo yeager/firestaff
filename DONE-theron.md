@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-24 — source-bound Stage-2 VCE palette in US and JP media
+
+The `$46B8` dispatch handler and regional calls (`$5E4D` US, `$5E7D` JP)
+were compared against the authenticated raw Track 02 images with MODE1/2352
+sector framing applied. Each target contains the exact VCE routine that
+writes 64 bytes to palette entries `$E0..$FF`; the US and JP payloads are
+identical and decode as 32 HuC6260 colors. This resolves a false mismatch
+caused by using contiguous-file offsets across raw sectors. The evidence is
+static source/media proof only: which screen invokes the command and how its
+pixels use these colors remain unverified. See
+[`theron-stage2-static-vce-palette-20261024.md`](docs/source-lock/theron-stage2-static-vce-palette-20261024.md).
+
 ## 2026-10-24 — native input reaches a loaded dungeon and starts game ticks
 
 A local macOS Debug build ran the native Firestaff C/SDL application with
