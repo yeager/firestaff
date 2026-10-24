@@ -35,6 +35,10 @@ receipt proves movement, gameplay, or visual parity. Do not promote
 Reproduction command on TRV2, repeated three times:
 
 ```sh
+app=/home/trv2/work/firestaff-current-main-20261024/.build-debug/firestaff
+root=/home/trv2/.firestaff/data/theron/TQUS02.bin
+out=/dev/shm/theron-debug-render-receipt-loop1
+mkdir -p "$out"
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$out/runtime.json" \
 FIRESTAFF_AUTOTEST_SCREENSHOT_DIR="$out/source" \
 FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$out/presented" \
