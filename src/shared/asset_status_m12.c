@@ -6090,7 +6090,7 @@ static void m12_admit_csb_amiga31_english_program_package(
                      * Resolve the single authenticated virtual member and
                      * let the package gate validate its same-disk programs. */
                     count = asset_find_by_md5(root, hashes[edition],
-                                              paths[0], ASSET_PATH_MAX, 0);
+                                              paths[0], ASSET_PATH_MAX, 32);
                 }
                 for (candidate = 0; candidate < count; ++candidate) {
                     if ((pass && !m12_path_is_virtual_asset(paths[candidate])) ||
