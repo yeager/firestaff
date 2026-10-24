@@ -21,6 +21,20 @@ EXPECTED = {
     "DM Nexus V2": 20,
     "Theron V1": 72,
 }
+FAMILY_TARGETS = {
+    "DM1": ("DM1 V1", "DM1 V2"),
+    "CSB": ("CSB V1", "CSB V2"),
+    "DM2": ("DM2 V1", "DM2 V2"),
+    "DM Nexus": ("DM Nexus V1", "DM Nexus V2"),
+    "Theron's Quest": ("Theron V1",),
+}
+VERSION_PROFILES = {
+    "DM1": 16,
+    "CSB": 9,
+    "DM2": 7,
+    "DM Nexus": 5,
+    "Theron's Quest": 4,
+}
 
 
 def main() -> int:
@@ -39,6 +53,17 @@ def main() -> int:
     doc = DOC.read_text(encoding="utf-8")
     for target, percent in EXPECTED.items():
         assert f"| {target} | {percent}% | {percent}/100 |" in doc, target
+    for family, targets in FAMILY_TARGETS.items():
+        mean = round(sum(rows[target]["points"] for target in targets) / len(targets), 1)
+        summary = f"| {family} | {len(targets)} | {VERSION_PROFILES[family]} | {mean:.1f}% |"
+        assert summary in doc, f"stale family roll-up: expected {summary}"
+    total_points = sum(row["points"] for row in rows.values())
+    total_summary = (
+        f"| **Total** | **{len(rows)}** | **{sum(VERSION_PROFILES.values())}** | "
+        f"**{total_points / len(rows):.1f}%** | Unweighted mean of the {len(rows)} runtime targets: "
+        f"{total_points}/{len(rows) * 100}. |"
+    )
+    assert total_summary in doc, f"stale completion total: expected {total_summary}"
     out = subprocess.check_output([sys.executable, str(ROOT / "tools/firestaff_completion_status.py")], text=True)
     for target, percent in EXPECTED.items():
         assert f"{target} | completionPercent={percent}%" in out, target
