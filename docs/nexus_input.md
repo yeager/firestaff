@@ -95,7 +95,7 @@ pointer and mouse clicks remain inert while callback semantics are unresolved.
 
 `scripts/analyze_nexus_mouse_event_crossrefs.py` inventories direct SH-2
 `MOV.L @(disp,PC),Rn` references in the hash-verified retail `DM.BIN`. In the
-current English retail image, none of the 60 event-name strings has a direct
+hash-pinned Japanese retail image, none of the 60 event-name strings has a direct
 literal-pointer reference. The image does reference the HUD hit-rectangle
 subtable beginning at file offset `0x38040`, and `yam\\mouse.c` appears in a
 separate source-path reference. The string scan alone cannot resolve indirect
@@ -109,10 +109,14 @@ SH-2 instructions at `DM.BIN:0x16588` load a callback at runtime address
 `0x06048040` (`DM.BIN:0x38040`), then call the setup routine at
 `0x06034ad0`. That routine stores the supplied callback pointer in a global
 slot; the paired dispatcher checks its active flag and makes an indirect call
-through that slot. This proves that the retail program registers and invokes
-a callback associated with the authentic hit-region data. The callback's
-state transitions and the action assigned to individual rectangles are still
-unresolved, so this evidence is not enough to implement click actions.
+through that slot. A second verified path at `DM.BIN:0x164a8` reads fields at
+object offsets 100 and 104. When the first field is 6, submode 0 queues numeric
+event 13 and submode 2 queues numeric event 44 to `0x06024288`; submode 1 does
+not queue either event. The numeric event names and the state changes made by
+the later consumer remain unresolved. This trace therefore does not establish
+the action assigned to any hit rectangle and is not enough to implement
+pointer clicks. The analyzer checks the branch targets, event values, and
+queue target against the hash-verified Japanese retail `DM.BIN`.
 
 ## Mouse and remaining input work
 
@@ -125,6 +129,6 @@ cursor and D-pad movement are captured, while desktop mouse movement in
 Firestaff is a host control behavior rather than a claim about Saturn
 ShuttleMouse.
 
-Next work must bind the documented cursor and non-movement controls to
-same-session retail input and state traces. Keep unsupported actions inert
-until their retail consumers are identified.
+Next work must bind the queued event IDs and documented cursor/non-movement
+controls to the retail event consumer and same-session state writes. Keep
+unsupported actions inert until those consumers are identified.

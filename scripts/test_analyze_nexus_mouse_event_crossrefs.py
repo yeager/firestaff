@@ -64,6 +64,20 @@ def retail_mouse_registration_fixture() -> bytearray:
     put_u16(data, 0x24B32, 0x2EE8)  # tst R14,R14
     put_u16(data, 0x24B34, 0x8901)  # bt 0x24B3A
     put_u16(data, 0x24B36, 0x4E0B)  # JSR @R14
+
+    # Callback object-class/submode gates and the two numeric event submits.
+    for offset, opcode in {
+        0x16548: 0xE064, 0x1654A: 0x00EE, 0x1654C: 0x8806,
+        0x1654E: 0x8B1B, 0x16550: 0xE068, 0x16552: 0x00EE,
+        0x16554: 0x8800, 0x16556: 0x8905, 0x16558: 0x8801,
+        0x1655A: 0x8915, 0x1655C: 0x8802, 0x1655E: 0x890A,
+        0x1656A: 0xE40D, 0x1657A: 0xE507, 0x1657E: 0xE42C,
+    }.items():
+        put_u16(data, offset, opcode)
+    put_mov_l_pc(data, trace.MOUSE_CALLBACK_EVENT_DISPATCH, 3,
+                 0x06024288, 0x16690)
+    put_mov_l_pc(data, trace.MOUSE_CALLBACK_MODE2_DISPATCH, 2,
+                 0x06024288, 0x16694)
     return data
 
 
@@ -98,6 +112,24 @@ class NexusMouseCallbackTraceTests(unittest.TestCase):
         data = retail_mouse_registration_fixture()
         put_u16(data, 0x24B36, 0x4E0A)
         self.assertFalse(self.report(data)[0])
+
+    def test_mode_gated_event_ids_are_reported_without_names(self) -> None:
+        data = retail_mouse_registration_fixture()
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            valid = trace.report_mouse_callback_event_ids(data)
+        self.assertTrue(valid)
+        self.assertIn("event_mode_0_id=13", output.getvalue())
+        self.assertIn("event_mode_2_id=44", output.getvalue())
+        self.assertIn("event_names_and_gameplay_effects=unbound", output.getvalue())
+
+    def test_event_submission_mode_change_is_rejected(self) -> None:
+        data = retail_mouse_registration_fixture()
+        put_u16(data, 0x1657E, 0xE42D)
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            valid = trace.report_mouse_callback_event_ids(data)
+        self.assertFalse(valid)
 
 
 if __name__ == "__main__":

@@ -138,10 +138,11 @@ on the PRS3 menu capture. See
   strings, while its HUD table's subtable at `0x38040` is referenced. This
   scan is supplemented by a verified SH-2 path that registers the hit-region
   table with a callback and later dispatches indirectly through that callback
-  slot. The individual hit-region actions and resulting gameplay-state writes
-  are still unbound, so this does not open the action gate. Trace the callback
-  to its event targets and same-session gameplay-state writes before wiring
-  Nexus mouse gameplay.
+  slot. A second retail callback trace verifies object fields 100/104 and
+  queues numeric events 13/44 to `0x06024288` in two modes; event names and
+  downstream effects remain unbound. This does not open the action gate.
+  Trace the queue consumer and same-session gameplay-state writes before
+  wiring pointer actions.
   See `parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`.
   See also `parity-evidence/verification/nexus-mouse-callback-dispatch-20261024/README.md`.
   Firestaff now has a host Z toggle, logical pointer motion through keyboard

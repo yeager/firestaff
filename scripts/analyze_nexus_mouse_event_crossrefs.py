@@ -37,6 +37,16 @@ MOUSE_REGION_ACTIVE_FLAG_BRANCH = 0x24B2C
 MOUSE_REGION_CALLBACK_NULL_TEST = 0x24B32
 MOUSE_REGION_CALLBACK_NULL_BRANCH = 0x24B34
 
+# The registered callback has a secondary path for mouse-region objects in
+# interaction class 6. It submits two numeric event IDs for object modes 0 and
+# 2. The adjacent EV_* strings are not enough to assign names to those IDs;
+# preserve the numeric values until the event consumer is decoded.
+MOUSE_CALLBACK_MODE_CHECK = 0x16548
+MOUSE_CALLBACK_MODE0_EVENT = 0x1656A
+MOUSE_CALLBACK_MODE2_EVENT = 0x1657E
+MOUSE_CALLBACK_EVENT_DISPATCH = 0x16568
+MOUSE_CALLBACK_MODE2_DISPATCH = 0x1657C
+
 
 def resolve_dm_bin(explicit: Path | None) -> Path:
     if explicit is not None:
@@ -182,6 +192,66 @@ def report_mouse_region_registration(data: bytes) -> bool:
     return valid
 
 
+def report_mouse_callback_event_ids(data: bytes) -> bool:
+    """Verify the callback's mode-gated numeric event submissions.
+
+    This does not bind the event IDs to names or game actions. It only checks
+    the retail SH-2 path which reads object fields 100/104 and passes IDs 13/44
+    to the event dispatcher for modes 0/2.
+    """
+    words = {
+        0x16548: 0xE064,  # mov #100,r0
+        0x1654A: 0x00EE,  # mov.l @(r0,r14),r0
+        0x1654C: 0x8806,  # cmp/eq #6,r0
+        0x1654E: 0x8B1B,  # bf 0x16588
+        0x16550: 0xE068,  # mov #104,r0
+        0x16552: 0x00EE,  # mov.l @(r0,r14),r0
+        0x16554: 0x8800,  # cmp/eq #0,r0
+        0x16556: 0x8905,  # bt 0x16564
+        0x16558: 0x8801,  # cmp/eq #1,r0
+        0x1655A: 0x8915,  # bt 0x16588 (no event submission)
+        0x1655C: 0x8802,  # cmp/eq #2,r0
+        0x1655E: 0x890A,  # bt 0x16576
+        0x1656A: 0xE40D,  # mov #13,r4
+        0x1657A: 0xE507,  # mov #7,r5
+        0x1657E: 0xE42C,  # mov #44,r4
+    }
+    valid = True
+    for offset, expected in words.items():
+        actual = read_be16(data, offset)
+        if actual != expected:
+            print(f"mouse_callback_event_path=invalid file_offset=0x{offset:06x} "
+                  f"expected=0x{expected:04x} actual="
+                  f"{('none' if actual is None else f'0x{actual:04x}')}")
+            valid = False
+
+    for offset, expected_target in ((0x1654E, 0x16588),
+                                    (0x16556, 0x16564),
+                                    (0x1655A, 0x16588),
+                                    (0x1655E, 0x16576)):
+        opcode = read_be16(data, offset)
+        if opcode is None or bt_target(offset, opcode) != expected_target:
+            print(f"mouse_callback_event_branch=invalid file_offset=0x{offset:06x}")
+            valid = False
+
+    for offset in (MOUSE_CALLBACK_EVENT_DISPATCH,
+                   MOUSE_CALLBACK_MODE2_DISPATCH):
+        decoded = mov_l_pc_literal(data, offset)
+        if decoded != (3 if offset == MOUSE_CALLBACK_EVENT_DISPATCH else 2,
+                       0x06024288):
+            print(f"mouse_callback_event_dispatch=invalid file_offset=0x{offset:06x} "
+                  f"decoded={decoded}")
+            valid = False
+
+    if valid:
+        print("mouse_callback_object_mode_field_offset=100 value=6")
+        print("mouse_callback_submode_field_offset=104 event_mode_0_id=13 "
+              "event_mode_2_id=44 event_mode_1=no-submit")
+        print("mouse_callback_event_dispatch_target=0x06024288 "
+              "event_names_and_gameplay_effects=unbound")
+    return valid
+
+
 def event_string_offsets(data: bytes) -> list[tuple[int, bytes]]:
     pool = data[EVENT_TABLE_OFFSET:EVENT_TABLE_END]
     result: list[tuple[int, bytes]] = []
@@ -246,9 +316,13 @@ def main() -> int:
     if not report_mouse_region_registration(data):
         print("NEXUS_MOUSE_REGION_REGISTRATION_INVALID: retail instruction path changed")
         return 1
+    if not report_mouse_callback_event_ids(data):
+        print("NEXUS_MOUSE_CALLBACK_EVENT_PATH_INVALID: retail callback path changed")
+        return 1
 
     print("interpretation=verified retail hit-region registration and callback transport; "
-          "callback semantics and resulting gameplay actions remain unbound")
+          "verified numeric callback event submissions; event names and resulting "
+          "gameplay actions remain unbound")
     return 0
 
 
