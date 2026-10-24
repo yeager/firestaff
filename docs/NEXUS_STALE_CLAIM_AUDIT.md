@@ -19,7 +19,7 @@ source-bound.
 | `nexus_audio_format.md`, `nexus_music.md`, `nexus_sound.md`, `nexus_sfx.md` | CD-DA/SAL/MAP can be played through host assumptions, or level pairs automatically choose tracks | CDDA tracks 2–9 and SAL/MAP are metadata; level→CDDA, SLEV/SDDRVS event→selector, and playback are capture-gated |
 | `nexus_input.md`, `nexus_sensors.md`, `nexus_squares.md` | DM1-like input, sensor, and square semantics apply to Nexus | Only bounded source records are admitted; Saturn dispatch and state writes are unproven |
 | `nexus_dungeon.md`, `nexus_content.md`, `nexus_math.md` | Nexus uses a 32×32 grid, or DGN geometry is entirely unparsed | Retail DGN has 64×64 Structure1B cells; Structure1B/2/3 intake exists, while transform/material/VDP1 consumer remains capture-gated |
-| `nexus_menus.md`, `nexus_graphics.md` | Animated Saturn title, options/in-game menu, or the host polygon route is retail parity | Host state/input and bounded geometry exist as receipts; title/menu composition, VDP1/VDP2 ownership, and menu sequence remain unbound |
+| `nexus_menus.md`, `nexus_graphics.md` | Animated Saturn title, options/in-game menu, or the host polygon route is retail parity | Host state/input and bounded geometry exist as receipts; title/menu composition, VDP1/VDP2 ownership, and menu sequence remain unbound. The NBG1 TileFetcher address correction in open PR #19 is capture-only and does not establish any of these owners |
 | `nexus_phase2_data_formats_H2321.md`, `nexus_test_coverage.md` | Historical test/stub matrices describe current production | Older plan/coverage documents do not override current CMake exclusion and no-draw gates |
 
 ## Production rule

@@ -1,6 +1,6 @@
 # Game and platform status
 
-**Last full review: 2026-10-12; Theron rows updated: 2026-10-03.** This is the
+**Last full review: 2026-10-24.** This is the
 operational status matrix. It separates media recognition, verified runtime
 slices and end-to-end playability. A row marked as supported does not mean
 that every menu, save format or visual parity gate is complete.
@@ -291,7 +291,7 @@ queue acceptance, not audible hardware or retail sound parity.
 
 | Platform | Status | Current scope | Open boundary |
 |---|---|---|---|
-| Sega Saturn Japanese | **Verified bounded title-asset route** | Authentic CUE/BIN media is retained as the sole source owner. Firestaff decodes the retail `TITLE.BIN`/`TITLE.CG` MAPD planes, selector sequence and BGR555 palettes in memory and presents those bounded title assets through CLI and start-menu selection. This is not a claim of full Saturn title composition or a verified title-to-menu transition. Disc parsing, CDDA ownership, DMDF/DGN/MNS/PRS3 decoding and capture receipts remain separately source-bound. | Full Saturn title composition and title-to-menu transition; same-revision consumer evidence for menu/face, HUD and dungeon display; native event/audio playback and full gameplay. |
+| Sega Saturn Japanese | **Verified bounded title-asset route** | Authentic CUE/BIN media is retained as the sole source owner. Firestaff decodes the retail `TITLE.BIN`/`TITLE.CG` MAPD planes, selector sequence and BGR555 palettes in memory and presents those bounded title assets through CLI and start-menu selection. Open PR #19 adds a capture-only NBG1 tile-fetch address correction tested on an authentic Japanese startup frame; neither claim establishes full Saturn title composition or a verified title-to-menu transition. Disc parsing, CDDA ownership, DMDF/DGN/MNS/PRS3 decoding and capture receipts remain separately source-bound. | Full Saturn title composition and title-to-menu transition; same-revision consumer evidence for menu/face, HUD and dungeon display; native event/audio playback and full gameplay. |
 | Saturn demo or fan translations | **Preservation** | Classified separately from the canonical Japanese retail route. | Independent media and runtime proof. |
 
 ## Theron's Quest

@@ -1,20 +1,40 @@
-## 2026-10-24 — original-emulator visual pair remains open
+## 2026-10-24 — authenticated snapshot renders; state pairing remains open
 
-- The available TRV2 `firestaff` executable was built from commit `3f6f575`
-  dated 2026-09-17. It rejects both `--debug` and the current Theron
-  `--theron-native` option before opening game media. No runtime route or
-  capture was produced; this attempt is not parity evidence.
-- A separate current-source TRV2 build accepted `--debug`. Three direct
-  Theron US boot-probe loops against the authentic Track 02 BIN (MD5
-  `f23601102138f87c33025877767ebf76`) reached the same receipt: runtime phase,
-  map 0, party (1,0), two champions, 291 source objects, and four loaded
-  dungeon levels. The logs remain in private TRV2 cache. SDL dummy output and
-  zero runtime frames provide no screenshot or original-emulator pair, so this
-  verifies runtime admission only, not visual or gameplay parity.
-- Capture a matching original-emulator frame and state receipt, then pair it
-  with a Firestaff `--debug` runtime capture using the paired-capture v2
-  contract. Keep unknown original coordinates unknown until debugger evidence
-  supplies them.
+- Three TRV2 Firestaff `--debug` runtime loops accepted the authentic US Track
+  02 BIN (MD5 `f23601102138f87c33025877767ebf76`) and the hash-allowlisted
+  `selection.trace` VDC bundle. Each boot probe loaded Ak-Tu-Ba dungeon 1,
+  level 0 (32x27, entrance (4,0)), four dungeon levels, 291 source objects,
+  four verified source headers, 455 non-zero source tiles, and two champions
+  at map 0, position (1,0). The bounded movement pipeline remained idle and
+  `gameTick=0`.
+- The five-file authentic capture bundle was accepted by the production CLI
+  route. All three runs emitted identical 320x200 source and presented frames
+  (SHA-256
+  `cdcb9d4f4247d72f6fa9f28dd28571153c718984fae8dd581553729d3317df47`), with
+  35,452 non-black pixels. Capture hashes, FNV allowlist tuple, relevant source
+  file hashes, and invocation are recorded in
+  `parity-evidence/verification/theron_v1_authenticated_snapshot_render_receipt_20261024/`.
+- The earlier all-black receipt in
+  `parity-evidence/verification/theron_v1_debug_render_receipt_20261024/`
+  came from a no-snapshot invocation of an exported TRV2 source snapshot whose
+  renderer and capture-loader files differ from this checkout. It remains a
+  valid historical no-snapshot diagnostic, not evidence that the authenticated
+  capture route currently renders black.
+- The same close-time TRV2 capture also reports raw BaseRAM fields
+  `current_level_2031=02`, `party_direction_203f=01`, `party_x_2040=02`, and
+  `party_y_2041=03`; the VDC-I/O snapshot boundary is sequence 65536 at
+  timestamp 40176 (`vdc-io` SHA-256
+  `c14cfd4d20fab26c6175d0f5c8cbac4e86d806a0f85e2ddee907c753cdb28aec`). The
+  capture retained 65,536 main-RAM consumer reads with no direct reads of
+  those four candidate offsets, and reports `transition=missing`. The original
+  three-loop Firestaff probe reported level 0 and party `(1,0,dir0)`. A
+  follow-up three-loop `--debug` route reached party `(2,3,dir1)`, three
+  champions, and `gameTick=17`; each presented frame retained the same
+  snapshot-render SHA-256. The x/y/direction raw candidate bytes therefore
+  match that route, but Firestaff still loaded level 0 and `$2031=02` has no
+  source-backed world meaning. This is only a candidate pose match, not a
+  same-level/world join. No original-emulator screenshot was paired with the
+  Firestaff frame; rendering remains screen-space evidence only.
 
 ## 2026-10-10 — instrument PCE Fast CPU VWR commits for source attribution
 

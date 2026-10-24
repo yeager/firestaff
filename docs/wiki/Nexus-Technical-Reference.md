@@ -1,10 +1,10 @@
 # Dungeon Master Nexus Technical Reference
 
-> **Status reviewed 2026-10-24.** The retail Japanese CUE/BIN supplies the
-> admitted MAPD assets that Firestaff can present in a bounded route. Full
-> Saturn title composition and the title-to-menu transition remain unverified;
-> menu, HUD, dungeon composition and playability require their own source-bound
-> display and execution evidence.
+> **Status reviewed 2026-10-24.** The retail Japanese CUE/BIN drives a native
+> MAPD title sequence. A capture-only NBG1 tile-fetch address correction is
+> verified against an authentic startup frame in open PR #19. Menu, HUD,
+> dungeon composition and full playability remain open because each needs its
+> own source-bound display consumer evidence.
 
 ## Scope
 

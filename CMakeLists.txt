@@ -12083,6 +12083,11 @@ endif()
             COMMAND ${_pool_probe_exe} "${_pool_probe_data}"
         )
         set_tests_properties(${_pool_probe_exe} PROPERTIES TIMEOUT 600 PROCESSORS 2)
+        if(_pool_probe_exe STREQUAL "firestaff_dm1_v1_hoc_champion_portrait_01_highdpi_mouse_rect_portrait_rect_position_121_gate_probe")
+            set_tests_properties(${_pool_probe_exe} PROPERTIES
+                SKIP_RETURN_CODE 77
+                LABELS "dm1;pc34;real-media;hoc;champion-input;hidpi;skip-safe")
+        endif()
     endif()
 endforeach()
 
@@ -13501,6 +13506,10 @@ if(BUILD_TESTING)
             COMMAND test_m11_dm1_hoc_c127_c162_rotation_owner_pc34
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         )
+        set_tests_properties(m11_dm1_hoc_c127_c162_rotation_owner_pc34 PROPERTIES
+            SKIP_RETURN_CODE 77
+            ENVIRONMENT "FIRESTAFF_DM1_DATA_DIR=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
+            LABELS "dm1;dos;pc34;real-media;hoc;champion-input;skip-safe")
     endif()
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_hoc_c127_resurrect_reincarnate_full_pc34.c")
@@ -18671,6 +18680,17 @@ endif()
         LABELS "tier2;csb;amiga;startup;cli;menu;real-data;real-media;archive;native;skip-safe"
         ENVIRONMENT "FIRESTAFF_CSB_AMIGA_ADF_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back (FTL).zip"
         TIMEOUT 45
+    )
+    add_test(
+        NAME m12_main_menu_csb_amiga_only_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_csb_amiga_only_real_media.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(m12_main_menu_csb_amiga_only_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;csb;amiga;startup;cli;menu;real-data;real-media;archive;native;skip-safe"
+        ENVIRONMENT "FIRESTAFF_CSB_AMIGA_ADF_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back (FTL).zip;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        TIMEOUT 60
     )
     add_test(
         NAME csb_v1_fmtowns_native_cli_boot
@@ -47184,6 +47204,7 @@ if(BUILD_TESTING AND TARGET firestaff_theron)
     set_tests_properties(theron_v1_cli_authenticated_capture PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "theron;real-media;rendering"
+        ENVIRONMENT "FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
     )
 endif()
 

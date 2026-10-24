@@ -1,6 +1,6 @@
 # Firestaff project status
 
-**Last full review: 2026-09-12; Theron's Quest updated: 2026-10-03.** This page
+**Last full review: 2026-10-24.** This page
 is the concise status source for the README and wiki. The full documentation
 map is in [`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md).
 
@@ -12,7 +12,7 @@ source audits and capture receipts remain in the linked game documentation.
 | Dungeon Master 1 | Playable PC DOS 3.4; bounded native routes for other editions | PC 3.4 runtime, viewport, HUD, input, combat and saves; Apple IIGS 2.0/2.1 original-media CLI/M12 first-world startup; Apple Silicon macOS boot smoke and original-data gates | Broader original-vs-Firestaff capture, IIGS title/entrance and DOC playback, and V2 material; the unreleased historical Macintosh prototype has no local authenticated data |
 | Chaos Strikes Back | Verified bounded real-media routes; active hardening | Atari STX 50 Hz title-to-FTLCODE/runtime route, start-menu CLI, Amiga and FM Towns bounded native routes; FM Towns C28 entrance palette and MINI.DAT bootstrap state | DSA/save corpus and wider campaign/capture evidence |
 | Dungeon Master II: Skullkeep | Verified bounded real-media routes; active hardening | M12 source-owner selection, English/French DOS menu-to-runtime routes, Amiga title/New Game/runtime, FM Towns in-memory title/menu/runtime slices, source-owned viewport/HUD and focused mechanics | Edition-matched title palette/timing, input, audio and dungeon-composition parity across editions |
-| DM Nexus | Active real-data bring-up | Saturn DMDF/DGN data, CUE-owned CDDA and STABG source selection, bounded presentation of retail MAPD title assets, captured NBG1 palette-bank/origin and raw bitmap/CRAM decode receipts, world/render/save/mechanics slices and V2 presentation | Full Saturn title composition and title-to-menu transition; menu/face, HUD and dungeon source-to-VDP material semantics; native event/audio playback and full playability |
+| DM Nexus | Active real-data bring-up | Saturn DMDF/DGN data, CUE-owned CDDA and STABG source selection, bounded presentation of retail MAPD title assets, capture-only VDP1/VDP2 decoders, and an NBG1 tile-fetch address correction tested against an authentic Japanese startup frame in PR #19 | Full Saturn title composition and title-to-menu transition; menu/face, HUD and dungeon source-to-VDP material semantics; native event/audio playback and full playability; production readiness remains 0% |
 | Theron's Quest | Verified bounded JP runtime and US routes; active real-media bring-up | JP Rev 1 title → stage → Soul Room → Akutuba runtime; source-only loading of all seven JP dungeons from authentic raw BIN and CUE-projected ISO; US Track 02 starts from direct CLI and the no-game M12 main menu reaches its bounded runtime; CloneCD ZIP startup and MODE1/2048 ISO Akutuba forcefield handoff; raw/assembled-ISO equivalence for all 34 maps and 2,269 linked source-object records in each region; the separate world ledger retains 2,266 ground-reference occurrences; JP/US media identity and level framing | Later campaign progression, save-body semantics, original presentation, JP initial party pose/map join and end-to-end gameplay |
 
 ## Completion reporting

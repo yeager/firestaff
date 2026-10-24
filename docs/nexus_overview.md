@@ -18,7 +18,7 @@ source for missing exact members.
 
 | Area | Verified | Remaining |
 |---|---|---|
-| Startup | TITLE/MAPD, LOGOBG, WARNING/GAMEOVER/STABG, FACE, and FONT bytes | Saturn VDP2 layers, timing, text mapping, and destination |
+| Startup | TITLE/MAPD, LOGOBG, WARNING/GAMEOVER/STABG, FACE, and FONT bytes; NBG1 tile addresses decoded in an authentic capture by open PR #19 | Saturn VDP2 asset ownership, timing, text mapping, title composition, and title-to-menu transition |
 | Menu | MENU.BPK/BPPK, 162 PRS3 surfaces, and pixel decoding | CLUT, VDP1 upload, placement, and menu sequence |
 | HUD | STABG tiles/palette and DM.BIN hit rectangles | input/VDP consumer and runtime-state binding |
 | Viewport | DGN Structure1B/2 and MNS/DMDF census | Structure3 face owner, mesh transform, VDP1 command/texture use |
@@ -26,9 +26,9 @@ source for missing exact members.
 
 ## Sources
 
-- DMWeb's Nexus-specific file-format pages and DMN Data File Decoder.
-- Greatstone's SCK material only for applicable DM/CSB/DM2 comparisons; it
-  does not provide Saturn Nexus format or runtime evidence.
+- [DMWeb Nexus file-format pages](http://dmweb.free.fr/community/documentation/dungeon-master-nexus/file-formats/) and the [DMN Data File Decoder](http://dmweb.free.fr/community/tools/dungeon-master-nexus-data-file-decoder/) document game-file formats and decoder behavior.
+- [Greatstone Swoosh Construction Kit](http://greatstone.free.fr/dm/) is a cross-version extraction and format reference for authentic DM-family assets; use it for asset/format cross-checks, not as evidence of Saturn VDP register behavior or runtime presentation.
+- The reviewed page inventory and scope notes are in [DMWeb and Greatstone Reference](DMWEB_REFERENCE.md).
 - [NEXUS_STRICT_FIDELITY_INVENTORY.md](NEXUS_STRICT_FIDELITY_INVENTORY.md).
 - [NEXUS_RUNTIME_CAPTURE.md](NEXUS_RUNTIME_CAPTURE.md).
 

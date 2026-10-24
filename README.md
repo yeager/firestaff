@@ -20,9 +20,8 @@ Theron's Quest.
 
 ## Current status
 
-The table was last fully reviewed on 2026-09-12; the Theron's Quest row was
-updated on 2026-10-03. It reports what has been exercised with real media, not
-a claim of complete game parity.
+The table was reviewed on 2026-10-24. It reports what has been exercised
+with real media, not a claim of complete game parity.
 
 Firestaff detects real media and exposes only paths with a verified handoff; it
 never borrows data from another edition to fill a gap. The detailed status is kept in
@@ -37,7 +36,7 @@ separates source/disassembly evidence, real-media receipts and open routes.
 | Dungeon Master | PC DOS, Atari ST, Amiga and FM Towns startup and selected dungeon routes have real-media coverage. The PC 3.4 Hall of Champions candidate panel is rendered from authenticated C040/C026 assets. Further gameplay and visual parity work continues. |
 | Chaos Strikes Back | Amiga, Atari ST and FM Towns startup routes have real-media coverage. FM Towns uses its own authenticated entrance palette and MINI.DAT bootstrap state. Campaign, saves and presentation parity are still being completed. |
 | Dungeon Master II: Skullkeep | DOS, Amiga, FM Towns and Macintosh have real-media startup and selected runtime coverage. Amiga reaches its initial GDAT-backed M11 frame through the normal start menu with source movement covered. Broader input, save, native display/audio and dungeon-composition parity remain open per edition. |
-| DM Nexus | Saturn disc parsing and bounded MAPD title-asset presentation work from the original CUE/BIN. Full Saturn title composition and the title-to-menu transition remain unverified; later menu, HUD and dungeon presentation remain capture-gated. |
+| DM Nexus | Saturn disc parsing and bounded MAPD title-asset presentation work from the original CUE/BIN. NBG1 tile-address decoding has a capture-only fix under review. Full title composition and title-to-menu transition remain unverified; later menu, HUD and dungeon presentation remain capture-gated. |
 | Theron's Quest | Authentic US and Japanese Track 02 media reach bounded native routes, and source-only loaders verify all seven dungeons in both regions. In the Japanese emulator route, LOAD GAME returns to the Akutuba selection map, but its 2-KiB BRAM matches the known empty menu-only image, so native save persistence is unverified. Full presentation, transitions and gameplay remain evidence-gated. |
 
 ### Dungeon Master II: Skullkeep
@@ -269,10 +268,12 @@ In the startup menu, **Settings → Audio → Music Volume → Off** disables
 music while preserving sound effects and UI audio. `--no-music` applies the
 same choice for a direct CLI launch; `--music` explicitly re-enables it.
 
-Nexus presents the admitted retail MAPD title assets from the original CUE/BIN.
-This bounded asset route does not claim the full Saturn title composition or
-the title-to-menu transition. The later menu, HUD and dungeon compositor remain
-deliberately fail-closed until their own real Saturn consumer evidence exists.
+Nexus presents admitted retail MAPD title assets from the original CUE/BIN.
+This bounded asset route does not claim full Saturn title composition or the
+title-to-menu transition. PR #19 contains a capture-only NBG1 tilemap decoder
+fix with an authentic-frame test; it does not establish menu, HUD or dungeon
+composition. Those production routes remain fail-closed until their own real
+Saturn consumer evidence exists.
 Firestaff never delegates Nexus startup or gameplay to Mednafen (or another
 emulator); emulator tooling is used only outside the product to obtain and
 validate capture evidence.

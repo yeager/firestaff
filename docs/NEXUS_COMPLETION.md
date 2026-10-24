@@ -1,5 +1,21 @@
 # Nexus: verified completion status
 
+## NBG1 capture-only tile-fetch address correction — 2026-10-24
+
+Open PR #19 corrects Saturn's NBG1 capture decoder to calculate the name-table
+address in 16-bit words, apply the 18-bit word-address wrap, then convert to
+byte addressing. Character numbers use Saturn's 32-byte stride for both 4bpp
+and 8bpp paths. Against an authentic Japanese startup frame, MAP1A/MAP1B at
+`0x44/0x46` select plane `0x17`, the visible name-table span begins at
+`0x5c000`, and `charno=0x1000` resolves to character bytes at `0x20000`. The
+64×64 test window visits 64 unique cells. This test does not assert full-frame
+traversal or authenticate the capture by itself.
+
+This change is capture-only and remains under review. It proves address
+interpretation for the captured NBG1 layer, not an asset owner, text-page map,
+menu composition, HUD, viewport, or production rendering. The Menu gate stays
+at 3/8 and production readiness stays at 0%.
+
 ## Japanese date/time setup VDP2 trace — 2026-10-24
 
 Ymir `--debug` captures from a session configured with the hash-verified
