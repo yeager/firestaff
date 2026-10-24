@@ -7367,7 +7367,8 @@ metadata and locally staged CD-DA tracks.
   loaded source pit tiles and both levitation states, unchanged party/transition
   state, and an authentic delayed actuator event that remains unresolved
   without changing its target tile. The test reports raw pit attribute-nibble
-  counts without assigning meaning to those values.
+  counts and one source-coordinate capture candidate per edition/dungeon
+  without assigning meaning to the tile attributes or candidate map identity.
 - The remaining code-window, runtime mapping, fall damage, and destination
   transition gaps are documented in
   `docs/source-lock/theron-disassembly/theron-pit-gate-evidence-gap-20261024.md`.

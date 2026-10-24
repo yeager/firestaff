@@ -2191,7 +2191,8 @@ static unsigned int assert_real_active_teleporter_destinations_are_loaded(
 }
 
 static void assert_real_source_pits_fail_closed(
-    Theron_V1_World *world, unsigned int attribute_counts[16]) {
+    Theron_V1_World *world, const char *edition,
+    unsigned int attribute_counts[16]) {
     int exercised_source_pit_move = 0;
     int saved_level = world->current_level;
 
@@ -2201,6 +2202,7 @@ static void assert_real_source_pits_fail_closed(
         if (!world->level_loaded[world->current_dungeon - 1][level_index])
             continue;
         level = &world->levels[world->current_dungeon - 1][level_index];
+        int candidate_reported = 0;
         for (int y = 0; y < level->height; ++y) {
             for (int x = 0; x < level->width; ++x) {
                 uint8_t source_tile = level->source_tiles[y][x];
@@ -2240,6 +2242,19 @@ static void assert_real_source_pits_fail_closed(
                             world->party = saved_party;
                             world->transition_pending = before_pending;
                             break;
+                        }
+                        if (!candidate_reported) {
+                            printf("THERON_SOURCE_PIT_CANDIDATE edition=%s "
+                                   "dungeon=%d level_slot=%d "
+                                   "source_header_level_index=0x%04x "
+                                   "pit=(%d,%d) raw_byte=0x%02x "
+                                   "floor_approach=(%d,%d) direction=%d\n",
+                                   edition, world->current_dungeon,
+                                   level_index,
+                                   (unsigned int)
+                                       level->source_header_level_index,
+                                   x, y, source_tile, px, py, dir);
+                            candidate_reported = 1;
                         }
                         Theron_V1_Party before_move = world->party;
                         int rc = theron_v1_move_party(world, dir);
@@ -3494,7 +3509,8 @@ static void test_all_dungeons(
         }
         assert_real_door_source_gate_survives_save(world);
         assert_real_teleporter_source_gate_survives_save(world);
-        assert_real_source_pits_fail_closed(world, pit_attribute_counts);
+        assert_real_source_pits_fail_closed(
+            world, "US", pit_attribute_counts);
         assert_real_control_records_have_no_fixture_mutation_aliases(
             world, (unsigned int)result.teleporters_placed,
             (unsigned int)result.actuators_placed);
@@ -3764,7 +3780,8 @@ static void test_all_jp_dungeons(
         }
         assert_real_door_source_gate_survives_save(world);
         assert_real_teleporter_source_gate_survives_save(world);
-        assert_real_source_pits_fail_closed(world, pit_attribute_counts);
+        assert_real_source_pits_fail_closed(
+            world, "JP", pit_attribute_counts);
         assert_real_control_records_have_no_fixture_mutation_aliases(
             world, (unsigned int)result.teleporters_placed,
             (unsigned int)result.actuators_placed);

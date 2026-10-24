@@ -37,6 +37,10 @@ committed. Source-less fixture probes retain their separate legacy behavior.
 Source-backed floor-actuator events targeting pits remain queued without
 changing the runtime tile; the decoded record and raw attribute bits are
 retained, but the original actuator consumer is not inferred.
+The real-media loader test emits one first floor-adjacent pit coordinate per
+edition and dungeon, including the raw tile byte, level-array slot, and opaque
+header-level value. These coordinates help target emulator capture only; they
+do not prove which map or tile the original runtime displays at a given state.
 
 ## Evidence required to promote behavior
 

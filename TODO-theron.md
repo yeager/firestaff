@@ -3496,7 +3496,9 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 - 🔧 Recover a hash-locked original US/JP runtime code window and same-session
   bank mapping/execution receipt for the pit and actuator consumers, then
   trace fall damage and destination-level selection before enabling any
-  source-backed pit form.
+  source-backed pit form. Use the real-media test's raw coordinate candidates
+  to target an original-emulator capture, then join its active map and party
+  pose before interpreting the tile attributes.
 
 ## 2026-08-13 — Incomplete dungeon exits fail closed
 
