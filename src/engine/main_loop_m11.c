@@ -128,6 +128,9 @@ enum {
     M11_LAUNCHER_MODERN_HEIGHT = M12_MODERN_MENU_NATIVE_HEIGHT
 };
 
+static void m11_debug_log_scan_progress(const M12_AssetScanProgress* progress);
+static void m11_debug_reset_scan_progress_trace(void);
+
 /* The launcher owns persistence and editing of the touch layout; the active
  * game loop owns only the translated input.  Keeping this bridge here sends
  * virtual controls through precisely the same M12 input path as keyboard and
@@ -545,6 +548,7 @@ static void m11_draw_launcher(const M12_StartupMenuState* menuState,
     }
     if (menuState && menuState->deferredScanActive &&
         M12_StartupMenu_GetDeferredScanProgress(menuState, &scanProgress)) {
+        m11_debug_log_scan_progress(&scanProgress);
         if (useModern && modernRgba) {
             m11_draw_intro_progress_bar(modernRgba,
                                         M11_LAUNCHER_MODERN_WIDTH,
@@ -558,6 +562,8 @@ static void m11_draw_launcher(const M12_StartupMenuState* menuState,
                 launcherFramebuffer, M11_LAUNCHER_FB_WIDTH,
                 M11_LAUNCHER_FB_HEIGHT);
         }
+    } else {
+        m11_debug_reset_scan_progress_trace();
     }
 }
 
@@ -598,18 +604,7 @@ static int m11_scan_progress_callback(const M12_AssetScanProgress* progress,
                                       void* userData) {
     M11_ScanProgressContext* ctx = (M11_ScanProgressContext*)userData;
     if (!ctx || (!ctx->framebuffer && !ctx->modernRgba)) return 1;
-    if (ctx->debug && progress) {
-        fprintf(stderr,
-                "firestaff: scan elapsed-ms=%llu progress=%zu%% game=%s task=%s path=%s\n",
-                (unsigned long long)(SDL_GetTicks() - ctx->startedMs),
-                progress->totalSteps > 0U
-                    ? (progress->completedSteps * 100U +
-                       progress->currentStepPercent) / progress->totalSteps
-                    : 0U,
-                progress->currentGameId[0] ? progress->currentGameId : "all",
-                progress->currentTask,
-                progress->currentPath[0] ? progress->currentPath : "(none)");
-    }
+    if (ctx->debug) m11_debug_log_scan_progress(progress);
     /* A game frame leaves presentation constrained to its viewport. The scan
      * panel is launcher UI and must use the full window, including after a
      * game returns to the menu. */
@@ -961,6 +956,49 @@ static void m11_debug_log_launch_selection(
 
 static int g_m11_debug_startup_detail = 0;
 
+typedef struct {
+    int hasLastProgress;
+    Uint64 startedMs;
+    M12_AssetScanProgress lastProgress;
+} M11_DebugScanProgressTrace;
+
+static M11_DebugScanProgressTrace g_m11_debug_scan_progress_trace;
+
+static void m11_debug_reset_scan_progress_trace(void) {
+    memset(&g_m11_debug_scan_progress_trace, 0,
+           sizeof(g_m11_debug_scan_progress_trace));
+}
+
+static void m11_debug_log_scan_progress(const M12_AssetScanProgress* progress) {
+    M11_DebugScanProgressTrace* trace = &g_m11_debug_scan_progress_trace;
+    if (!g_m11_debug_startup_detail || !progress) return;
+    if (!trace->hasLastProgress ||
+        progress->completedSteps != trace->lastProgress.completedSteps ||
+        progress->currentStepPercent !=
+            trace->lastProgress.currentStepPercent ||
+        strcmp(progress->currentTask, trace->lastProgress.currentTask) != 0 ||
+        strcmp(progress->currentGameId,
+               trace->lastProgress.currentGameId) != 0 ||
+        strcmp(progress->currentPath, trace->lastProgress.currentPath) != 0) {
+        if (!trace->hasLastProgress) trace->startedMs = SDL_GetTicks();
+        fprintf(stderr,
+                "firestaff: scan elapsed-ms=%llu progress=%zu%% game=%s task=%s path=%s\n",
+                (unsigned long long)(SDL_GetTicks() - trace->startedMs),
+                progress->totalSteps > 0U
+                    ? (progress->completedSteps * 100U +
+                       progress->currentStepPercent) / progress->totalSteps
+                    : 0U,
+                progress->currentGameId[0] ? progress->currentGameId : "all",
+                progress->currentTask,
+                progress->currentPath[0] ? progress->currentPath : "(none)");
+        trace->lastProgress = *progress;
+        trace->hasLastProgress = 1;
+    }
+    if (progress->complete || progress->cancelled) {
+        trace->hasLastProgress = 0;
+    }
+}
+
 static void m11_draw_intro_progress_bar(unsigned char* rgba,
                                         int w, int h,
                                         const M12_AssetScanProgress* progress,
@@ -1055,11 +1093,8 @@ static int m11_play_firestaff_startup_intro(M12_StartupMenuState* menuState) {
     char resourcePath[1024];
     const char* basePath;
     Uint64 started;
-    Uint64 scanStarted = 0;
     int scanActive = 0;
     int autotestQuitInjected = 0;
-    int haveLastProgress = 0;
-    M12_AssetScanProgress lastProgress;
 
     rgba = (unsigned char*)malloc((size_t)M12_STARTUP_INTRO_WIDTH *
                                   (size_t)M12_STARTUP_INTRO_HEIGHT * 4U);
@@ -1112,8 +1147,6 @@ static int m11_play_firestaff_startup_intro(M12_StartupMenuState* menuState) {
     }
 
     started = SDL_GetTicks();
-    scanStarted = started;
-    memset(&lastProgress, 0, sizeof(lastProgress));
     for (;;) {
         Uint64 elapsed = SDL_GetTicks() - started;
         uint32_t effectiveDuration = M12_STARTUP_INTRO_DURATION_MS;
@@ -1134,25 +1167,7 @@ static int m11_play_firestaff_startup_intro(M12_StartupMenuState* menuState) {
                                         &snap,
                                         elapsed,
                                         menuState ? menuState->settings.languageIndex : 0);
-            if (g_m11_debug_startup_detail &&
-                (!haveLastProgress ||
-                 snap.completedSteps != lastProgress.completedSteps ||
-                 snap.currentStepPercent != lastProgress.currentStepPercent ||
-                 strcmp(snap.currentTask, lastProgress.currentTask) != 0 ||
-                 strcmp(snap.currentPath, lastProgress.currentPath) != 0)) {
-                fprintf(stderr,
-                        "firestaff: scan elapsed-ms=%llu progress=%zu%% game=%s task=%s path=%s\n",
-                        (unsigned long long)(SDL_GetTicks() - scanStarted),
-                        snap.totalSteps > 0U
-                            ? (snap.completedSteps * 100U +
-                               snap.currentStepPercent) / snap.totalSteps
-                            : 0U,
-                        snap.currentGameId[0] ? snap.currentGameId : "all",
-                        snap.currentTask,
-                        snap.currentPath[0] ? snap.currentPath : "(none)");
-            }
-            lastProgress = snap;
-            haveLastProgress = 1;
+            m11_debug_log_scan_progress(&snap);
             {
                 const char* quitAny =
                     getenv("FIRESTAFF_AUTOTEST_QUIT_DURING_SCAN");

@@ -165,8 +165,8 @@ static int m12_scan_progress_update(M12_ScanProgressContext* ctx,
     }
     if (advanceStep && progress->completedSteps < progress->totalSteps) {
         ++progress->completedSteps;
+        progress->currentStepPercent = 0U;
     }
-    progress->currentStepPercent = 0U;
     snprintf(progress->currentTask, sizeof(progress->currentTask),
              "%s", task ? task : "");
     snprintf(progress->currentGameId, sizeof(progress->currentGameId),
@@ -196,6 +196,12 @@ static int m12_scan_progress_set_step_percent(M12_ScanProgressContext* ctx,
     if (!ctx || !ctx->status) return 1;
     progress = &ctx->status->scanProgress;
     if (percent > 100U) percent = 100U;
+    /* A phase may inspect multiple archive candidates. Their individual
+     * inflate counters restart at zero, but the launcher progress represents
+     * the whole scan and must never move backwards within the same phase. */
+    if (percent < progress->currentStepPercent) {
+        percent = progress->currentStepPercent;
+    }
     if (progress->currentStepPercent == percent) return 1;
     progress->currentStepPercent = percent;
     if (ctx->options && ctx->options->cancelFlag &&
