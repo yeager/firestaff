@@ -122,9 +122,11 @@ int main(void)
                       &presenter, delayed_host_time) == 1);
         CHECK(m11_dm2_mve_presenter_advance(
                   &presenter, delayed_host_time) == 0);
+        /* The first six video boundaries own seventeen original audio
+         * packets; packet count is not one-to-one with displayed frames. */
         CHECK(sink.count == 6u && sink.last_index == 5u &&
               sink.last_time_us == 5u * 83328u &&
-              presenter.audio.queued_source_packets == 6u);
+              presenter.audio.queued_source_packets == 17u);
     }
 cleanup:
     m11_dm2_mve_presenter_close(&presenter);

@@ -971,3 +971,12 @@ Reviewed 2026-08-29. Completed work only.
   speed and host refresh. The DOS MVE presenter regression now simulates a
   delayed host with five overdue frames and checks source frame and audio order.
   Native-display 30/60/120 Hz capture remains pending.
+- 2026-10-24: Fixed the PC-DOS MVE intro flashing black between its 12 Hz
+  source frames. The shared M11 framebuffer is no longer cleared while the
+  last decoded IBMIOP page remains the active source surface; a failed decode
+  still clears to the fail-closed black frame. The real-media launcher test
+  now checks that a redraw before the next MVE deadline preserves the complete
+  displayed source page. It passes with the authentic DOS installation under
+  SDL's dummy display; native-display playback and refresh-rate captures remain
+  unverified. The startup ownership follows
+  `SKWINSPX/src/v5/startend.cpp::DM2_INIT` and its `SHOW_MENU_SCREEN` loop.

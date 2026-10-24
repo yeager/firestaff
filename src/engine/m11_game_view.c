@@ -72792,10 +72792,16 @@ static void m11_game_view_draw_source(M11_GameViewState* state,
     const struct DungeonMapDesc_Compat* mapDesc = NULL;
     int avgFood = 0;
     int avgWater = 0;
+    int retainDm2DosMveFrame = 0;
     char champion[24];
     if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0) {
         return;
     }
+    retainDm2DosMveFrame = state &&
+        state->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
+        state->dm2State.startup_menu_active && state->dm2DosMveIntroActive &&
+        state->dm2DosMveCopiedFrameValid &&
+        !m11_dm2_preselection_input_active(state);
     if (state && state->active && state->dm1IigsActive) {
         /* The native GS first-world renderer does not publish the PC34 F0115
          * pile rectangles. Retire any prior edition's frame-local targets
@@ -73028,7 +73034,8 @@ static void m11_game_view_draw_source(M11_GameViewState* state,
      * Classic DM1 renders the area outside the HUD chrome as solid
      * black; only the HUD frame itself carries stone/bronze shading. CSB
      * preserves its current host page until its source-owned receipt commits. */
-    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
+    if ((!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) &&
+        !retainDm2DosMveFrame) {
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                       0, 0, framebufferWidth, framebufferHeight,
                       M11_COLOR_BLACK);
@@ -73473,10 +73480,20 @@ static void m11_game_view_draw_source(M11_GameViewState* state,
          * input loop.  Do not render a live dungeon underneath or instead of
          * that source-owned surface: missing title GDAT must fail closed. */
         if (state->dm2State.startup_menu_active) {
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          0, 0, framebufferWidth, framebufferHeight,
-                          M11_COLOR_BLACK);
-            if (m11_dm2_preselection_input_active((M11_GameViewState *)state) &&
+            const int dm2_preselection_active =
+                m11_dm2_preselection_input_active((M11_GameViewState *)state);
+            /* The PC IBMIOP movie updates at its source cadence (12 Hz).
+             * Keep its last submitted page in the shared framebuffer between
+             * those updates. Clearing to black here while the MVE owner skips
+             * duplicate scaling makes every intervening host frame flash
+             * black. SKWINSPX/src/v5/startend.cpp:601-610 keeps the source
+             * startup owner active until SHOW_MENU_SCREEN/GAME_LOAD handoff. */
+            if (!retainDm2DosMveFrame) {
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              0, 0, framebufferWidth, framebufferHeight,
+                              M11_COLOR_BLACK);
+            }
+            if (dm2_preselection_active &&
                 m11_dm2_render_preselection_view(
                     (M11_GameViewState *)state, framebuffer,
                     framebufferWidth, framebufferHeight)) {
@@ -73500,9 +73517,18 @@ static void m11_game_view_draw_source(M11_GameViewState* state,
                  * credits or host overlay route.  The presenter advances at
                  * most one exact source frame per Draw call, even when the
                  * host has missed several deadlines. */
-                if (!m11_dm2_present_dos_intro(
-                        (M11_GameViewState *)state, framebuffer,
-                        framebufferWidth, framebufferHeight) &&
+                const int mve_present_result = m11_dm2_present_dos_intro(
+                    (M11_GameViewState *)state, framebuffer,
+                    framebufferWidth, framebufferHeight);
+                if (mve_present_result < 0) {
+                    /* A failed source frame must remain fail-closed black;
+                     * retaining the last good page is only valid between
+                     * successful source deadlines. */
+                    m11_fill_rect(framebuffer, framebufferWidth,
+                                  framebufferHeight, 0, 0,
+                                  framebufferWidth, framebufferHeight,
+                                  M11_COLOR_BLACK);
+                } else if (mve_present_result == 0 &&
                     ((M11_GameViewState *)state)->dm2DosMveIntroComplete) {
                     /* The last MVE page was already presented.  Its next
                      * draw releases the movie owner; draw SHOW_MENU_SCREEN
