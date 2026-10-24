@@ -1,94 +1,18 @@
 # Firestaff TODO — Nexus
 
-Reviewed 2026-10-24. Only open work is listed here; completed evidence belongs
-in the Nexus capture and reverse-engineering records.
+Reviewed 2026-10-24. The items below track open work and include completed
+diagnostics as context. Verified evidence is also recorded in the Nexus capture
+and reverse-engineering records and in [DONE-nexus.md](DONE-nexus.md).
 
 ## Current evidence boundary
 
-The NBG1 capture-only tilemap decoder has a corrected TileFetcher address path
-in [PR #19](https://github.com/yeager/firestaff/pull/19). Focused tests and an
-authentic Japanese startup frame verify name-table byte addressing, character
-stride and unique-cell counts. The PR is still open. This does not bind the
+PR #19 adds the corrected NBG1 TileFetcher address path and a scroll-offset
+regression. Its focused test verifies the bounded name-table fetch behavior;
+the PR remains under review. This does not bind the
 NBG1 data to FONT256, MENU.BPK or a retail text/display consumer, and does not
 change menu, HUD, viewport or production-readiness gates. Keep the next work
 focused on a same-session retail source-to-display join and the interactive
 title-to-menu transition.
-
-## Available local retail media
-
-2026-10-23 direct-start diagnostic recheck: the installed English Saturn CUE
-and original media root selected the authenticated `nexus-saturn-en-fan-v2`
-image, loaded `TITLE.CG`, `STABG.BIN`, `LOGOBG.DG2` and all 20 `FACE.BIN`
-records, then completed the title animation. The startup receipt remains
-`status=blocked`, `levelLoaded=0`, `menu=0`, with
-`menu-bpk-prs3-capture-required`. The old `runtime-entered` phase label was
-therefore false for this title-only state; the pending source change reports
-`title-entered`, and the updated original-media CLI checks require the blocked
-receipt and reject a runtime claim. This diagnostic correction does not make the
-Nexus menu or playable level available. The M4 runtime binary predates the
-source edit; rebuilding and running the updated regression on the dedicated
-build host remains outstanding because `trv2` does not resolve on this host.
-
-The current `nexus_v1_bpk_archive_runtime_upload_plan` already decodes PRS3
-payloads for bounded evidence, but explicitly emits no drawable pixels and
-keeps each row blocked. A successful PRS3 decode alone does not establish
-Saturn PALT/CRAM ownership, VDP1 upload framing or destination semantics. The
-startup gate separately requires the menu text consumer and its VDP2 placement.
-Next evidence must bind the post-title menu's input transition and these
-source-owned consumers from the same authentic Saturn session; do not bypass
-the gate by drawing decoded surfaces or substitute generated menu material.
-
-The staged JP retail set supplies the CUE, nine BIN tracks, CDDA WAV tracks,
-and the original ZIP package.  The disc itself does **not** contain a Saturn
-VDP1/VDP2 VRAM dump, CRAM dump, register snapshot, or frame/timing capture.
-Firestaff reads the CUE/ISO members directly in memory; it must not manufacture
-either a capture or a presentation claim from those disc files.
-
-The native title renderer consumes the retail `TITLE.BIN`/`TITLE.CG` MAPD
-planes, selector sequence and BGR555 palettes directly from the selected CUE/
-BIN media. `test_nexus_v1_title_mapd_real`, `test_m11_nexus_startup_gate` and
-`test_m11_nexus_startup_runtime_handoff` cover this bounded path. The renderer
-does not authorise the separate menu, face, HUD or dungeon compositors.
-
-The French `TITLE.BIN` now has a separate exact SHA-256 corpus profile and a
-real-CUE regression for its 60 RES* directory entries. The receipt preserves
-observed IDs, offsets, record heads and chain bounds only; regional menu
-rendering remains blocked.
-
-Four authentic 32 KiB Saturn Backup RAM images with a `DMNEXUS__01` entry
-are available in the private real-data corpus. The savegame editor now reads
-their block chains and exposes each exact 20,480-byte payload as read-only
-hex and can compare same-name entries from another image using payload-relative
-byte offsets; it does not assign payload fields or allow rewriting. The BKR
-self-test accepts only these four filename/SHA-256-pinned captures, while
-`nexus_v1_saturn_bkr_real_data` validates their container structure and skips
-when the private sample corpus is absent. Native Saturn save/load compatibility
-remains blocked until the payload schema and retail consumer are source-bound.
-Across the authentic two-, three-, and four-champion samples, the big-endian
-value at payload offset `0x0a` is `0x0274 + champion_count * 0x00e0`, and the
-payload tail from that value is zero in all four images. This narrows the
-observed count-correlated boundary but does not establish record or field
-semantics; trace the retail BUP save/load consumer before decoding or writing it.
-
-An end-to-end check against the installed English Saturn CUE on 2026-09-27
-confirms that `--game nexus --platform saturn` opens the original disc and
-reaches `phase=nexus-title` with `titleReady=1` after 140 frames. Sending Enter
-after 500 title frames still leaves the process at `nexus-title`, with no menu
-or level loaded; the startup receipt reports `blocker=faces`. The separate
-retail `FACE.BIN` decoder passes for all 20 authenticated portraits, so this
-is not missing user media or failed portrait decoding. The remaining join is
-PLRD roster row to FACE.BIN ordinal: `nexus_v1_champions.c` deliberately leaves
-each `portrait_index` unknown (`-1`) because no Saturn consumer trace proves
-the ordinal mapping. CLI launch to the title is therefore verified, but the
-interactive Nexus start-menu handoff remains blocked until that real-media
-mapping and the corresponding menu consumer are captured.
-
-A same-revision, media-immutable title-session receipt now joins retail CD
-FIFO records for LBA 6063--6089 to SH-2 RAM source writes for the same range,
-cached SH-2 reads, and frame-stamped VDP2 writes/registers for frames
-13294--13455. This closes title CD-to-RAM-to-VDP2 provenance only; it is not
-menu, HUD, dungeon, audio or input evidence and does not widen the native
-presentation boundary.
 
 - Capture the actual interactive title/menu transition and its input contract,
   including the display consumer that places menu and face material.

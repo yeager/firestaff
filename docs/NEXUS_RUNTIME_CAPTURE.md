@@ -1344,9 +1344,9 @@ Japanese Nexus startup capture. For NBG1, MAP1A/MAP1B at register offsets
 base is `0x5c000` bytes after wrapping the 18-bit Saturn word address and
 converting it to bytes. The visible 64×64-pixel window visits 64 unique cells.
 The observed `charno=0x1000` selects character bytes at `0x20000` using
-Saturn's 32-byte character-number stride. The runtime decoder test passes on
-authentic startup frame 0. A full 320×224 decode visits 1,120 cells and writes
-zero opaque pixels, matching the transparent reference frame.
+Saturn's 32-byte character-number stride. The runtime decoder test checks the
+64×64 window at (0, 0) and its 64 unique name-table cells. It does not establish
+full-frame traversal or authenticate the capture by itself.
 
 This is capture transport/address validation only. It does not bind an asset,
 text code, CLUT owner, menu placement or display consumer. `renderer_permitted`
