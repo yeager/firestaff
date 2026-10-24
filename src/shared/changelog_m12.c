@@ -22,6 +22,8 @@ static const char* const g_changelogLines[] = {
     "  - --debug reports CPU and memory use, native startup states, and observed actions and combat events.",
     "  - The no-game launcher has authentic keyboard and mouse selection coverage for all five games.",
     "  - A state-bound paired-capture diff tool shares one evidence and review format across all five games.",
+    "  - Shared per-game test and real-media boot sweeps report platform coverage, selected assets, partial runs and startup blockers.",
+    "  - Date-stamped parity evidence includes five-game CTest inventories and authentic boot receipts without claiming parity.",
     "  - Cross-platform CI uses Ninja on macOS and caches C/C++ compilation on macOS and Linux.",
     "  - DM1 HoC stair-torch pickup, PC34 combat receipts, CSB attack targeting and Nexus startup gating receive original-media coverage.",
     "  - Remaining renderer, capture-gate and full-game parity limits are recorded in release notes and game ledgers.",
