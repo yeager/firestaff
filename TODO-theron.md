@@ -13,6 +13,14 @@
   for UP versus idle, and at 65027 for LEFT versus idle, within the SAT
   region. This proves an input-associated change in one SAT entry's data, but
   does not identify that entry as the party sprite or establish world
+  movement. Disassembly of the matching authentic JP Track 02 code window
+  resolves the entry's role more narrowly: runtime `$D65F` indexes sprite
+  coordinates from `$2E7A,X` and `$2E3A,X`; for `X=0`, it writes the former
+  plus `$40` into SAT word `$7F00` and the latter plus `$20` into `$7F01`.
+  The close-time RAM snapshots match those source fields: idle `$2E3A/$2E7A`
+  are `78/78`, left is `00/78`, and up is `14/04`, matching the first SAT
+  entry after the VDC's coordinate offsets. This binds the moving entry to
+  Theron's on-screen cursor coordinates, but not to a world target or party
   movement. No authenticated CD-to-RAM receipt or gameplay transition was
   produced. Keep original pointer hit targets and interactive state-driven
   dungeon rendering open; the Firestaff mouse panel remains a host control
