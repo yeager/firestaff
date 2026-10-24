@@ -1,19 +1,27 @@
-# Ymir capture regression checks — 2026-10-24
+# Authentic Nexus and Ymir capture checks — 2026-10-24
 
-On TRV2, three focused CTest checks passed against the shared Firestaff Debug
-build:
+On TRV2, seven focused tests passed against the shared Firestaff Debug build.
+Four exercise authentic Japanese retail title resources from
+`FIRESTAFF_NEXUS_CUE=/home/trv2/.firestaff/data/nexus/Dungeon Master Nexus (Japan).cue`:
 
-- `nexus_v1_ymir_priority_compositor_authentic` composes authentic Ymir
-  viewport layer captures with the verified retail `STABG.BIN` hash.
-- `nexus_v1_ymir_runtime_capture_authentic` repacks hash-pinned Ymir VDP1,
-  VDP2, CRAM, and framebuffer dumps and compares the composition to the
-  observed RGB5 display framebuffer.
-- `nexus_v1_ymir_title_color_calculation_authentic` checks the capture-backed
-  title color-calculation path.
+- `nexus_v1_title_res_corpus_receipt_real`
+- `nexus_v1_title_titl_pp_payload_admission_real`
+- `nexus_v1_title_dgt2_pp_payload_admission_real`
+- `nexus_v1_title_mapd_tibg_admission_real`
 
-`ctest.log` records these three passes and one skipped gate. The real data
-folder `/home/trv2/.firestaff/data` was symlinked into the test snapshot; no
-game data was copied. The retail `STABG.BIN` SHA-256 was
+The other three passing checks exercise authentic Ymir capture data:
+
+- `nexus_v1_ymir_priority_compositor_authentic`, using real viewport layer
+  captures and the verified retail `STABG.BIN` hash.
+- `nexus_v1_ymir_runtime_capture_authentic`, repacking hash-pinned Ymir VDP1,
+  VDP2, CRAM, and framebuffer dumps and comparing composition to the observed
+  RGB5 display framebuffer.
+- `nexus_v1_ymir_title_color_calculation_authentic`.
+
+`ctest.log` and `title-resource-ctest.log` preserve the pass results;
+`title-resource-ctest-verbose.log` records the CUE path each retail test used.
+The real data folder `/home/trv2/.firestaff/data` was symlinked into the test
+snapshot; no game data was copied. `STABG.BIN` SHA-256:
 `7b8e44ffd1249175da1c407993b983a26bc180204e63f9b69274014b336c6913`.
 `input_sha256.json` and `state_observation.json` identify the authentic Ymir
 capture inputs and selected display framebuffer. Binary dumps and game media
@@ -29,8 +37,8 @@ capture subdirectories. Producing that trace is the next concrete evidence
 gap for admitting the retail title source path.
 
 The build used the shared source snapshot based on revision `dd79c4f18`; that
-snapshot contained concurrent uncommitted changes. These tests validate
-capture-level composition and color calculation only. They do not prove
-production renderer permission, title-menu selection, or viewport/HUD parity.
-The Nexus startup gate remains blocked pending verified retail source
-ownership and compositor evidence.
+snapshot contained concurrent uncommitted changes. Passing these tests
+validates authentic title-resource admissions and capture-level composition.
+It does not prove production renderer permission, title-menu selection, or
+viewport/HUD parity. The Nexus startup gate remains blocked pending verified
+retail source ownership and compositor evidence.
