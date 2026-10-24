@@ -27,9 +27,9 @@
   surface, not source-verified world-pointing behavior.
 - Dungeon clicks outside the explicit 4x3 host controls are now ignored
   instead of being converted into Button I / a wait tick. Regression coverage
-  confirms that an unmapped click leaves the source party position, direction,
-  and tick count unchanged. Authentic Theron target hitboxes and a
-  state-driven view remain open.
+  and an authentic USA Track 02 `--debug` runtime loop confirm an unmapped
+  click leaves the party pose and tick count unchanged. Authentic Theron
+  target hitboxes and a state-driven view remain open.
 
 ## 2026-10-24 — complete Theron keyboard and mouse playability
 
