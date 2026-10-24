@@ -45,6 +45,13 @@ and the dated evidence in [TODO-theron.md](../TODO-theron.md).
 
 ## In-dungeon
 
+Turn input reports `BLOCKED` and leaves facing unchanged if the bounded
+source-actuator event queue cannot reserve the events required by the turn.
+The runtime receipt does not request a redraw in that case. This is a
+fail-closed queue-capacity guarantee, not evidence about the original game's
+actuator timing or retail queue capacity; see the 2026-10-24 entry in
+[`DONE-theron.md`](../DONE-theron.md).
+
 | Action         | Keys                              |
 |----------------|-----------------------------------|
 | Move forward   | Up Arrow, W                       |

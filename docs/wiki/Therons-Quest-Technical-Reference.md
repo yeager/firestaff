@@ -22,6 +22,16 @@ door-use route performs the state transition and key validation; this keeps
 source-bound Track 02 object state transactional and fail-closed. A stair
 query likewise returns `STAIRS` only when the destination level is resident.
 
+## Turn input receipt boundary
+
+Left and right turn inputs share one receipt path. If the bounded
+source-actuator event queue cannot reserve the turn's events, the runtime
+returns `BLOCKED`, preserves the party pose, and requests no redraw. A focused
+full-queue regression covers all four turn bindings. This proves error
+reporting and transactional failure handling only; it does not establish
+retail actuator timing, queue capacity, or broader turn parity. See the
+[input notes](../theron_input.md) and [verified work log](../../DONE-theron.md).
+
 ## r30 emulator/capture boundary
 
 The 2026-08-14 r30 state replay retained 65,756 spawn-register rows, 256
