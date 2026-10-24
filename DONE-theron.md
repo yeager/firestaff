@@ -1,5 +1,13 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-24 — keep authenticated CLI-check output in its build directory
+
+- The real-capture CLI check now creates and removes its temporary log beside
+  the tested Firestaff executable, within the task-specific build directory.
+  It no longer falls back to `/tmp`.
+- `bash -n tests/test_theron_v1_cli_authenticated_capture.sh` and
+  `git diff --check` pass.
+
 ## 2026-10-23 — reach Theron runtime from the no-game main menu
 
 - Extended `m12_main_menu_runtime_real_media` with a Theron case that starts
