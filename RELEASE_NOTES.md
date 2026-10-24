@@ -25,6 +25,7 @@
 - `Five-game startup diagnostics`: verify startup summaries for all five games and distinguish the Nexus title from a playable runtime.
 - `Debug performance telemetry`: add portable CPU and memory regression coverage and run it through the cross-platform CI workflow.
 - `Paired capture diff`: add a shared state-bound image comparison tool and report format for all five games, with per-manifest native frame geometry, source-state hashes, region metrics and difference masks.
+- `Cross-platform CI`: use Ninja for macOS builds and cache C/C++ compilation results on macOS and Linux to speed up repeated verification runs.
 - `Startup-menu catalogs`: update gettext source references and translated catalogs for the current startup diagnostics.
 - `Release metadata`: bump the project version and update the SPDX source SBOM for v3.0.410.
 

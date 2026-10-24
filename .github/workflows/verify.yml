@@ -97,7 +97,7 @@ jobs:
             build_parallel: '3'
           - os: macos-14
             shell: bash
-            generator: Unix Makefiles
+            generator: Ninja
             exe: ''
             full_ctest: true
             build_parallel: '3'
@@ -164,23 +164,53 @@ jobs:
           if ! brew list --formula sdl3 >/dev/null 2>&1 || ! brew list --formula sdl3_ttf >/dev/null 2>&1; then
             brew install sdl3 sdl3_ttf
           fi
+          if ! brew list --formula ninja >/dev/null 2>&1; then
+            brew install ninja
+          fi
+          if ! brew list --formula ccache >/dev/null 2>&1; then
+            brew install ccache
+          fi
 
-      - name: Install SDL3 (Linux)
+      - name: Install Linux build dependencies
         if: runner.os == 'Linux'
         run: |
           bash scripts/ci/install_apt_packages.sh \
             libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev \
-            libxss-dev libxtst-dev libwayland-dev libxkbcommon-dev wayland-protocols
+            libxss-dev libxtst-dev libwayland-dev libxkbcommon-dev wayland-protocols ccache
+
+      - name: Restore C/C++ compilation cache
+        if: runner.os != 'Windows'
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/ccache
+          key: ccache-${{ runner.os }}-${{ matrix.os }}-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-${{ matrix.os }}-
+
+      - name: Configure compiler cache
+        if: runner.os != 'Windows'
+        env:
+          CCACHE_DIR: ${{ runner.temp }}/ccache
+        run: ccache --max-size=2G
+
+      - name: Build and install SDL3 (Linux)
+        if: runner.os == 'Linux'
+        env:
+          CCACHE_DIR: ${{ runner.temp }}/ccache
+        run: |
           sdl_root="$RUNNER_TEMP/firestaff-sdl3"
           git clone --depth 1 --branch "$SDL3_TAG" https://github.com/libsdl-org/SDL.git "$sdl_root/source"
-          cmake -S "$sdl_root/source" -B "$sdl_root/build" -G Ninja -DCMAKE_BUILD_TYPE=Release -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TESTS=OFF
+          cmake -S "$sdl_root/source" -B "$sdl_root/build" -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TESTS=OFF \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           cmake --build "$sdl_root/build" --parallel
           sudo cmake --install "$sdl_root/build"
           ttf_root="$RUNNER_TEMP/firestaff-sdl3-ttf"
           git clone --depth 1 --recurse-submodules --branch "$SDL3_TTF_TAG" https://github.com/libsdl-org/SDL_ttf.git "$ttf_root/source"
           cmake -S "$ttf_root/source" -B "$ttf_root/build" -G Ninja \
             -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON \
-            -DSDLTTF_VENDORED=ON -DSDLTTF_SAMPLES=OFF
+            -DSDLTTF_VENDORED=ON -DSDLTTF_SAMPLES=OFF \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           cmake --build "$ttf_root/build" --parallel
           sudo cmake --install "$ttf_root/build"
           sudo ldconfig
@@ -199,9 +229,14 @@ jobs:
             mingw-w64-ucrt-x86_64-sdl3-ttf
 
       - name: CMake configure
-        run: cmake -B build -G "${{ matrix.generator }}" -DCMAKE_BUILD_TYPE=Release
+        run: >-
+          cmake -B build -G "${{ matrix.generator }}"
+          -DCMAKE_BUILD_TYPE=Release
+          ${{ runner.os != 'Windows' && '-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache' || '' }}
 
       - name: CMake build
+        env:
+          CCACHE_DIR: ${{ runner.temp }}/ccache
         run: |
           if [ -n "${{ matrix.build_targets }}" ]; then
             cmake --build build --target ${{ matrix.build_targets }} \
