@@ -1,5 +1,15 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-24 authentic launch-flow recheck: DM1's mixed-edition
+`dm1_v1_m12_auto_multi_platform_menu` test reached its first runtime through
+FM Towns AUTO, bare `--game dm1`, explicit CLI selection of PC/Atari ST/Amiga,
+and M12 selection of Atari ST, Amiga and PC. The authentic source-owned
+edition handoffs were checked for each route. The `direct-exit` mode of
+`test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh` also passed for DM1,
+CSB and DM2: each direct `--game` launch exits after Return to Menu without
+opening the launcher. Both checks use SDL dummy video/audio; they do not prove
+native input/presentation or full gameplay parity.
+
 2026-10-24 fresh Xcode arm64 launcher verification: the Xcode 27.1 Release
 binary passed `test_m12_main_menu_game_selection_real_media.sh` against the
 installed originals. The no-game menu selected all five games by keyboard;

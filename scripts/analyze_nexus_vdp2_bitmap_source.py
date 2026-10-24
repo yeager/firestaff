@@ -253,6 +253,51 @@ def dgn_structure2_palettes(assets: dict[str, bytes]) -> list[tuple[str, bytes]]
     return palettes
 
 
+def ymir_bundle_frame(bundle: Path) -> tuple[dict[str, bytes], int]:
+    """Read one complete Ymir memory dump whose frame receipt matches its VDP snapshot."""
+    def receipt(path: Path, expected_format: str) -> dict[str, str]:
+        values: dict[str, str] = {}
+        for line in path.read_text(encoding="ascii").splitlines():
+            if not line or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            if key in values:
+                raise ValueError(f"duplicate {key} in {path.name}")
+            values[key] = value
+        if values.get("format") != expected_format:
+            raise ValueError(f"unsupported {path.name} format")
+        return values
+
+    capture = receipt(bundle / "vdp1-capture-bundle.txt",
+                      "ymir-vdp1-capture-bundle-v1")
+    snapshot = receipt(bundle / "vdp-register-snapshot.txt",
+                       "ymir-vdp-register-snapshot-v1")
+    try:
+        frame = int(capture["capture_frame_index"])
+        snapshot_frame = int(snapshot["vdp1_frame_index"])
+        register_bytes = int(snapshot["vdp2_register_bytes"])
+        rows_for_frame = int(capture["trace_rows_for_capture_frame"])
+    except (KeyError, ValueError) as error:
+        raise ValueError("Ymir frame receipt is incomplete or malformed") from error
+    if (frame < 0 or snapshot_frame != frame or
+            capture.get("trace_file_complete") != "1" or
+            rows_for_frame < 1 or register_bytes != 512 or
+            snapshot.get("register_byte_order") != "big_endian"):
+        raise ValueError("Ymir bundle receipts do not identify one complete VDP frame")
+    expected = {
+        "vdp2-regs": ("vdp2-registers.bin", 512),
+        "vdp2-vram": ("vdp2-vram.bin", 512 * 1024),
+        "vdp2-cram": ("vdp2-cram.bin", 4096),
+    }
+    regions: dict[str, bytes] = {}
+    for name, (filename, size) in expected.items():
+        data = (bundle / filename).read_bytes()
+        if len(data) != size:
+            raise ValueError(f"{filename} has unexpected size")
+        regions[name] = data
+    return regions, frame
+
+
 def longest_nonzero_match(source: bytes, target: bytes) -> tuple[int, int, int]:
     best = (0, 0, 0)
     if len(source) < 32:
@@ -276,7 +321,8 @@ def longest_nonzero_match(source: bytes, target: bytes) -> tuple[int, int, int]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("capture", type=Path)
+    parser.add_argument("capture", type=Path,
+                        help="authenticated raw capture file or Ymir memory-bundle directory")
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--data-dir", type=Path)
     source.add_argument("--cue", type=Path,
@@ -297,7 +343,14 @@ def main() -> int:
         print("NEXUS_VDP2_BITMAP_SOURCE_INVALID: capture frame count does not include selected frame")
         return 1
     try:
-        frames, _ = frame_regions(args.capture.read_bytes(), capture_frames)
+        if args.capture.is_dir():
+            if args.frame != 0:
+                raise ValueError("--frame applies only to multi-frame raw captures")
+            frame_data, frame_index = ymir_bundle_frame(args.capture)
+            frames = [frame_data]
+        else:
+            frames, _ = frame_regions(args.capture.read_bytes(), capture_frames)
+            frame_index = args.frame
         required = {"MENU.BPK", "FONT256.S2D"} | {
             f"LEV{level:02d}.DGN" for level in range(16)
         }
@@ -350,7 +403,7 @@ def main() -> int:
         print("NEXUS_VDP2_BITMAP_SOURCE_INVALID: bitmap span outside VRAM")
         return 1
 
-    print(f"frame={args.frame} register_byte_order={byte_order} "
+    print(f"frame={frame_index} register_byte_order={byte_order} "
           f"NBG1_bitmap_offset=0x{byte_offset:06x} bytes={len(bitmap)}")
     print(f"NBG1_bmpna=0x{bmpna:04x} colour_code=1 bitmap_size_code=0")
     exact = 0

@@ -1396,6 +1396,18 @@ pass against it. This proves a replayable VDP1 command-state corridor, not
 yet a MENU.BPK/FONT256, HUD or DGN scene owner; semantic admission remains
 blocked.
 
+## Japanese FONT256 character-source identity
+
+The VDP2 character-source join accepts both the hash-verified European
+`FONT256.S2D` extraction and the authentic Japanese retail file recorded in
+`scripts/fixtures/nexus_v1_disc_file_hashes.py`. The Japanese file is parsed
+using its own SCR descriptors; hash acceptance does not assert that its font
+is present in a captured frame. In the authenticated Japanese capture,
+frame 142 yields only one of four exact VRAM span matches and no CRAM palette
+match. The source join therefore remains unbound, text-consumer ownership is
+unknown, and semantic admission remains blocked. DMWeb's SCR format notes
+guide parsing; they do not supply the missing runtime binding.
+
 | Route | Magic | Evidence still required |
 |---|---|---|
 | PRS3/menu replay | `NXSPRS3M` | source stream, SH-2 execution trace, PALT/VDP1 consumer and frame identity |
@@ -1469,6 +1481,31 @@ The A capture and traces remain under
 the no-input control remains under
 `/Volumes/Extern-disk/nexus-saturn-capture/run-codex-menu-noinput-smpc-control-20261023/`.
 These external reference captures are not Firestaff renderer output.
+
+## Ymir VDP2 bitmap/source join, frame 278, 2026-10-24
+
+The new Ymir memory bundle reader accepts a Ymir dump directory directly in
+`analyze_nexus_vdp2_bitmap_source.py`. It checks the frame receipt against the
+register snapshot, requires a completed trace with commands for that frame,
+and validates the VDP2 register, VRAM, and CRAM lengths before decoding. Run
+it with the authenticated Japanese retail corpus:
+
+```sh
+python3 scripts/analyze_nexus_vdp2_bitmap_source.py \
+  /Volumes/Extern-disk/nexus-saturn-capture/run-ymir-vdp1-bundle-20261024 \
+  --data-dir /Volumes/Extern-disk/FirestaffUserData/data/nexus
+```
+
+The source CUE SHA-256 is
+`878b3bc223bb56e99626dbaa2946d17fb349a2a67a10cd4423742d8ab30b8699`. The
+authentic frame receipt identifies frame 278; its VDP2 registers enable NBG1
+8-bit bitmap mode at VRAM byte offset `0x020000` for a 512x256 span. The
+bounded join finds no exact match among the decoded retail menu, font, title,
+and level palette sources. The longest reported partial spans are 118 bytes
+from `TITLE.BIN` map 4 and 99 bytes from `MENU.BPK`; palettes do not match
+CRAM. The analyzer therefore reports `source_join=unbound` and
+`semantic_admission=blocked`. This Ymir boot state does not identify the date
+screen, menu, HUD, or viewport owner, and does not authorize rendering.
 
 ## Source references
 

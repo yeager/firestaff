@@ -466,6 +466,9 @@ int main(void) {
         state.gameOptions[2].architectureIndex = M12_ARCH_AUTO;
         state.gameOptions[2].versionIndex = pc98Version;
 
+        if (!expect(M12_AssetStatus_GameAvailable(&state.assetStatus, "dm2") == 0,
+                    "preservation-only match cannot mark the DM2 game card available")) return 1;
+
         if (!expect(M12_StartupMenu_GetBootReadiness(&state, 2, &boot) == 1 &&
                         boot.versionReady == 0,
                     "unsupported preservation match is not AUTO-ready")) return 1;
