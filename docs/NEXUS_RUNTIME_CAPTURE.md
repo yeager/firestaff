@@ -1396,6 +1396,18 @@ pass against it. This proves a replayable VDP1 command-state corridor, not
 yet a MENU.BPK/FONT256, HUD or DGN scene owner; semantic admission remains
 blocked.
 
+## Japanese FONT256 character-source identity
+
+The VDP2 character-source join accepts both the hash-verified European
+`FONT256.S2D` extraction and the authentic Japanese retail file recorded in
+`scripts/fixtures/nexus_v1_disc_file_hashes.py`. The Japanese file is parsed
+using its own SCR descriptors; hash acceptance does not assert that its font
+is present in a captured frame. In the authenticated Japanese capture,
+frame 142 yields only one of four exact VRAM span matches and no CRAM palette
+match. The source join therefore remains unbound, text-consumer ownership is
+unknown, and semantic admission remains blocked. DMWeb's SCR format notes
+guide parsing; they do not supply the missing runtime binding.
+
 | Route | Magic | Evidence still required |
 |---|---|---|
 | PRS3/menu replay | `NXSPRS3M` | source stream, SH-2 execution trace, PALT/VDP1 consumer and frame identity |

@@ -16,10 +16,16 @@ import re
 from pathlib import Path
 
 from analyze_nexus_saturn_runtime_capture import frame_regions
+from fixtures.nexus_v1_disc_file_hashes import DISC_HASH
 from nexus_vdp2_registers import detect_byte_order, read_u16
 
 
-FONT256_SHA256 = "764a2d6ce11b463817f5c1f2dfefbf55ff9221a1362cb5e4366998100d8ff3bb"
+# Accept the verified European extraction and the authenticated Japanese
+# retail corpus. They share the SCR region framing but have distinct bytes.
+FONT256_SHA256 = frozenset({
+    "764a2d6ce11b463817f5c1f2dfefbf55ff9221a1362cb5e4366998100d8ff3bb",
+    DISC_HASH["FONT256.S2D"],
+})
 
 
 def wordswapped(data: bytes) -> bytes:
@@ -114,7 +120,7 @@ def main() -> int:
         capture = args.capture.read_bytes()
         frames, _ = frame_regions(capture, required)
         font = (args.data_dir / "FONT256.S2D").read_bytes()
-        if hashlib.sha256(font).hexdigest() != FONT256_SHA256:
+        if hashlib.sha256(font).hexdigest() not in FONT256_SHA256:
             raise ValueError("FONT256.S2D hash mismatch")
         regions = font_regions(font)
     except (OSError, ValueError) as error:
