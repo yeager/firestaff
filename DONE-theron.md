@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-24 — clarify native runtime and reference-capture limit
+
+- Reaffirmed that Firestaff runs Theron's Quest in its native C/SDL runtime;
+  Mednafen is only an external reverse-engineering/reference tool.
+- A private JP autoload attempt emitted raw VDC and RAM snapshots but lacked
+  verified input delivery, a game-command consumer receipt, and a CD
+  transition. The capture helper rejected the bundle. No movement, visual
+  parity, or gameplay claim follows from those snapshots.
+- Updated the project, platform, and capture status plus the open-work ledger
+  to preserve this evidence boundary. No emulator dependency was added to
+  Firestaff runtime.
+
 ## 2026-10-24 — verify an authentic JP debug runtime and bound pit candidates
 
 - On TRV2, three consecutive current-source Firestaff `--debug` runs using

@@ -416,6 +416,19 @@ dynamic receipt binds any candidate sector to the runtime bank. See
 
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-24 — Native runtime and latest capture boundary
+
+Firestaff must run Theron's Quest in its native C/SDL runtime. Mednafen is an
+external reference tool only and must never be a shipped runtime dependency or
+a substitute for native gameplay. The latest private JP save-state autoload
+emitted raw VDC and RAM snapshots, but no verified controller delivery,
+game-command consumer receipt, or CD transition. The capture helper rejected
+the bundle; it does not prove movement, dungeon rendering, or gameplay parity.
+Continue native implementation from authentic game data and source-bound
+semantics. Current viewport and pit consumers remain fail-closed; see
+`docs/THERON_CAPTURE_READINESS.md` and
+`docs/source-lock/theron-disassembly/theron-pit-gate-evidence-gap-20261024.md`.
+
 ## 2026-10-09 — JP CUE initial-level gameplay meaning remains unproven
 
 - The authenticated JP CUE ISO now catalogs and copies the three bank
