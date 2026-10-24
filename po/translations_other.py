@@ -1270,7 +1270,6 @@ THERON.update({
     'hu': {k: k for k in THERON_EN},
     'ko': {k: k for k in THERON_EN},
     'tr': {k: k for k in THERON_EN},
-    'id': {k: k for k in THERON_EN},
 })
 
 # The shared M11 font has no CJK glyphs. Keep the Theron panel's Japanese and
@@ -1282,6 +1281,13 @@ THERON_MOUSE = {
            if key in {'TURN L', 'FORWARD', 'TURN R', 'STEP L', 'BACK',
                       'STEP R', 'NEXT', 'PICKUP', 'ITEM', 'WAIT'}}
     for lang, table in THERON.items()
+}
+# Preserve reviewed Indonesian strings in the full Theron catalog. English
+# fallbacks are generated only for new mouse-panel captions in the panel-only
+# update mode; existing translations such as DROP remain owned by the PO file.
+THERON_MOUSE['id'] = {
+    key: key for key in {'TURN L', 'FORWARD', 'TURN R', 'STEP L', 'BACK',
+                         'STEP R', 'NEXT', 'PICKUP', 'ITEM', 'WAIT'}
 }
 THERON_MOUSE['fr']['USE'] = THERON['fr']['USE']
 THERON_MOUSE['de']['DROP'] = THERON['de']['DROP']
