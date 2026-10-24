@@ -25,6 +25,27 @@ pointer-coordinate targeting, in-dungeon mouse actions, or Firestaff mouse
 behavior. Attack, inventory, spell, champion-selection, and other
 non-movement button semantics remain unverified by these captures.
 
+## Retail manual control model
+
+The Japanese retail manual's controller table (printed page 4) documents the
+input model independently of the Ymir experiments: D-pad directions move or
+turn in 3D mode and move the hand pointer in eight directions; L/R change the
+leader; Start pauses; A attacks in movement mode and inspects, searches, uses,
+or picks up in hand-pointer mode; B opens inventory; Y opens the magic window;
+Z toggles the hand pointer; and C stores a held item in the backpack. In
+hand-pointer mode, Y also moves the pointer to an item or switch. The manual's
+inventory instructions (printed page 19) describe moving items between hand,
+champion slots, and backpack with the hand pointer. See the
+[Japanese retail manual, control table](https://api.regvault.org/api/v1/game/saturn/d83623212c7fd61623377cc9074bf3ea/manual#page=4)
+and [inventory instructions](https://api.regvault.org/api/v1/game/saturn/d83623212c7fd61623377cc9074bf3ea/manual#page=19).
+
+These documented controls define the retail interaction contract. The current
+Firestaff runtime does not yet implement the Nexus hand-pointer mode,
+inventory/magic panels, or their pointer targets, and the Ymir captures above
+do not establish those routes. They must be implemented with Nexus-owned data
+and proven hit regions rather than by reusing DM1 panels or guessed
+coordinates.
+
 ## Firestaff keyboard routing
 
 The M11 host maps W/S to forward/backward and Q/E to left/right turns. For
@@ -45,7 +66,7 @@ cursor actions or world commands. The existing logical click-route helpers
 require pre-resolved targets and do not establish how viewport pixels map to
 Nexus actions.
 
-Next work must bind the Saturn cursor mode and non-movement buttons to
+Next work must bind the documented cursor and non-movement controls to
 same-session retail input and state traces, then implement desktop mouse
 control against those observed semantics. Keep unsupported actions inert until
 their retail consumers are identified.
