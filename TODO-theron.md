@@ -20,11 +20,17 @@
   renderer and capture-loader files differ from this checkout. It remains a
   valid historical no-snapshot diagnostic, not evidence that the authenticated
   capture route currently renders black.
-- The captured VDC screen has not been joined to the Firestaff runtime's world
-  coordinates, and no original-emulator frame has been paired with this exact
-  rendered state. This proves authentic capture admission and non-black
-  screen-space rendering only; it does not prove gameplay, movement, or visual
-  parity. Keep source positions unknown until the original state is bound.
+- The same close-time TRV2 capture also reports raw BaseRAM fields
+  `current_level_2031=02`, `party_direction_203f=01`, `party_x_2040=02`, and
+  `party_y_2041=03`; the VDC-I/O snapshot boundary is sequence 65536 at
+  timestamp 40176 (`vdc-io` SHA-256
+  `c14cfd4d20fab26c6175d0f5c8cbac4e86d806a0f85e2ddee907c753cdb28aec`). The
+  capture reports `transition=missing`. The Firestaff boot probe instead
+  reports level 0 and party `(1,0,dir0)`. The offsets still lack a
+  source-backed consumer join, so treat these only as conflicting candidate
+  state fields. They confirm that this render has not been joined to the
+  Firestaff world; no original-emulator screenshot was paired with this exact
+  Firestaff frame. Rendering evidence remains screen-space only.
 
 ## 2026-10-10 — instrument PCE Fast CPU VWR commits for source attribution
 

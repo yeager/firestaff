@@ -30,11 +30,26 @@
       "vdcIo": "49d2ae18"
     },
     "files": {
-      "vram": {"bytes": 65536, "sha256": "4bf7a7b8fe1d37a072b4eb1201c5c466cd8068f0dce3e3a3e209f1b39ccf679b"},
-      "vce": {"bytes": 1024, "sha256": "2263486eb8c1e2cdc822a655b4a7da01f4f9a27c73987a8f19bb822e454ada45"},
-      "vdcState": {"bytes": 116, "sha256": "2390ae5ddbd036b47bfbb5b64d497327169ab9528e2f9207232b68aaaf69e1f8"},
-      "sat": {"bytes": 512, "sha256": "62d7a999ec39b6e2a99752e773b8a878c96503e669a1e847c81de911b4ec7082"},
-      "vdcIo": {"bytes": 10116865, "sha256": "c14cfd4d20fab26c6175d0f5c8cbac4e86d806a0f85e2ddee907c753cdb28aec"}
+      "vram": {
+        "bytes": 65536,
+        "sha256": "4bf7a7b8fe1d37a072b4eb1201c5c466cd8068f0dce3e3a3e209f1b39ccf679b"
+      },
+      "vce": {
+        "bytes": 1024,
+        "sha256": "2263486eb8c1e2cdc822a655b4a7da01f4f9a27c73987a8f19bb822e454ada45"
+      },
+      "vdcState": {
+        "bytes": 116,
+        "sha256": "2390ae5ddbd036b47bfbb5b64d497327169ab9528e2f9207232b68aaaf69e1f8"
+      },
+      "sat": {
+        "bytes": 512,
+        "sha256": "62d7a999ec39b6e2a99752e773b8a878c96503e669a1e847c81de911b4ec7082"
+      },
+      "vdcIo": {
+        "bytes": 10116865,
+        "sha256": "c14cfd4d20fab26c6175d0f5c8cbac4e86d806a0f85e2ddee907c753cdb28aec"
+      }
     },
     "admittedByCurrentCaptureLoader": true
   },
@@ -46,8 +61,17 @@
     "level": 0,
     "levelWidth": 32,
     "levelHeight": 27,
-    "entrance": [4, 0],
-    "party": {"mapIndex": 0, "x": 1, "y": 0, "direction": 0, "champions": 2},
+    "entrance": [
+      4,
+      0
+    ],
+    "party": {
+      "mapIndex": 0,
+      "x": 1,
+      "y": 0,
+      "direction": 0,
+      "champions": 2
+    },
     "gameTick": 0,
     "sourceObjects": 291,
     "dungeonLevelsLoaded": 4,
@@ -74,5 +98,31 @@
     "The captured source screen has not been joined to Firestaff dungeon coordinates.",
     "No gameplay tick, movement, or behavioral parity is proven.",
     "No synthetic artwork or original game-media bytes are included."
-  ]
+  ],
+  "runtimeStateComparison": {
+    "captureCloseTime": {
+      "mainRamSnapshotBytes": 8192,
+      "captureBoundary": "PCE Fast CloseGame-before-Cleanup; VDC-I/O boundary sequence 65536 timestamp 40176",
+      "reportedRawFields": {
+        "current_level_2031": "02",
+        "party_direction_203f": "01",
+        "party_x_2040": "02",
+        "party_y_2041": "03"
+      },
+      "fieldSemanticsJoinedToWorld": false,
+      "mainRamSha256": "909e9fae11955465b6c665665650b50aa8f6844cf5bd9d05ee7905fadd0955c3",
+      "transition": "missing"
+    },
+    "firestaffBootProbe": {
+      "level": 0,
+      "party": {
+        "mapIndex": 0,
+        "x": 1,
+        "y": 0,
+        "direction": 0
+      }
+    },
+    "sameWorldStateProven": false,
+    "note": "The capture summary labels these BaseRAM offsets as candidate runtime fields, but a source-backed consumer trace has not joined them to the loaded world. Their differing values also do not identify the captured screen as the Firestaff boot-probe world."
+  }
 }

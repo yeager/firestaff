@@ -20,11 +20,19 @@ TRV2 `/dev/shm`; no screenshot or original game-media bytes are committed.
 The TRV2 source snapshot has no Git metadata. SHA-256 values for the four
 relevant CLI, capture-loader, viewport, and M11 presenter source files match
 this checkout and are recorded in `manifest.json`; that does not prove the
-entire executable's source commit. The VDC snapshot's original gameplay state
-has not been joined to the Firestaff world coordinates, and no original
-emulator screenshot was paired with this Firestaff frame. This receipt proves
-authentic capture admission and non-black screen-space rendering only. It does
-not prove gameplay or visual parity.
+entire executable's source commit. The same TRV2 PCE Fast close-time capture
+also retained an 8 KiB main-RAM snapshot (SHA-256
+`909e9fae11955465b6c665665650b50aa8f6844cf5bd9d05ee7905fadd0955c3`). Its
+capture summary reports raw bytes `current_level_2031=02`,
+`party_direction_203f=01`, `party_x_2040=02`, and `party_y_2041=03` beside the
+VDC snapshot boundary. These fields have not been joined to the live world
+through a source-backed consumer trace. The capture reports
+`transition=missing`. The Firestaff boot probe instead
+reported level 0 and party `(1,0,dir0)`. These are different candidate states,
+so the rendered snapshot cannot be called a render of that Firestaff world.
+No original-emulator screenshot was paired with the Firestaff frame. This
+receipt proves authentic capture admission and non-black screen-space
+rendering only. It does not prove gameplay or visual parity.
 
 Reproduction on TRV2, repeated three times with separate output directories:
 
