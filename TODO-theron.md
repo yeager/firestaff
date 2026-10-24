@@ -546,7 +546,7 @@ dynamic receipt binds any candidate sector to the runtime bank. See
 
 # Firestaff TODO — Theron's Quest
 
-## 2026-10-24 — fresh native debug build boundary
+## Earlier 2026-10-24 — native debug boot-probe boundary
 
 A clean Firestaff build from commit `2748eed3db4a3a9d7b1db2e1522b050440b3e0a2`
 reached `theron-runtime` in three native `--debug --boot-probe` loops with

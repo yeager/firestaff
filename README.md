@@ -102,10 +102,13 @@ hash-verified US or Japanese Track 02 data with `--theron-native us` or
 `--theron-native jp`. A native macOS Debug run with authentic Japanese Rev. 1
 data advanced through stage select and Soul Room into a loaded dungeon using
 Firestaff's SDL input path. The runtime reported about 2.8 game ticks/s and
-5 rendered/presented frames/s in one interval. Its presented-surface capture
-was still black: the original graphics-bank binding, palette and dungeon tile
-mapping are not yet connected to the renderer. This confirms native startup,
-input and tick-loop progress, not a visually playable game or complete parity.
+5 rendered/presented frames/s in one interval. A follow-up native Linux Debug
+run on trv2 used Xvfb only as the SDL display and authentic JP Rev. 1 Track 02;
+it reached `theron-runtime`, loaded map 0 and advanced 73 game ticks in 18
+seconds. No emulator ran the game. The presented-surface capture remains
+black: original graphics-bank binding, palette and dungeon tile mapping are
+not yet connected to the renderer. These runs confirm native startup, input
+and tick-loop progress, not a visually playable game or complete parity.
 Source-only verification of all seven dungeon records establishes data
 admission, not campaign parity. Native movement, transitions, combat, audio,
 presentation and save parity remain open.
