@@ -7348,23 +7348,29 @@ metadata and locally staged CD-DA tracks.
   Firestaff therefore keeps source-bound doors fail-closed until the real
   button consumer and its exact state transition have been captured.
 
-# 2026-08-21 Track 02 pits' real OPEN gate
+# 2026-10-24 withdrawn Theron pit-gate attribution
 
-- ✅ Original movement code `$C332–$C347` classifies map type `$40` as a pit
-  and enters the fall route only when levitation is zero, `OPEN` (`$08`) is
-  set, and `IMAGINARY` (`$01`) is zero. A closed, imaginary, or levitated pit
-  continues without a fall. Both the movement query and mutating runtime path
-  now use this gate.
-- ✅ The complete real corpus verifies 165 closed/passable and 132
-  open/fail-closed US pits, and 166 closed/passable and 130 open/fail-closed
-  JP pits. At least one real movement outcome of each kind is run per
-  available dungeon bank. The same open original tile is also tested with
-  levitation and must then be passable, as specified by the `$AB` gate. No
-  constructed pit tiles or fallback maps are used.
-- 🔒 An open, real pit is still blocked before damage and level fall. The
-  original gate is proven, but the T700 stat mutation and destination
-  transition consumer are not. The fixture pit's older damage behavior is
-  therefore not used on a source-verified level.
+- The former `$C332-$C347` OPEN/IMAGINARY/levitation claim is unsupported by
+  the checked-in Theron evidence and has been removed from the source-backed
+  behavior. The authenticated Stage-2 listing does not establish that address
+  range as the runtime pit consumer; no same-session bank mapping or execution
+  receipt binds it to the pit path.
+- Source-backed Track 02 pit-family tiles now remain blocked for every
+  attribute and levitation state. Source-backed floor-actuator events
+  targeting pits remain queued without tile mutation. Source-less fixture
+  behavior is kept separate. This avoids promoting DM1/CSB movement logic
+  into Theron.
+- The real-media `theron_v1_track02_dungeon_loader` CTest passed three
+  consecutive TRV2 runs with US Track 02 MD5
+  `f23601102138f87c33025877767ebf76` and JP Track 02 MD5
+  `b7afb338ad31be1025b53f9aff12d73a`. It checks blocked movement across the
+  loaded source pit tiles and both levitation states, unchanged party/transition
+  state, and an authentic delayed actuator event that remains unresolved
+  without changing its target tile. The test reports raw pit attribute-nibble
+  counts without assigning meaning to those values.
+- The remaining code-window, runtime mapping, fall damage, and destination
+  transition gaps are documented in
+  `docs/source-lock/theron-disassembly/theron-pit-gate-evidence-gap-20261024.md`.
 
 # 2026-08-21 Live startup and Continue preserve authentic dungeon data
 

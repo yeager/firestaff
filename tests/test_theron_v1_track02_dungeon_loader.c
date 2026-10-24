@@ -2190,11 +2190,9 @@ static unsigned int assert_real_active_teleporter_destinations_are_loaded(
     return verified;
 }
 
-static void assert_real_pit_open_gate(
-    Theron_V1_World *world, unsigned int *closed_count,
-    unsigned int *open_count) {
-    int exercised_closed_move = 0;
-    int exercised_open_move = 0;
+static void assert_real_source_pits_fail_closed(
+    Theron_V1_World *world, unsigned int attribute_counts[16]) {
+    int exercised_source_pit_move = 0;
     int saved_level = world->current_level;
 
     for (int level_index = 0;
@@ -2206,13 +2204,11 @@ static void assert_real_pit_open_gate(
         for (int y = 0; y < level->height; ++y) {
             for (int x = 0; x < level->width; ++x) {
                 uint8_t source_tile = level->source_tiles[y][x];
-                int is_open;
+                uint8_t attributes;
                 if (theron_tile_type(source_tile) != THERON_TILE_PIT)
                     continue;
-                is_open = (source_tile & 0x08u) != 0u &&
-                          (source_tile & 0x01u) == 0u;
-                if (is_open) ++*open_count;
-                else ++*closed_count;
+                attributes = (uint8_t)(source_tile & 0x0fu);
+                ++attribute_counts[attributes];
                 for (int dir = 0; dir < THERON_DIR_COUNT; ++dir) {
                     int px = x - g_theron_dir_dx[dir];
                     int py = y - g_theron_dir_dy[dir];
@@ -2230,15 +2226,12 @@ static void assert_real_pit_open_gate(
                     world->party.leader_dir = (int8_t)dir;
                     world->party.levitating = 0;
                     assert(theron_v1_get_move_result(world, dir) ==
-                           (is_open ? THERON_MOVE_BLOCKED : THERON_MOVE_OK));
-                    if (is_open) {
-                        world->party.levitating = 1;
-                        assert(theron_v1_get_move_result(world, dir) ==
-                               THERON_MOVE_OK);
-                        world->party.levitating = 0;
-                    }
-                    if ((is_open && !exercised_open_move) ||
-                        (!is_open && !exercised_closed_move)) {
+                           THERON_MOVE_BLOCKED);
+                    world->party.levitating = 1;
+                    assert(theron_v1_get_move_result(world, dir) ==
+                           THERON_MOVE_BLOCKED);
+                    world->party.levitating = 0;
+                    if (!exercised_source_pit_move) {
                         Theron_V1_Creature *creature =
                             theron_v1_creature_at_in_dungeon(
                                 world, world->current_dungeon,
@@ -2248,24 +2241,24 @@ static void assert_real_pit_open_gate(
                             world->transition_pending = before_pending;
                             break;
                         }
+                        Theron_V1_Party before_move = world->party;
                         int rc = theron_v1_move_party(world, dir);
-                        assert(rc == (is_open ? THERON_MOVE_BLOCKED :
-                                               THERON_MOVE_OK));
-                        if (is_open) {
-                            assert(world->party.leader_x == px);
-                            assert(world->party.leader_y == py);
-                            assert(world->transition_pending == before_pending);
-                            world->party.levitating = 1;
-                            assert(theron_v1_move_party(world, dir) ==
-                                   THERON_MOVE_OK);
-                            assert(world->party.leader_x == x);
-                            assert(world->party.leader_y == y);
-                            exercised_open_move = 1;
-                        } else {
-                            assert(world->party.leader_x == x);
-                            assert(world->party.leader_y == y);
-                            exercised_closed_move = 1;
-                        }
+                        assert(rc == THERON_MOVE_BLOCKED);
+                        assert(memcmp(&world->party, &before_move,
+                                      sizeof(before_move)) == 0);
+                        assert(world->party.leader_x == px);
+                        assert(world->party.leader_y == py);
+                        assert(world->transition_pending == before_pending);
+                        world->party.levitating = 1;
+                        before_move = world->party;
+                        assert(theron_v1_move_party(world, dir) ==
+                               THERON_MOVE_BLOCKED);
+                        assert(memcmp(&world->party, &before_move,
+                                      sizeof(before_move)) == 0);
+                        assert(world->party.leader_x == px);
+                        assert(world->party.leader_y == py);
+                        assert(world->transition_pending == before_pending);
+                        exercised_source_pit_move = 1;
                     }
                     world->party = saved_party;
                     world->transition_pending = before_pending;
@@ -2274,6 +2267,7 @@ static void assert_real_pit_open_gate(
             }
         }
     }
+    assert(exercised_source_pit_move);
     world->current_level = saved_level;
 }
 
@@ -3138,8 +3132,7 @@ static void test_all_dungeons(
     unsigned int type7_tiles = 0u;
     unsigned int type7_movement_routes = 0u;
     Theron_TeleporterMetadataCensus teleporter_metadata = {0};
-    unsigned int closed_pits = 0u;
-    unsigned int open_pits = 0u;
+    unsigned int pit_attribute_counts[16] = {0};
     unsigned int floor_actuators[128] = {0};
     unsigned int wall_actuators[128] = {0};
     unsigned int actuator_effects[8] = {0};
@@ -3501,7 +3494,7 @@ static void test_all_dungeons(
         }
         assert_real_door_source_gate_survives_save(world);
         assert_real_teleporter_source_gate_survives_save(world);
-        assert_real_pit_open_gate(world, &closed_pits, &open_pits);
+        assert_real_source_pits_fail_closed(world, pit_attribute_counts);
         assert_real_control_records_have_no_fixture_mutation_aliases(
             world, (unsigned int)result.teleporters_placed,
             (unsigned int)result.actuators_placed);
@@ -3549,8 +3542,10 @@ static void test_all_dungeons(
     assert(active_teleporter_destinations == active_teleporters);
     printf("  US active teleporter destinations on loaded maps=%u\n",
            active_teleporter_destinations);
-    printf("  US source pits: closed/passable=%u open/fail-closed=%u\n",
-           closed_pits, open_pits);
+    printf("  US source pit low-nibble counts:");
+    for (unsigned int attr = 0u; attr < 16u; ++attr)
+        printf(" %x=%u", attr, pit_attribute_counts[attr]);
+    putchar('\n');
     print_real_actuator_census(
         "US", floor_actuators, wall_actuators, actuator_effects,
         local_effect_actuators, reverted_actuators, once_actuators,
@@ -3597,8 +3592,7 @@ static void test_all_jp_dungeons(
     unsigned int type7_tiles = 0u;
     unsigned int type7_movement_routes = 0u;
     Theron_TeleporterMetadataCensus teleporter_metadata = {0};
-    unsigned int closed_pits = 0u;
-    unsigned int open_pits = 0u;
+    unsigned int pit_attribute_counts[16] = {0};
     unsigned int floor_actuators[128] = {0};
     unsigned int wall_actuators[128] = {0};
     unsigned int actuator_effects[8] = {0};
@@ -3770,7 +3764,7 @@ static void test_all_jp_dungeons(
         }
         assert_real_door_source_gate_survives_save(world);
         assert_real_teleporter_source_gate_survives_save(world);
-        assert_real_pit_open_gate(world, &closed_pits, &open_pits);
+        assert_real_source_pits_fail_closed(world, pit_attribute_counts);
         assert_real_control_records_have_no_fixture_mutation_aliases(
             world, (unsigned int)result.teleporters_placed,
             (unsigned int)result.actuators_placed);
@@ -3801,8 +3795,10 @@ static void test_all_jp_dungeons(
     assert(active_teleporter_destinations == active_teleporters);
     printf("  JP active teleporter destinations on loaded maps=%u\n",
            active_teleporter_destinations);
-    printf("  JP source pits: closed/passable=%u open/fail-closed=%u\n",
-           closed_pits, open_pits);
+    printf("  JP source pit low-nibble counts:");
+    for (unsigned int attr = 0u; attr < 16u; ++attr)
+        printf(" %x=%u", attr, pit_attribute_counts[attr]);
+    putchar('\n');
     print_real_actuator_census(
         "JP", floor_actuators, wall_actuators, actuator_effects,
         local_effect_actuators, reverted_actuators, once_actuators,
@@ -4861,9 +4857,9 @@ static void test_authentic_coordinate_teleporter_without_endpoint(
         Theron_Actuator trigger;
         int trigger_direction = -1;
         uint8_t source_tile = 0u;
-        uint8_t expected_tile = 0u;
         uint8_t runtime_tile = 0u;
         uint64_t due_tick = 0u;
+        int pit_event_pending = 0;
         for (int dungeon = 1; dungeon <= 7 && !trigger_source; ++dungeon) {
             theron_v1_world_init(&world);
             world.current_dungeon = dungeon;
@@ -4882,7 +4878,10 @@ static void test_authentic_coordinate_teleporter_without_endpoint(
                     theron_v1_track02_actuator_decode(
                         source->raw, &trigger) != 0 ||
                     trigger.type != TQ_ACT_FLOOR_PARTY ||
-                    trigger.local_effect)
+                    trigger.local_effect || source->level != 1 ||
+                    trigger.target_x != 2u || trigger.target_y != 16u ||
+                    trigger.effect != TQ_ACT_EFFECT_CLEAR ||
+                    trigger.delay != 15u)
                     continue;
                 level = &world.levels[dungeon - 1][source->level];
                 if (trigger.target_x >= level->width ||
@@ -4892,14 +4891,6 @@ static void test_authentic_coordinate_teleporter_without_endpoint(
                     level->source_tiles[trigger.target_y][trigger.target_x];
                 if ((source_tile >> 5) != THERON_TILE_PIT)
                     continue;
-                expected_tile = source_tile;
-                if (trigger.effect == TQ_ACT_EFFECT_SET)
-                    expected_tile |= 0x08u;
-                else if (trigger.effect == TQ_ACT_EFFECT_CLEAR)
-                    expected_tile &= (uint8_t)~0x08u;
-                else if (trigger.effect == TQ_ACT_EFFECT_TOGGLE)
-                    expected_tile ^= 0x08u;
-                if (expected_tile == source_tile) continue;
                 for (int direction = 0; direction < 4; ++direction) {
                     if (theron_v1_track02_actuator_evaluate_party_event(
                             &trigger, 1, 0, world.party.champion_count,
@@ -4925,7 +4916,6 @@ static void test_authentic_coordinate_teleporter_without_endpoint(
                    trigger.target_x == 2u && trigger.target_y == 16u &&
                    trigger.effect == TQ_ACT_EFFECT_CLEAR &&
                    trigger.delay == 15u && source_tile == 0x48u &&
-                   expected_tile == 0x40u &&
                    memcmp(trigger_source->raw, expected_trigger_raw,
                           sizeof(expected_trigger_raw)) == 0);
         }
@@ -4953,11 +4943,20 @@ static void test_authentic_coordinate_teleporter_without_endpoint(
         assert(theron_v1_world_track02_runtime_tile(
                    &world, trigger_source->dungeon_id, trigger_source->level,
                    trigger.target_x, trigger.target_y, &runtime_tile) &&
-               runtime_tile == expected_tile);
+               runtime_tile == source_tile);
         assert(world.levels[trigger_source->dungeon_id - 1]
                            [trigger_source->level]
                            .source_tiles[trigger.target_y][trigger.target_x] ==
                source_tile);
+        for (unsigned int i = 0u;
+             i < world.source_actuator_event_count; ++i) {
+            if (world.source_actuator_events[i].source_ref ==
+                    trigger_source->source_ref &&
+                world.source_actuator_events[i].source_index ==
+                    trigger_source->source_index)
+                pit_event_pending = 1;
+        }
+        assert(pit_event_pending);
         world.current_level = trigger_source->level;
         {
             int approach_found = 0;
@@ -4974,16 +4973,31 @@ static void test_authentic_coordinate_teleporter_without_endpoint(
                     continue;
                 world.party.leader_x = old_x;
                 world.party.leader_y = old_y;
-                if (theron_v1_get_move_result(&world, direction) ==
-                        THERON_MOVE_OK) {
-                    approach_found = 1;
-                    break;
-                }
+                world.party.levitating = 0;
+                assert(theron_v1_get_move_result(&world, direction) ==
+                       THERON_MOVE_BLOCKED);
+                assert(theron_v1_move_party(&world, direction) ==
+                       THERON_MOVE_BLOCKED);
+                assert(world.party.leader_x == old_x &&
+                       world.party.leader_y == old_y);
+                world.party.levitating = 1;
+                assert(theron_v1_get_move_result(&world, direction) ==
+                       THERON_MOVE_BLOCKED);
+                assert(theron_v1_move_party(&world, direction) ==
+                       THERON_MOVE_BLOCKED);
+                assert(world.party.leader_x == old_x &&
+                       world.party.leader_y == old_y);
+                approach_found = 1;
+                break;
             }
             assert(approach_found);
         }
-        printf("  authentic delayed pit CLEAR closes pit, changes movement "
-               "and preserves raw tile OK\n");
+        world.party.levitating = 0;
+        memset(world.source_actuator_events, 0,
+               sizeof(world.source_actuator_events));
+        world.source_actuator_event_count = 0u;
+        printf("  authentic delayed actuator targeting pit remains unresolved "
+               "without mutating tile or party OK\n");
     }
 
     {

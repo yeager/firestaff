@@ -133,41 +133,6 @@ static int theron_v1_source_level_requires_item_provenance(
 static int theron_v1_source_level_needs_stat_consumer(
     const Theron_V1_World *world);
 
-/* Original US movement consumer $C332-$C347: a source pit (type $40)
- * enters the fall route only when OPEN ($08) is set, IMAGINARY ($01) is
- * clear, and the party levitation byte is zero.  Return whether this is an
- * authenticated source pit separately from whether it needs the unresolved
- * fall consumer, so closed/imaginary/levitated pits can remain passable. */
-static int theron_v1_source_pit_requires_fall(
-    const Theron_V1_World *world, int x, int y, int *is_source_pit) {
-    const Theron_V1_Level *level;
-    uint8_t source_tile;
-
-    if (is_source_pit) *is_source_pit = 0;
-    if (!world || world->current_dungeon < 1 ||
-        world->current_dungeon > THERON_DUNGEON_COUNT ||
-        world->current_level < 0 ||
-        world->current_level >= THERON_MAX_LEVELS_PER_DUNGEON ||
-        x < 0 || x >= THERON_MAX_MAP_SIZE ||
-        y < 0 || y >= THERON_MAX_MAP_SIZE ||
-        !world->level_loaded[world->current_dungeon - 1]
-                            [world->current_level]) {
-        return 0;
-    }
-    level = &world->levels[world->current_dungeon - 1]
-                          [world->current_level];
-    if (!level->source_header_verified) return 0;
-    if (!theron_v1_world_track02_runtime_tile(
-            world, world->current_dungeon, world->current_level,
-            x, y, &source_tile))
-        return 0;
-    if ((source_tile & 0xe0u) != 0x40u) return 0;
-    if (is_source_pit) *is_source_pit = 1;
-    return !world->party.levitating &&
-           (source_tile & 0x08u) != 0u &&
-           (source_tile & 0x01u) == 0u;
-}
-
 static int theron_v1_source_item_category_is_carryable(uint8_t category) {
     /* T900 inventory ownership is defined for the decoded carried-object
      * categories. Monster, actuator and raw-only categories are not items. */
@@ -658,11 +623,10 @@ Theron_MoveResult theron_v1_get_move_result(const Theron_V1_World *world, int di
         return THERON_MOVE_SPECIAL;
     }
     if (tile == THERON_SQUARE_PIT) {
-        int is_source_pit = 0;
-        if (theron_v1_source_pit_requires_fall(
-                world, nx, ny, &is_source_pit))
+        /* Track 02 pits lack a Theron movement-consumer receipt; do not
+         * import the DM1/CSB OPEN/IMAGINARY/levitation gate. */
+        if (theron_v1_source_level_needs_stat_consumer(world))
             return THERON_MOVE_BLOCKED;
-        if (is_source_pit) return THERON_MOVE_OK;
         /* Phase 5 pit logic: fall through */
         return THERON_MOVE_PIT_FALL;
     }
@@ -860,23 +824,16 @@ static int move_party_internal(Theron_V1_World *world, int direction) {
 
     /* ── Special squares: pit ── */
     if (tile == THERON_SQUARE_PIT) {
-        int is_source_pit = 0;
-        /* The original source gate is proven, but its damage/level-transition
-         * tail is not.  Block only an actual open, non-imaginary pit that
-         * would enter that unresolved tail; the other source forms commit as
-         * ordinary movement in the original. */
-        if (theron_v1_source_pit_requires_fall(
-                world, nx, ny, &is_source_pit))
+        /* The authentic Theron pit consumer and fall destination are
+         * unresolved, so no source-backed pit form may mutate the party. */
+        if (theron_v1_source_level_needs_stat_consumer(world))
             return THERON_MOVE_BLOCKED;
-        if (is_source_pit) tile = THERON_SQUARE_FLOOR;
-        else {
         bool fell = theron_v1_pit_check_and_trigger(world, nx, ny);
         if (fell) {
             theron_v1_apply_post_move_effects(world);
             return THERON_MOVE_PIT_FALL;
         }
-        }
-        /* Fall-through to normal move if pit is blocked/imaginary */
+        /* Fixture-only pit routes remain available to source-less probes. */
     }
 
     /* ── Special squares: stairs ── */
@@ -1088,17 +1045,10 @@ int theron_v1_door_unlock_with_key(Theron_V1_World *world,
     return theron_v1_door_open(world, x, y);
 }
 
-/* ══════════════════════════════════════════════════════════════════════
- * Pit mechanics
- *
- * Source: movement_features.md — pit fall chain (ReDMCSB MOVESENS.C:538)
- * Conditions for pit fall:
- *   1. Square type = PIT
- *   2. Party does NOT levitate (world->party.levitating == 0)
- *   3. Pit OPEN bit is set (MASK0x0008_PIT_OPEN = bit 3)
- *   4. Pit is NOT imaginary (MASK0x0001_PIT_IMAGINARY is clear)
- * On fall: party takes stamina/HP damage; world level may change.
- * ══════════════════════════════════════════════════════════════════════ */
+/* Source-less fixture pit behavior retained for probes. The DM1/CSB
+ * ReDMCSB movement reference in docs/source-lock/movement_features.md is not
+ * evidence for Theron's pit gate; authenticated Track 02 pits return blocked
+ * before reaching this fixture path. */
 
 bool theron_v1_pit_check_and_trigger(Theron_V1_World *world,
                                       int x, int y) {

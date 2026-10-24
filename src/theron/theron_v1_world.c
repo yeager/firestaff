@@ -3708,10 +3708,8 @@ static void theron_v1_world_dispatch_source_actuator_events(
                         }
                     }
                 }
-            } else if ((source_tile >> 5) == THERON_TILE_PIT ||
-                       (source_tile >> 5) == THERON_TILE_FAKEWALL) {
-                const uint8_t open_mask =
-                    (source_tile >> 5) == THERON_TILE_PIT ? 0x08u : 0x04u;
+            } else if ((source_tile >> 5) == THERON_TILE_FAKEWALL) {
+                const uint8_t open_mask = 0x04u;
                 uint8_t runtime_tile;
                 uint8_t effect = event.effect;
                 if (theron_v1_world_track02_runtime_tile(
@@ -3731,6 +3729,10 @@ static void theron_v1_world_dispatch_source_actuator_events(
                             event.target_x, event.target_y, runtime_tile))
                         consumed = 1;
                 }
+            } else if ((source_tile >> 5) == THERON_TILE_PIT) {
+                /* Track 02 attributes are byte-authentic, but the Theron
+                 * actuator's pit-bit consumer is unresolved. Keep this event
+                 * queued without changing the runtime tile. */
             } else if ((source_tile >> 5) == THERON_TILE_WALL ||
                        (source_tile >> 5) == THERON_TILE_OPEN) {
                 const int wall =

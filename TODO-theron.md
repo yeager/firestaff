@@ -3484,12 +3484,19 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## 2026-08-13 — Source-bound pit blocks without fixture damage
 
-- ✅ Query, movement, and the public pit handler now recognize that the T700
-  consumer is absent for source levels. A pit tile is reported as blocked
-  instead of applying host HP/stamina damage or falling through as floor.
-- ✅ The hardening probe verifies that position, HP, and stamina are unchanged.
-- 🔒 This does not enable the original pit/fall/levitation consumer; fixture
-  levels retain the previous ReDMCSB-based probe semantics.
+- ✅ Query and movement block source-backed Track 02 pits before applying host
+  damage or changing the party position. Source-backed floor-actuator events
+  targeting pits remain queued without changing the runtime tile. Source-less
+  probes retain a separate fixture path.
+- 🔒 The earlier `$C332-$C347` OPEN/IMAGINARY/levitation attribution has been
+  withdrawn: the checked-in evidence does not bind that address range to the
+  original Theron pit consumer. The authenticated Track 02 data format
+  identifies pit-family bytes, but not their movement meaning. See
+  `docs/source-lock/theron-disassembly/theron-pit-gate-evidence-gap-20261024.md`.
+- 🔧 Recover a hash-locked original US/JP runtime code window and same-session
+  bank mapping/execution receipt for the pit and actuator consumers, then
+  trace fall damage and destination-level selection before enabling any
+  source-backed pit form.
 
 ## 2026-08-13 — Incomplete dungeon exits fail closed
 
