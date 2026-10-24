@@ -130,6 +130,11 @@ on the PRS3 menu capture. See
 - Finish Nexus keyboard and mouse gameplay routing. Retail Ymir captures now
   confirm forward movement, left/right turns, Start-to-pause, and the Z cursor
   mode. Firestaff maps A/D to Nexus turns while preserving DM1's A/D strafe
-  behavior, but the native cursor action contract, desktop mouse-to-game route,
-  and attack, inventory, spell, and champion-selection semantics remain open.
+  behavior. A hash-clean dual-port Ymir run reached the dungeon with a
+  ControlPad and ShuttleMouse; isolated ShuttleMouse direction and click events
+  did not visibly move or activate the hand cursor. Xvfb did not validate a
+  physical desktop mouse. Firestaff still needs a host mouse translation into
+  Nexus movement and action paths, plus the native cursor, attack, inventory,
+  spell, and champion-selection semantics. Keep the event/action gate closed
+  until its consumer is bound.
   See `parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`.

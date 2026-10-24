@@ -24,6 +24,7 @@ Record authentic Japanese retail Nexus startup and gameplay input observations u
 6. B produced no visible change in this corridor. With no visible party or HUD in the captured scene, this does not establish B's in-game action. Attack, inventory, spell, champion selection, and mouse-action semantics remain unverified by these runs.
 7. In the fresh profile, F opened the title menu and S moved selection from `NEW GAME` to `CONTINUE`. R, mapped to the ControlPad right shoulder, did not change the selected menu item. Pressing J while `CONTINUE` was selected left the screen unchanged; no save-list transition was observed. The newly initialized BUP hash remained unchanged. This establishes the retail menu selection and an empty-save observation, not a Continue save-load path.
 8. In the separate ShuttleMouse profile, F opened the title menu with `NEW GAME` selected. The first desktop click only entered Ymir mouse-capture mode. A following mouse-button event was followed by the title menu leaving for the retail intro presentation. This is limited evidence for a title-flow button event; it does not establish pointer-coordinate targeting or in-dungeon mouse semantics. The BUP remained at the blank/init hash.
+9. In a fresh dual-port dungeon run, isolated ShuttleMouse direction and left-button events did not visibly move the hand cursor or produce a click response. The cursor's orange-pixel bounds remained `(411,337)` to `(441,366)` across the captured frames. See the probe notes below; Xvfb does not verify a physical desktop mouse.
 
 ## Evidence files
 
@@ -35,9 +36,31 @@ Record authentic Japanese retail Nexus startup and gameplay input observations u
 - `continue-menu-fresh.png`: fresh-profile title menu with `NEW GAME` selected.
 - `continue-selected-fresh.png`: the same title menu after S selects `CONTINUE`; the new BUP contains no game save.
 - `shuttle-mouse-title-menu.png` and `shuttle-mouse-after-click.png`: title menu and subsequent retail intro presentation from the isolated ShuttleMouse probe.
+- `ymir-port2-hand-mode.png`, `ymir-port2-after-motion.png`, and `ymir-port2-after-click.png`: stable in-dungeon screenshots from the dual-port probe below.
 
-The cursor-mode screenshot was not retained. The ShuttleMouse attempt did not reach a stable gameplay cursor capture, and its input did not establish cursor displacement in the dungeon. Xvfb cannot validate physical desktop mouse capture. The new captures establish only a title-flow button event; ShuttleMouse pointer movement and Firestaff mouse gameplay remain unproven. These are Ymir captures of the retail game, not Firestaff screenshots or complete parity proof.
+## Dual-port in-dungeon ShuttleMouse probe
+
+A follow-up run reached the live first-person dungeon view on the Japanese
+retail disc using Ymir 0.4.1 with `--debug`. The private profile used a
+ControlPad on port 1 and a Shuttle Mouse on port 2. It began with a fresh,
+empty BUP (`6a0d5bcdf8c8243c4f6b8666e76aa0fc8f4eef56df7993b414f3fa7bb3a3e141`);
+no save or save state was imported.
+
+Port 1's `O` key entered the retail orange-hand cursor mode. Port 2's cursor
+direction bindings (arrow keys) and left-button binding (`KeyPad1`) were then
+sent independently. The hand remained at the same captured location in the
+baseline and follow-up frames: its orange-pixel bounds were `(411,337)` to
+`(441,366)` in the 813×631 Ymir window. The screenshots show no visible cursor
+movement or click response. The BUP hash was unchanged after the run.
+
+The profile's `PhysicalMouse` capture mode was enabled, but the host-side
+`xdotool` pointer moves used here are X11-synthetic events, not a directly
+attached USB mouse. They do not establish how a physical desktop mouse would
+behave. The isolated port-2 keyboard bindings do establish that the tested
+ShuttleMouse direction and button events did not visibly affect this gameplay
+state. The evidence still does not prove the Saturn game's full peripheral
+contract or any Firestaff mouse route.
 
 ## Conclusion
 
-These runs prove keyboard startup, title-menu confirmation and Continue selection, forward movement, left and right turning, Start-to-pause, and entry into the game's cursor mode on authentic retail media. They do not prove the Continue save-load path, all Nexus gameplay actions, or Firestaff mouse gameplay. The new ShuttleMouse test establishes a title-flow button event only; pointer movement and in-dungeon click behavior remain open. Firestaff's Nexus non-movement action gate must remain fail-closed until those actions are bound to retail evidence. Firestaff keyboard source changes map Nexus A/D to turning while preserving DM1 strafe behavior; the isolated source build succeeded on TRV2. No Firestaff gameplay pointer route is claimed by this change.
+These runs prove keyboard startup, title-menu confirmation and Continue selection, forward movement, left and right turning, Start-to-pause, and entry into the game's cursor mode on authentic retail media. They do not prove the Continue save-load path, all Nexus gameplay actions, or Firestaff mouse gameplay. The title-only ShuttleMouse result and the dual-port in-dungeon probe do not establish a working retail mouse route. Firestaff's Nexus non-movement action gate must remain fail-closed until those actions are bound to retail evidence. Firestaff keyboard source changes map Nexus A/D to turning while preserving DM1 strafe behavior; the isolated source build succeeded on TRV2. No Firestaff gameplay pointer route is claimed by this change.

@@ -25,6 +25,15 @@ pointer-coordinate targeting, in-dungeon mouse actions, or Firestaff mouse
 behavior. Attack, inventory, spell, champion-selection, and other
 non-movement button semantics remain unverified by these captures.
 
+A dual-port follow-up reached the live dungeon with a ControlPad on port 1 and
+a ShuttleMouse on port 2. Port 1 entered hand-cursor mode; isolated port 2
+arrow-key direction events and a left-button event produced no visible cursor
+movement or click response. The orange cursor stayed at the same captured
+pixel bounds across those frames. The profile used an unchanged, empty BUP.
+Although `PhysicalMouse` capture was enabled, Xvfb `xdotool` pointer movement
+is synthetic and does not stand in for a directly attached desktop mouse. See
+the additional captures and limits in the linked evidence directory.
+
 ## Retail manual control model
 
 The Japanese retail manual's controller table (printed page 4) documents the
@@ -41,10 +50,11 @@ and [inventory instructions](https://api.regvault.org/api/v1/game/saturn/d836232
 
 These documented controls define the retail interaction contract. The current
 Firestaff runtime does not yet implement the Nexus hand-pointer mode,
-inventory/magic panels, or their pointer targets, and the Ymir captures above
-do not establish those routes. They must be implemented with Nexus-owned data
-and proven hit regions rather than by reusing DM1 panels or guessed
-coordinates.
+inventory/magic panels, or their pointer targets. Ymir has not established a
+working in-dungeon ShuttleMouse route. Firestaff desktop mouse support therefore
+needs an explicit host translation into the documented Nexus controls, backed
+by Nexus-owned input and action handling. Do not reuse DM1 panels or guessed
+Nexus coordinates.
 
 ## Firestaff keyboard routing
 
@@ -64,7 +74,10 @@ Nexus has startup pointer handling, but Firestaff does not yet have an
 authenticated Nexus gameplay route from desktop pointer coordinates to retail
 cursor actions or world commands. The existing logical click-route helpers
 require pre-resolved targets and do not establish how viewport pixels map to
-Nexus actions.
+Nexus actions. The Saturn hand cursor itself is D-pad-driven according to the
+manual; a Firestaff mouse adapter must map desktop movement and clicks into
+those Nexus-owned input paths without enabling the unproven generic action
+dispatcher.
 
 Next work must bind the documented cursor and non-movement controls to
 same-session retail input and state traces, then implement desktop mouse
