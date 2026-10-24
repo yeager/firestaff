@@ -37,7 +37,7 @@ separates source/disassembly evidence, real-media receipts and open routes.
 | Chaos Strikes Back | Amiga, Atari ST and FM Towns startup routes have real-media coverage. FM Towns uses its own authenticated entrance palette and MINI.DAT bootstrap state. Campaign, saves and presentation parity are still being completed. |
 | Dungeon Master II: Skullkeep | DOS, Amiga, FM Towns and Macintosh have real-media startup and selected runtime coverage. Amiga reaches its initial GDAT-backed M11 frame through the normal start menu with source movement covered. Broader input, save, native display/audio and dungeon-composition parity remain open per edition. |
 | DM Nexus | Saturn disc parsing and native MAPD title rendering work from the original CUE/BIN. NBG1 tile-address decoding has a capture-only fix under review; menu, HUD and dungeon presentation remain capture-gated. |
-| Theron's Quest | Authentic US and Japanese Track 02 media reach bounded native routes, and source-only loaders verify all seven dungeons in both regions. In the Japanese emulator route, LOAD GAME returns to the Akutuba selection map, but its 2-KiB BRAM matches the known empty menu-only image, so native save persistence is unverified. Full presentation, transitions and gameplay remain evidence-gated. |
+| Theron's Quest | Firestaff runs Theron in its native C/SDL runtime. Authentic US and Japanese Track 02 media reach bounded native routes, and source-only loaders verify all seven dungeons in both regions. Three repeated native macOS runs reached a loaded dungeon with nonzero ticks and presented frames; the Firestaff-presented capture was nonblack, but has not been paired with an original-emulator capture. Authentic graphics-bank binding, tile mapping, palette, transitions, combat, audio and save parity remain open. |
 
 ### Dungeon Master II: Skullkeep
 
@@ -84,30 +84,40 @@ Focused real-media checks and their current boundaries are documented in
 and the [DM2 FM Towns wiki guide](docs/wiki/DM2-FMTowns-Guide.md).
 
 Theron's Quest uses ordinary desktop controls in Firestaff: Up/W moves
-forward, Down/S moves backward, and Left/A and Right/D turn while held.
+forward, Down/S moves backward, Left/Right turn, and A/D step sideways while
+held. Home/Q and End/E are alternate turn keys.
 Tab selects the next living member of the Soul Room party and G picks up a
 source-verified item in the facing cell. P drops that explicitly selected
 source item on the party square, and U uses a door in the facing cell.
-Keypad 8/2/4/6 provides the same four directions. Left and right mouse
-buttons are Button I and Button II; mouse motion only moves the normal pointer
-and never changes the selected object or jumps between controls. On touch
-screens, a short touch is Button I and a long touch is Button II.
+Keypad 8/2/4/6 provides forward, backward and turns. Mouse buttons 1 and 2 map
+to Theron Button I and Button II. In the dungeon, clicks do not use their
+coordinates to choose movement, inventory or champion controls; Button II
+does not perform a standalone dungeon action. Theron does not yet have
+DM1-style clickable controls. The native dungeon image and a source-backed
+control layout must be recovered before those mouse controls can be added.
+Mouse motion only moves the pointer. On touch screens, a short touch is Button
+I and a long touch is Button II. Button II cancels startup selection and does
+not advance the dungeon tick by itself.
 
 ### Theron's Quest runtime status
 
-The native Track 02 runtime can select co-located US or Japanese data
-explicitly with `--theron-native us` or `--theron-native jp`. Verified bounded
-routes include Japanese Rev. 1 title-to-Akutuba startup and US Continue from
-the authentic Akutuba-complete Backup RAM into dungeon 2, level 0, followed by
-three native movement inputs on a floor-only path. Source-only loaders also
-verify all seven dungeon sources in both regions; that is data coverage, not
-proof of the original game's transitions. In the Japanese emulator run,
-LOAD GAME returned to the Akutuba selection map, but its 2-KiB BRAM is
-byte-identical to the known empty menu-only image, so native campaign-save
-persistence is unverified. Broader progression, original T900 item placement/use,
-gameplay presentation, combat, audio and save parity remain open. README
-screenshots are Firestaff-rendered only;
-original-emulator captures are not presented as Firestaff output. See the
+Firestaff runs Theron's Quest through its native C/SDL runtime and admits
+hash-verified US or Japanese Track 02 data with `--theron-native us` or
+`--theron-native jp`. A native macOS Debug run with authentic Japanese Rev. 1
+data advanced through stage select and Soul Room into a loaded dungeon using
+Firestaff's SDL input path. The runtime reported about 2.8 game ticks/s and
+5 rendered/presented frames/s in one interval. A follow-up native Linux Debug
+run on trv2 used Xvfb only as the SDL display and authentic JP Rev. 1 Track 02;
+it reached `theron-runtime`, loaded map 0 and advanced 73 game ticks in 18
+seconds. No emulator ran the game. The presented-surface capture remains
+black: original graphics-bank binding, palette and dungeon tile mapping are
+not yet connected to the renderer. These runs confirm native startup, input
+and tick-loop progress, not a visually playable game or complete parity.
+Source-only verification of all seven dungeon records establishes data
+admission, not campaign parity. Native movement, transitions, combat, audio,
+presentation and save parity remain open.
+README screenshots are Firestaff-rendered only; original-emulator captures
+are not presented as Firestaff output. See the
 [platform status](docs/PLATFORM_STATUS.md) and
 [capture handoff record](docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md)
 for the evidence boundaries.
@@ -313,8 +323,13 @@ tests when those corpora are installed.
 When a complete CUE is present, native startup may bind matching original
 Track 01 CDDA. A loose Track 02 never borrows audio from an unrelated file.
 
-The title accepts Enter, followed by the stage and Soul Room selections. The
-Japanese Rev 1 CUE then reaches the bounded native Akutuba runtime through
+Firestaff's native input path maps Enter to title, stage and Soul Room
+selection actions. These controls have not yet been shown on a rendered
+Theron frame. The mapping does not establish the original game's multi-second
+button-hold timing. For original-menu capture guidance and the current
+unverified hold, see
+[Theron input notes](docs/theron_input.md). The Japanese Rev 1 CUE then
+reaches the bounded native Akutuba runtime through
 hash-verified Track 02 records. For a headless, reproducible CLI receipt, use:
 
 ```bash

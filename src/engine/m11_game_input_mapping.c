@@ -36,7 +36,9 @@ M12_MenuInput M11_GamepadActionToMenuInput(M12_InputAction action,
         case M12_ACTION_SPELL_RUNE_6: return M12_MENU_INPUT_SPELL_RUNE_6;
         case M12_ACTION_SPELL_CAST: return M12_MENU_INPUT_SPELL_CAST;
         case M12_ACTION_SPELL_CLEAR: return M12_MENU_INPUT_SPELL_CLEAR;
-        case M12_ACTION_USE_ITEM: return M12_MENU_INPUT_ACTION;
+        /* Preserve this dedicated command: Theron's native runtime routes
+         * USE_ITEM to its front-object handler, while ACTION is wait/tick. */
+        case M12_ACTION_USE_ITEM: return M12_MENU_INPUT_USE_ITEM;
         case M12_ACTION_MAP_TOGGLE: return M12_MENU_INPUT_MAP_TOGGLE;
         case M12_ACTION_INVENTORY_TOGGLE: return M12_MENU_INPUT_INVENTORY_TOGGLE;
         case M12_ACTION_QUICK_SAVE: return M12_MENU_INPUT_SAVE_GAME;
@@ -132,21 +134,20 @@ M12_MenuInput M11_TheronNavigationInputFromKeycode(int keycode)
 M12_MenuInput M11_TheronMouseButtonToInput(int button)
 {
     if (button == SDL_BUTTON_LEFT) return M12_MENU_INPUT_ACCEPT;
-    /* The user-facing Theron contract is ordinary mouse button 1/2:
-     * SDL left/right.  SDL_BUTTON_MIDDLE is a third physical button and
-     * must stay inert; treating it as Button II made a middle click
-     * unexpectedly advance the source tick.  Mouse motion is deliberately
-     * handled by HandlePointerMove, not by a hit-test: moving the pointer
-     * must never select or hop between objects. */
+    /* Theron's Quest Instruction Manual, printed p. 5, assigns Button II to
+     * cancel and to the held simplified-movement modifier; it is not a
+     * world-tick command. See docs/source-lock/
+     * theron-button-ii-manual-source-lock.md. Keep Button II on an ordinary
+     * right mouse button; SDL_BUTTON_MIDDLE remains inert. */
     if (button == SDL_BUTTON_RIGHT) {
-        return M12_MENU_INPUT_ACTION;
+        return M12_MENU_INPUT_BACK;
     }
     return M12_MENU_INPUT_NONE;
 }
 
 M12_MenuInput M11_TheronTouchButtonInput(int longPress)
 {
-    return longPress ? M12_MENU_INPUT_ACTION : M12_MENU_INPUT_ACCEPT;
+    return longPress ? M12_MENU_INPUT_BACK : M12_MENU_INPUT_ACCEPT;
 }
 
 int M11_GamepadEnabledForInputMode(int inputModeIndex, int configuredEnabled)

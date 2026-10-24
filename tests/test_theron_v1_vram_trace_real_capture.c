@@ -212,8 +212,8 @@ int main(void) {
            (size_t)viewport.fb.stride * (size_t)viewport.fb.h);
     /* The real dungeon renderer must leave the source capture intact when
      * no authenticated world/asset relation is available. */
-    theron_vp_render_dungeon(&viewport, NULL);
-    if (memcmp(expected_screen, viewport.fb.data,
+    if (!theron_vp_render_dungeon(&viewport, NULL) ||
+        memcmp(expected_screen, viewport.fb.data,
                (size_t)viewport.fb.stride * (size_t)viewport.fb.h) != 0) {
         fprintf(stderr,
                 "FAIL: production dungeon route diverged from authenticated screen route\n");
@@ -270,6 +270,24 @@ int main(void) {
         if (boot_presented_nonzero == 0u) {
             fprintf(stderr,
                     "FAIL: boot facade presented an empty capture frame\n");
+            theron_vp_free(&viewport);
+            return 1;
+        }
+        /* Fault-inject a missing authenticated SAT after a good render. The
+         * production route must report failure and clear the stale frame. */
+        viewport.vdc_sat_loaded = 0;
+        memset(boot_framebuffer, 0x7f, sizeof(boot_framebuffer));
+        if (theron_v1_boot_runtime_render_frame(
+                &world, &viewport, &assets, 0, 0,
+                boot_framebuffer, 320, 200)) {
+            fprintf(stderr,
+                    "FAIL: malformed authenticated capture reported render success\n");
+            theron_vp_free(&viewport);
+            return 1;
+        }
+        if (nonzero_bytes(boot_framebuffer, sizeof(boot_framebuffer)) != 0u) {
+            fprintf(stderr,
+                    "FAIL: failed authenticated render retained stale pixels\n");
             theron_vp_free(&viewport);
             return 1;
         }

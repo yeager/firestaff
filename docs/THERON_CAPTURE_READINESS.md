@@ -1,5 +1,140 @@
 # Theron Capture Readiness
 
+Firestaff runs Theron's Quest in its native C/SDL runtime. Mednafen is used
+only as an external reference instrument for authentic original-game behavior
+and data capture; it is never part of the shipped runtime or a substitute for
+native Firestaff gameplay.
+
+## 2026-10-24 — native menu input reaches the dungeon, presentation remains black
+
+A local macOS Debug build ran Firestaff's native C/SDL application with
+authentic Japanese Rev. 1 `TQJP02.bin` copied from the user's TRV2 data
+directory into the ignored local game-data directory. Firestaff's own SDL
+script input selected a stage, opened the Soul Room, moved its cursor to the
+forcefield entry, and entered a loaded dungeon. All three repeated runs
+reported `level-loaded=1`, map 0, party `(1,0)`, `THERON READY`, and nonzero
+game ticks and rendered frames. The reported champion count varied between
+one and two. Measured intervals reported `game-ticks-per-sec=2.80–3.00`,
+`game-frames-rendered-per-sec=4.99–5.19`, and
+`game-frames-presented-per-sec=4.99–5.19`. The Firestaff-presented 1600x1000
+capture remained black (SHA-256
+`160ee7a7f88cd678205f9aceced67995f35203c647f6fc71ec104f556bdcd733`). This
+verifies native startup, input, dungeon admission, and tick/render loop
+activity, but not visible playability. The scripted inputs were discrete
+key-down events and do not verify a continuous 3–5 second button hold. No
+emulator was used to run Theron. The next parity work is to bind authentic
+graphics, palette, and tile mapping into the production native renderer.
+The US/JP Stage-2 `$46B8` palette callers and their regional VCE routines are
+now source-bound across raw MODE1/2352 sectors, including a shared 64-byte
+payload written at VCE index `$E0`. The command stream's screen association
+and matching graphics/pixel route remain unproven; see the
+[palette source note](source-lock/theron-stage2-static-vce-palette-20261024.md).
+
+## Earlier 2026-10-24 — TRV2 headless native full-loop presentation check
+
+Firestaff was built from source commit `d43df8905e22a207696f4439bde7afb02b808b53`
+on TRV2 and run three times for 15 seconds through the native application
+path with authentic Japanese Rev. 1 Track 02. Each run admitted the verified
+Track 02 file and kept the SDL host loop active at about 62.5 loops per
+second. The Debug perf receipts reported zero game ticks, zero rendered game
+frames, and zero presented frames in every run. Firestaff's own presented
+surface capture was 320x200 and black in all three runs. `SDL_VIDEODRIVER=dummy`
+was required because the TRV2 session had no `DISPLAY` or `WAYLAND_DISPLAY`,
+so no interactive window or input was verified. This is stronger than the
+boot-probe-only startup receipt, but still does not establish visible native
+gameplay. Firestaff reported that the later original graphics bank is not
+captured and fallback visuals stay disabled. The next parity blocker is to
+bind and decode authentic graphics data and then verify nonzero native game
+ticks and presented frames. No emulator participated in these Firestaff runs.
+
+## 2026-10-24 — current evidence boundary
+
+An isolated Debug build from clean commit `2748eed3db4a3a9d7b1db2e1522b050440b3e0a2`
+was built on TRV2 and exercised three times through Firestaff's native
+`--debug --boot-probe` route with the authentic JP Rev. 1 Track 02 image. Each
+run reported `phase=theron-runtime`, `levelLoaded=1`, party `(1,0,0)`, two
+champions, 291 source objects, four loaded dungeon levels, and 455 nonzero
+source tiles. The probe also reported `frames=0` and `runtimeTick=0`. This
+confirms a clean native build and bounded startup/data admission; it does not
+confirm interactive gameplay, dungeon drawing, or parity. The isolated source
+and build directory was removed from `/dev/shm` after the three loops.
+
+The Oct. 24 pit safety change was then built from a checksum-verified source
+snapshot on TRV2. The real-media `theron_v1_track02_dungeon_loader` test passed
+three loops against authentic US Track 02 MD5
+`f23601102138f87c33025877767ebf76` and JP Track 02 MD5
+`b7afb338ad31be1025b53f9aff12d73a`. Each loop found 18 authentic pit-target
+party-actuator occurrences per edition and retriggered each 128 times; the
+queue retained one equivalent pending occurrence and the target source tile
+stayed unchanged. The movement guard is in Firestaff's native C path and runs before
+creature combat. No authentic active creature was co-located with a pit, so
+that conditional interaction remains untested. The full native Firestaff
+binary was also rebuilt and launched three times with `--debug
+--boot-probe --theron-native jp`; each reached `theron-runtime`, but reported
+`frames=0` and `runtimeTick=0`. This demonstrates startup only, not gameplay,
+pit semantics, or dungeon rendering parity.
+
+Three current-source Firestaff `--debug` runs on TRV2 passed with authentic JP
+Rev. 1 Track 02 (MD5 `b7afb338ad31be1025b53f9aff12d73a`) through the default
+`FIRESTAFF_DATA` directory and `--theron-native jp`. Each reached
+`phase=theron-runtime` with the level loaded, party `(1,0,0)`, two champions,
+291 source objects and four loaded dungeon levels. This also verifies the
+null-safe default-data path when no `--data-dir` argument is supplied. The
+separate movement regression remains recorded below. The
+`test_theron_v1_track02_dungeon_loader` real-media test also passed three
+loops and reported pit-record candidates across all seven JP/US dungeons.
+These checks establish Firestaff runtime admission and source-record
+candidates only; they do not prove original-game movement, pit semantics or
+visual parity.
+
+An authentic JP Mednafen state was visibly in dungeon gameplay, but its active
+map and party coordinates are not joined to Track 02. The latest isolated
+autoload attempt produced raw VDC and RAM snapshots, but had no verified input
+delivery, command-consumer receipt, or CD transition. The capture helper
+therefore rejected the bundle as incomplete. An earlier host-key attempt
+reached the PCE pad interface but did not prove movement. A separate US
+cold-start attempt remained on the System Card screen. These are reference
+diagnostics only; do not promote them to original-game parity. The pit
+consumer remains blocked; see the
+[pit evidence gap](source-lock/theron-disassembly/theron-pit-gate-evidence-gap-20261024.md).
+
+The fresh clean-source Oct. 24 `pce_fast` reference binary contains the
+scripted-input hook. A bounded replay from the authentic JP state recorded
+one non-System-Card controller poll but no matching replay-plan/event/apply
+or game-command-consumer receipt, and the capture helper rejected the bundle.
+This provides no evidence of movement. Before interpreting any later
+reference capture, require plan, event, apply, and controller-read receipts
+to agree. Firestaff gameplay continues to run in the native C/SDL runtime.
+
+Next reference-capture work is to verify a controlled input with same-session
+command-consumer, party-pose and active-map receipts, then bind the executing
+pit query/caller to its physical bank and authentic Track 02 record. Keep game
+media and private emulator artifacts on the operator's machine. Continue
+implementing and validating gameplay in Firestaff's native runtime.
+
+## 2026-10-24 — selected title-menu action hold remains unverified
+
+The user reports that starting from the original game's menu requires holding
+the selected action for several seconds. Treat this as capture procedure to
+verify, not as established retail timing: DMWeb's manual identifies Button I
+as the selector but does not specify a multi-second hold. Existing JP
+`pce_fast` captures reached the title menu after a four-second RUN hold and
+advanced through New Game/File 1 with ordinary Space/Button I. The latest US
+interactive session used the normal `pce` module and remained at the authentic
+System Card 3.0 `JUST A MOMENT...` screen; it never exposed the Theron menu and
+therefore did not test the requested hold. Its BRAM and pre-existing states
+were left unchanged. Next capture: use an isolated authenticated `pce_fast`
+profile, confirm the menu visually, hold the highlighted Button I action for
+3–5 seconds, and retain same-session input and screen receipts. Do not treat a
+System Card screen or a prior JP short-press capture as evidence for the US
+hold or full-game parity.
+
+Reference context: [DMWeb Theron's Quest edition records](DMWEB_REFERENCE.md)
+separate Japanese and US media and include original menu/gameplay references;
+[Greatstone SCK](http://greatstone.free.fr/dm/) publishes a CSBWin custom
+dungeon named "Theron's Quest Conversion," not retail PC Engine data. Neither
+substitutes for an authenticated runtime capture of the menu input.
+
 ## 2026-09-25 — JP cold-start capture is System Card-only
 
 The hash-locked authentic JP Rev. 1 cold full-disc capture has a VDC-I/O stream

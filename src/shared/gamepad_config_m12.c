@@ -568,6 +568,17 @@ void M12_GamepadStatus_Update(M12_GamepadStatus* status) {
 
     if (!status) return;
 
+    /* SDL3 does not initialize gamepad support with the video subsystem.
+     * SDL_GetGamepads() returns no devices until this subsystem is active. */
+    if (!status->subsystemInitialized) {
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+        if (!SDL_InitSubSystem(SDL_INIT_GAMEPAD)) return;
+#else
+        if (SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER) != 0) return;
+#endif
+        status->subsystemInitialized = 1;
+    }
+
     /* If we have a handle, check if it's still connected */
     if (status->handle) {
         if (SDL_GamepadConnected(status->handle)) {
@@ -615,6 +626,14 @@ void M12_GamepadStatus_Close(M12_GamepadStatus* status) {
     status->connected  = 0;
     status->instanceId = 0;
     status->name[0]    = '\0';
+    if (status->subsystemInitialized) {
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+        SDL_QuitSubSystem(SDL_INIT_GAMEPAD);
+#else
+        SDL_QuitSubSystem(SDL_INIT_GAMECONTROLLER);
+#endif
+        status->subsystemInitialized = 0;
+    }
 }
 
 /* ── Profile management ─────────────────────────────────────────────── */

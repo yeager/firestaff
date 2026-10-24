@@ -166,7 +166,7 @@ def _validate_state_evidence(base: Path, side: dict[str, Any], label: str,
         raise ManifestError(f"{label}.stateEvidence.bindings must map state keys to JSON Pointers")
     try:
         document = json.loads(evidence_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise ManifestError(f"cannot read state evidence JSON {evidence_path}: {exc}") from exc
     observed: dict[str, Any] = {}
     for key, expected in (("captureId", capture_id), ("imageSha256", image_sha256)):
@@ -192,6 +192,53 @@ def _validate_state_evidence(base: Path, side: dict[str, Any], label: str,
             )
         observed[key] = actual
     return {"path": str(evidence_path), "sha256": sha256_file(evidence_path), "state": observed}
+
+
+def _validate_capture_provenance(base: Path, capture: dict[str, Any],
+                                 capture_id: str,
+                                 expected_build_id: str) -> dict[str, Any]:
+    """Require hash-bound authentic-media and debug-build receipts per pair."""
+    provenance = capture.get("provenance")
+    if not isinstance(provenance, dict):
+        raise ManifestError(f"{capture_id}.provenance must be an object")
+    media = provenance.get("authenticMedia")
+    if not isinstance(media, dict):
+        raise ManifestError(f"{capture_id}.provenance.authenticMedia must be an object")
+    _required_text(media.get("identity"), f"{capture_id}.provenance.authenticMedia.identity")
+    media_receipt = _resolve_input(
+        base, media.get("receipt"), f"{capture_id}.provenance.authenticMedia.receipt"
+    )
+    debug = provenance.get("firestaffDebug")
+    if not isinstance(debug, dict):
+        raise ManifestError(f"{capture_id}.provenance.firestaffDebug must be an object")
+    if debug.get("enabled") is not True:
+        raise ManifestError(f"{capture_id}.provenance.firestaffDebug.enabled must be true")
+    build_id = _required_text(debug.get("buildId"), f"{capture_id}.provenance.firestaffDebug.buildId")
+    debug_receipt = _resolve_input(
+        base, debug.get("receipt"), f"{capture_id}.provenance.firestaffDebug.receipt"
+    )
+    try:
+        media_document = json.loads(media_receipt.read_text(encoding="utf-8"))
+        debug_document = json.loads(debug_receipt.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise ManifestError(f"{capture_id} provenance receipt is not valid JSON: {exc}") from exc
+    if not isinstance(media_document, dict) or media_document.get("authentic") is not True:
+        raise ManifestError(f"{capture_id} authentic-media receipt must assert authentic=true")
+    if media_document.get("identity") != media.get("identity"):
+        raise ManifestError(f"{capture_id} authentic-media identity does not match its receipt")
+    if not isinstance(debug_document, dict) or debug_document.get("debug") is not True:
+        raise ManifestError(f"{capture_id} debug receipt must assert debug=true")
+    if build_id != expected_build_id:
+        raise ManifestError(
+            f"{capture_id} debug build id does not match manifest firestaffBuildId"
+        )
+    if debug_document.get("buildId") != build_id:
+        raise ManifestError(f"{capture_id} debug build id does not match its receipt")
+    return {
+        "authenticMediaReceipt": {"path": str(media_receipt), "sha256": sha256_file(media_receipt)},
+        "debugReceipt": {"path": str(debug_receipt), "sha256": sha256_file(debug_receipt)},
+        "debugBuildId": build_id,
+    }
 
 
 def _validate_region(region: Any, image_size: tuple[int, int], index: int) -> dict[str, Any]:
@@ -250,7 +297,7 @@ def compare_manifest(manifest_path: Path, out_dir: Path,
     manifest_path = manifest_path.resolve()
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise ManifestError(f"cannot read JSON manifest {manifest_path}: {exc}") from exc
     if not isinstance(manifest, dict) or manifest.get("schema") != SCHEMA:
         raise ManifestError(f"manifest schema must be {SCHEMA!r}")
@@ -329,6 +376,9 @@ def compare_manifest(manifest_path: Path, out_dir: Path,
             manifest_path.parent, capture["firestaff"], f"{label}.firestaff", state_keys,
             capture_id, firestaff_sha256,
         )
+        provenance = _validate_capture_provenance(
+            manifest_path.parent, capture, capture_id, build_id
+        )
         state_values: dict[str, Any] = {}
         for key in state_keys:
             reference_value = reference_state_evidence["state"][key]
@@ -375,6 +425,7 @@ def compare_manifest(manifest_path: Path, out_dir: Path,
                 "path": firestaff_state_evidence["path"],
                 "sha256": firestaff_state_evidence["sha256"],
             },
+            "provenance": provenance,
             "regions": region_reports,
         })
     report_path = _safe_output_file(out_dir, "paired_capture_report.json")

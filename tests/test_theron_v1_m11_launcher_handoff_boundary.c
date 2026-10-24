@@ -110,8 +110,8 @@ static void run_theron_pointer_and_button_input_contract(void) {
                     M11_TheronMouseButtonToInput(SDL_BUTTON_MIDDLE) ==
                     M12_MENU_INPUT_NONE &&
                     M11_TheronMouseButtonToInput(SDL_BUTTON_RIGHT) ==
-                    M12_MENU_INPUT_ACTION,
-                "Theron mouse buttons map Button I/II for ordinary mice");
+                    M12_MENU_INPUT_BACK,
+                "Theron Button II cancels instead of advancing a world tick");
 }
 
 static void init_menu_without_gallery(M12_StartupMenuState* state,

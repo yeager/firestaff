@@ -1,5 +1,12 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-24: Fixed gamepad `Use Item` dispatch for Theron's native runtime.
+  The shared M11 mapper now emits the dedicated `M12_MENU_INPUT_USE_ITEM`
+  token instead of generic `M12_MENU_INPUT_ACTION` (wait/tick). Added a
+  regression for gameplay and menu contexts; the focused bridge test passed
+  three repeated runs. This corrects host input translation, not original
+  retail item-use/T900 semantics.
+
 - 2026-10-24: Rebuilt the current-source `firestaff` executable and reran
   `test_m12_main_menu_game_selection_real_media`; all 16 menu routes passed.
   Keyboard and mouse selected DM1, CSB and DM2 from the five-game launcher,
