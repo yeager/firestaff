@@ -1,133 +1,45 @@
-# Nexus V1 — Input System Audit
+# Nexus V1 Input Status
 
-## Sources
-- `src/engine/firestaff_input.c` (input queue, keyboard mapping)
-- `src/engine/firestaff_touch.c` (touch-to-mouse abstraction)
-- `src/engine/firestaff_controller.c` (gamepad/controller support)
-- `docs/dm2_input.md` (DM2 input system reference)
-- `src/frontend/entrance_keyboard_routes_pc34_compat.c` (DM1 keyboard routing)
-- `src/frontend/entrance_mouse_routes_pc34_compat.c` (DM1 mouse routing)
+## Retail evidence
 
-## Overview
+The current input observations use the Japanese retail Saturn disc and BIOS in
+Ymir 0.4.1 with `--debug`. The evidence and paired screenshots are in
+[`parity-evidence/verification/keyboard-mouse-debug-20261024/`](../parity-evidence/verification/keyboard-mouse-debug-20261024/README.md).
 
-Nexus V1 input is handled by the Firestaff input layer — the same system used
-for DM1, M11, and M12. The Nexus engine has no input handling code;
-keyboard/mouse/gamepad events are processed by firestaff_input.c and routed
-to game commands (movement, menu, action) which the Nexus engine interprets.
+The isolated Ymir ControlPad profile mapped `W/S/A/D` to Saturn D-pad
+up/down/left/right, `J` to A, `O` to Z, and `F` to Start. In the retail
+dungeon view, W moved forward, A turned left, D turned right, and F displayed
+the game's `PAUSE` overlay. O entered the game's hand-cursor mode; W moved the
+cursor upward in that mode. The captures show real game output from the retail
+media, not generated or synthetic game state.
 
-On Sega Saturn, input comes from the SFC-style controller (D-pad + 6 face
-buttons + 2 shoulder triggers). On PC/Linux, this is emulated via SDL2.
+The Ymir profile used a ControlPad. A desktop mouse click did not produce a
+separately attributable game action, so this run does not establish Saturn
+Shuttle Mouse compatibility or Firestaff mouse behavior. The attack,
+inventory, spell, champion-selection, and other non-movement button semantics
+were not established by these captures.
 
-## Input Command System
+## Firestaff keyboard routing
 
-FS_Command enum (src/engine/firestaff_input.h):
+The M11 host maps W/S to forward/backward and Q/E to left/right turns. For
+Nexus only, A/D are aliases for left/right turn, matching the observed retail
+ControlPad behavior. This preserves DM1's A/D strafe mapping. Left/right arrow
+keys and shoulder bindings remain the strafe inputs.
 
-| Command | Key (Arrow) | Key (WASD) | Action |
-|---------|-------------|------------|--------|
-| FS_CMD_MOVE_FORWARD | Up / W | W | Move forward |
-| FS_CMD_MOVE_BACKWARD | Down / S | S | Move backward |
-| FS_CMD_TURN_LEFT | Left | A | Turn left 90 deg |
-| FS_CMD_TURN_RIGHT | Right | D | Turn right 90 deg |
-| FS_CMD_STRAFE_LEFT | — | A | Strafe left (if WASD enabled) |
-| FS_CMD_STRAFE_RIGHT | — | D | Strafe right (if WASD enabled) |
-| FS_CMD_MENU | Escape | Escape | Open ESC menu |
-| FS_CMD_ACTION | Space | Space | Confirm / attack |
-| FS_CMD_INVENTORY | Tab | Tab | Toggle inventory |
+The Nexus movement-only `M11_GameView_HandleInput` route accepts movement
+commands. The Nexus mechanics action gate remains fail-closed for unproven
+retail actions. Do not treat the shared DM1 action, inventory, spell, pause, or
+mouse routes as Nexus parity.
 
-Input queue: FS_InputQueue — FIFO command queue, size FS_INPUT_QUEUE_SIZE (8).
+## Mouse and remaining input work
 
-## Keyboard Input Mapping
+Nexus has startup pointer handling, but Firestaff does not yet have an
+authenticated Nexus gameplay route from desktop pointer coordinates to retail
+cursor actions or world commands. The existing logical click-route helpers
+require pre-resolved targets and do not establish how viewport pixels map to
+Nexus actions.
 
-fs_input_key_to_command() (firestaff_input.c):
-- SDL scancodes: Up=82, Down=81, Left=80, Right=79
-- WASD: W=26, A=4, S=22, D=7
-
-## Mouse Input (DM1/M11/M12 reference)
-
-DM1 PC 3.4 mouse handling (entrance_mouse_routes_pc34_compat.c):
-- Click zones defined in CEDTDATA.C (mouse input records per dialog type)
-- G2259_as_MouseInput_Dialog2Choices[3] — 2-choice dialog buttons
-- G2260_as_MouseInput_Dialog3ChoicesA[4] — 3-choice dialog
-- G2285_as_FilePickerDialogButtons[5] — file picker buttons
-
-## Touch Input
-
-firestaff_touch.c maps SDL touch/finger events to synthesized mouse events
-through M11_GameView_HandlePointerButton(). No duplicate click logic.
-
-Gestures:
-- Single tap: Left click (move / confirm)
-- Long press (>500ms): Right click (inventory panel)
-- Horizontal swipe: Turn left/right
-- Vertical swipe: Move forward/backward
-
-Swipe threshold: FIRESTAFF_TOUCH_SWIPE_THRESHOLD_PX = 40 pixels.
-
-## Controller / Gamepad Input
-
-firestaff_controller.c — SDL gamepad mapping for Saturn SFC pad:
-- D-pad: 4-directional movement
-- A: Action / confirm
-- B: Cancel / back
-- X: Inventory
-- Y: Menu (ESC)
-- L/R: Strafe (if enabled)
-- Start: Pause
-
-## DM1 vs Nexus Input Comparison
-
-| Feature | DM1 | Nexus V1 (Firestaff) |
-|---------|-----|-----------------------|
-| Keyboard | BIOS INT 16h | SDL keyboard API |
-| Mouse | INT 33h | SDL mouse |
-| Gamepad | None | SDL gamepad |
-| Touch | None | SDL touch |
-| Event system | Immediate | FIFO command queue |
-
-## Nexus-Specific Input Notes
-
-### Saturn Controller (SFC Pad)
-Native input device. Button mapping:
-- D-pad: 4-directional movement
-- A/B/X/Y: Face buttons (A=confirm, B=cancel, X=inventory, Y=menu)
-- L/R: Left/right shoulder buttons
-- Start: Pause
-
-### Input in Nexus Engine
-nexus_v1_engine.c has no input handling. It receives commands via the
-Firestaff command queue. nexus_v1_tick() is called each frame by the game
-loop — input is processed before nexus_v1_tick().
-
-### Menu Navigation
-The Nexus startup state machine in `src/nexus/nexus_v1_startup_menu.c` now
-handles title idle/start, save/new-game selection, and champion selection.
-The corresponding mouse hit helpers are in `nexus_v1_startup_layout.c`; they
-are host compatibility regions, not authenticated Saturn coordinates.
-
-The in-game ESC/pause menu and Saturn-owned menu presentation remain blocked
-until their original runtime command/VDP ownership is captured.
-
-## Whats Implemented vs Whats Missing
-
-Implemented: Keyboard command mapping, input queue FIFO, touch-to-mouse
-gesture system, SDL gamepad mapping, startup save/champion state input,
-ESC/Tab/Space action keys, and WASD toggle.
-
-Not yet implemented: authenticated mouse click-to-square routing in the 3D
-viewport, Saturn-owned champion portrait click/presentation, inventory
-drag-and-drop, key binding customization, and the in-game pause menu.
-
-## Next Steps
-1. Implement mouse click-to-square routing in 3D viewport
-2. Implement Nexus ESC menu with D-pad navigation
-3. Add key binding customization via config_m12.c settings
-4. Implement champion portrait click (party member selection)
-5. Add pause menu binding (Start button on gamepad)
-# Firestaff runtime panel
-
-The Nexus runtime exposes the shared **F10** panel after launch. It provides
-live host presentation controls and the verified shared cheat/speed controls
-without changing Saturn input semantics. Use keyboard navigation or mouse
-clicks; changes apply immediately and Esc closes the modal panel. Unproven
-Saturn-specific debug powers and synthetic graphics are intentionally not
-shown as cheats.
+Next work must bind the Saturn cursor mode and non-movement buttons to
+same-session retail input and state traces, then implement desktop mouse
+control against those observed semantics. Keep unsupported actions inert until
+their retail consumers are identified.
