@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-24: Rebuilt the current macOS arm64 launcher and reran the no-game
+  M12 main-menu selection matrix against the installed authentic media.
+  Keyboard and mouse selection each handed off to the expected original
+  edition for DM1, CSB, DM2, Nexus and Theron's Quest. The DM1/CSB/DM2 routes
+  also passed with each individual game directory used as the scan root, and
+  with the ordinary `~/.firestaff/data` root and no `--game` or `--data-dir`.
+  These are authentic-media launcher handoff checks under SDL's dummy display;
+  they do not establish native display parity or complete gameplay parity.
+
 - 2026-10-23: Added a real-media regression for launching the main menu with
   only CSB installed under `~/.firestaff/data/csb` and no CLI game selection.
   The scripted menu route selected authentic FM Towns CSB and reached its
