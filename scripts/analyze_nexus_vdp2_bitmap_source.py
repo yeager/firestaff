@@ -437,25 +437,25 @@ def main() -> int:
     chctla = read_u16(registers, 0x28, byte_order)
     bmpna = read_u16(registers, 0x2C, byte_order)
     mpo = read_u16(registers, 0x3C, byte_order)
-    layers: list[tuple[str, int, int, int]] = []
+    layers: list[tuple[str, int, int]] = []
     # NBG0 and NBG1 each use their own register fields in CHCTLA/MPOFN.
     # This comparator admits only the captured 512x256, 8bpp bitmap mode.
     if bgon & 0x01 and chctla & 0x0002:
-        if (chctla & 0x000C) != 0 or (chctla & 0x0030) != 0x0010:
+        if (chctla & 0x000C) != 0 or (chctla & 0x0070) != 0x0010:
             print("NEXUS_VDP2_BITMAP_SOURCE_INVALID: unsupported NBG0 geometry")
             return 1
-        layers.append(("NBG0", mpo & 7, bmpna & 7, 0x01))
+        layers.append(("NBG0", mpo & 7, bmpna & 7))
     if bgon & 0x02 and chctla & 0x0200:
         if ((chctla >> 10) & 3) != 0 or ((chctla >> 12) & 3) != 1:
             print("NEXUS_VDP2_BITMAP_SOURCE_INVALID: unsupported NBG1 geometry")
             return 1
-        layers.append(("NBG1", (mpo >> 4) & 7, (bmpna >> 8) & 7, 0x02))
+        layers.append(("NBG1", (mpo >> 4) & 7, (bmpna >> 8) & 7))
     if not layers:
         print("NEXUS_VDP2_BITMAP_SOURCE_INVALID: no supported bitmap layer is active")
         return 1
     bitmap_size = 512 * 256
     exact = 0
-    for layer, map_offset, palette, _ in layers:
+    for layer, map_offset, palette in layers:
         byte_offset = map_offset * 0x20000
         bitmap = frame["vdp2-vram"][byte_offset:byte_offset + bitmap_size]
         if len(bitmap) != bitmap_size:
