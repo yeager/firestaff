@@ -1463,6 +1463,54 @@ transport only. RAM-to-VDP2 ownership and semantic admission remain blocked.
 The BIOS, disc, raw capture and traces remain on TRV2 under
 `/home/trv2/work/firestaff-nexus-menu-transition-20260928/runs/title-mapd-cd-ram-source-13294-20260928/`.
 
+## JP title-screen START follow-up and SH-2 branch trace, 2026-10-02
+
+A separate authentic-media run shows the retail title screen after a single
+START pulse. The input capture uses the Japanese BIOS and Japanese retail CUE
+hashes above, starts at frame 42509, and schedules mask `0x10` for one frame at
+42809. The rendered frames at 42808, 42809, 42810, 42869, and 43108 are
+retained in the capture manifest; frame 42869 shows the Nexus title and
+`PRESS START BUTTON`, and frame 43108 still shows the title after 299 frames.
+The frame-42869 PPM SHA-256 is
+`acacec7595eaae5175b15253a63345daeae5b1613b17865779cf6c06818d37f9`; the
+frame-43108 PPM SHA-256 is
+`e47c9b0685d7a81bb4526a86b846bdecca7b79ff13d770002907182e2016253f`. The
+matched control-follow-up has the same PPM hashes at both frames and the same
+600-frame raw capture hash
+`0bcf7126e458782169b9d73b59325790643acf01962b32c909327c573c073f8f`.
+The control-follow-up's only START pulse is at its initial frame, so this
+comparison establishes no lasting presentation change from the later input
+pulse, but does not identify the menu action consumer.
+
+An independent cold-start pair captured 70 raw frames from absolute frames
+42860--42929, with START mask `0x10` for one frame at 42869 in the input run
+and no input in the control. Both manifests bind the same authenticated
+Japanese BIOS and retail CUE. Their complete raw VDP1/VDP2 streams are
+byte-identical (SHA-256
+`f6e905f19a34125414f74e3daab64fd91b744361d2c80084e7d08e9d6734ae57`,
+110,434,202 bytes). The input branch trace records `R2=0x10` at frame 42870
+versus `R2=0` in control; at the observed `PC=0x06039290` both runs retain
+`T=0`, `taken=0`, and the same `opcode=0x8d5d`. The trace therefore shows a
+transient register difference, not a taken START branch or a visual
+transition. Its branch-trace SHA-256 values are
+`1d3f0ec113b0383cfc65c76482f89220ff4878572628ebf20bead43245a6ad01`
+(input) and
+`8933f0358b0ffcb943e40bd4700eb5e56bf9da83b46b250564f3291663e74c30`
+(control). Under `scripts/analyze_nexus_tm_bin_vdp_owner.py`'s static
+`DM.BIN` load base `0x06010040`, this PC maps to file offset `0x29250`. The
+hash-verified Japanese `DM.BIN`
+(`3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124`)
+contains opcode `0x8903` at that offset, not the runtime-traced `0x8d5d`.
+This direct mapping therefore does not bind the branch to a retail code span;
+relocation or runtime code provenance remains unknown. The input/action
+consumer and title-to-menu transition remain unverified.
+
+The rendered frames are in
+`/home/trv2/work/firestaff-nexus-title-start-pair-real15/`; the branch pair is
+in `/home/trv2/work/firestaff-nexus-start-branch-trace-20261002/`. These
+captures are supporting negative evidence only; they do not authorize title,
+menu, HUD, or viewport renderer admission.
+
 ## Matched A-input and no-input title-window capture, 2026-10-23
 
 A fresh 40-frame comparison used the authenticated Japanese BIOS

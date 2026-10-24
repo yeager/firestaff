@@ -14,6 +14,16 @@ unbound. Next priorities are capturing a matched Japanese source-PC/disc-read
 trace, then joining the menu/HUD writes to retail assets. Do not enable
 rendering from coincidence.
 
+2026-10-24 Japanese title START follow-up: an authentic JP BIOS/CUE run
+captured the Nexus title screen at frame 42869 and still showed it 299 frames
+after a one-frame START pulse. A separate matched 70-frame input/control trace
+at frames 42860--42929 has byte-identical VDP1/VDP2 output; its sampled SH-2
+branch stays not-taken while `R2` briefly changes to `0x10`. The branch PC does
+not map to the observed opcode under the current hash-verified `DM.BIN`
+address mapping. This does not bind a menu action or title-to-menu transition;
+keep startup and menu renderer admission closed. Detailed hashes and paths are
+in `docs/NEXUS_RUNTIME_CAPTURE.md`.
+
 2026-10-24 five-game direct CLI retest: the authentic-media
 `firestaff_cli_startup_diagnostics_real_media` CTest passed in 246 seconds,
 covering DM1, CSB, DM2, Nexus and Theron. It verifies selected source media,
