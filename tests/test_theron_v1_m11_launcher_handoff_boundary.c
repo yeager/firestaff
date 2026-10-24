@@ -100,31 +100,45 @@ static void run_theron_pointer_and_button_input_contract(void) {
         int party_dir;
         int active_slot;
         M11_GameInputResult expected_result;
+        const char *expected_action;
+        const char *expected_outcome;
         const char *label;
     } mouse_controls[] = {
         { 204, 132, 3, 3, THERON_DIR_WEST, 0, M11_GAME_INPUT_REDRAW,
+          NULL, NULL,
           "mouse overlay turns left" },
         { 248, 132, 3, 2, THERON_DIR_NORTH, 0, M11_GAME_INPUT_REDRAW,
+          NULL, NULL,
           "mouse overlay moves forward" },
         { 292, 132, 3, 3, THERON_DIR_EAST, 0, M11_GAME_INPUT_REDRAW,
+          NULL, NULL,
           "mouse overlay turns right" },
         { 204, 151, 2, 3, THERON_DIR_NORTH, 0, M11_GAME_INPUT_REDRAW,
+          NULL, NULL,
           "mouse overlay steps left" },
         { 248, 151, 3, 4, THERON_DIR_NORTH, 0, M11_GAME_INPUT_REDRAW,
+          NULL, NULL,
           "mouse overlay moves backward" },
         { 292, 151, 4, 3, THERON_DIR_NORTH, 0, M11_GAME_INPUT_REDRAW,
+          NULL, NULL,
           "mouse overlay steps right" },
         { 204, 170, 3, 3, THERON_DIR_NORTH, 1, M11_GAME_INPUT_REDRAW,
+          NULL, NULL,
           "mouse overlay cycles champion" },
         { 248, 170, 3, 3, THERON_DIR_NORTH, 0, M11_GAME_INPUT_IGNORED,
+          "ITEM", "NOTHING TO PICK UP",
           "mouse overlay requests source-backed pickup" },
         { 292, 170, 3, 3, THERON_DIR_NORTH, 0, M11_GAME_INPUT_IGNORED,
+          "ITEM", "NO SOURCE ITEM",
           "mouse overlay selects source-backed item" },
         { 204, 189, 3, 3, THERON_DIR_NORTH, 0, M11_GAME_INPUT_IGNORED,
+          "ITEM", "NO SELECTED SOURCE ITEM",
           "mouse overlay drops selected source item" },
         { 248, 189, 3, 3, THERON_DIR_NORTH, 0, M11_GAME_INPUT_IGNORED,
+          "USE", "NOTHING USABLE AHEAD",
           "mouse overlay uses front object" },
         { 292, 189, 3, 3, THERON_DIR_NORTH, 0, M11_GAME_INPUT_REDRAW,
+          NULL, NULL,
           "mouse overlay waits one tick" }
     };
     unsigned char framebuffer[320 * 200];
@@ -207,7 +221,12 @@ static void run_theron_pointer_and_button_input_contract(void) {
                             view.theronState.party_dir ==
                                 mouse_controls[control_index].party_dir &&
                             world.party.active_slot ==
-                                mouse_controls[control_index].active_slot,
+                                mouse_controls[control_index].active_slot &&
+                            (!mouse_controls[control_index].expected_action ||
+                             (strcmp(view.lastAction,
+                                     mouse_controls[control_index].expected_action) == 0 &&
+                              strcmp(view.lastOutcome,
+                                     mouse_controls[control_index].expected_outcome) == 0)),
                         mouse_controls[control_index].label);
         }
     }
