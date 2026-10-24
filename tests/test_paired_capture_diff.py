@@ -28,12 +28,18 @@ class PairedCaptureDiffTests(unittest.TestCase):
         frame.putpixel((1, 34), (40, 20, 10))
         frame.save(self.firestaff)
         evidence = {"map": 2, "position": {"x": 5, "y": 7}, "facing": "north"}
-        self.reference_state.write_text(json.dumps(evidence), encoding="utf-8")
-        self.firestaff_state.write_text(json.dumps(evidence), encoding="utf-8")
+        reference_evidence = {
+            **evidence, "captureId": "hoc-entry", "imageSha256": self._sha(self.reference),
+        }
+        firestaff_evidence = {
+            **evidence, "captureId": "hoc-entry", "imageSha256": self._sha(self.firestaff),
+        }
+        self.reference_state.write_text(json.dumps(reference_evidence), encoding="utf-8")
+        self.firestaff_state.write_text(json.dumps(firestaff_evidence), encoding="utf-8")
         self.manifest = self.root / "pair.json"
         self.report_dir = self.root / "result"
         self.data = {
-            "schema": "firestaff.parity.paired_capture.v1",
+            "schema": "firestaff.parity.paired_capture.v2",
             "gameId": "dm1",
             "platformId": "dos-pc34",
             "referenceBuildId": "dosbox-x-test-build",
@@ -56,6 +62,7 @@ class PairedCaptureDiffTests(unittest.TestCase):
                         "bindings": {
                             "map": "/map", "position.x": "/position/x",
                             "position.y": "/position/y", "facing": "/facing",
+                            "captureId": "/captureId", "imageSha256": "/imageSha256",
                         },
                     },
                 },
@@ -69,6 +76,7 @@ class PairedCaptureDiffTests(unittest.TestCase):
                         "bindings": {
                             "map": "/map", "position.x": "/position/x",
                             "position.y": "/position/y", "facing": "/facing",
+                            "captureId": "/captureId", "imageSha256": "/imageSha256",
                         },
                     },
                 },
@@ -85,6 +93,14 @@ class PairedCaptureDiffTests(unittest.TestCase):
 
     def _write_manifest(self) -> None:
         self.manifest.write_text(json.dumps(self.data), encoding="utf-8")
+
+    def _refresh_image_receipt(self, side_name: str, image_path: Path) -> None:
+        side = self.data["captures"][0][side_name]
+        evidence_path = self.root / side["stateEvidence"]["path"]
+        evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+        evidence["imageSha256"] = self._sha(image_path)
+        evidence_path.write_text(json.dumps(evidence), encoding="utf-8")
+        side["stateEvidence"]["sha256"] = self._sha(evidence_path)
 
     def test_emits_provenance_and_per_region_pixel_metrics(self) -> None:
         report = compare_manifest(self.manifest, self.report_dir)
@@ -111,7 +127,10 @@ class PairedCaptureDiffTests(unittest.TestCase):
 
     def test_rejects_a_different_source_state(self) -> None:
         self.data["captures"][0]["firestaff"]["state"]["position"]["x"] = 6
-        evidence = {"map": 2, "position": {"x": 6, "y": 7}, "facing": "north"}
+        evidence = {
+            "map": 2, "position": {"x": 6, "y": 7}, "facing": "north",
+            "captureId": "hoc-entry", "imageSha256": self._sha(self.firestaff),
+        }
         self.firestaff_state.write_text(json.dumps(evidence), encoding="utf-8")
         self.data["captures"][0]["firestaff"]["stateEvidence"]["sha256"] = self._sha(
             self.firestaff_state
@@ -132,9 +151,32 @@ class PairedCaptureDiffTests(unittest.TestCase):
         with self.assertRaisesRegex(ManifestError, "state evidence mismatch at position.x"):
             compare_manifest(self.manifest, self.report_dir)
 
+    def test_rejects_evidence_bound_to_a_different_image(self) -> None:
+        evidence = json.loads(self.firestaff_state.read_text(encoding="utf-8"))
+        evidence["imageSha256"] = self._sha(self.reference)
+        self.firestaff_state.write_text(json.dumps(evidence), encoding="utf-8")
+        self.data["captures"][0]["firestaff"]["stateEvidence"]["sha256"] = self._sha(
+            self.firestaff_state
+        )
+        self._write_manifest()
+        with self.assertRaisesRegex(ManifestError, "state evidence mismatch at imageSha256"):
+            compare_manifest(self.manifest, self.report_dir)
+
+    def test_rejects_evidence_bound_to_a_different_capture(self) -> None:
+        evidence = json.loads(self.firestaff_state.read_text(encoding="utf-8"))
+        evidence["captureId"] = "other-checkpoint"
+        self.firestaff_state.write_text(json.dumps(evidence), encoding="utf-8")
+        self.data["captures"][0]["firestaff"]["stateEvidence"]["sha256"] = self._sha(
+            self.firestaff_state
+        )
+        self._write_manifest()
+        with self.assertRaisesRegex(ManifestError, "state evidence mismatch at captureId"):
+            compare_manifest(self.manifest, self.report_dir)
+
     def test_rejects_noncanonical_dimensions(self) -> None:
         Image.new("RGB", (640, 400), (0, 0, 0)).save(self.reference)
         self.data["captures"][0]["reference"]["sha256"] = self._sha(self.reference)
+        self._refresh_image_receipt("reference", self.reference)
         self._write_manifest()
         with self.assertRaisesRegex(ManifestError, "must match frameSize"):
             compare_manifest(self.manifest, self.report_dir)
@@ -151,6 +193,8 @@ class PairedCaptureDiffTests(unittest.TestCase):
         ]
         self.data["captures"][0]["reference"]["sha256"] = self._sha(self.reference)
         self.data["captures"][0]["firestaff"]["sha256"] = self._sha(self.firestaff)
+        self._refresh_image_receipt("reference", self.reference)
+        self._refresh_image_receipt("firestaff", self.firestaff)
         self._write_manifest()
         report = compare_manifest(self.manifest, self.report_dir)
         self.assertEqual(report["canonicalFrameSize"], [256, 224])

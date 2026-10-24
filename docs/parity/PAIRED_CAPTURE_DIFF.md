@@ -12,10 +12,11 @@ remain adapter-defined.
 The manifest contains one or more named checkpoint pairs. Each side records an
 image path and SHA-256, a canonical state object, and a JSON evidence artifact
 with its own SHA-256. `stateEvidence.bindings` maps every comparison key to a
-JSON Pointer in that artifact. The tool verifies both hashes and confirms that
-the manifest's state values match the bound evidence before it compares any
-pixels. This prevents hand-entered state claims from silently disagreeing with
-the attached debug or emulator receipt.
+JSON Pointer in that artifact. The evidence must also bind `captureId` and
+`imageSha256` to JSON Pointers that resolve to the pair's capture ID and that
+side's exact image SHA-256. The tool verifies both file hashes and all state
+and image bindings before comparing pixels. This prevents a valid state receipt
+from being reused with an unrelated image or checkpoint.
 
 `frameSize` declares the exact width and height for a capture pair. It supports
 platform-native layouts, including 320x200 DOS/Atari ST/Amiga views, 320x224
@@ -29,7 +30,7 @@ Example manifest:
 
 ```json
 {
-  "schema": "firestaff.parity.paired_capture.v1",
+  "schema": "firestaff.parity.paired_capture.v2",
   "gameId": "dm1",
   "platformId": "dos-pc34",
   "referenceBuildId": "DOSBox-X-version-or-machine-image-id",
@@ -51,6 +52,7 @@ Example manifest:
           "path": "original-hoc-entry-state.json",
           "sha256": "<64-hex-digest>",
           "bindings": {
+            "captureId": "/captureId", "imageSha256": "/imageSha256",
             "map": "/map", "position.x": "/position/x",
             "position.y": "/position/y", "facing": "/facing"
           }
@@ -64,6 +66,7 @@ Example manifest:
           "path": "firestaff-hoc-entry-state.json",
           "sha256": "<64-hex-digest>",
           "bindings": {
+            "captureId": "/captureId", "imageSha256": "/imageSha256",
             "map": "/map", "position.x": "/position/x",
             "position.y": "/position/y", "facing": "/facing"
           }

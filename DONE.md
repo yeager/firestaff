@@ -2212,3 +2212,7 @@ only. Active work is in `TODO.md` and `TODO-<game>.md`.
   cannot contain path separators, generated mask filenames are index-unique,
   and resolved mask/report paths must remain inside the approved output
   directory. Negative tests cover traversal names and pre-existing symlinks.
+- Versioned the paired-capture manifest contract to v2 and bound each state
+  receipt to its exact capture ID and image SHA-256. The diff tool rejects
+  reused state receipts for another checkpoint or frame; tests cover valid
+  receipts and both mismatch cases across the shared five-game schema.

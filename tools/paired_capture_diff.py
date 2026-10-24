@@ -24,7 +24,7 @@ from typing import Any
 
 from PIL import Image
 
-SCHEMA = "firestaff.parity.paired_capture.v1"
+SCHEMA = "firestaff.parity.paired_capture.v2"
 MAX_FRAME_DIMENSION = 8192
 
 
@@ -152,7 +152,8 @@ def _json_pointer(document: Any, pointer: str, label: str) -> Any:
 
 
 def _validate_state_evidence(base: Path, side: dict[str, Any], label: str,
-                             state_keys: list[str]) -> dict[str, Any]:
+                             state_keys: list[str], capture_id: str,
+                             image_sha256: str) -> dict[str, Any]:
     state = side.get("state")
     evidence_ref = side.get("stateEvidence")
     if not isinstance(state, dict) or not isinstance(evidence_ref, dict):
@@ -166,6 +167,16 @@ def _validate_state_evidence(base: Path, side: dict[str, Any], label: str,
     except (OSError, json.JSONDecodeError) as exc:
         raise ManifestError(f"cannot read state evidence JSON {evidence_path}: {exc}") from exc
     observed: dict[str, Any] = {}
+    for key, expected in (("captureId", capture_id), ("imageSha256", image_sha256)):
+        pointer = bindings.get(key)
+        if not isinstance(pointer, str):
+            raise ManifestError(f"{label}.stateEvidence has no JSON Pointer for {key}")
+        actual = _json_pointer(document, pointer, f"{label}.stateEvidence.{key}")
+        if actual != expected:
+            raise ManifestError(
+                f"{label} state evidence mismatch at {key}: "
+                f"manifest={expected!r}, evidence={actual!r}"
+            )
     for key in state_keys:
         pointer = bindings.get(key)
         if not isinstance(pointer, str):
@@ -306,11 +317,15 @@ def compare_manifest(manifest_path: Path, out_dir: Path,
         firestaff_path = _resolve_input(
             manifest_path.parent, capture.get("firestaff"), f"{label}.firestaff"
         )
+        reference_sha256 = sha256_file(reference_path)
+        firestaff_sha256 = sha256_file(firestaff_path)
         reference_state_evidence = _validate_state_evidence(
-            manifest_path.parent, capture["reference"], f"{label}.reference", state_keys
+            manifest_path.parent, capture["reference"], f"{label}.reference", state_keys,
+            capture_id, reference_sha256,
         )
         firestaff_state_evidence = _validate_state_evidence(
-            manifest_path.parent, capture["firestaff"], f"{label}.firestaff", state_keys
+            manifest_path.parent, capture["firestaff"], f"{label}.firestaff", state_keys,
+            capture_id, firestaff_sha256,
         )
         state_values: dict[str, Any] = {}
         for key in state_keys:
@@ -348,8 +363,8 @@ def compare_manifest(manifest_path: Path, out_dir: Path,
         report["captures"].append({
             "id": capture_id,
             "state": state_values,
-            "reference": {"path": str(reference_path), "sha256": sha256_file(reference_path)},
-            "firestaff": {"path": str(firestaff_path), "sha256": sha256_file(firestaff_path)},
+            "reference": {"path": str(reference_path), "sha256": reference_sha256},
+            "firestaff": {"path": str(firestaff_path), "sha256": firestaff_sha256},
             "referenceStateEvidence": {
                 "path": reference_state_evidence["path"],
                 "sha256": reference_state_evidence["sha256"],
