@@ -64,6 +64,7 @@ jobs:
           python3 scripts/test_analyze_nexus_vdp1_source_join.py
           python3 scripts/test_analyze_nexus_vdp1_source_write_join.py
           python3 scripts/test_analyze_nexus_vdp1_write_trace.py
+          python3 scripts/test_audit_nexus_vdp1_ymir_trace.py
 
   release-notes-policy:
     runs-on: ubuntu-24.04
