@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from contextlib import redirect_stdout
+import hashlib
 from io import StringIO
 from pathlib import Path
 import sys
@@ -61,6 +62,37 @@ class Font256RetailIdentityTests(unittest.TestCase):
             "NEXUS_VDP2_CHAR_SOURCE_INVALID: FONT256.S2D hash mismatch",
             output.getvalue(),
         )
+
+    def test_main_passes_allowlisted_font_hash_gate(self) -> None:
+        font_bytes = b"allowlisted font bytes"
+        digest = hashlib.sha256(font_bytes).hexdigest()
+
+        class HashGatePassed(Exception):
+            pass
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            capture = root / "capture.raw"
+            capture.write_bytes(b"synthetic capture")
+            data_dir = root / "data"
+            data_dir.mkdir()
+            (data_dir / "FONT256.S2D").write_bytes(font_bytes)
+            argv = [
+                "analyze_nexus_vdp2_char_source_join.py",
+                str(capture),
+                "--data-dir",
+                str(data_dir),
+                "--capture-frames",
+                "1",
+            ]
+            with (
+                patch.object(sys, "argv", argv),
+                patch.object(analyzer, "FONT256_SHA256", frozenset({digest})),
+                patch.object(analyzer, "frame_regions", return_value=([{}], None)),
+                patch.object(analyzer, "font_regions", side_effect=HashGatePassed),
+                self.assertRaises(HashGatePassed),
+            ):
+                analyzer.main()
 
 
 if __name__ == "__main__":
