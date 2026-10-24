@@ -48,6 +48,8 @@ def _required_text(value: Any, label: str) -> str:
 
 def _safe_filename_component(value: Any, label: str) -> str:
     name = _required_text(value, label)
+    if value != name:
+        raise ManifestError(f"{label} must not have leading or trailing whitespace")
     if name in {".", ".."} or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", name):
         raise ManifestError(
             f"{label} must be a filename-safe identifier using letters, digits, dot, "

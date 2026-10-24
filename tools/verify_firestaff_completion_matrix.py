@@ -51,8 +51,23 @@ def main() -> int:
         assert row["maxPoints"] == 100, target
         assert row["primaryBlockers"], target
     doc = DOC.read_text(encoding="utf-8")
+    active_target = None
+    documented_scores: dict[str, int] = {}
+    for line in doc.splitlines():
+        if line.startswith("### "):
+            active_target = line[4:]
+        elif active_target in rows and line.startswith("| `"):
+            cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+            if len(cells) >= 2:
+                score = cells[1].split("/", 1)[0]
+                if score.isdigit():
+                    documented_scores[active_target] = documented_scores.get(active_target, 0) + int(score)
     for target, percent in EXPECTED.items():
         assert f"| {target} | {percent}% | {percent}/100 |" in doc, target
+        assert documented_scores.get(target) == percent, (
+            f"documented criterion scores do not sum to {percent} for {target}: "
+            f"{documented_scores.get(target)}"
+        )
     for family, targets in FAMILY_TARGETS.items():
         mean = round(sum(rows[target]["points"] for target in targets) / len(targets), 1)
         summary = f"| {family} | {len(targets)} | {VERSION_PROFILES[family]} | {mean:.1f}% |"

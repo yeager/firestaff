@@ -212,10 +212,22 @@ class PairedCaptureDiffTests(unittest.TestCase):
         with self.assertRaisesRegex(ManifestError, "captures\[0\]\.id must be a filename-safe"):
             compare_manifest(self.manifest, self.report_dir)
 
+    def test_rejects_capture_id_with_surrounding_whitespace(self) -> None:
+        self.data["captures"][0]["id"] = " hoc-entry "
+        self._write_manifest()
+        with self.assertRaisesRegex(ManifestError, "captures\[0\]\.id must not have leading or trailing whitespace"):
+            compare_manifest(self.manifest, self.report_dir)
+
     def test_rejects_region_name_path_traversal(self) -> None:
         self.data["regions"][0]["name"] = "../escape"
         self._write_manifest()
         with self.assertRaisesRegex(ManifestError, "regions\[0\]\.name must be a filename-safe"):
+            compare_manifest(self.manifest, self.report_dir)
+
+    def test_rejects_region_name_with_surrounding_whitespace(self) -> None:
+        self.data["regions"][0]["name"] = " viewport "
+        self._write_manifest()
+        with self.assertRaisesRegex(ManifestError, "regions\[0\]\.name must not have leading or trailing whitespace"):
             compare_manifest(self.manifest, self.report_dir)
 
     @unittest.skipIf(sys.platform == "win32", "symlink creation may require elevated privileges")
