@@ -1,3 +1,19 @@
+## 2026-10-24 — native SDL loop has no Theron frames
+
+A Debug Firestaff executable built from the current source commit on TRV2 and
+ran three 15-second native C/SDL loops with authentic Japanese Rev. 1 Track 02
+data. Each admitted the verified Track 02 file and kept the SDL host loop at
+about 62.5 loops per second, but reported `game-ticks-per-sec=0.00`,
+`game-frames-rendered-per-sec=0.00`, and `presented-frame-count=0`. Each
+Firestaff-owned 320x200 presented-surface capture was black. SDL used the
+dummy video driver because the TRV2 session has no `DISPLAY` or
+`WAYLAND_DISPLAY`; this verifies the native application path, not a visible or
+playable session. The runtime log states that the later original graphics
+bank is not captured and fallback visuals stay disabled. Do not enable
+synthetic dungeon or title pixels to hide this gap. Bind and decode the
+authentic graphics source, then prove nonzero game ticks and presented frames
+in Firestaff before calling Theron playable.
+
 ## 2026-10-24 — native pit movement and pending-event safety
 
 The authentic source-backed pit gate is now checked before creature combat in

@@ -5,6 +5,23 @@ only as an external reference instrument for authentic original-game behavior
 and data capture; it is never part of the shipped runtime or a substitute for
 native Firestaff gameplay.
 
+## 2026-10-24 — native full-loop presentation check
+
+Firestaff was built from source commit `d43df8905e22a207696f4439bde7afb02b808b53`
+on TRV2 and run three times for 15 seconds through the native application
+path with authentic Japanese Rev. 1 Track 02. Each run admitted the verified
+Track 02 file and kept the SDL host loop active at about 62.5 loops per
+second. The Debug perf receipts reported zero game ticks, zero rendered game
+frames, and zero presented frames in every run. Firestaff's own presented
+surface capture was 320x200 and black in all three runs. `SDL_VIDEODRIVER=dummy`
+was required because the TRV2 session had no `DISPLAY` or `WAYLAND_DISPLAY`,
+so no interactive window or input was verified. This is stronger than the
+boot-probe-only startup receipt, but still does not establish visible native
+gameplay. Firestaff reported that the later original graphics bank is not
+captured and fallback visuals stay disabled. The next parity blocker is to
+bind and decode authentic graphics data and then verify nonzero native game
+ticks and presented frames. No emulator participated in these Firestaff runs.
+
 ## 2026-10-24 — current evidence boundary
 
 An isolated Debug build from clean commit `2748eed3db4a3a9d7b1db2e1522b050440b3e0a2`

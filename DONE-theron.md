@@ -1,5 +1,20 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-24 — repeated native SDL run documents the remaining presentation block
+
+Built Firestaff from the current source commit on TRV2 and ran three 15-second
+Debug sessions through Firestaff's own C/SDL runtime with authentic Japanese
+Rev. 1 Track 02 data. All three admitted the hash-verified media and kept the
+host loop active at about 62.5 iterations per second. All three reported zero
+Theron game ticks, zero rendered game frames, and zero presented frames. The
+three Firestaff-owned 320x200 presented-surface captures were black. The
+session used SDL's dummy driver because TRV2 has no active graphical display;
+these results prove native startup and the render gate, not visible gameplay.
+The verified Track 02 record still lacks a bound original graphics bank, so
+the native renderer correctly refuses to substitute synthetic visuals. The
+next required work is authentic graphics-bank binding and decoding followed
+by nonzero native game-frame evidence.
+
 ## 2026-10-24 — native pit guard and unresolved event queue bounded
 
 The native movement path checks authenticated source pits before creature

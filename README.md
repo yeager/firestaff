@@ -97,19 +97,19 @@ cancels startup selection and does not advance the dungeon tick by itself.
 
 ### Theron's Quest runtime status
 
-The native Track 02 runtime can select co-located US or Japanese data
-explicitly with `--theron-native us` or `--theron-native jp`. Verified bounded
-routes include Japanese Rev. 1 title-to-Akutuba startup and US Continue from
-the authentic Akutuba-complete Backup RAM into dungeon 2, level 0, followed by
-three native movement inputs on a floor-only path. Source-only loaders also
-verify all seven dungeon sources in both regions; that is data coverage, not
-proof of the original game's transitions. In the Japanese emulator run,
-LOAD GAME returned to the Akutuba selection map, but its 2-KiB BRAM is
-byte-identical to the known empty menu-only image, so native campaign-save
-persistence is unverified. Broader progression, original T900 item placement/use,
-gameplay presentation, combat, audio and save parity remain open. README
-screenshots are Firestaff-rendered only;
-original-emulator captures are not presented as Firestaff output. See the
+Firestaff runs Theron's Quest through its native C/SDL runtime and admits
+hash-verified US or Japanese Track 02 data with `--theron-native us` or
+`--theron-native jp`. This does not yet produce a playable native game. A
+three-loop Debug run against authentic Japanese Rev. 1 data kept the SDL host
+loop active, but reported zero Theron game ticks, zero rendered frames and
+zero presented frames. Firestaff's native presented-surface capture was black
+in all three runs. The original graphics-bank binding and dungeon renderer
+remain unavailable, so Firestaff keeps fallback visuals disabled. Startup
+receipts and source-only verification of all seven dungeon records establish
+data admission, not complete gameplay or platform parity. Native movement,
+transitions, combat, audio, presentation and save parity remain open.
+README screenshots are Firestaff-rendered only; original-emulator captures
+are not presented as Firestaff output. See the
 [platform status](docs/PLATFORM_STATUS.md) and
 [capture handoff record](docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md)
 for the evidence boundaries.
@@ -313,10 +313,11 @@ tests when those corpora are installed.
 When a complete CUE is present, native startup may bind matching original
 Track 01 CDDA. A loose Track 02 never borrows audio from an unrelated file.
 
-In Firestaff's native route, Enter advances the title and accepts stage and
-Soul Room selections. This describes Firestaff input, not the original
-emulator's button-hold timing. For original-menu capture guidance and the
-current unverified multi-second selection hold, see
+Firestaff's native input path maps Enter to title, stage and Soul Room
+selection actions. These controls have not yet been shown on a rendered
+Theron frame. The mapping does not establish the original game's multi-second
+button-hold timing. For original-menu capture guidance and the current
+unverified hold, see
 [Theron input notes](docs/theron_input.md). The Japanese Rev 1 CUE then
 reaches the bounded native Akutuba runtime through
 hash-verified Track 02 records. For a headless, reproducible CLI receipt, use:
