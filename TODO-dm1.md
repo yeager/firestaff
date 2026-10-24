@@ -2,11 +2,12 @@
 `M11_GameView_DrawLeaderHandCursor` read an unmasked low nibble for odd
 columns. Transparent color C therefore became 0xCC and was written to the
 framebuffer as vertical stripes. The cursor now masks the low nibble, and
-`m11_dm1_real_object_names` uses the authentic HoC apple from the installed
-PC34 DUNGEON.DAT and checks every F0702 cursor pixel against its real icon
-atlas on a contrasting framebuffer. The real-media test passes and the
-captured apple cursor is clean. The shared packed-cursor route is fixed;
-independent visual confirmation on other editions remains outstanding.
+`m11_dm1_real_object_names` checks every F0702 cursor pixel for all 605 valid
+original item Things in the installed PC34 DUNGEON.DAT against their real icon
+atlas on a contrasting framebuffer, including the HoC apple. The real-media
+test passes and the captured apple cursor is clean. The shared packed-cursor
+route is fixed; independent original-media checks on other editions remain
+outstanding.
 
 2026-10-24 PC34 wall-item coverage audit: the authentic-media alcove test used
 to return as soon as it found a floor item, before scanning later dungeon
