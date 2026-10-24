@@ -25,6 +25,15 @@ pointer-coordinate targeting, in-dungeon mouse actions, or Firestaff mouse
 behavior. Attack, inventory, spell, champion-selection, and other
 non-movement button semantics remain unverified by these captures.
 
+A later fresh-profile capture retained the actual orange Nexus hand cursor and
+measured its movement after `O` (Saturn Z) and D-pad input. `W/S/A/D` moved it
+up/down/left/right, and `W+A` moved it diagonally. The approximate per-press
+displacements and authentic screenshots are recorded in
+[`nexus-v1-hand-pointer-debug-20261025`](../parity-evidence/verification/nexus-v1-hand-pointer-debug-20261025/README.md).
+The capture used Ymir fast-forward, so its host-time movement interval does
+not establish a normal-speed repeat rate. It does not establish mouse
+coordinates or button-to-action mapping.
+
 ## Retail manual control model
 
 The Japanese retail manual's controller table (printed page 4) documents the
@@ -56,7 +65,8 @@ semantics remain specific to a connected Saturn ControlPad.
 The retail game tick now accepts only the six basic movement commands
 (forward/backward, turn left/right, and strafe left/right) against the
 authenticated DGN grid. Item use, inventory, spells, combat, sensors, doors,
-and level transitions remain fail-closed.
+and level transitions remain fail-closed. Firestaff does not yet implement
+the retail hand-pointer mode or its eight-way cursor movement.
 
 In a loaded Nexus dungeon, Space toggles Firestaff's host pause. Ymir evidence
 records that the retail Start button displayed the `PAUSE` overlay; whether
@@ -95,12 +105,13 @@ unresolved, so this evidence is not enough to implement click actions.
 
 ## Mouse and remaining input work
 
-Nexus has startup pointer handling and now has desktop mouse movement mapped to
-the verified basic movement command set. Firestaff still does not have an
+Nexus has startup pointer handling and desktop mouse clicks mapped to the
+verified basic movement command set. Firestaff still does not have an
 authenticated Nexus gameplay route from pointer coordinates to cursor actions,
 inventory/magic panels, or world interactions. The existing logical
 click-route helpers require pre-resolved targets and do not establish how
-viewport pixels map to Nexus actions.
+viewport pixels map to Nexus actions. The retail hand cursor and D-pad movement
+are now captured, but the desktop pointer route remains unverified.
 
 Next work must bind the documented cursor and non-movement controls to
 same-session retail input and state traces. Keep unsupported actions inert
