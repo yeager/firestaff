@@ -43,6 +43,12 @@ meaning or ownership of these RAM fields. In particular, do not treat writes
 to `$2031` as level changes or writes to `$203F` as player-facing direction
 changes without a consumer-level proof.
 
+The live-capture summary therefore reports these snapshot bytes only as
+`ram_2031`, `ram_203f`, `ram_2040`, and `ram_2041`. The labels describe BaseRAM
+offsets and do not claim current-level or party-pose semantics. `$203F` changes
+at similar rates in no-input and held-input replays, so it must remain opaque
+until its caller and game-state consumer are joined in one source-backed trace.
+
 ## Static authentic-media matches
 
 Each runtime code window at `$506A`, `$5079`, `$57D7`, `$57E3`, and `$57EF`

@@ -8405,3 +8405,16 @@ T900/original inventory semantics. No synthetic media was used.
   runs on trv2 and directly reported both authentic regional BIN identities.
   This is static source correspondence only; it does not prove runtime bank
   mapping, table ownership, creature spawning, or gameplay semantics.
+
+## 2026-10-24 — keep unjoined BaseRAM bytes semantically opaque
+
+- The live Mednafen receipt now labels `$2031` and `$203F-$2041` by raw RAM
+  address instead of asserting current-level or party-pose meaning. Runtime
+  writer samples show `$203F` cycling at similar rates with and without held
+  input; its gameplay consumer remains unidentified.
+- Updated the capture-script contract test for the current bounded consumer
+  read trace, including its narrow target-writer sampling exception. The
+  focused script test passed three consecutive runs; `bash -n` and
+  `git diff --check` also pass.
+- This improves evidence labeling only. Level/party semantics and their join
+  to the authenticated map remain open.
