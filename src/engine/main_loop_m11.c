@@ -11159,6 +11159,22 @@ static int m11_dm1_v1_input_is_immediate_turn(M12_MenuInput input) {
     return DM1_V1_InputMenuTokenIsImmediateTurnPc34Compat((int)input);
 }
 
+/* Nexus uses the Saturn D-pad's left/right inputs as turns in its
+ * movement mode. The authentic Ymir retail session confirmed W moves forward
+ * and A turns left. Map the reciprocal D key to the Saturn right turn while
+ * leaving DM1's established A/D strafe mapping unchanged. */
+static M12_MenuInput m11_nexus_wasd_turn_input(
+    const M11_GameViewState* gameView,
+    SDL_Scancode scancode) {
+    if (!gameView ||
+        gameView->sourceKind != M11_GAME_SOURCE_NEXUS_DGN) {
+        return M12_MENU_INPUT_NONE;
+    }
+    if (scancode == SDL_SCANCODE_A) return M12_MENU_INPUT_TURN_LEFT;
+    if (scancode == SDL_SCANCODE_D) return M12_MENU_INPUT_TURN_RIGHT;
+    return M12_MENU_INPUT_NONE;
+}
+
 static M12_MenuInput m11_motion_input_from_scancode(SDL_Scancode scancode) {
     int action = M11_Input_ActionForScancode(scancode);
     if (!m11_input_action_is_motion(action)) {
@@ -12124,6 +12140,9 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                         return mappedInput;
                     }
                 }
+                mappedInput = m11_nexus_wasd_turn_input(
+                    gameView, ev.key.scancode);
+                if (mappedInput != M12_MENU_INPUT_NONE) return mappedInput;
                 mappedInput = m11_motion_input_from_scancode(ev.key.scancode);
                 if (mappedInput != M12_MENU_INPUT_NONE) {
                     return mappedInput;
@@ -12693,6 +12712,9 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                         return mappedInput;
                     }
                 }
+                mappedInput = m11_nexus_wasd_turn_input(
+                    gameView, ev.key.keysym.scancode);
+                if (mappedInput != M12_MENU_INPUT_NONE) return mappedInput;
                 mappedInput = m11_motion_input_from_scancode(ev.key.keysym.scancode);
                 if (mappedInput != M12_MENU_INPUT_NONE) {
                     return mappedInput;

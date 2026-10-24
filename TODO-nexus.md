@@ -118,3 +118,12 @@ title-to-menu transition.
 - Implement native Saturn runtime semantics only after each dispatcher,
   material, event, save or audio consumer has a captured, hash-verified
   contract.
+
+## Input parity
+
+- Finish Nexus keyboard and mouse gameplay routing. Retail Ymir captures now
+  confirm forward movement, left/right turns, Start-to-pause, and the Z cursor
+  mode. Firestaff maps A/D to Nexus turns while preserving DM1's A/D strafe
+  behavior, but the native cursor action contract, desktop mouse-to-game route,
+  and attack, inventory, spell, and champion-selection semantics remain open.
+  See `parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`.

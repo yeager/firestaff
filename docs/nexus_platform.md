@@ -28,7 +28,7 @@ FTL Games / Athena chose Saturn for its:
 | Resolution | 320×224 (NTSC) or 320×240 (PAL), 16-bit framebuffer |
 | Display | VDP2 for backgrounds, layers, transparency |
 | Storage | CD-ROM (MODE1/2352 sectors), 8 tracks CD-DA audio |
-| Controller | Saturn 8-button pad (same input semantics as keyboard/mouse) |
+| Controller | Saturn ControlPad; retail Ymir captures confirm D-pad movement/turning and Start pause. Desktop keyboard aliases are documented in [Nexus input status](nexus_input.md); Shuttle Mouse behavior remains unverified. |
 
 ### Saturn-Specific Code in Firestaff
 The Firestaff Nexus implementation handles Saturn-specific formats:

@@ -121,8 +121,12 @@ evidence is available.
 ### Phase 5 -- Mechanics Parity
 
 **How to test:**
-- Movement: walk north/south/east/west, verify step timing and collision
-- Click: left-click movement, right-click action, verify response
+- Movement: use the authenticated ControlPad D-pad mapping (or its verified
+  Firestaff keyboard aliases) to walk and turn; verify against retail captures.
+- Mouse: Shuttle Mouse and desktop pointer gameplay routing are open evidence
+  gates. Do not assume left-click movement or right-click action until the
+  retail peripheral and action dispatch have been captured. See
+  [Nexus input status](nexus_input.md).
 - Item: pick up item, equip to hand, use item -- verify state changes
 - Door: open, close, locked state
 - Pit: fall, teleport, return
@@ -211,6 +215,7 @@ The **only** differences from DM1 are:
 - Different texture/model assets
 - CD audio instead of PC speaker/AdLib
 - Japanese text (Shift-JIS)
-- Saturn controller (same input semantics as keyboard/mouse)
+- Saturn ControlPad; keyboard aliases are recorded in
+  [Nexus input status](nexus_input.md). Shuttle Mouse parity is unverified.
 
 Everything else is DM1 under the hood.
