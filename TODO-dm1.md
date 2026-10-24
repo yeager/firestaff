@@ -1,3 +1,12 @@
+2026-10-24 DM1 cross-platform startup and combat regression retest:
+The configured CTest build passed five authentic-media tests: Atari ST and
+FM Towns CLI startup, plus first-monster combat on Amiga 2.0, Atari ST 1.2,
+and FM Towns. The separate PC34 native CLI regression also passed, including
+the `--debug` checks for pointer actions, champion selection, health changes,
+and full-redraw performance counters. These SDL dummy runs verify the named
+source-backed routes and diagnostics only; they do not establish native
+display/input or complete edition and campaign parity.
+
 2026-10-23 PC34 HoC champion-switch retest:
 `m11_dm1_hoc_c127_resurrect_reincarnate_full_pc34` passed against the
 installed original PC34 archive. After recruiting two champions through the
