@@ -155,6 +155,8 @@ fi
 if ! printf '%s\n' "$runtime_output" | grep -Fq \
     'game-debug-capabilities game=csb source=csb-runtime' ||
    ! printf '%s\n' "$runtime_output" | grep -Fq \
+    'player-attack=source-melee-receipt monster-health=source-melee-hp-receipt' ||
+   ! printf '%s\n' "$runtime_output" | grep -Fq \
     'champion-health=source-party-state'; then
     printf '%s\n' "$runtime_output" >&2
     echo 'FAIL: CSB --debug omitted authoritative runtime/health coverage' >&2

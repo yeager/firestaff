@@ -59138,6 +59138,7 @@ static int m11_perform_csb_melee_action(M11_GameViewState* state,
                                         unsigned char chosen)
 {
     struct ChampionState_Compat* champ;
+    CSB_V1_RuntimeMeleeActionResult result;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) return 0;
     if (championIndex < 0 ||
@@ -59149,11 +59150,24 @@ static int m11_perform_csb_melee_action(M11_GameViewState* state,
     if (!champ->present || champ->hp.current == 0) return 0;
 
     m11_set_champion_direction_to_party_f0406(state, champ);
+    memset(&result, 0, sizeof(result));
     if (!csb_v1_runtime_perform_melee_action_from_boot_profile_pc34(
             state->csbBootProfile,
             championIndex,
-            (int)chosen)) {
+            (int)chosen,
+            &result)) {
         return 0;
+    }
+    if (state->debugMovementTraceEnabled && result.performed) {
+        fprintf(stderr,
+                "firestaff: game-combat game=csb tick=%u type=player-attack "
+                "champion=%d action=%d target=%d,%d group=%u creature=%d "
+                "hit=%d damage=%d hp=%d->%d killed-group=%d\n",
+                (unsigned int)state->world.gameTick, championIndex,
+                result.action_index, result.target_map_x, result.target_map_y,
+                (unsigned int)result.group_thing, result.creature_index,
+                result.hit_group, result.damage, result.creature_hp_before,
+                result.creature_hp_after, result.killed_group);
     }
     m11_write_csb_runtime_champion_vitals(state, championIndex);
     return 1;

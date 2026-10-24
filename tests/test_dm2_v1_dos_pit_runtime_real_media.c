@@ -478,6 +478,29 @@ static int exercise_authentic_active_creature(
                     printf("  active DOS creature DB4/F9 map %d,%d,%d type %d GDAT %d\n",
                            map, material->x, material->y,
                            creature.creature_type, creature.gdat_index);
+                    {
+                        DM2_V1_CreatureScheduleReceipt schedule;
+                        DM2_V1_RuntimeCreatureMovementReceipt before;
+                        DM2_V1_RuntimeCreatureMovementReceipt after;
+                        const int had_before =
+                            dm2_v1_runtime_last_creature_movement_receipt(
+                                &before);
+                        memset(&schedule, 0, sizeof(schedule));
+                        memset(&after, 0, sizeof(after));
+                        if (!dm2_v1_runtime_schedule_creature_at(
+                                map, material->x, material->y, &schedule) ||
+                            !schedule.valid ||
+                            (dm2_v1_runtime_last_creature_movement_receipt(
+                                 &after) &&
+                             (!had_before ||
+                              after.sequence != before.sequence))) {
+                            fprintf(stderr,
+                                    "FAIL: DOS AI timer admission was reported "
+                                    "as a committed creature movement\n");
+                            return 0;
+                        }
+                        printf("  PASS: DOS AI queue admission does not emit a movement receipt\n");
+                    }
                     /* A source-owned viewport proof is sufficient here.
                      * Positioning a restored party beside arbitrary DB4
                      * records and repeatedly issuing WIELD is not an

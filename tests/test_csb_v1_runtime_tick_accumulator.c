@@ -14,6 +14,7 @@
 
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_creature_render_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
@@ -7008,6 +7009,44 @@ static void test_csbwin_item16_claims_live_ai_ownership(void)
           "CSBWin ITEM16 ownership claim is idempotent");
 }
 
+static void test_csb_melee_action_returns_native_hp_receipt(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    CSB_V1_RuntimeMeleeActionResult result;
+    uint8_t raw[160];
+    int i;
+
+    printf("\n-- CSB player melee source HP receipt --\n");
+    make_c38_giggler_steal_fixture(&profile, &dungeon, raw, sizeof(raw), 100u);
+    profile.party_x = 1;
+    profile.party_y = 2;
+    profile.party_dir = 0;
+    profile.party_state.Champions[0].Cell = 0;
+    for (i = 0; i < CSB_V1_SLOT_COUNT; ++i)
+        profile.party_state.Champions[0].Slots[i] = 0xffffu;
+    for (i = 0; i < CSB_V1_STAT_COUNT; ++i) {
+        profile.party_state.Champions[0].Statistics[i][CSB_V1_STAT_MIN] = 60;
+        profile.party_state.Champions[0].Statistics[i][CSB_V1_STAT_CUR] = 60;
+        profile.party_state.Champions[0].Statistics[i][CSB_V1_STAT_MAX] = 60;
+    }
+    memset(&result, 0, sizeof(result));
+    CHECK(csb_v1_runtime_perform_melee_action(
+              &profile, 0, DM1_ACTION_PUNCH, &result) == 1,
+          "CSB melee action reaches the runtime owner");
+    CHECK(result.performed && result.action_index == DM1_ACTION_PUNCH &&
+              result.target_map_index == 0 && result.target_map_x == 1 &&
+              result.target_map_y == 1,
+          "CSB melee receipt reports the action and source target square");
+    CHECK(result.hit_group && result.group_thing == (uint16_t)(4u << 10) &&
+              result.creature_index == 0 && result.creature_hp_before == 39 &&
+              result.damage >= 0 &&
+              result.creature_hp_after ==
+                  (result.damage >= result.creature_hp_before
+                       ? 0 : result.creature_hp_before - result.damage),
+          "CSB melee receipt reports the targeted C04 creature and native HP delta");
+}
+
 static void test_csbwin_resume_file_applies_runtime_handoff(void)
 {
     uint8_t bytes[4096];
@@ -7524,6 +7563,7 @@ int main(void)
     test_input_command_queue_move_boundary_does_not_claim_movement();
     test_csbwin_gameblock2_summary_applies_runtime_handoff();
     test_csbwin_item16_claims_live_ai_ownership();
+    test_csb_melee_action_returns_native_hp_receipt();
     test_csbwin_resume_file_applies_runtime_handoff();
     test_csbwin_extended_resume_file_handoff();
     test_csbwin_core_save_export_roundtrips_runtime();

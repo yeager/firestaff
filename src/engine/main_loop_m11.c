@@ -2776,8 +2776,8 @@ static void m11_debug_native_game_state(const M11_GameViewState* state,
                     "firestaff: game-debug-capabilities game=csb "
                     "source=csb-runtime actions=observed "
                     "monster-movement=active-group-position "
-                    "player-attack=unavailable "
-                    "monster-health=unavailable "
+                    "player-attack=source-melee-receipt "
+                    "monster-health=source-melee-hp-receipt "
                     "champion-health=source-party-state\n");
         }
         if (snapshotLaunchSerial != g_m11_sync_launch_serial) {
@@ -2874,12 +2874,17 @@ static void m11_debug_native_game_state(const M11_GameViewState* state,
         static unsigned int receiptLaunchSerial;
         static int haveWieldReceipt;
         static int haveCreatureDamageReceipt;
+        static int heroSnapshotCount;
+        static int haveHeroSnapshot;
+        static DM2_V1_RuntimeSourceHeroStateReceipt previousHeroes[DM2_MAX_HEROES];
+        static uint64_t lastCreatureMovementSequence;
         static DM2_V1_RuntimeWieldAttackReceipt previousWieldReceipt;
         static DM2_V1_RuntimeCreatureDamageReceipt previousDamageReceipt;
         const DM2_V1_GameState* world =
             (const DM2_V1_GameState*)state->dm2World;
         DM2_V1_RuntimeWieldAttackReceipt wieldReceipt;
         DM2_V1_RuntimeCreatureDamageReceipt damageReceipt;
+        DM2_V1_RuntimeCreatureMovementReceipt movementReceipt;
         const int tick = dm2_v1_runtime_get_tick_count();
         if (reportSummary)
             fprintf(stderr,
@@ -2894,14 +2899,93 @@ static void m11_debug_native_game_state(const M11_GameViewState* state,
                     "source=dm2-runtime actions=observed "
                     "player-attack=source-receipt "
                     "monster-damage=source-hp-receipt "
-                    "monster-movement=unavailable "
-                    "champion-health=unavailable\n");
+                    "monster-movement=source-moverec-commit "
+                    "champion-health=source-party-state\n");
         if (receiptLaunchSerial != g_m11_sync_launch_serial) {
             receiptLaunchSerial = g_m11_sync_launch_serial;
             haveWieldReceipt = 0;
             haveCreatureDamageReceipt = 0;
             memset(&previousWieldReceipt, 0, sizeof(previousWieldReceipt));
             memset(&previousDamageReceipt, 0, sizeof(previousDamageReceipt));
+            memset(previousHeroes, 0, sizeof(previousHeroes));
+            heroSnapshotCount = 0;
+            haveHeroSnapshot = 0;
+            lastCreatureMovementSequence = 0;
+        }
+        {
+            const int championCount = dm2_v1_runtime_get_champion_count();
+            int champion;
+            if (championCount < 0 || championCount > DM2_MAX_HEROES) {
+                haveHeroSnapshot = 0;
+            } else {
+                if (haveHeroSnapshot && championCount != heroSnapshotCount)
+                    haveHeroSnapshot = 0;
+                {
+                    int completeSnapshot = 1;
+                for (champion = 0; champion < championCount; ++champion) {
+                    DM2_V1_RuntimeSourceHeroStateReceipt currentHero;
+                    const DM2_V1_RuntimeSourceHeroStateReceipt *previousHero =
+                        &previousHeroes[champion];
+                    memset(&currentHero, 0, sizeof(currentHero));
+                    if (!dm2_v1_runtime_get_source_hero_state(
+                            (uint8_t)champion, &currentHero)) {
+                        completeSnapshot = 0;
+                        continue;
+                    }
+                    if (haveHeroSnapshot &&
+                        memcmp(previousHero->name1, currentHero.name1,
+                               sizeof(currentHero.name1)) == 0 &&
+                        memcmp(previousHero->name2, currentHero.name2,
+                               sizeof(currentHero.name2)) == 0 &&
+                        previousHero->party_position ==
+                            currentHero.party_position &&
+                        previousHero->max_hp == currentHero.max_hp &&
+                        previousHero->cur_hp != currentHero.cur_hp) {
+                        fprintf(stderr,
+                                "firestaff: game-health game=dm2 tick=%d "
+                                "target=champion index=%d hp=%d->%d delta=%+d\n",
+                                tick, champion, previousHero->cur_hp,
+                                currentHero.cur_hp,
+                                currentHero.cur_hp - previousHero->cur_hp);
+                    }
+                    previousHeroes[champion] = currentHero;
+                }
+                    if (completeSnapshot) {
+                        heroSnapshotCount = championCount;
+                        haveHeroSnapshot = 1;
+                    } else {
+                        haveHeroSnapshot = 0;
+                    }
+                }
+            }
+        }
+        memset(&movementReceipt, 0, sizeof(movementReceipt));
+        if (dm2_v1_runtime_last_creature_movement_receipt(&movementReceipt) &&
+            movementReceipt.sequence > lastCreatureMovementSequence) {
+            if (lastCreatureMovementSequence != 0 &&
+                movementReceipt.sequence > lastCreatureMovementSequence + 1u) {
+                fprintf(stderr,
+                        "firestaff: game-event game=dm2 tick=%d "
+                        "type=monster-movement-gap skipped=%llu\n",
+                        tick,
+                        (unsigned long long)(movementReceipt.sequence -
+                            lastCreatureMovementSequence - 1u));
+            }
+            fprintf(stderr,
+                    "firestaff: game-event game=dm2 tick=%u "
+                    "type=monster-moved creature=%d type-id=%u "
+                    "from=%d,%d,%d to=%d,%d,%d sequence=%llu\n",
+                    movementReceipt.game_tick,
+                    (int)movementReceipt.record_handle,
+                    (unsigned int)movementReceipt.creature_type,
+                    (int)movementReceipt.from_map,
+                    (int)movementReceipt.from_x,
+                    (int)movementReceipt.from_y,
+                    (int)movementReceipt.to_map,
+                    (int)movementReceipt.to_x,
+                    (int)movementReceipt.to_y,
+                    (unsigned long long)movementReceipt.sequence);
+            lastCreatureMovementSequence = movementReceipt.sequence;
         }
         memset(&wieldReceipt, 0, sizeof(wieldReceipt));
         if (dm2_v1_runtime_last_wield_attack_receipt(&wieldReceipt) &&

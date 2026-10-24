@@ -339,6 +339,8 @@ struct DM2_V1_RuntimeState {
     int dynamic_move_queue_admissions;
     int dynamic_move_timer_consumptions;
     int dynamic_move_successes;
+    uint64_t creature_movement_sequence;
+    DM2_V1_RuntimeCreatureMovementReceipt last_creature_movement;
     int dynamic_move_last_failure;
     int dynamic_move_pending_source_map;
     int dynamic_move_pending_source_x;
@@ -7582,6 +7584,7 @@ static int dm2_runtime_process_moverec_timer(
     uint8_t *record;
     int16_t record_handle;
     int map;
+    int source_map = -1;
     int x;
     int y;
     int source_x = -1;
@@ -7731,6 +7734,7 @@ static int dm2_runtime_process_moverec_timer(
             }
             source_x = candidate_source_x;
             source_y = candidate_source_y;
+            source_map = candidate_source_map;
             found = 1;
             cross_map_move = 1;
             /* SKProject/SKULLWIN/c_tim_proc.cpp:900-915 dispatches timer
@@ -7782,6 +7786,7 @@ static int dm2_runtime_process_moverec_timer(
         rt->dynamic_move_pending_source_y >= 0) {
         source_x = rt->dynamic_move_pending_source_x;
         source_y = rt->dynamic_move_pending_source_y;
+        source_map = map;
         found = 1;
     }
 
@@ -7807,6 +7812,7 @@ static int dm2_runtime_process_moverec_timer(
                     ((uint16_t)record_handle & 0x3fffu)) {
                     source_x = sx;
                     source_y = sy;
+                    source_map = map;
                     found = 1;
                     break;
                 }
@@ -7842,6 +7848,7 @@ static int dm2_runtime_process_moverec_timer(
             if (contains) {
                 source_x = sx;
                 source_y = sy;
+                source_map = map;
                 found = 1;
             }
         }
@@ -7898,6 +7905,26 @@ static int dm2_runtime_process_moverec_timer(
     free(caii_backup);
     ++rt->dynamic_move_successes;
     rt->dynamic_move_last_failure = 0;
+    if (!party_move && record_handle != (int16_t)0xffff &&
+        source_map >= 0 && source_x >= 0 && source_y >= 0) {
+        const uint8_t *moved_record = dm2_v1_record_pool_address(
+            &rt->record_pools, record_handle);
+        if (moved_record) {
+            DM2_V1_RuntimeCreatureMovementReceipt *movement =
+                &rt->last_creature_movement;
+            memset(movement, 0, sizeof(*movement));
+            movement->sequence = ++rt->creature_movement_sequence;
+            movement->game_tick = (uint32_t)rt->tick_count;
+            movement->record_handle = record_handle;
+            movement->creature_type = moved_record[4];
+            movement->from_map = (int16_t)source_map;
+            movement->from_x = (int16_t)source_x;
+            movement->from_y = (int16_t)source_y;
+            movement->to_map = (int16_t)map;
+            movement->to_x = (int16_t)x;
+            movement->to_y = (int16_t)y;
+        }
+    }
     if (rt->dynamic_move_pending_record == record_handle)
         rt->dynamic_move_pending_record = DM2_V1_RECORD_HANDLE_NULL;
     if (receipt && receipt->handler_rejected_count > 0)
@@ -16873,6 +16900,9 @@ void dm2_v1_runtime_clear_new_game_party_state(void) {
     memset(&g_dm2_runtime.source_party, 0,
            sizeof(g_dm2_runtime.source_party));
     g_dm2_runtime.source_party_valid = 0;
+    g_dm2_runtime.creature_movement_sequence = 0;
+    memset(&g_dm2_runtime.last_creature_movement, 0,
+           sizeof(g_dm2_runtime.last_creature_movement));
     g_dm2_last_wield_death_drop_count = 0;
     g_dm2_last_wield_death_drop_iterations = 0;
     g_dm2_last_wield_death_drop_alloc_failures = 0;
@@ -16981,6 +17011,9 @@ int dm2_v1_runtime_get_source_hero_state(
     hero = &g_dm2_runtime.source_party.hero[champion];
     out_state->max_hp = hero->maxHP;
     out_state->cur_hp = hero->curHP;
+    memcpy(out_state->name1, hero->name1, sizeof(out_state->name1));
+    memcpy(out_state->name2, hero->name2, sizeof(out_state->name2));
+    out_state->party_position = hero->partypos;
     out_state->cur_mp = hero->curMP;
     out_state->wizardry_skill = hero->ability[DM2_ABILITY_WIZARDRY][0];
     out_state->rune_count = hero->nrunes;
@@ -16989,6 +17022,16 @@ int dm2_v1_runtime_get_source_hero_state(
     out_state->ench_aura = hero->ench_aura;
     out_state->first_item = hero->item[0];
     out_state->heroflag = (uint16_t)hero->heroflag;
+    return 1;
+}
+
+int dm2_v1_runtime_last_creature_movement_receipt(
+    DM2_V1_RuntimeCreatureMovementReceipt *out_receipt) {
+    if (!out_receipt || !g_dm2_runtime.last_creature_movement.sequence) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    *out_receipt = g_dm2_runtime.last_creature_movement;
     return 1;
 }
 

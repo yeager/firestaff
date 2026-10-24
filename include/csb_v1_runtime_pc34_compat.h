@@ -2797,7 +2797,10 @@ typedef struct {
     int target_map_y;
     int target_square_type;
     int hit_group;
+    uint16_t group_thing;
     int creature_index;
+    int creature_hp_before;
+    int creature_hp_after;
     int damage;
     int killed_group;
     int hit_door;
@@ -3209,7 +3212,8 @@ int csb_v1_runtime_spawn_champion_projectile_from_boot_profile_pc34(
 int csb_v1_runtime_perform_melee_action_from_boot_profile_pc34(
     void *boot_profile,
     int champion_index,
-    int action_index);
+    int action_index,
+    CSB_V1_RuntimeMeleeActionResult *out_result);
 int csb_v1_runtime_perform_climb_down_action_from_boot_profile_pc34(
     void *boot_profile,
     CSB_V1_InputCommandRuntimeResult *out_result);

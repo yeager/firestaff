@@ -17638,7 +17638,11 @@ int csb_v1_runtime_perform_melee_action(
         }
         if (out_result) {
             out_result->hit_group = 1;
+            out_result->group_thing = (uint16_t)thing;
             out_result->creature_index = creature_index;
+            out_result->creature_hp_before = (int)hp;
+            out_result->creature_hp_after = combat.damageApplied >= (int)hp
+                ? 0 : (int)hp - combat.damageApplied;
             out_result->damage = combat.damageApplied;
         }
         return 1;

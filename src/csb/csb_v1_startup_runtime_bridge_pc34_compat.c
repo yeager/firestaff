@@ -548,14 +548,15 @@ int csb_v1_runtime_spawn_champion_projectile_from_boot_profile_pc34(
 int csb_v1_runtime_perform_melee_action_from_boot_profile_pc34(
     void *boot_profile,
     int champion_index,
-    int action_index)
+    int action_index,
+    CSB_V1_RuntimeMeleeActionResult *out_result)
 {
     CSB_V1_BootProfile *profile = (CSB_V1_BootProfile *)boot_profile;
 
     return profile ? csb_v1_runtime_perform_melee_action(&profile->runtime,
                                                          champion_index,
                                                          action_index,
-                                                         NULL)
+                                                         out_result)
                    : 0;
 }
 

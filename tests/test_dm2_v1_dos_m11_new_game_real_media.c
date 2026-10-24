@@ -92,6 +92,21 @@ int main(void)
         M11_GameView_Shutdown(&view);
         return 1;
     }
+    {
+        const int hero_count = dm2_v1_runtime_get_champion_count();
+        DM2_V1_RuntimeSourceHeroStateReceipt hero;
+        if (hero_count < 1 || hero_count > DM2_MAX_HEROES ||
+            !dm2_v1_runtime_get_source_hero_state(0, &hero) ||
+            hero.cur_hp < 0 || hero.cur_hp > hero.max_hp ||
+            hero.name1[0] == '\0' || hero.name2[0] == '\0') {
+            fputs("FAIL: DM2 DOS source hero HP/identity receipt is incomplete\n",
+                  stderr);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        printf("PASS: DM2 DOS source hero receipt has identity and HP %d/%d\n",
+               hero.cur_hp, hero.max_hp);
+    }
     memset(&runtime, 0, sizeof(runtime));
     if (!dm2_v1_runtime_weather_chain_started() ||
         !dm2_v1_boot_runtime_capture(

@@ -88,6 +88,9 @@ typedef struct {
 typedef struct {
     int16_t max_hp;
     int16_t cur_hp;
+    char name1[8];
+    char name2[20];
+    int8_t party_position;
     /* Read-only c_hero spell-admission inputs.  These expose the original
      * SKSAVE state to presentation/tests without giving callers a way to
      * fabricate a castable champion. */
@@ -100,6 +103,21 @@ typedef struct {
     int16_t first_item;
     uint16_t heroflag;
 } DM2_V1_RuntimeSourceHeroStateReceipt;
+
+/* Source DB4 movement committed by the timer's MOVE_RECORD_TO owner. This
+ * receipt is published only after the full relocation transaction commits. */
+typedef struct DM2_V1_RuntimeCreatureMovementReceipt {
+    uint64_t sequence;
+    uint32_t game_tick;
+    int16_t record_handle;
+    uint8_t creature_type;
+    int16_t from_map;
+    int16_t from_x;
+    int16_t from_y;
+    int16_t to_map;
+    int16_t to_x;
+    int16_t to_y;
+} DM2_V1_RuntimeCreatureMovementReceipt;
 
 /* Runtime-visible proof that the M11-owned frame consumed DM2 GDAT pixels.
  * This is deliberately aggregate: it proves ownership and real consumption
@@ -1588,6 +1606,10 @@ int dm2_v1_runtime_get_source_hero_timer_state(uint8_t champion,
                                                int16_t *out_cur_hp);
 int dm2_v1_runtime_get_source_hero_state(
     uint8_t champion, DM2_V1_RuntimeSourceHeroStateReceipt *out_state);
+/* Read the most recent committed DB4 movement, or 0 when no creature has
+ * moved in this session. Sequence increases once per committed movement. */
+int dm2_v1_runtime_last_creature_movement_receipt(
+    DM2_V1_RuntimeCreatureMovementReceipt *out_receipt);
 /* Read-only owner receipt for savegames1.b_04 (Aura of Speed). */
 int dm2_v1_runtime_get_source_aura_of_speed(uint8_t *out_value);
 /* Returns -1 without mutation: c_hero item links require the original DB
