@@ -175,6 +175,12 @@ remain dated records.
   game-menu action. Current native Firestaff input uses discrete SDL key-down
   events; the observed native sequence reached a loaded dungeon but did not
   verify a continuous hold. Do not infer pit semantics from that input route.
+- A native Xvfb/xdotool hold experiment on trv2 did not establish the original
+  timing: X11 keyboard autorepeat generated extra Return presses and advanced
+  multiple startup phases, with inconsistent final phases across trials. This
+  does not represent a held gamepad button or prove the retail hold behavior.
+  Do not add a guessed hold threshold; obtain controlled native gamepad
+  down/up phase receipts first.
 - Reference review: DMWeb's Theron PC Engine/TurboGrafx edition page provides
   JP/US provenance and original menu/gameplay references; the retail manual
   identifies Button I as the menu selector but does not specify a long hold.
@@ -560,14 +566,15 @@ shortcuts. See `docs/source-lock/theron-button-ii-manual-source-lock.md`.
 This control correction does not close broader input, item-use, transition,
 combat, or presentation parity.
 
-## 2026-10-24 — Native runtime and latest capture boundary
+## 2026-10-24 — Native runtime and reference-capture boundary
 
-Firestaff must run Theron's Quest in its native C/SDL runtime. Mednafen is an
-external reference tool only and must never be a shipped runtime dependency or
-a substitute for native gameplay. The latest private JP save-state autoload
-emitted raw VDC and RAM snapshots, but no verified controller delivery,
-game-command consumer receipt, or CD transition. The capture helper rejected
-the bundle; it does not prove movement, dungeon rendering, or gameplay parity.
+Firestaff runs Theron's Quest in its native C/SDL runtime; an emulator is not
+the game runtime. The latest trv2 Xvfb run used authentic JP Rev. 1 Track 02
+data and native SDL inputs, reached `theron-runtime`, loaded map 0, and advanced
+73 game ticks. The native dungeon image remains black because authentic
+graphics-to-map rendering is not yet bound. A separate private JP save-state
+autoload remains reference-only: it emitted raw VDC and RAM snapshots, but no
+verified controller delivery, game-command consumer receipt, or CD transition.
 Continue native implementation from authentic game data and source-bound
 semantics. Current viewport and pit consumers remain fail-closed; see
 `docs/THERON_CAPTURE_READINESS.md` and
