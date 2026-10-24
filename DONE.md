@@ -2228,3 +2228,9 @@ only. Active work is in `TODO.md` and `TODO-<game>.md`.
   after Phase A begins. This preserves the `-1` internal platform sentinel as
   Auto for ordinary game launches. Focused edition-option and DM2 unsupported-
   platform CTests both pass.
+- The authentic CSB-only M12 test now backs out of platform selection, returns
+  to the game list, reselects CSB, and requires exactly one handoff to the
+  original FM Towns English edition. The current-source run reached the
+  authentic first runtime twice and confirmed the source archive hash was
+  unchanged. This is SDL dummy input/runtime coverage, not native display or
+  physical input parity.
