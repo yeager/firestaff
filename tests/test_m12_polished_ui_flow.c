@@ -105,6 +105,18 @@ static void force_dm1_available(M12_StartupMenuState *state) {
     state->settings.rendererBackendIndex = M12_RENDERER_BACKEND_SOFTWARE;
 }
 
+static void force_menu_game_available(M12_StartupMenuState *state,
+                                      int gameIndex,
+                                      const char *gameId,
+                                      const char *title) {
+    if (!state || gameIndex < 0 || gameIndex >= M12_CONFIG_GAME_COUNT) return;
+    state->entries[gameIndex].title = title;
+    state->entries[gameIndex].gameId = gameId;
+    state->entries[gameIndex].kind = M12_MENU_ENTRY_GAME;
+    state->entries[gameIndex].sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG;
+    state->entries[gameIndex].available = 1;
+}
+
 static int setup_home(void) {
     char templ[512];
     const char *base = getenv("TMPDIR");
@@ -205,6 +217,29 @@ int main(void) {
                 "settings ACCEPT should cycle the selected row value")) return 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     if (!expect(state.view == M12_MENU_VIEW_MAIN, "settings BACK should return to main")) return 1;
+
+    /* Back out of DM2's platform cards without launching, then reopen DM2
+     * from the game list. This is a menu-state regression only: it does not
+     * provide synthetic game files or claim that a game can launch. */
+    force_menu_game_available(&state, 2, "dm2", "SKULLKEEP");
+    state.selectedIndex = 2;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    if (!expect(state.view == M12_MENU_VIEW_GAME_OPTIONS &&
+                state.activatedIndex == 2 && state.gameCardFlowStage == 0 &&
+                state.launchRequested == 0,
+                "DM2 selection should open platform cards without launching")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    if (!expect(state.view == M12_MENU_VIEW_MAIN && state.launchRequested == 0,
+                "DM2 platform-card BACK should return to game list without launching")) return 1;
+    state.selectedIndex = 2;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    if (!expect(state.view == M12_MENU_VIEW_GAME_OPTIONS &&
+                state.activatedIndex == 2 && state.gameCardFlowStage == 0 &&
+                state.launchRequested == 0,
+                "DM2 should reopen its platform cards after returning to the game list")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    if (!expect(state.view == M12_MENU_VIEW_MAIN && state.launchRequested == 0,
+                "DM2 platform cards should close before the next menu scenario")) return 1;
 
     force_dm1_available(&state);
     state.selectedIndex = 0;
