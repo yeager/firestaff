@@ -49,13 +49,17 @@ DM2 has bounded native routes from four authenticated source families:
 | DOSBox / PC English | `GRAPHICS.DAT` + `DUNGEON.DAT`; matching DOS saves are optional resume data | New Game, active runtime, movement, pits, stairs, level transitions, creatures and spell handoff |
 | Amiga English | Original installer archive, read and verified in memory | M12 → SWSH/TITL → GDAT New Game → initial runtime frame and movement; receipt confirms real assets, zero core fallbacks and a visible frame |
 | FM Towns Japanese | Original HME-242 ZIP/disc image; non-Japanese text uses the built-in GDAT-keyed l10n bridge | Title sequence, New Game, inventory, movement, level transitions and creatures |
-| Macintosh English | Authentic retail ZIP/HFS media | New Game, active big-endian runtime, movement, stairs, level transitions and combat/creature handoff |
+| Macintosh English | Authentic retail ZIP/HFS media | New Game, active big-endian runtime, per-image movement-icon palettes, movement, stairs, level transitions and combat/creature handoff |
 
 The shared DM2 data root may contain all four editions. Firestaff resolves a
 selected version to its own source owner: the DOS `data` tree or symlink,
 Amiga installer, FM Towns disc archive, or Mac archive. Original archives are
 kept intact and archive members are read into bounded memory; Firestaff does
 not use a sibling edition as a fallback.
+
+The Macintosh M11 HUD loads each movement icon with its own palette from the
+retail archive. The original-media New Game route verifies the HUD, movement,
+stairs, level transitions and combat handoff.
 
 ### Language selection
 
