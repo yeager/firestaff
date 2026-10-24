@@ -31,6 +31,16 @@
   overlay and passing dispatch tests do not establish complete visual
   playability.
 
+- A follow-up TRV2 original-reference comparison loaded the same preserved JP
+  gameplay state for UP, LEFT, and RIGHT scripted input. Each event reached the
+  non-System Card controller poll at HuC6280 `$44D2`; LEFT/RIGHT had identical
+  party-RAM trace hashes and identical candidate bytes at `$2031`, `$203F`,
+  `$2040`, and `$2041`. No CD IRQ or authenticated CD-to-RAM receipt occurred.
+  Close-time VRAM differed, but without a VDC write trace that difference is
+  not evidence of input-driven movement. This capture narrows the next source
+  task to identifying the live command/state consumer and pairing it with VDC
+  writes; it does not unblock the native renderer.
+
 ## 2026-10-24 — authenticated snapshot renders; state pairing remains open
 
 - Three TRV2 Firestaff `--debug` runtime loops accepted the authentic US Track

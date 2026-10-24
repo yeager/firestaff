@@ -5,6 +5,28 @@ only as an external reference instrument for authentic original-game behavior
 and data capture; it is never part of the shipped runtime or a substitute for
 native Firestaff gameplay.
 
+## 2026-10-24 — authentic runtime input comparison remains inconclusive
+
+Three isolated PCE Fast captures on TRV2 loaded the same preserved Japanese
+gameplay state, authentic Rev. 1 Track 02, and the verified System Card. A
+scripted UP event and matched LEFT/RIGHT events each reached the non-System
+Card controller poll at HuC6280 PC `$44D2`. The LEFT and RIGHT captures retained
+identical party-RAM trace hashes and identical candidate bytes at `$2031`,
+`$203F`, `$2040`, and `$2041`; no authenticated CD-to-RAM receipt or CD IRQ was
+observed. The close-time VRAM hashes differed, while LEFT and RIGHT VDC state
+and VCE hashes matched. With no VDC write trace or proven RAM field semantics,
+those VRAM differences cannot be attributed to party movement. This confirms
+input polling only; it does not establish movement, a map-to-graphics binding,
+or dynamic-renderer parity.
+
+The captures and bounded receipts were kept in a private TRV2 task cache and
+removed after analysis; no game media, savestate, BIOS, or raw memory image was
+added to the repository.
+The reproducible capture entry point is
+`scripts/capture_theron_mednafen_live_trace.sh` with
+`THERON_CAPTURE_AUTOLOAD_STATE`, `THERON_CAPTURE_REPLAY_INPUT_SCRIPT`, and
+`THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast` set against authentic local media.
+
 ## 2026-10-24 — authenticated screen snapshot renders; world pairing remains open
 
 Three TRV2 Firestaff `--debug --boot-probe` loops accepted authentic US Track
