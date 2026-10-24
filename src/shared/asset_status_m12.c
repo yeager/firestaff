@@ -9251,25 +9251,45 @@ void M12_AssetStatus_RequestCancel(M12_AssetStatus* status) {
 
 int M12_AssetStatus_GameAvailable(const M12_AssetStatus* status,
                                   const char* gameId) {
+    const M12_GameVersionSpec* gameSpec;
+    int gameIndex;
+    int available;
+    int hasMatchedVersion = 0;
+    int hasLaunchableVersion = 0;
+    size_t i;
     if (!status || !gameId) {
         return 0;
     }
     if (strcmp(gameId, "dm1") == 0) {
-        return status->dm1Available;
+        available = status->dm1Available;
+    } else if (strcmp(gameId, "csb") == 0) {
+        available = status->csbAvailable;
+    } else if (strcmp(gameId, "dm2") == 0) {
+        available = status->dm2Available;
+    } else if (strcmp(gameId, "nexus") == 0) {
+        available = status->nexusAvailable;
+    } else if (strcmp(gameId, "theron") == 0) {
+        available = status->theronAvailable;
+    } else {
+        return 0;
     }
-    if (strcmp(gameId, "csb") == 0) {
-        return status->csbAvailable;
+    if (!available) return 0;
+
+    /* Custom admission paths may publish availability before all version
+     * receipts exist. Preserve that established behavior for an empty
+     * catalogue snapshot, but once matched editions are present, require at
+     * least one with a runtime launch boundary. */
+    gameIndex = m12_game_index_from_id(gameId);
+    gameSpec = m12_find_game_spec(gameId);
+    if (gameIndex < 0 || !gameSpec) return available;
+    for (i = 0U; i < gameSpec->versionCount; ++i) {
+        if (!status->versions[gameIndex][i].matched) continue;
+        hasMatchedVersion = 1;
+        if (m12_version_is_launchable(gameId, &gameSpec->versions[i])) {
+            hasLaunchableVersion = 1;
+        }
     }
-    if (strcmp(gameId, "dm2") == 0) {
-        return status->dm2Available;
-    }
-    if (strcmp(gameId, "nexus") == 0) {
-        return status->nexusAvailable;
-    }
-    if (strcmp(gameId, "theron") == 0) {
-        return status->theronAvailable;
-    }
-    return 0;
+    return hasMatchedVersion ? hasLaunchableVersion : available;
 }
 
 const char* M12_AssetStatus_GetCSBLaunchBlockReason(
