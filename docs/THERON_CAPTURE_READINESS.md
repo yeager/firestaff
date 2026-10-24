@@ -5,7 +5,27 @@ only as an external reference instrument for authentic original-game behavior
 and data capture; it is never part of the shipped runtime or a substitute for
 native Firestaff gameplay.
 
-## 2026-10-24 — native menu input reaches the dungeon, presentation remains black
+## 2026-10-24 — authenticated screen snapshot renders; world pairing remains open
+
+Three TRV2 Firestaff `--debug --boot-probe` loops accepted authentic US Track
+02 and a hash-allowlisted VDC capture bundle. Each produced identical native
+320x200 source and presented frames with 35,452 non-black pixels. This proves
+capture admission and screen-space rendering in Firestaff. The captured image
+is a frozen authentic frame: the boot probe had `gameTick=0`, no movement, and
+the original screen has not been joined to Firestaff's loaded dungeon or party
+coordinates. It is not evidence of dynamic dungeon rendering or visual/gameplay
+parity. The receipt and reproduction command are recorded in
+[`theron_v1_authenticated_snapshot_render_receipt_20261024`](../parity-evidence/verification/theron_v1_authenticated_snapshot_render_receipt_20261024/).
+
+The follow-up native route reached party `(2,3,dir1)` and `gameTick=17` while
+presenting the same frozen frame hash. This pose match remains a candidate
+only: the capture's map/level fields are not source-joined to Firestaff's
+world. The production renderer still needs an authenticated live
+square-to-screen/material binding before it can replace the snapshot with
+state-driven gameplay. Mouse hit regions likewise remain unavailable until
+that native view exposes meaningful controls.
+
+## Earlier 2026-10-24 — native menu input reaches the dungeon, one presentation path was black
 
 A local macOS Debug build ran Firestaff's native C/SDL application with
 authentic Japanese Rev. 1 `TQJP02.bin` copied from the user's TRV2 data
