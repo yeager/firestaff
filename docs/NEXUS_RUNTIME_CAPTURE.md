@@ -1482,6 +1482,31 @@ the no-input control remains under
 `/Volumes/Extern-disk/nexus-saturn-capture/run-codex-menu-noinput-smpc-control-20261023/`.
 These external reference captures are not Firestaff renderer output.
 
+## Ymir VDP2 bitmap/source join, frame 278, 2026-10-24
+
+The new Ymir memory bundle reader accepts a Ymir dump directory directly in
+`analyze_nexus_vdp2_bitmap_source.py`. It checks the frame receipt against the
+register snapshot, requires a completed trace with commands for that frame,
+and validates the VDP2 register, VRAM, and CRAM lengths before decoding. Run
+it with the authenticated Japanese retail corpus:
+
+```sh
+python3 scripts/analyze_nexus_vdp2_bitmap_source.py \
+  /Volumes/Extern-disk/nexus-saturn-capture/run-ymir-vdp1-bundle-20261024 \
+  --data-dir /Volumes/Extern-disk/FirestaffUserData/data/nexus
+```
+
+The source CUE SHA-256 is
+`878b3bc223bb56e99626dbaa2946d17fb349a2a67a10cd4423742d8ab30b8699`. The
+authentic frame receipt identifies frame 278; its VDP2 registers enable NBG1
+8-bit bitmap mode at VRAM byte offset `0x020000` for a 512x256 span. The
+bounded join finds no exact match among the decoded retail menu, font, title,
+and level palette sources. The longest reported partial spans are 118 bytes
+from `TITLE.BIN` map 4 and 99 bytes from `MENU.BPK`; palettes do not match
+CRAM. The analyzer therefore reports `source_join=unbound` and
+`semantic_admission=blocked`. This Ymir boot state does not identify the date
+screen, menu, HUD, or viewport owner, and does not authorize rendering.
+
 ## Source references
 
 The byte-format baseline is the [DMWeb Nexus file-format documentation](http://dmweb.free.fr/community/documentation/dungeon-master-nexus/file-formats/),
