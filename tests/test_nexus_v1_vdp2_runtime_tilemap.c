@@ -91,6 +91,21 @@ static int run_external_tilemap_capture(void)
     }
     nexus_fb_init(&framebuffer);
     nexus_fb_clear(&framebuffer);
+    if (nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
+            &framebuffer, capture, (size_t)file_size, frame_index,
+            INT_MAX, 0, 1, 1, 0, 0, &frame, &registers, &receipt) ||
+        nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
+            &framebuffer, capture, (size_t)file_size, frame_index,
+            0, INT_MAX, 1, 1, 0, 0, &frame, &registers, &receipt) ||
+        nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
+            &framebuffer, capture, (size_t)file_size, frame_index,
+            0, 0, 1, 1, INT_MAX, 0, &frame, &registers, &receipt) ||
+        nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
+            &framebuffer, capture, (size_t)file_size, frame_index,
+            0, 0, 1, 1, 0, INT_MAX, &frame, &registers, &receipt)) {
+        free(capture);
+        return 0;
+    }
     memset(&frame, 0, sizeof(frame));
     memset(&registers, 0, sizeof(registers));
     memset(&receipt, 0, sizeof(receipt));

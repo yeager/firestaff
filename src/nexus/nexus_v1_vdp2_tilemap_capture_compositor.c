@@ -340,10 +340,12 @@ int nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
     if (out_receipt) *out_receipt = receipt;
     if (!framebuffer || !capture_bytes ||
         source_x < 0 || source_y < 0 || width <= 0 || height <= 0 ||
-        source_x + width > 512 || source_y + height > 512 ||
+        source_x > 512 || source_y > 512 ||
+        width > 512 - source_x || height > 512 - source_y ||
         destination_x < 0 || destination_y < 0 ||
-        destination_x + width > NEXUS_FB_W ||
-        destination_y + height > NEXUS_FB_H ||
+        destination_x > NEXUS_FB_W || destination_y > NEXUS_FB_H ||
+        width > NEXUS_FB_W - destination_x ||
+        height > NEXUS_FB_H - destination_y ||
         !nexus_v1_saturn_runtime_capture_frame(
             capture_bytes, capture_byte_count, frame_index, &frame) ||
         !frame.valid || !frame.vdp2_vram || !frame.vdp2_cram ||
