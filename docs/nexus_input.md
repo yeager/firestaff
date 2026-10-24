@@ -58,6 +58,16 @@ commands. The Nexus mechanics action gate remains fail-closed for unproven
 retail actions. Do not treat the shared DM1 action, inventory, spell, pause, or
 mouse routes as Nexus parity.
 
+`scripts/analyze_nexus_mouse_event_crossrefs.py` inventories direct SH-2
+`MOV.L @(disp,PC),Rn` references in the hash-verified retail `DM.BIN`. In the
+current English retail image, none of the 60 event-name strings has a direct
+literal-pointer reference. The image does reference the HUD hit-rectangle
+subtable beginning at file offset `0x38040`, and `yam\\mouse.c` appears in a
+separate source-path reference. This is only a direct-reference inventory:
+indirect tables, generated pointers, and runtime callback dispatch are not
+resolved, so it does not establish that mouse events are unused or bind them
+to game commands.
+
 ## Mouse and remaining input work
 
 Nexus has startup pointer handling, but Firestaff does not yet have an
