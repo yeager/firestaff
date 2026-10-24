@@ -26,11 +26,17 @@ inside the completed root-zero chain because capture timing can differ.
 
 ```sh
 python3 scripts/audit_nexus_vdp1_ymir_trace.py /path/to/trace.csv \
-  --frame 647 \
+  --frame 670 \
   --runtime-capture /path/to/capture.raw \
-  --runtime-capture-frames 4 \
-  --runtime-frame 0
+  --runtime-capture-frames 411 \
+  --runtime-frame 23
 ```
+
+When both `--frame` and `--runtime-capture` are supplied, the report also
+compares Ymir's ordered command records with the root-zero command records in
+the explicitly selected runtime-capture frame. The selected indices are an
+operator-supplied pairing; equal numeric offsets do not prove the emulators
+were at the same game state.
 
 ## Evidence and limits
 
@@ -53,3 +59,14 @@ palette, camera, or retail scene ownership.
 Semantic admission remains blocked until command textures, palettes, source
 owners, camera transforms, clipping, and Firestaff output are independently
 bound to authentic retail evidence.
+
+An additional Mednafen capture was made with the same hash-verified Japanese
+BIOS and CUE, skipping 647 frames and recording the following 411 with no
+button input. The raw capture is stored outside the repository with SHA-256
+`ef656bc061401cd7eba5e3152ee70a7ee2c2c6ec95491c541ccca954ac69578b`. Pairing
+its frame 23 with Ymir frame 670 by the nominal frame offset does not yield
+matching command lists: Mednafen's root-zero chain has 3 records while Ymir
+dispatched 306. The only exact full-list matches across nominal pairs are
+single-record END lists. These runs therefore are not a synchronized runtime
+parity witness; absolute emulator frame numbers cannot be used as a
+cross-emulator join key without a shared state marker.

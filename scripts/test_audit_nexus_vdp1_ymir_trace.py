@@ -120,19 +120,31 @@ class YmirVdp1TraceTests(unittest.TestCase):
         command(0x140, 0x0002)
         command(0x160, 0x0002)
         command(0x180, 0x1001, link=0x8)
+        root_commands = []
+        for offset in (0x00, 0x20, 0x40, 0x60):
+            words = tuple(
+                vram[offset + index * 2] | (vram[offset + index * 2 + 1] << 8)
+                for index in range(16)
+            )
+            root_commands.append((offset, words))
+
+        regions = {"vdp1-vram": bytes(vram), "vdp1-state": "copr:0x8"}
+
+        def capture_frames(_path, _frame_count):
+            return iter([(0, regions)])
 
         with patch(
             "audit_nexus_vdp1_ymir_trace.iter_frame_regions_file",
-            return_value=iter([(0, {
-                "vdp1-vram": bytes(vram), "vdp1-state": "copr:0x8"
-            })]),
+            side_effect=capture_frames,
         ), patch(
             "audit_nexus_vdp1_ymir_trace._sha256_file", return_value="fixture"
         ), patch.object(
             Path, "stat", autospec=True,
             return_value=SimpleNamespace(st_size=len(vram)),
         ):
-            report = audit_runtime_capture(Path("fixture.raw"), 1, 0)
+            report = audit_runtime_capture(
+                Path("fixture.raw"), 1, 0, root_commands, 649
+            )
 
         self.assertEqual(report["hardware_root_zero_chain"]["start"], "0x00000")
         self.assertEqual(report["candidate_scan_selection"]["start"], "0x00100")
@@ -140,6 +152,26 @@ class YmirVdp1TraceTests(unittest.TestCase):
         self.assertEqual(
             report["comparison"]["classification"],
             "candidate-scan-selects-a-different-chain",
+        )
+        paired = report["ymir_vs_root_zero"]
+        self.assertEqual(paired["ymir_frame"], 649)
+        self.assertEqual(paired["aligned_exact_record_matches"], 4)
+        self.assertTrue(paired["same_ordered_command_records"])
+
+        regions["vdp1-state"] = "copr:0x1"
+        with patch(
+            "audit_nexus_vdp1_ymir_trace.iter_frame_regions_file",
+            side_effect=capture_frames,
+        ), patch(
+            "audit_nexus_vdp1_ymir_trace._sha256_file", return_value="fixture"
+        ), patch.object(
+            Path, "stat", autospec=True,
+            return_value=SimpleNamespace(st_size=len(vram)),
+        ):
+            without_candidate = audit_runtime_capture(Path("fixture.raw"), 1, 0)
+        self.assertEqual(
+            without_candidate["comparison"]["classification"],
+            "no-candidate-chain-reaches-copr",
         )
 
 

@@ -62,6 +62,7 @@ class FrameAudit:
     locals_seen: set[tuple[int, int]] = field(default_factory=set)
     addresses: list[int] = field(default_factory=list)
     draw_state: list[dict[str, object]] = field(default_factory=list)
+    command_records: list[tuple[int, tuple[int, ...]]] = field(default_factory=list)
     user_clip: tuple[int, ...] | None = None
     system_clip: tuple[int, ...] | None = None
 
@@ -155,6 +156,11 @@ def _audit_frame(
             )
         seen_addresses.add(address)
         audit.addresses.append(address)
+        if include_draw_state:
+            audit.command_records.append((
+                address,
+                tuple(row[f"word{i}"] for i in range(16)),
+            ))
         audit.roots.add(row["frame_root"])
         audit.records += 1
         kind = _command_type(row)
@@ -303,7 +309,11 @@ def audit_trace(path: Path, selected_frame: int | None = None) -> dict[str, obje
             "all_frame_roots_zero": all_frame_roots_zero,
         },
         "selected_frame": (
-            {**selected.summary(), "draw_state": selected.draw_state}
+            {
+                **selected.summary(),
+                "draw_state": selected.draw_state,
+                "_command_records": selected.command_records,
+            }
             if selected else None
         ),
         "semantic_admission": "blocked",
@@ -362,7 +372,11 @@ def _chain_summary(chain: list[Record]) -> dict[str, object]:
 
 
 def audit_runtime_capture(
-    path: Path, required_frames: int, selected_frame: int
+    path: Path,
+    required_frames: int,
+    selected_frame: int,
+    ymir_command_records: list[tuple[int, tuple[int, ...]]] | None = None,
+    ymir_frame: int | None = None,
 ) -> dict[str, object]:
     """Compare the VDP1 command list rooted at zero to the VRAM scan heuristic."""
     if required_frames <= 0 or selected_frame < 0 or selected_frame >= required_frames:
@@ -389,15 +403,40 @@ def audit_runtime_capture(
         root_chain = follow(command_index, 0)
     except ValueError as error:
         raise TraceError(f"invalid VDP1 root-zero chain: {error}") from error
+    candidate_scan_error: str | None = None
     try:
         scan_chain = find_chain(selected_vram, copr_word)
-    except (ValueError, struct.error) as error:
+    except ValueError as error:
+        # A captured cursor may not belong to a complete draw/clip/local chain.
+        # Preserve the root-zero evidence and report the heuristic's rejection.
+        scan_chain = []
+        candidate_scan_error = str(error)
+    except struct.error as error:
         raise TraceError(f"VRAM candidate scan failed: {error}") from error
 
     root = _chain_summary(root_chain)
     scanned = _chain_summary(scan_chain)
     same_offsets = root["offsets"] == scanned["offsets"]
     same_draw_state = root["draw_state"] == scanned["draw_state"]
+    paired_comparison: dict[str, object] | None = None
+    if ymir_command_records is not None:
+        root_records = [(record.offset, record.words) for record in root_chain]
+        common_count = min(len(ymir_command_records), len(root_records))
+        paired_comparison = {
+            "ymir_frame": ymir_frame,
+            "runtime_capture_frame": selected_frame,
+            "ymir_records": len(ymir_command_records),
+            "root_zero_records": len(root_records),
+            "aligned_address_matches": sum(
+                ymir_command_records[index][0] == root_records[index][0]
+                for index in range(common_count)
+            ),
+            "aligned_exact_record_matches": sum(
+                ymir_command_records[index] == root_records[index]
+                for index in range(common_count)
+            ),
+            "same_ordered_command_records": ymir_command_records == root_records,
+        }
     first_offset_difference = next((
         index for index, (left, right) in enumerate(
             zip(root["offsets"], scanned["offsets"])
@@ -428,9 +467,12 @@ def audit_runtime_capture(
             "first_offset_difference_index": first_offset_difference,
             "classification": (
                 "agreement" if same_offsets and same_draw_state
+                else "no-candidate-chain-reaches-copr" if not scan_chain
                 else "candidate-scan-selects-a-different-chain"
             ),
+            "candidate_scan_error": candidate_scan_error,
         },
+        "ymir_vs_root_zero": paired_comparison,
         "capture_semantics": "blocked",
     }
 
@@ -457,11 +499,19 @@ def main(argv: list[str] | None = None, stdout: TextIO = sys.stdout) -> int:
     try:
         report = audit_trace(args.trace, args.frame)
         if args.runtime_capture is not None:
+            selected = report["selected_frame"]
+            if selected is None:
+                parser.error("--runtime-capture requires --frame to select a Ymir frame")
+            command_records = selected.pop("_command_records")
             report["independent_runtime_capture"] = audit_runtime_capture(
                 args.runtime_capture,
                 args.runtime_capture_frames,
                 args.runtime_frame,
+                command_records,
+                selected["frame"],
             )
+        elif report["selected_frame"] is not None:
+            report["selected_frame"].pop("_command_records")
     except (OSError, TraceError) as error:
         print(f"NEXUS_YMIR_VDP1_TRACE_INVALID: {error}", file=stdout)
         return 1
