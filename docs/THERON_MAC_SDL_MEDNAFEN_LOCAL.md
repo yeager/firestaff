@@ -231,9 +231,10 @@ the title/menu Button I sequence blindly: first confirm that the original
 Theron menu is visibly present, then hold the selected Button I action for
 3–5 seconds as requested by the operator and record the resulting screen. The
 multi-second selection timing is not yet independently confirmed; see
-[`THERON_CAPTURE_READINESS.md`](THERON_CAPTURE_READINESS.md). Greatstone and
-DMWeb provide edition, manual and data-extraction context, not proof that a
-particular emulator input reached a menu consumer.
+[`THERON_CAPTURE_READINESS.md`](THERON_CAPTURE_READINESS.md). DMWeb provides
+retail-edition and manual context. Greatstone's Theron material is the CSBWin
+custom-dungeon conversion, not the PC Engine game's retail data; neither
+reference proves that a particular emulator input reached a menu consumer.
 
 For a reproducible test without Quartz, the corresponding PCE buttons may be
 sent through the instrumented scripted-input route, but that is an emulator

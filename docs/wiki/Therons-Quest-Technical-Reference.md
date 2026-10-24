@@ -204,8 +204,10 @@ that the selected menu action itself must be held for 3–5 seconds. The latest
 US emulator attempt stayed on System Card 3.0 and did not test that hold. See
 the current
 [capture readiness](../THERON_CAPTURE_READINESS.md) and
-[input notes](../theron_input.md). DMWeb and Greatstone are format, edition
-and visual references; they do not establish this input timing.
+[input notes](../theron_input.md). DMWeb provides retail edition and manual
+references. Greatstone's Theron material covers a CSBWin custom-dungeon
+conversion, not retail PC Engine data. Neither reference establishes this
+input timing.
 
 Theron's Quest is a PC Engine CD target. Firestaff accepts original Track 02
 media through a strict CUE/BIN handoff and verifies known media identities. It

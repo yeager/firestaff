@@ -130,9 +130,9 @@ hold or full-game parity.
 
 Reference context: [DMWeb Theron's Quest edition records](DMWEB_REFERENCE.md)
 separate Japanese and US media and include original menu/gameplay references;
-[Greatstone SCK](http://greatstone.free.fr/dm/) is a secondary extraction and
-data-format reference. Neither substitutes for an authenticated runtime
-capture of the menu input.
+[Greatstone SCK](http://greatstone.free.fr/dm/) publishes a CSBWin custom
+dungeon named "Theron's Quest Conversion," not retail PC Engine data. Neither
+substitutes for an authenticated runtime capture of the menu input.
 
 ## 2026-09-25 — JP cold-start capture is System Card-only
 
