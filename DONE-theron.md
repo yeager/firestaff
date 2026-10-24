@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-24 — fresh native debug build reaches JP runtime
+
+Built Firestaff from a clean clone of commit `2748eed3db4a3a9d7b1db2e1522b050440b3e0a2`
+on TRV2 with `-j1`, then ran the native `--debug --boot-probe` route three
+times against the authentic JP Rev. 1 Track 02 media. All three runs reported
+`phase=theron-runtime`, `levelLoaded=1`, party `(1,0,0)`, two champions, 291
+source objects, four loaded dungeon levels, and 455 nonzero source tiles. The
+probe reported `frames=0` and `runtimeTick=0`, so this proves a clean native
+build and bounded data admission, not interactive gameplay or presentation.
+The task-specific `/dev/shm` source and build directory was removed after the
+loops; the original media remained in place.
+
 ## 2026-10-24 — native Button II cancel behavior
 
 Corrected the native Theron mapping so right mouse and long touch send Button

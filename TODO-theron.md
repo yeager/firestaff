@@ -435,6 +435,16 @@ dynamic receipt binds any candidate sector to the runtime bank. See
 
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-24 — fresh native debug build boundary
+
+A clean Firestaff build from commit `2748eed3db4a3a9d7b1db2e1522b050440b3e0a2`
+reached `theron-runtime` in three native `--debug --boot-probe` loops with
+authentic JP Rev. 1 Track 02 on TRV2. Each admitted the level and party and
+reported 291 source objects across four levels. `frames=0` and `runtimeTick=0`
+remain explicit: this is not interactive gameplay, dungeon rendering, or
+platform parity. Continue with the native presentation and gameplay gaps below;
+Mednafen remains reference-only.
+
 ## 2026-10-24 — native Button II semantics corrected from the retail manual
 
 Button II now maps to cancel and no longer advances the native dungeon tick

@@ -7,6 +7,16 @@ native Firestaff gameplay.
 
 ## 2026-10-24 — current evidence boundary
 
+An isolated Debug build from clean commit `2748eed3db4a3a9d7b1db2e1522b050440b3e0a2`
+was built on TRV2 and exercised three times through Firestaff's native
+`--debug --boot-probe` route with the authentic JP Rev. 1 Track 02 image. Each
+run reported `phase=theron-runtime`, `levelLoaded=1`, party `(1,0,0)`, two
+champions, 291 source objects, four loaded dungeon levels, and 455 nonzero
+source tiles. The probe also reported `frames=0` and `runtimeTick=0`. This
+confirms a clean native build and bounded startup/data admission; it does not
+confirm interactive gameplay, dungeon drawing, or parity. The isolated source
+and build directory was removed from `/dev/shm` after the three loops.
+
 Three current-source Firestaff `--debug` runs on TRV2 passed with authentic JP
 Rev. 1 Track 02 (MD5 `b7afb338ad31be1025b53f9aff12d73a`) through the default
 `FIRESTAFF_DATA` directory and `--theron-native jp`. Each reached
