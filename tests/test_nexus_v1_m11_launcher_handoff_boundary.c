@@ -109,6 +109,32 @@ static int count_diff_pixels(const unsigned char* a,
     return diff;
 }
 
+static void test_nexus_keyboard_pause_toggle(void) {
+    M11_GameViewState view;
+
+    M11_GameView_Init(&view);
+    view.active = 1;
+    view.sourceKind = M11_GAME_SOURCE_NEXUS_DGN;
+    view.nexusState.level_loaded = 1;
+
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
+                    M11_GAME_INPUT_REDRAW &&
+                    (view.pauseReasons & M11_GAME_PAUSE_REASON_INPUT) != 0u &&
+                    M11_GameView_IsPaused(&view) &&
+                    (!view.audioState.initialized || view.audioState.hostPaused),
+                "Nexus ACTION pauses the live dungeon and host audio");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
+                    M11_GAME_INPUT_IGNORED,
+                "Nexus gameplay input stays blocked while keyboard-paused");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
+                    M11_GAME_INPUT_REDRAW && view.pauseReasons == 0u &&
+                    !M11_GameView_IsPaused(&view) &&
+                    (!view.audioState.initialized || !view.audioState.hostPaused),
+                "Nexus ACTION resumes the live dungeon and host audio");
+
+    M11_GameView_Shutdown(&view);
+}
+
 static void make_empty_data_dir(char out[512]) {
     int rc = snprintf(out, 512, "firestaff_nexus_launcher_empty_%ld",
                       (long)TEST_GETPID());
@@ -348,6 +374,7 @@ static void run_real_launcher_handoff_if_available(void) {
 int main(void) {
     printf("=== Nexus V1 M12/M11 launcher handoff boundary ===\n");
 
+    test_nexus_keyboard_pause_toggle();
     run_empty_launcher_boundary();
     run_nexus_runtime_path_resolution();
     run_synthetic_nexus_v2_launch_modes();
