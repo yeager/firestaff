@@ -8425,3 +8425,13 @@ T900/original inventory semantics. No synthetic media was used.
   `git diff --check` also pass.
 - This improves evidence labeling only. Level/party semantics and their join
   to the authenticated map remain open.
+
+## Documentation status refresh — 2026-10-24
+
+- Updated the current documentation map and Theron technical-reference
+  summary to match bounded authentic JP/US routes and seven-dungeon
+  source-only coverage.
+- Marked the older 24-hour readiness PASS as a historical local check set;
+  the original-emulator multi-second menu-action hold, original presentation,
+  save semantics, campaign progression and end-to-end gameplay remain open.
+- Historical source-lock records remain dated evidence and were not rewritten.

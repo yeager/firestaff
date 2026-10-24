@@ -1,5 +1,11 @@
 ## 2026-10-24 — original US emulator title input remains unverified
 
+Documentation synchronization: the documentation index and technical wiki
+now summarize the current bounded JP/US routes, seven-dungeon source-only
+coverage and unresolved original-emulator menu hold. The 24-hour readiness
+PASS is explicitly marked as a historical local check set, not an overall
+parity or playability claim. Historical source-lock notes remain dated records.
+
 - The active original US session is running Mednafen's normal `pce` module.
   Its task-specific profile maps PCE I, II, and RUN to keyboard codes 91, 90,
   and 40; these differ from the global profile, so global hotkey assumptions
