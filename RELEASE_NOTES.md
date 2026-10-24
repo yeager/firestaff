@@ -24,12 +24,14 @@
 - `DM2 Macintosh combat`: verify monotonic source missile-impact sequences across repeated Lightning attacks.
 - `Five-game startup diagnostics`: verify startup summaries for all five games and distinguish the Nexus title from a playable runtime.
 - `Debug performance telemetry`: add portable CPU and memory regression coverage and run it through the cross-platform CI workflow.
-- `Paired capture diff`: add a shared state-bound image comparison tool and report format for all five games, with per-manifest native frame geometry, source-state hashes, region metrics and difference masks.
+- `Paired capture diff`: add a shared state-bound image comparison tool and report format for all five games, with per-manifest native frame geometry, capture/image-bound state receipts, region metrics and difference masks. Manifest v2 rejects padded or unsafe IDs and output paths that resolve outside the report directory.
 - `Five-game test sweep`: add a command-line tool that discovers and runs CTest groups for DM1, CSB, DM2, Theron and Nexus, preserving test names and distinguishing partial runs and skips.
+- `Shared parity review`: add structural checks for the five-game platform-status table and game-gap review format, and derive completion rollups from their detailed scores.
 - `Real-media boot sweep`: add a tool that runs supported CLI boot routes per game and platform, preserves selected asset hashes and receipts, and reports missing media and blocked startup separately.
 - `Parity evidence`: add dated test-inventory and real-media boot reports, including the DM2 Macintosh missing-media route and Nexus title-compositor blocker; the reports describe diagnostic evidence, not parity.
 - `Nexus Ymir observation`: add a retail-media Ymir 0.4.1 startup capture and document that it does not establish Firestaff rendering or game parity.
 - `Nexus authentic-media checks`: add logs and hashes for seven passing title-resource and Ymir compositor checks plus four trace-dependent skips; document the remaining capture gaps without claiming renderer or menu parity.
+- `Theron US runtime evidence`: add dated evidence with repeatable authentic Track 02 debug receipts and note that an original-emulator visual pair is still missing.
 - `Cross-platform CI`: use Ninja for macOS builds and cache C/C++ compilation results on macOS and Linux to speed up repeated verification runs.
 - `Startup-menu catalogs`: update gettext source references and translated catalogs for the current startup diagnostics.
 - `Release metadata`: bump the project version and update the SPDX source SBOM for v3.0.410.
