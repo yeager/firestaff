@@ -1,12 +1,20 @@
-## 2026-10-24 — current-source debug runtime receipt still needed
+## 2026-10-24 — original-emulator visual pair remains open
 
 - The available TRV2 `firestaff` executable was built from commit `3f6f575`
   dated 2026-09-17. It rejects both `--debug` and the current Theron
   `--theron-native` option before opening game media. No runtime route or
   capture was produced; this attempt is not parity evidence.
-- Rebuild or locate a current-source executable on TRV2, then repeat the
-  authentic Theron runtime route with `--debug` and collect state-bound
-  evidence under the paired-capture v2 contract.
+- A separate current-source TRV2 build accepted `--debug`. Three direct
+  Theron US boot-probe loops against the authentic Track 02 BIN (MD5
+  `f23601102138f87c33025877767ebf76`) reached the same receipt: runtime phase,
+  map 0, party (1,0), two champions, 291 source objects, and four loaded
+  dungeon levels. The logs remain in private TRV2 cache. SDL dummy output and
+  zero runtime frames provide no screenshot or original-emulator pair, so this
+  verifies runtime admission only, not visual or gameplay parity.
+- Capture a matching original-emulator frame and state receipt, then pair it
+  with a Firestaff `--debug` runtime capture using the paired-capture v2
+  contract. Keep unknown original coordinates unknown until debugger evidence
+  supplies them.
 
 ## 2026-10-10 — instrument PCE Fast CPU VWR commits for source attribution
 
