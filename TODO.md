@@ -8,9 +8,11 @@ The retail-source analyzer now checks both layers, but exact bitmap and tested
 palette joins remain absent; `source_join=unbound` and
 `semantic_admission=blocked`. Current evidence does not tie this screen to
 Nexus code/assets or prove the retail game booted, so it is not game startup
-parity. Next priorities are proving game boot with source-PC/disc-read evidence,
-then disassembling source writers and binding glyph/palette ownership before
-capturing a source-bound menu/HUD. Do not enable rendering from coincidence.
+parity. A separate English-media trace does verify a runtime write of a
+`TM.BIN` chunk, but the corresponding Japanese gameplay transition remains
+unbound. Next priorities are capturing a matched Japanese source-PC/disc-read
+trace, then joining the menu/HUD writes to retail assets. Do not enable
+rendering from coincidence.
 
 2026-10-24 five-game direct CLI retest: the authentic-media
 `firestaff_cli_startup_diagnostics_real_media` CTest passed in 246 seconds,

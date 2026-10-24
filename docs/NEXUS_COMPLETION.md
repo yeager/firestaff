@@ -19,6 +19,14 @@ game booted. Treat it as a pre-game/system setup state, not a game startup
 witness. It does not change Nexus completion status. Full evidence and
 reproduction commands are in `docs/NEXUS_RUNTIME_CAPTURE.md`.
 
+The separate authenticated English-media run does have a positive loader
+source witness: runtime PC `0x00205f18` wrote an exact 16 KiB `TM.BIN` chunk
+to `0x06027000`. Rechecking the same captured chunk against the Japanese retail
+CUE also finds it at ISO offset `0xdc1800`, but that source-corpus lookup does
+not make the runtime capture Japanese-media evidence. Neither capture binds
+that code to the rendered title/menu or a gameplay transition. Nexus completion
+therefore remains unverified.
+
 ## Structure1Fb floor-decoration boundary — 2026-09-29
 
 The production mechanics loader no longer classifies every authentic

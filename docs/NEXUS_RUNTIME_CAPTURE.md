@@ -1252,8 +1252,12 @@ either executable to a captured command or source span.
 
 The first positive runtime source join is retained outside the repository at
 `/Volumes/Extern-disk/nexus-saturn-capture/run-codex-vdp1-source-read-20260810`.
-The authenticated J-BIOS/English-media capture has 600 raw VDP1/VDP2 frames.
-Its bounded SH-2 source-write trace contains a complete 16,384-byte
+The SH-2 source-write trace SHA-256 is
+`91819bcdad6ee9c34f3cced80926d0efc855e2fc09c4bceeb48d0ea2944431b4`; the
+English merged ISO used for the runtime join has SHA-256
+`00431dfad48b44d4457300bcc62d8af6bfb5edcad149313e75db8de6bbddd581`. The
+authenticated J-BIOS/English-media capture has 600 raw VDP1/VDP2 frames. Its
+bounded SH-2 source-write trace contains a complete 16,384-byte
 `TM.BIN` chunk loaded to `0x06027000` by runtime PC `0x00205f18`; the strict
 analyzer resolves the chunk to ISO offset `0xd89800`, member offset
 `0x17000`, and reports `retail_runtime_source_join=verified`. Reproduce it
@@ -1261,9 +1265,17 @@ with:
 
 ```sh
 python3 scripts/analyze_nexus_sh2_source_trace.py \
+  --require-member TM.BIN \
+  --require-destination-range 0x06027000:0x0602b000 \
+  --require-pc 0x00205f18 \
   "/Volumes/Extern-disk/nexus-saturn-capture/media/Dungeon Master Nexus (English) - Merged.iso" \
   "/Volumes/Extern-disk/nexus-saturn-capture/run-codex-vdp1-source-read-20260810/sh2-source-writes.trace"
 ```
+
+The same exact 16 KiB chunk also occurs in the authenticated Japanese retail
+CUE at ISO offset `0xdc1800`; this alternate source-corpus lookup does not
+change the capture's English-media provenance and does not prove the Japanese
+runtime executed this chunk.
 
 This proves retail `TM.BIN` bytes entered runtime RAM during the capture. The
 same witness still has no exact VDP1 command-to-retail-file owner
