@@ -26,10 +26,9 @@ int main(void)
         return 1;
     }
 
-    /* A retail source identity alone is not an action receipt.  Exercise the
-     * actual production tick boundary so queued input cannot move an
-     * unplaced party or advance gameplay timers before Saturn ownership is
-     * bound. */
+    /* A retail source identity alone is not an action receipt. Basic
+     * movement has Ymir evidence, but it must wait for a loaded DGN and a
+     * placed party pose before consuming commands or advancing ticks. */
     memset(&engine, 0, sizeof(engine));
     memset(&mechanics, 0, sizeof(mechanics));
     engine.source = NEXUS_SRC_ISO;
@@ -41,7 +40,47 @@ int main(void)
         mechanics.party_dir != 0 ||
         mechanics.total_ticks != 0 || mechanics.input_count != 1) {
         fprintf(stderr,
-                "FAIL: retail-source Nexus mechanics tick mutated world state without a Saturn action receipt\n");
+                "FAIL: retail movement consumed input before DGN startup\n");
+        return 1;
+    }
+
+    engine.current_level.width = NEXUS_MAX_MAP_SIZE;
+    engine.current_level.height = NEXUS_MAX_MAP_SIZE;
+    engine.level_loaded = 1;
+    (void)nexus_mechanics_tick(&mechanics, &engine);
+    if (mechanics.total_ticks != 1 || mechanics.input_count != 0) {
+        fprintf(stderr,
+                "FAIL: placed retail movement did not run on a loaded DGN\n");
+        return 1;
+    }
+
+    mechanics.party_x = -1;
+    mechanics.party_y = -1;
+    if (nexus_mechanics_push_command(&mechanics, NEXUS_CMD_TURN_LEFT) != 0 ||
+        nexus_mechanics_tick(&mechanics, &engine) != 0 ||
+        mechanics.party_x != -1 || mechanics.party_y != -1 ||
+        mechanics.party_dir != 0 ||
+        mechanics.total_ticks != 1 || mechanics.input_count != 1) {
+        fprintf(stderr,
+                "FAIL: retail movement consumed input without party placement\n");
+        return 1;
+    }
+
+    mechanics.party_x = 7;
+    mechanics.party_y = 9;
+    (void)nexus_mechanics_tick(&mechanics, &engine);
+    if (mechanics.party_dir == 0 || mechanics.total_ticks != 2 ||
+        mechanics.input_count != 0) {
+        fprintf(stderr,
+                "FAIL: placed retail turn did not run on a loaded DGN\n");
+        return 1;
+    }
+
+    if (nexus_mechanics_push_command(&mechanics, NEXUS_CMD_INTERACT) != 0 ||
+        nexus_mechanics_tick(&mechanics, &engine) != 0 ||
+        mechanics.total_ticks != 2 || mechanics.input_count != 0) {
+        fprintf(stderr,
+                "FAIL: unsupported retail Nexus action escaped the Saturn receipt gate\n");
         return 1;
     }
 

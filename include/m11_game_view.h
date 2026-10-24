@@ -2208,7 +2208,8 @@ int M11_GameView_GetLauncherRuntimeOptions(
     M12_LauncherRuntimeOptions* out);
 enum {
     M11_GAME_PAUSE_REASON_TIMER = 1u,
-    M11_GAME_PAUSE_REASON_FOCUS = 2u
+    M11_GAME_PAUSE_REASON_FOCUS = 2u,
+    M11_GAME_PAUSE_REASON_INPUT = 4u
 };
 /* Independent host reasons share one audio/movie-clock suspension. */
 void M11_GameView_SetPauseReason(M11_GameViewState* state,

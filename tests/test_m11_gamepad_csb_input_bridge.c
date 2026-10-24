@@ -8,6 +8,7 @@
 
 #include "main_loop_m11.h"
 #include "gamepad_config_m12.h"
+#include "input_remap_m11.h"
 
 #include <stdio.h>
 
@@ -31,6 +32,7 @@ int main(void) {
     M12_GamepadMap map;
     M12_GamepadStatus status = {0};
 
+    M11_Input_SetDefaults();
     M12_GamepadMap_SetDefaults(&map);
     CHECK(map.enabled == 1);
     CHECK(M11_GamepadEnabledForInputMode(0, 1) == 1);
@@ -120,18 +122,26 @@ int main(void) {
     CHECK(M11_TheronNavigationInputFromScancode(SDL_SCANCODE_KP_6) ==
           M12_MENU_INPUT_RIGHT);
 
-    /* Nexus follows the retail Saturn D-pad turn behavior on both WASD and
-     * arrow-key layouts; the caller scopes this mapping to Nexus only. */
+    /* Nexus desktop keys fall through to the shared M11 bindings, while the
+     * connected Saturn ControlPad keeps its own D-pad turn semantics. */
     CHECK(M11_NexusMovementInputFromScancode(SDL_SCANCODE_A) ==
-          M12_MENU_INPUT_TURN_LEFT);
+          M12_MENU_INPUT_NONE);
     CHECK(M11_NexusMovementInputFromScancode(SDL_SCANCODE_D) ==
-          M12_MENU_INPUT_TURN_RIGHT);
+          M12_MENU_INPUT_NONE);
     CHECK(M11_NexusMovementInputFromScancode(SDL_SCANCODE_LEFT) ==
-          M12_MENU_INPUT_TURN_LEFT);
+          M12_MENU_INPUT_NONE);
     CHECK(M11_NexusMovementInputFromScancode(SDL_SCANCODE_RIGHT) ==
-          M12_MENU_INPUT_TURN_RIGHT);
+          M12_MENU_INPUT_NONE);
     CHECK(M11_NexusMovementInputFromScancode(SDL_SCANCODE_UP) ==
           M12_MENU_INPUT_NONE);
+    CHECK(M11_Input_ActionForScancode(SDL_SCANCODE_A) ==
+          M11_ACTION_STRAFE_LEFT);
+    CHECK(M11_Input_ActionForScancode(SDL_SCANCODE_D) ==
+          M11_ACTION_STRAFE_RIGHT);
+    CHECK(M11_Input_ActionForScancode(SDL_SCANCODE_LEFT) ==
+          M11_ACTION_STRAFE_LEFT);
+    CHECK(M11_Input_ActionForScancode(SDL_SCANCODE_RIGHT) ==
+          M11_ACTION_STRAFE_RIGHT);
     CHECK(M11_TheronNavigationInputFromKeycode(SDLK_W) ==
           M12_MENU_INPUT_UP);
     CHECK(M11_TheronNavigationInputFromKeycode(SDLK_S) ==

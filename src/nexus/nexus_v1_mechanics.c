@@ -596,16 +596,12 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
     saturn_actions = engine->source == NEXUS_SRC_NONE ||
                      nexus_v1_action_semantics_proven();
 
-    /* A decoded retail corpus is not an action-dispatch proof.  The old
-     * compatibility loop still allowed FORWARD/TURN and floor-geometry
-     * writes to mutate the party pose before its individual square effects
-     * were gated.  That made the host model appear playable while the
-     * Saturn event producer, SDDRVS state writes and command queue remain
-     * uncaptured.  Keep all mechanics state immutable until that owner is
-     * admitted; NEXUS_SRC_NONE remains the explicit isolated fixture lane. */
-    if (!saturn_actions) return 0;
-    st->total_ticks++;
-
+    /* Retail Ymir --debug captures bind D-pad up/down to stepping and
+     * left/right to turning in the live dungeon.  Admit only those six
+     * host movement commands against the authenticated DGN grid; all other
+     * Saturn action consumers remain capture-gated below.  Do not infer
+     * interaction, combat, item, spell, sensor, or transition behavior from
+     * this movement receipt. */
     /* Advance door animation each tick, independent of input cooldown.
      * Source: DM1 viewport door open/close stepping (SDDRVS.TSK / renderer). */
     /* Door animation is still a DM1-shaped compatibility state machine.  A
@@ -644,6 +640,20 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
         }
     }
 
+    /* Retail movement has no meaningful consumer until a DGN level and a
+     * placed party pose are both available. Preserve queued input and the
+     * session tick while the title/startup route still owns the view. */
+    if (engine->source != NEXUS_SRC_NONE &&
+        (!engine->level_loaded || engine->current_level.width <= 0 ||
+         engine->current_level.width > NEXUS_MAX_MAP_SIZE ||
+         engine->current_level.height <= 0 ||
+         engine->current_level.height > NEXUS_MAX_MAP_SIZE ||
+         st->map_index < 0 || st->map_index >= NEXUS_MAX_LEVELS ||
+         st->party_x < 0 || st->party_x >= engine->current_level.width ||
+         st->party_y < 0 || st->party_y >= engine->current_level.height)) {
+        return needs_redraw;
+    }
+
     if (st->move_cooldown_ticks > 0) {
         st->move_cooldown_ticks--;
         return 0;
@@ -653,6 +663,19 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
     if (!nexus_mechanics_pop_command(st, &cmd)) {
         cmd = 0;
     }
+
+    if (!saturn_actions &&
+        cmd != NEXUS_CMD_FORWARD && cmd != NEXUS_CMD_BACKWARD &&
+        cmd != NEXUS_CMD_TURN_LEFT && cmd != NEXUS_CMD_TURN_RIGHT &&
+        cmd != NEXUS_CMD_STRAFE_LEFT && cmd != NEXUS_CMD_STRAFE_RIGHT) {
+        /* Consume unsupported queued actions without mutating retail state.
+         * This also prevents an unsupported command from blocking a later
+         * verified movement command in the queue. */
+        cmd = NEXUS_CMD_NONE;
+    }
+
+    if (!saturn_actions && cmd == NEXUS_CMD_NONE) return 0;
+    st->total_ticks++;
 
     /* Dispatch command */
     if (cmd != 0) {
