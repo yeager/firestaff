@@ -55229,6 +55229,7 @@ if(BUILD_TESTING AND
     add_executable(test_m11_gamepad_csb_input_bridge
         tests/test_m11_gamepad_csb_input_bridge.c
         src/engine/m11_game_input_mapping.c
+        src/engine/input_remap_m11.c
         src/shared/gamepad_config_m12.c
         src/shared/fs_portable_compat.c
     )
