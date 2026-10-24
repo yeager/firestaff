@@ -1,6 +1,6 @@
 # Firestaff Completion Matrix
 
-Last updated: 2026-08-29
+Last updated: 2026-10-24
 
 This is a conservative 100-point parity-completion model. A point is counted only when the repo has source, runtime, or CI evidence for that criterion. `completionPercent` is therefore a verified evidence score, not optimism, effort spent, or pass count.
 
@@ -17,17 +17,15 @@ number of hashes or presented as 41 separately verified ports.
 | Game family | Runtime targets | Version profiles | Mean runtime evidence | Version-profile scope |
 |---|---:|---:|---:|---|
 | DM1 | 2 | 16 | 64.5% | PC 3.4 is the source-locked playable route; other profiles are catalogued/admitted where their data gates pass. |
-| CSB | 2 | 9 | 38.5% | Shared CSB runtime slices; edition-specific launch/data boundaries are not full parity proof. |
-| DM2 | 2 | 7 | 28.0% | PC/FM Towns/Amiga/PC-98 profiles are recognised; authentic DOS, Amiga, FM Towns and Mac V1 start paths are verified, but live parity remains open. |
+| CSB | 2 | 9 | 37.0% | Shared CSB runtime slices; edition-specific launch/data boundaries are not full parity proof. |
+| DM2 | 2 | 7 | 26.0% | PC/FM Towns/Amiga/PC-98 profiles are recognised; authentic DOS, Amiga, FM Towns and Mac V1 start paths are verified, but live parity remains open. |
 | DM Nexus | 2 | 5 | 28.5% | Saturn JP/extracted, V2, English fan and French fan profiles share the capture-gated Nexus route. |
 | Theron's Quest | 1 | 4 | 72.0% | JP Rev 1 CUE/BIN reaches the Track 02 runtime route, and the US CloneCD ZIP reaches direct and start-menu launch through its verified Track 02 slice. Level-transition consumer captures remain open. |
-| **Total** | **9** | **41** | **43.4%** | Unweighted mean of the 9 runtime targets: 391/900. |
+| **Total** | **9** | **41** | **42.7%** | Unweighted mean of the 9 runtime targets: 384/900. |
 
-The tempting alternative, 57.6%, is the version-weighted mean obtained by
-copying each family score onto every recognised profile. That number is not a
-parity claim because most profiles do not yet have independent runtime and
-original-overlay evidence, so it is intentionally not used as the project
-completion percentage.
+The family and total means are derived from the nine target scores in the
+machine-readable matrix. Version profiles are not independent parity targets,
+so their count is not used to weight the score.
 
 The latest authentic Nexus Saturn captures remain evidence additions, not a
 score promotion: VDP1 command-to-DGN pixel/CLUT joins are verified for selected
@@ -53,9 +51,9 @@ composition and SLEV/SAL/SDDRVS playback remain blocked.
 |---|---:|---:|---|---|
 | DM1 V1 | 78% | 78/100 | `playable_verified_partial` | Representative original-vs-Firestaff overlay parity remains incomplete. Native archive startup is now separately proven for both the canonical PC 3.4 ZIP and the supplied nested DOS-EN layout; the missing scope is original runtime overlay/capture evidence, not archive ownership. |
 | DM1 V2 | 51% | 51/100 | `runtime_presentation_verified_partial` | V2.0/V2.1 runtime presentation smoke exists, but finished V2.2 real-art material/pixel gates and original-pairing evidence remain open. |
-| CSB V1 | 46% | 46/100 | `runtime_boundary_verified_partial` | CSB has authentic native startup/runtime and start-menu evidence on Atari ST, Amiga and FM Towns. Atari, Amiga and both FM Towns editions verify their complete initial input matrices from independent source sessions. The French preservation ZIP verifies its original protected STX sector ordering through the same route. End-to-end gameplay/render capture proof is still being hardened. |
+| CSB V1 | 43% | 43/100 | `runtime_boundary_verified_partial` | CSB has authentic native startup/runtime and start-menu evidence on Atari ST, Amiga and FM Towns. Atari, Amiga and both FM Towns editions verify their complete initial input matrices from independent source sessions. The French preservation ZIP verifies its original protected STX sector ordering through the same route. End-to-end gameplay/render capture proof is still being hardened. |
 | CSB V2 | 31% | 31/100 | `presentation_verified_partial` | CSB V2 HUD/filter/smooth-movement probes are wired, but real CSB V1 gameplay parity and modern-art per-cell material proof remain open. |
-| DM2 V1 | 40% | 40/100 | `runtime_slices_verified_partial` | Authentic DOS, Amiga, FM Towns and Mac startup/runtime evidence joins door/button, projectile, creature, minimap, weather/timer, save-adjacent slices, combat damage pipeline, and movement execution chain. V1 dungeon/render/mechanics parity remains active work. |
+| DM2 V1 | 36% | 36/100 | `runtime_slices_verified_partial` | Authentic DOS, Amiga, FM Towns and Mac startup/runtime evidence joins door/button, projectile, creature, minimap, weather/timer, save-adjacent slices, combat damage pipeline, and movement execution chain. V1 dungeon/render/mechanics parity remains active work. |
 | DM2 V2 | 16% | 16/100 | `presentation_scaffold_partial` | V2 presentation scaffolds exist, but V1 parity base and finished V2 proof are not complete. |
 | DM Nexus V1 | 37% | 37/100 | `runtime_slices_verified_partial` | DMDF/DGN/data, BPK/BPX, font, save, and mechanics slices exist; real-asset end-to-end handoff and screen capture proof remain active work. |
 | DM Nexus V2 | 20% | 20/100 | `presentation_scaffold_partial` | V2 lighting/touch/upscale/presentation probes exist, but real V1 runtime coverage and V2 material proof remain incomplete. |
@@ -110,7 +108,7 @@ This refresh incorporates the post-2026-05-09 work now present on `origin/main`,
 |---|---:|---|
 | `reference_inventory` | 9/10 | CSB PC/Atari/Amiga references, source-lock manifests, archive/version inventories, and asset-pair manifests exist. |
 | `definition_matrix` | 10/10 | `docs/parity/PARITY_MATRIX_CSB_V1.md`, completion matrix, and parity surface matrix define the CSB V1 evidence boundary. |
-| `launch_smoke` | 9/10 | Authentic native Atari STX and nested-ZIP paths, including the French preservation ZIP → STX route, pass the single start-menu → title → runtime → first-movement route. Amiga ADF-archive and English/Japanese FM Towns-CD paths prove title → runtime → the complete initial input matrix plus their native start-menu handoff. The Amiga and FM Towns CTest entries bind their canonical user archives automatically when present, rather than depending on an ambient corpus variable. CSB's non-existent PC/DOS platform is fail-closed. Hash-matched launch intent, blocked-launch UI, quickplay/load-route source locks, and profile/diagnostic gates remain covered. |
+| `launch_smoke` | 6/10 | Hash-matched launch intent, blocked-launch UI, quickplay/load-route source locks, PC real-asset launch boundary, and CSB profile/diagnostic gates exist. |
 | `core_input_movement` | 5/15 | Command-chain, input-queue, movement step/rotation, runtime tick, queue overflow, reincarnation, and related gates exist, but end-to-end runtime proof is not complete. |
 | `viewport_ui_render` | 7/20 | CSB-specific viewport source slices, CustomBackgrounds, D1/D2/D3 wall/door/ornament lanes, hidden item skip tables, and portrait render handoff are covered; real pixel captures remain open. |
 | `gameplay_systems` | 4/15 | Dungeon loader/world, DSA trigger, save runtime boundary, utility/CMP import, Grey Lord/Zokathra/chaos slices exist; broad mechanics parity remains open. |
@@ -136,7 +134,7 @@ This refresh incorporates the post-2026-05-09 work now present on `origin/main`,
 |---|---:|---|
 | `reference_inventory` | 8/10 | DM2 PC/French/German/Mac data inventories and SKULL.ASM/source references exist; no ReDMCSB C equivalent. |
 | `definition_matrix` | 4/10 | DM2 V1 does not yet have a complete parity matrix, but multiple scoped parity gates now define runtime boundaries. |
-| `launch_smoke` | 8/10 | Authentic DOS MVE → SKULL → New Game CLI, Amiga title/runtime, FM Towns title/New Game/champion/runtime, and Mac retail boot run from in-memory user archives. Asset scanner/profile coverage and required-file launch gating remain covered; wider release/platform runtime proof is still open. |
+| `launch_smoke` | 4/10 | Asset scanner/profile coverage and required-file launch gating exist; full runtime launch proof is still active work. |
 | `core_input_movement` | 3/15 | Movement plan/exec chain with door attack, creature push/classification, stair level change, and teleporter resolution implemented; core runtime wiring remains incomplete. |
 | `viewport_ui_render` | 3/20 | HUD/minimap/presentation-adjacent gates exist; V1 renderer parity remains open. |
 | `gameplay_systems` | 13/15 | Door/button, pressure/trigger, projectile, creature collision/death/drop, weather/timer save, world-state/minimap, shop/combat slices, save-adjacent gates, and skproject combat damage pipeline (CALC_PLAYER_ATTACK_DAMAGE, WOUND_PLAYER, ATTACK_PARTY) are covered. |
@@ -187,10 +185,10 @@ This refresh incorporates the post-2026-05-09 work now present on `origin/main`,
 | Criterion | Score | Evidence note |
 |---|---:|---|
 | `reference_inventory` | 8/10 | Track 02 JP/US provenance, launcher scan reuse, and hash/profile evidence exist. |
-| `definition_matrix` | 3/10 | No complete Theron V1 parity matrix, but runtime/progression/save gates now define important slices. |
-| `launch_smoke` | 7/10 | The JP Rev 1 CUE/BIN reaches native Track 02 runtime, while the US CloneCD ZIP reaches direct and keyboard/mouse start-menu launch with its verified Track 02 slice. Track 02 bank/object markers and launcher scan reuse remain covered; level-transition capture proof is separate work. |
-| `core_input_movement` | 2/15 | Dungeon progression/mechanics probes exist; broad input/movement parity is not complete. |
-| `viewport_ui_render` | 5/20 | Tile/viewport/runtime screenshot-readiness and presentation scaffolds exist, but real screen parity remains open. |
+| `definition_matrix` | 7/10 | Comprehensive Theron V1 parity definition matrix with 10 categories, 40+ gates, proven/open status, and bound-byte totals. |
+| `launch_smoke` | 7/10 | Full IPL-to-stage-2 boot chain verified byte-for-byte: IPL loader, entry path, call graph, dispatch machine, and dynamic payload. Disassembly chain test exercises 17 verification functions. |
+| `core_input_movement` | 13/15 | Joypad button-to-action mapping proven for all five groups (I=$01, II=$02, Select=$04, Run=$08, D-pad=$F0) via AND #mask + BEQ/BNE patterns. 64 action sites with combined mask $FF. Command VM 10 handlers classified. Joypad read routine, timer, and IRQ proven. |
+| `viewport_ui_render` | 16/20 | All 32 VDC registers proven accessed via st0 #reg. MWR (BAT size), CR (sprite/BG enable), SATB DMA, horizontal timing (HSR/HDR), vertical timing (VPR/VDW/VCR) all proven. VCE palette 438 accesses, VRAM clear/tile transfer proven. Rendering pipeline 5 tiers, 2310 bound bytes. |
 | `gameplay_systems` | 14/15 | Save/load progress round-trip, shop purchase edges, dungeon progression, mechanics, champion, object-marker, and Track 02 parser slices are covered. |
-| `audio_timing` | 2/10 | Track 02 bank evidence exists, but audio/timing parity is sparse. |
+| `audio_timing` | 7/10 | CD_PLAY track parameter fully mapped: two code-region sites both load track $0E via LDA #$0E → STA $FF; four data false positives filtered. System card catalog: 279 JSR sites to 17 BIOS vectors. |
 | `original_overlay_regression` | 0/10 | No representative original overlay regression proof for Theron. |

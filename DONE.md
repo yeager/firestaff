@@ -2194,3 +2194,25 @@ only. Active work is in `TODO.md` and `TODO-<game>.md`.
   including real C15 ownership where available; poison C25/C75 ordering and
   harm-non-material killed-all behavior are source-verified. Nine focused
   source/raw-data regressions pass.
+
+- Added `verify_platform_status_matrix.py` and a CTest regression for the
+  shared gap-review and platform-status formats. It requires the common
+  missing-code/data/verification/closed classifications and priority section,
+  then rejects missing game sections, malformed or duplicate platform rows,
+  unknown status labels, and rows without both a current-scope statement and
+  an explicit open boundary. This is a structural documentation guard only;
+  it does not validate the claims or establish original-media, runtime, or
+  visual parity.
+- Reconciled the published completion roll-up with its existing target-level
+  criterion scores: CSB V1 remains 43/100 and DM2 V1 remains 36/100, with no
+  evidence-based score promotion. Family means and the total now derive from
+  the same nine target scores; version-profile counts are not treated as
+  independent parity evidence.
+- Hardened the shared paired-capture diff writer: capture/region identifiers
+  cannot contain path separators, generated mask filenames are index-unique,
+  and resolved mask/report paths must remain inside the approved output
+  directory. Negative tests cover traversal names and pre-existing symlinks.
+- Versioned the paired-capture manifest contract to v2 and bound each state
+  receipt to its exact capture ID and image SHA-256. The diff tool rejects
+  reused state receipts for another checkpoint or frame; tests cover valid
+  receipts and both mismatch cases across the shared five-game schema.

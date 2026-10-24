@@ -36030,6 +36030,10 @@ endif()
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_firestaff_completion_matrix.py
         )
         add_test(
+            NAME parity_review_inventory_structure
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_platform_status_matrix.py
+        )
+        add_test(
             NAME dm1_v1_movement_timing_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_movement_timing_source_lock.py
         )
