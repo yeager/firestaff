@@ -399,8 +399,8 @@ int nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
             frame.vdp2_cram + x * 2, registers.byte_order);
     for (y = 0; y < height; ++y) {
         for (x = 0; x < width; ++x) {
-            int tile_x = source_x + x;
-            int tile_y = source_y + y;
+            int tile_x = source_x + x + registers.nbg1_scroll_x;
+            int tile_y = source_y + y + registers.nbg1_scroll_y;
             int map_index = ((tile_y >> 3) & 0x3f) * 64 +
                 ((tile_x >> 3) & 0x3f);
             /* Match the bounded TileFetcher address derivation mirrored by
