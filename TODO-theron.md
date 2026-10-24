@@ -7,23 +7,28 @@
   and keypad 1/3 and 4/6 provide the same actions. Startup arrows still
   navigate Theron's menus. The focused input regression passed three loops on
   TRV2.
-- The native dungeon draw now includes a visible, Firestaff-owned 3x2 mouse
-  panel for turn-left/forward/turn-right and step-left/back/step-right. Its six
-  buttons dispatch the same native Theron inputs as the keyboard and normalize
-  pointer coordinates across presentation sizes. The panel uses explicit host
-  UI bounds rather than borrowing DM1's pointer table or claiming original
-  Theron hitboxes. Button II remains cancel/back.
+- The native dungeon draw includes a visible, Firestaff-owned 4x3 mouse
+  panel. Alongside the six movement controls, it exposes the native actions
+  already available from the keyboard: next champion, source-backed item
+  pickup/selection/drop/use, and wait. A shared control table drives drawing
+  and hit-testing; the controls use host UI bounds rather than borrowing
+  DM1's pointer table or claiming original Theron hitboxes. Button II remains
+  cancel/back.
 - The source-locked captures do identify six original movement-panel command
   points: turn-left `$7B/$8F`, forward `$8A/$8F`, turn-right `$98/$8F`,
   step-left `$7B/$A5`, backward `$8A/$A5`, and step-right `$98/$A5`. These are
   internal PCE cursor samples, not rectangle boundaries or host-space pixels.
   They establish the original command order only.
-- On TRV2, `theron_v1_m11_launcher_handoff_boundary` passed three consecutive
-  loops, checking all six controls with 320x200 and 640x400 pointer coordinates
-  and verifying the drawn panel. Its small test map verifies dispatch only.
-  `theron_v1_raw_bin_runtime_boot` passed once with `--debug` and authentic US
-  `TQUS02.bin`: mouse turn-left changed the loaded party to direction 3, and
-  mouse Back moved it from `(1,0)` to `(1,1)` with one runtime tick.
+- On TRV2, `theron_v1_m11_launcher_handoff_boundary` and
+  `m11_gamepad_csb_input_bridge` each passed three consecutive loops after the
+  4x3 panel change. The pointer test covers all twelve controls with 320x200
+  and 640x400 coordinates. Its small test map verifies host input routing
+  only, not item availability or game-mechanics parity.
+  `theron_v1_raw_bin_runtime_boot` passed three loops with `--debug` and
+  authentic US `TQUS02.bin`: keyboard movement/turning and mouse turn-left,
+  back-step, champion cycling, and wait produced the expected native state.
+  Pickup, item selection, drop, and use controls still need an authentic
+  source-backed item/target path for gameplay-effect verification.
 - Remaining work: bind Theron's original graphics and layout in the native
   state-driven renderer, then verify that mouse movement is visible in an
   interactive native real-media run. The current authenticated screen route
