@@ -77,9 +77,9 @@ M12_MenuInput M11_GamepadAxisToMenuInput(SDL_GamepadAxis axis,
 
 M12_MenuInput M11_TheronNavigationInputFromScancode(int scancode)
 {
-    /* Retail movement-panel capture binds $01/$02 to turns and $04/$06 to
-     * right/left steps. Keep arrows/keypad on turns and expose the lower-row
-     * steps through A/D without changing the normalized M12 vocabulary. */
+    /* Keep startup navigation on the standard menu tokens. Loaded-dungeon
+     * keys use M11_TheronGameplayInputFromScancode() so arrows follow DM1's
+     * familiar strafe layout without changing menu behavior. */
     switch ((SDL_Scancode)scancode) {
         case SDL_SCANCODE_UP:
         case SDL_SCANCODE_W:
@@ -127,6 +127,78 @@ M12_MenuInput M11_TheronNavigationInputFromKeycode(int keycode)
         case SDLK_DOWN: return M12_MENU_INPUT_DOWN;
         case SDLK_LEFT: return M12_MENU_INPUT_LEFT;
         case SDLK_RIGHT: return M12_MENU_INPUT_RIGHT;
+        default: return M12_MENU_INPUT_NONE;
+    }
+}
+
+M12_MenuInput M11_TheronGameplayInputFromScancode(int scancode)
+{
+    /* Match DM1's familiar dungeon keyboard layout while preserving Theron's
+     * own native command tokens. Startup arrows remain menu navigation and
+     * continue to use M11_TheronNavigationInputFromScancode(). */
+    switch ((SDL_Scancode)scancode) {
+        case SDL_SCANCODE_UP:
+        case SDL_SCANCODE_W:
+        case SDL_SCANCODE_KP_5:
+        case SDL_SCANCODE_KP_8:
+            return M12_MENU_INPUT_UP;
+        case SDL_SCANCODE_DOWN:
+        case SDL_SCANCODE_S:
+        case SDL_SCANCODE_KP_2:
+            return M12_MENU_INPUT_DOWN;
+        case SDL_SCANCODE_LEFT:
+        case SDL_SCANCODE_A:
+        case SDL_SCANCODE_KP_1:
+            return M12_MENU_INPUT_STRAFE_LEFT;
+        case SDL_SCANCODE_RIGHT:
+        case SDL_SCANCODE_D:
+        case SDL_SCANCODE_KP_3:
+            return M12_MENU_INPUT_STRAFE_RIGHT;
+        case SDL_SCANCODE_HOME:
+        case SDL_SCANCODE_Q:
+        case SDL_SCANCODE_KP_4:
+            return M12_MENU_INPUT_TURN_LEFT;
+        case SDL_SCANCODE_END:
+        case SDL_SCANCODE_E:
+        case SDL_SCANCODE_KP_6:
+            return M12_MENU_INPUT_TURN_RIGHT;
+        default:
+            return M12_MENU_INPUT_NONE;
+    }
+}
+
+M12_MenuInput M11_TheronGameplayInputFromKeycode(int keycode)
+{
+    /* SDL keycode fallback for events that do not carry a useful scancode. */
+    switch ((SDL_Keycode)keycode) {
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+        case SDLK_W: return M12_MENU_INPUT_UP;
+        case SDLK_S: return M12_MENU_INPUT_DOWN;
+        case SDLK_A: return M12_MENU_INPUT_STRAFE_LEFT;
+        case SDLK_D: return M12_MENU_INPUT_STRAFE_RIGHT;
+        case SDLK_Q: return M12_MENU_INPUT_TURN_LEFT;
+        case SDLK_E: return M12_MENU_INPUT_TURN_RIGHT;
+#else
+        case SDLK_w: return M12_MENU_INPUT_UP;
+        case SDLK_s: return M12_MENU_INPUT_DOWN;
+        case SDLK_a: return M12_MENU_INPUT_STRAFE_LEFT;
+        case SDLK_d: return M12_MENU_INPUT_STRAFE_RIGHT;
+        case SDLK_q: return M12_MENU_INPUT_TURN_LEFT;
+        case SDLK_e: return M12_MENU_INPUT_TURN_RIGHT;
+#endif
+        case SDLK_UP:
+        case SDLK_KP_5:
+        case SDLK_KP_8: return M12_MENU_INPUT_UP;
+        case SDLK_DOWN:
+        case SDLK_KP_2: return M12_MENU_INPUT_DOWN;
+        case SDLK_LEFT:
+        case SDLK_KP_1: return M12_MENU_INPUT_STRAFE_LEFT;
+        case SDLK_RIGHT:
+        case SDLK_KP_3: return M12_MENU_INPUT_STRAFE_RIGHT;
+        case SDLK_HOME:
+        case SDLK_KP_4: return M12_MENU_INPUT_TURN_LEFT;
+        case SDLK_END:
+        case SDLK_KP_6: return M12_MENU_INPUT_TURN_RIGHT;
         default: return M12_MENU_INPUT_NONE;
     }
 }

@@ -14,8 +14,8 @@ are research instruments only and do not run or replace the game in Firestaff.
 |------------|-------------------|----------------|
 | D-pad Up   | Up Arrow          | W              |
 | D-pad Down | Down Arrow        | S              |
-| D-pad Left | Left Arrow        | Home, Q        |
-| D-pad Right| Right Arrow       | End, E         |
+| D-pad Left | Q                 | Home, keypad 4 |
+| D-pad Right| E                 | End, keypad 6  |
 | Button I   | Mouse 1, short touch | Z, Return, Space |
 | Button II  | Mouse 2, long touch  | X, Escape         |
 | Run        | Return            |                |
@@ -51,12 +51,12 @@ actuator timing or retail queue capacity; see the 2026-10-24 entry in
 
 | Action         | Keys                              |
 |----------------|-----------------------------------|
-| Move forward   | Up Arrow, W                       |
-| Move backward  | Down Arrow, S                     |
-| Step left      | A                                 |
-| Step right     | D                                 |
-| Turn left      | Left Arrow, Home, Q               |
-| Turn right     | Right Arrow, End, E               |
+| Move forward   | Up Arrow, W, keypad 5/8           |
+| Move backward  | Down Arrow, S, keypad 2           |
+| Step left      | Left Arrow, A, keypad 1           |
+| Step right     | Right Arrow, D, keypad 3          |
+| Turn left      | Q, Home, keypad 4                 |
+| Turn right     | E, End, keypad 6                  |
 | Wait (tick)    | Return, Space                     |
 | Next champion  | Tab                               |
 | Pick up facing item | G                            |
@@ -65,8 +65,10 @@ actuator timing or retail queue capacity; see the 2026-10-24 entry in
 
 ## Notes
 
-- Arrow Left/Right and Home/End/Q/E rotate. A/D use the source-backed lower
-  movement-panel side-step commands `$06/$04`.
+- During loaded gameplay, arrows and A/D issue the source-backed side-step
+  commands `$06/$04`; Q/E, Home/End and keypad 4/6 turn. Startup menu arrows
+  retain their navigation behavior. This matches Firestaff's ordinary DM1
+  dungeon keyboard layout while preserving Theron's native command tokens.
 - Mouse button 1/2 are direct Button I/II bindings. A short touch emits
   Button I; a long touch emits Button II, including during startup. Button II
   cancels startup selection and does not advance a dungeon tick. The retail
@@ -78,7 +80,12 @@ actuator timing or retail queue capacity; see the 2026-10-24 entry in
   Button II is a cancel/modifier and does not perform a standalone dungeon
   action. This does not provide DM1-style clickable controls. Theron's native
   dungeon layout is not yet rendered from authenticated graphics, and the
-  captured original input points do not establish complete region boundaries.
+  original movement-panel captures identify only six internal PCE cursor
+  samples, not host-space coordinates or hitbox bounds: turn-left `$7B/$8F`,
+  forward `$8A/$8F`, turn-right `$98/$8F`, step-left `$7B/$A5`, backward
+  `$8A/$A5`, and step-right `$98/$A5`. Use these points to align visible
+  Firestaff-owned click targets only after the live native layout and
+  coordinate transform are bound.
   The turn and forward point captures are recorded in
   [`theron-original-turn-command-capture-2026-08-21.md`](source-lock/theron-original-turn-command-capture-2026-08-21.md)
   and

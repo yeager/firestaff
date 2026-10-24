@@ -65,6 +65,7 @@ research and must not be copied into current status or wiki pages.
 - [Preservation status (reviewed 2026-08-12)](PRESERVATION_STATUS_2026-08-11.md) — cross-game real-media, format and disassembly boundary
 - [External preservation archive](PRESERVATION_ARCHIVE.md) — moved historical runs and checksum manifest
 - [DMWeb and Greatstone references](DMWEB_REFERENCE.md) — external provenance index
+- [Theron input controls](theron_input.md) — native keyboard mappings, Button I/II mouse behavior and open in-dungeon mouse zones
 - [Theron real-data inventory](THERON_REALDATA_INVENTORY.md) — Track 02/19 media identities and placeholder boundaries
 - [Theron input notes](theron_input.md) — native controls and the separate, unverified original-emulator menu-hold procedure
 - [Theron capture readiness](THERON_CAPTURE_READINESS.md) — current authenticated `--debug` and emulator evidence, capture requirements, and open runtime joins

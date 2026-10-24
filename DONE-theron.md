@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-24 — match DM1's dungeon keyboard layout
+
+Loaded-dungeon Theron input now maps arrows and A/D to side-steps, Q/E to
+turns, and Home/End plus keypad 4/6 to turns; keypad 1/3 also side-step.
+Up/W and Down/S move forward/backward, with keypad 5/8 and 2 as alternatives.
+Startup arrows retain Theron's menu navigation. The focused
+`m11_gamepad_csb_input_bridge` test passed three consecutive runs on TRV2, and
+both the test target and native Firestaff target built. A native C/SDL Debug
+run with authentic JP Track 02 logged these inputs into Theron's loaded-dungeon
+movement path. This verifies keyboard dispatch, not full visual/gameplay
+parity. Mouse pointer zones remain open; mouse buttons still map Button I/II.
+
 ## 2026-10-24 — initialize SDL's native gamepad subsystem
 
 `M12_GamepadStatus_Update` now initializes SDL's gamepad subsystem before

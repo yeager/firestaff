@@ -83,9 +83,12 @@ Focused real-media checks and their current boundaries are documented in
 [DM2 platform variants](docs/dm2_variants_platform.md)
 and the [DM2 FM Towns wiki guide](docs/wiki/DM2-FMTowns-Guide.md).
 
-Theron's Quest uses ordinary desktop controls in Firestaff: Up/W moves
-forward, Down/S moves backward, Left/Right turn, and A/D step sideways while
-held. Home/Q and End/E are alternate turn keys.
+Theron's Quest uses the familiar DM1 dungeon keyboard layout in Firestaff:
+Up/W moves forward, Down/S moves backward, Left/Right/A/D step sideways, and
+Q/E turn. Home/End and keypad 4/6 are alternate turn keys; keypad 1/3 step,
+8/5 move forward and 2 moves backward. Dungeon mouse clicks still map Button
+I/II without using pointer position for gameplay; DM1-style clickable controls
+remain open until the native layout is bound to authenticated graphics.
 Tab selects the next living member of the Soul Room party and G picks up a
 source-verified item in the facing cell. P drops that explicitly selected
 source item on the party square, and U uses a door in the facing cell.

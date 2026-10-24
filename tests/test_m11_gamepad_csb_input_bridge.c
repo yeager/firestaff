@@ -135,6 +135,36 @@ int main(void) {
           M12_MENU_INPUT_LEFT);
     CHECK(M11_TheronNavigationInputFromKeycode(SDLK_RIGHT) ==
           M12_MENU_INPUT_RIGHT);
+    /* In the loaded dungeon, Theron's key layout matches DM1 while still
+     * producing the Theron movement tokens. */
+    CHECK(M11_TheronGameplayInputFromScancode(SDL_SCANCODE_LEFT) ==
+          M12_MENU_INPUT_STRAFE_LEFT);
+    CHECK(M11_TheronGameplayInputFromScancode(SDL_SCANCODE_RIGHT) ==
+          M12_MENU_INPUT_STRAFE_RIGHT);
+    CHECK(M11_TheronGameplayInputFromScancode(SDL_SCANCODE_HOME) ==
+          M12_MENU_INPUT_TURN_LEFT);
+    CHECK(M11_TheronGameplayInputFromScancode(SDL_SCANCODE_Q) ==
+          M12_MENU_INPUT_TURN_LEFT);
+    CHECK(M11_TheronGameplayInputFromScancode(SDL_SCANCODE_END) ==
+          M12_MENU_INPUT_TURN_RIGHT);
+    CHECK(M11_TheronGameplayInputFromScancode(SDL_SCANCODE_E) ==
+          M12_MENU_INPUT_TURN_RIGHT);
+    CHECK(M11_TheronGameplayInputFromScancode(SDL_SCANCODE_KP_1) ==
+          M12_MENU_INPUT_STRAFE_LEFT);
+    CHECK(M11_TheronGameplayInputFromScancode(SDL_SCANCODE_KP_3) ==
+          M12_MENU_INPUT_STRAFE_RIGHT);
+    CHECK(M11_TheronGameplayInputFromScancode(SDL_SCANCODE_KP_4) ==
+          M12_MENU_INPUT_TURN_LEFT);
+    CHECK(M11_TheronGameplayInputFromScancode(SDL_SCANCODE_KP_6) ==
+          M12_MENU_INPUT_TURN_RIGHT);
+    CHECK(M11_TheronGameplayInputFromKeycode(SDLK_LEFT) ==
+          M12_MENU_INPUT_STRAFE_LEFT);
+    CHECK(M11_TheronGameplayInputFromKeycode(SDLK_RIGHT) ==
+          M12_MENU_INPUT_STRAFE_RIGHT);
+    CHECK(M11_TheronGameplayInputFromKeycode(SDLK_Q) ==
+          M12_MENU_INPUT_TURN_LEFT);
+    CHECK(M11_TheronGameplayInputFromKeycode(SDLK_E) ==
+          M12_MENU_INPUT_TURN_RIGHT);
     CHECK(M11_TheronMouseButtonToInput(SDL_BUTTON_LEFT) ==
           M12_MENU_INPUT_ACCEPT);
     /* Button II cancels; it is not a world-tick action. A physical middle

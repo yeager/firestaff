@@ -172,10 +172,14 @@ M12_MenuInput M11_StartupSettingsHorizontalKeyInput(
     int textEditingActive);
 
 /* Theron host controls. W/S are forward/backward, A/D are the original
-   lower-panel left/right steps, arrow Left/Right turn, mouse button 1/2 are
-   Button I/II, and a short/long touch is the same Button I/II pair. */
+   lower-panel left/right steps during startup/menu routing. Dungeon keyboard
+   movement follows DM1: arrows/A/D strafe, Q/E/Home/End turn, and the keypad
+   uses the same direction layout. Mouse button 1/2 are Button I/II, and a
+   short/long touch is the same Button I/II pair. */
 M12_MenuInput M11_TheronNavigationInputFromScancode(int scancode);
 M12_MenuInput M11_TheronNavigationInputFromKeycode(int keycode);
+M12_MenuInput M11_TheronGameplayInputFromScancode(int scancode);
+M12_MenuInput M11_TheronGameplayInputFromKeycode(int keycode);
 M12_MenuInput M11_TheronMouseButtonToInput(int button);
 M12_MenuInput M11_TheronTouchButtonInput(int longPress);
 

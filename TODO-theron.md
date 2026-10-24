@@ -2,21 +2,31 @@
 
 - Native keyboard input already reaches the Theron movement and action facade;
   discrete key events also reached a loaded dungeon and advanced native ticks
-  in the 2026-10-24 Debug runs recorded below. The README control summary had
-  incorrectly described A/D as turn keys; it now matches the implementation:
-  arrows or Home/Q and End/E turn, while A/D step sideways.
+  in the 2026-10-24 Debug runs recorded below. Loaded-dungeon keyboard mapping
+  now matches the familiar DM1 layout: arrows/A/D sidestep, Q/E/Home/End turn,
+  and keypad 1/3 and 4/6 provide the same actions. Startup arrows still
+  navigate Theron's menus. The focused input regression passed three loops on
+  TRV2.
 - Mouse buttons 1/2 currently map to Button I/II. Dungeon clicks do not use
   pointer position to select movement, inventory or champion controls, and
-  Button II does not perform a standalone dungeon action. Existing authentic
-  input-point captures establish individual turn and forward commands, but
-  not complete clickable-region boundaries. The product's native dungeon
-  view also lacks authenticated graphics/layout mapping, so DM1 zones cannot
-  safely be copied or guessed.
+  Button II does not perform a standalone dungeon action. The retail Theron
+  interface is controller-only, so authentic point captures do not establish
+  host mouse bounds. The original framebuffer/layout is not yet connected to
+  a validated native gameplay view. DM1 zones cannot be copied blindly onto
+  Theron's differently sized PCE layout; create and test an explicitly
+  Firestaff-owned mouse overlay after the native authenticated view is ready.
+- The source-locked captures do identify six original movement-panel command
+  points: turn-left `$7B/$8F`, forward `$8A/$8F`, turn-right `$98/$8F`,
+  step-left `$7B/$A5`, backward `$8A/$A5`, and step-right `$98/$A5`. These are
+  internal PCE cursor samples, not rectangle boundaries or host-space pixels.
+  Use them to align visible Firestaff-owned targets with the authentic panel
+  after the live native view and its coordinate transform are source-bound.
 - Remaining work: bind Theron's original graphics and layout in the native
-  renderer, recover the original input-region boundaries from source/runtime
-  evidence, then implement and verify DM1-style mouse zones on the native
-  presentation. User requirement remains open until keyboard and mouse both
-  support ordinary dungeon play.
+  renderer, implement visible Firestaff-owned mouse targets for its six
+  movement actions, then verify coordinate scaling and dispatch in an
+  interactive native real-media run. The authentic point captures do not
+  define the host hitbox bounds. User requirement remains open until keyboard
+  and mouse both support ordinary dungeon play.
 
 ## 2026-10-24 — authenticated snapshot renders; state pairing remains open
 
