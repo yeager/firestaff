@@ -1259,6 +1259,7 @@ static void check_scan_progress_uses_display_names(void) {
         {"checking original file candidates", "CHECKING ORIGINAL FILE CANDIDATES"},
         {"search root", "CHECKING ORIGINAL FILE CANDIDATES"},
         {"enumerating ZIP candidates", "CHECKING ORIGINAL FILE CANDIDATES"},
+        {"reading original DM2 disc image", "CHECKING ORIGINAL FILE CANDIDATES"},
         {"matching editions", "MATCHING GAME VERSIONS"},
         {"matching game versions", "MATCHING GAME VERSIONS"},
         {"authenticating ZIP candidate", "MATCHING GAME VERSIONS"},
@@ -1317,15 +1318,24 @@ static void check_scan_progress_uses_display_names(void) {
 
     for (taskIndex = 0U;
          taskIndex < sizeof(scanTasks) / sizeof(scanTasks[0]); ++taskIndex) {
-        const char* translatedLabel = M12_StartupMenu_TranslateForLocale(
-            1, scanTasks[taskIndex].englishLabel);
         CHECK(strcmp(M12_StartupMenu_ScanTaskDisplayForLocale(
                          0, scanTasks[taskIndex].task),
                      scanTasks[taskIndex].englishLabel) == 0);
-        CHECK(translatedLabel && strcmp(
-                  M12_StartupMenu_ScanTaskDisplayForLocale(
-                      1, scanTasks[taskIndex].task),
-                  translatedLabel) == 0);
+        for (languageIndex = 1; languageIndex < 20; ++languageIndex) {
+            const char* translatedLabel = M12_StartupMenu_TranslateForLocale(
+                languageIndex, scanTasks[taskIndex].englishLabel);
+            const char* displayedLabel = M12_StartupMenu_ScanTaskDisplayForLocale(
+                languageIndex, scanTasks[taskIndex].task);
+            CHECK(translatedLabel && translatedLabel[0] != '\0');
+            CHECK(strcmp(translatedLabel, scanTasks[taskIndex].englishLabel) != 0);
+            CHECK(strcmp(displayedLabel, translatedLabel) == 0);
+        }
+    }
+    for (languageIndex = 1; languageIndex < 20; ++languageIndex) {
+        const char* translatedScanning = M12_StartupMenu_TranslateForLocale(
+            languageIndex, "SCANNING GAME DATA");
+        CHECK(translatedScanning && translatedScanning[0] != '\0');
+        CHECK(strcmp(translatedScanning, "SCANNING GAME DATA") != 0);
     }
 
     for (languageIndex = 0; languageIndex < 19; ++languageIndex) {

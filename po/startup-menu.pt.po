@@ -1081,7 +1081,7 @@ msgstr "VERIFICANDO PEDIDO DE ARQUIVO EXPLÍCITO"
 
 #: src/ui/menu_startup_m12.c:2059
 msgid "BUILDING SEARCH ROOTS"
-msgstr "BUILDING SEARCH ROOTS"
+msgstr "CRIANDO DIRETÓRIOS DE PESQUISA"
 
 #: src/ui/menu_startup_m12.c:2062 src/ui/menu_startup_m12.c:2064
 #: src/ui/menu_startup_m12.c:10670
@@ -1090,11 +1090,11 @@ msgstr "VERIFICANDO OS CANDIDATOS DO ARQUIVO ORIGINAL"
 
 #: src/ui/menu_startup_m12.c:2070
 msgid "MATCHING GAME VERSIONS"
-msgstr "MATCHING GAME VERSIONS"
+msgstr "IDENTIFICANDO VERSÕES DO JOGO"
 
 #: src/ui/menu_startup_m12.c:2072
 msgid "MATCHING REQUIRED FILES"
-msgstr "MATCHING REQUIRED FILES"
+msgstr "IDENTIFICANDO ARQUIVOS NECESSÁRIOS"
 
 #: src/ui/menu_startup_m12.c:2074
 msgid "MATERIALIZING LAUNCH CACHE"
@@ -1109,7 +1109,7 @@ msgstr "ATUALIZANDO METADADOS DE MÍDIA"
 #: src/ui/menu_startup_m12.c:2911 src/ui/menu_startup_m12.c:10668
 #: src/ui/menu_startup_m12.c:10678 src/ui/menu_startup_m12.c:14529
 msgid "SCANNING GAME DATA"
-msgstr "SCANNING GAME DATA"
+msgstr "PROCURANDO DADOS DO JOGO"
 
 #: src/ui/menu_startup_m12.c:2119 src/ui/menu_startup_m12.c:3477
 #: src/ui/menu_startup_m12.c:6064 src/ui/menu_startup_m12.c:6304
