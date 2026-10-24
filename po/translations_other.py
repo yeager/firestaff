@@ -1290,6 +1290,8 @@ THERON_MOUSE['id'] = {
                          'STEP R', 'NEXT', 'PICKUP', 'ITEM', 'WAIT'}
 }
 THERON_MOUSE['fr']['USE'] = THERON['fr']['USE']
+THERON_MOUSE['zh']['STEP L'] = 'ZUO BU'
+THERON_MOUSE['zh']['STEP R'] = 'YOU BU'
 THERON_MOUSE['de']['DROP'] = THERON['de']['DROP']
 THERON_MOUSE['de']['USE'] = THERON['de']['USE']
 THERON_MOUSE['nl']['DROP'] = 'AFLEG'

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import os
 import subprocess
 import sys
@@ -13,6 +14,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "po" / "translations_other.py"
+SPEC = importlib.util.spec_from_file_location("translations_other", SCRIPT)
+assert SPEC is not None and SPEC.loader is not None
+translations_other = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(translations_other)
 
 
 PO_FIXTURE = '''msgid ""
@@ -72,6 +77,13 @@ class TheronTranslationUpdateTests(unittest.TestCase):
         self.assertEqual(translation(updated, "USE"), "PAKAI")
         self.assertEqual(translation(updated, "FORWARD"), "FORWARD")
         self.assertEqual(translation(updated, "WAIT"), "WAIT")
+
+    def test_chinese_turn_and_side_step_captions_are_distinct_and_fit(self) -> None:
+        captions = translations_other.THERON_MOUSE["zh"]
+        self.assertNotEqual(captions["TURN L"], captions["STEP L"])
+        self.assertNotEqual(captions["TURN R"], captions["STEP R"])
+        self.assertLessEqual(len(captions["STEP L"]), 7)
+        self.assertLessEqual(len(captions["STEP R"]), 7)
 
 
 if __name__ == "__main__":
