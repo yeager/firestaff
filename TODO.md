@@ -1,5 +1,23 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-24 five-game main-menu selection retest: the authentic-media
+`m12_main_menu_game_selection_real_media` CTest passed in 248 seconds. It
+verified keyboard and mouse selection for all five titles, the three priority
+games from default `~/.firestaff/data`, and sibling discovery when the selected
+data folder is one game's directory. Test cases retain isolated config files
+while sharing the identity-bound scan cache for unchanged source paths; this
+keeps the complete menu matrix inside its CI timeout without weakening media
+authentication.
+
+2026-10-24 DM2 FM Towns warm scan reuse: after a full directory-discovery
+boot-profile scan proves the exact HME-242 `DATA/GRAPHICS.DAT` and
+`DATA/DUNGEON.DAT` pair, M12 can reuse those member MD5 receipts while the
+source ZIP file identity and timestamps remain unchanged. Explicitly selected
+archives still run the full boot scanner. The authentic `dm2_v1_fmtowns_native_cli_boot`
+test passed with both cold and warm `--scan-data` runs and the full New Game
+route (390 seconds on this machine). This avoids rescanning that same Towns
+disc image on repeat directory scans; other DM2 archives are still checked.
+
 2026-10-24 startup/CLI audit: expanded the DM1/CSB/DM2 unsupported-platform
 test to cover every currently unsupported platform pairing in both direct and
 menu-request modes. The 24-case live CLI matrix rejected each pair before

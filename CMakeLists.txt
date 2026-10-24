@@ -4373,9 +4373,9 @@ if(BUILD_TESTING)
         ENVIRONMENT "FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip;HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm2-fmtowns;XDG_CONFIG_HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm2-fmtowns;APPDATA=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm2-fmtowns"
         # The normal M12 -> Towns TWANIM -> New Game route is intentionally
         # paced by the original Timer-A clock instead of boot-probe fast-forward.
-        # The complete authentic-media route took 271 seconds locally; leave
-        # enough headroom for slower desktop CI runners.
-        TIMEOUT 420
+        # The complete authentic-media route, including cold/warm scan-cache
+        # verification, took 390 seconds locally; leave headroom for CI runners.
+        TIMEOUT 600
     )
     add_test(
         NAME dm2_unsupported_platform_cli
