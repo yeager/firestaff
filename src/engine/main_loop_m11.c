@@ -10537,6 +10537,8 @@ static int m11_script_keycode_from_name(const char* name) {
     if (strcmp(name, "down") == 0) return SDLK_DOWN;
     if (strcmp(name, "left") == 0) return SDLK_LEFT;
     if (strcmp(name, "right") == 0) return SDLK_RIGHT;
+    if (strcmp(name, "home") == 0) return SDLK_HOME;
+    if (strcmp(name, "end") == 0) return SDLK_END;
     if (strcmp(name, "enter") == 0 || strcmp(name, "return") == 0) return SDLK_RETURN;
     if (strcmp(name, "kp-enter") == 0) return SDLK_KP_ENTER;
     if (strcmp(name, "kp-1") == 0 || strcmp(name, "kp1") == 0) return SDLK_KP_1;

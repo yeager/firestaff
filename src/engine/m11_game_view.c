@@ -39232,9 +39232,10 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
      * startup Button I still needs the source-space menu hit test; Button II
      * cancels startup selection and has no standalone dungeon action. In a
      * loaded dungeon, left clicks on the visible Firestaff-owned twelve-button
-     * panel select its host-defined movement/action controls; other left clicks
-     * retain Button I's wait/tick action. The panel bounds are not original
-     * PCE hitboxes. The retail manual (printed p. 5; see
+     * panel select its host-defined movement/action controls; clicks outside
+     * it are ignored because no world-space hit targets have been
+     * authenticated. The panel bounds are not original PCE hitboxes. The
+     * retail manual (printed p. 5; see
      * docs/source-lock/theron-button-ii-manual-source-lock.md) specifies it
      * as a modifier when combined with a direction input. Once the dungeon
      * is live Button I enters the authenticated Theron input facade directly.

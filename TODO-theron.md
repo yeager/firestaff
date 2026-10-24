@@ -32,8 +32,9 @@
   target hitboxes and a state-driven view remain open.
 - The `--debug` boot-probe key path now uses the loaded-dungeon gameplay
   mapping, matching the native SDL path rather than startup navigation. The
-  authentic USA Track 02 loop checks Q/E turning and right-arrow sidestepping;
-  the focused launcher/input contract remains green.
+  authentic USA Track 02 loop checks left/right arrow sidestepping and Q/E,
+  Home, and keypad-6 turning; the focused launcher/input contract also checks
+  keycode aliases for Home/End and keypad 4/6.
 
 ## 2026-10-24 — complete Theron keyboard and mouse playability
 
