@@ -25,8 +25,7 @@ extern "C" {
  * must not run when V1 is active.
  *
  * Source-lock anchors:
- *   Saturn NEXUS.BIN VDP1 polygon lighting
- *   Saturn NEXUS.BIN VDP2 shadow layer
+ *   No authenticated retail Saturn VDP1/VDP2 lighting consumer receipt
  *   DMDF level data (per-tile light emission values, DGN format)
  *   ReDMCSB LIGHT.C F0380 (light radius + flicker timing)
  *   ReDMCSB COMMAND.C F0209 (spell-light colour binding)

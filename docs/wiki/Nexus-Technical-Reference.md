@@ -1,9 +1,10 @@
 # Dungeon Master Nexus Technical Reference
 
-> **Status reviewed 2026-09-09.** The retail Japanese CUE/BIN now drives a
-> native MAPD title sequence. Menu, HUD, dungeon composition and full
-> playability remain open because each needs its own source-bound display
-> consumer evidence.
+> **Status reviewed 2026-10-24.** The retail Japanese CUE/BIN supplies the
+> admitted MAPD assets that Firestaff can present in a bounded route. Full
+> Saturn title composition and the title-to-menu transition remain unverified;
+> menu, HUD, dungeon composition and playability require their own source-bound
+> display and execution evidence.
 
 ## Scope
 
@@ -61,8 +62,8 @@ creature-state determinism across runs.
 
 Launcher startup carries title, save, champion, and package/host receipts into
 M11. Title readiness alone does not prove DGN rendering, SLEV/SAL sound, or
-Saturn timing. The real `TITLE.CG`/MAPD sequence is decoded and rendered
-natively when its complete retail plane and palette receipt is admitted.
+Saturn timing. Retail `TITLE.CG`/MAPD assets are decoded and presented through
+a bounded route when their complete plane and palette receipt is admitted.
 `MENU.BPK` stays fail-closed awaiting PRS3 capture evidence; ACCEPT exits a
 completed title instead of trapping on the blocked menu route, and M11
 presentation copies only source-bound material rather than substituting
@@ -71,8 +72,8 @@ neutral placeholder colours.
 `nexus_v1_title_mapd_real` reads `TITLE.BIN` and `TITLE.CG` through the native
 CUE/ISO reader when they are present only in the original Track 1 image. It
 uses bounded RAM buffers and does not require an extracted disc tree. The test
-source-binds all five MAPD/TIBG maps and their palette receipts. The native
-title renderer consumes this bounded map sequence directly; it does not
+source-binds all five MAPD/TIBG maps and their palette receipts. The bounded
+MAPD asset presentation consumes this admitted map sequence; it does not
 authorize the separate menu compositor, HUD or dungeon renderer, each of
 which still requires its own same-revision VDP consumer evidence.
 

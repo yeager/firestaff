@@ -65,7 +65,7 @@
  *   nexus_v2_particles.h           particle systems
  *   nexus_v2_atmosphere.h          fog + AO + color grading
  *   nexus_v1_rasterizer.h          V1 320x200 indexed framebuffer
- *   NEXUS.C / NEXUS2.C / NEXUS.BIN Saturn DM Nexus engine
+ *   Saturn retail executable/runtime ownership remains unverified
  *   DMDF level data                per-tile render configuration
  *   ReDMCSB DUNVIEW.C F0128        320x200 base
  */

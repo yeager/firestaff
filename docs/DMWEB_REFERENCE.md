@@ -2,24 +2,25 @@
 
 The **Dungeon Master Encyclopaedia** at <http://dmweb.free.fr/>
 and **Greatstone's Swoosh Construction Kit** site at
-<http://greatstone.free.fr/dm/> are the two highest-quality
-community references for the original FTL Games data. This
-document indexes every page we have reviewed so far, with notes
-on what each contributes to Firestaff.
+<http://greatstone.free.fr/dm/> are important community references for
+Dungeon Master family data. DMWeb also publishes Nexus-specific Saturn file
+format notes. Greatstone documents SCK extraction for many DM, CSB, and DM2
+versions and custom dungeons; its catalog is not a Saturn Nexus extraction
+corpus or a PC Engine Theron's Quest game-data corpus. This document indexes
+the pages reviewed so far and states the scope each supports.
 
 ## Why these two sites matter
 
 | Site | What it gives us |
 |---|---|
-| **dmweb.free.fr** | Whole-game encyclopaedia: per-platform release matrix, magazine scans, awards, custom dungeon galleries, FAQ for each platform's quirks, and — most importantly — **byte-level file format specs** for DUNGEON.DAT, GRAPHICS.DAT, animations, data files, save games, and DMII variants. |
-| **greatstone.free.fr/dm/** | Pierre Monnot's "Swoosh Construction Kit" (sck) project: a data-extraction tool and mapfile/spec corpus for converting proprietary DM-family resources into ordinary formats such as BMP, WAV and TXT. It has **already extracted every asset from 26+ commercial versions** of DM and CSB (Amiga 1.0/1.1/1.2/1.3/2.0/2.1/2.2/3.6, Atari, Apple IIGS, FM-Towns, PC-98, PC 3.4, SNES, X68000, CSB Amiga, CSB Atari, CSB FM-Towns, CSB PC-98, CSB X68000, DMII Amiga/Mac/PC/Sega-CD/FM-Towns/PC-98/IBM PSV/PC-9821, Theron's Quest, DM Nexus, Black Crypt, R-Type III GBA). Specs for the FTL container format, the PAK compression format, the SCK mapfile format, and the IMG5 4bpp planar image format. |
+| **dmweb.free.fr** | Whole-game encyclopaedia with platform pages, community resources, and format documentation. Its Nexus pages describe Saturn file families including DGN, MNS, and ITEM.IBS. Those documents are format references; runtime consumers, VDP composition, and parity still require evidence from the authentic Saturn program and captures. |
+| **greatstone.free.fr/dm/** | Pierre Monnot's "Swoosh Construction Kit" (SCK) project: a data-extraction tool and mapfile/spec corpus for converting supported DM-family resources into ordinary formats such as BMP, WAV, and TXT. Its documented extraction coverage includes many DM, CSB, and DM2 versions and custom dungeons. It does not establish Nexus Saturn asset extraction or PC Engine Theron's Quest media support. Its FTL, PAK, mapfile, and IMG5 references apply only where those formats are actually present. |
 
-Combined, these are the definitive "ground truth" for any
-Dungeon Master implementation. Where ReDMCSB gives us
-decompiled C source for DM/CSB Atari ST, dmweb/greatstone give
-us the platform matrix and the file-level wire format for
-*every* version, including the ones we don't have local assets
-for (DMII, Nexus, Theron's Quest).
+Use these references as independent cross-checks, not as ground truth for
+every platform or build. DMWeb is the cited public source for Nexus-specific
+format descriptions. Greatstone is useful for applicable DM/CSB/DM2 extraction
+and format comparisons. Authentic local media establishes Firestaff's source
+bytes; Saturn execution traces establish runtime ownership and presentation.
 
 ---
 
@@ -79,7 +80,7 @@ for (DMII, Nexus, Theron's Quest).
 | URL | What's there | What we use it for |
 |---|---|---|
 | `http://dmweb.free.fr/community/clones/chaos-strikes-back-for-windows-and-linux-raspbian-macos-x-pocket-pc/` | **CSBwin** by Paul R. Stevens. 12.100 source, available for Windows x86-32/x64, Linux x86-32/x64, Raspbian ARM-32, MacOS X, Pocket PC. **Open source on GitHub via zelurker's fork** (https://github.com/zelurker/CSB). Includes DM and CSB dungeons from Atari ST. Supports custom modules. | Our `src/csb/` is closely modeled on CSBwin's behavior. The **zelurker CSB GitHub repo** is a valuable second source for CSB disassembly in addition to Meynaf's ReDMCSB. **The 'CSB lineage' link in AGENTS.md is the same project**: <https://github.com/zelurker/CSB>. |
-| `http://dmweb.free.fr/community/clones/skwin-dungeon-master-ii-for-windows/` | **SKWIN** by kentaro.k-21 + Sphenx. Port of DM2 to Windows. The latest version is the `skproject` on GitHub: <https://github.com/gbsphenx/skproject/releases>. | Our `src/dm2/` work is informed by skproject's reverse-engineering of DM2's data formats. **Sphenx is also the author of several custom Theron's Quest save games** that the greatstone site documents. |
+| `http://dmweb.free.fr/community/clones/skwin-dungeon-master-ii-for-windows/` | **SKWIN** by kentaro.k-21 + Sphenx. Port of DM2 to Windows. The latest version is the `skproject` on GitHub: <https://github.com/gbsphenx/skproject/releases>. | Our `src/dm2/` work is informed by skproject's reverse-engineering of DM2's data formats. The separate community forum report at `https://www.dungeon-master.com/forum/viewtopic.php?t=23826` discusses Sphenx's Theron's Quest conversion and quest-block analysis; it is not a Greatstone save-format specification. |
 | `http://dmweb.free.fr/community/clones/return-to-chaos/` | **Return to Chaos** (RTC) by George Gilbert. Recreation of DM/CSB/DM2 with custom graphics/sounds support. | The "how to swap graphics and sounds" feature is a useful reference for our V22 modern-asset pipeline. |
 | `http://dmweb.free.fr/community/clones/dungeon-strikes-back/` | **Dungeon Strikes Back** — another DM/CSB clone. | (Lower priority — CSBwin is the canonical reference) |
 | `http://dmweb.free.fr/community/clones/` | Index of all DM clones: CSBwin, Return to Chaos, Dungeon Strikes Back, SKWIN, plus 30+ "truthful gameplay" / "similar gameplay" / "other games" inspired by DM | Useful to see what other implementations exist; the dmweb "Clones" page has 30+ entries |
@@ -138,9 +139,13 @@ The overview also states why mapfiles matter: a file description must be indepen
 | **DM** | 26 extraction entries: Amiga 2.0 (EN/FR/GE), 2.1 EN, 2.2 (EN/GE), 3.6 EN/FR/GE, Amiga Atari-1.2 Meynaf port, Apple IIGS EN, Atari teaser demo, Atari 1.0/1.1/1.2/1.3 plus cracked variants, FM-Towns 2.0 EN/JP, PC-98 2.0 JP, PC 3.4 and 3.4 EN/FR/GE, SNES 1.0 EN NTSC/PAL + JP NTSC, SNES 1.1 JP NTSC, X68000 3.0 JP |
 | **CSB** | Atari 2.0/2.1, Amiga 3.1/3.3 (EN/FR/GE), FM-Towns 3.1 (EN/JP), PC-9801 3.1 (JP), X68000 |
 | **DM2** | Supported extraction entries: Amiga 1.0 EN/FR/GE, FM-Towns 1.0 JP, IBM PS/V, Macintosh EN/JP retail, MegaCD 1.0 JP, PC-9801 1.0 JP, PC-9821 1.0 JP, PC 0.9, PC 1.0 EN/FR/GE, PC demo EN, and Sega CD 1.0 EN |
-| **Theron's Quest** | PC Engine (CD) JP/US |
-| **DM Nexus** | Sega Saturn JP |
 | **Other** | Black Crypt (Amiga), R-Type III (GBA) — both for fun, not DM/CSB |
+
+The SCK product page's aggregate count includes tested games and custom
+dungeons; it does not mean every platform version or every game's retail media
+has been extracted. In particular, a Greatstone "Theron's Quest" custom-dungeon
+entry is not the PC Engine game, and SCK does not list the Saturn Nexus retail
+release. Use DMWeb's Nexus pages and hash-verified Saturn media for Nexus work.
 
 ### File format specs
 
@@ -239,9 +244,9 @@ A canonical "Firestaff supports these game versions" matrix is derived from dmwe
 
 dmweb's "What is the use of the Green Gem, Magnifier, Rabbit's Foot, Ekkhard Cross?" FAQ gives a definitive list of magical-item effects. Our i18n work already covers most of these (`T%u: %s CASTS %s` and similar), but a few game-specific items (Rabbit's Foot for hunger, etc.) could be added.
 
-### 6. Theron's Quest savegame format
+### 6. Theron's Quest save and conversion references
 
-greatstone has a section on Theron's Quest save games. TQ's save format is **completely different** from DM's (it uses gzipped custom format with a header). We should look at this when implementing `src/theron/` V1 save/load.
+The cited community forum material discusses a Theron's Quest conversion and quest-block layout, not an authenticated retail save-file specification. Firestaff's host `.tqsv` format is not a retail save decoder. Use the source-locked PC Engine Backup RAM analysis below for claims about the original save path.
 
 Implementation status is not established by the older sentence above: the
 eight-slot `.tqsv` serializer is a Firestaff host format, not a retail save
@@ -256,7 +261,14 @@ substitute for either original save path.
 
 ### 7. Nexus DMDF/DGN formats
 
-The Saturn's DMDF (data) and DGN (dungeon geometry) formats are documented elsewhere but dmweb/greatstone both reference them. Our `src/nexus/` V1 needs to parse these from the Sega Saturn NEXUS.BIN file.
+DMWeb has Nexus-specific descriptions for DGN levels and DMDF containers;
+Greatstone is not a Nexus format source. The authenticated Saturn corpus used
+by Firestaff contains `DM.BIN` and `LEV00.DGN` through `LEV15.DGN`, not a
+`NEXUS.BIN` member. DMWeb describes `LEV00.DGN` as the non-playable entrance
+shown during the title sequence, `LEV01.DGN` as the Hall of Champions, and
+Structure1B as a 64×64 grid with eight bytes per cell. These are bounded format
+and file-role references; the runtime loader and screen owner still require
+independent source and execution evidence.
 
 ---
 

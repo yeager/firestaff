@@ -37,7 +37,7 @@ separates source/disassembly evidence, real-media receipts and open routes.
 | Dungeon Master | PC DOS, Atari ST, Amiga and FM Towns startup and selected dungeon routes have real-media coverage. The PC 3.4 Hall of Champions candidate panel is rendered from authenticated C040/C026 assets. Further gameplay and visual parity work continues. |
 | Chaos Strikes Back | Amiga, Atari ST and FM Towns startup routes have real-media coverage. FM Towns uses its own authenticated entrance palette and MINI.DAT bootstrap state. Campaign, saves and presentation parity are still being completed. |
 | Dungeon Master II: Skullkeep | DOS, Amiga, FM Towns and Macintosh have real-media startup and selected runtime coverage. Amiga reaches its initial GDAT-backed M11 frame through the normal start menu with source movement covered. Broader input, save, native display/audio and dungeon-composition parity remain open per edition. |
-| DM Nexus | Saturn disc parsing and native MAPD title rendering work from the original CUE/BIN; later menu, HUD and dungeon presentation remain capture-gated. |
+| DM Nexus | Saturn disc parsing and bounded MAPD title-asset presentation work from the original CUE/BIN. Full Saturn title composition and the title-to-menu transition remain unverified; later menu, HUD and dungeon presentation remain capture-gated. |
 | Theron's Quest | Authentic US and Japanese Track 02 media reach bounded native routes, and source-only loaders verify all seven dungeons in both regions. In the Japanese emulator route, LOAD GAME returns to the Akutuba selection map, but its 2-KiB BRAM matches the known empty menu-only image, so native save persistence is unverified. Full presentation, transitions and gameplay remain evidence-gated. |
 
 ### Dungeon Master II: Skullkeep
@@ -269,8 +269,9 @@ In the startup menu, **Settings → Audio → Music Volume → Off** disables
 music while preserving sound effects and UI audio. `--no-music` applies the
 same choice for a direct CLI launch; `--music` explicitly re-enables it.
 
-Nexus renders the admitted retail MAPD title sequence natively from the
-original CUE/BIN. The later menu, HUD and dungeon compositor remain
+Nexus presents the admitted retail MAPD title assets from the original CUE/BIN.
+This bounded asset route does not claim the full Saturn title composition or
+the title-to-menu transition. The later menu, HUD and dungeon compositor remain
 deliberately fail-closed until their own real Saturn consumer evidence exists.
 Firestaff never delegates Nexus startup or gameplay to Mednafen (or another
 emulator); emulator tooling is used only outside the product to obtain and

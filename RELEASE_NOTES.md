@@ -3789,7 +3789,8 @@ DM2/Nexus DMWeb-referenced gap closure:
 - Nexus DGN: floor item, decoration, sensor, alcove, wall structs from DMWeb
 - Nexus MNS: MOTN keyframe decoder (per-joint rotation at 30fps)
 - BPK surface: mode-derived bpp for PRS3 entries
-- V2 lighting: NEXUS.BIN evidence reference
+- V2 lighting: the old `NEXUS.BIN` evidence citation was an unauthenticated
+  placeholder, not a verified retail member or lighting source.
 - Inventory: IBS fallback guard (g_ibs_ever_bound)
 
 # Firestaff v3.0.209
@@ -7680,7 +7681,11 @@ V2 expansion, source-lock hardening, and engine handoff release building on the 
 - **CSB V2 Phase 0**: V1 compatibility lock before V2 work. `csb_v2_phase_gate_pc34.h` defines 13 domain compile gates (V1-source-locked vs V2-presentation-eligible). Stub hooks for all V2-only functions. C11 `_Static_assert` for V1 struct sizes. Source-lock: COMMAND.C, DUNGEON.C, CSBWin champion/resurrect.
 - **CSB V2 Phase 1**: Launch/profile separation. `CSB_V2_PHASE_DOMAIN_LAUNCH` and `CSB_V2_PHASE_DOMAIN_PROFILE` compile gates with CSB-hash-katalog (DUNGEON.DAT `6695d2a`, GRAPHICS.DAT `61fbfd5`). LAUNCH-before-PROFILE pattern enforced. Source-lock: ENTRANCE.C F0806, PROFILE.C F0401.
 - **DM2 V2 Phase 5**: Smooth movement runtime integration. `DM2_V2_MoveCallback`/`DM2_V2_TurnCallback`/`DM2_V2_StairsCallback` registered from `dm2_v2_runtime.c` into `dm2_v1_runtime`. Pre-move position stored, turn-only detection fires turn_callback without move_callback. Source-lock: ReDMCSB DUNGEON.C G0306/G0307.
-- **Nexus V1 Launcher**: Full `nexus_v1_launcher.h/.c` engine handoff. Singleton owns `Nexus_V1_Engine` lifecycle. `M11_GameView_StartNexus` now calls `launcher_init` + `launcher_load_level(0)` and stores engine pointer. `firestaff_nexus_v1_launch_smoke_probe` validates full init→load→tick→render cycle (6/6 headless). Source-lock: NEXUS.C/NEXUS2.C engine lifecycle, DMWeb Saturn DGN/DMDF format.
+- **Historical Nexus V1 launcher note (corrected):** the earlier `NEXUS.C`/
+  `NEXUS2.C` source-lock attribution was not authenticated. The retail
+  executable entry point and complete engine handoff remain unverified;
+  current evidence supports bounded DMWeb format readers and retail data
+  membership, not a complete startup-to-render lifecycle.
 
 ## Fixes
 

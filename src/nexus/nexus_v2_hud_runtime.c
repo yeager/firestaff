@@ -4,9 +4,9 @@
  * V1→V2 HUD bridge for Dungeon Master Nexus (Saturn).
  * Mirrors dm2_v2_hud_runtime.c pattern (sibling CSB V2 wire-up).
  *
- * The linked overlay is a procedural diagnostic/test surface.  No
- * authenticated retail NEXUS.BIN/widget surface is present in the supplied
- * corpus, so the production gate must remain closed.
+ * The linked overlay is a procedural diagnostic/test surface. No
+ * authenticated retail Saturn HUD-to-VDP placement receipt is admitted, so
+ * the production gate must remain closed.
  */
 
 #include "nexus_v2_hud_runtime.h"
@@ -121,7 +121,7 @@ void nexus_v2_hud_runtime_force_active_for_test(int active) {
 const char *nexus_v2_hud_runtime_source_evidence(void) {
     return
         "Nexus V2 HUD Runtime — Phase 3 source-lock\n"
-        "Procedural diagnostic/test overlay; no retail NEXUS.BIN source admitted\n"
+        "Procedural diagnostic/test overlay; no authenticated retail Saturn HUD-to-VDP placement receipt\n"
         "No Saturn VDP1/VDP2 widget-placement receipt; production render gated\n"
         "ReDMCSB PANEL.C / DUNGEON.C are behavioural test references only\n"
         "Source: csb_v2_hud_runtime.c (sibling CSB V2 wire-up pattern)\n"

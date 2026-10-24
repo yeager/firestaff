@@ -40,5 +40,6 @@ exist.
 
 See [NEXUS_STRICT_FIDELITY_INVENTORY.md](NEXUS_STRICT_FIDELITY_INVENTORY.md) and
 [NEXUS_RUNTIME_CAPTURE.md](NEXUS_RUNTIME_CAPTURE.md) for the current admission
-boundary. DMWeb and Greatstone are used as format references; they do not
-replace an executed Saturn capture.
+boundary. DMWeb's Nexus-specific pages are format references; Greatstone is
+used only for applicable DM-family comparisons. Neither replaces an executed
+Saturn capture.

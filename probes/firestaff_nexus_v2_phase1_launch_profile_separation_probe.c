@@ -53,8 +53,7 @@
  *   SDL_VIDEODRIVER=dummy ./firestaff_nexus_v2_phase1_launch_profile_separation_probe
  *
  * Source references:
- *   NEXUS.C / NEXUS2.C                DM Nexus engine lifecycle
- *   NEXUS.BIN                          Saturn game binary
+ *   Retail Saturn executable ownership and runtime entry point: unverified
  *   nexus_v1_iso_reader.c              Saturn ISO 9660 + DMDF interleaving
  *   nexus_v1_dmdf_model.c              DMDF (Dungeon Master Data Format) decoder
  *   nexus_v1_dungeon.c                 DGN level loader, 16 levels

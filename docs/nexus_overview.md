@@ -26,8 +26,9 @@ source for missing exact members.
 
 ## Sources
 
-- DMWeb Nexus file-format pages and DMN Data File Decoder.
-- Greatstone for DM-format comparisons and byte-format references.
+- DMWeb's Nexus-specific file-format pages and DMN Data File Decoder.
+- Greatstone's SCK material only for applicable DM/CSB/DM2 comparisons; it
+  does not provide Saturn Nexus format or runtime evidence.
 - [NEXUS_STRICT_FIDELITY_INVENTORY.md](NEXUS_STRICT_FIDELITY_INVENTORY.md).
 - [NEXUS_RUNTIME_CAPTURE.md](NEXUS_RUNTIME_CAPTURE.md).
 

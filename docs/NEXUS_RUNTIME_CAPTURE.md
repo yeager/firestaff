@@ -1657,6 +1657,8 @@ python3 scripts/analyze_nexus_vdp2_bitmap_source.py \
 The byte-format baseline is the [DMWeb Nexus file-format documentation](http://dmweb.free.fr/community/documentation/dungeon-master-nexus/file-formats/),
 including the [ITEM.IBS description](http://dmweb.free.fr/community/documentation/dungeon-master-nexus/item.ibs-file/)
 and [DGN documentation](http://dmweb.free.fr/community/documentation/dungeon-master-nexus/dgn-files/).
+Greatstone/SCK is used only for applicable DM/CSB/DM2 comparisons and is not a
+Nexus Saturn format source.
 Disassembly and runtime ownership must be established from the Saturn program
 and an execution capture; inferred offsets or host screenshots must not be
 promoted to production semantics.

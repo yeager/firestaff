@@ -13,7 +13,8 @@
  *    to RGBA framebuffer, in-place, with byte-stable output for known
  *    inputs
  *  - null-args are safe
- *  - source-evidence references NEXUS.BIN / ReDMCSB
+ *  - source-evidence marks this as diagnostic math without a retail lighting
+ *    consumer binding
  *  - NEXUS_MAX_LIGHTS = 16
  *  - Out-of-bounds index for remove is safe
  *
@@ -298,15 +299,12 @@ static void check_source_evidence(void)
     const char *e = nexus_v2_lighting_source_evidence();
     check_true("evidence.present", e != 0);
     check_true("evidence.nonempty", e && e[0] != 0);
-    check_true("evidence.NEXUS.BIN", strstr(e, "NEXUS.BIN") != 0);
-    check_true("evidence.VDP1", strstr(e, "VDP1") != 0);
-    check_true("evidence.VDP2", strstr(e, "VDP2") != 0);
-    check_true("evidence.ReDMCSB_LIGHT.C", strstr(e, "LIGHT.C") != 0);
-    check_true("evidence.ReDMCSB_F0380", strstr(e, "F0380") != 0);
-    check_true("evidence.ReDMCSB_COMMAND.C", strstr(e, "COMMAND.C") != 0);
-    check_true("evidence.ReDMCSB_F0209", strstr(e, "F0209") != 0);
-    check_true("evidence.ReDMCSB_DUNGEON.C", strstr(e, "DUNGEON.C") != 0);
-    check_true("evidence.DMDF", strstr(e, "DMDF") != 0);
+    check_true("evidence.diagnostic_only", strstr(e, "diagnostic effect only") != 0);
+    check_true("evidence.no_authenticated_vdp_consumer",
+        strstr(e, "No authenticated retail Saturn VDP1/VDP2 lighting consumer receipt") != 0);
+    check_true("evidence.no_light_consumer_binding",
+        strstr(e, "no light-consumer binding is established") != 0);
+    check_true("evidence.no_fictitious_binary_name", strstr(e, "NEXUS.BIN") == 0);
 }
 
 static void check_max_lights_constant(void)

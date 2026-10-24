@@ -21,10 +21,10 @@
  *   - Low-health pulse (champion HP bar ~2 Hz)
  *   - Smooth compass needle interpolation
  *
- * This file is a procedural diagnostic/test overlay only.  The supplied
- * European retail corpus has no authenticated NEXUS.BIN HUD surface or
- * Saturn widget-placement receipt, so this module is never a production
- * pixel owner.  Production M11 keeps it gated until such evidence exists.
+ * This file is a procedural diagnostic/test overlay only. No authenticated
+ * retail Saturn HUD-to-VDP widget-placement receipt is admitted, so this
+ * module is never a production pixel owner. Production M11 keeps it gated
+ * until such evidence exists.
  * ReDMCSB PANEL.C/DUNGEON.C remains a behavioural reference for isolated
  * state tests, not provenance for these pixels.
  *
@@ -201,7 +201,7 @@ void nexus_v2_hud_render(Nexus_V2_HudOverlay *h, uint8_t *fb, int stride, int h_
 const char *nexus_v2_hud_source_evidence(void) {
     return
         "Nexus V2 HUD: procedural diagnostic/test overlay only\n"
-        "  No authenticated retail NEXUS.BIN/widget surface in supplied corpus\n"
+        "  No authenticated retail Saturn HUD-to-VDP widget-placement receipt\n"
         "  DMDF/DGN describes dungeon source formats, not HUD ownership\n"
         "  No Saturn VDP1/VDP2 placement receipt; production pixels forbidden\n"
         "  ReDMCSB PANEL.C/DUNGEON.C are behavioural test references only\n";

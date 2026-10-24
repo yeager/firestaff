@@ -109,14 +109,14 @@ and English Macintosh versions are explicitly exempt.
 
 | Platform | Version | Lang | Status | Greatstone DB | Local hash | Notes |
 |---|---|---|---|---|---|---|
-| TurboGrafx-16 / PC Engine | 1.0 (CD) | JP | 🟡 | `c_therons_quest_jp/` | yes (Track 02) | Track 02 identity and parser/runtime slices are verified. The authentic capture reaches the BIOS CD-read path; game-owned dungeon-data consumption, full semantic record binding and screenshot promotion remain open. |
-| TurboGrafx-16 / PC Engine | 1.0 (CD) | EN | 🟡 | `c_therons_quest_en/` | yes (Track 02) | Track 02 identity and parser/runtime slices are verified. The authentic capture reaches the BIOS CD-read path; game-owned dungeon-data consumption, full semantic record binding and screenshot promotion remain open. |
+| TurboGrafx-16 / PC Engine | 1.0 (CD) | JP | 🟡 | — | yes (Track 02) | Track 02 identity and parser/runtime slices are verified. The authentic capture reaches the BIOS CD-read path; game-owned dungeon-data consumption, full semantic record binding and screenshot promotion remain open. Greatstone's similarly named custom-dungeon entry is not PC Engine media. |
+| TurboGrafx-16 / PC Engine | 1.0 (CD) | EN | 🟡 | — | yes (Track 02) | Track 02 identity and parser/runtime slices are verified. The authentic capture reaches the BIOS CD-read path; game-owned dungeon-data consumption, full semantic record binding and screenshot promotion remain open. |
 
 ## DM Nexus — 1 known version
 
 | Platform | Version | Lang | Status | Greatstone DB | Local hash | Notes |
 |---|---|---|---|---|---|---|
-| Sega Saturn | 1.0 | JP | 🔵 | `c_dm_nexus_saturn/` | yes (DM.BIN 555,144 B) | DMWeb page: Japan-only Saturn release by Victor Interactive Software, 1998-03-26, ¥6800, catalog `T-9111G`, true 3D, 15 levels, CD audio tracks 02-09, Japanese screenshots/manual scans/playthrough, Japanese demo plus unofficial EN/FR fan translations. Hash-verified Track 1 is the source the engine opens (`nexus_iso_open_cue` parses the first CUE FILE entry), and `firestaff_nexus_v1_track1_phase_launch_probe` is CTest-gated as `nexus_v1_track1_phase_launch_{synthetic,extracted_root,saturn_ja_iso}` (PASS 3/3) so the E1 V1 phase-launch path (engine init, DGN load, DMDF MNS load, S2D font parse, BPK archive) is driven by Track 1. A selected `Dungeon-Master-Nexus_SEGA-Saturn_JA.zip` is also a first-class source: the native reader loads its Track 01 BIN in RAM, retains the ZIP as the runtime owner even beside loose CUE/BIN/WAV siblings, and is covered by real-media CLI and start-menu probes. Demo and EN/FR fan-translation media lines remain classified separately. Full Nexus V1 runtime/playability + public screenshot promotion remain tracked gaps |
+| Sega Saturn | 1.0 | JP | 🟣 | — (not in SCK) | yes (DM.BIN 555,144 B) | DMWeb documents the Japan-only Saturn release (catalog `T-9111G`) and Nexus-specific file formats; Greatstone does not list a Saturn Nexus extraction. The hash-verified retail Track 1 drives the bounded native parser/loader route, and admitted MAPD title assets can be presented from original CUE/BIN media. This does not establish full Saturn title composition or the title-to-menu transition. Menu, HUD, viewport, audio/event dispatch, and gameplay parity remain capture-gated. |
 
 **Notes:** DM Nexus uses the proprietary DMDF (Dungeon Master
 Data File) format, completely different from the FTL
@@ -135,8 +135,8 @@ future hashes or launch profiles.
 | CSB | 1 (Amiga 3.5 EN hash set) | 2 (Atari ST, with local v2.0 hashes) | 7 (Amiga 3.1/3.3, PC-98, FM-Towns, X68000) | 1 (Amiga 3.5 multilingual) | 11 |
 | DM2 | 1 (PC EN) | 0 | 13 (Amiga/Mac/PC-98/PS/V/PC-9821/Sega-CD/FM-Towns/Demo/Beta) | 0 | 13+ |
 | TQ | 2 (JP + EN Track 02 launch/readiness) | 0 | 0 | 0 | 2 |
-| Nexus | 0 | 0 | 1 (Saturn JP) | 0 | 1 |
-| **Total** | **6** | **7** | **43** | **1** | **49+** |
+| Nexus | 0 | 0 | 0 | 1 (Saturn JP) | 1 |
+| **Total** | **6** | **7** | **42** | **2** | **49+** |
 
 ## What we'd need to unlock more 1️⃣/2️⃣ coverage
 

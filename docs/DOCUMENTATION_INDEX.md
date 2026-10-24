@@ -15,7 +15,7 @@ original-media playability or pixel parity.
 | Dungeon Master (DM1) | Playable PC 3.4 V1 route; separately verified Atari ST, Amiga and FM Towns starts | Continued original-route captures and V2 visual polish |
 | Chaos Strikes Back (CSB) | Bounded native real-media routes on Atari ST, Amiga and FM Towns | Wider campaign, save and visual-capture evidence |
 | Dungeon Master II: Skullkeep | Bounded real-media routes on DOS, Amiga, FM Towns and Macintosh | Full record/save ownership and wider source UI, audio and mechanics parity |
-| DM Nexus | Native retail MAPD title rendering from the Japanese Saturn CUE/BIN, plus source-owned disc/format work | Same-revision menu, HUD and dungeon display-consumer evidence |
+| DM Nexus | Bounded presentation of retail MAPD title assets from Saturn CUE/BIN, plus source-owned disc/format work | Full Saturn title composition and title-to-menu transition; menu, HUD and dungeon display-consumer evidence |
 | Theron's Quest | Bounded JP runtime and US startup from native Track 02 media | Transition trace, saves, bitmap/palette binding and wider gameplay proof |
 
 Across every game, work is ordered as **startup → menu → HUD → viewport**.

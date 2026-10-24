@@ -4,10 +4,8 @@
  * Mirrors dm2_v2_smooth_movement_runtime pattern (sibling DM2 wire-up).
  *
  * Source-lock:
- *   ReDMCSB GROUP.C:1695-1770 (F0207 creature attack)
- *   skproject/SKWIN/SkWinCore.cpp (ease-out cubic / ease-in-out cubic)
- *   ReDMCSB GAMELOOP.C:47-50 (V1 tick cadence 55ms)
- *   Saturn NEXUS.BIN (Saturn-specific interpolation timing)
+ * Evidence boundary: this probe checks diagnostic interpolation state only.
+ * No retail Saturn movement-to-presentation timing receipt is admitted.
  *
  * Coverage (28 assertions):
  *   1.  init/shutdown lifecycle
@@ -59,8 +57,8 @@ static int g_failures = 0;
 
 int main(void) {
     printf("Nexus V2 Smooth Movement Runtime Wire-up — Phase 5 headless probe\n");
-    printf("Source: ReDMCSB GROUP.C:1695-1770, skproject/SKWIN/SkWinCore.cpp,\n"
-           "        ReDMCSB GAMELOOP.C:47-50, Saturn NEXUS.BIN\n");
+    printf("Evidence: diagnostic interpolation only; no authenticated retail\n"
+           "          Saturn movement-to-presentation timing receipt\n");
 
     /* 1. init/shutdown lifecycle */
     nexus_v2_smooth_movement_runtime_init();

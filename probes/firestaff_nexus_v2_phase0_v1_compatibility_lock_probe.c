@@ -43,13 +43,13 @@
  *   7. nexus_v2_phase_gate_domain_name() returns non-NULL strings for
  *      all 20 domains (19 + UNKNOWN fallback)
  *
- *   8. nexus_v2_phase_gate_source_evidence() returns a non-NULL,
- *      non-empty string referencing NEXUS.C / NEXUS2.C / nexus_v1_*
+ *   8. nexus_v2_phase_gate_source_evidence() names authenticated retail data
+ *      and states that executable/runtime ownership remains unbound
  *
  *   9. All 19 domains are handled (no switch fallthrough to default)
  *
- *  10. Source citations in gate decisions contain NEXUS.C / NEXUS2.C /
- *      nexus_v1_* references for all domains
+ *  10. Gate decisions include a source-anchor label and rule for every domain;
+ *      these labels are not treated as retail executable citations
  *
  *  11. Default config has both toggles off
  *
@@ -83,8 +83,7 @@
  *   nexus_v1_save_load.c      CDL save/load round-trip
  *   nexus_v1_sound.c          Saturn SCSP sound driver
  *   nexus_v1_rasterizer.c     320x200 indexed framebuffer
- *   NEXUS.C / NEXUS2.C        DM Nexus engine lifecycle
- *   NEXUS.BIN                 Saturn game binary
+ *   Retail Saturn executable ownership and runtime entry point: unverified
  *   HuC6260/HuC6270           VDC/VCE datasheet
  *   ReDMCSB CLIKMENU.C:142    F0365 turn
  *   ReDMCSB CLIKMENU.C:180    F0366 move
@@ -393,38 +392,14 @@ static void check_source_evidence(void)
 
     check(e != 0, "evidence present");
     check(e && e[0] != 0, "evidence non-empty");
-    check(e && strstr(e, "nexus_v1_iso_reader") != 0,
-          "evidence references nexus_v1_iso_reader");
-    check(e && strstr(e, "nexus_v1_dmdf_model") != 0,
-          "evidence references nexus_v1_dmdf_model");
-    check(e && strstr(e, "nexus_v1_dungeon") != 0,
-          "evidence references nexus_v1_dungeon");
-    check(e && strstr(e, "nexus_v1_engine") != 0,
-          "evidence references nexus_v1_engine");
-    check(e && strstr(e, "nexus_v1_game") != 0,
-          "evidence references nexus_v1_game");
-    check(e && strstr(e, "nexus_v1_champions") != 0,
-          "evidence references nexus_v1_champions");
-    check(e && strstr(e, "nexus_v1_movement") != 0,
-          "evidence references nexus_v1_movement");
-    check(e && strstr(e, "nexus_v1_save_load") != 0,
-          "evidence references nexus_v1_save_load");
-    check(e && strstr(e, "nexus_v1_rasterizer") != 0,
-          "evidence references nexus_v1_rasterizer");
-    check(e && strstr(e, "NEXUS.C") != 0,
-          "evidence references NEXUS.C");
-    check(e && strstr(e, "NEXUS2.C") != 0,
-          "evidence references NEXUS2.C");
-    check(e && strstr(e, "NEXUS.BIN") != 0,
-          "evidence references NEXUS.BIN");
-    check(e && strstr(e, "F0365") != 0,
-          "evidence references F0365 (CLIKMENU.C:142 turn)");
-    check(e && strstr(e, "F0366") != 0,
-          "evidence references F0366 (CLIKMENU.C:180 move)");
-    check(e && strstr(e, "F0380") != 0,
-          "evidence references F0380 (COMMAND.C:2045 input wait)");
-    check(e && strstr(e, "HuC6260") != 0,
-          "evidence references HuC6260 (Saturn VDC)");
+    check(e && strstr(e, "DM.BIN") != 0 && strstr(e, "LEV00.DGN") != 0,
+          "evidence names authenticated retail data members");
+    check(e && strstr(e, "executable entry point and runtime consumers remain unbound") != 0,
+          "evidence preserves the unbound runtime boundary");
+    check(e && strstr(e, "no Saturn input, HUD, lighting") != 0,
+          "evidence keeps unverified consumers gated");
+    check(e && strstr(e, "NEXUS.BIN") == 0,
+          "evidence does not cite a fictitious retail filename");
 }
 
 static void check_all_domains_have_anchor(void)

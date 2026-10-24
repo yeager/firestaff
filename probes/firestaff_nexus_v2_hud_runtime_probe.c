@@ -9,10 +9,8 @@
  *   - Honors force_active_for_test escape hatch
  *   - Source evidence returns the citation string
  *
- * Source-lock:
- *   Saturn NEXUS.BIN HUD surface data
- *   DMDF/DGN level format (Saturn DMDF VDP1/VDP2 layers)
- *   ReDMCSB PANEL.C / DUNGEON.C (champion status refresh)
+ * Evidence boundary: the procedural HUD overlay is diagnostic-only. No
+ * authenticated retail Saturn HUD-to-VDP placement receipt is admitted.
  *
  * Coverage (22 assertions):
  *   1.  init/shutdown lifecycle
@@ -31,7 +29,7 @@
  *  14.  Action strip with active icon → no synthetic pixels appear
  *  15.  V1 invariant: V2 off → out struct fields stay at caller defaults
  *  16.  Null-fb is safe when V2 disabled
- *  17.  source_evidence returns citation string with NEXUS.BIN
+ *  17.  source_evidence records the missing retail HUD-to-VDP receipt
  *  18.  Direction setter accepts all 4 cardinal values
  *  19.  Level setter accepts cur > max (clamped internally)
  *  20.  Hit-flash trigger stores state
@@ -64,8 +62,8 @@ static void clear_fb(uint8_t *fb, int size) {
 
 int main(void) {
     printf("Nexus V2 HUD Runtime Wire-up — Phase 3 headless probe\n");
-    printf("Source: Saturn NEXUS.BIN HUD surface data, DMDF/DGN level format,\n"
-           "        ReDMCSB PANEL.C / DUNGEON.C (champion status refresh)\n");
+    printf("Evidence: procedural diagnostic overlay only; no authenticated\n"
+           "         retail Saturn HUD-to-VDP placement receipt\n");
 
     /* 1. init/shutdown lifecycle */
     nexus_v2_hud_runtime_init();
@@ -286,8 +284,8 @@ int main(void) {
     {
         const char *ev = nexus_v2_hud_runtime_source_evidence();
         CHECK(ev != NULL && ev[0] != '\0'
-            && strstr(ev, "NEXUS.BIN") != NULL
-            && strstr(ev, "PANEL.C") != NULL);
+            && strstr(ev, "no authenticated retail Saturn HUD-to-VDP placement receipt") != NULL
+            && strstr(ev, "production render gated") != NULL);
     }
 
     /* 18. Direction setter accepts all 4 cardinal values */

@@ -4,13 +4,8 @@
  * Dungeon Master Nexus (Saturn).  Mirrors dm2_v2_touch_runtime_probe
  * pattern (sibling DM2 wire-up).
  *
- * Source-lock:
- *   Saturn NEXUS.BIN touch/joypad input layer
- *   Saturn SDK JOYPAD API (SMP-SONY Japan)
- *   ReDMCSB COMMAND.C:108-113 (mouse movement zones C001-C006)
- *   ReDMCSB COMMAND.C:254-291 (keyboard tables for C001..C006)
- *   ReDMCSB CLIKMENU.C:142/180 (F0365 turn / F0366 move)
- *   ReDMCSB GAMELOOP.C:164-219 (V1 input wait loop)
+ * Evidence boundary: this probe checks a local affordance adapter only.
+ * No retail Saturn input-dispatch consumer receipt is admitted.
  *
  * Coverage (38 assertions):
  *   1-2.   init/shutdown lifecycle + re-init idempotent
@@ -30,7 +25,7 @@
  *   24.    V1 invariant: V2 off → count stays 0
  *   25.    V2 on + multiple accepted translations → count = N
  *   26.    V2 off → out->command = NONE (V1 chrome untouched)
- *   27.    source_evidence returns citation string with NEXUS.BIN
+ *   27.    source_evidence records the unverified retail input-dispatch join
  *   28.    Translation accepted even with non-zero x/y coordinates
  *   29.    Translation accepted even with negative x/y coordinates
  *   30.    Null out pointer rejected
@@ -64,9 +59,8 @@ static int g_failures = 0;
 
 int main(void) {
     printf("Nexus V2 Touch Runtime Wire-up — Phase 6 headless probe\n");
-    printf("Source: Saturn NEXUS.BIN touch/joypad, SDK JOYPAD API,\n"
-           "        ReDMCSB COMMAND.C:108-113/254-291,\n"
-           "        CLIKMENU.C:142/180, GAMELOOP.C:164-219\n");
+    printf("Evidence: no authenticated retail Saturn input-dispatch consumer\n"
+           "          receipt; affordance route remains probe-only\n");
 
     /* 1. init/shutdown lifecycle */
     nexus_v2_touch_runtime_init();
@@ -267,8 +261,8 @@ int main(void) {
     {
         const char *ev = nexus_v2_touch_runtime_source_evidence();
         CHECK(ev != NULL && ev[0] != '\0'
-            && strstr(ev, "NEXUS.BIN") != NULL
-            && strstr(ev, "CLIKMENU.C") != NULL);
+            && strstr(ev, "No authenticated retail Saturn input-dispatch consumer receipt") != NULL
+            && strstr(ev, "probe-only") != NULL);
     }
 
     /* 22. Multiple init/shutdown cycles safe */

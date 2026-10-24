@@ -1,7 +1,7 @@
 /* Nexus V2 touch/controller production boundary.
  *
  * The affordance mapper remains available to explicit probes, but the
- * supplied Saturn corpus has no authenticated NEXUS.BIN input consumer.
+ * no retail Saturn input-dispatch consumer is authenticated.
  * Do not inject a sibling-DM1 command mapping into the production Nexus
  * queue; retain M11's ABI as a fail-closed no-op until Saturn evidence exists.
  */
@@ -35,5 +35,5 @@ int nexus_v2_touch_runtime_translation_count(void) { return 0; }
 const char *nexus_v2_touch_runtime_source_evidence(void)
 {
     return "Nexus V2 touch/controller production route blocked: Saturn "
-           "NEXUS.BIN input consumer unverified; affordance mapper is probe-only";
+           "retail Saturn input-dispatch consumer unverified; affordance mapper is probe-only";
 }

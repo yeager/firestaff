@@ -3,43 +3,19 @@
  *
  * Nexus V2 Phase 6 — Touch/controller ergonomics
  *
- * Source-lock anchors:
- *   DMDF/DGN level format — Nexus movement grid
- *   No authenticated Saturn NEXUS.BIN input-surface data is present in the
- *   supplied corpus; controller labels therefore remain behavioral metadata.
- *   Saturn SDK joystick mapping (D-pad, analog sticks)
- *   DM1 CLIKMENU.C:224-233 arrow deltas / blocked movement
- *   DM1 CLIKMENU.C:237-255 F0325 stamina cost before movement
- *   DM1 CLIKMENU.C:142  F0365_COMMAND_ProcessTypes1To2_TurnParty (turn)
- *   DM1 CLIKMENU.C:180  F0366_COMMAND_ProcessTypes3To6_MoveParty (step)
- *   DM1 REALTIME.ASM T048  input dispatch
- *   DM1 GAMELOOP.C:164-219 V1 input wait/command queue loop
- *   nexus_v1_movement.c:nexus_movement_tick() V1 tick handler
- *   nexus_v1_movement.h:NEXUS_CMD_* (1-6 movement commands)
+ * Experimental UI metadata only. No retail Saturn button-to-action mapping
+ * or VDP/input-dispatch consumer is admitted. Local NEXUS_CMD_* values are
+ * API identifiers, not proof of original controller semantics.
  *
  * Architecture:
- *   Nexus inherits the DM1 movement engine (step/turn/stamina logic)
- *   via nexus_v1_movement.c.  This file labels V2 affordances and maps
- *   them to the same NEXUS_CMD_* enum values that V1 uses.
+ *   The experimental mapper produces local NEXUS_CMD_* values. It is not
+ *   connected to an authenticated Saturn input-dispatch route.
  *
- *   V2 affordance → NEXUS_CMD_* → nexus_input_queue_push() → nexus_movement_tick()
- *   → either V1 source route (disabled) or V2 presentation route (enabled).
+ * The local toggle controls only this helper's returned diagnostic metadata.
+ * The helper is not connected to a game input queue or VDP presentation path.
  *
- * V1 invariant: with v2PresentationEnabled=0, all affordances return
- * accepted=0 so the V1 mouse/touch/click route matrix is sole input path.
- * V2 presentation only: NEXUS_V2_AFFORDANCE_* are metadata labels that
- * route through the existing Nexus movement command queue.
- *
- * Differences from DM1 V2 Phase 6 (dm1_v2_touch_controller_affordance_pc34):
- *   - Nexus uses NEXUS_CMD_* (1-6) vs DM1 C001-C006 command ids
- *   - No pinch-to-zoom (Nexus/Saturn has no zoomable minimap)
- *   - No shoulder button mappings (no champion-cycle/chaos-magic in Nexus)
- *   - Right stick turns only (Saturn gamepad layout)
- *
- * Differences from DM2 V2 Phase 6 (dm2_v2_touch_controller_affordance):
- *   - DM2 uses DM1_V2_MovementCommand enum (shared C001-C006 system)
- *   - Nexus uses its own NEXUS_CMD_* enum (1-6, same movement semantics)
- *   - Identical behavior: right stick turns only, no shoulder buttons
+ * DM1/DM2 mappings are not used as Saturn input evidence. Control layouts
+ * remain unverified until retail action dispatch is joined to real input.
  */
 
 #include "nexus_v2_touch_controller_affordance.h"
@@ -155,18 +131,7 @@ nexus_v2_touch_controller_affordance_input_kind(
     }
 }
 
-/* ── Route dispatch ──────────────────────────────────────────────────────
- *
- * Source: nexus_v1_movement.c:nexus_movement_tick(), GAMELOOP.C:164-219.
- *
- * V2 affordances are accepted only when v2PresentationEnabled is true.
- * When false, all affordances return accepted=0, preserving the V1
- * mouse/touch/click matrix as sole input path.
- *
- * V2 route: affordance → NEXUS_CMD_* → nexus_input_queue_push()
- * The movement command adapter routes through the Nexus V1 movement
- * pipeline which handles the cooldown, stamina, and collision checks.
- */
+/* Apply the diagnostic toggle and return local metadata. */
 
 Nexus_V2_TouchControllerAffordanceRoute
 nexus_v2_touch_controller_affordance_route(
@@ -175,10 +140,8 @@ nexus_v2_touch_controller_affordance_route(
     int cmd = nexus_v2_touch_controller_affordance_movement_command(aff);
     int routeKind;
 
-    /* V1 parity guard: reject all affordances when V2 presentation is
-     * disabled. This preserves the V1 mouse/touch/click route matrix
-     * (DM1 CLIKMENU.C:142/180, nexus_v1_movement.c:nexus_movement_tick())
-     * as the sole input path for non-V2 builds. */
+    /* Keep the historical routeKind value for API compatibility. It does
+     * not assert that a V1 retail input route was observed or preserved. */
     if (!v2PresentationEnabled) {
         routeKind = NEXUS_V2_ROUTE_KIND_V1_SOURCE;
         return make_route(0, aff, cmd, routeKind);
@@ -228,24 +191,9 @@ nexus_v2_touch_controller_affordance_name(
 const char *
 nexus_v2_touch_controller_affordance_source_evidence(void) {
     return
-        "Nexus V2 Touch/Controller Affordance — Phase 6\n"
-        "Source: DMDF/DGN level format — Nexus movement grid\n"
-        "Saturn NEXUS.BIN input-surface data: absent from supplied corpus; not admitted\n"
-        "Source: Saturn SDK joystick mapping (D-pad, analog sticks)\n"
-        "Source: DM1 CLIKMENU.C:224-233 arrow deltas / blocked movement\n"
-        "Source: DM1 CLIKMENU.C:237-255 F0325 stamina cost before movement\n"
-        "Source: DM1 CLIKMENU.C:142 F0365_COMMAND_ProcessTypes1To2_TurnParty (turn)\n"
-        "Source: DM1 CLIKMENU.C:180 F0366_COMMAND_ProcessTypes3To6_MoveParty (step)\n"
-        "Source: DM1 REALTIME.ASM T048 input dispatch\n"
-        "Source: DM1 GAMELOOP.C:164-219 V1 input wait/command queue loop\n"
-        "Source: nexus_v1_movement.c:nexus_movement_tick() V1 tick handler\n"
-        "Source: nexus_v1_movement.h:NEXUS_CMD_* (1-6 movement commands)\n"
-        "Nexus inherits DM1 movement engine via nexus_v1_movement.c.\n"
-        "V2 affordances map to NEXUS_CMD_* (1-6), same as V1 input path.\n"
-        "No pinch-to-zoom (Nexus/Saturn has no zoomable minimap).\n"
-        "No shoulder button mappings (Nexus has no champion-cycle/chaos-magic).\n"
-        "Right stick turns only (Saturn gamepad layout).\n"
-        "V1 touch/click parity: all affordances rejected when v2PresentationEnabled=0.\n"
-        "Nexus vs DM1 V2 Phase 6: NEXUS_CMD_* enum vs C001-C006 (same semantics).\n"
-        "Nexus vs DM2 V2 Phase 6: same movement model, different enum namespace.\n";
+        "Nexus V2 Touch/Controller Affordance — experimental UI mapper only\n"
+        "No authenticated retail Saturn input-dispatch consumer receipt\n"
+        "NEXUS_CMD_* values are local API identifiers, not verified button semantics\n"
+        "DM1/DM2 references are comparisons only and do not establish Saturn behavior\n"
+        "Production input remains gated until authentic control-to-action evidence exists\n";
 }
