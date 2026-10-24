@@ -4384,6 +4384,15 @@ if(BUILD_TESTING)
         TIMEOUT 30
     )
     add_test(
+        NAME fmtowns_edition_option_validation
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fmtowns_edition_option_validation.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(fmtowns_edition_option_validation PROPERTIES
+        LABELS "dm1;csb;cli;argument-validation"
+        TIMEOUT 30
+    )
+    add_test(
         NAME dm1_v1_pc34_selector_archive_paths
         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_pc34_selector_archive_paths.sh
             $<TARGET_FILE:firestaff>

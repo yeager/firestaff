@@ -2223,3 +2223,8 @@ only. Active work is in `TODO.md` and `TODO-<game>.md`.
   Atari ST as unsupported. The focused unsupported-platform CLI test passes;
   this check validates game/platform compatibility, not the presence or
   integrity of installed media.
+- The `--dm1-fmtowns-ja` and `--csb-fmtowns-ja` edition switches now reject a
+  missing or mismatched game/platform pair during CLI validation rather than
+  after Phase A begins. This preserves the `-1` internal platform sentinel as
+  Auto for ordinary game launches. Focused edition-option and DM2 unsupported-
+  platform CTests both pass.
