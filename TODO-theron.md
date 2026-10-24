@@ -30,6 +30,10 @@
   and an authentic USA Track 02 `--debug` runtime loop confirm an unmapped
   click leaves the party pose and tick count unchanged. Authentic Theron
   target hitboxes and a state-driven view remain open.
+- The `--debug` boot-probe key path now uses the loaded-dungeon gameplay
+  mapping, matching the native SDL path rather than startup navigation. The
+  authentic USA Track 02 loop checks Q/E turning and right-arrow sidestepping;
+  the focused launcher/input contract remains green.
 
 ## 2026-10-24 — complete Theron keyboard and mouse playability
 

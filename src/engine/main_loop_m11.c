@@ -10908,8 +10908,11 @@ static M12_MenuInput m11_boot_probe_key_input(const M11_GameViewState* gameView,
         return csbInput;
     }
     if (m11_game_view_is_theron(gameView)) {
-        M12_MenuInput theronInput =
-            M11_TheronNavigationInputFromKeycode(keycode);
+        const int gameplayInput =
+            m11_game_view_supports_held_motion_input(gameView);
+        M12_MenuInput theronInput = gameplayInput
+            ? M11_TheronGameplayInputFromKeycode(keycode)
+            : M11_TheronNavigationInputFromKeycode(keycode);
         if (theronInput != M12_MENU_INPUT_NONE) {
             return theronInput;
         }
