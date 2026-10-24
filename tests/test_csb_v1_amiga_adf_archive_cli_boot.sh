@@ -64,6 +64,8 @@ fi
 # checksum-verified user save or a DSA trace.  The blank action/strafe result
 # is also significant: it must retain the source-owned starting pose rather
 # than synthesize a target, door, or save-side effect.
+# Amiga startup advances on 20 ms PAL VBlanks; four 800-frame windows now
+# yield 3138 runtime ticks after the intro.
 probe_runtime_input() {
     local input=$1
     local party=$2
@@ -74,8 +76,8 @@ probe_runtime_input() {
         --boot-probe-expect-phase inactive --boot-probe-expect-runtime \
         --boot-probe-expect-level-loaded 1 --boot-probe-expect-map 0 \
         --boot-probe-expect-party "$party" \
-        --boot-probe-expect-runtime-tick-min 3177 \
-        --boot-probe-expect-runtime-tick-max 3177 --duration 0)
+        --boot-probe-expect-runtime-tick-min 3138 \
+        --boot-probe-expect-runtime-tick-max 3138 --duration 0)
     if ! grep -Fq "party=$party" <<<"$output" ||
        ! grep -Fq 'champions=0' <<<"$output"; then
         printf '%s\n' "$output" >&2

@@ -1,11 +1,10 @@
 /*
- * DM1 V1 Hall of Champions — champion portrait ordinal 1 (HALK)
+ * DM1 V1 Hall of Champions — authentic PC34 champion portrait
  * highdpi_mouse_rect / portrait_rect_position runtime gate probe.
  *
  * Targeted slice:
- *   ordinal    = 1 (HALK / barbarian, C127 sensorData=1)
- *   pose       = (map 0, x=1, y=2) facing NORTH
- *                 (front cell (1,1) carries the C127 champion mirror)
+ *   ordinal    = first C127 sensor found in the authentic PC34 Hall map
+ *   pose       = resolved from the authentic PC34 DUNGEON.DAT sensor map
  *   route      = highdpi_mouse_rect
  *                 (the M11 scaled-window mouse dispatch path:
  *                  TOUCHCLICK_Compat_MapScaledViewportPointToDispatch
@@ -22,15 +21,15 @@
  *   aspect     = portrait_rect_position
  *                 (the (96, 35, 32, 29) viewport-local cutout stays
  *                  anchored at the same source-locked rectangle for
- *                  ordinal 1 even after the scaled dispatch math,
+ *                  the selected portrait even after scaled dispatch math,
  *                  so the inverse letterbox maps every high-DPI
  *                  physical pixel that lands inside the cutout back
  *                  onto viewport (96..127, 35..63).)
  *
  * Coverage gap relative to existing champion-mirror probe matrix:
  *   - firestaff_dm1_v1_hoc_champion_portrait_01_redraw_after_candidate
- *     _portrait_rect_position_097_gate_probe covers the
- *     redraw_after_candidate cycle for ordinal 1 (HALK) but does
+ *     _portrait_rect_position_097_gate_probe covers a
+ *     redraw_after_candidate cycle but does
  *     not exercise the high-DPI scaled-window dispatch path on
  *     physical surface pixels.
  *   - tests/test_dm1_v1_hidpi_chest_slot_hit_zone_pc34_compat.c
@@ -44,18 +43,18 @@
  *     routing on high-DPI surfaces.
  *
  * This probe fills that narrow slice: it pins the portrait_rect
- * (96, 35, 32, 29) viewport-local position invariant for ordinal 1
+ * (96, 35, 32, 29) viewport-local position invariant for an original portrait
  * across the scaled-window dispatch math, on six distinct surface
  * sizes that cover the original HiDPI failure mode
  * (1512x982 MacBook Pro Retina), a 1366x768 laptop/projector
  * baseline, a 1440p letterbox case (2560x1440), and a 4K UHD case
- * (3840x2160). It does not duplicate any of the existing ordinal 1
+ * (3840x2160). It does not duplicate any existing
  * probes because none of them assert the scaled dispatch / SDL
  * framebuffer map path against the C026 cutout.
  *
  * What the probe asserts:
- *   Stage 1 (ordinal sanity):    the front-mirror route at (1,2)
- *                                 NORTH reports ordinal 1 and the
+ *   Stage 1 (ordinal sanity):    a source C127 pose reports its real
+ *                                 ordinal and the
  *                                 D1C wall zone matches coordSet
  *                                 5 / index 12 = (80, 29, 64, 43).
  *   Stage 2 (cutout invariant):  the source viewport rect remains
@@ -63,8 +62,8 @@
  *                                 and the portrait cutout (96, 35,
  *                                 32, 29) stays inside that
  *                                 viewport. The C026 portrait
- *                                 graphic is loaded and the
- *                                 ordinal-1 strip cell is reachable.
+ *                                 graphic is loaded and the matching
+ *                                 source strip cell is reachable.
  *   Stage 3 (per-surface scaled dispatch):
  *     For each of 1280x720, 1366x768, 1920x1080, 2560x1440,
  *     1512x982, and 3840x2160:
@@ -107,8 +106,7 @@
  *   ReDMCSB DUNGEON.C:2573 maps M011_CELL(sensor) against view dir
  *   ReDMCSB DUNGEON.C:2608-2612 stores C127 sensorData in G0289
  *   ReDMCSB DUNVIEW.C:3913-3928 D1C champion portrait blit (C026)
- *   ReDMCSB DUNVIEW.C:4547-4581 nibble 2 -> ordinal 1 / nibble 1
- *                       -> ordinal 0 (G0289 ordinal decode)
+ *   ReDMCSB DUNVIEW.C:4547-4581 decodes source ordinals from cell-order nibbles
  *   ReDMCSB DUNVIEW.C:14271-14313 (D1C champion mirror BUG-120/121
  *                       guard: portrait anchored at (96, 35, 32, 29))
  *   ReDMCSB MOVESENS.C:1501-1503 passes C127 sensorData to F0280
@@ -187,10 +185,6 @@ enum {
     D1C_ZONE_Y_VP = 29,
     D1C_ZONE_W = 64,
     D1C_ZONE_H = 43,
-    /* Hall of Champions ordinal 1 = HALK / barbarian.  C127 sensorData
-     * is 0-indexed per DUNVIEW.C:4547-4581, so the M11 ordinal = 1 is
-     * the second cell in the portrait strip: column 1, row 0. */
-    ORDINAL_HALK = 1,
     /* Source-locked COMMAND.C:403 C080 -> C007_ZONE_VIEWPORT and the
      * firestaff touch-click matrix records zoneIndex=7 for that
      * mapping. */
@@ -308,16 +302,52 @@ static int pick_physical_pixel_for_screen_source(const Surface* surface,
     return 0;
 }
 
-/*
- * Reset the game view to the canonical ordinal-1 front-mirror pose
- * (1, 2) NORTH and clear any panel / inventory state that would
- * otherwise route clicks to a panel zone.
- */
-static void reset_to_ordinal1_pose(M11_GameViewState* game) {
+typedef struct Dm1MirrorPose {
+    int x;
+    int y;
+    int direction;
+    int ordinal;
+} Dm1MirrorPose;
+
+/* Resolve a mirror pose from the loaded original map rather than relying on
+ * coordinates copied from a different PC34 dungeon fixture. */
+static int find_original_mirror_pose(M11_GameViewState* game,
+                                     Dm1MirrorPose* out) {
+    const struct DungeonMapDesc_Compat* map;
+    int y;
+    if (!game || !out || !game->world.dungeon ||
+        game->world.dungeon->header.mapCount == 0) return 0;
+    map = &game->world.dungeon->maps[0];
+    for (y = 0; y < (int)map->height; ++y) {
+        int x;
+        for (x = 0; x < (int)map->width; ++x) {
+            int direction;
+            for (direction = 0; direction < 4; ++direction) {
+                int ordinal;
+                game->world.party.mapIndex = 0;
+                game->world.party.mapX = x;
+                game->world.party.mapY = y;
+                game->world.party.direction = direction;
+                ordinal = M11_GameView_GetFrontMirrorOrdinal(game);
+                if (ordinal < 0 || ordinal >= 24) continue;
+                out->x = x;
+                out->y = y;
+                out->direction = direction;
+                out->ordinal = ordinal;
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+/* Reset to the resolved authentic mirror pose and clear panel/inventory state. */
+static void reset_to_original_mirror_pose(M11_GameViewState* game,
+                                          const Dm1MirrorPose* pose) {
     game->world.party.mapIndex = 0;
-    game->world.party.mapX = 1;
-    game->world.party.mapY = 2;
-    game->world.party.direction = 0; /* DIR_NORTH */
+    game->world.party.mapX = pose->x;
+    game->world.party.mapY = pose->y;
+    game->world.party.direction = pose->direction;
     game->showDebugHUD = 0;
     game->candidateMirrorPanelActive = 0;
     game->candidateMirrorOrdinal = -1;
@@ -333,18 +363,23 @@ int main(int argc, char** argv) {
     int frontOrdinal;
     int vx, vy, vw, vh;
     int surfaceIndex;
+    Dm1MirrorPose mirrorPose;
     const char* dataDir;
     char narrowed[1024];
 
     if (argc < 2) {
         fprintf(stderr,
                 "usage: %s DATA_DIR\n"
-                "  verifies ordinal 1 (HALK) highdpi_mouse_rect portrait_rect_position\n",
+                "  verifies authentic PC34 C127 highdpi_mouse_rect portrait_rect_position\n",
                 argv[0]);
         return 2;
     }
     dataDir = argv[1];
     dataDir = firestaff_dm1_probe_narrow_data_dir(dataDir, narrowed, sizeof(narrowed));
+    if (!firestaff_dm1_probe_is_pc34_data_dir(dataDir)) {
+        puts("SKIP authentic PC34 GRAPHICS.DAT/DUNGEON.DAT are unavailable");
+        return 77;
+    }
 
     setvbuf(stdout, NULL, _IONBF, 0);
     setvbuf(stderr, NULL, _IONBF, 0);
@@ -359,25 +394,26 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    printf("=== DM1 V1 HoC portrait ordinal 1 (HALK) highdpi_mouse_rect ===\n");
-    printf("dataDir=%s pose=(map 0, x=1, y=2) facing NORTH\n", dataDir);
-
-    /* Stage 1: ordinal sanity.  Front-mirror route lookup at (1,2)
-     * NORTH must report ordinal 1 per DUNGEON.C:2573 and
-     * MOVESENS.C:1501-1503. */
-    reset_to_ordinal1_pose(&game);
-    frontOrdinal = M11_GameView_GetFrontMirrorOrdinal(&game);
-    if (frontOrdinal != ORDINAL_HALK) {
-        printf("SKIP this DM1 V1 build does not place the C127 sensor "
-               "with sensorData=1 at (1,2) front cell (got ordinal=%d, "
-               "want %d); the highdpi_mouse_rect slice is not "
-               "exercised on builds that do not match the reference "
-               "DUNGEON.DAT fixture.\n",
-               frontOrdinal, ORDINAL_HALK);
+    if (!find_original_mirror_pose(&game, &mirrorPose)) {
+        fprintf(stderr, "FAIL authentic PC34 map 0 has no C127 mirror pose\n");
         M11_GameView_Shutdown(&game);
-        return 0;
+        return 1;
     }
-    CHECK(frontOrdinal == ORDINAL_HALK);
+    printf("=== DM1 V1 HoC original C127 ordinal %d highdpi_mouse_rect ===\n",
+           mirrorPose.ordinal);
+    printf("dataDir=%s pose=(map 0, x=%d, y=%d) direction=%d\n",
+           dataDir, mirrorPose.x, mirrorPose.y, mirrorPose.direction);
+
+    /* Stage 1: the resolved C127 front-mirror pose remains source-owned. */
+    reset_to_original_mirror_pose(&game, &mirrorPose);
+    frontOrdinal = M11_GameView_GetFrontMirrorOrdinal(&game);
+    if (frontOrdinal != mirrorPose.ordinal) {
+        fprintf(stderr, "FAIL authentic C127 pose changed ordinal (%d -> %d)\n",
+                mirrorPose.ordinal, frontOrdinal);
+        M11_GameView_Shutdown(&game);
+        return 1;
+    }
+    CHECK(frontOrdinal == mirrorPose.ordinal);
 
     ornX = ornY = ornW = ornH = 0;
     M11_GameView_GetD1CWallOrnamentZone(&game, &ornX, &ornY, &ornW, &ornH);
@@ -414,8 +450,8 @@ int main(int argc, char** argv) {
     }
     CHECK(portraits->loaded);
     {
-        int srcBaseX = (ORDINAL_HALK & 7) * PORTRAIT_W;
-        int srcBaseY = (ORDINAL_HALK >> 3) * PORTRAIT_H;
+        int srcBaseX = (mirrorPose.ordinal & 7) * PORTRAIT_W;
+        int srcBaseY = (mirrorPose.ordinal >> 3) * PORTRAIT_H;
         CHECK(srcBaseX + PORTRAIT_W <= (int)portraits->width);
         CHECK(srcBaseY + PORTRAIT_H <= (int)portraits->height);
     }
@@ -635,10 +671,10 @@ int main(int argc, char** argv) {
      * therefore hit panel.resurrect at viewport (112,58), but the
      * source screen-coordinate route is still COMMAND.C:403 C080 /
      * C007 viewport.dungeon for the same physical click. */
-    reset_to_ordinal1_pose(&game);
+    reset_to_original_mirror_pose(&game, &mirrorPose);
     CHECK(M11_GameView_SelectFrontMirrorCandidate(&game) == 1);
     CHECK(game.candidateMirrorPanelActive == 1);
-    CHECK(game.candidateMirrorOrdinal == ORDINAL_HALK);
+    CHECK(game.candidateMirrorOrdinal == mirrorPose.ordinal);
     CHECK(game.inventoryPanelActive == 1);
     CHECK(PORTRAIT_PANEL_OVERLAP_X_VP >= PORTRAIT_X_VP &&
           PORTRAIT_PANEL_OVERLAP_X_VP < PORTRAIT_X_VP + PORTRAIT_W);
@@ -724,7 +760,7 @@ int main(int argc, char** argv) {
     }
 
     M11_GameView_Shutdown(&game);
-    printf("%s dm1 v1 HoC champion portrait ordinal 1 highdpi_mouse_rect portrait_rect_position\n",
+    printf("%s dm1 v1 authentic PC34 HoC C127 highdpi_mouse_rect portrait_rect_position\n",
            g_failures == 0 ? "PASS" : "FAIL");
     printf("summary=pass=%d fail=%d\n", g_pass, g_failures);
     return g_failures == 0 ? 0 : 1;

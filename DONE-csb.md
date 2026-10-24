@@ -1138,3 +1138,9 @@ Reviewed 2026-08-29. Completed work only.
   check both 50 Hz title clocks and the Amiga two-VBlank door-step timing.
   Host 30/60/120 Hz measurements remain a separate native-display
   verification.
+- 2026-10-24: Fixed the authentic FM Towns ZIP startup regression check to
+  accept the current `--debug` scan log's `delta-ms` field. The complete
+  `csb_v1_fmtowns_native_cli_boot` test now passes against the installed
+  original ZIP, including title selection, authentic MINI.DAT launch, scan
+  progress, and three closed-Entrance presentation modes. This is startup and
+  first-scene evidence, not full campaign or visual-parity coverage.
