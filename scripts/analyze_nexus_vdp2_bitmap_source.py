@@ -254,7 +254,7 @@ def dgn_structure2_palettes(assets: dict[str, bytes]) -> list[tuple[str, bytes]]
     return palettes
 
 
-def ymir_bundle_frame(bundle: Path) -> tuple[dict[str, bytes], int]:
+def ymir_bundle_frame(bundle: Path) -> tuple[dict[str, bytes], int, str]:
     """Read one complete Ymir VDP2 dump and bind it to its captured frame."""
     def receipt(path: Path, expected_format: str) -> dict[str, str]:
         values: dict[str, str] = {}
@@ -272,6 +272,8 @@ def ymir_bundle_frame(bundle: Path) -> tuple[dict[str, bytes], int]:
     if (bundle / "vdp2-memory-write-bundle.txt").is_file():
         capture = receipt(bundle / "vdp2-memory-write-bundle.txt",
                           "ymir-vdp2-memory-write-bundle-v1")
+        # Ymir's VDP::DumpVDP2Registers() writes high byte before low byte.
+        register_byte_order = "big"
         try:
             frame = int(capture["current_vdp1_frame_index"])
             expected_rows = int(capture["trace_rows"])
@@ -312,7 +314,7 @@ def ymir_bundle_frame(bundle: Path) -> tuple[dict[str, bytes], int]:
                 if (limit == 0 or width not in (1, 2) or address < 0 or
                         address + width > limit or value >= 1 << (width * 8)):
                     raise ValueError("Ymir VDP2 trace contains an invalid memory write")
-        except (KeyError, ValueError) as error:
+        except (KeyError, TypeError, ValueError) as error:
             raise ValueError("Ymir VDP2 trace does not match its frame receipt") from error
     else:
         capture = receipt(bundle / "vdp1-capture-bundle.txt",
@@ -331,6 +333,7 @@ def ymir_bundle_frame(bundle: Path) -> tuple[dict[str, bytes], int]:
                 rows_for_frame < 1 or register_bytes != 512 or
                 snapshot.get("register_byte_order") != "big_endian"):
             raise ValueError("Ymir bundle receipts do not identify one complete VDP frame")
+        register_byte_order = "big"
     expected = {
         "vdp2-regs": ("vdp2-registers.bin", 512),
         "vdp2-vram": ("vdp2-vram.bin", 512 * 1024),
@@ -342,7 +345,7 @@ def ymir_bundle_frame(bundle: Path) -> tuple[dict[str, bytes], int]:
         if len(data) != size:
             raise ValueError(f"{filename} has unexpected size")
         regions[name] = data
-    return regions, frame
+    return regions, frame, register_byte_order
 
 
 def longest_nonzero_match(source: bytes, target: bytes) -> tuple[int, int, int]:
@@ -389,11 +392,12 @@ def main() -> int:
     if capture_frames <= args.frame:
         print("NEXUS_VDP2_BITMAP_SOURCE_INVALID: capture frame count does not include selected frame")
         return 1
+    bundle_byte_order = None
     try:
         if args.capture.is_dir():
             if args.frame != 0:
                 raise ValueError("--frame applies only to multi-frame raw captures")
-            frame_data, frame_index = ymir_bundle_frame(args.capture)
+            frame_data, frame_index, bundle_byte_order = ymir_bundle_frame(args.capture)
             frames = [frame_data]
         else:
             frames, _ = frame_regions(args.capture.read_bytes(), capture_frames)
@@ -432,7 +436,7 @@ def main() -> int:
 
     frame = frames[args.frame]
     registers = frame["vdp2-regs"]
-    byte_order = detect_byte_order(registers)
+    byte_order = bundle_byte_order or detect_byte_order(registers)
     bgon = read_u16(registers, 0x20, byte_order)
     chctla = read_u16(registers, 0x28, byte_order)
     bmpna = read_u16(registers, 0x2C, byte_order)
