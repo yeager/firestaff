@@ -8659,6 +8659,11 @@ static int dm2_v1_boot_gdat_hud_source_move_arrow_plan(
         destinations[arrow] = (DM2_V1_ViewportRect){
             source_rect.x, source_rect.y, source_rect.w, source_rect.h };
     }
+    if (profile->platform == DM2_PLATFORM_MAC_EN ||
+        profile->platform == DM2_PLATFORM_MAC_FR) {
+        return dm2_v1_gdat_hud_m11_command_plan_build_mac_move_arrows(
+            &gfx->loader, destinations, out_plan);
+    }
     return dm2_v1_gdat_hud_m11_command_plan_build_source_move_arrows(
         &gfx->loader, destinations, out_plan);
 }

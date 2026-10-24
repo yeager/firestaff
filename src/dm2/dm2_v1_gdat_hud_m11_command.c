@@ -1038,6 +1038,21 @@ int dm2_v1_gdat_hud_m11_command_plan_build_mac_move_arrows(
 {
     if (!dm2_v1_gdat_hud_m11_command_plan_build_source_move_arrows(
             loader, destinations, out_plan)) return 0;
+    for (int arrow = 0; arrow < 6; ++arrow) {
+        DM2_V1_GdatHudM11Command *command = &out_plan->commands[arrow];
+        uint8_t local_palette[16];
+        uint32_t local_palette_hash = 0u;
+        if (command->kind != DM2_V1_GDAT_HUD_M11_COMMAND_MOVE_ARROW ||
+            !dm2_v1_asset_load_image_local_palette(
+                loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 3,
+                2 + arrow * 2, local_palette, &local_palette_hash) ||
+            !local_palette_hash) {
+            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+            return 0;
+        }
+        memcpy(command->palette16, local_palette, sizeof(local_palette));
+        command->palette_hash = local_palette_hash;
+    }
     out_plan->mac_native_layout = 1;
     out_plan->command_hash = dm2_v1_gdat_hud_m11_command_plan_hash(out_plan);
     return out_plan->command_hash != 0u;
