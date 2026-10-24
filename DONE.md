@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-24: The current Xcode-built macOS arm64 executable accepted direct
+  `--game <id> --debug --boot-probe --boot-probe-frames 2 --duration 0`
+  launches against all five authentic installed data folders. The selected
+  defaults were DM1 FM Towns EN, CSB FM Towns EN, DM2 FM Towns JA, Theron's
+  Quest PC Engine US and Nexus Saturn JA. Each emitted a game-handoff receipt
+  and exited successfully. The short probe reached DM1's runtime but only the
+  title/startup phases for the other games; it does not prove they reach an
+  active dungeon or establish native display/audio parity.
+
 - 2026-10-24: Rebuilt the current macOS arm64 launcher and reran the no-game
   M12 main-menu selection matrix against the installed authentic media.
   Keyboard and mouse selection each handed off to the expected original
