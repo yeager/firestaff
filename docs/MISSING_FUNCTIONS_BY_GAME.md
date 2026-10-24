@@ -164,6 +164,9 @@ requirements above.
   are still missing.
 - **Structure1F/VDP1:** several material, texture/palette, and replay gates
   remain capture- or host-route-dependent.
+- **VDP2 NBG1 tilemap:** corrected Saturn word/byte address and character-stride
+  math is under review in PR #19; the capture-only test does not provide a retail
+  asset owner, text/page mapping, placement or production rendering.
 
 ### Missing Original Data or Verification
 

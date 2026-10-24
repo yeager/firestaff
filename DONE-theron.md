@@ -1,5 +1,20 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-24 — use the DM1 keyboard layout in Theron dungeons
+
+Loaded-dungeon keyboard movement now follows Firestaff's DM1 map: arrows and
+A/D sidestep, Q/E turn, Home/End and keypad 4/6 turn, and keypad 1/3 sidestep.
+Startup arrows still navigate Theron's menus. The focused
+`m11_gamepad_csb_input_bridge` regression passed three consecutive runs on
+TRV2, and both its test target and the native `firestaff` target built.
+
+A native Firestaff Debug run used authentic Japanese Rev. 1 Track 02 through
+the C/SDL runtime, with SDL's dummy video/audio drivers and no emulator. The
+scripted startup reached the loaded dungeon; debug receipts showed left-arrow
+`strafe-left`, Q `turn-left`, right-arrow `strafe-right`, E `turn-right`, and
+A/D side-step commands. This verifies keyboard dispatch into Theron's native
+movement path, not visual gameplay parity or complete campaign behavior.
+
 ## 2026-10-24 — initialize SDL's native gamepad subsystem
 
 `M12_GamepadStatus_Update` now initializes SDL's gamepad subsystem before

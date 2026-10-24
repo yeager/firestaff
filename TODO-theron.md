@@ -2,21 +2,25 @@
 
 - Native keyboard input already reaches the Theron movement and action facade;
   discrete key events also reached a loaded dungeon and advanced native ticks
-  in the 2026-10-24 Debug runs recorded below. The README control summary had
-  incorrectly described A/D as turn keys; it now matches the implementation:
-  arrows or Home/Q and End/E turn, while A/D step sideways.
+  in the 2026-10-24 Debug runs recorded below. Loaded-dungeon movement now
+  follows DM1's key layout: arrows/A/D sidestep and Q/E/Home/End turn; startup
+  arrows retain their menu-navigation behavior. A fresh native Debug run with
+  authentic JP media logged strafe-left, turn-left/right and side-step
+  commands from those keyboard inputs; the focused input regression passed
+  three loops.
 - Mouse buttons 1/2 currently map to Button I/II. Dungeon clicks do not use
   pointer position to select movement, inventory or champion controls, and
-  Button II does not perform a standalone dungeon action. Existing authentic
-  input-point captures establish individual turn and forward commands, but
-  not complete clickable-region boundaries. The product's native dungeon
-  view also lacks authenticated graphics/layout mapping, so DM1 zones cannot
-  safely be copied or guessed.
-- Remaining work: bind Theron's original graphics and layout in the native
-  renderer, recover the original input-region boundaries from source/runtime
-  evidence, then implement and verify DM1-style mouse zones on the native
-  presentation. User requirement remains open until keyboard and mouse both
-  support ordinary dungeon play.
+  Button II does not perform a standalone dungeon action. The retail Theron
+  manual describes a controller-only interface; it has no original mouse
+  route. Authentic controller-selected points identify the six movement
+  commands, but do not specify host mouse bounds. The product's complete
+  native dungeon view is not yet composed from authenticated graphics, so
+  clickable movement, inventory and champion controls cannot be positioned
+  safely yet.
+- Remaining work: finish the authenticated native dungeon view, derive mouse
+  targets from its displayed control layout, then implement and verify
+  DM1-style pointer controls on that native presentation. User requirement
+  remains open until keyboard and mouse both support ordinary dungeon play.
 
 ## 2026-10-24 — authenticated snapshot renders; state pairing remains open
 

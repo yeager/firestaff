@@ -11318,7 +11318,7 @@ static M12_MenuInput m11_held_motion_input_from_keyboard(const M11_GameViewState
             }
             M12_MenuInput input =
                 m11_game_view_is_theron(gameView)
-                    ? M11_TheronNavigationInputFromScancode((int)preferred[i])
+                    ? M11_TheronGameplayInputFromScancode((int)preferred[i])
                     : m11_game_view_is_dm1(gameView)
                     ? M11_DM1V1_NavigationInputFromScancode((int)preferred[i])
                     : M12_MENU_INPUT_NONE;
@@ -12072,7 +12072,7 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 ev.key.repeat) {
                 M12_MenuInput repeatInput =
                     m11_game_view_is_theron(gameView)
-                        ? M11_TheronNavigationInputFromScancode(
+                        ? M11_TheronGameplayInputFromScancode(
                               (int)ev.key.scancode)
                         : M11_DM1V1_NavigationInputFromScancode(
                               (int)ev.key.scancode);
@@ -12093,11 +12093,19 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             if (gameView && gameView->active) {
                 M12_MenuInput mappedInput = M12_MENU_INPUT_NONE;
                 if (m11_game_view_is_theron(gameView)) {
-                    mappedInput = M11_TheronNavigationInputFromScancode(
-                        (int)ev.key.scancode);
+                    const int gameplayInput =
+                        m11_game_view_supports_held_motion_input(gameView);
+                    mappedInput = gameplayInput
+                        ? M11_TheronGameplayInputFromScancode(
+                              (int)ev.key.scancode)
+                        : M11_TheronNavigationInputFromScancode(
+                              (int)ev.key.scancode);
                     if (mappedInput == M12_MENU_INPUT_NONE) {
-                        mappedInput = M11_TheronNavigationInputFromKeycode(
-                            (int)ev.key.key);
+                        mappedInput = gameplayInput
+                            ? M11_TheronGameplayInputFromKeycode(
+                                  (int)ev.key.key)
+                            : M11_TheronNavigationInputFromKeycode(
+                                  (int)ev.key.key);
                     }
                     if (mappedInput != M12_MENU_INPUT_NONE) {
                         return mappedInput;
@@ -12636,7 +12644,7 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 ev.key.repeat) {
                 M12_MenuInput repeatInput =
                     m11_game_view_is_theron(gameView)
-                        ? M11_TheronNavigationInputFromScancode(
+                        ? M11_TheronGameplayInputFromScancode(
                               (int)ev.key.keysym.scancode)
                         : M11_DM1V1_NavigationInputFromScancode(
                               (int)ev.key.keysym.scancode);
@@ -12654,11 +12662,19 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             if (gameView && gameView->active) {
                 M12_MenuInput mappedInput = M12_MENU_INPUT_NONE;
                 if (m11_game_view_is_theron(gameView)) {
-                    mappedInput = M11_TheronNavigationInputFromScancode(
-                        (int)ev.key.keysym.scancode);
+                    const int gameplayInput =
+                        m11_game_view_supports_held_motion_input(gameView);
+                    mappedInput = gameplayInput
+                        ? M11_TheronGameplayInputFromScancode(
+                              (int)ev.key.keysym.scancode)
+                        : M11_TheronNavigationInputFromScancode(
+                              (int)ev.key.keysym.scancode);
                     if (mappedInput == M12_MENU_INPUT_NONE) {
-                        mappedInput = M11_TheronNavigationInputFromKeycode(
-                            (int)ev.key.keysym.sym);
+                        mappedInput = gameplayInput
+                            ? M11_TheronGameplayInputFromKeycode(
+                                  (int)ev.key.keysym.sym)
+                            : M11_TheronNavigationInputFromKeycode(
+                                  (int)ev.key.keysym.sym);
                     }
                     if (mappedInput != M12_MENU_INPUT_NONE) {
                         return mappedInput;

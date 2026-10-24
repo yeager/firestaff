@@ -15,8 +15,8 @@ original-media playability or pixel parity.
 | Dungeon Master (DM1) | Playable PC 3.4 V1 route; separately verified Atari ST, Amiga and FM Towns starts | Continued original-route captures and V2 visual polish |
 | Chaos Strikes Back (CSB) | Bounded native real-media routes on Atari ST, Amiga and FM Towns | Wider campaign, save and visual-capture evidence |
 | Dungeon Master II: Skullkeep | Bounded real-media routes on DOS, Amiga, FM Towns and Macintosh | Full record/save ownership and wider source UI, audio and mechanics parity |
-| DM Nexus | Native retail MAPD title rendering from the Japanese Saturn CUE/BIN, plus source-owned disc/format work | Same-revision menu, HUD and dungeon display-consumer evidence |
-| Theron's Quest | Bounded JP runtime and US startup/runtime routes from authentic Track 02 media; three JP `--debug` runtime loops and source-only loaders for all seven regional dungeons | Original-emulator menu hold, JP state/map/input join, pit consumer, original presentation, save semantics, later progression and end-to-end gameplay remain unverified |
+| DM Nexus | Native retail MAPD title rendering and source-owned disc/format work. A capture-only NBG1 tile-address correction has an authentic-frame test in open PR #19 | Retail menu, HUD and dungeon display-consumer evidence; the decoder fix does not change production readiness |
+| Theron's Quest | Bounded JP runtime and US startup from native Track 02 media | Transition trace, saves, bitmap/palette binding and wider gameplay proof |
 
 Across every game, work is ordered as **startup → menu → HUD → viewport**.
 Later presentation claims remain blocked when an earlier source or real-data
@@ -65,9 +65,8 @@ research and must not be copied into current status or wiki pages.
 - [Preservation status (reviewed 2026-08-12)](PRESERVATION_STATUS_2026-08-11.md) — cross-game real-media, format and disassembly boundary
 - [External preservation archive](PRESERVATION_ARCHIVE.md) — moved historical runs and checksum manifest
 - [DMWeb and Greatstone references](DMWEB_REFERENCE.md) — external provenance index
+- [Theron input controls](theron_input.md) — native keyboard mappings, Button I/II mouse behavior and open in-dungeon mouse zones
 - [Theron real-data inventory](THERON_REALDATA_INVENTORY.md) — Track 02/19 media identities and placeholder boundaries
-- [Theron input notes](theron_input.md) — native controls and the separate, unverified original-emulator menu-hold procedure
-- [Theron capture readiness](THERON_CAPTURE_READINESS.md) — current authenticated `--debug` and emulator evidence, capture requirements, and open runtime joins
 
 ## Wiki map
 
@@ -85,7 +84,7 @@ wiki and are copied by `scripts/sync_wiki.sh` during release work.
 - **CSB:** [technical reference](wiki/CSB-Technical-Reference.md), [DSA and saves](wiki/CSB-DSA-and-Save-Internals.md), [FM Towns guide](wiki/CSB-FMTowns-Guide.md), [reverse engineering](wiki/CSB-Reverse-Engineering.md)
 - **DM2:** [technical reference](wiki/DM2-Technical-Reference.md), [GDAT internals](wiki/DM2-GDAT-Internals.md), [reverse engineering](wiki/DM2-Reverse-Engineering.md), [platform status](PLATFORM_STATUS.md)
 - **Nexus:** [technical reference](wiki/Nexus-Technical-Reference.md), [DGN/PRS3](wiki/Nexus-DGN-and-PRS3-Internals.md), [SAL/MAP](wiki/Nexus-SAL-MAP-Internals.md), [reverse engineering](wiki/Nexus-Reverse-Engineering.md)
-- **Theron:** [technical reference](wiki/Therons-Quest-Technical-Reference.md), [Track 02 internals](wiki/Therons-Quest-Track02-Internals.md), [reverse engineering](wiki/Therons-Quest-Reverse-Engineering.md), [input notes](theron_input.md), [capture readiness](THERON_CAPTURE_READINESS.md)
+- **Theron:** [technical reference](wiki/Therons-Quest-Technical-Reference.md), [Track 02 internals](wiki/Therons-Quest-Track02-Internals.md), [reverse engineering](wiki/Therons-Quest-Reverse-Engineering.md)
 
 ### Shared pages
 
@@ -114,6 +113,4 @@ release, run the focused tests for the affected game, check Markdown links and
 run the build/CI commands in [CI.md](CI.md). Do not commit original game data,
 emulator saves, private capture logs or generated placeholder art.
 
-**Last reviewed:** 2026-10-24. Theron's current evidence and capture
-boundary were refreshed; other games' summaries retain their stated review
-dates and scope.
+**Last reviewed:** 2026-10-24.
