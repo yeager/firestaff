@@ -134,6 +134,18 @@ int main(void) {
           M12_MENU_INPUT_NONE);
     CHECK(M11_NexusMovementInputFromScancode(SDL_SCANCODE_UP) ==
           M12_MENU_INPUT_NONE);
+    CHECK(M11_NexusPointerInputFromScancode(SDL_SCANCODE_UP) ==
+          M12_MENU_INPUT_UP);
+    CHECK(M11_NexusPointerInputFromScancode(SDL_SCANCODE_DOWN) ==
+          M12_MENU_INPUT_DOWN);
+    CHECK(M11_NexusPointerInputFromScancode(SDL_SCANCODE_LEFT) ==
+          M12_MENU_INPUT_LEFT);
+    CHECK(M11_NexusPointerInputFromScancode(SDL_SCANCODE_RIGHT) ==
+          M12_MENU_INPUT_RIGHT);
+    CHECK(M11_NexusPointerInputFromScancode(SDL_SCANCODE_A) ==
+          M12_MENU_INPUT_NONE);
+    CHECK(M11_NexusPointerToggleInputFromScancode(SDL_SCANCODE_Z) ==
+          M12_MENU_INPUT_NEXUS_POINTER_TOGGLE);
     CHECK(M11_Input_ActionForScancode(SDL_SCANCODE_A) ==
           M11_ACTION_STRAFE_LEFT);
     CHECK(M11_Input_ActionForScancode(SDL_SCANCODE_D) ==

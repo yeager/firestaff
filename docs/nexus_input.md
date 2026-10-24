@@ -48,12 +48,11 @@ champion slots, and backpack with the hand pointer. See the
 [Japanese retail manual, control table](https://api.regvault.org/api/v1/game/saturn/d83623212c7fd61623377cc9074bf3ea/manual#page=4)
 and [inventory instructions](https://api.regvault.org/api/v1/game/saturn/d83623212c7fd61623377cc9074bf3ea/manual#page=19).
 
-These documented controls define the retail interaction contract. The current
-Firestaff runtime does not yet implement the Nexus hand-pointer mode,
-inventory/magic panels, or their pointer targets, and the Ymir captures above
-do not establish those routes. They must be implemented with Nexus-owned data
-and proven hit regions rather than by reusing DM1 panels or guessed
-coordinates.
+These documented controls define the retail interaction contract. Firestaff
+implements the Z mode toggle and logical pointer movement in the captured
+viewport. Inventory/magic panels and pointer targets remain unimplemented;
+they must use Nexus-owned data and proven hit regions rather than DM1 panels
+or guessed coordinates.
 
 ## Firestaff keyboard routing
 
@@ -62,11 +61,17 @@ W/S move forward/backward, A/D and left/right arrows strafe, and Q/E or
 Home/End turn. This is a host keyboard layout; Saturn D-pad left/right turn
 semantics remain specific to a connected Saturn ControlPad.
 
-The retail game tick now accepts only the six basic movement commands
+The retail game tick accepts only the six basic movement commands
 (forward/backward, turn left/right, and strafe left/right) against the
-authenticated DGN grid. Item use, inventory, spells, combat, sensors, doors,
-and level transitions remain fail-closed. Firestaff does not yet implement
-the retail hand-pointer mode or its eight-way cursor movement.
+authenticated DGN grid. In the loaded dungeon, Z toggles a host hand-pointer
+mode. Arrow keys move its logical position in the authenticated DM.BIN
+viewport rectangle; mouse motion positions it directly in that rectangle.
+The hand sprite is sourced from the hash-verified retail ITEM.IBS image 65 and
+palette 6, joined against Ymir `--debug` VDP1 texture capture. Mouse movement
+and the six keyboard movement commands remain available with pointer mode off.
+Pointer clicks and A/B/Y/C/L/R actions remain inert until their retail
+consumers are traced. Item use, inventory, spells, combat, sensors, doors, and
+level transitions remain fail-closed.
 
 In a loaded Nexus dungeon, Space toggles Firestaff's host pause. Ymir evidence
 records that the retail Start button displayed the `PAUSE` overlay; whether
@@ -74,13 +79,14 @@ retail gameplay resumes on a second press remains unverified. Firestaff's host
 pause freezes the session tick and host audio until Space is pressed again.
 This does not reproduce the retail `PAUSE` graphic or menu.
 
-For desktop mouse movement, Firestaff uses the authentic Nexus viewport
-rectangle parsed from `DM.BIN` as a host control surface. Left-click the upper
+With pointer mode off, Firestaff uses the authentic Nexus viewport rectangle
+parsed from `DM.BIN` as a host control surface. Left-click the upper
 left/right thirds to turn, the lower left/right thirds to strafe, and the upper
 or lower center third to move forward or backward. This is a Firestaff desktop
 mapping into the same six keyboard movement commands; it does not claim to
-reproduce Saturn ShuttleMouse or retail hit-table callback behavior. Clicks
-outside that viewport and right-clicks do not enter DM1 gameplay routes.
+reproduce Saturn ShuttleMouse or retail hit-table callback behavior. With
+pointer mode on, mouse motion moves the logical hand pointer and clicks remain
+inert while callback semantics are unresolved.
 
 `scripts/analyze_nexus_mouse_event_crossrefs.py` inventories direct SH-2
 `MOV.L @(disp,PC),Rn` references in the hash-verified retail `DM.BIN`. In the
@@ -105,13 +111,14 @@ unresolved, so this evidence is not enough to implement click actions.
 
 ## Mouse and remaining input work
 
-Nexus has startup pointer handling and desktop mouse clicks mapped to the
-verified basic movement command set. Firestaff still does not have an
-authenticated Nexus gameplay route from pointer coordinates to cursor actions,
-inventory/magic panels, or world interactions. The existing logical
-click-route helpers require pre-resolved targets and do not establish how
-viewport pixels map to Nexus actions. The retail hand cursor and D-pad movement
-are now captured, but the desktop pointer route remains unverified.
+Nexus has startup pointer handling, viewport mouse movement, keyboard
+movement, and the authentic retail cursor sprite in the captured viewport.
+Pointer activation actions are still not bound to retail callback evidence.
+The existing logical click-route helpers require pre-resolved targets and do
+not establish how viewport pixels map to Nexus actions. The orange retail
+cursor and D-pad movement are captured, while desktop mouse movement in
+Firestaff is a host control behavior rather than a claim about Saturn
+ShuttleMouse.
 
 Next work must bind the documented cursor and non-movement controls to
 same-session retail input and state traces. Keep unsupported actions inert

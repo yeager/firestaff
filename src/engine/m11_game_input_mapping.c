@@ -106,12 +106,32 @@ M12_MenuInput M11_TheronNavigationInputFromScancode(int scancode)
 
 M12_MenuInput M11_NexusMovementInputFromScancode(int scancode)
 {
-    /* Nexus gameplay uses the same desktop controls as DM1.  Leave every
+    /* Nexus gameplay uses the same desktop controls as DM1. Leave every
      * scancode to the shared M11 action map: A/D and the arrow keys strafe,
      * while Q/E and Home/End turn.  The Saturn D-pad's left/right turn
      * semantics are not imposed on a desktop keyboard. */
     (void)scancode;
     return M12_MENU_INPUT_NONE;
+}
+
+M12_MenuInput M11_NexusPointerInputFromScancode(int scancode)
+{
+    /* Saturn's D-pad moves the hand pointer in eight directions. Map the four
+     * cardinal host keys directly; diagonal simultaneous-key handling is
+     * resolved at the held-input sampler. */
+    switch ((SDL_Scancode)scancode) {
+        case SDL_SCANCODE_UP: return M12_MENU_INPUT_UP;
+        case SDL_SCANCODE_DOWN: return M12_MENU_INPUT_DOWN;
+        case SDL_SCANCODE_LEFT: return M12_MENU_INPUT_LEFT;
+        case SDL_SCANCODE_RIGHT: return M12_MENU_INPUT_RIGHT;
+        default: return M12_MENU_INPUT_NONE;
+    }
+}
+
+M12_MenuInput M11_NexusPointerToggleInputFromScancode(int scancode)
+{
+    return (SDL_Scancode)scancode == SDL_SCANCODE_Z
+        ? M12_MENU_INPUT_NEXUS_POINTER_TOGGLE : M12_MENU_INPUT_NONE;
 }
 
 M12_MenuInput M11_TheronNavigationInputFromKeycode(int keycode)

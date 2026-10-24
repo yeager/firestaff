@@ -160,6 +160,13 @@ int  M11_Render_PresentIndexedToResolution(const unsigned char* framebuffer,
 int  M11_Render_PresentIndexed(const unsigned char* framebuffer,
                                int logicalWidth,
                                int logicalHeight);
+/* Queue one source-local RGBA layer for the next indexed presentation.
+ * Pixels use RGBA byte order; alpha zero leaves the game pixel unchanged. */
+int  M11_Render_SetNextIndexedRgbaOverlay(const unsigned char* rgba,
+                                          int overlayWidth,
+                                          int overlayHeight,
+                                          int logicalX,
+                                          int logicalY);
 /* DM1 V2.1: Scale2x/EPX-expand an indexed source before the ordinary
  * palette/presentation route. The source buffer is never modified. */
 int  M11_Render_PresentEpxIndexed(const unsigned char* framebuffer,

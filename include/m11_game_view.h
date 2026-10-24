@@ -22,6 +22,7 @@
 #include "dm1_v1_iigs_installation.h"
 #include "dm1_v1_iigs_audio.h"
 #include "nexus_v1_dungeon.h"
+#include "nexus_v1_hud_hit_rects.h"
 #include "nexus_v1_light_runtime.h"
 #include "dm1_v1_vblank_timing.h"
 #include "dm1_v1_text_message_pc34_compat.h"
@@ -1306,6 +1307,13 @@ typedef struct {
         int champion_select_active;
         int champion_cursor;
         int champion_select_frame;
+        /* Retail Z toggles the hand pointer. Click/action routing remains
+         * gated until the Saturn callback owners are traced. */
+        int hand_pointer_active;
+        int hand_pointer_x;
+        int hand_pointer_y;
+        int hand_pointer_position_known;
+        int hand_pointer_repeat_ticks;
         int startup_save_select_active;
         int startup_save_selected_row;
         int startup_save_row_count;
@@ -2359,6 +2367,10 @@ void M11_GameView_Draw(M11_GameViewState* state,
                        unsigned char* framebuffer,
                        int framebufferWidth,
                        int framebufferHeight);
+void M11_GameView_DrawNexusPointerOverlay(const M11_GameViewState* state,
+                                          unsigned char* framebuffer,
+                                          int framebufferWidth,
+                                          int framebufferHeight);
 /* Render ReDMCSB ENTRANCE.C F0439's transient south-facing C255 map into a
  * 224x136 viewport buffer without mutating the loaded campaign map. */
 int M11_GameView_RenderDm1IigsEntranceC255(
