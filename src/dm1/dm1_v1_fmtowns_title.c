@@ -171,10 +171,16 @@ unsigned int dm1_v1_fmtowns_title_vblank_delay_ms(unsigned int ordinal)
 
 unsigned int dm1_v1_fmtowns_door_step_delay_ms(unsigned int ordinal)
 {
+    unsigned int previous_vblank;
+    unsigned int current_vblank;
     if (ordinal == 0u) return 0u;
-    /* ReDMCSB ENTRANCE.C F0438:230-240 calls M526_WaitVerticalBlank once
-     * after each FM Towns door blit. Keep the source cadence at one 60 Hz
-     * blank per step; multiplying by three makes the 31-frame opening take
-     * about 1.55 seconds instead of about 0.52 seconds. */
-    return dm1_v1_fmtowns_title_vblank_delay_ms(ordinal);
+    /* ReDMCSB ENTRANCE.C F0438 documents BUG0_71: one source VBlank is too
+     * short on fast computers, so the entrance door moves too quickly. Keep
+     * the FM Towns presentation at the historical three-VBlank correction
+     * per visible door step (about 1.55 s for all 31 steps at 60 Hz). */
+    previous_vblank = (ordinal - 1u) * 3u;
+    current_vblank = ordinal * 3u;
+    return dm1_v1_fmtowns_title_vblank_delay_ms(previous_vblank + 1u) +
+           dm1_v1_fmtowns_title_vblank_delay_ms(previous_vblank + 2u) +
+           dm1_v1_fmtowns_title_vblank_delay_ms(current_vblank);
 }

@@ -194,12 +194,12 @@ for line in door_frames[1:]:
     if not match:
         raise SystemExit(f"FAIL: missing FM Towns entrance frame timing: {line}")
     door_intervals.append(int(match.group(1)))
-if any(interval < 12 or interval > 55 for interval in door_intervals):
-    raise SystemExit(f"FAIL: FM Towns entrance cadence does not match one 60 Hz VBlank: {door_intervals}")
-if sum(door_intervals) / len(door_intervals) > 35:
-    raise SystemExit(f"FAIL: FM Towns entrance averaged slower than one 60 Hz VBlank: {door_intervals}")
+if any(interval < 45 or interval > 60 for interval in door_intervals):
+    raise SystemExit(f"FAIL: FM Towns entrance cadence does not include the BUG0_71 fast-computer correction: {door_intervals}")
+if not 1450 <= sum(door_intervals) <= 1800:
+    raise SystemExit(f"FAIL: FM Towns entrance opening duration is outside the three-VBlank cadence: {sum(door_intervals)} ms")
 print("PASS: authentic DM1 FM Towns M12 reached the first runtime frame")
-print("PASS: authentic DM1 FM Towns title palette, 60 Hz pacing, master hold, and entrance cadence")
+print("PASS: authentic DM1 FM Towns title palette, 60 Hz pacing, master hold, and corrected entrance cadence")
 PY
     rm -f "$probe_file"
     rm -f "$trace_file"
