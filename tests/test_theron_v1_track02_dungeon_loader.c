@@ -2239,8 +2239,23 @@ static void assert_real_source_pits_fail_closed(
                                 world, world->current_dungeon,
                                 level_index, x, y);
                         if (creature && (creature->flags & THERON_CF_ACTIVE)) {
+                            Theron_V1_Party before_move = world->party;
+                            Theron_V1_Creature before_creature = *creature;
                             world->party = saved_party;
                             world->transition_pending = before_pending;
+                            world->party.leader_x = px;
+                            world->party.leader_y = py;
+                            world->party.leader_dir = (int8_t)dir;
+                            assert(theron_v1_move_party(world, dir) ==
+                                   THERON_MOVE_BLOCKED);
+                            assert(memcmp(&world->party, &before_move,
+                                          sizeof(before_move)) == 0);
+                            assert(memcmp(creature, &before_creature,
+                                          sizeof(before_creature)) == 0);
+                            assert(world->transition_pending == before_pending);
+                            printf("  authentic source pit/co-located creature "
+                                   "blocks movement without combat mutation\n");
+                            exercised_source_pit_move = 1;
                             break;
                         }
                         if (!candidate_reported) {
@@ -2284,6 +2299,94 @@ static void assert_real_source_pits_fail_closed(
     }
     assert(exercised_source_pit_move);
     world->current_level = saved_level;
+}
+
+static unsigned int assert_real_pit_target_events_coalesce(
+    const uint8_t *ud, size_t ud_size,
+    const uint8_t *track02, size_t track02_size,
+    Theron_Track02Variant variant, const char *md5_hex)
+{
+    unsigned int verified = 0u;
+    for (int dungeon = 1; dungeon <= THERON_DUNGEON_COUNT; ++dungeon) {
+        Theron_V1_World *world =
+            (Theron_V1_World *)malloc(sizeof(*world));
+        Theron_DungeonLoadResult result;
+        assert(world != NULL);
+        theron_v1_world_init(world);
+        world->current_dungeon = dungeon;
+        assert(theron_v1_track02_load_full_dungeon_for_variant(
+                   world, dungeon, ud, ud_size, variant, &result) == 0);
+        bind_real_track02_party(world, track02, track02_size, md5_hex);
+        for (unsigned int i = 0; i < world->source_object_count; ++i) {
+            const Theron_V1_SourceObjectRecord *source =
+                &world->source_objects[i];
+            Theron_Actuator actuator;
+            Theron_ActuatorPartyEvent party_event;
+            int trigger_addition = -1;
+            int trigger_party_square = -1;
+            int trigger_direction = -1;
+            if (source->category != THERON_CAT_ACTUATOR ||
+                source->raw_size != 8u || source->dungeon_id != dungeon ||
+                theron_v1_track02_actuator_decode(
+                    source->raw, &actuator) != 0 || actuator.local_effect ||
+                source->level < 0 ||
+                source->level >= THERON_MAX_LEVELS_PER_DUNGEON ||
+                !world->level_loaded[dungeon - 1][source->level])
+                continue;
+            const Theron_V1_Level *level =
+                &world->levels[dungeon - 1][source->level];
+            if (actuator.target_x >= level->width ||
+                actuator.target_y >= level->height ||
+                theron_tile_type(level->source_tiles[actuator.target_y]
+                                                  [actuator.target_x]) !=
+                    THERON_TILE_PIT)
+                continue;
+            for (int addition = 0; addition <= 1 && trigger_addition < 0;
+                 ++addition) {
+                for (int already = 0; already <= 1 &&
+                     trigger_addition < 0; ++already) {
+                    for (int direction = 0; direction < 4; ++direction) {
+                        if (theron_v1_track02_actuator_evaluate_party_event(
+                                &actuator, addition, already,
+                                world->party.champion_count,
+                                (unsigned int)direction, &party_event) == 0 &&
+                            party_event.triggered) {
+                            trigger_addition = addition;
+                            trigger_party_square = already;
+                            trigger_direction = direction;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (trigger_addition < 0) continue;
+            const uint8_t source_tile =
+                level->source_tiles[actuator.target_y][actuator.target_x];
+            for (unsigned int repeat = 0u; repeat < 128u; ++repeat) {
+                assert(theron_v1_world_queue_track02_party_events(
+                           world, source->level, source->x, source->y,
+                           trigger_addition, trigger_party_square,
+                           (unsigned int)trigger_direction) >= 0);
+                unsigned int source_events = 0u;
+                for (unsigned int event_index = 0u;
+                     event_index < world->source_actuator_event_count;
+                     ++event_index) {
+                    const Theron_V1_SourceActuatorEvent *event =
+                        &world->source_actuator_events[event_index];
+                    source_events += event->dungeon_id == dungeon &&
+                        event->level == source->level &&
+                        event->source_ref == source->source_ref &&
+                        event->source_index == source->source_index;
+                }
+                assert(source_events == 1u);
+                assert(level->source_tiles[actuator.target_y]
+                                          [actuator.target_x] == source_tile);
+            }
+            ++verified;
+        }
+        free(world);
+    }
+    return verified;
 }
 
 static void assert_real_door_source_gate_survives_save(
@@ -6782,6 +6885,11 @@ int main(void) {
             raw = load_raw_bytes(jp_path, &raw_size);
             assert(raw != NULL);
             test_all_jp_dungeons(jp_ud, jp_ud_size, raw, raw_size);
+            printf("  authentic JP pit-target party actuator events coalesced: %u\n",
+                   assert_real_pit_target_events_coalesce(
+                       jp_ud, jp_ud_size, raw, raw_size,
+                       THERON_TRACK02_VARIANT_JP_BIN,
+                       THERON_TRACK02_MD5_JP_BIN));
             test_authentic_jp_akutuba_coordinate_teleporter(
                 jp_ud, jp_ud_size, raw, raw_size);
             test_authentic_coordinate_teleporter_movement_corpus(
@@ -6820,6 +6928,11 @@ int main(void) {
     raw = load_raw_bytes(path, &raw_size);
     assert(raw != NULL);
     test_all_dungeons(ud, ud_size, raw, raw_size);
+    printf("  authentic US pit-target party actuator events coalesced: %u\n",
+           assert_real_pit_target_events_coalesce(
+               ud, ud_size, raw, raw_size,
+               THERON_TRACK02_VARIANT_US_BIN,
+               THERON_TRACK02_MD5_US_BIN));
     test_authentic_coordinate_teleporter_movement_corpus(
         ud, ud_size, raw, raw_size, 2);
     if (g_jp_stair_party_actuator_census_valid) {

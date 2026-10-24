@@ -17,6 +17,21 @@ confirms a clean native build and bounded startup/data admission; it does not
 confirm interactive gameplay, dungeon drawing, or parity. The isolated source
 and build directory was removed from `/dev/shm` after the three loops.
 
+The Oct. 24 pit safety change was then built from a checksum-verified source
+snapshot on TRV2. The real-media `theron_v1_track02_dungeon_loader` test passed
+three loops against authentic US Track 02 MD5
+`f23601102138f87c33025877767ebf76` and JP Track 02 MD5
+`b7afb338ad31be1025b53f9aff12d73a`. Each loop found 18 authentic pit-target
+party-actuator occurrences per edition and retriggered each 128 times; the
+queue retained one equivalent pending occurrence and the target source tile
+stayed unchanged. The movement guard is in Firestaff's native C path and runs before
+creature combat. No authentic active creature was co-located with a pit, so
+that conditional interaction remains untested. The full native Firestaff
+binary was also rebuilt and launched three times with `--debug
+--boot-probe --theron-native jp`; each reached `theron-runtime`, but reported
+`frames=0` and `runtimeTick=0`. This demonstrates startup only, not gameplay,
+pit semantics, or dungeon rendering parity.
+
 Three current-source Firestaff `--debug` runs on TRV2 passed with authentic JP
 Rev. 1 Track 02 (MD5 `b7afb338ad31be1025b53f9aff12d73a`) through the default
 `FIRESTAFF_DATA` directory and `--theron-native jp`. Each reached

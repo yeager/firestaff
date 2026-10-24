@@ -34,9 +34,14 @@ Both read-only movement queries and party movement block pit tiles whenever
 the current level is source-authenticated, independent of the raw attribute
 bits and levitation. No party position, damage, or transition state is
 committed. Source-less fixture probes retain their separate legacy behavior.
-Source-backed floor-actuator events targeting pits remain queued without
-changing the runtime tile; the decoded record and raw attribute bits are
-retained, but the original actuator consumer is not inferred.
+Source-backed floor-actuator events targeting pits remain unresolved without
+changing the runtime tile; repeated pending events from the same authenticated
+equivalent envelopes from the same authenticated source occurrence are
+coalesced to keep the bounded event queue from growing without limit. The
+decoded record and raw attribute bits are retained, but the
+original actuator consumer is not inferred. Movement checks the source-backed
+pit gate before creature combat so a co-located creature cannot mutate combat
+state or allow entry through that unresolved route.
 The real-media loader test emits one first floor-adjacent pit coordinate per
 edition and dungeon, including the raw tile byte, level-array slot, and opaque
 header-level value. These coordinates help target emulator capture only; they

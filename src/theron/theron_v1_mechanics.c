@@ -459,23 +459,7 @@ static int queue_party_pose_change_events(
     int new_level, int new_x, int new_y, unsigned int new_direction,
     int new_party_square)
 {
-    unsigned int upper_bound = 0u;
     const unsigned int queued_before = world->source_actuator_event_count;
-
-    for (unsigned int i = 0; i < world->source_object_count; ++i) {
-        const Theron_V1_SourceObjectRecord *source = &world->source_objects[i];
-        if (source->category != THERON_CAT_ACTUATOR || source->raw_size != 8u ||
-            source->dungeon_id != world->current_dungeon)
-            continue;
-        if (source->level == old_level &&
-            source->x == old_x && source->y == old_y)
-            ++upper_bound;
-        if (source->level == new_level &&
-            source->x == new_x && source->y == new_y)
-            ++upper_bound;
-    }
-    if (upper_bound > THERON_MAX_SOURCE_ACTUATOR_EVENTS - queued_before)
-        return 0;
 
     /* CLIKMENU.C F0365 publishes removal before addition.  Its normal
      * removal call still reports partySquare=1; the destination addition
@@ -486,8 +470,7 @@ static int queue_party_pose_change_events(
         theron_v1_world_queue_track02_party_events(
             world, new_level, new_x, new_y, 1, new_party_square,
             new_direction) < 0) {
-        /* The capacity preflight makes this unreachable for valid loaded
-         * records.  Keep any failure from publishing a partial queue. */
+        /* Keep queue failure from publishing only half of a pose change. */
         while (world->source_actuator_event_count > queued_before) {
             --world->source_actuator_event_count;
             memset(&world->source_actuator_events[
@@ -732,6 +715,13 @@ static int move_party_internal(Theron_V1_World *world, int direction) {
     if (tile == THERON_SQUARE_TYPE7_UNRESOLVED) {
         return THERON_MOVE_BLOCKED;
     }
+    /* Keep the production movement path fail-closed before creature combat;
+     * the source-backed pit consumer remains unresolved (see
+     * docs/source-lock/theron-disassembly/theron-pit-gate-evidence-gap-20261024.md). */
+    if (tile == THERON_SQUARE_PIT &&
+        theron_v1_source_level_needs_stat_consumer(world)) {
+        return THERON_MOVE_BLOCKED;
+    }
 
     /* ── Creature collision (combat) ── */
     {
@@ -824,10 +814,6 @@ static int move_party_internal(Theron_V1_World *world, int direction) {
 
     /* ── Special squares: pit ── */
     if (tile == THERON_SQUARE_PIT) {
-        /* The authentic Theron pit consumer and fall destination are
-         * unresolved, so no source-backed pit form may mutate the party. */
-        if (theron_v1_source_level_needs_stat_consumer(world))
-            return THERON_MOVE_BLOCKED;
         bool fell = theron_v1_pit_check_and_trigger(world, nx, ny);
         if (fell) {
             theron_v1_apply_post_move_effects(world);

@@ -1,3 +1,23 @@
+## 2026-10-24 — native pit movement and pending-event safety
+
+The authentic source-backed pit gate is now checked before creature combat in
+both movement admission and the read-only route. The unresolved source pit
+consumer and fall destination remain disabled; see
+`docs/source-lock/theron-disassembly/theron-pit-gate-evidence-gap-20261024.md`.
+Equivalent pending floor-party events targeting an authenticated pit are
+coalesced by source occurrence and event fields, with the target tile left
+unchanged. An authentic US/JP Track 02 regression checks repeated dispatch
+and conditionally checks a real active creature co-located with a pit. A
+checksummed source snapshot built the focused regression and native Firestaff executable on
+TRV2. Three real-media test loops passed; each found 18 pit-target actuator
+occurrences in both US and JP data and repeated each 128 times while checking
+one pending event and an unchanged source tile. No active creature was
+co-located with a pit in those authentic datasets, so that conditional case
+was not exercised. Three native JP `--debug --boot-probe` runs reached
+`theron-runtime` with 291 source objects, four dungeon levels and 455
+nonzero source tiles; `frames=0` and `runtimeTick=0` remain a startup result,
+not gameplay or visual parity.
+
 ## 2026-10-24 — native default-data Theron launch verified
 
 The native `--theron-native jp` path could dereference a null explicit data
@@ -3598,9 +3618,10 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 ## 2026-08-13 — Source-bound pit blocks without fixture damage
 
 - ✅ Query and movement block source-backed Track 02 pits before applying host
-  damage or changing the party position. Source-backed floor-actuator events
-  targeting pits remain queued without changing the runtime tile. Source-less
-  probes retain a separate fixture path.
+  damage or changing the party position. The native movement gate also runs
+  before creature combat. Equivalent pending floor-actuator events targeting
+  pits are coalesced by source occurrence without changing the runtime tile.
+  Source-less probes retain a separate fixture path.
 - 🔒 The earlier `$C332-$C347` OPEN/IMAGINARY/levitation attribution has been
   withdrawn: the checked-in evidence does not bind that address range to the
   original Theron pit consumer. The authenticated Track 02 data format

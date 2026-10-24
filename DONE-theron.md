@@ -1,5 +1,25 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-24 — native pit guard and unresolved event queue bounded
+
+The native movement path checks authenticated source pits before creature
+combat, matching the read-only admission gate. It leaves pit and fall
+semantics unresolved. Repeated pending floor-party events targeting an
+authenticated pit are coalesced only when the source occurrence and event
+fields match, without changing the source or runtime tile.
+
+On TRV2, a checksummed source snapshot built the focused test and the native
+Firestaff executable. The real-media test passed three loops; each loop found
+18 pit-target actuator occurrences in both US and JP Track 02 and repeated
+each trigger 128 times while asserting exactly one pending occurrence event
+and an unchanged source tile. No authentic active creature shared a pit tile,
+so the conditional no-combat mutation check was not exercised. Three native
+JP `--debug --boot-probe` runs reached `theron-runtime` with 291 source
+objects, four loaded dungeon levels, and 455 nonzero source tiles. They
+reported `frames=0` and `runtimeTick=0`; startup/data admission is not gameplay
+or presentation parity. The remaining original pit consumer, fall destination,
+combat interaction, and dungeon rendering are still unresolved.
+
 ## 2026-10-24 — fresh native debug build reaches JP runtime
 
 Built Firestaff from a clean clone of commit `2748eed3db4a3a9d7b1db2e1522b050440b3e0a2`
@@ -7461,7 +7481,8 @@ metadata and locally staged CD-DA tracks.
   receipt binds it to the pit path.
 - Source-backed Track 02 pit-family tiles now remain blocked for every
   attribute and levitation state. Source-backed floor-actuator events
-  targeting pits remain queued without tile mutation. Source-less fixture
+  targeting pits remain unresolved and are coalesced by source occurrence,
+  without tile mutation. Source-less fixture
   behavior is kept separate. This avoids promoting DM1/CSB movement logic
   into Theron.
 - The real-media `theron_v1_track02_dungeon_loader` CTest passed three
