@@ -1,5 +1,28 @@
 # Theron Capture Readiness
 
+## 2026-10-24 — selected title-menu action hold remains unverified
+
+The user reports that starting from the original game's menu requires holding
+the selected action for several seconds. Treat this as capture procedure to
+verify, not as established retail timing: DMWeb's manual identifies Button I
+as the selector but does not specify a multi-second hold. Existing JP
+`pce_fast` captures reached the title menu after a four-second RUN hold and
+advanced through New Game/File 1 with ordinary Space/Button I. The latest US
+interactive session used the normal `pce` module and remained at the authentic
+System Card 3.0 `JUST A MOMENT...` screen; it never exposed the Theron menu and
+therefore did not test the requested hold. Its BRAM and pre-existing states
+were left unchanged. Next capture: use an isolated authenticated `pce_fast`
+profile, confirm the menu visually, hold the highlighted Button I action for
+3–5 seconds, and retain same-session input and screen receipts. Do not treat a
+System Card screen or a prior JP short-press capture as evidence for the US
+hold or full-game parity.
+
+Reference context: [DMWeb Theron's Quest edition records](DMWEB_REFERENCE.md)
+separate Japanese and US media and include original menu/gameplay references;
+[Greatstone SCK](http://greatstone.free.fr/dm/) is a secondary extraction and
+data-format reference. Neither substitutes for an authenticated runtime
+capture of the menu input.
+
 ## 2026-09-25 — JP cold-start capture is System Card-only
 
 The hash-locked authentic JP Rev. 1 cold full-disc capture has a VDC-I/O stream

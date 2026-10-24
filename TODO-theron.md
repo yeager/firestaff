@@ -16,6 +16,14 @@
   visible, then hold its selected action and capture the file and dungeon
   screens with same-session controller and RAM receipts. Do not infer pit
   semantics from this boot attempt.
+- Reference review: DMWeb's Theron PC Engine/TurboGrafx edition page provides
+  JP/US provenance and original menu/gameplay references; the retail manual
+  identifies Button I as the menu selector but does not specify a long hold.
+  Greatstone SCK is used as a secondary extraction/data-format reference only.
+  Neither source establishes the reported 3–5 second timing; retain that as
+  an operator-provided capture instruction until verified in a visible,
+  authenticated menu session. See `docs/THERON_CAPTURE_READINESS.md` and
+  `docs/theron_input.md`.
 
 ## 2026-10-24 — require authentic-media and debug receipts in paired captures
 

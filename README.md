@@ -21,8 +21,8 @@ Theron's Quest.
 ## Current status
 
 The table was last fully reviewed on 2026-09-12; the Theron's Quest row was
-updated on 2026-10-03. It reports what has been exercised with real media, not
-a claim of complete game parity.
+updated on 2026-10-24. It reports what has been exercised with real media,
+not a claim of complete game parity.
 
 Firestaff detects real media and exposes only paths with a verified handoff; it
 never borrows data from another edition to fill a gap. The detailed status is kept in
@@ -38,7 +38,7 @@ separates source/disassembly evidence, real-media receipts and open routes.
 | Chaos Strikes Back | Amiga, Atari ST and FM Towns startup routes have real-media coverage. FM Towns uses its own authenticated entrance palette and MINI.DAT bootstrap state. Campaign, saves and presentation parity are still being completed. |
 | Dungeon Master II: Skullkeep | DOS, Amiga, FM Towns and Macintosh have real-media startup and selected runtime coverage. Amiga reaches its initial GDAT-backed M11 frame through the normal start menu with source movement covered. Broader input, save, native display/audio and dungeon-composition parity remain open per edition. |
 | DM Nexus | Saturn disc parsing and native MAPD title rendering work from the original CUE/BIN; later menu, HUD and dungeon presentation remain capture-gated. |
-| Theron's Quest | Authentic US and Japanese Track 02 media reach bounded native routes, and source-only loaders verify all seven dungeons in both regions. In the Japanese emulator route, LOAD GAME returns to the Akutuba selection map, but its 2-KiB BRAM matches the known empty menu-only image, so native save persistence is unverified. Full presentation, transitions and gameplay remain evidence-gated. |
+| Theron's Quest | Authentic US and Japanese Track 02 media reach bounded native routes, and source-only loaders verify all seven dungeons in both regions. A fresh US emulator title/menu capture is still open: the current session remained at the System Card screen, and the requested multi-second hold on the selected menu action has not yet been verified. In the earlier Japanese emulator route, LOAD GAME returned to the Akutuba selection map, but its 2-KiB BRAM matched the known empty menu-only image, so native save persistence is unverified. Full presentation, transitions and gameplay remain evidence-gated. |
 
 ### Dungeon Master II: Skullkeep
 
@@ -312,8 +312,12 @@ tests when those corpora are installed.
 When a complete CUE is present, native startup may bind matching original
 Track 01 CDDA. A loose Track 02 never borrows audio from an unrelated file.
 
-The title accepts Enter, followed by the stage and Soul Room selections. The
-Japanese Rev 1 CUE then reaches the bounded native Akutuba runtime through
+In Firestaff's native route, Enter advances the title and accepts stage and
+Soul Room selections. This describes Firestaff input, not the original
+emulator's button-hold timing. For original-menu capture guidance and the
+current unverified multi-second selection hold, see
+[Theron input notes](docs/theron_input.md). The Japanese Rev 1 CUE then
+reaches the bounded native Akutuba runtime through
 hash-verified Track 02 records. For a headless, reproducible CLI receipt, use:
 
 ```bash

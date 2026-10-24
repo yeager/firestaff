@@ -219,12 +219,21 @@ Example PCE input through the host:
 
 ```bash
 THERON_CAPTURE_SDL_VIDEODRIVER=cocoa \
-THERON_CAPTURE_HOST_KEY_SEQUENCE='run@8,i@480,i@900' \
-THERON_CAPTURE_HOST_KEY_HOLDS=4,1,1 \
+THERON_CAPTURE_HOST_KEY_SEQUENCE='run@8' \
+THERON_CAPTURE_HOST_KEY_HOLDS=4 \
 THERON_CAPTURE_HOST_KEY_HOLD=1 \
 THERON_CAPTURE_INPUT_ROUTE=pid \
 scripts/capture_theron_mednafen_live_trace.sh
 ```
+
+This example only holds RUN to leave the System Card startup. Do not schedule
+the title/menu Button I sequence blindly: first confirm that the original
+Theron menu is visibly present, then hold the selected Button I action for
+3–5 seconds as requested by the operator and record the resulting screen. The
+multi-second selection timing is not yet independently confirmed; see
+[`THERON_CAPTURE_READINESS.md`](THERON_CAPTURE_READINESS.md). Greatstone and
+DMWeb provide edition, manual and data-extraction context, not proof that a
+particular emulator input reached a menu consumer.
 
 For a reproducible test without Quartz, the corresponding PCE buttons may be
 sent through the instrumented scripted-input route, but that is an emulator
@@ -352,8 +361,10 @@ Right / D:      turn right
 
 Held keys are sampled at Theron's input boundary rather than relying on
 macOS/SDL autorepeat. A short touch corresponds to Button I and a long touch
-to Button II. Startup's own buttons use the same Button I/II route, so the
-control scheme does not need to change between menu, handoff and dungeon.
+to Button II. This paragraph describes Firestaff's native bindings. For an
+original emulator capture, the menu's selected Button I action may require the
+operator-reported 3–5 second hold; this is still awaiting a fresh visible
+capture and must not be inferred from Firestaff's input routing.
 
 With `-GAMEPORT0 KEY`, Tsugaru uses keyboard emulation for gamepad 0:
 

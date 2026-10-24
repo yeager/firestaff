@@ -20,6 +20,20 @@ input paths that do not populate scancodes.
 
 ## Startup menu
 
+These are Firestaff's native-runtime bindings. They must not be read as a
+verified timing specification for the original PC Engine menu. For original
+Mednafen captures, first hold RUN until the Theron title menu is visibly
+present. Then navigate to the desired entry and hold its Button I selection
+for several seconds (use the operator-requested 3–5 second window) before
+concluding that the selection failed. The latest US `pce` session did not
+reach the title menu, so it did not test this action. Prior JP `pce_fast`
+captures advanced with ordinary Space/Button I; a fresh capture still needs
+to verify the longer hold explicitly. Keep this emulator procedure separate
+from Firestaff's native key handling and from the retail manual, which
+documents Button I as the menu selection control but does not specify a
+multi-second hold. See [DMWeb and Greatstone references](DMWEB_REFERENCE.md)
+and the dated evidence in [TODO-theron.md](../TODO-theron.md).
+
 | Action              | Keys                        |
 |---------------------|-----------------------------|
 | Advance from title  | Return, Space               |

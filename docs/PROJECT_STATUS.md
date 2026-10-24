@@ -1,6 +1,6 @@
 # Firestaff project status
 
-**Last full review: 2026-09-12; Theron's Quest updated: 2026-10-03.** This page
+**Last full review: 2026-09-12; Theron's Quest updated: 2026-10-24.** This page
 is the concise status source for the README and wiki. The full documentation
 map is in [`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md).
 
@@ -13,7 +13,7 @@ source audits and capture receipts remain in the linked game documentation.
 | Chaos Strikes Back | Verified bounded real-media routes; active hardening | Atari STX 50 Hz title-to-FTLCODE/runtime route, start-menu CLI, Amiga and FM Towns bounded native routes; FM Towns C28 entrance palette and MINI.DAT bootstrap state | DSA/save corpus and wider campaign/capture evidence |
 | Dungeon Master II: Skullkeep | Verified bounded real-media routes; active hardening | M12 source-owner selection, English/French DOS menu-to-runtime routes, Amiga title/New Game/runtime, FM Towns in-memory title/menu/runtime slices, source-owned viewport/HUD and focused mechanics | Edition-matched title palette/timing, input, audio and dungeon-composition parity across editions |
 | DM Nexus | Active real-data bring-up | Saturn DMDF/DGN data, CUE-owned CDDA and STABG source selection, native retail MAPD title rendering, captured NBG1 palette-bank/origin and raw bitmap/CRAM decode receipts, world/render/save/mechanics slices and V2 presentation | Menu/face, HUD and dungeon source-to-VDP material semantics, native event/audio playback and full playability |
-| Theron's Quest | Verified bounded JP runtime and US routes; active real-media bring-up | JP Rev 1 title → stage → Soul Room → Akutuba runtime; source-only loading of all seven JP dungeons from authentic raw BIN and CUE-projected ISO; US Track 02 starts from direct CLI and the no-game M12 main menu reaches its bounded runtime; CloneCD ZIP startup and MODE1/2048 ISO Akutuba forcefield handoff; raw/assembled-ISO equivalence for all 34 maps and 2,269 linked source-object records in each region; the separate world ledger retains 2,266 ground-reference occurrences; JP/US media identity and level framing | Later campaign progression, save-body semantics, original presentation, JP initial party pose/map join and end-to-end gameplay |
+| Theron's Quest | Verified bounded JP runtime and US routes; active real-media bring-up | JP Rev 1 title → stage → Soul Room → Akutuba runtime; source-only loading of all seven JP dungeons from authentic raw BIN and CUE-projected ISO; US Track 02 starts from direct CLI and the no-game M12 main menu reaches its bounded runtime; CloneCD ZIP startup and MODE1/2048 ISO Akutuba forcefield handoff; raw/assembled-ISO equivalence for all 34 maps and 2,269 linked source-object records in each region; the separate world ledger retains 2,266 ground-reference occurrences; JP/US media identity and level framing | A fresh US original-emulator capture has not passed the System Card screen; the user-reported 3–5 second hold on the selected title-menu action remains to be verified. Also open: later campaign progression, save-body semantics, original presentation, JP initial party pose/map join and end-to-end gameplay |
 
 ## Completion reporting
 
@@ -30,7 +30,7 @@ real-media evidence.
 | Chaos Strikes Back | Verified bounded routes on Atari ST, Amiga and FM Towns; no original DOS/PC release. | [CSB platform rows](PLATFORM_STATUS.md#chaos-strikes-back) |
 | Dungeon Master II: Skullkeep | Verified bounded routes on DOS, Amiga, FM Towns and the listed Macintosh editions. | [DM2 platform rows](PLATFORM_STATUS.md#dungeon-master-ii-the-legend-of-skullkeep) |
 | DM Nexus | Verified bounded Japanese Saturn route, not production gameplay. The measured implementation coverage is documented separately. | [Nexus platform row](PLATFORM_STATUS.md#dm-nexus), [Nexus completion](NEXUS_COMPLETION.md) |
-| Theron's Quest | JP has a verified bounded runtime route and an observed LOAD-menu return to dungeon selection, but its BRAM matches the known empty menu-only image, so native save persistence is unproven; US has a verified authentic Continue-to-dungeon-2 native route. Neither establishes complete gameplay or original-emulator parity. | [Theron platform rows](PLATFORM_STATUS.md#therons-quest) |
+| Theron's Quest | JP has a verified bounded runtime route and an observed LOAD-menu return to dungeon selection, but its BRAM matches the known empty menu-only image, so native save persistence is unproven; US has a verified authentic Continue-to-dungeon-2 native route. The newest US emulator attempt remained on the System Card screen; the selected-menu-action hold has not been verified. These routes do not establish complete gameplay or original-emulator parity. | [Theron platform rows](PLATFORM_STATUS.md#therons-quest) |
 
 Nexus is the sole exception with an explicitly defined numeric measurement:
 44.0% implementation coverage across its six measured domains, 33.1% for its

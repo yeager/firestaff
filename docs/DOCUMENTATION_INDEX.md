@@ -66,6 +66,8 @@ research and must not be copied into current status or wiki pages.
 - [External preservation archive](PRESERVATION_ARCHIVE.md) — moved historical runs and checksum manifest
 - [DMWeb and Greatstone references](DMWEB_REFERENCE.md) — external provenance index
 - [Theron real-data inventory](THERON_REALDATA_INVENTORY.md) — Track 02/19 media identities and placeholder boundaries
+- [Theron input notes](theron_input.md) — native controls and the separate, unverified original-emulator menu-hold procedure
+- [Theron capture readiness](THERON_CAPTURE_READINESS.md) — authenticated capture requirements and current title-menu input blocker
 
 ## Wiki map
 
@@ -83,7 +85,7 @@ wiki and are copied by `scripts/sync_wiki.sh` during release work.
 - **CSB:** [technical reference](wiki/CSB-Technical-Reference.md), [DSA and saves](wiki/CSB-DSA-and-Save-Internals.md), [FM Towns guide](wiki/CSB-FMTowns-Guide.md), [reverse engineering](wiki/CSB-Reverse-Engineering.md)
 - **DM2:** [technical reference](wiki/DM2-Technical-Reference.md), [GDAT internals](wiki/DM2-GDAT-Internals.md), [reverse engineering](wiki/DM2-Reverse-Engineering.md), [platform status](PLATFORM_STATUS.md)
 - **Nexus:** [technical reference](wiki/Nexus-Technical-Reference.md), [DGN/PRS3](wiki/Nexus-DGN-and-PRS3-Internals.md), [SAL/MAP](wiki/Nexus-SAL-MAP-Internals.md), [reverse engineering](wiki/Nexus-Reverse-Engineering.md)
-- **Theron:** [technical reference](wiki/Therons-Quest-Technical-Reference.md), [Track 02 internals](wiki/Therons-Quest-Track02-Internals.md), [reverse engineering](wiki/Therons-Quest-Reverse-Engineering.md)
+- **Theron:** [technical reference](wiki/Therons-Quest-Technical-Reference.md), [Track 02 internals](wiki/Therons-Quest-Track02-Internals.md), [reverse engineering](wiki/Therons-Quest-Reverse-Engineering.md), [input notes](theron_input.md), [capture readiness](THERON_CAPTURE_READINESS.md)
 
 ### Shared pages
 
