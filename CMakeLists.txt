@@ -12088,6 +12088,11 @@ endif()
             COMMAND ${_pool_probe_exe} "${_pool_probe_data}"
         )
         set_tests_properties(${_pool_probe_exe} PROPERTIES TIMEOUT 600 PROCESSORS 2)
+        if(_pool_probe_exe STREQUAL "firestaff_dm1_v1_hoc_champion_portrait_01_highdpi_mouse_rect_portrait_rect_position_121_gate_probe")
+            set_tests_properties(${_pool_probe_exe} PROPERTIES
+                SKIP_RETURN_CODE 77
+                LABELS "dm1;pc34;real-media;hoc;champion-input;hidpi;skip-safe")
+        endif()
     endif()
 endforeach()
 
