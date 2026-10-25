@@ -55193,6 +55193,34 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_input_remap_roundtrip.c"
     )
 endif()
 
+# Nexus keyboard and hand-pointer host-input contract. Nexus movement keys
+# defer to the shared M11 action map (the same desktop mapping as DM1), while
+# Z and the four arrow keys are reserved for explicit pointer controls.
+# This data-free regression does not emulate or invent retail game content.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_desktop_input_mapping.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/m11_game_input_mapping.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/input_remap_m11.c")
+    add_executable(test_nexus_desktop_input_mapping
+        tests/test_nexus_desktop_input_mapping.c
+        src/engine/m11_game_input_mapping.c
+        src/engine/input_remap_m11.c
+    )
+    target_include_directories(test_nexus_desktop_input_mapping PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_nexus_desktop_input_mapping PRIVATE SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_nexus_desktop_input_mapping PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME nexus_desktop_input_mapping
+        COMMAND test_nexus_desktop_input_mapping
+    )
+    set_tests_properties(nexus_desktop_input_mapping PROPERTIES
+        LABELS "nexus;m11;input;keyboard;pointer;tier2"
+    )
+endif()
+
 # M12 gamepad default mapping / axis processing gate. This pins the
 # controller contract used by the M11 runtime SDL gamepad bridge: D-pad
 # movement/turning, shoulders for strafe, face buttons for accept/back/action,

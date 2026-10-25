@@ -11947,22 +11947,11 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     const Nexus_HitRect *pad =
                         &gameView->nexusEngine->hud_hit_rects[
                             NEXUS_HIT_MOVEMENT_PAD];
-                    if (mappedX >= pad->x1 && mappedX < pad->x2 &&
-                        mappedY >= pad->y1 && mappedY < pad->y2) {
-                        const int width = pad->x2 - pad->x1;
-                        const int height = pad->y2 - pad->y1;
-                        const int column = ((mappedX - pad->x1) * 3) / width;
-                        const int row = ((mappedY - pad->y1) * 2) / height;
-                        M12_MenuInput movement = M12_MENU_INPUT_NONE;
-                        if (row == 0) {
-                            movement = column == 0 ? M12_MENU_INPUT_TURN_LEFT
-                                : column == 1 ? M12_MENU_INPUT_UP
-                                              : M12_MENU_INPUT_TURN_RIGHT;
-                        } else {
-                            movement = column == 0 ? M12_MENU_INPUT_STRAFE_LEFT
-                                : column == 1 ? M12_MENU_INPUT_DOWN
-                                              : M12_MENU_INPUT_STRAFE_RIGHT;
-                        }
+                    const M12_MenuInput movement =
+                        M11_NexusMovementPadInputAt(
+                            mappedX, mappedY, pad->x1, pad->y1,
+                            pad->x2, pad->y2);
+                    if (movement != M12_MENU_INPUT_NONE) {
                         *gameViewResult = M11_GameView_HandleInput(
                             gameView, movement);
                         if (*gameViewResult != M11_GAME_INPUT_IGNORED) {
@@ -12611,19 +12600,11 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     const Nexus_HitRect *pad =
                         &gameView->nexusEngine->hud_hit_rects[
                             NEXUS_HIT_MOVEMENT_PAD];
-                    if (mappedX >= pad->x1 && mappedX < pad->x2 &&
-                        mappedY >= pad->y1 && mappedY < pad->y2) {
-                        const int width = pad->x2 - pad->x1;
-                        const int height = pad->y2 - pad->y1;
-                        const int column = ((mappedX - pad->x1) * 3) / width;
-                        const int row = ((mappedY - pad->y1) * 2) / height;
-                        const M12_MenuInput movement = row == 0
-                            ? (column == 0 ? M12_MENU_INPUT_TURN_LEFT
-                               : column == 1 ? M12_MENU_INPUT_UP
-                                             : M12_MENU_INPUT_TURN_RIGHT)
-                            : (column == 0 ? M12_MENU_INPUT_STRAFE_LEFT
-                               : column == 1 ? M12_MENU_INPUT_DOWN
-                                             : M12_MENU_INPUT_STRAFE_RIGHT);
+                    const M12_MenuInput movement =
+                        M11_NexusMovementPadInputAt(
+                            mappedX, mappedY, pad->x1, pad->y1,
+                            pad->x2, pad->y2);
+                    if (movement != M12_MENU_INPUT_NONE) {
                         *gameViewResult = M11_GameView_HandleInput(
                             gameView, movement);
                         if (*gameViewResult != M11_GAME_INPUT_IGNORED)
