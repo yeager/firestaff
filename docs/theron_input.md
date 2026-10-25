@@ -45,12 +45,12 @@ the dated evidence in [TODO-theron.md](../TODO-theron.md).
 
 | Action              | Keys                        |
 |---------------------|-----------------------------|
-| Advance from title  | Return, Space               |
+| Advance from title  | Z, Return, Space            |
 | Navigate menu       | Up/Down Arrow, W/S          |
-| Select stage        | Return, Space               |
-| Select/deselect hero| Return, Space               |
-| Enter forcefield    | Return, Space               |
-| Go back             | Escape                      |
+| Select stage        | Z, Return, Space            |
+| Select/deselect hero| Z, Return, Space            |
+| Enter forcefield    | Z, Return, Space            |
+| Go back             | X, Escape                   |
 
 ## In-dungeon
 
@@ -70,6 +70,7 @@ actuator timing or retail queue capacity; see the 2026-10-24 entry in
 | Turn left      | Q, Home, keypad 4                 |
 | Turn right     | E, End, keypad 6                  |
 | Wait (tick)    | Z, Space, Return                  |
+| Back/cancel    | X, Escape                          |
 | Next champion  | Tab                               |
 | Pick up facing item | G                            |
 | Select next source item | I                         |
