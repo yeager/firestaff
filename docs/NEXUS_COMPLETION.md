@@ -2,7 +2,7 @@
 
 ## NBG1 capture-only tile-fetch address correction — 2026-10-24
 
-Open PR #19 corrects Saturn's NBG1 capture decoder to calculate the name-table
+Merged PR #19 corrects Saturn's NBG1 capture decoder to calculate the name-table
 address in 16-bit words, apply the 18-bit word-address wrap, then convert to
 byte addressing. Character numbers use Saturn's 32-byte stride for both 4bpp
 and 8bpp paths. Against an authentic Japanese startup frame, MAP1A/MAP1B at
