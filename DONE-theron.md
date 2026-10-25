@@ -1,5 +1,27 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-25 — make SDL item assertions independent of host language
+
+The authentic USA SDL event test now selects `--lang en` because its item
+trace assertions compare localized action labels. On a Swedish host the
+three actions succeeded but emitted `FÖREMÅL`, failing the English `ITEM`
+assertion. All seven event routes passed on the Linux build host with the
+USA Track 02 after fixing the language selection, including the added side
+steps, left turn, champion selection and wait actions. This verifies input
+and item state handling, not native rendering parity.
+
+## 2026-10-25 — verify Theron mouse item actions in the SDL loop
+
+The normal `theron_v1_sdl_input_events` path now picks up the authentic USA
+level-0 SANDALS, selects the same source-backed item again and drops it with
+three mouse-panel clicks. Theron's `--debug` SDL pointer trace includes the
+mapped source-space position and the actual action result, so the regression
+checks each event rather than inferring success from the party's final pose.
+The focused test passed three consecutive loops on TRV2 against authentic
+`TQUS02.bin` (MD5 `f23601102138f87c33025877767ebf76`). This verifies the native
+host panel only; direct world clicks and state-driven native rendering remain
+open.
+
 ## 2026-10-25 — verify native Theron mouse-panel SDL dispatch
 
 `theron_v1_sdl_input_events` now drives clicks through the regular SDL event
