@@ -1,6 +1,6 @@
 # Five-game startup support gap analysis
 
-Reviewed against `origin/main` at `61b81cb54` on 2026-10-25. The repository
+Reviewed against `origin/main` at `a42988705` on 2026-10-25. The repository
 contains authentic-media route checks for all five games, but “available,”
 “selected,” “handed off,” and “entered a playable runtime” are separate states.
 The current evidence does not establish complete five-game startup support.
@@ -37,17 +37,26 @@ The current evidence does not establish complete five-game startup support.
 
 ## Launcher scan responsiveness
 
-The latest recorded full-media scan took 31.13 seconds cold on one Mac16,10
-host and 8.54–8.70 seconds across three warm repeats. The collection contained
-425 files / 4.3 GiB; all five games were READY on warm scans. A source sample
-found repeated CSB Amiga package/archive admission work. Reusing an already
-hash-verified same-container match reduced the same host's measured cold time
-to 27.86 seconds and warm median to 8.57 seconds, but cold-cache conditions
-were uncontrolled and the earlier comparison had one sample. The first
-selectable menu therefore still has a measurable scan delay, and the observed
-gain is preliminary rather than a cross-platform performance claim. See the
-latest scan profile in [`TODO.md`](../TODO.md) and the bounded reuse logic in
-[`asset_status_m12.c`](../src/shared/asset_status_m12.c).
+The latest recorded full-media scan took 26.41 seconds on one Mac16,10 host
+with an isolated user cache; the OS file-cache state was uncontrolled. It used
+the installed 425-file / 4.3 GiB collection, found all five games READY, and
+reported about 637 MB maximum resident memory. A five-second source sample
+identified `m12_fill_game_versions` → `asset_find_all_by_md5_list` →
+`scan_dir_by_md5_list`, including nested Amiga ADF/CAPS/MFM decoding. This
+single measurement is not directly comparable to prior cold/warm samples and
+does not establish a cross-platform speedup.
+
+The source shows one bounded optimization candidate: `m12_fill_game_versions`
+queries each game's edition hashes separately for each root. The scan cache
+avoids rehashing unchanged physical files, but the version passes may still
+repeat directory traversal and container admission. A shared candidate index
+could reduce that work, but must retain every edition result, duplicate-file
+handling, complete/incomplete package admission, same-container ownership and
+cancellation semantics. Until those invariants are carried through an
+implementation, keep the repeated scans and report the measured launcher
+delay. See the scan profiles in [`TODO.md`](../TODO.md), the version pass in
+[`asset_status_m12.c`](../src/shared/asset_status_m12.c), and traversal/cache
+logic in [`asset_find_by_hash.c`](../src/shared/asset_find_by_hash.c).
 
 ## Remaining startup work
 
