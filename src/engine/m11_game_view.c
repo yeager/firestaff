@@ -61427,6 +61427,52 @@ static int m11_v1_mouth_live_inventory_transaction(
     return 1;
 }
 
+/* ReDMCSB PANEL.C F0349:1824-1850 gates mouth use by AllowedSlots, consumes
+ * charged water/waterskins without removing them, retains potion flasks, and
+ * removes only food. G20E/G21E share this source path. */
+static int m11_iigs_mouth_item_supported(
+    const M11_GameViewState* state, unsigned short thing)
+{
+    const struct DungeonThings_Compat* things;
+    int type;
+    int index;
+    int icon;
+
+    if (!state || !state->dm1IigsActive ||
+        state->v1FoodCommandPending || state->candidateMirrorPanelActive ||
+        thing == THING_NONE || thing == THING_ENDOFLIST ||
+        !state->world.things || !m11_iigs_equipment_valid(state, thing) ||
+        !(dm1_v1_dungeon_get_object_allowed_slots_pc34(
+              state->world.things, thing) & 1U)) {
+        return 0;
+    }
+
+    things = state->world.things;
+    type = (int)THING_GET_TYPE(thing);
+    index = (int)THING_GET_INDEX(thing);
+    icon = dm1_v1_dungeon_get_object_icon_index_pc34(
+        things, thing, state->world.party.direction);
+
+    if (type == THING_TYPE_POTION) {
+        return things->potions && things->rawThingData[THING_TYPE_POTION] &&
+               index >= 0 && index < things->potionCount &&
+               index < things->thingCounts[THING_TYPE_POTION];
+    }
+
+    if (type != THING_TYPE_JUNK || !things->junks ||
+        !things->rawThingData[THING_TYPE_JUNK] || index < 0 ||
+        index >= things->junkCount || index >= things->thingCounts[THING_TYPE_JUNK]) {
+        return 0;
+    }
+
+    if (icon == 8 || icon == 9) {
+        return things->junks[index].chargeCount > 0;
+    }
+    if (icon < 168 || icon >= 176) return 0;
+    return state->dm1IigsInstallation.metadata.food_amounts[icon - 168] ==
+           dm1_inventory_food_amount_from_icon_pc34(icon);
+}
+
 static int m11_process_v1_mouth_click(M11_GameViewState* state) {
     unsigned short thing;
     int iconIndex;
@@ -61444,16 +61490,9 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state) {
 
     thing = DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state);
     if (state->dm1IigsActive) {
-        int icon = dm1_v1_dungeon_get_object_icon_index_pc34(state->world.things,thing,state->world.party.direction);
-        /* Native food is proven by its own G0242 and original LE record.
-         * Retained drinks/potions and empty-hand panel need separate binding. */
-        if (state->v1FoodCommandPending || thing == THING_NONE ||
-            state->candidateMirrorPanelActive || THING_GET_TYPE(thing) != THING_TYPE_JUNK ||
-            !m11_iigs_equipment_valid(state,thing) || icon < 168 || icon >= 176 ||
-            !(dm1_v1_dungeon_get_object_allowed_slots_pc34(state->world.things,thing)&1U) ||
-            state->dm1IigsInstallation.metadata.food_amounts[icon-168] !=
-                dm1_inventory_food_amount_from_icon_pc34(icon) ||
-            !state->v1FoodVblankHzNumerator || !state->v1FoodVblankHzDenominator) return 0;
+        if (!m11_iigs_mouth_item_supported(state, thing) ||
+            !state->v1FoodVblankHzNumerator ||
+            !state->v1FoodVblankHzDenominator) return 0;
     }
     if (thing == THING_NONE) {
         if (state->v1FoodWaterPanelActive) {

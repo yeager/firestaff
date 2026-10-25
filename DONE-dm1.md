@@ -4351,3 +4351,12 @@ not used as its final verification.
   Atari test passed the M12 Hall C127 choice, first HoC runtime state, and
   native input matrix. SDL dummy-display coverage does not prove native display
   or visual parity.
+- 2026-10-25: Fixed the Apple IIGS mouth-click admission gate to follow the
+  source-owned `AllowedSlots` rules for original potions and charged water
+  flasks, alongside the existing validated food path. Against authentic IIGS
+  2.0 and 2.1 software, the real-media test now recruits ELIJA, walks through
+  HoC to the original water flask at map 0 (4,15), picks it up through native
+  input, and verifies drinking adds 800 water up to the source cap, consumes
+  one charge, and retains the flask in the unique hand owner. The test passed
+  for both original editions. Potion discovery-to-use and complete IIGS parity
+  remain unverified.

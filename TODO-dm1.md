@@ -1,3 +1,16 @@
+2026-10-25 Apple IIGS mouth interaction: ReDMCSB PANEL.C F0349:1824-1850
+allows water/waterskin icons with charges and original potion Things when the
+mouth bit is present in AllowedSlots. Firestaff's IIGS-specific click gate only
+admitted food, so it rejected those source-valid hand items before the shared
+live transaction could apply the original water, potion and flask-retention
+rules. The gate now admits valid original potions and charged water flasks,
+while retaining the existing original-food metadata check. The real-media test
+recruits and moves through HoC, picks up the original water flask at map 0
+(4,15), then verifies the mouth action increases water by 800 up to 2048,
+decrements one charge, and retains unique hand ownership. IIGS 2.0 and 2.1
+real-media CTest passes. Authentic potion discovery-to-use remains untested;
+this does not establish complete IIGS gameplay or visual parity.
+
 2026-10-24 PC34 held-object cursor stripe regression:
 `M11_GameView_DrawLeaderHandCursor` read an unmasked low nibble for odd
 columns. Transparent color C therefore became 0xCC and was written to the

@@ -1172,6 +1172,55 @@ cleanup:
     free(frame); free(view); return result;
 }
 
+static int check_original_water(const char *root, int version) {
+    static const uint8_t route[][2]={{9,8},{9,9},{8,9},{7,9},{6,9},{5,9},{4,9},{4,10},{4,11},
+        {4,12},{4,13},{4,14},{4,15}};
+    M11_GameViewState *view=calloc(1,sizeof(*view));
+    uint8_t *frame=malloc((size_t)M11_FB_WIDTH*M11_FB_HEIGHT);
+    int result=0;
+    REQUIRE(view && frame,"bounded original native water session"); M11_GameView_Init(view);
+    REQUIRE(M11_GameView_StartIigs(view,root,version) && check_recruitment(view,frame),
+        "fresh authentic IIGS leader reaches original HoC water flask");
+    for (size_t step=0; step<sizeof(route)/sizeof(route[0]); ++step) {
+        int dx=(int)route[step][0]-view->world.party.mapX;
+        int dy=(int)route[step][1]-view->world.party.mapY;
+        int direction=dx>0 ? 1 : dx<0 ? 3 : dy>0 ? 2 : 0;
+        REQUIRE(abs(dx)+abs(dy)==1,"original water route follows adjacent map squares");
+        for (unsigned turn=0; view->world.party.direction!=direction && turn<4; ++turn)
+            (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_TURN_RIGHT);
+        for (unsigned tick=0; tick<8; ++tick) (void)M11_GameView_AdvanceIdleTick(view);
+        (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_UP);
+        REQUIRE(view->world.party.mapX==route[step][0] && view->world.party.mapY==route[step][1],
+            "ordinary native footsteps reach original water square");
+    }
+    {
+        unsigned short water=F0511_DUNGEON_GetSquareFirstThing_Compat(
+            view->world.dungeon,view->world.things,0,4,15);
+        int before=view->world.party.champions[view->world.party.activeChampionIndex].water;
+        REQUIRE(water==0x280bu && THING_GET_TYPE(water)==THING_TYPE_JUNK &&
+            view->world.things->junks[THING_GET_INDEX(water)].chargeCount==3,
+            "original HoC water flask is present and charged at map zero four-fifteen");
+        REQUIRE(M11_GameView_HandleInput(view,M12_MENU_INPUT_PICKUP_ITEM)==M11_GAME_INPUT_REDRAW &&
+            view->leaderHandObjectPresent && view->leaderHandThing==water && original_thing_owners(view,water)==1,
+            "native pickup transfers original water flask to the hand");
+        (void)M11_GameView_HandleInput(view,M12_MENU_INPUT_CHAMPION_1_INVENTORY);
+        int mouthResult;
+        REQUIRE(view->inventoryPanelActive,"native inventory opens beside original water flask");
+        mouthResult=M11_GameView_HandlePointerButton(view,64,54,DM1_V1_MOUSE_MASK_LEFT_PC34);
+        REQUIRE(mouthResult==M11_GAME_INPUT_REDRAW &&
+            view->world.party.champions[view->world.party.activeChampionIndex].water==
+                (before+800>2048 ? 2048 : before+800) &&
+            view->leaderHandObjectPresent && view->leaderHandThing==water &&
+            view->world.things->junks[THING_GET_INDEX(water)].chargeCount==2 &&
+            original_thing_owners(view,water)==1,
+            "native mouth drinks from original water flask while retaining its charges and ownership");
+    }
+    result=1;
+cleanup:
+    if (view) M11_GameView_Shutdown(view);
+    free(frame); free(view); return result;
+}
+
 static int check_native_wall_bump(M11_GameViewState *view) {
     DM1_V1_IigsDocSnapshot audio_before,audio_after;
     struct GameWorld_Compat *staged=calloc(1,sizeof(*staged));
@@ -1368,6 +1417,7 @@ int main(int argc, char **argv) {
         if (!check_scan(argv[1+i],version,0) || !check_session(argv[1+i],version,argv[1+i])) return 1;
         if (!check_linflas_capacity(argv[1+i],version)) return 1;
         if (!check_original_food(argv[1+i],version)) return 1;
+        if (!check_original_water(argv[1+i],version)) return 1;
         if (snprintf(owner,sizeof(owner),"%s::Dungeon Master for Apple IIGS 2.%d (English) Original (Not working).po",argv[3],i)>=(int)sizeof(owner) ||
             !check_session(argv[3],version,owner)) return 1;
     }
