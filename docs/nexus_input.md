@@ -42,6 +42,19 @@ The capture used Ymir fast-forward, so its host-time movement interval does
 not establish a normal-speed repeat rate. It does not establish mouse
 coordinates or button-to-action mapping.
 
+A separate controlled gameplay-state sequence mapped `K` to ControlPad B and
+`J` to A. The `--debug` high-WRAM dumps show B queueing event 12
+(`EV_INVENTORY`). A in that flow queues event 39 (`EV_RING_SELECT`) with
+argument 8; the visible retail view changes to an equipment page labelled
+`頭に装備` (“equip to head”). Context record 10 changes at `+0x122/+0x124`,
+but the capture does not join that record to a champion or prove a persistent
+item transfer. The screenshots, complete WRAM dumps, source hashes and event
+trace are recorded in
+[`nexus-v1-inventory-button-debug-20261025`](../parity-evidence/verification/nexus-v1-inventory-button-debug-20261025/README.md).
+This advances the retail button/event trace; Firestaff inventory and equip
+actions remain unimplemented until the champion and item-state joins are
+established.
+
 ## Retail manual control model
 
 The Japanese retail manual's controller table (printed page 4) documents the
@@ -223,11 +236,11 @@ cursor and D-pad movement are captured, while desktop mouse movement in
 Firestaff is a host control behavior rather than a claim about Saturn
 ShuttleMouse.
 
-Next work must identify the retail context-to-champion relationship, the
-opaque item-pair auxiliary word, and the post-click visible result from a
-controlled Ymir before/after capture. Then map the retail state to the
-authentic Nexus champion/inventory model and bind pointer actions. Keep
-unsupported actions inert until those joins are proven. The attempted
+Next work must identify the retail context-to-champion relationship and the
+opaque item-pair auxiliary word, then trace whether the event-39 selection
+commits a retail inventory mutation and how the relevant item maps to the
+authentic Nexus champion/inventory model. Bind pointer actions only after
+those joins are proven. Keep unsupported actions inert. The attempted
 ShuttleMouse click and its unmatched WRAM snapshots are preserved in
 [`parity-evidence/verification/nexus-keyboard-mouse-retail-input-20261025/`](../parity-evidence/verification/nexus-keyboard-mouse-retail-input-20261025/README.md);
 they do not prove an action.
