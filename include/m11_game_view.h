@@ -933,6 +933,10 @@ typedef struct {
      * 0=unattempted, 1=all five buffers owned, -1=allocation failed/native. */
     void* dm1LegacyWallCache;
     int dm1LegacyWallCacheCapability;
+    /* Reused by the single-threaded DM1 renderer while F0111 composes a
+     * complete door bitmap before clipping it into the viewport. */
+    unsigned char* dm1DoorCompositeScratch;
+    size_t dm1DoorCompositeScratchCapacity;
     /* ReDMCSB OBJECT.C F0031: raw M564 stream, indexed by F0033 icon. */
     int dm1ObjectNameTableValid;
     char dm1ObjectNames[199][96]; /* UTF-8 presentation keys; CP932 may expand 3x. */
