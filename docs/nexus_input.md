@@ -87,8 +87,10 @@ the retail D-pad turns in movement mode.
 The retail game tick accepts only the six basic movement commands
 (forward/backward, turn left/right, and strafe left/right) against the
 authenticated DGN grid. In the loaded dungeon, Z toggles a host hand-pointer
-mode. Arrow keys move its logical position in the authenticated DM.BIN
-viewport rectangle; mouse motion positions it directly in that rectangle.
+mode. W/A/S/D and the arrow keys move its logical position in the authenticated
+DM.BIN viewport rectangle; simultaneous directions allow diagonal movement.
+The W/A/S/D mapping matches the captured retail profile's D-pad bindings.
+Mouse motion positions the hand pointer directly in that rectangle.
 The hand sprite is sourced from the hash-verified retail ITEM.IBS image 65 and
 palette 6, joined against Ymir `--debug` VDP1 texture capture. Mouse movement
 and the six keyboard movement commands remain available with pointer mode off.

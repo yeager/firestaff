@@ -143,7 +143,7 @@ int main(void) {
     CHECK(M11_NexusPointerInputFromScancode(SDL_SCANCODE_RIGHT) ==
           M12_MENU_INPUT_RIGHT);
     CHECK(M11_NexusPointerInputFromScancode(SDL_SCANCODE_A) ==
-          M12_MENU_INPUT_NONE);
+          M12_MENU_INPUT_LEFT);
     CHECK(M11_NexusPointerToggleInputFromScancode(SDL_SCANCODE_Z) ==
           M12_MENU_INPUT_NEXUS_POINTER_TOGGLE);
     CHECK(M11_Input_ActionForScancode(SDL_SCANCODE_A) ==
