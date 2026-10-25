@@ -28,7 +28,37 @@ if [[ "$capture_mednafen_module" == pce_fast ]]; then
     capture_cdbios_setting=pce_fast.cdbios
     capture_input_port_setting=pce_fast.input.port1
 fi
-capture_input_args=("-$capture_input_port_setting" gamepad)
+capture_input_device=${THERON_CAPTURE_INPUT_DEVICE:-gamepad}
+mouse_input_script=${THERON_CAPTURE_MOUSE_INPUT_SCRIPT:-}
+if [[ "$capture_input_device" != gamepad &&
+      "$capture_input_device" != mouse ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_INPUT_DEVICE must be gamepad or mouse' >&2
+    exit 1
+fi
+if [[ -n "$mouse_input_script" ]]; then
+    if [[ "$capture_input_device" != mouse ]]; then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_MOUSE_INPUT_SCRIPT requires THERON_CAPTURE_INPUT_DEVICE=mouse' >&2
+        exit 1
+    fi
+    if ! python3 - "$mouse_input_script" <<'PY'
+import sys
+import re
+
+if len(sys.argv[1]) >= 8192:
+    raise SystemExit(1)
+for sample in sys.argv[1].split(";"):
+    if not re.fullmatch(r"-?[0-9]+,-?[0-9]+,-?[0-9]+", sample):
+        raise SystemExit(1)
+    dx, dy, buttons = map(int, sample.split(","))
+    if not (-127 <= dx <= 127 and -127 <= dy <= 127 and 0 <= buttons <= 15):
+        raise SystemExit(1)
+PY
+    then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_MOUSE_INPUT_SCRIPT must be under 8192 characters and contain semicolon-separated decimal dx,dy,button-mask samples' >&2
+        exit 1
+    fi
+fi
+capture_input_args=("-$capture_input_port_setting" "$capture_input_device")
 # An empty value is intentional on macOS: it lets native SDL2 select Cocoa.
 # Use `-` rather than `:-` so the caller can distinguish that from the
 # headless dummy default.
@@ -627,6 +657,10 @@ if [[ "$replay_post_dungeon_overlay" == 1 ]]; then
     post_dungeon_overlay_iso=$track02_path
 fi
 if [[ "$host_input_requested" == 1 ]]; then
+    if [[ "$capture_input_device" != gamepad ]]; then
+        printf '%s\n' 'FAIL: host keyboard sequences require THERON_CAPTURE_INPUT_DEVICE=gamepad' >&2
+        exit 1
+    fi
     case "$(uname -s)" in
         Darwin) host_input_backend=quartz ;;
         Linux)
@@ -1046,6 +1080,7 @@ cd_trace="${trace}.cd"
 adpcm_playback_trace="${trace}.adpcm-playback"
 cdda_command_trace="${trace}.cdda-command"
 input_trace="${trace}.input"
+mouse_trace="${trace}.mouse"
 main_ram_loader_trace="${trace}.main-ram-loader"
 indirect_target_trace="${trace}.3879-indirect-target"
 cd_ram_target_write_trace="${trace}.cd-ram-target-write"
@@ -1115,7 +1150,7 @@ for pce_fast_snapshot in "$pce_fast_vram_snapshot" "$pce_fast_vce_snapshot" \
     fi
 done
 rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" \
-    "$input_trace" "$main_ram_loader_trace" "$indirect_target_trace" \
+    "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" \
     "$cd_ram_target_write_trace" "$cd_data_port_read_trace" \
     "$profile_sram_manifest" "$main_ram_consumer_trace" "$selected_record_trace" \
     "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" \
@@ -1186,6 +1221,7 @@ mkdir -p "$home_dir/sav"
 mkdir -p "$home_dir/mcs"
 profile_sram_count=0
 : >"$profile_sram_manifest"
+printf '%s\n' 'FIRESTAFF_THERON_MOUSE_TRACE_V1' >"$mouse_trace"
 while IFS= read -r -d '' profile_sram_path; do
     profile_sram_md5=$(md5_file "$profile_sram_path") || {
         printf '%s\n' 'FAIL: could not hash a valid copied Mednafen SRAM file' >&2
@@ -1318,6 +1354,8 @@ launch=(
     FIRESTAFF_THERON_ADPCM_PLAYBACK_TRACE="$adpcm_playback_trace" \
     FIRESTAFF_THERON_CDDA_COMMAND_TRACE="$cdda_command_trace" \
     FIRESTAFF_THERON_IRQ2_INPUT_TRACE="$input_trace" \
+    FIRESTAFF_THERON_MOUSE_TRACE="$mouse_trace" \
+    FIRESTAFF_THERON_MOUSE_INPUT_SCRIPT="$mouse_input_script" \
     FIRESTAFF_THERON_INPUT_TRACE_LIMIT="$input_trace_limit" \
     FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT="$replay_input_script" \
     FIRESTAFF_THERON_AUTOLOAD_STATE="$autoload_state" \
@@ -1636,7 +1674,7 @@ if [[ ! -s "$trace" ]] || ! grep -Fqx 'source=mednafen-pce-instrumented' "$trace
     printf '%s\n' 'FAIL: Mednafen did not produce a provenance-marked live trace' >&2
     exit 1
 fi
-if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$cd_data_port_read_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" "$pce_fast_a1b7_bmt_write_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace"; then
+if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$cd_data_port_read_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" "$pce_fast_a1b7_bmt_write_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace"; then
     printf '%s\n' 'FAIL: Mednafen emitted a literal backslash-n in a trace record' >&2
     exit 1
 fi
@@ -1975,6 +2013,7 @@ transition_rng_state_boundary_count=$(trace_count '^rng_state_boundary ' "$rng_s
 transition_rng_generator_context_count=$(trace_count '^rng_generator_context ' "$rng_generator_context_trace")
 transition_rng_code_window_count=$(trace_count '^rng_code_window ' "$rng_code_trace")
 transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$input_trace")
+mouse_trace_row_count=$(trace_count '^(guest_read|guest_write|device_)' "$mouse_trace")
 transition_vdc_io_write_count=$(trace_count '^vdc_io_write ' "$vdc_io_trace")
 transition_command_ram_write_count=$(trace_count '^command_ram_write ' "$command_ram_trace")
 transition_command_input_write_count=$(trace_count '^input_buffer_write ' "$command_ram_trace")
@@ -2119,6 +2158,8 @@ fi
     printf 'ram_2040=%s\n' "$transition_ram_2040"
     printf 'ram_2041=%s\n' "$transition_ram_2041"
     printf 'scripted_pce_input_events=%s\n' "$transition_scripted_input_count"
+    printf 'pce_input_device=%s\n' "$capture_input_device"
+    printf 'mouse_trace_rows=%s\n' "$mouse_trace_row_count"
     if [[ "$capture_mednafen_module" == pce ]]; then
         printf 'vdc_vram_snapshot_bytes=65536\n'
         printf 'main_ram_snapshot_bytes=8192\n'

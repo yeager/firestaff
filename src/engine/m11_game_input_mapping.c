@@ -266,6 +266,27 @@ M12_MenuInput M11_TheronGameplayInputFromScancode(int scancode)
     }
 }
 
+M12_MenuInput M11_TheronGameplayInputFromScancodeWithButtonII(
+    int scancode, int buttonIIHeld)
+{
+    if (buttonIIHeld) {
+        /* The USA retail manual, printed p. 5, says to hold Button II while
+         * pressing a direction to turn instead of side-step. On desktop this
+         * is the right mouse button plus the matching direction key. */
+        switch ((SDL_Scancode)scancode) {
+            case SDL_SCANCODE_LEFT:
+            case SDL_SCANCODE_A:
+                return M12_MENU_INPUT_TURN_LEFT;
+            case SDL_SCANCODE_RIGHT:
+            case SDL_SCANCODE_D:
+                return M12_MENU_INPUT_TURN_RIGHT;
+            default:
+                break;
+        }
+    }
+    return M11_TheronGameplayInputFromScancode(scancode);
+}
+
 M12_MenuInput M11_TheronGameplayInputFromKeycode(int keycode)
 {
     /* SDL keycode fallback for events that do not carry a useful scancode. */
@@ -313,6 +334,32 @@ M12_MenuInput M11_TheronGameplayInputFromKeycode(int keycode)
         case SDLK_KP_6: return M12_MENU_INPUT_TURN_RIGHT;
         default: return M12_MENU_INPUT_NONE;
     }
+}
+
+M12_MenuInput M11_TheronGameplayInputFromKeycodeWithButtonII(
+    int keycode, int buttonIIHeld)
+{
+    if (buttonIIHeld) {
+        switch ((SDL_Keycode)keycode) {
+            case SDLK_LEFT:
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+            case SDLK_A:
+#else
+            case SDLK_a:
+#endif
+                return M12_MENU_INPUT_TURN_LEFT;
+            case SDLK_RIGHT:
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+            case SDLK_D:
+#else
+            case SDLK_d:
+#endif
+                return M12_MENU_INPUT_TURN_RIGHT;
+            default:
+                break;
+        }
+    }
+    return M11_TheronGameplayInputFromKeycode(keycode);
 }
 
 M12_MenuInput M11_TheronMouseButtonToInput(int button)

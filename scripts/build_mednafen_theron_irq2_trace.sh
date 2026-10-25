@@ -300,6 +300,9 @@ sed $'s/^FIRESTAFF_PATCH_TAB_CONTEXT/ \\t/' "$theron_3879_trace_patch" \
 patch -d "$build_root/source" -p1 --batch --forward --fuzz=1 \
     < "$theron_3879_trace_rendered"
 
+python3 "$repo/scripts/instrument_mednafen_theron_mouse_trace.py" \
+    "$build_root/source"
+
 if [[ "$patch_only" == 1 ]]; then
     # Tests use the exact production patch order without paying for a rebuild.
     printf 'PASS: complete Theron Mednafen patch set applied to isolated source copy\n'
