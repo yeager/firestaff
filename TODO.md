@@ -17,6 +17,17 @@ and switched between them through the C012/C013 name boxes; its original-data
 route passed. Native physical mouse delivery and Retina-window click mapping
 remain unverified.
 
+2026-10-25 native DM1 PC34 startup timing: the authentic DOS archive ran in a
+native Cocoa/Metal window on the Mac16,10 M4 host, whose display reported 60
+Hz. The 32-frame selector door animation took 505 ms; the selector handoff
+completed after 764 ms including a 259 ms post-animation audio wait. Presented
+frame intervals were 14–17 ms with VSync active. The full authentic PC34
+startup/CLI regression passed separately in 458.42 seconds and checks the
+source's modeled 70 Hz door cadence. This is evidence for the M4 60 Hz host
+only; it does not establish timing or HiDPI behavior on the reported MacBook
+Pro M5. ReDMCSB ENTRANCE.C F0441 opens the door after the new-game command, so
+it should not wait for a second confirmation after that command.
+
 2026-10-25 authentic launcher return/rescan retest: the
 `return_to_menu_rescans_dm1_csb_dm2_real_media` CTest passed in 1,527.71
 seconds using installed original media. It exercised DM1 PC, FM Towns, Atari
