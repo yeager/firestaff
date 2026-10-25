@@ -9140,6 +9140,12 @@ static int m11_open_requested_launch_impl(M11_GameViewState* gameView,
                 }
             }
         }
+        /* Startup scans can continue through later games after this game's
+         * authenticated launch receipt is ready. Stop the worker here; the
+         * full return-to-menu rescan joins it before refreshing all games. */
+        if (menuState->deferredScanActive) {
+            M12_StartupMenu_CancelDeferredScan(menuState);
+        }
         menuState->launchRequested = 0;
         (void)M11_Render_SetPaletteLevel(0);
         if (idleAccumulatorMs) {

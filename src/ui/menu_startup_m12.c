@@ -119,14 +119,26 @@ typedef struct M12_DeferredStartupScanJob {
     int hasExplicitDataDir;
     int scanAllGames;
     int looseFilesOnly;
+    unsigned int publishedGameMask;
     char gameId[16];
     M12_Config config;
     /* The worker receives a deliberately small, isolated scan state. It must
      * never mutate the live menu state while the launcher is drawing or
      * handling input. */
     M12_StartupMenuState scanState;
+    M12_AssetStatus publishedStatus;
     M12_AssetScanProgress progress;
 } M12_DeferredStartupScanJob;
+
+static unsigned int m12_deferred_game_bit(const char* gameId) {
+    if (!gameId) return 0U;
+    if (strcmp(gameId, "dm1") == 0) return M12_DEFERRED_SCAN_DM1;
+    if (strcmp(gameId, "csb") == 0) return M12_DEFERRED_SCAN_CSB;
+    if (strcmp(gameId, "dm2") == 0) return M12_DEFERRED_SCAN_DM2;
+    if (strcmp(gameId, "nexus") == 0) return M12_DEFERRED_SCAN_NEXUS;
+    if (strcmp(gameId, "theron") == 0) return M12_DEFERRED_SCAN_THERON;
+    return 0U;
+}
 
 typedef struct M12_FolderDialogJob {
     SDL_AtomicInt refs;
@@ -2190,7 +2202,9 @@ static void m12_show_missing_game_data_file_popup(M12_StartupMenuState* state,
      * missing-media error if the player reaches a game card early. Leave the
      * card in place so scan progress remains visible and the choice can be
      * retried against the finished snapshot. */
-    if (state->deferredScanActive) {
+    if (state->deferredScanActive &&
+        !(state->deferredScanCompletedGameMask &
+          m12_deferred_game_bit(gameId))) {
         return;
     }
     gameIndex = m12_entry_index_for_game_id(state, gameId);
@@ -4820,14 +4834,49 @@ startup_scan_complete:
     }
 }
 
+static unsigned int m12_deferred_completed_game_mask(
+    const M12_AssetScanProgress* progress) {
+    if (!progress || strcmp(progress->currentTask, "matching game versions") != 0)
+        return 0U;
+    if (strcmp(progress->currentGameId, "csb") == 0)
+        return M12_DEFERRED_SCAN_DM1;
+    if (strcmp(progress->currentGameId, "dm2") == 0)
+        return M12_DEFERRED_SCAN_DM1 | M12_DEFERRED_SCAN_CSB;
+    if (strcmp(progress->currentGameId, "nexus") == 0)
+        return M12_DEFERRED_SCAN_DM1 | M12_DEFERRED_SCAN_CSB |
+               M12_DEFERRED_SCAN_DM2;
+    /* Nexus and Theron depend on the shared metadata refresh after this loop.
+     * Keep them gated until the worker publishes the complete scan result. */
+    return 0U;
+}
+
 static int m12_deferred_startup_scan_progress(
     const M12_AssetScanProgress* progress,
     void* userData) {
     M12_DeferredStartupScanJob* job =
         (M12_DeferredStartupScanJob*)userData;
+    unsigned int completedMask;
     if (!job || !progress) return 1;
+    completedMask = job->scanAllGames
+        ? m12_deferred_completed_game_mask(progress) : 0U;
     if (job->mutex) SDL_LockMutex(job->mutex);
     job->progress = *progress;
+    if (completedMask > job->publishedGameMask &&
+        !progress->cancelled && !progress->cancelRequested &&
+        SDL_GetAtomicInt(&job->cancelRequested) == 0) {
+        job->publishedStatus = job->scanState.assetStatus;
+        if (!(completedMask & M12_DEFERRED_SCAN_DM1))
+            job->publishedStatus.dm1Available = 0;
+        if (!(completedMask & M12_DEFERRED_SCAN_CSB))
+            job->publishedStatus.csbAvailable = 0;
+        if (!(completedMask & M12_DEFERRED_SCAN_DM2))
+            job->publishedStatus.dm2Available = 0;
+        if (!(completedMask & M12_DEFERRED_SCAN_NEXUS))
+            job->publishedStatus.nexusAvailable = 0;
+        if (!(completedMask & M12_DEFERRED_SCAN_THERON))
+            job->publishedStatus.theronAvailable = 0;
+        job->publishedGameMask = completedMask;
+    }
     if (job->mutex) SDL_UnlockMutex(job->mutex);
     return SDL_GetAtomicInt(&job->cancelRequested) == 0;
 }
@@ -4916,6 +4965,7 @@ int M12_StartupMenu_BeginDeferredScan(M12_StartupMenuState* state) {
         state->gameOptions[0].languageIndex;
     SDL_SetAtomicInt(&job->cancelRequested, 0);
     SDL_SetAtomicInt(&job->done, 0);
+    state->deferredScanCompletedGameMask = 0U;
     state->deferredScanProgress = job->progress;
     state->deferredScanJob = job;
     state->deferredScanActive = 1;
@@ -5468,6 +5518,11 @@ void M12_StartupMenu_RescanAllGames(
     deferredLooseFilesOnly = state->deferredLooseFilesOnly;
     deferredHasExplicitDataDir = state->deferredHasExplicitDataDir;
     deferredScanAllGames = state->deferredScanAllGames;
+    /* A game may have started while the startup worker was still scanning
+     * later titles. Stop and join that isolated worker before the synchronous
+     * return-menu scan reuses the live asset snapshot. */
+    m12_cancel_deferred_startup_scan_and_join(state);
+    state->deferredScanCompletedGameMask = 0U;
     M12_Config_Load(&savedConfig, NULL);
     currentDataDir = M12_StartupMenu_AssetDataDir(state);
     /* Prefer the intended collection again once its directory or selected
@@ -5552,6 +5607,11 @@ void M12_StartupMenu_RescanAllGames(
     state->deferredScanAllGames = 1;
     state->deferredScanPending = 1;
     M12_StartupMenu_RunDeferredScan(state, progressFn, progressUserData);
+    if (state->assetStatus.scanProgress.complete &&
+        !state->assetStatus.scanProgress.cancelled &&
+        !state->assetStatus.scanProgress.cancelRequested) {
+        state->deferredScanCompletedGameMask = M12_DEFERRED_SCAN_ALL;
+    }
     savedConfig.v22_modern_assets_installed =
         M12_AssetStatus_V22ModernAssetsInstalled(&state->assetStatus);
     (void)M12_Config_Save(&savedConfig);
@@ -10671,7 +10731,10 @@ int M12_StartupMenu_GetLaunchGate(
         }
     }
     gate.dataReady = gate.boot.dataReady;
-    if (state->deferredScanActive) {
+    if (state->deferredScanActive &&
+        (!entry->gameId ||
+         !(state->deferredScanCompletedGameMask &
+           m12_deferred_game_bit(entry->gameId)))) {
         gate.dataReady = gate.boot.dataReady = 0;
         gate.boot.statusLabel = m12_tr(state, "SCANNING GAME DATA");
         gate.boot.detailLabel = m12_tr(state,
@@ -11790,7 +11853,9 @@ static void m12_draw_game_card_flow_view(const M12_StartupMenuState* state,
         return;
     }
     if (state->gameCardFlowStage == 0) {
-        scanning = state->deferredScanActive;
+        scanning = state->deferredScanActive &&
+            !(state->deferredScanCompletedGameMask &
+              m12_deferred_game_bit(entry->gameId));
         ready = M12_AssetStatus_GameAvailable(&state->assetStatus,
                                                entry->gameId) &&
                 M12_AssetStatus_GameHasMatchedArchitecture(
@@ -14346,12 +14411,34 @@ static int m12_update_data_dir_dialog(M12_StartupMenuState* state) {
 static int m12_update_deferred_startup_scan(M12_StartupMenuState* state) {
     M12_DeferredStartupScanJob* job;
     int threadStatus = 0;
+    int partialSnapshotPublished = 0;
     M12_Config config;
     if (!state || !state->deferredScanJob) return 0;
     job = (M12_DeferredStartupScanJob*)state->deferredScanJob;
     if (job->mutex) SDL_LockMutex(job->mutex);
     state->deferredScanProgress = job->progress;
+    if (job->publishedGameMask > state->deferredScanCompletedGameMask) {
+        state->assetStatus = job->publishedStatus;
+        state->deferredScanCompletedGameMask = job->publishedGameMask;
+        partialSnapshotPublished = 1;
+    }
     if (job->mutex) SDL_UnlockMutex(job->mutex);
+    if (partialSnapshotPublished) {
+        m12_sync_entries_from_assets(state);
+        m12_apply_auto_platform_versions(state);
+        m12_publish_game_availability(state);
+        m12_sync_card_art(state);
+        if (state->debugStartup) {
+            fprintf(stderr,
+                    "firestaff: scan partial-ready games=dm1:%s,csb:%s,dm2:%s\n",
+                    M12_AssetStatus_GameAvailable(&state->assetStatus, "dm1")
+                        ? "yes" : "no",
+                    M12_AssetStatus_GameAvailable(&state->assetStatus, "csb")
+                        ? "yes" : "no",
+                    M12_AssetStatus_GameAvailable(&state->assetStatus, "dm2")
+                        ? "yes" : "no");
+        }
+    }
     if (!SDL_GetAtomicInt(&job->done)) return 1;
     if (job->thread) SDL_WaitThread(job->thread, &threadStatus);
     (void)threadStatus;
@@ -14388,6 +14475,7 @@ static int m12_update_deferred_startup_scan(M12_StartupMenuState* state) {
         char canonicalDataDir[M12_ASSET_DATA_DIR_CAPACITY];
         const char* scannedDataDir;
         state->assetStatus = job->scanState.assetStatus;
+        state->deferredScanCompletedGameMask = M12_DEFERRED_SCAN_ALL;
         scannedDataDir = M12_AssetStatus_GetDataDir(&state->assetStatus);
         if (job->config.dataDir[0] &&
             !m12_data_directory_dialog_token_is_placeholder(job->config.dataDir)) {

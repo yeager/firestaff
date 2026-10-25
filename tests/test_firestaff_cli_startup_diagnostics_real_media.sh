@@ -345,6 +345,12 @@ if [ -f "$dm1_towns_archive" ] && [ -f "$csb_towns_archive" ] &&
             "$no_game_output" >&2
         exit 1
     }
+    printf '%s\n' "$no_game_output" | \
+        grep -Fq 'firestaff: scan partial-ready games=dm1:yes,csb:yes,dm2:' || {
+        printf 'FAIL: deferred scan did not publish the authenticated DM1/CSB snapshot before completion\n%s\n' \
+            "$no_game_output" >&2
+        exit 1
+    }
     expected_scan_games='dm1:yes,csb:yes,dm2:yes'
     if [ -f "$nexus_iso" ]; then
         expected_scan_games="$expected_scan_games,nexus:yes"
