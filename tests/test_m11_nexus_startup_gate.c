@@ -865,6 +865,8 @@ int main(void) {
         view.nexusEngine = &engine;
         view.nexusState.level_loaded = 1;
         engine.champions.champion_count = 2;
+        engine.champions.champions[0].alive = 1;
+        engine.champions.champions[1].alive = 1;
         engine.champions.party_count = 2;
         engine.champions.party[0] = 0;
         engine.champions.party[1] = 1;
