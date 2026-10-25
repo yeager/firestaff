@@ -4,11 +4,12 @@
   convention: arrows/WASD for forward, back and side-step, with Q/E, Home/End
   and keypad turn aliases. Preserve Theron's source-owned action tokens.
 - Mouse parity is still partial. The visible 4x3 Firestaff panel dispatches
-  native Theron inputs, while direct world clicks remain disabled and the
-  original cursor is not yet rendered in the native dungeon view. Do not
-  copy DM1's hit regions. The `$D515/$D588` interval candidate and the live
-  `$77DC` dispatch/descriptor path still need an authenticated runtime join
-  through hover state, Button-I output and the resulting game-state change.
+  native Theron inputs and now highlights the hovered control. Direct world
+  clicks remain disabled, and the original pointer art is not drawn in the
+  native dungeon view. Do not copy DM1's hit regions. The `$D515/$D588`
+  interval candidate and the live `$77DC` dispatch/descriptor path still need
+  an authenticated runtime join through original hover state, Button-I output
+  and the resulting game-state change.
 - Once that source route is bound, implement Theron's native cursor and
   source-derived world hit testing, then verify movement and action clicks
   against authentic Track 02 data. Current frozen-capture rendering means

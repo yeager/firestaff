@@ -73,6 +73,8 @@ keyboard actions. Their captions use the active Theron translation catalog.
 The panel scales with the game's presentation size. Japanese and Chinese
 captions use ASCII romanizations because the native small font does not
 contain CJK glyphs.
+Hovering a control highlights it. Pointer movement requests a redraw only when
+the highlighted control changes.
 
 ## Notes
 

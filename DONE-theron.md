@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-25 — highlight hovered Theron mouse controls
+
+The twelve-button native mouse panel now highlights the hovered control. The
+same scaled hit-test drives click routing and hover feedback; pointer movement
+requests a redraw only when the highlighted control changes. On TRV2, the
+focused `test_theron_v1_m11_launcher_handoff_boundary` passed three consecutive
+loops with 95 passed, 0 failed and 1 skipped per loop. The skip was the optional
+`FIRESTAFF_THERON_CUE` check. Tests cover the hover transition, rendered
+highlight and existing mouse controls at both 320x200 and 640x400. This does
+not close the separate original-world hitbox or live-rendering gaps.
+
 ## 2026-10-25 — fit localized Theron mouse-panel captions
 
 Mouse-panel strings now use the active Theron catalog with labels limited to

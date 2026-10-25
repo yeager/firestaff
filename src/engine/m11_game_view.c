@@ -38832,6 +38832,9 @@ M11_GameInputResult M11_GameView_HandleTouchEvent(M11_GameViewState* state,
 M11_GameInputResult M11_GameView_HandlePointerMove(M11_GameViewState* state,
                                                    int x,
                                                    int y) {
+    M12_MenuInput previous_theron_control = M12_MENU_INPUT_NONE;
+    M12_MenuInput current_theron_control = M12_MENU_INPUT_NONE;
+    int track_theron_control = 0;
     if (state && state->dm1IigsActive) {
         if (state->v1FoodCommandPending) return M11_GAME_INPUT_IGNORED;
         state->pointerPositionKnown = 1;
@@ -38841,9 +38844,24 @@ M11_GameInputResult M11_GameView_HandlePointerMove(M11_GameViewState* state,
     if (!state || !state->active) {
         return M11_GAME_INPUT_IGNORED;
     }
+    track_theron_control =
+        state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02 &&
+        state->theronState.startup_phase == THERON_STARTUP_PHASE_IN_DUNGEON &&
+        state->theronState.level_loaded;
+    if (track_theron_control && state->pointerPositionKnown) {
+        previous_theron_control = m11_theron_mouse_control_input_at(
+            state, state->pointerX, state->pointerY);
+    }
     state->pointerPositionKnown = 1;
     state->pointerX = x;
     state->pointerY = y;
+    if (track_theron_control) {
+        current_theron_control = m11_theron_mouse_control_input_at(
+            state, x, y);
+        if (current_theron_control != previous_theron_control) {
+            return M11_GAME_INPUT_REDRAW;
+        }
+    }
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
         state->dm2State.leader_hand_object != 0u &&
         M11_GameView_Dm2LeaderHandObjectIconAvailable(state)) {
@@ -72460,6 +72478,7 @@ static void m11_theron_draw_mouse_controls(
     int column;
     int scale;
     M11_TextStyle label_style = g_text_small;
+    M12_MenuInput hovered_control;
 
     if (!state || !framebuffer || framebufferWidth <= 0 ||
         framebufferHeight <= 0 || state->sourceKind !=
@@ -72477,6 +72496,10 @@ static void m11_theron_draw_mouse_controls(
         scale = framebufferHeight / M11_THERON_MOUSE_CANVAS_H;
     }
     if (scale < 1) scale = 1;
+    hovered_control = state->pointerPositionKnown
+        ? m11_theron_mouse_control_input_at(
+              state, state->pointerX, state->pointerY)
+        : M12_MENU_INPUT_NONE;
     label_style.scale = scale;
     for (row = 0; row < M11_THERON_MOUSE_ROWS; ++row) {
         for (column = 0; column < M11_THERON_MOUSE_COLUMNS; ++column) {
@@ -72495,9 +72518,17 @@ static void m11_theron_draw_mouse_controls(
             const int cell_width = x1 - x0;
             const int cell_height = y1 - y0;
             const char *label = m11_theron_mouse_control_label(row, column);
+            const M12_MenuInput cell_input =
+                g_m11_theron_mouse_inputs[row][column];
+            const int highlighted = hovered_control == cell_input;
+            M11_TextStyle cell_style = label_style;
             size_t label_byte;
             int label_glyphs = 0;
             int text_width;
+
+            if (highlighted) {
+                cell_style.color = M11_COLOR_BLACK;
+            }
 
             /* m11_draw_text advances one fixed-width glyph per UTF-8
              * codepoint, so center localized labels by glyphs, not bytes. */
@@ -72509,14 +72540,15 @@ static void m11_theron_draw_mouse_controls(
             text_width = label_glyphs * 6 * scale;
 
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          x0, y0, cell_width, cell_height, M11_COLOR_BLACK);
+                          x0, y0, cell_width, cell_height,
+                          highlighted ? M11_COLOR_LIGHT_GRAY : M11_COLOR_BLACK);
             m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                           x0, y0, cell_width, cell_height,
                           M11_COLOR_LIGHT_GRAY);
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           x0 + (cell_width - text_width) / 2,
                           y0 + (cell_height - 7 * scale) / 2,
-                          label, &label_style);
+                          label, &cell_style);
         }
     }
 }
