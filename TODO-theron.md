@@ -1,9 +1,38 @@
+## 2026-10-25 — authentic US VDC turn pair for native-renderer work
+
+- Captured the same authentic US Drator save state twice with the PCE module:
+  once without input and once with the logged controller plan
+  `right@1:140,down@2:33,i@145:5`. Both sessions ended at the exact 200-frame
+  boundary; the input capture changed the bound direction byte while the
+  party coordinates remained `(2,3)`, and the VDC image changed. VCE and VDC
+  geometry stayed constant. The state loads in PCE, not this build's PCE Fast
+  module. See
+  [`theron-us-authentic-vdc-turn-pair-2026-10-25.md`](docs/source-lock/theron-us-authentic-vdc-turn-pair-2026-10-25.md).
+- This is new authentic screen-transition evidence for native rendering. It
+  does not bind a mouse target, prove translation from screen pixels to
+  Track 02 cells, or close the state-driven renderer gap. Keep the mouse-panel
+  route separate from original game hit testing until those consumers are
+  joined.
+
+## 2026-10-25 — verify native SDL mouse item actions
+
+- The regular SDL-loop test now reaches the authentic USA level-0 SANDALS and
+  clicks PICKUP, ITEM and DROP on the visible Theron mouse panel. Theron's
+  `--debug` pointer trace reports the mapped source coordinates and action
+  receipts for each event; three consecutive TRV2 runs passed against
+  `TQUS02.bin` (MD5 `f23601102138f87c33025877767ebf76`).
+- This verifies the host-panel item flow through normal SDL input and source
+  data. Direct viewport clicks remain unbound, and the native dungeon
+  renderer still does not update from world state.
+
 ## 2026-10-25 — verify normal Theron SDL gameplay input
 
 - ✅ Added `theron_v1_sdl_input_events`, which drives the normal SDL event loop
   with an authentic USA Track 02 runtime. Three TRV2 loops prove that holding
   right mouse while pressing Right turns, that release restores Right
-  side-step behavior, and that the authenticated media hash is correct.
+  side-step behavior, and that the authenticated media hash is correct. The
+  same SDL route now verifies mouse-panel pickup, source-item reselection and
+  drop with mapped pointer action receipts.
 - ✅ In both SDL2 and SDL3 paths, right-button edges during loaded dungeon play
   now exclusively set/clear Button II state instead of also invoking desktop
   Back. This avoids a quit modal intercepting the direction key.

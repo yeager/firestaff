@@ -112,7 +112,10 @@ the highlighted control changes.
   commands against each region's loaded dungeon state. The Japanese test
   asserts both click receipts and the resulting party pose. These checks cover
   Firestaff's host panel, not original PCE mouse support or direct world-space
-  clicks.
+  clicks. The normal SDL-loop regression also uses the panel to pick up the
+  authentic level-0 SANDALS, reselect that source-backed item and drop it;
+  three consecutive TRV2 Debug runs verify the mapped pointer receipts and
+  resulting party state against USA Track 02.
 - The host-panel bounds are Firestaff UI and do not reuse DM1's
   C007..C116 pointer tables. The original movement-panel captures identify
   six internal PCE cursor samples, not desktop hitboxes or host coordinates:

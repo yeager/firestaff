@@ -12059,6 +12059,16 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                             ev.button.button == SDL_BUTTON_LEFT
                                 ? DM1_V1_MOUSE_MASK_LEFT_PC34
                                 : DM1_V1_MOUSE_MASK_RIGHT_PC34);
+                        /* --debug's pointer trace is the live evidence for
+                         * Theron's host-panel routing. Keep it at the same
+                         * mapped source coordinates the dispatcher consumed,
+                         * so letterboxing and presentation scaling can be
+                         * diagnosed without guessing from window pixels. */
+                        m11_debug_game_pointer(
+                            gameView,
+                            ev.button.button == SDL_BUTTON_LEFT
+                                ? "pointer-left" : "pointer-right",
+                            mappedX, mappedY, *gameViewResult);
                     } else {
                         /* Letterbox clicks have no source-space coordinate. */
                         continue;
