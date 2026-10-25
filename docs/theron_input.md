@@ -102,11 +102,15 @@ the highlighted control changes.
   implemented champion, item, use and wait actions. The retail manual's
   Button II chord is available as right-mouse plus Left/Right Arrow or A/D;
   it turns instead of side-stepping. A standalone right click does not advance
-  a dungeon tick. Authentic US Track 02 and Japan Rev. 1 Track 02 runtime tests
-  exercise the panel's turn and movement commands against each region's loaded
-  dungeon state. The Japanese test asserts both click receipts and the
-  resulting party pose. These checks cover Firestaff's host panel, not original
-  PCE mouse support or direct world-space clicks.
+  a dungeon tick; in a loaded dungeon it is consumed only as the modifier,
+  while Escape remains the desktop Back command. An SDL event-loop regression
+  verifies that Button II plus Right turns, then that Right after release
+  side-steps, using authenticated USA Track 02. Existing US and Japanese
+  Rev. 1 Track 02 runtime tests also exercise the panel's turn and movement
+  commands against each region's loaded dungeon state. The Japanese test
+  asserts both click receipts and the resulting party pose. These checks cover
+  Firestaff's host panel, not original PCE mouse support or direct world-space
+  clicks.
 - The host-panel bounds are Firestaff UI and do not reuse DM1's
   C007..C116 pointer tables. The original movement-panel captures identify
   six internal PCE cursor samples, not desktop hitboxes or host coordinates:

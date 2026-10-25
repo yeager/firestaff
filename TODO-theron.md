@@ -1,3 +1,17 @@
+## 2026-10-25 — verify normal Theron SDL gameplay input
+
+- ✅ Added `theron_v1_sdl_input_events`, which drives the normal SDL event loop
+  with an authentic USA Track 02 runtime. Three TRV2 loops prove that holding
+  right mouse while pressing Right turns, that release restores Right
+  side-step behavior, and that the authenticated media hash is correct.
+- ✅ In both SDL2 and SDL3 paths, right-button edges during loaded dungeon play
+  now exclusively set/clear Button II state instead of also invoking desktop
+  Back. This avoids a quit modal intercepting the direction key.
+- 🔒 Direct world clicks remain disabled until Theron's original cursor/hit
+  dispatch is joined to an authenticated live state. The native dungeon
+  renderer still needs state-driven graphics before end-to-end visual
+  playability is established.
+
 ## 2026-10-25 — mouse trace tool validation and truncation reporting
 
 - Tightened the live-capture mouse-script validator to require the same

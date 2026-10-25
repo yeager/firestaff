@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-25 — verify Button II and keyboard events in the SDL loop
+
+Theron now consumes right-button down/up in a loaded dungeon as Button II
+modifier edges, without also opening the desktop Back modal. The scripted SDL
+event path gained right-button down/up tokens for real-loop regression tests.
+`theron_v1_sdl_input_events` launched native Firestaff against authenticated
+USA Track 02 (MD5 `f23601102138f87c33025877767ebf76`) and verified that Right
+turns while Button II is held, then side-steps after release. The focused test
+passed three consecutive loops on TRV2. Direct viewport targeting and
+state-driven Theron rendering remain open.
+
 ## 2026-10-25 — support the Button II simplified-movement chord
 
 Holding the right mouse button while pressing Left/Right Arrow or A/D now
@@ -12,9 +23,10 @@ TRV2 passed, followed by three loops each of the authentic USA Track 02 test
 (MD5 `f23601102138f87c33025877767ebf76`) and Japanese Rev. 1 Track 02 test
 (MD5 `b7afb338ad31be1025b53f9aff12d73a`). The real-media scripts verify the
 regular keyboard and mouse-panel state routes; the Button II chord is directly
-covered by the pure mapper test, while SDL mouse-down/key-down/release
-lifecycle still needs an interactive event-level regression. Authenticated
-viewport hit targets and state-driven Theron rendering remain open.
+covered by the pure mapper test at that time; the normal SDL event lifecycle is
+now covered by `theron_v1_sdl_input_events` (see the newer entry above).
+Authenticated viewport hit targets and state-driven Theron rendering remain
+open.
 
 ## 2026-10-25 — route Theron action keys through native SDL input
 

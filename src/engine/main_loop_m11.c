@@ -10879,6 +10879,24 @@ static int m11_push_script_event_token(const char* token, size_t len) {
         SDL_PushEvent(&ev);
         return 1;
     }
+    if (sscanf(buffer, "rightdown:%d:%d", &x, &y) == 2 ||
+        sscanf(buffer, "rightup:%d:%d", &x, &y) == 2) {
+        const int isDown = strncmp(buffer, "rightdown:", 10) == 0;
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+        ev.type = isDown ? SDL_EVENT_MOUSE_BUTTON_DOWN
+                         : SDL_EVENT_MOUSE_BUTTON_UP;
+        ev.button.button = SDL_BUTTON_RIGHT;
+        ev.button.x = (float)x;
+        ev.button.y = (float)y;
+#else
+        ev.type = isDown ? SDL_MOUSEBUTTONDOWN : SDL_MOUSEBUTTONUP;
+        ev.button.button = SDL_BUTTON_RIGHT;
+        ev.button.x = x;
+        ev.button.y = y;
+#endif
+        SDL_PushEvent(&ev);
+        return 1;
+    }
     if (sscanf(buffer, "click:%d:%d", &x, &y) == 2) {
 #if SDL_VERSION_ATLEAST(3, 0, 0)
         ev.type = SDL_EVENT_MOUSE_BUTTON_DOWN;
@@ -12007,6 +12025,14 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                         gameView->theronState.startup_phase ==
                                 THERON_STARTUP_PHASE_IN_DUNGEON &&
                         gameView->theronState.level_loaded;
+                    if (gameView->theronButtonIIHeld) {
+                        /* The USA retail manual p. 5 defines Button II as the
+                         * simplified-movement modifier. Do not also route its
+                         * press through desktop Back, which opens a quit modal
+                         * and prevents the direction key from reaching play.
+                         * See docs/source-lock/theron-button-ii-manual-source-lock.md. */
+                        continue;
+                    }
                 }
                 M12_MenuInput buttonInput =
                     M11_TheronMouseButtonToInput(ev.button.button);
@@ -12686,6 +12712,11 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                         gameView->theronState.startup_phase ==
                                 THERON_STARTUP_PHASE_IN_DUNGEON &&
                         gameView->theronState.level_loaded;
+                    if (gameView->theronButtonIIHeld) {
+                        /* Keep the SDL2 path aligned with SDL3: Button II is
+                         * a dungeon modifier, not a simultaneous Back action. */
+                        continue;
+                    }
                 }
                 M12_MenuInput buttonInput =
                     M11_TheronMouseButtonToInput(ev.button.button);
