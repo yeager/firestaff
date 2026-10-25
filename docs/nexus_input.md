@@ -274,12 +274,18 @@ port 1 and ShuttleMouse on port 2. XTEST core-pointer motion and the ShuttleMous
 port's relative arrow-key bindings produced no visible movement of a clearly
 identifiable retail hand pointer in the Xvfb captures. The setup and captures
 are recorded in [`nexus-shuttle-mouse-xvfb-20261025`](../parity-evidence/verification/nexus-shuttle-mouse-xvfb-20261025/README.md).
-The XTEST result is explained by a Ymir 0.4.1 frontend gap: SDL global mouse ID
-`0` enters relative-capture mode and returns before Ymir maps its motion or
-buttons to the emulated ShuttleMouse. Ymir PR
-[#963](https://github.com/ymir-emu/Ymir/pull/963) proposes connecting that
-stream when a ShuttleMouse is selected; it still needs a full build and runtime
-`--debug` verification. Neither the earlier capture nor the proposed fix
-establishes Nexus retail mouse semantics. Firestaff's desktop mouse actions
-still need to follow proven Nexus state changes before enabling equipment or
-other pointer actions.
+The XTEST result was explained by a Ymir 0.4.1 frontend gap: SDL global mouse
+ID `0` entered relative-capture mode and returned before Ymir mapped its motion
+or buttons to the emulated ShuttleMouse. Ymir PR
+[#963](https://github.com/ymir-emu/Ymir/pull/963) was built and run under
+`--debug` on the authentic Nexus disc. Ymir reported binding the mouse to
+ShuttleMouse on port 1, but neither absolute nor relative host motion visibly
+moved the retail cursor/selection. One occupied-icon click left the screen
+unchanged. Fresh before/after WRAM dumps show no event 44, no live queue change,
+and no item-pair deltas across contexts 0–15. The full setup and hash-verified
+captures are recorded in
+[`nexus-shuttle-mouse-ymir-pr963-input-routing-20261025`](../parity-evidence/verification/nexus-shuttle-mouse-ymir-pr963-input-routing-20261025/README.md).
+This rules out stale dump-path evidence for that trial, but does not show that
+the retail event-44 handler rejected a correctly targeted click because the
+cursor never moved visibly. Firestaff's desktop pointer actions still need to
+follow proven Nexus state changes before enabling equipment or other actions.
