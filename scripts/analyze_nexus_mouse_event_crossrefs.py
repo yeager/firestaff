@@ -472,6 +472,67 @@ def report_mouse_event_queue_fallback(data: bytes) -> bool:
         print("mouse_event_queue_special_case_ids=38,39,40,49,52,56,57")
         print("mouse_event_ids_13_44_consumer=generic_bad_event_diagnostic "
               "gameplay_state_effect=not_verified")
+        # Record exact direct-comparison candidates across the full image.
+        # This is deliberately a byte-pattern scan: it does not identify code
+        # versus data and cannot rule out register, table, or indirect dispatch.
+        direct_event_44_cmp_r0 = [
+            offset for offset in range(0, len(data) - 1, 2)
+            if read_be16(data, offset) == 0x882C  # cmp/eq #44,r0
+        ]
+        locations = ",".join(f"0x{offset:06x}"
+                             for offset in direct_event_44_cmp_r0)
+        print("mouse_event_44_cmp_eq_r0_raw_candidates="
+              f"{locations if locations else 'none'} "
+              "scan=even_aligned_opcode_pattern_only")
+    return valid
+
+
+def report_mouse_event_name_resolver(data: bytes) -> bool:
+    """Verify that the generic queue fallback resolves a name, not a handler."""
+    expected_words = {
+        0x141B4: 0x4411,  # cmp/pz R4
+        0x141B6: 0x8B02,  # bf to out-of-range/default name path
+        0x141B8: 0xE23D,  # mov #61,R2
+        0x141BA: 0x3427,  # cmp/gt R2,R4
+        0x141BC: 0x8B02,  # bf to in-range name table
+        0x141BE: 0xD17C,  # load default name pointer
+        0x141C0: 0x000B,  # rts
+        0x141C2: 0x6012,  # delay slot: mov.l @R1,R0
+        0x141C4: 0xD17B,  # load event-name pointer table
+        0x141C6: 0x6043,  # mov R4,R0 (event id)
+        0x141C8: 0x4008,  # shll2 R0
+        0x141CA: 0x001E,  # mov.l @(R0,R1),R0
+        0x141CC: 0x000B,  # rts
+        0x141CE: 0x0009,  # nop
+    }
+    valid = True
+    for offset, expected in expected_words.items():
+        actual = read_be16(data, offset)
+        if actual != expected:
+            print(f"mouse_event_name_resolver=invalid file_offset=0x{offset:06x} "
+                  f"expected=0x{expected:04x} actual="
+                  f"{('none' if actual is None else f'0x{actual:04x}')}")
+            valid = False
+
+    table_base = mov_l_pc_literal(data, 0x141C4)
+    default_name = mov_l_pc_literal(data, 0x141BE)
+    if table_base != (1, DM_BASE + EVENT_NAME_POINTER_TABLE_OFFSET):
+        print(f"mouse_event_name_table_base=invalid decoded={table_base}")
+        valid = False
+    if default_name != (1, 0x0604AEBC):
+        print(f"mouse_event_default_name=invalid decoded={default_name}")
+        valid = False
+
+    for offset, expected_target in ((0x141B6, 0x141BE),
+                                    (0x141BC, 0x141C4)):
+        opcode = read_be16(data, offset)
+        if opcode is None or bt_target(offset, opcode) != expected_target:
+            print(f"mouse_event_name_resolver_branch=invalid "
+                  f"file_offset=0x{offset:06x}")
+            valid = False
+    if valid:
+        print("mouse_event_queue_fallback_helper=event_id_to_name_pointer "
+              "table=0x0604adc4; no event-action dispatch")
     return valid
 
 
@@ -580,6 +641,9 @@ def main() -> int:
         return 1
     if not report_mouse_event_queue_fallback(data):
         print("NEXUS_MOUSE_EVENT_QUEUE_CONSUMER_INVALID: retail consumer changed")
+        return 1
+    if not report_mouse_event_name_resolver(data):
+        print("NEXUS_MOUSE_EVENT_NAME_RESOLVER_INVALID: retail helper changed")
         return 1
     if not report_mouse_motion_event_gate(data):
         print("NEXUS_MOUSE_MOTION_EVENT_GATE_INVALID: retail poller changed")

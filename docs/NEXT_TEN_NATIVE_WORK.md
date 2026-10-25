@@ -8,9 +8,12 @@ It intentionally ranks source-owned work above synthetic presentation work.
    binds `TITLE.CG`, its active `MAPD` span, CRAM palette, VDP1/VDP2 register
    state, layer order, and timing. This is the admission prerequisite for a
    native title renderer.
-2. **Nexus interactive title-to-menu trace.** Capture actual Start/A input
-   handling after the title state; the existing frames 13000–13039 are
-   non-interactive animation and must not be promoted as menu evidence.
+2. **Nexus menu source/display join.** Ymir `--debug` on authentic retail media
+   has already demonstrated Start opening the title menu, navigation to
+   Continue, A confirming New Game, and a separate ShuttleMouse title button
+   event. Bind that interaction to the menu/face display consumer and Firestaff
+   startup state; the raw frames 13000–13039 remain non-interactive animation
+   and must not be promoted as menu evidence.
 3. **Nexus Structure 2/VDP1 material ownership.** Bind real texture, CLUT,
    raster, clipping, animation, and composition inputs to one captured
    consumer before enabling textured 3D output.
