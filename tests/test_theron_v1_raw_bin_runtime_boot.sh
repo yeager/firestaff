@@ -100,6 +100,7 @@ keyboard_right_output=$(mktemp "$scratch_root/firestaff-theron-us-keyboard-right
 keyboard_left_output=$(mktemp "$scratch_root/firestaff-theron-us-keyboard-left.XXXXXX")
 turn_alias_left_output=$(mktemp "$scratch_root/firestaff-theron-us-turn-alias-left.XXXXXX")
 turn_alias_right_output=$(mktemp "$scratch_root/firestaff-theron-us-turn-alias-right.XXXXXX")
+forward_alias_keypad_output=$(mktemp "$scratch_root/firestaff-theron-us-forward-alias-keypad.XXXXXX")
 mouse_turn_left_output=$(mktemp "$scratch_root/firestaff-theron-us-mouse-turn-left.XXXXXX")
 mouse_turn_right_output=$(mktemp "$scratch_root/firestaff-theron-us-mouse-turn-right.XXXXXX")
 mouse_forward_output=$(mktemp "$scratch_root/firestaff-theron-us-mouse-forward.XXXXXX")
@@ -109,7 +110,7 @@ mouse_next_output=$(mktemp "$scratch_root/firestaff-theron-us-mouse-next.XXXXXX"
 mouse_wait_output=$(mktemp "$scratch_root/firestaff-theron-us-mouse-wait.XXXXXX")
 mouse_unmapped_output=$(mktemp "$scratch_root/firestaff-theron-us-mouse-unmapped.XXXXXX")
 mouse_item_drop_output=$(mktemp "$scratch_root/firestaff-theron-us-mouse-item-drop.XXXXXX")
-trap 'rm -f "$output" "$baseline_output" "$turn_output" "$move_output" "$forward_blocked_output" "$turn_left_output" "$keyboard_right_output" "$keyboard_left_output" "$turn_alias_left_output" "$turn_alias_right_output" "$mouse_turn_left_output" "$mouse_turn_right_output" "$mouse_forward_output" "$mouse_back_output" "$mouse_step_pair_output" "$mouse_next_output" "$mouse_wait_output" "$mouse_unmapped_output" "$mouse_item_drop_output"; rm -rf "$us_only_root"' EXIT
+trap 'rm -f "$output" "$baseline_output" "$turn_output" "$move_output" "$forward_blocked_output" "$turn_left_output" "$keyboard_right_output" "$keyboard_left_output" "$turn_alias_left_output" "$turn_alias_right_output" "$forward_alias_keypad_output" "$mouse_turn_left_output" "$mouse_turn_right_output" "$mouse_forward_output" "$mouse_back_output" "$mouse_step_pair_output" "$mouse_next_output" "$mouse_wait_output" "$mouse_unmapped_output" "$mouse_item_drop_output"; rm -rf "$us_only_root"' EXIT
 run_pose_probe "$baseline_output" "$startup_script" '1,0,0'
 run_pose_probe "$turn_output" "$startup_script,key:e" '1,0,1'
 run_pose_probe "$move_output" "$startup_script,down" '1,1,0'
@@ -120,6 +121,9 @@ run_pose_probe "$keyboard_left_output" \
     "$startup_script,down,key:right,key:left" '1,1,0'
 run_pose_probe "$turn_alias_left_output" "$startup_script,key:home" '1,0,3'
 run_pose_probe "$turn_alias_right_output" "$startup_script,key:kp6" '1,0,1'
+# KP8 is a native forward alias.  The script injects a real SDL keydown into
+# the regular event loop after moving onto a source-backed open tile.
+run_pose_probe "$forward_alias_keypad_output" "$startup_script,down,key:kp8" '1,2,0'
 run_pose_probe "$mouse_turn_left_output" "$startup_script,click:204:144" '1,0,3'
 run_pose_probe "$mouse_turn_right_output" "$startup_script,click:292:144" '1,0,1'
 run_pose_probe "$mouse_forward_output" "$startup_script,down,click:248:144" '1,0,0'
@@ -141,6 +145,7 @@ if ! grep -Fq 'party=1,0,0 champions=2 runtimeTick=0' "$baseline_output" ||
    ! grep -Fq 'party=1,1,0 champions=2 runtimeTick=3' "$keyboard_left_output" ||
    ! grep -Fq 'party=1,0,3 champions=2 runtimeTick=0' "$turn_alias_left_output" ||
    ! grep -Fq 'party=1,0,1 champions=2 runtimeTick=0' "$turn_alias_right_output" ||
+   ! grep -Fq 'party=1,2,0 champions=2 runtimeTick=2' "$forward_alias_keypad_output" ||
    ! grep -Fq 'party=1,0,3 champions=2 runtimeTick=0' "$mouse_turn_left_output" ||
    ! grep -Fq 'party=1,0,1 champions=2 runtimeTick=0' "$mouse_turn_right_output" ||
    ! grep -Fq 'party=1,0,0 champions=2 runtimeTick=2' "$mouse_forward_output" ||
