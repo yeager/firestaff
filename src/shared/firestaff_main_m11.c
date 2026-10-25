@@ -495,18 +495,27 @@ static void print_scan_game(const M12_AssetStatus* status,
 
 static int verbose_scan_progress(const M12_AssetScanProgress* progress,
                                  void* userData) {
+    size_t percent = 0U;
+    const char* gameLabel;
     (void)userData;
     if (!progress) return 1;
-    if (progress->currentGameId[0] != '\0') {
-        printf("  [%s] %s",
-               M12_StartupMenu_GameDisplayTitleForLocale(
-                   0, progress->currentGameId),
-               progress->currentTask);
-        if (progress->currentPath[0] != '\0') {
-            printf(": %s", progress->currentPath);
-        }
-        printf("\n");
+    if (progress->totalSteps > 0U) {
+        percent = (progress->completedSteps * 100U +
+                   progress->currentStepPercent) / progress->totalSteps;
+        if (percent > 100U) percent = 100U;
     }
+    gameLabel = progress->currentGameId[0] != '\0'
+        ? M12_StartupMenu_GameDisplayTitleForLocale(
+              0, progress->currentGameId)
+        : "All games";
+    printf("  [%s] %s %zu%%",
+           gameLabel ? gameLabel : "All games",
+           progress->currentTask,
+           percent);
+    if (progress->currentPath[0] != '\0') {
+        printf(": %s", progress->currentPath);
+    }
+    printf("\n");
     return 1;
 }
 

@@ -100,8 +100,22 @@ static int make_isolated_home(char* out, size_t outSize) {
     }
     return TEST_MKDIR(out) == 0;
 #else
-    char templatePath[] = "/tmp/firestaff-data-dir-change-inval-XXXXXX";
-    char* made = mkdtemp(templatePath);
+    const char* tempDir = getenv("TMPDIR");
+    char templatePath[1024];
+    size_t tempDirLength;
+    int pathLength;
+    char* made;
+    if (!tempDir || !tempDir[0]) tempDir = "/tmp";
+    tempDirLength = strlen(tempDir);
+    pathLength = snprintf(templatePath, sizeof(templatePath), "%s%s%s",
+                          tempDir,
+                          tempDirLength > 0U && tempDir[tempDirLength - 1U] == '/'
+                              ? "" : "/",
+                          "firestaff-data-dir-change-inval-XXXXXX");
+    if (pathLength <= 0 || (size_t)pathLength >= sizeof(templatePath)) {
+        return 0;
+    }
+    made = mkdtemp(templatePath);
     if (!made) {
         return 0;
     }
@@ -341,6 +355,9 @@ static void scan_in_isolated_env(const char* homeRoot,
 typedef struct {
     size_t callbacks;
     size_t cancelAtStep;
+    int cancelDuringCandidateProgress;
+    size_t candidateProgressCallbacks;
+    unsigned int maxCandidateProgress;
     char lastTask[64];
     char lastGame[16];
 } CancelScanProbe;
@@ -356,6 +373,17 @@ static int cancel_scan_progress_cb(const M12_AssetScanProgress* progress,
              progress->currentTask);
     snprintf(probe->lastGame, sizeof(probe->lastGame), "%s",
              progress->currentGameId);
+    if (strcmp(progress->currentTask,
+               "checking original file candidates") == 0) {
+        ++probe->candidateProgressCallbacks;
+        if (progress->currentStepPercent > probe->maxCandidateProgress) {
+            probe->maxCandidateProgress = progress->currentStepPercent;
+        }
+        if (probe->cancelDuringCandidateProgress &&
+            progress->currentStepPercent >= 5U) {
+            return 0;
+        }
+    }
     if (probe->cancelAtStep > 0U &&
         progress->completedSteps >= probe->cancelAtStep) {
         return 0;
@@ -397,6 +425,44 @@ static void check_scan_progress_cancel_contract(const char* homeRoot,
               "progress cancel: callback must be invoked before cancel");
     check_no_game_available(&status);
     check_required_metadata_preserved(&status);
+}
+
+static void check_original_candidate_scan_progress_and_cancel(
+    const char* homeRoot,
+    const char* dataRoot) {
+    M12_AssetStatus status;
+    M12_AssetStatusScanOptions options;
+    const M12_AssetScanProgress* progress;
+    CancelScanProbe probe;
+    int rc;
+
+    memset(&status, 0, sizeof(status));
+    memset(&options, 0, sizeof(options));
+    memset(&probe, 0, sizeof(probe));
+    probe.cancelDuringCandidateProgress = 1;
+    options.progressFn = cancel_scan_progress_cb;
+    options.progressUserData = &probe;
+
+    test_setenv("HOME", homeRoot);
+    test_setenv("FIRESTAFF_DATA", dataRoot);
+    test_setenv("XDG_DATA_HOME", homeRoot);
+    test_setenv("APPDATA", homeRoot);
+    M12_AssetStatus_TestResetScanMetrics();
+    rc = M12_AssetStatus_ScanWithOptions(&status, dataRoot, &options);
+    progress = M12_AssetStatus_GetScanProgress(&status);
+
+    check_int(rc == 0,
+              "candidate progress cancel: scan must report cancellation");
+    check_int(progress && progress->cancelled == 1,
+              "candidate progress cancel: status must publish cancelled=1");
+    check_int(probe.candidateProgressCallbacks > 1U,
+              "candidate progress cancel: callback must report phase progress");
+    check_int(probe.maxCandidateProgress >= 5U,
+              "candidate progress cancel: progress must advance during file checks");
+    check_int(strcmp(probe.lastTask,
+                     "checking original file candidates") == 0,
+              "candidate progress cancel: cancellation must stop within candidate search");
+    check_no_game_available(&status);
 }
 
 static void check_scan_progress_complete_contract(const char* homeRoot,
@@ -1402,6 +1468,7 @@ int main(int argc, char** argv) {
     check_different_payload_different_hash(home, dirA, dirC);
     check_legacy_fallback_dir_refreshes(home, dirA, dirB);
     check_scan_progress_cancel_contract(home, dirB);
+    check_original_candidate_scan_progress_and_cancel(home, dirB);
     check_scan_progress_complete_contract(home, dirB);
     check_game_subdir_scan_promotes_to_parent(home);
     check_explicit_game_subdir_scan_preserves_leaf(home);

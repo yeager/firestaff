@@ -4445,7 +4445,11 @@ static size_t m12_build_search_roots(char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET
 }
 
 
-static int m12_root_has_original_candidate(const char* root) {
+static int m12_root_has_original_candidate(
+    const char* root,
+    M12_ScanProgressContext* progressCtx,
+    size_t totalChecks,
+    size_t* checksDone) {
     char path[M12_ASSET_DATA_DIR_CAPACITY + 64];
     size_t i;
     int s;
@@ -4461,13 +4465,25 @@ static int m12_root_has_original_candidate(const char* root) {
         }
         for (i = 0U; g_originalCandidateNames[i] != NULL; ++i) {
             FILE* fp;
-            if (!FSP_JoinPath(path, sizeof(path), subroot, g_originalCandidateNames[i])) {
-                continue;
+            if (FSP_JoinPath(path, sizeof(path), subroot,
+                             g_originalCandidateNames[i])) {
+                fp = fopen(path, "rb");
+                if (fp) {
+                    fclose(fp);
+                    if (!m12_scan_progress_set_step_percent(progressCtx, 100U)) {
+                        return 0;
+                    }
+                    return 1;
+                }
             }
-            fp = fopen(path, "rb");
-            if (fp) {
-                fclose(fp);
-                return 1;
+            if (checksDone) {
+                ++*checksDone;
+                if (totalChecks > 0U &&
+                    !m12_scan_progress_set_step_percent(
+                        progressCtx,
+                        (unsigned int)((*checksDone * 100U) / totalChecks))) {
+                    return 0;
+                }
             }
         }
     }
@@ -4631,19 +4647,41 @@ static void m12_refresh_nexus_bpk_trailer_metadata(
     free(data);
 }
 
-static void m12_scan_original_candidates(M12_AssetStatus* status,
-                                         const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
-                                         size_t rootCount) {
+static int m12_scan_original_candidates(
+    M12_AssetStatus* status,
+    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
+    size_t rootCount,
+    M12_ScanProgressContext* progressCtx) {
     size_t rootIndex;
+    size_t subdirCount = 0U;
+    size_t candidateCount = 0U;
+    size_t totalChecks;
+    size_t checksDone = 0U;
     if (!status) {
-        return;
+        return 0;
     }
+    while (g_assetCandidateSubdirs[subdirCount] != NULL) ++subdirCount;
+    while (g_originalCandidateNames[candidateCount] != NULL) ++candidateCount;
+    totalChecks = rootCount * subdirCount * candidateCount;
     for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
-        if (m12_root_has_original_candidate(roots[rootIndex])) {
+        if (!m12_scan_progress_update(progressCtx,
+                                      "checking original file candidates",
+                                      NULL,
+                                      roots[rootIndex],
+                                      0)) {
+            return 0;
+        }
+        if (m12_root_has_original_candidate(roots[rootIndex], progressCtx,
+                                            totalChecks, &checksDone)) {
             status->originalFileCandidateFound = 1;
-            return;
+            return 1;
+        }
+        if (status->scanProgress.cancelled ||
+            status->scanProgress.cancelRequested) {
+            return 0;
         }
     }
+    return m12_scan_progress_set_step_percent(progressCtx, 100U);
 }
 
 static const char* m12_effective_version_md5(const M12_VersionSpec* spec) {
@@ -8518,7 +8556,7 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
                                   "checking direct launch path",
                                   "theron",
                                   requestedDataDir,
-                                  1)) {
+                                  0)) {
         m12_scan_publish_cancelled_status(status, requestedDataDir, NULL);
         return 0;
     }
@@ -8531,7 +8569,7 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
                                   "checking direct launch path",
                                   "nexus",
                                   requestedDataDir,
-                                  1)) {
+                                  0)) {
         m12_scan_publish_cancelled_status(status, requestedDataDir, NULL);
         return 0;
     }
@@ -8595,7 +8633,7 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
                                   "checking explicit file request",
                                   NULL,
                                   requestedDataDir,
-                                  1)) {
+                                  0)) {
         m12_scan_publish_cancelled_status(status, requestedDataDir, NULL);
         return 0;
     }
@@ -8649,7 +8687,11 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
                                           legacyFallbackSnapshot);
         return 0;
     }
-    m12_scan_original_candidates(status, roots, rootCount);
+    if (!m12_scan_original_candidates(status, roots, rootCount, &progressCtx)) {
+        m12_scan_publish_cancelled_status(status, requestedDataDir,
+                                          legacyFallbackSnapshot);
+        return 0;
+    }
     int userExplicitDataDir = (requestedDataDir && requestedDataDir[0] != '\0') ? 1 : 0;
     for (i = 0; i < M12_ASSET_GAME_COUNT; ++i) {
         int csbFmtownsAdmitted = 0;
