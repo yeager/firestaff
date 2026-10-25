@@ -47132,6 +47132,15 @@ if(BUILD_TESTING AND TARGET firestaff_theron)
         LABELS "theron;real-media;runtime;input;native;no-synthetic"
     )
     add_test(
+        NAME theron_v1_jp_sdl_input_events
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_jp_sdl_input_events.sh
+                $<TARGET_FILE:firestaff>
+    )
+    set_tests_properties(theron_v1_jp_sdl_input_events PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;runtime;input;native;no-synthetic"
+    )
+    add_test(
         NAME theron_v1_us_clonecd_zip_runtime_boot
         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_us_clonecd_zip_runtime_boot.sh
                 $<TARGET_FILE:firestaff>
