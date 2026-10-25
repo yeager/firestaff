@@ -1,5 +1,24 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-25: Audited the published v3.0.411 macOS arm64 executable against
+  the installed original-media collection. Direct `--game` boot probes
+  resolved DM1, CSB, DM2, Nexus and Theron's Quest to authenticated editions.
+  The M12 no-game picker passed keyboard and mouse selection for all five
+  games. The separate original-media runtime test reached an active first
+  dungeon runtime for DM1, CSB and DM2. Direct-start exit and mouse return to
+  the launcher passed for those three priority games; each return rescan
+  reported all five games. `test_firestaff_cli_game_option_forms.sh`,
+  `test_dm1_v1_m12_auto_multi_platform_menu.sh`,
+  `test_csb_v1_fmtowns_native_cli_boot.sh`,
+  `test_m12_main_menu_game_selection_real_media.sh`,
+  `test_m12_main_menu_runtime_real_media.sh`, and the `direct-exit` and
+  `mouse-return` modes of `test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh`
+  passed. Original media stayed outside Git. These runs used SDL's dummy
+  display/audio drivers: they verify the exercised CLI/menu/runtime routes,
+  not physical input, native display or audio, full gameplay, or visual parity.
+  The full runtime test covered DM1/CSB/DM2; Nexus and Theron were verified at
+  menu handoff and short CLI boot-probe only.
+
 - 2026-10-24: Fixed gamepad `Use Item` dispatch for Theron's native runtime.
   The shared M11 mapper now emits the dedicated `M12_MENU_INPUT_USE_ITEM`
   token instead of generic `M12_MENU_INPUT_ACTION` (wait/tick). Added a
