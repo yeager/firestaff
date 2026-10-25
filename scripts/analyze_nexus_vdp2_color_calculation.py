@@ -22,12 +22,14 @@ class CaptureError(ValueError):
 
 def read_capture(path: Path) -> bytes:
     try:
-        data = path.read_bytes()
+        with path.open("rb") as capture:
+            data = capture.read(REGISTER_BYTES + 1)
     except OSError as error:
         raise CaptureError(f"cannot read {path}: {error}") from error
     if len(data) != REGISTER_BYTES:
+        size = f"at least {len(data)}" if len(data) > REGISTER_BYTES else str(len(data))
         raise CaptureError(
-            f"{path}: expected {REGISTER_BYTES} register bytes, got {len(data)}"
+            f"{path}: expected {REGISTER_BYTES} register bytes, got {size}"
         )
     return data
 

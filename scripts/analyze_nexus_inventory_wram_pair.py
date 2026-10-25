@@ -27,6 +27,7 @@ from pathlib import Path
 WRAM_SIZE = 0x100000
 WRAM_BASE = 0x06000000
 DM_BASE = 0x06010000
+DM_BIN_SIZE = 555144
 DM_BIN_SHA256 = "3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124"
 EVENT_NAME_POINTER_TABLE_OFFSET = 0x3ADC4
 EVENT_NAME_COUNT = 61
@@ -73,9 +74,12 @@ def resolve_dm_bin(explicit: Path | None) -> Path | None:
 
 def read_event_names(path: Path) -> dict[int, str]:
     try:
-        data = path.read_bytes()
+        with path.open("rb") as source:
+            data = source.read(DM_BIN_SIZE + 1)
     except OSError as error:
         raise CaptureError(f"cannot read authentic DM.BIN {path}: {error}") from error
+    if len(data) != DM_BIN_SIZE:
+        raise CaptureError(f"{path}: expected {DM_BIN_SIZE} canonical DM.BIN bytes")
     digest = hashlib.sha256(data).hexdigest()
     if digest != DM_BIN_SHA256:
         raise CaptureError(
