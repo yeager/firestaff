@@ -1,5 +1,13 @@
 # Firestaff DONE — cross-game completed work
 
+## 2026-10-25 — Nexus event-44 analyzer regression coverage
+
+The new event-44 instruction checks passed against the hash-verified retail
+DM.BIN and RLOWFIX.BIN on the build host. Updated the analyzer's small opcode
+fixtures for the four newly checked words and added independent corruption
+checks for each word. All 23 analyzer unit tests pass. These fixtures test the
+real-data evidence tool; they do not establish retail mouse-action parity.
+
 - 2026-10-25: Rebuilt after the DM2 RECT_7 presentation extraction and ran
   authentic DM2 FM Towns, Macintosh and Amiga startup/runtime checks. FM Towns
   passed its CLI, cache, menu, first-party and runtime screenshot routes in
