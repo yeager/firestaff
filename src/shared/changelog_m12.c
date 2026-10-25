@@ -23,6 +23,7 @@ static const char* const g_changelogLines[] = {
     "  - Launcher asset collection reuses the direct-root hash instead of hashing the same file twice.",
     "  - Authentic DM1, CSB and DM2 menu routes and current five-game startup gaps are documented with their evidence limits.",
     "  - Theron compile-time dead checks and Nexus PLRD signedness warning are removed; main-loop compiler warnings are cleared.",
+    "  - DM2 French Macintosh md.dat/qstrat.dat remain preservation-only; shared graphics and dungeon hashes do not establish French startup or MIDI ownership.",
     "",
     "V3.0.412  (2026-10-25)",
     "  - CSB Amiga startup reuses verified package matches while retaining the incomplete-candidate fallback.",

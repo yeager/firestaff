@@ -13,6 +13,7 @@
 - `Theron and Nexus source cleanup`: remove dead Theron checks and correct the Nexus PLRD slot bound; clear main-loop compiler warnings.
 - `CSB FM Towns diagnostics`: fix native CLI boot checks to handle broken pipes while preserving authentic-media route assertions.
 - `Release metadata`: update the project version and regenerate the versioned SPDX source SBOM for v3.0.413.
+- `DM2 French Macintosh evidence`: record that the French Mac md.dat/qstrat.dat pair is preserved but not admitted as a supported startup edition; shared Graphics.dat and Dungeon.dat hashes do not prove French ownership or MIDI routing.
 
 ## Known limitations
 
@@ -20,6 +21,7 @@
 - `Nexus`: the authentic Saturn title-menu consumer, New Game/Continue flow and transition to an authenticated playable level remain gated; the BKR parser does not load game saves.
 - `Theron's Quest`: native dungeon presentation is not yet driven by authenticated world and graphics state.
 - `DM2`: platform-wide viewport, HUD and native input parity remain incomplete.
+- `DM2 French Macintosh`: startup support remains unverified until a same-owner four-file identity and source/runtime evidence establish French edition selection and qstrat.dat use.
 - The launcher pointer changes are source-compiled but have not yet been verified in a runtime UI session.
 
 # Firestaff v3.0.412
