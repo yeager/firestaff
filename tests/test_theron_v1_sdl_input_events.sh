@@ -45,6 +45,7 @@ run_event_route() {
         --theron-native us \
         --data-dir "$data_root" \
         --debug \
+        --lang en \
         --duration 8000 \
         --script "$startup_script,wait-game-runtime,$gameplay_events" \
         >"$output" 2>&1
