@@ -181,6 +181,8 @@ M12_MenuInput M11_TheronNavigationInputFromScancode(int scancode);
 M12_MenuInput M11_NexusMovementInputFromScancode(int scancode);
 M12_MenuInput M11_NexusPointerInputFromScancode(int scancode);
 M12_MenuInput M11_NexusPointerToggleInputFromScancode(int scancode);
+M12_MenuInput M11_NexusMovementPadInputAt(
+    int x, int y, int x1, int y1, int x2, int y2);
 M12_MenuInput M11_TheronNavigationInputFromKeycode(int keycode);
 M12_MenuInput M11_TheronGameplayInputFromScancode(int scancode);
 M12_MenuInput M11_TheronGameplayInputFromKeycode(int keycode);

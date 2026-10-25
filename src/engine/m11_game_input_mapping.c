@@ -134,6 +134,32 @@ M12_MenuInput M11_NexusPointerToggleInputFromScancode(int scancode)
         ? M12_MENU_INPUT_NEXUS_POINTER_TOGGLE : M12_MENU_INPUT_NONE;
 }
 
+M12_MenuInput M11_NexusMovementPadInputAt(
+    int x, int y, int x1, int y1, int x2, int y2)
+{
+    int column;
+    int row;
+    int width;
+    int height;
+
+    if (x2 <= x1 || y2 <= y1 || x < x1 || x >= x2 || y < y1 || y >= y2) {
+        return M12_MENU_INPUT_NONE;
+    }
+
+    width = x2 - x1;
+    height = y2 - y1;
+    column = ((x - x1) * 3) / width;
+    row = ((y - y1) * 2) / height;
+    if (row == 0) {
+        return column == 0 ? M12_MENU_INPUT_TURN_LEFT
+             : column == 1 ? M12_MENU_INPUT_UP
+                           : M12_MENU_INPUT_TURN_RIGHT;
+    }
+    return column == 0 ? M12_MENU_INPUT_STRAFE_LEFT
+         : column == 1 ? M12_MENU_INPUT_DOWN
+                       : M12_MENU_INPUT_STRAFE_RIGHT;
+}
+
 M12_MenuInput M11_TheronNavigationInputFromKeycode(int keycode)
 {
     /* SDL normally supplies both fields.  Keep a keycode fallback for
