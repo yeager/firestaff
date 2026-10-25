@@ -213,14 +213,20 @@ marker. There is a partial fit with Firestaff's ITEM.IBS declaration indices,
 but not a lossless mapping. The context index is not joined to a champion,
 Firestaff's champion model has no field for the opaque second 16-bit word, and
 the retail PLRD item pairs do not establish the inventory-panel layout. The
-hash-pinned Japanese `RLOWFIX.BIN` (`f2686bf3…37be18b0`) contains 20 PLRD
-rows with ten item pairs each: 64 pairs have an item ordinal, 136 are empty,
-and all 200 second words are zero. This start-roster sample does not establish
-the auxiliary word's meaning for live items. The helper effects that transfer
-the held item through global UI state and the runtime-visible result still
-need a controlled Ymir before/after capture. The analyzer reproduces both the
-DM.BIN instruction checks and this PLRD pair summary. This path is separate
-from the later `0x21c84` generic diagnostic loop.
+hash-pinned Japanese `RLOWFIX.BIN`
+(`f2686bf3d6b971c5eaa613b2619b7e1bb7958a8045876296a83509f137be18b0`) contains
+20 PLRD rows with ten item pairs each: 64 pairs have an item ordinal, 136 are
+empty, and all 200 second words are zero. A read-only comparison of four
+authentic Ymir captures found that context records 0–3 duplicate each other
+and match PLRD row 2's first seven pairs, but differ at slot 7; empty context 4
+matches four PLRD rows. These ambiguous matches do not establish a unique
+context-to-champion mapping or the auxiliary word's meaning for live items.
+The candidate relation and capture hashes are recorded in
+[`nexus-v1-inventory-button-debug-20261025`](../parity-evidence/verification/nexus-v1-inventory-button-debug-20261025/README.md).
+The helper effects that transfer the held item through global UI state and
+the runtime-visible result still need a controlled Ymir before/after capture.
+The analyzer reproduces the DM.BIN instruction checks and PLRD pair summary.
+This path is separate from the later `0x21c84` generic diagnostic loop.
 The separate mouse-motion poller filters for event 46 before it calls the
 hit-region scanner; it does not consume event 44 as a second pointer action.
 Event 44 has a hash-verified source-side slot-pair path, but its runtime

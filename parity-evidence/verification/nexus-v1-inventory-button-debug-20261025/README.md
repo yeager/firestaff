@@ -38,6 +38,29 @@ is no proven join from that record to a champion or to an item declaration.
 The trace therefore proves button-driven menu navigation, not item transfer,
 and does not authorize an inventory mutation in Firestaff.
 
+## Context records and the authentic party roster
+
+The candidate equipment arrays in WRAM contexts 0–3 each contain the same
+first seven item/auxiliary pairs as PLRD row 2 in the authentic Japanese
+`RLOWFIX.BIN` (`f2686bf3d6b971c5eaa613b2619b7e1bb7958a8045876296a83509f137be18b0`).
+PLRD is at file offset `0xedac`; its rows begin at `0xedb4`, have a 64-byte
+stride, and row 2 begins at `0xee34`. In slots 0–9, each of contexts 0–3 has
+`ffff/0000` ×3, `005e/0000`, `0073/0000`, `0081/0000`, `00a4/0000`,
+`8080/8080`, `8000/0000`, and `0000/0000`. The first seven pairs match PLRD
+row 2; slot 7 differs (`8080/8080` in each context versus `ffff/0000` in
+PLRD). The four contexts are duplicates of one another.
+Context 4 is empty and matches four separate empty PLRD rows (3, 8, 18, and
+19). These are ambiguous structural matches; they do not identify a unique
+champion or prove that retail contexts are champion records. The B/A snapshots
+also leave the candidate arrays unchanged. A live event-44 transfer and an
+independent context-to-champion join are still required.
+
+The comparison also checked the pre-click Ymir dump
+`before-event44-click-hi.bin` (SHA-256
+`a9ba26b4ed6cb845570aad08a57ad78af96e64795b0cf12f158482a74b3675f8`), which
+matches the same candidate context arrays. It is a baseline snapshot, not an
+event-44 click result.
+
 The three complete 1 MiB high-WRAM dumps came from Ymir's Debug → Dump all
 memory command. Their SHA-256 values are:
 
@@ -60,15 +83,19 @@ The Firestaff input contract and remaining join requirements are recorded in
 
 ## Reproduction
 
-Run the repository analyzer against the external authentic retail `DM.BIN`:
+Original high-WRAM dumps are intentionally excluded from Git as runtime game
+data. The analyzer requires the three matching Ymir dump files in a private
+local evidence directory; use the authentic retail `DM.BIN` and this capture
+set, or a separately hash-matched copy of the same captures:
 
 ```sh
 python3 scripts/analyze_nexus_inventory_button_trace.py \
   /path/to/nexus/DM.BIN \
-  parity-evidence/verification/nexus-v1-inventory-button-debug-20261025
+  /path/to/private/nexus-v1-inventory-button-debug-20261025
 ```
 
-It verifies the retail disc hash, all three full high-WRAM capture hashes,
-event queue values, event names, dispatch destinations, and the observed
-context-record byte pair. It deliberately reports the champion/item join and
-persistent item transfer as unproven.
+The successful run verified the retail disc hash, all three full high-WRAM
+capture hashes, event queue values, event names, dispatch destinations, and
+the observed context-record byte pair. It reports the champion/item join and
+persistent item transfer as unproven. The capture hashes and interpreted
+values above let reviewers identify the exact private dumps used.
