@@ -1070,7 +1070,8 @@ add_test(NAME nexus_v1_saturn_save_capture_engine_lifecycle
     COMMAND test_nexus_v1_saturn_save_capture_engine_lifecycle)
 add_executable(test_nexus_v1_saturn_bkr_real
     tests/test_nexus_v1_saturn_bkr_real.c
-    src/shared/firestaff_x68k_media_receipt.c)
+    src/shared/firestaff_x68k_media_receipt.c
+    src/shared/firestaff_x68k_media_classify.c)
 target_include_directories(test_nexus_v1_saturn_bkr_real PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_saturn_bkr_real PRIVATE firestaff_nexus)
