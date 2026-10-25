@@ -47,6 +47,15 @@ bytes, so they are not duplicate files, but their position and cursor fields
 do not support treating `us-forward-pce` as a successful move. Its label is
 not movement evidence.
 
+Two follow-up PCE-module replays against the same authentic autoload state
+were also rejected as movement evidence. `up@1:140` and
+`right@1:20,up@30:140` each had their scripted controller masks applied and
+subsequently observed at a non-System-Card controller poll, while their final
+party bytes remained `01 02 03`. Both bounded runs emitted complete VRAM,
+VCE, SAT, VDC-state, and main-RAM snapshots, but did not reach the dynamic
+receipt required by the capture driver before its timeout. They therefore do
+not establish a source-owned movement result or a pose-to-frame mapping.
+
 This audit applies only to the private 2026-10-25 capture set and does not
 replace the separately source-locked 2026-08-21 movement record, which names
 a Track 02 file/transport hash (`ceb02343868f80cec899e9b239aff2da`, MODE1/2048)
