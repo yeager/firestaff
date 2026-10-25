@@ -46028,7 +46028,7 @@ set_tests_properties(nexus_v1_launch_smoke PROPERTIES
 # boundary without extracting media or using an emulator.
 add_test(
     NAME nexus_v1_native_menu_mouse_title
-    COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_native_menu_mouse_title.sh
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_native_menu_mouse_title.sh
             $<TARGET_FILE:firestaff>
             ${CMAKE_BINARY_DIR}
 )

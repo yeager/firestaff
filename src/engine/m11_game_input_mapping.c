@@ -117,6 +117,14 @@ M12_MenuInput M11_NexusMovementInputFromScancode(int scancode)
     }
 }
 
+M12_MenuInput M11_NexusLeaderInputFromScancode(int scancode, int shift_down)
+{
+    if (scancode == SDL_SCANCODE_TAB && shift_down) {
+        return M12_MENU_INPUT_NEXUS_CYCLE_CHAMPION_PREVIOUS;
+    }
+    return M12_MENU_INPUT_NONE;
+}
+
 M12_MenuInput M11_NexusPointerInputFromScancode(int scancode)
 {
     /* Saturn's D-pad moves the hand pointer in eight directions. Retail Ymir

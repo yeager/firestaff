@@ -1,5 +1,18 @@
 # Firestaff DONE — Nexus
 
+## 2026-10-25 — Desktop input build and authentic menu-route verification
+
+A clean Linux Release build of `firestaff` completed with the unified desktop
+movement-pad routing and reverse leader selection. The focused desktop-input
+and leader-switch regressions passed. The authentic Japanese Saturn pointer-only
+menu regression also passed against that binary: it reached the title capture
+gate and rejected a playable-runtime claim. Run this regression with Bash,
+including from CTest, because its output checks use here-strings.
+
+The same binary passed the authentic Theron JP raw-BIN startup regression,
+including keyboard and mouse pose/tick checks. These results do not establish
+Nexus menu/gameplay parity or full Theron parity.
+
 ## 2026-10-24 — Verified title and media diagnostics
 
 ## Available local retail media
@@ -13,9 +26,9 @@ records, then completed the title animation. The startup receipt remains
 therefore false for this title-only state; the pending source change reports
 `title-entered`, and the updated original-media CLI checks require the blocked
 receipt and reject a runtime claim. This diagnostic correction does not make the
-Nexus menu or playable level available. The M4 runtime binary predates the
-source edit; rebuilding and running the updated regression on the dedicated
-build host remains outstanding because `trv2` does not resolve on this host.
+Nexus menu or playable level available. The 2026-10-25 Linux build and authentic
+Japanese pointer-route regression above now verify the title-only boundary;
+the earlier English diagnostic remains separate platform/media evidence.
 
 The current `nexus_v1_bpk_archive_runtime_upload_plan` already decodes PRS3
 payloads for bounded evidence, but explicitly emits no drawable pixels and

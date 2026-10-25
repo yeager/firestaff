@@ -157,8 +157,10 @@ right; the lower row maps to strafe left, backward, and strafe right. This
 host mapping uses the retail rectangle but does not claim to reproduce the
 unresolved callback's cell semantics. Clicks elsewhere and hand-pointer clicks
 remain inert. A/B/Y/C actions remain inert until their retail consumers are
-traced. Tab provides the separately verified leader-cycle action; L/R
-controller events are not yet mapped to desktop controls. Item use, inventory,
+traced. Tab cycles to the next party leader and Shift+Tab cycles to the
+previous party leader in Firestaff's desktop controls. The reverse direction
+is a host keyboard convenience; it does not claim that the retail L/R events
+or an identified guest RAM field have been reproduced. Item use, inventory,
 spells, combat, sensors, doors, and level transitions remain fail-closed.
 
 In a loaded Nexus dungeon, Space toggles Firestaff's host pause. Ymir evidence
@@ -172,10 +174,11 @@ rectangle parsed from `DM.BIN` to send the corresponding desktop movement
 command: the upper row maps to turn left, forward, and turn right; the lower
 row maps to strafe left, backward, and strafe right. This host mapping uses a
 retail rectangle but does not claim to reproduce Saturn ShuttleMouse or the
-retail callback's unresolved cell semantics. Other buttons and clicks outside
-the pad do nothing. With pointer mode on, mouse motion moves the logical hand
-pointer across the viewport and HUD. Mouse clicks remain inert while the
-callback's HUD-region action semantics are unresolved.
+retail callback's unresolved cell semantics. Every Firestaff pointer-button
+entry point uses that same rectangle and six-cell mapping; clicks elsewhere
+do nothing. With pointer mode on, mouse motion moves the logical hand pointer
+across the viewport and HUD. Mouse clicks remain inert while the callback's
+HUD-region action semantics are unresolved.
 
 `scripts/analyze_nexus_mouse_event_crossrefs.py` inventories direct SH-2
 `MOV.L @(disp,PC),Rn` references in the hash-verified retail `DM.BIN`. In the
