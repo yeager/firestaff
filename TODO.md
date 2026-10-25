@@ -13,6 +13,13 @@ repeated ZIP inflation and nested Amiga ADF traversal, followed by more
 duplicate-admission path, not proof that every lookup is redundant: preserve
 the same-owner and incomplete-first-copy checks when optimizing it. One host
 and one cold/warm pair do not establish a cross-platform regression or speedup.
+The follow-up now reuses an already hash-verified CSB Amiga graphics match
+only after the same-container program package passes; A31E also must pass its
+startup-media gate. Incomplete candidates retain the exhaustive fallback.
+The focused real-media CTests passed for the original English A35 CTRaw package
+(5.85 s) and the A31 M12-to-M11 handoff ZIP (2.15 s). These verify authentic
+package admission and startup, but do not measure a before/after scan-time
+improvement; the earlier full-library timings remain the only scan profile.
 
 2026-10-25 authentic priority-game startup and combat retest: the launcher
 picker script passed with an isolated root containing only symlinks to the
