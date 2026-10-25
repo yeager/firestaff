@@ -233,6 +233,17 @@ Event 44 has a hash-verified source-side slot-pair path, but its runtime
 held-item effects and Firestaff state mapping are not verified. Production
 inventory and equipment clicks remain disabled until those joins are captured.
 
+For a controlled Ymir run, save a baseline and post-action high-WRAM dump from
+the same retail savestate with Debug > Dump all memory, then compare them with
+`scripts/analyze_nexus_inventory_wram_pair.py`. The tool checks that both
+`wram-hi.bin` inputs are exactly 1 MiB, prints the raw eight-record event queue,
+and reports item-pair changes for an explicitly selected context range. For
+example, use `--context-start 0 --context-count 11` to include the indices
+observed in the existing captures. Its output is a byte-level delta only; it
+does not identify a context as a champion or establish that a pointer click
+caused a change. Keep each Ymir profile's dump directory separate so a stale
+snapshot from another run cannot be mistaken for the post-action capture.
+
 ## Mouse and remaining input work
 
 Nexus has startup pointer handling, full-game-screen mouse movement, keyboard
