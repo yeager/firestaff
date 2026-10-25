@@ -166,6 +166,22 @@ real assets and no core fallbacks, and the test verified the extracted files
 remained byte-identical. SDL dummy does not verify native Macintosh display,
 sound output or physical input.
 
+2026-10-26 French Macintosh identity audit: the authentic French SIT contains
+`Graphics.dat` (`5cab25f6b975957eae4a203174e7f2a6`) and `Dungeon.dat`
+(`719ae78bc124027806c65491a256827d`), the same pair used by the English retail
+profile, plus French `md.dat` (`a1692c182344952b6bffcb82e2e2f06e`) and
+`qstrat.dat` (`535bcbd371347cbcadf61e35d51c1d46e`). The current startup test
+reaches a real-asset frame but asserts platform enum 4 (Macintosh English),
+and general scanning reports readiness from the shared graphics identity.
+This proves the files can feed the existing Macintosh runtime; it does not
+prove that Firestaff identifies or runs the French edition. Keep French
+Macintosh preservation-only until admission and boot bind the complete
+same-owner four-file tuple, distinguish the English tuple, and source/runtime
+evidence shows how `qstrat.dat` supplies French text. Do not add a second
+version row keyed only by the shared graphics hash: it would mislabel English
+installs too. The test should assert the French identity and a French-owned
+runtime behavior before the edition is advertised as supported.
+
 2026-10-21 no-game main-menu selection:
 `test_m12_main_menu_game_selection_real_media` passed both keyboard and mouse
 selection of DM2 from the no-game launcher, beginning with
