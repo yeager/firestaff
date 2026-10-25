@@ -10579,6 +10579,9 @@ static int m11_script_keycode_from_name(const char* name) {
     if (strcmp(name, "kp-4") == 0 || strcmp(name, "kp4") == 0) return SDLK_KP_4;
     if (strcmp(name, "kp-5") == 0 || strcmp(name, "kp5") == 0) return SDLK_KP_5;
     if (strcmp(name, "kp-6") == 0 || strcmp(name, "kp6") == 0) return SDLK_KP_6;
+    if (strcmp(name, "kp-7") == 0 || strcmp(name, "kp7") == 0) return SDLK_KP_7;
+    if (strcmp(name, "kp-8") == 0 || strcmp(name, "kp8") == 0) return SDLK_KP_8;
+    if (strcmp(name, "kp-9") == 0 || strcmp(name, "kp9") == 0) return SDLK_KP_9;
     if (strcmp(name, "space") == 0) return SDLK_SPACE;
     if (strcmp(name, "tab") == 0) return SDLK_TAB;
     if (strcmp(name, "esc") == 0 || strcmp(name, "escape") == 0) return SDLK_ESCAPE;
