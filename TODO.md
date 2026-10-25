@@ -4,6 +4,26 @@ The current five-game startup evidence matrix and remaining Nexus/Theron
 runtime-entry gaps are consolidated in
 [`docs/STARTUP_SUPPORT_GAP_ANALYSIS.md`](docs/STARTUP_SUPPORT_GAP_ANALYSIS.md).
 
+2026-10-25 current-main TRV2 build and original-media startup retest:
+`fast-dev` built commit `e3b6d015` successfully (2,342 Ninja steps, one job).
+Direct `--game` boot probes using the per-game `.firestaff/data` folders
+reached `runtime-entered` for DM1/CSB/DM2 (FM Towns) and Theron (PC Engine).
+Nexus reached its Saturn title but correctly remained blocked with
+`menu=0 levelLoaded=0`; this is not a playable start. The real-media M12 menu
+selection script passed keyboard and mouse selection/handoff for all five
+cards, and default-root menu launches for DM1/CSB/DM2. Handoff receipts do
+not prove a playable Nexus or Theron runtime. The broader CLI edition matrix
+returned its documented skip code 77 because this TRV2 data root lacks the
+required authentic DM2 Macintosh archive; no substitute or synthetic media
+was used. All probes used SDL dummy video/audio and do not establish native
+display/input parity or complete gameplay.
+
+PR #74 is not ready to merge despite green CI. Source review found two gaps
+behind its Theron Z/X binding: the inactive startup keyboard dispatcher does
+not route Z to Action or X to Back, and the loaded-dungeon Theron input
+consumer returns `UNKNOWN INPUT` for `M12_MENU_INPUT_BACK`. Keep the PR open
+until those paths are corrected and covered by live-input regression evidence.
+
 2026-10-25 DM1 Swedish startup diagnostics: an authentic PC 3.4
 `--game dm1 --platform pc --lang sv --debug --boot-probe` previously printed
 the scan phase only as its English internal key. Debug scan lines now retain

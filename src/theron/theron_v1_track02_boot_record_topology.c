@@ -52,10 +52,12 @@ static int theron_v1_boot_verify_span_envelopes(const uint8_t *track02_data,
         uint32_t sector = first + (uint32_t)index;
         size_t raw_offset;
 
-        if ((size_t)sector > SIZE_MAX / THERON_V1_BOOT_RAW_SECTOR_BYTES) {
+        raw_offset = (size_t)sector;
+        if (raw_offset != 0u &&
+            THERON_V1_BOOT_RAW_SECTOR_BYTES > SIZE_MAX / raw_offset) {
             return 0;
         }
-        raw_offset = (size_t)sector * THERON_V1_BOOT_RAW_SECTOR_BYTES;
+        raw_offset *= THERON_V1_BOOT_RAW_SECTOR_BYTES;
         if (raw_offset > track02_size ||
             THERON_V1_BOOT_RAW_SECTOR_BYTES > track02_size - raw_offset) {
             return 0;

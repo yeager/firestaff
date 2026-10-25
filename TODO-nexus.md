@@ -20,6 +20,19 @@ change menu, HUD, viewport or production-readiness gates. Keep the next work
 focused on a same-session retail source-to-display join and the interactive
 title-to-menu transition.
 
+A retained Ymir v0.4.0 Japanese title-menu frame received a read-only source
+join on TRV2 against the authentic Japanese CUE/ISO members. Its hash-pinned
+VDP1 VRAM (`0f484877f5c5ef300fcbcaec6948b50c8b7aed7945e448a9f8281b2da46a2f21`)
+contained 137 active texture draws: 124 indexed image/CLUT pairs from
+`LEV00.DGN`, eight direct-color spans from `LEV00.DGN`, and five `TITLE.BIN`
+spans, with zero active draws left byte-unbound. Of the 124 indexed draws, 108
+matched a static FACE selector and 16 did not. This narrows authentic source
+bytes for one emulator frame; it does not establish SH-2 upload ownership,
+semantic use of the 16 selector-free draws, input progression, full display
+composition, or production renderer permission. Preserve the current startup
+gate. The analysis ran against the authentic media and raw capture retained on
+TRV2; the VDP1 dump is intentionally not copied into this repository.
+
 The 2026-10-24 direct-CLI check against authenticated Japanese retail
 `DM.BIN` confirms the same remaining start gap: the title reaches its ready
 frame, but no menu or level is loaded and the startup receipt remains blocked

@@ -19,8 +19,9 @@ mkdir -p "$scratch_root"
 scratch=$(mktemp -d "$scratch_root/dm1-auto-menu.XXXXXX")
 trap 'rm -rf "$scratch"' EXIT HUP INT TERM
 
-# Stage authentic archives in the documented per-user install layout.  No
-# --data-dir or FIRESTAFF_DATA override should mask AUTO's platform choice.
+# Stage authentic archives in the documented per-user install layout. Do not
+# pass --game, --data-dir, or FIRESTAFF_DATA: exercise both the no-game
+# launcher and its automatic platform choice.
 data_root="$scratch/home/.firestaff/data"
 dm1_root="$data_root/dm1"
 mkdir -p "$dm1_root" "$scratch/home"
@@ -48,9 +49,10 @@ FIRESTAFF_CONFIG_PATH="$scratch/home/config.toml" \
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$probe" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
-    "$app" --width 1920 --height 1080 --menu --game dm1 \
-    --debug --verbose --script 'enter,enter,enter' \
-    --duration 10000 >"$log" 2>&1 || {
+    "$app" --width 1920 --height 1080 --menu \
+    --debug --verbose \
+    --script 'wait-scan-complete,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
+    --duration 12000 >"$log" 2>&1 || {
         cat "$log" >&2
         exit 1
     }
@@ -68,6 +70,7 @@ with open(probe_path, encoding="utf-8") as stream:
 
 towns_source = f"{dm1_root}/Dungeon-Master_FM-Towns_JA-EN.zip::DATA/GRAPHICS.DAT"
 checks = (
+    ("startup game=none mode=menu", "no-game main menu entry"),
     ("dm1 platform=FM Towns edition=fmtowns-en matched", "FM Towns media discovery"),
     ("dm1 platform=PC edition=pc34-en matched", "PC media discovery"),
     (f"launch phase=game-handoff mode=menu game=dm1 platform=FM Towns edition=fmtowns-en source={towns_source}",

@@ -7,6 +7,7 @@
 
 #include "menu_hit_m12.h"
 #include "menu_row_metrics_m12.h"
+#include "firestaff_item_encyclopedia.h"
 
 #include <string.h>
 
@@ -102,6 +103,11 @@
 #define M12_HIT_BACK_Y     120
 #define M12_HIT_BACK_W     110
 #define M12_HIT_BACK_H     44
+
+/* Shared geometry of the modern extras row lists. */
+#define M12_HIT_EXTRAS_CONTENT_Y (M12_HIT_CANVAS_H / 30 + M12_HIT_CANVAS_H / 4 + 10)
+#define M12_HIT_EXTRAS_LIST_X    (M12_HIT_CANVAS_W / 30)
+#define M12_HIT_EXTRAS_LIST_W    (M12_HIT_CANVAS_W - 2 * M12_HIT_EXTRAS_LIST_X)
 
 /* Cycle-arrow strips inside a settings / game-options row.
  * The left half of the row (from row start) is LEFT cycle, the right
@@ -489,11 +495,132 @@ M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
             hit.kind = M12_HIT_MESSAGE_DISMISS;
             return hit;
         case M12_MENU_VIEW_CHANGELOG:
+            if (rect_contains(M12_HIT_CANVAS_W / 30,
+                              M12_HIT_CANVAS_H / 30 + M12_HIT_CANVAS_H / 4 + 10,
+                              M12_HIT_CANVAS_W - 2 * (M12_HIT_CANVAS_W / 30),
+                              M12_CHANGELOG_VISIBLE_LINES * 20,
+                              x, y)) {
+                const int contentY = M12_HIT_CANVAS_H / 30 +
+                                     M12_HIT_CANVAS_H / 4 + 10;
+                int row = (y - contentY - 4) / 20;
+                int target;
+                if (row < 0) row = 0;
+                if (row >= M12_CHANGELOG_VISIBLE_LINES)
+                    row = M12_CHANGELOG_VISIBLE_LINES - 1;
+                target = state->changelog.scrollOffset + row;
+                if (target >= M12_Changelog_LineCount()) return hit;
+                hit.kind = M12_HIT_VIEW_INPUT;
+                hit.index = row == 0 ? M12_MENU_INPUT_NONE
+                                     : M12_MENU_INPUT_DOWN;
+                hit.delta = target - state->changelog.scrollOffset;
+                return hit;
+            }
+            return hit;
         case M12_MENU_VIEW_MANUAL_DOCS:
+            /* The manual has no activation action; clicking its body should
+             * not accidentally dispatch ACCEPT and close the view. */
+            return hit;
         case M12_MENU_VIEW_BESTIARY:
+            if (rect_contains(M12_HIT_CANVAS_W / 30,
+                              M12_HIT_CANVAS_H / 30,
+                              M12_HIT_CANVAS_W - 2 * (M12_HIT_CANVAS_W / 30),
+                              M12_HIT_CANVAS_H / 4,
+                              x, y)) {
+                hit.kind = M12_HIT_VIEW_INPUT;
+                hit.index = x < M12_HIT_CANVAS_W / 2
+                                ? M12_MENU_INPUT_LEFT : M12_MENU_INPUT_RIGHT;
+                return hit;
+            }
+            if (rect_contains(M12_HIT_CANVAS_W / 30,
+                              M12_HIT_CANVAS_H / 30 + M12_HIT_CANVAS_H / 4 + 10,
+                              M12_HIT_CANVAS_W - 2 * (M12_HIT_CANVAS_W / 30),
+                              M12_BESTIARY_VISIBLE_LINES * 22,
+                              x, y)) {
+                const int contentY = M12_HIT_CANVAS_H / 30 +
+                                     M12_HIT_CANVAS_H / 4 + 10;
+                int row = (y - contentY - 4) / 22;
+                int target;
+                if (row < 0) row = 0;
+                if (row >= M12_BESTIARY_VISIBLE_LINES)
+                    row = M12_BESTIARY_VISIBLE_LINES - 1;
+                target = state->bestiary.scrollOffset + row;
+                if (target < 0 || target >=
+                    M12_Bestiary_FilteredCount(&state->bestiary)) return hit;
+                hit.kind = M12_HIT_VIEW_INPUT;
+                hit.delta = target - state->bestiary.selectedIndex;
+                hit.index = hit.delta == 0 ? M12_MENU_INPUT_NONE
+                    : (hit.delta < 0 ? M12_MENU_INPUT_UP : M12_MENU_INPUT_DOWN);
+                return hit;
+            }
+            return hit;
         case M12_MENU_VIEW_ITEM_ENCYCLOPEDIA:
+            if (rect_contains(M12_HIT_CANVAS_W / 30,
+                              M12_HIT_CANVAS_H / 30,
+                              M12_HIT_CANVAS_W - 2 * (M12_HIT_CANVAS_W / 30),
+                              M12_HIT_CANVAS_H / 4,
+                              x, y)) {
+                hit.kind = M12_HIT_VIEW_INPUT;
+                hit.index = x < M12_HIT_CANVAS_W / 2
+                                ? M12_MENU_INPUT_LEFT : M12_MENU_INPUT_RIGHT;
+                return hit;
+            }
+            if (rect_contains(M12_HIT_EXTRAS_LIST_X,
+                              M12_HIT_EXTRAS_CONTENT_Y + 4,
+                              M12_HIT_EXTRAS_LIST_W,
+                              12 * 22, x, y)) {
+                int visibleRow = (y - M12_HIT_EXTRAS_CONTENT_Y - 4) / 22;
+                int category = state->itemEncyclopediaCategory;
+                int total = fs_item_encyclopedia_count();
+                int i;
+                int row = 0;
+                for (i = 0; i < total; ++i) {
+                    const FS_ItemEntry* entry = fs_item_encyclopedia_get(i);
+                    if (!entry || (int)entry->category != category ||
+                        i < state->itemEncyclopediaScrollOffset) {
+                        continue;
+                    }
+                    if (row++ == visibleRow) {
+                        hit.kind = M12_HIT_LIST_ROW;
+                        hit.index = i;
+                        return hit;
+                    }
+                    if (row >= 12) break;
+                }
+            }
+            break;
         case M12_MENU_VIEW_SCREENSHOT_GALLERY:
+            if (rect_contains(M12_HIT_EXTRAS_LIST_X,
+                              M12_HIT_EXTRAS_CONTENT_Y + 4,
+                              M12_HIT_EXTRAS_LIST_W,
+                              12 * 22, x, y)) {
+                int row = (y - M12_HIT_EXTRAS_CONTENT_Y - 4) / 22;
+                int index = state->screenshotGallery.scrollOffset + row;
+                if (index >= 0 && index < state->screenshotGallery.entryCount) {
+                    hit.kind = M12_HIT_LIST_ROW;
+                    hit.index = index;
+                    return hit;
+                }
+            }
+            break;
         case M12_MENU_VIEW_SAVE_BROWSER:
+            {
+                const int rowHeight = m12_menu_row_save_browser_pitch(
+                    state->settings.fontScale);
+                const int visibleRows =
+                    (M12_HIT_CANVAS_H - 150) / rowHeight;
+                if (rect_contains(38, 82, M12_HIT_CANVAS_W - 76,
+                                  visibleRows * rowHeight, x, y)) {
+                    int row = (y - 82) / rowHeight;
+                    int index = state->saveBrowser.scrollOffset + row;
+                    if (row >= 0 && row < visibleRows && index >= 0 &&
+                        index < state->saveBrowser.entryCount) {
+                        hit.kind = M12_HIT_LIST_ROW;
+                        hit.index = index;
+                        return hit;
+                    }
+                }
+            }
+            break;
         case M12_MENU_VIEW_AUDIO_SETTINGS:
         case M12_MENU_VIEW_DATA_VALIDATOR:
         case M12_MENU_VIEW_ACCESSIBILITY:
@@ -739,7 +866,34 @@ int M12_ModernMenu_ApplyHit(M12_StartupMenuState* state,
                 hit.index > M12_MENU_INPUT_SAVE_GAME) {
                 return 0;
             }
-            M12_StartupMenu_HandleInput(state, (M12_MenuInput)hit.index);
+            {
+                int count = hit.delta < 0 ? -hit.delta : hit.delta;
+                int step;
+                if (count == 0) count = 1;
+                /* Hit deltas are derived from bounded on-screen row counts. */
+                if (count > M12_CHANGELOG_VISIBLE_LINES) {
+                    count = M12_CHANGELOG_VISIBLE_LINES;
+                }
+                for (step = 0; step < count; ++step) {
+                    M12_StartupMenu_HandleInput(state,
+                                                (M12_MenuInput)hit.index);
+                }
+            }
+            return 1;
+        case M12_HIT_LIST_ROW:
+            if (hit.index < 0) return 0;
+            if (state->view == M12_MENU_VIEW_ITEM_ENCYCLOPEDIA) {
+                if (hit.index >= fs_item_encyclopedia_count()) return 0;
+                state->itemEncyclopediaSelectedIndex = hit.index;
+            } else if (state->view == M12_MENU_VIEW_SCREENSHOT_GALLERY) {
+                if (hit.index >= state->screenshotGallery.entryCount) return 0;
+                state->screenshotGallery.selectedIndex = hit.index;
+            } else if (state->view == M12_MENU_VIEW_SAVE_BROWSER) {
+                if (hit.index >= state->saveBrowser.entryCount) return 0;
+                state->saveBrowser.selectedIndex = hit.index;
+            } else {
+                return 0;
+            }
             return 1;
     }
     return 0;

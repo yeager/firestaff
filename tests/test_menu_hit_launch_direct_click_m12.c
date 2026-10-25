@@ -424,48 +424,42 @@ int main(void) {
      * This keeps every keyboard-navigable menu usable without a keyboard. */
     state.view = M12_MENU_VIEW_CHANGELOG;
     M12_Changelog_Init(&state.changelog);
-    hit = M12_ModernMenu_HitTest(&state, 960, 900);
+    /* The changelog scroll route follows rendered row bounds. Its visible
+     * rows end well above the bottom of the 1080px canvas, so click the
+     * second row instead of treating the whole lower canvas as a scroll zone. */
+    hit = M12_ModernMenu_HitTest(&state, 960, 340);
     if (!expect(hit.kind == M12_HIT_VIEW_INPUT && hit.index == M12_MENU_INPUT_DOWN,
                 "changelog lower-centre region should provide mouse scrolling")) return 1;
     changed = M12_ModernMenu_ApplyHit(&state, hit);
     if (!expect(changed == 1 && state.changelog.scrollOffset > 0,
                 "changelog pointer input should scroll through entries")) return 1;
     hit = M12_ModernMenu_HitTest(&state, 960, 540);
-    if (!expect(hit.kind == M12_HIT_VIEW_INPUT && hit.index == M12_MENU_INPUT_ACCEPT,
-                "document centre should provide mouse activation")) return 1;
+    if (!expect(hit.kind == M12_HIT_VIEW_INPUT && hit.index == M12_MENU_INPUT_DOWN,
+                "visible changelog row click should advance the selected entry")) return 1;
     state.view = M12_MENU_VIEW_BESTIARY;
     M12_Bestiary_Init(&state.bestiary);
-    hit = M12_ModernMenu_HitTest(&state, 1800, 540);
+    hit = M12_ModernMenu_HitTest(&state, 1800, 180);
     if (!expect(hit.kind == M12_HIT_VIEW_INPUT && hit.index == M12_MENU_INPUT_RIGHT,
                 "bestiary right region should provide mouse category navigation")) return 1;
     changed = M12_ModernMenu_ApplyHit(&state, hit);
     if (!expect(changed == 1 && state.bestiary.categoryFilter == M12_BESTIARY_CAT_HUMANOID,
                 "bestiary pointer input should change category")) return 1;
 
-    /* Every remaining document/list renderer deliberately shares the same
-     * pointer grammar.  Keep the full view set here rather than testing two
-     * representative screens only: adding a new keyboard-navigable view to
-     * the enum must also give it a mouse route.  The centre activates, the
-     * side thirds navigate, and the Back button remains independently
-     * reachable in every non-main view. */
+    /* Generic document/list renderers share this pointer grammar. Views
+     * with row-specific routing or no body activation are covered above or
+     * by their own selection tests. */
     {
         static const M12_MenuView pointerViews[] = {
-            M12_MENU_VIEW_MANUAL_DOCS,
             M12_MENU_VIEW_DATA_VALIDATOR,
             M12_MENU_VIEW_AUDIO_SETTINGS,
-            M12_MENU_VIEW_CHANGELOG,
             M12_MENU_VIEW_ACCESSIBILITY,
             M12_MENU_VIEW_THEME,
-            M12_MENU_VIEW_SAVE_BROWSER,
             M12_MENU_VIEW_INPUT_REMAP,
-            M12_MENU_VIEW_BESTIARY,
             M12_MENU_VIEW_CUSTOM_DUNGEON,
-            M12_MENU_VIEW_ITEM_ENCYCLOPEDIA,
             M12_MENU_VIEW_CAMPAIGN,
             M12_MENU_VIEW_SPELL_REFERENCE,
             M12_MENU_VIEW_MAP_VIEWER,
             M12_MENU_VIEW_TOUCH_LAYOUT,
-            M12_MENU_VIEW_SCREENSHOT_GALLERY,
             M12_MENU_VIEW_PRESENTATION_PREVIEW
         };
         size_t viewIndex;

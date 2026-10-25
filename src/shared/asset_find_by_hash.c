@@ -7668,10 +7668,14 @@ static int asset_find_all_by_md5_list_internal(
         if (foundCount < normalizedCount) {
             char direct_hex[33];
             int direct_index;
-            if (s_path_collection && file_md5(searchDir, direct_hex)) {
+            int direct_hash_valid = file_md5(searchDir, direct_hex);
+            /* Path collection and ordinary matching share the same direct
+             * root hash. Reusing it avoids repeating stat/cache lookup and
+             * open-permission validation for this physical file. */
+            if (s_path_collection && direct_hash_valid) {
                 collect_matching_path(direct_hex, searchDir, NULL, NULL);
             }
-            if (file_md5(searchDir, direct_hex) &&
+            if (direct_hash_valid &&
                 (direct_index = md5_list_match_index(
                      direct_hex, normalizedPtrs, normalizedMatched,
                      normalizedCount)) >= 0 &&
