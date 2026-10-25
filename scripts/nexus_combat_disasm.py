@@ -3,8 +3,10 @@
 Nexus Saturn DM.BIN Combat System - Final Analysis
 SH-2 big-endian, base 0x06010000, file 555144 bytes
 
-Disassembles the combat dispatcher at file 0x0197DE and traces all
-subroutines to extract damage formulas, wound penalties, and combat constants.
+Examines the call setup at file 0x0197DE and the combat case switch at
+0x0197FC, then traces selected combat routines to extract damage formulas,
+wound penalties, and combat constants. This report does not establish which
+controller or game event reaches the combat router.
 """
 
 import argparse
@@ -172,10 +174,11 @@ for off in range(0, len(ROM)-1, 2):
 # ============================================================================
 print("""
 
-2. COMBAT DISPATCHER
-====================
-File: 0x0197DE  Runtime: 0x060297DE
-Switch on R0 (values 0-5):
+2. COMBAT ROUTER AND CASE SWITCH
+================================
+Call setup begins at file 0x0197DE (runtime 0x060297DE); the R0 case
+comparisons begin at file 0x0197FC (runtime 0x060297FC). The switch uses
+values 0-5:
 
   Case 0 (R0=0): BT/S -> 0x01986A  CHAMPION ATTACK (basic melee)
   Case 1 (R0=1): BT   -> 0x019882  CREATURE COUNTER-ATTACK
@@ -183,6 +186,10 @@ Switch on R0 (values 0-5):
   Case 3 (R0=3): BRA  -> 0x019CA8  CHAMPION MELEE DAMAGE APPLICATION
   Case 4 (R0=4): BRA  -> 0x019F5A  CREATURE MELEE DAMAGE APPLICATION
   Case 5 (R0=5): BRA  -> 0x019860  CONDITIONAL EXIT
+
+Static call/reference scans do not bind these cases to a controller input.
+The event-name table has no EV_ATTACK entry; event names and case labels alone
+do not prove an input-to-combat route.
 
 Key registers set before switch:
   R9  = 3                    ; max attacks per round
@@ -647,7 +654,8 @@ COMBAT RNG (file 0x018006):
    Only returns 0-3 (body part / attack direction)
 
 KEY FILE OFFSETS:
-   Combat dispatcher:      0x0197DE (runtime 0x060297DE)
+   Combat call setup:      0x0197DE (runtime 0x060297DE)
+   Combat case switch:     0x0197FC (runtime 0x060297FC)
    Champion attack setup:  0x0195B8 (runtime 0x060295B8)
    Damage calc helper:     0x0136BA (runtime 0x060236BA)
    Stat evaluation:        0x029F76 (runtime 0x06039F76)

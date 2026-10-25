@@ -15,7 +15,7 @@ validates and decodes its 32-byte prefix plus packed 4bpp payload into a
 source-owned surface. The Saturn screen placement, palette consumer, and any
 animated executable-side title composition are not yet authenticated, so the
 surface remains a data receipt rather than a claim of final title parity. The
-separate NBG1 tilemap address correction in open PR #19 is tested on authentic
+separate NBG1 tilemap address correction in merged PR #19 was tested on authentic
 startup frame 0, but does not bind NBG1 to the title image or menu.
 
 The same corpus contains `LOGOBG.DG2`, a separate retail PP layer. Firestaff
