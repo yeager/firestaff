@@ -605,7 +605,7 @@ def report_mouse_early_event_jump_table(data: bytes) -> bool:
         0x298: 0x001D,  # load signed 16-bit relative case target
         0x29A: 0x0023,  # braf R0
         0x29C: 0x0009,  # nop
-        0x8C0: 0x55FE,  # event record argument -> R5
+        0x8C0: 0x55FE,  # mov.l @(56,R15),R5; stack-slot provenance is untraced
         0x8C4: 0x410B,  # jsr @R1
         0x8C6: 0x0009,  # nop
         0x26E58: 0x2FE6,  # event-44 handler saves R14
@@ -640,7 +640,8 @@ def report_mouse_early_event_jump_table(data: bytes) -> bool:
     if valid:
         print("mouse_early_event_dispatch=relative_jump_table "
               "event_44_case=DM.BIN:0x0008c0 "
-              "handler_pointer=0x06036e58 slot_argument=R5 "
+              "handler_pointer=0x06036e58 "
+              "r5_load=stack_offset_56 provenance=untraced "
               "handler_side_effects=unverified")
     return valid
 

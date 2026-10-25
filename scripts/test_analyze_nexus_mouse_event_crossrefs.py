@@ -356,6 +356,8 @@ class NexusMouseCallbackTraceTests(unittest.TestCase):
         with contextlib.redirect_stdout(output):
             valid = trace.report_mouse_early_event_jump_table(data)
         self.assertTrue(valid)
+        self.assertIn("r5_load=stack_offset_56 provenance=untraced",
+                      output.getvalue())
         self.assertIn("handler_side_effects=unverified", output.getvalue())
 
         put_u16(data, 0x308, 0x0000)

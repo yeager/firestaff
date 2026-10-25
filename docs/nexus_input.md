@@ -155,11 +155,13 @@ candidate. The analyzer labels this as an opcode-pattern scan only: it cannot
 distinguish data from code or exclude register comparisons, jump tables, or
 indirect event dispatch.
 An early main event dispatcher at file offset `0x260` uses a relative jump
-table. Its event-44 case reaches file offset `0x8c0`, where a checked
-PC-relative literal points to code at runtime address `0x06036e58`; the hit-row
-argument is passed in `R5`. A separate check verifies selected instruction
-words and address literals in nearby handler/helper regions, including values
-`0x013c`, `0x0607fba0`, `0x0110`, `0x06064610`, and `0x1000`. These checks do
+table. Its event-44 case reaches file offset `0x8c0`, where opcode `0x55fe`
+loads `R5` from offset 56 relative to `R15`. A checked PC-relative literal at
+the next instruction points to code at runtime address `0x06036e58`. The
+current checks do not trace who populated the stack slot, so the loaded value
+is not established as the hit-row argument. A separate check verifies selected
+instruction words and address literals in nearby handler/helper regions,
+including `0x013c`, `0x0607fba0`, `0x0110`, `0x06064610`, and `0x1000`. These checks do
 not verify control flow from this dispatch case through those regions, decode
 their full operations, or establish any memory write or callback effect.
 Accordingly, the slot-pair and assignment/swap interpretation remains a
