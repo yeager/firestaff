@@ -1,0 +1,14 @@
+format=ymir-vdp1-capture-bundle-v1
+capture_frame_index=497
+capture_next_command_index=178
+capture_current_command_address=55712
+capture_local_x=0
+capture_local_y=0
+trace_enabled=1
+trace_file=vdp1-command-trace.csv
+trace_file_complete=1
+trace_rows=11896
+trace_rows_for_capture_frame=178
+trace_dropped_total=0
+trace_first_frame=430
+trace_last_frame=497

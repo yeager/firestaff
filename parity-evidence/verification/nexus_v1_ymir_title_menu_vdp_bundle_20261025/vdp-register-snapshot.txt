@@ -1,0 +1,12 @@
+format=ymir-vdp-register-snapshot-v1
+register_byte_order=big_endian
+register_word_bytes=2
+vdp1_register_address_base=0x00000000
+vdp1_register_bytes=32
+vdp2_register_address_base=0x00000000
+vdp2_register_bytes=512
+vdp1_frame_index=497
+vdp1_next_command_index=178
+vdp1_current_command_address=55712
+vdp1_local_x=0
+vdp1_local_y=0
