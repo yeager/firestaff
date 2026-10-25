@@ -15,8 +15,20 @@ retail pointer action.
   `Dumps` path pointed to that profile's own dump directory.
 - Port 1 was configured as `ShuttleMouse`. Ymir reported “Mouse bound to
   Shuttle Mouse on port 1” and entered mouse-capture mode.
+- The input excerpt in `input-trace.txt` is a supplemental devlog capture from
+  the same hash-verified retail savestate/peripheral setup. Its full log hash
+  is recorded there; the executable hash for that supplemental capture was not
+  retained. Do not treat that trace as the source of the paired WRAM dumps.
 
 ## Result
+
+The captured Ymir devlog confirms the host-to-emulator route for one controlled
+motion and click: SDL global mouse ID 0 generated nonzero relative motion and
+button edges while ImGui was not capturing input, and Ymir produced a nonzero
+Shuttle Mouse frame report. The exact log excerpt and full-log SHA-256 are in
+[`input-trace.txt`](input-trace.txt). This verifies delivery to Ymir's emulated
+peripheral; it does not verify that Nexus moved its retail hand cursor or
+performed a retail action.
 
 After capture, XTEST absolute motion of 280×150 pixels and relative motion of
 150×60 pixels left the visible retail selection and hand cursor unchanged. A
@@ -34,9 +46,10 @@ The paired high-WRAM snapshots were analyzed with
 
 All eight queue-storage records contained stale event 39 in both snapshots;
 the live queue count was zero. Event 44 was absent, queue storage was
-unchanged, and no item-pair changed in contexts 0–15. The cursor did not move
-visibly, so this is a negative input-routing result; it does not show that the
-retail event-44 handler rejected a correctly targeted click.
+unchanged, and no item-pair changed in contexts 0–15. The Ymir host-input path
+reached the Shuttle Mouse report, but no retail cursor movement or game-state
+change was observed. This is a negative retail-visible result; it does not
+show that the retail event-44 handler rejected a correctly targeted click.
 
 Raw memory dumps and the full test log are kept outside Git at
 `/Volumes/Extern-disk/ymir-event44-pr963-a2-before.bin`,

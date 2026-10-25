@@ -278,14 +278,18 @@ The XTEST result was explained by a Ymir 0.4.1 frontend gap: SDL global mouse
 ID `0` entered relative-capture mode and returned before Ymir mapped its motion
 or buttons to the emulated ShuttleMouse. Ymir PR
 [#963](https://github.com/ymir-emu/Ymir/pull/963) was built and run under
-`--debug` on the authentic Nexus disc. Ymir reported binding the mouse to
-ShuttleMouse on port 1, but neither absolute nor relative host motion visibly
-moved the retail cursor/selection. One occupied-icon click left the screen
-unchanged. Fresh before/after WRAM dumps show no event 44, no live queue change,
-and no item-pair deltas across contexts 0–15. The full setup and hash-verified
-captures are recorded in
+`--debug` on the authentic Nexus disc. In a supplemental devlog run using the
+same hash-verified state and peripheral setup, SDL global mouse ID 0 motion and
+button edges passed with `imguiCapture=false` and produced nonzero Shuttle
+Mouse frame input. This confirms delivery to Ymir's peripheral layer; it does
+not establish a retail action. In the separate paired-dump trial, neither
+absolute nor relative host motion visibly moved the retail cursor/selection,
+one occupied-icon click left the screen unchanged, and before/after WRAM dumps
+show no event 44, live queue change, or item-pair deltas across contexts 0–15.
+The full setup and hash-verified captures are recorded in
 [`nexus-shuttle-mouse-ymir-pr963-input-routing-20261025`](../parity-evidence/verification/nexus-shuttle-mouse-ymir-pr963-input-routing-20261025/README.md).
-This rules out stale dump-path evidence for that trial, but does not show that
-the retail event-44 handler rejected a correctly targeted click because the
-cursor never moved visibly. Firestaff's desktop pointer actions still need to
-follow proven Nexus state changes before enabling equipment or other actions.
+This rules out a missing Ymir peripheral report for the supplemental input
+trace, but it does not show that the retail event-44 handler rejected a
+correctly targeted click because the cursor never moved visibly. Firestaff's
+desktop pointer actions still need to follow proven Nexus state changes before
+enabling equipment or other actions.

@@ -1,0 +1,16 @@
+Verbatim event excerpt from the Ymir devlog used for this run. Full log
+SHA-256: 3ac3c736036d5f58eed2613768c61c06801a5facff3374499cedfdd14d0661bd
+
+debug | App | Mouse motion id=0 relative=(-92, -214) absolute=(300, 300) imguiCapture=false inputCapture=false
+debug | App | Mouse button id=0 button=1 down=true at=(300, 300) imguiCapture=false inputCapture=false
+info  | App | Mouse bound to Shuttle Mouse on port 1
+info  | App | Entering mouse capture mode
+debug | App | Mouse capture config: captured=true relative=true grab=false
+debug | App | Mouse button id=0 button=1 down=false at=(300, 300) imguiCapture=false inputCapture=false
+debug | App | Shuttle mouse relative input delta=(-92, -214) accumulated=(-92, -214)
+debug | App | Shuttle mouse frame input port=1 x=-368 y=-856
+debug | App | Mouse motion id=0 relative=(100, 50) absolute=(400, 350) imguiCapture=false inputCapture=false
+debug | App | Shuttle mouse relative input delta=(100, 50) accumulated=(100, 50)
+debug | App | Shuttle mouse frame input port=1 x=400 y=200
+debug | App | Mouse button id=0 button=1 down=true at=(400, 350) imguiCapture=false inputCapture=false
+debug | App | Mouse button id=0 button=1 down=false at=(400, 350) imguiCapture=false inputCapture=false
