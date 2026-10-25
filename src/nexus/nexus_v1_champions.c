@@ -283,7 +283,7 @@ int nexus_v1_champions_init_from_rlowfix(Nexus_V1_ChampionPool *pool,
          * the eleventh slot would read the next row (or CRET on the final
          * row). Keep that destination empty until a source-bound mapping is
          * available. */
-        for (j = 0; j < (64U - 24U) / 4U && j < NEXUS_SLOT_COUNT; ++j) {
+        for (j = 0; j < (64 - 24) / 4 && j < NEXUS_SLOT_COUNT; ++j) {
             uint16_t item = (uint16_t)(((uint16_t)r[24U + 4U * (unsigned)j] << 8) |
                                        r[25U + 4U * (unsigned)j]);
             c->slots[j] = item == 0xffffU ? -1 : (int)item;
