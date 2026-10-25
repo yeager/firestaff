@@ -10,16 +10,24 @@ are research instruments only and do not run or replace the game in Firestaff.
 
 ## PC Engine button mapping
 
-| PCE Button | Keyboard (primary) | Keyboard (alt) |
-|------------|-------------------|----------------|
-| D-pad Up   | Up Arrow          | W              |
-| D-pad Down | Down Arrow        | S              |
-| D-pad Left | Q                 | Home, keypad 4 |
-| D-pad Right| E                 | End, keypad 6  |
-| Button I   | Mouse 1, short touch | Z, Return, Space |
-| Button II  | Mouse 2, long touch  | X, Escape         |
-| Run        | Return            |                |
-| Select     | —                 |                |
+| Theron action | Keyboard (primary) | Keyboard (alt) |
+|---------------|-------------------|----------------|
+| D-pad Up      | Up Arrow          | W              |
+| D-pad Down    | Down Arrow        | S              |
+| D-pad Left    | Q                 | Home, keypad 4 |
+| D-pad Right   | E                 | End, keypad 6  |
+| Button I      | Z                 | Return, Space  |
+| Button II     | X                 | Escape         |
+| Run           | Return            |                |
+| Select        | —                 |                |
+
+Desktop mouse controls are provided by Firestaff's native interface. During
+startup, left-click selects and right-click goes back. During dungeon play,
+left-click activates one of the twelve visible control-panel actions, while
+right-click goes back; middle-click is inert. Moving the pointer highlights a
+panel control. Clicks elsewhere in the dungeon do not trigger a game action
+until Theron's original world hit regions are verified. Short and long touch
+gestures send Button I and Button II, respectively.
 
 ## Startup menu
 
@@ -82,13 +90,12 @@ the highlighted control changes.
   commands `$06/$04`; Q/E, Home/End and keypad 4/6 turn. Startup menu arrows
   retain their navigation behavior. This matches Firestaff's ordinary DM1
   dungeon keyboard layout while preserving Theron's native command tokens.
-- Mouse button 1 selects a visible movement or action control during dungeon
-  play. Mouse button 2 remains Button II (cancel in startup and back/exit in
-  gameplay); it does not advance a dungeon tick. A short touch emits Button I
-  and a long touch emits Button II, including during startup. The retail
-  manual also describes holding Button II with a direction key as simplified
-  movement; Firestaff's native direction keys already issue those movement
-  commands directly.
+- The native mouse panel provides all six Theron movement actions and the
+  implemented champion, item, use and wait actions. Right-click remains
+  cancel/back and does not advance a dungeon tick. The retail manual also
+  describes holding Button II with a direction key as simplified movement;
+  Firestaff's native direction keys already issue those movement commands
+  directly.
 - The host-panel bounds are Firestaff UI and do not reuse DM1's
   C007..C116 pointer tables. The original movement-panel captures identify
   six internal PCE cursor samples, not desktop hitboxes or host coordinates:

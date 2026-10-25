@@ -1,5 +1,13 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-25 — document native Theron mouse behavior
+
+`docs/theron_input.md` now separates Firestaff's keyboard bindings from its
+desktop mouse controls. It records startup selection/back behavior, the
+dungeon panel actions and hover feedback, right-click back, inert middle-click,
+and the fail-closed behavior for clicks outside the panel. This documents the
+verified host input route without claiming original-world hitbox parity.
+
 ## 2026-10-25 — highlight hovered Theron mouse controls
 
 The twelve-button native mouse panel now highlights the hovered control. The
