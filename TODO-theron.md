@@ -25,6 +25,20 @@
   route separate from original game hit testing until those consumers are
   joined.
 
+## 2026-10-25 — audit separately labelled US forward capture
+
+- The private `us-forward-pce` record uses the same authentic save state and
+  controller plan as `us-turn-pce-v2-traced`, and confirms all three planned
+  events were applied. Its final party pose remains direction/position
+  `02/02/03`, cursor `$30/$8f`, and cleared command `$2905`; it has no observed
+  coordinate commit. Its RAM snapshot differs by 49 bytes, so it is a
+  distinct capture, but the label does not prove forward movement.
+- This finding is limited to the 2026-10-25 private PCE pair. The older
+  2026-08-21 forward-command record names another Track 02 hash and must be
+  reproduced independently before any screen-to-world binding. Details are
+  recorded in
+  [`theron-us-authentic-vdc-turn-pair-2026-10-25.md`](docs/source-lock/theron-us-authentic-vdc-turn-pair-2026-10-25.md).
+
 ## 2026-10-25 — verify native SDL mouse item actions
 
 - The regular SDL-loop test now reaches the authentic USA level-0 SANDALS and
@@ -7570,3 +7584,15 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   A second runtime sample at PC $4009 matches the next unique eight-byte
   window, giving a 15-byte static code candidate. It remains distinct from a
   source-transfer receipt.
+## 2026-10-25 — honor authenticated Theron VDC layer enables
+
+- The authenticated native VDC screen path now gates background composition
+  on HuC6270 CR bit 7 and sprite composition on CR bit 6. A focused register
+  logic test covers enabled background, disabled background, and both layers
+  disabled; it is explicitly not retail-rendering evidence.
+- `clang -std=c11 -Wall -Wextra -Werror -Iinclude -fsyntax-only` passed for
+  the renderer and its unit test. The configured test build is unavailable in
+  this checkout, and TRV2 was unreachable during this verification attempt,
+  so the linked test and authentic runtime loop remain outstanding.
+- Full keyboard/mouse playability remains open: this does not add a native
+  state-driven dungeon renderer or bind original viewport click targets.

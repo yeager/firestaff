@@ -179,6 +179,54 @@ static void test_populate_tiles(void) {
     printf("PASS: test_populate_tiles\n");
 }
 
+static void test_authenticated_screen_obeys_cr_layer_enables(void) {
+    Theron_V1_Viewport vp;
+    uint8_t framebuffer[8 * 8];
+    uint8_t tile[32];
+    uint8_t vram[THERON_VRAM_SIZE];
+    uint8_t sat[THERON_VDC_SAT_SIZE];
+
+    memset(&vp, 0, sizeof(vp));
+    memset(framebuffer, 0, sizeof(framebuffer));
+    memset(tile, 0xff, sizeof(tile));
+    memset(vram, 0, sizeof(vram));
+    memset(sat, 0, sizeof(sat));
+    vp.fb.data = framebuffer;
+    vp.fb.w = vp.fb.stride = 8;
+    vp.fb.h = 8;
+    vp.vram_trace_data = vram;
+    vp.vram_trace_loaded = 1;
+    vp.palette.tile_count = 1;
+    vp.palette.tiles[0].data = tile;
+    vp.palette.tiles[0].bpp = 4;
+    vp.bat_atlas_indices[0] = 0;
+    vp.vdc_state_loaded = 1;
+    vp.vdc_bat_width = 64;
+    vp.vdc_bat_height = 64;
+    vp.vdc_display_width = vp.vdc_display_height = 8;
+    vp.vdc_sat_loaded = 1;
+    vp.vdc_sat_trace_data = sat;
+
+    /* This exercises register gating only; it is not retail rendering evidence. */
+    vp.vdc_cr = 0x0080u;
+    assert(theron_v1_vram_trace_render_authenticated_screen(&vp) > 0);
+    assert(vp.host_palette_source_indices[0] == 15u);
+
+    memset(framebuffer, 0xff, sizeof(framebuffer));
+    vp.vdc_cr = 0x0040u;
+    assert(theron_v1_vram_trace_render_authenticated_screen(&vp) == 0);
+    for (size_t i = 0; i < sizeof(framebuffer); ++i)
+        assert(framebuffer[i] == 0);
+
+    memset(framebuffer, 0xff, sizeof(framebuffer));
+    vp.vdc_cr = 0;
+    assert(theron_v1_vram_trace_render_authenticated_screen(&vp) == 0);
+    for (size_t i = 0; i < sizeof(framebuffer); ++i)
+        assert(framebuffer[i] == 0);
+    free(vp.vdc_source_frame);
+    printf("PASS: test_authenticated_screen_obeys_cr_layer_enables\n");
+}
+
 static void test_bgr333_decode(void) {
     /* HuC6260 GRB333: G[8:6] R[5:3] B[2:0]
      * White: R=7 G=7 B=7 → 0x01FF */
@@ -299,6 +347,7 @@ int main(void) {
     test_load_raw();
     test_load_tqtr_extended_vram_alignment();
     test_populate_tiles();
+    test_authenticated_screen_obeys_cr_layer_enables();
     test_null_safety();
     test_verified_real_capture();
     printf("All VRAM trace loader tests passed.\n");

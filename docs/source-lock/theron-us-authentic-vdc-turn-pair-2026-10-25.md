@@ -34,6 +34,26 @@ differs between the two captures; the VCE snapshot is identical in both
 (`51cc0d97fea1d97b29519f483de3dc82`), and the VDC geometry remains
 `MWR=005a`, `HDR=0327`, `VDR=00c7`.
 
+## Audit of a separately labelled forward capture
+
+The private capture directory also contains `us-forward-pce`, recorded with
+the same save state, PCE module, 200-frame boundary and input plan. Its input
+trace confirms all three planned events were applied (145 apply records).
+However, its final party bytes are still direction/position
+`02/02/03` (`$203F..$2041`), its cursor remains `$30/$8f`, and `$2905` is
+cleared. Those values exactly match `us-turn-pce-v2-traced`; neither capture
+shows a coordinate commit. The complete main-RAM snapshots differ in 49
+bytes, so they are not duplicate files, but their position and cursor fields
+do not support treating `us-forward-pce` as a successful move. Its label is
+not movement evidence.
+
+This audit applies only to the private 2026-10-25 capture set and does not
+replace the separately source-locked 2026-08-21 movement record, which names
+a Track 02 file/transport hash (`ceb02343868f80cec899e9b239aff2da`, MODE1/2048)
+different from this pair's raw MODE1/2352 BIN hash. The hashes are not directly
+comparable. Reproduce that source record independently before joining either
+capture set to a screen cell.
+
 ## Limits and next use
 
 This pair proves that an authentic loaded state can produce distinct native
