@@ -11,9 +11,9 @@ and 8bpp paths. Against an authentic Japanese startup frame, MAP1A/MAP1B at
 64×64 test window visits 64 unique cells. This test does not assert full-frame
 traversal or authenticate the capture by itself.
 
-This change is capture-only and remains under review. It proves address
-interpretation for the captured NBG1 layer, not an asset owner, text-page map,
-menu composition, HUD, viewport, or production rendering. The Menu gate stays
+This merged change is capture-only. It proves address interpretation for the
+captured NBG1 layer, not an asset owner, text-page map, menu composition, HUD,
+viewport, or production rendering. The Menu gate stays
 at 3/8 and production readiness stays at 0%.
 
 ## Japanese date/time setup VDP2 trace — 2026-10-24
