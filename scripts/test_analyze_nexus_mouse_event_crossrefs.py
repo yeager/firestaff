@@ -137,18 +137,39 @@ def retail_mouse_registration_fixture() -> bytearray:
 
 
 def retail_event_44_evidence_fixture() -> bytearray:
-    data = bytearray(0x27200)
+    data = bytearray(0x27300)
     for offset, value in {
         0x26E58: 0x2FE6, 0x26E5E: 0x6D43, 0x26E66: 0x6E53,
+        0x26E64: 0xBE78, 0x26E68: 0x6C03, 0x26E6C: 0xBDEE,
+        0x26E6E: 0x2F26, 0x26E72: 0x8807, 0x26E74: 0x8F0E,
+        0x26E98: 0x4211, 0x26E9A: 0x8916, 0x26EA4: 0xB0DA,
+        0x26EAC: 0x88FF, 0x26EAE: 0x8B01,
+        0x26F38: 0xB090, 0x26F42: 0xB133,
         0x26B88: 0x900B, 0x26B8A: 0x2E0F, 0x26B8C: 0xD310,
+        0x27064: 0x9325, 0x27070: 0x2C3F, 0x27072: 0xD211,
+        0x27074: 0x911E, 0x27084: 0x4408, 0x27086: 0x73D4,
+        0x27088: 0x33CC, 0x2708A: 0x334C, 0x2708C: 0x6031,
+        0x27094: 0x8531, 0x2709A: 0x2431,
+        0x271CC: 0x9375, 0x2721E: 0x4308,
+        0x27226: 0x2301, 0x2722A: 0x8131,
+        0x27244: 0x2E31, 0x27246: 0x81E1,
+        0x26EBC: 0x9327, 0x26EBE: 0xE054, 0x26EC0: 0x02CE,
+        0x26EC2: 0x223B, 0x26EC4: 0x0C26,
+        0x26F58: 0x936E, 0x26F5A: 0xE054, 0x26F5C: 0x02CE,
+        0x26F5E: 0x223B, 0x26F60: 0x0C26,
+        0x27260: 0xD31F, 0x27262: 0xE054, 0x27264: 0x02CE,
+        0x27266: 0x223B, 0x2726A: 0x0C26,
         0x26EE2: 0x4408, 0x26EE6: 0x343C, 0x26EE8: 0x4408,
         0x26EEA: 0x4400, 0x26EBE: 0xE054, 0x26EC0: 0x02CE,
         0x2705C: 0x2FE6, 0x271AC: 0x2FE6,
         0x26BA2: 0x013C, 0x26BD0: 0x0607, 0x26BD2: 0xFBA0,
+        0x27038: 0x1000, 0x272E0: 0x0010, 0x272E2: 0x0000,
         0x26F28: 0x0606, 0x26F2A: 0x4610, 0x26F2C: 0x0604,
         0x26F2E: 0x8874, 0x26F0E: 0x1000, 0x270B2: 0x013C,
         0x270B4: 0x0110, 0x270B6: 0xFFFF, 0x270B8: 0x0607,
         0x270BA: 0xFBA0, 0x27184: 0x00A1,
+        0x272BA: 0x013C, 0x272BE: 0x0110, 0x272C0: 0x0200,
+        0x272C2: 0xFFFF, 0x272C4: 0x0607, 0x272C6: 0xFBA0,
     }.items():
         put_u16(data, offset, value)
     return data
@@ -177,7 +198,40 @@ def retail_event_queue_fixture() -> bytearray:
     return data
 
 
+def rlowfix_plrd_fixture() -> bytearray:
+    data = bytearray(8 + trace.PLRD_RECORD_COUNT * trace.PLRD_RECORD_SIZE + 4)
+    data[:4] = b"PLRD"
+    plrd = 8
+    for row in range(trace.PLRD_RECORD_COUNT):
+        for slot in range(trace.PLRD_ITEM_PAIR_COUNT):
+            pair = plrd + row * trace.PLRD_RECORD_SIZE + \
+                trace.PLRD_ITEM_PAIR_OFFSET + slot * 4
+            put_u16(data, pair, 0xFFFF if slot else row)
+            put_u16(data, pair + 2, 0)
+    cret = plrd + trace.PLRD_RECORD_COUNT * trace.PLRD_RECORD_SIZE
+    data[cret:cret + 4] = b"CRET"
+    return data
+
+
 class NexusMouseCallbackTraceTests(unittest.TestCase):
+    def test_rlowfix_plrd_item_pairs_are_reported_without_live_semantics(self) -> None:
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            valid = trace.report_rlowfix_plrd_item_pairs(
+                rlowfix_plrd_fixture(), allow_unpinned_hash=True)
+        self.assertTrue(valid)
+        self.assertIn("rows_20x10 empty=180 nonempty=20", output.getvalue())
+        self.assertIn("auxiliary_values=0000", output.getvalue())
+
+    def test_rlowfix_plrd_rejects_item_id_outside_catalog(self) -> None:
+        data = rlowfix_plrd_fixture()
+        put_u16(data, 8 + trace.PLRD_ITEM_PAIR_OFFSET,
+                trace.NEXUS_ITEM_DEFINITION_COUNT)
+        with contextlib.redirect_stdout(io.StringIO()):
+            valid = trace.report_rlowfix_plrd_item_pairs(
+                data, allow_unpinned_hash=True)
+        self.assertFalse(valid)
+
     def report(self, data: bytes) -> tuple[bool, str]:
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
@@ -332,9 +386,22 @@ class NexusMouseCallbackTraceTests(unittest.TestCase):
         with contextlib.redirect_stdout(output):
             valid = trace.report_mouse_event_44_state_evidence(data)
         self.assertTrue(valid)
-        self.assertIn("selected_opcodes_and_literals", output.getvalue())
-        self.assertIn("control_flow_and_side_effects=unverified", output.getvalue())
+        self.assertIn("slot_pair_reads_writes_and_context_stride", output.getvalue())
+        self.assertIn("context_state_load_literals_0x1000_0x00100000=verified",
+                      output.getvalue())
+        self.assertIn("runtime_deltas_and_firestaff_mapping=unverified",
+                      output.getvalue())
 
+        put_u16(data, 0x27038, 0x0000)
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertFalse(trace.report_mouse_event_44_state_evidence(data))
+
+        data = retail_event_44_evidence_fixture()
+        put_u16(data, 0x272E0, 0x0000)
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertFalse(trace.report_mouse_event_44_state_evidence(data))
+
+        data = retail_event_44_evidence_fixture()
         put_u16(data, 0x26EC0, 0x0000)
         with contextlib.redirect_stdout(io.StringIO()):
             self.assertFalse(trace.report_mouse_event_44_state_evidence(data))
@@ -346,8 +413,13 @@ class NexusMouseCallbackTraceTests(unittest.TestCase):
             0x28C: 0x8B01, 0x292: 0x4000, 0x294: 0x6103,
             0x296: 0xC707, 0x298: 0x001D, 0x29A: 0x0023,
             0x29C: 0x0009, 0x8C0: 0x55FE, 0x8C4: 0x410B,
-            0x8C6: 0x0009, 0x26E58: 0x2FE6, 0x26E5E: 0x6D43,
-            0x26E66: 0x6E53,
+            0x8C6: 0x0009, 0x282: 0x6422,
+            0x26E58: 0x2FE6, 0x26E5E: 0x6D43,
+            0x26E64: 0xBE78, 0x26E66: 0x6E53, 0x26E68: 0x6C03,
+            0x26E6C: 0xBDEE, 0x26E6E: 0x2F26, 0x26E72: 0x8807,
+            0x26E74: 0x8F0E, 0x26E98: 0x4211, 0x26E9A: 0x8916,
+            0x26EA4: 0xB0DA, 0x26EAC: 0x88FF, 0x26EAE: 0x8B01,
+            0x26F38: 0xB090, 0x26F42: 0xB133,
         }.items():
             put_u16(data, offset, value)
         put_u16(data, 0x308, 0x0622)
@@ -356,9 +428,14 @@ class NexusMouseCallbackTraceTests(unittest.TestCase):
         with contextlib.redirect_stdout(output):
             valid = trace.report_mouse_early_event_jump_table(data)
         self.assertTrue(valid)
-        self.assertIn("r5_load=stack_offset_56 provenance=untraced",
+        self.assertIn("slot_argument=stack_offset_56",
                       output.getvalue())
-        self.assertIn("handler_side_effects=unverified", output.getvalue())
+        self.assertIn("slot7=separate_path normal_slot_pair_path=verified",
+                      output.getvalue())
+
+        put_u16(data, 0x26E74, 0x8F0D)
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertFalse(trace.report_mouse_early_event_jump_table(data))
 
         put_u16(data, 0x308, 0x0000)
         with contextlib.redirect_stdout(io.StringIO()):

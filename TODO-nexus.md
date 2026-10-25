@@ -138,8 +138,8 @@ on the PRS3 menu capture. See
 - Finish Nexus keyboard and mouse gameplay routing. Retail Ymir captures now
   confirm forward movement, left/right turns, Start-to-pause, and the Z cursor
   mode. Firestaff maps A/D to Nexus turns while preserving DM1's A/D strafe
-  behavior. The native cursor action contract and attack, inventory, spell,
-  and champion-selection semantics remain open.
+  behavior. Tab now cycles the loaded party leader. The native cursor action
+  contract and attack, inventory, and spell semantics remain open.
   An independent 2026-10-25 Ymir `--debug` comparison loaded a hash-verified
   authentic JP gameplay savestate into a private profile: the no-input reload
   changed 0.00175% of pixels, W-forward changed 3.08408%, and A-left changed
@@ -156,22 +156,42 @@ on the PRS3 menu capture. See
   table with a callback and later dispatches indirectly through that callback
   slot. A second retail callback trace verifies object fields 100/104 and
   queues numeric events 13/44 to `0x06024288` in two modes. The retail
-  pointer table names these `EV_EXIT_INV` and `EV_INV_EQUIP`; downstream
-  effects remain unbound. The eight authentic action rectangles at
+  pointer table names these `EV_EXIT_INV` and `EV_INV_EQUIP`. The event-44
+  path is now traced through its context resolver, slot-pair reads/clears and
+  compatible destination writes: it uses context stride `0x13c`, slot-pair
+  base `0x0607fba0 + context*0x13c + 0x110 + slot*4`, and 40-byte item
+  metadata records. Slot 7 has a separate path. Firestaff only has a partial
+  item-ID fit: it lacks the opaque second word, and context-to-champion mapping
+  is unproven. The hash-pinned Japanese RLOWFIX scan finds 20 PLRD rows with
+  ten pairs each: 64 nonempty item ordinals, 136 empty pairs, and zero in all
+  second words. This does not identify auxiliary data for live items. The
+  helper that transfers the held pair through global UI state and the visible
+  post-click result also remain unverified. The eight authentic action rectangles at
   `DM.BIN:0x3850c` are verified to queue `EV_INV_EQUIP` with slot arguments
   0--7 through the retail bounds scanner at `0x24ed6`. Bind that event's
-  consumer to authentic champion/inventory runtime writes before opening the
-  production equipment-click route. The verified consumer at `0x21c84`
+  actual retail state owner to the authentic champion/inventory model before
+  opening the production equipment-click route. The verified consumer at `0x21c84`
   special-cases only IDs 38, 39, 40, 49, 52, 56, and 57; IDs 13 and 44 reach
   its generic `bad event data` diagnostic. The separate mouse poller filters
   for event 46 before it invokes the hit scanner; it does not separately
-  consume event 44. Continue searching for the state owner before enabling
-  equipment clicks.
-  Trace the queue consumer and same-session gameplay-state writes before
-  wiring pointer actions.
+  consume event 44. Continue tracing the held-item helper and capture a
+  controlled click's guest RAM and visible result before enabling pointer
+  actions.
   See `parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`.
   See also `parity-evidence/verification/nexus-mouse-callback-dispatch-20261024/README.md`.
   Firestaff now has a host Z toggle, logical pointer motion through keyboard
   arrows or mouse movement, and the authentic retail hand sprite joined from
   ITEM.IBS image 65/palette 6 against Ymir VDP1 capture. Pointer click actions
   remain open until their retail source joins are captured.
+
+- Input parity follow-up: Firestaff routes Tab to cycle the loaded Nexus
+  party leader. Authentic Ymir `--debug` captures confirm retail L/R changes
+  the visible leader marker and portrait; they do not bind the guest RAM owner.
+  Retail PLRD has no live/dead field, so Tab treats an available roster row
+  with positive health as selectable even while `alive` is unknown, and skips
+  zero-health members.
+  Keyboard/mouse movement, pointer motion, and the desktop movement pad remain
+  available. Mouse clicks on the hand pointer and non-movement actions remain
+  blocked until the opaque item data, champion context mapping and runtime
+  click effects are established. See `docs/nexus_input.md` and
+  `parity-evidence/verification/nexus-leader-cycle-debug-20261025/README.md`.

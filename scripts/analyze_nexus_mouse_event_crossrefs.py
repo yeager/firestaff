@@ -17,6 +17,12 @@ from pathlib import Path
 
 DM_BASE = 0x06010000
 DM_SHA256 = "3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124"
+JAPANESE_RLOWFIX_SHA256 = "f2686bf3d6b971c5eaa613b2619b7e1bb7958a8045876296a83509f137be18b0"
+PLRD_RECORD_COUNT = 20
+PLRD_RECORD_SIZE = 64
+PLRD_ITEM_PAIR_OFFSET = 24
+PLRD_ITEM_PAIR_COUNT = 10
+NEXUS_ITEM_DEFINITION_COUNT = 243
 EVENT_TABLE_OFFSET = 0x36D04
 EVENT_TABLE_END = 0x37024
 EVENT_NAME_POINTER_TABLE_OFFSET = 0x3ADC4
@@ -79,6 +85,53 @@ def resolve_dm_bin(explicit: Path | None) -> Path:
     return Path.home() / ".firestaff" / "data" / "nexus" / "DM.BIN"
 
 
+def report_rlowfix_plrd_item_pairs(data: bytes,
+                                   allow_unpinned_hash: bool = False) -> bool:
+    """Summarize authentic PLRD's ten 2-word item pairs per champion row."""
+    digest = hashlib.sha256(data).hexdigest()
+    if digest != JAPANESE_RLOWFIX_SHA256 and not allow_unpinned_hash:
+        print("rlowfix_plrd_pairs=unverified sha256_mismatch")
+        return False
+    marker = b"PLRD"
+    plrd_offset = None
+    search_end = len(data) - 8 - PLRD_RECORD_COUNT * PLRD_RECORD_SIZE - 4
+    for offset in range(max(0, search_end + 1)):
+        if (data[offset:offset + 4] == marker and
+                data[offset + 8 + PLRD_RECORD_COUNT * PLRD_RECORD_SIZE:
+                     offset + 12 + PLRD_RECORD_COUNT * PLRD_RECORD_SIZE] == b"CRET"):
+            plrd_offset = offset + 8
+            break
+    if plrd_offset is None:
+        print("rlowfix_plrd_pairs=invalid missing_complete_plrd_cret")
+        return False
+
+    item_ids = []
+    auxiliary_words = []
+    for champion in range(PLRD_RECORD_COUNT):
+        record = plrd_offset + champion * PLRD_RECORD_SIZE
+        for slot in range(PLRD_ITEM_PAIR_COUNT):
+            pair = record + PLRD_ITEM_PAIR_OFFSET + slot * 4
+            item_id = read_be16(data, pair)
+            auxiliary = read_be16(data, pair + 2)
+            if item_id != 0xFFFF and item_id >= NEXUS_ITEM_DEFINITION_COUNT:
+                print(f"rlowfix_plrd_pairs=invalid row={champion} slot={slot} "
+                      f"item_id=0x{item_id:04x}")
+                return False
+            item_ids.append(item_id)
+            auxiliary_words.append(auxiliary)
+
+    nonempty = sum(item_id != 0xFFFF for item_id in item_ids)
+    empty = len(item_ids) - nonempty
+    auxiliary_values = sorted(set(auxiliary_words))
+    print(f"rlowfix_sha256={digest} "
+          f"canonical_japanese={'verified' if digest == JAPANESE_RLOWFIX_SHA256 else 'unverified'}")
+    print(f"rlowfix_plrd_item_pairs=rows_{PLRD_RECORD_COUNT}x{PLRD_ITEM_PAIR_COUNT} "
+          f"empty={empty} nonempty={nonempty} "
+          f"item_ids=ordinal_or_ffff auxiliary_values="
+          f"{','.join(f'{value:04x}' for value in auxiliary_values)}")
+    return True
+
+
 def read_be32(data: bytes, offset: int) -> int:
     return int.from_bytes(data[offset : offset + 4], "big")
 
@@ -122,7 +175,7 @@ def read_be16(data: bytes, offset: int) -> int | None:
 
 def bt_target(instruction_offset: int, opcode: int) -> int | None:
     """Resolve a SH-2 BT/BF target (the branch base is PC+4)."""
-    if opcode >> 8 not in (0x89, 0x8B):
+    if opcode >> 8 not in (0x89, 0x8B, 0x8D, 0x8F):
         return None
     displacement = opcode & 0xFF
     if displacement & 0x80:
@@ -133,6 +186,16 @@ def bt_target(instruction_offset: int, opcode: int) -> int | None:
 def bsr_target(instruction_offset: int, opcode: int) -> int | None:
     """Resolve a SH-2 BSR target (12-bit displacement, base PC+4)."""
     if opcode >> 12 != 0xB:
+        return None
+    displacement = opcode & 0x0FFF
+    if displacement & 0x0800:
+        displacement -= 0x1000
+    return instruction_offset + 4 + displacement * 2
+
+
+def bra_target(instruction_offset: int, opcode: int) -> int | None:
+    """Resolve a SH-2 BRA target (12-bit displacement, base PC+4)."""
+    if opcode >> 12 != 0xA:
         return None
     displacement = opcode & 0x0FFF
     if displacement & 0x0800:
@@ -605,12 +668,26 @@ def report_mouse_early_event_jump_table(data: bytes) -> bool:
         0x298: 0x001D,  # load signed 16-bit relative case target
         0x29A: 0x0023,  # braf R0
         0x29C: 0x0009,  # nop
-        0x8C0: 0x55FE,  # mov.l @(56,R15),R5; stack-slot provenance is untraced
+        0x282: 0x6422,  # load current context index through global pointer
+        0x8C0: 0x55FE,  # mov.l @(56,R15),R5; event-case slot argument
         0x8C4: 0x410B,  # jsr @R1
         0x8C6: 0x0009,  # nop
         0x26E58: 0x2FE6,  # event-44 handler saves R14
+        0x26E64: 0xBE78,  # bsr context resolver at 0x26b58
         0x26E5E: 0x6D43,  # handler context R4 -> R13
         0x26E66: 0x6E53,  # hit-row argument R5 -> R14
+        0x26E68: 0x6C03,  # context record pointer from resolver
+        0x26E6C: 0xBDEE,  # bsr staged-pair initializer at 0x26a4c
+        0x26E6E: 0x2F26,  # delay slot: pass staged-pair pointer
+        0x26E72: 0x8807,  # slot 7 is a separate path
+        0x26E74: 0x8F0E,  # bf normal slots to 0x26e94
+        0x26E98: 0x4211,  # compare staged pair word with zero
+        0x26E9A: 0x8916,  # bt place/compatibility path at 0x26eca
+        0x26EA4: 0xB0DA,  # bsr slot-pair lookup/clear helper 0x2705c
+        0x26EAC: 0x88FF,  # compare staged item ID with -1
+        0x26EAE: 0x8B01,  # bf held-pair helper path at 0x26eb4
+        0x26F38: 0xB090,  # bsr slot-pair lookup/clear helper 0x2705c
+        0x26F42: 0xB133,  # bsr slot-pair write helper 0x271ac
     }
     valid = True
     for offset, expected in expected_words.items():
@@ -637,12 +714,30 @@ def report_mouse_early_event_jump_table(data: bytes) -> bool:
     if handler != (1, 0x06036E58):
         print(f"mouse_event_44_handler_pointer=invalid decoded={handler}")
         valid = False
+    for offset, expected_target in ((0x26E64, 0x26B58),
+                                    (0x26E6C, 0x26A4C),
+                                    (0x26E74, 0x26E94),
+                                    (0x26E9A, 0x26ECA),
+                                    (0x26EA4, 0x2705C),
+                                    (0x26EAE, 0x26EB4),
+                                    (0x26F38, 0x2705C),
+                                    (0x26F42, 0x271AC)):
+        opcode = read_be16(data, offset)
+        target = (bt_target(offset, opcode)
+                  if offset in (0x26E74, 0x26E9A, 0x26EAE)
+                  else bsr_target(offset, opcode)) if opcode is not None else None
+        if target != expected_target:
+            print(f"mouse_event_44_handler_branch=invalid file_offset=0x{offset:06x} "
+                  f"target={None if target is None else f'0x{target:06x}'}")
+            valid = False
     if valid:
         print("mouse_early_event_dispatch=relative_jump_table "
               "event_44_case=DM.BIN:0x0008c0 "
               "handler_pointer=0x06036e58 "
-              "r5_load=stack_offset_56 provenance=untraced "
-              "handler_side_effects=unverified")
+              "context_index=global_context_pointer "
+              "slot_argument=stack_offset_56 "
+              "slot7=separate_path normal_slot_pair_path=verified "
+              "item_compatibility_path=verified state_model_mapping=unverified")
     return valid
 
 
@@ -653,6 +748,38 @@ def report_mouse_event_44_state_evidence(data: bytes) -> bool:
         0x26E58: 0x2FE6,  # event-44 handler prologue
         0x26E5E: 0x6D43,  # preserve context in R13
         0x26E66: 0x6E53,  # preserve hit-row slot in R14
+        0x27064: 0x9325,  # load context stride literal
+        0x27070: 0x2C3F,  # multiply context index by stride
+        0x27072: 0xD211,  # load retail context table base
+        0x27074: 0x911E,  # load slot-array offset literal
+        0x27084: 0x4408,  # slot index * 4
+        0x27086: 0x73D4,  # add stride - 44 (0x110)
+        0x27088: 0x33CC,  # add context base
+        0x2708A: 0x334C,  # add slot offset
+        0x2708C: 0x6031,  # read first pair word
+        0x27094: 0x8531,  # read second pair word
+        0x2709A: 0x2431,  # clear source first word
+        0x271CC: 0x9375,  # load context stride for write helper
+        0x2721E: 0x4308,  # slot index * 4
+        0x27226: 0x2301,  # write first staged pair word
+        0x2722A: 0x8131,  # write second staged pair word
+        0x27244: 0x2E31,  # clear held first word
+        0x27246: 0x81E1,  # clear held second word
+        0x26EBC: 0x9327,  # load 0x1000 context-state mask
+        0x26EBE: 0xE054,  # context field offset 84
+        0x26EC0: 0x02CE,  # context-field state update
+        0x26EC2: 0x223B,
+        0x26EC4: 0x0C26,
+        0x26F58: 0x936E,  # second 0x1000 context-state update
+        0x26F5A: 0xE054,
+        0x26F5C: 0x02CE,
+        0x26F5E: 0x223B,
+        0x26F60: 0x0C26,
+        0x27260: 0xD31F,  # load context-state literal from 0x272E0
+        0x27262: 0xE054,
+        0x27264: 0x02CE,
+        0x27266: 0x223B,
+        0x2726A: 0x0C26,
         0x26B88: 0x900B,  # load context stride
         0x26B8A: 0x2E0F,  # multiply context by stride
         0x26B8C: 0xD310,  # load context-block base
@@ -682,12 +809,21 @@ def report_mouse_event_44_state_evidence(data: bytes) -> bool:
         0x26F2C: 0x0604,
         0x26F2E: 0x8874,  # context eligibility masks
         0x26F0E: 0x1000,  # mask-like literal
+        0x27038: 0x1000,  # MOV.W target for context-state update at 0x26F58
+        0x272E0: 0x0010,  # high word of MOV.L target at 0x27260
+        0x272E2: 0x0000,  # low word; full loaded value is 0x00100000
         0x270B2: 0x013C,  # stride-like literal
         0x270B4: 0x0110,  # offset-like literal
         0x270B6: 0xFFFF,  # sentinel-like literal
         0x270B8: 0x0607,
         0x270BA: 0xFBA0,  # address literal
         0x27184: 0x00A1,  # item eligibility threshold
+        0x272BA: 0x013C,  # context stride
+        0x272BE: 0x0110,  # slot-array offset
+        0x272C0: 0x0200,  # context dirty flag literal
+        0x272C2: 0xFFFF,
+        0x272C4: 0x0607,
+        0x272C6: 0xFBA0,  # context table base
     }
     for offset, expected in expected_literals.items():
         actual = read_be16(data, offset)
@@ -698,10 +834,13 @@ def report_mouse_event_44_state_evidence(data: bytes) -> bool:
             valid = False
 
     if valid:
-        print("mouse_event_44_state_evidence=selected_opcodes_and_literals "
+        print("mouse_event_44_state_evidence=slot_pair_reads_writes_and_context_stride "
               "literal_0x013c=present literal_0x0607fba0=present "
-              "literal_0x0110=present literal_0x06064610=present "
-              "literal_0x1000=present control_flow_and_side_effects=unverified")
+              "literal_0x0110=present literal_0x0200=present "
+              "literal_0x06064610=present "
+              "context_state_load_literals_0x1000_0x00100000=verified "
+              "slot_pair_writes=verified held_item_helpers=untraced "
+              "runtime_deltas_and_firestaff_mapping=unverified")
     return valid
 
 
@@ -757,6 +896,8 @@ def event_string_offsets(data: bytes) -> list[tuple[int, bytes]]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("dm_bin", nargs="?", type=Path)
+    parser.add_argument("--rlowfix", type=Path,
+                        help="also inspect an authentic RLOWFIX.BIN PLRD roster")
     parser.add_argument("--allow-unpinned-hash", action="store_true",
                         help="report a noncanonical binary without failing")
     args = parser.parse_args()
@@ -827,9 +968,25 @@ def main() -> int:
         print("NEXUS_MOUSE_MOTION_EVENT_GATE_INVALID: retail poller changed")
         return 1
 
-    print("interpretation=verified retail hit-region registration, queue and "
-          "event-44 dispatch pointer plus selected handler-region values; "
-          "handler side effects and Firestaff field mapping remain unverified")
+    rlowfix_path = args.rlowfix or (Path.home() / ".firestaff" / "data" /
+                                    "nexus" / "RLOWFIX.BIN")
+    if rlowfix_path.exists():
+        try:
+            rlowfix_data = rlowfix_path.read_bytes()
+        except OSError as error:
+            print(f"NEXUS_RLOWFIX_INVALID: {error}")
+            return 1
+        if not report_rlowfix_plrd_item_pairs(rlowfix_data,
+                                               args.allow_unpinned_hash):
+            return 1
+    elif args.rlowfix is not None:
+        print(f"NEXUS_RLOWFIX_INVALID: file not found: {rlowfix_path}")
+        return 1
+    else:
+        print("rlowfix_plrd_pairs=unavailable configure --rlowfix to inspect")
+    print("interpretation=verified retail hit-region registration, event-44 "
+          "dispatch path, and slot-pair access/writes; held-item UI effects "
+          "and Firestaff field mapping remain unverified")
     return 0
 
 

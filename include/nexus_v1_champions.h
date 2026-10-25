@@ -139,6 +139,10 @@ int nexus_v1_champion_recruit_and_advance(Nexus_V1_ChampionPool *pool,
 int nexus_v1_champion_on_death_update_leader(Nexus_V1_ChampionPool *pool,
                                              int dead_champion_index);
 
+/* Cycle to the next valid party slot and return the new leader slot, or -1
+ * when the pool has no valid next party member. */
+int nexus_v1_champion_cycle_leader(Nexus_V1_ChampionPool *pool);
+
 /* ── Champion pool binary serialization (Phase 6 save/load) ────────────────
  *
  * Serializes the champion pool (up to 24 storage slots + party + leader state)

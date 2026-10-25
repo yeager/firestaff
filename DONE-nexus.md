@@ -377,3 +377,15 @@ Reviewed 2026-08-26. Completed work only.
 - The post-intro input receipt is completed as a negative observation: title
   frames 13000–13039 are bit-identical with and without verified Start/A
   pulses, so that window is not an interactive start-menu transition.
+- The Nexus gameplay Tab action cycles the loaded party's leader slot. An
+  authentic Ymir `--debug` run on Japanese retail media visibly confirmed L/R
+  changes the leader marker and portrait; the guest RAM owner remains unknown.
+  See `docs/nexus_input.md` and
+  `parity-evidence/verification/nexus-leader-cycle-debug-20261025/`.
+- The hash-pinned Japanese retail `DM.BIN` event-44 route now has checked
+  control flow through its context resolver and slot-pair read/clear/write
+  helpers. It uses a `0x13c` context stride, a `+0x110` slot-pair array with
+  two 16-bit words per slot, and 40-byte item metadata records; slot 7 takes a
+  separate path. This does not bind its context index or opaque auxiliary word
+  to Firestaff's champion/inventory model. The reproducible checker is
+  `scripts/analyze_nexus_mouse_event_crossrefs.py`.

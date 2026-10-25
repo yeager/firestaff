@@ -853,6 +853,31 @@ int main(void) {
     char real_fallback[512];
     const char* real_dir;
 
+    /* Exercise the actual M11 keyboard-action route with a small in-memory
+     * party fixture; this fixture tests input plumbing, not retail content. */
+    {
+        M11_GameViewState view;
+        Nexus_V1_Engine engine;
+        memset(&view, 0, sizeof(view));
+        memset(&engine, 0, sizeof(engine));
+        view.active = 1;
+        view.sourceKind = M11_GAME_SOURCE_NEXUS_DGN;
+        view.nexusEngine = &engine;
+        view.nexusState.level_loaded = 1;
+        engine.champions.champion_count = 2;
+        engine.champions.champions[0].alive = 1;
+        engine.champions.champions[1].alive = 1;
+        engine.champions.party_count = 2;
+        engine.champions.party[0] = 0;
+        engine.champions.party[1] = 1;
+        engine.champions.leader_index = 0;
+        expect_true(M11_GameView_HandleInput(
+                        &view, M12_MENU_INPUT_CYCLE_CHAMPION) ==
+                        M11_GAME_INPUT_REDRAW &&
+                    engine.champions.leader_index == 1,
+                    "Nexus gameplay cycle-champion input changes leader");
+    }
+
     expect_true(nexus_v1_launcher_startup_structure3_raw_capture_intake(
                     NULL, 0U, NULL, NULL, &g_raw_capture_receipt) == 0 &&
                     g_raw_capture_receipt.no_draw_only &&
