@@ -37054,7 +37054,11 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         }
         if (state->nexusState.hand_pointer_active &&
             (input == M12_MENU_INPUT_UP || input == M12_MENU_INPUT_DOWN ||
-             input == M12_MENU_INPUT_LEFT || input == M12_MENU_INPUT_RIGHT)) {
+             input == M12_MENU_INPUT_LEFT || input == M12_MENU_INPUT_RIGHT ||
+             input == M12_MENU_INPUT_NEXUS_POINTER_UP_LEFT ||
+             input == M12_MENU_INPUT_NEXUS_POINTER_UP_RIGHT ||
+             input == M12_MENU_INPUT_NEXUS_POINTER_DOWN_LEFT ||
+             input == M12_MENU_INPUT_NEXUS_POINTER_DOWN_RIGHT)) {
             const Nexus_HitRect *viewport = NULL;
             int x, y;
             if (state->nexusEngine->hud_hit_rect_count !=
@@ -37070,6 +37074,10 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 case M12_MENU_INPUT_DOWN: ++y; break;
                 case M12_MENU_INPUT_LEFT: --x; break;
                 case M12_MENU_INPUT_RIGHT: ++x; break;
+                case M12_MENU_INPUT_NEXUS_POINTER_UP_LEFT: --x; --y; break;
+                case M12_MENU_INPUT_NEXUS_POINTER_UP_RIGHT: ++x; --y; break;
+                case M12_MENU_INPUT_NEXUS_POINTER_DOWN_LEFT: --x; ++y; break;
+                case M12_MENU_INPUT_NEXUS_POINTER_DOWN_RIGHT: ++x; ++y; break;
                 default: break;
             }
             if (x < viewport->x1 || x >= viewport->x2 ||

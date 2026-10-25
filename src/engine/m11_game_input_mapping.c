@@ -119,16 +119,43 @@ M12_MenuInput M11_NexusMovementInputFromScancode(int scancode)
 
 M12_MenuInput M11_NexusPointerInputFromScancode(int scancode)
 {
-    /* Saturn's D-pad moves the hand pointer in eight directions. Map the four
-     * cardinal host keys directly; diagonal simultaneous-key handling is
-     * resolved at the held-input sampler. */
+    /* Saturn's D-pad moves the hand pointer in eight directions. Retail Ymir
+     * --debug input captures used W/S/A/D for the D-pad, so preserve that
+     * familiar desktop layout while pointer mode is active. Arrow keys remain
+     * aliases for players who prefer cursor-style navigation. Diagonal
+     * simultaneous-key handling is resolved at the held-input sampler. */
     switch ((SDL_Scancode)scancode) {
         case SDL_SCANCODE_UP: return M12_MENU_INPUT_UP;
+        case SDL_SCANCODE_W: return M12_MENU_INPUT_UP;
         case SDL_SCANCODE_DOWN: return M12_MENU_INPUT_DOWN;
+        case SDL_SCANCODE_S: return M12_MENU_INPUT_DOWN;
         case SDL_SCANCODE_LEFT: return M12_MENU_INPUT_LEFT;
+        case SDL_SCANCODE_A: return M12_MENU_INPUT_LEFT;
         case SDL_SCANCODE_RIGHT: return M12_MENU_INPUT_RIGHT;
+        case SDL_SCANCODE_D: return M12_MENU_INPUT_RIGHT;
         default: return M12_MENU_INPUT_NONE;
     }
+}
+
+M12_MenuInput M11_NexusPointerInputFromDirections(int up, int down,
+                                                   int left, int right)
+{
+    const int dy = (up != down) ? (up ? -1 : 1) : 0;
+    const int dx = (left != right) ? (left ? -1 : 1) : 0;
+
+    if (dy < 0) {
+        return dx < 0 ? M12_MENU_INPUT_NEXUS_POINTER_UP_LEFT
+             : dx > 0 ? M12_MENU_INPUT_NEXUS_POINTER_UP_RIGHT
+                      : M12_MENU_INPUT_UP;
+    }
+    if (dy > 0) {
+        return dx < 0 ? M12_MENU_INPUT_NEXUS_POINTER_DOWN_LEFT
+             : dx > 0 ? M12_MENU_INPUT_NEXUS_POINTER_DOWN_RIGHT
+                      : M12_MENU_INPUT_DOWN;
+    }
+    if (dx < 0) return M12_MENU_INPUT_LEFT;
+    if (dx > 0) return M12_MENU_INPUT_RIGHT;
+    return M12_MENU_INPUT_NONE;
 }
 
 M12_MenuInput M11_NexusPointerToggleInputFromScancode(int scancode)

@@ -87,8 +87,10 @@ the retail D-pad turns in movement mode.
 The retail game tick accepts only the six basic movement commands
 (forward/backward, turn left/right, and strafe left/right) against the
 authenticated DGN grid. In the loaded dungeon, Z toggles a host hand-pointer
-mode. Arrow keys move its logical position in the authenticated DM.BIN
-viewport rectangle; mouse motion positions it directly in that rectangle.
+mode. W/A/S/D and the arrow keys move its logical position in the authenticated
+DM.BIN viewport rectangle; simultaneous directions allow diagonal movement.
+The W/A/S/D mapping matches the captured retail profile's D-pad bindings.
+Mouse motion positions the hand pointer directly in that rectangle.
 The hand sprite is sourced from the hash-verified retail ITEM.IBS image 65 and
 palette 6, joined against Ymir `--debug` VDP1 texture capture. Mouse movement
 and the six keyboard movement commands remain available with pointer mode off.
@@ -97,9 +99,10 @@ desktop movement surface: the upper row maps to turn left, forward, and turn
 right; the lower row maps to strafe left, backward, and strafe right. This
 host mapping uses the retail rectangle but does not claim to reproduce the
 unresolved callback's cell semantics. Clicks elsewhere and hand-pointer clicks
-remain inert. A/B/Y/C/L/R actions remain inert until their retail consumers
-are traced. Item use, inventory, spells, combat, sensors, doors, and level
-transitions remain fail-closed.
+remain inert. A/B/Y/C actions remain inert until their retail consumers are
+traced. Tab provides the separately verified leader-cycle action; L/R
+controller events are not yet mapped to desktop controls. Item use, inventory,
+spells, combat, sensors, doors, and level transitions remain fail-closed.
 
 In a loaded Nexus dungeon, Space toggles Firestaff's host pause. Ymir evidence
 records that the retail Start button displayed the `PAUSE` overlay; whether

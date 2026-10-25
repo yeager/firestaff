@@ -2686,6 +2686,10 @@ static const char* m11_debug_input_name(M12_MenuInput input) {
         case M12_MENU_INPUT_SAVE_GAME: return "save";
         case M12_MENU_INPUT_FREEZE_TOGGLE: return "freeze-toggle";
         case M12_MENU_INPUT_NEXUS_POINTER_TOGGLE: return "nexus-pointer-toggle";
+        case M12_MENU_INPUT_NEXUS_POINTER_UP_LEFT: return "nexus-pointer-up-left";
+        case M12_MENU_INPUT_NEXUS_POINTER_UP_RIGHT: return "nexus-pointer-up-right";
+        case M12_MENU_INPUT_NEXUS_POINTER_DOWN_LEFT: return "nexus-pointer-down-left";
+        case M12_MENU_INPUT_NEXUS_POINTER_DOWN_RIGHT: return "nexus-pointer-down-right";
         case M12_MENU_INPUT_DISK_MENU: return "disk-menu";
         case M12_MENU_INPUT_CHAMPION_1_INVENTORY: return "champion-1-inventory";
         case M12_MENU_INPUT_CHAMPION_2_INVENTORY: return "champion-2-inventory";
@@ -11317,19 +11321,25 @@ static M12_MenuInput m11_held_motion_input_from_keyboard(M11_GameViewState* game
      * cursor and must not be translated through the DM1 movement layout. */
     if (gameView && gameView->sourceKind == M11_GAME_SOURCE_NEXUS_DGN &&
         gameView->nexusState.hand_pointer_active) {
-        static const SDL_Scancode pointerPreferred[] = {
-            SDL_SCANCODE_UP, SDL_SCANCODE_DOWN,
-            SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT
-        };
-        for (i = 0; i < (int)(sizeof(pointerPreferred) /
-                              sizeof(pointerPreferred[0])); ++i) {
-            int sc = (int)pointerPreferred[i];
-            if (keys && sc >= 0 && sc < count && keys[sc]) {
-                if (gameView->nexusState.hand_pointer_repeat_ticks++ % 3 == 0) {
-                    return M11_NexusPointerInputFromScancode(sc);
-                }
-                return M12_MENU_INPUT_NONE;
-            }
+        const int up = keys &&
+            ((count > SDL_SCANCODE_UP && keys[SDL_SCANCODE_UP]) ||
+             (count > SDL_SCANCODE_W && keys[SDL_SCANCODE_W]));
+        const int down = keys &&
+            ((count > SDL_SCANCODE_DOWN && keys[SDL_SCANCODE_DOWN]) ||
+             (count > SDL_SCANCODE_S && keys[SDL_SCANCODE_S]));
+        const int left = keys &&
+            ((count > SDL_SCANCODE_LEFT && keys[SDL_SCANCODE_LEFT]) ||
+             (count > SDL_SCANCODE_A && keys[SDL_SCANCODE_A]));
+        const int right = keys &&
+            ((count > SDL_SCANCODE_RIGHT && keys[SDL_SCANCODE_RIGHT]) ||
+             (count > SDL_SCANCODE_D && keys[SDL_SCANCODE_D]));
+
+        const M12_MenuInput pointerInput =
+            M11_NexusPointerInputFromDirections(up, down, left, right);
+        if (pointerInput != M12_MENU_INPUT_NONE) {
+            if (gameView->nexusState.hand_pointer_repeat_ticks++ % 3 == 0)
+                return pointerInput;
+            return M12_MENU_INPUT_NONE;
         }
         gameView->nexusState.hand_pointer_repeat_ticks = 0;
     }

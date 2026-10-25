@@ -77,8 +77,28 @@ int main(void) {
                     M12_MENU_INPUT_RIGHT,
                 "pointer mode Right should move the hand pointer right")) return 1;
     if (!expect(M11_NexusPointerInputFromScancode(SDL_SCANCODE_W) ==
-                    M12_MENU_INPUT_NONE,
-                "pointer mode should use arrows rather than movement keys"))
+                    M12_MENU_INPUT_UP,
+                "pointer mode W should move the hand pointer up"))
+        return 1;
+    if (!expect(M11_NexusPointerInputFromScancode(SDL_SCANCODE_A) ==
+                    M12_MENU_INPUT_LEFT,
+                "pointer mode A should move the hand pointer left"))
+        return 1;
+    if (!expect(M11_NexusPointerInputFromScancode(SDL_SCANCODE_S) ==
+                    M12_MENU_INPUT_DOWN,
+                "pointer mode S should move the hand pointer down"))
+        return 1;
+    if (!expect(M11_NexusPointerInputFromScancode(SDL_SCANCODE_D) ==
+                    M12_MENU_INPUT_RIGHT,
+                "pointer mode D should move the hand pointer right"))
+        return 1;
+    if (!expect(M11_NexusPointerInputFromDirections(1, 0, 1, 0) ==
+                    M12_MENU_INPUT_NEXUS_POINTER_UP_LEFT,
+                "held W+A should move the hand pointer diagonally up-left"))
+        return 1;
+    if (!expect(M11_NexusPointerInputFromDirections(1, 1, 1, 0) ==
+                    M12_MENU_INPUT_LEFT,
+                "opposite vertical inputs should cancel for pointer movement"))
         return 1;
 
     /* These bounds are the verified retail DM.BIN movement-pad rectangle,
