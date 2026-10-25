@@ -134,11 +134,14 @@ The SH-2 hit scanner at file offset `0x24ed6` compares pointer coordinates
 against those bounds, reads the event and slot fields, and queues them to
 `0x06024288`. This binds the rectangles to `EV_INV_EQUIP` with a slot argument.
 The verified consumer at file offset `0x21c84` has special branches only for
-event IDs 38, 39, 40, 49, 52, 56, and 57. IDs 13 and 44 take its generic
-diagnostic path, which resolves the event name and emits `bad event data`.
+event IDs 38, 39, 40, 49, 52, 56, and 57. IDs 13 and 44 branch at `0x21cce`
+to the generic diagnostic at `0x21d98`, which resolves the event name and
+emits `bad event data`. This rules out an inventory mutation in this queue
+consumer; it does not rule out a separate consumer elsewhere in the retail
+runtime.
 The separate mouse-motion poller filters for event 46 before it calls the
 hit-region scanner; it does not consume event 44 as a second pointer action.
-The verified queue consumers do not establish an inventory mutation. No
+This verified queue consumer does not establish an inventory mutation. No
 event-44-specific champion/inventory state writer has been identified, so
 production equipment clicks remain disabled pending a source-bound owner.
 
@@ -156,6 +159,7 @@ cursor and D-pad movement are captured, while desktop mouse movement in
 Firestaff is a host control behavior rather than a claim about Saturn
 ShuttleMouse.
 
-Next work must bind the queued event IDs and documented cursor/non-movement
-controls to the retail event consumer and same-session state writes. Keep
-unsupported actions inert until those consumers are identified.
+Next work must search for any separate consumer of queued IDs 13 and 44, then
+bind the documented cursor/non-movement controls to retail state writes in the
+same session. Keep unsupported actions inert until those consumers are
+identified.
