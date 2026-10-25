@@ -1,3 +1,14 @@
+2026-10-25 explicit original-ZIP ownership retest: the authentic-media
+`test_dm2_v1_explicit_zip_ownership.sh` matrix passed for DOS, Macintosh,
+FM Towns, and Amiga. Each platform retained the exact selected source through
+direct CLI runtime, scoped M12 launch, and unscoped M12 launch, both under its
+original filename and a renamed symlink. Runtime probes required the expected
+edition hash and zero fallback draws. An unrelated DM1 PC archive and the
+removed PC-9821 DM2 archive were rejected while an authentic FM Towns DM2
+archive was present beside them. Original DM2 archives remained unchanged.
+This verifies the tested archive-selection paths with SDL dummy drivers; it
+does not prove native display, audio, or physical input parity.
+
 2026-10-23 indoor viewport draw interleaving: implemented from SKProject
 `SKWINSPX/src/v5/skguivwp.cpp::DM2_DRAW_DUNGEON_TILES` walks the 20 entries
 of `table1d7029`, issuing static-object or creature draws before advancing to

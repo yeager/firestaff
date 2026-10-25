@@ -1,3 +1,14 @@
+2026-10-25 mixed original-media launcher retest: the authentic
+`csb_v1_fmtowns_m12_auto_mixed_real_media` matrix passed against the installed
+FM Towns, Atari ST, and Amiga originals. AUTO selected FM Towns and reached
+the original MINI.DAT party; M12 platform selection reached the Atari C200
+runtime and Amiga A31M runtime; mouse selection of the Amiga card also reached
+the original runtime. Explicit CLI selection of all three platforms retained
+its edition owner, and bare `--game csb` selected the default FM Towns source
+from `~/.firestaff/data/csb`. This verifies the scripted routes against
+authentic media with SDL dummy video/audio, not native display, audio, or
+physical input parity.
+
 2026-10-22 mixed original-media direct CLI default: the CSB AUTO regression
 now also starts bare `--game csb` from a collection containing authentic
 FM Towns, Atari ST and Amiga editions, with no `--platform` override. It
