@@ -1,3 +1,10 @@
+- 2026-10-25: Reproduced the FM Towns pointer-only menu regression stopping
+  after its second click at the three-second test deadline. With the same
+  authentic archive and click coordinates, waiting for scan completion and
+  allowing thirty seconds reaches the expected FM Towns game handoff. The
+  regression now uses that bounded wait and prints its captured log on failure.
+  This verifies the launcher handoff, not full gameplay or visual parity.
+
 - 2026-10-25: Extracted the DM2 RECT_7 receipt/copy/screen-owned presentation
   pass into a private runtime helper while keeping the same receipt alive for
   later click-target placement. The product target rebuilt with `-j1`; the

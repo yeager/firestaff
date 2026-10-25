@@ -261,11 +261,15 @@ fi
 # FM Towns is the first DM2 platform card.  This asserts that the launcher
 # admits the authentic disc solely through mouse selection before the source
 # title and New Game input path below takes over.
-FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+pointer_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --width 1920 --height 1080 --menu --game dm2 --platform fm-towns --data-dir "$archive" \
-    --script 'wait20,click:1645:262,wait20,click:410:405,wait20,click:450:405,wait20' \
-    --duration 3000 >/dev/null 2>&1
+    --script 'wait-scan-complete,wait20,click:1645:262,wait20,click:410:405,wait20,click:450:405,wait20' \
+    --duration 30000 2>&1) || {
+    printf '%s\n' "$pointer_output" >&2
+    echo 'FAIL: DM2 FM Towns pointer-only menu route did not launch' >&2
+    exit 1
+}
 
 # The direct CLI route must also finish the authentic Towns TWANIM before
 # its source-coordinate New Game and mirror clicks. Keep the probe surface at
