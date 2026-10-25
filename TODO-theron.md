@@ -24,6 +24,26 @@
   world-click and state-driven rendering work open until the original command
   consumer, position state, and screen-data lineage are joined.
 
+## 2026-10-25 — authentic pointer interval-table candidate recovered
+
+- A read-only inspection of the authentic US Track 02 BIN (8,104,992 bytes,
+  MD5 `f23601102138f87c33025877767ebf76`) found the same 26-byte interval-table
+  candidate immediately after each of the seven identical `$D515` code
+  windows. The table hash is `8f9eea35bef73f48d39f09255524608a39188524935170168a44659b1b74b800`;
+  no game bytes are copied into the repository.
+- The disassembly at `$D588` compares the cursor coordinate `$2E7A` against
+  paired thresholds in that table and returns a paired value. This is concrete
+  evidence that the original has coordinate-dependent pointer classification,
+  so full hit regions may be recoverable from authentic media. The seven
+  code copies remain static candidates; the capture does not bind which one
+  executes or what each returned value means.
+- The caller first loads a pointer from runtime `$77DC/$77DD` and follows its
+  descriptor. Those pointer contents and their source-data lineage are still
+  unknown. Do not publish hitboxes or route arbitrary viewport clicks until
+  the runtime pointer, descriptor records, returned command and state effect
+  are joined. See
+  [`theron-pointer-interval-table-candidates-20261025.md`](docs/source-lock/theron-pointer-interval-table-candidates-20261025.md).
+
 ## 2026-10-25 — PCE Fast left-input and VDC comparison
 
 - Replayed the preserved authentic Japanese Ak-Tu-Ba dungeon state on TRV2
@@ -62,7 +82,7 @@
   Home, and keypad-6 turning; the focused launcher/input contract also checks
   keycode aliases for Home/End and keypad 4/6.
 
-## 2026-10-24 — complete Theron keyboard and mouse playability
+## 2026-10-24 — verified native keyboard and panel mouse controls; original mouse parity open
 
 - Native keyboard input already reaches the Theron movement and action facade;
   discrete key events also reached a loaded dungeon and advanced native ticks
