@@ -1,3 +1,19 @@
+2026-10-25 authentic PC 3.4 CLI/menu retest: the complete
+`test_dm1_v1_pc34_native_cli_boot.sh` matrix passed against the installed
+original DOS 3.4 archive and the original Atari ST dungeon used as a wrong-
+edition control. It verified clean quit during SWSH and I34E title, rejection
+of PC graphics paired only with Atari dungeon data, correct PC dungeon choice
+when both editions are present, and the mixed-data-root PC34 AUTO menu route.
+Direct and bare `--game dm1` startup reached runtime; the no-game menu ran the
+authentic 53-frame title and 32-step selector before its HoC handoff. The
+authenticated HoC route recruited the original C127 champion and reached the
+first runtime movement, while 1920x1080 scripted menu clicks and debug/FPS
+receipts also passed. The supporting Atari STX decoder verified the original
+wrong-edition DUNGEON.DAT. SDL dummy video/audio verifies these source and
+handoff paths, not native display, physical mouse delivery, audio output, or
+visual parity. The test inputs do not use the numeric-keypad script aliases
+removed from the current main-loop parser after the local v3.0.412 build.
+
 2026-10-25 Apple IIGS mouth interaction: ReDMCSB PANEL.C F0349:1824-1850
 allows water/waterskin icons with charges and original potion Things when the
 mouth bit is present in AllowedSlots. Firestaff's IIGS-specific click gate only
