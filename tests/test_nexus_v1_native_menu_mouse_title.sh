@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # Verify the visible Nexus card flow using only pointer input.  The retail
 # Saturn CUE/BIN remains in place; a hash-verified extracted corpus takes
 # precedence while the CUE is admitted as supplemental media.  The title
