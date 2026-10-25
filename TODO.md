@@ -1,5 +1,20 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-25 authentic priority-game startup and combat retest: the launcher
+picker script passed with an isolated root containing only symlinks to the
+installed DM1, CSB and DM2 originals. It passed keyboard and mouse card
+selection, per-game-folder sibling discovery, default `~/.firestaff/data`
+discovery and source-archive hash checks for all three games. Each menu route
+launched its authentic FM Towns edition. A separate authentic DM1 PC 3.4 HoC
+combat probe recorded a damaging player attack, 16 creature moves, six
+creature attacks and champion HP loss. With party ShieldDefense set to 100,
+the same sequence reduced observed group damage from 28 to 17 HP. The
+authentic DM1 Amiga 2.0 first-monster combat test also passed. These checks
+cover scripted SDL input and game-state receipts; they do not verify native
+window input, real Retina scaling or complete playthroughs. The existing
+portrait-click test still seeds party state directly, so authentic
+multi-champion portrait switching remains unverified.
+
 2026-10-25 authentic launcher return/rescan retest: the
 `return_to_menu_rescans_dm1_csb_dm2_real_media` CTest passed in 1,527.71
 seconds using installed original media. It exercised DM1 PC, FM Towns, Atari
