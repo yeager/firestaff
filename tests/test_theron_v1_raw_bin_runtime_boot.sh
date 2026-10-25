@@ -172,6 +172,7 @@ if ! grep -Fq 'party=1,0,0 champions=2 runtimeTick=0' "$baseline_output" ||
         "$forward_blocked_output" "$turn_left_output" \
         "$keyboard_right_output" "$keyboard_left_output" \
         "$turn_alias_left_output" "$turn_alias_right_output" \
+        "$forward_alias_keypad_output" \
         "$mouse_turn_left_output" "$mouse_back_output" \
         "$mouse_turn_right_output" "$mouse_forward_output" \
         "$mouse_step_pair_output" \
