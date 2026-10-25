@@ -14,6 +14,24 @@ handoff paths, not native display, physical mouse delivery, audio output, or
 visual parity. The test inputs do not use the numeric-keypad script aliases
 removed from the current main-loop parser after the local v3.0.412 build.
 
+2026-10-26 user-reported PC34 native-view defects: Entrance doors appear to
+open too quickly; walking backward toward stairs can hang; alcoves and wall
+torches render as identical black holes; inscriptions are barely legible; and
+floor trap doors are invisible. The supplied native screenshot also shows
+striped floor-apple pixels and overlapping `APPLE` text over the dungeon
+viewport. Reproduced the exact original PC34 archive and rebuilt the current
+source. Focused authentic-media CTests passed for inscription font/stale-state
+rendering, HoC wall material/torch receipt, and floor-pit viewport capture;
+they prove selected source material and destination pixels, not the reported
+native presented frame or full pixel parity. Existing source times the shared
+PC34 F0438 entrance transition at 31 steps with nominal 40 ms waits; no paired
+native timing capture yet distinguishes that transition from I34E's separate
+32-step selector door. The ordinary SDL-queue backward-to-stairs hang is also
+not covered by the boot-probe route. Capture the exact native run and matching
+DOSBox-X original pose, then audit the route-specific frame timer, F0115/F0107
+asset composition, C10 glyph raster/palette, F0128 stairs dispatch and frame
+ownership before changing any mapping. Do not substitute generated assets.
+
 2026-10-25 Apple IIGS mouth interaction: ReDMCSB PANEL.C F0349:1824-1850
 allows water/waterskin icons with charges and original potion Things when the
 mouth bit is present in AllowedSlots. Firestaff's IIGS-specific click gate only

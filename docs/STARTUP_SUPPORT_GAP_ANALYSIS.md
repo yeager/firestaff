@@ -1,7 +1,9 @@
 # Five-game startup support gap analysis
 
-Reviewed against `origin/main` at `e3b6d015c` on 2026-10-25. The repository
-contains authentic-media route checks for all five games, but “available,”
+Reconciled with `origin/main` at `b2f569e3e` on 2026-10-26. Runtime receipts
+cited below remain the recorded runs at their stated revisions; they were not
+rerun during this documentation update. The repository contains checks
+against authentic media for all five games, but “available,”
 “selected,” “handed off,” and “entered a playable runtime” are separate states.
 The current evidence does not establish complete five-game startup support.
 
@@ -42,10 +44,22 @@ The current evidence does not establish complete five-game startup support.
   CLI edition matrix skipped with code 77 because TRV2 lacks its required
   authentic DM2 Macintosh archive. No synthetic or copied media was used.
 - PR #74 (`feat(theron): route Button II keyboard binding`) remains open and
-  should not be merged on mapper tests alone. The inactive startup dispatcher
-  lacks Z/X routing, and the loaded-dungeon Theron consumer reports
-  `UNKNOWN INPUT` for the mapped Back token. Require live SDL coverage for
-  startup and dungeon paths before treating these bindings as supported.
+  is not merge-ready despite green Actions checks. Its mapper adds Z/X, but
+  `main_loop_m11.c` only calls Theron's navigation mapper inside the active
+  game-view branch (SDL3 around lines 12290-12308; SDL2 around 12969-12987).
+  With the view inactive, the generic fallback omits Z and returns no input for
+  X (SDL3 lines 12504-12508; SDL2 lines 13142-13146). In the loaded dungeon,
+  X maps to `M12_MENU_INPUT_BACK`; `M11_GameView_HandleInput` forwards that token to
+  `theron_v1_boot_runtime_handle_m12_input_with_inventory_slot`, whose handled
+  tokens omit BACK before falling through to `UNKNOWN INPUT`
+  (`src/theron/theron_v1_boot.c`, lines 6205-6212). The PR's SDL check
+  currently asserts that result rather than proving a source-owned cancel
+  behavior. The check also does not compare the tick before and after X, so the
+  test can pass if X advances the world clock. Resolve the
+  startup dispatch, decide and document source-backed Button II semantics, and
+  strengthen the SDL assertion before merging. The PR head also targets a base
+  older than the currently fetched `origin/main` and needs a current-base
+  review after those fixes.
 - [`tests/test_firestaff_cli_startup_diagnostics_real_media.sh`](../tests/test_firestaff_cli_startup_diagnostics_real_media.sh)
   checks discovery and direct CLI startup for all five IDs. Its Nexus-specific
   assertion rejects a false `runtime-entered` receipt and requires the blocked

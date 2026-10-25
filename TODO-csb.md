@@ -1,3 +1,110 @@
+2026-10-26 user-reported CSB Amiga defects: the dungeon viewport looks badly
+wrong (alcoves and wall torches collapse to black holes, inscriptions are
+hard to read, and floor trap doors are invisible), the intro animation is
+absent, and there is no audible sound. Static source audit confirms these
+gaps and bounds what can be concluded:
+
+- The native A31/A35 viewport path supplies original Amiga DMCSB2 records to
+  the shared `csb_v1_boot_render_viewport_frame_pc34` draw core. The Amiga
+  provider admits floor/ceiling, wall, stair, door, pit and ornament families,
+  including M615 indices 259..384, but the existing CLI/M12 checks only
+  require a nonzero aperture hash. They do not compare an Amiga Entrance or
+  trap-door frame against the original. The CSB parity matrix likewise keeps
+  Amiga pixel parity open. The reported black/illegible/missing materials are
+  therefore not ruled out by the current green startup checks. Capture a
+  matching original and Firestaff pose, then verify source index selection,
+  transparency, draw order, palette/light row and inscription raster before
+  changing any asset mapping. Use the installed originals; do not replace
+  these records with generated art.
+- A concrete cross-platform wall-ornament mismatch exists in that Amiga
+  viewport route: the M615 provider supplies original Amiga records, while
+  F0107 calls the PC34 `dm1_v1_wall_ornament_render_plan_pc34`, whose source
+  coordinates/palette and derived-image geometry come from PC GRAPHICS.DAT
+  layout 696/G0205. The source inventory confirms both PC34 and Amiga M615
+  use the base-plus-two-per-ornament family, so the numeric ID stride is not
+  itself the defect. MEDIA720 defines `M587_VIEW_WALL_D1C_FRONT` as 14; the
+  wrapper maps shared row 14 to the PC34 planner's internal row 12. That
+  translation is explicitly intended to bridge the two index orders and is
+  not, by itself, proof of a defect. The verified gap is that the selected
+  Amiga pixel is still planned and placed through PC34 layout 696/G0205;
+  source-native Amiga coordinate-set and palette/light handling must be
+  compared before concluding which visible failures this causes. F0107 needs
+  an Amiga-specific plan grounded in original `DUNVIEW.C`/`COORD.C` behavior
+  while retaining exact M615 pixels. The installed authentic A33M
+  `Graphics.DAT` has MD5 `61fbfd56887c94adc26888a9491c6611` (749 records);
+  its M615 source headers show distinct native dimensions, for example item
+  259 is 10x42 and item 260 is 90x56. This confirms the paired originals are
+  perspective-specific. The table is not a replacement atlas; any Amiga plan
+  must keep these record identities and prove the resulting placement against
+  the original renderer.
+  Floor trapdoors remain a separate
+  capture-gated check because their floor pit/door path uses other families.
+- Front-wall inscription presentation has a separate Amiga wiring gap. The
+  readable M648 plan correctly selects native Amiga graphic 258 and the
+  `m11_draw_csb_front_inscription` helper decodes visible C02 text and draws
+  its glyphs with the selected M648 font. However, that helper is called only
+  from `m11_render_csb_boot_viewport`, the PC34/other shared boot-frame route.
+  The A31/A35 path calls `m11_csb_render_amiga_runtime_viewport` directly and
+  commits its candidate framebuffer without the M648 call. In the Amiga frame
+  the generic F0107 callback suppresses the front D1C unreadable M615 plaque
+  in anticipation of the later M648 pass, so this leaves the front inscription
+  absent on Amiga. Side-wall unreadable plaques still use the shared PC34
+  F0107 planner/raster path described above. This source call-graph gap is
+  confirmed; capture comparison is still needed to assess exact placement and
+  contrast after wiring the authentic font into the Amiga transaction.
+- The shared F0107 raster loop has a separate, directly verified gap: its
+  `DM1_WallOrnamentRenderPlanPc34` provides `flipHorizontal`,
+  `paletteMapValid`/`paletteMap`, and source-scale metadata, and the material
+  planner populates those fields. The final loop in
+  `dm1_viewport_3d_draw_wall_ornament_f0107` copies source pixels directly
+  after testing only `transparentColor`; it does not apply the requested flip,
+  palette map or scale. This is on the production Amiga CSB path: M11 calls
+  `csb_v1_boot_render_viewport_frame_pc34`, which reaches this shared draw
+  loop and commits its candidate frame; the separate M11 host-material
+  presenter that handles these plan fields is not called for that CSB frame.
+  So the production CSB renderer drops operations specified by its plan,
+  including for side-view M615 records. Concrete case: Amiga D3R2 uses
+  shared view row 1, translated to planner row 14. For global ornament 0 the
+  planner selects M615 item 259 (native 10x42) and sets
+  `flipHorizontal=1` plus source scale 30/14; the Amiga provider returns that
+  same item 259 for either orientation, while the F0107 raster loop copies
+  up to 10x42 unchanged and reads it left-to-right. The produced right-side
+  image therefore contradicts the plan. This plan/raster mismatch is
+  established; a source-matched capture is still needed to measure its exact
+  visual effect. The authentic A33M IMG1 records make the size conflict
+  concrete: D3R2 global wall ornament 0 asks for M615 item 259, whose original
+  header is 10x42, while the translated PC34 outer-wall plan requests a
+  224x136 destination. The production loop clips its requested 224x136 copy
+  to the 10x42 source and copies those pixels 1:1; it neither expands the
+  native Amiga bitmap nor applies the plan's D3 palette or mirror. Item 260 is
+  a distinct 90x56 record, confirming M615 is perspective-specific and that a
+  correct Amiga layout must resolve the selected record and native screen
+  rectangle together. These dimensions come directly from the installed
+  authenticated `Graphics.DAT` (MD5
+  `61fbfd56887c94adc26888a9491c6611`), not generated or reconstructed art.
+- The common Amiga FTL/SWSH intro is a confirmed edition gap. The authenticated
+  Amiga packages include the original `SWSH.FTL`, and ReDMCSB's Amiga
+  startup chain invokes `FTL_SWSH`. Firestaff's shared CSB prelude instead
+  looks for the PC `SWOOSH`/`SWOOSH.DAT` payload and its PC-format sound
+  records; `csb_v1_boot_load_swoosh_source_pc34` does not bind `SWSH.FTL`.
+  Consequently the real Amiga logo animation and its source audio never reach
+  the presenter. Decode and play the exact installed Amiga stream with its
+  own 50 Hz timing and audio owner; do not substitute the PC `SWOOSH` or
+  generated media.
+- The later title program still differs by edition. A31M/A33M decodes the
+  original `TITL.DAT` schedule. A31E/A35E take their documented direct
+  `BJELoad_R` -> `C03_GAME` boundary; A35M uses the `C08_LANG` selector and
+  does not enter A31's APPA/TITL chain. The A35E/A35M original startup capture
+  is still missing, so verify each retail presentation after the common
+  SWSH prelude before adding any later title page.
+- Amiga gameplay effects have a source PCM/Paula transport and the entrance
+  switch has a trigger, but `ANIMSND.C` animation-audio owners F1230-F1245
+  remain explicitly `fail_closed`; `m11_csb_advance_amiga_titl` advances
+  frames without dispatching animation sound cues. Existing SDL dummy
+  startup checks cannot prove device output. Add authentic cue/timing
+  ownership from the original stream, then verify audible output on a real
+  audio device; do not substitute generated sound.
+
 2026-10-25 mixed original-media launcher retest: the authentic
 `csb_v1_fmtowns_m12_auto_mixed_real_media` matrix passed against the installed
 FM Towns, Atari ST, and Amiga originals. AUTO selected FM Towns and reached
@@ -629,3 +736,19 @@ edition and source-media provenance that binds its `dungeon.dat`,
 # row is published directly by the original renderer path, never inferred
 # from host brightness. Remaining work is authenticated platform trace
 # evidence for this complete consumer.
+- The front-inscription gap also affects the Amiga runtime's generic readability
+  contract: `m11_draw_csb_front_inscription` is present only in the
+  `m11_render_csb_boot_viewport` path at line 6047; the A31/A35 surface
+  presenter invokes `m11_csb_render_amiga_runtime_viewport` directly at line
+  7361 and then composes HUD surfaces without a front-M648 pass. The CSB
+  profile still provides the authentic shared byte-map and M648 graphic 258,
+  and M11 binds a read-only query world from those exact decoded bytes. Thus
+  there is no evidence that the source text or source dungeon is missing; it
+  is the Amiga frame composition call site that omits the authentic font pass.
+  The previously reported floor-trapdoor symptom remains capture-gated: the
+  Amiga provider accepts the pit records 49..69, the source dungeon is the
+  canonical shared `DUNGEON.DAT` (MD5
+  `6695d2acebce49f95db1d8f3a5c733de`), and the map/aspect grids use matching
+  fixed 32-cell row strides. The generic F0104 plan, native Amiga pit record
+  mapping and final Amiga pixels still need an original-frame comparison;
+  current evidence does not isolate a further pit-specific defect.
