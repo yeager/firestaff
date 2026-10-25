@@ -1,6 +1,6 @@
 # Five-game startup support gap analysis
 
-Reviewed against `origin/main` at `a42988705` on 2026-10-25. The repository
+Reviewed against `origin/main` at `c3e9c4309` on 2026-10-25. The repository
 contains authentic-media route checks for all five games, but “available,”
 “selected,” “handed off,” and “entered a playable runtime” are separate states.
 The current evidence does not establish complete five-game startup support.
@@ -57,6 +57,15 @@ implementation, keep the repeated scans and report the measured launcher
 delay. See the scan profiles in [`TODO.md`](../TODO.md), the version pass in
 [`asset_status_m12.c`](../src/shared/asset_status_m12.c), and traversal/cache
 logic in [`asset_find_by_hash.c`](../src/shared/asset_find_by_hash.c).
+
+One detail needs measurement before simplifying the current fast-candidate
+pass: it writes candidate paths into the same output arrays that the following
+`asset_find_all_by_md5_list` call clears on entry. The candidate hashes still
+warm the metadata-validated file cache, while the recursive pass supplies the
+published inventory. Removing that pass may reduce redundant probes, but its
+value for named files that normal enumeration cannot reach has not been
+measured. Preserve that route or provide equivalent evidence before removing
+it.
 
 ## Remaining startup work
 
