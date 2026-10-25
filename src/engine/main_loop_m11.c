@@ -11894,16 +11894,25 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                                        (int)ev.motion.y,
                                                        &mappedX,
                                                        &mappedY)) {
+                /* Nexus's retail hand cursor addresses the full game screen,
+                 * including the HUD. The hit table's bottom is below M11's
+                 * 200-line framebuffer, so clamp the accepted desktop range
+                 * to the pixels Firestaff can actually display. */
                 if (gameView->sourceKind == M11_GAME_SOURCE_NEXUS_DGN &&
                     gameView->nexusState.hand_pointer_active &&
                     gameView->nexusEngine &&
                     gameView->nexusEngine->hud_hit_rect_count ==
                         NEXUS_HIT_RECT_COUNT) {
-                    const Nexus_HitRect *viewport =
+                    const Nexus_HitRect *game_screen =
                         &gameView->nexusEngine->hud_hit_rects[
-                            NEXUS_HIT_VIEWPORT];
-                    if (mappedX >= viewport->x1 && mappedX < viewport->x2 &&
-                        mappedY >= viewport->y1 && mappedY < viewport->y2) {
+                            NEXUS_HIT_FULL_GAME_SCREEN];
+                    const int screen_bottom =
+                        game_screen->y2 < M11_FB_HEIGHT
+                            ? game_screen->y2 : M11_FB_HEIGHT;
+                    if (mappedX >= game_screen->x1 &&
+                        mappedX < game_screen->x2 &&
+                        mappedY >= game_screen->y1 &&
+                        mappedY < screen_bottom) {
                         gameView->nexusState.hand_pointer_x = mappedX;
                         gameView->nexusState.hand_pointer_y = mappedY;
                         gameView->nexusState.hand_pointer_position_known = 1;
@@ -12547,16 +12556,23 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                                        ev.motion.y,
                                                        &mappedX,
                                                        &mappedY)) {
+                /* Keep the SDL2 path aligned with the SDL3 full-screen
+                 * pointer bounds above. */
                 if (gameView->sourceKind == M11_GAME_SOURCE_NEXUS_DGN &&
                     gameView->nexusState.hand_pointer_active &&
                     gameView->nexusEngine &&
                     gameView->nexusEngine->hud_hit_rect_count ==
                         NEXUS_HIT_RECT_COUNT) {
-                    const Nexus_HitRect *viewport =
+                    const Nexus_HitRect *game_screen =
                         &gameView->nexusEngine->hud_hit_rects[
-                            NEXUS_HIT_VIEWPORT];
-                    if (mappedX >= viewport->x1 && mappedX < viewport->x2 &&
-                        mappedY >= viewport->y1 && mappedY < viewport->y2) {
+                            NEXUS_HIT_FULL_GAME_SCREEN];
+                    const int screen_bottom =
+                        game_screen->y2 < M11_FB_HEIGHT
+                            ? game_screen->y2 : M11_FB_HEIGHT;
+                    if (mappedX >= game_screen->x1 &&
+                        mappedX < game_screen->x2 &&
+                        mappedY >= game_screen->y1 &&
+                        mappedY < screen_bottom) {
                         gameView->nexusState.hand_pointer_x = mappedX;
                         gameView->nexusState.hand_pointer_y = mappedY;
                         gameView->nexusState.hand_pointer_position_known = 1;

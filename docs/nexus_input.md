@@ -87,10 +87,13 @@ the retail D-pad turns in movement mode.
 The retail game tick accepts only the six basic movement commands
 (forward/backward, turn left/right, and strafe left/right) against the
 authenticated DGN grid. In the loaded dungeon, Z toggles a host hand-pointer
-mode. W/A/S/D and the arrow keys move its logical position in the authenticated
-DM.BIN viewport rectangle; simultaneous directions allow diagonal movement.
-The W/A/S/D mapping matches the captured retail profile's D-pad bindings.
-Mouse motion positions the hand pointer directly in that rectangle.
+mode. W/A/S/D and the arrow keys move its logical position across the
+authentic `NEXUS_HIT_FULL_GAME_SCREEN` rectangle parsed from `DM.BIN`;
+simultaneous directions allow diagonal movement. Firestaff clips its lower
+edge to the 320×200 source framebuffer. This lets the visible hand cursor move
+from the viewport over the Nexus HUD. The W/A/S/D mapping matches the captured
+retail profile's D-pad bindings. Mouse motion positions the hand pointer
+directly across the same screen area.
 The hand sprite is sourced from the hash-verified retail ITEM.IBS image 65 and
 palette 6, joined against Ymir `--debug` VDP1 texture capture. Mouse movement
 and the six keyboard movement commands remain available with pointer mode off.
@@ -117,7 +120,8 @@ row maps to strafe left, backward, and strafe right. This host mapping uses a
 retail rectangle but does not claim to reproduce Saturn ShuttleMouse or the
 retail callback's unresolved cell semantics. Other buttons and clicks outside
 the pad do nothing. With pointer mode on, mouse motion moves the logical hand
-pointer and mouse clicks remain inert while callback semantics are unresolved.
+pointer across the viewport and HUD. Mouse clicks remain inert while the
+callback's HUD-region action semantics are unresolved.
 
 `scripts/analyze_nexus_mouse_event_crossrefs.py` inventories direct SH-2
 `MOV.L @(disp,PC),Rn` references in the hash-verified retail `DM.BIN`. In the
@@ -205,11 +209,13 @@ inventory and equipment clicks remain disabled until those joins are captured.
 
 ## Mouse and remaining input work
 
-Nexus has startup pointer handling, viewport mouse movement, keyboard
-movement, and the authentic retail cursor sprite in the captured viewport.
+Nexus has startup pointer handling, full-game-screen mouse movement, keyboard
+movement, and the authentic retail cursor sprite joined from the captured
+viewport data and ITEM.IBS source.
 The keyboard supports forward/backward movement, turning, strafing, party
-leader cycling (Tab), pointer mode, and pointer movement. The mouse supports the six-cell desktop movement
-pad and direct pointer positioning. Inventory, attack, spell, and item-use
+leader cycling (Tab), pointer mode, and pointer movement. The mouse supports
+the six-cell desktop movement pad and direct pointer positioning across the
+game screen. Inventory, attack, spell, and item-use
 clicks remain inert until their retail callback consumers are established.
 The existing logical click-route helpers require pre-resolved targets and do
 not establish how viewport pixels map to Nexus actions. The orange retail

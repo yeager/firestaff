@@ -192,7 +192,9 @@ on the PRS3 menu capture. See
   with positive health as selectable even while `alive` is unknown, and skips
   zero-health members.
   Keyboard/mouse movement, pointer motion, and the desktop movement pad remain
-  available. Mouse clicks on the hand pointer and non-movement actions remain
-  blocked until the opaque item data, champion context mapping and runtime
-  click effects are established. See `docs/nexus_input.md` and
+  available. The hand pointer now travels across the authentic full-game-screen
+  hit rectangle, including the HUD, clipped to Firestaff's 320x200 framebuffer.
+  Mouse clicks on the hand pointer and non-movement actions remain blocked
+  until the opaque item data, champion context mapping and runtime click effects
+  are established. See `docs/nexus_input.md` and
   `parity-evidence/verification/nexus-leader-cycle-debug-20261025/README.md`.
