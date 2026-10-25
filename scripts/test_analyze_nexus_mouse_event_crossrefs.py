@@ -163,6 +163,7 @@ def retail_event_44_evidence_fixture() -> bytearray:
         0x26EEA: 0x4400, 0x26EBE: 0xE054, 0x26EC0: 0x02CE,
         0x2705C: 0x2FE6, 0x271AC: 0x2FE6,
         0x26BA2: 0x013C, 0x26BD0: 0x0607, 0x26BD2: 0xFBA0,
+        0x27038: 0x1000, 0x272E0: 0x0010, 0x272E2: 0x0000,
         0x26F28: 0x0606, 0x26F2A: 0x4610, 0x26F2C: 0x0604,
         0x26F2E: 0x8874, 0x26F0E: 0x1000, 0x270B2: 0x013C,
         0x270B4: 0x0110, 0x270B6: 0xFFFF, 0x270B8: 0x0607,
@@ -386,9 +387,21 @@ class NexusMouseCallbackTraceTests(unittest.TestCase):
             valid = trace.report_mouse_event_44_state_evidence(data)
         self.assertTrue(valid)
         self.assertIn("slot_pair_reads_writes_and_context_stride", output.getvalue())
+        self.assertIn("context_state_load_literals_0x1000_0x00100000=verified",
+                      output.getvalue())
         self.assertIn("runtime_deltas_and_firestaff_mapping=unverified",
                       output.getvalue())
 
+        put_u16(data, 0x27038, 0x0000)
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertFalse(trace.report_mouse_event_44_state_evidence(data))
+
+        data = retail_event_44_evidence_fixture()
+        put_u16(data, 0x272E0, 0x0000)
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertFalse(trace.report_mouse_event_44_state_evidence(data))
+
+        data = retail_event_44_evidence_fixture()
         put_u16(data, 0x26EC0, 0x0000)
         with contextlib.redirect_stdout(io.StringIO()):
             self.assertFalse(trace.report_mouse_event_44_state_evidence(data))

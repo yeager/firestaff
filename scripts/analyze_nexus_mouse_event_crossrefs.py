@@ -775,7 +775,7 @@ def report_mouse_event_44_state_evidence(data: bytes) -> bool:
         0x26F5C: 0x02CE,
         0x26F5E: 0x223B,
         0x26F60: 0x0C26,
-        0x27260: 0xD31F,  # load 0x0200 context-state mask
+        0x27260: 0xD31F,  # load context-state literal from 0x272E0
         0x27262: 0xE054,
         0x27264: 0x02CE,
         0x27266: 0x223B,
@@ -809,6 +809,9 @@ def report_mouse_event_44_state_evidence(data: bytes) -> bool:
         0x26F2C: 0x0604,
         0x26F2E: 0x8874,  # context eligibility masks
         0x26F0E: 0x1000,  # mask-like literal
+        0x27038: 0x1000,  # MOV.W target for context-state update at 0x26F58
+        0x272E0: 0x0010,  # high word of MOV.L target at 0x27260
+        0x272E2: 0x0000,  # low word; full loaded value is 0x00100000
         0x270B2: 0x013C,  # stride-like literal
         0x270B4: 0x0110,  # offset-like literal
         0x270B6: 0xFFFF,  # sentinel-like literal
@@ -834,7 +837,8 @@ def report_mouse_event_44_state_evidence(data: bytes) -> bool:
         print("mouse_event_44_state_evidence=slot_pair_reads_writes_and_context_stride "
               "literal_0x013c=present literal_0x0607fba0=present "
               "literal_0x0110=present literal_0x0200=present "
-              "literal_0x06064610=present context_masks_0x1000_0x0200=verified "
+              "literal_0x06064610=present "
+              "context_state_load_literals_0x1000_0x00100000=verified "
               "slot_pair_writes=verified held_item_helpers=untraced "
               "runtime_deltas_and_firestaff_mapping=unverified")
     return valid
