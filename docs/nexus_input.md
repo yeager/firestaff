@@ -33,6 +33,15 @@ pointer-coordinate targeting, in-dungeon mouse actions, or Firestaff mouse
 behavior. Attack, inventory, spell, champion-selection, and other
 non-movement button semantics remain unverified by these captures.
 
+A separate authentic same-session Ymir `--debug` trace configured Port 1 as
+`ShuttleMouse` and drove keyboard bindings W, D, J, K and L. The raw 259-row
+SMPC trace records Y `-30`, X `+30`, and left/middle/right button reports,
+with five consecutive polls for each held input and no dropped trace entries.
+This confirms Ymir generated the corresponding Saturn peripheral report
+fields. It does not confirm that Nexus consumes them as pointer movement or
+gameplay actions, or that a physical desktop mouse is delivered through SDL.
+See the [raw trace and its source hashes](../parity-evidence/verification/nexus-shuttle-mouse-keyboard-trace-20261025/README.md).
+
 A later fresh-profile capture retained the actual orange Nexus hand cursor and
 measured its movement after `O` (Saturn Z) and D-pad input. `W/S/A/D` moved it
 up/down/left/right, and `W+A` moved it diagonally. The approximate per-press
