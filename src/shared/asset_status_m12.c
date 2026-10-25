@@ -6105,6 +6105,19 @@ static void m12_admit_csb_amiga31_english_program_package(
         int admitted = 0;
         if (versionIndex < 0) continue;
         version = &status->versions[gameIndex][versionIndex];
+        /* The general version pass has already hashed this graphics file.
+         * Reuse that receipt only when the same-container program package
+         * and (for A31E) startup media are complete. An incomplete first
+         * copy must still fall through to the exhaustive search so a later
+         * complete package can be selected. */
+        if (version->matched &&
+            strcmp(version->matchedMd5, hashes[edition]) == 0 &&
+            csb_v1_amiga_english_package_ready(version->matchedPath,
+                                               ids[edition]) &&
+            (edition != 0u || m12_csb_amiga31_startup_media_ready(
+                                  version->matchedPath, ids[edition]))) {
+            admitted = 1;
+        }
         for (rootIndex = 0u; rootIndex < (explicitFile ? 1u : rootCount) && !admitted; ++rootIndex) {
             const char *root = explicitFile ? requestedDataDir : roots[rootIndex];
             int count = asset_collect_files_by_md5(root, hashes[edition],
