@@ -5,9 +5,10 @@
 The authentic USA SDL event test now selects `--lang en` because its item
 trace assertions compare localized action labels. On a Swedish host the
 three actions succeeded but emitted `FÖREMÅL`, failing the English `ITEM`
-assertion. All four event routes passed on the Linux build host with the
-USA Track 02 after fixing the language selection. This verifies input and
-item state handling, not native rendering parity.
+assertion. All seven event routes passed on the Linux build host with the
+USA Track 02 after fixing the language selection, including the added side
+steps, left turn, champion selection and wait actions. This verifies input
+and item state handling, not native rendering parity.
 
 ## 2026-10-25 — verify Theron mouse item actions in the SDL loop
 
