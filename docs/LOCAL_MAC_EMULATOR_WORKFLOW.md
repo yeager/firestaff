@@ -22,12 +22,16 @@ SDL_VIDEODRIVER=dummy \
   /Volumes/Extern-disk/firestaff-theron-active2-build/firestaff_m11_phase_a_probe
 ```
 
-Theron in Firestaff uses `WASD` for movement. Mouse button 1 is Button I and
-mouse button 2 is Button II. On touch devices, a short tap is Button I and a
-long press (500 ms) is Button II. Touch must use the same Firestaff input route
-as the mouse; it must not create separate game mechanics. In Firestaff,
-Button II cancels startup selection and does not advance a dungeon tick by
-itself.
+Theron runs in Firestaff's native C/SDL runtime. During dungeon play, Up/W
+moves forward, Down/S moves backward, Left/A and Right/D step sideways, and
+Q/E turn; Home/End and keypad 4/6 are alternate turn keys. The visible native
+4x3 mouse panel dispatches the same movement and action inputs. Left-click
+activates a panel control, right-click goes back, and middle-click is inert.
+Clicks outside the panel are ignored until source-backed world hit regions are
+verified. Mouse motion highlights a panel control but does not select objects.
+On touch devices, a short tap is Button I and a long press is Button II. These
+are native Firestaff host bindings; they do not turn the emulator into the
+runtime or claim original PC Engine mouse support.
 
 ## Mednafen on macOS
 
