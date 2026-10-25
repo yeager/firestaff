@@ -374,8 +374,8 @@ def report_mouse_callback_event_ids(data: bytes) -> bool:
               f"event_mode_0_name={event_names[13]} event_mode_2_id=44 "
               f"event_mode_2_name={event_names[44]} event_mode_1=no-submit")
         print("mouse_callback_event_queue_target=0x06024288 "
-              "event_names=verified event_44_static_transaction=verified "
-              "click_runtime_join=unverified firestaff_inventory_mapping=unverified")
+              "event_names=verified event_44_handler_semantics=unverified "
+              "firestaff_inventory_mapping=unverified")
     return valid
 
 
