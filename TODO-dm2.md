@@ -1,3 +1,16 @@
+2026-10-25 selected DM2 PC loose-language owner: the authentic DOS English
+and French archives share a dungeon payload but have different GRAPHICS.DAT
+hashes. A reproduced no-game M12 selection handed off `pc-fr` while the M11
+boot scanner selected the earlier PC English graphics file from the same
+directory. The launcher now passes the chosen hash-verified loose graphics
+file directly to the DM2 owner scan; selected ZIP launches keep their archive
+owner. The extended `dm2_v1_loose_owner_real_media` test extracts both
+originals only into external scratch, chooses French from the main menu, and
+requires the first loaded runtime to report French hash
+`b4d733576ea60c41737f79f212faf528`. The complete four-platform loose-owner
+matrix and this regression passed. SDL dummy verifies selected-media ownership
+and first-level startup, not native display, physical input, or audio output.
+
 2026-10-25 explicit original-ZIP ownership retest: the authentic-media
 `test_dm2_v1_explicit_zip_ownership.sh` matrix passed for DOS, Macintosh,
 FM Towns, and Amiga. Each platform retained the exact selected source through

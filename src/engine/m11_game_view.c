@@ -27448,6 +27448,17 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                                    sizeof(selectedDm2RuntimeDataDir))) {
                         spec.dataDir = selectedDm2RuntimeDataDir;
                     }
+                } else if (M12_AssetStatus_GetVersionArchitecture(
+                               "dm2", selectedVersionIndex) == M12_ARCH_PC &&
+                           !archive_member &&
+                           FSP_FileExists(version->matchedPath)) {
+                    /* Loose PC releases can share one directory and the
+                     * same DUNGEON.DAT while owning different localized
+                     * GRAPHICS.DAT files. Pass the selected, hash-verified
+                     * graphics file to DM2's explicit-loose loader so its
+                     * hash-pair lookup cannot pick an earlier sibling
+                     * language (for example PC English before PC French). */
+                    spec.dataDir = version->matchedPath;
                 } else if (M12_AssetStatus_ResolveRuntimeDataDirForVersion(
                                &menuState->assetStatus, entry->gameId,
                                version->versionId,
