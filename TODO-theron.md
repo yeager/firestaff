@@ -8,6 +8,11 @@
   native state. The item test invokes the Firestaff panel at the real level-0
   item location; it does not verify direct item/world clicks or a fully
   state-driven viewport.
+- Ran `test_theron_v1_jp_cue_runtime_boot.sh` three consecutive times against
+  the user's installed Japan Rev 1 CUE and Track 02 (`b7afb338ad31be1025b53f9aff12d73a`).
+  All runs reached the native Akutuba runtime and accepted the six scripted
+  movement inputs. This is a keyboard/runtime boot check, not mouse world-hit
+  coverage.
 - Theron's loaded-dungeon keyboard aliases already match Firestaff's DM1
   convention: arrows/WASD for forward, back and side-step, with Q/E, Home/End
   and keypad turn aliases. Preserve Theron's source-owned action tokens.
