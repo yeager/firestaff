@@ -237,7 +237,12 @@ port 1 and ShuttleMouse on port 2. XTEST core-pointer motion and the ShuttleMous
 port's relative arrow-key bindings produced no visible movement of a clearly
 identifiable retail hand pointer in the Xvfb captures. The setup and captures
 are recorded in [`nexus-shuttle-mouse-xvfb-20261025`](../parity-evidence/verification/nexus-shuttle-mouse-xvfb-20261025/README.md).
-The result is inconclusive about whether relative input reached the Saturn
-mouse port; it does not establish retail mouse semantics. First obtain a
-visible pointer response, then verify a controlled click and resulting game
-state before wiring gameplay actions.
+The XTEST result is explained by a Ymir 0.4.1 frontend gap: SDL global mouse ID
+`0` enters relative-capture mode and returns before Ymir maps its motion or
+buttons to the emulated ShuttleMouse. Ymir PR
+[#963](https://github.com/ymir-emu/Ymir/pull/963) proposes connecting that
+stream when a ShuttleMouse is selected; it still needs a full build and runtime
+`--debug` verification. Neither the earlier capture nor the proposed fix
+establishes Nexus retail mouse semantics. Firestaff's desktop mouse actions
+still need to follow proven Nexus state changes before enabling equipment or
+other pointer actions.

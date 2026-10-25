@@ -33,3 +33,23 @@ identify a retail hit region, prove a click, or justify mapping inventory,
 attack, spell, or item actions. First establish a visible hand-pointer response
 to relative mouse input; then capture a controlled click and its retail state
 change before wiring gameplay actions.
+
+## Ymir Xvfb input-path finding
+
+Source review of Ymir 0.4.1 explains why the XTEST core-pointer attempt could
+not establish that the mouse stream reached the emulated ShuttleMouse. SDL
+reports the Xvfb core pointer as global mouse ID `0`. In physical capture mode,
+`MouseCaptureService::ConnectMouseToPeripheral` enables relative mode for ID
+`0` and returns before mapping relative motion or buttons; `CaptureMouse` also
+rejects ID `0`. The prior screenshots therefore do not show a negative retail
+response to mouse input: the host event was not connected to the ShuttleMouse
+input actions.
+
+A focused Ymir fix has been proposed in
+[Ymir PR #963](https://github.com/ymir-emu/Ymir/pull/963). It maps the global
+SDL stream when a ShuttleMouse is available. The change has passed formatting,
+diff checks, and a standalone syntax compilation, but it has not yet had a full
+Ymir build or a runtime `--debug` probe. This does not establish Nexus retail
+mouse support; the console game itself is controlled through the Saturn
+controller, and Firestaff's desktop mouse actions still need to be implemented
+against proven Nexus behavior.
