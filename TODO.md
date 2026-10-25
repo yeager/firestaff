@@ -41,6 +41,24 @@ controlled, the old timing had one sample, and both builds used the same scan
 options that skip external-only archives. Repeat with controlled cold caches
 and another platform before treating the gain as general.
 
+2026-10-25 fresh-cache startup scan profile on the same Mac16,10: the
+v3.0.412 scanner completed `--scan-data --debug` against the installed
+original-media root in 26.41 seconds (18.67 seconds user CPU, 3.28 seconds
+system CPU). `/usr/bin/time -lp` reported 637,403,136 bytes maximum resident
+set and 839,795,864 bytes peak footprint. All five games were reported READY;
+external-only archive formats remained explicitly skipped. A five-second
+macOS `sample` attributed the main-thread scan stack to
+`m12_fill_game_versions` → `asset_find_all_by_md5_list` →
+`scan_dir_by_md5_list`; the nested container path included native 7z ADF
+visits and CAPS/MFM track decoding. This confirms a first-scan CPU and memory
+cost remains for the full mixed-media root, even though normal launcher
+scanning runs on a worker thread. The measurement used an isolated user cache,
+but did not control the OS file cache and is not a cross-platform benchmark.
+Investigate sharing authenticated candidate indexing across the per-game
+version passes without weakening edition hashes, same-container ownership,
+or cancellation; do not infer that repeated low-level samples alone prove a
+candidate can be skipped.
+
 Current-source M12 single-game menu retest at `c54007b45`: the separate
 `test_m12_main_menu_{dm1,csb,dm2}_only_real_media.sh` checks passed with one
 authentic FM Towns archive in each isolated `~/.firestaff/data/<game>` tree.
