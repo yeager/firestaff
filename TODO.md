@@ -11,9 +11,11 @@ creature attacks and champion HP loss. With party ShieldDefense set to 100,
 the same sequence reduced observed group damage from 28 to 17 HP. The
 authentic DM1 Amiga 2.0 first-monster combat test also passed. These checks
 cover scripted SDL input and game-state receipts; they do not verify native
-window input, real Retina scaling or complete playthroughs. The existing
-portrait-click test still seeds party state directly, so authentic
-multi-champion portrait switching remains unverified.
+window input, real Retina scaling or complete playthroughs. A separate
+authentic PC34 HoC test recruited two champions from original C127 mirrors
+and switched between them through the C012/C013 name boxes; its original-data
+route passed. Native physical mouse delivery and Retina-window click mapping
+remain unverified.
 
 2026-10-25 authentic launcher return/rescan retest: the
 `return_to_menu_rescans_dm1_csb_dm2_real_media` CTest passed in 1,527.71
