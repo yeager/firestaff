@@ -1,6 +1,6 @@
 # Five-game startup support gap analysis
 
-Reviewed against `origin/main` at `efb9cc6f9` on 2026-10-25. The repository
+Reviewed against `origin/main` at `61b81cb54` on 2026-10-25. The repository
 contains authentic-media route checks for all five games, but “available,”
 “selected,” “handed off,” and “entered a playable runtime” are separate states.
 The current evidence does not establish complete five-game startup support.
@@ -12,8 +12,8 @@ The current evidence does not establish complete five-game startup support.
 | DM1 | The authentic-media CLI diagnostics exercise direct selection and source-owned startup. | The picker test covers keyboard and mouse handoff; the runtime test checks an authentic first runtime frame. | First runtime is verified on bounded real-media routes. Platform-wide parity and native physical input remain open. |
 | CSB | The authentic-media CLI diagnostics exercise direct selection and source-owned startup. | The picker test covers keyboard and mouse handoff; the runtime test checks the authentic starting party and viewport receipt. | First runtime is verified on bounded real-media routes. Platform-wide parity and native physical input remain open. |
 | DM2 | The authentic-media CLI diagnostics cover direct selection; platform-specific checks include the complete timed FM Towns title sequence. | The picker test covers keyboard and mouse handoff; the runtime test checks the authentic first party and frame. | First runtime is verified on bounded real-media routes. Other edition and native interaction coverage remains incomplete. |
-| Theron | The CLI diagnostics reach its source-owned runtime handoff. | The picker test covers keyboard and mouse handoff; the runtime test checks a loaded authentic Track 02 state. | Runtime state is reached, but the native dungeon renderer still does not produce a state-driven playable view. A documented native-window run showed a black image. |
-| Nexus | The CLI diagnostics intentionally expect the title frame and a blocked startup receipt: `levelLoaded=0`, `menu=0`, blocker `menu-bpk-prs3-capture-required`. | Keyboard and mouse selection tests reach the M12-to-M11 handoff, not an active game runtime. There is no Nexus case in the first-runtime probe matrix. | **Not startable as a playable game yet.** The production title/menu consumer and transition to an authenticated level remain gated. The Saturn BKR parser is container-level only and is not wired to save selection or loading. |
+| Theron | The CLI diagnostics reach its source-owned runtime handoff. | The picker test covers keyboard and mouse handoff; the runtime test checks a loaded authentic Track 02 state. | Runtime state and native frames are reached, but the native dungeon image is not yet driven by the authenticated world/graphics state. A recent nonblack Firestaff capture has not been paired with an original-emulator capture. |
+| Nexus | The CLI diagnostics intentionally expect the title frame and a blocked startup receipt: `levelLoaded=0`, `menu=0`, blocker `menu-bpk-prs3-capture-required`. | Keyboard and mouse selection tests reach the M12-to-M11 handoff, not an active game runtime. There is no Nexus case in the first-runtime probe matrix. | **Not startable as a playable game yet.** A new Ymir title-menu VDP capture documents `NEW GAME`, `CONTINUE`, and `CONFIGURATION`, but Firestaff's production title/menu consumer and transition to an authenticated level remain gated. The Saturn BKR parser is container-level only and is not wired to save selection or loading. |
 
 ## What the existing checks prove
 
@@ -27,6 +27,10 @@ The current evidence does not establish complete five-game startup support.
   checks discovery and direct CLI startup for all five IDs. Its Nexus-specific
   assertion rejects a false `runtime-entered` receipt and requires the blocked
   menu/level gate, so a passing test is not evidence that Nexus is playable.
+- [`nexus_v1_ymir_title_menu_vdp_bundle_20261025`](../parity-evidence/verification/nexus_v1_ymir_title_menu_vdp_bundle_20261025/README.md)
+  records emulator evidence of the retail title menu. It explicitly does not
+  satisfy the original-Saturn provenance gate or establish Firestaff menu
+  rendering, input dispatch, or level startup.
 - These tests use SDL dummy video/audio and authentic installed media. They do
   not establish native window presentation, physical input, audible output,
   complete game playthroughs, or cross-platform gameplay parity.
