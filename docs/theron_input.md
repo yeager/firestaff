@@ -70,7 +70,7 @@ actuator timing or retail queue capacity; see the 2026-10-24 entry in
 | Turn left      | Q, Home, keypad 4                 |
 | Turn right     | E, End, keypad 6                  |
 | Wait (tick)    | Z, Space, Return                  |
-| Back/cancel    | X, Escape                          |
+| Back/cancel    | X, Escape (ignored when no dungeon cancel surface is active) |
 | Next champion  | Tab                               |
 | Pick up facing item | G                            |
 | Select next source item | I                         |

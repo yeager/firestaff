@@ -84,19 +84,20 @@ run_event_route "$left_turn_probe" "$left_turn_output" \
 # Tab, Button I's Z binding, Space, and Button II's X binding take the same
 # normal SDL keydown path used by a physical keyboard. Verify these
 # non-movement actions independently of the host mouse panel on the
-# hash-verified original runtime. Button II must be received but must not
-# advance the dungeon clock when no source-owned cancel surface is active.
+# hash-verified original runtime. Button II is an explicit ignored input
+# while no source-owned cancel surface is active and must not advance time.
 run_event_route "$keyboard_action_probe" "$keyboard_action_output" \
     'key:tab,key:z,key:space,key:x,wait:8'
 
 python3 - "$held_probe" "$released_probe" "$panel_probe" "$item_probe" \
     "$side_probe" "$action_probe" "$left_turn_probe" "$keyboard_action_probe" \
-    "$expected_md5" <<'PY'
+    "$expected_md5" "$keyboard_action_output" <<'PY'
 import json
+import re
 import sys
 
 held_path, released_path, panel_path, item_path, side_path, action_path, \
-    left_turn_path, keyboard_action_path, expected_md5 = sys.argv[1:]
+    left_turn_path, keyboard_action_path, expected_md5, keyboard_log_path = sys.argv[1:]
 with open(held_path, encoding="utf-8") as stream:
     held = json.load(stream)
 with open(released_path, encoding="utf-8") as stream:
@@ -147,6 +148,24 @@ if any(probe.get("bootAssetMd5") != expected_md5 for probe in
 if keyboard_actions.get("gameTick", 0) < 2:
     raise SystemExit("FAIL: keyboard Z and Space did not advance authentic gameplay ticks")
 
+with open(keyboard_log_path, encoding="utf-8", errors="replace") as stream:
+    game_events = [line.strip() for line in stream
+                   if "game-action game=theron " in line]
+back_index = next((index for index, line in enumerate(game_events)
+                   if ('input=back result=0 action="THERON" '
+                       'outcome="NO-OP"') in line), None)
+if back_index is None:
+    raise SystemExit("FAIL: X did not produce the explicit no-cancel receipt")
+if back_index == 0:
+    raise SystemExit("FAIL: no preceding game-action tick was logged before X")
+tick_pattern = re.compile(r"\btick=(\d+)\b")
+before_match = tick_pattern.search(game_events[back_index - 1])
+back_match = tick_pattern.search(game_events[back_index])
+if not before_match or not back_match:
+    raise SystemExit("FAIL: missing tick on the game action immediately before or at X")
+if before_match.group(1) != back_match.group(1):
+    raise SystemExit("FAIL: X advanced the dungeon clock")
+
 PY
 grep -Eq 'game-action game=theron tick=[0-9]+ input=pointer-left point=[0-9]+,[0-9]+ result=1 action="ITEM" outcome="ITEM PICKED UP"' "$item_output"
 grep -Eq 'game-action game=theron tick=[0-9]+ input=pointer-left point=[0-9]+,[0-9]+ result=1 action="ITEM" outcome="SANDALS"' "$item_output"
@@ -158,5 +177,4 @@ grep -Eq 'game-action game=theron tick=[0-9]+ input=pointer-left point=204,170 r
 grep -Eq 'game-action game=theron tick=[0-9]+ input=pointer-left point=292,189 result=1 action="WAIT" outcome="THERON TICK"' "$action_output"
 grep -Eq 'game-action game=theron tick=[0-9]+ input=cycle-champion result=1 action="CHAMPION" outcome="ACTIVE CHAMPION CHANGED"' "$keyboard_action_output"
 [[ $(grep -Ec 'game-action game=theron tick=[0-9]+ input=action result=1 action="WAIT" outcome="THERON TICK"' "$keyboard_action_output") -ge 2 ]]
-grep -Eq 'game-action game=theron tick=[0-9]+ input=back result=0 action="THERON" outcome="UNKNOWN INPUT"' "$keyboard_action_output"
 printf '%s\n' 'PASS: authentic Theron SDL routes Button II, keyboard, mouse-panel movement, champion/wait, and source-backed item actions'

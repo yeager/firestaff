@@ -5881,6 +5881,24 @@ int theron_v1_boot_runtime_handle_m12_input_with_inventory_slot(
     }
     theron_v1_boot_runtime_input_receipt_init(out_receipt);
 
+    /* Button II is a cancel token in native menus, but the loaded dungeon
+     * has no cancel surface. Consume the standalone token without mutating
+     * the source world or advancing its clock; directional Button II chords
+     * are normalized to turn inputs by the SDL keyboard mapper. */
+    if (m12_input == M12_MENU_INPUT_BACK) {
+        theron_v1_boot_runtime_world_receipt(
+            world,
+            &out_receipt->party_x,
+            &out_receipt->party_y,
+            &out_receipt->party_dir,
+            &out_receipt->tick_count);
+        out_receipt->handled = 1;
+        out_receipt->result = THERON_V1_BOOT_RUNTIME_INPUT_RESULT_IGNORED;
+        out_receipt->status_scope = "THERON";
+        out_receipt->status = "NO-OP";
+        return 1;
+    }
+
     /* Arrow Left/Right produce turns (same as Home/End/Q/E).  A/D use the
      * separately captured lower-row Theron movement commands $06/$04. */
     if (m12_input == M12_MENU_INPUT_TURN_LEFT) {
