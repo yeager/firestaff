@@ -1,8 +1,34 @@
 ## Unreleased changes
 
-- `Theron's Quest Button II`: right mouse and long touch now cancel startup
-  selection and do not advance the dungeon tick, matching the retail manual.
-  Native direction keys already provide its simplified-movement commands.
+# Firestaff v3.0.411
+
+## User-facing changes
+
+- `Startup scan and launcher`: add live, localized discovery progress on game cards and cancellation for original-media scans; suppress premature missing-media notices, keep progress monotonic, and preserve the selected collection root across rescans and sibling-game discovery.
+- `CLI validation`: reject unsupported game/platform pairs and invalid FM Towns edition choices before scanning or opening the launcher, with direct diagnostics for missing or malformed option values.
+- `DM1`: correct held-object cursor pixels, restore Apple IIGS mouth actions for water and potions, improve authentic HoC alcove/portrait and stair-torch coverage, and extend original-media startup, combat and input checks across admitted platforms.
+- `CSB`: add discovery of original Amiga editions from a shared data root, reject invalid utility-disk choices early, and extend authentic Amiga and Atari startup, input and combat coverage.
+- `DM2`: retain the correct PC intro frame between successive source frames, reuse authenticated FM Towns scan profiles on unchanged media, and extend original DOS, Macintosh and Amiga startup/runtime verification.
+- `Nexus`: admit the authentic Japanese FONT256 asset and correct NBG1 tile-read address mapping; add native keyboard and pointer controls, movement/turning aliases, pause and party-leader shortcuts, and full-screen hand-pointer movement. Actions without verified retail state effects remain gated.
+- `Theron's Quest`: add a localized native dungeon mouse panel with hover feedback, align keyboard aliases with dungeon actions, and make right-click/long touch cancel startup without advancing a dungeon tick.
+- `Debugging`: add host hardware, CPU and memory details, report scan timing intervals and cancellable file-scan progress, and expose more startup and gameplay event state.
+
+## Developer changes
+
+- `Authentic-media verification`: add CLI, menu, return-to-menu, platform-picker, portrait, combat, inventory, held-item, startup and first-runtime-frame tests. Test reports distinguish source handoffs from presented gameplay and physical display/input evidence.
+- `Paired-capture reports`: bind comparisons to authentic debug provenance and strengthen checks for image identity, state receipts and unsafe report paths.
+- `Nexus and Theron research`: preserve retail screenshots and bounded emulator/trace evidence, add tools for analyzing retail event queues and VDP captures, and keep unproven world-click paths fail-closed.
+- `Startup performance`: reduce repeated Amiga MFM wrap work, reuse unchanged authenticated DM2 FM Towns scan receipts, keep app-only CMake builds lean, and improve cross-platform compiler caching.
+- `Release and CI quality`: add cross-platform CLI rejection coverage, original-media policy checks, deterministic-output checks, localized catalog validation and launcher regression coverage.
+- `Release metadata`: update the project version and regenerate the versioned SPDX source SBOM for v3.0.411.
+
+## Known limitations
+
+- These changes do not establish complete visual or gameplay parity across every game and platform. Physical MacBook Pro M5/HiDPI input, display timing and audible output remain separate verification requirements.
+- `DM2`: HUD and dungeon viewport parity remains incomplete on several platforms.
+- `Nexus`: a verified playable retail level and source-backed state effects for all pointer actions remain open.
+- `Theron's Quest`: native dungeon rendering and source-backed world hit regions remain incomplete.
+- Original-media and headless tests verify only the routes and states named in their evidence; they do not establish complete campaign parity.
 
 # Firestaff v3.0.410
 
