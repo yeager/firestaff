@@ -1,5 +1,21 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-25 — route Theron action keys through native SDL input
+
+The loaded-dungeon SDL scancode and keycode mappers now route Tab, G, I, P,
+U, Space and Return to the same supported Theron command tokens as the mouse
+panel. Previously, Theron's special movement mapping returned early for
+these keys, while the boot-probe-only generic mapper made scripted checks
+look successful. The dedicated mapper test isolates Theron's SDL key ingress
+assertions from an existing unrelated Nexus input-test failure. On TRV2, its
+CTest target passed three consecutive runs. A fresh Debug Firestaff build
+also passed three loops of `theron_v1_raw_bin_runtime_boot` with authentic US
+Track 02 (MD5 `f23601102138f87c33025877767ebf76`), verifying existing native
+movement/turning and mouse-panel state routes. The boot-probe script's key
+actions use its own mapper, so the new standalone test is the direct evidence
+for SDL keyboard action ingress. Direct world clicks, original mouse cursor
+behavior and complete visual/state-driven mouse parity remain open.
+
 ## 2026-10-25 — document native Theron mouse behavior
 
 `docs/theron_input.md` now separates Firestaff's keyboard bindings from its

@@ -65,11 +65,12 @@ actuator timing or retail queue capacity; see the 2026-10-24 entry in
 | Step right     | Right Arrow, D, keypad 3          |
 | Turn left      | Q, Home, keypad 4                 |
 | Turn right     | E, End, keypad 6                  |
-| Wait (tick)    | Return, Space                     |
+| Wait (tick)    | Space, Return                     |
 | Next champion  | Tab                               |
 | Pick up facing item | G                            |
+| Select next source item | I                         |
 | Drop last picked source item | P                    |
-| Use facing door | U                                |
+| Use facing object | U                               |
 
 The native dungeon view also shows a twelve-button Firestaff mouse panel in
 its lower-right corner. Its first two rows provide **TURN L**, **FORWARD**,
@@ -90,6 +91,11 @@ the highlighted control changes.
   commands `$06/$04`; Q/E, Home/End and keypad 4/6 turn. Startup menu arrows
   retain their navigation behavior. This matches Firestaff's ordinary DM1
   dungeon keyboard layout while preserving Theron's native command tokens.
+- SDL keyboard input routes the same supported loaded-dungeon commands as the
+  native mouse panel: Tab cycles champion, G picks up, I selects the next
+  source-backed item, P drops it, U uses the facing object, and Space/Return
+  waits. These keys enter the Theron input facade directly; they do not rely
+  on the boot-probe-only key mapper.
 - The native mouse panel provides all six Theron movement actions and the
   implemented champion, item, use and wait actions. Right-click remains
   cancel/back and does not advance a dungeon tick. The retail manual also
