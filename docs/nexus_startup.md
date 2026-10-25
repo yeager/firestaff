@@ -32,6 +32,30 @@ source.
 | `MENU.BPK` | 162 PRS3 surfaces decode to source-bound indexed bytes; menu ordering, CLUT, and VDP1/VDP2 are missing |
 | Mednafen visual baseline | A clean J-BIOS capture against authentic retail shows black boot followed by the original intro FMV without input; menu/LEV01 identity remains missing |
 
+## Retail title-menu evidence (2026-10-25)
+
+An isolated Ymir `--debug` run with the authenticated Japanese BIOS and retail
+disc reaches the native Nexus title menu. The retained 2026-10-25 screenshot
+shows the three actual choices: `NEW GAME`, `CONTINUE`, and `CONFIGURATION`,
+with New Game selected. Its SHA-256 is
+`d1ec79c6b1e3abcd16837781a1212eedb3cb157562356593ab3ce069b18f2ab4`.
+The 2026-10-24 keyboard run records Start opening the menu, Down selecting
+Continue, and A confirming New Game into the dungeon. The fresh-profile run
+had no game save; selecting Continue therefore did not verify save loading.
+Together, these are retail startup/input observations, not Firestaff parity.
+The capture environment, key mapping, and per-action limitations are recorded
+in [`parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`](../parity-evidence/verification/keyboard-mouse-debug-20261024/README.md).
+
+The current Firestaff startup flow is not the retail title menu: after its
+synthetic 48-frame warning and 54-frame title-ready schedule, accepting the
+title routes to the host save selector when saves exist or directly to champion
+selection when none exist. The retail title instead opens its three-choice menu
+before New Game or Continue proceeds. Configuration behavior and the Saturn
+consumer that draws the retail menu have not yet been bound to a same-session
+VDP1/VDP2 capture. Do not treat the existing host save/champion panels as
+equivalent to the retail title menu, and do not synthesize the missing choices
+or Saturn presentation from decoded MENU.BPK surfaces alone.
+
 ## Runtime boundary
 
 `firestaff_nexus` must not present a host-built title, champion menu,
