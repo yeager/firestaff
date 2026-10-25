@@ -295,6 +295,25 @@ M12_MenuInput M11_TheronGameplayInputFromScancodeWithButtonII(
     return M11_TheronGameplayInputFromScancode(scancode);
 }
 
+M12_MenuInput M11_TheronHeldMotionInputFromScancode(int scancode,
+                                                    int buttonIIHeld)
+{
+    M12_MenuInput input =
+        M11_TheronGameplayInputFromScancodeWithButtonII(scancode,
+                                                        buttonIIHeld);
+    switch (input) {
+        case M12_MENU_INPUT_UP:
+        case M12_MENU_INPUT_DOWN:
+        case M12_MENU_INPUT_TURN_LEFT:
+        case M12_MENU_INPUT_TURN_RIGHT:
+        case M12_MENU_INPUT_STRAFE_LEFT:
+        case M12_MENU_INPUT_STRAFE_RIGHT:
+            return input;
+        default:
+            return M12_MENU_INPUT_NONE;
+    }
+}
+
 M12_MenuInput M11_TheronGameplayInputFromKeycode(int keycode)
 {
     /* SDL keycode fallback for events that do not carry a useful scancode. */

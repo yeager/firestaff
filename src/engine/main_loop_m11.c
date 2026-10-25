@@ -11332,6 +11332,7 @@ static M12_MenuInput m11_held_motion_input_from_keyboard(M11_GameViewState* game
         SDL_SCANCODE_END,
         SDL_SCANCODE_E,
         SDL_SCANCODE_KP_5,
+        SDL_SCANCODE_KP_8,
         SDL_SCANCODE_KP_2,
         SDL_SCANCODE_KP_1,
         SDL_SCANCODE_KP_3,
@@ -11405,7 +11406,7 @@ static M12_MenuInput m11_held_motion_input_from_keyboard(M11_GameViewState* game
             }
             M12_MenuInput input =
                 m11_game_view_is_theron(gameView)
-                    ? M11_TheronGameplayInputFromScancodeWithButtonII(
+                    ? M11_TheronHeldMotionInputFromScancode(
                           (int)preferred[i], gameView->theronButtonIIHeld)
                     : m11_game_view_is_dm1(gameView)
                     ? M11_DM1V1_NavigationInputFromScancode((int)preferred[i])

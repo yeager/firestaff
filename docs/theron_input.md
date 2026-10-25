@@ -92,8 +92,10 @@ the highlighted control changes.
 ## Notes
 
 - During loaded gameplay, arrows and A/D issue the source-backed side-step
-  commands `$06/$04`; Q/E, Home/End and keypad 4/6 turn. Startup menu arrows
-  retain their navigation behavior. This matches Firestaff's ordinary DM1
+  commands `$06/$04`; Q/E, Home/End and keypad 4/6 turn. Keypad 5 and keypad
+  8 move forward, with held keypad 8 sampled continuously instead of relying
+  on SDL key-repeat events. Startup menu arrows retain their navigation
+  behavior. This matches Firestaff's ordinary DM1
   dungeon keyboard layout while preserving Theron's native command tokens.
 - SDL keyboard input routes the same supported loaded-dungeon commands as the
   native mouse panel: Tab cycles champion, G picks up, I selects the next
