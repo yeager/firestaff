@@ -30,7 +30,19 @@ source.
 | `FACE.BIN` | The JP retail member is verified as 45,104 bytes (`bd9ca16ea68043984e2804067b6cd66f`): 20 variable-length, 56×56 PRS3 portraits with source palettes. The PLRD roster-to-portrait ordinal and the VDP1 destination/order are still unobserved. |
 | `FONT256.S2D` | 242 CG tiles are retained in production source; Saturn page/attribute/glyph mapping is missing |
 | `MENU.BPK` | 162 PRS3 surfaces decode to source-bound indexed bytes; menu ordering, CLUT, and VDP1/VDP2 are missing |
+| Saturn Backup RAM | `nexus_v1_saturn_bkr_parse` reads hash-pinned 32 KiB card directories and block chains, returning exact opaque payload bytes; native save selection, payload interpretation, and runtime loading remain missing |
 | Mednafen visual baseline | A clean J-BIOS capture against authentic retail shows black boot followed by the original intro FMV without input; menu/LEV01 identity remains missing |
+
+The BKR parser has been checked against all four hash-pinned images in the
+private corpus, which are reported as retail-written. It reproduces each
+20,480-byte payload hash from the existing read-only Python reader. These
+images use 64-byte card blocks (512 blocks per 32 KiB image); each game entry
+claims 354 blocks. The parser deliberately returns payload bytes without
+interpreting game fields. This supports container-level Continue work but is
+not yet a save-load path into the Nexus engine. The opaque Saturn capture
+receipt remains a separate API and is not a BKR parser. The BUP used in the
+Ymir Continue run has no retained transfer chain, so its retail provenance is
+reported rather than independently established.
 
 ## Retail title-menu evidence (2026-10-25)
 

@@ -63,6 +63,36 @@ int main(void)
     for (file_index = 0U;
          file_index < sizeof(corpus) / sizeof(corpus[0]); ++file_index) {
         char path[1024];
+        FILE *file;
+        int path_length = snprintf(path, sizeof(path), "%s/%s", root,
+                                   corpus[file_index].filename);
+        if (path_length < 0 || (size_t)path_length >= sizeof(path) ||
+            !(file = fopen(path, "rb"))) {
+            printf("SKIP: authentic BKR corpus is incomplete: %s\n",
+                   corpus[file_index].filename);
+            return 77;
+        }
+        fclose(file);
+    }
+
+    for (file_index = 0U;
+         file_index < sizeof(corpus) / sizeof(corpus[0]); ++file_index) {
+        char path[1024];
+        FILE *file;
+        int path_length = snprintf(path, sizeof(path), "%s/%s", root,
+                                   corpus[file_index].filename);
+        if (path_length < 0 || (size_t)path_length >= sizeof(path) ||
+            !(file = fopen(path, "rb"))) {
+            printf("SKIP: authentic BKR corpus is incomplete: %s\n",
+                   corpus[file_index].filename);
+            return 77;
+        }
+        fclose(file);
+    }
+
+    for (file_index = 0U;
+         file_index < sizeof(corpus) / sizeof(corpus[0]); ++file_index) {
+        char path[1024];
         char digest[65];
         char payload_digest[65];
         uint8_t *image = NULL;

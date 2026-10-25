@@ -4,6 +4,12 @@ Reviewed 2026-10-24. The items below track open work and include completed
 diagnostics as context. Verified evidence is also recorded in the Nexus capture
 and reverse-engineering records and in [DONE-nexus.md](DONE-nexus.md).
 
+The C Saturn BKR container parser is now verified against all four
+hash-pinned samples reported as retail-written; see DONE-nexus.md. Remaining Continue work is the
+source-bound payload schema and retail save-selection/load consumer. Do not
+promote the parser's opaque payload bytes into runtime state without joining
+those bytes to the authentic Saturn save/load implementation.
+
 ## Current evidence boundary
 
 PR #19 merged the corrected NBG1 TileFetcher address path and a scroll-offset
