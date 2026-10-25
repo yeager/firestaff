@@ -30,7 +30,19 @@ source.
 | `FACE.BIN` | The JP retail member is verified as 45,104 bytes (`bd9ca16ea68043984e2804067b6cd66f`): 20 variable-length, 56×56 PRS3 portraits with source palettes. The PLRD roster-to-portrait ordinal and the VDP1 destination/order are still unobserved. |
 | `FONT256.S2D` | 242 CG tiles are retained in production source; Saturn page/attribute/glyph mapping is missing |
 | `MENU.BPK` | 162 PRS3 surfaces decode to source-bound indexed bytes; menu ordering, CLUT, and VDP1/VDP2 are missing |
+| Saturn Backup RAM | `nexus_v1_saturn_bkr_parse` reads hash-pinned 32 KiB card directories and block chains, returning exact opaque payload bytes; native save selection, payload interpretation, and runtime loading remain missing |
 | Mednafen visual baseline | A clean J-BIOS capture against authentic retail shows black boot followed by the original intro FMV without input; menu/LEV01 identity remains missing |
+
+The BKR parser has been checked against all four hash-pinned images in the
+private corpus, which are reported as retail-written. It reproduces each
+20,480-byte payload hash from the existing read-only Python reader. These
+images use 64-byte card blocks (512 blocks per 32 KiB image); each game entry
+claims 354 blocks. The parser deliberately returns payload bytes without
+interpreting game fields. This supports container-level Continue work but is
+not yet a save-load path into the Nexus engine. The opaque Saturn capture
+receipt remains a separate API and is not a BKR parser. The BUP used in the
+Ymir Continue run has no retained transfer chain, so its retail provenance is
+reported rather than independently established.
 
 ## Retail title-menu evidence (2026-10-25)
 
@@ -39,12 +51,38 @@ disc reaches the native Nexus title menu. The retained 2026-10-25 screenshot
 shows the three actual choices: `NEW GAME`, `CONTINUE`, and `CONFIGURATION`,
 with New Game selected. Its SHA-256 is
 `d1ec79c6b1e3abcd16837781a1212eedb3cb157562356593ab3ce069b18f2ab4`.
-The 2026-10-24 keyboard run records Start opening the menu, Down selecting
-Continue, and A confirming New Game into the dungeon. The fresh-profile run
-had no game save; selecting Continue therefore did not verify save loading.
+The 2026-10-24 keyboard run records Start opening the menu and confirming
+`NEW GAME` entering the dungeon. In a separate fresh-profile attempt, selecting
+Continue left the screen unchanged because no save was present; that attempt
+did not verify save loading.
 Together, these are retail startup/input observations, not Firestaff parity.
 The capture environment, key mapping, and per-action limitations are recorded
 in [`parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`](../parity-evidence/verification/keyboard-mouse-debug-20261024/README.md).
+
+## Retail Continue with an authentic save (2026-10-25)
+
+A second isolated Ymir `--debug` run used a reported retail-written 32 KiB
+Saturn backup image (SHA-256
+`87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`) with the
+same hash-verified Japanese retail disc and BIOS. The title menu showed
+`NEW GAME`, `CONTINUE`, and `CONFIGURATION`. Selecting `CONTINUE` opened the
+retail `LOAD` panel, which listed the internal-memory entry `B01 0:06 NORMAL`.
+Confirming it displayed `Now Loading`, then entered the dungeon with the
+four-champion HUD. The BUP image retained its original SHA-256 after loading.
+
+The isolated profile was `/dev/shm/ymir-nexus-real-bup-menu-20261025`; the
+source/transfer chain was not retained, so the save's retail provenance is
+reported rather than independently established. The source BUP was copied into
+that profile and was not edited directly. Ymir 0.4.1
+ran with `--debug` on TRV2 against the Japanese retail cue (SHA-256
+`878b3bc223bb56e99626dbaa2946d17fb349a2a67a10cd4423742d8ab30b8699`). The
+retained screenshots and their hashes are in
+[`parity-evidence/verification/nexus-continue-real-bup-20261025/README.md`](../parity-evidence/verification/nexus-continue-real-bup-20261025/README.md).
+This demonstrates the retail save-load route under Ymir with a BUP reported as
+retail-written. Because its transfer chain was not retained, the save's retail
+provenance is not independently established. It does not prove Firestaff
+implements that title menu or save selection; the production startup route
+remains blocked by the consumer-evidence gates described below.
 
 Firestaff's source-level startup helpers do not implement the retail title
 menu. `nexus_v1_startup_boot_handle_input` uses the synthetic warning/title

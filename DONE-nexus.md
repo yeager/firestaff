@@ -13,6 +13,23 @@ The same binary passed the authentic Theron JP raw-BIN startup regression,
 including keyboard and mouse pose/tick checks. These results do not establish
 Nexus menu/gameplay parity or full Theron parity.
 
+## 2026-10-25 — Parse authentic Saturn Backup RAM containers in C
+
+- Added a bounded, read-only Saturn BKR parser for 64-byte and 512-byte block
+  geometries. It validates directory references and continuation blocks,
+  rejects overlap/cycles, and copies game payload bytes without interpreting
+  their contents.
+- Added a real-data regression pinned to the SHA-256 of all four 32 KiB Nexus
+  BKR images reported as retail-written. On TRV2, the C parser returned the expected
+  `DMNEXUS__01` entry and 20,480-byte payload for each image; all payload
+  SHA-256 values matched the existing Python parser byte-for-byte.
+- The retail card images use 64-byte blocks, 512 blocks per image and 354
+  allocated blocks per entry. This does not establish payload field meaning,
+  BUP selection UI, or loading into the game engine. Continue remains
+  incomplete. The retail provenance of the BUP used in the Ymir run was not
+  independently established because its original transfer chain was not
+  retained.
+
 ## 2026-10-24 — Verified title and media diagnostics
 
 ## Available local retail media
