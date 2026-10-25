@@ -74,6 +74,10 @@ def retail_mouse_registration_fixture() -> bytearray:
         0x1656A: 0xE40D, 0x1657A: 0xE507, 0x1657E: 0xE42C,
     }.items():
         put_u16(data, offset, opcode)
+    put_u16(data, trace.MOUSE_CALLBACK_MODE0_CALL, 0x432B)
+    put_u16(data, trace.MOUSE_CALLBACK_MODE0_CALL + 2, 0x6EF6)
+    put_u16(data, trace.MOUSE_CALLBACK_MODE2_CALL, 0x422B)
+    put_u16(data, trace.MOUSE_CALLBACK_MODE2_CALL + 2, 0x6EF6)
     put_mov_l_pc(data, trace.MOUSE_CALLBACK_EVENT_DISPATCH, 3,
                  0x06024288, 0x16690)
     put_mov_l_pc(data, trace.MOUSE_CALLBACK_MODE2_DISPATCH, 2,
@@ -87,12 +91,23 @@ def retail_mouse_registration_fixture() -> bytearray:
         offset = trace.MOUSE_ACTION_RECT_TABLE_OFFSET + index * trace.MOUSE_ACTION_RECT_RECORD_SIZE
         for field, value in enumerate(row):
             put_u16(data, offset + field * 2, value)
+    sentinel_offset = (trace.MOUSE_ACTION_RECT_TABLE_OFFSET +
+                       trace.MOUSE_ACTION_RECT_TABLE_COUNT *
+                       trace.MOUSE_ACTION_RECT_RECORD_SIZE + 8)
+    put_u16(data, sentinel_offset, 0xFFFF)
     for offset, opcode in {
         0x24EE2: 0x62E1, 0x24EE4: 0x3247, 0x24EE8: 0x85E2,
         0x24EEA: 0x3407, 0x24EEE: 0x85E1, 0x24EF0: 0x3057,
         0x24EF4: 0x85E3, 0x24EF6: 0x3507, 0x24EFC: 0x85E5,
         0x24EFE: 0x6503, 0x24F00: 0x85E4, 0x24F02: 0x4D0B,
         0x24F04: 0x6403,
+    }.items():
+        put_u16(data, offset, opcode)
+    for offset, opcode in {
+        0x24EE0: 0x6E63, 0x24EE6: 0x8910, 0x24EEC: 0x890D,
+        0x24EF2: 0x890A, 0x24EF8: 0x8907, 0x24F08: 0xE001,
+        0x24F0A: 0x7E0C, 0x24F0C: 0x85E4, 0x24F0E: 0x4015,
+        0x24F10: 0x89E7, 0x24F12: 0xE000,
     }.items():
         put_u16(data, offset, opcode)
     put_mov_l_pc(data, 0x24EDC, 13, 0x06024288, 0x25080)
@@ -182,6 +197,17 @@ class NexusMouseCallbackTraceTests(unittest.TestCase):
             valid = trace.report_mouse_callback_event_ids(data)
         self.assertFalse(valid)
 
+    def test_callback_dispatch_call_opcode_is_checked_for_both_modes(self) -> None:
+        for offset in (trace.MOUSE_CALLBACK_MODE0_CALL,
+                       trace.MOUSE_CALLBACK_MODE2_CALL):
+            with self.subTest(offset=offset):
+                data = retail_mouse_registration_fixture()
+                put_u16(data, offset, 0x420B)
+                output = io.StringIO()
+                with contextlib.redirect_stdout(output):
+                    valid = trace.report_mouse_callback_event_ids(data)
+                self.assertFalse(valid)
+
     def test_retail_inventory_regions_dispatch_equip_slots(self) -> None:
         data = retail_mouse_registration_fixture()
         output = io.StringIO()
@@ -194,6 +220,33 @@ class NexusMouseCallbackTraceTests(unittest.TestCase):
     def test_inventory_hit_event_id_mismatch_is_rejected(self) -> None:
         data = retail_mouse_registration_fixture()
         put_u16(data, trace.MOUSE_ACTION_RECT_TABLE_OFFSET + 8, 13)
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            valid = trace.report_mouse_inventory_hit_regions(data)
+        self.assertFalse(valid)
+
+    def test_inventory_scanner_stride_change_is_rejected(self) -> None:
+        data = retail_mouse_registration_fixture()
+        put_u16(data, 0x24F0A, 0x7E08)
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            valid = trace.report_mouse_inventory_hit_regions(data)
+        self.assertFalse(valid)
+
+    def test_inventory_scanner_back_edge_change_is_rejected(self) -> None:
+        data = retail_mouse_registration_fixture()
+        put_u16(data, 0x24F10, 0x89E6)
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            valid = trace.report_mouse_inventory_hit_regions(data)
+        self.assertFalse(valid)
+
+    def test_inventory_scanner_sentinel_change_is_rejected(self) -> None:
+        data = retail_mouse_registration_fixture()
+        sentinel_offset = (trace.MOUSE_ACTION_RECT_TABLE_OFFSET +
+                           trace.MOUSE_ACTION_RECT_TABLE_COUNT *
+                           trace.MOUSE_ACTION_RECT_RECORD_SIZE + 8)
+        put_u16(data, sentinel_offset, 0x0000)
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
             valid = trace.report_mouse_inventory_hit_regions(data)

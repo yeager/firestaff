@@ -66,6 +66,8 @@ MOUSE_CALLBACK_MODE0_EVENT = 0x1656A
 MOUSE_CALLBACK_MODE2_EVENT = 0x1657E
 MOUSE_CALLBACK_EVENT_DISPATCH = 0x16568
 MOUSE_CALLBACK_MODE2_DISPATCH = 0x1657C
+MOUSE_CALLBACK_MODE0_CALL = 0x16572
+MOUSE_CALLBACK_MODE2_CALL = 0x16584
 
 
 def resolve_dm_bin(explicit: Path | None) -> Path:
@@ -274,6 +276,18 @@ def report_mouse_callback_event_ids(data: bytes) -> bool:
                   f"decoded={decoded}")
             valid = False
 
+    # The dispatch literal alone is insufficient: the retail function must
+    # actually call the target after loading each event ID. Check the JSR and
+    # its delay-slot instruction for both mode-gated paths.
+    for offset, expected in ((MOUSE_CALLBACK_MODE0_CALL, 0x432B),
+                             (MOUSE_CALLBACK_MODE2_CALL, 0x422B)):
+        actual = read_be16(data, offset)
+        delay_slot = read_be16(data, offset + 2)
+        if (actual, delay_slot) != (expected, 0x6EF6):
+            print(f"mouse_callback_event_call=invalid file_offset=0x{offset:06x} "
+                  f"opcode={actual} delay_slot={delay_slot}")
+            valid = False
+
     event_names: dict[int, str] = {}
     for event_id, (expected_name, expected_string_offset) in MOUSE_CALLBACK_EVENT_NAMES.items():
         pointer_offset = EVENT_NAME_POINTER_TABLE_OFFSET + event_id * 4
@@ -302,8 +316,11 @@ def report_mouse_callback_event_ids(data: bytes) -> bool:
 
 
 def report_mouse_inventory_hit_regions(data: bytes) -> bool:
-    """Verify the retail inventory hit rectangles and event queue dispatch."""
+    """Verify the retail inventory rows and the scanner's eight-row loop."""
     valid = True
+    if len(MOUSE_ACTION_RECT_RECORDS) != MOUSE_ACTION_RECT_TABLE_COUNT:
+        print("mouse_inventory_hit_region=invalid configured record count")
+        valid = False
     for index, expected in enumerate(MOUSE_ACTION_RECT_RECORDS):
         offset = MOUSE_ACTION_RECT_TABLE_OFFSET + index * MOUSE_ACTION_RECT_RECORD_SIZE
         actual = tuple(read_be16(data, offset + field * 2) for field in range(6))
@@ -335,14 +352,57 @@ def report_mouse_inventory_hit_regions(data: bytes) -> bool:
                   f"expected=0x{expected:04x} actual="
                   f"{('none' if actual is None else f'0x{actual:04x}')}")
             valid = False
+
+    # Registration supplies this table base to the retail scanner (checked
+    # independently by report_mouse_region_registration). The scanner advances
+    # by one 12-byte row and stops on the signed -1 event-ID sentinel after the
+    # eight live records. Validate the complete loop shape and sentinel so a
+    # changed stride, bound condition, or back-edge cannot still claim that all
+    # eight inventory regions were scanned.
+    scanner_words = {
+        0x24EE0: 0x6E63,  # load current row pointer from the registered list
+        0x24F08: 0xE001,  # next-row path
+        0x24F0A: 0x7E0C,  # add #12,R14 (record stride)
+        0x24F0C: 0x85E4,  # MOV.W @(8,R14),R0 (signed sentinel/event ID)
+        0x24F0E: 0x4015,  # CMP/PL R0
+        0x24F10: 0x89E7,  # BT back to the row scanner while ID >= 0
+        0x24F12: 0xE000,  # delay slot: MOV #0,R0
+    }
+    for offset, expected in scanner_words.items():
+        actual = read_be16(data, offset)
+        if actual != expected:
+            print(f"mouse_inventory_scanner=invalid file_offset=0x{offset:06x} "
+                  f"expected=0x{expected:04x} actual="
+                  f"{('none' if actual is None else f'0x{actual:04x}')}")
+            valid = False
+    for offset, expected_target in ((0x24EE6, 0x24F0A),
+                                    (0x24EEC, 0x24F0A),
+                                    (0x24EF2, 0x24F0A),
+                                    (0x24EF8, 0x24F0A),
+                                    (0x24F10, 0x24EE2)):
+        opcode = read_be16(data, offset)
+        if opcode is None or bt_target(offset, opcode) != expected_target:
+            print(f"mouse_inventory_scanner_branch=invalid "
+                  f"file_offset=0x{offset:06x} target="
+                  f"{None if opcode is None else bt_target(offset, opcode)}")
+            valid = False
+    sentinel_offset = (MOUSE_ACTION_RECT_TABLE_OFFSET +
+                       MOUSE_ACTION_RECT_TABLE_COUNT * MOUSE_ACTION_RECT_RECORD_SIZE + 8)
+    sentinel = read_be16(data, sentinel_offset)
+    if sentinel != 0xFFFF:
+        print(f"mouse_inventory_hit_region_sentinel=invalid "
+              f"file_offset=0x{sentinel_offset:06x} value={sentinel}")
+        valid = False
     queue_writer = mov_l_pc_literal(data, 0x24EDC)
     if queue_writer != (13, 0x06024288):
         print(f"mouse_inventory_queue_target=invalid decoded={queue_writer}")
         valid = False
     if valid:
-        print("mouse_inventory_hit_regions=8 event=44(EV_INV_EQUIP) "
+        print(f"mouse_inventory_hit_regions={MOUSE_ACTION_RECT_TABLE_COUNT} "
+              "event=44(EV_INV_EQUIP) "
               "arguments=inventory_slots_0_to_7")
-        print("mouse_inventory_hit_region_dispatch=retail_bounds_scan_and_queued_event_verified")
+        print("mouse_inventory_hit_region_dispatch=registered_action_table_0x03850c "
+              "stride_12_signed_ffff_sentinel_and_loop_back_edge_verified")
     return valid
 
 
