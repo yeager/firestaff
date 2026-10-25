@@ -13,8 +13,10 @@ reference evidence; it does not claim Firestaff parity.
   `878b3bc223bb56e99626dbaa2946d17fb349a2a67a10cd4423742d8ab30b8699`.
 - BIOS: authenticated Japanese Saturn BIOS, SHA-256
   `dcfef4b99605f872b6c3b6d05c045385cdea3d1b702906a0ed930df7bcb7deac`.
-- Save: authentic retail-written four-champion BUP, 32,768 bytes, SHA-256
+- Save: reported retail-written four-champion BUP, 32,768 bytes, SHA-256
   `87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`.
+- The source/transfer chain was not retained, so retail provenance is reported
+  rather than independently established.
 - Ymir profile: `/dev/shm/ymir-nexus-real-bup-menu-20261025`, isolated from
   the user's normal profile. The BUP was copied into this profile; its hash
   was checked before and after the run and remained unchanged.

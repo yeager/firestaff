@@ -153,6 +153,7 @@ def retail_event_44_evidence_fixture() -> bytearray:
         0x271CC: 0x9375, 0x2721E: 0x4308,
         0x27226: 0x2301, 0x2722A: 0x8131,
         0x27244: 0x2E31, 0x27246: 0x81E1,
+        0x27248: 0x60D3, 0x27258: 0x8801,
         0x26EBC: 0x9327, 0x26EBE: 0xE054, 0x26EC0: 0x02CE,
         0x26EC2: 0x223B, 0x26EC4: 0x0C26,
         0x26F58: 0x936E, 0x26F5A: 0xE054, 0x26F5C: 0x02CE,
@@ -392,6 +393,13 @@ class NexusMouseCallbackTraceTests(unittest.TestCase):
         self.assertIn("runtime_deltas_and_firestaff_mapping=unverified",
                       output.getvalue())
 
+        for offset in (0x27248, 0x27258):
+            with self.subTest(offset=hex(offset)):
+                changed = bytearray(data)
+                put_u16(changed, offset, 0x0000)
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertFalse(trace.report_mouse_event_44_state_evidence(changed))
+
         put_u16(data, 0x27038, 0x0000)
         with contextlib.redirect_stdout(io.StringIO()):
             self.assertFalse(trace.report_mouse_event_44_state_evidence(data))
@@ -420,6 +428,7 @@ class NexusMouseCallbackTraceTests(unittest.TestCase):
             0x26E74: 0x8F0E, 0x26E98: 0x4211, 0x26E9A: 0x8916,
             0x26EA4: 0xB0DA, 0x26EAC: 0x88FF, 0x26EAE: 0x8B01,
             0x26F38: 0xB090, 0x26F42: 0xB133,
+            0x26F52: 0x7404, 0x26F54: 0xBDCC,
         }.items():
             put_u16(data, offset, value)
         put_u16(data, 0x308, 0x0622)
@@ -432,6 +441,13 @@ class NexusMouseCallbackTraceTests(unittest.TestCase):
                       output.getvalue())
         self.assertIn("slot7=separate_path normal_slot_pair_path=verified",
                       output.getvalue())
+
+        for offset in (0x26F52, 0x26F54):
+            with self.subTest(offset=hex(offset)):
+                changed = bytearray(data)
+                put_u16(changed, offset, 0x0000)
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertFalse(trace.report_mouse_early_event_jump_table(changed))
 
         put_u16(data, 0x26E74, 0x8F0D)
         with contextlib.redirect_stdout(io.StringIO()):

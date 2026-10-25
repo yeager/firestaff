@@ -39,21 +39,23 @@ assert_rejected_before_scan() {
     esac
 }
 
-for platform in pc98 pc-98 pc9821 pc-9821; do
-    for route in direct menu; do
-        menu_arg=
-        if [ "$route" = menu ]; then menu_arg=--menu; fi
-        if output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-            --game dm2 --platform "$platform" --data-dir "$archive" \
-            $menu_arg --boot-probe --debug --duration 0 2>&1); then
-            echo "FAIL: unsupported platform $platform was accepted ($route)" >&2
-            exit 1
-        fi
-        case "$output" in
-            *'firestaff: --platform must be '*) ;;
-            *) printf '%s\n' "$output" >&2; exit 1 ;;
-        esac
-        assert_rejected_before_scan "$output" "dm2/$platform/$route"
+for game in dm1 csb dm2; do
+    for platform in pc98 pc-98 pc9821 pc-9821; do
+        for route in direct menu; do
+            menu_arg=
+            if [ "$route" = menu ]; then menu_arg=--menu; fi
+            if output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+                --game "$game" --platform "$platform" --data-dir "$archive" \
+                $menu_arg --boot-probe --debug --duration 0 2>&1); then
+                echo "FAIL: unsupported platform $platform was accepted for $game ($route)" >&2
+                exit 1
+            fi
+            case "$output" in
+                *'firestaff: --platform must be '*) ;;
+                *) printf '%s\n' "$output" >&2; exit 1 ;;
+            esac
+            assert_rejected_before_scan "$output" "$game/$platform/$route"
+        done
     done
 done
 for route in direct menu; do

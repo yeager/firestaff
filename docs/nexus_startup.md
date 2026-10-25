@@ -1,7 +1,7 @@
 # Dungeon Master Nexus — startup status
 
 This is an evidence report for startup, not a specification for a completed
-Nexus startup screen. Reviewed 2026-10-24: the NBG1 tile-fetch address fix in
+Nexus startup screen. Reviewed 2026-10-25: the NBG1 tile-fetch address fix in
 merged PR #19 passes against an authentic Japanese startup frame, but remains a
 capture-only decoder result and does not prove the title-to-menu transition.
 
@@ -39,16 +39,17 @@ disc reaches the native Nexus title menu. The retained 2026-10-25 screenshot
 shows the three actual choices: `NEW GAME`, `CONTINUE`, and `CONFIGURATION`,
 with New Game selected. Its SHA-256 is
 `d1ec79c6b1e3abcd16837781a1212eedb3cb157562356593ab3ce069b18f2ab4`.
-The 2026-10-24 keyboard run records Start opening the menu, Down selecting
-Continue, and A confirming New Game into the dungeon. The fresh-profile run
-had no game save; selecting Continue therefore did not verify save loading.
+The 2026-10-24 keyboard run records Start opening the menu and confirming
+`NEW GAME` entering the dungeon. In a separate fresh-profile attempt, selecting
+Continue left the screen unchanged because no save was present; that attempt
+did not verify save loading.
 Together, these are retail startup/input observations, not Firestaff parity.
 The capture environment, key mapping, and per-action limitations are recorded
 in [`parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`](../parity-evidence/verification/keyboard-mouse-debug-20261024/README.md).
 
 ## Retail Continue with an authentic save (2026-10-25)
 
-A second isolated Ymir `--debug` run used an authentic, retail-written 32 KiB
+A second isolated Ymir `--debug` run used a reported retail-written 32 KiB
 Saturn backup image (SHA-256
 `87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`) with the
 same hash-verified Japanese retail disc and BIOS. The title menu showed
@@ -58,7 +59,9 @@ Confirming it displayed `Now Loading`, then entered the dungeon with the
 four-champion HUD. The BUP image retained its original SHA-256 after loading.
 
 The isolated profile was `/dev/shm/ymir-nexus-real-bup-menu-20261025`; the
-source BUP was copied into that profile and was not edited directly. Ymir 0.4.1
+source/transfer chain was not retained, so the save's retail provenance is
+reported rather than independently established. The source BUP was copied into
+that profile and was not edited directly. Ymir 0.4.1
 ran with `--debug` on TRV2 against the Japanese retail cue (SHA-256
 `878b3bc223bb56e99626dbaa2946d17fb349a2a67a10cd4423742d8ab30b8699`). The
 retained screenshots and their hashes are in
@@ -83,15 +86,44 @@ or Saturn presentation from decoded MENU.BPK surfaces alone.
 
 `firestaff_nexus` must not present a host-built title, champion menu,
 portrait placement or a text footer as though it were Saturn output. M11 handoff
-and viewport remain fail-closed until an authenticated Saturn capture binds
-resource, palette, destination, and timing.
+and viewport remain fail-closed until authenticated Saturn captures bind the
+relevant resource, palette, destination, input action, and timing. Startup has
+separate gates for title presentation, title-to-menu dispatch, menu surface
+presentation, New Game/Continue selection, and start-pose/level handoff. Passing
+a decoder or later handoff gate does not prove the earlier transitions.
 
-The current `faces` startup gate is specifically a consumer-evidence gate, not
-an unavailable-file or decoder failure: the retail FACE container and every
-one of its compact PRS3 spans validate. A future capture must show the real
-roster/menu transition and bind a PLRD row to its FACE ordinal, VDP1 command
-destination, palette/CRAM state, and displayed frame timing. It must not
-relax the gate based only on the presence or hash of `FACE.BIN`.
+Champion portraits are a later champion-select consumer question, not evidence
+that the title menu is ready. A future champion-select capture must bind a PLRD
+row to its FACE ordinal, VDP1 command destination, palette/CRAM state, and
+displayed frame timing. Presence or hash of `FACE.BIN` alone cannot relax that
+gate.
+
+## Title-menu evidence (2026-10-25)
+
+An isolated Ymir 0.4.1 `--debug` run with the authenticated Japanese BIOS and
+retail disc shows the native title menu after holding Start. The screen contains
+`NEW GAME`, `CONTINUE`, and `CONFIGURATION`; New Game is initially selected.
+Down selects Continue, and A confirms New Game into the dungeon. A fresh profile
+with no game save leaves Continue on the same menu and does not prove a save-load
+route. This establishes retail behavior only; it is not Firestaff parity.
+Capture details and screenshots are recorded in
+[`parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`](../parity-evidence/verification/keyboard-mouse-debug-20261024/README.md).
+
+The historical direct-CLI probe in
+[`parity-evidence/verification/nexus_cli_direct_start_block_20261024/README.md`](../parity-evidence/verification/nexus_cli_direct_start_block_20261024/README.md)
+reached the ready title frame but reported `menu=0` and `levelLoaded=0` after
+one scripted Return. It did not start Nexus. That receipt names a MENU.BPK PRS3
+capture blocker for that build; it should not be read as proof that decoding
+MENU.BPK alone implements the title-menu transition.
+
+An inspection of the hash-verified Japanese retail `MENU.BPK` confirms that its
+162 PRS3 surfaces decode, and visually identifies save/load panels, Japanese
+configuration panels, labels, and small button glyphs. The inspected contact
+sheets did not identify the three English title-menu choices shown by Ymir.
+This is a content observation, not proof those assets are absent from the game
+or that MENU.BPK is unrelated to the title menu. Surface ordering, CLUT,
+consumer, placement, and input-to-action dispatch still require a same-session
+Saturn trace.
 
 FONT256's authenticated Character Generator bytes now remain in the engine's
 source object for the future Saturn consumer. This does not admit glyph coding,

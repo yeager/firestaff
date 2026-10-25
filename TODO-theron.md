@@ -1,16 +1,67 @@
+## 2026-10-25 — cover Japanese Theron input in the regular SDL loop
+
+- Added `theron_v1_jp_sdl_input_events` against authentic Japanese Rev. 1
+  Track 02. The live SDL event-loop regression covers keyboard backward
+  movement, the Button II + Right chord, right/left mouse-panel side-steps,
+  mouse-panel left-turn/forward movement, champion selection and wait.
+- Three consecutive TRV2 runs passed with Track 02 MD5
+  `b7afb338ad31be1025b53f9aff12d73a`. This verifies native input behavior on
+  the Japanese edition; it does not close the state-driven renderer or direct
+  dungeon-view click gaps.
+
+## 2026-10-25 — authentic US VDC turn pair for native-renderer work
+
+- Captured the same authentic US Drator save state twice with the PCE module:
+  once without input and once with the logged controller plan
+  `right@1:140,down@2:33,i@145:5`. Both sessions ended at the exact 200-frame
+  boundary; the input capture changed the bound direction byte while the
+  party coordinates remained `(2,3)`, and the VDC image changed. VCE and VDC
+  geometry stayed constant. The state loads in PCE, not this build's PCE Fast
+  module. See
+  [`theron-us-authentic-vdc-turn-pair-2026-10-25.md`](docs/source-lock/theron-us-authentic-vdc-turn-pair-2026-10-25.md).
+- This is new authentic screen-transition evidence for native rendering. It
+  does not bind a mouse target, prove translation from screen pixels to
+  Track 02 cells, or close the state-driven renderer gap. Keep the mouse-panel
+  route separate from original game hit testing until those consumers are
+  joined.
+
+## 2026-10-25 — verify native SDL mouse item actions
+
+- The regular SDL-loop test now reaches the authentic USA level-0 SANDALS and
+  clicks PICKUP, ITEM and DROP on the visible Theron mouse panel. Theron's
+  `--debug` pointer trace reports the mapped source coordinates and action
+  receipts for each event; three consecutive TRV2 runs passed against
+  `TQUS02.bin` (MD5 `f23601102138f87c33025877767ebf76`).
+- This verifies the host-panel item flow through normal SDL input and source
+  data. Direct viewport clicks remain unbound, and the native dungeon
+  renderer still does not update from world state.
+
+## 2026-10-25 — extend normal SDL mouse-panel gameplay coverage
+
+- The normal SDL event-loop regression now also clicks the panel's left turn,
+  right step, left step, next-champion and wait controls. Against authentic
+  USA Track 02, right then left returns the party along a source-backed open
+  path; the test avoids the blocked west cell beside the initial spawn.
+- This verifies all six movement controls and the panel's champion/wait
+  actions through the live native SDL loop. Original-world hit testing and a
+  state-driven native dungeon renderer remain open, so this is not complete
+  DM1-equivalent playability.
+
 ## 2026-10-25 — verify normal Theron SDL gameplay input
 
 - ✅ Added `theron_v1_sdl_input_events`, which drives the normal SDL event loop
   with an authentic USA Track 02 runtime. Three TRV2 loops prove that holding
   right mouse while pressing Right turns, that release restores Right
-  side-step behavior, and that the authenticated media hash is correct.
+  side-step behavior, and that the authenticated media hash is correct. The
+  same SDL route now verifies mouse-panel pickup, source-item reselection and
+  drop with mapped pointer action receipts.
 - ✅ In both SDL2 and SDL3 paths, right-button edges during loaded dungeon play
   now exclusively set/clear Button II state instead of also invoking desktop
   Back. This avoids a quit modal intercepting the direction key.
-- 🔒 Direct world clicks remain disabled until Theron's original cursor/hit
-  dispatch is joined to an authenticated live state. The native dungeon
-  renderer still needs state-driven graphics before end-to-end visual
-  playability is established.
+- 🔒 Direct world clicks remain disabled until Firestaff has a state-driven
+  dungeon renderer and a validated desktop screen-to-world mapping. The
+  original PC Engine game has no mouse interface, so this is a host feature,
+  not original cursor parity.
 
 ## 2026-10-25 — mouse trace tool validation and truncation reporting
 
@@ -66,13 +117,14 @@
   loops; live SDL gameplay events for those action keys still need an
   end-to-end authentic Track 02 `--debug` capture. The boot-probe key mapper
   had masked the missing normal SDL gameplay bindings.
-- Mouse parity is still partial. The visible 4x3 Firestaff panel dispatches
+- Mouse support is still partial. The original PC Engine game has no mouse
+  interface. The visible 4x3 Firestaff panel dispatches
   native Theron inputs and now highlights the hovered control. Direct world
-  clicks remain disabled, and the original pointer art is not drawn in the
+  clicks remain disabled, and the Firestaff pointer art is not drawn in the
   native dungeon view. Do not copy DM1's hit regions. The `$D515/$D588`
-  interval candidate and the live `$77DC` dispatch/descriptor path still need
-  an authenticated runtime join through original hover state, Button-I output
-  and the resulting game-state change.
+  interval candidate and live `$77DC` dispatch/descriptor path remain
+  disassembly questions; they do not establish mouse behavior or desktop
+  coordinates for the original game.
 - `theron_v1_sdl_input_events` also verifies a real SDL left-click through
   the host mouse panel on authenticated US Track 02. Three consecutive TRV2
   Debug runs passed for two panel turns followed by a forward move, the Button
@@ -87,8 +139,8 @@
   and each regional runtime-input loop passed three times on TRV2. This proves
   native panel command routing on both regional datasets; it does not prove
   direct world hit targets, state-driven rendering, or full visual parity.
-- Once that source route is bound, implement Theron's native cursor and
-  source-derived world hit testing, then verify movement and action clicks
+- After binding state-driven dungeon graphics, implement Firestaff's optional
+  desktop screen-to-world mapping and verify movement and action clicks
   against authentic Track 02 data. Current frozen-capture rendering means
   even a correct input transaction would not yet establish end-to-end
   DM1-like playability. See

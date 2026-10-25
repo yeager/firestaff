@@ -454,7 +454,8 @@ int nexus_v1_champion_on_death_update_leader(Nexus_V1_ChampionPool *pool,
     return -1;
 }
 
-int nexus_v1_champion_cycle_leader(Nexus_V1_ChampionPool *pool) {
+static int nexus_v1_champion_cycle_leader_direction(
+    Nexus_V1_ChampionPool *pool, int direction) {
     int offset;
     if (!pool || pool->party_count < 2 ||
         pool->party_count > NEXUS_MAX_PARTY || pool->leader_index < 0 ||
@@ -463,7 +464,8 @@ int nexus_v1_champion_cycle_leader(Nexus_V1_ChampionPool *pool) {
         return -1;
     }
     for (offset = 1; offset < pool->party_count; ++offset) {
-        int next = (pool->leader_index + offset) % pool->party_count;
+        int next = (pool->leader_index + direction * offset +
+                    pool->party_count * 2) % pool->party_count;
         int champion_index = pool->party[next];
         if (champion_index >= 0 && champion_index < pool->champion_count &&
             (pool->champions[champion_index].alive ||
@@ -476,6 +478,14 @@ int nexus_v1_champion_cycle_leader(Nexus_V1_ChampionPool *pool) {
         }
     }
     return -1;
+}
+
+int nexus_v1_champion_cycle_leader(Nexus_V1_ChampionPool *pool) {
+    return nexus_v1_champion_cycle_leader_direction(pool, 1);
+}
+
+int nexus_v1_champion_cycle_leader_previous(Nexus_V1_ChampionPool *pool) {
+    return nexus_v1_champion_cycle_leader_direction(pool, -1);
 }
 
 /* ═══════════════════════════════════════════════════════════════════

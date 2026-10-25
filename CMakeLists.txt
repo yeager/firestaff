@@ -46040,7 +46040,7 @@ set_tests_properties(nexus_v1_launch_smoke PROPERTIES
 # boundary without extracting media or using an emulator.
 add_test(
     NAME nexus_v1_native_menu_mouse_title
-    COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_native_menu_mouse_title.sh
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_native_menu_mouse_title.sh
             $<TARGET_FILE:firestaff>
             ${CMAKE_BINARY_DIR}
 )
@@ -47140,6 +47140,15 @@ if(BUILD_TESTING AND TARGET firestaff_theron)
                 $<TARGET_FILE:firestaff>
     )
     set_tests_properties(theron_v1_sdl_input_events PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;runtime;input;native;no-synthetic"
+    )
+    add_test(
+        NAME theron_v1_jp_sdl_input_events
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_jp_sdl_input_events.sh
+                $<TARGET_FILE:firestaff>
+    )
+    set_tests_properties(theron_v1_jp_sdl_input_events PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "theron;real-media;runtime;input;native;no-synthetic"
     )

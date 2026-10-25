@@ -138,8 +138,10 @@ on the PRS3 menu capture. See
 - Finish Nexus keyboard and mouse gameplay routing. Retail Ymir captures now
   confirm forward movement, left/right turns, Start-to-pause, and the Z cursor
   mode. Firestaff maps A/D to Nexus turns while preserving DM1's A/D strafe
-  behavior. Tab now cycles the loaded party leader. The native cursor action
-  contract and attack, inventory, and spell semantics remain open.
+  behavior. Tab cycles the loaded party leader forward and Shift+Tab cycles
+  backward in Firestaff's desktop controls. The reverse direction is a host
+  keyboard convenience; the native cursor action contract and attack,
+  inventory, and spell semantics remain open.
   An independent 2026-10-25 Ymir `--debug` comparison loaded a hash-verified
   authentic JP gameplay savestate into a private profile: the no-input reload
   changed 0.00175% of pixels, W-forward changed 3.08408%, and A-left changed
@@ -183,11 +185,16 @@ on the PRS3 menu capture. See
   WASD/arrows or mouse movement, including captured diagonal WASD movement,
   and the authentic retail hand sprite joined from
   ITEM.IBS image 65/palette 6 against Ymir VDP1 capture. Pointer click actions
-  remain open until their retail source joins are captured.
+  remain open until their retail source joins are captured. All host
+  pointer-button routes now use the same parsed retail movement-pad rectangle
+  and six-cell desktop mapping; this does not claim Saturn ShuttleMouse
+  parity. The authentic callback's click-action semantics remain unresolved.
 
-- Input parity follow-up: Firestaff routes Tab to cycle the loaded Nexus
-  party leader. Authentic Ymir `--debug` captures confirm retail L/R changes
-  the visible leader marker and portrait; they do not bind the guest RAM owner.
+- Input parity follow-up: Firestaff routes Tab and Shift+Tab to cycle the
+  loaded Nexus party leader forward and backward. Authentic Ymir `--debug`
+  captures confirm retail L/R changes the visible leader marker and portrait;
+  the desktop reverse binding is a host convenience, and the captures do not
+  bind the guest RAM owner.
   Retail PLRD has no live/dead field, so Tab treats an available roster row
   with positive health as selectable even while `alive` is unknown, and skips
   zero-health members.

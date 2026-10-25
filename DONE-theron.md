@@ -1,5 +1,36 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-25 — verify Japanese keyboard and mouse-panel SDL input
+
+Added the authentic Japan Rev. 1 `theron_v1_jp_sdl_input_events` regression.
+The normal SDL loop verifies keyboard movement, Button II + Right, mouse-panel
+side-steps, turn and forward movement, champion selection, and wait against
+Track 02 MD5 `b7afb338ad31be1025b53f9aff12d73a`. The test passed three
+consecutive runs on TRV2. This verifies input dispatch and bounded world-state
+changes; state-driven visual rendering and direct viewport clicks remain open.
+
+## 2026-10-25 — make SDL item assertions independent of host language
+
+The authentic USA SDL event test now selects `--lang en` because its item
+trace assertions compare localized action labels. On a Swedish host the
+three actions succeeded but emitted `FÖREMÅL`, failing the English `ITEM`
+assertion. All seven event routes passed on the Linux build host with the
+USA Track 02 after fixing the language selection, including the added side
+steps, left turn, champion selection and wait actions. This verifies input
+and item state handling, not native rendering parity.
+
+## 2026-10-25 — verify Theron mouse item actions in the SDL loop
+
+The normal `theron_v1_sdl_input_events` path now picks up the authentic USA
+level-0 SANDALS, selects the same source-backed item again and drops it with
+three mouse-panel clicks. Theron's `--debug` SDL pointer trace includes the
+mapped source-space position and the actual action result, so the regression
+checks each event rather than inferring success from the party's final pose.
+The focused test passed three consecutive loops on TRV2 against authentic
+`TQUS02.bin` (MD5 `f23601102138f87c33025877767ebf76`). This verifies the native
+host panel only; direct world clicks and state-driven native rendering remain
+open.
+
 ## 2026-10-25 — verify native Theron mouse-panel SDL dispatch
 
 `theron_v1_sdl_input_events` now drives clicks through the regular SDL event
