@@ -88,7 +88,6 @@ int theron_v1_track02_sector_record_admit_from_trace(
         strcmp(coalesced.track02_md5, observed_md5) != 0 ||
         coalesced.later_track02_record <= coalesced.stage3_track02_record ||
         coalesced.later_track02_record >= intake->sector_count ||
-        (size_t)coalesced.later_track02_record > SIZE_MAX / 2352u ||
         coalesced.descriptor_selector == 0u ||
         coalesced.descriptor_source_raw_offset >= track_size ||
         coalesced.descriptor_source_hash == 0u ||
@@ -127,6 +126,8 @@ int theron_v1_track02_sector_record_admit_from_trace(
     receipt.descriptor_source_raw_offset = coalesced.descriptor_source_raw_offset;
     receipt.descriptor_source_hash = coalesced.descriptor_source_hash;
     receipt.resolved_track02_record = coalesced.later_track02_record;
+    /* Admission above proves sector_count == track_size / 2352 and this
+     * record is below sector_count, so the multiplication is bounded. */
     receipt.record_raw_offset = (size_t)coalesced.later_track02_record * 2352u;
     if (receipt.record_raw_offset > track_size ||
         track_size - receipt.record_raw_offset < 2352u) {
