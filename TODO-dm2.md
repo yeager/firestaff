@@ -164,7 +164,8 @@ The French Macintosh CLI test passed after extracting the authentic
 it at those original files; the route reached the first runtime frame with
 real assets and no core fallbacks, and the test verified the extracted files
 remained byte-identical. SDL dummy does not verify native Macintosh display,
-sound output or physical input.
+sound output or physical input. This does not prove that Firestaff identifies
+or runs the French edition.
 
 2026-10-26 French Macintosh identity audit: the authentic French SIT contains
 `Graphics.dat` (`5cab25f6b975957eae4a203174e7f2a6`) and `Dungeon.dat`
@@ -173,11 +174,13 @@ profile, plus French `md.dat` (`a1692c182344952b6bffcb82e2e2f06e`) and
 `qstrat.dat` (`535bcbd371347cbcadf61e35d51c1d46e`). The current startup test
 reaches a real-asset frame but asserts platform enum 4 (Macintosh English),
 and general scanning reports readiness from the shared graphics identity.
-This proves the files can feed the existing Macintosh runtime; it does not
-prove that Firestaff identifies or runs the French edition. Keep French
-Macintosh preservation-only until admission and boot bind the complete
-same-owner four-file tuple, distinguish the English tuple, and source/runtime
-evidence shows how `qstrat.dat` supplies French text. Do not add a second
+The test extracts the French SIT but reports platform enum 4 (Macintosh
+English), so it demonstrates only that the shared graphics/dungeon pair can
+reach the Mac English runtime from that directory. It does not show that the
+French `md.dat` or `qstrat.dat` is read. Keep French Macintosh
+preservation-only until admission and boot bind the complete same-owner
+four-file tuple, distinguish the English tuple, and source/runtime evidence
+shows how `qstrat.dat` supplies French text. Do not add a second
 version row keyed only by the shared graphics hash: it would mislabel English
 installs too. The test should assert the French identity and a French-owned
 runtime behavior before the edition is advertised as supported.
