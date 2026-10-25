@@ -139,6 +139,10 @@ to the generic diagnostic at `0x21d98`, which resolves the event name and
 emits `bad event data`. This rules out an inventory mutation in this queue
 consumer; it does not rule out a separate consumer elsewhere in the retail
 runtime.
+The fallback calls `DM.BIN:0x141b4`, which bounds-checks the event ID and
+indexes the authentic name-pointer table at runtime address `0x0604adc4`.
+It returns a name string; it does not dispatch an event handler. The analyzer
+now verifies this helper's instructions and table base in the pinned image.
 An even-offset scan of the pinned image finds no raw `CMP/EQ #44,R0` opcode
 candidate. The analyzer labels this as an opcode-pattern scan only: it cannot
 distinguish data from code or exclude register comparisons, jump tables, or
