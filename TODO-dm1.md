@@ -359,9 +359,12 @@ CTest cases pass against both original disk images. The CLI test asserts title
 frame 18 and F0437 completion precede `DM1 IIGS READY` for direct and M12
 launches.
 Current zoom sampling is explicitly nearest-neighbour and does not reproduce
-the GS-specific F0129 scaler; palette fade stages, PRESENTS/MASTER overlays,
-F0441 entrance, and hardware visual/input parity remain open. This is a
-partial startup stage, not complete native startup parity.
+the GS-specific F0129 scaler, and the source palette fade stages remain open
+visual-parity work. The MEDIA351 IIGS title branch does not show the
+PRESENTS/MASTER overlays used by other editions. The F0441 entrance is
+implemented as a separate startup stage and is covered by the authentic G20/G21
+direct and M12 launch tests described below. Hardware visual/input parity and
+complete native startup parity remain unverified.
 
 2026-10-21 DM1 Quick Resume handoff: M12 passed Firestaff's own `FSM11QS1`
 envelope to the original-save-only F0435 reader, so valid Firestaff saves
@@ -846,10 +849,12 @@ gameplay viewport, audible output and original-emulator alignment separate
 from this completed entrance-scene verification.
 
 Completion scope: catalogue entries and authenticated files do not by
-themselves prove complete platform support. Apple IIGS 2.0/2.1 now reach the
-first world through direct CLI and M12 start-menu launch using the original
-ProDOS owners; intro/entrance, audible DOC playback, and complete gameplay
-remain open as recorded below. The test does not establish visual parity.
+themselves prove complete platform support. Apple IIGS 2.0/2.1 reach the first
+world through direct CLI and M12 start-menu launch using the original ProDOS
+owners. The F0437 title and F0441 entrance are implemented and have
+original-media startup coverage; their hardware visual parity, audible DOC
+playback, and complete gameplay remain open. The tested startup routes do not
+establish visual parity.
 Sharp X68000 and SNES media archive names also exist locally; their content
 and native runtime/startup gaps still need investigation. Do not infer playable
 campaign support from file intake or claim all-platform support from this
