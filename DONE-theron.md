@@ -1,5 +1,23 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-25 — route Buttons I and II through native keyboard entry
+
+The documented layout-stable controller keys now reach Theron's native SDL
+facade in both scancode and keycode paths during startup and gameplay: `Z`
+sends Button I's action/selection token, and `X` sends Button II's cancel/back
+token. This follows the USA retail manual's Button I/II assignments (pp. 4–5)
+and avoids a host-keyboard-layout dependency. The focused native mapping test
+covers all four paths. A fresh TRV2 Debug build also passed the regular
+`theron_v1_sdl_input_events` regression against authenticated USA Track 02
+(MD5 `f23601102138f87c33025877767ebf76`) with `--debug`; that live loop
+exercises the current native binary and Button I `Z` route. It also sends
+Button II `X` through the ordinary SDL event queue and asserts an explicit
+no-op receipt when no dungeon cancel surface is active. The
+regression compares the tick on the immediately preceding action with the
+tick on `X`, and the boot-runtime test verifies the input is recognized while
+preserving the source-owned party pose and world clock. This does not claim
+complete gameplay or presentation parity.
+
 ## 2026-10-25 — route PC Engine Button I Z through native SDL gameplay
 
 The documented desktop `Z` binding for PC Engine Button I now reaches the

@@ -99,6 +99,13 @@ M12_MenuInput M11_TheronNavigationInputFromScancode(int scancode)
         case SDL_SCANCODE_RIGHT:
         case SDL_SCANCODE_KP_6:
             return M12_MENU_INPUT_RIGHT;
+        /* Theron's Quest USA retail manual pp. 4--5 assigns Button I to
+         * selection and Button II to cancel.  Keep Z/X layout-stable across
+         * keyboard layouts, as in the documented desktop controller map. */
+        case SDL_SCANCODE_Z:
+            return M12_MENU_INPUT_ACTION;
+        case SDL_SCANCODE_X:
+            return M12_MENU_INPUT_BACK;
         default:
             return M12_MENU_INPUT_NONE;
     }
@@ -211,11 +218,15 @@ M12_MenuInput M11_TheronNavigationInputFromKeycode(int keycode)
         case SDLK_S: return M12_MENU_INPUT_DOWN;
         case SDLK_A: return M12_MENU_INPUT_STRAFE_LEFT;
         case SDLK_D: return M12_MENU_INPUT_STRAFE_RIGHT;
+        case SDLK_Z: return M12_MENU_INPUT_ACTION;
+        case SDLK_X: return M12_MENU_INPUT_BACK;
 #else
         case SDLK_w: return M12_MENU_INPUT_UP;
         case SDLK_s: return M12_MENU_INPUT_DOWN;
         case SDLK_a: return M12_MENU_INPUT_STRAFE_LEFT;
         case SDLK_d: return M12_MENU_INPUT_STRAFE_RIGHT;
+        case SDLK_z: return M12_MENU_INPUT_ACTION;
+        case SDLK_x: return M12_MENU_INPUT_BACK;
 #endif
         case SDLK_UP: return M12_MENU_INPUT_UP;
         case SDLK_DOWN: return M12_MENU_INPUT_DOWN;
@@ -272,6 +283,8 @@ M12_MenuInput M11_TheronGameplayInputFromScancode(int scancode)
         case SDL_SCANCODE_RETURN:
         case SDL_SCANCODE_SPACE:
             return M12_MENU_INPUT_ACTION;
+        case SDL_SCANCODE_X:
+            return M12_MENU_INPUT_BACK;
         default:
             return M12_MENU_INPUT_NONE;
     }
@@ -363,6 +376,7 @@ M12_MenuInput M11_TheronGameplayInputFromKeycode(int keycode)
         case SDLK_I: return M12_MENU_INPUT_INVENTORY_TOGGLE;
         case SDLK_U: return M12_MENU_INPUT_USE_ITEM;
         case SDLK_Z: return M12_MENU_INPUT_ACTION;
+        case SDLK_X: return M12_MENU_INPUT_BACK;
 #else
         case SDLK_w: return M12_MENU_INPUT_UP;
         case SDLK_s: return M12_MENU_INPUT_DOWN;
@@ -376,6 +390,7 @@ M12_MenuInput M11_TheronGameplayInputFromKeycode(int keycode)
         case SDLK_i: return M12_MENU_INPUT_INVENTORY_TOGGLE;
         case SDLK_u: return M12_MENU_INPUT_USE_ITEM;
         case SDLK_z: return M12_MENU_INPUT_ACTION;
+        case SDLK_x: return M12_MENU_INPUT_BACK;
 #endif
         case SDLK_RETURN:
         case SDLK_KP_ENTER:

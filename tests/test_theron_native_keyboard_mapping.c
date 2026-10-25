@@ -27,6 +27,11 @@ int main(void)
     CHECK(M11_TheronHeldMotionInputFromKeyboardState(
               heldKeys, (int)sizeof(heldKeys), 0) == M12_MENU_INPUT_NONE);
 
+    CHECK(M11_TheronNavigationInputFromScancode(SDL_SCANCODE_Z) ==
+          M12_MENU_INPUT_ACTION);
+    CHECK(M11_TheronNavigationInputFromScancode(SDL_SCANCODE_X) ==
+          M12_MENU_INPUT_BACK);
+
     CHECK(M11_TheronGameplayInputFromScancode(SDL_SCANCODE_UP) ==
           M12_MENU_INPUT_UP);
     CHECK(M11_TheronGameplayInputFromScancode(SDL_SCANCODE_KP_8) ==
@@ -53,6 +58,8 @@ int main(void)
           M12_MENU_INPUT_USE_ITEM);
     CHECK(M11_TheronGameplayInputFromScancode(SDL_SCANCODE_Z) ==
           M12_MENU_INPUT_ACTION);
+    CHECK(M11_TheronGameplayInputFromScancode(SDL_SCANCODE_X) ==
+          M12_MENU_INPUT_BACK);
     CHECK(M11_TheronGameplayInputFromScancode(SDL_SCANCODE_SPACE) ==
           M12_MENU_INPUT_ACTION);
     CHECK(M11_TheronGameplayInputFromScancode(SDL_SCANCODE_RETURN) ==
@@ -75,11 +82,23 @@ int main(void)
     CHECK(M11_TheronGameplayInputFromKeycode(SDLK_U) ==
           M12_MENU_INPUT_USE_ITEM);
 #if SDL_VERSION_ATLEAST(3, 0, 0)
+    CHECK(M11_TheronNavigationInputFromKeycode(SDLK_Z) ==
+          M12_MENU_INPUT_ACTION);
+    CHECK(M11_TheronNavigationInputFromKeycode(SDLK_X) ==
+          M12_MENU_INPUT_BACK);
     CHECK(M11_TheronGameplayInputFromKeycode(SDLK_Z) ==
           M12_MENU_INPUT_ACTION);
+    CHECK(M11_TheronGameplayInputFromKeycode(SDLK_X) ==
+          M12_MENU_INPUT_BACK);
 #else
+    CHECK(M11_TheronNavigationInputFromKeycode(SDLK_z) ==
+          M12_MENU_INPUT_ACTION);
+    CHECK(M11_TheronNavigationInputFromKeycode(SDLK_x) ==
+          M12_MENU_INPUT_BACK);
     CHECK(M11_TheronGameplayInputFromKeycode(SDLK_z) ==
           M12_MENU_INPUT_ACTION);
+    CHECK(M11_TheronGameplayInputFromKeycode(SDLK_x) ==
+          M12_MENU_INPUT_BACK);
 #endif
     CHECK(M11_TheronGameplayInputFromKeycode(SDLK_SPACE) ==
           M12_MENU_INPUT_ACTION);

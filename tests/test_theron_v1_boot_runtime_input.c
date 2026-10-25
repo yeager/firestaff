@@ -504,6 +504,14 @@ static int test_button_ii_does_not_tick_world(void)
     ASSERT(receipt.waited == 0, "BACK must not report a wait");
     ASSERT(receipt.result == THERON_V1_BOOT_RUNTIME_INPUT_RESULT_IGNORED,
            "BACK must not request a redraw");
+    ASSERT(receipt.handled == 1,
+           "BACK must be recognized even without a cancel surface");
+    ASSERT(strcmp(receipt.status, "NO-OP") == 0,
+           "BACK must report that no dungeon cancel surface is active");
+    ASSERT(world.party.leader_x == receipt.party_x &&
+           world.party.leader_y == receipt.party_y &&
+           world.party.leader_dir == receipt.party_dir,
+           "BACK must preserve the source-owned party pose");
     PASS();
     return 1;
 }
