@@ -1,6 +1,6 @@
 # Five-game startup support gap analysis
 
-Reconciled with `origin/main` at `b2f569e3e` on 2026-10-26. Runtime receipts
+Reconciled with `origin/main` at `3e3ec633f` on 2026-10-26. Runtime receipts
 cited below remain the recorded runs at their stated revisions; they were not
 rerun during this documentation update. The repository contains checks
 against authentic media for all five games, but “available,”
@@ -11,7 +11,7 @@ The current evidence does not establish complete five-game startup support.
 
 | Game | Direct CLI evidence | Main-menu evidence | Current startup result |
 |---|---|---|---|
-| DM1 | The authentic-media CLI diagnostics exercise direct selection and source-owned startup. | The picker test covers keyboard and mouse handoff; the runtime test checks an authentic first runtime frame. | First runtime is verified on bounded real-media routes. Platform-wide parity and native physical input remain open. |
+| DM1 | The authentic-media CLI diagnostics exercise direct selection and source-owned startup. | The picker test covers keyboard and mouse handoff; PR #76 extends the mixed-media AUTO route to enter through the no-game menu and reach its authentic first runtime frame. | First runtime is verified on bounded real-media routes. Platform-wide parity and native physical input remain open. |
 | CSB | The authentic-media CLI diagnostics exercise direct selection and source-owned startup. | The picker test covers keyboard and mouse handoff; the runtime test checks the authentic starting party and viewport receipt. | First runtime is verified on bounded real-media routes. Platform-wide parity and native physical input remain open. |
 | DM2 | The authentic-media CLI diagnostics cover direct selection; platform-specific checks include the complete timed FM Towns title sequence. The French DOS loose-file route now also preserves its selected graphics owner into the first loaded runtime. | The picker test covers keyboard and mouse handoff; the runtime test checks the authentic first party and frame. | First runtime is verified on bounded real-media routes, including the selected French DOS loose-file case. Other edition and native interaction coverage remains incomplete. |
 | Theron | The CLI diagnostics reach its source-owned runtime handoff. | The picker test covers keyboard and mouse handoff; the runtime test checks a loaded authentic Track 02 state. Tab champion cycling and the documented Z/Space wait keys now exercise the normal SDL event loop on authentic USA Track 02. | Runtime state, native frames and these keyboard actions are reached, but the native dungeon image is not yet driven by the authenticated world/graphics state. A recent nonblack Firestaff capture has not been paired with an original-emulator capture. |
@@ -25,6 +25,11 @@ The current evidence does not establish complete five-game startup support.
 - [`tests/test_m12_main_menu_runtime_real_media.sh`](../tests/test_m12_main_menu_runtime_real_media.sh)
   exercises first-runtime probes for DM1, CSB, DM2, and Theron. The verifier
   requires an active runtime and `levelLoaded=1`; Nexus is not included.
+- PR #76 (`test(dm1): exercise mixed AUTO through no-game menu`) removes the
+  explicit game selection from the DM1 mixed-media AUTO regression, waits for
+  scan completion, selects through the ordinary no-game menu, and asserts the
+  selected FM Towns handoff reaches its authentic first runtime. This extends
+  route coverage; it does not establish full DM1 edition or platform parity.
 - [`tests/test_dm2_v1_loose_owner_real_media.sh`](../tests/test_dm2_v1_loose_owner_real_media.sh)
   verifies that choosing the authentic French DOS loose files from the main
   menu retains the selected French graphics hash through first runtime,
@@ -59,7 +64,8 @@ The current evidence does not establish complete five-game startup support.
   startup dispatch, decide and document source-backed Button II semantics, and
   strengthen the SDL assertion before merging. The PR head also targets a base
   older than the currently fetched `origin/main` and needs a current-base
-  review after those fixes.
+  review after those fixes. GitHub still reports the PR open and
+  non-mergeable as of this review.
 - [`tests/test_firestaff_cli_startup_diagnostics_real_media.sh`](../tests/test_firestaff_cli_startup_diagnostics_real_media.sh)
   checks discovery and direct CLI startup for all five IDs. Its Nexus-specific
   assertion rejects a false `runtime-entered` receipt and requires the blocked
