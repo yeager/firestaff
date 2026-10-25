@@ -190,6 +190,10 @@ M12_MenuInput M11_TheronNavigationInputFromKeycode(int keycode);
 M12_MenuInput M11_TheronGameplayInputFromScancode(int scancode);
 M12_MenuInput M11_TheronHeldMotionInputFromScancode(int scancode,
                                                     int buttonIIHeld);
+/* Poll the Theron held-motion aliases from a caller-provided SDL keyboard
+   state. This keeps the SDL event-loop poller testable without SDL globals. */
+M12_MenuInput M11_TheronHeldMotionInputFromKeyboardState(
+    const uint8_t* keys, int keyCount, int buttonIIHeld);
 M12_MenuInput M11_TheronGameplayInputFromKeycode(int keycode);
 M12_MenuInput M11_TheronGameplayInputFromScancodeWithButtonII(
     int scancode, int buttonIIHeld);

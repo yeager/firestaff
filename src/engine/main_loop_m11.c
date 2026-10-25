@@ -11380,13 +11380,17 @@ static M12_MenuInput m11_held_motion_input_from_keyboard(M11_GameViewState* game
         gameView->nexusState.hand_pointer_repeat_ticks = 0;
     }
 
+    if (m11_game_view_is_theron(gameView)) {
+        return M11_TheronHeldMotionInputFromKeyboardState(
+            (const uint8_t*)keys, count, gameView->theronButtonIIHeld);
+    }
+
     if (!keys || count <= 0) return M12_MENU_INPUT_NONE;
     for (i = 0; i < (int)(sizeof(preferred) / sizeof(preferred[0])); i++) {
         int sc = (int)preferred[i];
-        /* KP8 is a Theron convenience alias; keep it out of other games'
-         * shared held-key routes even if their input remap binds the key. */
-        if (preferred[i] == SDL_SCANCODE_KP_8 &&
-            !m11_game_view_is_theron(gameView)) {
+        /* KP8 is a Theron convenience alias; the Theron branch above owns
+         * its held-state route, so keep this shared route unchanged. */
+        if (preferred[i] == SDL_SCANCODE_KP_8) {
             continue;
         }
         if (sc >= 0 && sc < count && keys[sc]) {
@@ -11411,10 +11415,7 @@ static M12_MenuInput m11_held_motion_input_from_keyboard(M11_GameViewState* game
                 continue;
             }
             M12_MenuInput input =
-                m11_game_view_is_theron(gameView)
-                    ? M11_TheronHeldMotionInputFromScancode(
-                          (int)preferred[i], gameView->theronButtonIIHeld)
-                    : m11_game_view_is_dm1(gameView)
+                m11_game_view_is_dm1(gameView)
                     ? M11_DM1V1_NavigationInputFromScancode((int)preferred[i])
                     : gameView->sourceKind == M11_GAME_SOURCE_NEXUS_DGN
                     ? M11_NexusMovementInputFromScancode((int)preferred[i])
