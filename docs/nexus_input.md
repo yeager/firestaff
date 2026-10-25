@@ -146,8 +146,8 @@ It returns a name string; it does not dispatch an event handler. The analyzer
 now verifies this helper's instructions and table base in the pinned image.
 The callback's event-44 producer, the event-17 producer behind a separate
 global-slot gate, and the dispatcher share the same bounded queue: eight
-12-byte records at runtime `0x060797b0`, with count/state at `0x06079814` and
-dequeue helper `0x060242d6`. The later queue loop described above is not
+12-byte records at runtime `0x060797b0`, count at `0x06079814`, and queue state
+at `0x06079810`; the dequeue helper is `0x060242d6`. The later queue loop is not
 necessarily the only consumer; event-action semantics must be followed from
 each caller's event context.
 An even-offset scan of the pinned image finds no raw `CMP/EQ #44,R0` opcode
