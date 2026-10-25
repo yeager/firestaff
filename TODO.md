@@ -18,8 +18,15 @@ only after the same-container program package passes; A31E also must pass its
 startup-media gate. Incomplete candidates retain the exhaustive fallback.
 The focused real-media CTests passed for the original English A35 CTRaw package
 (5.85 s) and the A31 M12-to-M11 handoff ZIP (2.15 s). These verify authentic
-package admission and startup, but do not measure a before/after scan-time
-improvement; the earlier full-library timings remain the only scan profile.
+package admission and startup. A fresh current-source build scanned the same
+425-file, 4.3 GiB collection on the same Mac16,10 in 27.86 s with an isolated
+user cache; three warm repeats took 8.70, 8.57 and 8.54 s (median 8.57 s).
+The prior build measured 31.13 s cold and 11.91 s warm, so the observed
+reductions are 10.5% and 28.0%. DM1, CSB and DM2 remained READY in every run.
+This is preliminary single-host evidence: the cold OS file-cache state was not
+controlled, the old timing had one sample, and both builds used the same scan
+options that skip external-only archives. Repeat with controlled cold caches
+and another platform before treating the gain as general.
 
 2026-10-25 authentic priority-game startup and combat retest: the launcher
 picker script passed with an isolated root containing only symlinks to the
