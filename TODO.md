@@ -1,5 +1,52 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-25 DM1 Swedish startup diagnostics: an authentic PC 3.4
+`--game dm1 --platform pc --lang sv --debug --boot-probe` previously printed
+the scan phase only as its English internal key. Debug scan lines now retain
+the stable `task` and `game` keys and add language-specific `task-label` and
+`game-label` fields. The DM1-only original-media CTest passed with Swedish
+catalogs loaded from `po/`; it also confirmed the authenticated `pc34-en`
+selection and boot-probe receipt. This verifies localized debug diagnostics,
+not native-window localization or visual parity.
+
+2026-10-26 current-source cold launcher-scan profile: on the Mac16,10 host,
+`--scan-data --debug` over the installed 425-file, 4.3 GiB original-media
+collection completed in 31.13 s from an isolated home/config. A repeat with
+the same scan cache completed in 11.91 s and reported all five games READY.
+`/usr/bin/time -lp` recorded about 438 MiB maximum resident memory for the
+cold run and 736 MiB for the warm run; peak footprint was about 810 MiB warm.
+A six-second macOS `sample` placed substantial work in
+`m12_admit_csb_amiga31_english_program_package` → `asset_find_by_md5`, including
+repeated ZIP inflation and nested Amiga ADF traversal, followed by more
+`m12_fill_game_versions` archive matching. This identifies a candidate
+duplicate-admission path, not proof that every lookup is redundant: preserve
+the same-owner and incomplete-first-copy checks when optimizing it. One host
+and one cold/warm pair do not establish a cross-platform regression or speedup.
+The follow-up now reuses an already hash-verified CSB Amiga graphics match
+only after the same-container program package passes; A31E also must pass its
+startup-media gate. Incomplete candidates retain the exhaustive fallback.
+The focused real-media CTests passed for the original English A35 CTRaw package
+(5.85 s) and the A31 M12-to-M11 handoff ZIP (2.15 s). These verify authentic
+package admission and startup. A fresh current-source build scanned the same
+425-file, 4.3 GiB collection on the same Mac16,10 in 27.86 s with an isolated
+user cache; three warm repeats took 8.70, 8.57 and 8.54 s (median 8.57 s).
+The prior build measured 31.13 s cold and 11.91 s warm, so the observed
+reductions are 10.5% and 28.0%. DM1, CSB and DM2 remained READY in every run.
+This is preliminary single-host evidence: the cold OS file-cache state was not
+controlled, the old timing had one sample, and both builds used the same scan
+options that skip external-only archives. Repeat with controlled cold caches
+and another platform before treating the gain as general.
+
+Current-source M12 single-game menu retest at `c54007b45`: the separate
+`test_m12_main_menu_{dm1,csb,dm2}_only_real_media.sh` checks passed with one
+authentic FM Towns archive in each isolated `~/.firestaff/data/<game>` tree.
+DM1, CSB and DM2 reached their first FM Towns runtime from the no-game menu
+and passed Back/reselect with the same authentic runtime receipt. DM1's test
+now validates the HoC first frame after both initial selection and Back/reselect
+instead of exiting at the launch handoff. These are SDL dummy-driver
+route/runtime checks, not native-window input, display, audio, or complete
+platform parity.
+
 2026-10-25 authentic priority-game startup and combat retest: the launcher
 picker script passed with an isolated root containing only symlinks to the
 installed DM1, CSB and DM2 originals. It passed keyboard and mouse card
@@ -102,7 +149,9 @@ disc image on repeat directory scans; other DM2 archives are still checked.
 test to cover every currently unsupported platform pairing in both direct and
 menu-request modes. The 24-case live CLI matrix rejected each pair before
 startup or scan diagnostics, and `dm2_unsupported_platform_cli` passed against
-the configured build. With all five original-media directories installed,
+the configured build. The regression now runs those routes with `--debug` and
+fails if scan or startup diagnostics appear before the rejection. With all five
+original-media directories installed,
 `--scan-data --debug` found all five games READY in 26.9 seconds on a fresh
 isolated cache and 8.9 seconds on the warm repeat. A five-second warm-run
 sample placed most active samples in DM2 ZIP profile admission and zlib image

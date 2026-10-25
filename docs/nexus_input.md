@@ -320,3 +320,18 @@ trace, but it does not show that the retail event-44 handler rejected a
 correctly targeted click because the cursor never moved visibly. Firestaff's
 desktop pointer actions still need to follow proven Nexus state changes before
 enabling equipment or other actions.
+
+A separate port-2 trial investigated the earlier Xvfb probe, which showed no
+identifiable hand-pointer movement because
+Ymir's frontend did not route SDL global mouse ID `0` to the emulated
+ShuttleMouse. Ymir PR [#963](https://github.com/ymir-emu/Ymir/pull/963) now
+builds successfully and passed an isolated `--debug` runtime probe with the
+authentic Japanese retail disc and hash-verified Saturn IPL. Ymir visibly
+bound global mouse ID `0` to ShuttleMouse port 2 while a ControlPad was on port
+1, confirming the host-to-peripheral connection. The new game-view captures
+do not establish reliable retail pointer movement or a mouse action, so Nexus
+ShuttleMouse gameplay semantics and Firestaff mouse-action parity remain
+unverified. Build limitations and captures are recorded in
+[`nexus-shuttle-mouse-ymir-pr963-20261025`](../parity-evidence/verification/nexus-shuttle-mouse-ymir-pr963-20261025/README.md).
+Firestaff's desktop mouse actions still need to follow proven Nexus state
+changes before enabling equipment or other pointer actions.

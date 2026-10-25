@@ -1266,7 +1266,7 @@ static void check_scan_progress_uses_display_names(void) {
         {"authenticating CSB FM Towns image", "MATCHING GAME VERSIONS"},
         {"reusing verified FM Towns media receipt", "MATCHING GAME VERSIONS"},
         {"matching required files", "MATCHING REQUIRED FILES"},
-        {"materializing launch cache", "MATERIALIZING LAUNCH CACHE"},
+        {"preparing runtime media", "SCANNING GAME DATA"},
         {"refreshing media metadata", "REFRESHING MEDIA METADATA"},
         {"ZIP directory incomplete", "SCANNING GAME DATA"},
         {"ZIP inventory incomplete", "SCANNING GAME DATA"},

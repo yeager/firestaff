@@ -38,7 +38,9 @@ EVENT_QUEUE_RECORD_SIZE = 12
 CONTEXT_BASE_OFFSET = 0x7FBA0
 CONTEXT_STRIDE = 0x13C
 CONTEXT_ITEM_PAIRS_OFFSET = 0x110
-CONTEXT_ITEM_SLOT_COUNT = 8
+# The hash-pinned event-44 handler only proves this layout for slots 0–6.
+# Slot 7 follows a separate path; +0x12c must not be labelled as its pair.
+CONTEXT_ITEM_SLOT_COUNT = 7
 
 
 class CaptureError(ValueError):

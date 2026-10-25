@@ -1,5 +1,44 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-25 — verify native Theron mouse-panel SDL dispatch
+
+`theron_v1_sdl_input_events` now drives clicks through the regular SDL event
+loop into the native Theron mouse panel, in addition to checking the Button II
+modifier and keyboard turn/step behavior. Against authenticated USA Track 02
+(MD5 `f23601102138f87c33025877767ebf76`), two TURN R clicks followed by FORWARD
+moved the party from `(1,0)` to `(1,1)` in the loaded dungeon. The fresh TRV2
+Debug binary passed three consecutive runs. This proves host-panel mouse
+movement with authentic game data; direct world-space mouse hit targets,
+visible state-driven rendering and complete DM1-like mouse parity remain open.
+
+## 2026-10-25 — verify Button II and keyboard events in the SDL loop
+
+Theron now consumes right-button down/up in a loaded dungeon as Button II
+modifier edges, without also opening the desktop Back modal. The scripted SDL
+event path gained right-button down/up tokens for real-loop regression tests.
+`theron_v1_sdl_input_events` launched native Firestaff against authenticated
+USA Track 02 (MD5 `f23601102138f87c33025877767ebf76`) and verified that Right
+turns while Button II is held, then side-steps after release. The focused test
+passed three consecutive loops on TRV2. Direct viewport targeting and
+state-driven Theron rendering remain open.
+
+## 2026-10-25 — support the Button II simplified-movement chord
+
+Holding the right mouse button while pressing Left/Right Arrow or A/D now
+turns instead of side-stepping, matching the USA retail manual's Button II
+simplified-movement chord. The regular unmodified side-step mapping remains
+unchanged. SDL2 and SDL3 input paths preserve the modifier during held-key
+sampling and clear it on mouse release or window focus loss. The keyboard
+mapper regression passed three loops. A fresh native Debug Firestaff build on
+TRV2 passed, followed by three loops each of the authentic USA Track 02 test
+(MD5 `f23601102138f87c33025877767ebf76`) and Japanese Rev. 1 Track 02 test
+(MD5 `b7afb338ad31be1025b53f9aff12d73a`). The real-media scripts verify the
+regular keyboard and mouse-panel state routes; the Button II chord is directly
+covered by the pure mapper test at that time; the normal SDL event lifecycle is
+now covered by `theron_v1_sdl_input_events` (see the newer entry above).
+Authenticated viewport hit targets and state-driven Theron rendering remain
+open.
+
 ## 2026-10-25 — route Theron action keys through native SDL input
 
 The loaded-dungeon SDL scancode and keycode mappers now route Tab, G, I, P,

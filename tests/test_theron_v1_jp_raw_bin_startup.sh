@@ -33,9 +33,10 @@ turn_output=$(mktemp "./firestaff-theron-jp-turn.XXXXXX")
 move_output=$(mktemp "./firestaff-theron-jp-move.XXXXXX")
 forward_blocked_output=$(mktemp "./firestaff-theron-jp-forward-blocked.XXXXXX")
 turn_left_output=$(mktemp "./firestaff-theron-jp-turn-left.XXXXXX")
+mouse_output=$(mktemp "./firestaff-theron-jp-mouse.XXXXXX")
 output=$(mktemp "./firestaff-theron-jp-raw-bin.XXXXXX")
 audio_cache=$(mktemp -d "./firestaff-theron-jp-audio.XXXXXX")
-trap 'rm -f "$baseline_output" "$turn_output" "$move_output" "$forward_blocked_output" "$turn_left_output" "$output"; rm -rf "$audio_cache"' EXIT
+trap 'rm -f "$baseline_output" "$turn_output" "$move_output" "$forward_blocked_output" "$turn_left_output" "$mouse_output" "$output"; rm -rf "$audio_cache"' EXIT
 if [[ ! -f "$track19_raw" && ! -f "$track19_iso" ]]; then
     printf 'SKIP: authentic Theron JP Track 19 is not staged\n'
     exit 77
@@ -61,6 +62,29 @@ run_probe() {
         --duration 0 >"$destination" 2>&1
 }
 
+run_mouse_probe() {
+    local destination=$1
+    local script=$2
+    local expected_party=$3
+    FIRESTAFF_THERON_MEDNAFEN_CACHE="$audio_cache" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --width 320 --height 224 \
+        --game theron \
+        --theron-native jp \
+        --data-dir "$data_root" \
+        --boot-probe \
+        --boot-probe-frames 0 \
+        --script "$script" \
+        --debug \
+        --boot-probe-expect-runtime \
+        --boot-probe-expect-level-loaded 1 \
+        --boot-probe-expect-party "$expected_party" \
+        --boot-probe-expect-champions 2 \
+        --boot-probe-expect-asset-md5 "$expected_md5" \
+        --boot-probe-expect-startup-active 0 \
+        --duration 0 >"$destination" 2>&1
+}
+
 startup_script='enter,enter,enter,action,tab'
 run_probe "$baseline_output" "$startup_script" '1,0,0'
 run_probe "$turn_output" "$startup_script,right" '1,0,1'
@@ -68,6 +92,8 @@ run_probe "$move_output" "$startup_script,down" '1,1,0'
 run_probe "$forward_blocked_output" "$startup_script,up" '1,0,0'
 run_probe "$turn_left_output" "$startup_script,left" '1,0,3'
 run_probe "$output" "$startup_script,up,right,down,left,up,up" '2,3,0'
+run_mouse_probe "$mouse_output" \
+    "$startup_script,click:204:144,click:248:144" '2,3,3'
 
 if ! grep -Fq 'party=1,0,0 champions=2 runtimeTick=0' "$baseline_output" ||
    ! grep -Fq 'party=1,0,1 champions=2 runtimeTick=0' "$turn_output" ||
@@ -77,6 +103,16 @@ if ! grep -Fq 'party=1,0,0 champions=2 runtimeTick=0' "$baseline_output" ||
     cat "$baseline_output" "$turn_output" "$move_output" \
         "$forward_blocked_output" "$turn_left_output" >&2
     printf '%s\n' 'FAIL: authentic Theron JP movement-panel inputs did not match source-owned pose/tick behavior' >&2
+    exit 1
+fi
+
+if ! grep -Fq 'pointer-click point=204,132 result=1 action="TURN" outcome="LEFT"' \
+        "$mouse_output" ||
+   ! grep -Fq 'pointer-click point=248,132 result=1 action="MOVE" outcome="THERON ADVANCED"' \
+        "$mouse_output" ||
+   ! grep -Fq 'party=2,3,3 champions=2 runtimeTick=1' "$mouse_output"; then
+    cat "$mouse_output" >&2
+    printf '%s\n' 'FAIL: authentic Theron JP mouse-panel inputs did not match source-owned pose/tick behavior' >&2
     exit 1
 fi
 
@@ -107,4 +143,4 @@ if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=theron' "$output" ||
     exit 1
 fi
 
-printf '%s\n' 'PASS: authentic Theron JP raw BIN reaches runtime; isolated turns, one-step movement, and blocked boundary movement match source-owned pose/tick behavior'
+printf '%s\n' 'PASS: authentic Theron JP raw BIN reaches runtime; keyboard and mouse turns/movement match source-owned pose/tick behavior'
