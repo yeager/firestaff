@@ -26,11 +26,11 @@
 
 ## 2026-10-25 — authentic pointer interval-table candidate recovered
 
-- A read-only inspection of the authentic US Track 02 BIN (8,104,992 bytes,
-  MD5 `f23601102138f87c33025877767ebf76`) found the same 26-byte interval-table
-  candidate immediately after each of the seven identical `$D515` code
-  windows. The table hash is `8f9eea35bef73f48d39f09255524608a39188524935170168a44659b1b74b800`;
-  no game bytes are copied into the repository.
+- Read-only inspection of the authentic US and JP Track 02 BINs found the same
+  26-byte interval-table candidate immediately after all seven `$D515` code
+  windows in each region. Its SHA-256 is
+  `8f9eea35bef73f48d39f09255524608a39188524935170168a44659b1b74b800`; no game
+  bytes are copied into the repository.
 - The disassembly at `$D588` compares the cursor coordinate `$2E7A` against
   paired thresholds in that table and returns a paired value. This is concrete
   evidence that the original has coordinate-dependent pointer classification,
@@ -39,9 +39,14 @@
   executes or what each returned value means.
 - The caller first loads a pointer from runtime `$77DC/$77DD` and follows its
   descriptor. Those pointer contents and their source-data lineage are still
-  unknown. Do not publish hitboxes or route arbitrary viewport clicks until
-  the runtime pointer, descriptor records, returned command and state effect
-  are joined. See
+  unknown. An additional read-only decode of the preserved post-Akutuba state
+  found that its 64-byte `$77DC` snapshot matches JP media once, while its
+  64-byte `$C060` snapshot matches seven US copies; the complete pointer
+  sequence does not match US. In this state `$C060+5` is zero, so the `$D515`
+  path returns before scanning descriptor rows. The saved-state bytes do not
+  establish a same-edition source join or prove a live click-zone lookup. Do
+  not publish hitboxes or route arbitrary viewport clicks until the runtime pointer,
+  descriptor records, returned command and state effect are joined. See
   [`theron-pointer-interval-table-candidates-20261025.md`](docs/source-lock/theron-pointer-interval-table-candidates-20261025.md).
 
 ## 2026-10-25 — PCE Fast left-input and VDC comparison
