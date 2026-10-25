@@ -89,25 +89,32 @@ The current evidence does not establish complete five-game startup support.
 
 ## Launcher scan responsiveness
 
-The latest recorded full-media scan took 26.41 seconds on one Mac16,10 host
-with an isolated user cache; the OS file-cache state was uncontrolled. It used
-the installed 425-file / 4.3 GiB collection, found all five games READY, and
-reported about 637 MB maximum resident memory. A five-second source sample
-identified `m12_fill_game_versions` → `asset_find_all_by_md5_list` →
-`scan_dir_by_md5_list`, including nested Amiga ADF/CAPS/MFM decoding. This
-single measurement is not directly comparable to prior cold/warm samples and
-does not establish a cross-platform speedup.
+An earlier full-media profile on one Mac16,10 host scanned the installed
+425-file / 4.3 GiB collection in 31.13 seconds cold and 11.91 seconds warm
+with an isolated user cache. A six-second sample attributed substantial
+work to CSB Amiga 3.1 package admission, repeated ZIP inflation, nested ADF
+traversal, and later edition matching. Current main reuses a previously
+hash-verified graphics match only after the same-container program package
+passes; Amiga 3.1 English also has to pass its startup-media gate, while
+incomplete candidates retain exhaustive fallback. On the same host, a later
+current-source scan took 27.86 seconds cold and three warm runs had a median of
+8.57 seconds. The focused authentic-media CTests for Amiga 3.5 English and the
+Amiga 3.1 menu-to-runtime ZIP route passed. The observed reductions are 10.5%
+cold and 28.0% warm, but uncontrolled OS file-cache state, one host, and one
+prior timing sample prevent treating them as a general speedup. Full details
+and limits are recorded in [`TODO.md`](../TODO.md).
 
-The source shows one bounded optimization candidate: `m12_fill_game_versions`
-queries each game's edition hashes separately for each root. The scan cache
-avoids rehashing unchanged physical files, but the version passes may still
-repeat directory traversal and container admission. A shared candidate index
-could reduce that work, but must retain every edition result, duplicate-file
-handling, complete/incomplete package admission, same-container ownership and
-cancellation semantics. Until those invariants are carried through an
-implementation, keep the repeated scans and report the measured launcher
-delay. See the scan profiles in [`TODO.md`](../TODO.md), the version pass in
-[`asset_status_m12.c`](../src/shared/asset_status_m12.c), and traversal/cache
+The larger cross-game candidate-index opportunity remains open:
+`m12_fill_game_versions` queries each game's edition hashes separately for
+each root, and scan-cache hits do not avoid all directory traversal or
+container admission. Any shared index must retain every edition result,
+duplicate-file handling, complete/incomplete package admission, same-container
+ownership and cancellation semantics. Preserve those invariants and the
+reported launcher delay until a representative multi-edition profile proves a
+safe reduction. This branch also removes a duplicate direct-root `file_md5`
+call during path collection; the translation unit compiles for both M12 and
+Nexus, but its runtime impact has not been measured. See the version pass in
+[`asset_status_m12.c`](../src/shared/asset_status_m12.c) and traversal/cache
 logic in [`asset_find_by_hash.c`](../src/shared/asset_find_by_hash.c).
 
 One detail needs measurement before simplifying the current fast-candidate
