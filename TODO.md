@@ -140,7 +140,9 @@ disc image on repeat directory scans; other DM2 archives are still checked.
 test to cover every currently unsupported platform pairing in both direct and
 menu-request modes. The 24-case live CLI matrix rejected each pair before
 startup or scan diagnostics, and `dm2_unsupported_platform_cli` passed against
-the configured build. With all five original-media directories installed,
+the configured build. The regression now runs those routes with `--debug` and
+fails if scan or startup diagnostics appear before the rejection. With all five
+original-media directories installed,
 `--scan-data --debug` found all five games READY in 26.9 seconds on a fresh
 isolated cache and 8.9 seconds on the warm repeat. A five-second warm-run
 sample placed most active samples in DM2 ZIP profile admission and zlib image

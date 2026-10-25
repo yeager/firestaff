@@ -26,13 +26,26 @@ print("PASS: removed DM2 PC-9821 editions are absent from the validator catalog"
 PY
 
 export FIRESTAFF_CONFIG_PATH="$scratch/menu.toml"
+assert_rejected_before_scan() {
+    scan_output=$1
+    context=$2
+    case "$scan_output" in
+        *'asset scan:'*|*'scan complete'*|*'startup game='*|*'Firestaff game-data scan'*)
+            printf 'FAIL: unsupported game/platform pair entered startup or scanning (%s)\n' \
+                "$context" >&2
+            printf '%s\n' "$scan_output" >&2
+            exit 1
+            ;;
+    esac
+}
+
 for platform in pc98 pc-98 pc9821 pc-9821; do
     for route in direct menu; do
         menu_arg=
         if [ "$route" = menu ]; then menu_arg=--menu; fi
         if output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
             --game dm2 --platform "$platform" --data-dir "$archive" \
-            $menu_arg --boot-probe --duration 0 2>&1); then
+            $menu_arg --boot-probe --debug --duration 0 2>&1); then
             echo "FAIL: unsupported platform $platform was accepted ($route)" >&2
             exit 1
         fi
@@ -40,6 +53,7 @@ for platform in pc98 pc-98 pc9821 pc-9821; do
             *'firestaff: --platform must be '*) ;;
             *) printf '%s\n' "$output" >&2; exit 1 ;;
         esac
+        assert_rejected_before_scan "$output" "dm2/$platform/$route"
     done
 done
 for route in direct menu; do
@@ -47,7 +61,7 @@ for route in direct menu; do
     if [ "$route" = menu ]; then menu_arg=--menu; fi
     if output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
         --game dm2 --platform atari --data-dir "$archive" \
-        $menu_arg --duration 0 2>&1); then
+        $menu_arg --debug --duration 0 2>&1); then
         echo "FAIL: unsupported DM2 Atari ST platform was accepted ($route)" >&2
         exit 1
     fi
@@ -55,6 +69,7 @@ for route in direct menu; do
         *"firestaff: game 'dm2' has no launchable version for --platform Atari ST"*) ;;
         *) printf '%s\n' "$output" >&2; exit 1 ;;
     esac
+    assert_rejected_before_scan "$output" "dm2/atari/$route"
 done
 
 # Keep the shared game/platform compatibility guard covered for the other
@@ -69,7 +84,7 @@ expect_unsupported_pair() {
         if [ "$route" = menu ]; then menu_arg=--menu; fi
         if output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
             --game "$game" --platform "$platform" --data-dir "$archive" \
-            $menu_arg --duration 0 2>&1); then
+            $menu_arg --debug --duration 0 2>&1); then
             echo "FAIL: unsupported platform $platform was accepted for $game ($route)" >&2
             exit 1
         fi
@@ -77,6 +92,7 @@ expect_unsupported_pair() {
             *"firestaff: game '$game' has no launchable version for --platform $platform_label"*) ;;
             *) printf '%s\n' "$output" >&2; exit 1 ;;
         esac
+        assert_rejected_before_scan "$output" "$game/$platform/$route"
     done
 }
 
