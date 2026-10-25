@@ -1,5 +1,14 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-25 — verify Japanese keyboard and mouse-panel SDL input
+
+Added the authentic Japan Rev. 1 `theron_v1_jp_sdl_input_events` regression.
+The normal SDL loop verifies keyboard movement, Button II + Right, mouse-panel
+side-steps, turn and forward movement, champion selection, and wait against
+Track 02 MD5 `b7afb338ad31be1025b53f9aff12d73a`. The test passed three
+consecutive runs on TRV2. This verifies input dispatch and bounded world-state
+changes; state-driven visual rendering and direct viewport clicks remain open.
+
 ## 2026-10-25 — make SDL item assertions independent of host language
 
 The authentic USA SDL event test now selects `--lang en` because its item

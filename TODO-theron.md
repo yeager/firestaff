@@ -1,3 +1,14 @@
+## 2026-10-25 — cover Japanese Theron input in the regular SDL loop
+
+- Added `theron_v1_jp_sdl_input_events` against authentic Japanese Rev. 1
+  Track 02. The live SDL event-loop regression covers keyboard backward
+  movement, the Button II + Right chord, right/left mouse-panel side-steps,
+  mouse-panel left-turn/forward movement, champion selection and wait.
+- Three consecutive TRV2 runs passed with Track 02 MD5
+  `b7afb338ad31be1025b53f9aff12d73a`. This verifies native input behavior on
+  the Japanese edition; it does not close the state-driven renderer or direct
+  dungeon-view click gaps.
+
 ## 2026-10-25 — authentic US VDC turn pair for native-renderer work
 
 - Captured the same authentic US Drator save state twice with the PCE module:
