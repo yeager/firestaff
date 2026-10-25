@@ -48,16 +48,29 @@ row to its FACE ordinal, VDP1 command destination, palette/CRAM state, and
 displayed frame timing. Presence or hash of `FACE.BIN` alone cannot relax that
 gate.
 
-## Title-menu evidence (2026-10-25)
+## Retail title-menu evidence (2026-10-25)
 
-An isolated Ymir 0.4.1 `--debug` run with the authenticated Japanese BIOS and
-retail disc shows the native title menu after holding Start. The screen contains
-`NEW GAME`, `CONTINUE`, and `CONFIGURATION`; New Game is initially selected.
-Down selects Continue, and A confirms New Game into the dungeon. A fresh profile
-with no game save leaves Continue on the same menu and does not prove a save-load
-route. This establishes retail behavior only; it is not Firestaff parity.
-Capture details and screenshots are recorded in
-[`parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`](../parity-evidence/verification/keyboard-mouse-debug-20261024/README.md).
+An isolated Ymir `--debug` run with the authenticated Japanese BIOS and retail
+disc reaches the native Nexus title menu. The retained 2026-10-25 screenshot
+shows the three actual choices: `NEW GAME`, `CONTINUE`, and `CONFIGURATION`,
+with New Game selected. Its SHA-256 is
+`d1ec79c6b1e3abcd16837781a1212eedb3cb157562356593ab3ce069b18f2ab4`.
+The 2026-10-24 keyboard run records Start opening the menu, Down selecting
+Continue, and A confirming New Game into the dungeon. The fresh-profile run
+had no game save; selecting Continue therefore did not verify save loading.
+Together, these are retail startup/input observations, not Firestaff parity.
+The capture environment, key mapping, and per-action limitations are recorded
+in [`parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`](../parity-evidence/verification/keyboard-mouse-debug-20261024/README.md).
+
+The current Firestaff startup flow is not the retail title menu: after its
+synthetic 48-frame warning and 54-frame title-ready schedule, accepting the
+title routes to the host save selector when saves exist or directly to champion
+selection when none exist. The retail title instead opens its three-choice menu
+before New Game or Continue proceeds. Configuration behavior and the Saturn
+consumer that draws the retail menu have not yet been bound to a same-session
+VDP1/VDP2 capture. Do not treat the existing host save/champion panels as
+equivalent to the retail title menu, and do not synthesize the missing choices
+or Saturn presentation from decoded MENU.BPK surfaces alone.
 
 The historical direct-CLI probe in
 [`parity-evidence/verification/nexus_cli_direct_start_block_20261024/README.md`](../parity-evidence/verification/nexus_cli_direct_start_block_20261024/README.md)
