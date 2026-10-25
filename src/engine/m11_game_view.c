@@ -37002,12 +37002,13 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 !state->nexusState.hand_pointer_position_known &&
                 state->nexusEngine &&
                 state->nexusEngine->hud_hit_rect_count == NEXUS_HIT_RECT_COUNT) {
-                const Nexus_HitRect *viewport =
-                    &state->nexusEngine->hud_hit_rects[NEXUS_HIT_VIEWPORT];
+                const Nexus_HitRect *game_screen =
+                    &state->nexusEngine->hud_hit_rects[
+                        NEXUS_HIT_FULL_GAME_SCREEN];
                 state->nexusState.hand_pointer_x =
-                    viewport->x1 + (viewport->x2 - viewport->x1) / 2;
+                    game_screen->x1 + (game_screen->x2 - game_screen->x1) / 2;
                 state->nexusState.hand_pointer_y =
-                    viewport->y1 + (viewport->y2 - viewport->y1) / 2;
+                    game_screen->y1 + (game_screen->y2 - game_screen->y1) / 2;
                 state->nexusState.hand_pointer_position_known = 1;
             }
             return M11_GAME_INPUT_REDRAW;
@@ -37059,14 +37060,18 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
              input == M12_MENU_INPUT_NEXUS_POINTER_UP_RIGHT ||
              input == M12_MENU_INPUT_NEXUS_POINTER_DOWN_LEFT ||
              input == M12_MENU_INPUT_NEXUS_POINTER_DOWN_RIGHT)) {
-            const Nexus_HitRect *viewport = NULL;
+            const Nexus_HitRect *game_screen = NULL;
+            int screen_bottom;
             int x, y;
             if (state->nexusEngine->hud_hit_rect_count !=
                     NEXUS_HIT_RECT_COUNT ||
                 !state->nexusState.hand_pointer_position_known) {
                 return M11_GAME_INPUT_IGNORED;
             }
-            viewport = &state->nexusEngine->hud_hit_rects[NEXUS_HIT_VIEWPORT];
+            game_screen = &state->nexusEngine->hud_hit_rects[
+                NEXUS_HIT_FULL_GAME_SCREEN];
+            screen_bottom = game_screen->y2 < M11_FB_HEIGHT
+                ? game_screen->y2 : M11_FB_HEIGHT;
             x = state->nexusState.hand_pointer_x;
             y = state->nexusState.hand_pointer_y;
             switch (input) {
@@ -37080,8 +37085,8 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 case M12_MENU_INPUT_NEXUS_POINTER_DOWN_RIGHT: ++x; ++y; break;
                 default: break;
             }
-            if (x < viewport->x1 || x >= viewport->x2 ||
-                y < viewport->y1 || y >= viewport->y2) {
+            if (x < game_screen->x1 || x >= game_screen->x2 ||
+                y < game_screen->y1 || y >= screen_bottom) {
                 return M11_GAME_INPUT_IGNORED;
             }
             state->nexusState.hand_pointer_x = x;
@@ -39812,13 +39817,17 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         }
     }
     if (state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) {
-        const Nexus_HitRect *viewport = NULL;
+        const Nexus_HitRect *game_screen = NULL;
+        int screen_bottom;
         if (state->nexusEngine &&
             state->nexusEngine->hud_hit_rect_count == NEXUS_HIT_RECT_COUNT) {
-            viewport = &state->nexusEngine->hud_hit_rects[NEXUS_HIT_VIEWPORT];
+            game_screen = &state->nexusEngine->hud_hit_rects[
+                NEXUS_HIT_FULL_GAME_SCREEN];
         }
-        if (viewport && x >= viewport->x1 && x < viewport->x2 &&
-            y >= viewport->y1 && y < viewport->y2) {
+        screen_bottom = game_screen && game_screen->y2 < M11_FB_HEIGHT
+            ? game_screen->y2 : M11_FB_HEIGHT;
+        if (game_screen && x >= game_screen->x1 && x < game_screen->x2 &&
+            y >= game_screen->y1 && y < screen_bottom) {
             state->nexusState.hand_pointer_x = x;
             state->nexusState.hand_pointer_y = y;
             state->nexusState.hand_pointer_position_known = 1;
@@ -75084,7 +75093,7 @@ void M11_GameView_DrawNexusPointerOverlay(const M11_GameViewState* state,
                                           int framebufferHeight) {
     unsigned char rgba[16 * 16 * 4];
     const Nexus_V1_Engine *engine;
-    const Nexus_HitRect *viewport;
+    const Nexus_HitRect *game_screen;
     const uint8_t *texels;
     const uint16_t *palette;
     int x0, y0, y, x;
@@ -75115,11 +75124,11 @@ void M11_GameView_DrawNexusPointerOverlay(const M11_GameViewState* state,
         engine->hud_hit_rect_count != NEXUS_HIT_RECT_COUNT) {
         return;
     }
-    viewport = &engine->hud_hit_rects[NEXUS_HIT_VIEWPORT];
-    if (state->nexusState.hand_pointer_x < viewport->x1 ||
-        state->nexusState.hand_pointer_x >= viewport->x2 ||
-        state->nexusState.hand_pointer_y < viewport->y1 ||
-        state->nexusState.hand_pointer_y >= viewport->y2) {
+    game_screen = &engine->hud_hit_rects[NEXUS_HIT_FULL_GAME_SCREEN];
+    if (state->nexusState.hand_pointer_x < game_screen->x1 ||
+        state->nexusState.hand_pointer_x >= game_screen->x2 ||
+        state->nexusState.hand_pointer_y < game_screen->y1 ||
+        state->nexusState.hand_pointer_y >= game_screen->y2) {
         return;
     }
     memset(rgba, 0, sizeof(rgba));
