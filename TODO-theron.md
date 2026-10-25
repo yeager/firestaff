@@ -42,6 +42,11 @@
 - Theron's loaded-dungeon keyboard aliases already match Firestaff's DM1
   convention: arrows/WASD for forward, back and side-step, with Q/E, Home/End
   and keypad turn aliases. Preserve Theron's source-owned action tokens.
+- The manual's Button II simplified-movement chord is now available natively:
+  holding right mouse while pressing Left/Right Arrow or A/D turns instead of
+  side-stepping. The mapper passed three loops and fresh native Debug USA and
+  JP Track 02 runtime regressions each passed three loops. Direct viewport
+  targeting and state-driven rendering remain open below.
 - SDL key events now map Tab, G, I, P, U, Space and Return to supported native
   champion/item/use/wait commands. The isolated mapper regression passes three
   loops; live SDL gameplay events for those action keys still need an

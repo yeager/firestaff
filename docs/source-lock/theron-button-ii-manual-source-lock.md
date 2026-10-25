@@ -24,11 +24,13 @@ from DM1's regions or the PCE cursor's internal coordinates.
 ## Native Firestaff behavior
 
 Firestaff maps keyboard direction inputs directly to the same four movement
-commands, so it does not need a second modifier mode. The Button II host
-bindings (right mouse, long touch, and cancel/back) must not advance the
-Theron world tick by themselves. `Return` and `Space` remain separate host
-wait/tick shortcuts. This source lock does not authorize item, combat,
-transition, or rendering semantics.
+commands. In a loaded dungeon, holding the right mouse button (host Button II)
+while pressing Left/Right Arrow or A/D maps those directions to turns instead
+of side-steps, matching the manual's simplified-movement chord. The modifier
+clears on right-button release or focus loss. A standalone Button II press,
+long touch or cancel/back input must not advance the Theron world tick.
+`Return` and `Space` remain separate host wait/tick shortcuts. This source
+lock does not authorize item, combat, transition, or rendering semantics.
 
 Greatstone SCK remains a secondary format/extraction reference. It is not used
 to infer this control contract, and its converted data does not replace

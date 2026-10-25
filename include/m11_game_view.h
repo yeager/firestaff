@@ -1182,6 +1182,8 @@ typedef struct {
     int pointerPositionKnown;
     int pointerX;
     int pointerY;
+    /* Host-side Button II modifier state for Theron's simplified movement. */
+    int theronButtonIIHeld;
     /* COMMAND.C G0449 selects the source slot on button-down; a later
      * button-up may place the carried raw Thing through another G0449 slot. */
     int v1InventoryDragActive;

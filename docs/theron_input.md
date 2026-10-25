@@ -23,11 +23,13 @@ are research instruments only and do not run or replace the game in Firestaff.
 
 Desktop mouse controls are provided by Firestaff's native interface. During
 startup, left-click selects and right-click goes back. During dungeon play,
-left-click activates one of the twelve visible control-panel actions, while
-right-click goes back; middle-click is inert. Moving the pointer highlights a
-panel control. Clicks elsewhere in the dungeon do not trigger a game action
-until Theron's original world hit regions are verified. Short and long touch
-gestures send Button I and Button II, respectively.
+left-click activates one of the twelve visible control-panel actions. Holding
+right mouse while pressing a direction key applies the manual's Button II
+simplified-movement modifier; a right click by itself does not advance a tick.
+Middle-click is inert. Moving the pointer highlights a panel control. Clicks
+elsewhere in the dungeon do not trigger a game action until Theron's original
+world hit regions are verified. Short and long touch gestures send Button I
+and Button II, respectively.
 
 ## Startup menu
 
@@ -97,11 +99,10 @@ the highlighted control changes.
   waits. These keys enter the Theron input facade directly; they do not rely
   on the boot-probe-only key mapper.
 - The native mouse panel provides all six Theron movement actions and the
-  implemented champion, item, use and wait actions. Right-click remains
-  cancel/back and does not advance a dungeon tick. The retail manual also
-  describes holding Button II with a direction key as simplified movement;
-  Firestaff's native direction keys already issue those movement commands
-  directly. Authentic US Track 02 and Japan Rev. 1 Track 02 runtime tests
+  implemented champion, item, use and wait actions. The retail manual's
+  Button II chord is available as right-mouse plus Left/Right Arrow or A/D;
+  it turns instead of side-stepping. A standalone right click does not advance
+  a dungeon tick. Authentic US Track 02 and Japan Rev. 1 Track 02 runtime tests
   exercise the panel's turn and movement commands against each region's loaded
   dungeon state. The Japanese test asserts both click receipts and the
   resulting party pose. These checks cover Firestaff's host panel, not original

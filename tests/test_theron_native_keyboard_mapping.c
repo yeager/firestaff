@@ -55,6 +55,37 @@ int main(void)
     CHECK(M11_TheronGameplayInputFromKeycode(SDLK_RETURN) ==
           M12_MENU_INPUT_ACTION);
 
+    CHECK(M11_TheronGameplayInputFromScancodeWithButtonII(
+              SDL_SCANCODE_LEFT, 0) == M12_MENU_INPUT_STRAFE_LEFT);
+    CHECK(M11_TheronGameplayInputFromScancodeWithButtonII(
+              SDL_SCANCODE_LEFT, 1) == M12_MENU_INPUT_TURN_LEFT);
+    CHECK(M11_TheronGameplayInputFromScancodeWithButtonII(
+              SDL_SCANCODE_A, 1) == M12_MENU_INPUT_TURN_LEFT);
+    CHECK(M11_TheronGameplayInputFromScancodeWithButtonII(
+              SDL_SCANCODE_RIGHT, 1) == M12_MENU_INPUT_TURN_RIGHT);
+    CHECK(M11_TheronGameplayInputFromScancodeWithButtonII(
+              SDL_SCANCODE_D, 1) == M12_MENU_INPUT_TURN_RIGHT);
+    CHECK(M11_TheronGameplayInputFromScancodeWithButtonII(
+              SDL_SCANCODE_UP, 1) == M12_MENU_INPUT_UP);
+
+    CHECK(M11_TheronGameplayInputFromKeycodeWithButtonII(
+              SDLK_LEFT, 0) == M12_MENU_INPUT_STRAFE_LEFT);
+    CHECK(M11_TheronGameplayInputFromKeycodeWithButtonII(
+              SDLK_LEFT, 1) == M12_MENU_INPUT_TURN_LEFT);
+    CHECK(M11_TheronGameplayInputFromKeycodeWithButtonII(
+              SDLK_RIGHT, 1) == M12_MENU_INPUT_TURN_RIGHT);
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    CHECK(M11_TheronGameplayInputFromKeycodeWithButtonII(
+              SDLK_A, 1) == M12_MENU_INPUT_TURN_LEFT);
+    CHECK(M11_TheronGameplayInputFromKeycodeWithButtonII(
+              SDLK_D, 1) == M12_MENU_INPUT_TURN_RIGHT);
+#else
+    CHECK(M11_TheronGameplayInputFromKeycodeWithButtonII(
+              SDLK_a, 1) == M12_MENU_INPUT_TURN_LEFT);
+    CHECK(M11_TheronGameplayInputFromKeycodeWithButtonII(
+              SDLK_d, 1) == M12_MENU_INPUT_TURN_RIGHT);
+#endif
+
     if (failures) return 1;
     puts("PASS: native Theron gameplay keyboard mapping");
     return 0;
