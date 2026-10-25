@@ -130,6 +130,15 @@ typedef struct M12_DeferredStartupScanJob {
     M12_AssetScanProgress progress;
 } M12_DeferredStartupScanJob;
 
+enum {
+    M12_DEFERRED_SCAN_DM1 = 1U << 0,
+    M12_DEFERRED_SCAN_CSB = 1U << 1,
+    M12_DEFERRED_SCAN_DM2 = 1U << 2,
+    M12_DEFERRED_SCAN_NEXUS = 1U << 3,
+    M12_DEFERRED_SCAN_THERON = 1U << 4,
+    M12_DEFERRED_SCAN_ALL = (1U << M12_ASSET_GAME_COUNT) - 1U
+};
+
 static unsigned int m12_deferred_game_bit(const char* gameId) {
     if (!gameId) return 0U;
     if (strcmp(gameId, "dm1") == 0) return M12_DEFERRED_SCAN_DM1;
