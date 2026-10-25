@@ -702,97 +702,105 @@ int theron_v1_vram_trace_render_authenticated_screen(Theron_V1_Viewport *vp) {
                (size_t)vp->fb.stride * (size_t)vp->fb.h);
         memset(vp->vdc_source_frame, 0,
                frame_pixels * sizeof(*vp->vdc_source_frame));
-        for (int y = 0; y < vp->vdc_display_height; ++y) {
-            unsigned sy = ((unsigned)vp->vdc_byr + (unsigned)y) &
-                          (unsigned)(bat_height * TQR_TILE_DIM - 1);
-            for (int x = 0; x < vp->vdc_display_width; ++x) {
-                unsigned sx = ((unsigned)vp->vdc_bxr + (unsigned)x) &
-                              (unsigned)(bat_width * TQR_TILE_DIM - 1);
-                int bat_word = (int)((sy >> 3) * (unsigned)bat_width +
-                                     (sx >> 3));
-                int atlas_index = vp->bat_atlas_indices[bat_word];
-                const TQR_Tile *tile;
-                uint8_t decoded[64];
-                uint8_t pixel;
-                if (atlas_index < 0 || atlas_index >= vp->palette.tile_count)
-                    continue;
-                tile = &vp->palette.tiles[atlas_index];
-                if (!tile->data) continue;
-                tqr_decode_tile(decoded, tile->data, tile->bpp);
-                pixel = decoded[(sy & 7u) * 8u + (sx & 7u)];
-                vp->vdc_source_frame[y * vp->vdc_display_width + x] = pixel == 0u
-                    ? 0u
-                    : (uint16_t)(tile->pal_group * TQR_PALETTE_GROUP_SIZE +
-                                 pixel);
-                ++rendered;
+        /* Mednafen 1.32.1 PCE VDC::Run and DrawBG
+         * (src/hw_video/huc6270/vdc.cpp:1387-1437) gate the background on
+         * CR bit 7 and sprites on bit 6. An authenticated snapshot with
+         * either layer disabled remains valid, but must not expose it. */
+        if (vp->vdc_cr & 0x0080u) {
+            for (int y = 0; y < vp->vdc_display_height; ++y) {
+                unsigned sy = ((unsigned)vp->vdc_byr + (unsigned)y) &
+                              (unsigned)(bat_height * TQR_TILE_DIM - 1);
+                for (int x = 0; x < vp->vdc_display_width; ++x) {
+                    unsigned sx = ((unsigned)vp->vdc_bxr + (unsigned)x) &
+                                  (unsigned)(bat_width * TQR_TILE_DIM - 1);
+                    int bat_word = (int)((sy >> 3) * (unsigned)bat_width +
+                                         (sx >> 3));
+                    int atlas_index = vp->bat_atlas_indices[bat_word];
+                    const TQR_Tile *tile;
+                    uint8_t decoded[64];
+                    uint8_t pixel;
+                    if (atlas_index < 0 || atlas_index >= vp->palette.tile_count)
+                        continue;
+                    tile = &vp->palette.tiles[atlas_index];
+                    if (!tile->data) continue;
+                    tqr_decode_tile(decoded, tile->data, tile->bpp);
+                    pixel = decoded[(sy & 7u) * 8u + (sx & 7u)];
+                    vp->vdc_source_frame[y * vp->vdc_display_width + x] = pixel == 0u
+                        ? 0u
+                        : (uint16_t)(tile->pal_group * TQR_PALETTE_GROUP_SIZE +
+                                     pixel);
+                    ++rendered;
+                }
             }
         }
         /* HuC6270 SAT composition.  The hardware selects the first sixteen
          * matching SAT pieces for each scanline, then draws them in reverse
          * order so the lower SAT number wins.  A 32-pixel sprite consumes
          * two pieces, exactly as Mednafen's FetchSpriteData path does. */
-        for (int y = 0; y < vp->vdc_display_height; ++y) {
-            struct SpritePiece {
-                uint16_t flags, pattern, palette;
-                int x, row;
-            } active[16];
-            int active_count = 0;
-            for (int sprite = 0; sprite < 64 && active_count < 16; ++sprite) {
-                const uint8_t *s = vp->vdc_sat_trace_data + sprite * 8;
-                uint16_t syw = (uint16_t)s[0] | ((uint16_t)s[1] << 8);
-                uint16_t sxw = (uint16_t)s[2] | ((uint16_t)s[3] << 8);
-                uint16_t pn = (uint16_t)s[4] | ((uint16_t)s[5] << 8);
-                uint16_t flags = (uint16_t)s[6] | ((uint16_t)s[7] << 8);
-                static const int heights[4] = {16, 32, 64, 64};
-                static const unsigned masks[4] = {~0u, ~2u, ~6u, ~6u};
-                int sy = (int)(syw & 0x03ffu) - 0x40;
-                int height = heights[(flags >> 12) & 3u];
-                int width = (flags & 0x0100u) ? 32 : 16;
-                int row;
-                unsigned base;
-                if (y < sy || y >= sy + height) continue;
-                row = y - sy;
-                if (flags & 0x8000u) row = height - 1 - row;
-                base = ((pn >> 1) & 0x03ffu) & masks[(flags >> 12) & 3u];
-                base |= (unsigned)(row & 0x30) >> 3;
-                if (width == 32) base &= ~1u;
-                for (int half = 0; half < width / 16 && active_count < 16;
-                     ++half) {
-                    unsigned pattern = base | (unsigned)half;
-                    int piece_x = (int)(sxw & 0x03ffu) - 0x20 + half * 16;
-                    if ((flags & 0x0800u) && width == 32) pattern ^= 1u;
-                    active[active_count].flags = flags;
-                    active[active_count].pattern = (uint16_t)pattern;
-                    active[active_count].palette = (uint16_t)((flags & 0xfu) << 4);
-                    active[active_count].x = piece_x;
-                    active[active_count].row = row & 15;
-                    ++active_count;
+        if (vp->vdc_cr & 0x0040u) {
+            for (int y = 0; y < vp->vdc_display_height; ++y) {
+                struct SpritePiece {
+                    uint16_t flags, pattern, palette;
+                    int x, row;
+                } active[16];
+                int active_count = 0;
+                for (int sprite = 0; sprite < 64 && active_count < 16; ++sprite) {
+                    const uint8_t *s = vp->vdc_sat_trace_data + sprite * 8;
+                    uint16_t syw = (uint16_t)s[0] | ((uint16_t)s[1] << 8);
+                    uint16_t sxw = (uint16_t)s[2] | ((uint16_t)s[3] << 8);
+                    uint16_t pn = (uint16_t)s[4] | ((uint16_t)s[5] << 8);
+                    uint16_t flags = (uint16_t)s[6] | ((uint16_t)s[7] << 8);
+                    static const int heights[4] = {16, 32, 64, 64};
+                    static const unsigned masks[4] = {~0u, ~2u, ~6u, ~6u};
+                    int sy = (int)(syw & 0x03ffu) - 0x40;
+                    int height = heights[(flags >> 12) & 3u];
+                    int width = (flags & 0x0100u) ? 32 : 16;
+                    int row;
+                    unsigned base;
+                    if (y < sy || y >= sy + height) continue;
+                    row = y - sy;
+                    if (flags & 0x8000u) row = height - 1 - row;
+                    base = ((pn >> 1) & 0x03ffu) & masks[(flags >> 12) & 3u];
+                    base |= (unsigned)(row & 0x30) >> 3;
+                    if (width == 32) base &= ~1u;
+                    for (int half = 0; half < width / 16 && active_count < 16;
+                         ++half) {
+                        unsigned pattern = base | (unsigned)half;
+                        int piece_x = (int)(sxw & 0x03ffu) - 0x20 + half * 16;
+                        if ((flags & 0x0800u) && width == 32) pattern ^= 1u;
+                        active[active_count].flags = flags;
+                        active[active_count].pattern = (uint16_t)pattern;
+                        active[active_count].palette = (uint16_t)((flags & 0xfu) << 4);
+                        active[active_count].x = piece_x;
+                        active[active_count].row = row & 15;
+                        ++active_count;
+                    }
                 }
-            }
-            for (int ai = active_count - 1; ai >= 0; --ai) {
-                const struct SpritePiece *sp = &active[ai];
-                size_t word_base = (size_t)sp->pattern * 64u +
-                                   (size_t)sp->row;
-                uint16_t planes[4];
-                if (word_base + 48u >= THERON_VRAM_SIZE / 2u) continue;
-                for (int plane = 0; plane < 4; ++plane) {
-                    size_t byte = (word_base + (size_t)plane * 16u) * 2u;
-                    planes[plane] = (uint16_t)vp->vram_trace_data[byte] |
-                        ((uint16_t)vp->vram_trace_data[byte + 1] << 8);
-                }
-                for (int px = 0; px < 16; ++px) {
-                    int bit = (sp->flags & 0x0800u) ? px : 15 - px;
-                    unsigned pixel = 0;
-                    int dx = sp->x + px;
-                    uint16_t *dst;
-                    if (dx < 0 || dx >= vp->vdc_display_width) continue;
-                    for (int plane = 0; plane < 4; ++plane)
-                        pixel |= ((planes[plane] >> bit) & 1u) << plane;
-                    if (!pixel) continue;
-                    dst = &vp->vdc_source_frame[
-                        y * vp->vdc_display_width + dx];
-                    if ((*dst & 0x0fu) == 0u || (sp->flags & 0x0080u))
-                        *dst = (uint16_t)(0x100u | sp->palette | pixel);
+                for (int ai = active_count - 1; ai >= 0; --ai) {
+                    const struct SpritePiece *sp = &active[ai];
+                    size_t word_base = (size_t)sp->pattern * 64u +
+                                       (size_t)sp->row;
+                    uint16_t planes[4];
+                    if (word_base + 48u >= THERON_VRAM_SIZE / 2u) continue;
+                    for (int plane = 0; plane < 4; ++plane) {
+                        size_t byte = (word_base + (size_t)plane * 16u) * 2u;
+                        planes[plane] = (uint16_t)vp->vram_trace_data[byte] |
+                            ((uint16_t)vp->vram_trace_data[byte + 1] << 8);
+                    }
+                    for (int px = 0; px < 16; ++px) {
+                        int bit = (sp->flags & 0x0800u) ? px : 15 - px;
+                        unsigned pixel = 0;
+                        int dx = sp->x + px;
+                        uint16_t *dst;
+                        if (dx < 0 || dx >= vp->vdc_display_width) continue;
+                        for (int plane = 0; plane < 4; ++plane)
+                            pixel |= ((planes[plane] >> bit) & 1u) << plane;
+                        if (!pixel) continue;
+                        dst = &vp->vdc_source_frame[
+                            y * vp->vdc_display_width + dx];
+                        if ((*dst & 0x0fu) == 0u || (sp->flags & 0x0080u))
+                            *dst = (uint16_t)(0x100u | sp->palette | pixel);
+                    }
                 }
             }
         }
