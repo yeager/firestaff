@@ -15,7 +15,7 @@
   against authentic Track 02 data. Current frozen-capture rendering means
   even a correct input transaction would not yet establish end-to-end
   DM1-like playability. See
-  [`theron-pointer-interval-table-candidates-20261025.md`](docs/source-lock/theron-pointer-interval-table-candidates-20261025.md).
+  [`theron-jp-runtime-input-poll-bank-alias-20261009.md`](docs/source-lock/theron-disassembly/theron-jp-runtime-input-poll-bank-alias-20261009.md).
 
 ## 2026-10-25 — Button II simplified-movement chord boundary
 
@@ -66,7 +66,7 @@
   establish a same-edition source join or prove a live click-zone lookup. Do
   not publish hitboxes or route arbitrary viewport clicks until the runtime pointer,
   descriptor records, returned command and state effect are joined. See
-  [`theron-pointer-interval-table-candidates-20261025.md`](docs/source-lock/theron-pointer-interval-table-candidates-20261025.md).
+  [`theron-jp-runtime-input-poll-bank-alias-20261009.md`](docs/source-lock/theron-disassembly/theron-jp-runtime-input-poll-bank-alias-20261009.md).
 
 ## 2026-10-25 — PCE Fast left-input and VDC comparison
 
