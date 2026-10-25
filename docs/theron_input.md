@@ -116,6 +116,9 @@ the highlighted control changes.
   authentic level-0 SANDALS, reselect that source-backed item and drop it;
   three consecutive TRV2 Debug runs verify the mapped pointer receipts and
   resulting party state against USA Track 02.
+  The SDL-loop regression also clicks TURN L, STEP R then STEP L over a
+  source-backed open passage, NEXT and WAIT; the return pose and mapped action
+  receipts are checked against authentic USA Track 02.
 - The host-panel bounds are Firestaff UI and do not reuse DM1's
   C007..C116 pointer tables. The original movement-panel captures identify
   six internal PCE cursor samples, not desktop hitboxes or host coordinates:

@@ -25,6 +25,17 @@
   data. Direct viewport clicks remain unbound, and the native dungeon
   renderer still does not update from world state.
 
+## 2026-10-25 — extend normal SDL mouse-panel gameplay coverage
+
+- The normal SDL event-loop regression now also clicks the panel's left turn,
+  right step, left step, next-champion and wait controls. Against authentic
+  USA Track 02, right then left returns the party along a source-backed open
+  path; the test avoids the blocked west cell beside the initial spawn.
+- This verifies all six movement controls and the panel's champion/wait
+  actions through the live native SDL loop. Original-world hit testing and a
+  state-driven native dungeon renderer remain open, so this is not complete
+  DM1-equivalent playability.
+
 ## 2026-10-25 — verify normal Theron SDL gameplay input
 
 - ✅ Added `theron_v1_sdl_input_events`, which drives the normal SDL event loop
