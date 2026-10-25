@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-25 — route PC Engine Button I Z through native SDL gameplay
+
+The documented desktop `Z` binding for PC Engine Button I now reaches the
+same native Theron action token as Space and Return in both SDL scancode and
+keycode paths. The script-event grammar accepts `key:z`, so the ordinary SDL
+event-loop regression verifies a champion cycle followed by separate `Z` and
+Space wait ticks against authentic USA Track 02 (`TQUS02.bin`, MD5
+`f23601102138f87c33025877767ebf76`). A fresh TRV2 Debug build passed both
+`test_theron_native_keyboard_mapping` and the authentic SDL regression. This
+adds a controller-faithful keyboard alias; it does not claim item-use, direct
+viewport clicks, or state-driven rendering parity.
+
 ## 2026-10-25 — verify Japanese keyboard and mouse-panel SDL input
 
 Added the authentic Japan Rev. 1 `theron_v1_jp_sdl_input_events` regression.

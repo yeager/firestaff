@@ -81,11 +81,11 @@ run_event_route "$action_probe" "$action_output" \
     'click:204:182,click:292:201,wait:8'
 run_event_route "$left_turn_probe" "$left_turn_output" \
     'click:204:144,wait:8'
-# Tab and Space take the same normal SDL keydown path used by a physical
-# keyboard.  Verify the two non-movement actions independently of the host
-# mouse panel on the hash-verified original runtime.
+# Tab, Button I's Z binding, and Space take the same normal SDL keydown path
+# used by a physical keyboard. Verify these non-movement actions independently
+# of the host mouse panel on the hash-verified original runtime.
 run_event_route "$keyboard_action_probe" "$keyboard_action_output" \
-    'key:tab,key:space,wait:8'
+    'key:tab,key:z,key:space,wait:8'
 
 python3 - "$held_probe" "$released_probe" "$panel_probe" "$item_probe" \
     "$side_probe" "$action_probe" "$left_turn_probe" "$keyboard_action_probe" \
@@ -142,8 +142,8 @@ if (left_turn["party"]["mapX"], left_turn["party"]["mapY"],
 if any(probe.get("bootAssetMd5") != expected_md5 for probe in
        (held, released, panel, item, side, actions, left_turn, keyboard_actions)):
     raise SystemExit("FAIL: runtime event route did not use authenticated USA Track 02")
-if keyboard_actions.get("gameTick", 0) < 1:
-    raise SystemExit("FAIL: keyboard Space did not advance an authentic gameplay tick")
+if keyboard_actions.get("gameTick", 0) < 2:
+    raise SystemExit("FAIL: keyboard Z and Space did not advance authentic gameplay ticks")
 
 PY
 grep -Eq 'game-action game=theron tick=[0-9]+ input=pointer-left point=[0-9]+,[0-9]+ result=1 action="ITEM" outcome="ITEM PICKED UP"' "$item_output"
@@ -155,5 +155,5 @@ grep -Eq 'game-action game=theron tick=[0-9]+ input=pointer-left point=204,132 r
 grep -Eq 'game-action game=theron tick=[0-9]+ input=pointer-left point=204,170 result=1 action="CHAMPION" outcome="ACTIVE CHAMPION CHANGED"' "$action_output"
 grep -Eq 'game-action game=theron tick=[0-9]+ input=pointer-left point=292,189 result=1 action="WAIT" outcome="THERON TICK"' "$action_output"
 grep -Eq 'game-action game=theron tick=[0-9]+ input=cycle-champion result=1 action="CHAMPION" outcome="ACTIVE CHAMPION CHANGED"' "$keyboard_action_output"
-grep -Eq 'game-action game=theron tick=[0-9]+ input=action result=1 action="WAIT" outcome="THERON TICK"' "$keyboard_action_output"
+[[ $(grep -Ec 'game-action game=theron tick=[0-9]+ input=action result=1 action="WAIT" outcome="THERON TICK"' "$keyboard_action_output") -ge 2 ]]
 printf '%s\n' 'PASS: authentic Theron SDL routes Button II, keyboard, mouse-panel movement, champion/wait, and source-backed item actions'
