@@ -51,9 +51,16 @@ but the capture does not join that record to a champion or prove a persistent
 item transfer. The screenshots, complete WRAM dumps, source hashes and event
 trace are recorded in
 [`nexus-v1-inventory-button-debug-20261025`](../parity-evidence/verification/nexus-v1-inventory-button-debug-20261025/README.md).
-This advances the retail button/event trace; Firestaff inventory and equip
-actions remain unimplemented until the champion and item-state joins are
-established.
+Retail disassembly clarifies the boundary: event 12 validates and updates a
+global UI selection list, while event 39 invokes a callback on the current UI
+view to change pages. Neither handler writes a champion's equipment slots in
+this capture, and the candidate champion slot pairs remain unchanged. Event 44
+(`EV_INV_EQUIP`) is a separate retail slot-action route: its handler reads and
+writes context slot pairs and checks item compatibility, but its live runtime
+result and context-to-champion mapping have not yet been captured. The button
+trace therefore establishes menu navigation only; Firestaff inventory and
+equip actions remain disabled until event 44's runtime effects and the
+champion/item joins are verified.
 
 ## Retail manual control model
 
