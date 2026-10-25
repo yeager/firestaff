@@ -17,6 +17,12 @@ from pathlib import Path
 
 DM_BASE = 0x06010000
 DM_SHA256 = "3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124"
+JAPANESE_RLOWFIX_SHA256 = "f2686bf3d6b971c5eaa613b2619b7e1bb7958a8045876296a83509f137be18b0"
+PLRD_RECORD_COUNT = 20
+PLRD_RECORD_SIZE = 64
+PLRD_ITEM_PAIR_OFFSET = 24
+PLRD_ITEM_PAIR_COUNT = 10
+NEXUS_ITEM_DEFINITION_COUNT = 243
 EVENT_TABLE_OFFSET = 0x36D04
 EVENT_TABLE_END = 0x37024
 EVENT_NAME_POINTER_TABLE_OFFSET = 0x3ADC4
@@ -77,6 +83,53 @@ def resolve_dm_bin(explicit: Path | None) -> Path:
     if data_dir:
         return Path(data_dir) / "DM.BIN"
     return Path.home() / ".firestaff" / "data" / "nexus" / "DM.BIN"
+
+
+def report_rlowfix_plrd_item_pairs(data: bytes,
+                                   allow_unpinned_hash: bool = False) -> bool:
+    """Summarize authentic PLRD's ten 2-word item pairs per champion row."""
+    digest = hashlib.sha256(data).hexdigest()
+    if digest != JAPANESE_RLOWFIX_SHA256 and not allow_unpinned_hash:
+        print("rlowfix_plrd_pairs=unverified sha256_mismatch")
+        return False
+    marker = b"PLRD"
+    plrd_offset = None
+    search_end = len(data) - 8 - PLRD_RECORD_COUNT * PLRD_RECORD_SIZE - 4
+    for offset in range(max(0, search_end + 1)):
+        if (data[offset:offset + 4] == marker and
+                data[offset + 8 + PLRD_RECORD_COUNT * PLRD_RECORD_SIZE:
+                     offset + 12 + PLRD_RECORD_COUNT * PLRD_RECORD_SIZE] == b"CRET"):
+            plrd_offset = offset + 8
+            break
+    if plrd_offset is None:
+        print("rlowfix_plrd_pairs=invalid missing_complete_plrd_cret")
+        return False
+
+    item_ids = []
+    auxiliary_words = []
+    for champion in range(PLRD_RECORD_COUNT):
+        record = plrd_offset + champion * PLRD_RECORD_SIZE
+        for slot in range(PLRD_ITEM_PAIR_COUNT):
+            pair = record + PLRD_ITEM_PAIR_OFFSET + slot * 4
+            item_id = read_be16(data, pair)
+            auxiliary = read_be16(data, pair + 2)
+            if item_id != 0xFFFF and item_id >= NEXUS_ITEM_DEFINITION_COUNT:
+                print(f"rlowfix_plrd_pairs=invalid row={champion} slot={slot} "
+                      f"item_id=0x{item_id:04x}")
+                return False
+            item_ids.append(item_id)
+            auxiliary_words.append(auxiliary)
+
+    nonempty = sum(item_id != 0xFFFF for item_id in item_ids)
+    empty = len(item_ids) - nonempty
+    auxiliary_values = sorted(set(auxiliary_words))
+    print(f"rlowfix_sha256={digest} "
+          f"canonical_japanese={'verified' if digest == JAPANESE_RLOWFIX_SHA256 else 'unverified'}")
+    print(f"rlowfix_plrd_item_pairs=rows_{PLRD_RECORD_COUNT}x{PLRD_ITEM_PAIR_COUNT} "
+          f"empty={empty} nonempty={nonempty} "
+          f"item_ids=ordinal_or_ffff auxiliary_values="
+          f"{','.join(f'{value:04x}' for value in auxiliary_values)}")
+    return True
 
 
 def read_be32(data: bytes, offset: int) -> int:
@@ -839,6 +892,8 @@ def event_string_offsets(data: bytes) -> list[tuple[int, bytes]]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("dm_bin", nargs="?", type=Path)
+    parser.add_argument("--rlowfix", type=Path,
+                        help="also inspect an authentic RLOWFIX.BIN PLRD roster")
     parser.add_argument("--allow-unpinned-hash", action="store_true",
                         help="report a noncanonical binary without failing")
     args = parser.parse_args()
@@ -908,6 +963,23 @@ def main() -> int:
     if not report_mouse_motion_event_gate(data):
         print("NEXUS_MOUSE_MOTION_EVENT_GATE_INVALID: retail poller changed")
         return 1
+
+    rlowfix_path = args.rlowfix or (Path.home() / ".firestaff" / "data" /
+                                    "nexus" / "RLOWFIX.BIN")
+    if rlowfix_path.exists():
+        try:
+            rlowfix_data = rlowfix_path.read_bytes()
+        except OSError as error:
+            print(f"NEXUS_RLOWFIX_INVALID: {error}")
+            return 1
+        if not report_rlowfix_plrd_item_pairs(rlowfix_data,
+                                               args.allow_unpinned_hash):
+            return 1
+    elif args.rlowfix is not None:
+        print(f"NEXUS_RLOWFIX_INVALID: file not found: {rlowfix_path}")
+        return 1
+    else:
+        print("rlowfix_plrd_pairs=unavailable configure --rlowfix to inspect")
 
     print("interpretation=verified retail hit-region registration, event-44 "
           "dispatch path, and slot-pair access/writes; held-item UI effects "

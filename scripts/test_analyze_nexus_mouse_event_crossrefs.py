@@ -197,7 +197,40 @@ def retail_event_queue_fixture() -> bytearray:
     return data
 
 
+def rlowfix_plrd_fixture() -> bytearray:
+    data = bytearray(8 + trace.PLRD_RECORD_COUNT * trace.PLRD_RECORD_SIZE + 4)
+    data[:4] = b"PLRD"
+    plrd = 8
+    for row in range(trace.PLRD_RECORD_COUNT):
+        for slot in range(trace.PLRD_ITEM_PAIR_COUNT):
+            pair = plrd + row * trace.PLRD_RECORD_SIZE + \
+                trace.PLRD_ITEM_PAIR_OFFSET + slot * 4
+            put_u16(data, pair, 0xFFFF if slot else row)
+            put_u16(data, pair + 2, 0)
+    cret = plrd + trace.PLRD_RECORD_COUNT * trace.PLRD_RECORD_SIZE
+    data[cret:cret + 4] = b"CRET"
+    return data
+
+
 class NexusMouseCallbackTraceTests(unittest.TestCase):
+    def test_rlowfix_plrd_item_pairs_are_reported_without_live_semantics(self) -> None:
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            valid = trace.report_rlowfix_plrd_item_pairs(
+                rlowfix_plrd_fixture(), allow_unpinned_hash=True)
+        self.assertTrue(valid)
+        self.assertIn("rows_20x10 empty=180 nonempty=20", output.getvalue())
+        self.assertIn("auxiliary_values=0000", output.getvalue())
+
+    def test_rlowfix_plrd_rejects_item_id_outside_catalog(self) -> None:
+        data = rlowfix_plrd_fixture()
+        put_u16(data, 8 + trace.PLRD_ITEM_PAIR_OFFSET,
+                trace.NEXUS_ITEM_DEFINITION_COUNT)
+        with contextlib.redirect_stdout(io.StringIO()):
+            valid = trace.report_rlowfix_plrd_item_pairs(
+                data, allow_unpinned_hash=True)
+        self.assertFalse(valid)
+
     def report(self, data: bytes) -> tuple[bool, str]:
         output = io.StringIO()
         with contextlib.redirect_stdout(output):

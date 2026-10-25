@@ -162,8 +162,11 @@ on the PRS3 menu capture. See
   base `0x0607fba0 + context*0x13c + 0x110 + slot*4`, and 40-byte item
   metadata records. Slot 7 has a separate path. Firestaff only has a partial
   item-ID fit: it lacks the opaque second word, and context-to-champion mapping
-  is unproven. The helper that transfers the held pair through global UI state
-  and the visible post-click result also remain unverified. The eight authentic action rectangles at
+  is unproven. The hash-pinned Japanese RLOWFIX scan finds 20 PLRD rows with
+  ten pairs each: 64 nonempty item ordinals, 136 empty pairs, and zero in all
+  second words. This does not identify auxiliary data for live items. The
+  helper that transfers the held pair through global UI state and the visible
+  post-click result also remain unverified. The eight authentic action rectangles at
   `DM.BIN:0x3850c` are verified to queue `EV_INV_EQUIP` with slot arguments
   0--7 through the retail bounds scanner at `0x24ed6`. Bind that event's
   actual retail state owner to the authentic champion/inventory model before
