@@ -53,4 +53,38 @@ if ! grep -Fq 'selected game=dm1 platform=PC edition=pc34-en' "$log" ||
     exit 1
 fi
 
-echo 'PASS: Swedish DM1 PC original-media startup retains raw scan keys and prints localized debug labels'
+echo 'PASS: --lang sv DM1 PC original-media startup prints localized scan labels'
+
+# The regular settings route must localize the synchronous platform scan too.
+# This is distinct from --lang, which explicitly overrides saved launcher
+# settings. Keep the saved profile isolated and use the same authenticated
+# original PC archive without copying or modifying its media.
+saved_home="$scratch/saved-profile-home"
+saved_log="$scratch/saved-profile-firestaff.log"
+mkdir -p "$saved_home"
+cat > "$saved_home/config.toml" <<'EOF'
+language_index = 1
+language_explicit = 1
+EOF
+if ! HOME="$saved_home" USERPROFILE="$saved_home" \
+     XDG_CONFIG_HOME="$saved_home" APPDATA="$saved_home" \
+     FIRESTAFF_CONFIG_PATH="$saved_home/config.toml" \
+     FIRESTAFF_LOCALE_DIR="${FIRESTAFF_LOCALE_DIR:-$script_dir/../po}" \
+     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+     "$app" --game dm1 --platform pc --data-dir "$archive" \
+         --debug --boot-probe --boot-probe-frames 0 >"$saved_log" 2>&1; then
+    cat "$saved_log" >&2
+    exit 1
+fi
+
+if ! grep -Fq \
+    'task=search root task-label="KONTROLLERAR KANDIDATER FÖR ORIGINALFILER"' \
+    "$saved_log" ||
+   ! grep -Fq 'selected game=dm1 platform=PC edition=pc34-en' "$saved_log" ||
+   ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=dm1' "$saved_log"; then
+    echo 'FAIL: saved Swedish launcher language was not used by the DM1 PC startup scan' >&2
+    cat "$saved_log" >&2
+    exit 1
+fi
+
+echo 'PASS: saved Swedish launcher profile localizes the authentic DM1 PC startup scan'
