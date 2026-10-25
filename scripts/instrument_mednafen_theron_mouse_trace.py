@@ -243,9 +243,24 @@ def instrument(root: Path) -> None:
         " fflush(TheronPointerTrace);\n"
         " TheronPointerTraceCount++;\n"
         "}\n"
+        "static void TheronTracePointerRegisters(unsigned int pc,\n"
+        "                                        unsigned int physical_pc,\n"
+        "                                        uint8 a, uint8 x, uint8 y,\n"
+        "                                        uint8 p, uint8 s,\n"
+        "                                        uint8 opcode, uint8 byte1,\n"
+        "                                        uint8 byte2)\n"
+        "{\n"
+        " if(!TheronPointerTrace || TheronPointerTraceCount >= 20000) return;\n"
+        " fprintf(TheronPointerTrace,\n"
+        "         \"pointer_regs sequence=%u pc=%04x physical_pc=%06x opcode=%02x byte1=%02x byte2=%02x a=%02x x=%02x y=%02x p=%02x s=%02x\\n\",\n"
+        "         TheronPointerTraceCount++, pc & 0xFFFF, physical_pc & 0xFFFFFF,\n"
+        "         opcode, byte1, byte2, a, x, y, p, s);\n"
+        " fflush(TheronPointerTrace);\n"
+        "}\n"
         "static bool TheronPointerAddress(unsigned int A)\n"
         "{\n"
-        " return (A >= 0x77CE && A <= 0x77DB) ||\n"
+        " return (A >= 0x287F && A <= 0x2896) ||\n"
+        "        (A >= 0x77CE && A <= 0x77DB) ||\n"
         "        (A >= 0x77DC && A <= 0x77E9) ||\n"
         "        (A >= 0xD5A7 && A <= 0xD5B6) ||\n"
         "        (A >= 0x00C5 && A <= 0x00CA) || A == 0x2911 ||\n"
@@ -253,18 +268,29 @@ def instrument(root: Path) -> None:
         "        A == 0x2E3B || A == 0x2E7A || A == 0x2E7B ||\n"
         "        A == 0x2EBA || A == 0x2EBB;\n"
         "}\n"
+        "static bool TheronPointerCodePC(unsigned int pc)\n"
+        "{\n"
+        " return (pc >= 0xD120 && pc <= 0xD1FF) ||\n"
+        "        (pc >= 0xD2B0 && pc <= 0xD2FF) ||\n"
+        "        (pc >= 0xD515 && pc <= 0xD5A6);\n"
+        "}\n"
         "static INLINE uint8 RdMem(unsigned int A)\n"
         "{\n"
         " uint8 wmpr = HuCPU.MPR[A >> 13];\n"
         " uint32 physical_address = (wmpr << 13) | (A & 0x1FFF);\n"
         " uint8 value = HuCPU.PCERead[wmpr](physical_address);\n"
         " if(TheronPointerAddress(A) ||\n"
-        "    (TheronTraceInstructionPC >= 0xD515 &&\n"
-        "     TheronTraceInstructionPC <= 0xD5A6))\n"
+        "    TheronPointerCodePC(TheronTraceInstructionPC))\n"
         "  TheronTracePointerAccess(\"guest_read\", A, physical_address, value, wmpr);\n"
         " TheronTraceMainRAMConsumerRead(A, physical_address, value);\n"
         " return(value);\n"
         "}\n",
+    )
+    replace_once(
+        root,
+        "src/pce_fast/huc6280.cpp",
+        "#define LD_IY(op)\t{ unsigned int EA; uint8 x; GetIY(EA); x=RdMem(EA); op; break; }\n",
+        "#define LD_IY(op)\t{ unsigned int EA; uint8 x; GetIY(EA); x=RdMem(EA); if(TheronPointerCodePC(TheronTraceInstructionPC)) { uint8 wmpr = HuCPU.MPR[EA >> 13]; TheronTracePointerAccess(\"guest_effective_read\", EA, (wmpr << 13) | (EA & 0x1FFF), x, wmpr); } op; break; }\n",
     )
     replace_once(
         root,
@@ -274,10 +300,18 @@ def instrument(root: Path) -> None:
         "  if(Theron3879FastTargetStepsRemaining ||\n",
         "  TheronTraceInstructionPC = GetRealPC();\n"
         "  TheronTraceInstructionPhysicalPC = (HuCPU.MPR[TheronTraceInstructionPC >> 13] << 13) | (TheronTraceInstructionPC & 0x1FFF);\n"
-        "  if(TheronTraceInstructionPC >= 0xD515 && TheronTraceInstructionPC <= 0xD5A6)\n"
+        "  if(TheronPointerCodePC(TheronTraceInstructionPC))\n"
+        "  {\n"
         "   TheronTracePointerAccess(\"pointer_pc\", TheronTraceInstructionPC,\n"
         "                            TheronTraceInstructionPhysicalPC, 0,\n"
-        "                            HuCPU.MPR[TheronTraceInstructionPC >> 13]);\n\n"
+        "                            HuCPU.MPR[TheronTraceInstructionPC >> 13]);\n"
+        "   TheronTracePointerRegisters(TheronTraceInstructionPC,\n"
+        "                              TheronTraceInstructionPhysicalPC,\n"
+        "                              HU_A, HU_X, HU_Y, HU_P, HU_S,\n"
+        "                              RdOp(TheronTraceInstructionPC),\n"
+        "                              RdOp(TheronTraceInstructionPC + 1),\n"
+        "                              RdOp(TheronTraceInstructionPC + 2));\n"
+        "  }\n\n"
         "  if(Theron3879FastTargetStepsRemaining ||\n",
     )
     replace_once(
@@ -379,8 +413,7 @@ def instrument(root: Path) -> None:
         " uint8 wmpr = HuCPU.MPR[A >> 13];\n"
         " uint32 physical = (wmpr << 13) | (A & 0x1FFF);\n"
         " if(TheronPointerAddress(A) ||\n"
-        "    (TheronTraceInstructionPC >= 0xD515 &&\n"
-        "     TheronTraceInstructionPC <= 0xD5A6))\n"
+        "    TheronPointerCodePC(TheronTraceInstructionPC))\n"
         "  TheronTracePointerAccess(\"guest_write\", A, physical, V, wmpr);\n"
         " HuCPU.PCEWrite[wmpr](physical, V);\n"
         "}\n",

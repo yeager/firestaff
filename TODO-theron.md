@@ -89,6 +89,25 @@
   descriptor records, returned command and state effect are joined. See
   [`theron-jp-runtime-input-poll-bank-alias-20261009.md`](docs/source-lock/theron-disassembly/theron-jp-runtime-input-poll-bank-alias-20261009.md).
 
+## 2026-10-25 — dynamic pointer path still lacks authentic runtime receipts
+
+- Instrumented PCE Fast observations from the preserved emulator-created
+  dungeon state show that logical `$D52D..$D551` executes different bytes from
+  the static Track 02 candidate: that runtime bank dispatches to `$D165`, then
+  enters the `$D123` six-rectangle classifier through `$D1C8`. This explains
+  why the static `$D588` candidate was not reached in those runs. The classifier
+  reads `$287F..$2896`; in this particular state all six tested rectangle
+  starts were `$FF`, so no target was selected. These are emulator observations
+  from a saved state, not proof of a live original-data target table or click
+  effect.
+- The attempted repeat captures using the baseline, F5, and user-created state
+  were rejected by the capture gate: each reported `authenticated_cd_ram=0`
+  and exited with status 124. Their traces cannot establish authentic runtime
+  behavior. Reacquire a receipt-backed state and trace the dynamic bank and
+  rectangle-table initialization before implementing world clicks. Keep native
+  world clicks blocked until the same-edition target, command dispatch, and
+  resulting game-state effect are all joined.
+
 ## 2026-10-25 — PCE Fast left-input and VDC comparison
 
 - Replayed the preserved authentic Japanese Ak-Tu-Ba dungeon state on TRV2
