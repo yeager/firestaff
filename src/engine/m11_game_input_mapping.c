@@ -295,6 +295,54 @@ M12_MenuInput M11_TheronGameplayInputFromScancodeWithButtonII(
     return M11_TheronGameplayInputFromScancode(scancode);
 }
 
+M12_MenuInput M11_TheronHeldMotionInputFromScancode(int scancode,
+                                                    int buttonIIHeld)
+{
+    M12_MenuInput input =
+        M11_TheronGameplayInputFromScancodeWithButtonII(scancode,
+                                                        buttonIIHeld);
+    switch (input) {
+        case M12_MENU_INPUT_UP:
+        case M12_MENU_INPUT_DOWN:
+        case M12_MENU_INPUT_TURN_LEFT:
+        case M12_MENU_INPUT_TURN_RIGHT:
+        case M12_MENU_INPUT_STRAFE_LEFT:
+        case M12_MENU_INPUT_STRAFE_RIGHT:
+            return input;
+        default:
+            return M12_MENU_INPUT_NONE;
+    }
+}
+
+M12_MenuInput M11_TheronHeldMotionInputFromKeyboardState(
+    const uint8_t* keys, int keyCount, int buttonIIHeld)
+{
+    static const SDL_Scancode preferred[] = {
+        SDL_SCANCODE_UP, SDL_SCANCODE_W,
+        SDL_SCANCODE_DOWN, SDL_SCANCODE_S,
+        SDL_SCANCODE_LEFT, SDL_SCANCODE_A,
+        SDL_SCANCODE_RIGHT, SDL_SCANCODE_D,
+        SDL_SCANCODE_HOME, SDL_SCANCODE_Q,
+        SDL_SCANCODE_END, SDL_SCANCODE_E,
+        SDL_SCANCODE_KP_5, SDL_SCANCODE_KP_8, SDL_SCANCODE_KP_2,
+        SDL_SCANCODE_KP_1, SDL_SCANCODE_KP_3,
+        SDL_SCANCODE_KP_4, SDL_SCANCODE_KP_6
+    };
+    int i;
+
+    if (!keys || keyCount <= 0) return M12_MENU_INPUT_NONE;
+    for (i = 0; i < (int)(sizeof(preferred) / sizeof(preferred[0])); ++i) {
+        const int scancode = (int)preferred[i];
+        if (scancode >= 0 && scancode < keyCount && keys[scancode]) {
+            const M12_MenuInput input =
+                M11_TheronHeldMotionInputFromScancode(scancode,
+                                                      buttonIIHeld);
+            if (input != M12_MENU_INPUT_NONE) return input;
+        }
+    }
+    return M12_MENU_INPUT_NONE;
+}
+
 M12_MenuInput M11_TheronGameplayInputFromKeycode(int keycode)
 {
     /* SDL keycode fallback for events that do not carry a useful scancode. */

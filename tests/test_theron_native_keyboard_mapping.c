@@ -1,6 +1,7 @@
 #include "main_loop_m11.h"
 
 #include <stdio.h>
+#include <string.h>
 
 static int failures;
 
@@ -13,8 +14,29 @@ static int failures;
 
 int main(void)
 {
+    uint8_t heldKeys[SDL_SCANCODE_COUNT];
+
+    memset(heldKeys, 0, sizeof(heldKeys));
+    heldKeys[SDL_SCANCODE_KP_8] = 1;
+    CHECK(M11_TheronHeldMotionInputFromKeyboardState(
+              heldKeys, (int)sizeof(heldKeys), 0) == M12_MENU_INPUT_UP);
+    CHECK(M11_TheronHeldMotionInputFromKeyboardState(
+              heldKeys, (int)sizeof(heldKeys), 1) == M12_MENU_INPUT_UP);
+    memset(heldKeys, 0, sizeof(heldKeys));
+    heldKeys[SDL_SCANCODE_TAB] = 1;
+    CHECK(M11_TheronHeldMotionInputFromKeyboardState(
+              heldKeys, (int)sizeof(heldKeys), 0) == M12_MENU_INPUT_NONE);
+
     CHECK(M11_TheronGameplayInputFromScancode(SDL_SCANCODE_UP) ==
           M12_MENU_INPUT_UP);
+    CHECK(M11_TheronGameplayInputFromScancode(SDL_SCANCODE_KP_8) ==
+          M12_MENU_INPUT_UP);
+    CHECK(M11_TheronHeldMotionInputFromScancode(SDL_SCANCODE_KP_8, 0) ==
+          M12_MENU_INPUT_UP);
+    CHECK(M11_TheronHeldMotionInputFromScancode(SDL_SCANCODE_KP_8, 1) ==
+          M12_MENU_INPUT_UP);
+    CHECK(M11_TheronHeldMotionInputFromScancode(SDL_SCANCODE_TAB, 0) ==
+          M12_MENU_INPUT_NONE);
     CHECK(M11_TheronGameplayInputFromScancode(SDL_SCANCODE_LEFT) ==
           M12_MENU_INPUT_STRAFE_LEFT);
     CHECK(M11_TheronGameplayInputFromScancode(SDL_SCANCODE_Q) ==

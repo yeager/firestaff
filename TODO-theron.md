@@ -7596,3 +7596,16 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   so the linked test and authentic runtime loop remain outstanding.
 - Full keyboard/mouse playability remains open: this does not add a native
   state-driven dungeon renderer or bind original viewport click targets.
+
+## 2026-10-25 — repeat held Theron keypad 8 movement
+
+- The gameplay key map accepted keypad 8 as forward, but the shared held-key
+  sampler only polled keypad 5 and the other movement aliases. Add keypad 8
+  to Theron's sampler only and route held keys through a movement-only mapper
+  so action keys such as Tab do not repeat every frame or alter other games.
+- The native keyboard mapping regression now checks held keypad 8 both with
+  and without Button II, plus rejection of a non-movement action key. The
+  focused TRV2 test compiled and passed three consecutive loops.
+- Keypad 8 is a Firestaff convenience alias. It is not claimed as a retail
+  PC Engine control. Direct dungeon-view mouse targeting remains blocked on
+  the missing source-bound world-to-screen consumer.
