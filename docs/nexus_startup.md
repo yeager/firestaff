@@ -46,10 +46,12 @@ Together, these are retail startup/input observations, not Firestaff parity.
 The capture environment, key mapping, and per-action limitations are recorded
 in [`parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`](../parity-evidence/verification/keyboard-mouse-debug-20261024/README.md).
 
-The current Firestaff startup flow is not the retail title menu: after its
-synthetic 48-frame warning and 54-frame title-ready schedule, accepting the
-title routes to the host save selector when saves exist or directly to champion
-selection when none exist. The retail title instead opens its three-choice menu
+Firestaff's source-level startup helpers do not implement the retail title
+menu. `nexus_v1_startup_boot_handle_input` uses the synthetic warning/title
+schedule and selects a host save or champion action from the available slot
+mask. That helper logic is not proof of a reachable production menu: the
+authentic launch route remains blocked by its menu-surface and consumer
+evidence gates, as described below. The retail title instead opens its three-choice menu
 before New Game or Continue proceeds. Configuration behavior and the Saturn
 consumer that draws the retail menu have not yet been bound to a same-session
 VDP1/VDP2 capture. Do not treat the existing host save/champion panels as
