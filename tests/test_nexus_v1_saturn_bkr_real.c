@@ -70,6 +70,9 @@ int main(void)
         size_t image_size = 0U;
         Nexus_V1_SaturnBkrEntry entries[NEXUS_V1_SATURN_BKR_MAX_ENTRIES];
         Nexus_V1_SaturnBkrReceipt receipt;
+        int image_hash_valid;
+        int parse_valid;
+        int payload_hash_valid = 0;
         int path_length = snprintf(path, sizeof(path), "%s/%s", root,
                                    corpus[file_index].filename);
         if (path_length < 0 || (size_t)path_length >= sizeof(path) ||
@@ -80,14 +83,25 @@ int main(void)
             continue;
         }
         payload = (uint8_t *)calloc(image_size, 1U);
-        if (!payload ||
+        memset(entries, 0, sizeof(entries));
+        memset(&receipt, 0, sizeof(receipt));
+        image_hash_valid = payload &&
             firestaff_x68k_media_receipt_sha256_hex(
-                image, image_size, digest, sizeof(digest)) != 0 ||
-            strcmp(digest, corpus[file_index].sha256) != 0 ||
-            !nexus_v1_saturn_bkr_parse(
-                image, image_size, entries,
-                NEXUS_V1_SATURN_BKR_MAX_ENTRIES,
-                payload, image_size, &receipt) ||
+                image, image_size, digest, sizeof(digest)) == 0 &&
+            strcmp(digest, corpus[file_index].sha256) == 0;
+        parse_valid = payload && nexus_v1_saturn_bkr_parse(
+            image, image_size, entries, NEXUS_V1_SATURN_BKR_MAX_ENTRIES,
+            payload, image_size, &receipt);
+        if (parse_valid && receipt.entry_count == 1U &&
+            entries[0].payload_offset + entries[0].payload_bytes <= image_size) {
+            payload_hash_valid =
+                firestaff_x68k_media_receipt_sha256_hex(
+                    payload + entries[0].payload_offset,
+                    entries[0].payload_bytes, payload_digest,
+                    sizeof(payload_digest)) == 0 &&
+                strcmp(payload_digest, corpus[file_index].payload_sha256) == 0;
+        }
+        if (!image_hash_valid || !parse_valid ||
             !receipt.valid || receipt.image_bytes != 32768U ||
             receipt.block_bytes != 512U || receipt.block_count != 64U ||
             receipt.entry_count != 1U || receipt.payload_bytes != 20480U ||
@@ -95,12 +109,16 @@ int main(void)
             entries[0].payload_bytes != 20480U ||
             entries[0].allocated_block_count != 354U ||
             entries[0].payload_offset != 0U ||
-            firestaff_x68k_media_receipt_sha256_hex(
-                payload, entries[0].payload_bytes, payload_digest,
-                sizeof(payload_digest)) != 0 ||
-            strcmp(payload_digest, corpus[file_index].payload_sha256) != 0) {
-            fprintf(stderr, "FAIL: authentic BKR parse/hash mismatch: %s\n",
-                    corpus[file_index].filename);
+            !payload_hash_valid) {
+            fprintf(stderr,
+                    "FAIL: authentic BKR parse/hash mismatch: %s "
+                    "image_hash=%d parse=%d valid=%d geometry=%u/%u "
+                    "entries=%u payload=%u name=%s allocated=%u "
+                    "payload_hash=%d\n",
+                    corpus[file_index].filename, image_hash_valid, parse_valid,
+                    receipt.valid, receipt.block_bytes, receipt.block_count,
+                    receipt.entry_count, receipt.payload_bytes, entries[0].name,
+                    entries[0].allocated_block_count, payload_hash_valid);
             failed = 1;
         } else {
             payloads[file_index] = payload;
