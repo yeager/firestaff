@@ -38295,16 +38295,15 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
     return M11_GAME_INPUT_IGNORED;
 }
 
-/* Firestaff's desktop mouse uses the authentic Nexus viewport rectangle as
- * a directional control surface.  This is a host-input layout, not a claim
+/* Firestaff's desktop mouse uses the authentic Nexus movement-pad rectangle
+ * as a directional control surface. This is a host-input layout, not a claim
  * about Saturn mouse semantics: the retail manual and Ymir captures verify
  * the movement commands, while the Saturn hit-table's individual callback
  * actions remain unresolved. */
 static M11_GameInputResult m11_nexus_handle_gameplay_pointer(
     M11_GameViewState *state, int x, int y)
 {
-    const Nexus_HitRect *viewport;
-    int local_x, local_y;
+    const Nexus_HitRect *pad;
     M12_MenuInput input;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_NEXUS_DGN ||
@@ -38317,27 +38316,13 @@ static M11_GameInputResult m11_nexus_handle_gameplay_pointer(
         return M11_GAME_INPUT_IGNORED;
     }
 
-    viewport = &state->nexusEngine->hud_hit_rects[NEXUS_HIT_VIEWPORT];
-    if (x < viewport->x1 || x >= viewport->x2 ||
-        y < viewport->y1 || y >= viewport->y2) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-
-    local_x = x - viewport->x1;
-    local_y = y - viewport->y1;
     if (state->nexusState.hand_pointer_active) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (local_x < (viewport->x2 - viewport->x1) / 3) {
-        input = local_y < (viewport->y2 - viewport->y1) * 2 / 3
-            ? M12_MENU_INPUT_TURN_LEFT : M12_MENU_INPUT_STRAFE_LEFT;
-    } else if (local_x >= (viewport->x2 - viewport->x1) * 2 / 3) {
-        input = local_y < (viewport->y2 - viewport->y1) * 2 / 3
-            ? M12_MENU_INPUT_TURN_RIGHT : M12_MENU_INPUT_STRAFE_RIGHT;
-    } else {
-        input = local_y < (viewport->y2 - viewport->y1) / 2
-            ? M12_MENU_INPUT_UP : M12_MENU_INPUT_DOWN;
-    }
+    pad = &state->nexusEngine->hud_hit_rects[NEXUS_HIT_MOVEMENT_PAD];
+    input = M11_NexusMovementPadInputAt(
+        x, y, pad->x1, pad->y1, pad->x2, pad->y2);
+    if (input == M12_MENU_INPUT_NONE) return M11_GAME_INPUT_IGNORED;
 
     return M11_GameView_HandleInput(state, input);
 }

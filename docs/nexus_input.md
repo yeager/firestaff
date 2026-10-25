@@ -138,10 +138,11 @@ rectangle parsed from `DM.BIN` to send the corresponding desktop movement
 command: the upper row maps to turn left, forward, and turn right; the lower
 row maps to strafe left, backward, and strafe right. This host mapping uses a
 retail rectangle but does not claim to reproduce Saturn ShuttleMouse or the
-retail callback's unresolved cell semantics. Other buttons and clicks outside
-the pad do nothing. With pointer mode on, mouse motion moves the logical hand
-pointer across the viewport and HUD. Mouse clicks remain inert while the
-callback's HUD-region action semantics are unresolved.
+retail callback's unresolved cell semantics. Every Firestaff pointer-button
+entry point uses that same rectangle and six-cell mapping; clicks elsewhere
+do nothing. With pointer mode on, mouse motion moves the logical hand pointer
+across the viewport and HUD. Mouse clicks remain inert while the callback's
+HUD-region action semantics are unresolved.
 
 `scripts/analyze_nexus_mouse_event_crossrefs.py` inventories direct SH-2
 `MOV.L @(disp,PC),Rn` references in the hash-verified retail `DM.BIN`. In the

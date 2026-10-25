@@ -183,7 +183,10 @@ on the PRS3 menu capture. See
   WASD/arrows or mouse movement, including captured diagonal WASD movement,
   and the authentic retail hand sprite joined from
   ITEM.IBS image 65/palette 6 against Ymir VDP1 capture. Pointer click actions
-  remain open until their retail source joins are captured.
+  remain open until their retail source joins are captured. All host
+  pointer-button routes now use the same parsed retail movement-pad rectangle
+  and six-cell desktop mapping; this does not claim Saturn ShuttleMouse
+  parity. The authentic callback's click-action semantics remain unresolved.
 
 - Input parity follow-up: Firestaff routes Tab to cycle the loaded Nexus
   party leader. Authentic Ymir `--debug` captures confirm retail L/R changes
