@@ -55193,10 +55193,10 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_input_remap_roundtrip.c"
     )
 endif()
 
-# Nexus keyboard and hand-pointer host-input contract. Nexus movement keys
-# defer to the shared M11 action map (the same desktop mapping as DM1), while
-# Z and the four arrow keys are reserved for explicit pointer controls.
-# This data-free regression does not emulate or invent retail game content.
+# Nexus keyboard and hand-pointer host-input contract. Nexus A/D turns follow
+# the authenticated Ymir ControlPad capture; other movement keys use the
+# shared M11 action map. Z toggles the hand pointer and arrows move it in that
+# mode. This data-free regression does not invent retail game content.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_desktop_input_mapping.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/m11_game_input_mapping.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/input_remap_m11.c")

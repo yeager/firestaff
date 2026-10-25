@@ -64,10 +64,12 @@ or guessed coordinates.
 
 ## Firestaff keyboard routing
 
-The M11 host uses the same desktop keyboard layout for Nexus as for DM1:
-W/S move forward/backward, A/D and left/right arrows strafe, and Q/E or
-Home/End turn. This is a host keyboard layout; Saturn D-pad left/right turn
-semantics remain specific to a connected Saturn ControlPad.
+The Nexus host keeps W/S for forward/backward and uses A/D to turn left/right,
+matching the authenticated Ymir ControlPad capture. Left/right arrow keys
+remain available for strafing through the shared M11 action map; Q/E and
+Home/End also turn. DM1 retains its own A/D strafe bindings. The Nexus-specific
+A/D mapping is evidence-based: Ymir mapped those keys to the Saturn D-pad, and
+the retail D-pad turns in movement mode.
 
 The retail game tick accepts only the six basic movement commands
 (forward/backward, turn left/right, and strafe left/right) against the

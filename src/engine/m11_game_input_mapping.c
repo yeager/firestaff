@@ -106,12 +106,15 @@ M12_MenuInput M11_TheronNavigationInputFromScancode(int scancode)
 
 M12_MenuInput M11_NexusMovementInputFromScancode(int scancode)
 {
-    /* Nexus gameplay uses the same desktop controls as DM1. Leave every
-     * scancode to the shared M11 action map: A/D and the arrow keys strafe,
-     * while Q/E and Home/End turn.  The Saturn D-pad's left/right turn
-     * semantics are not imposed on a desktop keyboard. */
-    (void)scancode;
-    return M12_MENU_INPUT_NONE;
+    /* The authenticated Ymir ControlPad profile maps host A/D to Saturn
+     * D-pad left/right, which turn in Nexus movement mode. Keep that
+     * game-specific mapping here; DM1 continues to use the shared A/D
+     * strafe bindings. Arrow keys still reach the shared map for strafing. */
+    switch ((SDL_Scancode)scancode) {
+        case SDL_SCANCODE_A: return M12_MENU_INPUT_TURN_LEFT;
+        case SDL_SCANCODE_D: return M12_MENU_INPUT_TURN_RIGHT;
+        default: return M12_MENU_INPUT_NONE;
+    }
 }
 
 M12_MenuInput M11_NexusPointerInputFromScancode(int scancode)

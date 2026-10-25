@@ -14,15 +14,23 @@ static int expect(int condition, const char* message) {
 int main(void) {
     M11_Input_SetDefaults();
 
-    /* Nexus intentionally falls through to the shared DM1 desktop motion
-     * map. Keep the retail D-pad's turn semantics out of host keyboard input. */
+    /* Nexus uses its captured D-pad turn mapping for A/D and keeps the shared
+     * DM1 bindings for the remaining movement keys. */
     if (!expect(M11_NexusMovementInputFromScancode(SDL_SCANCODE_W) ==
                     M12_MENU_INPUT_NONE,
                 "Nexus movement mapper should defer W to the shared map"))
         return 1;
+    if (!expect(M11_NexusMovementInputFromScancode(SDL_SCANCODE_A) ==
+                    M12_MENU_INPUT_TURN_LEFT,
+                "Nexus A should turn left as in the retail ControlPad capture"))
+        return 1;
+    if (!expect(M11_NexusMovementInputFromScancode(SDL_SCANCODE_D) ==
+                    M12_MENU_INPUT_TURN_RIGHT,
+                "Nexus D should turn right as in the retail ControlPad capture"))
+        return 1;
     if (!expect(M11_NexusMovementInputFromScancode(SDL_SCANCODE_LEFT) ==
                     M12_MENU_INPUT_NONE,
-                "Nexus movement mapper should defer arrows to the shared map"))
+                "Nexus arrows should defer to the shared strafe bindings"))
         return 1;
 
     if (!expect(M11_Input_ActionForScancode(SDL_SCANCODE_W) ==
@@ -37,6 +45,12 @@ int main(void) {
     if (!expect(M11_Input_ActionForScancode(SDL_SCANCODE_D) ==
                     M11_ACTION_STRAFE_RIGHT,
                 "shared DM1 D binding should strafe right")) return 1;
+    if (!expect(M11_Input_ActionForScancode(SDL_SCANCODE_LEFT) ==
+                    M11_ACTION_STRAFE_LEFT,
+                "shared DM1 left-arrow binding should strafe left")) return 1;
+    if (!expect(M11_Input_ActionForScancode(SDL_SCANCODE_RIGHT) ==
+                    M11_ACTION_STRAFE_RIGHT,
+                "shared DM1 right-arrow binding should strafe right")) return 1;
     if (!expect(M11_Input_ActionForScancode(SDL_SCANCODE_Q) ==
                     M11_ACTION_TURN_LEFT,
                 "shared DM1 Q binding should turn left")) return 1;

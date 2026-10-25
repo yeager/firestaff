@@ -34,7 +34,7 @@ ImageMagick `compare -metric AE -fuzz 5%` compared each full 1280×800 capture t
 | `captures/keyboard-forward-W.png` | `8924128a632960c134a2c2e85ab392fcea2f0e36ec2ca70c9e12032c3e141f7a` |
 | `captures/keyboard-turn-A.png` | `908e9cb894bfdd7c4907fd5706aa8c4dc9abb7f0e80690fa13414a750f315443` |
 
-This confirms authentic retail forward and turn response through Ymir's ControlPad mapping. It is distinct from Firestaff's host binding where A/D strafe and Q/E or Home/End turn.
+This confirms authentic retail forward and turn response through Ymir's ControlPad mapping. Firestaff maps A/D to Nexus turns from this evidence while preserving DM1's separate A/D strafe bindings; Q/E and Home/End remain additional turn bindings.
 
 ## Mouse status
 
