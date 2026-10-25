@@ -65,6 +65,13 @@ typedef struct {
     int legacyBigEndian;
     int legacyDm1;
 
+    /* DM1 FM Towns uses EDM.EXP DECODEGRAPHIC from its picture library.
+     * legacyDm1 remains set for shared classic-DM1 renderer behavior, while
+     * this flag selects the platform-native packed-pixel decoder first. */
+    unsigned char *dm1FmtownsData;
+    long dm1FmtownsDataSize;
+    int dm1Fmtowns;
+
     /* Explicit Apple IIGS GRAPHICS.GAME owner; its packed F0466 commands
      * never select the legacy FM Towns decoder through a shared LE header. */
     unsigned char *iigsData;
@@ -124,6 +131,10 @@ int M11_AssetLoader_InitFromBuffer(M11_AssetLoader* loader,
 int M11_AssetLoader_InitDm1LegacyFromBuffer(M11_AssetLoader* loader,
                                             const unsigned char *data,
                                             long size, int big_endian);
+/* Initialize DM1 FM Towns GRAPHICS.DAT with the native EDM.EXP decoder. */
+int M11_AssetLoader_InitDm1FmtownsFromBuffer(M11_AssetLoader* loader,
+                                             const unsigned char *data,
+                                             long size);
 int M11_AssetLoader_InitDm1LegacyFromFile(M11_AssetLoader* loader,
                                           const char *graphicsDatPath,
                                           int big_endian);

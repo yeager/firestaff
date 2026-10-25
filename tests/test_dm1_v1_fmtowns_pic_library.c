@@ -30,7 +30,7 @@ static void put_u16_le(uint8_t *p, uint16_t v) {
 
 #define ASSET_COUNT 3
 static const uint16_t k_sizes[ASSET_COUNT]  = {  4, 6, 5 };
-/* Asset 0: raw 4-byte DECODEGRAPHIC header (w=32,h=1 -> uncompressed).
+/* Asset 0: 4-byte DECODEGRAPHIC header (w=32,h=1 -> compact-row RLE).
  * Asset 1: 4-byte header (w=16,h=1 -> padded=32, compressed) + 2
  *          bytes of RLE payload.
  * Asset 2: 5 bytes that mimic a raw byte span (like the menu font). */
@@ -126,7 +126,7 @@ static void test_gfx_header_math(void) {
     /* width=1..31 → padded=32. */
     assert(dm1_v1_fmtowns_pic_library_padded_width_pc34(1)   == 32);
     assert(dm1_v1_fmtowns_pic_library_padded_width_pc34(31)  == 32);
-    /* width=32 → padded=32 (uncompressed path). */
+    /* width=32 → padded=32 (compact-row RLE path). */
     assert(dm1_v1_fmtowns_pic_library_padded_width_pc34(32)  == 32);
     /* width=33 → padded=64. */
     assert(dm1_v1_fmtowns_pic_library_padded_width_pc34(33)  == 64);
@@ -146,21 +146,21 @@ static void test_gfx_header_parse(void) {
     const uint8_t *p; uint16_t sz;
     dm1_v1_fmtowns_pic_library_gfx_header_t hdr;
 
-    /* Asset 0: width=32,height=1 → uncompressed. */
+    /* Asset 0: width=32,height=1 → compact-row RLE. */
     assert(dm1_v1_fmtowns_pic_library_asset_bytes_pc34(&view, 0, &p, &sz) == 0);
     assert(dm1_v1_fmtowns_pic_library_parse_gfx_header_pc34(p, sz, &hdr) == 0);
     assert(hdr.width_pixels == 32 && hdr.height_pixels == 1);
     assert(hdr.padded_width_pixels == 32);
     assert(hdr.row_bytes == 16);
     assert(hdr.decoded_total_bytes == 16u);
-    assert(hdr.is_uncompressed == 1);
+    assert(hdr.uses_compact_row_rle == 1);
 
     /* Asset 1: width=16,height=1 → padded=32, compressed path. */
     assert(dm1_v1_fmtowns_pic_library_asset_bytes_pc34(&view, 1, &p, &sz) == 0);
     assert(dm1_v1_fmtowns_pic_library_parse_gfx_header_pc34(p, sz, &hdr) == 0);
     assert(hdr.width_pixels == 16 && hdr.height_pixels == 1);
     assert(hdr.padded_width_pixels == 32);
-    assert(hdr.is_uncompressed == 0);
+    assert(hdr.uses_compact_row_rle == 0);
 }
 
 static void test_menu_font_identity_is_reachable(void) {
@@ -213,8 +213,7 @@ static void test_synthetic_short_fill(void) {
 
 /* Extended fill (bit7=1, bit6=0, mode 0): 1-byte count field. */
 static void test_synthetic_extended_fill(void) {
-    /* w=32 h=1 → padded_w=32 → uncompressed path → decoder refuses.
-     * Use w=16 again; extended mode 0 with count = next+1. */
+    /* Use w=16 so the stream exercises the extended RLE mode. */
     /* ctrl 0x8A: bit7=1 bit6=0 mode 00, nib 0xA. Next byte 0x0F →
      * count = 16. Fills 16 pixels with nibble 0xA. */
     uint8_t asset[7] = { 0x10, 0x00, 0x01, 0x00, 0x8A, 0x0F, 0 };
@@ -230,6 +229,19 @@ static void test_synthetic_extended_fill(void) {
     for (size_t i = 8; i < 16; ++i) assert(dst[i] == 0x00);
     /* Consumed = 4 (header) + 1 (ctrl) + 1 (count) = 6. */
     assert(consumed == 6);
+}
+
+static void test_synthetic_compact_row_rle(void) {
+    uint8_t asset[6] = {0x20, 0x00, 0x01, 0x00, 0x8f, 0x1f};
+    uint8_t dst[16] = {0};
+    size_t wrote = 0u, consumed = 0u;
+    dm1_v1_fmtowns_pic_library_gfx_header_t hdr;
+    assert(dm1_v1_fmtowns_pic_library_decode_asset_pc34(
+        asset, sizeof(asset), dst, sizeof(dst), &wrote, &consumed, &hdr) ==
+        DM1_V1_FMTOWNS_PIC_LIB_OK);
+    assert(hdr.uses_compact_row_rle == 1);
+    assert(wrote == sizeof(dst) && consumed == sizeof(asset));
+    for (size_t i = 0u; i < sizeof(dst); ++i) assert(dst[i] == 0xffu);
 }
 
 /* Real GRAPHICS.DAT round-trip: byte-count verification on ≥2 RLE
@@ -283,6 +295,34 @@ static void test_real_graphics_dat_rle_roundtrip(void) {
     int rc = dm1_v1_fmtowns_pic_library_open_pc34(file, sz, &view);
     assert(rc == DM1_V1_FMTOWNS_PIC_LIB_OK);
 
+    /* EDM.EXP asset 1 is a real 320x200 title raster and hits
+     * DECODEGRAPHIC's width==padded-width compact-row RLE path. */
+    {
+        const uint8_t *span = NULL;
+        uint16_t spanSize = 0u;
+        uint8_t *pixels = (uint8_t *)malloc(320u * 200u / 2u);
+        size_t wrote = 0u, consumed = 0u;
+        dm1_v1_fmtowns_pic_library_gfx_header_t hdr;
+        assert(pixels != NULL);
+        assert(dm1_v1_fmtowns_pic_library_asset_bytes_pc34(
+            &view, 1u, &span, &spanSize) == DM1_V1_FMTOWNS_PIC_LIB_OK);
+        assert(dm1_v1_fmtowns_pic_library_parse_gfx_header_pc34(
+            span, spanSize, &hdr) == DM1_V1_FMTOWNS_PIC_LIB_OK);
+        {
+            const int result = dm1_v1_fmtowns_pic_library_decode_asset_pc34(
+            span, spanSize, pixels, 320u * 200u / 2u,
+            &wrote, &consumed, &hdr);
+            if (result != DM1_V1_FMTOWNS_PIC_LIB_OK)
+                fprintf(stderr, "title asset decode failed status=%d span=%u %ux%u unpacked=%u\n",
+                        result, spanSize, hdr.width_pixels, hdr.height_pixels,
+                        hdr.decoded_total_bytes);
+            assert(result == DM1_V1_FMTOWNS_PIC_LIB_OK);
+        }
+        assert(hdr.width_pixels == 320u && hdr.height_pixels == 200u);
+        assert(wrote == 320u * 200u / 2u && consumed == spanSize);
+        free(pixels);
+    }
+
     /* Sweep every asset that hits the RLE branch (width != padded_width)
      * up to index 500 (past that the container also stores palette /
      * font raw spans whose 4-byte prefix is data, not a valid header). */
@@ -294,7 +334,7 @@ static void test_real_graphics_dat_rle_roundtrip(void) {
         if (span_sz < 4) continue;
         dm1_v1_fmtowns_pic_library_gfx_header_t hdr;
         if (dm1_v1_fmtowns_pic_library_parse_gfx_header_pc34(span, span_sz, &hdr) != 0) continue;
-        if (hdr.is_uncompressed) continue;
+        if (hdr.uses_compact_row_rle) continue;
         if (hdr.decoded_total_bytes == 0 || hdr.decoded_total_bytes > sizeof(dst)) continue;
         size_t wrote = 0, consumed = 0;
         int drc = dm1_v1_fmtowns_pic_library_decode_asset_pc34(
@@ -332,6 +372,7 @@ int main(void) {
     test_truncated_input();
     test_synthetic_short_fill();
     test_synthetic_extended_fill();
+    test_synthetic_compact_row_rle();
     test_real_graphics_dat_rle_roundtrip();
     printf("All dm1_v1_fmtowns_pic_library tests passed.\n");
     return 0;

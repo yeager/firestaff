@@ -718,8 +718,10 @@ int main(void)
                       live_receipt.hud_material_plan_command_count == 4 &&
                       live_receipt.hud_material_plan_consumed &&
                       live_receipt.hud_material_plan_hash != 0u &&
-                      right_panel_pixels > 1000u && squad_icon_pixels > 0u,
-                  "FM Towns post-confirm M11 frame consumes the source squad panel with visible pixels");
+                      right_panel_pixels > 1000u && squad_icon_pixels > 0u &&
+                      dm2_v1_runtime_last_asset_hud_portrait_count() > 0 &&
+                      dm2_v1_runtime_last_fallback_hud_portrait_count() == 0,
+                  "FM Towns post-confirm M11 frame consumes the source squad panel and authentic champion portraits");
         }
     }
     check(M11_GameView_HandleInput(&view, M12_MENU_INPUT_TURN_RIGHT) ==

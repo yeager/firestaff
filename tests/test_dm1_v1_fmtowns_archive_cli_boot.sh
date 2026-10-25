@@ -449,7 +449,8 @@ for row in range(height):
         if pixel != b"\0\0\0":
             nonblack += 1
             colours.add(pixel)
-if nonblack < 500000 or len(colours) < 4:
+viewport_pixels = (right - left) * (bottom - top) * scale * scale
+if nonblack < viewport_pixels * 0.70 or len(colours) < 4:
     raise SystemExit(
         "FAIL: DM1 FM Towns runtime viewport lacks visible F20 scenery "
         f"(nonblack={nonblack}, colours={len(colours)})")

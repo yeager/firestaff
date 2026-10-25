@@ -8341,6 +8341,13 @@ static int m11_play_dm1_fmtowns_title_if_available(
                                  plan->game_title_graphic_index);
     framebuffer = M11_Render_GetFramebuffer();
     if (!title || !framebuffer || title->width < 320u || title->height < 200u) {
+        if (g_m11_debug_startup_detail) {
+            fprintf(stderr,
+                    "firestaff: startup-rejected game=dm1 platform=fm-towns phase=title-asset index=%u loaded=%d size=%ux%u framebuffer=%d\n",
+                    plan->game_title_graphic_index, title ? 1 : 0,
+                    title ? title->width : 0u, title ? title->height : 0u,
+                    framebuffer ? 1 : 0);
+        }
         return 0;
     }
     /* DMWeb's authenticated FM Towns track table assigns CDDA track 02 to
@@ -9046,6 +9053,12 @@ static int m11_open_requested_launch_impl(M11_GameViewState* gameView,
                     return 1;
                 }
                 if (titleResult != M11_ENTRANCE_COMMAND_ENTER || !played) {
+                    if (g_m11_debug_startup_detail) {
+                        fprintf(stderr,
+                                "firestaff: startup-rejected game=dm1 platform=fm-towns phase=native-title result=%d played=%d native-graphics=%d\n",
+                                (int)titleResult, played,
+                                gameView->assetLoader.dm1Fmtowns);
+                    }
                     g_m11_intro_delay_fast_forward = oldFastForward;
                     M11_GameView_Shutdown(gameView);
                     M11_GameView_Init(gameView);

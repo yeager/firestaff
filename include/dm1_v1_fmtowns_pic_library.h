@@ -38,15 +38,13 @@ extern "C" {
  * verified the two tables are byte-identical, so either table
  * decodes the container correctly.
  *
- * Every asset span begins with a 4-byte `DECODEGRAPHIC` header:
+ * Image spans begin with a 4-byte `DECODEGRAPHIC` header:
  *   +0 : u16 width_pixels    (may be padded up to a multiple of 32)
  *   +2 : u16 height_pixels
- * The remaining bytes are either raw 4-bpp pixel rows (when
- * `width_pixels` already equals `padded_width`, which triggers the
- * fast-copy path at DECODEGRAPHIC 0x1f85f) or an RLE-compressed
- * stream (the loop starting at 0x1f6a0). This decoder ships the
- * container parse + header inspection; the RLE decoder is the next
- * step and lives outside this module.
+ * The remaining bytes are an RLE-compressed stream. `DECODEGRAPHIC`
+ * selects its padded-row loop when width differs from padded width,
+ * or a compact-row RLE loop when they match. Both loops are decoded
+ * by this module. Non-image spans may use separate direct-data paths.
  *
  * Evidence: parity-evidence/dm1_fmtowns_pic_library_format.md
  */
@@ -132,7 +130,7 @@ typedef struct {
     uint16_t padded_width_pixels;  /* (width + 0x1f) & ~0x1f */
     uint16_t row_bytes;            /* padded_width / 2 (4 bpp) */
     uint32_t decoded_total_bytes;  /* row_bytes * height */
-    int      is_uncompressed;      /* padded_width == width */
+    int      uses_compact_row_rle; /* width == padded_width */
 } dm1_v1_fmtowns_pic_library_gfx_header_t;
 
 /* Parse the 4-byte DECODEGRAPHIC header at the start of an asset
@@ -210,7 +208,7 @@ dm1_v1_fmtowns_pic_library_decode_asset_pc34(
     dm1_v1_fmtowns_pic_library_gfx_header_t *out_header);
 
 /* GET_MY_DECODED (EDM.EXP 0x9f04) direct-copy path: for a raw
- * uncompressed asset (like the menu font, index 557), copy the
+ * non-image data record (like the menu font, index 557), copy the
  * stored byte span verbatim into a caller buffer. Refuses to copy
  * a size that does not match the primary-table entry. */
 dm1_v1_fmtowns_pic_library_status_t

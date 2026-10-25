@@ -61899,6 +61899,18 @@ set_tests_properties(test_dm1_v1_fmtowns_pic_library PROPERTIES
     ENVIRONMENT "FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"
     LABELS "dm1;fmtowns;graphics;real-media;in-memory")
 
+add_executable(test_m11_dm1_fmtowns_graphics_real_media
+    tests/test_m11_dm1_fmtowns_graphics_real_media.c)
+target_include_directories(test_m11_dm1_fmtowns_graphics_real_media PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_m11_dm1_fmtowns_graphics_real_media PRIVATE firestaff_m12)
+add_test(NAME test_m11_dm1_fmtowns_graphics_real_media
+    COMMAND test_m11_dm1_fmtowns_graphics_real_media)
+set_tests_properties(test_m11_dm1_fmtowns_graphics_real_media PROPERTIES
+    SKIP_RETURN_CODE 77
+    ENVIRONMENT "FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"
+    LABELS "dm1;fmtowns;graphics;asset-loader;real-media;in-memory;skip-safe")
+
 add_executable(test_dm1_v1_fmtowns_pic_library_loader
     tests/test_dm1_v1_fmtowns_pic_library_loader.c
     src/dm1/dm1_v1_fmtowns_pic_library_loader.c
