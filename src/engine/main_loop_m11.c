@@ -80,6 +80,8 @@
 #include "dm2_v1_mac_input.h"
 #include "fs_gesture_navigation_gate.h"
 #include "theron_v1_world.h"
+#include "nexus_v1_engine.h"
+#include "nexus_v1_hud_hit_rects.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11927,6 +11929,49 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             (ev.button.button == SDL_BUTTON_LEFT ||
              ev.button.button == SDL_BUTTON_MIDDLE ||
              ev.button.button == SDL_BUTTON_RIGHT)) {
+            if (gameView->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) {
+                /* Nexus's retail callback is not yet semantically bound to
+                 * individual regions. Never send a hand-pointer click into
+                 * the generic DM1 click dispatcher. */
+                if (gameView->nexusState.hand_pointer_active ||
+                    ev.button.button != SDL_BUTTON_LEFT) {
+                    continue;
+                }
+                if (gameViewResult &&
+                    m11_map_window_pointer_to_game_source(
+                        gameView, (int)ev.button.x, (int)ev.button.y,
+                        &mappedX, &mappedY) &&
+                    gameView->nexusEngine &&
+                    gameView->nexusEngine->hud_hit_rect_count ==
+                        NEXUS_HIT_RECT_COUNT) {
+                    const Nexus_HitRect *pad =
+                        &gameView->nexusEngine->hud_hit_rects[
+                            NEXUS_HIT_MOVEMENT_PAD];
+                    if (mappedX >= pad->x1 && mappedX < pad->x2 &&
+                        mappedY >= pad->y1 && mappedY < pad->y2) {
+                        const int width = pad->x2 - pad->x1;
+                        const int height = pad->y2 - pad->y1;
+                        const int column = ((mappedX - pad->x1) * 3) / width;
+                        const int row = ((mappedY - pad->y1) * 2) / height;
+                        M12_MenuInput movement = M12_MENU_INPUT_NONE;
+                        if (row == 0) {
+                            movement = column == 0 ? M12_MENU_INPUT_TURN_LEFT
+                                : column == 1 ? M12_MENU_INPUT_UP
+                                              : M12_MENU_INPUT_TURN_RIGHT;
+                        } else {
+                            movement = column == 0 ? M12_MENU_INPUT_STRAFE_LEFT
+                                : column == 1 ? M12_MENU_INPUT_DOWN
+                                              : M12_MENU_INPUT_STRAFE_RIGHT;
+                        }
+                        *gameViewResult = M11_GameView_HandleInput(
+                            gameView, movement);
+                        if (*gameViewResult != M11_GAME_INPUT_IGNORED) {
+                            return M12_MENU_INPUT_NONE;
+                        }
+                    }
+                }
+                continue;
+            }
             if (m11_game_view_is_theron(gameView)) {
                 M12_MenuInput buttonInput =
                     M11_TheronMouseButtonToInput(ev.button.button);
@@ -12548,6 +12593,45 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             (ev.button.button == SDL_BUTTON_LEFT ||
              ev.button.button == SDL_BUTTON_MIDDLE ||
              ev.button.button == SDL_BUTTON_RIGHT)) {
+            if (gameView->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) {
+                /* The hand-pointer action callback is not yet bound to
+                 * retail consumers. Keep its clicks inert, and route only
+                 * left-clicks on the authentic movement pad to locomotion. */
+                if (gameView->nexusState.hand_pointer_active ||
+                    ev.button.button != SDL_BUTTON_LEFT) {
+                    continue;
+                }
+                if (gameViewResult &&
+                    m11_map_window_pointer_to_game_source(
+                        gameView, ev.button.x, ev.button.y,
+                        &mappedX, &mappedY) &&
+                    gameView->nexusEngine &&
+                    gameView->nexusEngine->hud_hit_rect_count ==
+                        NEXUS_HIT_RECT_COUNT) {
+                    const Nexus_HitRect *pad =
+                        &gameView->nexusEngine->hud_hit_rects[
+                            NEXUS_HIT_MOVEMENT_PAD];
+                    if (mappedX >= pad->x1 && mappedX < pad->x2 &&
+                        mappedY >= pad->y1 && mappedY < pad->y2) {
+                        const int width = pad->x2 - pad->x1;
+                        const int height = pad->y2 - pad->y1;
+                        const int column = ((mappedX - pad->x1) * 3) / width;
+                        const int row = ((mappedY - pad->y1) * 2) / height;
+                        const M12_MenuInput movement = row == 0
+                            ? (column == 0 ? M12_MENU_INPUT_TURN_LEFT
+                               : column == 1 ? M12_MENU_INPUT_UP
+                                             : M12_MENU_INPUT_TURN_RIGHT)
+                            : (column == 0 ? M12_MENU_INPUT_STRAFE_LEFT
+                               : column == 1 ? M12_MENU_INPUT_DOWN
+                                             : M12_MENU_INPUT_STRAFE_RIGHT);
+                        *gameViewResult = M11_GameView_HandleInput(
+                            gameView, movement);
+                        if (*gameViewResult != M11_GAME_INPUT_IGNORED)
+                            return M12_MENU_INPUT_NONE;
+                    }
+                }
+                continue;
+            }
             if (m11_game_view_is_theron(gameView)) {
                 M12_MenuInput buttonInput =
                     M11_TheronMouseButtonToInput(ev.button.button);

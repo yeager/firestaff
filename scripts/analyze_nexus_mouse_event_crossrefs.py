@@ -19,9 +19,29 @@ DM_BASE = 0x06010000
 DM_SHA256 = "3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124"
 EVENT_TABLE_OFFSET = 0x36D04
 EVENT_TABLE_END = 0x37024
+EVENT_NAME_POINTER_TABLE_OFFSET = 0x3ADC4
+EVENT_QUEUE_CONSUMER_OFFSET = 0x21C84
+EVENT_BAD_DATA_FORMAT_OFFSET = 0x376A4
+MOUSE_CALLBACK_EVENT_NAMES = {
+    13: (b"EV_EXIT_INV", 0x36DB8),
+    44: (b"EV_INV_EQUIP", 0x36F68),
+}
 HIT_RECT_TABLE_OFFSET = 0x38000
 HIT_RECT_TABLE_SUBSET_OFFSET = HIT_RECT_TABLE_OFFSET + 8 * 8
 MOUSE_SOURCE_PATH_OFFSET = 0x387FC
+MOUSE_ACTION_RECT_TABLE_OFFSET = 0x3850C
+MOUSE_ACTION_RECT_TABLE_COUNT = 8
+MOUSE_ACTION_RECT_RECORD_SIZE = 12
+MOUSE_ACTION_RECT_RECORDS = (
+    (0x0101, 0x0068, 0x0111, 0x0078, 44, 0),
+    (0x0120, 0x0068, 0x0130, 0x0078, 44, 1),
+    (0x0110, 0x0048, 0x0120, 0x0058, 44, 2),
+    (0x0110, 0x005B, 0x0120, 0x006B, 44, 3),
+    (0x0111, 0x0073, 0x0121, 0x0083, 44, 4),
+    (0x0110, 0x0088, 0x0120, 0x0098, 44, 5),
+    (0x00F8, 0x0050, 0x0108, 0x0060, 44, 6),
+    (0x00FC, 0x0088, 0x010C, 0x0098, 44, 7),
+)
 
 # Retail mouse hit-region setup discovered by following the direct
 # MOV.L-literal references to the DM.BIN table. These are file offsets in the
@@ -36,6 +56,18 @@ MOUSE_REGION_ACTIVE_FLAG_TEST = 0x24B2A
 MOUSE_REGION_ACTIVE_FLAG_BRANCH = 0x24B2C
 MOUSE_REGION_CALLBACK_NULL_TEST = 0x24B32
 MOUSE_REGION_CALLBACK_NULL_BRANCH = 0x24B34
+
+# The registered callback has a secondary path for mouse-region objects in
+# interaction class 6. It submits two event IDs for object modes 0 and 2.
+# Verify their names through the retail pointer table, but do not infer the
+# downstream state changes from those names alone.
+MOUSE_CALLBACK_MODE_CHECK = 0x16548
+MOUSE_CALLBACK_MODE0_EVENT = 0x1656A
+MOUSE_CALLBACK_MODE2_EVENT = 0x1657E
+MOUSE_CALLBACK_EVENT_DISPATCH = 0x16568
+MOUSE_CALLBACK_MODE2_DISPATCH = 0x1657C
+MOUSE_CALLBACK_MODE0_CALL = 0x16572
+MOUSE_CALLBACK_MODE2_CALL = 0x16584
 
 
 def resolve_dm_bin(explicit: Path | None) -> Path:
@@ -95,6 +127,16 @@ def bt_target(instruction_offset: int, opcode: int) -> int | None:
     displacement = opcode & 0xFF
     if displacement & 0x80:
         displacement -= 0x100
+    return instruction_offset + 4 + displacement * 2
+
+
+def bsr_target(instruction_offset: int, opcode: int) -> int | None:
+    """Resolve a SH-2 BSR target (12-bit displacement, base PC+4)."""
+    if opcode >> 12 != 0xB:
+        return None
+    displacement = opcode & 0x0FFF
+    if displacement & 0x0800:
+        displacement -= 0x1000
     return instruction_offset + 4 + displacement * 2
 
 
@@ -182,6 +224,290 @@ def report_mouse_region_registration(data: bytes) -> bool:
     return valid
 
 
+def report_mouse_callback_event_ids(data: bytes) -> bool:
+    """Verify the callback's mode-gated numeric event submissions.
+
+    It checks the retail SH-2 path which reads object fields 100/104, passes
+    IDs 13/44 to the event dispatcher for modes 0/2, and resolves those IDs
+    through the retail event-name pointer table. The names do not establish
+    the downstream state changes.
+    """
+    words = {
+        0x16548: 0xE064,  # mov #100,r0
+        0x1654A: 0x00EE,  # mov.l @(r0,r14),r0
+        0x1654C: 0x8806,  # cmp/eq #6,r0
+        0x1654E: 0x8B1B,  # bf 0x16588
+        0x16550: 0xE068,  # mov #104,r0
+        0x16552: 0x00EE,  # mov.l @(r0,r14),r0
+        0x16554: 0x8800,  # cmp/eq #0,r0
+        0x16556: 0x8905,  # bt 0x16564
+        0x16558: 0x8801,  # cmp/eq #1,r0
+        0x1655A: 0x8915,  # bt 0x16588 (no event submission)
+        0x1655C: 0x8802,  # cmp/eq #2,r0
+        0x1655E: 0x890A,  # bt 0x16576
+        0x1656A: 0xE40D,  # mov #13,r4
+        0x1657A: 0xE507,  # mov #7,r5
+        0x1657E: 0xE42C,  # mov #44,r4
+    }
+    valid = True
+    for offset, expected in words.items():
+        actual = read_be16(data, offset)
+        if actual != expected:
+            print(f"mouse_callback_event_path=invalid file_offset=0x{offset:06x} "
+                  f"expected=0x{expected:04x} actual="
+                  f"{('none' if actual is None else f'0x{actual:04x}')}")
+            valid = False
+
+    for offset, expected_target in ((0x1654E, 0x16588),
+                                    (0x16556, 0x16564),
+                                    (0x1655A, 0x16588),
+                                    (0x1655E, 0x16576)):
+        opcode = read_be16(data, offset)
+        if opcode is None or bt_target(offset, opcode) != expected_target:
+            print(f"mouse_callback_event_branch=invalid file_offset=0x{offset:06x}")
+            valid = False
+
+    for offset in (MOUSE_CALLBACK_EVENT_DISPATCH,
+                   MOUSE_CALLBACK_MODE2_DISPATCH):
+        decoded = mov_l_pc_literal(data, offset)
+        if decoded != (3 if offset == MOUSE_CALLBACK_EVENT_DISPATCH else 2,
+                       0x06024288):
+            print(f"mouse_callback_event_dispatch=invalid file_offset=0x{offset:06x} "
+                  f"decoded={decoded}")
+            valid = False
+
+    # The dispatch literal alone is insufficient: the retail function must
+    # actually call the target after loading each event ID. Check the JSR and
+    # its delay-slot instruction for both mode-gated paths.
+    for offset, expected in ((MOUSE_CALLBACK_MODE0_CALL, 0x432B),
+                             (MOUSE_CALLBACK_MODE2_CALL, 0x422B)):
+        actual = read_be16(data, offset)
+        delay_slot = read_be16(data, offset + 2)
+        if (actual, delay_slot) != (expected, 0x6EF6):
+            print(f"mouse_callback_event_call=invalid file_offset=0x{offset:06x} "
+                  f"opcode={actual} delay_slot={delay_slot}")
+            valid = False
+
+    event_names: dict[int, str] = {}
+    for event_id, (expected_name, expected_string_offset) in MOUSE_CALLBACK_EVENT_NAMES.items():
+        pointer_offset = EVENT_NAME_POINTER_TABLE_OFFSET + event_id * 4
+        pointer = (int.from_bytes(bytes(data[pointer_offset:pointer_offset + 4]), "big")
+                   if pointer_offset + 4 <= len(data) else None)
+        expected_pointer = DM_BASE + expected_string_offset
+        end = bytes(data).find(b"\0", expected_string_offset)
+        actual_name = (data[expected_string_offset:end]
+                       if end >= 0 else b"")
+        if pointer != expected_pointer or actual_name != expected_name:
+            print(f"mouse_callback_event_name=invalid id={event_id} "
+                  f"pointer={('none' if pointer is None else f'0x{pointer:08x}')} "
+                  f"name={actual_name!r}")
+            valid = False
+        else:
+            event_names[event_id] = expected_name.decode("ascii")
+
+    if valid:
+        print("mouse_callback_object_mode_field_offset=100 value=6")
+        print("mouse_callback_submode_field_offset=104 event_mode_0_id=13 "
+              f"event_mode_0_name={event_names[13]} event_mode_2_id=44 "
+              f"event_mode_2_name={event_names[44]} event_mode_1=no-submit")
+        print("mouse_callback_event_dispatch_target=0x06024288 "
+              "event_names=verified gameplay_effects=unbound")
+    return valid
+
+
+def report_mouse_inventory_hit_regions(data: bytes) -> bool:
+    """Verify the retail inventory rows and the scanner's eight-row loop."""
+    valid = True
+    if len(MOUSE_ACTION_RECT_RECORDS) != MOUSE_ACTION_RECT_TABLE_COUNT:
+        print("mouse_inventory_hit_region=invalid configured record count")
+        valid = False
+    for index, expected in enumerate(MOUSE_ACTION_RECT_RECORDS):
+        offset = MOUSE_ACTION_RECT_TABLE_OFFSET + index * MOUSE_ACTION_RECT_RECORD_SIZE
+        actual = tuple(read_be16(data, offset + field * 2) for field in range(6))
+        if actual != expected:
+            print(f"mouse_inventory_hit_region=invalid index={index} "
+                  f"expected={expected} actual={actual}")
+            valid = False
+    # Retail SH-2 bounds scan: compare pointer x/y with each 12-byte record,
+    # then load event id at +8 and argument at +10 before calling 0x06024288.
+    expected_words = {
+        0x24EE2: 0x62E1,  # MOV.W @R14,R2 (x1)
+        0x24EE4: 0x3247,  # CMP/GT R4,R2
+        0x24EE8: 0x85E2,  # MOV.W @(4,R14),R0 (x2)
+        0x24EEA: 0x3407,  # CMP/GT R0,R4
+        0x24EEE: 0x85E1,  # MOV.W @(2,R14),R0 (y1)
+        0x24EF0: 0x3057,  # CMP/GT R0,R5
+        0x24EF4: 0x85E3,  # MOV.W @(6,R14),R0 (y2)
+        0x24EF6: 0x3507,  # CMP/GT R0,R5
+        0x24EFC: 0x85E5,  # MOV.W @(10,R14),R0 (event argument)
+        0x24EFE: 0x6503,  # MOV R0,R5
+        0x24F00: 0x85E4,  # MOV.W @(8,R14),R0 (event id)
+        0x24F02: 0x4D0B,  # JSR @R13
+        0x24F04: 0x6403,  # delay slot: MOV R0,R4
+    }
+    for offset, expected in expected_words.items():
+        actual = read_be16(data, offset)
+        if actual != expected:
+            print(f"mouse_inventory_dispatch=invalid file_offset=0x{offset:06x} "
+                  f"expected=0x{expected:04x} actual="
+                  f"{('none' if actual is None else f'0x{actual:04x}')}")
+            valid = False
+
+    # Registration supplies this table base to the retail scanner (checked
+    # independently by report_mouse_region_registration). The scanner advances
+    # by one 12-byte row and stops on the signed -1 event-ID sentinel after the
+    # eight live records. Validate the complete loop shape and sentinel so a
+    # changed stride, bound condition, or back-edge cannot still claim that all
+    # eight inventory regions were scanned.
+    scanner_words = {
+        0x24EE0: 0x6E63,  # load current row pointer from the registered list
+        0x24F08: 0xE001,  # next-row path
+        0x24F0A: 0x7E0C,  # add #12,R14 (record stride)
+        0x24F0C: 0x85E4,  # MOV.W @(8,R14),R0 (signed sentinel/event ID)
+        0x24F0E: 0x4015,  # CMP/PL R0
+        0x24F10: 0x89E7,  # BT back to the row scanner while ID >= 0
+        0x24F12: 0xE000,  # delay slot: MOV #0,R0
+    }
+    for offset, expected in scanner_words.items():
+        actual = read_be16(data, offset)
+        if actual != expected:
+            print(f"mouse_inventory_scanner=invalid file_offset=0x{offset:06x} "
+                  f"expected=0x{expected:04x} actual="
+                  f"{('none' if actual is None else f'0x{actual:04x}')}")
+            valid = False
+    for offset, expected_target in ((0x24EE6, 0x24F0A),
+                                    (0x24EEC, 0x24F0A),
+                                    (0x24EF2, 0x24F0A),
+                                    (0x24EF8, 0x24F0A),
+                                    (0x24F10, 0x24EE2)):
+        opcode = read_be16(data, offset)
+        if opcode is None or bt_target(offset, opcode) != expected_target:
+            print(f"mouse_inventory_scanner_branch=invalid "
+                  f"file_offset=0x{offset:06x} target="
+                  f"{None if opcode is None else bt_target(offset, opcode)}")
+            valid = False
+    sentinel_offset = (MOUSE_ACTION_RECT_TABLE_OFFSET +
+                       MOUSE_ACTION_RECT_TABLE_COUNT * MOUSE_ACTION_RECT_RECORD_SIZE + 8)
+    sentinel = read_be16(data, sentinel_offset)
+    if sentinel != 0xFFFF:
+        print(f"mouse_inventory_hit_region_sentinel=invalid "
+              f"file_offset=0x{sentinel_offset:06x} value={sentinel}")
+        valid = False
+    queue_writer = mov_l_pc_literal(data, 0x24EDC)
+    if queue_writer != (13, 0x06024288):
+        print(f"mouse_inventory_queue_target=invalid decoded={queue_writer}")
+        valid = False
+    if valid:
+        print(f"mouse_inventory_hit_regions={MOUSE_ACTION_RECT_TABLE_COUNT} "
+              "event=44(EV_INV_EQUIP) "
+              "arguments=inventory_slots_0_to_7")
+        print("mouse_inventory_hit_region_dispatch=registered_action_table_0x03850c "
+              "stride_12_signed_ffff_sentinel_and_loop_back_edge_verified")
+    return valid
+
+
+def report_mouse_event_queue_fallback(data: bytes) -> bool:
+    """Verify the current event consumer's special cases and generic fallback."""
+    valid = True
+    # These are the only event IDs with branches in the queue loop. IDs 13 and
+    # 44 take the fallback, which resolves a name and reports bad event data.
+    expected_words = {
+        0x21CAE: 0x8826,  # cmp/eq #38,r0
+        0x21CB0: 0x8B01,  # bf 0x21cb6
+        0x21CB6: 0x8827,  # cmp/eq #39,r0
+        0x21CB8: 0x8941,  # bt 0x21d3e
+        0x21CBA: 0x8828,  # cmp/eq #40,r0
+        0x21CBC: 0x8945,  # bt 0x21d4a
+        0x21CBE: 0x8831,  # cmp/eq #49,r0
+        0x21CC0: 0x8949,  # bt 0x21d56
+        0x21CC2: 0x8834,  # cmp/eq #52,r0
+        0x21CC4: 0x8905,  # bt 0x21cd2
+        0x21CC6: 0x8838,  # cmp/eq #56,r0
+        0x21CC8: 0x894A,  # bt 0x21d60
+        0x21CCA: 0x8839,  # cmp/eq #57,r0
+        0x21CCC: 0x895C,  # bt 0x21d88
+        0x21CCE: 0xA063,  # bra 0x21d98, generic fallback
+        0x21D98: 0xD34F,  # name lookup function address
+        0x21D9A: 0x430B,  # jsr @r3
+        0x21D9C: 0x64B3,  # event ID -> lookup argument
+        0x21D9E: 0xE519,  # diagnostic argument length
+        0x21DA4: 0xD34D,  # format string address
+        0x21DAA: 0xD24D,  # diagnostic function address
+        0x21DAC: 0x420B,  # jsr @r2
+        0x21DAE: 0xE400,  # delay slot: diagnostic context 0
+    }
+    for offset, expected in expected_words.items():
+        actual = read_be16(data, offset)
+        if actual != expected:
+            print(f"mouse_event_queue_consumer=invalid file_offset=0x{offset:06x} "
+                  f"expected=0x{expected:04x} actual="
+                  f"{('none' if actual is None else f'0x{actual:04x}')}")
+            valid = False
+    for offset, expected_target in ((0x21CC8, 0x21D60),
+                                    (0x21CCC, 0x21D88),
+                                    (0x21CCE, 0x21D98)):
+        opcode = read_be16(data, offset)
+        target = (bt_target(offset, opcode) if offset != 0x21CCE else
+                  offset + 4 + (((opcode & 0xFFF) ^ 0x800) - 0x800) * 2
+                  if opcode is not None and opcode >> 12 == 0xA else None)
+        if target != expected_target:
+            print(f"mouse_event_queue_branch=invalid file_offset=0x{offset:06x} "
+                  f"target={target}")
+            valid = False
+    for offset, expected in ((0x21D98, (3, 0x060241B4)),
+                             (0x21DA4, (3, 0x060476A4)),
+                             (0x21DAA, (2, 0x06023DB4))):
+        if mov_l_pc_literal(data, offset) != expected:
+            print(f"mouse_event_queue_fallback_literal=invalid "
+                  f"file_offset=0x{offset:06x} "
+                  f"decoded={mov_l_pc_literal(data, offset)}")
+            valid = False
+    format_end = bytes(data).find(b"\0", EVENT_BAD_DATA_FORMAT_OFFSET)
+    format_string = (bytes(data[EVENT_BAD_DATA_FORMAT_OFFSET:format_end])
+                     if format_end >= 0 else b"")
+    if format_string != b"bad event data ($%x:%s)\n":
+        print(f"mouse_event_queue_fallback_format=invalid value={format_string!r}")
+        valid = False
+    if valid:
+        print("mouse_event_queue_special_case_ids=38,39,40,49,52,56,57")
+        print("mouse_event_ids_13_44_consumer=generic_bad_event_diagnostic "
+              "gameplay_state_effect=not_verified")
+    return valid
+
+
+def report_mouse_motion_event_gate(data: bytes) -> bool:
+    """Verify mouse motion events are the only inputs reaching the hit scanner."""
+    expected_words = {
+        0x250EE: 0x6042,  # read queued event ID
+        0x250F0: 0x882E,  # cmp/eq #46,r0
+        0x250F2: 0x8B14,  # bf past mouse processing unless ID 46
+        0x2511A: 0xBEDC,  # bsr to the 0x34ed6 table hit scanner
+        0x2511C: 0x0009,  # delay-slot nop
+    }
+    valid = True
+    for offset, expected in expected_words.items():
+        actual = read_be16(data, offset)
+        if actual != expected:
+            print(f"mouse_motion_event_gate=invalid file_offset=0x{offset:06x} "
+                  f"expected=0x{expected:04x} actual="
+                  f"{('none' if actual is None else f'0x{actual:04x}')}")
+            valid = False
+    if bt_target(0x250F2, 0x8B14) != 0x2511E:
+        print("mouse_motion_event_gate=invalid nonmouse branch target")
+        valid = False
+    if bsr_target(0x2511A, 0xBEDC) != 0x24ED6:
+        print("mouse_motion_event_gate=invalid hit-scanner call target")
+        valid = False
+    if mov_l_pc_literal(data, 0x250F4) != (2, 0x060242D6):
+        print(f"mouse_motion_event_gate=invalid queue-pop call "
+              f"decoded={mov_l_pc_literal(data, 0x250F4)}")
+        valid = False
+    if valid:
+        print("mouse_motion_event_gate=event_46_only_then_retail_hit_scanner")
+        print("mouse_motion_event_44_is_not_a_separate_mouse_poller_input")
+    return valid
+
+
 def event_string_offsets(data: bytes) -> list[tuple[int, bytes]]:
     pool = data[EVENT_TABLE_OFFSET:EVENT_TABLE_END]
     result: list[tuple[int, bytes]] = []
@@ -246,9 +572,22 @@ def main() -> int:
     if not report_mouse_region_registration(data):
         print("NEXUS_MOUSE_REGION_REGISTRATION_INVALID: retail instruction path changed")
         return 1
+    if not report_mouse_callback_event_ids(data):
+        print("NEXUS_MOUSE_CALLBACK_EVENT_PATH_INVALID: retail callback path changed")
+        return 1
+    if not report_mouse_inventory_hit_regions(data):
+        print("NEXUS_MOUSE_INVENTORY_HIT_PATH_INVALID: retail hit path changed")
+        return 1
+    if not report_mouse_event_queue_fallback(data):
+        print("NEXUS_MOUSE_EVENT_QUEUE_CONSUMER_INVALID: retail consumer changed")
+        return 1
+    if not report_mouse_motion_event_gate(data):
+        print("NEXUS_MOUSE_MOTION_EVENT_GATE_INVALID: retail poller changed")
+        return 1
 
     print("interpretation=verified retail hit-region registration and callback transport; "
-          "callback semantics and resulting gameplay actions remain unbound")
+          "verified callback event IDs and retail names; downstream gameplay "
+          "actions remain unbound")
     return 0
 
 

@@ -69,9 +69,14 @@ viewport rectangle; mouse motion positions it directly in that rectangle.
 The hand sprite is sourced from the hash-verified retail ITEM.IBS image 65 and
 palette 6, joined against Ymir `--debug` VDP1 texture capture. Mouse movement
 and the six keyboard movement commands remain available with pointer mode off.
-Pointer clicks and A/B/Y/C/L/R actions remain inert until their retail
-consumers are traced. Item use, inventory, spells, combat, sensors, doors, and
-level transitions remain fail-closed.
+The authentic `DM.BIN` movement-pad rectangle is also wired as a six-cell
+desktop movement surface: the upper row maps to turn left, forward, and turn
+right; the lower row maps to strafe left, backward, and strafe right. This
+host mapping uses the retail rectangle but does not claim to reproduce the
+unresolved callback's cell semantics. Clicks elsewhere and hand-pointer clicks
+remain inert. A/B/Y/C/L/R actions remain inert until their retail consumers
+are traced. Item use, inventory, spells, combat, sensors, doors, and level
+transitions remain fail-closed.
 
 In a loaded Nexus dungeon, Space toggles Firestaff's host pause. Ymir evidence
 records that the retail Start button displayed the `PAUSE` overlay; whether
@@ -79,18 +84,18 @@ retail gameplay resumes on a second press remains unverified. Firestaff's host
 pause freezes the session tick and host audio until Space is pressed again.
 This does not reproduce the retail `PAUSE` graphic or menu.
 
-With pointer mode off, Firestaff uses the authentic Nexus viewport rectangle
-parsed from `DM.BIN` as a host control surface. Left-click the upper
-left/right thirds to turn, the lower left/right thirds to strafe, and the upper
-or lower center third to move forward or backward. This is a Firestaff desktop
-mapping into the same six keyboard movement commands; it does not claim to
-reproduce Saturn ShuttleMouse or retail hit-table callback behavior. With
-pointer mode on, mouse motion moves the logical hand pointer and clicks remain
-inert while callback semantics are unresolved.
+With pointer mode off, left-click within the authentic Nexus movement-pad
+rectangle parsed from `DM.BIN` to send the corresponding desktop movement
+command: the upper row maps to turn left, forward, and turn right; the lower
+row maps to strafe left, backward, and strafe right. This host mapping uses a
+retail rectangle but does not claim to reproduce Saturn ShuttleMouse or the
+retail callback's unresolved cell semantics. Other buttons and clicks outside
+the pad do nothing. With pointer mode on, mouse motion moves the logical hand
+pointer and mouse clicks remain inert while callback semantics are unresolved.
 
 `scripts/analyze_nexus_mouse_event_crossrefs.py` inventories direct SH-2
 `MOV.L @(disp,PC),Rn` references in the hash-verified retail `DM.BIN`. In the
-current English retail image, none of the 60 event-name strings has a direct
+hash-pinned Japanese retail image, none of the 60 event-name strings has a direct
 literal-pointer reference. The image does reference the HUD hit-rectangle
 subtable beginning at file offset `0x38040`, and `yam\\mouse.c` appears in a
 separate source-path reference. The string scan alone cannot resolve indirect
@@ -104,22 +109,45 @@ SH-2 instructions at `DM.BIN:0x16588` load a callback at runtime address
 `0x06048040` (`DM.BIN:0x38040`), then call the setup routine at
 `0x06034ad0`. That routine stores the supplied callback pointer in a global
 slot; the paired dispatcher checks its active flag and makes an indirect call
-through that slot. This proves that the retail program registers and invokes
-a callback associated with the authentic hit-region data. The callback's
-state transitions and the action assigned to individual rectangles are still
-unresolved, so this evidence is not enough to implement click actions.
+through that slot. A second verified path at `DM.BIN:0x164a8` reads fields at
+object offsets 100 and 104. When the first field is 6, submode 0 queues numeric
+event 13 and submode 2 queues numeric event 44 to `0x06024288`; submode 1 does
+not queue either event. The retail event-name pointer table maps ID 13 to
+`EV_EXIT_INV` and ID 44 to `EV_INV_EQUIP`. Their downstream state changes and
+the action assigned to any hit rectangle remain unresolved, so this trace is
+not enough to implement inventory clicks. The analyzer checks the branch
+targets, event values, queue target, and name pointers against the
+hash-verified Japanese retail `DM.BIN`.
+
+The same retail image contains an eight-entry action-rectangle table at file
+offset `0x3850c`. Each 12-byte record stores `(x1, y1, x2, y2, event, slot)`;
+the eight authentic records all use event 44 and slot arguments 0 through 7.
+The SH-2 hit scanner at file offset `0x24ed6` compares pointer coordinates
+against those bounds, reads the event and slot fields, and queues them to
+`0x06024288`. This binds the rectangles to `EV_INV_EQUIP` with a slot argument.
+The verified consumer at file offset `0x21c84` has special branches only for
+event IDs 38, 39, 40, 49, 52, 56, and 57. IDs 13 and 44 take its generic
+diagnostic path, which resolves the event name and emits `bad event data`.
+The separate mouse-motion poller filters for event 46 before it calls the
+hit-region scanner; it does not consume event 44 as a second pointer action.
+The verified queue consumers do not establish an inventory mutation. No
+event-44-specific champion/inventory state writer has been identified, so
+production equipment clicks remain disabled pending a source-bound owner.
 
 ## Mouse and remaining input work
 
 Nexus has startup pointer handling, viewport mouse movement, keyboard
 movement, and the authentic retail cursor sprite in the captured viewport.
-Pointer activation actions are still not bound to retail callback evidence.
+The keyboard supports forward/backward movement, turning, strafing, pointer
+mode, and pointer movement. The mouse supports the six-cell desktop movement
+pad and direct pointer positioning. Inventory, attack, spell, and item-use
+clicks remain inert until their retail callback consumers are established.
 The existing logical click-route helpers require pre-resolved targets and do
 not establish how viewport pixels map to Nexus actions. The orange retail
 cursor and D-pad movement are captured, while desktop mouse movement in
 Firestaff is a host control behavior rather than a claim about Saturn
 ShuttleMouse.
 
-Next work must bind the documented cursor and non-movement controls to
-same-session retail input and state traces. Keep unsupported actions inert
-until their retail consumers are identified.
+Next work must bind the queued event IDs and documented cursor/non-movement
+controls to the retail event consumer and same-session state writes. Keep
+unsupported actions inert until those consumers are identified.
