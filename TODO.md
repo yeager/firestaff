@@ -1,5 +1,9 @@
 # Firestaff TODO — active cross-game work
 
+The current five-game startup evidence matrix and remaining Nexus/Theron
+runtime-entry gaps are consolidated in
+[`docs/STARTUP_SUPPORT_GAP_ANALYSIS.md`](docs/STARTUP_SUPPORT_GAP_ANALYSIS.md).
+
 2026-10-25 DM1 Swedish startup diagnostics: an authentic PC 3.4
 `--game dm1 --platform pc --lang sv --debug --boot-probe` previously printed
 the scan phase only as its English internal key. Debug scan lines now retain
