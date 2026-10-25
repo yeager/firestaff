@@ -29,9 +29,29 @@ source.
 | `WARNING.BIN`, `GAMEOVER.BIN`, `STABG.BIN` | real surfaces are decoded and receive byte provenance; presentation is missing |
 | `FACE.BIN` | The JP retail member is verified as 45,104 bytes (`bd9ca16ea68043984e2804067b6cd66f`): 20 variable-length, 56×56 PRS3 portraits with source palettes. The PLRD roster-to-portrait ordinal and the VDP1 destination/order are still unobserved. |
 | `FONT256.S2D` | 242 CG tiles are retained in production source; Saturn page/attribute/glyph mapping is missing |
-| `MENU.BPK` | 162 PRS3 surfaces decode to source-bound indexed bytes; menu ordering, CLUT, and VDP1/VDP2 are missing |
+| `MENU.BPK` | 162 PRS3 surfaces decode to source-bound indexed bytes; the exact title-menu draw ownership, ordering, CLUT, and VDP1/VDP2 composition are not established |
 | Saturn Backup RAM | `nexus_v1_saturn_bkr_parse` reads hash-pinned 32 KiB card directories and block chains, returning exact opaque payload bytes; native save selection, payload interpretation, and runtime loading remain missing |
 | Mednafen visual baseline | A clean J-BIOS capture against authentic retail shows black boot followed by the original intro FMV without input; menu/LEV01 identity remains missing |
+
+## Title-menu VDP1 source-span join (2026-10-19 capture; analyzed 2026-10-26)
+
+A read-only source-join analysis on TRV2 used the retained Ymir v0.4.0
+Japanese title-menu VDP1 capture (VRAM SHA-256
+`0f484877f5c5ef300fcbcaec6948b50c8b7aed7945e448a9f8281b2da46a2f21`) and
+read the Japanese retail CUE/ISO members directly from the authentic Nexus
+media root. The analysis identified 137 active texture draws: 124 indexed
+image/CLUT pairs exactly matched to `LEV00.DGN`, eight direct-color spans
+matched to `LEV00.DGN`, and five spans matched to `TITLE.BIN`. No active draw
+was left byte-unbound. Of the 124 indexed DGN draws, 108 had a matching
+static FACE selector; 16 did not.
+
+This narrows source-byte provenance for that single Ymir menu frame. It does
+not establish SH-2 upload ownership, the semantic use of the 16 draws without
+static FACE selectors, menu input progression, complete pixel composition,
+or production renderer permission. It is a different capture from the 2026-10-25
+VDP command bundle above. Keep Nexus startup gated until a same-session source,
+input, command, palette, and displayed-frame route is bound; do not infer that
+`MENU.BPK` owns these observed draws or that it is unused in other frames.
 
 The BKR parser has been checked against all four hash-pinned images in the
 private corpus, which are reported as retail-written. It reproduces each
