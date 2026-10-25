@@ -65,11 +65,11 @@ global UI selection list, while event 39 invokes a callback on the current UI
 view to change pages. Neither handler writes a champion's equipment slots in
 this capture, and the candidate champion slot pairs remain unchanged. Event 44
 (`EV_INV_EQUIP`) is a separate retail slot-action route: its handler reads and
-writes context slot pairs and checks item compatibility, but its live runtime
-result and context-to-champion mapping have not yet been captured. The button
-trace therefore establishes menu navigation only; Firestaff inventory and
-equip actions remain disabled until event 44's runtime effects and the
-champion/item joins are verified.
+writes context slot pairs, stages a displaced pair through the held-item path,
+and checks item compatibility. The live click-to-event route and the
+context-to-champion mapping have not yet been captured. The button trace
+therefore establishes menu navigation only; Firestaff inventory and equip
+actions remain disabled until those runtime joins are verified.
 
 ## Retail manual control model
 
@@ -238,11 +238,14 @@ That handler passes the context index through a resolver that uses base
 `0x0607fba0` and stride `0x13c`. For ordinary slots 0–6, the helper accesses
 two 16-bit words at `context + 0x110 + 4*slot`, stages and clears the source
 pair, checks item metadata through the 40-byte records at `0x06064610`, and
-writes the staged pair to a destination slot on the compatible path. Slot 7
-uses a separate path. The handler also updates context fields using masks
-`0x1000` and `0x0200`. The checker verifies the key SH-2 instructions,
-branches, helper calls, table literals and pair reads/writes against the
-hash-pinned retail `DM.BIN`.
+writes the staged pair to the selected destination on the compatible path. The
+old destination pair is staged through the same held-item helper, so the path
+supports a source-to-hand and hand-to-slot transaction; whether that appears
+as pickup, placement, or swap depends on the active UI state. Slot 7 uses a
+separate path. The handler also updates context fields using masks `0x1000`
+and `0x0200`. The checker verifies the SH-2 branch and helper-call sites,
+table literals, pair reads, source clearing, destination writes and displaced
+pair staging against the hash-pinned retail `DM.BIN`.
 
 The first pair word is an item-definition ordinal; `0xffff` is the empty
 marker. There is a partial fit with Firestaff's ITEM.IBS declaration indices,
@@ -259,8 +262,8 @@ matches four PLRD rows. These ambiguous matches do not establish a unique
 context-to-champion mapping or the auxiliary word's meaning for live items.
 The candidate relation and capture hashes are recorded in
 [`nexus-v1-inventory-button-debug-20261025`](../parity-evidence/verification/nexus-v1-inventory-button-debug-20261025/README.md).
-The helper effects that transfer the held item through global UI state and
-the runtime-visible result still need a controlled Ymir before/after capture.
+The helper code stages the displaced pair through global UI state, but the
+runtime-visible result still needs a controlled Ymir before/after capture.
 The analyzer reproduces the DM.BIN instruction checks and PLRD pair summary.
 This path is separate from the later `0x21c84` generic diagnostic loop.
 The separate mouse-motion poller filters for event 46 before it calls the

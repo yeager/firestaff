@@ -374,8 +374,8 @@ def report_mouse_callback_event_ids(data: bytes) -> bool:
               f"event_mode_0_name={event_names[13]} event_mode_2_id=44 "
               f"event_mode_2_name={event_names[44]} event_mode_1=no-submit")
         print("mouse_callback_event_queue_target=0x06024288 "
-              "event_names=verified event_44_handler_semantics=unverified "
-              "firestaff_inventory_mapping=unverified")
+              "event_names=verified event_44_static_transaction=verified "
+              "click_runtime_join=unverified firestaff_inventory_mapping=unverified")
     return valid
 
 
@@ -688,6 +688,8 @@ def report_mouse_early_event_jump_table(data: bytes) -> bool:
         0x26EAE: 0x8B01,  # bf held-pair helper path at 0x26eb4
         0x26F38: 0xB090,  # bsr slot-pair lookup/clear helper 0x2705c
         0x26F42: 0xB133,  # bsr slot-pair write helper 0x271ac
+        0x26F52: 0x7404,  # pass staging pair to displaced-item helper
+        0x26F54: 0xBDCC,  # bsr staged/displaced-item helper at 0x26af0
     }
     valid = True
     for offset, expected in expected_words.items():
@@ -765,6 +767,8 @@ def report_mouse_event_44_state_evidence(data: bytes) -> bool:
         0x2722A: 0x8131,  # write second staged pair word
         0x27244: 0x2E31,  # clear held first word
         0x27246: 0x81E1,  # clear held second word
+        0x27248: 0x60D3,  # restore context for dirty-state handling
+        0x27258: 0x8801,  # test destination class before flag update
         0x26EBC: 0x9327,  # load 0x1000 context-state mask
         0x26EBE: 0xE054,  # context field offset 84
         0x26EC0: 0x02CE,  # context-field state update
@@ -839,7 +843,8 @@ def report_mouse_event_44_state_evidence(data: bytes) -> bool:
               "literal_0x0110=present literal_0x0200=present "
               "literal_0x06064610=present "
               "context_state_load_literals_0x1000_0x00100000=verified "
-              "slot_pair_writes=verified held_item_helpers=untraced "
+              "slot_pair_writes=verified displaced_pair_staging=verified "
+              "context_to_champion_join=unverified "
               "runtime_deltas_and_firestaff_mapping=unverified")
     return valid
 
@@ -985,8 +990,8 @@ def main() -> int:
     else:
         print("rlowfix_plrd_pairs=unavailable configure --rlowfix to inspect")
     print("interpretation=verified retail hit-region registration, event-44 "
-          "dispatch path, and slot-pair access/writes; held-item UI effects "
-          "and Firestaff field mapping remain unverified")
+          "slot transfer transaction and compatibility path; live click "
+          "attribution, context owner and Firestaff field mapping remain unverified")
     return 0
 
 
