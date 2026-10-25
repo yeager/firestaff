@@ -83,24 +83,24 @@ Focused real-media checks and their current boundaries are documented in
 [DM2 platform variants](docs/dm2_variants_platform.md)
 and the [DM2 FM Towns wiki guide](docs/wiki/DM2-FMTowns-Guide.md).
 
-Theron's Quest uses the familiar DM1 dungeon keyboard layout in Firestaff:
+Theron's Quest uses a DM1-like dungeon keyboard layout in Firestaff:
 Up/W moves forward, Down/S moves backward, Left/Right/A/D step sideways, and
 Q/E turn. Home/End and keypad 4/6 are alternate turn keys; keypad 1/3 step,
-8/5 move forward and 2 moves backward. Dungeon mouse clicks still map Button
-I/II without using pointer position for gameplay; DM1-style clickable controls
-remain open until the native layout is bound to authenticated graphics.
-Tab selects the next living member of the Soul Room party and G picks up a
-source-verified item in the facing cell. P drops that explicitly selected
-source item on the party square, and U uses a door in the facing cell.
-Keypad 8/2/4/6 provides forward, backward and turns. Mouse buttons 1 and 2 map
-to Theron Button I and Button II. In the dungeon, clicks do not use their
-coordinates to choose movement, inventory or champion controls; Button II
-does not perform a standalone dungeon action. Theron does not yet have
-DM1-style clickable controls. The native dungeon image and a source-backed
-control layout must be recovered before those mouse controls can be added.
-Mouse motion only moves the pointer. On touch screens, a short touch is Button
-I and a long touch is Button II. Button II cancels startup selection and does
-not advance the dungeon tick by itself.
+8/5 move forward and 2 moves backward. Tab selects the next living member of
+the Soul Room party; G picks up a source-verified item in the facing cell; P
+drops the selected source item on the party square; and U uses a door ahead.
+
+The native dungeon view also provides a visible 4x3 Firestaff mouse panel.
+Its first two rows click to turn, move and sidestep; the remaining rows select
+the next champion, pick up or select an item, drop or use it, and wait. These
+host controls dispatch the same native Theron actions as the keyboard. They are
+not claimed as original PCE mouse hitboxes: the retail game is controller
+based, so clicks outside the panel are ignored until screen-space target
+semantics are authenticated. Mouse motion only moves the pointer. Mouse button
+2 remains Button II for cancel/back and does not advance a dungeon tick by
+itself. On touch screens, a short touch is Button I and a long touch is Button
+II. The native dungeon presentation still needs a state-driven renderer, so
+working input dispatch alone does not establish visual gameplay parity.
 
 ### Theron's Quest runtime status
 

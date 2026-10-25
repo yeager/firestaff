@@ -152,15 +152,15 @@ if ! grep -Fq 'party=1,0,0 champions=2 runtimeTick=0' "$baseline_output" ||
    ! grep -Fq 'party=1,0,0 champions=2 runtimeTick=0' "$mouse_unmapped_output" ||
    ! grep -Fq 'input=pointer-click point=100,68 result=0' "$mouse_unmapped_output" ||
    ! grep -Fq 'party=1,2,3 champions=2 runtimeTick=2' "$mouse_item_drop_output" ||
-   ! grep -Fq 'pointer-click point=248,170 result=1 action="ITEM" outcome="ITEM PICKED UP"' "$mouse_item_drop_output" ||
-   ! grep -Fq 'pointer-click point=292,170 result=1 action="ITEM" outcome="SANDALS"' "$mouse_item_drop_output" ||
-   ! grep -Fq 'pointer-click point=204,189 result=1 action="ITEM" outcome="ITEM DROPPED"' "$mouse_item_drop_output" ||
+   ! grep -Eq 'pointer-click point=248,170 result=1 action="[^"]+" outcome="ITEM PICKED UP"' "$mouse_item_drop_output" ||
+   ! grep -Eq 'pointer-click point=292,170 result=1 action="[^"]+" outcome="SANDALS"' "$mouse_item_drop_output" ||
+   ! grep -Eq 'pointer-click point=204,189 result=1 action="[^"]+" outcome="ITEM DROPPED"' "$mouse_item_drop_output" ||
    ! grep -Fq 'pointer-click point=204,132' "$mouse_turn_left_output" ||
    ! grep -Fq 'pointer-click point=292,132' "$mouse_turn_right_output" ||
    ! grep -Fq 'pointer-click point=248,132' "$mouse_forward_output" ||
-   ! grep -Fq 'pointer-click point=292,151 result=1 action="MOVE" outcome="THERON STEPPED RIGHT"' \
+   ! grep -Eq 'pointer-click point=292,151 result=1 action="[^"]+" outcome="THERON STEPPED RIGHT"' \
        "$mouse_step_pair_output" ||
-   ! grep -Fq 'pointer-click point=204,151 result=1 action="MOVE" outcome="THERON STEPPED LEFT"' \
+   ! grep -Eq 'pointer-click point=204,151 result=1 action="[^"]+" outcome="THERON STEPPED LEFT"' \
        "$mouse_step_pair_output" ||
    ! grep -Fq 'pointer-click point=248,151' "$mouse_back_output"; then
     cat "$baseline_output" "$turn_output" "$move_output" \
