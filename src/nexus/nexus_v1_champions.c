@@ -454,6 +454,22 @@ int nexus_v1_champion_on_death_update_leader(Nexus_V1_ChampionPool *pool,
     return -1;
 }
 
+int nexus_v1_champion_cycle_leader(Nexus_V1_ChampionPool *pool) {
+    int next;
+    int champion_index;
+    if (!pool || pool->party_count < 2 ||
+        pool->party_count > NEXUS_MAX_PARTY || pool->leader_index < 0 ||
+        pool->leader_index >= pool->party_count || pool->champion_count <= 0 ||
+        pool->champion_count > NEXUS_MAX_CHAMPIONS) {
+        return -1;
+    }
+    next = (pool->leader_index + 1) % pool->party_count;
+    champion_index = pool->party[next];
+    if (champion_index < 0 || champion_index >= pool->champion_count) return -1;
+    pool->leader_index = next;
+    return next;
+}
+
 /* ═══════════════════════════════════════════════════════════════════
  * Champion pool binary serialization (Phase 6 save/load)
  * Source-lock: ReDMCSB LOADSAVE.C F0433/F0434 (DM1 save/load structure),

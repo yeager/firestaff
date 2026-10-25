@@ -56,6 +56,14 @@ champion slots, and backpack with the hand pointer. See the
 [Japanese retail manual, control table](https://api.regvault.org/api/v1/game/saturn/d83623212c7fd61623377cc9074bf3ea/manual#page=4)
 and [inventory instructions](https://api.regvault.org/api/v1/game/saturn/d83623212c7fd61623377cc9074bf3ea/manual#page=19).
 
+A Ymir `--debug` run on the authentic Japanese retail disc independently
+confirmed L/R leader changes: the configured L input selected the fourth
+party member and R returned to the first. The before/after game captures are
+in [`nexus-leader-cycle-debug-20261025`](../parity-evidence/verification/nexus-leader-cycle-debug-20261025/README.md).
+Firestaff routes its existing Tab “cycle champion” input through the loaded
+Nexus party order, matching the manual's leader-change control. The captures
+establish the retail behavior, but do not identify the guest RAM leader field.
+
 These documented controls define the retail interaction contract. Firestaff
 implements the Z mode toggle and logical pointer movement in the captured
 viewport. Inventory/magic panels and pointer targets remain unimplemented;
@@ -178,8 +186,8 @@ state transition, Firestaff field mapping, and visible result are verified.
 
 Nexus has startup pointer handling, viewport mouse movement, keyboard
 movement, and the authentic retail cursor sprite in the captured viewport.
-The keyboard supports forward/backward movement, turning, strafing, pointer
-mode, and pointer movement. The mouse supports the six-cell desktop movement
+The keyboard supports forward/backward movement, turning, strafing, party
+leader cycling (Tab), pointer mode, and pointer movement. The mouse supports the six-cell desktop movement
 pad and direct pointer positioning. Inventory, attack, spell, and item-use
 clicks remain inert until their retail callback consumers are established.
 The existing logical click-route helpers require pre-resolved targets and do

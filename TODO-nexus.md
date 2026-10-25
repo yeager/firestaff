@@ -175,3 +175,12 @@ on the PRS3 menu capture. See
   arrows or mouse movement, and the authentic retail hand sprite joined from
   ITEM.IBS image 65/palette 6 against Ymir VDP1 capture. Pointer click actions
   remain open until their retail source joins are captured.
+
+- Input parity follow-up: Firestaff now routes Tab to cycle the loaded Nexus
+  party leader. Authentic Ymir `--debug` captures confirm retail L/R changes
+  the visible leader marker and portrait; they do not bind the guest RAM owner.
+  Keyboard/mouse movement, pointer motion, and the desktop movement pad remain
+  available. Mouse clicks on the hand pointer and non-movement actions remain
+  blocked until the authentic event consumer/state owner and hit regions are
+  established. See `docs/nexus_input.md` and
+  `parity-evidence/verification/nexus-leader-cycle-debug-20261025/README.md`.

@@ -377,3 +377,8 @@ Reviewed 2026-08-26. Completed work only.
 - The post-intro input receipt is completed as a negative observation: title
   frames 13000–13039 are bit-identical with and without verified Start/A
   pulses, so that window is not an interactive start-menu transition.
+- The Nexus gameplay Tab action cycles the loaded party's leader slot. An
+  authentic Ymir `--debug` run on Japanese retail media visibly confirmed L/R
+  changes the leader marker and portrait; the guest RAM owner remains unknown.
+  See `docs/nexus_input.md` and
+  `parity-evidence/verification/nexus-leader-cycle-debug-20261025/`.

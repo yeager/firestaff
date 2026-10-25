@@ -40,7 +40,23 @@ int main(void) {
         nexus_mechanics_set_leader_slot(NULL, 0);
     }
 
-    /* Test 4: encumbrance move ticks basic */
+    /* Test 4: Tab-style leader cycling follows party order and wraps. */
+    {
+        Nexus_V1_ChampionPool pool;
+        memset(&pool, 0, sizeof(pool));
+        pool.champion_count = 3;
+        pool.party_count = 3;
+        pool.party[0] = 0; pool.party[1] = 1; pool.party[2] = 2;
+        pool.leader_index = 0;
+        expect(nexus_v1_champion_cycle_leader(&pool) == 1,
+               "cycle selects next party slot");
+        expect(nexus_v1_champion_cycle_leader(&pool) == 2,
+               "cycle selects third party slot");
+        expect(nexus_v1_champion_cycle_leader(&pool) == 0,
+               "cycle wraps to first party slot");
+    }
+
+    /* Test 5: encumbrance move ticks basic */
     {
         Nexus_MechanicsState st;
         nexus_mechanics_init(&st, 0, 0, 0);
