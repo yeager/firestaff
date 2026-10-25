@@ -42,20 +42,19 @@ if [[ -n "$mouse_input_script" ]]; then
     fi
     if ! python3 - "$mouse_input_script" <<'PY'
 import sys
+import re
 
+if len(sys.argv[1]) >= 8192:
+    raise SystemExit(1)
 for sample in sys.argv[1].split(";"):
-    fields = sample.split(",")
-    if len(fields) != 3:
+    if not re.fullmatch(r"-?[0-9]+,-?[0-9]+,-?[0-9]+", sample):
         raise SystemExit(1)
-    try:
-        dx, dy, buttons = map(int, fields)
-    except ValueError:
-        raise SystemExit(1)
+    dx, dy, buttons = map(int, sample.split(","))
     if not (-127 <= dx <= 127 and -127 <= dy <= 127 and 0 <= buttons <= 15):
         raise SystemExit(1)
 PY
     then
-        printf '%s\n' 'FAIL: THERON_CAPTURE_MOUSE_INPUT_SCRIPT must contain semicolon-separated dx,dy,button-mask samples' >&2
+        printf '%s\n' 'FAIL: THERON_CAPTURE_MOUSE_INPUT_SCRIPT must be under 8192 characters and contain semicolon-separated decimal dx,dy,button-mask samples' >&2
         exit 1
     fi
 fi

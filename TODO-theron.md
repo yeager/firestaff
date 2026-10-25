@@ -1,3 +1,19 @@
+## 2026-10-25 — mouse trace tool validation and truncation reporting
+
+- Tightened the live-capture mouse-script validator to require the same
+  semicolon-separated decimal sample shape, bounds and 8191-byte maximum as
+  Mednafen's instrumented consumers. Inputs Python would accept but C would
+  partially parse, including underscore-formatted integers, are rejected.
+- Added one `trace_truncated limit=20000` marker to the shared pointer trace
+  when its record cap is reached, so a capped trace cannot be mistaken for a
+  complete negative observation.
+- Local syntax checks and a five-case validator loop passed. Applying the
+  updated instrumenter to the archived TRV2 Mednafen source was not possible:
+  that snapshot lacks the expected clean `src/pce/huc6280.h` anchor. Re-run
+  instrumentation against a matching clean Mednafen source before relying on
+  a new runtime trace. This tooling fix does not close the native mouse
+  world-hit or viewport-rendering gaps below.
+
 ## 2026-10-25 — DM1-like native keyboard and mouse parity
 
 - Rebuilt the current PR commit natively on TRV2 and ran
