@@ -132,7 +132,8 @@ enum {
     M11_LAUNCHER_MODERN_HEIGHT = M12_MODERN_MENU_NATIVE_HEIGHT
 };
 
-static void m11_debug_log_scan_progress(const M12_AssetScanProgress* progress);
+static void m11_debug_log_scan_progress(const M12_AssetScanProgress* progress,
+                                        int languageIndex);
 static void m11_debug_reset_scan_progress_trace(void);
 
 /* The launcher owns persistence and editing of the touch layout; the active
@@ -552,7 +553,8 @@ static void m11_draw_launcher(const M12_StartupMenuState* menuState,
     }
     if (menuState && menuState->deferredScanActive &&
         M12_StartupMenu_GetDeferredScanProgress(menuState, &scanProgress)) {
-        m11_debug_log_scan_progress(&scanProgress);
+        m11_debug_log_scan_progress(&scanProgress,
+                                    menuState->settings.languageIndex);
         if (useModern && modernRgba) {
             m11_draw_intro_progress_bar(modernRgba,
                                         M11_LAUNCHER_MODERN_WIDTH,
@@ -608,7 +610,9 @@ static int m11_scan_progress_callback(const M12_AssetScanProgress* progress,
                                       void* userData) {
     M11_ScanProgressContext* ctx = (M11_ScanProgressContext*)userData;
     if (!ctx || (!ctx->framebuffer && !ctx->modernRgba)) return 1;
-    if (ctx->debug) m11_debug_log_scan_progress(progress);
+    if (ctx->debug) {
+        m11_debug_log_scan_progress(progress, ctx->languageIndex);
+    }
     /* A game frame leaves presentation constrained to its viewport. The scan
      * panel is launcher UI and must use the full window, including after a
      * game returns to the menu. */
@@ -974,9 +978,12 @@ static void m11_debug_reset_scan_progress_trace(void) {
            sizeof(g_m11_debug_scan_progress_trace));
 }
 
-static void m11_debug_log_scan_progress(const M12_AssetScanProgress* progress) {
+static void m11_debug_log_scan_progress(const M12_AssetScanProgress* progress,
+                                        int languageIndex) {
     M11_DebugScanProgressTrace* trace = &g_m11_debug_scan_progress_trace;
     Uint64 nowMs;
+    const char* localizedGame;
+    const char* localizedTask;
     if (!g_m11_debug_startup_detail || !progress) return;
     nowMs = SDL_GetTicks();
     if (!trace->hasLastProgress ||
@@ -991,8 +998,14 @@ static void m11_debug_log_scan_progress(const M12_AssetScanProgress* progress) {
             trace->startedMs = nowMs;
             trace->lastProgressMs = nowMs;
         }
+        localizedGame = progress->currentGameId[0]
+            ? M12_StartupMenu_GameDisplayTitleForLocale(
+                  languageIndex, progress->currentGameId)
+            : "";
+        localizedTask = M12_StartupMenu_ScanTaskDisplayForLocale(
+            languageIndex, progress->currentTask);
         fprintf(stderr,
-                "firestaff: scan elapsed-ms=%llu delta-ms=%llu progress=%zu%% game=%s task=%s path=%s\n",
+                "firestaff: scan elapsed-ms=%llu delta-ms=%llu progress=%zu%% game=%s game-label=\"%s\" task=%s task-label=\"%s\" path=%s\n",
                 (unsigned long long)(nowMs - trace->startedMs),
                 (unsigned long long)(nowMs - trace->lastProgressMs),
                 progress->totalSteps > 0U
@@ -1000,7 +1013,9 @@ static void m11_debug_log_scan_progress(const M12_AssetScanProgress* progress) {
                        progress->currentStepPercent) / progress->totalSteps
                     : 0U,
                 progress->currentGameId[0] ? progress->currentGameId : "all",
+                localizedGame ? localizedGame : "",
                 progress->currentTask,
+                localizedTask ? localizedTask : "",
                 progress->currentPath[0] ? progress->currentPath : "(none)");
         trace->lastProgressMs = nowMs;
         trace->lastProgress = *progress;
@@ -1179,7 +1194,8 @@ static int m11_play_firestaff_startup_intro(M12_StartupMenuState* menuState) {
                                         &snap,
                                         elapsed,
                                         menuState ? menuState->settings.languageIndex : 0);
-            m11_debug_log_scan_progress(&snap);
+            m11_debug_log_scan_progress(
+                &snap, menuState ? menuState->settings.languageIndex : 0);
             {
                 const char* quitAny =
                     getenv("FIRESTAFF_AUTOTEST_QUIT_DURING_SCAN");

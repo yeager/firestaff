@@ -4303,6 +4303,17 @@ if(BUILD_TESTING)
         TIMEOUT 300
     )
     add_test(
+        NAME firestaff_dm1_scan_debug_localization_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_dm1_scan_debug_localization_real_media.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(firestaff_dm1_scan_debug_localization_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "dm1;startup;cli;debug;localization;real-media;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM1_PC_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_LOCALE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/po;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy"
+        TIMEOUT 90
+    )
+    add_test(
         NAME return_to_menu_rescans_dm1_csb_dm2_real_media
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh"
             "$<TARGET_FILE:firestaff>"

@@ -1,5 +1,14 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-25 DM1 Swedish startup diagnostics: an authentic PC 3.4
+`--game dm1 --platform pc --lang sv --debug --boot-probe` previously printed
+the scan phase only as its English internal key. Debug scan lines now retain
+the stable `task` and `game` keys and add language-specific `task-label` and
+`game-label` fields. The DM1-only original-media CTest passed with Swedish
+catalogs loaded from `po/`; it also confirmed the authenticated `pc34-en`
+selection and boot-probe receipt. This verifies localized debug diagnostics,
+not native-window localization or visual parity.
+
 2026-10-26 current-source cold launcher-scan profile: on the Mac16,10 host,
 `--scan-data --debug` over the installed 425-file, 4.3 GiB original-media
 collection completed in 31.13 s from an isolated home/config. A repeat with
