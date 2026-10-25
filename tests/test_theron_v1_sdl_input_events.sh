@@ -51,12 +51,13 @@ run_event_route() {
 # The mouse and key events enter the normal SDL poll loop.
 # At the source-owned starting tile, the Button II chord turns right without
 # moving; after button release, the same key side-steps right to (2,1).
+# Two TURN R panel clicks and a FORWARD click cross the next source-backed tile.
 run_event_route "$held_probe" "$held_output" \
     'down,rightdown:40:40,key:right,wait:8'
 run_event_route "$released_probe" "$released_output" \
     'down,rightdown:40:40,rightup:40:40,key:right,wait:8'
 run_event_route "$panel_probe" "$panel_output" \
-    'click:204:144,wait:8'
+    'click:292:144,click:292:144,click:248:144,wait:8'
 
 python3 - "$held_probe" "$released_probe" "$panel_probe" "$expected_md5" <<'PY'
 import json
@@ -84,8 +85,8 @@ if (held_party["mapX"], held_party["mapY"], held_party["direction"]) != (1, 1, 1
     raise SystemExit(f"FAIL: held Button II + Right did not turn in place: {held_party}")
 if (released_party["mapX"], released_party["mapY"], released_party["direction"]) != (2, 1, 0):
     raise SystemExit(f"FAIL: Right after Button II release did not side-step: {released_party}")
-if (panel_party["mapX"], panel_party["mapY"], panel_party["direction"]) != (1, 0, 3):
-    raise SystemExit(f"FAIL: live SDL mouse-panel click did not turn left: {panel_party}")
+if (panel_party["mapX"], panel_party["mapY"], panel_party["direction"]) != (1, 1, 2):
+    raise SystemExit(f"FAIL: live SDL mouse-panel turn-and-forward clicks did not move: {panel_party}")
 if any(probe.get("bootAssetMd5") != expected_md5 for probe in (held, released, panel)):
     raise SystemExit("FAIL: runtime event route did not use authenticated USA Track 02")
 
