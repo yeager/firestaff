@@ -12112,7 +12112,7 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     ev.button.button == SDL_BUTTON_RIGHT ? "down-right" : "down-left",
                     windowX, windowY, pointerMapped, mappedX, mappedY,
                     buttonMask, activeChampionBefore,
-                    pointerMapped ? *gameViewResult : -1);
+                    pointerMapped ? (int)*gameViewResult : -1);
                 if (pointerMapped) {
                     m11_debug_game_pointer(
                         gameView,
@@ -13362,8 +13362,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         strcmp(SDL_GetCurrentVideoDriver(), "dummy") == 0) {
         (void)M11_Render_HandleResize(o->windowWidth, o->windowHeight);
     }
-    if (o->debug) M11_Debug_LogHardware(); launcherFramebuffer = (unsigned char*)calloc((size_t)M11_LAUNCHER_FB_WIDTH,
-                                                 (size_t)M11_LAUNCHER_FB_HEIGHT);
+    if (o->debug) M11_Debug_LogHardware();
+    launcherFramebuffer = (unsigned char*)calloc(
+        (size_t)M11_LAUNCHER_FB_WIDTH,
+        (size_t)M11_LAUNCHER_FB_HEIGHT);
     if (!launcherFramebuffer) {
         M11_Render_Shutdown();
         return M11_RENDER_ERR_TEXTURE;
