@@ -40,20 +40,32 @@ int main(void) {
         nexus_mechanics_set_leader_slot(NULL, 0);
     }
 
-    /* Test 4: Tab-style leader cycling follows party order and wraps. */
+    /* Test 4: Tab-style leader cycling follows living party order and wraps. */
     {
         Nexus_V1_ChampionPool pool;
         memset(&pool, 0, sizeof(pool));
         pool.champion_count = 3;
         pool.party_count = 3;
         pool.party[0] = 0; pool.party[1] = 1; pool.party[2] = 2;
+        pool.champions[0].alive = 1;
+        pool.champions[1].alive = 1;
+        pool.champions[2].alive = 1;
         pool.leader_index = 0;
         expect(nexus_v1_champion_cycle_leader(&pool) == 1,
-               "cycle selects next party slot");
+               "cycle selects next living party slot");
         expect(nexus_v1_champion_cycle_leader(&pool) == 2,
-               "cycle selects third party slot");
+               "cycle selects third living party slot");
         expect(nexus_v1_champion_cycle_leader(&pool) == 0,
-               "cycle wraps to first party slot");
+               "cycle wraps to first living party slot");
+
+        pool.leader_index = 0;
+        pool.champions[1].alive = 0;
+        expect(nexus_v1_champion_cycle_leader(&pool) == 2,
+               "cycle skips dead party member");
+        pool.champions[0].alive = 0;
+        expect(nexus_v1_champion_cycle_leader(&pool) == -1 &&
+                   pool.leader_index == 2,
+               "cycle leaves leader unchanged when no other party member lives");
     }
 
     /* Test 5: encumbrance move ticks basic */

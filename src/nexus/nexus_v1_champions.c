@@ -455,19 +455,23 @@ int nexus_v1_champion_on_death_update_leader(Nexus_V1_ChampionPool *pool,
 }
 
 int nexus_v1_champion_cycle_leader(Nexus_V1_ChampionPool *pool) {
-    int next;
-    int champion_index;
+    int offset;
     if (!pool || pool->party_count < 2 ||
         pool->party_count > NEXUS_MAX_PARTY || pool->leader_index < 0 ||
         pool->leader_index >= pool->party_count || pool->champion_count <= 0 ||
         pool->champion_count > NEXUS_MAX_CHAMPIONS) {
         return -1;
     }
-    next = (pool->leader_index + 1) % pool->party_count;
-    champion_index = pool->party[next];
-    if (champion_index < 0 || champion_index >= pool->champion_count) return -1;
-    pool->leader_index = next;
-    return next;
+    for (offset = 1; offset <= pool->party_count; ++offset) {
+        int next = (pool->leader_index + offset) % pool->party_count;
+        int champion_index = pool->party[next];
+        if (champion_index >= 0 && champion_index < pool->champion_count &&
+            pool->champions[champion_index].alive) {
+            pool->leader_index = next;
+            return next;
+        }
+    }
+    return -1;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
