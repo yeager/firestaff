@@ -149,19 +149,26 @@ case "$runtime_output" in
         ;;
 esac
 
-if ! printf '%s\n' "$runtime_output" | grep -Fq "presentationMode=$expected_mode "; then
-    printf '%s\n' "$runtime_output" >&2; exit 1
-fi
-if ! printf '%s\n' "$runtime_output" | grep -Fq \
-    'game-debug-capabilities game=csb source=csb-runtime' ||
-   ! printf '%s\n' "$runtime_output" | grep -Fq \
-    'player-attack=melee-and-projectile-launch monster-health=melee-only-receipt' ||
-   ! printf '%s\n' "$runtime_output" | grep -Fq \
-    'champion-health=source-party-state'; then
-    printf '%s\n' "$runtime_output" >&2
-    echo 'FAIL: CSB --debug omitted authoritative runtime/health coverage' >&2
-    exit 1
-fi
+case "$runtime_output" in
+    *"presentationMode=$expected_mode "*) ;;
+    *)
+        printf '%s\n' "$runtime_output" >&2
+        exit 1
+        ;;
+esac
+for required_debug_line in \
+    'game-debug-capabilities game=csb source=csb-runtime' \
+    'player-attack=melee-and-projectile-launch monster-health=melee-only-receipt' \
+    'champion-health=source-party-state'; do
+    case "$runtime_output" in
+        *"$required_debug_line"*) ;;
+        *)
+            printf '%s\n' "$runtime_output" >&2
+            echo 'FAIL: CSB --debug omitted authoritative runtime/health coverage' >&2
+            exit 1
+            ;;
+    esac
+done
 done
 
 # CHTWE/CHTWJ has now reached the real C03_GAME owner.  Its C28 palette
