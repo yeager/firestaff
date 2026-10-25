@@ -231,3 +231,13 @@ unsupported actions inert until those joins are proven. The attempted
 ShuttleMouse click and its unmatched WRAM snapshots are preserved in
 [`parity-evidence/verification/nexus-keyboard-mouse-retail-input-20261025/`](../parity-evidence/verification/nexus-keyboard-mouse-retail-input-20261025/README.md);
 they do not prove an action.
+
+A later isolated Ymir probe used the authentic slot-1 state with ControlPad on
+port 1 and ShuttleMouse on port 2. XTEST core-pointer motion and the ShuttleMouse
+port's relative arrow-key bindings produced no visible movement of a clearly
+identifiable retail hand pointer in the Xvfb captures. The setup and captures
+are recorded in [`nexus-shuttle-mouse-xvfb-20261025`](../parity-evidence/verification/nexus-shuttle-mouse-xvfb-20261025/README.md).
+The result is inconclusive about whether relative input reached the Saturn
+mouse port; it does not establish retail mouse semantics. First obtain a
+visible pointer response, then verify a controlled click and resulting game
+state before wiring gameplay actions.
