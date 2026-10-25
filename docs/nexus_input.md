@@ -63,6 +63,11 @@ in [`nexus-leader-cycle-debug-20261025`](../parity-evidence/verification/nexus-l
 Firestaff routes its existing Tab “cycle champion” input through the loaded
 Nexus party order, matching the manual's leader-change control. The captures
 establish the retail behavior, but do not identify the guest RAM leader field.
+The retail PLRD roster has no live/dead field, so Firestaff does not treat its
+zero-initialized runtime `alive` member as proof that a selected champion is
+dead. Leader cycling accepts a roster-backed party member with positive
+current health, and skips members whose runtime health is zero. This keeps the
+authentic start roster selectable without inventing liveness data.
 
 These documented controls define the retail interaction contract. Firestaff
 implements the Z mode toggle and logical pointer movement in the captured

@@ -187,6 +187,9 @@ on the PRS3 menu capture. See
 - Input parity follow-up: Firestaff routes Tab to cycle the loaded Nexus
   party leader. Authentic Ymir `--debug` captures confirm retail L/R changes
   the visible leader marker and portrait; they do not bind the guest RAM owner.
+  Retail PLRD has no live/dead field, so Tab treats an available roster row
+  with positive health as selectable even while `alive` is unknown, and skips
+  zero-health members.
   Keyboard/mouse movement, pointer motion, and the desktop movement pad remain
   available. Mouse clicks on the hand pointer and non-movement actions remain
   blocked until the opaque item data, champion context mapping and runtime

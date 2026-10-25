@@ -466,7 +466,11 @@ int nexus_v1_champion_cycle_leader(Nexus_V1_ChampionPool *pool) {
         int next = (pool->leader_index + offset) % pool->party_count;
         int champion_index = pool->party[next];
         if (champion_index >= 0 && champion_index < pool->champion_count &&
-            pool->champions[champion_index].alive) {
+            (pool->champions[champion_index].alive ||
+             (pool->champions[champion_index].roster_row_available &&
+              pool->champions[champion_index].health > 0 &&
+              !(pool->champions[champion_index].attributes &
+                NEXUS_ATTR_DEAD)))) {
             pool->leader_index = next;
             return next;
         }
