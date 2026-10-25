@@ -1,6 +1,6 @@
 # Five-game startup support gap analysis
 
-Reconciled with `origin/main` at `3e3ec633f` on 2026-10-26. Runtime receipts
+Reconciled with `origin/main` at `aa07e7441` on 2026-10-26. Runtime receipts
 cited below remain the recorded runs at their stated revisions; they were not
 rerun during this documentation update. The repository contains checks
 against authentic media for all five games, but “available,”
@@ -22,6 +22,15 @@ The current evidence does not establish complete five-game startup support.
 - [`tests/test_m12_main_menu_game_selection_real_media.sh`](../tests/test_m12_main_menu_game_selection_real_media.sh)
   verifies five-card keyboard/mouse selection and authentic-media handoff. Its
   success condition is a `game-handoff` receipt, not a loaded level.
+- PR #77 (`test(m12): cover mouse selection for first-row games`) adds another
+  click-and-handoff invocation for each of DM1, CSB, and DM2 at first-row
+  coordinates. The same script already runs mouse handoffs for those three
+  cards later, at slightly different coordinates. Each invocation starts a
+  fresh launcher discovery/menu path, although the picker matrix shares an
+  identity-bound file-hash cache. The change should document what extra
+  hit-box coverage the second coordinate provides or consolidate the duplicate
+  cases to avoid repeating traversal and menu dispatch. This is a test-runtime
+  and coverage-maintenance issue, not evidence of a faulty production hit box.
 - [`tests/test_m12_main_menu_runtime_real_media.sh`](../tests/test_m12_main_menu_runtime_real_media.sh)
   exercises first-runtime probes for DM1, CSB, DM2, and Theron. The verifier
   requires an active runtime and `levelLoaded=1`; Nexus is not included.
