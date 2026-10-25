@@ -345,22 +345,31 @@ written; forced termination can leave it unsaved.
 
 ### Controls
 
-Firestaff's Theron runtime uses a normal SDL mouse and keyboard, not a joystick
-pointer that jumps between visible objects. The mouse continuously reports its
-current position in the source-mapped 320x200 view; a mouse-move event selects
-no object. Mouse button 1 (left) is PC Engine Button I and mouse button 2
-(right) is Button II. The physical middle button is deliberately unbound.
-Button II cancels startup selection and does not advance the native dungeon
-tick by itself; it is also the original control's simplified-movement
-modifier when combined with a direction key.
+Firestaff's Theron runtime is native C/SDL code. SDL keyboard, mouse and gamepad
+events are handled by Firestaff; Mednafen is used only to inspect original
+game behavior. During startup, left-click selects and right-click goes back.
+In the loaded dungeon, left-click activates one of the twelve visible
+Firestaff mouse-panel controls; right-click goes back and middle-click is
+inert. Pointer motion highlights a panel control. Clicks outside the panel are
+ignored until authentic screen-space target semantics are established. The
+native renderer does not yet provide complete state-driven visual parity, so
+this input coverage alone is not an end-to-end gameplay-parity claim.
 
-In the dungeon, the keyboard is:
+In loaded dungeon play, the keyboard is:
 
 ```text
 Up / W:         forward
 Down / S:       backward
-Left / A:       turn left
-Right / D:      turn right
+Left / A:       step left
+Right / D:      step right
+Q / Home / KP4: turn left
+E / End / KP6:  turn right
+KP8 / KP5:      forward
+KP2:            backward
+KP1 / KP3:      step left / step right
+Return / Space: wait one tick
+Tab:            select next champion
+G / P / U:      pick up / drop selected source item / use forward object
 ```
 
 Held keys are sampled at Theron's input boundary rather than relying on
@@ -381,8 +390,8 @@ Action D:   X
 ```
 
 These are Tsugaru's FM Towns controls and must not be confused with Firestaff's
-Theron binding, `WASD` + mouse buttons 1/2. For a physical controller, use
-`PHYS0`–`PHYS3`; if directions are reported as an analogue stick, use
+Theron keyboard layout or native dungeon mouse panel. For a physical
+controller, use `PHYS0`–`PHYS3`; if directions are reported as an analogue stick, use
 `ANA0`–`ANA3` instead of `KEY`.
 
 ### What Tsugaru proves — and does not prove

@@ -1,3 +1,73 @@
+## 2026-10-25 — DM1-like native keyboard and mouse parity
+
+- Theron's loaded-dungeon keyboard aliases already match Firestaff's DM1
+  convention: arrows/WASD for forward, back and side-step, with Q/E, Home/End
+  and keypad turn aliases. Preserve Theron's source-owned action tokens.
+- Mouse parity is still partial. The visible 4x3 Firestaff panel dispatches
+  native Theron inputs and now highlights the hovered control. Direct world
+  clicks remain disabled, and the original pointer art is not drawn in the
+  native dungeon view. Do not copy DM1's hit regions. The `$D515/$D588`
+  interval candidate and the live `$77DC` dispatch/descriptor path still need
+  an authenticated runtime join through original hover state, Button-I output
+  and the resulting game-state change.
+- Once that source route is bound, implement Theron's native cursor and
+  source-derived world hit testing, then verify movement and action clicks
+  against authentic Track 02 data. Current frozen-capture rendering means
+  even a correct input transaction would not yet establish end-to-end
+  DM1-like playability. See
+  [`theron-jp-runtime-input-poll-bank-alias-20261009.md`](docs/source-lock/theron-disassembly/theron-jp-runtime-input-poll-bank-alias-20261009.md).
+
+## 2026-10-25 — Button II simplified-movement chord boundary
+
+- From the same preserved authentic JP Ak-Tu-Ba dungeon state and isolated
+  Mednafen profile, an eight-second `ii@1:60,left@2:59` replay was compared
+  with a matched eight-second `left@2:59` replay. The input-consumption
+  verifier confirmed both planned masks at the non-System-Card poll `$44D2`:
+  chord mask `$0082` and direction-only mask `$0080`. A separate eight-second
+  `ii@1:60` replay confirmed the Button II-only mask `$0002` at the same poll.
+- The close-time cursor fields `$2E3A/$2E7A` remain `$78/$78` during the
+  Button-II-plus-LEFT chord, while LEFT alone changes them to `$00/$78` and
+  changes the corresponding SAT snapshot. This is consistent with the retail
+  manual's simplified-movement chord selecting movement input instead of
+  moving the cursor. It does not prove that the party moved: no party-position
+  field or source consumer is bound by these captures.
+- The observed `$2031` and `$203F` candidate bytes are not movement evidence.
+  In the same chord capture, `$2031` repeatedly alternates through writers
+  `$506A/$5079`, and `$203F` cycles through `$57D7/$57E3/$57EF/$5800`; their
+  final values vary across matched captures. `$2040/$2041` remain `$02/$03`.
+- All captures ended with `transition=missing`, zero CD IRQ callbacks, zero
+  authenticated CD-to-RAM receipts, and zero command-RAM writes. Close-time
+  VDC snapshots and VWR commit streams therefore do not bind the screen to
+  authentic source bytes or to party position. The private save state and
+  capture artifacts remain on TRV2 and are not repository assets. Keep native
+  world-click and state-driven rendering work open until the original command
+  consumer, position state, and screen-data lineage are joined.
+
+## 2026-10-25 — authentic pointer interval-table candidate recovered
+
+- Read-only inspection of the authentic US and JP Track 02 BINs found the same
+  26-byte interval-table candidate immediately after all seven `$D515` code
+  windows in each region. Its SHA-256 is
+  `8f9eea35bef73f48d39f09255524608a39188524935170168a44659b1b74b800`; no game
+  bytes are copied into the repository.
+- The disassembly at `$D588` compares the cursor coordinate `$2E7A` against
+  paired thresholds in that table and returns a paired value. This is concrete
+  evidence that the original has coordinate-dependent pointer classification,
+  so full hit regions may be recoverable from authentic media. The seven
+  code copies remain static candidates; the capture does not bind which one
+  executes or what each returned value means.
+- The caller first loads a pointer from runtime `$77DC/$77DD` and follows its
+  descriptor. Those pointer contents and their source-data lineage are still
+  unknown. An additional read-only decode of the preserved post-Akutuba state
+  found that its 64-byte `$77DC` snapshot matches JP media once, while its
+  64-byte `$C060` snapshot matches seven US copies; the complete pointer
+  sequence does not match US. In this state `$C060+5` is zero, so the `$D515`
+  path returns before scanning descriptor rows. The saved-state bytes do not
+  establish a same-edition source join or prove a live click-zone lookup. Do
+  not publish hitboxes or route arbitrary viewport clicks until the runtime pointer,
+  descriptor records, returned command and state effect are joined. See
+  [`theron-jp-runtime-input-poll-bank-alias-20261009.md`](docs/source-lock/theron-disassembly/theron-jp-runtime-input-poll-bank-alias-20261009.md).
+
 ## 2026-10-25 — PCE Fast left-input and VDC comparison
 
 - Replayed the preserved authentic Japanese Ak-Tu-Ba dungeon state on TRV2
@@ -36,7 +106,7 @@
   Home, and keypad-6 turning; the focused launcher/input contract also checks
   keycode aliases for Home/End and keypad 4/6.
 
-## 2026-10-24 — complete Theron keyboard and mouse playability
+## 2026-10-24 — verified native keyboard and panel mouse controls; original mouse parity open
 
 - Native keyboard input already reaches the Theron movement and action facade;
   discrete key events also reached a loaded dungeon and advanced native ticks

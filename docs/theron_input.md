@@ -10,16 +10,24 @@ are research instruments only and do not run or replace the game in Firestaff.
 
 ## PC Engine button mapping
 
-| PCE Button | Keyboard (primary) | Keyboard (alt) |
-|------------|-------------------|----------------|
-| D-pad Up   | Up Arrow          | W              |
-| D-pad Down | Down Arrow        | S              |
-| D-pad Left | Q                 | Home, keypad 4 |
-| D-pad Right| E                 | End, keypad 6  |
-| Button I   | Mouse 1, short touch | Z, Return, Space |
-| Button II  | Mouse 2, long touch  | X, Escape         |
-| Run        | Return            |                |
-| Select     | —                 |                |
+| Theron action | Keyboard (primary) | Keyboard (alt) |
+|---------------|-------------------|----------------|
+| D-pad Up      | Up Arrow          | W              |
+| D-pad Down    | Down Arrow        | S              |
+| D-pad Left    | Q                 | Home, keypad 4 |
+| D-pad Right   | E                 | End, keypad 6  |
+| Button I      | Z                 | Return, Space  |
+| Button II     | X                 | Escape         |
+| Run           | Return            |                |
+| Select        | —                 |                |
+
+Desktop mouse controls are provided by Firestaff's native interface. During
+startup, left-click selects and right-click goes back. During dungeon play,
+left-click activates one of the twelve visible control-panel actions, while
+right-click goes back; middle-click is inert. Moving the pointer highlights a
+panel control. Clicks elsewhere in the dungeon do not trigger a game action
+until Theron's original world hit regions are verified. Short and long touch
+gestures send Button I and Button II, respectively.
 
 ## Startup menu
 
@@ -73,6 +81,8 @@ keyboard actions. Their captions use the active Theron translation catalog.
 The panel scales with the game's presentation size. Japanese and Chinese
 captions use ASCII romanizations because the native small font does not
 contain CJK glyphs.
+Hovering a control highlights it. Pointer movement requests a redraw only when
+the highlighted control changes.
 
 ## Notes
 
@@ -80,13 +90,12 @@ contain CJK glyphs.
   commands `$06/$04`; Q/E, Home/End and keypad 4/6 turn. Startup menu arrows
   retain their navigation behavior. This matches Firestaff's ordinary DM1
   dungeon keyboard layout while preserving Theron's native command tokens.
-- Mouse button 1 selects a visible movement or action control during dungeon
-  play. Mouse button 2 remains Button II (cancel in startup and back/exit in
-  gameplay); it does not advance a dungeon tick. A short touch emits Button I
-  and a long touch emits Button II, including during startup. The retail
-  manual also describes holding Button II with a direction key as simplified
-  movement; Firestaff's native direction keys already issue those movement
-  commands directly.
+- The native mouse panel provides all six Theron movement actions and the
+  implemented champion, item, use and wait actions. Right-click remains
+  cancel/back and does not advance a dungeon tick. The retail manual also
+  describes holding Button II with a direction key as simplified movement;
+  Firestaff's native direction keys already issue those movement commands
+  directly.
 - The host-panel bounds are Firestaff UI and do not reuse DM1's
   C007..C116 pointer tables. The original movement-panel captures identify
   six internal PCE cursor samples, not desktop hitboxes or host coordinates:
@@ -100,6 +109,14 @@ contain CJK glyphs.
   and
   [`theron-original-forward-command-capture-2026-08-21.md`](source-lock/theron-original-forward-command-capture-2026-08-21.md).
   Do not substitute DM1 hit regions or guessed coordinates.
+- DM1-like mouse parity remains open: Theron's native dungeon view does not
+  yet draw its original cursor, and clicks outside the Firestaff panel do not
+  target the game world. The `$D515/$D588` interval candidate must be joined
+  through the live pointer descriptor, hover result and Button-I command
+  consumer before source-derived hit testing can be enabled. The viewport
+  must also update from native game state for clicks to provide visible,
+  end-to-end gameplay. See the current evidence and remaining capture gate in
+  [`TODO-theron.md`](../TODO-theron.md).
 - Run and Select have no keyboard binding (no gameplay use currently).
 - Gamepad input follows the SDL3 gamepad mapping (D-pad, A/B buttons) where
   the selected input mode permits gamepad events.

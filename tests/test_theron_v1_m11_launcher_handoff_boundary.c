@@ -149,15 +149,26 @@ static void run_theron_pointer_and_button_input_contract(void) {
     view.active = 1;
     view.sourceKind = M11_GAME_SOURCE_THERON_TRACK02;
     snprintf(view.sourceId, sizeof(view.sourceId), "%s", "theron");
+    view.theronState.startup_phase = THERON_STARTUP_PHASE_IN_DUNGEON;
+    view.theronState.level_loaded = 1;
+    view.presentationWidth = 320;
+    view.presentationHeight = 200;
     view.pointerPositionKnown = 1;
     view.pointerX = 17;
     view.pointerY = 29;
 
-    expect_true(M11_GameView_HandlePointerMove(&view, 211, 143) ==
+    expect_true(M11_GameView_HandlePointerMove(&view, 100, 100) ==
                     M11_GAME_INPUT_IGNORED &&
-                    view.pointerPositionKnown && view.pointerX == 211 &&
-                    view.pointerY == 143,
+                    view.pointerPositionKnown && view.pointerX == 100 &&
+                    view.pointerY == 100,
                 "Theron mouse motion keeps the real pointer position without object hopping");
+    expect_true(M11_GameView_HandlePointerMove(&view, 204, 132) ==
+                    M11_GAME_INPUT_REDRAW &&
+                    M11_GameView_HandlePointerMove(&view, 205, 133) ==
+                    M11_GAME_INPUT_IGNORED &&
+                    M11_GameView_HandlePointerMove(&view, 100, 100) ==
+                    M11_GAME_INPUT_REDRAW,
+                "Theron mouse panel redraws only when its hover target changes");
     expect_true(M11_TheronMouseButtonToInput(SDL_BUTTON_LEFT) ==
                     M12_MENU_INPUT_ACCEPT &&
                     M11_TheronMouseButtonToInput(SDL_BUTTON_MIDDLE) ==
@@ -278,6 +289,15 @@ static void run_theron_pointer_and_button_input_contract(void) {
     M11_GameView_Draw(&view, framebuffer, 320, 200);
     expect_true(framebuffer[123 * 320 + 182] != 0,
                 "Theron dungeon render draws the visible mouse action panel");
+    {
+        const unsigned char unhovered_pixel = framebuffer[124 * 320 + 183];
+        view.pointerPositionKnown = 1;
+        view.pointerX = 183;
+        view.pointerY = 124;
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        expect_true(framebuffer[124 * 320 + 183] != unhovered_pixel,
+                    "Theron dungeon render highlights the hovered mouse control");
+    }
 }
 
 static void init_menu_without_gallery(M12_StartupMenuState* state,
