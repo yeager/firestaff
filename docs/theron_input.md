@@ -101,7 +101,11 @@ the highlighted control changes.
   cancel/back and does not advance a dungeon tick. The retail manual also
   describes holding Button II with a direction key as simplified movement;
   Firestaff's native direction keys already issue those movement commands
-  directly.
+  directly. Authentic US Track 02 and Japan Rev. 1 Track 02 runtime tests
+  exercise the panel's turn and movement commands against each region's loaded
+  dungeon state. The Japanese test asserts both click receipts and the
+  resulting party pose. These checks cover Firestaff's host panel, not original
+  PCE mouse support or direct world-space clicks.
 - The host-panel bounds are Firestaff UI and do not reuse DM1's
   C007..C116 pointer tables. The original movement-panel captures identify
   six internal PCE cursor samples, not desktop hitboxes or host coordinates:

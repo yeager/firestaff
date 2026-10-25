@@ -54,6 +54,14 @@
   interval candidate and the live `$77DC` dispatch/descriptor path still need
   an authenticated runtime join through original hover state, Button-I output
   and the resulting game-state change.
+- The native mouse panel's turn and movement controls are now exercised on
+  authentic US Track 02 by `test_theron_v1_raw_bin_runtime_boot.sh` and on
+  authentic Japan Rev. 1 Track 02 by `test_theron_v1_jp_raw_bin_startup.sh`.
+  The JP regression checks the mapped left-turn and forward-click receipts and
+  resulting source-backed party pose. The focused runtime-input facade test
+  and each regional runtime-input loop passed three times on TRV2. This proves
+  native panel command routing on both regional datasets; it does not prove
+  direct world hit targets, state-driven rendering, or full visual parity.
 - Once that source route is bound, implement Theron's native cursor and
   source-derived world hit testing, then verify movement and action clicks
   against authentic Track 02 data. Current frozen-capture rendering means
