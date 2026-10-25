@@ -1,3 +1,29 @@
+## 2026-10-25 — Button II simplified-movement chord boundary
+
+- From the same preserved authentic JP Ak-Tu-Ba dungeon state and isolated
+  Mednafen profile, an eight-second `ii@1:60,left@2:59` replay was compared
+  with a matched eight-second `left@2:59` replay. The input-consumption
+  verifier confirmed both planned masks at the non-System-Card poll `$44D2`:
+  chord mask `$0082` and direction-only mask `$0080`. A separate eight-second
+  `ii@1:60` replay confirmed the Button II-only mask `$0002` at the same poll.
+- The close-time cursor fields `$2E3A/$2E7A` remain `$78/$78` during the
+  Button-II-plus-LEFT chord, while LEFT alone changes them to `$00/$78` and
+  changes the corresponding SAT snapshot. This is consistent with the retail
+  manual's simplified-movement chord selecting movement input instead of
+  moving the cursor. It does not prove that the party moved: no party-position
+  field or source consumer is bound by these captures.
+- The observed `$2031` and `$203F` candidate bytes are not movement evidence.
+  In the same chord capture, `$2031` repeatedly alternates through writers
+  `$506A/$5079`, and `$203F` cycles through `$57D7/$57E3/$57EF/$5800`; their
+  final values vary across matched captures. `$2040/$2041` remain `$02/$03`.
+- All captures ended with `transition=missing`, zero CD IRQ callbacks, zero
+  authenticated CD-to-RAM receipts, and zero command-RAM writes. Close-time
+  VDC snapshots and VWR commit streams therefore do not bind the screen to
+  authentic source bytes or to party position. The private save state and
+  capture artifacts remain on TRV2 and are not repository assets. Keep native
+  world-click and state-driven rendering work open until the original command
+  consumer, position state, and screen-data lineage are joined.
+
 ## 2026-10-25 — PCE Fast left-input and VDC comparison
 
 - Replayed the preserved authentic Japanese Ak-Tu-Ba dungeon state on TRV2
