@@ -227,4 +227,7 @@ Next work must identify the retail context-to-champion relationship, the
 opaque item-pair auxiliary word, and the post-click visible result from a
 controlled Ymir before/after capture. Then map the retail state to the
 authentic Nexus champion/inventory model and bind pointer actions. Keep
-unsupported actions inert until those joins are proven.
+unsupported actions inert until those joins are proven. The attempted
+ShuttleMouse click and its unmatched WRAM snapshots are preserved in
+[`parity-evidence/verification/nexus-keyboard-mouse-retail-input-20261025/`](../parity-evidence/verification/nexus-keyboard-mouse-retail-input-20261025/README.md);
+they do not prove an action.
