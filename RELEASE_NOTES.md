@@ -1,3 +1,27 @@
+# Firestaff v3.0.413
+
+## User-facing changes
+
+- `DM2 French DOS startup`: fix loose-file launch to keep the selected French graphics owner beside another edition's graphics.
+- `Launcher menu pointer support`: add click selection for visible Changelog, Bestiary, Item Encyclopedia, Screenshot Gallery and Save Browser rows; align Bestiary and Item Encyclopedia category clicks with their displayed headers.
+- `Launcher direct-root asset collection`: use the direct-root file hash during path collection instead of hashing the same file twice.
+
+## Developer changes
+
+- `Authentic startup routes`: add DM1 mixed AUTO selection through the no-game menu, DM2 French loose-file first-runtime ownership receipts, and first-row mouse coverage for DM1, CSB and DM2.
+- `Startup gap evidence`: update the five-game route matrix, launcher scan profile and Nexus title-menu evidence with current source facts and explicit runtime limits.
+- `Theron and Nexus source cleanup`: remove dead Theron checks and correct the Nexus PLRD slot bound; clear main-loop compiler warnings.
+- `CSB FM Towns diagnostics`: fix native CLI boot checks to handle broken pipes while preserving authentic-media route assertions.
+- `Release metadata`: update the project version and regenerate the versioned SPDX source SBOM for v3.0.413.
+
+## Known limitations
+
+- This release does not establish complete gameplay or visual parity across all five games and supported platforms.
+- `Nexus`: the authentic Saturn title-menu consumer, New Game/Continue flow and transition to an authenticated playable level remain gated; the BKR parser does not load game saves.
+- `Theron's Quest`: native dungeon presentation is not yet driven by authenticated world and graphics state.
+- `DM2`: platform-wide viewport, HUD and native input parity remain incomplete.
+- The launcher pointer changes are source-compiled but have not yet been verified in a runtime UI session.
+
 # Firestaff v3.0.412
 
 ## User-facing changes

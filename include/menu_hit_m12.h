@@ -52,6 +52,9 @@ typedef enum {
      * M12_MenuInput value, so every keyboard-navigable menu has a bounded
      * mouse route as well. */
     M12_HIT_VIEW_INPUT,
+    /* Select one visible row in a scrollable extras list. `index` is the
+     * source list index, not the visible row number. */
+    M12_HIT_LIST_ROW,
     /* Back button (visible in all views except main) */
     M12_HIT_BACK
 } M12_HitKind;

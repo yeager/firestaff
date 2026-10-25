@@ -19,6 +19,16 @@ The current evidence does not establish complete five-game startup support.
 
 ## What the existing checks prove
 
+- Modern pointer coverage is still inconsistent across visible extras. The
+  current local source change adds line clicks to Changelog, row selection and
+  header category cycling to Bestiary, filtered row selection and header
+  category cycling to Item Encyclopedia, and row selection to Screenshot
+  Gallery and Save Browser. It also removes the misleading ACCEPT route from
+  the Manual document body. The changed translation unit passes a local
+  warning-as-error syntax-only compile, but these interactions have not been
+  runtime-verified. Several other views still use the generic thirds/quarters
+  gesture map instead of targeting rendered controls. A follow-up should align
+  those hit regions with each view's actual renderer and action contract.
 - [`tests/test_m12_main_menu_game_selection_real_media.sh`](../tests/test_m12_main_menu_game_selection_real_media.sh)
   verifies five-card keyboard/mouse selection and authentic-media handoff. Its
   success condition is a `game-handoff` receipt, not a loaded level.
