@@ -1,5 +1,19 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-26 current-source cold launcher-scan profile: on the Mac16,10 host,
+`--scan-data --debug` over the installed 425-file, 4.3 GiB original-media
+collection completed in 31.13 s from an isolated home/config. A repeat with
+the same scan cache completed in 11.91 s and reported all five games READY.
+`/usr/bin/time -lp` recorded about 438 MiB maximum resident memory for the
+cold run and 736 MiB for the warm run; peak footprint was about 810 MiB warm.
+A six-second macOS `sample` placed substantial work in
+`m12_admit_csb_amiga31_english_program_package` → `asset_find_by_md5`, including
+repeated ZIP inflation and nested Amiga ADF traversal, followed by more
+`m12_fill_game_versions` archive matching. This identifies a candidate
+duplicate-admission path, not proof that every lookup is redundant: preserve
+the same-owner and incomplete-first-copy checks when optimizing it. One host
+and one cold/warm pair do not establish a cross-platform regression or speedup.
+
 2026-10-25 authentic priority-game startup and combat retest: the launcher
 picker script passed with an isolated root containing only symlinks to the
 installed DM1, CSB and DM2 originals. It passed keyboard and mouse card
