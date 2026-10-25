@@ -174,6 +174,18 @@ def analyze(before: bytes, after: bytes, context_start: int, context_count: int,
     changed_slots = 0
     changed_contexts = 0
     for index in range(context_start, context_start + context_count):
+        if index == 10:
+            # The pinned B/A capture observes these four bytes, but does not
+            # prove equipment semantics or the ordinary slot layout here.
+            # See analyze_nexus_inventory_button_trace.py and its capture hashes.
+            offset = CONTEXT_BASE_OFFSET + index * CONTEXT_STRIDE + 0x122
+            old = before[offset:offset + 4]
+            new = after[offset:offset + 4]
+            print(f"context[10].observed_raw @0x{WRAM_BASE + offset:08x}: "
+                  f"{old.hex()} -> {new.hex()} semantics=unproven")
+            if old != new:
+                changed_contexts += 1
+            continue
         old_pairs = context_pairs(before, index)
         new_pairs = context_pairs(after, index)
         deltas = [
