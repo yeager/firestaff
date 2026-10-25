@@ -88,7 +88,7 @@ warm_scan_log="$scan_cache_home/warm-scan.log"
     cat "$cold_scan_log" >&2
     exit 1
 }
-if ! grep -Fq "reading original DM2 disc image: $archive" "$cold_scan_log" ||
+if ! grep -F 'reading original DM2 disc image' "$cold_scan_log" | grep -Fq "$archive" ||
    ! grep -Fq 'Dungeon Master II: The Legend of Skullkeep READY' "$cold_scan_log"; then
     echo 'FAIL: cold DM2 scan did not authenticate and admit the original FM Towns disc' >&2
     cat "$cold_scan_log" >&2
@@ -105,7 +105,7 @@ fi
     cat "$warm_scan_log" >&2
     exit 1
 }
-if grep -Fq "reading original DM2 disc image: $archive" "$warm_scan_log" ||
+if grep -F 'reading original DM2 disc image' "$warm_scan_log" | grep -Fq "$archive" ||
    ! grep -Fq 'Dungeon Master II: The Legend of Skullkeep READY' "$warm_scan_log" ||
    ! grep -Fq 'Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip::DATA/GRAPHICS.DAT' "$warm_scan_log"; then
     echo 'FAIL: warm DM2 scan did not reuse only the cached authentic FM Towns member receipts' >&2

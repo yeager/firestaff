@@ -1,5 +1,19 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-10-25: Rebuilt after the DM2 RECT_7 presentation extraction and ran
+  authentic DM2 FM Towns, Macintosh and Amiga startup/runtime checks. FM Towns
+  passed its CLI, cache, menu, first-party and runtime screenshot routes in
+  425.24 seconds. Macintosh and Amiga native CLI checks passed in 191.79 and
+  121.03 seconds. Direct-click launcher and DM1 FM Towns click-geometry tests
+  also passed. These scripted/headless checks preserve the tested routes; they
+  do not establish full cross-platform visual or physical-input parity.
+
+- 2026-10-25: Added opt-in `fast-dev` and `fast-dev-ccache` CMake presets for
+  app-only Ninja builds. On this host, the app-only configuration took 3.17
+  seconds versus 5.42 seconds with tests enabled. The app-only build graph has
+  2,321 compile invocations versus 16,891 commands in the full test graph;
+  end-to-end compile time was not measured.
+
 - 2026-10-25: Audited the published v3.0.411 macOS arm64 executable against
   the installed original-media collection. Direct `--game` boot probes
   resolved DM1, CSB, DM2, Nexus and Theron's Quest to authenticated editions.
