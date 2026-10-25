@@ -26,7 +26,8 @@ against a target.
 
 The pair analyzer reported a queue count of zero before and after A. Its read
 cursor moved from 0 to 1, and one stale queue-storage entry changed from event
-56 (`EV_SAVELOAD`) to event 29 (`EV_DYNAMIC`). A zero-count queue does not
+56 (`EV_SAVELOAD`) to event 29 (`EV_DYNAMIC`). Event names were resolved from
+the authentic `DM.BIN` after verifying its SHA-256 above. A zero-count queue does not
 identify a live event, and this delta does not link the button press to the
 event. Candidate context-10 item pairs matched the timed no-input capture; no
 champion ownership or combat-state change was proven. The screen captures are
