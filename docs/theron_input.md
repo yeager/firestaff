@@ -69,7 +69,7 @@ actuator timing or retail queue capacity; see the 2026-10-24 entry in
 | Step right     | Right Arrow, D, keypad 3          |
 | Turn left      | Q, Home, keypad 4                 |
 | Turn right     | E, End, keypad 6                  |
-| Wait (tick)    | Space, Return                     |
+| Wait (tick)    | Z, Space, Return                  |
 | Next champion  | Tab                               |
 | Pick up facing item | G                            |
 | Select next source item | I                         |
@@ -100,8 +100,8 @@ the highlighted control changes.
 - SDL keyboard input routes the same supported loaded-dungeon commands as the
   native mouse panel: Tab cycles champion, G picks up, I selects the next
   source-backed item, P drops it, U uses the facing object, and Space/Return
-  waits. These keys enter the Theron input facade directly; they do not rely
-  on the boot-probe-only key mapper.
+  or the PC Engine Button I binding Z waits. These keys enter the Theron input
+  facade directly; they do not rely on the boot-probe-only key mapper.
 - The native mouse panel provides all six Theron movement actions and the
   implemented champion, item, use and wait actions. The retail manual's
   Button II chord is available as right-mouse plus Left/Right Arrow or A/D;

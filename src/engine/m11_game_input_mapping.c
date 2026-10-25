@@ -266,6 +266,9 @@ M12_MenuInput M11_TheronGameplayInputFromScancode(int scancode)
             return M12_MENU_INPUT_INVENTORY_TOGGLE;
         case SDL_SCANCODE_U:
             return M12_MENU_INPUT_USE_ITEM;
+        /* The native desktop binding for PC Engine Button I.  Keep the
+         * conventional Return/Space aliases below for the DM1-like layout. */
+        case SDL_SCANCODE_Z:
         case SDL_SCANCODE_RETURN:
         case SDL_SCANCODE_SPACE:
             return M12_MENU_INPUT_ACTION;
@@ -359,6 +362,7 @@ M12_MenuInput M11_TheronGameplayInputFromKeycode(int keycode)
         case SDLK_P: return M12_MENU_INPUT_DROP_ITEM;
         case SDLK_I: return M12_MENU_INPUT_INVENTORY_TOGGLE;
         case SDLK_U: return M12_MENU_INPUT_USE_ITEM;
+        case SDLK_Z: return M12_MENU_INPUT_ACTION;
 #else
         case SDLK_w: return M12_MENU_INPUT_UP;
         case SDLK_s: return M12_MENU_INPUT_DOWN;
@@ -371,6 +375,7 @@ M12_MenuInput M11_TheronGameplayInputFromKeycode(int keycode)
         case SDLK_p: return M12_MENU_INPUT_DROP_ITEM;
         case SDLK_i: return M12_MENU_INPUT_INVENTORY_TOGGLE;
         case SDLK_u: return M12_MENU_INPUT_USE_ITEM;
+        case SDLK_z: return M12_MENU_INPUT_ACTION;
 #endif
         case SDLK_RETURN:
         case SDLK_KP_ENTER:

@@ -51,6 +51,8 @@ int main(void)
           M12_MENU_INPUT_DROP_ITEM);
     CHECK(M11_TheronGameplayInputFromScancode(SDL_SCANCODE_U) ==
           M12_MENU_INPUT_USE_ITEM);
+    CHECK(M11_TheronGameplayInputFromScancode(SDL_SCANCODE_Z) ==
+          M12_MENU_INPUT_ACTION);
     CHECK(M11_TheronGameplayInputFromScancode(SDL_SCANCODE_SPACE) ==
           M12_MENU_INPUT_ACTION);
     CHECK(M11_TheronGameplayInputFromScancode(SDL_SCANCODE_RETURN) ==
@@ -72,6 +74,13 @@ int main(void)
           M12_MENU_INPUT_DROP_ITEM);
     CHECK(M11_TheronGameplayInputFromKeycode(SDLK_U) ==
           M12_MENU_INPUT_USE_ITEM);
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    CHECK(M11_TheronGameplayInputFromKeycode(SDLK_Z) ==
+          M12_MENU_INPUT_ACTION);
+#else
+    CHECK(M11_TheronGameplayInputFromKeycode(SDLK_z) ==
+          M12_MENU_INPUT_ACTION);
+#endif
     CHECK(M11_TheronGameplayInputFromKeycode(SDLK_SPACE) ==
           M12_MENU_INPUT_ACTION);
     CHECK(M11_TheronGameplayInputFromKeycode(SDLK_RETURN) ==

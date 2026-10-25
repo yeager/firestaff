@@ -1,3 +1,14 @@
+## 2026-10-25 — verify keyboard champion and wait actions in the SDL loop
+
+- Extended `theron_v1_sdl_input_events` to send actual SDL `Tab` and `Space`
+  key-down events after the authentic USA Track 02 dungeon handoff. The
+  regression verifies the source-backed active-champion transition and a
+  native wait tick without going through the Firestaff mouse panel.
+- An isolated Debug build of the exact change passed on TRV2 against
+  `TQUS02.bin` (MD5 `f23601102138f87c33025877767ebf76`). This proves the
+  implemented keyboard route for those two actions only; it does not establish
+  direct dungeon-view mouse targeting or state-driven visual parity.
+
 ## 2026-10-25 — cover Japanese Theron input in the regular SDL loop
 
 - Added `theron_v1_jp_sdl_input_events` against authentic Japanese Rev. 1

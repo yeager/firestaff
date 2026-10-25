@@ -10619,6 +10619,7 @@ static int m11_script_keycode_from_name(const char* name) {
             case 'v': return SDLK_V;
             case 'w': return SDLK_W;
             case 'x': return SDLK_X;
+            case 'z': return SDLK_Z;
             case '1': return SDLK_1;
             case '2': return SDLK_2;
             case '3': return SDLK_3;
