@@ -18,7 +18,7 @@ source for missing exact members.
 
 | Area | Verified | Remaining |
 |---|---|---|
-| Startup | TITLE/MAPD, LOGOBG, WARNING/GAMEOVER/STABG, FACE, and FONT bytes; NBG1 tile addresses decoded in an authentic capture by open PR #19 | Saturn VDP2 asset ownership, timing, text mapping, title composition, and title-to-menu transition |
+| Startup | TITLE/MAPD, LOGOBG, WARNING/GAMEOVER/STABG, FACE, and FONT bytes; NBG1 tile addresses decoded in an authentic capture by merged PR #19 | Saturn VDP2 asset ownership, timing, text mapping, title composition, and title-to-menu transition |
 | Menu | MENU.BPK/BPPK, 162 PRS3 surfaces, and pixel decoding | CLUT, VDP1 upload, placement, and menu sequence |
 | HUD | STABG tiles/palette and DM.BIN hit rectangles | input/VDP consumer and runtime-state binding |
 | Viewport | DGN Structure1B/2 and MNS/DMDF census | Structure3 face owner, mesh transform, VDP1 command/texture use |

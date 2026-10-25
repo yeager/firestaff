@@ -2,7 +2,7 @@
 
 This is an evidence report for startup, not a specification for a completed
 Nexus startup screen. Reviewed 2026-10-24: the NBG1 tile-fetch address fix in
-open PR #19 passes against an authentic Japanese startup frame, but remains a
+merged PR #19 passes against an authentic Japanese startup frame, but remains a
 capture-only decoder result and does not prove the title-to-menu transition.
 
 ## Verified initialization order

@@ -76,6 +76,31 @@ champion slots, and backpack with the hand pointer. See the
 [Japanese retail manual, control table](https://api.regvault.org/api/v1/game/saturn/d83623212c7fd61623377cc9074bf3ea/manual#page=4)
 and [inventory instructions](https://api.regvault.org/api/v1/game/saturn/d83623212c7fd61623377cc9074bf3ea/manual#page=19).
 
+## A-button attack remains unbound
+
+The manual documents A as an attack in movement mode, but the authentic retail
+input-to-combat route is still unknown. In a Ymir 0.4.1 `--debug` probe, the
+Japanese retail ControlPad profile mapped J to A and loaded the same
+hash-verified gameplay savestate for the no-input and A-input runs. The
+high-WRAM comparison showed queue count zero in both captures. The read cursor
+advanced from 0 to 1 and a stale queue-storage word changed from event 56
+(`EV_SAVELOAD`) to event 29 (`EV_DYNAMIC`), but a zero-count queue makes those
+records insufficient to identify a live event or attribute it to A. Context
+10's candidate item pairs matched the timed no-input control, and the captured
+view had no visible enemy; this probe does not establish an attack effect.
+Screenshots and source hashes are in
+[`nexus-a-button-debug-20261025`](../parity-evidence/verification/nexus-a-button-debug-20261025/README.md);
+raw WRAM is kept outside Git on the external disk.
+
+Static analysis of the authentic `DM.BIN` confirms combat cases at
+`0x0197FC` and a case-0 branch to the champion-attack routine at `0x01986A`.
+The call setup begins earlier at `0x0197DE`; the disassembly report had
+previously mislabeled that address as the switch entry. Direct SH-2 literal
+and pointer scans find no input-to-combat reference, and the event-name table
+has no `EV_ATTACK` entry. These scans cannot exclude indirect dispatch. Do not
+route A to the host combat model until a live-enemy Ymir trace joins controller
+input, the retail dispatcher, and the resulting enemy/party state changes.
+
 A Ymir `--debug` run on the authentic Japanese retail disc independently
 confirmed L/R leader changes: the configured L input selected the fourth
 party member and R returned to the first. The before/after game captures are
@@ -187,8 +212,10 @@ It returns a name string; it does not dispatch an event handler. The analyzer
 now verifies this helper's instructions and table base in the pinned image.
 The callback's event-44 producer, the event-17 producer behind a separate
 global-slot gate, and the dispatcher share the same bounded queue: eight
-12-byte records at runtime `0x060797b0`, count at `0x06079814`, and queue state
-at `0x06079810`; the dequeue helper is `0x060242d6`. The later queue loop is not
+12-byte records at runtime `0x060797b0`, count at `0x06079814`, and read cursor
+at `0x06079810`; the dequeue helper is `0x060242d6`. Only the `count` records
+starting at that cursor are live (the ring has eight slots); remaining storage
+can retain stale event IDs. The later queue loop is not
 necessarily the only consumer; event-action semantics must be followed from
 each caller's event context.
 An even-offset scan of the pinned image finds no raw `CMP/EQ #44,R0` opcode
@@ -233,6 +260,17 @@ Event 44 has a hash-verified source-side slot-pair path, but its runtime
 held-item effects and Firestaff state mapping are not verified. Production
 inventory and equipment clicks remain disabled until those joins are captured.
 
+For a controlled Ymir run, save a baseline and post-action high-WRAM dump from
+the same retail savestate with Debug > Dump all memory, then compare them with
+`scripts/analyze_nexus_inventory_wram_pair.py`. The tool checks that both
+`wram-hi.bin` inputs are exactly 1 MiB, prints the raw eight-record event queue,
+and reports item-pair changes for an explicitly selected context range. For
+example, use `--context-start 0 --context-count 11` to include the indices
+observed in the existing captures. Its output is a byte-level delta only; it
+does not identify a context as a champion or establish that a pointer click
+caused a change. Keep each Ymir profile's dump directory separate so a stale
+snapshot from another run cannot be mistaken for the post-action capture.
+
 ## Mouse and remaining input work
 
 Nexus has startup pointer handling, full-game-screen mouse movement, keyboard
@@ -258,7 +296,33 @@ ShuttleMouse click and its unmatched WRAM snapshots are preserved in
 [`parity-evidence/verification/nexus-keyboard-mouse-retail-input-20261025/`](../parity-evidence/verification/nexus-keyboard-mouse-retail-input-20261025/README.md);
 they do not prove an action.
 
-The earlier Xvfb probe showed no identifiable hand-pointer movement because
+A later isolated Ymir probe used the authentic slot-1 state with ControlPad on
+port 1 and ShuttleMouse on port 2. XTEST core-pointer motion and the ShuttleMouse
+port's relative arrow-key bindings produced no visible movement of a clearly
+identifiable retail hand pointer in the Xvfb captures. The setup and captures
+are recorded in [`nexus-shuttle-mouse-xvfb-20261025`](../parity-evidence/verification/nexus-shuttle-mouse-xvfb-20261025/README.md).
+The XTEST result was explained by a Ymir 0.4.1 frontend gap: SDL global mouse
+ID `0` entered relative-capture mode and returned before Ymir mapped its motion
+or buttons to the emulated ShuttleMouse. Ymir PR
+[#963](https://github.com/ymir-emu/Ymir/pull/963) was built and run under
+`--debug` on the authentic Nexus disc. In a supplemental devlog run using the
+same hash-verified state and peripheral setup, SDL global mouse ID 0 motion and
+button edges passed with `imguiCapture=false` and produced nonzero Shuttle
+Mouse frame input. This confirms delivery to Ymir's peripheral layer; it does
+not establish a retail action. In the separate paired-dump trial, neither
+absolute nor relative host motion visibly moved the retail cursor/selection,
+one occupied-icon click left the screen unchanged, and before/after WRAM dumps
+show no event 44, live queue change, or item-pair deltas across contexts 0–15.
+The full setup and hash-verified captures are recorded in
+[`nexus-shuttle-mouse-ymir-pr963-input-routing-20261025`](../parity-evidence/verification/nexus-shuttle-mouse-ymir-pr963-input-routing-20261025/README.md).
+This rules out a missing Ymir peripheral report for the supplemental input
+trace, but it does not show that the retail event-44 handler rejected a
+correctly targeted click because the cursor never moved visibly. Firestaff's
+desktop pointer actions still need to follow proven Nexus state changes before
+enabling equipment or other actions.
+
+A separate port-2 trial investigated the earlier Xvfb probe, which showed no
+identifiable hand-pointer movement because
 Ymir's frontend did not route SDL global mouse ID `0` to the emulated
 ShuttleMouse. Ymir PR [#963](https://github.com/ymir-emu/Ymir/pull/963) now
 builds successfully and passed an isolated `--debug` runtime probe with the
