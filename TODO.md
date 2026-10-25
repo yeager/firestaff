@@ -1,5 +1,15 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-25 authentic launcher return/rescan retest: the
+`return_to_menu_rescans_dm1_csb_dm2_real_media` CTest passed in 1,527.71
+seconds using installed original media. It exercised DM1 PC, FM Towns, Atari
+ST and Amiga; CSB FM Towns, Atari ST and Amiga; and DM2 PC, Macintosh and
+Amiga, including direct-exit and keyboard/mouse return routes. The focused
+DM2 selected-archive return test also passed independently in 55.87 seconds.
+These SDL dummy video/audio checks cover the scripted launcher/runtime handoff
+and rescanning paths only; they do not establish native presentation, physical
+input, audio, or complete gameplay parity.
+
 2026-10-24 Ymir Japanese date/time setup VDP2 investigation: captures at frames
 105 and 118 show NBG0 date/time text and cursor pixels plus NBG1 UI box shapes.
 Both are 512×256 8bpp bitmap layers. Filtered traces have
