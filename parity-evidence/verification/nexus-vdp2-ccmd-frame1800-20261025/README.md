@@ -83,3 +83,37 @@ This capture proves the register state and supplies a same-frame native output
 and VDP buffers for a future pixel-level comparison. It does not by itself
 prove which captured pixels traverse the additive branch, authorize a
 production render path, or establish general parity across gameplay states.
+
+The matching Ymir run emitted a `YMCMP1` per-pixel composition trace. Its
+manifest identifies frame 1800 at 320×224, and its VDP2 register, VRAM, and
+CRAM hashes match the register bundle above. The trace and screen hashes are:
+
+| Capture file | SHA-256 |
+| --- | --- |
+| `nexus-frame-1800.composition.v1.bin` | `7bdd93ba2f92a35f7a621109b98b7941ac00421dcc22fc44063df8786c44555d` |
+| `nexus-frame-1800.screen.xrgb8888` | `4fade9cc286d9a8b5656790a387761ce59c33a5006ec78eef09fbefd025180f4` |
+
+The composition trace is preserved outside Git at
+`/Volumes/Extern-disk/nexus-framebound-20261020-comptrace5/`. Its YMCMP1
+header and per-pixel record schema were checked against Ymir's renderer
+implementation. `scripts/analyze_nexus_ymir_composition_trace.py` validates
+the header, payload size, and row indices, then reports candidate layers,
+priorities, special-state bytes, and final output colors. Reproduce the
+summary with:
+
+```sh
+python3 scripts/analyze_nexus_ymir_composition_trace.py \
+  /Volumes/Extern-disk/nexus-framebound-20261020-comptrace5/nexus-frame-1800.composition.v1.bin
+```
+
+For this frame, the trace contains 71,680 pixels, no unknown layer IDs, and
+the final RGB matches candidate slot 0 for all 71,680 pixels. Slot 0 contains
+60,375 sprite, 7,203 NBG2, 3,954 NBG0/RBG1, and 148 NBG1/EXBG records. This
+is a composition observation, not proof that a color-calculation gate fired
+or that Firestaff has source-level pixel ownership for each candidate.
+
+An earlier separate run at
+`/Volumes/Extern-disk/nexus-framebound-20261020-comptrace2-authentic/` has a
+different VDP2 register hash (`0x` omitted:
+`2f77834013d5a9dacc43e02360f18e755e15b647e677a8f7890a8ce6c5a64127`); do
+not combine its trace with this frame-bound bundle.
