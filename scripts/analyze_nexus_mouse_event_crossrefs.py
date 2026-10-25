@@ -310,8 +310,9 @@ def report_mouse_callback_event_ids(data: bytes) -> bool:
         print("mouse_callback_submode_field_offset=104 event_mode_0_id=13 "
               f"event_mode_0_name={event_names[13]} event_mode_2_id=44 "
               f"event_mode_2_name={event_names[44]} event_mode_1=no-submit")
-        print("mouse_callback_event_dispatch_target=0x06024288 "
-              "event_names=verified gameplay_effects=unbound")
+        print("mouse_callback_event_queue_target=0x06024288 "
+              "event_names=verified event_44_handler_semantics=unverified "
+              "firestaff_inventory_mapping=unverified")
     return valid
 
 
@@ -409,8 +410,9 @@ def report_mouse_inventory_hit_regions(data: bytes) -> bool:
 def report_mouse_event_queue_fallback(data: bytes) -> bool:
     """Verify the current event consumer's special cases and generic fallback."""
     valid = True
-    # These are the only event IDs with branches in the queue loop. IDs 13 and
-    # 44 take the fallback, which resolves a name and reports bad event data.
+    # These are the only event IDs with branches in this later diagnostic
+    # queue loop. IDs 13 and 44 take its generic fallback; a separate early
+    # table dispatcher is checked by report_mouse_early_event_jump_table().
     expected_words = {
         0x21CAE: 0x8826,  # cmp/eq #38,r0
         0x21CB0: 0x8B01,  # bf 0x21cb6
@@ -470,8 +472,8 @@ def report_mouse_event_queue_fallback(data: bytes) -> bool:
         valid = False
     if valid:
         print("mouse_event_queue_special_case_ids=38,39,40,49,52,56,57")
-        print("mouse_event_ids_13_44_consumer=generic_bad_event_diagnostic "
-              "gameplay_state_effect=not_verified")
+        print("mouse_later_loop_ids_13_44=generic_bad_event_diagnostic "
+              "consumer=file_0x21c84; not_the_only_consumer")
         # Record exact direct-comparison candidates across the full image.
         # This is deliberately a byte-pattern scan: it does not identify code
         # versus data and cannot rule out register, table, or indirect dispatch.
@@ -533,6 +535,173 @@ def report_mouse_event_name_resolver(data: bytes) -> bool:
     if valid:
         print("mouse_event_queue_fallback_helper=event_id_to_name_pointer "
               "table=0x0604adc4; no event-action dispatch")
+    return valid
+
+
+def report_mouse_event_queue_link(data: bytes) -> bool:
+    """Verify the retail queue append/dequeue pair used by the event loop."""
+    valid = True
+    for offset, expected in {
+        0x14292: 0x8808,  # queue capacity is eight records
+        0x142B6: 0x7201,  # increment queued-record count
+        0x142C8: 0x2742,  # store event ID (R4) at record +0
+        0x142CA: 0x1751,  # store argument (R5) at record +4
+        0x142CC: 0x1762,  # store argument (R6) at record +8
+        0x21DB6: 0x420B,  # event loop calls the dequeue helper
+        0x21DB8: 0x0009,  # delay-slot nop
+        0x1462A: 0x6032,  # load gated global slot
+        0x1462C: 0x2008,  # test global slot
+        0x14630: 0xE600,  # event 17's third argument
+        0x14632: 0x6563,  # event 17's second argument
+        0x14636: 0xE411,  # event 17's first argument
+    }.items():
+        actual = read_be16(data, offset)
+        if actual != expected:
+            print(f"mouse_event_queue_link=invalid file_offset=0x{offset:06x} "
+                  f"expected=0x{expected:04x} actual="
+                  f"{('none' if actual is None else f'0x{actual:04x}')}")
+            valid = False
+
+    expected_literals = {
+        0x1428C: (14, 0x06079814),  # record count
+        0x142A2: (3, 0x06079810),   # queue index/state
+        0x142B4: (1, 0x060797B0),   # record storage
+        0x142DC: (13, 0x06079814),  # dequeue reads same count
+        0x142E8: (14, 0x06079810),  # dequeue reads same queue state
+        0x142F4: (2, 0x060797B0),   # dequeue reads same record storage
+        0x21DB4: (2, 0x060242D6),  # dispatcher dequeue helper
+    }
+    for offset, expected in expected_literals.items():
+        actual = mov_l_pc_literal(data, offset)
+        if actual != expected:
+            print(f"mouse_event_queue_literal=invalid file_offset=0x{offset:06x} "
+                  f"expected={expected} actual={actual}")
+            valid = False
+
+    event17_branch = read_be16(data, 0x14634)
+    if event17_branch is None or bsr_target(0x14634, event17_branch) != 0x14288:
+        print("mouse_event_17_queue_target=invalid "
+              f"target={None if event17_branch is None else bsr_target(0x14634, event17_branch)}")
+        valid = False
+
+    if valid:
+        print("mouse_event_queue=shared_append_dequeue count=0x06079814 "
+              "records=0x060797b0 stride=12 capacity=8")
+        print("mouse_event_17_global_slot_path=appends_to_shared_queue "
+              "consumer_dispatch_semantics_require_context")
+    return valid
+
+
+def report_mouse_early_event_jump_table(data: bytes) -> bool:
+    """Verify the early main event switch's table-routed event-44 handler."""
+    expected_words = {
+        0x286: 0x70FE,  # event id - 2 -> table index
+        0x288: 0xE13B,  # 59 relative event slots
+        0x28A: 0x3012,  # cmp/hs R1,R0
+        0x28C: 0x8B01,  # branch to table dispatch when in range
+        0x292: 0x4000,  # shll R0 (16-bit table index)
+        0x294: 0x6103,  # mov R0,R1
+        0x296: 0xC707,  # mova relative event table base
+        0x298: 0x001D,  # load signed 16-bit relative case target
+        0x29A: 0x0023,  # braf R0
+        0x29C: 0x0009,  # nop
+        0x8C0: 0x55FE,  # mov.l @(56,R15),R5; stack-slot provenance is untraced
+        0x8C4: 0x410B,  # jsr @R1
+        0x8C6: 0x0009,  # nop
+        0x26E58: 0x2FE6,  # event-44 handler saves R14
+        0x26E5E: 0x6D43,  # handler context R4 -> R13
+        0x26E66: 0x6E53,  # hit-row argument R5 -> R14
+    }
+    valid = True
+    for offset, expected in expected_words.items():
+        actual = read_be16(data, offset)
+        if actual != expected:
+            print(f"mouse_early_event_dispatch=invalid file_offset=0x{offset:06x} "
+                  f"expected=0x{expected:04x} actual="
+                  f"{('none' if actual is None else f'0x{actual:04x}')}")
+            valid = False
+
+    table_index = 44 - 2
+    table_offset = 0x2B4 + table_index * 2
+    relative_target = read_be16(data, table_offset)
+    target = (0x29E + (relative_target - 0x10000
+                       if relative_target is not None and relative_target & 0x8000
+                       else relative_target)
+              if relative_target is not None else None)
+    if target != 0x8C0:
+        print(f"mouse_event_44_jump_table=invalid file_offset=0x{table_offset:06x} "
+              f"target={None if target is None else f'0x{target:06x}'}")
+        valid = False
+
+    handler = mov_l_pc_literal(data, 0x8C2)
+    if handler != (1, 0x06036E58):
+        print(f"mouse_event_44_handler_pointer=invalid decoded={handler}")
+        valid = False
+    if valid:
+        print("mouse_early_event_dispatch=relative_jump_table "
+              "event_44_case=DM.BIN:0x0008c0 "
+              "handler_pointer=0x06036e58 "
+              "r5_load=stack_offset_56 provenance=untraced "
+              "handler_side_effects=unverified")
+    return valid
+
+
+def report_mouse_event_44_state_evidence(data: bytes) -> bool:
+    """Check selected opcodes and literals near the event-44 handler."""
+    valid = True
+    expected_words = {
+        0x26E58: 0x2FE6,  # event-44 handler prologue
+        0x26E5E: 0x6D43,  # preserve context in R13
+        0x26E66: 0x6E53,  # preserve hit-row slot in R14
+        0x26B88: 0x900B,  # load context stride
+        0x26B8A: 0x2E0F,  # multiply context by stride
+        0x26B8C: 0xD310,  # load context-block base
+        0x26EE2: 0x4408,  # item-record offset calculation
+        0x26EE6: 0x343C,
+        0x26EE8: 0x4408,
+        0x26EEA: 0x4400,
+        0x26EBE: 0xE054,  # MOV #84,R0 (context-record field)
+        0x26EC0: 0x02CE,  # adjacent opcode; full operation is not decoded here
+        0x2705C: 0x2FE6,  # candidate helper prologue
+        0x271AC: 0x2FE6,  # candidate helper prologue
+    }
+    for offset, expected in expected_words.items():
+        actual = read_be16(data, offset)
+        if actual != expected:
+            print(f"mouse_event_44_state=invalid file_offset=0x{offset:06x} "
+                  f"expected=0x{expected:04x} actual="
+                  f"{('none' if actual is None else f'0x{actual:04x}')}")
+            valid = False
+
+    expected_literals = {
+        0x26BA2: 0x013C,  # stride-like literal
+        0x26BD0: 0x0607,
+        0x26BD2: 0xFBA0,  # address literal
+        0x26F28: 0x0606,
+        0x26F2A: 0x4610,  # address literal
+        0x26F2C: 0x0604,
+        0x26F2E: 0x8874,  # context eligibility masks
+        0x26F0E: 0x1000,  # mask-like literal
+        0x270B2: 0x013C,  # stride-like literal
+        0x270B4: 0x0110,  # offset-like literal
+        0x270B6: 0xFFFF,  # sentinel-like literal
+        0x270B8: 0x0607,
+        0x270BA: 0xFBA0,  # address literal
+        0x27184: 0x00A1,  # item eligibility threshold
+    }
+    for offset, expected in expected_literals.items():
+        actual = read_be16(data, offset)
+        if actual != expected:
+            print(f"mouse_event_44_literal=invalid file_offset=0x{offset:06x} "
+                  f"expected=0x{expected:04x} actual="
+                  f"{('none' if actual is None else f'0x{actual:04x}')}")
+            valid = False
+
+    if valid:
+        print("mouse_event_44_state_evidence=selected_opcodes_and_literals "
+              "literal_0x013c=present literal_0x0607fba0=present "
+              "literal_0x0110=present literal_0x06064610=present "
+              "literal_0x1000=present control_flow_and_side_effects=unverified")
     return valid
 
 
@@ -645,13 +814,22 @@ def main() -> int:
     if not report_mouse_event_name_resolver(data):
         print("NEXUS_MOUSE_EVENT_NAME_RESOLVER_INVALID: retail helper changed")
         return 1
+    if not report_mouse_event_queue_link(data):
+        print("NEXUS_MOUSE_EVENT_QUEUE_LINK_INVALID: retail queue changed")
+        return 1
+    if not report_mouse_early_event_jump_table(data):
+        print("NEXUS_MOUSE_EARLY_EVENT_DISPATCH_INVALID: retail switch changed")
+        return 1
+    if not report_mouse_event_44_state_evidence(data):
+        print("NEXUS_MOUSE_EVENT_44_EVIDENCE_INVALID: retail image changed")
+        return 1
     if not report_mouse_motion_event_gate(data):
         print("NEXUS_MOUSE_MOTION_EVENT_GATE_INVALID: retail poller changed")
         return 1
 
-    print("interpretation=verified retail hit-region registration and callback transport; "
-          "verified callback event IDs and retail names; downstream gameplay "
-          "actions remain unbound")
+    print("interpretation=verified retail hit-region registration, queue and "
+          "event-44 dispatch pointer plus selected handler-region values; "
+          "handler side effects and Firestaff field mapping remain unverified")
     return 0
 
 
