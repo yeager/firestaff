@@ -105,8 +105,9 @@ the highlighted control changes.
   a dungeon tick; in a loaded dungeon it is consumed only as the modifier,
   while Escape remains the desktop Back command. An SDL event-loop regression
   verifies that Button II plus Right turns, then that Right after release
-  side-steps, and a native left-click turns through the visible host panel,
-  using authenticated USA Track 02. Existing US and Japanese
+  side-steps. A native SDL mouse sequence through the visible host panel also
+  turns twice and advances across a source-backed tile, using authenticated
+  USA Track 02. Existing US and Japanese
   Rev. 1 Track 02 runtime tests also exercise the panel's turn and movement
   commands against each region's loaded dungeon state. The Japanese test
   asserts both click receipts and the resulting party pose. These checks cover
