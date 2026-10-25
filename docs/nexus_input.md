@@ -123,10 +123,10 @@ through that slot. A second verified path at `DM.BIN:0x164a8` reads fields at
 object offsets 100 and 104. When the first field is 6, submode 0 queues numeric
 event 13 and submode 2 queues numeric event 44 to `0x06024288`; submode 1 does
 not queue either event. The retail event-name pointer table maps ID 13 to
-`EV_EXIT_INV` and ID 44 to `EV_INV_EQUIP`. Their downstream state changes and
-the action assigned to any hit rectangle remain unresolved, so this trace is
-not enough to implement inventory clicks. The analyzer checks the branch
-targets, event values, queue target, and name pointers against the
+`EV_EXIT_INV` and ID 44 to `EV_INV_EQUIP`. Event 44's downstream handler is
+now traced to item metadata access and per-context slot-pair updates, but the
+slot pair has not been mapped to Firestaff's state model. The analyzer checks
+the branch targets, event values, queue target, and name pointers against the
 hash-verified Japanese retail `DM.BIN`.
 
 The same retail image contains an eight-entry action-rectangle table at file
@@ -145,15 +145,34 @@ The fallback calls `DM.BIN:0x141b4`, which bounds-checks the event ID and
 indexes the authentic name-pointer table at runtime address `0x0604adc4`.
 It returns a name string; it does not dispatch an event handler. The analyzer
 now verifies this helper's instructions and table base in the pinned image.
+The callback's event-44 producer, the event-17 producer behind a separate
+global-slot gate, and the dispatcher share the same bounded queue: eight
+12-byte records at runtime `0x060797b0`, with count/state at `0x06079814` and
+dequeue helper `0x060242d6`. The later queue loop described above is not
+necessarily the only consumer; event-action semantics must be followed from
+each caller's event context.
 An even-offset scan of the pinned image finds no raw `CMP/EQ #44,R0` opcode
 candidate. The analyzer labels this as an opcode-pattern scan only: it cannot
 distinguish data from code or exclude register comparisons, jump tables, or
 indirect event dispatch.
+An early main event dispatcher at file offset `0x260` uses a relative jump
+table. Its event-44 case reaches file offset `0x8c0`, which calls the handler
+at runtime `0x06036e58` with the hit-row argument. The handler resolves the
+context block using a `0x13c`-byte stride, accesses item metadata using a
+40-byte record stride, and updates a per-context, per-slot four-byte pair at
+`0x0607fba0 + 0x13c * context + 0x110 + 4 * slot`. Helpers stage the old pair,
+write the replacement pair, and call update callbacks; the context block also
+receives the `0x1000` flag at offset 84. This establishes a real item/slot
+assignment or swap path. The exact fields and their mapping to Firestaff's
+champion and equipment model remain unjoined, so the handler is not enough to
+reproduce its mutation safely. This is a separate route from the later
+`0x21c84` generic diagnostic loop.
 The separate mouse-motion poller filters for event 46 before it calls the
 hit-region scanner; it does not consume event 44 as a second pointer action.
-This verified queue consumer does not establish an inventory mutation. No
-event-44-specific champion/inventory state writer has been identified, so
-production equipment clicks remain disabled pending a source-bound owner.
+The event-44 handler is real retail item/slot behavior, but the retail slot
+pair has not yet been mapped to Firestaff's state model. Production inventory
+and equipment clicks remain disabled until that mapping and visible result are
+verified.
 
 ## Mouse and remaining input work
 
@@ -169,7 +188,7 @@ cursor and D-pad movement are captured, while desktop mouse movement in
 Firestaff is a host control behavior rather than a claim about Saturn
 ShuttleMouse.
 
-Next work must search for any separate consumer of queued IDs 13 and 44, then
-bind the documented cursor/non-movement controls to retail state writes in the
-same session. Keep unsupported actions inert until those consumers are
-identified.
+Next work must map the retail context/slot pair to the authentic Nexus
+champion/inventory model and verify the post-click visible result. Then bind
+the documented cursor and non-movement controls to those state transitions in
+the same session. Keep unsupported actions inert until that mapping is proven.

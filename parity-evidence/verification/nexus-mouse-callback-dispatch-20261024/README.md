@@ -18,4 +18,17 @@ python3 scripts/analyze_nexus_mouse_event_crossrefs.py
 
 ## Limits
 
-This trace establishes retail hit-region registration and callback transport. It does not identify the callback's complete state transitions, bind individual hit rectangles to actions, or prove Firestaff mouse parity. The `yam\\mouse.c` string references have not been bound to this input route. Do not enable Nexus gameplay clicks from these findings alone.
+Follow-up disassembly of the pinned retail `DM.BIN` established that all eight
+hit rows enqueue event 44 with slot arguments 0 through 7, and the early main
+event jump table routes event 44 to handler `0x06036e58`. The handler accesses
+context and item metadata, replaces a context/slot two-word pair, and calls
+update helpers. See [`docs/nexus_input.md`](../../../docs/nexus_input.md) and
+[`scripts/analyze_nexus_mouse_event_crossrefs.py`](../../../scripts/analyze_nexus_mouse_event_crossrefs.py)
+for the verified chain and address formulas.
+
+The callback is now known to perform retail item/slot assignment or swap
+behavior. Its pair has not yet been mapped to Firestaff's champion and
+equipment fields, and a visible post-click result has not been verified.
+Therefore this evidence alone still does not authorize production gameplay
+clicks. The `yam\\mouse.c` string references have not been bound to this input
+route.
