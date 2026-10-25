@@ -73,6 +73,11 @@
   interval candidate and the live `$77DC` dispatch/descriptor path still need
   an authenticated runtime join through original hover state, Button-I output
   and the resulting game-state change.
+- `theron_v1_sdl_input_events` also verifies a real SDL left-click through
+  the host mouse panel on authenticated US Track 02. Three consecutive TRV2
+  Debug runs passed for the panel turn, Button II chord/release, and keyboard
+  turn/side-step. This covers SDL event ingress only; it does not close the
+  direct world-click, cursor-art, or state-driven rendering gaps.
 - The native mouse panel's turn and movement controls are now exercised on
   authentic US Track 02 by `test_theron_v1_raw_bin_runtime_boot.sh` and on
   authentic Japan Rev. 1 Track 02 by `test_theron_v1_jp_raw_bin_startup.sh`.
