@@ -3,6 +3,11 @@
 - Theron's loaded-dungeon keyboard aliases already match Firestaff's DM1
   convention: arrows/WASD for forward, back and side-step, with Q/E, Home/End
   and keypad turn aliases. Preserve Theron's source-owned action tokens.
+- SDL key events now map Tab, G, I, P, U, Space and Return to supported native
+  champion/item/use/wait commands. The isolated mapper regression passes three
+  loops; live SDL gameplay events for those action keys still need an
+  end-to-end authentic Track 02 `--debug` capture. The boot-probe key mapper
+  had masked the missing normal SDL gameplay bindings.
 - Mouse parity is still partial. The visible 4x3 Firestaff panel dispatches
   native Theron inputs and now highlights the hovered control. Direct world
   clicks remain disabled, and the original pointer art is not drawn in the
@@ -108,16 +113,16 @@
 
 ## 2026-10-24 — verified native keyboard and panel mouse controls; original mouse parity open
 
-- Native keyboard input already reaches the Theron movement and action facade;
-  discrete key events also reached a loaded dungeon and advanced native ticks
-  in the 2026-10-24 Debug runs recorded below. Loaded-dungeon keyboard mapping
+- Native SDL keyboard input reached the Theron movement facade; discrete key
+  events also reached a loaded dungeon and advanced native ticks in the
+  2026-10-24 Debug runs recorded below. Loaded-dungeon keyboard mapping
   now matches the familiar DM1 layout: arrows/A/D sidestep, Q/E/Home/End turn,
   and keypad 1/3 and 4/6 provide the same actions. Startup arrows still
   navigate Theron's menus. The focused input regression passed three loops on
   TRV2.
 - The native dungeon draw includes a visible, Firestaff-owned 4x3 mouse
   panel. Alongside the six movement controls, it exposes the native actions
-  already available from the keyboard: next champion, source-backed item
+  also mapped to keyboard input: next champion, source-backed item
   pickup/selection/drop/use, and wait. A shared control table drives drawing
   and hit-testing; the controls use host UI bounds rather than borrowing
   DM1's pointer table or claiming original Theron hitboxes. Button II remains

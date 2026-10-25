@@ -55274,6 +55274,30 @@ if(BUILD_TESTING AND
         LABELS "csb;theron;input;gamepad;steamdeck")
 endif()
 
+# Theron's native SDL gameplay mapper owns its keyboard action ingress. Keep
+# these bindings isolated from other games' shared input assertions.
+if(BUILD_TESTING AND
+   EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_native_keyboard_mapping.c")
+    add_executable(test_theron_native_keyboard_mapping
+        tests/test_theron_native_keyboard_mapping.c
+        src/engine/m11_game_input_mapping.c
+        src/shared/gamepad_config_m12.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_theron_native_keyboard_mapping PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src)
+    target_link_libraries(test_theron_native_keyboard_mapping PRIVATE SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_theron_native_keyboard_mapping PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+    add_test(NAME theron_native_keyboard_mapping
+             COMMAND test_theron_native_keyboard_mapping)
+    set_tests_properties(theron_native_keyboard_mapping PROPERTIES
+        LABELS "theron;input;keyboard")
+endif()
+
 # M11 input scale boundary contract for the source-to-screen
 # direction. Pins the inverse helper
 # `M11_MapSourcePointToPresentedForPresentation()` (new in this

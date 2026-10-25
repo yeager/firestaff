@@ -248,6 +248,19 @@ M12_MenuInput M11_TheronGameplayInputFromScancode(int scancode)
         case SDL_SCANCODE_E:
         case SDL_SCANCODE_KP_6:
             return M12_MENU_INPUT_TURN_RIGHT;
+        case SDL_SCANCODE_TAB:
+            return M12_MENU_INPUT_CYCLE_CHAMPION;
+        case SDL_SCANCODE_G:
+            return M12_MENU_INPUT_PICKUP_ITEM;
+        case SDL_SCANCODE_P:
+            return M12_MENU_INPUT_DROP_ITEM;
+        case SDL_SCANCODE_I:
+            return M12_MENU_INPUT_INVENTORY_TOGGLE;
+        case SDL_SCANCODE_U:
+            return M12_MENU_INPUT_USE_ITEM;
+        case SDL_SCANCODE_RETURN:
+        case SDL_SCANCODE_SPACE:
+            return M12_MENU_INPUT_ACTION;
         default:
             return M12_MENU_INPUT_NONE;
     }
@@ -264,6 +277,11 @@ M12_MenuInput M11_TheronGameplayInputFromKeycode(int keycode)
         case SDLK_D: return M12_MENU_INPUT_STRAFE_RIGHT;
         case SDLK_Q: return M12_MENU_INPUT_TURN_LEFT;
         case SDLK_E: return M12_MENU_INPUT_TURN_RIGHT;
+        case SDLK_TAB: return M12_MENU_INPUT_CYCLE_CHAMPION;
+        case SDLK_G: return M12_MENU_INPUT_PICKUP_ITEM;
+        case SDLK_P: return M12_MENU_INPUT_DROP_ITEM;
+        case SDLK_I: return M12_MENU_INPUT_INVENTORY_TOGGLE;
+        case SDLK_U: return M12_MENU_INPUT_USE_ITEM;
 #else
         case SDLK_w: return M12_MENU_INPUT_UP;
         case SDLK_s: return M12_MENU_INPUT_DOWN;
@@ -271,7 +289,15 @@ M12_MenuInput M11_TheronGameplayInputFromKeycode(int keycode)
         case SDLK_d: return M12_MENU_INPUT_STRAFE_RIGHT;
         case SDLK_q: return M12_MENU_INPUT_TURN_LEFT;
         case SDLK_e: return M12_MENU_INPUT_TURN_RIGHT;
+        case SDLK_TAB: return M12_MENU_INPUT_CYCLE_CHAMPION;
+        case SDLK_g: return M12_MENU_INPUT_PICKUP_ITEM;
+        case SDLK_p: return M12_MENU_INPUT_DROP_ITEM;
+        case SDLK_i: return M12_MENU_INPUT_INVENTORY_TOGGLE;
+        case SDLK_u: return M12_MENU_INPUT_USE_ITEM;
 #endif
+        case SDLK_RETURN:
+        case SDLK_KP_ENTER:
+        case SDLK_SPACE: return M12_MENU_INPUT_ACTION;
         case SDLK_UP:
         case SDLK_KP_5:
         case SDLK_KP_8: return M12_MENU_INPUT_UP;
