@@ -16,6 +16,16 @@
 
 ## 2026-10-25 — DM1-like native keyboard and mouse parity
 
+- Reference clarification: the retail USA manual defines direction-key and
+  Button I/II controls, while the DMWeb Encyclopaedia notes that the original
+  TurboGrafx version has no mouse. Firestaff's 4x3 panel is a desktop mouse
+  convenience over supported native commands, not reconstruction of an
+  original mouse interface. Keep its host bounds separate from game data; any
+  direct viewport-click feature must be designed as an explicit Firestaff UX
+  over the authenticated native renderer and object state. The manual and
+  DMWeb references are recorded in
+  [`theron-button-ii-manual-source-lock.md`](docs/source-lock/theron-button-ii-manual-source-lock.md).
+
 - Rebuilt the current PR commit natively on TRV2 and ran
   `test_theron_v1_raw_bin_runtime_boot.sh` three consecutive times against the
   hash-verified USA `TQUS02.bin` (`f23601102138f87c33025877767ebf76`). All three

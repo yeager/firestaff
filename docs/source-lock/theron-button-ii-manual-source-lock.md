@@ -13,6 +13,14 @@ also indexed from the [DMWeb Theron's Quest PC Engine edition page](http://dmweb
 The scanned manual is external reference material; no manual image or game
 media is copied into the repository.
 
+The retail control contract uses the PCE direction key and controller buttons,
+not native mouse input. A [DMWeb Encyclopaedia forum answer](https://www.dungeon-master.com/forum/viewtopic.php?t=23303)
+confirms that mouse input is unavailable in the original TurboGrafx version.
+Firestaff's desktop mouse panel is therefore a host-side convenience that
+dispatches supported native commands. Its rectangles are Firestaff UI
+geometry, not recovered game hitboxes. Do not infer viewport mouse targets
+from DM1's regions or the PCE cursor's internal coordinates.
+
 ## Native Firestaff behavior
 
 Firestaff maps keyboard direction inputs directly to the same four movement
