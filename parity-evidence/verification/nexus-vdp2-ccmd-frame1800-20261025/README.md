@@ -62,8 +62,10 @@ python3 scripts/analyze_nexus_vdp2_color_calculation.py \
   /Volumes/Extern-disk/nexus-framebound-20261020-authentic/nexus-frame-1800.vdp2-regs-le16.bin
 ```
 
-It reports `CCMD=additive_saturating`, `ratio_applied=no`, and
-`color_calculation_layers=NBG1,SPRITES` for this frame.
+It reports `CCMD=additive_saturating`, `ratio_applied=no`,
+`ccctl_color_calculation_gates=NBG1,SPRITES`, and
+`eligible_background_calculation=NBG1`. Sprite pixels are gated separately;
+the register span alone does not prove which sprite pixels reach the mixer.
 
 Mednafen's VDP2 `MixIt` implementation selects the mixer from `CCCTL` bit
 `0x0100`. Its `CCMD` branch ignores pixel ratios and adds the two color

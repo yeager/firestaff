@@ -50,35 +50,44 @@ def report(data: bytes) -> None:
     print(f"CCRNA=0x{ccrna:04x}")
 
     layers = (
-        ("NBG0", 0),
-        ("NBG1", 1),
-        ("NBG2", 2),
-        ("NBG3", 3),
-        ("RBG0", 4),
+        ("NBG0", 0, 0),
+        ("NBG1", 1, 1),
+        ("NBG2", 2, 2),
+        ("NBG3", 3, 3),
+        ("RBG0", 4, 4),
+        # Rotation background 1 reuses NBG0's CCCTL and SFCCMD selector.
+        ("RBG1", 5, 0),
     )
-    admitted: list[str] = []
-    for name, bit in layers:
-        enabled = bool(ccctl & (1 << bit))
-        special_mode = (sfccmd >> (bit * 2)) & 0x3
+    eligible_backgrounds: list[str] = []
+    ccctl_gates: list[str] = []
+    for name, bgon_bit, ccctl_bit in layers:
+        background_enabled = bool(bgon & (1 << bgon_bit))
+        calculation_enabled = bool(ccctl & (1 << ccctl_bit))
+        if calculation_enabled:
+            ccctl_gates.append(name)
+        special_mode = (sfccmd >> (ccctl_bit * 2)) & 0x3
         print(
-            f"{name}_color_calculation="
-            f"{'enabled' if enabled else 'disabled'}"
+            f"{name}_background={'enabled' if background_enabled else 'disabled'}"
         )
+        print(f"{name}_ccctl_gate={'enabled' if calculation_enabled else 'disabled'}")
         print(f"{name}_sfccmd_mode={special_mode}")
-        if enabled:
-            admitted.append(name)
+        if background_enabled and calculation_enabled:
+            eligible_backgrounds.append(name)
 
     sprite_enabled = bool(ccctl & (1 << 6))
     ccmd = bool(ccctl & (1 << 8))
     ccrtmd = bool(ccctl & (1 << 9))
     if sprite_enabled:
-        admitted.append("SPRITES")
-    print(f"SPRITES_color_calculation={'enabled' if sprite_enabled else 'disabled'}")
+        ccctl_gates.append("SPRITES")
+    print(f"SPRITES_ccctl_gate={'enabled' if sprite_enabled else 'disabled'}")
     print(f"CCMD={'additive_saturating' if ccmd else 'ratio'}")
     print(f"CCRTMD={'source_pixel_ratio' if ccrtmd else 'register_ratio'}")
-    print(f"CCRNA=0x{ccrna:04x}")
     print(f"ratio_applied={'no' if ccmd else 'yes'}")
-    print(f"color_calculation_layers={','.join(admitted) if admitted else 'none'}")
+    print(f"ccctl_color_calculation_gates={','.join(ccctl_gates) if ccctl_gates else 'none'}")
+    print(
+        "eligible_background_calculation="
+        f"{','.join(eligible_backgrounds) if eligible_backgrounds else 'none'}"
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
