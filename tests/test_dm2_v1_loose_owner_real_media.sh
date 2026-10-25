@@ -198,6 +198,75 @@ for i in 1 3; do
             "$alias_path" "${hashes[$i]}" "$route"
     done
 done
+
+# The English and French PC releases share DUNGEON.DAT but have distinct
+# GRAPHICS.DAT identities. Keep both authentic loose graphics files beside
+# each other, select the French version through the no-game launcher, and
+# require M11's runtime receipt to retain that exact selected owner.
+selected_language_root="$scratch/pc-two-languages/data"
+selected_language_home="$scratch/pc-two-languages/home"
+mkdir -p "$selected_language_root" "$selected_language_home"
+python3 - "$data_root/dm2/${files[0]}" \
+    "$data_root/dm2/Dungeon-Master-II-Skullkeep_DOS_FR.zip" \
+    "$selected_language_root" <<'PY'
+import pathlib
+import sys
+import zipfile
+
+english, french, output = sys.argv[1:]
+with zipfile.ZipFile(english) as archive:
+    pathlib.Path(output, "GRAPHICS-EN.DAT").write_bytes(
+        archive.read("data/graphics.dat"))
+    english_dungeon = archive.read("data/dungeon.dat")
+with zipfile.ZipFile(french) as archive:
+    pathlib.Path(output, "GRAPHICS-FR.DAT").write_bytes(
+        archive.read("data/graphics.dat"))
+    if archive.read("data/dungeon.dat") != english_dungeon:
+        raise SystemExit("FAIL: original PC EN/FR dungeon payloads differ")
+pathlib.Path(output, "DUNGEON.DAT").write_bytes(english_dungeon)
+PY
+cat > "$selected_language_home/config.toml" <<'EOF'
+game_2_architecture_index = 1
+game_2_version_index = 2
+EOF
+selected_language_probe="$scratch/pc-two-languages/runtime.json"
+selected_language_log="$scratch/pc-two-languages/menu.log"
+unset FIRESTAFF_EXIT_AFTER_LAUNCH
+if ! FIRESTAFF_CONFIG_PATH="$selected_language_home/config.toml" \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$selected_language_probe" \
+    FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    HOME="$selected_language_home" XDG_CONFIG_HOME="$selected_language_home" \
+    APPDATA="$selected_language_home" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --debug --data-dir "$selected_language_root" \
+    --script 'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait:1000,key:enter,key:enter' \
+    --duration 30000 >"$selected_language_log" 2>&1; then
+    cat "$selected_language_log" >&2
+    exit 1
+fi
+if ! grep -Fq \
+    "launch phase=game-handoff mode=menu game=dm2 platform=PC edition=pc-fr source=$selected_language_root/GRAPHICS-FR.DAT" \
+    "$selected_language_log"; then
+    echo 'FAIL: launcher did not select the authentic PC French loose graphics file' >&2
+    cat "$selected_language_log" >&2
+    exit 1
+fi
+python3 - "$selected_language_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+if (probe.get("sourceId") != "dm2" or
+        probe.get("bootAssetMd5") != "b4d733576ea60c41737f79f212faf528" or
+        probe.get("startup", {}).get("phase") != "dm2-runtime" or
+        probe.get("startup", {}).get("levelLoaded") != 1):
+    raise SystemExit(
+        "FAIL: selected PC French media did not own the loaded DM2 runtime: "
+        + json.dumps(probe, sort_keys=True))
+print("PASS: DM2 menu-selected PC French loose media owns the runtime beside PC English")
+PY
+
 for i in 0 1 2 3; do
     [[ "${before[$i]}" = "$(firestaff_sha256_file "$data_root/dm2/${files[$i]}")" ]]
 done
