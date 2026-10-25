@@ -31,6 +31,21 @@ The current evidence does not establish complete five-game startup support.
   sends Tab, Z and Space through SDL key-down events after authentic USA Track
   02 startup and checks champion cycling and gameplay ticks. It does not
   establish full game input or renderer parity.
+- A fresh current-main TRV2 build at `e3b6d015c` succeeded, then direct CLI
+  boot probes against the authentic per-game `.firestaff/data` roots reached
+  `runtime-entered` for DM1, CSB, DM2 (FM Towns) and Theron (PC Engine).
+  Nexus reached the Saturn title and retained its explicit blocked receipt
+  (`menu=0`, `levelLoaded=0`); it did not enter gameplay. The real-media M12
+  menu selection script passed keyboard and mouse selection/handoff for all
+  five cards, and default-root launches for DM1/CSB/DM2. Those five-card
+  handoffs are not evidence of playable Nexus or Theron runtimes. The broad
+  CLI edition matrix skipped with code 77 because TRV2 lacks its required
+  authentic DM2 Macintosh archive. No synthetic or copied media was used.
+- PR #74 (`feat(theron): route Button II keyboard binding`) remains open and
+  should not be merged on mapper tests alone. The inactive startup dispatcher
+  lacks Z/X routing, and the loaded-dungeon Theron consumer reports
+  `UNKNOWN INPUT` for the mapped Back token. Require live SDL coverage for
+  startup and dungeon paths before treating these bindings as supported.
 - [`tests/test_firestaff_cli_startup_diagnostics_real_media.sh`](../tests/test_firestaff_cli_startup_diagnostics_real_media.sh)
   checks discovery and direct CLI startup for all five IDs. Its Nexus-specific
   assertion rejects a false `runtime-entered` receipt and requires the blocked
