@@ -8778,8 +8778,10 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
             /* m12_fill_game_versions retains the verified FM Towns rows.
              * Do not reopen the same disc image solely to restore them. */
         }
-    }
-    for (i = 0; i < M12_ASSET_GAME_COUNT; ++i) {
+        /* Finish this game's launch receipt before moving to the next one.
+         * The order above is DM1, CSB, DM2, Nexus, Theron, so the launcher
+         * can publish authenticated early-game results without waiting for
+         * the later games' archive admission. */
         const M12_AssetVersionStatus* selected =
             m12_first_matched_version(status, i);
         int skipNestedArchiveScan = strcmp(g_games[i].gameId, "csb") == 0 &&

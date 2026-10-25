@@ -776,6 +776,8 @@ const M11_AssetSlot* M11_AssetLoader_Load(M11_AssetLoader* loader,
             dm1_v1_fmtowns_pic_library_parse_gfx_header_pc34(
                 asset, assetSize, &header) != DM1_V1_FMTOWNS_PIC_LIB_OK ||
             header.width_pixels == 0u || header.height_pixels == 0u ||
+            header.padded_width_pixels < header.width_pixels ||
+            header.decoded_total_bytes == 0u ||
             (size_t)header.width_pixels > SIZE_MAX / header.height_pixels) {
             return NULL;
         }

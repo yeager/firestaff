@@ -197,9 +197,15 @@ original-media directories installed,
 `--scan-data --debug` found all five games READY in 26.9 seconds on a fresh
 isolated cache and 8.9 seconds on the warm repeat. A five-second warm-run
 sample placed most active samples in DM2 ZIP profile admission and zlib image
-inflation. The full scan still delays the first selectable menu; reducing that
-work without weakening source authentication remains open. This scan-only
-check does not prove native menu input or gameplay parity.
+inflation.
+
+2026-10-25 incremental startup scan: the deferred launcher scan now publishes
+completed DM1, CSB and DM2 receipts separately, so a ready game card can
+launch while later media is still being checked;
+Nexus and Theron remain gated until the shared metadata refresh completes.
+The menu-state gate test passes, but the authentic-media startup test still
+needs a host with the full DM1/CSB/DM2 collection. This scan-only work does not
+prove native menu input or gameplay parity.
 
 2026-10-24 authentic launch-flow recheck: DM1's mixed-edition
 `dm1_v1_m12_auto_multi_platform_menu` test reached its first runtime through

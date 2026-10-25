@@ -171,6 +171,11 @@ profile, confirm the menu visually, hold the highlighted Button I action for
 System Card screen or a prior JP short-press capture as evidence for the US
 hold or full-game parity.
 
+On 2026-10-25, three additional isolated four-second RUN traces likewise
+stopped at System Card BIOS controller reads rather than game-owned input or
+Theron title/menu execution. They are retained only as operator-local negative
+diagnostics; they do not change the boundary above or establish menu timing.
+
 Reference context: [DMWeb Theron's Quest edition records](DMWEB_REFERENCE.md)
 separate Japanese and US media and include original menu/gameplay references;
 [Greatstone SCK](http://greatstone.free.fr/dm/) publishes a CSBWin custom

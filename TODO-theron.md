@@ -142,6 +142,10 @@
   loops; live SDL gameplay events for those action keys still need an
   end-to-end authentic Track 02 `--debug` capture. The boot-probe key mapper
   had masked the missing normal SDL gameplay bindings.
+- Keyboard `X` and Escape reach the native Back token in a loaded dungeon.
+  With no source-owned dungeon cancel surface active, Firestaff now consumes
+  the token as an ignored input and preserves the authentic party pose and
+  world tick; this does not claim an in-dungeon cancel transition.
 - Mouse support is still partial. The original PC Engine game has no mouse
   interface. The visible 4x3 Firestaff panel dispatches
   native Theron inputs and now highlights the hovered control. Direct world
@@ -915,11 +919,14 @@ Mednafen remains reference-only.
 
 ## 2026-10-24 — native Button II semantics corrected from the retail manual
 
-Button II now maps to cancel and no longer advances the native dungeon tick
-when sent by right mouse or long touch. The manual's simplified movement
-combination needs no second native mode because direction keys already issue
-those four commands directly. `Return` and `Space` remain Firestaff wait/tick
-shortcuts. See `docs/source-lock/theron-button-ii-manual-source-lock.md`.
+Button II maps to the Back/cancel token and no longer advances the native
+dungeon tick when sent by right mouse, long touch or keyboard. Since the
+loaded dungeon has no source-owned cancel surface, the native input receipt
+reports the input as ignored rather than claiming a cancel transition. The
+manual's simplified movement combination needs no second native mode because
+direction keys already issue those four commands directly. `Return` and
+`Space` remain Firestaff wait/tick shortcuts. See
+`docs/source-lock/theron-button-ii-manual-source-lock.md`.
 This control correction does not close broader input, item-use, transition,
 combat, or presentation parity.
 
