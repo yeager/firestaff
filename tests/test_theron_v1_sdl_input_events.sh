@@ -24,9 +24,11 @@ fi
 mkdir -p "$scratch_root"
 held_probe=$(mktemp "$scratch_root/firestaff-theron-sdl-held.XXXXXX")
 released_probe=$(mktemp "$scratch_root/firestaff-theron-sdl-released.XXXXXX")
+panel_probe=$(mktemp "$scratch_root/firestaff-theron-sdl-panel.XXXXXX")
 held_output=$(mktemp "$scratch_root/firestaff-theron-sdl-held-output.XXXXXX")
 released_output=$(mktemp "$scratch_root/firestaff-theron-sdl-released-output.XXXXXX")
-trap 'rm -f "$held_probe" "$released_probe" "$held_output" "$released_output"' EXIT
+panel_output=$(mktemp "$scratch_root/firestaff-theron-sdl-panel-output.XXXXXX")
+trap 'rm -f "$held_probe" "$released_probe" "$panel_probe" "$held_output" "$released_output" "$panel_output"' EXIT
 
 startup_script='enter,enter,down,down,down,down,down,down,enter,down,enter,tab'
 run_event_route() {
@@ -46,25 +48,29 @@ run_event_route() {
         >"$output" 2>&1
 }
 
-# The right-button events and key-down events enter the normal SDL poll loop.
+# The mouse and key events enter the normal SDL poll loop.
 # At the source-owned starting tile, the Button II chord turns right without
 # moving; after button release, the same key side-steps right to (2,1).
 run_event_route "$held_probe" "$held_output" \
     'down,rightdown:40:40,key:right,wait:8'
 run_event_route "$released_probe" "$released_output" \
     'down,rightdown:40:40,rightup:40:40,key:right,wait:8'
+run_event_route "$panel_probe" "$panel_output" \
+    'click:204:144,wait:8'
 
-python3 - "$held_probe" "$released_probe" "$expected_md5" <<'PY'
+python3 - "$held_probe" "$released_probe" "$panel_probe" "$expected_md5" <<'PY'
 import json
 import sys
 
-held_path, released_path, expected_md5 = sys.argv[1:]
+held_path, released_path, panel_path, expected_md5 = sys.argv[1:]
 with open(held_path, encoding="utf-8") as stream:
     held = json.load(stream)
 with open(released_path, encoding="utf-8") as stream:
     released = json.load(stream)
+with open(panel_path, encoding="utf-8") as stream:
+    panel = json.load(stream)
 
-for label, probe in (("held", held), ("released", released)):
+for label, probe in (("held", held), ("released", released), ("panel", panel)):
     startup = probe.get("startup", {})
     if not startup.get("levelLoaded"):
         raise SystemExit(f"FAIL: {label} SDL event route did not load a dungeon")
@@ -73,12 +79,15 @@ for label, probe in (("held", held), ("released", released)):
 
 held_party = held["party"]
 released_party = released["party"]
+panel_party = panel["party"]
 if (held_party["mapX"], held_party["mapY"], held_party["direction"]) != (1, 1, 1):
     raise SystemExit(f"FAIL: held Button II + Right did not turn in place: {held_party}")
 if (released_party["mapX"], released_party["mapY"], released_party["direction"]) != (2, 1, 0):
     raise SystemExit(f"FAIL: Right after Button II release did not side-step: {released_party}")
-if held.get("bootAssetMd5") != expected_md5 or released.get("bootAssetMd5") != expected_md5:
+if (panel_party["mapX"], panel_party["mapY"], panel_party["direction"]) != (1, 0, 3):
+    raise SystemExit(f"FAIL: live SDL mouse-panel click did not turn left: {panel_party}")
+if any(probe.get("bootAssetMd5") != expected_md5 for probe in (held, released, panel)):
     raise SystemExit("FAIL: runtime event route did not use authenticated USA Track 02")
 
-print("PASS: authentic Theron SDL events route Button II turn and post-release side-step")
+print("PASS: authentic Theron SDL routes Button II, keyboard, and mouse-panel events")
 PY

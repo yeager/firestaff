@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-25 — verify native Theron mouse-panel SDL dispatch
+
+`theron_v1_sdl_input_events` now drives a left-click through the regular SDL
+event loop into the native Theron mouse panel, in addition to checking the
+Button II mouse modifier and keyboard turn/step behavior. Against authenticated
+USA Track 02 (MD5 `f23601102138f87c33025877767ebf76`), the panel click turned the
+party left from the source-backed starting pose. The fresh TRV2 Debug binary
+passed three consecutive runs. This proves host-panel mouse dispatch with
+authentic game data; direct world-space mouse hit targets, visible state-driven
+rendering and complete DM1-like mouse parity remain open.
+
 ## 2026-10-25 — verify Button II and keyboard events in the SDL loop
 
 Theron now consumes right-button down/up in a loaded dungeon as Button II
