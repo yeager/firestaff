@@ -35,8 +35,14 @@ on the PRS3 menu capture. See
   buffers/draw selector and VDP2 registers/VRAM/CRAM) were byte-identical to
   the no-input control.  The observed active VDP1 state has two stable
   texture sources for frames 30000--30037, but remains an unbound hardware
-  observation rather than proof of a menu, HUD or dungeon consumer.  Search
-  beyond this window for the first input-correlated presentation change.
+  observation rather than proof of a menu, HUD or dungeon consumer. Search
+  beyond this window for the first input-correlated presentation change. A
+  separate interactive Ymir run on authentic Japanese retail media shows
+  F/Start opening the title menu, S selecting Continue, and J/A confirming
+  New Game into the dungeon. A separate ShuttleMouse run shows a button event
+  advancing the title into the intro. These establish retail input behavior,
+  not Firestaff startup parity or the menu/face display consumer; see
+  `parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`.
   A further matched JP control/input pair at frames 40000--40079 scheduled the
   remaining Up/Down/Left/Right/X/Y/Z/L/R masks (each for two frames). The
   80-frame raw VDP1/VDP2 capture matched the no-input control byte-for-byte
@@ -44,7 +50,8 @@ on the PRS3 menu capture. See
   and frames 40000 and 40079 rendered identically; the input-event receipt
   confirms only that the external hook scheduled the masks, not that Saturn
   code consumed them. This later window adds no menu/gameplay semantics; the
-  first input-correlated presentation change remains open.
+  first input-correlated presentation change within these raw capture windows
+  remains open.
   A fresh cold-start matched pair then captured frames 0--279 on the
   authenticated Japanese BIOS/disc: Start was requested at 140--199 and A at
   210--239 in the input run; the control forced no buttons in those windows.
@@ -53,7 +60,8 @@ on the PRS3 menu capture. See
   280-frame raw VDP1/VDP2 stream were identical (both raw SHA-256
   `ea2eb96dc56ce9505d67062b2a5f98141d2a456d413c74c19997c04346e27af3`).
   This confirms delivered input and a live reader, not action semantics or a
-  presentation change; startup/menu admission remains blocked. A later
+  presentation change in this matched cold-start pair; startup/menu admission
+  remains blocked. A later
   matched frame-10500 WorkRAMH pair and retail CD-to-RAM source receipt now
   bind the relocated reader PCs to an exact 512-byte `TM.BIN` span at file
   offset `0x4500` (destination `0x06014500..0x060146ff`). The authenticated
