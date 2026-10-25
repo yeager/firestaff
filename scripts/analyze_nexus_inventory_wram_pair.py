@@ -183,7 +183,15 @@ def analyze(before: bytes, after: bytes, context_start: int, context_count: int,
             new = after[offset:offset + 4]
             print(f"context[10].observed_raw @0x{WRAM_BASE + offset:08x}: "
                   f"{old.hex()} -> {new.hex()} semantics=unproven")
-            if old != new:
+            # Preserve changes elsewhere in the inspected window as raw bytes;
+            # the four-byte observation must not hide other context changes.
+            start = CONTEXT_BASE_OFFSET + index * CONTEXT_STRIDE + CONTEXT_ITEM_PAIRS_OFFSET
+            end = start + CONTEXT_ITEM_SLOT_COUNT * 4
+            for address in range(start, end):
+                if before[address] != after[address]:
+                    print(f"context[10].raw_byte @0x{WRAM_BASE + address:08x}: "
+                          f"{before[address]:02x} -> {after[address]:02x}")
+            if before[start:end] != after[start:end]:
                 changed_contexts += 1
             continue
         old_pairs = context_pairs(before, index)
