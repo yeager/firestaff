@@ -1,5 +1,13 @@
 ## 2026-10-25 — DM1-like native keyboard and mouse parity
 
+- Rebuilt the current PR commit natively on TRV2 and ran
+  `test_theron_v1_raw_bin_runtime_boot.sh` three consecutive times against the
+  hash-verified USA `TQUS02.bin` (`f23601102138f87c33025877767ebf76`). All three
+  `--debug` runs passed: keyboard movement and turning, mouse panel movement,
+  champion cycling, wait, pickup, item selection and drop produced the expected
+  native state. The item test invokes the Firestaff panel at the real level-0
+  item location; it does not verify direct item/world clicks or a fully
+  state-driven viewport.
 - Theron's loaded-dungeon keyboard aliases already match Firestaff's DM1
   convention: arrows/WASD for forward, back and side-step, with Q/E, Home/End
   and keypad turn aliases. Preserve Theron's source-owned action tokens.
