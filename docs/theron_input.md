@@ -100,6 +100,14 @@ contain CJK glyphs.
   and
   [`theron-original-forward-command-capture-2026-08-21.md`](source-lock/theron-original-forward-command-capture-2026-08-21.md).
   Do not substitute DM1 hit regions or guessed coordinates.
+- DM1-like mouse parity remains open: Theron's native dungeon view does not
+  yet draw its original cursor, and clicks outside the Firestaff panel do not
+  target the game world. The `$D515/$D588` interval candidate must be joined
+  through the live pointer descriptor, hover result and Button-I command
+  consumer before source-derived hit testing can be enabled. The viewport
+  must also update from native game state for clicks to provide visible,
+  end-to-end gameplay. See the current evidence and remaining capture gate in
+  [`TODO-theron.md`](../TODO-theron.md).
 - Run and Select have no keyboard binding (no gameplay use currently).
 - Gamepad input follows the SDL3 gamepad mapping (D-pad, A/B buttons) where
   the selected input mode permits gamepad events.

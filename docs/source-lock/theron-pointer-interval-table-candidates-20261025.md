@@ -49,8 +49,9 @@ This is not a clean same-edition source join. Existing input-sweep evidence
 also does not bind the saved state's `$77DC`/`$C060` bytes to a live `$D515`
 lookup. The state therefore does not establish that this pointer table or
 descriptor was loaded from one claimed edition or consumed by the live game.
-The next capture must use the native original runtime instrumented as a
-reference, admit the exact source edition, record live MPR and mapped `$77DC`
+The next capture must use the instrumented PCE reference emulator with the
+authentic original media; Firestaff itself continues to run natively. Admit
+the exact source edition, record live MPR and mapped `$77DC`
 and target bytes, then bind a nonzero descriptor through `$D515` and `$D588`
 to `$2911` hover and `$CCDB` Button-I command output. Only after that can the
 pointer data drive native hit testing.
