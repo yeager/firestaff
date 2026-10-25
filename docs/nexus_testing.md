@@ -205,17 +205,16 @@ frames only; no menu, LEV01 or Saturn-save claim is made from them.
 ## Reference: DM1 comparison boundary
 
 Nexus is related to DM1, but DM1 parity is not proof of Nexus behavior. Use
-DM1/ReDMCSB only for comparative hypotheses; promote Nexus behavior only from
-Nexus bytes, disassembly or an authenticated Saturn capture. In particular,
-do not infer Nexus start pose, event ownership, save format, sound selectors or
-rendering semantics from DM1.
+DM1/ReDMCSB only to form comparative hypotheses; accept Nexus behavior only
+from Nexus bytes, disassembly or an authenticated Saturn capture. Do not infer
+Nexus mechanics, start pose, event ownership, save format, sound selectors,
+input semantics or rendering behavior from DM1. The two games have distinct
+platforms, data and runtime paths, and the complete set of behavioral
+differences has not been established.
 
-The **only** differences from DM1 are:
-- 3D polygon rendering (not 2D sprites)
-- Different texture/model assets
-- CD audio instead of PC speaker/AdLib
-- Japanese text (Shift-JIS)
-- Saturn ControlPad; keyboard aliases are recorded in
-  [Nexus input status](nexus_input.md). Shuttle Mouse parity is unverified.
-
-Everything else is DM1 under the hood.
+Firestaff currently exposes a desktop keyboard movement layout, a logical
+hand-pointer mode and a retail-rectangle movement surface. These are host
+controls with documented limits, not proof that Nexus uses DM1 mechanics or
+that Firestaff reproduces Saturn peripheral behavior. See
+[Nexus input status](nexus_input.md) for the verified controls and remaining
+evidence gates.
