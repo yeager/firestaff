@@ -80,9 +80,11 @@ padded_width = (width + 0x1f) & ~0x1f     ; 0x1f665..0x1f66e
 row_bytes    = padded_width / 2            ; 0x1f66e..0x1f672 (4 bpp)
 total_bytes  = row_bytes * height          ; 0x1f676
 ```
-If `width == padded_width` the fast-copy branch at `0x1f85f` runs
-(the on-disk bytes are the pixel matrix verbatim). Otherwise the
-RLE loop starting at `0x1f6a0` runs — control byte layout:
+`DECODEGRAPHIC` has two RLE loops. When `width != padded_width`, the
+loop at `0x1f69b` advances across padded scanlines. When they match, the
+branch at `0x1f68c` selects the compact-row RLE loop at `0x1f85f`; it
+does not copy the source span verbatim. Both loops use the same control
+byte grammar:
 
 | bit 7 | bit 6 | bits 4-5 | count encoding                     |
 |-------|-------|----------|------------------------------------|
@@ -96,11 +98,12 @@ Bits 4-5 select the operation applied to that count:
 |-----|-------------|------------------------------------------------------|
 | 00  | `0x1f734`   | copy `count` pixels from the stream                  |
 | 01  | `0x1f775`   | write single pixel `ctrl & 0x0f` `count` times       |
-| 11  | `0x1f7f3`   | mode-3 (row copy with pixel nibble); unfinished here |
+| 11  | `0x1f7f3`   | mode-3 (row copy with pixel nibble)                  |
 
 The container + header parse is enough to reach any asset. The
-inner RLE decoder is deferred to a follow-up job so we never emit
-guessed pixels.
+All four control modes are implemented in the native decoder and
+validated against the shipped English picture library. The host-side
+renderer still needs separate visual checks for each gameplay surface.
 
 ## Firestaff-side deliverable
 
@@ -174,27 +177,30 @@ pixels, so downstream state stays coherent.
 ## Round-trip verification
 
 Firestaff decoder: `dm1_v1_fmtowns_pic_library_decode_asset_pc34`
-(`src/dm1/dm1_v1_fmtowns_pic_library.c`). Byte-count invariant
-holds against the shipped English GRAPHICS.DAT:
+(`src/dm1/dm1_v1_fmtowns_pic_library.c`). The width-equals-padding loop
+is verified using shipped English asset 1 (320x200, 5,126 source bytes,
+32,000 decoded bytes); this asset previously failed to render because the
+second RLE loop had been mistaken for a raw copy. The padded-row byte-count
+invariant also holds against the same GRAPHICS.DAT:
 
   - **347 / 347 RLE-branch assets** (indices 6..532 where
     `width != padded_width`) decode with
     `source_bytes_consumed == size_table_primary[index]` **and**
     `bytes_written == (padded_width/2) * height`.
-  - Indices ≥ 533 have `width` values (29187, 56072, ...) whose
-    padded_width fits no display asset — they are raw data spans
-    reachable via the DIRECT+NO_HDR path, not DECODEGRAPHIC. The
-    decoder correctly refuses them (fast-path branch is not
-    implemented for asset spans; the raw-asset path applies).
+  - Indices ≥ 533 include raw data spans with non-image headers (for
+    example the menu font at index 557), reachable through
+    GET_MY_DECODED's DIRECT+NO_HDR path rather than DECODEGRAPHIC.
 
 The verification harness is `test_dm1_v1_fmtowns_pic_library.c`
 `test_real_graphics_dat_rle_roundtrip` — gate the run with
 `FIRESTAFF_DM1_FMTOWNS_GRAPHICS_DAT=/path/to/GRAPHICS.DAT`. Skips
 silently without game data. Never bundles bytes.
 
-## Next step
+## Runtime integration
 
-The pixel matrices for every RLE-branch asset in `GRAPHICS.DAT` are
-now materialisable. Follow-up work: wire the decoded pixels into the
-viewport, portrait, and splash bindings behind their own asset
-descriptors.
+The FM Towns DM1 loader now uses this decoder for `GRAPHICS.DAT` assets,
+while the classic DM1 loader remains available for its other variants.
+Real-media tests authenticate the English archive, decode the title and
+representative floor, wall, ornament, and mirror assets, and verify
+source-to-destination nibble order. The host-side renderer still needs
+separate visual checks for each gameplay surface.

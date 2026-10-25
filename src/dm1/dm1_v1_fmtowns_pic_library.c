@@ -180,10 +180,10 @@ dm1_v1_fmtowns_pic_library_parse_gfx_header_pc34(
     out_header->padded_width_pixels = pw;
     out_header->row_bytes           = rb;
     out_header->decoded_total_bytes = (uint32_t)rb * (uint32_t)h;
-    /* DECODEGRAPHIC 0x1f689: `cmp dx, ax` then `je 0x1f85f` — if the
-     * on-disk width equals the padded width, the RLE loop is
-     * skipped and the pixels are copied verbatim. */
-    out_header->is_uncompressed     = (pw == w) ? 1 : 0;
+    /* DECODEGRAPHIC 0x1f689 selects the second RLE loop at 0x1fa5f when
+     * width equals padded width. Both loops decode the same four control
+     * modes; the second omits row-padding adjustments. */
+    out_header->uses_compact_row_rle = (pw == w) ? 1 : 0;
     return DM1_V1_FMTOWNS_PIC_LIB_OK;
 }
 
@@ -343,15 +343,8 @@ dm1_v1_fmtowns_pic_library_decode_asset_pc34(
     st.esi_px     = 0;
     st.di_row     = hdr.width_pixels;
 
-    /* Fast path (0x1f85f): width == padded_width. Not shipped here —
-     * every FM Towns asset that hits the fast path is already
-     * reachable via the raw-asset path; this decoder targets the RLE
-     * branch that the format-evidence pass deferred. */
-    if (hdr.is_uncompressed) {
-        return DM1_V1_FMTOWNS_PIC_LIB_ERR_ASSET_HEADER;
-    }
-
-    /* Main loop (0x1f69b .. 0x1f854). */
+    /* Main decoder loop. For rows without padding, `delta` is zero and
+     * the per-row logic below reduces to the original 0x1fa5f loop. */
     while (st.esi_px < st.total_px) {
         uint8_t ctrl;
         if (!decode_read_byte(&st, &ctrl)) {

@@ -154,6 +154,7 @@
 #include "dm1_v1_fmtowns_jdm_bss.h"
 #include "dm1_v1_fmtowns_jdm_symbols.h"
 #include "dm1_v1_fmtowns_pic_library_loader.h"
+#include "dm1_v1_fmtowns_font_asset.h"
 #include "dm1_v1_fmtowns_menu_render.h"
 #include "firestaff_fmtowns_disc.h"
 #include "firestaff_zip_extract.h"
@@ -8297,6 +8298,20 @@ static int m11_dm1_bind_original_font(M11_GameViewState *state) {
         state->originalFontAvailable = M11_Font_LoadIigsFromRawBitmap(
             &state->originalFont, raw, length);
         return state->originalFontAvailable;
+    } else if (state->assetLoader.dm1Fmtowns) {
+        dm1_v1_fmtowns_pic_library_view_t view;
+        if (dm1_v1_fmtowns_pic_library_open_pc34(
+                state->assetLoader.dm1FmtownsData,
+                (size_t)state->assetLoader.dm1FmtownsDataSize,
+                &view) != DM1_V1_FMTOWNS_PIC_LIB_OK ||
+            dm1_v1_fmtowns_pic_library_load_raw_asset_pc34(
+                &view, dm1_v1_fmtowns_font_pic_library_index_pc34(), raw,
+                sizeof(raw), &length) != DM1_V1_FMTOWNS_PIC_LIB_OK) {
+            return 0;
+        }
+        state->originalFontAvailable = M11_Font_LoadFromRawBitmap(
+            &state->originalFont, M11_FONT_GRAPHIC_INDEX_LEGACY, raw, length);
+        return state->originalFontAvailable;
     } else if (state->assetLoader.atariStDm1) {
         DM1_V1_AtariStGraphicsDat dat;
         int count;
@@ -8361,7 +8376,8 @@ static void m11_bind_verified_i34e_archive_food_clock(M11_GameViewState* state) 
 static int m11_apply_dm1_startup_graphics_bind_receipt(
     M11_GameViewState* state,
     const DM1_V1_StartupGraphicsBindReceipt_PC34* receipt,
-    const char* expectedMd5) {
+    const char* expectedMd5,
+    int dm1Fmtowns) {
     if (!state || !receipt || !receipt->handled) {
         return 0;
     }
@@ -8371,6 +8387,7 @@ static int m11_apply_dm1_startup_graphics_bind_receipt(
     /* Earlier native/virtual ingestion has already authenticated this exact
      * source. Reuse its retained loader instead of reopening a loose file. */
     if (!state->assetLoader.initialized ||
+        (dm1Fmtowns && !state->assetLoader.dm1Fmtowns) ||
         strcmp(state->assetLoader.graphicsDatPath, receipt->graphics_dat_path) != 0) {
         uint8_t* readBytes = NULL;
         const uint8_t* bytes;
@@ -8392,9 +8409,13 @@ static int m11_apply_dm1_startup_graphics_bind_receipt(
             free(readBytes);
             return 0;
         }
-        /* Preserve legacy/Atari/PC decoder precedence, consuming only the
-         * bytes just authenticated. Each successful decoder owns its copy. */
-        loaded = M11_AssetLoader_InitDm1LegacyFromBuffer(
+        /* The FM Towns picture library is not the shared IMG2 layout. Route
+         * it through EDM.EXP DECODEGRAPHIC after authenticating the exact
+         * startup bytes; leave other platform decoder precedence intact. */
+        loaded = dm1Fmtowns
+            ? M11_AssetLoader_InitDm1FmtownsFromBuffer(
+                  &state->assetLoader, bytes, (long)byteCount)
+            : M11_AssetLoader_InitDm1LegacyFromBuffer(
                      &state->assetLoader, bytes, (long)byteCount, 0) ||
                  M11_AssetLoader_InitDm1LegacyFromBuffer(
                      &state->assetLoader, bytes, (long)byteCount, 1) ||
@@ -27048,6 +27069,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             DM1_V1_STARTUP_LAUNCH_PATH_DIRECT_GAME_VIEW_PC34;
         facts.load_succeeded = 1;
         if (!dm1_v1_startup_runtime_ready_receipt_pc34(&facts, &receipt)) {
+            fprintf(stderr, "firestaff: DM1 startup runtime receipt rejected game=%s asset=%s dungeon=%s\n",
+                    spec->gameId ? spec->gameId : "(null)",
+                    spec->verifiedAssetMd5 ? spec->verifiedAssetMd5 : "(none)",
+                    dungeonPath);
             return 0;
         }
         graphicsBindReceipt = receipt.graphics_bind_receipt;
@@ -27064,9 +27089,20 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                      "%s", spec->verifiedAssetPath);
         }
         if (!m11_apply_dm1_startup_runtime_start_receipt(
-                state, &receipt.runtime_start_receipt)) return 0;
+                state, &receipt.runtime_start_receipt)) {
+            fprintf(stderr, "firestaff: DM1 runtime start receipt apply failed handled=%d active=%d title=%s\n",
+                    receipt.runtime_start_receipt.handled,
+                    receipt.runtime_start_receipt.active,
+                    receipt.runtime_start_receipt.title);
+            return 0;
+        }
         if (!m11_apply_dm1_startup_graphics_bind_receipt(
-                state, &graphicsBindReceipt, spec->verifiedAssetMd5)) {
+                state, &graphicsBindReceipt, spec->verifiedAssetMd5,
+                spec->dm1Fmtowns)) {
+            fprintf(stderr,
+                    "firestaff: DM1 graphics bind failed fmtowns=%d path=%s bytes=%zu\n",
+                    spec->dm1Fmtowns, graphicsBindReceipt.graphics_dat_path,
+                    state->fmtownsGraphicsDatSize);
             /* The runtime receipt activated the freshly loaded world. A
              * rejected source must not leave it running behind the menu. */
             M11_GameView_Shutdown(state);

@@ -17,6 +17,7 @@
 #include "memory_frontend_pc34_compat.h"
 #include "graphics_dat_entry_classify_pc34_compat.h"
 #include "dm1_v1_legacy_graphics_dat.h"
+#include "dm1_v1_fmtowns_pic_library.h"
 #include "dm1_v1_iigs_graphics_dat.h"
 #include "dm1_v1_amiga_graphics_dat.h"
 #include "dm1_v1_atari_st_graphics_dat.h"
@@ -218,6 +219,50 @@ int M11_AssetLoader_InitDm1LegacyFromFile(M11_AssetLoader* loader,
     return ok;
 }
 
+int M11_AssetLoader_InitDm1FmtownsFromBuffer(M11_AssetLoader* loader,
+                                             const unsigned char *data,
+                                             long size) {
+    dm1_v1_fmtowns_pic_library_view_t view;
+    unsigned char *copy;
+    unsigned char *legacyCopy;
+
+    if (!loader || !data || size <= 0 ||
+        dm1_v1_fmtowns_pic_library_open_pc34(data, (size_t)size, &view) !=
+            DM1_V1_FMTOWNS_PIC_LIB_OK || view.asset_count != 575u ||
+        !dm1_v1_fmtowns_pic_library_tables_are_mirror_pc34(&view)) {
+        return 0;
+    }
+    copy = (unsigned char *)malloc((size_t)size);
+    legacyCopy = (unsigned char *)malloc((size_t)size);
+    if (!copy || !legacyCopy) {
+        free(copy);
+        free(legacyCopy);
+        return 0;
+    }
+    memcpy(copy, data, (size_t)size);
+    memcpy(legacyCopy, data, (size_t)size);
+    /* A platform handoff can replace an already initialized loader. Keep
+     * its cached surfaces and native-buffer ownership from leaking. The
+     * replacement bytes are copied first, so `data` may safely alias the
+     * old loader's storage. */
+    M11_AssetLoader_Shutdown(loader);
+    memset(loader, 0, sizeof(*loader));
+    loader->dm1FmtownsData = copy;
+    loader->dm1FmtownsDataSize = size;
+    loader->dm1Fmtowns = 1;
+    /* Several renderer and gameplay paths use this flag for classic DM1
+     * semantics. Load/QuerySize dispatch the FM Towns format before the
+     * generic legacy decoder, so its bytes cannot be decoded as IMG2. */
+    loader->legacyData = legacyCopy;
+    loader->legacyDataSize = size;
+    loader->legacyDm1 = 1;
+    loader->graphicCount = view.asset_count;
+    loader->initialized = 1;
+    snprintf(loader->graphicsDatPath, sizeof(loader->graphicsDatPath),
+             "(DM1 FM Towns picture library, %ld bytes)", size);
+    return 1;
+}
+
 /* Bound the resident original GS bank independently of a caller's long size.
  * The two native editions use 398713 bytes; this is a resource cap, not an
  * edition admission check. The explicit profile below also authenticates
@@ -400,6 +445,7 @@ void M11_AssetLoader_Shutdown(M11_AssetLoader* loader) {
         return;
     }
     free(loader->legacyData);
+    free(loader->dm1FmtownsData);
     free(loader->iigsData);
     free(loader->ownedBuffer);
     free(loader->atariStData);
@@ -491,6 +537,26 @@ int M11_AssetLoader_QuerySize(const M11_AssetLoader* loader,
         }
         return dm1_v1_iigs_graphics_query(loader->iigsData,
             (size_t)loader->iigsDataSize,(uint16_t)graphicIndex,outWidth,outHeight);
+    }
+    if (loader->dm1Fmtowns) {
+        dm1_v1_fmtowns_pic_library_view_t view;
+        const uint8_t *asset = NULL;
+        uint16_t assetSize = 0u;
+        dm1_v1_fmtowns_pic_library_gfx_header_t header;
+        if (graphicIndex >= loader->graphicCount ||
+            dm1_v1_fmtowns_pic_library_open_pc34(
+                loader->dm1FmtownsData, (size_t)loader->dm1FmtownsDataSize,
+                &view) != DM1_V1_FMTOWNS_PIC_LIB_OK ||
+            dm1_v1_fmtowns_pic_library_asset_bytes_pc34(
+                &view, (uint16_t)graphicIndex, &asset, &assetSize) !=
+                DM1_V1_FMTOWNS_PIC_LIB_OK ||
+            dm1_v1_fmtowns_pic_library_parse_gfx_header_pc34(
+                asset, assetSize, &header) != DM1_V1_FMTOWNS_PIC_LIB_OK) {
+            return 0;
+        }
+        if (outWidth) *outWidth = header.width_pixels;
+        if (outHeight) *outHeight = header.height_pixels;
+        return 1;
     }
     if (loader->legacyDm1) {
         return dm1_v1_legacy_graphics_query(loader->legacyData,
@@ -685,6 +751,64 @@ const M11_AssetSlot* M11_AssetLoader_Load(M11_AssetLoader* loader,
                                                        pixels,width,height);
         free(pixels);
         return installed ? m11_find_cached(loader,graphicIndex) : NULL;
+    }
+
+    if (loader->dm1Fmtowns) {
+        dm1_v1_fmtowns_pic_library_view_t view;
+        const uint8_t *asset = NULL;
+        uint16_t assetSize = 0u;
+        dm1_v1_fmtowns_pic_library_gfx_header_t header;
+        uint8_t *packed = NULL;
+        uint8_t *pixels = NULL;
+        size_t bytesWritten = 0u;
+        size_t consumed = 0u;
+        size_t pixelCount;
+        unsigned int x, y;
+        int installed = 0;
+
+        if (graphicIndex >= loader->graphicCount ||
+            dm1_v1_fmtowns_pic_library_open_pc34(
+                loader->dm1FmtownsData, (size_t)loader->dm1FmtownsDataSize,
+                &view) != DM1_V1_FMTOWNS_PIC_LIB_OK ||
+            dm1_v1_fmtowns_pic_library_asset_bytes_pc34(
+                &view, (uint16_t)graphicIndex, &asset, &assetSize) !=
+                DM1_V1_FMTOWNS_PIC_LIB_OK ||
+            dm1_v1_fmtowns_pic_library_parse_gfx_header_pc34(
+                asset, assetSize, &header) != DM1_V1_FMTOWNS_PIC_LIB_OK ||
+            header.width_pixels == 0u || header.height_pixels == 0u ||
+            (size_t)header.width_pixels > SIZE_MAX / header.height_pixels) {
+            return NULL;
+        }
+        packed = (uint8_t *)malloc(header.decoded_total_bytes);
+        pixelCount = (size_t)header.width_pixels * header.height_pixels;
+        pixels = (uint8_t *)malloc(pixelCount);
+        if (!packed || !pixels ||
+            dm1_v1_fmtowns_pic_library_decode_asset_pc34(
+                asset, assetSize, packed, header.decoded_total_bytes,
+                &bytesWritten, &consumed, &header) !=
+                DM1_V1_FMTOWNS_PIC_LIB_OK || consumed != assetSize ||
+            bytesWritten != header.decoded_total_bytes) {
+            free(packed);
+            free(pixels);
+            return NULL;
+        }
+        for (y = 0; y < header.height_pixels; ++y) {
+            for (x = 0; x < header.width_pixels; ++x) {
+                const uint8_t value = packed[(size_t)y * header.row_bytes + x / 2u];
+                /* The renderer's packed 4-bpp convention is high nibble
+                 * first: even X is the left pixel, odd X the right pixel.
+                 * Reversing these produces visibly wrong Towns walls,
+                 * alcoves and champion portraits despite valid RLE output. */
+                pixels[(size_t)y * header.width_pixels + x] =
+                    (uint8_t)((x & 1u) ? (value & 0x0fu) : (value >> 4));
+            }
+        }
+        installed = M11_AssetLoader_InstallDecodedPixels(
+            loader, graphicIndex, pixels, header.width_pixels,
+            header.height_pixels);
+        free(packed);
+        free(pixels);
+        return installed ? m11_find_cached(loader, graphicIndex) : NULL;
     }
 
     if (loader->legacyDm1) {
