@@ -53,6 +53,14 @@ VDP command bundle above. Keep Nexus startup gated until a same-session source,
 input, command, palette, and displayed-frame route is bound; do not infer that
 `MENU.BPK` owns these observed draws or that it is unused in other frames.
 
+The five matched `TITLE.BIN` source spans fall within the verified `TITL`
+resource-directory entry with class-local id 3 (record beginning at file
+offset `0x0d068`, before the `MAPD` record at `0x0e278`). This adds record-level
+ownership only. The exact subresource role, upload path, and menu label/pixel
+association remain unbound. The 16 `LEV00.DGN` draws without static FACE
+selectors likewise have byte and material matches, but no evidenced semantic
+owner; do not label them from dimensions or geometry alone.
+
 The BKR parser has been checked against all four hash-pinned images in the
 private corpus, which are reported as retail-written. It reproduces each
 20,480-byte payload hash from the existing read-only Python reader. These
