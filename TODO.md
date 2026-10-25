@@ -31,11 +31,12 @@ and another platform before treating the gain as general.
 Current-source M12 single-game menu retest at `c54007b45`: the separate
 `test_m12_main_menu_{dm1,csb,dm2}_only_real_media.sh` checks passed with one
 authentic FM Towns archive in each isolated `~/.firestaff/data/<game>` tree.
-DM1 selected its authentic archive, returned from the platform picker, and
-reselected it once. CSB and DM2 reached their first FM Towns runtime from the
-no-game menu; both also passed Back/reselect with the same runtime receipt.
-These are SDL dummy-driver route/runtime checks, not native-window input,
-display, audio, or complete platform parity.
+DM1, CSB and DM2 reached their first FM Towns runtime from the no-game menu
+and passed Back/reselect with the same authentic runtime receipt. DM1's test
+now validates the HoC first frame after both initial selection and Back/reselect
+instead of exiting at the launch handoff. These are SDL dummy-driver
+route/runtime checks, not native-window input, display, audio, or complete
+platform parity.
 
 2026-10-25 authentic priority-game startup and combat retest: the launcher
 picker script passed with an isolated root containing only symlinks to the

@@ -28,6 +28,7 @@ mkdir -p "$dm1_root"
 ln -s "$archive" "$dm1_root/$(basename "$archive")"
 archive_hash=$(firestaff_sha256_file "$archive")
 log="$scratch/firestaff.log"
+probe="$scratch/runtime.json"
 
 # No --game or --data-dir: discover the sole installed original from the
 # documented per-user data tree, then select it from the no-game menu.
@@ -35,7 +36,7 @@ log="$scratch/firestaff.log"
     unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
     FIRESTAFF_CONFIG_PATH="$home/config.toml" \
     FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
-    FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$probe" \
     HOME="$home" XDG_CONFIG_HOME="$home" APPDATA="$home" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
         "$app" --debug --width 320 --height 200 \
@@ -58,6 +59,8 @@ for required in \
     fi
 done
 
+python3 "$(dirname "$0")/verify_main_menu_runtime_probe.py" dm1 "$probe"
+
 if [[ $(firestaff_sha256_file "$archive") != "$archive_hash" ]]; then
     echo 'FAIL: original DM1 archive changed during the M12 menu launch' >&2
     exit 1
@@ -72,11 +75,12 @@ back_dm1_root="$back_home/.firestaff/data/dm1"
 mkdir -p "$back_dm1_root"
 ln -s "$archive" "$back_dm1_root/$(basename "$archive")"
 back_log="$scratch/back-firestaff.log"
+back_probe="$scratch/back-runtime.json"
 (
     unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
     FIRESTAFF_CONFIG_PATH="$back_home/config.toml" \
     FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
-    FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$back_probe" \
     HOME="$back_home" XDG_CONFIG_HOME="$back_home" APPDATA="$back_home" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
         "$app" --debug --width 320 --height 200 \
@@ -94,6 +98,8 @@ if [[ $(grep -Fc 'launch phase=game-handoff' "$back_log") != 1 ]] ||
     grep -E 'startup game=|game-handoff|error|failed' "$back_log" >&2 || true
     exit 1
 fi
+
+python3 "$(dirname "$0")/verify_main_menu_runtime_probe.py" dm1 "$back_probe"
 
 if [[ $(firestaff_sha256_file "$archive") != "$archive_hash" ]]; then
     echo 'FAIL: original DM1 archive changed during Back/reselect menu launch' >&2

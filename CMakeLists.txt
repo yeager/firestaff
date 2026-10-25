@@ -213,9 +213,9 @@ if(BUILD_TESTING)
         COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_dm1_only_real_media.sh"
             "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
     set_tests_properties(m12_main_menu_dm1_only_real_media PROPERTIES
-        SKIP_RETURN_CODE 77 TIMEOUT 120
+        SKIP_RETURN_CODE 77 TIMEOUT 300
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
-        LABELS "m12;dm1;main-menu;game-selection;real-media;skip-safe")
+        LABELS "m12;dm1;main-menu;game-selection;runtime;real-media;skip-safe")
 
     add_test(NAME m12_main_menu_dm2_only_real_media
         COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_dm2_only_real_media.sh"
