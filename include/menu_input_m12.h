@@ -57,7 +57,11 @@ typedef enum {
      * SKSave candidate the user selects. */
     M12_MENU_INPUT_MAC_OPEN_GAME,
     /* Host-only Nexus cursor mode; distinct from source pause/freeze. */
-    M12_MENU_INPUT_NEXUS_POINTER_TOGGLE
+    M12_MENU_INPUT_NEXUS_POINTER_TOGGLE,
+    M12_MENU_INPUT_NEXUS_POINTER_UP_LEFT,
+    M12_MENU_INPUT_NEXUS_POINTER_UP_RIGHT,
+    M12_MENU_INPUT_NEXUS_POINTER_DOWN_LEFT,
+    M12_MENU_INPUT_NEXUS_POINTER_DOWN_RIGHT
 } M12_MenuInput;
 
 #endif

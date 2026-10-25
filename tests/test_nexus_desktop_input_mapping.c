@@ -92,6 +92,14 @@ int main(void) {
                     M12_MENU_INPUT_RIGHT,
                 "pointer mode D should move the hand pointer right"))
         return 1;
+    if (!expect(M11_NexusPointerInputFromDirections(1, 0, 1, 0) ==
+                    M12_MENU_INPUT_NEXUS_POINTER_UP_LEFT,
+                "held W+A should move the hand pointer diagonally up-left"))
+        return 1;
+    if (!expect(M11_NexusPointerInputFromDirections(1, 1, 1, 0) ==
+                    M12_MENU_INPUT_LEFT,
+                "opposite vertical inputs should cancel for pointer movement"))
+        return 1;
 
     /* These bounds are the verified retail DM.BIN movement-pad rectangle,
      * (27,142)-(129,207), parsed by nexus_v1_hud_hit_rects_parse_dm_bin. */

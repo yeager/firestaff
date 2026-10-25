@@ -99,9 +99,10 @@ desktop movement surface: the upper row maps to turn left, forward, and turn
 right; the lower row maps to strafe left, backward, and strafe right. This
 host mapping uses the retail rectangle but does not claim to reproduce the
 unresolved callback's cell semantics. Clicks elsewhere and hand-pointer clicks
-remain inert. A/B/Y/C/L/R actions remain inert until their retail consumers
-are traced. Item use, inventory, spells, combat, sensors, doors, and level
-transitions remain fail-closed.
+remain inert. A/B/Y/C actions remain inert until their retail consumers are
+traced. Tab provides the separately verified leader-cycle action; L/R
+controller events are not yet mapped to desktop controls. Item use, inventory,
+spells, combat, sensors, doors, and level transitions remain fail-closed.
 
 In a loaded Nexus dungeon, Space toggles Firestaff's host pause. Ymir evidence
 records that the retail Start button displayed the `PAUSE` overlay; whether

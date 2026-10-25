@@ -137,6 +137,27 @@ M12_MenuInput M11_NexusPointerInputFromScancode(int scancode)
     }
 }
 
+M12_MenuInput M11_NexusPointerInputFromDirections(int up, int down,
+                                                   int left, int right)
+{
+    const int dy = (up != down) ? (up ? -1 : 1) : 0;
+    const int dx = (left != right) ? (left ? -1 : 1) : 0;
+
+    if (dy < 0) {
+        return dx < 0 ? M12_MENU_INPUT_NEXUS_POINTER_UP_LEFT
+             : dx > 0 ? M12_MENU_INPUT_NEXUS_POINTER_UP_RIGHT
+                      : M12_MENU_INPUT_UP;
+    }
+    if (dy > 0) {
+        return dx < 0 ? M12_MENU_INPUT_NEXUS_POINTER_DOWN_LEFT
+             : dx > 0 ? M12_MENU_INPUT_NEXUS_POINTER_DOWN_RIGHT
+                      : M12_MENU_INPUT_DOWN;
+    }
+    if (dx < 0) return M12_MENU_INPUT_LEFT;
+    if (dx > 0) return M12_MENU_INPUT_RIGHT;
+    return M12_MENU_INPUT_NONE;
+}
+
 M12_MenuInput M11_NexusPointerToggleInputFromScancode(int scancode)
 {
     return (SDL_Scancode)scancode == SDL_SCANCODE_Z

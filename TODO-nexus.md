@@ -180,7 +180,8 @@ on the PRS3 menu capture. See
   See `parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`.
   See also `parity-evidence/verification/nexus-mouse-callback-dispatch-20261024/README.md`.
   Firestaff now has a host Z toggle, logical pointer motion through keyboard
-  arrows or mouse movement, and the authentic retail hand sprite joined from
+  WASD/arrows or mouse movement, including captured diagonal WASD movement,
+  and the authentic retail hand sprite joined from
   ITEM.IBS image 65/palette 6 against Ymir VDP1 capture. Pointer click actions
   remain open until their retail source joins are captured.
 

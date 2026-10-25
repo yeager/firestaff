@@ -180,6 +180,8 @@ M12_MenuInput M11_TheronNavigationInputFromScancode(int scancode);
 /* Nexus D-pad-compatible turn aliases, restricted by the caller to Nexus. */
 M12_MenuInput M11_NexusMovementInputFromScancode(int scancode);
 M12_MenuInput M11_NexusPointerInputFromScancode(int scancode);
+M12_MenuInput M11_NexusPointerInputFromDirections(int up, int down,
+                                                  int left, int right);
 M12_MenuInput M11_NexusPointerToggleInputFromScancode(int scancode);
 M12_MenuInput M11_NexusMovementPadInputAt(
     int x, int y, int x1, int y1, int x2, int y2);
