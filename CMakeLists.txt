@@ -1068,6 +1068,17 @@ target_include_directories(test_nexus_v1_saturn_save_capture_engine_lifecycle PR
 target_link_libraries(test_nexus_v1_saturn_save_capture_engine_lifecycle PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_saturn_save_capture_engine_lifecycle
     COMMAND test_nexus_v1_saturn_save_capture_engine_lifecycle)
+add_executable(test_nexus_v1_saturn_bkr_real
+    tests/test_nexus_v1_saturn_bkr_real.c
+    src/shared/firestaff_x68k_media_receipt.c)
+target_include_directories(test_nexus_v1_saturn_bkr_real PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_saturn_bkr_real PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_saturn_bkr_real COMMAND test_nexus_v1_saturn_bkr_real)
+set_tests_properties(nexus_v1_saturn_bkr_real PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+    SKIP_RETURN_CODE 77
+    LABELS "nexus;saturn;bkr;real_data;no_synthetic;skip_safe")
 add_executable(test_nexus_v1_launcher_saturn_card_startup
     tests/test_nexus_v1_launcher_saturn_card_startup.c
     src/nexus/nexus_v1_saturn_save_capture.c src/shared/asset_find_by_hash.c)
