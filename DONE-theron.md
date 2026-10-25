@@ -10,9 +10,12 @@ and avoids a host-keyboard-layout dependency. The focused native mapping test
 covers all four paths. A fresh TRV2 Debug build also passed the regular
 `theron_v1_sdl_input_events` regression against authenticated USA Track 02
 (MD5 `f23601102138f87c33025877767ebf76`) with `--debug`; that live loop
-exercises the current native binary and Button I `Z` route. The Button II `X`
-route is mapper-covered rather than separately asserted by that live sequence.
-This does not claim complete gameplay or presentation parity.
+exercises the current native binary and Button I `Z` route. It also sends
+Button II `X` through the ordinary SDL event queue and asserts its debug
+receipt as `input=back`, `result=0`, and `UNKNOWN INPUT` in the loaded dungeon.
+The existing boot-runtime input test separately proves this ignored cancel
+path does not advance the source-backed world tick. This does not claim
+complete gameplay or presentation parity.
 
 ## 2026-10-25 — route PC Engine Button I Z through native SDL gameplay
 

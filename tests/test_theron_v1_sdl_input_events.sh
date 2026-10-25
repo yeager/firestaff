@@ -81,11 +81,13 @@ run_event_route "$action_probe" "$action_output" \
     'click:204:182,click:292:201,wait:8'
 run_event_route "$left_turn_probe" "$left_turn_output" \
     'click:204:144,wait:8'
-# Tab, Button I's Z binding, and Space take the same normal SDL keydown path
-# used by a physical keyboard. Verify these non-movement actions independently
-# of the host mouse panel on the hash-verified original runtime.
+# Tab, Button I's Z binding, Space, and Button II's X binding take the same
+# normal SDL keydown path used by a physical keyboard. Verify these
+# non-movement actions independently of the host mouse panel on the
+# hash-verified original runtime. Button II must be received but must not
+# advance the dungeon clock when no source-owned cancel surface is active.
 run_event_route "$keyboard_action_probe" "$keyboard_action_output" \
-    'key:tab,key:z,key:space,wait:8'
+    'key:tab,key:z,key:space,key:x,wait:8'
 
 python3 - "$held_probe" "$released_probe" "$panel_probe" "$item_probe" \
     "$side_probe" "$action_probe" "$left_turn_probe" "$keyboard_action_probe" \
@@ -156,4 +158,5 @@ grep -Eq 'game-action game=theron tick=[0-9]+ input=pointer-left point=204,170 r
 grep -Eq 'game-action game=theron tick=[0-9]+ input=pointer-left point=292,189 result=1 action="WAIT" outcome="THERON TICK"' "$action_output"
 grep -Eq 'game-action game=theron tick=[0-9]+ input=cycle-champion result=1 action="CHAMPION" outcome="ACTIVE CHAMPION CHANGED"' "$keyboard_action_output"
 [[ $(grep -Ec 'game-action game=theron tick=[0-9]+ input=action result=1 action="WAIT" outcome="THERON TICK"' "$keyboard_action_output") -ge 2 ]]
+grep -Eq 'game-action game=theron tick=[0-9]+ input=back result=0 action="THERON" outcome="UNKNOWN INPUT"' "$keyboard_action_output"
 printf '%s\n' 'PASS: authentic Theron SDL routes Button II, keyboard, mouse-panel movement, champion/wait, and source-backed item actions'
