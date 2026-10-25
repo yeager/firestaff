@@ -48,6 +48,22 @@
   world-click and state-driven rendering work open until the original command
   consumer, position state, and screen-data lineage are joined.
 
+## 2026-10-25 — live mouse pointer lookup remains unbound
+
+- Instrumented Mednafen's PCE Fast mouse and guest memory path, then replayed
+  the same five-sample mouse script from the preserved authentic JP Ak-Tu-Ba
+  state in three loops. Each loop delivered the scripted device samples and
+  recorded 88 reads from indexed table bytes `$77DA/$77DB`; the counts and
+  sampled table values matched across loops.
+- The trace reached `$D52D..$D551` but did not execute `$D588`. It recorded
+  repeated reads of the candidate cursor fields, but the save state emitted
+  `MDFNRINP` input-variable compatibility warnings on load. Treat this as
+  path-specific reference evidence only: it does not bind the cursor reads to
+  an authentic same-edition source pointer, actual hover classification,
+  Button-I command, or resulting game-state change.
+- Keep direct native world clicks blocked until that full runtime/source join
+  is established. The 4x3 native action panel remains the supported mouse path.
+
 ## 2026-10-25 — authentic pointer interval-table candidate recovered
 
 - Read-only inspection of the authentic US and JP Track 02 BINs found the same
