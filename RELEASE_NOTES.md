@@ -9,6 +9,7 @@
 
 ## Developer changes
 
+- `Nexus menu regression`: invoke the pointer-only authentic-media test with Bash so its here-string checks run correctly on Linux.
 - `Authentic-media startup tests`: add DM1 PC34 menu-to-HoC runtime, CSB FM Towns scan-progress, DM2 FM Towns cache/menu/first-party, and unsupported CLI platform regressions.
 - `DM2 RECT_7 presentation`: move receipt validation, direct backbuffer copy and screen-owned passes into a private helper while preserving the receipt used for click-target placement.
 - `DM2 build sources`: remove the unreferenced predicate helper from the product target while retaining its dedicated regression target.
