@@ -1,6 +1,6 @@
 # Nexus Keyboard and Mouse Retail Input Capture
 
-This evidence set preserves a Japanese retail Nexus gameplay screen, a Ymir ShuttleMouse port configuration, a click-attempt screenshot, and two 1 MiB SH-2 WRAM snapshots. The game data is authentic; no synthetic game state was used.
+This evidence set preserves a Japanese retail Nexus gameplay screen, a Ymir ShuttleMouse port configuration, and a click-attempt screenshot. The investigation also examined two 1 MiB SH-2 WRAM snapshots; their hashes and relevant decoded values are recorded below, while the raw memory dumps are omitted from Git. The game data is authentic; no synthetic game state was used.
 
 The DM.BIN used by the investigation is the hash-pinned Japanese retail image (SHA-256 `3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124`). The screenshot `nexus-port1-mouse-selected.png` shows ShuttleMouse on port 1. The gameplay screenshot shows the four-champion HUD.
 
@@ -11,6 +11,13 @@ The queue record area at WRAM offset `0x0797b0` contains eight 12-byte records. 
 These snapshots are not a controlled click/no-click pair: elapsed emulation time and other inputs were not matched. The event 39 values may be stale queue records or may reflect earlier input; they do not prove that the mouse click selected a ring. The screenshots also do not show a confirmed game action. Do not bind attack, inventory, spell, or item-use clicks from this evidence.
 
 The next useful capture is a same-session, same-duration no-input control and one click at a known authentic hit region, with event-queue and champion/item state captured immediately before and after.
+
+## Examined memory snapshots
+
+- `ram-before-click.bin` — SHA-256 `26fe4c8aa0fd4f3c0eef809fa484a73f221a80db00700437285f2e4c2b40982e`
+- `ram-after-port1-input.bin` — SHA-256 `941f035e8b30bd34d3e6abcbad35e82702fb14cd7c2418556d67ca4d53b6a7e0`
+
+The examined queue bytes at `0x0797b0` begin `00 00 00 03` before and `00 00 00 27` after. At `0x0797ec`, the event field changes from `0x0c` to `0x27`. Multiple ring entries contain `0x27` after the attempt. These raw dumps are excluded because they contain the complete Saturn WRAM image; the hashes and bounded event-field summary retain the relevant evidence without committing the full memory payload.
 
 ## Files
 
