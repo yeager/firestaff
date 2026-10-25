@@ -54,6 +54,17 @@ The capture's little-endian VDP2 register span gives:
 | `CCRNA` | `0x1000` | Raw ratio register; bypassed by `CCMD` |
 | `WCTLA`–`WCTLD` | all `0x0000` | No window-control bits set in this capture |
 
+The checked-in register analyzer reproduces the layer-gate reading directly
+from the preserved authentic dump:
+
+```sh
+python3 scripts/analyze_nexus_vdp2_color_calculation.py \
+  /Volumes/Extern-disk/nexus-framebound-20261020-authentic/nexus-frame-1800.vdp2-regs-le16.bin
+```
+
+It reports `CCMD=additive_saturating`, `ratio_applied=no`, and
+`color_calculation_layers=NBG1,SPRITES` for this frame.
+
 Mednafen's VDP2 `MixIt` implementation selects the mixer from `CCCTL` bit
 `0x0100`. Its `CCMD` branch ignores pixel ratios and adds the two color
 channels with saturation for pixels admitted to color calculation. In this
