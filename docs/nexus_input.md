@@ -76,6 +76,31 @@ champion slots, and backpack with the hand pointer. See the
 [Japanese retail manual, control table](https://api.regvault.org/api/v1/game/saturn/d83623212c7fd61623377cc9074bf3ea/manual#page=4)
 and [inventory instructions](https://api.regvault.org/api/v1/game/saturn/d83623212c7fd61623377cc9074bf3ea/manual#page=19).
 
+## A-button attack remains unbound
+
+The manual documents A as an attack in movement mode, but the authentic retail
+input-to-combat route is still unknown. In a Ymir 0.4.1 `--debug` probe, the
+Japanese retail ControlPad profile mapped J to A and loaded the same
+hash-verified gameplay savestate for the no-input and A-input runs. The
+high-WRAM comparison showed queue count zero in both captures. The read cursor
+advanced from 0 to 1 and a stale queue-storage word changed from event 56
+(`EV_SAVELOAD`) to event 29 (`EV_DYNAMIC`), but a zero-count queue makes those
+records insufficient to identify a live event or attribute it to A. Context
+10's candidate item pairs matched the timed no-input control, and the captured
+view had no visible enemy; this probe does not establish an attack effect.
+Screenshots and source hashes are in
+[`nexus-a-button-debug-20261025`](../parity-evidence/verification/nexus-a-button-debug-20261025/README.md);
+raw WRAM is kept outside Git on the external disk.
+
+Static analysis of the authentic `DM.BIN` confirms combat cases at
+`0x0197FC` and a case-0 branch to the champion-attack routine at `0x01986A`.
+The call setup begins earlier at `0x0197DE`; the disassembly report had
+previously mislabeled that address as the switch entry. Direct SH-2 literal
+and pointer scans find no input-to-combat reference, and the event-name table
+has no `EV_ATTACK` entry. These scans cannot exclude indirect dispatch. Do not
+route A to the host combat model until a live-enemy Ymir trace joins controller
+input, the retail dispatcher, and the resulting enemy/party state changes.
+
 A Ymir `--debug` run on the authentic Japanese retail disc independently
 confirmed L/R leader changes: the configured L input selected the fourth
 party member and R returned to the first. The before/after game captures are
