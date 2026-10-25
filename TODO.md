@@ -10,6 +10,15 @@ These SDL dummy video/audio checks cover the scripted launcher/runtime handoff
 and rescanning paths only; they do not establish native presentation, physical
 input, audio, or complete gameplay parity.
 
+2026-10-25 isolated priority-game menu retest:
+`test_m12_main_menu_game_selection_real_media.sh` passed with a data root that
+contained only symlinked original DM1, CSB and DM2 directories. Keyboard and
+mouse selection launched each game's authenticated FM Towns edition; default
+`~/.firestaff/data` discovery and sibling-game discovery from a per-game root
+also passed. Nexus and Theron were absent from this isolated test and were not
+started. These scripted SDL dummy checks do not establish native display,
+physical input, audio, or complete gameplay parity.
+
 2026-10-24 Ymir Japanese date/time setup VDP2 investigation: captures at frames
 105 and 118 show NBG0 date/time text and cursor pixels plus NBG1 UI box shapes.
 Both are 512×256 8bpp bitmap layers. Filtered traces have
