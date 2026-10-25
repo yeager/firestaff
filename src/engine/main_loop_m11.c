@@ -11383,6 +11383,12 @@ static M12_MenuInput m11_held_motion_input_from_keyboard(M11_GameViewState* game
     if (!keys || count <= 0) return M12_MENU_INPUT_NONE;
     for (i = 0; i < (int)(sizeof(preferred) / sizeof(preferred[0])); i++) {
         int sc = (int)preferred[i];
+        /* KP8 is a Theron convenience alias; keep it out of other games'
+         * shared held-key routes even if their input remap binds the key. */
+        if (preferred[i] == SDL_SCANCODE_KP_8 &&
+            !m11_game_view_is_theron(gameView)) {
+            continue;
+        }
         if (sc >= 0 && sc < count && keys[sc]) {
             if (m11_game_view_is_dm2_mac(gameView)) {
                 M12_MenuInput macInput = M12_MENU_INPUT_NONE;
