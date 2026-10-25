@@ -78,7 +78,9 @@ ran with `--debug` on TRV2 against the Japanese retail cue (SHA-256
 `878b3bc223bb56e99626dbaa2946d17fb349a2a67a10cd4423742d8ab30b8699`). The
 retained screenshots and their hashes are in
 [`parity-evidence/verification/nexus-continue-real-bup-20261025/README.md`](../parity-evidence/verification/nexus-continue-real-bup-20261025/README.md).
-This proves the retail save-load route under Ymir. It does not prove Firestaff
+This demonstrates the retail save-load route under Ymir with a BUP reported as
+retail-written. Because its transfer chain was not retained, the save's retail
+provenance is not independently established. It does not prove Firestaff
 implements that title menu or save selection; the production startup route
 remains blocked by the consumer-evidence gates described below.
 
