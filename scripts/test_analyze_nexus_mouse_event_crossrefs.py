@@ -178,7 +178,7 @@ class NexusMouseCallbackTraceTests(unittest.TestCase):
         self.assertIn("event_mode_0_name=EV_EXIT_INV", output.getvalue())
         self.assertIn("event_mode_2_id=44", output.getvalue())
         self.assertIn("event_mode_2_name=EV_INV_EQUIP", output.getvalue())
-        self.assertIn("gameplay_effects=unbound", output.getvalue())
+        self.assertIn("firestaff_slot_mapping=unbound", output.getvalue())
 
     def test_event_name_pointer_mismatch_is_rejected(self) -> None:
         data = retail_mouse_registration_fixture()
@@ -260,7 +260,8 @@ class NexusMouseCallbackTraceTests(unittest.TestCase):
         self.assertTrue(valid)
         self.assertIn("mouse_event_queue_special_case_ids=38,39,40,49,52,56,57",
                       output.getvalue())
-        self.assertIn("mouse_event_ids_13_44_consumer=generic_bad_event_diagnostic",
+        self.assertIn("mouse_later_loop_ids_13_44=generic_bad_event_diagnostic "
+                      "consumer=file_0x21c84; not_the_only_consumer",
                       output.getvalue())
 
     def test_event_queue_consumer_change_is_rejected(self) -> None:
