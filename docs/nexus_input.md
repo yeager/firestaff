@@ -6,6 +6,14 @@ The current input observations use the Japanese retail Saturn disc and BIOS in
 Ymir 0.4.1 with `--debug`. The evidence and paired screenshots are in
 [`parity-evidence/verification/keyboard-mouse-debug-20261024/`](../parity-evidence/verification/keyboard-mouse-debug-20261024/README.md).
 
+A second controlled run loaded a hash-verified authentic Japanese retail
+gameplay savestate in a private Ymir profile. The no-input reload changed only
+0.00175% of the captured pixels, while W-forward changed 3.08408% and A-left
+changed 5.08610%. The before/after captures and source hashes are recorded in
+[`parity-evidence/verification/nexus-savestate-input-20261025/`](../parity-evidence/verification/nexus-savestate-input-20261025/README.md).
+This independently confirms retail ControlPad movement from a stable gameplay
+state; it does not establish Firestaff runtime parity or ShuttleMouse actions.
+
 The isolated Ymir ControlPad profile mapped `W/S/A/D` to Saturn D-pad
 up/down/left/right, `J` to A, `O` to Z, and `F` to Start. In a fresh profile
 with an empty BUP, F opened the title menu and S selected `CONTINUE`; a Right

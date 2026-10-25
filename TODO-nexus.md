@@ -132,6 +132,14 @@ on the PRS3 menu capture. See
   mode. Firestaff maps A/D to Nexus turns while preserving DM1's A/D strafe
   behavior. The native cursor action contract and attack, inventory, spell,
   and champion-selection semantics remain open.
+  An independent 2026-10-25 Ymir `--debug` comparison loaded a hash-verified
+  authentic JP gameplay savestate into a private profile: the no-input reload
+  changed 0.00175% of pixels, W-forward changed 3.08408%, and A-left changed
+  5.08610%. The three real captures and source hashes are recorded in
+  `parity-evidence/verification/nexus-savestate-input-20261025/README.md`.
+  This validates the retail ControlPad response from a stable gameplay state,
+  not Firestaff's desktop route. The isolated Xvfb exposed no nonzero SDL
+  mouse for Ymir ShuttleMouse, so mouse gameplay remains unverified there.
   Static SH-2 triage is now reproducible with
   `scripts/analyze_nexus_mouse_event_crossrefs.py`: the hash-verified English
   DM.BIN has no direct PC-relative literal references to the 60 event-name
