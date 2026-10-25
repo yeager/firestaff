@@ -154,6 +154,29 @@ def retail_event_44_evidence_fixture() -> bytearray:
     return data
 
 
+def retail_event_queue_fixture() -> bytearray:
+    data = bytearray(0x21E00)
+    for offset, value in {
+        0x14292: 0x8808, 0x142B6: 0x7201, 0x142C8: 0x2742,
+        0x142CA: 0x1751, 0x142CC: 0x1762, 0x21DB6: 0x420B,
+        0x21DB8: 0x0009, 0x1462A: 0x6032, 0x1462C: 0x2008,
+        0x14630: 0xE600, 0x14632: 0x6563, 0x14634: 0xBE28,
+        0x14636: 0xE411,
+    }.items():
+        put_u16(data, offset, value)
+    for offset, register, value, literal in (
+        (0x1428C, 14, 0x06079814, 0x14380),
+        (0x142A2, 3, 0x06079810, 0x14384),
+        (0x142B4, 1, 0x060797B0, 0x14388),
+        (0x142DC, 13, 0x06079814, 0x1438C),
+        (0x142E8, 14, 0x06079810, 0x14390),
+        (0x142F4, 2, 0x060797B0, 0x14394),
+        (0x21DB4, 2, 0x060242D6, 0x21DC4),
+    ):
+        put_mov_l_pc(data, offset, register, value, literal)
+    return data
+
+
 class NexusMouseCallbackTraceTests(unittest.TestCase):
     def report(self, data: bytes) -> tuple[bool, str]:
         output = io.StringIO()
@@ -290,6 +313,18 @@ class NexusMouseCallbackTraceTests(unittest.TestCase):
         with contextlib.redirect_stdout(output):
             valid = trace.report_mouse_event_queue_fallback(data)
         self.assertFalse(valid)
+
+    def test_shared_event_queue_link_is_checked(self) -> None:
+        data = retail_event_queue_fixture()
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            valid = trace.report_mouse_event_queue_link(data)
+        self.assertTrue(valid)
+        self.assertIn("mouse_event_queue=shared_append_dequeue", output.getvalue())
+
+        put_u16(data, 0x142C8, 0x0000)
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertFalse(trace.report_mouse_event_queue_link(data))
 
     def test_event_44_selected_handler_evidence_is_checked_without_claiming_effects(self) -> None:
         data = retail_event_44_evidence_fixture()
