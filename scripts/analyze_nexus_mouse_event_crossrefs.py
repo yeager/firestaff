@@ -310,9 +310,9 @@ def report_mouse_callback_event_ids(data: bytes) -> bool:
         print("mouse_callback_submode_field_offset=104 event_mode_0_id=13 "
               f"event_mode_0_name={event_names[13]} event_mode_2_id=44 "
               f"event_mode_2_name={event_names[44]} event_mode_1=no-submit")
-        print("mouse_callback_event_dispatch_target=0x06024288 "
-              "event_names=verified event_44_handler=traced "
-              "firestaff_slot_mapping=unbound")
+        print("mouse_callback_event_queue_target=0x06024288 "
+              "event_names=verified event_44_handler_semantics=unverified "
+              "firestaff_inventory_mapping=unverified")
     return valid
 
 
@@ -639,14 +639,14 @@ def report_mouse_early_event_jump_table(data: bytes) -> bool:
         valid = False
     if valid:
         print("mouse_early_event_dispatch=relative_jump_table "
-              "event_44_case=DM.BIN:0x0008c0 handler=0x06036e58 "
-              "slot_argument=R5 item_slot_state=accessed "
-              "exact_firestaff_field_mapping=unbound")
+              "event_44_case=DM.BIN:0x0008c0 "
+              "handler_pointer=0x06036e58 slot_argument=R5 "
+              "handler_side_effects=unverified")
     return valid
 
 
-def report_mouse_event_44_state_updates(data: bytes) -> bool:
-    """Check the item/slot update helper constants reached by event 44."""
+def report_mouse_event_44_state_evidence(data: bytes) -> bool:
+    """Check selected opcodes and literals near the event-44 handler."""
     valid = True
     expected_words = {
         0x26E58: 0x2FE6,  # event-44 handler prologue
@@ -660,9 +660,9 @@ def report_mouse_event_44_state_updates(data: bytes) -> bool:
         0x26EE8: 0x4408,
         0x26EEA: 0x4400,
         0x26EBE: 0xE054,  # MOV #84,R0 (context-record field)
-        0x26EC0: 0x02CE,  # state update through resolved context record
-        0x2705C: 0x2FE6,  # slot-pair staging helper
-        0x271AC: 0x2FE6,  # slot-pair replacement helper
+        0x26EC0: 0x02CE,  # adjacent opcode; full operation is not decoded here
+        0x2705C: 0x2FE6,  # candidate helper prologue
+        0x271AC: 0x2FE6,  # candidate helper prologue
     }
     for offset, expected in expected_words.items():
         actual = read_be16(data, offset)
@@ -673,19 +673,19 @@ def report_mouse_event_44_state_updates(data: bytes) -> bool:
             valid = False
 
     expected_literals = {
-        0x26BA2: 0x013C,  # context-block stride
+        0x26BA2: 0x013C,  # stride-like literal
         0x26BD0: 0x0607,
-        0x26BD2: 0xFBA0,  # context-block base
+        0x26BD2: 0xFBA0,  # address literal
         0x26F28: 0x0606,
-        0x26F2A: 0x4610,  # item metadata table pointer
+        0x26F2A: 0x4610,  # address literal
         0x26F2C: 0x0604,
         0x26F2E: 0x8874,  # context eligibility masks
-        0x26F0E: 0x1000,  # context flag mask
-        0x270B2: 0x013C,  # per-context slot-table stride
-        0x270B4: 0x0110,  # per-context slot-table base offset
-        0x270B6: 0xFFFF,  # empty item/pair marker
+        0x26F0E: 0x1000,  # mask-like literal
+        0x270B2: 0x013C,  # stride-like literal
+        0x270B4: 0x0110,  # offset-like literal
+        0x270B6: 0xFFFF,  # sentinel-like literal
         0x270B8: 0x0607,
-        0x270BA: 0xFBA0,  # slot/context table base
+        0x270BA: 0xFBA0,  # address literal
         0x27184: 0x00A1,  # item eligibility threshold
     }
     for offset, expected in expected_literals.items():
@@ -697,10 +697,10 @@ def report_mouse_event_44_state_updates(data: bytes) -> bool:
             valid = False
 
     if valid:
-        print("mouse_event_44_state_update=verified context_stride=0x13c "
-              "item_record_stride=40 "
-              "slot_pair_base=0x0607fba0+0x13c*context+0x110+4*slot "
-              "firestaff_champion_field_mapping=unbound")
+        print("mouse_event_44_state_evidence=selected_opcodes_and_literals "
+              "literal_0x013c=present literal_0x0607fba0=present "
+              "literal_0x0110=present literal_0x06064610=present "
+              "literal_0x1000=present control_flow_and_side_effects=unverified")
     return valid
 
 
@@ -819,16 +819,16 @@ def main() -> int:
     if not report_mouse_early_event_jump_table(data):
         print("NEXUS_MOUSE_EARLY_EVENT_DISPATCH_INVALID: retail switch changed")
         return 1
-    if not report_mouse_event_44_state_updates(data):
-        print("NEXUS_MOUSE_EVENT_44_STATE_INVALID: retail handler changed")
+    if not report_mouse_event_44_state_evidence(data):
+        print("NEXUS_MOUSE_EVENT_44_EVIDENCE_INVALID: retail image changed")
         return 1
     if not report_mouse_motion_event_gate(data):
         print("NEXUS_MOUSE_MOTION_EVENT_GATE_INVALID: retail poller changed")
         return 1
 
-    print("interpretation=verified retail hit-region registration, queue, event "
-          "44 item-slot handler and update path; retail slot pair to Firestaff "
-          "state mapping remains unbound")
+    print("interpretation=verified retail hit-region registration, queue and "
+          "event-44 dispatch pointer plus selected handler-region values; "
+          "handler side effects and Firestaff field mapping remain unverified")
     return 0
 
 

@@ -123,11 +123,10 @@ through that slot. A second verified path at `DM.BIN:0x164a8` reads fields at
 object offsets 100 and 104. When the first field is 6, submode 0 queues numeric
 event 13 and submode 2 queues numeric event 44 to `0x06024288`; submode 1 does
 not queue either event. The retail event-name pointer table maps ID 13 to
-`EV_EXIT_INV` and ID 44 to `EV_INV_EQUIP`. Event 44's downstream handler is
-now traced to item metadata access and per-context slot-pair updates, but the
-slot pair has not been mapped to Firestaff's state model. The analyzer checks
-the branch targets, event values, queue target, and name pointers against the
-hash-verified Japanese retail `DM.BIN`.
+`EV_EXIT_INV` and ID 44 to `EV_INV_EQUIP`. The event-44 dispatch target is
+identified below, but the downstream state change is not verified. The
+analyzer checks the branch targets, event values, queue target, and name
+pointers against the hash-verified Japanese retail `DM.BIN`.
 
 The same retail image contains an eight-entry action-rectangle table at file
 offset `0x3850c`. Each 12-byte record stores `(x1, y1, x2, y2, event, slot)`;
@@ -156,23 +155,22 @@ candidate. The analyzer labels this as an opcode-pattern scan only: it cannot
 distinguish data from code or exclude register comparisons, jump tables, or
 indirect event dispatch.
 An early main event dispatcher at file offset `0x260` uses a relative jump
-table. Its event-44 case reaches file offset `0x8c0`, which calls the handler
-at runtime `0x06036e58` with the hit-row argument. The handler resolves the
-context block using a `0x13c`-byte stride, accesses item metadata using a
-40-byte record stride, and updates a per-context, per-slot four-byte pair at
-`0x0607fba0 + 0x13c * context + 0x110 + 4 * slot`. Helpers stage the old pair,
-write the replacement pair, and call update callbacks; the context block also
-receives the `0x1000` flag at offset 84. This establishes a real item/slot
-assignment or swap path. The exact fields and their mapping to Firestaff's
-champion and equipment model remain unjoined, so the handler is not enough to
-reproduce its mutation safely. This is a separate route from the later
-`0x21c84` generic diagnostic loop.
+table. Its event-44 case reaches file offset `0x8c0`, where a checked
+PC-relative literal points to code at runtime address `0x06036e58`; the hit-row
+argument is passed in `R5`. A separate check verifies selected instruction
+words and address literals in nearby handler/helper regions, including values
+`0x013c`, `0x0607fba0`, `0x0110`, `0x06064610`, and `0x1000`. These checks do
+not verify control flow from this dispatch case through those regions, decode
+their full operations, or establish any memory write or callback effect.
+Accordingly, the slot-pair and assignment/swap interpretation remains a
+hypothesis, not a verified retail behavior; neither its Firestaff field
+mapping nor its visible result is known. This dispatch path is separate from
+the later `0x21c84` generic diagnostic loop.
 The separate mouse-motion poller filters for event 46 before it calls the
 hit-region scanner; it does not consume event 44 as a second pointer action.
-The event-44 handler is real retail item/slot behavior, but the retail slot
-pair has not yet been mapped to Firestaff's state model. Production inventory
-and equipment clicks remain disabled until that mapping and visible result are
-verified.
+The event-44 dispatch target is verified, but its downstream behavior is not.
+Production inventory and equipment clicks remain disabled until the retail
+state transition, Firestaff field mapping, and visible result are verified.
 
 ## Mouse and remaining input work
 
