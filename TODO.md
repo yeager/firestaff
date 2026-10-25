@@ -114,6 +114,16 @@ Firestaff. DMWeb's edition/manual pages and Greatstone SCK inform provenance
 and media handling. See [`docs/THERON_CAPTURE_READINESS.md`](docs/THERON_CAPTURE_READINESS.md)
 and [`docs/theron_input.md`](docs/theron_input.md).
 
+2026-10-25 Amiga MFM scan hot-path measurement: a one-subtraction fast path
+for wrapped bit reads avoids division on the common single-wrap case. On the
+same isolated DM1/CSB/DM2 original-media root, four unmodified-build runs had
+median process user time of 19.77 s and five optimized-build runs had median
+18.90 s (about 4% lower). Wall time medians were 26.06 s and 24.68 s. These
+small samples varied noticeably between runs and establish only a modest local
+startup-scan gain on one Mac mini M4; they do not establish a cross-platform
+improvement. All runs found DM1, CSB and DM2 READY, and the synthetic MFM scan
+test passed. The original media remained in place and outside Git.
+
 2026-10-24 startup scan diagnostics: `--debug` scan progress now includes
 `delta-ms`, the time since the preceding distinct progress snapshot, alongside
 total elapsed time. This makes long gaps between scanner updates visible next

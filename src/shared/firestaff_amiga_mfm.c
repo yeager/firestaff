@@ -12,7 +12,14 @@
 static unsigned read_bit_wrapped(const uint8_t *bits, size_t bit_count,
                                  size_t position)
 {
-    position %= bit_count;
+    /* The sync-word loop asks for start+31 on every bit. Most reads therefore
+     * wrap at most once; avoid a variable-width division in that hot path.
+     * Header/body reads can be farther ahead on the shortest accepted track,
+     * so retain a general fallback after the fast subtraction. */
+    if (position >= bit_count) {
+        position -= bit_count;
+        if (position >= bit_count) position %= bit_count;
+    }
     return (unsigned)((bits[position >> 3] >> (7u - (position & 7u))) & 1u);
 }
 
