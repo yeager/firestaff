@@ -10,9 +10,11 @@ sampling and clear it on mouse release or window focus loss. The keyboard
 mapper regression passed three loops. A fresh native Debug Firestaff build on
 TRV2 passed, followed by three loops each of the authentic USA Track 02 test
 (MD5 `f23601102138f87c33025877767ebf76`) and Japanese Rev. 1 Track 02 test
-(MD5 `b7afb338ad31be1025b53f9aff12d73a`). This closes the host Button II
-modifier route; authenticated viewport hit targets and state-driven Theron
-rendering remain open.
+(MD5 `b7afb338ad31be1025b53f9aff12d73a`). The real-media scripts verify the
+regular keyboard and mouse-panel state routes; the Button II chord is directly
+covered by the pure mapper test, while SDL mouse-down/key-down/release
+lifecycle still needs an interactive event-level regression. Authenticated
+viewport hit targets and state-driven Theron rendering remain open.
 
 ## 2026-10-25 — route Theron action keys through native SDL input
 
