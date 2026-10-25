@@ -103,7 +103,7 @@ int main(void)
         }
         if (!image_hash_valid || !parse_valid ||
             !receipt.valid || receipt.image_bytes != 32768U ||
-            receipt.block_bytes != 512U || receipt.block_count != 64U ||
+            receipt.block_bytes != 64U || receipt.block_count != 512U ||
             receipt.entry_count != 1U || receipt.payload_bytes != 20480U ||
             strcmp(entries[0].name, "DMNEXUS__01") != 0 ||
             entries[0].payload_bytes != 20480U ||
