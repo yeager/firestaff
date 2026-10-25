@@ -9140,12 +9140,6 @@ static int m11_open_requested_launch_impl(M11_GameViewState* gameView,
                 }
             }
         }
-        /* Startup scans can continue through later games after this game's
-         * authenticated launch receipt is ready. Stop the worker here; the
-         * full return-to-menu rescan joins it before refreshing all games. */
-        if (menuState->deferredScanActive) {
-            M12_StartupMenu_CancelDeferredScan(menuState);
-        }
         menuState->launchRequested = 0;
         (void)M11_Render_SetPaletteLevel(0);
         if (idleAccumulatorMs) {
@@ -9191,6 +9185,14 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
     ++g_m11_sync_launch_serial;
     result = m11_open_requested_launch_impl(gameView, menuState,
                                             idleAccumulatorMs, dataDir, bootProbe);
+    /* All selected-launch routes converge here, including the DM1 source-owned
+     * transaction that returns before the generic post-open path. Stop later
+     * archive admission only after a live game view has been handed off; the
+     * full return-to-menu rescan joins the worker before refreshing assets. */
+    if (result > 0 && gameView && gameView->active && menuState &&
+        menuState->deferredScanActive) {
+        M12_StartupMenu_CancelDeferredScan(menuState);
+    }
     if (debug) {
         const Uint64 startupEndedCounter = SDL_GetPerformanceCounter();
         const double startupElapsedMs = m11_counter_milliseconds(
