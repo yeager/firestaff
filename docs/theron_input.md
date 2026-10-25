@@ -21,15 +21,17 @@ are research instruments only and do not run or replace the game in Firestaff.
 | Run           | Return            |                |
 | Select        | —                 |                |
 
-Desktop mouse controls are provided by Firestaff's native interface. During
+The original PC Engine release has no mouse interface. Firestaff adds desktop
+mouse controls as a host-side convenience. During
 startup, left-click selects and right-click goes back. During dungeon play,
 left-click activates one of the twelve visible control-panel actions. Holding
 right mouse while pressing a direction key applies the manual's Button II
 simplified-movement modifier; a right click by itself does not advance a tick.
 Middle-click is inert. Moving the pointer highlights a panel control. Clicks
-elsewhere in the dungeon do not trigger a game action until Theron's original
-world hit regions are verified. Short and long touch gestures send Button I
-and Button II, respectively.
+outside the panel currently do not trigger a game action. Direct clicks in the
+dungeon view require a state-driven renderer and a Firestaff screen-to-world
+mapping; they are not original Theron hit regions. Short and long touch
+gestures send Button I and Button II, respectively.
 
 ## Startup menu
 
@@ -116,6 +118,9 @@ the highlighted control changes.
   authentic level-0 SANDALS, reselect that source-backed item and drop it;
   three consecutive TRV2 Debug runs verify the mapped pointer receipts and
   resulting party state against USA Track 02.
+  The SDL-loop regression also clicks TURN L, STEP R then STEP L over a
+  source-backed open passage, NEXT and WAIT; the return pose and mapped action
+  receipts are checked against authentic USA Track 02.
 - The host-panel bounds are Firestaff UI and do not reuse DM1's
   C007..C116 pointer tables. The original movement-panel captures identify
   six internal PCE cursor samples, not desktop hitboxes or host coordinates:
