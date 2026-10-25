@@ -256,9 +256,43 @@ M12_MenuInput M11_TheronGameplayInputFromScancode(int scancode)
         case SDL_SCANCODE_E:
         case SDL_SCANCODE_KP_6:
             return M12_MENU_INPUT_TURN_RIGHT;
+        case SDL_SCANCODE_TAB:
+            return M12_MENU_INPUT_CYCLE_CHAMPION;
+        case SDL_SCANCODE_G:
+            return M12_MENU_INPUT_PICKUP_ITEM;
+        case SDL_SCANCODE_P:
+            return M12_MENU_INPUT_DROP_ITEM;
+        case SDL_SCANCODE_I:
+            return M12_MENU_INPUT_INVENTORY_TOGGLE;
+        case SDL_SCANCODE_U:
+            return M12_MENU_INPUT_USE_ITEM;
+        case SDL_SCANCODE_RETURN:
+        case SDL_SCANCODE_SPACE:
+            return M12_MENU_INPUT_ACTION;
         default:
             return M12_MENU_INPUT_NONE;
     }
+}
+
+M12_MenuInput M11_TheronGameplayInputFromScancodeWithButtonII(
+    int scancode, int buttonIIHeld)
+{
+    if (buttonIIHeld) {
+        /* The USA retail manual, printed p. 5, says to hold Button II while
+         * pressing a direction to turn instead of side-step. On desktop this
+         * is the right mouse button plus the matching direction key. */
+        switch ((SDL_Scancode)scancode) {
+            case SDL_SCANCODE_LEFT:
+            case SDL_SCANCODE_A:
+                return M12_MENU_INPUT_TURN_LEFT;
+            case SDL_SCANCODE_RIGHT:
+            case SDL_SCANCODE_D:
+                return M12_MENU_INPUT_TURN_RIGHT;
+            default:
+                break;
+        }
+    }
+    return M11_TheronGameplayInputFromScancode(scancode);
 }
 
 M12_MenuInput M11_TheronGameplayInputFromKeycode(int keycode)
@@ -272,6 +306,11 @@ M12_MenuInput M11_TheronGameplayInputFromKeycode(int keycode)
         case SDLK_D: return M12_MENU_INPUT_STRAFE_RIGHT;
         case SDLK_Q: return M12_MENU_INPUT_TURN_LEFT;
         case SDLK_E: return M12_MENU_INPUT_TURN_RIGHT;
+        case SDLK_TAB: return M12_MENU_INPUT_CYCLE_CHAMPION;
+        case SDLK_G: return M12_MENU_INPUT_PICKUP_ITEM;
+        case SDLK_P: return M12_MENU_INPUT_DROP_ITEM;
+        case SDLK_I: return M12_MENU_INPUT_INVENTORY_TOGGLE;
+        case SDLK_U: return M12_MENU_INPUT_USE_ITEM;
 #else
         case SDLK_w: return M12_MENU_INPUT_UP;
         case SDLK_s: return M12_MENU_INPUT_DOWN;
@@ -279,7 +318,15 @@ M12_MenuInput M11_TheronGameplayInputFromKeycode(int keycode)
         case SDLK_d: return M12_MENU_INPUT_STRAFE_RIGHT;
         case SDLK_q: return M12_MENU_INPUT_TURN_LEFT;
         case SDLK_e: return M12_MENU_INPUT_TURN_RIGHT;
+        case SDLK_TAB: return M12_MENU_INPUT_CYCLE_CHAMPION;
+        case SDLK_g: return M12_MENU_INPUT_PICKUP_ITEM;
+        case SDLK_p: return M12_MENU_INPUT_DROP_ITEM;
+        case SDLK_i: return M12_MENU_INPUT_INVENTORY_TOGGLE;
+        case SDLK_u: return M12_MENU_INPUT_USE_ITEM;
 #endif
+        case SDLK_RETURN:
+        case SDLK_KP_ENTER:
+        case SDLK_SPACE: return M12_MENU_INPUT_ACTION;
         case SDLK_UP:
         case SDLK_KP_5:
         case SDLK_KP_8: return M12_MENU_INPUT_UP;
@@ -295,6 +342,32 @@ M12_MenuInput M11_TheronGameplayInputFromKeycode(int keycode)
         case SDLK_KP_6: return M12_MENU_INPUT_TURN_RIGHT;
         default: return M12_MENU_INPUT_NONE;
     }
+}
+
+M12_MenuInput M11_TheronGameplayInputFromKeycodeWithButtonII(
+    int keycode, int buttonIIHeld)
+{
+    if (buttonIIHeld) {
+        switch ((SDL_Keycode)keycode) {
+            case SDLK_LEFT:
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+            case SDLK_A:
+#else
+            case SDLK_a:
+#endif
+                return M12_MENU_INPUT_TURN_LEFT;
+            case SDLK_RIGHT:
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+            case SDLK_D:
+#else
+            case SDLK_d:
+#endif
+                return M12_MENU_INPUT_TURN_RIGHT;
+            default:
+                break;
+        }
+    }
+    return M11_TheronGameplayInputFromKeycode(keycode);
 }
 
 M12_MenuInput M11_TheronMouseButtonToInput(int button)

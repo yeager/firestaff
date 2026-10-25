@@ -2070,8 +2070,8 @@ static const char* m12_scan_task_for_locale(int localeIndex,
         return m12_translate_for_locale(locale, "MATCHING GAME VERSIONS");
     if (strcmp(task, "matching required files") == 0)
         return m12_translate_for_locale(locale, "MATCHING REQUIRED FILES");
-    if (strcmp(task, "materializing launch cache") == 0)
-        return m12_translate_for_locale(locale, "MATERIALIZING LAUNCH CACHE");
+    if (strcmp(task, "preparing runtime media") == 0)
+        return m12_translate_for_locale(locale, "SCANNING GAME DATA");
     if (strcmp(task, "refreshing media metadata") == 0)
         return m12_translate_for_locale(locale, "REFRESHING MEDIA METADATA");
     if (strcmp(task, "ZIP directory incomplete") == 0 ||

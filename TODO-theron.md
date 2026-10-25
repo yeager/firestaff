@@ -1,8 +1,71 @@
+## 2026-10-25 — verify normal Theron SDL gameplay input
+
+- ✅ Added `theron_v1_sdl_input_events`, which drives the normal SDL event loop
+  with an authentic USA Track 02 runtime. Three TRV2 loops prove that holding
+  right mouse while pressing Right turns, that release restores Right
+  side-step behavior, and that the authenticated media hash is correct.
+- ✅ In both SDL2 and SDL3 paths, right-button edges during loaded dungeon play
+  now exclusively set/clear Button II state instead of also invoking desktop
+  Back. This avoids a quit modal intercepting the direction key.
+- 🔒 Direct world clicks remain disabled until Theron's original cursor/hit
+  dispatch is joined to an authenticated live state. The native dungeon
+  renderer still needs state-driven graphics before end-to-end visual
+  playability is established.
+
+## 2026-10-25 — mouse trace tool validation and truncation reporting
+
+- Tightened the live-capture mouse-script validator to require the same
+  semicolon-separated decimal sample shape, bounds and 8191-byte maximum as
+  Mednafen's instrumented consumers. Inputs Python would accept but C would
+  partially parse, including underscore-formatted integers, are rejected.
+- Added one `trace_truncated limit=20000` marker to the shared pointer trace
+  when its record cap is reached, so a capped trace cannot be mistaken for a
+  complete negative observation.
+- Local syntax checks and a five-case validator loop passed. Applying the
+  updated instrumenter to the archived TRV2 Mednafen source was not possible:
+  that snapshot lacks the expected clean `src/pce/huc6280.h` anchor. Re-run
+  instrumentation against a matching clean Mednafen source before relying on
+  a new runtime trace. This tooling fix does not close the native mouse
+  world-hit or viewport-rendering gaps below.
+
 ## 2026-10-25 — DM1-like native keyboard and mouse parity
 
+- Reference clarification: the retail USA manual defines direction-key and
+  Button I/II controls, while the DMWeb Encyclopaedia notes that the original
+  TurboGrafx version has no mouse. Firestaff's 4x3 panel is a desktop mouse
+  convenience over supported native commands, not reconstruction of an
+  original mouse interface. Keep its host bounds separate from game data; any
+  direct viewport-click feature must be designed as an explicit Firestaff UX
+  over the authenticated native renderer and object state. The manual and
+  DMWeb references are recorded in
+  [`theron-button-ii-manual-source-lock.md`](docs/source-lock/theron-button-ii-manual-source-lock.md).
+
+- Rebuilt the current PR commit natively on TRV2 and ran
+  `test_theron_v1_raw_bin_runtime_boot.sh` three consecutive times against the
+  hash-verified USA `TQUS02.bin` (`f23601102138f87c33025877767ebf76`). All three
+  `--debug` runs passed: keyboard movement and turning, mouse panel movement,
+  champion cycling, wait, pickup, item selection and drop produced the expected
+  native state. The item test invokes the Firestaff panel at the real level-0
+  item location; it does not verify direct item/world clicks or a fully
+  state-driven viewport.
+- Ran `test_theron_v1_jp_cue_runtime_boot.sh` three consecutive times against
+  the user's installed Japan Rev 1 CUE and Track 02 (`b7afb338ad31be1025b53f9aff12d73a`).
+  All runs reached the native Akutuba runtime and accepted the six scripted
+  movement inputs. This is a keyboard/runtime boot check, not mouse world-hit
+  coverage.
 - Theron's loaded-dungeon keyboard aliases already match Firestaff's DM1
   convention: arrows/WASD for forward, back and side-step, with Q/E, Home/End
   and keypad turn aliases. Preserve Theron's source-owned action tokens.
+- The manual's Button II simplified-movement chord is now available natively:
+  holding right mouse while pressing Left/Right Arrow or A/D turns instead of
+  side-stepping. The mapper passed three loops and fresh native Debug USA and
+  JP Track 02 runtime regressions each passed three loops. Direct viewport
+  targeting and state-driven rendering remain open below.
+- SDL key events now map Tab, G, I, P, U, Space and Return to supported native
+  champion/item/use/wait commands. The isolated mapper regression passes three
+  loops; live SDL gameplay events for those action keys still need an
+  end-to-end authentic Track 02 `--debug` capture. The boot-probe key mapper
+  had masked the missing normal SDL gameplay bindings.
 - Mouse parity is still partial. The visible 4x3 Firestaff panel dispatches
   native Theron inputs and now highlights the hovered control. Direct world
   clicks remain disabled, and the original pointer art is not drawn in the
@@ -10,6 +73,20 @@
   interval candidate and the live `$77DC` dispatch/descriptor path still need
   an authenticated runtime join through original hover state, Button-I output
   and the resulting game-state change.
+- `theron_v1_sdl_input_events` also verifies a real SDL left-click through
+  the host mouse panel on authenticated US Track 02. Three consecutive TRV2
+  Debug runs passed for two panel turns followed by a forward move, the Button
+  II chord/release, and keyboard turn/side-step. This covers host-panel SDL
+  movement; it does not close the direct world-click, cursor-art, or
+  state-driven rendering gaps.
+- The native mouse panel's turn and movement controls are now exercised on
+  authentic US Track 02 by `test_theron_v1_raw_bin_runtime_boot.sh` and on
+  authentic Japan Rev. 1 Track 02 by `test_theron_v1_jp_raw_bin_startup.sh`.
+  The JP regression checks the mapped left-turn and forward-click receipts and
+  resulting source-backed party pose. The focused runtime-input facade test
+  and each regional runtime-input loop passed three times on TRV2. This proves
+  native panel command routing on both regional datasets; it does not prove
+  direct world hit targets, state-driven rendering, or full visual parity.
 - Once that source route is bound, implement Theron's native cursor and
   source-derived world hit testing, then verify movement and action clicks
   against authentic Track 02 data. Current frozen-capture rendering means
@@ -43,6 +120,22 @@
   world-click and state-driven rendering work open until the original command
   consumer, position state, and screen-data lineage are joined.
 
+## 2026-10-25 — live mouse pointer lookup remains unbound
+
+- Instrumented Mednafen's PCE Fast mouse and guest memory path, then replayed
+  the same five-sample mouse script from the preserved authentic JP Ak-Tu-Ba
+  state in three loops. Each loop delivered the scripted device samples and
+  recorded 88 reads from indexed table bytes `$77DA/$77DB`; the counts and
+  sampled table values matched across loops.
+- The trace reached `$D52D..$D551` but did not execute `$D588`. It recorded
+  repeated reads of the candidate cursor fields, but the save state emitted
+  `MDFNRINP` input-variable compatibility warnings on load. Treat this as
+  path-specific reference evidence only: it does not bind the cursor reads to
+  an authentic same-edition source pointer, actual hover classification,
+  Button-I command, or resulting game-state change.
+- Keep direct native world clicks blocked until that full runtime/source join
+  is established. The 4x3 native action panel remains the supported mouse path.
+
 ## 2026-10-25 — authentic pointer interval-table candidate recovered
 
 - Read-only inspection of the authentic US and JP Track 02 BINs found the same
@@ -67,6 +160,25 @@
   not publish hitboxes or route arbitrary viewport clicks until the runtime pointer,
   descriptor records, returned command and state effect are joined. See
   [`theron-jp-runtime-input-poll-bank-alias-20261009.md`](docs/source-lock/theron-disassembly/theron-jp-runtime-input-poll-bank-alias-20261009.md).
+
+## 2026-10-25 — dynamic pointer path still lacks authentic runtime receipts
+
+- Instrumented PCE Fast observations from the preserved emulator-created
+  dungeon state show that logical `$D52D..$D551` executes different bytes from
+  the static Track 02 candidate: that runtime bank dispatches to `$D165`, then
+  enters the `$D123` six-rectangle classifier through `$D1C8`. This explains
+  why the static `$D588` candidate was not reached in those runs. The classifier
+  reads `$287F..$2896`; in this particular state all six tested rectangle
+  starts were `$FF`, so no target was selected. These are emulator observations
+  from a saved state, not proof of a live original-data target table or click
+  effect.
+- The attempted repeat captures using the baseline, F5, and user-created state
+  were rejected by the capture gate: each reported `authenticated_cd_ram=0`
+  and exited with status 124. Their traces cannot establish authentic runtime
+  behavior. Reacquire a receipt-backed state and trace the dynamic bank and
+  rectangle-table initialization before implementing world clicks. Keep native
+  world clicks blocked until the same-edition target, command dispatch, and
+  resulting game-state effect are all joined.
 
 ## 2026-10-25 — PCE Fast left-input and VDC comparison
 
@@ -108,16 +220,16 @@
 
 ## 2026-10-24 — verified native keyboard and panel mouse controls; original mouse parity open
 
-- Native keyboard input already reaches the Theron movement and action facade;
-  discrete key events also reached a loaded dungeon and advanced native ticks
-  in the 2026-10-24 Debug runs recorded below. Loaded-dungeon keyboard mapping
+- Native SDL keyboard input reached the Theron movement facade; discrete key
+  events also reached a loaded dungeon and advanced native ticks in the
+  2026-10-24 Debug runs recorded below. Loaded-dungeon keyboard mapping
   now matches the familiar DM1 layout: arrows/A/D sidestep, Q/E/Home/End turn,
   and keypad 1/3 and 4/6 provide the same actions. Startup arrows still
   navigate Theron's menus. The focused input regression passed three loops on
   TRV2.
 - The native dungeon draw includes a visible, Firestaff-owned 4x3 mouse
   panel. Alongside the six movement controls, it exposes the native actions
-  already available from the keyboard: next champion, source-backed item
+  also mapped to keyboard input: next champion, source-backed item
   pickup/selection/drop/use, and wait. A shared control table drives drawing
   and hit-testing; the controls use host UI bounds rather than borrowing
   DM1's pointer table or claiming original Theron hitboxes. Button II remains

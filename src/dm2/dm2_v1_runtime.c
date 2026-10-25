@@ -12731,6 +12731,49 @@ static void dm2_runtime_bind_source_hand_action(
 
 /* ── Viewport rendering ────────────────────────────────────────────── */
 
+static int dm2_runtime_present_rect7_backbuffer(
+    DM2_V1_RuntimeState *rt,
+    DM2_V1_ViewportState *viewport,
+    DM2_V1_BootExpandedRectReceipt *rect7_receipt,
+    const uint8_t *dungeon_backbuffer,
+    uint8_t *framebuffer,
+    int fb_stride,
+    int view_w,
+    int view_h)
+{
+    if (!rt || !rt->boot || !viewport || !rect7_receipt ||
+        !dungeon_backbuffer || !framebuffer ||
+        !dm2_v1_boot_query_expanded_rect_receipt(rt->boot, 7u,
+                                                 rect7_receipt) ||
+        !rect7_receipt->valid || rect7_receipt->rect_id != 7u ||
+        !rect7_receipt->raw4_bytes || !rect7_receipt->raw4_byte_count ||
+        !rect7_receipt->raw4_hash || !rect7_receipt->receipt_hash ||
+        rect7_receipt->rect.w != DM2_GFX_BACKBUFFER_W ||
+        rect7_receipt->rect.h != DM2_GFX_BACKBUFFER_H ||
+        rect7_receipt->rect.x < 0 || rect7_receipt->rect.y < 0 ||
+        rect7_receipt->rect.x + rect7_receipt->rect.w > view_w ||
+        rect7_receipt->rect.y + rect7_receipt->rect.h > view_h) {
+        return -1;
+    }
+
+    /* Normal DM2_DRAWINGS_COMPLETED passes 0x0008, i.e. the direct
+     * non-stretched MBlitter copy. Preserve every indexed source byte
+     * and the RAW4-owned destination; no scaling or host texture route
+     * is permitted at this boundary. */
+    for (int row = 0; row < DM2_GFX_BACKBUFFER_H; ++row) {
+        memcpy(framebuffer + (size_t)(rect7_receipt->rect.y + row) *
+                   (size_t)fb_stride + (size_t)rect7_receipt->rect.x,
+               dungeon_backbuffer + (size_t)row * DM2_GFX_BACKBUFFER_W,
+               DM2_GFX_BACKBUFFER_W);
+    }
+    if (!dm2_v1_viewport_bind_surface(viewport, framebuffer, fb_stride)) {
+        return -1;
+    }
+    dm2_v1_viewport_set_render_dungeon_backbuffer_only(viewport, 0);
+    dm2_v1_viewport_render_screen_owned_passes(viewport);
+    return 0;
+}
+
 /*
  * dm2_v1_runtime_render_frame — render one DM2 viewport frame.
  *
@@ -13276,35 +13319,11 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_runtime_capture_door_render_receipt(&viewport);
     viewport.tick_count = rt->tick_count;
     dm2_v1_viewport_render(&viewport);
-    if (use_rect7_backbuffer) {
-        if (!dm2_v1_boot_query_expanded_rect_receipt(rt->boot, 7u,
-                                                     &rect7_receipt) ||
-            !rect7_receipt.valid || rect7_receipt.rect_id != 7u ||
-            !rect7_receipt.raw4_bytes || !rect7_receipt.raw4_byte_count ||
-            !rect7_receipt.raw4_hash || !rect7_receipt.receipt_hash ||
-            rect7_receipt.rect.w != DM2_GFX_BACKBUFFER_W ||
-            rect7_receipt.rect.h != DM2_GFX_BACKBUFFER_H ||
-            rect7_receipt.rect.x < 0 || rect7_receipt.rect.y < 0 ||
-            rect7_receipt.rect.x + rect7_receipt.rect.w > view_w ||
-            rect7_receipt.rect.y + rect7_receipt.rect.h > view_h) {
-            return -1;
-        }
-        /* Normal DM2_DRAWINGS_COMPLETED passes 0x0008, i.e. the direct
-         * non-stretched MBlitter copy. Preserve every indexed source byte
-         * and the RAW4-owned destination; no scaling or host texture route
-         * is permitted at this boundary. */
-        for (int row = 0; row < DM2_GFX_BACKBUFFER_H; ++row) {
-            memcpy(framebuffer + (size_t)(rect7_receipt.rect.y + row) *
-                       (size_t)fb_stride + (size_t)rect7_receipt.rect.x,
-                   dungeon_backbuffer + (size_t)row *
-                       DM2_GFX_BACKBUFFER_W,
-                   DM2_GFX_BACKBUFFER_W);
-        }
-        if (!dm2_v1_viewport_bind_surface(&viewport, framebuffer, fb_stride)) {
-            return -1;
-        }
-        dm2_v1_viewport_set_render_dungeon_backbuffer_only(&viewport, 0);
-        dm2_v1_viewport_render_screen_owned_passes(&viewport);
+    if (use_rect7_backbuffer &&
+        dm2_runtime_present_rect7_backbuffer(
+            rt, &viewport, &rect7_receipt, dungeon_backbuffer, framebuffer,
+            fb_stride, view_w, view_h) != 0) {
+        return -1;
     }
     rt->source_click_target_count = viewport.source_click_target_count;
     if (rt->source_click_target_count > DM2_V1_VIEWPORT_CLICK_TARGET_COUNT) {

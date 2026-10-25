@@ -261,17 +261,16 @@ ShuttleMouse click and its unmatched WRAM snapshots are preserved in
 [`parity-evidence/verification/nexus-keyboard-mouse-retail-input-20261025/`](../parity-evidence/verification/nexus-keyboard-mouse-retail-input-20261025/README.md);
 they do not prove an action.
 
-A later isolated Ymir probe used the authentic slot-1 state with ControlPad on
-port 1 and ShuttleMouse on port 2. XTEST core-pointer motion and the ShuttleMouse
-port's relative arrow-key bindings produced no visible movement of a clearly
-identifiable retail hand pointer in the Xvfb captures. The setup and captures
-are recorded in [`nexus-shuttle-mouse-xvfb-20261025`](../parity-evidence/verification/nexus-shuttle-mouse-xvfb-20261025/README.md).
-The XTEST result is explained by a Ymir 0.4.1 frontend gap: SDL global mouse ID
-`0` enters relative-capture mode and returns before Ymir maps its motion or
-buttons to the emulated ShuttleMouse. Ymir PR
-[#963](https://github.com/ymir-emu/Ymir/pull/963) proposes connecting that
-stream when a ShuttleMouse is selected; it still needs a full build and runtime
-`--debug` verification. Neither the earlier capture nor the proposed fix
-establishes Nexus retail mouse semantics. Firestaff's desktop mouse actions
-still need to follow proven Nexus state changes before enabling equipment or
-other pointer actions.
+The earlier Xvfb probe showed no identifiable hand-pointer movement because
+Ymir's frontend did not route SDL global mouse ID `0` to the emulated
+ShuttleMouse. Ymir PR [#963](https://github.com/ymir-emu/Ymir/pull/963) now
+builds successfully and passed an isolated `--debug` runtime probe with the
+authentic Japanese retail disc and hash-verified Saturn IPL. Ymir visibly
+bound global mouse ID `0` to ShuttleMouse port 2 while a ControlPad was on port
+1, confirming the host-to-peripheral connection. The new game-view captures
+do not establish reliable retail pointer movement or a mouse action, so Nexus
+ShuttleMouse gameplay semantics and Firestaff mouse-action parity remain
+unverified. Build limitations and captures are recorded in
+[`nexus-shuttle-mouse-ymir-pr963-20261025`](../parity-evidence/verification/nexus-shuttle-mouse-ymir-pr963-20261025/README.md).
+Firestaff's desktop mouse actions still need to follow proven Nexus state
+changes before enabling equipment or other pointer actions.

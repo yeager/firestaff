@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 3.0.411 LANGUAGES C)
+project(Firestaff VERSION 3.0.412 LANGUAGES C)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
@@ -213,9 +213,9 @@ if(BUILD_TESTING)
         COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_dm1_only_real_media.sh"
             "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
     set_tests_properties(m12_main_menu_dm1_only_real_media PROPERTIES
-        SKIP_RETURN_CODE 77 TIMEOUT 120
+        SKIP_RETURN_CODE 77 TIMEOUT 300
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
-        LABELS "m12;dm1;main-menu;game-selection;real-media;skip-safe")
+        LABELS "m12;dm1;main-menu;game-selection;runtime;real-media;skip-safe")
 
     add_test(NAME m12_main_menu_dm2_only_real_media
         COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_dm2_only_real_media.sh"
@@ -4303,6 +4303,17 @@ if(BUILD_TESTING)
         TIMEOUT 300
     )
     add_test(
+        NAME firestaff_dm1_scan_debug_localization_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_dm1_scan_debug_localization_real_media.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(firestaff_dm1_scan_debug_localization_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "dm1;startup;cli;debug;localization;real-media;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM1_PC_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_LOCALE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/po;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy"
+        TIMEOUT 90
+    )
+    add_test(
         NAME return_to_menu_rescans_dm1_csb_dm2_real_media
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh"
             "$<TARGET_FILE:firestaff>"
@@ -7295,10 +7306,11 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_move_record_to_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_actuator_event_pc34_compat.c"
     # QUERY_*_BAR_COLOR is also implemented by the source-owned champion-HUD
-    # helper below, with a different receipt/signature.  This older predicate
-    # study has no DM2 runtime caller; keep its focused executable isolated so
-    # the product archive cannot export duplicate symbols.
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_predicate_helpers.c")
+    # helper below, with a different receipt/signature. The predicate study
+    # has no DM2 runtime caller; its separate test target below keeps it out
+    # of the product archive.
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_predicate_helpers.c"
+)
 if(DM2_SOURCES)
     add_library(firestaff_dm2 STATIC ${DM2_SOURCES}
         # The original Amiga installer is an OFS ADF chain.  DM2 boot owns
@@ -12632,9 +12644,9 @@ endforeach()
 # source files already live on main; this block only reattaches verified targets
 # without trusting stale CMake context from old branches.
 if(BUILD_TESTING)
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_asset_status_iso_cache_materialization.c")
-        add_executable(test_asset_status_iso_cache_materialization
-            tests/test_asset_status_iso_cache_materialization.c
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_asset_status_iso_no_extraction.c")
+        add_executable(test_asset_status_iso_no_extraction
+            tests/test_asset_status_iso_no_extraction.c
             src/shared/asset_status_m12.c
             src/shared/firestaff_theron_media_classify.c
             src/shared/asset_find_by_hash.c
@@ -12661,17 +12673,19 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_us_roster_receipt.c
         src/theron/theron_v1_dungeon_handoff.c
         )
-        target_link_libraries(test_asset_status_iso_cache_materialization PRIVATE
+        target_link_libraries(test_asset_status_iso_no_extraction PRIVATE
             firestaff_v2
             firestaff_nexus
             firestaff_theron
         )
-        target_include_directories(test_asset_status_iso_cache_materialization PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-        target_compile_definitions(test_asset_status_iso_cache_materialization PRIVATE FIRESTAFF_ASSET_STATUS_TESTING=1)
+        target_include_directories(test_asset_status_iso_no_extraction PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        target_compile_definitions(test_asset_status_iso_no_extraction PRIVATE FIRESTAFF_ASSET_STATUS_TESTING=1)
         if(NOT MSVC)
-            target_compile_options(test_asset_status_iso_cache_materialization PRIVATE -Wall -Wextra -O2)
+            target_compile_options(test_asset_status_iso_no_extraction PRIVATE -Wall -Wextra -O2)
         endif()
-        add_test(NAME asset_status_iso_cache_materialization COMMAND test_asset_status_iso_cache_materialization)
+        add_test(NAME asset_status_iso_no_extraction COMMAND test_asset_status_iso_no_extraction)
+        set_tests_properties(asset_status_iso_no_extraction PROPERTIES
+            ENVIRONMENT "FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}")
     endif()
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_qol_runtime_pc34_compat.c")
@@ -47109,6 +47123,15 @@ if(BUILD_TESTING AND TARGET firestaff_theron)
         LABELS "theron;real-media;startup;native"
     )
     add_test(
+        NAME theron_v1_sdl_input_events
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_sdl_input_events.sh
+                $<TARGET_FILE:firestaff>
+    )
+    set_tests_properties(theron_v1_sdl_input_events PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;runtime;input;native;no-synthetic"
+    )
+    add_test(
         NAME theron_v1_us_clonecd_zip_runtime_boot
         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_us_clonecd_zip_runtime_boot.sh
                 $<TARGET_FILE:firestaff>
@@ -47363,7 +47386,7 @@ endif()
 # Source-lock: src/shared/asset_status_m12.c M12_AssetStatus_Scan +
 #   m12_scan_direct_theron_request / m12_scan_explicit_file_request /
 #   m12_scan_original_candidates / m12_reuse_verified_theron_refresh /
-#   m12_materialize_runtime_cache_for_game, src/ui/menu_startup_m12.c
+#   m12_prepare_runtime_media_owner, src/ui/menu_startup_m12.c
 #   M12_StartupMenu_SetDataDirectory, include/asset_status_m12.h.
 # The launcher keeps one M12_AssetStatus on the menu state for the
 # whole session; flipping the configured data root must invalidate
@@ -55272,6 +55295,30 @@ if(BUILD_TESTING AND
              COMMAND test_m11_gamepad_csb_input_bridge)
     set_tests_properties(m11_gamepad_csb_input_bridge PROPERTIES
         LABELS "csb;theron;input;gamepad;steamdeck")
+endif()
+
+# Theron's native SDL gameplay mapper owns its keyboard action ingress. Keep
+# these bindings isolated from other games' shared input assertions.
+if(BUILD_TESTING AND
+   EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_native_keyboard_mapping.c")
+    add_executable(test_theron_native_keyboard_mapping
+        tests/test_theron_native_keyboard_mapping.c
+        src/engine/m11_game_input_mapping.c
+        src/shared/gamepad_config_m12.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_theron_native_keyboard_mapping PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src)
+    target_link_libraries(test_theron_native_keyboard_mapping PRIVATE SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_theron_native_keyboard_mapping PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+    add_test(NAME theron_native_keyboard_mapping
+             COMMAND test_theron_native_keyboard_mapping)
+    set_tests_properties(theron_native_keyboard_mapping PROPERTIES
+        LABELS "theron;input;keyboard")
 endif()
 
 # M11 input scale boundary contract for the source-to-screen

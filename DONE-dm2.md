@@ -1,3 +1,10 @@
+- 2026-10-25: Extracted the DM2 RECT_7 receipt/copy/screen-owned presentation
+  pass into a private runtime helper while keeping the same receipt alive for
+  later click-target placement. The product target rebuilt with `-j1`; the
+  authentic FM Towns CLI/menu/runtime test and Macintosh and Amiga native CLI
+  tests passed. The checks include screenshot/viewport-region assertions but
+  not exact before/after pixel hashes or complete visual parity.
+
 - 2026-10-24: Rebuilt the current-source DM2 launcher and ran the authentic
   DOS PC34 direct-start action probes against the original English ZIP. All
   seven source-state checks passed: up/down/left/right, both strafes and

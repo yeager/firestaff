@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 20,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "fast-dev",
+      "displayName": "Fast local Firestaff build",
+      "description": "Configure only the shipping app by default; build tests explicitly when needed.",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/.codex-scratch/build-fast-dev",
+      "cacheVariables": {
+        "BUILD_TESTING": "OFF",
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "fast-dev-ccache",
+      "displayName": "Fast local Firestaff build with ccache",
+      "description": "Use ccache for the app-only fast-dev build when ccache is installed.",
+      "inherits": "fast-dev",
+      "binaryDir": "${sourceDir}/.codex-scratch/build-fast-dev-ccache",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER_LAUNCHER": "ccache"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "fast-dev",
+      "configurePreset": "fast-dev",
+      "targets": ["firestaff"],
+      "jobs": 1
+    },
+    {
+      "name": "fast-dev-ccache",
+      "configurePreset": "fast-dev-ccache",
+      "targets": ["firestaff"],
+      "jobs": 1
+    }
+  ]
+}

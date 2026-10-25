@@ -144,7 +144,17 @@ void M11_Debug_LogHardware(void) {
     }
     logicalCpus = m11_debug_logical_cpu_count();
     ramMiB = SDL_GetSystemRAM();
-#if defined(__APPLE__) || defined(__linux__)
+#if defined(__ANDROID__)
+    {
+        FILE* loadAverage = fopen("/proc/loadavg", "rb");
+        if (loadAverage) {
+            systemLoadCount = fscanf(loadAverage, "%lf %lf %lf",
+                                     &systemLoad[0], &systemLoad[1],
+                                     &systemLoad[2]);
+            fclose(loadAverage);
+        }
+    }
+#elif defined(__APPLE__) || defined(__linux__)
     systemLoadCount = getloadavg(systemLoad, 3);
 #endif
 #if SDL_VERSION_ATLEAST(3, 2, 0)

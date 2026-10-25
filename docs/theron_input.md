@@ -23,11 +23,13 @@ are research instruments only and do not run or replace the game in Firestaff.
 
 Desktop mouse controls are provided by Firestaff's native interface. During
 startup, left-click selects and right-click goes back. During dungeon play,
-left-click activates one of the twelve visible control-panel actions, while
-right-click goes back; middle-click is inert. Moving the pointer highlights a
-panel control. Clicks elsewhere in the dungeon do not trigger a game action
-until Theron's original world hit regions are verified. Short and long touch
-gestures send Button I and Button II, respectively.
+left-click activates one of the twelve visible control-panel actions. Holding
+right mouse while pressing a direction key applies the manual's Button II
+simplified-movement modifier; a right click by itself does not advance a tick.
+Middle-click is inert. Moving the pointer highlights a panel control. Clicks
+elsewhere in the dungeon do not trigger a game action until Theron's original
+world hit regions are verified. Short and long touch gestures send Button I
+and Button II, respectively.
 
 ## Startup menu
 
@@ -65,11 +67,12 @@ actuator timing or retail queue capacity; see the 2026-10-24 entry in
 | Step right     | Right Arrow, D, keypad 3          |
 | Turn left      | Q, Home, keypad 4                 |
 | Turn right     | E, End, keypad 6                  |
-| Wait (tick)    | Return, Space                     |
+| Wait (tick)    | Space, Return                     |
 | Next champion  | Tab                               |
 | Pick up facing item | G                            |
+| Select next source item | I                         |
 | Drop last picked source item | P                    |
-| Use facing door | U                                |
+| Use facing object | U                               |
 
 The native dungeon view also shows a twelve-button Firestaff mouse panel in
 its lower-right corner. Its first two rows provide **TURN L**, **FORWARD**,
@@ -90,12 +93,26 @@ the highlighted control changes.
   commands `$06/$04`; Q/E, Home/End and keypad 4/6 turn. Startup menu arrows
   retain their navigation behavior. This matches Firestaff's ordinary DM1
   dungeon keyboard layout while preserving Theron's native command tokens.
+- SDL keyboard input routes the same supported loaded-dungeon commands as the
+  native mouse panel: Tab cycles champion, G picks up, I selects the next
+  source-backed item, P drops it, U uses the facing object, and Space/Return
+  waits. These keys enter the Theron input facade directly; they do not rely
+  on the boot-probe-only key mapper.
 - The native mouse panel provides all six Theron movement actions and the
-  implemented champion, item, use and wait actions. Right-click remains
-  cancel/back and does not advance a dungeon tick. The retail manual also
-  describes holding Button II with a direction key as simplified movement;
-  Firestaff's native direction keys already issue those movement commands
-  directly.
+  implemented champion, item, use and wait actions. The retail manual's
+  Button II chord is available as right-mouse plus Left/Right Arrow or A/D;
+  it turns instead of side-stepping. A standalone right click does not advance
+  a dungeon tick; in a loaded dungeon it is consumed only as the modifier,
+  while Escape remains the desktop Back command. An SDL event-loop regression
+  verifies that Button II plus Right turns, then that Right after release
+  side-steps. A native SDL mouse sequence through the visible host panel also
+  turns twice and advances across a source-backed tile, using authenticated
+  USA Track 02. Existing US and Japanese
+  Rev. 1 Track 02 runtime tests also exercise the panel's turn and movement
+  commands against each region's loaded dungeon state. The Japanese test
+  asserts both click receipts and the resulting party pose. These checks cover
+  Firestaff's host panel, not original PCE mouse support or direct world-space
+  clicks.
 - The host-panel bounds are Firestaff UI and do not reuse DM1's
   C007..C116 pointer tables. The original movement-panel captures identify
   six internal PCE cursor samples, not desktop hitboxes or host coordinates:

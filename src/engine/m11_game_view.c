@@ -25182,6 +25182,9 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
     free(state->dm1LegacyWallCache);
     state->dm1LegacyWallCache = NULL;
     state->dm1LegacyWallCacheCapability = 0;
+    free(state->dm1DoorCompositeScratch);
+    state->dm1DoorCompositeScratch = NULL;
+    state->dm1DoorCompositeScratchCapacity = 0U;
     if (state->assetsAvailable) {
         M11_AssetLoader_Shutdown(&state->assetLoader);
         state->assetsAvailable = 0;
@@ -26013,6 +26016,9 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     free(state->dm1LegacyWallCache);
     state->dm1LegacyWallCache = NULL;
     state->dm1LegacyWallCacheCapability = 0;
+    free(state->dm1DoorCompositeScratch);
+    state->dm1DoorCompositeScratch = NULL;
+    state->dm1DoorCompositeScratchCapacity = 0U;
     state->dm1NativeObjectMetadataSource = NULL;
     state->dm1NativeObjectMetadataSourceSize = 0;
     state->dm1NativeObjectMetadataValid = 0;
@@ -49814,8 +49820,23 @@ static int m11_draw_dm1_center_door_material_receipt(
  * applies the door-state zone and AL0114 flip in F0791.  Keeping this as one
  * transaction prevents an ornament or mask from being scaled across the
  * visible sliver of a partly-open door. */
+static unsigned char* m11_dm1_door_composite_scratch(
+    M11_GameViewState* state,
+    size_t required)
+{
+    unsigned char* grown;
+    if (!state || required == 0U) return NULL;
+    if (required <= state->dm1DoorCompositeScratchCapacity)
+        return state->dm1DoorCompositeScratch;
+    grown = (unsigned char*)realloc(state->dm1DoorCompositeScratch, required);
+    if (!grown) return NULL;
+    state->dm1DoorCompositeScratch = grown;
+    state->dm1DoorCompositeScratchCapacity = required;
+    return grown;
+}
+
 static int m11_draw_dm1_center_door_composite(
-    const M11_GameViewState* state,
+    M11_GameViewState* state,
     unsigned char* framebuffer,
     int fbW,
     int fbH,
@@ -49843,7 +49864,10 @@ static int m11_draw_dm1_center_door_composite(
                                      graphicIndex);
     if (!panelSlot || !panelSlot->loaded || !panelSlot->pixels ||
         panelSlot->width == 0 || panelSlot->height == 0) return 0;
-    pixels = (unsigned char*)malloc((size_t)panelSlot->width * panelSlot->height);
+    if ((size_t)panelSlot->width > SIZE_MAX / (size_t)panelSlot->height)
+        return 0;
+    pixels = m11_dm1_door_composite_scratch(
+        state, (size_t)panelSlot->width * (size_t)panelSlot->height);
     if (!pixels) return 0;
     memcpy(pixels, panelSlot->pixels,
            (size_t)panelSlot->width * panelSlot->height);
@@ -49904,7 +49928,6 @@ static int m11_draw_dm1_center_door_composite(
         if (b->srcX < 0 || b->srcY < 0 ||
             b->srcX + b->width > panelSlot->width ||
             b->srcY + b->height > panelSlot->height) {
-            free(pixels);
             return 0;
         }
         for (y = 0; y < b->height; ++y) {
@@ -49926,7 +49949,6 @@ static int m11_draw_dm1_center_door_composite(
             }
         }
     }
-    free(pixels);
     return 1;
 }
 
@@ -50367,7 +50389,10 @@ static int m11_draw_dm1_side_door_composite(
     panelSlot = M11_AssetLoader_Load(&state->assetLoader, graphicIndex);
     if (!panelSlot || !panelSlot->loaded || !panelSlot->pixels ||
         panelSlot->width == 0 || panelSlot->height == 0) return 0;
-    pixels = (unsigned char*)malloc((size_t)panelSlot->width * panelSlot->height);
+    if ((size_t)panelSlot->width > SIZE_MAX / (size_t)panelSlot->height)
+        return 0;
+    pixels = m11_dm1_door_composite_scratch(
+        state, (size_t)panelSlot->width * (size_t)panelSlot->height);
     if (!pixels) return 0;
     memcpy(pixels, panelSlot->pixels,
            (size_t)panelSlot->width * panelSlot->height);
@@ -50418,7 +50443,6 @@ static int m11_draw_dm1_side_door_composite(
             &composition, resolvedBlits) ||
         composition.panelCount != panelCount ||
         composition.random4Consumed != (doorSet == 3)) {
-        free(pixels);
         return 0;
     }
     flipMask = composition.flipMask;
@@ -50438,7 +50462,6 @@ static int m11_draw_dm1_side_door_composite(
         if (b->srcX < 0 || b->srcY < 0 ||
             b->srcX + b->width > (int)panelSlot->width ||
             b->srcY + b->height > (int)panelSlot->height) {
-            free(pixels);
             return 0;
         }
         for (y = 0; y < b->height; ++y) {
@@ -50459,7 +50482,6 @@ static int m11_draw_dm1_side_door_composite(
             }
         }
     }
-    free(pixels);
     return 1;
 }
 

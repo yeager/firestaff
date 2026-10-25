@@ -3536,8 +3536,8 @@ static int m12_theron_version_index_for_md5(const char* md5);
 static void m12_apply_required_game_availability(M12_AssetStatus* status,
                                                  int gameIndex,
                                                  int available);
-static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
-                                                   int gameIndex);
+static int m12_prepare_runtime_media_owner(M12_AssetStatus* status,
+                                           int gameIndex);
 
 /* CUE-backed Theron releases may store Track 02 under a filename that is
  * intentionally not a canonical loose-file candidate (for example a full
@@ -3602,7 +3602,7 @@ static void m12_scan_theron_cue_packages(
                     }
                 }
                 status->originalFileCandidateFound = 1;
-                (void)m12_materialize_runtime_cache_for_game(status, gameIndex);
+                (void)m12_prepare_runtime_media_owner(status, gameIndex);
                 m12_apply_required_game_availability(status, gameIndex, 1);
             }
         }
@@ -6105,6 +6105,19 @@ static void m12_admit_csb_amiga31_english_program_package(
         int admitted = 0;
         if (versionIndex < 0) continue;
         version = &status->versions[gameIndex][versionIndex];
+        /* The general version pass has already hashed this graphics file.
+         * Reuse that receipt only when the same-container program package
+         * and (for A31E) startup media are complete. An incomplete first
+         * copy must still fall through to the exhaustive search so a later
+         * complete package can be selected. */
+        if (version->matched &&
+            strcmp(version->matchedMd5, hashes[edition]) == 0 &&
+            csb_v1_amiga_english_package_ready(version->matchedPath,
+                                               ids[edition]) &&
+            (edition != 0u || m12_csb_amiga31_startup_media_ready(
+                                  version->matchedPath, ids[edition]))) {
+            admitted = 1;
+        }
         for (rootIndex = 0u; rootIndex < (explicitFile ? 1u : rootCount) && !admitted; ++rootIndex) {
             const char *root = explicitFile ? requestedDataDir : roots[rootIndex];
             int count = asset_collect_files_by_md5(root, hashes[edition],
@@ -7630,8 +7643,8 @@ static int m12_materialize_csb_fmtowns_runtime_cache(
 }
 #endif
 
-static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
-                                                  int gameIndex) {
+static int m12_prepare_runtime_media_owner(M12_AssetStatus* status,
+                                           int gameIndex) {
     const char* gameId;
     char userDataDir[M12_ASSET_DATA_DIR_CAPACITY];
     char cacheRoot[M12_ASSET_DATA_DIR_CAPACITY];
@@ -8050,7 +8063,7 @@ static int m12_publish_direct_theron_match(
         }
     }
     m12_apply_required_game_availability(status, theronIndex, requiredMatched);
-    if (!m12_materialize_runtime_cache_for_game(status, theronIndex)) {
+    if (!m12_prepare_runtime_media_owner(status, theronIndex)) {
         m12_apply_required_game_availability(status, theronIndex, 0);
         return 0;
     }
@@ -8884,7 +8897,7 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
             }
         }
         if (!m12_scan_progress_update(&progressCtx,
-                                      "materializing launch cache",
+                                      "preparing runtime media",
                                       g_games[i].gameId,
                                       status->runtimeDataDirs[i],
                                       1)) {
@@ -8892,7 +8905,7 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
                                               legacyFallbackSnapshot);
             return 0;
         }
-        if (!m12_materialize_runtime_cache_for_game(status, i)) {
+        if (!m12_prepare_runtime_media_owner(status, i)) {
             m12_apply_required_game_availability(status, i, 0);
         }
         m12_prefer_dm2_loose_graphics_runtime_dir(status, i);
@@ -9341,7 +9354,7 @@ void M12_AssetStatus_ScanGameWithOptions(
     if (reqMatch) {
         status->originalFileCandidateFound = 1;
     }
-    if (!m12_materialize_runtime_cache_for_game(status, gameIndex)) {
+    if (!m12_prepare_runtime_media_owner(status, gameIndex)) {
         m12_apply_required_game_availability(status, gameIndex, 0);
     }
     m12_prefer_dm2_loose_graphics_runtime_dir(status, gameIndex);

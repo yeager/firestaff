@@ -1845,6 +1845,7 @@ int asset_read_path_alloc(const char *path, uint8_t **outBytes,
         if (strstr(separator + 2, "::") == NULL &&
             (is_atari_stx_path(container) || is_atari_st_path(container) ||
              is_atari_msa_path(container) ||
+             asset_container_kind_for_path(container) == ASSET_CONTAINER_ISO ||
              asset_container_kind_for_path(container) == ASSET_CONTAINER_ADF ||
              asset_container_kind_for_path(container) == ASSET_CONTAINER_PRODOS)) {
             return asset_read_virtual_path_alloc(path, outBytes, outSize);
@@ -2331,10 +2332,12 @@ static int scan_zip_by_md5_list(const char *zipPath, const char *const *md5List,
 
 static int iso_read_sector(FILE *fp, int raw2352, uint32_t sector,
                            unsigned char out[ASSET_ISO_SECTOR_SIZE]) {
-    long offset = raw2352
-        ? (long)sector * (long)ASSET_ISO_RAW_SECTOR_SIZE + (long)ASSET_ISO_RAW_DATA_OFFSET
-        : (long)sector * (long)ASSET_ISO_SECTOR_SIZE;
-    if (fseek(fp, offset, SEEK_SET) != 0) return 0;
+    uint64_t stride = raw2352 ? ASSET_ISO_RAW_SECTOR_SIZE
+                              : ASSET_ISO_SECTOR_SIZE;
+    uint64_t offset = (uint64_t)sector * stride +
+        (raw2352 ? ASSET_ISO_RAW_DATA_OFFSET : 0U);
+    if (!fp || !out || offset > (uint64_t)LONG_MAX ||
+        fseek(fp, (long)offset, SEEK_SET) != 0) return 0;
     return fread(out, 1U, ASSET_ISO_SECTOR_SIZE, fp) == ASSET_ISO_SECTOR_SIZE;
 }
 
@@ -2378,17 +2381,51 @@ static int iso_extract_file(FILE *fp, int raw2352, uint32_t lba, uint32_t size,
     return fclose(out) == 0;
 }
 
+static int iso_read_file_alloc(FILE *fp, int raw2352, uint32_t lba,
+                               uint32_t size, uint8_t **outBytes,
+                               size_t *outSize) {
+    unsigned char sector[ASSET_ISO_SECTOR_SIZE];
+    uint8_t *bytes;
+    uint32_t remaining = size;
+    uint32_t sectorIndex = lba;
+    size_t offset = 0U;
+    if (!fp || !outBytes || !outSize || size == 0U ||
+        size > ASSET_ZIP_MAX_ENTRY_BYTES) return 0;
+    if ((uint64_t)lba + ((uint64_t)size + ASSET_ISO_SECTOR_SIZE - 1U) /
+            ASSET_ISO_SECTOR_SIZE - 1U > UINT32_MAX) return 0;
+    *outBytes = NULL;
+    *outSize = 0U;
+    bytes = (uint8_t *)malloc((size_t)size);
+    if (!bytes) return 0;
+    while (remaining > 0U) {
+        uint32_t chunk = remaining > ASSET_ISO_SECTOR_SIZE
+            ? ASSET_ISO_SECTOR_SIZE : remaining;
+        if (!iso_read_sector(fp, raw2352, sectorIndex, sector)) {
+            free(bytes);
+            return 0;
+        }
+        memcpy(bytes + offset, sector, chunk);
+        offset += chunk;
+        remaining -= chunk;
+        ++sectorIndex;
+    }
+    *outBytes = bytes;
+    *outSize = offset;
+    return 1;
+}
+
 static int iso_parse_dir_record(const unsigned char *sector, int offset,
                                 uint32_t *outLba, uint32_t *outSize,
                                 int *outIsDir, char name[128]) {
     int recLen = sector[offset];
     int nameLen;
     int copyLen;
-    if (recLen == 0 || offset + recLen > (int)ASSET_ISO_SECTOR_SIZE) return 0;
+    if (recLen < 34 || offset + recLen > (int)ASSET_ISO_SECTOR_SIZE) return 0;
+    nameLen = sector[offset + 32];
+    if (nameLen == 0 || 33 + nameLen > recLen) return 0;
     *outLba = read_u32le(sector + offset + 2);
     *outSize = read_u32le(sector + offset + 10);
     *outIsDir = (sector[offset + 25] & 0x02) != 0;
-    nameLen = sector[offset + 32];
     copyLen = nameLen < 127 ? nameLen : 127;
     memcpy(name, sector + offset + 33, (size_t)copyLen);
     name[copyLen] = '\0';
@@ -2631,6 +2668,81 @@ static int iso_extract_entry_to_path(const char *isoPath, const char *entryName,
         rootSize = read_u32le(pvd + 166);
         if (iso_extract_entry_in_dir(fp, raw, rootLba, rootSize, 0,
                                      "", entryName, outFilePath)) {
+            fclose(fp);
+            return 1;
+        }
+    }
+    fclose(fp);
+    return 0;
+}
+
+static int iso_read_entry_in_dir(FILE *fp, int raw2352, uint32_t dirLba,
+                                 uint32_t dirSize, int depth,
+                                 const char *directory, const char *entryName,
+                                 uint8_t **outBytes, size_t *outSize) {
+    unsigned char sector[ASSET_ISO_SECTOR_SIZE];
+    uint64_t sectorCount = ((uint64_t)dirSize + ASSET_ISO_SECTOR_SIZE - 1U) /
+        ASSET_ISO_SECTOR_SIZE;
+    uint32_t sectors;
+    uint32_t s;
+    if (sectorCount > UINT32_MAX) return 0;
+    sectors = (uint32_t)sectorCount;
+    if (depth > ASSET_ISO_MAX_DIR_DEPTH ||
+        (sectors > 0U && (uint64_t)dirLba + sectors - 1U > UINT32_MAX)) return 0;
+    for (s = 0U; s < sectors; ++s) {
+        int offset = 0;
+        if (!iso_read_sector(fp, raw2352, dirLba + s, sector)) return 0;
+        while (offset < (int)ASSET_ISO_SECTOR_SIZE) {
+            uint32_t lba, size;
+            int isDir;
+            int recLen;
+            char name[128];
+            char fullName[256];
+            recLen = iso_parse_dir_record(sector, offset, &lba, &size,
+                                          &isDir, name);
+            if (recLen == 0) break;
+            if (name[0] != '\0' && (unsigned char)name[0] > 1U) {
+                int written;
+                if (directory && directory[0] != '\0') {
+                    written = snprintf(fullName, sizeof(fullName), "%s/%s",
+                                       directory, name);
+                } else {
+                    written = snprintf(fullName, sizeof(fullName), "%s", name);
+                }
+                if (written < 0 || (size_t)written >= sizeof(fullName)) return 0;
+                if (isDir) {
+                    if (iso_read_entry_in_dir(fp, raw2352, lba, size,
+                                              depth + 1, fullName, entryName,
+                                              outBytes, outSize)) return 1;
+                } else if (asset_casecmp(fullName, entryName) == 0) {
+                    return iso_read_file_alloc(fp, raw2352, lba, size,
+                                               outBytes, outSize);
+                }
+            }
+            offset += recLen;
+        }
+    }
+    return 0;
+}
+
+static int iso_read_entry_alloc(const char *isoPath, const char *entryName,
+                                uint8_t **outBytes, size_t *outSize) {
+    FILE *fp;
+    unsigned char pvd[ASSET_ISO_SECTOR_SIZE];
+    int raw;
+    if (!isoPath || !entryName || !outBytes || !outSize) return 0;
+    *outBytes = NULL;
+    *outSize = 0U;
+    fp = fopen(isoPath, "rb");
+    if (!fp) return 0;
+    for (raw = 0; raw <= 1; ++raw) {
+        uint32_t rootLba, rootSize;
+        if (!iso_read_sector(fp, raw, 16U, pvd) || pvd[0] != 1 ||
+            memcmp(pvd + 1, "CD001", 5) != 0) continue;
+        rootLba = read_u32le(pvd + 158);
+        rootSize = read_u32le(pvd + 166);
+        if (iso_read_entry_in_dir(fp, raw, rootLba, rootSize, 0, "",
+                                  entryName, outBytes, outSize)) {
             fclose(fp);
             return 1;
         }
@@ -8013,6 +8125,10 @@ int asset_read_virtual_path_alloc(const char *virtualPath,
             *outBytes = member;
             return 1;
 #endif
+        }
+        if (asset_container_kind_for_path(container) == ASSET_CONTAINER_ISO) {
+            return iso_read_entry_alloc(container, first + 2,
+                                        outBytes, outSize);
         }
         /* A directly selected ST/STX/MSA disk has the same virtual member
          * spelling as a disk nested in ZIP, but no outer archive separator.

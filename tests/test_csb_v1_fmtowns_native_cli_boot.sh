@@ -420,8 +420,10 @@ with open(log_path, encoding="utf-8", errors="replace") as stream:
     for line in stream:
         match = re.search(
             r"scan elapsed-ms=\d+(?: delta-ms=\d+)? progress=(\d+)% game=csb "
+            r"(?:game-label=\"[^\"]*\" )?"
             r"task=(?:authenticating ZIP candidate|"
-            r"authenticating CSB FM Towns image) path=(.*)$", line.rstrip())
+            r"authenticating CSB FM Towns image) "
+            r"(?:task-label=\"[^\"]*\" )?path=(.*)$", line.rstrip())
         if match and "/csb/" in match.group(2) and match.group(2).endswith(archive_name):
             progress.append(int(match.group(1)))
 if len(set(progress)) < 2 or progress[-1] <= progress[0]:

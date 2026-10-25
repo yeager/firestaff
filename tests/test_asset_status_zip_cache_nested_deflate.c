@@ -40,7 +40,7 @@
  *   - src/shared/asset_status_m12.c
  *       * m12_path_is_virtual_asset (detects "::" in matched paths)
  *       * m12_materialize_required_file (virtual -> ordinary copy)
- *       * m12_materialize_runtime_cache_for_game (cache layout under
+ *       * m12_prepare_runtime_media_owner (runtime source owner under
  *         <userDataDir>/asset-cache/<gameId>/<label>)
  *
  * Test is data-free: it synthesizes its own ZIP and uses the testing-only
