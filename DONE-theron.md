@@ -7,9 +7,12 @@ facade in both scancode and keycode paths during startup and gameplay: `Z`
 sends Button I's action/selection token, and `X` sends Button II's cancel/back
 token. This follows the USA retail manual's Button I/II assignments (pp. 4–5)
 and avoids a host-keyboard-layout dependency. The focused native mapping test
-covers all four paths. This proves host input normalization only; authentic
-media SDL-loop coverage remains separate and does not claim complete gameplay
-or presentation parity.
+covers all four paths. A fresh TRV2 Debug build also passed the regular
+`theron_v1_sdl_input_events` regression against authenticated USA Track 02
+(MD5 `f23601102138f87c33025877767ebf76`) with `--debug`; that live loop
+exercises the current native binary and Button I `Z` route. The Button II `X`
+route is mapper-covered rather than separately asserted by that live sequence.
+This does not claim complete gameplay or presentation parity.
 
 ## 2026-10-25 — route PC Engine Button I Z through native SDL gameplay
 
