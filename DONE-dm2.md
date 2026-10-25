@@ -1,3 +1,19 @@
+- 2026-10-25: Reproduced the FM Towns pointer-only menu regression stopping
+  after its second click at the three-second test deadline. With the same
+  authentic archive and click coordinates, waiting for scan completion and
+  allowing thirty seconds reaches the expected FM Towns game handoff. The
+  regression now uses that bounded wait and prints its captured log on failure.
+  This verifies the launcher handoff, not full gameplay or visual parity.
+
+  The corrected regression subsequently completed on Linux with authentic
+  FM Towns media. Both bare CLI and M12 routes reached the first champion in
+  the normal runtime loop. The New Game menu RGB digest matched `TITLE/0/4`
+  (`367b54aa92b46d6e`); the 320x200 runtime screenshot passed its viewport and
+  HUD-region coverage checks. Those coverage checks are not pixel parity.
+  The mixed DOS/Amiga/Mac/FM Towns collection subtest was skipped because
+  the build host lacked the Mac archive; that combination remains unverified
+  by this run.
+
 - 2026-10-25: Extracted the DM2 RECT_7 receipt/copy/screen-owned presentation
   pass into a private runtime helper while keeping the same receipt alive for
   later click-target placement. The product target rebuilt with `-j1`; the
