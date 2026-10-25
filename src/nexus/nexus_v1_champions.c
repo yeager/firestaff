@@ -462,7 +462,7 @@ int nexus_v1_champion_cycle_leader(Nexus_V1_ChampionPool *pool) {
         pool->champion_count > NEXUS_MAX_CHAMPIONS) {
         return -1;
     }
-    for (offset = 1; offset <= pool->party_count; ++offset) {
+    for (offset = 1; offset < pool->party_count; ++offset) {
         int next = (pool->leader_index + offset) % pool->party_count;
         int champion_index = pool->party[next];
         if (champion_index >= 0 && champion_index < pool->champion_count &&
