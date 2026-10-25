@@ -16,18 +16,19 @@ Record authentic Japanese retail Nexus startup and gameplay input observations u
 
 ## Observations from the retail game
 
-1. `F` held for about one second at the Nexus title prompt opened the actual title menu. It showed `NEW GAME`, `CONTINUE`, and `CONFIGURATION`, with `NEW GAME` selected. `J` confirmed it.
+1. `F` held for about one second at the Nexus title prompt opened the actual title menu. It showed `NEW GAME`, `CONTINUE`, and `CONFIGURATION`, with `NEW GAME` selected. `J` confirmed it and entered the dungeon. This is a key-hold observation, not a frame-exact repeatable input threshold.
 2. The game entered a first-person dungeon corridor. After the view stabilized, holding `W` for about one second moved the view forward. Holding `A` for about 0.4 seconds rotated the view left. A separate follow-up run on the same retail disc held `D` for about 0.4 seconds and rotated the view right. The paired screenshots show live movement rather than only title animation.
 3. Holding `F` for about 0.4 seconds in the dungeon displayed the in-game `PAUSE` overlay. A second Start press resumed play.
 4. Pressing `O` (Saturn Z) displayed the game's orange hand cursor. In that mode, `W` moved the cursor upward. This confirms a distinct cursor mode in addition to movement mode.
 5. A mouse click at Ymir desktop coordinates `(650, 400)` did not produce a separately identifiable game action. This run had Ymir port 1 configured as a ControlPad, not the Saturn Shuttle Mouse, so it does not determine whether the retail game supports that peripheral or how Firestaff should translate desktop mouse input.
 6. B produced no visible change in this corridor. With no visible party or HUD in the captured scene, this does not establish B's in-game action. Attack, inventory, spell, champion selection, and mouse-action semantics remain unverified by these runs.
-7. In the fresh profile, F opened the title menu and S moved selection from `NEW GAME` to `CONTINUE`. R, mapped to the ControlPad right shoulder, did not change the selected menu item. Pressing J while `CONTINUE` was selected left the screen unchanged; no save-list transition was observed. The newly initialized BUP hash remained unchanged. This establishes the retail menu selection and an empty-save observation, not a Continue save-load path.
+7. In the fresh profile, F opened the title menu and S moved selection from `NEW GAME` to `CONTINUE`. R, mapped to the ControlPad right shoulder, did not change the selected menu item. Pressing J while `CONTINUE` was selected left the screen unchanged; no save-list transition was observed. The newly initialized BUP hash remained unchanged. This establishes the retail menu selection and an empty-save observation, not a Continue save-load path. `CONFIGURATION` is visible in the retail screenshot, but its selection and behavior were not tested.
 8. In the separate ShuttleMouse profile, F opened the title menu with `NEW GAME` selected. The first desktop click only entered Ymir mouse-capture mode. A following mouse-button event was followed by the title menu leaving for the retail intro presentation. This is limited evidence for a title-flow button event; it does not establish pointer-coordinate targeting or in-dungeon mouse semantics. The BUP remained at the blank/init hash.
 
 ## Evidence files
 
 - `title-menu.png`: retail title menu.
+- `retail-title-menu-20261025.png`: additional authentic Japanese retail title-menu screenshot captured in Ymir `0.4.2-dev` on 2026-10-25. SHA-256: `d1ec79c6b1e3abcd16837781a1212eedb3cb157562356593ab3ce069b18f2ab4`. It visibly shows `NEW GAME`, `CONTINUE`, and `CONFIGURATION`, with New Game selected. This is a screenshot only; the 2026-10-24 run remains the source for keyboard action observations.
 - `game-after-w-long.png`: forward movement after holding W.
 - `game-after-left.png`: left turn after holding A.
 - `dtest-room-before-d.png` and `dtest-room-after-d.png`: views before and after holding D, confirming a right turn.
