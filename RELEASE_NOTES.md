@@ -3,7 +3,11 @@
 ## User-facing changes
 
 - `CSB Amiga startup scan`: reuse a hash-verified graphics match after the original program-package checks, reducing repeated archive scans while retaining exhaustive fallback for incomplete candidates.
+- `DM1 door rendering`: reuse a composite scratch buffer instead of allocating a new buffer for each rendered door frame.
+- `Nexus desktop controls`: map clicks to the rendered movement-pad bounds and add `Shift+Tab` to cycle to the previous party leader.
 - `Theron gameplay keyboard controls`: bind `Tab`, `G`, `P`, `I`, `U`, `Enter` and `Space` to champion, pickup, drop, inventory, use-item and action inputs during dungeon play.
+- `Theron forward movement`: repeat held keypad 8 input as forward movement in the normal SDL loop.
+- `Theron VDC layer visibility`: respect the authentic VDC background- and sprite-enable bits when rendering trace-backed frames.
 - `--debug scan progress`: add localized game and task labels alongside stable diagnostic keys.
 - `ISO game-data reads`: read ISO-backed assets in memory instead of extracting them to temporary files.
 
@@ -15,6 +19,7 @@
 - `DM2 RECT_7 presentation`: move receipt validation, direct backbuffer copy and screen-owned passes into a private helper while preserving the receipt used for click-target placement.
 - `DM2 build sources`: remove the unreferenced predicate helper from the product target while retaining its dedicated regression target.
 - `CMake fast-dev presets`: add an app-only Ninja build preset and an optional ccache variant; the app-only target avoids the test-target build fanout.
+- `Nexus Saturn backup cards`: parse BKR directory records and bounded payloads while leaving game-specific save interpretation and loading unconnected.
 - `Startup and localization records`: update generated PO source references and record authentic scan timings, CLI/menu routes and evidence limits.
 - `Nexus and Theron verification records`: add bounded retail-media and emulator-trace evidence while keeping unproven gameplay routes explicitly open.
 - `Release metadata`: update the project version and regenerate the versioned SPDX source SBOM for v3.0.412.
@@ -23,7 +28,8 @@
 
 - These changes do not establish complete gameplay or visual parity across all games and platforms.
 - `DM2`: HUD and dungeon viewport parity remains incomplete on several platforms; the RECT_7 refactor preserves the current render route and does not claim pixel parity.
-- `Nexus` and `Theron's Quest`: retail gameplay and pointer-action parity remain incomplete.
+- `Nexus`: the Saturn BKR parser does not load game saves; retail gameplay and pointer-action parity remain incomplete.
+- `Theron's Quest`: native dungeon rendering is not yet driven by authenticated world state.
 - Scripted SDL and headless tests do not establish physical MacBook Pro M5/HiDPI input, native display timing or audible output.
 
 # Firestaff v3.0.411
