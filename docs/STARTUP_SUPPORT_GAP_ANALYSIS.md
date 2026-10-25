@@ -31,6 +31,20 @@ The current evidence does not establish complete five-game startup support.
   not establish native window presentation, physical input, audible output,
   complete game playthroughs, or cross-platform gameplay parity.
 
+## Launcher scan responsiveness
+
+The latest recorded full-media scan took 31.13 seconds cold on one Mac16,10
+host and 8.54–8.70 seconds across three warm repeats. The collection contained
+425 files / 4.3 GiB; all five games were READY on warm scans. A source sample
+found repeated CSB Amiga package/archive admission work. Reusing an already
+hash-verified same-container match reduced the same host's measured cold time
+to 27.86 seconds and warm median to 8.57 seconds, but cold-cache conditions
+were uncontrolled and the earlier comparison had one sample. The first
+selectable menu therefore still has a measurable scan delay, and the observed
+gain is preliminary rather than a cross-platform performance claim. See the
+latest scan profile in [`TODO.md`](../TODO.md) and the bounded reuse logic in
+[`asset_status_m12.c`](../src/shared/asset_status_m12.c).
+
 ## Remaining startup work
 
 1. **Nexus:** join authentic Saturn title/menu presentation, input dispatch,
