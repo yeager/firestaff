@@ -980,7 +980,6 @@ def main() -> int:
         return 1
     else:
         print("rlowfix_plrd_pairs=unavailable configure --rlowfix to inspect")
-
     print("interpretation=verified retail hit-region registration, event-44 "
           "dispatch path, and slot-pair access/writes; held-item UI effects "
           "and Firestaff field mapping remain unverified")
