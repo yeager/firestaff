@@ -139,6 +139,10 @@ to the generic diagnostic at `0x21d98`, which resolves the event name and
 emits `bad event data`. This rules out an inventory mutation in this queue
 consumer; it does not rule out a separate consumer elsewhere in the retail
 runtime.
+An even-offset scan of the pinned image finds no raw `CMP/EQ #44,R0` opcode
+candidate. The analyzer labels this as an opcode-pattern scan only: it cannot
+distinguish data from code or exclude register comparisons, jump tables, or
+indirect event dispatch.
 The separate mouse-motion poller filters for event 46 before it calls the
 hit-region scanner; it does not consume event 44 as a second pointer action.
 This verified queue consumer does not establish an inventory mutation. No

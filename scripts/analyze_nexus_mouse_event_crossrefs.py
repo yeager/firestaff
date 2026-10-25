@@ -472,6 +472,18 @@ def report_mouse_event_queue_fallback(data: bytes) -> bool:
         print("mouse_event_queue_special_case_ids=38,39,40,49,52,56,57")
         print("mouse_event_ids_13_44_consumer=generic_bad_event_diagnostic "
               "gameplay_state_effect=not_verified")
+        # Record exact direct-comparison candidates across the full image.
+        # This is deliberately a byte-pattern scan: it does not identify code
+        # versus data and cannot rule out register, table, or indirect dispatch.
+        direct_event_44_cmp_r0 = [
+            offset for offset in range(0, len(data) - 1, 2)
+            if read_be16(data, offset) == 0x882C  # cmp/eq #44,r0
+        ]
+        locations = ",".join(f"0x{offset:06x}"
+                             for offset in direct_event_44_cmp_r0)
+        print("mouse_event_44_cmp_eq_r0_raw_candidates="
+              f"{locations if locations else 'none'} "
+              "scan=even_aligned_opcode_pattern_only")
     return valid
 
 
