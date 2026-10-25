@@ -46,6 +46,27 @@ Together, these are retail startup/input observations, not Firestaff parity.
 The capture environment, key mapping, and per-action limitations are recorded
 in [`parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`](../parity-evidence/verification/keyboard-mouse-debug-20261024/README.md).
 
+## Retail Continue with an authentic save (2026-10-25)
+
+A second isolated Ymir `--debug` run used an authentic, retail-written 32 KiB
+Saturn backup image (SHA-256
+`87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`) with the
+same hash-verified Japanese retail disc and BIOS. The title menu showed
+`NEW GAME`, `CONTINUE`, and `CONFIGURATION`. Selecting `CONTINUE` opened the
+retail `LOAD` panel, which listed the internal-memory entry `B01 0:06 NORMAL`.
+Confirming it displayed `Now Loading`, then entered the dungeon with the
+four-champion HUD. The BUP image retained its original SHA-256 after loading.
+
+The isolated profile was `/dev/shm/ymir-nexus-real-bup-menu-20261025`; the
+source BUP was copied into that profile and was not edited directly. Ymir 0.4.1
+ran with `--debug` on TRV2 against the Japanese retail cue (SHA-256
+`878b3bc223bb56e99626dbaa2946d17fb349a2a67a10cd4423742d8ab30b8699`). The
+retained screenshots and their hashes are in
+[`parity-evidence/verification/nexus-continue-real-bup-20261025/README.md`](../parity-evidence/verification/nexus-continue-real-bup-20261025/README.md).
+This proves the retail save-load route under Ymir. It does not prove Firestaff
+implements that title menu or save selection; the production startup route
+remains blocked by the consumer-evidence gates described below.
+
 Firestaff's source-level startup helpers do not implement the retail title
 menu. `nexus_v1_startup_boot_handle_input` uses the synthetic warning/title
 schedule and selects a host save or champion action from the available slot
