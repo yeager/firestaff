@@ -123,8 +123,10 @@ right; the lower row maps to strafe left, backward, and strafe right. This
 host mapping uses the retail rectangle but does not claim to reproduce the
 unresolved callback's cell semantics. Clicks elsewhere and hand-pointer clicks
 remain inert. A/B/Y/C actions remain inert until their retail consumers are
-traced. Tab provides the separately verified leader-cycle action; L/R
-controller events are not yet mapped to desktop controls. Item use, inventory,
+traced. Tab cycles to the next party leader and Shift+Tab cycles to the
+previous party leader in Firestaff's desktop controls. The reverse direction
+is a host keyboard convenience; it does not claim that the retail L/R events
+or an identified guest RAM field have been reproduced. Item use, inventory,
 spells, combat, sensors, doors, and level transitions remain fail-closed.
 
 In a loaded Nexus dungeon, Space toggles Firestaff's host pause. Ymir evidence

@@ -2690,6 +2690,7 @@ static const char* m11_debug_input_name(M12_MenuInput input) {
         case M12_MENU_INPUT_NEXUS_POINTER_UP_RIGHT: return "nexus-pointer-up-right";
         case M12_MENU_INPUT_NEXUS_POINTER_DOWN_LEFT: return "nexus-pointer-down-left";
         case M12_MENU_INPUT_NEXUS_POINTER_DOWN_RIGHT: return "nexus-pointer-down-right";
+        case M12_MENU_INPUT_NEXUS_CYCLE_CHAMPION_PREVIOUS: return "nexus-cycle-champion-previous";
         case M12_MENU_INPUT_DISK_MENU: return "disk-menu";
         case M12_MENU_INPUT_CHAMPION_1_INVENTORY: return "champion-1-inventory";
         case M12_MENU_INPUT_CHAMPION_2_INVENTORY: return "champion-2-inventory";
@@ -12226,6 +12227,10 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                         return mappedInput;
                     }
                 } else if (gameView->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) {
+                    mappedInput = M11_NexusLeaderInputFromScancode(
+                        (int)ev.key.scancode,
+                        (ev.key.mod & SDL_KMOD_SHIFT) != 0);
+                    if (mappedInput != M12_MENU_INPUT_NONE) return mappedInput;
                     mappedInput = M11_NexusPointerToggleInputFromScancode(
                         (int)ev.key.scancode);
                     if (mappedInput != M12_MENU_INPUT_NONE) return mappedInput;
@@ -12866,6 +12871,10 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                         return mappedInput;
                     }
                 } else if (gameView->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) {
+                    mappedInput = M11_NexusLeaderInputFromScancode(
+                        (int)ev.key.keysym.scancode,
+                        (ev.key.keysym.mod & KMOD_SHIFT) != 0);
+                    if (mappedInput != M12_MENU_INPUT_NONE) return mappedInput;
                     mappedInput = M11_NexusPointerToggleInputFromScancode(
                         (int)ev.key.keysym.scancode);
                     if (mappedInput != M12_MENU_INPUT_NONE) return mappedInput;

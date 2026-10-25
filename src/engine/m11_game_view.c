@@ -36991,6 +36991,14 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             }
             return M11_GAME_INPUT_REDRAW;
         }
+        if (input == M12_MENU_INPUT_NEXUS_CYCLE_CHAMPION_PREVIOUS) {
+            Nexus_V1_ChampionPool *pool = &state->nexusEngine->champions;
+            if (!state->nexusState.level_loaded ||
+                nexus_v1_champion_cycle_leader_previous(pool) < 0) {
+                return M11_GAME_INPUT_IGNORED;
+            }
+            return M11_GAME_INPUT_REDRAW;
+        }
         if (input == M12_MENU_INPUT_NEXUS_POINTER_TOGGLE) {
             if (!state->nexusState.level_loaded ||
                 state->nexusState.title_active) {

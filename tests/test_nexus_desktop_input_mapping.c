@@ -28,6 +28,14 @@ int main(void) {
                     M12_MENU_INPUT_TURN_RIGHT,
                 "Nexus D should turn right as in the retail ControlPad capture"))
         return 1;
+    if (!expect(M11_NexusLeaderInputFromScancode(SDL_SCANCODE_TAB, 1) ==
+                    M12_MENU_INPUT_NEXUS_CYCLE_CHAMPION_PREVIOUS,
+                "Nexus Shift+Tab should select the previous party leader"))
+        return 1;
+    if (!expect(M11_NexusLeaderInputFromScancode(SDL_SCANCODE_TAB, 0) ==
+                    M12_MENU_INPUT_NONE,
+                "unshifted Nexus Tab should retain the shared next-leader action"))
+        return 1;
     if (!expect(M11_NexusMovementInputFromScancode(SDL_SCANCODE_LEFT) ==
                     M12_MENU_INPUT_NONE,
                 "Nexus arrows should defer to the shared strafe bindings"))

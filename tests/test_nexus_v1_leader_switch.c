@@ -58,6 +58,11 @@ int main(void) {
         expect(nexus_v1_champion_cycle_leader(&pool) == 0,
                "cycle wraps to first living party slot");
 
+        expect(nexus_v1_champion_cycle_leader_previous(&pool) == 2,
+               "reverse cycle wraps to last living party slot");
+        expect(nexus_v1_champion_cycle_leader_previous(&pool) == 1,
+               "reverse cycle selects previous living party slot");
+
         pool.leader_index = 0;
         pool.champions[1].alive = 0;
         expect(nexus_v1_champion_cycle_leader(&pool) == 2,
@@ -66,6 +71,11 @@ int main(void) {
         expect(nexus_v1_champion_cycle_leader(&pool) == -1 &&
                    pool.leader_index == 2,
                "cycle leaves leader unchanged when no other party member lives");
+
+        pool.leader_index = 2;
+        pool.champions[0].alive = 1;
+        expect(nexus_v1_champion_cycle_leader_previous(&pool) == 0,
+               "reverse cycle skips dead party member");
     }
 
     /* Test 5: encumbrance move ticks basic */
