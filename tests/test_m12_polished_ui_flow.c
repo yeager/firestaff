@@ -138,6 +138,7 @@ static int setup_home(void) {
 int main(void) {
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
+    M12_StartupLaunchGate launchGate;
     unsigned char platformCardView[320 * 200];
     unsigned char presentationCardView[320 * 200];
     unsigned char selectedPresentationView[320 * 200];
@@ -258,6 +259,18 @@ int main(void) {
     if (!expect(state.view == M12_MENU_VIEW_GAME_OPTIONS &&
                 state.gameCardFlowStage == 0 && state.launchRequested == 0,
                 "active scan must suppress false missing-media popup and retain selection")) return 1;
+    /* A complete DM1 snapshot may launch while the worker continues through
+     * DM2.  Conversely, a later game's stale READY bit must remain gated until
+     * its own snapshot has been published. */
+    force_dm1_available(&state);
+    state.deferredScanCompletedGameMask = 1U << 0;
+    state.assetStatus.dm2Available = 1;
+    if (!expect(M12_StartupMenu_GetLaunchGate(&state, 0, &launchGate) &&
+                launchGate.dataReady,
+                "completed DM1 receipt should be launch-ready during later scans")) return 1;
+    if (!expect(M12_StartupMenu_GetLaunchGate(&state, 2, &launchGate) &&
+                !launchGate.dataReady,
+                "DM2 must stay gated until its own scan receipt is complete")) return 1;
     state.deferredScanActive = 0;
     M12_StartupMenu_Draw(&state, pendingCardView, 320, 200);
     if (!expect(rendered_rows_differ(scanningCardView, pendingCardView,
