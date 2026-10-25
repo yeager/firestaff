@@ -38,7 +38,7 @@
  * Source-lock: src/shared/asset_status_m12.c (M12_AssetStatus_Scan,
  *   m12_scan_direct_theron_request, m12_scan_explicit_file_request,
  *   m12_scan_original_candidates, m12_reuse_verified_theron_refresh,
- *   m12_materialize_runtime_cache_for_game), include/asset_status_m12.h,
+ *   m12_prepare_runtime_media_owner), include/asset_status_m12.h,
  *   ReDMCSB launcher/scan reference behavior (THERON.ASM / DATA.C:359-360).
  *
  * This is a synthetic data-dir invalidation contract test. It does

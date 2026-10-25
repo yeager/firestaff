@@ -12643,9 +12643,9 @@ endforeach()
 # source files already live on main; this block only reattaches verified targets
 # without trusting stale CMake context from old branches.
 if(BUILD_TESTING)
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_asset_status_iso_cache_materialization.c")
-        add_executable(test_asset_status_iso_cache_materialization
-            tests/test_asset_status_iso_cache_materialization.c
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_asset_status_iso_no_extraction.c")
+        add_executable(test_asset_status_iso_no_extraction
+            tests/test_asset_status_iso_no_extraction.c
             src/shared/asset_status_m12.c
             src/shared/firestaff_theron_media_classify.c
             src/shared/asset_find_by_hash.c
@@ -12672,17 +12672,19 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_us_roster_receipt.c
         src/theron/theron_v1_dungeon_handoff.c
         )
-        target_link_libraries(test_asset_status_iso_cache_materialization PRIVATE
+        target_link_libraries(test_asset_status_iso_no_extraction PRIVATE
             firestaff_v2
             firestaff_nexus
             firestaff_theron
         )
-        target_include_directories(test_asset_status_iso_cache_materialization PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-        target_compile_definitions(test_asset_status_iso_cache_materialization PRIVATE FIRESTAFF_ASSET_STATUS_TESTING=1)
+        target_include_directories(test_asset_status_iso_no_extraction PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        target_compile_definitions(test_asset_status_iso_no_extraction PRIVATE FIRESTAFF_ASSET_STATUS_TESTING=1)
         if(NOT MSVC)
-            target_compile_options(test_asset_status_iso_cache_materialization PRIVATE -Wall -Wextra -O2)
+            target_compile_options(test_asset_status_iso_no_extraction PRIVATE -Wall -Wextra -O2)
         endif()
-        add_test(NAME asset_status_iso_cache_materialization COMMAND test_asset_status_iso_cache_materialization)
+        add_test(NAME asset_status_iso_no_extraction COMMAND test_asset_status_iso_no_extraction)
+        set_tests_properties(asset_status_iso_no_extraction PROPERTIES
+            ENVIRONMENT "FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}")
     endif()
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_qol_runtime_pc34_compat.c")
@@ -47374,7 +47376,7 @@ endif()
 # Source-lock: src/shared/asset_status_m12.c M12_AssetStatus_Scan +
 #   m12_scan_direct_theron_request / m12_scan_explicit_file_request /
 #   m12_scan_original_candidates / m12_reuse_verified_theron_refresh /
-#   m12_materialize_runtime_cache_for_game, src/ui/menu_startup_m12.c
+#   m12_prepare_runtime_media_owner, src/ui/menu_startup_m12.c
 #   M12_StartupMenu_SetDataDirectory, include/asset_status_m12.h.
 # The launcher keeps one M12_AssetStatus on the menu state for the
 # whole session; flipping the configured data root must invalidate

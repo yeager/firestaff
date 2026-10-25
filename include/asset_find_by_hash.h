@@ -109,18 +109,18 @@ int asset_collect_paths_by_md5(const char *searchDir, const char *expectedMd5,
  */
 int asset_extract_virtual_path(const char *virtualPath, const char *outFilePath);
 
-/* Read a verified loose file or a supported ZIP member directly into bounded
- * memory.  This is the production reader primitive: it never creates a
- * game-data file and never changes the container.  The caller owns *outBytes
- * and releases it with free(). */
+/* Read a verified loose file or supported virtual container entry directly
+ * into bounded memory. This is the production reader primitive: it never
+ * creates a game-data file and never changes the container. The caller owns
+ * *outBytes and releases it with free(). */
 int asset_read_path_alloc(const char *path,
                           uint8_t **outBytes,
                           size_t *outSize);
 
-/* Read a verified nested disk member (for example
- * archive.zip::game.stx::DUNGEON.DAT) directly into bounded RAM.  This is
- * the production path for protected Atari/ST and Amiga media; it never
- * writes an extracted game-data file. */
+/* Read a verified ISO entry or nested disk member (for example
+ * disc.iso::DUNGEON.DAT or archive.zip::game.stx::DUNGEON.DAT) directly into
+ * bounded RAM. This is the production path for packed media; it never writes
+ * an extracted game-data file. */
 int asset_read_virtual_path_alloc(const char *virtualPath,
                                   uint8_t **outBytes,
                                   size_t *outSize);

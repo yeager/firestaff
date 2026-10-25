@@ -1096,21 +1096,18 @@ msgstr "PASUJĄCE WERSJE GRY"
 msgid "MATCHING REQUIRED FILES"
 msgstr "DOPASOWANIE WYMAGANYCH PLIKÓW"
 
-#: src/ui/menu_startup_m12.c:2074
-msgid "MATERIALIZING LAUNCH CACHE"
-msgstr "MATERIALIZACJA Uruchamiania pamięci podręcznej"
+#: src/ui/menu_startup_m12.c:2074 src/ui/menu_startup_m12.c:2079
+#: src/ui/menu_startup_m12.c:2443 src/ui/menu_startup_m12.c:2552
+#: src/ui/menu_startup_m12.c:2810 src/ui/menu_startup_m12.c:2919
+#: src/ui/menu_startup_m12.c:10676 src/ui/menu_startup_m12.c:10686
+#: src/ui/menu_startup_m12.c:11820 src/ui/menu_startup_m12.c:11866
+#: src/ui/menu_startup_m12.c:14541
+msgid "SCANNING GAME DATA"
+msgstr "SKANOWANIE DANYCH GRY"
 
 #: src/ui/menu_startup_m12.c:2076
 msgid "REFRESHING MEDIA METADATA"
 msgstr "ODŚWIEŻAJĄCE METADANE W MEDIACH"
-
-#: src/ui/menu_startup_m12.c:2079 src/ui/menu_startup_m12.c:2443
-#: src/ui/menu_startup_m12.c:2552 src/ui/menu_startup_m12.c:2810
-#: src/ui/menu_startup_m12.c:2919 src/ui/menu_startup_m12.c:10676
-#: src/ui/menu_startup_m12.c:10686 src/ui/menu_startup_m12.c:11820
-#: src/ui/menu_startup_m12.c:11866 src/ui/menu_startup_m12.c:14541
-msgid "SCANNING GAME DATA"
-msgstr "SKANOWANIE DANYCH GRY"
 
 #: src/ui/menu_startup_m12.c:2119 src/ui/menu_startup_m12.c:3485
 #: src/ui/menu_startup_m12.c:6072 src/ui/menu_startup_m12.c:6312
@@ -1961,6 +1958,9 @@ msgstr "OK"
 #: src/ui/menu_startup_render_modern_m12.c:2706
 msgid "CANCEL"
 msgstr "ANULUJ"
+
+#~ msgid "MATERIALIZING LAUNCH CACHE"
+#~ msgstr "MATERIALIZACJA Uruchamiania pamięci podręcznej"
 
 #~ msgid "PATCHED"
 #~ msgstr "PATCHED"

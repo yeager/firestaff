@@ -1095,20 +1095,17 @@ msgstr ""
 msgid "MATCHING REQUIRED FILES"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:2074
-msgid "MATERIALIZING LAUNCH CACHE"
+#: src/ui/menu_startup_m12.c:2074 src/ui/menu_startup_m12.c:2079
+#: src/ui/menu_startup_m12.c:2443 src/ui/menu_startup_m12.c:2552
+#: src/ui/menu_startup_m12.c:2810 src/ui/menu_startup_m12.c:2919
+#: src/ui/menu_startup_m12.c:10676 src/ui/menu_startup_m12.c:10686
+#: src/ui/menu_startup_m12.c:11820 src/ui/menu_startup_m12.c:11866
+#: src/ui/menu_startup_m12.c:14541
+msgid "SCANNING GAME DATA"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:2076
 msgid "REFRESHING MEDIA METADATA"
-msgstr ""
-
-#: src/ui/menu_startup_m12.c:2079 src/ui/menu_startup_m12.c:2443
-#: src/ui/menu_startup_m12.c:2552 src/ui/menu_startup_m12.c:2810
-#: src/ui/menu_startup_m12.c:2919 src/ui/menu_startup_m12.c:10676
-#: src/ui/menu_startup_m12.c:10686 src/ui/menu_startup_m12.c:11820
-#: src/ui/menu_startup_m12.c:11866 src/ui/menu_startup_m12.c:14541
-msgid "SCANNING GAME DATA"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:2119 src/ui/menu_startup_m12.c:3485
