@@ -42,6 +42,26 @@ The capture used Ymir fast-forward, so its host-time movement interval does
 not establish a normal-speed repeat rate. It does not establish mouse
 coordinates or button-to-action mapping.
 
+A separate controlled gameplay-state sequence mapped `K` to ControlPad B and
+`J` to A. The `--debug` high-WRAM dumps show B queueing event 12
+(`EV_INVENTORY`). A in that flow queues event 39 (`EV_RING_SELECT`) with
+argument 8; the visible retail view changes to an equipment page labelled
+`頭に装備` (“equip to head”). Context record 10 changes at `+0x122/+0x124`,
+but the capture does not join that record to a champion or prove a persistent
+item transfer. The screenshots, complete WRAM dumps, source hashes and event
+trace are recorded in
+[`nexus-v1-inventory-button-debug-20261025`](../parity-evidence/verification/nexus-v1-inventory-button-debug-20261025/README.md).
+Retail disassembly clarifies the boundary: event 12 validates and updates a
+global UI selection list, while event 39 invokes a callback on the current UI
+view to change pages. Neither handler writes a champion's equipment slots in
+this capture, and the candidate champion slot pairs remain unchanged. Event 44
+(`EV_INV_EQUIP`) is a separate retail slot-action route: its handler reads and
+writes context slot pairs and checks item compatibility, but its live runtime
+result and context-to-champion mapping have not yet been captured. The button
+trace therefore establishes menu navigation only; Firestaff inventory and
+equip actions remain disabled until event 44's runtime effects and the
+champion/item joins are verified.
+
 ## Retail manual control model
 
 The Japanese retail manual's controller table (printed page 4) documents the
@@ -193,14 +213,20 @@ marker. There is a partial fit with Firestaff's ITEM.IBS declaration indices,
 but not a lossless mapping. The context index is not joined to a champion,
 Firestaff's champion model has no field for the opaque second 16-bit word, and
 the retail PLRD item pairs do not establish the inventory-panel layout. The
-hash-pinned Japanese `RLOWFIX.BIN` (`f2686bf3…37be18b0`) contains 20 PLRD
-rows with ten item pairs each: 64 pairs have an item ordinal, 136 are empty,
-and all 200 second words are zero. This start-roster sample does not establish
-the auxiliary word's meaning for live items. The helper effects that transfer
-the held item through global UI state and the runtime-visible result still
-need a controlled Ymir before/after capture. The analyzer reproduces both the
-DM.BIN instruction checks and this PLRD pair summary. This path is separate
-from the later `0x21c84` generic diagnostic loop.
+hash-pinned Japanese `RLOWFIX.BIN`
+(`f2686bf3d6b971c5eaa613b2619b7e1bb7958a8045876296a83509f137be18b0`) contains
+20 PLRD rows with ten item pairs each: 64 pairs have an item ordinal, 136 are
+empty, and all 200 second words are zero. A read-only comparison of four
+authentic Ymir captures found that context records 0–3 duplicate each other
+and match PLRD row 2's first seven pairs, but differ at slot 7; empty context 4
+matches four PLRD rows. These ambiguous matches do not establish a unique
+context-to-champion mapping or the auxiliary word's meaning for live items.
+The candidate relation and capture hashes are recorded in
+[`nexus-v1-inventory-button-debug-20261025`](../parity-evidence/verification/nexus-v1-inventory-button-debug-20261025/README.md).
+The helper effects that transfer the held item through global UI state and
+the runtime-visible result still need a controlled Ymir before/after capture.
+The analyzer reproduces the DM.BIN instruction checks and PLRD pair summary.
+This path is separate from the later `0x21c84` generic diagnostic loop.
 The separate mouse-motion poller filters for event 46 before it calls the
 hit-region scanner; it does not consume event 44 as a second pointer action.
 Event 44 has a hash-verified source-side slot-pair path, but its runtime
@@ -223,8 +249,26 @@ cursor and D-pad movement are captured, while desktop mouse movement in
 Firestaff is a host control behavior rather than a claim about Saturn
 ShuttleMouse.
 
-Next work must identify the retail context-to-champion relationship, the
-opaque item-pair auxiliary word, and the post-click visible result from a
-controlled Ymir before/after capture. Then map the retail state to the
-authentic Nexus champion/inventory model and bind pointer actions. Keep
-unsupported actions inert until those joins are proven.
+Next work must identify the retail context-to-champion relationship and the
+opaque item-pair auxiliary word, then trace whether the event-39 selection
+commits a retail inventory mutation and how the relevant item maps to the
+authentic Nexus champion/inventory model. Bind pointer actions only after
+those joins are proven. Keep unsupported actions inert. The attempted
+ShuttleMouse click and its unmatched WRAM snapshots are preserved in
+[`parity-evidence/verification/nexus-keyboard-mouse-retail-input-20261025/`](../parity-evidence/verification/nexus-keyboard-mouse-retail-input-20261025/README.md);
+they do not prove an action.
+
+A later isolated Ymir probe used the authentic slot-1 state with ControlPad on
+port 1 and ShuttleMouse on port 2. XTEST core-pointer motion and the ShuttleMouse
+port's relative arrow-key bindings produced no visible movement of a clearly
+identifiable retail hand pointer in the Xvfb captures. The setup and captures
+are recorded in [`nexus-shuttle-mouse-xvfb-20261025`](../parity-evidence/verification/nexus-shuttle-mouse-xvfb-20261025/README.md).
+The XTEST result is explained by a Ymir 0.4.1 frontend gap: SDL global mouse ID
+`0` enters relative-capture mode and returns before Ymir maps its motion or
+buttons to the emulated ShuttleMouse. Ymir PR
+[#963](https://github.com/ymir-emu/Ymir/pull/963) proposes connecting that
+stream when a ShuttleMouse is selected; it still needs a full build and runtime
+`--debug` verification. Neither the earlier capture nor the proposed fix
+establishes Nexus retail mouse semantics. Firestaff's desktop mouse actions
+still need to follow proven Nexus state changes before enabling equipment or
+other pointer actions.
