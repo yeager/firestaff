@@ -3081,7 +3081,9 @@ instead of PC34 rectangles. The successful DM1 Towns path draws C028's four
 19x14 party icons through C113..C116 and the selected inventory champion's
 packed 32x29 portrait through C175..C178. Native names, status bars and hand
 widgets remain cleared until their F20 glyph, zone and material routes are
-source-bound. Pixel and geometry tests cover F20E/F20J C028 and C175
+source-bound. F20 C028 backgrounds use DATA.C's fixed G0046 values; unlike
+MEDIA720, F20 does not apply the invisibility palette remap. Pixel and
+geometry tests cover F20E/F20J C028 and C175
 placements. This is bounded core HUD work, not a fixed or parity-tested F20
 HUD. Add an M11 framebuffer capture against the original game before claiming
 visual parity.

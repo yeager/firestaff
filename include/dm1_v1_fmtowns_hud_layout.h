@@ -72,4 +72,12 @@ int dm1_v1_fmtowns_hud_blit_indexed(
     int destination_height,
     int transparent_index);
 
+/* ReDMCSB DATA.C G0046 F20E/F20J party icon background color. F20 F0622
+ * does not apply the later MEDIA720 invisibility palette remap. */
+int dm1_v1_fmtowns_hud_champion_icon_color(
+    DM1_V1_FmtownsHudEdition edition,
+    int champion_slot,
+    int invisibility_active,
+    uint8_t *out_color);
+
 #endif

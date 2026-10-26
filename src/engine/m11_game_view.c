@@ -68196,6 +68196,7 @@ static void m11_draw_v1_champion_icons(const M11_GameViewState* state,
             DM1_V1_FmtownsHudRect rect;
             const struct ChampionState_Compat* champ;
             DM1_ChampionPanel_IconBitmapModel iconModel;
+            unsigned char nativeFillColor;
             unsigned int zone = (unsigned int)(113 + slot);
             if (!dm1_v1_fmtowns_hud_layout_rect(edition, zone,
                     19, 14, &rect)) {
@@ -68214,10 +68215,14 @@ static void m11_draw_v1_champion_icons(const M11_GameViewState* state,
                     slot, (int)champ->direction & 3,
                     state->world.party.direction & 3,
                     (int)state->world.magic.event71CountInvisibility,
-                    &iconModel)) continue;
+                    &iconModel) ||
+                !dm1_v1_fmtowns_hud_champion_icon_color(
+                    edition, slot,
+                    state->world.magic.event71CountInvisibility > 0,
+                    &nativeFillColor)) continue;
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           rect.x, rect.y, rect.width, rect.height,
-                          (unsigned char)iconModel.fillColor);
+                          nativeFillColor);
             if (!dm1_v1_fmtowns_hud_blit_indexed(edition, zone,
                     iconStrip->pixels, (int)iconStrip->width,
                     (int)iconStrip->height, iconModel.width, iconModel.height,
@@ -68227,11 +68232,6 @@ static void m11_draw_v1_champion_icons(const M11_GameViewState* state,
                 m11_clear_dm1_v1_top_row_receipt_zones(
                     state, framebuffer, framebufferWidth, framebufferHeight);
                 return;
-            }
-            if (iconModel.applyInvisibilityPalette) {
-                m11_apply_v1_champion_icon_invisibility_remap(
-                    framebuffer, framebufferWidth, framebufferHeight,
-                    rect.x, rect.y, rect.width, rect.height);
             }
         }
         return;

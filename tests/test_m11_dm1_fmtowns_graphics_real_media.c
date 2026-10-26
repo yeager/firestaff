@@ -105,6 +105,8 @@ static int check_f20_hud_layout_media(M11_AssetLoader *loader,
     static const int expected_x[] = {0, 69, 138, 207};
     unsigned short width = 0u, height = 0u;
     DM1_V1_FmtownsHudRect rect;
+    const M11_AssetSlot *iconStrip;
+    int found_transparency = 0;
     if (!M11_AssetLoader_QuerySize(loader, 8u, &width, &height) ||
         width != 67u || height != 29u) return 0;
     for (size_t i = 0u; i < sizeof(zones) / sizeof(zones[0]); ++i) {
@@ -125,6 +127,23 @@ static int check_f20_hud_layout_media(M11_AssetLoader *loader,
         !dm1_v1_fmtowns_hud_layout_rect(edition, 175u, 32, 29, &rect) ||
         rect.x != 7 || rect.y != 0 || rect.width != 32 ||
         rect.height != 29) return 0;
+    iconStrip = M11_AssetLoader_Load(loader, 28u);
+    if (!iconStrip || !iconStrip->loaded || !iconStrip->pixels ||
+        iconStrip->width != 76u || iconStrip->height != 14u) return 0;
+    for (size_t i = 0u; i < (size_t)iconStrip->width * iconStrip->height; ++i) {
+        if (iconStrip->pixels[i] == 12u) found_transparency = 1;
+        if (iconStrip->pixels[i] >= 16u) return 0;
+    }
+    if (!found_transparency) return 0;
+    {
+        static const uint8_t expected_colors[4] = {7u, 11u, 8u, 14u};
+        for (int slot = 0; slot < 4; ++slot) {
+            uint8_t color = 0u;
+            if (!dm1_v1_fmtowns_hud_champion_icon_color(
+                    edition, slot, 1, &color) ||
+                color != expected_colors[slot]) return 0;
+        }
+    }
     /* F20E/F20J use the same G3034/G3038 geometry. Only native bitmap
      * extents admitted from this edition's media are supplied to F0635. */
     return 1;

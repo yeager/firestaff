@@ -127,6 +127,7 @@ int main(void)
      * G3033 500..613 and G3016 1..17, MEDIA487 F20E/MEDIA569 F20J. */
     for (int edition = DM1_V1_FMTOWNS_HUD_EDITION_F20E;
          edition <= DM1_V1_FMTOWNS_HUD_EDITION_F20J; ++edition) {
+        static const uint8_t expected_icon_colors[4] = {7u, 11u, 8u, 14u};
         for (size_t i = 0; i < sizeof(expected_leaves) /
                                   sizeof(expected_leaves[0]); ++i) {
             CHECK(dm1_v1_fmtowns_hud_layout_chain(
@@ -154,6 +155,15 @@ int main(void)
                     sizeof(loadLabel554) / sizeof(loadLabel554[0]));
         check_chain((DM1_V1_FmtownsHudEdition)edition, 555, loadValue555,
                     sizeof(loadValue555) / sizeof(loadValue555[0]));
+        for (int slot = 0; slot < 4; ++slot) {
+            uint8_t color = 0u;
+            CHECK(dm1_v1_fmtowns_hud_champion_icon_color(
+                (DM1_V1_FmtownsHudEdition)edition, slot, 0, &color));
+            CHECK(color == expected_icon_colors[slot]);
+            CHECK(dm1_v1_fmtowns_hud_champion_icon_color(
+                (DM1_V1_FmtownsHudEdition)edition, slot, 1, &color));
+            CHECK(color == expected_icon_colors[slot]);
+        }
         for (size_t i = 0; i < sizeof(expected_rects) /
                                   sizeof(expected_rects[0]); ++i) {
             DM1_V1_FmtownsHudRect rect;
@@ -211,12 +221,15 @@ int main(void)
         DM1_V1_FMTOWNS_HUD_EDITION_F20E, 113, NULL));
     {
         DM1_V1_FmtownsHudRect rect;
+        uint8_t color;
         CHECK(!dm1_v1_fmtowns_hud_layout_rect(
             DM1_V1_FMTOWNS_HUD_EDITION_F20E, 163, 0, 0, &rect));
         CHECK(!dm1_v1_fmtowns_hud_layout_rect(
             DM1_V1_FMTOWNS_HUD_EDITION_F20E, 151, 67, 0, &rect));
         CHECK(!dm1_v1_fmtowns_hud_layout_rect(
             DM1_V1_FMTOWNS_HUD_EDITION_F20E, 113, 19, 14, NULL));
+        CHECK(!dm1_v1_fmtowns_hud_champion_icon_color(
+            DM1_V1_FMTOWNS_HUD_EDITION_F20E, 4, 0, &color));
     }
     if (failures) return 1;
     puts("PASS: F20E/F20J source-native DM1 HUD layout records and parent chains");

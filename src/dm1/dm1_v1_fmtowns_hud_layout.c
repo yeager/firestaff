@@ -411,3 +411,20 @@ int dm1_v1_fmtowns_hud_blit_indexed(
     }
     return 1;
 }
+
+int dm1_v1_fmtowns_hud_champion_icon_color(
+    DM1_V1_FmtownsHudEdition edition,
+    int champion_slot,
+    int invisibility_active,
+    uint8_t *out_color)
+{
+    static const uint8_t colors[4] = {7u, 11u, 8u, 14u};
+    (void)invisibility_active;
+    if (out_color) *out_color = 0u;
+    if (!out_color ||
+        (edition != DM1_V1_FMTOWNS_HUD_EDITION_F20E &&
+         edition != DM1_V1_FMTOWNS_HUD_EDITION_F20J) ||
+        champion_slot < 0 || champion_slot >= 4) return 0;
+    *out_color = colors[champion_slot];
+    return 1;
+}
