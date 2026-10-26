@@ -207,6 +207,18 @@ state. It does not yet reach or bind a stable playable level, the party pose,
 viewport, HUD, level source, or palette/compositor route; it must not be used
 to synthesize any of those Firestaff states.
 
+After the no-present capture path was added to Ymir PR #966, the same
+authenticated state and input schedule was repeated under Xvfb without GUI
+presentation. The 600-frame run exited with status 0, wrote its memory dump,
+and saved a 640×448 RGBA screenshot with the same `Now Loading` SHA-256
+`07a6f3a612ca75209cd6308852a7cf25b3d1f35943ce2f5774e720376ef7c61c`.
+Its VDP1 trace and receipt digests were respectively
+`d529f883b686b7c3fc83db929e3e1b476527799ca3fbda35ba41a4ef48a1079e` and
+`45d384f8b6d8c4a5ab48941bcea462cbe1624ea57f8679ebfe4f8c8c1baf3a22`.
+The temporary profile, dump, screenshot, process, and result receipt were
+removed after verification. This independently reproduces the observed loading
+checkpoint but does not extend its presentation admission.
+
 ## Title-menu VDP1 source-span join (2026-10-19 capture; analyzed 2026-10-26)
 
 A read-only source-join analysis on TRV2 used the retained Ymir v0.4.0
