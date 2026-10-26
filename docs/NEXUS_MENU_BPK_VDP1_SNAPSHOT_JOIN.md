@@ -134,6 +134,14 @@ displayed frame or exclude use of `MENU.BPK` in other frames. It also tests
 source starts, not complete texture spans. The raw files are retained on the
 external evidence volume; no game-data payload is committed.
 
+Comparing the 178 traced command records in frame 59 to the final VRAM
+snapshot gives 177 exact 32-byte matches. The first traced command at address
+zero differs in its link word: the trace has `0x1874`, while the final dump
+has `0x0004`. This confirms that the command table changed between execution
+and the snapshot; it does not identify when any texture bytes changed. A
+snapshot-only source join therefore cannot prove the historical command chain
+or promote a renderer on its own.
+
 A previous draft of this note reported a one-frame VRAM/command-trace pair and
 concluded that no textured command started in a matched `MENU.BPK` range. The
 two raw files are not present together in the retained evidence, so that join
