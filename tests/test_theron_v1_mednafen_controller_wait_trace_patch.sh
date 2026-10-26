@@ -27,6 +27,7 @@ fifo_origin_v2_patch_file=$repo/scripts/mednafen_1.32.1_theron_fifo_origin_main_
 ram_provenance_patch_file=$repo/scripts/mednafen_1.32.1_theron_ram_provenance_trace.patch
 ram_provenance_guard_patch_file=$repo/scripts/mednafen_1.32.1_theron_ram_provenance_guard.patch
 vdc_instruction_pc_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_vdc_instruction_pc.patch
+vram_vce_snapshot_patch_file=$repo/scripts/mednafen_1.32.1_theron_vram_vce_snapshot.patch
 file_select_vdc_patch_file=$repo/scripts/mednafen_1.32.1_theron_file_select_vdc_snapshot.patch
 file_select_scroll_driver_patch_file=$repo/scripts/mednafen_1.32.1_theron_file_select_scroll_driver_trace.patch
 adpcm_fifo_ram_patch_file=$repo/scripts/mednafen_1.32.1_theron_adpcm_fifo_ram_trace.patch
@@ -218,8 +219,10 @@ if ! grep -Fq 'if(ok && trace_count < 4096)' "$later_raw_patch_file"; then
     exit 1
 fi
 if ! grep -Fq 'FIRESTAFF_THERON_FILE_SELECT_VDC_TRACE' "$file_select_vdc_patch_file" ||
-   ! grep -Fq 'fclose(sat_file);' "$file_select_vdc_patch_file" ||
-   ! grep -Fq 'if(ram_file) fclose(ram_file);' "$file_select_vdc_patch_file" ||
+   ! grep -Fq 'fclose(sat_file);' "$vram_vce_snapshot_patch_file" ||
+   ! grep -Fq 'if(ram_file) fclose(ram_file);' "$vram_vce_snapshot_patch_file" ||
+   grep -Fq '+ fclose(sat_file);' "$file_select_vdc_patch_file" ||
+   grep -Fq '+ if(ram_file) fclose(ram_file);' "$file_select_vdc_patch_file" ||
    ! grep -Fq 'TheronGraphicsSnapshotFrameEnd = ~0U;' "$file_select_vdc_patch_file" ||
    ! grep -Fq 'const unsigned sequence = file_select_vdc_count++;' "$file_select_vdc_patch_file" ||
    ! grep -Fq 'if(file_select_vdc_count == 525)' "$file_select_vdc_patch_file" ||
@@ -230,7 +233,7 @@ if ! grep -Fq 'FIRESTAFF_THERON_FILE_SELECT_VDC_TRACE' "$file_select_vdc_patch_f
    ! grep -Fq 'TheronMaybeDumpFrameEndSnapshot();' "$file_select_vdc_patch_file" ||
    ! grep -Fq 'mednafen_1.32.1_theron_file_select_vdc_snapshot.patch' \
        "$repo/scripts/build_mednafen_theron_irq2_trace.sh"; then
-    printf 'FAIL: file-select VDC patch no longer snapshots the authentic write or frame-end boundary\n' >&2
+    printf 'FAIL: file-select VDC patch no longer composes with the shared snapshot helper\n' >&2
     exit 1
 fi
 if ! grep -Fq 'FIRESTAFF_THERON_FILE_SELECT_DRIVER_CODE_SNAPSHOT' "$file_select_scroll_driver_patch_file" ||
