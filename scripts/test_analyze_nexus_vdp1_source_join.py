@@ -42,10 +42,14 @@ class AcceptedRetailHashesTests(unittest.TestCase):
                 writer = csv.DictWriter(stream, fieldnames=fields)
                 writer.writeheader()
                 writer.writerow({**{f"word{i}": "0" for i in range(16)},
-                                 "frame": "7", "index": "0", "address": "0x20"})
+                                 "word0": "0x8000", "frame": "7", "index": "0", "address": "0x20"})
             (root / "vdp1-vram.bin").write_bytes(bytes(512 * 1024))
             _, frame, commands = ymir_commands(root)
             self.assertEqual((frame, commands[0][0]), (7, 0x20))
+            trace = root / "vdp1-command-trace.csv"
+            trace.write_text(trace.read_text().replace("0x8000", "0x1000"))
+            with self.assertRaises(ValueError):
+                ymir_commands(root)
             receipt.write_text(receipt.read_text().replace("trace_dropped_total=0", "trace_dropped_total=1"))
             with self.assertRaises(ValueError):
                 ymir_commands(root)

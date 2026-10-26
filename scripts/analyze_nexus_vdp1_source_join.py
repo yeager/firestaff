@@ -231,6 +231,33 @@ def ymir_commands(bundle: Path) -> tuple[bytes, int, list[tuple[int, tuple[int, 
             raise ValueError("Ymir command indices are not contiguous")
         commands.append((int(row["address"], 0),
                          tuple(int(row[f"word{i}"], 0) for i in range(16))))
+    if not commands:
+        raise ValueError("Ymir capture frame has no commands")
+    stack: list[int] = []
+    for index, (address, words) in enumerate(commands):
+        if address < 0 or address % 32 or address + 32 > 512 * 1024:
+            raise ValueError("Ymir command address is out of bounds or unaligned")
+        control, link = words[:2]
+        if control & 0x8000:
+            if index != len(commands) - 1 or stack:
+                raise ValueError("Ymir trace terminates early or with an outstanding call")
+            continue
+        mode = (control >> 12) & 3
+        if mode == 0:
+            target = address + 32
+        elif mode == 1:
+            target = link << 3
+        elif mode == 2:
+            stack.append(address + 32)
+            target = link << 3
+        elif stack:
+            target = stack.pop()
+        else:
+            raise ValueError("Ymir command return without call")
+        if index + 1 >= len(commands) or commands[index + 1][0] != target:
+            raise ValueError("Ymir command transition does not match CMDLINK")
+    if not (commands[-1][1][0] & 0x8000):
+        raise ValueError("Ymir command trace lacks END")
     vram = (bundle / "vdp1-vram.bin").read_bytes()
     if len(vram) != 512 * 1024:
         raise ValueError("Ymir VDP1 VRAM size mismatch")
