@@ -1,3 +1,15 @@
+## 2026-10-26 — bind scripted-controller receipts to the replay-clock interval
+
+- The Mednafen reference-capture verifier now requires every accepted
+  controller read to carry the replay-clock frame and to occur inside the
+  logged event's active hold interval. The legacy PCE raw-read/result pair
+  must carry the same frame too. This rejects a formerly accepted
+  source-order-only trace in which a matching mask was read after a
+  one-frame event had expired.
+- This is fail-closed capture-tooling validation, not original gameplay
+  evidence. It preserves the distinction between a delivered host/replay
+  input and a game-owned command, pose, map, or rendering transition.
+
 ## 2026-10-26 — revalidate native debug input against authentic US and JP media
 
 - An isolated TRV2 Debug build passed the authentic USA raw Track 02 runtime

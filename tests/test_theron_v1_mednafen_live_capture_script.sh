@@ -52,7 +52,7 @@ cat >"$input_test_dir/consumed.trace" <<'THERON_CONSUMED_INPUT'
 source=mednafen-pce-scripted-input
 scripted_pce_input_event frame=9600 key=run mask=0008 hold=90
 scripted_pce_input_apply frame=9600 physical=0000 scripted=0008 combined=0008
-pce_input_read cpu_pc=8123 register=1000 raw=0008 sel=0 clr=0 index=0 value=07
+pce_input_read frame=9600 cpu_pc=8123 register=1000 raw=0008 sel=0 clr=0 index=0 value=07
 THERON_CONSUMED_INPUT
 consumption_receipt=$("$scripted_input_consumption_verifier" \
     "$input_test_dir/consumed.trace" run@9600:90 131072)
@@ -68,7 +68,7 @@ fi
 cat >"$input_test_dir/system-card-only.trace" <<'THERON_SYSTEM_CARD_INPUT'
 scripted_pce_input_event frame=9600 key=run mask=0008 hold=90
 scripted_pce_input_apply frame=9600 physical=0000 scripted=0008 combined=0008
-pce_input_read cpu_pc=e4c8 register=1000 raw=0008 sel=0 clr=0 index=0 value=07
+pce_input_read frame=9600 cpu_pc=e4c8 register=1000 raw=0008 sel=0 clr=0 index=0 value=07
 THERON_SYSTEM_CARD_INPUT
 system_card_receipt=$("$scripted_input_consumption_verifier" \
     "$input_test_dir/system-card-only.trace" run@9600:90 131072)
@@ -82,10 +82,10 @@ fi
 cat >"$input_test_dir/multiple-events.trace" <<'THERON_MULTI_EVENT_INPUT'
 scripted_pce_input_event frame=10 key=run mask=0008 hold=1
 scripted_pce_input_apply frame=10 physical=0000 scripted=0008 combined=0008
-pce_input_read cpu_pc=8123 register=1000 raw=0008 sel=0 clr=0 index=0 value=07
+pce_input_read frame=10 cpu_pc=8123 register=1000 raw=0008 sel=0 clr=0 index=0 value=07
 scripted_pce_input_event frame=12 key=ii mask=0002 hold=1
 scripted_pce_input_apply frame=12 physical=0008 scripted=0002 combined=000a
-pce_input_read cpu_pc=8123 register=1000 raw=000a sel=0 clr=0 index=0 value=05
+pce_input_read frame=12 cpu_pc=8123 register=1000 raw=000a sel=0 clr=0 index=0 value=05
 THERON_MULTI_EVENT_INPUT
 "$scripted_input_consumption_verifier" \
     "$input_test_dir/multiple-events.trace" run@10,ii@12 4 >/dev/null
@@ -93,16 +93,16 @@ cat >"$input_test_dir/same-frame-events.trace" <<'THERON_SAME_FRAME_INPUT'
 scripted_pce_input_event frame=20 key=run mask=0008 hold=1
 scripted_pce_input_event frame=20 key=ii mask=0002 hold=1
 scripted_pce_input_apply frame=20 physical=0000 scripted=000a combined=000a
-pce_input_read cpu_pc=8123 register=1000 raw=000a sel=0 clr=0 index=0 value=05
+pce_input_read frame=20 cpu_pc=8123 register=1000 raw=000a sel=0 clr=0 index=0 value=05
 THERON_SAME_FRAME_INPUT
 "$scripted_input_consumption_verifier" \
     "$input_test_dir/same-frame-events.trace" run@20,ii@20 2 >/dev/null
 cat >"$input_test_dir/legacy-pce-result.trace" <<'THERON_LEGACY_PCE_INPUT'
 scripted_pce_input_event frame=60 key=up mask=0010 hold=60
 scripted_pce_input_apply frame=60 physical=0000 scripted=0010 combined=0010
-pce_input_read cpu_pc=44ca register=1000 raw=0010 sel=1 clr=0 index=0
+pce_input_read frame=60 cpu_pc=44ca register=1000 raw=0010 sel=1 clr=0 index=0
 pce_input_port0 raw=0010
-pce_input_result cpu_pc=44ca register=1000 raw=0010 value=3e sel=1 clr=0 index=0 sp=f2 stack=4b436d74
+pce_input_result frame=60 cpu_pc=44ca register=1000 raw=0010 value=3e sel=1 clr=0 index=0 sp=f2 stack=4b436d74
 THERON_LEGACY_PCE_INPUT
 legacy_pce_receipt=$("$scripted_input_consumption_verifier" \
     "$input_test_dir/legacy-pce-result.trace" up@60:60 1)
@@ -113,11 +113,28 @@ if [[ "$legacy_pce_receipt" != *'event_frames_with_scripted_mask_read=1'* ||
         "$legacy_pce_receipt" >&2
     exit 1
 fi
+cat >"$input_test_dir/out-of-window-read.trace" <<'THERON_OUT_OF_WINDOW_INPUT'
+scripted_pce_input_event frame=70 key=run mask=0008 hold=1
+scripted_pce_input_apply frame=70 physical=0000 scripted=0008 combined=0008
+pce_input_read frame=71 cpu_pc=8123 register=1000 raw=0008 sel=0 clr=0 index=0 value=07
+THERON_OUT_OF_WINDOW_INPUT
+if "$scripted_input_consumption_verifier" \
+    "$input_test_dir/out-of-window-read.trace" run@70 1 \
+    >"$input_test_dir/out-of-window-read.stdout" \
+    2>"$input_test_dir/out-of-window-read.stderr"; then
+    printf '%s\n' 'FAIL: a controller poll after a one-frame scripted hold was accepted' >&2
+    exit 1
+fi
+if ! grep -Fq 'only read outside its active hold interval' \
+    "$input_test_dir/out-of-window-read.stderr"; then
+    printf '%s\n' 'FAIL: out-of-window controller poll rejection lacked a precise diagnostic' >&2
+    exit 1
+fi
 cat >"$input_test_dir/legacy-pce-result-mismatch.trace" <<'THERON_LEGACY_PCE_MISMATCH'
 scripted_pce_input_event frame=61 key=up mask=0010 hold=1
 scripted_pce_input_apply frame=61 physical=0000 scripted=0010 combined=0010
-pce_input_read cpu_pc=44ca register=1000 raw=0010 sel=1 clr=0 index=0
-pce_input_result cpu_pc=44cb register=1000 raw=0010 value=3e sel=1 clr=0 index=0 sp=f2 stack=4b436d74
+pce_input_read frame=61 cpu_pc=44ca register=1000 raw=0010 sel=1 clr=0 index=0
+pce_input_result frame=61 cpu_pc=44cb register=1000 raw=0010 value=3e sel=1 clr=0 index=0 sp=f2 stack=4b436d74
 THERON_LEGACY_PCE_MISMATCH
 if "$scripted_input_consumption_verifier" \
     "$input_test_dir/legacy-pce-result-mismatch.trace" up@61 1 \
@@ -129,9 +146,9 @@ fi
 cat >"$input_test_dir/legacy-pce-result-interleaved.trace" <<'THERON_LEGACY_PCE_INTERLEAVED'
 scripted_pce_input_event frame=62 key=up mask=0010 hold=1
 scripted_pce_input_apply frame=62 physical=0000 scripted=0010 combined=0010
-pce_input_read cpu_pc=44ca register=1000 raw=0010 sel=1 clr=0 index=0
+pce_input_read frame=62 cpu_pc=44ca register=1000 raw=0010 sel=1 clr=0 index=0
 trace_marker unrelated=1
-pce_input_result cpu_pc=44ca register=1000 raw=0010 value=3e sel=1 clr=0 index=0 sp=f2 stack=4b436d74
+pce_input_result frame=62 cpu_pc=44ca register=1000 raw=0010 value=3e sel=1 clr=0 index=0 sp=f2 stack=4b436d74
 THERON_LEGACY_PCE_INTERLEAVED
 if "$scripted_input_consumption_verifier" \
     "$input_test_dir/legacy-pce-result-interleaved.trace" up@62 1 \
@@ -164,8 +181,8 @@ if ! grep -Fq 'legacy PCE input result frame did not match its raw read' \
     exit 1
 fi
 cat >"$input_test_dir/event-at-read-cap.trace" <<'THERON_CAPPED_INPUT'
-pce_input_read cpu_pc=8123 register=1000 raw=0000 sel=0 clr=0 index=0
-pce_input_read cpu_pc=8123 register=1000 raw=0000 sel=0 clr=0 index=0
+pce_input_read frame=1 cpu_pc=8123 register=1000 raw=0000 sel=0 clr=0 index=0
+pce_input_read frame=2 cpu_pc=8123 register=1000 raw=0000 sel=0 clr=0 index=0
 scripted_pce_input_event frame=12 key=run mask=0008 hold=1
 scripted_pce_input_apply frame=12 physical=0000 scripted=0008 combined=0008
 THERON_CAPPED_INPUT
@@ -199,7 +216,7 @@ fi
 cat >"$input_test_dir/wrong-mask.trace" <<'THERON_WRONG_MASK_INPUT'
 scripted_pce_input_event frame=40 key=up mask=0010 hold=1
 scripted_pce_input_apply frame=40 physical=0000 scripted=0010 combined=0010
-pce_input_read cpu_pc=8123 register=1000 raw=0000 sel=1 clr=0 index=0 value=0f
+pce_input_read frame=40 cpu_pc=8123 register=1000 raw=0000 sel=1 clr=0 index=0 value=0f
 THERON_WRONG_MASK_INPUT
 if "$scripted_input_consumption_verifier" \
     "$input_test_dir/wrong-mask.trace" up@40 2 \
@@ -210,7 +227,7 @@ fi
 cat >"$input_test_dir/direction-readback.trace" <<'THERON_DIRECTION_READBACK'
 scripted_pce_input_event frame=45 key=up mask=0010 hold=1
 scripted_pce_input_apply frame=45 physical=0000 scripted=0010 combined=0010
-pce_input_read cpu_pc=8123 register=1000 raw=0010 sel=1 clr=0 index=0 value=0e
+pce_input_read frame=45 cpu_pc=8123 register=1000 raw=0010 sel=1 clr=0 index=0 value=0e
 THERON_DIRECTION_READBACK
 direction_receipt=$("$scripted_input_consumption_verifier" \
     "$input_test_dir/direction-readback.trace" up@45 1)
@@ -222,7 +239,7 @@ fi
 cat >"$input_test_dir/wrong-direction-bank.trace" <<'THERON_WRONG_DIRECTION_BANK'
 scripted_pce_input_event frame=46 key=up mask=0010 hold=1
 scripted_pce_input_apply frame=46 physical=0000 scripted=0010 combined=0010
-pce_input_read cpu_pc=8123 register=1000 raw=0010 sel=0 clr=0 index=0 value=0f
+pce_input_read frame=46 cpu_pc=8123 register=1000 raw=0010 sel=0 clr=0 index=0 value=0f
 THERON_WRONG_DIRECTION_BANK
 if "$scripted_input_consumption_verifier" \
     "$input_test_dir/wrong-direction-bank.trace" up@46 1 \
@@ -233,7 +250,7 @@ fi
 cat >"$input_test_dir/wrong-button-bank.trace" <<'THERON_WRONG_BUTTON_BANK'
 scripted_pce_input_event frame=47 key=run mask=0008 hold=1
 scripted_pce_input_apply frame=47 physical=0000 scripted=0008 combined=0008
-pce_input_read cpu_pc=8123 register=1000 raw=0008 sel=1 clr=0 index=0 value=0f
+pce_input_read frame=47 cpu_pc=8123 register=1000 raw=0008 sel=1 clr=0 index=0 value=0f
 THERON_WRONG_BUTTON_BANK
 if "$scripted_input_consumption_verifier" \
     "$input_test_dir/wrong-button-bank.trace" run@47 1 \
@@ -244,7 +261,7 @@ fi
 cat >"$input_test_dir/wrong-input-index.trace" <<'THERON_WRONG_INPUT_INDEX'
 scripted_pce_input_event frame=47 key=up mask=0010 hold=1
 scripted_pce_input_apply frame=47 physical=0000 scripted=0010 combined=0010
-pce_input_read cpu_pc=8123 register=1000 raw=0010 sel=1 clr=0 index=1 value=0e
+pce_input_read frame=47 cpu_pc=8123 register=1000 raw=0010 sel=1 clr=0 index=1 value=0e
 THERON_WRONG_INPUT_INDEX
 if "$scripted_input_consumption_verifier" \
     "$input_test_dir/wrong-input-index.trace" up@47 1 \
@@ -256,8 +273,8 @@ cat >"$input_test_dir/combined-bank-readback.trace" <<'THERON_COMBINED_BANK_READ
 scripted_pce_input_event frame=48 key=up mask=0010 hold=1
 scripted_pce_input_event frame=48 key=run mask=0008 hold=1
 scripted_pce_input_apply frame=48 physical=0000 scripted=0018 combined=0018
-pce_input_read cpu_pc=8123 register=1000 raw=0018 sel=1 clr=0 index=0 value=0e
-pce_input_read cpu_pc=8123 register=1000 raw=0018 sel=0 clr=0 index=0 value=07
+pce_input_read frame=48 cpu_pc=8123 register=1000 raw=0018 sel=1 clr=0 index=0 value=0e
+pce_input_read frame=48 cpu_pc=8123 register=1000 raw=0018 sel=0 clr=0 index=0 value=07
 THERON_COMBINED_BANK_READBACK
 combined_bank_receipt=$("$scripted_input_consumption_verifier" \
     "$input_test_dir/combined-bank-readback.trace" up@48,run@48 2)
@@ -275,7 +292,7 @@ cat >"$input_test_dir/partial-combined-mask.trace" <<'THERON_PARTIAL_COMBINED_MA
 scripted_pce_input_event frame=50 key=run mask=0008 hold=1
 scripted_pce_input_event frame=50 key=ii mask=0002 hold=1
 scripted_pce_input_apply frame=50 physical=0000 scripted=000a combined=000a
-pce_input_read cpu_pc=8123 register=1000 raw=0008 sel=0 clr=0 index=0
+pce_input_read frame=50 cpu_pc=8123 register=1000 raw=0008 sel=0 clr=0 index=0
 THERON_PARTIAL_COMBINED_MASK_INPUT
 if "$scripted_input_consumption_verifier" \
     "$input_test_dir/partial-combined-mask.trace" run@50,ii@50 2 \
@@ -285,7 +302,7 @@ if "$scripted_input_consumption_verifier" \
 fi
 cat >"$input_test_dir/no-apply.trace" <<'THERON_NO_APPLY_INPUT'
 scripted_pce_input_event frame=30 key=run mask=0008 hold=1
-pce_input_read cpu_pc=8123 register=1000 raw=0008 sel=0 clr=0 index=0
+pce_input_read frame=30 cpu_pc=8123 register=1000 raw=0008 sel=0 clr=0 index=0
 THERON_NO_APPLY_INPUT
 if "$scripted_input_consumption_verifier" \
     "$input_test_dir/no-apply.trace" run@30 2 \
