@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import os
 import subprocess
 import tempfile
@@ -30,6 +31,7 @@ def verify_bundle(bundle: Path) -> None:
         "capture_frame_index": "59",
         "capture_next_command_index": "178",
         "trace_enabled": "1",
+        "trace_rows": "10668",
         "trace_file_complete": "1",
         "trace_rows_for_capture_frame": "178",
         "trace_dropped_total": "0",
@@ -43,6 +45,13 @@ def verify_bundle(bundle: Path) -> None:
     trace = bundle / manifest["trace_file"]
     if not trace.is_file() or trace.stat().st_size == 0:
         raise ValueError("complete command trace is missing")
+    with trace.open(newline="") as stream:
+        rows = list(csv.DictReader(stream))
+    frame_rows = [row for row in rows if row.get("frame") == "59"]
+    if len(rows) != 10668 or len(frame_rows) != 178 or [
+        row.get("index") for row in frame_rows
+    ] != [str(index) for index in range(178)]:
+        raise ValueError("frame-59 command trace rows are incomplete or reordered")
     for name, size in EXPECTED_SIZES.items():
         path = bundle / name
         if not path.is_file() or path.stat().st_size != size:
