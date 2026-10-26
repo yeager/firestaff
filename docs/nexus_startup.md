@@ -91,7 +91,9 @@ authenticated Japanese retail CUE, BIOS, and title-prompt state in CLI slot 2.
 It held Start during capture frames 0 through 59 and captured 120 frames with
 `--debug --load-state 2 --capture-frames 120 --dump-memory
 --capture-start-frame 0 --capture-start-hold 60`. The profile and raw dumps
-were removed after the metadata below was inspected.
+were removed after inspection; the displayed title-menu image and VDP1 receipt
+are retained in
+[`nexus_v1_ymir_deterministic_start_menu_20261026`](../parity-evidence/verification/nexus_v1_ymir_deterministic_start_menu_20261026/README.md).
 
 The capture completed at VDP1 frame 59 with command cursor 178 and 178 rows
 for that frame. Its complete trace had 10,668 rows from frames 0 through 59,
@@ -107,6 +109,7 @@ title checkpoint remained byte-identical to the retained title-state reference:
 | VDP2 registers | `79efa616c2db727749aa9018864d1ad32c1583935652fafb16534ba69f8e1f2d` |
 | VDP1 capture receipt | `0e5cfa33070e33f24ae0e25ead7ce4fac561ae7c329ef7c59ff12382d3ea519e` |
 | VDP1 trace | `b80c7a118e7f9df4f941804cdc045f4024336080504c512bbdf5c4e0df19d8d3` |
+| Retained title-menu image | `0ad6bbc433936cd853fef476c8eb14be2c9532efcfcc218a43ca1053500ca55c` |
 
 This makes title-menu capture reproducible without X11 keyboard injection. It
 does not bind a retail menu resource to a Saturn consumer, prove the final
