@@ -1,3 +1,20 @@
+## 2026-10-26 — authentic USA Backup RAM Continue remains native and source-bound
+
+- An isolated TRV2 Debug build passed
+  `test_theron_v1_m11_real_bram_continue` against the authenticated USA Track
+  02 and its original 2 KiB Backup RAM capture. The test admitted both hashes,
+  followed the native Continue route through the original startup sequence,
+  and loaded the source-backed level and object state before exercising the
+  bounded movement route.
+- This is a real native Firestaff path and does not require an emulator or
+  System Card at runtime. It is not permission to auto-load a dungeon: the
+  verified Backup RAM only covers the authenticated Continue record and its
+  documented restored fields. Skipping title, stage selection, or Soul Room
+  would still fabricate unproven party/startup state.
+- Later graphics-bank and original-consumer bindings remain open. The test
+  proves an authentic Continue handoff, not complete dynamic dungeon-renderer
+  parity.
+
 ## 2026-10-26 — full-trace cold boot still has no game-owned input receipt
 
 - A fresh 35-second PCE Fast reference replay used the authenticated Japanese
