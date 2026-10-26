@@ -8,6 +8,103 @@ static uint16_t read_le16(const uint8_t *p)
     return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
 }
 
+static int preview_mode0_normal(
+    Nexus_V1_Vdp1DirectColorFramebuffer *framebuffer,
+    const uint8_t *command, int command_size,
+    const uint8_t *vdp1_vram, int vdp1_vram_size,
+    const Nexus_V1_Vdp2ColourRamCapture *capture,
+    int origin_x, int origin_y, int clip_x, int clip_y,
+    int *out_written_pixels, int blend)
+{
+    Nexus_V1_Vdp1TextureCommand parsed;
+    Nexus_V1_Vdp1Mode1PalettePixel *pixels;
+    uint32_t count, u, v;
+    uint16_t spctl = 0, ccctl = 0;
+    int written = 0;
+    if (out_written_pixels) *out_written_pixels = 0;
+    if (!framebuffer || !out_written_pixels || clip_x < 0 || clip_y < 0 ||
+        origin_x < -8192 || origin_x > 8191 || origin_y < -8192 || origin_y > 8191 ||
+        nexus_v1_vdp1_texture_command_parse(command, command_size, &parsed) != 0 ||
+        !parsed.texture_command || parsed.command_type != 0U ||
+        (parsed.draw_mode & ~0x00c0U) != 0U) return 0;
+    if (blend) {
+        if (!capture || !capture->registers || capture->registers_size < 0x108U) return 0;
+        spctl = read_le16(capture->registers + 0xe0U);
+        ccctl = read_le16(capture->registers + 0xecU);
+        /* Support top-screen ratio only; additive, second-screen, extended,
+         * MSB-conditional cases need separate composition. Window masking is
+         * outside this capture preview. */
+        if ((spctl & 0x0fU) != 6U || ((spctl >> 12U) & 3U) == 3U ||
+            (ccctl & 0x0700U)) return 0;
+    }
+    count = (uint32_t)parsed.texture_width * parsed.texture_height;
+    if (!count) return 0;
+    pixels = (Nexus_V1_Vdp1Mode1PalettePixel *)malloc((size_t)count * sizeof(*pixels));
+    if (!pixels || !nexus_v1_vdp1_resolve_mode0_type6_capture(command, command_size,
+            vdp1_vram, vdp1_vram_size, capture, pixels, count)) {
+        free(pixels); return 0;
+    }
+    for (v = 0; v < parsed.texture_height; ++v) {
+        for (u = 0; u < parsed.texture_width; ++u) {
+            uint32_t source_u = (parsed.control & 0x10U) ? parsed.texture_width - 1U - u : u;
+            uint32_t source_v = (parsed.control & 0x20U) ? parsed.texture_height - 1U - v : v;
+            const Nexus_V1_Vdp1Mode1PalettePixel *pixel =
+                &pixels[source_v * parsed.texture_width + source_u];
+            int x = origin_x + parsed.xa + (int)u;
+            int y = origin_y + parsed.ya + (int)v;
+            if (x < 0 || y < 0 || x >= NEXUS_FB_W || y >= NEXUS_FB_H ||
+                x > clip_x || y > clip_y || pixel->kind == NEXUS_V1_VDP1_MODE1_PIXEL_TRANSPARENT)
+                continue;
+            {
+                uint32_t red = pixel->red, green = pixel->green, blue = pixel->blue;
+                if (blend && (ccctl & 0x40U)) {
+                    uint16_t code = pixel->raw_colour_code;
+                    unsigned priority_index = (code >> 12U) & 7U;
+                    unsigned priority_word = read_le16(capture->registers + 0xf0U + 2U * (priority_index / 2U));
+                    unsigned priority = (priority_word >> ((priority_index & 1U) * 8U)) & 7U;
+                    unsigned threshold = (spctl >> 8U) & 7U;
+                    unsigned condition = (spctl >> 12U) & 3U;
+                    int enabled = condition == 0U ? priority <= threshold :
+                        (condition == 1U ? priority == threshold : priority >= threshold);
+                    if (enabled) {
+                        unsigned ratio_index = (code >> 10U) & 3U;
+                        unsigned ratio_word = read_le16(capture->registers + 0x100U + 2U * (ratio_index / 2U));
+                        unsigned ratio = 31U - ((ratio_word >> ((ratio_index & 1U) * 8U)) & 31U);
+                        uint32_t below = framebuffer->rgba_buffer[y * NEXUS_FB_W + x];
+                        red = (red * ratio + ((below >> 16U) & 255U) * (32U - ratio)) >> 5U;
+                        green = (green * ratio + ((below >> 8U) & 255U) * (32U - ratio)) >> 5U;
+                        blue = (blue * ratio + (below & 255U) * (32U - ratio)) >> 5U;
+                    }
+                }
+                framebuffer->rgba_buffer[y * NEXUS_FB_W + x] = UINT32_C(0xff000000) |
+                    (red << 16U) | (green << 8U) | blue;
+            }
+            ++written;
+        }
+    }
+    free(pixels);
+    *out_written_pixels = written;
+    return 1;
+}
+
+int nexus_v1_vdp1_capture_preview_mode0_normal(
+    Nexus_V1_Vdp1DirectColorFramebuffer *fb, const uint8_t *command, int command_size,
+    const uint8_t *vram, int vram_size, const Nexus_V1_Vdp2ColourRamCapture *capture,
+    int origin_x, int origin_y, int clip_x, int clip_y, int *written)
+{
+    return preview_mode0_normal(fb, command, command_size, vram, vram_size, capture,
+        origin_x, origin_y, clip_x, clip_y, written, 0);
+}
+
+int nexus_v1_vdp1_capture_blend_mode0_normal(
+    Nexus_V1_Vdp1DirectColorFramebuffer *fb, const uint8_t *command, int command_size,
+    const uint8_t *vram, int vram_size, const Nexus_V1_Vdp2ColourRamCapture *capture,
+    int origin_x, int origin_y, int clip_x, int clip_y, int *written)
+{
+    return preview_mode0_normal(fb, command, command_size, vram, vram_size, capture,
+        origin_x, origin_y, clip_x, clip_y, written, 1);
+}
+
 /* Mednafen's generic Saturn capture deliberately preserves the Saturn bus
  * representation (big-endian uint16 values).  Firestaff's VDP1 command
  * parser operates on its historical little-endian VRAM image.  Normalize
@@ -266,7 +363,7 @@ static int composite_triangle(Nexus_Framebuffer *fb,
                               int system_clip_x, int system_clip_y,
                               uint16_t draw_mode, int *written,
                               int *transparent, int *end_code,
-                              uint8_t end_rows[256])
+                              const uint16_t end_after[256])
 {
     float area;
     float min_x, max_x, min_y, max_y;
@@ -326,13 +423,12 @@ static int composite_triangle(Nexus_Framebuffer *fb,
             pixel = ty * width + tx;
             texel = (pixel & 1) == 0 ? (uint8_t)(tex[pixel >> 1] >> 4U) :
                 (uint8_t)(tex[pixel >> 1] & 0x0fU);
-            if (end_rows[ty]) continue;
+            if ((draw_mode & 0x0080U) == 0U && (unsigned)tx >= end_after[ty]) continue;
             if (texel == 0U && (draw_mode & 0x0040U) == 0U) {
                 ++*transparent;
                 continue;
             }
             if (texel == 0x0fU && (draw_mode & 0x0080U) == 0U) {
-                end_rows[ty] = 1U;
                 ++*end_code;
                 continue;
             }
@@ -355,36 +451,51 @@ int nexus_v1_vdp1_capture_composite_mode1(
     Nexus_V1_Vdp1TextureCommand command;
     uint16_t palette[16];
     float xy[4][2];
-    uint8_t end_rows[256] = {0};
+    uint16_t end_after[256];
     int index;
+    int source_has_end_code = 0;
+
+    int item_source;
+    const uint8_t *source_image;
+    const uint8_t *source_palette;
+    int source_image_size;
+    int source_palette_size;
+
+    for (index = 0; index < 256; ++index) end_after[index] = UINT16_MAX;
 
     if (!out_receipt) return 0;
     memset(&receipt, 0, sizeof(receipt));
     receipt.fallback_visuals_permitted = 0;
+    item_source = input && input->item_source_hash_verified;
+    source_image = input ? (item_source ? input->item_image : input->dgn_image) : NULL;
+    source_palette = input ? (item_source ? input->item_palette : input->dgn_palette) : NULL;
+    source_image_size = input ? (item_source ? input->item_image_size : input->dgn_image_size) : 0;
+    source_palette_size = input ? (item_source ? input->item_palette_size : input->dgn_palette_size) : 0;
     if (!framebuffer || !input || !input->command || !input->texture_span ||
         (!input->transparent_capture_noop_verified &&
-         (!input->palette_state || !input->dgn_image || !input->dgn_palette)) ||
+         (!input->palette_state || !source_image || !source_palette)) ||
         input->command_size != NEXUS_V1_VDP1_COMMAND_BYTES ||
         (!input->transparent_capture_noop_verified &&
-         (input->palette_state_size != 32 || input->dgn_palette_size != 32 ||
-          input->dgn_image_size <= 0)) ||
+         (input->palette_state_size != 32 || source_palette_size != 32 ||
+          source_image_size <= 0)) ||
         input->texture_span_size <= 0 ||
         input->screen_origin_x < 0 || input->screen_origin_x >= NEXUS_FB_W ||
         input->screen_origin_y < 0 || input->screen_origin_y >= NEXUS_FB_H ||
         input->palette_slot_base < 0 || input->palette_slot_base > 240 ||
         (!input->transparent_capture_noop_verified &&
-         !input->dgn_source_hash_verified) ||
+         (!input->dgn_source_hash_verified && !item_source)) ||
+        (item_source && input->dgn_source_hash_verified) ||
         !input->original_saturn_capture_verified ||
         nexus_v1_vdp1_texture_command_parse(input->command,
             input->command_size, &command) != 0 || !command.texture_command ||
         command.colour_mode != 1U || !command.texture_source_range_valid ||
         command.texture_byte_count != (uint32_t)input->texture_span_size ||
         (!input->transparent_capture_noop_verified &&
-         (input->texture_span_size != input->dgn_image_size ||
+         (input->texture_span_size != source_image_size ||
           !swapped_words_equal(input->texture_span, input->texture_span_size,
-                               input->dgn_image, input->dgn_image_size) ||
+                               source_image, source_image_size) ||
           !swapped_words_equal(input->palette_state, input->palette_state_size,
-                               input->dgn_palette, input->dgn_palette_size))) ||
+                               source_palette, source_palette_size))) ||
         (input->transparent_capture_noop_verified &&
          ((command.draw_mode & UINT16_C(0x0040)) != 0U ||
           !bytes_all_zero(input->texture_span, input->texture_span_size)))) {
@@ -406,6 +517,7 @@ int nexus_v1_vdp1_capture_composite_mode1(
     receipt.coordinate_words_framed = command.coordinate_words_framed;
     receipt.original_saturn_capture_verified = 1;
     receipt.source_join_verified = input->transparent_capture_noop_verified ? 0 : 1;
+    receipt.item_source_join_verified = item_source && !input->transparent_capture_noop_verified;
     receipt.palette_join_verified = input->transparent_capture_noop_verified ? 0 : 1;
     receipt.structure3_face_owner_join_verified =
         input->dgn_structure3_face_owner_verified ? 1 : 0;
@@ -435,6 +547,24 @@ int nexus_v1_vdp1_capture_composite_mode1(
     xy[2][1] = (float)input->screen_origin_y + (float)command.yc;
     xy[3][0] = (float)input->screen_origin_x + (float)command.xd;
     xy[3][1] = (float)input->screen_origin_y + (float)command.yd;
+    if (!(command.draw_mode & 0x0080U)) {
+        int row, column;
+        for (row = 0; row < command.texture_height; ++row) {
+            int codes_seen = 0;
+            for (column = 0; column < command.texture_width; ++column) {
+                int pixel = row * command.texture_width + column;
+                uint8_t packed = input->texture_span[pixel >> 1];
+                uint8_t texel = (pixel & 1) ? packed & 15U : packed >> 4U;
+                if (texel == 15U) {
+                    source_has_end_code = 1;
+                    if (++codes_seen == 2) {
+                        end_after[row] = (uint16_t)column;
+                        break;
+                    }
+                }
+            }
+        }
+    }
     if (xy[0][0] == xy[1][0] && xy[0][1] == xy[1][1]) {
         if (input->capture_allow_zero_pixel_command) {
             receipt.valid = 1;
@@ -452,16 +582,18 @@ int nexus_v1_vdp1_capture_composite_mode1(
         input->palette_slot_base, input->system_clip_state_verified,
         input->system_clip_x, input->system_clip_y, command.draw_mode,
         &receipt.written_pixels, &receipt.transparent_pixels,
-        &receipt.end_code_pixels, end_rows);
+        &receipt.end_code_pixels, end_after);
     (void)composite_triangle(working, xy, 0, 2, 3,
         input->texture_span, command.texture_width, command.texture_height,
         input->palette_slot_base, input->system_clip_state_verified,
         input->system_clip_x, input->system_clip_y, command.draw_mode,
         &receipt.written_pixels, &receipt.transparent_pixels,
-        &receipt.end_code_pixels, end_rows);
+        &receipt.end_code_pixels, end_after);
     receipt.valid = receipt.written_pixels > 0 ||
         input->capture_allow_zero_pixel_command;
-    receipt.renderer_permitted = receipt.written_pixels > 0;
+    /* Source-row scanning cannot model VDP1's resampling and direction when
+     * an end code is encountered. Keep that result capture-only. */
+    receipt.renderer_permitted = receipt.written_pixels > 0 && !source_has_end_code;
     if (receipt.valid) *framebuffer = *working;
     free(working);
     *out_receipt = receipt;
@@ -476,6 +608,7 @@ int nexus_v1_vdp1_capture_composite_mode1_sequence(
     Nexus_V1_Vdp1CaptureSequenceReceipt receipt;
     Nexus_Framebuffer *working;
     int i;
+    int renderer_accurate = 1;
 
     memset(&receipt, 0, sizeof(receipt));
     if (!out_receipt) return 0;
@@ -552,6 +685,8 @@ int nexus_v1_vdp1_capture_composite_mode1_sequence(
         receipt.written_pixels += command_receipt.written_pixels;
         receipt.transparent_pixels += command_receipt.transparent_pixels;
         receipt.end_code_pixels += command_receipt.end_code_pixels;
+        if (command_receipt.written_pixels > 0 && !command_receipt.renderer_permitted)
+            renderer_accurate = 0;
         receipt.transparent_noop_commands +=
             command_receipt.transparent_noop_verified;
     }
@@ -570,7 +705,7 @@ int nexus_v1_vdp1_capture_composite_mode1_sequence(
     free(working);
     receipt.valid = receipt.written_pixels > 0 ||
         (input->command_count > 0 && receipt.capture_gap_commands > 0);
-    receipt.renderer_permitted = receipt.written_pixels > 0;
+    receipt.renderer_permitted = receipt.written_pixels > 0 && renderer_accurate;
     /* The authenticated Saturn envelope can exceed Firestaff's 320x224 V1
      * destination. Preserve the replay receipt, but never present that host
      * crop as a production-equivalent Saturn framebuffer. */
@@ -606,12 +741,18 @@ int nexus_v1_vdp1_capture_replay_vram_sequence(
     if (!framebuffer || !input || !input->vdp1_vram ||
         input->vdp1_vram_size != (int)NEXUS_V1_VDP1_VRAM_BYTES ||
         !input->original_saturn_capture_verified || !input->resolve_material ||
-        !nexus_v1_vdp1_command_sequence_frame(
+        !(input->trace_commands ?
+          (input->trace_complete_verified && input->trace_offsets &&
+           nexus_v1_vdp1_command_sequence_trace(input->trace_commands,
+               input->trace_offsets, input->trace_command_count,
+               &receipt.command_sequence)) :
+          (!input->trace_offsets && !input->trace_command_count &&
+           !input->trace_complete_verified && nexus_v1_vdp1_command_sequence_frame(
             &(Nexus_V1_Vdp1CommandSequenceInput){
                 input->vdp1_vram, input->vdp1_vram_size, input->copr_word,
                 input->system_clip_state_present, input->system_clip_x,
                 input->system_clip_y},
-            &receipt.command_sequence) ||
+            &receipt.command_sequence))) ||
         !receipt.command_sequence.valid || !receipt.command_sequence.complete ||
         !receipt.command_sequence.display_origin_verified ||
         receipt.command_sequence.draw_count <= 0 ||
@@ -625,7 +766,9 @@ int nexus_v1_vdp1_capture_replay_vram_sequence(
         uint32_t offset = receipt.command_sequence.command_byte_offsets[i];
         uint32_t palette_offset;
         Nexus_V1_Vdp1TextureCommand parsed;
-        const uint8_t *command = input->vdp1_vram + offset;
+        const uint8_t *command = input->trace_commands ?
+            input->trace_commands + (size_t)i * NEXUS_V1_VDP1_COMMAND_BYTES :
+            input->vdp1_vram + offset;
         Nexus_V1_Vdp1CaptureCompositeInput *resolved;
 
         if (nexus_v1_vdp1_texture_command_parse(
@@ -736,6 +879,7 @@ int nexus_v1_vdp1_capture_replay_vram_sequence(
     replay_input.commands = commands;
     replay_input.command_count = receipt.draw_commands_resolved;
     replay_input.system_clip_state_verified =
+        input->system_clip_state_present ||
         receipt.command_sequence.system_clip_state_verified;
     replay_input.system_clip_x = input->system_clip_state_present
         ? (int)input->system_clip_x
@@ -775,7 +919,7 @@ int nexus_v1_vdp1_capture_replay_vram_sequence(
         *out_receipt = receipt;
         return 0;
     }
-    if (receipt.system_clip_state_missing)
+    if (receipt.system_clip_state_missing || input->trace_commands)
         receipt.replay.renderer_permitted = 0;
     receipt.valid = 1;
     *out_receipt = receipt;

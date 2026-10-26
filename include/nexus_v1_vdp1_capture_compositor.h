@@ -29,6 +29,12 @@ typedef struct {
     int dgn_source_hash_verified;
     int dgn_structure3_face_owner_count;
     int dgn_structure3_face_owner_verified;
+    /* Separate ITEM.IBS source; never relabel an item as a DGN material. */
+    const uint8_t *item_image;
+    int item_image_size;
+    const uint8_t *item_palette;
+    int item_palette_size;
+    int item_source_hash_verified;
     /* Optional canonical DGN Structure2 encoding 28h source-owner witness
      * for VDP1 colour mode 5. */
     const uint8_t *dgn_direct_image;
@@ -53,6 +59,7 @@ typedef struct {
     int source_join_verified;
     int palette_join_verified;
     int structure3_face_owner_join_verified;
+    int item_source_join_verified;
     int command_framed;
     int mode1_lookup;
     int coordinate_words_framed;
@@ -94,6 +101,25 @@ typedef struct {
     int transparent_pixels;
     uint32_t command_byte_offset;
 } Nexus_V1_Vdp1DirectColorCaptureReceipt;
+
+/* Capture-only normal sprite preview. The caller supplies the observed local
+ * coordinate and clip; later VRAM/CRAM snapshots do not prove temporal parity. */
+int nexus_v1_vdp1_capture_preview_mode0_normal(
+    Nexus_V1_Vdp1DirectColorFramebuffer *framebuffer,
+    const uint8_t *command, int command_size,
+    const uint8_t *vdp1_vram, int vdp1_vram_size,
+    const Nexus_V1_Vdp2ColourRamCapture *vdp2_capture,
+    int origin_x, int origin_y, int clip_x, int clip_y,
+    int *out_written_pixels);
+/* As above, compositing onto the supplied lower layer using captured VDP2
+ * type-6 sprite priorities and top-screen ratio colour calculation. */
+int nexus_v1_vdp1_capture_blend_mode0_normal(
+    Nexus_V1_Vdp1DirectColorFramebuffer *framebuffer,
+    const uint8_t *command, int command_size,
+    const uint8_t *vdp1_vram, int vdp1_vram_size,
+    const Nexus_V1_Vdp2ColourRamCapture *vdp2_capture,
+    int origin_x, int origin_y, int clip_x, int clip_y,
+    int *out_written_pixels);
 
 /* A complete, bounded replay lane for one captured VDP1 command window.
  * The per-command source joins remain explicit; these additional facts bind
@@ -165,6 +191,12 @@ typedef struct {
     int system_clip_state_present;
     uint32_t system_clip_x;
     uint32_t system_clip_y;
+    /* Optional ordered trace; producer completeness and zero drops must be
+     * checked by the caller. VRAM remains a later material snapshot. */
+    const uint8_t *trace_commands;
+    const uint32_t *trace_offsets;
+    int trace_command_count;
+    int trace_complete_verified;
 } Nexus_V1_Vdp1CaptureVramSequenceInput;
 
 typedef struct {

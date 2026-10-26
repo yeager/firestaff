@@ -98,11 +98,11 @@ def source_spans(frame: dict[str, bytes], state: str) -> list[tuple[int, int, in
     for command_offset, words in command_window(frame["vdp1-vram"], state):
         control = words[0]
         command_type = control & 0x000F
-        if control & 0x8000 or command_type > 2:
+        if control & 0xC000 or command_type > 2:
             continue
         colour_mode = (words[2] >> 3) & 0x7
-        width = (words[5] & 0x003F) * 8
-        height = (words[5] >> 8) & 0x00FF
+        width = ((words[5] >> 8) & 0x003F) * 8
+        height = words[5] & 0x00FF
         bits_per_pixel = 4 if colour_mode <= 1 else 8 if colour_mode <= 4 else 16
         source_offset = words[4] * 8
         source_size = (width * height * bits_per_pixel) // 8

@@ -5422,7 +5422,7 @@ static void test_structure1f_item_ibs_material_binding(void) {
     wl16(vdp1_command, 0U);       /* normal sprite */
     wl16(vdp1_command + 4, 0U);   /* 4bpp colour-bank mode */
     wl16(vdp1_command + 8, 0x1234U);
-    wl16(vdp1_command + 10, 2U | (16U << 8));
+    wl16(vdp1_command + 10, (2U << 8) | 16U);
     candidate.vdp1_command_fnv1a64 = fnv1a64(vdp1_command,
                                               sizeof(vdp1_command));
     candidate.texture_first_sequence = 10U;
@@ -5622,6 +5622,18 @@ static void test_real_item_ibs_special_floor_corpus(void) {
     CHECK(nexus_v1_item_ibs_parse_verified(data, NEXUS_V1_ITEM_IBS_BYTES,
                                              1, &bank) == 0,
           "real ITEM.IBS proves the special-floor packed-4bpp layout");
+    if (asset_file_matches_md5(path, "309dc91bd14ded1223c72dd6c743f17c")) {
+        int color;
+        int palette_matches = bank.floor_images[33].palette_id == 8U;
+        for (color = 0; color < 16; ++color) {
+            uint16_t expected = (uint16_t)((data[0xb098 + color * 2] << 8) |
+                                           data[0xb099 + color * 2]);
+            if (bank.floor_images[33].palette_bgr555[color] != expected)
+                palette_matches = 0;
+        }
+        CHECK(palette_matches,
+              "Japanese ITEM.IBS floor 33 reuses palette 8, not the last unrelated palette");
+    }
     CHECK(bank.floor_image_count == NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_COUNT &&
           bank.floor_images[43].image_id == 266U &&
           bank.floor_images[43].packed_4bpp_valid &&

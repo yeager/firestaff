@@ -6569,8 +6569,8 @@ int nexus_v1_item_ibs_parse_verified(const uint8_t *data, int size,
     memcpy(out_bank->regular_image_texels, data + ITEM_IMAGES,
            sizeof(out_bank->regular_image_texels));
     {
-        uint16_t inherited_palette[16] = {0};
-        int have_inherited_palette = 0;
+        uint16_t floor_palettes[64][16] = {{0}};
+        uint8_t have_floor_palette[64] = {0};
         int terminator_offset = -1;
         for (i = 0; i <= NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_COUNT; ++i) {
             const uint8_t *decl = data + ITEM_FLOOR_DECLARATIONS +
@@ -6603,20 +6603,21 @@ int nexus_v1_item_ibs_parse_verified(const uint8_t *data, int size,
             floor->width = rb16(decl + 6);
             floor->height = rb16(decl + 8);
             floor->image_offset = image_offset;
-            if (!floor->width || !floor->height || floor->encoding != 8U)
+            if (!floor->width || !floor->height || floor->encoding != 8U ||
+                floor->palette_id >= 64U)
                 return -1;
             if (palette_offset != 0U) {
                 if (palette_offset > (uint32_t)(NEXUS_V1_ITEM_IBS_BYTES -
                                                   ITEM_FLOOR_DECLARATIONS - 32))
                     return -1;
                 for (color = 0; color < 16; ++color) {
-                    inherited_palette[color] = rb16(data + ITEM_FLOOR_DECLARATIONS +
-                                                     palette_offset + color * 2);
+                    floor_palettes[floor->palette_id][color] = rb16(
+                        data + ITEM_FLOOR_DECLARATIONS + palette_offset + color * 2);
                 }
-                have_inherited_palette = 1;
+                have_floor_palette[floor->palette_id] = 1;
             }
-            if (!have_inherited_palette) return -1;
-            memcpy(floor->palette_bgr555, inherited_palette,
+            if (!have_floor_palette[floor->palette_id]) return -1;
+            memcpy(floor->palette_bgr555, floor_palettes[floor->palette_id],
                    sizeof(floor->palette_bgr555));
             floor->palette_bound = 1;
         }
@@ -6944,8 +6945,9 @@ int nexus_v1_vdp1_texture_command_parse(
     }
     /* Sega Saturn VDP1 User Manual, command-table Figure 8.3: CMDCTRL,
      * CMDLINK, CMDPMOD, CMDCOLR, CMDSRCA and CMDSIZE are at +00,+02,+04,
-     * +06,+08,+0A. SH-2 command-table memory is little-endian; CMDSIZE
-     * stores width in eight-pixel units. CMDCOLR remains an opaque field:
+     * +06,+08,+0A. This capture stores 16-bit words in little-endian host
+     * order; CMDSIZE bits 13..8 store width in eight-pixel units, and bits
+     * 7..0 store height. CMDCOLR remains an opaque field:
      * parsing its position does not prove a palette or CLUT relation. */
     parsed.control = rl16(command);
     parsed.link_word = rl16(command + 2);
@@ -6968,10 +6970,12 @@ int nexus_v1_vdp1_texture_command_parse(
     parsed.gouraud_table_word = rl16(command + 28);
     parsed.command_type = (uint8_t)(parsed.control & 0x000fU);
     parsed.colour_mode = (uint8_t)((parsed.draw_mode >> 3) & 0x0007U);
-    parsed.texture_width = (uint16_t)((rl16(command + 10) & 0x003fU) * 8U);
-    parsed.texture_height = (uint16_t)(rl16(command + 10) >> 8);
+    parsed.texture_width = (uint16_t)(((rl16(command + 10) >> 8) & 0x003fU) * 8U);
+    parsed.texture_height = (uint16_t)(rl16(command + 10) & 0x00ffU);
     parsed.end_command = (parsed.control & 0x8000U) != 0U;
-    parsed.texture_command = !parsed.end_command && parsed.command_type <= 2U;
+    /* CMDCTRL bit 14 skips drawing while retaining the jump operation. */
+    parsed.texture_command = (parsed.control & 0xc000U) == 0U &&
+        parsed.command_type <= 2U;
     parsed.colour_mode_documented = parsed.colour_mode <= 5U;
     if (parsed.texture_command && parsed.colour_mode_documented &&
         parsed.texture_width != 0U && parsed.texture_height != 0U) {
@@ -7011,6 +7015,31 @@ int nexus_v1_vdp1_lookup_colour_codes_match(
     if (!decoded || !expected || decoded_count == 0U ||
         decoded_count != expected_count) return 0;
     return memcmp(decoded, expected, decoded_count * sizeof(*decoded)) == 0;
+}
+
+int nexus_v1_vdp1_decode_mode0_bank_texture(
+    const uint8_t *command, int command_size,
+    const uint8_t *vdp1_vram, int vdp1_vram_size,
+    uint8_t *out_indices, uint16_t *out_colour_codes, size_t output_count)
+{
+    Nexus_V1_Vdp1TextureCommand parsed;
+    uint32_t count, pixel;
+    uint16_t bank;
+    if (!command || !vdp1_vram || !out_indices || !out_colour_codes ||
+        vdp1_vram_size != (int)NEXUS_V1_VDP1_VRAM_BYTES ||
+        nexus_v1_vdp1_texture_command_parse(command, command_size, &parsed) != 0 ||
+        !parsed.texture_command || parsed.colour_mode != 0U ||
+        !parsed.texture_source_range_valid || !parsed.texture_byte_count) return 0;
+    count = (uint32_t)parsed.texture_width * (uint32_t)parsed.texture_height;
+    if (output_count < count) return 0;
+    bank = parsed.colour_control & 0xfff0U;
+    for (pixel = 0; pixel < count; ++pixel) {
+        uint8_t packed = vdp1_vram[parsed.texture_source_byte_offset + (pixel >> 1U)];
+        uint8_t index = (pixel & 1U) ? packed & 15U : packed >> 4U;
+        out_indices[pixel] = index;
+        out_colour_codes[pixel] = bank | index;
+    }
+    return 1;
 }
 
 int nexus_v1_vdp1_decode_mode1_lookup_texture(
@@ -7087,6 +7116,66 @@ static uint8_t nexus_v1_vdp_rgb5_to_u8(uint16_t value, unsigned shift)
     return (uint8_t)(((value >> shift) & 0x1fU) << 3);
 }
 
+int nexus_v1_vdp1_resolve_mode0_type6_capture(
+    const uint8_t *command, int command_size,
+    const uint8_t *vdp1_vram, int vdp1_vram_size,
+    const Nexus_V1_Vdp2ColourRamCapture *capture,
+    Nexus_V1_Vdp1Mode1PalettePixel *out_pixels, size_t output_count)
+{
+    Nexus_V1_Vdp1TextureCommand parsed;
+    uint8_t *indices;
+    uint16_t *codes;
+    uint16_t ramctl, craofb, spctl;
+    uint32_t count, i, mode, sprite_offset;
+    if (!capture || !capture->original_saturn_capture_verified ||
+        !capture->colour_ram || capture->colour_ram_size != NEXUS_V1_VDP2_CRAM_BYTES ||
+        !capture->registers || capture->registers_size < NEXUS_V1_VDP2_CAPTURE_REGISTERS_MIN_BYTES ||
+        !out_pixels || nexus_v1_vdp1_texture_command_parse(command, command_size, &parsed) != 0 ||
+        !parsed.four_bpp_colour_bank || !parsed.texture_source_range_valid ||
+        !(parsed.draw_mode & 0x0080U) || (parsed.colour_control & 0x8000U)) return 0;
+    spctl = rl16(capture->registers + 0xe0U);
+    ramctl = rl16(capture->registers + NEXUS_V1_VDP2_RAMCTL_OFFSET);
+    craofb = rl16(capture->registers + NEXUS_V1_VDP2_CRAOFB_OFFSET);
+    mode = (ramctl >> 12U) & 3U;
+    if ((spctl & 15U) != 6U || mode > 1U) return 0;
+    count = (uint32_t)parsed.texture_width * parsed.texture_height;
+    if (!count || output_count < count) return 0;
+    indices = (uint8_t *)malloc(count);
+    codes = (uint16_t *)malloc((size_t)count * sizeof(*codes));
+    if (!indices || !codes || !nexus_v1_vdp1_decode_mode0_bank_texture(
+            command, command_size, vdp1_vram, vdp1_vram_size, indices, codes, count)) {
+        free(indices); free(codes); return 0;
+    }
+    for (i = 0; i < count; ++i) {
+        if ((codes[i] & 0x3ffU) == 0x3feU) {
+            free(indices); free(codes); return 0;
+        }
+    }
+    sprite_offset = (craofb >> 4U) & 7U;
+    for (i = 0; i < count; ++i) {
+        Nexus_V1_Vdp1Mode1PalettePixel *pixel = &out_pixels[i];
+        uint32_t address;
+        uint16_t colour;
+        memset(pixel, 0, sizeof(*pixel));
+        pixel->texture_index = indices[i];
+        pixel->raw_colour_code = codes[i];
+        if (!indices[i] && !(parsed.draw_mode & 0x0040U)) {
+            pixel->kind = NEXUS_V1_VDP1_MODE1_PIXEL_TRANSPARENT;
+            continue;
+        }
+        address = ((codes[i] & 0x03ffU) + (sprite_offset << 8U)) &
+            (mode == 0U ? 0x03ffU : 0x07ffU);
+        colour = rl16(capture->colour_ram + address * 2U);
+        pixel->colour_ram_address = (uint16_t)address;
+        pixel->kind = NEXUS_V1_VDP1_MODE1_PIXEL_VDP2_CRAM_RGB555;
+        pixel->red = nexus_v1_vdp_rgb5_to_u8(colour, 0U);
+        pixel->green = nexus_v1_vdp_rgb5_to_u8(colour, 5U);
+        pixel->blue = nexus_v1_vdp_rgb5_to_u8(colour, 10U);
+    }
+    free(indices); free(codes);
+    return 1;
+}
+
 int nexus_v1_vdp1_mode1_palette_pixels_match(
     const Nexus_V1_Vdp1Mode1PalettePixel *resolved, size_t resolved_count,
     const Nexus_V1_Vdp1Mode1PalettePixel *expected, size_t expected_count)
@@ -7115,7 +7204,7 @@ int nexus_v1_vdp1_resolve_mode1_palette_capture(
     uint8_t sprite_offset;
     uint32_t pixel_count;
     uint32_t pixel;
-    int current_row_ended = 0;
+    int row_end_codes = 0;
 
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
@@ -7184,17 +7273,17 @@ int nexus_v1_vdp1_resolve_mode1_palette_capture(
             (uint8_t)(packed & 0x0fU);
         uint32_t address;
 
-        if (pixel % parsed.texture_width == 0U) current_row_ended = 0;
+        if (pixel % parsed.texture_width == 0U) row_end_codes = 0;
         memset(&resolved, 0, sizeof(resolved));
         resolved.texture_index = index;
         resolved.raw_colour_code = raw_codes[pixel];
-        if (current_row_ended) {
+        if (row_end_codes >= 2) {
             resolved.kind = NEXUS_V1_VDP1_MODE1_PIXEL_SUPPRESSED_AFTER_END;
         } else if (index == 0U && receipt.source_index_zero_transparent) {
             resolved.kind = NEXUS_V1_VDP1_MODE1_PIXEL_TRANSPARENT;
         } else if (index == 0x0fU && receipt.source_index_f_end_code) {
             resolved.kind = NEXUS_V1_VDP1_MODE1_PIXEL_END_CODE;
-            current_row_ended = 1;
+            ++row_end_codes;
         } else if ((resolved.raw_colour_code & 0x8000U) != 0U) {
             /* VDP1 RGB-code format: bit 15 selects direct RGB; B:G:R are
              * 5:5:5 at bits 14..10, 9..5, and 4..0. */

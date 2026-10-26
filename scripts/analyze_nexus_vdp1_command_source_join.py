@@ -40,11 +40,11 @@ def main() -> int:
                 end_seen = True
                 break
             command_type = control & 0x000f
-            if command_type > 2:
+            if control & 0x4000 or command_type > 2:
                 continue
             colour_mode = (words[2] >> 3) & 0x7
-            width = (words[5] & 0x003f) * 8
-            height = (words[5] >> 8) & 0x00ff
+            width = ((words[5] >> 8) & 0x003f) * 8
+            height = words[5] & 0x00ff
             source = words[4] * 8
             bits_per_pixel = 4 if colour_mode <= 1 else 8 if colour_mode <= 4 else 16
             source_size = width * height * bits_per_pixel // 8

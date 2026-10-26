@@ -40,11 +40,11 @@ def dgn_match_index(data_dir: Path):
 
 def command_material(vram: bytes, record):
     control = record.words[0]
-    if control & 0x8000 or (control & 0x000F) != 2:
+    if control & 0xC000 or (control & 0x000F) != 2:
         return None
     mode = (record.words[2] >> 3) & 0x7
-    width = (record.words[5] & 0x003F) * 8
-    height = (record.words[5] >> 8) & 0x00FF
+    width = ((record.words[5] >> 8) & 0x003F) * 8
+    height = record.words[5] & 0x00FF
     bits = 4 if mode <= 1 else 8 if mode <= 4 else 16
     source_offset = record.words[4] * 8
     source_size = width * height * bits // 8

@@ -345,3 +345,175 @@ int nexus_v1_vdp2_capture_decode_runtime_frame_nbg0_bitmap(
     if (out_receipt) *out_receipt = receipt;
     return 1;
 }
+
+static uint32_t capture_rgb555(uint16_t word)
+{
+    uint32_t red = ((uint32_t)word & 0x1fU) << 3U;
+    uint32_t green = ((uint32_t)word >> 2U) & 0xf8U;
+    uint32_t blue = ((uint32_t)word >> 7U) & 0xf8U;
+    return UINT32_C(0xff000000) | (red << 16U) | (green << 8U) | blue;
+}
+
+static uint32_t capture_blend_555(uint16_t source, uint32_t lower,
+                                  unsigned int ratio)
+{
+    uint32_t source_rgb = capture_rgb555(source);
+    unsigned int inverse = 32U - ratio;
+    unsigned int red = ((((source_rgb >> 16U) & 0xffU) * ratio) +
+                        (((lower >> 16U) & 0xffU) * inverse)) / 32U;
+    unsigned int green = ((((source_rgb >> 8U) & 0xffU) * ratio) +
+                          (((lower >> 8U) & 0xffU) * inverse)) / 32U;
+    unsigned int blue = (((source_rgb & 0xffU) * ratio) +
+                         ((lower & 0xffU) * inverse)) / 32U;
+    return UINT32_C(0xff000000) | ((uint32_t)red << 16U) |
+        ((uint32_t)green << 8U) | blue;
+}
+
+int nexus_v1_vdp2_capture_replay_ymir_title_menu(
+    Nexus_V1_Vdp2YmirMenuCaptureFramebuffer *framebuffer,
+    const Nexus_V1_Vdp2YmirMenuCaptureInput *input,
+    Nexus_V1_Vdp2YmirMenuCaptureReceipt *out_receipt)
+{
+    Nexus_V1_Vdp2YmirMenuCaptureReceipt receipt;
+    const uint8_t *registers;
+    uint16_t bgon;
+    uint16_t chctla;
+    uint16_t bmpna;
+    uint16_t craofa;
+    uint16_t spctl;
+    uint16_t ccctl;
+    uint16_t nbg0_priority;
+    uint16_t back_upper;
+    uint16_t back_lower;
+    uint32_t back_base;
+    unsigned int x;
+    unsigned int y;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.capture_only = 1;
+    receipt.width = (int)NEXUS_V1_VDP2_YMIR_MENU_WIDTH;
+    receipt.height = (int)NEXUS_V1_VDP2_YMIR_MENU_HEIGHT;
+    if (out_receipt) *out_receipt = receipt;
+    if (!framebuffer || !input || !input->vdp1_display_framebuffer ||
+        !input->vdp2_vram || !input->vdp2_cram || !input->vdp2_registers ||
+        input->vdp1_display_framebuffer_size !=
+            NEXUS_V1_VDP1_YMIR_FRAMEBUFFER_BYTES ||
+        input->vdp2_vram_size != NEXUS_V1_SATURN_VDP2_VRAM_BYTES ||
+        input->vdp2_cram_size != NEXUS_V1_SATURN_VDP2_CRAM_BYTES ||
+        input->vdp2_registers_size < 0x120U ||
+        input->register_byte_order ==
+            NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_UNKNOWN ||
+        !input->original_ymir_capture_verified ||
+        !input->command_trace_complete_verified) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    registers = input->vdp2_registers;
+#define CAPTURE_REG(offset) read_register16_ordered( \
+        registers, (offset), input->register_byte_order)
+    bgon = CAPTURE_REG(0x20U);
+    chctla = CAPTURE_REG(0x28U);
+    bmpna = CAPTURE_REG(0x2cU);
+    craofa = CAPTURE_REG(0xe4U);
+    spctl = CAPTURE_REG(0xe0U);
+    ccctl = CAPTURE_REG(0xecU);
+    nbg0_priority = CAPTURE_REG(0xf8U);
+    back_upper = CAPTURE_REG(0xacU);
+    back_lower = CAPTURE_REG(0xaeU);
+    back_base = ((uint32_t)(back_upper & 7U) << 17U) |
+        ((uint32_t)back_lower << 1U);
+    if (CAPTURE_REG(0x00U) != 0x8000U || CAPTURE_REG(0x0eU) != 0x0300U ||
+        bgon != 0x0001U ||
+        chctla != 0x0013U || bmpna != 0U || CAPTURE_REG(0x3cU) != 0U ||
+        craofa != 0U || CAPTURE_REG(0x70U) != 0U ||
+        CAPTURE_REG(0x72U) != 0U || CAPTURE_REG(0x74U) != 0U ||
+        CAPTURE_REG(0x76U) != 0U || CAPTURE_REG(0x78U) != 1U ||
+        CAPTURE_REG(0x7aU) != 0U || CAPTURE_REG(0x7cU) != 1U ||
+        CAPTURE_REG(0x7eU) != 0U || CAPTURE_REG(0xe8U) != 0U ||
+        spctl != 0x1536U || ccctl != 0x0043U ||
+        CAPTURE_REG(0xf0U) != 0x0102U ||
+        CAPTURE_REG(0xf2U) != 0x0300U ||
+        CAPTURE_REG(0xf4U) != 0x0504U ||
+        CAPTURE_REG(0xf6U) != 0x0706U ||
+        (nbg0_priority & 7U) != 4U ||
+        CAPTURE_REG(0x100U) != 0x1000U ||
+        CAPTURE_REG(0x108U) != 0x1000U ||
+        back_upper != 0x8003U || back_lower != 0xf800U ||
+        back_base != 0x7f000U ||
+        back_base + NEXUS_V1_VDP2_YMIR_MENU_HEIGHT * 2U >
+            input->vdp2_vram_size) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.registers_verified = 1;
+    receipt.original_ymir_capture_verified = 1;
+    receipt.command_trace_complete_verified = 1;
+
+    for (y = 0; y < NEXUS_V1_VDP2_YMIR_MENU_HEIGHT; ++y) {
+        uint16_t back = read_be16(input->vdp2_vram + back_base + y * 2U);
+        if (back != 0U) {
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        for (x = 0; x < NEXUS_V1_VDP2_YMIR_MENU_WIDTH; ++x) {
+            size_t source_pixel =
+                (size_t)y * NEXUS_V1_VDP2_NBG0_BITMAP_WIDTH + x;
+            size_t output_pixel =
+                (size_t)y * NEXUS_V1_VDP2_YMIR_MENU_WIDTH + x;
+            uint16_t vdp1 = read_be16(
+                input->vdp1_display_framebuffer + source_pixel * 2U);
+            uint8_t nbg0 = input->vdp2_vram[source_pixel];
+            uint32_t lower;
+
+            if ((vdp1 & 0x8000U) != 0U) {
+                lower = capture_rgb555(vdp1);
+                ++receipt.vdp1_direct_pixels;
+            } else if (vdp1 != 0U) {
+                unsigned int priority = (vdp1 >> 12U) & 7U;
+                unsigned int ratio_index = (vdp1 >> 10U) & 3U;
+                uint16_t priority_reg;
+                uint16_t ratio_reg;
+                unsigned int ratio;
+                uint16_t color;
+                if (priority != ((spctl >> 8U) & 7U) || ratio_index != 0U ||
+                    nbg0 != 0U || (ccctl & 0x0040U) == 0U) {
+                    if (out_receipt) *out_receipt = receipt;
+                    return 0;
+                }
+                priority_reg = CAPTURE_REG(0xf4U);
+                ratio_reg = CAPTURE_REG(0x100U);
+                if (((priority_reg >> 8U) & 7U) != priority ||
+                    ((ccctl & 0x0700U) != 0x0000U)) {
+                    if (out_receipt) *out_receipt = receipt;
+                    return 0;
+                }
+                ratio = 31U - (ratio_reg & 31U);
+                color = read_be16(input->vdp2_cram +
+                    (size_t)(vdp1 & 0x03ffU) * 2U);
+                framebuffer->rgba_buffer[output_pixel] =
+                    capture_blend_555(color, 0U, ratio);
+                ++receipt.vdp1_palette_pixels;
+                continue;
+            } else {
+                lower = UINT32_C(0xff000000);
+            }
+
+            if (nbg0 != 0U) {
+                uint16_t color = read_be16(input->vdp2_cram +
+                    (size_t)nbg0 * 2U);
+                unsigned int ratio = 31U -
+                    (CAPTURE_REG(0x108U) & 31U);
+                framebuffer->rgba_buffer[output_pixel] =
+                    capture_blend_555(color, lower, ratio);
+                ++receipt.nbg0_overlay_pixels;
+            } else {
+                framebuffer->rgba_buffer[output_pixel] = lower;
+            }
+        }
+    }
+    receipt.valid = 1;
+    receipt.renderer_permitted = 0;
+    if (out_receipt) *out_receipt = receipt;
+#undef CAPTURE_REG
+    return 1;
+}

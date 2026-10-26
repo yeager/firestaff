@@ -67,6 +67,8 @@ jobs:
           python3 scripts/test_analyze_nexus_vdp1_source_join.py
           python3 scripts/test_analyze_nexus_vdp1_source_write_join.py
           python3 scripts/test_analyze_nexus_vdp1_write_trace.py
+          python3 scripts/test_analyze_nexus_menu_bpk_vdp1_snapshot_join.py
+          python3 scripts/test_analyze_nexus_vdp1_sh2_write_trace.py
           python3 scripts/test_audit_nexus_vdp1_ymir_trace.py
           python3 scripts/test_analyze_nexus_vdp2_char_source_join.py
           python3 scripts/test_analyze_nexus_mouse_event_crossrefs.py

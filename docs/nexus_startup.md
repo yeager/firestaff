@@ -486,6 +486,70 @@ source object for the future Saturn consumer. This does not admit glyph coding,
 page/PND attributes, layer placement, or text writing; `font_loaded` remains
 closed until those parts are bound by the same runtime witness.
 
+## Debug boot memory receipt (2026-10-26)
+
+A system-built Ymir 0.4.2-dev run on TRV2 booted the hash-verified Japanese
+retail cue for 600 deterministic frames with `--debug`. It used the verified
+Japanese BIOS (SHA-256
+`dcfef4b99605f872b6c3b6d05c045385cdea3d1b702906a0ed930df7bcb7deac`) and
+recorded bounded SH-2 writes to `0x05c00000..0x05c80000`. The resulting VDP1
+VRAM dump is SHA-256
+`0e0a67c1eec3c0bf61e7358ded889d3df343a5cb7bd1154b6422636d57bf1d74`.
+
+The capture used Ymir's explicit no-render mode so that it could retain real
+emulated memory and CPU-write evidence without producing a synthetic host
+frame. It must not be used for visual parity, title/menu placement, or HUD
+claims. The raw dump and write trace are retained outside the repository on
+the external evidence volume; only their reproducible receipt is recorded
+here.
+
+## Long boot memory trace (2026-10-26)
+
+A separate Ymir `--debug --capture-boot-frames 13000` run retained a full
+memory snapshot after normal disc boot. The final VDP1 counter was 12947; its
+complete command trace had four terminal records and no VDP1 trace drops. The
+bounded source scanner found no supported textured draw commands in that
+final frame. VDP2 had NBG0, NBG1, and NBG2 enabled (`BGON=0x0007`,
+`CHCTLA=0x1212`). The SH-2 write trace reached its 250,000-row cap and reports
+420,006 dropped master-SH-2 rows, so it cannot establish complete writer
+provenance.
+
+Both NBG0 and NBG1 were 8bpp bitmap layers at VRAM offsets `0x00000` and
+`0x20000`. Comparison with the authentic retail `TITLE.BIN` and `MENU.BPK`
+data found no exact pixel-span or palette joins. The largest partial byte
+matches were 118 bytes to `TITLE.BIN` map 4, 99 bytes to a repeated
+`MENU.BPK` surface sequence, and 35 bytes to `TITLE.BIN` maps 1 and 3; these
+do not prove asset ownership. A diagnostic decode of the captured NBG0 bytes
+and CRAM shows Japanese date/time settings, the date 2026-10-26, and Cancel
+/ Confirm labels. This looks like a system date/time page and is not evidence
+that Nexus reached its title menu.
+
+This capture used `--capture-no-render`: both VDP1 framebuffers are zeroed and
+there is no screenshot. It is useful as a register and memory checkpoint only;
+it does not identify what appeared on screen or prove that Nexus reached a
+particular game menu. The raw files, SHA-256 list, and clearly labelled layer
+diagnostic previews are retained off-repository.
+
+## Captured title-menu frame reconstruction (2026-10-26)
+
+The atomic frame-59 Ymir capture loaded a previously saved Japanese retail
+title-prompt state, held Start for 60 of 120 capture frames, and dumped memory
+and the VDP1 trace in the same run. It was not a cold boot. A bounded C replay
+combines the retained VDP1 display framebuffer, NBG0 8bpp bitmap, CRAM,
+registers, and verified zero back-screen table. Its output matches all 286,720
+pixels of the hash-pinned 640×448 Ymir screenshot exactly. This confirms static
+composition for the captured menu frame; the screenshot was saved after the
+memory dump, so exact frame identity is still unproven.
+
+The replay remains capture-only and does not feed the Firestaff viewport or
+establish cold-boot-to-menu behavior, title-to-menu input handling, or gameplay
+HUD. Separately, a 13,000-loop cold boot with `--capture-no-render` stopped on
+a Japanese date/time settings page. That run has no screenshot and incomplete
+SH-2 write tracing; it does not prove that Nexus reached the game title. See
+the boot-dump receipt on the external evidence disk and
+[full capture receipt and SHA-256 identities](NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md#full-ymir-title-frame-capture-replay)
+for the menu-state reproduction command and exact scope.
+
 ## Sources
 
 - DMWeb Nexus file formats and DMN Data File Decoder.

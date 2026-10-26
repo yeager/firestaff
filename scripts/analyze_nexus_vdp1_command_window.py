@@ -89,10 +89,10 @@ def main() -> int:
         end = bool(control & 0x8000)
         end_seen |= end
         source_detail = ""
-        if command_type in (0, 1, 2) and not end:
+        if command_type in (0, 1, 2) and not control & 0xC000:
             colour_mode = (words[2] >> 3) & 0x7
-            width = (words[5] & 0x003F) * 8
-            height = (words[5] >> 8) & 0x00FF
+            width = ((words[5] >> 8) & 0x003F) * 8
+            height = words[5] & 0x00FF
             bits_per_pixel = 4 if colour_mode <= 1 else 8 if colour_mode <= 4 else 16
             source_offset = words[4] * 8
             source_size = (width * height * bits_per_pixel) // 8

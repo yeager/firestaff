@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import array
+import csv
 import hashlib
 import struct
 from pathlib import Path
@@ -57,9 +58,12 @@ def be32(data: bytes, offset: int) -> int:
 
 
 def mns_surfaces(data_dir: Path) -> list[tuple[str, bytes]]:
+    """Extract surfaces only from resources matching an authenticated disc hash."""
     surfaces: list[tuple[str, bytes]] = []
     for path in sorted(data_dir.glob("*.MNS")):
         data = path.read_bytes()
+        if hashlib.sha256(data).hexdigest() not in accepted_retail_hashes(path.name):
+            continue
         if len(data) < 0x2C or data[:4] != b"DMDF" or be32(data, 4) != len(data):
             continue
         text_offset = be32(data, 0x24)
@@ -194,48 +198,120 @@ def aggregate_source_join_status(draw_count: int, joined_count: int) -> str:
     return "complete"
 
 
+def has_informative_source(source: bytes) -> bool:
+    """Zero-filled VRAM can match padding in unrelated authenticated files."""
+    return bool(source) and any(source)
+
+
+def texture_dimensions(size_word: int) -> tuple[int, int]:
+    """Decode Saturn CMDSIZE: horizontal cells in bits 13..8, height in 7..0."""
+    return ((size_word >> 8) & 0x3F) * 8, size_word & 0xFF
+
+
+def ymir_commands(bundle: Path) -> tuple[bytes, int, list[tuple[int, tuple[int, ...]]]]:
+    """Read the last recorded VDP1 frame without relabelling its source."""
+    receipt = {}
+    for line in (bundle / "vdp1-capture-bundle.txt").read_text(encoding="ascii").splitlines():
+        key, value = line.split("=", 1)
+        if key in receipt:
+            raise ValueError("duplicate Ymir receipt field")
+        receipt[key] = value
+    if (receipt.get("format") != "ymir-vdp1-capture-bundle-v1" or
+            receipt.get("trace_file_complete") != "1" or
+            receipt.get("trace_dropped_total") != "0"):
+        raise ValueError("incomplete or dropped Ymir VDP1 trace")
+    frame = int(receipt["capture_frame_index"])
+    with (bundle / "vdp1-command-trace.csv").open(newline="", encoding="ascii") as stream:
+        rows = list(csv.DictReader(stream))
+    if len(rows) != int(receipt["trace_rows"]):
+        raise ValueError("Ymir trace row count mismatch")
+    selected = [row for row in rows if int(row["frame"]) == frame]
+    if len(selected) != int(receipt["trace_rows_for_capture_frame"]):
+        raise ValueError("Ymir capture frame row count mismatch")
+    commands = []
+    for index, row in enumerate(selected):
+        if int(row["index"]) != index:
+            raise ValueError("Ymir command indices are not contiguous")
+        commands.append((int(row["address"], 0),
+                         tuple(int(row[f"word{i}"], 0) for i in range(16))))
+    if not commands:
+        raise ValueError("Ymir capture frame has no commands")
+    return_address = None
+    for index, (address, words) in enumerate(commands):
+        if address < 0 or address % 32 or address + 32 > 512 * 1024:
+            raise ValueError("Ymir command address is out of bounds or unaligned")
+        control, link = words[:2]
+        if control & 0x8000:
+            if index != len(commands) - 1:
+                raise ValueError("Ymir trace terminates early")
+            continue
+        mode = (control >> 12) & 3
+        if mode == 0:
+            target = (address + 32) & 0x7FFFF
+        elif mode == 1:
+            target = (link << 3) & 0x7FFE0
+        elif mode == 2:
+            if return_address is None:
+                return_address = (address + 32) & 0x7FFFF
+            target = (link << 3) & 0x7FFE0
+        elif return_address is not None:
+            target = return_address
+            return_address = None
+        else:
+            target = (address + 32) & 0x7FFFF
+        if index + 1 >= len(commands) or commands[index + 1][0] != target:
+            raise ValueError("Ymir command transition does not match CMDLINK")
+    if not (commands[-1][1][0] & 0x8000):
+        raise ValueError("Ymir command trace lacks END")
+    vram = (bundle / "vdp1-vram.bin").read_bytes()
+    if len(vram) != 512 * 1024:
+        raise ValueError("Ymir VDP1 VRAM size mismatch")
+    return vram, frame, commands
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture", type=Path)
     parser.add_argument("--data-dir", type=Path, required=True)
     parser.add_argument("--frame", type=int, default=0)
     parser.add_argument("--capture-frames", type=int, default=None)
+    parser.add_argument("--ymir-bundle", action="store_true",
+                        help="read the captured frame from a Ymir dump directory")
     args = parser.parse_args()
     if args.frame < 0:
         print("NEXUS_VDP1_SOURCE_JOIN_INVALID: negative frame")
         return 1
     try:
-        required = args.capture_frames or args.frame + 1
-        selected_frame = None
-        for frame_index, frame in iter_frame_regions_file(args.capture, required):
-            if frame_index == args.frame:
-                selected_frame = frame
-                break
-        if selected_frame is None:
-            raise ValueError("selected frame is absent from capture")
-        commands = [
-            (record.offset, record.words)
-            for record in find_chain(
-                selected_frame["vdp1-vram"],
-                parse_copr(selected_frame["vdp1-state"]),
-            )
-        ]
+        if args.ymir_bundle:
+            vram, frame_index, commands = ymir_commands(args.capture)
+        else:
+            required = args.capture_frames or args.frame + 1
+            selected_frame = None
+            for frame_index, frame in iter_frame_regions_file(args.capture, required):
+                if frame_index == args.frame:
+                    selected_frame = frame
+                    break
+            if selected_frame is None:
+                raise ValueError("selected frame is absent from capture")
+            vram = selected_frame["vdp1-vram"]
+            commands = [
+                (record.offset, record.words)
+                for record in find_chain(vram, parse_copr(selected_frame["vdp1-state"]))
+            ]
         mns = mns_surfaces(args.data_dir)
         dgn = dgn_structure2_surfaces(args.data_dir)
-    except (OSError, ValueError, struct.error) as error:
+    except (OSError, KeyError, ValueError, struct.error, csv.Error) as error:
         print(f"NEXUS_VDP1_SOURCE_JOIN_INVALID: {error}")
         return 1
 
     draws: list[tuple[int, int, int, bytes]] = []
-    vram = selected_frame["vdp1-vram"]
     for offset, words in commands:
         control = words[0]
         command_type = control & 0x000F
-        if command_type > 2 or control & 0x8000:
+        if command_type > 2 or control & 0xC000:
             continue
         colour_mode = (words[2] >> 3) & 0x7
-        width = (words[5] & 0x003F) * 8
-        height = (words[5] >> 8) & 0x00FF
+        width, height = texture_dimensions(words[5])
         bits_per_pixel = 4 if colour_mode <= 1 else 8 if colour_mode <= 4 else 16
         source_offset = words[4] * 8
         source_size = (width * height * bits_per_pixel) // 8
@@ -251,7 +327,7 @@ def main() -> int:
         draws.append((offset, colour_mode, source_offset, vram[source_offset:source_end]))
 
     print(
-        f"frame={args.frame} draw_commands={len(draws)} "
+        f"frame={frame_index} draw_commands={len(draws)} "
         f"mns_surfaces={len(mns)} dgn_structure2_surfaces={len(dgn)}"
     )
     retail_files, rejected_files = authenticated_retail_files(args.data_dir)
@@ -276,7 +352,7 @@ def main() -> int:
         draw_joined = bool(
             exact or swapped_exact or dgn_exact or dgn_swapped_exact or
             file_exact or file_word_swap
-        )
+        ) and has_informative_source(source)
         if draw_joined:
             joined_draws += 1
         print(
@@ -296,6 +372,7 @@ def main() -> int:
               ("|".join(file_word_swap) if file_word_swap else "none"))
         print(f"retail_files_scanned={len(retail_files)}")
         print(f"retail_files_hash_rejected={rejected_files}")
+        print(f"source_informative={int(has_informative_source(source))}")
     print(f"source_joined_draws={joined_draws}/{len(draws)}")
     print("source_join=" + aggregate_source_join_status(len(draws), joined_draws))
     print("semantic_admission=blocked")
