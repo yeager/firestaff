@@ -24,6 +24,7 @@ title prompt. It is an emulator observation, not a hardware capture.
 python3 scripts/analyze_nexus_menu_bpk_vdp1_snapshot_join.py \
   /home/trv2/.firestaff/data/nexus/MENU.BPK \
   /home/trv2/work/firestaff-parity-debug-20261024/parity-evidence/verification/nexus_v1_ymir_title_menu_replay_20261020/dumps/vdp1-vram.bin \
+  --vdp1-command-trace /path/to/vdp1-command-trace.csv \
   --expected-vdp1-sha256 968e9d0f05de45ff8c97ea562988cd0aea7c125b54822983ca52c12edc88b895
 ```
 
@@ -67,10 +68,16 @@ were:
 | VDP1 registers | `00477de68c306db0fabcbfef46b9d24c8815c3069ab2223ef2908c975be37368` |
 | VDP1 command trace | `6346986721f5a9204cbf00e67b7053f9909806ff763b46bb58a3af838c54ac67` |
 
-It reproduced the same 86/162 whole-surface matches. The trace contains one
-textured command whose source interval overlaps the coarse observed upload
-range (`0x63e00..0x6c000`), but that command uses VDP1 colour mode 5
-(direct 16-bit colour). `MENU.BPK` output is indexed 8-bit. The overlap is
-therefore insufficient to attribute that draw to a BPK menu surface and is
-explicitly retained as non-admission evidence rather than converted into a
-renderer route.
+It reproduced the same 86/162 whole-surface matches. The frame-local trace has
+168 commands, 135 of which are textured sprite commands (VDP1 command types
+0, 1 or 2). None has a texture-source start in any matched `MENU.BPK` range.
+The apparent earlier overlap was a type-4 polyline command, not a textured
+sprite, and therefore has no texture source. This rules out the previous
+coarse overlap claim for this captured frame.
+
+The title-menu capture consequently shows that the resident `MENU.BPK` bytes
+are not enough to establish that this menu reads them. The production BPK
+gate must not be interpreted as a title-menu renderer requirement until a
+separate source-to-draw receipt identifies a frame that does consume those
+surfaces. This remains non-admission evidence: it does not identify the
+actual title/menu assets, their palette, placement, or compositor path.
