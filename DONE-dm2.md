@@ -1,3 +1,13 @@
+- 2026-10-26: The macOS DM2 DOS startup build now excludes the portable
+  software SHA-256 implementation when CommonCrypto is selected. This removes
+  the unused-init/final compiler warnings and avoids compiling the fallback
+  implementation on that platform; the software implementation remains
+  unchanged for other platforms. The full macOS `firestaff` target built, and
+  the subsequent DM2 object rebuild and application relink completed without
+  warnings. An isolated `--scan-data` against the installed original-media
+  collection reported DM1, CSB, DM2, Nexus and Theron READY in 26.7 seconds.
+  This verifies media discovery and compilation, not full runtime playability.
+
 - 2026-10-25: Reproduced the FM Towns pointer-only menu regression stopping
   after its second click at the three-second test deadline. With the same
   authentic archive and click coordinates, waiting for scan completion and

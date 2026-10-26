@@ -13,9 +13,11 @@
 #  define DM2_V1_DOS_HAVE_COMMONCRYPTO 1
 #endif
 
-/* Small, local FIPS 180-4 SHA-256 reader.  Startup admission needs the
- * manifest's SHA-256 identity, but must not pull another platform's media
- * scanner and its unrelated archive policy into DM2's DOS boot route. */
+#if !defined(DM2_V1_DOS_HAVE_COMMONCRYPTO)
+/* Small, local FIPS 180-4 SHA-256 reader for platforms without CommonCrypto.
+ * Startup admission needs the manifest's SHA-256 identity, but must not pull
+ * another platform's media scanner and its unrelated archive policy into
+ * DM2's DOS boot route. */
 typedef struct {
     uint32_t state[8];
     uint64_t bit_count;
@@ -114,6 +116,7 @@ static void dm2_v1_dos_sha256_final(DM2_V1_DosSha256 *ctx, uint8_t digest[32])
         digest[i * 4u + 3u] = (uint8_t)ctx->state[i];
     }
 }
+#endif
 
 /* Prefer macOS CommonCrypto (hardware-accelerated on Apple Silicon and modern
  * Intel).  The software path above stays for platforms without a system
