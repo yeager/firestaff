@@ -149,6 +149,29 @@ static int check_f20_hud_layout_media(M11_AssetLoader *loader,
     return 1;
 }
 
+static int check_f20_inscription_font_media(M11_AssetLoader *loader,
+                                             const char *edition)
+{
+    unsigned short nativeWidth = 0u, nativeHeight = 0u;
+    unsigned short pc34Width = 0u, pc34Height = 0u;
+    const M11_AssetSlot *font;
+    if (!M11_AssetLoader_QuerySize(loader, 120u,
+                                   &nativeWidth, &nativeHeight) ||
+        nativeWidth != 288u || nativeHeight != 8u ||
+        !M11_AssetLoader_QuerySize(loader, 258u,
+                                   &pc34Width, &pc34Height) ||
+        pc34Width != 62u || pc34Height != 21u) {
+        fprintf(stderr,
+            "%s M648 index audit: native 120=%ux%u, PC34 258=%ux%u\n",
+            edition, nativeWidth, nativeHeight, pc34Width, pc34Height);
+        return 0;
+    }
+    font = M11_AssetLoader_Load(loader, 120u);
+    return font && font->loaded && font->pixels &&
+           font->graphicIndex == 120u && font->width == 288u &&
+           font->height == 8u;
+}
+
 static int audit_f20_mirror_geometry_media(M11_AssetLoader *loader,
                                            DM1_V1_FmtownsHudEdition edition,
                                            const char *edition_name)
@@ -244,6 +267,8 @@ int main(void) {
     REQUIRE(check_f20_hud_layout_media(&loader,
                 DM1_V1_FMTOWNS_HUD_EDITION_F20E),
         "original F20E bitmap dimensions resolve through native COORD.C HUD zones");
+    REQUIRE(check_f20_inscription_font_media(&loader, "F20E"),
+        "ReDMCSB M648 ordinal 120 resolves the authentic F20E inscription font, unlike PC34 ordinal 258");
     REQUIRE(audit_f20_mirror_geometry_media(&loader,
                 DM1_V1_FMTOWNS_HUD_EDITION_F20E, "F20E"),
         "original F20E C208/C026 media resolves through the F0635 mirror zones");
@@ -341,6 +366,8 @@ int main(void) {
     REQUIRE(check_f20_hud_layout_media(&japaneseLoader,
                 DM1_V1_FMTOWNS_HUD_EDITION_F20J),
         "original F20J bitmap dimensions resolve through native COORD.C HUD zones");
+    REQUIRE(check_f20_inscription_font_media(&japaneseLoader, "F20J"),
+        "ReDMCSB M648 ordinal 120 resolves the authentic F20J inscription font, unlike PC34 ordinal 258");
     REQUIRE(audit_f20_mirror_geometry_media(&japaneseLoader,
                 DM1_V1_FMTOWNS_HUD_EDITION_F20J, "F20J"),
         "original F20J C208/C026 media resolves through the F0635 mirror zones");

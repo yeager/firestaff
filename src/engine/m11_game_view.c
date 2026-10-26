@@ -47972,7 +47972,8 @@ static const M11_AssetSlot* m11_dm1_inscription_font_slot_for_material(
         return NULL;
     }
     fontSlot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                    DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34);
+        state->assetLoader.dm1Fmtowns ? 120u :
+        DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34);
     if (!fontSlot || !fontSlot->loaded || !fontSlot->pixels ||
         fontSlot->width != DM1_V1_INSCRIPTION_FONT_WIDTH_PC34 ||
         fontSlot->height != DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34) {
@@ -48290,6 +48291,14 @@ static int m11_restore_dm1_f0107_inscription_wall_patch(
         state, M11_GFX_WALLSET0_D1C);
     int y;
 
+    /* ReDMCSB's F20E/F20J F0107 route writes M648 directly into the
+     * F0635 C1000 inscription zones. G0202 is only used by the PC34
+     * MEDIA008/413 route; applying its patch admission to F20 can reject
+     * the native inscription before any glyph is drawn. */
+    if (state && state->assetLoader.dm1Fmtowns) {
+        return 1;
+    }
+
     /* ReDMCSB DUNVIEW.C F0107:778 restores G202 from the current C10 D1C
      * wall bitmap before M648 overlays its C10-transparent cells.  This is
      * not a generic text backdrop: it is a 4x26 source crop whose position
@@ -48335,6 +48344,12 @@ static void m11_draw_dm1_front_wall_inscription_material(
         return;
     }
     material = *inputMaterial;
+    /* ReDMCSB DEFS.H assigns M648 to GRAPHICS.DAT ordinal 120 for
+     * MEDIA020/F20E/F20J. PC34 uses ordinal 258; the binary index tables
+     * are edition-specific even though both native fonts are 288x8. */
+    if (state->assetLoader.dm1Fmtowns) {
+        material.fontGraphicIndex = 120;
+    }
     if (!m11_dm1_inscription_material_raster_ready(state, &material,
                                                     &fontSlot,
                                                     &sourceCapture)) {

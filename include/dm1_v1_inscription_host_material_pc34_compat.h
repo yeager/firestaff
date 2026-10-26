@@ -165,7 +165,8 @@ static inline int DM1_V1_InscriptionSourceGlyphLayoutGatePc34(
         *outVisibleLineMask = 0u;
     }
     if (!material || !material->valid ||
-        material->fontGraphicIndex != DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34 ||
+        (material->fontGraphicIndex != DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34 &&
+         material->fontGraphicIndex != 120) ||
         material->transparentColor != DM1_V1_INSCRIPTION_TRANSPARENT_COLOR ||
         material->glyphByteCount <= 0 ||
         material->glyphByteCount >= DM1_V1_INSCRIPTION_HOST_MATERIAL_MAX_GLYPHS_PC34 ||

@@ -3094,6 +3094,17 @@ F20 dungeon palette to the top-row consumer. Source-native F20 top-row zone
 geometry and an original-frame pixel comparison remain open; this is not full
 FM Towns HUD parity.
 
+2026-10-26 F20 wall inscription font: ReDMCSB `DEFS.H` assigns
+`M648_GRAPHIC_INSCRIPTION_FONT` to GRAPHICS.DAT index 120 for MEDIA020,
+including F20E/F20J; PC34 assigns it to index 258. Authentic English and
+Japanese F20 libraries confirm index 120 is 288x8, while index 258 is 62x21.
+Firestaff previously requested PC34 index 258 unconditionally, so the native
+F20 `F0107` inscription route could not admit its 288x8 M648 raster. The
+renderer now selects index 120 for Towns, keeps the PC34 path at 258, and
+skips PC-only G0202 wall patch admission because F20 draws into F0635's C1000
+inscription zones directly. The real-media regression now checks both editions.
+This verifies native font source selection, not full inscription pixel parity.
+
 2026-10-26 F20 champion-HUD layout: a bounded resolver ports the relevant
 COORD.C static F20 records and F0635 placement/clipping rules. The G3034
 champion rows (150..218), G3038 portrait rows (110..116), and load rows
