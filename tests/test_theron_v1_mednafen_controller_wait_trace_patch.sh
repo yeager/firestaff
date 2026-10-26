@@ -127,8 +127,16 @@ if ! grep -Fq 'FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT' "$scripted_input_patch_file
    ! grep -Fq 'theron_script_trace_frame = ++theron_script_frame;' "$scripted_input_patch_file" ||
    ! grep -Fq 'theron_script_trace_frame == start' "$scripted_input_patch_file" ||
    ! grep -Fq 'cursor = next ? next + 1 : at + strlen(at);' "$scripted_input_patch_file" ||
-   ! grep -Fq 'MDFN_en16lsb(data_ptr[0], theron_script_original_port0);' "$scripted_input_patch_file"; then
+   ! grep -Fq 'devices[i]->Update(data_ptr[i]);' "$scripted_input_patch_file" ||
+   ! grep -Fq 'MDFN_en16lsb(data_ptr[0], physical_mask | scripted_mask);' "$scripted_input_patch_file"; then
     printf 'FAIL: scripted PCE input patch no longer retains explicit replay provenance\n' >&2
+    exit 1
+fi
+
+update_line=$(grep -nF 'devices[i]->Update(data_ptr[i]);' "$scripted_input_patch_file" | head -n1 | cut -d: -f1)
+overlay_line=$(grep -nF 'MDFN_en16lsb(data_ptr[0], physical_mask | scripted_mask);' "$scripted_input_patch_file" | head -n1 | cut -d: -f1)
+if [[ -z $update_line || -z $overlay_line || $overlay_line -le $update_line ]]; then
+    printf 'FAIL: scripted PCE input must overlay the physical controller after polling\n' >&2
     exit 1
 fi
 if ! grep -Fq "key[0] == 'i') return 0x0001" "$scripted_input_patch_file" ||
