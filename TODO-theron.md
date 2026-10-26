@@ -1,3 +1,19 @@
+## 2026-10-26 — JP cold-start follow budget was spent in another bank
+
+- A 360-second PCE Fast cold start used the authentic Japanese Rev. 1 CUE and
+  System Card, with `run@9600:300,i@12000:60,i@15000:60,up@18000:60`.
+  All four events passed the scripted controller-consumption verifier, but
+  every classified poll was System Card code. The capture observed no CD IRQ,
+  SCSI command, raw-sector span, authenticated CD-to-RAM receipt, or game
+  `$E009` dispatch, and reported `transition=missing`.
+- The first logical `$44D2` execution mapped to physical `$1004D2` (MPR2
+  `$80`), not the previously observed game poll at physical `$0D04D2` (MPR2
+  `$68`). It exhausted the 2,048-instruction follow budget before any matching
+  game-bank poll. A future follow capture must distinguish physical mappings;
+  this run establishes neither a game-owned input nor a source-to-RAM join.
+- The isolated capture and original media remain private; no game, firmware,
+  save, or raw trace bytes are stored in Git.
+
 ## 2026-10-26 — normal PCE scripted RUN reaches the controller
 
 - An isolated normal-PCE reference build applied the complete input trace
