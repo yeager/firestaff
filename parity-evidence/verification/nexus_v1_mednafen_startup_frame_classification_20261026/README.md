@@ -45,3 +45,22 @@ of mouse input support in Firestaff.
 These screenshots and the temporary profile were deleted after inspection.
 They are observational evidence only: they neither establish the original
 Saturn asset owner for the surface nor authorize a host-drawn replacement.
+
+## Follow-up: Ymir debug-memory input receipt
+
+Ymir's Debug > Dump all memory action was used on the same isolated profile
+immediately before and after one right-direction Control Pad input. The raw
+dumps remained local and were deleted after comparison. Their SHA-256 receipts
+were:
+
+| Region | Before | After |
+| --- | --- | --- |
+| WRAM-H | `e0e2122264526eb7e7695b6c5b92f900938e94b02a74d9a8a4c7d95e187d41fb` | `f49c447c1189170cdb064ea5ca24d46ea5b306c818335b2491c8040ffcb1eb4d` |
+| VDP2 VRAM | `07854d2fef297a06ba81685e660c332de36d5d18d546927d30daad6d7fda1541` | `5f3c6446774358ac37920e4064cdae54246dbdc6b3c01fc9c50d72948d2e89b5` |
+
+The WRAM-H comparison changed 476,550 bytes across 28,892 ranges, so it is
+not yet a stable field-level consumer receipt. VDP2 VRAM changed 2,816 bytes;
+the first changed range is `0x40000..0x403ff`, followed by tile-like changes
+from `0x60000`. This is strong evidence that the observed date/time surface is
+live Saturn display state, but it remains Ymir-only diagnostic evidence and
+does not satisfy the Mednafen-specific menu admission gate.
