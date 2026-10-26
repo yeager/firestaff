@@ -318,6 +318,30 @@ static void test_export_negative_slot_leaves_per_game_zero(void) {
           "negative game slot leaves per-game fields zero");
 }
 
+static void test_export_out_of_range_slot_leaves_per_game_zero(void) {
+    M12_StartupMenuState state;
+    M12_LauncherRuntimeOptions opts;
+    M12_GameOptions* finalGame;
+    memset(&state, 0, sizeof(state));
+    seed_dm1_state(&state);
+    finalGame = &state.gameOptions[M12_CONFIG_GAME_COUNT - 1];
+    finalGame->languageIndex = 9;
+    finalGame->cheatsEnabled = 1;
+    finalGame->gameSpeed = M12_GAME_SPEED_FASTER;
+
+    M12_StartupMenu_ExportLauncherRuntimeOptions(
+        &state, M12_CONFIG_GAME_COUNT, &opts);
+    check(opts.languageIndex == 0 && opts.cheatsEnabled == 0 &&
+              opts.gameSpeed == 0,
+          "game-count boundary leaves per-game fields zero");
+
+    M12_StartupMenu_ExportLauncherRuntimeOptions(
+        &state, M12_CONFIG_GAME_COUNT + 3, &opts);
+    check(opts.languageIndex == 0 && opts.cheatsEnabled == 0 &&
+              opts.gameSpeed == 0,
+          "out-of-range slot does not export final game's options");
+}
+
 static void test_launch_intent_carries_options(void) {
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
@@ -387,6 +411,142 @@ static void test_invalid_intent_leaves_options_unbound(void) {
     check(intent.valid == 0, "no activated entry -> invalid intent");
     check(intent.launcherOptionsBound == 0,
           "no activated entry -> launcherOptions unbound");
+}
+
+static void test_system_entries_do_not_produce_game_launch_intents(void) {
+    M12_StartupMenuState state;
+    M12_LaunchIntent intent;
+    M12_StartupLaunchGate gate;
+    M12_StartupBootReadiness readiness;
+    int i;
+
+    memset(&state, 0, sizeof(state));
+    M12_StartupMenu_InitWithDataDir(&state, ownedDataDirectory, NULL);
+    for (i = 0; i < (int)(sizeof(state.entries) / sizeof(state.entries[0])); ++i) {
+        state.entries[i].kind = M12_MENU_ENTRY_SETTINGS;
+        /* A stale or shared game id must not turn a system action into a
+         * launch intent. System rows do not own per-game option slots. */
+        state.entries[i].gameId = "dm1";
+        state.activatedIndex = i;
+        intent = M12_StartupMenu_GetLaunchIntent(&state);
+        check(intent.valid == 0,
+              "system menu entries never produce game launch intents");
+        check(intent.launcherOptionsBound == 0,
+              "system menu entries never bind per-game launcher options");
+
+        state.view = M12_MENU_VIEW_SETTINGS;
+        M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+        check(state.activatedIndex == i,
+              "system entry indices remain valid menu indices");
+
+        if (i < M12_CONFIG_GAME_COUNT) {
+            state.view = M12_MENU_VIEW_GAME_OPTIONS;
+            state.gameCardFlowStage = 2;
+            state.gameOptSelectedRow = M12_GAME_OPT_ROW_CHEATS;
+            state.gameOptions[i].cheatsEnabled = 0;
+            M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+            check(state.view == M12_MENU_VIEW_MAIN,
+                  "system entries cannot remain in game options view");
+            check(state.gameOptions[i].cheatsEnabled == 0,
+                  "system entries cannot change per-game options");
+        }
+    }
+
+    M12_StartupMenu_InitWithDataDir(&state, ownedDataDirectory, NULL);
+    state.entries[M12_CONFIG_GAME_COUNT].kind = M12_MENU_ENTRY_GAME;
+    state.entries[M12_CONFIG_GAME_COUNT].gameId = "unknown-game";
+    state.activatedIndex = M12_CONFIG_GAME_COUNT;
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    check(intent.valid == 0,
+          "unknown game ids cannot produce launch intents");
+    M12_StartupMenu_GetBootReadiness(&state, M12_CONFIG_GAME_COUNT,
+                                     &readiness);
+    check(readiness.handled == 0,
+          "unknown game ids are rejected by boot readiness");
+    M12_StartupMenu_GetLaunchGate(&state, M12_CONFIG_GAME_COUNT, &gate);
+    check(gate.handled == 0 && gate.canLaunch == 0,
+          "unknown game ids are rejected by the launch gate");
+
+    M12_StartupMenu_InitWithDataDir(&state, ownedDataDirectory, NULL);
+    state.entries[0].gameId = "unknown-game";
+    state.selectedIndex = 0;
+    state.gameOptions[0].cheatsEnabled = 0;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    check(state.view == M12_MENU_VIEW_MAIN && state.activatedIndex == -1,
+          "unknown game cards cannot open another game's options");
+    check(state.gameOptions[0].cheatsEnabled == 0,
+          "unknown game cards leave every game option untouched");
+}
+
+static void test_quick_resume_resolves_game_row_independently_of_slot(void) {
+    M12_StartupMenuState state;
+    M12_MenuEntry movedEntry;
+    M12_LaunchIntent intent;
+    const char* dataRoot = getenv("FIRESTAFF_TEST_DM1_DATA_ROOT");
+
+    if (!dataRoot || !dataRoot[0]) {
+        puts("SKIP quick-resume row-order check: authentic DM1 data root is not configured");
+        return;
+    }
+
+    memset(&state, 0, sizeof(state));
+    M12_StartupMenu_InitWithDataDir(&state, dataRoot, "dm1");
+    if (!M12_AssetStatus_GameAvailable(&state.assetStatus, "dm1")) {
+        puts("SKIP quick-resume row-order check: authentic DM1 media is unavailable");
+        M12_StartupMenu_Destroy(&state);
+        return;
+    }
+
+    /* Keep the real hash-matched media snapshot and move only its menu row.
+     * Quick-resume state here selects the UI handoff; no fake save or archive
+     * is introduced to claim runtime data. */
+    movedEntry = state.entries[0];
+    state.entries[0] = state.entries[2];
+    state.entries[2] = movedEntry;
+    state.languageExplicit = 1;
+    state.gameOptions[0].languageIndex = 0;
+    state.gameOptions[0].cheatsEnabled = 1;
+    state.gameOptions[2].cheatsEnabled = 0;
+    state.assetStatus.dm1DungeonLanguage = 0;
+    state.quickResumeAvailable = 1;
+    snprintf(state.quickResumeGameId,
+             sizeof(state.quickResumeGameId),
+             "%s",
+             "dm1");
+    state.selectedIndex = -1;
+
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    check(state.activatedIndex == 2,
+          "quick resume stores the matching menu row as activatedIndex");
+    check(state.launchRequested && state.quickResumeLaunchRequested,
+          "quick resume launches after resolving a reordered game row");
+
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    check(intent.gameId && strcmp(intent.gameId, "dm1") == 0,
+          "quick resume keeps the game id after row reordering");
+    check(intent.launcherOptionsBound && intent.options.cheatsEnabled == 1,
+          "quick resume binds options from the DM1 game slot");
+    M12_StartupMenu_Destroy(&state);
+}
+
+static void test_cli_game_preselection_uses_game_menu_row(void) {
+    M12_StartupMenuState state;
+    const M12_MenuEntry* selectedEntry;
+
+    check(M12_StartupMenu_GetGameOptionsSlot("dm1") == 0 &&
+              M12_StartupMenu_GetGameOptionsSlot("csb") == 1 &&
+              M12_StartupMenu_GetGameOptionsSlot("dm2") == 2 &&
+              M12_StartupMenu_GetGameOptionsSlot("nexus") == 3 &&
+              M12_StartupMenu_GetGameOptionsSlot("theron") == 4 &&
+              M12_StartupMenu_GetGameOptionsSlot("unknown") == -1,
+          "game option slots are resolved from supported game ids");
+
+    memset(&state, 0, sizeof(state));
+    M12_StartupMenu_InitWithDataDir(&state, ownedDataDirectory, "dm2");
+    selectedEntry = M12_StartupMenu_GetEntry(&state, state.selectedIndex);
+    check(selectedEntry && selectedEntry->kind == M12_MENU_ENTRY_GAME &&
+              strcmp(selectedEntry->gameId, "dm2") == 0,
+          "CLI game preselection points to the matching game menu row");
 }
 
 static void test_custom_music_directory_selection_validation(void) {
@@ -577,9 +737,13 @@ int main(void) {
     test_export_field_mapping();
     test_export_clamps();
     test_export_negative_slot_leaves_per_game_zero();
+    test_export_out_of_range_slot_leaves_per_game_zero();
     test_launch_intent_carries_options();
     test_launch_intent_options_follow_constraints();
     test_invalid_intent_leaves_options_unbound();
+    test_system_entries_do_not_produce_game_launch_intents();
+    test_quick_resume_resolves_game_row_independently_of_slot();
+    test_cli_game_preselection_uses_game_menu_row();
     test_custom_music_directory_selection_validation();
     if (SDL_Init(0)) {
         test_custom_music_dialog_thread_handoff_and_destroy();

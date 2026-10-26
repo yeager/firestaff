@@ -12,6 +12,53 @@ those bytes to the authentic Saturn save/load implementation.
 
 ## Current evidence boundary
 
+The current workstation's authentic `~/.firestaff/data/nexus/MENU.BPK` has
+SHA-256 `f2f78dddfe37a5ff414775ae888f164624e987059934b034ba36299cc769d2ca`,
+the English retail revision admitted by
+`scripts/analyze_nexus_vdp1_source_join.py`. The deterministic Ymir title-menu
+capture below uses the Japanese disc and Japanese BIOS. Its VDP1-to-resource
+join therefore cannot establish source ownership for the installed English
+menu archive. Capture the same title/menu interval from the English retail
+disc and join it against this installed authentic data before changing the
+production renderer gate. Keep the Japanese capture as separate regional
+evidence.
+
+2026-10-27 TRV2 Firestaff v3.0.415 direct CLI probe against the authentic
+Japanese Saturn corpus selected `DM.BIN` (MD5
+`e88d60859f65f08fa622e1992b02280f`). After 110 boot-probe frames and one
+scripted Enter, the receipt reported `titleReady=1`, `levelLoaded=0`,
+`menu=0`, and `menu-bpk-prs3-capture-required`. The real-data
+`test_nexus_v1_native_menu_mouse_title.sh` also passed through the visible M12
+mouse flow and stopped at the same title gate. These SDL dummy runs prove
+authentic data selection and title handoff only; they do not prove an in-game
+Nexus menu, save load, or playable level.
+
+An older 600-frame Mednafen capture on the authentic English merged disc
+(`run-authentic-merged-menu-20260811`, disc SHA-256
+`5ab2fbd572d454e4a9df024e2bb6b3cd30f84018c3e650bd945bd52742edd83d`) does
+not close that gap. The source-join analyzer found one VDP1 direct-colour draw
+and no exact match against the 126 hash-verified retail files at each sampled
+frame 299, 300, 301, 320, 360, 400, 500 and 599; the source remained unbound.
+The separate authentic English-disc capture
+(`run-authentic-english-menu-20260811`) records manifest disc SHA-256
+`f3575af985cadbecc74edda0c51451ffeea775054ec5fcdd7c4f960dcdc0cc17`. This
+also does not identify a retail source for its sampled direct-colour draw.
+Against the installed English Nexus data, frames 0, 299, 300, 301, 320, 360,
+400, 500 and 599 each produced one unbound draw and zero exact matches across
+126 hash-verified files. The manifest skips 1,200 emulation frames, captures
+600 frames, and schedules Start at emulation frame 1,500; the input patch's
+frame counter is not reset by the capture skip, so the press falls within the
+capture window, around capture frame 300. The raw VDP1/source join still does not
+identify the retail source or establish whether the input caused a visible
+title-to-menu transition. Keep this separate from the English merged-disc
+negative result; neither capture authorizes renderer admission.
+An earlier cold-start capture requested 400 frames but retained only 48 before
+its 45-second timeout, before its scheduled Start input at capture frame 300.
+These are incomplete or negative provenance observations, not menu or
+renderer evidence. Keep the Nexus menu gate closed until a complete,
+session-bound English capture identifies the retail VDP1/CLUT composition and
+interactive title-to-menu transition.
+
 PR #19 merged the corrected NBG1 TileFetcher address path and a scroll-offset
 regression. Its focused test verifies the bounded name-table fetch behavior;
 this does not bind the
