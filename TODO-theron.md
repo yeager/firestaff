@@ -11,6 +11,12 @@
   `$68`). It exhausted the 2,048-instruction follow budget before any matching
   game-bank poll. A future follow capture must distinguish physical mappings;
   this run establishes neither a game-owned input nor a source-to-RAM join.
+- The reference tracer now supports an exact physical-PC filter. In the
+  original Japanese F5 state, filter `$0D04D2` captured the game-owned UP
+  poll and 2,048 follow instructions; filter `$1004D2` captured no `$44D2`
+  window or follow in the same state. Both runs still lacked CD-to-RAM origin
+  receipts and reported `transition=missing`. The filter improves diagnostics,
+  not the evidence for a particular loaded Track 02 source.
 - The isolated capture and original media remain private; no game, firmware,
   save, or raw trace bytes are stored in Git.
 

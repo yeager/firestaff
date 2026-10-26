@@ -96,6 +96,7 @@ vdc_io_trace_limit=${THERON_CAPTURE_VDC_IO_TRACE_LIMIT:-65536}
 capture_pce_fast_vram_commit_trace=${THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE:-0}
 pce_fast_vram_commit_trace_limit=${THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT:-65536}
 pce_fast_44d2_follow_limit=${THERON_CAPTURE_PCE_FAST_44D2_FOLLOW_LIMIT:-128}
+capture_44d2_physical_pc=${THERON_CAPTURE_44D2_PHYSICAL_PC-}
 input_trace_limit_default=65536
 if [[ -n "$replay_input_script" || -n "$host_key" || -n "$host_key_sequence" ]]; then
     # Long boot/replay plans can reach the old 65,536-read ceiling before the
@@ -223,6 +224,18 @@ if [[ ! "$pce_fast_44d2_follow_limit" =~ ^[0-9]+$ ]] ||
    (( pce_fast_44d2_follow_limit < 1 || pce_fast_44d2_follow_limit > 2048 )); then
     printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_44D2_FOLLOW_LIMIT must be an integer from 1 through 2048' >&2
     exit 1
+fi
+if [[ -n "$capture_44d2_physical_pc" ]]; then
+    if [[ ! "$capture_44d2_physical_pc" =~ ^(0[xX])?[0-9a-fA-F]{1,6}$ ]]; then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_44D2_PHYSICAL_PC must be a hexadecimal HuC6280 physical PC' >&2
+        exit 1
+    fi
+    capture_44d2_filter_digits=${capture_44d2_physical_pc#0x}
+    capture_44d2_filter_digits=${capture_44d2_filter_digits#0X}
+    if (( 16#$capture_44d2_filter_digits > 0x1fffff )); then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_44D2_PHYSICAL_PC exceeds the HuC6280 physical address range' >&2
+        exit 1
+    fi
 fi
 if [[ ! "$input_trace_limit" =~ ^[0-9]+$ ]] ||
    (( input_trace_limit < 65536 || input_trace_limit > 1048576 )); then
@@ -1448,6 +1461,7 @@ launch=(
     FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace" \
     FIRESTAFF_THERON_3879_TRACE="$indirect_target_trace" \
     FIRESTAFF_THERON_44D2_FOLLOW_LIMIT="$pce_fast_44d2_follow_limit" \
+    FIRESTAFF_THERON_44D2_PHYSICAL_PC="$capture_44d2_physical_pc" \
     FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE="$cd_ram_target_write_trace" \
     FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_TRACE="$cd_data_port_read_trace" \
     FIRESTAFF_THERON_PCE_FAST_TRACK02_INDEX1_FILE_OFFSET="$track02_index1_file_offset" \
@@ -2177,6 +2191,7 @@ fi
         sed 's/^/configured_profile_sram=/' "$profile_sram_manifest"
     fi
     printf 'autoload_state_md5=%s\n' "$autoload_state_md5"
+    printf 'runtime_44d2_physical_pc_filter=%s\n' "${capture_44d2_physical_pc:-any}"
     printf 'post_dungeon_overlay_replay=%s\n' "$replay_post_dungeon_overlay"
     printf 'input_transactions=%s\n' "$transition_input_count"
     printf 'input_trace_limit=%s\n' "$input_trace_limit"
