@@ -92,6 +92,7 @@ typedef struct {
     char name1[8];
     char name2[20];
     int8_t party_position;
+    int8_t hero_type;
     /* Read-only c_hero spell-admission inputs.  These expose the original
      * SKSAVE state to presentation/tests without giving callers a way to
      * fabricate a castable champion. */

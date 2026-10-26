@@ -12376,6 +12376,15 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
             dst->towns_spell_cooldown =
                 (uint8_t)source_hero->handcooldown[2];
             dst->towns_spell_cooldown_source_bound = 1;
+            /* SKProject's live c_party entry retains HeroType from the
+             * selected mirror. The FM Towns HUD reads that value directly
+             * for CHAMPIONS/<HeroType>/0; the DOS c_hero byte-257 bridge
+             * below is not the owner for this native Towns party. */
+            if (source_hero->herotype >= 0 &&
+                source_hero->herotype <= 15) {
+                dst->portrait_index = (uint8_t)source_hero->herotype;
+                dst->portrait_type_source_bound = 1;
+            }
         }
         if (rt->source_party_valid &&
             slot < rt->source_party.heros_in_party) {
@@ -12390,8 +12399,10 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
             dst->stamina_pct = stat_receipt.champions[slot].stamina_pct;
             dst->mana_pct = stat_receipt.champions[slot].mana_pct;
             dst->state_source_bound = 1;
-            dst->portrait_index = raw[257];
-            dst->portrait_type_source_bound = 1;
+            if (!hud.towns_squad_route_valid) {
+                dst->portrait_index = raw[257];
+                dst->portrait_type_source_bound = 1;
+            }
         }
         memcpy(dst->name, champ->first_name, DM2_V1_HUD_CHAMPION_NAME_MAX);
         dst->name[DM2_V1_HUD_CHAMPION_NAME_MAX] = '\0';
@@ -17042,6 +17053,7 @@ int dm2_v1_runtime_get_source_hero_state(
     memcpy(out_state->name1, hero->name1, sizeof(out_state->name1));
     memcpy(out_state->name2, hero->name2, sizeof(out_state->name2));
     out_state->party_position = hero->partypos;
+    out_state->hero_type = hero->herotype;
     out_state->cur_mp = hero->curMP;
     out_state->wizardry_skill = hero->ability[DM2_ABILITY_WIZARDRY][0];
     out_state->rune_count = hero->nrunes;

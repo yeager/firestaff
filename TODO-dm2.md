@@ -149,6 +149,17 @@ verification does not reproduce it. Source reference:
 
 # Firestaff TODO — DM2
 
+2026-10-26 FM Towns champion portrait binding: the live Towns HUD now reads
+`HeroType` from the authenticated source `c_party` champion selected by
+`DM2_SELECT_CHAMPION`. The prior path admitted portraits only from byte 257
+of the DOS `c_hero` record, so the Towns HUD could omit its source portraits.
+The source hero-state receipt exposes `HeroType` for regression diagnostics.
+`dm2_fmtowns_m11_gameplay_real_media` passes through New Game, movement,
+inventory, and active-champion rendering with at least one original portrait
+and zero fallback portraits. This corrects portrait admission only; the
+reported full Towns HUD and dungeon viewport still require a same-state
+comparison against SKProject/original emulator output.
+
 2026-10-21 original-media CLI/menu regression matrix:
 `dm2_v1_dos_native_cli_boot`, `dm2_v1_mac_native_cli_boot`,
 `dm2_v1_amiga_native_cli_boot`, and `dm2_v1_fmtowns_native_cli_boot` passed

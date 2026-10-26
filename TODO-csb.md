@@ -1,3 +1,14 @@
+2026-10-26 FM Towns C151..C154 champion row: the generic PC HUD gate
+required C011=14x26 and suppressed the entire party row for authentic F31,
+where C011 is 14x39. The F31 route now admits only the source-bound champion
+materials, then draws the C696-positioned status panels and C028 icons; its
+spell, menu, idle-action and movement regions remain on their Towns-specific
+compositors. The packed original-media tests now assert nonblack pixels in
+the F31 C151..C154/C113..C116 row and pass for English and Japanese media.
+This verifies that the source row is presented, not complete framebuffer or
+original-emulator parity. The reported broad Towns viewport/HUD defects are
+still open.
+
 2026-10-26 user-reported CSB Amiga defects: the dungeon viewport looks badly
 wrong (alcoves and wall torches collapse to black holes, inscriptions are
 hard to read, and floor trap doors are invisible), the intro animation is

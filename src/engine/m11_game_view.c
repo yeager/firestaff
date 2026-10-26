@@ -6266,9 +6266,44 @@ static void m11_draw_csb_v1_runtime_hud(const M11_GameViewState *state,
 {
     M11_GameViewState source_party_state;
     const M11_GameViewState *party_state;
+    const CSB_V1_BootProfile *profile;
 
     if (!state || !framebuffer || framebufferWidth < 320 ||
         framebufferHeight < 200) {
+        return;
+    }
+
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    if (m11_csb_is_fmtowns_profile(profile)) {
+        /* F31's C696 owns the same C151..C154 champion-box geometry and
+         * C113..C116 icon row used by these shared source consumers, but its
+         * C011 rune strip is 14x39. The PC3.4 HUD gate below requires 14x26
+         * and therefore suppresses the entire party row before it can draw.
+         * Admit only the independently source-bound champion materials here;
+         * the F31 menu, spell, idle-action, and movement regions are composed
+         * by their native overlays after the viewport has been restored. */
+        party_state = m11_csb_v1_party_hud_source_state(
+            state, &source_party_state);
+        if (!party_state) {
+            m11_clear_csb_v1_party_hud_source_surfaces(
+                framebuffer, framebufferWidth, framebufferHeight);
+            m11_clear_csb_v1_message_area_source_owned(
+                state, framebuffer, framebufferWidth, framebufferHeight);
+            return;
+        }
+        if (!m11_csb_v1_install_runtime_champion_materials(state)) {
+            m11_clear_dm1_v1_top_row_receipt_zones(
+                framebuffer, framebufferWidth, framebufferHeight);
+            m11_clear_csb_v1_message_area_source_owned(
+                state, framebuffer, framebufferWidth, framebufferHeight);
+            return;
+        }
+        m11_draw_v1_champion_icons(party_state, framebuffer,
+                                   framebufferWidth, framebufferHeight);
+        m11_draw_party_panel(party_state, framebuffer,
+                             framebufferWidth, framebufferHeight);
+        m11_clear_csb_v1_message_area_source_owned(
+            party_state, framebuffer, framebufferWidth, framebufferHeight);
         return;
     }
 

@@ -137,6 +137,28 @@ static uint32_t f31_viewport_fnv1a(const uint8_t *framebuffer,
     return hash;
 }
 
+static size_t f31_nonblack_champion_row_pixels(const uint8_t *framebuffer)
+{
+    static const int status_left[] = {0, 69, 138, 207};
+    size_t count = 0u;
+    int slot, x, y;
+
+    if (!framebuffer) return 0u;
+    for (slot = 0; slot < 4; ++slot) {
+        for (y = 0; y < 29; ++y) {
+            for (x = status_left[slot]; x < status_left[slot] + 67; ++x) {
+                if (framebuffer[(size_t)y * 320u + (size_t)x] != 0u) ++count;
+            }
+        }
+    }
+    for (y = 0; y < 29; ++y) {
+        for (x = 281; x < 320; ++x) {
+            if (framebuffer[(size_t)y * 320u + (size_t)x] != 0u) ++count;
+        }
+    }
+    return count;
+}
+
 static int f31_has_native_runtime_group_sprite(const M11_GameViewState *view)
 {
     int object_sprite_count;
@@ -2009,6 +2031,8 @@ int main(void)
     live_frame_nonblack = 0;
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
+    CHECK(f31_nonblack_champion_row_pixels(framebuffer) > 0u,
+          "F31 source C151..C154 status panels and C113..C116 icons render beside the viewport");
     {
         CSB_V1_StartupRenderState_PC34 closed_state;
         CSB_V1_StartupRenderPlan_PC34 closed_plan;

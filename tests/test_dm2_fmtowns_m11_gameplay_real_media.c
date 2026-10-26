@@ -765,6 +765,13 @@ int main(void)
           "FM Towns retains the first champion's second authentic hand");
     check(dm2_v1_runtime_get_active_champion_index() == 0,
           "FM Towns reads the source party.curacthero for inventory ownership");
+    {
+        DM2_V1_RuntimeSourceHeroStateReceipt hero_state;
+        memset(&hero_state, 0, sizeof(hero_state));
+        check(dm2_v1_runtime_get_source_hero_state(0, &hero_state) &&
+                  hero_state.hero_type >= 0 && hero_state.hero_type <= 15,
+              "FM Towns source party retains the selected original HeroType");
+    }
     memset(&hud_render_receipt, 0, sizeof(hud_render_receipt));
     memset(framebuffer, 0, sizeof(framebuffer));
     check(dm2_v1_boot_runtime_render_frame(
@@ -776,8 +783,10 @@ int main(void)
               hud_render_receipt.runtime_m11_frame_hud_material_plan_command_count >= 4 &&
               hud_render_receipt.runtime_m11_frame_hud_material_plan_consumed &&
               hud_render_receipt.runtime_render_no_core_fallbacks &&
+              dm2_v1_runtime_last_asset_hud_portrait_count() > 0 &&
+              dm2_v1_runtime_last_fallback_hud_portrait_count() == 0 &&
               hud_render_receipt.runtime_render_blocked_material_draw_count == 0,
-          "FM Towns keeps its source squad HUD rendered after selecting an active champion");
+          "FM Towns keeps the source HeroType portrait and squad HUD after selecting an active champion");
     {
         int source_slot = -1;
         uint32_t source_object = 0u;
