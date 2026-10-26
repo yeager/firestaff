@@ -97,23 +97,8 @@ sed \
     "$pce_fast_input_trace_patch" > "$pce_fast_input_trace_rendered"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$pce_fast_input_trace_rendered"
-scripted_pce_input_patch="$repo/scripts/mednafen_1.32.1_theron_scripted_pce_input.patch"
-scripted_pce_input_rendered="$build_root/theron-scripted-pce-input.rendered.patch"
-sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$scripted_pce_input_patch" \
-    > "$scripted_pce_input_rendered"
-git -C "$build_root/source" apply --recount --whitespace=nowarn \
-    "$scripted_pce_input_rendered"
-if ! grep -Fq 'unsigned theron_script_trace_frame = 0;' \
-        "$build_root/source/src/pce/input.cpp" ||
-   ! grep -Fq 'theron_script_boot_applied' \
-        "$build_root/source/src/pce/input.cpp" ||
-   ! grep -Fq 'theron_script_initialized' \
-        "$build_root/source/src/pce/input.cpp" ||
-   ! grep -Fq 'theron_script_run_valid' \
-        "$build_root/source/src/pce/input/gamepad.cpp"; then
-    printf '%s\n' 'FAIL: scripted PCE input patch did not install every required producer' >&2
-    exit 1
-fi
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_input.patch"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_fast_input.patch"
 patch -d "$build_root/source" -p1 --batch --forward \

@@ -1,27 +1,11 @@
-diff --git a/src/pce/input.cpp b/src/pce/input.cpp
-index 4511b63..2c6c4ef 100644
 --- a/src/pce/input.cpp
 +++ b/src/pce/input.cpp
-@@ -19,6 +19,9 @@
- #include "input.h"
+@@ -19,0 +20,4 @@
 +#include <stdio.h>
 +#include <stdlib.h>
 +#include <string.h>
- #include "huc.h"
-FIRESTAFF_PATCH_BLANK_CONTEXT
- #include "vce.h"	// For debugging only(but not the debugger :b)
-@@ -31,6 +32,7 @@
-FIRESTAFF_PATCH_BLANK_CONTEXT
- namespace MDFN_IEN_PCE
- {
 +unsigned theron_script_trace_frame = 0;
-FIRESTAFF_PATCH_BLANK_CONTEXT
- enum
- {
-@@ -93,6 +95,24 @@ static int InputTypes[5] = { 0 };
- static uint8 *data_ptr[5];
- static bool SEL, CLR;
- static uint8 read_index = 0;
+@@ -95,0 +99,19 @@
 +static bool theron_script_boot_applied = false;
 +static uint16 theron_script_boot_original_port0 = 0;
 +
@@ -40,13 +24,8 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 + if(key_length == 4 && !strncmp(key, "left", 4)) return 0x0080;
 + return 0;
 +}
- static bool DisableSR = false;
-FIRESTAFF_PATCH_BLANK_CONTEXT
- static void RemakeDevices(int which = -1)
-@@ -161,6 +181,24 @@ void PCEINPUT_SetInput(unsigned port, const char *type, uint8 *ptr)
-FIRESTAFF_PATCH_BLANK_CONTEXT
-  data_ptr[port] = (uint8 *)ptr;
-FIRESTAFF_PATCH_BLANK_CONTEXT
++
+@@ -161,0 +181,19 @@
 + if(port == 0 && ptr && !theron_script_boot_applied)
 + {
 +  const char *script = getenv("FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT");
@@ -65,13 +44,8 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +   theron_script_boot_applied = true;
 +  }
 + }
-  RemakeDevices(port);
- }
-FIRESTAFF_PATCH_BLANK_CONTEXT
-@@ -178,6 +216,20 @@ uint16 INPUT_HESHack(void)
-FIRESTAFF_PATCH_BLANK_CONTEXT
- void INPUT_Frame(void)
- {
++
+@@ -180,0 +219,14 @@
 + static bool theron_script_initialized = false;
 + static bool theron_script_valid = false;
 + static unsigned theron_script_frame = 0;
@@ -86,13 +60,7 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +  bool emitted;
 +  char key[8];
 + } theron_script_events[32];
-  static FILE *theron_input_trace = NULL;
-  static uint16 theron_previous_port0 = 0xffff;
-  if(!theron_input_trace)
-@@ -203,6 +255,109 @@ void INPUT_Frame(void)
-    theron_previous_port0 = port0;
-   }
-  }
+@@ -193,0 +246,103 @@
 + if(!theron_script_initialized)
 + {
 +  const char *script = getenv("FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT");
@@ -196,38 +164,19 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +  }
 + }
 + theron_script_frame++;
-  for(int i = 0; i < 5; i++)
-   if(devices[i])
-    devices[i]->Update(data_ptr[i]);
-diff --git a/src/pce/input/gamepad.cpp b/src/pce/input/gamepad.cpp
-index eb70226..cf69d2f 100644
 --- a/src/pce/input/gamepad.cpp
 +++ b/src/pce/input/gamepad.cpp
-@@ -18,6 +18,8 @@
- #include "../pce.h"
- #include "../input.h"
- #include "gamepad.h"
+@@ -20,0 +21,2 @@
 +#include <stdlib.h>
 +#include <string.h>
-FIRESTAFF_PATCH_BLANK_CONTEXT
- namespace MDFN_IEN_PCE
- {
-@@ -41,6 +43,11 @@ class PCE_Input_Gamepad : public PCE_Input_Device
- };
-FIRESTAFF_PATCH_BLANK_CONTEXT
-FIRESTAFF_PATCH_BLANK_CONTEXT
+@@ -43,0 +46,6 @@
 +static unsigned theron_script_run_count = 0;
 +static unsigned theron_script_run_frame = 0;
 +static unsigned theron_script_run_start[32];
 +static unsigned theron_script_run_end[32];
 +static bool theron_script_run_valid = false;
- PCE_Input_Gamepad::PCE_Input_Gamepad()
- {
-  Power(0); // FIXME?
-@@ -48,6 +55,43 @@ PCE_Input_Gamepad::PCE_Input_Gamepad()
-FIRESTAFF_PATCH_BLANK_CONTEXT
- void PCE_Input_Gamepad::Power(int32 timestamp)
- {
++
+@@ -53,0 +62,37 @@
 + const char *script = getenv("FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT");
 + const char *cursor = script;
 + theron_script_run_count = 0;
@@ -265,13 +214,7 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 + if(theron_script_run_valid && *cursor)
 +  theron_script_run_valid = false;
 + theron_script_run_frame = 0;
-  SEL = 0;
-  CLR = 0;
-  buttons = 0;
-@@ -70,6 +114,19 @@ void PCE_Input_Gamepad::TransformInput(uint8* data, const bool DisableSR)
- void PCE_Input_Gamepad::Update(const uint8* data)
- {
-  buttons = MDFN_de16lsb(data);
+@@ -72,0 +115,13 @@
 + if(theron_script_run_valid)
 + {
 +  for(unsigned run_index = 0; run_index < theron_script_run_count; run_index++)
@@ -285,6 +228,3 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +   }
 +  theron_script_run_frame++;
 + }
- }
-FIRESTAFF_PATCH_BLANK_CONTEXT
- uint8 PCE_Input_Gamepad::Read(int32 timestamp)

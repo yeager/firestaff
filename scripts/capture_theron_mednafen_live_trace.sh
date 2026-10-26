@@ -855,7 +855,7 @@ trace_files_are_line_delimited() {
     if (( ${#existing_trace_files[@]} == 0 )); then
         return 0
     fi
-    LC_ALL=C perl -ne 'exit 1 if index($_, chr(92) . chr(92) . "n") >= 0' "${existing_trace_files[@]}"
+    LC_ALL=C perl -ne 'exit 1 if index($_, chr(92) . "n") >= 0' "${existing_trace_files[@]}"
 }
 
 require_snapshot_size() {
