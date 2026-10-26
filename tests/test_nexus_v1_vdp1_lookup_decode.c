@@ -37,6 +37,13 @@ int main(void) {
 
     memset(command, 0, sizeof(command));
     memset(vram, 0, sizeof(vram));
+    {
+        Nexus_V1_Vdp1TextureCommand parsed;
+        wl16(command + 10, 0x0410U);
+        expect(nexus_v1_vdp1_texture_command_parse(command, sizeof(command), &parsed) == 0 &&
+               parsed.texture_width == 32U && parsed.texture_height == 16U,
+               "VDP1 CMDSIZE uses high-byte width and low-byte height");
+    }
     /* CMDPMOD mode 1, CMDCOLR table at 0x20, CMDSRCA texture at 0x40,
      * CMDSIZE = 8x1. Sega VDP1 User's Manual 6.3--6.6. */
     wl16(command + 4, 1U << 3);

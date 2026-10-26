@@ -292,7 +292,7 @@ int main(void)
     wl16(command + 4, 1U << 3);
     wl16(command + 6, 0x3278U);
     wl16(command + 8, 0x0040U);
-    wl16(command + 10, 0x0402U);
+    wl16(command + 10, 0x0204U);
     wl16(command + 12, 0xfff0U);
     wl16(command + 14, 0xfff0U);
     wl16(command + 16, 0x0010U);
@@ -561,7 +561,7 @@ int main(void)
     }
     wl16(quad_command + 0, 2U);
     wl16(quad_command + 4, 1U << 3);
-    wl16(quad_command + 10, 0x0201U);
+    wl16(quad_command + 10, 0x0102U);
     wl16(quad_command + 16, 8U);
     wl16(quad_command + 20, 8U);
     wl16(quad_command + 22, 8U);
