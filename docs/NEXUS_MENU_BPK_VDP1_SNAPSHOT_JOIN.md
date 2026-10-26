@@ -144,9 +144,13 @@ SCREENSHOT TITLE.BIN`; Pillow is required. The retained registers explain the
 top-layer factor: CCCTL `0x0043` enables sprite colour calculation in top-ratio
 mode, SPCTL `0x1536` selects the priority-equals-5 condition, and PRISC
 `0x0504` assigns priority 5 to these type-6 pixels. Their ratio index is zero
-and CCRSA `0x1000` selects a top ratio of 31/32. The comparison assumes a black
-lower layer; its actual pixels and exact capture timing remain unproven. It
-covers these sprites, not the complete VDP2 image or menu interaction.
+and CCRSA `0x1000` selects a top ratio of 31/32. At all 1,495 compared
+positions, the captured NBG0 bitmap contains transparent index zero. The
+captured per-line back-screen table is black on the affected lines. The
+verification now reads these lower-layer values from the VDP2 dump instead of
+assuming black. The screenshot was taken after the dump, so exact capture
+timing remains unproven; this covers these sprites, not the complete image or
+menu interaction.
 The capture preview can now blend a normal mode-0 sprite over a supplied lower
 framebuffer using type-6 priority and top-screen ratio registers. The retail
 capture regression checks the observed 31/32 result over black and the blend
