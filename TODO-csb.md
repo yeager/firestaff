@@ -157,9 +157,8 @@ The checksum accumulator now follows the stored 16-bit result. The focused
 real-media test checks all four hunk checksums and confirms that the decoded
 palette schedule, 320x200 F31E logo, and 9,078-byte sound sample match the
 literal arrays in ReDMCSB `SWSH.C`, `SWSHGDAT.C`, and `SWSHSDAT.C`. Original
-bytes remain outside Git. This fixes FTL container verification and proves
-resource extraction only; the Amiga SWSH animation/audio are still not wired
-into the CSB launcher runtime, as noted above.
+bytes remain outside Git. The runtime integration and its remaining native
+display/audio limitations are documented in the preceding SWSH entry.
 
 The same real-media checksum audit found that Amiga 3.3 `KAOS.FTL` and
 `CNFG.FTL` use the 0x5223 compressed CODE format. Their stored CODE checksums
@@ -167,7 +166,9 @@ match the decoded program bytes, not the compressed stream, so the
 container-only verifier now reports that checksum as deferred until decode.
 The authentic-media regressions decode both modules and compare the resulting
 checksums; all ten installed CSB Amiga FTL modules now match their stored
-checksums when checked at the correct layer.
+checksums when checked at the correct layer. The SWSH runtime integration is
+described in the preceding 2026-10-26 entry; this checksum check alone proves
+container/resource integrity, not native display timing or audible output.
 
 2026-10-25 mixed original-media launcher retest: the authentic
 `csb_v1_fmtowns_m12_auto_mixed_real_media` matrix passed against the installed
