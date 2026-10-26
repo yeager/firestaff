@@ -1,3 +1,91 @@
+## 2026-10-26 — revalidate native debug input against authentic US and JP media
+
+- An isolated TRV2 Debug build passed the authentic USA raw Track 02 runtime
+  regression with `--debug`. It verifies source-backed runtime entry plus
+  keyboard movement/turning and panel-mouse movement, champion selection,
+  waiting, pickup, item selection, and drop.
+- The same binary passed the authentic Japanese Rev. 1 SDL regression with
+  `--debug`, covering keyboard input, Button II, panel-mouse movement,
+  champion selection, and waiting. These are native Firestaff checks; no
+  emulator or firmware is part of either runtime route.
+- This revalidates the existing source-backed input routes, not visual,
+  semantic, or full gameplay parity. The evidence-capture gaps below remain
+  open.
+
+## 2026-10-26 — retain the bounded controller witness across cold boot
+
+- The PCE Fast capture instrumentation now accepts a bounded input-trace
+  start frame. For a replay plan, the capture script automatically begins the
+  controller diagnostic window 120 frames before its earliest scheduled
+  event, while the emulator continues to apply every controller frame from
+  boot. This prevents BIOS polling from consuming the bounded trace before a
+  late RUN hold can be witnessed.
+- The start frame is recorded in the transition receipt and may be explicitly
+  supplied for a reproducible capture. This is capture plumbing only: it does
+  not establish a Track 02-to-RAM receipt, game-owned controller consumer, or
+  dungeon pose/rendering semantics. A fresh authentic cold-start capture is
+  still required to make those joins.
+- The normal PCE instrumentation uses the same gate and keeps each emitted
+  raw controller row paired with its result row at the bounded-trace limit.
+  This repairs an evidence-recording boundary only; it does not alter the
+  reference emulator's controller state or Firestaff runtime behavior.
+
+## 2026-10-26 — F5-state RUN hold has a reproducible raw state and screen result
+
+- Two fresh PCE Fast replays of the same user-created Japanese F5 save state
+  held RUN for 300 frames. Both produced identical 8 KiB main-RAM, VRAM, and
+  SAT hashes, distinct from matched no-input controls. The raw transition
+  receipt consistently changed `$20DB` from `00` in the control to `01` after
+  RUN, while `$20DA`, `$2031`, and `$203F-$2041` retained their observed
+  values and `transition=missing` remained true.
+- This establishes a reproducible input-to-raw-state-and-screen tuple for the
+  exact save state. It does not identify `$20DB`, prove that RUN starts a
+  dungeon, establish party movement, or authorize a native state-driven
+  renderer. A same-session source/consumer and pose join is still required.
+
+## 2026-10-26 — matched F5-state VDC commits show an input-coupled screen delta
+
+- The user-created Japanese Akutuba F5 save state was captured twice in fresh
+  PCE Fast reference processes against the same authentic Rev. 1 disc and
+  System Card: once with `up@1:60` and once without scripted input. Both
+  captures produced valid bounded CPU-port VWR commit traces with 65,536
+  records and the same VDC geometry and VCE palette.
+- The UP capture differs from the control by 16 VRAM bytes, two SAT bytes,
+  and 59 main-RAM bytes. Its PCE Fast party-RAM snapshot is byte-identical to
+  the control. This is authenticated input-coupled screen-state evidence, not
+  a proven movement, coordinate, direction, object, or square-to-screen
+  binding. The dynamic CD/RAM receipt gate remained absent in both runs.
+- A second no-input control was byte-identical to the first across VRAM, SAT,
+  main RAM, and party RAM. The UP delta is therefore reproducible for this
+  exact save-state/input/boundary tuple, while still not establishing a party
+  pose or renderer-state mapping.
+- Raw state, media, firmware, and capture sidecars remain private and were not
+  added to Git. The isolated reference build will be removed after analysis.
+
+## 2026-10-26 — PCE Fast input-latch follow-up remains unjoined
+
+- A clean isolated PCE Fast reference build extended the bounded
+  movement-context observer with raw `$2911`, `$2912`, `$2920`, `$2031`, and
+  `$203F-$2041` write records. These are opaque observations, not coordinate,
+  direction, or command semantics.
+- A fresh no-input control against the preserved authentic Japanese Rev. 1
+  Akutuba state, using the current observer, produced 128 bounded
+  `$0E8A00-$0E8AFF` data reads, 128 input-latch writes, and 128 runtime-state
+  writes with physical PC/MPR context. The records remain opaque: this control
+  does not assign field semantics or demonstrate an input-caused transition.
+  Its reference binary lacked the required bounded VDC word-commit trace, so
+  the capture remains blocked and cannot be paired with an UP run yet.
+- Rebuilding the same observer with the bounded VDC word-commit hook enabled
+  permitted a fresh paired control/`up@1:60` run. Both runs emitted 65,536
+  CPU-port VWR commits; the scripted UP bit reached the observed controller
+  read, and the final VRAM, SAT, and main-RAM snapshots differed by 2, 2, and
+  51 bytes respectively. VCE, VDC-state, and party-RAM snapshots were
+  identical. This proves an input-coupled raw/screen delta for this boundary,
+  but not a party pose, coordinate commit, command consumer, or native
+  renderer mapping: the dynamic CD/RAM receipt gate was absent in both runs.
+- The isolated build and raw traces were removed after verification. No game
+  media, save state, firmware, or raw trace is tracked by Git.
+
 ## 2026-10-25 — verify keyboard champion and wait actions in the SDL loop
 
 - Extended `theron_v1_sdl_input_events` to send actual SDL `Tab` and `Space`

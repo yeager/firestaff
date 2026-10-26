@@ -5,6 +5,21 @@ only as an external reference instrument for authentic original-game behavior
 and data capture; it is never part of the shipped runtime or a substitute for
 native Firestaff gameplay.
 
+## 2026-10-26 — native launch does not expose the System Card Run menu
+
+Firestaff's Theron launcher consumes a hash-verified Track 02 image and enters
+the native C/SDL startup/runtime path. It does not boot a PC Engine System Card,
+display its `RUN` menu, or require a controller-button hold to cross that
+firmware screen. System Card menus and their hold timing remain reference-only
+capture evidence and are not part of the shipped game flow.
+
+The native route may still present source-backed Theron title, stage-selection,
+and Soul Room states when a fresh game requires them. It may enter a loaded
+dungeon only through a verified Track 02 level/party handoff. Firestaff must
+not replace those states with a guessed party, position, or level merely to
+shorten startup; full direct-to-dungeon launch needs an authenticated initial
+party-and-level receipt.
+
 ## 2026-10-24 — authentic runtime input comparison remains inconclusive
 
 Three isolated PCE Fast captures on TRV2 loaded the same preserved Japanese

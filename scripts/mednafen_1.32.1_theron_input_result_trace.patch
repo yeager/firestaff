@@ -1,7 +1,7 @@
 --- a/src/pce/input.cpp
 +++ b/src/pce/input.cpp
 @@ -317,0 +318,16 @@
-+ if(theron_input_read_trace && theron_input_read_count < theron_input_read_trace_limit)
++ if(theron_input_read_trace && theron_input_read_result_pending)
 + {
 +  const uint16 raw = data_ptr[0] ? MDFN_de16lsb(data_ptr[0]) : 0;
 +  const unsigned int sp = HuCPU.GetRegister(HuC6280::GSREG_SP);
@@ -16,4 +16,5 @@
 +          stack0, stack1, stack2, stack3);
 +  fflush(theron_input_read_trace);
 + }
++ theron_input_read_result_pending = false;
 +

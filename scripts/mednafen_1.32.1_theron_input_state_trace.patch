@@ -4,7 +4,10 @@
 + static FILE *theron_input_read_trace = NULL;
 + static unsigned theron_input_read_count = 0;
 + static unsigned theron_input_read_trace_limit = 65536;
++ static unsigned theron_input_read_trace_start_frame = 0;
 + static bool theron_input_read_trace_limit_initialized = false;
++ static bool theron_input_read_result_pending = false;
++ extern unsigned theron_script_trace_frame;
 + if(!theron_input_read_trace)
 + {
 +  const char *path = getenv("FIRESTAFF_THERON_IRQ2_INPUT_TRACE");
@@ -20,20 +23,27 @@
 +   if(parsed_limit)
 +    theron_input_read_trace_limit = parsed_limit;
 +  }
++  const char *start_frame = getenv("FIRESTAFF_THERON_INPUT_TRACE_START_FRAME");
++  if(start_frame && *start_frame)
++   theron_input_read_trace_start_frame = (unsigned)strtoul(start_frame, NULL, 10);
 +  theron_input_read_trace_limit_initialized = true;
 + }
-+ if(theron_input_read_trace && theron_input_read_count < theron_input_read_trace_limit)
++ theron_input_read_result_pending = false;
++ if(theron_input_read_trace && theron_script_trace_frame >= theron_input_read_trace_start_frame && theron_input_read_count < theron_input_read_trace_limit)
 + {
 +  const uint16 raw = data_ptr[0] ? MDFN_de16lsb(data_ptr[0]) : 0;
 +  fprintf(theron_input_read_trace, "pce_input_read cpu_pc=%04x register=%04x raw=%04x sel=%u clr=%u index=%u\n", HuCPU.GetRegister(HuC6280::GSREG_PC), A, raw, SEL ? 1 : 0, CLR ? 1 : 0, read_index);
 +  fflush(theron_input_read_trace);
 +  theron_input_read_count++;
++  theron_input_read_result_pending = true;
 + }
 @@ -294,0 +323,27 @@
 + static FILE *theron_input_write_trace = NULL;
 + static unsigned theron_input_write_count = 0;
 + static unsigned theron_input_write_trace_limit = 65536;
++ static unsigned theron_input_write_trace_start_frame = 0;
 + static bool theron_input_write_trace_limit_initialized = false;
++ extern unsigned theron_script_trace_frame;
 + if(!theron_input_write_trace)
 + {
 +  const char *path = getenv("FIRESTAFF_THERON_IRQ2_INPUT_TRACE");
@@ -49,9 +59,12 @@
 +   if(parsed_limit)
 +    theron_input_write_trace_limit = parsed_limit;
 +  }
++  const char *start_frame = getenv("FIRESTAFF_THERON_INPUT_TRACE_START_FRAME");
++  if(start_frame && *start_frame)
++   theron_input_write_trace_start_frame = (unsigned)strtoul(start_frame, NULL, 10);
 +  theron_input_write_trace_limit_initialized = true;
 + }
-+ if(theron_input_write_trace && theron_input_write_count < theron_input_write_trace_limit)
++ if(theron_input_write_trace && theron_script_trace_frame >= theron_input_write_trace_start_frame && theron_input_write_count < theron_input_write_trace_limit)
 + {
 +  fprintf(theron_input_write_trace, "pce_input_write cpu_pc=%04x register=%04x data=%02x sel_before=%u clr_before=%u index=%u\n", HuCPU.GetRegister(HuC6280::GSREG_PC), A, V, SEL ? 1 : 0, CLR ? 1 : 0, read_index);
 +  fflush(theron_input_write_trace);

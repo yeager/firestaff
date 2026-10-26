@@ -1,9 +1,10 @@
 --- a/src/pce/input.cpp
 +++ b/src/pce/input.cpp
-@@ -19,0 +20,3 @@
+@@ -19,0 +20,4 @@
 +#include <stdio.h>
 +#include <stdlib.h>
 +#include <string.h>
++unsigned theron_script_trace_frame = 0;
 @@ -95,0 +99,19 @@
 +static bool theron_script_boot_applied = false;
 +static uint16 theron_script_boot_original_port0 = 0;
@@ -59,7 +60,7 @@
 +  bool emitted;
 +  char key[8];
 + } theron_script_events[32];
-@@ -193,0 +246,102 @@
+@@ -193,0 +246,103 @@
 + if(!theron_script_initialized)
 + {
 +  const char *script = getenv("FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT");
@@ -130,6 +131,7 @@
 + }
 + if(theron_script_valid)
 + {
++  theron_script_trace_frame = theron_script_frame;
 +  uint16 scripted_mask = 0;
 +  for(unsigned event_index = 0; event_index < theron_script_event_count; event_index++)
 +  {
