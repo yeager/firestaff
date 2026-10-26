@@ -264,7 +264,7 @@ int main(void) {
            "authentic Nexus COLR word address converts to VDP1 byte offset");
 
     /* A complete captured VDP2 CRAM/register state is mandatory for palette
-     * resolution. Texture 0 is transparent, texture F ends this scanline,
+     * resolution. Texture 0 is transparent and two F texels end a scanline;
      * index 1 uses direct RGB555, and index 2 uses the captured SPCAOS CRAM
      * address. This remains an output witness test, never a host draw. */
     memset(command, 0, sizeof(command));
@@ -332,16 +332,27 @@ int main(void) {
     expected_pixels[3].texture_index = 15U;
     expected_pixels[3].raw_colour_code = 0x8fffU;
     for (index = 4; index < 8; ++index) {
-        expected_pixels[index].kind =
-            NEXUS_V1_VDP1_MODE1_PIXEL_SUPPRESSED_AFTER_END;
+        expected_pixels[index].kind = index == 7 ? NEXUS_V1_VDP1_MODE1_PIXEL_TRANSPARENT :
+            NEXUS_V1_VDP1_MODE1_PIXEL_VDP2_CRAM_RGB555;
         expected_pixels[index].texture_index = index == 4 ? 3U :
             (index == 5 ? 4U : (index == 6 ? 5U : 0U));
         expected_pixels[index].raw_colour_code = index == 4 ? 0U :
             (index == 5 ? 0U : (index == 6 ? 0U : 0x8fffU));
+        if (index != 7) expected_pixels[index].colour_ram_address = 0x100U;
     }
     expect(nexus_v1_vdp1_mode1_palette_pixels_match(
                resolved, 8U, expected_pixels, 8U),
            "mode-1 transparent/RGB/CRAM/end-code pixels match captured palette semantics");
+    vram[0x42] = 0x3fU;
+    expect(nexus_v1_vdp1_resolve_mode1_palette_capture(
+               command, sizeof(command), vram, sizeof(vram), vram + 0x40,
+               4, &vdp2_capture, resolved, 8U, &palette_receipt) &&
+           resolved[3].kind == NEXUS_V1_VDP1_MODE1_PIXEL_END_CODE &&
+           resolved[4].kind == NEXUS_V1_VDP1_MODE1_PIXEL_VDP2_CRAM_RGB555 &&
+           resolved[5].kind == NEXUS_V1_VDP1_MODE1_PIXEL_END_CODE &&
+           resolved[6].kind == NEXUS_V1_VDP1_MODE1_PIXEL_SUPPRESSED_AFTER_END,
+           "second VDP1 end code terminates the texture row");
+    vram[0x42] = 0x34U;
     vdp2_capture.original_saturn_capture_verified = 0;
     expect(nexus_v1_vdp1_resolve_mode1_palette_capture(
                command, sizeof(command), vram, sizeof(vram), vram + 0x40,

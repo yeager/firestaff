@@ -127,6 +127,16 @@ external lookup test checks the command positions and horizontal flip against
 both buffers when `FIRESTAFF_NEXUS_YMIR_VDP1_FBS` is provided alongside the
 trace and VRAM paths. Transparent pixels and final VDP2 output are not covered
 by this comparison, and the dump does not prove per-command snapshot timing.
+Sampling the separately saved 640×448 screenshot at twice these sprite
+coordinates produced zero direct RGB matches for the 1,495 nontransparent
+pixels. The screenshot follows the dump and VDP2 can cover or alter sprites;
+this observation does not distinguish timing from composition or priority.
+
+For mode-1 palette analysis, Ymir's software VDP1 renderer counts two end codes
+per rasterized line: each end code is skipped and the second stops the line.
+The no-draw palette decoder now follows that count. The older triangle capture
+compositor still uses a first-end-code approximation and must not be used as
+evidence of accurate rendering when end codes are enabled.
 
 The same CMDSIZE and skipped-command corrections also apply to the Mednafen
 VDP1 source, material, and write-join analyzers. Earlier numerical receipts

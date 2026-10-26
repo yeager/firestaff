@@ -7204,7 +7204,7 @@ int nexus_v1_vdp1_resolve_mode1_palette_capture(
     uint8_t sprite_offset;
     uint32_t pixel_count;
     uint32_t pixel;
-    int current_row_ended = 0;
+    int row_end_codes = 0;
 
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
@@ -7273,17 +7273,17 @@ int nexus_v1_vdp1_resolve_mode1_palette_capture(
             (uint8_t)(packed & 0x0fU);
         uint32_t address;
 
-        if (pixel % parsed.texture_width == 0U) current_row_ended = 0;
+        if (pixel % parsed.texture_width == 0U) row_end_codes = 0;
         memset(&resolved, 0, sizeof(resolved));
         resolved.texture_index = index;
         resolved.raw_colour_code = raw_codes[pixel];
-        if (current_row_ended) {
+        if (row_end_codes >= 2) {
             resolved.kind = NEXUS_V1_VDP1_MODE1_PIXEL_SUPPRESSED_AFTER_END;
         } else if (index == 0U && receipt.source_index_zero_transparent) {
             resolved.kind = NEXUS_V1_VDP1_MODE1_PIXEL_TRANSPARENT;
         } else if (index == 0x0fU && receipt.source_index_f_end_code) {
             resolved.kind = NEXUS_V1_VDP1_MODE1_PIXEL_END_CODE;
-            current_row_ended = 1;
+            ++row_end_codes;
         } else if ((resolved.raw_colour_code & 0x8000U) != 0U) {
             /* VDP1 RGB-code format: bit 15 selects direct RGB; B:G:R are
              * 5:5:5 at bits 14..10, 9..5, and 4..0. */
