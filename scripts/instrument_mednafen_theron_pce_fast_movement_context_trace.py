@@ -26,7 +26,8 @@ def main() -> None:
         raise SystemExit("FAIL: isolated Mednafen PCE Fast source is unavailable")
 
     helpers = r'''static FILE *TheronPCEFastMovementContextTrace;
-static unsigned TheronPCEFastMovementContextCount;
+static unsigned TheronPCEFastMovementDataReadCount;
+static unsigned TheronPCEFastMovementCommandWriteCount;
 static unsigned TheronPCEFastMovementContextLimit(void)
 {
  static unsigned limit;
@@ -43,7 +44,10 @@ static void TheronPCEFastMovementContext(const char *kind, unsigned int logical_
 {
  const uint16 pc = GetRealPC_EXTERNAL();
  const uint8 mpr = HuCPU.MPR[pc >> 13];
- if(TheronPCEFastMovementContextCount >= TheronPCEFastMovementContextLimit())
+ unsigned *count = !strcmp(kind, "movement_command_write") ?
+                   &TheronPCEFastMovementCommandWriteCount :
+                   &TheronPCEFastMovementDataReadCount;
+ if(*count >= TheronPCEFastMovementContextLimit())
   return;
  if(!TheronPCEFastMovementContextTrace)
  {
@@ -52,14 +56,14 @@ static void TheronPCEFastMovementContext(const char *kind, unsigned int logical_
   {
    TheronPCEFastMovementContextTrace = fopen(path, "w");
    if(TheronPCEFastMovementContextTrace)
-    fputs("source=mednafen-pce-fast-theron-movement-context-v1\\n", TheronPCEFastMovementContextTrace);
+    fputs("source=mednafen-pce-fast-theron-movement-context-v1\n", TheronPCEFastMovementContextTrace);
   }
  }
  if(TheronPCEFastMovementContextTrace)
  {
   fprintf(TheronPCEFastMovementContextTrace,
-          "%s sequence=%u logical_address=%04x physical_address=%06x value=%02x pc=%04x pc_mpr=%02x physical_pc=%06x\\n",
-          kind, TheronPCEFastMovementContextCount++, logical_address, physical_address,
+          "%s sequence=%u logical_address=%04x physical_address=%06x value=%02x pc=%04x pc_mpr=%02x physical_pc=%06x\n",
+          kind, (*count)++, logical_address, physical_address,
           value, pc, mpr, (mpr << 13) | (pc & 0x1fff));
   fflush(TheronPCEFastMovementContextTrace);
  }
