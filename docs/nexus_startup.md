@@ -33,6 +33,29 @@ source.
 | Saturn Backup RAM | `nexus_v1_saturn_bkr_parse` reads hash-pinned 32 KiB card directories and block chains, returning exact opaque payload bytes; native save selection, payload interpretation, and runtime loading remain missing |
 | Mednafen visual baseline | A clean J-BIOS capture against authentic retail shows black boot followed by the original intro FMV without input; menu/LEV01 identity remains missing |
 
+## Deterministic title-state replay (2026-10-26)
+
+The system-wide Ymir 0.4.2-dev capture build on TRV2 was run with `--debug`,
+the authenticated Japanese BIOS and retail cue, and the retained title-prompt
+state in CLI slot 2. The isolated profile mapped that state to
+`savestates/5EA76F972566FE6EB667D092CD494BCF/1.savestate`; it was removed
+after the run. One frame after the successful load, the VDP2 outputs matched
+the retained title-state reference exactly:
+
+| Output | SHA-256 |
+|---|---|
+| VDP2 VRAM | `de1a77427dc62457eb4b59fa0424fd25e9768ce229505445311929d3bdae405c` |
+| VDP2 CRAM | `db282593790dec4a2bf8f76293c0458a1a140adc3351650bd56a417f0359e0de` |
+| VDP2 registers | `79efa616c2db727749aa9018864d1ad32c1583935652fafb16534ba69f8e1f2d` |
+
+The capture build also emitted big-endian VDP1 and VDP2 register files (32 and
+512 bytes respectively) and a register snapshot. That tooling is proposed in
+[Ymir PR #965](https://github.com/ymir-emu/Ymir/pull/965). This confirms a
+repeatable authentic VDP2 title-state checkpoint, not the separate VDP1
+title-menu command bundle: the one-frame VDP1 outputs did not match that
+bundle's frame-497 hashes. It therefore does not admit the menu compositor,
+input dispatch, title-to-menu transition, or Firestaff presentation.
+
 ## Title-menu VDP1 source-span join (2026-10-19 capture; analyzed 2026-10-26)
 
 A read-only source-join analysis on TRV2 used the retained Ymir v0.4.0
