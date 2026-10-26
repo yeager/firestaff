@@ -126,6 +126,23 @@ capture and `--dump-memory`. A 60-frame retail boot check produced both the
 VDP1 receipt and that PNG. The generated media was discarded after verification
 and is not a Firestaff asset or parity admission signal.
 
+Ymir PR #966 now also provides `--capture-no-present` for deterministic runs
+where an X11/GLX compositor cannot swap GUI frames reliably. A fresh temporary
+profile on TRV2 loaded the same authenticated Japanese BIOS, retail CUE, and
+title-prompt state, then completed `--load-state 2 --capture-frames 1
+--dump-memory --capture-no-present` under Xvfb. It wrote a complete memory dump
+and exited with status 0 in under three seconds. The profile and dump were
+removed after the check. This proves the capture transport no longer depends on
+a successful GUI presentation for this state; it does not supply a framebuffer,
+prove visual parity, or open any Firestaff presentation gate.
+
+The same state was then captured with `--capture-screenshot` in no-present
+mode. The completed dump was followed by a 640×448 RGBA PNG with SHA-256
+`4b19474395c7192e7e68faf82efe0c240c9da213c4cd36c1ad91f31e68c17d82` before
+Ymir exited. The temporary image was removed after its dimensions and digest
+were checked. This validates non-present screenshot delivery for future visual
+comparisons; it is not itself a pixel-parity admission or a Firestaff asset.
+
 ## Boot VDP2 writer anchor (2026-10-26)
 
 Ymir PR #966 was extended with a bounded direct SH-2 VDP2-write trace and a
@@ -189,6 +206,34 @@ extends the observed route from the door transition to the native loading
 state. It does not yet reach or bind a stable playable level, the party pose,
 viewport, HUD, level source, or palette/compositor route; it must not be used
 to synthesize any of those Firestaff states.
+
+After the no-present capture path was added to Ymir PR #966, the same
+authenticated state and input schedule was repeated under Xvfb without GUI
+presentation. The 600-frame run exited with status 0, wrote its memory dump,
+and saved a 640×448 RGBA screenshot with the same `Now Loading` SHA-256
+`07a6f3a612ca75209cd6308852a7cf25b3d1f35943ce2f5774e720376ef7c61c`.
+Its VDP1 trace and receipt digests were respectively
+`d529f883b686b7c3fc83db929e3e1b476527799ca3fbda35ba41a4ef48a1079e` and
+`45d384f8b6d8c4a5ab48941bcea462cbe1624ea57f8679ebfe4f8c8c1baf3a22`.
+The temporary profile, dump, screenshot, process, and result receipt were
+removed after verification. This independently reproduces the observed loading
+checkpoint but does not extend its presentation admission.
+
+Ymir PR #966 also adds `--capture-save-state N`. A real title-prompt capture
+saved slot 3 after its dump, and a second isolated Ymir process loaded slot 3
+and completed a further one-frame dump. This makes long retail transitions
+inspectable through short, repeatable follow-up captures. The temporary state
+and both profiles were removed after the round trip; a saved emulator state is
+diagnostic transport, not a Firestaff asset or an admission signal.
+
+An authenticated 900-frame Start/A capture saved such a checkpoint and reached
+a 640×448 first-person dungeon viewport with SHA-256
+`8ede95f1fd777eda69ebcfc91d0268194e501f145306eb1fc2971ed0113a2274`.
+Reloading slot 3 in a fresh isolated process and capturing one frame reproduced
+the same digest exactly. The image has no party HUD, so it is evidence for this
+narrow rendered viewport checkpoint only. It does not identify the level or
+room source, establish input semantics, authorize a host compositor, or prove
+the HUD route.
 
 ## Title-menu VDP1 source-span join (2026-10-19 capture; analyzed 2026-10-26)
 

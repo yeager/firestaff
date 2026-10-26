@@ -1,11 +1,14 @@
 # Five-game startup support gap analysis
 
-Reconciled with published `main` at `86ef3e4b5` (Firestaff v3.0.414) on
-2026-10-26. Its GitHub Actions release run `40292923310` completed the seven
-platform build jobs successfully (Windows x86_64, macOS x86_64/arm64, Linux
-x86_64/arm64, Android arm64 and iOS arm64). Those builds verify compilation,
-not game startup. Runtime receipts cited below remain the recorded runs at
-their stated revisions; they were not rerun during this documentation update.
+Reconciled with published `main` at `5d612f62a` (Firestaff v3.0.415) on
+2026-10-26. Its GitHub Actions release run `40325408361` completed the seven
+platform build and packaging jobs successfully (Windows x86_64, macOS
+x86_64/arm64, Linux x86_64/arm64, Android arm64 and iOS arm64), then published
+23 release assets. These results verify compilation and packaging, not game
+startup. The v3.0.415 release notes use the v3.0.414 runtime receipts; this
+release did not run a new five-game startup matrix. Runtime receipts cited
+below remain the recorded runs at their stated revisions; they were not rerun
+during this documentation update.
 The repository contains checks
 against authentic media for all five games, but “available,”
 “selected,” “handed off,” and “entered a playable runtime” are separate states.
@@ -19,7 +22,7 @@ The current evidence does not establish complete five-game startup support.
 | CSB | The authentic-media CLI diagnostics exercise direct selection and source-owned startup. | The picker test covers keyboard and mouse handoff; the runtime test checks the authentic starting party and viewport receipt. | First runtime is verified on bounded real-media routes. Platform-wide parity and native physical input remain open. |
 | DM2 | The authentic-media CLI diagnostics cover direct selection; platform-specific checks include the complete timed FM Towns title sequence. The French DOS loose-file route now also preserves its selected graphics owner into the first loaded runtime. | The picker test covers keyboard and mouse handoff; the runtime test checks the authentic first party and frame. | First runtime is verified on bounded real-media routes, including the selected French DOS loose-file case. Other edition and native interaction coverage remains incomplete. |
 | Theron | The CLI diagnostics reach its source-owned runtime handoff. | The picker test covers keyboard and mouse handoff; the runtime test checks a loaded authentic Track 02 state. Tab champion cycling and the documented Z/X/Space controls now exercise the normal SDL event loop on authentic USA Track 02. | Runtime state, native frames and these keyboard actions are reached, but the native dungeon image is not yet driven by the authenticated world/graphics state. A recent nonblack Firestaff capture has not been paired with an original-emulator capture. |
-| Nexus | The v3.0.414 authentic-media CLI boot probe reports `title=1`, `levelLoaded=0`, `menu=0`, and blocker `menu-bpk-prs3-capture-required`. Keyboard and mouse selection tests reach the M12-to-M11 handoff, not an active game runtime. There is no Nexus case in the first-runtime probe matrix. | **Not startable as a playable game yet.** Retail Ymir captures document `NEW GAME`, `CONTINUE`, and `CONFIGURATION`, but Firestaff's production title/menu consumer and transition to an authenticated level remain gated. The Saturn BKR parser is container-level only and is not wired to save selection or loading. |
+| Nexus | The latest recorded authentic-media CLI boot probe (v3.0.414) reports `title=1`, `levelLoaded=0`, `menu=0`, and blocker `menu-bpk-prs3-capture-required`. Keyboard and mouse selection tests reach the M12-to-M11 handoff, not an active game runtime. There is no Nexus case in the first-runtime probe matrix. | Retail Ymir captures document `NEW GAME`, `CONTINUE`, and `CONFIGURATION`, but Firestaff's production title/menu consumer and transition to an authenticated level remain gated. The 600-frame no-present Ymir replay reproduced the retail `Now Loading` image (SHA-256 `07a6f3a612ca75209cd6308852a7cf25b3d1f35943ce2f5774e720376ef7c61c`); this confirms only a retail loading checkpoint, not Firestaff menu or playable-runtime behavior ([capture evidence](nexus_startup.md#delayed-title-menu-confirm-observation-2026-10-26)). The Saturn BKR parser is container-level only and is not wired to save selection or loading. | **Not startable as a playable game yet.** |
 
 ## What the existing checks prove
 
@@ -67,8 +70,9 @@ The current evidence does not establish complete five-game startup support.
   Theron, but only DM1 had `levelLoaded=1` at that zero-frame snapshot; the
   other three were still in their startup/title states. Nexus reported
   `title=1`, `levelLoaded=0`, `menu=0`, and
-  `menu-bpk-prs3-capture-required`. Thus the current release evidence confirms
-  all five launcher card selections, not playable starts for all five games.
+  `menu-bpk-prs3-capture-required`. Thus the v3.0.414 runtime evidence
+  confirms all five launcher card selections, not playable starts for all five
+  games. v3.0.415 did not add a new game-start run.
 - `test_m12_main_menu_runtime_real_media.sh` then passed against the same
   v3.0.414 app and authentic collection for DM1, CSB, DM2 and Theron. Its probe
   requires an active runtime with `levelLoaded=1`; DM1 also had its HoC first
