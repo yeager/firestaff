@@ -4,15 +4,40 @@
 from __future__ import annotations
 
 import unittest
+import csv
+import tempfile
+from pathlib import Path
 
 from analyze_nexus_vdp1_source_join import (
     accepted_retail_hashes,
     aggregate_source_join_status,
     swapped_words,
+    ymir_commands,
 )
 
 
 class AcceptedRetailHashesTests(unittest.TestCase):
+    def test_ymir_bundle_checks_frame_and_rejects_dropped_rows(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            receipt = root / "vdp1-capture-bundle.txt"
+            receipt.write_text("format=ymir-vdp1-capture-bundle-v1\n"
+                               "trace_file_complete=1\ntrace_dropped_total=0\n"
+                               "capture_frame_index=7\ntrace_rows=1\n"
+                               "trace_rows_for_capture_frame=1\n", encoding="ascii")
+            fields = ["frame", "index", "address"] + [f"word{i}" for i in range(16)]
+            with (root / "vdp1-command-trace.csv").open("w", newline="", encoding="ascii") as stream:
+                writer = csv.DictWriter(stream, fieldnames=fields)
+                writer.writeheader()
+                writer.writerow({**{f"word{i}": "0" for i in range(16)},
+                                 "frame": "7", "index": "0", "address": "0x20"})
+            (root / "vdp1-vram.bin").write_bytes(bytes(512 * 1024))
+            _, frame, commands = ymir_commands(root)
+            self.assertEqual((frame, commands[0][0]), (7, 0x20))
+            receipt.write_text(receipt.read_text().replace("trace_dropped_total=0", "trace_dropped_total=1"))
+            with self.assertRaises(ValueError):
+                ymir_commands(root)
+
     def test_menu_bpk_accepts_only_the_three_verified_regions(self) -> None:
         self.assertEqual(
             accepted_retail_hashes("MENU.BPK"),
