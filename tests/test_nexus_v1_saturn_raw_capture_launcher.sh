@@ -171,7 +171,7 @@ from pathlib import Path
 Path(sys.argv[1]).write_text(
     "#!/bin/sh\n# FIRESTAFF_NEXUS_TRACE_OUTPUT\n"
     "printf 'authenticated-test-trace' > \"$FIRESTAFF_NEXUS_TRACE_OUTPUT\"\n"
-    "printf 'frame=12 button=start pressed=1\\n' > \"$FIRESTAFF_NEXUS_TRACE_INPUT_EVENTS\"\n",
+    "printf 'frame=12 button=start pressed=1 debug_present=%s\\n' \"${FIRESTAFF_NEXUS_TRACE_SMPC_PIPELINE_DEBUG+yes}\" > \"$FIRESTAFF_NEXUS_TRACE_INPUT_EVENTS\"\n",
     encoding="utf-8",
 )
 os.chmod(sys.argv[1], 0o755)
@@ -184,6 +184,7 @@ FIRESTAFF_NEXUS_TRACE_INPUT_EVENTS="$input_trace" \
   --manifest "$tmp_dir/manifest-input.txt" >/dev/null
 grep -Fq "input_events_trace_sha256=$(shasum -a 256 "$input_trace" | awk '{print $1}')" \
   "$tmp_dir/manifest-input.txt"
+grep -Fxq 'frame=12 button=start pressed=1 debug_present=' "$input_trace"
 
 smpc_fake="$tmp_dir/fake-mednafen-smpc"
 smpc_trace="$tmp_dir/smpc-reads.trace"
