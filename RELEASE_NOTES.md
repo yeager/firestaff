@@ -1,3 +1,28 @@
+# Firestaff v3.0.414
+
+## User-facing changes
+
+- `DM1 FM Towns graphics`: load the authentic F20 picture library through its native bounded reader and use its source layouts for the tested wall-ornament and HoC presentation paths.
+- `Launcher scan progress`: update the startup menu with authenticated game discoveries while a collection scan continues, before the full scan finishes.
+- `Theron keyboard controls`: bind X/Escape to the native Button II and cancel paths, including the normal SDL event loop.
+- `DM2 Apple startup scan`: prevent an unused software SHA digest from being calculated on Apple while retaining edition identity checks for startup admission.
+
+## Developer changes
+
+- `Startup route evidence`: update the five-game CLI/menu matrix and diagnostics to distinguish media discovery, menu handoff, and an entered playable runtime.
+- `DM1 stair regression`: verify backward movement into the authentic PC34 HoC stairs with the original torch carried into the next level.
+- `Nexus capture gate`: reject Saturn captures that reach a title or other non-menu state instead of treating them as Firestaff menu evidence.
+- `Theron controller traces`: require matching scripted-input, controller-poll, and source-data-read receipts before classifying an original reference trace as consumed gameplay input.
+- `Release metadata`: update the CMake project version and regenerate the reproducible SPDX source SBOM for v3.0.414.
+
+## Known limitations
+
+- This release does not establish complete gameplay or visual parity across all five games and supported platforms.
+- `Nexus`: the production Saturn title/menu consumer, New Game/Continue path, and transition to an authenticated playable level remain gated; menu-card handoff is not a playable runtime.
+- `Theron's Quest`: native dungeon presentation is not yet driven by authenticated world and graphics state, despite verified startup and selected keyboard routes.
+- `DM1`, `CSB`, and `DM2`: full platform-wide viewport, HUD, physical input, and native display parity remain incomplete. Some original-media CTests are local-only and are not exercised by the asset-free GitHub Actions matrix.
+- Original game media and BIOS/firmware are not included in release packages.
+
 # Firestaff v3.0.413
 
 ## User-facing changes
