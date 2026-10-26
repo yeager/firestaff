@@ -86,7 +86,6 @@ with open(log_path, encoding="utf-8", errors="replace") as stream:
               if "game-action game=theron " in line]
 required_receipts = {
     "pickup": 1,
-    "inventory-toggle": 2,
     "drop": 1,
     "use-item": 1,
     "action": 1,
@@ -98,6 +97,14 @@ for input_name, required_count in required_receipts.items():
             f"FAIL: SDL keys reached the {input_name} gameplay route "
             f"{receipt_count} times; expected at least {required_count}"
         )
+successful_inventory_toggles = sum(
+    'input=inventory-toggle result=1 ' in line for line in events
+)
+if successful_inventory_toggles < 2:
+    raise SystemExit(
+        "FAIL: SDL I keys completed the inventory-toggle route "
+        f"{successful_inventory_toggles} times; expected at least 2"
+    )
 for required in (
     'input=pickup result=1 action="ITEM" outcome="ITEM PICKED UP"',
     'input=drop result=1 action="ITEM" outcome="ITEM DROPPED"',
