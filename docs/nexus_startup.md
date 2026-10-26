@@ -160,10 +160,23 @@ dump showed the retail door-opening transition; its SHA-256 was
 `abdd1e9f65c0999d967fced4dad456856751cd9afcb46080616f617470ffc55a`.
 
 This is an observed response to a delayed input schedule, not sufficient
-proof that A semantically confirms New Game: an equally timed no-A control,
-the next stable screen, source-resource joins, and palette/compositor evidence
-are still missing. Do not enable a host menu, gameplay, HUD, or synthetic
-confirmation rule from this observation.
+proof that A semantically confirms New Game. A matching no-A control was then
+run from the same retained state with Start held for `0..59` and no other
+scheduled input through the same requested 360-frame capture. Its final
+profile-local framebuffer was the native three-choice title menu, with
+SHA-256 `20801648c86a5cbbe2a0e6c9cc90e625579fb52ba41f0b2234a51d3b0b17ecfe`.
+The control capture produced an undropped VDP1 trace (32,028 rows), but its
+bounded trace buffer ended at frame 179; it therefore cannot be used to
+compare a final VDP1 command stream to the delayed-A capture. The framebuffer
+is nevertheless emitted after the requested capture-owned frame loop, so this
+is evidence that the observed door transition depends on the delayed A
+schedule rather than on the Start-only title timeline.
+
+This still does not establish which retail menu item A confirms, the next
+stable game state, source-resource joins, or palette/compositor evidence. Do
+not enable a host menu, gameplay, HUD, or synthetic confirmation rule from this
+observation. The temporary screenshots, dumps, profile, and emulator process
+were removed after their hashes and receipt limits were checked.
 
 ## Title-menu VDP1 source-span join (2026-10-19 capture; analyzed 2026-10-26)
 
