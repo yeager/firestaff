@@ -118,6 +118,14 @@ captured local coordinate and clip, including horizontal and vertical flips.
 The external test checks the `0xd8e0` sprite at `(104,144)` against all 576
 decoded texels. It remains a capture preview; sprite priority, the other VDP1
 commands, VDP2 layers, and a time-aligned reference image are not established.
+With all external capture paths set, the test now exercises the preview for all
+five commands, including the horizontally flipped sprite. Its visible pixels
+are checked against both captured VDP1 buffers and the captured CRAM values.
+The test accepts `FIRESTAFF_NEXUS_YMIR_DUMP` (VDP1 VRAM),
+`FIRESTAFF_NEXUS_VDP1_TRACE` (frame-59 little-endian records),
+`FIRESTAFF_NEXUS_YMIR_CRAM`, `FIRESTAFF_NEXUS_YMIR_REGS`, and
+`FIRESTAFF_NEXUS_YMIR_VDP1_FBS` (Ymir's draw/display buffers). None of these
+game-derived files is stored in the repository.
 
 The retained Ymir framebuffer dump supplies a stronger VDP1 comparison. Both
 the draw and display buffers contain the expected big-endian colour-bank word

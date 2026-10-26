@@ -151,6 +151,9 @@ int main(void) {
                     uint32_t address = (uint32_t)record[0] | ((uint32_t)record[1] << 8U) |
                         ((uint32_t)record[2] << 16U) | ((uint32_t)record[3] << 24U);
                     Nexus_V1_Vdp1TextureCommand parsed;
+                    static Nexus_V1_Vdp1DirectColorFramebuffer preview;
+                    Nexus_V1_Vdp2ColourRamCapture preview_capture;
+                    int preview_written = 0;
                     uint32_t x, y;
                     if (address != 0xd8e0U && address != 0xd900U && address != 0xd920U &&
                         address != 0xd940U && address != 0xd960U) continue;
@@ -158,6 +161,18 @@ int main(void) {
                         (uint32_t)parsed.texture_width * parsed.texture_height > 832U ||
                         !nexus_v1_vdp1_decode_mode0_bank_texture(record + 4, 32, vram,
                             sizeof(vram), indices, codes, 832)) { ok = 0; break; }
+                    if (cram_path && regs_path) {
+                        memset(&preview, 0, sizeof(preview));
+                        memset(&preview_capture, 0, sizeof(preview_capture));
+                        preview_capture.colour_ram = colour_ram;
+                        preview_capture.colour_ram_size = sizeof(colour_ram);
+                        preview_capture.registers = vdp2_registers;
+                        preview_capture.registers_size = sizeof(vdp2_registers);
+                        preview_capture.original_saturn_capture_verified = 1;
+                        if (!nexus_v1_vdp1_capture_preview_mode0_normal(&preview, record + 4,
+                                32, vram, sizeof(vram), &preview_capture, 0, 0, 319, 223,
+                                &preview_written) || !preview_written) { ok = 0; break; }
+                    }
                     ++command_count;
                     for (y = 0; ok && y < parsed.texture_height; ++y) {
                         for (x = 0; x < parsed.texture_width; ++x) {
@@ -172,6 +187,19 @@ int main(void) {
                                 size_t pos = (size_t)plane * 262144U + dest * 2U;
                                 uint16_t value = ((uint16_t)captured_fbs[pos] << 8U) | captured_fbs[pos + 1U];
                                 if (value != codes[source]) ok = 0;
+                            }
+                            if (cram_path && regs_path) {
+                                uint32_t cram_index = codes[source] & 0x3ffU;
+                                uint16_t color = (uint16_t)colour_ram[cram_index * 2U] |
+                                    ((uint16_t)colour_ram[cram_index * 2U + 1U] << 8U);
+                                uint32_t expected = UINT32_C(0xff000000) |
+                                    ((uint32_t)(color & 31U) << 19U) |
+                                    ((uint32_t)((color >> 5U) & 31U) << 11U) |
+                                    ((uint32_t)((color >> 10U) & 31U) << 3U);
+                                uint32_t output = ((uint32_t)parsed.ya + y) * NEXUS_FB_W +
+                                    (uint32_t)parsed.xa + x;
+                                if (output >= NEXUS_FB_W * NEXUS_FB_H ||
+                                    preview.rgba_buffer[output] != expected) ok = 0;
                             }
                             ++pixel_count;
                         }
