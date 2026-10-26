@@ -18,11 +18,14 @@ required authentic DM2 Macintosh archive; no substitute or synthetic media
 was used. All probes used SDL dummy video/audio and do not establish native
 display/input parity or complete gameplay.
 
-PR #74 is not ready to merge despite green CI. Source review found two gaps
-behind its Theron Z/X binding: the inactive startup keyboard dispatcher does
-not route Z to Action or X to Back, and the loaded-dungeon Theron input
-consumer returns `UNKNOWN INPUT` for `M12_MENU_INPUT_BACK`. Keep the PR open
-until those paths are corrected and covered by live-input regression evidence.
+2026-10-26 Theron keyboard gap follow-up: PR #74 was merged on 2026-10-25.
+The earlier review blockers are resolved in the current source: the Theron
+SDL mapper routes Z to Action and X to Back, and the loaded-dungeon runtime
+consumes a standalone Back token without advancing the source clock. The
+authentic USA Track 02 SDL event test sends Tab, Z, Space and X through the
+normal event loop; `tests/test_theron_native_keyboard_mapping.c` also checks
+the keyboard mappings. This closes those specific routing gaps only; it does
+not establish native dungeon-image parity or complete Theron gameplay.
 
 2026-10-25 DM1 Swedish startup diagnostics: an authentic PC 3.4
 `--game dm1 --platform pc --lang sv --debug --boot-probe` previously printed
@@ -88,6 +91,35 @@ tools were not enabled; their members were therefore not part of the READY
 result. The run used an isolated HOME/config but did not control the OS file
 cache, so it is one current-source observation rather than a cold-scan
 benchmark. No game data was extracted or copied.
+
+2026-10-26 published v3.0.414 launcher scan against the same installed
+original-media root: a fresh isolated HOME/config took 30.08 s; two warm
+repeats took 9.92 s and 9.84 s (9.88 s median). The scanner reported all five
+games READY, while explicitly skipping 14 external `.7z`/`.rar` candidates
+because external archive tools were not enabled. The OS file cache was not
+controlled, so this is not a cold-disk measurement or a complete inventory of
+the collection. It confirms that full-root discovery still costs about 30 s
+from an isolated application cache; it does not measure time to first menu
+interaction. Profile this
+packaged revision before retaining another scanner optimization.
+
+2026-10-26 TRV2 current-main follow-up: a one-job `fast-dev` build of
+`6f1f79ff5` completed, then `--scan-data` against TRV2's authentic
+`.firestaff/data` root scanned the five-game collection in 14.77 s using the
+existing user scan cache. The report marked DM1, CSB, DM2, Nexus and Theron
+READY, while explicitly skipping several external-only archive candidates;
+this is not complete archive inventory or a cold-cache measurement. Two
+alternating three-run comparisons against binaries built from the same source
+revision produced identical full scan output. Removing the generic named-file
+pre-hash pass measured 9.295 s baseline and 9.257 s experimental median.
+Reusing a successful physical-file hash instead of repeating the final
+`file_md5` call measured 9.195 s baseline and 9.212 s experimental median.
+These differences are within run variation, so neither source change was
+retained. The recursive scan reaches the configured shallow candidate
+directories; keep the known same-owner,
+duplicate-edition, container and access-permission checks intact. Continue
+with representative profiling before changing the broader edition index or
+archive-admission work.
 
 Current-source M12 single-game menu retest at `c54007b45`: the separate
 `test_m12_main_menu_{dm1,csb,dm2}_only_real_media.sh` checks passed with one
