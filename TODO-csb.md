@@ -1,3 +1,16 @@
+2026-10-26 F0107 wall-ornament blit: the shared ReDMCSB viewport callback
+resolved a layout and material plan, but its final pixel loop copied source
+pixels 1:1 and ignored `sourceScaleX32`, `sourceScaleY32`, horizontal flip,
+and the source palette map. That made the callback contradict its own plan,
+especially for perspective-specific Towns wall assets. It now uses the exact
+`DEFS.H M078_SCALED_DIMENSION` rounding, clips the derived-size image to the
+layout zone and viewport, applies the selected flip and palette map, and
+honors transparent pixels. A focused pixel test covers all four operations.
+The authentic English/Japanese F31 packed-M11 runs still pass, but they do
+not assert a full source-matched dungeon screenshot. CSB FM Towns wall,
+inscription, door-button, trapdoor and overall HUD/viewport parity remain
+open pending matched original-versus-Firestaff captures.
+
 2026-10-26 FM Towns C151..C154 champion row: the generic PC HUD gate
 required C011=14x26 and suppressed the entire party row for authentic F31,
 where C011 is 14x39. The F31 route now admits only the source-bound champion

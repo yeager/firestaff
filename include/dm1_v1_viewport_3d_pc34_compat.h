@@ -137,6 +137,19 @@ extern "C" {
 #define DM1_VIEWPORT_SCREEN_WIDTH   320
 #define DM1_VIEWPORT_SCREEN_HEIGHT  200
 
+/* Raster one source-owned F0107 wall ornament into the viewport. Scaling is
+ * ReDMCSB DEFS.H M078_SCALED_DIMENSION; the layout rectangle clips the
+ * scaled bitmap, while transparency, palette remap and horizontal flip are
+ * applied in the same order as F0791. */
+int dm1_v1_viewport_3d_blit_wall_ornament_pc34(
+    uint8_t *destination, int destination_width, int destination_height,
+    int destination_stride, int destination_x, int destination_y,
+    int zone_width, int zone_height,
+    const uint8_t *source, int source_width, int source_height,
+    int source_stride, int source_x, int source_y,
+    int scale_x32, int scale_y32, int transparent_color,
+    int flip_horizontal, const uint8_t *palette_map);
+
 /* Viewport sub-regions — DUNVIEW.C F0098 */
 #define DM1_VIEWPORT_BLACK_AREA_H   37   /* Lines 0..36: cleared to black */
 #define DM1_VIEWPORT_CEILING_H      29   /* Lines 0..28: ceiling bitmap */

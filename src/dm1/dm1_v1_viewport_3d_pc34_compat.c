@@ -149,6 +149,88 @@ static int dm1_viewport_3d_draw_side_wall_element(
     DM1_ViewSquareIndex square,
     int map_x, int map_y);
 
+int dm1_v1_viewport_3d_blit_wall_ornament_pc34(
+    uint8_t *destination, int destination_width, int destination_height,
+    int destination_stride, int destination_x, int destination_y,
+    int zone_width, int zone_height,
+    const uint8_t *source, int source_width, int source_height,
+    int source_stride, int source_x, int source_y,
+    int scale_x32, int scale_y32, int transparent_color,
+    int flip_horizontal, const uint8_t *palette_map)
+{
+    int scaled_width;
+    int scaled_height;
+    int clipped_x0;
+    int clipped_y0;
+    int clipped_x1;
+    int clipped_y1;
+    int x;
+    int y;
+    int drawn = 0;
+
+    if (!destination || !source || destination_width <= 0 ||
+        destination_width > 32768 || destination_height <= 0 ||
+        destination_height > 32768 || destination_stride < destination_width ||
+        destination_stride > 32768 || destination_x < -32768 ||
+        destination_x > 32768 || destination_y < -32768 ||
+        destination_y > 32768 || zone_width <= 0 || zone_width > 32768 ||
+        zone_height <= 0 || zone_height > 32768 || source_width <= 0 ||
+        source_width > 32768 || source_height <= 0 || source_height > 32768 ||
+        source_stride < source_width || source_stride > 32768 ||
+        source_x < 0 || source_y < 0 || source_x >= source_width ||
+        source_y >= source_height || scale_x32 <= 0 || scale_y32 <= 0 ||
+        scale_x32 > 1024 || scale_y32 > 1024 || transparent_color < -1 ||
+        transparent_color > 255) {
+        return 0;
+    }
+
+    /* ReDMCSB DEFS.H M078_SCALED_DIMENSION rounds by half the scale, not
+     * by a fixed 16. F0791 clips the derived image against its layout zone. */
+    scaled_width = ((source_width - source_x) * scale_x32 +
+                    (scale_x32 >> 1)) >> 5;
+    scaled_height = ((source_height - source_y) * scale_y32 +
+                     (scale_y32 >> 1)) >> 5;
+    if (scaled_width <= 0 || scaled_height <= 0) return 0;
+
+    clipped_x0 = destination_x < 0 ? -destination_x : 0;
+    clipped_y0 = destination_y < 0 ? -destination_y : 0;
+    clipped_x1 = zone_width;
+    if (clipped_x1 > scaled_width) clipped_x1 = scaled_width;
+    if (destination_x + clipped_x1 > destination_width)
+        clipped_x1 = destination_width - destination_x;
+    clipped_y1 = zone_height;
+    if (clipped_y1 > scaled_height) clipped_y1 = scaled_height;
+    if (destination_y + clipped_y1 > destination_height)
+        clipped_y1 = destination_height - destination_y;
+    if (clipped_x0 < 0) clipped_x0 = 0;
+    if (clipped_y0 < 0) clipped_y0 = 0;
+    if (clipped_x0 >= clipped_x1 || clipped_y0 >= clipped_y1) return 0;
+
+    for (y = clipped_y0; y < clipped_y1; ++y) {
+        int source_y_scaled = source_y + (int)(
+            ((int64_t)y * (int64_t)(source_height - source_y)) /
+            (int64_t)scaled_height);
+        int destination_row = (destination_y + y) * destination_stride;
+        for (x = clipped_x0; x < clipped_x1; ++x) {
+            int source_x_scaled = flip_horizontal
+                ? source_x + (int)(((int64_t)(scaled_width - 1 - x) *
+                                    (int64_t)(source_width - source_x)) /
+                                   (int64_t)scaled_width)
+                : source_x + (int)(((int64_t)x *
+                                    (int64_t)(source_width - source_x)) /
+                                   (int64_t)scaled_width);
+            uint8_t pixel = source[source_y_scaled * source_stride +
+                                    source_x_scaled];
+            if (transparent_color >= 0 && pixel == (uint8_t)transparent_color)
+                continue;
+            if (palette_map) pixel = palette_map[pixel & 0x0fu];
+            destination[destination_row + destination_x + x] = pixel;
+            drawn++;
+        }
+    }
+    return drawn;
+}
+
 /* View square → wall frame table index mapping.
  * Placed before csb_v1_vp_get_wall_frame to avoid forward-reference errors. */
 static int view_square_to_frame_index(DM1_ViewSquareIndex sq)
@@ -4295,31 +4377,17 @@ static void dm1_viewport_3d_draw_wall_ornament_f0107(
         if (state->graphic_provider_callback(
                 state->graphic_provider_user_data,
                 plan.graphicIndex, &pixels, &gfx_w, &gfx_h) && pixels) {
-            int sx = plan.srcX;
-            int sy = plan.srcY;
-            int dx = plan.dstX;
-            int dy = plan.dstY;
-            int w = plan.width;
-            int h = plan.height;
-            int x, y;
-            if (sx < 0) sx = 0;
-            if (sy < 0) sy = 0;
-            if (w > gfx_w - sx) w = gfx_w - sx;
-            if (h > gfx_h - sy) h = gfx_h - sy;
-            if (w <= 0 || h <= 0) return;
-            if (dx < 0) { sx -= dx; w += dx; dx = 0; }
-            if (dy < 0) { sy -= dy; h += dy; dy = 0; }
-            if (dx + w > DM1_VIEWPORT_WIDTH) w = DM1_VIEWPORT_WIDTH - dx;
-            if (dy + h > DM1_VIEWPORT_HEIGHT) h = DM1_VIEWPORT_HEIGHT - dy;
-            if (w <= 0 || h <= 0) return;
-            for (y = 0; y < h; ++y) {
-                for (x = 0; x < w; ++x) {
-                    uint8_t px = pixels[(sy + y) * gfx_w + (sx + x)];
-                    if (px != (uint8_t)plan.transparentColor) {
-                        state->viewport_pixels[(dy + y) * state->viewport_stride + (dx + x)] = px;
-                    }
-                }
-            }
+            if (plan.width <= 0 || plan.height <= 0 || plan.srcX < 0 ||
+                plan.srcY < 0 || plan.srcX >= gfx_w || plan.srcY >= gfx_h ||
+                state->viewport_stride < DM1_VIEWPORT_WIDTH) return;
+            (void)dm1_v1_viewport_3d_blit_wall_ornament_pc34(
+                state->viewport_pixels, DM1_VIEWPORT_WIDTH,
+                DM1_VIEWPORT_HEIGHT, state->viewport_stride,
+                plan.dstX, plan.dstY, plan.width, plan.height,
+                pixels, gfx_w, gfx_h, gfx_w, plan.srcX, plan.srcY,
+                plan.sourceScaleX32, plan.sourceScaleY32,
+                plan.transparentColor, plan.flipHorizontal,
+                plan.paletteMapValid ? plan.paletteMap : NULL);
         }
     }
     }
