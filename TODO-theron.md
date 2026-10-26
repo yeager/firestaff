@@ -58,6 +58,21 @@
   dungeon, establish party movement, or authorize a native state-driven
   renderer. A same-session source/consumer and pose join is still required.
 
+## 2026-10-26 — matched F5-state UP control confirms a bounded screen delta
+
+- Fresh isolated PCE Fast captures replayed the same authentic Japanese F5
+  state once with `up@1:60` and once without scripted input. The original
+  game poll at `$44D2` read the UP mask in the input run, establishing that
+  the consumer was non-System-Card code.
+- The final authenticated snapshots differ by 79 VRAM bytes, two SAT bytes,
+  and 64 main-RAM bytes; VCE palette and VDC geometry are identical. The
+  observed runtime fields `$20DA`, `$20DB`, `$2031`, and `$203F-$2041` are
+  also identical between the runs.
+- This is a repeatable input-coupled screen-state delta for one authentic
+  saved boundary. It is not a coordinate commit, direction proof, semantic
+  field decoding, or a source-backed renderer contract. The captures contain
+  user media and remain private.
+
 ## 2026-10-26 — matched F5-state VDC commits show an input-coupled screen delta
 
 - The user-created Japanese Akutuba F5 save state was captured twice in fresh
