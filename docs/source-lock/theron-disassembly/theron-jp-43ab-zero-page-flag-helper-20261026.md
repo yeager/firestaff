@@ -56,6 +56,34 @@ returned A value before replacing it, and this immediate sequence does not
 read zero-page `$07`. This narrows the observed call path but does not identify
 a later consumer or assign meaning to the written `$27xx` registers.
 
+## First observed zero-page consumer
+
+The same 128-instruction windows continue through a trace row at logical
+`$C292` / physical `$0D2292` whose sampled bytes are `A5 07` (`LDA $07`). This
+row occurs in all 45 windows. At the next row, `$C294`, A is `$02` in 23
+windows and `$00` in 22 windows, matching the values stored by `$43B2` on the
+preceding branch paths. The sampled bytes at `$C294–$C296` are three `ASL A`
+instructions, and the row at `$C297` records a store to `$279F` with A=`$10`
+in the 23 `$02` cases and A=`$00` in the 22 `$00` cases. This establishes a
+trace correlation between the sampled `$07` load bytes, following A values,
+and `$279F` store bytes for this JP state; it does not establish a
+fetched-opcode-backed read or the semantic name or use of `$279F`.
+
+The next sampled byte windows are `TAX` at `$C29A` and `LDA $4842,X` at
+`$C29B`, but the recorded X at `$C29B` is `$10` in all 45 cases, including
+those where `$279F` was written as `$00`. The current capture therefore does
+not bind `$279F` to the indexed lookup value. The byte windows are read from
+Mednafen's mapped code page, not logged at the opcode fetch; a follow-up must
+capture the fetched opcode and post-instruction registers before assigning
+this lookup any behavior. The adjacent helpers that read `$27A1` or increment
+`$05/$06` still have unbound callers and effects.
+
+`scripts/verify_theron_pce_fast_a1a9_zero_page_consumer_trace.py` checks this
+bounded trace correlation and preserves the `$C29B` X-register discrepancy
+as an explicit open finding. Against the private authentic JP trace it
+reports 5,760 instruction rows, 23 branches through `$43B0`, 22 through
+`$43B2`, and X=`$10` at `$C29B` in all 45 cases. The raw trace remains private.
+
 ## Adjacent authentic helper family
 
 The 23 bytes immediately following the traced routine are also identical at
@@ -70,8 +98,9 @@ them at JP `$43B5–$43CB` and US `$43B8–$43CE`:
 
 The static receipt now verifies this adjacent byte span at every admitted
 raw-BIN candidate. These decodes narrow the next dynamic tracing task to the
-callers and producers of `$05–$07`; they still do not identify the routines'
-gameplay roles, caller path, or loaded CD source.
+fetched opcode/register discrepancy and the callers of the `$27A1` and
+`$05/$06` helpers; they still do not identify the routines' gameplay roles,
+caller path, or loaded CD source.
 
 ## Verification
 
