@@ -608,6 +608,9 @@ fi
 if [[ ! -f "$pce_fast_movement_context_instrumenter" ]] ||
    ! grep -Fq 'RdOp' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'movement_command_write' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'input_latch_write' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'runtime_state_write' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'A == 0x2911 || A == 0x2912 || A == 0x2920' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq '0x0e8a00' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'GetRealPC_EXTERNAL' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_TRACE' "$pce_fast_movement_context_instrumenter" ||
