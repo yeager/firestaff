@@ -7017,6 +7017,31 @@ int nexus_v1_vdp1_lookup_colour_codes_match(
     return memcmp(decoded, expected, decoded_count * sizeof(*decoded)) == 0;
 }
 
+int nexus_v1_vdp1_decode_mode0_bank_texture(
+    const uint8_t *command, int command_size,
+    const uint8_t *vdp1_vram, int vdp1_vram_size,
+    uint8_t *out_indices, uint16_t *out_colour_codes, size_t output_count)
+{
+    Nexus_V1_Vdp1TextureCommand parsed;
+    uint32_t count, pixel;
+    uint16_t bank;
+    if (!command || !vdp1_vram || !out_indices || !out_colour_codes ||
+        vdp1_vram_size != (int)NEXUS_V1_VDP1_VRAM_BYTES ||
+        nexus_v1_vdp1_texture_command_parse(command, command_size, &parsed) != 0 ||
+        !parsed.texture_command || parsed.colour_mode != 0U ||
+        !parsed.texture_source_range_valid || !parsed.texture_byte_count) return 0;
+    count = (uint32_t)parsed.texture_width * (uint32_t)parsed.texture_height;
+    if (output_count < count) return 0;
+    bank = parsed.colour_control & 0xfff0U;
+    for (pixel = 0; pixel < count; ++pixel) {
+        uint8_t packed = vdp1_vram[parsed.texture_source_byte_offset + (pixel >> 1U)];
+        uint8_t index = (pixel & 1U) ? packed & 15U : packed >> 4U;
+        out_indices[pixel] = index;
+        out_colour_codes[pixel] = bank | index;
+    }
+    return 1;
+}
+
 int nexus_v1_vdp1_decode_mode1_lookup_texture(
     const uint8_t *command, int command_size,
     const uint8_t *vdp1_vram, int vdp1_vram_size,

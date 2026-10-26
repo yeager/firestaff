@@ -2578,6 +2578,13 @@ int nexus_v1_vdp1_decode_mode1_lookup_texture(
     const uint8_t *texture_span, int texture_span_size,
     uint16_t *out_colour_codes, size_t out_colour_code_count,
     Nexus_V1_Vdp1LookupDecodeReceipt *out_receipt);
+/* Decode mode-0 texture indices and VDP1 colour-bank words from a captured
+ * VRAM snapshot. This does not apply transparency, end codes, VDP2 colour
+ * RAM, sprite priority, or establish that snapshot bytes were live at draw. */
+int nexus_v1_vdp1_decode_mode0_bank_texture(
+    const uint8_t *command, int command_size,
+    const uint8_t *vdp1_vram, int vdp1_vram_size,
+    uint8_t *out_indices, uint16_t *out_colour_codes, size_t output_count);
 /* Byte-for-byte checker for a separately supplied mode-1 colour-code witness.
  * Equality does not authenticate a witness or permit a renderer. */
 int nexus_v1_vdp1_lookup_colour_codes_match(

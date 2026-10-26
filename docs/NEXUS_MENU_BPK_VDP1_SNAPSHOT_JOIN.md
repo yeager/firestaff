@@ -101,6 +101,11 @@ is a normal sprite in 4-bit colour-bank mode, with captured CMDCOLR values
 matches against the later VRAM snapshot, not a time-aligned palette or a
 proof of the final menu image. The capture replay currently resolves mode-1
 lookup textures; it does not yet composite these mode-0 bank sprites.
+`nexus_v1_vdp1_decode_mode0_bank_texture` now decodes the sprite's packed
+indices and VDP1 colour-bank words from a VRAM snapshot. The retained `0xd8e0`
+command and its 576 texels pass the external capture test. These words still
+need transparency, end-code, sprite priority and time-aligned VDP2 colour RAM
+handling before they can produce a trustworthy displayed image.
 
 The same CMDSIZE and skipped-command corrections also apply to the Mednafen
 VDP1 source, material, and write-join analyzers. Earlier numerical receipts

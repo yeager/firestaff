@@ -1,6 +1,7 @@
 #include "nexus_v1_dungeon.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int failures;
@@ -37,6 +38,53 @@ int main(void) {
 
     memset(command, 0, sizeof(command));
     memset(vram, 0, sizeof(vram));
+    {
+        uint8_t indices[8];
+        wl16(command + 6, 0x52f3U);
+        wl16(command + 8, 8U);
+        wl16(command + 10, 0x0101U);
+        memcpy(vram + 0x40, texture, sizeof(texture));
+        expect(nexus_v1_vdp1_decode_mode0_bank_texture(
+                   command, sizeof(command), vram, sizeof(vram), indices, decoded, 8U) &&
+               indices[0] == 1U && indices[7] == 8U &&
+               decoded[0] == 0x52f1U && decoded[7] == 0x52f8U,
+               "VDP1 colour-bank decode preserves bank and nibble order");
+        expect(!nexus_v1_vdp1_decode_mode0_bank_texture(
+                   command, sizeof(command), vram, sizeof(vram), indices, decoded, 7U),
+               "VDP1 colour-bank decode rejects short output");
+        memset(command, 0, sizeof(command));
+    }
+    {
+        const char *path = getenv("FIRESTAFF_NEXUS_YMIR_DUMP");
+        const char *trace = getenv("FIRESTAFF_NEXUS_VDP1_TRACE");
+        if (path && trace) {
+            FILE *vram_file = fopen(path, "rb"), *trace_file = fopen(trace, "rb");
+            uint8_t record[36], indices[576];
+            uint16_t codes[576];
+            int found = 0;
+            expect(vram_file && trace_file, "open authentic Ymir inputs");
+            if (vram_file && trace_file && fread(vram, 1, sizeof(vram), vram_file) == sizeof(vram)) {
+                while (fread(record, 1, sizeof(record), trace_file) == sizeof(record)) {
+                    if (record[0] == 0xe0U && record[1] == 0xd8U &&
+                        record[2] == 0U && record[3] == 0U) {
+                        size_t n;
+                        found = nexus_v1_vdp1_decode_mode0_bank_texture(
+                            record + 4, 32, vram, sizeof(vram), indices, codes, 576);
+                        for (n = 0; found && n < 576; ++n) {
+                            uint8_t packed = vram[0x44060U + n / 2];
+                            uint8_t expected_index = n & 1U ? packed & 15U : packed >> 4U;
+                            if (indices[n] != expected_index || codes[n] != (0x52f0U | expected_index)) found = 0;
+                        }
+                        break;
+                    }
+                }
+            }
+            expect(found, "decode authentic Nexus TITLE.BIN colour-bank sprite");
+            if (vram_file) fclose(vram_file);
+            if (trace_file) fclose(trace_file);
+            memset(vram, 0, sizeof(vram));
+        }
+    }
     {
         Nexus_V1_Vdp1TextureCommand parsed;
         wl16(command + 10, 0x0410U);
