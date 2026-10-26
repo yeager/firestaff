@@ -1,14 +1,16 @@
 # Five-game startup support gap analysis
 
-Reconciled with published `main` at `5d612f62a` (Firestaff v3.0.415) on
-2026-10-26. Its GitHub Actions release run `40325408361` completed the seven
-platform build and packaging jobs successfully (Windows x86_64, macOS
-x86_64/arm64, Linux x86_64/arm64, Android arm64 and iOS arm64), then published
-23 release assets. These results verify compilation and packaging, not game
-startup. The v3.0.415 release notes use the v3.0.414 runtime receipts; this
-release did not run a new five-game startup matrix. Runtime receipts cited
-below remain the recorded runs at their stated revisions; they were not rerun
-during this documentation update.
+Reconciled with repository `main` at `6e03c4706` on 2026-10-26. The latest
+published release is v3.0.415 (published at 13:06 UTC); current `main` has
+advanced to the v3.0.416 candidate and contains later evidence changes, but no
+release has been created from them. The v3.0.415 GitHub Actions release run
+`40325408361` completed the seven platform build and packaging jobs
+successfully (Windows x86_64, macOS x86_64/arm64, Linux x86_64/arm64, Android
+arm64 and iOS arm64), then published 23 release assets. These results verify
+compilation and packaging, not game startup. Its release notes use the v3.0.414
+runtime receipts and it did not run a new five-game startup matrix. Runtime
+receipts cited below remain the recorded runs at their stated revisions; they
+were not rerun during this documentation update.
 The repository contains checks
 against authentic media for all five games, but “available,”
 “selected,” “handed off,” and “entered a playable runtime” are separate states.
@@ -22,7 +24,7 @@ The current evidence does not establish complete five-game startup support.
 | CSB | The authentic-media CLI diagnostics exercise direct selection and source-owned startup. | The picker test covers keyboard and mouse handoff; the runtime test checks the authentic starting party and viewport receipt. | First runtime is verified on bounded real-media routes. Platform-wide parity and native physical input remain open. |
 | DM2 | The authentic-media CLI diagnostics cover direct selection; platform-specific checks include the complete timed FM Towns title sequence. The French DOS loose-file route now also preserves its selected graphics owner into the first loaded runtime. | The picker test covers keyboard and mouse handoff; the runtime test checks the authentic first party and frame. | First runtime is verified on bounded real-media routes, including the selected French DOS loose-file case. Other edition and native interaction coverage remains incomplete. |
 | Theron | The CLI diagnostics reach its source-owned runtime handoff. | The picker test covers keyboard and mouse handoff; the runtime test checks a loaded authentic Track 02 state. Tab champion cycling and the documented Z/X/Space controls now exercise the normal SDL event loop on authentic USA Track 02. | Runtime state, native frames and these keyboard actions are reached, but the native dungeon image is not yet driven by the authenticated world/graphics state. A recent nonblack Firestaff capture has not been paired with an original-emulator capture. |
-| Nexus | A fresh 2026-10-27 TRV2 v3.0.415 CLI run used the authentic Japanese `DM.BIN` (MD5 `e88d60859f65f08fa622e1992b02280f`): after 110 boot-probe frames and one scripted Enter, it reported `titleReady=1`, `levelLoaded=0`, `menu=0`, blocker `menu-bpk-prs3-capture-required`. The authentic-data mouse test also passes only through the same capture-gated title route. There is no Nexus case in the first-runtime probe matrix. | Retail Ymir evidence covers the Japanese `LOAD` row and a second-stage load into the four-champion HUD and first-person viewport. This establishes a retail checkpoint route only; it does not admit Firestaff's production menu, save loader, or runtime. The installed English `MENU.BPK` still lacks the source-bound English capture required by the renderer gate. The Saturn BKR parser remains container-level and is not wired to save selection or loading ([retail evidence](nexus_startup.md#retail-continue-with-an-authentic-save-2026-10-25)). | **Not startable as a playable game yet.** |
+| Nexus | A fresh TRV2 v3.0.415 CLI run used authentic Japanese `DM.BIN` (MD5 `e88d60859f65f08fa622e1992b02280f`): after 110 boot-probe frames and one scripted Enter, it reported `titleReady=1`, `levelLoaded=0`, `menu=0`, blocker `menu-bpk-prs3-capture-required`. The authentic-data mouse test likewise reaches only that capture-gated title route. No Nexus case exists in the first-runtime probe matrix. | Ymir evidence now includes an authentic Japanese cold boot through the BIOS date/time screen to the Nexus logo and canyon attract sequence. Separate Ymir captures show the Japanese `LOAD` row and a later load into the four-champion HUD and first-person viewport. These are retail/emulator checkpoints only; none admits Firestaff's production menu, save loader, or runtime. The installed English `MENU.BPK` still lacks the source-bound English capture required by the renderer gate. The Saturn BKR parser remains container-level and is not wired to save selection or loading ([cold-boot limits](nexus_startup.md#deterministic-cold-boot-reaches-the-nexus-titlelogo-2026-10-26), [retail continue evidence](nexus_startup.md#retail-continue-with-an-authentic-save-2026-10-25)). | **Not startable as a playable game yet.** |
 
 ## What the existing checks prove
 
@@ -107,9 +109,12 @@ The current evidence does not establish complete five-game startup support.
   assertion rejects a false `runtime-entered` receipt and requires the blocked
   menu/level gate, so a passing test is not evidence that Nexus is playable.
 - [`docs/nexus_startup.md`](nexus_startup.md) records authentic Ymir title,
-  menu, load-row, and loaded-HUD observations from Japanese retail media. They
-  do not satisfy the English `MENU.BPK` source-binding gate or establish
-  Firestaff menu rendering, save selection/loading, or level startup.
+  cold-boot, title, menu, load-row, and loaded-HUD observations from Japanese
+  retail media. The cold-boot capture reaches the logo and attract sequence;
+  a separate saved-state run shows title-menu input, but neither proves that
+  Firestaff renders or dispatches the menu. They do not satisfy the English
+  `MENU.BPK` source-binding gate or establish Firestaff save selection/loading
+  or level startup.
 - These tests use SDL dummy video/audio and authentic installed media. They do
   not establish native window presentation, physical input, audible output,
   complete game playthroughs, or cross-platform gameplay parity.
