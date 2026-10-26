@@ -1,3 +1,16 @@
+## 2026-10-26 — PCE Fast input-latch follow-up remains unjoined
+
+- A clean isolated PCE Fast reference build extended the bounded
+  movement-context observer with raw `$2911`, `$2912`, `$2920`, `$2031`, and
+  `$203F-$2041` write records. These are opaque observations, not coordinate,
+  direction, or command semantics.
+- Replaying the preserved authentic Japanese Rev. 1 Akutuba state with
+  `up@1:60` produced 128 bounded `$0E8A00-$0E8AFF` data reads with physical
+  PC/MPR context but no latch or runtime-state write record. The capture also
+  lacked the required bounded VDC word-commit trace and remains blocked.
+- The isolated build and raw traces were removed after verification. No game
+  media, save state, firmware, or raw trace is tracked by Git.
+
 ## 2026-10-25 — verify keyboard champion and wait actions in the SDL loop
 
 - Extended `theron_v1_sdl_input_events` to send actual SDL `Tab` and `Space`
