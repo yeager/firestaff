@@ -63,10 +63,12 @@ static int follow_candidate(const uint8_t *vram, int vram_size,
         if (offset == copr) has_copr = 1;
         type = (uint8_t)(control & 0x000fU);
         if (control & 0x8000U) break;
-        if (type <= 7U) ++draws;
-        else if (type == 8U) ++user_clips;
-        else if (type == 9U) ++system_clips;
-        else if (type == 10U) ++locals;
+        if (!(control & 0x4000U)) {
+            if (type <= 7U) ++draws;
+            else if (type == 8U) ++user_clips;
+            else if (type == 9U) ++system_clips;
+            else if (type == 10U) ++locals;
+        }
 
         jump_mode = (unsigned)((control >> 12U) & 0x3U);
         if (jump_mode == 0U) {
@@ -194,7 +196,7 @@ int nexus_v1_vdp1_command_sequence_frame(
         for (i = 0; i < best_count; ++i) {
             const uint8_t *record = input->vdp1_vram + best[i];
             if ((read_le16(record) & 0x000fU) == 10U &&
-                !(read_le16(record) & 0x8000U)) {
+                !(read_le16(record) & 0xc000U)) {
                 origin_x = signed_11(read_le16(record + 12U));
                 origin_y = signed_11(read_le16(record + 14U));
                 origin_verified = 1;
@@ -211,7 +213,7 @@ int nexus_v1_vdp1_command_sequence_frame(
         for (i = 0; i < best_count; ++i) {
             const uint8_t *record = input->vdp1_vram + best[i];
             if ((read_le16(record) & 0x000fU) == 8U &&
-                !(read_le16(record) & 0x8000U)) {
+                !(read_le16(record) & 0xc000U)) {
                 receipt.user_clip_x0 = read_le16(record + 12U) & 0x1fffU;
                 receipt.user_clip_y0 = read_le16(record + 14U) & 0x1fffU;
                 receipt.user_clip_x1 = read_le16(record + 20U) & 0x1fffU;

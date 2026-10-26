@@ -94,6 +94,15 @@ int main(void)
         free(vram);
         return 1;
     }
+    /* A skipped local command must not change display-space origin. */
+    wl16(vram + start + 96U, 0x400aU);
+    if (!nexus_v1_vdp1_command_sequence_frame(&input, &receipt) ||
+        receipt.local_coordinate_count != 1 || receipt.draw_count != 2 ||
+        receipt.command_origin_x[4] != 160 || receipt.command_origin_y[4] != 112) {
+        fprintf(stderr, "FAIL: skipped VDP1 local command changed origin\n");
+        free(vram);
+        return 1;
+    }
     /* A chain without a local-coordinate record cannot invent an origin. */
     wl16(vram + start + 32U, 0x0002U);
     wl16(vram + start + 96U, 0x0002U);
