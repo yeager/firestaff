@@ -27,7 +27,7 @@ from analyze_nexus_vdp1_command_sequence import (
     follow,
     parse_copr,
     records,
-    signed_11,
+    signed_13,
 )
 
 
@@ -348,7 +348,7 @@ def _chain_summary(chain: list[Record]) -> dict[str, object]:
         elif kind == 9:
             system_clip = (record.words[10], record.words[11])
         elif kind == 10:
-            origin = (signed_11(record.words[6]), signed_11(record.words[7]))
+            origin = (signed_13(record.words[6]), signed_13(record.words[7]))
             origin_verified = True
         elif kind in DRAW_TYPES:
             draw_state.append({

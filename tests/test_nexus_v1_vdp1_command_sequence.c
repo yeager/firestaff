@@ -109,6 +109,13 @@ int main(void)
             fprintf(stderr, "FAIL: VDP1 return without call\n");
             free(vram); return 1;
         }
+        wl16(commands + 12U, 0x0400U);
+        wl16(commands + 14U, 0x1fffU);
+        if (!nexus_v1_vdp1_command_sequence_trace(commands, offsets, 3, &traced) ||
+            traced.display_origin_x != 1024 || traced.display_origin_y != -1) {
+            fprintf(stderr, "FAIL: VDP1 local coordinates are not signed 13-bit\n");
+            free(vram); return 1;
+        }
     }
 
     if (!vram) return 1;

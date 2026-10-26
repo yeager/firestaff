@@ -214,9 +214,9 @@ def find_chain(vram: bytes, copr: int) -> list[Record]:
     ]
 
 
-def signed_11(value: int) -> int:
-    value &= 0x07FF
-    return value - 0x800 if value & 0x400 else value
+def signed_13(value: int) -> int:
+    value &= 0x1FFF
+    return value - 0x2000 if value & 0x1000 else value
 
 
 def describe(chain: list[Record], copr: int) -> dict[str, object]:
@@ -235,7 +235,7 @@ def describe(chain: list[Record], copr: int) -> dict[str, object]:
         for r in system_clips
     ]
     local_points = [
-        (signed_11(r.words[6]), signed_11(r.words[7])) for r in locals_
+        (signed_13(r.words[6]), signed_13(r.words[7])) for r in locals_
     ]
     return {
         "start_offset": chain[0].offset,

@@ -13,10 +13,10 @@ static int valid_offset(uint32_t offset, int size)
         offset <= (uint32_t)size - NEXUS_V1_VDP1_COMMAND_BYTES;
 }
 
-static int signed_11(uint16_t value)
+static int signed_13(uint16_t value)
 {
-    value &= 0x07ffU;
-    return (value & 0x0400U) != 0U ? (int)value - 0x0800 : (int)value;
+    value &= 0x1fffU;
+    return (value & 0x1000U) != 0U ? (int)value - 0x2000 : (int)value;
 }
 
 static int contains_offset(const uint32_t *offsets, int count, uint32_t target)
@@ -200,8 +200,8 @@ int nexus_v1_vdp1_command_sequence_frame(
             const uint8_t *record = input->vdp1_vram + best[i];
             if ((read_le16(record) & 0x000fU) == 10U &&
                 !(read_le16(record) & 0xc000U)) {
-                origin_x = signed_11(read_le16(record + 12U));
-                origin_y = signed_11(read_le16(record + 14U));
+                origin_x = signed_13(read_le16(record + 12U));
+                origin_y = signed_13(read_le16(record + 14U));
                 origin_verified = 1;
                 if (!receipt.display_origin_verified) {
                     receipt.display_origin_x = origin_x;
@@ -256,8 +256,8 @@ int nexus_v1_vdp1_command_sequence_trace(
             else if (type == 9U) ++r.system_clip_count;
             else if (type == 10U) {
                 ++r.local_coordinate_count;
-                origin_x = signed_11(read_le16(p + 12U));
-                origin_y = signed_11(read_le16(p + 14U));
+                origin_x = signed_13(read_le16(p + 12U));
+                origin_y = signed_13(read_le16(p + 14U));
                 have_origin = 1;
                 if (!r.display_origin_verified) {
                     r.display_origin_x = origin_x; r.display_origin_y = origin_y;

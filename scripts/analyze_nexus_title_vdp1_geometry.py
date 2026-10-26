@@ -49,7 +49,7 @@ def main() -> int:
             continue
         words = record.words
         if record.command_type == 10:
-            local_x, local_y = signed(words[6], 11), signed(words[7], 11)
+            local_x, local_y = signed(words[6], 13), signed(words[7], 13)
             local_updates.append((record.offset, local_x, local_y))
             continue
         if record.command_type != 2:
