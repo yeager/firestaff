@@ -119,6 +119,17 @@ does not bind a retail menu resource to a Saturn consumer, prove the final
 displayed pixels, or permit Firestaff to present a host-built menu. Those
 production gates remain closed.
 
+An independent 2,200-frame no-present replay on 2026-10-26 used the same
+authenticated Japanese IPL, retail CUE, retained title-prompt state, and the
+hash-verified four-champion BKR (`87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`).
+It scheduled Start, Down, A, and a second A at emulator-frame boundaries rather
+than through X11. The BKR digest was unchanged after the run. Its final native
+frame was the Dungeon Master Nexus title image, SHA-256
+`1c224b148ec5c107569c1c9b30c5dfab24d8110d3e391b0bcb1089cd582dfb13`.
+This is a timing boundary: those inputs occur before the title is receptive and
+must not be interpreted as a verified menu or Continue route. The temporary
+profile, dump, and screenshot were removed after inspection.
+
 Ymir PR #966 additionally provides `--capture-screenshot` for the same
 capture-owned route. It queues a profile-local framebuffer PNG only after the
 requested frames and memory receipt have completed; it requires both a frame
