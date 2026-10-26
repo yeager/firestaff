@@ -144,11 +144,12 @@ Its endpoint was still the native title screen, with SHA-256
 `8d495ffa4e8a76ab38a48c3c84a6fcc437db1bc4682aec6ac897609ed2307d95`; the
 four-champion BKR digest remained
 `87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`.
-Therefore insufficient hold duration is not the cause of the failed
-post-title transition. The temporary profile, X display, memory dump, and
-inspection copy were removed after verification. This remains negative
-emulator evidence only: it does not establish menu, save, HUD, or viewport
-parity.
+Both runs ended with the same final title-screen image hash. Extending the
+post-title hold from eight to 60 frames did not change the final endpoint; no
+claim is made here about intermediate menu or loading transitions. The
+temporary profile, X display, memory dump, and inspection copy were removed
+after verification. This remains negative emulator evidence only: it does not
+establish menu, save, HUD, or viewport parity.
 
 Ymir PR #966 additionally provides `--capture-screenshot` for the same
 capture-owned route. It queues a profile-local framebuffer PNG only after the
@@ -287,7 +288,7 @@ frame from that checkpoint. The source BKR remained
 `87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`
 before and after both captures. A bounded SH-2 data-read trace over
 `0x060476d0..0x06048000` recorded twelve master-SH-2 16-bit reads, all in the
-`0x06047ca0..0x06047cae` range, without dropped rows. The captured checkpoint
+`0x06047ca0..0x06047cb6` range, without dropped rows. The captured checkpoint
 has SHA-256 `48ca0feb12432dde6748124a9e639ad4e466efc307520268356a16c00fd5b2ce`;
 the retained CSV has SHA-256
 `e45ad64fa89ce263b51c0579167a35fcfacdce840a438854b48b8df5100dd9ee`.
