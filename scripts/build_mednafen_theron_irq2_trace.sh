@@ -318,12 +318,22 @@ if [[ "$pce_fast_snapshot" == 1 || "$pce_fast_vram_commit_trace" == 1 ]]; then
     python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_movement_context_trace.py" \
         "$build_root/source"
 fi
-a1a9_init_trace_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_a1a9_init_trace.patch"
-a1a9_init_trace_rendered="$build_root/theron-pce-fast-a1a9-init.rendered.patch"
-sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$a1a9_init_trace_patch" \
-    > "$a1a9_init_trace_rendered"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$a1a9_init_trace_rendered"
+python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_a1a9_init_trace.py" \
+    "$build_root/source"
+if ! awk '
+    index($0, "b1 = RdAtPC();") { opcode_fetch = NR }
+    index($0, "ADDCYC(CycTable[b1]);") { dispatch_cycle = NR }
+    index($0, "a1a9_init_instruction sequence=") {
+        trace_record = NR
+    }
+    END {
+        if (!opcode_fetch || !dispatch_cycle || !trace_record ||
+            opcode_fetch >= trace_record || trace_record >= dispatch_cycle) exit 1
+    }
+' "$build_root/source/src/pce_fast/huc6280.cpp"; then
+    printf '%s\n' 'FAIL: A1A9 trace must sample the fetched opcode after existing trace calls and before dispatch' >&2
+    exit 1
+fi
 
 if [[ "$patch_only" == 1 ]]; then
     # Tests use the exact production patch order without paying for a rebuild.
@@ -340,13 +350,16 @@ fi
 # The released Mednafen tree carries generated Makefile.in files. Copying it
 # into a fresh trace root can make make try to regenerate them, which would
 # require the historical automake-1.16 toolchain. Keep the shipped generated
-# inputs authoritative for this instrumented build.
+# inputs authoritative for this instrumented build. The source copy also makes
+# configure.ac newer than the shipped configure, so preserve that generated
+# input before running configure below.
 # cp -R assigns the copy timestamp to every source file. In the shipped
 # release tree that can make aclocal.m4 appear older than acinclude.m4, so
 # make tries to regenerate both Autotools outputs even though this build has
 # no Autotools toolchain installed. Treat the release-generated aclocal file
 # as authoritative, then advance Makefile.in after its dependencies.
 touch "$build_root/source/aclocal.m4"
+touch "$build_root/source/configure"
 find "$build_root/source" -name Makefile.in -exec touch {} +
 
 cd "$build_root/source"

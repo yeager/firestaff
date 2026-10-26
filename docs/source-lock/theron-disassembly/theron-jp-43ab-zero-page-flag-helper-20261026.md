@@ -3,18 +3,18 @@
 ## Evidence identity
 
 The execution evidence is the private PCE Fast capture
-`/home/trv2/firestaff-theron-evidence/capture/theron-a1a9-register-local-20261027/live.trace.a1a9-init`
+`/home/trv2/firestaff-theron-evidence/capture/theron-a1a9-fetch-v2-20261027/live.trace.a1a9-init`
 on TRV2. Its SHA-256 is
-`80be0ef30865051216ecc341a7f3b936e030221d4fed4fcc7238e58d1a09fb32`.
+`ff6dd9426adfebdd2927b0417c0f8b9f1bbf1820cfaab0c5abbd4843aa9d0f5b`.
 It was captured from an emulator-created Ak-Tu-Ba state using authentic JP
 Rev. 1 media. The authentic JP Track 02 MD5 is
 `b7afb338ad31be1025b53f9aff12d73a`; the matching US Track 02 MD5 is
 `f23601102138f87c33025877767ebf76`.
 
-Across 45 bounded trace windows, the JP code at logical `$43AB–$43B4` ran at
-physical `$0D03AB–$0D03B4`. The trace records 45 visits to `$43AB` and `$43AD`,
-23 fall-through branches from `$43AD` to `$43B0`, 22 branches from `$43AD` to
-`$43B2`, 45 visits to `$43B2`, and 45 returns through `$43B4` to `$A1C1`.
+Across 30 bounded trace windows, the JP code at logical `$43AB–$43B4` ran at
+physical `$0D03AB–$0D03B4`. The trace records 30 visits to `$43AB` and `$43AD`,
+15 fall-through branches from `$43AD` to `$43B0`, 15 branches from `$43AD` to
+`$43B2`, 30 visits to `$43B2`, and 30 returns through `$43B4` to `$A1C1`.
 
 ## Decoded routine
 
@@ -48,7 +48,7 @@ remains ambiguous, and no native click behavior is established.
 
 ## Dynamic caller context
 
-The same private trace records 45 calls at logical `$A1BE`, physical
+The same private trace records 30 calls at logical `$A1BE`, physical
 `$0E01BE`, with instruction bytes `20 AB 43` (`JSR $43AB`). Every observed
 return reaches `$A1C1`, then executes `STZ $271F` at `$A1C1`, `STZ $271D` at
 `$A1C4`, and `LDA #$DF` at `$A1C7`. The caller does not consume the helper's
@@ -60,14 +60,17 @@ a later consumer or assign meaning to the written `$27xx` registers.
 
 The same 128-instruction windows continue through a trace row at logical
 `$C292` / physical `$0D2292` whose sampled bytes are `A5 07` (`LDA $07`). This
-row occurs in all 45 windows. At the next row, `$C294`, A is `$02` in 23
-windows and `$00` in 22 windows, matching the values stored by `$43B2` on the
+row occurs in all 30 windows. At the next row, `$C294`, A is `$02` in 15
+windows and `$00` in 15 windows, matching the values stored by `$43B2` on the
 preceding branch paths. The sampled bytes at `$C294–$C296` are three `ASL A`
 instructions, and the row at `$C297` records a store to `$279F` with A=`$10`
-in the 23 `$02` cases and A=`$00` in the 22 `$00` cases. This establishes a
-trace correlation between the sampled `$07` load bytes, following A values,
-and `$279F` store bytes for this JP state; it does not establish a
-fetched-opcode-backed read or the semantic name or use of `$279F`.
+in the 15 `$02` cases and A=`$00` in the 15 `$00` cases. The new trace records
+the opcode returned by `RdAtPC()` and verifies it against the first byte of
+each mapped code window. Thus the executed opcode bytes, including `$A5` at
+`$C292`, match the mapped bytes in all rows; operands remain sampled from the
+mapped code page. This establishes a bounded trace correlation between the
+`$07` consumer, following A values, and `$279F` writes for this JP state. It
+does not prove the loaded CD source or the semantic name or use of `$279F`.
 
 The next sampled byte windows are `TAX` at `$C29A` and `LDA $4842,X` at
 `$C29B`. Mednafen 1.32.1
@@ -76,17 +79,18 @@ variables inside `HuC6280_Run`; `SAVE_LOCALS` writes them back to `HuCPU` only
 when that run call exits. The old trace sampled `HuCPU.X`, `HuCPU.Y`, and
 `HuCPU.P`, so it recorded stale struct values while the CPU was running. The
 trace patch now samples `X_local`, `Y_local`, and `P_local`. The corrected
-capture records X=`$10` in all 23 `$02` selector cases and X=`$00` in all 22
-`$00` cases at `$C29B`, matching the value previously stored to `$279F`.
-This verifies the bounded live-register correlation for this state. The byte
-windows still come from Mednafen's mapped code page rather than the opcode
-fetch. The adjacent helpers that read `$27A1` or increment `$05/$06` also
-still have unbound callers and effects.
+capture records fetched opcode `$BD` at `$C29B`, with X=`$10` in all 15 `$02`
+selector cases and X=`$00` in all 15 `$00` cases, matching the value
+previously stored to `$279F`. This verifies the bounded live-register and
+opcode-byte correlations for this state. Operands still come from the mapped
+code page rather than operand-fetch receipts. The adjacent helpers that read
+`$27A1` or increment `$05/$06` also still have unbound callers and effects.
 
 `scripts/verify_theron_pce_fast_a1a9_zero_page_consumer_trace.py` checks this
-bounded trace correlation and requires the live `$C29B` X value to match the
-shifted `$279F` value. The corrected private trace has 5,760 rows, 45 validated
-windows, and 23/22 branch counts. The full capture's broader dynamic-evidence
+bounded trace correlation, verifies each fetched opcode against the first
+mapped code byte, and requires live `$C29B` X to match the shifted `$279F`
+value. The corrected private trace has 3,840 rows, 30 validated windows, and
+15/15 branch counts. The full capture's broader dynamic-evidence
 gate did not obtain host-key, IRQ, or authenticated CD-to-RAM receipts; this
 sidecar therefore supports only the stated instruction-window correlation.
 The raw trace remains private.

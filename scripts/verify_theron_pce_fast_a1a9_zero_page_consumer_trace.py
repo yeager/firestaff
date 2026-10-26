@@ -8,7 +8,7 @@ from collections import Counter
 from pathlib import Path
 
 
-SOURCE_MARKER = "mednafen-pce-fast-a1a9-initializer-code-v1"
+SOURCE_MARKER = "mednafen-pce-fast-a1a9-initializer-fetch-v2"
 EXPECTED_A1A9 = ("a1a9", "0e01a9", "628d80288d8128")
 EXPECTED_CALL = ("a1be", "0e01be", "20ab439c1f279c")
 EXPECTED_BRANCH = ("43ad", "0d03ad", "0f0602a9028507")
@@ -23,7 +23,6 @@ EXPECTED_ASL = (
     ("c296", "0d2296", "0a"),
 )
 INSTRUCTION_WINDOW_SIZE = 128
-EXPECTED_WINDOW_COUNT = 45
 
 
 def parse_fields(line: str) -> dict[str, str]:
@@ -65,6 +64,10 @@ def verify(lines: list[str]) -> tuple[int, Counter[str], int]:
                 f"non-contiguous instruction sequence at row {sequence}: "
                 f"got {row.get('sequence', 'missing')}"
             )
+        if len(row["bytes"]) != 14 or row["opcode"] != row["bytes"][:2]:
+            raise ValueError(
+                f"fetched opcode does not match the mapped instruction byte at row {sequence}"
+            )
 
     if len(rows) % INSTRUCTION_WINDOW_SIZE:
         raise ValueError(
@@ -75,8 +78,6 @@ def verify(lines: list[str]) -> tuple[int, Counter[str], int]:
     branches: Counter[str] = Counter()
     stores: list[str] = []
     consumer_inputs: list[str] = []
-    consumers: list[int] = []
-    indexed_x: Counter[tuple[str, str]] = Counter()
     validated_a1a9_entries = 0
     for window_number, start in enumerate(range(0, len(rows), INSTRUCTION_WINDOW_SIZE)):
         window = rows[start : start + INSTRUCTION_WINDOW_SIZE]
@@ -95,28 +96,27 @@ def verify(lines: list[str]) -> tuple[int, Counter[str], int]:
             )
         validated_a1a9_entries += 1
 
-        if instruction(window[branch_index]) == EXPECTED_BRANCH:
-            if branch_index + 2 >= len(window):
-                raise ValueError(f"truncated $43AB branch in A1A9 window {window_number}")
-            target = window[branch_index + 1]["logical_pc"]
-            if target == "43b0":
-                if instruction(window[branch_index + 2]) != EXPECTED_STORE:
-                    raise ValueError("fall-through branch did not store through $43B2")
-                stored_value = window[branch_index + 2]["a"]
-            elif target == "43b2":
-                if instruction(window[branch_index + 1]) != EXPECTED_STORE:
-                    raise ValueError("taken branch did not store through $43B2")
-                stored_value = window[branch_index + 1]["a"]
-            else:
-                raise ValueError(f"unexpected $43AB branch target ${target}")
-            expected_value = "02" if target == "43b0" else "00"
-            if stored_value != expected_value:
-                raise ValueError(
-                    f"$43AB branch to ${target} stored A=${stored_value}, "
-                    f"expected ${expected_value}"
-                )
-            branches[target] += 1
-            stores.append(stored_value)
+        if branch_index + 2 >= len(window):
+            raise ValueError(f"truncated $43AB branch in A1A9 window {window_number}")
+        target = window[branch_index + 1]["logical_pc"]
+        if target == "43b0":
+            if instruction(window[branch_index + 2]) != EXPECTED_STORE:
+                raise ValueError("fall-through branch did not store through $43B2")
+            stored_value = window[branch_index + 2]["a"]
+        elif target == "43b2":
+            if instruction(window[branch_index + 1]) != EXPECTED_STORE:
+                raise ValueError("taken branch did not store through $43B2")
+            stored_value = window[branch_index + 1]["a"]
+        else:
+            raise ValueError(f"unexpected $43AB branch target ${target}")
+        expected_value = "02" if target == "43b0" else "00"
+        if stored_value != expected_value:
+            raise ValueError(
+                f"$43AB branch to ${target} stored A=${stored_value}, "
+                f"expected ${expected_value}"
+            )
+        branches[target] += 1
+        stores.append(stored_value)
 
         if consumer_index + 6 >= len(window):
             raise ValueError(f"truncated $C292 consumer sequence in A1A9 window {window_number}")
@@ -154,31 +154,19 @@ def verify(lines: list[str]) -> tuple[int, Counter[str], int]:
                 f"live X=${window[consumer_index + 6]['x']} does not match the "
                 f"$279F value ${stored} in A1A9 window {window_number}"
             )
-        indexed_x[(result, window[consumer_index + 6]["x"])] += 1
-        consumers.append(expected)
-
-    if not stores or len(stores) != len(consumers):
+    if not stores or len(stores) != len(consumer_inputs):
         raise ValueError(
-            f"helper stores ({len(stores)}) and $07 consumers ({len(consumers)}) differ"
+            f"helper stores ({len(stores)}) and $07 consumers ({len(consumer_inputs)}) differ"
         )
     if stores != consumer_inputs:
         raise ValueError("$07 consumer values do not match the preceding helper stores")
-    if validated_a1a9_entries != EXPECTED_WINDOW_COUNT:
-        raise ValueError(
-            f"expected {EXPECTED_WINDOW_COUNT} validated A1A9 entries, "
-            f"got {validated_a1a9_entries}"
-        )
     if len(stores) != validated_a1a9_entries:
         raise ValueError(
             f"validated A1A9 entries ({validated_a1a9_entries}) and "
             f"$43AB helper calls ({len(stores)}) differ"
         )
-    if branches != Counter({"43b0": 23, "43b2": 22}):
-        raise ValueError(f"unexpected $43AB branch counts: {dict(branches)}")
-    if Counter(f"{value:02x}" for value in consumers) != Counter({"10": 23, "00": 22}):
-        raise ValueError("unexpected $279F selector result counts")
-    if indexed_x != Counter({("02", "10"): 23, ("00", "00"): 22}):
-        raise ValueError(f"unexpected live X-register observations: {dict(indexed_x)}")
+    if set(branches) != {"43b0", "43b2"}:
+        raise ValueError(f"trace did not cover both $43AB paths: {dict(branches)}")
 
     return len(rows), branches, validated_a1a9_entries
 

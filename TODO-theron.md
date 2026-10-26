@@ -14,13 +14,13 @@
   consumers and producers before assigning game behavior. The runtime CD
   source LBA, the semantic meaning of `$06/$07`, and native input/click parity
   remain unresolved.
-- The corrected 5,760-row capture has 45 validated windows. The `$07` read
-  at `$C292`, three `ASL A` byte windows, `$00/$10` stores to `$279F`, and
-  live X at `$C29B` correlate in all 45 cases (23 `$10`, 22 `$00`). The trace
-  patch samples Mednafen's execution-local registers rather than stale CPU
-  struct members. Opcode-fetch provenance, CD-to-RAM provenance, and semantic
-  meaning remain unproven; adjacent `$27A1` and `$05/$06` helper callers are
-  also unbound.
+- The corrected 3,840-row capture has 30 validated windows. The fetched opcode
+  matches the mapped code byte in every row; the `$07` read at `$C292`, three
+  `ASL A` windows, `$00/$10` stores to `$279F`, and live X at `$C29B` correlate
+  in all windows (15 `$10`, 15 `$00`). The trace patch samples Mednafen's
+  execution-local registers rather than stale CPU struct members. Operand
+  fetches, CD-to-RAM provenance, and gameplay meaning remain unproven;
+  `$27A1` and `$05/$06` helper callers are also unbound.
 - Evidence and decode references:
   [`theron-jp-43ab-zero-page-flag-helper-20261026.md`](docs/source-lock/theron-disassembly/theron-jp-43ab-zero-page-flag-helper-20261026.md).
 
