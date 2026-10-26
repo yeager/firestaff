@@ -278,7 +278,7 @@ profiles, dumps, screenshots, and X displays were removed. This verifies the
 current Ymir capture tooling and the bounded retail viewport route, not a
 Firestaff renderer, menu consumer, or HUD admission.
 
-## Bounded HUD-window SH-2 read witness (2026-10-26)
+## Bounded candidate-state-window SH-2 read witness (2026-10-26)
 
 Using the same hash-pinned Japanese retail CUE, BIOS, title-prompt state, and
 four-champion BKR, an isolated system-wide Ymir run advanced the observed
@@ -292,13 +292,22 @@ has SHA-256 `48ca0feb12432dde6748124a9e639ad4e466efc307520268356a16c00fd5b2ce`;
 the retained CSV has SHA-256
 `e45ad64fa89ce263b51c0579167a35fcfacdce840a438854b48b8df5100dd9ee`.
 
+Disassembly against the retained high-WRAM image identifies two real 16-bit
+field reads at offsets `+4` and `+6` from the observed eight-byte records, and
+the caller dereferences a table entry in the same address range. For example,
+the trace reads the `0x0124` and `0x00b0` fields from the record beginning at
+`0x06047cb0`; the next observed records have the same packed layout. This is
+evidence of structured runtime state, not evidence of a particular UI role.
+The high-WRAM image used for this disassembly has SHA-256
+`344b6a15bdac95a8e698c9a9ccc336f6f225fb3a4c60eec9788102c57b2e197d`.
+
 The raw CSV, its completed Ymir bundle, VDP1 command trace, VDP register
-snapshot, VDP2 registers, and checkpoint are retained in the TRV2 verification
-store as `nexus_v1_ymir_sh2_read_trace_hud_20261026`. This is an authentic
-execution witness for the specified RAM window. It is not an ownership join
-from a Firestaff source resource to a HUD element, does not label those reads
-semantically, and does not permit a host HUD, viewport compositor, save route,
-or input implementation.
+snapshot, VDP2 registers, high-WRAM image, and checkpoint are retained in the
+TRV2 verification store as `nexus_v1_ymir_sh2_read_trace_hud_20261026`. This
+is an authentic execution witness for the specified RAM window. It is not an
+ownership join from a Firestaff source resource to a HUD element, does not
+label those reads semantically, and does not permit a host HUD, viewport
+compositor, save route, or input implementation.
 
 ## Title-menu VDP1 source-span join (2026-10-19 capture; analyzed 2026-10-26)
 
