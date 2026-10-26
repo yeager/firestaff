@@ -1342,8 +1342,11 @@ then it checks and draws the current slot's missile. Both paths call
 `wvalueB`; it is not a pass over the legacy Firestaff projectile drain.
 Firestaff's current combined item/creature receipt has no DB14 events or
 creature-success replay events, and its later `dm2_v1_render_projectiles`
-pass cannot reproduce these occlusion points. The active DB14 selector and
-timer receipts are evidence only so far; no pixel parity is claimed. Next,
-bridge live DB14 chain snapshots and timer receipts to source-cell draw events,
-including the separate center pass, then bind TEMP_PICST placement/frame
-selection before allowing those events to draw authenticated GDAT material.
+pass cannot reproduce these occlusion points. The active timer receipt now
+decodes `ticks_and_map` and packed `wvalueB` coordinates, and the HME-242
+real-media test confirms that the live Fireball is reachable from the active
+G1 tile chain at that timer-owned map position. These are source-state
+receipts only; no pixel parity is claimed. Next, bridge live DB14 chain
+snapshots and timer receipts to source-cell draw events, including the
+separate center pass, then bind TEMP_PICST placement/frame selection before
+allowing those events to draw authenticated GDAT material.

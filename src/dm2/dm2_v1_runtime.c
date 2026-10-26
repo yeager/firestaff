@@ -15386,6 +15386,9 @@ int dm2_v1_runtime_live_missile_timer_receipt(
     out_timer->actor = matched->actor;
     out_timer->value = (uint16_t)matched->value_a;
     out_timer->action_word = (uint16_t)matched->value_b;
+    out_timer->map_index = (uint8_t)(matched->ticks_and_map >> 24);
+    out_timer->map_x = (uint8_t)((uint16_t)matched->value_b & 0x1fu);
+    out_timer->map_y = (uint8_t)(((uint16_t)matched->value_b >> 5) & 0x1fu);
     out_timer->direction = (uint8_t)((out_timer->action_word >> 10) & 3u);
     out_timer->raw_timer_hash = hash;
     out_timer->valid = 1;

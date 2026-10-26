@@ -2000,6 +2000,13 @@ int main(void)
         DM2_V1_G1DirectMissileReceipt live_missile;
         DM2_V1_G1FlyingItemSelectorReceipt live_selector;
         DM2_V1_G1MissileTimerReceipt live_timer;
+        DM2_V1_G1VisibleMapCell live_cell;
+        DM2_V1_G1MissileChainSnapshot live_snapshots[16];
+        const DM2_V1_DungeonData *live_dungeon = NULL;
+        const DM2_V1_RecordPoolSet *live_pools = NULL;
+        const DM2_V1_AssetLoader *live_loader = NULL;
+        size_t live_snapshot_count = 0u;
+        int live_snapshot_found = 0;
         uint8_t count_before = 0u, count_active = 0u, count_expired = 0u;
         int selected = dm2_v1_runtime_select_mac_charsheet_champion(0);
         int spell_ready = selected &&
@@ -2061,6 +2068,31 @@ int main(void)
                   live_timer.value == (uint16_t)cast.missile_record &&
                   live_timer.direction < 4u && live_timer.raw_timer_hash != 0u,
               "HME-242 live Fireball joins DB14 to its active source timer wvalueB");
+        live_cell.x = (int16_t)live_timer.map_x;
+        live_cell.y = (int16_t)live_timer.map_y;
+        memset(live_snapshots, 0, sizeof(live_snapshots));
+        if (cast.applied && live_timer.valid &&
+            dm2_v1_runtime_live_missile_selector_context(
+                &live_dungeon, &live_pools, &live_loader) &&
+            live_loader != NULL &&
+            dm2_v1_g1_snapshot_visible_missile_chains(
+                live_dungeon, live_pools, live_timer.map_index,
+                &live_cell, 1u,
+                (uint8_t)dm2_v1_runtime_get_party_dir(), live_snapshots,
+                sizeof(live_snapshots) / sizeof(live_snapshots[0]),
+                &live_snapshot_count)) {
+            for (size_t i = 0u; i < live_snapshot_count; ++i) {
+                if (live_snapshots[i].object_id ==
+                        (uint16_t)cast.missile_record &&
+                    live_snapshots[i].timer_index == live_timer.timer_index &&
+                    live_snapshots[i].view_position_5x5 <= 24u) {
+                    live_snapshot_found = 1;
+                    break;
+                }
+            }
+        }
+        check(live_snapshot_found,
+              "HME-242 live Fireball is reachable through the active G1 source tile chain");
     }
     M11_GameView_Shutdown(&view);
     if (failures) return 1;

@@ -1004,6 +1004,11 @@ typedef struct {
     uint8_t actor;
     uint16_t value;
     uint16_t action_word;
+    /* c_tim::ticks_and_map and packed wvalueB location decoded from the live
+     * timer that owns this DB14. Coordinates use the source five-bit fields. */
+    uint8_t map_index;
+    uint8_t map_x;
+    uint8_t map_y;
     uint8_t direction;
     uint32_t raw_timer_hash;
 } DM2_V1_G1MissileTimerReceipt;
