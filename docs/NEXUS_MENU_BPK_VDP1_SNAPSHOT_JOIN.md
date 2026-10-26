@@ -89,6 +89,16 @@ produced by those analyzers must be regenerated against their original raw
 captures before they are used as evidence; they are not automatically
 validated by the Ymir result above.
 
+One retained Mednafen startup capture has now been reanalyzed with the
+corrected command decoder. Frame 0 of the four-frame
+`nexus_v1_startup_render_27518_20261009` capture (SHA-256
+`1eaa507e314b60f1cc123dd6eb9fbcff4e635dcd1ea5b6cb7aeb16d12e33baae`)
+has a 236-record chain and 221 executed textured draws. The authenticated
+`LEV00.DGN` material join finds 215 matching source/palette pairs, including
+186 with Structure3 face owners. Six draws remain unmatched. This is a
+capture-level result; it does not establish display composition or permit
+production rendering.
+
 The frame counter in the VDP1 trace is distinct from the 120 requested capture
 steps, and the screenshot is taken after the dump. This receipt therefore
 does not establish that all three artifacts represent precisely the same
