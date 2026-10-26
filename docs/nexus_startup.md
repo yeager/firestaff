@@ -71,6 +71,13 @@ checkpoint were regression-checked on TRV2. The VDP2 write tracer has not yet
 produced a retained source-to-write witness for this menu, so it is tooling for
 the next capture rather than an admission signal.
 
+An input-driven retail probe sent the observed Start key route while retaining
+the VDP2 trace. It produced 92,288 VRAM-write rows with no trace drops, but its
+captured VDP1 cursor had only seven commands rather than the authenticated
+title-menu bundle's 178. It is therefore negative routing evidence, not a
+title-menu capture; its untracked raw dump was removed after inspection. Do not
+use those writes to label a menu resource or relax a presentation gate.
+
 `scripts/verify_nexus_ymir_title_state_checkpoint.py` verifies this narrow
 checkpoint from caller-supplied retail CUE, BIOS, title-prompt state, and local
 Ymir dump files. It requires the emitted VDP register artifacts but does not
