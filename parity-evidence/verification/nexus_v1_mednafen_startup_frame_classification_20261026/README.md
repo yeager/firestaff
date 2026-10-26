@@ -64,3 +64,15 @@ the first changed range is `0x40000..0x403ff`, followed by tile-like changes
 from `0x60000`. This is strong evidence that the observed date/time surface is
 live Saturn display state, but it remains Ymir-only diagnostic evidence and
 does not satisfy the Mednafen-specific menu admission gate.
+
+## Follow-up: bounded Mednafen startup capture
+
+An instrumented Mednafen session captured 900 consecutive frames from the
+authentic Japanese retail CUE with explicit Start-button pulses at frames
+`300..329` and `600..629`. The raw capture SHA-256 was
+`e19bcb3fafc2b8e8f5a473b696aee0bbac36c5c7f1be846358b15aa0fd8ba9b6`.
+The transport validator accepted the 900-frame raw layout and observed VDP1
+activity in 733 frames. Semantic admission remained blocked, as expected:
+this bounded run does not yet bind a displayed title-menu surface to its
+canonical asset owner and consumer. The 1.4 GiB operator-local raw capture
+was deleted after validation.
