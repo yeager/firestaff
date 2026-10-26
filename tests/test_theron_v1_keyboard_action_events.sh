@@ -84,9 +84,20 @@ if probe.get("gameTick", 0) < 1:
 with open(log_path, encoding="utf-8", errors="replace") as stream:
     events = [line.strip() for line in stream
               if "game-action game=theron " in line]
-for input_name in ("pickup", "inventory-toggle", "drop", "use-item", "action"):
-    if not any(f"input={input_name} " in line for line in events):
-        raise SystemExit(f"FAIL: SDL key did not reach the {input_name} gameplay route")
+required_receipts = {
+    "pickup": 1,
+    "inventory-toggle": 2,
+    "drop": 1,
+    "use-item": 1,
+    "action": 1,
+}
+for input_name, required_count in required_receipts.items():
+    receipt_count = sum(f"input={input_name} " in line for line in events)
+    if receipt_count < required_count:
+        raise SystemExit(
+            f"FAIL: SDL keys reached the {input_name} gameplay route "
+            f"{receipt_count} times; expected at least {required_count}"
+        )
 for required in (
     'input=pickup result=1 action="ITEM" outcome="ITEM PICKED UP"',
     'input=drop result=1 action="ITEM" outcome="ITEM DROPPED"',
