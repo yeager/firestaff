@@ -503,6 +503,21 @@ claims. The raw dump and write trace are retained outside the repository on
 the external evidence volume; only their reproducible receipt is recorded
 here.
 
+## Full title-menu frame reconstruction (2026-10-26)
+
+The atomic frame-59 Ymir capture now has a bounded C replay for the full
+320×224 display. It combines the retained VDP1 display framebuffer, NBG0
+8bpp bitmap, CRAM, registers, and the verified zero back-screen table. The C
+output matches all 286,720 pixels of the hash-pinned 640×448 Ymir screenshot
+exactly. This confirms static composition for that captured menu frame; the
+screenshot was saved after the memory dump, so exact frame identity is still
+unproven.
+
+The replay remains capture-only and does not feed the Firestaff viewport or
+establish the boot-to-menu transition, menu input, or gameplay HUD. See the
+[full capture receipt and SHA-256 identities](NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md#full-ymir-title-frame-capture-replay)
+for the reproducible command and exact scope.
+
 ## Sources
 
 - DMWeb Nexus file formats and DMN Data File Decoder.
