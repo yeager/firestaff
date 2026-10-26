@@ -79,13 +79,19 @@ retains source map/cell fields, and
 derived candidate draw key while asserting that source-order validity remains
 false until the direction provenance is proven.
 
-More fundamental runtime integration is also still missing: production writes
-to `g_dm2_projectile_drain_count` do not exist. The runtime initializes that
-count to zero, reads it into the viewport, and exposes the cache, but does not
-call `dm2_v1_projectile_step_and_drain` or `dm2_v1_projectile_drain_to_m11`.
-Those drain functions are currently exercised only by tests and probes. As a
-result, the candidate draw rows do not currently receive live production
-projectiles. The live selector boundary is now separate from the immutable
+The player Fireball combat route is already connected to the production
+runtime: the authentic DM2 Macintosh M11 test creates a live DB14, advances
+the source 0x1e timer into a real HoC creature, checks applied HP damage, and
+then observes the queued wound. The FM Towns original-media test also checks
+the source Fireball cast, active DB14/timer ownership, G1 chain reachability,
+and admission into the center-cell compositor plan. These checks do not prove
+projectile pixel presentation. The distinct legacy draw-cache handoff is
+still unconnected: production leaves `g_dm2_projectile_drain_count` at zero
+and does not call `dm2_v1_projectile_step_and_drain` or
+`dm2_v1_projectile_drain_to_m11`. Candidate draw rows therefore do not reach
+the renderer through that cache. Creature-authored missile dispatch remains
+fail-closed until the source CCM/DB14/timer owner is fully connected. The live
+selector boundary is now separate from the immutable
 dungeon-only helper: it resolves the DB14 bytes from the active runtime record
 pools, resolves linked records from those pools first, and falls back to the
 immutable dungeon owner only for DB15 handles absent from the active pools.
@@ -94,15 +100,16 @@ decoded as `low_byte - 0x80` before record lookup, so virtual spell effects do
 not get mistaken for DB15 addresses. A focused selector test covers Fireball's
 source effect 0, and the HME-242 real-media test casts the original Fireball
 recipe through runtime creation and verifies that its live DB14 resolves to the
-original GDAT class, effect and image-selector branch. This proves
-record-to-image selection only;
-it does not prove pixel drawing, timer-directed animation, or painter order.
+original GDAT class, effect and image-selector branch. The source Fireball
+tests prove combat damage, but this plan check alone proves record-to-image
+selection; it does not prove pixel drawing, timer-directed animation, or
+painter order.
 Before claiming projectile-render parity, bind snapshots of the authenticated
 visible G1 DB14 chains and their source timers to the viewport handoff, preserve
 ObjectID direction and chain ordinal, then merge normal and seven-slot
 creature-associated replay events into `DM2_DRAW_STATIC_OBJECT`'s indoor draw
-schedule. The production drain count remains unpopulated, and the authentic
-HME-242 test does not yet assert source-order presentation.
+schedule. The production draw-cache count remains unpopulated, and the
+authentic HME-242 test does not yet assert source-order presentation.
 
 2026-10-26 SKProject source trace tightened the compositor contract. In
 `DM2_DRAW_STATIC_OBJECT`, `table1d6afe[cell]` selects one of three 25-slot
