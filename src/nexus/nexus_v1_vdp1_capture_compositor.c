@@ -8,17 +8,18 @@ static uint16_t read_le16(const uint8_t *p)
     return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
 }
 
-int nexus_v1_vdp1_capture_preview_mode0_normal(
+static int preview_mode0_normal(
     Nexus_V1_Vdp1DirectColorFramebuffer *framebuffer,
     const uint8_t *command, int command_size,
     const uint8_t *vdp1_vram, int vdp1_vram_size,
     const Nexus_V1_Vdp2ColourRamCapture *capture,
     int origin_x, int origin_y, int clip_x, int clip_y,
-    int *out_written_pixels)
+    int *out_written_pixels, int blend)
 {
     Nexus_V1_Vdp1TextureCommand parsed;
     Nexus_V1_Vdp1Mode1PalettePixel *pixels;
     uint32_t count, u, v;
+    uint16_t spctl = 0, ccctl = 0;
     int written = 0;
     if (out_written_pixels) *out_written_pixels = 0;
     if (!framebuffer || !out_written_pixels || clip_x < 0 || clip_y < 0 ||
@@ -26,6 +27,16 @@ int nexus_v1_vdp1_capture_preview_mode0_normal(
         nexus_v1_vdp1_texture_command_parse(command, command_size, &parsed) != 0 ||
         !parsed.texture_command || parsed.command_type != 0U ||
         (parsed.draw_mode & ~0x00c0U) != 0U) return 0;
+    if (blend) {
+        if (!capture || !capture->registers || capture->registers_size < 0x108U) return 0;
+        spctl = read_le16(capture->registers + 0xe0U);
+        ccctl = read_le16(capture->registers + 0xecU);
+        /* Support top-screen ratio only; additive, second-screen, extended,
+         * MSB-conditional cases need separate composition. Window masking is
+         * outside this capture preview. */
+        if ((spctl & 0x0fU) != 6U || ((spctl >> 12U) & 3U) == 3U ||
+            (ccctl & 0x0700U)) return 0;
+    }
     count = (uint32_t)parsed.texture_width * parsed.texture_height;
     if (!count) return 0;
     pixels = (Nexus_V1_Vdp1Mode1PalettePixel *)malloc((size_t)count * sizeof(*pixels));
@@ -44,14 +55,54 @@ int nexus_v1_vdp1_capture_preview_mode0_normal(
             if (x < 0 || y < 0 || x >= NEXUS_FB_W || y >= NEXUS_FB_H ||
                 x > clip_x || y > clip_y || pixel->kind == NEXUS_V1_VDP1_MODE1_PIXEL_TRANSPARENT)
                 continue;
-            framebuffer->rgba_buffer[y * NEXUS_FB_W + x] = UINT32_C(0xff000000) |
-                ((uint32_t)pixel->red << 16U) | ((uint32_t)pixel->green << 8U) | pixel->blue;
+            {
+                uint32_t red = pixel->red, green = pixel->green, blue = pixel->blue;
+                if (blend && (ccctl & 0x40U)) {
+                    uint16_t code = pixel->raw_colour_code;
+                    unsigned priority_index = (code >> 12U) & 7U;
+                    unsigned priority_word = read_le16(capture->registers + 0xf0U + 2U * (priority_index / 2U));
+                    unsigned priority = (priority_word >> ((priority_index & 1U) * 8U)) & 7U;
+                    unsigned threshold = (spctl >> 8U) & 7U;
+                    unsigned condition = (spctl >> 12U) & 3U;
+                    int enabled = condition == 0U ? priority <= threshold :
+                        (condition == 1U ? priority == threshold : priority >= threshold);
+                    if (enabled) {
+                        unsigned ratio_index = (code >> 10U) & 3U;
+                        unsigned ratio_word = read_le16(capture->registers + 0x100U + 2U * (ratio_index / 2U));
+                        unsigned ratio = 31U - ((ratio_word >> ((ratio_index & 1U) * 8U)) & 31U);
+                        uint32_t below = framebuffer->rgba_buffer[y * NEXUS_FB_W + x];
+                        red = (red * ratio + ((below >> 16U) & 255U) * (32U - ratio)) >> 5U;
+                        green = (green * ratio + ((below >> 8U) & 255U) * (32U - ratio)) >> 5U;
+                        blue = (blue * ratio + (below & 255U) * (32U - ratio)) >> 5U;
+                    }
+                }
+                framebuffer->rgba_buffer[y * NEXUS_FB_W + x] = UINT32_C(0xff000000) |
+                    (red << 16U) | (green << 8U) | blue;
+            }
             ++written;
         }
     }
     free(pixels);
     *out_written_pixels = written;
     return 1;
+}
+
+int nexus_v1_vdp1_capture_preview_mode0_normal(
+    Nexus_V1_Vdp1DirectColorFramebuffer *fb, const uint8_t *command, int command_size,
+    const uint8_t *vram, int vram_size, const Nexus_V1_Vdp2ColourRamCapture *capture,
+    int origin_x, int origin_y, int clip_x, int clip_y, int *written)
+{
+    return preview_mode0_normal(fb, command, command_size, vram, vram_size, capture,
+        origin_x, origin_y, clip_x, clip_y, written, 0);
+}
+
+int nexus_v1_vdp1_capture_blend_mode0_normal(
+    Nexus_V1_Vdp1DirectColorFramebuffer *fb, const uint8_t *command, int command_size,
+    const uint8_t *vram, int vram_size, const Nexus_V1_Vdp2ColourRamCapture *capture,
+    int origin_x, int origin_y, int clip_x, int clip_y, int *written)
+{
+    return preview_mode0_normal(fb, command, command_size, vram, vram_size, capture,
+        origin_x, origin_y, clip_x, clip_y, written, 1);
 }
 
 /* Mednafen's generic Saturn capture deliberately preserves the Saturn bus

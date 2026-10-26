@@ -23,7 +23,7 @@ int main(void) {
     unsigned char command[NEXUS_V1_VDP1_COMMAND_BYTES];
     static unsigned char vram[NEXUS_V1_VDP1_VRAM_BYTES];
     static unsigned char colour_ram[NEXUS_V1_VDP2_CRAM_BYTES];
-    static unsigned char vdp2_registers[NEXUS_V1_VDP2_CAPTURE_REGISTERS_MIN_BYTES];
+    static unsigned char vdp2_registers[0x200U];
     const unsigned char texture[] = { 0x12U, 0x34U, 0x56U, 0x78U };
     const unsigned short expected[] = {
         0x9001U, 0x9002U, 0x9003U, 0x9004U,
@@ -127,6 +127,34 @@ int main(void) {
                                             ((uint32_t)real_pixels[j].red << 16U) |
                                             ((uint32_t)real_pixels[j].green << 8U) | real_pixels[j].blue : 0U;
                                         if (preview.rgba_buffer[y * NEXUS_FB_W + x] != expected_pixel) found = 0;
+                                    }
+                                    memset(&preview, 0, sizeof(preview));
+                                    if (found) found = nexus_v1_vdp1_capture_blend_mode0_normal(
+                                        &preview, record + 4, 32, vram, sizeof(vram), &real_capture,
+                                        0, 0, 319, 223, &written);
+                                    for (j = 0; found && j < 576; ++j) {
+                                        unsigned int x = 104U + (unsigned int)(j % 24U);
+                                        unsigned int y = 144U + (unsigned int)(j / 24U);
+                                        uint32_t expected_pixel = indices[j] ? UINT32_C(0xff000000) |
+                                            ((uint32_t)(real_pixels[j].red * 31U / 32U) << 16U) |
+                                            ((uint32_t)(real_pixels[j].green * 31U / 32U) << 8U) |
+                                            (real_pixels[j].blue * 31U / 32U) : 0U;
+                                        if (preview.rgba_buffer[y * NEXUS_FB_W + x] != expected_pixel) found = 0;
+                                    }
+                                    if (found) {
+                                        uint32_t expected;
+                                        const Nexus_V1_Vdp1Mode1PalettePixel *p = &real_pixels[103];
+                                        for (j = 0; j < NEXUS_FB_W * NEXUS_FB_H; ++j)
+                                            preview.rgba_buffer[j] = UINT32_C(0xff204060);
+                                        found = nexus_v1_vdp1_capture_blend_mode0_normal(
+                                            &preview, record + 4, 32, vram, sizeof(vram), &real_capture,
+                                            0, 0, 319, 223, &written);
+                                        expected = UINT32_C(0xff000000) |
+                                            (((p->red * 31U + 32U) >> 5U) << 16U) |
+                                            (((p->green * 31U + 64U) >> 5U) << 8U) |
+                                            ((p->blue * 31U + 96U) >> 5U);
+                                        if (!p->texture_index || preview.rgba_buffer[148 * NEXUS_FB_W + 111] != expected)
+                                            found = 0;
                                     }
                                 }
                             }

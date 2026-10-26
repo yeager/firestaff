@@ -147,6 +147,11 @@ mode, SPCTL `0x1536` selects the priority-equals-5 condition, and PRISC
 and CCRSA `0x1000` selects a top ratio of 31/32. The comparison assumes a black
 lower layer; its actual pixels and exact capture timing remain unproven. It
 covers these sprites, not the complete VDP2 image or menu interaction.
+The capture preview can now blend a normal mode-0 sprite over a supplied lower
+framebuffer using type-6 priority and top-screen ratio registers. The retail
+capture regression checks the observed 31/32 result over black and the blend
+over a nonblack test background. It does not select the lower VDP2 layer or
+apply sprite-window masking; those inputs must be established separately.
 
 For mode-1 palette analysis, Ymir's software VDP1 renderer counts two end codes
 per rasterized line: each end code is skipped and the second stops the line.

@@ -111,6 +111,15 @@ int nexus_v1_vdp1_capture_preview_mode0_normal(
     const Nexus_V1_Vdp2ColourRamCapture *vdp2_capture,
     int origin_x, int origin_y, int clip_x, int clip_y,
     int *out_written_pixels);
+/* As above, compositing onto the supplied lower layer using captured VDP2
+ * type-6 sprite priorities and top-screen ratio colour calculation. */
+int nexus_v1_vdp1_capture_blend_mode0_normal(
+    Nexus_V1_Vdp1DirectColorFramebuffer *framebuffer,
+    const uint8_t *command, int command_size,
+    const uint8_t *vdp1_vram, int vdp1_vram_size,
+    const Nexus_V1_Vdp2ColourRamCapture *vdp2_capture,
+    int origin_x, int origin_y, int clip_x, int clip_y,
+    int *out_written_pixels);
 
 /* A complete, bounded replay lane for one captured VDP1 command window.
  * The per-command source joins remain explicit; these additional facts bind
