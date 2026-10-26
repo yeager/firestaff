@@ -217,6 +217,19 @@ The menu-state gate test passes, but the authentic-media startup test still
 needs a host with the full DM1/CSB/DM2 collection. This scan-only work does not
 prove native menu input or gameplay parity.
 
+2026-10-26 original-media launcher retest: `m12_main_menu_game_selection_real_media`
+passed for all five installed games through keyboard and mouse selection. It
+also passed default `~/.firestaff/data` discovery and per-game-folder roots for
+DM1, CSB and DM2. `m12_main_menu_runtime_real_media` reached the first authentic
+runtime from the menu for DM1, CSB, DM2 and Theron. The CLI startup diagnostics
+found all five games in the default data tree and resolved each bare `--game`
+request to its original media. Nexus still stops at its title/startup gate and
+does not reach an admitted playable level or menu, so its actual runtime start
+remains unverified. The Swedish DM1 scan-label test, CLI option-form test, and
+unsupported-platform direct/menu rejection matrix also passed. These scripted
+runs used original media and SDL dummy video/audio; they do not establish native
+display/input parity or complete game functionality.
+
 2026-10-24 authentic launch-flow recheck: DM1's mixed-edition
 `dm1_v1_m12_auto_multi_platform_menu` test reached its first runtime through
 FM Towns AUTO, bare `--game dm1`, explicit CLI selection of PC/Atari ST/Amiga,
