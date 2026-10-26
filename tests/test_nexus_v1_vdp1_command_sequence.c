@@ -181,6 +181,16 @@ int main(void)
         free(vram);
         return 1;
     }
+    /* A longer inferred chain must not win if it draws before LOCAL. */
+    wl16(vram + 0x300U, 0x1002U);
+    wl16(vram + 0x302U, (start + 64U) >> 3U);
+    if (!nexus_v1_vdp1_command_sequence_frame(&input, &receipt) ||
+        receipt.start_byte_offset != start) {
+        fprintf(stderr, "FAIL: inferred chain drew before verified origin\n");
+        free(vram); return 1;
+    }
+    wl16(vram + 0x300U, 0U);
+    wl16(vram + 0x302U, 0U);
     /* A skipped local command must not change display-space origin. */
     wl16(vram + start + 96U, 0x400aU);
     if (!nexus_v1_vdp1_command_sequence_frame(&input, &receipt) ||

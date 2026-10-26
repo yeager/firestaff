@@ -43,6 +43,7 @@ static int follow_candidate(const uint8_t *vram, int vram_size,
     int user_clips = 0;
     int system_clips = 0;
     int locals = 0;
+    int have_origin = 0;
     int has_copr = 0;
     uint32_t offset = start;
 
@@ -64,10 +65,15 @@ static int follow_candidate(const uint8_t *vram, int vram_size,
         type = (uint8_t)(control & 0x000fU);
         if (control & 0x8000U) break;
         if (!(control & 0x4000U)) {
-            if (type <= 7U) ++draws;
+            if (type <= 7U) {
+                /* Snapshot inference has no earlier local-coordinate state.
+                 * A draw before LOCAL cannot be replayed with verified origin. */
+                if (!have_origin) return 0;
+                ++draws;
+            }
             else if (type == 8U) ++user_clips;
             else if (type == 9U) ++system_clips;
-            else if (type == 10U) ++locals;
+            else if (type == 10U) { ++locals; have_origin = 1; }
         }
 
         jump_mode = (unsigned)((control >> 12U) & 0x3U);

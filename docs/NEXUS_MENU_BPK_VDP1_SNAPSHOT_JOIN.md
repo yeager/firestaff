@@ -167,6 +167,14 @@ This initial file-level join does not establish item identity, placement, or
 production renderer permission. A matching all-zero image must
 not be used to infer its owner or promote a renderer gate.
 
+After aligning the C chain walker with Ymir's single return-address model, the
+snapshot heuristic selected an invalid longer candidate that drew before any
+captured local coordinate. Candidates without an origin before their first draw
+are now excluded. On the same frame the C replay selects 222 draws, resolves
+221, and verifies 201 nonzero source/palette joins. This remains a heuristic
+snapshot chain, not proof of the original execution order; the Python scanner
+and direct trace may select different chains.
+
 Further inspection of that same Japanese `ITEM.IBS` and capture binds the
 1,152-byte image to floor-image descriptor 33: encoding `0x0008`, dimensions
 48×48, palette id 8. Its descriptor reuses the palette first supplied by

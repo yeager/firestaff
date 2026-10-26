@@ -236,7 +236,10 @@ static int run_external_dgn_mode1_capture(void)
           replay.skipped_non_draw_commands == 7) ||
          (item_bank && frame_index == 0 && replay.draw_commands_seen == 224 &&
           replay.draw_commands_resolved == 221 && replay.unowned_mode1_draw_commands == 3 &&
-          replay.unowned_non_mode1_draw_commands == 0 && replay.skipped_non_draw_commands == 8)) &&
+          replay.unowned_non_mode1_draw_commands == 0 && replay.skipped_non_draw_commands == 8) ||
+         (item_bank && frame_index == 0 && replay.draw_commands_seen == 222 &&
+          replay.draw_commands_resolved == 221 && replay.unowned_mode1_draw_commands == 1 &&
+          replay.unowned_non_mode1_draw_commands == 0 && replay.skipped_non_draw_commands == 9)) &&
         replay.replay.valid &&
          ((replay.replay.source_joins_verified == 218 &&
            replay.replay.palette_joins_verified == 218) ||
@@ -257,9 +260,18 @@ static int run_external_dgn_mode1_capture(void)
         (replay.draw_commands_seen == 212 && replay.draw_commands_resolved == 194) ||
         (replay.draw_commands_seen == 237 && replay.draw_commands_resolved == 219) ||
         (replay.draw_commands_seen == 242 && replay.draw_commands_resolved == 225) ||
-        (item_bank && replay.draw_commands_seen == 224 && replay.draw_commands_resolved == 221);
+        (item_bank && (replay.draw_commands_seen == 224 || replay.draw_commands_seen == 222) &&
+         replay.draw_commands_resolved == 221);
     if (ok && !known_capture_window) ok = 0;
     if (!ok) {
+        int k;
+        fprintf(stderr, "sequence start=%x count=%d draws=%d origins:",
+            replay.command_sequence.start_byte_offset, replay.command_sequence.command_count,
+            replay.command_sequence.draw_count);
+        for (k = 0; k < replay.command_sequence.command_count && k < 12; ++k)
+            fprintf(stderr, " %x/%d", replay.command_sequence.command_byte_offsets[k],
+                replay.command_sequence.command_origin_verified[k]);
+        fputc('\n', stderr);
         fprintf(stderr,
                 "external VDP1 replay: frame=%u draws=%d resolved=%d "
                 "unowned_mode1=%d unowned_other=%d skipped=%d "
