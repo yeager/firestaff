@@ -67,7 +67,10 @@ def main() -> int:
     print(f"vdp1_write_rows={len(parsed)}")
     print(f"vdp1_unique_write_addresses={len(written_addresses)}")
     print(f"vdp1_unique_written_bytes={len(written_bytes)}")
-    print(f"vdp1_write_address_span=0x{min(written_addresses):08x}-0x{max(written_addresses):08x}")
+    if written_addresses:
+        print(f"vdp1_write_address_span=0x{min(written_addresses):08x}-0x{max(written_addresses):08x}")
+    else:
+        print("vdp1_write_address_span=none")
     for pc, count in by_pc.most_common(12):
         addresses = [address for entry_pc, address, _ in parsed if entry_pc == pc]
         print(f"pc=0x{pc:08x} writes={count} address_min=0x{min(addresses):08x} "

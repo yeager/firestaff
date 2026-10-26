@@ -36,6 +36,18 @@ def run_trace(width: int, address: int = 0x05C00000) -> tuple[int, str]:
 
 
 class Vdp1Sh2TraceTests(unittest.TestCase):
+    def test_empty_trace_has_no_address_span(self) -> None:
+        output = io.StringIO()
+        with tempfile.TemporaryDirectory(prefix="nexus-vdp1-empty-") as directory:
+            trace = Path(directory) / "trace.csv"
+            with trace.open("w", newline="", encoding="utf-8") as handle:
+                csv.DictWriter(handle, fieldnames=FIELDS).writeheader()
+            with patch("sys.argv", ["analyzer", str(trace), "--source-address", "0x05c02460"]), \
+                 contextlib.redirect_stdout(output):
+                self.assertEqual(analyze_nexus_vdp1_sh2_write_trace.main(), 0)
+        self.assertIn("vdp1_write_address_span=none", output.getvalue())
+        self.assertIn("writes_covering_source=0", output.getvalue())
+
     def test_accepts_supported_widths(self) -> None:
         for width in (1, 2, 4):
             with self.subTest(width=width):
