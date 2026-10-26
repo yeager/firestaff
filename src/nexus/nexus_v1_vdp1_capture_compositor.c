@@ -312,7 +312,7 @@ static int composite_triangle(Nexus_Framebuffer *fb,
                               int system_clip_x, int system_clip_y,
                               uint16_t draw_mode, int *written,
                               int *transparent, int *end_code,
-                              uint8_t end_rows[256])
+                              const uint16_t end_after[256])
 {
     float area;
     float min_x, max_x, min_y, max_y;
@@ -372,13 +372,12 @@ static int composite_triangle(Nexus_Framebuffer *fb,
             pixel = ty * width + tx;
             texel = (pixel & 1) == 0 ? (uint8_t)(tex[pixel >> 1] >> 4U) :
                 (uint8_t)(tex[pixel >> 1] & 0x0fU);
-            if (end_rows[ty]) continue;
+            if ((draw_mode & 0x0080U) == 0U && (unsigned)tx >= end_after[ty]) continue;
             if (texel == 0U && (draw_mode & 0x0040U) == 0U) {
                 ++*transparent;
                 continue;
             }
             if (texel == 0x0fU && (draw_mode & 0x0080U) == 0U) {
-                end_rows[ty] = 1U;
                 ++*end_code;
                 continue;
             }
@@ -401,13 +400,17 @@ int nexus_v1_vdp1_capture_composite_mode1(
     Nexus_V1_Vdp1TextureCommand command;
     uint16_t palette[16];
     float xy[4][2];
-    uint8_t end_rows[256] = {0};
+    uint16_t end_after[256];
     int index;
+    int source_has_end_code = 0;
+
     int item_source;
     const uint8_t *source_image;
     const uint8_t *source_palette;
     int source_image_size;
     int source_palette_size;
+
+    for (index = 0; index < 256; ++index) end_after[index] = UINT16_MAX;
 
     if (!out_receipt) return 0;
     memset(&receipt, 0, sizeof(receipt));
@@ -493,6 +496,24 @@ int nexus_v1_vdp1_capture_composite_mode1(
     xy[2][1] = (float)input->screen_origin_y + (float)command.yc;
     xy[3][0] = (float)input->screen_origin_x + (float)command.xd;
     xy[3][1] = (float)input->screen_origin_y + (float)command.yd;
+    if (!(command.draw_mode & 0x0080U)) {
+        int row, column;
+        for (row = 0; row < command.texture_height; ++row) {
+            int codes_seen = 0;
+            for (column = 0; column < command.texture_width; ++column) {
+                int pixel = row * command.texture_width + column;
+                uint8_t packed = input->texture_span[pixel >> 1];
+                uint8_t texel = (pixel & 1) ? packed & 15U : packed >> 4U;
+                if (texel == 15U) {
+                    source_has_end_code = 1;
+                    if (++codes_seen == 2) {
+                        end_after[row] = (uint16_t)column;
+                        break;
+                    }
+                }
+            }
+        }
+    }
     if (xy[0][0] == xy[1][0] && xy[0][1] == xy[1][1]) {
         if (input->capture_allow_zero_pixel_command) {
             receipt.valid = 1;
@@ -510,16 +531,18 @@ int nexus_v1_vdp1_capture_composite_mode1(
         input->palette_slot_base, input->system_clip_state_verified,
         input->system_clip_x, input->system_clip_y, command.draw_mode,
         &receipt.written_pixels, &receipt.transparent_pixels,
-        &receipt.end_code_pixels, end_rows);
+        &receipt.end_code_pixels, end_after);
     (void)composite_triangle(working, xy, 0, 2, 3,
         input->texture_span, command.texture_width, command.texture_height,
         input->palette_slot_base, input->system_clip_state_verified,
         input->system_clip_x, input->system_clip_y, command.draw_mode,
         &receipt.written_pixels, &receipt.transparent_pixels,
-        &receipt.end_code_pixels, end_rows);
+        &receipt.end_code_pixels, end_after);
     receipt.valid = receipt.written_pixels > 0 ||
         input->capture_allow_zero_pixel_command;
-    receipt.renderer_permitted = receipt.written_pixels > 0;
+    /* Source-row scanning cannot model VDP1's resampling and direction when
+     * an end code is encountered. Keep that result capture-only. */
+    receipt.renderer_permitted = receipt.written_pixels > 0 && !source_has_end_code;
     if (receipt.valid) *framebuffer = *working;
     free(working);
     *out_receipt = receipt;
@@ -534,6 +557,7 @@ int nexus_v1_vdp1_capture_composite_mode1_sequence(
     Nexus_V1_Vdp1CaptureSequenceReceipt receipt;
     Nexus_Framebuffer *working;
     int i;
+    int renderer_accurate = 1;
 
     memset(&receipt, 0, sizeof(receipt));
     if (!out_receipt) return 0;
@@ -610,6 +634,8 @@ int nexus_v1_vdp1_capture_composite_mode1_sequence(
         receipt.written_pixels += command_receipt.written_pixels;
         receipt.transparent_pixels += command_receipt.transparent_pixels;
         receipt.end_code_pixels += command_receipt.end_code_pixels;
+        if (command_receipt.written_pixels > 0 && !command_receipt.renderer_permitted)
+            renderer_accurate = 0;
         receipt.transparent_noop_commands +=
             command_receipt.transparent_noop_verified;
     }
@@ -628,7 +654,7 @@ int nexus_v1_vdp1_capture_composite_mode1_sequence(
     free(working);
     receipt.valid = receipt.written_pixels > 0 ||
         (input->command_count > 0 && receipt.capture_gap_commands > 0);
-    receipt.renderer_permitted = receipt.written_pixels > 0;
+    receipt.renderer_permitted = receipt.written_pixels > 0 && renderer_accurate;
     /* The authenticated Saturn envelope can exceed Firestaff's 320x224 V1
      * destination. Preserve the replay receipt, but never present that host
      * crop as a production-equivalent Saturn framebuffer. */

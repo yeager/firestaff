@@ -425,17 +425,30 @@ int main(void)
         fprintf(stderr, "FAIL: viewport VDP1 capture replay adapter\n");
         return 1;
     }
-    /* ECD is active in this command: an F texel ends its source row. */
+    /* The first F is skipped, while the second F ends its source row. */
     texture[0] = 0x1fU;
     for (i = 0; i < (int)sizeof(texture); i += 2) {
         dgn_image[i] = texture[i + 1];
         dgn_image[i + 1] = texture[i];
     }
+    nexus_fb_clear(&framebuffer);
     memset(&receipt, 0, sizeof(receipt));
     if (!nexus_v1_vdp1_capture_composite_mode1(
             &framebuffer, &input, &receipt) || receipt.end_code_pixels <= 0 ||
-        receipt.written_pixels <= 0) {
+        receipt.written_pixels <= 0 || receipt.renderer_permitted ||
+        framebuffer.color_buffer[96 * NEXUS_FB_W + 150] != 34U) {
         fprintf(stderr, "FAIL: VDP1 end-code row termination\n");
+        return 1;
+    }
+    texture[1] = 0x1fU;
+    for (i = 0; i < (int)sizeof(texture); i += 2) {
+        dgn_image[i] = texture[i + 1];
+        dgn_image[i + 1] = texture[i];
+    }
+    nexus_fb_clear(&framebuffer);
+    if (!nexus_v1_vdp1_capture_composite_mode1(&framebuffer, &input, &receipt) ||
+        framebuffer.color_buffer[96 * NEXUS_FB_W + 154] != 0U) {
+        fprintf(stderr, "FAIL: second VDP1 end code did not stop row\n");
         return 1;
     }
     input.original_saturn_capture_verified = 0;

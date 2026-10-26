@@ -134,9 +134,11 @@ this observation does not distinguish timing from composition or priority.
 
 For mode-1 palette analysis, Ymir's software VDP1 renderer counts two end codes
 per rasterized line: each end code is skipped and the second stops the line.
-The no-draw palette decoder now follows that count. The older triangle capture
-compositor still uses a first-end-code approximation and must not be used as
-evidence of accurate rendering when end codes are enabled.
+The no-draw palette decoder follows that count. The triangle capture
+compositor also skips the first code and stops at the second in source order,
+but this remains an approximation: VDP1 resampling and texture direction can
+change which texels are encountered. If the texture contains a code, its preview
+cannot authorize rendering.
 
 The same CMDSIZE and skipped-command corrections also apply to the Mednafen
 VDP1 source, material, and write-join analyzers. Earlier numerical receipts
