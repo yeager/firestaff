@@ -4564,6 +4564,52 @@ int dm2_v1_asset_load_interface_palette(
     return 1;
 }
 
+int dm2_v1_asset_load_fmtowns_lighting_palette(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    int light_level,
+    DM2_V1_InterfacePalette *out_palette)
+{
+    const uint8_t *irgb;
+    size_t irgb_size = 0u;
+    size_t row_offset = 0u;
+    uint32_t hash = 2166136261u;
+    int color;
+
+    if (!out_palette) return 0;
+    memset(out_palette, 0, sizeof(*out_palette));
+    if (!loader || loader->gdat_version != DM2_FMTOWNS_GDAT_VERSION ||
+        light_level < 0 || light_level > 5) return 0;
+    irgb = dm2_v1_asset_load_typed_sized(
+        loader, category, index, DM2_GDAT_ENTRY_TYPE_PAL_IRGB, field,
+        &irgb_size);
+    if (!irgb) return 0;
+    if (irgb_size == 16u * 4u) {
+        if (light_level != 0) return 0;
+    } else if (irgb_size == 6u * 16u * 4u) {
+        row_offset = (size_t)light_level * 16u * 4u;
+    } else {
+        return 0;
+    }
+    for (color = 0; color < 16; ++color) {
+        const uint8_t *src = irgb + row_offset + (size_t)color * 4u;
+        out_palette->rgb6[color][0] = (uint8_t)(src[1] >> 2u);
+        out_palette->rgb6[color][1] = (uint8_t)(src[2] >> 2u);
+        out_palette->rgb6[color][2] = (uint8_t)(src[3] >> 2u);
+        out_palette->palette16[color] = (uint8_t)color;
+        hash = (hash ^ out_palette->rgb6[color][0]) * 16777619u;
+        hash = (hash ^ out_palette->rgb6[color][1]) * 16777619u;
+        hash = (hash ^ out_palette->rgb6[color][2]) * 16777619u;
+    }
+    for (color = 0; color < 16; ++color)
+        hash = (hash ^ out_palette->palette16[color]) * 16777619u;
+    hash = (hash ^ (uint32_t)light_level) * 16777619u;
+    out_palette->hash = hash ? hash : 1u;
+    return 1;
+}
+
 int dm2_v1_asset_loader_uses_physical_16_color_palette(
     const DM2_V1_AssetLoader *loader)
 {

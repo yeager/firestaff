@@ -88,6 +88,14 @@ const void *csb_v1_viewport_f0110_door_button_coord_set_pc34(
     int door_button_ordinal,
     int view_door_button_index);
 
+/* Raster one decoded source button into its G0208 F0791 zone. The caller's
+ * destination pointer is the viewport origin; bounds are the 224x136 source
+ * aperture and dst_stride may include the enclosing 320-pixel screen. */
+int csb_v1_viewport_f0110_door_button_raster_pc34(
+    const uint8_t *source_pixels, int source_width, int source_height,
+    int view_door_button_index, uint8_t *destination, int dst_stride,
+    int viewport_width, int viewport_height);
+
 #ifdef __cplusplus
 }
 #endif

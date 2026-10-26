@@ -19,6 +19,17 @@ static const RequiredSurface kRequired[] = {
     { 33, 18, 18 }, { 34, 18, 18 }, { 35, 18, 18 } /* F0291 */
 };
 
+static const RequiredSurface kRequiredFmtowns[] = {
+    { 8, 67, 29 },   /* F0292 dead status C008 */
+    { 17, 224, 136 },/* F0296/F0302 inventory C017 */
+    { 26, 256, 87 }, /* C026 portrait atlas */
+    { 28, 76, 14 },  /* F0292 status icons C028 */
+    { 32, 90, 15 },  /* F20-native poison strip C032 */
+    { 15, 43, 7 },   /* F20-native damage strip C015 */
+    { 16, 32, 29 },  /* inventory damage C016 */
+    { 33, 18, 18 }, { 34, 18, 18 }, { 35, 18, 18 }
+};
+
 uint32_t dm1_v1_champion_panel_material_fnv1a_pc34(
     const unsigned char *bytes, int byteCount)
 {
@@ -32,9 +43,10 @@ uint32_t dm1_v1_champion_panel_material_fnv1a_pc34(
     return hash;
 }
 
-int dm1_v1_champion_panel_material_from_m11_loader_pc34(
+static int panel_material_from_loader(
     M11_AssetLoader *loader, const M11_FontState *font,
     const unsigned char *palette, int paletteEntryCount,
+    const RequiredSurface *required, int requiredCount,
     Dm1V1ChampionPanelMaterialReceiptPc34 *outReceipt)
 {
     Dm1V1ChampionPanelMaterialReceiptPc34 receipt;
@@ -47,15 +59,20 @@ int dm1_v1_champion_panel_material_from_m11_loader_pc34(
         !M11_Font_IsLoaded(font) ||
         (M11_Font_ResolvedGraphicIndex(font) != M11_FONT_GRAPHIC_INDEX_PC34 &&
          M11_Font_ResolvedGraphicIndex(font) != M11_FONT_GRAPHIC_INDEX_LEGACY) ||
-        !palette || paletteEntryCount != 16) return 0;
+        !palette || paletteEntryCount != 16 || !required ||
+        requiredCount <= 0) return 0;
 
-    for (i = 0; i < (int)(sizeof(kRequired) / sizeof(kRequired[0])); ++i) {
-        const M11_AssetSlot *slot = M11_AssetLoader_Load(loader, kRequired[i].graphic);
+    for (i = 0; i < requiredCount; ++i) {
+        const M11_AssetSlot *slot = M11_AssetLoader_Load(loader, required[i].graphic);
         uint32_t hash;
         if (!slot || !slot->loaded || !slot->pixels ||
-            (int)slot->graphicIndex != kRequired[i].graphic ||
-            (int)slot->width != kRequired[i].width ||
-            (int)slot->height != kRequired[i].height) return 0;
+            (int)slot->graphicIndex != required[i].graphic) return 0;
+        /* F20J ships C032 as a compact 53x17 poison strip, while F20E
+         * uses the 90x15 strip. Both are source-owned Towns layouts. */
+        if (((int)slot->width != required[i].width ||
+             (int)slot->height != required[i].height) &&
+            !(required == kRequiredFmtowns && required[i].graphic == 32 &&
+              (int)slot->width == 53 && (int)slot->height == 17)) return 0;
         hash = dm1_v1_champion_panel_material_fnv1a_pc34(
             slot->pixels, (int)slot->width * (int)slot->height);
         if (!hash) return 0;
@@ -74,4 +91,25 @@ int dm1_v1_champion_panel_material_from_m11_loader_pc34(
     receipt.materialFingerprint = fingerprint;
     *outReceipt = receipt;
     return 1;
+}
+
+int dm1_v1_champion_panel_material_from_m11_loader_pc34(
+    M11_AssetLoader *loader, const M11_FontState *font,
+    const unsigned char *palette, int paletteEntryCount,
+    Dm1V1ChampionPanelMaterialReceiptPc34 *outReceipt)
+{
+    return panel_material_from_loader(loader, font, palette,
+        paletteEntryCount, kRequired,
+        (int)(sizeof(kRequired) / sizeof(kRequired[0])), outReceipt);
+}
+
+int dm1_v1_champion_panel_material_from_m11_loader_fmtowns(
+    M11_AssetLoader *loader, const M11_FontState *font,
+    const unsigned char *palette, int paletteEntryCount,
+    Dm1V1ChampionPanelMaterialReceiptPc34 *outReceipt)
+{
+    return panel_material_from_loader(loader, font, palette,
+        paletteEntryCount, kRequiredFmtowns,
+        (int)(sizeof(kRequiredFmtowns) / sizeof(kRequiredFmtowns[0])),
+        outReceipt);
 }

@@ -61,6 +61,8 @@
 #include "dm1_v1_amiga_title_f0437.h"
 #include "dm1_v1_amiga_entrance_f0441.h"
 #include "dm1_v1_amiga_graphics_dat.h"
+#include "redmcsb_amiga_graphic_expand.h"
+#include "csb_v1_amiga_swsh_ftl.h"
 #include "dm1_v1_iigs_graphics_dat.h"
 #include "dm1_v1_iigs_installation.h"
 #include "dm1_v1_iigs_title_f0437.h"
@@ -74,6 +76,7 @@
 #include "csb_v22_finished_art_material_gate_pc34.h"
 #include "csb_v22_modern_assets_pc34.h"
 #include "csb_v1_boot.h"
+#include "csb_v1_amiga_english_programs.h"
 #include "csb_v1_f0908_f0909_f0910_swsh_sound_pc34_compat.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_runtime.h"
@@ -5923,6 +5926,148 @@ static int m11_play_ftl_swoosh_for_game_if_available(
     memset(&swshAudio, 0, sizeof(swshAudio));
     memset(&csbBoot, 0, sizeof(csbBoot));
     memset(&dm1Media, 0, sizeof(dm1Media));
+    if (gameId && strcmp(gameId, "csb") == 0 && dataDir && dataDir[0]) {
+        CSB_V1_BootProfile amigaBoot;
+        CSB_V1_AmigaSwshFtlAssets amigaAssets;
+        char amigaPath[FSP_PATH_MAX];
+        char amigaMd5[33];
+        uint8_t *amigaBytes = NULL;
+        size_t amigaByteCount = 0u;
+        uint8_t indexed[CSB_V1_AMIGA_SWSH_WIDTH * CSB_V1_AMIGA_SWSH_HEIGHT];
+        uint8_t rgba[CSB_V1_AMIGA_SWSH_WIDTH * CSB_V1_AMIGA_SWSH_HEIGHT * 4u];
+        unsigned char palette[16][3] = {{0}};
+        M11_AudioState amigaAudio;
+        int amigaAudioInitialized = 0;
+        int amigaProfile = 0;
+        int amigaComplete = 0;
+        unsigned int sourceFrames = 0u;
+        unsigned int sourceVblanks = 0u;
+        Uint64 audioStartedAt = 0u;
+        Uint64 soundDurationMs = 0u;
+
+        memset(&amigaBoot, 0, sizeof(amigaBoot));
+        memset(&amigaAssets, 0, sizeof(amigaAssets));
+        memset(&amigaAudio, 0, sizeof(amigaAudio));
+        csb_v1_boot_profile_init(&amigaBoot);
+        if (csb_v1_boot_scan_assets(&amigaBoot, dataDir) == 0 &&
+            amigaBoot.assets_verified &&
+            amigaBoot.variant_id == CSB_V1_VARIANT_AMIGA31_MULTI) {
+            amigaProfile = 1;
+        }
+        if (amigaProfile) {
+            /* ReDMCSB APPA.C calls FTL_SWSH before FTL_ANIM and ignores a
+             * missing prelude. Bind only to the selected Amiga disk member;
+             * the PC SWOOSH finder must not substitute another edition. */
+            if (csb_v1_amiga_selected_companion(amigaBoot.graphics_path,
+                    "SWSH.FTL", amigaPath, sizeof(amigaPath)) &&
+                asset_file_md5_hex(amigaPath, amigaMd5) &&
+                strcmp(amigaMd5, "ff3872baaed8ee4e83ee3c0684b2eeec") == 0 &&
+                asset_read_path_alloc(amigaPath, &amigaBytes,
+                                      &amigaByteCount) &&
+                csb_v1_amiga_swsh_ftl_decode(amigaBytes, amigaByteCount,
+                                              &amigaAssets) &&
+                redmcsb_amiga_graphic_expand(
+                    amigaAssets.logo_graphic,
+                    sizeof(amigaAssets.logo_graphic), indexed,
+                    sizeof(indexed), NULL, NULL)) {
+                soundDurationMs =
+                    ((Uint64)sizeof(amigaAssets.sample) *
+                     amigaAssets.sample_period * 1000u + 3579544u) /
+                    3579545u;
+                g_m11_intro_local_audio = &amigaAudio;
+                m11_swsh_indexed_to_rgba(indexed, rgba, palette);
+                if (M11_Render_PresentRGBA(rgba,
+                        CSB_V1_AMIGA_SWSH_WIDTH,
+                        CSB_V1_AMIGA_SWSH_HEIGHT) == M11_RENDER_OK &&
+                    m11_prepare_swsh_source_clock_after_launcher_handoff(
+                        rgba, CSB_V1_AMIGA_SWSH_WIDTH,
+                        CSB_V1_AMIGA_SWSH_HEIGHT, 20u)) {
+                    if (M11_Audio_Init(&amigaAudio)) {
+                        amigaAudioInitialized = 1;
+                        (void)M11_ApplyIntroAudioPreferences(&amigaAudio,
+                                                              menuState);
+                        audioStartedAt = m11_intro_active_ticks();
+                        if (!M11_Audio_PlayAmigaDmaPcmAtPaulaVolume(
+                                &amigaAudio, amigaAssets.sample,
+                                (int)sizeof(amigaAssets.sample),
+                                (int)amigaAssets.sample_period,
+                                m11_dm1_amiga_swsh_fnv1a(
+                                    amigaAssets.sample,
+                                    sizeof(amigaAssets.sample)), 64)) {
+                            M11_Audio_Shutdown(&amigaAudio);
+                            amigaAudioInitialized = 0;
+                        }
+                    }
+                    amigaComplete = 1;
+                    for (unsigned int eventIndex = 0u;
+                         eventIndex < CSB_V1_AMIGA_SWSH_PALETTE_EVENT_COUNT;
+                         ++eventIndex) {
+                        const CSB_V1_AmigaSwshPaletteEvent *event =
+                            &amigaAssets.palette[eventIndex];
+                        if (M11_Render_PumpEvents()) {
+                            g_m11_startup_intro_quit_requested = 1;
+                            amigaComplete = 0;
+                            break;
+                        }
+                        if (event->command >= 0) {
+                            const unsigned int color = event->parameter;
+                            palette[event->command][0] =
+                                (unsigned char)(((color >> 8) & 0x0fu) * 17u);
+                            palette[event->command][1] =
+                                (unsigned char)(((color >> 4) & 0x0fu) * 17u);
+                            palette[event->command][2] =
+                                (unsigned char)((color & 0x0fu) * 17u);
+                            m11_swsh_indexed_to_rgba(indexed, rgba, palette);
+                            if (M11_Render_PresentRGBA(rgba,
+                                    CSB_V1_AMIGA_SWSH_WIDTH,
+                                    CSB_V1_AMIGA_SWSH_HEIGHT) !=
+                                    M11_RENDER_OK) {
+                                amigaComplete = 0;
+                                break;
+                            }
+                            ++sourceFrames;
+                        } else {
+                            m11_swsh_indexed_to_rgba(indexed, rgba, palette);
+                            if (M11_Render_PresentRGBA(rgba,
+                                    CSB_V1_AMIGA_SWSH_WIDTH,
+                                    CSB_V1_AMIGA_SWSH_HEIGHT) !=
+                                    M11_RENDER_OK ||
+                                m11_delay_ms_with_intro_event_pump(
+                                    event->parameter * 20u)) {
+                                amigaComplete = 0;
+                                break;
+                            }
+                            sourceVblanks += event->parameter;
+                        }
+                    }
+                    if (amigaComplete && amigaAudioInitialized) {
+                        const Uint64 elapsed = m11_intro_active_ticks() -
+                                               audioStartedAt;
+                        if (elapsed < soundDurationMs &&
+                            m11_delay_ms_with_intro_event_pump(
+                                (unsigned int)(soundDurationMs - elapsed))) {
+                            amigaComplete = 0;
+                        }
+                    }
+                }
+                if (amigaComplete && g_m11_debug_startup_detail) {
+                    fprintf(stderr,
+                        "firestaff: startup-source-complete game=csb phase=amiga-swsh-ftl profile=%s frames=%u source-vblanks=%u audio=%s\n",
+                        amigaMd5, sourceFrames, sourceVblanks,
+                        amigaAudioInitialized ? "played" : "unavailable");
+                }
+            }
+            if (!amigaComplete && g_m11_debug_startup_detail &&
+                !g_m11_startup_intro_quit_requested) {
+                fprintf(stderr,
+                    "firestaff: startup-source-skip game=csb phase=amiga-swsh-ftl reason=missing-or-invalid-source\n");
+            }
+            g_m11_intro_local_audio = NULL;
+            if (amigaAudioInitialized) M11_Audio_Shutdown(&amigaAudio);
+            free(amigaBytes);
+            return g_m11_startup_intro_quit_requested ? 0 : 1;
+        }
+    }
     if (dm1MediaReceipt && dm1MediaReceipt->handled) {
         dm1Media = *dm1MediaReceipt;
         hasDm1Media = 1;
@@ -13347,37 +13492,26 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     struct Dm1V1PendingMotionQueuePc34Compat pendingDm1V1MotionQueue;
     Firestaff_RA_Runtime raRuntime;
 
+    int startupWindowMode = M11_WINDOW_MODE_MAXIMIZED;
     {
         M12_Config startupConfig;
         M12_Config_Load(&startupConfig, o->dataDir);
         M11_Render_SetBackendPreference(startupConfig.rendererBackendIndex);
+        if (startupConfig.windowModeIndex >= M11_WINDOW_MODE_WINDOWED &&
+            startupConfig.windowModeIndex <= M11_WINDOW_MODE_FULLSCREEN) {
+            startupWindowMode = startupConfig.windowModeIndex;
+        }
     }
-    int rc = M11_Render_Init(o->windowWidth, o->windowHeight, o->scaleMode);
+    if (o->windowModeOverride >= M11_WINDOW_MODE_WINDOWED &&
+        o->windowModeOverride <= M11_WINDOW_MODE_FULLSCREEN) {
+        startupWindowMode = o->windowModeOverride;
+    }
+    int rc = M11_Render_InitWithWindowMode(o->windowWidth, o->windowHeight,
+                                           o->scaleMode, startupWindowMode);
     if (rc != M11_RENDER_OK) {
         return rc;
     }
     M11_Render_SetPresentTimingEnabled(o->debug);
-    if (o->verbose) {
-        int windowWidth = 0;
-        int windowHeight = 0;
-        int drawableWidth = 0;
-        int drawableHeight = 0;
-        int presentX = 0;
-        int presentY = 0;
-        int presentWidth = 0;
-        int presentHeight = 0;
-        (void)M11_Render_GetWindowAndDrawableSize(
-            &windowWidth, &windowHeight, &drawableWidth, &drawableHeight);
-        (void)M11_Render_GetPresentRect(&presentX, &presentY,
-                                        &presentWidth, &presentHeight);
-        fprintf(stderr,
-                "firestaff: renderer ready video-driver=%s window=%dx%d drawable=%dx%d present=%d,%d %dx%d scale=%d aspect=%d\n",
-                SDL_GetCurrentVideoDriver() ? SDL_GetCurrentVideoDriver() : "unknown",
-                windowWidth, windowHeight, drawableWidth, drawableHeight,
-                presentX, presentY, presentWidth, presentHeight,
-                o->scaleMode, M11_Render_GetDisplayAspectMode());
-
-    }
     if (o->debug) debugStartupTrace.startedMs = SDL_GetTicks();
     /* SDL's dummy driver can retain its default 1024x768 logical window even
      * when a test requested another size.  Scripted mouse events use the
@@ -13388,6 +13522,32 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         (void)M11_Render_HandleResize(o->windowWidth, o->windowHeight);
     }
     if (o->debug) M11_Debug_LogHardware();
+    if (o->verbose) {
+        int windowWidth = 0;
+        int windowHeight = 0;
+        int drawableWidth = 0;
+        int drawableHeight = 0;
+        int presentX = 0;
+        int presentY = 0;
+        int presentWidth = 0;
+        int presentHeight = 0;
+        const int windowMode = M11_Render_GetWindowMode();
+        const char* windowModeName =
+            windowMode == M11_WINDOW_MODE_WINDOWED ? "windowed" :
+            windowMode == M11_WINDOW_MODE_MAXIMIZED ? "maximized" :
+            windowMode == M11_WINDOW_MODE_FULLSCREEN ? "fullscreen" : "unknown";
+        (void)M11_Render_GetWindowAndDrawableSize(
+            &windowWidth, &windowHeight, &drawableWidth, &drawableHeight);
+        (void)M11_Render_GetPresentRect(&presentX, &presentY,
+                                        &presentWidth, &presentHeight);
+        fprintf(stderr,
+                "firestaff: renderer ready video-driver=%s window=%dx%d drawable=%dx%d present=%d,%d %dx%d window-mode=%s scale=%d aspect=%d\n",
+                SDL_GetCurrentVideoDriver() ? SDL_GetCurrentVideoDriver() : "unknown",
+                windowWidth, windowHeight, drawableWidth, drawableHeight,
+                presentX, presentY, presentWidth, presentHeight,
+                windowModeName, o->scaleMode,
+                M11_Render_GetDisplayAspectMode());
+    }
     launcherFramebuffer = (unsigned char*)calloc(
         (size_t)M11_LAUNCHER_FB_WIDTH,
         (size_t)M11_LAUNCHER_FB_HEIGHT);

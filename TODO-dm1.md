@@ -1,3 +1,50 @@
+2026-10-26 F20 status hand slots: the DM1 FM Towns top row now renders
+ready/action hand frames into COORD.C C211..C218 from the original C033/C034/
+C035 graphics, using F0291's one-pixel border expansion and C12 transparency.
+F0038's 16x16 object icon is drawn opaquely from the authenticated icon atlas;
+unknown frame/icon material remains fail-closed. The authentic F20E/F20J
+real-media test checks all eight native hand zones and frame/icon pixels for
+empty, wounded, acting and Apple-held examples. Focused Towns and PC34 hand
+slot tests pass. This closes the missing top-row hand-slot layer only; it does
+not establish complete Towns HUD or visual parity.
+
+2026-10-26 F20 champion mirror placement: the shared mirror host receipt used
+PC34's front-wall portrait destination (96,35) for authenticated Towns runs.
+ReDMCSB DUNVIEW.C:3913-3928 instead sends the C026 atlas through F0635/M635
+C733; the authentic F20E/F20J COORD.C geometry is (0,19) for a 32x29 portrait.
+The Towns mirror route now keeps the source-validated C026 crop but replaces
+only the destination with C733 before drawing and publishing its presentation
+receipt. The FMTowns real-media geometry audit verifies both editions' native
+C026/C208 zones. This fixes placement source parity for the front-wall mirror;
+it does not prove captured pixel identity or complete viewport parity.
+
+2026-10-26 F20 champion names and status bars: the DM1 FM Towns HUD now draws
+non-selected champion names
+champion names from the original M653 picture-library font (asset 557) into
+COORD.C C159..C162 using F0635 C163..C166 geometry. It follows CHAMDRAW.C
+F0292's centered six-pixel cells, dark-gray name fields, gold leader name, and
+light-gray non-leader/dead names; the inventory champion remains named in its
+source viewport route. F0287 now paints health, stamina and mana into native
+C195..C206 zones with G0046 champion colors, C12 empty rows and source
+rounding. Geometry and bar-pixel tests cover both F20E and F20J, including the
+23x5 four-character C163 text extent, all 12 bar zones, empty, partial, minimum
+positive, and full/over-maximum values. Action-hand icons and original-frame
+comparison remain open, so this does not establish full HUD or visual parity.
+
+2026-10-26 FM Towns F20 wall ornaments: replaced the PC C696 ornament path
+for authenticated Towns gameplay with the original ReDMCSB F20 data model.
+The runtime now resolves G0194 coordinate sets, native bitmap pairs from base
+121, F20's 13 wall-view zones, source flips, D3/D2 palette maps, and scale 16/20
+against COORD.C G3026 records 1004..1107. English and Japanese G3026 tables
+are kept separately for their different unreadable-inscription anchors. The
+real-media graphics gate checked all 60 ornaments across all 13 views against
+both original DATA/GRAPHICS.DAT and JDATA/GRAPHICS.DAT; the HoC alcove-item
+runtime gate also confirmed presented ornaments use F20 bitmap ids and scales.
+This closes the incorrect PC bitmap/layout reuse for DM1 FM Towns wall
+ornaments, including mirror backing. It does not prove complete Towns HUD or
+viewport parity, or pixel identity to a native emulator; other F20 viewport
+and HUD layers remain to be checked against original media.
+
 2026-10-25 authentic PC 3.4 CLI/menu retest: the complete
 `test_dm1_v1_pc34_native_cli_boot.sh` matrix passed against the installed
 original DOS 3.4 archive and the original Atari ST dungeon used as a wrong-
@@ -3038,3 +3085,51 @@ the source health change from the original resurrection route. This checks
 that gameplay diagnostics include actions and health transitions in addition
 to the existing five-second process CPU, RSS, virtual-memory, and frame
 telemetry. It does not claim that every combat event is covered by this test.
+2026-10-26 F20E/F20J top-row asset admission: the original Towns
+`GRAPHICS.DAT` libraries contain the exact source-sized status box (graphic
+8, 67x29), champion strip (28, 76x14), and three slot-state surfaces (33-35,
+18x18) expected by the shared top-row renderer. The authentic-media graphics
+test now checks these five dimensions and requires the shared top-row source
+receipt to accept them in both DATA and JDATA. This rules out missing or
+wrongly sized source assets as the reason for a blank F20 HUD;
+runtime palette/font/material admission and final top-row composition still
+need a source-backed F20 test before changing the renderer gate.
+
+2026-10-26 FM Towns F20 HUD admission: the shared champion-panel material
+receipt now admits the native F20E surfaces (including its 90x15 C032 and
+43x7 C015) and the source-verified compact F20J C032 (53x17). The real-media
+graphics test loads the FM Towns M653 directly from GRAPHICS.DAT asset 557
+and checks both English and Japanese libraries. M11 now supplies the verified
+F20 dungeon palette to the top-row consumer. Source-native F20 top-row zone
+geometry and an original-frame pixel comparison remain open; this is not full
+FM Towns HUD parity.
+
+2026-10-26 F20 wall inscription font: ReDMCSB `DEFS.H` assigns
+`M648_GRAPHIC_INSCRIPTION_FONT` to GRAPHICS.DAT index 120 for MEDIA020,
+including F20E/F20J; PC34 assigns it to index 258. Authentic English and
+Japanese F20 libraries confirm index 120 is 288x8, while index 258 is 62x21.
+Firestaff previously requested PC34 index 258 unconditionally, so the native
+F20 `F0107` inscription route could not admit its 288x8 M648 raster. The
+renderer now selects index 120 for Towns, keeps the PC34 path at 258, and
+skips PC-only G0202 wall patch admission because F20 draws into F0635's C1000
+inscription zones directly. The real-media regression now checks both editions.
+This verifies native font source selection, not full inscription pixel parity.
+
+2026-10-26 F20 champion-HUD layout: a bounded resolver ports the relevant
+COORD.C static F20 records and F0635 placement/clipping rules. The G3034
+champion rows (150..218), G3038 portrait rows (110..116), and load rows
+(553..555) are shared by
+F20E/F20J; tests cover both editions. M11's DM1 Towns top-row failure/clear
+path now uses F20 zone geometry for champion boxes, portraits and hand slots
+instead of PC34 rectangles. The successful DM1 Towns path draws C028's four
+19x14 party icons through C113..C116 and the selected inventory champion's
+packed 32x29 portrait through C175..C178. The 2026-10-26 follow-up binds
+non-selected champion names to M653 asset 557 and the C159/C163 F0635 zones,
+and source-driven health/stamina/mana bars to C195..C206. Hand widgets remain
+cleared until their F20 material routes are source-bound. F20 C028 backgrounds
+use DATA.C's fixed G0046 values; unlike
+MEDIA720, F20 does not apply the invisibility palette remap. Pixel and
+geometry tests cover F20E/F20J C028 and C175
+placements. This is bounded core HUD work, not a fixed or parity-tested F20
+HUD. Add an M11 framebuffer capture against the original game before claiming
+visual parity.

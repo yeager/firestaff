@@ -475,9 +475,10 @@ static void run_real_data_handoff_if_available(void) {
                         strcmp(entry->gameId, kCases[i].gameId) == 0,
                     "authentic game row can move independently of option slot");
         ++available_count;
-        /* Direct --game without an explicit platform is AUTO. Test the host's
-         * native DM2 Macintosh preference when authenticated Mac retail media
-         * is present; all other routes retain their game-specific policy. */
+        /* Direct --game without an explicit platform is AUTO. When the
+         * authenticated FM Towns edition is installed, its game-specific
+         * priority must remain ahead of other matched editions, including
+         * Macintosh retail media on this host. */
         autoVersionIndex = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
             &menu.assetStatus, kCases[i].gameId, M12_ARCH_AUTO);
         autoMatchedVersion = autoVersionIndex >= 0

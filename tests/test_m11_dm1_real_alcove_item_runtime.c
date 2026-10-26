@@ -321,6 +321,7 @@ int main(void)
     int mapIndex;
     int renderedAlcoveItems = 0;
     int renderedAlcoveItemsOnWalls = 0;
+    int renderedFmtownsWallOrnaments = 0;
     int sourceAlcoveItemSquares = 0;
     unsigned char sourceMapAudited[32] = {0};
 #if defined(M11_DM1_REAL_MEDIA_PLATFORM_FMTOWNS) || \
@@ -381,6 +382,31 @@ int main(void)
                     memset(framebuffer, 0, sizeof(framebuffer));
                     M11_GameView_Draw(&state, framebuffer,
                                       kFramebufferWidth, kFramebufferHeight);
+#if defined(M11_DM1_REAL_MEDIA_PLATFORM_FMTOWNS)
+                    {
+                        M11_Dm1WallOrnamentHostPresentationReceipt wall;
+                        memset(&wall, 0, sizeof(wall));
+                        M11_GameView_GetDm1WallOrnamentHostPresentationReceipt(
+                            &wall);
+                        if (wall.valid) {
+                            if (wall.graphicIndex < 121 ||
+                                wall.graphicIndex > 240 ||
+                                wall.transparentColor != 10 ||
+                                (wall.sourceScaleX32 != 16 &&
+                                 wall.sourceScaleX32 != 20) ||
+                                (wall.sourceScaleY32 != 16 &&
+                                 wall.sourceScaleY32 != 20)) {
+                                fprintf(stderr,
+                                    "FM Towns wall ornament used an invalid F20 receipt: graphic=%d scale=%d,%d\n",
+                                    wall.graphicIndex, wall.sourceScaleX32,
+                                    wall.sourceScaleY32);
+                                M11_GameView_Shutdown(&state);
+                                return 1;
+                            }
+                            ++renderedFmtownsWallOrnaments;
+                        }
+                    }
+#endif
                     if (!sourceMapAudited[mapIndex]) {
                         sourceAlcoveItemSquares +=
                             count_real_alcove_item_squares(&state, mapIndex);
@@ -610,6 +636,13 @@ int main(void)
         M11_GameView_Shutdown(&state);
         return 77;
     }
+#if defined(M11_DM1_REAL_MEDIA_PLATFORM_FMTOWNS)
+    if (renderedFmtownsWallOrnaments == 0) {
+        fprintf(stderr, "no F20-native wall ornament was presented from HoC media\n");
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+#endif
     fprintf(stderr,
             "source alcove objects were not presented "
             "(source alcove-item squares=%d, alcove receipts=%d, "

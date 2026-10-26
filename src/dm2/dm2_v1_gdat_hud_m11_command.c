@@ -1,6 +1,7 @@
-/* skproject/SKWIN/SkWinCore.cpp loads INTERFACE_GENERAL images through
+/* SKProject/SKWIN/SkWinCore.cpp loads INTERFACE_GENERAL images through
  * LOAD_GDAT_INTERFACE_00_02 before c_gui_vp draws HUD chrome. M11 receives
- * only fully decoded, exact-source commands; it cannot request a substitute. */
+ * only fully decoded, exact-source commands. Its typed image lookup falls
+ * back to MISCELLANEOUS/254/IMG/254 when an optional image is absent. */
 
 #include "dm2_v1_gdat_hud_m11_command.h"
 
@@ -172,6 +173,9 @@ static uint32_t dm2_v1_gdat_hud_command_hash(
         hash = dm2_v1_gdat_hud_hash_bytes(hash,
             &command->source_state_flags,
             sizeof(command->source_state_flags));
+        hash = dm2_v1_gdat_hud_hash_bytes(hash,
+            &command->source_transparency_key,
+            sizeof(command->source_transparency_key));
         hash = dm2_v1_gdat_hud_hash_bytes(hash,
             &command->animation_direction,
             sizeof(command->animation_direction));
@@ -660,8 +664,10 @@ int dm2_v1_gdat_hud_m11_command_plan_build_fmtowns_squad(
     memset(out_plan, 0, sizeof(*out_plan));
     if (!loader || loader->gdat_version != 4u || !party ||
         !party->towns_squad_route_valid || !slots ||
+        !party->towns_savegames1_b02_source_bound ||
         party->champion_count <= 0 ||
-        party->champion_count > DM2_V1_HUD_CHAMPION_SLOT_COUNT) return 0;
+        party->champion_count > DM2_V1_HUD_CHAMPION_SLOT_COUNT ||
+        party->towns_party_direction > 3u) return 0;
 
     for (slot = 0; slot < party->champion_count; ++slot) {
         const DM2_V1_GdatHudTownsSquadSlot *source = &slots[slot];
@@ -744,6 +750,81 @@ int dm2_v1_gdat_hud_m11_command_plan_build_fmtowns_squad(
                     ? DM2_V1_GDAT_HUD_M11_TOWNS_GRAY_OVERLAY : 0u) |
                 (party->champions[slot].leader
                     ? DM2_V1_GDAT_HUD_M11_TOWNS_LEADER_ICON : 0u));
+        }
+        /* DRAW_SQUAD_POS_INTERFACE is the final F5 pass in SKProject's
+         * UPDATE_RIGHT_PANEL path: it redraws the formation and then paints
+         * living figures over the earlier spell/status icons. */
+        if (party->champions[slot].towns_current_hp != 0 &&
+            source->draw_squad_figure) {
+            DM2_V1_GdatHudM11Command *figure_command;
+            int figure_frame;
+            if (!party->champions[slot].towns_absdir_source_bound ||
+                party->champions[slot].towns_absdir > 3u ||
+                !source->draw_squad_figure ||
+                source->squad_figure_direction > 3u ||
+                source->squad_figure_rect_id !=
+                    (uint16_t)(0x53u + source->relative_position) ||
+                source->squad_figure_rect.w != 17 ||
+                source->squad_figure_rect.h != 17 ||
+                !source->squad_figure_rect_raw4_hash ||
+                out_plan->command_count >=
+                    DM2_V1_GDAT_HUD_M11_COMMAND_MAX) {
+                dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+                return 0;
+            }
+            if (!dm2_v1_gdat_hud_add_command(loader, out_plan,
+                    DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_FIGURE,
+                    0x6600 + slot, &source->squad_figure_rect,
+                    DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 6, slot)) {
+                dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+                return 0;
+            }
+            figure_command = &out_plan->commands[out_plan->command_count - 1];
+            if (figure_command->format != DM2_IMG_FMT_U4 ||
+                figure_command->width != 136 ||
+                figure_command->height != 17 ||
+                figure_command->destination.w != 17 ||
+                figure_command->destination.h != 17) {
+                dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+                return 0;
+            }
+            figure_command->destination_rect_id =
+                source->squad_figure_rect_id;
+            figure_command->destination_table_hash =
+                source->squad_figure_rect_raw4_hash;
+            uint8_t *cropped_pixels = (uint8_t *)malloc(17u * 17u);
+            if (!cropped_pixels) {
+                dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+                return 0;
+            }
+            figure_frame = (party->champions[slot].towns_absdir + 4u -
+                party->towns_party_direction) & 3u;
+            if (figure_frame != source->squad_figure_direction) {
+                dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+                return 0;
+            }
+            if (party->towns_savegames1_b02 != 0u) figure_frame += 4;
+            for (int y = 0; y < 17; ++y) {
+                memcpy(cropped_pixels + y * 17,
+                    figure_command->pixels + y * 136 + figure_frame * 17,
+                    17u);
+            }
+            dm2_v1_asset_free_pixels(figure_command->pixels);
+            figure_command->pixels = cropped_pixels;
+            figure_command->width = 17;
+            figure_command->height = 17;
+            figure_command->source_transparency_key = 2u;
+            figure_command->source_state_flags = (uint8_t)(
+                (source->squad_figure_direction <<
+                    DM2_V1_GDAT_HUD_M11_TOWNS_DIRECTION_SHIFT) |
+                (party->towns_savegames1_b02 != 0u
+                    ? DM2_V1_GDAT_HUD_M11_TOWNS_INVISIBLE_FIGURE : 0u));
+            figure_command->decoded_hash =
+                dm2_v1_gdat_hud_m11_command_pixel_hash(figure_command);
+            if (!figure_command->decoded_hash) {
+                dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+                return 0;
+            }
         }
     }
         if (party->towns_selected_hero_source_bound) {

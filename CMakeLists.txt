@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 3.0.415 LANGUAGES C)
+project(Firestaff VERSION 3.0.416 LANGUAGES C)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
@@ -6998,6 +6998,7 @@ add_library(firestaff_m10 STATIC
     src/shared/dungeon_decompressor_ftl.c
     # The DM1 Amiga DAT reader is shared by the M11 asset loader and scanner
     # consumers that compile that loader directly in focused regressions.
+    src/shared/redmcsb_amiga_graphic_expand.c
     src/dm1/dm1_v1_amiga_graphics_dat.c
     src/shared/asset_find_by_hash.c
     src/shared/firestaff_cmp_decode.c
@@ -7007,6 +7008,7 @@ add_library(firestaff_m10 STATIC
     src/shared/image_backend_pc34_compat_globals.c
     src/csb/csb_v1_csbgraphics_dat_classify.c
     src/csb/csb_v1_csbgraphics_dat_real_scan.c
+    src/csb/csb_v1_fmtowns_stairs.c
     src/csb/csb_v1_fmtowns_graphics_dat.c
     src/csb/csb_v1_fmtowns_cd.c
     src/csb/csb_v1_csbgraphics_runtime_binding.c
@@ -7762,6 +7764,8 @@ set(M11_SOURCES
     src/dm1/dm1_v1_amiga_title_f0437.c
     src/dm1/dm1_v1_i34e_title_anim_pc34.c
     src/dm1/dm1_v1_amiga_entrance_f0441.c
+    src/csb/csb_v1_amiga_swsh_ftl.c
+    src/shared/firestaff_ftl_decode.c
     src/shared/firestaff_ftl_container.c
     src/shared/firestaff_ftl_hunk_data_zero_run.c
     src/shared/firestaff_amiga_adf.c
@@ -7803,6 +7807,8 @@ set(M11_SOURCES
     src/dm1/dm1_v1_viewport_3d_pc34_compat.c
     src/dm1/dm1_v1_fmtowns_entrance_viewport.c
     src/dm1/dm1_v1_fmtowns_layout_crop.c
+    src/dm1/dm1_v1_fmtowns_wall_ornament.c
+    src/dm1/dm1_v1_fmtowns_hud_layout.c
     src/dm1/dm1_v1_viewport_wall_ornament_ordinal_provider_pc34_compat.c
     src/csb/csb_v1_viewport_wall_ornament_ordinal_resolver_pc34_compat.c
     src/dm1/dm1_v1_viewport_runtime_materialization_pc34_compat.c
@@ -27250,6 +27256,26 @@ endif()
         LABELS "dm1;fmtowns;layout;viewport;regression"
     )
 
+    add_executable(test_dm1_v1_fmtowns_hud_layout
+        tests/test_dm1_v1_fmtowns_hud_layout.c
+        src/dm1/dm1_v1_fmtowns_hud_layout.c
+    )
+    target_include_directories(test_dm1_v1_fmtowns_hud_layout PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_fmtowns_hud_layout PRIVATE
+            -Wall -Wextra -Werror -O2
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_fmtowns_hud_layout
+        COMMAND test_dm1_v1_fmtowns_hud_layout
+    )
+    set_tests_properties(dm1_v1_fmtowns_hud_layout PROPERTIES
+        LABELS "dm1;fmtowns;layout;hud;regression"
+    )
+
     add_executable(test_dm1_v1_fmtowns_title
         tests/test_dm1_v1_fmtowns_title.c
     )
@@ -42573,6 +42599,15 @@ add_executable(test_nexus_v1_dgn_material_raster
         LABELS "tier2;csb;csbwin_custom_resource;data_free"
     )
 
+    add_executable(test_csb_v1_fmtowns_stairs
+        tests/test_csb_v1_fmtowns_stairs.c
+    )
+    target_link_libraries(test_csb_v1_fmtowns_stairs PRIVATE firestaff_m10)
+    add_test(NAME csb_v1_fmtowns_stairs_unit
+        COMMAND test_csb_v1_fmtowns_stairs)
+    set_tests_properties(csb_v1_fmtowns_stairs_unit PROPERTIES
+        LABELS "tier2;csb;fmtowns;data_free")
+
     add_executable(test_csb_v1_csbwin_planar_bitmap
         tests/test_csb_v1_csbwin_planar_bitmap.c
         src/csb/csb_v1_csbwin_planar_bitmap.c
@@ -43057,6 +43092,8 @@ add_executable(test_nexus_v1_dgn_material_raster
     # follow-up gates.
     add_executable(test_firestaff_ftl_decode
         tests/test_firestaff_ftl_decode.c
+        src/csb/csb_v1_amiga_swsh_ftl.c
+        src/shared/redmcsb_amiga_graphic_expand.c
         src/shared/firestaff_ftl_decode.c
         src/shared/firestaff_ftl_hunk_data_zero_run.c
         src/shared/firestaff_ftl_container.c
@@ -43071,6 +43108,27 @@ add_executable(test_nexus_v1_dgn_material_raster
         NAME firestaff_ftl_decode_unit
         COMMAND test_firestaff_ftl_decode
     )
+    add_test(
+        NAME csb_amiga_swsh_ftl_decode_real_media
+        COMMAND test_firestaff_ftl_decode
+            "${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/amiga33-original/SWSH.FTL"
+    )
+    set_tests_properties(csb_amiga_swsh_ftl_decode_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "csb;amiga;startup;real-media;skip-safe")
+    foreach(csb_ftl_module IN ITEMS KAOS CNFG)
+        string(TOLOWER "${csb_ftl_module}" csb_ftl_module_lower)
+        add_test(
+            NAME "csb_amiga_${csb_ftl_module_lower}_ftl_code_checksum_real_media"
+            COMMAND test_firestaff_ftl_decode --compressed-code
+                "${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/amiga33-original/${csb_ftl_module}.FTL"
+        )
+        set_tests_properties(
+            "csb_amiga_${csb_ftl_module_lower}_ftl_code_checksum_real_media"
+            PROPERTIES
+                SKIP_RETURN_CODE 77
+                LABELS "csb;amiga;ftl;code-checksum;real-media;skip-safe")
+    endforeach()
 
     # ── CSB Utility Disk .CMP file decoder (Tier 2 #6) ──
     # Verifies src/shared/firestaff_cmp_decode.c parses the
@@ -63041,6 +63099,7 @@ unset(_firestaff_csb_v2_verification_tests)
 add_executable(test_dm1_v1_amiga_graphics_dat
     tests/test_dm1_v1_amiga_graphics_dat.c
     src/dm1/dm1_v1_amiga_title_f0437.c
+    src/shared/redmcsb_amiga_graphic_expand.c
     src/dm1/dm1_v1_amiga_graphics_dat.c
     src/dm1/dm1_v1_legacy_graphics_dat.c
     src/dm1/dm1_v1_original_save_amiga_handoff.c
@@ -63071,6 +63130,7 @@ set_tests_properties(test_dm1_v1_amiga_graphics_dat PROPERTIES
 add_executable(test_dm1_v1_amiga_title_f0437_real_media
     tests/test_dm1_v1_amiga_title_f0437_real_media.c
     src/dm1/dm1_v1_amiga_title_f0437.c
+    src/shared/redmcsb_amiga_graphic_expand.c
     src/dm1/dm1_v1_amiga_graphics_dat.c
     src/dm1/dm1_v1_amiga_swsh.c
     src/dm1/dm1_v1_legacy_graphics_dat.c
@@ -63092,6 +63152,7 @@ add_executable(test_dm1_v1_amiga_entrance_f0441_real_media
     tests/test_dm1_v1_amiga_entrance_f0441_real_media.c
     src/dm1/dm1_v1_amiga_entrance_f0441.c
     src/dm1/dm1_v1_amiga_title_f0437.c
+    src/shared/redmcsb_amiga_graphic_expand.c
     src/dm1/dm1_v1_amiga_graphics_dat.c
     src/dm1/dm1_v1_amiga_swsh.c
     src/dm1/dm1_v1_legacy_graphics_dat.c
@@ -63116,6 +63177,7 @@ add_executable(test_dm1_v1_amiga_demo_startup_real_media
     tests/test_dm1_v1_amiga_demo_startup_real_media.c
     src/dm1/dm1_v1_amiga_entrance_f0441.c
     src/dm1/dm1_v1_amiga_title_f0437.c
+    src/shared/redmcsb_amiga_graphic_expand.c
     src/dm1/dm1_v1_amiga_graphics_dat.c
     src/dm1/dm1_v1_amiga_swsh.c
     src/dm1/dm1_v1_legacy_graphics_dat.c
@@ -63137,6 +63199,7 @@ add_executable(test_dm1_v1_amiga20_french_startup_real_media
     tests/test_dm1_v1_amiga20_french_startup_real_media.c
     src/dm1/dm1_v1_amiga_entrance_f0441.c
     src/dm1/dm1_v1_amiga_title_f0437.c
+    src/shared/redmcsb_amiga_graphic_expand.c
     src/dm1/dm1_v1_amiga_graphics_dat.c
     src/dm1/dm1_v1_amiga_swsh.c
     src/dm1/dm1_v1_legacy_graphics_dat.c

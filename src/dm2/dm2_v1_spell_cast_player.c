@@ -268,8 +268,14 @@ static void dm2_cast_player_classify_timer(
             r->timer_kind = DM2_V1_SPELL_TIMER_AURA;
             r->timer_duration = DM2_SPELL_AURA_DURATION(cast_power);
             r->timer_value_a = cast_power;
-        } else if (spell_index == 2 || spell_index == 3 ||
-                   spell_index == 4 || spell_index == 8) {
+        } else if (spell_index == 3) {
+            /* SKWINSPX/src/v4/skspell.cpp:224-232 queues ttyInvisibility
+             * after (power + 1) * 4, then multiplies the delay by eight.
+             * This is a global 0x47 timer, not the per-hero 0x48 aura decay. */
+            r->timer_kind = DM2_V1_SPELL_TIMER_ENCHANTMENT;
+            r->timer_duration = (cast_power + 1) * 32;
+        } else if (spell_index == 2 || spell_index == 4 ||
+                   spell_index == 8) {
             r->timer_kind = DM2_V1_SPELL_TIMER_ENCHANTMENT;
             r->timer_duration = DM2_SPELL_ENCHANTMENT_DURATION(cast_power);
             r->timer_value_a = cast_power;
@@ -450,8 +456,17 @@ static DM2_V1_SourceTimer dm2_cast_player_build_timer(
         t.type = 0x46;
         t.value_a = (int16_t)cast->timer_value_a;
         break;
-    case DM2_V1_SPELL_TIMER_AURA:
     case DM2_V1_SPELL_TIMER_ENCHANTMENT:
+        if (cast->spell_index == 3) {
+            /* SKWINSPX skspell.cpp:225 queues ttyInvisibility with the
+             * default actor/value fields; the live runtime transaction
+             * advances the shared savegames1.b_02 count. */
+            t.type = 0x47;
+            t.actor = 0;
+            break;
+        }
+        /* fall through */
+    case DM2_V1_SPELL_TIMER_AURA:
         /* Source: c_hero.cpp DM2_PROCEED_ENCHANTMENT_SELF queues the
          * per-hero enchantment-power decay as 0x48.  Actor is the source
          * self-target mask; value_a is power, while due_tick carries the

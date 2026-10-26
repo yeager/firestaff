@@ -526,10 +526,21 @@ int FirestaffFtl_Decode(FirestaffFtl* ftl) {
      * If HUNK_DATA is absent, this step is a no-op (output stays NULL). */
     if (ftl->hunk_data_raw.data != NULL && ftl->hunk_data_raw.size > 0u) {
         size_t uncompressed_size = 0u;
+        const uint8_t* data = ftl->hunk_data_raw.data;
+        size_t data_size = ftl->hunk_data_raw.size;
+        uint32_t area1_size;
+        uint32_t area2_size;
         int rc = hunk_data_expected_size(ftl, &uncompressed_size);
         if (rc != 0) return -1;
-        rc = decode_hunk_data(ftl->hunk_data_raw.data,
-                              ftl->hunk_data_raw.size,
+        /* The DATA hunk begins with a word and two big-endian lengths.
+         * Only area 1 is compressed; area 2 contains relocation records.
+         * See the original FTL format and ReDMCSB's loader. */
+        if (data_size < 10u) return -1;
+        area1_size = rd32_be(data + 2u);
+        area2_size = rd32_be(data + 6u);
+        if ((uint64_t)10u + area1_size + area2_size != data_size ||
+            (area2_size & 1u) != 0u) return -1;
+        rc = decode_hunk_data(data + 10u, (size_t)area1_size,
                               uncompressed_size,
                               &ftl->hunk_data_decoded,
                               &ftl->hunk_data_decoded_size);
@@ -639,13 +650,13 @@ static int build_ftl_synthetic(FtlTestBitWriter* code,
      *   0x00..0x13   : 20-byte FTL header
      *   0x14..0x3F   : 3 x 12-byte segment headers
      *   0x40..0x47   : 8-byte HUNK_BSS payload (zero)
-     *   0x48..0x4F   : 8-byte HUNK_DATA payload (8 literal bytes)
-     *   0x50..       : HUNK_CODE payload (8-byte header + table + code)
+     *   0x48..       : DATA header and 8 literal bytes
+     *   then         : HUNK_CODE payload (8-byte header + table + code)
      */
     const size_t bss_off = 0x40u;
     const size_t bss_size = 8u;
     const size_t data_off = bss_off + bss_size;
-    const size_t data_size = 8u;
+    const size_t data_size = 18u;
     const size_t code_off = data_off + data_size;
     const size_t code_header = 8u;
     const size_t table_bytes = 3840u;
@@ -696,9 +707,10 @@ static int build_ftl_synthetic(FtlTestBitWriter* code,
     /* HUNK_BSS offset 4: HUNK_DATA area_1 in-memory size. */
     wr32_be(out + bss_off + 4u, 8u);
 
-    /* HUNK_DATA payload: literal pairs "ABCDEFGH" per Greatstone Note 7. */
+    /* HUNK_DATA area 1: literal pairs "ABCDEFGH". */
     uint8_t* data_p = out + data_off;
-    memcpy(data_p, "ABCDEFGH", 8);
+    wr32_be(data_p + 2u, 8u);
+    memcpy(data_p + 10u, "ABCDEFGH", 8u);
 
     /* HUNK_CODE payload: 8-byte header + 3840-byte table + nibble stream */
     uint8_t* code_p = out + code_off;
@@ -948,12 +960,12 @@ static int test_decode_hunk_code_bad_signature(void) {
     if (rc != 0) ST_FAIL("build");
 
     /* Corrupt the 0x5223 signature. */
-    buf[0x50u + 0u] = 0x12u;
-    buf[0x50u + 1u] = 0x34u;
+    buf[0x5au + 0u] = 0x12u;
+    buf[0x5au + 1u] = 0x34u;
 
     uint8_t* decoded = NULL;
     size_t   decoded_size = 0;
-    rc = decode_hunk_code(buf + 0x50u, 3848u, &decoded, &decoded_size);
+    rc = decode_hunk_code(buf + 0x5au, 3848u, &decoded, &decoded_size);
     ST_ASSERT(rc != 0, "bad signature rejected");
     return 1;
 }
@@ -978,7 +990,7 @@ static int test_decode_hunk_code_zero_word_count(void) {
 
     uint8_t* decoded = NULL;
     size_t   decoded_size = 0;
-    rc = decode_hunk_code(buf + 0x50u, 3848u, &decoded, &decoded_size);
+    rc = decode_hunk_code(buf + 0x5au, 3848u, &decoded, &decoded_size);
     ST_ASSERT(rc == 0, "zero word count succeeds");
     ST_ASSERT(decoded == NULL, "no allocation");
     ST_ASSERT(decoded_size == 0u, "no output");
@@ -1256,7 +1268,7 @@ static int test_diagnose_clean_stream(void) {
     if (rc != 0) ST_FAIL("build");
 
     FirestaffFtlHunkCodeDiagnostics d;
-    int ok = FirestaffFtl_HunkCodeDiagnose(buf + 0x50u, 3848u + 16u, &d);
+    int ok = FirestaffFtl_HunkCodeDiagnose(buf + 0x5au, 3848u + 16u, &d);
     ST_ASSERT(ok == 1, "diagnose succeeded");
     ST_ASSERT(d.status == FIRESTAFF_HUNK_CODE_OK, "OK status");
     ST_ASSERT(d.declared_word_count == 16u, "word count");
@@ -1302,7 +1314,7 @@ static int test_diagnose_padded_stream(void) {
      * decoder only needs 40 nibbles for 8 words, leaving
      * 2 unused nibbles = 1 byte of padding. */
     FirestaffFtlHunkCodeDiagnostics d;
-    int ok = FirestaffFtl_HunkCodeDiagnose(buf + 0x50u, 3869u, &d);
+    int ok = FirestaffFtl_HunkCodeDiagnose(buf + 0x5au, 3869u, &d);
     ST_ASSERT(ok == 1, "diagnose succeeded");
     ST_ASSERT(d.status == FIRESTAFF_HUNK_CODE_OK_WITH_PAD,
               "OK_WITH_PAD");

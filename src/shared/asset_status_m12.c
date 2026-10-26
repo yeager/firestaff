@@ -6346,16 +6346,16 @@ static int m12_csb_graphics_has_amiga31_title(const char* graphicsPath) {
 /* ReDMCSB COMPILE.H:199-243 gives A31E its APPB.FTL/BJELoad_R route; lines
  * 246-269 bind the A31M/A33M language selector and versioned KAOS.FTL.
  * APPA.C:51-81 reaches APPB through APPA.FTL and ANIM.FTL; APPA also starts
- * the original SWSH.FTL presentation. A graphics/title match without the
- * selected edition's complete same-package handoff can be displayed as
+ * the optional original SWSH.FTL presentation. A graphics/title match without
+ * the selected edition's required same-package handoff can be displayed as
  * installed by M12, then stall before the player can start CSB. */
 static int m12_csb_amiga31_startup_media_ready(const char* graphicsPath,
                                                const char* versionId) {
     static const char* const multiStartupLabels[] = {
-        "APPA.FTL", "ANIM.FTL", "APPB.FTL", "KAOS.FTL", "SWSH.FTL", NULL
+        "APPA.FTL", "ANIM.FTL", "APPB.FTL", "KAOS.FTL", NULL
     };
     static const char* const englishStartupLabels[] = {
-        "APPB.FTL", "BJELoad_R", "SWSH.FTL", NULL
+        "APPB.FTL", "BJELoad_R", NULL
     };
     static const char* const dungeonNames[] = {
         "Dungeon.DAT", "DUNGEON.DAT", "dungeon.dat", NULL
@@ -6467,8 +6467,9 @@ static void m12_require_csb_amiga31_package_identity(
     }
     /* These graphics bytes also appear in development/reference corpora.
      * CSB had no DOS/Windows release, so only a same-package TITL.DAT plus
-     * authenticated APPA/ANIM/APPB/KAOS/SWSH chain is a playable A31M/A33M
-     * catalogue row. */
+     * the authenticated APPA/ANIM/APPB/KAOS handoff is a playable A31M/A33M
+     * catalogue row. SWSH.FTL is an optional prelude: ReDMCSB ignores a
+     * missing FTL_SWSH result and continues into the required title chain. */
     amiga->matched = 0;
     amiga->matchedPath[0] = '\0';
     amiga->matchedMd5[0] = '\0';
@@ -9884,10 +9885,18 @@ int M12_AssetStatus_PrepareCSBRuntimeVersion(
             return m12_source_runtime_root(version->matchedPath, outPath,
                                            outPathSize);
         }
-        /* Loose F31 GRAPHICS.DAT lives below CDATA/CJDATA; retain the disc
-         * root so AUTOEXEC/TITLE.ANM and CHTWE/CHTWJ remain source-owned. */
-        return FSP_ParentDir(outPath, outPathSize, version->matchedPath) &&
-            FSP_ParentDir(outPath, outPathSize, outPath);
+        /* A source extraction can expose GRAPHICS.DAT either at the disc
+         * root or below CDATA/CJDATA. Keep the root that owns TITLE.ANM and
+         * CHTWE/CHTWJ in both layouts; blindly walking up twice escapes a
+         * flattened extraction when the scanner matched its root copy. */
+        if (!FSP_ParentDir(outPath, outPathSize, version->matchedPath)) {
+            return 0;
+        }
+        if (m12_ascii_equals_ignore_case(m12_path_leaf(outPath), "CDATA") ||
+            m12_ascii_equals_ignore_case(m12_path_leaf(outPath), "CJDATA")) {
+            return FSP_ParentDir(outPath, outPathSize, outPath);
+        }
+        return 1;
     }
     /* A directly selected ST/STX/MSA image is a native filesystem object,
      * not a loose DATA directory.  Retain the image itself so the CSB boot

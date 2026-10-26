@@ -6020,6 +6020,7 @@ int dm2_v1_g1_flying_item_selector_receipt(
     return 1;
 }
 
+
 int dm2_v1_g1_flying_item_geometry_receipt(
     const DM2_V1_G1FlyingItemSelectorReceipt *selector,
     int view_position, DM2_V1_G1FlyingItemGeometryReceipt *out)

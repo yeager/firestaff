@@ -4010,6 +4010,59 @@ int dm2_v1_runtime_cast_spell_player(
         if (out_receipt) *out_receipt = receipt;
         return 1;
     }
+    if (receipt.cast.spell_index == 3 &&
+        rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA) {
+        DM2_V1_SourceTimer timer;
+        DM2_V1_SourceTimerResult result;
+        uint32_t ticket;
+        int inventory_hero = rt->source_v1e0976;
+
+        /* SKWINSPX skspell.cpp:224-232 queues ttyInvisibility (0x47)
+         * with actor 0 and due tick (power + 1) * 32. savegames1.b_02 is
+         * the shared count for live 0x47 timers (skengage.cpp and
+         * c_events.cpp); keep the timer, count, mana and rune update atomic. */
+        if (receipt.cast.timer_kind != DM2_V1_SPELL_TIMER_ENCHANTMENT ||
+            receipt.cast.timer_duration <= 0 ||
+            rt->source_attack_counter == UINT8_MAX ||
+            rt->dungeon_level < 0 || rt->dungeon_level > 0xff) {
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        queue_before = rt->timer_queue;
+        memset(&timer, 0, sizeof(timer));
+        timer.ticks_and_map = ((uint32_t)rt->dungeon_level << 24) |
+            ((uint32_t)(rt->tick_count + receipt.cast.timer_duration) &
+             DM2_V1_SOURCE_TIMER_TICK_MASK);
+        timer.type = DM2_V1_TIMER_HERO_ENCH_FLAG;
+        ticket = dm2_v1_source_timer_enqueue_ticketed(
+            &rt->timer_queue, &timer, 0u, &result);
+        if (result != DM2_V1_SOURCE_TIMER_OK || ticket == 0u) {
+            rt->timer_queue = queue_before;
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        if (rt->source_attack_counter == 0u && inventory_hero > 0 &&
+            inventory_hero <= rt->source_party.heros_in_party) {
+            rt->source_party.hero[inventory_hero - 1].heroflag =
+                (int16_t)((uint16_t)rt->source_party.hero[
+                    inventory_hero - 1].heroflag | 0x4000u);
+        }
+        ++rt->source_attack_counter;
+        rt->source_hero_ench_countdown = rt->source_attack_counter;
+        rt->source_savegames1[2] = rt->source_attack_counter;
+        hero->curMP = (int16_t)(hero->curMP - receipt.cast.mana_cost);
+        hero->handcooldown[hand_index] =
+            (int8_t)receipt.cast.cooldown_ticks;
+        memset(hero->rune, 0, sizeof(hero->rune));
+        hero->nrunes = 0;
+        receipt.source_owner_available = 1;
+        receipt.applied = 1;
+        receipt.timer_enqueued = 1;
+        receipt.timer_ticket = ticket;
+        receipt.mana_after = hero->curMP;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
     if (receipt.cast.timer_kind != DM2_V1_SPELL_TIMER_LIGHT ||
         (receipt.cast.spell_index != 0 && receipt.cast.spell_index != 1 &&
          receipt.cast.spell_index != 5)) {
@@ -10150,7 +10203,8 @@ static int dm2_runtime_hero_ench_flag_timer(
         rt->source_party.heros_in_party > DM2_MAX_HEROES)
         return 0;
     map = (int)((timer->ticks_and_map >> 24) & 0xffu);
-    target = rt->source_hero_ench_target;
+    target = rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA
+        ? rt->source_v1e0976 : rt->source_hero_ench_target;
     if (map < 0 ||
         map >= ((DM2_V1_DungeonData *)rt->boot->dungeon_data)->level_count ||
         map != rt->dungeon_level || target < 0 ||
@@ -12376,6 +12430,15 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
             dst->towns_spell_cooldown =
                 (uint8_t)source_hero->handcooldown[2];
             dst->towns_spell_cooldown_source_bound = 1;
+            /* SKProject's live c_party entry retains HeroType from the
+             * selected mirror. The FM Towns HUD reads that value directly
+             * for CHAMPIONS/<HeroType>/0; the DOS c_hero byte-257 bridge
+             * below is not the owner for this native Towns party. */
+            if (source_hero->herotype >= 0 &&
+                source_hero->herotype <= 15) {
+                dst->portrait_index = (uint8_t)source_hero->herotype;
+                dst->portrait_type_source_bound = 1;
+            }
         }
         if (rt->source_party_valid &&
             slot < rt->source_party.heros_in_party) {
@@ -12390,8 +12453,10 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
             dst->stamina_pct = stat_receipt.champions[slot].stamina_pct;
             dst->mana_pct = stat_receipt.champions[slot].mana_pct;
             dst->state_source_bound = 1;
-            dst->portrait_index = raw[257];
-            dst->portrait_type_source_bound = 1;
+            if (!hud.towns_squad_route_valid) {
+                dst->portrait_index = raw[257];
+                dst->portrait_type_source_bound = 1;
+            }
         }
         memcpy(dst->name, champ->first_name, DM2_V1_HUD_CHAMPION_NAME_MAX);
         dst->name[DM2_V1_HUD_CHAMPION_NAME_MAX] = '\0';
@@ -15242,6 +15307,132 @@ int dm2_v1_runtime_last_projectile_render_receipt(
     return 1;
 }
 
+
+int dm2_v1_runtime_live_missile_selector_context(
+    const DM2_V1_DungeonData **out_dungeon,
+    const DM2_V1_RecordPoolSet **out_pools,
+    const DM2_V1_AssetLoader **out_loader)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    if (out_dungeon) *out_dungeon = NULL;
+    if (out_pools) *out_pools = NULL;
+    if (out_loader) *out_loader = NULL;
+    if (!out_dungeon || !out_pools || !out_loader ||
+        !rt->record_pools_valid || !rt->boot || !rt->boot->dungeon_data ||
+        !(*out_loader = dm2_v1_boot_asset_loader(rt->boot))) {
+        return 0;
+    }
+    *out_dungeon = (const DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    *out_pools = &rt->record_pools;
+    return 1;
+}
+
+int dm2_v1_runtime_live_missile_timer_receipt(
+    int missile_record_handle,
+    DM2_V1_G1MissileTimerReceipt *out_timer)
+{
+    const DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    const uint8_t *record;
+    const DM2_V1_SourceTimer *matched = NULL;
+    uint16_t timer_index;
+    uint8_t raw[DM2_V1_SOURCE_TIMER_SIZE];
+    uint32_t hash;
+
+    if (out_timer) memset(out_timer, 0, sizeof(*out_timer));
+    if (!out_timer || !rt->record_pools_valid ||
+        !rt->record_pools.valid ||
+        dm2_v1_record_handle_pool((int16_t)missile_record_handle) != 14 ||
+        rt->timer_queue.count > DM2_V1_SOURCE_TIMER_MAX ||
+        !(record = dm2_v1_record_pool_address(
+              &rt->record_pools, (int16_t)missile_record_handle)) ||
+        rt->record_pools.pools[14].record_size < 8) {
+        return 0;
+    }
+    timer_index = dm2_runtime_missile_rd16(&rt->record_pools, record + 6);
+
+    /* DB14::w6 names the source timerarray slot. Match both that stable slot
+     * and c_tim::wvalueA (the owning DB14 handle); source indices alone can
+     * repeat for unrelated runtime-created timers. */
+    for (size_t i = 0u; i < rt->timer_queue.count; ++i) {
+        const DM2_V1_SourceTimer *timer = &rt->timer_queue.timers[i];
+        if (rt->timer_queue.source_indices[i] != timer_index ||
+            (uint16_t)timer->value_a != (uint16_t)missile_record_handle ||
+            (timer->type != 0x1du && timer->type != 0x1eu)) {
+            continue;
+        }
+        if (matched) return 0;
+        matched = timer;
+    }
+    if (!matched) return 0;
+
+    memset(raw, 0, sizeof(raw));
+    raw[0] = (uint8_t)matched->ticks_and_map;
+    raw[1] = (uint8_t)(matched->ticks_and_map >> 8);
+    raw[2] = (uint8_t)(matched->ticks_and_map >> 16);
+    raw[3] = (uint8_t)(matched->ticks_and_map >> 24);
+    raw[4] = matched->type;
+    raw[5] = matched->actor;
+    raw[6] = (uint8_t)matched->value_a;
+    raw[7] = (uint8_t)((uint16_t)matched->value_a >> 8);
+    raw[8] = (uint8_t)matched->value_b;
+    raw[9] = (uint8_t)((uint16_t)matched->value_b >> 8);
+    raw[10] = (uint8_t)matched->reserved;
+    raw[11] = (uint8_t)((uint16_t)matched->reserved >> 8);
+    hash = dm2_runtime_viewport_evidence_hash_bytes(raw, sizeof(raw));
+    if (!hash) return 0;
+
+    out_timer->timer_index = timer_index;
+    out_timer->timer_type = matched->type;
+    out_timer->actor = matched->actor;
+    out_timer->value = (uint16_t)matched->value_a;
+    out_timer->action_word = (uint16_t)matched->value_b;
+    out_timer->map_index = (uint8_t)(matched->ticks_and_map >> 24);
+    out_timer->map_x = (uint8_t)((uint16_t)matched->value_b & 0x1fu);
+    out_timer->map_y = (uint8_t)(((uint16_t)matched->value_b >> 5) & 0x1fu);
+    out_timer->direction = (uint8_t)((out_timer->action_word >> 10) & 3u);
+    out_timer->raw_timer_hash = hash;
+    out_timer->valid = 1;
+    return 1;
+}
+
+int dm2_v1_runtime_snapshot_visible_missile_chains(
+    int map, const DM2_V1_G1VisibleMapCell *visible_cells,
+    size_t visible_cell_count, uint8_t view_direction,
+    DM2_V1_RuntimeVisibleMissileSnapshot *out_snapshots,
+    size_t snapshot_capacity, size_t *out_count)
+{
+    const DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    const DM2_V1_DungeonData *dungeon;
+    DM2_V1_G1MissileChainSnapshot source[
+        DM2_V1_G1_VISIBLE_MISSILE_MAX];
+    size_t source_count = 0u;
+
+    if (out_count) *out_count = 0u;
+    if (!out_count || (snapshot_capacity != 0u && !out_snapshots) ||
+        snapshot_capacity > DM2_V1_G1_VISIBLE_MISSILE_MAX ||
+        !rt->record_pools_valid || !rt->boot || !rt->boot->dungeon_data ||
+        map < 0 || map > 0xff) {
+        return 0;
+    }
+    dungeon = (const DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    if (!dm2_v1_g1_snapshot_visible_missile_chains(
+            dungeon, &rt->record_pools, map, visible_cells,
+            visible_cell_count, view_direction, source, snapshot_capacity,
+            &source_count)) {
+        return 0;
+    }
+    for (size_t i = 0u; i < source_count; ++i) {
+        DM2_V1_RuntimeVisibleMissileSnapshot *out = &out_snapshots[i];
+        memset(out, 0, sizeof(*out));
+        out->source = source[i];
+        out->timer_valid = dm2_v1_runtime_live_missile_timer_receipt(
+            source[i].object_id, &out->timer);
+        if (!out->timer_valid) memset(&out->timer, 0, sizeof(out->timer));
+    }
+    *out_count = source_count;
+    return 1;
+}
+
 int dm2_v1_runtime_last_missile_impact_receipt(
     DM2_V1_RuntimeMissileImpactReceipt *out_receipt) {
     if (!out_receipt || !g_dm2_last_missile_impact.valid) {
@@ -17042,6 +17233,7 @@ int dm2_v1_runtime_get_source_hero_state(
     memcpy(out_state->name1, hero->name1, sizeof(out_state->name1));
     memcpy(out_state->name2, hero->name2, sizeof(out_state->name2));
     out_state->party_position = hero->partypos;
+    out_state->hero_type = hero->herotype;
     out_state->cur_mp = hero->curMP;
     out_state->wizardry_skill = hero->ability[DM2_ABILITY_WIZARDRY][0];
     out_state->rune_count = hero->nrunes;
@@ -17094,6 +17286,15 @@ int dm2_v1_runtime_get_source_aura_of_speed(uint8_t *out_value) {
     if (!out_value || !g_dm2_runtime.source_aura_of_speed_valid)
         return 0;
     *out_value = g_dm2_runtime.source_aura_of_speed;
+    return 1;
+}
+
+int dm2_v1_runtime_get_source_47_count(uint8_t *out_count) {
+    if (!out_count || !g_dm2_runtime.source_party_valid ||
+        !g_dm2_runtime.boot ||
+        g_dm2_runtime.boot->platform != DM2_PLATFORM_FMTOWNS_JA)
+        return 0;
+    *out_count = g_dm2_runtime.source_savegames1[2];
     return 1;
 }
 

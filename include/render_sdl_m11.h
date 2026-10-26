@@ -95,6 +95,11 @@ extern "C" {
 
 /* Lifecycle */
 int  M11_Render_Init(int windowWidth, int windowHeight, int scaleMode);
+/* Startup-only variant: create the native window in the requested mode before
+ * the first event-loop synchronization. M11_Render_Init retains its legacy
+ * maximized default for renderer clients that do not own launcher config. */
+int  M11_Render_InitWithWindowMode(int windowWidth, int windowHeight,
+                                   int scaleMode, int windowMode);
 void M11_Render_Shutdown(void);
 int  M11_Render_IsInitialized(void);
 

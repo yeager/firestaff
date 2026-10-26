@@ -1,3 +1,40 @@
+2026-10-26 F0107 wall-ornament blit: the shared ReDMCSB viewport callback
+resolved a layout and material plan, but its final pixel loop copied source
+pixels 1:1 and ignored `sourceScaleX32`, `sourceScaleY32`, horizontal flip,
+and the source palette map. That made the callback contradict its own plan,
+especially for perspective-specific Towns wall assets. It now uses the exact
+`DEFS.H M078_SCALED_DIMENSION` rounding, clips the derived-size image to the
+layout zone and viewport, applies the selected flip and palette map, and
+honors transparent pixels. A focused pixel test covers all four operations.
+The authentic English/Japanese F31 packed-M11 runs still pass, but they do
+not assert a full source-matched dungeon screenshot. CSB FM Towns wall,
+inscription, door-button, trapdoor and overall HUD/viewport parity remain
+open pending matched original-versus-Firestaff captures.
+
+2026-10-26 F31 door transaction: D3R's F0110 callback uses the G0208 D3R
+clip and then the F0111 D3R side-door plan; it no longer routes that side
+panel through the center D3C material plan. ReDMCSB anchors are
+`DUNVIEW.C:4119-4216` (F0110/G0208) and `DUNVIEW.C:4218-4337` (F0111).
+The F31 native button is M634 item 453, while G0693 is resolved from MAP.D's
+DoorSet0/1 and DB0's type bit. D3R DoorSet 3 now consumes its source M004 RNG
+value from the F0128-bound G0349 state and applies the resulting horizontal /
+vertical flip mask. The opt-in authentic F31 handoff test checks the real
+button image, exact D3R raster clip, a MAP.D/DB0-selected panel, and a real
+DoorSet 3 panel/flip plan from the installed dungeon. It does not move the
+party to a synthetic test pose. Full native F0111 ornament and mask composition
+parity remains open.
+
+2026-10-26 FM Towns C151..C154 champion row: the generic PC HUD gate
+required C011=14x26 and suppressed the entire party row for authentic F31,
+where C011 is 14x39. The F31 route now admits only the source-bound champion
+materials, then draws the C696-positioned status panels and C028 icons; its
+spell, menu, idle-action and movement regions remain on their Towns-specific
+compositors. The packed original-media tests now assert nonblack pixels in
+the F31 C151..C154/C113..C116 row and pass for English and Japanese media.
+This verifies that the source row is presented, not complete framebuffer or
+original-emulator parity. The reported broad Towns viewport/HUD defects are
+still open.
+
 2026-10-26 user-reported CSB Amiga defects: the dungeon viewport looks badly
 wrong (alcoves and wall torches collapse to black holes, inscriptions are
 hard to read, and floor trap doors are invisible), the intro animation is
@@ -79,15 +116,16 @@ gaps and bounds what can be concluded:
   rectangle together. These dimensions come directly from the installed
   authenticated `Graphics.DAT` (MD5
   `61fbfd56887c94adc26888a9491c6611`), not generated or reconstructed art.
-- The common Amiga FTL/SWSH intro is a confirmed edition gap. The authenticated
-  Amiga packages include the original `SWSH.FTL`, and ReDMCSB's Amiga
-  startup chain invokes `FTL_SWSH`. Firestaff's shared CSB prelude instead
-  looks for the PC `SWOOSH`/`SWOOSH.DAT` payload and its PC-format sound
-  records; `csb_v1_boot_load_swoosh_source_pc34` does not bind `SWSH.FTL`.
-  Consequently the real Amiga logo animation and its source audio never reach
-  the presenter. Decode and play the exact installed Amiga stream with its
-  own 50 Hz timing and audio owner; do not substitute the PC `SWOOSH` or
-  generated media.
+- The common Amiga FTL/SWSH prelude is now wired for the authenticated A31M/A33M
+  multi-language Amiga profile. The launcher reads `SWSH.FTL` beside the
+  selected `GRAPHICS.DAT`, requires the known original file fingerprint, then
+  checks the FTL hunks and palette, logo and sample fingerprints before
+  presenting anything. The logo uses the shared bounded F0466 decoder, the 27
+  source palette events advance at 50 Hz, and the Paula PCM uses the period
+  stored in the FTL. Missing or mismatched optional SWSH media falls through
+  to the normal Amiga title route, as ReDMCSB does. Unit and authentic-media
+  extraction tests pass; native-screen timing and audible device output still
+  need verification. Other Amiga edition variants remain outside this route.
 - The later title program still differs by edition. A31M/A33M decodes the
   original `TITL.DAT` schedule. A31E/A35E take their documented direct
   `BJELoad_R` -> `C03_GAME` boundary; A35M uses the `C08_LANG` selector and
@@ -101,6 +139,33 @@ gaps and bounds what can be concluded:
   startup checks cannot prove device output. Add authentic cue/timing
   ownership from the original stream, then verify audible output on a real
   audio device; do not substitute generated sound.
+
+2026-10-26 CSB Amiga SWSH runtime: the A31M/A33M FTL prelude now plays from
+the selected Amiga source profile instead of falling through to the PC
+`SWOOSH` search. The real-media regression verifies the palette events, logo
+pixels, sample bytes and Paula period against the installed SWSH.FTL; the
+production app and test target link on trv2. Native video/audio playback and
+other Amiga editions remain unverified.
+
+2026-10-26 CSB Amiga FTL checksum arithmetic: the authentic 3.3 `SWSH.FTL`
+failed the container verifier because its BSS and DATA sums use ordinary
+16-bit overflow, while the verifier reduced each addition modulo 65,535.
+The checksum accumulator now follows the stored 16-bit result. The focused
+real-media test checks all four hunk checksums and confirms that the decoded
+palette schedule, 320x200 F31E logo, and 9,078-byte sound sample match the
+literal arrays in ReDMCSB `SWSH.C`, `SWSHGDAT.C`, and `SWSHSDAT.C`. Original
+bytes remain outside Git. The runtime integration and its remaining native
+display/audio limitations are documented in the preceding SWSH entry.
+
+The same real-media checksum audit found that Amiga 3.3 `KAOS.FTL` and
+`CNFG.FTL` use the 0x5223 compressed CODE format. Their stored CODE checksums
+match the decoded program bytes, not the compressed stream, so the
+container-only verifier now reports that checksum as deferred until decode.
+The authentic-media regressions decode both modules and compare the resulting
+checksums; all ten installed CSB Amiga FTL modules now match their stored
+checksums when checked at the correct layer. The SWSH runtime integration is
+described in the preceding 2026-10-26 entry; this checksum check alone proves
+container/resource integrity, not native display timing or audible output.
 
 2026-10-25 mixed original-media launcher retest: the authentic
 `csb_v1_fmtowns_m12_auto_mixed_real_media` matrix passed against the installed
@@ -749,3 +814,19 @@ edition and source-media provenance that binds its `dungeon.dat`,
   fixed 32-cell row strides. The generic F0104 plan, native Amiga pit record
   mapping and final Amiga pixels still need an original-frame comparison;
   current evidence does not isolate a further pit-specific defect.
+2026-10-26 F31 FM Towns spell panel: F31's authenticated C009 panel and
+champion tabs no longer depend on the unrelated DM1 PC34 M653 font receipt.
+When that receipt is unavailable, Firestaff keeps the source C009 background
+and suppresses spell-panel glyph drawing instead of clearing the panel or
+using an unverified host font. The packed F31 real-media handoff test now
+checks that C009's source border remains intact with the font receipt disabled
+for both English and Japanese editions. The F31J system-font owner is still
+unresolved, so its glyph parity and full viewport/HUD parity remain open.
+
+2026-10-26 FM Towns F31 stair graphics: ReDMCSB DUNVIEW.C F0094/F0128 selects
+M645 + WallSet*M647, where M647 is the 40-image wall-set stride. The shared
+viewport plan had been passing the wall-set-zero stair ids unchanged; its
+Towns provider now restores the active wall-set bank for M645 offsets 0..17.
+Data-free index boundaries pass, and authentic English/Japanese Towns handoff
+tests still pass. Frame-level comparison of F31 wall graphics and HUD remains
+open.

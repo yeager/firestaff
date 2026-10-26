@@ -79,19 +79,79 @@ retains source map/cell fields, and
 derived candidate draw key while asserting that source-order validity remains
 false until the direction provenance is proven.
 
-More fundamental runtime integration is also still missing: production writes
-to `g_dm2_projectile_drain_count` do not exist. The runtime initializes that
-count to zero, reads it into the viewport, and exposes the cache, but does not
-call `dm2_v1_projectile_step_and_drain` or `dm2_v1_projectile_drain_to_m11`.
-Those drain functions are currently exercised only by tests and probes. As a
-result, the candidate draw rows do not currently receive live production
-projectiles. Before claiming projectile-render parity, bind the runtime's
-authenticated tile-rooted DB14 records and source timers to the viewport
-handoff, preserve their ObjectID direction and chain ordinal, and then model
-the normal and seven-slot creature-associated replay events from
-`DM2_DRAW_STATIC_OBJECT`.
+The player Fireball combat route is already connected to the production
+runtime: the authentic DM2 Macintosh M11 test creates a live DB14, advances
+the source 0x1e timer into a real HoC creature, checks applied HP damage, and
+then observes the queued wound. The FM Towns original-media test also checks
+the source Fireball cast, active DB14/timer ownership, G1 chain reachability,
+and admission into the center-cell compositor plan. These checks do not prove
+projectile pixel presentation. The distinct legacy draw-cache handoff is
+still unconnected: production leaves `g_dm2_projectile_drain_count` at zero
+and does not call `dm2_v1_projectile_step_and_drain` or
+`dm2_v1_projectile_drain_to_m11`. Candidate draw rows therefore do not reach
+the renderer through that cache. Creature-authored missile dispatch remains
+fail-closed until the source CCM/DB14/timer owner is fully connected. The live
+selector boundary is now separate from the immutable
+dungeon-only helper: it resolves the DB14 bytes from the active runtime record
+pools, resolves linked records from those pools first, and falls back to the
+immutable dungeon owner only for DB15 handles absent from the active pools.
+SKProject's `DM2_QUERY_CLS2_FROM_RECORD` sentinel for `ObjectID >= 0xff80` is
+decoded as `low_byte - 0x80` before record lookup, so virtual spell effects do
+not get mistaken for DB15 addresses. A focused selector test covers Fireball's
+source effect 0, and the HME-242 real-media test casts the original Fireball
+recipe through runtime creation and verifies that its live DB14 resolves to the
+original GDAT class, effect and image-selector branch. The source Fireball
+tests prove combat damage, but this plan check alone proves record-to-image
+selection; it does not prove pixel drawing, timer-directed animation, or
+painter order.
+Before claiming projectile-render parity, bind snapshots of the authenticated
+visible G1 DB14 chains and their source timers to the viewport handoff, preserve
+ObjectID direction and chain ordinal, then merge normal and seven-slot
+creature-associated replay events into `DM2_DRAW_STATIC_OBJECT`'s indoor draw
+schedule. The production draw-cache count remains unpopulated, and the
+authentic HME-242 test does not yet assert source-order presentation.
+
+2026-10-26 SKProject source trace tightened the compositor contract. In
+`DM2_DRAW_STATIC_OBJECT`, `table1d6afe[cell]` selects one of three 25-slot
+orders: positive uses `table1d6da1`, zero uses `table1d6dba`, and negative uses
+`table1d6d88`; cell 0 visits only 15 slots. At each enabled slot the source
+draws the floor item, then the eligible creature. Only if that creature draw
+succeeds, it replays missile-mask hits from the preceding at most seven slots
+in ascending slot order, and then draws a missile at the current slot. These
+replays are part of each cell's source pass, not a global projectile overlay.
+`DM2_DRAW_FLYING_ITEM` selects a chain member only when
+`QUERY_OBJECT_5x5_POS(ObjectID, view_direction)` equals that slot. Its special
+DB14 class1 `0x0d` path reads the linked timer phase and uses a GDAT `0x0b`
+selector plus TEMP_PICST; ordinary DB14 items take a separate item draw path.
+Firestaff's live snapshot already captures the DB14 ObjectID, chain ordinal,
+5x5 position, timer index and energy, but production does not yet pass those
+snapshots to the indoor compositor. Do not infer source ordering from F0810's
+movement direction or claim timer-driven pixel parity from the selector-only
+real-media test.
+
+2026-10-26 runtime prerequisites: `dm2_v1_viewport_static_object_cell_for_map`
+now inverts the complete SKProject `table1d6ad0` forward/lateral table for all
+20 `table1d7029` draw cells, including the previously omitted ±2 lanes and
+party-row side cells. Object draw plans still apply their own source cell
+eligibility. `dm2_v1_runtime_live_missile_timer_receipt` now resolves a live
+DB14's timer through both its source timerarray index and owning DB14 handle,
+then exposes the active `wvalueB` as `action_word`; this avoids reading the
+immutable save timer table after runtime changes and avoids conflating timers
+that share a source index. Unit tests cover the rotated cell/pass mapping, and
+the authentic HME-242 Fireball runtime test verifies the live DB14-to-timer
+join. These bridges remain evidence only and are not yet consumed by rendering.
+
+Next implementation gate: feed authenticated visible DB14 chains and their
+active timer receipts into the per-slot compositor, emit current-slot and
+successful-creature seven-slot replay events in source order, and test that
+receipt against original DM2 media. Only after that should the renderer replace
+its trailing global projectile pass; separately verify the DB14 class1 `0x0d`
+TEMP_PICST animation and ordinary flying-item material path against captured
+source-phase frames.
+
 References: `include/dm2_v1_projectile_pc34_compat.h`,
 `src/dm2/dm2_v1_projectile_pc34_compat.c`,
+`src/dm2/dm2_v1_runtime.c::dm2_v1_runtime_live_missile_selector_receipt`,
 `src/dm2/dm2_v1_runtime.c::dm2_runtime_populate_projectiles`, and SKProject
 `SKWINSPX/src/v5/skgdtqdb.cpp::DM2_QUERY_OBJECT_5x5_POS`,
 `SKWINSPX/src/v5/dm2data.cpp::table1d268e`,
@@ -148,6 +208,17 @@ verification does not reproduce it. Source reference:
 2026-10-18 v3.0.386 original-media CLI/menu retest: `test_dm2_v1_fmtowns_native_cli_boot.sh` passed the reported bare `--game dm2` AUTO route with authentic DOS, Amiga, Macintosh and FM Towns media installed. FM Towns reached the New Game menu within 40 seconds; the presented 320x200 menu RGB matched the independently decoded original `TITLE/0/4` digest `367b54aa92b46d6e`; the normal M12 loop then reached the first champion with original assets and no core fallbacks. `test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh returns` also passed DM2 DOS, Macintosh, Amiga and FM Towns direct-start/return coverage. SDL dummy output does not establish physical MacBook Pro M5 HiDPI presentation or input behavior; the reported native-display failure remains open.
 
 # Firestaff TODO — DM2
+
+2026-10-26 FM Towns champion portrait binding: the live Towns HUD now reads
+`HeroType` from the authenticated source `c_party` champion selected by
+`DM2_SELECT_CHAMPION`. The prior path admitted portraits only from byte 257
+of the DOS `c_hero` record, so the Towns HUD could omit its source portraits.
+The source hero-state receipt exposes `HeroType` for regression diagnostics.
+`dm2_fmtowns_m11_gameplay_real_media` passes through New Game, movement,
+inventory, and active-champion rendering with at least one original portrait
+and zero fallback portraits. This corrects portrait admission only; the
+reported full Towns HUD and dungeon viewport still require a same-state
+comparison against SKProject/original emulator output.
 
 2026-10-21 original-media CLI/menu regression matrix:
 `dm2_v1_dos_native_cli_boot`, `dm2_v1_mac_native_cli_boot`,
@@ -1208,3 +1279,92 @@ that root with PC English priority without enforcing the selected graphics hash.
 Reproduce with authentic renamed EN/French graphics and shared dungeon, then
 preserve the explicit selected file and validate boot profile ownership. No
 runtime reproduction yet; complete DM1 work remains the priority.
+2026-10-26 FM Towns squad HUD: SKProject's
+`SKWINSPX/src/v4/skguidrw.cpp::DRAW_SQUAD_POS_INTERFACE` draws the F5
+formation background and overlays champion icons without clearing each
+formation rectangle. Firestaff had been filling each occupied formation
+rectangle with palette index 0 before drawing the icons, which erased parts
+of F5. The Towns formation command remains as an authenticated layout receipt
+but no longer paints pixels. The real-media gameplay test still needs a
+pixel-level regression assertion for preserving F5 under the icon masks; this
+change alone does not establish full DM2 FM Towns HUD or viewport parity.
+
+2026-10-26 FM Towns dungeon lighting palette: the renderer now selects the
+original GRAPHICSSET PAL_IRGB stripe indexed by the authenticated M11 frame's
+c_light receipt (0..5), instead of always presenting stripe zero. The
+real-media test compares all six decoded stripes with the original 384-byte
+palette and verifies the presented row matches the active c_light level. The
+authentic Towns M11 New Game handoff passes. HUD geometry and source-frame
+visual comparison remain open; this does not establish full FM Towns HUD or
+viewport parity.
+
+2026-10-26 FM Towns living squad figures: the active
+`DRAW_SQUAD_POS_INTERFACE` route now binds one
+`INTERFACE_GENERAL/6/<party-slot>` U4 sprite sheet per living champion, crops
+the source-relative facing frame, and draws it over the F5 formation and the
+earlier spell/status icons at the authentic `QUERY_BLIT_RECT` for
+`0x53 + relative_position`. SKProject's
+`SKWINSPX/src/v4/skguidrw.cpp::DRAW_SQUAD_POS_INTERFACE` and
+`SKWINSPX/src/v4/skcore.cpp::QUERY_GDAT_SQUAD_ICON` establish party-slot
+lookup, four normal facing frames, and source color key 2. The command uses the
+local GDAT palette and retains the expanded formation receipt as its layout
+identity; the four-frame crop and index-2 transparency are checked against
+original FM Towns media. The installed HME-242 media has the 136x17 sheet only
+for party slot 0; slots 1–3 fall back in SKProject to
+`MISCELLANEOUS/254/IMG/254`, whose image is 31x31. SKProject then applies
+4bpp source offsets 0, 17, 34, or 51 with a 16-byte row pitch and key 2. Since
+those offsets exceed the fallback width and the original temporary packed
+buffer's padding nibble is not source-initialized, Firestaff omits only those
+unverified fallback figure crops while preserving the rest of the squad HUD.
+For party slot 0, `skspell.cpp` now supplies the Towns-only spell-3 transaction:
+it queues the source 0x47 timer at `(power + 1) * 32` ticks, updates the shared
+`savegames1.b_02` count atomically with mana/rune consumption, and the existing
+0x47 event path decrements that count on expiry. The M11 HUD receives this
+source-bound count and chooses the four authentic alternate frames. A focused
+HME-242 real-media test casts the spell in the live Towns session, verifies the
+count transition, then advances the authentic runtime until the timer expires
+and verifies restoration. Non-Towns runtime casting remains fail-closed. This
+does not resolve missing party-slot sheets 1–3: SKProject's 31x31 generic
+fallback cannot safely supply the 34/51-pixel source offsets, so those figure
+crops remain omitted until authentic pixel ownership is proven. Selected-hero
+overlays, full-screen visual comparison, and original-emulator HUD capture
+remain open; this does not establish full FM Towns HUD or viewport parity.
+
+2026-10-26 SKProject source comparison: `skguivwp.cpp::DM2_DRAW_DUNGEON_TILES`
+walks the 20 `table1d7029` cells, but calls `DM2_DRAW_STATIC_OBJECT` only when
+the terrain branch sets `skip00964`: tile types 1–5, 16, 18, and 19 (with
+`table1d6dd3` also excluding source cells 9 and 10, and the callee rejecting
+cells above 15). The live missile snapshot plan applies both the source-cell
+and tile-type filters before admitting a DB14 event. The center/player tile is a separate pass in
+`DM2_DRAW_PLAYER_TILE`: it calls `DM2_DRAW_PIT_ROOF(0)`, then
+`DM2_DRAW_STATIC_OBJECT(0, 0x1ffffff, 0)`, and only afterward draws the
+teleporter/rain/external-tile overlays. The center pass is therefore not a
+21st entry in `table1d7029`; a future live DB14 snapshot must query it as a
+separate cell to preserve that source order. The current plan records source
+ownership/order only; it does not yet emit pixels or model creature-success
+replay, so visual parity is not claimed.
+
+Within `DM2_DRAW_STATIC_OBJECT`, source draw-slot order is selected by
+`table1d6afe[cell]` (positive: `table1d6da1`; zero:
+`table1d6dba`; negative: `table1d6d88`). For each enabled slot, the source
+draws the floor item, then the creature. Only when the creature draw succeeds
+does it replay up to seven prior missile-mask slots, from oldest to newest,
+then it checks and draws the current slot's missile. Both paths call
+`DM2_DRAW_FLYING_ITEM`, which re-queries the DB14's 5x5 position and timer
+`wvalueB`; it is not a pass over the legacy Firestaff projectile drain.
+Firestaff's current combined item/creature receipt has no DB14 events or
+creature-success replay events, and its later `dm2_v1_render_projectiles`
+pass cannot reproduce these occlusion points. The active timer receipt now
+decodes `ticks_and_map` and packed `wvalueB` coordinates, and the HME-242
+real-media test confirms that the live Fireball is reachable from the active
+G1 tile chain at that timer-owned map position. A runtime API now snapshots
+caller-ordered visible cells from the active record-pool owner and joins each
+DB14 to its live timer receipt when available. The viewport now collects
+those live snapshots from the in-bounds `table1d7029` static-object cells and
+queries the center/player cell separately at the final source pass; it orders
+the resulting receipt by source pass, display slot and chain order. The HME-242
+real-media test verifies that the live Fireball enters the center-cell plan.
+This plan is currently evidence only and is not yet consumed for pixels. Next,
+add DB14 draw events and creature-success replay to the indoor compositor, then
+bind TEMP_PICST placement/frame selection before those events can draw
+authenticated GDAT material.

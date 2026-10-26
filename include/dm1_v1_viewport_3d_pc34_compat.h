@@ -137,6 +137,19 @@ extern "C" {
 #define DM1_VIEWPORT_SCREEN_WIDTH   320
 #define DM1_VIEWPORT_SCREEN_HEIGHT  200
 
+/* Raster one source-owned F0107 wall ornament into the viewport. Scaling is
+ * ReDMCSB DEFS.H M078_SCALED_DIMENSION; the layout rectangle clips the
+ * scaled bitmap, while transparency, palette remap and horizontal flip are
+ * applied in the same order as F0791. */
+int dm1_v1_viewport_3d_blit_wall_ornament_pc34(
+    uint8_t *destination, int destination_width, int destination_height,
+    int destination_stride, int destination_x, int destination_y,
+    int zone_width, int zone_height,
+    const uint8_t *source, int source_width, int source_height,
+    int source_stride, int source_x, int source_y,
+    int scale_x32, int scale_y32, int transparent_color,
+    int flip_horizontal, const uint8_t *palette_map);
+
 /* Viewport sub-regions — DUNVIEW.C F0098 */
 #define DM1_VIEWPORT_BLACK_AREA_H   37   /* Lines 0..36: cleared to black */
 #define DM1_VIEWPORT_CEILING_H      29   /* Lines 0..28: ceiling bitmap */
@@ -192,6 +205,12 @@ typedef int (*DM1_ViewportGraphicProviderCallback)(
     const uint8_t **out_pixels,
     int *out_width,
     int *out_height);
+
+/* Optional owner for a front-facing door's F0110/F0111 source transaction.
+ * The F0128 core invokes it after drawing that square's frame and passes the
+ * exact map cell plus D3R/D3C/D2C/D1C button-view index. */
+typedef void (*DM1_ViewportDoorFrontTransactionCallback)(
+    void *user_data, int map_x, int map_y, int view_door_button_index);
 
 /* ReDMCSB DUNVIEW.C F0113 obtains two values from the owning game's random
  * stream for each visible field: M005_RANDOM(2) selects the 16-pixel source
@@ -993,6 +1012,8 @@ typedef struct {
      * one byte per pixel, as M11_AssetLoader_Load does after IMG3 expansion. */
     DM1_ViewportGraphicProviderCallback graphic_provider_callback;
     void *graphic_provider_user_data;
+    DM1_ViewportDoorFrontTransactionCallback door_front_transaction_callback;
+    void *door_front_transaction_user_data;
     /* ReDMCSB F0113 offsets the native field bitmap for each presentation
      * tick. The owning game supplies this counter; it is never a host pixel
      * generator. */

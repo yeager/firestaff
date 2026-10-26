@@ -77,6 +77,59 @@ static int find_towns_keyed_pixel_outside(
     return 0;
 }
 
+static int find_towns_figure_transparency_sample(
+    const DM2_V1_GdatHudM11Command *figure,
+    const DM2_V1_GdatHudM11Command *underlay,
+    int *out_x,
+    int *out_y,
+    uint8_t *out_expected)
+{
+    if (!figure || !underlay || !figure->pixels || !underlay->pixels ||
+        !out_x || !out_y || !out_expected ||
+        figure->source_transparency_key != 2u ||
+        figure->width != 17 || figure->height != 17 ||
+        underlay->destination.w <= 0 || underlay->destination.h <= 0 ||
+        underlay->width <= 0 || underlay->height <= 0) return 0;
+    for (int y = 0; y < figure->height; ++y) {
+        const int target_y = figure->destination.y + y;
+        if (target_y < underlay->destination.y ||
+            target_y >= underlay->destination.y + underlay->destination.h)
+            continue;
+        for (int x = 0; x < figure->width; ++x) {
+            const int target_x = figure->destination.x + x;
+            int source_x;
+            int source_y;
+            uint8_t underlay_pixel;
+            int identity = 1;
+            if (target_x < underlay->destination.x ||
+                target_x >= underlay->destination.x + underlay->destination.w ||
+                figure->pixels[y * figure->width + x] != 2u) continue;
+            source_x = ((target_x - underlay->destination.x) *
+                underlay->width) / underlay->destination.w;
+            source_y = ((target_y - underlay->destination.y) *
+                underlay->height) / underlay->destination.h;
+            if (underlay->source_state_flags &
+                DM2_V1_GDAT_HUD_M11_TOWNS_MIRROR)
+                source_x = underlay->width - 1 - source_x;
+            underlay_pixel = underlay->pixels[
+                source_y * underlay->width + source_x];
+            /* The status icon is drawn before the figure. Pick a source
+             * pixel that is visible through its own color key so the final
+             * framebuffer proves the figure's key leaves prior pixels alone. */
+            if (underlay_pixel == 4u) continue;
+            for (int p = 0; p < 16; ++p) {
+                if (underlay->palette16[p] != (uint8_t)p) identity = 0;
+            }
+            *out_x = target_x;
+            *out_y = target_y;
+            *out_expected = identity ? underlay_pixel
+                                     : underlay->palette16[underlay_pixel];
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static int failures;
 
 static int check_original_light_teleporters(const DM2_V1_DungeonData *dungeon)
@@ -679,24 +732,71 @@ int main(void)
      * cyan/orange corruption this regression protects against. */
     {
         DM2_V1_RuntimeGraphicsSetSceneReceipt scene;
+        DM2_V1_ViewportM11FrameReceipt frame_receipt;
         DM2_V1_InterfacePalette expected_palette;
         uint8_t presented_palette[256][3];
         const DM2_V1_AssetLoader *loader = dm2_v1_boot_asset_loader(
             (const DM2_V1_BootProfile *)view.dm2BootProfile);
+        const uint8_t *lighting_bank = NULL;
+        size_t lighting_bank_size = 0u;
+        DM2_V1_InterfacePalette stripes[6];
+        int stripes_distinct = 0;
         memset(&scene, 0, sizeof(scene));
+        memset(&frame_receipt, 0, sizeof(frame_receipt));
         memset(&expected_palette, 0, sizeof(expected_palette));
+        memset(stripes, 0, sizeof(stripes));
         memset(framebuffer, 0, sizeof(framebuffer));
         M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
-        check(loader && dm2_v1_runtime_graphicsset_scene_receipt(&scene) &&
-                  scene.ready &&
-                  dm2_v1_asset_load_interface_palette(
+        if (loader && dm2_v1_runtime_graphicsset_scene_receipt(&scene) &&
+            scene.ready) {
+            lighting_bank = dm2_v1_asset_load_typed_sized(
+                loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
+                scene.map_graphics_style, DM2_GDAT_ENTRY_TYPE_PAL_IRGB,
+                DM2_GDAT_GFXSET_FLOOR, &lighting_bank_size);
+        }
+        check(loader && scene.ready && lighting_bank &&
+                  lighting_bank_size == 6u * 16u * 4u,
+              "FM Towns floor owns a six-stripe 384-byte source palette");
+        if (lighting_bank && lighting_bank_size == 6u * 16u * 4u) {
+            for (int level = 0; level < 6; ++level) {
+                int differs_from_first = 0;
+                int stripe_ok = dm2_v1_asset_load_fmtowns_lighting_palette(
+                    loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
+                    scene.map_graphics_style, DM2_GDAT_GFXSET_FLOOR,
+                    level, &stripes[level]);
+                for (int color = 0; stripe_ok && color < 16; ++color) {
+                    const uint8_t *source = lighting_bank +
+                        (size_t)level * 64u + (size_t)color * 4u;
+                    for (int channel = 0; channel < 3; ++channel) {
+                        if (stripes[level].rgb6[color][channel] !=
+                            (uint8_t)(source[channel + 1] >> 2u))
+                            stripe_ok = 0;
+                        if (stripes[level].rgb6[color][channel] !=
+                            stripes[0].rgb6[color][channel])
+                            differs_from_first = 1;
+                    }
+                }
+                check(stripe_ok && stripes[level].hash != 0u,
+                      "each Towns light stripe matches its original PAL_IRGB row");
+                if (level > 0 && differs_from_first) stripes_distinct = 1;
+            }
+        }
+        check(stripes_distinct,
+              "original Towns source contains distinguishable dungeon light stripes");
+        check(loader && scene.ready &&
+                  dm2_v1_runtime_last_m11_frame_receipt(&frame_receipt) &&
+                  frame_receipt.valid &&
+                  frame_receipt.c_light_receipt_hash != 0u &&
+                  frame_receipt.c_light_level <= 5u &&
+                  dm2_v1_asset_load_fmtowns_lighting_palette(
                       loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
                       scene.map_graphics_style, DM2_GDAT_GFXSET_FLOOR,
-                      &expected_palette) && expected_palette.hash != 0u &&
+                      frame_receipt.c_light_level, &expected_palette) &&
+                  expected_palette.hash != 0u &&
                   M11_Render_CopyIndexedPaletteRgb6(presented_palette) == 1 &&
                   memcmp(presented_palette, expected_palette.rgb6,
                          sizeof(expected_palette.rgb6)) == 0,
-              "FM Towns M11 presents the active GRAPHICSSET physical palette");
+              "FM Towns M11 presents the exact GRAPHICSSET stripe selected by c_light");
         {
             DM2_V1_ViewportM11FrameReceipt live_receipt;
             size_t right_panel_pixels = 0u;
@@ -715,7 +815,7 @@ int main(void)
             check(live_ok && live_receipt.valid &&
                       dm2_v1_runtime_get_active_champion_index() == -1 &&
                       live_receipt.hud_material_plan_required &&
-                      live_receipt.hud_material_plan_command_count == 4 &&
+                      live_receipt.hud_material_plan_command_count == 5 &&
                       live_receipt.hud_material_plan_consumed &&
                       live_receipt.hud_material_plan_hash != 0u &&
                       right_panel_pixels > 1000u && squad_icon_pixels > 0u &&
@@ -765,6 +865,13 @@ int main(void)
           "FM Towns retains the first champion's second authentic hand");
     check(dm2_v1_runtime_get_active_champion_index() == 0,
           "FM Towns reads the source party.curacthero for inventory ownership");
+    {
+        DM2_V1_RuntimeSourceHeroStateReceipt hero_state;
+        memset(&hero_state, 0, sizeof(hero_state));
+        check(dm2_v1_runtime_get_source_hero_state(0, &hero_state) &&
+                  hero_state.hero_type >= 0 && hero_state.hero_type <= 15,
+              "FM Towns source party retains the selected original HeroType");
+    }
     memset(&hud_render_receipt, 0, sizeof(hud_render_receipt));
     memset(framebuffer, 0, sizeof(framebuffer));
     check(dm2_v1_boot_runtime_render_frame(
@@ -776,8 +883,10 @@ int main(void)
               hud_render_receipt.runtime_m11_frame_hud_material_plan_command_count >= 4 &&
               hud_render_receipt.runtime_m11_frame_hud_material_plan_consumed &&
               hud_render_receipt.runtime_render_no_core_fallbacks &&
+              dm2_v1_runtime_last_asset_hud_portrait_count() > 0 &&
+              dm2_v1_runtime_last_fallback_hud_portrait_count() == 0 &&
               hud_render_receipt.runtime_render_blocked_material_draw_count == 0,
-          "FM Towns keeps its source squad HUD rendered after selecting an active champion");
+          "FM Towns keeps the source HeroType portrait and squad HUD after selecting an active champion");
     {
         int source_slot = -1;
         uint32_t source_object = 0u;
@@ -1266,6 +1375,7 @@ int main(void)
             squad.champion_count = 1;
             squad.leader_index = 0;
             squad.towns_squad_route_valid = 1;
+            squad.towns_savegames1_b02_source_bound = 1;
             squad.towns_status_hero_source_bound = 1;
             squad.towns_status_hero_index = -1;
             squad.towns_party_direction = 0;
@@ -1275,23 +1385,29 @@ int main(void)
             squad.champions[0].towns_current_hp_source_bound = 1;
             squad.champions[0].towns_current_hp = 10;
             squad.champions[0].towns_spell_cooldown_source_bound = 1;
+            squad.champions[0].towns_absdir_source_bound = 1;
             for (int relative = 0; relative < 4; ++relative) {
                 DM2_V1_GdatHudM11CommandPlan plan;
                 DM2_V1_InterfaceRect spell_rect;
                 DM2_V1_InterfaceRect status_rect;
+                DM2_V1_InterfaceRect figure_rect;
                 int status_field = relative <= 1 ? 11 : 13;
                 check(dm2_v1_boot_query_blit_rect_for_dimensions(
                           profile, (uint16_t)(0x57 + relative),
                           18, 13, &spell_rect) &&
                       dm2_v1_boot_query_blit_rect_for_dimensions(
+                          profile, (uint16_t)(0x53 + relative), 17, 17,
+                          &figure_rect) &&
+                      dm2_v1_boot_query_blit_rect_for_dimensions(
                           profile, (uint16_t)(0x53 + relative), 19, 19,
                           &status_rect),
                       "FM Towns source icon crop queries cover each relative party position");
                 squad.champions[0].towns_party_position = (uint8_t)relative;
+                squad.champions[0].towns_absdir = (uint8_t)relative;
                 memset(&plan, 0, sizeof(plan));
                 check(dm2_v1_boot_gdat_hud_m11_command_plan(
                           (DM2_V1_BootProfile *)profile, &squad, &plan) &&
-                      plan.command_count == 4 &&
+                      plan.command_count == 5 &&
                       plan.commands[0].kind ==
                           DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_FILL &&
                       plan.commands[0].destination_rect_id ==
@@ -1300,6 +1416,22 @@ int main(void)
                           ((relative == 0 || relative == 3) ? 229 : 296) &&
                       plan.commands[0].destination.y ==
                           (relative < 2 ? 62 : 86) &&
+                      plan.commands[3].kind ==
+                          DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_FIGURE &&
+                      plan.commands[3].gdat_category ==
+                          DM2_GDAT_CATEGORY_INTERFACE_GENERAL &&
+                      plan.commands[3].gdat_index == 6 &&
+                      plan.commands[3].gdat_field == 0 &&
+                      plan.commands[3].width == 17 &&
+                      plan.commands[3].height == 17 &&
+                      plan.commands[3].source_transparency_key == 2u &&
+                      plan.commands[3].source_state_flags ==
+                          (uint8_t)(relative <<
+                              DM2_V1_GDAT_HUD_M11_TOWNS_DIRECTION_SHIFT) &&
+                      plan.commands[3].destination_rect_id ==
+                          (uint16_t)(0x53 + relative) &&
+                      plan.commands[3].destination.x == figure_rect.x &&
+                      plan.commands[3].destination.y == figure_rect.y &&
                       plan.commands[1].gdat_field ==
                           (relative < 2 ? 6 : 8) &&
                       plan.commands[1].destination_rect_id ==
@@ -1315,17 +1447,17 @@ int main(void)
                       plan.commands[2].destination.y == status_rect.y &&
                       plan.commands[2].destination.w == status_rect.w &&
                       plan.commands[2].destination.h == status_rect.h &&
-                      plan.commands[3].kind ==
+                      plan.commands[4].kind ==
                           DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_STATUS_PANE &&
-                      plan.commands[3].gdat_category ==
+                      plan.commands[4].gdat_category ==
                           DM2_GDAT_CATEGORY_INTERFACE_GENERAL &&
-                      plan.commands[3].gdat_index == 2 &&
-                      plan.commands[3].gdat_field == 0 &&
-                      plan.commands[3].destination_rect_id == 0xa1 &&
-                      plan.commands[3].destination.x == 0 &&
-                      plan.commands[3].destination.y == 0 &&
-                      plan.commands[3].destination.w == 38 &&
-                      plan.commands[3].destination.h == 18 &&
+                      plan.commands[4].gdat_index == 2 &&
+                      plan.commands[4].gdat_field == 0 &&
+                      plan.commands[4].destination_rect_id == 0xa1 &&
+                      plan.commands[4].destination.x == 0 &&
+                      plan.commands[4].destination.y == 0 &&
+                      plan.commands[4].destination.w == 38 &&
+                      plan.commands[4].destination.h == 18 &&
                       (plan.commands[1].source_state_flags &
                        DM2_V1_GDAT_HUD_M11_TOWNS_COLOR_KEY_4) != 0u &&
                       (plan.commands[2].source_state_flags &
@@ -1337,6 +1469,34 @@ int main(void)
                         DM2_V1_GDAT_HUD_M11_TOWNS_MIRROR) != 0u) ==
                           (relative == 1 || relative == 2),
                       "FM Towns squad plan preserves fill, image fields, RAW4 destinations, and mirror state for each relative position");
+                if (plan.command_count == 5) {
+                    const DM2_V1_AssetLoader *loader =
+                        dm2_v1_boot_asset_loader(profile);
+                    DM2_ImageFormat figure_format = DM2_IMG_FMT_UNKNOWN;
+                    int figure_width = 0;
+                    int figure_height = 0;
+                    int figure_crop_matches = 1;
+                    uint8_t *figure_sheet = dm2_v1_asset_load_image_field(
+                        loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 6, 0,
+                        &figure_width, &figure_height, &figure_format);
+                    if (figure_sheet && figure_width == 136 &&
+                        figure_height == 17) {
+                        for (int row = 0; row < 17; ++row) {
+                            if (memcmp(plan.commands[3].pixels + row * 17,
+                                    figure_sheet + row * 136 + relative * 17,
+                                    17u) != 0) figure_crop_matches = 0;
+                        }
+                    } else {
+                        figure_crop_matches = 0;
+                    }
+                    check(figure_sheet && figure_width == 136 &&
+                              figure_height == 17 &&
+                              figure_format == DM2_IMG_FMT_U4 &&
+                              figure_crop_matches &&
+                              plan.commands[3].source_transparency_key == 2u,
+                          "FM Towns living squad figure uses the source party-slot sheet and relative-facing frame");
+                    dm2_v1_asset_free_pixels(figure_sheet);
+                }
                 if (relative == 0) {
                     DM2_V1_InterfacePalette interface_palette;
                     DM2_V1_GdatSceneM11CommandPlan scene_plan;
@@ -1345,14 +1505,22 @@ int main(void)
                     int main_key_y = -1;
                     int status_key_x = -1;
                     int status_key_y = -1;
+                    int figure_key_x = -1;
+                    int figure_key_y = -1;
+                    uint8_t figure_underlay_expected = 0u;
                     int main_key_sample = find_towns_keyed_pixel_outside(
                         &plan.commands[1], &plan.commands[2].destination,
-                        &plan.commands[0].destination,
+                        &plan.commands[3].destination,
                         &main_key_x, &main_key_y);
                     int status_key_sample = find_towns_keyed_pixel_outside(
                         &plan.commands[2], &plan.commands[1].destination,
-                        &plan.commands[0].destination,
+                        &plan.commands[3].destination,
                         &status_key_x, &status_key_y);
+                    int figure_key_sample =
+                        find_towns_figure_transparency_sample(
+                            &plan.commands[3], &plan.commands[2],
+                            &figure_key_x, &figure_key_y,
+                            &figure_underlay_expected);
                     memset(&interface_palette, 0, sizeof(interface_palette));
                     memset(&scene_plan, 0, sizeof(scene_plan));
                     memset(framebuffer, 0xfe, sizeof(framebuffer));
@@ -1376,15 +1544,67 @@ int main(void)
                     dm2_v1_render_ui_chrome(&chrome);
                     check(palette_ready && main_key_sample &&
                               status_key_sample &&
-                              chrome.gdat_hud_material_plan_consumed_count == 4 &&
+                              figure_key_sample &&
+                              chrome.gdat_hud_material_plan_consumed_count == 5 &&
                               framebuffer[main_key_y * M11_FB_WIDTH + main_key_x] ==
                                   0xfeu &&
                               framebuffer[status_key_y * M11_FB_WIDTH + status_key_x] ==
-                                  0xfeu,
-                          "FM Towns squad renderer preserves source index-4 pixels as transparent");
+                                  0xfeu &&
+                              figure_key_sample &&
+                              framebuffer[figure_key_y * M11_FB_WIDTH + figure_key_x] ==
+                                  figure_underlay_expected,
+                    "FM Towns squad renderer draws the living figure after icons and preserves source index-2 transparency");
                     dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
                 }
                 dm2_v1_gdat_hud_m11_command_plan_free(&plan);
+            }
+            {
+                const DM2_V1_AssetLoader *loader =
+                    dm2_v1_boot_asset_loader(profile);
+                int sheet_width = 0, sheet_height = 0;
+                DM2_ImageFormat sheet_format = DM2_IMG_FMT_UNKNOWN;
+                uint8_t *sheet = dm2_v1_asset_load_image_field(
+                    loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 6, 0,
+                    &sheet_width, &sheet_height, &sheet_format);
+                squad.towns_savegames1_b02 = 1u;
+                check(sheet && sheet_width == 136 && sheet_height == 17 &&
+                          sheet_format == DM2_IMG_FMT_U4,
+                      "HME-242 source sheet contains the four global-invisibility figure frames");
+                for (int direction = 0; direction < 4; ++direction) {
+                    DM2_V1_GdatHudM11CommandPlan invisible_plan;
+                    int crop_matches = 1;
+                    squad.champions[0].towns_party_position =
+                        (uint8_t)direction;
+                    squad.champions[0].towns_absdir = (uint8_t)direction;
+                    memset(&invisible_plan, 0, sizeof(invisible_plan));
+                    int plan_ok = dm2_v1_boot_gdat_hud_m11_command_plan(
+                        (DM2_V1_BootProfile *)profile, &squad,
+                        &invisible_plan);
+                    if (plan_ok && sheet) {
+                        const DM2_V1_GdatHudM11Command *figure =
+                            &invisible_plan.commands[3];
+                        for (int row = 0; row < 17; ++row) {
+                            if (memcmp(figure->pixels + row * 17,
+                                    sheet + row * 136 +
+                                        (direction + 4) * 17,
+                                    17u) != 0) crop_matches = 0;
+                        }
+                        check(invisible_plan.command_count == 5 &&
+                                  figure->source_state_flags ==
+                                      (uint8_t)((direction <<
+                                          DM2_V1_GDAT_HUD_M11_TOWNS_DIRECTION_SHIFT) |
+                                          DM2_V1_GDAT_HUD_M11_TOWNS_INVISIBLE_FIGURE) &&
+                                  crop_matches,
+                              "FM Towns invisibility uses the authentic direction-matched frame 4-7");
+                    } else {
+                        check(0, "FM Towns invisibility figure plan is source-bound");
+                    }
+                    dm2_v1_gdat_hud_m11_command_plan_free(&invisible_plan);
+                }
+                dm2_v1_asset_free_pixels(sheet);
+                squad.towns_savegames1_b02 = 0u;
+                squad.champions[0].towns_party_position = 0u;
+                squad.champions[0].towns_absdir = 0u;
             }
             {
                 DM2_V1_GdatHudM11CommandPlan aura_plan;
@@ -1427,17 +1647,17 @@ int main(void)
                                 dm2_v1_boot_gdat_hud_m11_command_plan(
                                     (DM2_V1_BootProfile *)profile, &squad,
                                     &frame_plan) &&
-                                frame_plan.command_count == 6 &&
-                                frame_plan.commands[4].animation_direction ==
+                                frame_plan.command_count == 7 &&
+                                frame_plan.commands[5].animation_direction ==
                                     (uint8_t)direction &&
-                                frame_plan.commands[4].animation_frame ==
+                                frame_plan.commands[5].animation_frame ==
                                     (uint8_t)frame;
                             check(frame_plan_ok,
                                   "FM Towns aura command binds source facing and game tick");
                             if (frame_plan_ok) {
                                 for (int y = 0; y < 21; ++y) {
                                     check(memcmp(
-                                        frame_plan.commands[4].pixels + y * 21,
+                                        frame_plan.commands[5].pixels + y * 21,
                                         aura_sheet + (frame * 21 + y) * 84 +
                                             direction * 21,
                                         21u) == 0,
@@ -1453,26 +1673,26 @@ int main(void)
                 memset(&aura_plan, 0, sizeof(aura_plan));
                 check(dm2_v1_boot_gdat_hud_m11_command_plan(
                           (DM2_V1_BootProfile *)profile, &squad,
-                          &aura_plan) && aura_plan.command_count == 6 &&
-                          aura_plan.commands[4].kind ==
-                              DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_ENCHANTMENT_AURA &&
+                          &aura_plan) && aura_plan.command_count == 7 &&
                           aura_plan.commands[5].kind ==
+                              DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_ENCHANTMENT_AURA &&
+                          aura_plan.commands[6].kind ==
                               DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_STATUS_PANE &&
-                          aura_plan.commands[5].gdat_field == 9 &&
-                          aura_plan.commands[4].gdat_category ==
+                          aura_plan.commands[6].gdat_field == 9 &&
+                          aura_plan.commands[5].gdat_category ==
                               DM2_GDAT_CATEGORY_INTERFACE_GENERAL &&
-                          aura_plan.commands[4].gdat_index == 7 &&
-                          aura_plan.commands[4].gdat_field == 0 &&
-                          aura_plan.commands[4].width == 21 &&
-                          aura_plan.commands[4].height == 21 &&
-                          aura_plan.commands[4].destination.x == aura_rect.x &&
-                          aura_plan.commands[4].destination.y == aura_rect.y &&
-                          aura_plan.commands[4].destination.w == 21 &&
-                          aura_plan.commands[4].destination.h == 21,
+                          aura_plan.commands[5].gdat_index == 7 &&
+                          aura_plan.commands[5].gdat_field == 0 &&
+                          aura_plan.commands[5].width == 21 &&
+                          aura_plan.commands[5].height == 21 &&
+                          aura_plan.commands[5].destination.x == aura_rect.x &&
+                          aura_plan.commands[5].destination.y == aura_rect.y &&
+                          aura_plan.commands[5].destination.w == 21 &&
+                          aura_plan.commands[5].destination.h == 21,
                       "FM Towns active enchantment adds original field 7 at selected-hero RECT 0x5e");
-                if (aura_plan.command_count == 6 && aura_sheet) {
+                if (aura_plan.command_count == 7 && aura_sheet) {
                     for (int y = 0; y < 21; ++y) {
-                        check(memcmp(aura_plan.commands[4].pixels + y * 21,
+                        check(memcmp(aura_plan.commands[5].pixels + y * 21,
                                   aura_sheet + (2 * 21 + y) * 84 + 2 * 21,
                                   21u) == 0,
                               "FM Towns aura crop follows relative facing and tick frame");
@@ -1505,11 +1725,53 @@ int main(void)
                         &chrome, &aura_plan);
                     dm2_v1_render_ui_chrome(&chrome);
                     check(palette_ready &&
-                              chrome.gdat_hud_material_plan_consumed_count == 6,
+                              chrome.gdat_hud_material_plan_consumed_count == 7,
                           "FM Towns renderer consumes aura with authenticated HUD materials");
                     dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
                 }
                 dm2_v1_gdat_hud_m11_command_plan_free(&aura_plan);
+            }
+            {
+                DM2_V1_HudPartyState two_heroes = squad;
+                DM2_V1_GdatHudM11CommandPlan two_hero_plan;
+                const DM2_V1_AssetLoader *loader =
+                    dm2_v1_boot_asset_loader(profile);
+                int fallback_width = 0;
+                int fallback_height = 0;
+                DM2_ImageFormat fallback_format = DM2_IMG_FMT_UNKNOWN;
+                uint8_t *fallback_pixels = dm2_v1_asset_load_image_field(
+                    loader, DM2_GDAT_CATEGORY_MISCELLANEOUS, 0xfe, 0xfe,
+                    &fallback_width, &fallback_height, &fallback_format);
+                int optional_slots_absent = 1;
+                for (int hero_index = 1; hero_index < 4; ++hero_index) {
+                    size_t raw_size = 0u;
+                    if (dm2_v1_asset_load_typed_sized(
+                            loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 6,
+                            DM2_GDAT_ENTRY_TYPE_IMAGE, hero_index,
+                            &raw_size) != NULL || raw_size != 0u)
+                        optional_slots_absent = 0;
+                }
+                check(optional_slots_absent && fallback_pixels &&
+                          fallback_width == 31 && fallback_height == 31 &&
+                          fallback_format == DM2_IMG_FMT_U4,
+                      "FM Towns original media lacks squad sheets for slots 1-3 and exposes the source 31x31 default image");
+                dm2_v1_asset_free_pixels(fallback_pixels);
+                two_heroes.champion_count = 2;
+                two_heroes.towns_selected_hero_source_bound = 1;
+                two_heroes.towns_selected_hero_index = 0;
+                two_heroes.towns_status_hero_source_bound = 1;
+                two_heroes.towns_status_hero_index = 0;
+                two_heroes.champions[0].towns_ench_aura_source_bound = 0;
+                two_heroes.champions[0].towns_ench_power = 0;
+                two_heroes.champions[1] = two_heroes.champions[0];
+                two_heroes.champions[1].towns_party_position = 1u;
+                two_heroes.champions[1].towns_absdir = 1u;
+                memset(&two_hero_plan, 0, sizeof(two_hero_plan));
+                check(dm2_v1_boot_gdat_hud_m11_command_plan(
+                          (DM2_V1_BootProfile *)profile, &two_heroes,
+                          &two_hero_plan) && two_hero_plan.command_count == 10,
+                      "FM Towns keeps the squad HUD available while omitting only unverified fallback figure crops");
+                dm2_v1_gdat_hud_m11_command_plan_free(&two_hero_plan);
             }
             squad.champions[0].towns_current_hp = 0;
             squad.champions[0].towns_ench_power = 0;
@@ -1727,6 +1989,139 @@ int main(void)
                   ((DM2_V1_BootProfile *)view.dm2BootProfile)->dungeon_data,
               framebuffer),
           "FM Towns active M11 consumes an authentic DB4/F9 creature");
+    {
+        static const uint8_t invisibility_runes[4] = {
+            DM2_RUNE_YA, DM2_RUNE_OH, DM2_RUNE_EW, DM2_RUNE_SAR
+        };
+        static const uint8_t fireball_runes[3] = {
+            DM2_RUNE_YA, DM2_RUNE_FUL, DM2_RUNE_IR
+        };
+        DM2_V1_RuntimeSpellCastReceipt cast;
+        DM2_V1_G1DirectMissileReceipt live_missile;
+        DM2_V1_G1FlyingItemSelectorReceipt live_selector;
+        DM2_V1_G1MissileTimerReceipt live_timer;
+        DM2_V1_G1VisibleMapCell live_cell;
+        DM2_V1_RuntimeVisibleMissileSnapshot live_snapshots[16];
+        DM2_V1_ViewportState live_viewport;
+        DM2_V1_IndoorLiveMissilePlan live_plan;
+        size_t live_snapshot_count = 0u;
+        int live_snapshot_found = 0;
+        int live_plan_found = 0;
+        uint8_t count_before = 0u, count_active = 0u, count_expired = 0u;
+        int selected = dm2_v1_runtime_select_mac_charsheet_champion(0);
+        int spell_ready = selected &&
+            dm2_v1_runtime_set_spell_runes(
+                0, invisibility_runes, 4);
+        memset(&cast, 0, sizeof(cast));
+        check(spell_ready &&
+                  dm2_v1_runtime_get_source_47_count(&count_before) &&
+                  dm2_v1_runtime_cast_spell_player(0, 0, &cast) &&
+                  cast.cast.spell_index == 3 && cast.applied &&
+                  cast.timer_enqueued && cast.timer_ticket != 0u &&
+                  cast.cast.timer_duration > 0 &&
+                  dm2_v1_runtime_get_source_47_count(&count_active) &&
+                  count_active == (uint8_t)(count_before + 1u),
+              "HME-242 Towns session casts source Invisibility and increments live 0x47 count");
+        if (cast.applied && cast.cast.timer_duration > 0) {
+            for (int tick = 0; tick < cast.cast.timer_duration; ++tick)
+                dm2_v1_runtime_tick();
+        }
+        check(cast.applied &&
+                  dm2_v1_runtime_get_source_47_count(&count_expired) &&
+                  count_expired == count_before,
+              "HME-242 Towns source 0x47 event expires at its game tick and restores the count");
+
+        memset(&cast, 0, sizeof(cast));
+        memset(&live_missile, 0, sizeof(live_missile));
+        memset(&live_selector, 0, sizeof(live_selector));
+        memset(&live_timer, 0, sizeof(live_timer));
+        spell_ready = selected && dm2_v1_runtime_set_spell_runes(
+            0, fireball_runes, 3);
+        check(spell_ready &&
+                  dm2_v1_runtime_cast_spell_player(0, 0, &cast) &&
+                  cast.applied && cast.timer_enqueued &&
+                  cast.cast.timer_kind == DM2_V1_SPELL_TIMER_PROJECTILE &&
+                  cast.cast.object_effect == DM2_OBJECT_EFFECT_FIREBALL &&
+                  cast.missile_record >= 0 &&
+                  cast.missile_object ==
+                      (uint16_t)(0xff80u + cast.cast.object_effect),
+              "HME-242 Towns casts the source Fireball through live DB14 creation");
+        check(cast.applied &&
+                  dm2_v1_runtime_live_missile_selector_receipt(
+                      cast.missile_record, &live_missile, &live_selector) &&
+                  live_missile.valid &&
+                  live_missile.object_id == (uint16_t)cast.missile_record &&
+                  live_missile.missile_object == cast.missile_object &&
+                  live_selector.valid && live_selector.class1 == 0x0du &&
+                  live_selector.class2 ==
+                      (uint8_t)cast.cast.object_effect &&
+                  live_selector.missile_object == cast.missile_object &&
+                  live_selector.branch_temp_picst &&
+                  live_selector.image_data_index != 0u,
+              "HME-242 live DB14 resolves Fireball through the active pool into its original GDAT selector");
+        check(cast.applied &&
+                  dm2_v1_runtime_live_missile_timer_receipt(
+                      cast.missile_record, &live_timer) &&
+                  live_timer.valid &&
+                  live_timer.timer_index == live_missile.timer_index &&
+                  live_timer.timer_type == 0x1eu &&
+                  live_timer.value == (uint16_t)cast.missile_record &&
+                  live_timer.direction < 4u && live_timer.raw_timer_hash != 0u,
+              "HME-242 live Fireball joins DB14 to its active source timer wvalueB");
+        live_cell.x = (int16_t)live_timer.map_x;
+        live_cell.y = (int16_t)live_timer.map_y;
+        memset(live_snapshots, 0, sizeof(live_snapshots));
+        if (cast.applied && live_timer.valid &&
+            dm2_v1_runtime_snapshot_visible_missile_chains(
+                live_timer.map_index, &live_cell, 1u,
+                (uint8_t)dm2_v1_runtime_get_party_dir(), live_snapshots,
+                sizeof(live_snapshots) / sizeof(live_snapshots[0]),
+                &live_snapshot_count)) {
+            for (size_t i = 0u; i < live_snapshot_count; ++i) {
+                if (live_snapshots[i].source.object_id ==
+                        (uint16_t)cast.missile_record &&
+                    live_snapshots[i].source.timer_index ==
+                        live_timer.timer_index &&
+                    live_snapshots[i].source.view_position_5x5 <= 24u &&
+                    live_snapshots[i].timer_valid &&
+                    live_snapshots[i].timer.raw_timer_hash ==
+                        live_timer.raw_timer_hash &&
+                    live_snapshots[i].timer.map_index == live_timer.map_index &&
+                    live_snapshots[i].timer.map_x == live_timer.map_x &&
+                    live_snapshots[i].timer.map_y == live_timer.map_y) {
+                    live_snapshot_found = 1;
+                    break;
+                }
+            }
+        }
+        check(live_snapshot_found,
+              "HME-242 live Fireball is reachable through the active G1 source tile chain");
+        memset(&live_viewport, 0, sizeof(live_viewport));
+        memset(&live_plan, 0, sizeof(live_plan));
+        live_viewport.party_x = dm2_v1_runtime_get_party_x();
+        live_viewport.party_y = dm2_v1_runtime_get_party_y();
+        live_viewport.party_dir = dm2_v1_runtime_get_party_dir();
+        live_viewport.dungeon_level = live_timer.map_index;
+        if (live_timer.valid &&
+            dm2_v1_viewport_build_indoor_live_missile_plan(
+                &live_viewport, &live_plan) && live_plan.valid) {
+            for (int i = 0; i < live_plan.event_count; ++i) {
+                const DM2_V1_IndoorLiveMissileEvent *event =
+                    &live_plan.events[i];
+                if (event->live.source.object_id ==
+                        (uint16_t)cast.missile_record &&
+                    event->live.timer_valid &&
+                    event->live.timer.timer_index == live_timer.timer_index) {
+                    live_plan_found = event->source_cell == 0 &&
+                        event->source_pass == 20 &&
+                        event->display_index >= 0;
+                    break;
+                }
+            }
+        }
+        check(live_plan_found,
+              "HME-242 live Fireball enters the SKProject center-cell missile draw plan");
+    }
     M11_GameView_Shutdown(&view);
     if (failures) return 1;
     puts("PASS: DM2 FM Towns M11 NEW GAME reaches the source runtime");

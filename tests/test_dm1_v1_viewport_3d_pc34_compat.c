@@ -30,6 +30,33 @@ static void check_nonnull(const char *id, const void *ptr)
     }
 }
 
+static void test_f0107_wall_ornament_blit_material(void)
+{
+    const uint8_t source[4] = {1, 10, 3, 4};
+    uint8_t destination[36];
+    uint8_t palette[16];
+    int i;
+    memset(destination, 99, sizeof(destination));
+    for (i = 0; i < 16; ++i) palette[i] = (uint8_t)(i + 20);
+
+    check_int("f0107.scaled_flip_palette_transparency.drawn",
+        dm1_v1_viewport_3d_blit_wall_ornament_pc34(
+            destination, 6, 6, 6, 1, 1, 3, 3,
+            source, 2, 2, 2, 0, 0, 48, 48, 10, 1, palette), 7);
+    check_int("f0107.scaled_flip_palette_transparency.top",
+              destination[1 * 6 + 2], 21);
+    check_int("f0107.scaled_flip_palette_transparency.transparent",
+              destination[1 * 6 + 1], 99);
+    check_int("f0107.scaled_flip_palette_transparency.bottom_left",
+              destination[3 * 6 + 1], 24);
+    check_int("f0107.scaled_flip_palette_transparency.bottom_right",
+              destination[3 * 6 + 2], 23);
+    check_int("f0107.invalid_scale_rejected",
+        dm1_v1_viewport_3d_blit_wall_ornament_pc34(
+            destination, 6, 6, 6, 0, 0, 6, 6,
+            source, 2, 2, 2, 0, 0, 0, 32, 10, 0, NULL), 0);
+}
+
 typedef struct FloorCeilingProviderFixture {
     const uint8_t *ceiling;
     const uint8_t *floor;
@@ -5196,6 +5223,7 @@ static void test_ornament_cache_requires_source_owned_map_metadata(void)
 
 int main(void)
 {
+    test_f0107_wall_ornament_blit_material();
     test_redmcsb_g0163_wall_frames();
     test_redmcsb_f0115_object_c2500_geometry();
     test_redmcsb_f0115_creature_c3200_geometry();

@@ -1167,6 +1167,12 @@ int main(int argc, char** argv) {
     /* Reject impossible direct game/platform pairs before asset discovery,
      * which can otherwise spend time scanning archives for an edition that
      * does not exist in the launch catalogue. */
+    if (opts.gameId && strcmp(opts.gameId, "csb") == 0 &&
+        opts.architectureOverride == M12_ARCH_PC) {
+        fprintf(stderr,
+                "firestaff: CSB has no original DOS/PC release; use --platform amiga, atari-st, or fm-towns\n");
+        return 1;
+    }
     if (opts.gameId &&
         opts.architectureOverride > M12_ARCH_AUTO &&
         !M12_AssetStatus_GameSupportsArchitecture(

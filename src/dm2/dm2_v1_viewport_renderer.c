@@ -71,6 +71,22 @@ static const uint8_t s_dm2_draw_dungeon_tiles_cells[20] = {
     0x04u, 0x05u, 0x03u, 0x01u, 0x02u
 };
 
+/* Inverse coordinates from SKProject dm2data.cpp::table1d6ad0. */
+static const int8_t s_dm2_source_lateral_by_cell[23] = {
+     0, -1,  1,  0, -1,  1,  0, -1,  1, -2,  2,  0,
+    -1,  1, -2,  2,  0, -1,  1, -2,  2, -3,  3
+};
+static const int8_t s_dm2_source_forward_by_cell[23] = {
+    0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 2, 3,
+    3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4
+};
+/* SKProject dm2data.cpp::table1d6dd3 disables static-object drawing for
+ * source cells 9 and 10; cells above 15 are rejected by DRAW_STATIC_OBJECT. */
+static const uint8_t s_dm2_static_object_cell_enabled[16] = {
+    1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
+    1u, 0u, 0u, 1u, 1u, 1u, 1u, 1u
+};
+
 static uint32_t dm2_v1_wall_hash_bytes(uint32_t hash, const uint8_t *bytes,
                                         size_t size)
 {
@@ -227,21 +243,16 @@ int dm2_v1_viewport_static_object_cell_for_map(
 {
     static const int dx[4] = { 0, 1, 0, -1 };
     static const int dy[4] = { -1, 0, 1, 0 };
-    /* Inverse of SKProject dm2data.cpp::table1d6ad0 for the four source map
-     * rows admitted by this source-object bridge. */
-    static const int8_t cell_by_forward_lateral[4][3] = {
-        /* forward 1: D1L/D1C/D1R */ {  4,  3,  5 },
-        /* forward 2: D2L/D2C/D2R */ {  7,  6,  8 },
-        /* forward 3: D3L/D3C/D3R */ { 12, 11, 13 },
-        /* forward 4: D4L/D4C/D4R */ { 17, 16, 18 },
-    };
+    /* Inverse of SKProject dm2data.cpp::table1d6ad0. Keep all source cells
+     * addressable here, including the ±2 lanes that have no DM2_ViewSquare;
+     * individual source draw plans apply their own cell eligibility. */
     int dir;
     int right;
     int rel_x;
     int rel_y;
     int forward;
     int lateral;
-    int cell;
+    int cell = -1;
     int pass;
 
     if (out_cell) *out_cell = -1;
@@ -253,15 +264,20 @@ int dm2_v1_viewport_static_object_cell_for_map(
     forward = rel_x * dx[dir] + rel_y * dy[dir];
     lateral = rel_x * dx[right] + rel_y * dy[right];
 
-    if (forward < 1 || forward > 4 || lateral < -1 || lateral > 1) {
+    if (forward < 0 || forward > 4 || lateral < -3 || lateral > 3) {
         return 0;
     }
-    cell = (int)cell_by_forward_lateral[forward - 1][lateral + 1];
+    for (int candidate = 1; candidate < 23; ++candidate) {
+        if (s_dm2_source_forward_by_cell[candidate] == forward &&
+            s_dm2_source_lateral_by_cell[candidate] == lateral) {
+            cell = candidate;
+            break;
+        }
+    }
+    if (cell < 0) return 0;
     pass = dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(cell);
-    /* D0C (cell 0) has no table1d7029 pass and is not promoted to a generic
-     * object draw.  Side/deep cells have passes but are still blocked by
-     * dm2_v1_viewport_static_object_source_plan until their placement tables
-     * are recovered. */
+    /* D0C (cell 0) has no table1d7029 pass.  Static-object eligibility is
+     * applied by its source plan (DRAW_STATIC_OBJECT returns for cells >15). */
     if (pass < 0) return 0;
     if (out_cell) *out_cell = cell;
     if (out_pass) *out_pass = pass;
@@ -608,6 +624,167 @@ int dm2_v1_viewport_static_object_display_index(int cell_pos,
         }
     }
     return -1;
+}
+
+static int dm2_v1_indoor_live_missile_event_before(
+    const DM2_V1_IndoorLiveMissileEvent *a,
+    const DM2_V1_IndoorLiveMissileEvent *b)
+{
+    if (a->source_pass != b->source_pass)
+        return a->source_pass < b->source_pass;
+    if (a->display_index != b->display_index)
+        return a->display_index < b->display_index;
+    return a->live.source.chain_ordinal < b->live.source.chain_ordinal;
+}
+
+/* SKProject skguivwp.cpp::DM2_DRAW_DUNGEON_TILES sets skip00964 (and thus
+ * calls DRAW_STATIC_OBJECT) only for these normalized 5-bit tile types.
+ * The party square is handled by the separate DRAW_PLAYER_TILE pass. */
+static int dm2_v1_indoor_source_static_object_tile(int tile_type)
+{
+    return (tile_type >= 1 && tile_type <= 5) || tile_type == 16 ||
+           tile_type == 18 || tile_type == 19;
+}
+
+int dm2_v1_viewport_build_indoor_live_missile_plan(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_IndoorLiveMissilePlan *out_plan)
+{
+    static const int dx[4] = { 0, 1, 0, -1 };
+    static const int dy[4] = { -1, 0, 1, 0 };
+    DM2_V1_G1VisibleMapCell visible_cells[20];
+    DM2_V1_G1VisibleMapCell center_cell;
+    DM2_V1_RuntimeVisibleMissileSnapshot snapshots[
+        DM2_V1_MAX_INDOOR_LIVE_MISSILES];
+    DM2_V1_RuntimeVisibleMissileSnapshot center_snapshots[
+        DM2_V1_MAX_INDOOR_LIVE_MISSILES];
+    const DM2_V1_DungeonData *dungeon = NULL;
+    const DM2_V1_RecordPoolSet *pools = NULL;
+    const DM2_V1_AssetLoader *loader = NULL;
+    size_t visible_count = 0u;
+    size_t snapshot_count = 0u;
+    size_t center_count = 0u;
+    int map;
+    int dir;
+
+    if (!out_plan) return 0;
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!s) return 0;
+    out_plan->valid = 1;
+    if (s->is_outdoor) return 1;
+    if (!dm2_v1_runtime_live_missile_selector_context(
+            &dungeon, &pools, &loader) || !dungeon || !pools || !loader) {
+        out_plan->valid = 0;
+        return 0;
+    }
+    map = s->dungeon_level;
+    if (map < 0 || map >= dungeon->level_count ||
+        dungeon->level_widths[map] <= 0 ||
+        dungeon->level_heights[map] <= 0) {
+        out_plan->valid = 0;
+        return 0;
+    }
+    dir = s->party_dir & 3;
+
+    /* SKProject DRAW_DUNGEON_TILES source walk. DRAW_STATIC_OBJECT rejects
+     * cells >15 and table1d6dd3 rejects cells 9 and 10. */
+    for (size_t i = 0u; i < sizeof(s_dm2_draw_dungeon_tiles_cells); ++i) {
+        int cell = s_dm2_draw_dungeon_tiles_cells[i];
+        int map_x;
+        int map_y;
+        int tile_type;
+        if (cell > 15 || !s_dm2_static_object_cell_enabled[cell]) continue;
+        map_x = s->party_x + dx[dir] *
+            s_dm2_source_forward_by_cell[cell] -
+            dy[dir] * s_dm2_source_lateral_by_cell[cell];
+        map_y = s->party_y + dy[dir] *
+            s_dm2_source_forward_by_cell[cell] +
+            dx[dir] * s_dm2_source_lateral_by_cell[cell];
+        if (map_x < 0 || map_y < 0 ||
+            map_x >= dungeon->level_widths[map] ||
+            map_y >= dungeon->level_heights[map]) continue;
+        tile_type = dm2_v1_dungeon_get_square_type(
+            dungeon, map, map_x, map_y);
+        if (tile_type < 0 ||
+            !dm2_v1_indoor_source_static_object_tile(tile_type)) continue;
+        visible_cells[visible_count].x = (int16_t)map_x;
+        visible_cells[visible_count].y = (int16_t)map_y;
+        ++visible_count;
+    }
+    memset(snapshots, 0, sizeof(snapshots));
+    if (!dm2_v1_runtime_snapshot_visible_missile_chains(
+            map, visible_cells, visible_count, (uint8_t)dir, snapshots,
+            DM2_V1_MAX_INDOOR_LIVE_MISSILES, &snapshot_count)) {
+        out_plan->valid = 0;
+        return 0;
+    }
+
+    /* DM2_DRAW_PLAYER_TILE calls the center-cell static-object pass after
+     * all 20 table1d7029 cells, so it is queried separately and assigned the
+     * final painter pass rather than appended to the source table. */
+    center_cell.x = (int16_t)s->party_x;
+    center_cell.y = (int16_t)s->party_y;
+    memset(center_snapshots, 0, sizeof(center_snapshots));
+    if (!dm2_v1_runtime_snapshot_visible_missile_chains(
+            map, &center_cell, 1u, (uint8_t)dir, center_snapshots,
+            DM2_V1_MAX_INDOOR_LIVE_MISSILES - snapshot_count,
+            &center_count) ||
+        snapshot_count + center_count > DM2_V1_MAX_INDOOR_LIVE_MISSILES) {
+        out_plan->valid = 0;
+        return 0;
+    }
+    for (size_t i = 0u; i < center_count; ++i)
+        snapshots[snapshot_count + i] = center_snapshots[i];
+    snapshot_count += center_count;
+
+    for (size_t i = 0u; i < snapshot_count; ++i) {
+        const DM2_V1_RuntimeVisibleMissileSnapshot *live = &snapshots[i];
+        DM2_V1_IndoorLiveMissileEvent event;
+        int source_cell;
+        int source_pass;
+        int display_index;
+        memset(&event, 0, sizeof(event));
+        if (live->source.x == s->party_x &&
+            live->source.y == s->party_y) {
+            source_cell = 0;
+            source_pass = 20;
+        } else if (!dm2_v1_viewport_static_object_cell_for_map(
+                       live->source.x, live->source.y, dir,
+                       s->party_x, s->party_y,
+                       &source_cell, &source_pass) ||
+                   source_cell > 15 ||
+                   !s_dm2_static_object_cell_enabled[source_cell]) {
+            out_plan->partial = 1;
+            continue;
+        }
+        display_index = dm2_v1_viewport_static_object_display_index(
+            source_cell, live->source.view_position_5x5);
+        if (display_index < 0) continue;
+        if (!live->timer_valid) out_plan->partial = 1;
+        event.live = *live;
+        event.source_cell = (int16_t)source_cell;
+        event.source_pass = (int16_t)source_pass;
+        event.display_index = (int16_t)display_index;
+        if (out_plan->event_count >=
+                (int)DM2_V1_MAX_INDOOR_LIVE_MISSILES) {
+            out_plan->valid = 0;
+            out_plan->event_count = 0;
+            return 0;
+        }
+        out_plan->events[out_plan->event_count++] = event;
+    }
+
+    for (int i = 1; i < out_plan->event_count; ++i) {
+        DM2_V1_IndoorLiveMissileEvent event = out_plan->events[i];
+        int j = i;
+        while (j > 0 && dm2_v1_indoor_live_missile_event_before(
+                   &event, &out_plan->events[j - 1])) {
+            out_plan->events[j] = out_plan->events[j - 1];
+            --j;
+        }
+        out_plan->events[j] = event;
+    }
+    return 1;
 }
 
 int dm2_v1_viewport_flying_item_scale64(int y_distance,
@@ -8054,8 +8231,15 @@ void dm2_v1_render_indoor_items_and_creatures(DM2_V1_ViewportState *s)
     DM2_V1_ItemRenderPlan item_plan;
     DM2_V1_CreatureRenderPlan creature_plan;
     DM2_V1_IndoorDrawOrderReceipt receipt;
+    DM2_V1_IndoorLiveMissilePlan live_missile_plan;
 
-    if (!s || !s->framebuffer ||
+    if (!s) return;
+    memset(&live_missile_plan, 0, sizeof(live_missile_plan));
+    (void)dm2_v1_viewport_build_indoor_live_missile_plan(
+        s, &live_missile_plan);
+    s->last_indoor_live_missile_plan = live_missile_plan;
+
+    if (!s->framebuffer ||
         !dm2_v1_viewport_build_item_render_plan(s, &item_plan) ||
         !dm2_v1_viewport_build_creature_render_plan(s, &creature_plan) ||
         !dm2_v1_viewport_build_indoor_draw_order(
@@ -8983,7 +9167,7 @@ static int dm2_v1_render_fmtowns_squad_plan(
     const DM2_V1_GdatHudM11CommandPlan *plan)
 {
     int expected_count = 0;
-    int fills = 0;
+    int formation_receipts = 0;
     int icons = 0;
     int gdat_counter_base;
 
@@ -8998,11 +9182,32 @@ static int dm2_v1_render_fmtowns_squad_plan(
     }
     for (int slot = 0; slot < s->hud_party.champion_count; ++slot) {
         const DM2_V1_HudChampionState *hero = &s->hud_party.champions[slot];
+        size_t figure_raw_size = 0u;
+        const uint8_t *figure_raw = NULL;
+        int has_native_figure = 0;
         if (!hero->occupied || !hero->towns_party_position_source_bound ||
             !hero->towns_current_hp_source_bound ||
             !hero->towns_spell_cooldown_source_bound ||
             hero->towns_party_position > 3u) return 0;
-        expected_count += 1 + (hero->towns_current_hp == 0 ? 1 : 3);
+        if (hero->towns_current_hp != 0) {
+            DM2_V1_GdatImageMetadata figure_metadata;
+            figure_raw = dm2_v1_asset_load_typed_sized(
+                s->asset_loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 6,
+                DM2_GDAT_ENTRY_TYPE_IMAGE, slot, &figure_raw_size);
+            if (figure_raw) {
+                if (figure_raw_size == 0u ||
+                    !dm2_v1_asset_load_image_metadata(
+                        s->asset_loader,
+                        DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 6, slot,
+                        &figure_metadata) ||
+                    figure_metadata.bits_per_pixel != 4u ||
+                    figure_metadata.width != 136u ||
+                    figure_metadata.height != 17u) return 0;
+                has_native_figure = 1;
+            }
+        }
+        expected_count += 1 +
+            (hero->towns_current_hp == 0 ? 1 : 3) + has_native_figure;
     }
     if (s->hud_party.towns_game_tick_source_bound &&
         s->hud_party.towns_selected_hero_source_bound) {
@@ -9029,6 +9234,8 @@ static int dm2_v1_render_fmtowns_squad_plan(
             DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_ICON;
         int status_command = command->kind ==
             DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_STATUS_ICON;
+        int figure_command = command->kind ==
+            DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_FIGURE;
         int selected_icon_command = command->kind ==
             DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SELECTED_HERO_ICON;
         int aura_command = command->kind ==
@@ -9041,6 +9248,7 @@ static int dm2_v1_render_fmtowns_squad_plan(
 
         if (fill_command) hero_slot = command->viewport_gdat_index - 0x6200;
         else if (status_command) hero_slot = command->viewport_gdat_index - 0x6100;
+        else if (figure_command) hero_slot = command->viewport_gdat_index - 0x6600;
         else if (spell_command) hero_slot = command->viewport_gdat_index - 0x6000;
         else if (selected_icon_command)
             hero_slot = command->viewport_gdat_index - 0x6300;
@@ -9072,16 +9280,104 @@ static int dm2_v1_render_fmtowns_squad_plan(
                 command->pixels || command->width || command->height) {
                 return 0;
             }
-            dm2_v1_fill_rect(s, &command->destination,
-                             dm2_v1_hud_palette_color(s, 0u));
+            /* SKProject's DRAW_SQUAD_POS_INTERFACE keeps the F5 squad
+             * background intact and overlays champion icons directly. The
+             * formation rect is retained here as a source-layout receipt,
+             * but painting it with palette index 0 erases that authored F5
+             * material behind each occupied slot. */
             ++s->gdat_hud_material_plan_consumed_count;
-            ++s->asset_hud_core_drawn_count;
-            ++fills;
+            ++formation_receipts;
+            continue;
+        }
+
+        if (figure_command) {
+            DM2_V1_BootExpandedRectReceipt rect_receipt;
+            DM2_V1_InterfaceRect blit_rect;
+            DM2_V1_GdatImageMetadata metadata;
+            uint8_t expected_palette[16];
+            uint32_t expected_palette_hash = 0u;
+            const int figure_direction = (hero->towns_absdir + 4u -
+                s->hud_party.towns_party_direction) & 3u;
+            const int invisible =
+                s->hud_party.towns_savegames1_b02 != 0u;
+            if (hero->towns_current_hp == 0 ||
+                !hero->towns_absdir_source_bound ||
+                !s->hud_party.towns_savegames1_b02_source_bound ||
+                command->gdat_category !=
+                    DM2_GDAT_CATEGORY_INTERFACE_GENERAL ||
+                command->gdat_index != 6 || command->gdat_field != hero_slot ||
+                command->destination_rect_id != (uint16_t)(0x53 + relative) ||
+                command->width != 17 || command->height != 17 ||
+                command->format != DM2_IMG_FMT_U4 || !command->pixels ||
+                command->source_transparency_key != 2u ||
+                command->source_state_flags !=
+                    (uint8_t)((figure_direction <<
+                        DM2_V1_GDAT_HUD_M11_TOWNS_DIRECTION_SHIFT) |
+                        (invisible
+                            ? DM2_V1_GDAT_HUD_M11_TOWNS_INVISIBLE_FIGURE
+                            : 0u)) ||
+                !command->raw_hash || !command->raw_byte_count ||
+                !command->material_source_bytes ||
+                !command->material_source_byte_count ||
+                !command->material_receipt_hash ||
+                !command->destination_table_hash ||
+                command->palette_hash == 0u ||
+                command->palette_hash != dm2_v1_weather_pixels_hash(
+                    command->palette16, 16, 1, 16) ||
+                command->decoded_hash !=
+                    dm2_v1_gdat_hud_m11_command_pixel_hash(command) ||
+                !dm2_v1_asset_load_image_metadata(
+                    s->asset_loader,
+                    DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 6, hero_slot,
+                    &metadata) ||
+                metadata.bits_per_pixel != 4u || metadata.width != 136u ||
+                metadata.height != 17u ||
+                !dm2_v1_asset_load_image_local_palette(
+                    s->asset_loader,
+                    DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 6, hero_slot,
+                    expected_palette,
+                    &expected_palette_hash) ||
+                command->palette_hash != expected_palette_hash ||
+                memcmp(command->palette16, expected_palette,
+                       sizeof(expected_palette)) != 0 ||
+                !dm2_v1_boot_query_expanded_rect_receipt(
+                    (const DM2_V1_BootProfile *)s->asset_profile,
+                    (uint16_t)(0x4f + relative), &rect_receipt) ||
+                !rect_receipt.valid ||
+                rect_receipt.raw4_hash != command->destination_table_hash ||
+                !dm2_v1_boot_query_blit_rect_for_dimensions(
+                    (const DM2_V1_BootProfile *)s->asset_profile,
+                    (uint16_t)(0x53 + relative), 17, 17, &blit_rect) ||
+                blit_rect.x != command->destination.x ||
+                blit_rect.y != command->destination.y ||
+                blit_rect.w != command->destination.w ||
+                blit_rect.h != command->destination.h) return 0;
+            memcpy(s->active_asset_palette16, command->palette16,
+                   sizeof(s->active_asset_palette16));
+            s->active_asset_palette_hash = command->palette_hash;
+            s->active_asset_palette_ready = 1;
+            for (int y = 0; y < 17; ++y) {
+                const int fy = command->destination.y + y;
+                if ((unsigned)fy >=
+                    (unsigned)dm2_v1_viewport_draw_height(s)) continue;
+                for (int x = 0; x < 17; ++x) {
+                    const int fx = command->destination.x + x;
+                    const uint8_t pixel = command->pixels[y * 17 + x];
+                    if (pixel == command->source_transparency_key ||
+                        (unsigned)fx >=
+                            (unsigned)dm2_v1_viewport_draw_width(s)) continue;
+                    target[fy * stride + fx] = dm2_v1_material_palette_color(
+                        s, pixel,
+                        &s->gdat_interface_palette_consumed_count);
+                }
+            }
+            ++s->gdat_hud_material_plan_consumed_count;
+            ++s->asset_hud_portrait_drawn_count;
+            ++icons;
             s->last_hud_core_gdat_hash = dm2_v1_viewport_hash_gdat_asset(
                 s->last_hud_core_gdat_hash, command->viewport_gdat_index,
-                command->destination.w, command->destination.h);
-            s->last_hud_core_pixel_count +=
-                (uint32_t)(command->destination.w * command->destination.h);
+                command->width, command->height);
+            s->last_hud_core_pixel_count += 17u * 17u;
             continue;
         }
 
@@ -9399,8 +9695,8 @@ static int dm2_v1_render_fmtowns_squad_plan(
         s->last_hud_core_pixel_count +=
             (uint32_t)(command->destination.w * command->destination.h);
     }
-    return fills == s->hud_party.champion_count &&
-        icons == (expected_count - fills) &&
+    return formation_receipts == s->hud_party.champion_count &&
+        icons == (expected_count - formation_receipts) &&
         s->gdat_hud_material_plan_consumed_count - gdat_counter_base ==
             expected_count;
 }

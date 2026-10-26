@@ -20,6 +20,7 @@ enum {
     DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_FILL,
     DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_ICON,
     DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_STATUS_ICON,
+    DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_FIGURE,
     DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SELECTED_HERO_ICON,
     DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_ENCHANTMENT_AURA,
     DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_STATUS_PANE,
@@ -32,12 +33,15 @@ enum {
     DM2_V1_GDAT_HUD_M11_TOWNS_MIRROR = 0x04,
     DM2_V1_GDAT_HUD_M11_TOWNS_FORMATION_FILL = 0x08,
     DM2_V1_GDAT_HUD_M11_TOWNS_COLOR_KEY_4 = 0x10,
+    /* Kind-specific flag for the Towns squad figure's alternate four frames.
+     * SKWINSPX QUERY_GDAT_SQUAD_ICON adds four when global invisibility is on. */
+    DM2_V1_GDAT_HUD_M11_TOWNS_INVISIBLE_FIGURE = 0x01,
     DM2_V1_GDAT_HUD_M11_TOWNS_DIRECTION_MASK = 0x60,
     DM2_V1_GDAT_HUD_M11_TOWNS_DIRECTION_SHIFT = 5,
     DM2_V1_GDAT_HUD_M11_TOWNS_SELECTED_ICON_VARIANT = 0x80
 };
 
-#define DM2_V1_GDAT_HUD_M11_COMMAND_MAX 20
+#define DM2_V1_GDAT_HUD_M11_COMMAND_MAX 24
 /* The static source family contains only the four surfaces whose exact
  * address is independently retained here. Hand/action backdrops are dynamic:
  * DRAW_HAND_ACTION_ICONS selects INTERFACE_GENERAL/4 fields 2..5 and
@@ -69,6 +73,7 @@ typedef struct DM2_V1_GdatHudM11Command {
     size_t material_source_byte_count;
     uint32_t material_receipt_hash;
     uint8_t source_state_flags;
+    uint8_t source_transparency_key;
     uint8_t animation_direction;
     uint8_t animation_frame;
 } DM2_V1_GdatHudM11Command;
@@ -90,6 +95,11 @@ typedef struct {
     int spell_icon_field;
     int draw_status_icon;
     int status_icon_field;
+    int draw_squad_figure;
+    uint8_t squad_figure_direction;
+    uint32_t squad_figure_rect_raw4_hash;
+    DM2_V1_ViewportRect squad_figure_rect;
+    uint16_t squad_figure_rect_id;
     int mirror_flip;
     uint32_t raw4_hash;
     DM2_V1_ViewportRect formation_rect;

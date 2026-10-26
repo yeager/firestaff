@@ -7,6 +7,7 @@
 #include "m11_loose_sibling.h"
 #include "dm1_v1_native_dungeon_compat.h"
 #include "dm1_v1_iigs_graphics_dat.h"
+#include "dm1_v1_fmtowns_hud_layout.h"
 #include "soundtrack_selector_m11.h"
 #include "csb_v22_modern_assets_pc34.h"
 #include "csb_v22_finished_art_material_gate_pc34.h"
@@ -45,6 +46,7 @@
 #include "csb_v1_atari_save_decode_pc34_compat.h"
 #include "csb_v1_fmtowns_cd.h"
 #include "csb_v1_fmtowns_graphics_dat.h"
+#include "csb_v1_fmtowns_stairs.h"
 #include "csb_v1_fmtowns_portrait.h"
 #include "csb_v1_fmtowns_utility_render.h"
 #include "fmtowns_bios_host.h"
@@ -297,6 +299,7 @@
 #include "firestaff/dm1/v1/G0206_pc34_compat.h"
 #include "firestaff/dm1/v1/G0207_pc34_compat.h"
 #include "dm1_v1_wall_ornament_pc34_compat.h"
+#include "dm1_v1_fmtowns_wall_ornament.h"
 #include "firestaff/dm1/v1/G0192_pc34_compat.h"
 #include "dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
@@ -1153,6 +1156,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                                  int framebufferWidth,
                                  int framebufferHeight);
 static void m11_clear_dm1_v1_top_row_receipt_zones(
+    const M11_GameViewState* state,
     unsigned char* framebuffer,
     int framebufferWidth,
     int framebufferHeight);
@@ -4442,6 +4446,14 @@ static int m11_csb_fmtowns_viewport_graphic_provider(
             (unsigned int)wall_set * F31_M647_WALL_SET_GRAPHIC_COUNT +
             F31_WALL_SURFACE_OFFSET + (unsigned int)(graphic_index - 93);
     } else if (graphic_index >= F31_M645_FIRST_STAIRS &&
+               graphic_index < F31_M645_FIRST_STAIRS + 18) {
+        /* ReDMCSB DUNVIEW.C F0094/F0128 seeds M645 from
+         * CurrentMap->WallSet * M647 + M645. The shared host plan supplies
+         * the corresponding wall-set-zero semantic id, so restore F31's
+         * active 40-image bank before selecting the native IMG2 item. */
+        if (!csb_v1_fmtowns_stairs_graphic_index(
+                wall_set, graphic_index, &source_graphic)) return 0;
+    } else if (graphic_index >= F31_M645_FIRST_STAIRS + 18 &&
                graphic_index < F31_M633_FIRST_DOOR_SET) {
         source_graphic = (unsigned int)graphic_index;
     } else if (graphic_index >= F31_M633_FIRST_DOOR_SET &&
@@ -6266,9 +6278,44 @@ static void m11_draw_csb_v1_runtime_hud(const M11_GameViewState *state,
 {
     M11_GameViewState source_party_state;
     const M11_GameViewState *party_state;
+    const CSB_V1_BootProfile *profile;
 
     if (!state || !framebuffer || framebufferWidth < 320 ||
         framebufferHeight < 200) {
+        return;
+    }
+
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    if (m11_csb_is_fmtowns_profile(profile)) {
+        /* F31's C696 owns the same C151..C154 champion-box geometry and
+         * C113..C116 icon row used by these shared source consumers, but its
+         * C011 rune strip is 14x39. The PC3.4 HUD gate below requires 14x26
+         * and therefore suppresses the entire party row before it can draw.
+         * Admit only the independently source-bound champion materials here;
+         * the F31 menu, spell, idle-action, and movement regions are composed
+         * by their native overlays after the viewport has been restored. */
+        party_state = m11_csb_v1_party_hud_source_state(
+            state, &source_party_state);
+        if (!party_state) {
+            m11_clear_csb_v1_party_hud_source_surfaces(
+                framebuffer, framebufferWidth, framebufferHeight);
+            m11_clear_csb_v1_message_area_source_owned(
+                state, framebuffer, framebufferWidth, framebufferHeight);
+            return;
+        }
+        if (!m11_csb_v1_install_runtime_champion_materials(state)) {
+            m11_clear_dm1_v1_top_row_receipt_zones(
+                state, framebuffer, framebufferWidth, framebufferHeight);
+            m11_clear_csb_v1_message_area_source_owned(
+                state, framebuffer, framebufferWidth, framebufferHeight);
+            return;
+        }
+        m11_draw_v1_champion_icons(party_state, framebuffer,
+                                   framebufferWidth, framebufferHeight);
+        m11_draw_party_panel(party_state, framebuffer,
+                             framebufferWidth, framebufferHeight);
+        m11_clear_csb_v1_message_area_source_owned(
+            party_state, framebuffer, framebufferWidth, framebufferHeight);
         return;
     }
 
@@ -6305,7 +6352,7 @@ static void m11_draw_csb_v1_runtime_hud(const M11_GameViewState *state,
         /* The shared renderer is permitted to draw the row only after every
          * source-owned CHAMDRAW surface is installed through CSB's decoder. */
         m11_clear_dm1_v1_top_row_receipt_zones(
-            framebuffer, framebufferWidth, framebufferHeight);
+            state, framebuffer, framebufferWidth, framebufferHeight);
         m11_clear_csb_v1_message_area_source_owned(
             state, framebuffer, framebufferWidth, framebufferHeight);
         return;
@@ -27407,6 +27454,15 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                                        selectedVersionIndex);
         if (version && version->matchedPath[0] != '\0' &&
             version->matchedMd5[0] != '\0') {
+            if (menuState->debugStartup && entry->gameId &&
+                strcmp(entry->gameId, "csb") == 0) {
+                fprintf(stderr,
+                        "firestaff: selected-launch game=csb edition=%s source=%s runtime=%s md5=%s\n",
+                        version->versionId ? version->versionId : "unknown",
+                        version->matchedPath,
+                        spec.dataDir ? spec.dataDir : "",
+                        version->matchedMd5);
+            }
             spec.verifiedAssetPath = version->matchedPath;
             spec.verifiedAssetMd5 = version->matchedMd5;
             if (entry->gameId && strcmp(entry->gameId, "dm1") == 0 &&
@@ -27435,6 +27491,14 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                     return 0;
                 }
                 spec.dataDir = selectedCsbRuntimeDataDir;
+                if (menuState->debugStartup) {
+                    fprintf(stderr,
+                            "firestaff: selected-launch-runtime game=csb edition=%s source=%s runtime=%s md5=%s\n",
+                            version->versionId ? version->versionId : "unknown",
+                            version->matchedPath,
+                            spec.dataDir,
+                            version->matchedMd5);
+                }
                 /* An archive-selected package needs its own cache.  A loose
                  * package stays with the verified source directory, which
                  * retains all original startup siblings for direct CLI
@@ -47920,7 +47984,8 @@ static const M11_AssetSlot* m11_dm1_inscription_font_slot_for_material(
         return NULL;
     }
     fontSlot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                    DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34);
+        state->assetLoader.dm1Fmtowns ? 120u :
+        DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34);
     if (!fontSlot || !fontSlot->loaded || !fontSlot->pixels ||
         fontSlot->width != DM1_V1_INSCRIPTION_FONT_WIDTH_PC34 ||
         fontSlot->height != DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34) {
@@ -48238,6 +48303,14 @@ static int m11_restore_dm1_f0107_inscription_wall_patch(
         state, M11_GFX_WALLSET0_D1C);
     int y;
 
+    /* ReDMCSB's F20E/F20J F0107 route writes M648 directly into the
+     * F0635 C1000 inscription zones. G0202 is only used by the PC34
+     * MEDIA008/413 route; applying its patch admission to F20 can reject
+     * the native inscription before any glyph is drawn. */
+    if (state && state->assetLoader.dm1Fmtowns) {
+        return 1;
+    }
+
     /* ReDMCSB DUNVIEW.C F0107:778 restores G202 from the current C10 D1C
      * wall bitmap before M648 overlays its C10-transparent cells.  This is
      * not a generic text backdrop: it is a 4x26 source crop whose position
@@ -48283,6 +48356,12 @@ static void m11_draw_dm1_front_wall_inscription_material(
         return;
     }
     material = *inputMaterial;
+    /* ReDMCSB DEFS.H assigns M648 to GRAPHICS.DAT ordinal 120 for
+     * MEDIA020/F20E/F20J. PC34 uses ordinal 258; the binary index tables
+     * are edition-specific even though both native fonts are 288x8. */
+    if (state->assetLoader.dm1Fmtowns) {
+        material.fontGraphicIndex = 120;
+    }
     if (!m11_dm1_inscription_material_raster_ready(state, &material,
                                                     &fontSlot,
                                                     &sourceCapture)) {
@@ -48596,6 +48675,10 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
 #endif
 
 static int m11_dm1_pc_wall_ornaments(const M11_GameViewState* state);
+static int m11_dm1_fmtowns_wall_ornaments(const M11_GameViewState* state);
+static int m11_dm1_ornament_material(const M11_GameViewState* state,
+    int global, int view, int maxHeight,
+    DM1_WallOrnamentHostMaterialReceiptPc34* out);
 static int m11_draw_dm1_wall_ornament_host_material_receipt(
     const M11_GameViewState* state, unsigned char* framebuffer,
     int fbW, int fbH, DM1_WallOrnamentHostMaterialReceiptPc34* material);
@@ -48613,15 +48696,17 @@ static int m11_draw_dm1_front_mirror_backing_host_receipt(
         receipt->backingWidth <= 0 || receipt->backingHeight <= 0) {
         return 0;
     }
-    if (m11_dm1_pc_wall_ornaments(state)) {
+    if (m11_dm1_pc_wall_ornaments(state) ||
+        m11_dm1_fmtowns_wall_ornaments(state)) {
         DM1_WallOrnamentHostMaterialReceiptPc34 material;
         /* DUNGEON.C F0174:2678-2679 selects native 345 for global 43;
          * DUNVIEW.C F0107:3722-3750 selects its following front bitmap.
          * D1C uses native pixels without a derived palette or rescaling.
          * Resolve selected C696 through the ordinary F0635/F0791 path. */
-        if (!dm1_v1_wall_ornament_native_material_pc34(
+        if (!m11_dm1_ornament_material(
+                state,
                 DM1_V1_CHAMPION_MIRROR_BACKING_GLOBAL_ORNAMENT_PC34_COMPAT,
-                12, &material) ||
+                12, 0, &material) ||
             !m11_draw_dm1_wall_ornament_host_material_receipt(
                 state, framebuffer, fbW, fbH, &material)) return 0;
         receipt->backingDstX = material.plan.dstX;
@@ -48793,6 +48878,29 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
         return;
     }
 
+    /* F20 DUNVIEW.C:3923-3928 passes M635_ZONE_PORTRAIT_ON_WALL (C733)
+     * through F0635. The common DM1 receipt carries PC34's hard-coded
+     * destination (96,35), which is not the Towns viewport location. Keep
+     * the validated source ordinal/atlas crop, then replace only the
+     * destination with the edition's native F20 zone before drawing and
+     * publishing the actual host presentation. */
+    if (m11_dm1_fmtowns_wall_ornaments(state)) {
+        DM1_V1_FmtownsHudEdition edition =
+            state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP
+                ? DM1_V1_FMTOWNS_HUD_EDITION_F20J
+                : DM1_V1_FMTOWNS_HUD_EDITION_F20E;
+        DM1_V1_FmtownsHudRect portraitRect;
+        if (!dm1_v1_fmtowns_hud_layout_rect(
+                edition, 733u, drawReceipt.portraitWidth,
+                drawReceipt.portraitHeight, &portraitRect) ||
+            portraitRect.width != drawReceipt.portraitWidth ||
+            portraitRect.height != drawReceipt.portraitHeight) {
+            return;
+        }
+        drawReceipt.portraitDstX = portraitRect.x;
+        drawReceipt.portraitDstY = portraitRect.y;
+    }
+
     /* ReDMCSB DUNVIEW.C:3913-3928 draws the C346 backing from this exact
      * F0172-derived receipt, then overlays C026. The ordinary F0107 pass
      * cannot stand in for C346 because its map-local ornament lookup is a
@@ -48826,6 +48934,14 @@ static int m11_dm1_pc_wall_ornaments(const M11_GameViewState* state)
         strcmp(state->sourceId, "dm1") == 0 &&
         !state->assetLoader.legacyDm1 && !state->assetLoader.atariStDm1 &&
         !state->assetLoader.dm1Amiga36 && state->assetLoader.fileState;
+}
+
+static int m11_dm1_fmtowns_wall_ornaments(const M11_GameViewState* state)
+{
+    return state && m11_is_dm1_source_kind(state->sourceKind) &&
+        strcmp(state->sourceId, "dm1") == 0 &&
+        state->assetLoader.dm1Fmtowns &&
+        state->dm1FmtownsStartupReceiptValid;
 }
 
 static unsigned int m11_ornament_le16(const unsigned char* p)
@@ -48900,6 +49016,9 @@ static int m11_dm1_pc_ornament_layout(M11_GameViewState* state)
 typedef struct M11_PcOrnamentRaster {
     const M11_AssetSlot* slot;
     M11_GameViewState* state;
+    const int16_t* layoutRecords;
+    int layoutZoneBase;
+    int layoutZoneLast;
     unsigned char* framebuffer;
     const unsigned char* palette;
     int width, height, fbWidth, fbHeight, drawn;
@@ -48915,8 +49034,9 @@ static int m11_pc_ornament_zone(void* user, const void* bitmap, int16_t xyz[4],
     const int16_t* record;
     int type, x, y, width, height, sx, sy;
     (void)bitmap;
-    if (zone < 1004 || zone > 1138) return 0;
-    record = raster->state->dm1PcWallOrnamentLayout[zone-1004];
+    if (zone < raster->layoutZoneBase || zone > raster->layoutZoneLast ||
+        !raster->layoutRecords) return 0;
+    record = raster->layoutRecords + (size_t)(zone-raster->layoutZoneBase)*4u;
     type = record[0]; x = record[2]; y = record[3];
     width = *source_x ? *source_x : raster->width;
     height = *source_y ? *source_y : raster->height;
@@ -48981,6 +49101,35 @@ static void m11_pc_ornament_blit(void* user, const void* source, void* destinati
 static int m11_dm1_ornament_material(const M11_GameViewState* state,
     int global, int view, int maxHeight, DM1_WallOrnamentHostMaterialReceiptPc34* out)
 {
+    if (m11_dm1_fmtowns_wall_ornaments(state)) {
+        static const unsigned char paletteD3[16] = {
+            0, 0, 12, 3, 4, 3, 0, 6, 3, 9, 10, 11, 0, 1, 0, 2
+        };
+        static const unsigned char paletteD2[16] = {
+            0, 12, 1, 3, 4, 3, 6, 7, 5, 9, 10, 11, 0, 2, 14, 13
+        };
+        DM1_V1_FmtownsWallOrnament source;
+        if (!out || !dm1_v1_fmtowns_wall_ornament_resolve(
+                global, view, (state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP),
+                &source)) return 0;
+        memset(out, 0, sizeof(*out));
+        out->valid = 1;
+        out->globalOrnamentIndex = global;
+        out->viewWallIndex = view;
+        out->plan.graphicIndex = source.graphic_index;
+        out->plan.transparentColor = 10;
+        out->plan.flipHorizontal = source.flip_horizontal;
+        out->plan.paletteMapValid = 1;
+        memcpy(out->plan.paletteMap,
+               source.palette_depth == 3 ? paletteD3 : paletteD2,
+               sizeof(out->plan.paletteMap));
+        out->plan.sourceScaleX32 = source.scale;
+        out->plan.sourceScaleY32 = source.scale;
+        out->plan.usesDerivedBitmap = 1;
+        out->plan.isAlcove = dm1_v1_wall_ornament_is_alcove_global_pc34(global);
+        out->plan.height = maxHeight;
+        return 1;
+    }
     if (m11_is_dm1_media009(state)) {
         if (view < 0 || view >= 13 ||
             !dm1_v1_wall_ornament_native_material_pc34(global, view, out)) return 0;
@@ -49034,19 +49183,41 @@ static int m11_draw_dm1_wall_ornament_host_material_receipt(
         slot->width <= 0 || slot->height <= 0) {
         return 0;
     }
-    if (m11_dm1_pc_wall_ornaments(state)) {
+    if (m11_dm1_pc_wall_ornaments(state) ||
+        m11_dm1_fmtowns_wall_ornaments(state)) {
         M11_PcOrnamentRaster raster = {0};
         const redmcsb_f0791_renderer_pc34_compat renderer = {
             m11_pc_ornament_zone, m11_pc_ornament_width,
             m11_pc_ornament_height, m11_pc_ornament_blit, &raster
         };
-        int set = dm1_v1_wall_ornament_coord_set_index_pc34(material->globalOrnamentIndex);
-        int row = material->viewWallIndex >= 13 ? material->viewWallIndex-13 : material->viewWallIndex+2;
-        int16_t zone = (int16_t)(1004+set*15+row);
+        int set;
+        int row;
+        int16_t zone;
         uint16_t flip = plan->flipHorizontal ? 1 : 0;
-        if (set < 0 || set > 8 || row < 0 || row > 14 ||
-            fbW < M11_VIEWPORT_X+224 || fbH < M11_VIEWPORT_Y+136 ||
-            !m11_dm1_pc_ornament_layout((M11_GameViewState*)state)) return 0;
+        if (fbW < M11_VIEWPORT_X+224 || fbH < M11_VIEWPORT_Y+136) return 0;
+        if (m11_dm1_fmtowns_wall_ornaments(state)) {
+            DM1_V1_FmtownsWallOrnament source;
+            if (!dm1_v1_fmtowns_wall_ornament_resolve(
+                    material->globalOrnamentIndex, material->viewWallIndex,
+                    (state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP), &source)) return 0;
+            set = source.coordinate_set;
+            row = material->viewWallIndex;
+            zone = (int16_t)source.zone_index;
+            raster.layoutRecords = source.layout;
+            raster.layoutZoneBase = zone;
+            raster.layoutZoneLast = zone;
+        } else {
+            set = dm1_v1_wall_ornament_coord_set_index_pc34(
+                material->globalOrnamentIndex);
+            row = material->viewWallIndex >= 13
+                ? material->viewWallIndex-13 : material->viewWallIndex+2;
+            zone = (int16_t)(1004+set*15+row);
+            if (set < 0 || set > 8 || row < 0 || row > 14 ||
+                !m11_dm1_pc_ornament_layout((M11_GameViewState*)state)) return 0;
+            raster.layoutRecords = &state->dm1PcWallOrnamentLayout[0][0];
+            raster.layoutZoneBase = 1004;
+            raster.layoutZoneLast = 1138;
+        }
         raster.slot = slot; raster.state = (M11_GameViewState*)state;
         raster.framebuffer = framebuffer; raster.fbWidth = fbW; raster.fbHeight = fbH;
         raster.palette = plan->paletteMapValid ? plan->paletteMap : NULL;
@@ -63488,23 +63659,30 @@ static uint32_t m11_dm2_startup_frame_hash(const unsigned char *framebuffer,
  * display transaction only: the HUD and scene share the machine palette in
  * the original, and no image bytes are altered. */
 static int m11_dm2_apply_fmtowns_runtime_palette(
-    const DM2_V1_BootProfile *profile)
+    const M11_GameViewState *state)
 {
+    const DM2_V1_BootProfile *profile;
     const DM2_V1_AssetLoader *loader;
     DM2_V1_RuntimeGraphicsSetSceneReceipt scene;
+    DM2_V1_ViewportM11FrameReceipt frame;
     DM2_V1_InterfacePalette palette;
 
+    profile = state
+        ? (const DM2_V1_BootProfile *)state->dm2BootProfile : NULL;
     if (!profile || profile->platform != DM2_PLATFORM_FMTOWNS_JA ||
         !(loader = dm2_v1_boot_asset_loader(profile))) {
         return 0;
     }
     memset(&scene, 0, sizeof(scene));
+    memset(&frame, 0, sizeof(frame));
     memset(&palette, 0, sizeof(palette));
     if (!dm2_v1_runtime_graphicsset_scene_receipt(&scene) || !scene.ready ||
-        !dm2_v1_asset_load_interface_palette(
+        !dm2_v1_runtime_last_m11_frame_receipt(&frame) || !frame.valid ||
+        frame.c_light_receipt_hash == 0u || frame.c_light_level > 5u ||
+        !dm2_v1_asset_load_fmtowns_lighting_palette(
             loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
             (int)scene.map_graphics_style, DM2_GDAT_GFXSET_FLOOR,
-            &palette) || palette.hash == 0u) {
+            (int)frame.c_light_level, &palette) || palette.hash == 0u) {
         return 0;
     }
     return M11_Render_SetIndexedPaletteRgb6(palette.rgb6) == M11_RENDER_OK;
@@ -64795,8 +64973,12 @@ static int m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
         const int storedWidth = csbTownsSpellPanel ? 87 : 96;
         /* F31 C009 is87x25; C696 C013 retains F20's EN/JP anchor but
          * requires no nine-pixel source crop. C011 is not used by F0394. */
-        if (!m11_dm1_pc34_hud_font_is_source_bound(state) ||
-            !m11_build_dm1_spell_area_overlay_plan(sourceState, &plan) ||
+        /* F31 C009 and its champion tabs are independent of the system-font
+         * glyph owner. F31J may use the FM Towns EGB font, which has not been
+         * authenticated as the PC34 M653 bitmap. Keep verified panel pixels
+         * visible while the glyph helper below safely draws nothing without
+         * a bound source font; never replace those glyphs with host text. */
+        if (!m11_build_dm1_spell_area_overlay_plan(sourceState, &plan) ||
             !m11_panel_asset_source_loaded(state, 9, storedWidth, 25, NULL, NULL)) {
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           233, 42 + spellYOffset, 87, 33, M11_COLOR_BLACK);
@@ -64882,7 +65064,7 @@ static int m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
                 plan.line1[i].tab_x1, plan.line1[i].tab_y1 + spellYOffset);
         }
     }
-    {
+    if (m11_dm1_pc34_hud_font_is_source_bound(state)) {
         const int caster = sourceState->dm1SpellCasting.magicCasterIndex;
         const unsigned char* name = sourceState->world.party.champions[caster].name;
         int japaneseName = 0;
@@ -68064,6 +68246,64 @@ static void m11_draw_v1_champion_icons(const M11_GameViewState* state,
             (unsigned int)dm1_v1_graphic_champion_icons_pc34());
     }
 
+    if (m11_is_dm1_fmtowns(state)) {
+        DM1_V1_FmtownsHudEdition edition;
+        if (!state->dm1FmtownsStartupReceiptValid ||
+            !state->dm1FmtownsStartupReceipt.game_dungeon_palettes_verified ||
+            !iconStrip || !iconStrip->loaded || !iconStrip->pixels ||
+            iconStrip->width != 76u || iconStrip->height != 14u) {
+            m11_clear_dm1_v1_top_row_receipt_zones(
+                state, framebuffer, framebufferWidth, framebufferHeight);
+            return;
+        }
+        edition = state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP
+            ? DM1_V1_FMTOWNS_HUD_EDITION_F20J
+            : DM1_V1_FMTOWNS_HUD_EDITION_F20E;
+        for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
+            DM1_V1_FmtownsHudRect rect;
+            const struct ChampionState_Compat* champ;
+            DM1_ChampionPanel_IconBitmapModel iconModel;
+            unsigned char nativeFillColor;
+            unsigned int zone = (unsigned int)(113 + slot);
+            if (!dm1_v1_fmtowns_hud_layout_rect(edition, zone,
+                    19, 14, &rect)) {
+                m11_clear_dm1_v1_top_row_receipt_zones(
+                    state, framebuffer, framebufferWidth, framebufferHeight);
+                return;
+            }
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          rect.x, rect.y, rect.width, rect.height,
+                          M11_COLOR_BLACK);
+            if (slot >= state->world.party.championCount ||
+                !state->world.party.champions[slot].present ||
+                state->world.party.champions[slot].hp.current <= 0) continue;
+            champ = &state->world.party.champions[slot];
+            if (!DM1_ChampionPanel_BuildIconBitmapModel(
+                    slot, (int)champ->direction & 3,
+                    state->world.party.direction & 3,
+                    (int)state->world.magic.event71CountInvisibility,
+                    &iconModel) ||
+                !dm1_v1_fmtowns_hud_champion_icon_color(
+                    edition, slot,
+                    state->world.magic.event71CountInvisibility > 0,
+                    &nativeFillColor)) continue;
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          rect.x, rect.y, rect.width, rect.height,
+                          nativeFillColor);
+            if (!dm1_v1_fmtowns_hud_blit_indexed(edition, zone,
+                    iconStrip->pixels, (int)iconStrip->width,
+                    (int)iconStrip->height, iconModel.width, iconModel.height,
+                    iconModel.sourceX, iconModel.sourceY,
+                    framebuffer, framebufferWidth, framebufferHeight,
+                    iconModel.transparentColor)) {
+                m11_clear_dm1_v1_top_row_receipt_zones(
+                    state, framebuffer, framebufferWidth, framebufferHeight);
+                return;
+            }
+        }
+        return;
+    }
+
     /* CHAMDRAW.C F0622 requires C028's four 19x14 frames. CSB's selected
      * GRAPHICS.DAT must supply that full strip before its icon zones exist. */
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
@@ -68204,11 +68444,47 @@ static unsigned int m11_dm1_v1_top_row_material_fnv1a(
     return hash;
 }
 
-static void m11_clear_dm1_v1_top_row_receipt_zones(unsigned char* framebuffer,
-                                                    int framebufferWidth,
-                                                    int framebufferHeight)
+static void m11_clear_dm1_v1_top_row_receipt_zones(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
 {
     int slot;
+    if (m11_is_dm1_fmtowns(state)) {
+        DM1_V1_FmtownsHudEdition edition;
+        edition = state->dm1FmtownsStartupReceiptValid &&
+                  state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP
+            ? DM1_V1_FMTOWNS_HUD_EDITION_F20J
+            : DM1_V1_FMTOWNS_HUD_EDITION_F20E;
+        for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
+            DM1_V1_FmtownsHudRect rect;
+            int hand;
+            if (dm1_v1_fmtowns_hud_layout_rect(
+                    edition, (unsigned int)(151 + slot), 67, 29, &rect)) {
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              rect.x, rect.y, rect.width, rect.height,
+                              M11_COLOR_DARK_GRAY);
+            }
+            if (dm1_v1_fmtowns_hud_layout_rect(
+                    edition, (unsigned int)(113 + slot), 19, 14, &rect)) {
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              rect.x, rect.y, rect.width, rect.height,
+                              M11_COLOR_BLACK);
+            }
+            for (hand = 0; hand < 2; ++hand) {
+                unsigned int zone = (unsigned int)(211 + slot * 2 + hand);
+                if (dm1_v1_fmtowns_hud_layout_rect(
+                        edition, zone, 16, 16, &rect)) {
+                    m11_fill_rect(framebuffer, framebufferWidth,
+                                  framebufferHeight, rect.x, rect.y,
+                                  rect.width, rect.height,
+                                  M11_COLOR_DARK_GRAY);
+                }
+            }
+        }
+        return;
+    }
     for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
         DM1_V1_ChampionStatusRectPc34 statusRect;
         DM1_V1_ChampionStatusRectPc34 nameRect;
@@ -68258,6 +68534,20 @@ static void m11_clear_dm1_v1_top_row_receipt_zones(unsigned char* framebuffer,
             }
         }
     }
+}
+
+static const unsigned char *m11_dm1_v1_top_row_palette(
+    const M11_GameViewState *state)
+{
+    if (m11_is_dm1_fmtowns(state) && state->dm1FmtownsStartupReceiptValid &&
+        state->dm1FmtownsStartupReceipt.game_dungeon_palettes_verified) {
+        int level = m11_compute_dungeon_palette_index(state);
+        if (level < 0) level = 0;
+        if (level > 5) level = 5;
+        return &state->dm1FmtownsStartupReceipt
+            .game_dungeon_palettes_rgb6[level][0][0];
+    }
+    return &G9010_auc_VgaPaletteBrightest_Compat[0][0];
 }
 
 static const M11_AssetSlot* m11_dm1_v1_top_row_receipt_source_slot(
@@ -68419,11 +68709,13 @@ static int m11_draw_dm1_v1_status_bar_frame_receipt(
     Dm1V1ChampionStatusBarFrameMaterialsPc34 frameMaterials;
     Dm1V1ChampionStatusBarFramePresentationReceiptPc34 presentation;
     int operationIndex;
+    const unsigned char *indexedPalette;
 
     if (!state || !assets || !assets->valid || !framebuffer ||
         framebufferWidth <= 0 || framebufferHeight <= 0) {
         return 0;
     }
+    indexedPalette = m11_dm1_v1_top_row_palette(state);
     memset(&ownershipInput, 0, sizeof(ownershipInput));
     ownershipInput.candidateChampionOrdinal =
         state->candidateMirrorPanelActive && state->candidateMirrorPartyIndex >= 0
@@ -68447,7 +68739,7 @@ static int m11_draw_dm1_v1_status_bar_frame_receipt(
     memset(&commandMaterials, 0, sizeof(commandMaterials));
     commandMaterials.statusTargetReady = 1;
     commandMaterials.indexedPaletteOriginal = 1;
-    commandMaterials.indexedPalette = &G9010_auc_VgaPaletteBrightest_Compat[0][0];
+    commandMaterials.indexedPalette = indexedPalette;
     commandMaterials.indexedPaletteEntryCount = VGA_PALETTE_PC34_COLOR_COUNT;
     memset(&commands, 0, sizeof(commands));
     if (!dm1_v1_champion_status_bar_redraw_commands_pc34(
@@ -68841,6 +69133,223 @@ static int m11_dm1_v1_f0662_invisibility_material_ready(
            outReceipt->m653GraphicIndex == glyph.graphicIndex;
 }
 
+/* Bounded F20 top row. COORD.C F0635 supplies C151..C154 status boxes and
+ * C113..C116 C028 icons; PANEL.C F0354 places the selected inventory
+ * champion's original 32x29 packed portrait at C175..C178. */
+static int m11_draw_dm1_fmtowns_top_row_zones(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    int selected;
+    int slot;
+    DM1_V1_FmtownsHudEdition edition;
+    if (!state || !framebuffer) return 0;
+    edition = state->dm1FmtownsStartupReceiptValid &&
+              state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP
+        ? DM1_V1_FMTOWNS_HUD_EDITION_F20J
+        : DM1_V1_FMTOWNS_HUD_EDITION_F20E;
+    m11_clear_dm1_v1_top_row_receipt_zones(
+        state, framebuffer, framebufferWidth, framebufferHeight);
+    if (!state->dm1FmtownsStartupReceiptValid ||
+        !state->dm1FmtownsStartupReceipt.game_dungeon_palettes_verified)
+        return 1;
+    m11_draw_v1_champion_icons(state, framebuffer, framebufferWidth,
+                               framebufferHeight);
+
+    if (state->assetsAvailable) {
+        const M11_AssetSlot* deadStatus = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&state->assetLoader, 8u);
+        if (deadStatus && deadStatus->loaded && deadStatus->pixels &&
+            deadStatus->width == 67u && deadStatus->height == 29u) {
+            for (slot = 0; slot < state->world.party.championCount &&
+                           slot < CHAMPION_MAX_PARTY; ++slot) {
+                if (state->world.party.champions[slot].present &&
+                    state->world.party.champions[slot].hp.current <= 0 &&
+                    !dm1_v1_fmtowns_hud_blit_indexed(edition,
+                        (unsigned int)(151 + slot), deadStatus->pixels,
+                        (int)deadStatus->width, (int)deadStatus->height,
+                        67, 29, 0, 0, framebuffer, framebufferWidth,
+                        framebufferHeight, -1)) return 0;
+            }
+        }
+    }
+
+    selected = state->inventoryPanelActive
+        ? m11_inventory_champion_index(state) : -1;
+    if (selected >= 0 && selected < state->world.party.championCount &&
+        state->world.party.champions[selected].present &&
+        state->world.party.champions[selected].hp.current > 0 &&
+        state->world.party.champions[selected].portraitBitmapValid) {
+        const struct ChampionState_Compat* champion =
+            &state->world.party.champions[selected];
+        unsigned char unpacked[CHAMPION_PORTRAIT_BITMAP_WIDTH *
+                               CHAMPION_PORTRAIT_BITMAP_HEIGHT];
+        DM1_V1_FmtownsHudRect rect;
+        int y;
+        for (y = 0; y < CHAMPION_PORTRAIT_BITMAP_HEIGHT; ++y) {
+            const unsigned char* src = champion->portraitBitmap +
+                y * (CHAMPION_PORTRAIT_BITMAP_WIDTH / 2);
+            int x;
+            for (x = 0; x < CHAMPION_PORTRAIT_BITMAP_WIDTH; x += 2) {
+                unsigned char packed = src[x / 2];
+                unpacked[y * CHAMPION_PORTRAIT_BITMAP_WIDTH + x] =
+                    (unsigned char)(packed >> 4);
+                unpacked[y * CHAMPION_PORTRAIT_BITMAP_WIDTH + x + 1] =
+                    (unsigned char)(packed & 0x0fU);
+            }
+        }
+        if (!dm1_v1_fmtowns_hud_layout_rect(edition,
+                (unsigned int)(175 + selected),
+                CHAMPION_PORTRAIT_BITMAP_WIDTH,
+                CHAMPION_PORTRAIT_BITMAP_HEIGHT, &rect) ||
+            rect.width != CHAMPION_PORTRAIT_BITMAP_WIDTH ||
+            rect.height != CHAMPION_PORTRAIT_BITMAP_HEIGHT ||
+            !dm1_v1_fmtowns_hud_blit_indexed(edition,
+                (unsigned int)(175 + selected), unpacked,
+                CHAMPION_PORTRAIT_BITMAP_WIDTH,
+                CHAMPION_PORTRAIT_BITMAP_HEIGHT,
+                CHAMPION_PORTRAIT_BITMAP_WIDTH,
+                CHAMPION_PORTRAIT_BITMAP_HEIGHT, 0, 0,
+                framebuffer, framebufferWidth, framebufferHeight, -1)) {
+            return 0;
+        }
+    }
+
+    /* ReDMCSB CHAMDRAW.C F0292 fills C159..C162 and centers each living or
+     * dead champion's Name[] through F0650/F0635 C163..C166. F20's M653
+     * raster is loaded by m11_dm1_bind_original_font from picture 557; use
+     * that source glyph set and the F20 COORD.C anchors rather than the host
+     * text renderer. The selected inventory champion is named in C553, so
+     * its top-row strip is deliberately left clear. */
+    if (state->originalFontAvailable &&
+        M11_Font_IsLoaded(&state->originalFont) &&
+        state->assetsAvailable) {
+        static const unsigned char f20_color_dark_gray = 1u;
+        static const unsigned char f20_color_lightest_gray = 13u;
+        static const unsigned char f20_color_gold = 9u;
+        for (slot = 0; slot < state->world.party.championCount &&
+                       slot < CHAMPION_MAX_PARTY; ++slot) {
+            const struct ChampionState_Compat* champion =
+                &state->world.party.champions[slot];
+            DM1_V1_FmtownsHudRect nameBox;
+            char name[16];
+            unsigned char color;
+            if (!champion->present || slot == selected) continue;
+            m11_format_champion_name(champion->name, name, sizeof(name));
+            if (!name[0] || strcmp(name, "EMPTY") == 0) continue;
+            if (!dm1_v1_fmtowns_hud_layout_rect(edition,
+                    (unsigned int)(159 + slot), 43, 7, &nameBox) ||
+                nameBox.width != 43 || nameBox.height != 7) {
+                return 0;
+            }
+            /* F0733_FillZoneByIndex(C159 + slot, C01_COLOR_DARK_GRAY). */
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          nameBox.x, nameBox.y, nameBox.width,
+                          nameBox.height, f20_color_dark_gray);
+            color = champion->hp.current <= 0
+                ? f20_color_lightest_gray
+                : (slot == state->world.party.activeChampionIndex
+                    ? f20_color_gold : f20_color_lightest_gray);
+            m11_draw_dm1_status_name_text(
+                framebuffer, framebufferWidth, framebufferHeight,
+                nameBox.x + 1, nameBox.y + 5, name,
+                color, f20_color_dark_gray);
+        }
+    }
+
+    /* ReDMCSB CHAMDRAW.C F0292 calls F0287 for each champion with statistics
+     * enabled, including the selected inventory champion and dead champions.
+     * F0287 draws health, stamina and mana in C195..C206. G0046 supplies the
+     * per-slot colors; F20 grows the colored portion upward from the bottom
+     * and preserves one row for any positive current stat. */
+    {
+        static const uint8_t f20_champion_colors[4] = {7u, 11u, 8u, 14u};
+        for (slot = 0; slot < state->world.party.championCount &&
+                       slot < CHAMPION_MAX_PARTY; ++slot) {
+            const struct ChampionState_Compat* champion =
+                &state->world.party.champions[slot];
+            const struct ChampionStat_Compat* stats[3];
+            int stat;
+            if (!champion->present) continue;
+            stats[0] = &champion->hp;
+            stats[1] = &champion->stamina;
+            stats[2] = &champion->mana;
+            for (stat = 0; stat < 3; ++stat) {
+                const unsigned int zone =
+                    (unsigned int)(195 + slot + stat * 4);
+                if (!dm1_v1_fmtowns_hud_draw_bar(edition, zone,
+                        stats[stat]->current, stats[stat]->maximum,
+                        f20_champion_colors[slot], 12u,
+                        framebuffer, framebufferWidth, framebufferHeight)) {
+                    return 0;
+                }
+            }
+        }
+    }
+    /* ReDMCSB CHAMDRAW.C F0292/F0291 draws C211..C218 for living
+     * champions. F0291 expands each 16x16 hand zone by G2077=1 pixel for
+     * C033/C034/C035, blits that 18x18 bitmap with C12 transparent, then
+     * F0038 draws the selected 16x16 object icon opaquely in the hand zone. */
+    if (state->assetsAvailable) {
+        for (slot = 0; slot < state->world.party.championCount &&
+                       slot < CHAMPION_MAX_PARTY; ++slot) {
+            const struct ChampionState_Compat* champion =
+                &state->world.party.champions[slot];
+            int hand;
+            if (!champion->present || champion->hp.current <= 0) continue;
+            for (hand = 0; hand < 2; ++hand) {
+                const unsigned int zone =
+                    (unsigned int)(211 + slot * 2 + hand);
+                const int frameGraphic =
+                    dm1_v1_champion_status_hand_slot_graphic_pc34(
+                        hand, (uint16_t)champion->wounds,
+                        hand == DM1_SLOT_ACTION_HAND &&
+                            state->actingChampionOrdinal ==
+                                (unsigned int)(slot + 1));
+                DM1_V1_FmtownsHudRect iconRect;
+                const M11_AssetSlot* frame;
+                int iconIndex;
+                if (frameGraphic <= 0 ||
+                    !dm1_v1_fmtowns_hud_layout_rect(
+                        edition, zone, 16, 16, &iconRect) ||
+                    iconRect.width != 16 || iconRect.height != 16 ||
+                    iconRect.x < 1 || iconRect.y < 1 ||
+                    iconRect.x + 16 >= framebufferWidth ||
+                    iconRect.y + 16 >= framebufferHeight) {
+                    continue;
+                }
+                frame = M11_AssetLoader_Load(
+                    (M11_AssetLoader*)&state->assetLoader,
+                    (unsigned int)frameGraphic);
+                if (!frame || !frame->loaded || !frame->pixels ||
+                    frame->width != 18u || frame->height != 18u) {
+                    continue;
+                }
+                M11_AssetLoader_BlitRegion(
+                    frame, 0, 0, 18, 18,
+                    framebuffer, framebufferWidth, framebufferHeight,
+                    iconRect.x - 1, iconRect.y - 1,
+                    DM1_COLOR_DARKEST_GRAY);
+
+                /* F0291/F0038 uses C212+slot*2 for an empty hand; held
+                 * objects use F0033's current object icon record. An
+                 * unbound icon stays absent while the native frame remains. */
+                iconIndex = m11_v1_status_hand_icon_index(
+                    state, slot, hand);
+                if (iconIndex >= 0) {
+                    (void)m11_draw_dm_object_icon_index(
+                        state, framebuffer, framebufferWidth,
+                        framebufferHeight, iconIndex,
+                        iconRect.x, iconRect.y, 0);
+                }
+            }
+        }
+    }
+    return 1;
+}
+
 static int m11_draw_dm1_v1_top_row_receipt(
     const M11_GameViewState* state,
     unsigned char* framebuffer,
@@ -68860,15 +69369,30 @@ static int m11_draw_dm1_v1_top_row_receipt(
     int invisibilityMaterialReady;
     int statusBarFrameReady;
     int operationIndex;
+    const unsigned char *indexedPalette;
 
     if (!m11_dm1_v1_top_row_receipt_required(state) || !framebuffer) {
         return 0;
     }
-
-    if (!dm1_v1_champion_panel_material_from_m11_loader_pc34(
+    if (m11_is_dm1_fmtowns(state)) {
+        return m11_draw_dm1_fmtowns_top_row_zones(
+            state, framebuffer, framebufferWidth, framebufferHeight);
+    }
+    if (m11_is_dm1_fmtowns(state) &&
+        (!state->dm1FmtownsStartupReceiptValid ||
+         !state->dm1FmtownsStartupReceipt.game_dungeon_palettes_verified)) {
+        return 0;
+    }
+    indexedPalette = m11_dm1_v1_top_row_palette(state);
+    if (!(m11_is_dm1_fmtowns(state)
+              ? dm1_v1_champion_panel_material_from_m11_loader_fmtowns(
+                    (M11_AssetLoader*)&state->assetLoader,
+                    &state->originalFont, indexedPalette,
+                    VGA_PALETTE_PC34_COLOR_COUNT, &panelMaterials)
+              : dm1_v1_champion_panel_material_from_m11_loader_pc34(
             (M11_AssetLoader*)&state->assetLoader, &state->originalFont,
-            &G9010_auc_VgaPaletteBrightest_Compat[0][0],
-            VGA_PALETTE_PC34_COLOR_COUNT, &panelMaterials) ||
+                    indexedPalette, VGA_PALETTE_PC34_COLOR_COUNT,
+                    &panelMaterials)) ||
         !panelMaterials.valid || !panelMaterials.suppressSyntheticFallback ||
         !dm1_v1_champion_top_row_assets_from_m11_loader_pc34(
             (M11_AssetLoader*)&state->assetLoader, &assets) ||
@@ -68882,14 +69406,14 @@ static int m11_draw_dm1_v1_top_row_receipt(
             state, &presentation, &redrawMaterials, &redraw, &handoff) ||
         !handoff.valid) {
         m11_clear_dm1_v1_top_row_receipt_zones(
-            framebuffer, framebufferWidth, framebufferHeight);
+            state, framebuffer, framebufferWidth, framebufferHeight);
         return 0;
     }
 
     if (!m11_dm1_v1_top_row_atomic_host_consume(
             state, &assets, framebuffer, framebufferWidth, framebufferHeight)) {
         m11_clear_dm1_v1_top_row_receipt_zones(
-            framebuffer, framebufferWidth, framebufferHeight);
+            state, framebuffer, framebufferWidth, framebufferHeight);
         return 0;
     }
 
@@ -68911,7 +69435,7 @@ static int m11_draw_dm1_v1_top_row_receipt(
          !shieldMaterialReady) ||
         (frame.invisibilityCount > 0 && !invisibilityMaterialReady)) {
         m11_clear_dm1_v1_top_row_receipt_zones(
-            framebuffer, framebufferWidth, framebufferHeight);
+            state, framebuffer, framebufferWidth, framebufferHeight);
         return 0;
     }
 
@@ -68927,7 +69451,7 @@ static int m11_draw_dm1_v1_top_row_receipt(
             if (operation->sourceOperationIndex < 0 ||
                 operation->sourceOperationIndex >= presentation.operationCount) {
                 m11_clear_dm1_v1_top_row_receipt_zones(
-                    framebuffer, framebufferWidth, framebufferHeight);
+                    state, framebuffer, framebufferWidth, framebufferHeight);
                 return 0;
             }
             source = &presentation.operations[operation->sourceOperationIndex];
@@ -68940,7 +69464,7 @@ static int m11_draw_dm1_v1_top_row_receipt(
                   source->kind == DM1_V1_CHAMPION_TOP_ROW_OP_BLIT_HAND_PC34) &&
                  !m11_dm1_v1_top_row_receipt_source_slot(state, source))) {
                 m11_clear_dm1_v1_top_row_receipt_zones(
-                    framebuffer, framebufferWidth, framebufferHeight);
+                    state, framebuffer, framebufferWidth, framebufferHeight);
                 return 0;
             }
         } else if (operation->kind == DM1_V1_CHAMPION_PARTY_INVENTORY_HANDOFF_REDRAW_PC34) {
@@ -68948,7 +69472,7 @@ static int m11_draw_dm1_v1_top_row_receipt(
             if (operation->sourceOperationIndex < 0 ||
                 operation->sourceOperationIndex >= redraw.operationCount) {
                 m11_clear_dm1_v1_top_row_receipt_zones(
-                    framebuffer, framebufferWidth, framebufferHeight);
+                    state, framebuffer, framebufferWidth, framebufferHeight);
                 return 0;
             }
             source = &redraw.operations[operation->sourceOperationIndex];
@@ -68966,12 +69490,12 @@ static int m11_draw_dm1_v1_top_row_receipt(
                  (source->pendingDamageAmount <= 0 ||
                   !m11_dm1_pc34_hud_font_is_source_bound(state)))) {
                 m11_clear_dm1_v1_top_row_receipt_zones(
-                    framebuffer, framebufferWidth, framebufferHeight);
+                    state, framebuffer, framebufferWidth, framebufferHeight);
                 return 0;
             }
         } else {
             m11_clear_dm1_v1_top_row_receipt_zones(
-                framebuffer, framebufferWidth, framebufferHeight);
+                state, framebuffer, framebufferWidth, framebufferHeight);
             return 0;
         }
     }
@@ -69100,7 +69624,7 @@ static int m11_draw_dm1_v1_top_row_receipt(
 
             default:
                 m11_clear_dm1_v1_top_row_receipt_zones(
-                    framebuffer, framebufferWidth, framebufferHeight);
+                    state, framebuffer, framebufferWidth, framebufferHeight);
                 return 0;
         }
     }
@@ -69109,7 +69633,7 @@ static int m11_draw_dm1_v1_top_row_receipt(
         state, &assets, framebuffer, framebufferWidth, framebufferHeight);
     if (!statusBarFrameReady) {
         m11_clear_dm1_v1_top_row_receipt_zones(
-            framebuffer, framebufferWidth, framebufferHeight);
+            state, framebuffer, framebufferWidth, framebufferHeight);
         m11_clear_dm1_v1_status_bar_receipt_zones(
             framebuffer, framebufferWidth, framebufferHeight);
         return 0;
@@ -69145,7 +69669,7 @@ static int m11_draw_dm1_v1_top_row_receipt(
                             source->pendingDamageAmount,
                             isInventory, &origin)) {
                         m11_clear_dm1_v1_top_row_receipt_zones(
-                            framebuffer, framebufferWidth, framebufferHeight);
+                            state, framebuffer, framebufferWidth, framebufferHeight);
                         return 0;
                     }
                     snprintf(damageText, sizeof(damageText), "%d",
@@ -69162,7 +69686,7 @@ static int m11_draw_dm1_v1_top_row_receipt(
             m11_dm1_v1_top_row_material_fnv1a(&assets);
         if (materialFNV1a == 0u) {
             m11_clear_dm1_v1_top_row_receipt_zones(
-                framebuffer, framebufferWidth, framebufferHeight);
+                state, framebuffer, framebufferWidth, framebufferHeight);
             return 0;
         }
         m11_dm1_runtime_capture_route_evidence(
@@ -69206,7 +69730,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
          * direct legacy painter must not republish a partial HUD with omitted
          * bars, borders, icons, or original text. */
         m11_clear_dm1_v1_top_row_receipt_zones(
-            framebuffer, framebufferWidth, framebufferHeight);
+            state, framebuffer, framebufferWidth, framebufferHeight);
         m11_clear_dm1_v1_status_bar_receipt_zones(
             framebuffer, framebufferWidth, framebufferHeight);
         return;
@@ -74125,7 +74649,7 @@ static void m11_game_view_draw_source(M11_GameViewState* state,
                 rendered = -1;
             } else {
                 (void)m11_dm2_apply_fmtowns_runtime_palette(
-                    (const DM2_V1_BootProfile *)state->dm2BootProfile);
+                    state);
             }
         }
         if (rendered == -1) {

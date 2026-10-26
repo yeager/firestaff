@@ -90,10 +90,17 @@ expect_unsupported_pair() {
             echo "FAIL: unsupported platform $platform was accepted for $game ($route)" >&2
             exit 1
         fi
-        case "$output" in
-            *"firestaff: game '$game' has no launchable version for --platform $platform_label"*) ;;
-            *) printf '%s\n' "$output" >&2; exit 1 ;;
-        esac
+        if [ "$game" = csb ] && [ "$platform" = pc ]; then
+            case "$output" in
+                *'firestaff: CSB has no original DOS/PC release; use --platform amiga, atari-st, or fm-towns'*) ;;
+                *) printf '%s\n' "$output" >&2; exit 1 ;;
+            esac
+        else
+            case "$output" in
+                *"firestaff: game '$game' has no launchable version for --platform $platform_label"*) ;;
+                *) printf '%s\n' "$output" >&2; exit 1 ;;
+            esac
+        fi
         assert_rejected_before_scan "$output" "$game/$platform/$route"
     done
 }

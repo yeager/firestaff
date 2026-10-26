@@ -31,7 +31,7 @@
  *   Followed by:
  *
  *   HUNK_BSS payload (zero-run length table; payload is just metadata)
- *   HUNK_DATA payload (resource area; may use zero-run compression)
+ *   HUNK_DATA payload (10-byte header, compressed area 1 and relocations)
  *   HUNK_CODE payload (Amiga-style 68k code; may use 0x5223 magic +
  *                      1920-word frequency table + nibble-coded stream,
  *                      same algorithm as the Atari ST PAK format)
@@ -52,12 +52,9 @@
  * HUNK_CODE decompression delegates to FirestaffPak_Decode.
  *
  * HUNK_DATA is exposed in two forms:
- *   - raw_data:    pointer to the compressed bytes as stored on disk
- *                  (zero-run encoded; may need further FTL resource
- *                  decoding depending on which area the caller wants)
- *   - decoded:     best-effort zero-run decoded bytes (when raw_data
- *                  happens to be uncompressed, this is identical;
- *                  otherwise the zero-run scheme is reversed here)
+ *   - raw_data:    pointer to the full DATA hunk as stored on disk
+ *   - decoded:     zero-run decoded area 1, excluding the DATA header
+ *                  and area 2 relocation records
  *
  * HUNK_BSS is exposed as raw_data only (BSS is metadata for the loader;
  * there is no payload to decompress).

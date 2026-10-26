@@ -1004,9 +1004,21 @@ typedef struct {
     uint8_t actor;
     uint16_t value;
     uint16_t action_word;
+    /* c_tim::ticks_and_map and packed wvalueB location decoded from the live
+     * timer that owns this DB14. Coordinates use the source five-bit fields. */
+    uint8_t map_index;
+    uint8_t map_x;
+    uint8_t map_y;
     uint8_t direction;
     uint32_t raw_timer_hash;
 } DM2_V1_G1MissileTimerReceipt;
+
+#define DM2_V1_G1_VISIBLE_MISSILE_MAX 60u
+typedef struct {
+    DM2_V1_G1MissileChainSnapshot source;
+    int timer_valid;
+    DM2_V1_G1MissileTimerReceipt timer;
+} DM2_V1_RuntimeVisibleMissileSnapshot;
 
 /* SKWIN/SkWinCore.cpp::QUERY_CREATURE_BLIT_RECTI. The returned id is the
  * source RAW4 rectangle index; callers add QUERY_TEMP_PICST flags separately. */
@@ -1491,6 +1503,17 @@ typedef struct DM2_V1_DungeonData {
 int dm2_v1_g1_direct_missile_receipt(const DM2_V1_DungeonData *d,
                                      uint16_t object_id,
                                      DM2_V1_G1DirectMissileReceipt *out);
+/* Live counterpart for a source-owned DB14 allocated in the active runtime
+ * record pools. Linked spell/item objects prefer the live pools and use the
+ * immutable dungeon owner only when the handle is not present in those pools.
+ * The existing dungeon-only selector above intentionally remains unchanged. */
+int dm2_v1_g1_live_flying_item_selector_receipt(
+    const DM2_V1_DungeonData *dungeon,
+    const struct DM2_V1_RecordPoolSet *record_pools,
+    const DM2_V1_AssetLoader *loader,
+    uint16_t missile_object_id,
+    DM2_V1_G1DirectMissileReceipt *out_missile,
+    DM2_V1_G1FlyingItemSelectorReceipt *out_selector);
 /* Snapshots DB14 records from caller ordered visible cells (at most the
  * source's 20 table1d7029 cells), preserving cell and chain order. G1 formats
  * without persisted w0 links use one root record per tile. Malformed chains,

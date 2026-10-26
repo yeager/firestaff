@@ -1,6 +1,6 @@
-/* Lane C cycle 13 regression test:
+/* Lane C regression test:
  *   - door state -> open_pct source table
- *   - side/deep static-object cell ordering (fail-closed until source tables)
+ *   - source table1d6ad0 mapping for center, side and deep draw cells
  *   - custom wall-button pushed variant field selection
  */
 #include "dm2_v1_viewport_renderer.h"
@@ -42,6 +42,20 @@ static void test_door_open_pct_from_state(void)
 
 static void test_static_object_side_deep_cell_ordering(void)
 {
+    static const int8_t source_lateral[23] = {
+         0, -1,  1,  0, -1,  1,  0, -1,  1, -2,  2,  0,
+        -1,  1, -2,  2,  0, -1,  1, -2,  2, -3,  3
+    };
+    static const int8_t source_forward[23] = {
+        0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 2, 3,
+        3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4
+    };
+    static const int8_t source_pass[23] = {
+        -1, 18, 19, 17, 15, 16, 14, 12, 13, 10, 11, 9,
+        7, 8, 5, 6, 4, 2, 3, 0, 1, -1, -1
+    };
+    static const int dx[4] = { 0, 1, 0, -1 };
+    static const int dy[4] = { -1, 0, 1, 0 };
     int cell, pass;
 
     /* Party faces north (dir=0) at (10,10). */
@@ -53,6 +67,14 @@ static void test_static_object_side_deep_cell_ordering(void)
           dm2_v1_viewport_static_object_cell_for_map(11, 9, 0, 10, 10,
                                                      &cell, &pass) == 1 &&
               cell == 5 && pass == 16);
+    CHECK("D0L maps to source cell 1 with valid pass",
+          dm2_v1_viewport_static_object_cell_for_map(9, 10, 0, 10, 10,
+                                                     &cell, &pass) == 1 &&
+              cell == 1 && pass == 18);
+    CHECK("D0R maps to source cell 2 with valid pass",
+          dm2_v1_viewport_static_object_cell_for_map(11, 10, 0, 10, 10,
+                                                     &cell, &pass) == 1 &&
+              cell == 2 && pass == 19);
     CHECK("D2L maps to source cell 7 with valid pass",
           dm2_v1_viewport_static_object_cell_for_map(9, 8, 0, 10, 10,
                                                      &cell, &pass) == 1 &&
@@ -76,17 +98,43 @@ static void test_static_object_side_deep_cell_ordering(void)
     CHECK("D0C remains without a generic table pass",
           dm2_v1_viewport_static_object_cell_for_map(10, 10, 0, 10, 10,
                                                      &cell, &pass) == 0);
-    CHECK("out-of-range lateral is rejected",
+    CHECK("D2 far-right cell maps to table1d7029 cell 10",
           dm2_v1_viewport_static_object_cell_for_map(12, 8, 0, 10, 10,
-                                                     &cell, &pass) == 0);
+                                                     &cell, &pass) == 1 &&
+              cell == 10 && pass == 11);
+    CHECK("D3 far-left cell maps to table1d7029 cell 14",
+          dm2_v1_viewport_static_object_cell_for_map(8, 7, 0, 10, 10,
+                                                     &cell, &pass) == 1 &&
+              cell == 14 && pass == 5);
+    CHECK("D3 far-right cell maps to table1d7029 cell 15",
+          dm2_v1_viewport_static_object_cell_for_map(12, 7, 0, 10, 10,
+                                                     &cell, &pass) == 1 &&
+              cell == 15 && pass == 6);
     CHECK("out-of-range forward is rejected",
           dm2_v1_viewport_static_object_cell_for_map(10, 4, 0, 10, 10,
                                                      &cell, &pass) == 0);
 
-    /* Cycle 15: side/deep cells 1..15 are admitted because glbTabYAxisDistance,
-     * _4976_418e and the display-order tables prove their placement.  Cell 0
-     * (no table1d7029 pass) and D4 cells (DRAW_PUT_DOWN_ITEM distance guard)
-     * stay fail-closed. */
+    /* Rotate every table1d6ad0 cell through all four party directions. This
+     * catches missing ±2 lanes and verifies each cell's table1d7029 pass. */
+    for (int dir = 0; dir < 4; ++dir) {
+        for (int expected_cell = 1; expected_cell <= 20; ++expected_cell) {
+            int map_x = 10 + dx[dir] * source_forward[expected_cell] -
+                dy[dir] * source_lateral[expected_cell];
+            int map_y = 10 + dy[dir] * source_forward[expected_cell] +
+                dx[dir] * source_lateral[expected_cell];
+            int expected = source_pass[expected_cell] >= 0;
+            int actual = dm2_v1_viewport_static_object_cell_for_map(
+                map_x, map_y, dir, 10, 10, &cell, &pass);
+            CHECK("rotated table1d6ad0 cell/pass mapping",
+                  actual == expected &&
+                  (!expected || (cell == expected_cell &&
+                                  pass == source_pass[expected_cell])));
+        }
+    }
+
+    /* Static-object plans cover cells 1..15. Other view cells remain
+     * available for source ordering, while DRAW_PUT_DOWN_ITEM itself rejects
+     * cells beyond 15. */
     {
         DM2_V1_StaticObjectSourcePlan plan;
         CHECK("D1L source plan derives its side-cell placement",

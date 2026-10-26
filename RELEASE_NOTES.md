@@ -1,3 +1,38 @@
+# Firestaff v3.0.416
+
+## User-facing changes
+
+- `DM1 FM Towns`: load native F20 wall ornaments, inscription fonts, champion portraits, status panels and hand slots for the tested Hall of Champions paths.
+- `DM1 PC`: use source-backed wall inscription, door-button, champion-mirror and held-item presentation data in the covered PC 3.4 runtime paths.
+- `CSB Amiga`: add playback of the authentic FTL intro sequence from SWSH media, preserve mixed-case archive access, and keep the missing-SWSH fallback explicit.
+- `CSB FM Towns`: add source-backed stairs and animated doors for the covered viewport states.
+- `DM2 FM Towns`: bind HUD portraits, champion status and dungeon viewport materials to native asset and runtime state, including the covered live projectile paths.
+- `DM2 combat rendering`: bind moving missiles to their live source tile and timer state, and keep static item rendering tied to the source cell.
+- `Launcher startup`: bind selected games by stable game identity and honor explicit startup window dimensions across supported routes.
+- `Renderer initialization`: bind the requested default presentation mode through shared initialization.
+- `CSB PC CLI`: reject unsupported platform selection before scanning game data.
+
+## Developer changes
+
+- `DM1, CSB and DM2 authentic-media tests`: add and extend original-media coverage for FM Towns handoff, HUD, stairs, doors, DM1 PC34 combat and wall materials, and DM2 live viewport state.
+- `CSB Amiga FTL reader`: bound container and decoded-data reads, correct DATA-area decoding and checksum arithmetic, and add authentic SWSH decode and runtime-route regressions.
+- `FM Towns graphics readers`: add source-locked F20 HUD and wall-ornament tests and CSB stair-state checks against authentic media.
+- `Nexus VDP1 and VDP2 analysis`: add capture-bound command replay, texture and palette resolution, sprite composition, DGN/item material joins, and source-to-capture validation tools; retain the distinction between traced captures and production gameplay.
+- `Theron's Quest trace tools`: tighten scripted-input, BRAM and capture-receipt checks, preserve normal controller traces, and add authentic-media readiness evidence.
+- `Startup and localization`: regenerate launcher catalogs after source-string changes and extend all-game launch, input, display and failure-path checks.
+- `Cross-platform verification`: extend CMake and CI checks for media policies, deterministic outputs, debug telemetry, launcher handoff and platform-specific regression targets.
+- `Release metadata`: update the project version and regenerate the reproducible SPDX source SBOM for v3.0.416.
+
+## Known limitations
+
+- These changes do not establish complete gameplay or visual parity across every game and supported platform.
+- `DM1`: complete viewport timing, object and wall rendering, combat, HUD and input parity still require broader platform-by-platform verification; the cited tests cover only named source states.
+- `CSB`: full gameplay and viewport parity across Amiga, Atari and FM Towns remains incomplete; authentic SWSH audio/display timing has not been verified on physical hardware.
+- `DM2`: HUD and viewport parity remains incomplete outside the specifically tested states and platforms; no physical-display capture establishes full parity.
+- `Nexus`: capture analysis and menu evidence do not establish a complete production New Game/Continue path or playable-level parity.
+- `Theron's Quest`: trace and startup evidence do not establish complete source-driven dungeon rendering or campaign parity.
+- Original game media and BIOS/firmware are not included in release packages.
+
 # Firestaff v3.0.415
 
 ## Developer changes

@@ -1366,6 +1366,35 @@ static void check_sdl3_close_request_after_poll_uses_queue_drain(void) {
 #endif
 }
 
+static void check_renderer_bootstrap_honors_requested_windowed_geometry(void) {
+    int initResult = M11_Render_InitWithWindowMode(
+        1200, 800, M11_SCALE_FIT, M11_WINDOW_MODE_WINDOWED);
+    int windowW = 0;
+    int windowH = 0;
+    int drawableW = 0;
+    int drawableH = 0;
+
+    if (initResult != M11_RENDER_OK) {
+        puts("SKIP renderer window-mode bootstrap: no SDL presentation driver");
+        return;
+    }
+
+    CHECK(M11_Render_GetWindowMode() == M11_WINDOW_MODE_WINDOWED);
+    CHECK(M11_Render_GetWindowAndDrawableSize(
+              &windowW, &windowH, &drawableW, &drawableH) == 1);
+    if (SDL_GetCurrentVideoDriver() &&
+        strcmp(SDL_GetCurrentVideoDriver(), "dummy") == 0) {
+        CHECK(windowW == 1200);
+        CHECK(windowH == 800);
+    }
+    CHECK(M11_Render_SetWindowMode(M11_WINDOW_MODE_MAXIMIZED) == M11_RENDER_OK);
+    CHECK(M11_Render_GetWindowMode() == M11_WINDOW_MODE_MAXIMIZED);
+    CHECK(M11_Render_SetWindowMode(M11_WINDOW_MODE_WINDOWED) == M11_RENDER_OK);
+    CHECK(M11_Render_GetWindowMode() == M11_WINDOW_MODE_WINDOWED);
+    puts("PASS renderer starts windowed at the requested geometry and applies saved modes explicitly");
+    M11_Render_Shutdown();
+}
+
 static void check_arg_validation_invariants(void) {
     int rectX = -1;
     int rectY = -1;
@@ -1849,6 +1878,7 @@ int main(void) {
     check_sdl3_stale_pixel_resize_event_preserves_live_retina_pair();
     check_sdl3_window_close_request_quits_renderer();
     check_sdl3_close_request_after_poll_uses_queue_drain();
+    check_renderer_bootstrap_honors_requested_windowed_geometry();
 
     /* Wire the dead-code check_integer_scaled_movement_arrows_at_resolution
      * helper into main() so the M11_SCALE_FIT + integerScaling +

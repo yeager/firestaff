@@ -92,6 +92,7 @@ typedef struct {
     char name1[8];
     char name2[20];
     int8_t party_position;
+    int8_t hero_type;
     /* Read-only c_hero spell-admission inputs.  These expose the original
      * SKSAVE state to presentation/tests without giving callers a way to
      * fabricate a castable champion. */
@@ -320,6 +321,32 @@ int  dm2_v1_runtime_commit_source_game_load(
 int dm2_v1_runtime_cast_spell_player(
     int hero_index, int hand_index,
     DM2_V1_RuntimeSpellCastReceipt *out_receipt);
+/* Read the active runtime DB14 and resolve its linked GDAT selector through
+ * the current record-pool owner. This does not mutate the dungeon or render. */
+int dm2_v1_runtime_live_missile_selector_receipt(
+    int missile_record_handle,
+    DM2_V1_G1DirectMissileReceipt *out_missile,
+    DM2_V1_G1FlyingItemSelectorReceipt *out_selector);
+/* Resolve a live DB14's timer index against the active runtime timer queue.
+ * The returned action_word is the source wvalueB used by DRAW_FLYING_ITEM;
+ * missing, expired, ambiguous, or mismatched timer owners fail closed. */
+int dm2_v1_runtime_live_missile_timer_receipt(
+    int missile_record_handle,
+    DM2_V1_G1MissileTimerReceipt *out_timer);
+/* Snapshot DB14 chains from caller-ordered visible source cells in the active
+ * runtime and join each record to its live timer when one is present. */
+int dm2_v1_runtime_snapshot_visible_missile_chains(
+    int map, const DM2_V1_G1VisibleMapCell *visible_cells,
+    size_t visible_cell_count, uint8_t view_direction,
+    DM2_V1_RuntimeVisibleMissileSnapshot *out_snapshots,
+    size_t snapshot_capacity, size_t *out_count);
+/* Internal context bridge kept in the runtime object so source-only runtime
+ * tests do not acquire a new dependency on the projectile selector module. */
+struct DM2_V1_RecordPoolSet;
+int dm2_v1_runtime_live_missile_selector_context(
+    const DM2_V1_DungeonData **out_dungeon,
+    const struct DM2_V1_RecordPoolSet **out_pools,
+    const DM2_V1_AssetLoader **out_loader);
 /* Copy the currently visible source rune line into the live c_hero owner.
  * M11 owns the panel buffer; DM2 owns the cast transaction. */
 int dm2_v1_runtime_set_spell_runes(int hero_index,
@@ -1619,6 +1646,8 @@ size_t dm2_v1_runtime_creature_movement_receipts_since(
     size_t capacity, uint64_t *out_dropped);
 /* Read-only owner receipt for savegames1.b_04 (Aura of Speed). */
 int dm2_v1_runtime_get_source_aura_of_speed(uint8_t *out_value);
+/* Read the Towns source savegames1.b_02 count used by live 0x47 timers. */
+int dm2_v1_runtime_get_source_47_count(uint8_t *out_count);
 /* Returns -1 without mutation: c_hero item links require the original DB
  * record-chain allocator and may not be supplied as 32-bit host handles. */
 int dm2_v1_runtime_set_champion_inventory_object(uint8_t champion,
