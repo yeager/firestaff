@@ -1417,6 +1417,15 @@ joined to a same-frame source asset, Firestaff renderer output or a retail
 menu/HUD/viewport owner. Ymir remains an external development tool, never a
 Firestaff runtime dependency. The PR is open and has not been released.
 
+The follow-up [Ymir PR #965](https://github.com/ymir-emu/Ymir/pull/965)
+adds `--load-state SLOT` and `--dump-memory` for unattended capture.  The
+frontend queues a requested save-state load before the dump on the emulation
+event queue, avoiding host-window focus and synthetic keyboard input.  It is
+intended to reproduce an already hash-pinned, authentic state with an
+isolated profile; it neither packages game bytes nor proves a hardware
+presentation route.  Any resulting dump still requires the normal
+same-session source, palette, VDP command, and consumer admission checks.
+
 ## Mednafen generic VDP1 state and bus-order handoff
 
 The generic Mednafen candidate now emits an optional `state=` line after
