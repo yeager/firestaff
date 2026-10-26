@@ -12,9 +12,13 @@
 #include "csb_v1_f0070_champion_formation_pc34_compat.h"
 #include "csb_v1_fmtowns_game.h"
 #include "csb_v1_fmtowns_graphics_dat.h"
+#include "csb_v1_fmtowns_stairs.h"
 #include "csb_v1_fmtowns_portrait.h"
 #include "csb_v1_fmtowns_switch.h"
 #include "csb_v1_fmtowns_utility_render.h"
+#include "csb_v1_viewport_f0110_door_button_pc34_compat.h"
+#include "csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat.h"
+#include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "dm1_v1_champion_status_layout_pc34_compat.h"
 #include "dm1_v1_creature_render_pc34_compat.h"
 #include "dm1_v1_input_command_queue_pc34_compat.h"
@@ -101,6 +105,56 @@ static uint8_t *load_profile_graphics(const CSB_V1_BootProfile *profile,
            profile->fmtowns_graphics_size);
     *out_size = profile->fmtowns_graphics_size;
     return bytes;
+}
+
+typedef struct F31DoorRasterProvider {
+    const uint8_t *graphics;
+    size_t graphics_size;
+    uint8_t *scratch;
+    int floor_set;
+    int wall_set;
+    int requests[4]; /* F0110, D3 panel, D2 panel, D1 panel. */
+} F31DoorRasterProvider;
+
+static int f31_door_raster_graphic_provider(
+    void *user_data, int graphic_index, const uint8_t **out_pixels,
+    int *out_width, int *out_height)
+{
+    F31DoorRasterProvider *provider = (F31DoorRasterProvider *)user_data;
+    CSB_V1_FmtownsItemDecodeReceipt receipt;
+    unsigned int source_index = (unsigned int)graphic_index;
+    int slot = -1;
+
+    if (!provider || !provider->graphics || !provider->scratch ||
+        !out_pixels || !out_width || !out_height || graphic_index < 0)
+        return 0;
+    if (graphic_index == 453) {
+        slot = 0;
+    } else if (graphic_index >= 246 && graphic_index <= 257) {
+        int depth = (graphic_index - 246) % 3;
+        slot = depth == 0 ? 1 : (depth == 1 ? 2 : 3);
+    }
+    if (graphic_index >= 86 && graphic_index <= 92) {
+        source_index = 86 + provider->wall_set * 40 + graphic_index - 86;
+    } else if (graphic_index >= 93 && graphic_index <= 107) {
+        source_index = 86 + provider->wall_set * 40 + 7 + graphic_index - 93;
+    } else if (graphic_index >= 108 && graphic_index < 126) {
+        if (!csb_v1_fmtowns_stairs_graphic_index(
+                provider->wall_set, graphic_index, &source_index)) return 0;
+    } else if (graphic_index >= 78 && graphic_index <= 85) {
+        source_index = 78 + provider->floor_set * 2 + graphic_index - 78;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!csb_v1_fmtowns_graphics_decode_item(
+            provider->graphics, provider->graphics_size,
+            (uint16_t)source_index, provider->scratch,
+            640u * 400u, &receipt) || !receipt.valid ||
+        !receipt.is_image || receipt.pixel_count > 640u * 400u) return 0;
+    if (slot >= 0) ++provider->requests[slot];
+    *out_pixels = provider->scratch;
+    *out_width = receipt.width;
+    *out_height = receipt.height;
+    return 1;
 }
 
 static uint32_t fnv1a(const uint8_t *bytes, size_t size)
@@ -2221,6 +2275,122 @@ int main(void)
                   "F31 floor material is byte-identical to genuine GRAPHICS.DAT IMG2");
         }
         free(expected);
+        free(graphics);
+    }
+    {
+        const CSB_V1_BootProfile *live_profile =
+            (const CSB_V1_BootProfile *)view.csbBootProfile;
+        uint8_t *graphics = NULL;
+        uint8_t *scratch = NULL;
+        uint8_t *button_zone = NULL;
+        size_t graphics_size = 0u;
+        F31DoorRasterProvider provider;
+        CSB_V1_ViewportDoorButtonPlanPc34 button_plan;
+        const uint8_t *decoded = NULL;
+        int decoded_width = 0, decoded_height = 0;
+        int panel_source_found = 0, panel_graphic = -1;
+        int panel_door_set = -1, panel_door_state = -1, panel_flip_draws = -1;
+        const CSB_V1_DungeonData *dungeon = NULL;
+        int level;
+
+        memset(&provider, 0, sizeof(provider));
+        if (live_profile) {
+            graphics = load_profile_graphics(live_profile, &graphics_size);
+            scratch = (uint8_t *)malloc(640u * 400u);
+            button_zone = (uint8_t *)malloc(224u * 136u);
+            dungeon = live_profile->runtime.dungeon_handle;
+        }
+        provider.graphics = graphics;
+        provider.graphics_size = graphics_size;
+        provider.scratch = scratch;
+        CHECK(graphics && scratch && button_zone && dungeon,
+              "F31 door transaction binds original IMG2 media and runtime dungeon");
+        csb_v1_viewport_f0110_door_button_plan_pc34(
+            1, DM1_VIEW_DOOR_BUTTON_D3R, &button_plan);
+        CHECK(button_plan.valid && button_plan.native_bitmap_index == 0 &&
+                  button_plan.coord_x1 == 199 && button_plan.coord_x2 == 204 &&
+                  button_plan.coord_y1 == 41 && button_plan.coord_y2 == 44,
+              "F31 F0110 D3R uses the exact G0208 zone and button ordinal");
+        CHECK(f31_door_raster_graphic_provider(
+                  &provider, 453, &decoded, &decoded_width, &decoded_height) &&
+                  decoded && decoded_width > 0 && decoded_height > 0 &&
+                  provider.requests[0] == 1,
+              "F31 F0110 requests authentic M634 item 453 through the IMG2 provider");
+        if (decoded && button_zone) {
+            int x, y, changed_inside = 0, outside_changed = 0;
+            memset(button_zone, 0x55, 224u * 136u);
+            CHECK(csb_v1_viewport_f0110_door_button_raster_pc34(
+                      decoded, decoded_width, decoded_height,
+                      DM1_VIEW_DOOR_BUTTON_D3R, button_zone, 224, 224, 136) > 0,
+                  "F31 F0110 D3R source pixels rasterize into the G0208 clip");
+            for (y = 0; y < 136; ++y) for (x = 0; x < 224; ++x) {
+                int in_zone = x >= 199 && x <= 204 && y >= 41 && y <= 44;
+                if (button_zone[y * 224 + x] != 0x55) {
+                    if (in_zone) changed_inside = 1;
+                    else outside_changed = 1;
+                }
+            }
+            CHECK(changed_inside && !outside_changed,
+                  "F31 F0110 writes pixels only inside the source-owned D3R zone");
+        }
+
+        /* Find a real door-button record in the installed F31 maps and
+         * resolve its G0693 item from MAP.D DoorSet0/1 plus DB0 type bit.
+         * This checks source provenance without moving the party to a
+         * synthetic test pose. */
+        if (dungeon && graphics && scratch) {
+            for (level = 0; level < dungeon->level_count && !panel_source_found;
+                 ++level) {
+                int y;
+                for (y = 0; y < dungeon->level_heights[level] && !panel_source_found;
+                     ++y) {
+                    int x;
+                    for (x = 0; x < dungeon->level_widths[level] && !panel_source_found;
+                         ++x) {
+                        int raw = csb_v1_dungeon_get_raw_square(
+                            dungeon, level, x, y);
+                        int thing, type, size;
+                        const uint8_t *record;
+                        uint16_t word;
+                        if (raw < 0 || ((raw >> 5) & 7) != 4) continue;
+                        thing = csb_v1_dungeon_get_first_thing(
+                            dungeon, level, x, y);
+                        if (thing < 0 || thing == 0xfffe || thing == 0xffff) continue;
+                        record = csb_v1_dungeon_get_thing_record(
+                            dungeon, (uint16_t)thing, &type, NULL, &size);
+                        if (!record || type != 0 || size < 4) continue;
+                        word = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+                        if (!(word & 0x0040u)) continue;
+                        panel_door_set = (word & 1u)
+                            ? dungeon->map_door_set1[level]
+                            : dungeon->map_door_set0[level];
+                        panel_door_state = raw & 7;
+                        panel_graphic = csb_v1_viewport_door_graphic_index_from_map_pc34(
+                            dungeon->map_door_set0[level],
+                            dungeon->map_door_set1[level], word, 0);
+                        if (csb_v1_viewport_d3_door_graphic_index_valid_pc34(
+                                panel_graphic) &&
+                            f31_door_raster_graphic_provider(
+                                &provider, panel_graphic, &decoded,
+                                &decoded_width, &decoded_height) &&
+                            decoded_width > 0 && decoded_height > 0) {
+                            (void)dm1_v1_f0111_animated_door_flip_mask_pc34(
+                                panel_door_set, panel_door_state, 0,
+                                &panel_flip_draws);
+                            panel_source_found = 1;
+                        }
+                    }
+                }
+            }
+        }
+        CHECK(panel_source_found && panel_graphic >= 246 && panel_graphic <= 257,
+              "F31 button door resolves its F0111 G0693 panel from MAP.D and DB0");
+        CHECK(panel_door_set >= 0 && panel_door_set <= 2 &&
+                  panel_graphic == 246 + panel_door_set * 3 &&
+                  panel_flip_draws == 0,
+              "F31 non-animated DoorSet selects D3 G0693 with F0111 flip mask zero");
+        free(button_zone);
+        free(scratch);
         free(graphics);
     }
     {

@@ -9114,8 +9114,11 @@ static int dm2_v1_render_fmtowns_squad_plan(
             uint32_t expected_palette_hash = 0u;
             const int figure_direction = (hero->towns_absdir + 4u -
                 s->hud_party.towns_party_direction) & 3u;
+            const int invisible =
+                s->hud_party.towns_savegames1_b02 != 0u;
             if (hero->towns_current_hp == 0 ||
                 !hero->towns_absdir_source_bound ||
+                !s->hud_party.towns_savegames1_b02_source_bound ||
                 command->gdat_category !=
                     DM2_GDAT_CATEGORY_INTERFACE_GENERAL ||
                 command->gdat_index != 6 || command->gdat_field != hero_slot ||
@@ -9124,8 +9127,11 @@ static int dm2_v1_render_fmtowns_squad_plan(
                 command->format != DM2_IMG_FMT_U4 || !command->pixels ||
                 command->source_transparency_key != 2u ||
                 command->source_state_flags !=
-                    (uint8_t)(figure_direction <<
-                        DM2_V1_GDAT_HUD_M11_TOWNS_DIRECTION_SHIFT) ||
+                    (uint8_t)((figure_direction <<
+                        DM2_V1_GDAT_HUD_M11_TOWNS_DIRECTION_SHIFT) |
+                        (invisible
+                            ? DM2_V1_GDAT_HUD_M11_TOWNS_INVISIBLE_FIGURE
+                            : 0u)) ||
                 !command->raw_hash || !command->raw_byte_count ||
                 !command->material_source_bytes ||
                 !command->material_source_byte_count ||

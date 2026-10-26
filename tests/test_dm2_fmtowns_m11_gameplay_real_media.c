@@ -1375,6 +1375,7 @@ int main(void)
             squad.champion_count = 1;
             squad.leader_index = 0;
             squad.towns_squad_route_valid = 1;
+            squad.towns_savegames1_b02_source_bound = 1;
             squad.towns_status_hero_source_bound = 1;
             squad.towns_status_hero_index = -1;
             squad.towns_party_direction = 0;
@@ -1556,6 +1557,54 @@ int main(void)
                     dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
                 }
                 dm2_v1_gdat_hud_m11_command_plan_free(&plan);
+            }
+            {
+                const DM2_V1_AssetLoader *loader =
+                    dm2_v1_boot_asset_loader(profile);
+                int sheet_width = 0, sheet_height = 0;
+                DM2_ImageFormat sheet_format = DM2_IMG_FMT_UNKNOWN;
+                uint8_t *sheet = dm2_v1_asset_load_image_field(
+                    loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 6, 0,
+                    &sheet_width, &sheet_height, &sheet_format);
+                squad.towns_savegames1_b02 = 1u;
+                check(sheet && sheet_width == 136 && sheet_height == 17 &&
+                          sheet_format == DM2_IMG_FMT_U4,
+                      "HME-242 source sheet contains the four global-invisibility figure frames");
+                for (int direction = 0; direction < 4; ++direction) {
+                    DM2_V1_GdatHudM11CommandPlan invisible_plan;
+                    int crop_matches = 1;
+                    squad.champions[0].towns_party_position =
+                        (uint8_t)direction;
+                    squad.champions[0].towns_absdir = (uint8_t)direction;
+                    memset(&invisible_plan, 0, sizeof(invisible_plan));
+                    int plan_ok = dm2_v1_boot_gdat_hud_m11_command_plan(
+                        (DM2_V1_BootProfile *)profile, &squad,
+                        &invisible_plan);
+                    if (plan_ok && sheet) {
+                        const DM2_V1_GdatHudM11Command *figure =
+                            &invisible_plan.commands[3];
+                        for (int row = 0; row < 17; ++row) {
+                            if (memcmp(figure->pixels + row * 17,
+                                    sheet + row * 136 +
+                                        (direction + 4) * 17,
+                                    17u) != 0) crop_matches = 0;
+                        }
+                        check(invisible_plan.command_count == 5 &&
+                                  figure->source_state_flags ==
+                                      (uint8_t)((direction <<
+                                          DM2_V1_GDAT_HUD_M11_TOWNS_DIRECTION_SHIFT) |
+                                          DM2_V1_GDAT_HUD_M11_TOWNS_INVISIBLE_FIGURE) &&
+                                  crop_matches,
+                              "FM Towns invisibility uses the authentic direction-matched frame 4-7");
+                    } else {
+                        check(0, "FM Towns invisibility figure plan is source-bound");
+                    }
+                    dm2_v1_gdat_hud_m11_command_plan_free(&invisible_plan);
+                }
+                dm2_v1_asset_free_pixels(sheet);
+                squad.towns_savegames1_b02 = 0u;
+                squad.champions[0].towns_party_position = 0u;
+                squad.champions[0].towns_absdir = 0u;
             }
             {
                 DM2_V1_GdatHudM11CommandPlan aura_plan;
@@ -1940,6 +1989,35 @@ int main(void)
                   ((DM2_V1_BootProfile *)view.dm2BootProfile)->dungeon_data,
               framebuffer),
           "FM Towns active M11 consumes an authentic DB4/F9 creature");
+    {
+        static const uint8_t invisibility_runes[4] = {
+            DM2_RUNE_YA, DM2_RUNE_OH, DM2_RUNE_EW, DM2_RUNE_SAR
+        };
+        DM2_V1_RuntimeSpellCastReceipt cast;
+        uint8_t count_before = 0u, count_active = 0u, count_expired = 0u;
+        int selected = dm2_v1_runtime_select_mac_charsheet_champion(0);
+        int spell_ready = selected &&
+            dm2_v1_runtime_set_spell_runes(
+                0, invisibility_runes, 4);
+        memset(&cast, 0, sizeof(cast));
+        check(spell_ready &&
+                  dm2_v1_runtime_get_source_47_count(&count_before) &&
+                  dm2_v1_runtime_cast_spell_player(0, 0, &cast) &&
+                  cast.cast.spell_index == 3 && cast.applied &&
+                  cast.timer_enqueued && cast.timer_ticket != 0u &&
+                  cast.cast.timer_duration > 0 &&
+                  dm2_v1_runtime_get_source_47_count(&count_active) &&
+                  count_active == (uint8_t)(count_before + 1u),
+              "HME-242 Towns session casts source Invisibility and increments live 0x47 count");
+        if (cast.applied && cast.cast.timer_duration > 0) {
+            for (int tick = 0; tick < cast.cast.timer_duration; ++tick)
+                dm2_v1_runtime_tick();
+        }
+        check(cast.applied &&
+                  dm2_v1_runtime_get_source_47_count(&count_expired) &&
+                  count_expired == count_before,
+              "HME-242 Towns source 0x47 event expires at its game tick and restores the count");
+    }
     M11_GameView_Shutdown(&view);
     if (failures) return 1;
     puts("PASS: DM2 FM Towns M11 NEW GAME reaches the source runtime");

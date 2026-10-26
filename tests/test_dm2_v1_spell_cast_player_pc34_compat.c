@@ -166,6 +166,8 @@ static void test_cast_success_branches(void)
     /* Fixed table stores DES IR SAR as the tail; YA is the live power rune. */
     const uint8_t darkness[] = {DM2_RUNE_YA, DM2_RUNE_DES, DM2_RUNE_IR,
                                 DM2_RUNE_SAR, 0};
+    const uint8_t invisibility[] = {DM2_RUNE_YA, DM2_RUNE_OH,
+                                    DM2_RUNE_EW, DM2_RUNE_SAR, 0};
     const uint8_t fireball[] = {DM2_RUNE_YA, DM2_RUNE_FUL, DM2_RUNE_IR, 0};
     const uint8_t str_potion[] = {DM2_RUNE_YA, DM2_RUNE_FUL, DM2_RUNE_BRO, DM2_RUNE_KU, 0};
     const uint8_t attack_minion[] = {DM2_RUNE_YA, DM2_RUNE_ZO, DM2_RUNE_EW, DM2_RUNE_KU, 0};
@@ -212,6 +214,13 @@ static void test_cast_success_branches(void)
                 "Darkness requests the source light timer family");
     expect_true(r.timer_value_a > 0 && r.timer_value_a < 16,
                 "Darkness carries bounded positive source timer-A");
+
+    r = dm2_v1_spell_cast_player(&table, invisibility, 30, 100, 0);
+    expect_true(r.valid && r.found && r.spell_index == 3 && r.cast_success,
+                "OH EW SAR resolves source Invisibility spell index 3");
+    expect_true(r.timer_kind == DM2_V1_SPELL_TIMER_ENCHANTMENT &&
+                    r.timer_duration == (r.cast_power + 1) * 32,
+                "Invisibility uses the source global 0x47 duration");
 
     r = dm2_v1_spell_cast_player(&table, open_door, 30, 100, 0);
     expect_true(r.cast_success && r.spell_index == 20 &&

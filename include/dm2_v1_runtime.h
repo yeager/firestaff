@@ -1620,6 +1620,8 @@ size_t dm2_v1_runtime_creature_movement_receipts_since(
     size_t capacity, uint64_t *out_dropped);
 /* Read-only owner receipt for savegames1.b_04 (Aura of Speed). */
 int dm2_v1_runtime_get_source_aura_of_speed(uint8_t *out_value);
+/* Read the Towns source savegames1.b_02 count used by live 0x47 timers. */
+int dm2_v1_runtime_get_source_47_count(uint8_t *out_count);
 /* Returns -1 without mutation: c_hero item links require the original DB
  * record-chain allocator and may not be supplied as 32-bit host handles. */
 int dm2_v1_runtime_set_champion_inventory_object(uint8_t champion,

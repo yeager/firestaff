@@ -664,6 +664,7 @@ int dm2_v1_gdat_hud_m11_command_plan_build_fmtowns_squad(
     memset(out_plan, 0, sizeof(*out_plan));
     if (!loader || loader->gdat_version != 4u || !party ||
         !party->towns_squad_route_valid || !slots ||
+        !party->towns_savegames1_b02_source_bound ||
         party->champion_count <= 0 ||
         party->champion_count > DM2_V1_HUD_CHAMPION_SLOT_COUNT ||
         party->towns_party_direction > 3u) return 0;
@@ -802,6 +803,7 @@ int dm2_v1_gdat_hud_m11_command_plan_build_fmtowns_squad(
                 dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
                 return 0;
             }
+            if (party->towns_savegames1_b02 != 0u) figure_frame += 4;
             for (int y = 0; y < 17; ++y) {
                 memcpy(cropped_pixels + y * 17,
                     figure_command->pixels + y * 136 + figure_frame * 17,
@@ -813,7 +815,10 @@ int dm2_v1_gdat_hud_m11_command_plan_build_fmtowns_squad(
             figure_command->height = 17;
             figure_command->source_transparency_key = 2u;
             figure_command->source_state_flags = (uint8_t)(
-                figure_frame << DM2_V1_GDAT_HUD_M11_TOWNS_DIRECTION_SHIFT);
+                (source->squad_figure_direction <<
+                    DM2_V1_GDAT_HUD_M11_TOWNS_DIRECTION_SHIFT) |
+                (party->towns_savegames1_b02 != 0u
+                    ? DM2_V1_GDAT_HUD_M11_TOWNS_INVISIBLE_FIGURE : 0u));
             figure_command->decoded_hash =
                 dm2_v1_gdat_hud_m11_command_pixel_hash(figure_command);
             if (!figure_command->decoded_hash) {

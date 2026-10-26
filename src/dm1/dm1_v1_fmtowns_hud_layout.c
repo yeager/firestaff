@@ -90,7 +90,11 @@ static const DM1_V1_FmtownsHudLayoutRecord g_f20_hud_records[] = {
     {218, 1, 210,  24,  10},
     {553, 4,   4,   3,   7},
     {554, 4,   4, 104, 132},
-    {555, 3,   4, 218, 132}
+    {555, 3,   4, 218, 132},
+    /* ReDMCSB COORD.C G3019 records 1081 and 733: the F20 mirror backing
+     * C208 and M635 C026 portrait zone. Kept available for source audits. */
+    {1081,0,   4, 112,  51},
+    {733,  1,   0,   0,  19}
 };
 
 static int supported_zone(unsigned int zone)
@@ -99,7 +103,8 @@ static int supported_zone(unsigned int zone)
            (zone >= 151u && zone <= 162u) ||
            (zone >= 163u && zone <= 170u) ||
            (zone >= 175u && zone <= 218u) ||
-           (zone >= 553u && zone <= 555u);
+           (zone >= 553u && zone <= 555u) || zone == 733u ||
+           zone == 1081u;
 }
 
 static const DM1_V1_FmtownsHudLayoutRecord *find_record(unsigned int zone)

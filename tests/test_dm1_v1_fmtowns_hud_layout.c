@@ -92,6 +92,12 @@ int main(void)
     static const ExpectedRecord loadValue555[] = {
         {555,3,4,218,132}, {4,1,3,0,0}, {3,9,0,224,136}
     };
+    static const ExpectedRecord mirrorBacking1081[] = {
+        {1081,0,4,112,51}, {4,1,3,0,0}, {3,9,0,224,136}
+    };
+    static const ExpectedRecord mirrorPortrait733[] = {
+        {733,1,0,0,19}
+    };
     DM1_V1_FmtownsHudLayoutChain chain;
     static const struct {
         unsigned int zone;
@@ -120,7 +126,8 @@ int main(void)
         {211,16,16,4,10,16,16,0,0},
         {212,16,16,24,10,16,16,0,0},
         {213,16,16,73,10,16,16,0,0},
-        {214,16,16,93,10,16,16,0,0}
+        {214,16,16,93,10,16,16,0,0},
+        {733,32,29,0,19,32,29,0,0}
     };
 
     /* Source oracle: ReDMCSB COORD.C G3038 110..116, G3034 150..218,
@@ -155,6 +162,12 @@ int main(void)
                     sizeof(loadLabel554) / sizeof(loadLabel554[0]));
         check_chain((DM1_V1_FmtownsHudEdition)edition, 555, loadValue555,
                     sizeof(loadValue555) / sizeof(loadValue555[0]));
+        check_chain((DM1_V1_FmtownsHudEdition)edition, 1081,
+                    mirrorBacking1081,
+                    sizeof(mirrorBacking1081) / sizeof(mirrorBacking1081[0]));
+        check_chain((DM1_V1_FmtownsHudEdition)edition, 733,
+                    mirrorPortrait733,
+                    sizeof(mirrorPortrait733) / sizeof(mirrorPortrait733[0]));
         for (int slot = 0; slot < 4; ++slot) {
             uint8_t color = 0u;
             CHECK(dm1_v1_fmtowns_hud_champion_icon_color(
@@ -178,6 +191,13 @@ int main(void)
             CHECK(rect.height == expected_rects[i].clipped_height);
             CHECK(rect.source_x == expected_rects[i].source_x);
             CHECK(rect.source_y == expected_rects[i].source_y);
+        }
+        {
+            DM1_V1_FmtownsHudRect rect;
+            CHECK(dm1_v1_fmtowns_hud_layout_rect(
+                (DM1_V1_FmtownsHudEdition)edition, 1081, 48, 43, &rect));
+            CHECK(rect.x == 88 && rect.y == 29 &&
+                  rect.width == 48 && rect.height == 43);
         }
         {
             uint8_t icons[76 * 14];

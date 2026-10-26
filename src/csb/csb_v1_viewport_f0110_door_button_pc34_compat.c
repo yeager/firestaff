@@ -100,3 +100,74 @@ const void *csb_v1_viewport_f0110_door_button_coord_set_pc34(
     return dm1_v1_viewport_get_door_button_frame_pc34(
         door_button_ordinal, (DM1_ViewDoorButtonIndex)view_door_button_index);
 }
+
+int csb_v1_viewport_f0110_door_button_raster_pc34(
+    const uint8_t *source_pixels, int source_width, int source_height,
+    int view_door_button_index, uint8_t *destination, int dst_stride,
+    int viewport_width, int viewport_height)
+{
+    CSB_V1_ViewportDoorButtonPlanPc34 plan;
+    const DM1_WallFrame *zone;
+    int dst_width, dst_height, written = 0, y;
+    uint32_t x_step = 0u, y_step = 0u, y_position;
+
+    if (!source_pixels || source_width <= 0 || source_height <= 0 ||
+        !destination || dst_stride < viewport_width || viewport_width <= 0 ||
+        viewport_height <= 0) return 0;
+    csb_v1_viewport_f0110_door_button_plan_pc34(
+        1, view_door_button_index, &plan);
+    zone = (const DM1_WallFrame *)
+        csb_v1_viewport_f0110_door_button_coord_set_pc34(
+            1, view_door_button_index);
+    if (!plan.valid || !zone) return 0;
+    dst_width = (int)zone->right_x - (int)zone->left_x + 1;
+    dst_height = (int)zone->bottom_y - (int)zone->top_y + 1;
+    if (dst_width <= 0 || dst_height <= 0 ||
+        zone->left_x < 0 || zone->top_y < 0 ||
+        zone->right_x >= viewport_width || zone->bottom_y >= viewport_height)
+        return 0;
+
+    if (view_door_button_index != DM1_VIEW_DOOR_BUTTON_D1C) {
+        /* ReDMCSB BLTSHRNK.C F0129 uses a 6.6 source step and starts each
+         * axis at half one source step (F0720/F0721); its G0198/G0199 map is
+         * applied after sampling. */
+        x_step = (uint32_t)(((uint64_t)(unsigned int)source_width << 6) /
+                            (unsigned int)dst_width);
+        y_step = (uint32_t)(((uint64_t)(unsigned int)source_height << 6) /
+                            (unsigned int)dst_height);
+        if (x_step == 0u || y_step == 0u) return 0;
+    } else if (dst_width > source_width || dst_height > source_height) {
+        return 0;
+    }
+
+    y_position = (view_door_button_index == DM1_VIEW_DOOR_BUTTON_D1C)
+        ? 0u : y_step >> 1;
+    for (y = 0; y < dst_height; ++y) {
+        uint32_t sy = view_door_button_index == DM1_VIEW_DOOR_BUTTON_D1C
+            ? (uint32_t)y : y_position >> 6;
+        uint32_t x_position = view_door_button_index == DM1_VIEW_DOOR_BUTTON_D1C
+            ? 0u : x_step >> 1;
+        int x;
+        if (sy >= (uint32_t)source_height) return 0;
+        for (x = 0; x < dst_width; ++x) {
+            uint32_t sx = view_door_button_index == DM1_VIEW_DOOR_BUTTON_D1C
+                ? (uint32_t)x : x_position >> 6;
+            uint8_t pixel;
+            if (sx >= (uint32_t)source_width) return 0;
+            pixel = source_pixels[(size_t)sy * (size_t)source_width + sx];
+            if (pixel != (uint8_t)plan.transparent_color) {
+                if (plan.palette_remap)
+                    pixel = plan.palette_remap[pixel & 0x0fu];
+                destination[(size_t)(zone->top_y + y) * (size_t)dst_stride +
+                            (size_t)zone->left_x + (size_t)x] =
+                    (uint8_t)(0x10u | (pixel & 0x0fu));
+                ++written;
+            }
+            if (view_door_button_index != DM1_VIEW_DOOR_BUTTON_D1C)
+                x_position += x_step;
+        }
+        if (view_door_button_index != DM1_VIEW_DOOR_BUTTON_D1C)
+            y_position += y_step;
+    }
+    return written;
+}

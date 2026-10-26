@@ -24,6 +24,7 @@
 #include "csb_v1_csbgraphics_runtime_plan.h"
 #include "csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.h"
 #include "csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat.h"
+#include "csb_v1_viewport_f0110_door_button_pc34_compat.h"
 #include "csb_v1_viewport_custom_backgrounds_room_slot_pc34_compat.h"
 #include "csb_v1_viewport_f0219_projectile_handoff_consumer_pc34_compat.h"
 #include "csb_v1_f0247_launcher_rng_pc34_compat.h"
@@ -31,10 +32,181 @@
 #include "csb_v2_presentation_mode_pc34.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
+#include "dm1_v1_center_door_render_pc34_compat.h"
+#include "dm1_v1_side_door_render_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+
+static int csb_v1_viewport_draw_f31_door_panel_pc34(
+    CSB_V1_ViewportConfig *cfg, const uint8_t *door_record,
+    int door_state, int view_index)
+{
+    const CSB_V1_RuntimeProfile *runtime;
+    const CSB_V1_DungeonData *dungeon;
+    DM1_CenterDoorHostMaterialReceiptPc34 material;
+    const uint8_t *panel_pixels = NULL;
+    int panel_width = 0, panel_height = 0;
+    int plan_depth, graphic_depth, panel_graphic, written = 0, i;
+    uint16_t door_word;
+
+    if (!cfg || !door_record || !cfg->viewport_pixels ||
+        !cfg->graphic_provider_callback || !(runtime = cfg->runtime_profile) ||
+        !(dungeon = runtime->dungeon_handle) || runtime->current_level < 0 ||
+        runtime->current_level >= dungeon->level_count) return 0;
+    plan_depth = (view_index == DM1_VIEW_DOOR_BUTTON_D1C) ? 0 :
+        (view_index == DM1_VIEW_DOOR_BUTTON_D2C ? 1 : 2);
+    graphic_depth = 2 - plan_depth; /* G0693=D3, G0694=D2, G0695=D1. */
+    door_word = (uint16_t)door_record[2] | ((uint16_t)door_record[3] << 8);
+    panel_graphic = csb_v1_viewport_door_graphic_index_from_map_pc34(
+        dungeon->map_door_set0[runtime->current_level],
+        dungeon->map_door_set1[runtime->current_level],
+        door_word, graphic_depth);
+    if (!csb_v1_viewport_door_graphic_index_valid_pc34(
+            panel_graphic, graphic_depth) ||
+        !dm1_v1_center_door_host_material_receipt_pc34(
+            plan_depth, door_state, (door_word & 0x0020u) != 0u,
+            panel_graphic, &material) ||
+        material.frameCount < 0 || material.frameCount > material.blitCount ||
+        material.blitCount > DM1_CENTER_DOOR_HOST_MATERIAL_MAX_BLITS) return 0;
+    if (material.panelVisible &&
+        !cfg->graphic_provider_callback(cfg->graphic_provider_user_data,
+            panel_graphic, &panel_pixels, &panel_width, &panel_height)) return 0;
+    for (i = material.frameCount; i < material.blitCount; ++i) {
+        const DM1_CenterDoorBlitPc34 *blit = &material.blits[i];
+        int y;
+        if (!panel_pixels || blit->srcX < 0 || blit->srcY < 0 ||
+            blit->width <= 0 || blit->height <= 0 ||
+            blit->srcX + blit->width > panel_width ||
+            blit->srcY + blit->height > panel_height ||
+            blit->dstX < 0 || blit->dstY < 0 ||
+            blit->dstX + blit->width > DM1_VIEWPORT_WIDTH ||
+            blit->dstY + blit->height > DM1_VIEWPORT_HEIGHT) return 0;
+        for (y = 0; y < blit->height; ++y) {
+            int x;
+            for (x = 0; x < blit->width; ++x) {
+                uint8_t pixel = panel_pixels[
+                    (size_t)(blit->srcY + y) * (size_t)panel_width +
+                    (size_t)(blit->srcX + x)];
+                if (pixel == CSB_V1_F0110_DOOR_BUTTON_PC34_TRANSPARENT_COLOR) continue;
+                cfg->viewport_pixels[(size_t)(blit->dstY + y) *
+                    (size_t)cfg->viewport_stride + (size_t)blit->dstX +
+                    (size_t)x] = pixel;
+                ++written;
+            }
+        }
+    }
+    return written;
+}
+
+/* ReDMCSB F0110 is immediately before F0111 in F0117/F0118/F0121/F0124.
+ * Keep both operations under the shared per-door frame callback so a button
+ * cannot be replayed after its panel. F31 supplies original IMG2 item 453
+ * through the active viewport provider. */
+static void csb_v1_viewport_f31_door_front_transaction_pc34(
+    void *user_data, int map_x, int map_y, int view_index)
+{
+    CSB_V1_ViewportConfig *cfg = (CSB_V1_ViewportConfig *)user_data;
+    const CSB_V1_RuntimeProfile *runtime;
+    const CSB_V1_DungeonData *dungeon;
+    const uint8_t *record;
+    const uint8_t *button_pixels = NULL;
+    int button_width = 0, button_height = 0;
+    int raw, thing, thing_type, thing_size;
+    uint16_t door_word;
+    int door_state;
+
+    if (!cfg || !(runtime = cfg->runtime_profile) ||
+        (runtime->variant_id != CSB_V1_VARIANT_FMTOWNS_EN &&
+         runtime->variant_id != CSB_V1_VARIANT_FMTOWNS_JA) ||
+        !(dungeon = runtime->dungeon_handle) || runtime->current_level < 0 ||
+        runtime->current_level >= dungeon->level_count) return;
+    raw = csb_v1_dungeon_get_raw_square(
+        dungeon, runtime->current_level, map_x, map_y);
+    if (raw < 0 || ((raw >> 5) & 7) != 4 ||
+        (((raw >> 3) & 1) == (runtime->party_dir & 1))) return;
+    thing = csb_v1_dungeon_get_first_thing(
+        dungeon, runtime->current_level, map_x, map_y);
+    if (thing < 0 || thing == 0xfffe || thing == 0xffff) return;
+    record = csb_v1_dungeon_get_thing_record(
+        dungeon, (uint16_t)thing, &thing_type, NULL, &thing_size);
+    if (!record || thing_type != 0 || thing_size < 4) return;
+    door_word = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+    door_state = raw & 7;
+    if (door_word & 0x0040u) {
+        if (!cfg->graphic_provider_callback ||
+            !cfg->graphic_provider_callback(cfg->graphic_provider_user_data,
+                453, &button_pixels, &button_width, &button_height) ||
+            !csb_v1_viewport_f0110_door_button_raster_pc34(
+                button_pixels, button_width, button_height, view_index,
+                cfg->viewport_pixels, cfg->viewport_stride,
+                DM1_VIEWPORT_WIDTH, DM1_VIEWPORT_HEIGHT)) return;
+    }
+    if (view_index == DM1_VIEW_DOOR_BUTTON_D3R) {
+        DM1_SideDoorRenderPlanPc34 plan;
+        DM1_SideDoorF0111CompositionPc34 composition;
+        DM1_SideDoorBlitPc34 blits[2];
+        const uint8_t *panel_pixels = NULL;
+        int panel_width = 0, panel_height = 0;
+        int door_set = (door_word & 1u)
+            ? dungeon->map_door_set1[runtime->current_level]
+            : dungeon->map_door_set0[runtime->current_level];
+        int panel_graphic;
+        int count, i;
+
+        /* D3R is the side-square route. Its G0208 button zone is D3R, but
+         * F0111 owns the side-door plan (G0181), never the center D3C panel.
+         * F31 can select DoorSet 3, whose source F0111 consumes M005_RANDOM(4).
+         * The current viewport callback has no source RNG transaction, so
+         * fail closed for that set rather than inventing a visual phase. */
+        if (door_set < 0 || door_set > 2 ||
+            !dm1_v1_side_door_render_plan_for_rel_pc34(3, 1, &plan)) return;
+        panel_graphic = csb_v1_viewport_door_graphic_index_from_map_pc34(
+            dungeon->map_door_set0[runtime->current_level],
+            dungeon->map_door_set1[runtime->current_level],
+            door_word, 0);
+        if (!csb_v1_viewport_door_graphic_index_valid_pc34(panel_graphic, 0) ||
+            !dm1_v1_side_door_f0111_composition_pc34(
+                &plan, door_state, (door_word & 0x0020u) != 0u,
+                (door_word >> 1) & 0x0fu, door_set, 0,
+                &composition, blits) || !composition.valid ||
+            composition.random4Consumed || composition.panelCount <= 0 ||
+            composition.panelCount > 2 || !cfg->graphic_provider_callback ||
+            !cfg->graphic_provider_callback(cfg->graphic_provider_user_data,
+                panel_graphic, &panel_pixels, &panel_width, &panel_height) ||
+            !panel_pixels || panel_width <= 0 || panel_height <= 0) return;
+        for (i = 0; i < composition.panelCount; ++i) {
+            const DM1_SideDoorBlitPc34 *blit = &blits[i];
+            int y;
+            if (blit->srcX < 0 || blit->srcY < 0 || blit->width <= 0 ||
+                blit->height <= 0 || blit->srcX + blit->width > panel_width ||
+                blit->srcY + blit->height > panel_height || blit->dstX < 0 ||
+                blit->dstY < 0 || blit->dstX + blit->width > DM1_VIEWPORT_WIDTH ||
+                blit->dstY + blit->height > DM1_VIEWPORT_HEIGHT) return;
+            for (y = 0; y < blit->height; ++y) {
+                int x;
+                for (x = 0; x < blit->width; ++x) {
+                    int sx = blit->srcX + x;
+                    int sy = blit->srcY + y;
+                    uint8_t pixel;
+                    if (!dm1_v1_f0111_composed_source_xy_pc34(
+                            panel_width, panel_height, sx, sy,
+                            composition.flipMask, &sx, &sy)) continue;
+                    pixel = panel_pixels[(size_t)sy * (size_t)panel_width +
+                                         (size_t)sx];
+                    if (pixel != CSB_V1_F0110_DOOR_BUTTON_PC34_TRANSPARENT_COLOR)
+                        cfg->viewport_pixels[(size_t)(blit->dstY + y) *
+                            (size_t)cfg->viewport_stride +
+                            (size_t)blit->dstX + (size_t)x] = pixel;
+                }
+            }
+        }
+    } else {
+        (void)csb_v1_viewport_draw_f31_door_panel_pc34(
+            cfg, record, door_state, view_index);
+    }
+}
 
 static int csb_v1_viewport_f0113_next_field_phase(
     void *user_data,
@@ -5081,6 +5253,9 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
                          cfg->viewport_stride > 0 ? cfg->viewport_stride : 320);
     vp.graphic_provider_callback = cfg->graphic_provider_callback;
     vp.graphic_provider_user_data = cfg->graphic_provider_user_data;
+    vp.door_front_transaction_callback =
+        csb_v1_viewport_f31_door_front_transaction_pc34;
+    vp.door_front_transaction_user_data = cfg;
     vp.field_animation_tick = cfg->field_animation_tick;
     vp.field_phase_callback = cfg->field_random_state
         ? csb_v1_viewport_f0113_next_field_phase : NULL;

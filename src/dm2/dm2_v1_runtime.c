@@ -4010,6 +4010,59 @@ int dm2_v1_runtime_cast_spell_player(
         if (out_receipt) *out_receipt = receipt;
         return 1;
     }
+    if (receipt.cast.spell_index == 3 &&
+        rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA) {
+        DM2_V1_SourceTimer timer;
+        DM2_V1_SourceTimerResult result;
+        uint32_t ticket;
+        int inventory_hero = rt->source_v1e0976;
+
+        /* SKWINSPX skspell.cpp:224-232 queues ttyInvisibility (0x47)
+         * with actor 0 and due tick (power + 1) * 32. savegames1.b_02 is
+         * the shared count for live 0x47 timers (skengage.cpp and
+         * c_events.cpp); keep the timer, count, mana and rune update atomic. */
+        if (receipt.cast.timer_kind != DM2_V1_SPELL_TIMER_ENCHANTMENT ||
+            receipt.cast.timer_duration <= 0 ||
+            rt->source_attack_counter == UINT8_MAX ||
+            rt->dungeon_level < 0 || rt->dungeon_level > 0xff) {
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        queue_before = rt->timer_queue;
+        memset(&timer, 0, sizeof(timer));
+        timer.ticks_and_map = ((uint32_t)rt->dungeon_level << 24) |
+            ((uint32_t)(rt->tick_count + receipt.cast.timer_duration) &
+             DM2_V1_SOURCE_TIMER_TICK_MASK);
+        timer.type = DM2_V1_TIMER_HERO_ENCH_FLAG;
+        ticket = dm2_v1_source_timer_enqueue_ticketed(
+            &rt->timer_queue, &timer, 0u, &result);
+        if (result != DM2_V1_SOURCE_TIMER_OK || ticket == 0u) {
+            rt->timer_queue = queue_before;
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        if (rt->source_attack_counter == 0u && inventory_hero > 0 &&
+            inventory_hero <= rt->source_party.heros_in_party) {
+            rt->source_party.hero[inventory_hero - 1].heroflag =
+                (int16_t)((uint16_t)rt->source_party.hero[
+                    inventory_hero - 1].heroflag | 0x4000u);
+        }
+        ++rt->source_attack_counter;
+        rt->source_hero_ench_countdown = rt->source_attack_counter;
+        rt->source_savegames1[2] = rt->source_attack_counter;
+        hero->curMP = (int16_t)(hero->curMP - receipt.cast.mana_cost);
+        hero->handcooldown[hand_index] =
+            (int8_t)receipt.cast.cooldown_ticks;
+        memset(hero->rune, 0, sizeof(hero->rune));
+        hero->nrunes = 0;
+        receipt.source_owner_available = 1;
+        receipt.applied = 1;
+        receipt.timer_enqueued = 1;
+        receipt.timer_ticket = ticket;
+        receipt.mana_after = hero->curMP;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
     if (receipt.cast.timer_kind != DM2_V1_SPELL_TIMER_LIGHT ||
         (receipt.cast.spell_index != 0 && receipt.cast.spell_index != 1 &&
          receipt.cast.spell_index != 5)) {
@@ -10150,7 +10203,8 @@ static int dm2_runtime_hero_ench_flag_timer(
         rt->source_party.heros_in_party > DM2_MAX_HEROES)
         return 0;
     map = (int)((timer->ticks_and_map >> 24) & 0xffu);
-    target = rt->source_hero_ench_target;
+    target = rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA
+        ? rt->source_v1e0976 : rt->source_hero_ench_target;
     if (map < 0 ||
         map >= ((DM2_V1_DungeonData *)rt->boot->dungeon_data)->level_count ||
         map != rt->dungeon_level || target < 0 ||
@@ -17106,6 +17160,15 @@ int dm2_v1_runtime_get_source_aura_of_speed(uint8_t *out_value) {
     if (!out_value || !g_dm2_runtime.source_aura_of_speed_valid)
         return 0;
     *out_value = g_dm2_runtime.source_aura_of_speed;
+    return 1;
+}
+
+int dm2_v1_runtime_get_source_47_count(uint8_t *out_count) {
+    if (!out_count || !g_dm2_runtime.source_party_valid ||
+        !g_dm2_runtime.boot ||
+        g_dm2_runtime.boot->platform != DM2_PLATFORM_FMTOWNS_JA)
+        return 0;
+    *out_count = g_dm2_runtime.source_savegames1[2];
     return 1;
 }
 

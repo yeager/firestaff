@@ -134,6 +134,17 @@ static void dm1_viewport_3d_draw_d3_side_square(
     int map_x,
     int map_y);
 
+static void dm1_viewport_3d_notify_door_front_transaction(
+    DM1_Viewport3DState *state, int map_x, int map_y, int button_view_index)
+{
+    if (!state || !state->door_front_transaction_callback ||
+        dm1_viewport_3d_get_dungeon_element(state, map_x, map_y) !=
+            DM1_VP_ELEMENT_DOOR_FRONT) return;
+    state->door_front_transaction_callback(
+        state->door_front_transaction_user_data, map_x, map_y,
+        button_view_index);
+}
+
 static void dm1_viewport_3d_draw_wall_ornament_f0107(
     DM1_Viewport3DState *state,
     int view_wall_index,
@@ -2166,6 +2177,8 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
             } else {
                 (void)dm1_viewport_3d_draw_source_door_frame(
                     state, 89, right_frame, 1);
+                dm1_viewport_3d_notify_door_front_transaction(
+                    state, d3c_x, d3c_y, DM1_VIEW_DOOR_BUTTON_D3C);
             }
         }
     }
@@ -2263,6 +2276,8 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
                     state, 88, left_frame, 0);
                 (void)dm1_viewport_3d_draw_source_door_frame(
                     state, 88, right_frame, 1);
+                dm1_viewport_3d_notify_door_front_transaction(
+                    state, d2c_x, d2c_y, DM1_VIEW_DOOR_BUTTON_D2C);
             } else if (!state->source_graphics_required) {
                 if (fr_top && bm_base) {
                     dm1_viewport_3d_draw_wall(state, bm_base + 19 * BMP_STRIDE, fr_top);
@@ -2367,6 +2382,8 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
                     state, 87, left_frame, 0);
                 (void)dm1_viewport_3d_draw_source_door_frame(
                     state, 87, right_frame, 1);
+                dm1_viewport_3d_notify_door_front_transaction(
+                    state, d1c_x, d1c_y, DM1_VIEW_DOOR_BUTTON_D1C);
             } else if (!state->source_graphics_required) {
                 if (fr_top && bm_base) {
                     dm1_viewport_3d_draw_wall(state, bm_base + 16 * BMP_STRIDE, fr_top);
@@ -4115,6 +4132,10 @@ static void dm1_viewport_3d_draw_d3_side_square(
         if (dm1_viewport_3d_draw_source_door_frame(
                 state, 90, right ? dm1_v1_g0165_table_pc34()
                                 : dm1_v1_g0164_table_pc34(), right)) {
+            if (right) {
+                dm1_viewport_3d_notify_door_front_transaction(
+                    state, map_x, map_y, DM1_VIEW_DOOR_BUTTON_D3R);
+            }
             return;
         }
         if (state->source_graphics_required || !wall_base) return;
@@ -4129,6 +4150,10 @@ static void dm1_viewport_3d_draw_d3_side_square(
             dm1_viewport_3d_draw_door_frame_flipped(state,
                                                      wall_base + 20 * DM1_VIEWPORT_BYTE_WIDTH,
                                                      frame);
+        }
+        if (right) {
+            dm1_viewport_3d_notify_door_front_transaction(
+                state, map_x, map_y, DM1_VIEW_DOOR_BUTTON_D3R);
         }
     }
     if (element == DM1_VP_ELEMENT_TELEPORTER) {

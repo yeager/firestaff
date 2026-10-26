@@ -149,6 +149,44 @@ static int check_f20_hud_layout_media(M11_AssetLoader *loader,
     return 1;
 }
 
+static int audit_f20_mirror_geometry_media(M11_AssetLoader *loader,
+                                           DM1_V1_FmtownsHudEdition edition,
+                                           const char *edition_name)
+{
+    unsigned short portraitWidth = 0u, portraitHeight = 0u;
+    unsigned short backingWidth = 0u, backingHeight = 0u;
+    DM1_V1_FmtownsHudRect portraitRect, backingRect;
+    int overlaps;
+    if (!loader ||
+        !M11_AssetLoader_QuerySize(loader, 26u,
+                                   &portraitWidth, &portraitHeight) ||
+        !M11_AssetLoader_QuerySize(loader, 208u,
+                                   &backingWidth, &backingHeight) ||
+        portraitWidth < 256u || portraitHeight < 87u ||
+        !dm1_v1_fmtowns_hud_layout_rect(edition, 733u, 32, 29,
+                                        &portraitRect) ||
+        !dm1_v1_fmtowns_hud_layout_rect(edition, 1081u,
+                (int)backingWidth, (int)backingHeight, &backingRect)) {
+        return 0;
+    }
+    overlaps = portraitRect.x < backingRect.x + backingRect.width &&
+        portraitRect.x + portraitRect.width > backingRect.x &&
+        portraitRect.y < backingRect.y + backingRect.height &&
+        portraitRect.y + portraitRect.height > backingRect.y;
+    fprintf(stderr,
+        "F20 mirror audit %s: source C208 %ux%u -> F0635 zone1081 (%d,%d %dx%d); "
+        "source C026 %ux%u -> F0635/M635 C733 (%d,%d %dx%d); "
+        "rectangles %s; Firestaff PC34 destination=(96,35)\n",
+        edition_name, backingWidth, backingHeight,
+        backingRect.x, backingRect.y, backingRect.width, backingRect.height,
+        portraitWidth, portraitHeight,
+        portraitRect.x, portraitRect.y,
+        portraitRect.width, portraitRect.height,
+        overlaps ? "overlap" : "do not overlap");
+    return portraitRect.x == 0 && portraitRect.y == 19 &&
+           portraitRect.width == 32 && portraitRect.height == 29;
+}
+
 int main(void) {
     const char *archive = getenv("FIRESTAFF_DM1_FMTOWNS_ARCHIVE");
     uint8_t *cue = NULL, *bin = NULL;
@@ -206,6 +244,9 @@ int main(void) {
     REQUIRE(check_f20_hud_layout_media(&loader,
                 DM1_V1_FMTOWNS_HUD_EDITION_F20E),
         "original F20E bitmap dimensions resolve through native COORD.C HUD zones");
+    REQUIRE(audit_f20_mirror_geometry_media(&loader,
+                DM1_V1_FMTOWNS_HUD_EDITION_F20E, "F20E"),
+        "original F20E C208/C026 media resolves through the F0635 mirror zones");
     REQUIRE(M11_AssetLoader_QuerySize(&loader, 1u, &width, &height) &&
             width == 320u && height == 200u,
         "EDM.EXP title raster preserves source dimensions");
@@ -300,6 +341,9 @@ int main(void) {
     REQUIRE(check_f20_hud_layout_media(&japaneseLoader,
                 DM1_V1_FMTOWNS_HUD_EDITION_F20J),
         "original F20J bitmap dimensions resolve through native COORD.C HUD zones");
+    REQUIRE(audit_f20_mirror_geometry_media(&japaneseLoader,
+                DM1_V1_FMTOWNS_HUD_EDITION_F20J, "F20J"),
+        "original F20J C208/C026 media resolves through the F0635 mirror zones");
     for (int global = 0; global < 60; ++global) {
         for (int view = 0; view < 13; ++view) {
             DM1_V1_FmtownsWallOrnament ornament;

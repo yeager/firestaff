@@ -1256,7 +1256,16 @@ for party slot 0; slots 1–3 fall back in SKProject to
 those offsets exceed the fallback width and the original temporary packed
 buffer's padding nibble is not source-initialized, Firestaff omits only those
 unverified fallback figure crops while preserving the rest of the squad HUD.
-The Towns global invisibility state is also not source-bound, so only normal
-facing frames are admitted. Selected-hero overlays, fallback figure parity,
-full-screen visual comparison, and original-emulator HUD capture remain open;
-this change does not establish full FM Towns HUD or viewport parity.
+For party slot 0, `skspell.cpp` now supplies the Towns-only spell-3 transaction:
+it queues the source 0x47 timer at `(power + 1) * 32` ticks, updates the shared
+`savegames1.b_02` count atomically with mana/rune consumption, and the existing
+0x47 event path decrements that count on expiry. The M11 HUD receives this
+source-bound count and chooses the four authentic alternate frames. A focused
+HME-242 real-media test casts the spell in the live Towns session, verifies the
+count transition, then advances the authentic runtime until the timer expires
+and verifies restoration. Non-Towns runtime casting remains fail-closed. This
+does not resolve missing party-slot sheets 1–3: SKProject's 31x31 generic
+fallback cannot safely supply the 34/51-pixel source offsets, so those figure
+crops remain omitted until authentic pixel ownership is proven. Selected-hero
+overlays, full-screen visual comparison, and original-emulator HUD capture
+remain open; this does not establish full FM Towns HUD or viewport parity.
