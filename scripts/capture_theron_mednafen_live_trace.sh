@@ -99,6 +99,31 @@ if [[ -n "$replay_input_script" || -n "$host_key" || -n "$host_key_sequence" ]];
     input_trace_limit_default=1048576
 fi
 input_trace_limit=${THERON_CAPTURE_INPUT_TRACE_LIMIT:-$input_trace_limit_default}
+input_trace_start_frame=${THERON_CAPTURE_INPUT_TRACE_START_FRAME:-}
+if [[ -z "$input_trace_start_frame" && -n "$replay_input_script" ]]; then
+    # The BIOS polls the controller often enough to exhaust a bounded trace
+    # before a late scripted event. Retain a short pre-event window, then
+    # record only the diagnostic witness window around the earliest event.
+    earliest_replay_frame=
+    IFS=',' read -r -a replay_entries_for_trace_start <<< "$replay_input_script"
+    for replay_entry_for_trace_start in "${replay_entries_for_trace_start[@]}"; do
+        replay_frame_for_trace_start=${replay_entry_for_trace_start#*@}
+        replay_frame_for_trace_start=${replay_frame_for_trace_start%%:*}
+        # Replay syntax is validated below. Do not make an earlier diagnostic
+        # calculation turn a malformed user value into a shell arithmetic
+        # failure first.
+        [[ "$replay_frame_for_trace_start" =~ ^[0-9]+$ ]] || continue
+        if [[ -z "$earliest_replay_frame" || "$replay_frame_for_trace_start" -lt "$earliest_replay_frame" ]]; then
+            earliest_replay_frame=$replay_frame_for_trace_start
+        fi
+    done
+    if [[ -n "$earliest_replay_frame" ]] && (( earliest_replay_frame > 120 )); then
+        input_trace_start_frame=$((earliest_replay_frame - 120))
+    else
+        input_trace_start_frame=0
+    fi
+fi
+input_trace_start_frame=${input_trace_start_frame:-0}
 input_route=${THERON_CAPTURE_INPUT_ROUTE:-pid}
 host_focus_x=${THERON_CAPTURE_FOCUS_X:-960}
 host_focus_y=${THERON_CAPTURE_FOCUS_Y:-540}
@@ -190,6 +215,11 @@ fi
 if [[ ! "$input_trace_limit" =~ ^[0-9]+$ ]] ||
    (( input_trace_limit < 65536 || input_trace_limit > 1048576 )); then
     printf '%s\n' 'FAIL: THERON_CAPTURE_INPUT_TRACE_LIMIT must be an integer from 65536 through 1048576' >&2
+    exit 1
+fi
+if [[ ! "$input_trace_start_frame" =~ ^[0-9]+$ ]] ||
+   (( input_trace_start_frame > 4294967295 )); then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_INPUT_TRACE_START_FRAME must be an integer from 0 through 4294967295' >&2
     exit 1
 fi
 
@@ -608,6 +638,15 @@ require_mednafen_module() {
     exit 1
 }
 require_mednafen_module "$capture_mednafen_module"
+if [[ "$capture_pce_fast_vram_commit_trace" == 1 ]] &&
+   ! grep -aFq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE' "$mednafen_bin"; then
+    # A PCE Fast module and its controller trace are insufficient for a
+    # viewport capture. Reject the stale partial instrumentation before it
+    # can consume an authentic-media capture window and later fail without a
+    # bounded producer receipt.
+    printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the required PCE Fast VRAM commit instrumentation' >&2
+    exit 1
+fi
 if [[ "$capture_shutdown_signal" != INT && "$capture_shutdown_signal" != TERM ]]; then
     printf '%s\n' 'FAIL: THERON_CAPTURE_SHUTDOWN_SIGNAL must be INT or TERM' >&2
     exit 1
@@ -816,7 +855,7 @@ trace_files_are_line_delimited() {
     if (( ${#existing_trace_files[@]} == 0 )); then
         return 0
     fi
-    LC_ALL=C perl -ne 'exit 1 if index($_, chr(92) . chr(92) . "n") >= 0' "${existing_trace_files[@]}"
+    LC_ALL=C perl -ne 'exit 1 if index($_, chr(92) . "n") >= 0' "${existing_trace_files[@]}"
 }
 
 require_snapshot_size() {
@@ -1098,6 +1137,7 @@ main_ram_target_trace="${trace}.main-ram-target"
 ram_provenance_trace="${trace}.ram-provenance"
 record_watch_trace="${trace}.record-watch"
 movement_data_read_trace="${trace}.movement-data-read"
+pce_fast_movement_context_trace="${trace}.pce-fast-movement-context"
 spawn_consumer_trace="${trace}.spawn-consumer"
 spawn_register_trace="${trace}.spawn-registers"
 rng_consumer_trace="${trace}.rng-consumer"
@@ -1162,6 +1202,7 @@ rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_comman
     "$profile_sram_manifest" "$main_ram_consumer_trace" "$selected_record_trace" \
     "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" \
     "$movement_data_read_trace" \
+    "$pce_fast_movement_context_trace" \
     "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" \
     "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" \
     "$vram_snapshot" "$vce_snapshot" "$vdc_state_snapshot" "$vdc_sat_snapshot" \
@@ -1365,6 +1406,7 @@ launch=(
     FIRESTAFF_THERON_MOUSE_TRACE="$mouse_trace" \
     FIRESTAFF_THERON_MOUSE_INPUT_SCRIPT="$mouse_input_script" \
     FIRESTAFF_THERON_INPUT_TRACE_LIMIT="$input_trace_limit" \
+    FIRESTAFF_THERON_INPUT_TRACE_START_FRAME="$input_trace_start_frame" \
     FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT="$replay_input_script" \
     FIRESTAFF_THERON_AUTOLOAD_STATE="$autoload_state" \
     FIRESTAFF_THERON_AUTOLOAD_MOVIE="$autoload_movie" \
@@ -1387,6 +1429,8 @@ launch=(
     FIRESTAFF_THERON_RECORD_WATCH_TRACE="$record_watch_trace" \
     FIRESTAFF_THERON_MOVEMENT_DATA_READ_TRACE="$movement_data_read_trace" \
     FIRESTAFF_THERON_MOVEMENT_DATA_READ_SAMPLE_LIMIT="$movement_data_read_sample_limit" \
+    FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_TRACE="$pce_fast_movement_context_trace" \
+    FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_SAMPLE_LIMIT="${THERON_CAPTURE_PCE_FAST_MOVEMENT_CONTEXT_SAMPLE_LIMIT:-128}" \
     FIRESTAFF_THERON_SPAWN_CONSUMER_TRACE="$spawn_consumer_trace" \
     FIRESTAFF_THERON_SPAWN_REGISTER_TRACE="$spawn_register_trace" \
     FIRESTAFF_THERON_SPAWN_REGISTER_SAMPLE_LIMIT="${THERON_CAPTURE_SPAWN_REGISTER_SAMPLE_LIMIT:-65536}" \
@@ -1684,7 +1728,7 @@ if [[ ! -s "$trace" ]] || ! grep -Fqx 'source=mednafen-pce-instrumented' "$trace
     printf '%s\n' 'FAIL: Mednafen did not produce a provenance-marked live trace' >&2
     exit 1
 fi
-if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$cd_data_port_read_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" "$pce_fast_a1b7_bmt_write_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace"; then
+if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$cd_data_port_read_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" "$pce_fast_a1b7_bmt_write_trace" "$pce_fast_movement_context_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace"; then
     printf '%s\n' 'FAIL: Mednafen emitted a literal backslash-n in a trace record' >&2
     exit 1
 fi
@@ -2101,6 +2145,7 @@ fi
     printf 'post_dungeon_overlay_replay=%s\n' "$replay_post_dungeon_overlay"
     printf 'input_transactions=%s\n' "$transition_input_count"
     printf 'input_trace_limit=%s\n' "$input_trace_limit"
+    printf 'input_trace_start_frame=%s\n' "$input_trace_start_frame"
     printf 'host_key_events=%s\n' "$transition_host_key_count"
     printf 'host_sdl_events=%s\n' "$transition_host_sdl_event_count"
     printf 'host_sdl_event_types=%s\n' "$transition_host_sdl_event_types"

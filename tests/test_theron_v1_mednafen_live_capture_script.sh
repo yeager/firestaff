@@ -24,6 +24,7 @@ later_raw_receipt=$repo/scripts/verify_theron_later_raw_sector_media_receipt.pl
 x11_keymap=$repo/scripts/theron_x11_keymap.sh
 scripted_input_consumption_verifier=$repo/scripts/verify_theron_scripted_input_consumption.sh
 movement_data_instrumenter=$repo/scripts/instrument_mednafen_theron_movement_data_read_trace.py
+pce_fast_movement_context_instrumenter=$repo/scripts/instrument_mednafen_theron_pce_fast_movement_context_trace.py
 
 if [[ ! -x "$script" ]]; then
     printf 'FAIL: live Mednafen capture script is not executable\n' >&2
@@ -604,6 +605,33 @@ if [[ ! -f "$movement_data_instrumenter" ]] ||
     printf 'FAIL: movement-data capture must exclude instruction fetches and retain bounded command provenance\n' >&2
     exit 1
 fi
+if [[ ! -f "$pce_fast_movement_context_instrumenter" ]] ||
+   ! grep -Fq 'RdOp' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'movement_command_write' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'input_latch_write' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'runtime_state_write' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'A == 0x2911 || A == 0x2912 || A == 0x2920' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq '0x0e8a00' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'TheronTraceInstructionPC' "$pce_fast_movement_context_instrumenter" ||
+   grep -Fq 'GetRealPC_EXTERNAL' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'TheronPCEFastMovementRuntimeStateWrite' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq '0x2000u + zero_page_address' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'ST_ZP(r)' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'ST_ZPX(r)' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'ST_ZPY(r)' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'RMW_ZP(op)' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'RMW_ZPX(op)' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_TRACE' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'instrument_mednafen_theron_pce_fast_movement_context_trace.py' "$build_script"; then
+    printf 'FAIL: PCE Fast movement context must record data-only reads without borrowing PCE command provenance\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'pce_fast_movement_context_trace="${trace}.pce-fast-movement-context"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_TRACE="$pce_fast_movement_context_trace"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_SAMPLE_LIMIT="${THERON_CAPTURE_PCE_FAST_MOVEMENT_CONTEXT_SAMPLE_LIMIT:-128}"' "$script"; then
+    printf '%s\n' 'FAIL: capture must own and bound the PCE Fast movement-context trace' >&2
+    exit 1
+fi
 if [[ ! -f "$ram_provenance_patch" ]] ||
    ! grep -Fq '@@ -420,8 +428,12 @@' "$ram_provenance_patch" ||
    ! grep -Fq 'const uint8 reader_mpr = MPR[reader_pc >> 13];' "$ram_provenance_patch"; then
@@ -684,6 +712,9 @@ if ! grep -Fq 'mednafen_1.32.1_theron_vdc_io_trace.patch' "$build_script" ||
 fi
 if ! grep -Fq 'THERON_CAPTURE_INPUT_TRACE_LIMIT' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_INPUT_TRACE_LIMIT="$input_trace_limit"' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_INPUT_TRACE_START_FRAME' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_INPUT_TRACE_START_FRAME="$input_trace_start_frame"' "$script" ||
+   ! grep -Fq 'input_trace_start_frame=$((earliest_replay_frame - 120))' "$script" ||
    ! grep -Fq 'input_trace_limit_default=65536' "$script" ||
    ! grep -Fq 'input_trace_limit_default=1048576' "$script" ||
    ! grep -Fq '|| -n "$host_key" || -n "$host_key_sequence"' "$script" ||
@@ -738,7 +769,7 @@ if [[ ! -f "$irq2_patch" ]] ||
     exit 1
 fi
 if ! grep -Fq 'trace_files_are_line_delimited()' "$script" ||
-   ! grep -Fq 'index($_, chr(92) . chr(92) . "n")' "$script" ||
+   ! grep -Fq 'index($_, chr(92) . "n")' "$script" ||
    ! grep -Fq 'existing_trace_files' "$script" ||
    ! grep -Fq '"$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace"' "$script" ||
    ! grep -Fq 'Mednafen emitted a literal backslash-n in a trace record' "$script"; then
@@ -809,6 +840,9 @@ if grep -Fq 'activationAccepted' "$quartz_helper"; then
 fi
 if command -v swiftc >/dev/null 2>&1; then
     swift_module_cache=$(mktemp -d "$repo/build/firestaff-theron-swift-module-cache.XXXXXX")
+    # AppKit module caches are large. Keep the focused check repeatable on
+    # constrained developer disks instead of leaving generated artifacts.
+    trap 'rm -rf -- "$swift_module_cache"' EXIT
     if ! swiftc -module-cache-path "$swift_module_cache" -typecheck "$quartz_helper" >/dev/null 2>&1; then
         printf 'FAIL: Quartz helper does not type-check\n' >&2
         exit 1
@@ -830,7 +864,7 @@ if ! grep -Fq -- '-force_module "$capture_mednafen_module"' "$script" ||
    ! grep -Fq -- 'capture_cdbios_setting=pce_fast.cdbios' "$script" ||
    ! grep -Fq -- 'capture_input_port_setting=pce.input.port1' "$script" ||
    ! grep -Fq -- 'capture_input_port_setting=pce_fast.input.port1' "$script" ||
-   ! grep -Fq -- 'capture_input_args=("-$capture_input_port_setting" gamepad)' "$script" ||
+   ! grep -Fq -- 'capture_input_args=("-$capture_input_port_setting" "$capture_input_device")' "$script" ||
    ! grep -Fq -- 'capture_input_args+=(' "$script" ||
    ! grep -Fq -- '"-pce_fast.input.port1.gamepad.$key"' "$script" ||
    ! grep -Fq -- '"keyboard 0x0 $pce_scancode"' "$script" ||
@@ -870,10 +904,77 @@ if ! grep -Fq 'FIRESTAFF_THERON_IRQ2_INPUT_TRACE="$input_trace"' "$script"; then
     printf 'FAIL: capture script must retain a raw controller input receipt\n' >&2
     exit 1
 fi
+python3 - "$repo/scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch" \
+    "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_input.patch" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+hunk = re.compile(r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
+for name in sys.argv[1:]:
+    lines = Path(name).read_text(encoding="utf-8").splitlines()
+    for index, header in enumerate(lines):
+        match = hunk.match(header)
+        if not match:
+            continue
+        old_count = new_count = 0
+        cursor = index + 1
+        while cursor < len(lines) and not lines[cursor].startswith(("@@ ", "--- a/")):
+            line = lines[cursor]
+            if line == "FIRESTAFF_PATCH_BLANK_CONTEXT" or line.startswith("FIRESTAFF_PATCH_TAB_CONTEXT"):
+                old_count += 1
+                new_count += 1
+            elif line.startswith(" "):
+                old_count += 1
+                new_count += 1
+            elif line.startswith("+"):
+                new_count += 1
+            elif line.startswith("-"):
+                old_count += 1
+            elif line.startswith("\\ No newline"):
+                pass
+            else:
+                raise SystemExit(f"{name}:{cursor + 1}: invalid unified-diff context")
+            cursor += 1
+        expected_old = int(match.group(2) or 1)
+        expected_new = int(match.group(4) or 1)
+        if (old_count, new_count) != (expected_old, expected_new):
+            raise SystemExit(
+                f"{name}:{index + 1}: hunk declares {expected_old}/{expected_new}, "
+                f"contains {old_count}/{new_count}"
+            )
+PY
+
 if ! grep -Fq 'source=mednafen-pce-fast-instrumented-input' "$script" ||
    ! grep -Fq 'scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch' "$repo/scripts/build_mednafen_theron_irq2_trace.sh" ||
-   ! grep -Fq 'static void TheronPCEFastInputTraceRead' "$repo/scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch"; then
+   ! grep -Fq 'static void TheronPCEFastInputTraceRead' "$repo/scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch" ||
+   ! grep -Fq 'FIRESTAFF_THERON_INPUT_TRACE_START_FRAME' "$repo/scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch" ||
+   ! grep -Fq 'TheronPCEFastScriptFrame >= TheronPCEFastInputTraceStartFrame' "$repo/scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch"; then
     printf '%s\n' 'FAIL: pce_fast capture must retain source- and bus-bound input traces' >&2
+    exit 1
+fi
+if ! awk '
+    function finish_hunk() {
+        if (in_hunk && seen != expected)
+            exit 1
+    }
+    /^@@ -[0-9]+(,[0-9]+)? \+[0-9]+(,[0-9]+)? @@/ {
+        finish_hunk()
+        range_count = split($3, range, ",")
+        expected = (range_count == 2) ? range[2] : 1
+        seen = 0
+        in_hunk = 1
+        next
+    }
+    /^(---|\+\+\+) / {
+        finish_hunk()
+        in_hunk = 0
+        next
+    }
+    in_hunk && (/^[ +]/ || /^FIRESTAFF_PATCH_(BLANK|TAB)_CONTEXT/) { seen++ }
+    END { finish_hunk() }
+' "$repo/scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch"; then
+    printf '%s\n' 'FAIL: PCE Fast input-trace patch has an invalid unified-diff hunk count' >&2
     exit 1
 fi
 if ! grep -Fq 'mednafen_1.32.1_theron_scripted_pce_fast_input.patch' "$repo/scripts/build_mednafen_theron_irq2_trace.sh" ||
@@ -894,7 +995,9 @@ if ! grep -Fq 'if [[ "$capture_mednafen_module" == pce ]]; then' "$script" ||
     printf '%s\n' 'FAIL: capture snapshots must match the selected Mednafen core' >&2
     exit 1
 fi
-if ! grep -Fq 'theron_input_read_count < theron_input_read_trace_limit' "$repo/scripts/mednafen_1.32.1_theron_input_result_trace.patch" ||
+if ! grep -Fq 'theron_input_read_result_pending' "$repo/scripts/mednafen_1.32.1_theron_input_result_trace.patch" ||
+   ! grep -Fq 'theron_script_trace_frame >= theron_input_read_trace_start_frame' "$repo/scripts/mednafen_1.32.1_theron_input_state_trace.patch" ||
+   ! grep -Fq 'theron_script_trace_frame >= theron_input_write_trace_start_frame' "$repo/scripts/mednafen_1.32.1_theron_input_state_trace.patch" ||
    grep -Fq 'theron_input_read_count <= theron_input_read_trace_limit' "$repo/scripts/mednafen_1.32.1_theron_input_result_trace.patch" ||
    ! grep -Fq 'HuCPU.PeekLogical(0x2100u | ((sp + 1u) & 0xffu))' "$repo/scripts/mednafen_1.32.1_theron_input_result_trace.patch" ||
    ! grep -Fq 'stack=%02x%02x%02x%02x' "$repo/scripts/mednafen_1.32.1_theron_input_result_trace.patch"; then
@@ -912,6 +1015,12 @@ if ! grep -Fq 'require_instrumented_mednafen_binary()' "$script" ||
    ! grep -Fq 'MEDNAFEN_BIN lacks the required Firestaff Theron instrumentation' "$script" ||
    ! grep -Fq 'build_mednafen_theron_irq2_trace.sh' "$script"; then
     printf 'FAIL: capture script must reject an uninstrumented Mednafen binary before launch\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'capture_pce_fast_vram_commit_trace" == 1' "$script" ||
+   ! grep -Fq "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE' \"\$mednafen_bin\"" "$script" ||
+   ! grep -Fq 'MEDNAFEN_BIN lacks the required PCE Fast VRAM commit instrumentation' "$script"; then
+    printf '%s\n' 'FAIL: PCE Fast VRAM capture must reject a binary missing its commit-trace producer before launch' >&2
     exit 1
 fi
 if ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace"' "$script" ||
@@ -1051,7 +1160,7 @@ if ! grep -Fq 'THERON_CAPTURE_HOST_KEY must name a supported PCE key' "$script" 
    ! grep -Fq 'sleep "$host_key_current_hold"' "$script" ||
    ! grep -Fq 'quartz_arguments=("$host_key_current_code" "$host_key_current_hold" "$mednafen_ui_pid")' "$script" ||
    ! grep -Fq 'requested_host_key_holds_seconds=%s' "$script" ||
-   ! grep -Fq 'THERON_CAPTURE_HOST_KEY_HOLDS=4,1,1' "$repo/docs/THERON_MAC_SDL_MEDNAFEN_LOCAL.md" ||
+   ! grep -Eq 'THERON_CAPTURE_HOST_KEY_HOLDS=4([[:space:]]|$)' "$repo/docs/THERON_MAC_SDL_MEDNAFEN_LOCAL.md" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_SEQUENCE times must be ordered' "$script" ||
    ! grep -Fq 'host_key_sequence_codes+=("$(capture_host_key_for_label "$host_key_sequence_label")")' "$script" ||
    ! grep -Fq 'requested_host_key_sequence=%s' "$script" ||

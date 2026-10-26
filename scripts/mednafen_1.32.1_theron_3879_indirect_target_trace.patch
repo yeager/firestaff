@@ -12,7 +12,7 @@
 +static unsigned Theron3879TargetPhysical;
 +static unsigned Theron3879TargetOpcode;
 +static unsigned Theron3879CallerWindowStarted;
-@@ -1188,1 +1188,49 @@
+@@ -1188,1 +1188,50 @@
  FIRESTAFF_PATCH_TAB_CONTEXT physical_pc = (MPR[PC >> 13] << 13) | (PC & 0x1fff);
 +	 if(Theron3879TargetStepsRemaining ||
 +	    (PC >= 0x4ef4 && PC <= 0x4ef6) ||
@@ -41,9 +41,10 @@
 +	         (Theron3879IndirectTarget & 0x1fff)) : 0xffffff;
 +	    Theron3879TargetOpcode = Theron3879IsIndirectTarget ?
 +	        RdOp(Theron3879IndirectTarget) : 0xff;
++	    const uint32 theron_trace_physical_pc = (MPR[PC >> 13] << 13) | (PC & 0x1fff);
 +	    fprintf(Theron3879Trace,
 +	            "theron_3879_step sequence=%u logical_pc=%04x physical_pc=%06x opcode=%02x a=%02x x=%02x y=%02x p=%02x s=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x ptr2003=%02x ptr2004=%02x indirect_target=%04x target_physical=%06x target_opcode=%02x follow_remaining=%u\n",
-+	            Theron3879TraceCount++, PC, physical_pc, lastop,
++	            Theron3879TraceCount++, PC, theron_trace_physical_pc, lastop,
 +	            A, X, Y, P, S, MPR[0], MPR[1], MPR[2], MPR[3],
 +	            MPR[4], MPR[5], MPR[6], MPR[7], Theron3879PointerLow,
 +	            Theron3879PointerHigh, Theron3879IndirectTarget,

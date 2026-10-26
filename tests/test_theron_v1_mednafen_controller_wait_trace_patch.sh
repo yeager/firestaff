@@ -423,6 +423,8 @@ if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
    ! grep -Fq 'RdMem(0x2004)' "$indirect_target_patch_file" ||
    ! grep -Fq 'target_physical' "$indirect_target_patch_file" ||
    ! grep -Fq 'Theron3879TargetStepsRemaining = 128' "$indirect_target_patch_file" ||
+   ! grep -Fq 'theron_trace_physical_pc = (MPR[PC >> 13]' "$indirect_target_patch_file" ||
+   ! grep -Fq 'PC, theron_trace_physical_pc, lastop' "$indirect_target_patch_file" ||
    ! grep -Fq 'RdMem(0x2003)' "$pce_fast_indirect_target_patch_file" ||
    ! grep -Fq 'RdMem(0x2004)' "$pce_fast_indirect_target_patch_file" ||
    ! grep -Fq 'mapped_opcode=%02x operand1_mapped=%02x operand2_mapped=%02x' "$pce_fast_indirect_target_patch_file" ||
@@ -523,7 +525,7 @@ if ! grep -Fq 'trace_files_are_line_delimited "$trace" "$cd_trace"' "$capture_sc
     exit 1
 fi
 if ! grep -Fq 'FIRESTAFF_THERON_3879_TRACE="$indirect_target_trace"' "$capture_script" ||
-   ! grep -Fq 'index($_, chr(92) . chr(92) . "n")' "$capture_script" ||
+   ! grep -Fq 'index($_, chr(92) . "n")' "$capture_script" ||
    ! grep -Fq '"$indirect_target_trace"' "$capture_script"; then
     printf '%s\n' 'FAIL: PCE Fast runtime window trace is not wired into capture verification' >&2
     exit 1
