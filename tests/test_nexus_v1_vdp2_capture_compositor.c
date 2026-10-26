@@ -61,6 +61,133 @@ static int run_external_bitmap_capture(void)
     return ok;
 }
 
+static uint8_t *read_exact_file(const char *path, size_t expected_size)
+{
+    FILE *file;
+    uint8_t *bytes;
+    long size;
+    if (!path || !*path) return NULL;
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0, SEEK_END) != 0 ||
+        (size = ftell(file)) < 0 || (size_t)size != expected_size ||
+        fseek(file, 0, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        return NULL;
+    }
+    bytes = (uint8_t *)malloc(expected_size);
+    if (!bytes || fread(bytes, 1U, expected_size, file) != expected_size) {
+        free(bytes);
+        fclose(file);
+        return NULL;
+    }
+    fclose(file);
+    return bytes;
+}
+
+static int run_external_ymir_menu_capture(void)
+{
+    const char *fbs_path = getenv("FIRESTAFF_NEXUS_YMIR_FBS");
+    const char *vram_path = getenv("FIRESTAFF_NEXUS_YMIR_VDP2_VRAM");
+    const char *cram_path = getenv("FIRESTAFF_NEXUS_YMIR_CRAM");
+    const char *registers_path = getenv("FIRESTAFF_NEXUS_YMIR_REGS");
+    const char *output_path = getenv("FIRESTAFF_NEXUS_YMIR_REPLAY_OUT");
+    const char *capture_attested = getenv("FIRESTAFF_NEXUS_YMIR_CAPTURE_ATTESTED");
+    const char *trace_attested = getenv("FIRESTAFF_NEXUS_YMIR_TRACE_ATTESTED");
+    uint8_t *fbs = NULL;
+    uint8_t *vram = NULL;
+    uint8_t *cram = NULL;
+    uint8_t *registers = NULL;
+    Nexus_V1_Vdp2YmirMenuCaptureFramebuffer *framebuffer = NULL;
+    Nexus_V1_Vdp2YmirMenuCaptureInput input;
+    Nexus_V1_Vdp2YmirMenuCaptureReceipt receipt;
+    FILE *output = NULL;
+    size_t i;
+    int ok = 0;
+
+    if (!fbs_path && !vram_path && !cram_path && !registers_path &&
+        !output_path) return 1;
+    fbs = read_exact_file(fbs_path,
+                          NEXUS_V1_VDP1_YMIR_FRAMEBUFFER_BYTES * 2U);
+    vram = read_exact_file(vram_path, NEXUS_V1_SATURN_VDP2_VRAM_BYTES);
+    cram = read_exact_file(cram_path, NEXUS_V1_SATURN_VDP2_CRAM_BYTES);
+    registers = read_exact_file(registers_path, 512U);
+    framebuffer = (Nexus_V1_Vdp2YmirMenuCaptureFramebuffer *)
+        malloc(sizeof(*framebuffer));
+    if (!fbs || !vram || !cram || !registers || !framebuffer ||
+        !output_path || !*output_path) goto cleanup;
+    memset(&input, 0, sizeof(input));
+    /* Ymir writes draw then display framebuffer; consume the latter. */
+    input.vdp1_display_framebuffer = fbs +
+        NEXUS_V1_VDP1_YMIR_FRAMEBUFFER_BYTES;
+    input.vdp1_display_framebuffer_size = NEXUS_V1_VDP1_YMIR_FRAMEBUFFER_BYTES;
+    input.vdp2_vram = vram;
+    input.vdp2_vram_size = NEXUS_V1_SATURN_VDP2_VRAM_BYTES;
+    input.vdp2_cram = cram;
+    input.vdp2_cram_size = NEXUS_V1_SATURN_VDP2_CRAM_BYTES;
+    input.vdp2_registers = registers;
+    input.vdp2_registers_size = 512U;
+    input.register_byte_order = NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG;
+    input.original_ymir_capture_verified = capture_attested &&
+        strcmp(capture_attested, "1") == 0;
+    input.command_trace_complete_verified = trace_attested &&
+        strcmp(trace_attested, "1") == 0;
+    if (!nexus_v1_vdp2_capture_replay_ymir_title_menu(
+            framebuffer, &input, &receipt) || !receipt.valid ||
+        !receipt.capture_only || receipt.renderer_permitted ||
+        !receipt.registers_verified || !receipt.command_trace_complete_verified ||
+        !receipt.original_ymir_capture_verified ||
+        receipt.vdp1_direct_pixels != 70185 ||
+        receipt.vdp1_palette_pixels != 1495 ||
+        receipt.nbg0_overlay_pixels != 18513) {
+        fprintf(stderr, "Ymir menu receipt valid=%d registers=%d direct=%d "
+                "palette=%d nbg0=%d capture=%d trace=%d\n",
+                receipt.valid, receipt.registers_verified,
+                receipt.vdp1_direct_pixels, receipt.vdp1_palette_pixels,
+                receipt.nbg0_overlay_pixels,
+                receipt.original_ymir_capture_verified,
+                receipt.command_trace_complete_verified);
+        goto cleanup;
+    }
+    input.command_trace_complete_verified = 0;
+    if (nexus_v1_vdp2_capture_replay_ymir_title_menu(
+            framebuffer, &input, &receipt) || receipt.valid ||
+        receipt.renderer_permitted) goto cleanup;
+    input.command_trace_complete_verified = 1;
+    registers[0x2cU] = 0x01U;
+    if (nexus_v1_vdp2_capture_replay_ymir_title_menu(
+            framebuffer, &input, &receipt) || receipt.valid ||
+        receipt.renderer_permitted) goto cleanup;
+    registers[0x2cU] = 0U;
+    if (!nexus_v1_vdp2_capture_replay_ymir_title_menu(
+            framebuffer, &input, &receipt) || !receipt.valid ||
+        receipt.renderer_permitted) goto cleanup;
+    output = fopen(output_path, "wb");
+    if (!output) goto cleanup;
+    for (i = 0; i < NEXUS_V1_VDP2_YMIR_MENU_WIDTH *
+                    NEXUS_V1_VDP2_YMIR_MENU_HEIGHT; ++i) {
+        uint32_t pixel = framebuffer->rgba_buffer[i];
+        uint8_t rgb[3];
+        rgb[0] = (uint8_t)(pixel >> 16U);
+        rgb[1] = (uint8_t)(pixel >> 8U);
+        rgb[2] = (uint8_t)pixel;
+        if (fwrite(rgb, 1U, sizeof(rgb), output) != sizeof(rgb)) goto cleanup;
+    }
+    if (fclose(output) != 0) {
+        output = NULL;
+        goto cleanup;
+    }
+    output = NULL;
+    ok = 1;
+cleanup:
+    if (output) fclose(output);
+    free(framebuffer);
+    free(registers);
+    free(cram);
+    free(vram);
+    free(fbs);
+    return ok;
+}
+
 int main(void)
 {
     uint8_t *bitmap = (uint8_t *)calloc(1, NEXUS_V1_VDP2_NBG1_BITMAP_BYTES);
@@ -180,6 +307,15 @@ int main(void)
         getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE_FRAME") &&
         !run_external_bitmap_capture()) {
         fprintf(stderr, "FAIL: external VDP2 NBG1 bitmap capture decode\n");
+        return 1;
+    }
+    if ((getenv("FIRESTAFF_NEXUS_YMIR_FBS") ||
+         getenv("FIRESTAFF_NEXUS_YMIR_VDP2_VRAM") ||
+         getenv("FIRESTAFF_NEXUS_YMIR_CRAM") ||
+         getenv("FIRESTAFF_NEXUS_YMIR_REGS") ||
+         getenv("FIRESTAFF_NEXUS_YMIR_REPLAY_OUT")) &&
+        !run_external_ymir_menu_capture()) {
+        fprintf(stderr, "FAIL: external full-frame Ymir title-menu replay\n");
         return 1;
     }
     puts("test_nexus_v1_vdp2_capture_compositor: PASS");

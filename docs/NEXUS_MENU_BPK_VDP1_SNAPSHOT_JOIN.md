@@ -296,3 +296,35 @@ The capture compositor can consume those traced command words while resolving
 materials from a separate VRAM snapshot. It requires explicit verification of
 trace completeness and keeps renderer permission disabled because the later
 snapshot alone cannot prove the texture and palette state at execution time.
+
+## Full Ymir title-frame capture replay
+
+The atomic frame-59 Ymir bundle also contains the VDP1 display framebuffer,
+VDP2 VRAM, CRAM, and registers. The bounded C function
+`nexus_v1_vdp2_capture_replay_ymir_title_menu` now reconstructs the full
+320x224 capture from those real buffers. It admits only the observed NBG0
+8bpp bitmap configuration, register offsets, scroll/scale, priority and colour
+calculation settings, black per-line back screen, and type-6 sprite palette
+lane. It rejects missing capture/trace attestations, other register layouts,
+unexpected sprite priorities, and a nonblack back-screen row.
+
+The display framebuffer contributes 70,185 direct RGB words. NBG0 overlays
+18,513 pixels with the captured CRAM and 31/32 top ratio; 1,495 indexed
+type-6 VDP1 pixels use their captured priority and CRAM words over the
+verified black back screen. The output matches every one of the screenshot's
+286,720 pixels exactly, including each of the four pixels in the 2x-scaled
+source pixel. Re-run the C implementation against the retained real capture:
+
+```sh
+python3 tests/test_nexus_ymir_title_capture_parity.py \
+  /path/to/test_nexus_v1_vdp2_capture_compositor \
+  /path/to/ymir_nexus_atomic_menu_20261026/dumps \
+  '/path/to/ymir_nexus_atomic_menu_20261026/screenshots/DUNGEON MASTER NEXUS [T-9111G]-20261026T200759.691.png'
+```
+
+This result establishes exact static capture composition for the retained
+frame. The screenshot was taken after the dump, so frame identity remains
+unproven. The API reports `capture_only=1` and `renderer_permitted=0`; it does
+not yet feed the live Firestaff viewport, prove the startup sequence, or test
+controller and mouse interaction. The evidence dumps remain on the external
+disk and are not committed.
