@@ -1,6 +1,6 @@
 # Five-game startup support gap analysis
 
-Reconciled with `origin/main` at `aa07e7441` on 2026-10-26. Runtime receipts
+Reconciled with `main` at `961ea8370` on 2026-10-26. Runtime receipts
 cited below remain the recorded runs at their stated revisions; they were not
 rerun during this documentation update. The repository contains checks
 against authentic media for all five games, but “available,”
@@ -11,52 +11,30 @@ The current evidence does not establish complete five-game startup support.
 
 | Game | Direct CLI evidence | Main-menu evidence | Current startup result |
 |---|---|---|---|
-| DM1 | The authentic-media CLI diagnostics exercise direct selection and source-owned startup. | The picker test covers keyboard and mouse handoff; PR #76 extends the mixed-media AUTO route to enter through the no-game menu and reach its authentic first runtime frame. | First runtime is verified on bounded real-media routes. Platform-wide parity and native physical input remain open. |
+| DM1 | The authentic-media CLI diagnostics exercise direct selection and source-owned startup. | The picker test covers keyboard and mouse handoff; the mixed-media AUTO route enters through the no-game menu and reaches its authentic first runtime frame. | First runtime is verified on bounded real-media routes. Platform-wide parity and native physical input remain open. |
 | CSB | The authentic-media CLI diagnostics exercise direct selection and source-owned startup. | The picker test covers keyboard and mouse handoff; the runtime test checks the authentic starting party and viewport receipt. | First runtime is verified on bounded real-media routes. Platform-wide parity and native physical input remain open. |
 | DM2 | The authentic-media CLI diagnostics cover direct selection; platform-specific checks include the complete timed FM Towns title sequence. The French DOS loose-file route now also preserves its selected graphics owner into the first loaded runtime. | The picker test covers keyboard and mouse handoff; the runtime test checks the authentic first party and frame. | First runtime is verified on bounded real-media routes, including the selected French DOS loose-file case. Other edition and native interaction coverage remains incomplete. |
-| Theron | The CLI diagnostics reach its source-owned runtime handoff. | The picker test covers keyboard and mouse handoff; the runtime test checks a loaded authentic Track 02 state. Tab champion cycling and the documented Z/Space wait keys now exercise the normal SDL event loop on authentic USA Track 02. | Runtime state, native frames and these keyboard actions are reached, but the native dungeon image is not yet driven by the authenticated world/graphics state. A recent nonblack Firestaff capture has not been paired with an original-emulator capture. |
+| Theron | The CLI diagnostics reach its source-owned runtime handoff. | The picker test covers keyboard and mouse handoff; the runtime test checks a loaded authentic Track 02 state. Tab champion cycling and the documented Z/X/Space controls now exercise the normal SDL event loop on authentic USA Track 02. | Runtime state, native frames and these keyboard actions are reached, but the native dungeon image is not yet driven by the authenticated world/graphics state. A recent nonblack Firestaff capture has not been paired with an original-emulator capture. |
 | Nexus | The CLI diagnostics intentionally expect the title frame and a blocked startup receipt: `levelLoaded=0`, `menu=0`, blocker `menu-bpk-prs3-capture-required`. | Keyboard and mouse selection tests reach the M12-to-M11 handoff, not an active game runtime. There is no Nexus case in the first-runtime probe matrix. | **Not startable as a playable game yet.** A new Ymir title-menu VDP capture documents `NEW GAME`, `CONTINUE`, and `CONFIGURATION`, but Firestaff's production title/menu consumer and transition to an authenticated level remain gated. The Saturn BKR parser is container-level only and is not wired to save selection or loading. |
 
 ## What the existing checks prove
 
-- Modern pointer coverage is still inconsistent across visible extras. The
-  current local source change adds line clicks to Changelog, row selection and
-  header category cycling to Bestiary, filtered row selection and header
-  category cycling to Item Encyclopedia, and row selection to Screenshot
-  Gallery and Save Browser. It also removes the misleading ACCEPT route from
-  the Manual document body. The changed translation unit passes a local
-  warning-as-error syntax-only compile, but these interactions have not been
-  runtime-verified. Several other views still use the generic thirds/quarters
-  gesture map instead of targeting rendered controls. A follow-up should align
-  those hit regions with each view's actual renderer and action contract.
 - [`tests/test_m12_main_menu_game_selection_real_media.sh`](../tests/test_m12_main_menu_game_selection_real_media.sh)
   verifies five-card keyboard/mouse selection and authentic-media handoff. Its
   success condition is a `game-handoff` receipt, not a loaded level.
-- PR #77 (`test(m12): cover mouse selection for first-row games`) adds another
-  click-and-handoff invocation for each of DM1, CSB, and DM2 at first-row
-  coordinates. The same script already runs mouse handoffs for those three
-  cards later, at slightly different coordinates. Each invocation starts a
-  fresh launcher discovery/menu path, although the picker matrix shares an
-  identity-bound file-hash cache. The change should document what extra
-  hit-box coverage the second coordinate provides or consolidate the duplicate
-  cases to avoid repeating traversal and menu dispatch. This is a test-runtime
-  and coverage-maintenance issue, not evidence of a faulty production hit box.
+  Duplicate first-row DM1, CSB and DM2 mouse handoffs were removed; the
+  remaining five-card mouse matrix retains one center click for each card.
 - [`tests/test_m12_main_menu_runtime_real_media.sh`](../tests/test_m12_main_menu_runtime_real_media.sh)
   exercises first-runtime probes for DM1, CSB, DM2, and Theron. The verifier
   requires an active runtime and `levelLoaded=1`; Nexus is not included.
-- PR #76 (`test(dm1): exercise mixed AUTO through no-game menu`) removes the
-  explicit game selection from the DM1 mixed-media AUTO regression, waits for
-  scan completion, selects through the ordinary no-game menu, and asserts the
-  selected FM Towns handoff reaches its authentic first runtime. This extends
-  route coverage; it does not establish full DM1 edition or platform parity.
 - [`tests/test_dm2_v1_loose_owner_real_media.sh`](../tests/test_dm2_v1_loose_owner_real_media.sh)
   verifies that choosing the authentic French DOS loose files from the main
   menu retains the selected French graphics hash through first runtime,
   despite an English graphics file in the same directory.
 - [`tests/test_theron_v1_sdl_input_events.sh`](../tests/test_theron_v1_sdl_input_events.sh)
   sends Tab, Z and Space through SDL key-down events after authentic USA Track
-  02 startup and checks champion cycling and gameplay ticks. It does not
-  establish full game input or renderer parity.
+  02 startup and checks champion cycling, Button I/II keyboard routing and
+  gameplay ticks. It does not establish full game input or renderer parity.
 - A fresh current-main TRV2 build at `e3b6d015c` succeeded, then direct CLI
   boot probes against the authentic per-game `.firestaff/data` roots reached
   `runtime-entered` for DM1, CSB, DM2 (FM Towns) and Theron (PC Engine).
@@ -67,24 +45,10 @@ The current evidence does not establish complete five-game startup support.
   handoffs are not evidence of playable Nexus or Theron runtimes. The broad
   CLI edition matrix skipped with code 77 because TRV2 lacks its required
   authentic DM2 Macintosh archive. No synthetic or copied media was used.
-- PR #74 (`feat(theron): route Button II keyboard binding`) remains open and
-  is not merge-ready despite green Actions checks. Its mapper adds Z/X, but
-  `main_loop_m11.c` only calls Theron's navigation mapper inside the active
-  game-view branch (SDL3 around lines 12290-12308; SDL2 around 12969-12987).
-  With the view inactive, the generic fallback omits Z and returns no input for
-  X (SDL3 lines 12504-12508; SDL2 lines 13142-13146). In the loaded dungeon,
-  X maps to `M12_MENU_INPUT_BACK`; `M11_GameView_HandleInput` forwards that token to
-  `theron_v1_boot_runtime_handle_m12_input_with_inventory_slot`, whose handled
-  tokens omit BACK before falling through to `UNKNOWN INPUT`
-  (`src/theron/theron_v1_boot.c`, lines 6205-6212). The PR's SDL check
-  currently asserts that result rather than proving a source-owned cancel
-  behavior. The check also does not compare the tick before and after X, so the
-  test can pass if X advances the world clock. Resolve the
-  startup dispatch, decide and document source-backed Button II semantics, and
-  strengthen the SDL assertion before merging. The PR head also targets a base
-  older than the currently fetched `origin/main` and needs a current-base
-  review after those fixes. GitHub still reports the PR open and
-  non-mergeable as of this review.
+- The Theron Button II dispatch and non-advancing cancel behavior have
+  source-backed coverage in the active runtime input and SDL event-loop checks.
+  This closes that input-path defect; it does not establish full input or
+  renderer parity.
 - [`tests/test_firestaff_cli_startup_diagnostics_real_media.sh`](../tests/test_firestaff_cli_startup_diagnostics_real_media.sh)
   checks discovery and direct CLI startup for all five IDs. Its Nexus-specific
   assertion rejects a false `runtime-entered` receipt and requires the blocked
