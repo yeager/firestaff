@@ -202,3 +202,7 @@ that the trace covers a complete frame and that its producer dropped no rows.
 The Japanese retail title-menu trace at Ymir frame 59 passes with 178 commands;
 the captured words are used directly, rather than substituted from the later
 VRAM snapshot. This does not establish that textures or the final image match.
+The capture compositor can consume those traced command words while resolving
+materials from a separate VRAM snapshot. It requires explicit verification of
+trace completeness and keeps renderer permission disabled because the later
+snapshot alone cannot prove the texture and palette state at execution time.

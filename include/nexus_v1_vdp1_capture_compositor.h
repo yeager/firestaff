@@ -172,6 +172,12 @@ typedef struct {
     int system_clip_state_present;
     uint32_t system_clip_x;
     uint32_t system_clip_y;
+    /* Optional ordered trace; producer completeness and zero drops must be
+     * checked by the caller. VRAM remains a later material snapshot. */
+    const uint8_t *trace_commands;
+    const uint32_t *trace_offsets;
+    int trace_command_count;
+    int trace_complete_verified;
 } Nexus_V1_Vdp1CaptureVramSequenceInput;
 
 typedef struct {

@@ -573,6 +573,40 @@ int main(void)
         fprintf(stderr, "FAIL: VDP1 VRAM sequence adapter\n");
         return 1;
     }
+    {
+        uint8_t captured_commands[128];
+        uint32_t captured_offsets[4] = {0U, 32U, 64U, 96U};
+        memcpy(captured_commands, vdp1_vram, sizeof(captured_commands));
+        /* The later snapshot differs from the command actually executed. */
+        wl16(vdp1_vram + 64, 0x8000U);
+        vram_sequence_input.trace_commands = captured_commands;
+        vram_sequence_input.trace_offsets = captured_offsets;
+        vram_sequence_input.trace_command_count = 4;
+        vram_sequence_input.trace_complete_verified = 1;
+        vram_sequence_input.system_clip_state_present = 1;
+        vram_sequence_input.system_clip_x = 319U;
+        vram_sequence_input.system_clip_y = 223U;
+        if (!nexus_v1_vdp1_capture_replay_vram_sequence(
+                &framebuffer, &vram_sequence_input, &vram_sequence_receipt) ||
+            vram_sequence_receipt.draw_commands_resolved != 1 ||
+            vram_sequence_receipt.replay.renderer_permitted) {
+            free(vdp1_vram);
+            fprintf(stderr, "FAIL: traced replay did not use captured commands\n");
+            return 1;
+        }
+        vram_sequence_input.trace_complete_verified = 0;
+        if (nexus_v1_vdp1_capture_replay_vram_sequence(
+                &framebuffer, &vram_sequence_input, &vram_sequence_receipt)) {
+            free(vdp1_vram);
+            fprintf(stderr, "FAIL: unverified trace was admitted\n");
+            return 1;
+        }
+        wl16(vdp1_vram + 64, 0x0002U);
+        vram_sequence_input.trace_commands = NULL;
+        vram_sequence_input.trace_offsets = NULL;
+        vram_sequence_input.trace_command_count = 0;
+        vram_sequence_input.system_clip_state_present = 0;
+    }
     before_rejected_vram_replay = framebuffer;
     material_fixture.reject = 1;
     if (nexus_v1_vdp1_capture_replay_vram_sequence(

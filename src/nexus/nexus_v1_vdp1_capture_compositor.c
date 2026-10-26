@@ -618,12 +618,18 @@ int nexus_v1_vdp1_capture_replay_vram_sequence(
     if (!framebuffer || !input || !input->vdp1_vram ||
         input->vdp1_vram_size != (int)NEXUS_V1_VDP1_VRAM_BYTES ||
         !input->original_saturn_capture_verified || !input->resolve_material ||
-        !nexus_v1_vdp1_command_sequence_frame(
+        !(input->trace_commands ?
+          (input->trace_complete_verified && input->trace_offsets &&
+           nexus_v1_vdp1_command_sequence_trace(input->trace_commands,
+               input->trace_offsets, input->trace_command_count,
+               &receipt.command_sequence)) :
+          (!input->trace_offsets && !input->trace_command_count &&
+           !input->trace_complete_verified && nexus_v1_vdp1_command_sequence_frame(
             &(Nexus_V1_Vdp1CommandSequenceInput){
                 input->vdp1_vram, input->vdp1_vram_size, input->copr_word,
                 input->system_clip_state_present, input->system_clip_x,
                 input->system_clip_y},
-            &receipt.command_sequence) ||
+            &receipt.command_sequence))) ||
         !receipt.command_sequence.valid || !receipt.command_sequence.complete ||
         !receipt.command_sequence.display_origin_verified ||
         receipt.command_sequence.draw_count <= 0 ||
@@ -637,7 +643,9 @@ int nexus_v1_vdp1_capture_replay_vram_sequence(
         uint32_t offset = receipt.command_sequence.command_byte_offsets[i];
         uint32_t palette_offset;
         Nexus_V1_Vdp1TextureCommand parsed;
-        const uint8_t *command = input->vdp1_vram + offset;
+        const uint8_t *command = input->trace_commands ?
+            input->trace_commands + (size_t)i * NEXUS_V1_VDP1_COMMAND_BYTES :
+            input->vdp1_vram + offset;
         Nexus_V1_Vdp1CaptureCompositeInput *resolved;
 
         if (nexus_v1_vdp1_texture_command_parse(
@@ -748,6 +756,7 @@ int nexus_v1_vdp1_capture_replay_vram_sequence(
     replay_input.commands = commands;
     replay_input.command_count = receipt.draw_commands_resolved;
     replay_input.system_clip_state_verified =
+        input->system_clip_state_present ||
         receipt.command_sequence.system_clip_state_verified;
     replay_input.system_clip_x = input->system_clip_state_present
         ? (int)input->system_clip_x
@@ -787,7 +796,7 @@ int nexus_v1_vdp1_capture_replay_vram_sequence(
         *out_receipt = receipt;
         return 0;
     }
-    if (receipt.system_clip_state_missing)
+    if (receipt.system_clip_state_missing || input->trace_commands)
         receipt.replay.renderer_permitted = 0;
     receipt.valid = 1;
     *out_receipt = receipt;
