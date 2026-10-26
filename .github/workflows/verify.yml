@@ -63,6 +63,7 @@ jobs:
       - uses: actions/checkout@v5
       - name: Verify regional retail identities in VDP1 source scans
         run: |
+          python3 tests/test_nexus_v1_checkpoint_verifiers.py
           python3 scripts/test_analyze_nexus_vdp1_source_join.py
           python3 scripts/test_analyze_nexus_vdp1_source_write_join.py
           python3 scripts/test_analyze_nexus_vdp1_write_trace.py

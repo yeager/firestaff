@@ -30,10 +30,14 @@ def read_export(path: Path) -> tuple[str, str, list[dict[str, object]], list[dic
         text = path.read_text(encoding="utf-8")
     except OSError as exc:
         raise ValueError(f"cannot read {path}: {exc}") from exc
-    sha = SHA_RE.search(text)
-    language = LANGUAGE_RE.search(text)
-    if not sha or not language:
+    hashes = SHA_RE.findall(text)
+    languages = [match.strip() for match in LANGUAGE_RE.findall(text)]
+    if not hashes or not languages:
         raise ValueError(f"{path}: missing Ghidra input_sha256 or language header")
+    if len(set(hashes)) != 1:
+        raise ValueError(f"{path}: conflicting Ghidra input_sha256 headers")
+    if len(set(languages)) != 1:
+        raise ValueError(f"{path}: conflicting Ghidra language headers")
     functions = [
         {
             "requested": match.group(1),
@@ -50,7 +54,7 @@ def read_export(path: Path) -> tuple[str, str, list[dict[str, object]], list[dic
     ]
     if not functions and not ranges:
         raise ValueError(f"{path}: no exported functions or disassembly range")
-    return (sha.group(1), language.group(1).strip(), functions, ranges,
+    return (hashes[0], languages[0], functions, ranges,
             {"path": str(path)})
 
 

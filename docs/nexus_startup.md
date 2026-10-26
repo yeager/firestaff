@@ -80,8 +80,11 @@ use those writes to label a menu resource or relax a presentation gate.
 
 `scripts/verify_nexus_ymir_title_state_checkpoint.py` verifies this narrow
 checkpoint from caller-supplied retail CUE, BIOS, title-prompt state, and local
-Ymir dump files. It requires the emitted VDP register artifacts but does not
-accept them as menu or gameplay evidence.
+Ymir dump files. It pins every CUE-referenced retail track and validates the
+register snapshot schema. The checkpoint pins VDP2 register bytes; it does not
+use the emitted VDP1 register file as evidence because this capture record has
+no independent VDP1-register digest. Nothing in this receipt establishes menu
+or gameplay presentation.
 
 ## Deterministic Start-to-menu checkpoint (2026-10-26)
 
