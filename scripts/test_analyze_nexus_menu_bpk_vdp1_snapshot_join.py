@@ -10,7 +10,9 @@ from pathlib import Path
 from analyze_nexus_menu_bpk_vdp1_snapshot_join import (
     all_offsets,
     command_trace_source_starts,
+    merge_ranges,
     surface_offsets,
+    surface_offset_summary,
 )
 
 BUILD = Path(__file__).resolve().parents[1] / "build"
@@ -23,6 +25,15 @@ class SnapshotJoinTests(unittest.TestCase):
         self.assertEqual(direct, [0, 2])
         self.assertEqual(swapped, [1])
         self.assertEqual(all_offsets(b"aaaa", b"aa"), [0, 1, 2])
+
+    def test_summarizes_repeated_matches_with_bounded_output_and_ranges(self) -> None:
+        direct, swapped = surface_offset_summary(b"\0" * (512 * 1024), b"\0", 8)
+        self.assertEqual(direct[0], 512 * 1024)
+        self.assertEqual(direct[1], list(range(8)))
+        self.assertEqual(direct[2], [(0, 512 * 1024)])
+        self.assertEqual(swapped, direct)
+        self.assertEqual(merge_ranges([(9, 12), (0, 2), (2, 4), (11, 14)]),
+                         [(0, 4), (9, 14)])
 
     def test_uses_cmdsrca_word4_and_ignores_untextured_commands(self) -> None:
         trace = (

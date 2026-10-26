@@ -52,6 +52,49 @@ def surface_offsets(vram: bytes, pixels: bytes) -> tuple[list[int], list[int]]:
     return all_offsets(vram, pixels), all_offsets(vram, word_swap(pixels))
 
 
+def surface_offset_summary(vram: bytes, pixels: bytes,
+                           preview_limit: int = 32):
+    """Count surface matches, retain a bounded preview, and compact their ranges."""
+    if preview_limit < 0:
+        raise ValueError("preview limit cannot be negative")
+
+    def summarize(needle: bytes):
+        if not needle:
+            raise ValueError("cannot search for an empty surface")
+        count = 0
+        preview: list[int] = []
+        ranges: list[tuple[int, int]] = []
+        cursor = 0
+        while True:
+            offset = vram.find(needle, cursor)
+            if offset < 0:
+                return count, preview, ranges
+            count += 1
+            if len(preview) < preview_limit:
+                preview.append(offset)
+            end = offset + len(needle)
+            if ranges and offset <= ranges[-1][1]:
+                ranges[-1] = (ranges[-1][0], max(ranges[-1][1], end))
+            else:
+                ranges.append((offset, end))
+            cursor = offset + 1
+
+    return summarize(pixels), summarize(word_swap(pixels))
+
+
+def merge_ranges(ranges: list[tuple[int, int]]) -> list[tuple[int, int]]:
+    """Merge overlapping or adjacent nonempty ranges in ascending order."""
+    merged: list[tuple[int, int]] = []
+    for begin, end in sorted(ranges):
+        if begin < 0 or end <= begin:
+            raise ValueError("invalid matched surface range")
+        if merged and begin <= merged[-1][1]:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], end))
+        else:
+            merged.append((begin, end))
+    return merged
+
+
 def decode_prs3(body: bytes, compressed_size: int, pixel_count: int) -> bytes:
     """Decode exactly the documented bounded DMWeb PRS3 byte grammar."""
     if compressed_size <= 0 or compressed_size > len(body) or pixel_count <= 0:
@@ -201,20 +244,23 @@ def main() -> int:
     matches = 0
     matched_ranges: list[tuple[int, int]] = []
     for index, width, height, pixels in decoded:
-        direct_offsets, swapped_offsets = surface_offsets(vram, pixels)
-        direct = direct_offsets[0] if direct_offsets else -1
-        swapped = swapped_offsets[0] if swapped_offsets else -1
-        if direct >= 0 or swapped >= 0:
+        direct, swapped = surface_offset_summary(vram, pixels)
+        direct_count, direct_preview, direct_ranges = direct
+        swapped_count, swapped_preview, swapped_ranges = swapped
+        if direct_count or swapped_count:
             matches += 1
-            matched_ranges.extend(
-                (offset, offset + len(pixels))
-                for offset in sorted(set(direct_offsets + swapped_offsets))
-            )
+            matched_ranges.extend(direct_ranges)
+            matched_ranges.extend(swapped_ranges)
             print(
                 f"entry={index} size={width}x{height} bytes={len(pixels)} "
-                f"vram_exact_offsets={','.join(f'0x{offset:x}' for offset in direct_offsets) or 'none'} "
-                f"vram_word_swap_offsets={','.join(f'0x{offset:x}' for offset in swapped_offsets) or 'none'}"
+                f"vram_exact_offsets={','.join(f'0x{offset:x}' for offset in direct_preview) or 'none'}"
+                f"{'...' if direct_count > len(direct_preview) else ''} "
+                f"vram_exact_offset_count={direct_count} "
+                f"vram_word_swap_offsets={','.join(f'0x{offset:x}' for offset in swapped_preview) or 'none'}"
+                f"{'...' if swapped_count > len(swapped_preview) else ''} "
+                f"vram_word_swap_offset_count={swapped_count}"
             )
+    matched_ranges = merge_ranges(matched_ranges)
     print(f"menu_bpk_sha256={menu_hash}")
     print(f"vdp1_vram_sha256={vram_hash}")
     print(f"decoded_prs3_surfaces={len(decoded)}")
