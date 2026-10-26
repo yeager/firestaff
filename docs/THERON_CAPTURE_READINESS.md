@@ -22,6 +22,19 @@ party-and-level receipt.
 
 ## 2026-10-24 — authentic runtime input comparison remains inconclusive
 
+## 2026-10-26 — frame-windowed PCE Fast replay still has no gameplay receipt
+
+An isolated replay from the preserved authentic Japanese dungeon state used a
+five-second Button I hold followed by held UP and RIGHT inputs. The replay
+plan, application records, and non-System-Card controller reads agreed for all
+three events. A bounded movement-context window starting immediately before
+the directional events captured the original CPU's input-latch, data-read and
+runtime-state activity, but no observed movement-command write followed either
+direction. This is evidence of controller delivery only. It does not identify
+a party coordinate, map, movement outcome, or renderer input, and does not
+authorize native dynamic rendering. The private reference build and capture
+artifacts were discarded after analysis; no game media or state was committed.
+
 Three isolated PCE Fast captures on TRV2 loaded the same preserved Japanese
 gameplay state, authentic Rev. 1 Track 02, and the verified System Card. A
 scripted UP event and matched LEFT/RIGHT events each reached the non-System
