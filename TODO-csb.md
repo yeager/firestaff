@@ -776,3 +776,11 @@ edition and source-media provenance that binds its `dungeon.dat`,
   fixed 32-cell row strides. The generic F0104 plan, native Amiga pit record
   mapping and final Amiga pixels still need an original-frame comparison;
   current evidence does not isolate a further pit-specific defect.
+2026-10-26 F31 FM Towns spell panel: F31's authenticated C009 panel and
+champion tabs no longer depend on the unrelated DM1 PC34 M653 font receipt.
+When that receipt is unavailable, Firestaff keeps the source C009 background
+and suppresses spell-panel glyph drawing instead of clearing the panel or
+using an unverified host font. The packed F31 real-media handoff test now
+checks that C009's source border remains intact with the font receipt disabled
+for both English and Japanese editions. The F31J system-font owner is still
+unresolved, so its glyph parity and full viewport/HUD parity remain open.

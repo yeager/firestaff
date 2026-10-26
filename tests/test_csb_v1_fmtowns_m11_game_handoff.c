@@ -2666,6 +2666,22 @@ int main(void)
                             background[y * 87 + x]) ++mismatch;
                     }
                 CHECK(mismatch == 0, "F31 final spell border matches original C009 in every mode");
+                {
+                    int savedFontAvailable = view.originalFontAvailable;
+                    view.originalFontAvailable = 0;
+                    M11_GameView_Draw(&view, framebuffer, 320, 200);
+                    mismatch = 0;
+                    for (int y = 0; y < 25; ++y)
+                        for (int x = 0; x < 87; ++x) {
+                            if (x >= 2 && x < 85 && y < 23) continue;
+                            if (framebuffer[(50 + offsetY + y) * 320 + 233 + x] !=
+                                background[y * 87 + x]) ++mismatch;
+                        }
+                    CHECK(mismatch == 0,
+                          "F31 C009 background remains source-rendered when the M653 font receipt is absent");
+                    view.originalFontAvailable = savedFontAvailable;
+                    M11_GameView_Draw(&view, framebuffer, 320, 200);
+                }
                 mismatch = 0;
                 /* MENUDRAW.C:62-78 and105-119 draw six available/four
                  * selected cells. The original M653 bitmap is the oracle,

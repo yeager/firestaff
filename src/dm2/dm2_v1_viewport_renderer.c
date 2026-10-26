@@ -8983,7 +8983,7 @@ static int dm2_v1_render_fmtowns_squad_plan(
     const DM2_V1_GdatHudM11CommandPlan *plan)
 {
     int expected_count = 0;
-    int fills = 0;
+    int formation_receipts = 0;
     int icons = 0;
     int gdat_counter_base;
 
@@ -9072,16 +9072,13 @@ static int dm2_v1_render_fmtowns_squad_plan(
                 command->pixels || command->width || command->height) {
                 return 0;
             }
-            dm2_v1_fill_rect(s, &command->destination,
-                             dm2_v1_hud_palette_color(s, 0u));
+            /* SKProject's DRAW_SQUAD_POS_INTERFACE keeps the F5 squad
+             * background intact and overlays champion icons directly. The
+             * formation rect is retained here as a source-layout receipt,
+             * but painting it with palette index 0 erases that authored F5
+             * material behind each occupied slot. */
             ++s->gdat_hud_material_plan_consumed_count;
-            ++s->asset_hud_core_drawn_count;
-            ++fills;
-            s->last_hud_core_gdat_hash = dm2_v1_viewport_hash_gdat_asset(
-                s->last_hud_core_gdat_hash, command->viewport_gdat_index,
-                command->destination.w, command->destination.h);
-            s->last_hud_core_pixel_count +=
-                (uint32_t)(command->destination.w * command->destination.h);
+            ++formation_receipts;
             continue;
         }
 
@@ -9399,8 +9396,8 @@ static int dm2_v1_render_fmtowns_squad_plan(
         s->last_hud_core_pixel_count +=
             (uint32_t)(command->destination.w * command->destination.h);
     }
-    return fills == s->hud_party.champion_count &&
-        icons == (expected_count - fills) &&
+    return formation_receipts == s->hud_party.champion_count &&
+        icons == (expected_count - formation_receipts) &&
         s->gdat_hud_material_plan_consumed_count - gdat_counter_base ==
             expected_count;
 }

@@ -1219,3 +1219,12 @@ that root with PC English priority without enforcing the selected graphics hash.
 Reproduce with authentic renamed EN/French graphics and shared dungeon, then
 preserve the explicit selected file and validate boot profile ownership. No
 runtime reproduction yet; complete DM1 work remains the priority.
+2026-10-26 FM Towns squad HUD: SKProject's
+`SKWINSPX/src/v4/skguidrw.cpp::DRAW_SQUAD_POS_INTERFACE` draws the F5
+formation background and overlays champion icons without clearing each
+formation rectangle. Firestaff had been filling each occupied formation
+rectangle with palette index 0 before drawing the icons, which erased parts
+of F5. The Towns formation command remains as an authenticated layout receipt
+but no longer paints pixels. The real-media gameplay test still needs a
+pixel-level regression assertion for preserving F5 under the icon masks; this
+change alone does not establish full DM2 FM Towns HUD or viewport parity.

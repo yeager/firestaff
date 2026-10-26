@@ -64888,8 +64888,12 @@ static int m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
         const int storedWidth = csbTownsSpellPanel ? 87 : 96;
         /* F31 C009 is87x25; C696 C013 retains F20's EN/JP anchor but
          * requires no nine-pixel source crop. C011 is not used by F0394. */
-        if (!m11_dm1_pc34_hud_font_is_source_bound(state) ||
-            !m11_build_dm1_spell_area_overlay_plan(sourceState, &plan) ||
+        /* F31 C009 and its champion tabs are independent of the system-font
+         * glyph owner. F31J may use the FM Towns EGB font, which has not been
+         * authenticated as the PC34 M653 bitmap. Keep verified panel pixels
+         * visible while the glyph helper below safely draws nothing without
+         * a bound source font; never replace those glyphs with host text. */
+        if (!m11_build_dm1_spell_area_overlay_plan(sourceState, &plan) ||
             !m11_panel_asset_source_loaded(state, 9, storedWidth, 25, NULL, NULL)) {
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           233, 42 + spellYOffset, 87, 33, M11_COLOR_BLACK);
@@ -64975,7 +64979,7 @@ static int m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
                 plan.line1[i].tab_x1, plan.line1[i].tab_y1 + spellYOffset);
         }
     }
-    {
+    if (m11_dm1_pc34_hud_font_is_source_bound(state)) {
         const int caster = sourceState->dm1SpellCasting.magicCasterIndex;
         const unsigned char* name = sourceState->world.party.champions[caster].name;
         int japaneseName = 0;
