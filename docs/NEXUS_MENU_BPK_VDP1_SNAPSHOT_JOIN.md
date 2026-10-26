@@ -140,9 +140,13 @@ sprite pixels at twice the VDP1 coordinates. Their RGB channels equal the
 captured CRAM components converted to 8 bits and multiplied by 31/32, rounding
 down. The earlier zero-match result compared unscaled colours and is withdrawn.
 Recheck with `python3 scripts/verify_nexus_title_sprite_screenshot.py BUNDLE
-SCREENSHOT TITLE.BIN`; Pillow is required. This is an observed relationship,
-not proof of what caused the scaling or of exact capture timing. It covers
-these sprites, not the complete VDP2 image or menu interaction.
+SCREENSHOT TITLE.BIN`; Pillow is required. The retained registers explain the
+top-layer factor: CCCTL `0x0043` enables sprite colour calculation in top-ratio
+mode, SPCTL `0x1536` selects the priority-equals-5 condition, and PRISC
+`0x0504` assigns priority 5 to these type-6 pixels. Their ratio index is zero
+and CCRSA `0x1000` selects a top ratio of 31/32. The comparison assumes a black
+lower layer; its actual pixels and exact capture timing remain unproven. It
+covers these sprites, not the complete VDP2 image or menu interaction.
 
 For mode-1 palette analysis, Ymir's software VDP1 renderer counts two end codes
 per rasterized line: each end code is skipped and the second stops the line.

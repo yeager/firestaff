@@ -2,7 +2,7 @@
 """Compare retained Nexus title sprites with a Ymir screenshot and VRAM dump.
 
 The screenshot follows the capture bundle; matches do not prove frame identity
-or identify the hardware cause of the observed 31/32 colour scaling.
+or the actual lower-layer pixels used by the observed colour calculation.
 """
 
 from __future__ import annotations
@@ -24,12 +24,16 @@ def verify(bundle: Path, screenshot: Path, title: Path) -> None:
     vram, frame, commands = ymir_commands(bundle)
     cram = (bundle / "vdp2-cram.bin").read_bytes()
     regs = (bundle / "vdp2-registers.bin").read_bytes()
-    if len(cram) != 4096 or len(regs) < 0xE8:
+    if len(cram) != 4096 or len(regs) < 0x108:
         raise ValueError("incomplete VDP2 snapshot")
     if int.from_bytes(regs[0xE0:0xE2], "big") != 0x1536 or \
        int.from_bytes(regs[0x0E:0x10], "big") != 0x0300 or \
        int.from_bytes(regs[0xE6:0xE8], "big") != 0:
         raise ValueError("unexpected sprite or colour RAM configuration")
+    ccctl = int.from_bytes(regs[0xEC:0xEE], "big")
+    spctl = int.from_bytes(regs[0xE0:0xE2], "big")
+    if (ccctl & 0x740) != 0x40 or ((spctl >> 12) & 3) != 1:
+        raise ValueError("unexpected sprite colour calculation mode")
     image = Image.open(screenshot).convert("RGB")
     if image.size != (640, 448):
         raise ValueError("expected the retained 2x screenshot")
@@ -41,6 +45,18 @@ def verify(bundle: Path, screenshot: Path, title: Path) -> None:
         ctrl, mode, colr, src, size = words[0], words[2], words[3], words[4], words[5]
         if ctrl & 0xC00F or mode != 0x80:
             raise ValueError("unexpected title sprite format")
+        priority_index = (colr >> 12) & 7
+        priority_reg = int.from_bytes(regs[0xF0 + (priority_index // 2) * 2:
+                                           0xF2 + (priority_index // 2) * 2], "big")
+        priority = (priority_reg >> (8 if priority_index & 1 else 0)) & 7
+        if priority != ((spctl >> 8) & 7):
+            raise ValueError("sprite priority does not enable colour calculation")
+        ratio_index = (colr >> 10) & 3
+        ratio_reg = int.from_bytes(regs[0x100 + (ratio_index // 2) * 2:
+                                        0x102 + (ratio_index // 2) * 2], "big")
+        ratio = 31 - ((ratio_reg >> (8 if ratio_index & 1 else 0)) & 31)
+        if ratio != 31:
+            raise ValueError("unexpected title sprite colour ratio")
         width, height = ((size >> 8) & 63) * 8, size & 255
         texture = vram[src * 8:src * 8 + width * height // 2]
         if not texture or source.find(texture) < 0:
@@ -57,7 +73,9 @@ def verify(bundle: Path, screenshot: Path, title: Path) -> None:
                     continue
                 colour_index = (colr & 0x3F0) | texel
                 word = int.from_bytes(cram[colour_index * 2:colour_index * 2 + 2], "big")
-                rgb = tuple(((((word >> shift) & 31) << 3) * 31) // 32
+                # The observed result matches a black lower layer; its actual
+                # pixels and their contribution remain independently unproven.
+                rgb = tuple(((((word >> shift) & 31) << 3) * ratio) // 32
                             for shift in (0, 5, 10))
                 screen_x, screen_y = (words[6] + x) * 2, (words[7] + y) * 2
                 if not (0 <= screen_x < 640 and 0 <= screen_y < 448):
@@ -70,7 +88,7 @@ def verify(bundle: Path, screenshot: Path, title: Path) -> None:
         print(f"frame={frame} command={address:#x} screenshot_matches={matches}/{count}")
     if checked != set(EXPECTED):
         raise ValueError("one or more title sprites are missing")
-    print("screenshot_colour_scale=31/32; timing_and_cause=unproven")
+    print("sprite_priority=5 ratio=31/32; lower_layer_and_timing=unproven")
 
 
 if __name__ == "__main__":
