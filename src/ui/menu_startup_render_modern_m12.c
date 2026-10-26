@@ -2337,10 +2337,18 @@ static void draw_game_card_flow(M12_ModernCanvas* c,
 }
 
 static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
-    int slot = slot_for_game_id(state->entries[state->selectedIndex].gameId);
-    if (slot < 0) slot = 0;
-    const M12_GameOptions* opts = &state->gameOptions[slot];
-    const M12_MenuEntry* entry = &state->entries[state->selectedIndex];
+    int entryCount;
+    int slot;
+    const M12_GameOptions* opts;
+    const M12_MenuEntry* entry;
+    if (!c || !state) return;
+    entryCount = M12_StartupMenu_GetEntryCount();
+    if (state->selectedIndex < 0 || state->selectedIndex >= entryCount) return;
+    entry = &state->entries[state->selectedIndex];
+    if (entry->kind != M12_MENU_ENTRY_GAME) return;
+    slot = slot_for_game_id(entry->gameId);
+    if (slot < 0 || slot >= M12_CONFIG_GAME_COUNT) return;
+    opts = &state->gameOptions[slot];
     if (state->gameCardFlowStage == 0 || state->gameCardFlowStage == 1) {
         draw_game_card_flow(c, state, entry);
         return;

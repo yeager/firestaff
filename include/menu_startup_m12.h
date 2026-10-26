@@ -730,6 +730,9 @@ void M12_StartupMenu_InitWithOptions(M12_StartupMenuState* state,
                                      const char* dataDir,
                                      const char* gameId,
                                      const M12_StartupMenuInitOptions* options);
+/* Resolve the fixed per-game options slot independently of menu row order.
+ * Returns -1 for unknown game ids. */
+int M12_StartupMenu_GetGameOptionsSlot(const char* gameId);
 void M12_StartupMenu_RunDeferredScan(M12_StartupMenuState* state,
                                      M12_AssetStatusScanProgressFn progressFn,
                                      void* progressUserData);

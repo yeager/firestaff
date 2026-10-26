@@ -807,6 +807,13 @@ int M12_ModernMenu_ApplyHit(M12_StartupMenuState* state,
         }
         case M12_HIT_GAMEOPT_CYCLE:
         {
+            const M12_MenuEntry* selectedEntry =
+                M12_StartupMenu_GetEntry(state, state->activatedIndex);
+            int gameOptionsSlot =
+                selectedEntry && selectedEntry->kind == M12_MENU_ENTRY_GAME
+                    ? M12_StartupMenu_GetGameOptionsSlot(
+                          selectedEntry->gameId)
+                    : -1;
             int guard = 0;
             while (state->gameOptSelectedRow != hit.index &&
                    guard++ < M12_GAME_OPT_ROW_COUNT + 2) {
@@ -819,15 +826,17 @@ int M12_ModernMenu_ApplyHit(M12_StartupMenuState* state,
             }
             if (hit.index == M12_GAME_OPT_ROW_PRESENTATION &&
                 state->activatedIndex >= 0 &&
-                state->activatedIndex < M12_CONFIG_GAME_COUNT) {
+                state->activatedIndex < M12_StartupMenu_GetEntryCount() &&
+                gameOptionsSlot >= 0 &&
+                gameOptionsSlot < M12_CONFIG_GAME_COUNT) {
                 if (hit.delta < 0) {
                     int guard = 0;
-                    while (state->gameOptions[state->activatedIndex].presentationModeIndex !=
+                    while (state->gameOptions[gameOptionsSlot].presentationModeIndex !=
                                M12_PRESENTATION_V1_ORIGINAL &&
                            guard++ < M12_PRESENTATION_MODE_COUNT) {
                         M12_StartupMenu_HandleInput(state, M12_MENU_INPUT_LEFT);
                     }
-                } else if (state->gameOptions[state->activatedIndex].presentationModeIndex ==
+                } else if (state->gameOptions[gameOptionsSlot].presentationModeIndex ==
                            M12_PRESENTATION_V1_ORIGINAL) {
                     M12_StartupMenu_HandleInput(state, M12_MENU_INPUT_RIGHT);
                 }
