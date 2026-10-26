@@ -95,20 +95,6 @@ run_game_picker_case csb "$csb_archive" \
     'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
     fmtowns-en keyboard-leaf 'FM Towns' "$data_root/dm2"
 
-# Exercise mouse hit testing on the first row as well as keyboard selection.
-# These clicks target the centers of the DM1, CSB, and DM2 cards in the
-# 1920x1080 main menu, then continue through the normal platform/presentation
-# choices to an authenticated handoff.
-run_game_picker_case dm1 "$dm1_archive" \
-    'wait-scan-complete,wait20,click:701:262,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
-    fmtowns-en mouse
-run_game_picker_case csb "$csb_archive" \
-    'wait-scan-complete,wait20,click:1173:262,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
-    fmtowns-en mouse
-run_game_picker_case dm2 "$dm2_archive" \
-    'wait-scan-complete,wait20,click:1645:262,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
-    fmtowns-ja mouse
-
 # The documented per-user collection must open the all-games launcher and
 # launch each supported priority game when neither --game nor --data-dir is
 # supplied. Each case gets an isolated HOME/config while reusing the authentic

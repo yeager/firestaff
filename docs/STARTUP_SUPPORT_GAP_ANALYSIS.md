@@ -22,11 +22,8 @@ The current evidence does not establish complete five-game startup support.
 - [`tests/test_m12_main_menu_game_selection_real_media.sh`](../tests/test_m12_main_menu_game_selection_real_media.sh)
   verifies five-card keyboard/mouse selection and authentic-media handoff. Its
   success condition is a `game-handoff` receipt, not a loaded level.
-  The script also launches DM1, CSB and DM2 through two first-row mouse-click
-  groups at slightly different x coordinates (around lines 103 and 206). Keep
-  both only if the coordinates intentionally cover distinct hit-box behavior;
-  otherwise consolidate the repeated full scan/menu/handoff runs to reduce
-  real-media test time.
+  Duplicate first-row DM1, CSB and DM2 mouse handoffs were removed; the
+  remaining five-card mouse matrix retains one center click for each card.
 - [`tests/test_m12_main_menu_runtime_real_media.sh`](../tests/test_m12_main_menu_runtime_real_media.sh)
   exercises first-runtime probes for DM1, CSB, DM2, and Theron. The verifier
   requires an active runtime and `levelLoaded=1`; Nexus is not included.
