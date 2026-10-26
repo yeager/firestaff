@@ -142,6 +142,17 @@ gaps and bounds what can be concluded:
   ownership from the original stream, then verify audible output on a real
   audio device; do not substitute generated sound.
 
+2026-10-26 CSB Amiga FTL checksum arithmetic: the authentic 3.3 `SWSH.FTL`
+failed the container verifier because its BSS and DATA sums use ordinary
+16-bit overflow, while the verifier reduced each addition modulo 65,535.
+The checksum accumulator now follows the stored 16-bit result. The focused
+real-media test checks all four hunk checksums and confirms that the decoded
+palette schedule, 320x200 F31E logo, and 9,078-byte sound sample match the
+literal arrays in ReDMCSB `SWSH.C`, `SWSHGDAT.C`, and `SWSHSDAT.C`. Original
+bytes remain outside Git. This fixes FTL container verification and proves
+resource extraction only; the Amiga SWSH animation/audio are still not wired
+into the CSB launcher runtime, as noted above.
+
 2026-10-25 mixed original-media launcher retest: the authentic
 `csb_v1_fmtowns_m12_auto_mixed_real_media` matrix passed against the installed
 FM Towns, Atari ST, and Amiga originals. AUTO selected FM Towns and reached

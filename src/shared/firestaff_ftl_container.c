@@ -27,9 +27,11 @@ static void wr32_be(uint8_t* p, uint32_t v) {
 }
 
 static uint16_t checksum_add(uint32_t sum, uint32_t add) {
-    sum += add;
-    sum %= 0xffffu;
-    return (uint16_t)sum;
+    /* FTL checksum fields are 16-bit sums with normal word overflow. The
+     * original CSB Amiga SWSH.FTL stores 0x9a4a for its BSS sum and 0xb0c5
+     * for DATA; one's-complement modulo 0xffff instead produces 0x9a4e and
+     * 0xb0d0, rejecting the authentic module. */
+    return (uint16_t)(sum + add);
 }
 
 uint16_t FirestaffFtlContainer_CommonChecksum(const uint8_t* data,

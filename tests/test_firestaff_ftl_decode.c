@@ -54,6 +54,16 @@ static void set_table_word(uint8_t* table, size_t idx, uint16_t word) {
     wr16_be(table + idx * 2u, word);
 }
 
+static uint64_t fnv1a64(const uint8_t* bytes, size_t size) {
+    uint64_t hash = UINT64_C(14695981039346656037);
+    size_t i;
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= UINT64_C(1099511628211);
+    }
+    return hash;
+}
+
 static size_t build_checksum_bridge_ftl(uint8_t* out, size_t cap) {
     const size_t hunk_count = 3u;
     const size_t bss_off = 20u + hunk_count * 12u;
@@ -201,6 +211,9 @@ static int csb_amiga_swsh_real_media(const char* path) {
     uint8_t* bytes;
     long size;
     FirestaffFtl ftl;
+    FirestaffFtlContainer container;
+    FirestaffFtlChecksumReport checksums;
+    int parsed = 0;
     int rc;
     if (!file) {
         fprintf(stderr, "SKIP: CSB Amiga SWSH.FTL is unavailable\n");
@@ -219,19 +232,66 @@ static int csb_amiga_swsh_real_media(const char* path) {
         return 1;
     }
     fclose(file);
+    memset(&container, 0, sizeof(container));
+    memset(&checksums, 0, sizeof(checksums));
+    if (FirestaffFtlContainer_Parse(bytes, (size_t)size, &container) != 0 ||
+        FirestaffFtlContainer_VerifyChecksums(bytes, (size_t)size,
+                                               &container, &checksums) != 0 ||
+        container.hunk_count != 3u || container.bss_index != 0 ||
+        container.data_index != 1 || container.code_index != 2 ||
+        container.hunks[0].type != FIRESTAFF_FTL_HUNK_BSS ||
+        container.hunks[0].size != 176u ||
+        container.hunks[1].type != FIRESTAFF_FTL_HUNK_DATA ||
+        container.hunks[1].size != 11672u ||
+        container.hunks[2].type != FIRESTAFF_FTL_HUNK_CODE ||
+        container.hunks[2].size != 6978u ||
+        checksums.common_header.status != FIRESTAFF_FTL_CHECK_MATCH ||
+        checksums.bss_hunk.status != FIRESTAFF_FTL_CHECK_MATCH ||
+        checksums.data_hunk.status != FIRESTAFF_FTL_CHECK_MATCH ||
+        checksums.code_hunk.status != FIRESTAFF_FTL_CHECK_MATCH) {
+        fprintf(stderr,
+                "CSB SWSH.FTL hunk layout/checksum mismatch: hunks=%zu "
+                "indices=%d/%d/%d checksums=%d/%d/%d/%d "
+                "data=%04x/%04x code=%04x/%04x\n",
+                container.hunk_count, container.bss_index,
+                container.data_index, container.code_index,
+                checksums.common_header.status, checksums.bss_hunk.status,
+                checksums.data_hunk.status, checksums.code_hunk.status,
+                checksums.data_hunk.expected, checksums.data_hunk.actual,
+                checksums.code_hunk.expected, checksums.code_hunk.actual);
+        free(bytes);
+        return 1;
+    }
     rc = FirestaffFtl_Parse(bytes, (size_t)size, &ftl);
-    if (rc == 0) rc = FirestaffFtl_Decode(&ftl);
+    if (rc == 0) {
+        parsed = 1;
+        rc = FirestaffFtl_Decode(&ftl);
+    }
+    /* ReDMCSB SWSH.C F0904/F0909 consumes the palette and sample; F31E's
+     * G8187_Graphic_FTLLogo and G0746_auc_SwooshSoundData are defined in
+     * SWSHGDAT.C and SWSHSDAT.C. These FNV receipts bind the decoded fields
+     * to those source arrays without copying game media into the repository. */
     if (rc != 0 || ftl.hunk_data_decoded_size != 11780u ||
         memcmp(ftl.hunk_data_decoded + 154u,
-               "\x00\x01\x0f\xff\xff\xff\x00\x01", 8u) != 0) {
-        fprintf(stderr, "CSB SWSH DATA or palette schedule did not decode\n");
-        if (rc == 0) FirestaffFtl_Free(&ftl);
+               "\x00\x01\x0f\xff\xff\xff\x00\x01", 8u) != 0 ||
+        memcmp(ftl.hunk_data_decoded + 262u,
+               "\x01\x40\x00\xc8", 4u) != 0 ||
+        fnv1a64(ftl.hunk_data_decoded + 154u, 54u) !=
+            UINT64_C(0x7831ad38d877cea1) ||
+        fnv1a64(ftl.hunk_data_decoded + 262u, 2310u) !=
+            UINT64_C(0x08e34132eb706e05) ||
+        fnv1a64(ftl.hunk_data_decoded + 2650u, 9078u) !=
+            UINT64_C(0xd8a7920cbad582f5)) {
+        fprintf(stderr,
+                "CSB SWSH source palette, FTL logo, or sound sample mismatch\n");
+        if (parsed) FirestaffFtl_Free(&ftl);
         free(bytes);
         return 1;
     }
     FirestaffFtl_Free(&ftl);
     free(bytes);
-    puts("PASS: original CSB Amiga SWSH DATA and palette schedule");
+    puts("PASS: original CSB Amiga SWSH hunk checksums, palette schedule, "
+         "FTL logo, and sound sample match ReDMCSB F31E resources");
     return 0;
 }
 
