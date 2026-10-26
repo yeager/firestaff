@@ -18,7 +18,7 @@
 - `CSB Amiga FTL reader`: bound container and decoded-data reads, correct DATA-area decoding and checksum arithmetic, and add authentic SWSH decode and runtime-route regressions.
 - `FM Towns graphics readers`: add source-locked F20 HUD and wall-ornament tests and CSB stair-state checks against authentic media.
 - `Nexus VDP1 and VDP2 analysis`: add capture-bound command replay, texture and palette resolution, sprite composition, DGN/item material joins, and source-to-capture validation tools; retain the distinction between traced captures and production gameplay.
-- `Theron's Quest trace tools`: tighten scripted-input, BRAM and capture-receipt checks, preserve normal controller traces, and add authentic-media readiness evidence.
+- `Theron's Quest SDL and trace tests`: add native keyboard-action checks in both regions, tighten scripted-input, BRAM and capture-receipt checks, preserve normal controller traces, and record authentic-media readiness evidence.
 - `Startup and localization`: regenerate launcher catalogs after source-string changes and extend all-game launch, input, display and failure-path checks.
 - `Cross-platform verification`: extend CMake and CI checks for media policies, deterministic outputs, debug telemetry, launcher handoff and platform-specific regression targets.
 - `Release metadata`: update the project version and regenerate the reproducible SPDX source SBOM for v3.0.416.

@@ -21,7 +21,7 @@ static const char* const g_changelogLines[] = {
     "  - CSB Amiga plays the authentic SWSH FTL intro; CSB FM Towns adds native stair and animated-door rendering for tested states.",
     "  - DM2 FM Towns HUD and viewport paths use native asset and runtime state, including live missile ownership and timing.",
     "  - Startup identity, window sizing, shared renderer setup and unsupported CSB PC CLI paths receive targeted corrections.",
-    "  - Authentic-media, cross-platform, capture-analysis and trace regressions expand; Nexus and Theron gameplay parity gaps remain open.",
+    "  - Authentic-media tests verify Theron native keyboard actions in both regions; capture-analysis and trace checks expand while Nexus and Theron gameplay gaps remain open.",
     "",
     "V3.0.415  (2026-10-26)",
     "  - Startup support evidence records the five-game v3.0.414 runtime checks and distinguishes launcher handoff from playable gameplay.",
