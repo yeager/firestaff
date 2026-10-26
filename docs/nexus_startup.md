@@ -56,6 +56,11 @@ title-menu command bundle: the one-frame VDP1 outputs did not match that
 bundle's frame-497 hashes. It therefore does not admit the menu compositor,
 input dispatch, title-to-menu transition, or Firestaff presentation.
 
+`scripts/verify_nexus_ymir_title_state_checkpoint.py` verifies this narrow
+checkpoint from caller-supplied retail CUE, BIOS, title-prompt state, and local
+Ymir dump files. It requires the emitted VDP register artifacts but does not
+accept them as menu or gameplay evidence.
+
 ## Title-menu VDP1 source-span join (2026-10-19 capture; analyzed 2026-10-26)
 
 A read-only source-join analysis on TRV2 used the retained Ymir v0.4.0
