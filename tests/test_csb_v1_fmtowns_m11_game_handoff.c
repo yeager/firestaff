@@ -16,9 +16,11 @@
 #include "csb_v1_fmtowns_portrait.h"
 #include "csb_v1_fmtowns_switch.h"
 #include "csb_v1_fmtowns_utility_render.h"
+#include "csb_v1_f0247_launcher_rng_pc34_compat.h"
 #include "csb_v1_viewport_f0110_door_button_pc34_compat.h"
 #include "csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "dm1_v1_side_door_render_pc34_compat.h"
 #include "dm1_v1_champion_status_layout_pc34_compat.h"
 #include "dm1_v1_creature_render_pc34_compat.h"
 #include "dm1_v1_input_command_queue_pc34_compat.h"
@@ -155,6 +157,54 @@ static int f31_door_raster_graphic_provider(
     *out_width = receipt.width;
     *out_height = receipt.height;
     return 1;
+}
+
+static int f31_find_animated_door(const CSB_V1_DungeonData *dungeon,
+                                 F31DoorRasterProvider *provider,
+                                 int *out_graphic, int *out_state,
+                                 uint16_t *out_door_word)
+{
+    int level;
+    if (!dungeon || !provider || !out_graphic || !out_state || !out_door_word)
+        return 0;
+    for (level = 0; level < dungeon->level_count; ++level) {
+        int y;
+        for (y = 0; y < dungeon->level_heights[level]; ++y) {
+            int x;
+            for (x = 0; x < dungeon->level_widths[level]; ++x) {
+                int raw = csb_v1_dungeon_get_raw_square(dungeon, level, x, y);
+                int thing, type, size, door_set, graphic;
+                const uint8_t *record;
+                const uint8_t *pixels = NULL;
+                int width = 0, height = 0;
+                uint16_t word;
+                if (raw < 0 || ((raw >> 5) & 7) != 4 || (raw & 7) == 0)
+                    continue;
+                thing = csb_v1_dungeon_get_first_thing(dungeon, level, x, y);
+                if (thing < 0 || thing == 0xfffe || thing == 0xffff) continue;
+                record = csb_v1_dungeon_get_thing_record(
+                    dungeon, (uint16_t)thing, &type, NULL, &size);
+                if (!record || type != 0 || size < 4) continue;
+                word = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+                door_set = (word & 1u)
+                    ? dungeon->map_door_set1[level]
+                    : dungeon->map_door_set0[level];
+                if (door_set != 3) continue;
+                graphic = csb_v1_viewport_door_graphic_index_from_map_pc34(
+                    dungeon->map_door_set0[level],
+                    dungeon->map_door_set1[level], word, 0);
+                if (!csb_v1_viewport_d3_door_graphic_index_valid_pc34(graphic) ||
+                    !f31_door_raster_graphic_provider(
+                        provider, graphic, &pixels, &width, &height) ||
+                    !pixels || width <= 0 || height <= 0) continue;
+                *out_graphic = graphic;
+                *out_state = raw & 7;
+                *out_door_word = word;
+                return 1;
+            }
+        }
+    }
+    return 0;
 }
 
 static uint32_t fnv1a(const uint8_t *bytes, size_t size)
@@ -2313,6 +2363,9 @@ int main(void)
         int decoded_width = 0, decoded_height = 0;
         int panel_source_found = 0, panel_graphic = -1;
         int panel_door_set = -1, panel_door_state = -1, panel_flip_draws = -1;
+        int animated_source_found = 0, animated_graphic = -1;
+        int animated_door_state = -1, random4 = -1;
+        uint16_t animated_door_word = 0;
         const CSB_V1_DungeonData *dungeon = NULL;
         int level;
 
@@ -2412,6 +2465,32 @@ int main(void)
                   panel_graphic == 246 + panel_door_set * 3 &&
                   panel_flip_draws == 0,
               "F31 non-animated DoorSet selects D3 G0693 with F0111 flip mask zero");
+        animated_source_found = f31_find_animated_door(
+            dungeon, &provider, &animated_graphic, &animated_door_state,
+            &animated_door_word);
+        if (animated_source_found) {
+            DM1_SideDoorRenderPlanPc34 side_plan;
+            DM1_SideDoorF0111CompositionPc34 animated_composition;
+            DM1_SideDoorBlitPc34 animated_blits[2];
+            uint32_t random_state = live_profile->runtime.csbwin_random_seed;
+            CHECK(animated_graphic == 255 && animated_door_state > 0 &&
+                      dm1_v1_side_door_render_plan_for_rel_pc34(
+                          3, 1, &side_plan) &&
+                      csb_v1_f0247_launcher_next_random_masked_pc34_compat(
+                          &random_state, UINT16_C(3), &random4) &&
+                      dm1_v1_side_door_f0111_composition_pc34(
+                          &side_plan, animated_door_state,
+                          (animated_door_word & 0x0020u) != 0u,
+                          (animated_door_word >> 1) & 0x0fu,
+                          3, random4, &animated_composition,
+                          animated_blits) && animated_composition.valid &&
+                      animated_composition.random4Consumed &&
+                      animated_composition.flipMask == random4 &&
+                      animated_composition.panelCount > 0,
+                  "F31 animated D3R uses original G0693 DoorSet 3 and F0111 M004_RANDOM(4) flip");
+        }
+        CHECK(animated_source_found,
+              "F31 original maps contain a non-open DoorSet 3 panel for F0111 verification");
         free(button_zone);
         free(scratch);
         free(graphics);

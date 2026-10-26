@@ -152,30 +152,34 @@ static void csb_v1_viewport_f31_door_front_transaction_pc34(
         int door_set = (door_word & 1u)
             ? dungeon->map_door_set1[runtime->current_level]
             : dungeon->map_door_set0[runtime->current_level];
-        int panel_graphic;
+        int panel_graphic, random4 = 0;
         int count, i;
 
         /* D3R is the side-square route. Its G0208 button zone is D3R, but
          * F0111 owns the side-door plan (G0181), never the center D3C panel.
-         * F31 can select DoorSet 3, whose source F0111 consumes M005_RANDOM(4).
-         * The current viewport callback has no source RNG transaction, so
-         * fail closed for that set rather than inventing a visual phase. */
-        if (door_set < 0 || door_set > 2 ||
+         * DoorSet 3 is animated: F0111 consumes M004_RANDOM(4) from G0349
+         * after F0109's ornament pass. The same source stream is already
+         * bound to field_random_state by F0128's runtime transaction. */
+        if (door_set < 0 || door_set > 3 ||
             !dm1_v1_side_door_render_plan_for_rel_pc34(3, 1, &plan)) return;
         panel_graphic = csb_v1_viewport_door_graphic_index_from_map_pc34(
             dungeon->map_door_set0[runtime->current_level],
             dungeon->map_door_set1[runtime->current_level],
             door_word, 0);
         if (!csb_v1_viewport_door_graphic_index_valid_pc34(panel_graphic, 0) ||
-            !dm1_v1_side_door_f0111_composition_pc34(
-                &plan, door_state, (door_word & 0x0020u) != 0u,
-                (door_word >> 1) & 0x0fu, door_set, 0,
-                &composition, blits) || !composition.valid ||
-            composition.random4Consumed || composition.panelCount <= 0 ||
-            composition.panelCount > 2 || !cfg->graphic_provider_callback ||
             !cfg->graphic_provider_callback(cfg->graphic_provider_user_data,
                 panel_graphic, &panel_pixels, &panel_width, &panel_height) ||
             !panel_pixels || panel_width <= 0 || panel_height <= 0) return;
+        if (door_set == 3 && door_state != 0 &&
+            (!cfg->field_random_state ||
+             !csb_v1_f0247_launcher_next_random_masked_pc34_compat(
+                 cfg->field_random_state, UINT16_C(3), &random4))) return;
+        if (!dm1_v1_side_door_f0111_composition_pc34(
+                &plan, door_state, (door_word & 0x0020u) != 0u,
+                (door_word >> 1) & 0x0fu, door_set, random4,
+                &composition, blits) || !composition.valid ||
+            composition.random4Consumed != (door_set == 3 && door_state != 0) ||
+            composition.panelCount <= 0 || composition.panelCount > 2) return;
         for (i = 0; i < composition.panelCount; ++i) {
             const DM1_SideDoorBlitPc34 *blit = &blits[i];
             int y;

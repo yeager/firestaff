@@ -16,12 +16,13 @@ clip and then the F0111 D3R side-door plan; it no longer routes that side
 panel through the center D3C material plan. ReDMCSB anchors are
 `DUNVIEW.C:4119-4216` (F0110/G0208) and `DUNVIEW.C:4218-4337` (F0111).
 The F31 native button is M634 item 453, while G0693 is resolved from MAP.D's
-DoorSet0/1 and DB0's type bit. DoorSet 3 remains fail-closed until the source
-RNG transaction is available to this callback. The opt-in authentic F31
-handoff test checks the real button image, exact D3R raster clip, and a
-real installed button door's MAP.D/DB0-selected G0693 image. It does not move
-the party to a synthetic test pose; full native door composition parity is
-still open.
+DoorSet0/1 and DB0's type bit. D3R DoorSet 3 now consumes its source M004 RNG
+value from the F0128-bound G0349 state and applies the resulting horizontal /
+vertical flip mask. The opt-in authentic F31 handoff test checks the real
+button image, exact D3R raster clip, a MAP.D/DB0-selected panel, and a real
+DoorSet 3 panel/flip plan from the installed dungeon. It does not move the
+party to a synthetic test pose. Full native F0111 ornament and mask composition
+parity remains open.
 
 2026-10-26 FM Towns C151..C154 champion row: the generic PC HUD gate
 required C011=14x26 and suppressed the entire party row for authentic F31,
