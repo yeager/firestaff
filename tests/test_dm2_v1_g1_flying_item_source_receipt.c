@@ -1,4 +1,5 @@
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_record_pool_pc34_compat.h"
 #include "dm2_v1_runtime.h"
 #include <stdio.h>
 #include <string.h>
@@ -25,13 +26,16 @@ int main(void) {
     DM2_V1_Dm2ViewportM11CompositionReceipt composition;
     DM2_V1_Dm2ViewportM11MaterialCompositionReceipt material_composition;
     DM2_V1_AssetLoader loader;
+    DM2_V1_RecordPoolSet live_pools;
     DM2_V1_GdatEntry entries[4];
     uint32_t raw_offsets[1] = { 0u };
     uint32_t raw_sizes[1];
     uint8_t raw[16] = {0,0,0x00,0x14,0x56,0x78,0x00,0x00,
                        0,0,0x02,0x00,0x00,0,0,0};
+    uint8_t live_db5[4] = {0xfe, 0xff, 0x02, 0x00};
     uint8_t gfx_raw[34] = {0};
     uint8_t timers[20] = {0};
+    uint8_t live_db14[8] = {0xfe, 0xff, 0x80, 0xff, 0x40, 0x5a, 0, 0};
     uint16_t rect = 0;
     int ok = dm2_v1_g1_query_creature_blit_recti(3, 6, 0, &rect) &&
         rect == 5081 &&
@@ -68,6 +72,37 @@ int main(void) {
     loader.data=gfx_raw; loader.data_size=sizeof(gfx_raw); loader.raw_data_count=1;
     loader.raw_offsets=raw_offsets; loader.raw_sizes=raw_sizes;
     loader.entries=entries; loader.entry_count=4;
+    memset(&live_pools, 0, sizeof(live_pools));
+    live_pools.valid = 1;
+    live_pools.record_graph_complete = 1;
+    live_pools.pools[14].bytes = live_db14;
+    live_pools.pools[14].record_count = 1;
+    live_pools.pools[14].record_size = 8;
+    entries[0].cls1 = 0x0d; entries[0].cls2 = 0;
+    entries[0].cls3 = 0x0b; entries[0].cls4 = 1;
+    entries[0].data_index = 1;
+    /* The live Fireball links virtual ObjectID 0xff80. SKProject decodes
+     * its DB15 effect directly as low-byte - 0x80; no DB15 record is present. */
+    ok &= dm2_v1_g1_live_flying_item_selector_receipt(
+        &d, &live_pools, &loader, 0x3800u, &missile, &selector) &&
+        missile.valid && missile.object_id == 0x3800u &&
+        missile.missile_object == 0xff80u &&
+        selector.valid && selector.class1 == 0x0du &&
+        selector.class2 == 0u && selector.missile_object == 0xff80u &&
+        selector.branch_temp_picst && selector.image_data_index == 1u;
+    /* A live ordinary linked item is also resolved from its active DB5 pool,
+     * not from the immutable dungeon bytes at the same ObjectID. */
+    live_db14[2] = 0x00; live_db14[3] = 0x14;
+    live_pools.pools[5].bytes = live_db5;
+    live_pools.pools[5].record_count = 1;
+    live_pools.pools[5].record_size = 4;
+    entries[0].cls2 = 2;
+    ok &= dm2_v1_g1_live_flying_item_selector_receipt(
+        &d, &live_pools, &loader, 0x3800u, &missile, &selector) &&
+        missile.valid && missile.missile_object == 0x1400u &&
+        selector.valid && selector.class1 == 0x10u &&
+        selector.class2 == 2u && selector.missile_object == 0x1400u &&
+        !selector.branch_temp_picst;
     ok &= dm2_v1_g1_direct_missile_receipt(&d,0x3800u,&missile) && missile.valid &&
         missile.missile_object==0x1400u && missile.energy_remaining==0x56u &&
         missile.energy_remaining2==0x78u && missile.timer_index==0u &&

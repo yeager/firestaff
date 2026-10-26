@@ -85,13 +85,27 @@ count to zero, reads it into the viewport, and exposes the cache, but does not
 call `dm2_v1_projectile_step_and_drain` or `dm2_v1_projectile_drain_to_m11`.
 Those drain functions are currently exercised only by tests and probes. As a
 result, the candidate draw rows do not currently receive live production
-projectiles. Before claiming projectile-render parity, bind the runtime's
-authenticated tile-rooted DB14 records and source timers to the viewport
-handoff, preserve their ObjectID direction and chain ordinal, and then model
-the normal and seven-slot creature-associated replay events from
-`DM2_DRAW_STATIC_OBJECT`.
+projectiles. The live selector boundary is now separate from the immutable
+dungeon-only helper: it resolves the DB14 bytes from the active runtime record
+pools, resolves linked records from those pools first, and falls back to the
+immutable dungeon owner only for DB15 handles absent from the active pools.
+SKProject's `DM2_QUERY_CLS2_FROM_RECORD` sentinel for `ObjectID >= 0xff80` is
+decoded as `low_byte - 0x80` before record lookup, so virtual spell effects do
+not get mistaken for DB15 addresses. A focused selector test covers Fireball's
+source effect 0, and the HME-242 real-media test casts the original Fireball
+recipe through runtime creation and verifies that its live DB14 resolves to the
+original GDAT class, effect and image-selector branch. This proves
+record-to-image selection only;
+it does not prove pixel drawing, timer-directed animation, or painter order.
+Before claiming projectile-render parity, bind snapshots of the authenticated
+visible G1 DB14 chains and their source timers to the viewport handoff, preserve
+ObjectID direction and chain ordinal, then merge normal and seven-slot
+creature-associated replay events into `DM2_DRAW_STATIC_OBJECT`'s indoor draw
+schedule. The production drain count remains unpopulated, and the authentic
+HME-242 test does not yet assert source-order presentation.
 References: `include/dm2_v1_projectile_pc34_compat.h`,
 `src/dm2/dm2_v1_projectile_pc34_compat.c`,
+`src/dm2/dm2_v1_runtime.c::dm2_v1_runtime_live_missile_selector_receipt`,
 `src/dm2/dm2_v1_runtime.c::dm2_runtime_populate_projectiles`, and SKProject
 `SKWINSPX/src/v5/skgdtqdb.cpp::DM2_QUERY_OBJECT_5x5_POS`,
 `SKWINSPX/src/v5/dm2data.cpp::table1d268e`,

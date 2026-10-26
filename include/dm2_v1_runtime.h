@@ -321,6 +321,12 @@ int  dm2_v1_runtime_commit_source_game_load(
 int dm2_v1_runtime_cast_spell_player(
     int hero_index, int hand_index,
     DM2_V1_RuntimeSpellCastReceipt *out_receipt);
+/* Read the active runtime DB14 and resolve its linked GDAT selector through
+ * the current record-pool owner. This does not mutate the dungeon or render. */
+int dm2_v1_runtime_live_missile_selector_receipt(
+    int missile_record_handle,
+    DM2_V1_G1DirectMissileReceipt *out_missile,
+    DM2_V1_G1FlyingItemSelectorReceipt *out_selector);
 /* Copy the currently visible source rune line into the live c_hero owner.
  * M11 owns the panel buffer; DM2 owns the cast transaction. */
 int dm2_v1_runtime_set_spell_runes(int hero_index,

@@ -1993,7 +1993,12 @@ int main(void)
         static const uint8_t invisibility_runes[4] = {
             DM2_RUNE_YA, DM2_RUNE_OH, DM2_RUNE_EW, DM2_RUNE_SAR
         };
+        static const uint8_t fireball_runes[3] = {
+            DM2_RUNE_YA, DM2_RUNE_FUL, DM2_RUNE_IR
+        };
         DM2_V1_RuntimeSpellCastReceipt cast;
+        DM2_V1_G1DirectMissileReceipt live_missile;
+        DM2_V1_G1FlyingItemSelectorReceipt live_selector;
         uint8_t count_before = 0u, count_active = 0u, count_expired = 0u;
         int selected = dm2_v1_runtime_select_mac_charsheet_champion(0);
         int spell_ready = selected &&
@@ -2017,6 +2022,34 @@ int main(void)
                   dm2_v1_runtime_get_source_47_count(&count_expired) &&
                   count_expired == count_before,
               "HME-242 Towns source 0x47 event expires at its game tick and restores the count");
+
+        memset(&cast, 0, sizeof(cast));
+        memset(&live_missile, 0, sizeof(live_missile));
+        memset(&live_selector, 0, sizeof(live_selector));
+        spell_ready = selected && dm2_v1_runtime_set_spell_runes(
+            0, fireball_runes, 3);
+        check(spell_ready &&
+                  dm2_v1_runtime_cast_spell_player(0, 0, &cast) &&
+                  cast.applied && cast.timer_enqueued &&
+                  cast.cast.timer_kind == DM2_V1_SPELL_TIMER_PROJECTILE &&
+                  cast.cast.object_effect == DM2_OBJECT_EFFECT_FIREBALL &&
+                  cast.missile_record >= 0 &&
+                  cast.missile_object ==
+                      (uint16_t)(0xff80u + cast.cast.object_effect),
+              "HME-242 Towns casts the source Fireball through live DB14 creation");
+        check(cast.applied &&
+                  dm2_v1_runtime_live_missile_selector_receipt(
+                      cast.missile_record, &live_missile, &live_selector) &&
+                  live_missile.valid &&
+                  live_missile.object_id == (uint16_t)cast.missile_record &&
+                  live_missile.missile_object == cast.missile_object &&
+                  live_selector.valid && live_selector.class1 == 0x0du &&
+                  live_selector.class2 ==
+                      (uint8_t)cast.cast.object_effect &&
+                  live_selector.missile_object == cast.missile_object &&
+                  live_selector.branch_temp_picst &&
+                  live_selector.image_data_index != 0u,
+              "HME-242 live DB14 resolves Fireball through the active pool into its original GDAT selector");
     }
     M11_GameView_Shutdown(&view);
     if (failures) return 1;
