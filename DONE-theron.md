@@ -11,10 +11,10 @@ CUE check now also requires its already staged authentic CUE instead of
 extracting an archive to disk; direct archive admission remains covered by the
 separate archive test route.
 
-The Japanese 7z direct-archive regression also runs with `--debug` and uses a
-caller-selected task scratch directory only for its archive symlink. The game
-archive itself remains in place and Firestaff reads it through the native
-archive path.
+The Japanese and USA 7z direct-archive regressions also run with `--debug`
+and use a caller-selected task scratch directory only for an archive symlink.
+The game archive itself remains in place and Firestaff reads it through the
+native archive path.
 
 ## 2026-10-25 — route Buttons I and II through native keyboard entry
 
