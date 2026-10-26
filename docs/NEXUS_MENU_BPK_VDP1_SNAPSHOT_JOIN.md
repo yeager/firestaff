@@ -86,6 +86,10 @@ not establish source identity. Excluding those uninformative matches leaves
 This is a byte-source observation, not proof of final pixel composition or
 input behavior.
 
+The source scanner verifies each MNS file against its retail hash before
+extracting candidate surfaces. Re-running the retained frame with this check
+still finds 126 informative source matches among the 137 textured commands.
+
 The same CMDSIZE and skipped-command corrections also apply to the Mednafen
 VDP1 source, material, and write-join analyzers. Earlier numerical receipts
 produced by those analyzers must be regenerated against their original raw
@@ -143,8 +147,7 @@ snapshot-only source join therefore cannot prove the historical command chain
 or promote a renderer on its own.
 
 The recorded frame-59 command order was independently checked against each
-record's CMDCTRL jump mode and CMDLINK, including the return stack: all 177
-transitions match, the stack is empty at termination, and the last record at
+record's CMDCTRL jump mode and CMDLINK: all 177 transitions match, and the last record at
 `0xd9a0` has END set. The observed root is `0x00000`; its skip-and-jump
 command uses the traced link `0x1874`. This validates the recorded order for
 this Ymir frame, without claiming that its texture bytes or later screenshot

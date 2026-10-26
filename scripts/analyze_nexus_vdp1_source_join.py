@@ -58,9 +58,12 @@ def be32(data: bytes, offset: int) -> int:
 
 
 def mns_surfaces(data_dir: Path) -> list[tuple[str, bytes]]:
+    """Extract surfaces only from resources matching an authenticated disc hash."""
     surfaces: list[tuple[str, bytes]] = []
     for path in sorted(data_dir.glob("*.MNS")):
         data = path.read_bytes()
+        if hashlib.sha256(data).hexdigest() not in accepted_retail_hashes(path.name):
+            continue
         if len(data) < 0x2C or data[:4] != b"DMDF" or be32(data, 4) != len(data):
             continue
         text_offset = be32(data, 0x24)
