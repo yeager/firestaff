@@ -142,6 +142,14 @@ and the snapshot; it does not identify when any texture bytes changed. A
 snapshot-only source join therefore cannot prove the historical command chain
 or promote a renderer on its own.
 
+The recorded frame-59 command order was independently checked against each
+record's CMDCTRL jump mode and CMDLINK, including the return stack: all 177
+transitions match, the stack is empty at termination, and the last record at
+`0xd9a0` has END set. The observed root is `0x00000`; its skip-and-jump
+command uses the traced link `0x1874`. This validates the recorded order for
+this Ymir frame, without claiming that its texture bytes or later screenshot
+were frozen at each command's execution time.
+
 A previous draft of this note reported a one-frame VRAM/command-trace pair and
 concluded that no textured command started in a matched `MENU.BPK` range. The
 two raw files are not present together in the retained evidence, so that join
