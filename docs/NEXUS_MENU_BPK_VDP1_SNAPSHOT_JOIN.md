@@ -17,6 +17,8 @@ The 512 KiB VDP1 image belongs to
 `nexus_v1_ymir_title_menu_replay_20261020`. Its accompanying receipt identifies
 the state as a Japanese retail-disc boot followed by one Start press at the
 title prompt. It is an emulator observation, not a hardware capture.
+The snapshot has no command trace from the same capture, so do not join it
+with a trace from another run.
 
 ## Reproduction
 
@@ -24,26 +26,31 @@ title prompt. It is an emulator observation, not a hardware capture.
 python3 scripts/analyze_nexus_menu_bpk_vdp1_snapshot_join.py \
   /home/trv2/.firestaff/data/nexus/MENU.BPK \
   /home/trv2/work/firestaff-parity-debug-20261024/parity-evidence/verification/nexus_v1_ymir_title_menu_replay_20261020/dumps/vdp1-vram.bin \
-  --vdp1-command-trace /path/to/vdp1-command-trace.csv \
   --expected-vdp1-sha256 968e9d0f05de45ff8c97ea562988cd0aea7c125b54822983ca52c12edc88b895
 ```
 
+Only add `--vdp1-command-trace` when the trace and VRAM dump are from one
+atomic capture. This retained replay has no such command trace.
+
 The tool rejects a different `MENU.BPK` identity, malformed BPPK/PRS3 framing,
 an image that is not a 512 KiB VDP1 dump, or a supplied snapshot hash mismatch.
-It decodes the documented bounded DMWeb PRS3 stream and searches only for a
-whole decoded surface, directly and with 16-bit word order swapped.
+It decodes the documented bounded DMWeb PRS3 stream and searches for every
+possibly overlapping occurrence of each whole decoded surface, directly and
+with 16-bit word order swapped. A supplied command trace must come from the
+same capture as the VRAM snapshot.
 
 ## Result
 
-The receipt decodes all 162 declared PRS3 surfaces. Entries **77 through 162**
-occur byte-exactly in VDP1 VRAM (86/162 surfaces); none of those joins requires
-word swapping. Their observed offsets descend from `0x6c700` (entry 77) to
-`0x61da0` (entry 162). The other 76 declared surfaces do not have a whole-
-surface direct or word-swapped match in this snapshot.
+The hash-pinned rerun decodes all 162 declared PRS3 surfaces. Entries **77
+through 162** occur byte-exactly in VDP1 VRAM (86/162 surfaces); none of those
+joins requires word swapping. Their first direct-match offsets descend from
+`0x6c700` (entry 77) to `0x61d60` (entry 162). The other 76 declared surfaces
+do not have a whole-surface direct or word-swapped match in this snapshot.
 
-This is useful positive evidence for an authentic menu upload, but it does not
-authorize a host menu renderer. The following independent evidence is still
-required before changing presentation admission:
+This is byte-level evidence that authentic menu-package surfaces were present
+in VDP1 VRAM. It does not prove which command consumed them or authorize a host
+menu renderer. The following independent evidence is still required before
+changing presentation admission:
 
 - a command-chain receipt tying each admitted source range to rendered commands;
 - Saturn CLUT/palette ownership and pixel-mode evidence;
@@ -53,44 +60,32 @@ required before changing presentation admission:
 Until then, the tool emits `semantic_admission=blocked` and no decoded pixels
 are handed to the production renderer.
 
-## Atomic one-frame follow-up
+## Command trace status
 
-An isolated Ymir profile loaded the retained title-prompt state, ran one
-deterministic frame with `--debug --dump-memory --load-state 2
---capture-frames 1 --capture-no-present`, and emitted its VDP1 VRAM, registers
-and command trace in the same emulator-thread capture event. The Japanese IPL,
-retail disc and title state were the only inputs. The derived artifact hashes
-were:
+A previous draft of this note reported a one-frame VRAM/command-trace pair and
+concluded that no textured command started in a matched `MENU.BPK` range. The
+two raw files are not present together in the retained evidence, so that join
+cannot be independently reproduced. Withdraw the 168-command, 135-textured,
+zero-source-hit result and do not use it as evidence. The retained 2026-10-25
+command history and the 2026-10-20 VRAM snapshot are separate captures;
+pairing them would be invalid. A new atomic capture with both outputs is
+required before making any command-consumption claim.
 
-| Artifact | SHA-256 |
-| --- | --- |
-| VDP1 VRAM | `62e33308e29fbff3adbab16738cc0be04e1d7a9dadd4a26780ff6445ee9f5682` |
-| VDP1 registers | `00477de68c306db0fabcbfef46b9d24c8815c3069ab2223ef2908c975be37368` |
-| VDP1 command trace | `6346986721f5a9204cbf00e67b7053f9909806ff763b46bb58a3af838c54ac67` |
-
-It reproduced the same 86/162 whole-surface matches. The frame-local trace has
-168 commands, 135 of which are textured sprite commands (VDP1 command types
-0, 1 or 2). None has a texture-source start in any matched `MENU.BPK` range.
-The apparent earlier overlap was a type-4 polyline command, not a textured
-sprite, and therefore has no texture source. This rules out the previous
-coarse overlap claim for this captured frame.
-
-The title-menu capture consequently shows that the resident `MENU.BPK` bytes
-are not enough to establish that this menu reads them. The production BPK
-gate must not be interpreted as a title-menu renderer requirement until a
-separate source-to-draw receipt identifies a frame that does consume those
-surfaces. This remains non-admission evidence: it does not identify the
-actual title/menu assets, their palette, placement, or compositor path.
+The confirmed VRAM snapshot proves only that 86 real `MENU.BPK` surfaces were
+resident in that snapshot. It does not establish whether the title menu reads
+them. This remains non-admission evidence and does not identify the active
+menu assets, palette, placement or compositor path.
 
 ## Five-frame Start write trace
 
-A second isolated capture loaded the same retained Japanese title-prompt state,
-held Control Pad 1 Start for capture frame zero, and ran five frames with
+A separate isolated capture loaded the same retained Japanese title-prompt
+state, held Control Pad 1 Start for capture frame zero, and ran five frames with
 `--debug --trace-sh2-writes-begin 0x05c00000 --trace-sh2-writes-end
 0x05c80000`. Ymir wrote a complete 1,082-row VDP1 SH-2 trace without dropped
 rows. It is intentionally a post-state-load observation: it can identify work
 caused by Start, but cannot claim to contain the earlier pre-load that produced
-the title-prompt textures.
+the title-prompt textures. Its trace is not paired with the 2026-10-20 VRAM
+snapshot above.
 
 The most frequent writer was master SH-2 PC `0x0608ba46`, with 1,004 writes in
 `0x05c000c0..0x05c18710`. Disassembly of the captured WRAM bytes at that PC is

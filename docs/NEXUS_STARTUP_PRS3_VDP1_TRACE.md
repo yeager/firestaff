@@ -17,8 +17,23 @@ an original-Saturn provenance capture.
   `87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`
 
 Ymir 0.4.2-dev was run with `--debug`, the title state was restored, Start was
-held for the first ten of 120 captured frames, and SH-2 writes to physical VDP1
-VRAM `[0x05c00000, 0x05c80000)` were recorded. The local evidence directory is
+held for the first ten of 120 capture frames, and SH-2 writes to physical VDP1
+VRAM `[0x05c00000, 0x05c80000)` were recorded. The retained profile contained
+the hash-pinned Japanese CUE and IPL above and the title-prompt state in CLI
+slot 2. The original shell transcript and profile directory were not retained;
+the recorded settings map to this repeatable invocation after configuring
+those inputs:
+
+```sh
+/opt/ymir/build-capture/apps/ymir-sdl3/ymir-sdl3-0.4.2-dev \
+  --debug --load-state 2 --capture-frames 120 --dump-memory \
+  --capture-start-frame 0 --capture-start-hold 10 \
+  --trace-sh2-writes-begin 0x05c00000 \
+  --trace-sh2-writes-end 0x05c80000
+```
+
+The isolated profile must use the same Japanese retail disc and IPL, with the
+same title-prompt state loaded into slot 2. The local evidence directory is
 not committed because it contains raw commercial-game-derived trace data.
 
 | Artifact | SHA-256 |
@@ -75,7 +90,8 @@ interval cannot be used to invent a PRS3 output-buffer ownership claim.
 ## VDP1 command-history capture
 
 The same hash-pinned title-prompt state was restored again and Start was held
-for the first ten of 120 requested capture frames. Ymir completed its
+for 60 of 120 requested capture frames, matching the deterministic
+Start-to-menu receipt. Ymir completed its
 capture-owned loop at VDP1 frame 59. The derived command-history bundle
 contains 10,668 commands from frames 0 through 59, 178 commands for frame 59,
 and zero dropped commands.
@@ -90,6 +106,9 @@ media and state. It provides a finite command set for later source joins. It
 does **not** identify a `MENU.BPK` entry, a PRS3 output buffer, a texture
 window owner, palette interpretation, or on-screen semantic placement. It is
 therefore evidence for the next join, not permission to render a host menu.
+
+Its exact setup and retained receipt are recorded in
+[`nexus_v1_ymir_deterministic_start_menu_20261026`](../parity-evidence/verification/nexus_v1_ymir_deterministic_start_menu_20261026/README.md).
 
 ## Next evidence required
 

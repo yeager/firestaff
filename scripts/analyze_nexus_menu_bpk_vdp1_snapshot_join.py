@@ -19,6 +19,7 @@ from pathlib import Path
 JAPANESE_MENU_BPK_SHA256 = (
     "740ab2a864f04b89cddb172ce2560044fcc8c6a7f98ae2fe50461aa8da886636"
 )
+VDP1_TRACE_REQUIRED_COLUMNS = {"word0", "word4"}
 
 
 def be32(data: bytes, offset: int) -> int:
@@ -30,6 +31,25 @@ def word_swap(data: bytes) -> bytes:
     for offset in range(0, len(swapped) - 1, 2):
         swapped[offset], swapped[offset + 1] = swapped[offset + 1], swapped[offset]
     return bytes(swapped)
+
+
+def all_offsets(haystack: bytes, needle: bytes) -> list[int]:
+    """Return every possibly overlapping occurrence of a nonempty byte string."""
+    if not needle:
+        raise ValueError("cannot search for an empty surface")
+    offsets = []
+    cursor = 0
+    while True:
+        offset = haystack.find(needle, cursor)
+        if offset < 0:
+            return offsets
+        offsets.append(offset)
+        cursor = offset + 1
+
+
+def surface_offsets(vram: bytes, pixels: bytes) -> tuple[list[int], list[int]]:
+    """Return all direct and word-swapped offsets for one decoded surface."""
+    return all_offsets(vram, pixels), all_offsets(vram, word_swap(pixels))
 
 
 def decode_prs3(body: bytes, compressed_size: int, pixel_count: int) -> bytes:
@@ -120,15 +140,23 @@ def command_trace_source_starts(trace_path: Path,
     """
     try:
         with trace_path.open(newline="", encoding="utf-8") as handle:
-            rows = list(csv.DictReader(handle))
+            reader = csv.DictReader(handle)
+            if (reader.fieldnames is None
+                    or not VDP1_TRACE_REQUIRED_COLUMNS.issubset(reader.fieldnames)):
+                raise ValueError("missing VDP1 command-trace columns")
+            rows = list(reader)
     except (OSError, csv.Error, UnicodeError) as error:
         raise ValueError(f"invalid VDP1 command trace: {error}") from error
+    if not rows:
+        raise ValueError("VDP1 command trace has no command rows")
     textured = 0
     source_starts_in_match = 0
     for row in rows:
         try:
             command_type = int(row["word0"], 0) & 0x000f
-            source_start = int(row["word2"], 0) << 3
+            # VDP1 command words are CMDCTRL, CMDLINK, CMDPMOD, CMDCOLR,
+            # CMDSRCA, ...; CMDSRCA is word4 and stores the address / 8.
+            source_start = int(row["word4"], 0) << 3
         except (KeyError, TypeError, ValueError) as error:
             raise ValueError("invalid VDP1 command trace row") from error
         if command_type not in (0, 1, 2):
@@ -172,16 +200,19 @@ def main() -> int:
     matches = 0
     matched_ranges: list[tuple[int, int]] = []
     for index, width, height, pixels in decoded:
-        direct = vram.find(pixels)
-        swapped = vram.find(word_swap(pixels))
+        direct_offsets, swapped_offsets = surface_offsets(vram, pixels)
+        direct = direct_offsets[0] if direct_offsets else -1
+        swapped = swapped_offsets[0] if swapped_offsets else -1
         if direct >= 0 or swapped >= 0:
             matches += 1
-            match_offset = direct if direct >= 0 else swapped
-            matched_ranges.append((match_offset, match_offset + len(pixels)))
+            matched_ranges.extend(
+                (offset, offset + len(pixels))
+                for offset in sorted(set(direct_offsets + swapped_offsets))
+            )
             print(
                 f"entry={index} size={width}x{height} bytes={len(pixels)} "
-                f"vram_exact_offset={direct if direct >= 0 else 'none'} "
-                f"vram_word_swap_offset={swapped if swapped >= 0 else 'none'}"
+                f"vram_exact_offsets={','.join(f'0x{offset:x}' for offset in direct_offsets) or 'none'} "
+                f"vram_word_swap_offsets={','.join(f'0x{offset:x}' for offset in swapped_offsets) or 'none'}"
             )
     print(f"menu_bpk_sha256={menu_hash}")
     print(f"vdp1_vram_sha256={vram_hash}")

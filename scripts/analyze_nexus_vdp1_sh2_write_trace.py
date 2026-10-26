@@ -49,9 +49,12 @@ def main() -> int:
     except (KeyError, TypeError, ValueError) as error:
         print(f"NEXUS_VDP1_SH2_WRITE_TRACE_INVALID: {error}")
         return 1
-    if any(address < VDP1_VRAM_BEGIN or address + width > VDP1_VRAM_END
+    if any(width not in (1, 2, 4)
+           or address < VDP1_VRAM_BEGIN
+           or address >= VDP1_VRAM_END
+           or address + width > VDP1_VRAM_END
            for _, address, width in parsed):
-        print("NEXUS_VDP1_SH2_WRITE_TRACE_INVALID: write is outside VDP1 VRAM")
+        print("NEXUS_VDP1_SH2_WRITE_TRACE_INVALID: invalid width or write outside VDP1 VRAM")
         return 1
 
     by_pc = Counter(pc for pc, _, _ in parsed)
