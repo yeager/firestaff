@@ -43111,6 +43111,19 @@ add_executable(test_nexus_v1_dgn_material_raster
     set_tests_properties(csb_amiga_swsh_ftl_decode_real_media PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "csb;amiga;startup;real-media;skip-safe")
+    foreach(csb_ftl_module IN ITEMS KAOS CNFG)
+        string(TOLOWER "${csb_ftl_module}" csb_ftl_module_lower)
+        add_test(
+            NAME "csb_amiga_${csb_ftl_module_lower}_ftl_code_checksum_real_media"
+            COMMAND test_firestaff_ftl_decode --compressed-code
+                "${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/amiga33-original/${csb_ftl_module}.FTL"
+        )
+        set_tests_properties(
+            "csb_amiga_${csb_ftl_module_lower}_ftl_code_checksum_real_media"
+            PROPERTIES
+                SKIP_RETURN_CODE 77
+                LABELS "csb;amiga;ftl;code-checksum;real-media;skip-safe")
+    endforeach()
 
     # ── CSB Utility Disk .CMP file decoder (Tier 2 #6) ──
     # Verifies src/shared/firestaff_cmp_decode.c parses the

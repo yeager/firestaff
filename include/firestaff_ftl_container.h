@@ -114,9 +114,10 @@ int FirestaffFtlContainer_Parse(const uint8_t* data,
  * Verify the checksums documented by greatstone d_ftl.html.
  *
  * Common header, BSS hunk, and DATA hunk can be verified directly from
- * bytes on disk. CODE hunk checksum can be verified only for uncompressed
- * CODE hunks; compressed 0x5223 CODE hunks are explicitly reported as
- * FIRESTAFF_FTL_CHECK_UNSUPPORTED_COMPRESSED_CODE.
+ * bytes on disk. Uncompressed CODE hunk checksums can also be verified
+ * directly. The CODE checksum covers decoded bytes, so compressed 0x5223
+ * hunks are reported as FIRESTAFF_FTL_CHECK_UNSUPPORTED_COMPRESSED_CODE;
+ * decode the hunk before checking its stored checksum.
  */
 int FirestaffFtlContainer_VerifyChecksums(const uint8_t* data,
                                           size_t data_size,

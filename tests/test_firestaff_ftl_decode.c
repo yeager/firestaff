@@ -163,8 +163,10 @@ static int checksum_bridge_test(void) {
     if (report.common_header.status != FIRESTAFF_FTL_CHECK_MATCH ||
         report.bss_hunk.status != FIRESTAFF_FTL_CHECK_MATCH ||
         report.data_hunk.status != FIRESTAFF_FTL_CHECK_MATCH ||
-        report.code_hunk.status != FIRESTAFF_FTL_CHECK_MATCH) {
-        fprintf(stderr, "checksum_bridge_test: compressed CODE checksum mismatch\n");
+        report.code_hunk.status !=
+            FIRESTAFF_FTL_CHECK_UNSUPPORTED_COMPRESSED_CODE) {
+        fprintf(stderr,
+                "checksum_bridge_test: compressed CODE checksum was not deferred\n");
         return -1;
     }
 
@@ -193,12 +195,24 @@ static int checksum_bridge_test(void) {
     }
     FirestaffFtl_Free(&decoded);
 
-    buf[size - 1u] ^= 0x01u;
-    if (FirestaffFtlContainer_Parse(buf, size, &container) != 0 ||
-        FirestaffFtlContainer_VerifyChecksums(buf, size, &container,
-                                             &report) != 0 ||
-        report.code_hunk.status != FIRESTAFF_FTL_CHECK_MISMATCH) {
-        fprintf(stderr, "checksum_bridge_test: CODE corruption not detected\n");
+    /* Change the dictionary word referenced by the first compressed CODE
+     * token. The container-only report must remain deferred, but the decoded
+     * checksum must detect that the resulting program bytes changed. */
+    buf[container.hunks[container.code_index].offset + 8u + 0x12u * 2u + 1u]
+        ^= 0x01u;
+    memset(&decoded, 0, sizeof(decoded));
+    if (FirestaffFtl_Parse(buf, size, &decoded) != 0 ||
+        FirestaffFtl_Decode(&decoded) != 0) {
+        fprintf(stderr, "checksum_bridge_test: changed CODE failed to decode\n");
+        FirestaffFtl_Free(&decoded);
+        return -1;
+    }
+    decoded_checksum = FirestaffFtlContainer_ByteChecksum(decoded.hunk_code,
+                                                         decoded.hunk_code_size);
+    FirestaffFtl_Free(&decoded);
+    if (decoded_checksum == 0x0386u) {
+        fprintf(stderr,
+                "checksum_bridge_test: decoded CODE checksum missed mutation\n");
         return -1;
     }
     return 0;
@@ -295,7 +309,78 @@ static int csb_amiga_swsh_real_media(const char* path) {
     return 0;
 }
 
+static int compressed_code_real_media(const char* path) {
+    FILE* file = path ? fopen(path, "rb") : NULL;
+    uint8_t* bytes;
+    long size;
+    FirestaffFtlContainer container;
+    FirestaffFtlChecksumReport checksums;
+    FirestaffFtl decoded;
+    int parsed = 0;
+    int rc;
+    if (!file) {
+        fprintf(stderr, "SKIP: CSB Amiga compressed FTL module is unavailable\n");
+        return 77;
+    }
+    if (fseek(file, 0, SEEK_END) != 0 ||
+        (size = ftell(file)) <= 0 || size > 64L * 1024L * 1024L ||
+        fseek(file, 0, SEEK_SET) != 0) {
+        fclose(file);
+        fprintf(stderr, "Invalid CSB Amiga compressed FTL module size\n");
+        return 1;
+    }
+    bytes = (uint8_t*)malloc((size_t)size);
+    if (!bytes || fread(bytes, 1u, (size_t)size, file) != (size_t)size) {
+        free(bytes);
+        fclose(file);
+        return 1;
+    }
+    fclose(file);
+    memset(&container, 0, sizeof(container));
+    memset(&checksums, 0, sizeof(checksums));
+    if (FirestaffFtlContainer_Parse(bytes, (size_t)size, &container) != 0 ||
+        FirestaffFtlContainer_VerifyChecksums(bytes, (size_t)size,
+                                               &container, &checksums) != 0 ||
+        container.code_index < 0 ||
+        container.hunks[container.code_index].size < 2u ||
+        container.hunks[container.code_index].payload[0] != 0x52u ||
+        container.hunks[container.code_index].payload[1] != 0x23u ||
+        checksums.common_header.status != FIRESTAFF_FTL_CHECK_MATCH ||
+        checksums.bss_hunk.status != FIRESTAFF_FTL_CHECK_MATCH ||
+        checksums.data_hunk.status != FIRESTAFF_FTL_CHECK_MATCH ||
+        checksums.code_hunk.status !=
+            FIRESTAFF_FTL_CHECK_UNSUPPORTED_COMPRESSED_CODE) {
+        fprintf(stderr,
+                "CSB Amiga compressed FTL container checks are inconsistent\n");
+        free(bytes);
+        return 1;
+    }
+    rc = FirestaffFtl_Parse(bytes, (size_t)size, &decoded);
+    if (rc == 0) {
+        parsed = 1;
+        rc = FirestaffFtl_Decode(&decoded);
+    }
+    if (rc != 0 || !decoded.hunk_code ||
+        FirestaffFtlContainer_ByteChecksum(decoded.hunk_code,
+                                           decoded.hunk_code_size) !=
+            container.bss.code_checksum) {
+        fprintf(stderr,
+                "CSB Amiga FTL decoded CODE checksum did not match\n");
+        if (parsed) FirestaffFtl_Free(&decoded);
+        free(bytes);
+        return 1;
+    }
+    FirestaffFtl_Free(&decoded);
+    free(bytes);
+    puts("PASS: authentic CSB Amiga compressed FTL CODE checksum matches "
+         "after source-format decoding");
+    return 0;
+}
+
 int main(int argc, char** argv) {
+    if (argc == 3 && strcmp(argv[1], "--compressed-code") == 0) {
+        return compressed_code_real_media(argv[2]);
+    }
     if (argc == 2) return csb_amiga_swsh_real_media(argv[1]);
     int rc = FirestaffFtl_SelfTest();
     int bridge_rc = checksum_bridge_test();

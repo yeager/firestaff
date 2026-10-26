@@ -153,6 +153,14 @@ bytes remain outside Git. This fixes FTL container verification and proves
 resource extraction only; the Amiga SWSH animation/audio are still not wired
 into the CSB launcher runtime, as noted above.
 
+The same real-media checksum audit found that Amiga 3.3 `KAOS.FTL` and
+`CNFG.FTL` use the 0x5223 compressed CODE format. Their stored CODE checksums
+match the decoded program bytes, not the compressed stream, so the
+container-only verifier now reports that checksum as deferred until decode.
+The authentic-media regressions decode both modules and compare the resulting
+checksums; all ten installed CSB Amiga FTL modules now match their stored
+checksums when checked at the correct layer.
+
 2026-10-25 mixed original-media launcher retest: the authentic
 `csb_v1_fmtowns_m12_auto_mixed_real_media` matrix passed against the installed
 FM Towns, Atari ST, and Amiga originals. AUTO selected FM Towns and reached
