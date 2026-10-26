@@ -113,6 +113,11 @@ that captured CRAM; the external test verifies its palette addresses and RGB
 components. It rejects unsupported sprite formats, enabled end codes, and
 shadow/RGB cases. The separately dumped state remains a snapshot, so this is
 not proof of time-aligned composition or permission to display the result.
+An isolated normal-sprite preview now places these mode-0 pixels using the
+captured local coordinate and clip, including horizontal and vertical flips.
+The external test checks the `0xd8e0` sprite at `(104,144)` against all 576
+decoded texels. It remains a capture preview; sprite priority, the other VDP1
+commands, VDP2 layers, and a time-aligned reference image are not established.
 
 The same CMDSIZE and skipped-command corrections also apply to the Mednafen
 VDP1 source, material, and write-join analyzers. Earlier numerical receipts

@@ -8,6 +8,52 @@ static uint16_t read_le16(const uint8_t *p)
     return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
 }
 
+int nexus_v1_vdp1_capture_preview_mode0_normal(
+    Nexus_V1_Vdp1DirectColorFramebuffer *framebuffer,
+    const uint8_t *command, int command_size,
+    const uint8_t *vdp1_vram, int vdp1_vram_size,
+    const Nexus_V1_Vdp2ColourRamCapture *capture,
+    int origin_x, int origin_y, int clip_x, int clip_y,
+    int *out_written_pixels)
+{
+    Nexus_V1_Vdp1TextureCommand parsed;
+    Nexus_V1_Vdp1Mode1PalettePixel *pixels;
+    uint32_t count, u, v;
+    int written = 0;
+    if (out_written_pixels) *out_written_pixels = 0;
+    if (!framebuffer || !out_written_pixels || clip_x < 0 || clip_y < 0 ||
+        origin_x < -8192 || origin_x > 8191 || origin_y < -8192 || origin_y > 8191 ||
+        nexus_v1_vdp1_texture_command_parse(command, command_size, &parsed) != 0 ||
+        !parsed.texture_command || parsed.command_type != 0U ||
+        (parsed.draw_mode & ~0x00c0U) != 0U) return 0;
+    count = (uint32_t)parsed.texture_width * parsed.texture_height;
+    if (!count) return 0;
+    pixels = (Nexus_V1_Vdp1Mode1PalettePixel *)malloc((size_t)count * sizeof(*pixels));
+    if (!pixels || !nexus_v1_vdp1_resolve_mode0_type6_capture(command, command_size,
+            vdp1_vram, vdp1_vram_size, capture, pixels, count)) {
+        free(pixels); return 0;
+    }
+    for (v = 0; v < parsed.texture_height; ++v) {
+        for (u = 0; u < parsed.texture_width; ++u) {
+            uint32_t source_u = (parsed.control & 0x10U) ? parsed.texture_width - 1U - u : u;
+            uint32_t source_v = (parsed.control & 0x20U) ? parsed.texture_height - 1U - v : v;
+            const Nexus_V1_Vdp1Mode1PalettePixel *pixel =
+                &pixels[source_v * parsed.texture_width + source_u];
+            int x = origin_x + parsed.xa + (int)u;
+            int y = origin_y + parsed.ya + (int)v;
+            if (x < 0 || y < 0 || x >= NEXUS_FB_W || y >= NEXUS_FB_H ||
+                x > clip_x || y > clip_y || pixel->kind == NEXUS_V1_VDP1_MODE1_PIXEL_TRANSPARENT)
+                continue;
+            framebuffer->rgba_buffer[y * NEXUS_FB_W + x] = UINT32_C(0xff000000) |
+                ((uint32_t)pixel->red << 16U) | ((uint32_t)pixel->green << 8U) | pixel->blue;
+            ++written;
+        }
+    }
+    free(pixels);
+    *out_written_pixels = written;
+    return 1;
+}
+
 /* Mednafen's generic Saturn capture deliberately preserves the Saturn bus
  * representation (big-endian uint16 values).  Firestaff's VDP1 command
  * parser operates on its historical little-endian VRAM image.  Normalize

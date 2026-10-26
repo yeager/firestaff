@@ -102,6 +102,16 @@ typedef struct {
     uint32_t command_byte_offset;
 } Nexus_V1_Vdp1DirectColorCaptureReceipt;
 
+/* Capture-only normal sprite preview. The caller supplies the observed local
+ * coordinate and clip; later VRAM/CRAM snapshots do not prove temporal parity. */
+int nexus_v1_vdp1_capture_preview_mode0_normal(
+    Nexus_V1_Vdp1DirectColorFramebuffer *framebuffer,
+    const uint8_t *command, int command_size,
+    const uint8_t *vdp1_vram, int vdp1_vram_size,
+    const Nexus_V1_Vdp2ColourRamCapture *vdp2_capture,
+    int origin_x, int origin_y, int clip_x, int clip_y,
+    int *out_written_pixels);
+
 /* A complete, bounded replay lane for one captured VDP1 command window.
  * The per-command source joins remain explicit; these additional facts bind
  * the state that one command cannot establish by itself. */

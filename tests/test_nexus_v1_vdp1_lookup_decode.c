@@ -1,4 +1,5 @@
 #include "nexus_v1_dungeon.h"
+#include "nexus_v1_vdp1_capture_compositor.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -111,6 +112,21 @@ int main(void) {
                                          real_pixels[j].red != (uint8_t)((color & 31U) << 3U) ||
                                          real_pixels[j].green != (uint8_t)(((color >> 5U) & 31U) << 3U) ||
                                          real_pixels[j].blue != (uint8_t)(((color >> 10U) & 31U) << 3U))) found = 0;
+                                }
+                                if (found) {
+                                    static Nexus_V1_Vdp1DirectColorFramebuffer preview;
+                                    int written = 0;
+                                    found = nexus_v1_vdp1_capture_preview_mode0_normal(
+                                        &preview, record + 4, 32, vram, sizeof(vram), &real_capture,
+                                        0, 0, 319, 223, &written) && written > 0;
+                                    for (j = 0; found && j < 576; ++j) {
+                                        unsigned int x = 104U + (unsigned int)(j % 24U);
+                                        unsigned int y = 144U + (unsigned int)(j / 24U);
+                                        uint32_t expected_pixel = indices[j] ? UINT32_C(0xff000000) |
+                                            ((uint32_t)real_pixels[j].red << 16U) |
+                                            ((uint32_t)real_pixels[j].green << 8U) | real_pixels[j].blue : 0U;
+                                        if (preview.rgba_buffer[y * NEXUS_FB_W + x] != expected_pixel) found = 0;
+                                    }
                                 }
                             }
                             if (cram_file) fclose(cram_file);
