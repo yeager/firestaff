@@ -40,7 +40,7 @@ output="$(HOME="$test_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 }
 
 if ! grep -Fq 'NEXUS STARTUP RECEIPT: status=blocked gameId=nexus' <<< "$output" ||
-   ! grep -Fq 'blocker=blocked-title-vdp-owner-compositor-capture' <<< "$output" ||
+   ! grep -Fq 'blocker=menu-bpk-prs3-capture-required' <<< "$output" ||
    ! grep -Fq 'launch phase=game-handoff mode=menu game=nexus platform=Saturn edition=nexus-saturn-jp' <<< "$output" ||
    grep -Fq 'launch phase=runtime-entered game=nexus' <<< "$output" ||
    ! grep -Fq 'Nexus: supplemental retail ISO ' <<< "$output" ||

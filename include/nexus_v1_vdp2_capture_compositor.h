@@ -13,6 +13,9 @@
 #define NEXUS_V1_VDP2_NBG0_BITMAP_BYTES (512U * 256U)
 #define NEXUS_V1_VDP2_NBG0_BITMAP_WIDTH 512U
 #define NEXUS_V1_VDP2_NBG0_BITMAP_HEIGHT 256U
+#define NEXUS_V1_VDP2_YMIR_MENU_WIDTH 320U
+#define NEXUS_V1_VDP2_YMIR_MENU_HEIGHT 224U
+#define NEXUS_V1_VDP1_YMIR_FRAMEBUFFER_BYTES (512U * 256U * 2U)
 
 /* One source-bound NBG1 bitmap plane. The source and capture spans must be
  * exact byte matches; placement is explicit because registers alone do not
@@ -90,6 +93,42 @@ typedef struct {
     uint32_t cram_offset;
 } Nexus_V1_Vdp2BitmapCaptureReceipt;
 
+/* Inputs for the exact Ymir frame-59 Nexus title-menu capture lane. The two
+ * caller attestations bind the independently retained Ymir dump bundle and
+ * complete VDP1 trace; this function never authenticates files itself. */
+typedef struct {
+    const uint8_t *vdp1_display_framebuffer;
+    size_t vdp1_display_framebuffer_size;
+    const uint8_t *vdp2_vram;
+    size_t vdp2_vram_size;
+    const uint8_t *vdp2_cram;
+    size_t vdp2_cram_size;
+    const uint8_t *vdp2_registers;
+    size_t vdp2_registers_size;
+    Nexus_V1_SaturnVdp2RegisterByteOrder register_byte_order;
+    int original_ymir_capture_verified;
+    int command_trace_complete_verified;
+} Nexus_V1_Vdp2YmirMenuCaptureInput;
+
+typedef struct {
+    uint32_t rgba_buffer[NEXUS_V1_VDP2_YMIR_MENU_WIDTH *
+                         NEXUS_V1_VDP2_YMIR_MENU_HEIGHT];
+} Nexus_V1_Vdp2YmirMenuCaptureFramebuffer;
+
+typedef struct {
+    int valid;
+    int capture_only;
+    int renderer_permitted;
+    int registers_verified;
+    int command_trace_complete_verified;
+    int original_ymir_capture_verified;
+    int width;
+    int height;
+    int vdp1_direct_pixels;
+    int vdp1_palette_pixels;
+    int nbg0_overlay_pixels;
+} Nexus_V1_Vdp2YmirMenuCaptureReceipt;
+
 /* Replay one authenticated NBG1 8bpp bitmap span. This is deliberately a
  * capture consumer, not a VDP2 emulator or a general tilemap renderer. */
 int nexus_v1_vdp2_capture_composite_nbg1_bitmap(
@@ -117,5 +156,14 @@ int nexus_v1_vdp2_capture_decode_runtime_frame_nbg0_bitmap(
     Nexus_V1_SaturnRuntimeCaptureFrameReceipt *out_frame_receipt,
     Nexus_V1_SaturnVdp2RegisterReceipt *out_register_receipt,
     Nexus_V1_Vdp2BitmapCaptureReceipt *out_receipt);
+
+/* Reconstruct the retained 320x224 Ymir title-menu capture from its raw
+ * display framebuffer and VDP2 snapshots. This exact-register lane is
+ * capture-only: a screenshot comparison is still required before any live
+ * renderer may consume it. */
+int nexus_v1_vdp2_capture_replay_ymir_title_menu(
+    Nexus_V1_Vdp2YmirMenuCaptureFramebuffer *framebuffer,
+    const Nexus_V1_Vdp2YmirMenuCaptureInput *input,
+    Nexus_V1_Vdp2YmirMenuCaptureReceipt *out_receipt);
 
 #endif

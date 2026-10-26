@@ -1,6 +1,6 @@
 --- a/src/pce_fast/huc6280.cpp
 +++ b/src/pce_fast/huc6280.cpp
-@@ -35,6 +35,7 @@
+@@ -35,6 +35,17 @@
  static unsigned Theron3879FastTraceMappedOpcode;
  static unsigned Theron3879FastTraceMappedOperand1;
  static unsigned Theron3879FastTraceMappedOperand2;
@@ -8,6 +8,17 @@
 +static unsigned Theron44D2FastFollowStepsRemaining;
 +static unsigned Theron44D2FastFollowStarted;
 +static unsigned Theron44D2FastFollowCount;
++static unsigned Theron44D2FastFollowLimit(void)
++{
++ static unsigned limit;
++ if(!limit)
++ {
++  const char *text = getenv("FIRESTAFF_THERON_44D2_FOLLOW_LIMIT");
++  const unsigned long parsed = text && *text ? strtoul(text, NULL, 10) : 128;
++  limit = parsed >= 1 && parsed <= 2048 ? (unsigned)parsed : 128;
++ }
++ return limit;
++}
  static char Theron3879FastRuntimeCodeWindow[27];
  static uint8 dummy_bank[8192 + 8192];  // + 8192 for PC-as-ptr safety padding
 @@ -1025,7 +1026,8 @@
@@ -41,9 +52,9 @@
 +     if(TheronTraceInstructionPC == 0x44d2 && !Theron44D2FastFollowStarted)
 +     {
 +      Theron44D2FastFollowStarted = 1;
-+      Theron44D2FastFollowStepsRemaining = 128;
++      Theron44D2FastFollowStepsRemaining = Theron44D2FastFollowLimit();
 +     }
-+     else if(Theron44D2FastFollowStepsRemaining && Theron44D2FastFollowCount < 128)
++     else if(Theron44D2FastFollowStepsRemaining && Theron44D2FastFollowCount < Theron44D2FastFollowLimit())
 +     {
 +      fprintf(Theron3879FastTrace,
 +          "theron_44d2_follow step=%u logical_pc=%04x physical_pc=%06x opcode=%02x byte1=%02x byte2=%02x a=%02x x=%02x y=%02x p=%02x s=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x\n",

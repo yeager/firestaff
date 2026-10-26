@@ -1196,6 +1196,31 @@ static void check_active_scan_renders_progress_bar(void) {
     free(rgba);
 }
 
+static void check_game_options_renderer_rejects_invalid_selection(void) {
+    M12_StartupMenuState state;
+    const int width = M12_ModernMenu_NativeWidth();
+    const int height = M12_ModernMenu_NativeHeight();
+    const size_t bytes = (size_t)width * (size_t)height * 4U;
+    unsigned char* rgba = (unsigned char*)calloc(1U, bytes);
+
+    CHECK(rgba != NULL);
+    if (!rgba) return;
+    memset(&state, 0, sizeof(state));
+    state.settings.uiScale = 100;
+    state.settings.fontScale = 1;
+    state.view = M12_MENU_VIEW_GAME_OPTIONS;
+
+    state.quickResumeAvailable = 1;
+    state.selectedIndex = -1;
+    M12_ModernMenu_Render(&state, rgba, width, height);
+    CHECK(rgba[3] != 0U);
+
+    state.selectedIndex = M12_StartupMenu_GetEntryCount();
+    M12_ModernMenu_Render(&state, rgba, width, height);
+    CHECK(rgba[3] != 0U);
+    free(rgba);
+}
+
 static void check_modern_scan_progress_standalone_render(void) {
     const int width = M12_ModernMenu_NativeWidth();
     const int height = M12_ModernMenu_NativeHeight();
@@ -1434,6 +1459,7 @@ int main(void) {
     check_fresh_config_repairs_dot_in_memory();
     check_dot_asset_status_does_not_replace_saved_directory();
     check_active_scan_renders_progress_bar();
+    check_game_options_renderer_rejects_invalid_selection();
     check_modern_scan_progress_standalone_render();
     check_scan_progress_uses_display_names();
     check_auto_language_matches_startup_scan();

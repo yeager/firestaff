@@ -135,11 +135,11 @@ def main() -> int:
     vram = frames[args.frame]["vdp1-vram"]
     for offset, words in records:
         control = words[0]
-        if control & 0x8000 or (control & 0x000F) > 2:
+        if control & 0xC000 or (control & 0x000F) > 2:
             continue
         mode = (words[2] >> 3) & 0x7
-        width = (words[5] & 0x003F) * 8
-        height = (words[5] >> 8) & 0x00FF
+        width = ((words[5] >> 8) & 0x003F) * 8
+        height = words[5] & 0x00FF
         bits = 4 if mode <= 1 else 8 if mode <= 4 else 16
         source_offset = words[4] * 8
         source_size = width * height * bits // 8

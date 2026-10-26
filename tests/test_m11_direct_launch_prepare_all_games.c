@@ -430,6 +430,7 @@ static void run_real_data_handoff_if_available(void) {
         int autoVersionIndex;
         int autoArchitecture;
         int matchedFmTownsVersion = 0;
+        int menuEntryIndex;
         size_t versionOrdinal;
         char expectedAssetMd5[33];
         char scoped_dir[512];
@@ -456,6 +457,23 @@ static void run_real_data_handoff_if_available(void) {
             M12_StartupMenu_Destroy(&menu);
             continue;
         }
+        /* Keep the authenticated AssetStatus and game-option slots intact,
+         * but move this actual game row to prove that direct launch and the
+         * later menu handoff use a menu index rather than the fixed slot. */
+        menuEntryIndex = kCases[i].slot;
+        {
+            int otherEntryIndex =
+                (menuEntryIndex + 1) % M12_CONFIG_GAME_COUNT;
+            M12_MenuEntry movedEntry = menu.entries[menuEntryIndex];
+            menu.entries[menuEntryIndex] = menu.entries[otherEntryIndex];
+            menu.entries[otherEntryIndex] = movedEntry;
+            menuEntryIndex = otherEntryIndex;
+        }
+        entry = M12_StartupMenu_GetEntry(&menu, menuEntryIndex);
+        expect_true(entry && entry->kind == M12_MENU_ENTRY_GAME &&
+                        entry->gameId &&
+                        strcmp(entry->gameId, kCases[i].gameId) == 0,
+                    "authentic game row can move independently of option slot");
         ++available_count;
         /* Direct --game without an explicit platform is AUTO. When the
          * authenticated FM Towns edition is installed, its game-specific
@@ -531,10 +549,10 @@ static void run_real_data_handoff_if_available(void) {
 
         expect_true(M11_PrepareDirectLaunchForGame(&menu, kCases[i].gameId) == 1,
                     "direct launch prepares available game data");
-        expect_true(menu.selectedIndex == kCases[i].slot &&
-                        menu.activatedIndex == kCases[i].slot &&
+        expect_true(menu.selectedIndex == menuEntryIndex &&
+                        menu.activatedIndex == menuEntryIndex &&
                         menu.launchRequested == 1,
-                    "direct launch prepares selected and activated slot");
+                    "direct launch prepares the matching selected menu row");
         expect_true(menu.quickResumeLaunchRequested == 0,
                     "direct launch clears quick-resume launch request");
 
@@ -734,7 +752,7 @@ static void run_real_data_handoff_if_available(void) {
         menu.launchRequested = 0;
         menu.quickResumeLaunchRequested = 0;
         menu.view = M12_MENU_VIEW_MAIN;
-        menu.selectedIndex = kCases[i].slot;
+        menu.selectedIndex = menuEntryIndex;
         menu.gameOptions[kCases[i].slot].architectureIndex = M12_ARCH_AUTO;
         menu.gameOptions[kCases[i].slot].versionIndex = autoVersionIndex;
         menu.gameOptions[kCases[i].slot].presentationModeIndex =

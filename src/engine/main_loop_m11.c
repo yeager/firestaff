@@ -374,19 +374,24 @@ static int M12_StartupMenu_PrepareSelectedGameLaunch(
     M12_LaunchIntent intent;
     char runtimeDir[M12_ASSET_DATA_DIR_CAPACITY];
     int versionIndex;
+    int gameOptionsSlot;
     if (!menuState || menuState->activatedIndex < 0 ||
-        menuState->activatedIndex >= M12_ASSET_GAME_COUNT) {
+        menuState->activatedIndex >= M12_StartupMenu_GetEntryCount()) {
         return 0;
     }
     entry = M12_StartupMenu_GetEntry(menuState, menuState->activatedIndex);
-    if (!entry || !entry->gameId) {
-        return 1;
+    if (!entry || entry->kind != M12_MENU_ENTRY_GAME || !entry->gameId) {
+        return 0;
+    }
+    gameOptionsSlot = M12_StartupMenu_GetGameOptionsSlot(entry->gameId);
+    if (gameOptionsSlot < 0 || gameOptionsSlot >= M12_CONFIG_GAME_COUNT) {
+        return 0;
     }
     if (strcmp(entry->gameId, "dm1") == 0) {
         intent = M12_StartupMenu_GetLaunchIntent(menuState);
         versionIndex = intent.valid && intent.options.versionIndex >= 0
             ? intent.options.versionIndex
-            : menuState->gameOptions[menuState->activatedIndex].versionIndex;
+            : menuState->gameOptions[gameOptionsSlot].versionIndex;
         version = versionIndex >= 0
             ? M12_AssetStatus_GetVersion(&menuState->assetStatus, "dm1",
                                          (size_t)versionIndex) : NULL;
@@ -413,7 +418,7 @@ static int M12_StartupMenu_PrepareSelectedGameLaunch(
     intent = M12_StartupMenu_GetLaunchIntent(menuState);
     versionIndex = intent.valid && intent.options.versionIndex >= 0
         ? intent.options.versionIndex
-        : menuState->gameOptions[menuState->activatedIndex].versionIndex;
+        : menuState->gameOptions[gameOptionsSlot].versionIndex;
     version = versionIndex >= 0
         ? M12_AssetStatus_GetVersion(&menuState->assetStatus, "csb",
                                      (size_t)versionIndex) : NULL;
@@ -8651,12 +8656,8 @@ static int m11_game_display_aspect(int aspectRatio) {
 }
 
 static int m11_game_option_slot(const char *gameId) {
-    if (!gameId) return 0;
-    if (strcmp(gameId, "csb") == 0) return 1;
-    if (strcmp(gameId, "dm2") == 0) return 2;
-    if (strcmp(gameId, "nexus") == 0) return 3;
-    if (strcmp(gameId, "theron") == 0) return 4;
-    return 0;
+    int slot = M12_StartupMenu_GetGameOptionsSlot(gameId);
+    return slot >= 0 ? slot : 0;
 }
 
 static int m11_is_supported_game_id(const char *gameId) {
@@ -9499,7 +9500,10 @@ int M11_PrepareDirectLaunchForGame(M12_StartupMenuState* menuState,
                                    const char* gameId) {
     int i;
     int entryCount;
-    if (!menuState || !gameId || gameId[0] == '\0') {
+    int gameOptionsSlot = M12_StartupMenu_GetGameOptionsSlot(gameId);
+    if (!menuState || !gameId || gameId[0] == '\0' ||
+        gameOptionsSlot < 0 ||
+        gameOptionsSlot >= M12_CONFIG_GAME_COUNT) {
         return 0;
     }
     entryCount = M12_StartupMenu_GetEntryCount();
@@ -9528,7 +9532,7 @@ int M11_PrepareDirectLaunchForGame(M12_StartupMenuState* menuState,
              * this exact case.  Consume it before asking M12 for the intent,
              * so --game csb --presentation-mode v22 starts in V2.1 rather
              * than reporting the verified game data as unavailable. */
-            if (menuState->gameOptions[i].presentationModeIndex ==
+            if (menuState->gameOptions[gameOptionsSlot].presentationModeIndex ==
                 M12_PRESENTATION_V22_MODERN) {
                 int resolveToV21 = 0;
                 if (strcmp(gameId, "csb") == 0) {
@@ -9550,7 +9554,7 @@ int M11_PrepareDirectLaunchForGame(M12_StartupMenuState* menuState,
                 if (resolveToV21) {
                     menuState->settings.graphicsIndex =
                         M12_PRESENTATION_V21_UPSCALED;
-                    menuState->gameOptions[i].presentationModeIndex =
+                    menuState->gameOptions[gameOptionsSlot].presentationModeIndex =
                         M12_PRESENTATION_V21_UPSCALED;
                 }
             }

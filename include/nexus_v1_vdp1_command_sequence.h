@@ -61,4 +61,13 @@ int nexus_v1_vdp1_command_sequence_frame(
     const Nexus_V1_Vdp1CommandSequenceInput *input,
     Nexus_V1_Vdp1CommandSequenceReceipt *out_receipt);
 
+/* Validate an ordered producer trace, preserving its captured words instead
+ * of rereading command records from a later VRAM snapshot. Each record is 32
+ * bytes of little-endian words. The caller must independently verify that the
+ * producer captured the whole frame without dropped records. This does not
+ * validate texture contents or establish semantic admission. */
+int nexus_v1_vdp1_command_sequence_trace(
+    const uint8_t *command_words, const uint32_t *command_offsets, int count,
+    Nexus_V1_Vdp1CommandSequenceReceipt *out_receipt);
+
 #endif

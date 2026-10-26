@@ -1,8 +1,15 @@
 # Five-game startup support gap analysis
 
-Reconciled with `main` at `000cf7a94` on 2026-10-26. Runtime receipts
-cited below remain the recorded runs at their stated revisions; they were not
-rerun during this documentation update. The repository contains checks
+Reconciled with published `main` at `5d612f62a` (Firestaff v3.0.415) on
+2026-10-26. Its GitHub Actions release run `40325408361` completed the seven
+platform build and packaging jobs successfully (Windows x86_64, macOS
+x86_64/arm64, Linux x86_64/arm64, Android arm64 and iOS arm64), then published
+23 release assets. These results verify compilation and packaging, not game
+startup. The v3.0.415 release notes use the v3.0.414 runtime receipts; this
+release did not run a new five-game startup matrix. Runtime receipts cited
+below remain the recorded runs at their stated revisions; they were not rerun
+during this documentation update.
+The repository contains checks
 against authentic media for all five games, but “available,”
 “selected,” “handed off,” and “entered a playable runtime” are separate states.
 The current evidence does not establish complete five-game startup support.
@@ -15,7 +22,7 @@ The current evidence does not establish complete five-game startup support.
 | CSB | The authentic-media CLI diagnostics exercise direct selection and source-owned startup. | The picker test covers keyboard and mouse handoff; the runtime test checks the authentic starting party and viewport receipt. | First runtime is verified on bounded real-media routes. Platform-wide parity and native physical input remain open. |
 | DM2 | The authentic-media CLI diagnostics cover direct selection; platform-specific checks include the complete timed FM Towns title sequence. The French DOS loose-file route now also preserves its selected graphics owner into the first loaded runtime. | The picker test covers keyboard and mouse handoff; the runtime test checks the authentic first party and frame. | First runtime is verified on bounded real-media routes, including the selected French DOS loose-file case. Other edition and native interaction coverage remains incomplete. |
 | Theron | The CLI diagnostics reach its source-owned runtime handoff. | The picker test covers keyboard and mouse handoff; the runtime test checks a loaded authentic Track 02 state. Tab champion cycling and the documented Z/X/Space controls now exercise the normal SDL event loop on authentic USA Track 02. | Runtime state, native frames and these keyboard actions are reached, but the native dungeon image is not yet driven by the authenticated world/graphics state. A recent nonblack Firestaff capture has not been paired with an original-emulator capture. |
-| Nexus | The authentic-media CLI diagnostic must report `levelLoaded=0`, `menu=0`, and the current title gate `blocked-title-vdp-owner-compositor-capture`. Keyboard and mouse selection tests reach the M12-to-M11 handoff, not an active game runtime. There is no Nexus case in the first-runtime probe matrix. | **Not startable as a playable game yet.** Retail Ymir captures document `NEW GAME`, `CONTINUE`, and `CONFIGURATION`, but Firestaff's production title/menu consumer and transition to an authenticated level remain gated. The Saturn BKR parser is container-level only and is not wired to save selection or loading. |
+| Nexus | A fresh 2026-10-27 TRV2 v3.0.415 CLI run used the authentic Japanese `DM.BIN` (MD5 `e88d60859f65f08fa622e1992b02280f`): after 110 boot-probe frames and one scripted Enter, it reported `titleReady=1`, `levelLoaded=0`, `menu=0`, blocker `menu-bpk-prs3-capture-required`. The authentic-data mouse test also passes only through the same capture-gated title route. There is no Nexus case in the first-runtime probe matrix. | Retail Ymir evidence covers the Japanese `LOAD` row and a second-stage load into the four-champion HUD and first-person viewport. This establishes a retail checkpoint route only; it does not admit Firestaff's production menu, save loader, or runtime. The installed English `MENU.BPK` still lacks the source-bound English capture required by the renderer gate. The Saturn BKR parser remains container-level and is not wired to save selection or loading ([retail evidence](nexus_startup.md#retail-continue-with-an-authentic-save-2026-10-25)). | **Not startable as a playable game yet.** |
 
 ## What the existing checks prove
 
@@ -53,6 +60,44 @@ The current evidence does not establish complete five-game startup support.
   handoffs are not evidence of playable Nexus or Theron runtimes. The broad
   CLI edition matrix skipped with code 77 because TRV2 lacks its required
   authentic DM2 Macintosh archive. No synthetic or copied media was used.
+- The published v3.0.414 macOS arm64 app was also exercised against the
+  installed authentic media. `test_m12_main_menu_game_selection_real_media.sh`
+  passed keyboard and mouse selection/handoff for all five cards and verified
+  the default `.firestaff/data` menu route for DM1, CSB and DM2. The separate
+  `test_nexus_v1_native_menu_mouse_title.sh` passed and confirmed that Nexus
+  reaches the capture-gated title route, not a playable menu. Direct CLI
+  `--boot-probe-frames 0` runs reported `runtime-entered` for DM1, CSB, DM2 and
+  Theron, but only DM1 had `levelLoaded=1` at that zero-frame snapshot; the
+  other three were still in their startup/title states. Nexus reported
+  `title=1`, `levelLoaded=0`, `menu=0`, and
+  `menu-bpk-prs3-capture-required`. Thus the v3.0.414 runtime evidence
+  confirms all five launcher card selections, not playable starts for all five
+  games. v3.0.415 did not add a new game-start run.
+- `test_m12_main_menu_runtime_real_media.sh` then passed against the same
+  v3.0.414 app and authentic collection for DM1, CSB, DM2 and Theron. Its probe
+  requires an active runtime with `levelLoaded=1`; DM1 also had its HoC first
+  frame, CSB its source party and viewport receipt, DM2 its completed Towns
+  title and first party, and Theron its Track 02 runtime/party. The runtime
+  test has no Nexus case; Nexus remains the known playable-start blocker.
+- A fresh 2026-10-26 TRV2 run rebuilt main at `ed2ff82a` and repeated
+  `test_m12_main_menu_runtime_real_media.sh` against the authentic installed
+  collection. Its `levelLoaded=1` verifier passed the no-game menu routes for
+  DM1, CSB, DM2 (FM Towns), and Theron (PC Engine). Separate zero-frame direct
+  CLI probes against the same real data entered DM1's loaded runtime
+  immediately, but sampled CSB, DM2, and Theron before their startup/title
+  transitions completed. Nexus still reported
+  `title=1`, `menu=0`, `levelLoaded=0`, and
+  `menu-bpk-prs3-capture-required`. The runtime script omits Nexus, so these
+  four passes do not close the five-game startup gap.
+- A fresh 2026-10-27 TRV2 v3.0.415 build used authentic Japanese Nexus data.
+  Direct `--game nexus --platform saturn` startup selected the hash-matched
+  `DM.BIN` (MD5 `e88d60859f65f08fa622e1992b02280f`); after 110 boot-probe
+  frames and one scripted Enter it reported `titleReady=1` but
+  `levelLoaded=0`, `menu=0`, and
+  `menu-bpk-prs3-capture-required`. The real-data
+  `test_nexus_v1_native_menu_mouse_title.sh` passed and confirmed the M12
+  mouse route reaches the same capture-gated title. These runs verify title
+  handoff only; no Nexus menu or playable level was reached.
 - The Theron Button II dispatch and non-advancing cancel behavior have
   source-backed coverage in the active runtime input and SDL event-loop checks.
   This closes that input-path defect; it does not establish full input or
@@ -61,10 +106,10 @@ The current evidence does not establish complete five-game startup support.
   checks discovery and direct CLI startup for all five IDs. Its Nexus-specific
   assertion rejects a false `runtime-entered` receipt and requires the blocked
   menu/level gate, so a passing test is not evidence that Nexus is playable.
-- [`nexus_v1_ymir_title_menu_vdp_bundle_20261025`](../parity-evidence/verification/nexus_v1_ymir_title_menu_vdp_bundle_20261025/README.md)
-  records emulator evidence of the retail title menu. It explicitly does not
-  satisfy the original-Saturn provenance gate or establish Firestaff menu
-  rendering, input dispatch, or level startup.
+- [`docs/nexus_startup.md`](nexus_startup.md) records authentic Ymir title,
+  menu, load-row, and loaded-HUD observations from Japanese retail media. They
+  do not satisfy the English `MENU.BPK` source-binding gate or establish
+  Firestaff menu rendering, save selection/loading, or level startup.
 - These tests use SDL dummy video/audio and authentic installed media. They do
   not establish native window presentation, physical input, audible output,
   complete game playthroughs, or cross-platform gameplay parity.
@@ -100,20 +145,33 @@ container admission. Any shared index must retain every edition result,
 duplicate-file handling, complete/incomplete package admission, same-container
 ownership and cancellation semantics. Preserve those invariants and the
 reported launcher delay until a representative multi-edition profile proves a
-safe reduction. This branch also removes a duplicate direct-root `file_md5`
+safe reduction. Current main also removes a duplicate direct-root `file_md5`
 call during path collection; the translation unit compiles for both M12 and
-Nexus, but its runtime impact has not been measured. See the version pass in
+Nexus, but its runtime impact has not been measured. A current-main TRV2 scan
+against authentic media confirms all five required profiles are found, but
+skips some external-only archives. Two same-source warm A/B attempts to remove
+redundant hash work produced identical reports and no measurable speedup; the
+details and limits are recorded in [`TODO.md`](../TODO.md). See the version
+pass in
 [`asset_status_m12.c`](../src/shared/asset_status_m12.c) and traversal/cache
 logic in [`asset_find_by_hash.c`](../src/shared/asset_find_by_hash.c).
 
-One detail needs measurement before simplifying the current fast-candidate
-pass: it writes candidate paths into the same output arrays that the following
-`asset_find_all_by_md5_list` call clears on entry. The candidate hashes still
-warm the metadata-validated file cache, while the recursive pass supplies the
-published inventory. Removing that pass may reduce redundant probes, but its
-value for named files that normal enumeration cannot reach has not been
-measured. Preserve that route or provide equivalent evidence before removing
-it.
+The generic fast-candidate pass writes to output arrays that the following
+`asset_find_all_by_md5_list` call clears on entry, so it currently warms the
+metadata-validated file cache but does not seed the published inventory. Its
+configured paths are within the recursive walk's depth limit, which follows
+directory links via `stat()`. A same-source warm A/B scan showed no measurable
+benefit from removing the pre-pass, so it remains in place pending a broader
+profile that can justify changes to candidate ordering or cross-game indexing.
+
+The published v3.0.414 macOS arm64 app scanned the installed authentic
+collection from an isolated HOME/config in 30.08 seconds on the first run; two
+warm repeats took 9.92 and 9.84 seconds (9.88-second median). All five games
+were READY. Fourteen `.7z`/`.rar` candidates were explicitly skipped because
+external archive tools were disabled. The OS file cache was not controlled,
+and scan completion time is not a measurement of time to first menu input.
+This remains a one-host profile, not evidence of a general speedup or full
+archive inventory.
 
 ## Remaining startup work
 

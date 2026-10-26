@@ -1,13 +1,29 @@
 --- a/src/pce/input.cpp
 +++ b/src/pce/input.cpp
-@@ -19,0 +20,3 @@
+@@ -17,6 +17,11 @@
+FIRESTAFF_PATCH_BLANK_CONTEXT
+ #include "pce.h"
+ #include "input.h"
 +#include <stdio.h>
++#include <errno.h>
++#include <limits.h>
 +#include <stdlib.h>
 +#include <string.h>
-@@ -95,0 +99,19 @@
-+static bool theron_script_boot_applied = false;
-+static uint16 theron_script_boot_original_port0 = 0;
-+
+ #include "huc.h"
+FIRESTAFF_PATCH_BLANK_CONTEXT
+ #include "vce.h"	// For debugging only(but not the debugger :b)
+@@ -29,6 +34,7 @@
+FIRESTAFF_PATCH_BLANK_CONTEXT
+ namespace MDFN_IEN_PCE
+ {
++unsigned theron_script_trace_frame = 0;
+FIRESTAFF_PATCH_BLANK_CONTEXT
+ enum
+ {
+@@ -93,6 +99,22 @@
+ static uint8 read_index = 0;
+ static bool DisableSR = false;
+FIRESTAFF_PATCH_BLANK_CONTEXT
 +static uint16 theron_script_key_mask(const char *key, size_t key_length)
 +{
 + /* Mednafen's PCE_GamepadIDII vector order is the wire-state layout:
@@ -24,33 +40,17 @@
 + return 0;
 +}
 +
-@@ -161,0 +181,19 @@
-+ if(port == 0 && ptr && !theron_script_boot_applied)
-+ {
-+  const char *script = getenv("FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT");
-+  const char *at = script ? strchr(script, '@') : NULL;
-+  const char *comma = at ? strchr(at + 1, ',') : NULL;
-+  const size_t key_length = at ? (size_t)(at - script) : 0;
-+  char *end = NULL;
-+  unsigned long frame = at ? strtoul(at + 1, &end, 10) : 0;
-+  uint16 mask = theron_script_key_mask(script, key_length);
-+  if(at && frame == 1 && mask && end &&
-+     (*end == ':' || *end == ',' || *end == 0) &&
-+     (!comma || end == comma))
-+  {
-+   theron_script_boot_original_port0 = MDFN_de16lsb(ptr);
-+   MDFN_en16lsb(ptr, theron_script_boot_original_port0 | mask);
-+   theron_script_boot_applied = true;
-+  }
-+ }
-+
-@@ -180,0 +219,14 @@
+ static void RemakeDevices(int which = -1)
+ {
+  int s = 0;
+@@ -178,6 +200,18 @@
+ {
+  static FILE *theron_input_trace = NULL;
+  static uint16 theron_previous_port0 = 0xffff;
 + static bool theron_script_initialized = false;
 + static bool theron_script_valid = false;
 + static unsigned theron_script_frame = 0;
 + static unsigned theron_script_event_count = 0;
-+ static uint16 theron_script_original_port0 = 0;
-+ static bool theron_script_applied = false;
 + static struct
 + {
 +  unsigned frame;
@@ -59,7 +59,13 @@
 +  bool emitted;
 +  char key[8];
 + } theron_script_events[32];
-@@ -193,0 +246,102 @@
+  if(!theron_input_trace)
+  {
+   const char *path = getenv("FIRESTAFF_THERON_IRQ2_INPUT_TRACE");
+@@ -191,6 +225,114 @@
+    }
+   }
+  }
 + if(!theron_script_initialized)
 + {
 +  const char *script = getenv("FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT");
@@ -80,9 +86,34 @@
 +    theron_script_valid = false;
 +    break;
 +   }
++   if(at[1] < '0' || at[1] > '9')
++   {
++    theron_script_valid = false;
++    break;
++   }
++   errno = 0;
 +   frame = strtoul(at + 1, &end, 10);
++   if(errno == ERANGE || end == at + 1 || frame > UINT_MAX)
++   {
++    theron_script_valid = false;
++    break;
++   }
 +   if(end && *end == ':')
-+    duration = strtoul(end + 1, &end, 10);
++   {
++    const char *duration_start = end + 1;
++    if(*duration_start < '0' || *duration_start > '9')
++    {
++     theron_script_valid = false;
++     break;
++    }
++    errno = 0;
++    duration = strtoul(duration_start, &end, 10);
++    if(errno == ERANGE || end == duration_start || duration > UINT_MAX)
++    {
++     theron_script_valid = false;
++     break;
++    }
++   }
 +   if(!frame || !duration || end != (next ? next : at + strlen(at)))
 +   {
 +    theron_script_valid = false;
@@ -107,6 +138,11 @@
 +   theron_script_events[theron_script_event_count].key[key_length] = 0;
 +   theron_script_event_count++;
 +   cursor = next ? next + 1 : at + strlen(at);
++   if(next && !*cursor)
++   {
++    theron_script_valid = false;
++    break;
++   }
 +  }
 +  if(theron_script_valid && (!theron_script_event_count || *cursor))
 +   theron_script_valid = false;
@@ -118,111 +154,52 @@
 +   fflush(theron_input_trace);
 +  }
 + }
-+ if(theron_script_applied)
-+ {
-+  MDFN_en16lsb(data_ptr[0], theron_script_original_port0);
-+  theron_script_applied = false;
-+ }
-+ if(theron_script_boot_applied)
-+ {
-+  MDFN_en16lsb(data_ptr[0], theron_script_boot_original_port0);
-+  theron_script_boot_applied = false;
-+ }
++ uint16 scripted_mask = 0;
 + if(theron_script_valid)
 + {
-+  uint16 scripted_mask = 0;
++  theron_script_trace_frame = ++theron_script_frame;
 +  for(unsigned event_index = 0; event_index < theron_script_event_count; event_index++)
 +  {
 +   const unsigned start = theron_script_events[event_index].frame;
 +   const unsigned duration = theron_script_events[event_index].duration;
-+   if(!theron_script_events[event_index].emitted && theron_script_frame == start)
++   if(!theron_script_events[event_index].emitted && theron_script_trace_frame == start)
 +   {
 +    if(theron_input_trace)
 +     fprintf(theron_input_trace, "scripted_pce_input_event frame=%u key=%s mask=%04x hold=%u\n",
-+             theron_script_frame, theron_script_events[event_index].key,
++             theron_script_trace_frame, theron_script_events[event_index].key,
 +             theron_script_events[event_index].mask, duration);
 +    theron_script_events[event_index].emitted = true;
 +   }
-+   if(theron_script_frame >= start && theron_script_frame - start < duration)
++   if(theron_script_trace_frame >= start && theron_script_trace_frame - start < duration)
 +    scripted_mask |= theron_script_events[event_index].mask;
 +  }
-+  if(scripted_mask)
-+  {
-+   const uint16 physical_mask = MDFN_de16lsb(data_ptr[0]);
-+   MDFN_en16lsb(data_ptr[0], physical_mask | scripted_mask);
-+   theron_script_original_port0 = physical_mask;
-+   theron_script_applied = true;
-+   if(theron_input_trace)
-+   {
-+    fprintf(theron_input_trace, "scripted_pce_input_apply frame=%u physical=%04x scripted=%04x combined=%04x\n",
-+            theron_script_frame, physical_mask, scripted_mask,
-+            (uint16)(physical_mask | scripted_mask));
-+    fflush(theron_input_trace);
-+   }
-+  }
 + }
-+ theron_script_frame++;
---- a/src/pce/input/gamepad.cpp
-+++ b/src/pce/input/gamepad.cpp
-@@ -20,0 +21,2 @@
-+#include <stdlib.h>
-+#include <string.h>
-@@ -43,0 +46,6 @@
-+static unsigned theron_script_run_count = 0;
-+static unsigned theron_script_run_frame = 0;
-+static unsigned theron_script_run_start[32];
-+static unsigned theron_script_run_end[32];
-+static bool theron_script_run_valid = false;
-+
-@@ -53,0 +62,37 @@
-+ const char *script = getenv("FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT");
-+ const char *cursor = script;
-+ theron_script_run_count = 0;
-+ theron_script_run_valid = script && *script;
-+ while(theron_script_run_valid && *cursor && theron_script_run_count < 32)
+  if(theron_input_trace && data_ptr[0])
+  {
+   const uint16 port0 = MDFN_de16lsb(data_ptr[0]);
+@@ -204,6 +346,25 @@
++ uint16 physical_mask = 0;
++ bool scripted_overlay_applied = false;
++ if(scripted_mask && data_ptr[0])
 + {
-+  const char *at = strchr(cursor, '@');
-+  const char *next = at ? strchr(at + 1, ',') : NULL;
-+  const size_t key_length = at ? (size_t)(at - cursor) : 0;
-+  char *end = NULL;
-+  unsigned long start;
-+  unsigned long duration = 1;
-+  if(!at || !key_length)
-+  {
-+   theron_script_run_valid = false;
-+   break;
-+  }
-+  start = strtoul(at + 1, &end, 10);
-+  if(end && *end == ':')
-+   duration = strtoul(end + 1, &end, 10);
-+  if(!start || !duration || start > UINT_MAX - duration ||
-+     end != (next ? next : at + strlen(at)))
-+  {
-+   theron_script_run_valid = false;
-+   break;
-+  }
-+  if(key_length == 3 && !strncmp(cursor, "run", 3))
-+  {
-+   theron_script_run_start[theron_script_run_count] = (unsigned)start;
-+   theron_script_run_end[theron_script_run_count] = (unsigned)(start + duration);
-+   theron_script_run_count++;
-+  }
-+  cursor = next ? next + 1 : at + strlen(at);
++  physical_mask = MDFN_de16lsb(data_ptr[0]);
++  MDFN_en16lsb(data_ptr[0], physical_mask | scripted_mask);
++  scripted_overlay_applied = true;
 + }
-+ if(theron_script_run_valid && *cursor)
-+  theron_script_run_valid = false;
-+ theron_script_run_frame = 0;
-@@ -72,0 +115,13 @@
-+ if(theron_script_run_valid)
+  for(int i = 0; i < 5; i++)
+   if(devices[i])
+    devices[i]->Update(data_ptr[i]);
++ if(scripted_overlay_applied)
 + {
-+  for(unsigned run_index = 0; run_index < theron_script_run_count; run_index++)
-+   if(((theron_script_run_frame >= theron_script_run_start[run_index]) ||
-+       (theron_script_run_start[run_index] > 0 &&
-+        theron_script_run_frame + 1u >= theron_script_run_start[run_index])) &&
-+      theron_script_run_frame < theron_script_run_end[run_index])
-+   {
-+    buttons |= 0x0008;
-+    break;
-+   }
-+  theron_script_run_frame++;
++  MDFN_en16lsb(data_ptr[0], physical_mask);
++  if(theron_input_trace)
++  {
++   fprintf(theron_input_trace, "scripted_pce_input_apply frame=%u physical=%04x scripted=%04x combined=%04x\n",
++           theron_script_trace_frame, physical_mask, scripted_mask,
++           (uint16)(physical_mask | scripted_mask));
++   fflush(theron_input_trace);
++  }
 + }
+ }
+FIRESTAFF_PATCH_BLANK_CONTEXT
+ void INPUT_AdjustTS(int32 delta_timestamp)

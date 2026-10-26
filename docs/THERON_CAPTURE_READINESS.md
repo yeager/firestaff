@@ -5,7 +5,67 @@ only as an external reference instrument for authentic original-game behavior
 and data capture; it is never part of the shipped runtime or a substitute for
 native Firestaff gameplay.
 
+## 2026-10-26 — PCE Fast captures default to a close-time snapshot signal
+
+The reference capture launcher now defaults PCE Fast to `TERM` unless the
+caller explicitly selects another shutdown signal. In an isolated TRV2 probe
+using the authentic Japanese Rev. 1 disc and preserved gameplay state, `TERM`
+reached Mednafen's `CloseGame` boundary and wrote complete 8 KiB main-RAM,
+64 KiB VRAM, VCE, SAT and VDC-state snapshots. The prior PCE Fast `INT`
+default did not exit that older instrumented binary before the bounded force
+kill and therefore produced no snapshots.
+
+This selects a reliable reference-capture shutdown path only. It does not
+assign meaning to any captured RAM byte, prove a party pose or movement, or
+alter Firestaff's native runtime.
+
+## 2026-10-26 — native launch does not expose the System Card Run menu
+
+Firestaff's Theron launcher consumes a hash-verified Track 02 image and enters
+the native C/SDL startup/runtime path. It does not boot a PC Engine System Card,
+display its `RUN` menu, or require a controller-button hold to cross that
+firmware screen. System Card menus and their hold timing remain reference-only
+capture evidence and are not part of the shipped game flow.
+
+The native route may still present source-backed Theron title, stage-selection,
+and Soul Room states when a fresh game requires them. It may enter a loaded
+dungeon only through a verified Track 02 level/party handoff. Firestaff must
+not replace those states with a guessed party, position, or level merely to
+shorten startup; full direct-to-dungeon launch needs an authenticated initial
+party-and-level receipt.
+
+## 2026-10-26 — five-second cold-start RUN is delivered but remains System Card-only
+
+An isolated `pce_fast` reference capture used the authenticated Japanese Rev.
+1 disc and verified System Card 3.0 with `run@9600:300`: a five-second RUN
+hold beginning at reference frame 9,600. The scripted-plan and
+controller-read receipts both passed. The active-low RUN mask appeared in 414
+controller reads during the hold, but every witnessed poll belonged to System
+Card PC `$E4C5`; no non-System-Card poll followed.
+
+The run also produced close-time PCE Fast RAM, VRAM, VCE, SAT and VDC-state
+snapshots, plus source-bound CD data-port reads. It produced no raw-sector
+span, SCSI command, authenticated CD-to-RAM origin receipt, CD IRQ, or game
+`$E009` dispatch. The capture helper therefore rejected it as
+`transition=missing`. This proves delivery of the requested long RUN hold to
+the original controller path only. It does not prove a Theron title/menu
+action, game launch, dungeon admission, or native runtime parity. The raw
+capture remains operator-local and is discarded after the summary is recorded.
+
 ## 2026-10-24 — authentic runtime input comparison remains inconclusive
+
+## 2026-10-26 — frame-windowed PCE Fast replay still has no gameplay receipt
+
+An isolated replay from the preserved authentic Japanese dungeon state used a
+five-second Button I hold followed by held UP and RIGHT inputs. The replay
+plan, application records, and non-System-Card controller reads agreed for all
+three events. A bounded movement-context window starting immediately before
+the directional events captured the original CPU's input-latch, data-read and
+runtime-state activity, but no observed movement-command write followed either
+direction. This is evidence of controller delivery only. It does not identify
+a party coordinate, map, movement outcome, or renderer input, and does not
+authorize native dynamic rendering. The private reference build and capture
+artifacts were discarded after analysis; no game media or state was committed.
 
 Three isolated PCE Fast captures on TRV2 loaded the same preserved Japanese
 gameplay state, authentic Rev. 1 Track 02, and the verified System Card. A
@@ -26,6 +86,19 @@ The reproducible capture entry point is
 `scripts/capture_theron_mednafen_live_trace.sh` with
 `THERON_CAPTURE_AUTOLOAD_STATE`, `THERON_CAPTURE_REPLAY_INPUT_SCRIPT`, and
 `THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast` set against authentic local media.
+
+For a narrow follow-up probe, `THERON_CAPTURE_PCE_FAST_MOVEMENT_CONTEXT_MAIN_RAM_RANGE`
+accepts one inclusive physical-RAM range as `first-last` hexadecimal addresses.
+It records only writes in that range with the executing PC and MPR map. The
+range is disabled by default; selecting one produces provenance evidence, not
+field semantics or permission to enable dynamic rendering.
+
+The bounded movement-context sidecar records the reference frame and the full
+MPR0--MPR7 map for every observed input-latch or runtime-state write. This
+makes a future same-session capture auditable against its scripted controller
+event and executing physical bank. The sidecar is provenance evidence only:
+it does not make a RAM field semantic, identify a Track 02 source offset, or
+permit Firestaff to enable dynamic rendering.
 
 ## 2026-10-24 — authenticated screen snapshot renders; world pairing remains open
 

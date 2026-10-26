@@ -52,6 +52,27 @@ static int decode_range(const unsigned char *graphics, size_t size,
     return 1;
 }
 
+static int decode_m648_font(const unsigned char *graphics, size_t size)
+{
+    unsigned char pixels[640u * 400u];
+    uint16_t width = 0u, height = 0u;
+    size_t pixel;
+    if (!csb_v1_amiga_graphics_decode_item(graphics, size, 258u, pixels,
+            sizeof(pixels), &width, &height) || width < 288u || width > 640u ||
+        height != 8u) {
+        fputs("FAIL: original Amiga M648 inscription font dimensions\n", stderr);
+        return 0;
+    }
+    for (pixel = 0u; pixel < (size_t)width * height; ++pixel) {
+        if (pixels[pixel] > 15u) {
+            fputs("FAIL: original Amiga M648 index outside four-bit palette\n",
+                  stderr);
+            return 0;
+        }
+    }
+    return 1;
+}
+
 int main(void)
 {
     const char *archive = getenv("FIRESTAFF_CSB_AMIGA_ADF_ARCHIVE");
@@ -106,6 +127,7 @@ int main(void)
     if (!decode_range(graphics.bytes, graphics.size, 1u, 4u, "title/entrance") ||
         !decode_range(graphics.bytes, graphics.size, 17u, 17u, "inventory") ||
         !decode_range(graphics.bytes, graphics.size, 40u, 41u, "panel") ||
+        !decode_m648_font(graphics.bytes, graphics.size) ||
         !decode_range(graphics.bytes, graphics.size, 49u, 77u, "pit/field") ||
         !decode_range(graphics.bytes, graphics.size, 108u, 245u, "stairs") ||
         !decode_range(graphics.bytes, graphics.size, 259u, 384u, "wall") ||

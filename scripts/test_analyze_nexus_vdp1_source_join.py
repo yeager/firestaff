@@ -4,15 +4,143 @@
 from __future__ import annotations
 
 import unittest
+import csv
+import tempfile
+from pathlib import Path
 
+from analyze_nexus_title_vdp1_geometry import geometry_for_chain
+from analyze_nexus_vdp1_command_sequence import Record, describe, find_chain, follow
 from analyze_nexus_vdp1_source_join import (
     accepted_retail_hashes,
     aggregate_source_join_status,
+    has_informative_source,
     swapped_words,
+    texture_dimensions,
+    ymir_commands,
 )
+
+BUILD = Path(__file__).resolve().parents[1] / "build"
+BUILD.mkdir(exist_ok=True)
 
 
 class AcceptedRetailHashesTests(unittest.TestCase):
+    @staticmethod
+    def command(offset: int, control: int, link: int = 0) -> Record:
+        return Record(offset, (control, link) + (0,) * 14)
+
+    def test_command_follow_uses_single_pending_return_address(self) -> None:
+        index = {
+            0x00: self.command(0x00, 0x2000, 8),  # CALL 0x40; return to 0x20
+            0x20: self.command(0x20, 0x8000),
+            0x40: self.command(0x40, 0x2000, 12),  # Nested CALL 0x60
+            0x60: self.command(0x60, 0x3000),  # Returns to 0x20
+            0x80: self.command(0x80, 0x8000),  # Would be reached by a stack
+        }
+        chain = follow(index, 0x00)
+        self.assertEqual([record.offset for record in chain],
+                         [0x00, 0x40, 0x60, 0x20])
+
+    def test_command_return_without_call_advances_sequentially(self) -> None:
+        chain = follow({
+            0x00: self.command(0x00, 0x3000),
+            0x20: self.command(0x20, 0x8000),
+        }, 0x00)
+        self.assertEqual([record.offset for record in chain], [0x00, 0x20])
+
+    def test_candidate_search_matches_single_pending_return_semantics(self) -> None:
+        vram = bytearray(512 * 1024)
+        for offset, control, link in (
+            (0x00, 0x000A, 0),   # LOCAL
+            (0x20, 0x0008, 0),   # User clip
+            (0x40, 0x2000, 20),  # CALL subroutine at 0xA0; return to END
+            (0x60, 0x8000, 0),   # END
+            (0xA0, 0x2000, 24),  # Nested CALL at 0xC0
+            (0xC0, 0x3000, 0),   # RETURN uses the outer pending address
+        ):
+            vram[offset:offset + 4] = control.to_bytes(2, "little") + \
+                link.to_bytes(2, "little")
+        chain = find_chain(bytes(vram), 0x40 >> 3)
+        self.assertEqual([record.offset for record in chain],
+                         [0x00, 0x20, 0x40, 0xA0, 0xC0, 0x60])
+
+    def test_cmdlink_discards_non_record_address_bits(self) -> None:
+        record = self.command(0, 0x0000, 0xFFFF)
+        self.assertEqual(record.link_offset, 0x7FFE0)
+
+    def test_title_geometry_ignores_skipped_local_and_draw_commands(self) -> None:
+        def command(offset: int, control: int, words=None) -> Record:
+            payload = list(words or [0] * 16)
+            payload[0] = control
+            return Record(offset, tuple(payload))
+
+        skipped_local = [0] * 16
+        skipped_local[6:8] = [100, 200]
+        local = [0] * 16
+        local[6:8] = [10, 20]
+        skipped_draw = [0] * 16
+        skipped_draw[6:14] = [30, 40, 50, 60, 70, 80, 90, 100]
+        draw = [0] * 16
+        draw[6:14] = [1, 2, 3, 4, 5, 6, 7, 8]
+        chain = [
+            command(0x00, 0x400A, skipped_local),
+            command(0x20, 0x4002, skipped_draw),
+            command(0x40, 0x000A, local),
+            command(0x60, 0x0002, draw),
+            command(0x80, 0x8000),
+        ]
+        distorted, vertices, local_updates = geometry_for_chain(chain)
+        self.assertEqual(distorted, 1)
+        self.assertEqual(vertices, [(11, 22), (13, 24), (15, 26), (17, 28)])
+        self.assertEqual(local_updates, [(0x40, 10, 20)])
+
+    def test_command_summary_excludes_skipped_commands_from_active_state(self) -> None:
+        def command(offset: int, control: int) -> Record:
+            return Record(offset, (control,) + (0,) * 15)
+
+        report = describe([
+            command(0x00, 0x4000),       # skipped draw
+            command(0x20, 0x400A),       # skipped local-coordinate command
+            command(0x40, 0x000A),       # active local-coordinate command
+            command(0x60, 0x0000),       # active draw
+            command(0x80, 0x8000),       # END
+        ], 0)
+        self.assertEqual(report["draw_count"], 1)
+        self.assertEqual(report["local_coordinate_count"], 1)
+        self.assertEqual(report["types"],
+                         ["SKIP 0x0", "SKIP 0xa", "0xa", "0x0", "END"])
+
+    def test_zero_filled_texture_is_not_source_identity(self) -> None:
+        self.assertFalse(has_informative_source(bytes(448)))
+        self.assertTrue(has_informative_source(b"\x00\x01"))
+
+    def test_saturn_cmdsize_dimensions(self) -> None:
+        self.assertEqual(texture_dimensions(0x0410), (32, 16))
+
+    def test_ymir_bundle_checks_frame_and_rejects_dropped_rows(self) -> None:
+        with tempfile.TemporaryDirectory(dir=BUILD) as directory:
+            root = Path(directory)
+            receipt = root / "vdp1-capture-bundle.txt"
+            receipt.write_text("format=ymir-vdp1-capture-bundle-v1\n"
+                               "trace_file_complete=1\ntrace_dropped_total=0\n"
+                               "capture_frame_index=7\ntrace_rows=1\n"
+                               "trace_rows_for_capture_frame=1\n", encoding="ascii")
+            fields = ["frame", "index", "address"] + [f"word{i}" for i in range(16)]
+            with (root / "vdp1-command-trace.csv").open("w", newline="", encoding="ascii") as stream:
+                writer = csv.DictWriter(stream, fieldnames=fields)
+                writer.writeheader()
+                writer.writerow({**{f"word{i}": "0" for i in range(16)},
+                                 "word0": "0x8000", "frame": "7", "index": "0", "address": "0x20"})
+            (root / "vdp1-vram.bin").write_bytes(bytes(512 * 1024))
+            _, frame, commands = ymir_commands(root)
+            self.assertEqual((frame, commands[0][0]), (7, 0x20))
+            trace = root / "vdp1-command-trace.csv"
+            trace.write_text(trace.read_text().replace("0x8000", "0x1000"))
+            with self.assertRaises(ValueError):
+                ymir_commands(root)
+            receipt.write_text(receipt.read_text().replace("trace_dropped_total=0", "trace_dropped_total=1"))
+            with self.assertRaises(ValueError):
+                ymir_commands(root)
+
     def test_menu_bpk_accepts_only_the_three_verified_regions(self) -> None:
         self.assertEqual(
             accepted_retail_hashes("MENU.BPK"),

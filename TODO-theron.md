@@ -1,3 +1,183 @@
+## 2026-10-26 — authentic USA Backup RAM Continue remains native and source-bound
+
+- An isolated TRV2 Debug build passed
+  `test_theron_v1_m11_real_bram_continue` against the authenticated USA Track
+  02 and its original 2 KiB Backup RAM capture. The test admitted both hashes,
+  followed the native Continue route through the original startup sequence,
+  and loaded the source-backed level and object state before exercising the
+  bounded movement route.
+- This is a real native Firestaff path and does not require an emulator or
+  System Card at runtime. It is not permission to auto-load a dungeon: the
+  verified Backup RAM only covers the authenticated Continue record and its
+  documented restored fields. Skipping title, stage selection, or Soul Room
+  would still fabricate unproven party/startup state.
+- Later graphics-bank and original-consumer bindings remain open. The test
+  proves an authentic Continue handoff, not complete dynamic dungeon-renderer
+  parity.
+
+## 2026-10-26 — full-trace cold boot still has no game-owned input receipt
+
+- A fresh 35-second PCE Fast reference replay used the authenticated Japanese
+  Rev. 1 disc and System Card with `run@1:300`. The full-trace instrumented
+  binary applied both scheduled events and recorded two controller reads, but
+  both reads were System Card reads. It recorded zero non-System-Card reads,
+  CD IRQs, or authenticated CD-to-RAM receipts before the bounded run timed
+  out.
+- This is a negative capture result, not a source record. No trace, save,
+  firmware, or game bytes were retained in the repository. In particular, it
+  does not authorize a direct native dungeon launch, a party pose, a movement
+  rule, or a state-driven viewport mapping.
+- The next capture must cross the original System Card title-state handoff and
+  bind an input to a game-owned consumer and observable state transition in
+  the same session. Until then, the existing native runtime remains limited
+  to its separately verified Track 02 paths.
+
+## 2026-10-26 — bind scripted-controller receipts to the replay-clock interval
+
+- The bounded `$44D2` PCE Fast caller follow-up is now configurable for a
+  future authentic-state capture through
+  `THERON_CAPTURE_PCE_FAST_44D2_FOLLOW_LIMIT` (1 through 2048 instructions,
+  default 128). It retains the existing strict bound and records no game data
+  in the repository. A longer follow-up must still be paired with the same
+  session's authenticated media identity, controller receipt, and observed
+  game-state effect before it can establish a gameplay meaning.
+
+- The Mednafen reference-capture verifier now requires every accepted
+  controller read to carry the replay-clock frame and to occur inside the
+  logged event's active hold interval. The legacy PCE raw-read/result pair
+  must carry the same frame too. This rejects a formerly accepted
+  source-order-only trace in which a matching mask was read after a
+  one-frame event had expired.
+- This is fail-closed capture-tooling validation, not original gameplay
+  evidence. It preserves the distinction between a delivered host/replay
+  input and a game-owned command, pose, map, or rendering transition.
+
+## 2026-10-26 — revalidate native debug input against authentic US and JP media
+
+- An isolated TRV2 Debug build passed the authentic USA raw Track 02 runtime
+  regression with `--debug`. It verifies source-backed runtime entry plus
+  keyboard movement/turning and panel-mouse movement, champion selection,
+  waiting, pickup, item selection, and drop.
+- The same binary passed the authentic Japanese Rev. 1 SDL regression with
+  `--debug`, covering keyboard input, Button II, panel-mouse movement,
+  champion selection, and waiting. These are native Firestaff checks; no
+  emulator or firmware is part of either runtime route.
+- This revalidates the existing source-backed input routes, not visual,
+  semantic, or full gameplay parity. The evidence-capture gaps below remain
+  open.
+
+## 2026-10-26 — five-second cold-boot RUN hold remains System Card-only
+
+- A fresh isolated PCE Fast reference run used the authenticated USA disc and
+  System Card with `run@9600:300`, which holds RUN for five seconds. The
+  instrumented controller consumed the exact `0008` mask at System Card poll
+  `$E4C5`; all 300 scheduled apply frames were recorded.
+- The reference process nevertheless remained in the System Card path: it
+  recorded no CD IRQ, SCSI command, raw-sector binding, authenticated CD-to-RAM
+  receipt, or non-System-Card controller poll. It therefore does not prove a
+  game launch, despite the requested hold duration having been delivered.
+- The trace and media remain private. The next evidence task is to identify
+  the original System Card title-state transition that precedes the game-owned
+  input consumer; no native gameplay rule or renderer mapping may be inferred
+  from this System Card-only result.
+
+## 2026-10-26 — retain the bounded controller witness across cold boot
+
+- The PCE Fast capture instrumentation now accepts a bounded input-trace
+  start frame. For a replay plan, the capture script automatically begins the
+  controller diagnostic window 120 frames before its earliest scheduled
+  event, while the emulator continues to apply every controller frame from
+  boot. This prevents BIOS polling from consuming the bounded trace before a
+  late RUN hold can be witnessed.
+- The start frame is recorded in the transition receipt and may be explicitly
+  supplied for a reproducible capture. This is capture plumbing only: it does
+  not establish a Track 02-to-RAM receipt, game-owned controller consumer, or
+  dungeon pose/rendering semantics. A fresh authentic cold-start capture is
+  still required to make those joins.
+- The normal PCE instrumentation uses the same gate and keeps each emitted
+  raw controller row paired with its result row at the bounded-trace limit.
+  This repairs an evidence-recording boundary only; it does not alter the
+  reference emulator's controller state or Firestaff runtime behavior.
+
+## 2026-10-26 — F5-state RUN hold has a reproducible raw state and screen result
+
+- Two fresh PCE Fast replays of the same user-created Japanese F5 save state
+  held RUN for 300 frames. Both produced identical 8 KiB main-RAM, VRAM, and
+  SAT hashes, distinct from matched no-input controls. The raw transition
+  receipt consistently changed `$20DB` from `00` in the control to `01` after
+  RUN, while `$20DA`, `$2031`, and `$203F-$2041` retained their observed
+  values and `transition=missing` remained true.
+- This establishes a reproducible input-to-raw-state-and-screen tuple for the
+  exact save state. It does not identify `$20DB`, prove that RUN starts a
+  dungeon, establish party movement, or authorize a native state-driven
+  renderer. A same-session source/consumer and pose join is still required.
+
+## 2026-10-26 — matched F5-state UP control confirms a bounded screen delta
+
+- Fresh isolated PCE Fast captures replayed the same authentic Japanese F5
+  state once with `up@1:60` and once without scripted input. The original
+  game poll at `$44D2` read the UP mask in the input run, establishing that
+  the consumer was non-System-Card code.
+- The final authenticated snapshots differ by 79 VRAM bytes, two SAT bytes,
+  and 64 main-RAM bytes; VCE palette and VDC geometry are identical. The
+  observed runtime fields `$20DA`, `$20DB`, `$2031`, and `$203F-$2041` are
+  also identical between the runs.
+- This is a repeatable input-coupled screen-state delta for one authentic
+  saved boundary. It is not a coordinate commit, direction proof, semantic
+  field decoding, or a source-backed renderer contract. The captures contain
+  user media and remain private.
+
+## 2026-10-26 — matched F5-state VDC commits show an input-coupled screen delta
+
+- The user-created Japanese Akutuba F5 save state was captured twice in fresh
+  PCE Fast reference processes against the same authentic Rev. 1 disc and
+  System Card: once with `up@1:60` and once without scripted input. Both
+  captures produced valid bounded CPU-port VWR commit traces with 65,536
+  records and the same VDC geometry and VCE palette.
+- The UP capture differs from the control by 16 VRAM bytes, two SAT bytes,
+  and 59 main-RAM bytes. Its PCE Fast party-RAM snapshot is byte-identical to
+  the control. This is authenticated input-coupled screen-state evidence, not
+  a proven movement, coordinate, direction, object, or square-to-screen
+  binding. The dynamic CD/RAM receipt gate remained absent in both runs.
+- A second no-input control was byte-identical to the first across VRAM, SAT,
+  main RAM, and party RAM. The UP delta is therefore reproducible for this
+  exact save-state/input/boundary tuple, while still not establishing a party
+  pose or renderer-state mapping.
+- Raw state, media, firmware, and capture sidecars remain private and were not
+  added to Git. The isolated reference build will be removed after analysis.
+
+## 2026-10-26 — PCE Fast input-latch follow-up remains unjoined
+
+- A clean isolated PCE Fast reference build extended the bounded
+  movement-context observer with raw `$2911`, `$2912`, `$2920`, `$2031`, and
+  `$203F-$2041` write records. These are opaque observations, not coordinate,
+  direction, or command semantics.
+- A fresh no-input control against the preserved authentic Japanese Rev. 1
+  Akutuba state, using the current observer, produced 128 bounded
+  `$0E8A00-$0E8AFF` data reads, 128 input-latch writes, and 128 runtime-state
+  writes with physical PC/MPR context. The records remain opaque: this control
+  does not assign field semantics or demonstrate an input-caused transition.
+  Its reference binary lacked the required bounded VDC word-commit trace, so
+  the capture remains blocked and cannot be paired with an UP run yet.
+- Rebuilding the same observer with the bounded VDC word-commit hook enabled
+  permitted a fresh paired control/`up@1:60` run. Both runs emitted 65,536
+  CPU-port VWR commits; the scripted UP bit reached the observed controller
+  read, and the final VRAM, SAT, and main-RAM snapshots differed by 2, 2, and
+  51 bytes respectively. VCE, VDC-state, and party-RAM snapshots were
+  identical. This proves an input-coupled raw/screen delta for this boundary,
+  but not a party pose, coordinate commit, command consumer, or native
+  renderer mapping: the dynamic CD/RAM receipt gate was absent in both runs.
+- A subsequent matched pair preserved the same boundary and recorded the
+  bounded latch-write sequence after the observed poll. The no-input control
+  performed only the baseline writes at `$2911`, `$2912`, and `$2920`; the UP
+  run added a distinct `$2912` value and a finite `$2920` progression, with
+  both paths carrying physical PC/MPR context. This joins the accepted input
+  to a game-RAM write boundary, but the fields remain opaque until a
+  source-bound execution path and an independently observed gameplay result
+  establish their meaning.
+- The isolated build and raw traces were removed after verification. No game
+  media, save state, firmware, or raw trace is tracked by Git.
+
 ## 2026-10-25 — verify keyboard champion and wait actions in the SDL loop
 
 - Extended `theron_v1_sdl_input_events` to send actual SDL `Tab` and `Space`
@@ -7627,3 +7807,16 @@ this is distinct from the authenticated combined-RAR title-audio path above.
 - Keypad 8 is a Firestaff convenience alias. It is not claimed as a retail
   PC Engine control. Direct dungeon-view mouse targeting remains blocked on
   the missing source-bound world-to-screen consumer.
+
+## 2026-10-26 — cold-start RUN still lacks a game-owned transition
+
+- A private, authentic Japanese Rev. 1 `pce_fast` capture held RUN for five
+  seconds at frames 9600--9899. Scripted input application and controller-read
+  receipts passed, but all witnessed polls were System Card reads at `$E4C5`.
+  The capture recorded no non-System-Card input poll, raw-sector span, SCSI
+  command, authenticated CD-to-RAM origin receipt, CD IRQ, or game `$E009`
+  dispatch. It is not evidence of title/menu selection or game launch.
+- Next reference work: capture a same-session transition with a verified
+  game-owned controller poll and source-bound CD-to-RAM receipt before deriving
+  any initial party, level, graphics, control, or renderer behavior. Keep all
+  original media and raw capture artifacts private.

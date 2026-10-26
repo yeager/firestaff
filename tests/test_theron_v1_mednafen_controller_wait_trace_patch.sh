@@ -27,6 +27,7 @@ fifo_origin_v2_patch_file=$repo/scripts/mednafen_1.32.1_theron_fifo_origin_main_
 ram_provenance_patch_file=$repo/scripts/mednafen_1.32.1_theron_ram_provenance_trace.patch
 ram_provenance_guard_patch_file=$repo/scripts/mednafen_1.32.1_theron_ram_provenance_guard.patch
 vdc_instruction_pc_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_vdc_instruction_pc.patch
+vram_vce_snapshot_patch_file=$repo/scripts/mednafen_1.32.1_theron_vram_vce_snapshot.patch
 file_select_vdc_patch_file=$repo/scripts/mednafen_1.32.1_theron_file_select_vdc_snapshot.patch
 file_select_scroll_driver_patch_file=$repo/scripts/mednafen_1.32.1_theron_file_select_scroll_driver_trace.patch
 adpcm_fifo_ram_patch_file=$repo/scripts/mednafen_1.32.1_theron_adpcm_fifo_ram_trace.patch
@@ -123,13 +124,22 @@ if ! grep -Fq 'FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT' "$scripted_input_patch_file
    ! grep -Fq 'scripted_pce_input_plan valid=%u events=%u' "$scripted_input_patch_file" ||
    ! grep -Fq 'scripted_pce_input_event frame=%u key=%s mask=%04x' "$scripted_input_patch_file" ||
    ! grep -Fq 'scripted_pce_input_apply frame=%u physical=%04x scripted=%04x combined=%04x' "$scripted_input_patch_file" ||
-   ! grep -Fq 'theron_script_run_start[32]' "$scripted_input_patch_file" ||
-   ! grep -Fq 'theron_script_run_end[32]' "$scripted_input_patch_file" ||
-   ! grep -Fq 'theron_script_run_frame >= theron_script_run_start[run_index]' "$scripted_input_patch_file" ||
-   ! grep -Fq 'theron_script_run_frame + 1u >= theron_script_run_start[run_index]' "$scripted_input_patch_file" ||
+   ! grep -Fq 'theron_script_trace_frame = ++theron_script_frame;' "$scripted_input_patch_file" ||
+   ! grep -Fq 'theron_script_trace_frame == start' "$scripted_input_patch_file" ||
    ! grep -Fq 'cursor = next ? next + 1 : at + strlen(at);' "$scripted_input_patch_file" ||
-   ! grep -Fq 'MDFN_en16lsb(data_ptr[0], theron_script_original_port0);' "$scripted_input_patch_file"; then
+   ! grep -Fq 'devices[i]->Update(data_ptr[i]);' "$scripted_input_patch_file" ||
+   ! grep -Fq 'MDFN_en16lsb(data_ptr[0], physical_mask | scripted_mask);' "$scripted_input_patch_file" ||
+   ! grep -Fq 'MDFN_en16lsb(data_ptr[0], physical_mask);' "$scripted_input_patch_file"; then
     printf 'FAIL: scripted PCE input patch no longer retains explicit replay provenance\n' >&2
+    exit 1
+fi
+
+update_line=$(grep -nF 'devices[i]->Update(data_ptr[i]);' "$scripted_input_patch_file" | head -n1 | cut -d: -f1)
+overlay_line=$(grep -nF 'MDFN_en16lsb(data_ptr[0], physical_mask | scripted_mask);' "$scripted_input_patch_file" | head -n1 | cut -d: -f1)
+restore_line=$(grep -nF 'MDFN_en16lsb(data_ptr[0], physical_mask);' "$scripted_input_patch_file" | head -n1 | cut -d: -f1)
+if [[ -z $update_line || -z $overlay_line || -z $restore_line ||
+      $overlay_line -ge $update_line || $restore_line -le $update_line ]]; then
+    printf 'FAIL: scripted PCE input must be latched before polling and restore the physical buffer afterward\n' >&2
     exit 1
 fi
 if ! grep -Fq "key[0] == 'i') return 0x0001" "$scripted_input_patch_file" ||
@@ -140,14 +150,36 @@ if ! grep -Fq "key[0] == 'i') return 0x0001" "$scripted_input_patch_file" ||
    ! grep -Fq 'strncmp(key, "right", 5)) return 0x0020' "$scripted_input_patch_file" ||
    ! grep -Fq 'strncmp(key, "down", 4)) return 0x0040' "$scripted_input_patch_file" ||
    ! grep -Fq 'strncmp(key, "left", 4)) return 0x0080' "$scripted_input_patch_file" ||
-   ! grep -Fq 'buttons |= 0x0008' "$scripted_input_patch_file" ||
+   ! grep -Fq 'strncmp(key, "run", 3)) return 0x0008' "$scripted_input_patch_file" ||
    grep -Fq "key[0] == 'i') return 0x1000" "$scripted_input_patch_file"; then
     printf 'FAIL: scripted PCE input masks must follow Mednafen PCE_GamepadIDII vector order\n' >&2
     exit 1
 fi
-if ! grep -Fq 'pce_input_read cpu_pc=%04x register=%04x raw=%04x sel=%u clr=%u index=%u' "$input_state_patch_file" ||
-   ! grep -Fq 'pce_input_write cpu_pc=%04x register=%04x data=%02x sel_before=%u clr_before=%u index=%u' "$input_state_patch_file"; then
+if ! grep -Fq 'pce_input_read frame=%u cpu_pc=%04x register=%04x raw=%04x sel=%u clr=%u index=%u' "$input_state_patch_file" ||
+   ! grep -Fq 'pce_input_write frame=%u cpu_pc=%04x register=%04x data=%02x sel_before=%u clr_before=%u index=%u' "$input_state_patch_file"; then
     printf 'FAIL: Mednafen input-state patch no longer retains raw port transaction evidence\n' >&2
+    exit 1
+fi
+
+input_read_hunk_lines=$(awk '
+    /^@@ -268,0 \+269,36 @@$/ { in_hunk = 1; next }
+    in_hunk && /^@@/ { exit }
+    in_hunk && /^\+/ { count++ }
+    END { print count + 0 }
+' "$input_state_patch_file")
+if [[ "$input_read_hunk_lines" != 36 ]]; then
+    printf 'FAIL: Mednafen input-state read hunk must declare and contain 36 added lines\n' >&2
+    exit 1
+fi
+
+input_write_hunk_lines=$(awk '
+    /^@@ -294,0 \+323,32 @@$/ { in_hunk = 1; next }
+    in_hunk && /^@@/ { exit }
+    in_hunk && /^\+/ { count++ }
+    END { print count + 0 }
+' "$input_state_patch_file")
+if [[ "$input_write_hunk_lines" != 32 ]]; then
+    printf 'FAIL: Mednafen input-state write hunk must declare and contain 32 added lines\n' >&2
     exit 1
 fi
 if ! grep -Fq 'source=mednafen-host-input-events' "$host_input_patch_file" ||
@@ -220,7 +252,13 @@ if ! grep -Fq 'if(ok && trace_count < 4096)' "$later_raw_patch_file"; then
     exit 1
 fi
 if ! grep -Fq 'FIRESTAFF_THERON_FILE_SELECT_VDC_TRACE' "$file_select_vdc_patch_file" ||
-   ! grep -Fq 'file_select_vdc_count == 525' "$file_select_vdc_patch_file" ||
+   ! grep -Fq 'fclose(sat_file);' "$vram_vce_snapshot_patch_file" ||
+   ! grep -Fq 'if(ram_file) fclose(ram_file);' "$vram_vce_snapshot_patch_file" ||
+   grep -Fq '+ fclose(sat_file);' "$file_select_vdc_patch_file" ||
+   grep -Fq '+ if(ram_file) fclose(ram_file);' "$file_select_vdc_patch_file" ||
+   ! grep -Fq 'TheronGraphicsSnapshotFrameEnd = ~0U;' "$file_select_vdc_patch_file" ||
+   ! grep -Fq 'const unsigned sequence = file_select_vdc_count++;' "$file_select_vdc_patch_file" ||
+   ! grep -Fq 'if(file_select_vdc_count == 525)' "$file_select_vdc_patch_file" ||
    ! grep -Fq 'TheronFileSelectVDCSnapshotPending = true' "$file_select_vdc_patch_file" ||
    ! grep -Fq 'TheronGraphicsSnapshotDumped = false' "$file_select_vdc_patch_file" ||
    ! grep -Fq 'FIRESTAFF_THERON_FRAME_END_SNAPSHOT_FRAME' "$file_select_vdc_patch_file" ||
@@ -228,7 +266,7 @@ if ! grep -Fq 'FIRESTAFF_THERON_FILE_SELECT_VDC_TRACE' "$file_select_vdc_patch_f
    ! grep -Fq 'TheronMaybeDumpFrameEndSnapshot();' "$file_select_vdc_patch_file" ||
    ! grep -Fq 'mednafen_1.32.1_theron_file_select_vdc_snapshot.patch' \
        "$repo/scripts/build_mednafen_theron_irq2_trace.sh"; then
-    printf 'FAIL: file-select VDC patch no longer snapshots the authentic write or frame-end boundary\n' >&2
+    printf 'FAIL: file-select VDC patch no longer composes with the shared snapshot helper\n' >&2
     exit 1
 fi
 if ! grep -Fq 'FIRESTAFF_THERON_FILE_SELECT_DRIVER_CODE_SNAPSHOT' "$file_select_scroll_driver_patch_file" ||
@@ -423,6 +461,8 @@ if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
    ! grep -Fq 'RdMem(0x2004)' "$indirect_target_patch_file" ||
    ! grep -Fq 'target_physical' "$indirect_target_patch_file" ||
    ! grep -Fq 'Theron3879TargetStepsRemaining = 128' "$indirect_target_patch_file" ||
+   ! grep -Fq 'theron_trace_physical_pc = (MPR[PC >> 13]' "$indirect_target_patch_file" ||
+   ! grep -Fq 'PC, theron_trace_physical_pc, lastop' "$indirect_target_patch_file" ||
    ! grep -Fq 'RdMem(0x2003)' "$pce_fast_indirect_target_patch_file" ||
    ! grep -Fq 'RdMem(0x2004)' "$pce_fast_indirect_target_patch_file" ||
    ! grep -Fq 'mapped_opcode=%02x operand1_mapped=%02x operand2_mapped=%02x' "$pce_fast_indirect_target_patch_file" ||
@@ -434,8 +474,10 @@ if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_44d2_runtime_code_window.patch' "$build_script" ||
    ! grep -Fq 'TheronTraceInstructionPC == 0x44d2' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'Theron44D2FastCodeWindowCount < 64' "$runtime_code_window_patch_file" ||
-   ! grep -Fq 'Theron44D2FastFollowStepsRemaining = 128' "$runtime_code_window_patch_file" ||
-   ! grep -Fq 'Theron44D2FastFollowCount < 128' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'FIRESTAFF_THERON_44D2_FOLLOW_LIMIT' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'parsed >= 1 && parsed <= 2048' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'Theron44D2FastFollowStepsRemaining = Theron44D2FastFollowLimit()' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'Theron44D2FastFollowCount < Theron44D2FastFollowLimit()' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'theron_44d2_follow step=%u logical_pc=%04x physical_pc=%06x opcode=%02x' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'theron_runtime_code_window pc=%04x physical_pc=%06x byte0=%02x byte0_mpr=%02x byte0_physical=%06x byte1=%02x byte1_mpr=%02x byte1_physical=%06x byte2=%02x byte2_mpr=%02x byte2_physical=%06x' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'Theron3879FastTraceMappedOpcode, HuCPU.MPR[TheronTraceInstructionPC >> 13]' "$runtime_code_window_patch_file" ||
@@ -444,7 +486,9 @@ if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
    ! grep -Fq '(HuCPU.MPR[(TheronTraceInstructionPC + 1) >> 13] << 13) | ((TheronTraceInstructionPC + 1) & 0x1fff)' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'Theron3879FastTraceMappedOperand2, HuCPU.MPR[(TheronTraceInstructionPC + 2) >> 13]' "$runtime_code_window_patch_file" ||
    ! grep -Fq '(HuCPU.MPR[(TheronTraceInstructionPC + 2) >> 13] << 13) | ((TheronTraceInstructionPC + 2) & 0x1fff)' "$runtime_code_window_patch_file" ||
-   ! grep -Fq '"$indirect_target_trace"' "$capture_script"; then
+   ! grep -Fq '"$indirect_target_trace"' "$capture_script" ||
+   ! grep -Fq 'THERON_CAPTURE_PCE_FAST_44D2_FOLLOW_LIMIT' "$capture_script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_44D2_FOLLOW_LIMIT="$pce_fast_44d2_follow_limit"' "$capture_script"; then
     printf '%s\n' 'FAIL: bounded PCE Fast code trace is missing or not wired into the live capture'
     exit 1
 fi
@@ -523,7 +567,7 @@ if ! grep -Fq 'trace_files_are_line_delimited "$trace" "$cd_trace"' "$capture_sc
     exit 1
 fi
 if ! grep -Fq 'FIRESTAFF_THERON_3879_TRACE="$indirect_target_trace"' "$capture_script" ||
-   ! grep -Fq 'index($_, chr(92) . chr(92) . "n")' "$capture_script" ||
+   ! grep -Fq 'index($_, chr(92) . "n")' "$capture_script" ||
    ! grep -Fq '"$indirect_target_trace"' "$capture_script"; then
     printf '%s\n' 'FAIL: PCE Fast runtime window trace is not wired into capture verification' >&2
     exit 1

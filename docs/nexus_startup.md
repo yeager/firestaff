@@ -33,6 +33,303 @@ source.
 | Saturn Backup RAM | `nexus_v1_saturn_bkr_parse` reads hash-pinned 32 KiB card directories and block chains, returning exact opaque payload bytes; native save selection, payload interpretation, and runtime loading remain missing |
 | Mednafen visual baseline | A clean J-BIOS capture against authentic retail shows black boot followed by the original intro FMV without input; menu/LEV01 identity remains missing |
 
+## Deterministic title-state replay (2026-10-26)
+
+The system-wide Ymir 0.4.2-dev capture build on TRV2 was run with `--debug`,
+the authenticated Japanese BIOS and retail cue, and the retained title-prompt
+state in CLI slot 2. The isolated profile mapped that state to
+`savestates/5EA76F972566FE6EB667D092CD494BCF/1.savestate`; it was removed
+after the run. One frame after the successful load, the VDP2 outputs matched
+the retained title-state reference exactly:
+
+| Output | SHA-256 |
+|---|---|
+| VDP2 VRAM | `de1a77427dc62457eb4b59fa0424fd25e9768ce229505445311929d3bdae405c` |
+| VDP2 CRAM | `db282593790dec4a2bf8f76293c0458a1a140adc3351650bd56a417f0359e0de` |
+| VDP2 registers | `79efa616c2db727749aa9018864d1ad32c1583935652fafb16534ba69f8e1f2d` |
+
+The capture build also emitted big-endian VDP1 and VDP2 register files (32 and
+512 bytes respectively) and a register snapshot. That tooling is proposed in
+[Ymir PR #966](https://github.com/ymir-emu/Ymir/pull/966). This confirms a
+repeatable authentic VDP2 title-state checkpoint, not the separate VDP1
+title-menu command bundle: the one-frame VDP1 outputs did not match that
+bundle's frame-497 hashes. It therefore does not admit the menu compositor,
+input dispatch, title-to-menu transition, or Firestaff presentation.
+
+The same system build was subsequently checked after its VDP1 trace was
+reattached following save-state loading. The single captured frame produced a
+complete `ymir-vdp1-capture-bundle-v1`: capture frame 0 contained 168 command
+rows, its snapshot cursor was command 168 at address `0x00000cc0`, and the
+bundle reported zero dropped rows. This proves that the Ymir CLI can now retain
+frame-aligned VDP1 command evidence across this authentic state load. It still
+does not identify the displayed menu, establish source ownership or palette
+composition, or authorize a Firestaff renderer.
+
+Ymir PR #966 also contains a bounded VDP2 VRAM/CRAM write tracer and an
+export receipt. Its system build and the existing title-state VDP1/VDP2
+checkpoint were regression-checked on TRV2. The VDP2 write tracer has not yet
+produced a retained source-to-write witness for this menu, so it is tooling for
+the next capture rather than an admission signal.
+
+An input-driven retail probe sent the observed Start key route while retaining
+the VDP2 trace. It produced 92,288 VRAM-write rows with no trace drops, but its
+captured VDP1 cursor had only seven commands rather than the authenticated
+title-menu bundle's 178. It is therefore negative routing evidence, not a
+title-menu capture; its untracked raw dump was removed after inspection. Do not
+use those writes to label a menu resource or relax a presentation gate.
+
+`scripts/verify_nexus_ymir_title_state_checkpoint.py` verifies this narrow
+checkpoint from caller-supplied retail CUE, BIOS, title-prompt state, and local
+Ymir dump files. It pins every CUE-referenced retail track and validates the
+register snapshot schema. The checkpoint pins VDP2 register bytes; it does not
+use the emitted VDP1 register file as evidence because this capture record has
+no independent VDP1-register digest. Nothing in this receipt establishes menu
+or gameplay presentation.
+
+## Deterministic Start-to-menu checkpoint (2026-10-26)
+
+Ymir PR #966 adds a frame-aligned Control Pad 1 Start route for the existing
+state/frame/dump capture path. On TRV2, a fresh temporary profile used the
+authenticated Japanese retail CUE, BIOS, and title-prompt state in CLI slot 2.
+It held Start during capture frames 0 through 59 and captured 120 frames with
+`--debug --load-state 2 --capture-frames 120 --dump-memory
+--capture-start-frame 0 --capture-start-hold 60`. The profile and raw dumps
+were removed after inspection; the displayed title-menu image and VDP1 receipt
+are retained in
+[`nexus_v1_ymir_deterministic_start_menu_20261026`](../parity-evidence/verification/nexus_v1_ymir_deterministic_start_menu_20261026/README.md).
+
+The capture completed at VDP1 frame 59 with command cursor 178 and 178 rows
+for that frame. Its complete trace had 10,668 rows from frames 0 through 59,
+with zero dropped entries. This is the same command count as the retained
+retail three-choice title-menu capture, so it is reproducible emulator evidence
+for the observed Start route rather than host-window timing evidence. The VDP2
+title checkpoint remained byte-identical to the retained title-state reference:
+
+| Output | SHA-256 |
+|---|---|
+| VDP2 VRAM | `de1a77427dc62457eb4b59fa0424fd25e9768ce229505445311929d3bdae405c` |
+| VDP2 CRAM | `db282593790dec4a2bf8f76293c0458a1a140adc3351650bd56a417f0359e0de` |
+| VDP2 registers | `79efa616c2db727749aa9018864d1ad32c1583935652fafb16534ba69f8e1f2d` |
+| VDP1 capture receipt | `0e5cfa33070e33f24ae0e25ead7ce4fac561ae7c329ef7c59ff12382d3ea519e` |
+| VDP1 trace | `b80c7a118e7f9df4f941804cdc045f4024336080504c512bbdf5c4e0df19d8d3` |
+| Retained title-menu image | `0ad6bbc433936cd853fef476c8eb14be2c9532efcfcc218a43ca1053500ca55c` |
+
+This makes title-menu capture reproducible without X11 keyboard injection. It
+does not bind a retail menu resource to a Saturn consumer, prove the final
+displayed pixels, or permit Firestaff to present a host-built menu. Those
+production gates remain closed.
+
+An independent 2,200-frame no-present replay on 2026-10-26 used the same
+authenticated Japanese IPL, retail CUE, retained title-prompt state, and the
+hash-verified four-champion BKR (`87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`).
+It scheduled Start, Down, A, and a second A at emulator-frame boundaries rather
+than through X11. The BKR digest was unchanged after the run. Its final native
+frame was the Dungeon Master Nexus title image, SHA-256
+`1c224b148ec5c107569c1c9b30c5dfab24d8110d3e391b0bcb1089cd582dfb13`.
+This is a timing boundary: those inputs occur before the title is receptive and
+must not be interpreted as a verified menu or Continue route. The temporary
+profile, dump, and screenshot were removed after inspection.
+
+A later 3,400-frame replay moved the same Start/Down/A/A sequence after the
+title boundary, but held every control for only eight emulated frames. Its
+retail endpoint remained the title image (SHA-256
+`8d495ffa4e8a76ab38a48c3c84a6fcc437db1bc4682aec6ac897609ed2307d95`), while
+the BKR digest again remained unchanged. This is negative timing evidence: an
+eight-frame post-title hold is not sufficient to establish a retail input
+transition. It does not authorize a host menu, save route, HUD, or viewport.
+
+A separate 3,400-frame debug replay kept the same post-title frame schedule
+but extended each Start, Down, A, and second-A press to 60 emulated frames.
+Its endpoint was still the native title screen, with SHA-256
+`8d495ffa4e8a76ab38a48c3c84a6fcc437db1bc4682aec6ac897609ed2307d95`; the
+four-champion BKR digest remained
+`87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`.
+Both runs ended with the same final title-screen image hash. Extending the
+post-title hold from eight to 60 frames did not change the final endpoint; no
+claim is made here about intermediate menu or loading transitions. The
+temporary profile, X display, memory dump, and inspection copy were removed
+after verification. This remains negative emulator evidence only: it does not
+establish menu, save, HUD, or viewport parity.
+
+Ymir PR #966 additionally provides `--capture-screenshot` for the same
+capture-owned route. It queues a profile-local framebuffer PNG only after the
+requested frames and memory receipt have completed; it requires both a frame
+capture and `--dump-memory`. A 60-frame retail boot check produced both the
+VDP1 receipt and that PNG. The generated media was discarded after verification
+and is not a Firestaff asset or parity admission signal.
+
+Ymir PR #966 now also provides `--capture-no-present` for deterministic runs
+where an X11/GLX compositor cannot swap GUI frames reliably. A fresh temporary
+profile on TRV2 loaded the same authenticated Japanese BIOS, retail CUE, and
+title-prompt state, then completed `--load-state 2 --capture-frames 1
+--dump-memory --capture-no-present` under Xvfb. It wrote a complete memory dump
+and exited with status 0 in under three seconds. The profile and dump were
+removed after the check. This proves the capture transport no longer depends on
+a successful GUI presentation for this state; it does not supply a framebuffer,
+prove visual parity, or open any Firestaff presentation gate.
+
+The same state was then captured with `--capture-screenshot` in no-present
+mode. The completed dump was followed by a 640×448 RGBA PNG with SHA-256
+`4b19474395c7192e7e68faf82efe0c240c9da213c4cd36c1ad91f31e68c17d82` before
+Ymir exited. The temporary image was removed after its dimensions and digest
+were checked. This validates non-present screenshot delivery for future visual
+comparisons; it is not itself a pixel-parity admission or a Firestaff asset.
+
+## Boot VDP2 writer anchor (2026-10-26)
+
+Ymir PR #966 was extended with a bounded direct SH-2 VDP2-write trace and a
+normal-disc boot capture route. A 60-frame `--debug --capture-boot-frames 60
+--dump-memory --trace-vdp2-writes` run against the authenticated Japanese
+retail CUE and BIOS recorded one direct master-SH-2 write: PC `0x0602e12e`
+wrote the 16-bit value `0x0000` to VDP2 VRAM bus address `0x05e7fffe` at VDP1
+frame 21. The current call-site was return address `0x06032c24`, targeting the
+generic word-copy routine at `0x0602e120`. The trace had zero dropped entries.
+Its CSV and receipt hashes were respectively
+`47b98193f1b7615aad2326f5fc8386b502a214c6a244fece30e3a6580a0efc46` and
+`7efd6c70e83aea4178fa013ce59dfe7149e05727c26e81b64f736897356646fd`.
+
+This is a real SH-2 routine anchor for subsequent disassembly of a retail VDP2
+writer. It does not identify the source resource, establish a complete upload
+sequence, or prove title-menu ownership. The temporary memory dump was removed
+after the PC, address, width, value, and receipts were checked.
+
+Big-endian SH-2 disassembly of the captured high WRAM identifies the inner
+call at `0x06032c20`: the wrapper masks `r4` with `0x0007ffff`, maps it into
+the uncached Saturn bus (`0x25e00000 | r4`), and calls `0x0602e120` with a
+one-word count. A static cross-reference at `0x060282d4` calls that wrapper
+with destination `0x25e7fffe`. This explains the recorded address, but its
+source is a stack temporary. It therefore remains an initialization anchor,
+not source-resource provenance or permission to draw a host menu.
+
+## Delayed title-menu confirm observation (2026-10-26)
+
+An authenticated Japanese retail title-prompt state was replayed in Ymir with
+the deterministic capture route for 360 frames. Start was held for frames
+`0..59`; Control Pad 1 A was held for frames `240..249`. The captured final
+frame was VDP1 frame 231 with 112 command records, rather than the earlier
+title-menu capture's 139 records. A window capture made immediately after the
+dump showed the retail door-opening transition; its SHA-256 was
+`abdd1e9f65c0999d967fced4dad456856751cd9afcb46080616f617470ffc55a`.
+
+This is an observed response to a delayed input schedule, not sufficient
+proof that A semantically confirms New Game. A matching no-A control was then
+run from the same retained state with Start held for `0..59` and no other
+scheduled input through the same requested 360-frame capture. Its final
+profile-local framebuffer was the native three-choice title menu, with
+SHA-256 `20801648c86a5cbbe2a0e6c9cc90e625579fb52ba41f0b2234a51d3b0b17ecfe`.
+The control capture produced an undropped VDP1 trace (32,028 rows), but its
+bounded trace buffer ended at frame 179; it therefore cannot be used to
+compare a final VDP1 command stream to the delayed-A capture. The framebuffer
+is nevertheless emitted after the requested capture-owned frame loop, so this
+is evidence that the observed door transition depends on the delayed A
+schedule rather than on the Start-only title timeline.
+
+This still does not establish which retail menu item A confirms, the next
+stable game state, source-resource joins, or palette/compositor evidence. Do
+not enable a host menu, gameplay, HUD, or synthetic confirmation rule from this
+observation. The temporary screenshots, dumps, profile, and emulator process
+were removed after their hashes and receipt limits were checked.
+
+The same real state and input schedule was also captured for 600 requested
+frames. Its final framebuffer showed the retail `Now Loading` screen (SHA-256
+`07a6f3a612ca75209cd6308852a7cf25b3d1f35943ce2f5774e720376ef7c61c`), and
+the VDP1 receipt retained 48,380 undropped trace rows through frame 391. This
+extends the observed route from the door transition to the native loading
+state. It does not yet reach or bind a stable playable level, the party pose,
+viewport, HUD, level source, or palette/compositor route; it must not be used
+to synthesize any of those Firestaff states.
+
+After the no-present capture path was added to Ymir PR #966, the same
+authenticated state and input schedule was repeated under Xvfb without GUI
+presentation. The 600-frame run exited with status 0, wrote its memory dump,
+and saved a 640×448 RGBA screenshot with the same `Now Loading` SHA-256
+`07a6f3a612ca75209cd6308852a7cf25b3d1f35943ce2f5774e720376ef7c61c`.
+Its VDP1 trace and receipt digests were respectively
+`d529f883b686b7c3fc83db929e3e1b476527799ca3fbda35ba41a4ef48a1079e` and
+`45d384f8b6d8c4a5ab48941bcea462cbe1624ea57f8679ebfe4f8c8c1baf3a22`.
+The temporary profile, dump, screenshot, process, and result receipt were
+removed after verification. This independently reproduces the observed loading
+checkpoint but does not extend its presentation admission.
+
+Ymir PR #966 also adds `--capture-save-state N`. A real title-prompt capture
+saved slot 3 after its dump, and a second isolated Ymir process loaded slot 3
+and completed a further one-frame dump. This makes long retail transitions
+inspectable through short, repeatable follow-up captures. The temporary state
+and both profiles were removed after the round trip; a saved emulator state is
+diagnostic transport, not a Firestaff asset or an admission signal.
+
+An authenticated 900-frame Start/A capture saved such a checkpoint and reached
+a 640×448 first-person dungeon viewport with SHA-256
+`8ede95f1fd777eda69ebcfc91d0268194e501f145306eb1fc2971ed0113a2274`.
+Reloading slot 3 in a fresh isolated process and capturing one frame reproduced
+the same digest exactly. The image has no party HUD, so it is evidence for this
+narrow rendered viewport checkpoint only. It does not identify the level or
+room source, establish input semantics, authorize a host compositor, or prove
+the HUD route.
+
+On 2026-10-26, the system-wide Ymir build on TRV2 reproduced that route from
+the retained Japanese title-prompt state: Start held for capture frames `0..59`,
+then A for `240..249`, over 900 `--debug` frames. The framebuffer again hashed
+to `8ede95f1fd777eda69ebcfc91d0268194e501f145306eb1fc2971ed0113a2274`; the
+isolated four-champion BKR remained
+`87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`.
+Saving that endpoint in CLI slot 3 and reloading it in a second isolated
+profile reproduced the framebuffer hash after one frame. Both temporary
+profiles, dumps, screenshots, and X displays were removed. This verifies the
+current Ymir capture tooling and the bounded retail viewport route, not a
+Firestaff renderer, menu consumer, or HUD admission.
+
+## Bounded candidate-state-window SH-2 read witness (2026-10-26)
+
+Using the same hash-pinned Japanese retail CUE, BIOS, title-prompt state, and
+four-champion BKR, an isolated system-wide Ymir run advanced the observed
+Start/Down/A route, saved a fresh slot-3 checkpoint, and replayed one debug
+frame from that checkpoint. The source BKR remained
+`87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`
+before and after both captures. A bounded SH-2 data-read trace over
+`0x060476d0..0x06048000` recorded twelve master-SH-2 16-bit reads, all in the
+`0x06047ca0..0x06047cb6` range, without dropped rows. The captured checkpoint
+has SHA-256 `48ca0feb12432dde6748124a9e639ad4e466efc307520268356a16c00fd5b2ce`;
+the retained CSV has SHA-256
+`e45ad64fa89ce263b51c0579167a35fcfacdce840a438854b48b8df5100dd9ee`.
+
+Disassembly against the retained high-WRAM image identifies two real 16-bit
+field reads at offsets `+4` and `+6` from the observed eight-byte records, and
+the caller dereferences a table entry in the same address range. For example,
+the trace reads the `0x0124` and `0x00b0` fields from the record beginning at
+`0x06047cb0`; the next observed records have the same packed layout. This is
+evidence of structured runtime state, not evidence of a particular UI role.
+The high-WRAM image used for this disassembly has SHA-256
+`344b6a15bdac95a8e698c9a9ccc336f6f225fb3a4c60eec9788102c57b2e197d`.
+
+The raw CSV, its completed Ymir bundle, VDP1 command trace, VDP register
+snapshot, VDP2 registers, high-WRAM image, and checkpoint are retained in the
+TRV2 verification store as `nexus_v1_ymir_sh2_read_trace_hud_20261026`. This
+is an authentic execution witness for the specified RAM window. It is not an
+ownership join from a Firestaff source resource to a HUD element, does not
+label those reads semantically, and does not permit a host HUD, viewport
+compositor, save route, or input implementation.
+
+## SH-2 to VDP1 command handoff (2026-10-26)
+
+Ymir PR #966 now exposes a bounded SH-2 data-write trace independently of the
+older VDP2-only trace. A two-frame replay from the same authentic checkpoint
+traced physical VDP1 RAM at `0x05c00000..0x05c80000`. It retained 176
+master-SH-2 writes with no drops. In frame 0, the master SH-2 completed the
+command at physical address `0x05c000a0` by writing `0x5000` to offset zero
+and `0x0018` to offset two. In frame 1, the VDP1 command trace executed the
+command at VDP1 address `0x00a0` with word 0 `0x5000` and word 1 `0x0018`.
+
+This is a same-checkpoint, temporal CPU-to-VDP1 handoff: it proves that the
+retail SH-2 authored the VDP1 command consumed on the next captured frame. The
+two-frame SH-2 write trace and VDP1 command trace have SHA-256
+`58c9d41740a75063543c70b6cb11e336268cfb47486df1ffdcbe19718f12bc66` and
+`c93f3a8f86263ded3b79d081f15771bce4331ab31ec6a0ce37d3b4691b628f32`
+respectively. The corresponding completed receipts are retained with the
+checkpoint. This does not identify the source resource, texture, palette, or
+semantic role of that command, so it does not by itself admit a Firestaff HUD,
+viewport, or renderer.
+
 ## Title-menu VDP1 source-span join (2026-10-19 capture; analyzed 2026-10-26)
 
 A read-only source-join analysis on TRV2 used the retained Ymir v0.4.0
@@ -112,6 +409,23 @@ provenance is not independently established. It does not prove Firestaff
 implements that title menu or save selection; the production startup route
 remains blocked by the consumer-evidence gates described below.
 
+On 2026-10-26, a fresh TRV2 Ymir profile copied the same hash-verified
+four-champion BKR and replayed the retained Japanese title-prompt state with
+Start at frames `0..59`, Down at `180..189`, and A at `240..249`. At frame 900,
+the authentic framebuffer showed the native Japanese `LOAD` panel and its
+`B01 0:06 NORMAL` internal-memory row (SHA-256
+`b95cdc24ae30705648533dba1e1a1a304196a8fbb449bd069df513be85c0928b`). A
+saved checkpoint was loaded into a second isolated profile; A at frames
+`0..9` then reached a four-character HUD plus first-person viewport at frame
+900 (SHA-256
+`68de1c7898d79d70d7f3b9fd8f220485fd5ffa75b8aefad9f491eeb3d16a2a76`). Both
+profiles retained the BKR SHA-256
+`87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`.
+This authentic two-stage route binds a real UI checkpoint and HUD witness for
+future capture consumers; it does not yet admit a Firestaff menu compositor,
+HUD compositor, or save-format implementation. The profiles, dumps,
+screenshots, and X displays were removed after verification.
+
 Firestaff's source-level startup helpers do not implement the retail title
 menu. `nexus_v1_startup_boot_handle_input` uses the synthetic warning/title
 schedule and selects a host save or champion action from the available slot
@@ -171,6 +485,70 @@ FONT256's authenticated Character Generator bytes now remain in the engine's
 source object for the future Saturn consumer. This does not admit glyph coding,
 page/PND attributes, layer placement, or text writing; `font_loaded` remains
 closed until those parts are bound by the same runtime witness.
+
+## Debug boot memory receipt (2026-10-26)
+
+A system-built Ymir 0.4.2-dev run on TRV2 booted the hash-verified Japanese
+retail cue for 600 deterministic frames with `--debug`. It used the verified
+Japanese BIOS (SHA-256
+`dcfef4b99605f872b6c3b6d05c045385cdea3d1b702906a0ed930df7bcb7deac`) and
+recorded bounded SH-2 writes to `0x05c00000..0x05c80000`. The resulting VDP1
+VRAM dump is SHA-256
+`0e0a67c1eec3c0bf61e7358ded889d3df343a5cb7bd1154b6422636d57bf1d74`.
+
+The capture used Ymir's explicit no-render mode so that it could retain real
+emulated memory and CPU-write evidence without producing a synthetic host
+frame. It must not be used for visual parity, title/menu placement, or HUD
+claims. The raw dump and write trace are retained outside the repository on
+the external evidence volume; only their reproducible receipt is recorded
+here.
+
+## Long boot memory trace (2026-10-26)
+
+A separate Ymir `--debug --capture-boot-frames 13000` run retained a full
+memory snapshot after normal disc boot. The final VDP1 counter was 12947; its
+complete command trace had four terminal records and no VDP1 trace drops. The
+bounded source scanner found no supported textured draw commands in that
+final frame. VDP2 had NBG0, NBG1, and NBG2 enabled (`BGON=0x0007`,
+`CHCTLA=0x1212`). The SH-2 write trace reached its 250,000-row cap and reports
+420,006 dropped master-SH-2 rows, so it cannot establish complete writer
+provenance.
+
+Both NBG0 and NBG1 were 8bpp bitmap layers at VRAM offsets `0x00000` and
+`0x20000`. Comparison with the authentic retail `TITLE.BIN` and `MENU.BPK`
+data found no exact pixel-span or palette joins. The largest partial byte
+matches were 118 bytes to `TITLE.BIN` map 4, 99 bytes to a repeated
+`MENU.BPK` surface sequence, and 35 bytes to `TITLE.BIN` maps 1 and 3; these
+do not prove asset ownership. A diagnostic decode of the captured NBG0 bytes
+and CRAM shows Japanese date/time settings, the date 2026-10-26, and Cancel
+/ Confirm labels. This looks like a system date/time page and is not evidence
+that Nexus reached its title menu.
+
+This capture used `--capture-no-render`: both VDP1 framebuffers are zeroed and
+there is no screenshot. It is useful as a register and memory checkpoint only;
+it does not identify what appeared on screen or prove that Nexus reached a
+particular game menu. The raw files, SHA-256 list, and clearly labelled layer
+diagnostic previews are retained off-repository.
+
+## Captured title-menu frame reconstruction (2026-10-26)
+
+The atomic frame-59 Ymir capture loaded a previously saved Japanese retail
+title-prompt state, held Start for 60 of 120 capture frames, and dumped memory
+and the VDP1 trace in the same run. It was not a cold boot. A bounded C replay
+combines the retained VDP1 display framebuffer, NBG0 8bpp bitmap, CRAM,
+registers, and verified zero back-screen table. Its output matches all 286,720
+pixels of the hash-pinned 640×448 Ymir screenshot exactly. This confirms static
+composition for the captured menu frame; the screenshot was saved after the
+memory dump, so exact frame identity is still unproven.
+
+The replay remains capture-only and does not feed the Firestaff viewport or
+establish cold-boot-to-menu behavior, title-to-menu input handling, or gameplay
+HUD. Separately, a 13,000-loop cold boot with `--capture-no-render` stopped on
+a Japanese date/time settings page. That run has no screenshot and incomplete
+SH-2 write tracing; it does not prove that Nexus reached the game title. See
+the boot-dump receipt on the external evidence disk and
+[full capture receipt and SHA-256 identities](NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md#full-ymir-title-frame-capture-replay)
+for the menu-state reproduction command and exact scope.
 
 ## Sources
 

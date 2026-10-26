@@ -89,10 +89,20 @@ patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_input_state_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_input_result_trace.patch"
+pce_fast_input_trace_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch"
+pce_fast_input_trace_rendered="$build_root/theron-pce-fast-input-trace.rendered.patch"
+sed \
+    -e 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' \
+    -e $'s/^FIRESTAFF_PATCH_TAB_CONTEXT/ \\t/' \
+    "$pce_fast_input_trace_patch" > "$pce_fast_input_trace_rendered"
 patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch"
+    < "$pce_fast_input_trace_rendered"
+scripted_pce_input_patch="$repo/scripts/mednafen_1.32.1_theron_scripted_pce_input.patch"
+scripted_pce_input_rendered="$build_root/theron-scripted-pce-input.rendered.patch"
+sed -e 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' \
+    "$scripted_pce_input_patch" > "$scripted_pce_input_rendered"
 patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_input.patch"
+    < "$scripted_pce_input_rendered"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_fast_input.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
@@ -302,6 +312,12 @@ patch -d "$build_root/source" -p1 --batch --forward --fuzz=1 \
 
 python3 "$repo/scripts/instrument_mednafen_theron_mouse_trace.py" \
     "$build_root/source"
+python3 "$repo/scripts/instrument_mednafen_theron_movement_data_read_trace.py" \
+    "$build_root/source"
+if [[ "$pce_fast_snapshot" == 1 || "$pce_fast_vram_commit_trace" == 1 ]]; then
+    python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_movement_context_trace.py" \
+        "$build_root/source"
+fi
 
 if [[ "$patch_only" == 1 ]]; then
     # Tests use the exact production patch order without paying for a rebuild.
@@ -347,12 +363,7 @@ CXXFLAGS="${CXXFLAGS:--O2}" ./configure --prefix="$prefix" --disable-apple2 --di
     --disable-pcfx --disable-psx --disable-sasplay --disable-sms --disable-snes \
     --disable-snes-faust --disable-ss --disable-ssfplay --disable-vb --disable-wswan \
     --without-libflac
-if command -v getconf >/dev/null 2>&1; then
-    build_jobs=$(getconf _NPROCESSORS_ONLN 2>/dev/null || true)
-fi
-if [[ ! ${build_jobs:-} =~ ^[1-9][0-9]*$ ]] && command -v sysctl >/dev/null 2>&1; then
-    build_jobs=$(sysctl -n hw.ncpu 2>/dev/null || true)
-fi
+build_jobs=1
 if [[ -n ${FIRESTAFF_MEDNAFEN_BUILD_JOBS:-} ]]; then
     if [[ ! $FIRESTAFF_MEDNAFEN_BUILD_JOBS =~ ^[1-9][0-9]*$ ]]; then
         printf 'FAIL: FIRESTAFF_MEDNAFEN_BUILD_JOBS must be a positive integer\n' >&2

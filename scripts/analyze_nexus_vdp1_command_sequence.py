@@ -54,8 +54,12 @@ class Record:
         return bool(self.control & 0x8000)
 
     @property
+    def skipped(self) -> bool:
+        return bool(self.control & 0x4000)
+
+    @property
     def link_offset(self) -> int:
-        return self.words[1] << 3
+        return (self.words[1] << 3) & 0x7FFE0
 
 
 def records(vram: bytes) -> list[Record]:
@@ -77,8 +81,7 @@ def record_metadata(vram: bytes) -> dict[int, tuple[int, int, int]]:
     if len(vram) != VDP1_VRAM_BYTES:
         raise ValueError(f"unexpected VDP1 VRAM size: {len(vram)}")
     return {
-        offset: (control, link, (control >> 12) & 0x0003,
-                 int(any(vram[offset:offset + COMMAND_BYTES])))
+        offset: (control, link, int(any(vram[offset:offset + COMMAND_BYTES])))
         for offset in range(0, len(vram), COMMAND_BYTES)
         for control, link in (struct.unpack_from("<2H", vram, offset),)
     }
@@ -90,27 +93,35 @@ def record_at(index: dict[int, Record], offset: int) -> Record:
     return index[offset]
 
 
-def next_offset(record: Record, stack: list[int]) -> int | None:
-    if record.end:
-        return None
-    if record.jump_mode == 0:
-        return record.offset + COMMAND_BYTES
-    if record.jump_mode == 1:
-        return record.link_offset
-    if record.jump_mode == 2:
-        stack.append(record.offset + COMMAND_BYTES)
-        return record.link_offset
-    if not stack:
-        raise ValueError(
-            f"VDP1 return without call at 0x{record.offset:05x}"
-        )
-    return stack.pop()
+def command_transition(offset: int, control: int, link: int,
+                       return_address: int | None
+                       ) -> tuple[int | None, int | None]:
+    """Return the next command and updated single pending VDP1 return address."""
+    if control & 0x8000:
+        return None, return_address
+    sequential = (offset + COMMAND_BYTES) & 0x7FFFF
+    jump_mode = (control >> 12) & 0x0003
+    if jump_mode == 0:
+        return sequential, return_address
+    if jump_mode == 1:
+        return (link << 3) & 0x7FFE0, return_address
+    if jump_mode == 2:
+        if return_address is None:
+            return_address = sequential
+        return (link << 3) & 0x7FFE0, return_address
+    return (return_address if return_address is not None else sequential), None
+
+
+def next_offset(record: Record,
+                return_address: int | None) -> tuple[int | None, int | None]:
+    return command_transition(record.offset, record.control, record.words[1],
+                              return_address)
 
 
 def follow(index: dict[int, Record], start_offset: int) -> list[Record]:
     chain: list[Record] = []
     visited: set[tuple[int, tuple[int, ...]]] = set()
-    stack: list[int] = []
+    return_address: int | None = None
     offset: int | None = start_offset
     while offset is not None:
         record = record_at(index, offset)
@@ -121,16 +132,16 @@ def follow(index: dict[int, Record], start_offset: int) -> list[Record]:
         chain.append(record)
         if len(chain) > MAX_CHAIN_RECORDS:
             raise ValueError("VDP1 command chain exceeds bounded record limit")
-        offset = next_offset(record, stack)
+        offset, return_address = next_offset(record, return_address)
     if not chain[-1].end:
         raise ValueError("VDP1 command chain ended without END")
     return chain
 
 
 def chain_score(chain: list[Record], current_offset: int) -> tuple[int, int, int, int]:
-    draws = sum(not r.end and r.command_type <= 7 for r in chain)
-    clips = sum(not r.end and r.command_type in (8, 9) for r in chain)
-    locals_ = sum(not r.end and r.command_type == 10 for r in chain)
+    draws = sum(not (r.control & 0xC000) and r.command_type <= 7 for r in chain)
+    clips = sum(not (r.control & 0xC000) and r.command_type in (8, 9) for r in chain)
+    locals_ = sum(not (r.control & 0xC000) and r.command_type == 10 for r in chain)
     current = int(any(r.offset == current_offset for r in chain))
     return current, int(draws > 0 and clips > 0 and locals_ > 0), draws, -len(chain)
 
@@ -148,12 +159,12 @@ def find_chain(vram: bytes, copr: int) -> list[Record]:
     def follow_offsets(start_offset: int) -> list[int]:
         chain: list[int] = []
         visited: set[tuple[int, tuple[int, int, int]]] = set()
-        stack: list[int] = []
+        return_address: int | None = None
         offset: int | None = start_offset
         while offset is not None:
             if offset % COMMAND_BYTES or offset not in metadata:
                 raise ValueError(f"invalid VDP1 command offset 0x{offset:05x}")
-            control, link, jump_mode, nonempty = metadata[offset]
+            control, link, nonempty = metadata[offset]
             if not nonempty:
                 raise ValueError(f"empty VDP1 command record at 0x{offset:05x}")
             key = (offset, metadata[offset])
@@ -163,30 +174,19 @@ def find_chain(vram: bytes, copr: int) -> list[Record]:
             chain.append(offset)
             if len(chain) > MAX_CHAIN_RECORDS:
                 raise ValueError("VDP1 command chain exceeds bounded record limit")
-            if control & 0x8000:
-                offset = None
-            elif jump_mode == 0:
-                offset += COMMAND_BYTES
-            elif jump_mode == 1:
-                offset = link << 3
-            elif jump_mode == 2:
-                stack.append(offset + COMMAND_BYTES)
-                offset = link << 3
-            elif not stack:
-                raise ValueError(f"VDP1 return without call at 0x{offset:05x}")
-            else:
-                offset = stack.pop()
+            offset, return_address = command_transition(
+                offset, control, link, return_address)
         if not chain or not (metadata[chain[-1]][0] & 0x8000):
             raise ValueError("VDP1 command chain ended without END")
         return chain
 
     def metadata_score(chain: list[int]) -> tuple[int, int, int, int]:
         draws = sum(metadata[offset][0] & 0x000F <= 7 and
-                    not (metadata[offset][0] & 0x8000) for offset in chain)
+                    not (metadata[offset][0] & 0xC000) for offset in chain)
         clips = sum(metadata[offset][0] & 0x000F in (8, 9) and
-                    not (metadata[offset][0] & 0x8000) for offset in chain)
+                    not (metadata[offset][0] & 0xC000) for offset in chain)
         locals_ = sum(metadata[offset][0] & 0x000F == 10 and
-                      not (metadata[offset][0] & 0x8000) for offset in chain)
+                      not (metadata[offset][0] & 0xC000) for offset in chain)
         current = int(current_offset in chain)
         return current, int(draws > 0 and clips > 0 and locals_ > 0), draws, -len(chain)
 
@@ -214,16 +214,17 @@ def find_chain(vram: bytes, copr: int) -> list[Record]:
     ]
 
 
-def signed_11(value: int) -> int:
-    value &= 0x07FF
-    return value - 0x800 if value & 0x400 else value
+def signed_13(value: int) -> int:
+    value &= 0x1FFF
+    return value - 0x2000 if value & 0x1000 else value
 
 
 def describe(chain: list[Record], copr: int) -> dict[str, object]:
-    draws = [r for r in chain if not r.end and r.command_type <= 7]
-    user_clips = [r for r in chain if not r.end and r.command_type == 8]
-    system_clips = [r for r in chain if not r.end and r.command_type == 9]
-    locals_ = [r for r in chain if not r.end and r.command_type == 10]
+    active = [r for r in chain if not r.end and not r.skipped]
+    draws = [r for r in active if r.command_type <= 7]
+    user_clips = [r for r in active if r.command_type == 8]
+    system_clips = [r for r in active if r.command_type == 9]
+    locals_ = [r for r in active if r.command_type == 10]
     end = chain[-1]
     user_clip_bounds = [
         (r.words[6] & 0x1FFF, r.words[7] & 0x1FFF,
@@ -235,7 +236,7 @@ def describe(chain: list[Record], copr: int) -> dict[str, object]:
         for r in system_clips
     ]
     local_points = [
-        (signed_11(r.words[6]), signed_11(r.words[7])) for r in locals_
+        (signed_13(r.words[6]), signed_13(r.words[7])) for r in locals_
     ]
     return {
         "start_offset": chain[0].offset,
@@ -251,7 +252,12 @@ def describe(chain: list[Record], copr: int) -> dict[str, object]:
         "local_coordinates": local_points,
         "end_control": end.control,
         "offsets": [r.offset for r in chain],
-        "types": ["END" if r.end else f"0x{r.command_type:x}" for r in chain],
+        "types": [
+            "END" if r.end else
+            f"SKIP 0x{r.command_type:x}" if r.skipped else
+            f"0x{r.command_type:x}"
+            for r in chain
+        ],
     }
 
 

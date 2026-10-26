@@ -1573,10 +1573,8 @@ void M12_StartupMenu_ExportLauncherRuntimeOptions(
         return;
     }
     s = &state->settings;
-    if (gameSlot >= 0) {
-        const M12_GameOptions* opts =
-            &state->gameOptions[m12_clamp_index(gameSlot,
-                                                M12_CONFIG_GAME_COUNT)];
+    if (gameSlot >= 0 && gameSlot < M12_CONFIG_GAME_COUNT) {
+        const M12_GameOptions* opts = &state->gameOptions[gameSlot];
         out->languageIndex = opts->languageIndex;
         out->cheatsEnabled = opts->cheatsEnabled ? 1 : 0;
         out->gameSpeed = opts->gameSpeed;
@@ -5684,9 +5682,9 @@ void M12_StartupMenu_InitWithOptions(M12_StartupMenuState* state,
     state->selectedIndex = 0;
     /* --game CLI override: pre-select specific game */
     if (gameId) {
-        int gi = m12_game_slot_from_id(gameId);
-        if (gi >= 0) {
-            state->selectedIndex = gi;
+        int entryIndex = m12_entry_index_for_game_id(state, gameId);
+        if (entryIndex >= 0) {
+            state->selectedIndex = entryIndex;
         }
     }
     state->settingsSelectedIndex = 0;
@@ -6483,6 +6481,10 @@ static int m12_game_slot_from_id(const char* gameId) {
     return -1;
 }
 
+int M12_StartupMenu_GetGameOptionsSlot(const char* gameId) {
+    return m12_game_slot_from_id(gameId);
+}
+
 static int m12_game_supported(const char* gameId) {
     /* All five catalogued games now have runtime launch boundaries. */
     if (!gameId) return 0;
@@ -6907,7 +6909,7 @@ static void m12_sanitize_runtime_state(M12_StartupMenuState* state) {
                                                  M12_MUSEUM_CATEGORY_COUNT);
     state->museumPageIndex = m12_clamp_index(state->museumPageIndex,
                                              g_museumCategories[state->museumSelectedIndex].pageCount);
-    if (state->activatedIndex < -1 || state->activatedIndex >= M12_CONFIG_GAME_COUNT) {
+    if (state->activatedIndex < -1 || state->activatedIndex >= entryCount) {
         state->activatedIndex = -1;
     }
     if (state->view != M12_MENU_VIEW_MAIN &&
@@ -6977,8 +6979,12 @@ static void m12_activate_selected(M12_StartupMenuState* state) {
     }
     state->activatedIndex = state->selectedIndex;
     if (entry->kind == M12_MENU_ENTRY_GAME) {
-        int gi = m12_clamp_index(state->selectedIndex, M12_CONFIG_GAME_COUNT);
+        int gi = m12_game_slot_from_id(entry->gameId);
         int platforms[M12_ARCH_COUNT];
+        if (gi < 0) {
+            state->activatedIndex = -1;
+            return;
+        }
         int count = M12_StartupMenu_GetPlatformCardArchitectures(
             entry->gameId, platforms);
         int requestedArchitecture = state->gameOptions[gi].architectureIndex;
@@ -7057,24 +7063,26 @@ static void m12_main_resume_or_activate_selected(M12_StartupMenuState* state) {
         return;
     }
     if (state->quickResumeAvailable && state->selectedIndex == -1) {
-        int qrSlot = m12_game_slot_from_id(state->quickResumeGameId);
-        if (m12_retry_dm1_language_scan(state,qrSlot,0)) return;
-        if (qrSlot >= 0 && qrSlot < m12_entry_count() &&
-            state->entries[qrSlot].available) {
+        int gameSlot = m12_game_slot_from_id(state->quickResumeGameId);
+        int entryIndex = m12_entry_index_for_game_id(
+            state, state->quickResumeGameId);
+        if (m12_retry_dm1_language_scan(state, entryIndex, 0)) return;
+        if (gameSlot >= 0 && gameSlot < M12_CONFIG_GAME_COUNT &&
+            entryIndex >= 0 && state->entries[entryIndex].available) {
             /* Quick Resume belongs to this game's options. V2.2 is allowed
              * only when the ordinary per-game launch gate admits it. */
             int pmode = m12_clamp_index(
-                state->gameOptions[qrSlot].presentationModeIndex,
+                state->gameOptions[gameSlot].presentationModeIndex,
                 M12_PRESENTATION_MODE_COUNT);
-            state->activatedIndex = qrSlot;
-            m12_normalize_game_version_index(state, qrSlot, 0);
-            m12_enforce_mode_constraints(&state->gameOptions[qrSlot], pmode);
+            state->activatedIndex = entryIndex;
+            m12_normalize_game_version_index(state, gameSlot, 0);
+            m12_enforce_mode_constraints(&state->gameOptions[gameSlot], pmode);
             if (pmode == M12_PRESENTATION_V22_MODERN) {
                 M12_StartupLaunchGate gate;
                 memset(&gate, 0, sizeof(gate));
                 gate.blockedLabel = "OFFLINE";
                 gate.blockedDetail = "OFFLINE";
-                if (!M12_StartupMenu_GetLaunchGate(state, qrSlot, &gate) ||
+                if (!M12_StartupMenu_GetLaunchGate(state, entryIndex, &gate) ||
                     !gate.canLaunch) {
                     state->launchRequested = 0;
                     state->quickResumeLaunchRequested = 0;
@@ -7091,7 +7099,7 @@ static void m12_main_resume_or_activate_selected(M12_StartupMenuState* state) {
                 state->quickResumeLaunchRequested = 1;
                 m12_enter_message_view(state);
                 state->messageLine1 = "RESUMING SAVE";
-                state->messageLine2 = state->entries[qrSlot].title;
+                state->messageLine2 = state->entries[entryIndex].title;
                 state->messageLine3 = m12_text(
                     state, M12_TEXT_ESC_RETURNS_TO_MENU);
                 m12_clear_dm2_source_status(state, state->quickResumeGameId);
@@ -7528,7 +7536,8 @@ static void m12_return_from_message_view(M12_StartupMenuState* state) {
 
 static void m12_save_browser_request_launch(M12_StartupMenuState* state) {
     const M12_SaveBrowserEntry* entry;
-    int slot;
+    int gameSlot;
+    int entryIndex;
     int pmode;
 
     if (!state) {
@@ -7538,20 +7547,21 @@ static void m12_save_browser_request_launch(M12_StartupMenuState* state) {
     if (!entry || !entry->valid) {
         return;
     }
-    slot = m12_game_slot_from_id(entry->gameId);
-    if (slot < 0 || slot >= m12_entry_count()) {
+    gameSlot = m12_game_slot_from_id(entry->gameId);
+    entryIndex = m12_entry_index_for_game_id(state, entry->gameId);
+    if (gameSlot < 0 || gameSlot >= M12_CONFIG_GAME_COUNT || entryIndex < 0) {
         return;
     }
-    if (m12_retry_dm1_language_scan(state,slot,0)) return;
-    if (!state->entries[slot].available) {
+    if (m12_retry_dm1_language_scan(state, entryIndex, 0)) return;
+    if (!state->entries[entryIndex].available) {
         m12_show_missing_game_data_popup(state, entry->gameId);
         return;
     }
-    pmode = m12_clamp_index(state->gameOptions[slot].presentationModeIndex,
+    pmode = m12_clamp_index(state->gameOptions[gameSlot].presentationModeIndex,
                             M12_PRESENTATION_MODE_COUNT);
-    state->activatedIndex = slot;
-    m12_normalize_game_version_index(state, slot, 0);
-    m12_enforce_mode_constraints(&state->gameOptions[slot], pmode);
+    state->activatedIndex = entryIndex;
+    m12_normalize_game_version_index(state, gameSlot, 0);
+    m12_enforce_mode_constraints(&state->gameOptions[gameSlot], pmode);
     snprintf(state->quickResumeGameId, sizeof(state->quickResumeGameId),
              "%s", entry->gameId);
     snprintf(state->quickResumeSavePath, sizeof(state->quickResumeSavePath),
@@ -7567,7 +7577,8 @@ static void m12_save_browser_request_launch(M12_StartupMenuState* state) {
 }
 
 static void m12_save_browser_commit_csb_import(M12_StartupMenuState* state) {
-    int csbSlot;
+    int csbGameSlot;
+    int csbEntryIndex;
     int pmode;
 
     if (!state) {
@@ -7577,18 +7588,19 @@ static void m12_save_browser_commit_csb_import(M12_StartupMenuState* state) {
         state->csbImportDm1ConfirmPath[0] == '\0') {
         return;
     }
-    csbSlot = m12_game_slot_from_id("csb");
-    if (csbSlot < 0 || csbSlot >= m12_entry_count() ||
-        !state->entries[csbSlot].available) {
+    csbGameSlot = m12_game_slot_from_id("csb");
+    csbEntryIndex = m12_entry_index_for_game_id(state, "csb");
+    if (csbGameSlot < 0 || csbGameSlot >= M12_CONFIG_GAME_COUNT ||
+        csbEntryIndex < 0 || !state->entries[csbEntryIndex].available) {
         m12_show_missing_game_data_popup(state, "csb");
         return;
     }
 
-    pmode = m12_clamp_index(state->gameOptions[csbSlot].presentationModeIndex,
+    pmode = m12_clamp_index(state->gameOptions[csbGameSlot].presentationModeIndex,
                             M12_PRESENTATION_MODE_COUNT);
-    state->activatedIndex = csbSlot;
-    m12_normalize_game_version_index(state, csbSlot, 0);
-    m12_enforce_mode_constraints(&state->gameOptions[csbSlot], pmode);
+    state->activatedIndex = csbEntryIndex;
+    m12_normalize_game_version_index(state, csbGameSlot, 0);
+    m12_enforce_mode_constraints(&state->gameOptions[csbGameSlot], pmode);
     snprintf(state->csbImportDm1SavePath,
              sizeof(state->csbImportDm1SavePath),
              "%s",
@@ -7608,7 +7620,7 @@ static void m12_save_browser_commit_csb_import(M12_StartupMenuState* state) {
 
 static void m12_save_browser_request_csb_import(M12_StartupMenuState* state) {
     const M12_SaveBrowserEntry* entry;
-    int csbSlot;
+    int csbEntryIndex;
 
     if (!state) {
         return;
@@ -7618,9 +7630,8 @@ static void m12_save_browser_request_csb_import(M12_StartupMenuState* state) {
         (void)M12_SaveBrowser_HandleInput(&state->saveBrowser, 7);
         return;
     }
-    csbSlot = m12_game_slot_from_id("csb");
-    if (csbSlot < 0 || csbSlot >= m12_entry_count() ||
-        !state->entries[csbSlot].available) {
+    csbEntryIndex = m12_entry_index_for_game_id(state, "csb");
+    if (csbEntryIndex < 0 || !state->entries[csbEntryIndex].available) {
         m12_show_missing_game_data_popup(state, "csb");
         return;
     }
@@ -7718,17 +7729,19 @@ static void m12_startup_menu_handle_input(M12_StartupMenuState* state,
     }
 
     if (state->view == M12_MENU_VIEW_GAME_OPTIONS) {
-        int gi = m12_clamp_index(state->activatedIndex, M12_CONFIG_GAME_COUNT);
         const M12_MenuEntry* cardEntry = M12_StartupMenu_GetEntry(state,
                                                                     state->activatedIndex);
+        int gi = cardEntry && cardEntry->kind == M12_MENU_ENTRY_GAME
+            ? m12_game_slot_from_id(cardEntry->gameId)
+            : -1;
+        if (gi < 0) {
+            m12_return_to_main_view(state);
+            return;
+        }
         /* First two screens are card selectors.  They deliberately precede
          * the detailed options view so a user cannot accidentally launch a
          * game through AUTO or a platform whose real media is absent. */
         if (state->gameCardFlowStage == 0 || state->gameCardFlowStage == 1) {
-            if (!cardEntry || cardEntry->kind != M12_MENU_ENTRY_GAME) {
-                m12_return_to_main_view(state);
-                return;
-            }
             if (input == M12_MENU_INPUT_BACK) {
                 if (state->gameCardFlowStage == 1) {
                     state->gameCardFlowStage = 0;
@@ -9733,8 +9746,11 @@ static void m12_draw_main_view(const M12_StartupMenuState* state,
     const M12_MenuEntry* selectedEntry;
     int boxArtIndex;
     if (state->quickResumeAvailable && state->selectedIndex == -1) {
-        boxArtIndex = m12_game_slot_from_id(state->quickResumeGameId);
-        selectedEntry = (boxArtIndex >= 0) ? M12_StartupMenu_GetEntry(state, boxArtIndex) : NULL;
+        boxArtIndex = m12_entry_index_for_game_id(
+            state, state->quickResumeGameId);
+        selectedEntry = (boxArtIndex >= 0)
+            ? M12_StartupMenu_GetEntry(state, boxArtIndex)
+            : NULL;
     } else {
         boxArtIndex = state->selectedIndex;
         selectedEntry = M12_StartupMenu_GetEntry(state, state->selectedIndex);
@@ -10409,6 +10425,10 @@ int M12_StartupMenu_GetBootReadiness(
     }
 
     gameIndex = m12_game_slot_from_id(entry->gameId);
+    if (gameIndex < 0) {
+        *outReadiness = receipt;
+        return 1;
+    }
     version = m12_selected_version_status(state, gameIndex);
 
     receipt.handled = 1;
@@ -10476,24 +10496,6 @@ int M12_StartupMenu_GetBootReadiness(
         receipt.startupStepReadyCount = receipt.startupStepCount;
     }
 
-    /* Nexus reaches M11 through a title-only handoff. Data/version admission
-     * is enough to try its authentic title route, but it is not evidence that
-     * the full menu graphics, startup contract, or packaged capture is ready.
-     * M11's launcher receipt owns those later transitions. */
-    if (receipt.supported && receipt.gameId &&
-        strcmp(receipt.gameId, "nexus") == 0) {
-        receipt.startupMenuReady = receipt.dataReady && receipt.versionReady;
-        receipt.startupStepReadyCount = receipt.startupMenuReady ? 3 :
-                                        (receipt.dataReady ? 1 : 0) +
-                                        (receipt.versionReady ? 1 : 0);
-        receipt.fullStartGraphicsReady = 0;
-        receipt.startupContractReady = 0;
-        receipt.packagedCaptureReady = 0;
-        receipt.readyStepMask &= ~(M12_STARTUP_BOOT_STEP_FULL_GRAPHICS |
-                                   M12_STARTUP_BOOT_STEP_CONTRACT |
-                                   M12_STARTUP_BOOT_STEP_CAPTURE);
-        receipt.blockedStepMask = receipt.expectedStepMask & ~receipt.readyStepMask;
-    }
     (void)m12_apply_dm1_hoc_startup_capture_package(state, &receipt);
 
     if (!receipt.supported) {
@@ -10712,16 +10714,16 @@ int M12_StartupMenu_GetLaunchGate(
         return 1;
     }
 
-    gate.handled = 1;
     gameIndex = m12_game_slot_from_id(entry->gameId);
+    if (gameIndex < 0) {
+        *outGate = gate;
+        return 1;
+    }
+    gate.handled = 1;
     m11OwnsStartupProof = entry->gameId && strcmp(entry->gameId, "dm1") != 0;
     (void)M12_StartupMenu_GetBootReadiness(state, entryIndex, &gate.boot);
     gate.rendererReady = M12_StartupMenu_RendererBackendAvailable(
         state->settings.rendererBackendIndex);
-    gameIndex = m12_game_slot_from_id(entry->gameId);
-    if (gameIndex < 0) {
-        gameIndex = m12_clamp_index(entryIndex, M12_CONFIG_GAME_COUNT);
-    }
     pmode = m12_clamp_index(state->gameOptions[gameIndex].presentationModeIndex,
                             M12_PRESENTATION_MODE_COUNT);
     gate.presentationReady = 1;
@@ -12365,6 +12367,9 @@ static void m12_draw_game_card(const M12_StartupMenuState* state,
     unsigned char statusText;
     unsigned char gameFill = entry ? m12_game_card_fill(entry->gameId) : M12_COLOR_DARK_GRAY;
     int artH = h * 55 / 100;
+    int gameSlot = entry && entry->kind == M12_MENU_ENTRY_GAME
+                       ? m12_game_slot_from_id(entry->gameId)
+                       : -1;
     M12_StartupLaunchGate launchGate;
     int hasLaunchGate = 0;
     if (artH < 30) {
@@ -12445,13 +12450,13 @@ static void m12_draw_game_card(const M12_StartupMenuState* state,
                                 statusFill,
                                 M12_COLOR_BLACK,
                                 statusText);
-    if (entry && entry->kind == M12_MENU_ENTRY_GAME && entryIndex >= 0 && entryIndex < M12_CONFIG_GAME_COUNT) {
+    if (gameSlot >= 0) {
         m12_draw_language_flag(framebuffer,
                                framebufferWidth,
                                framebufferHeight,
                                x + w - 28,
                                y + 10,
-                               state->gameOptions[entryIndex].languageIndex);
+                               state->gameOptions[gameSlot].languageIndex);
     }
     m12_draw_text(framebuffer,
                   framebufferWidth,
@@ -13588,7 +13593,9 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
     const M12_GameCardArt* art = (state->activatedIndex >= 0 && state->activatedIndex < m12_entry_count())
                                      ? &state->cardArt[state->activatedIndex]
                                      : NULL;
-    int gi = m12_game_slot_from_id(entry ? entry->gameId : NULL);
+    int gi = entry && entry->kind == M12_MENU_ENTRY_GAME
+        ? m12_game_slot_from_id(entry->gameId)
+        : -1;
     const M12_GameOptions* opts;
     int margin = framebufferWidth / 30;
     int heroH = framebufferHeight / 4;
@@ -13603,14 +13610,13 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
     int resLocked;
     const M12_AssetVersionStatus* version;
     unsigned char gameFill;
-    if (entry && entry->kind == M12_MENU_ENTRY_GAME &&
-        state->gameCardFlowStage < 2) {
+    if (gi < 0) {
+        return;
+    }
+    if (state->gameCardFlowStage < 2) {
         m12_draw_game_card_flow_view(state, framebuffer, framebufferWidth,
                                      framebufferHeight, entry);
         return;
-    }
-    if (gi < 0) {
-        gi = m12_clamp_index(state->activatedIndex, M12_CONFIG_GAME_COUNT);
     }
     opts = &state->gameOptions[gi];
     if (margin < 12) {
@@ -15409,8 +15415,16 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
     if (!state || state->activatedIndex < 0 || state->activatedIndex >= m12_entry_count()) {
         return intent;
     }
-    gi = m12_clamp_index(state->activatedIndex, M12_CONFIG_GAME_COUNT);
     intent.gameId = state->entries[state->activatedIndex].gameId;
+    /* The menu also contains non-game system entries, and card order is a UI
+     * detail. Resolve settings from the game id and reject system actions
+     * before indexing the per-game options array. */
+    gi = state->entries[state->activatedIndex].kind == M12_MENU_ENTRY_GAME
+        ? m12_game_slot_from_id(intent.gameId)
+        : -1;
+    if (gi < 0) {
+        return intent;
+    }
     pmode = m12_clamp_index(state->gameOptions[gi].presentationModeIndex,
                             M12_PRESENTATION_MODE_COUNT);
     hasGate = M12_StartupMenu_GetLaunchGate(state, state->activatedIndex, &gate);

@@ -29,7 +29,9 @@ if ! command -v 7zz >/dev/null 2>&1 && ! command -v 7z >/dev/null 2>&1; then
     exit 77
 fi
 
-data_root=$(mktemp -d "$(dirname "$1")/firestaff-theron-${region}-7z.XXXXXX")
+scratch_root=${FIRESTAFF_TEST_SCRATCH_ROOT:-"$(dirname "$1")"}
+mkdir -p "$scratch_root"
+data_root=$(mktemp -d "$scratch_root/firestaff-theron-${region}-7z.XXXXXX")
 trap 'rm -rf "$data_root"' EXIT
 ln -s "$archive" "$data_root/$archive_alias"
 # This is a real but different Japanese disc image. Giving it the expected
@@ -45,6 +47,7 @@ output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
     "$firestaff" --theron-native "$region" \
     --enable-external-archive-tools \
     --data-dir "$data_root" \
+    --debug \
     --boot-probe --duration 0 2>&1)
 printf '%s\n' "$output"
 grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=theron' <<<"$output"

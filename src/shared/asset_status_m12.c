@@ -640,6 +640,9 @@ static const char* const g_originalCandidateNames[] = {
     NULL
 };
 
+static int m12_dm2_virtual_path_has_native_owner(
+    const M12_AssetVersionStatus* version);
+
 static int m12_game_index_from_id(const char* gameId) {
     size_t i;
     if (!gameId) {
@@ -922,18 +925,23 @@ static int m12_admit_dm2_fmtowns_archive(M12_AssetStatus* status,
     }
     for (versionIndex = 0U; versionIndex < g_games[gameIndex].versionCount;
          ++versionIndex) {
+        M12_AssetVersionStatus* version = &status->versions[gameIndex][versionIndex];
         if (strcmp(g_games[gameIndex].versions[versionIndex].versionId,
-                   "fmtowns-ja") == 0 &&
-            status->versions[gameIndex][versionIndex].matched &&
-            strstr(status->versions[gameIndex][versionIndex].matchedPath,
-                   "::") != NULL) {
+                   "fmtowns-ja") == 0 && version->matched &&
+            strstr(version->matchedPath, "::") != NULL) {
             /* A previous generic hash match may name loose DATA/GRAPHICS.DAT
              * bytes that came from an extracted HME-242 disc.  That proves
              * the GDAT identity but does not preserve the CUE/IMG owner that
              * supplies AUTOEXEC, the native animation streams and CDDA.
-             * Retain an already-admitted virtual archive, but continue to
-             * select the original ZIP when the only prior match is loose. */
-            return 1;
+             * Keep a virtual match only when the DM2 boot scanner confirms
+             * that its outer source has a native runtime owner. Otherwise
+             * let the edition-specific archive readers select a bootable
+             * sibling (for example, the PC DOS ZIP) instead of allowing an
+             * unsupported image member to shadow it in catalogue order. */
+            if (m12_dm2_virtual_path_has_native_owner(version)) return 1;
+            version->matched = 0;
+            version->matchedPath[0] = '\0';
+            version->matchedMd5[0] = '\0';
         }
     }
     for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
@@ -8850,6 +8858,7 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
         }
         if (strcmp(g_games[i].gameId, "dm2") == 0) {
             size_t requiredIndex;
+            m12_publish_dm2_pc_dos_required_files(status, i);
             m12_publish_dm2_fmtowns_required_files(status, i);
             m12_publish_dm2_mac_required_files(status, i);
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING

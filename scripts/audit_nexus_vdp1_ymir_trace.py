@@ -27,7 +27,7 @@ from analyze_nexus_vdp1_command_sequence import (
     follow,
     parse_copr,
     records,
-    signed_11,
+    signed_13,
 )
 
 
@@ -335,9 +335,9 @@ def _chain_summary(chain: list[Record]) -> dict[str, object]:
     type_counts: Counter[int] = Counter()
     for record in chain:
         kind = record.command_type
-        type_counts[kind] += 1
-        if record.end:
+        if record.end or record.skipped:
             continue
+        type_counts[kind] += 1
         if kind == 8:
             user_clip = (
                 record.words[6] & 0x1FFF,
@@ -348,7 +348,7 @@ def _chain_summary(chain: list[Record]) -> dict[str, object]:
         elif kind == 9:
             system_clip = (record.words[10], record.words[11])
         elif kind == 10:
-            origin = (signed_11(record.words[6]), signed_11(record.words[7]))
+            origin = (signed_13(record.words[6]), signed_13(record.words[7]))
             origin_verified = True
         elif kind in DRAW_TYPES:
             draw_state.append({

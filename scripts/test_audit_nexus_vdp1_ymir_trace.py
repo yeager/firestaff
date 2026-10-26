@@ -11,9 +11,11 @@ from unittest.mock import patch
 
 from audit_nexus_vdp1_ymir_trace import (
     TraceError,
+    _chain_summary,
     audit_runtime_capture,
     audit_trace,
 )
+from analyze_nexus_vdp1_command_sequence import Record
 
 
 COLUMNS = [
@@ -43,6 +45,22 @@ def encode(rows: list[list[str]]) -> bytes:
 
 
 class YmirVdp1TraceTests(unittest.TestCase):
+    def test_chain_summary_does_not_apply_skipped_local_origin(self):
+        def command(offset: int, control: int, x: int = 0, y: int = 0) -> Record:
+            words = [0] * 16
+            words[0], words[6], words[7] = control, x, y
+            return Record(offset, tuple(words))
+
+        summary = _chain_summary([
+            command(0x00, 0x400A, 100, 200),
+            command(0x20, 0x0002),
+            command(0x40, 0x8000),
+        ])
+        self.assertEqual(summary["draws"], 1)
+        self.assertEqual(summary["command_types"], {"0x2": 1})
+        self.assertEqual(summary["draw_state"][0]["origin"], [0, 0])
+        self.assertFalse(summary["draw_state"][0]["origin_verified"])
+
     def run_trace(self, data: bytes, frame: int | None = None):
         path = Path("authentic-ymir-trace.csv")
         def open_path(_path, mode="r", *args, **kwargs):

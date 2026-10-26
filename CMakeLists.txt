@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 3.0.413 LANGUAGES C)
+project(Firestaff VERSION 3.0.415 LANGUAGES C)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
@@ -28345,7 +28345,7 @@ endif()
         COMMAND test_m12_launcher_options_runtime_handoff
     )
     set_tests_properties(m12_launcher_options_runtime_handoff PROPERTIES
-        ENVIRONMENT "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/launcher-options-scratch;SDL_VIDEODRIVER=dummy")
+        ENVIRONMENT "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/launcher-options-scratch;SDL_VIDEODRIVER=dummy;FIRESTAFF_TEST_DM1_DATA_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1")
 
     add_executable(test_m12_version_changelog_consistency
         tests/test_m12_version_changelog_consistency.c
@@ -47176,7 +47176,7 @@ if(BUILD_TESTING AND TARGET firestaff_theron)
     )
     set_tests_properties(theron_v1_jp_7z_direct_boot PROPERTIES
         SKIP_RETURN_CODE 77
-        LABELS "theron;real-media;archive;startup;native;no-extraction;no-synthetic"
+        LABELS "theron;real-media;archive;startup;native;debug;no-extraction;no-synthetic"
     )
     add_test(
         NAME theron_v1_us_7z_direct_boot
@@ -47185,7 +47185,7 @@ if(BUILD_TESTING AND TARGET firestaff_theron)
     )
     set_tests_properties(theron_v1_us_7z_direct_boot PROPERTIES
         SKIP_RETURN_CODE 77
-        LABELS "theron;real-media;archive;startup;native;no-extraction;no-synthetic"
+        LABELS "theron;real-media;archive;startup;native;debug;no-extraction;no-synthetic"
     )
     add_test(
         NAME theron_v1_raw_bin_runtime_boot
@@ -47250,7 +47250,7 @@ if(BUILD_TESTING AND TARGET firestaff_theron)
     )
     set_tests_properties(theron_v1_jp_cue_runtime_boot PROPERTIES
         SKIP_RETURN_CODE 77
-        LABELS "theron;real-media;startup;native"
+        LABELS "theron;real-media;startup;native;debug;no-extraction;no-synthetic"
         ENVIRONMENT
             "FIRESTAFF_THERON_JP_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/Dungeon Master - Theron's Quest (Japan) (Rev 1).cue"
     )

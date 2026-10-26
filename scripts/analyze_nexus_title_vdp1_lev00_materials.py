@@ -58,11 +58,11 @@ def main() -> int:
     textured = matched = 0
     unmatched = []
     for record in chain:
-        if record.end or record.command_type > 2:
+        if record.control & 0xC000 or record.command_type > 2:
             continue
         words = record.words
         mode = (words[2] >> 3) & 7
-        width, height = (words[5] & 0x3F) * 8, words[5] >> 8
+        width, height = ((words[5] >> 8) & 0x3F) * 8, words[5] & 0xFF
         bits = 4 if mode <= 1 else 8 if mode <= 4 else 16
         size, source = width * height * bits // 8, words[4] * 8
         if not size:
