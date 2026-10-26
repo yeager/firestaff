@@ -46,10 +46,28 @@ to pointer input. The runtime capture also contains no same-session CD read
 or authenticated CD-to-RAM receipt. The exact source LBA among seven copies
 remains ambiguous, and no native click behavior is established.
 
+## Adjacent authentic helper family
+
+The 23 bytes immediately following the traced routine are also identical at
+all seven JP and all seven US Track 02 candidates. Regional disassembly places
+them at JP `$43B5–$43CB` and US `$43B8–$43CE`:
+
+| Region address | Bytes | Decode |
+| --- | --- | --- |
+| JP `$43B5` / US `$43B8` | `A9 02 0F 06 02 A9 00 85 07 60` | Test bit 0 of `$06`; store 2 when clear, 0 when set. |
+| JP `$43BF` / US `$43C2` | `AD A1 27 85 07 60` | Load `$27A1`, store to `$07`, return. |
+| JP `$43C5` / US `$43C8` | `78 E6 05 E6 06 58 60` | Mask interrupts, increment `$05` and `$06`, restore interrupts, return. |
+
+The static receipt now verifies this adjacent byte span at every admitted
+raw-BIN candidate. These decodes narrow the next dynamic tracing task to the
+callers and producers of `$05–$07`; they still do not identify the routines'
+gameplay roles, caller path, or loaded CD source.
+
 ## Verification
 
-`theron_v1_huc6280_disassembly` checks the exact ten bytes at all seven JP and
-US raw-BIN offsets after validating the full authentic Track 02 identity. On
-TRV2, the JP execution trace also matched all 203 dynamically executed callee
-rows against each of the seven JP copies in three repeated verifier runs.
-That runtime comparison is a byte match, not a load-provenance receipt.
+`theron_v1_huc6280_disassembly` checks the exact ten-byte callee and its
+23-byte adjacent helper span at all seven JP and US raw-BIN offsets after
+validating the full authentic Track 02 identity. On TRV2, the JP execution
+trace also matched all 203 dynamically executed callee rows against each of
+the seven JP copies in three repeated verifier runs. That runtime comparison
+is a byte match, not a load-provenance receipt.

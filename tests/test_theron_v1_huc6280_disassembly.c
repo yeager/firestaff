@@ -278,10 +278,14 @@ static void verify(const char *env_name, const char *name,
         assert(receipt.initializer_callee_candidate_count ==
                THERON_V1_HUC6280_CALLEE_CANDIDATE_COUNT);
         assert(receipt.initializer_callee_fnv1a == 0x7bacabfau);
+        assert(receipt.initializer_adjacent_helpers_verified);
+        assert(receipt.initializer_adjacent_helpers_bytes == 23u);
+        assert(receipt.initializer_adjacent_helpers_fnv1a == 0x6bfdc224u);
         assert(memcmp(receipt.initializer_callee_candidate_file_offsets,
                       expected_offsets, sizeof(us_offsets)) == 0);
     } else {
         assert(!receipt.initializer_callee_candidates_verified);
+        assert(!receipt.initializer_adjacent_helpers_verified);
     }
     assert(receipt.fragment_address == 0x243eu);
     assert(receipt.fragment_bytes == 134u);

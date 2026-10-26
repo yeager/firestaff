@@ -6,10 +6,12 @@
   zero-page `$07`, and returns. The helper does not write the six-rectangle
   buffer `$287F–$2896`.
 - The existing static disassembly receipt now verifies this ten-byte routine
-  at all seven source candidates in authentic JP and US Track 02. This still
+  and the next 23 bytes of adjacent helper code at all seven candidates in
+  authentic JP and US Track 02. The adjacent code also reads `$27A1` into `$07`
+  and increments `$05/$06`; its callers and meanings are unbound. This still
   does not identify the runtime CD source LBA, explain the meaning of `$06` or
-  `$07`, or prove native input/click parity. Continue tracing the producer and
-  consumer of these zero-page bytes before assigning game behavior.
+  `$07`, or prove native input/click parity. Continue tracing the producers and
+  consumers before assigning game behavior.
 - Evidence and decode references:
   [`theron-jp-43ab-zero-page-flag-helper-20261026.md`](docs/source-lock/theron-disassembly/theron-jp-43ab-zero-page-flag-helper-20261026.md).
 

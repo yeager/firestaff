@@ -137,6 +137,11 @@ typedef struct {
     uint32_t initializer_callee_candidate_file_offsets[
         THERON_V1_HUC6280_CALLEE_CANDIDATE_COUNT];
     uint32_t initializer_callee_fnv1a;
+    /* Adjacent static helper family after the traced initializer callee:
+     * inverse bit test, $27A1 load, and interrupt-guarded $05/$06 increment. */
+    int initializer_adjacent_helpers_verified;
+    uint16_t initializer_adjacent_helpers_bytes;
+    uint32_t initializer_adjacent_helpers_fnv1a;
     int semantic_publication_allowed;
     uint32_t source_file_size;
     uint32_t bank_file_offset;

@@ -100,6 +100,8 @@
 #define THERON_JP_SPAWN_CC3E_FNV1A 0x13a65ea6u
 #define THERON_INITIALIZER_CALLEE_BYTES 10u
 #define THERON_INITIALIZER_CALLEE_FNV1A 0x7bacabfau
+#define THERON_INITIALIZER_ADJACENT_HELPERS_BYTES 23u
+#define THERON_INITIALIZER_ADJACENT_HELPERS_FNV1A 0x6bfdc224u
 
 static const uint8_t g_fragment[THERON_FRAGMENT_BYTES] = {
     0xb2, 0x2e, 0x85, 0x0e, 0xe6, 0x2e, 0xd0, 0x02, 0xe6, 0x2f, 0x86, 0x0f,
@@ -203,6 +205,15 @@ static const uint8_t g_initializer_callee[THERON_INITIALIZER_CALLEE_BYTES] = {
     0xa9, 0x00, 0x0f, 0x06, 0x02, 0xa9, 0x02, 0x85, 0x07, 0x60
 };
 
+/* Adjacent code in the same authentic routine family. Decoding is limited to
+ * the bytes; their callers and gameplay meaning are not yet source-bound. */
+static const uint8_t g_initializer_adjacent_helpers[
+    THERON_INITIALIZER_ADJACENT_HELPERS_BYTES] = {
+    0xa9, 0x02, 0x0f, 0x06, 0x02, 0xa9, 0x00, 0x85, 0x07, 0x60,
+    0xad, 0xa1, 0x27, 0x85, 0x07, 0x60,
+    0x78, 0xe6, 0x05, 0xe6, 0x06, 0x58, 0x60
+};
+
 static const uint32_t g_us_initializer_callee_offsets[
     THERON_V1_HUC6280_CALLEE_CANDIDATE_COUNT] = {
     0x9587eu, 0xdf07eu, 0x12887eu, 0x17207eu,
@@ -269,6 +280,23 @@ static int read_initializer_callee_candidates(
     return 1;
 }
 
+static int read_initializer_adjacent_helpers(
+    FILE *file,
+    const uint32_t offsets[THERON_V1_HUC6280_CALLEE_CANDIDATE_COUNT],
+    uint8_t helpers[THERON_V1_HUC6280_CALLEE_CANDIDATE_COUNT]
+                  [THERON_INITIALIZER_ADJACENT_HELPERS_BYTES]) {
+    size_t i;
+    for (i = 0u; i < THERON_V1_HUC6280_CALLEE_CANDIDATE_COUNT; ++i) {
+        if (fseek(file, (long)(offsets[i] + THERON_INITIALIZER_CALLEE_BYTES),
+                  SEEK_SET) != 0 ||
+            fread(helpers[i], 1u, THERON_INITIALIZER_ADJACENT_HELPERS_BYTES,
+                  file) != THERON_INITIALIZER_ADJACENT_HELPERS_BYTES ||
+            memcmp(helpers[i], g_initializer_adjacent_helpers,
+                   THERON_INITIALIZER_ADJACENT_HELPERS_BYTES) != 0) return 0;
+    }
+    return 1;
+}
+
 static int expected_source(int variant,
                            uint32_t *size,
                            const char **md5,
@@ -325,6 +353,9 @@ int theron_v1_huc6280_disassembly_read_file(
     uint8_t initializer_callee_candidates[
         THERON_V1_HUC6280_CALLEE_CANDIDATE_COUNT]
         [THERON_INITIALIZER_CALLEE_BYTES];
+    uint8_t initializer_adjacent_helpers[
+        THERON_V1_HUC6280_CALLEE_CANDIDATE_COUNT]
+        [THERON_INITIALIZER_ADJACENT_HELPERS_BYTES];
     uint8_t spawn_rng_helper[THERON_SPAWN_RNG_HELPER_BYTES];
     uint8_t spawn_rng_preconsumer[THERON_SPAWN_RNG_PRECONSUMER_BYTES];
     uint8_t spawn_rng_c96b[THERON_SPAWN_C96B_BYTES];
@@ -454,6 +485,12 @@ int theron_v1_huc6280_disassembly_read_file(
                  g_us_initializer_callee_offsets :
                  g_jp_initializer_callee_offsets,
              initializer_callee_candidates)) ||
+        (raw_bin_variant &&
+         !read_initializer_adjacent_helpers(file,
+             track02_variant == THERON_TRACK02_VARIANT_US_BIN ?
+                 g_us_initializer_callee_offsets :
+                 g_jp_initializer_callee_offsets,
+             initializer_adjacent_helpers)) ||
         !m12_file_md5_hex(path, receipt.source_md5)) {
         if (file) fclose(file);
         receipt.status = THERON_V1_HUC6280_DISASSEMBLY_REJECTED;
@@ -485,6 +522,10 @@ int theron_v1_huc6280_disassembly_read_file(
          fnv1a(initializer_callee_candidates[0],
                THERON_INITIALIZER_CALLEE_BYTES) !=
              THERON_INITIALIZER_CALLEE_FNV1A) ||
+        (raw_bin_variant &&
+         fnv1a(initializer_adjacent_helpers[0],
+               THERON_INITIALIZER_ADJACENT_HELPERS_BYTES) !=
+             THERON_INITIALIZER_ADJACENT_HELPERS_FNV1A) ||
         (retail_track02_variant &&
          memcmp(vce_palette_caller, g_vce_palette_caller,
                 sizeof(vce_palette_caller)) != 0) ||
@@ -647,6 +688,12 @@ int theron_v1_huc6280_disassembly_read_file(
         receipt.initializer_callee_fnv1a = fnv1a(
             initializer_callee_candidates[0],
             THERON_INITIALIZER_CALLEE_BYTES);
+        receipt.initializer_adjacent_helpers_verified = 1;
+        receipt.initializer_adjacent_helpers_bytes =
+            THERON_INITIALIZER_ADJACENT_HELPERS_BYTES;
+        receipt.initializer_adjacent_helpers_fnv1a = fnv1a(
+            initializer_adjacent_helpers[0],
+            THERON_INITIALIZER_ADJACENT_HELPERS_BYTES);
     }
     receipt.source_file_size = expected_size;
     receipt.bank_file_offset = bank_file_offset;
