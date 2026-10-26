@@ -1,3 +1,16 @@
+## 2026-10-26 — F5-state RUN hold has a reproducible raw state and screen result
+
+- Two fresh PCE Fast replays of the same user-created Japanese F5 save state
+  held RUN for 300 frames. Both produced identical 8 KiB main-RAM, VRAM, and
+  SAT hashes, distinct from matched no-input controls. The raw transition
+  receipt consistently changed `$20DB` from `00` in the control to `01` after
+  RUN, while `$20DA`, `$2031`, and `$203F-$2041` retained their observed
+  values and `transition=missing` remained true.
+- This establishes a reproducible input-to-raw-state-and-screen tuple for the
+  exact save state. It does not identify `$20DB`, prove that RUN starts a
+  dungeon, establish party movement, or authorize a native state-driven
+  renderer. A same-session source/consumer and pose join is still required.
+
 ## 2026-10-26 — matched F5-state VDC commits show an input-coupled screen delta
 
 - The user-created Japanese Akutuba F5 save state was captured twice in fresh
