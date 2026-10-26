@@ -1,5 +1,21 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-26 — verify native SDL keyboard item/action commands in both editions
+
+Added `theron_v1_us_keyboard_action_events` and
+`theron_v1_jp_keyboard_action_events`. Each drives G, I, P, U, and Return
+through Firestaff's ordinary SDL event loop after launching the authentic
+regional Track 02. Both routes pick up and drop the source-backed Ak-Tu-Ba
+sandals, visit the inventory-toggle and bounded use-item handlers, preserve
+the expected party pose, and consume Return as the native Button I wait
+action. All three TRV2 loops passed for each region against USA Track 02
+(`f23601102138f87c33025877767ebf76`) and Japan Rev. 1 Track 02
+(`b7afb338ad31be1025b53f9aff12d73a`).
+
+This establishes the normal SDL keyboard route for these actions on the
+authentic starting level. It does not establish later-level item semantics,
+world-click targeting, or state-driven dungeon rendering.
+
 ## 2026-10-26 — run the authentic Japanese CUE boot check with debug receipts
 
 The authentic Japanese Rev. 1 CUE boot regression now passes `--debug` to the
