@@ -85,6 +85,13 @@ cold and 28.0% warm, but uncontrolled OS file-cache state, one host, and one
 prior timing sample prevent treating them as a general speedup. Full details
 and limits are recorded in [`TODO.md`](../TODO.md).
 
+A 2026-10-26 Debug scan with an isolated HOME/config took 26.84 seconds and
+reported all five games READY. The standard scan explicitly skipped installed
+`.7z` and `.rar` archives because external archive tools were not enabled, so
+READY means the required media was found among scanned sources; it does not
+mean every archive in the collection was inventoried. The OS file cache was
+not controlled, so this is a single observation, not a cold-scan comparison.
+
 The larger cross-game candidate-index opportunity remains open:
 `m12_fill_game_versions` queries each game's edition hashes separately for
 each root, and scan-cache hits do not avoid all directory traversal or

@@ -79,6 +79,16 @@ version passes without weakening edition hashes, same-container ownership,
 or cancellation; do not infer that repeated low-level samples alone prove a
 candidate can be skipped.
 
+2026-10-26 current-source isolated-cache scan: the Debug `firestaff` build
+from `c61971089` completed `--scan-data --debug` against the installed
+original-media collection in 26.84 seconds (18.44 seconds user CPU and 3.32
+seconds system CPU). All five games were reported READY. The scan also
+reported authentic `.7z` and `.rar` files as skipped because external archive
+tools were not enabled; their members were therefore not part of the READY
+result. The run used an isolated HOME/config but did not control the OS file
+cache, so it is one current-source observation rather than a cold-scan
+benchmark. No game data was extracted or copied.
+
 Current-source M12 single-game menu retest at `c54007b45`: the separate
 `test_m12_main_menu_{dm1,csb,dm2}_only_real_media.sh` checks passed with one
 authentic FM Towns archive in each isolated `~/.firestaff/data/<game>` tree.
