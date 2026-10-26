@@ -486,6 +486,23 @@ source object for the future Saturn consumer. This does not admit glyph coding,
 page/PND attributes, layer placement, or text writing; `font_loaded` remains
 closed until those parts are bound by the same runtime witness.
 
+## Debug boot memory receipt (2026-10-26)
+
+A system-built Ymir 0.4.2-dev run on TRV2 booted the hash-verified Japanese
+retail cue for 600 deterministic frames with `--debug`. It used the verified
+Japanese BIOS (SHA-256
+`dcfef4b99605f872b6c3b6d05c045385cdea3d1b702906a0ed930df7bcb7deac`) and
+recorded bounded SH-2 writes to `0x05c00000..0x05c80000`. The resulting VDP1
+VRAM dump is SHA-256
+`0e0a67c1eec3c0bf61e7358ded889d3df343a5cb7bd1154b6422636d57bf1d74`.
+
+The capture used Ymir's explicit no-render mode so that it could retain real
+emulated memory and CPU-write evidence without producing a synthetic host
+frame. It must not be used for visual parity, title/menu placement, or HUD
+claims. The raw dump and write trace are retained outside the repository on
+the external evidence volume; only their reproducible receipt is recorded
+here.
+
 ## Sources
 
 - DMWeb Nexus file formats and DMN Data File Decoder.
