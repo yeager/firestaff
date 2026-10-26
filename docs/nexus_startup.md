@@ -136,6 +136,13 @@ removed after the check. This proves the capture transport no longer depends on
 a successful GUI presentation for this state; it does not supply a framebuffer,
 prove visual parity, or open any Firestaff presentation gate.
 
+The same state was then captured with `--capture-screenshot` in no-present
+mode. The completed dump was followed by a 640×448 RGBA PNG with SHA-256
+`4b19474395c7192e7e68faf82efe0c240c9da213c4cd36c1ad91f31e68c17d82` before
+Ymir exited. The temporary image was removed after its dimensions and digest
+were checked. This validates non-present screenshot delivery for future visual
+comparisons; it is not itself a pixel-parity admission or a Firestaff asset.
+
 ## Boot VDP2 writer anchor (2026-10-26)
 
 Ymir PR #966 was extended with a bounded direct SH-2 VDP2-write trace and a
