@@ -102,12 +102,16 @@ has a 236-record chain and 221 executed textured draws. The authenticated
 capture-level result; it does not establish display composition or permit
 production rendering.
 
-The broader source-only scan counts 200 of 221 draws with nonzero matching
-retail bytes. Of the six unmatched source/palette pairs, five use the same
-448-byte all-zero texture, which cannot identify a resource; the remaining
-draw at command `0x00f00` uses a nonzero 1,152-byte span without a match in
-the scanned corpus. A matching all-zero image must not be used to infer its
-owner or promote a renderer gate.
+The broader source-only scan counts 201 of 221 draws with nonzero matching
+retail bytes when the verified Japanese `ITEM.IBS` is included. Of the six
+unmatched source/palette pairs, five use the same 448-byte all-zero texture,
+which cannot identify a resource. The remaining draw at command `0x00f00`
+uses a 1,152-byte span matching the word-swapped Japanese `ITEM.IBS` bytes
+at file offset `0x123dc`; the file SHA-256 is
+`fc32ca5875906e6e0dc69e0b5edfa5d00cb1f4401b7d497397c699be7c4530c1`.
+This establishes byte provenance only, not its item identity, CLUT ownership,
+placement, or production renderer permission. A matching all-zero image must
+not be used to infer its owner or promote a renderer gate.
 
 The frame counter in the VDP1 trace is distinct from the 120 requested capture
 steps, and the screenshot is taken after the dump. This receipt therefore
