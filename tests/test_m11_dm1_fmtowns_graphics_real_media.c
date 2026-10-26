@@ -1,5 +1,6 @@
 #include "asset_find_by_hash.h"
 #include "asset_loader_m11.h"
+#include "dm1_v1_champion_top_row_assets_pc34_compat.h"
 #include "dm1_v1_fmtowns_pic_library.h"
 #include "dm1_v1_fmtowns_wall_ornament.h"
 #include "firestaff_fmtowns_disc.h"
@@ -24,7 +25,14 @@ static int check_top_row_source_surfaces(M11_AssetLoader *loader)
         if (!M11_AssetLoader_QuerySize(loader, indices[i], &width, &height) ||
             width != widths[i] || height != heights[i]) return 0;
     }
-    return 1;
+    {
+        Dm1V1ChampionTopRowAssetsReceiptPc34 receipt;
+        return dm1_v1_champion_top_row_assets_from_m11_loader_pc34(
+                   loader, &receipt) && receipt.valid &&
+               receipt.c008Accepted && receipt.c028Accepted &&
+               receipt.c033Accepted && receipt.c034Accepted &&
+               receipt.c035Accepted;
+    }
 }
 
 int main(void) {
@@ -80,7 +88,7 @@ int main(void) {
             !loader.legacyBigEndian && loader.graphicCount == 575u,
         "FM Towns graphics use its native decoder and classic DM1 semantics");
     REQUIRE(check_top_row_source_surfaces(&loader),
-        "original F20E status box, champion strip, and slot states match the live HUD source dimensions");
+        "original F20E status box, champion strip, and slot states pass the shared source-surface receipt");
     REQUIRE(M11_AssetLoader_QuerySize(&loader, 1u, &width, &height) &&
             width == 320u && height == 200u,
         "EDM.EXP title raster preserves source dimensions");
@@ -171,7 +179,7 @@ int main(void) {
             "original Japanese F20 graphics initialize their native decoder");
     }
     REQUIRE(check_top_row_source_surfaces(&japaneseLoader),
-        "original F20J status box, champion strip, and slot states match the live HUD source dimensions");
+        "original F20J status box, champion strip, and slot states pass the shared source-surface receipt");
     for (int global = 0; global < 60; ++global) {
         for (int view = 0; view < 13; ++view) {
             DM1_V1_FmtownsWallOrnament ornament;

@@ -3056,7 +3056,8 @@ telemetry. It does not claim that every combat event is covered by this test.
 `GRAPHICS.DAT` libraries contain the exact source-sized status box (graphic
 8, 67x29), champion strip (28, 76x14), and three slot-state surfaces (33-35,
 18x18) expected by the shared top-row renderer. The authentic-media graphics
-test now checks these five dimensions in both DATA and JDATA. This rules out
-missing or wrongly sized source assets as the reason for a blank F20 HUD;
+test now checks these five dimensions and requires the shared top-row source
+receipt to accept them in both DATA and JDATA. This rules out missing or
+wrongly sized source assets as the reason for a blank F20 HUD;
 runtime palette/font/material admission and final top-row composition still
 need a source-backed F20 test before changing the renderer gate.
