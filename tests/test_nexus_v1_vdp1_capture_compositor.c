@@ -592,6 +592,21 @@ int main(void)
         fprintf(stderr, "FAIL: VDP1 second-triangle quad UV mapping\n");
         return 1;
     }
+    quad_input.item_image = quad_input.dgn_image;
+    quad_input.item_image_size = quad_input.dgn_image_size;
+    quad_input.item_palette = quad_input.dgn_palette;
+    quad_input.item_palette_size = quad_input.dgn_palette_size;
+    quad_input.item_source_hash_verified = 1;
+    quad_input.dgn_source_hash_verified = 0;
+    nexus_fb_clear(&quad_framebuffer);
+    if (!nexus_v1_vdp1_capture_composite_mode1(
+            &quad_framebuffer, &quad_input, &quad_receipt) ||
+        !quad_receipt.item_source_join_verified ||
+        quad_framebuffer.color_buffer[117 * NEXUS_FB_W + 161] != 36U) {
+        free(vdp1_vram);
+        fprintf(stderr, "FAIL: ITEM.IBS capture material lane\n");
+        return 1;
+    }
     free(vdp1_vram);
     /* Direct-colour and DGN/Mode-1 are separate authenticated windows in
      * the Saturn capture. Allow an explicit direct-colour capture to be

@@ -29,6 +29,12 @@ typedef struct {
     int dgn_source_hash_verified;
     int dgn_structure3_face_owner_count;
     int dgn_structure3_face_owner_verified;
+    /* Separate ITEM.IBS source; never relabel an item as a DGN material. */
+    const uint8_t *item_image;
+    int item_image_size;
+    const uint8_t *item_palette;
+    int item_palette_size;
+    int item_source_hash_verified;
     /* Optional canonical DGN Structure2 encoding 28h source-owner witness
      * for VDP1 colour mode 5. */
     const uint8_t *dgn_direct_image;
@@ -53,6 +59,7 @@ typedef struct {
     int source_join_verified;
     int palette_join_verified;
     int structure3_face_owner_join_verified;
+    int item_source_join_verified;
     int command_framed;
     int mode1_lookup;
     int coordinate_words_framed;

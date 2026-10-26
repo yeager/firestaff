@@ -357,34 +357,45 @@ int nexus_v1_vdp1_capture_composite_mode1(
     float xy[4][2];
     uint8_t end_rows[256] = {0};
     int index;
+    int item_source;
+    const uint8_t *source_image;
+    const uint8_t *source_palette;
+    int source_image_size;
+    int source_palette_size;
 
     if (!out_receipt) return 0;
     memset(&receipt, 0, sizeof(receipt));
     receipt.fallback_visuals_permitted = 0;
+    item_source = input && input->item_source_hash_verified;
+    source_image = input ? (item_source ? input->item_image : input->dgn_image) : NULL;
+    source_palette = input ? (item_source ? input->item_palette : input->dgn_palette) : NULL;
+    source_image_size = input ? (item_source ? input->item_image_size : input->dgn_image_size) : 0;
+    source_palette_size = input ? (item_source ? input->item_palette_size : input->dgn_palette_size) : 0;
     if (!framebuffer || !input || !input->command || !input->texture_span ||
         (!input->transparent_capture_noop_verified &&
-         (!input->palette_state || !input->dgn_image || !input->dgn_palette)) ||
+         (!input->palette_state || !source_image || !source_palette)) ||
         input->command_size != NEXUS_V1_VDP1_COMMAND_BYTES ||
         (!input->transparent_capture_noop_verified &&
-         (input->palette_state_size != 32 || input->dgn_palette_size != 32 ||
-          input->dgn_image_size <= 0)) ||
+         (input->palette_state_size != 32 || source_palette_size != 32 ||
+          source_image_size <= 0)) ||
         input->texture_span_size <= 0 ||
         input->screen_origin_x < 0 || input->screen_origin_x >= NEXUS_FB_W ||
         input->screen_origin_y < 0 || input->screen_origin_y >= NEXUS_FB_H ||
         input->palette_slot_base < 0 || input->palette_slot_base > 240 ||
         (!input->transparent_capture_noop_verified &&
-         !input->dgn_source_hash_verified) ||
+         (!input->dgn_source_hash_verified && !item_source)) ||
+        (item_source && input->dgn_source_hash_verified) ||
         !input->original_saturn_capture_verified ||
         nexus_v1_vdp1_texture_command_parse(input->command,
             input->command_size, &command) != 0 || !command.texture_command ||
         command.colour_mode != 1U || !command.texture_source_range_valid ||
         command.texture_byte_count != (uint32_t)input->texture_span_size ||
         (!input->transparent_capture_noop_verified &&
-         (input->texture_span_size != input->dgn_image_size ||
+         (input->texture_span_size != source_image_size ||
           !swapped_words_equal(input->texture_span, input->texture_span_size,
-                               input->dgn_image, input->dgn_image_size) ||
+                               source_image, source_image_size) ||
           !swapped_words_equal(input->palette_state, input->palette_state_size,
-                               input->dgn_palette, input->dgn_palette_size))) ||
+                               source_palette, source_palette_size))) ||
         (input->transparent_capture_noop_verified &&
          ((command.draw_mode & UINT16_C(0x0040)) != 0U ||
           !bytes_all_zero(input->texture_span, input->texture_span_size)))) {
@@ -406,6 +417,7 @@ int nexus_v1_vdp1_capture_composite_mode1(
     receipt.coordinate_words_framed = command.coordinate_words_framed;
     receipt.original_saturn_capture_verified = 1;
     receipt.source_join_verified = input->transparent_capture_noop_verified ? 0 : 1;
+    receipt.item_source_join_verified = item_source && !input->transparent_capture_noop_verified;
     receipt.palette_join_verified = input->transparent_capture_noop_verified ? 0 : 1;
     receipt.structure3_face_owner_join_verified =
         input->dgn_structure3_face_owner_verified ? 1 : 0;
