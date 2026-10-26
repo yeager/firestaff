@@ -1,3 +1,13 @@
+2026-10-26 F20 champion mirror placement: the shared mirror host receipt used
+PC34's front-wall portrait destination (96,35) for authenticated Towns runs.
+ReDMCSB DUNVIEW.C:3913-3928 instead sends the C026 atlas through F0635/M635
+C733; the authentic F20E/F20J COORD.C geometry is (0,19) for a 32x29 portrait.
+The Towns mirror route now keeps the source-validated C026 crop but replaces
+only the destination with C733 before drawing and publishing its presentation
+receipt. The FMTowns real-media geometry audit verifies both editions' native
+C026/C208 zones. This fixes placement source parity for the front-wall mirror;
+it does not prove captured pixel identity or complete viewport parity.
+
 2026-10-26 F20 champion names and status bars: the DM1 FM Towns HUD now draws
 non-selected champion names
 champion names from the original M653 picture-library font (asset 557) into

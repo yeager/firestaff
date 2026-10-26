@@ -48851,6 +48851,29 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
         return;
     }
 
+    /* F20 DUNVIEW.C:3923-3928 passes M635_ZONE_PORTRAIT_ON_WALL (C733)
+     * through F0635. The common DM1 receipt carries PC34's hard-coded
+     * destination (96,35), which is not the Towns viewport location. Keep
+     * the validated source ordinal/atlas crop, then replace only the
+     * destination with the edition's native F20 zone before drawing and
+     * publishing the actual host presentation. */
+    if (m11_dm1_fmtowns_wall_ornaments(state)) {
+        DM1_V1_FmtownsHudEdition edition =
+            state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP
+                ? DM1_V1_FMTOWNS_HUD_EDITION_F20J
+                : DM1_V1_FMTOWNS_HUD_EDITION_F20E;
+        DM1_V1_FmtownsHudRect portraitRect;
+        if (!dm1_v1_fmtowns_hud_layout_rect(
+                edition, 733u, drawReceipt.portraitWidth,
+                drawReceipt.portraitHeight, &portraitRect) ||
+            portraitRect.width != drawReceipt.portraitWidth ||
+            portraitRect.height != drawReceipt.portraitHeight) {
+            return;
+        }
+        drawReceipt.portraitDstX = portraitRect.x;
+        drawReceipt.portraitDstY = portraitRect.y;
+    }
+
     /* ReDMCSB DUNVIEW.C:3913-3928 draws the C346 backing from this exact
      * F0172-derived receipt, then overlays C026. The ordinary F0107 pass
      * cannot stand in for C346 because its map-local ornament lookup is a

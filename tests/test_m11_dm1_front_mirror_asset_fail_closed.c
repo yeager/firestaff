@@ -57,6 +57,14 @@ int main(void)
             "return;\n    }\n    if (m11_draw_dm1_front_champion_portrait_host_receipt(") &&
          contains_between(route, route_end,
             "if (drawReceipt.candidatePanelOwnsCell)") &&
+         contains_between(route, route_end,
+            "if (m11_dm1_fmtowns_wall_ornaments(state))") &&
+         contains_between(route, route_end,
+            "dm1_v1_fmtowns_hud_layout_rect(") &&
+         contains_between(route, route_end,
+            "edition, 733u, drawReceipt.portraitWidth") &&
+         contains_between(route, route_end,
+            "drawReceipt.portraitDstX = portraitRect.x") &&
          strstr(source, "receipt->portraitSourceX + receipt->portraitWidth >") &&
          strstr(source, "receipt->portraitSourceY + receipt->portraitHeight >") &&
          strstr(source, "dm1_v1_graphic_validate_champion_portrait_atlas_pc34(") &&
