@@ -226,3 +226,62 @@ int nexus_v1_vdp1_command_sequence_frame(
     *out_receipt = receipt;
     return receipt.valid;
 }
+
+int nexus_v1_vdp1_command_sequence_trace(
+    const uint8_t *commands, const uint32_t *offsets, int count,
+    Nexus_V1_Vdp1CommandSequenceReceipt *out)
+{
+    Nexus_V1_Vdp1CommandSequenceReceipt r;
+    uint32_t stack[NEXUS_V1_VDP1_SEQUENCE_MAX_COMMANDS];
+    int depth = 0, origin_x = 0, origin_y = 0, have_origin = 0, i;
+    if (!out) return 0;
+    memset(&r, 0, sizeof(r));
+    r.semantic_admission_blocked = 1;
+    if (!commands || !offsets || count <= 0 || count > NEXUS_V1_VDP1_SEQUENCE_MAX_COMMANDS) {
+        *out = r; return 0;
+    }
+    for (i = 0; i < count; ++i) {
+        const uint8_t *p = commands + (size_t)i * NEXUS_V1_VDP1_COMMAND_BYTES;
+        uint16_t control = read_le16(p), type = control & 15U;
+        unsigned mode = (control >> 12U) & 3U;
+        uint32_t next;
+        if (!valid_offset(offsets[i], NEXUS_V1_VDP1_VRAM_BYTES)) { *out = r; return 0; }
+        r.command_byte_offsets[i] = offsets[i];
+        if (!(control & 0xc000U)) {
+            if (type <= 7U) ++r.draw_count;
+            else if (type == 8U) ++r.user_clip_count;
+            else if (type == 9U) ++r.system_clip_count;
+            else if (type == 10U) {
+                ++r.local_coordinate_count;
+                origin_x = signed_11(read_le16(p + 12U));
+                origin_y = signed_11(read_le16(p + 14U));
+                have_origin = 1;
+                if (!r.display_origin_verified) {
+                    r.display_origin_x = origin_x; r.display_origin_y = origin_y;
+                    r.display_origin_verified = 1;
+                }
+            }
+        }
+        r.command_origin_x[i] = origin_x; r.command_origin_y[i] = origin_y;
+        r.command_origin_verified[i] = (uint8_t)have_origin;
+        if (control & 0x8000U) {
+            if (i != count - 1) { *out = r; return 0; }
+            r.end_record_verified = 1; break;
+        }
+        if (mode == 0U) next = offsets[i] + NEXUS_V1_VDP1_COMMAND_BYTES;
+        else if (mode == 1U) next = (uint32_t)read_le16(p + 2U) << 3U;
+        else if (mode == 2U) {
+            if (depth >= NEXUS_V1_VDP1_SEQUENCE_MAX_COMMANDS) { *out = r; return 0; }
+            stack[depth++] = offsets[i] + NEXUS_V1_VDP1_COMMAND_BYTES;
+            next = (uint32_t)read_le16(p + 2U) << 3U;
+        } else {
+            if (!depth) { *out = r; return 0; }
+            next = stack[--depth];
+        }
+        if (i + 1 >= count || offsets[i + 1] != next) { *out = r; return 0; }
+    }
+    r.start_byte_offset = offsets[0]; r.end_byte_offset = offsets[count - 1];
+    r.command_count = count; r.command_order_verified = 1;
+    r.complete = r.end_record_verified; r.valid = r.complete && r.display_origin_verified;
+    *out = r; return r.valid;
+}

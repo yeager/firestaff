@@ -194,3 +194,11 @@ python3 scripts/analyze_nexus_vdp1_sh2_write_trace.py \
 
 It retains only the observed PC/address facts and always leaves semantic
 admission blocked.
+
+The C command-sequence validator also accepts ordered command words from a
+producer trace. It checks every jump, call, return and END, and tracks local
+coordinates without applying skipped commands. The caller must first verify
+that the trace covers a complete frame and that its producer dropped no rows.
+The Japanese retail title-menu trace at Ymir frame 59 passes with 178 commands;
+the captured words are used directly, rather than substituted from the later
+VRAM snapshot. This does not establish that textures or the final image match.
