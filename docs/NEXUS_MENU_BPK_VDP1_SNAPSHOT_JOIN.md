@@ -51,3 +51,26 @@ required before changing presentation admission:
 
 Until then, the tool emits `semantic_admission=blocked` and no decoded pixels
 are handed to the production renderer.
+
+## Atomic one-frame follow-up
+
+An isolated Ymir profile loaded the retained title-prompt state, ran one
+deterministic frame with `--debug --dump-memory --load-state 2
+--capture-frames 1 --capture-no-present`, and emitted its VDP1 VRAM, registers
+and command trace in the same emulator-thread capture event. The Japanese IPL,
+retail disc and title state were the only inputs. The derived artifact hashes
+were:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| VDP1 VRAM | `62e33308e29fbff3adbab16738cc0be04e1d7a9dadd4a26780ff6445ee9f5682` |
+| VDP1 registers | `00477de68c306db0fabcbfef46b9d24c8815c3069ab2223ef2908c975be37368` |
+| VDP1 command trace | `6346986721f5a9204cbf00e67b7053f9909806ff763b46bb58a3af838c54ac67` |
+
+It reproduced the same 86/162 whole-surface matches. The trace contains one
+textured command whose source interval overlaps the coarse observed upload
+range (`0x63e00..0x6c000`), but that command uses VDP1 colour mode 5
+(direct 16-bit colour). `MENU.BPK` output is indexed 8-bit. The overlap is
+therefore insufficient to attribute that draw to a BPK menu surface and is
+explicitly retained as non-admission evidence rather than converted into a
+renderer route.
