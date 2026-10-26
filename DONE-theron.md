@@ -9,8 +9,10 @@ executes the JP copy at physical `$0D03AB`; the instruction sequence decodes to
 a bit-0 test of zero-page `$06` that writes 0 or 2 to zero-page `$07`. Adjacent
 code tests the inverse bit condition, copies `$27A1` to `$07`, and increments
 `$05/$06` under an interrupt guard. The traced helper does not write the
-six-rectangle buffer. Real-media CTest coverage checks both regions' hashes
-and candidate offsets when authentic media is installed.
+six-rectangle buffer. Its 45 observed calls come from `$A1BE`; the immediate
+caller continuation replaces A with `$DF` without reading `$07`, so the
+direct consumer remains unknown. Real-media CTest coverage checks both
+regions' hashes and candidate offsets when authentic media is installed.
 
 The repeated copies remain ambiguous as the runtime CD source, and the
 zero-page values and adjacent helpers are not yet tied to a native input

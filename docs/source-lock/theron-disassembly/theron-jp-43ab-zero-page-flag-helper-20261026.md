@@ -46,6 +46,16 @@ to pointer input. The runtime capture also contains no same-session CD read
 or authenticated CD-to-RAM receipt. The exact source LBA among seven copies
 remains ambiguous, and no native click behavior is established.
 
+## Dynamic caller context
+
+The same private trace records 45 calls at logical `$A1BE`, physical
+`$0E01BE`, with instruction bytes `20 AB 43` (`JSR $43AB`). Every observed
+return reaches `$A1C1`, then executes `STZ $271F` at `$A1C1`, `STZ $271D` at
+`$A1C4`, and `LDA #$DF` at `$A1C7`. The caller does not consume the helper's
+returned A value before replacing it, and this immediate sequence does not
+read zero-page `$07`. This narrows the observed call path but does not identify
+a later consumer or assign meaning to the written `$27xx` registers.
+
 ## Adjacent authentic helper family
 
 The 23 bytes immediately following the traced routine are also identical at
