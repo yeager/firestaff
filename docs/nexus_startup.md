@@ -123,9 +123,11 @@ normal-disc boot capture route. A 60-frame `--debug --capture-boot-frames 60
 --dump-memory --trace-vdp2-writes` run against the authenticated Japanese
 retail CUE and BIOS recorded one direct master-SH-2 write: PC `0x0602e12e`
 wrote the 16-bit value `0x0000` to VDP2 VRAM bus address `0x05e7fffe` at VDP1
-frame 21. The trace had zero dropped entries. Its CSV and receipt hashes were
-respectively `2cce0bf28d28ef8e898a23d16c0a73ca0f7373c282197cab64a2991b83e45d7a`
-and `7efd6c70e83aea4178fa013ce59dfe7149e05727c26e81b64f736897356646fd`.
+frame 21. The current call-site was return address `0x06032c24`, targeting the
+generic word-copy routine at `0x0602e120`. The trace had zero dropped entries.
+Its CSV and receipt hashes were respectively
+`47b98193f1b7615aad2326f5fc8386b502a214c6a244fece30e3a6580a0efc46` and
+`7efd6c70e83aea4178fa013ce59dfe7149e05727c26e81b64f736897356646fd`.
 
 This is a real SH-2 routine anchor for subsequent disassembly of a retail VDP2
 writer. It does not identify the source resource, establish a complete upload
