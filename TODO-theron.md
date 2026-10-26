@@ -12,6 +12,21 @@
   semantic, or full gameplay parity. The evidence-capture gaps below remain
   open.
 
+## 2026-10-26 — five-second cold-boot RUN hold remains System Card-only
+
+- A fresh isolated PCE Fast reference run used the authenticated USA disc and
+  System Card with `run@9600:300`, which holds RUN for five seconds. The
+  instrumented controller consumed the exact `0008` mask at System Card poll
+  `$E4C5`; all 300 scheduled apply frames were recorded.
+- The reference process nevertheless remained in the System Card path: it
+  recorded no CD IRQ, SCSI command, raw-sector binding, authenticated CD-to-RAM
+  receipt, or non-System-Card controller poll. It therefore does not prove a
+  game launch, despite the requested hold duration having been delivered.
+- The trace and media remain private. The next evidence task is to identify
+  the original System Card title-state transition that precedes the game-owned
+  input consumer; no native gameplay rule or renderer mapping may be inferred
+  from this System Card-only result.
+
 ## 2026-10-26 — retain the bounded controller witness across cold boot
 
 - The PCE Fast capture instrumentation now accepts a bounded input-trace
@@ -42,6 +57,21 @@
   exact save state. It does not identify `$20DB`, prove that RUN starts a
   dungeon, establish party movement, or authorize a native state-driven
   renderer. A same-session source/consumer and pose join is still required.
+
+## 2026-10-26 — matched F5-state UP control confirms a bounded screen delta
+
+- Fresh isolated PCE Fast captures replayed the same authentic Japanese F5
+  state once with `up@1:60` and once without scripted input. The original
+  game poll at `$44D2` read the UP mask in the input run, establishing that
+  the consumer was non-System-Card code.
+- The final authenticated snapshots differ by 79 VRAM bytes, two SAT bytes,
+  and 64 main-RAM bytes; VCE palette and VDC geometry are identical. The
+  observed runtime fields `$20DA`, `$20DB`, `$2031`, and `$203F-$2041` are
+  also identical between the runs.
+- This is a repeatable input-coupled screen-state delta for one authentic
+  saved boundary. It is not a coordinate commit, direction proof, semantic
+  field decoding, or a source-backed renderer contract. The captures contain
+  user media and remain private.
 
 ## 2026-10-26 — matched F5-state VDC commits show an input-coupled screen delta
 
@@ -83,6 +113,14 @@
   identical. This proves an input-coupled raw/screen delta for this boundary,
   but not a party pose, coordinate commit, command consumer, or native
   renderer mapping: the dynamic CD/RAM receipt gate was absent in both runs.
+- A subsequent matched pair preserved the same boundary and recorded the
+  bounded latch-write sequence after the observed poll. The no-input control
+  performed only the baseline writes at `$2911`, `$2912`, and `$2920`; the UP
+  run added a distinct `$2912` value and a finite `$2920` progression, with
+  both paths carrying physical PC/MPR context. This joins the accepted input
+  to a game-RAM write boundary, but the fields remain opaque until a
+  source-bound execution path and an independently observed gameplay result
+  establish their meaning.
 - The isolated build and raw traces were removed after verification. No game
   media, save state, firmware, or raw trace is tracked by Git.
 
