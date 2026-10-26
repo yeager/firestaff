@@ -47118,7 +47118,7 @@ if(BUILD_TESTING AND TARGET firestaff_theron)
     )
     set_tests_properties(theron_v1_jp_7z_direct_boot PROPERTIES
         SKIP_RETURN_CODE 77
-        LABELS "theron;real-media;archive;startup;native;no-extraction;no-synthetic"
+        LABELS "theron;real-media;archive;startup;native;debug;no-extraction;no-synthetic"
     )
     add_test(
         NAME theron_v1_us_7z_direct_boot
@@ -47192,7 +47192,7 @@ if(BUILD_TESTING AND TARGET firestaff_theron)
     )
     set_tests_properties(theron_v1_jp_cue_runtime_boot PROPERTIES
         SKIP_RETURN_CODE 77
-        LABELS "theron;real-media;startup;native"
+        LABELS "theron;real-media;startup;native;debug;no-extraction;no-synthetic"
         ENVIRONMENT
             "FIRESTAFF_THERON_JP_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/Dungeon Master - Theron's Quest (Japan) (Rev 1).cue"
     )

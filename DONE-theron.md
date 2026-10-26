@@ -1,5 +1,21 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-26 — run the authentic Japanese CUE boot check with debug receipts
+
+The authentic Japanese Rev. 1 CUE boot regression now passes `--debug` to the
+native Firestaff executable, matching the raw-BIN and SDL gameplay regressions.
+It keeps the existing hash, native runtime, level, party and champion checks;
+the change makes the same real-media route emit diagnostic receipts for parity
+investigation without introducing an emulator or synthetic runtime path. The
+CUE check now also requires its already staged authentic CUE instead of
+extracting an archive to disk; direct archive admission remains covered by the
+separate archive test route.
+
+The Japanese 7z direct-archive regression also runs with `--debug` and uses a
+caller-selected task scratch directory only for its archive symlink. The game
+archive itself remains in place and Firestaff reads it through the native
+archive path.
+
 ## 2026-10-25 — route Buttons I and II through native keyboard entry
 
 The documented layout-stable controller keys now reach Theron's native SDL
