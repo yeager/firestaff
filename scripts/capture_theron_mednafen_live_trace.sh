@@ -10,7 +10,11 @@ system_card=${THERON_SYSTEM_CARD:-}
 trace=${THERON_LIVE_TRACE_OUTPUT:-}
 seconds=${THERON_CAPTURE_SECONDS:-45}
 capture_startup_grace=${THERON_CAPTURE_STARTUP_GRACE:-30}
-capture_shutdown_signal=${THERON_CAPTURE_SHUTDOWN_SIGNAL:-INT}
+# Leave the default unset until the selected module is known.  PCE Fast
+# reaches CloseGame and flushes its reference snapshots on TERM, while its
+# INT path can remain in the emulator loop until timeout force-kills it.
+# An explicit caller choice remains authoritative.
+capture_shutdown_signal=${THERON_CAPTURE_SHUTDOWN_SIGNAL:-}
 # Keep the historical silent capture default, but allow a real CDDA-backed
 # run when investigating BIOS/CD initialization.  This flag changes only the
 # emulator's audio output path; it never promotes media bytes to game state.
@@ -638,6 +642,13 @@ require_mednafen_module() {
     exit 1
 }
 require_mednafen_module "$capture_mednafen_module"
+if [[ -z "$capture_shutdown_signal" ]]; then
+    if [[ "$capture_mednafen_module" == pce_fast ]]; then
+        capture_shutdown_signal=TERM
+    else
+        capture_shutdown_signal=INT
+    fi
+fi
 if [[ "$capture_pce_fast_vram_commit_trace" == 1 ]] &&
    ! grep -aFq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE' "$mednafen_bin"; then
     # A PCE Fast module and its controller trace are insufficient for a

@@ -396,6 +396,9 @@ if ! grep -Fq 'capture_clonecd_track02=0' "$script" ||
     exit 1
 fi
 if ! grep -Fq 'capture_force_kill_seconds=5' "$script" ||
+   ! grep -Fq 'if [[ "$capture_mednafen_module" == pce_fast ]]; then' "$script" ||
+   ! grep -Fq 'capture_shutdown_signal=TERM' "$script" ||
+   ! grep -Fq 'capture_shutdown_signal=INT' "$script" ||
    ! grep -Fq 'gtimeout -k "$capture_force_kill_seconds" -s "$capture_shutdown_signal"' "$script" ||
    ! grep -Fq 'timeout -k "$capture_force_kill_seconds" -s "$capture_shutdown_signal"' "$script"; then
     printf '%s\n' 'FAIL: live capture timeout must force-terminate a Mednafen process that ignores its soft shutdown signal' >&2

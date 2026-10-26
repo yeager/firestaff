@@ -5,6 +5,20 @@ only as an external reference instrument for authentic original-game behavior
 and data capture; it is never part of the shipped runtime or a substitute for
 native Firestaff gameplay.
 
+## 2026-10-26 — PCE Fast captures default to a close-time snapshot signal
+
+The reference capture launcher now defaults PCE Fast to `TERM` unless the
+caller explicitly selects another shutdown signal. In an isolated TRV2 probe
+using the authentic Japanese Rev. 1 disc and preserved gameplay state, `TERM`
+reached Mednafen's `CloseGame` boundary and wrote complete 8 KiB main-RAM,
+64 KiB VRAM, VCE, SAT and VDC-state snapshots. The prior PCE Fast `INT`
+default did not exit that older instrumented binary before the bounded force
+kill and therefore produced no snapshots.
+
+This selects a reliable reference-capture shutdown path only. It does not
+assign meaning to any captured RAM byte, prove a party pose or movement, or
+alter Firestaff's native runtime.
+
 ## 2026-10-26 — native launch does not expose the System Card Run menu
 
 Firestaff's Theron launcher consumes a hash-verified Track 02 image and enters
