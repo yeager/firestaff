@@ -74,7 +74,7 @@ if "dm2 platform=FM Towns edition=fmtowns-ja matched" not in trace:
     raise SystemExit("FAIL: DM1-leaf menu scan did not discover authentic DM2 FM Towns media")
 
 dm1_runtime = re.search(
-    r"startup-frame game=dm1 elapsed-ms=0 source=dm1 phase=dm1-runtime "
+    r"startup-frame game=dm1 .*elapsed-ms=0 .*source=dm1 phase=dm1-runtime "
     r"active=0 .*level-loaded=1 map=0 party=1,3 dir=2 champions=0", trace)
 csb_runtime = re.search(
     r"startup-frame game=dm1 .*source=csb phase=inactive active=0 .*"
