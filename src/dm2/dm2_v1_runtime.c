@@ -15345,7 +15345,7 @@ int dm2_v1_runtime_live_missile_timer_receipt(
         rt->timer_queue.count > DM2_V1_SOURCE_TIMER_MAX ||
         !(record = dm2_v1_record_pool_address(
               &rt->record_pools, (int16_t)missile_record_handle)) ||
-        rt->record_pools.pools[14].record_size < 8u) {
+        rt->record_pools.pools[14].record_size < 8) {
         return 0;
     }
     timer_index = dm2_runtime_missile_rd16(&rt->record_pools, record + 6);
