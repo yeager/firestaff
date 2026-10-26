@@ -8,6 +8,7 @@ import csv
 import tempfile
 from pathlib import Path
 
+from analyze_nexus_vdp1_command_sequence import Record, describe
 from analyze_nexus_vdp1_source_join import (
     accepted_retail_hashes,
     aggregate_source_join_status,
@@ -22,6 +23,22 @@ BUILD.mkdir(exist_ok=True)
 
 
 class AcceptedRetailHashesTests(unittest.TestCase):
+    def test_command_summary_excludes_skipped_commands_from_active_state(self) -> None:
+        def command(offset: int, control: int) -> Record:
+            return Record(offset, (control,) + (0,) * 15)
+
+        report = describe([
+            command(0x00, 0x4000),       # skipped draw
+            command(0x20, 0x400A),       # skipped local-coordinate command
+            command(0x40, 0x000A),       # active local-coordinate command
+            command(0x60, 0x0000),       # active draw
+            command(0x80, 0x8000),       # END
+        ], 0)
+        self.assertEqual(report["draw_count"], 1)
+        self.assertEqual(report["local_coordinate_count"], 1)
+        self.assertEqual(report["types"],
+                         ["SKIP 0x0", "SKIP 0xa", "0xa", "0x0", "END"])
+
     def test_zero_filled_texture_is_not_source_identity(self) -> None:
         self.assertFalse(has_informative_source(bytes(448)))
         self.assertTrue(has_informative_source(b"\x00\x01"))

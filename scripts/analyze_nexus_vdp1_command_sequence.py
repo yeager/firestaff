@@ -54,6 +54,10 @@ class Record:
         return bool(self.control & 0x8000)
 
     @property
+    def skipped(self) -> bool:
+        return bool(self.control & 0x4000)
+
+    @property
     def link_offset(self) -> int:
         return self.words[1] << 3
 
@@ -220,10 +224,11 @@ def signed_13(value: int) -> int:
 
 
 def describe(chain: list[Record], copr: int) -> dict[str, object]:
-    draws = [r for r in chain if not r.end and r.command_type <= 7]
-    user_clips = [r for r in chain if not r.end and r.command_type == 8]
-    system_clips = [r for r in chain if not r.end and r.command_type == 9]
-    locals_ = [r for r in chain if not r.end and r.command_type == 10]
+    active = [r for r in chain if not r.end and not r.skipped]
+    draws = [r for r in active if r.command_type <= 7]
+    user_clips = [r for r in active if r.command_type == 8]
+    system_clips = [r for r in active if r.command_type == 9]
+    locals_ = [r for r in active if r.command_type == 10]
     end = chain[-1]
     user_clip_bounds = [
         (r.words[6] & 0x1FFF, r.words[7] & 0x1FFF,
@@ -251,7 +256,12 @@ def describe(chain: list[Record], copr: int) -> dict[str, object]:
         "local_coordinates": local_points,
         "end_control": end.control,
         "offsets": [r.offset for r in chain],
-        "types": ["END" if r.end else f"0x{r.command_type:x}" for r in chain],
+        "types": [
+            "END" if r.end else
+            f"SKIP 0x{r.command_type:x}" if r.skipped else
+            f"0x{r.command_type:x}"
+            for r in chain
+        ],
     }
 
 
