@@ -142,6 +142,22 @@ with destination `0x25e7fffe`. This explains the recorded address, but its
 source is a stack temporary. It therefore remains an initialization anchor,
 not source-resource provenance or permission to draw a host menu.
 
+## Delayed title-menu confirm observation (2026-10-26)
+
+An authenticated Japanese retail title-prompt state was replayed in Ymir with
+the deterministic capture route for 360 frames. Start was held for frames
+`0..59`; Control Pad 1 A was held for frames `240..249`. The captured final
+frame was VDP1 frame 231 with 112 command records, rather than the earlier
+title-menu capture's 139 records. A window capture made immediately after the
+dump showed the retail door-opening transition; its SHA-256 was
+`abdd1e9f65c0999d967fced4dad456856751cd9afcb46080616f617470ffc55a`.
+
+This is an observed response to a delayed input schedule, not sufficient
+proof that A semantically confirms New Game: an equally timed no-A control,
+the next stable screen, source-resource joins, and palette/compositor evidence
+are still missing. Do not enable a host menu, gameplay, HUD, or synthetic
+confirmation rule from this observation.
+
 ## Title-menu VDP1 source-span join (2026-10-19 capture; analyzed 2026-10-26)
 
 A read-only source-join analysis on TRV2 used the retained Ymir v0.4.0
