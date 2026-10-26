@@ -7,6 +7,8 @@
 extern "C" {
 #endif
 
+#define THERON_V1_HUC6280_CALLEE_CANDIDATE_COUNT 7u
+
 typedef enum {
     THERON_V1_HUC6280_DISASSEMBLY_UNAVAILABLE = 0,
     THERON_V1_HUC6280_DISASSEMBLY_REJECTED,
@@ -125,6 +127,21 @@ typedef struct {
     uint16_t vce_palette_caller_bytes;
     uint32_t vce_palette_caller_file_offset;
     uint32_t vce_palette_caller_fnv1a;
+    /* Static raw-BIN candidates for the helper reached by JP $43AB and US
+     * $43AE. Matching bytes do not identify the source LBA or prove which
+     * copy was loaded at runtime. */
+    int initializer_callee_candidates_verified;
+    uint16_t initializer_callee_logical_address;
+    uint16_t initializer_callee_bytes;
+    uint8_t initializer_callee_candidate_count;
+    uint32_t initializer_callee_candidate_file_offsets[
+        THERON_V1_HUC6280_CALLEE_CANDIDATE_COUNT];
+    uint32_t initializer_callee_fnv1a;
+    /* Adjacent static helper family after the traced initializer callee:
+     * inverse bit test, $27A1 load, and interrupt-guarded $05/$06 increment. */
+    int initializer_adjacent_helpers_verified;
+    uint16_t initializer_adjacent_helpers_bytes;
+    uint32_t initializer_adjacent_helpers_fnv1a;
     int semantic_publication_allowed;
     uint32_t source_file_size;
     uint32_t bank_file_offset;
