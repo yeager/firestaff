@@ -12,6 +12,7 @@ expected_media="$data_dir"
 scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 entrance_capture_dir=""
 isolated_home=""
+root_selected_fixture=""
 
 cleanup_entrance_capture() {
     if [ -n "$entrance_capture_dir" ] && [ -d "$entrance_capture_dir" ]; then
@@ -21,6 +22,10 @@ cleanup_entrance_capture() {
 }
 cleanup_test_artifacts() {
     cleanup_entrance_capture
+    if [ -n "$root_selected_fixture" ] && [ -d "$root_selected_fixture" ]; then
+        find "$root_selected_fixture" -depth -delete
+    fi
+    root_selected_fixture=""
     if [ -n "$isolated_home" ] && [ -d "$isolated_home" ]; then
         find "$isolated_home" -depth -delete
     fi
@@ -646,6 +651,45 @@ for loose_selected_name in GRAPHICS.DAT DUNGEON.DAT; do
     esac
     echo "PASS: CSB FM Towns $language CLI launches from selected loose $loose_selected_name"
 done
+
+# Also exercise scanner selection when the loose image places authenticated
+# GRAPHICS.DAT/DUNGEON.DAT directly at disc root. The real media remains in
+# its original directory; this temporary view is made only of symlinks.
+if [ -d "$loose_data_root" ] && [ -d "$loose_selected_dir" ]; then
+    root_selected_fixture=$(mktemp -d "$scratch_root/csb-fmtowns-root-file.XXXXXX")
+    for loose_entry in "$loose_data_root"/*; do
+        [ -e "$loose_entry" ] || continue
+        ln -s "$loose_entry" "$root_selected_fixture/$(basename "$loose_entry")"
+    done
+    for loose_selected_name in GRAPHICS.DAT DUNGEON.DAT; do
+        loose_selected_file="$loose_selected_dir/$loose_selected_name"
+        [ -f "$loose_selected_file" ] || continue
+        rm -f "$root_selected_fixture/$loose_selected_name"
+        ln -s "$loose_selected_file" "$root_selected_fixture/$loose_selected_name"
+        root_file_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+            SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy run_firestaff \
+            --game csb --data-dir "$root_selected_fixture/$loose_selected_name" \
+            --platform fm-towns $edition_arg --boot-probe \
+            --boot-probe-frames 2 --boot-probe-expect-startup-active 1 \
+            --boot-probe-expect-runtime-tick-max 0 --duration 0 2>&1)" || {
+            printf '%s\n' "$root_file_output" >&2
+            echo "FAIL: CSB FM Towns CLI rejected disc-root $loose_selected_name" >&2
+            exit 1
+        }
+        case "$root_file_output" in
+            *"variant=csb-fmtowns-$language"*"phase=csb-fmtowns-title"*"startupAnimation=title-anm"*) ;;
+            *)
+                echo "FAIL: CSB FM Towns CLI lost disc-root $loose_selected_name owner" >&2
+                printf '%s\n' "$root_file_output" >&2
+                exit 1
+                ;;
+        esac
+        echo "PASS: CSB FM Towns CLI launches from disc-root $loose_selected_name"
+        rm -f "$root_selected_fixture/$loose_selected_name"
+    done
+    find "$root_selected_fixture" -depth -delete
+    root_selected_fixture=""
+fi
 
 if [ -n "$user_save" ]; then
     menu_resume_probe="$isolated_home/menu-resume-runtime.json"

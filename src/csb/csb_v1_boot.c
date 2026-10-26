@@ -2971,13 +2971,35 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
             : "83c56cf1b779e7460a55c9299ebeb04b";
         if (asset_file_matches_md5(data_dir, graphics_md5) ||
             asset_file_matches_md5(data_dir, dungeon_md5)) {
+            const char *selected_parent_leaf;
+            const char *path_separator;
             if (!FSP_ParentDir(selected_data_directory,
-                               sizeof(selected_data_directory), data_dir) ||
-                !FSP_ParentDir(disc_root, sizeof(disc_root),
-                               selected_data_directory) ||
-                !FSP_DirExists(disc_root)) {
+                               sizeof(selected_data_directory), data_dir)) {
                 return 0;
             }
+            path_separator = strrchr(selected_data_directory, '/');
+#ifdef _WIN32
+            {
+                const char *backslash = strrchr(selected_data_directory, '\\');
+                if (backslash && (!path_separator || backslash > path_separator))
+                    path_separator = backslash;
+            }
+#endif
+            selected_parent_leaf = path_separator
+                ? path_separator + 1 : selected_data_directory;
+            /* Loose Towns images may select a file inside CDATA/CJDATA or
+             * a file placed directly at disc root. Walk up twice only for
+             * the language-private directory; otherwise the parent already
+             * is the disc root. */
+            if (strcmp(selected_parent_leaf, "CDATA") == 0 ||
+                strcmp(selected_parent_leaf, "CJDATA") == 0) {
+                if (!FSP_ParentDir(disc_root, sizeof(disc_root),
+                                   selected_data_directory)) return 0;
+            } else {
+                snprintf(disc_root, sizeof(disc_root), "%s",
+                         selected_data_directory);
+            }
+            if (!disc_root[0] || !FSP_DirExists(disc_root)) return 0;
             data_dir = disc_root;
         }
     }

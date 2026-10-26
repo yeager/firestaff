@@ -6,6 +6,7 @@
 - `DM1 PC`: use source-backed wall inscription, door-button, champion-mirror and held-item presentation data in the covered PC 3.4 runtime paths; apply ReDMCSB F0107 scaling, clipping, horizontal flips, palette remapping and transparency to wall ornaments.
 - `CSB Amiga`: add playback of the authentic FTL intro sequence from SWSH media, render source-backed M648 front inscriptions, preserve mixed-case archive access, and keep the missing-SWSH fallback explicit.
 - `CSB FM Towns`: bind the native F31 HUD, add source-backed stairs and animated doors, and retain the selected loose-file launch root for tested routes.
+- `CSB FM Towns`: preserve the disc root when a loose `GRAPHICS.DAT` or `DUNGEON.DAT` is selected directly, and keep door-panel rendering available when optional button art cannot be loaded.
 - `DM2 FM Towns`: bind HUD portraits, champion status and dungeon viewport materials to native asset and runtime state, including the 0x47 invisibility timer, four HME-242 alternate HUD frames and covered live projectile paths.
 - `DM2 combat rendering`: bind moving missiles to their live source tile and timer state, and keep static item rendering tied to the source cell.
 - `Launcher startup`: bind selected games by stable game identity and honor explicit startup window dimensions across supported routes.
@@ -15,6 +16,7 @@
 ## Developer changes
 
 - `DM1, CSB and DM2 authentic-media tests`: add and extend original-media coverage for FM Towns handoff, HUD, stairs, doors, DM1 PC34 combat and wall materials, and DM2 live viewport state.
+- `CSB FM Towns launch and viewport regressions`: cover directly selected loose files at the disc root and keep F0111 door panels independent from optional F0110 button assets.
 - `CSB Amiga FTL reader`: bound container and decoded-data reads, correct DATA-area decoding and checksum arithmetic, and add authentic SWSH decode and runtime-route regressions.
 - `FM Towns graphics readers`: add source-locked F20 HUD and wall-ornament tests and CSB stair-state checks against authentic media.
 - `Nexus VDP1 and VDP2 analysis`: add capture-bound command replay, texture and palette resolution, sprite composition, DGN/item material joins, and source-to-capture validation tools; retain the distinction between traced captures and production gameplay.

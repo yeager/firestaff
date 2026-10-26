@@ -18,7 +18,7 @@ static const char* const g_changelogLines[] = {
     "",
     "V" FIRESTAFF_VERSION_NUMBER "  (2026-10-27)",
     "  - DM1 FM Towns uses authentic F20 wall, font and champion HUD assets for tested HoC paths; PC34 wall, button, mirror, held-item and F0107 ornament rendering follows original material rules.",
-    "  - CSB Amiga plays the authentic SWSH FTL intro and draws native M648 front inscriptions; CSB FM Towns uses native F31 HUD assets and adds stairs and animated doors for tested states.",
+    "  - CSB Amiga plays the authentic SWSH FTL intro and draws native M648 front inscriptions; CSB FM Towns uses native F31 HUD assets and adds stairs and animated doors for tested states, preserves the root for directly selected loose media, and keeps door panels visible when optional button assets fail.",
     "  - DM2 FM Towns HUD and viewport paths use native assets and runtime state, including the 0x47 invisibility timer, HME-242 alternate frames and live missile ownership/timing.",
     "  - Startup identity, window sizing, shared renderer setup and unsupported CSB PC CLI paths receive targeted corrections.",
     "  - Authentic-media tests verify Theron native keyboard actions in both regions; capture-analysis and trace checks expand while Nexus and Theron gameplay gaps remain open.",
