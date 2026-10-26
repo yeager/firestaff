@@ -17,60 +17,60 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: src/engine/main_loop_m11.c:474
+#: src/engine/main_loop_m11.c:479
 msgid "NEXUS LOAD FAILED"
 msgstr "NEXUS LOAD FAILED"
 
-#: src/engine/main_loop_m11.c:476
+#: src/engine/main_loop_m11.c:481
 msgid "CHECK ISO/BIN OR EXTRACTED FILES"
 msgstr "CHECK ISO/BIN OR EXTRACTED FILES"
 
-#: src/engine/main_loop_m11.c:483
+#: src/engine/main_loop_m11.c:488
 msgid "THERON STARTUP FAILED"
 msgstr "THERON STARTUP FAILED"
 
-#: src/engine/main_loop_m11.c:485
+#: src/engine/main_loop_m11.c:490
 msgid "VERIFY CUE/BIN AND STARTUP DETAILS"
 msgstr "VERIFY CUE/BIN AND STARTUP DETAILS"
 
-#: src/engine/main_loop_m11.c:503
+#: src/engine/main_loop_m11.c:508
 msgid "CSB LOAD FAILED"
 msgstr "CSB LOAD FAILED"
 
-#: src/engine/main_loop_m11.c:505
+#: src/engine/main_loop_m11.c:510
 msgid "CHECK GRAPHICS/DUNGEON DATA"
 msgstr "CHECK GRAPHICS/DUNGEON DATA"
 
-#: src/engine/main_loop_m11.c:508
+#: src/engine/main_loop_m11.c:513
 msgid "DUNGEON LOAD FAILED"
 msgstr "DUNGEON LOAD FAILED"
 
-#: src/engine/main_loop_m11.c:510
+#: src/engine/main_loop_m11.c:515
 msgid "CHECK DUNGEON.DAT"
 msgstr "CHECK DUNGEON.DAT"
 
-#: src/engine/main_loop_m11.c:513 src/engine/main_loop_m11.c:9301
-#: src/engine/main_loop_m11.c:9324 src/ui/menu_startup_m12.c:1147
+#: src/engine/main_loop_m11.c:518 src/engine/main_loop_m11.c:9302
+#: src/engine/main_loop_m11.c:9325 src/ui/menu_startup_m12.c:1147
 msgid "ESC RETURNS TO MENU"
 msgstr "ESC KEMBALI KE MENU"
 
-#: src/engine/main_loop_m11.c:9297 src/engine/main_loop_m11.c:9320
+#: src/engine/main_loop_m11.c:9298 src/engine/main_loop_m11.c:9321
 msgid "CSB UTILITY DISK NOT READY"
 msgstr "CSB UTILITY DISK NOT READY"
 
-#: src/engine/main_loop_m11.c:9299
+#: src/engine/main_loop_m11.c:9300
 msgid "VERIFIED FM TOWNS CSB MEDIA REQUIRED"
 msgstr "VERIFIED FM TOWNS CSB MEDIA REQUIRED"
 
-#: src/engine/main_loop_m11.c:9322
+#: src/engine/main_loop_m11.c:9323
 msgid "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED"
 msgstr "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED"
 
-#: src/ui/menu_startup_m12.c:324 src/ui/menu_startup_m12.c:6443
+#: src/ui/menu_startup_m12.c:324 src/ui/menu_startup_m12.c:6441
 msgid "ACCESSIBILITY"
 msgstr "AKSESIBILITAS"
 
-#: src/ui/menu_startup_m12.c:324 src/ui/menu_startup_m12.c:6440
+#: src/ui/menu_startup_m12.c:324 src/ui/menu_startup_m12.c:6438
 msgid "AUDIO"
 msgstr "AUDIO"
 
@@ -78,17 +78,17 @@ msgstr "AUDIO"
 msgid "CONTROLS"
 msgstr "KONTROL"
 
-#: src/ui/menu_startup_m12.c:324 src/ui/menu_startup_m12.c:2040
-#: src/ui/menu_startup_m12.c:2052
+#: src/ui/menu_startup_m12.c:324 src/ui/menu_startup_m12.c:2038
+#: src/ui/menu_startup_m12.c:2050
 msgid "GAME"
 msgstr "GAME"
 
-#: src/ui/menu_startup_m12.c:324 src/ui/menu_startup_m12.c:6425
-#: src/ui/menu_startup_m12.c:11574
+#: src/ui/menu_startup_m12.c:324 src/ui/menu_startup_m12.c:6423
+#: src/ui/menu_startup_m12.c:11576
 msgid "GRAPHICS"
 msgstr "GRAFIS"
 
-#: src/ui/menu_startup_m12.c:325 src/ui/menu_startup_m12.c:6446
+#: src/ui/menu_startup_m12.c:325 src/ui/menu_startup_m12.c:6444
 msgid "ONLINE"
 msgstr "DARING"
 
@@ -268,7 +268,7 @@ msgstr "TR"
 
 #: src/ui/menu_startup_m12.c:531 src/ui/menu_startup_m12.c:537
 #: src/ui/menu_startup_m12.c:559 src/ui/menu_startup_m12.c:562
-#: src/ui/menu_startup_m12.c:5890 src/ui/menu_startup_m12.c:6034
+#: src/ui/menu_startup_m12.c:5888 src/ui/menu_startup_m12.c:6032
 msgid "AUTO"
 msgstr "OTOMATIS"
 
@@ -355,12 +355,12 @@ msgstr "RUANG"
 #: src/ui/menu_startup_m12.c:541 src/ui/menu_startup_m12.c:557
 #: src/ui/menu_startup_m12.c:563 src/ui/menu_startup_m12.c:565
 #: src/ui/menu_startup_m12.c:566 src/ui/menu_startup_m12.c:567
-#: src/ui/menu_startup_m12.c:6020 src/ui/menu_startup_m12.c:6125
+#: src/ui/menu_startup_m12.c:6018 src/ui/menu_startup_m12.c:6123
 msgid "OFF"
 msgstr "MATI"
 
 #: src/ui/menu_startup_m12.c:541 src/ui/menu_startup_m12.c:557
-#: src/ui/menu_startup_render_modern_m12.c:2515
+#: src/ui/menu_startup_render_modern_m12.c:2523
 msgid "ON"
 msgstr "HIDUP"
 
@@ -412,8 +412,8 @@ msgstr "VULKAN"
 msgid "AVAILABLE"
 msgstr "TERSEDIA"
 
-#: src/ui/menu_startup_m12.c:560 src/ui/menu_startup_m12.c:11599
-#: src/ui/menu_startup_m12.c:13770 src/ui/menu_startup_render_modern_m12.c:2127
+#: src/ui/menu_startup_m12.c:560 src/ui/menu_startup_m12.c:11601
+#: src/ui/menu_startup_m12.c:13776 src/ui/menu_startup_render_modern_m12.c:2127
 msgid "UNAVAILABLE"
 msgstr "TIDAK TERSEDIA"
 
@@ -526,16 +526,16 @@ msgid "REMASTERED"
 msgstr "REMASTER"
 
 #: src/ui/menu_startup_m12.c:859 src/ui/menu_startup_m12.c:880
-#: src/ui/menu_startup_m12.c:11014 src/ui/menu_startup_m12.c:11457
+#: src/ui/menu_startup_m12.c:11016 src/ui/menu_startup_m12.c:11459
 #: src/ui/menu_startup_render_modern_m12.c:1543
-#: src/ui/menu_startup_render_modern_m12.c:2780
+#: src/ui/menu_startup_render_modern_m12.c:2788
 msgid "DUNGEON MASTER"
 msgstr "DUNGEON MASTER"
 
 #: src/ui/menu_startup_m12.c:860 src/ui/menu_startup_m12.c:890
-#: src/ui/menu_startup_m12.c:11016 src/ui/menu_startup_m12.c:11471
+#: src/ui/menu_startup_m12.c:11018 src/ui/menu_startup_m12.c:11473
 #: src/ui/menu_startup_render_modern_m12.c:1544
-#: src/ui/menu_startup_render_modern_m12.c:2783
+#: src/ui/menu_startup_render_modern_m12.c:2791
 msgid "CHAOS STRIKES BACK"
 msgstr "CHAOS STRIKES BACK"
 
@@ -560,16 +560,16 @@ msgstr "DISK UTILITAS CSB (KOTA FM)"
 msgid "CSB UTILITY DISK — HINT ORACLE"
 msgstr "DISK UTILITAS CSB — PETUNJUK ORACLE"
 
-#: src/ui/menu_startup_m12.c:867 src/ui/menu_startup_m12.c:12549
-#: src/ui/menu_startup_m12.c:12552 src/ui/menu_startup_render_modern_m12.c:1902
+#: src/ui/menu_startup_m12.c:867 src/ui/menu_startup_m12.c:12554
+#: src/ui/menu_startup_m12.c:12557 src/ui/menu_startup_render_modern_m12.c:1902
 #: src/ui/menu_startup_render_modern_m12.c:2175
 msgid "MUSEUM OF LORE"
 msgstr "MUSEUM LORE"
 
-#: src/ui/menu_startup_m12.c:868 src/ui/menu_startup_m12.c:9339
-#: src/ui/menu_startup_m12.c:9908 src/ui/menu_startup_m12.c:11210
-#: src/ui/menu_startup_m12.c:12584 src/ui/menu_startup_m12.c:12587
-#: src/ui/menu_startup_m12.c:12732
+#: src/ui/menu_startup_m12.c:868 src/ui/menu_startup_m12.c:9352
+#: src/ui/menu_startup_m12.c:9924 src/ui/menu_startup_m12.c:11212
+#: src/ui/menu_startup_m12.c:12589 src/ui/menu_startup_m12.c:12592
+#: src/ui/menu_startup_m12.c:12737
 msgid "SETTINGS"
 msgstr "PENGATURAN"
 
@@ -789,8 +789,8 @@ msgstr "V1 MEMPERTAHANKAN PERILAKU DASAR"
 msgid "CHRISTOPHE FONTANEL DOCUMENTED VITAL HISTORY"
 msgstr "CHRISTOPHE FONTANEL MENDOKUMENTASIKAN SEJARAH PENTING"
 
-#: src/ui/menu_startup_m12.c:914 src/ui/menu_startup_m12.c:12566
-#: src/ui/menu_startup_m12.c:12569
+#: src/ui/menu_startup_m12.c:914 src/ui/menu_startup_m12.c:12571
+#: src/ui/menu_startup_m12.c:12574
 msgid "CREDITS"
 msgstr "KREDIT"
 
@@ -934,8 +934,8 @@ msgstr "ATAS/BAWAH GERAK   ENTER BUKA   ESC KELUAR"
 msgid "PERSISTED OPTIONS"
 msgstr "OPSI TERSIMPAN"
 
-#: src/ui/menu_startup_m12.c:1138 src/ui/menu_startup_m12.c:11572
-#: src/ui/menu_startup_m12.c:13782
+#: src/ui/menu_startup_m12.c:1138 src/ui/menu_startup_m12.c:11574
+#: src/ui/menu_startup_m12.c:13788
 msgid "LANGUAGE"
 msgstr "BAHASA"
 
@@ -959,8 +959,8 @@ msgstr "MODE JENDELA"
 msgid "CHANGES SAVE IMMEDIATELY TO CONFIG"
 msgstr "PERUBAHAN LANGSUNG TERSIMPAN KE KONFIGURASI"
 
-#: src/ui/menu_startup_m12.c:1144 src/ui/menu_startup_m12.c:11903
-#: src/ui/menu_startup_m12.c:11946
+#: src/ui/menu_startup_m12.c:1144 src/ui/menu_startup_m12.c:11905
+#: src/ui/menu_startup_m12.c:11948
 msgid "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
 msgstr "KIRI/KANAN PUTAR   ENTER LANJUT   ESC KEMBALI"
 
@@ -968,7 +968,7 @@ msgstr "KIRI/KANAN PUTAR   ENTER LANJUT   ESC KEMBALI"
 msgid "ENTER OR ESC RETURNS TO MENU"
 msgstr "ENTER ATAU ESC KEMBALI KE MENU"
 
-#: src/ui/menu_startup_m12.c:1146 src/ui/menu_startup_m12.c:9349
+#: src/ui/menu_startup_m12.c:1146 src/ui/menu_startup_m12.c:9362
 msgid "READY TO LAUNCH"
 msgstr "SIAP DILUNCURKAN"
 
@@ -1042,833 +1042,833 @@ msgstr "ARCHIVE: %s  OPTION: %s"
 msgid "RESTART WITH THE OPTION, THEN RESCAN GAME DATA"
 msgstr "RESTART WITH THE OPTION, THEN RESCAN GAME DATA"
 
-#: src/ui/menu_startup_m12.c:2042 src/ui/menu_startup_m12.c:9919
+#: src/ui/menu_startup_m12.c:2040 src/ui/menu_startup_m12.c:9935
 msgid "Dungeon Master"
 msgstr "Dungeon Master"
 
-#: src/ui/menu_startup_m12.c:2044 src/ui/menu_startup_m12.c:9919
+#: src/ui/menu_startup_m12.c:2042 src/ui/menu_startup_m12.c:9935
 msgid "Chaos Strikes Back"
 msgstr "Chaos Strikes Back"
 
-#: src/ui/menu_startup_m12.c:2047
+#: src/ui/menu_startup_m12.c:2045
 msgid "Dungeon Master II: The Legend of Skullkeep"
 msgstr "Dungeon Master II: The Legend of Skullkeep"
 
-#: src/ui/menu_startup_m12.c:2049
+#: src/ui/menu_startup_m12.c:2047
 msgid "Dungeon Master Nexus"
 msgstr "Dungeon Master Nexus"
 
-#: src/ui/menu_startup_m12.c:2051 src/ui/menu_startup_m12.c:9920
+#: src/ui/menu_startup_m12.c:2049 src/ui/menu_startup_m12.c:9936
 msgid "Theron's Quest"
 msgstr "Theron's Quest"
 
-#: src/ui/menu_startup_m12.c:2072 src/ui/menu_startup_m12.c:2834
-#: src/ui/menu_startup_m12.c:2943
+#: src/ui/menu_startup_m12.c:2070 src/ui/menu_startup_m12.c:2832
+#: src/ui/menu_startup_m12.c:2941
 msgid "STARTING"
 msgstr "MEMULAI"
 
-#: src/ui/menu_startup_m12.c:2074
+#: src/ui/menu_startup_m12.c:2072
 msgid "CHECKING CACHED RESUME PATHS"
 msgstr "MEMERIKSA JALUR RESUME Cache"
 
-#: src/ui/menu_startup_m12.c:2076
+#: src/ui/menu_startup_m12.c:2074
 msgid "CHECKING DIRECT LAUNCH PATH"
 msgstr "MEMERIKSA JALUR PELUNCURAN LANGSUNG"
 
-#: src/ui/menu_startup_m12.c:2078
+#: src/ui/menu_startup_m12.c:2076
 msgid "CHECKING EXPLICIT FILE REQUEST"
 msgstr "MEMERIKSA PERMINTAAN FILE EKSPLISIT"
 
-#: src/ui/menu_startup_m12.c:2080
+#: src/ui/menu_startup_m12.c:2078
 msgid "BUILDING SEARCH ROOTS"
 msgstr "MEMBANGUN AKAR PENCARIAN"
 
-#: src/ui/menu_startup_m12.c:2083 src/ui/menu_startup_m12.c:2085
-#: src/ui/menu_startup_m12.c:10750
+#: src/ui/menu_startup_m12.c:2081 src/ui/menu_startup_m12.c:2083
+#: src/ui/menu_startup_m12.c:10752
 msgid "CHECKING ORIGINAL FILE CANDIDATES"
 msgstr "MEMERIKSA CALON FILE ASLI"
 
-#: src/ui/menu_startup_m12.c:2091
+#: src/ui/menu_startup_m12.c:2089
 msgid "MATCHING GAME VERSIONS"
 msgstr "MENCOCOKKAN VERSI GAME"
 
-#: src/ui/menu_startup_m12.c:2093
+#: src/ui/menu_startup_m12.c:2091
 msgid "MATCHING REQUIRED FILES"
 msgstr "MENCOCOKKAN FILE YANG DIPERLUKAN"
 
-#: src/ui/menu_startup_m12.c:2095 src/ui/menu_startup_m12.c:2100
-#: src/ui/menu_startup_m12.c:2466 src/ui/menu_startup_m12.c:2575
-#: src/ui/menu_startup_m12.c:2833 src/ui/menu_startup_m12.c:2942
-#: src/ui/menu_startup_m12.c:10748 src/ui/menu_startup_m12.c:10758
-#: src/ui/menu_startup_m12.c:11894 src/ui/menu_startup_m12.c:11940
-#: src/ui/menu_startup_m12.c:14638
+#: src/ui/menu_startup_m12.c:2093 src/ui/menu_startup_m12.c:2098
+#: src/ui/menu_startup_m12.c:2464 src/ui/menu_startup_m12.c:2573
+#: src/ui/menu_startup_m12.c:2831 src/ui/menu_startup_m12.c:2940
+#: src/ui/menu_startup_m12.c:10750 src/ui/menu_startup_m12.c:10760
+#: src/ui/menu_startup_m12.c:11896 src/ui/menu_startup_m12.c:11942
+#: src/ui/menu_startup_m12.c:14644
 msgid "SCANNING GAME DATA"
 msgstr "MEMINDAI DATA GAME"
 
-#: src/ui/menu_startup_m12.c:2097
+#: src/ui/menu_startup_m12.c:2095
 msgid "REFRESHING MEDIA METADATA"
 msgstr "METADATA MEDIA YANG MENYEGARKAN"
 
-#: src/ui/menu_startup_m12.c:2140 src/ui/menu_startup_m12.c:3508
-#: src/ui/menu_startup_m12.c:6141 src/ui/menu_startup_m12.c:6381
+#: src/ui/menu_startup_m12.c:2138 src/ui/menu_startup_m12.c:3506
+#: src/ui/menu_startup_m12.c:6139 src/ui/menu_startup_m12.c:6379
 msgid "NOT SET"
 msgstr "TIDAK DIATUR"
 
-#: src/ui/menu_startup_m12.c:2250
+#: src/ui/menu_startup_m12.c:2248
 msgid "COPY GAME FILES TO Documents/Firestaff/data USING A FILE MANAGER"
 msgstr "SALIN BERKAS GAME KE Documents/Firestaff/data MENGGUNAKAN PENGELOLA BERKAS"
 
-#: src/ui/menu_startup_m12.c:2252
+#: src/ui/menu_startup_m12.c:2250
 msgid "USE THE FILES APP TO COPY GAME FILES TO Firestaff/data IN THIS APP"
 msgstr "GUNAKAN APLIKASI FILES UNTUK MENYALIN BERKAS GAME KE Firestaff/data DI APLIKASI INI"
 
-#: src/ui/menu_startup_m12.c:2254
+#: src/ui/menu_startup_m12.c:2252
 msgid "COPY ORIGINAL GAME FILES INTO THE DATA DIRECTORY"
 msgstr "SALIN BERKAS GAME ASLI ANDA KE:"
 
-#: src/ui/menu_startup_m12.c:2289
+#: src/ui/menu_startup_m12.c:2287
 msgid "NO GAME DATA FOUND"
 msgstr "DATA GAME TIDAK DITEMUKAN"
 
-#: src/ui/menu_startup_m12.c:2338 src/ui/menu_startup_m12.c:2665
+#: src/ui/menu_startup_m12.c:2336 src/ui/menu_startup_m12.c:2663
 #, c-format
 msgid "%d FOLDER REQUIRES ACCESS"
 msgstr "%d FOLDER REQUIRES ACCESS"
 
-#: src/ui/menu_startup_m12.c:2346 src/ui/menu_startup_m12.c:2672
+#: src/ui/menu_startup_m12.c:2344 src/ui/menu_startup_m12.c:2670
 msgid "ALLOW ACCESS IN SYSTEM SETTINGS, THEN RESCAN"
 msgstr "ALLOW ACCESS IN SYSTEM SETTINGS, THEN RESCAN"
 
-#: src/ui/menu_startup_m12.c:2375 src/ui/menu_startup_m12.c:10683
-#: src/ui/menu_startup_m12.c:10817
+#: src/ui/menu_startup_m12.c:2373 src/ui/menu_startup_m12.c:10685
+#: src/ui/menu_startup_m12.c:10819
 msgid "TITLE START AVAILABLE"
 msgstr "TITLE START AVAILABLE"
 
-#: src/ui/menu_startup_m12.c:2422
+#: src/ui/menu_startup_m12.c:2420
 msgid "DATA DIRECTORY UPDATED"
 msgstr "DIREKTORI DATA DIPERBARUI"
 
-#: src/ui/menu_startup_m12.c:2423 src/ui/menu_startup_m12.c:3351
+#: src/ui/menu_startup_m12.c:2421 src/ui/menu_startup_m12.c:3349
 msgid "DATA DIRECTORY UNCHANGED"
 msgstr "DIREKTORI DATA TIDAK BERUBAH"
 
-#: src/ui/menu_startup_m12.c:2574
+#: src/ui/menu_startup_m12.c:2572
 msgid "CANCELLING DATA SCAN"
 msgstr "MEMBATALKAN PEMINDAIAN DATA"
 
-#: src/ui/menu_startup_m12.c:2577
+#: src/ui/menu_startup_m12.c:2575
 msgid "WAITING FOR CURRENT FILE CHECK TO FINISH"
 msgstr "MENUNGGU PEMERIKSAAN FILE SAAT INI SAMPAI SELESAI"
 
-#: src/ui/menu_startup_m12.c:2743 src/ui/menu_startup_m12.c:2970
-#: src/ui/menu_startup_m12.c:14591
+#: src/ui/menu_startup_m12.c:2741 src/ui/menu_startup_m12.c:2968
+#: src/ui/menu_startup_m12.c:14597
 msgid "DATA SCAN CANCELLED"
 msgstr "PEMINDAIAN DATA DIBATALKAN"
 
-#: src/ui/menu_startup_m12.c:2744 src/ui/menu_startup_m12.c:2973
-#: src/ui/menu_startup_m12.c:10760 src/ui/menu_startup_m12.c:14594
+#: src/ui/menu_startup_m12.c:2742 src/ui/menu_startup_m12.c:2971
+#: src/ui/menu_startup_m12.c:10762 src/ui/menu_startup_m12.c:14600
 msgid "GAME AVAILABILITY WAS NOT UPDATED"
 msgstr "KETERSEDIAAN GAME TIDAK DIPERBARUI"
 
-#: src/ui/menu_startup_m12.c:2785 src/ui/menu_startup_m12.c:2925
+#: src/ui/menu_startup_m12.c:2783 src/ui/menu_startup_m12.c:2923
 msgid "DATA DIRECTORY NOT FOUND"
 msgstr "DATA GAME TIDAK DITEMUKAN"
 
-#: src/ui/menu_startup_m12.c:2786 src/ui/menu_startup_m12.c:2926
-#: src/ui/menu_startup_m12.c:2974 src/ui/menu_startup_m12.c:14595
+#: src/ui/menu_startup_m12.c:2784 src/ui/menu_startup_m12.c:2924
+#: src/ui/menu_startup_m12.c:2972 src/ui/menu_startup_m12.c:14601
 msgid "CHOOSE AN EXISTING FOLDER"
 msgstr "PILIH FOLDER YANG ADA"
 
-#: src/ui/menu_startup_m12.c:2971 src/ui/menu_startup_m12.c:14592
+#: src/ui/menu_startup_m12.c:2969 src/ui/menu_startup_m12.c:14598
 msgid "DATA SCAN FAILED"
 msgstr "PEMINDAIAN DATA GAGAL"
 
-#: src/ui/menu_startup_m12.c:2995
+#: src/ui/menu_startup_m12.c:2993
 msgid "SAVE MANIFEST EXPORTED"
 msgstr "SIMPAN MANIFEST EKSPOR"
 
-#: src/ui/menu_startup_m12.c:2996
+#: src/ui/menu_startup_m12.c:2994
 msgid "SAVE FILES ARE NOT COPIED"
 msgstr "SIMPAN FILE TIDAK DISALIN"
 
-#: src/ui/menu_startup_m12.c:3000
+#: src/ui/menu_startup_m12.c:2998
 msgid "EXPORT FAILED"
 msgstr "EKSPOR GAGAL"
 
-#: src/ui/menu_startup_m12.c:3001
+#: src/ui/menu_startup_m12.c:2999
 msgid "CHECK YOUR SETTINGS FOLDER"
 msgstr "PERIKSA FOLDER PENGATURAN ANDA"
 
-#: src/ui/menu_startup_m12.c:3115 src/ui/menu_startup_m12.c:3254
+#: src/ui/menu_startup_m12.c:3113 src/ui/menu_startup_m12.c:3252
 msgid "DM1 PC34 SAVE EXPORTED"
 msgstr "DM1 PC34 SIMPAN DIEKSPOR"
 
-#: src/ui/menu_startup_m12.c:3121 src/ui/menu_startup_m12.c:3261
+#: src/ui/menu_startup_m12.c:3119 src/ui/menu_startup_m12.c:3259
 msgid "PC34 EXPORT FAILED"
 msgstr "EKSPOR PC34 GAGAL"
 
-#: src/ui/menu_startup_m12.c:3122
+#: src/ui/menu_startup_m12.c:3120
 msgid "CHECK QUICK RESUME SAVE"
 msgstr "PERIKSA CEPAT RESUME SIMPAN"
 
-#: src/ui/menu_startup_m12.c:3149 src/ui/menu_startup_m12.c:14071
+#: src/ui/menu_startup_m12.c:3147 src/ui/menu_startup_m12.c:14077
 msgid "NO SAVES FOUND"
 msgstr "DATA GAME TIDAK DITEMUKAN"
 
-#: src/ui/menu_startup_m12.c:3150
+#: src/ui/menu_startup_m12.c:3148
 msgid "SAVE A GAME FIRST"
 msgstr "SIMPAN GAME PERTAMA"
 
-#: src/ui/menu_startup_m12.c:3262
+#: src/ui/menu_startup_m12.c:3260
 msgid "SELECT A VALID DM1 SAVE"
 msgstr "PILIH SIMPAN DM1 YANG VALID"
 
-#: src/ui/menu_startup_m12.c:3289
+#: src/ui/menu_startup_m12.c:3287
 msgid "SAVE MANIFEST IMPORTED"
 msgstr "SIMPAN MANIFEST IMPOR"
 
-#: src/ui/menu_startup_m12.c:3290
+#: src/ui/menu_startup_m12.c:3288
 msgid "QUICK RESUME PATH UPDATED"
 msgstr "JALUR RESUME CEPAT DIPERBARUI"
 
-#: src/ui/menu_startup_m12.c:3295
+#: src/ui/menu_startup_m12.c:3293
 msgid "IMPORT FAILED"
 msgstr "IMPOR GAGAL"
 
-#: src/ui/menu_startup_m12.c:3296
+#: src/ui/menu_startup_m12.c:3294
 msgid "EXPORT A SAVE MANIFEST FIRST"
 msgstr "EKSPOR MANIFEST SIMPAN TERLEBIH DAHULU"
 
-#: src/ui/menu_startup_m12.c:3334
+#: src/ui/menu_startup_m12.c:3332
 msgid "CHOOSE GAME DATA FOLDER"
 msgstr "DATA GAME TIDAK DITEMUKAN"
 
-#: src/ui/menu_startup_m12.c:3335
+#: src/ui/menu_startup_m12.c:3333
 msgid "THE LAUNCHER WILL RESCAN AFTER SELECTION"
 msgstr "PELUNCUR AKAN MEMINDAI ULANG SETELAH SELEKSI"
 
-#: src/ui/menu_startup_m12.c:3507 src/ui/menu_startup_m12.c:6315
+#: src/ui/menu_startup_m12.c:3505 src/ui/menu_startup_m12.c:6313
 msgid "CUSTOM MUSIC"
 msgstr "KUSTOM"
 
-#: src/ui/menu_startup_m12.c:3512 src/ui/menu_startup_m12.c:3521
-#: src/ui/menu_startup_m12.c:14306 src/ui/menu_startup_m12.c:14311
+#: src/ui/menu_startup_m12.c:3510 src/ui/menu_startup_m12.c:3519
+#: src/ui/menu_startup_m12.c:14312 src/ui/menu_startup_m12.c:14317
 msgid "CUSTOM MUSIC FOLDER UNCHANGED"
 msgstr "CUSTOM MUSIC FOLDER UNCHANGED"
 
-#: src/ui/menu_startup_m12.c:3513 src/ui/menu_startup_m12.c:3550
-#: src/ui/menu_startup_m12.c:3608
+#: src/ui/menu_startup_m12.c:3511 src/ui/menu_startup_m12.c:3548
+#: src/ui/menu_startup_m12.c:3606
 msgid "NATIVE FILE DIALOG DISABLED"
 msgstr "DIALOG FILE ASLI DONAKTIFKAN"
 
-#: src/ui/menu_startup_m12.c:3522 src/ui/menu_startup_m12.c:3558
-#: src/ui/menu_startup_m12.c:3616
+#: src/ui/menu_startup_m12.c:3520 src/ui/menu_startup_m12.c:3556
+#: src/ui/menu_startup_m12.c:3614
 msgid "NOT ENOUGH MEMORY"
 msgstr "NOT ENOUGH MEMORY"
 
-#: src/ui/menu_startup_m12.c:3544
+#: src/ui/menu_startup_m12.c:3542
 msgid "CHOOSE UNICODE FONT"
 msgstr "PILIH FONT UNICODE"
 
-#: src/ui/menu_startup_m12.c:3545
+#: src/ui/menu_startup_m12.c:3543
 msgid "SELECT A BROAD TTF OR OTF FONT"
 msgstr "PILIH FONT TTF ATAU OTF LUAS"
 
-#: src/ui/menu_startup_m12.c:3549 src/ui/menu_startup_m12.c:3557
-#: src/ui/menu_startup_m12.c:14343
+#: src/ui/menu_startup_m12.c:3547 src/ui/menu_startup_m12.c:3555
+#: src/ui/menu_startup_m12.c:14349
 msgid "UNICODE FONT UNCHANGED"
 msgstr "FONT UNICODE TIDAK BERUBAH"
 
-#: src/ui/menu_startup_m12.c:3602
+#: src/ui/menu_startup_m12.c:3600
 msgid "CHOOSE V2.2 ARTPACK"
 msgstr "PILIH PAKET SENI V2.2"
 
-#: src/ui/menu_startup_m12.c:3603
+#: src/ui/menu_startup_m12.c:3601
 msgid "SELECT A .FSART FILE"
 msgstr "PILIH TUJUAN"
 
-#: src/ui/menu_startup_m12.c:3607 src/ui/menu_startup_m12.c:3615
-#: src/ui/menu_startup_m12.c:14384
+#: src/ui/menu_startup_m12.c:3605 src/ui/menu_startup_m12.c:3613
+#: src/ui/menu_startup_m12.c:14390
 msgid "V2.2 ARTPACK UNCHANGED"
 msgstr "V2.2 ARTPACK TIDAK BERUBAH"
 
-#: src/ui/menu_startup_m12.c:6118
+#: src/ui/menu_startup_m12.c:6116
 msgid "NEEDS LOGIN"
 msgstr "MEMBUTUHKAN LOGIN"
 
-#: src/ui/menu_startup_m12.c:6120 src/ui/menu_startup_m12.c:11895
-#: src/ui/menu_startup_m12.c:11941
+#: src/ui/menu_startup_m12.c:6118 src/ui/menu_startup_m12.c:11897
+#: src/ui/menu_startup_m12.c:11943
 msgid "READY"
 msgstr "SIAP"
 
-#: src/ui/menu_startup_m12.c:6122
+#: src/ui/menu_startup_m12.c:6120
 msgid "BACKEND PENDING"
 msgstr "BACKEND TERTUNDA"
 
-#: src/ui/menu_startup_m12.c:6147
+#: src/ui/menu_startup_m12.c:6145
 msgid "SET"
 msgstr "REGANGKAN"
 
-#: src/ui/menu_startup_m12.c:6164 src/ui/menu_startup_m12.c:6377
+#: src/ui/menu_startup_m12.c:6162 src/ui/menu_startup_m12.c:6375
 msgid "EDITING"
 msgstr "PENGATURAN"
 
-#: src/ui/menu_startup_m12.c:6269
+#: src/ui/menu_startup_m12.c:6267
 msgid "SCALE"
 msgstr "SKALA"
 
-#: src/ui/menu_startup_m12.c:6270 src/ui/menu_startup_m12.c:13830
+#: src/ui/menu_startup_m12.c:6268 src/ui/menu_startup_m12.c:13836
 msgid "ASPECT RATIO"
 msgstr "RASIO ASPEK"
 
-#: src/ui/menu_startup_m12.c:6271
+#: src/ui/menu_startup_m12.c:6269
 msgid "PIXEL SNAP"
 msgstr "SNAP PIKSEL"
 
-#: src/ui/menu_startup_m12.c:6272
+#: src/ui/menu_startup_m12.c:6270
 msgid "FILTER"
 msgstr "FILTER"
 
-#: src/ui/menu_startup_m12.c:6273
+#: src/ui/menu_startup_m12.c:6271
 msgid "VSYNC"
 msgstr "VSYNC"
 
-#: src/ui/menu_startup_m12.c:6274
+#: src/ui/menu_startup_m12.c:6272
 msgid "FPS OVERLAY"
 msgstr "OVERLAY FPS"
 
-#: src/ui/menu_startup_m12.c:6275
+#: src/ui/menu_startup_m12.c:6273
 msgid "VIEWPORT STYLE"
 msgstr "GAYA PANDANGAN"
 
-#: src/ui/menu_startup_m12.c:6276
+#: src/ui/menu_startup_m12.c:6274
 msgid "INPUT MODE"
 msgstr "MODE JENDELA"
 
-#: src/ui/menu_startup_m12.c:6278
+#: src/ui/menu_startup_m12.c:6276
 msgid "TOUCH CONTROLS"
 msgstr "KONTROL"
 
-#: src/ui/menu_startup_m12.c:6279
+#: src/ui/menu_startup_m12.c:6277
 msgid "MOVEMENT MODE"
 msgstr "MODE GERAKAN"
 
-#: src/ui/menu_startup_m12.c:6280
+#: src/ui/menu_startup_m12.c:6278
 msgid "SMOOTH TURN PAN"
 msgstr "PAN BALIK HALUS"
 
-#: src/ui/menu_startup_m12.c:6281
+#: src/ui/menu_startup_m12.c:6279
 msgid "DATA DIRECTORY"
 msgstr "DIREKTORI DATA"
 
-#: src/ui/menu_startup_m12.c:6282
+#: src/ui/menu_startup_m12.c:6280
 msgid "ORIGINAL DATA"
 msgstr "ASLI"
 
-#: src/ui/menu_startup_m12.c:6283
+#: src/ui/menu_startup_m12.c:6281
 msgid "DEBUG OVERLAY"
 msgstr "DEBUG OVERLAY"
 
-#: src/ui/menu_startup_m12.c:6284
+#: src/ui/menu_startup_m12.c:6282
 msgid "DEVELOPER GATES"
 msgstr "GERBANG PENGEMBANG"
 
-#: src/ui/menu_startup_m12.c:6285
+#: src/ui/menu_startup_m12.c:6283
 msgid "MASTER VOLUME"
 msgstr "REMASTER"
 
-#: src/ui/menu_startup_m12.c:6286
+#: src/ui/menu_startup_m12.c:6284
 msgid "MUSIC VOLUME"
 msgstr "VOLUME MUSIK"
 
-#: src/ui/menu_startup_m12.c:6287
+#: src/ui/menu_startup_m12.c:6285
 msgid "SFX VOLUME"
 msgstr "VOLUME SFX"
 
-#: src/ui/menu_startup_m12.c:6288
+#: src/ui/menu_startup_m12.c:6286
 msgid "MUTE AUDIO"
 msgstr "AUDIO"
 
-#: src/ui/menu_startup_m12.c:6289
+#: src/ui/menu_startup_m12.c:6287
 msgid "AUDIO DEVICE"
 msgstr "PERANGKAT AUDIO"
 
-#: src/ui/menu_startup_m12.c:6290
+#: src/ui/menu_startup_m12.c:6288
 msgid "BRIGHTNESS"
 msgstr "KECERAHAN"
 
-#: src/ui/menu_startup_m12.c:6291
+#: src/ui/menu_startup_m12.c:6289
 msgid "FONT SCALE"
 msgstr "SKALA"
 
-#: src/ui/menu_startup_m12.c:6292
+#: src/ui/menu_startup_m12.c:6290
 msgid "UNICODE FONT"
 msgstr "FONT UNIKODE"
 
-#: src/ui/menu_startup_m12.c:6293
+#: src/ui/menu_startup_m12.c:6291
 msgid "HIGH CONTRAST"
 msgstr "KONTRAS TINGGI"
 
-#: src/ui/menu_startup_m12.c:6294
+#: src/ui/menu_startup_m12.c:6292
 msgid "COLORBLIND"
 msgstr "buta warna"
 
-#: src/ui/menu_startup_m12.c:6295
+#: src/ui/menu_startup_m12.c:6293
 msgid "AUTO PAUSE"
 msgstr "JEDA OTOMATIS"
 
-#: src/ui/menu_startup_m12.c:6296
+#: src/ui/menu_startup_m12.c:6294
 msgid "THEME"
 msgstr "TEMA"
 
-#: src/ui/menu_startup_m12.c:6297
+#: src/ui/menu_startup_m12.c:6295
 msgid "BACKGROUND"
 msgstr "LATAR BELAKANG"
 
-#: src/ui/menu_startup_m12.c:6298
+#: src/ui/menu_startup_m12.c:6296
 msgid "QUICK RESUME"
 msgstr "LANJUTKAN CEPAT"
 
-#: src/ui/menu_startup_m12.c:6299
+#: src/ui/menu_startup_m12.c:6297
 msgid "V2.2 ARTPACK"
 msgstr "V2.2 PAKET SENI"
 
-#: src/ui/menu_startup_m12.c:6300
+#: src/ui/menu_startup_m12.c:6298
 msgid "RETROACHIEVEMENTS"
 msgstr "PENCAPAIAN RETRO"
 
-#: src/ui/menu_startup_m12.c:6301
+#: src/ui/menu_startup_m12.c:6299
 msgid "RETROACHIEVEMENTS HARDCORE"
 msgstr "PENCAPAIAN RETRO HARDCORE"
 
-#: src/ui/menu_startup_m12.c:6302
+#: src/ui/menu_startup_m12.c:6300
 msgid "RETROACHIEVEMENTS USER"
 msgstr "PENGGUNA PENCAPAIAN RETRO"
 
-#: src/ui/menu_startup_m12.c:6303
+#: src/ui/menu_startup_m12.c:6301
 msgid "RETROACHIEVEMENTS API TOKEN"
 msgstr "TOKEN API PENCAPAIAN RETRO"
 
-#: src/ui/menu_startup_m12.c:6304
+#: src/ui/menu_startup_m12.c:6302
 msgid "RETROACHIEVEMENTS SERVER"
 msgstr "SERVER PENCAPAIAN RETRO"
 
-#: src/ui/menu_startup_m12.c:6305 src/ui/menu_startup_m12.c:14026
+#: src/ui/menu_startup_m12.c:6303 src/ui/menu_startup_m12.c:14032
 msgid "SAVE BROWSER"
 msgstr "SIMPAN BROWSER"
 
-#: src/ui/menu_startup_m12.c:6306
+#: src/ui/menu_startup_m12.c:6304
 msgid "SESSION TIMER"
 msgstr "PENGATUR WAKTU SESI"
 
-#: src/ui/menu_startup_m12.c:6307
+#: src/ui/menu_startup_m12.c:6305
 msgid "MINIMAP"
 msgstr "MINIMAL"
 
-#: src/ui/menu_startup_m12.c:6308
+#: src/ui/menu_startup_m12.c:6306
 msgid "AUTOMAP"
 msgstr "OTOMATIS"
 
-#: src/ui/menu_startup_m12.c:6309
+#: src/ui/menu_startup_m12.c:6307
 msgid "COMBAT LOG"
 msgstr "LOG PERTEMPURAN"
 
-#: src/ui/menu_startup_m12.c:6310
+#: src/ui/menu_startup_m12.c:6308
 msgid "SOUNDTRACK"
 msgstr "SUARA"
 
-#: src/ui/menu_startup_m12.c:6311
+#: src/ui/menu_startup_m12.c:6309
 msgid "AMBIENT SOUND"
 msgstr "DATA GAME TIDAK DITEMUKAN"
 
-#: src/ui/menu_startup_m12.c:6312
+#: src/ui/menu_startup_m12.c:6310
 msgid "AMBIENT VOLUME"
 msgstr "VOLUME LINGKUNGAN"
 
-#: src/ui/menu_startup_m12.c:6313
+#: src/ui/menu_startup_m12.c:6311
 msgid "UI SCALE"
 msgstr "SKALA"
 
-#: src/ui/menu_startup_m12.c:6314
+#: src/ui/menu_startup_m12.c:6312
 msgid "UI FONT"
 msgstr "FONT UI"
 
-#: src/ui/menu_startup_m12.c:6316
+#: src/ui/menu_startup_m12.c:6314
 msgid "CUSTOM DUNGEONS"
 msgstr "DUNGEON"
 
-#: src/ui/menu_startup_m12.c:6317
+#: src/ui/menu_startup_m12.c:6315
 msgid "SCREENSHOTS"
 msgstr "tangkapan layar"
 
-#: src/ui/menu_startup_m12.c:6318
+#: src/ui/menu_startup_m12.c:6316
 msgid "ARTPACK"
 msgstr "PAKET SENI"
 
-#: src/ui/menu_startup_m12.c:6319
+#: src/ui/menu_startup_m12.c:6317
 msgid "STREAMER MODE"
 msgstr "MODE STREAMER"
 
-#: src/ui/menu_startup_m12.c:6323
+#: src/ui/menu_startup_m12.c:6321
 msgid "EXPORT DM1 PC34 SAVE"
 msgstr "EKSPOR DM1 PC34 SIMPAN"
 
-#: src/ui/menu_startup_m12.c:6324
+#: src/ui/menu_startup_m12.c:6322
 msgid "EXPORT SAVE MANIFEST"
 msgstr "EKSPOR SIMPAN MANIFEST"
 
-#: src/ui/menu_startup_m12.c:6325
+#: src/ui/menu_startup_m12.c:6323
 msgid "IMPORT SAVE MANIFEST"
 msgstr "IMPOR SIMPAN MANIFEST"
 
-#: src/ui/menu_startup_m12.c:6386
+#: src/ui/menu_startup_m12.c:6384
 msgid "OPEN..."
 msgstr "OPENGL"
 
-#: src/ui/menu_startup_m12.c:6404
+#: src/ui/menu_startup_m12.c:6402
 msgid "WRITE PC34..."
 msgstr "TULIS PC34..."
 
-#: src/ui/menu_startup_m12.c:6405
+#: src/ui/menu_startup_m12.c:6403
 msgid "WRITE..."
 msgstr "TULIS..."
 
-#: src/ui/menu_startup_m12.c:6406
+#: src/ui/menu_startup_m12.c:6404
 msgid "READ..."
 msgstr "BACA..."
 
-#: src/ui/menu_startup_m12.c:6422
+#: src/ui/menu_startup_m12.c:6420
 msgid "GENERAL"
 msgstr "UMUM"
 
-#: src/ui/menu_startup_m12.c:6428 src/ui/menu_startup_m12.c:13721
+#: src/ui/menu_startup_m12.c:6426 src/ui/menu_startup_m12.c:13727
 msgid "RENDERER"
 msgstr "RENDERER"
 
-#: src/ui/menu_startup_m12.c:6431
+#: src/ui/menu_startup_m12.c:6429
 msgid "INPUT"
 msgstr "MASUKAN"
 
-#: src/ui/menu_startup_m12.c:6434
+#: src/ui/menu_startup_m12.c:6432
 msgid "DATA"
 msgstr "DIREKTORI DATA"
 
-#: src/ui/menu_startup_m12.c:6437
+#: src/ui/menu_startup_m12.c:6435
 msgid "DEBUG"
 msgstr "DEBUG"
 
-#: src/ui/menu_startup_m12.c:6448
+#: src/ui/menu_startup_m12.c:6446
 msgid "APPEARANCE"
 msgstr "PENAMPILAN"
 
-#: src/ui/menu_startup_m12.c:6967 src/ui/menu_startup_m12.c:7022
-#: src/ui/menu_startup_m12.c:11896 src/ui/menu_startup_m12.c:11942
+#: src/ui/menu_startup_m12.c:6969 src/ui/menu_startup_m12.c:7028
+#: src/ui/menu_startup_m12.c:11898 src/ui/menu_startup_m12.c:11944
 msgid "DATA FILES NOT FOUND"
 msgstr "BERKAS ASLI TIDAK DITEMUKAN"
 
-#: src/ui/menu_startup_m12.c:7022
+#: src/ui/menu_startup_m12.c:7028
 msgid "ENTER FOR GAME MENU"
 msgstr "ENTER ATAU ESC KEMBALI KE MENU"
 
-#: src/ui/menu_startup_m12.c:7023
+#: src/ui/menu_startup_m12.c:7029
 msgid "THIS GAME IS NOT SUPPORTED YET"
 msgstr "GAME INI BELUM DIDUKUNG"
 
-#: src/ui/menu_startup_m12.c:7135
+#: src/ui/menu_startup_m12.c:7143
 msgid "NO DM1 SAVES FOUND"
 msgstr "DATA GAME TIDAK DITEMUKAN"
 
-#: src/ui/menu_startup_m12.c:7136
+#: src/ui/menu_startup_m12.c:7144
 msgid "SAVE OR IMPORT DM1 FIRST"
 msgstr "SIMPAN ATAU IMPOR DM1 DULU"
 
-#: src/ui/menu_startup_m12.c:7564
+#: src/ui/menu_startup_m12.c:7574
 msgid "LOADING SAVE"
 msgstr "MEMUAT SIMPAN"
 
-#: src/ui/menu_startup_m12.c:7604
+#: src/ui/menu_startup_m12.c:7616
 msgid "IMPORTING PARTY"
 msgstr "PIHAK IMPOR"
 
-#: src/ui/menu_startup_m12.c:7643
+#: src/ui/menu_startup_m12.c:7654
 msgid "IMPORT DM1 PARTY TO CSB?"
 msgstr "IMPOR PIHAK DM1 KE CSB?"
 
-#: src/ui/menu_startup_m12.c:7645
+#: src/ui/menu_startup_m12.c:7656
 msgid "ENTER IMPORTS / ESC CANCELS"
 msgstr "MASUKKAN IMPOR / ESC CANCEL"
 
-#: src/ui/menu_startup_m12.c:7657
+#: src/ui/menu_startup_m12.c:7668
 msgid "ESC SETTINGS"
 msgstr "PENGATURAN"
 
-#: src/ui/menu_startup_m12.c:7661
+#: src/ui/menu_startup_m12.c:7672
 msgid "ENTER LOAD   ACTION IMPORTS TO CSB   SAVE EXPORTS PC34   ESC SETTINGS"
 msgstr "MASUKKAN LOAD ACTION IMPORTS KE PENGATURAN CSB SAVE EXPORTS PC34 ESC"
 
-#: src/ui/menu_startup_m12.c:7663
+#: src/ui/menu_startup_m12.c:7674
 msgid "ENTER LOAD   ESC SETTINGS"
 msgstr "ENTER ATAU ESC KEMBALI KE MENU"
 
-#: src/ui/menu_startup_m12.c:9134 src/ui/menu_startup_m12.c:9346
+#: src/ui/menu_startup_m12.c:9147 src/ui/menu_startup_m12.c:9359
 msgid "NO SOURCE"
 msgstr "TIDAK ADA SUMBER"
 
-#: src/ui/menu_startup_m12.c:9342
+#: src/ui/menu_startup_m12.c:9355
 msgid "SELECT TO VERIFY ORIGINAL DATA"
 msgstr "ASLI"
 
-#: src/ui/menu_startup_m12.c:9351
+#: src/ui/menu_startup_m12.c:9364
 msgid "MISSING OR MISMATCHED"
 msgstr "HILANG ATAU TIDAK COCOK"
 
-#: src/ui/menu_startup_m12.c:9908 src/ui/menu_startup_render_modern_m12.c:2103
+#: src/ui/menu_startup_m12.c:9924 src/ui/menu_startup_render_modern_m12.c:2103
 msgid "EXTRAS"
 msgstr "EKSTRA"
 
-#: src/ui/menu_startup_m12.c:9908
+#: src/ui/menu_startup_m12.c:9924
 msgid "PLAY"
 msgstr "MAIN"
 
-#: src/ui/menu_startup_m12.c:9908
+#: src/ui/menu_startup_m12.c:9924
 msgid "QUIT"
 msgstr "KELUAR"
 
-#: src/ui/menu_startup_m12.c:9912
+#: src/ui/menu_startup_m12.c:9928
 msgid "Start or continue a game"
 msgstr "Mulai atau lanjutkan permainan"
 
-#: src/ui/menu_startup_m12.c:9913
+#: src/ui/menu_startup_m12.c:9929
 msgid "Display, video, audio and controls"
 msgstr "Tampilan, video, audio, dan kontrol"
 
-#: src/ui/menu_startup_m12.c:9914
+#: src/ui/menu_startup_m12.c:9930
 msgid "Museum, bestiary, spell reference and more"
 msgstr "Museum, bestiari, referensi mantra, dan lainnya"
 
-#: src/ui/menu_startup_m12.c:9915
+#: src/ui/menu_startup_m12.c:9931
 msgid "Exit Firestaff"
 msgstr "Keluar dari Firestaff"
 
-#: src/ui/menu_startup_m12.c:9920
+#: src/ui/menu_startup_m12.c:9936
 msgid "DM Nexus"
 msgstr "DM Nexus"
 
-#: src/ui/menu_startup_m12.c:9920
+#: src/ui/menu_startup_m12.c:9936
 msgid "Dungeon Master II"
 msgstr "Dungeon Master II"
 
-#: src/ui/menu_startup_m12.c:9929
+#: src/ui/menu_startup_m12.c:9945
 msgid "V1 / V2.0 / V2.1 / V2.2"
 msgstr "V1 / V2.0 / V2.1 / V2.2"
 
-#: src/ui/menu_startup_m12.c:9930 src/ui/menu_startup_m12.c:9931
+#: src/ui/menu_startup_m12.c:9946 src/ui/menu_startup_m12.c:9947
 msgid "V1 / V2"
 msgstr "V1 / V2"
 
-#: src/ui/menu_startup_m12.c:9932
+#: src/ui/menu_startup_m12.c:9948
 msgid "V1 / SATURN CAPTURE GATED"
 msgstr "V1 / PEREKAMAN SATURN DIKUNCI"
 
-#: src/ui/menu_startup_m12.c:9933
+#: src/ui/menu_startup_m12.c:9949
 msgid "V1 Only (Phase 1)"
 msgstr "Hanya V1 (Fase 1)"
 
-#: src/ui/menu_startup_m12.c:9936 src/ui/menu_startup_m12.c:9937
-#: src/ui/menu_startup_m12.c:9938 src/ui/menu_startup_m12.c:9939
-#: src/ui/menu_startup_m12.c:9940
+#: src/ui/menu_startup_m12.c:9952 src/ui/menu_startup_m12.c:9953
+#: src/ui/menu_startup_m12.c:9954 src/ui/menu_startup_m12.c:9955
+#: src/ui/menu_startup_m12.c:9956
 msgid "No data files"
 msgstr "Tidak ada berkas data"
 
-#: src/ui/menu_startup_m12.c:10684
+#: src/ui/menu_startup_m12.c:10686
 msgid "MENU AND CAPTURE PROOFS NOT READY"
 msgstr "MENU AND CAPTURE PROOFS NOT READY"
 
-#: src/ui/menu_startup_m12.c:10685
+#: src/ui/menu_startup_m12.c:10687
 msgid "TITLE START"
 msgstr "TITLE START"
 
-#: src/ui/menu_startup_m12.c:10686
+#: src/ui/menu_startup_m12.c:10688
 msgid "VERIFIED SOURCE DATA"
 msgstr "VERIFIED SOURCE DATA"
 
-#: src/ui/menu_startup_m12.c:10821
+#: src/ui/menu_startup_m12.c:10823
 msgid "VERIFIED TITLE START; MENU AND CAPTURE STILL GATED"
 msgstr "VERIFIED TITLE START; MENU AND CAPTURE STILL GATED"
 
-#: src/ui/menu_startup_m12.c:10859
+#: src/ui/menu_startup_m12.c:10861
 msgid "New Game (Original)"
 msgstr "Game Baru (Asli)"
 
-#: src/ui/menu_startup_m12.c:10860
+#: src/ui/menu_startup_m12.c:10862
 msgid "New Game (Original + Filters)"
 msgstr "Game Baru (Asli + Filter)"
 
-#: src/ui/menu_startup_m12.c:10861
+#: src/ui/menu_startup_m12.c:10863
 msgid "New Game (Original 10x Upscale)"
 msgstr "Game Baru (Asli Upscale 10x)"
 
-#: src/ui/menu_startup_m12.c:10862
+#: src/ui/menu_startup_m12.c:10864
 msgid "Continue Saved Game"
 msgstr "Lanjutkan Game Tersimpan"
 
-#: src/ui/menu_startup_m12.c:10863
+#: src/ui/menu_startup_m12.c:10865
 msgid "New Game (Modern Graphics)"
 msgstr "Game Baru (Grafis Modern)"
 
-#: src/ui/menu_startup_m12.c:10871
+#: src/ui/menu_startup_m12.c:10873
 msgid "Museum of Lore"
 msgstr "Museum Cerita Lama"
 
-#: src/ui/menu_startup_m12.c:10872
+#: src/ui/menu_startup_m12.c:10874
 msgid "Manual / Docs"
 msgstr "Manual / Dokumen"
 
-#: src/ui/menu_startup_m12.c:10873
+#: src/ui/menu_startup_m12.c:10875
 msgid "Bestiary"
 msgstr "Bestiarium"
 
-#: src/ui/menu_startup_m12.c:10874
+#: src/ui/menu_startup_m12.c:10876
 msgid "Spell Reference"
 msgstr "Referensi Mantra"
 
-#: src/ui/menu_startup_m12.c:10875
+#: src/ui/menu_startup_m12.c:10877
 msgid "Map Viewer"
 msgstr "Penampil Peta"
 
-#: src/ui/menu_startup_m12.c:10876
+#: src/ui/menu_startup_m12.c:10878
 msgid "Item Encyclopedia"
 msgstr "Ensiklopedia Item"
 
-#: src/ui/menu_startup_m12.c:10877
+#: src/ui/menu_startup_m12.c:10879
 msgid "Changelog"
 msgstr "Log Perubahan"
 
-#: src/ui/menu_startup_m12.c:10878
+#: src/ui/menu_startup_m12.c:10880
 msgid "Screenshot Gallery"
 msgstr "Galeri Tangkapan Layar"
 
-#: src/ui/menu_startup_m12.c:10907
+#: src/ui/menu_startup_m12.c:10909
 msgid "NO DATA SOURCE YET"
 msgstr "TIDAK ADA SUMBER"
 
-#: src/ui/menu_startup_m12.c:10980
+#: src/ui/menu_startup_m12.c:10982
 msgid "Up/Down Navigate  |  Enter Select"
 msgstr "Atas/Bawah navigasi  |  Enter pilih"
 
-#: src/ui/menu_startup_m12.c:11004
+#: src/ui/menu_startup_m12.c:11006
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Select"
 msgstr "Escape kembali  |  Atas/Bawah navigasi  |  Enter pilih"
 
-#: src/ui/menu_startup_m12.c:11033
+#: src/ui/menu_startup_m12.c:11035
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Start"
 msgstr "Escape kembali  |  Atas/Bawah navigasi  |  Enter mulai"
 
-#: src/ui/menu_startup_m12.c:11057
+#: src/ui/menu_startup_m12.c:11059
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Open"
 msgstr "Escape kembali  |  Atas/Bawah navigasi  |  Enter buka"
 
-#: src/ui/menu_startup_m12.c:11201
+#: src/ui/menu_startup_m12.c:11203
 msgid "< > Switch tab   Up/Down Navigate   Enter Change"
 msgstr "< > ganti tab   Atas/Bawah navigasi   Enter ubah"
 
-#: src/ui/menu_startup_m12.c:11860 src/ui/menu_startup_render_modern_m12.c:2321
+#: src/ui/menu_startup_m12.c:11862 src/ui/menu_startup_render_modern_m12.c:2321
 msgid "NO SUPPORTED NATIVE PLATFORM"
 msgstr "TIDAK ADA PLATFORM ASLI YANG DIDUKUNG"
 
-#: src/ui/menu_startup_m12.c:11861
+#: src/ui/menu_startup_m12.c:11863
 msgid "ESC BACK"
 msgstr "ESC BACK"
 
-#: src/ui/menu_startup_m12.c:11882
+#: src/ui/menu_startup_m12.c:11884
 msgid "V2.1 UPSCALED"
 msgstr "V2.1 UPSCALED"
 
-#: src/ui/menu_startup_m12.c:13698
+#: src/ui/menu_startup_m12.c:13704
 msgid "GAME OPTIONS"
 msgstr "OPSI GAME"
 
-#: src/ui/menu_startup_m12.c:13735
+#: src/ui/menu_startup_m12.c:13741
 msgid "ARCHITECTURE"
 msgstr "STATUS ARSIP"
 
-#: src/ui/menu_startup_m12.c:13748
+#: src/ui/menu_startup_m12.c:13754
 msgid "VERSION"
 msgstr "VERSI"
 
-#: src/ui/menu_startup_m12.c:13769
+#: src/ui/menu_startup_m12.c:13775
 msgid "PATCH"
 msgstr "TAMBALAN"
 
-#: src/ui/menu_startup_m12.c:13795
+#: src/ui/menu_startup_m12.c:13801
 msgid "CHEATS"
 msgstr "KECURANGAN"
 
-#: src/ui/menu_startup_m12.c:13808
+#: src/ui/menu_startup_m12.c:13814
 msgid "SPEED"
 msgstr "KECEPATAN"
 
-#: src/ui/menu_startup_m12.c:13820
+#: src/ui/menu_startup_m12.c:13826
 msgid "ENABLE CHEATS TO UNLOCK SPEED / HOTKEYS"
 msgstr "AKTIFKAN KECURANGAN UNTUK MEMBUKA KECEPATAN / TOMBOL PINTAS"
 
-#: src/ui/menu_startup_m12.c:13842
+#: src/ui/menu_startup_m12.c:13848
 msgid "LOCKED BY V1 ORIGINAL MODE"
 msgstr "DIKUNCI OLEH MODE V1 ASLI"
 
-#: src/ui/menu_startup_m12.c:13852
+#: src/ui/menu_startup_m12.c:13858
 msgid "RESOLUTION"
 msgstr "RESOLUSI"
 
-#: src/ui/menu_startup_m12.c:13866
+#: src/ui/menu_startup_m12.c:13872
 msgid "LOCKED BY V2.0 FILTERED MODE"
 msgstr "DIKUNCI OLEH MODE V1 ASLI"
 
-#: src/ui/menu_startup_m12.c:13887
+#: src/ui/menu_startup_m12.c:13893
 msgid "> DATA FILES NOT FOUND"
 msgstr "BERKAS ASLI TIDAK DITEMUKAN"
 
-#: src/ui/menu_startup_m12.c:13889
+#: src/ui/menu_startup_m12.c:13895
 msgid "> RENDERER UNAVAILABLE"
 msgstr "BACKEND RENDERER TIDAK TERSEDIA"
 
-#: src/ui/menu_startup_m12.c:13890
+#: src/ui/menu_startup_m12.c:13896
 msgid "> LAUNCH"
 msgstr "> LUNCURKAN"
 
-#: src/ui/menu_startup_m12.c:13903
+#: src/ui/menu_startup_m12.c:13909
 msgid "ESC: BACK  ARROWS: NAVIGATE  ENTER: SELECT"
 msgstr "ESC: KEMBALI  PANAH: NAVIGASI  ENTER: PILIH"
 
-#: src/ui/menu_startup_m12.c:14301
+#: src/ui/menu_startup_m12.c:14307
 msgid "CUSTOM MUSIC FOLDER SELECTED"
 msgstr "CUSTOM MUSIC FOLDER SELECTED"
 
-#: src/ui/menu_startup_m12.c:14307
+#: src/ui/menu_startup_m12.c:14313
 msgid "NO FOLDER SELECTED"
 msgstr "NO FOLDER SELECTED"
 
-#: src/ui/menu_startup_m12.c:14312
+#: src/ui/menu_startup_m12.c:14318
 msgid "FOLDER MISSING OR PATH TOO LONG"
 msgstr "FOLDER MISSING OR PATH TOO LONG"
 
-#: src/ui/menu_startup_m12.c:14337
+#: src/ui/menu_startup_m12.c:14343
 msgid "UNICODE FONT SELECTED"
 msgstr "FONT UNICODE DIPILIH"
 
-#: src/ui/menu_startup_m12.c:14345 src/ui/menu_startup_m12.c:14386
+#: src/ui/menu_startup_m12.c:14351 src/ui/menu_startup_m12.c:14392
 msgid "NO FILE SELECTED"
 msgstr "TIDAK ADA FILE YANG DIPILIH"
 
-#: src/ui/menu_startup_m12.c:14346 src/ui/menu_startup_m12.c:14387
+#: src/ui/menu_startup_m12.c:14352 src/ui/menu_startup_m12.c:14393
 msgid "FILE PATH TOO LONG"
 msgstr "FILE PATH TOO LONG"
 
-#: src/ui/menu_startup_m12.c:14371
+#: src/ui/menu_startup_m12.c:14377
 msgid "V2.2 ARTPACK SELECTED"
 msgstr "V2.2 ARTPACK DIPILIH"
 
-#: src/ui/menu_startup_m12.c:14377
+#: src/ui/menu_startup_m12.c:14383
 msgid "V2.2 ARTPACK REJECTED"
 msgstr "V2.2 ARTPACK DITOLAK"
 
@@ -1877,7 +1877,7 @@ msgid "COMING SOON"
 msgstr "SEGERA HADIR"
 
 #: src/ui/menu_startup_render_modern_m12.c:1500
-#: src/ui/menu_startup_render_modern_m12.c:2624
+#: src/ui/menu_startup_render_modern_m12.c:2632
 msgid "FIRESTAFF"
 msgstr "PROYEK FIRESTAFF"
 
@@ -1946,16 +1946,16 @@ msgstr "DATA GAME TIDAK DITEMUKAN"
 msgid "CHOOSE PRESENTATION"
 msgstr "TUJUAN PELUNCUR"
 
-#: src/ui/menu_startup_render_modern_m12.c:2572
+#: src/ui/menu_startup_render_modern_m12.c:2580
 msgid "LAUNCH >"
 msgstr "LUNCURKAN"
 
-#: src/ui/menu_startup_render_modern_m12.c:2641
-#: src/ui/menu_startup_render_modern_m12.c:2766
+#: src/ui/menu_startup_render_modern_m12.c:2649
+#: src/ui/menu_startup_render_modern_m12.c:2774
 msgid "OK"
 msgstr "OK"
 
-#: src/ui/menu_startup_render_modern_m12.c:2706
+#: src/ui/menu_startup_render_modern_m12.c:2714
 msgid "CANCEL"
 msgstr "BATAL"
 
