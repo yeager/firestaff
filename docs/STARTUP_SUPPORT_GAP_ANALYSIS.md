@@ -1,6 +1,6 @@
 # Five-game startup support gap analysis
 
-Reconciled with `main` at `961ea8370` on 2026-10-26. Runtime receipts
+Reconciled with `main` at `000cf7a94` on 2026-10-26. Runtime receipts
 cited below remain the recorded runs at their stated revisions; they were not
 rerun during this documentation update. The repository contains checks
 against authentic media for all five games, but “available,”
@@ -35,6 +35,13 @@ The current evidence does not establish complete five-game startup support.
   sends Tab, Z and Space through SDL key-down events after authentic USA Track
   02 startup and checks champion cycling, Button I/II keyboard routing and
   gameplay ticks. It does not establish full game input or renderer parity.
+- The `m11_dm1_hoc_stair_torch_pc34` real-media test now sends the ordinary
+  M11 backward-movement input from authentic PC34 HoC corridor cell (4,15)
+  toward the original stairs at (3,15). The campaign bytes confirm both
+  square types. The test target compiled and linked in GitHub Actions on
+  Linux, macOS and Windows, but the workflow does not run this real-media test
+  and no local runtime execution has been completed. It is regression coverage
+  for the reported route, not evidence that the hang is fixed.
 - A fresh current-main TRV2 build at `e3b6d015c` succeeded, then direct CLI
   boot probes against the authentic per-game `.firestaff/data` roots reached
   `runtime-entered` for DM1, CSB, DM2 (FM Towns) and Theron (PC Engine).

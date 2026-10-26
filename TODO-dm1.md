@@ -26,11 +26,16 @@ they prove selected source material and destination pixels, not the reported
 native presented frame or full pixel parity. Existing source times the shared
 PC34 F0438 entrance transition at 31 steps with nominal 40 ms waits; no paired
 native timing capture yet distinguishes that transition from I34E's separate
-32-step selector door. The ordinary SDL-queue backward-to-stairs hang is also
-not covered by the boot-probe route. Capture the exact native run and matching
-DOSBox-X original pose, then audit the route-specific frame timer, F0115/F0107
-asset composition, C10 glyph raster/palette, F0128 stairs dispatch and frame
-ownership before changing any mapping. Do not substitute generated assets.
+32-step selector door. Added `m11_dm1_hoc_stair_torch_pc34` to send the normal
+M11 backward-movement input from the authentic HoC corridor at (4,15) onto
+the original stairs at (3,15); the PC34 archive confirms those tile types,
+and GitHub Actions compiled and linked the test on Linux, macOS and Windows.
+The workflow did not execute this real-media CTest, and it has not been run
+locally, so the reported hang remains unverified and unresolved. Capture the
+exact native run and matching DOSBox-X original pose, then audit the
+route-specific frame timer, F0115/F0107 asset composition, C10 glyph
+raster/palette, F0128 stairs dispatch and frame ownership before changing any
+mapping. Do not substitute generated assets.
 
 2026-10-25 Apple IIGS mouth interaction: ReDMCSB PANEL.C F0349:1824-1850
 allows water/waterskin icons with charges and original potion Things when the
