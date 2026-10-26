@@ -29,9 +29,18 @@ mac_debug=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     printf '%s\n' "$mac_debug" >&2
     exit 1
 }
+if ! printf '%s\n' "$mac_debug" | \
+        grep -F 'task=search root' | grep -F "path=$mac_archive" >/dev/null; then
+    echo "FAIL: Mac debug trace omitted the searched archive path on its task record" >&2
+    exit 1
+fi
 case "$mac_debug" in
-    *"task=search root path="*"candidate-file=GRAPHICS.DAT"*"launch phase=game-handoff mode=direct game=dm2 platform=Macintosh edition=mac-en-retail source="*) ;;
-    *) echo "FAIL: Mac debug trace omitted searched source or selected edition" >&2; exit 1 ;;
+    *"candidate-file=GRAPHICS.DAT"*) ;;
+    *) echo "FAIL: Mac debug trace omitted the catalogued graphics candidate" >&2; exit 1 ;;
+esac
+case "$mac_debug" in
+    *"launch phase=game-handoff mode=direct game=dm2 platform=Macintosh edition=mac-en-retail source="*) ;;
+    *) echo "FAIL: Mac debug trace omitted the selected edition" >&2; exit 1 ;;
 esac
 
 towns_verbose=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
@@ -294,7 +303,8 @@ PYDM2INFLATE
     set -e
     if [ "${dm2_inflate_close_status:-0}" -ne 0 ] ||
        ! printf '%s\n' "$dm2_inflate_close_output" | \
-            grep -Fq 'task=reading original DM2 disc image path=' ||
+            grep -F 'task=reading original DM2 disc image' | \
+            grep -F "path=$default_data_root/dm2/" >/dev/null ||
        ! printf '%s\n' "$dm2_inflate_close_output" | \
             grep -Fq 'autotest injected window-close during DM2 disc image inflate' ||
        printf '%s\n' "$dm2_inflate_close_output" | \
