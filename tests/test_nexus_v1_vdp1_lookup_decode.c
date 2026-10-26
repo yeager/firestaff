@@ -43,6 +43,12 @@ int main(void) {
         expect(nexus_v1_vdp1_texture_command_parse(command, sizeof(command), &parsed) == 0 &&
                parsed.texture_width == 32U && parsed.texture_height == 16U,
                "VDP1 CMDSIZE uses high-byte width and low-byte height");
+        wl16(command, 0x5000U);
+        expect(nexus_v1_vdp1_texture_command_parse(command, sizeof(command), &parsed) == 0 &&
+               !parsed.end_command && !parsed.texture_command &&
+               !parsed.texture_source_range_valid,
+               "VDP1 skipped jump does not decode a texture");
+        wl16(command, 0U);
     }
     /* CMDPMOD mode 1, CMDCOLR table at 0x20, CMDSRCA texture at 0x40,
      * CMDSIZE = 8x1. Sega VDP1 User's Manual 6.3--6.6. */

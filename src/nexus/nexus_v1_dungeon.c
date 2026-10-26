@@ -6972,7 +6972,9 @@ int nexus_v1_vdp1_texture_command_parse(
     parsed.texture_width = (uint16_t)(((rl16(command + 10) >> 8) & 0x003fU) * 8U);
     parsed.texture_height = (uint16_t)(rl16(command + 10) & 0x00ffU);
     parsed.end_command = (parsed.control & 0x8000U) != 0U;
-    parsed.texture_command = !parsed.end_command && parsed.command_type <= 2U;
+    /* CMDCTRL bit 14 skips drawing while retaining the jump operation. */
+    parsed.texture_command = (parsed.control & 0xc000U) == 0U &&
+        parsed.command_type <= 2U;
     parsed.colour_mode_documented = parsed.colour_mode <= 5U;
     if (parsed.texture_command && parsed.colour_mode_documented &&
         parsed.texture_width != 0U && parsed.texture_height != 0U) {
