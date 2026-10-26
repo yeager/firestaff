@@ -7803,6 +7803,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_viewport_3d_pc34_compat.c
     src/dm1/dm1_v1_fmtowns_entrance_viewport.c
     src/dm1/dm1_v1_fmtowns_layout_crop.c
+    src/dm1/dm1_v1_fmtowns_wall_ornament.c
     src/dm1/dm1_v1_viewport_wall_ornament_ordinal_provider_pc34_compat.c
     src/csb/csb_v1_viewport_wall_ornament_ordinal_resolver_pc34_compat.c
     src/dm1/dm1_v1_viewport_runtime_materialization_pc34_compat.c

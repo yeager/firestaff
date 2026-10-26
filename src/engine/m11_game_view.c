@@ -297,6 +297,7 @@
 #include "firestaff/dm1/v1/G0206_pc34_compat.h"
 #include "firestaff/dm1/v1/G0207_pc34_compat.h"
 #include "dm1_v1_wall_ornament_pc34_compat.h"
+#include "dm1_v1_fmtowns_wall_ornament.h"
 #include "firestaff/dm1/v1/G0192_pc34_compat.h"
 #include "dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
@@ -48619,6 +48620,10 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
 #endif
 
 static int m11_dm1_pc_wall_ornaments(const M11_GameViewState* state);
+static int m11_dm1_fmtowns_wall_ornaments(const M11_GameViewState* state);
+static int m11_dm1_ornament_material(const M11_GameViewState* state,
+    int global, int view, int maxHeight,
+    DM1_WallOrnamentHostMaterialReceiptPc34* out);
 static int m11_draw_dm1_wall_ornament_host_material_receipt(
     const M11_GameViewState* state, unsigned char* framebuffer,
     int fbW, int fbH, DM1_WallOrnamentHostMaterialReceiptPc34* material);
@@ -48636,15 +48641,17 @@ static int m11_draw_dm1_front_mirror_backing_host_receipt(
         receipt->backingWidth <= 0 || receipt->backingHeight <= 0) {
         return 0;
     }
-    if (m11_dm1_pc_wall_ornaments(state)) {
+    if (m11_dm1_pc_wall_ornaments(state) ||
+        m11_dm1_fmtowns_wall_ornaments(state)) {
         DM1_WallOrnamentHostMaterialReceiptPc34 material;
         /* DUNGEON.C F0174:2678-2679 selects native 345 for global 43;
          * DUNVIEW.C F0107:3722-3750 selects its following front bitmap.
          * D1C uses native pixels without a derived palette or rescaling.
          * Resolve selected C696 through the ordinary F0635/F0791 path. */
-        if (!dm1_v1_wall_ornament_native_material_pc34(
+        if (!m11_dm1_ornament_material(
+                state,
                 DM1_V1_CHAMPION_MIRROR_BACKING_GLOBAL_ORNAMENT_PC34_COMPAT,
-                12, &material) ||
+                12, 0, &material) ||
             !m11_draw_dm1_wall_ornament_host_material_receipt(
                 state, framebuffer, fbW, fbH, &material)) return 0;
         receipt->backingDstX = material.plan.dstX;
@@ -48851,6 +48858,14 @@ static int m11_dm1_pc_wall_ornaments(const M11_GameViewState* state)
         !state->assetLoader.dm1Amiga36 && state->assetLoader.fileState;
 }
 
+static int m11_dm1_fmtowns_wall_ornaments(const M11_GameViewState* state)
+{
+    return state && m11_is_dm1_source_kind(state->sourceKind) &&
+        strcmp(state->sourceId, "dm1") == 0 &&
+        state->assetLoader.dm1Fmtowns &&
+        state->dm1FmtownsStartupReceiptValid;
+}
+
 static unsigned int m11_ornament_le16(const unsigned char* p)
 {
     return (unsigned int)p[0] | ((unsigned int)p[1] << 8);
@@ -48923,6 +48938,9 @@ static int m11_dm1_pc_ornament_layout(M11_GameViewState* state)
 typedef struct M11_PcOrnamentRaster {
     const M11_AssetSlot* slot;
     M11_GameViewState* state;
+    const int16_t* layoutRecords;
+    int layoutZoneBase;
+    int layoutZoneLast;
     unsigned char* framebuffer;
     const unsigned char* palette;
     int width, height, fbWidth, fbHeight, drawn;
@@ -48938,8 +48956,9 @@ static int m11_pc_ornament_zone(void* user, const void* bitmap, int16_t xyz[4],
     const int16_t* record;
     int type, x, y, width, height, sx, sy;
     (void)bitmap;
-    if (zone < 1004 || zone > 1138) return 0;
-    record = raster->state->dm1PcWallOrnamentLayout[zone-1004];
+    if (zone < raster->layoutZoneBase || zone > raster->layoutZoneLast ||
+        !raster->layoutRecords) return 0;
+    record = raster->layoutRecords + (size_t)(zone-raster->layoutZoneBase)*4u;
     type = record[0]; x = record[2]; y = record[3];
     width = *source_x ? *source_x : raster->width;
     height = *source_y ? *source_y : raster->height;
@@ -49004,6 +49023,35 @@ static void m11_pc_ornament_blit(void* user, const void* source, void* destinati
 static int m11_dm1_ornament_material(const M11_GameViewState* state,
     int global, int view, int maxHeight, DM1_WallOrnamentHostMaterialReceiptPc34* out)
 {
+    if (m11_dm1_fmtowns_wall_ornaments(state)) {
+        static const unsigned char paletteD3[16] = {
+            0, 0, 12, 3, 4, 3, 0, 6, 3, 9, 10, 11, 0, 1, 0, 2
+        };
+        static const unsigned char paletteD2[16] = {
+            0, 12, 1, 3, 4, 3, 6, 7, 5, 9, 10, 11, 0, 2, 14, 13
+        };
+        DM1_V1_FmtownsWallOrnament source;
+        if (!out || !dm1_v1_fmtowns_wall_ornament_resolve(
+                global, view, (state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP),
+                &source)) return 0;
+        memset(out, 0, sizeof(*out));
+        out->valid = 1;
+        out->globalOrnamentIndex = global;
+        out->viewWallIndex = view;
+        out->plan.graphicIndex = source.graphic_index;
+        out->plan.transparentColor = 10;
+        out->plan.flipHorizontal = source.flip_horizontal;
+        out->plan.paletteMapValid = 1;
+        memcpy(out->plan.paletteMap,
+               source.palette_depth == 3 ? paletteD3 : paletteD2,
+               sizeof(out->plan.paletteMap));
+        out->plan.sourceScaleX32 = source.scale;
+        out->plan.sourceScaleY32 = source.scale;
+        out->plan.usesDerivedBitmap = 1;
+        out->plan.isAlcove = dm1_v1_wall_ornament_is_alcove_global_pc34(global);
+        out->plan.height = maxHeight;
+        return 1;
+    }
     if (m11_is_dm1_media009(state)) {
         if (view < 0 || view >= 13 ||
             !dm1_v1_wall_ornament_native_material_pc34(global, view, out)) return 0;
@@ -49057,19 +49105,41 @@ static int m11_draw_dm1_wall_ornament_host_material_receipt(
         slot->width <= 0 || slot->height <= 0) {
         return 0;
     }
-    if (m11_dm1_pc_wall_ornaments(state)) {
+    if (m11_dm1_pc_wall_ornaments(state) ||
+        m11_dm1_fmtowns_wall_ornaments(state)) {
         M11_PcOrnamentRaster raster = {0};
         const redmcsb_f0791_renderer_pc34_compat renderer = {
             m11_pc_ornament_zone, m11_pc_ornament_width,
             m11_pc_ornament_height, m11_pc_ornament_blit, &raster
         };
-        int set = dm1_v1_wall_ornament_coord_set_index_pc34(material->globalOrnamentIndex);
-        int row = material->viewWallIndex >= 13 ? material->viewWallIndex-13 : material->viewWallIndex+2;
-        int16_t zone = (int16_t)(1004+set*15+row);
+        int set;
+        int row;
+        int16_t zone;
         uint16_t flip = plan->flipHorizontal ? 1 : 0;
-        if (set < 0 || set > 8 || row < 0 || row > 14 ||
-            fbW < M11_VIEWPORT_X+224 || fbH < M11_VIEWPORT_Y+136 ||
-            !m11_dm1_pc_ornament_layout((M11_GameViewState*)state)) return 0;
+        if (fbW < M11_VIEWPORT_X+224 || fbH < M11_VIEWPORT_Y+136) return 0;
+        if (m11_dm1_fmtowns_wall_ornaments(state)) {
+            DM1_V1_FmtownsWallOrnament source;
+            if (!dm1_v1_fmtowns_wall_ornament_resolve(
+                    material->globalOrnamentIndex, material->viewWallIndex,
+                    (state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP), &source)) return 0;
+            set = source.coordinate_set;
+            row = material->viewWallIndex;
+            zone = (int16_t)source.zone_index;
+            raster.layoutRecords = source.layout;
+            raster.layoutZoneBase = zone;
+            raster.layoutZoneLast = zone;
+        } else {
+            set = dm1_v1_wall_ornament_coord_set_index_pc34(
+                material->globalOrnamentIndex);
+            row = material->viewWallIndex >= 13
+                ? material->viewWallIndex-13 : material->viewWallIndex+2;
+            zone = (int16_t)(1004+set*15+row);
+            if (set < 0 || set > 8 || row < 0 || row > 14 ||
+                !m11_dm1_pc_ornament_layout((M11_GameViewState*)state)) return 0;
+            raster.layoutRecords = &state->dm1PcWallOrnamentLayout[0][0];
+            raster.layoutZoneBase = 1004;
+            raster.layoutZoneLast = 1138;
+        }
         raster.slot = slot; raster.state = (M11_GameViewState*)state;
         raster.framebuffer = framebuffer; raster.fbWidth = fbW; raster.fbHeight = fbH;
         raster.palette = plan->paletteMapValid ? plan->paletteMap : NULL;

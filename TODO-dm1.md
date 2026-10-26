@@ -1,3 +1,17 @@
+2026-10-26 FM Towns F20 wall ornaments: replaced the PC C696 ornament path
+for authenticated Towns gameplay with the original ReDMCSB F20 data model.
+The runtime now resolves G0194 coordinate sets, native bitmap pairs from base
+121, F20's 13 wall-view zones, source flips, D3/D2 palette maps, and scale 16/20
+against COORD.C G3026 records 1004..1107. English and Japanese G3026 tables
+are kept separately for their different unreadable-inscription anchors. The
+real-media graphics gate checked all 60 ornaments across all 13 views against
+both original DATA/GRAPHICS.DAT and JDATA/GRAPHICS.DAT; the HoC alcove-item
+runtime gate also confirmed presented ornaments use F20 bitmap ids and scales.
+This closes the incorrect PC bitmap/layout reuse for DM1 FM Towns wall
+ornaments, including mirror backing. It does not prove complete Towns HUD or
+viewport parity, or pixel identity to a native emulator; other F20 viewport
+and HUD layers remain to be checked against original media.
+
 2026-10-25 authentic PC 3.4 CLI/menu retest: the complete
 `test_dm1_v1_pc34_native_cli_boot.sh` matrix passed against the installed
 original DOS 3.4 archive and the original Atari ST dungeon used as a wrong-

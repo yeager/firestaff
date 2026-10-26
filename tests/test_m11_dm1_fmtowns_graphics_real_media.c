@@ -1,6 +1,7 @@
 #include "asset_find_by_hash.h"
 #include "asset_loader_m11.h"
 #include "dm1_v1_fmtowns_pic_library.h"
+#include "dm1_v1_fmtowns_wall_ornament.h"
 #include "firestaff_fmtowns_disc.h"
 #include "firestaff_zip_extract.h"
 
@@ -16,11 +17,11 @@
 int main(void) {
     const char *archive = getenv("FIRESTAFF_DM1_FMTOWNS_ARCHIVE");
     uint8_t *cue = NULL, *bin = NULL;
-    uint8_t *bytes = NULL;
-    size_t cueSize = 0u, binSize = 0u, size = 0u;
+    uint8_t *bytes = NULL, *japaneseBytes = NULL;
+    size_t cueSize = 0u, binSize = 0u, size = 0u, japaneseSize = 0u;
     char imageMember[256];
     FmtownsDiscProbeResult disc;
-    M11_AssetLoader loader;
+    M11_AssetLoader loader, japaneseLoader;
     unsigned short width = 0u, height = 0u;
     const M11_AssetSlot *title;
     dm1_v1_fmtowns_pic_library_view_t pictureLibrary;
@@ -32,6 +33,7 @@ int main(void) {
     int result = 1;
 
     memset(&loader, 0, sizeof(loader));
+    memset(&japaneseLoader, 0, sizeof(japaneseLoader));
     if (!archive || !archive[0]) {
         puts("SKIP: FIRESTAFF_DM1_FMTOWNS_ARCHIVE not set");
         return 77;
@@ -118,6 +120,63 @@ int main(void) {
             }
         }
     }
+    for (int global = 0; global < 60; ++global) {
+        for (int view = 0; view < 13; ++view) {
+            DM1_V1_FmtownsWallOrnament ornament;
+            unsigned short ornamentWidth = 0u, ornamentHeight = 0u;
+            REQUIRE(dm1_v1_fmtowns_wall_ornament_resolve(
+                        global, view, 0, &ornament),
+                "F20E resolves each original wall ornament and view");
+            REQUIRE(ornament.coordinate_set >= 0 &&
+                    ornament.coordinate_set <= 7 &&
+                    ornament.zone_index ==
+                        1004 + ornament.coordinate_set * 13 + view &&
+                    ornament.graphic_index ==
+                        121 + global * 2 +
+                            ((view == 2 || view == 3 || view == 4 ||
+                              view == 7 || view == 8 || view == 9 ||
+                              view == 11 || view == 12) ? 1 : 0) &&
+                    ornament.layout[1] == 4,
+                "F20E uses its 13-zone layout, paired native bitmaps, and anchors");
+            REQUIRE(M11_AssetLoader_QuerySize(&loader,
+                        (unsigned int)ornament.graphic_index,
+                        &ornamentWidth, &ornamentHeight) &&
+                    ornamentWidth > 0u && ornamentHeight > 0u,
+                "selected F20E ornament bitmap exists in original media");
+        }
+    }
+    {
+        const FmtownsIsoEntry *entry = fmtowns_disc_find(
+            &disc, "JDATA/GRAPHICS.DAT");
+        REQUIRE(entry && fmtowns_disc_extract_alloc(bin, binSize,
+                    FMTOWNS_SECTOR_2048, entry, &japaneseBytes,
+                    &japaneseSize) == 0 && japaneseBytes &&
+                M11_AssetLoader_InitDm1FmtownsFromBuffer(&japaneseLoader,
+                    japaneseBytes, (long)japaneseSize),
+            "original Japanese F20 graphics initialize their native decoder");
+    }
+    for (int global = 0; global < 60; ++global) {
+        for (int view = 0; view < 13; ++view) {
+            DM1_V1_FmtownsWallOrnament ornament;
+            unsigned short ornamentWidth = 0u, ornamentHeight = 0u;
+            REQUIRE(dm1_v1_fmtowns_wall_ornament_resolve(
+                        global, view, 1, &ornament),
+                "F20J resolves each original wall ornament and view");
+            REQUIRE(M11_AssetLoader_QuerySize(&japaneseLoader,
+                        (unsigned int)ornament.graphic_index,
+                        &ornamentWidth, &ornamentHeight) &&
+                    ornamentWidth > 0u && ornamentHeight > 0u,
+                "selected F20J ornament bitmap exists in original media");
+        }
+    }
+    {
+        DM1_V1_FmtownsWallOrnament english, japanese;
+        REQUIRE(dm1_v1_fmtowns_wall_ornament_resolve(0, 0, 0, &english) &&
+                dm1_v1_fmtowns_wall_ornament_resolve(0, 0, 1, &japanese) &&
+                english.zone_index == 1095 && japanese.zone_index == 1095 &&
+                english.layout[3] == 41 && japanese.layout[3] == 38,
+            "F20E and F20J preserve their distinct unreadable-inscription anchors");
+    }
     REQUIRE(M11_AssetLoader_Load(&loader, 1u) == title,
         "title raster remains stable in the decoded cache");
     printf("PASS: DM1 FM Towns GRAPHICS.DAT title decoded natively (%ux%u)\n",
@@ -125,10 +184,12 @@ int main(void) {
     result = 0;
 
 cleanup:
+    M11_AssetLoader_Shutdown(&japaneseLoader);
     M11_AssetLoader_Shutdown(&loader);
     free(packedTitle);
     free(cue);
     free(bin);
     free(bytes);
+    free(japaneseBytes);
     return result;
 }
