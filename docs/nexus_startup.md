@@ -130,6 +130,14 @@ This is a timing boundary: those inputs occur before the title is receptive and
 must not be interpreted as a verified menu or Continue route. The temporary
 profile, dump, and screenshot were removed after inspection.
 
+A later 3,400-frame replay moved the same Start/Down/A/A sequence after the
+title boundary, but held every control for only eight emulated frames. Its
+retail endpoint remained the title image (SHA-256
+`8d495ffa4e8a76ab38a48c3c84a6fcc437db1bc4682aec6ac897609ed2307d95`), while
+the BKR digest again remained unchanged. This is negative timing evidence: an
+eight-frame post-title hold is not sufficient to establish a retail input
+transition. It does not authorize a host menu, save route, HUD, or viewport.
+
 Ymir PR #966 additionally provides `--capture-screenshot` for the same
 capture-owned route. It queues a profile-local framebuffer PNG only after the
 requested frames and memory receipt have completed; it requires both a frame
