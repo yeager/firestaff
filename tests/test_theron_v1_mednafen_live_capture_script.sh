@@ -968,6 +968,12 @@ if ! grep -Fq 'require_instrumented_mednafen_binary()' "$script" ||
     printf 'FAIL: capture script must reject an uninstrumented Mednafen binary before launch\n' >&2
     exit 1
 fi
+if ! grep -Fq 'capture_pce_fast_vram_commit_trace" == 1' "$script" ||
+   ! grep -Fq "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE' \"\$mednafen_bin\"" "$script" ||
+   ! grep -Fq 'MEDNAFEN_BIN lacks the required PCE Fast VRAM commit instrumentation' "$script"; then
+    printf '%s\n' 'FAIL: PCE Fast VRAM capture must reject a binary missing its commit-trace producer before launch' >&2
+    exit 1
+fi
 if ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace"' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE="$main_ram_consumer_trace"' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_CONSUMER_SAMPLE_LIMIT="$main_ram_consumer_sample_limit"' "$script" ||

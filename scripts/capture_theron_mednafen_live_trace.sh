@@ -638,6 +638,15 @@ require_mednafen_module() {
     exit 1
 }
 require_mednafen_module "$capture_mednafen_module"
+if [[ "$capture_pce_fast_vram_commit_trace" == 1 ]] &&
+   ! grep -aFq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE' "$mednafen_bin"; then
+    # A PCE Fast module and its controller trace are insufficient for a
+    # viewport capture. Reject the stale partial instrumentation before it
+    # can consume an authentic-media capture window and later fail without a
+    # bounded producer receipt.
+    printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the required PCE Fast VRAM commit instrumentation' >&2
+    exit 1
+fi
 if [[ "$capture_shutdown_signal" != INT && "$capture_shutdown_signal" != TERM ]]; then
     printf '%s\n' 'FAIL: THERON_CAPTURE_SHUTDOWN_SIGNAL must be INT or TERM' >&2
     exit 1
