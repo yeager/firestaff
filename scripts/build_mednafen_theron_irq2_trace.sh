@@ -68,11 +68,6 @@ cp -R "$source_root/." "$build_root/source"
 # an index, so create one inside this disposable copy before applying hooks.
 git -C "$build_root/source" init --quiet
 git -C "$build_root/source" add --all --force
-# This patch owns the pristine PCE close path.  Apply it before later
-# instrumentation changes that also touch pce.cpp, so its narrow context does
-# not depend on their hunk offsets.
-git -C "$build_root/source" apply --recount --whitespace=nowarn \
-    "$repo/scripts/mednafen_1.32.1_theron_vram_vce_snapshot.patch"
 # macOS's BSD patch rejects the large debugger hunk despite a clean 1.32.1
 # source tree; git apply validates that hunk exactly. The smaller trace
 # patches retain their original BSD-patch format.
@@ -152,6 +147,8 @@ patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_adpcm_fifo_direct_read_origin_fix.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_state_autoload.patch"
+git -C "$build_root/source" apply --recount --whitespace=nowarn \
+    "$repo/scripts/mednafen_1.32.1_theron_vram_vce_snapshot.patch"
 loader_write_patch="$repo/scripts/mednafen_1.32.1_theron_main_ram_loader_write_trace_v3.patch"
 loader_write_rendered="$build_root/theron-main-ram-loader-write.rendered.patch"
 sed \
