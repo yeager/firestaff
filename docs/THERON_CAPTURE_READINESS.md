@@ -55,6 +55,12 @@ The reproducible capture entry point is
 `THERON_CAPTURE_AUTOLOAD_STATE`, `THERON_CAPTURE_REPLAY_INPUT_SCRIPT`, and
 `THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast` set against authentic local media.
 
+For a narrow follow-up probe, `THERON_CAPTURE_PCE_FAST_MOVEMENT_CONTEXT_MAIN_RAM_RANGE`
+accepts one inclusive physical-RAM range as `first-last` hexadecimal addresses.
+It records only writes in that range with the executing PC and MPR map. The
+range is disabled by default; selecting one produces provenance evidence, not
+field semantics or permission to enable dynamic rendering.
+
 The bounded movement-context sidecar records the reference frame and the full
 MPR0--MPR7 map for every observed input-latch or runtime-state write. This
 makes a future same-session capture auditable against its scripted controller

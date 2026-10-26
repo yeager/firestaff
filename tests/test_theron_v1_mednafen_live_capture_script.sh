@@ -628,11 +628,13 @@ if [[ ! -f "$pce_fast_movement_context_instrumenter" ]] ||
    ! grep -Fq 'movement_command_write' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'input_latch_write' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'runtime_state_write' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'main_ram_write' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'A == 0x2911 || A == 0x2912 || A == 0x2920' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq '0x0e8a00' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'TheronTraceInstructionPC' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'TheronPCEFastScriptFrame' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_START_FRAME' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_MAIN_RAM_RANGE' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'frame=%u' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'mpr0=%02x' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'mpr7=%02x' "$pce_fast_movement_context_instrumenter" ||
@@ -645,14 +647,16 @@ if [[ ! -f "$pce_fast_movement_context_instrumenter" ]] ||
    ! grep -Fq 'RMW_ZP(op)' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'RMW_ZPX(op)' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_TRACE' "$pce_fast_movement_context_instrumenter" ||
-   ! grep -Fq 'instrument_mednafen_theron_pce_fast_movement_context_trace.py' "$build_script"; then
+   ! grep -Fq 'instrument_mednafen_theron_pce_fast_movement_context_trace.py' "$build_script" ||
+   ! grep -Fq 'build_jobs=1' "$build_script"; then
     printf 'FAIL: PCE Fast movement context must record data-only reads without borrowing PCE command provenance\n' >&2
     exit 1
 fi
 if ! grep -Fq 'pce_fast_movement_context_trace="${trace}.pce-fast-movement-context"' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_TRACE="$pce_fast_movement_context_trace"' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_SAMPLE_LIMIT="${THERON_CAPTURE_PCE_FAST_MOVEMENT_CONTEXT_SAMPLE_LIMIT:-128}"' "$script" ||
-   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_START_FRAME="${THERON_CAPTURE_PCE_FAST_MOVEMENT_CONTEXT_START_FRAME:-$input_trace_start_frame}"' "$script"; then
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_START_FRAME="${THERON_CAPTURE_PCE_FAST_MOVEMENT_CONTEXT_START_FRAME:-$input_trace_start_frame}"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_MAIN_RAM_RANGE="${THERON_CAPTURE_PCE_FAST_MOVEMENT_CONTEXT_MAIN_RAM_RANGE:-}"' "$script"; then
     printf '%s\n' 'FAIL: capture must own and bound the PCE Fast movement-context trace' >&2
     exit 1
 fi

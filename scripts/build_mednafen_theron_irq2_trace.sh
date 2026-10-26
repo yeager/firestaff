@@ -359,12 +359,7 @@ CXXFLAGS="${CXXFLAGS:--O2}" ./configure --prefix="$prefix" --disable-apple2 --di
     --disable-pcfx --disable-psx --disable-sasplay --disable-sms --disable-snes \
     --disable-snes-faust --disable-ss --disable-ssfplay --disable-vb --disable-wswan \
     --without-libflac
-if command -v getconf >/dev/null 2>&1; then
-    build_jobs=$(getconf _NPROCESSORS_ONLN 2>/dev/null || true)
-fi
-if [[ ! ${build_jobs:-} =~ ^[1-9][0-9]*$ ]] && command -v sysctl >/dev/null 2>&1; then
-    build_jobs=$(sysctl -n hw.ncpu 2>/dev/null || true)
-fi
+build_jobs=1
 if [[ -n ${FIRESTAFF_MEDNAFEN_BUILD_JOBS:-} ]]; then
     if [[ ! $FIRESTAFF_MEDNAFEN_BUILD_JOBS =~ ^[1-9][0-9]*$ ]]; then
         printf 'FAIL: FIRESTAFF_MEDNAFEN_BUILD_JOBS must be a positive integer\n' >&2
