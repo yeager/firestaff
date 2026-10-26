@@ -1302,6 +1302,12 @@ static void m11_framebuffer_to_rgba_special_resampled(const unsigned char* src,
 /* ---------------- Public API ---------------- */
 
 int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
+    return M11_Render_InitWithWindowMode(windowWidth, windowHeight, scaleMode,
+                                         M11_WINDOW_MODE_MAXIMIZED);
+}
+
+int M11_Render_InitWithWindowMode(int windowWidth, int windowHeight,
+                                  int scaleMode, int windowMode) {
     if (g_state.initialised) {
         return M11_RENDER_ERR_ALREADY_INIT;
     }
@@ -1309,6 +1315,10 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
         return M11_RENDER_ERR_INVALID_ARG;
     }
     if (!m11_validate_scale(scaleMode)) {
+        return M11_RENDER_ERR_INVALID_ARG;
+    }
+    if (windowMode < M11_WINDOW_MODE_WINDOWED ||
+        windowMode > M11_WINDOW_MODE_FULLSCREEN) {
         return M11_RENDER_ERR_INVALID_ARG;
     }
     if (g_state.globalBrightness == 0) g_state.globalBrightness = 100;
@@ -1342,7 +1352,10 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
         "Firestaff",
         windowWidth,
         windowHeight,
-        SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
+        SDL_WINDOW_RESIZABLE |
+            (windowMode == M11_WINDOW_MODE_MAXIMIZED
+                 ? SDL_WINDOW_MAXIMIZED : 0) |
+            SDL_WINDOW_HIGH_PIXEL_DENSITY);
 #else
     g_state.window = SDL_CreateWindow(
         "Firestaff",
@@ -1350,7 +1363,9 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
         SDL_WINDOWPOS_CENTERED,
         windowWidth,
         windowHeight,
-        SDL_WINDOW_RESIZABLE);
+        SDL_WINDOW_RESIZABLE |
+            (windowMode == M11_WINDOW_MODE_MAXIMIZED
+                 ? SDL_WINDOW_MAXIMIZED : 0));
 #endif
 
     if (!g_state.window) {
@@ -1459,11 +1474,6 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
     g_state.displayAspectMode = M11_DISPLAY_ASPECT_CONTENT; /* content-native aspect */
     g_state.presentationFillWindow = 0;
     g_state.paletteLevel = 0;
-    /* Begin with the requested window geometry.  The startup coordinator
-     * applies the saved/default mode after loading configuration; creating
-     * every window maximized here makes an explicit CLI size impossible to
-     * honor because the first menu sync mistakes that state for a user
-     * maximization. */
     g_state.windowMode = M11_WINDOW_MODE_WINDOWED;
     g_state.integerScaling = 0; /* non-integer scaling for full-window FIT */
     g_state.scaleFilter = M11_SCALE_FILTER_NEAREST;
@@ -1482,6 +1492,10 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
     g_state.presentedW = 0;
     g_state.presentedH = 0;
     g_state.initialised = 1;
+    if (M11_Render_SetWindowMode(windowMode) != M11_RENDER_OK) {
+        M11_Render_Shutdown();
+        return M11_RENDER_ERR_WINDOW;
+    }
     return M11_RENDER_OK;
 }
 

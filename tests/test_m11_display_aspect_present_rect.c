@@ -1367,7 +1367,8 @@ static void check_sdl3_close_request_after_poll_uses_queue_drain(void) {
 }
 
 static void check_renderer_bootstrap_honors_requested_windowed_geometry(void) {
-    int initResult = M11_Render_Init(1200, 800, M11_SCALE_FIT);
+    int initResult = M11_Render_InitWithWindowMode(
+        1200, 800, M11_SCALE_FIT, M11_WINDOW_MODE_WINDOWED);
     int windowW = 0;
     int windowH = 0;
     int drawableW = 0;

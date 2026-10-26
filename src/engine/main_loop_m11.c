@@ -13357,13 +13357,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         o->windowModeOverride <= M11_WINDOW_MODE_FULLSCREEN) {
         startupWindowMode = o->windowModeOverride;
     }
-    int rc = M11_Render_Init(o->windowWidth, o->windowHeight, o->scaleMode);
+    int rc = M11_Render_InitWithWindowMode(o->windowWidth, o->windowHeight,
+                                           o->scaleMode, startupWindowMode);
     if (rc != M11_RENDER_OK) {
         return rc;
-    }
-    if (M11_Render_SetWindowMode(startupWindowMode) != M11_RENDER_OK) {
-        M11_Render_Shutdown();
-        return M11_RENDER_ERR_WINDOW;
     }
     M11_Render_SetPresentTimingEnabled(o->debug);
     if (o->debug) debugStartupTrace.startedMs = SDL_GetTicks();
