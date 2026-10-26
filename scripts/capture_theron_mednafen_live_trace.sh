@@ -1098,6 +1098,7 @@ main_ram_target_trace="${trace}.main-ram-target"
 ram_provenance_trace="${trace}.ram-provenance"
 record_watch_trace="${trace}.record-watch"
 movement_data_read_trace="${trace}.movement-data-read"
+pce_fast_movement_context_trace="${trace}.pce-fast-movement-context"
 spawn_consumer_trace="${trace}.spawn-consumer"
 spawn_register_trace="${trace}.spawn-registers"
 rng_consumer_trace="${trace}.rng-consumer"
@@ -1162,6 +1163,7 @@ rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_comman
     "$profile_sram_manifest" "$main_ram_consumer_trace" "$selected_record_trace" \
     "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" \
     "$movement_data_read_trace" \
+    "$pce_fast_movement_context_trace" \
     "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" \
     "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" \
     "$vram_snapshot" "$vce_snapshot" "$vdc_state_snapshot" "$vdc_sat_snapshot" \
@@ -1387,6 +1389,8 @@ launch=(
     FIRESTAFF_THERON_RECORD_WATCH_TRACE="$record_watch_trace" \
     FIRESTAFF_THERON_MOVEMENT_DATA_READ_TRACE="$movement_data_read_trace" \
     FIRESTAFF_THERON_MOVEMENT_DATA_READ_SAMPLE_LIMIT="$movement_data_read_sample_limit" \
+    FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_TRACE="$pce_fast_movement_context_trace" \
+    FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_SAMPLE_LIMIT="${THERON_CAPTURE_PCE_FAST_MOVEMENT_CONTEXT_SAMPLE_LIMIT:-128}" \
     FIRESTAFF_THERON_SPAWN_CONSUMER_TRACE="$spawn_consumer_trace" \
     FIRESTAFF_THERON_SPAWN_REGISTER_TRACE="$spawn_register_trace" \
     FIRESTAFF_THERON_SPAWN_REGISTER_SAMPLE_LIMIT="${THERON_CAPTURE_SPAWN_REGISTER_SAMPLE_LIMIT:-65536}" \
@@ -1684,7 +1688,7 @@ if [[ ! -s "$trace" ]] || ! grep -Fqx 'source=mednafen-pce-instrumented' "$trace
     printf '%s\n' 'FAIL: Mednafen did not produce a provenance-marked live trace' >&2
     exit 1
 fi
-if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$cd_data_port_read_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" "$pce_fast_a1b7_bmt_write_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace"; then
+if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$cd_data_port_read_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" "$pce_fast_a1b7_bmt_write_trace" "$pce_fast_movement_context_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace"; then
     printf '%s\n' 'FAIL: Mednafen emitted a literal backslash-n in a trace record' >&2
     exit 1
 fi

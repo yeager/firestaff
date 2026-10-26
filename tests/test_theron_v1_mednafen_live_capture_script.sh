@@ -615,6 +615,12 @@ if [[ ! -f "$pce_fast_movement_context_instrumenter" ]] ||
     printf 'FAIL: PCE Fast movement context must record data-only reads without borrowing PCE command provenance\n' >&2
     exit 1
 fi
+if ! grep -Fq 'pce_fast_movement_context_trace="${trace}.pce-fast-movement-context"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_TRACE="$pce_fast_movement_context_trace"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_SAMPLE_LIMIT="${THERON_CAPTURE_PCE_FAST_MOVEMENT_CONTEXT_SAMPLE_LIMIT:-128}"' "$script"; then
+    printf '%s\n' 'FAIL: capture must own and bound the PCE Fast movement-context trace' >&2
+    exit 1
+fi
 if [[ ! -f "$ram_provenance_patch" ]] ||
    ! grep -Fq '@@ -420,8 +428,12 @@' "$ram_provenance_patch" ||
    ! grep -Fq 'const uint8 reader_mpr = MPR[reader_pc >> 13];' "$ram_provenance_patch"; then
