@@ -62,6 +62,28 @@ are handed to the production renderer.
 
 ## Command trace status
 
+### Retained same-run capture (2026-10-26)
+
+A new Ymir 0.4.2-dev run loaded the hash-verified Japanese title-prompt
+state, held Start for 60 of 120 capture frames, and dumped memory and the
+VDP1 trace in the same run. The saved screenshot shows the retail three-choice
+menu. The VDP1 VRAM dump has SHA-256
+`0989ce1cba450dbe5a766d346b979ac038a236589225f3f795c8dc06f2ec6ea7`;
+the complete command CSV has SHA-256
+`b80c7a118e7f9df4f941804cdc045f4024336080504c512bbdf5c4e0df19d8d3`.
+The bundle records 10,668 command rows, zero dropped rows, and 178 commands
+in its last captured VDP1 frame, index 59. Filtering the CSV to frame 59 and
+joining with the final VRAM dump finds 86 whole `MENU.BPK` surface matches,
+143 textured commands, and no textured command whose source start falls in
+those matched ranges.
+
+The frame counter in the VDP1 trace is distinct from the 120 requested capture
+steps, and the screenshot is taken after the dump. This receipt therefore
+does not establish that all three artifacts represent precisely the same
+displayed frame or exclude use of `MENU.BPK` in other frames. It also tests
+source starts, not complete texture spans. The raw files are retained on the
+external evidence volume; no game-data payload is committed.
+
 A previous draft of this note reported a one-frame VRAM/command-trace pair and
 concluded that no textured command started in a matched `MENU.BPK` range. The
 two raw files are not present together in the retained evidence, so that join
