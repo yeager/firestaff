@@ -219,6 +219,13 @@ The temporary profile, dump, screenshot, process, and result receipt were
 removed after verification. This independently reproduces the observed loading
 checkpoint but does not extend its presentation admission.
 
+Ymir PR #966 also adds `--capture-save-state N`. A real title-prompt capture
+saved slot 3 after its dump, and a second isolated Ymir process loaded slot 3
+and completed a further one-frame dump. This makes long retail transitions
+inspectable through short, repeatable follow-up captures. The temporary state
+and both profiles were removed after the round trip; a saved emulator state is
+diagnostic transport, not a Firestaff asset or an admission signal.
+
 ## Title-menu VDP1 source-span join (2026-10-19 capture; analyzed 2026-10-26)
 
 A read-only source-join analysis on TRV2 used the retained Ymir v0.4.0
