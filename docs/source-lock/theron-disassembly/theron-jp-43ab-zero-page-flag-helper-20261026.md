@@ -3,9 +3,9 @@
 ## Evidence identity
 
 The execution evidence is the private PCE Fast capture
-`/home/trv2/firestaff-theron-evidence/capture/theron-a1a9-initializer-20261026/live.trace.a1a9-init`
+`/home/trv2/firestaff-theron-evidence/capture/theron-a1a9-register-local-20261027/live.trace.a1a9-init`
 on TRV2. Its SHA-256 is
-`78c31eb35cd64d96e8af5bd8bde93221efe3adca70aedac60fd5c519a20f1550`.
+`80be0ef30865051216ecc341a7f3b936e030221d4fed4fcc7238e58d1a09fb32`.
 It was captured from an emulator-created Ak-Tu-Ba state using authentic JP
 Rev. 1 media. The authentic JP Track 02 MD5 is
 `b7afb338ad31be1025b53f9aff12d73a`; the matching US Track 02 MD5 is
@@ -70,25 +70,26 @@ and `$279F` store bytes for this JP state; it does not establish a
 fetched-opcode-backed read or the semantic name or use of `$279F`.
 
 The next sampled byte windows are `TAX` at `$C29A` and `LDA $4842,X` at
-`$C29B`. The old trace records X=`$10` at `$C29B` in every case, but this is
-not a valid live-register observation. Mednafen 1.32.1
+`$C29B`. Mednafen 1.32.1
 `src/pce_fast/huc6280.cpp:29–60` maps `HU_X`, `HU_Y`, and `HU_P` to local
 variables inside `HuC6280_Run`; `SAVE_LOCALS` writes them back to `HuCPU` only
 when that run call exits. The old trace sampled `HuCPU.X`, `HuCPU.Y`, and
 `HuCPU.P`, so it recorded stale struct values while the CPU was running. The
-trace patch now samples `X_local`, `Y_local`, and `P_local`; a fresh authentic
-capture must pass the verifier before the indexed lookup can be described.
-The byte windows still come from Mednafen's mapped code page rather than the
-opcode fetch. The adjacent helpers that read `$27A1` or increment `$05/$06`
-also still have unbound callers and effects.
+trace patch now samples `X_local`, `Y_local`, and `P_local`. The corrected
+capture records X=`$10` in all 23 `$02` selector cases and X=`$00` in all 22
+`$00` cases at `$C29B`, matching the value previously stored to `$279F`.
+This verifies the bounded live-register correlation for this state. The byte
+windows still come from Mednafen's mapped code page rather than the opcode
+fetch. The adjacent helpers that read `$27A1` or increment `$05/$06` also
+still have unbound callers and effects.
 
 `scripts/verify_theron_pce_fast_a1a9_zero_page_consumer_trace.py` checks this
 bounded trace correlation and requires the live `$C29B` X value to match the
-shifted `$279F` value. The existing private trace has 5,760 rows and 23/22
-branch counts, but its X/Y/P fields are stale because the earlier trace patch
-read the CPU struct instead of the execution locals; it is intentionally
-rejected by the corrected verifier. A fresh capture using the updated patch
-is required. The raw trace remains private.
+shifted `$279F` value. The corrected private trace has 5,760 rows, 45 validated
+windows, and 23/22 branch counts. The full capture's broader dynamic-evidence
+gate did not obtain host-key, IRQ, or authenticated CD-to-RAM receipts; this
+sidecar therefore supports only the stated instruction-window correlation.
+The raw trace remains private.
 
 ## Adjacent authentic helper family
 
@@ -103,10 +104,10 @@ them at JP `$43B5–$43CB` and US `$43B8–$43CE`:
 | JP `$43C5` / US `$43C8` | `78 E6 05 E6 06 58 60` | Mask interrupts, increment `$05` and `$06`, restore interrupts, return. |
 
 The static receipt now verifies this adjacent byte span at every admitted
-raw-BIN candidate. These decodes narrow the next dynamic tracing task to the
-fetched opcode/register discrepancy and the callers of the `$27A1` and
-`$05/$06` helpers; they still do not identify the routines' gameplay roles,
-caller path, or loaded CD source.
+raw-BIN candidate. These decodes narrow the next dynamic tracing task to
+opcode-fetch provenance and the callers of the `$27A1` and `$05/$06` helpers;
+they still do not identify the routines' gameplay roles, caller path, or
+loaded CD source.
 
 ## Verification
 
