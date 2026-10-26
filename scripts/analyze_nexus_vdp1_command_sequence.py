@@ -128,9 +128,9 @@ def follow(index: dict[int, Record], start_offset: int) -> list[Record]:
 
 
 def chain_score(chain: list[Record], current_offset: int) -> tuple[int, int, int, int]:
-    draws = sum(not r.end and r.command_type <= 7 for r in chain)
-    clips = sum(not r.end and r.command_type in (8, 9) for r in chain)
-    locals_ = sum(not r.end and r.command_type == 10 for r in chain)
+    draws = sum(not (r.control & 0xC000) and r.command_type <= 7 for r in chain)
+    clips = sum(not (r.control & 0xC000) and r.command_type in (8, 9) for r in chain)
+    locals_ = sum(not (r.control & 0xC000) and r.command_type == 10 for r in chain)
     current = int(any(r.offset == current_offset for r in chain))
     return current, int(draws > 0 and clips > 0 and locals_ > 0), draws, -len(chain)
 
@@ -182,11 +182,11 @@ def find_chain(vram: bytes, copr: int) -> list[Record]:
 
     def metadata_score(chain: list[int]) -> tuple[int, int, int, int]:
         draws = sum(metadata[offset][0] & 0x000F <= 7 and
-                    not (metadata[offset][0] & 0x8000) for offset in chain)
+                    not (metadata[offset][0] & 0xC000) for offset in chain)
         clips = sum(metadata[offset][0] & 0x000F in (8, 9) and
-                    not (metadata[offset][0] & 0x8000) for offset in chain)
+                    not (metadata[offset][0] & 0xC000) for offset in chain)
         locals_ = sum(metadata[offset][0] & 0x000F == 10 and
-                      not (metadata[offset][0] & 0x8000) for offset in chain)
+                      not (metadata[offset][0] & 0xC000) for offset in chain)
         current = int(current_offset in chain)
         return current, int(draws > 0 and clips > 0 and locals_ > 0), draws, -len(chain)
 
