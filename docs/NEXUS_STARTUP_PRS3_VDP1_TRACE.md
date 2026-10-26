@@ -72,6 +72,25 @@ elsewhere in the game. It only establishes that it did not produce a traced
 high-WRAM write during this ten-frame title Start interval. Therefore this
 interval cannot be used to invent a PRS3 output-buffer ownership claim.
 
+## VDP1 command-history capture
+
+The same hash-pinned title-prompt state was restored again and Start was held
+for the first ten of 120 requested capture frames. Ymir completed its
+capture-owned loop at VDP1 frame 59. The derived command-history bundle
+contains 10,668 commands from frames 0 through 59, 178 commands for frame 59,
+and zero dropped commands.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `vdp1-command-trace.csv` | `b80c7a118e7f9df4f941804cdc045f4024336080504c512bbdf5c4e0df19d8d3` |
+| `vdp1-capture-bundle.txt` | `0e5cfa33070e33f24ae0e25ead7ce4fac561ae7c329ef7c59ff12382d3ea519e` |
+
+This is a deterministic emulator command observation tied to the same real
+media and state. It provides a finite command set for later source joins. It
+does **not** identify a `MENU.BPK` entry, a PRS3 output buffer, a texture
+window owner, palette interpretation, or on-screen semantic placement. It is
+therefore evidence for the next join, not permission to render a host menu.
+
 ## Next evidence required
 
 The startup menu remains capture-gated until one coherent real-media trace
