@@ -141,6 +141,15 @@ directory links via `stat()`. A same-source warm A/B scan showed no measurable
 benefit from removing the pre-pass, so it remains in place pending a broader
 profile that can justify changes to candidate ordering or cross-game indexing.
 
+The published v3.0.414 macOS arm64 app scanned the installed authentic
+collection from an isolated HOME/config in 30.08 seconds on the first run; two
+warm repeats took 9.92 and 9.84 seconds (9.88-second median). All five games
+were READY. Fourteen `.7z`/`.rar` candidates were explicitly skipped because
+external archive tools were disabled. The OS file cache was not controlled,
+and scan completion time is not a measurement of time to first menu input.
+This remains a one-host profile, not evidence of a general speedup or full
+archive inventory.
+
 ## Remaining startup work
 
 1. **Nexus:** join authentic Saturn title/menu presentation, input dispatch,

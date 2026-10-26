@@ -92,6 +92,17 @@ result. The run used an isolated HOME/config but did not control the OS file
 cache, so it is one current-source observation rather than a cold-scan
 benchmark. No game data was extracted or copied.
 
+2026-10-26 published v3.0.414 launcher scan against the same installed
+original-media root: a fresh isolated HOME/config took 30.08 s; two warm
+repeats took 9.92 s and 9.84 s (9.88 s median). The scanner reported all five
+games READY, while explicitly skipping 14 external `.7z`/`.rar` candidates
+because external archive tools were not enabled. The OS file cache was not
+controlled, so this is not a cold-disk measurement or a complete inventory of
+the collection. It confirms that full-root discovery still costs about 30 s
+from an isolated application cache; it does not measure time to first menu
+interaction. Profile this
+packaged revision before retaining another scanner optimization.
+
 2026-10-26 TRV2 current-main follow-up: a one-job `fast-dev` build of
 `6f1f79ff5` completed, then `--scan-data` against TRV2's authentic
 `.firestaff/data` root scanned the five-game collection in 14.77 s using the
