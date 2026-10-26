@@ -122,12 +122,25 @@ snapshots to the indoor compositor. Do not infer source ordering from F0810's
 movement direction or claim timer-driven pixel parity from the selector-only
 real-media test.
 
-Next implementation gate: feed authenticated visible DB14 chains and timer
-records into the per-slot compositor, emit current-slot and successful-creature
-seven-slot replay events in source order, and test that receipt against original
-DM2 media. Only after that should the renderer replace its trailing global
-projectile pass; separately verify the DB14 class1 `0x0d` TEMP_PICST animation
-and ordinary flying-item material path against captured source-phase frames.
+2026-10-26 runtime prerequisites: `dm2_v1_viewport_static_object_cell_for_map`
+now inverts the complete SKProject `table1d6ad0` forward/lateral table for all
+20 `table1d7029` draw cells, including the previously omitted ±2 lanes and
+party-row side cells. Object draw plans still apply their own source cell
+eligibility. `dm2_v1_runtime_live_missile_timer_receipt` now resolves a live
+DB14's timer through both its source timerarray index and owning DB14 handle,
+then exposes the active `wvalueB` as `action_word`; this avoids reading the
+immutable save timer table after runtime changes and avoids conflating timers
+that share a source index. Unit tests cover the rotated cell/pass mapping, and
+the authentic HME-242 Fireball runtime test verifies the live DB14-to-timer
+join. These bridges remain evidence only and are not yet consumed by rendering.
+
+Next implementation gate: feed authenticated visible DB14 chains and their
+active timer receipts into the per-slot compositor, emit current-slot and
+successful-creature seven-slot replay events in source order, and test that
+receipt against original DM2 media. Only after that should the renderer replace
+its trailing global projectile pass; separately verify the DB14 class1 `0x0d`
+TEMP_PICST animation and ordinary flying-item material path against captured
+source-phase frames.
 
 References: `include/dm2_v1_projectile_pc34_compat.h`,
 `src/dm2/dm2_v1_projectile_pc34_compat.c`,

@@ -227,13 +227,16 @@ int dm2_v1_viewport_static_object_cell_for_map(
 {
     static const int dx[4] = { 0, 1, 0, -1 };
     static const int dy[4] = { -1, 0, 1, 0 };
-    /* Inverse of SKProject dm2data.cpp::table1d6ad0 for the four source map
-     * rows admitted by this source-object bridge. */
-    static const int8_t cell_by_forward_lateral[4][3] = {
-        /* forward 1: D1L/D1C/D1R */ {  4,  3,  5 },
-        /* forward 2: D2L/D2C/D2R */ {  7,  6,  8 },
-        /* forward 3: D3L/D3C/D3R */ { 12, 11, 13 },
-        /* forward 4: D4L/D4C/D4R */ { 17, 16, 18 },
+    /* Inverse of SKProject dm2data.cpp::table1d6ad0. Keep all source cells
+     * addressable here, including the ±2 lanes that have no DM2_ViewSquare;
+     * individual source draw plans apply their own cell eligibility. */
+    static const int8_t lateral_by_cell[23] = {
+         0, -1,  1,  0, -1,  1,  0, -1,  1, -2,  2,  0,
+        -1,  1, -2,  2,  0, -1,  1, -2,  2, -3,  3
+    };
+    static const int8_t forward_by_cell[23] = {
+        0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 2, 3,
+        3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4
     };
     int dir;
     int right;
@@ -241,7 +244,7 @@ int dm2_v1_viewport_static_object_cell_for_map(
     int rel_y;
     int forward;
     int lateral;
-    int cell;
+    int cell = -1;
     int pass;
 
     if (out_cell) *out_cell = -1;
@@ -253,15 +256,20 @@ int dm2_v1_viewport_static_object_cell_for_map(
     forward = rel_x * dx[dir] + rel_y * dy[dir];
     lateral = rel_x * dx[right] + rel_y * dy[right];
 
-    if (forward < 1 || forward > 4 || lateral < -1 || lateral > 1) {
+    if (forward < 0 || forward > 4 || lateral < -3 || lateral > 3) {
         return 0;
     }
-    cell = (int)cell_by_forward_lateral[forward - 1][lateral + 1];
+    for (int candidate = 1; candidate < 23; ++candidate) {
+        if (forward_by_cell[candidate] == forward &&
+            lateral_by_cell[candidate] == lateral) {
+            cell = candidate;
+            break;
+        }
+    }
+    if (cell < 0) return 0;
     pass = dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(cell);
-    /* D0C (cell 0) has no table1d7029 pass and is not promoted to a generic
-     * object draw.  Side/deep cells have passes but are still blocked by
-     * dm2_v1_viewport_static_object_source_plan until their placement tables
-     * are recovered. */
+    /* D0C (cell 0) has no table1d7029 pass.  Static-object eligibility is
+     * applied by its source plan (DRAW_STATIC_OBJECT returns for cells >15). */
     if (pass < 0) return 0;
     if (out_cell) *out_cell = cell;
     if (out_pass) *out_pass = pass;

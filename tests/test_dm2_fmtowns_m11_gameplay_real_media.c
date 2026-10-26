@@ -1999,6 +1999,7 @@ int main(void)
         DM2_V1_RuntimeSpellCastReceipt cast;
         DM2_V1_G1DirectMissileReceipt live_missile;
         DM2_V1_G1FlyingItemSelectorReceipt live_selector;
+        DM2_V1_G1MissileTimerReceipt live_timer;
         uint8_t count_before = 0u, count_active = 0u, count_expired = 0u;
         int selected = dm2_v1_runtime_select_mac_charsheet_champion(0);
         int spell_ready = selected &&
@@ -2026,6 +2027,7 @@ int main(void)
         memset(&cast, 0, sizeof(cast));
         memset(&live_missile, 0, sizeof(live_missile));
         memset(&live_selector, 0, sizeof(live_selector));
+        memset(&live_timer, 0, sizeof(live_timer));
         spell_ready = selected && dm2_v1_runtime_set_spell_runes(
             0, fireball_runes, 3);
         check(spell_ready &&
@@ -2050,6 +2052,15 @@ int main(void)
                   live_selector.branch_temp_picst &&
                   live_selector.image_data_index != 0u,
               "HME-242 live DB14 resolves Fireball through the active pool into its original GDAT selector");
+        check(cast.applied &&
+                  dm2_v1_runtime_live_missile_timer_receipt(
+                      cast.missile_record, &live_timer) &&
+                  live_timer.valid &&
+                  live_timer.timer_index == live_missile.timer_index &&
+                  live_timer.timer_type == 0x1eu &&
+                  live_timer.value == (uint16_t)cast.missile_record &&
+                  live_timer.direction < 4u && live_timer.raw_timer_hash != 0u,
+              "HME-242 live Fireball joins DB14 to its active source timer wvalueB");
     }
     M11_GameView_Shutdown(&view);
     if (failures) return 1;

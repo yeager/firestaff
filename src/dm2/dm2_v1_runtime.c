@@ -15327,6 +15327,71 @@ int dm2_v1_runtime_live_missile_selector_context(
     return 1;
 }
 
+int dm2_v1_runtime_live_missile_timer_receipt(
+    int missile_record_handle,
+    DM2_V1_G1MissileTimerReceipt *out_timer)
+{
+    const DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    const uint8_t *record;
+    const DM2_V1_SourceTimer *matched = NULL;
+    uint16_t timer_index;
+    uint8_t raw[DM2_V1_SOURCE_TIMER_SIZE];
+    uint32_t hash;
+
+    if (out_timer) memset(out_timer, 0, sizeof(*out_timer));
+    if (!out_timer || !rt->record_pools_valid ||
+        !rt->record_pools.valid ||
+        dm2_v1_record_handle_pool((int16_t)missile_record_handle) != 14 ||
+        rt->timer_queue.count > DM2_V1_SOURCE_TIMER_MAX ||
+        !(record = dm2_v1_record_pool_address(
+              &rt->record_pools, (int16_t)missile_record_handle)) ||
+        rt->record_pools.pools[14].record_size < 8u) {
+        return 0;
+    }
+    timer_index = dm2_runtime_missile_rd16(&rt->record_pools, record + 6);
+
+    /* DB14::w6 names the source timerarray slot. Match both that stable slot
+     * and c_tim::wvalueA (the owning DB14 handle); source indices alone can
+     * repeat for unrelated runtime-created timers. */
+    for (size_t i = 0u; i < rt->timer_queue.count; ++i) {
+        const DM2_V1_SourceTimer *timer = &rt->timer_queue.timers[i];
+        if (rt->timer_queue.source_indices[i] != timer_index ||
+            (uint16_t)timer->value_a != (uint16_t)missile_record_handle ||
+            (timer->type != 0x1du && timer->type != 0x1eu)) {
+            continue;
+        }
+        if (matched) return 0;
+        matched = timer;
+    }
+    if (!matched) return 0;
+
+    memset(raw, 0, sizeof(raw));
+    raw[0] = (uint8_t)matched->ticks_and_map;
+    raw[1] = (uint8_t)(matched->ticks_and_map >> 8);
+    raw[2] = (uint8_t)(matched->ticks_and_map >> 16);
+    raw[3] = (uint8_t)(matched->ticks_and_map >> 24);
+    raw[4] = matched->type;
+    raw[5] = matched->actor;
+    raw[6] = (uint8_t)matched->value_a;
+    raw[7] = (uint8_t)((uint16_t)matched->value_a >> 8);
+    raw[8] = (uint8_t)matched->value_b;
+    raw[9] = (uint8_t)((uint16_t)matched->value_b >> 8);
+    raw[10] = (uint8_t)matched->reserved;
+    raw[11] = (uint8_t)((uint16_t)matched->reserved >> 8);
+    hash = dm2_runtime_viewport_evidence_hash_bytes(raw, sizeof(raw));
+    if (!hash) return 0;
+
+    out_timer->timer_index = timer_index;
+    out_timer->timer_type = matched->type;
+    out_timer->actor = matched->actor;
+    out_timer->value = (uint16_t)matched->value_a;
+    out_timer->action_word = (uint16_t)matched->value_b;
+    out_timer->direction = (uint8_t)((out_timer->action_word >> 10) & 3u);
+    out_timer->raw_timer_hash = hash;
+    out_timer->valid = 1;
+    return 1;
+}
+
 int dm2_v1_runtime_last_missile_impact_receipt(
     DM2_V1_RuntimeMissileImpactReceipt *out_receipt) {
     if (!out_receipt || !g_dm2_last_missile_impact.valid) {

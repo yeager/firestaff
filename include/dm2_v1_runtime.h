@@ -327,6 +327,12 @@ int dm2_v1_runtime_live_missile_selector_receipt(
     int missile_record_handle,
     DM2_V1_G1DirectMissileReceipt *out_missile,
     DM2_V1_G1FlyingItemSelectorReceipt *out_selector);
+/* Resolve a live DB14's timer index against the active runtime timer queue.
+ * The returned action_word is the source wvalueB used by DRAW_FLYING_ITEM;
+ * missing, expired, ambiguous, or mismatched timer owners fail closed. */
+int dm2_v1_runtime_live_missile_timer_receipt(
+    int missile_record_handle,
+    DM2_V1_G1MissileTimerReceipt *out_timer);
 /* Internal context bridge kept in the runtime object so source-only runtime
  * tests do not acquire a new dependency on the projectile selector module. */
 struct DM2_V1_RecordPoolSet;
