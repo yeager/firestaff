@@ -15307,26 +15307,24 @@ int dm2_v1_runtime_last_projectile_render_receipt(
     return 1;
 }
 
-int dm2_v1_runtime_live_missile_selector_receipt(
-    int missile_record_handle,
-    DM2_V1_G1DirectMissileReceipt *out_missile,
-    DM2_V1_G1FlyingItemSelectorReceipt *out_selector)
+
+int dm2_v1_runtime_live_missile_selector_context(
+    const DM2_V1_DungeonData **out_dungeon,
+    const DM2_V1_RecordPoolSet **out_pools,
+    const DM2_V1_AssetLoader **out_loader)
 {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
-    const DM2_V1_DungeonData *dungeon;
-    const DM2_V1_AssetLoader *loader;
-
-    if (out_missile) memset(out_missile, 0, sizeof(*out_missile));
-    if (out_selector) memset(out_selector, 0, sizeof(*out_selector));
-    if (!out_missile || !out_selector || !rt->record_pools_valid ||
-        !rt->boot || !rt->boot->dungeon_data ||
-        !(loader = dm2_v1_boot_asset_loader(rt->boot))) {
+    if (out_dungeon) *out_dungeon = NULL;
+    if (out_pools) *out_pools = NULL;
+    if (out_loader) *out_loader = NULL;
+    if (!out_dungeon || !out_pools || !out_loader ||
+        !rt->record_pools_valid || !rt->boot || !rt->boot->dungeon_data ||
+        !(*out_loader = dm2_v1_boot_asset_loader(rt->boot))) {
         return 0;
     }
-    dungeon = (const DM2_V1_DungeonData *)rt->boot->dungeon_data;
-    return dm2_v1_g1_live_flying_item_selector_receipt(
-        dungeon, &rt->record_pools, loader,
-        (uint16_t)missile_record_handle, out_missile, out_selector);
+    *out_dungeon = (const DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    *out_pools = &rt->record_pools;
+    return 1;
 }
 
 int dm2_v1_runtime_last_missile_impact_receipt(

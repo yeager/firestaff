@@ -327,6 +327,13 @@ int dm2_v1_runtime_live_missile_selector_receipt(
     int missile_record_handle,
     DM2_V1_G1DirectMissileReceipt *out_missile,
     DM2_V1_G1FlyingItemSelectorReceipt *out_selector);
+/* Internal context bridge kept in the runtime object so source-only runtime
+ * tests do not acquire a new dependency on the projectile selector module. */
+struct DM2_V1_RecordPoolSet;
+int dm2_v1_runtime_live_missile_selector_context(
+    const DM2_V1_DungeonData **out_dungeon,
+    const struct DM2_V1_RecordPoolSet **out_pools,
+    const DM2_V1_AssetLoader **out_loader);
 /* Copy the currently visible source rune line into the live c_hero owner.
  * M11 owns the panel buffer; DM2 owns the cast transaction. */
 int dm2_v1_runtime_set_spell_runes(int hero_index,
