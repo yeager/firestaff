@@ -1,6 +1,6 @@
 --- a/src/pce/input.cpp
 +++ b/src/pce/input.cpp
-@@ -268,0 +269,28 @@
+@@ -268,0 +269,36 @@
 + static FILE *theron_input_read_trace = NULL;
 + static unsigned theron_input_read_count = 0;
 + static unsigned theron_input_read_trace_limit = 65536;
