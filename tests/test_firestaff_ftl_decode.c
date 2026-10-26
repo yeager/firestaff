@@ -35,6 +35,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
 static void wr16_be(uint8_t* p, uint16_t v) {
@@ -58,7 +59,7 @@ static size_t build_checksum_bridge_ftl(uint8_t* out, size_t cap) {
     const size_t bss_off = 20u + hunk_count * 12u;
     const size_t bss_size = 40u;
     const size_t data_off = bss_off + bss_size;
-    const size_t data_size = 8u;
+    const size_t data_size = 18u;
     const size_t code_off = data_off + data_size;
     const size_t code_size = 3848u + 5u;
     const size_t total = code_off + code_size;
@@ -93,7 +94,8 @@ static size_t build_checksum_bridge_ftl(uint8_t* out, size_t cap) {
     wr32_be(h + 4u, (uint32_t)code_off);
     wr32_be(h + 8u, (uint32_t)code_size);
 
-    memcpy(out + data_off, "ABCDEFGH", data_size);
+    wr32_be(out + data_off + 2u, 8u);
+    memcpy(out + data_off + 10u, "ABCDEFGH", 8u);
 
     code = out + code_off;
     wr16_be(code + 0u, 0x5223u);
@@ -114,7 +116,7 @@ static size_t build_checksum_bridge_ftl(uint8_t* out, size_t cap) {
     code[3852u] = 0x00u;
 
     bss = out + bss_off;
-    wr32_be(bss + 4u, (uint32_t)data_size);
+    wr32_be(bss + 4u, 8u);
     wr32_be(bss + 20u, 6u);
     wr32_be(bss + 24u, (uint32_t)data_size);
     wr16_be(bss + 36u, FirestaffFtlContainer_ByteChecksum(code, code_size));
@@ -192,7 +194,49 @@ static int checksum_bridge_test(void) {
     return 0;
 }
 
-int main(void) {
+/* Exercise the actual CSB Amiga 3.3 program. Its DATA area contains the
+ * ReDMCSB SWSH palette schedule; no original bytes are stored in the test. */
+static int csb_amiga_swsh_real_media(const char* path) {
+    FILE* file = fopen(path, "rb");
+    uint8_t* bytes;
+    long size;
+    FirestaffFtl ftl;
+    int rc;
+    if (!file) {
+        fprintf(stderr, "SKIP: CSB Amiga SWSH.FTL is unavailable\n");
+        return 77;
+    }
+    if (fseek(file, 0, SEEK_END) != 0 || (size = ftell(file)) != 18882 ||
+        fseek(file, 0, SEEK_SET) != 0) {
+        fclose(file);
+        fprintf(stderr, "Unexpected CSB SWSH.FTL size\n");
+        return 1;
+    }
+    bytes = (uint8_t*)malloc((size_t)size);
+    if (!bytes || fread(bytes, 1u, (size_t)size, file) != (size_t)size) {
+        free(bytes);
+        fclose(file);
+        return 1;
+    }
+    fclose(file);
+    rc = FirestaffFtl_Parse(bytes, (size_t)size, &ftl);
+    if (rc == 0) rc = FirestaffFtl_Decode(&ftl);
+    if (rc != 0 || ftl.hunk_data_decoded_size != 11780u ||
+        memcmp(ftl.hunk_data_decoded + 154u,
+               "\x00\x01\x0f\xff\xff\xff\x00\x01", 8u) != 0) {
+        fprintf(stderr, "CSB SWSH DATA or palette schedule did not decode\n");
+        if (rc == 0) FirestaffFtl_Free(&ftl);
+        free(bytes);
+        return 1;
+    }
+    FirestaffFtl_Free(&ftl);
+    free(bytes);
+    puts("PASS: original CSB Amiga SWSH DATA and palette schedule");
+    return 0;
+}
+
+int main(int argc, char** argv) {
+    if (argc == 2) return csb_amiga_swsh_real_media(argv[1]);
     int rc = FirestaffFtl_SelfTest();
     int bridge_rc = checksum_bridge_test();
     if (rc == 0 && bridge_rc == 0) {

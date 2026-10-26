@@ -43103,6 +43103,14 @@ add_executable(test_nexus_v1_dgn_material_raster
         NAME firestaff_ftl_decode_unit
         COMMAND test_firestaff_ftl_decode
     )
+    add_test(
+        NAME csb_amiga_swsh_ftl_decode_real_media
+        COMMAND test_firestaff_ftl_decode
+            "${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/amiga33-original/SWSH.FTL"
+    )
+    set_tests_properties(csb_amiga_swsh_ftl_decode_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "csb;amiga;startup;real-media;skip-safe")
 
     # ── CSB Utility Disk .CMP file decoder (Tier 2 #6) ──
     # Verifies src/shared/firestaff_cmp_decode.c parses the
