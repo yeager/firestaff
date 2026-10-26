@@ -181,6 +181,15 @@ not enable a host menu, gameplay, HUD, or synthetic confirmation rule from this
 observation. The temporary screenshots, dumps, profile, and emulator process
 were removed after their hashes and receipt limits were checked.
 
+The same real state and input schedule was also captured for 600 requested
+frames. Its final framebuffer showed the retail `Now Loading` screen (SHA-256
+`07a6f3a612ca75209cd6308852a7cf25b3d1f35943ce2f5774e720376ef7c61c`), and
+the VDP1 receipt retained 48,380 undropped trace rows through frame 391. This
+extends the observed route from the door transition to the native loading
+state. It does not yet reach or bind a stable playable level, the party pose,
+viewport, HUD, level source, or palette/compositor route; it must not be used
+to synthesize any of those Firestaff states.
+
 ## Title-menu VDP1 source-span join (2026-10-19 capture; analyzed 2026-10-26)
 
 A read-only source-join analysis on TRV2 used the retained Ymir v0.4.0
