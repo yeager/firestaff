@@ -195,6 +195,11 @@ def aggregate_source_join_status(draw_count: int, joined_count: int) -> str:
     return "complete"
 
 
+def has_informative_source(source: bytes) -> bool:
+    """Zero-filled VRAM can match padding in unrelated authenticated files."""
+    return bool(source) and any(source)
+
+
 def texture_dimensions(size_word: int) -> tuple[int, int]:
     """Decode Saturn CMDSIZE: horizontal cells in bits 13..8, height in 7..0."""
     return ((size_word >> 8) & 0x3F) * 8, size_word & 0xFF
@@ -315,7 +320,7 @@ def main() -> int:
         draw_joined = bool(
             exact or swapped_exact or dgn_exact or dgn_swapped_exact or
             file_exact or file_word_swap
-        )
+        ) and has_informative_source(source)
         if draw_joined:
             joined_draws += 1
         print(
@@ -335,6 +340,7 @@ def main() -> int:
               ("|".join(file_word_swap) if file_word_swap else "none"))
         print(f"retail_files_scanned={len(retail_files)}")
         print(f"retail_files_hash_rejected={rejected_files}")
+        print(f"source_informative={int(has_informative_source(source))}")
     print(f"source_joined_draws={joined_draws}/{len(draws)}")
     print("source_join=" + aggregate_source_join_status(len(draws), joined_draws))
     print("semantic_admission=blocked")

@@ -79,9 +79,12 @@ those matched ranges.
 
 An initial analysis incorrectly included skipped VDP1 commands and reversed
 the character width and height fields. With both corrected, the independent
-source scan matches all 137 executed texture spans to authenticated retail
-files in the available corpus. This is a byte-source observation, not proof
-of final pixel composition or input behavior.
+source scan initially matched all 137 executed texture spans to retail files.
+Eleven spans are all zero and also match unrelated file padding, so they do
+not establish source identity. Excluding those uninformative matches leaves
+126 of 137 spans with nonzero byte matches to authenticated retail files.
+This is a byte-source observation, not proof of final pixel composition or
+input behavior.
 
 The same CMDSIZE and skipped-command corrections also apply to the Mednafen
 VDP1 source, material, and write-join analyzers. Earlier numerical receipts
@@ -98,6 +101,13 @@ has a 236-record chain and 221 executed textured draws. The authenticated
 186 with Structure3 face owners. Six draws remain unmatched. This is a
 capture-level result; it does not establish display composition or permit
 production rendering.
+
+The broader source-only scan counts 200 of 221 draws with nonzero matching
+retail bytes. Of the six unmatched source/palette pairs, five use the same
+448-byte all-zero texture, which cannot identify a resource; the remaining
+draw at command `0x00f00` uses a nonzero 1,152-byte span without a match in
+the scanned corpus. A matching all-zero image must not be used to infer its
+owner or promote a renderer gate.
 
 The frame counter in the VDP1 trace is distinct from the 120 requested capture
 steps, and the screenshot is taken after the dump. This receipt therefore

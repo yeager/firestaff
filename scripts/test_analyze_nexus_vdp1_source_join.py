@@ -11,6 +11,7 @@ from pathlib import Path
 from analyze_nexus_vdp1_source_join import (
     accepted_retail_hashes,
     aggregate_source_join_status,
+    has_informative_source,
     swapped_words,
     texture_dimensions,
     ymir_commands,
@@ -21,6 +22,10 @@ BUILD.mkdir(exist_ok=True)
 
 
 class AcceptedRetailHashesTests(unittest.TestCase):
+    def test_zero_filled_texture_is_not_source_identity(self) -> None:
+        self.assertFalse(has_informative_source(bytes(448)))
+        self.assertTrue(has_informative_source(b"\x00\x01"))
+
     def test_saturn_cmdsize_dimensions(self) -> None:
         self.assertEqual(texture_dimensions(0x0410), (32, 16))
 
