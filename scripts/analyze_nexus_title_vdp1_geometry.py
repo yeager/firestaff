@@ -21,6 +21,30 @@ def signed(value: int, width: int) -> int:
     return value - (1 << width) if value & (1 << (width - 1)) else value
 
 
+def geometry_for_chain(chain):
+    """Summarize active LOCAL and distorted-sprite commands in one chain."""
+    local_x = local_y = 0
+    distorted = 0
+    vertices: list[tuple[int, int]] = []
+    local_updates: list[tuple[int, int, int]] = []
+    for record in chain:
+        if record.end or record.skipped:
+            continue
+        words = record.words
+        if record.command_type == 10:
+            local_x, local_y = signed(words[6], 13), signed(words[7], 13)
+            local_updates.append((record.offset, local_x, local_y))
+            continue
+        if record.command_type != 2:
+            continue
+        points = tuple((signed(words[index], 13) + local_x,
+                        signed(words[index + 1], 13) + local_y)
+                       for index in (6, 8, 10, 12))
+        distorted += 1
+        vertices.extend(points)
+    return distorted, vertices, local_updates
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture", type=Path)
@@ -40,29 +64,24 @@ def main() -> int:
         print("NEXUS_TITLE_VDP1_GEOMETRY_INVALID: title frame has no active chain")
         return 1
 
-    local_x = local_y = 0
-    distorted = 0
-    vertices: list[tuple[int, int]] = []
-    local_updates = []
-    for record in chain:
-        if record.end:
-            continue
-        words = record.words
-        if record.command_type == 10:
-            local_x, local_y = signed(words[6], 13), signed(words[7], 13)
-            local_updates.append((record.offset, local_x, local_y))
-            continue
-        if record.command_type != 2:
-            continue
-        points = tuple((signed(words[index], 13) + local_x,
-                        signed(words[index + 1], 13) + local_y)
-                       for index in (6, 8, 10, 12))
-        distorted += 1
-        vertices.extend(points)
-        if not args.summary:
-            print("command=0x%05x local=(%d,%d) vertices=%s" %
-                  (record.offset, local_x, local_y,
-                   ",".join("(%d,%d)" % point for point in points)))
+    distorted, vertices, local_updates = geometry_for_chain(chain)
+    if not args.summary:
+        local_state = (0, 0)
+        for record in chain:
+            if record.end or record.skipped:
+                continue
+            if record.command_type == 10:
+                local_state = (signed(record.words[6], 13),
+                               signed(record.words[7], 13))
+            elif record.command_type == 2:
+                words = record.words
+                points = tuple((signed(words[index], 13) + local_state[0],
+                                signed(words[index + 1], 13) + local_state[1])
+                               for index in (6, 8, 10, 12))
+                local_x, local_y = local_state
+                print("command=0x%05x local=(%d,%d) vertices=%s" %
+                      (record.offset, local_x, local_y,
+                       ",".join("(%d,%d)" % point for point in points)))
     if not vertices:
         print("NEXUS_TITLE_VDP1_GEOMETRY_INVALID: title chain has no distorted sprites")
         return 1

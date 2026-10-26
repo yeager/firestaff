@@ -335,9 +335,9 @@ def _chain_summary(chain: list[Record]) -> dict[str, object]:
     type_counts: Counter[int] = Counter()
     for record in chain:
         kind = record.command_type
-        type_counts[kind] += 1
-        if record.end:
+        if record.end or record.skipped:
             continue
+        type_counts[kind] += 1
         if kind == 8:
             user_clip = (
                 record.words[6] & 0x1FFF,

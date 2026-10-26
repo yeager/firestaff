@@ -8,6 +8,7 @@ import csv
 import tempfile
 from pathlib import Path
 
+from analyze_nexus_title_vdp1_geometry import geometry_for_chain
 from analyze_nexus_vdp1_command_sequence import Record, describe
 from analyze_nexus_vdp1_source_join import (
     accepted_retail_hashes,
@@ -23,6 +24,32 @@ BUILD.mkdir(exist_ok=True)
 
 
 class AcceptedRetailHashesTests(unittest.TestCase):
+    def test_title_geometry_ignores_skipped_local_and_draw_commands(self) -> None:
+        def command(offset: int, control: int, words=None) -> Record:
+            payload = list(words or [0] * 16)
+            payload[0] = control
+            return Record(offset, tuple(payload))
+
+        skipped_local = [0] * 16
+        skipped_local[6:8] = [100, 200]
+        local = [0] * 16
+        local[6:8] = [10, 20]
+        skipped_draw = [0] * 16
+        skipped_draw[6:14] = [30, 40, 50, 60, 70, 80, 90, 100]
+        draw = [0] * 16
+        draw[6:14] = [1, 2, 3, 4, 5, 6, 7, 8]
+        chain = [
+            command(0x00, 0x400A, skipped_local),
+            command(0x20, 0x4002, skipped_draw),
+            command(0x40, 0x000A, local),
+            command(0x60, 0x0002, draw),
+            command(0x80, 0x8000),
+        ]
+        distorted, vertices, local_updates = geometry_for_chain(chain)
+        self.assertEqual(distorted, 1)
+        self.assertEqual(vertices, [(11, 22), (13, 24), (15, 26), (17, 28)])
+        self.assertEqual(local_updates, [(0x40, 10, 20)])
+
     def test_command_summary_excludes_skipped_commands_from_active_state(self) -> None:
         def command(offset: int, control: int) -> Record:
             return Record(offset, (control,) + (0,) * 15)
