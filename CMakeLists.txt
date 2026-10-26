@@ -55113,9 +55113,9 @@ if(BUILD_TESTING AND THERON_SOURCES AND
         COMMAND test_theron_v1_runtime_level_data_receipt)
 endif()
 
-# Theron Track 02 bank-$1f static HuC6280 disassembly receipt. This verifies
-# only the byte-backed support fragment; the post-CD $2600 RAM consumer stays
-# a separate capture-gated boundary.
+# Theron Track 02 static HuC6280 disassembly receipt. This verifies byte-backed
+# source candidates, including the $43AB/$43AE initializer helper; it does not
+# identify the loaded CD copy or bind the post-CD $2600 RAM consumer.
 if(BUILD_TESTING AND THERON_SOURCES AND
         EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_huc6280_disassembly.c")
     add_executable(test_theron_v1_huc6280_disassembly

@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static const char *path_for(const char *env_name, const char *name,
                             char *fallback, size_t capacity) {
@@ -256,6 +257,32 @@ static void verify(const char *env_name, const char *name,
         assert(!receipt.spawn_rng_cc3e_jp_candidate_verified);
     }
     assert(!receipt.semantic_publication_allowed);
+    if (variant == THERON_TRACK02_VARIANT_US_BIN ||
+        variant == THERON_TRACK02_VARIANT_JP_BIN) {
+        static const uint32_t us_offsets[
+            THERON_V1_HUC6280_CALLEE_CANDIDATE_COUNT] = {
+            0x9587eu, 0xdf07eu, 0x12887eu, 0x17207eu,
+            0x1bb87eu, 0x20507eu, 0x24e87eu
+        };
+        static const uint32_t jp_offsets[
+            THERON_V1_HUC6280_CALLEE_CANDIDATE_COUNT] = {
+            0x94f4bu, 0xde74bu, 0x127f4bu, 0x17174bu,
+            0x1baf4bu, 0x20474bu, 0x24df4bu
+        };
+        const uint32_t *expected_offsets =
+            variant == THERON_TRACK02_VARIANT_US_BIN ? us_offsets : jp_offsets;
+        assert(receipt.initializer_callee_candidates_verified);
+        assert(receipt.initializer_callee_logical_address ==
+               (variant == THERON_TRACK02_VARIANT_US_BIN ? 0x43aeu : 0x43abu));
+        assert(receipt.initializer_callee_bytes == 10u);
+        assert(receipt.initializer_callee_candidate_count ==
+               THERON_V1_HUC6280_CALLEE_CANDIDATE_COUNT);
+        assert(receipt.initializer_callee_fnv1a == 0x7bacabfau);
+        assert(memcmp(receipt.initializer_callee_candidate_file_offsets,
+                      expected_offsets, sizeof(us_offsets)) == 0);
+    } else {
+        assert(!receipt.initializer_callee_candidates_verified);
+    }
     assert(receipt.fragment_address == 0x243eu);
     assert(receipt.fragment_bytes == 134u);
     assert(receipt.fragment_fnv1a != 0u);

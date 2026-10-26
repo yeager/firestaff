@@ -98,6 +98,8 @@
 #define THERON_JP_SPAWN_CC3E_ADDRESS 0xcc3eu
 #define THERON_JP_SPAWN_CC3E_BYTES 200u
 #define THERON_JP_SPAWN_CC3E_FNV1A 0x13a65ea6u
+#define THERON_INITIALIZER_CALLEE_BYTES 10u
+#define THERON_INITIALIZER_CALLEE_FNV1A 0x7bacabfau
 
 static const uint8_t g_fragment[THERON_FRAGMENT_BYTES] = {
     0xb2, 0x2e, 0x85, 0x0e, 0xe6, 0x2e, 0xd0, 0x02, 0xe6, 0x2f, 0x86, 0x0f,
@@ -193,6 +195,26 @@ static const uint8_t g_spawn_rng_helper_jp[
     0x60
 };
 
+/* The authentic restored JP trace executes this sequence at logical $43AB,
+ * physical $0D03AB. Opcode $0F is BBR0 zp,rel; see Mednafen 1.32.1
+ * src/pce/dis6280.cpp:222 and HuC6280::BBRi/JR in src/pce/huc6280.cpp:353-378.
+ * It writes only zero-page $07, not the six-rectangle table. */
+static const uint8_t g_initializer_callee[THERON_INITIALIZER_CALLEE_BYTES] = {
+    0xa9, 0x00, 0x0f, 0x06, 0x02, 0xa9, 0x02, 0x85, 0x07, 0x60
+};
+
+static const uint32_t g_us_initializer_callee_offsets[
+    THERON_V1_HUC6280_CALLEE_CANDIDATE_COUNT] = {
+    0x9587eu, 0xdf07eu, 0x12887eu, 0x17207eu,
+    0x1bb87eu, 0x20507eu, 0x24e87eu
+};
+
+static const uint32_t g_jp_initializer_callee_offsets[
+    THERON_V1_HUC6280_CALLEE_CANDIDATE_COUNT] = {
+    0x94f4bu, 0xde74bu, 0x127f4bu, 0x17174bu,
+    0x1baf4bu, 0x20474bu, 0x24df4bu
+};
+
 static const uint16_t g_stage2_dispatch_targets[THERON_STAGE2_DISPATCH_ENTRIES] = {
     0x41c5u, 0x41cbu, 0x41d8u, 0x41deu, 0x41e6u, 0x41ecu, 0x41f0u,
     0x41f4u, 0x4214u, 0x4253u, 0x4254u, 0x4259u, 0x4263u, 0x4271u,
@@ -227,6 +249,22 @@ static int stage2_dispatch_table_matches(const uint8_t *bytes) {
             ((uint16_t)bytes[i * 2u + 1u] << 8u));
         if (target != g_stage2_dispatch_targets[i] ||
             target < 0x4000u || target >= 0x8000u) return 0;
+    }
+    return 1;
+}
+
+static int read_initializer_callee_candidates(
+    FILE *file,
+    const uint32_t offsets[THERON_V1_HUC6280_CALLEE_CANDIDATE_COUNT],
+    uint8_t candidates[THERON_V1_HUC6280_CALLEE_CANDIDATE_COUNT]
+                    [THERON_INITIALIZER_CALLEE_BYTES]) {
+    size_t i;
+    for (i = 0u; i < THERON_V1_HUC6280_CALLEE_CANDIDATE_COUNT; ++i) {
+        if (fseek(file, (long)offsets[i], SEEK_SET) != 0 ||
+            fread(candidates[i], 1u, THERON_INITIALIZER_CALLEE_BYTES, file) !=
+                THERON_INITIALIZER_CALLEE_BYTES ||
+            memcmp(candidates[i], g_initializer_callee,
+                   THERON_INITIALIZER_CALLEE_BYTES) != 0) return 0;
     }
     return 1;
 }
@@ -284,6 +322,9 @@ int theron_v1_huc6280_disassembly_read_file(
     uint8_t stage2_dispatch_table[THERON_STAGE2_DISPATCH_BYTES];
     uint8_t vce_palette_consumer[THERON_VCE_PALETTE_CONSUMER_BYTES];
     uint8_t vce_palette_caller[THERON_VCE_PALETTE_CALLER_BYTES];
+    uint8_t initializer_callee_candidates[
+        THERON_V1_HUC6280_CALLEE_CANDIDATE_COUNT]
+        [THERON_INITIALIZER_CALLEE_BYTES];
     uint8_t spawn_rng_helper[THERON_SPAWN_RNG_HELPER_BYTES];
     uint8_t spawn_rng_preconsumer[THERON_SPAWN_RNG_PRECONSUMER_BYTES];
     uint8_t spawn_rng_c96b[THERON_SPAWN_C96B_BYTES];
@@ -407,6 +448,12 @@ int theron_v1_huc6280_disassembly_read_file(
                 SEEK_SET) != 0 ||
           fread(vce_palette_caller, 1u, sizeof(vce_palette_caller), file) !=
               sizeof(vce_palette_caller))) ||
+        (raw_bin_variant &&
+         !read_initializer_callee_candidates(file,
+             track02_variant == THERON_TRACK02_VARIANT_US_BIN ?
+                 g_us_initializer_callee_offsets :
+                 g_jp_initializer_callee_offsets,
+             initializer_callee_candidates)) ||
         !m12_file_md5_hex(path, receipt.source_md5)) {
         if (file) fclose(file);
         receipt.status = THERON_V1_HUC6280_DISASSEMBLY_REJECTED;
@@ -434,6 +481,10 @@ int theron_v1_huc6280_disassembly_read_file(
         (raw_bin_variant &&
          memcmp(vce_palette_consumer, g_vce_palette_consumer,
                 sizeof(vce_palette_consumer)) != 0) ||
+        (raw_bin_variant &&
+         fnv1a(initializer_callee_candidates[0],
+               THERON_INITIALIZER_CALLEE_BYTES) !=
+             THERON_INITIALIZER_CALLEE_FNV1A) ||
         (retail_track02_variant &&
          memcmp(vce_palette_caller, g_vce_palette_caller,
                 sizeof(vce_palette_caller)) != 0) ||
@@ -578,6 +629,25 @@ int theron_v1_huc6280_disassembly_read_file(
             spawn_runtime_c3a0_jp, sizeof(spawn_runtime_c3a0_jp));
     }
     receipt.semantic_publication_allowed = 0;
+    if (raw_bin_variant) {
+        size_t i;
+        const uint32_t *offsets =
+            track02_variant == THERON_TRACK02_VARIANT_US_BIN ?
+                g_us_initializer_callee_offsets :
+                g_jp_initializer_callee_offsets;
+        receipt.initializer_callee_candidates_verified = 1;
+        receipt.initializer_callee_logical_address =
+            track02_variant == THERON_TRACK02_VARIANT_US_BIN ? 0x43aeu : 0x43abu;
+        receipt.initializer_callee_bytes = THERON_INITIALIZER_CALLEE_BYTES;
+        receipt.initializer_callee_candidate_count =
+            THERON_V1_HUC6280_CALLEE_CANDIDATE_COUNT;
+        for (i = 0u; i < THERON_V1_HUC6280_CALLEE_CANDIDATE_COUNT; ++i) {
+            receipt.initializer_callee_candidate_file_offsets[i] = offsets[i];
+        }
+        receipt.initializer_callee_fnv1a = fnv1a(
+            initializer_callee_candidates[0],
+            THERON_INITIALIZER_CALLEE_BYTES);
+    }
     receipt.source_file_size = expected_size;
     receipt.bank_file_offset = bank_file_offset;
     receipt.fragment_address = THERON_FRAGMENT_OFFSET;

@@ -1,5 +1,19 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-26 — verify and decode the runtime initializer helper candidates
+
+The raw-BIN HuC6280 disassembly receipt now checks the ten-byte helper reached
+by JP `$43AB` and US `$43AE` against all seven candidate offsets in each
+authentic Track 02. The JP runtime trace executes the JP copy at physical
+`$0D03AB`; the instruction sequence decodes to a bit-0 test of zero-page
+`$06` that writes 0 or 2 to zero-page `$07`. It does not write the six-rectangle
+buffer. Real-media CTest coverage checks both regions' hashes and candidate
+offsets when authentic media is installed.
+
+The repeated copies remain ambiguous as the runtime CD source, and the
+zero-page values are not yet tied to a native input effect. See
+[`theron-jp-43ab-zero-page-flag-helper-20261026.md`](docs/source-lock/theron-disassembly/theron-jp-43ab-zero-page-flag-helper-20261026.md).
+
 ## 2026-10-26 — verify native SDL keyboard item/action commands in both editions
 
 Added `theron_v1_us_keyboard_action_events` and

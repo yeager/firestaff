@@ -1,3 +1,18 @@
+## 2026-10-26 — trace-driven decode of the initializer's $43AB helper
+
+- The authenticated JP runtime trace executes `$43AB–$43B4` at physical
+  `$0D03AB`. HuC6280 decoding shows that `$43AB` loads zero, tests bit 0 of
+  zero-page `$06`, loads 2 only when that bit is set, stores the result in
+  zero-page `$07`, and returns. The helper does not write the six-rectangle
+  buffer `$287F–$2896`.
+- The existing static disassembly receipt now verifies this ten-byte routine
+  at all seven source candidates in authentic JP and US Track 02. This still
+  does not identify the runtime CD source LBA, explain the meaning of `$06` or
+  `$07`, or prove native input/click parity. Continue tracing the producer and
+  consumer of these zero-page bytes before assigning game behavior.
+- Evidence and decode references:
+  [`theron-jp-43ab-zero-page-flag-helper-20261026.md`](docs/source-lock/theron-disassembly/theron-jp-43ab-zero-page-flag-helper-20261026.md).
+
 ## 2026-10-26 — verify native SDL keyboard item/action commands in both editions
 
 - The new `theron_v1_us_keyboard_action_events` and
