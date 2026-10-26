@@ -100,20 +100,24 @@ container admission. Any shared index must retain every edition result,
 duplicate-file handling, complete/incomplete package admission, same-container
 ownership and cancellation semantics. Preserve those invariants and the
 reported launcher delay until a representative multi-edition profile proves a
-safe reduction. This branch also removes a duplicate direct-root `file_md5`
+safe reduction. Current main also removes a duplicate direct-root `file_md5`
 call during path collection; the translation unit compiles for both M12 and
-Nexus, but its runtime impact has not been measured. See the version pass in
+Nexus, but its runtime impact has not been measured. A current-main TRV2 scan
+against authentic media confirms all five required profiles are found, but
+skips some external-only archives. Two same-source warm A/B attempts to remove
+redundant hash work produced identical reports and no measurable speedup; the
+details and limits are recorded in [`TODO.md`](../TODO.md). See the version
+pass in
 [`asset_status_m12.c`](../src/shared/asset_status_m12.c) and traversal/cache
 logic in [`asset_find_by_hash.c`](../src/shared/asset_find_by_hash.c).
 
-One detail needs measurement before simplifying the current fast-candidate
-pass: it writes candidate paths into the same output arrays that the following
-`asset_find_all_by_md5_list` call clears on entry. The candidate hashes still
-warm the metadata-validated file cache, while the recursive pass supplies the
-published inventory. Removing that pass may reduce redundant probes, but its
-value for named files that normal enumeration cannot reach has not been
-measured. Preserve that route or provide equivalent evidence before removing
-it.
+The generic fast-candidate pass writes to output arrays that the following
+`asset_find_all_by_md5_list` call clears on entry, so it currently warms the
+metadata-validated file cache but does not seed the published inventory. Its
+configured paths are within the recursive walk's depth limit, which follows
+directory links via `stat()`. A same-source warm A/B scan showed no measurable
+benefit from removing the pre-pass, so it remains in place pending a broader
+profile that can justify changes to candidate ordering or cross-game indexing.
 
 ## Remaining startup work
 
