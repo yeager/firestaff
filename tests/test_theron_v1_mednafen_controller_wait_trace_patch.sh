@@ -168,6 +168,17 @@ if [[ "$input_read_hunk_lines" != 36 ]]; then
     printf 'FAIL: Mednafen input-state read hunk must declare and contain 36 added lines\n' >&2
     exit 1
 fi
+
+input_write_hunk_lines=$(awk '
+    /^@@ -294,0 \+323,32 @@$/ { in_hunk = 1; next }
+    in_hunk && /^@@/ { exit }
+    in_hunk && /^\+/ { count++ }
+    END { print count + 0 }
+' "$input_state_patch_file")
+if [[ "$input_write_hunk_lines" != 32 ]]; then
+    printf 'FAIL: Mednafen input-state write hunk must declare and contain 32 added lines\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'source=mednafen-host-input-events' "$host_input_patch_file" ||
    ! grep -Fq 'host_sdl_event type=%u' "$host_input_patch_file" ||
    ! grep -Fq 'host_window_event event=%u' "$host_input_patch_file" ||
