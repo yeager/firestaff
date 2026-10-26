@@ -83,6 +83,36 @@ checkpoint from caller-supplied retail CUE, BIOS, title-prompt state, and local
 Ymir dump files. It requires the emitted VDP register artifacts but does not
 accept them as menu or gameplay evidence.
 
+## Deterministic Start-to-menu checkpoint (2026-10-26)
+
+Ymir PR #965 adds a frame-aligned Control Pad 1 Start route for the existing
+state/frame/dump capture path. On TRV2, a fresh temporary profile used the
+authenticated Japanese retail CUE, BIOS, and title-prompt state in CLI slot 2.
+It held Start during capture frames 0 through 59 and captured 120 frames with
+`--debug --load-state 2 --capture-frames 120 --dump-memory
+--capture-start-frame 0 --capture-start-hold 60`. The profile and raw dumps
+were removed after the metadata below was inspected.
+
+The capture completed at VDP1 frame 59 with command cursor 178 and 178 rows
+for that frame. Its complete trace had 10,668 rows from frames 0 through 59,
+with zero dropped entries. This is the same command count as the retained
+retail three-choice title-menu capture, so it is reproducible emulator evidence
+for the observed Start route rather than host-window timing evidence. The VDP2
+title checkpoint remained byte-identical to the retained title-state reference:
+
+| Output | SHA-256 |
+|---|---|
+| VDP2 VRAM | `de1a77427dc62457eb4b59fa0424fd25e9768ce229505445311929d3bdae405c` |
+| VDP2 CRAM | `db282593790dec4a2bf8f76293c0458a1a140adc3351650bd56a417f0359e0de` |
+| VDP2 registers | `79efa616c2db727749aa9018864d1ad32c1583935652fafb16534ba69f8e1f2d` |
+| VDP1 capture receipt | `0e5cfa33070e33f24ae0e25ead7ce4fac561ae7c329ef7c59ff12382d3ea519e` |
+| VDP1 trace | `b80c7a118e7f9df4f941804cdc045f4024336080504c512bbdf5c4e0df19d8d3` |
+
+This makes title-menu capture reproducible without X11 keyboard injection. It
+does not bind a retail menu resource to a Saturn consumer, prove the final
+displayed pixels, or permit Firestaff to present a host-built menu. Those
+production gates remain closed.
+
 ## Title-menu VDP1 source-span join (2026-10-19 capture; analyzed 2026-10-26)
 
 A read-only source-join analysis on TRV2 used the retained Ymir v0.4.0
