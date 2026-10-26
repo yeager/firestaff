@@ -417,6 +417,64 @@ int dm1_v1_fmtowns_hud_blit_indexed(
     return 1;
 }
 
+int dm1_v1_fmtowns_hud_draw_bar(
+    DM1_V1_FmtownsHudEdition edition,
+    unsigned int zone_index,
+    int current,
+    int maximum,
+    uint8_t champion_color,
+    uint8_t empty_color,
+    uint8_t *destination,
+    int destination_width,
+    int destination_height)
+{
+    DM1_V1_FmtownsHudRect rect;
+    int filled_height = 25;
+    int x;
+    int y;
+
+    if (!destination || zone_index < 195u || zone_index > 206u ||
+        current < 0 || maximum < 0 || champion_color >= 16u ||
+        empty_color >= 16u || destination_width <= 0 ||
+        destination_height <= 0 || destination_width > 20000 ||
+        destination_height > 20000 ||
+        (long long)destination_width * destination_height > 200000000LL ||
+        !dm1_v1_fmtowns_hud_layout_rect(edition, zone_index, 4, 25,
+                                         &rect) ||
+        rect.width != 4 || rect.height != 25) return 0;
+
+    /* CHAMDRAW.C F0287 F20: start with C195's colored zone. When current is
+     * below maximum, F0635 copies it to the blank zone, removes at least one
+     * row for any positive current, fills the upper remainder C12, and leaves
+     * the colored rows anchored at the bottom. */
+    if (maximum == 0) {
+        filled_height = current > 0 ? rect.height : 0;
+    } else if (maximum > current) {
+        if (current == 0) {
+            filled_height = 0;
+        } else {
+            filled_height = (int)(((long long)rect.height * current) / maximum);
+            if (filled_height < 1) filled_height = 1;
+            if (filled_height > rect.height) filled_height = rect.height;
+        }
+    }
+
+    for (y = 0; y < rect.height; ++y) {
+        const int destination_y = rect.y + y;
+        const uint8_t color = y < rect.height - filled_height
+            ? empty_color : champion_color;
+        if (destination_y < 0 || destination_y >= destination_height) continue;
+        for (x = 0; x < rect.width; ++x) {
+            const int destination_x = rect.x + x;
+            if (destination_x < 0 || destination_x >= destination_width)
+                continue;
+            destination[destination_y * destination_width + destination_x] =
+                color;
+        }
+    }
+    return 1;
+}
+
 int dm1_v1_fmtowns_hud_champion_icon_color(
     DM1_V1_FmtownsHudEdition edition,
     int champion_slot,

@@ -205,6 +205,70 @@ int main(void)
             }
         }
         {
+            uint8_t pixels[320 * 200];
+            static const uint8_t champion_colors[4] = {7u, 11u, 8u, 14u};
+            for (int slot = 0; slot < 4; ++slot) {
+                for (int stat = 0; stat < 3; ++stat) {
+                    const unsigned int zone =
+                        (unsigned int)(195 + slot + stat * 4);
+                    const int expected_x = 46 + slot * 69 + stat * 7;
+                    DM1_V1_FmtownsHudRect bar;
+                    CHECK(dm1_v1_fmtowns_hud_layout_rect(
+                        (DM1_V1_FmtownsHudEdition)edition, zone,
+                        4, 25, &bar));
+                    CHECK(bar.x == expected_x && bar.y == 2 &&
+                          bar.width == 4 && bar.height == 25);
+                }
+            }
+
+            memset(pixels, 0xEE, sizeof(pixels));
+            CHECK(dm1_v1_fmtowns_hud_draw_bar(
+                (DM1_V1_FmtownsHudEdition)edition, 197u,
+                50, 100, champion_colors[2], 12u,
+                pixels, 320, 200));
+            CHECK(pixels[14 * 320 + 184] == 12u);
+            CHECK(pixels[15 * 320 + 184] == champion_colors[2]);
+            CHECK(pixels[26 * 320 + 187] == champion_colors[2]);
+            CHECK(pixels[26 * 320 + 183] == 0xEEu);
+
+            CHECK(dm1_v1_fmtowns_hud_draw_bar(
+                (DM1_V1_FmtownsHudEdition)edition, 195u,
+                1, 1000, champion_colors[0], 12u,
+                pixels, 320, 200));
+            CHECK(pixels[25 * 320 + 46] == 12u);
+            CHECK(pixels[26 * 320 + 46] == champion_colors[0]);
+
+            CHECK(dm1_v1_fmtowns_hud_draw_bar(
+                (DM1_V1_FmtownsHudEdition)edition, 203u,
+                0, 100, champion_colors[0], 12u,
+                pixels, 320, 200));
+            CHECK(pixels[2 * 320 + 60] == 12u);
+            CHECK(pixels[26 * 320 + 63] == 12u);
+
+            CHECK(dm1_v1_fmtowns_hud_draw_bar(
+                (DM1_V1_FmtownsHudEdition)edition, 206u,
+                120, 100, champion_colors[3], 12u,
+                pixels, 320, 200));
+            CHECK(pixels[2 * 320 + 267] == champion_colors[3]);
+            CHECK(pixels[26 * 320 + 270] == champion_colors[3]);
+            CHECK(dm1_v1_fmtowns_hud_draw_bar(
+                (DM1_V1_FmtownsHudEdition)edition, 198u,
+                2147483646, 2147483647, champion_colors[3], 12u,
+                pixels, 320, 200));
+            CHECK(pixels[2 * 320 + 253] == 12u);
+            CHECK(pixels[3 * 320 + 253] == champion_colors[3]);
+            CHECK(dm1_v1_fmtowns_hud_draw_bar(
+                (DM1_V1_FmtownsHudEdition)edition, 199u,
+                0, 0, champion_colors[3], 12u,
+                pixels, 320, 200));
+            CHECK(pixels[2 * 320 + 53] == 12u);
+            CHECK(pixels[26 * 320 + 56] == 12u);
+            CHECK(!dm1_v1_fmtowns_hud_draw_bar(
+                (DM1_V1_FmtownsHudEdition)edition, 194u,
+                1, 2, champion_colors[0], 12u,
+                pixels, 320, 200));
+        }
+        {
             DM1_V1_FmtownsHudRect rect;
             CHECK(dm1_v1_fmtowns_hud_layout_rect(
                 (DM1_V1_FmtownsHudEdition)edition, 1081, 48, 43, &rect));

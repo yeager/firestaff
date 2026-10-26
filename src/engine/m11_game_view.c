@@ -69084,8 +69084,7 @@ static int m11_dm1_v1_f0662_invisibility_material_ready(
 
 /* Bounded F20 top row. COORD.C F0635 supplies C151..C154 status boxes and
  * C113..C116 C028 icons; PANEL.C F0354 places the selected inventory
- * champion's original 32x29 packed portrait at C175..C178. Names, bars and
- * hand widgets remain cleared until their native font/material paths exist. */
+ * champion's original 32x29 packed portrait at C175..C178. */
 static int m11_draw_dm1_fmtowns_top_row_zones(
     const M11_GameViewState* state,
     unsigned char* framebuffer,
@@ -69208,7 +69207,37 @@ static int m11_draw_dm1_fmtowns_top_row_zones(
                 color, f20_color_dark_gray);
         }
     }
-    /* Status bars and hand widgets still await their source-bound F20 path. */
+
+    /* ReDMCSB CHAMDRAW.C F0292 calls F0287 for each champion with statistics
+     * enabled, including the selected inventory champion and dead champions.
+     * F0287 draws health, stamina and mana in C195..C206. G0046 supplies the
+     * per-slot colors; F20 grows the colored portion upward from the bottom
+     * and preserves one row for any positive current stat. */
+    {
+        static const uint8_t f20_champion_colors[4] = {7u, 11u, 8u, 14u};
+        for (slot = 0; slot < state->world.party.championCount &&
+                       slot < CHAMPION_MAX_PARTY; ++slot) {
+            const struct ChampionState_Compat* champion =
+                &state->world.party.champions[slot];
+            const struct ChampionStat_Compat* stats[3];
+            int stat;
+            if (!champion->present) continue;
+            stats[0] = &champion->hp;
+            stats[1] = &champion->stamina;
+            stats[2] = &champion->mana;
+            for (stat = 0; stat < 3; ++stat) {
+                const unsigned int zone =
+                    (unsigned int)(195 + slot + stat * 4);
+                if (!dm1_v1_fmtowns_hud_draw_bar(edition, zone,
+                        stats[stat]->current, stats[stat]->maximum,
+                        f20_champion_colors[slot], 12u,
+                        framebuffer, framebufferWidth, framebufferHeight)) {
+                    return 0;
+                }
+            }
+        }
+    }
+    /* Action-hand widgets still await their source-bound F20 material path. */
     return 1;
 }
 

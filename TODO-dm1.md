@@ -1,12 +1,15 @@
-2026-10-26 F20 champion names: the DM1 FM Towns HUD now draws non-selected
+2026-10-26 F20 champion names and status bars: the DM1 FM Towns HUD now draws
+non-selected champion names
 champion names from the original M653 picture-library font (asset 557) into
 COORD.C C159..C162 using F0635 C163..C166 geometry. It follows CHAMDRAW.C
 F0292's centered six-pixel cells, dark-gray name fields, gold leader name, and
 light-gray non-leader/dead names; the inventory champion remains named in its
-source viewport route. Geometry tests cover both F20E and F20J, including the
-23x5 four-character C163 text extent and each 69-pixel slot stride. F20 status
-bars, action-hand icons, and original-frame comparison are still open, so
-this does not establish full HUD or visual parity.
+source viewport route. F0287 now paints health, stamina and mana into native
+C195..C206 zones with G0046 champion colors, C12 empty rows and source
+rounding. Geometry and bar-pixel tests cover both F20E and F20J, including the
+23x5 four-character C163 text extent, all 12 bar zones, empty, partial, minimum
+positive, and full/over-maximum values. Action-hand icons and original-frame
+comparison remain open, so this does not establish full HUD or visual parity.
 
 2026-10-26 FM Towns F20 wall ornaments: replaced the PC C696 ornament path
 for authenticated Towns gameplay with the original ReDMCSB F20 data model.
@@ -3090,9 +3093,10 @@ path now uses F20 zone geometry for champion boxes, portraits and hand slots
 instead of PC34 rectangles. The successful DM1 Towns path draws C028's four
 19x14 party icons through C113..C116 and the selected inventory champion's
 packed 32x29 portrait through C175..C178. The 2026-10-26 follow-up binds
-non-selected champion names to M653 asset 557 and the C159/C163 F0635 zones.
-Status bars and hand widgets remain cleared until their F20 material routes
-are source-bound. F20 C028 backgrounds use DATA.C's fixed G0046 values; unlike
+non-selected champion names to M653 asset 557 and the C159/C163 F0635 zones,
+and source-driven health/stamina/mana bars to C195..C206. Hand widgets remain
+cleared until their F20 material routes are source-bound. F20 C028 backgrounds
+use DATA.C's fixed G0046 values; unlike
 MEDIA720, F20 does not apply the invisibility palette remap. Pixel and
 geometry tests cover F20E/F20J C028 and C175
 placements. This is bounded core HUD work, not a fixed or parity-tested F20

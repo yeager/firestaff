@@ -72,6 +72,21 @@ int dm1_v1_fmtowns_hud_blit_indexed(
     int destination_height,
     int transparent_index);
 
+/* ReDMCSB CHAMDRAW.C F0287 F20 branch: paint one C195..C206 champion
+ * health/stamina/mana bar into the indexed 320x200 Towns screen. A partial
+ * bar keeps at least one colored row when current is nonzero, matching
+ * F0025_GetMaximumValue(1, height * current / maximum). */
+int dm1_v1_fmtowns_hud_draw_bar(
+    DM1_V1_FmtownsHudEdition edition,
+    unsigned int zone_index,
+    int current,
+    int maximum,
+    uint8_t champion_color,
+    uint8_t empty_color,
+    uint8_t *destination,
+    int destination_width,
+    int destination_height);
+
 /* ReDMCSB DATA.C G0046 F20E/F20J party icon background color. F20 F0622
  * does not apply the later MEDIA720 invisibility palette remap. */
 int dm1_v1_fmtowns_hud_champion_icon_color(
