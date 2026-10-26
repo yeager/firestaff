@@ -278,6 +278,28 @@ profiles, dumps, screenshots, and X displays were removed. This verifies the
 current Ymir capture tooling and the bounded retail viewport route, not a
 Firestaff renderer, menu consumer, or HUD admission.
 
+## Bounded HUD-window SH-2 read witness (2026-10-26)
+
+Using the same hash-pinned Japanese retail CUE, BIOS, title-prompt state, and
+four-champion BKR, an isolated system-wide Ymir run advanced the observed
+Start/Down/A route, saved a fresh slot-3 checkpoint, and replayed one debug
+frame from that checkpoint. The source BKR remained
+`87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`
+before and after both captures. A bounded SH-2 data-read trace over
+`0x060476d0..0x06048000` recorded twelve master-SH-2 16-bit reads, all in the
+`0x06047ca0..0x06047cae` range, without dropped rows. The captured checkpoint
+has SHA-256 `48ca0feb12432dde6748124a9e639ad4e466efc307520268356a16c00fd5b2ce`;
+the retained CSV has SHA-256
+`e45ad64fa89ce263b51c0579167a35fcfacdce840a438854b48b8df5100dd9ee`.
+
+The raw CSV, its completed Ymir bundle, VDP1 command trace, VDP register
+snapshot, VDP2 registers, and checkpoint are retained in the TRV2 verification
+store as `nexus_v1_ymir_sh2_read_trace_hud_20261026`. This is an authentic
+execution witness for the specified RAM window. It is not an ownership join
+from a Firestaff source resource to a HUD element, does not label those reads
+semantically, and does not permit a host HUD, viewport compositor, save route,
+or input implementation.
+
 ## Title-menu VDP1 source-span join (2026-10-19 capture; analyzed 2026-10-26)
 
 A read-only source-join analysis on TRV2 used the retained Ymir v0.4.0
