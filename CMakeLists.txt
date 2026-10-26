@@ -7805,6 +7805,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_fmtowns_entrance_viewport.c
     src/dm1/dm1_v1_fmtowns_layout_crop.c
     src/dm1/dm1_v1_fmtowns_wall_ornament.c
+    src/dm1/dm1_v1_fmtowns_hud_layout.c
     src/dm1/dm1_v1_viewport_wall_ornament_ordinal_provider_pc34_compat.c
     src/csb/csb_v1_viewport_wall_ornament_ordinal_resolver_pc34_compat.c
     src/dm1/dm1_v1_viewport_runtime_materialization_pc34_compat.c
@@ -27250,6 +27251,26 @@ endif()
     )
     set_tests_properties(dm1_v1_fmtowns_layout_crop PROPERTIES
         LABELS "dm1;fmtowns;layout;viewport;regression"
+    )
+
+    add_executable(test_dm1_v1_fmtowns_hud_layout
+        tests/test_dm1_v1_fmtowns_hud_layout.c
+        src/dm1/dm1_v1_fmtowns_hud_layout.c
+    )
+    target_include_directories(test_dm1_v1_fmtowns_hud_layout PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_fmtowns_hud_layout PRIVATE
+            -Wall -Wextra -Werror -O2
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_fmtowns_hud_layout
+        COMMAND test_dm1_v1_fmtowns_hud_layout
+    )
+    set_tests_properties(dm1_v1_fmtowns_hud_layout PROPERTIES
+        LABELS "dm1;fmtowns;layout;hud;regression"
     )
 
     add_executable(test_dm1_v1_fmtowns_title

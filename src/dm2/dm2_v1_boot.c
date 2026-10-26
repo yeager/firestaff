@@ -8781,6 +8781,42 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
             destination->formation_rect = (DM2_V1_ViewportRect){
                 formation.rect.x / 2, formation.rect.y / 2,
                 formation.rect.w / 2, formation.rect.h / 2 };
+            if (hero->towns_current_hp != 0) {
+                DM2_V1_GdatImageMetadata figure_metadata;
+                size_t figure_raw_size = 0u;
+                const uint8_t *figure_raw = dm2_v1_asset_load_typed_sized(
+                    &gfx->loader,
+                    DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 6,
+                    DM2_GDAT_ENTRY_TYPE_IMAGE, slot, &figure_raw_size);
+                if (figure_raw) {
+                    DM2_V1_InterfaceRect figure_blit;
+                    if (figure_raw_size == 0u ||
+                        !hero->towns_absdir_source_bound ||
+                        hero->towns_absdir > 3u ||
+                        !dm2_v1_asset_load_image_metadata(
+                            &gfx->loader,
+                            DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 6, slot,
+                            &figure_metadata) ||
+                        figure_metadata.bits_per_pixel != 4u ||
+                        figure_metadata.width != 136u ||
+                        figure_metadata.height != 17u ||
+                        !dm2_v1_boot_query_blit_rect_for_dimensions(
+                            profile, (uint16_t)(0x53u + relative), 17, 17,
+                            &figure_blit) || figure_blit.w != 17 ||
+                        figure_blit.h != 17) return 0;
+                    destination->draw_squad_figure = 1;
+                    destination->squad_figure_direction = (uint8_t)(
+                        (hero->towns_absdir + 4u -
+                         party->towns_party_direction) & 3u);
+                    destination->squad_figure_rect_raw4_hash =
+                        formation.raw4_hash;
+                    destination->squad_figure_rect = (DM2_V1_ViewportRect){
+                        figure_blit.x, figure_blit.y, figure_blit.w,
+                        figure_blit.h };
+                    destination->squad_figure_rect_id =
+                        (uint16_t)(0x53u + relative);
+                }
+            }
             if (!party->towns_status_hero_source_bound ||
                 !dm2_v1_boot_query_expanded_rect_receipt(
                     profile, (uint16_t)(0xa1u + slot), &status_pane) ||

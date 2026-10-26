@@ -3,6 +3,7 @@
 #include "dm1_v1_champion_top_row_assets_pc34_compat.h"
 #include "dm1_v1_champion_panel_material_pc34_compat.h"
 #include "dm1_v1_fmtowns_font_asset.h"
+#include "dm1_v1_fmtowns_hud_layout.h"
 #include "font_m11.h"
 #include "dm1_v1_fmtowns_pic_library.h"
 #include "dm1_v1_fmtowns_wall_ornament.h"
@@ -97,6 +98,38 @@ static int check_top_row_source_surfaces(M11_AssetLoader *loader)
     }
 }
 
+static int check_f20_hud_layout_media(M11_AssetLoader *loader,
+                                      DM1_V1_FmtownsHudEdition edition)
+{
+    static const unsigned zones[] = {151u, 152u, 153u, 154u};
+    static const int expected_x[] = {0, 69, 138, 207};
+    unsigned short width = 0u, height = 0u;
+    DM1_V1_FmtownsHudRect rect;
+    if (!M11_AssetLoader_QuerySize(loader, 8u, &width, &height) ||
+        width != 67u || height != 29u) return 0;
+    for (size_t i = 0u; i < sizeof(zones) / sizeof(zones[0]); ++i) {
+        if (!dm1_v1_fmtowns_hud_layout_rect(edition, zones[i],
+                (int)width, (int)height, &rect) ||
+            rect.x != expected_x[i] || rect.y != 0 ||
+            rect.width != 67 || rect.height != 29 ||
+            rect.source_x != 0 || rect.source_y != 0) return 0;
+    }
+    if (!M11_AssetLoader_QuerySize(loader, 15u, &width, &height) ||
+        width != 43u || height != 7u ||
+        !dm1_v1_fmtowns_hud_layout_rect(edition, 159u,
+            (int)width, (int)height, &rect) || rect.x != 0 || rect.y != 0 ||
+        rect.width != 43 || rect.height != 7 ||
+        !dm1_v1_fmtowns_hud_layout_rect(edition, 113u, 19, 14, &rect) ||
+        rect.x != 281 || rect.y != 0 || rect.width != 19 ||
+        rect.height != 14 ||
+        !dm1_v1_fmtowns_hud_layout_rect(edition, 175u, 32, 29, &rect) ||
+        rect.x != 7 || rect.y != 0 || rect.width != 32 ||
+        rect.height != 29) return 0;
+    /* F20E/F20J use the same G3034/G3038 geometry. Only native bitmap
+     * extents admitted from this edition's media are supplied to F0635. */
+    return 1;
+}
+
 int main(void) {
     const char *archive = getenv("FIRESTAFF_DM1_FMTOWNS_ARCHIVE");
     uint8_t *cue = NULL, *bin = NULL;
@@ -151,6 +184,9 @@ int main(void) {
         "FM Towns graphics use its native decoder and classic DM1 semantics");
     REQUIRE(check_top_row_source_surfaces(&loader),
         "original F20E status box, champion strip, and slot states pass the shared source-surface receipt");
+    REQUIRE(check_f20_hud_layout_media(&loader,
+                DM1_V1_FMTOWNS_HUD_EDITION_F20E),
+        "original F20E bitmap dimensions resolve through native COORD.C HUD zones");
     REQUIRE(M11_AssetLoader_QuerySize(&loader, 1u, &width, &height) &&
             width == 320u && height == 200u,
         "EDM.EXP title raster preserves source dimensions");
@@ -242,6 +278,9 @@ int main(void) {
     }
     REQUIRE(check_top_row_source_surfaces(&japaneseLoader),
         "original F20J status box, champion strip, and slot states pass the shared source-surface receipt");
+    REQUIRE(check_f20_hud_layout_media(&japaneseLoader,
+                DM1_V1_FMTOWNS_HUD_EDITION_F20J),
+        "original F20J bitmap dimensions resolve through native COORD.C HUD zones");
     for (int global = 0; global < 60; ++global) {
         for (int view = 0; view < 13; ++view) {
             DM1_V1_FmtownsWallOrnament ornament;

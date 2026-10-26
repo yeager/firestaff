@@ -3070,3 +3070,18 @@ and checks both English and Japanese libraries. M11 now supplies the verified
 F20 dungeon palette to the top-row consumer. Source-native F20 top-row zone
 geometry and an original-frame pixel comparison remain open; this is not full
 FM Towns HUD parity.
+
+2026-10-26 F20 champion-HUD layout: a bounded resolver ports the relevant
+COORD.C static F20 records and F0635 placement/clipping rules. The G3034
+champion rows (150..218), G3038 portrait rows (110..116), and load rows
+(553..555) are shared by
+F20E/F20J; tests cover both editions. M11's DM1 Towns top-row failure/clear
+path now uses F20 zone geometry for champion boxes, portraits and hand slots
+instead of PC34 rectangles. The successful DM1 Towns path draws C028's four
+19x14 party icons through C113..C116 and the selected inventory champion's
+packed 32x29 portrait through C175..C178. Native names, status bars and hand
+widgets remain cleared until their F20 glyph, zone and material routes are
+source-bound. Pixel and geometry tests cover F20E/F20J C028 and C175
+placements. This is bounded core HUD work, not a fixed or parity-tested F20
+HUD. Add an M11 framebuffer capture against the original game before claiming
+visual parity.

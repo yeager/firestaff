@@ -7,6 +7,7 @@
 #include "m11_loose_sibling.h"
 #include "dm1_v1_native_dungeon_compat.h"
 #include "dm1_v1_iigs_graphics_dat.h"
+#include "dm1_v1_fmtowns_hud_layout.h"
 #include "soundtrack_selector_m11.h"
 #include "csb_v22_modern_assets_pc34.h"
 #include "csb_v22_finished_art_material_gate_pc34.h"
@@ -1155,6 +1156,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                                  int framebufferWidth,
                                  int framebufferHeight);
 static void m11_clear_dm1_v1_top_row_receipt_zones(
+    const M11_GameViewState* state,
     unsigned char* framebuffer,
     int framebufferWidth,
     int framebufferHeight);
@@ -6303,7 +6305,7 @@ static void m11_draw_csb_v1_runtime_hud(const M11_GameViewState *state,
         }
         if (!m11_csb_v1_install_runtime_champion_materials(state)) {
             m11_clear_dm1_v1_top_row_receipt_zones(
-                framebuffer, framebufferWidth, framebufferHeight);
+                state, framebuffer, framebufferWidth, framebufferHeight);
             m11_clear_csb_v1_message_area_source_owned(
                 state, framebuffer, framebufferWidth, framebufferHeight);
             return;
@@ -6350,7 +6352,7 @@ static void m11_draw_csb_v1_runtime_hud(const M11_GameViewState *state,
         /* The shared renderer is permitted to draw the row only after every
          * source-owned CHAMDRAW surface is installed through CSB's decoder. */
         m11_clear_dm1_v1_top_row_receipt_zones(
-            framebuffer, framebufferWidth, framebufferHeight);
+            state, framebuffer, framebufferWidth, framebufferHeight);
         m11_clear_csb_v1_message_area_source_owned(
             state, framebuffer, framebufferWidth, framebufferHeight);
         return;
@@ -68177,6 +68179,64 @@ static void m11_draw_v1_champion_icons(const M11_GameViewState* state,
             (unsigned int)dm1_v1_graphic_champion_icons_pc34());
     }
 
+    if (m11_is_dm1_fmtowns(state)) {
+        DM1_V1_FmtownsHudEdition edition;
+        if (!state->dm1FmtownsStartupReceiptValid ||
+            !state->dm1FmtownsStartupReceipt.game_dungeon_palettes_verified ||
+            !iconStrip || !iconStrip->loaded || !iconStrip->pixels ||
+            iconStrip->width != 76u || iconStrip->height != 14u) {
+            m11_clear_dm1_v1_top_row_receipt_zones(
+                state, framebuffer, framebufferWidth, framebufferHeight);
+            return;
+        }
+        edition = state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP
+            ? DM1_V1_FMTOWNS_HUD_EDITION_F20J
+            : DM1_V1_FMTOWNS_HUD_EDITION_F20E;
+        for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
+            DM1_V1_FmtownsHudRect rect;
+            const struct ChampionState_Compat* champ;
+            DM1_ChampionPanel_IconBitmapModel iconModel;
+            unsigned int zone = (unsigned int)(113 + slot);
+            if (!dm1_v1_fmtowns_hud_layout_rect(edition, zone,
+                    19, 14, &rect)) {
+                m11_clear_dm1_v1_top_row_receipt_zones(
+                    state, framebuffer, framebufferWidth, framebufferHeight);
+                return;
+            }
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          rect.x, rect.y, rect.width, rect.height,
+                          M11_COLOR_BLACK);
+            if (slot >= state->world.party.championCount ||
+                !state->world.party.champions[slot].present ||
+                state->world.party.champions[slot].hp.current <= 0) continue;
+            champ = &state->world.party.champions[slot];
+            if (!DM1_ChampionPanel_BuildIconBitmapModel(
+                    slot, (int)champ->direction & 3,
+                    state->world.party.direction & 3,
+                    (int)state->world.magic.event71CountInvisibility,
+                    &iconModel)) continue;
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          rect.x, rect.y, rect.width, rect.height,
+                          (unsigned char)iconModel.fillColor);
+            if (!dm1_v1_fmtowns_hud_blit_indexed(edition, zone,
+                    iconStrip->pixels, (int)iconStrip->width,
+                    (int)iconStrip->height, iconModel.width, iconModel.height,
+                    iconModel.sourceX, iconModel.sourceY,
+                    framebuffer, framebufferWidth, framebufferHeight,
+                    iconModel.transparentColor)) {
+                m11_clear_dm1_v1_top_row_receipt_zones(
+                    state, framebuffer, framebufferWidth, framebufferHeight);
+                return;
+            }
+            if (iconModel.applyInvisibilityPalette) {
+                m11_apply_v1_champion_icon_invisibility_remap(
+                    framebuffer, framebufferWidth, framebufferHeight,
+                    rect.x, rect.y, rect.width, rect.height);
+            }
+        }
+        return;
+    }
+
     /* CHAMDRAW.C F0622 requires C028's four 19x14 frames. CSB's selected
      * GRAPHICS.DAT must supply that full strip before its icon zones exist. */
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
@@ -68317,11 +68377,46 @@ static unsigned int m11_dm1_v1_top_row_material_fnv1a(
     return hash;
 }
 
-static void m11_clear_dm1_v1_top_row_receipt_zones(unsigned char* framebuffer,
-                                                    int framebufferWidth,
-                                                    int framebufferHeight)
+static void m11_clear_dm1_v1_top_row_receipt_zones(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
 {
     int slot;
+    if (m11_is_dm1_fmtowns(state)) {
+        DM1_V1_FmtownsHudEdition edition;
+        edition = state->dm1FmtownsStartupReceiptValid &&
+                  state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP
+            ? DM1_V1_FMTOWNS_HUD_EDITION_F20J
+            : DM1_V1_FMTOWNS_HUD_EDITION_F20E;
+        for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
+            DM1_V1_FmtownsHudRect rect;
+            int hand;
+            if (dm1_v1_fmtowns_hud_layout_rect(
+                    edition, (unsigned int)(151 + slot), 67, 29, &rect)) {
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              rect.x, rect.y, rect.width, rect.height,
+                              M11_COLOR_DARK_GRAY);
+            }
+            if (dm1_v1_fmtowns_hud_layout_rect(
+                    edition, (unsigned int)(113 + slot), 19, 14, &rect)) {
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              rect.x, rect.y, rect.width, rect.height,
+                              M11_COLOR_BLACK);
+            }
+            for (hand = 0; hand < 2; ++hand) {
+                unsigned int zone = (unsigned int)(211 + slot * 2 + hand);
+                if (dm1_v1_fmtowns_hud_layout_rect(
+                        edition, zone, 16, 16, &rect)) {
+                    m11_fill_rect(framebuffer, framebufferWidth,
+                                  framebufferHeight, rect.x, rect.y,
+                                  rect.width, rect.height, M11_COLOR_BLACK);
+                }
+            }
+        }
+        return;
+    }
     for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
         DM1_V1_ChampionStatusRectPc34 statusRect;
         DM1_V1_ChampionStatusRectPc34 nameRect;
@@ -68970,6 +69065,94 @@ static int m11_dm1_v1_f0662_invisibility_material_ready(
            outReceipt->m653GraphicIndex == glyph.graphicIndex;
 }
 
+/* Bounded F20 top row. COORD.C F0635 supplies C151..C154 status boxes and
+ * C113..C116 C028 icons; PANEL.C F0354 places the selected inventory
+ * champion's original 32x29 packed portrait at C175..C178. Names, bars and
+ * hand widgets remain cleared until their native font/material paths exist. */
+static int m11_draw_dm1_fmtowns_top_row_zones(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    int selected;
+    int slot;
+    DM1_V1_FmtownsHudEdition edition;
+    if (!state || !framebuffer) return 0;
+    edition = state->dm1FmtownsStartupReceiptValid &&
+              state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP
+        ? DM1_V1_FMTOWNS_HUD_EDITION_F20J
+        : DM1_V1_FMTOWNS_HUD_EDITION_F20E;
+    m11_clear_dm1_v1_top_row_receipt_zones(
+        state, framebuffer, framebufferWidth, framebufferHeight);
+    if (!state->dm1FmtownsStartupReceiptValid ||
+        !state->dm1FmtownsStartupReceipt.game_dungeon_palettes_verified)
+        return 1;
+    m11_draw_v1_champion_icons(state, framebuffer, framebufferWidth,
+                               framebufferHeight);
+
+    if (state->assetsAvailable) {
+        const M11_AssetSlot* deadStatus = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&state->assetLoader, 8u);
+        if (deadStatus && deadStatus->loaded && deadStatus->pixels &&
+            deadStatus->width == 67u && deadStatus->height == 29u) {
+            for (slot = 0; slot < state->world.party.championCount &&
+                           slot < CHAMPION_MAX_PARTY; ++slot) {
+                if (state->world.party.champions[slot].present &&
+                    state->world.party.champions[slot].hp.current <= 0 &&
+                    !dm1_v1_fmtowns_hud_blit_indexed(edition,
+                        (unsigned int)(151 + slot), deadStatus->pixels,
+                        (int)deadStatus->width, (int)deadStatus->height,
+                        67, 29, 0, 0, framebuffer, framebufferWidth,
+                        framebufferHeight, -1)) return 0;
+            }
+        }
+    }
+
+    selected = state->inventoryPanelActive
+        ? m11_inventory_champion_index(state) : -1;
+    if (selected >= 0 && selected < state->world.party.championCount &&
+        state->world.party.champions[selected].present &&
+        state->world.party.champions[selected].hp.current > 0 &&
+        state->world.party.champions[selected].portraitBitmapValid) {
+        const struct ChampionState_Compat* champion =
+            &state->world.party.champions[selected];
+        unsigned char unpacked[CHAMPION_PORTRAIT_BITMAP_WIDTH *
+                               CHAMPION_PORTRAIT_BITMAP_HEIGHT];
+        DM1_V1_FmtownsHudRect rect;
+        int y;
+        for (y = 0; y < CHAMPION_PORTRAIT_BITMAP_HEIGHT; ++y) {
+            const unsigned char* src = champion->portraitBitmap +
+                y * (CHAMPION_PORTRAIT_BITMAP_WIDTH / 2);
+            int x;
+            for (x = 0; x < CHAMPION_PORTRAIT_BITMAP_WIDTH; x += 2) {
+                unsigned char packed = src[x / 2];
+                unpacked[y * CHAMPION_PORTRAIT_BITMAP_WIDTH + x] =
+                    (unsigned char)(packed >> 4);
+                unpacked[y * CHAMPION_PORTRAIT_BITMAP_WIDTH + x + 1] =
+                    (unsigned char)(packed & 0x0fU);
+            }
+        }
+        if (!dm1_v1_fmtowns_hud_layout_rect(edition,
+                (unsigned int)(175 + selected),
+                CHAMPION_PORTRAIT_BITMAP_WIDTH,
+                CHAMPION_PORTRAIT_BITMAP_HEIGHT, &rect) ||
+            rect.width != CHAMPION_PORTRAIT_BITMAP_WIDTH ||
+            rect.height != CHAMPION_PORTRAIT_BITMAP_HEIGHT ||
+            !dm1_v1_fmtowns_hud_blit_indexed(edition,
+                (unsigned int)(175 + selected), unpacked,
+                CHAMPION_PORTRAIT_BITMAP_WIDTH,
+                CHAMPION_PORTRAIT_BITMAP_HEIGHT,
+                CHAMPION_PORTRAIT_BITMAP_WIDTH,
+                CHAMPION_PORTRAIT_BITMAP_HEIGHT, 0, 0,
+                framebuffer, framebufferWidth, framebufferHeight, -1)) {
+            return 0;
+        }
+    }
+    /* No PC34 name glyphs, bars, or hand widgets are emitted on this path. */
+    return 1;
+}
+
 static int m11_draw_dm1_v1_top_row_receipt(
     const M11_GameViewState* state,
     unsigned char* framebuffer,
@@ -68993,6 +69176,10 @@ static int m11_draw_dm1_v1_top_row_receipt(
 
     if (!m11_dm1_v1_top_row_receipt_required(state) || !framebuffer) {
         return 0;
+    }
+    if (m11_is_dm1_fmtowns(state)) {
+        return m11_draw_dm1_fmtowns_top_row_zones(
+            state, framebuffer, framebufferWidth, framebufferHeight);
     }
     if (m11_is_dm1_fmtowns(state) &&
         (!state->dm1FmtownsStartupReceiptValid ||
@@ -69022,14 +69209,14 @@ static int m11_draw_dm1_v1_top_row_receipt(
             state, &presentation, &redrawMaterials, &redraw, &handoff) ||
         !handoff.valid) {
         m11_clear_dm1_v1_top_row_receipt_zones(
-            framebuffer, framebufferWidth, framebufferHeight);
+            state, framebuffer, framebufferWidth, framebufferHeight);
         return 0;
     }
 
     if (!m11_dm1_v1_top_row_atomic_host_consume(
             state, &assets, framebuffer, framebufferWidth, framebufferHeight)) {
         m11_clear_dm1_v1_top_row_receipt_zones(
-            framebuffer, framebufferWidth, framebufferHeight);
+            state, framebuffer, framebufferWidth, framebufferHeight);
         return 0;
     }
 
@@ -69051,7 +69238,7 @@ static int m11_draw_dm1_v1_top_row_receipt(
          !shieldMaterialReady) ||
         (frame.invisibilityCount > 0 && !invisibilityMaterialReady)) {
         m11_clear_dm1_v1_top_row_receipt_zones(
-            framebuffer, framebufferWidth, framebufferHeight);
+            state, framebuffer, framebufferWidth, framebufferHeight);
         return 0;
     }
 
@@ -69067,7 +69254,7 @@ static int m11_draw_dm1_v1_top_row_receipt(
             if (operation->sourceOperationIndex < 0 ||
                 operation->sourceOperationIndex >= presentation.operationCount) {
                 m11_clear_dm1_v1_top_row_receipt_zones(
-                    framebuffer, framebufferWidth, framebufferHeight);
+                    state, framebuffer, framebufferWidth, framebufferHeight);
                 return 0;
             }
             source = &presentation.operations[operation->sourceOperationIndex];
@@ -69080,7 +69267,7 @@ static int m11_draw_dm1_v1_top_row_receipt(
                   source->kind == DM1_V1_CHAMPION_TOP_ROW_OP_BLIT_HAND_PC34) &&
                  !m11_dm1_v1_top_row_receipt_source_slot(state, source))) {
                 m11_clear_dm1_v1_top_row_receipt_zones(
-                    framebuffer, framebufferWidth, framebufferHeight);
+                    state, framebuffer, framebufferWidth, framebufferHeight);
                 return 0;
             }
         } else if (operation->kind == DM1_V1_CHAMPION_PARTY_INVENTORY_HANDOFF_REDRAW_PC34) {
@@ -69088,7 +69275,7 @@ static int m11_draw_dm1_v1_top_row_receipt(
             if (operation->sourceOperationIndex < 0 ||
                 operation->sourceOperationIndex >= redraw.operationCount) {
                 m11_clear_dm1_v1_top_row_receipt_zones(
-                    framebuffer, framebufferWidth, framebufferHeight);
+                    state, framebuffer, framebufferWidth, framebufferHeight);
                 return 0;
             }
             source = &redraw.operations[operation->sourceOperationIndex];
@@ -69106,12 +69293,12 @@ static int m11_draw_dm1_v1_top_row_receipt(
                  (source->pendingDamageAmount <= 0 ||
                   !m11_dm1_pc34_hud_font_is_source_bound(state)))) {
                 m11_clear_dm1_v1_top_row_receipt_zones(
-                    framebuffer, framebufferWidth, framebufferHeight);
+                    state, framebuffer, framebufferWidth, framebufferHeight);
                 return 0;
             }
         } else {
             m11_clear_dm1_v1_top_row_receipt_zones(
-                framebuffer, framebufferWidth, framebufferHeight);
+                state, framebuffer, framebufferWidth, framebufferHeight);
             return 0;
         }
     }
@@ -69240,7 +69427,7 @@ static int m11_draw_dm1_v1_top_row_receipt(
 
             default:
                 m11_clear_dm1_v1_top_row_receipt_zones(
-                    framebuffer, framebufferWidth, framebufferHeight);
+                    state, framebuffer, framebufferWidth, framebufferHeight);
                 return 0;
         }
     }
@@ -69249,7 +69436,7 @@ static int m11_draw_dm1_v1_top_row_receipt(
         state, &assets, framebuffer, framebufferWidth, framebufferHeight);
     if (!statusBarFrameReady) {
         m11_clear_dm1_v1_top_row_receipt_zones(
-            framebuffer, framebufferWidth, framebufferHeight);
+            state, framebuffer, framebufferWidth, framebufferHeight);
         m11_clear_dm1_v1_status_bar_receipt_zones(
             framebuffer, framebufferWidth, framebufferHeight);
         return 0;
@@ -69285,7 +69472,7 @@ static int m11_draw_dm1_v1_top_row_receipt(
                             source->pendingDamageAmount,
                             isInventory, &origin)) {
                         m11_clear_dm1_v1_top_row_receipt_zones(
-                            framebuffer, framebufferWidth, framebufferHeight);
+                            state, framebuffer, framebufferWidth, framebufferHeight);
                         return 0;
                     }
                     snprintf(damageText, sizeof(damageText), "%d",
@@ -69302,7 +69489,7 @@ static int m11_draw_dm1_v1_top_row_receipt(
             m11_dm1_v1_top_row_material_fnv1a(&assets);
         if (materialFNV1a == 0u) {
             m11_clear_dm1_v1_top_row_receipt_zones(
-                framebuffer, framebufferWidth, framebufferHeight);
+                state, framebuffer, framebufferWidth, framebufferHeight);
             return 0;
         }
         m11_dm1_runtime_capture_route_evidence(
@@ -69346,7 +69533,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
          * direct legacy painter must not republish a partial HUD with omitted
          * bars, borders, icons, or original text. */
         m11_clear_dm1_v1_top_row_receipt_zones(
-            framebuffer, framebufferWidth, framebufferHeight);
+            state, framebuffer, framebufferWidth, framebufferHeight);
         m11_clear_dm1_v1_status_bar_receipt_zones(
             framebuffer, framebufferWidth, framebufferHeight);
         return;

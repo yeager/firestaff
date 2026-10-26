@@ -8998,11 +8998,32 @@ static int dm2_v1_render_fmtowns_squad_plan(
     }
     for (int slot = 0; slot < s->hud_party.champion_count; ++slot) {
         const DM2_V1_HudChampionState *hero = &s->hud_party.champions[slot];
+        size_t figure_raw_size = 0u;
+        const uint8_t *figure_raw = NULL;
+        int has_native_figure = 0;
         if (!hero->occupied || !hero->towns_party_position_source_bound ||
             !hero->towns_current_hp_source_bound ||
             !hero->towns_spell_cooldown_source_bound ||
             hero->towns_party_position > 3u) return 0;
-        expected_count += 1 + (hero->towns_current_hp == 0 ? 1 : 3);
+        if (hero->towns_current_hp != 0) {
+            DM2_V1_GdatImageMetadata figure_metadata;
+            figure_raw = dm2_v1_asset_load_typed_sized(
+                s->asset_loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 6,
+                DM2_GDAT_ENTRY_TYPE_IMAGE, slot, &figure_raw_size);
+            if (figure_raw) {
+                if (figure_raw_size == 0u ||
+                    !dm2_v1_asset_load_image_metadata(
+                        s->asset_loader,
+                        DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 6, slot,
+                        &figure_metadata) ||
+                    figure_metadata.bits_per_pixel != 4u ||
+                    figure_metadata.width != 136u ||
+                    figure_metadata.height != 17u) return 0;
+                has_native_figure = 1;
+            }
+        }
+        expected_count += 1 +
+            (hero->towns_current_hp == 0 ? 1 : 3) + has_native_figure;
     }
     if (s->hud_party.towns_game_tick_source_bound &&
         s->hud_party.towns_selected_hero_source_bound) {
@@ -9029,6 +9050,8 @@ static int dm2_v1_render_fmtowns_squad_plan(
             DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_ICON;
         int status_command = command->kind ==
             DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_STATUS_ICON;
+        int figure_command = command->kind ==
+            DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SQUAD_FIGURE;
         int selected_icon_command = command->kind ==
             DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SELECTED_HERO_ICON;
         int aura_command = command->kind ==
@@ -9041,6 +9064,7 @@ static int dm2_v1_render_fmtowns_squad_plan(
 
         if (fill_command) hero_slot = command->viewport_gdat_index - 0x6200;
         else if (status_command) hero_slot = command->viewport_gdat_index - 0x6100;
+        else if (figure_command) hero_slot = command->viewport_gdat_index - 0x6600;
         else if (spell_command) hero_slot = command->viewport_gdat_index - 0x6000;
         else if (selected_icon_command)
             hero_slot = command->viewport_gdat_index - 0x6300;
@@ -9079,6 +9103,91 @@ static int dm2_v1_render_fmtowns_squad_plan(
              * material behind each occupied slot. */
             ++s->gdat_hud_material_plan_consumed_count;
             ++formation_receipts;
+            continue;
+        }
+
+        if (figure_command) {
+            DM2_V1_BootExpandedRectReceipt rect_receipt;
+            DM2_V1_InterfaceRect blit_rect;
+            DM2_V1_GdatImageMetadata metadata;
+            uint8_t expected_palette[16];
+            uint32_t expected_palette_hash = 0u;
+            const int figure_direction = (hero->towns_absdir + 4u -
+                s->hud_party.towns_party_direction) & 3u;
+            if (hero->towns_current_hp == 0 ||
+                !hero->towns_absdir_source_bound ||
+                command->gdat_category !=
+                    DM2_GDAT_CATEGORY_INTERFACE_GENERAL ||
+                command->gdat_index != 6 || command->gdat_field != hero_slot ||
+                command->destination_rect_id != (uint16_t)(0x53 + relative) ||
+                command->width != 17 || command->height != 17 ||
+                command->format != DM2_IMG_FMT_U4 || !command->pixels ||
+                command->source_transparency_key != 2u ||
+                command->source_state_flags !=
+                    (uint8_t)(figure_direction <<
+                        DM2_V1_GDAT_HUD_M11_TOWNS_DIRECTION_SHIFT) ||
+                !command->raw_hash || !command->raw_byte_count ||
+                !command->material_source_bytes ||
+                !command->material_source_byte_count ||
+                !command->material_receipt_hash ||
+                !command->destination_table_hash ||
+                command->palette_hash == 0u ||
+                command->palette_hash != dm2_v1_weather_pixels_hash(
+                    command->palette16, 16, 1, 16) ||
+                command->decoded_hash !=
+                    dm2_v1_gdat_hud_m11_command_pixel_hash(command) ||
+                !dm2_v1_asset_load_image_metadata(
+                    s->asset_loader,
+                    DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 6, hero_slot,
+                    &metadata) ||
+                metadata.bits_per_pixel != 4u || metadata.width != 136u ||
+                metadata.height != 17u ||
+                !dm2_v1_asset_load_image_local_palette(
+                    s->asset_loader,
+                    DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 6, hero_slot,
+                    expected_palette,
+                    &expected_palette_hash) ||
+                command->palette_hash != expected_palette_hash ||
+                memcmp(command->palette16, expected_palette,
+                       sizeof(expected_palette)) != 0 ||
+                !dm2_v1_boot_query_expanded_rect_receipt(
+                    (const DM2_V1_BootProfile *)s->asset_profile,
+                    (uint16_t)(0x4f + relative), &rect_receipt) ||
+                !rect_receipt.valid ||
+                rect_receipt.raw4_hash != command->destination_table_hash ||
+                !dm2_v1_boot_query_blit_rect_for_dimensions(
+                    (const DM2_V1_BootProfile *)s->asset_profile,
+                    (uint16_t)(0x53 + relative), 17, 17, &blit_rect) ||
+                blit_rect.x != command->destination.x ||
+                blit_rect.y != command->destination.y ||
+                blit_rect.w != command->destination.w ||
+                blit_rect.h != command->destination.h) return 0;
+            memcpy(s->active_asset_palette16, command->palette16,
+                   sizeof(s->active_asset_palette16));
+            s->active_asset_palette_hash = command->palette_hash;
+            s->active_asset_palette_ready = 1;
+            for (int y = 0; y < 17; ++y) {
+                const int fy = command->destination.y + y;
+                if ((unsigned)fy >=
+                    (unsigned)dm2_v1_viewport_draw_height(s)) continue;
+                for (int x = 0; x < 17; ++x) {
+                    const int fx = command->destination.x + x;
+                    const uint8_t pixel = command->pixels[y * 17 + x];
+                    if (pixel == command->source_transparency_key ||
+                        (unsigned)fx >=
+                            (unsigned)dm2_v1_viewport_draw_width(s)) continue;
+                    target[fy * stride + fx] = dm2_v1_material_palette_color(
+                        s, pixel,
+                        &s->gdat_interface_palette_consumed_count);
+                }
+            }
+            ++s->gdat_hud_material_plan_consumed_count;
+            ++s->asset_hud_portrait_drawn_count;
+            ++icons;
+            s->last_hud_core_gdat_hash = dm2_v1_viewport_hash_gdat_asset(
+                s->last_hud_core_gdat_hash, command->viewport_gdat_index,
+                command->width, command->height);
+            s->last_hud_core_pixel_count += 17u * 17u;
             continue;
         }
 

@@ -1237,3 +1237,26 @@ palette and verifies the presented row matches the active c_light level. The
 authentic Towns M11 New Game handoff passes. HUD geometry and source-frame
 visual comparison remain open; this does not establish full FM Towns HUD or
 viewport parity.
+
+2026-10-26 FM Towns living squad figures: the active
+`DRAW_SQUAD_POS_INTERFACE` route now binds one
+`INTERFACE_GENERAL/6/<party-slot>` U4 sprite sheet per living champion, crops
+the source-relative facing frame, and draws it over the F5 formation and the
+earlier spell/status icons at the authentic `QUERY_BLIT_RECT` for
+`0x53 + relative_position`. SKProject's
+`SKWINSPX/src/v4/skguidrw.cpp::DRAW_SQUAD_POS_INTERFACE` and
+`SKWINSPX/src/v4/skcore.cpp::QUERY_GDAT_SQUAD_ICON` establish party-slot
+lookup, four normal facing frames, and source color key 2. The command uses the
+local GDAT palette and retains the expanded formation receipt as its layout
+identity; the four-frame crop and index-2 transparency are checked against
+original FM Towns media. The installed HME-242 media has the 136x17 sheet only
+for party slot 0; slots 1–3 fall back in SKProject to
+`MISCELLANEOUS/254/IMG/254`, whose image is 31x31. SKProject then applies
+4bpp source offsets 0, 17, 34, or 51 with a 16-byte row pitch and key 2. Since
+those offsets exceed the fallback width and the original temporary packed
+buffer's padding nibble is not source-initialized, Firestaff omits only those
+unverified fallback figure crops while preserving the rest of the squad HUD.
+The Towns global invisibility state is also not source-bound, so only normal
+facing frames are admitted. Selected-hero overlays, fallback figure parity,
+full-screen visual comparison, and original-emulator HUD capture remain open;
+this change does not establish full FM Towns HUD or viewport parity.
