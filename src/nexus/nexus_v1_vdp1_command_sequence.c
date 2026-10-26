@@ -36,8 +36,8 @@ static int follow_candidate(const uint8_t *vram, int vram_size,
                             int *out_system_clip_count,
                             int *out_local_count, int *out_has_copr)
 {
-    uint32_t returns[NEXUS_V1_VDP1_SEQUENCE_MAX_COMMANDS];
-    int return_count = 0;
+    uint32_t return_address = 0;
+    int has_return = 0;
     int count = 0;
     int draws = 0;
     int user_clips = 0;
@@ -72,16 +72,19 @@ static int follow_candidate(const uint8_t *vram, int vram_size,
 
         jump_mode = (unsigned)((control >> 12U) & 0x3U);
         if (jump_mode == 0U) {
-            offset += NEXUS_V1_VDP1_COMMAND_BYTES;
+            offset = (offset + NEXUS_V1_VDP1_COMMAND_BYTES) & 0x7ffffU;
         } else if (jump_mode == 1U) {
-            offset = (uint32_t)link << 3U;
+            offset = ((uint32_t)link << 3U) & 0x7ffe0U;
         } else if (jump_mode == 2U) {
-            if (return_count >= NEXUS_V1_VDP1_SEQUENCE_MAX_COMMANDS) return 0;
-            returns[return_count++] = offset + NEXUS_V1_VDP1_COMMAND_BYTES;
-            offset = (uint32_t)link << 3U;
+            if (!has_return) {
+                return_address = (offset + NEXUS_V1_VDP1_COMMAND_BYTES) & 0x7ffffU;
+                has_return = 1;
+            }
+            offset = ((uint32_t)link << 3U) & 0x7ffe0U;
         } else {
-            if (return_count <= 0) return 0;
-            offset = returns[--return_count];
+            offset = has_return ? return_address :
+                (offset + NEXUS_V1_VDP1_COMMAND_BYTES) & 0x7ffffU;
+            has_return = 0;
         }
     }
 
@@ -232,8 +235,8 @@ int nexus_v1_vdp1_command_sequence_trace(
     Nexus_V1_Vdp1CommandSequenceReceipt *out)
 {
     Nexus_V1_Vdp1CommandSequenceReceipt r;
-    uint32_t stack[NEXUS_V1_VDP1_SEQUENCE_MAX_COMMANDS];
-    int depth = 0, origin_x = 0, origin_y = 0, have_origin = 0, i;
+    uint32_t return_address = 0;
+    int has_return = 0, origin_x = 0, origin_y = 0, have_origin = 0, i;
     if (!out) return 0;
     memset(&r, 0, sizeof(r));
     r.semantic_admission_blocked = 1;
@@ -268,15 +271,18 @@ int nexus_v1_vdp1_command_sequence_trace(
             if (i != count - 1) { *out = r; return 0; }
             r.end_record_verified = 1; break;
         }
-        if (mode == 0U) next = offsets[i] + NEXUS_V1_VDP1_COMMAND_BYTES;
-        else if (mode == 1U) next = (uint32_t)read_le16(p + 2U) << 3U;
+        if (mode == 0U) next = (offsets[i] + NEXUS_V1_VDP1_COMMAND_BYTES) & 0x7ffffU;
+        else if (mode == 1U) next = ((uint32_t)read_le16(p + 2U) << 3U) & 0x7ffe0U;
         else if (mode == 2U) {
-            if (depth >= NEXUS_V1_VDP1_SEQUENCE_MAX_COMMANDS) { *out = r; return 0; }
-            stack[depth++] = offsets[i] + NEXUS_V1_VDP1_COMMAND_BYTES;
-            next = (uint32_t)read_le16(p + 2U) << 3U;
+            if (!has_return) {
+                return_address = (offsets[i] + NEXUS_V1_VDP1_COMMAND_BYTES) & 0x7ffffU;
+                has_return = 1;
+            }
+            next = ((uint32_t)read_le16(p + 2U) << 3U) & 0x7ffe0U;
         } else {
-            if (!depth) { *out = r; return 0; }
-            next = stack[--depth];
+            next = has_return ? return_address :
+                (offsets[i] + NEXUS_V1_VDP1_COMMAND_BYTES) & 0x7ffffU;
+            has_return = 0;
         }
         if (i + 1 >= count || offsets[i + 1] != next) { *out = r; return 0; }
     }

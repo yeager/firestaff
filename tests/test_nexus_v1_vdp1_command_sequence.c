@@ -90,6 +90,25 @@ int main(void)
             free(vram);
             return 1;
         }
+        /* VDP1 retains one return address; a nested CALL does not replace it. */
+        offsets[2] = 0x200U;
+        offsets[3] = 0x300U;
+        offsets[4] = 0x140U;
+        wl16(commands + 64U, 0x2002U);
+        wl16(commands + 66U, (0x300U >> 3U) | 3U);
+        wl16(commands + 96U, 0x3002U);
+        if (!nexus_v1_vdp1_command_sequence_trace(commands, offsets, 5, &traced)) {
+            fprintf(stderr, "FAIL: VDP1 nested call return-address semantics\n");
+            free(vram); return 1;
+        }
+        /* A RETURN without a saved address advances to the next command. */
+        wl16(commands + 32U, 0x3002U);
+        wl16(commands + 64U, 0x8000U);
+        offsets[2] = 0x140U;
+        if (!nexus_v1_vdp1_command_sequence_trace(commands, offsets, 3, &traced)) {
+            fprintf(stderr, "FAIL: VDP1 return without call\n");
+            free(vram); return 1;
+        }
     }
 
     if (!vram) return 1;

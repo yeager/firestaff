@@ -202,6 +202,10 @@ that the trace covers a complete frame and that its producer dropped no rows.
 The Japanese retail title-menu trace at Ymir frame 59 passes with 178 commands;
 the captured words are used directly, rather than substituted from the later
 VRAM snapshot. This does not establish that textures or the final image match.
+Transition checks follow Ymir's VDP1 model: a single saved return address,
+sequential execution on a return without a call, 32-byte link alignment, and
+512 KiB address wrapping. Ymir describes nested-call behavior as observed,
+so this model is not independent hardware verification.
 The capture compositor can consume those traced command words while resolving
 materials from a separate VRAM snapshot. It requires explicit verification of
 trace completeness and keeps renderer permission disabled because the later
