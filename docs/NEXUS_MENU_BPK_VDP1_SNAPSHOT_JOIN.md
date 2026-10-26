@@ -101,9 +101,12 @@ commands `0xd920`, `0xd940`, and `0xd960` match spans of 256, 256, and
 is a normal sprite in 4-bit colour-bank mode, with captured CMDCOLR values
 `0x52f0`, `0x52f0`, `0x5220`, `0x5230`, and `0x5250`. These are byte
 matches against the later VRAM snapshot, not a time-aligned palette or a
-proof of the final menu image. A later full-frame capture replay combines the
-captured VDP1 display framebuffer with VDP2 state, but it does not replay
-these command-level mode-0 sprites through Firestaff's live renderer.
+proof of the final menu image. The later full-frame capture replay combines
+the captured VDP1 display framebuffer with VDP2 state; it does not reconstruct
+the frame by replaying these command records. Separate capture-only paths
+resolve source-bound mode-1 lookup textures and preview or blend captured
+mode-0 bank sprites. Those paths do not establish sprite ordering or priority,
+VDP2 layer selection, or a time-aligned reference image.
 `nexus_v1_vdp1_decode_mode0_bank_texture` now decodes the sprite's packed
 indices and VDP1 colour-bank words from a VRAM snapshot. The retained `0xd8e0`
 command and its 576 texels pass the external capture test. These words still
