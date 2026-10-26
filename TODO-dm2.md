@@ -103,6 +103,32 @@ ObjectID direction and chain ordinal, then merge normal and seven-slot
 creature-associated replay events into `DM2_DRAW_STATIC_OBJECT`'s indoor draw
 schedule. The production drain count remains unpopulated, and the authentic
 HME-242 test does not yet assert source-order presentation.
+
+2026-10-26 SKProject source trace tightened the compositor contract. In
+`DM2_DRAW_STATIC_OBJECT`, `table1d6afe[cell]` selects one of three 25-slot
+orders: positive uses `table1d6da1`, zero uses `table1d6dba`, and negative uses
+`table1d6d88`; cell 0 visits only 15 slots. At each enabled slot the source
+draws the floor item, then the eligible creature. Only if that creature draw
+succeeds, it replays missile-mask hits from the preceding at most seven slots
+in ascending slot order, and then draws a missile at the current slot. These
+replays are part of each cell's source pass, not a global projectile overlay.
+`DM2_DRAW_FLYING_ITEM` selects a chain member only when
+`QUERY_OBJECT_5x5_POS(ObjectID, view_direction)` equals that slot. Its special
+DB14 class1 `0x0d` path reads the linked timer phase and uses a GDAT `0x0b`
+selector plus TEMP_PICST; ordinary DB14 items take a separate item draw path.
+Firestaff's live snapshot already captures the DB14 ObjectID, chain ordinal,
+5x5 position, timer index and energy, but production does not yet pass those
+snapshots to the indoor compositor. Do not infer source ordering from F0810's
+movement direction or claim timer-driven pixel parity from the selector-only
+real-media test.
+
+Next implementation gate: feed authenticated visible DB14 chains and timer
+records into the per-slot compositor, emit current-slot and successful-creature
+seven-slot replay events in source order, and test that receipt against original
+DM2 media. Only after that should the renderer replace its trailing global
+projectile pass; separately verify the DB14 class1 `0x0d` TEMP_PICST animation
+and ordinary flying-item material path against captured source-phase frames.
+
 References: `include/dm2_v1_projectile_pc34_compat.h`,
 `src/dm2/dm2_v1_projectile_pc34_compat.c`,
 `src/dm2/dm2_v1_runtime.c::dm2_v1_runtime_live_missile_selector_receipt`,
