@@ -109,9 +109,17 @@ which cannot identify a resource. The remaining draw at command `0x00f00`
 uses a 1,152-byte span matching the word-swapped Japanese `ITEM.IBS` bytes
 at file offset `0x123dc`; the file SHA-256 is
 `fc32ca5875906e6e0dc69e0b5edfa5d00cb1f4401b7d497397c699be7c4530c1`.
-This establishes byte provenance only, not its item identity, CLUT ownership,
-placement, or production renderer permission. A matching all-zero image must
+This initial file-level join does not establish item identity, placement, or
+production renderer permission. A matching all-zero image must
 not be used to infer its owner or promote a renderer gate.
+
+Further inspection of that same Japanese `ITEM.IBS` and capture binds the
+1,152-byte image to floor-image descriptor 33: encoding `0x0008`, dimensions
+48×48, palette id 8. Its descriptor reuses the palette first supplied by
+descriptor 0 at file offset `0xb098`. All 32 palette bytes, after the same
+16-bit word swap, equal the VDP1 command's captured CLUT at VRAM byte offset
+`0x18820`. This establishes the descriptor, image bytes, and CLUT byte join;
+the displayed item's game identity, transform, and composition remain open.
 
 The frame counter in the VDP1 trace is distinct from the 120 requested capture
 steps, and the screenshot is taken after the dump. This receipt therefore
