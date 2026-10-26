@@ -12,6 +12,21 @@
   semantic, or full gameplay parity. The evidence-capture gaps below remain
   open.
 
+## 2026-10-26 — five-second cold-boot RUN hold remains System Card-only
+
+- A fresh isolated PCE Fast reference run used the authenticated USA disc and
+  System Card with `run@9600:300`, which holds RUN for five seconds. The
+  instrumented controller consumed the exact `0008` mask at System Card poll
+  `$E4C5`; all 300 scheduled apply frames were recorded.
+- The reference process nevertheless remained in the System Card path: it
+  recorded no CD IRQ, SCSI command, raw-sector binding, authenticated CD-to-RAM
+  receipt, or non-System-Card controller poll. It therefore does not prove a
+  game launch, despite the requested hold duration having been delivered.
+- The trace and media remain private. The next evidence task is to identify
+  the original System Card title-state transition that precedes the game-owned
+  input consumer; no native gameplay rule or renderer mapping may be inferred
+  from this System Card-only result.
+
 ## 2026-10-26 — retain the bounded controller witness across cold boot
 
 - The PCE Fast capture instrumentation now accepts a bounded input-trace

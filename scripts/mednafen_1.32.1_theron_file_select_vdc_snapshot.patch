@@ -1,7 +1,31 @@
+diff --git a/src/pce/input.cpp b/src/pce/input.cpp
+index e66d216..6fb3b55 100644
+--- a/src/pce/input.cpp
++++ b/src/pce/input.cpp
+@@ -33,6 +33,9 @@
+ namespace MDFN_IEN_PCE
+ {
+ unsigned theron_script_trace_frame = 0;
++static bool theron_file_select_input_issued = false;
++bool TheronFileSelectInputIssued(void) { return theron_file_select_input_issued; }
++unsigned TheronScriptInputFrame(void) { return theron_script_trace_frame; }
+
+ enum
+ {
+@@ -298,6 +301,8 @@ void INPUT_Frame(void)
+    const unsigned duration = theron_script_events[event_index].duration;
+    if(!theron_script_events[event_index].emitted && theron_script_trace_frame == start)
+    {
++    if(theron_script_events[event_index].mask & 0x0001)
++     theron_file_select_input_issued = true;
+     if(theron_input_trace)
+      fprintf(theron_input_trace, "scripted_pce_input_event frame=%u key=%s mask=%04x hold=%u\n",
+              theron_script_trace_frame, theron_script_events[event_index].key,
 diff --git a/src/pce/input.h b/src/pce/input.h
+index 974f2b5..923cac5 100644
 --- a/src/pce/input.h
 +++ b/src/pce/input.h
-@@ -31,6 +31,8 @@
+@@ -31,6 +31,8 @@ MDFN_HIDE extern const std::vector<InputPortInfoStruct> PCEPortInfo;
  void INPUT_AdjustTS(int32 delta_timestamp);
 
  uint16 INPUT_HESHack(void);
@@ -10,41 +34,11 @@ diff --git a/src/pce/input.h b/src/pce/input.h
 
  };
 
-diff --git a/src/pce/input.cpp b/src/pce/input.cpp
---- a/src/pce/input.cpp
-+++ b/src/pce/input.cpp
-@@ -32,6 +32,10 @@
-
- namespace MDFN_IEN_PCE
- {
-+static bool theron_file_select_input_issued = false;
-+static unsigned theron_public_script_frame = 0;
-+bool TheronFileSelectInputIssued(void) { return theron_file_select_input_issued; }
-+unsigned TheronScriptInputFrame(void) { return theron_public_script_frame; }
-
- enum
- {
-@@ -225,6 +229,7 @@
-  static unsigned theron_script_event_count = 0;
-  static uint16 theron_script_original_port0 = 0;
-  static bool theron_script_applied = false;
-+ theron_public_script_frame = theron_script_frame;
-  static struct
-  {
-   unsigned frame;
-@@ -323,6 +328,8 @@
-    const unsigned duration = theron_script_events[event_index].duration;
-    if(!theron_script_events[event_index].emitted && theron_script_frame == start)
-    {
-+    if(theron_script_events[event_index].mask & 0x0001)
-+     theron_file_select_input_issued = true;
-     if(theron_input_trace)
-      fprintf(theron_input_trace, "scripted_pce_input_event frame=%u key=%s mask=%04x hold=%u\n",
-              theron_script_frame, theron_script_events[event_index].key,
 diff --git a/src/pce/pce.cpp b/src/pce/pce.cpp
+index b475efc..59b7f30 100644
 --- a/src/pce/pce.cpp
 +++ b/src/pce/pce.cpp
-@@ -75,6 +75,7 @@
+@@ -75,6 +75,7 @@ static bool IsHES;
 
  // Accessed in debug.cpp
  static bool TheronGraphicsSnapshotDumped = false;
@@ -52,7 +46,7 @@ diff --git a/src/pce/pce.cpp b/src/pce/pce.cpp
  static void TheronDumpGraphicsSnapshot(void)
  {
   const char *vram_path = getenv("FIRESTAFF_THERON_VRAM_SNAPSHOT");
-@@ -132,14 +133,37 @@
+@@ -150,6 +151,8 @@ static void TheronDumpGraphicsSnapshot(void)
           (unsigned)vce->GetRegisterVDC(0, VDC::GSREG_VDR, NULL, 0),
           (unsigned)vce->GetRegisterVDC(0, VDC::GSREG_VCR, NULL, 0),
           (unsigned)vce->GetRegisterVDC(0, VDC::GSREG_CR, NULL, 0));
@@ -61,8 +55,7 @@ diff --git a/src/pce/pce.cpp b/src/pce/pce.cpp
   fclose(vram_file);
   fclose(vce_file);
   fclose(vdc_file);
-  fclose(sat_file);
-  if(ram_file) fclose(ram_file);
+@@ -158,6 +161,27 @@ static void TheronDumpGraphicsSnapshot(void)
   if(bram_file) fclose(bram_file);
   TheronGraphicsSnapshotDumped = true;
  }
@@ -90,7 +83,7 @@ diff --git a/src/pce/pce.cpp b/src/pce/pce.cpp
  static uint8 BaseRAM[32768]; // 8KB for PCE, 32KB for Super Grafx
  uint8 PCE_PeekMainRAM(uint32 A)
  {
-@@ -257,6 +281,7 @@
+@@ -259,6 +283,7 @@ static unsigned TheronSCSIGenerationVDCSnapshotTarget = 0;
  static unsigned TheronSCSIGenerationVDCSnapshotRowTarget = 0;
  static bool TheronSCSIGenerationVDCSnapshotTargetInitialized = false;
  static bool TheronSCSIGenerationVDCSnapshotPending = false;
@@ -98,7 +91,8 @@ diff --git a/src/pce/pce.cpp b/src/pce/pce.cpp
  static unsigned TheronGetVDCIOTraceLimit(void)
  {
   const char *value;
-@@ -276,11 +301,56 @@
+@@ -277,11 +302,56 @@ static unsigned TheronGetVDCIOTraceLimit(void)
+ }
  static void TheronTraceVDCIOWrite(uint32 physical, uint8 value)
  {
 + static FILE *file_select_vdc_trace = NULL;
@@ -150,12 +144,11 @@ diff --git a/src/pce/pce.cpp b/src/pce/pce.cpp
 +    fflush(file_select_vdc_trace);
 +  }
 + }
-
 +
+
   if(!TheronSCSIGenerationVDCSnapshotTargetInitialized)
   {
-   const char *target = getenv(
-@@ -362,8 +432,15 @@
+@@ -364,8 +434,15 @@ static void TheronTraceVDCIOWrite(uint32 physical, uint8 value)
  static void TheronTraceVDCIOPostWrite(void)
  {
   if(!TheronVDCIOSnapshotPending &&
@@ -172,7 +165,7 @@ diff --git a/src/pce/pce.cpp b/src/pce/pce.cpp
   if(TheronVDCIOSnapshotPending)
   {
    TheronVDCIOSnapshotPending = false;
-@@ -1286,6 +1363,8 @@
+@@ -1287,6 +1364,8 @@ static void Emulate(EmulateSpecStruct *espec)
    }
   } while(!rp_rv);
 
