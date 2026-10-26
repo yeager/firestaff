@@ -1,9 +1,10 @@
 # Dungeon Master Nexus — startup status
 
 This is an evidence report for startup, not a specification for a completed
-Nexus startup screen. Reviewed 2026-10-25: the NBG1 tile-fetch address fix in
-merged PR #19 passes against an authentic Japanese startup frame, but remains a
-capture-only decoder result and does not prove the title-to-menu transition.
+Nexus startup screen. Updated 2026-10-26: an authentic Japanese retail cold
+boot now reaches the Nexus title/logo in Ymir with deterministic BIOS input.
+The title-to-menu transition, gameplay entry, and HUD are still unverified in
+Firestaff.
 
 ## Verified initialization order
 
@@ -549,6 +550,44 @@ SH-2 write tracing; it does not prove that Nexus reached the game title. See
 the boot-dump receipt on the external evidence disk and
 [full capture receipt and SHA-256 identities](NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md#full-ymir-title-frame-capture-replay)
 for the menu-state reproduction command and exact scope.
+
+## Deterministic cold boot reaches the Nexus title/logo (2026-10-26)
+
+Ymir 0.4.2-dev was built on TRV2 with the repeatable
+`--capture-pad-input FRAME:BUTTON:HOLD` option (submitted to the Yeager Ymir
+fork in [PR #1](https://github.com/yeager/Ymir/pull/1)). A fresh isolated Ymir
+profile used the authenticated Japanese Saturn BIOS
+(SHA-256
+`dcfef4b99605f872b6c3b6d05c045385cdea3d1b702906a0ed930df7bcb7deac`)
+and the real Japanese retail cue
+`/home/trv2/.firestaff/data/nexus/Dungeon Master Nexus (Japan).cue`. The
+isolated profile was marked onboarded to bypass Ymir's first-run UI; no game
+state was loaded.
+
+The deterministic boot schedule pressed Right at frames 700, 720, 740, 760,
+780, and 800, A at frame 830 to confirm the Japanese BIOS date/time screen,
+then Start at frame 7000. The 9000-frame capture shows the real Nexus logo and
+copyright; its captured emulation frame is 7977. A 10000-frame capture remains
+on that logo, while a 12000-frame capture has advanced into the game's canyon
+intro. These independent captures demonstrate BIOS exit and authentic retail
+boot progression to the logo and attract sequence.
+
+The screenshots and hashes are retained outside the repository:
+
+| Boot capture | SHA-256 |
+|---|---|
+| [`ymir_nexus_coldboot9000_20261026.png`](/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot9000_20261026.png) | `5ede8daf82936b7323563c01d56534f2eb140cec981865c16548ac52ccccc921` |
+| [`ymir_nexus_coldboot10000_20261026.png`](/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot10000_20261026.png) | `deff9f5bebaaa448ba5a897f40bda764e38c84da59e0e1bd344467b0a0c667fd` |
+| [`ymir_nexus_coldboot12000_20261026.png`](/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot12000_20261026.png) | `4be897d6b35d79c059de45f835611f824e695f381cf76c46312ea60743f207ba` |
+
+This does not establish that Start reaches the native title menu: on this
+schedule, Start at frame 7000 leads into the logo/attract sequence, and the
+later capture shows the canyon intro. A separately retained title-prompt
+state shows `PRESS START BUTTON`, but it is a saved-state replay and must not
+be presented as a cold-boot result. The native menu choices, menu input
+dispatch, new-game entry, continue/save behavior, and playable HUD therefore
+remain open gates. This evidence is from Ymir and does not admit a Firestaff
+render path or claim gameplay parity.
 
 ## Sources
 

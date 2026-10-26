@@ -811,3 +811,16 @@ retail FNV identities for `SLEV00.BIN`, `SNDLEV00.SAL`, `SNDLEV00.MAP`, and
 `SDDRVS.TSK` matches. It is therefore a runtime observation, not a source-bound
 capture. The SLEV/SAL/SDDRVS gate remains at 2/8 and production readiness at
 0%.
+
+## Cold-boot progress (2026-10-26)
+
+A fresh Japanese retail cold boot in Ymir now demonstrates the BIOS date/time
+confirmation, Nexus title/logo, and subsequent canyon attract sequence using a
+deterministic scheduled controller input. This closes the earlier evidence
+gap that stopped at the system date/time screen. It does not prove a cold-boot
+transition into the title menu, native menu input handling, playable-level
+entry, HUD rendering, or Firestaff parity. The screenshots, hashes, input
+schedule, and exact limits are recorded in
+[`nexus_startup.md`](nexus_startup.md#deterministic-cold-boot-reaches-the-nexus-titlelogo-2026-10-26).
+The Ymir controller scheduler is submitted separately in
+[yeager/Ymir PR #1](https://github.com/yeager/Ymir/pull/1).
