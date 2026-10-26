@@ -1324,13 +1324,18 @@ overlays, full-screen visual comparison, and original-emulator HUD capture
 remain open; this does not establish full FM Towns HUD or viewport parity.
 
 2026-10-26 SKProject source comparison: `skguivwp.cpp::DM2_DRAW_DUNGEON_TILES`
-walks the 20 `table1d7029` cells and calls `DM2_DRAW_STATIC_OBJECT` for each
-source-eligible tile. The center/player tile is a separate pass in
+walks the 20 `table1d7029` cells, but calls `DM2_DRAW_STATIC_OBJECT` only when
+the terrain branch sets `skip00964`: tile types 1–5, 16, 18, and 19 (with
+`table1d6dd3` also excluding source cells 9 and 10, and the callee rejecting
+cells above 15). The live missile snapshot plan applies both the source-cell
+and tile-type filters before admitting a DB14 event. The center/player tile is a separate pass in
 `DM2_DRAW_PLAYER_TILE`: it calls `DM2_DRAW_PIT_ROOF(0)`, then
 `DM2_DRAW_STATIC_OBJECT(0, 0x1ffffff, 0)`, and only afterward draws the
 teleporter/rain/external-tile overlays. The center pass is therefore not a
 21st entry in `table1d7029`; a future live DB14 snapshot must query it as a
-separate cell to preserve that source order.
+separate cell to preserve that source order. The current plan records source
+ownership/order only; it does not yet emit pixels or model creature-success
+replay, so visual parity is not claimed.
 
 Within `DM2_DRAW_STATIC_OBJECT`, source draw-slot order is selected by
 `table1d6afe[cell]` (positive: `table1d6da1`; zero:
@@ -1345,8 +1350,14 @@ creature-success replay events, and its later `dm2_v1_render_projectiles`
 pass cannot reproduce these occlusion points. The active timer receipt now
 decodes `ticks_and_map` and packed `wvalueB` coordinates, and the HME-242
 real-media test confirms that the live Fireball is reachable from the active
-G1 tile chain at that timer-owned map position. These are source-state
-receipts only; no pixel parity is claimed. Next, bridge live DB14 chain
-snapshots and timer receipts to source-cell draw events, including the
-separate center pass, then bind TEMP_PICST placement/frame selection before
-allowing those events to draw authenticated GDAT material.
+G1 tile chain at that timer-owned map position. A runtime API now snapshots
+caller-ordered visible cells from the active record-pool owner and joins each
+DB14 to its live timer receipt when available. The viewport now collects
+those live snapshots from the in-bounds `table1d7029` static-object cells and
+queries the center/player cell separately at the final source pass; it orders
+the resulting receipt by source pass, display slot and chain order. The HME-242
+real-media test verifies that the live Fireball enters the center-cell plan.
+This plan is currently evidence only and is not yet consumed for pixels. Next,
+add DB14 draw events and creature-success replay to the indoor compositor, then
+bind TEMP_PICST placement/frame selection before those events can draw
+authenticated GDAT material.

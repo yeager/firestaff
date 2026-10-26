@@ -2001,12 +2001,12 @@ int main(void)
         DM2_V1_G1FlyingItemSelectorReceipt live_selector;
         DM2_V1_G1MissileTimerReceipt live_timer;
         DM2_V1_G1VisibleMapCell live_cell;
-        DM2_V1_G1MissileChainSnapshot live_snapshots[16];
-        const DM2_V1_DungeonData *live_dungeon = NULL;
-        const DM2_V1_RecordPoolSet *live_pools = NULL;
-        const DM2_V1_AssetLoader *live_loader = NULL;
+        DM2_V1_RuntimeVisibleMissileSnapshot live_snapshots[16];
+        DM2_V1_ViewportState live_viewport;
+        DM2_V1_IndoorLiveMissilePlan live_plan;
         size_t live_snapshot_count = 0u;
         int live_snapshot_found = 0;
+        int live_plan_found = 0;
         uint8_t count_before = 0u, count_active = 0u, count_expired = 0u;
         int selected = dm2_v1_runtime_select_mac_charsheet_champion(0);
         int spell_ready = selected &&
@@ -2072,20 +2072,23 @@ int main(void)
         live_cell.y = (int16_t)live_timer.map_y;
         memset(live_snapshots, 0, sizeof(live_snapshots));
         if (cast.applied && live_timer.valid &&
-            dm2_v1_runtime_live_missile_selector_context(
-                &live_dungeon, &live_pools, &live_loader) &&
-            live_loader != NULL &&
-            dm2_v1_g1_snapshot_visible_missile_chains(
-                live_dungeon, live_pools, live_timer.map_index,
-                &live_cell, 1u,
+            dm2_v1_runtime_snapshot_visible_missile_chains(
+                live_timer.map_index, &live_cell, 1u,
                 (uint8_t)dm2_v1_runtime_get_party_dir(), live_snapshots,
                 sizeof(live_snapshots) / sizeof(live_snapshots[0]),
                 &live_snapshot_count)) {
             for (size_t i = 0u; i < live_snapshot_count; ++i) {
-                if (live_snapshots[i].object_id ==
+                if (live_snapshots[i].source.object_id ==
                         (uint16_t)cast.missile_record &&
-                    live_snapshots[i].timer_index == live_timer.timer_index &&
-                    live_snapshots[i].view_position_5x5 <= 24u) {
+                    live_snapshots[i].source.timer_index ==
+                        live_timer.timer_index &&
+                    live_snapshots[i].source.view_position_5x5 <= 24u &&
+                    live_snapshots[i].timer_valid &&
+                    live_snapshots[i].timer.raw_timer_hash ==
+                        live_timer.raw_timer_hash &&
+                    live_snapshots[i].timer.map_index == live_timer.map_index &&
+                    live_snapshots[i].timer.map_x == live_timer.map_x &&
+                    live_snapshots[i].timer.map_y == live_timer.map_y) {
                     live_snapshot_found = 1;
                     break;
                 }
@@ -2093,6 +2096,31 @@ int main(void)
         }
         check(live_snapshot_found,
               "HME-242 live Fireball is reachable through the active G1 source tile chain");
+        memset(&live_viewport, 0, sizeof(live_viewport));
+        memset(&live_plan, 0, sizeof(live_plan));
+        live_viewport.party_x = dm2_v1_runtime_get_party_x();
+        live_viewport.party_y = dm2_v1_runtime_get_party_y();
+        live_viewport.party_dir = dm2_v1_runtime_get_party_dir();
+        live_viewport.dungeon_level = live_timer.map_index;
+        if (live_timer.valid &&
+            dm2_v1_viewport_build_indoor_live_missile_plan(
+                &live_viewport, &live_plan) && live_plan.valid) {
+            for (int i = 0; i < live_plan.event_count; ++i) {
+                const DM2_V1_IndoorLiveMissileEvent *event =
+                    &live_plan.events[i];
+                if (event->live.source.object_id ==
+                        (uint16_t)cast.missile_record &&
+                    event->live.timer_valid &&
+                    event->live.timer.timer_index == live_timer.timer_index) {
+                    live_plan_found = event->source_cell == 0 &&
+                        event->source_pass == 20 &&
+                        event->display_index >= 0;
+                    break;
+                }
+            }
+        }
+        check(live_plan_found,
+              "HME-242 live Fireball enters the SKProject center-cell missile draw plan");
     }
     M11_GameView_Shutdown(&view);
     if (failures) return 1;

@@ -1556,6 +1556,22 @@ typedef struct {
         DM2_V1_MAX_INDOOR_DRAW_ORDER_EVENTS];
 } DM2_V1_IndoorDrawOrderReceipt;
 
+#define DM2_V1_MAX_INDOOR_LIVE_MISSILES DM2_V1_G1_VISIBLE_MISSILE_MAX
+typedef struct {
+    DM2_V1_RuntimeVisibleMissileSnapshot live;
+    int16_t source_cell;
+    int16_t source_pass;
+    int16_t display_index;
+} DM2_V1_IndoorLiveMissileEvent;
+
+typedef struct {
+    int valid;
+    int partial;
+    int event_count;
+    DM2_V1_IndoorLiveMissileEvent events[
+        DM2_V1_MAX_INDOOR_LIVE_MISSILES];
+} DM2_V1_IndoorLiveMissilePlan;
+
 typedef struct {
     DM2_V1_ItemRender item;
     int item_present;
@@ -1949,6 +1965,7 @@ typedef struct {
     DM2_V1_ViewportItemMaterialCommand last_item_presentation_command;
     DM2_V1_ViewportFrameCompositionReceipt last_frame_composition;
     DM2_V1_IndoorDrawOrderReceipt last_indoor_draw_order_receipt;
+    DM2_V1_IndoorLiveMissilePlan last_indoor_live_missile_plan;
     DM2_V1_ViewportM11FrameReceipt last_m11_frame_receipt;
     int last_door_button_asset_blit_valid;
     int last_door_button_asset_src_w;
@@ -2528,6 +2545,9 @@ int dm2_v1_viewport_build_indoor_draw_order(
     const DM2_V1_ItemRenderPlan *item_plan,
     const DM2_V1_CreatureRenderPlan *creature_plan,
     DM2_V1_IndoorDrawOrderReceipt *out_receipt);
+int dm2_v1_viewport_build_indoor_live_missile_plan(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_IndoorLiveMissilePlan *out_plan);
 int dm2_v1_viewport_build_carried_item_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_CarriedItemRenderPlan *out_plan);

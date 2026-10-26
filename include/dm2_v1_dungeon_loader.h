@@ -1013,6 +1013,13 @@ typedef struct {
     uint32_t raw_timer_hash;
 } DM2_V1_G1MissileTimerReceipt;
 
+#define DM2_V1_G1_VISIBLE_MISSILE_MAX 60u
+typedef struct {
+    DM2_V1_G1MissileChainSnapshot source;
+    int timer_valid;
+    DM2_V1_G1MissileTimerReceipt timer;
+} DM2_V1_RuntimeVisibleMissileSnapshot;
+
 /* SKWIN/SkWinCore.cpp::QUERY_CREATURE_BLIT_RECTI. The returned id is the
  * source RAW4 rectangle index; callers add QUERY_TEMP_PICST flags separately. */
 int dm2_v1_g1_query_creature_blit_recti(int cell_pos, int position_5x5,

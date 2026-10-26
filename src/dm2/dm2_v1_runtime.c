@@ -15395,6 +15395,44 @@ int dm2_v1_runtime_live_missile_timer_receipt(
     return 1;
 }
 
+int dm2_v1_runtime_snapshot_visible_missile_chains(
+    int map, const DM2_V1_G1VisibleMapCell *visible_cells,
+    size_t visible_cell_count, uint8_t view_direction,
+    DM2_V1_RuntimeVisibleMissileSnapshot *out_snapshots,
+    size_t snapshot_capacity, size_t *out_count)
+{
+    const DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    const DM2_V1_DungeonData *dungeon;
+    DM2_V1_G1MissileChainSnapshot source[
+        DM2_V1_G1_VISIBLE_MISSILE_MAX];
+    size_t source_count = 0u;
+
+    if (out_count) *out_count = 0u;
+    if (!out_count || (snapshot_capacity != 0u && !out_snapshots) ||
+        snapshot_capacity > DM2_V1_G1_VISIBLE_MISSILE_MAX ||
+        !rt->record_pools_valid || !rt->boot || !rt->boot->dungeon_data ||
+        map < 0 || map > 0xff) {
+        return 0;
+    }
+    dungeon = (const DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    if (!dm2_v1_g1_snapshot_visible_missile_chains(
+            dungeon, &rt->record_pools, map, visible_cells,
+            visible_cell_count, view_direction, source, snapshot_capacity,
+            &source_count)) {
+        return 0;
+    }
+    for (size_t i = 0u; i < source_count; ++i) {
+        DM2_V1_RuntimeVisibleMissileSnapshot *out = &out_snapshots[i];
+        memset(out, 0, sizeof(*out));
+        out->source = source[i];
+        out->timer_valid = dm2_v1_runtime_live_missile_timer_receipt(
+            source[i].object_id, &out->timer);
+        if (!out->timer_valid) memset(&out->timer, 0, sizeof(out->timer));
+    }
+    *out_count = source_count;
+    return 1;
+}
+
 int dm2_v1_runtime_last_missile_impact_receipt(
     DM2_V1_RuntimeMissileImpactReceipt *out_receipt) {
     if (!out_receipt || !g_dm2_last_missile_impact.valid) {

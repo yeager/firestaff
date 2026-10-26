@@ -71,6 +71,22 @@ static const uint8_t s_dm2_draw_dungeon_tiles_cells[20] = {
     0x04u, 0x05u, 0x03u, 0x01u, 0x02u
 };
 
+/* Inverse coordinates from SKProject dm2data.cpp::table1d6ad0. */
+static const int8_t s_dm2_source_lateral_by_cell[23] = {
+     0, -1,  1,  0, -1,  1,  0, -1,  1, -2,  2,  0,
+    -1,  1, -2,  2,  0, -1,  1, -2,  2, -3,  3
+};
+static const int8_t s_dm2_source_forward_by_cell[23] = {
+    0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 2, 3,
+    3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4
+};
+/* SKProject dm2data.cpp::table1d6dd3 disables static-object drawing for
+ * source cells 9 and 10; cells above 15 are rejected by DRAW_STATIC_OBJECT. */
+static const uint8_t s_dm2_static_object_cell_enabled[16] = {
+    1u, 1u, 1u, 1u, 1u, 1u, 1u, 1u,
+    1u, 0u, 0u, 1u, 1u, 1u, 1u, 1u
+};
+
 static uint32_t dm2_v1_wall_hash_bytes(uint32_t hash, const uint8_t *bytes,
                                         size_t size)
 {
@@ -230,14 +246,6 @@ int dm2_v1_viewport_static_object_cell_for_map(
     /* Inverse of SKProject dm2data.cpp::table1d6ad0. Keep all source cells
      * addressable here, including the ±2 lanes that have no DM2_ViewSquare;
      * individual source draw plans apply their own cell eligibility. */
-    static const int8_t lateral_by_cell[23] = {
-         0, -1,  1,  0, -1,  1,  0, -1,  1, -2,  2,  0,
-        -1,  1, -2,  2,  0, -1,  1, -2,  2, -3,  3
-    };
-    static const int8_t forward_by_cell[23] = {
-        0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 2, 3,
-        3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4
-    };
     int dir;
     int right;
     int rel_x;
@@ -260,8 +268,8 @@ int dm2_v1_viewport_static_object_cell_for_map(
         return 0;
     }
     for (int candidate = 1; candidate < 23; ++candidate) {
-        if (forward_by_cell[candidate] == forward &&
-            lateral_by_cell[candidate] == lateral) {
+        if (s_dm2_source_forward_by_cell[candidate] == forward &&
+            s_dm2_source_lateral_by_cell[candidate] == lateral) {
             cell = candidate;
             break;
         }
@@ -616,6 +624,167 @@ int dm2_v1_viewport_static_object_display_index(int cell_pos,
         }
     }
     return -1;
+}
+
+static int dm2_v1_indoor_live_missile_event_before(
+    const DM2_V1_IndoorLiveMissileEvent *a,
+    const DM2_V1_IndoorLiveMissileEvent *b)
+{
+    if (a->source_pass != b->source_pass)
+        return a->source_pass < b->source_pass;
+    if (a->display_index != b->display_index)
+        return a->display_index < b->display_index;
+    return a->live.source.chain_ordinal < b->live.source.chain_ordinal;
+}
+
+/* SKProject skguivwp.cpp::DM2_DRAW_DUNGEON_TILES sets skip00964 (and thus
+ * calls DRAW_STATIC_OBJECT) only for these normalized 5-bit tile types.
+ * The party square is handled by the separate DRAW_PLAYER_TILE pass. */
+static int dm2_v1_indoor_source_static_object_tile(int tile_type)
+{
+    return (tile_type >= 1 && tile_type <= 5) || tile_type == 16 ||
+           tile_type == 18 || tile_type == 19;
+}
+
+int dm2_v1_viewport_build_indoor_live_missile_plan(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_IndoorLiveMissilePlan *out_plan)
+{
+    static const int dx[4] = { 0, 1, 0, -1 };
+    static const int dy[4] = { -1, 0, 1, 0 };
+    DM2_V1_G1VisibleMapCell visible_cells[20];
+    DM2_V1_G1VisibleMapCell center_cell;
+    DM2_V1_RuntimeVisibleMissileSnapshot snapshots[
+        DM2_V1_MAX_INDOOR_LIVE_MISSILES];
+    DM2_V1_RuntimeVisibleMissileSnapshot center_snapshots[
+        DM2_V1_MAX_INDOOR_LIVE_MISSILES];
+    const DM2_V1_DungeonData *dungeon = NULL;
+    const DM2_V1_RecordPoolSet *pools = NULL;
+    const DM2_V1_AssetLoader *loader = NULL;
+    size_t visible_count = 0u;
+    size_t snapshot_count = 0u;
+    size_t center_count = 0u;
+    int map;
+    int dir;
+
+    if (!out_plan) return 0;
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!s) return 0;
+    out_plan->valid = 1;
+    if (s->is_outdoor) return 1;
+    if (!dm2_v1_runtime_live_missile_selector_context(
+            &dungeon, &pools, &loader) || !dungeon || !pools || !loader) {
+        out_plan->valid = 0;
+        return 0;
+    }
+    map = s->dungeon_level;
+    if (map < 0 || map >= dungeon->level_count ||
+        dungeon->level_widths[map] <= 0 ||
+        dungeon->level_heights[map] <= 0) {
+        out_plan->valid = 0;
+        return 0;
+    }
+    dir = s->party_dir & 3;
+
+    /* SKProject DRAW_DUNGEON_TILES source walk. DRAW_STATIC_OBJECT rejects
+     * cells >15 and table1d6dd3 rejects cells 9 and 10. */
+    for (size_t i = 0u; i < sizeof(s_dm2_draw_dungeon_tiles_cells); ++i) {
+        int cell = s_dm2_draw_dungeon_tiles_cells[i];
+        int map_x;
+        int map_y;
+        int tile_type;
+        if (cell > 15 || !s_dm2_static_object_cell_enabled[cell]) continue;
+        map_x = s->party_x + dx[dir] *
+            s_dm2_source_forward_by_cell[cell] -
+            dy[dir] * s_dm2_source_lateral_by_cell[cell];
+        map_y = s->party_y + dy[dir] *
+            s_dm2_source_forward_by_cell[cell] +
+            dx[dir] * s_dm2_source_lateral_by_cell[cell];
+        if (map_x < 0 || map_y < 0 ||
+            map_x >= dungeon->level_widths[map] ||
+            map_y >= dungeon->level_heights[map]) continue;
+        tile_type = dm2_v1_dungeon_get_square_type(
+            dungeon, map, map_x, map_y);
+        if (tile_type < 0 ||
+            !dm2_v1_indoor_source_static_object_tile(tile_type)) continue;
+        visible_cells[visible_count].x = (int16_t)map_x;
+        visible_cells[visible_count].y = (int16_t)map_y;
+        ++visible_count;
+    }
+    memset(snapshots, 0, sizeof(snapshots));
+    if (!dm2_v1_runtime_snapshot_visible_missile_chains(
+            map, visible_cells, visible_count, (uint8_t)dir, snapshots,
+            DM2_V1_MAX_INDOOR_LIVE_MISSILES, &snapshot_count)) {
+        out_plan->valid = 0;
+        return 0;
+    }
+
+    /* DM2_DRAW_PLAYER_TILE calls the center-cell static-object pass after
+     * all 20 table1d7029 cells, so it is queried separately and assigned the
+     * final painter pass rather than appended to the source table. */
+    center_cell.x = (int16_t)s->party_x;
+    center_cell.y = (int16_t)s->party_y;
+    memset(center_snapshots, 0, sizeof(center_snapshots));
+    if (!dm2_v1_runtime_snapshot_visible_missile_chains(
+            map, &center_cell, 1u, (uint8_t)dir, center_snapshots,
+            DM2_V1_MAX_INDOOR_LIVE_MISSILES - snapshot_count,
+            &center_count) ||
+        snapshot_count + center_count > DM2_V1_MAX_INDOOR_LIVE_MISSILES) {
+        out_plan->valid = 0;
+        return 0;
+    }
+    for (size_t i = 0u; i < center_count; ++i)
+        snapshots[snapshot_count + i] = center_snapshots[i];
+    snapshot_count += center_count;
+
+    for (size_t i = 0u; i < snapshot_count; ++i) {
+        const DM2_V1_RuntimeVisibleMissileSnapshot *live = &snapshots[i];
+        DM2_V1_IndoorLiveMissileEvent event;
+        int source_cell;
+        int source_pass;
+        int display_index;
+        memset(&event, 0, sizeof(event));
+        if (live->source.x == s->party_x &&
+            live->source.y == s->party_y) {
+            source_cell = 0;
+            source_pass = 20;
+        } else if (!dm2_v1_viewport_static_object_cell_for_map(
+                       live->source.x, live->source.y, dir,
+                       s->party_x, s->party_y,
+                       &source_cell, &source_pass) ||
+                   source_cell > 15 ||
+                   !s_dm2_static_object_cell_enabled[source_cell]) {
+            out_plan->partial = 1;
+            continue;
+        }
+        display_index = dm2_v1_viewport_static_object_display_index(
+            source_cell, live->source.view_position_5x5);
+        if (display_index < 0) continue;
+        if (!live->timer_valid) out_plan->partial = 1;
+        event.live = *live;
+        event.source_cell = (int16_t)source_cell;
+        event.source_pass = (int16_t)source_pass;
+        event.display_index = (int16_t)display_index;
+        if (out_plan->event_count >=
+                (int)DM2_V1_MAX_INDOOR_LIVE_MISSILES) {
+            out_plan->valid = 0;
+            out_plan->event_count = 0;
+            return 0;
+        }
+        out_plan->events[out_plan->event_count++] = event;
+    }
+
+    for (int i = 1; i < out_plan->event_count; ++i) {
+        DM2_V1_IndoorLiveMissileEvent event = out_plan->events[i];
+        int j = i;
+        while (j > 0 && dm2_v1_indoor_live_missile_event_before(
+                   &event, &out_plan->events[j - 1])) {
+            out_plan->events[j] = out_plan->events[j - 1];
+            --j;
+        }
+        out_plan->events[j] = event;
+    }
+    return 1;
 }
 
 int dm2_v1_viewport_flying_item_scale64(int y_distance,
@@ -8062,8 +8231,15 @@ void dm2_v1_render_indoor_items_and_creatures(DM2_V1_ViewportState *s)
     DM2_V1_ItemRenderPlan item_plan;
     DM2_V1_CreatureRenderPlan creature_plan;
     DM2_V1_IndoorDrawOrderReceipt receipt;
+    DM2_V1_IndoorLiveMissilePlan live_missile_plan;
 
-    if (!s || !s->framebuffer ||
+    if (!s) return;
+    memset(&live_missile_plan, 0, sizeof(live_missile_plan));
+    (void)dm2_v1_viewport_build_indoor_live_missile_plan(
+        s, &live_missile_plan);
+    s->last_indoor_live_missile_plan = live_missile_plan;
+
+    if (!s->framebuffer ||
         !dm2_v1_viewport_build_item_render_plan(s, &item_plan) ||
         !dm2_v1_viewport_build_creature_render_plan(s, &creature_plan) ||
         !dm2_v1_viewport_build_indoor_draw_order(

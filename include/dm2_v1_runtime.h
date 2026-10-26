@@ -333,6 +333,13 @@ int dm2_v1_runtime_live_missile_selector_receipt(
 int dm2_v1_runtime_live_missile_timer_receipt(
     int missile_record_handle,
     DM2_V1_G1MissileTimerReceipt *out_timer);
+/* Snapshot DB14 chains from caller-ordered visible source cells in the active
+ * runtime and join each record to its live timer when one is present. */
+int dm2_v1_runtime_snapshot_visible_missile_chains(
+    int map, const DM2_V1_G1VisibleMapCell *visible_cells,
+    size_t visible_cell_count, uint8_t view_direction,
+    DM2_V1_RuntimeVisibleMissileSnapshot *out_snapshots,
+    size_t snapshot_capacity, size_t *out_count);
 /* Internal context bridge kept in the runtime object so source-only runtime
  * tests do not acquire a new dependency on the projectile selector module. */
 struct DM2_V1_RecordPoolSet;
