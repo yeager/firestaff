@@ -7007,7 +7007,19 @@ static int m11_csb_render_amiga_runtime_viewport(M11_GameViewState *state,
     memset(&counts, 0, sizeof(counts));
     if (!csb_v1_boot_render_viewport_frame_pc34((void *)state->csbBootProfile,
             candidate, framebuffer_width, framebuffer_height, &binding,
-            &counts) || memcmp(candidate, framebuffer, byte_count) == 0) {
+            &counts)) {
+        free(candidate);
+        return 0;
+    }
+    /* ReDMCSB DUNVIEW.C F0107:3619-3638 draws the selected front C02
+     * inscription from native M648 using the MEDIA720 F0635 line zones.
+     * The Amiga runtime uses its separate viewport transaction above, so it
+     * must consume the same source-bound M648 helper before this candidate
+     * page is committed. The generic wall draw intentionally suppresses the
+     * unreadable front plaque while this readable inscription is pending. */
+    (void)m11_draw_csb_front_inscription(
+        state, candidate, framebuffer_width, framebuffer_height);
+    if (memcmp(candidate, framebuffer, byte_count) == 0) {
         free(candidate);
         return 0;
     }

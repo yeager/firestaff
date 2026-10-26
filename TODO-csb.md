@@ -39,19 +39,16 @@ gaps and bounds what can be concluded:
   the original renderer.
   Floor trapdoors remain a separate
   capture-gated check because their floor pit/door path uses other families.
-- Front-wall inscription presentation has a separate Amiga wiring gap. The
-  readable M648 plan correctly selects native Amiga graphic 258 and the
-  `m11_draw_csb_front_inscription` helper decodes visible C02 text and draws
-  its glyphs with the selected M648 font. However, that helper is called only
-  from `m11_render_csb_boot_viewport`, the PC34/other shared boot-frame route.
-  The A31/A35 path calls `m11_csb_render_amiga_runtime_viewport` directly and
-  commits its candidate framebuffer without the M648 call. In the Amiga frame
-  the generic F0107 callback suppresses the front D1C unreadable M615 plaque
-  in anticipation of the later M648 pass, so this leaves the front inscription
-  absent on Amiga. Side-wall unreadable plaques still use the shared PC34
-  F0107 planner/raster path described above. This source call-graph gap is
-  confirmed; capture comparison is still needed to assess exact placement and
-  contrast after wiring the authentic font into the Amiga transaction.
+- The Amiga D1C readable front-inscription wiring gap is now addressed:
+  `m11_csb_render_amiga_runtime_viewport` consumes the existing
+  `m11_draw_csb_front_inscription` source path on its candidate frame before
+  commit. ReDMCSB DUNVIEW.C F0107:3619-3638 selects M648 and draws each C02
+  glyph using the MEDIA720 F0635 line zones; Firestaff's helper uses the
+  authenticated Amiga item 258 and item-696 zone table. The real-media runtime
+  graphics check now explicitly decodes M648 as well. A source-matched frame
+  capture is still needed to assess readability, placement, and contrast in a
+  live Amiga pose. Side-wall unreadable plaques still use the shared PC34
+  F0107 planner/raster path described above.
 - The shared F0107 raster loop has a separate, directly verified gap: its
   `DM1_WallOrnamentRenderPlanPc34` provides `flipHorizontal`,
   `paletteMapValid`/`paletteMap`, and source-scale metadata, and the material
