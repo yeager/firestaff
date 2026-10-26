@@ -37,11 +37,12 @@ The current evidence does not establish complete five-game startup support.
   gameplay ticks. It does not establish full game input or renderer parity.
 - The `m11_dm1_hoc_stair_torch_pc34` real-media test now sends the ordinary
   M11 backward-movement input from authentic PC34 HoC corridor cell (4,15)
-  toward the original stairs at (3,15). The campaign bytes confirm both
-  square types. The test target compiled and linked in GitHub Actions on
-  Linux, macOS and Windows, but the workflow does not run this real-media test
-  and no local runtime execution has been completed. It is regression coverage
-  for the reported route, not evidence that the hang is fixed.
+  toward the original stairs at (3,15). The test target compiled and linked in
+  GitHub Actions on Linux, macOS and Windows, then passed a local run against
+  the installed original `Dungeon-Master_DOS_EN.zip`: backward input entered
+  the authentic stairs and next level with the original torch carried and lit.
+  This shows that the tested M11 route completes; the native-window hang report
+  remains open until its event-loop/frame-presentation path is reproduced.
 - A fresh current-main TRV2 build at `e3b6d015c` succeeded, then direct CLI
   boot probes against the authentic per-game `.firestaff/data` roots reached
   `runtime-entered` for DM1, CSB, DM2 (FM Towns) and Theron (PC Engine).

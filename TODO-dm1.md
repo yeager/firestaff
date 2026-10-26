@@ -30,12 +30,15 @@ native timing capture yet distinguishes that transition from I34E's separate
 M11 backward-movement input from the authentic HoC corridor at (4,15) onto
 the original stairs at (3,15); the PC34 archive confirms those tile types,
 and GitHub Actions compiled and linked the test on Linux, macOS and Windows.
-The workflow did not execute this real-media CTest, and it has not been run
-locally, so the reported hang remains unverified and unresolved. Capture the
-exact native run and matching DOSBox-X original pose, then audit the
-route-specific frame timer, F0115/F0107 asset composition, C10 glyph
-raster/palette, F0128 stairs dispatch and frame ownership before changing any
-mapping. Do not substitute generated assets.
+On 2026-10-26 the test target was built and run locally against the installed
+original `Dungeon-Master_DOS_EN.zip`; its ordinary M11 backward input entered
+the authentic stairs and next level, and the original torch remained equipped
+and lit level one. This does not reproduce the reported hang in that tested
+M11 route, but it does not rule out a native-window/event-loop or frame
+presentation hang. Capture the reported native run and matching DOSBox-X
+original pose, then audit the route-specific frame timer, F0115/F0107 asset
+composition, C10 glyph raster/palette, F0128 stairs dispatch and frame
+ownership before changing any mapping. Do not substitute generated assets.
 
 2026-10-25 Apple IIGS mouth interaction: ReDMCSB PANEL.C F0349:1824-1850
 allows water/waterskin icons with charges and original potion Things when the
