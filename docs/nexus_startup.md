@@ -126,6 +126,16 @@ capture and `--dump-memory`. A 60-frame retail boot check produced both the
 VDP1 receipt and that PNG. The generated media was discarded after verification
 and is not a Firestaff asset or parity admission signal.
 
+Ymir PR #966 now also provides `--capture-no-present` for deterministic runs
+where an X11/GLX compositor cannot swap GUI frames reliably. A fresh temporary
+profile on TRV2 loaded the same authenticated Japanese BIOS, retail CUE, and
+title-prompt state, then completed `--load-state 2 --capture-frames 1
+--dump-memory --capture-no-present` under Xvfb. It wrote a complete memory dump
+and exited with status 0 in under three seconds. The profile and dump were
+removed after the check. This proves the capture transport no longer depends on
+a successful GUI presentation for this state; it does not supply a framebuffer,
+prove visual parity, or open any Firestaff presentation gate.
+
 ## Boot VDP2 writer anchor (2026-10-26)
 
 Ymir PR #966 was extended with a bounded direct SH-2 VDP2-write trace and a
