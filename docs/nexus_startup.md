@@ -33,6 +33,163 @@ source.
 | Saturn Backup RAM | `nexus_v1_saturn_bkr_parse` reads hash-pinned 32 KiB card directories and block chains, returning exact opaque payload bytes; native save selection, payload interpretation, and runtime loading remain missing |
 | Mednafen visual baseline | A clean J-BIOS capture against authentic retail shows black boot followed by the original intro FMV without input; menu/LEV01 identity remains missing |
 
+## Deterministic title-state replay (2026-10-26)
+
+The system-wide Ymir 0.4.2-dev capture build on TRV2 was run with `--debug`,
+the authenticated Japanese BIOS and retail cue, and the retained title-prompt
+state in CLI slot 2. The isolated profile mapped that state to
+`savestates/5EA76F972566FE6EB667D092CD494BCF/1.savestate`; it was removed
+after the run. One frame after the successful load, the VDP2 outputs matched
+the retained title-state reference exactly:
+
+| Output | SHA-256 |
+|---|---|
+| VDP2 VRAM | `de1a77427dc62457eb4b59fa0424fd25e9768ce229505445311929d3bdae405c` |
+| VDP2 CRAM | `db282593790dec4a2bf8f76293c0458a1a140adc3351650bd56a417f0359e0de` |
+| VDP2 registers | `79efa616c2db727749aa9018864d1ad32c1583935652fafb16534ba69f8e1f2d` |
+
+The capture build also emitted big-endian VDP1 and VDP2 register files (32 and
+512 bytes respectively) and a register snapshot. That tooling is proposed in
+[Ymir PR #966](https://github.com/ymir-emu/Ymir/pull/966). This confirms a
+repeatable authentic VDP2 title-state checkpoint, not the separate VDP1
+title-menu command bundle: the one-frame VDP1 outputs did not match that
+bundle's frame-497 hashes. It therefore does not admit the menu compositor,
+input dispatch, title-to-menu transition, or Firestaff presentation.
+
+The same system build was subsequently checked after its VDP1 trace was
+reattached following save-state loading. The single captured frame produced a
+complete `ymir-vdp1-capture-bundle-v1`: capture frame 0 contained 168 command
+rows, its snapshot cursor was command 168 at address `0x00000cc0`, and the
+bundle reported zero dropped rows. This proves that the Ymir CLI can now retain
+frame-aligned VDP1 command evidence across this authentic state load. It still
+does not identify the displayed menu, establish source ownership or palette
+composition, or authorize a Firestaff renderer.
+
+Ymir PR #966 also contains a bounded VDP2 VRAM/CRAM write tracer and an
+export receipt. Its system build and the existing title-state VDP1/VDP2
+checkpoint were regression-checked on TRV2. The VDP2 write tracer has not yet
+produced a retained source-to-write witness for this menu, so it is tooling for
+the next capture rather than an admission signal.
+
+An input-driven retail probe sent the observed Start key route while retaining
+the VDP2 trace. It produced 92,288 VRAM-write rows with no trace drops, but its
+captured VDP1 cursor had only seven commands rather than the authenticated
+title-menu bundle's 178. It is therefore negative routing evidence, not a
+title-menu capture; its untracked raw dump was removed after inspection. Do not
+use those writes to label a menu resource or relax a presentation gate.
+
+`scripts/verify_nexus_ymir_title_state_checkpoint.py` verifies this narrow
+checkpoint from caller-supplied retail CUE, BIOS, title-prompt state, and local
+Ymir dump files. It pins every CUE-referenced retail track and validates the
+register snapshot schema. The checkpoint pins VDP2 register bytes; it does not
+use the emitted VDP1 register file as evidence because this capture record has
+no independent VDP1-register digest. Nothing in this receipt establishes menu
+or gameplay presentation.
+
+## Deterministic Start-to-menu checkpoint (2026-10-26)
+
+Ymir PR #966 adds a frame-aligned Control Pad 1 Start route for the existing
+state/frame/dump capture path. On TRV2, a fresh temporary profile used the
+authenticated Japanese retail CUE, BIOS, and title-prompt state in CLI slot 2.
+It held Start during capture frames 0 through 59 and captured 120 frames with
+`--debug --load-state 2 --capture-frames 120 --dump-memory
+--capture-start-frame 0 --capture-start-hold 60`. The profile and raw dumps
+were removed after inspection; the displayed title-menu image and VDP1 receipt
+are retained in
+[`nexus_v1_ymir_deterministic_start_menu_20261026`](../parity-evidence/verification/nexus_v1_ymir_deterministic_start_menu_20261026/README.md).
+
+The capture completed at VDP1 frame 59 with command cursor 178 and 178 rows
+for that frame. Its complete trace had 10,668 rows from frames 0 through 59,
+with zero dropped entries. This is the same command count as the retained
+retail three-choice title-menu capture, so it is reproducible emulator evidence
+for the observed Start route rather than host-window timing evidence. The VDP2
+title checkpoint remained byte-identical to the retained title-state reference:
+
+| Output | SHA-256 |
+|---|---|
+| VDP2 VRAM | `de1a77427dc62457eb4b59fa0424fd25e9768ce229505445311929d3bdae405c` |
+| VDP2 CRAM | `db282593790dec4a2bf8f76293c0458a1a140adc3351650bd56a417f0359e0de` |
+| VDP2 registers | `79efa616c2db727749aa9018864d1ad32c1583935652fafb16534ba69f8e1f2d` |
+| VDP1 capture receipt | `0e5cfa33070e33f24ae0e25ead7ce4fac561ae7c329ef7c59ff12382d3ea519e` |
+| VDP1 trace | `b80c7a118e7f9df4f941804cdc045f4024336080504c512bbdf5c4e0df19d8d3` |
+| Retained title-menu image | `0ad6bbc433936cd853fef476c8eb14be2c9532efcfcc218a43ca1053500ca55c` |
+
+This makes title-menu capture reproducible without X11 keyboard injection. It
+does not bind a retail menu resource to a Saturn consumer, prove the final
+displayed pixels, or permit Firestaff to present a host-built menu. Those
+production gates remain closed.
+
+Ymir PR #966 additionally provides `--capture-screenshot` for the same
+capture-owned route. It queues a profile-local framebuffer PNG only after the
+requested frames and memory receipt have completed; it requires both a frame
+capture and `--dump-memory`. A 60-frame retail boot check produced both the
+VDP1 receipt and that PNG. The generated media was discarded after verification
+and is not a Firestaff asset or parity admission signal.
+
+## Boot VDP2 writer anchor (2026-10-26)
+
+Ymir PR #966 was extended with a bounded direct SH-2 VDP2-write trace and a
+normal-disc boot capture route. A 60-frame `--debug --capture-boot-frames 60
+--dump-memory --trace-vdp2-writes` run against the authenticated Japanese
+retail CUE and BIOS recorded one direct master-SH-2 write: PC `0x0602e12e`
+wrote the 16-bit value `0x0000` to VDP2 VRAM bus address `0x05e7fffe` at VDP1
+frame 21. The current call-site was return address `0x06032c24`, targeting the
+generic word-copy routine at `0x0602e120`. The trace had zero dropped entries.
+Its CSV and receipt hashes were respectively
+`47b98193f1b7615aad2326f5fc8386b502a214c6a244fece30e3a6580a0efc46` and
+`7efd6c70e83aea4178fa013ce59dfe7149e05727c26e81b64f736897356646fd`.
+
+This is a real SH-2 routine anchor for subsequent disassembly of a retail VDP2
+writer. It does not identify the source resource, establish a complete upload
+sequence, or prove title-menu ownership. The temporary memory dump was removed
+after the PC, address, width, value, and receipts were checked.
+
+Big-endian SH-2 disassembly of the captured high WRAM identifies the inner
+call at `0x06032c20`: the wrapper masks `r4` with `0x0007ffff`, maps it into
+the uncached Saturn bus (`0x25e00000 | r4`), and calls `0x0602e120` with a
+one-word count. A static cross-reference at `0x060282d4` calls that wrapper
+with destination `0x25e7fffe`. This explains the recorded address, but its
+source is a stack temporary. It therefore remains an initialization anchor,
+not source-resource provenance or permission to draw a host menu.
+
+## Delayed title-menu confirm observation (2026-10-26)
+
+An authenticated Japanese retail title-prompt state was replayed in Ymir with
+the deterministic capture route for 360 frames. Start was held for frames
+`0..59`; Control Pad 1 A was held for frames `240..249`. The captured final
+frame was VDP1 frame 231 with 112 command records, rather than the earlier
+title-menu capture's 139 records. A window capture made immediately after the
+dump showed the retail door-opening transition; its SHA-256 was
+`abdd1e9f65c0999d967fced4dad456856751cd9afcb46080616f617470ffc55a`.
+
+This is an observed response to a delayed input schedule, not sufficient
+proof that A semantically confirms New Game. A matching no-A control was then
+run from the same retained state with Start held for `0..59` and no other
+scheduled input through the same requested 360-frame capture. Its final
+profile-local framebuffer was the native three-choice title menu, with
+SHA-256 `20801648c86a5cbbe2a0e6c9cc90e625579fb52ba41f0b2234a51d3b0b17ecfe`.
+The control capture produced an undropped VDP1 trace (32,028 rows), but its
+bounded trace buffer ended at frame 179; it therefore cannot be used to
+compare a final VDP1 command stream to the delayed-A capture. The framebuffer
+is nevertheless emitted after the requested capture-owned frame loop, so this
+is evidence that the observed door transition depends on the delayed A
+schedule rather than on the Start-only title timeline.
+
+This still does not establish which retail menu item A confirms, the next
+stable game state, source-resource joins, or palette/compositor evidence. Do
+not enable a host menu, gameplay, HUD, or synthetic confirmation rule from this
+observation. The temporary screenshots, dumps, profile, and emulator process
+were removed after their hashes and receipt limits were checked.
+
+The same real state and input schedule was also captured for 600 requested
+frames. Its final framebuffer showed the retail `Now Loading` screen (SHA-256
+`07a6f3a612ca75209cd6308852a7cf25b3d1f35943ce2f5774e720376ef7c61c`), and
+the VDP1 receipt retained 48,380 undropped trace rows through frame 391. This
+extends the observed route from the door transition to the native loading
+state. It does not yet reach or bind a stable playable level, the party pose,
+viewport, HUD, level source, or palette/compositor route; it must not be used
+to synthesize any of those Firestaff states.
+
 ## Title-menu VDP1 source-span join (2026-10-19 capture; analyzed 2026-10-26)
 
 A read-only source-join analysis on TRV2 used the retained Ymir v0.4.0
