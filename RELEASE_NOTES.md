@@ -1,3 +1,19 @@
+# Firestaff v3.0.415
+
+## Developer changes
+
+- `Startup support evidence`: update the five-game startup matrix with the published v3.0.414 runtime checks, including the distinction between launcher handoff and playable gameplay.
+- `Nexus startup regression`: update title/menu diagnostics and authentic-media test expectations for the current capture-required startup gate.
+- `Launcher scan profile`: record fresh authentic-media scan timings and clarify that archive candidates skipped without external archive tools remain unverified.
+
+## Known limitations
+
+- This release does not establish complete gameplay or visual parity across all five games and supported platforms.
+- `Nexus`: the production Saturn title/menu consumer, New Game/Continue path, and transition to an authenticated playable level remain gated; menu-card handoff is not a playable runtime.
+- `Theron's Quest`: native dungeon presentation is not yet driven by authenticated world and graphics state, despite verified startup and selected keyboard routes.
+- `DM1`, `CSB`, and `DM2`: full platform-wide viewport, HUD, physical input, and native display parity remain incomplete. Some original-media CTests are local-only and are not exercised by the asset-free GitHub Actions matrix.
+- Original game media and BIOS/firmware are not included in release packages.
+
 # Firestaff v3.0.414
 
 ## User-facing changes
