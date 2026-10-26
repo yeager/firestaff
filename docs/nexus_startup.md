@@ -50,7 +50,7 @@ the retained title-state reference exactly:
 
 The capture build also emitted big-endian VDP1 and VDP2 register files (32 and
 512 bytes respectively) and a register snapshot. That tooling is proposed in
-[Ymir PR #965](https://github.com/ymir-emu/Ymir/pull/965). This confirms a
+[Ymir PR #966](https://github.com/ymir-emu/Ymir/pull/966). This confirms a
 repeatable authentic VDP2 title-state checkpoint, not the separate VDP1
 title-menu command bundle: the one-frame VDP1 outputs did not match that
 bundle's frame-497 hashes. It therefore does not admit the menu compositor,
@@ -65,7 +65,7 @@ frame-aligned VDP1 command evidence across this authentic state load. It still
 does not identify the displayed menu, establish source ownership or palette
 composition, or authorize a Firestaff renderer.
 
-Ymir PR #965 also now contains a bounded VDP2 VRAM/CRAM write tracer and an
+Ymir PR #966 also contains a bounded VDP2 VRAM/CRAM write tracer and an
 export receipt. Its system build and the existing title-state VDP1/VDP2
 checkpoint were regression-checked on TRV2. The VDP2 write tracer has not yet
 produced a retained source-to-write witness for this menu, so it is tooling for
@@ -85,7 +85,7 @@ accept them as menu or gameplay evidence.
 
 ## Deterministic Start-to-menu checkpoint (2026-10-26)
 
-Ymir PR #965 adds a frame-aligned Control Pad 1 Start route for the existing
+Ymir PR #966 adds a frame-aligned Control Pad 1 Start route for the existing
 state/frame/dump capture path. On TRV2, a fresh temporary profile used the
 authenticated Japanese retail CUE, BIOS, and title-prompt state in CLI slot 2.
 It held Start during capture frames 0 through 59 and captured 120 frames with
@@ -116,9 +116,16 @@ does not bind a retail menu resource to a Saturn consumer, prove the final
 displayed pixels, or permit Firestaff to present a host-built menu. Those
 production gates remain closed.
 
+Ymir PR #966 additionally provides `--capture-screenshot` for the same
+capture-owned route. It queues a profile-local framebuffer PNG only after the
+requested frames and memory receipt have completed; it requires both a frame
+capture and `--dump-memory`. A 60-frame retail boot check produced both the
+VDP1 receipt and that PNG. The generated media was discarded after verification
+and is not a Firestaff asset or parity admission signal.
+
 ## Boot VDP2 writer anchor (2026-10-26)
 
-Ymir PR #965 was extended with a bounded direct SH-2 VDP2-write trace and a
+Ymir PR #966 was extended with a bounded direct SH-2 VDP2-write trace and a
 normal-disc boot capture route. A 60-frame `--debug --capture-boot-frames 60
 --dump-memory --trace-vdp2-writes` run against the authenticated Japanese
 retail CUE and BIOS recorded one direct master-SH-2 write: PC `0x0602e12e`

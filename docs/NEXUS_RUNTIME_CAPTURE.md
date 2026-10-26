@@ -1417,7 +1417,7 @@ joined to a same-frame source asset, Firestaff renderer output or a retail
 menu/HUD/viewport owner. Ymir remains an external development tool, never a
 Firestaff runtime dependency. The PR is open and has not been released.
 
-The follow-up [Ymir PR #965](https://github.com/ymir-emu/Ymir/pull/965)
+The follow-up [Ymir PR #966](https://github.com/ymir-emu/Ymir/pull/966)
 adds `--load-state SLOT` and `--dump-memory` for unattended capture.  The
 frontend queues a requested save-state load before the dump on the emulation
 event queue, avoiding host-window focus and synthetic keyboard input.  It is
