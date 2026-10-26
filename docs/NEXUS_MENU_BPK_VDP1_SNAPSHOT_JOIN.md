@@ -90,6 +90,18 @@ The source scanner verifies each MNS file against its retail hash before
 extracting candidate surfaces. Re-running the retained frame with this check
 still finds 126 informative source matches among the 137 textured commands.
 
+Five informative commands in that trace instead match the Japanese retail
+`TITLE.BIN` (SHA-256
+`51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3`).
+Commands `0xd8e0` and `0xd900` both match 288 bytes at file offset `0x15f6`;
+commands `0xd920`, `0xd940`, and `0xd960` match spans of 256, 256, and
+416 bytes at offsets `0x0446`, `0x0576`, and `0x07d6`, respectively. Each
+is a normal sprite in 4-bit colour-bank mode, with captured CMDCOLR values
+`0x52f0`, `0x52f0`, `0x5220`, `0x5230`, and `0x5250`. These are byte
+matches against the later VRAM snapshot, not a time-aligned palette or a
+proof of the final menu image. The capture replay currently resolves mode-1
+lookup textures; it does not yet composite these mode-0 bank sprites.
+
 The same CMDSIZE and skipped-command corrections also apply to the Mednafen
 VDP1 source, material, and write-join analyzers. Earlier numerical receipts
 produced by those analyzers must be regenerated against their original raw
