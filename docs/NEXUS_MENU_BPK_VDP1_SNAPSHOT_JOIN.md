@@ -120,6 +120,8 @@ descriptor 0 at file offset `0xb098`. All 32 palette bytes, after the same
 16-bit word swap, equal the VDP1 command's captured CLUT at VRAM byte offset
 `0x18820`. This establishes the descriptor, image bytes, and CLUT byte join;
 the displayed item's game identity, transform, and composition remain open.
+The retained files can be rechecked with
+`python3 scripts/verify_nexus_item_floor_capture.py CAPTURE ITEM.IBS --frames 4 --frame 0 --command-offset 0xf00 --floor-index 33`.
 
 The frame counter in the VDP1 trace is distinct from the 120 requested capture
 steps, and the screenshot is taken after the dump. This receipt therefore
