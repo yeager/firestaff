@@ -13343,37 +13343,29 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     struct Dm1V1PendingMotionQueuePc34Compat pendingDm1V1MotionQueue;
     Firestaff_RA_Runtime raRuntime;
 
+    int startupWindowMode = M11_WINDOW_MODE_MAXIMIZED;
     {
         M12_Config startupConfig;
         M12_Config_Load(&startupConfig, o->dataDir);
         M11_Render_SetBackendPreference(startupConfig.rendererBackendIndex);
+        if (startupConfig.windowModeIndex >= M11_WINDOW_MODE_WINDOWED &&
+            startupConfig.windowModeIndex <= M11_WINDOW_MODE_FULLSCREEN) {
+            startupWindowMode = startupConfig.windowModeIndex;
+        }
+    }
+    if (o->windowModeOverride >= M11_WINDOW_MODE_WINDOWED &&
+        o->windowModeOverride <= M11_WINDOW_MODE_FULLSCREEN) {
+        startupWindowMode = o->windowModeOverride;
     }
     int rc = M11_Render_Init(o->windowWidth, o->windowHeight, o->scaleMode);
     if (rc != M11_RENDER_OK) {
         return rc;
     }
-    M11_Render_SetPresentTimingEnabled(o->debug);
-    if (o->verbose) {
-        int windowWidth = 0;
-        int windowHeight = 0;
-        int drawableWidth = 0;
-        int drawableHeight = 0;
-        int presentX = 0;
-        int presentY = 0;
-        int presentWidth = 0;
-        int presentHeight = 0;
-        (void)M11_Render_GetWindowAndDrawableSize(
-            &windowWidth, &windowHeight, &drawableWidth, &drawableHeight);
-        (void)M11_Render_GetPresentRect(&presentX, &presentY,
-                                        &presentWidth, &presentHeight);
-        fprintf(stderr,
-                "firestaff: renderer ready video-driver=%s window=%dx%d drawable=%dx%d present=%d,%d %dx%d scale=%d aspect=%d\n",
-                SDL_GetCurrentVideoDriver() ? SDL_GetCurrentVideoDriver() : "unknown",
-                windowWidth, windowHeight, drawableWidth, drawableHeight,
-                presentX, presentY, presentWidth, presentHeight,
-                o->scaleMode, M11_Render_GetDisplayAspectMode());
-
+    if (M11_Render_SetWindowMode(startupWindowMode) != M11_RENDER_OK) {
+        M11_Render_Shutdown();
+        return M11_RENDER_ERR_WINDOW;
     }
+    M11_Render_SetPresentTimingEnabled(o->debug);
     if (o->debug) debugStartupTrace.startedMs = SDL_GetTicks();
     /* SDL's dummy driver can retain its default 1024x768 logical window even
      * when a test requested another size.  Scripted mouse events use the
@@ -13384,6 +13376,32 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         (void)M11_Render_HandleResize(o->windowWidth, o->windowHeight);
     }
     if (o->debug) M11_Debug_LogHardware();
+    if (o->verbose) {
+        int windowWidth = 0;
+        int windowHeight = 0;
+        int drawableWidth = 0;
+        int drawableHeight = 0;
+        int presentX = 0;
+        int presentY = 0;
+        int presentWidth = 0;
+        int presentHeight = 0;
+        const int windowMode = M11_Render_GetWindowMode();
+        const char* windowModeName =
+            windowMode == M11_WINDOW_MODE_WINDOWED ? "windowed" :
+            windowMode == M11_WINDOW_MODE_MAXIMIZED ? "maximized" :
+            windowMode == M11_WINDOW_MODE_FULLSCREEN ? "fullscreen" : "unknown";
+        (void)M11_Render_GetWindowAndDrawableSize(
+            &windowWidth, &windowHeight, &drawableWidth, &drawableHeight);
+        (void)M11_Render_GetPresentRect(&presentX, &presentY,
+                                        &presentWidth, &presentHeight);
+        fprintf(stderr,
+                "firestaff: renderer ready video-driver=%s window=%dx%d drawable=%dx%d present=%d,%d %dx%d window-mode=%s scale=%d aspect=%d\n",
+                SDL_GetCurrentVideoDriver() ? SDL_GetCurrentVideoDriver() : "unknown",
+                windowWidth, windowHeight, drawableWidth, drawableHeight,
+                presentX, presentY, presentWidth, presentHeight,
+                windowModeName, o->scaleMode,
+                M11_Render_GetDisplayAspectMode());
+    }
     launcherFramebuffer = (unsigned char*)calloc(
         (size_t)M11_LAUNCHER_FB_WIDTH,
         (size_t)M11_LAUNCHER_FB_HEIGHT);

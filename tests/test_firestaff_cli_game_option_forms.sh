@@ -41,7 +41,8 @@ check_default_startup_stays_in_menu() {
         FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
         FIRESTAFF_SKIP_INTRO=1 \
         SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
-        "$firestaff_bin" --verbose --duration 0 --data-dir "$scratch/data" 2>&1)
+        "$firestaff_bin" --verbose --debug --width 1200 --height 800 \
+        --duration 0 --data-dir "$scratch/data" 2>&1)
     status=$?
     set -e
     if [ "$status" -ne 1 ]; then
@@ -58,6 +59,13 @@ check_default_startup_stays_in_menu() {
             exit 1
             ;;
     esac
+    if ! printf '%s\n' "$output" | grep -Fq \
+        'renderer ready video-driver=dummy window=1200x800' ||
+       ! printf '%s\n' "$output" | grep -Fq 'window-mode=windowed'; then
+        printf 'fail: explicit --width/--height did not produce the requested windowed launcher geometry\n%s\n' "$output" >&2
+        rm -rf "$scratch"
+        exit 1
+    fi
     case "$output" in
         *'launch phase=game-handoff'*)
             printf 'fail: no-game startup entered a game handoff\n%s\n' "$output" >&2
