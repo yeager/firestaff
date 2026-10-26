@@ -7765,3 +7765,16 @@ this is distinct from the authenticated combined-RAR title-audio path above.
 - Keypad 8 is a Firestaff convenience alias. It is not claimed as a retail
   PC Engine control. Direct dungeon-view mouse targeting remains blocked on
   the missing source-bound world-to-screen consumer.
+
+## 2026-10-26 — cold-start RUN still lacks a game-owned transition
+
+- A private, authentic Japanese Rev. 1 `pce_fast` capture held RUN for five
+  seconds at frames 9600--9899. Scripted input application and controller-read
+  receipts passed, but all witnessed polls were System Card reads at `$E4C5`.
+  The capture recorded no non-System-Card input poll, raw-sector span, SCSI
+  command, authenticated CD-to-RAM origin receipt, CD IRQ, or game `$E009`
+  dispatch. It is not evidence of title/menu selection or game launch.
+- Next reference work: capture a same-session transition with a verified
+  game-owned controller poll and source-bound CD-to-RAM receipt before deriving
+  any initial party, level, graphics, control, or renderer behavior. Keep all
+  original media and raw capture artifacts private.

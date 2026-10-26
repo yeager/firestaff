@@ -34,6 +34,24 @@ not replace those states with a guessed party, position, or level merely to
 shorten startup; full direct-to-dungeon launch needs an authenticated initial
 party-and-level receipt.
 
+## 2026-10-26 — five-second cold-start RUN is delivered but remains System Card-only
+
+An isolated `pce_fast` reference capture used the authenticated Japanese Rev.
+1 disc and verified System Card 3.0 with `run@9600:300`: a five-second RUN
+hold beginning at reference frame 9,600. The scripted-plan and
+controller-read receipts both passed. The active-low RUN mask appeared in 414
+controller reads during the hold, but every witnessed poll belonged to System
+Card PC `$E4C5`; no non-System-Card poll followed.
+
+The run also produced close-time PCE Fast RAM, VRAM, VCE, SAT and VDC-state
+snapshots, plus source-bound CD data-port reads. It produced no raw-sector
+span, SCSI command, authenticated CD-to-RAM origin receipt, CD IRQ, or game
+`$E009` dispatch. The capture helper therefore rejected it as
+`transition=missing`. This proves delivery of the requested long RUN hold to
+the original controller path only. It does not prove a Theron title/menu
+action, game launch, dungeon admission, or native runtime parity. The raw
+capture remains operator-local and is discarded after the summary is recorded.
+
 ## 2026-10-24 — authentic runtime input comparison remains inconclusive
 
 ## 2026-10-26 — frame-windowed PCE Fast replay still has no gameplay receipt
