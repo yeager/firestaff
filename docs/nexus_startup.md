@@ -65,6 +65,12 @@ frame-aligned VDP1 command evidence across this authentic state load. It still
 does not identify the displayed menu, establish source ownership or palette
 composition, or authorize a Firestaff renderer.
 
+Ymir PR #965 also now contains a bounded VDP2 VRAM/CRAM write tracer and an
+export receipt. Its system build and the existing title-state VDP1/VDP2
+checkpoint were regression-checked on TRV2. The VDP2 write tracer has not yet
+produced a retained source-to-write witness for this menu, so it is tooling for
+the next capture rather than an admission signal.
+
 `scripts/verify_nexus_ymir_title_state_checkpoint.py` verifies this narrow
 checkpoint from caller-supplied retail CUE, BIOS, title-prompt state, and local
 Ymir dump files. It requires the emitted VDP register artifacts but does not
