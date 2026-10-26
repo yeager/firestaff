@@ -1,3 +1,22 @@
+## 2026-10-26 — matched F5-state VDC commits show an input-coupled screen delta
+
+- The user-created Japanese Akutuba F5 save state was captured twice in fresh
+  PCE Fast reference processes against the same authentic Rev. 1 disc and
+  System Card: once with `up@1:60` and once without scripted input. Both
+  captures produced valid bounded CPU-port VWR commit traces with 65,536
+  records and the same VDC geometry and VCE palette.
+- The UP capture differs from the control by 16 VRAM bytes, two SAT bytes,
+  and 59 main-RAM bytes. Its PCE Fast party-RAM snapshot is byte-identical to
+  the control. This is authenticated input-coupled screen-state evidence, not
+  a proven movement, coordinate, direction, object, or square-to-screen
+  binding. The dynamic CD/RAM receipt gate remained absent in both runs.
+- A second no-input control was byte-identical to the first across VRAM, SAT,
+  main RAM, and party RAM. The UP delta is therefore reproducible for this
+  exact save-state/input/boundary tuple, while still not establishing a party
+  pose or renderer-state mapping.
+- Raw state, media, firmware, and capture sidecars remain private and were not
+  added to Git. The isolated reference build will be removed after analysis.
+
 ## 2026-10-26 — PCE Fast input-latch follow-up remains unjoined
 
 - A clean isolated PCE Fast reference build extended the bounded
