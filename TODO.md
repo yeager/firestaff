@@ -225,7 +225,9 @@ runtime from the menu for DM1, CSB, DM2 and Theron. The CLI startup diagnostics
 found all five games in the default data tree and resolved each bare `--game`
 request to its original media. Nexus still stops at its title/startup gate and
 does not reach an admitted playable level or menu, so its actual runtime start
-remains unverified. The Swedish DM1 scan-label test, CLI option-form test, and
+remains unverified. The direct `--game` return-to-menu matrix also passed for
+DM1, CSB and DM2: each session exited without reopening the launcher or
+rescanning. The Swedish DM1 scan-label test, CLI option-form test, and
 unsupported-platform direct/menu rejection matrix also passed. These scripted
 runs used original media and SDL dummy video/audio; they do not establish native
 display/input parity or complete game functionality.
