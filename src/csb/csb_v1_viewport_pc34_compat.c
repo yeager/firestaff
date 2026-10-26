@@ -135,13 +135,16 @@ static void csb_v1_viewport_f31_door_front_transaction_pc34(
     door_word = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
     door_state = raw & 7;
     if (door_word & 0x0040u) {
-        if (!cfg->graphic_provider_callback ||
-            !cfg->graphic_provider_callback(cfg->graphic_provider_user_data,
-                453, &button_pixels, &button_width, &button_height) ||
-            !csb_v1_viewport_f0110_door_button_raster_pc34(
+        /* F0110 is optional surface art. A missing or malformed button must
+         * not suppress F0111's actual door panel for this square. */
+        if (cfg->graphic_provider_callback &&
+            cfg->graphic_provider_callback(cfg->graphic_provider_user_data,
+                453, &button_pixels, &button_width, &button_height)) {
+            (void)csb_v1_viewport_f0110_door_button_raster_pc34(
                 button_pixels, button_width, button_height, view_index,
                 cfg->viewport_pixels, cfg->viewport_stride,
-                DM1_VIEWPORT_WIDTH, DM1_VIEWPORT_HEIGHT)) return;
+                DM1_VIEWPORT_WIDTH, DM1_VIEWPORT_HEIGHT);
+        }
     }
     if (view_index == DM1_VIEW_DOOR_BUTTON_D3R) {
         DM1_SideDoorRenderPlanPc34 plan;
