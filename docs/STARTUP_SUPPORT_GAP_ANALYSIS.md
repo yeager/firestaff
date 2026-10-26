@@ -19,7 +19,7 @@ The current evidence does not establish complete five-game startup support.
 | CSB | The authentic-media CLI diagnostics exercise direct selection and source-owned startup. | The picker test covers keyboard and mouse handoff; the runtime test checks the authentic starting party and viewport receipt. | First runtime is verified on bounded real-media routes. Platform-wide parity and native physical input remain open. |
 | DM2 | The authentic-media CLI diagnostics cover direct selection; platform-specific checks include the complete timed FM Towns title sequence. The French DOS loose-file route now also preserves its selected graphics owner into the first loaded runtime. | The picker test covers keyboard and mouse handoff; the runtime test checks the authentic first party and frame. | First runtime is verified on bounded real-media routes, including the selected French DOS loose-file case. Other edition and native interaction coverage remains incomplete. |
 | Theron | The CLI diagnostics reach its source-owned runtime handoff. | The picker test covers keyboard and mouse handoff; the runtime test checks a loaded authentic Track 02 state. Tab champion cycling and the documented Z/X/Space controls now exercise the normal SDL event loop on authentic USA Track 02. | Runtime state, native frames and these keyboard actions are reached, but the native dungeon image is not yet driven by the authenticated world/graphics state. A recent nonblack Firestaff capture has not been paired with an original-emulator capture. |
-| Nexus | The authentic-media CLI diagnostic must report `levelLoaded=0`, `menu=0`, and the current title gate `blocked-title-vdp-owner-compositor-capture`. Keyboard and mouse selection tests reach the M12-to-M11 handoff, not an active game runtime. There is no Nexus case in the first-runtime probe matrix. | **Not startable as a playable game yet.** Retail Ymir captures document `NEW GAME`, `CONTINUE`, and `CONFIGURATION`, but Firestaff's production title/menu consumer and transition to an authenticated level remain gated. The Saturn BKR parser is container-level only and is not wired to save selection or loading. |
+| Nexus | The v3.0.414 authentic-media CLI boot probe reports `title=1`, `levelLoaded=0`, `menu=0`, and blocker `menu-bpk-prs3-capture-required`. Keyboard and mouse selection tests reach the M12-to-M11 handoff, not an active game runtime. There is no Nexus case in the first-runtime probe matrix. | **Not startable as a playable game yet.** Retail Ymir captures document `NEW GAME`, `CONTINUE`, and `CONFIGURATION`, but Firestaff's production title/menu consumer and transition to an authenticated level remain gated. The Saturn BKR parser is container-level only and is not wired to save selection or loading. |
 
 ## What the existing checks prove
 
@@ -57,6 +57,18 @@ The current evidence does not establish complete five-game startup support.
   handoffs are not evidence of playable Nexus or Theron runtimes. The broad
   CLI edition matrix skipped with code 77 because TRV2 lacks its required
   authentic DM2 Macintosh archive. No synthetic or copied media was used.
+- The published v3.0.414 macOS arm64 app was also exercised against the
+  installed authentic media. `test_m12_main_menu_game_selection_real_media.sh`
+  passed keyboard and mouse selection/handoff for all five cards and verified
+  the default `.firestaff/data` menu route for DM1, CSB and DM2. The separate
+  `test_nexus_v1_native_menu_mouse_title.sh` passed and confirmed that Nexus
+  reaches the capture-gated title route, not a playable menu. Direct CLI
+  `--boot-probe-frames 0` runs reported `runtime-entered` for DM1, CSB, DM2 and
+  Theron, but only DM1 had `levelLoaded=1` at that zero-frame snapshot; the
+  other three were still in their startup/title states. Nexus reported
+  `title=1`, `levelLoaded=0`, `menu=0`, and
+  `menu-bpk-prs3-capture-required`. Thus the current release evidence confirms
+  all five launcher card selections, not playable starts for all five games.
 - The Theron Button II dispatch and non-advancing cancel behavior have
   source-backed coverage in the active runtime input and SDL event-loop checks.
   This closes that input-path defect; it does not establish full input or
