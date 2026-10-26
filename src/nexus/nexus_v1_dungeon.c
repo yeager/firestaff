@@ -7116,6 +7116,66 @@ static uint8_t nexus_v1_vdp_rgb5_to_u8(uint16_t value, unsigned shift)
     return (uint8_t)(((value >> shift) & 0x1fU) << 3);
 }
 
+int nexus_v1_vdp1_resolve_mode0_type6_capture(
+    const uint8_t *command, int command_size,
+    const uint8_t *vdp1_vram, int vdp1_vram_size,
+    const Nexus_V1_Vdp2ColourRamCapture *capture,
+    Nexus_V1_Vdp1Mode1PalettePixel *out_pixels, size_t output_count)
+{
+    Nexus_V1_Vdp1TextureCommand parsed;
+    uint8_t *indices;
+    uint16_t *codes;
+    uint16_t ramctl, craofb, spctl;
+    uint32_t count, i, mode, sprite_offset;
+    if (!capture || !capture->original_saturn_capture_verified ||
+        !capture->colour_ram || capture->colour_ram_size != NEXUS_V1_VDP2_CRAM_BYTES ||
+        !capture->registers || capture->registers_size < NEXUS_V1_VDP2_CAPTURE_REGISTERS_MIN_BYTES ||
+        !out_pixels || nexus_v1_vdp1_texture_command_parse(command, command_size, &parsed) != 0 ||
+        !parsed.four_bpp_colour_bank || !parsed.texture_source_range_valid ||
+        !(parsed.draw_mode & 0x0080U) || (parsed.colour_control & 0x8000U)) return 0;
+    spctl = rl16(capture->registers + 0xe0U);
+    ramctl = rl16(capture->registers + NEXUS_V1_VDP2_RAMCTL_OFFSET);
+    craofb = rl16(capture->registers + NEXUS_V1_VDP2_CRAOFB_OFFSET);
+    mode = (ramctl >> 12U) & 3U;
+    if ((spctl & 15U) != 6U || mode > 1U) return 0;
+    count = (uint32_t)parsed.texture_width * parsed.texture_height;
+    if (!count || output_count < count) return 0;
+    indices = (uint8_t *)malloc(count);
+    codes = (uint16_t *)malloc((size_t)count * sizeof(*codes));
+    if (!indices || !codes || !nexus_v1_vdp1_decode_mode0_bank_texture(
+            command, command_size, vdp1_vram, vdp1_vram_size, indices, codes, count)) {
+        free(indices); free(codes); return 0;
+    }
+    for (i = 0; i < count; ++i) {
+        if ((codes[i] & 0x3ffU) == 0x3feU) {
+            free(indices); free(codes); return 0;
+        }
+    }
+    sprite_offset = (craofb >> 4U) & 7U;
+    for (i = 0; i < count; ++i) {
+        Nexus_V1_Vdp1Mode1PalettePixel *pixel = &out_pixels[i];
+        uint32_t address;
+        uint16_t colour;
+        memset(pixel, 0, sizeof(*pixel));
+        pixel->texture_index = indices[i];
+        pixel->raw_colour_code = codes[i];
+        if (!indices[i] && !(parsed.draw_mode & 0x0040U)) {
+            pixel->kind = NEXUS_V1_VDP1_MODE1_PIXEL_TRANSPARENT;
+            continue;
+        }
+        address = ((codes[i] & 0x03ffU) + (sprite_offset << 8U)) &
+            (mode == 0U ? 0x03ffU : 0x07ffU);
+        colour = rl16(capture->colour_ram + address * 2U);
+        pixel->colour_ram_address = (uint16_t)address;
+        pixel->kind = NEXUS_V1_VDP1_MODE1_PIXEL_VDP2_CRAM_RGB555;
+        pixel->red = nexus_v1_vdp_rgb5_to_u8(colour, 0U);
+        pixel->green = nexus_v1_vdp_rgb5_to_u8(colour, 5U);
+        pixel->blue = nexus_v1_vdp_rgb5_to_u8(colour, 10U);
+    }
+    free(indices); free(codes);
+    return 1;
+}
+
 int nexus_v1_vdp1_mode1_palette_pixels_match(
     const Nexus_V1_Vdp1Mode1PalettePixel *resolved, size_t resolved_count,
     const Nexus_V1_Vdp1Mode1PalettePixel *expected, size_t expected_count)

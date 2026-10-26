@@ -106,6 +106,13 @@ indices and VDP1 colour-bank words from a VRAM snapshot. The retained `0xd8e0`
 command and its 576 texels pass the external capture test. These words still
 need transparency, end-code, sprite priority and time-aligned VDP2 colour RAM
 handling before they can produce a trustworthy displayed image.
+The retained VDP2 snapshot has SPCTL `0x1536` (sprite type 6), RAMCTL
+`0x0300` (CRAM mode 0), and CRAOFB `0x0000`. The mode-0 type-6 capture
+resolver now maps the observed title sprite's ten-bit colour indices through
+that captured CRAM; the external test verifies its palette addresses and RGB
+components. It rejects unsupported sprite formats, enabled end codes, and
+shadow/RGB cases. The separately dumped state remains a snapshot, so this is
+not proof of time-aligned composition or permission to display the result.
 
 The same CMDSIZE and skipped-command corrections also apply to the Mednafen
 VDP1 source, material, and write-join analyzers. Earlier numerical receipts

@@ -57,6 +57,8 @@ int main(void) {
     {
         const char *path = getenv("FIRESTAFF_NEXUS_YMIR_DUMP");
         const char *trace = getenv("FIRESTAFF_NEXUS_VDP1_TRACE");
+        const char *cram_path = getenv("FIRESTAFF_NEXUS_YMIR_CRAM");
+        const char *regs_path = getenv("FIRESTAFF_NEXUS_YMIR_REGS");
         if (path && trace) {
             FILE *vram_file = fopen(path, "rb"), *trace_file = fopen(trace, "rb");
             uint8_t record[36], indices[576];
@@ -75,6 +77,45 @@ int main(void) {
                             uint8_t expected_index = n & 1U ? packed & 15U : packed >> 4U;
                             if (indices[n] != expected_index || codes[n] != (0x52f0U | expected_index)) found = 0;
                         }
+                        if (found && cram_path && regs_path) {
+                            FILE *cram_file = fopen(cram_path, "rb"), *regs_file = fopen(regs_path, "rb");
+                            static Nexus_V1_Vdp1Mode1PalettePixel real_pixels[576];
+                            Nexus_V1_Vdp2ColourRamCapture real_capture;
+                            size_t j;
+                            if (!cram_file || !regs_file ||
+                                fread(colour_ram, 1, sizeof(colour_ram), cram_file) != sizeof(colour_ram) ||
+                                fread(vdp2_registers, 1, sizeof(vdp2_registers), regs_file) != sizeof(vdp2_registers)) {
+                                found = 0;
+                            } else {
+                                /* Ymir emits big-endian register/CRAM words. */
+                                for (j = 0; j < sizeof(colour_ram); j += 2) {
+                                    uint8_t temp = colour_ram[j]; colour_ram[j] = colour_ram[j + 1]; colour_ram[j + 1] = temp;
+                                }
+                                for (j = 0; j < sizeof(vdp2_registers); j += 2) {
+                                    uint8_t temp = vdp2_registers[j]; vdp2_registers[j] = vdp2_registers[j + 1]; vdp2_registers[j + 1] = temp;
+                                }
+                                memset(&real_capture, 0, sizeof(real_capture));
+                                real_capture.colour_ram = colour_ram;
+                                real_capture.colour_ram_size = sizeof(colour_ram);
+                                real_capture.registers = vdp2_registers;
+                                real_capture.registers_size = sizeof(vdp2_registers);
+                                real_capture.original_saturn_capture_verified = 1;
+                                found = nexus_v1_vdp1_resolve_mode0_type6_capture(record + 4, 32, vram,
+                                    sizeof(vram), &real_capture, real_pixels, 576);
+                                for (j = 0; found && j < 576; ++j) {
+                                    uint32_t address = 0x2f0U | indices[j];
+                                    uint16_t color = (uint16_t)colour_ram[address * 2U] |
+                                        ((uint16_t)colour_ram[address * 2U + 1U] << 8U);
+                                    if (indices[j] &&
+                                        (real_pixels[j].colour_ram_address != address ||
+                                         real_pixels[j].red != (uint8_t)((color & 31U) << 3U) ||
+                                         real_pixels[j].green != (uint8_t)(((color >> 5U) & 31U) << 3U) ||
+                                         real_pixels[j].blue != (uint8_t)(((color >> 10U) & 31U) << 3U))) found = 0;
+                                }
+                            }
+                            if (cram_file) fclose(cram_file);
+                            if (regs_file) fclose(regs_file);
+                        }
                         break;
                     }
                 }
@@ -83,6 +124,8 @@ int main(void) {
             if (vram_file) fclose(vram_file);
             if (trace_file) fclose(trace_file);
             memset(vram, 0, sizeof(vram));
+            memset(colour_ram, 0, sizeof(colour_ram));
+            memset(vdp2_registers, 0, sizeof(vdp2_registers));
         }
     }
     {
