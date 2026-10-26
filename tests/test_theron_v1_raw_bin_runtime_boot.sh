@@ -62,9 +62,10 @@ if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=theron' "$output" ||
    ! grep -Fq 'theronTrack19NameBankReady=1' "$output" ||
    ! grep -Fq 'theronTrack19NameVariant=2' "$output" ||
    ! grep -Fq 'theronTrack19ItemMappingProven=1' "$output" ||
+   grep -Eiq 'System Card|PCE Fast|Mednafen' "$output" ||
    grep -Fq 'deterministic fallback assets' "$output"; then
     cat "$output" >&2
-    printf '%s\n' 'FAIL: authentic Theron USA raw BIN did not reach the source-backed runtime route' >&2
+    printf '%s\n' 'FAIL: authentic Theron USA raw BIN did not reach the native source-backed runtime route' >&2
     exit 1
 fi
 

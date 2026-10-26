@@ -46,7 +46,7 @@ index b475efc..59b7f30 100644
  static void TheronDumpGraphicsSnapshot(void)
  {
   const char *vram_path = getenv("FIRESTAFF_THERON_VRAM_SNAPSHOT");
-@@ -150,6 +151,13 @@ static void TheronDumpGraphicsSnapshot(void)
+@@ -150,6 +151,11 @@ static void TheronDumpGraphicsSnapshot(void)
           (unsigned)vce->GetRegisterVDC(0, VDC::GSREG_VDR, NULL, 0),
           (unsigned)vce->GetRegisterVDC(0, VDC::GSREG_VCR, NULL, 0),
           (unsigned)vce->GetRegisterVDC(0, VDC::GSREG_CR, NULL, 0));
@@ -58,8 +58,6 @@ index b475efc..59b7f30 100644
   fclose(vram_file);
   fclose(vce_file);
   fclose(vdc_file);
-+ fclose(sat_file);
-+ if(ram_file) fclose(ram_file);
 @@ -158,6 +166,27 @@ static void TheronDumpGraphicsSnapshot(void)
   if(bram_file) fclose(bram_file);
   TheronGraphicsSnapshotDumped = true;

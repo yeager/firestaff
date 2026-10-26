@@ -8,8 +8,6 @@ fi
 
 app=$1
 cue=${FIRESTAFF_THERON_JP_CUE:-}
-test_temp_dir=${FIRESTAFF_TEST_TEMP_DIR:-"$(dirname "$app")"}
-extracted_media_root=
 if [[ -z "$cue" ]]; then
     for candidate in \
         "$HOME/.firestaff/data/theron/TQJP.cue" \
@@ -28,56 +26,8 @@ if [[ ! -x "$app" ]]; then
     exit 1
 fi
 if [[ ! -f "$cue" ]]; then
-    archive_root="$HOME/.firestaff/data/theron"
-    extractor=$(command -v 7zz || command -v 7z || true)
-    archive=
-    archive_layout=
-    for candidate in \
-        "$archive_root/Dungeon Master - Theron's Quest (Japan).7z" \
-        "$archive_root/Dungeon Master - Theron's Quest (Japan) (1).7z"; do
-        if [[ -f "$candidate" ]]; then
-            archive=$candidate
-            break
-        fi
-    done
-    if [[ -n "$archive" && -n "$extractor" ]]; then
-        if [[ "$archive" == *"(1).7z" ]]; then
-            archive_layout="Dungeon Master - Theron's Quest (Japan)"
-        fi
-        if [[ ! -d "$test_temp_dir" ]]; then
-            printf 'FAIL: test temporary directory is unavailable: %s\n' "$test_temp_dir" >&2
-            exit 1
-        fi
-        extracted_media_root=$(mktemp -d "$test_temp_dir/firestaff-theron-jp-cue-media.XXXXXX")
-        if [[ -n "$archive_layout" ]]; then
-            if ! "$extractor" x "$archive" "-o$extracted_media_root" \
-                "$archive_layout/Dungeon Master - Theron's Quest (Japan).cue" \
-                "$archive_layout/Dungeon Master - Theron's Quest (Japan) (Track 02).bin" >/dev/null; then
-                rm -rf "$extracted_media_root"
-                printf 'FAIL: authentic Theron JP archive could not provide its CUE and Track 02\n' >&2
-                exit 1
-            fi
-            media_root="$extracted_media_root/$archive_layout"
-        else
-            if ! "$extractor" e "$archive" "-o$extracted_media_root" \
-                "Dungeon Master - Theron's Quest (Japan).cue" \
-                "Dungeon Master - Theron's Quest (Japan) (Track 02).bin" >/dev/null; then
-                rm -rf "$extracted_media_root"
-                printf 'FAIL: authentic Theron JP archive could not provide its CUE and Track 02\n' >&2
-                exit 1
-            fi
-            media_root=$extracted_media_root
-        fi
-        cue="$media_root/Dungeon Master - Theron's Quest (Japan).cue"
-    fi
-fi
-if [[ ! -f "$cue" ]]; then
     printf 'SKIP: authentic Theron JP CUE is not staged\n'
     exit 77
-fi
-
-if [[ -n "$extracted_media_root" ]]; then
-    trap 'rm -rf "$extracted_media_root"' EXIT
 fi
 
 output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
@@ -85,6 +35,7 @@ output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --data-dir "$cue" \
     --boot-probe \
     --boot-probe-frames 0 \
+    --debug \
     --script 'enter,enter,action,up,right,down,left,up,up' \
     --boot-probe-expect-phase theron-runtime \
     --boot-probe-expect-runtime \
