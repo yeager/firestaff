@@ -266,6 +266,18 @@ narrow rendered viewport checkpoint only. It does not identify the level or
 room source, establish input semantics, authorize a host compositor, or prove
 the HUD route.
 
+On 2026-10-26, the system-wide Ymir build on TRV2 reproduced that route from
+the retained Japanese title-prompt state: Start held for capture frames `0..59`,
+then A for `240..249`, over 900 `--debug` frames. The framebuffer again hashed
+to `8ede95f1fd777eda69ebcfc91d0268194e501f145306eb1fc2971ed0113a2274`; the
+isolated four-champion BKR remained
+`87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`.
+Saving that endpoint in CLI slot 3 and reloading it in a second isolated
+profile reproduced the framebuffer hash after one frame. Both temporary
+profiles, dumps, screenshots, and X displays were removed. This verifies the
+current Ymir capture tooling and the bounded retail viewport route, not a
+Firestaff renderer, menu consumer, or HUD admission.
+
 ## Title-menu VDP1 source-span join (2026-10-19 capture; analyzed 2026-10-26)
 
 A read-only source-join analysis on TRV2 used the retained Ymir v0.4.0
