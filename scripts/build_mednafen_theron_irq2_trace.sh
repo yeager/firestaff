@@ -279,14 +279,14 @@ sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$fast_vdc_snapshot_patch" \
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$fast_vdc_snapshot_rendered"
 if ! awk '
+    /TheronTraceInstructionPhysicalPC =/ { physical_pc_update = NR }
     /if\(Theron3879FastTargetStepsRemaining \|\|/ {
-        if(previous_nonblank !~ /TheronTraceInstructionPhysicalPC =/) exit 1
+        if(!physical_pc_update || NR - physical_pc_update > 64) exit 1
         hook = NR
     }
     /TheronTraceStage2MPR1\(GetRealPC/ {
         if(hook && NR > hook) found = 1
     }
-    NF { previous_nonblank = $0 }
     END { if(!found) exit 1 }
 ' "$build_root/source/src/pce_fast/huc6280.cpp"; then
     printf '%s\n' 'FAIL: PCE Fast $3879 hook must follow the current instruction physical-PC update' >&2
