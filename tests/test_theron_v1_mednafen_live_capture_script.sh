@@ -23,6 +23,7 @@ input_grab_patch=$repo/scripts/mednafen_1.32.1_theron_input_grab_trace.patch
 later_raw_receipt=$repo/scripts/verify_theron_later_raw_sector_media_receipt.pl
 x11_keymap=$repo/scripts/theron_x11_keymap.sh
 scripted_input_consumption_verifier=$repo/scripts/verify_theron_scripted_input_consumption.sh
+movement_data_instrumenter=$repo/scripts/instrument_mednafen_theron_movement_data_read_trace.py
 
 if [[ ! -x "$script" ]]; then
     printf 'FAIL: live Mednafen capture script is not executable\n' >&2
@@ -99,6 +100,7 @@ cat >"$input_test_dir/legacy-pce-result.trace" <<'THERON_LEGACY_PCE_INPUT'
 scripted_pce_input_event frame=60 key=up mask=0010 hold=60
 scripted_pce_input_apply frame=60 physical=0000 scripted=0010 combined=0010
 pce_input_read cpu_pc=44ca register=1000 raw=0010 sel=1 clr=0 index=0
+pce_input_port0 raw=0010
 pce_input_result cpu_pc=44ca register=1000 raw=0010 value=3e sel=1 clr=0 index=0 sp=f2 stack=4b436d74
 THERON_LEGACY_PCE_INPUT
 legacy_pce_receipt=$("$scripted_input_consumption_verifier" \
@@ -589,6 +591,17 @@ if [[ ! -f "$consumer_read_patch" ]] ||
    ! grep -Fq '@@ -407,11 +409,30 @@' "$consumer_read_patch" ||
    ! grep -Fq 'const uint16 reader_pc = GetRegister(GSREG_PC);' "$consumer_read_patch"; then
     printf 'FAIL: main-RAM consumer patch must retain its applicable hunk span and reader context\n' >&2
+    exit 1
+fi
+if [[ ! -f "$movement_data_instrumenter" ]] ||
+   ! grep -Fq 'TheronPCECDInstructionFetch' "$movement_data_instrumenter" ||
+   ! grep -Fq 'physical_address >= 0x0e8a00' "$movement_data_instrumenter" ||
+   ! grep -Fq 'physical_address <= 0x0e8aff' "$movement_data_instrumenter" ||
+   ! grep -Fq 'logical_address == 0x2905' "$movement_data_instrumenter" ||
+   ! grep -Fq 'reader_pc == 0xd34d' "$movement_data_instrumenter" ||
+   ! grep -Fq 'FIRESTAFF_THERON_MOVEMENT_DATA_READ_TRACE' "$movement_data_instrumenter" ||
+   ! grep -Fq 'instrument_mednafen_theron_movement_data_read_trace.py' "$build_script"; then
+    printf 'FAIL: movement-data capture must exclude instruction fetches and retain bounded command provenance\n' >&2
     exit 1
 fi
 if [[ ! -f "$ram_provenance_patch" ]] ||
