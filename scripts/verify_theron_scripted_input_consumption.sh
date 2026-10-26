@@ -74,10 +74,21 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
         return value % 16 == 15 - nibble
     }
     function accept_controller_read(raw_value, returned_value, read_sel,
-                                    read_index, read_pc) {
+                                    read_index, read_pc, read_frame) {
         if (pending_frame == "" || !pending_apply ||
-            read_index != 0 || read_pc !~ /^[0-9a-fA-F]+$/)
+            read_index != 0 || read_pc !~ /^[0-9a-fA-F]+$/ ||
+            read_frame !~ /^[0-9]+$/)
             return
+        # Source order alone cannot prove that a CPU poll saw an event while
+        # its scripted hold was active.  The replay-clock frame on each
+        # controller row is therefore a required, fail-closed witness.
+        if ((read_frame + 0) < (pending_frame + 0) ||
+            (read_frame + 0) >= (pending_end + 0)) {
+            if (contains_mask(raw_value, pending_mask)) {
+                pending_out_of_window_read = 1
+            }
+            return
+        }
         if (!pending_poll_classified) {
             pc = tolower(read_pc)
             if (pc == "e4b7" || pc == "e4c8" ||
@@ -121,6 +132,7 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
             read_sel = -1
             read_index = -1
             read_pc = ""
+            read_frame = ""
             for (i = 1; i <= NF; i++) {
                 if ($i ~ /^raw=[0-9a-fA-F]+$/)
                     raw_value = hex_to_dec(substr($i, 5))
@@ -132,10 +144,12 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
                     read_index = substr($i, 7)
                 if ($i ~ /^cpu_pc=[0-9a-fA-F]+$/)
                     read_pc = substr($i, 8)
+                if ($i ~ /^frame=[0-9]+$/)
+                    read_frame = substr($i, 7)
             }
             if (returned_value >= 0) {
                 accept_controller_read(raw_value, returned_value, read_sel,
-                                       read_index, read_pc)
+                                       read_index, read_pc, read_frame)
                 pending_result = 0
             } else {
                 # The original PCE core emits the raw port sample and the
@@ -148,6 +162,7 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
                 pending_result_raw = raw_value
                 pending_result_sel = read_sel
                 pending_result_index = read_index
+                pending_result_frame = read_frame
             }
         }
         next
@@ -155,7 +170,7 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
     /^pce_input_result / {
         if (pending_result) {
             result_raw = result_value = result_sel = result_index = -1
-            result_pc = result_register = ""
+            result_pc = result_register = result_frame = ""
             for (i = 1; i <= NF; i++) {
                 if ($i ~ /^raw=[0-9a-fA-F]+$/)
                     result_raw = hex_to_dec(substr($i, 5))
@@ -169,14 +184,20 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
                     result_register = tolower(substr($i, 10))
                 if ($i ~ /^cpu_pc=[0-9a-fA-F]+$/)
                     result_pc = substr($i, 8)
+                if ($i ~ /^frame=[0-9]+$/)
+                    result_frame = substr($i, 7)
             }
             if (result_register == pending_result_register &&
                 result_pc == pending_result_pc &&
                 result_raw == pending_result_raw &&
                 result_sel == pending_result_sel &&
-                result_index == pending_result_index)
+                result_index == pending_result_index &&
+                result_frame == pending_result_frame)
                 accept_controller_read(result_raw, result_value,
-                                       result_sel, result_index, result_pc)
+                                       result_sel, result_index, result_pc,
+                                       result_frame)
+            else if (result_frame != pending_result_frame)
+                failure = "legacy PCE input result frame did not match its raw read"
             pending_result = 0
         }
         next
@@ -198,11 +219,14 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
     /^scripted_pce_input_event / {
         event_frame = ""
         event_mask = ""
+        event_hold = ""
         for (i = 1; i <= NF; i++)
             if ($i ~ /^frame=[0-9]+$/)
                 event_frame = substr($i, 7)
             else if ($i ~ /^mask=[0-9a-fA-F]+$/)
                 event_mask = substr($i, 6)
+            else if ($i ~ /^hold=[1-9][0-9]*$/)
+                event_hold = substr($i, 6)
         if (event_frame == "") {
             failure = "a scripted event has no numeric frame"
             next
@@ -214,6 +238,10 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
         }
         if (mask_value > 255) {
             failure = "a scripted event uses controller bits outside the supported two input banks"
+            next
+        }
+        if (event_hold == "") {
+            failure = "a scripted event has no positive hold interval"
             next
         }
         if (pending_frame != "" && event_frame != pending_frame) {
@@ -230,11 +258,14 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
         }
         if (pending_frame == "") {
             pending_frame = event_frame
+            pending_end = event_frame + event_hold
             pending_mask = mask_value
             pending_direction_mask = int(mask_value / 16) % 16
             pending_button_mask = mask_value % 16
         } else {
             pending_mask = mask_union(pending_mask, mask_value)
+            if (event_frame + event_hold > pending_end)
+                pending_end = event_frame + event_hold
             pending_direction_mask = mask_union(pending_direction_mask, int(mask_value / 16) % 16)
             pending_button_mask = mask_union(pending_button_mask, mask_value % 16)
         }
@@ -246,6 +277,7 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
         pending_poll_classified = 0
         pending_direction_read = 0
         pending_button_read = 0
+        pending_out_of_window_read = 0
         next
     }
     END {
@@ -256,8 +288,12 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
                 failure = "final legacy PCE raw input read has no adjacent result record"
             else if (pending_frame != "" && !pending_apply)
                 failure = "the final scripted event frame has no nonzero apply receipt"
-            else if (pending_frame != "" && !pending_read)
-                failure = "the final scripted event frame had no controller-port read exposing its scripted mask"
+            else if (pending_frame != "" && !pending_read) {
+                if (pending_out_of_window_read)
+                    failure = "the final scripted event frame was only read outside its active hold interval"
+                else
+                    failure = "the final scripted event frame had no controller-port read exposing its scripted mask"
+            }
             else if (pending_frame != "") {
                 frames_with_apply++
                 frames_with_controller_read++

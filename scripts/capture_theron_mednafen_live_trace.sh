@@ -10,7 +10,11 @@ system_card=${THERON_SYSTEM_CARD:-}
 trace=${THERON_LIVE_TRACE_OUTPUT:-}
 seconds=${THERON_CAPTURE_SECONDS:-45}
 capture_startup_grace=${THERON_CAPTURE_STARTUP_GRACE:-30}
-capture_shutdown_signal=${THERON_CAPTURE_SHUTDOWN_SIGNAL:-INT}
+# Leave the default unset until the selected module is known.  PCE Fast
+# reaches CloseGame and flushes its reference snapshots on TERM, while its
+# INT path can remain in the emulator loop until timeout force-kills it.
+# An explicit caller choice remains authoritative.
+capture_shutdown_signal=${THERON_CAPTURE_SHUTDOWN_SIGNAL:-}
 # Keep the historical silent capture default, but allow a real CDDA-backed
 # run when investigating BIOS/CD initialization.  This flag changes only the
 # emulator's audio output path; it never promotes media bytes to game state.
@@ -89,6 +93,7 @@ movement_data_read_sample_limit=${THERON_CAPTURE_MOVEMENT_DATA_READ_SAMPLE_LIMIT
 vdc_io_trace_limit=${THERON_CAPTURE_VDC_IO_TRACE_LIMIT:-65536}
 capture_pce_fast_vram_commit_trace=${THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE:-0}
 pce_fast_vram_commit_trace_limit=${THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT:-65536}
+pce_fast_44d2_follow_limit=${THERON_CAPTURE_PCE_FAST_44D2_FOLLOW_LIMIT:-128}
 input_trace_limit_default=65536
 if [[ -n "$replay_input_script" || -n "$host_key" || -n "$host_key_sequence" ]]; then
     # Long boot/replay plans can reach the old 65,536-read ceiling before the
@@ -210,6 +215,11 @@ if [[ ! "$pce_fast_vram_commit_trace_limit" =~ ^[0-9]+$ ]] ||
    (( pce_fast_vram_commit_trace_limit < 1 ||
       pce_fast_vram_commit_trace_limit > 1048576 )); then
     printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT must be an integer from 1 through 1048576' >&2
+    exit 1
+fi
+if [[ ! "$pce_fast_44d2_follow_limit" =~ ^[0-9]+$ ]] ||
+   (( pce_fast_44d2_follow_limit < 1 || pce_fast_44d2_follow_limit > 2048 )); then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_44D2_FOLLOW_LIMIT must be an integer from 1 through 2048' >&2
     exit 1
 fi
 if [[ ! "$input_trace_limit" =~ ^[0-9]+$ ]] ||
@@ -638,6 +648,13 @@ require_mednafen_module() {
     exit 1
 }
 require_mednafen_module "$capture_mednafen_module"
+if [[ -z "$capture_shutdown_signal" ]]; then
+    if [[ "$capture_mednafen_module" == pce_fast ]]; then
+        capture_shutdown_signal=TERM
+    else
+        capture_shutdown_signal=INT
+    fi
+fi
 if [[ "$capture_pce_fast_vram_commit_trace" == 1 ]] &&
    ! grep -aFq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE' "$mednafen_bin"; then
     # A PCE Fast module and its controller trace are insufficient for a
@@ -1416,6 +1433,7 @@ launch=(
     FIRESTAFF_THERON_MENU_ROUTE="$menu_route" \
     FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace" \
     FIRESTAFF_THERON_3879_TRACE="$indirect_target_trace" \
+    FIRESTAFF_THERON_44D2_FOLLOW_LIMIT="$pce_fast_44d2_follow_limit" \
     FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE="$cd_ram_target_write_trace" \
     FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_TRACE="$cd_data_port_read_trace" \
     FIRESTAFF_THERON_PCE_FAST_TRACK02_INDEX1_FILE_OFFSET="$track02_index1_file_offset" \
@@ -1431,6 +1449,8 @@ launch=(
     FIRESTAFF_THERON_MOVEMENT_DATA_READ_SAMPLE_LIMIT="$movement_data_read_sample_limit" \
     FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_TRACE="$pce_fast_movement_context_trace" \
     FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_SAMPLE_LIMIT="${THERON_CAPTURE_PCE_FAST_MOVEMENT_CONTEXT_SAMPLE_LIMIT:-128}" \
+    FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_START_FRAME="${THERON_CAPTURE_PCE_FAST_MOVEMENT_CONTEXT_START_FRAME:-$input_trace_start_frame}" \
+    FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_MAIN_RAM_RANGE="${THERON_CAPTURE_PCE_FAST_MOVEMENT_CONTEXT_MAIN_RAM_RANGE:-}" \
     FIRESTAFF_THERON_SPAWN_CONSUMER_TRACE="$spawn_consumer_trace" \
     FIRESTAFF_THERON_SPAWN_REGISTER_TRACE="$spawn_register_trace" \
     FIRESTAFF_THERON_SPAWN_REGISTER_SAMPLE_LIMIT="${THERON_CAPTURE_SPAWN_REGISTER_SAMPLE_LIMIT:-65536}" \

@@ -27,6 +27,7 @@ fifo_origin_v2_patch_file=$repo/scripts/mednafen_1.32.1_theron_fifo_origin_main_
 ram_provenance_patch_file=$repo/scripts/mednafen_1.32.1_theron_ram_provenance_trace.patch
 ram_provenance_guard_patch_file=$repo/scripts/mednafen_1.32.1_theron_ram_provenance_guard.patch
 vdc_instruction_pc_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_vdc_instruction_pc.patch
+vram_vce_snapshot_patch_file=$repo/scripts/mednafen_1.32.1_theron_vram_vce_snapshot.patch
 file_select_vdc_patch_file=$repo/scripts/mednafen_1.32.1_theron_file_select_vdc_snapshot.patch
 file_select_scroll_driver_patch_file=$repo/scripts/mednafen_1.32.1_theron_file_select_scroll_driver_trace.patch
 adpcm_fifo_ram_patch_file=$repo/scripts/mednafen_1.32.1_theron_adpcm_fifo_ram_trace.patch
@@ -218,8 +219,10 @@ if ! grep -Fq 'if(ok && trace_count < 4096)' "$later_raw_patch_file"; then
     exit 1
 fi
 if ! grep -Fq 'FIRESTAFF_THERON_FILE_SELECT_VDC_TRACE' "$file_select_vdc_patch_file" ||
-   ! grep -Fq 'fclose(sat_file);' "$file_select_vdc_patch_file" ||
-   ! grep -Fq 'if(ram_file) fclose(ram_file);' "$file_select_vdc_patch_file" ||
+   ! grep -Fq 'fclose(sat_file);' "$vram_vce_snapshot_patch_file" ||
+   ! grep -Fq 'if(ram_file) fclose(ram_file);' "$vram_vce_snapshot_patch_file" ||
+   grep -Fq '+ fclose(sat_file);' "$file_select_vdc_patch_file" ||
+   grep -Fq '+ if(ram_file) fclose(ram_file);' "$file_select_vdc_patch_file" ||
    ! grep -Fq 'TheronGraphicsSnapshotFrameEnd = ~0U;' "$file_select_vdc_patch_file" ||
    ! grep -Fq 'const unsigned sequence = file_select_vdc_count++;' "$file_select_vdc_patch_file" ||
    ! grep -Fq 'if(file_select_vdc_count == 525)' "$file_select_vdc_patch_file" ||
@@ -230,7 +233,7 @@ if ! grep -Fq 'FIRESTAFF_THERON_FILE_SELECT_VDC_TRACE' "$file_select_vdc_patch_f
    ! grep -Fq 'TheronMaybeDumpFrameEndSnapshot();' "$file_select_vdc_patch_file" ||
    ! grep -Fq 'mednafen_1.32.1_theron_file_select_vdc_snapshot.patch' \
        "$repo/scripts/build_mednafen_theron_irq2_trace.sh"; then
-    printf 'FAIL: file-select VDC patch no longer snapshots the authentic write or frame-end boundary\n' >&2
+    printf 'FAIL: file-select VDC patch no longer composes with the shared snapshot helper\n' >&2
     exit 1
 fi
 if ! grep -Fq 'FIRESTAFF_THERON_FILE_SELECT_DRIVER_CODE_SNAPSHOT' "$file_select_scroll_driver_patch_file" ||
@@ -438,8 +441,10 @@ if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_44d2_runtime_code_window.patch' "$build_script" ||
    ! grep -Fq 'TheronTraceInstructionPC == 0x44d2' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'Theron44D2FastCodeWindowCount < 64' "$runtime_code_window_patch_file" ||
-   ! grep -Fq 'Theron44D2FastFollowStepsRemaining = 128' "$runtime_code_window_patch_file" ||
-   ! grep -Fq 'Theron44D2FastFollowCount < 128' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'FIRESTAFF_THERON_44D2_FOLLOW_LIMIT' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'parsed >= 1 && parsed <= 2048' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'Theron44D2FastFollowStepsRemaining = Theron44D2FastFollowLimit()' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'Theron44D2FastFollowCount < Theron44D2FastFollowLimit()' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'theron_44d2_follow step=%u logical_pc=%04x physical_pc=%06x opcode=%02x' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'theron_runtime_code_window pc=%04x physical_pc=%06x byte0=%02x byte0_mpr=%02x byte0_physical=%06x byte1=%02x byte1_mpr=%02x byte1_physical=%06x byte2=%02x byte2_mpr=%02x byte2_physical=%06x' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'Theron3879FastTraceMappedOpcode, HuCPU.MPR[TheronTraceInstructionPC >> 13]' "$runtime_code_window_patch_file" ||
@@ -448,7 +453,9 @@ if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
    ! grep -Fq '(HuCPU.MPR[(TheronTraceInstructionPC + 1) >> 13] << 13) | ((TheronTraceInstructionPC + 1) & 0x1fff)' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'Theron3879FastTraceMappedOperand2, HuCPU.MPR[(TheronTraceInstructionPC + 2) >> 13]' "$runtime_code_window_patch_file" ||
    ! grep -Fq '(HuCPU.MPR[(TheronTraceInstructionPC + 2) >> 13] << 13) | ((TheronTraceInstructionPC + 2) & 0x1fff)' "$runtime_code_window_patch_file" ||
-   ! grep -Fq '"$indirect_target_trace"' "$capture_script"; then
+   ! grep -Fq '"$indirect_target_trace"' "$capture_script" ||
+   ! grep -Fq 'THERON_CAPTURE_PCE_FAST_44D2_FOLLOW_LIMIT' "$capture_script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_44D2_FOLLOW_LIMIT="$pce_fast_44d2_follow_limit"' "$capture_script"; then
     printf '%s\n' 'FAIL: bounded PCE Fast code trace is missing or not wired into the live capture'
     exit 1
 fi

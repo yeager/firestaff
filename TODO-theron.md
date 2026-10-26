@@ -1,3 +1,57 @@
+## 2026-10-26 — authentic USA Backup RAM Continue remains native and source-bound
+
+- An isolated TRV2 Debug build passed
+  `test_theron_v1_m11_real_bram_continue` against the authenticated USA Track
+  02 and its original 2 KiB Backup RAM capture. The test admitted both hashes,
+  followed the native Continue route through the original startup sequence,
+  and loaded the source-backed level and object state before exercising the
+  bounded movement route.
+- This is a real native Firestaff path and does not require an emulator or
+  System Card at runtime. It is not permission to auto-load a dungeon: the
+  verified Backup RAM only covers the authenticated Continue record and its
+  documented restored fields. Skipping title, stage selection, or Soul Room
+  would still fabricate unproven party/startup state.
+- Later graphics-bank and original-consumer bindings remain open. The test
+  proves an authentic Continue handoff, not complete dynamic dungeon-renderer
+  parity.
+
+## 2026-10-26 — full-trace cold boot still has no game-owned input receipt
+
+- A fresh 35-second PCE Fast reference replay used the authenticated Japanese
+  Rev. 1 disc and System Card with `run@1:300`. The full-trace instrumented
+  binary applied both scheduled events and recorded two controller reads, but
+  both reads were System Card reads. It recorded zero non-System-Card reads,
+  CD IRQs, or authenticated CD-to-RAM receipts before the bounded run timed
+  out.
+- This is a negative capture result, not a source record. No trace, save,
+  firmware, or game bytes were retained in the repository. In particular, it
+  does not authorize a direct native dungeon launch, a party pose, a movement
+  rule, or a state-driven viewport mapping.
+- The next capture must cross the original System Card title-state handoff and
+  bind an input to a game-owned consumer and observable state transition in
+  the same session. Until then, the existing native runtime remains limited
+  to its separately verified Track 02 paths.
+
+## 2026-10-26 — bind scripted-controller receipts to the replay-clock interval
+
+- The bounded `$44D2` PCE Fast caller follow-up is now configurable for a
+  future authentic-state capture through
+  `THERON_CAPTURE_PCE_FAST_44D2_FOLLOW_LIMIT` (1 through 2048 instructions,
+  default 128). It retains the existing strict bound and records no game data
+  in the repository. A longer follow-up must still be paired with the same
+  session's authenticated media identity, controller receipt, and observed
+  game-state effect before it can establish a gameplay meaning.
+
+- The Mednafen reference-capture verifier now requires every accepted
+  controller read to carry the replay-clock frame and to occur inside the
+  logged event's active hold interval. The legacy PCE raw-read/result pair
+  must carry the same frame too. This rejects a formerly accepted
+  source-order-only trace in which a matching mask was read after a
+  one-frame event had expired.
+- This is fail-closed capture-tooling validation, not original gameplay
+  evidence. It preserves the distinction between a delivered host/replay
+  input and a game-owned command, pose, map, or rendering transition.
+
 ## 2026-10-26 — revalidate native debug input against authentic US and JP media
 
 - An isolated TRV2 Debug build passed the authentic USA raw Track 02 runtime
@@ -7753,3 +7807,16 @@ this is distinct from the authenticated combined-RAR title-audio path above.
 - Keypad 8 is a Firestaff convenience alias. It is not claimed as a retail
   PC Engine control. Direct dungeon-view mouse targeting remains blocked on
   the missing source-bound world-to-screen consumer.
+
+## 2026-10-26 — cold-start RUN still lacks a game-owned transition
+
+- A private, authentic Japanese Rev. 1 `pce_fast` capture held RUN for five
+  seconds at frames 9600--9899. Scripted input application and controller-read
+  receipts passed, but all witnessed polls were System Card reads at `$E4C5`.
+  The capture recorded no non-System-Card input poll, raw-sector span, SCSI
+  command, authenticated CD-to-RAM origin receipt, CD IRQ, or game `$E009`
+  dispatch. It is not evidence of title/menu selection or game launch.
+- Next reference work: capture a same-session transition with a verified
+  game-owned controller poll and source-bound CD-to-RAM receipt before deriving
+  any initial party, level, graphics, control, or renderer behavior. Keep all
+  original media and raw capture artifacts private.
