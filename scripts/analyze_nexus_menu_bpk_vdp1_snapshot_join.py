@@ -153,13 +153,14 @@ def command_trace_source_starts(trace_path: Path,
     source_starts_in_match = 0
     for row in rows:
         try:
-            command_type = int(row["word0"], 0) & 0x000f
+            control = int(row["word0"], 0)
+            command_type = control & 0x000f
             # VDP1 command words are CMDCTRL, CMDLINK, CMDPMOD, CMDCOLR,
             # CMDSRCA, ...; CMDSRCA is word4 and stores the address / 8.
             source_start = int(row["word4"], 0) << 3
         except (KeyError, TypeError, ValueError) as error:
             raise ValueError("invalid VDP1 command trace row") from error
-        if command_type not in (0, 1, 2):
+        if control & 0xC000 or command_type not in (0, 1, 2):
             continue
         textured += 1
         if any(begin <= source_start < end for begin, end in matched_ranges):

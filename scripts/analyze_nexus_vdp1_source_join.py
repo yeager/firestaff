@@ -195,6 +195,11 @@ def aggregate_source_join_status(draw_count: int, joined_count: int) -> str:
     return "complete"
 
 
+def texture_dimensions(size_word: int) -> tuple[int, int]:
+    """Decode Saturn CMDSIZE: horizontal cells in bits 13..8, height in 7..0."""
+    return ((size_word >> 8) & 0x3F) * 8, size_word & 0xFF
+
+
 def ymir_commands(bundle: Path) -> tuple[bytes, int, list[tuple[int, tuple[int, ...]]]]:
     """Read the last recorded VDP1 frame without relabelling its source."""
     receipt = {}
@@ -266,11 +271,10 @@ def main() -> int:
     for offset, words in commands:
         control = words[0]
         command_type = control & 0x000F
-        if command_type > 2 or control & 0x8000:
+        if command_type > 2 or control & 0xC000:
             continue
         colour_mode = (words[2] >> 3) & 0x7
-        width = (words[5] & 0x003F) * 8
-        height = (words[5] >> 8) & 0x00FF
+        width, height = texture_dimensions(words[5])
         bits_per_pixel = 4 if colour_mode <= 1 else 8 if colour_mode <= 4 else 16
         source_offset = words[4] * 8
         source_size = (width * height * bits_per_pixel) // 8

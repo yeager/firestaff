@@ -12,11 +12,15 @@ from analyze_nexus_vdp1_source_join import (
     accepted_retail_hashes,
     aggregate_source_join_status,
     swapped_words,
+    texture_dimensions,
     ymir_commands,
 )
 
 
 class AcceptedRetailHashesTests(unittest.TestCase):
+    def test_saturn_cmdsize_dimensions(self) -> None:
+        self.assertEqual(texture_dimensions(0x0410), (32, 16))
+
     def test_ymir_bundle_checks_frame_and_rejects_dropped_rows(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

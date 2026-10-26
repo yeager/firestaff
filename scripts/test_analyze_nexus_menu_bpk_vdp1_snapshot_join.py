@@ -26,6 +26,7 @@ class SnapshotJoinTests(unittest.TestCase):
             "frame,index,address,word0,word2,word4\n"
             "0,0,0x0,0x0,0x0,0x20\n"
             "0,1,0x20,0x4,0x20,0x0\n"
+            "0,2,0x40,0x5000,0x0,0x20\n"
         )
         with tempfile.TemporaryDirectory(prefix="nexus-menu-vdp1-trace-") as directory:
             path = Path(directory) / "trace.csv"

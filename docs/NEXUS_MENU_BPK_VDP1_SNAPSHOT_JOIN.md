@@ -74,8 +74,14 @@ the complete command CSV has SHA-256
 The bundle records 10,668 command rows, zero dropped rows, and 178 commands
 in its last captured VDP1 frame, index 59. Filtering the CSV to frame 59 and
 joining with the final VRAM dump finds 86 whole `MENU.BPK` surface matches,
-143 textured commands, and no textured command whose source start falls in
+137 executed textured commands, and no textured command whose source start falls in
 those matched ranges.
+
+An initial analysis incorrectly included skipped VDP1 commands and reversed
+the character width and height fields. With both corrected, the independent
+source scan matches all 137 executed texture spans to authenticated retail
+files in the available corpus. This is a byte-source observation, not proof
+of final pixel composition or input behavior.
 
 The frame counter in the VDP1 trace is distinct from the 120 requested capture
 steps, and the screenshot is taken after the dump. This receipt therefore
