@@ -3,7 +3,9 @@
 - An isolated normal-PCE reference build applied the complete input trace
   hunks and refreshed the gamepad's internal button state after scripted input
   was overlaid. A 240-second capture used authenticated USA CloneCD media and
-  the authenticated original Backup RAM, with RUN held for 300 frames.
+  the authenticated original Backup RAM, with RUN held for 300 frames. A
+  parallel change subsequently moved the overlay before the normal update and
+  restored the physical buffer; that variant still requires its own capture.
 - The scripted-input verifier accepted the active-low RUN read at System Card
   PC `$E4C8`. It observed no game or non-System-Card controller poll. The
   capture recorded 115 CD IRQs, 25 raw-sector spans, four SCSI reads and one
