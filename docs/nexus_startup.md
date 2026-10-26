@@ -134,6 +134,14 @@ writer. It does not identify the source resource, establish a complete upload
 sequence, or prove title-menu ownership. The temporary memory dump was removed
 after the PC, address, width, value, and receipts were checked.
 
+Big-endian SH-2 disassembly of the captured high WRAM identifies the inner
+call at `0x06032c20`: the wrapper masks `r4` with `0x0007ffff`, maps it into
+the uncached Saturn bus (`0x25e00000 | r4`), and calls `0x0602e120` with a
+one-word count. A static cross-reference at `0x060282d4` calls that wrapper
+with destination `0x25e7fffe`. This explains the recorded address, but its
+source is a stack temporary. It therefore remains an initialization anchor,
+not source-resource provenance or permission to draw a host menu.
+
 ## Title-menu VDP1 source-span join (2026-10-19 capture; analyzed 2026-10-26)
 
 A read-only source-join analysis on TRV2 used the retained Ymir v0.4.0
