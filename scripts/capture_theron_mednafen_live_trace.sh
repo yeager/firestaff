@@ -82,6 +82,7 @@ capture_input_grab_delay=${THERON_CAPTURE_INPUT_GRAB_DELAY:-2}
 replay_input_script=${THERON_CAPTURE_REPLAY_INPUT_SCRIPT:-}
 autoload_state=${THERON_CAPTURE_AUTOLOAD_STATE:-}
 autoload_movie=${THERON_CAPTURE_AUTOLOAD_MOVIE:-}
+capture_authentic_bram=${THERON_CAPTURE_AUTHENTIC_BRAM:-}
 post_dungeon_ordinal=${THERON_CAPTURE_POST_DUNGEON_ORDINAL:-}
 title_wait_input=${THERON_CAPTURE_TITLE_WAIT_INPUT:-}
 menu_route=${THERON_CAPTURE_MENU_ROUTE:-}
@@ -701,6 +702,21 @@ if [[ -n "$autoload_state" && -n "$autoload_movie" ]]; then
     printf '%s\n' 'FAIL: THERON_CAPTURE_AUTOLOAD_STATE and THERON_CAPTURE_AUTOLOAD_MOVIE cannot be combined' >&2
     exit 1
 fi
+if [[ -n "$capture_authentic_bram" ]]; then
+    if [[ ! -f "$capture_authentic_bram" ]] ||
+       [[ "$(wc -c < "$capture_authentic_bram" | tr -d '[:space:]')" != 2048 ]]; then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_AUTHENTIC_BRAM must name a 2048-byte original Backup RAM image' >&2
+        exit 1
+    fi
+    capture_authentic_bram_md5=$(md5_file "$capture_authentic_bram") || {
+        printf '%s\n' 'FAIL: could not hash THERON_CAPTURE_AUTHENTIC_BRAM' >&2
+        exit 1
+    }
+    if [[ "$capture_authentic_bram_md5" != ffabc8d19b0915d4d9632a7ae2e90a97 ]]; then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_AUTHENTIC_BRAM is not the authenticated USA Backup RAM image' >&2
+        exit 1
+    fi
+fi
 if [[ -n "$post_dungeon_ordinal" && ! "$post_dungeon_ordinal" =~ ^[0-6]$ ]]; then
     printf '%s\n' 'FAIL: THERON_CAPTURE_POST_DUNGEON_ORDINAL must be 0..6' >&2
     exit 1
@@ -1230,6 +1246,14 @@ rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_comman
     "$scripted_input_consumption_receipt" "$stage2_system_card_receipt"
 home_dir=$(mktemp -d "$capture_scratch_root/firestaff-theron-mednafen.XXXXXX")
 cleanup_home=1
+capture_sav_args=()
+if [[ -n "$capture_authentic_bram" ]]; then
+    # The explicit filename prevents Mednafen's normal game-name pattern
+    # from selecting an unrelated profile. The copied image is authentic.
+    mkdir -p "$home_dir/sav"
+    cp "$capture_authentic_bram" "$home_dir/sav/firestaff-theron-authentic.sav"
+    capture_sav_args=(-filesys.fname_sav firestaff-theron-authentic.sav)
+fi
 if [[ "$capture_clonecd_track02" == 1 ]]; then
     track02_hash_path="$home_dir/theron-track02-clonecd.raw"
     if ! dd if="$track02_path" of="$track02_hash_path" bs=2352 skip="$clonecd_start" count="$clonecd_count" 2>/dev/null; then
@@ -1491,6 +1515,7 @@ launch=(
     -sound "$capture_sound" \
     -video.driver softfb \
     -filesys.path_sav "$home_dir/sav" \
+    "${capture_sav_args[@]}" \
     -filesys.path_state "$home_dir/mcs" \
     -pce.input.multitap 0 \
     "${capture_input_args[@]}" \

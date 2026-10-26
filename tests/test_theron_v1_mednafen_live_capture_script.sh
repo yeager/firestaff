@@ -341,6 +341,10 @@ if [[ "$route_output" != *'SKIP: MEDNAFEN_BIN, THERON_US_CUE/THERON_CUE, THERON_
 fi
 if ! grep -Fq 'mkdir -p "$home_dir/sav"' "$script" ||
    ! grep -Fq -- '-filesys.path_sav "$home_dir/sav"' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_AUTHENTIC_BRAM must name a 2048-byte original Backup RAM image' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_AUTHENTIC_BRAM is not the authenticated USA Backup RAM image' "$script" ||
+   ! grep -Fq 'firestaff-theron-authentic.sav' "$script" ||
+   ! grep -Fq '"${capture_sav_args[@]}"' "$script" ||
    ! grep -Fq 'mkdir -p "$home_dir/mcs"' "$script" ||
    ! grep -Fq -- '-filesys.path_state "$home_dir/mcs"' "$script"; then
     printf '%s\n' 'FAIL: isolated captures must bind backup RAM and state files to the private capture home' >&2
