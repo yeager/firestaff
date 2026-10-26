@@ -86,7 +86,7 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +    theron_script_valid = false;
 +    break;
 +   }
-+   if(at[1] == '+' || at[1] == '-')
++   if(at[1] < '0' || at[1] > '9')
 +   {
 +    theron_script_valid = false;
 +    break;
@@ -101,7 +101,7 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +   if(end && *end == ':')
 +   {
 +    const char *duration_start = end + 1;
-+    if(*duration_start == '+' || *duration_start == '-')
++    if(*duration_start < '0' || *duration_start > '9')
 +    {
 +     theron_script_valid = false;
 +     break;

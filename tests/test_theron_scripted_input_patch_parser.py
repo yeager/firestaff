@@ -67,7 +67,7 @@ int main(int argc, char **argv)
         subprocess.run(command + ["-std=c++11", "-Wall", "-Wextra", "-Werror", str(cpp), "-o", str(binary)], check=True)
         for value in ("i@1", "run@1:5,ii@6:90", "up@1:1,down@2:2"):
             subprocess.run([str(binary), value], check=True)
-        for value in ("i@1,", "i@+1", "i@-1", "i@4294967296", "i@1:+2", "i@1:-2", "i@1:4294967296", "i@1,,ii@2"):
+        for value in ("i@1,", "i@+1", "i@-1", "i@ +1", "i@ 1", "i@4294967296", "i@1:+2", "i@1:-2", "i@1: +2", "i@1: 2", "i@1:4294967296", "i@1,,ii@2"):
             result = subprocess.run([str(binary), value], check=False)
             if result.returncode == 0:
                 raise SystemExit(f"FAIL: malformed scripted input was accepted: {value}")
