@@ -309,6 +309,26 @@ ownership join from a Firestaff source resource to a HUD element, does not
 label those reads semantically, and does not permit a host HUD, viewport
 compositor, save route, or input implementation.
 
+## SH-2 to VDP1 command handoff (2026-10-26)
+
+Ymir PR #966 now exposes a bounded SH-2 data-write trace independently of the
+older VDP2-only trace. A two-frame replay from the same authentic checkpoint
+traced physical VDP1 RAM at `0x05c00000..0x05c80000`. It retained 176
+master-SH-2 writes with no drops. In frame 0, the master SH-2 completed the
+command at physical address `0x05c000a0` by writing `0x5000` to offset zero
+and `0x0018` to offset two. In frame 1, the VDP1 command trace executed the
+command at VDP1 address `0x00a0` with word 0 `0x5000` and word 1 `0x0018`.
+
+This is a same-checkpoint, temporal CPU-to-VDP1 handoff: it proves that the
+retail SH-2 authored the VDP1 command consumed on the next captured frame. The
+two-frame SH-2 write trace and VDP1 command trace have SHA-256
+`58c9d41740a75063543c70b6cb11e336268cfb47486df1ffdcbe19718f12bc66` and
+`c93f3a8f86263ded3b79d081f15771bce4331ab31ec6a0ce37d3b4691b628f32`
+respectively. The corresponding completed receipts are retained with the
+checkpoint. This does not identify the source resource, texture, palette, or
+semantic role of that command, so it does not by itself admit a Firestaff HUD,
+viewport, or renderer.
+
 ## Title-menu VDP1 source-span join (2026-10-19 capture; analyzed 2026-10-26)
 
 A read-only source-join analysis on TRV2 used the retained Ymir v0.4.0
