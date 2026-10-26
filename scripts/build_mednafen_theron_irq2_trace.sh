@@ -256,6 +256,12 @@ sed $'s/^FIRESTAFF_PATCH_TAB_CONTEXT/ \\t/' "$pce_fast_3879_trace_patch" \
     > "$pce_fast_3879_trace_rendered"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$pce_fast_3879_trace_rendered"
+a1a9_init_trace_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_a1a9_init_trace.patch"
+a1a9_init_trace_rendered="$build_root/theron-pce-fast-a1a9-init.rendered.patch"
+sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$a1a9_init_trace_patch" \
+    > "$a1a9_init_trace_rendered"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$a1a9_init_trace_rendered"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_pce_fast_44d2_runtime_code_window.patch"
 git -C "$build_root/source" apply --unidiff-zero --recount --whitespace=nowarn \

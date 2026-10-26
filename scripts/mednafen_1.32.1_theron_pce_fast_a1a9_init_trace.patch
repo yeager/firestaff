@@ -1,0 +1,45 @@
+--- a/src/pce_fast/huc6280.cpp
++++ b/src/pce_fast/huc6280.cpp
+@@ -1025,4 +1025,42 @@
+   TheronTraceInstructionPC = GetRealPC();
+   TheronTraceInstructionPhysicalPC = (HuCPU.MPR[TheronTraceInstructionPC >> 13] << 13) | (TheronTraceInstructionPC & 0x1FFF);
+FIRESTAFF_PATCH_BLANK_CONTEXT
++  {
++   static FILE *trace = NULL;
++   static bool initialized = false;
++   static bool recording = false;
++   static unsigned remaining = 0;
++   static unsigned sequence = 0;
++   if(!initialized)
++   {
++    const char *path = getenv("FIRESTAFF_THERON_PCE_FAST_A1A9_INIT_TRACE");
++    initialized = true;
++    if(path && *path)
++    {
++     trace = fopen(path, "w");
++     if(trace)
++      fputs("source=mednafen-pce-fast-a1a9-initializer-code-v1\n", trace);
++    }
++   }
++   if(trace && !recording && TheronTraceInstructionPC == 0xA1A9 &&
++      TheronTraceInstructionPhysicalPC == 0x0E01A9)
++   {
++    recording = true;
++    remaining = 128;
++   }
++   if(trace && recording && remaining)
++   {
++    const uint8 *code = (const uint8 *)(HuCPU.FastPageR[
++     TheronTraceInstructionPC >> 13] + TheronTraceInstructionPC);
++    fprintf(trace, "a1a9_init_instruction sequence=%u logical_pc=%04x physical_pc=%06x mpr1=%02x mpr5=%02x a=%02x x=%02x y=%02x s=%02x p=%02x bytes=%02x%02x%02x%02x%02x%02x%02x\n",
++            sequence++, TheronTraceInstructionPC,
++            TheronTraceInstructionPhysicalPC, HuCPU.MPR[1], HuCPU.MPR[5],
++            HuCPU.A, X_local, Y_local, HuCPU.S, P_local,
++            code[0], code[1], code[2], code[3], code[4], code[5], code[6]);
++    fflush(trace);
++    remaining--;
++    if(!remaining)
++     recording = false;
++   }
++  }
+   if(Theron3879FastTargetStepsRemaining ||

@@ -1430,6 +1430,15 @@ if ! grep -Fq 'stage2_system_card_receipt="${trace}.stage2-system-card"' "$scrip
     printf 'FAIL: capture script must preserve a separate fail-closed stage-two loader receipt\n' >&2
     exit 1
 fi
+if ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_a1a9_init_trace.patch' "$build_script" ||
+   ! grep -Fq 'HuCPU.A, X_local, Y_local, HuCPU.S, P_local' \
+       "$repo/scripts/mednafen_1.32.1_theron_pce_fast_a1a9_init_trace.patch" ||
+   ! grep -Fq 'pce_fast_a1a9_init_trace="${trace}.a1a9-init"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_A1A9_INIT_TRACE="$pce_fast_a1a9_init_trace"' "$script" ||
+   ! grep -Fq '"$pce_fast_a1a9_init_trace"' "$script"; then
+    printf '%s\n' 'FAIL: A1A9 trace must use live HuC6280 register locals and preserve its capture sidecar' >&2
+    exit 1
+fi
 if ! grep -Fq 'resolve_mednafen_window_id_with_retry "$mednafen_ui_pid"' "$script" ||
    ! grep -Fq 'for ((attempt = 0; attempt < attempts; ++attempt)); do' "$script" ||
    ! grep -Fq 'xdotool search --onlyvisible --pid "$target_pid"' "$script" ||

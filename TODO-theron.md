@@ -14,12 +14,13 @@
   consumers and producers before assigning game behavior. The runtime CD
   source LBA, the semantic meaning of `$06/$07`, and native input/click parity
   remain unresolved.
-- The same 45 windows also correlate the `$07` read at `$C292` with three
-  `ASL A` byte windows and `$00/$10` stores to `$279F`. At `$C29B`, however,
-  recorded X remains `$10` in both result cases, so the capture does not prove
-  that `$279F` controls `LDA $4842,X`. Add fetched-opcode and post-instruction
-  register tracing before assigning lookup semantics. The adjacent `$27A1`
-  and `$05/$06` helper callers remain unbound.
+- The same 45 windows correlate the `$07` read at `$C292` with three `ASL A`
+  byte windows and `$00/$10` stores to `$279F`. The old trace's X/Y/P fields
+  came from stale `HuCPU` struct members; Mednafen keeps those registers in
+  locals during `HuC6280_Run`. The A1A9 trace patch now samples those locals.
+  Re-run it on the authentic JP state and require `$C29B` X to match the
+  `$279F` selector before describing the lookup. The adjacent `$27A1` and
+  `$05/$06` helper callers remain unbound.
 - Evidence and decode references:
   [`theron-jp-43ab-zero-page-flag-helper-20261026.md`](docs/source-lock/theron-disassembly/theron-jp-43ab-zero-page-flag-helper-20261026.md).
 

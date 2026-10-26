@@ -70,19 +70,25 @@ and `$279F` store bytes for this JP state; it does not establish a
 fetched-opcode-backed read or the semantic name or use of `$279F`.
 
 The next sampled byte windows are `TAX` at `$C29A` and `LDA $4842,X` at
-`$C29B`, but the recorded X at `$C29B` is `$10` in all 45 cases, including
-those where `$279F` was written as `$00`. The current capture therefore does
-not bind `$279F` to the indexed lookup value. The byte windows are read from
-Mednafen's mapped code page, not logged at the opcode fetch; a follow-up must
-capture the fetched opcode and post-instruction registers before assigning
-this lookup any behavior. The adjacent helpers that read `$27A1` or increment
-`$05/$06` still have unbound callers and effects.
+`$C29B`. The old trace records X=`$10` at `$C29B` in every case, but this is
+not a valid live-register observation. Mednafen 1.32.1
+`src/pce_fast/huc6280.cpp:29–60` maps `HU_X`, `HU_Y`, and `HU_P` to local
+variables inside `HuC6280_Run`; `SAVE_LOCALS` writes them back to `HuCPU` only
+when that run call exits. The old trace sampled `HuCPU.X`, `HuCPU.Y`, and
+`HuCPU.P`, so it recorded stale struct values while the CPU was running. The
+trace patch now samples `X_local`, `Y_local`, and `P_local`; a fresh authentic
+capture must pass the verifier before the indexed lookup can be described.
+The byte windows still come from Mednafen's mapped code page rather than the
+opcode fetch. The adjacent helpers that read `$27A1` or increment `$05/$06`
+also still have unbound callers and effects.
 
 `scripts/verify_theron_pce_fast_a1a9_zero_page_consumer_trace.py` checks this
-bounded trace correlation and preserves the `$C29B` X-register discrepancy
-as an explicit open finding. Against the private authentic JP trace it
-reports 5,760 instruction rows, 23 branches through `$43B0`, 22 through
-`$43B2`, and X=`$10` at `$C29B` in all 45 cases. The raw trace remains private.
+bounded trace correlation and requires the live `$C29B` X value to match the
+shifted `$279F` value. The existing private trace has 5,760 rows and 23/22
+branch counts, but its X/Y/P fields are stale because the earlier trace patch
+read the CPU struct instead of the execution locals; it is intentionally
+rejected by the corrected verifier. A fresh capture using the updated patch
+is required. The raw trace remains private.
 
 ## Adjacent authentic helper family
 
