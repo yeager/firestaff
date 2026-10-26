@@ -226,6 +226,15 @@ inspectable through short, repeatable follow-up captures. The temporary state
 and both profiles were removed after the round trip; a saved emulator state is
 diagnostic transport, not a Firestaff asset or an admission signal.
 
+An authenticated 900-frame Start/A capture saved such a checkpoint and reached
+a 640×448 first-person dungeon viewport with SHA-256
+`8ede95f1fd777eda69ebcfc91d0268194e501f145306eb1fc2971ed0113a2274`.
+Reloading slot 3 in a fresh isolated process and capturing one frame reproduced
+the same digest exactly. The image has no party HUD, so it is evidence for this
+narrow rendered viewport checkpoint only. It does not identify the level or
+room source, establish input semantics, authorize a host compositor, or prove
+the HUD route.
+
 ## Title-menu VDP1 source-span join (2026-10-19 capture; analyzed 2026-10-26)
 
 A read-only source-join analysis on TRV2 used the retained Ymir v0.4.0
