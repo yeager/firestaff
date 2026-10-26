@@ -42,6 +42,8 @@ class Vdp1Sh2TraceTests(unittest.TestCase):
                 result, output = run_trace(width)
                 self.assertEqual(result, 0)
                 self.assertIn("vdp1_write_rows=1", output)
+                self.assertIn("vdp1_unique_write_addresses=1", output)
+                self.assertIn(f"vdp1_unique_written_bytes={width}", output)
 
     def test_rejects_zero_negative_and_unsupported_widths(self) -> None:
         for width in (0, -1, 3):
