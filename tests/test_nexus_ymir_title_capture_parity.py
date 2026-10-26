@@ -36,6 +36,8 @@ def sha256(path: Path) -> str:
         for block in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+BUILD = Path(__file__).resolve().parents[1] / "build"
+BUILD.mkdir(exist_ok=True)
 
 
 def verify_bundle(bundle: Path) -> None:
@@ -86,7 +88,7 @@ def verify(executable: Path, bundle: Path, screenshot: Path) -> None:
     image = Image.open(screenshot).convert("RGB")
     if image.size != (640, 448):
         raise ValueError(f"expected 640x448 screenshot, got {image.size}")
-    with tempfile.TemporaryDirectory(prefix="firestaff-ymir-menu-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="firestaff-ymir-menu-", dir=BUILD) as temporary:
         replay = Path(temporary) / "capture.rgb"
         env = os.environ.copy()
         env.update(
