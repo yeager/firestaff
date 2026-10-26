@@ -81,3 +81,33 @@ gate must not be interpreted as a title-menu renderer requirement until a
 separate source-to-draw receipt identifies a frame that does consume those
 surfaces. This remains non-admission evidence: it does not identify the
 actual title/menu assets, their palette, placement, or compositor path.
+
+## Five-frame Start write trace
+
+A second isolated capture loaded the same retained Japanese title-prompt state,
+held Control Pad 1 Start for capture frame zero, and ran five frames with
+`--debug --trace-sh2-writes-begin 0x05c00000 --trace-sh2-writes-end
+0x05c80000`. Ymir wrote a complete 1,082-row VDP1 SH-2 trace without dropped
+rows. It is intentionally a post-state-load observation: it can identify work
+caused by Start, but cannot claim to contain the earlier pre-load that produced
+the title-prompt textures.
+
+The most frequent writer was master SH-2 PC `0x0608ba46`, with 1,004 writes in
+`0x05c000c0..0x05c18710`. Disassembly of the captured WRAM bytes at that PC is
+a zero-fill loop (`mov.l r5,@r4`, then `add #16,r4` and branch). It is therefore
+a VDP1 clear, not a texture upload. No traced write covers the title-frame
+texture starts `0x05c02460`, `0x05c02660`, or `0x05c02740`, nor the resident
+`MENU.BPK` match interval.
+
+Use the retained deterministic trace with:
+
+```sh
+python3 scripts/analyze_nexus_vdp1_sh2_write_trace.py \
+  /path/to/sh2-memory-write-trace.csv \
+  --source-address 0x05c02460 \
+  --source-address 0x05c02660 \
+  --source-address 0x05c02740
+```
+
+It retains only the observed PC/address facts and always leaves semantic
+admission blocked.
