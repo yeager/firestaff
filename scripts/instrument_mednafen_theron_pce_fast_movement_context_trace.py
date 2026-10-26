@@ -38,7 +38,8 @@ def main() -> None:
     if not huc.is_file():
         raise SystemExit("FAIL: isolated Mednafen PCE Fast source is unavailable")
 
-    helpers = r'''static FILE *TheronPCEFastMovementContextTrace;
+    helpers = r'''extern unsigned TheronPCEFastScriptFrame;
+static FILE *TheronPCEFastMovementContextTrace;
 static unsigned TheronPCEFastMovementDataReadCount;
 static unsigned TheronPCEFastMovementCommandWriteCount;
 static unsigned TheronPCEFastInputLatchWriteCount;
@@ -81,9 +82,12 @@ static void TheronPCEFastMovementContext(const char *kind, unsigned int logical_
  if(TheronPCEFastMovementContextTrace)
  {
   fprintf(TheronPCEFastMovementContextTrace,
-          "%s sequence=%u logical_address=%04x physical_address=%06x value=%02x pc=%04x pc_mpr=%02x physical_pc=%06x\n",
-          kind, (*count)++, logical_address, physical_address,
-          value, pc, mpr, (mpr << 13) | (pc & 0x1fff));
+          "%s sequence=%u frame=%u logical_address=%04x physical_address=%06x value=%02x pc=%04x pc_mpr=%02x physical_pc=%06x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x\n",
+          kind, (*count)++, TheronPCEFastScriptFrame, logical_address,
+          physical_address, value, pc, mpr,
+          (mpr << 13) | (pc & 0x1fff), HuCPU.MPR[0], HuCPU.MPR[1],
+          HuCPU.MPR[2], HuCPU.MPR[3], HuCPU.MPR[4], HuCPU.MPR[5],
+          HuCPU.MPR[6], HuCPU.MPR[7]);
   fflush(TheronPCEFastMovementContextTrace);
  }
 }

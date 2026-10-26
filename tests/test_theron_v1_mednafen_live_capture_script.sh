@@ -613,6 +613,10 @@ if [[ ! -f "$pce_fast_movement_context_instrumenter" ]] ||
    ! grep -Fq 'A == 0x2911 || A == 0x2912 || A == 0x2920' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq '0x0e8a00' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'TheronTraceInstructionPC' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'TheronPCEFastScriptFrame' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'frame=%u' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'mpr0=%02x' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'mpr7=%02x' "$pce_fast_movement_context_instrumenter" ||
    grep -Fq 'GetRealPC_EXTERNAL' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'TheronPCEFastMovementRuntimeStateWrite' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq '0x2000u + zero_page_address' "$pce_fast_movement_context_instrumenter" ||

@@ -42,6 +42,13 @@ The reproducible capture entry point is
 `THERON_CAPTURE_AUTOLOAD_STATE`, `THERON_CAPTURE_REPLAY_INPUT_SCRIPT`, and
 `THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast` set against authentic local media.
 
+The bounded movement-context sidecar records the reference frame and the full
+MPR0--MPR7 map for every observed input-latch or runtime-state write. This
+makes a future same-session capture auditable against its scripted controller
+event and executing physical bank. The sidecar is provenance evidence only:
+it does not make a RAM field semantic, identify a Track 02 source offset, or
+permit Firestaff to enable dynamic rendering.
+
 ## 2026-10-24 — authenticated screen snapshot renders; world pairing remains open
 
 Three TRV2 Firestaff `--debug --boot-probe` loops accepted authentic US Track
