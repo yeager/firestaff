@@ -69,6 +69,12 @@ The current evidence does not establish complete five-game startup support.
   `title=1`, `levelLoaded=0`, `menu=0`, and
   `menu-bpk-prs3-capture-required`. Thus the current release evidence confirms
   all five launcher card selections, not playable starts for all five games.
+- `test_m12_main_menu_runtime_real_media.sh` then passed against the same
+  v3.0.414 app and authentic collection for DM1, CSB, DM2 and Theron. Its probe
+  requires an active runtime with `levelLoaded=1`; DM1 also had its HoC first
+  frame, CSB its source party and viewport receipt, DM2 its completed Towns
+  title and first party, and Theron its Track 02 runtime/party. The runtime
+  test has no Nexus case; Nexus remains the known playable-start blocker.
 - The Theron Button II dispatch and non-advancing cancel behavior have
   source-backed coverage in the active runtime input and SDL event-loop checks.
   This closes that input-path defect; it does not establish full input or
