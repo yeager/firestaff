@@ -7,7 +7,7 @@
 +#include <stdio.h>
 +#include <stdlib.h>
 
-@@ -40,4 +42,44 @@ static uint8 mouse_index[5];
+@@ -40,4 +42,49 @@ static uint8 mouse_index[5];
  static uint8 sel;
  static uint8 read_index = 0;
 
