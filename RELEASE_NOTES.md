@@ -3,10 +3,10 @@
 ## User-facing changes
 
 - `DM1 FM Towns`: load native F20 wall ornaments, inscription fonts, champion portraits, status panels and hand slots for the tested Hall of Champions paths.
-- `DM1 PC`: use source-backed wall inscription, door-button, champion-mirror and held-item presentation data in the covered PC 3.4 runtime paths.
-- `CSB Amiga`: add playback of the authentic FTL intro sequence from SWSH media, preserve mixed-case archive access, and keep the missing-SWSH fallback explicit.
-- `CSB FM Towns`: add source-backed stairs and animated doors for the covered viewport states.
-- `DM2 FM Towns`: bind HUD portraits, champion status and dungeon viewport materials to native asset and runtime state, including the covered live projectile paths.
+- `DM1 PC`: use source-backed wall inscription, door-button, champion-mirror and held-item presentation data in the covered PC 3.4 runtime paths; apply ReDMCSB F0107 scaling, clipping, horizontal flips, palette remapping and transparency to wall ornaments.
+- `CSB Amiga`: add playback of the authentic FTL intro sequence from SWSH media, render source-backed M648 front inscriptions, preserve mixed-case archive access, and keep the missing-SWSH fallback explicit.
+- `CSB FM Towns`: bind the native F31 HUD, add source-backed stairs and animated doors, and retain the selected loose-file launch root for tested routes.
+- `DM2 FM Towns`: bind HUD portraits, champion status and dungeon viewport materials to native asset and runtime state, including the 0x47 invisibility timer, four HME-242 alternate HUD frames and covered live projectile paths.
 - `DM2 combat rendering`: bind moving missiles to their live source tile and timer state, and keep static item rendering tied to the source cell.
 - `Launcher startup`: bind selected games by stable game identity and honor explicit startup window dimensions across supported routes.
 - `Renderer initialization`: bind the requested default presentation mode through shared initialization.
