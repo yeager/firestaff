@@ -832,6 +832,9 @@ if grep -Fq 'activationAccepted' "$quartz_helper"; then
 fi
 if command -v swiftc >/dev/null 2>&1; then
     swift_module_cache=$(mktemp -d "$repo/build/firestaff-theron-swift-module-cache.XXXXXX")
+    # AppKit module caches are large. Keep the focused check repeatable on
+    # constrained developer disks instead of leaving generated artifacts.
+    trap 'rm -rf -- "$swift_module_cache"' EXIT
     if ! swiftc -module-cache-path "$swift_module_cache" -typecheck "$quartz_helper" >/dev/null 2>&1; then
         printf 'FAIL: Quartz helper does not type-check\n' >&2
         exit 1
