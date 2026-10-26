@@ -100,6 +100,19 @@ int nexus_v1_vdp1_item_material_resolver(
     return 1;
 }
 
+int nexus_v1_vdp1_dgn_item_material_resolver(
+    const uint8_t *vram, int vram_size, const uint8_t *command, int command_size,
+    const Nexus_V1_Vdp1TextureCommand *parsed, uint32_t command_offset,
+    Nexus_V1_Vdp1CaptureCompositeInput *out, void *context)
+{
+    Nexus_V1_Vdp1DgnItemMaterialResolverInput *input = context;
+    if (!input || !out) return 0;
+    if (nexus_v1_vdp1_dgn_material_resolver(vram, vram_size, command,
+            command_size, parsed, command_offset, out, &input->dgn)) return 1;
+    return nexus_v1_vdp1_item_material_resolver(vram, vram_size, command,
+            command_size, parsed, command_offset, out, &input->item);
+}
+
 static void clear_receipt(Nexus_V1_Vdp1DgnMaterialResolverReceipt *receipt)
 {
     if (receipt) memset(receipt, 0, sizeof(*receipt));

@@ -48,6 +48,7 @@ static int test_retail_item_capture(const char *capture_path, const char *item_p
     Nexus_V1_Vdp1TextureCommand command;
     Nexus_V1_Vdp1CaptureCompositeInput resolved;
     Nexus_V1_Vdp1ItemMaterialResolverInput context = {0};
+    Nexus_V1_Vdp1DgnItemMaterialResolverInput combined = {0};
     int ok = capture && item && bank &&
         nexus_v1_saturn_runtime_capture_frame(capture, (size_t)capture_size, 0, &frame) &&
         nexus_v1_item_ibs_parse_verified(item, (int)item_size, 1, bank) == 0 &&
@@ -61,6 +62,10 @@ static int test_retail_item_capture(const char *capture_path, const char *item_p
             resolved.item_image == item + 0x123dc &&
             resolved.item_palette == item + 0xb098 &&
             resolved.item_source_hash_verified && !resolved.dgn_source_hash_verified;
+        combined.item = context;
+        ok = ok && nexus_v1_vdp1_dgn_item_material_resolver(frame.vdp1_vram,
+            NEXUS_V1_VDP1_VRAM_BYTES, frame.vdp1_vram + 0xf00, 32,
+            &command, 0xf00, &resolved, &combined) && resolved.item_source_hash_verified;
         context.item_ibs_hash_verified = 0;
         ok = ok && !nexus_v1_vdp1_item_material_resolver(frame.vdp1_vram,
             NEXUS_V1_VDP1_VRAM_BYTES, frame.vdp1_vram + 0xf00, 32,

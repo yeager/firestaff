@@ -63,4 +63,15 @@ int nexus_v1_vdp1_item_material_resolver(
     const Nexus_V1_Vdp1TextureCommand *parsed, uint32_t command_byte_offset,
     Nexus_V1_Vdp1CaptureCompositeInput *out_input, void *context);
 
+typedef struct {
+    Nexus_V1_Vdp1DgnMaterialResolverInput dgn;
+    Nexus_V1_Vdp1ItemMaterialResolverInput item;
+} Nexus_V1_Vdp1DgnItemMaterialResolverInput;
+
+int nexus_v1_vdp1_dgn_item_material_resolver(
+    const uint8_t *vdp1_vram, int vdp1_vram_size,
+    const uint8_t *command, int command_size,
+    const Nexus_V1_Vdp1TextureCommand *parsed, uint32_t command_byte_offset,
+    Nexus_V1_Vdp1CaptureCompositeInput *out_input, void *context);
+
 #endif

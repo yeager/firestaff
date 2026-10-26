@@ -1,6 +1,7 @@
 #include "nexus_v1_vdp1_capture_compositor.h"
 #include "nexus_v1_vdp1_dgn_material_resolver.h"
 #include "nexus_v1_viewport.h"
+#include "asset_find_by_hash.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -126,6 +127,7 @@ static int run_external_dgn_mode1_capture(void)
     const char *capture_path = getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE");
     const char *dgn_path = getenv("FIRESTAFF_NEXUS_DGN_SOURCE");
     const char *frame_text = getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE_FRAME");
+    const char *item_path = getenv("FIRESTAFF_NEXUS_ITEM_IBS");
     FILE *capture_file;
     FILE *dgn_file;
     long capture_size;
@@ -133,6 +135,9 @@ static int run_external_dgn_mode1_capture(void)
     uint8_t *capture;
     uint8_t *dgn;
     Nexus_V1_Vdp1DgnMaterialResolverInput resolver;
+    Nexus_V1_Vdp1DgnItemMaterialResolverInput combined;
+    Nexus_V1_ItemIbsBank *item_bank = NULL;
+    uint8_t *item_bytes = NULL;
     Nexus_Framebuffer framebuffer;
     Nexus_V1_SaturnRuntimeCaptureFrameReceipt frame;
     Nexus_V1_Vdp1CaptureVramSequenceReceipt replay;
@@ -171,6 +176,28 @@ static int run_external_dgn_mode1_capture(void)
     resolver.dgn_bytes = dgn;
     resolver.dgn_byte_count = (int)dgn_size;
     resolver.source_hash_verified = 1;
+    memset(&combined, 0, sizeof(combined));
+    combined.dgn = resolver;
+    if (item_path && *item_path) {
+        FILE *item_file = fopen(item_path, "rb");
+        item_bytes = (uint8_t *)malloc(NEXUS_V1_ITEM_IBS_BYTES);
+        item_bank = (Nexus_V1_ItemIbsBank *)malloc(sizeof(*item_bank));
+        if (!item_file || !item_bytes || !item_bank ||
+            !asset_file_matches_md5(item_path, "309dc91bd14ded1223c72dd6c743f17c") ||
+            !asset_file_matches_md5(capture_path, "e5949cf146af22b7956b94ef663623d9") ||
+            !asset_file_matches_md5(dgn_path, "603ec9c531a92539babdda84ab09e78e") ||
+            fread(item_bytes, 1, NEXUS_V1_ITEM_IBS_BYTES, item_file) != NEXUS_V1_ITEM_IBS_BYTES ||
+            nexus_v1_item_ibs_parse_verified(item_bytes, NEXUS_V1_ITEM_IBS_BYTES, 1, item_bank) != 0) {
+            if (item_file) fclose(item_file);
+            free(item_bytes); free(item_bank); free(capture); free(dgn);
+            return 0;
+        }
+        fclose(item_file);
+        combined.item.item_ibs = item_bytes;
+        combined.item.item_ibs_size = NEXUS_V1_ITEM_IBS_BYTES;
+        combined.item.item_ibs_hash_verified = 1;
+        combined.item.bank = item_bank;
+    }
     nexus_fb_init(&framebuffer);
     nexus_fb_clear(&framebuffer);
     memset(&frame, 0, sizeof(frame));
@@ -180,7 +207,8 @@ static int run_external_dgn_mode1_capture(void)
      * Unowned commands stay capture-only in both windows. */
     ok = nexus_v1_vdp1_capture_replay_runtime_frame_mode1_sequence(
         &framebuffer, capture, (size_t)capture_size, frame_index,
-        nexus_v1_vdp1_dgn_material_resolver, &resolver, &frame, &replay) &&
+        item_bank ? nexus_v1_vdp1_dgn_item_material_resolver : nexus_v1_vdp1_dgn_material_resolver,
+        item_bank ? (void *)&combined : (void *)&resolver, &frame, &replay) &&
         frame.valid && replay.valid && replay.command_sequence.valid &&
         ((replay.draw_commands_seen == 235 &&
           replay.draw_commands_resolved == 218 &&
@@ -205,7 +233,10 @@ static int run_external_dgn_mode1_capture(void)
           replay.draw_commands_resolved == 225 &&
           replay.unowned_non_mode1_draw_commands == 0 &&
           replay.unowned_mode1_draw_commands == 17 &&
-          replay.skipped_non_draw_commands == 7)) &&
+          replay.skipped_non_draw_commands == 7) ||
+         (item_bank && frame_index == 0 && replay.draw_commands_seen == 224 &&
+          replay.draw_commands_resolved == 221 && replay.unowned_mode1_draw_commands == 3 &&
+          replay.unowned_non_mode1_draw_commands == 0 && replay.skipped_non_draw_commands == 8)) &&
         replay.replay.valid &&
          ((replay.replay.source_joins_verified == 218 &&
            replay.replay.palette_joins_verified == 218) ||
@@ -214,7 +245,9 @@ static int run_external_dgn_mode1_capture(void)
          (replay.replay.source_joins_verified == 219 &&
           replay.replay.palette_joins_verified == 219) ||
          (replay.replay.source_joins_verified == 225 &&
-          replay.replay.palette_joins_verified == 225)) &&
+          replay.replay.palette_joins_verified == 225) ||
+         (item_bank && replay.replay.source_joins_verified == 201 &&
+          replay.replay.palette_joins_verified == 201)) &&
         replay.semantic_admission_blocked &&
         !replay.system_clip_state_missing &&
         replay.system_clip_state_verified && replay.system_clip_x == 319 &&
@@ -223,7 +256,8 @@ static int run_external_dgn_mode1_capture(void)
         (replay.draw_commands_seen == 235 && replay.draw_commands_resolved == 218) ||
         (replay.draw_commands_seen == 212 && replay.draw_commands_resolved == 194) ||
         (replay.draw_commands_seen == 237 && replay.draw_commands_resolved == 219) ||
-        (replay.draw_commands_seen == 242 && replay.draw_commands_resolved == 225);
+        (replay.draw_commands_seen == 242 && replay.draw_commands_resolved == 225) ||
+        (item_bank && replay.draw_commands_seen == 224 && replay.draw_commands_resolved == 221);
     if (ok && !known_capture_window) ok = 0;
     if (!ok) {
         fprintf(stderr,
@@ -245,6 +279,8 @@ static int run_external_dgn_mode1_capture(void)
     }
     free(capture);
     free(dgn);
+    free(item_bytes);
+    free(item_bank);
     return ok;
 }
 
