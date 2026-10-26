@@ -138,6 +138,18 @@ the BKR digest again remained unchanged. This is negative timing evidence: an
 eight-frame post-title hold is not sufficient to establish a retail input
 transition. It does not authorize a host menu, save route, HUD, or viewport.
 
+A separate 3,400-frame debug replay kept the same post-title frame schedule
+but extended each Start, Down, A, and second-A press to 60 emulated frames.
+Its endpoint was still the native title screen, with SHA-256
+`8d495ffa4e8a76ab38a48c3c84a6fcc437db1bc4682aec6ac897609ed2307d95`; the
+four-champion BKR digest remained
+`87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`.
+Therefore insufficient hold duration is not the cause of the failed
+post-title transition. The temporary profile, X display, memory dump, and
+inspection copy were removed after verification. This remains negative
+emulator evidence only: it does not establish menu, save, HUD, or viewport
+parity.
+
 Ymir PR #966 additionally provides `--capture-screenshot` for the same
 capture-owned route. It queues a profile-local framebuffer PNG only after the
 requested frames and memory receipt have completed; it requires both a frame
