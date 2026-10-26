@@ -91,7 +91,7 @@ def main() -> int:
     print("vertex_bounds=(%d,%d)-(%d,%d)" %
           (min(x for x, _ in vertices), min(y for _, y in vertices),
            max(x for x, _ in vertices), max(y for _, y in vertices)))
-    print("vdp1_coordinate_widths=vertices:13,local:11")
+    print("vdp1_coordinate_widths=vertices:13,local:13")
     print("draw_geometry=authentic_command_observation")
     print("raster_priority_compositor_timing_semantics=blocked")
     if args.require_distorted is not None and distorted != args.require_distorted:

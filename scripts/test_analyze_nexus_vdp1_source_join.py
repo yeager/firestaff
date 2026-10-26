@@ -9,7 +9,7 @@ import tempfile
 from pathlib import Path
 
 from analyze_nexus_title_vdp1_geometry import geometry_for_chain
-from analyze_nexus_vdp1_command_sequence import Record, describe
+from analyze_nexus_vdp1_command_sequence import Record, describe, find_chain, follow
 from analyze_nexus_vdp1_source_join import (
     accepted_retail_hashes,
     aggregate_source_join_status,
@@ -24,6 +24,49 @@ BUILD.mkdir(exist_ok=True)
 
 
 class AcceptedRetailHashesTests(unittest.TestCase):
+    @staticmethod
+    def command(offset: int, control: int, link: int = 0) -> Record:
+        return Record(offset, (control, link) + (0,) * 14)
+
+    def test_command_follow_uses_single_pending_return_address(self) -> None:
+        index = {
+            0x00: self.command(0x00, 0x2000, 8),  # CALL 0x40; return to 0x20
+            0x20: self.command(0x20, 0x8000),
+            0x40: self.command(0x40, 0x2000, 12),  # Nested CALL 0x60
+            0x60: self.command(0x60, 0x3000),  # Returns to 0x20
+            0x80: self.command(0x80, 0x8000),  # Would be reached by a stack
+        }
+        chain = follow(index, 0x00)
+        self.assertEqual([record.offset for record in chain],
+                         [0x00, 0x40, 0x60, 0x20])
+
+    def test_command_return_without_call_advances_sequentially(self) -> None:
+        chain = follow({
+            0x00: self.command(0x00, 0x3000),
+            0x20: self.command(0x20, 0x8000),
+        }, 0x00)
+        self.assertEqual([record.offset for record in chain], [0x00, 0x20])
+
+    def test_candidate_search_matches_single_pending_return_semantics(self) -> None:
+        vram = bytearray(512 * 1024)
+        for offset, control, link in (
+            (0x00, 0x000A, 0),   # LOCAL
+            (0x20, 0x0008, 0),   # User clip
+            (0x40, 0x2000, 20),  # CALL subroutine at 0xA0; return to END
+            (0x60, 0x8000, 0),   # END
+            (0xA0, 0x2000, 24),  # Nested CALL at 0xC0
+            (0xC0, 0x3000, 0),   # RETURN uses the outer pending address
+        ):
+            vram[offset:offset + 4] = control.to_bytes(2, "little") + \
+                link.to_bytes(2, "little")
+        chain = find_chain(bytes(vram), 0x40 >> 3)
+        self.assertEqual([record.offset for record in chain],
+                         [0x00, 0x20, 0x40, 0xA0, 0xC0, 0x60])
+
+    def test_cmdlink_discards_non_record_address_bits(self) -> None:
+        record = self.command(0, 0x0000, 0xFFFF)
+        self.assertEqual(record.link_offset, 0x7FFE0)
+
     def test_title_geometry_ignores_skipped_local_and_draw_commands(self) -> None:
         def command(offset: int, control: int, words=None) -> Record:
             payload = list(words or [0] * 16)

@@ -59,7 +59,7 @@ class Record:
 
     @property
     def link_offset(self) -> int:
-        return self.words[1] << 3
+        return (self.words[1] << 3) & 0x7FFE0
 
 
 def records(vram: bytes) -> list[Record]:
@@ -81,8 +81,7 @@ def record_metadata(vram: bytes) -> dict[int, tuple[int, int, int]]:
     if len(vram) != VDP1_VRAM_BYTES:
         raise ValueError(f"unexpected VDP1 VRAM size: {len(vram)}")
     return {
-        offset: (control, link, (control >> 12) & 0x0003,
-                 int(any(vram[offset:offset + COMMAND_BYTES])))
+        offset: (control, link, int(any(vram[offset:offset + COMMAND_BYTES])))
         for offset in range(0, len(vram), COMMAND_BYTES)
         for control, link in (struct.unpack_from("<2H", vram, offset),)
     }
@@ -94,27 +93,35 @@ def record_at(index: dict[int, Record], offset: int) -> Record:
     return index[offset]
 
 
-def next_offset(record: Record, stack: list[int]) -> int | None:
-    if record.end:
-        return None
-    if record.jump_mode == 0:
-        return record.offset + COMMAND_BYTES
-    if record.jump_mode == 1:
-        return record.link_offset
-    if record.jump_mode == 2:
-        stack.append(record.offset + COMMAND_BYTES)
-        return record.link_offset
-    if not stack:
-        raise ValueError(
-            f"VDP1 return without call at 0x{record.offset:05x}"
-        )
-    return stack.pop()
+def command_transition(offset: int, control: int, link: int,
+                       return_address: int | None
+                       ) -> tuple[int | None, int | None]:
+    """Return the next command and updated single pending VDP1 return address."""
+    if control & 0x8000:
+        return None, return_address
+    sequential = (offset + COMMAND_BYTES) & 0x7FFFF
+    jump_mode = (control >> 12) & 0x0003
+    if jump_mode == 0:
+        return sequential, return_address
+    if jump_mode == 1:
+        return (link << 3) & 0x7FFE0, return_address
+    if jump_mode == 2:
+        if return_address is None:
+            return_address = sequential
+        return (link << 3) & 0x7FFE0, return_address
+    return (return_address if return_address is not None else sequential), None
+
+
+def next_offset(record: Record,
+                return_address: int | None) -> tuple[int | None, int | None]:
+    return command_transition(record.offset, record.control, record.words[1],
+                              return_address)
 
 
 def follow(index: dict[int, Record], start_offset: int) -> list[Record]:
     chain: list[Record] = []
     visited: set[tuple[int, tuple[int, ...]]] = set()
-    stack: list[int] = []
+    return_address: int | None = None
     offset: int | None = start_offset
     while offset is not None:
         record = record_at(index, offset)
@@ -125,7 +132,7 @@ def follow(index: dict[int, Record], start_offset: int) -> list[Record]:
         chain.append(record)
         if len(chain) > MAX_CHAIN_RECORDS:
             raise ValueError("VDP1 command chain exceeds bounded record limit")
-        offset = next_offset(record, stack)
+        offset, return_address = next_offset(record, return_address)
     if not chain[-1].end:
         raise ValueError("VDP1 command chain ended without END")
     return chain
@@ -152,12 +159,12 @@ def find_chain(vram: bytes, copr: int) -> list[Record]:
     def follow_offsets(start_offset: int) -> list[int]:
         chain: list[int] = []
         visited: set[tuple[int, tuple[int, int, int]]] = set()
-        stack: list[int] = []
+        return_address: int | None = None
         offset: int | None = start_offset
         while offset is not None:
             if offset % COMMAND_BYTES or offset not in metadata:
                 raise ValueError(f"invalid VDP1 command offset 0x{offset:05x}")
-            control, link, jump_mode, nonempty = metadata[offset]
+            control, link, nonempty = metadata[offset]
             if not nonempty:
                 raise ValueError(f"empty VDP1 command record at 0x{offset:05x}")
             key = (offset, metadata[offset])
@@ -167,19 +174,8 @@ def find_chain(vram: bytes, copr: int) -> list[Record]:
             chain.append(offset)
             if len(chain) > MAX_CHAIN_RECORDS:
                 raise ValueError("VDP1 command chain exceeds bounded record limit")
-            if control & 0x8000:
-                offset = None
-            elif jump_mode == 0:
-                offset += COMMAND_BYTES
-            elif jump_mode == 1:
-                offset = link << 3
-            elif jump_mode == 2:
-                stack.append(offset + COMMAND_BYTES)
-                offset = link << 3
-            elif not stack:
-                raise ValueError(f"VDP1 return without call at 0x{offset:05x}")
-            else:
-                offset = stack.pop()
+            offset, return_address = command_transition(
+                offset, control, link, return_address)
         if not chain or not (metadata[chain[-1]][0] & 0x8000):
             raise ValueError("VDP1 command chain ended without END")
         return chain
