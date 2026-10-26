@@ -1,9 +1,6 @@
 --- a/src/pce_fast/huc6280.cpp
 +++ b/src/pce_fast/huc6280.cpp
-@@ -1025,4 +1025,42 @@
-   TheronTraceInstructionPC = GetRealPC();
-   TheronTraceInstructionPhysicalPC = (HuCPU.MPR[TheronTraceInstructionPC >> 13] << 13) | (TheronTraceInstructionPC & 0x1FFF);
-FIRESTAFF_PATCH_BLANK_CONTEXT
+@@ -1025,1 +1025,38 @@
 +  {
 +   static FILE *trace = NULL;
 +   static bool initialized = false;
