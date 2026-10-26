@@ -54,6 +54,24 @@ It does not determine the real decompressed buffer owner, the transfer path,
 the VDP1 command that consumes a resulting texture, palette interpretation,
 or menu placement.
 
+## Short high-WRAM trace
+
+A second run used the same retail inputs, restored title-prompt state, and
+held Start for all ten captured frames. It recorded SH-2 writes to high WRAM
+`[0x06000000, 0x06100000)`. The completed receipt contains 175,530 writes and
+zero dropped records:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `sh2-memory-write-trace.csv` | `b0c67d8fa234ba37358ccefb759a52527012d88a48f88bb5690313dde30dd1fd` |
+| `sh2-memory-write-trace-bundle.txt` | `40b9b7ad3a852c990f78f1a89580f626e3ce181eecdfdcfcaf5893a4fe506942` |
+
+No row has a program counter inside the PRS3 routine's
+`0x06024d80..0x06024e3e` corridor. This does not prove that PRS3 never runs
+elsewhere in the game. It only establishes that it did not produce a traced
+high-WRAM write during this ten-frame title Start interval. Therefore this
+interval cannot be used to invent a PRS3 output-buffer ownership claim.
+
 ## Next evidence required
 
 The startup menu remains capture-gated until one coherent real-media trace
