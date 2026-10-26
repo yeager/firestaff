@@ -514,25 +514,41 @@ final frame. VDP2 had NBG0, NBG1, and NBG2 enabled (`BGON=0x0007`,
 420,006 dropped master-SH-2 rows, so it cannot establish complete writer
 provenance.
 
+Both NBG0 and NBG1 were 8bpp bitmap layers at VRAM offsets `0x00000` and
+`0x20000`. Comparison with the authentic retail `TITLE.BIN` and `MENU.BPK`
+data found no exact pixel-span or palette joins. The largest partial byte
+matches were 118 bytes to `TITLE.BIN` map 4, 99 bytes to a repeated
+`MENU.BPK` surface sequence, and 35 bytes to `TITLE.BIN` maps 1 and 3; these
+do not prove asset ownership. A diagnostic decode of the captured NBG0 bytes
+and CRAM shows Japanese date/time settings, the date 2026-10-26, and Cancel
+/ Confirm labels. This looks like a system date/time page and is not evidence
+that Nexus reached its title menu.
+
 This capture used `--capture-no-render`: both VDP1 framebuffers are zeroed and
 there is no screenshot. It is useful as a register and memory checkpoint only;
 it does not identify what appeared on screen or prove that Nexus reached a
-particular menu. The raw files and SHA-256 list are retained off-repository.
+particular game menu. The raw files, SHA-256 list, and clearly labelled layer
+diagnostic previews are retained off-repository.
 
-## Full title-menu frame reconstruction (2026-10-26)
+## Captured title-menu frame reconstruction (2026-10-26)
 
-The atomic frame-59 Ymir capture now has a bounded C replay for the full
-320×224 display. It combines the retained VDP1 display framebuffer, NBG0
-8bpp bitmap, CRAM, registers, and the verified zero back-screen table. The C
-output matches all 286,720 pixels of the hash-pinned 640×448 Ymir screenshot
-exactly. This confirms static composition for that captured menu frame; the
-screenshot was saved after the memory dump, so exact frame identity is still
-unproven.
+The atomic frame-59 Ymir capture loaded a previously saved Japanese retail
+title-prompt state, held Start for 60 of 120 capture frames, and dumped memory
+and the VDP1 trace in the same run. It was not a cold boot. A bounded C replay
+combines the retained VDP1 display framebuffer, NBG0 8bpp bitmap, CRAM,
+registers, and verified zero back-screen table. Its output matches all 286,720
+pixels of the hash-pinned 640×448 Ymir screenshot exactly. This confirms static
+composition for the captured menu frame; the screenshot was saved after the
+memory dump, so exact frame identity is still unproven.
 
 The replay remains capture-only and does not feed the Firestaff viewport or
-establish the boot-to-menu transition, menu input, or gameplay HUD. See the
+establish cold-boot-to-menu behavior, title-to-menu input handling, or gameplay
+HUD. Separately, a 13,000-loop cold boot with `--capture-no-render` stopped on
+a Japanese date/time settings page. That run has no screenshot and incomplete
+SH-2 write tracing; it does not prove that Nexus reached the game title. See
+the boot-dump receipt on the external evidence disk and
 [full capture receipt and SHA-256 identities](NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md#full-ymir-title-frame-capture-replay)
-for the reproducible command and exact scope.
+for the menu-state reproduction command and exact scope.
 
 ## Sources
 
