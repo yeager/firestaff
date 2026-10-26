@@ -16,6 +16,13 @@ and use a caller-selected task scratch directory only for an archive symlink.
 The game archive itself remains in place and Firestaff reads it through the
 native archive path.
 
+An isolated Japanese Debug boot was additionally observed with a file-system
+trace on TRV2. With `HOME` and the data symlink inside a disposable task
+directory, the external 7z reader opened the original archive read-only and
+streamed its CUE member. The boot receipt passed, no writable open of the
+archive was observed, and the disposable directory contained only the trace
+and diagnostic output before cleanup. The trace and all media remain private.
+
 ## 2026-10-25 — route Buttons I and II through native keyboard entry
 
 The documented layout-stable controller keys now reach Theron's native SDL
