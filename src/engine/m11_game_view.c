@@ -69166,7 +69166,49 @@ static int m11_draw_dm1_fmtowns_top_row_zones(
             return 0;
         }
     }
-    /* No PC34 name glyphs, bars, or hand widgets are emitted on this path. */
+
+    /* ReDMCSB CHAMDRAW.C F0292 fills C159..C162 and centers each living or
+     * dead champion's Name[] through F0650/F0635 C163..C166. F20's M653
+     * raster is loaded by m11_dm1_bind_original_font from picture 557; use
+     * that source glyph set and the F20 COORD.C anchors rather than the host
+     * text renderer. The selected inventory champion is named in C553, so
+     * its top-row strip is deliberately left clear. */
+    if (state->originalFontAvailable &&
+        M11_Font_IsLoaded(&state->originalFont) &&
+        state->assetsAvailable) {
+        static const unsigned char f20_color_dark_gray = 1u;
+        static const unsigned char f20_color_lightest_gray = 13u;
+        static const unsigned char f20_color_gold = 9u;
+        for (slot = 0; slot < state->world.party.championCount &&
+                       slot < CHAMPION_MAX_PARTY; ++slot) {
+            const struct ChampionState_Compat* champion =
+                &state->world.party.champions[slot];
+            DM1_V1_FmtownsHudRect nameBox;
+            char name[16];
+            unsigned char color;
+            if (!champion->present || slot == selected) continue;
+            m11_format_champion_name(champion->name, name, sizeof(name));
+            if (!name[0] || strcmp(name, "EMPTY") == 0) continue;
+            if (!dm1_v1_fmtowns_hud_layout_rect(edition,
+                    (unsigned int)(159 + slot), 43, 7, &nameBox) ||
+                nameBox.width != 43 || nameBox.height != 7) {
+                return 0;
+            }
+            /* F0733_FillZoneByIndex(C159 + slot, C01_COLOR_DARK_GRAY). */
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          nameBox.x, nameBox.y, nameBox.width,
+                          nameBox.height, f20_color_dark_gray);
+            color = champion->hp.current <= 0
+                ? f20_color_lightest_gray
+                : (slot == state->world.party.activeChampionIndex
+                    ? f20_color_gold : f20_color_lightest_gray);
+            m11_draw_dm1_status_name_text(
+                framebuffer, framebufferWidth, framebufferHeight,
+                nameBox.x + 1, nameBox.y + 5, name,
+                color, f20_color_dark_gray);
+        }
+    }
+    /* Status bars and hand widgets still await their source-bound F20 path. */
     return 1;
 }
 

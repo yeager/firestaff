@@ -193,6 +193,18 @@ int main(void)
             CHECK(rect.source_y == expected_rects[i].source_y);
         }
         {
+            static const int expected_name_x[4] = {1, 70, 139, 208};
+            DM1_V1_FmtownsHudRect nameRect;
+            for (int slot = 0; slot < 4; ++slot) {
+                CHECK(dm1_v1_fmtowns_hud_layout_rect(
+                    (DM1_V1_FmtownsHudEdition)edition,
+                    (unsigned int)(163 + slot), 23, 5, &nameRect));
+                CHECK(nameRect.x == expected_name_x[slot]);
+                CHECK(nameRect.y == 1 && nameRect.width == 23 &&
+                      nameRect.height == 5);
+            }
+        }
+        {
             DM1_V1_FmtownsHudRect rect;
             CHECK(dm1_v1_fmtowns_hud_layout_rect(
                 (DM1_V1_FmtownsHudEdition)edition, 1081, 48, 43, &rect));
