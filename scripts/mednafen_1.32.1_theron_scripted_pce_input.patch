@@ -4,6 +4,7 @@
 +#include <stdio.h>
 +#include <stdlib.h>
 +#include <string.h>
++unsigned theron_script_trace_frame = 0;
 @@ -95,0 +99,19 @@
 +static bool theron_script_boot_applied = false;
 +static uint16 theron_script_boot_original_port0 = 0;
@@ -130,6 +131,7 @@
 + }
 + if(theron_script_valid)
 + {
++  theron_script_trace_frame = theron_script_frame;
 +  uint16 scripted_mask = 0;
 +  for(unsigned event_index = 0; event_index < theron_script_event_count; event_index++)
 +  {

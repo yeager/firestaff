@@ -919,7 +919,9 @@ if ! grep -Fq 'if [[ "$capture_mednafen_module" == pce ]]; then' "$script" ||
     printf '%s\n' 'FAIL: capture snapshots must match the selected Mednafen core' >&2
     exit 1
 fi
-if ! grep -Fq 'theron_input_read_count < theron_input_read_trace_limit' "$repo/scripts/mednafen_1.32.1_theron_input_result_trace.patch" ||
+if ! grep -Fq 'theron_input_read_result_pending' "$repo/scripts/mednafen_1.32.1_theron_input_result_trace.patch" ||
+   ! grep -Fq 'theron_script_trace_frame >= theron_input_read_trace_start_frame' "$repo/scripts/mednafen_1.32.1_theron_input_state_trace.patch" ||
+   ! grep -Fq 'theron_script_trace_frame >= theron_input_write_trace_start_frame' "$repo/scripts/mednafen_1.32.1_theron_input_state_trace.patch" ||
    grep -Fq 'theron_input_read_count <= theron_input_read_trace_limit' "$repo/scripts/mednafen_1.32.1_theron_input_result_trace.patch" ||
    ! grep -Fq 'HuCPU.PeekLogical(0x2100u | ((sp + 1u) & 0xffu))' "$repo/scripts/mednafen_1.32.1_theron_input_result_trace.patch" ||
    ! grep -Fq 'stack=%02x%02x%02x%02x' "$repo/scripts/mednafen_1.32.1_theron_input_result_trace.patch"; then
