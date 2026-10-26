@@ -1,6 +1,6 @@
 # Five-game startup support gap analysis
 
-Reconciled with `main` at `000cf7a94` on 2026-10-26. Runtime receipts
+Reconciled with `main` at `d0a6c183f` on 2026-10-26. Runtime receipts
 cited below remain the recorded runs at their stated revisions; they were not
 rerun during this documentation update. The repository contains checks
 against authentic media for all five games, but “available,”
