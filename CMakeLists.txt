@@ -28319,7 +28319,7 @@ endif()
         COMMAND test_m12_launcher_options_runtime_handoff
     )
     set_tests_properties(m12_launcher_options_runtime_handoff PROPERTIES
-        ENVIRONMENT "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/launcher-options-scratch;SDL_VIDEODRIVER=dummy")
+        ENVIRONMENT "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/launcher-options-scratch;SDL_VIDEODRIVER=dummy;FIRESTAFF_TEST_DM1_DATA_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1")
 
     add_executable(test_m12_version_changelog_consistency
         tests/test_m12_version_changelog_consistency.c

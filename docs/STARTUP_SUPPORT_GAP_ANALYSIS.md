@@ -22,7 +22,7 @@ The current evidence does not establish complete five-game startup support.
 | CSB | The authentic-media CLI diagnostics exercise direct selection and source-owned startup. | The picker test covers keyboard and mouse handoff; the runtime test checks the authentic starting party and viewport receipt. | First runtime is verified on bounded real-media routes. Platform-wide parity and native physical input remain open. |
 | DM2 | The authentic-media CLI diagnostics cover direct selection; platform-specific checks include the complete timed FM Towns title sequence. The French DOS loose-file route now also preserves its selected graphics owner into the first loaded runtime. | The picker test covers keyboard and mouse handoff; the runtime test checks the authentic first party and frame. | First runtime is verified on bounded real-media routes, including the selected French DOS loose-file case. Other edition and native interaction coverage remains incomplete. |
 | Theron | The CLI diagnostics reach its source-owned runtime handoff. | The picker test covers keyboard and mouse handoff; the runtime test checks a loaded authentic Track 02 state. Tab champion cycling and the documented Z/X/Space controls now exercise the normal SDL event loop on authentic USA Track 02. | Runtime state, native frames and these keyboard actions are reached, but the native dungeon image is not yet driven by the authenticated world/graphics state. A recent nonblack Firestaff capture has not been paired with an original-emulator capture. |
-| Nexus | The latest recorded authentic-media CLI boot probe (v3.0.414) reports `title=1`, `levelLoaded=0`, `menu=0`, and blocker `menu-bpk-prs3-capture-required`. Keyboard and mouse selection tests reach the M12-to-M11 handoff, not an active game runtime. There is no Nexus case in the first-runtime probe matrix. | Retail Ymir captures document `NEW GAME`, `CONTINUE`, and `CONFIGURATION`, but Firestaff's production title/menu consumer and transition to an authenticated level remain gated. The 600-frame no-present Ymir replay reproduced the retail `Now Loading` image (SHA-256 `07a6f3a612ca75209cd6308852a7cf25b3d1f35943ce2f5774e720376ef7c61c`); this confirms only a retail loading checkpoint, not Firestaff menu or playable-runtime behavior ([capture evidence](nexus_startup.md#delayed-title-menu-confirm-observation-2026-10-26)). The Saturn BKR parser is container-level only and is not wired to save selection or loading. | **Not startable as a playable game yet.** |
+| Nexus | A fresh 2026-10-27 TRV2 v3.0.415 CLI run used the authentic Japanese `DM.BIN` (MD5 `e88d60859f65f08fa622e1992b02280f`): after 110 boot-probe frames and one scripted Enter, it reported `titleReady=1`, `levelLoaded=0`, `menu=0`, blocker `menu-bpk-prs3-capture-required`. The authentic-data mouse test also passes only through the same capture-gated title route. There is no Nexus case in the first-runtime probe matrix. | Retail Ymir evidence covers the Japanese `LOAD` row and a second-stage load into the four-champion HUD and first-person viewport. This establishes a retail checkpoint route only; it does not admit Firestaff's production menu, save loader, or runtime. The installed English `MENU.BPK` still lacks the source-bound English capture required by the renderer gate. The Saturn BKR parser remains container-level and is not wired to save selection or loading ([retail evidence](nexus_startup.md#retail-continue-with-an-authentic-save-2026-10-25)). | **Not startable as a playable game yet.** |
 
 ## What the existing checks prove
 
@@ -79,6 +79,25 @@ The current evidence does not establish complete five-game startup support.
   frame, CSB its source party and viewport receipt, DM2 its completed Towns
   title and first party, and Theron its Track 02 runtime/party. The runtime
   test has no Nexus case; Nexus remains the known playable-start blocker.
+- A fresh 2026-10-26 TRV2 run rebuilt main at `ed2ff82a` and repeated
+  `test_m12_main_menu_runtime_real_media.sh` against the authentic installed
+  collection. Its `levelLoaded=1` verifier passed the no-game menu routes for
+  DM1, CSB, DM2 (FM Towns), and Theron (PC Engine). Separate zero-frame direct
+  CLI probes against the same real data entered DM1's loaded runtime
+  immediately, but sampled CSB, DM2, and Theron before their startup/title
+  transitions completed. Nexus still reported
+  `title=1`, `menu=0`, `levelLoaded=0`, and
+  `menu-bpk-prs3-capture-required`. The runtime script omits Nexus, so these
+  four passes do not close the five-game startup gap.
+- A fresh 2026-10-27 TRV2 v3.0.415 build used authentic Japanese Nexus data.
+  Direct `--game nexus --platform saturn` startup selected the hash-matched
+  `DM.BIN` (MD5 `e88d60859f65f08fa622e1992b02280f`); after 110 boot-probe
+  frames and one scripted Enter it reported `titleReady=1` but
+  `levelLoaded=0`, `menu=0`, and
+  `menu-bpk-prs3-capture-required`. The real-data
+  `test_nexus_v1_native_menu_mouse_title.sh` passed and confirmed the M12
+  mouse route reaches the same capture-gated title. These runs verify title
+  handoff only; no Nexus menu or playable level was reached.
 - The Theron Button II dispatch and non-advancing cancel behavior have
   source-backed coverage in the active runtime input and SDL event-loop checks.
   This closes that input-path defect; it does not establish full input or
@@ -87,10 +106,10 @@ The current evidence does not establish complete five-game startup support.
   checks discovery and direct CLI startup for all five IDs. Its Nexus-specific
   assertion rejects a false `runtime-entered` receipt and requires the blocked
   menu/level gate, so a passing test is not evidence that Nexus is playable.
-- [`nexus_v1_ymir_title_menu_vdp_bundle_20261025`](../parity-evidence/verification/nexus_v1_ymir_title_menu_vdp_bundle_20261025/README.md)
-  records emulator evidence of the retail title menu. It explicitly does not
-  satisfy the original-Saturn provenance gate or establish Firestaff menu
-  rendering, input dispatch, or level startup.
+- [`docs/nexus_startup.md`](nexus_startup.md) records authentic Ymir title,
+  menu, load-row, and loaded-HUD observations from Japanese retail media. They
+  do not satisfy the English `MENU.BPK` source-binding gate or establish
+  Firestaff menu rendering, save selection/loading, or level startup.
 - These tests use SDL dummy video/audio and authentic installed media. They do
   not establish native window presentation, physical input, audible output,
   complete game playthroughs, or cross-platform gameplay parity.

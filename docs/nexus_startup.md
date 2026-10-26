@@ -119,6 +119,38 @@ does not bind a retail menu resource to a Saturn consumer, prove the final
 displayed pixels, or permit Firestaff to present a host-built menu. Those
 production gates remain closed.
 
+An independent 2,200-frame no-present replay on 2026-10-26 used the same
+authenticated Japanese IPL, retail CUE, retained title-prompt state, and the
+hash-verified four-champion BKR (`87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`).
+It scheduled Start, Down, A, and a second A at emulator-frame boundaries rather
+than through X11. The BKR digest was unchanged after the run. Its final native
+frame was the Dungeon Master Nexus title image, SHA-256
+`1c224b148ec5c107569c1c9b30c5dfab24d8110d3e391b0bcb1089cd582dfb13`.
+This is a timing boundary: those inputs occur before the title is receptive and
+must not be interpreted as a verified menu or Continue route. The temporary
+profile, dump, and screenshot were removed after inspection.
+
+A later 3,400-frame replay moved the same Start/Down/A/A sequence after the
+title boundary, but held every control for only eight emulated frames. Its
+retail endpoint remained the title image (SHA-256
+`8d495ffa4e8a76ab38a48c3c84a6fcc437db1bc4682aec6ac897609ed2307d95`), while
+the BKR digest again remained unchanged. This is negative timing evidence: an
+eight-frame post-title hold is not sufficient to establish a retail input
+transition. It does not authorize a host menu, save route, HUD, or viewport.
+
+A separate 3,400-frame debug replay kept the same post-title frame schedule
+but extended each Start, Down, A, and second-A press to 60 emulated frames.
+Its endpoint was still the native title screen, with SHA-256
+`8d495ffa4e8a76ab38a48c3c84a6fcc437db1bc4682aec6ac897609ed2307d95`; the
+four-champion BKR digest remained
+`87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`.
+Both runs ended with the same final title-screen image hash. Extending the
+post-title hold from eight to 60 frames did not change the final endpoint; no
+claim is made here about intermediate menu or loading transitions. The
+temporary profile, X display, memory dump, and inspection copy were removed
+after verification. This remains negative emulator evidence only: it does not
+establish menu, save, HUD, or viewport parity.
+
 Ymir PR #966 additionally provides `--capture-screenshot` for the same
 capture-owned route. It queues a profile-local framebuffer PNG only after the
 requested frames and memory receipt have completed; it requires both a frame
@@ -235,6 +267,69 @@ narrow rendered viewport checkpoint only. It does not identify the level or
 room source, establish input semantics, authorize a host compositor, or prove
 the HUD route.
 
+On 2026-10-26, the system-wide Ymir build on TRV2 reproduced that route from
+the retained Japanese title-prompt state: Start held for capture frames `0..59`,
+then A for `240..249`, over 900 `--debug` frames. The framebuffer again hashed
+to `8ede95f1fd777eda69ebcfc91d0268194e501f145306eb1fc2971ed0113a2274`; the
+isolated four-champion BKR remained
+`87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`.
+Saving that endpoint in CLI slot 3 and reloading it in a second isolated
+profile reproduced the framebuffer hash after one frame. Both temporary
+profiles, dumps, screenshots, and X displays were removed. This verifies the
+current Ymir capture tooling and the bounded retail viewport route, not a
+Firestaff renderer, menu consumer, or HUD admission.
+
+## Bounded candidate-state-window SH-2 read witness (2026-10-26)
+
+Using the same hash-pinned Japanese retail CUE, BIOS, title-prompt state, and
+four-champion BKR, an isolated system-wide Ymir run advanced the observed
+Start/Down/A route, saved a fresh slot-3 checkpoint, and replayed one debug
+frame from that checkpoint. The source BKR remained
+`87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`
+before and after both captures. A bounded SH-2 data-read trace over
+`0x060476d0..0x06048000` recorded twelve master-SH-2 16-bit reads, all in the
+`0x06047ca0..0x06047cb6` range, without dropped rows. The captured checkpoint
+has SHA-256 `48ca0feb12432dde6748124a9e639ad4e466efc307520268356a16c00fd5b2ce`;
+the retained CSV has SHA-256
+`e45ad64fa89ce263b51c0579167a35fcfacdce840a438854b48b8df5100dd9ee`.
+
+Disassembly against the retained high-WRAM image identifies two real 16-bit
+field reads at offsets `+4` and `+6` from the observed eight-byte records, and
+the caller dereferences a table entry in the same address range. For example,
+the trace reads the `0x0124` and `0x00b0` fields from the record beginning at
+`0x06047cb0`; the next observed records have the same packed layout. This is
+evidence of structured runtime state, not evidence of a particular UI role.
+The high-WRAM image used for this disassembly has SHA-256
+`344b6a15bdac95a8e698c9a9ccc336f6f225fb3a4c60eec9788102c57b2e197d`.
+
+The raw CSV, its completed Ymir bundle, VDP1 command trace, VDP register
+snapshot, VDP2 registers, high-WRAM image, and checkpoint are retained in the
+TRV2 verification store as `nexus_v1_ymir_sh2_read_trace_hud_20261026`. This
+is an authentic execution witness for the specified RAM window. It is not an
+ownership join from a Firestaff source resource to a HUD element, does not
+label those reads semantically, and does not permit a host HUD, viewport
+compositor, save route, or input implementation.
+
+## SH-2 to VDP1 command handoff (2026-10-26)
+
+Ymir PR #966 now exposes a bounded SH-2 data-write trace independently of the
+older VDP2-only trace. A two-frame replay from the same authentic checkpoint
+traced physical VDP1 RAM at `0x05c00000..0x05c80000`. It retained 176
+master-SH-2 writes with no drops. In frame 0, the master SH-2 completed the
+command at physical address `0x05c000a0` by writing `0x5000` to offset zero
+and `0x0018` to offset two. In frame 1, the VDP1 command trace executed the
+command at VDP1 address `0x00a0` with word 0 `0x5000` and word 1 `0x0018`.
+
+This is a same-checkpoint, temporal CPU-to-VDP1 handoff: it proves that the
+retail SH-2 authored the VDP1 command consumed on the next captured frame. The
+two-frame SH-2 write trace and VDP1 command trace have SHA-256
+`58c9d41740a75063543c70b6cb11e336268cfb47486df1ffdcbe19718f12bc66` and
+`c93f3a8f86263ded3b79d081f15771bce4331ab31ec6a0ce37d3b4691b628f32`
+respectively. The corresponding completed receipts are retained with the
+checkpoint. This does not identify the source resource, texture, palette, or
+semantic role of that command, so it does not by itself admit a Firestaff HUD,
+viewport, or renderer.
+
 ## Title-menu VDP1 source-span join (2026-10-19 capture; analyzed 2026-10-26)
 
 A read-only source-join analysis on TRV2 used the retained Ymir v0.4.0
@@ -313,6 +408,23 @@ retail-written. Because its transfer chain was not retained, the save's retail
 provenance is not independently established. It does not prove Firestaff
 implements that title menu or save selection; the production startup route
 remains blocked by the consumer-evidence gates described below.
+
+On 2026-10-26, a fresh TRV2 Ymir profile copied the same hash-verified
+four-champion BKR and replayed the retained Japanese title-prompt state with
+Start at frames `0..59`, Down at `180..189`, and A at `240..249`. At frame 900,
+the authentic framebuffer showed the native Japanese `LOAD` panel and its
+`B01 0:06 NORMAL` internal-memory row (SHA-256
+`b95cdc24ae30705648533dba1e1a1a304196a8fbb449bd069df513be85c0928b`). A
+saved checkpoint was loaded into a second isolated profile; A at frames
+`0..9` then reached a four-character HUD plus first-person viewport at frame
+900 (SHA-256
+`68de1c7898d79d70d7f3b9fd8f220485fd5ffa75b8aefad9f491eeb3d16a2a76`). Both
+profiles retained the BKR SHA-256
+`87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`.
+This authentic two-stage route binds a real UI checkpoint and HUD witness for
+future capture consumers; it does not yet admit a Firestaff menu compositor,
+HUD compositor, or save-format implementation. The profiles, dumps,
+screenshots, and X displays were removed after verification.
 
 Firestaff's source-level startup helpers do not implement the retail title
 menu. `nexus_v1_startup_boot_handle_input` uses the synthetic warning/title

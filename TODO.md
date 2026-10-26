@@ -4,6 +4,26 @@ The current five-game startup evidence matrix and remaining Nexus/Theron
 runtime-entry gaps are consolidated in
 [`docs/STARTUP_SUPPORT_GAP_ANALYSIS.md`](docs/STARTUP_SUPPORT_GAP_ANALYSIS.md).
 
+2026-10-26 local M12 source audit found several paths using a fixed game
+option slot as a menu-row index: CLI `--game` preselection, Quick Resume,
+save-browser load/import, Quick Resume card art, selected-launch preparation,
+direct CLI launch, and pointer cycling of presentation mode. The current
+static row order masks the mismatch. The working-tree fix resolves menu rows
+by game ID and keeps option access on the fixed game slot. Its reordered-row
+Quick Resume regression now scans the configured authentic DM1 media root
+and does not mark a game available by hand; the UI handoff state contains no
+fabricated archive, hash, or save. The existing all-games M11 direct-launch
+test also reorders each available game's row during its authentic-data path,
+so it can verify both direct and menu launch against real media. Syntax checks
+for the menu, pointer handler, M11 launch path and both tests pass with
+existing Firestaff compile flags. Rebuilt `firestaff` and the three focused
+test targets on the workstation with its five authentic `.firestaff/data`
+directories; `m11_direct_launch_prepare_all_games`,
+`m12_launcher_options_runtime_handoff`, and `m12_data_dir_cancel` all pass.
+The last test covers the all-games rescan path that previously let an
+unsupported virtual FM Towns image shadow a bootable DM2 PC archive. The
+working diff also passes `git diff --check`.
+
 2026-10-25 current-main TRV2 build and original-media startup retest:
 `fast-dev` built commit `e3b6d015` successfully (2,342 Ninja steps, one job).
 Direct `--game` boot probes using the per-game `.firestaff/data` folders
@@ -17,6 +37,28 @@ returned its documented skip code 77 because this TRV2 data root lacks the
 required authentic DM2 Macintosh archive; no substitute or synthetic media
 was used. All probes used SDL dummy video/audio and do not establish native
 display/input parity or complete gameplay.
+
+2026-10-26 fresh TRV2 retest against the authentic `.firestaff/data` roots:
+the no-game M12 menu to first-runtime test passed for DM1, CSB, DM2 (FM
+Towns), and Theron (PC Engine), with the verifier requiring `levelLoaded=1`.
+This confirms those four bounded menu routes on the rebuilt `ed2ff82a` main
+binary. A separate zero-frame CLI snapshot against the same real data showed
+why an immediate boot-probe is not a runtime matrix: DM1 already had
+`levelLoaded=1`, while CSB, DM2, and Theron were still in their respective
+startup states. Nexus remained `title=1`, `menu=0`, `levelLoaded=0`, blocked
+by `menu-bpk-prs3-capture-required`; no playable Nexus start was proved. The
+four-game runtime script has no Nexus case, and these SDL dummy runs do not
+establish native presentation or full gameplay.
+
+2026-10-27 TRV2 v3.0.415 recheck against authentic Japanese Nexus media:
+direct `--game nexus --platform saturn` selected `DM.BIN` (MD5
+`e88d60859f65f08fa622e1992b02280f`). After 110 boot-probe frames and one
+scripted Enter, the receipt reported `titleReady=1`, `levelLoaded=0`,
+`menu=0`, and `menu-bpk-prs3-capture-required`. The authentic-data
+`test_nexus_v1_native_menu_mouse_title.sh` passed through the M12 mouse flow
+to the same capture-gated title. This confirms Nexus title handoff only, not
+a playable level or menu. Both runs used SDL dummy video/audio and preserved
+the retail data.
 
 2026-10-26 Theron keyboard gap follow-up: PR #74 was merged on 2026-10-25.
 The earlier review blockers are resolved in the current source: the Theron
