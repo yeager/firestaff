@@ -22,3 +22,26 @@ asset owner, or enable Firestaff startup rendering.
 matches its manifest receipt and rejects an operator-supplied authenticated
 non-menu hash. A non-rejected result is deliberately reported as
 `unclassified`, never as a menu.
+
+## Follow-up: retained Ymir state classification
+
+On the same authenticated Japanese retail disc, an isolated Ymir 0.4.1
+profile loaded the retained state
+`ymir-title-prompt-slot-2.savestate` (SHA-256
+`11d88ef517c408b3bca5c078c0ccb8081dbf3342f308239dd73403c73f0c3774`).
+Its visible Nexus surface is the first-run Japanese date/time configuration,
+not a title prompt. The local rendered receipt after dismissing the Ymir-only
+update dialog had SHA-256
+`3338a1f2f8dbc87336a56251f29d5b47683eadc40574a1441ace79c983b9d60b`.
+
+The observed surface has editable year, month, day, hour and minute fields,
+plus Cancel and Confirm controls. The tested Control Pad mapping was
+`W/A/S/D` for the directional pad, `J/K/L` for A/B/C and `F` for Start.
+Keyboard directional input visibly moves or changes the active date/time
+field. An X11 mouse click over the visible Confirm control did not reach the
+Saturn Control Pad in this Ymir profile; it must not be recorded as evidence
+of mouse input support in Firestaff.
+
+These screenshots and the temporary profile were deleted after inspection.
+They are observational evidence only: they neither establish the original
+Saturn asset owner for the surface nor authorize a host-drawn replacement.
