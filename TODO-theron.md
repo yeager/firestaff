@@ -11,6 +11,10 @@
   not establish a Track 02-to-RAM receipt, game-owned controller consumer, or
   dungeon pose/rendering semantics. A fresh authentic cold-start capture is
   still required to make those joins.
+- The normal PCE instrumentation uses the same gate and keeps each emitted
+  raw controller row paired with its result row at the bounded-trace limit.
+  This repairs an evidence-recording boundary only; it does not alter the
+  reference emulator's controller state or Firestaff runtime behavior.
 
 ## 2026-10-26 — F5-state RUN hold has a reproducible raw state and screen result
 
