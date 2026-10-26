@@ -122,6 +122,10 @@ descriptor 0 at file offset `0xb098`. All 32 palette bytes, after the same
 the displayed item's game identity, transform, and composition remain open.
 The retained files can be rechecked with
 `python3 scripts/verify_nexus_item_floor_capture.py CAPTURE ITEM.IBS --frames 4 --frame 0 --command-offset 0xf00 --floor-index 33`.
+Firestaff's verified ITEM.IBS parser now resolves reused palettes by palette
+ID; previously it reused the most recently declared palette even when that
+palette belonged to another ID. The real Japanese corpus regression checks
+all 16 words for descriptor 33 against the original palette at `0xb098`.
 
 The frame counter in the VDP1 trace is distinct from the 120 requested capture
 steps, and the screenshot is taken after the dump. This receipt therefore

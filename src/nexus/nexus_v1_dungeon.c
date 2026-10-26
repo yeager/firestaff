@@ -6569,8 +6569,8 @@ int nexus_v1_item_ibs_parse_verified(const uint8_t *data, int size,
     memcpy(out_bank->regular_image_texels, data + ITEM_IMAGES,
            sizeof(out_bank->regular_image_texels));
     {
-        uint16_t inherited_palette[16] = {0};
-        int have_inherited_palette = 0;
+        uint16_t floor_palettes[64][16] = {{0}};
+        uint8_t have_floor_palette[64] = {0};
         int terminator_offset = -1;
         for (i = 0; i <= NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_COUNT; ++i) {
             const uint8_t *decl = data + ITEM_FLOOR_DECLARATIONS +
@@ -6603,20 +6603,21 @@ int nexus_v1_item_ibs_parse_verified(const uint8_t *data, int size,
             floor->width = rb16(decl + 6);
             floor->height = rb16(decl + 8);
             floor->image_offset = image_offset;
-            if (!floor->width || !floor->height || floor->encoding != 8U)
+            if (!floor->width || !floor->height || floor->encoding != 8U ||
+                floor->palette_id >= 64U)
                 return -1;
             if (palette_offset != 0U) {
                 if (palette_offset > (uint32_t)(NEXUS_V1_ITEM_IBS_BYTES -
                                                   ITEM_FLOOR_DECLARATIONS - 32))
                     return -1;
                 for (color = 0; color < 16; ++color) {
-                    inherited_palette[color] = rb16(data + ITEM_FLOOR_DECLARATIONS +
-                                                     palette_offset + color * 2);
+                    floor_palettes[floor->palette_id][color] = rb16(
+                        data + ITEM_FLOOR_DECLARATIONS + palette_offset + color * 2);
                 }
-                have_inherited_palette = 1;
+                have_floor_palette[floor->palette_id] = 1;
             }
-            if (!have_inherited_palette) return -1;
-            memcpy(floor->palette_bgr555, inherited_palette,
+            if (!have_floor_palette[floor->palette_id]) return -1;
+            memcpy(floor->palette_bgr555, floor_palettes[floor->palette_id],
                    sizeof(floor->palette_bgr555));
             floor->palette_bound = 1;
         }
