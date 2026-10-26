@@ -3,18 +3,18 @@
 ## Evidence identity
 
 The execution evidence is the private PCE Fast capture
-`/home/trv2/firestaff-theron-evidence/capture/theron-a1a9-fetch-v2-20261027/live.trace.a1a9-init`
+`/home/trv2/firestaff-theron-evidence/capture/theron-a1a9-opcode-fetch-20261027/live.trace.a1a9-init`
 on TRV2. Its SHA-256 is
-`ff6dd9426adfebdd2927b0417c0f8b9f1bbf1820cfaab0c5abbd4843aa9d0f5b`.
+`af9040613221fe12afc8ba8b34456fbc3663bd3a73a0191e9d37ef2146d2d249`.
 It was captured from an emulator-created Ak-Tu-Ba state using authentic JP
 Rev. 1 media. The authentic JP Track 02 MD5 is
 `b7afb338ad31be1025b53f9aff12d73a`; the matching US Track 02 MD5 is
 `f23601102138f87c33025877767ebf76`.
 
-Across 30 bounded trace windows, the JP code at logical `$43AB–$43B4` ran at
-physical `$0D03AB–$0D03B4`. The trace records 30 visits to `$43AB` and `$43AD`,
-15 fall-through branches from `$43AD` to `$43B0`, 15 branches from `$43AD` to
-`$43B2`, 30 visits to `$43B2`, and 30 returns through `$43B4` to `$A1C1`.
+Across 167 bounded trace windows, the JP code at logical `$43AB–$43B4` ran at
+physical `$0D03AB–$0D03B4`. The trace records 167 visits to `$43AB` and `$43AD`,
+84 fall-through branches from `$43AD` to `$43B0`, 83 branches from `$43AD` to
+`$43B2`, 167 visits to `$43B2`, and 167 returns through `$43B4` to `$A1C1`.
 
 ## Decoded routine
 
@@ -48,7 +48,7 @@ remains ambiguous, and no native click behavior is established.
 
 ## Dynamic caller context
 
-The same private trace records 30 calls at logical `$A1BE`, physical
+The same private trace records 167 calls at logical `$A1BE`, physical
 `$0E01BE`, with instruction bytes `20 AB 43` (`JSR $43AB`). Every observed
 return reaches `$A1C1`, then executes `STZ $271F` at `$A1C1`, `STZ $271D` at
 `$A1C4`, and `LDA #$DF` at `$A1C7`. The caller does not consume the helper's
@@ -56,15 +56,41 @@ returned A value before replacing it, and this immediate sequence does not
 read zero-page `$07`. This narrows the observed call path but does not identify
 a later consumer or assign meaning to the written `$27xx` registers.
 
+## Static JP caller candidates
+
+An additional scan of the authentic JP Rev. 1 raw Track 02 (`b7afb338ad31be1025b53f9aff12d73a`)
+finds a six-byte code window at `$4B4B`: `20 AB 43 8D A1 27` (`JSR $43AB; STA
+$27A1`). It appears at raw offsets `0x956eb`, `0xdeeeb`, `0x1286eb`,
+`0x171eeb`, `0x1bb6eb`, `0x204eeb`, and `0x24e6ee`. This is a static caller
+candidate where the helper's returned A is written to `$27A1`; it does not
+identify which copy ran or what the caller represents in gameplay.
+
+The same seven-copy scan finds two callers of the adjacent `$43C5` helper.
+At `$422A`, the bytes begin `20 C5 43 AD A0 27 0D 26 29 8D 26 29 9C A0 27`:
+the caller invokes `$43C5`, reads `$27A0`, combines it with `$2926`, writes
+`$2926`, then clears `$27A0`. The seven matching raw offsets are `0x94dca`,
+`0xde5ca`, `0x127dca`, `0x1715ca`, `0x1badca`, `0x2045ca`, and `0x24ddca`.
+At `$8A9F`, the sequence is `20 C5 43 20 7E 43 EE 26 29 20 0A 42 60`; its
+seven offsets are `0x9963f`, `0xe2e3f`, `0x12c63f`, `0x175e3f`, `0x1bf63f`,
+`0x208e3f`, and `0x25263f`. These static call windows connect the counter
+helper with `$27A0/$2926` updates, but do not prove runtime execution or
+semantic meaning.
+
+The adjacent `$43BF` helper is statically `LDA $27A1; STA $07; RTS`, which
+provides a candidate bridge from the `$4B4B` write to a later `$07` consumer.
+No same-session trace has yet bound that write, the `$43BF` read, and the
+`$C292` consumer into one transaction. Keep this relationship source-level
+only until such a trace also establishes the loaded Track 02 source.
+
 ## First observed zero-page consumer
 
 The same 128-instruction windows continue through a trace row at logical
 `$C292` / physical `$0D2292` whose sampled bytes are `A5 07` (`LDA $07`). This
-row occurs in all 30 windows. At the next row, `$C294`, A is `$02` in 15
-windows and `$00` in 15 windows, matching the values stored by `$43B2` on the
+row occurs in all 167 windows. At the next row, `$C294`, A is `$02` in 84
+windows and `$00` in 83 windows, matching the values stored by `$43B2` on the
 preceding branch paths. The sampled bytes at `$C294–$C296` are three `ASL A`
 instructions, and the row at `$C297` records a store to `$279F` with A=`$10`
-in the 15 `$02` cases and A=`$00` in the 15 `$00` cases. The new trace records
+in the 84 `$02` cases and A=`$00` in the 83 `$00` cases. The new trace records
 the opcode returned by `RdAtPC()` and verifies it against the first byte of
 each mapped code window. Thus the executed opcode bytes, including `$A5` at
 `$C292`, match the mapped bytes in all rows; operands remain sampled from the
@@ -79,8 +105,8 @@ variables inside `HuC6280_Run`; `SAVE_LOCALS` writes them back to `HuCPU` only
 when that run call exits. The old trace sampled `HuCPU.X`, `HuCPU.Y`, and
 `HuCPU.P`, so it recorded stale struct values while the CPU was running. The
 trace patch now samples `X_local`, `Y_local`, and `P_local`. The corrected
-capture records fetched opcode `$BD` at `$C29B`, with X=`$10` in all 15 `$02`
-selector cases and X=`$00` in all 15 `$00` cases, matching the value
+capture records fetched opcode `$BD` at `$C29B`, with X=`$10` in all 84 `$02`
+selector cases and X=`$00` in all 83 `$00` cases, matching the value
 previously stored to `$279F`. This verifies the bounded live-register and
 opcode-byte correlations for this state. Operands still come from the mapped
 code page rather than operand-fetch receipts. The adjacent helpers that read
