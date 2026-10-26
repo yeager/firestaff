@@ -1,5 +1,13 @@
 ## 2026-10-26 — bind scripted-controller receipts to the replay-clock interval
 
+- The bounded `$44D2` PCE Fast caller follow-up is now configurable for a
+  future authentic-state capture through
+  `THERON_CAPTURE_PCE_FAST_44D2_FOLLOW_LIMIT` (1 through 2048 instructions,
+  default 128). It retains the existing strict bound and records no game data
+  in the repository. A longer follow-up must still be paired with the same
+  session's authenticated media identity, controller receipt, and observed
+  game-state effect before it can establish a gameplay meaning.
+
 - The Mednafen reference-capture verifier now requires every accepted
   controller read to carry the replay-clock frame and to occur inside the
   logged event's active hold interval. The legacy PCE raw-read/result pair

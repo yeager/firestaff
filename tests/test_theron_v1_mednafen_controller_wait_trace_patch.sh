@@ -441,8 +441,10 @@ if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_44d2_runtime_code_window.patch' "$build_script" ||
    ! grep -Fq 'TheronTraceInstructionPC == 0x44d2' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'Theron44D2FastCodeWindowCount < 64' "$runtime_code_window_patch_file" ||
-   ! grep -Fq 'Theron44D2FastFollowStepsRemaining = 128' "$runtime_code_window_patch_file" ||
-   ! grep -Fq 'Theron44D2FastFollowCount < 128' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'FIRESTAFF_THERON_44D2_FOLLOW_LIMIT' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'parsed >= 1 && parsed <= 2048' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'Theron44D2FastFollowStepsRemaining = Theron44D2FastFollowLimit()' "$runtime_code_window_patch_file" ||
+   ! grep -Fq 'Theron44D2FastFollowCount < Theron44D2FastFollowLimit()' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'theron_44d2_follow step=%u logical_pc=%04x physical_pc=%06x opcode=%02x' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'theron_runtime_code_window pc=%04x physical_pc=%06x byte0=%02x byte0_mpr=%02x byte0_physical=%06x byte1=%02x byte1_mpr=%02x byte1_physical=%06x byte2=%02x byte2_mpr=%02x byte2_physical=%06x' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'Theron3879FastTraceMappedOpcode, HuCPU.MPR[TheronTraceInstructionPC >> 13]' "$runtime_code_window_patch_file" ||
@@ -451,7 +453,9 @@ if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
    ! grep -Fq '(HuCPU.MPR[(TheronTraceInstructionPC + 1) >> 13] << 13) | ((TheronTraceInstructionPC + 1) & 0x1fff)' "$runtime_code_window_patch_file" ||
    ! grep -Fq 'Theron3879FastTraceMappedOperand2, HuCPU.MPR[(TheronTraceInstructionPC + 2) >> 13]' "$runtime_code_window_patch_file" ||
    ! grep -Fq '(HuCPU.MPR[(TheronTraceInstructionPC + 2) >> 13] << 13) | ((TheronTraceInstructionPC + 2) & 0x1fff)' "$runtime_code_window_patch_file" ||
-   ! grep -Fq '"$indirect_target_trace"' "$capture_script"; then
+   ! grep -Fq '"$indirect_target_trace"' "$capture_script" ||
+   ! grep -Fq 'THERON_CAPTURE_PCE_FAST_44D2_FOLLOW_LIMIT' "$capture_script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_44D2_FOLLOW_LIMIT="$pce_fast_44d2_follow_limit"' "$capture_script"; then
     printf '%s\n' 'FAIL: bounded PCE Fast code trace is missing or not wired into the live capture'
     exit 1
 fi
