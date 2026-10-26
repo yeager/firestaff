@@ -1,3 +1,16 @@
+## 2026-10-26 — verify native SDL keyboard item/action commands in both editions
+
+- The new `theron_v1_us_keyboard_action_events` and
+  `theron_v1_jp_keyboard_action_events` regressions send G, I, P, U, and Return
+  through the ordinary SDL loop after authentic regional Track 02 startup.
+  Both editions pass three repeated TRV2 runs. The checks bind to each
+  region's retail hash, confirm level-0 sandals pickup/drop, exercise inventory
+  and bounded use handlers, preserve the source-backed pose, and confirm
+  Return reaches the Button I wait action.
+- This closes a live SDL keyboard coverage gap for these existing native
+  routes. It does not claim complete Theron support; later-level gameplay,
+  direct world clicks, and source-driven dungeon rendering remain open.
+
 ## 2026-10-26 — authentic USA Backup RAM Continue remains native and source-bound
 
 - An isolated TRV2 Debug build passed

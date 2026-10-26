@@ -47156,6 +47156,20 @@ if(BUILD_TESTING AND TARGET firestaff_theron)
         SKIP_RETURN_CODE 77
         LABELS "theron;real-media;runtime;input;native;no-synthetic"
     )
+    foreach(theron_keyboard_action_region IN ITEMS us jp)
+        add_test(
+            NAME theron_v1_${theron_keyboard_action_region}_keyboard_action_events
+            COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_keyboard_action_events.sh
+                    $<TARGET_FILE:firestaff>
+                    ${theron_keyboard_action_region}
+        )
+        set_tests_properties(
+            theron_v1_${theron_keyboard_action_region}_keyboard_action_events
+            PROPERTIES
+                SKIP_RETURN_CODE 77
+                LABELS "theron;real-media;runtime;input;native;no-synthetic"
+        )
+    endforeach()
     add_test(
         NAME theron_v1_us_clonecd_zip_runtime_boot
         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_us_clonecd_zip_runtime_boot.sh
