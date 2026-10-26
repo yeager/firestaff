@@ -33,3 +33,18 @@ That evidence establishes the following bounded facts:
 The next admissible implementation step is to capture the same session's
 VDP1/VDP2/CRAM state and the displayed frame around this dispatcher.  Only
 that join may unblock the existing real title or `MENU.BPK` render gates.
+
+## Rejected startup candidate
+
+The retained Mednafen capture from the `nexus-save-input-sweep-20261008`
+session is authentic but is not a title/menu render candidate:
+
+* SHA-256: `d5d9e190e7b3ee2812206b0c7da3277690490fb45c9498f0297d2e4f6d34d36e`
+* 300 raw VDP1/VDP2 frames, with active VDP1 state throughout.
+* The raw NBG1 tilemap decoder accepts sampled frames as capture-only data.
+* VDP1 source joins resolve to `LEV00.DGN`, but the sequence join, camera
+  transform, display origin and VDP2 composition remain unproven.
+
+It must therefore remain excluded from title and menu admission.  It is useful
+as a real-data regression input for the capture-only decoders, not as a
+substitute for the missing same-session title/menu capture.
