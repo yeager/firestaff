@@ -24,6 +24,52 @@ static void le16(uint8_t *p, unsigned int value)
     p[1] = (uint8_t)(value >> 8U);
 }
 
+static uint8_t *read_file(const char *path, long *size)
+{
+    FILE *file = fopen(path, "rb");
+    uint8_t *data;
+    if (!file || fseek(file, 0, SEEK_END) || (*size = ftell(file)) <= 0 ||
+        fseek(file, 0, SEEK_SET)) { if (file) fclose(file); return NULL; }
+    data = malloc((size_t)*size);
+    if (!data || fread(data, 1, (size_t)*size, file) != (size_t)*size) {
+        free(data); fclose(file); return NULL;
+    }
+    fclose(file);
+    return data;
+}
+
+static int test_retail_item_capture(const char *capture_path, const char *item_path)
+{
+    long capture_size, item_size;
+    uint8_t *capture = read_file(capture_path, &capture_size);
+    uint8_t *item = read_file(item_path, &item_size);
+    Nexus_V1_ItemIbsBank *bank = calloc(1, sizeof(*bank));
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt frame;
+    Nexus_V1_Vdp1TextureCommand command;
+    Nexus_V1_Vdp1CaptureCompositeInput resolved;
+    Nexus_V1_Vdp1ItemMaterialResolverInput context = {0};
+    int ok = capture && item && bank &&
+        nexus_v1_saturn_runtime_capture_frame(capture, (size_t)capture_size, 0, &frame) &&
+        nexus_v1_item_ibs_parse_verified(item, (int)item_size, 1, bank) == 0 &&
+        nexus_v1_vdp1_texture_command_parse(frame.vdp1_vram + 0xf00, 32, &command) == 0;
+    if (ok) {
+        context.item_ibs = item; context.item_ibs_size = (int)item_size;
+        context.item_ibs_hash_verified = 1; context.bank = bank;
+        ok = nexus_v1_vdp1_item_material_resolver(frame.vdp1_vram,
+            NEXUS_V1_VDP1_VRAM_BYTES, frame.vdp1_vram + 0xf00, 32,
+            &command, 0xf00, &resolved, &context) &&
+            resolved.item_image == item + 0x123dc &&
+            resolved.item_palette == item + 0xb098 &&
+            resolved.item_source_hash_verified && !resolved.dgn_source_hash_verified;
+        context.item_ibs_hash_verified = 0;
+        ok = ok && !nexus_v1_vdp1_item_material_resolver(frame.vdp1_vram,
+            NEXUS_V1_VDP1_VRAM_BYTES, frame.vdp1_vram + 0xf00, 32,
+            &command, 0xf00, &resolved, &context);
+    }
+    free(capture); free(item); free(bank);
+    return ok;
+}
+
 int main(void)
 {
     uint8_t *vram = (uint8_t *)calloc(1, NEXUS_V1_VDP1_VRAM_BYTES);
@@ -35,6 +81,13 @@ int main(void)
     Nexus_V1_Vdp1CaptureCompositeInput resolved;
     Nexus_V1_Vdp1DgnMaterialResolverReceipt envelope;
     int i;
+
+    if (getenv("FIRESTAFF_NEXUS_ITEM_CAPTURE") && getenv("FIRESTAFF_NEXUS_ITEM_IBS") &&
+        !test_retail_item_capture(getenv("FIRESTAFF_NEXUS_ITEM_CAPTURE"),
+                                  getenv("FIRESTAFF_NEXUS_ITEM_IBS"))) {
+        fprintf(stderr, "FAIL: retail ITEM.IBS capture material resolution\n");
+        return 1;
+    }
 
     if (!vram || !dgn || !dgn_direct) return 1;
     /* One canonical Structure2 descriptor at DGN block 1, then FFFF and

@@ -47,4 +47,20 @@ void nexus_v1_vdp1_dgn_material_resolver_receipt(
     const Nexus_V1_Vdp1DgnMaterialResolverInput *input,
     Nexus_V1_Vdp1DgnMaterialResolverReceipt *out_receipt);
 
+typedef struct {
+    const uint8_t *item_ibs;
+    int item_ibs_size;
+    int item_ibs_hash_verified;
+    const Nexus_V1_ItemIbsBank *bank;
+    int palette_slot_base;
+} Nexus_V1_Vdp1ItemMaterialResolverInput;
+
+/* Capture-only ITEM.IBS lookup: a unique, nonzero texture and its matching
+ * captured CLUT must both resolve to a verified floor descriptor. */
+int nexus_v1_vdp1_item_material_resolver(
+    const uint8_t *vdp1_vram, int vdp1_vram_size,
+    const uint8_t *command, int command_size,
+    const Nexus_V1_Vdp1TextureCommand *parsed, uint32_t command_byte_offset,
+    Nexus_V1_Vdp1CaptureCompositeInput *out_input, void *context);
+
 #endif

@@ -35,6 +35,71 @@ static int bytes_all_zero(const uint8_t *bytes, int size)
     return 1;
 }
 
+int nexus_v1_vdp1_item_material_resolver(
+    const uint8_t *vram, int vram_size, const uint8_t *command, int command_size,
+    const Nexus_V1_Vdp1TextureCommand *parsed, uint32_t command_offset,
+    Nexus_V1_Vdp1CaptureCompositeInput *out, void *context)
+{
+    const Nexus_V1_Vdp1ItemMaterialResolverInput *input = context;
+    const uint8_t *matched_image = NULL, *matched_palette = NULL;
+    uint32_t clut;
+    int i, matches = 0;
+    (void)command; (void)command_size; (void)command_offset;
+    if (out) memset(out, 0, sizeof(*out));
+    if (!out || !input || !input->bank || !input->bank->valid ||
+        !input->bank->source_hash_verified || !input->item_ibs ||
+        !input->item_ibs_hash_verified || input->bank->floor_image_count < 0 ||
+        input->bank->floor_image_count > NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_COUNT ||
+        input->item_ibs_size != NEXUS_V1_ITEM_IBS_BYTES || !vram ||
+        vram_size != (int)NEXUS_V1_VDP1_VRAM_BYTES || !parsed ||
+        !parsed->texture_command || parsed->colour_mode != 1U ||
+        !parsed->texture_source_range_valid || !parsed->texture_byte_count ||
+        parsed->texture_source_byte_end > NEXUS_V1_VDP1_VRAM_BYTES ||
+        input->palette_slot_base < 0 || input->palette_slot_base > 240) return 0;
+    clut = ((uint32_t)parsed->colour_control & ~UINT32_C(3)) << 3U;
+    if (clut > NEXUS_V1_VDP1_VRAM_BYTES - 32U ||
+        bytes_all_zero(vram + parsed->texture_source_byte_offset,
+                       (int)parsed->texture_byte_count)) return 0;
+    for (i = 0; i < input->bank->floor_image_count; ++i) {
+        const Nexus_V1_ItemIbsFloorImage *floor = &input->bank->floor_images[i];
+        const uint8_t *image, *palette = NULL;
+        uint32_t absolute = 0xa800U + floor->image_offset;
+        int j;
+        if (!floor->palette_bound || !floor->packed_4bpp_valid ||
+            floor->width != parsed->texture_width || floor->height != parsed->texture_height ||
+            floor->packed_4bpp_bytes != parsed->texture_byte_count ||
+            absolute > (uint32_t)input->item_ibs_size ||
+            floor->packed_4bpp_bytes > (uint32_t)input->item_ibs_size - absolute) continue;
+        image = input->item_ibs + absolute;
+        if (memcmp(image, floor->packed_4bpp_texels, floor->packed_4bpp_bytes) != 0 ||
+            !swapped_words_equal(vram + parsed->texture_source_byte_offset,
+                                 (int)parsed->texture_byte_count, image,
+                                 (int)floor->packed_4bpp_bytes)) continue;
+        for (j = i; j >= 0; --j) {
+            const uint8_t *desc = input->item_ibs + 0xa800U + (uint32_t)j * 20U;
+            uint32_t offset = read_be32(desc + 16U);
+            if (read_be16(desc + 4U) == floor->palette_id && offset) {
+                if (offset <= (uint32_t)input->item_ibs_size - 0xa800U - 32U)
+                    palette = input->item_ibs + 0xa800U + offset;
+                break;
+            }
+        }
+        if (!palette || !swapped_words_equal(vram + clut, 32, palette, 32)) continue;
+        for (j = 0; j < 16; ++j)
+            if (read_be16(palette + j * 2) != floor->palette_bgr555[j]) break;
+        if (j != 16) continue;
+        matched_image = image; matched_palette = palette; ++matches;
+    }
+    if (matches != 1) return 0;
+    out->item_image = matched_image;
+    out->item_image_size = (int)parsed->texture_byte_count;
+    out->item_palette = matched_palette;
+    out->item_palette_size = 32;
+    out->item_source_hash_verified = 1;
+    out->palette_slot_base = input->palette_slot_base;
+    return 1;
+}
+
 static void clear_receipt(Nexus_V1_Vdp1DgnMaterialResolverReceipt *receipt)
 {
     if (receipt) memset(receipt, 0, sizeof(*receipt));
