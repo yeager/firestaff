@@ -113,6 +113,14 @@
   identical. This proves an input-coupled raw/screen delta for this boundary,
   but not a party pose, coordinate commit, command consumer, or native
   renderer mapping: the dynamic CD/RAM receipt gate was absent in both runs.
+- A subsequent matched pair preserved the same boundary and recorded the
+  bounded latch-write sequence after the observed poll. The no-input control
+  performed only the baseline writes at `$2911`, `$2912`, and `$2920`; the UP
+  run added a distinct `$2912` value and a finite `$2920` progression, with
+  both paths carrying physical PC/MPR context. This joins the accepted input
+  to a game-RAM write boundary, but the fields remain opaque until a
+  source-bound execution path and an independently observed gameplay result
+  establish their meaning.
 - The isolated build and raw traces were removed after verification. No game
   media, save state, firmware, or raw trace is tracked by Git.
 
