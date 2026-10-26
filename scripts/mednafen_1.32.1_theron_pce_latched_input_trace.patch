@@ -1,0 +1,33 @@
+--- a/src/pce/input.h
++++ b/src/pce/input.h
+@@ -17,2 +17,3 @@
+  virtual void Update(const uint8* data);
++ virtual bool TheronTraceLatchedButtons(uint16* out) const { return false; }
+  virtual int StateAction(StateMem *sm, int load, int data_only, const char *section_name);
+--- a/src/pce/input/gamepad.cpp
++++ b/src/pce/input/gamepad.cpp
+@@ -34,2 +34,3 @@
+  virtual void Update(const uint8* data) override;
++ virtual bool TheronTraceLatchedButtons(uint16* out) const override { *out = buttons; return true; }
+  virtual int StateAction(StateMem *sm, int load, int data_only, const char *section_name) override;
+--- a/src/pce/input.cpp
++++ b/src/pce/input.cpp
+@@ -465,2 +465,4 @@
+-  const uint16 raw = data_ptr[0] ? MDFN_de16lsb(data_ptr[0]) : 0;
+-  fprintf(theron_input_read_trace, "pce_input_read frame=%u cpu_pc=%04x register=%04x raw=%04x sel=%u clr=%u index=%u\n", theron_script_trace_frame, HuCPU.GetRegister(HuC6280::GSREG_PC), A, raw, SEL ? 1 : 0, CLR ? 1 : 0, read_index);
++  uint16 raw = 0;
++  const bool latched_valid = InputTypes[0] == PCEINPUT_GAMEPAD && devices[0] && devices[0]->TheronTraceLatchedButtons(&raw);
++  fprintf(theron_input_read_trace, "pce_input_read frame=%u cpu_pc=%04x register=%04x raw=%04x sel=%u clr=%u index=%u latched_valid=%u\n", theron_script_trace_frame, HuCPU.GetRegister(HuC6280::GSREG_PC), A, raw, SEL ? 1 : 0, CLR ? 1 : 0, read_index, latched_valid ? 1 : 0);
++
+@@ -486,2 +488,3 @@
+-  const uint16 raw = data_ptr[0] ? MDFN_de16lsb(data_ptr[0]) : 0;
++  uint16 raw = 0;
++  const bool latched_valid = InputTypes[0] == PCEINPUT_GAMEPAD && devices[0] && devices[0]->TheronTraceLatchedButtons(&raw);
+   const unsigned int sp = HuCPU.GetRegister(HuC6280::GSREG_SP);
+@@ -493,4 +496,4 @@
+-          "pce_input_result frame=%u cpu_pc=%04x register=%04x raw=%04x value=%02x sel=%u clr=%u index=%u sp=%02x stack=%02x%02x%02x%02x\n",
++          "pce_input_result frame=%u cpu_pc=%04x register=%04x raw=%04x value=%02x sel=%u clr=%u index=%u sp=%02x stack=%02x%02x%02x%02x latched_valid=%u\n",
+           theron_script_trace_frame, HuCPU.GetRegister(HuC6280::GSREG_PC), A, raw, ret,
+           SEL ? 1 : 0, CLR ? 1 : 0, read_index, sp & 0xffu,
+-          stack0, stack1, stack2, stack3);
++          stack0, stack1, stack2, stack3, latched_valid ? 1 : 0);

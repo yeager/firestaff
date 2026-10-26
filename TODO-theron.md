@@ -5,7 +5,9 @@
   was overlaid. A 240-second capture used authenticated USA CloneCD media and
   the authenticated original Backup RAM, with RUN held for 300 frames. A
   parallel change subsequently moved the overlay before the normal update and
-  restored the physical buffer; that variant still requires its own capture.
+  restored the physical buffer. A second 240-second authentic capture of that
+  variant, with the gamepad's actual latched buttons traced, also verified the
+  active-low RUN read at `$E4C8` and found no game-owned controller poll.
 - The scripted-input verifier accepted the active-low RUN read at System Card
   PC `$E4C8`. It observed no game or non-System-Card controller poll. The
   capture recorded 115 CD IRQs, 25 raw-sector spans, four SCSI reads and one

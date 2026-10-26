@@ -68,6 +68,23 @@ if [[ "$consumption_receipt" != *'event_frames_with_apply=1'* ||
         "$consumption_receipt" >&2
     exit 1
 fi
+cat >"$input_test_dir/latched.trace" <<'THERON_LATCHED_INPUT'
+scripted_pce_input_event frame=9600 key=run mask=0008 hold=90
+scripted_pce_input_apply frame=9600 physical=0000 scripted=0008 combined=0008
+pce_input_read frame=9601 cpu_pc=e4c8 register=1000 raw=0008 sel=0 clr=0 index=0 latched_valid=1
+pce_input_result frame=9601 cpu_pc=e4c8 register=1000 raw=0008 value=07 sel=0 clr=0 index=0 latched_valid=1
+THERON_LATCHED_INPUT
+"$scripted_input_consumption_verifier" "$input_test_dir/latched.trace" run@9600:90 131072 >/dev/null
+sed 's/latched_valid=1/latched_valid=0/g' "$input_test_dir/latched.trace" >"$input_test_dir/not-gamepad.trace"
+if "$scripted_input_consumption_verifier" "$input_test_dir/not-gamepad.trace" run@9600:90 131072 >/dev/null 2>&1; then
+    printf 'FAIL: non-gamepad latched input must not prove controller delivery\n' >&2
+    exit 1
+fi
+sed 's/value=07/value=0f/' "$input_test_dir/latched.trace" >"$input_test_dir/wrong-latched-value.trace"
+if "$scripted_input_consumption_verifier" "$input_test_dir/wrong-latched-value.trace" run@9600:90 131072 >/dev/null 2>&1; then
+    printf 'FAIL: a latched mask without the active-low result must not prove delivery\n' >&2
+    exit 1
+fi
 cat >"$input_test_dir/system-card-only.trace" <<'THERON_SYSTEM_CARD_INPUT'
 scripted_pce_input_event frame=9600 key=run mask=0008 hold=90
 scripted_pce_input_apply frame=9600 physical=0000 scripted=0008 combined=0008

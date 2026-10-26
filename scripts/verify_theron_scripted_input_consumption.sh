@@ -133,6 +133,7 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
             read_index = -1
             read_pc = ""
             read_frame = ""
+            read_latched_valid = ""
             for (i = 1; i <= NF; i++) {
                 if ($i ~ /^raw=[0-9a-fA-F]+$/)
                     raw_value = hex_to_dec(substr($i, 5))
@@ -146,7 +147,11 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
                     read_pc = substr($i, 8)
                 if ($i ~ /^frame=[0-9]+$/)
                     read_frame = substr($i, 7)
+                if ($i ~ /^latched_valid=[01]$/)
+                    read_latched_valid = substr($i, 15)
             }
+            if (read_latched_valid == "0")
+                next
             if (returned_value >= 0) {
                 accept_controller_read(raw_value, returned_value, read_sel,
                                        read_index, read_pc, read_frame)
@@ -163,6 +168,7 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
                 pending_result_sel = read_sel
                 pending_result_index = read_index
                 pending_result_frame = read_frame
+                pending_result_latched_valid = read_latched_valid
             }
         }
         next
@@ -171,6 +177,7 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
         if (pending_result) {
             result_raw = result_value = result_sel = result_index = -1
             result_pc = result_register = result_frame = ""
+            result_latched_valid = ""
             for (i = 1; i <= NF; i++) {
                 if ($i ~ /^raw=[0-9a-fA-F]+$/)
                     result_raw = hex_to_dec(substr($i, 5))
@@ -186,13 +193,16 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
                     result_pc = substr($i, 8)
                 if ($i ~ /^frame=[0-9]+$/)
                     result_frame = substr($i, 7)
+                if ($i ~ /^latched_valid=[01]$/)
+                    result_latched_valid = substr($i, 15)
             }
             if (result_register == pending_result_register &&
                 result_pc == pending_result_pc &&
                 result_raw == pending_result_raw &&
                 result_sel == pending_result_sel &&
                 result_index == pending_result_index &&
-                result_frame == pending_result_frame)
+                result_frame == pending_result_frame &&
+                result_latched_valid == pending_result_latched_valid)
                 accept_controller_read(result_raw, result_value,
                                        result_sel, result_index, result_pc,
                                        result_frame)
