@@ -1,3 +1,20 @@
+## 2026-10-26 — full-trace cold boot still has no game-owned input receipt
+
+- A fresh 35-second PCE Fast reference replay used the authenticated Japanese
+  Rev. 1 disc and System Card with `run@1:300`. The full-trace instrumented
+  binary applied both scheduled events and recorded two controller reads, but
+  both reads were System Card reads. It recorded zero non-System-Card reads,
+  CD IRQs, or authenticated CD-to-RAM receipts before the bounded run timed
+  out.
+- This is a negative capture result, not a source record. No trace, save,
+  firmware, or game bytes were retained in the repository. In particular, it
+  does not authorize a direct native dungeon launch, a party pose, a movement
+  rule, or a state-driven viewport mapping.
+- The next capture must cross the original System Card title-state handoff and
+  bind an input to a game-owned consumer and observable state transition in
+  the same session. Until then, the existing native runtime remains limited
+  to its separately verified Track 02 paths.
+
 ## 2026-10-26 — bind scripted-controller receipts to the replay-clock interval
 
 - The bounded `$44D2` PCE Fast caller follow-up is now configurable for a
