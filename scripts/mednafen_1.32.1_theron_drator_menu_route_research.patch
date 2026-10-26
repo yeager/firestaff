@@ -192,4 +192,4 @@ diff --git a/src/pce/input/gamepad.cpp b/src/pce/input/gamepad.cpp
   buttons = MDFN_de16lsb(data);
 + /* Research-only navigation must never inject input into ordinary captures. */
 + buttons |= TheronDratorGeneratorInputMask();
-  if(theron_script_run_valid)
+ }

@@ -123,10 +123,8 @@ if ! grep -Fq 'FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT' "$scripted_input_patch_file
    ! grep -Fq 'scripted_pce_input_plan valid=%u events=%u' "$scripted_input_patch_file" ||
    ! grep -Fq 'scripted_pce_input_event frame=%u key=%s mask=%04x' "$scripted_input_patch_file" ||
    ! grep -Fq 'scripted_pce_input_apply frame=%u physical=%04x scripted=%04x combined=%04x' "$scripted_input_patch_file" ||
-   ! grep -Fq 'theron_script_run_start[32]' "$scripted_input_patch_file" ||
-   ! grep -Fq 'theron_script_run_end[32]' "$scripted_input_patch_file" ||
-   ! grep -Fq 'theron_script_run_frame >= theron_script_run_start[run_index]' "$scripted_input_patch_file" ||
-   ! grep -Fq 'theron_script_run_frame + 1u >= theron_script_run_start[run_index]' "$scripted_input_patch_file" ||
+   ! grep -Fq 'theron_script_trace_frame = ++theron_script_frame;' "$scripted_input_patch_file" ||
+   ! grep -Fq 'theron_script_trace_frame == start' "$scripted_input_patch_file" ||
    ! grep -Fq 'cursor = next ? next + 1 : at + strlen(at);' "$scripted_input_patch_file" ||
    ! grep -Fq 'MDFN_en16lsb(data_ptr[0], theron_script_original_port0);' "$scripted_input_patch_file"; then
     printf 'FAIL: scripted PCE input patch no longer retains explicit replay provenance\n' >&2
@@ -140,13 +138,13 @@ if ! grep -Fq "key[0] == 'i') return 0x0001" "$scripted_input_patch_file" ||
    ! grep -Fq 'strncmp(key, "right", 5)) return 0x0020' "$scripted_input_patch_file" ||
    ! grep -Fq 'strncmp(key, "down", 4)) return 0x0040' "$scripted_input_patch_file" ||
    ! grep -Fq 'strncmp(key, "left", 4)) return 0x0080' "$scripted_input_patch_file" ||
-   ! grep -Fq 'buttons |= 0x0008' "$scripted_input_patch_file" ||
+   ! grep -Fq 'strncmp(key, "run", 3)) return 0x0008' "$scripted_input_patch_file" ||
    grep -Fq "key[0] == 'i') return 0x1000" "$scripted_input_patch_file"; then
     printf 'FAIL: scripted PCE input masks must follow Mednafen PCE_GamepadIDII vector order\n' >&2
     exit 1
 fi
-if ! grep -Fq 'pce_input_read cpu_pc=%04x register=%04x raw=%04x sel=%u clr=%u index=%u' "$input_state_patch_file" ||
-   ! grep -Fq 'pce_input_write cpu_pc=%04x register=%04x data=%02x sel_before=%u clr_before=%u index=%u' "$input_state_patch_file"; then
+if ! grep -Fq 'pce_input_read frame=%u cpu_pc=%04x register=%04x raw=%04x sel=%u clr=%u index=%u' "$input_state_patch_file" ||
+   ! grep -Fq 'pce_input_write frame=%u cpu_pc=%04x register=%04x data=%02x sel_before=%u clr_before=%u index=%u' "$input_state_patch_file"; then
     printf 'FAIL: Mednafen input-state patch no longer retains raw port transaction evidence\n' >&2
     exit 1
 fi
@@ -220,7 +218,11 @@ if ! grep -Fq 'if(ok && trace_count < 4096)' "$later_raw_patch_file"; then
     exit 1
 fi
 if ! grep -Fq 'FIRESTAFF_THERON_FILE_SELECT_VDC_TRACE' "$file_select_vdc_patch_file" ||
-   ! grep -Fq 'file_select_vdc_count == 525' "$file_select_vdc_patch_file" ||
+   ! grep -Fq 'fclose(sat_file);' "$file_select_vdc_patch_file" ||
+   ! grep -Fq 'if(ram_file) fclose(ram_file);' "$file_select_vdc_patch_file" ||
+   ! grep -Fq 'TheronGraphicsSnapshotFrameEnd = ~0U;' "$file_select_vdc_patch_file" ||
+   ! grep -Fq 'const unsigned sequence = file_select_vdc_count++;' "$file_select_vdc_patch_file" ||
+   ! grep -Fq 'if(file_select_vdc_count == 525)' "$file_select_vdc_patch_file" ||
    ! grep -Fq 'TheronFileSelectVDCSnapshotPending = true' "$file_select_vdc_patch_file" ||
    ! grep -Fq 'TheronGraphicsSnapshotDumped = false' "$file_select_vdc_patch_file" ||
    ! grep -Fq 'FIRESTAFF_THERON_FRAME_END_SNAPSHOT_FRAME' "$file_select_vdc_patch_file" ||

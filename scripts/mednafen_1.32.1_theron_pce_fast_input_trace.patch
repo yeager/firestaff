@@ -50,7 +50,7 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 + TheronPCEFastInputTraceInit();
 + if(TheronPCEFastInputTrace && TheronPCEFastScriptFrame >= TheronPCEFastInputTraceStartFrame && TheronPCEFastInputTraceCount < TheronPCEFastInputTraceLimit)
 + {
-+  fprintf(TheronPCEFastInputTrace, "pce_input_read cpu_pc=%04x physical_pc=%08x register=%04x raw=%04x sel=%u clr=%u index=%u value=%02x\n", TheronTraceInstructionPC, TheronTraceInstructionPhysicalPC, address, index >= 0 ? pce_jp_data[index] : 0, sel & 1, (sel >> 1) & 1, read_index, value);
++  fprintf(TheronPCEFastInputTrace, "pce_input_read frame=%u cpu_pc=%04x physical_pc=%08x register=%04x raw=%04x sel=%u clr=%u index=%u value=%02x\n", TheronPCEFastScriptFrame, TheronTraceInstructionPC, TheronTraceInstructionPhysicalPC, address, index >= 0 ? pce_jp_data[index] : 0, sel & 1, (sel >> 1) & 1, read_index, value);
 +  fflush(TheronPCEFastInputTrace);
 +  TheronPCEFastInputTraceCount++;
 + }

@@ -32,7 +32,7 @@
 + if(theron_input_read_trace && theron_script_trace_frame >= theron_input_read_trace_start_frame && theron_input_read_count < theron_input_read_trace_limit)
 + {
 +  const uint16 raw = data_ptr[0] ? MDFN_de16lsb(data_ptr[0]) : 0;
-+  fprintf(theron_input_read_trace, "pce_input_read cpu_pc=%04x register=%04x raw=%04x sel=%u clr=%u index=%u\n", HuCPU.GetRegister(HuC6280::GSREG_PC), A, raw, SEL ? 1 : 0, CLR ? 1 : 0, read_index);
++  fprintf(theron_input_read_trace, "pce_input_read frame=%u cpu_pc=%04x register=%04x raw=%04x sel=%u clr=%u index=%u\n", theron_script_trace_frame, HuCPU.GetRegister(HuC6280::GSREG_PC), A, raw, SEL ? 1 : 0, CLR ? 1 : 0, read_index);
 +  fflush(theron_input_read_trace);
 +  theron_input_read_count++;
 +  theron_input_read_result_pending = true;
@@ -66,7 +66,7 @@
 + }
 + if(theron_input_write_trace && theron_script_trace_frame >= theron_input_write_trace_start_frame && theron_input_write_count < theron_input_write_trace_limit)
 + {
-+  fprintf(theron_input_write_trace, "pce_input_write cpu_pc=%04x register=%04x data=%02x sel_before=%u clr_before=%u index=%u\n", HuCPU.GetRegister(HuC6280::GSREG_PC), A, V, SEL ? 1 : 0, CLR ? 1 : 0, read_index);
++  fprintf(theron_input_write_trace, "pce_input_write frame=%u cpu_pc=%04x register=%04x data=%02x sel_before=%u clr_before=%u index=%u\n", theron_script_trace_frame, HuCPU.GetRegister(HuC6280::GSREG_PC), A, V, SEL ? 1 : 0, CLR ? 1 : 0, read_index);
 +  fflush(theron_input_write_trace);
 +  theron_input_write_count++;
 + }
