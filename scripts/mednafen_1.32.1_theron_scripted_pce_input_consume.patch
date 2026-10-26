@@ -1,0 +1,8 @@
+--- a/src/pce/input.cpp
++++ b/src/pce/input.cpp
+@@ -322,3 +322,5 @@
+   const uint16 physical_mask = MDFN_de16lsb(data_ptr[0]);
+   MDFN_en16lsb(data_ptr[0], physical_mask | scripted_mask);
++ if(devices[0])
++  devices[0]->Update(data_ptr[0]);
+   if(theron_input_trace)

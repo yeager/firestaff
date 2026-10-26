@@ -103,6 +103,8 @@ sed -e 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' \
     "$scripted_pce_input_patch" > "$scripted_pce_input_rendered"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$scripted_pce_input_rendered"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_input_consume.patch"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_fast_input.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
