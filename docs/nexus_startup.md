@@ -357,6 +357,23 @@ provenance is not independently established. It does not prove Firestaff
 implements that title menu or save selection; the production startup route
 remains blocked by the consumer-evidence gates described below.
 
+On 2026-10-26, a fresh TRV2 Ymir profile copied the same hash-verified
+four-champion BKR and replayed the retained Japanese title-prompt state with
+Start at frames `0..59`, Down at `180..189`, and A at `240..249`. At frame 900,
+the authentic framebuffer showed the native Japanese `LOAD` panel and its
+`B01 0:06 NORMAL` internal-memory row (SHA-256
+`b95cdc24ae30705648533dba1e1a1a304196a8fbb449bd069df513be85c0928b`). A
+saved checkpoint was loaded into a second isolated profile; A at frames
+`0..9` then reached a four-character HUD plus first-person viewport at frame
+900 (SHA-256
+`68de1c7898d79d70d7f3b9fd8f220485fd5ffa75b8aefad9f491eeb3d16a2a76`). Both
+profiles retained the BKR SHA-256
+`87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`.
+This authentic two-stage route binds a real UI checkpoint and HUD witness for
+future capture consumers; it does not yet admit a Firestaff menu compositor,
+HUD compositor, or save-format implementation. The profiles, dumps,
+screenshots, and X displays were removed after verification.
+
 Firestaff's source-level startup helpers do not implement the retail title
 menu. `nexus_v1_startup_boot_handle_input` uses the synthetic warning/title
 schedule and selects a host save or champion action from the available slot
