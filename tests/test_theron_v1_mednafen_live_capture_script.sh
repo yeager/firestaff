@@ -904,6 +904,30 @@ if ! grep -Fq 'source=mednafen-pce-fast-instrumented-input' "$script" ||
     printf '%s\n' 'FAIL: pce_fast capture must retain source- and bus-bound input traces' >&2
     exit 1
 fi
+if ! awk '
+    function finish_hunk() {
+        if (in_hunk && seen != expected)
+            exit 1
+    }
+    /^@@ -[0-9]+(,[0-9]+)? \+[0-9]+(,[0-9]+)? @@/ {
+        finish_hunk()
+        range_count = split($3, range, ",")
+        expected = (range_count == 2) ? range[2] : 1
+        seen = 0
+        in_hunk = 1
+        next
+    }
+    /^(---|\+\+\+) / {
+        finish_hunk()
+        in_hunk = 0
+        next
+    }
+    in_hunk && (/^[ +]/ || /^FIRESTAFF_PATCH_(BLANK|TAB)_CONTEXT/) { seen++ }
+    END { finish_hunk() }
+' "$repo/scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch"; then
+    printf '%s\n' 'FAIL: PCE Fast input-trace patch has an invalid unified-diff hunk count' >&2
+    exit 1
+fi
 if ! grep -Fq 'mednafen_1.32.1_theron_scripted_pce_fast_input.patch' "$repo/scripts/build_mednafen_theron_irq2_trace.sh" ||
    ! grep -Fq 'FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT' "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_fast_input.patch" ||
    ! grep -Fq 'scripted_pce_input_event frame=%u key=%s mask=%04x hold=%u' "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_fast_input.patch" ||

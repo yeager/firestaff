@@ -6,11 +6,11 @@
  #include "huc.h"
 +#include <stdio.h>
 +#include <stdlib.h>
-
+FIRESTAFF_PATCH_BLANK_CONTEXT
 @@ -40,4 +42,49 @@ static uint8 mouse_index[5];
  static uint8 sel;
  static uint8 read_index = 0;
-
+FIRESTAFF_PATCH_BLANK_CONTEXT
 +extern uint16 TheronTraceInstructionPC;
 +extern uint32 TheronTraceInstructionPhysicalPC;
 +extern unsigned TheronPCEFastScriptFrame;
@@ -59,7 +59,7 @@
  static bool DisableSR;
 @@ -196,4 +238,6 @@ uint8 INPUT_Read(unsigned int A)
   ret |= 0x30; // Always-set?
-
+FIRESTAFF_PATCH_BLANK_CONTEXT
 + TheronPCEFastInputTraceRead(A, ret, tmp_ri <= 4 ? tmp_ri : -1);
 +
   return(ret);
@@ -67,10 +67,10 @@
 --- a/src/pce_fast/huc6280.cpp
 +++ b/src/pce_fast/huc6280.cpp
 @@ -680,4 +680,7 @@
-	  HU_PI = HU_P;
-	  HuCPU.IRQMaskDelay = HuCPU.IRQMask;
-
+FIRESTAFF_PATCH_TAB_CONTEXT  HU_PI = HU_P;
+FIRESTAFF_PATCH_TAB_CONTEXT  HuCPU.IRQMaskDelay = HuCPU.IRQMask;
+FIRESTAFF_PATCH_BLANK_CONTEXT
 +  TheronTraceInstructionPC = GetRealPC();
 +  TheronTraceInstructionPhysicalPC = (HuCPU.MPR[TheronTraceInstructionPC >> 13] << 13) | (TheronTraceInstructionPC & 0x1FFF);
 +
-	  b1 = RdAtPC();
+FIRESTAFF_PATCH_TAB_CONTEXT  b1 = RdAtPC();

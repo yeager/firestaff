@@ -89,8 +89,14 @@ patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_input_state_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_input_result_trace.patch"
+pce_fast_input_trace_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch"
+pce_fast_input_trace_rendered="$build_root/theron-pce-fast-input-trace.rendered.patch"
+sed \
+    -e 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' \
+    -e $'s/^FIRESTAFF_PATCH_TAB_CONTEXT/ \\t/' \
+    "$pce_fast_input_trace_patch" > "$pce_fast_input_trace_rendered"
 patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch"
+    < "$pce_fast_input_trace_rendered"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_input.patch"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
