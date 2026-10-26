@@ -43,6 +43,14 @@
   does not assign field semantics or demonstrate an input-caused transition.
   Its reference binary lacked the required bounded VDC word-commit trace, so
   the capture remains blocked and cannot be paired with an UP run yet.
+- Rebuilding the same observer with the bounded VDC word-commit hook enabled
+  permitted a fresh paired control/`up@1:60` run. Both runs emitted 65,536
+  CPU-port VWR commits; the scripted UP bit reached the observed controller
+  read, and the final VRAM, SAT, and main-RAM snapshots differed by 2, 2, and
+  51 bytes respectively. VCE, VDC-state, and party-RAM snapshots were
+  identical. This proves an input-coupled raw/screen delta for this boundary,
+  but not a party pose, coordinate commit, command consumer, or native
+  renderer mapping: the dynamic CD/RAM receipt gate was absent in both runs.
 - The isolated build and raw traces were removed after verification. No game
   media, save state, firmware, or raw trace is tracked by Git.
 
