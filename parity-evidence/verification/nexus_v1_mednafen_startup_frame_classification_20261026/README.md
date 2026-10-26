@@ -77,14 +77,34 @@ this bounded run does not yet bind a displayed title-menu surface to its
 canonical asset owner and consumer. The 1.4 GiB operator-local raw capture
 was deleted after validation.
 
-## Follow-up: authentic Mednafen backup-card loading
+## Rejected follow-up: `.mca` was mislabeled as backup-card input
 
-A preserved retail Nexus Mednafen backup-card (`.mca`) was copied into an
-isolated profile and supplied through Mednafen's explicit
-`filesys.path_savbackup` setting. The resulting 900-frame capture had
-SHA-256 `b1e25d471d43d1949dc229b474d4482110d218553ef29b7cfd6bd1280556dd33`,
-which differs from the no-card startup receipt above. Mednafen reported
-`Cart: Backup Memory`; the changed capture hash is the evidence that the
-authentic card data reached the emulated session. The raw capture and copied
-card were deleted after the comparison. This establishes a reproducible route
-to a real saved startup state, not a title-menu ownership proof.
+An earlier note described a preserved retail Nexus `.mca` file as backup-card
+data and said it was supplied through `filesys.path_savbackup`. Mednafen 1.32.1
+source shows that the desktop autosave path calls
+`MDFNI_LoadState(NULL, "mca")` when `autosave` is enabled
+(`src/drivers/main.cpp`, lines 1135–1144), and saves the same state suffix on
+close (lines 1211–1212). `MDFNI_LoadState` resolves that file through
+`MDFNMKF_STATE` (`src/state.cpp`, lines 854–868); `src/general.cpp` maps that
+file type to `filesys.path_state` (lines 170–175). The same source maps
+`filesys.path_savbackup` to the separate `MDFNMKF_SAVBACK` file type (lines
+182–186). The `.mca` autosave is therefore an emulator save state, not a
+standalone backup-memory-card image.
+
+The 900-frame capture digest
+`b1e25d471d43d1949dc229b474d4482110d218553ef29b7cfd6bd1280556dd33` differs
+from the earlier capture, and Mednafen reported `Cart: Backup Memory`. Neither
+fact proves that authentic backup-memory contents were loaded: the digest only
+distinguishes captures, while the cart line identifies the emulated expansion
+cart type. The note retained no `.mca` digest, exact state-file path, effective
+`autosave`/`filesys.path_state` settings, or same-session load receipt. The raw
+capture and state file were deleted, so the run cannot be reproduced or
+promoted as evidence of a real saved startup state. Treat it as unclassified.
+
+To claim an authentic backup-memory load, repeat the capture with the actual
+Mednafen save-memory file under the verified `filesys.path_sav` path, record
+that input's digest and effective session settings, and retain a same-session
+load/read receipt. A `.mca` autosave state cannot stand in for that file. The
+local authentic Firestaff `.bkr` save is a different format and is not a
+substitute. This evidence gap does not change the title-menu ownership or
+Firestaff presentation gates above.

@@ -20,6 +20,15 @@ change menu, HUD, viewport or production-readiness gates. Keep the next work
 focused on a same-session retail source-to-display join and the interactive
 title-to-menu transition.
 
+The 2026-10-26 Mednafen `.mca` startup capture is not evidence of a loaded
+authentic backup card. Mednafen 1.32.1 uses the `mca` suffix for its autosave
+state via `MDFNMKF_STATE`/`filesys.path_state`; `filesys.path_savbackup` is a
+separate backup-file path. The different capture hash and `Cart: Backup
+Memory` line do not identify loaded card bytes. Re-run with the authentic
+Mednafen save-memory file under verified `filesys.path_sav`, and retain its
+digest, effective settings and a same-session load/read receipt. The local
+Firestaff `.bkr` is a different format and cannot substitute.
+
 A retained Ymir v0.4.0 Japanese title-menu frame received a read-only source
 join on TRV2 against the authentic Japanese CUE/ISO members. Its hash-pinned
 VDP1 VRAM (`0f484877f5c5ef300fcbcaec6948b50c8b7aed7945e448a9f8281b2da46a2f21`)
