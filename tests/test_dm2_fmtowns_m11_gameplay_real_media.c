@@ -679,24 +679,71 @@ int main(void)
      * cyan/orange corruption this regression protects against. */
     {
         DM2_V1_RuntimeGraphicsSetSceneReceipt scene;
+        DM2_V1_ViewportM11FrameReceipt frame_receipt;
         DM2_V1_InterfacePalette expected_palette;
         uint8_t presented_palette[256][3];
         const DM2_V1_AssetLoader *loader = dm2_v1_boot_asset_loader(
             (const DM2_V1_BootProfile *)view.dm2BootProfile);
+        const uint8_t *lighting_bank = NULL;
+        size_t lighting_bank_size = 0u;
+        DM2_V1_InterfacePalette stripes[6];
+        int stripes_distinct = 0;
         memset(&scene, 0, sizeof(scene));
+        memset(&frame_receipt, 0, sizeof(frame_receipt));
         memset(&expected_palette, 0, sizeof(expected_palette));
+        memset(stripes, 0, sizeof(stripes));
         memset(framebuffer, 0, sizeof(framebuffer));
         M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
-        check(loader && dm2_v1_runtime_graphicsset_scene_receipt(&scene) &&
-                  scene.ready &&
-                  dm2_v1_asset_load_interface_palette(
+        if (loader && dm2_v1_runtime_graphicsset_scene_receipt(&scene) &&
+            scene.ready) {
+            lighting_bank = dm2_v1_asset_load_typed_sized(
+                loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
+                scene.map_graphics_style, DM2_GDAT_ENTRY_TYPE_PAL_IRGB,
+                DM2_GDAT_GFXSET_FLOOR, &lighting_bank_size);
+        }
+        check(loader && scene.ready && lighting_bank &&
+                  lighting_bank_size == 6u * 16u * 4u,
+              "FM Towns floor owns a six-stripe 384-byte source palette");
+        if (lighting_bank && lighting_bank_size == 6u * 16u * 4u) {
+            for (int level = 0; level < 6; ++level) {
+                int differs_from_first = 0;
+                int stripe_ok = dm2_v1_asset_load_fmtowns_lighting_palette(
+                    loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
+                    scene.map_graphics_style, DM2_GDAT_GFXSET_FLOOR,
+                    level, &stripes[level]);
+                for (int color = 0; stripe_ok && color < 16; ++color) {
+                    const uint8_t *source = lighting_bank +
+                        (size_t)level * 64u + (size_t)color * 4u;
+                    for (int channel = 0; channel < 3; ++channel) {
+                        if (stripes[level].rgb6[color][channel] !=
+                            (uint8_t)(source[channel + 1] >> 2u))
+                            stripe_ok = 0;
+                        if (stripes[level].rgb6[color][channel] !=
+                            stripes[0].rgb6[color][channel])
+                            differs_from_first = 1;
+                    }
+                }
+                check(stripe_ok && stripes[level].hash != 0u,
+                      "each Towns light stripe matches its original PAL_IRGB row");
+                if (level > 0 && differs_from_first) stripes_distinct = 1;
+            }
+        }
+        check(stripes_distinct,
+              "original Towns source contains distinguishable dungeon light stripes");
+        check(loader && scene.ready &&
+                  dm2_v1_runtime_last_m11_frame_receipt(&frame_receipt) &&
+                  frame_receipt.valid &&
+                  frame_receipt.c_light_receipt_hash != 0u &&
+                  frame_receipt.c_light_level <= 5u &&
+                  dm2_v1_asset_load_fmtowns_lighting_palette(
                       loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
                       scene.map_graphics_style, DM2_GDAT_GFXSET_FLOOR,
-                      &expected_palette) && expected_palette.hash != 0u &&
+                      frame_receipt.c_light_level, &expected_palette) &&
+                  expected_palette.hash != 0u &&
                   M11_Render_CopyIndexedPaletteRgb6(presented_palette) == 1 &&
                   memcmp(presented_palette, expected_palette.rgb6,
                          sizeof(expected_palette.rgb6)) == 0,
-              "FM Towns M11 presents the active GRAPHICSSET physical palette");
+              "FM Towns M11 presents the exact GRAPHICSSET stripe selected by c_light");
         {
             DM2_V1_ViewportM11FrameReceipt live_receipt;
             size_t right_panel_pixels = 0u;

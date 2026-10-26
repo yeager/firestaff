@@ -1,6 +1,9 @@
 #include "asset_find_by_hash.h"
 #include "asset_loader_m11.h"
 #include "dm1_v1_champion_top_row_assets_pc34_compat.h"
+#include "dm1_v1_champion_panel_material_pc34_compat.h"
+#include "dm1_v1_fmtowns_font_asset.h"
+#include "font_m11.h"
 #include "dm1_v1_fmtowns_pic_library.h"
 #include "dm1_v1_fmtowns_wall_ornament.h"
 #include "firestaff_fmtowns_disc.h"
@@ -17,16 +20,75 @@
 
 static int check_top_row_source_surfaces(M11_AssetLoader *loader)
 {
+    static const unsigned required_indices[] = {
+        8u, 17u, 26u, 28u, 32u, 15u, 16u, 33u, 34u, 35u
+    };
+    static const unsigned required_widths[] = {
+        67u, 224u, 256u, 76u, 90u, 43u, 32u, 18u, 18u, 18u
+    };
+    static const unsigned required_heights[] = {
+        29u, 136u, 87u, 14u, 15u, 7u, 29u, 18u, 18u, 18u
+    };
     static const unsigned indices[] = {8u, 28u, 33u, 34u, 35u};
     static const unsigned widths[] = {67u, 76u, 18u, 18u, 18u};
     static const unsigned heights[] = {29u, 14u, 18u, 18u, 18u};
+    int pc_surface_set_accepted = 1;
     for (size_t i = 0u; i < sizeof(indices) / sizeof(indices[0]); ++i) {
         unsigned short width = 0u, height = 0u;
         if (!M11_AssetLoader_QuerySize(loader, indices[i], &width, &height) ||
             width != widths[i] || height != heights[i]) return 0;
     }
+    for (size_t i = 0u;
+         i < sizeof(required_indices) / sizeof(required_indices[0]); ++i) {
+        unsigned short width = 0u, height = 0u;
+        int native_fmtowns_variant = 0;
+        int size_available = M11_AssetLoader_QuerySize(loader,
+            required_indices[i], &width, &height);
+        native_fmtowns_variant = size_available &&
+            required_indices[i] == 32u && width == 53u && height == 17u;
+        if (!size_available ||
+            (!native_fmtowns_variant &&
+             (width != required_widths[i] || height != required_heights[i]))) {
+            fprintf(stderr, "F20 top-row material %u is %ux%u, expected %ux%u\n",
+                    required_indices[i], width, height,
+                    required_widths[i], required_heights[i]);
+            pc_surface_set_accepted = 0;
+        }
+    }
+    if (!pc_surface_set_accepted) return 0;
     {
         Dm1V1ChampionTopRowAssetsReceiptPc34 receipt;
+        M11_FontState sourceFont;
+        Dm1V1ChampionPanelMaterialReceiptPc34 panelReceipt;
+        static const unsigned char nativePalette[16u * 3u] = {0};
+        dm1_v1_fmtowns_pic_library_view_t view;
+        unsigned char rawFont[M11_FONT_BITMAP_BYTES];
+        size_t rawFontLength = 0u;
+        int admitted;
+        M11_Font_Init(&sourceFont);
+        admitted = loader->dm1FmtownsData && loader->dm1FmtownsDataSize > 0 &&
+            dm1_v1_fmtowns_pic_library_open_pc34(loader->dm1FmtownsData,
+                (size_t)loader->dm1FmtownsDataSize, &view) ==
+                    DM1_V1_FMTOWNS_PIC_LIB_OK &&
+            dm1_v1_fmtowns_pic_library_load_raw_asset_pc34(&view,
+                dm1_v1_fmtowns_font_pic_library_index_pc34(), rawFont,
+                sizeof(rawFont), &rawFontLength) ==
+                    DM1_V1_FMTOWNS_PIC_LIB_OK &&
+            M11_Font_LoadFromRawBitmap(&sourceFont,
+                M11_FONT_GRAPHIC_INDEX_LEGACY, rawFont, rawFontLength) &&
+            dm1_v1_champion_panel_material_from_m11_loader_fmtowns(
+                loader, &sourceFont, nativePalette, 16, &panelReceipt) &&
+            panelReceipt.valid && panelReceipt.suppressSyntheticFallback &&
+            panelReceipt.m653GraphicIndex == M11_FONT_GRAPHIC_INDEX_LEGACY &&
+            panelReceipt.materialFingerprint != 0u;
+        if (!admitted) {
+            fprintf(stderr,
+                    "F20 panel receipt rejected (font=%d index=%d material=%d)\n",
+                    M11_Font_IsLoaded(&sourceFont),
+                    M11_Font_ResolvedGraphicIndex(&sourceFont),
+                    panelReceipt.valid);
+            return 0;
+        }
         return dm1_v1_champion_top_row_assets_from_m11_loader_pc34(
                    loader, &receipt) && receipt.valid &&
                receipt.c008Accepted && receipt.c028Accepted &&

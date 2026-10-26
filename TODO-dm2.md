@@ -1228,3 +1228,12 @@ of F5. The Towns formation command remains as an authenticated layout receipt
 but no longer paints pixels. The real-media gameplay test still needs a
 pixel-level regression assertion for preserving F5 under the icon masks; this
 change alone does not establish full DM2 FM Towns HUD or viewport parity.
+
+2026-10-26 FM Towns dungeon lighting palette: the renderer now selects the
+original GRAPHICSSET PAL_IRGB stripe indexed by the authenticated M11 frame's
+c_light receipt (0..5), instead of always presenting stripe zero. The
+real-media test compares all six decoded stripes with the original 384-byte
+palette and verifies the presented row matches the active c_light level. The
+authentic Towns M11 New Game handoff passes. HUD geometry and source-frame
+visual comparison remain open; this does not establish full FM Towns HUD or
+viewport parity.

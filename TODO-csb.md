@@ -784,3 +784,11 @@ using an unverified host font. The packed F31 real-media handoff test now
 checks that C009's source border remains intact with the font receipt disabled
 for both English and Japanese editions. The F31J system-font owner is still
 unresolved, so its glyph parity and full viewport/HUD parity remain open.
+
+2026-10-26 FM Towns F31 stair graphics: ReDMCSB DUNVIEW.C F0094/F0128 selects
+M645 + WallSet*M647, where M647 is the 40-image wall-set stride. The shared
+viewport plan had been passing the wall-set-zero stair ids unchanged; its
+Towns provider now restores the active wall-set bank for M645 offsets 0..17.
+Data-free index boundaries pass, and authentic English/Japanese Towns handoff
+tests still pass. Frame-level comparison of F31 wall graphics and HUD remains
+open.

@@ -45,6 +45,7 @@
 #include "csb_v1_atari_save_decode_pc34_compat.h"
 #include "csb_v1_fmtowns_cd.h"
 #include "csb_v1_fmtowns_graphics_dat.h"
+#include "csb_v1_fmtowns_stairs.h"
 #include "csb_v1_fmtowns_portrait.h"
 #include "csb_v1_fmtowns_utility_render.h"
 #include "fmtowns_bios_host.h"
@@ -4443,6 +4444,14 @@ static int m11_csb_fmtowns_viewport_graphic_provider(
             (unsigned int)wall_set * F31_M647_WALL_SET_GRAPHIC_COUNT +
             F31_WALL_SURFACE_OFFSET + (unsigned int)(graphic_index - 93);
     } else if (graphic_index >= F31_M645_FIRST_STAIRS &&
+               graphic_index < F31_M645_FIRST_STAIRS + 18) {
+        /* ReDMCSB DUNVIEW.C F0094/F0128 seeds M645 from
+         * CurrentMap->WallSet * M647 + M645. The shared host plan supplies
+         * the corresponding wall-set-zero semantic id, so restore F31's
+         * active 40-image bank before selecting the native IMG2 item. */
+        if (!csb_v1_fmtowns_stairs_graphic_index(
+                wall_set, graphic_index, &source_graphic)) return 0;
+    } else if (graphic_index >= F31_M645_FIRST_STAIRS + 18 &&
                graphic_index < F31_M633_FIRST_DOOR_SET) {
         source_graphic = (unsigned int)graphic_index;
     } else if (graphic_index >= F31_M633_FIRST_DOOR_SET &&
@@ -63581,23 +63590,30 @@ static uint32_t m11_dm2_startup_frame_hash(const unsigned char *framebuffer,
  * display transaction only: the HUD and scene share the machine palette in
  * the original, and no image bytes are altered. */
 static int m11_dm2_apply_fmtowns_runtime_palette(
-    const DM2_V1_BootProfile *profile)
+    const M11_GameViewState *state)
 {
+    const DM2_V1_BootProfile *profile;
     const DM2_V1_AssetLoader *loader;
     DM2_V1_RuntimeGraphicsSetSceneReceipt scene;
+    DM2_V1_ViewportM11FrameReceipt frame;
     DM2_V1_InterfacePalette palette;
 
+    profile = state
+        ? (const DM2_V1_BootProfile *)state->dm2BootProfile : NULL;
     if (!profile || profile->platform != DM2_PLATFORM_FMTOWNS_JA ||
         !(loader = dm2_v1_boot_asset_loader(profile))) {
         return 0;
     }
     memset(&scene, 0, sizeof(scene));
+    memset(&frame, 0, sizeof(frame));
     memset(&palette, 0, sizeof(palette));
     if (!dm2_v1_runtime_graphicsset_scene_receipt(&scene) || !scene.ready ||
-        !dm2_v1_asset_load_interface_palette(
+        !dm2_v1_runtime_last_m11_frame_receipt(&frame) || !frame.valid ||
+        frame.c_light_receipt_hash == 0u || frame.c_light_level > 5u ||
+        !dm2_v1_asset_load_fmtowns_lighting_palette(
             loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
             (int)scene.map_graphics_style, DM2_GDAT_GFXSET_FLOOR,
-            &palette) || palette.hash == 0u) {
+            (int)frame.c_light_level, &palette) || palette.hash == 0u) {
         return 0;
     }
     return M11_Render_SetIndexedPaletteRgb6(palette.rgb6) == M11_RENDER_OK;
@@ -68357,6 +68373,20 @@ static void m11_clear_dm1_v1_top_row_receipt_zones(unsigned char* framebuffer,
     }
 }
 
+static const unsigned char *m11_dm1_v1_top_row_palette(
+    const M11_GameViewState *state)
+{
+    if (m11_is_dm1_fmtowns(state) && state->dm1FmtownsStartupReceiptValid &&
+        state->dm1FmtownsStartupReceipt.game_dungeon_palettes_verified) {
+        int level = m11_compute_dungeon_palette_index(state);
+        if (level < 0) level = 0;
+        if (level > 5) level = 5;
+        return &state->dm1FmtownsStartupReceipt
+            .game_dungeon_palettes_rgb6[level][0][0];
+    }
+    return &G9010_auc_VgaPaletteBrightest_Compat[0][0];
+}
+
 static const M11_AssetSlot* m11_dm1_v1_top_row_receipt_source_slot(
     const M11_GameViewState* state,
     const Dm1V1ChampionTopRowPresentationOpPc34* operation)
@@ -68516,11 +68546,13 @@ static int m11_draw_dm1_v1_status_bar_frame_receipt(
     Dm1V1ChampionStatusBarFrameMaterialsPc34 frameMaterials;
     Dm1V1ChampionStatusBarFramePresentationReceiptPc34 presentation;
     int operationIndex;
+    const unsigned char *indexedPalette;
 
     if (!state || !assets || !assets->valid || !framebuffer ||
         framebufferWidth <= 0 || framebufferHeight <= 0) {
         return 0;
     }
+    indexedPalette = m11_dm1_v1_top_row_palette(state);
     memset(&ownershipInput, 0, sizeof(ownershipInput));
     ownershipInput.candidateChampionOrdinal =
         state->candidateMirrorPanelActive && state->candidateMirrorPartyIndex >= 0
@@ -68544,7 +68576,7 @@ static int m11_draw_dm1_v1_status_bar_frame_receipt(
     memset(&commandMaterials, 0, sizeof(commandMaterials));
     commandMaterials.statusTargetReady = 1;
     commandMaterials.indexedPaletteOriginal = 1;
-    commandMaterials.indexedPalette = &G9010_auc_VgaPaletteBrightest_Compat[0][0];
+    commandMaterials.indexedPalette = indexedPalette;
     commandMaterials.indexedPaletteEntryCount = VGA_PALETTE_PC34_COLOR_COUNT;
     memset(&commands, 0, sizeof(commands));
     if (!dm1_v1_champion_status_bar_redraw_commands_pc34(
@@ -68957,15 +68989,26 @@ static int m11_draw_dm1_v1_top_row_receipt(
     int invisibilityMaterialReady;
     int statusBarFrameReady;
     int operationIndex;
+    const unsigned char *indexedPalette;
 
     if (!m11_dm1_v1_top_row_receipt_required(state) || !framebuffer) {
         return 0;
     }
-
-    if (!dm1_v1_champion_panel_material_from_m11_loader_pc34(
+    if (m11_is_dm1_fmtowns(state) &&
+        (!state->dm1FmtownsStartupReceiptValid ||
+         !state->dm1FmtownsStartupReceipt.game_dungeon_palettes_verified)) {
+        return 0;
+    }
+    indexedPalette = m11_dm1_v1_top_row_palette(state);
+    if (!(m11_is_dm1_fmtowns(state)
+              ? dm1_v1_champion_panel_material_from_m11_loader_fmtowns(
+                    (M11_AssetLoader*)&state->assetLoader,
+                    &state->originalFont, indexedPalette,
+                    VGA_PALETTE_PC34_COLOR_COUNT, &panelMaterials)
+              : dm1_v1_champion_panel_material_from_m11_loader_pc34(
             (M11_AssetLoader*)&state->assetLoader, &state->originalFont,
-            &G9010_auc_VgaPaletteBrightest_Compat[0][0],
-            VGA_PALETTE_PC34_COLOR_COUNT, &panelMaterials) ||
+                    indexedPalette, VGA_PALETTE_PC34_COLOR_COUNT,
+                    &panelMaterials)) ||
         !panelMaterials.valid || !panelMaterials.suppressSyntheticFallback ||
         !dm1_v1_champion_top_row_assets_from_m11_loader_pc34(
             (M11_AssetLoader*)&state->assetLoader, &assets) ||
@@ -74222,7 +74265,7 @@ static void m11_game_view_draw_source(M11_GameViewState* state,
                 rendered = -1;
             } else {
                 (void)m11_dm2_apply_fmtowns_runtime_palette(
-                    (const DM2_V1_BootProfile *)state->dm2BootProfile);
+                    state);
             }
         }
         if (rendered == -1) {

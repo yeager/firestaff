@@ -25,4 +25,13 @@ int dm1_v1_champion_panel_material_from_m11_loader_pc34(
     int paletteEntryCount,
     Dm1V1ChampionPanelMaterialReceiptPc34 *outReceipt);
 
+/* F20E/F20J CHAMDRAW.C F0292 uses the Towns-native poison/damage bitmaps,
+ * whose dimensions differ from the PC34 C032/C015 material. */
+int dm1_v1_champion_panel_material_from_m11_loader_fmtowns(
+    M11_AssetLoader *loader,
+    const M11_FontState *font,
+    const unsigned char *palette,
+    int paletteEntryCount,
+    Dm1V1ChampionPanelMaterialReceiptPc34 *outReceipt);
+
 #endif

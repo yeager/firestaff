@@ -7007,6 +7007,7 @@ add_library(firestaff_m10 STATIC
     src/shared/image_backend_pc34_compat_globals.c
     src/csb/csb_v1_csbgraphics_dat_classify.c
     src/csb/csb_v1_csbgraphics_dat_real_scan.c
+    src/csb/csb_v1_fmtowns_stairs.c
     src/csb/csb_v1_fmtowns_graphics_dat.c
     src/csb/csb_v1_fmtowns_cd.c
     src/csb/csb_v1_csbgraphics_runtime_binding.c
@@ -42573,6 +42574,15 @@ add_executable(test_nexus_v1_dgn_material_raster
     set_tests_properties(csb_v1_csbwin_layout_0232_unit PROPERTIES
         LABELS "tier2;csb;csbwin_custom_resource;data_free"
     )
+
+    add_executable(test_csb_v1_fmtowns_stairs
+        tests/test_csb_v1_fmtowns_stairs.c
+    )
+    target_link_libraries(test_csb_v1_fmtowns_stairs PRIVATE firestaff_m10)
+    add_test(NAME csb_v1_fmtowns_stairs_unit
+        COMMAND test_csb_v1_fmtowns_stairs)
+    set_tests_properties(csb_v1_fmtowns_stairs_unit PROPERTIES
+        LABELS "tier2;csb;fmtowns;data_free")
 
     add_executable(test_csb_v1_csbwin_planar_bitmap
         tests/test_csb_v1_csbwin_planar_bitmap.c

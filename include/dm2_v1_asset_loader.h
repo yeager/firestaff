@@ -1319,6 +1319,16 @@ int dm2_v1_asset_load_interface_palette(
     int index,
     int field,
     DM2_V1_InterfacePalette *out_palette);
+/* Load one physical FM Towns light stripe from a 16-colour PAL_IRGB record.
+ * The source may be one static 16-colour row or six consecutive rows; the
+ * latter is selected by light_level (0..5). */
+int dm2_v1_asset_load_fmtowns_lighting_palette(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    int light_level,
+    DM2_V1_InterfacePalette *out_palette);
 /* True when an authenticated big-endian V5 interface palette has only the
  * original physical 16-color bank; Macintosh V5 uses a 256-color bank. */
 int dm2_v1_asset_loader_uses_physical_16_color_palette(

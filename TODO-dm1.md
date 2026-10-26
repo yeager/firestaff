@@ -3061,3 +3061,12 @@ receipt to accept them in both DATA and JDATA. This rules out missing or
 wrongly sized source assets as the reason for a blank F20 HUD;
 runtime palette/font/material admission and final top-row composition still
 need a source-backed F20 test before changing the renderer gate.
+
+2026-10-26 FM Towns F20 HUD admission: the shared champion-panel material
+receipt now admits the native F20E surfaces (including its 90x15 C032 and
+43x7 C015) and the source-verified compact F20J C032 (53x17). The real-media
+graphics test loads the FM Towns M653 directly from GRAPHICS.DAT asset 557
+and checks both English and Japanese libraries. M11 now supplies the verified
+F20 dungeon palette to the top-row consumer. Source-native F20 top-row zone
+geometry and an original-frame pixel comparison remain open; this is not full
+FM Towns HUD parity.
