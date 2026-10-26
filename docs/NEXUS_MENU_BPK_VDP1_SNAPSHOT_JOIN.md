@@ -83,6 +83,12 @@ source scan matches all 137 executed texture spans to authenticated retail
 files in the available corpus. This is a byte-source observation, not proof
 of final pixel composition or input behavior.
 
+The same CMDSIZE and skipped-command corrections also apply to the Mednafen
+VDP1 source, material, and write-join analyzers. Earlier numerical receipts
+produced by those analyzers must be regenerated against their original raw
+captures before they are used as evidence; they are not automatically
+validated by the Ymir result above.
+
 The frame counter in the VDP1 trace is distinct from the 120 requested capture
 steps, and the screenshot is taken after the dump. This receipt therefore
 does not establish that all three artifacts represent precisely the same

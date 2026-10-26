@@ -20,12 +20,12 @@ from analyze_nexus_vdp1_command_sequence import find_chain, parse_copr
 def texture_spans(vram: bytes, state: str) -> list[tuple[int, int, bytes]]:
     spans = []
     for record in find_chain(vram, parse_copr(state)):
-        if record.end or record.command_type > 2:
+        if record.control & 0xC000 or record.command_type > 2:
             continue
         words = record.words
         colour_mode = (words[2] >> 3) & 0x7
-        width = (words[5] & 0x003F) * 8
-        height = words[5] >> 8
+        width = ((words[5] >> 8) & 0x003F) * 8
+        height = words[5] & 0x00FF
         bits_per_pixel = 4 if colour_mode <= 1 else 8 if colour_mode <= 4 else 16
         source_offset = words[4] * 8
         source_size = width * height * bits_per_pixel // 8
