@@ -55,6 +55,18 @@ static unsigned TheronPCEFastMovementContextLimit(void)
  }
  return limit;
 }
+static unsigned TheronPCEFastMovementContextStartFrame(void)
+{
+ static unsigned start_frame;
+ static bool initialized;
+ if(!initialized)
+ {
+  const char *text = getenv("FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_START_FRAME");
+  start_frame = text && *text ? strtoul(text, NULL, 10) : 0;
+  initialized = true;
+ }
+ return start_frame;
+}
 static void TheronPCEFastMovementContext(const char *kind, unsigned int logical_address,
                                          unsigned int physical_address, uint8 value)
 {
@@ -68,6 +80,8 @@ static void TheronPCEFastMovementContext(const char *kind, unsigned int logical_
  else if(!strcmp(kind, "runtime_state_write"))
   count = &TheronPCEFastRuntimeStateWriteCount;
  if(*count >= TheronPCEFastMovementContextLimit())
+  return;
+ if(TheronPCEFastScriptFrame < TheronPCEFastMovementContextStartFrame())
   return;
  if(!TheronPCEFastMovementContextTrace)
  {
