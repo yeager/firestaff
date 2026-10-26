@@ -218,6 +218,11 @@ if ! grep -Fq 'if(ok && trace_count < 4096)' "$later_raw_patch_file"; then
     exit 1
 fi
 if ! grep -Fq 'FIRESTAFF_THERON_FILE_SELECT_VDC_TRACE' "$file_select_vdc_patch_file" ||
+   ! grep -Fq 'fclose(sat_file);' "$file_select_vdc_patch_file" ||
+   ! grep -Fq 'if(ram_file) fclose(ram_file);' "$file_select_vdc_patch_file" ||
+   ! grep -Fq 'TheronGraphicsSnapshotFrameEnd = ~0U;' "$file_select_vdc_patch_file" ||
+   ! grep -Fq 'const unsigned sequence = file_select_vdc_count++;' "$file_select_vdc_patch_file" ||
+   ! grep -Fq 'if(file_select_vdc_count == 525)' "$file_select_vdc_patch_file" ||
    ! grep -Fq 'file_select_vdc_count == 525' "$file_select_vdc_patch_file" ||
    ! grep -Fq 'TheronFileSelectVDCSnapshotPending = true' "$file_select_vdc_patch_file" ||
    ! grep -Fq 'TheronGraphicsSnapshotDumped = false' "$file_select_vdc_patch_file" ||

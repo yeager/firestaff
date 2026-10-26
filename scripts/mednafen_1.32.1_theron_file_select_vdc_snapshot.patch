@@ -46,16 +46,21 @@ index b475efc..59b7f30 100644
  static void TheronDumpGraphicsSnapshot(void)
  {
   const char *vram_path = getenv("FIRESTAFF_THERON_VRAM_SNAPSHOT");
-@@ -150,6 +151,8 @@ static void TheronDumpGraphicsSnapshot(void)
+@@ -150,6 +151,13 @@ static void TheronDumpGraphicsSnapshot(void)
           (unsigned)vce->GetRegisterVDC(0, VDC::GSREG_VDR, NULL, 0),
           (unsigned)vce->GetRegisterVDC(0, VDC::GSREG_VCR, NULL, 0),
           (unsigned)vce->GetRegisterVDC(0, VDC::GSREG_CR, NULL, 0));
 + if(TheronGraphicsSnapshotFrameEnd != ~0U)
++ {
 +  fprintf(vdc_file, "snapshot_frame_end=%u\n", TheronGraphicsSnapshotFrameEnd);
++  TheronGraphicsSnapshotFrameEnd = ~0U;
++ }
   fclose(vram_file);
   fclose(vce_file);
   fclose(vdc_file);
-@@ -158,6 +161,27 @@ static void TheronDumpGraphicsSnapshot(void)
++ fclose(sat_file);
++ if(ram_file) fclose(ram_file);
+@@ -158,6 +166,27 @@ static void TheronDumpGraphicsSnapshot(void)
   if(bram_file) fclose(bram_file);
   TheronGraphicsSnapshotDumped = true;
  }
@@ -83,7 +88,7 @@ index b475efc..59b7f30 100644
  static uint8 BaseRAM[32768]; // 8KB for PCE, 32KB for Super Grafx
  uint8 PCE_PeekMainRAM(uint32 A)
  {
-@@ -259,6 +283,7 @@ static unsigned TheronSCSIGenerationVDCSnapshotTarget = 0;
+@@ -259,6 +288,7 @@ static unsigned TheronSCSIGenerationVDCSnapshotTarget = 0;
  static unsigned TheronSCSIGenerationVDCSnapshotRowTarget = 0;
  static bool TheronSCSIGenerationVDCSnapshotTargetInitialized = false;
  static bool TheronSCSIGenerationVDCSnapshotPending = false;
@@ -91,7 +96,7 @@ index b475efc..59b7f30 100644
  static unsigned TheronGetVDCIOTraceLimit(void)
  {
   const char *value;
-@@ -277,11 +302,56 @@ static unsigned TheronGetVDCIOTraceLimit(void)
+@@ -277,11 +307,57 @@ static unsigned TheronGetVDCIOTraceLimit(void)
  }
  static void TheronTraceVDCIOWrite(uint32 physical, uint8 value)
  {
@@ -128,18 +133,19 @@ index b475efc..59b7f30 100644
 +     fputs("source=mednafen-pce-instrumented-file-select-vdc\n", file_select_vdc_trace);
 +   }
 +  }
++  const unsigned sequence = file_select_vdc_count++;
++  if(file_select_vdc_count == 525)
++   TheronFileSelectVDCSnapshotPending = true;
 +  if(file_select_vdc_trace)
 +  {
 +   fprintf(file_select_vdc_trace,
 +           "file_select_vdc_write sequence=%u frame=%u logical_address=%04x physical_address=%06x value=%02x writer_pc=%04x writer_physical_pc=%06x a=%02x x=%02x y=%02x\n",
-+           file_select_vdc_count++, TheronScriptInputFrame(),
++           sequence, TheronScriptInputFrame(),
 +           HuCPU.GetLastLogicalWriteAddr(), physical, value,
 +           file_select_writer_pc, file_select_writer_physical_pc,
 +           HuCPU.GetRegister(HuC6280::GSREG_A),
 +           HuCPU.GetRegister(HuC6280::GSREG_X),
 +           HuCPU.GetRegister(HuC6280::GSREG_Y));
-+   if(file_select_vdc_count == 525)
-+    TheronFileSelectVDCSnapshotPending = true;
 +   if((file_select_vdc_count & 0xff) == 0)
 +    fflush(file_select_vdc_trace);
 +  }
@@ -148,7 +154,7 @@ index b475efc..59b7f30 100644
 
   if(!TheronSCSIGenerationVDCSnapshotTargetInitialized)
   {
-@@ -364,8 +434,15 @@ static void TheronTraceVDCIOWrite(uint32 physical, uint8 value)
+@@ -364,8 +440,15 @@ static void TheronTraceVDCIOWrite(uint32 physical, uint8 value)
  static void TheronTraceVDCIOPostWrite(void)
  {
   if(!TheronVDCIOSnapshotPending &&
@@ -165,7 +171,7 @@ index b475efc..59b7f30 100644
   if(TheronVDCIOSnapshotPending)
   {
    TheronVDCIOSnapshotPending = false;
-@@ -1287,6 +1364,8 @@ static void Emulate(EmulateSpecStruct *espec)
+@@ -1287,6 +1370,8 @@ static void Emulate(EmulateSpecStruct *espec)
    }
   } while(!rp_rv);
 
