@@ -7,6 +7,7 @@ quartz_helper=$repo/scripts/send_theron_macos_quartz_keypair.swift
 quartz_grab_helper=$repo/scripts/send_theron_macos_quartz_chord.swift
 runtime_verifier=$repo/scripts/verify_theron_mednafen_sdl2_runtime.sh
 build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
+bram_helper=$repo/scripts/prepare_theron_authentic_bram.sh
 adpcm_context_patch=$repo/scripts/mednafen_1.32.1_theron_adpcm_fifo_ram_trace_context.patch
 adpcm_playback_patch=$repo/scripts/mednafen_1.32.1_theron_adpcm_playback_trace.patch
 cdda_command_patch=$repo/scripts/mednafen_1.32.1_theron_cdda_command_trace.patch
@@ -35,6 +36,8 @@ if [[ ! -x "$scripted_input_consumption_verifier" ]]; then
     exit 1
 fi
 mkdir -p "$repo/build"
+python3 "$repo/tests/test_theron_scripted_input_patch_parser.py"
+bash "$repo/tests/test_theron_authentic_bram.sh"
 input_test_dir=$(mktemp -d "$repo/build/theron-input-consumption.XXXXXX")
 swift_module_cache=
 window_retry_harness=
@@ -341,9 +344,24 @@ if [[ "$route_output" != *'SKIP: MEDNAFEN_BIN, THERON_US_CUE/THERON_CUE, THERON_
 fi
 if ! grep -Fq 'mkdir -p "$home_dir/sav"' "$script" ||
    ! grep -Fq -- '-filesys.path_sav "$home_dir/sav"' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_AUTHENTIC_BRAM must name a 2048-byte original Backup RAM image' "$bram_helper" ||
+   ! grep -Fq 'THERON_CAPTURE_AUTHENTIC_BRAM is not the authenticated USA Backup RAM image' "$bram_helper" ||
+   ! grep -Fq 'cp "$source_path" "$destination_path"' "$bram_helper" ||
+   ! grep -Fq 'md5_file "$destination_path"' "$bram_helper" ||
+   ! grep -Fq 'theron_prepare_authentic_bram' "$script" ||
+   ! grep -Fq 'firestaff-theron-authentic.sav' "$bram_helper" ||
+   ! grep -Fq '"${capture_sav_args[@]}"' "$script" ||
    ! grep -Fq 'mkdir -p "$home_dir/mcs"' "$script" ||
    ! grep -Fq -- '-filesys.path_state "$home_dir/mcs"' "$script"; then
     printf '%s\n' 'FAIL: isolated captures must bind backup RAM and state files to the private capture home' >&2
+    exit 1
+fi
+authentic_bram_copy_line=$(grep -nF 'cp "$source_path" "$destination_path"' "$bram_helper" | head -n1 | cut -d: -f1)
+authentic_bram_hash_line=$(grep -nF 'md5_file "$destination_path"' "$bram_helper" | head -n1 | cut -d: -f1)
+if grep -Fq 'md5_file "$capture_authentic_bram"' "$script" ||
+   [[ -z $authentic_bram_copy_line || -z $authentic_bram_hash_line ||
+      $authentic_bram_copy_line -ge $authentic_bram_hash_line ]]; then
+    printf '%s\n' 'FAIL: authenticate the private BRAM copy after copying, not the mutable source path' >&2
     exit 1
 fi
 if ! grep -Fq 'FIRESTAFF_THERON_TITLE_WAIT_INPUT="$title_wait_input"' "$script" ||

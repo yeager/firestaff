@@ -3,6 +3,7 @@ set -euo pipefail
 
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 source "$script_dir/theron_x11_keymap.sh"
+source "$script_dir/prepare_theron_authentic_bram.sh"
 scripted_input_consumption_verifier="$script_dir/verify_theron_scripted_input_consumption.sh"
 mednafen_bin=${MEDNAFEN_BIN:-}
 cue=${THERON_US_CUE:-${THERON_CUE:-}}
@@ -82,6 +83,7 @@ capture_input_grab_delay=${THERON_CAPTURE_INPUT_GRAB_DELAY:-2}
 replay_input_script=${THERON_CAPTURE_REPLAY_INPUT_SCRIPT:-}
 autoload_state=${THERON_CAPTURE_AUTOLOAD_STATE:-}
 autoload_movie=${THERON_CAPTURE_AUTOLOAD_MOVIE:-}
+capture_authentic_bram=${THERON_CAPTURE_AUTHENTIC_BRAM:-}
 post_dungeon_ordinal=${THERON_CAPTURE_POST_DUNGEON_ORDINAL:-}
 title_wait_input=${THERON_CAPTURE_TITLE_WAIT_INPUT:-}
 menu_route=${THERON_CAPTURE_MENU_ROUTE:-}
@@ -1285,6 +1287,18 @@ if [[ -n "$configured_home" ]]; then
 fi
 mkdir -p "$home_dir/sav"
 mkdir -p "$home_dir/mcs"
+capture_sav_args=()
+if [[ -n "$capture_authentic_bram" ]]; then
+    # Copy into the private profile first, then authenticate the exact bytes
+    # Mednafen will open. A change to the operator's source path during the
+    # copy cannot replace already-validated bytes in this capture profile.
+    if ! capture_authentic_bram_name=$(theron_prepare_authentic_bram \
+        "$capture_authentic_bram" "$home_dir/sav" ffabc8d19b0915d4d9632a7ae2e90a97); then
+        rm -rf "$home_dir"
+        exit 1
+    fi
+    capture_sav_args=(-filesys.fname_sav "$capture_authentic_bram_name")
+fi
 profile_sram_count=0
 : >"$profile_sram_manifest"
 printf '%s\n' 'FIRESTAFF_THERON_MOUSE_TRACE_V1' >"$mouse_trace"
@@ -1491,6 +1505,7 @@ launch=(
     -sound "$capture_sound" \
     -video.driver softfb \
     -filesys.path_sav "$home_dir/sav" \
+    "${capture_sav_args[@]}" \
     -filesys.path_state "$home_dir/mcs" \
     -pce.input.multitap 0 \
     "${capture_input_args[@]}" \
