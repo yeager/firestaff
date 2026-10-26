@@ -1322,3 +1322,28 @@ fallback cannot safely supply the 34/51-pixel source offsets, so those figure
 crops remain omitted until authentic pixel ownership is proven. Selected-hero
 overlays, full-screen visual comparison, and original-emulator HUD capture
 remain open; this does not establish full FM Towns HUD or viewport parity.
+
+2026-10-26 SKProject source comparison: `skguivwp.cpp::DM2_DRAW_DUNGEON_TILES`
+walks the 20 `table1d7029` cells and calls `DM2_DRAW_STATIC_OBJECT` for each
+source-eligible tile. The center/player tile is a separate pass in
+`DM2_DRAW_PLAYER_TILE`: it calls `DM2_DRAW_PIT_ROOF(0)`, then
+`DM2_DRAW_STATIC_OBJECT(0, 0x1ffffff, 0)`, and only afterward draws the
+teleporter/rain/external-tile overlays. The center pass is therefore not a
+21st entry in `table1d7029`; a future live DB14 snapshot must query it as a
+separate cell to preserve that source order.
+
+Within `DM2_DRAW_STATIC_OBJECT`, source draw-slot order is selected by
+`table1d6afe[cell]` (positive: `table1d6da1`; zero:
+`table1d6dba`; negative: `table1d6d88`). For each enabled slot, the source
+draws the floor item, then the creature. Only when the creature draw succeeds
+does it replay up to seven prior missile-mask slots, from oldest to newest,
+then it checks and draws the current slot's missile. Both paths call
+`DM2_DRAW_FLYING_ITEM`, which re-queries the DB14's 5x5 position and timer
+`wvalueB`; it is not a pass over the legacy Firestaff projectile drain.
+Firestaff's current combined item/creature receipt has no DB14 events or
+creature-success replay events, and its later `dm2_v1_render_projectiles`
+pass cannot reproduce these occlusion points. The active DB14 selector and
+timer receipts are evidence only so far; no pixel parity is claimed. Next,
+bridge live DB14 chain snapshots and timer receipts to source-cell draw events,
+including the separate center pass, then bind TEMP_PICST placement/frame
+selection before allowing those events to draw authenticated GDAT material.
