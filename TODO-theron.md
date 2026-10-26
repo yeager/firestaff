@@ -1,3 +1,17 @@
+## 2026-10-26 — revalidate native debug input against authentic US and JP media
+
+- An isolated TRV2 Debug build passed the authentic USA raw Track 02 runtime
+  regression with `--debug`. It verifies source-backed runtime entry plus
+  keyboard movement/turning and panel-mouse movement, champion selection,
+  waiting, pickup, item selection, and drop.
+- The same binary passed the authentic Japanese Rev. 1 SDL regression with
+  `--debug`, covering keyboard input, Button II, panel-mouse movement,
+  champion selection, and waiting. These are native Firestaff checks; no
+  emulator or firmware is part of either runtime route.
+- This revalidates the existing source-backed input routes, not visual,
+  semantic, or full gameplay parity. The evidence-capture gaps below remain
+  open.
+
 ## 2026-10-26 — retain the bounded controller witness across cold boot
 
 - The PCE Fast capture instrumentation now accepts a bounded input-trace
