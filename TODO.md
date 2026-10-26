@@ -18,11 +18,14 @@ required authentic DM2 Macintosh archive; no substitute or synthetic media
 was used. All probes used SDL dummy video/audio and do not establish native
 display/input parity or complete gameplay.
 
-PR #74 is not ready to merge despite green CI. Source review found two gaps
-behind its Theron Z/X binding: the inactive startup keyboard dispatcher does
-not route Z to Action or X to Back, and the loaded-dungeon Theron input
-consumer returns `UNKNOWN INPUT` for `M12_MENU_INPUT_BACK`. Keep the PR open
-until those paths are corrected and covered by live-input regression evidence.
+2026-10-26 Theron keyboard gap follow-up: PR #74 was merged on 2026-10-25.
+The earlier review blockers are resolved in the current source: the Theron
+SDL mapper routes Z to Action and X to Back, and the loaded-dungeon runtime
+consumes a standalone Back token without advancing the source clock. The
+authentic USA Track 02 SDL event test sends Tab, Z, Space and X through the
+normal event loop; `tests/test_theron_native_keyboard_mapping.c` also checks
+the keyboard mappings. This closes those specific routing gaps only; it does
+not establish native dungeon-image parity or complete Theron gameplay.
 
 2026-10-25 DM1 Swedish startup diagnostics: an authentic PC 3.4
 `--game dm1 --platform pc --lang sv --debug --boot-probe` previously printed

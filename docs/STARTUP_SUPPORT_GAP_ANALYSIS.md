@@ -1,8 +1,12 @@
 # Five-game startup support gap analysis
 
-Reconciled with `main` at `d0a6c183f` on 2026-10-26. Runtime receipts
-cited below remain the recorded runs at their stated revisions; they were not
-rerun during this documentation update. The repository contains checks
+Reconciled with published `main` at `86ef3e4b5` (Firestaff v3.0.414) on
+2026-10-26. Its GitHub Actions release run `40292923310` completed the seven
+platform build jobs successfully (Windows x86_64, macOS x86_64/arm64, Linux
+x86_64/arm64, Android arm64 and iOS arm64). Those builds verify compilation,
+not game startup. Runtime receipts cited below remain the recorded runs at
+their stated revisions; they were not rerun during this documentation update.
+The repository contains checks
 against authentic media for all five games, but “available,”
 “selected,” “handed off,” and “entered a playable runtime” are separate states.
 The current evidence does not establish complete five-game startup support.
