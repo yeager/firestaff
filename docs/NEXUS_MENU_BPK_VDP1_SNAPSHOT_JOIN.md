@@ -135,10 +135,14 @@ external lookup test checks the command positions and horizontal flip against
 both buffers when `FIRESTAFF_NEXUS_YMIR_VDP1_FBS` is provided alongside the
 trace and VRAM paths. Transparent pixels and final VDP2 output are not covered
 by this comparison, and the dump does not prove per-command snapshot timing.
-Sampling the separately saved 640×448 screenshot at twice these sprite
-coordinates produced zero direct RGB matches for the 1,495 nontransparent
-pixels. The screenshot follows the dump and VDP2 can cover or alter sprites;
-this observation does not distinguish timing from composition or priority.
+The separately saved 640×448 screenshot contains all 1,495 nontransparent
+sprite pixels at twice the VDP1 coordinates. Their RGB channels equal the
+captured CRAM components converted to 8 bits and multiplied by 31/32, rounding
+down. The earlier zero-match result compared unscaled colours and is withdrawn.
+Recheck with `python3 scripts/verify_nexus_title_sprite_screenshot.py BUNDLE
+SCREENSHOT TITLE.BIN`; Pillow is required. This is an observed relationship,
+not proof of what caused the scaling or of exact capture timing. It covers
+these sprites, not the complete VDP2 image or menu interaction.
 
 For mode-1 palette analysis, Ymir's software VDP1 renderer counts two end codes
 per rasterized line: each end code is skipped and the second stops the line.
