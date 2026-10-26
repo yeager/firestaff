@@ -41,12 +41,15 @@ class SnapshotJoinTests(unittest.TestCase):
             "0,0,0x0,0x0,0x0,0x20\n"
             "0,1,0x20,0x4,0x20,0x0\n"
             "0,2,0x40,0x5000,0x0,0x20\n"
+            "1,0,0x60,0x0,0x0,0x20\n"
         )
         with tempfile.TemporaryDirectory(prefix="nexus-menu-vdp1-trace-", dir=BUILD) as directory:
             path = Path(directory) / "trace.csv"
             path.write_text(trace, encoding="utf-8")
-            self.assertEqual(command_trace_source_starts(path, [(0x100, 0x110)]),
+            self.assertEqual(command_trace_source_starts(path, [(0x100, 0x110)], 0),
                              (1, 1))
+            with self.assertRaisesRegex(ValueError, "no rows for capture frame 2"):
+                command_trace_source_starts(path, [(0x100, 0x110)], 2)
 
     def test_rejects_empty_missing_header_and_header_only_traces(self) -> None:
         invalid_traces = ("", "frame,index\n", "word0,word4\n")
@@ -56,7 +59,7 @@ class SnapshotJoinTests(unittest.TestCase):
                 with self.subTest(trace=trace):
                     path.write_text(trace, encoding="utf-8")
                     with self.assertRaises(ValueError):
-                        command_trace_source_starts(path, [])
+                        command_trace_source_starts(path, [], 0)
 
 
 if __name__ == "__main__":

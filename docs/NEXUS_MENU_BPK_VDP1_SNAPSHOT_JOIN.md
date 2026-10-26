@@ -30,14 +30,16 @@ python3 scripts/analyze_nexus_menu_bpk_vdp1_snapshot_join.py \
 ```
 
 Only add `--vdp1-command-trace` when the trace and VRAM dump are from one
-atomic capture. This retained replay has no such command trace.
+atomic capture, and pair it with `--vdp1-command-trace-frame` for the frame
+represented by the snapshot. This retained replay has no such command trace.
 
 The tool rejects a different `MENU.BPK` identity, malformed BPPK/PRS3 framing,
 an image that is not a 512 KiB VDP1 dump, or a supplied snapshot hash mismatch.
 It decodes the documented bounded DMWeb PRS3 stream and searches for every
 possibly overlapping occurrence of each whole decoded surface, directly and
 with 16-bit word order swapped. A supplied command trace must come from the
-same capture as the VRAM snapshot.
+same capture as the VRAM snapshot. The analyzer counts source-start checks
+only for its explicitly paired frame.
 
 ## Result
 

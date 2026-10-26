@@ -172,20 +172,21 @@ def entries(menu: bytes):
 
 
 def command_trace_source_starts(trace_path: Path,
-                                matched_ranges: list[tuple[int, int]]) -> tuple[int, int]:
+                                matched_ranges: list[tuple[int, int]],
+                                capture_frame: int) -> tuple[int, int]:
     """Count textured VDP1 commands whose source start is in a matched range.
 
     The VDP1 command trace is an optional corroborating input.  It reports
     only command type 0, 1, or 2 (normal/scaled/distorted sprites), because
     those are the textured VDP1 primitives.  A source start in a range is
     still not proof of a complete source span, palette binding, or display
-    ownership.
+    ownership. Only commands from the VRAM snapshot's frame are counted.
     """
     try:
         with trace_path.open(newline="", encoding="utf-8") as handle:
             reader = csv.DictReader(handle)
             if (reader.fieldnames is None
-                    or not VDP1_TRACE_REQUIRED_COLUMNS.issubset(reader.fieldnames)):
+                    or not (VDP1_TRACE_REQUIRED_COLUMNS | {"frame"}).issubset(reader.fieldnames)):
                 raise ValueError("missing VDP1 command-trace columns")
             rows = list(reader)
     except (OSError, csv.Error, UnicodeError) as error:
@@ -194,8 +195,12 @@ def command_trace_source_starts(trace_path: Path,
         raise ValueError("VDP1 command trace has no command rows")
     textured = 0
     source_starts_in_match = 0
+    frame_rows = 0
     for row in rows:
         try:
+            if int(row["frame"], 0) != capture_frame:
+                continue
+            frame_rows += 1
             control = int(row["word0"], 0)
             command_type = control & 0x000f
             # VDP1 command words are CMDCTRL, CMDLINK, CMDPMOD, CMDCOLR,
@@ -208,6 +213,8 @@ def command_trace_source_starts(trace_path: Path,
         textured += 1
         if any(begin <= source_start < end for begin, end in matched_ranges):
             source_starts_in_match += 1
+    if frame_rows == 0:
+        raise ValueError(f"VDP1 command trace has no rows for capture frame {capture_frame}")
     return textured, source_starts_in_match
 
 
@@ -218,6 +225,8 @@ def main() -> int:
     parser.add_argument("--expected-vdp1-sha256", default=None)
     parser.add_argument("--vdp1-command-trace", type=Path, default=None,
                         help="optional Ymir vdp1-command-trace.csv")
+    parser.add_argument("--vdp1-command-trace-frame", type=int, default=None,
+                        help="capture frame paired with the supplied VDP1 snapshot")
     args = parser.parse_args()
     try:
         menu = args.menu_bpk.read_bytes()
@@ -266,9 +275,12 @@ def main() -> int:
     print(f"decoded_prs3_surfaces={len(decoded)}")
     print(f"whole_surface_byte_matches={matches}/{len(decoded)}")
     if args.vdp1_command_trace:
+        if args.vdp1_command_trace_frame is None or args.vdp1_command_trace_frame < 0:
+            print("NEXUS_MENU_BPK_VDP1_JOIN_INVALID: command trace requires a nonnegative paired frame")
+            return 1
         try:
             textured, source_starts_in_match = command_trace_source_starts(
-                args.vdp1_command_trace, matched_ranges)
+                args.vdp1_command_trace, matched_ranges, args.vdp1_command_trace_frame)
         except ValueError as error:
             print(f"NEXUS_MENU_BPK_VDP1_JOIN_INVALID: {error}")
             return 1
