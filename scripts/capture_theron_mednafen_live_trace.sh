@@ -85,6 +85,7 @@ replay_post_dungeon_overlay=${THERON_CAPTURE_REPLAY_POST_DUNGEON_OVERLAY:-0}
 rng_consumer_sample_limit=${THERON_CAPTURE_RNG_CONSUMER_SAMPLE_LIMIT:-512}
 rng_consumer_window_limit=${THERON_CAPTURE_RNG_CONSUMER_WINDOW_LIMIT:-32}
 main_ram_consumer_sample_limit=${THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT:-65536}
+movement_data_read_sample_limit=${THERON_CAPTURE_MOVEMENT_DATA_READ_SAMPLE_LIMIT:-128}
 vdc_io_trace_limit=${THERON_CAPTURE_VDC_IO_TRACE_LIMIT:-65536}
 capture_pce_fast_vram_commit_trace=${THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE:-0}
 pce_fast_vram_commit_trace_limit=${THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT:-65536}
@@ -158,6 +159,11 @@ fi
 if [[ ! "$main_ram_consumer_sample_limit" =~ ^[0-9]+$ ]] ||
    (( main_ram_consumer_sample_limit < 4096 || main_ram_consumer_sample_limit > 1048576 )); then
     printf '%s\n' 'FAIL: THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT must be an integer from 4096 through 1048576' >&2
+    exit 1
+fi
+if [[ ! "$movement_data_read_sample_limit" =~ ^[0-9]+$ ]] ||
+   (( movement_data_read_sample_limit < 1 || movement_data_read_sample_limit > 256 )); then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_MOVEMENT_DATA_READ_SAMPLE_LIMIT must be an integer from 1 through 256' >&2
     exit 1
 fi
 if [[ ! "$vdc_io_trace_limit" =~ ^[0-9]+$ ]] ||
@@ -1091,6 +1097,7 @@ selected_record_trace="${trace}.selected-record"
 main_ram_target_trace="${trace}.main-ram-target"
 ram_provenance_trace="${trace}.ram-provenance"
 record_watch_trace="${trace}.record-watch"
+movement_data_read_trace="${trace}.movement-data-read"
 spawn_consumer_trace="${trace}.spawn-consumer"
 spawn_register_trace="${trace}.spawn-registers"
 rng_consumer_trace="${trace}.rng-consumer"
@@ -1154,6 +1161,7 @@ rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_comman
     "$cd_ram_target_write_trace" "$cd_data_port_read_trace" \
     "$profile_sram_manifest" "$main_ram_consumer_trace" "$selected_record_trace" \
     "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" \
+    "$movement_data_read_trace" \
     "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" \
     "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" \
     "$vram_snapshot" "$vce_snapshot" "$vdc_state_snapshot" "$vdc_sat_snapshot" \
@@ -1377,6 +1385,8 @@ launch=(
     FIRESTAFF_THERON_RAM_PROVENANCE_TRACE="$ram_provenance_trace" \
     FIRESTAFF_THERON_RAM_PROVENANCE_DIRECT="${THERON_CAPTURE_RAM_PROVENANCE_DIRECT:-0}" \
     FIRESTAFF_THERON_RECORD_WATCH_TRACE="$record_watch_trace" \
+    FIRESTAFF_THERON_MOVEMENT_DATA_READ_TRACE="$movement_data_read_trace" \
+    FIRESTAFF_THERON_MOVEMENT_DATA_READ_SAMPLE_LIMIT="$movement_data_read_sample_limit" \
     FIRESTAFF_THERON_SPAWN_CONSUMER_TRACE="$spawn_consumer_trace" \
     FIRESTAFF_THERON_SPAWN_REGISTER_TRACE="$spawn_register_trace" \
     FIRESTAFF_THERON_SPAWN_REGISTER_SAMPLE_LIMIT="${THERON_CAPTURE_SPAWN_REGISTER_SAMPLE_LIMIT:-65536}" \
