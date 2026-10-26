@@ -210,22 +210,22 @@ int nexus_v1_vdp1_dgn_material_resolver(
         }
     }
     if (!terminator_found || !out_input) return 0;
+    if (parsed->colour_mode == 1U &&
+        bytes_all_zero(vdp1_vram + parsed->texture_source_byte_offset,
+                       (int)parsed->texture_byte_count) &&
+        (parsed->draw_mode & UINT16_C(0x0040)) == 0U) {
+        /* A zero pattern is transparent here but is not a unique source:
+         * unrelated DGN images and padding can contain the same bytes. */
+        memset(out_input, 0, sizeof(*out_input));
+        out_input->transparent_capture_noop_verified = 1;
+        return 1;
+    }
     if (parsed->colour_mode == 5U) {
         if (image_matches != 1 || !matched_image) return 0;
         memset(out_input, 0, sizeof(*out_input));
         out_input->dgn_direct_image = matched_image;
         out_input->dgn_direct_image_size = (int)parsed->texture_byte_count;
         out_input->dgn_direct_source_hash_verified = 1;
-        return 1;
-    }
-    if (image_matches == 0 &&
-        bytes_all_zero(vdp1_vram + parsed->texture_source_byte_offset,
-                       (int)parsed->texture_byte_count) &&
-        (parsed->draw_mode & UINT16_C(0x0040)) == 0U) {
-        /* Four frame-760 draws are identical all-zero mode-1 clear sprites.
-         * They have no DGN image owner; retain them as capture evidence only. */
-        memset(out_input, 0, sizeof(*out_input));
-        out_input->transparent_capture_noop_verified = 1;
         return 1;
     }
     if (image_palette_matches == 1) {

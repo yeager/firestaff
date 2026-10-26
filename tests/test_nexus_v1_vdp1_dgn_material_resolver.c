@@ -66,7 +66,7 @@ int main(void)
     le16(command + 4, 1U << 3U);
     le16(command + 6, 0x3278U);
     le16(command + 8, 0x0020U);
-    le16(command + 10, 0x0402U);
+    le16(command + 10, 0x0204U);
     if (nexus_v1_vdp1_texture_command_parse(
             command, sizeof(command), &parsed) != 0 ||
         parsed.colour_mode != 1U || parsed.texture_byte_count != 32U) {
@@ -97,6 +97,17 @@ int main(void)
                 parsed.colour_control, parsed.texture_source_range_valid);
         free(vram); free(dgn); free(dgn_direct); return 1;
     }
+    /* Identical all-zero bytes in a DGN image are not source ownership. */
+    memset(vram + 0x100, 0, 32);
+    memset(dgn + 0x800 + 22, 0, 32);
+    if (!nexus_v1_vdp1_dgn_material_resolver(
+            vram, NEXUS_V1_VDP1_VRAM_BYTES, command, sizeof(command), &parsed,
+            0x300U, &resolved, &context) ||
+        !resolved.transparent_capture_noop_verified ||
+        resolved.dgn_source_hash_verified || resolved.dgn_image != NULL) {
+        fprintf(stderr, "FAIL: zero texture falsely attributed to DGN\n");
+        free(vram); free(dgn); free(dgn_direct); return 1;
+    }
     /* Structure2 encoding 28h is the canonical direct-colour DGN owner.
      * The capture source is Saturn little-endian; the DGN image remains
      * big-endian and the resolver returns the exact owner span. */
@@ -117,7 +128,7 @@ int main(void)
     }
     le16(command + 4, 5U << 3U);
     le16(command + 8, 0x0040U);
-    le16(command + 10, 0x0201U);
+    le16(command + 10, 0x0102U);
     if (nexus_v1_vdp1_texture_command_parse(
             command, sizeof(command), &parsed) != 0 ||
         parsed.colour_mode != 5U || parsed.texture_byte_count != 32U) {
