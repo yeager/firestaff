@@ -99,6 +99,31 @@ if [[ -n "$replay_input_script" || -n "$host_key" || -n "$host_key_sequence" ]];
     input_trace_limit_default=1048576
 fi
 input_trace_limit=${THERON_CAPTURE_INPUT_TRACE_LIMIT:-$input_trace_limit_default}
+input_trace_start_frame=${THERON_CAPTURE_INPUT_TRACE_START_FRAME:-}
+if [[ -z "$input_trace_start_frame" && -n "$replay_input_script" ]]; then
+    # The BIOS polls the controller often enough to exhaust a bounded trace
+    # before a late scripted event. Retain a short pre-event window, then
+    # record only the diagnostic witness window around the earliest event.
+    earliest_replay_frame=
+    IFS=',' read -r -a replay_entries_for_trace_start <<< "$replay_input_script"
+    for replay_entry_for_trace_start in "${replay_entries_for_trace_start[@]}"; do
+        replay_frame_for_trace_start=${replay_entry_for_trace_start#*@}
+        replay_frame_for_trace_start=${replay_frame_for_trace_start%%:*}
+        # Replay syntax is validated below. Do not make an earlier diagnostic
+        # calculation turn a malformed user value into a shell arithmetic
+        # failure first.
+        [[ "$replay_frame_for_trace_start" =~ ^[0-9]+$ ]] || continue
+        if [[ -z "$earliest_replay_frame" || "$replay_frame_for_trace_start" -lt "$earliest_replay_frame" ]]; then
+            earliest_replay_frame=$replay_frame_for_trace_start
+        fi
+    done
+    if [[ -n "$earliest_replay_frame" ]] && (( earliest_replay_frame > 120 )); then
+        input_trace_start_frame=$((earliest_replay_frame - 120))
+    else
+        input_trace_start_frame=0
+    fi
+fi
+input_trace_start_frame=${input_trace_start_frame:-0}
 input_route=${THERON_CAPTURE_INPUT_ROUTE:-pid}
 host_focus_x=${THERON_CAPTURE_FOCUS_X:-960}
 host_focus_y=${THERON_CAPTURE_FOCUS_Y:-540}
@@ -190,6 +215,11 @@ fi
 if [[ ! "$input_trace_limit" =~ ^[0-9]+$ ]] ||
    (( input_trace_limit < 65536 || input_trace_limit > 1048576 )); then
     printf '%s\n' 'FAIL: THERON_CAPTURE_INPUT_TRACE_LIMIT must be an integer from 65536 through 1048576' >&2
+    exit 1
+fi
+if [[ ! "$input_trace_start_frame" =~ ^[0-9]+$ ]] ||
+   (( input_trace_start_frame > 4294967295 )); then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_INPUT_TRACE_START_FRAME must be an integer from 0 through 4294967295' >&2
     exit 1
 fi
 
@@ -1367,6 +1397,7 @@ launch=(
     FIRESTAFF_THERON_MOUSE_TRACE="$mouse_trace" \
     FIRESTAFF_THERON_MOUSE_INPUT_SCRIPT="$mouse_input_script" \
     FIRESTAFF_THERON_INPUT_TRACE_LIMIT="$input_trace_limit" \
+    FIRESTAFF_THERON_INPUT_TRACE_START_FRAME="$input_trace_start_frame" \
     FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT="$replay_input_script" \
     FIRESTAFF_THERON_AUTOLOAD_STATE="$autoload_state" \
     FIRESTAFF_THERON_AUTOLOAD_MOVIE="$autoload_movie" \
@@ -2105,6 +2136,7 @@ fi
     printf 'post_dungeon_overlay_replay=%s\n' "$replay_post_dungeon_overlay"
     printf 'input_transactions=%s\n' "$transition_input_count"
     printf 'input_trace_limit=%s\n' "$input_trace_limit"
+    printf 'input_trace_start_frame=%s\n' "$input_trace_start_frame"
     printf 'host_key_events=%s\n' "$transition_host_key_count"
     printf 'host_sdl_events=%s\n' "$transition_host_sdl_event_count"
     printf 'host_sdl_event_types=%s\n' "$transition_host_sdl_event_types"

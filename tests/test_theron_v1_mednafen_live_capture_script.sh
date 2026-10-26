@@ -704,6 +704,9 @@ if ! grep -Fq 'mednafen_1.32.1_theron_vdc_io_trace.patch' "$build_script" ||
 fi
 if ! grep -Fq 'THERON_CAPTURE_INPUT_TRACE_LIMIT' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_INPUT_TRACE_LIMIT="$input_trace_limit"' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_INPUT_TRACE_START_FRAME' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_INPUT_TRACE_START_FRAME="$input_trace_start_frame"' "$script" ||
+   ! grep -Fq 'input_trace_start_frame=$((earliest_replay_frame - 120))' "$script" ||
    ! grep -Fq 'input_trace_limit_default=65536' "$script" ||
    ! grep -Fq 'input_trace_limit_default=1048576' "$script" ||
    ! grep -Fq '|| -n "$host_key" || -n "$host_key_sequence"' "$script" ||
@@ -892,7 +895,9 @@ if ! grep -Fq 'FIRESTAFF_THERON_IRQ2_INPUT_TRACE="$input_trace"' "$script"; then
 fi
 if ! grep -Fq 'source=mednafen-pce-fast-instrumented-input' "$script" ||
    ! grep -Fq 'scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch' "$repo/scripts/build_mednafen_theron_irq2_trace.sh" ||
-   ! grep -Fq 'static void TheronPCEFastInputTraceRead' "$repo/scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch"; then
+   ! grep -Fq 'static void TheronPCEFastInputTraceRead' "$repo/scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch" ||
+   ! grep -Fq 'FIRESTAFF_THERON_INPUT_TRACE_START_FRAME' "$repo/scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch" ||
+   ! grep -Fq 'TheronPCEFastScriptFrame >= TheronPCEFastInputTraceStartFrame' "$repo/scripts/mednafen_1.32.1_theron_pce_fast_input_trace.patch"; then
     printf '%s\n' 'FAIL: pce_fast capture must retain source- and bus-bound input traces' >&2
     exit 1
 fi

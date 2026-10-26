@@ -4,7 +4,7 @@
 +#include <string.h>
 +#include <limits.h>
 @@ -89,1 +91,49 @@
-+static unsigned TheronPCEFastScriptFrame;
++unsigned TheronPCEFastScriptFrame;
 +static void TheronPCEFastScriptInputFrame(uint16 *data)
 +{
 + static bool initialized, valid;

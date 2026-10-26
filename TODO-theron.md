@@ -1,3 +1,17 @@
+## 2026-10-26 — retain the bounded controller witness across cold boot
+
+- The PCE Fast capture instrumentation now accepts a bounded input-trace
+  start frame. For a replay plan, the capture script automatically begins the
+  controller diagnostic window 120 frames before its earliest scheduled
+  event, while the emulator continues to apply every controller frame from
+  boot. This prevents BIOS polling from consuming the bounded trace before a
+  late RUN hold can be witnessed.
+- The start frame is recorded in the transition receipt and may be explicitly
+  supplied for a reproducible capture. This is capture plumbing only: it does
+  not establish a Track 02-to-RAM receipt, game-owned controller consumer, or
+  dungeon pose/rendering semantics. A fresh authentic cold-start capture is
+  still required to make those joins.
+
 ## 2026-10-26 — F5-state RUN hold has a reproducible raw state and screen result
 
 - Two fresh PCE Fast replays of the same user-created Japanese F5 save state
