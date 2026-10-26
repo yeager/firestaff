@@ -56,6 +56,15 @@ title-menu command bundle: the one-frame VDP1 outputs did not match that
 bundle's frame-497 hashes. It therefore does not admit the menu compositor,
 input dispatch, title-to-menu transition, or Firestaff presentation.
 
+The same system build was subsequently checked after its VDP1 trace was
+reattached following save-state loading. The single captured frame produced a
+complete `ymir-vdp1-capture-bundle-v1`: capture frame 0 contained 168 command
+rows, its snapshot cursor was command 168 at address `0x00000cc0`, and the
+bundle reported zero dropped rows. This proves that the Ymir CLI can now retain
+frame-aligned VDP1 command evidence across this authentic state load. It still
+does not identify the displayed menu, establish source ownership or palette
+composition, or authorize a Firestaff renderer.
+
 `scripts/verify_nexus_ymir_title_state_checkpoint.py` verifies this narrow
 checkpoint from caller-supplied retail CUE, BIOS, title-prompt state, and local
 Ymir dump files. It requires the emitted VDP register artifacts but does not
