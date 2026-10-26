@@ -13,10 +13,11 @@ diff --git a/src/pce/input.h b/src/pce/input.h
 diff --git a/src/pce/input.cpp b/src/pce/input.cpp
 --- a/src/pce/input.cpp
 +++ b/src/pce/input.cpp
-@@ -32,6 +32,10 @@
+@@ -32,7 +32,11 @@
 
  namespace MDFN_IEN_PCE
  {
+ unsigned theron_script_trace_frame = 0;
 +static bool theron_file_select_input_issued = false;
 +static unsigned theron_public_script_frame = 0;
 +bool TheronFileSelectInputIssued(void) { return theron_file_select_input_issued; }
