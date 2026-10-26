@@ -16,13 +16,16 @@ from analyze_nexus_vdp1_source_join import (
     ymir_commands,
 )
 
+BUILD = Path(__file__).resolve().parents[1] / "build"
+BUILD.mkdir(exist_ok=True)
+
 
 class AcceptedRetailHashesTests(unittest.TestCase):
     def test_saturn_cmdsize_dimensions(self) -> None:
         self.assertEqual(texture_dimensions(0x0410), (32, 16))
 
     def test_ymir_bundle_checks_frame_and_rejects_dropped_rows(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
+        with tempfile.TemporaryDirectory(dir=BUILD) as directory:
             root = Path(directory)
             receipt = root / "vdp1-capture-bundle.txt"
             receipt.write_text("format=ymir-vdp1-capture-bundle-v1\n"

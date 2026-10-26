@@ -13,6 +13,9 @@ from analyze_nexus_menu_bpk_vdp1_snapshot_join import (
     surface_offsets,
 )
 
+BUILD = Path(__file__).resolve().parents[1] / "build"
+BUILD.mkdir(exist_ok=True)
+
 
 class SnapshotJoinTests(unittest.TestCase):
     def test_enumerates_overlapping_direct_and_word_swapped_occurrences(self) -> None:
@@ -28,7 +31,7 @@ class SnapshotJoinTests(unittest.TestCase):
             "0,1,0x20,0x4,0x20,0x0\n"
             "0,2,0x40,0x5000,0x0,0x20\n"
         )
-        with tempfile.TemporaryDirectory(prefix="nexus-menu-vdp1-trace-") as directory:
+        with tempfile.TemporaryDirectory(prefix="nexus-menu-vdp1-trace-", dir=BUILD) as directory:
             path = Path(directory) / "trace.csv"
             path.write_text(trace, encoding="utf-8")
             self.assertEqual(command_trace_source_starts(path, [(0x100, 0x110)]),
@@ -36,7 +39,7 @@ class SnapshotJoinTests(unittest.TestCase):
 
     def test_rejects_empty_missing_header_and_header_only_traces(self) -> None:
         invalid_traces = ("", "frame,index\n", "word0,word4\n")
-        with tempfile.TemporaryDirectory(prefix="nexus-menu-vdp1-invalid-") as directory:
+        with tempfile.TemporaryDirectory(prefix="nexus-menu-vdp1-invalid-", dir=BUILD) as directory:
             path = Path(directory) / "trace.csv"
             for trace in invalid_traces:
                 with self.subTest(trace=trace):

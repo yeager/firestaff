@@ -16,11 +16,13 @@ import analyze_nexus_vdp1_sh2_write_trace
 
 FIELDS = ("sh2", "pc", "caller_return_address", "caller_target",
           "address", "width", "value")
+BUILD = Path(__file__).resolve().parents[1] / "build"
+BUILD.mkdir(exist_ok=True)
 
 
 def run_trace(width: int, address: int = 0x05C00000) -> tuple[int, str]:
     output = io.StringIO()
-    with tempfile.TemporaryDirectory(prefix="nexus-vdp1-sh2-trace-") as directory:
+    with tempfile.TemporaryDirectory(prefix="nexus-vdp1-sh2-trace-", dir=BUILD) as directory:
         trace = Path(directory) / "trace.csv"
         with trace.open("w", newline="", encoding="utf-8") as handle:
             writer = csv.DictWriter(handle, fieldnames=FIELDS)
@@ -38,7 +40,7 @@ def run_trace(width: int, address: int = 0x05C00000) -> tuple[int, str]:
 class Vdp1Sh2TraceTests(unittest.TestCase):
     def test_empty_trace_has_no_address_span(self) -> None:
         output = io.StringIO()
-        with tempfile.TemporaryDirectory(prefix="nexus-vdp1-empty-") as directory:
+        with tempfile.TemporaryDirectory(prefix="nexus-vdp1-empty-", dir=BUILD) as directory:
             trace = Path(directory) / "trace.csv"
             with trace.open("w", newline="", encoding="utf-8") as handle:
                 csv.DictWriter(handle, fieldnames=FIELDS).writeheader()
