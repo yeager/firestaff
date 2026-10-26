@@ -99,6 +99,7 @@ cat >"$input_test_dir/legacy-pce-result.trace" <<'THERON_LEGACY_PCE_INPUT'
 scripted_pce_input_event frame=60 key=up mask=0010 hold=60
 scripted_pce_input_apply frame=60 physical=0000 scripted=0010 combined=0010
 pce_input_read cpu_pc=44ca register=1000 raw=0010 sel=1 clr=0 index=0
+pce_input_port0 raw=0010
 pce_input_result cpu_pc=44ca register=1000 raw=0010 value=3e sel=1 clr=0 index=0 sp=f2 stack=4b436d74
 THERON_LEGACY_PCE_INPUT
 legacy_pce_receipt=$("$scripted_input_consumption_verifier" \

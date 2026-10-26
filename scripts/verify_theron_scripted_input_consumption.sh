@@ -101,7 +101,10 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
             controller_read_witness_pc = read_pc
         }
     }
-    pending_result && $0 !~ /^pce_input_result / {
+    # The instrumented PCE core emits an informational raw-port line between
+    # its raw read and the corresponding active-low result.  It is part of
+    # the same CPU poll, not an intervening input operation.
+    pending_result && $0 !~ /^(pce_input_port0 raw=|pce_input_result )/ {
         failure = "legacy PCE input result did not immediately follow its raw read"
         pending_result = 0
     }
