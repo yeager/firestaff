@@ -9875,10 +9875,18 @@ int M12_AssetStatus_PrepareCSBRuntimeVersion(
             return m12_source_runtime_root(version->matchedPath, outPath,
                                            outPathSize);
         }
-        /* Loose F31 GRAPHICS.DAT lives below CDATA/CJDATA; retain the disc
-         * root so AUTOEXEC/TITLE.ANM and CHTWE/CHTWJ remain source-owned. */
-        return FSP_ParentDir(outPath, outPathSize, version->matchedPath) &&
-            FSP_ParentDir(outPath, outPathSize, outPath);
+        /* A source extraction can expose GRAPHICS.DAT either at the disc
+         * root or below CDATA/CJDATA. Keep the root that owns TITLE.ANM and
+         * CHTWE/CHTWJ in both layouts; blindly walking up twice escapes a
+         * flattened extraction when the scanner matched its root copy. */
+        if (!FSP_ParentDir(outPath, outPathSize, version->matchedPath)) {
+            return 0;
+        }
+        if (m12_ascii_equals_ignore_case(m12_path_leaf(outPath), "CDATA") ||
+            m12_ascii_equals_ignore_case(m12_path_leaf(outPath), "CJDATA")) {
+            return FSP_ParentDir(outPath, outPathSize, outPath);
+        }
+        return 1;
     }
     /* A directly selected ST/STX/MSA image is a native filesystem object,
      * not a loose DATA directory.  Retain the image itself so the CSB boot

@@ -430,6 +430,7 @@ int main(void)
     CSB_V1_FmtownsSwitchLanguage language;
     char materialized_data_dir[M12_ASSET_DATA_DIR_CAPACITY];
     char materialized_mini_path[M12_ASSET_DATA_DIR_CAPACITY];
+    char expected_disc_root[M12_ASSET_DATA_DIR_CAPACITY];
     M12_AssetStatus asset_status;
     M11_GameLaunchSpec spec;
     M11_GameViewState view;
@@ -525,6 +526,8 @@ int main(void)
     memset(materialized_data_dir, 0, sizeof(materialized_data_dir));
     memset(&asset_status, 0, sizeof(asset_status));
     if (loose_data_dir && loose_data_dir[0]) {
+        const M12_AssetVersionStatus *selected_version;
+        const char *selected_parent_leaf;
         M12_AssetStatus_ScanGame(&asset_status, loose_data_dir, "csb");
         if (!M12_AssetStatus_MaterializeCSBRuntimeVersion(
                 &asset_status, version_id, materialized_data_dir,
@@ -532,6 +535,26 @@ int main(void)
             fprintf(stderr, "SKIP: verified loose FM Towns %s CD root unavailable\n",
                     version_id);
             return 77;
+        }
+        selected_version = M12_AssetStatus_GetVersion(
+            &asset_status, "csb",
+            (size_t)M12_AssetStatus_FindVersionIndex("csb", version_id));
+        if (selected_version && selected_version->matchedPath[0] &&
+            FSP_ParentDir(expected_disc_root, sizeof(expected_disc_root),
+                          selected_version->matchedPath)) {
+            selected_parent_leaf = strrchr(expected_disc_root, '/');
+            selected_parent_leaf = selected_parent_leaf
+                ? selected_parent_leaf + 1 : expected_disc_root;
+            if (strcmp(selected_parent_leaf, "CDATA") == 0 ||
+                strcmp(selected_parent_leaf, "CJDATA") == 0) {
+                (void)FSP_ParentDir(expected_disc_root,
+                                    sizeof(expected_disc_root),
+                                    expected_disc_root);
+            }
+            CHECK(strcmp(materialized_data_dir, expected_disc_root) == 0,
+                  "loose F31 launch root is the selected disc root");
+        } else {
+            CHECK(0, "loose F31 selected source resolves to its disc root");
         }
         CHECK(strstr(materialized_data_dir, "asset-cache") == NULL,
               "F31 retains the selected verified source package");

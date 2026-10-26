@@ -27442,6 +27442,15 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                                        selectedVersionIndex);
         if (version && version->matchedPath[0] != '\0' &&
             version->matchedMd5[0] != '\0') {
+            if (menuState->debugStartup && entry->gameId &&
+                strcmp(entry->gameId, "csb") == 0) {
+                fprintf(stderr,
+                        "firestaff: selected-launch game=csb edition=%s source=%s runtime=%s md5=%s\n",
+                        version->versionId ? version->versionId : "unknown",
+                        version->matchedPath,
+                        spec.dataDir ? spec.dataDir : "",
+                        version->matchedMd5);
+            }
             spec.verifiedAssetPath = version->matchedPath;
             spec.verifiedAssetMd5 = version->matchedMd5;
             if (entry->gameId && strcmp(entry->gameId, "dm1") == 0 &&
@@ -27470,6 +27479,14 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                     return 0;
                 }
                 spec.dataDir = selectedCsbRuntimeDataDir;
+                if (menuState->debugStartup) {
+                    fprintf(stderr,
+                            "firestaff: selected-launch-runtime game=csb edition=%s source=%s runtime=%s md5=%s\n",
+                            version->versionId ? version->versionId : "unknown",
+                            version->matchedPath,
+                            spec.dataDir,
+                            version->matchedMd5);
+                }
                 /* An archive-selected package needs its own cache.  A loose
                  * package stays with the verified source directory, which
                  * retains all original startup siblings for direct CLI
