@@ -1,3 +1,19 @@
+## 2026-10-26 — normal PCE scripted RUN reaches the controller
+
+- An isolated normal-PCE reference build applied the complete input trace
+  hunks and refreshed the gamepad's internal button state after scripted input
+  was overlaid. A 240-second capture used authenticated USA CloneCD media and
+  the authenticated original Backup RAM, with RUN held for 300 frames.
+- The scripted-input verifier accepted the active-low RUN read at System Card
+  PC `$E4C8`. It observed no game or non-System-Card controller poll. The
+  capture recorded 115 CD IRQs, 25 raw-sector spans, four SCSI reads and one
+  game-main-RAM `$E009` dispatch, but no authenticated CD-to-RAM origin receipt;
+  the transition remained missing. This verifies reference input delivery,
+  not a game-owned input or gameplay transition.
+- Continue with a same-session game-owned controller poll and source-bound
+  transfer before deriving native dungeon behavior from this route. The
+  capture is private and no game or firmware bytes belong in the repository.
+
 ## 2026-10-26 — authentic USA Backup RAM Continue remains native and source-bound
 
 - An isolated TRV2 Debug build passed
