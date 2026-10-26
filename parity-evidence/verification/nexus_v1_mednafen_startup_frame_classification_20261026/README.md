@@ -76,3 +76,15 @@ activity in 733 frames. Semantic admission remained blocked, as expected:
 this bounded run does not yet bind a displayed title-menu surface to its
 canonical asset owner and consumer. The 1.4 GiB operator-local raw capture
 was deleted after validation.
+
+## Follow-up: authentic Mednafen backup-card loading
+
+A preserved retail Nexus Mednafen backup-card (`.mca`) was copied into an
+isolated profile and supplied through Mednafen's explicit
+`filesys.path_savbackup` setting. The resulting 900-frame capture had
+SHA-256 `b1e25d471d43d1949dc229b474d4482110d218553ef29b7cfd6bd1280556dd33`,
+which differs from the no-card startup receipt above. Mednafen reported
+`Cart: Backup Memory`; the changed capture hash is the evidence that the
+authentic card data reached the emulated session. The raw capture and copied
+card were deleted after the comparison. This establishes a reproducible route
+to a real saved startup state, not a title-menu ownership proof.
