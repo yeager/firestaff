@@ -1,3 +1,13 @@
+2026-10-26 F20 status hand slots: the DM1 FM Towns top row now renders
+ready/action hand frames into COORD.C C211..C218 from the original C033/C034/
+C035 graphics, using F0291's one-pixel border expansion and C12 transparency.
+F0038's 16x16 object icon is drawn opaquely from the authenticated icon atlas;
+unknown frame/icon material remains fail-closed. The authentic F20E/F20J
+real-media test checks all eight native hand zones and frame/icon pixels for
+empty, wounded, acting and Apple-held examples. Focused Towns and PC34 hand
+slot tests pass. This closes the missing top-row hand-slot layer only; it does
+not establish complete Towns HUD or visual parity.
+
 2026-10-26 F20 champion mirror placement: the shared mirror host receipt used
 PC34's front-wall portrait destination (96,35) for authenticated Towns runs.
 ReDMCSB DUNVIEW.C:3913-3928 instead sends the C026 atlas through F0635/M635

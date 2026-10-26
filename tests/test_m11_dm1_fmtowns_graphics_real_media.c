@@ -4,6 +4,7 @@
 #include "dm1_v1_champion_panel_material_pc34_compat.h"
 #include "dm1_v1_fmtowns_font_asset.h"
 #include "dm1_v1_fmtowns_hud_layout.h"
+#include "dm1_v1_graphic_ids_pc34_compat.h"
 #include "font_m11.h"
 #include "dm1_v1_fmtowns_pic_library.h"
 #include "dm1_v1_fmtowns_wall_ornament.h"
@@ -149,6 +150,102 @@ static int check_f20_hud_layout_media(M11_AssetLoader *loader,
     return 1;
 }
 
+static int check_f20_hand_slot_pixels(M11_AssetLoader *loader,
+                                      DM1_V1_FmtownsHudEdition edition,
+                                      const char *edition_name)
+{
+    static const struct {
+        unsigned int zone;
+        unsigned int frame_graphic;
+        int icon_index;
+    } cases[] = {
+        {211u, 33u, 212}, /* ready, empty */
+        {211u, 34u, 213}, /* ready, wounded, empty */
+        {212u, 35u, 214}, /* action, acting, empty */
+        {212u, 33u, 168}  /* action, occupied by the Apple */
+    };
+    static const int expected_x[8] = {4, 24, 73, 93, 142, 162, 211, 231};
+    uint8_t framebuffer[320u * 200u];
+    for (size_t zone_ordinal = 0u; zone_ordinal < 8u; ++zone_ordinal) {
+        DM1_V1_FmtownsHudRect rect;
+        const unsigned int zone = 211u + (unsigned int)zone_ordinal;
+        if (!dm1_v1_fmtowns_hud_layout_rect(edition, zone, 16, 16, &rect) ||
+            rect.x != expected_x[zone_ordinal] || rect.y != 10 ||
+            rect.width != 16 || rect.height != 16) {
+            fprintf(stderr, "%s hand zone %u resolved to (%d,%d %dx%d)\n",
+                    edition_name, zone, rect.x, rect.y,
+                    rect.width, rect.height);
+            return 0;
+        }
+    }
+    for (size_t case_index = 0u;
+         case_index < sizeof(cases) / sizeof(cases[0]); ++case_index) {
+        const M11_AssetSlot *frame = M11_AssetLoader_Load(
+            loader, cases[case_index].frame_graphic);
+        DM1_V1_ObjectIconSourceZonePc34 icon_zone;
+        const M11_AssetSlot *atlas;
+        DM1_V1_FmtownsHudRect rect;
+        if (!frame || !frame->loaded || !frame->pixels ||
+            frame->width != 18u || frame->height != 18u ||
+            !dm1_v1_fmtowns_hud_layout_rect(edition, cases[case_index].zone,
+                                            16, 16, &rect) ||
+            !dm1_v1_object_icon_source_zone_pc34(
+                cases[case_index].icon_index, &icon_zone) ||
+            icon_zone.w != 16 || icon_zone.h != 16) {
+            fprintf(stderr, "%s hand material admission failed (zone=%u, frame=%u, icon=%d)\n",
+                    edition_name, cases[case_index].zone,
+                    cases[case_index].frame_graphic,
+                    cases[case_index].icon_index);
+            return 0;
+        }
+        atlas = M11_AssetLoader_Load(loader,
+                                    (unsigned int)icon_zone.graphic_index);
+        if (!atlas || !atlas->loaded || !atlas->pixels ||
+            icon_zone.x < 0 || icon_zone.y < 0 ||
+            icon_zone.x + icon_zone.w > (int)atlas->width ||
+            icon_zone.y + icon_zone.h > (int)atlas->height) {
+            fprintf(stderr, "%s hand icon %d is outside original atlas %d (%ux%u)\n",
+                    edition_name, cases[case_index].icon_index,
+                    icon_zone.graphic_index,
+                    atlas ? atlas->width : 0u, atlas ? atlas->height : 0u);
+            return 0;
+        }
+        /* C12 is the F20 hand-zone clear color as well as the frame's
+         * transparent index; transparent border pixels must preserve it. */
+        memset(framebuffer, 12, sizeof(framebuffer));
+        M11_AssetLoader_BlitRegion(frame, 0, 0, 18, 18,
+            framebuffer, 320, 200, rect.x - 1, rect.y - 1, 12);
+        for (int y = 0; y < 16; ++y) {
+            for (int x = 0; x < 16; ++x) {
+                framebuffer[(rect.y + y) * 320 + rect.x + x] =
+                    atlas->pixels[(icon_zone.y + y) * (int)atlas->width +
+                                  icon_zone.x + x];
+            }
+        }
+        for (int y = 0; y < 18; ++y) {
+            for (int x = 0; x < 18; ++x) {
+                const int px = rect.x - 1 + x;
+                const int py = rect.y - 1 + y;
+                uint8_t expected = 12u;
+                if (x >= 1 && x <= 16 && y >= 1 && y <= 16) {
+                    expected = atlas->pixels[(icon_zone.y + y - 1) *
+                                 (int)atlas->width + icon_zone.x + x - 1];
+                } else if (frame->pixels[y * (int)frame->width + x] != 12u) {
+                    expected = frame->pixels[y * (int)frame->width + x];
+                }
+                if (framebuffer[py * 320 + px] != expected) {
+                    fprintf(stderr,
+                        "%s hand pixel mismatch case=%zu at (%d,%d): got=%u expected=%u\n",
+                        edition_name, case_index, x, y,
+                        framebuffer[py * 320 + px], expected);
+                    return 0;
+                }
+            }
+        }
+    }
+    return 1;
+}
+
 static int check_f20_inscription_font_media(M11_AssetLoader *loader,
                                              const char *edition)
 {
@@ -267,6 +364,9 @@ int main(void) {
     REQUIRE(check_f20_hud_layout_media(&loader,
                 DM1_V1_FMTOWNS_HUD_EDITION_F20E),
         "original F20E bitmap dimensions resolve through native COORD.C HUD zones");
+    REQUIRE(check_f20_hand_slot_pixels(&loader,
+                DM1_V1_FMTOWNS_HUD_EDITION_F20E, "F20E"),
+        "original F20E C211-C218 ready, wounded, acting, and occupied hands match F0291/F0038 pixels");
     REQUIRE(check_f20_inscription_font_media(&loader, "F20E"),
         "ReDMCSB M648 ordinal 120 resolves the authentic F20E inscription font, unlike PC34 ordinal 258");
     REQUIRE(audit_f20_mirror_geometry_media(&loader,
@@ -366,6 +466,9 @@ int main(void) {
     REQUIRE(check_f20_hud_layout_media(&japaneseLoader,
                 DM1_V1_FMTOWNS_HUD_EDITION_F20J),
         "original F20J bitmap dimensions resolve through native COORD.C HUD zones");
+    REQUIRE(check_f20_hand_slot_pixels(&japaneseLoader,
+                DM1_V1_FMTOWNS_HUD_EDITION_F20J, "F20J"),
+        "original F20J C211-C218 ready, wounded, acting, and occupied hands match F0291/F0038 pixels");
     REQUIRE(check_f20_inscription_font_media(&japaneseLoader, "F20J"),
         "ReDMCSB M648 ordinal 120 resolves the authentic F20J inscription font, unlike PC34 ordinal 258");
     REQUIRE(audit_f20_mirror_geometry_media(&japaneseLoader,

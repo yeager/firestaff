@@ -68466,7 +68466,8 @@ static void m11_clear_dm1_v1_top_row_receipt_zones(
                         edition, zone, 16, 16, &rect)) {
                     m11_fill_rect(framebuffer, framebufferWidth,
                                   framebufferHeight, rect.x, rect.y,
-                                  rect.width, rect.height, M11_COLOR_BLACK);
+                                  rect.width, rect.height,
+                                  M11_COLOR_DARK_GRAY);
                 }
             }
         }
@@ -69275,7 +69276,65 @@ static int m11_draw_dm1_fmtowns_top_row_zones(
             }
         }
     }
-    /* Action-hand widgets still await their source-bound F20 material path. */
+    /* ReDMCSB CHAMDRAW.C F0292/F0291 draws C211..C218 for living
+     * champions. F0291 expands each 16x16 hand zone by G2077=1 pixel for
+     * C033/C034/C035, blits that 18x18 bitmap with C12 transparent, then
+     * F0038 draws the selected 16x16 object icon opaquely in the hand zone. */
+    if (state->assetsAvailable) {
+        for (slot = 0; slot < state->world.party.championCount &&
+                       slot < CHAMPION_MAX_PARTY; ++slot) {
+            const struct ChampionState_Compat* champion =
+                &state->world.party.champions[slot];
+            int hand;
+            if (!champion->present || champion->hp.current <= 0) continue;
+            for (hand = 0; hand < 2; ++hand) {
+                const unsigned int zone =
+                    (unsigned int)(211 + slot * 2 + hand);
+                const int frameGraphic =
+                    dm1_v1_champion_status_hand_slot_graphic_pc34(
+                        hand, (uint16_t)champion->wounds,
+                        hand == DM1_SLOT_ACTION_HAND &&
+                            state->actingChampionOrdinal ==
+                                (unsigned int)(slot + 1));
+                DM1_V1_FmtownsHudRect iconRect;
+                const M11_AssetSlot* frame;
+                int iconIndex;
+                if (frameGraphic <= 0 ||
+                    !dm1_v1_fmtowns_hud_layout_rect(
+                        edition, zone, 16, 16, &iconRect) ||
+                    iconRect.width != 16 || iconRect.height != 16 ||
+                    iconRect.x < 1 || iconRect.y < 1 ||
+                    iconRect.x + 16 >= framebufferWidth ||
+                    iconRect.y + 16 >= framebufferHeight) {
+                    continue;
+                }
+                frame = M11_AssetLoader_Load(
+                    (M11_AssetLoader*)&state->assetLoader,
+                    (unsigned int)frameGraphic);
+                if (!frame || !frame->loaded || !frame->pixels ||
+                    frame->width != 18u || frame->height != 18u) {
+                    continue;
+                }
+                M11_AssetLoader_BlitRegion(
+                    frame, 0, 0, 18, 18,
+                    framebuffer, framebufferWidth, framebufferHeight,
+                    iconRect.x - 1, iconRect.y - 1,
+                    DM1_COLOR_DARKEST_GRAY);
+
+                /* F0291/F0038 uses C212+slot*2 for an empty hand; held
+                 * objects use F0033's current object icon record. An
+                 * unbound icon stays absent while the native frame remains. */
+                iconIndex = m11_v1_status_hand_icon_index(
+                    state, slot, hand);
+                if (iconIndex >= 0) {
+                    (void)m11_draw_dm_object_icon_index(
+                        state, framebuffer, framebufferWidth,
+                        framebufferHeight, iconIndex,
+                        iconRect.x, iconRect.y, 0);
+                }
+            }
+        }
+    }
     return 1;
 }
 
