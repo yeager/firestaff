@@ -308,6 +308,17 @@ calculation settings, black per-line back screen, and type-6 sprite palette
 lane. It rejects missing capture/trace attestations, other register layouts,
 unexpected sprite priorities, and a nonblack back-screen row.
 
+The verifier pins all inputs to this retained capture by SHA-256:
+
+| Capture input | SHA-256 |
+| --- | --- |
+| `vdp1-fbs.bin` | `2dc15ef07aaacd89a00af18fe3e0bf3677bdb626f3a852f37820eb29bc9ce1ce` |
+| `vdp2-vram.bin` | `de1a77427dc62457eb4b59fa0424fd25e9768ce229505445311929d3bdae405c` |
+| `vdp2-cram.bin` | `db282593790dec4a2bf8f76293c0458a1a140adc3351650bd56a417f0359e0de` |
+| `vdp2-registers.bin` | `79efa616c2db727749aa9018864d1ad32c1583935652fafb16534ba69f8e1f2d` |
+| `vdp1-command-trace.csv` | `b80c7a118e7f9df4f941804cdc045f4024336080504c512bbdf5c4e0df19d8d3` |
+| Frame-59 screenshot | `8721cce3354bc20b1cd367fd44be3d4ecc60ca65fa89c7d00654e83f5ad7db23` |
+
 The display framebuffer contributes 70,185 direct RGB words. NBG0 overlays
 18,513 pixels with the captured CRAM and 31/32 top ratio; 1,495 indexed
 type-6 VDP1 pixels use their captured priority and CRAM words over the

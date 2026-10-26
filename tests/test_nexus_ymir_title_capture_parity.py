@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import os
 import subprocess
 import tempfile
@@ -19,6 +20,22 @@ EXPECTED_SIZES = {
     "vdp2-cram.bin": 4096,
     "vdp2-registers.bin": 512,
 }
+EXPECTED_SHA256 = {
+    "vdp1-fbs.bin": "2dc15ef07aaacd89a00af18fe3e0bf3677bdb626f3a852f37820eb29bc9ce1ce",
+    "vdp2-vram.bin": "de1a77427dc62457eb4b59fa0424fd25e9768ce229505445311929d3bdae405c",
+    "vdp2-cram.bin": "db282593790dec4a2bf8f76293c0458a1a140adc3351650bd56a417f0359e0de",
+    "vdp2-registers.bin": "79efa616c2db727749aa9018864d1ad32c1583935652fafb16534ba69f8e1f2d",
+    "vdp1-command-trace.csv": "b80c7a118e7f9df4f941804cdc045f4024336080504c512bbdf5c4e0df19d8d3",
+    "screenshot.png": "8721cce3354bc20b1cd367fd44be3d4ecc60ca65fa89c7d00654e83f5ad7db23",
+}
+
+
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
 
 
 def verify_bundle(bundle: Path) -> None:
@@ -45,6 +62,8 @@ def verify_bundle(bundle: Path) -> None:
     trace = bundle / manifest["trace_file"]
     if not trace.is_file() or trace.stat().st_size == 0:
         raise ValueError("complete command trace is missing")
+    if sha256(trace) != EXPECTED_SHA256["vdp1-command-trace.csv"]:
+        raise ValueError("command trace SHA-256 does not match the retained Ymir capture")
     with trace.open(newline="") as stream:
         rows = list(csv.DictReader(stream))
     frame_rows = [row for row in rows if row.get("frame") == "59"]
@@ -56,10 +75,14 @@ def verify_bundle(bundle: Path) -> None:
         path = bundle / name
         if not path.is_file() or path.stat().st_size != size:
             raise ValueError(f"incomplete capture component: {name}")
+        if sha256(path) != EXPECTED_SHA256[name]:
+            raise ValueError(f"capture component SHA-256 mismatch: {name}")
 
 
 def verify(executable: Path, bundle: Path, screenshot: Path) -> None:
     verify_bundle(bundle)
+    if sha256(screenshot) != EXPECTED_SHA256["screenshot.png"]:
+        raise ValueError("screenshot SHA-256 does not match the retained Ymir capture")
     image = Image.open(screenshot).convert("RGB")
     if image.size != (640, 448):
         raise ValueError(f"expected 640x448 screenshot, got {image.size}")
