@@ -60,6 +60,7 @@ int main(void) {
         const char *trace = getenv("FIRESTAFF_NEXUS_VDP1_TRACE");
         const char *cram_path = getenv("FIRESTAFF_NEXUS_YMIR_CRAM");
         const char *regs_path = getenv("FIRESTAFF_NEXUS_YMIR_REGS");
+        const char *fb_path = getenv("FIRESTAFF_NEXUS_YMIR_VDP1_FBS");
         if (path && trace) {
             FILE *vram_file = fopen(path, "rb"), *trace_file = fopen(trace, "rb");
             uint8_t record[36], indices[576];
@@ -137,6 +138,48 @@ int main(void) {
                 }
             }
             expect(found, "decode authentic Nexus TITLE.BIN colour-bank sprite");
+            if (vram_file && trace_file && fb_path) {
+                FILE *fb_file = fopen(fb_path, "rb");
+                static uint8_t captured_fbs[512U * 1024U];
+                uint8_t indices[832];
+                uint16_t codes[832];
+                int command_count = 0, pixel_count = 0, ok = 1;
+                if (!fb_file || fread(captured_fbs, 1, sizeof(captured_fbs), fb_file) != sizeof(captured_fbs)) ok = 0;
+                if (fb_file) fclose(fb_file);
+                rewind(trace_file);
+                while (ok && fread(record, 1, sizeof(record), trace_file) == sizeof(record)) {
+                    uint32_t address = (uint32_t)record[0] | ((uint32_t)record[1] << 8U) |
+                        ((uint32_t)record[2] << 16U) | ((uint32_t)record[3] << 24U);
+                    Nexus_V1_Vdp1TextureCommand parsed;
+                    uint32_t x, y;
+                    if (address != 0xd8e0U && address != 0xd900U && address != 0xd920U &&
+                        address != 0xd940U && address != 0xd960U) continue;
+                    if (nexus_v1_vdp1_texture_command_parse(record + 4, 32, &parsed) != 0 ||
+                        (uint32_t)parsed.texture_width * parsed.texture_height > 832U ||
+                        !nexus_v1_vdp1_decode_mode0_bank_texture(record + 4, 32, vram,
+                            sizeof(vram), indices, codes, 832)) { ok = 0; break; }
+                    ++command_count;
+                    for (y = 0; ok && y < parsed.texture_height; ++y) {
+                        for (x = 0; x < parsed.texture_width; ++x) {
+                            uint32_t u = (parsed.control & 0x10U) ? parsed.texture_width - 1U - x : x;
+                            uint32_t v = (parsed.control & 0x20U) ? parsed.texture_height - 1U - y : y;
+                            uint32_t source = v * parsed.texture_width + u;
+                            uint32_t dest = ((uint32_t)parsed.ya + y) * 512U + (uint32_t)parsed.xa + x;
+                            int plane;
+                            if (!indices[source]) continue;
+                            if (dest >= 131072U) { ok = 0; break; }
+                            for (plane = 0; plane < 2; ++plane) {
+                                size_t pos = (size_t)plane * 262144U + dest * 2U;
+                                uint16_t value = ((uint16_t)captured_fbs[pos] << 8U) | captured_fbs[pos + 1U];
+                                if (value != codes[source]) ok = 0;
+                            }
+                            ++pixel_count;
+                        }
+                    }
+                }
+                expect(ok && command_count == 5 && pixel_count == 1495,
+                       "five authentic title sprites match both captured VDP1 framebuffers");
+            }
             if (vram_file) fclose(vram_file);
             if (trace_file) fclose(trace_file);
             memset(vram, 0, sizeof(vram));

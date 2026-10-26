@@ -119,6 +119,15 @@ The external test checks the `0xd8e0` sprite at `(104,144)` against all 576
 decoded texels. It remains a capture preview; sprite priority, the other VDP1
 commands, VDP2 layers, and a time-aligned reference image are not established.
 
+The retained Ymir framebuffer dump supplies a stronger VDP1 comparison. Both
+the draw and display buffers contain the expected big-endian colour-bank word
+at every nontransparent pixel of all five sprites: 213, 213, 313, 293, and
+463 pixels respectively, for 1,495 matches out of 1,495 per buffer. The
+external lookup test checks the command positions and horizontal flip against
+both buffers when `FIRESTAFF_NEXUS_YMIR_VDP1_FBS` is provided alongside the
+trace and VRAM paths. Transparent pixels and final VDP2 output are not covered
+by this comparison, and the dump does not prove per-command snapshot timing.
+
 The same CMDSIZE and skipped-command corrections also apply to the Mednafen
 VDP1 source, material, and write-join analyzers. Earlier numerical receipts
 produced by those analyzers must be regenerated against their original raw
