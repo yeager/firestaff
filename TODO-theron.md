@@ -36,10 +36,13 @@
   movement-context observer with raw `$2911`, `$2912`, `$2920`, `$2031`, and
   `$203F-$2041` write records. These are opaque observations, not coordinate,
   direction, or command semantics.
-- Replaying the preserved authentic Japanese Rev. 1 Akutuba state with
-  `up@1:60` produced 128 bounded `$0E8A00-$0E8AFF` data reads with physical
-  PC/MPR context but no latch or runtime-state write record. The capture also
-  lacked the required bounded VDC word-commit trace and remains blocked.
+- A fresh no-input control against the preserved authentic Japanese Rev. 1
+  Akutuba state, using the current observer, produced 128 bounded
+  `$0E8A00-$0E8AFF` data reads, 128 input-latch writes, and 128 runtime-state
+  writes with physical PC/MPR context. The records remain opaque: this control
+  does not assign field semantics or demonstrate an input-caused transition.
+  Its reference binary lacked the required bounded VDC word-commit trace, so
+  the capture remains blocked and cannot be paired with an UP run yet.
 - The isolated build and raw traces were removed after verification. No game
   media, save state, firmware, or raw trace is tracked by Git.
 
