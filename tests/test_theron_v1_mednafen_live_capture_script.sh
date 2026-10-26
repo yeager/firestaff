@@ -145,6 +145,24 @@ if ! grep -Fq 'legacy PCE input result did not immediately follow its raw read' 
     printf '%s\n' 'FAIL: non-adjacent PCE read/result rejection lacked a precise diagnostic' >&2
     exit 1
 fi
+cat >"$input_test_dir/legacy-pce-result-frame-mismatch.trace" <<'THERON_LEGACY_PCE_FRAME_MISMATCH'
+scripted_pce_input_event frame=63 key=up mask=0010 hold=1
+scripted_pce_input_apply frame=63 physical=0000 scripted=0010 combined=0010
+pce_input_read frame=63 cpu_pc=44ca register=1000 raw=0010 sel=1 clr=0 index=0
+pce_input_result frame=64 cpu_pc=44ca register=1000 raw=0010 value=0e sel=1 clr=0 index=0
+THERON_LEGACY_PCE_FRAME_MISMATCH
+if "$scripted_input_consumption_verifier" \
+    "$input_test_dir/legacy-pce-result-frame-mismatch.trace" up@63 1 \
+    >"$input_test_dir/legacy-pce-result-frame-mismatch.stdout" \
+    2>"$input_test_dir/legacy-pce-result-frame-mismatch.stderr"; then
+    printf '%s\n' 'FAIL: mismatched legacy PCE input frames were accepted' >&2
+    exit 1
+fi
+if ! grep -Fq 'legacy PCE input result frame did not match its raw read' \
+    "$input_test_dir/legacy-pce-result-frame-mismatch.stderr"; then
+    printf '%s\n' 'FAIL: legacy PCE frame mismatch lacked a precise diagnostic' >&2
+    exit 1
+fi
 cat >"$input_test_dir/event-at-read-cap.trace" <<'THERON_CAPPED_INPUT'
 pce_input_read cpu_pc=8123 register=1000 raw=0000 sel=0 clr=0 index=0
 pce_input_read cpu_pc=8123 register=1000 raw=0000 sel=0 clr=0 index=0

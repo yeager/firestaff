@@ -148,6 +148,10 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
                 pending_result_raw = raw_value
                 pending_result_sel = read_sel
                 pending_result_index = read_index
+                pending_result_frame = ""
+                for (i = 1; i <= NF; i++)
+                    if ($i ~ /^frame=[0-9]+$/)
+                        pending_result_frame = substr($i, 7)
             }
         }
         next
@@ -155,7 +159,7 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
     /^pce_input_result / {
         if (pending_result) {
             result_raw = result_value = result_sel = result_index = -1
-            result_pc = result_register = ""
+            result_pc = result_register = result_frame = ""
             for (i = 1; i <= NF; i++) {
                 if ($i ~ /^raw=[0-9a-fA-F]+$/)
                     result_raw = hex_to_dec(substr($i, 5))
@@ -169,14 +173,19 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
                     result_register = tolower(substr($i, 10))
                 if ($i ~ /^cpu_pc=[0-9a-fA-F]+$/)
                     result_pc = substr($i, 8)
+                if ($i ~ /^frame=[0-9]+$/)
+                    result_frame = substr($i, 7)
             }
             if (result_register == pending_result_register &&
                 result_pc == pending_result_pc &&
                 result_raw == pending_result_raw &&
                 result_sel == pending_result_sel &&
-                result_index == pending_result_index)
+                result_index == pending_result_index &&
+                (pending_result_frame == "" || result_frame == pending_result_frame))
                 accept_controller_read(result_raw, result_value,
                                        result_sel, result_index, result_pc)
+            else if (pending_result_frame != "" && result_frame != pending_result_frame)
+                failure = "legacy PCE input result frame did not match its raw read"
             pending_result = 0
         }
         next
