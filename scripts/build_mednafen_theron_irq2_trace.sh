@@ -304,6 +304,10 @@ python3 "$repo/scripts/instrument_mednafen_theron_mouse_trace.py" \
     "$build_root/source"
 python3 "$repo/scripts/instrument_mednafen_theron_movement_data_read_trace.py" \
     "$build_root/source"
+if [[ "$pce_fast_snapshot" == 1 || "$pce_fast_vram_commit_trace" == 1 ]]; then
+    python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_movement_context_trace.py" \
+        "$build_root/source"
+fi
 
 if [[ "$patch_only" == 1 ]]; then
     # Tests use the exact production patch order without paying for a rebuild.

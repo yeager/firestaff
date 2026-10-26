@@ -24,6 +24,7 @@ later_raw_receipt=$repo/scripts/verify_theron_later_raw_sector_media_receipt.pl
 x11_keymap=$repo/scripts/theron_x11_keymap.sh
 scripted_input_consumption_verifier=$repo/scripts/verify_theron_scripted_input_consumption.sh
 movement_data_instrumenter=$repo/scripts/instrument_mednafen_theron_movement_data_read_trace.py
+pce_fast_movement_context_instrumenter=$repo/scripts/instrument_mednafen_theron_pce_fast_movement_context_trace.py
 
 if [[ ! -x "$script" ]]; then
     printf 'FAIL: live Mednafen capture script is not executable\n' >&2
@@ -604,6 +605,16 @@ if [[ ! -f "$movement_data_instrumenter" ]] ||
     printf 'FAIL: movement-data capture must exclude instruction fetches and retain bounded command provenance\n' >&2
     exit 1
 fi
+if [[ ! -f "$pce_fast_movement_context_instrumenter" ]] ||
+   ! grep -Fq 'RdOp' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'movement_command_write' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq '0x0e8a00' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'GetRealPC_EXTERNAL' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MOVEMENT_CONTEXT_TRACE' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'instrument_mednafen_theron_pce_fast_movement_context_trace.py' "$build_script"; then
+    printf 'FAIL: PCE Fast movement context must record data-only reads without borrowing PCE command provenance\n' >&2
+    exit 1
+fi
 if [[ ! -f "$ram_provenance_patch" ]] ||
    ! grep -Fq '@@ -420,8 +428,12 @@' "$ram_provenance_patch" ||
    ! grep -Fq 'const uint8 reader_mpr = MPR[reader_pc >> 13];' "$ram_provenance_patch"; then
@@ -830,7 +841,7 @@ if ! grep -Fq -- '-force_module "$capture_mednafen_module"' "$script" ||
    ! grep -Fq -- 'capture_cdbios_setting=pce_fast.cdbios' "$script" ||
    ! grep -Fq -- 'capture_input_port_setting=pce.input.port1' "$script" ||
    ! grep -Fq -- 'capture_input_port_setting=pce_fast.input.port1' "$script" ||
-   ! grep -Fq -- 'capture_input_args=("-$capture_input_port_setting" gamepad)' "$script" ||
+   ! grep -Fq -- 'capture_input_args=("-$capture_input_port_setting" "$capture_input_device")' "$script" ||
    ! grep -Fq -- 'capture_input_args+=(' "$script" ||
    ! grep -Fq -- '"-pce_fast.input.port1.gamepad.$key"' "$script" ||
    ! grep -Fq -- '"keyboard 0x0 $pce_scancode"' "$script" ||
@@ -1051,7 +1062,7 @@ if ! grep -Fq 'THERON_CAPTURE_HOST_KEY must name a supported PCE key' "$script" 
    ! grep -Fq 'sleep "$host_key_current_hold"' "$script" ||
    ! grep -Fq 'quartz_arguments=("$host_key_current_code" "$host_key_current_hold" "$mednafen_ui_pid")' "$script" ||
    ! grep -Fq 'requested_host_key_holds_seconds=%s' "$script" ||
-   ! grep -Fq 'THERON_CAPTURE_HOST_KEY_HOLDS=4,1,1' "$repo/docs/THERON_MAC_SDL_MEDNAFEN_LOCAL.md" ||
+   ! grep -Fq 'THERON_CAPTURE_HOST_KEY_HOLDS=4' "$repo/docs/THERON_MAC_SDL_MEDNAFEN_LOCAL.md" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_SEQUENCE times must be ordered' "$script" ||
    ! grep -Fq 'host_key_sequence_codes+=("$(capture_host_key_for_label "$host_key_sequence_label")")' "$script" ||
    ! grep -Fq 'requested_host_key_sequence=%s' "$script" ||
