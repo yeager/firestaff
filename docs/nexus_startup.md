@@ -503,6 +503,22 @@ claims. The raw dump and write trace are retained outside the repository on
 the external evidence volume; only their reproducible receipt is recorded
 here.
 
+## Long boot memory trace (2026-10-26)
+
+A separate Ymir `--debug --capture-boot-frames 13000` run retained a full
+memory snapshot after normal disc boot. The final VDP1 counter was 12947; its
+complete command trace had four terminal records and no VDP1 trace drops. The
+bounded source scanner found no supported textured draw commands in that
+final frame. VDP2 had NBG0, NBG1, and NBG2 enabled (`BGON=0x0007`,
+`CHCTLA=0x1212`). The SH-2 write trace reached its 250,000-row cap and reports
+420,006 dropped master-SH-2 rows, so it cannot establish complete writer
+provenance.
+
+This capture used `--capture-no-render`: both VDP1 framebuffers are zeroed and
+there is no screenshot. It is useful as a register and memory checkpoint only;
+it does not identify what appeared on screen or prove that Nexus reached a
+particular menu. The raw files and SHA-256 list are retained off-repository.
+
 ## Full title-menu frame reconstruction (2026-10-26)
 
 The atomic frame-59 Ymir capture now has a bounded C replay for the full
