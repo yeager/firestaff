@@ -14,6 +14,19 @@
     if (!(condition)) { fprintf(stderr, "FAIL: %s\n", message); goto cleanup; } \
 } while (0)
 
+static int check_top_row_source_surfaces(M11_AssetLoader *loader)
+{
+    static const unsigned indices[] = {8u, 28u, 33u, 34u, 35u};
+    static const unsigned widths[] = {67u, 76u, 18u, 18u, 18u};
+    static const unsigned heights[] = {29u, 14u, 18u, 18u, 18u};
+    for (size_t i = 0u; i < sizeof(indices) / sizeof(indices[0]); ++i) {
+        unsigned short width = 0u, height = 0u;
+        if (!M11_AssetLoader_QuerySize(loader, indices[i], &width, &height) ||
+            width != widths[i] || height != heights[i]) return 0;
+    }
+    return 1;
+}
+
 int main(void) {
     const char *archive = getenv("FIRESTAFF_DM1_FMTOWNS_ARCHIVE");
     uint8_t *cue = NULL, *bin = NULL;
@@ -66,6 +79,8 @@ int main(void) {
     REQUIRE(loader.dm1Fmtowns && loader.legacyDm1 &&
             !loader.legacyBigEndian && loader.graphicCount == 575u,
         "FM Towns graphics use its native decoder and classic DM1 semantics");
+    REQUIRE(check_top_row_source_surfaces(&loader),
+        "original F20E status box, champion strip, and slot states match the live HUD source dimensions");
     REQUIRE(M11_AssetLoader_QuerySize(&loader, 1u, &width, &height) &&
             width == 320u && height == 200u,
         "EDM.EXP title raster preserves source dimensions");
@@ -155,6 +170,8 @@ int main(void) {
                     japaneseBytes, (long)japaneseSize),
             "original Japanese F20 graphics initialize their native decoder");
     }
+    REQUIRE(check_top_row_source_surfaces(&japaneseLoader),
+        "original F20J status box, champion strip, and slot states match the live HUD source dimensions");
     for (int global = 0; global < 60; ++global) {
         for (int view = 0; view < 13; ++view) {
             DM1_V1_FmtownsWallOrnament ornament;
