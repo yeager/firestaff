@@ -1,5 +1,5 @@
-/* Authentic-media DM1 HoC stair torch interaction regression for Atari ST
- * and Amiga 2.0. This deliberately checks source ownership and runtime
+/* Authentic-media DM1 HoC stair torch interaction regression for Atari ST,
+ * Amiga 2.0 and PC 3.4. This deliberately checks source ownership and runtime
  * transactions; platform-specific wall art assertions stay in their own
  * graphics-bound tests.
  * ReDMCSB source: CLIKVIEW.C:F0373 (78-129) transfers the pile-top Thing to
@@ -41,6 +41,11 @@ static int start_corpus(M11_GameViewState *state, const char *archive)
     if (version >= 0 && M12_AssetStatus_GetVersion(&menu.assetStatus,
             "dm1", (size_t)version)->matched)
         menu.gameOptions[0].architectureIndex = M12_ARCH_FM_TOWNS;
+#elif defined(M11_DM1_TORCH_PC34)
+    version = M12_AssetStatus_FindVersionIndex("dm1", "pc34-en");
+    if (version >= 0 && M12_AssetStatus_GetVersion(&menu.assetStatus,
+            "dm1", (size_t)version)->matched)
+        menu.gameOptions[0].architectureIndex = M12_ARCH_PC;
 #else
     version = M12_AssetStatus_FindVersionIndex("dm1", "st12-en");
     if (version >= 0 && M12_AssetStatus_GetVersion(&menu.assetStatus,
@@ -209,6 +214,30 @@ int main(void)
     state.inventoryPanelActive = 0;
     state.dm1InventoryChampionOrdinal = 0;
     state.world.party.mapIndex = 0;
+#if defined(M11_DM1_TORCH_PC34)
+    /* Use the original PC34 Hall cells: (4,15) is the corridor east of the
+     * stair at (3,15). Face east, then step backward onto the real stair, as
+     * in the user-reported hang. This passes through the live M11 input and
+     * movement pipeline with the authentic map and Thing data loaded above. */
+    state.world.party.mapX = 4;
+    state.world.party.mapY = 15;
+    state.world.party.direction = 1;
+    state.world.partyMapIndex = 0;
+    if (((state.world.dungeon->tiles[0].squareData[4 *
+             (int)state.world.dungeon->maps[0].height + 15] &
+             DUNGEON_SQUARE_MASK_TYPE) >> 5) != DUNGEON_ELEMENT_CORRIDOR ||
+        M11_GameView_HandleInput(&state, M12_MENU_INPUT_DOWN) !=
+            M11_GAME_INPUT_REDRAW ||
+        state.world.party.mapIndex != 1 || state.world.partyMapIndex != 1 ||
+        M11_GameView_GetLightLevel(&state) <= 0) {
+        fprintf(stderr,
+            "authentic PC34 backward step onto HoC stairs failed: map=%d partyMap=%d light=%d\n",
+            state.world.party.mapIndex, state.world.partyMapIndex,
+            M11_GameView_GetLightLevel(&state));
+        goto done;
+    }
+    puts("ok: authentic PC34 backward input from the HoC corridor enters the original stair and next level");
+#else
     state.world.party.mapX = 3;
     state.world.party.mapY = 15;
     if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_USE_STAIRS) != M11_GAME_INPUT_REDRAW ||
@@ -217,6 +246,7 @@ int main(void)
             state.world.party.mapIndex, M11_GameView_GetLightLevel(&state));
         goto done;
     }
+#endif
     printf("ok: authentic HoC wall torch Thing %u picked up, equipped, and carried through stairs with level-one light\n",
         (unsigned)torch);
     result = 0;
