@@ -119,15 +119,16 @@ gaps and bounds what can be concluded:
   rectangle together. These dimensions come directly from the installed
   authenticated `Graphics.DAT` (MD5
   `61fbfd56887c94adc26888a9491c6611`), not generated or reconstructed art.
-- The common Amiga FTL/SWSH intro is a confirmed edition gap. The authenticated
-  Amiga packages include the original `SWSH.FTL`, and ReDMCSB's Amiga
-  startup chain invokes `FTL_SWSH`. Firestaff's shared CSB prelude instead
-  looks for the PC `SWOOSH`/`SWOOSH.DAT` payload and its PC-format sound
-  records; `csb_v1_boot_load_swoosh_source_pc34` does not bind `SWSH.FTL`.
-  Consequently the real Amiga logo animation and its source audio never reach
-  the presenter. Decode and play the exact installed Amiga stream with its
-  own 50 Hz timing and audio owner; do not substitute the PC `SWOOSH` or
-  generated media.
+- The common Amiga FTL/SWSH prelude is now wired for the authenticated A31M/A33M
+  multi-language Amiga profile. The launcher reads `SWSH.FTL` beside the
+  selected `GRAPHICS.DAT`, requires the known original file fingerprint, then
+  checks the FTL hunks and palette, logo and sample fingerprints before
+  presenting anything. The logo uses the shared bounded F0466 decoder, the 27
+  source palette events advance at 50 Hz, and the Paula PCM uses the period
+  stored in the FTL. Missing or mismatched optional SWSH media falls through
+  to the normal Amiga title route, as ReDMCSB does. Unit and authentic-media
+  extraction tests pass; native-screen timing and audible device output still
+  need verification. Other Amiga edition variants remain outside this route.
 - The later title program still differs by edition. A31M/A33M decodes the
   original `TITL.DAT` schedule. A31E/A35E take their documented direct
   `BJELoad_R` -> `C03_GAME` boundary; A35M uses the `C08_LANG` selector and
@@ -141,6 +142,13 @@ gaps and bounds what can be concluded:
   startup checks cannot prove device output. Add authentic cue/timing
   ownership from the original stream, then verify audible output on a real
   audio device; do not substitute generated sound.
+
+2026-10-26 CSB Amiga SWSH runtime: the A31M/A33M FTL prelude now plays from
+the selected Amiga source profile instead of falling through to the PC
+`SWOOSH` search. The real-media regression verifies the palette events, logo
+pixels, sample bytes and Paula period against the installed SWSH.FTL; the
+production app and test target link on trv2. Native video/audio playback and
+other Amiga editions remain unverified.
 
 2026-10-26 CSB Amiga FTL checksum arithmetic: the authentic 3.3 `SWSH.FTL`
 failed the container verifier because its BSS and DATA sums use ordinary

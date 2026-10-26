@@ -32,6 +32,8 @@
 
 #include "firestaff_ftl_decode.h"
 #include "firestaff_ftl_container.h"
+#include "csb_v1_amiga_swsh_ftl.h"
+#include "redmcsb_amiga_graphic_expand.h"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -227,6 +229,10 @@ static int csb_amiga_swsh_real_media(const char* path) {
     FirestaffFtl ftl;
     FirestaffFtlContainer container;
     FirestaffFtlChecksumReport checksums;
+    CSB_V1_AmigaSwshFtlAssets assets;
+    uint8_t logo_pixels[CSB_V1_AMIGA_SWSH_WIDTH * CSB_V1_AMIGA_SWSH_HEIGHT];
+    uint16_t logo_width = 0u;
+    uint16_t logo_height = 0u;
     int parsed = 0;
     int rc;
     if (!file) {
@@ -299,6 +305,31 @@ static int csb_amiga_swsh_real_media(const char* path) {
         fprintf(stderr,
                 "CSB SWSH source palette, FTL logo, or sound sample mismatch\n");
         if (parsed) FirestaffFtl_Free(&ftl);
+        free(bytes);
+        return 1;
+    }
+    if (!csb_v1_amiga_swsh_ftl_decode(bytes, (size_t)size, &assets) ||
+        assets.palette[0].command != 1 ||
+        assets.palette[0].parameter != 0x0fffu ||
+        assets.palette[1].command != -1 ||
+        assets.palette[1].parameter != 1u ||
+        assets.palette[26].command != -1 ||
+        assets.palette[26].parameter != 0u ||
+        assets.sample_period != 334u ||
+        fnv1a64(assets.sample, sizeof(assets.sample)) !=
+            UINT64_C(0xd8a7920cbad582f5) ||
+        memcmp(assets.logo_graphic, ftl.hunk_data_decoded + 262u,
+               sizeof(assets.logo_graphic)) != 0 ||
+        !redmcsb_amiga_graphic_expand(
+            assets.logo_graphic, sizeof(assets.logo_graphic), logo_pixels,
+            sizeof(logo_pixels), &logo_width, &logo_height) ||
+        logo_width != CSB_V1_AMIGA_SWSH_WIDTH ||
+        logo_height != CSB_V1_AMIGA_SWSH_HEIGHT ||
+        fnv1a64(logo_pixels, sizeof(logo_pixels)) !=
+            UINT64_C(0xea195d2f39a50394)) {
+        fprintf(stderr,
+                "CSB SWSH runtime receipt did not match source data\n");
+        FirestaffFtl_Free(&ftl);
         free(bytes);
         return 1;
     }

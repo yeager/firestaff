@@ -6998,6 +6998,7 @@ add_library(firestaff_m10 STATIC
     src/shared/dungeon_decompressor_ftl.c
     # The DM1 Amiga DAT reader is shared by the M11 asset loader and scanner
     # consumers that compile that loader directly in focused regressions.
+    src/shared/redmcsb_amiga_graphic_expand.c
     src/dm1/dm1_v1_amiga_graphics_dat.c
     src/shared/asset_find_by_hash.c
     src/shared/firestaff_cmp_decode.c
@@ -7763,6 +7764,8 @@ set(M11_SOURCES
     src/dm1/dm1_v1_amiga_title_f0437.c
     src/dm1/dm1_v1_i34e_title_anim_pc34.c
     src/dm1/dm1_v1_amiga_entrance_f0441.c
+    src/csb/csb_v1_amiga_swsh_ftl.c
+    src/shared/firestaff_ftl_decode.c
     src/shared/firestaff_ftl_container.c
     src/shared/firestaff_ftl_hunk_data_zero_run.c
     src/shared/firestaff_amiga_adf.c
@@ -43089,6 +43092,8 @@ add_executable(test_nexus_v1_dgn_material_raster
     # follow-up gates.
     add_executable(test_firestaff_ftl_decode
         tests/test_firestaff_ftl_decode.c
+        src/csb/csb_v1_amiga_swsh_ftl.c
+        src/shared/redmcsb_amiga_graphic_expand.c
         src/shared/firestaff_ftl_decode.c
         src/shared/firestaff_ftl_hunk_data_zero_run.c
         src/shared/firestaff_ftl_container.c
@@ -63080,6 +63085,7 @@ unset(_firestaff_csb_v2_verification_tests)
 add_executable(test_dm1_v1_amiga_graphics_dat
     tests/test_dm1_v1_amiga_graphics_dat.c
     src/dm1/dm1_v1_amiga_title_f0437.c
+    src/shared/redmcsb_amiga_graphic_expand.c
     src/dm1/dm1_v1_amiga_graphics_dat.c
     src/dm1/dm1_v1_legacy_graphics_dat.c
     src/dm1/dm1_v1_original_save_amiga_handoff.c
@@ -63110,6 +63116,7 @@ set_tests_properties(test_dm1_v1_amiga_graphics_dat PROPERTIES
 add_executable(test_dm1_v1_amiga_title_f0437_real_media
     tests/test_dm1_v1_amiga_title_f0437_real_media.c
     src/dm1/dm1_v1_amiga_title_f0437.c
+    src/shared/redmcsb_amiga_graphic_expand.c
     src/dm1/dm1_v1_amiga_graphics_dat.c
     src/dm1/dm1_v1_amiga_swsh.c
     src/dm1/dm1_v1_legacy_graphics_dat.c
@@ -63131,6 +63138,7 @@ add_executable(test_dm1_v1_amiga_entrance_f0441_real_media
     tests/test_dm1_v1_amiga_entrance_f0441_real_media.c
     src/dm1/dm1_v1_amiga_entrance_f0441.c
     src/dm1/dm1_v1_amiga_title_f0437.c
+    src/shared/redmcsb_amiga_graphic_expand.c
     src/dm1/dm1_v1_amiga_graphics_dat.c
     src/dm1/dm1_v1_amiga_swsh.c
     src/dm1/dm1_v1_legacy_graphics_dat.c
@@ -63155,6 +63163,7 @@ add_executable(test_dm1_v1_amiga_demo_startup_real_media
     tests/test_dm1_v1_amiga_demo_startup_real_media.c
     src/dm1/dm1_v1_amiga_entrance_f0441.c
     src/dm1/dm1_v1_amiga_title_f0437.c
+    src/shared/redmcsb_amiga_graphic_expand.c
     src/dm1/dm1_v1_amiga_graphics_dat.c
     src/dm1/dm1_v1_amiga_swsh.c
     src/dm1/dm1_v1_legacy_graphics_dat.c
@@ -63176,6 +63185,7 @@ add_executable(test_dm1_v1_amiga20_french_startup_real_media
     tests/test_dm1_v1_amiga20_french_startup_real_media.c
     src/dm1/dm1_v1_amiga_entrance_f0441.c
     src/dm1/dm1_v1_amiga_title_f0437.c
+    src/shared/redmcsb_amiga_graphic_expand.c
     src/dm1/dm1_v1_amiga_graphics_dat.c
     src/dm1/dm1_v1_amiga_swsh.c
     src/dm1/dm1_v1_legacy_graphics_dat.c

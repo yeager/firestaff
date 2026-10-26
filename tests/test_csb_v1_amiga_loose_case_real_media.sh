@@ -21,7 +21,8 @@ source, target = map(pathlib.Path, sys.argv[1:])
 expected = {'graphics.dat':'61fbfd56887c94adc26888a9491c6611',
             'dungeon.dat':'6695d2acebce49f95db1d8f3a5c733de',
             'titl.dat':'5b590ea3a6f5eed513b5678b01468ee4',
-            'appb.ftl':'35987d3f0278c6036fcc24786d4a75d7'}
+            'appb.ftl':'35987d3f0278c6036fcc24786d4a75d7',
+            'swsh.ftl':'ff3872baaed8ee4e83ee3c0684b2eeec'}
 for name, digest in expected.items():
     matches = [p for p in source.iterdir() if p.is_file() and p.name.lower()==name]
     if len(matches)!=1 or hashlib.md5(matches[0].read_bytes()).hexdigest()!=digest:
@@ -37,12 +38,18 @@ run_cli() {
     mkdir -p "$scratch/$label-home"
     HOME="$scratch/$label-home" FIRESTAFF_CONFIG_PATH="$scratch/$label-home/config.toml" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --width 320 --height 200 --game csb --platform amiga \
-        --data-dir "$scratch/media" --boot-probe --boot-probe-frames 800 \
+        --data-dir "$scratch/media" --debug --boot-probe --boot-probe-frames 800 \
         --script 'wait700,click:100:100,key:enter,up' --boot-probe-expect-runtime \
         --boot-probe-expect-startup-active 0 --boot-probe-expect-level-loaded 1 \
         --boot-probe-expect-runtime-tick-min 1 > "$scratch/$label.log" 2>&1
 }
 run_cli baseline
+grep -Fq 'game=csb phase=amiga-swsh-ftl' "$scratch/baseline.log"
+grep -Fq 'source-vblanks=30' "$scratch/baseline.log"
+mv "$scratch/media/SWSH.FTL" "$scratch/media/SWSH.FTL.disabled"
+run_cli missing-swsh
+grep -Fq 'phase=amiga-swsh-ftl reason=missing-or-invalid-source' "$scratch/missing-swsh.log"
+mv "$scratch/media/SWSH.FTL.disabled" "$scratch/media/SWSH.FTL"
 mv "$scratch/media/TITL.DAT" "$scratch/media/Titl.dat"
 mv "$scratch/media/APPB.FTL" "$scratch/media/Appb.ftl"
 run_cli mixed
@@ -76,10 +83,11 @@ import hashlib, pathlib, sys
 expected={'graphics.dat':'61fbfd56887c94adc26888a9491c6611',
           'dungeon.dat':'6695d2acebce49f95db1d8f3a5c733de',
           'titl.dat':'5b590ea3a6f5eed513b5678b01468ee4',
-          'appb.ftl':'35987d3f0278c6036fcc24786d4a75d7'}
+          'appb.ftl':'35987d3f0278c6036fcc24786d4a75d7',
+          'swsh.ftl':'ff3872baaed8ee4e83ee3c0684b2eeec'}
 for directory in map(pathlib.Path,sys.argv[1:]):
     for name,digest in expected.items():
         matches=[p for p in directory.iterdir() if p.is_file() and p.name.lower()==name]
         assert len(matches)==1 and hashlib.md5(matches[0].read_bytes()).hexdigest()==digest, (directory,name)
 PY
-echo 'PASS: authentic CSB loose baseline and mixed-case CLI/menu runtime; ambiguous companions rejected'
+echo 'PASS: authentic CSB Amiga FTL prelude, missing-SWSH fallback, mixed-case CLI/menu runtime; ambiguous companions rejected'
