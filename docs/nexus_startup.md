@@ -653,6 +653,52 @@ that Firestaff renders or controls this menu, that `NEW GAME` reaches a playable
 level through Firestaff, that Continue loads a real save, or that the HUD is
 correct. Those remain separate production-parity gates.
 
+## Complete cold-boot SCU DMA trace (2026-10-27)
+
+A follow-up run used Ymir's explicit SCU DMA trace route with the same
+hash-verified Japanese retail cue, BIOS, and deterministic cold-boot pad
+schedule described above. Ymir was run with `--debug --capture-boot-frames
+9120 --dump-memory --capture-no-present --capture-no-render --trace-scu-dma`.
+The emulator loaded no save state or game save. Input timing was recorded in
+the retained run log. The full capture retained 8,399 SCU DMA transfers in an
+8,400-line CSV including its header; the manifest reports a 16,384-row
+capacity, zero dropped rows, no overflow, and complete trace data.
+
+The retained SCU DMA table was compared with the captured high-WRAM image,
+final VDP1 VRAM, and the authentic Japanese `TITLE.BIN` (SHA-256
+`51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3`,
+112,216 bytes). Several source spans match exactly:
+
+| Transfer | Captured WRAM source | VDP1 destination | Size | Exact `TITLE.BIN` offset |
+|---:|---:|---:|---:|---:|
+| 3777 | `0x060ab376` | `0x05c44060` | 288 bytes | `0x15f6` |
+| 3764 | `0x060aa1c6` | `0x05c47de0` | 256 bytes | `0x0446` |
+| 3765 | `0x060aa2f6` | `0x05c479e0` | 256 bytes | `0x0576` |
+| 3767 | `0x060aa556` | `0x05c46f60` | 416 bytes | `0x07d6` |
+
+The 288-byte source of transfer 3778 at `0x060ab4c6` ends up at VDP1 VRAM
+`0x05c43be0`, but does not match the cited `TITLE.BIN` span; its source
+ownership remains unassigned. The SCU trace records transfer order and
+addresses, not a per-transfer frame number. Its correlation with the final
+VDP1 image is therefore byte/address evidence from one deterministic run, not
+a transfer timestamp tied to the VDP1 menu frame.
+
+The external evidence bundle is
+[`scu_dma_complete_20261027`](/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/scu_dma_complete_20261027/).
+Its manifest SHA-256 is
+`5b2ede0748d3a4b009f4d6d781e1fbc9897c114be270e69a567daf277cefed36`; the
+trace CSV SHA-256 is
+`718f10d71fcae26437224362abf245f594fdb07d15cb3732ddebbd4d7322039c`. The
+bundle's `SHA256SUMS.txt` was checked against every retained artifact. The
+same trace functionality is proposed in [Yeager Ymir PR
+#2](https://github.com/yeager/Ymir/pull/2), stacked on its deterministic input
+capture PR #1.
+
+This adds reproducible DMA-to-source byte evidence for the authentic cold
+boot. It does not label the exact semantic role of each texture, bind the
+palette source, prove transfer-to-frame timing, or admit a Firestaff title-menu
+renderer. The existing production gates remain in force.
+
 ## Sources
 
 - DMWeb Nexus file formats and DMN Data File Decoder.
