@@ -13,12 +13,14 @@ Macintosh French and FM Towns Japanese routes listed in `TODO-dm2.md`; and
 Theron's Japanese Rev. 1 title-to-Akutuba route plus the US Continue route to
 dungeon 2, level 0. The CSB Atari Hint Oracle also passes with the original
 Atari R1 media. The Amiga demo, CSB Atari French preservation case, and DM2
-DOS French, Macintosh English and Amiga English cases remain unverified
-because their authentic archives are absent. These CLI checks use SDL dummy
-and verify the exercised source startup/handoff paths, not native display,
-physical input, or full gameplay. Recent changes also add authentic Japanese
-Theron input evidence and Nexus retail reference captures. The Nexus
-captures verify no-save Japanese and English routes to the native three-choice
+DOS French and Macintosh English direct CLI cases remain unverified because
+their authentic archives are absent. The DM2 Amiga English direct CLI case
+also remains unverified, but its no-game M12 route selected the original
+archive and reached level 0 with an Amiga runtime receipt. These CLI checks
+use SDL dummy and verify the exercised source startup/handoff paths, not
+native display, physical input, or full gameplay. Recent changes also add
+authentic Japanese Theron input evidence and Nexus retail reference captures.
+The Nexus captures verify no-save Japanese and English routes to the native three-choice
 title menu and a separate Japanese diagnostic replay to the native 3D corridor;
 they do not establish Firestaff's Nexus startup or renderer. Replaying the
 English screenshot from its captured frame is pixel-exact. Its complete VDP1
