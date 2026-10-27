@@ -1,3 +1,15 @@
+2026-10-27 FM Towns AUTO discovery with a repacked ZIP: the authentic
+`Dungeon-Master_FM-Towns_JA-EN.zip` on the external data disk contains the
+original BIN/CUE media and authentic language-specific graphics/world hashes,
+but its outer MD5 differs from the published ZIP. When renamed beside an
+authentic Apple IIGS image, AUTO selected IIGS because the repacked 322,760,817
+byte ZIP was not admitted by the bounded renamed-container search. The scanner
+now recognizes this ZIP identity and still gates launch on the exact inner
+`GRAPHICS.DAT` and `DUNGEON.DAT` hashes. The authentic IIGS G20/G21 plus Towns
+mixed-media CLI regression passes, including Towns AUTO selection; the original
+IIGS archive remains unchanged. This covers the known ZIP repack and does not
+claim arbitrary FM Towns container formats.
+
 2026-10-26 F20 status hand slots: the DM1 FM Towns top row now renders
 ready/action hand frames into COORD.C C211..C218 from the original C033/C034/
 C035 graphics, using F0291's one-pixel border expansion and C12 transparency.
