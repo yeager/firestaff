@@ -502,7 +502,7 @@ falls within an exact matched MENU.BPK surface range. This narrows the current
 menu asset lead toward `TITLE.BIN`; it does not prove MENU.BPK is unrelated or
 that Firestaff can yet compose the menu. The captured data and trace remain
 external at
-[`ymir_nexus_coldboot_menu_20261027`](/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/).
+`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/`.
 
 The four distinct 32-byte VDP1 CLUT blocks used by these commands were also
 compared directly and word-swapped against all 126 hash-accepted Japanese
@@ -630,11 +630,11 @@ and bounded SH-2 write traces are retained on the external evidence volume.
 
 | Artifact | Location | SHA-256 |
 |---|---|---|
-| Native title-menu screenshot | [`title-menu.png`](/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/title-menu.png) | `8721cce3354bc20b1cd367fd44be3d4ecc60ca65fa89c7d00654e83f5ad7db23` |
-| Source-join report | [`vdp1-source-join.txt`](/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/vdp1-source-join.txt) | `5df73daf4a37f187e0f3e4805d68d7f4870703839e5fb9b2d4c26f8cf12dc3a3` |
-| Complete narrowed SH-2 write trace | [`sh2-memory-write-trace.csv`](/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/sh2-write-narrow/sh2-memory-write-trace.csv) | `53502102c1dcdc0c511983bfaf0ce7e017fe711f26a393e353eea162a82f001d` |
-| Trace receipt | [`sh2-memory-write-trace-bundle.txt`](/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/sh2-write-narrow/sh2-memory-write-trace-bundle.txt) | `c463f5d77a57c7883fd2e22ae3bf69aa41823264ad25f804f0535b634b560166` |
-| Dump and screenshot manifest | [`SHA256SUMS.txt`](/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/SHA256SUMS.txt) | `30d4c019f5dccf090553a1e9328b185c1e90305d5c89f50a2f554fef87bc403b` |
+| Native title-menu screenshot | `/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/title-menu.png` | `8721cce3354bc20b1cd367fd44be3d4ecc60ca65fa89c7d00654e83f5ad7db23` |
+| Source-join report | `/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/vdp1-source-join.txt` | `5df73daf4a37f187e0f3e4805d68d7f4870703839e5fb9b2d4c26f8cf12dc3a3` |
+| Complete narrowed SH-2 write trace | `/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/sh2-write-narrow/sh2-memory-write-trace.csv` | `53502102c1dcdc0c511983bfaf0ce7e017fe711f26a393e353eea162a82f001d` |
+| Trace receipt | `/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/sh2-write-narrow/sh2-memory-write-trace-bundle.txt` | `c463f5d77a57c7883fd2e22ae3bf69aa41823264ad25f804f0535b634b560166` |
+| Dump and screenshot manifest | `/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/SHA256SUMS.txt` | `30d4c019f5dccf090553a1e9328b185c1e90305d5c89f50a2f554fef87bc403b` |
 
 The exact command was:
 
@@ -664,10 +664,13 @@ the retained run log. The full capture retained 8,399 SCU DMA transfers in an
 8,400-line CSV including its header; the manifest reports a 16,384-row
 capacity, zero dropped rows, no overflow, and complete trace data.
 
-The retained SCU DMA table was compared with the captured high-WRAM image,
-final VDP1 VRAM, and the authentic Japanese `TITLE.BIN` (SHA-256
+The retained SCU DMA table records transfer metadata; it does not contain the
+transferred payload bytes. The listed source addresses were compared with the
+final captured high-WRAM image, final VDP1 VRAM, and the authentic Japanese
+`TITLE.BIN` (SHA-256
 `51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3`,
-112,216 bytes). Several source spans match exactly:
+112,216 bytes). Several final high-WRAM spans at the recorded source addresses
+match exactly:
 
 | Transfer | Captured WRAM source | VDP1 destination | Size | Exact `TITLE.BIN` offset |
 |---:|---:|---:|---:|---:|
@@ -676,15 +679,17 @@ final VDP1 VRAM, and the authentic Japanese `TITLE.BIN` (SHA-256
 | 3765 | `0x060aa2f6` | `0x05c479e0` | 256 bytes | `0x0576` |
 | 3767 | `0x060aa556` | `0x05c46f60` | 416 bytes | `0x07d6` |
 
-The 288-byte source of transfer 3778 at `0x060ab4c6` ends up at VDP1 VRAM
-`0x05c43be0`, but does not match the cited `TITLE.BIN` span; its source
-ownership remains unassigned. The SCU trace records transfer order and
-addresses, not a per-transfer frame number. Its correlation with the final
-VDP1 image is therefore byte/address evidence from one deterministic run, not
-a transfer timestamp tied to the VDP1 menu frame.
+The 288-byte source address of transfer 3778 (`0x060ab4c6`) corresponds to
+VDP1 VRAM address `0x05c43be0` in the trace, but its final WRAM bytes do not
+match the cited `TITLE.BIN` span; its source ownership remains unassigned. The
+SCU trace records transfer order, source/destination addresses, and counts,
+not payload bytes or a per-transfer frame number. These comparisons are
+final-state byte/address evidence from one deterministic run. They do not
+prove that a DMA payload matched `TITLE.BIN` or timestamp a transfer to the
+VDP1 menu frame.
 
-The external evidence bundle is
-[`scu_dma_complete_20261027`](/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/scu_dma_complete_20261027/).
+The external evidence bundle is retained at
+`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/scu_dma_complete_20261027/`.
 Its manifest SHA-256 is
 `5b2ede0748d3a4b009f4d6d781e1fbc9897c114be270e69a567daf277cefed36`; the
 trace CSV SHA-256 is
@@ -694,10 +699,21 @@ same trace functionality is proposed in [Yeager Ymir PR
 #2](https://github.com/yeager/Ymir/pull/2), stacked on its deterministic input
 capture PR #1.
 
-This adds reproducible DMA-to-source byte evidence for the authentic cold
-boot. It does not label the exact semantic role of each texture, bind the
-palette source, prove transfer-to-frame timing, or admit a Firestaff title-menu
-renderer. The existing production gates remain in force.
+The retained README does not record the Ymir source revision used to build this
+capture. The TRV2 worktree inspected during this follow-up has base commit
+`bf68a2fdb13e533e7b6c6c9a511701ec52609220` and an uncommitted tracked diff
+whose SHA-256 is
+`ec59cfa728cb73f032836eaa5d8782bdfdf1bc1702d906af6b3ef627a2e95082`. This
+identifies the inspected worktree state, but the retained capture does not
+bind that state to the executable; the exact build revision is therefore
+unverified.
+
+This adds reproducible evidence linking recorded DMA source addresses to
+matching bytes in the final WRAM snapshot for the authentic cold boot. It does
+not prove the payload bytes transferred, label the exact semantic role of
+each texture, bind the palette source, prove transfer-to-frame timing, or
+admit a Firestaff title-menu renderer. The existing production gates remain in
+force.
 
 ## SCU DMA transfers indexed by deterministic capture frame (2026-10-27)
 
@@ -731,7 +747,7 @@ assign semantic labels to texture spans, identify palette ownership, or prove
 a transfer-to-displayed-frame relation.
 
 The raw dump bundle and reproducible receipt are retained at
-[`scu_dma_frame_index_20261027`](/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/scu_dma_frame_index_20261027/).
+`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/scu_dma_frame_index_20261027/`.
 Its README SHA-256 is
 `65c2fe206b937c3dc2a4e09cb1626389db458c9b9f5ca89a01b678a044a07c7d`, its
 checksum-list SHA-256 is
@@ -769,15 +785,15 @@ does not establish CLUT ownership or exclude intervening CPU writes.
 The five corresponding command records in the earlier rendered native-menu
 capture at VDP1 frame 8050 match these draw words, geometry, and source
 addresses; only their VDP1 link word differs. That separate rendered capture
-has the retained menu screenshot
-[`title-menu.png`](/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/title-menu.png),
+has the retained menu screenshot at
+`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/title-menu.png`,
 SHA-256
 `8721cce3354bc20b1cd367fd44be3d4ecc60ca65fa89c7d00654e83f5ad7db23`.
 The current trace-v4 run used no-render mode and has no screenshot, so it
 cannot establish its own displayed pixels.
 
 The complete raw capture and receipt are retained at
-[`scu_dma_vdp1_frame_map_20261027`](/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/scu_dma_vdp1_frame_map_20261027/).
+`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/scu_dma_vdp1_frame_map_20261027/`.
 Its README SHA-256 is
 `5fb18214931b5837b9e7fcaf02d933cc91f7f741d45d59c4fffce6a0033875bb`, the
 checksum-list SHA-256 is
