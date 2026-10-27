@@ -11937,7 +11937,8 @@ static void m12_draw_game_card_flow_view(const M12_StartupMenuState* state,
         return;
     }
     if (state->gameCardFlowStage == 0) {
-        scanning = state->deferredScanActive &&
+        scanning = (state->deferredScanPending ||
+                    state->deferredScanActive) &&
             !(state->deferredScanCompletedGameMask &
               m12_deferred_game_bit(entry->gameId));
         ready = M12_AssetStatus_GameAvailable(&state->assetStatus,
