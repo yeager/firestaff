@@ -1,3 +1,13 @@
+2026-10-27 authentic cross-platform CLI startup matrix: the current-source
+real-media CLI cases passed for PC34 (including the nested archive), DOS
+English/French, Atari ST 1.0a/1.0b/1.1/1.2/German/French, Amiga HD/2.0/2.0
+German/2.0 French/2.1-2.2 English/3.6, and FM Towns. The three Amiga 2.0
+language tests initially skipped because their media-probe helper had not been
+built; after building that helper, all three passed against the original
+Amiga archive. The Amiga demo case remains unverified because its original
+archive is absent. SDL dummy verifies these launch and source-handoff paths,
+not native display or physical input parity.
+
 2026-10-27 FM Towns AUTO discovery with a repacked ZIP: the authentic
 `Dungeon-Master_FM-Towns_JA-EN.zip` on the external data disk contains the
 original BIN/CUE media and authentic language-specific graphics/world hashes,
