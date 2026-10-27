@@ -1288,13 +1288,13 @@ frame-specific VRAM snapshot is required before claiming a temporal join.
 
 A frame-filtered repeat capture now records SH-2 writes only during VDP1
 frame `7,716`. The Ymir receipt reports exact frame bounds `7,716..7,716`,
-15,264 master rows, and zero dropped rows; the VDP2 trace ends at the same
-frame. The analyzer confirms one contiguous ordered match across all 15,264
-writes, all 14,784 final byte values agree with the selected-frame VRAM
-snapshot, and there are zero mismatches. The call chain is
+3,866 master rows, and zero dropped rows; the VDP2 trace and VRAM/register
+snapshot identify the same frame. The analyzer confirms one contiguous ordered
+match across all 3,866 writes, all 3,866 final byte values agree with the
+selected-frame VRAM snapshot, and there are zero mismatches. The call chain is
 `0x06023108|0x06023144|0x06040150`. This removes timing ambiguity in the
 earlier unfiltered SH-2 trace. The raw capture is retained in
-`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_frame_bound_20261027/`.
+`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_frame_aligned_20261027/`.
 
 A repeat capture added four nested call targets to each SH-2 write row. Its
 frame-7716 match has the single chain
