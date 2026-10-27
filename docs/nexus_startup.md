@@ -2,10 +2,11 @@
 
 This is an evidence report for startup, not a specification for a completed
 Nexus startup screen. Updated 2026-10-27: an authentic Japanese retail cold
-boot reaches the native `PRESS START BUTTON` title prompt in Ymir with BIOS
-and controller input. The three-choice title menu has not yet been verified as
-a clean-cold-boot result, and Firestaff startup, gameplay-entry, and HUD parity
-remain unverified.
+boot reaches the native `PRESS START BUTTON` title prompt and, with scheduled
+retail controller input, the native three-choice title menu in Ymir. The menu
+was navigated into its Configuration page from a saved diagnostic state.
+Firestaff startup and presentation, the New Game route to stable gameplay, real
+save loading through Continue, and HUD/viewport parity remain unverified.
 
 ## Verified initialization order
 
@@ -654,53 +655,111 @@ ymir-sdl3 --debug --capture-boot-frames 9120 --dump-memory --capture-screenshot 
   "/home/trv2/.firestaff/data/nexus/Dungeon Master Nexus (Japan).cue"
 ```
 
-This closes the Ymir cold-boot-to-title-prompt evidence gap only. It does not
-establish cold-boot entry to the three-choice menu, Firestaff menu rendering or
-control, a Firestaff `NEW GAME` route to a playable level, real-save loading
-through Continue, or HUD parity. Those remain separate production-parity
-gates.
+This closes the Ymir cold-boot-to-native-menu evidence gap. The separate
+New Game replay also reaches a native 3D viewport, as recorded below. These
+emulator results do not establish Firestaff menu rendering or control, a stable
+interactive gameplay route, real-save loading through Continue, or HUD parity.
+Those remain separate production-parity gates.
 
-## Cold-boot follow-up after the title prompt (2026-10-27)
+## Cold-boot follow-up: exact retail FMV frame match (2026-10-27)
 
 A rendered 19,000-frame Ymir run used the authentic Japanese retail disc and
 Japanese IPL in the isolated TRV2 profile. It loaded no emulator save state or
-game save. The profile retained its BIOS setup configuration. With `--debug
+game save; the profile retained its BIOS setup configuration. With `--debug
 --fast-forward`, Start was held for two frames at capture-loop frames 9,000,
-13,000, and 15,000. The endpoint screenshot is an authentic full-screen frame from
-`DMV0.AVI`, the retail TrueMotion 1.0 video (320×180, approximately 15 fps,
-SHA-256
-`eafb4c638db9ffada9e929d82299562e0a9d3eb73fb2a47858c0de0dc0fa57bb`). Its
-centered 320×180 crop exactly matches decoded video frame 626 after Saturn
-RGB5 quantization: all 57,600 pixels match with zero error. The matching
-VDP1 mode-5 draw reads 320×180 pixels from VRAM byte offset `0x47c00` and
-places them at y=21–200. This confirms authentic video-frame presentation,
-likely the intro FMV in this boot sequence; it is not gameplay, a menu, or HUD
-evidence, and it does not prove which preceding button caused the transition.
+13,000, and 15,000.
 
-The final VDP1 capture is frame 15,907, with four command rows for that frame.
-Its trace retained 785,986 rows and reports zero dropped VDP1 entries. The SCU
-DMA trace retained 16,384 rows but dropped 4,485 (`trace_data_complete=0`), so
-it cannot establish complete transfer provenance. Capture-loop frame 19,000
-and VDP1 frame 15,907 are different counters.
+The endpoint screenshot is an exact match to zero-based frame 626 of the
+authentic Japanese retail `DMV0.AVI` video. The AVI SHA-256 is
+`eafb4c638db9ffada9e929d82299562e0a9d3eb73fb2a47858c0de0dc0fa57bb`; it is
+RIFF AVI using TrueMotion 1.0 at 320×180 and approximately 15 fps. The native
+Ymir screenshot is 640×448. Its centered crop `image[42:402:2, ::2]` matches
+all 57,600 decoded frame pixels after Saturn RGB5 quantization (`& 0xF8`),
+with zero mismatches.
 
-The system executable SHA-256 is
+The final VDP1 capture is frame 15,907, with four command rows and 785,986
+retained trace rows with zero drops. The video draw at command offset `0x40`
+uses PMOD `0x0028` (colour mode 5), SRCA `0x8f80` (VRAM byte offset
+`0x47c00`), and SIZE `0x28b4` (320×180), placing the image at y=21–200.
+Capture-loop frame 19,000 and VDP1 frame 15,907 are separate counters. The
+SCU DMA trace retained 16,384 rows but dropped 4,485
+(`trace_data_complete=0`), so it cannot provide complete transfer provenance.
+
+This confirms authentic full-screen video output, likely the opening FMV in
+this boot sequence. It does not prove which input selected or started the
+video, the three-choice menu transition, a stable playable level, gameplay,
+or HUD.
+
+The Ymir executable SHA-256 is
 `f5d94ee84762d81e97f950d6cfc4253b4f72c61dc5c4f376b4296235ed46dcc3`. At
-inspection, the Ymir source worktree was based on commit
-`534ed10c6f7f13a3ba752476eea191be3ab553b4` with a tracked-diff SHA-256 of
+inspection, its source worktree was based on commit
+`534ed10c6f7f13a3ba752476eea191be3ab553b4` with tracked-diff SHA-256
 `2442944df961bf0079f61a032b2ca09f3252be4416a28471aee72573b49e4d5d`. These
-identify the observed executable and worktree state; they do not independently
-prove the binary was built from that exact source snapshot.
+identify the observed executable and source worktree state; they do not
+independently prove the binary was built from that exact source snapshot.
 
-The evidence bundle is retained at
+The screenshot, raw Ymir dumps, run log, reproducible RGB5 comparison, and
+retail TM.BIN disassembly receipts are retained at
 `/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_rendered_20261027/rendered_menu_candidate_19000/`.
 The screenshot SHA-256 is
-`903e710b455df66a1df79adcdf1e1a9a6c8fdc257833f0eed9e80def840d541a`, the
-run-log SHA-256 is
-`caf636e378d9888b4c97e01b12ddd864b0564e292fceb6f5ffc97b14f442d282`, and
-the checksum-manifest SHA-256 is
-`5284b2c2a29293b30ca5866e8983bdf671f4163ccb529ac84c8e3ef26566bcc1`. All
-35 retained bundle entries passed checksum verification. The screenshot is
-not a Firestaff asset and does not admit title-menu, gameplay, or HUD parity.
+`903e710b455df66a1df79adcdf1e1a9a6c8fdc257833f0eed9e80def840d541a`; the run
+log SHA-256 is
+`caf636e378d9888b4c97e01b12ddd864b0564e292fceb6f5ffc97b14f442d282`; the
+`DMV0_FRAME_MATCH.txt` SHA-256 is
+`51081a26e28878ac6f90a102fe79c76a51c519d3aba5c23f7e9b4612364d298f`; the
+`TM_BIN_AVI_DISPATCH.txt` SHA-256 is
+`884a62d68879edec2239fcafb0addec581c3e27ae252ddc606c4240303658d40`;
+`README.md` SHA-256 is
+`42ee176d4a06c539864fbcd4e68a176ea1ea579627be31ea0699faa5d0ade67a`; and
+`SHA256SUMS.txt` SHA-256 is
+`6d831e2f30bbf32031ae0586f152a5ee0aef80d67cec0183a76fba8a7ed27ae1`. All 37
+listed bundle files passed checksum verification. This is diagnostic evidence;
+it is not a Firestaff asset or a parity admission.
+
+## Retail TM.BIN video dispatcher disassembly (2026-10-27)
+
+The authentic Japanese retail `TM.BIN` is 160,044 bytes with SHA-256
+`d87485fe6eba1f6e9fbbf487f5fcdd994911136905e6172e5bb5bc0122407eb6`.
+With load base `0x06010000`, the three embedded video-name strings map to:
+`DMV0.AVI` at file offset `0x1968c` / runtime `0x0602968c`,
+`DMV1.AVI` at `0x19698` / `0x06029698`, and `DMV2.AVI` at `0x196a4` /
+`0x060296a4`.
+
+The module entry routine at file offset `0x00` reads the selector at SH-2
+address `0x00200000` at PC `0x0601006c`. It branches on values 0, 1, or 2 and
+loads the corresponding AVI pointer from its literal pool at offsets
+`0x260`, `0x264`, and `0x268`. It calls the shared playback routine at
+`0x06010eec`; the DMV0 branch passes `0x000a0000` in `r5`. After the shared
+playback call returns, the routine makes further calls and reads the word at
+`0x06029978`. If it is not 2, control branches to `0x060100e0`. If it is 2,
+the code tests the word addressed by `r14`: when nonzero, it clears byte
+`0x0020000b` and branches to `0x060100e0`; when zero, it loads a call target
+from `0x0600026c` and calls through that pointer. These are static control-flow
+observations, not proof of the values used during cold boot or the following
+menu transition.
+
+The retained excerpt was produced with GNU objdump's `-m sh4` decoder setting.
+The retail Saturn CPU is SH-2; this evidence claims only the displayed opcode
+bytes and their compatible control flow, not an SH-4 execution target. The
+reproducible command and raw output are retained at
+`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_rendered_20261027/rendered_menu_candidate_19000/TM_BIN_AVI_DISPATCH.txt`.
+
+This is high-confidence static evidence of a retail three-video dispatcher and
+shared playback call. Together with the exact DMV0 frame-626 pixel match above,
+it connects the rendered screenshot to the authentic video path. It does not
+show which caller sets selector `0x00200000` during cold boot, establish
+selector 0 as the startup default, identify the Start skip behavior, or prove
+how the three-choice menu is entered. The load base is supported by the AVI
+pointer arithmetic and the documented TM overlay mapping at file offset
+`0x4500` to runtime `0x06014500`; it remains a disassembly load hypothesis.
+
+`DM.BIN` contains resource-string anchors for `MENU.BPK`, `yam\menu.c`,
+`FONT256.S2D`, and `STABG.BIN` at offsets `0x373b4–0x373d8`, and
+`TITLE.CG` / `TITLE.BIN` at `0x38e6c` / `0x38e78`. These strings do not
+identify the title-menu entry routine. The next useful dynamic trace should
+capture SH-2 call/branch edges and selector/return globals around cold-boot
+loop frames 6,900–7,100 and 8,900–9,120, then correlate them with Start reads
+and frame-indexed VDP1 commands.
 
 ## Complete cold-boot SCU DMA trace (2026-10-27)
 
@@ -865,3 +924,82 @@ still does not provide CLUT source ownership or admit a Firestaff renderer.
 - `src/nexus/nexus_v1_engine.c` and `src/nexus/nexus_v1_title.c`.
 - `docs/NEXUS_RUNTIME_CAPTURE.md`.
 - [NEXUS_STRICT_FIDELITY_INVENTORY.md](NEXUS_STRICT_FIDELITY_INVENTORY.md).
+
+## Cold-boot title menu and retail menu navigation (2026-10-27)
+
+A rendered Ymir 0.4.2-dev run on TRV2 used the authentic Japanese retail
+disc and BIOS in an isolated profile. It loaded no emulator state or game
+save. After confirming the BIOS date/time screen, the deterministic schedule
+sent Start for two frames at capture-loop frames 9,000 and 13,000, then one
+frame at 15,000. At 16,000 capture-loop frames, the rendered retail screen is
+the native three-choice menu: `NEW GAME`, `CONTINUE`, and
+`CONFIGURATION`. This extends the clean-boot evidence beyond the title
+prompt; it remains an emulator capture, not a Firestaff menu implementation.
+
+The endpoint was saved as diagnostic emulator slot 3. Reloading that state
+and advancing two frames with no input leaves the main menu visible. From the
+same state, one frame of Down moves the selection from `NEW GAME` to
+`CONTINUE`. Two one-frame Down pulses followed by a one-frame A pulse open
+the native `CONFIGURATION` page, which displays Music, Sound, Game level,
+Monster gauge, and Exit. These short replay captures establish that Ymir's
+frame-indexed input route drives these visible menu transitions from this
+authentic retail state. The saved emulator state contains no game save.
+
+The final capture receipt reports VDP1 frame 13,108 and command cursor 168.
+These are distinct from the 16,000-loop-frame capture counter. The evidence
+bundle, screenshots, run log, VDP dumps, and saved state are retained on the
+external evidence disk at
+`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_rendered_20261027/`.
+The cold-boot menu screenshot SHA-256 is
+`2b64c0baeb8f006f68176eb1f70bc7e4c626db9ec77f2157a1d20daef89387ec`;
+the no-input replay is
+`4476cc68722372b9f57b237374801a12bcfdac6d2e8aa068f575aa8bc87960c4`;
+the Down replay is
+`70ef5517ba73309fb63722a2af3c553e7863e02ab10ebf1414bc19a1cf9548a1`;
+and the Configuration replay is
+`dffac2f786b92b543ddfed7b6eb969d50b5f2b7e115a5e1a2423537c01e18427`.
+All 24 retained files in the new bundle pass its SHA-256 manifest.
+
+The original run used `--debug --capture-boot-frames 16000
+--dump-memory --capture-screenshot --capture-save-state 3` with deterministic
+Start pulses at frames 9,000, 13,000, and 15,000. The navigation replays used
+`--load-state 3 --capture-frames` with no input, Down, or Down/Down/A
+respectively. The full commands and hashes are recorded in the external
+bundle README.
+
+This establishes a native retail menu and a narrow menu-navigation route in
+Ymir after a no-save cold boot. It does not prove the semantic purpose of
+every input across regions, a stable New Game transition to a playable level,
+Continue behavior with real save data, Firestaff menu rendering, or gameplay
+HUD/viewport parity. Those remain separate parity gates.
+
+## New Game reaches the native 3D viewport (2026-10-27)
+
+A short Ymir replay loaded diagnostic slot 3 from the no-save cold-boot menu
+capture, where `NEW GAME` was selected. It pressed Control Pad 1 A for two
+capture frames and advanced 1,200 frames with `--debug --fast-forward
+--capture-no-present`. The final 640×448 image is the native first-person
+corridor viewport. Its SHA-256 is
+`8ede95f1fd777eda69ebcfc91d0268194e501f145306eb1fc2971ed0113a2274`,
+matching the previously retained retail viewport checkpoint.
+
+The complete VDP1 trace retained 137,849 rows with zero drops. The final
+capture is VDP1 frame 1,005 with 151 command rows; the 1,200-frame Ymir
+capture-loop counter is separate. The screenshot shows no party HUD. The
+diagnostic profile was isolated under TRV2 `/dev/shm`; no retail save or
+Firestaff data was modified.
+
+The screenshot, VDP1 register/trace receipts, run log, and checksum manifest
+are retained at
+`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_rendered_20261027/replay_new_game_from_menu/`.
+The screenshot SHA-256 is
+`8ede95f1fd777eda69ebcfc91d0268194e501f145306eb1fc2971ed0113a2274`;
+the checksum manifest SHA-256 is
+`c10afefda0c76e2786a321b40942939bd252c31dee6bcdfb11f2c8978ee5b845`.
+Every listed artifact passed verification.
+
+This verifies that selecting `NEW GAME` from the native retail menu reached a
+native 3D viewport in this run. It does not establish a stable or fully
+interactive level, exact room/resource identity, the full gameplay input
+route, the party HUD, or Firestaff presentation parity. Those remain separate
+gates.
