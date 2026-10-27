@@ -68,6 +68,26 @@ FONT256.S2D tiles, TITLE.BIN MAPD/TIBG planes expanded through TITLE.CG, and
 STABG.BIN. This rules out an exact match in those decoded candidates; it does
 not rule out a transformed, partial, or runtime-generated source.
 
+The analyzer also reports a separate raw-byte candidate: NBG0 bytes
+`0x102b0..0x10912` exactly match `TITLE.BIN` bytes `0xa2b6..0xa8f8`, and the
+same 1,603-byte span occurs once in `wram-hi.bin` at offset `0xb4036`. Only 23
+bytes in the span are nonzero. The exact span occurs once in this `TITLE.BIN`
+and once in the captured NBG0 bitmap, but the snapshot has no write trace to
+prove that WRAM produced those VDP2 bytes. This sparse overlap is a producer
+candidate, not a source or semantic admission; full background ownership and
+the display consumer remain unbound.
+
+Reproduce the candidate report for each retained state with:
+
+```sh
+capture_root=/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_english_menu_source_join_20261027
+python3 scripts/analyze_nexus_vdp2_bitmap_source.py \
+  --data-dir "$capture_root/retail-members" "$capture_root/new_game/dumps"
+```
+
+The verifier checks each named retail member against its admitted hash before
+decoding or comparing it.
+
 Within the compared VDP domains, 42 bytes differ in VDP1 VRAM and 3,978 bytes
 in the display framebuffer; 50 bytes differ in the VDP1 command trace. The
 VDP1 register snapshot is identical. This bounds the observed

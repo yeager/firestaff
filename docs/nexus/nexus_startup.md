@@ -1266,6 +1266,12 @@ background's retail producer. Exact VDP2 hashes and changed-byte counts are in t
 The bounded retail-source scan reports zero exact NBG0 matches across 410
 decoded sources from the authenticated English disc members; its result remains
 `source_join=unbound` and `semantic_admission=blocked`.
+An additional raw-byte scan finds one sparse 1,603-byte overlap between
+`TITLE.BIN` (`0xa2b6`) and NBG0 (`0x102b0`); the same bytes appear once in the
+captured SH-2 WRAM-high snapshot. Only 23 bytes are nonzero, and no VDP2 write
+trace links that buffer to the bitmap, so the overlap remains an unproven
+producer candidate. Details and hashes are in the
+[English sprite receipt](../../parity-evidence/verification/nexus_english_title_menu_sprite_join_20261027/README.md).
 
 ## Authentic Japanese title-menu Down selection (2026-10-27)
 
