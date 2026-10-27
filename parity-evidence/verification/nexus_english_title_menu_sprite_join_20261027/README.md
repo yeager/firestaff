@@ -60,6 +60,14 @@ transition; its 131,072-byte snapshot has SHA-256
 `b802a3196a9d2183b336ab5c770028670ed658e8ed9ba582046096fc01d23f91` and
 contains 18,030 nonzero bytes. Its retail source remains unbound.
 
+Running `scripts/analyze_nexus_vdp2_bitmap_source.py` over either capture and
+the hash-checked English retail member set reports zero exact NBG0 source
+matches across 410 decoded sources (`source_join=unbound`,
+`semantic_admission=blocked`). The set includes decoded MENU.BPK surfaces,
+FONT256.S2D tiles, TITLE.BIN MAPD/TIBG planes expanded through TITLE.CG, and
+STABG.BIN. This rules out an exact match in those decoded candidates; it does
+not rule out a transformed, partial, or runtime-generated source.
+
 Within the compared VDP domains, 42 bytes differ in VDP1 VRAM and 3,978 bytes
 in the display framebuffer; 50 bytes differ in the VDP1 command trace. The
 VDP1 register snapshot is identical. This bounds the observed

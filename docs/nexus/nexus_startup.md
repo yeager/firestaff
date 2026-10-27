@@ -1263,6 +1263,9 @@ the compared VDP1 VRAM, framebuffer, and command trace differ. This isolates
 the observed selection change to VDP1 state without identifying the shared
 background's retail producer. Exact VDP2 hashes and changed-byte counts are in the
 [English sprite receipt](../../parity-evidence/verification/nexus_english_title_menu_sprite_join_20261027/README.md).
+The bounded retail-source scan reports zero exact NBG0 matches across 410
+decoded sources from the authenticated English disc members; its result remains
+`source_join=unbound` and `semantic_admission=blocked`.
 
 ## Authentic Japanese title-menu Down selection (2026-10-27)
 
