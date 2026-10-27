@@ -1,7 +1,9 @@
 /* Opt-in M11 regression for the original DM2 Amiga title route.
  *
- * The selected ZIP is consumed through ZIP -> ADF -> LZX into boot-owned
- * RAM.  No original member is materialised on the host filesystem. */
+ * FIRESTAFF_DM2_AMIGA_LOOSE_ROOT selects an authentic extracted install for
+ * the loose-file path. Otherwise FIRESTAFF_DM2_AMIGA_ROOT selects the
+ * original ZIP -> ADF -> LZX route. Both paths retain source files in RAM
+ * without adding copyrighted media to the repository. */
 
 #include "m11_game_view.h"
 #include "render_sdl_m11.h"
@@ -39,7 +41,9 @@ static unsigned int nonzero_pixels(const unsigned char *pixels, size_t size)
 
 int main(void)
 {
-    const char *root = getenv("FIRESTAFF_DM2_AMIGA_ROOT");
+    const char *loose_root = getenv("FIRESTAFF_DM2_AMIGA_LOOSE_ROOT");
+    const char *root = loose_root && loose_root[0]
+        ? loose_root : getenv("FIRESTAFF_DM2_AMIGA_ROOT");
     M11_GameViewState view;
     M11_GameLaunchSpec spec;
     M12_AssetStatus asset_status;
@@ -48,21 +52,19 @@ int main(void)
     int step;
 
     if (!root || !root[0]) {
-        puts("SKIP: FIRESTAFF_DM2_AMIGA_ROOT is not set");
+        puts("SKIP: DM2 Amiga original media root is not set");
         return 77;
     }
-    /* A shared DM2 root intentionally auto-prefers FM Towns.  This test is
-     * specifically about the selected Amiga edition, so reproduce M12's
-     * version-picker handoff instead of relying on the scanner's default.
-     * The resolver retains the original ZIP as the runtime source; it does
-     * not unpack GRAPHICS.DAT or DUNGEON.DAT onto disk. */
+    /* A shared DM2 root intentionally auto-prefers FM Towns.  Reproduce
+     * M12's version-picker handoff so either original media form selects
+     * the authenticated Amiga edition. */
     memset(&asset_status, 0, sizeof(asset_status));
     memset(selected_runtime, 0, sizeof(selected_runtime));
     M12_AssetStatus_ScanGame(&asset_status, root, "dm2");
     expect(M12_AssetStatus_ResolveRuntimeDataDirForVersion(
                &asset_status, "dm2", "amiga-en", selected_runtime,
                sizeof(selected_runtime)),
-           "the selected Amiga edition retains its verified archive handoff");
+           "the selected Amiga edition retains its verified media handoff");
     if (failures != 0) return 1;
     memset(&spec, 0, sizeof(spec));
     spec.gameId = "dm2";
@@ -74,7 +76,13 @@ int main(void)
     spec.presentationHeight = M11_FB_HEIGHT;
     M11_GameView_Init(&view);
     expect(M11_GameView_Start(&view, &spec) == 1,
-           "the selected Amiga archive enters the DM2 M11 path");
+           "the selected Amiga media enters the DM2 M11 path");
+    expect(view.dm2BootProfile &&
+               ((DM2_V1_BootProfile *)view.dm2BootProfile)->amiga_animation_media_verified &&
+               ((DM2_V1_BootProfile *)view.dm2BootProfile)->amiga_swsh_bytes &&
+               ((DM2_V1_BootProfile *)view.dm2BootProfile)->amiga_titl_bytes &&
+               ((DM2_V1_BootProfile *)view.dm2BootProfile)->amiga_enda_bytes,
+           "M11 receives all three hash-verified original Amiga startup streams");
     expect(view.dm2FmtownsTitleBound && view.dm2FmtownsSwooshActive &&
                view.dm2FmtownsTitleFrameReceipt.valid &&
                view.dm2FmtownsTitleFrameReceipt.requested_frame == 0u &&

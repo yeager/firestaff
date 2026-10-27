@@ -1,3 +1,13 @@
+- 2026-10-27: Extracted authentic DM2 Amiga installs now bind their adjacent
+  `SWSH.DAT`, `TITL.DAT`, and `ENDA.DAT` streams to the M11 title owner. Each
+  stream must match the original installer MD5, fit the bounded read, and
+  pass the shared AN parser before the Amiga startup receipt is published.
+  The real-media M11 title test passed on macOS against the extracted original
+  install and on trv2 against the original ZIP installer; it asserts all three
+  source streams reach M11 and the startup menu is presented. No game data was
+  added to Git. This verifies the tested startup routes, not full Amiga
+  gameplay or display/audio parity.
+
 - 2026-10-26: The macOS DM2 DOS startup build now excludes the portable
   software SHA-256 implementation when CommonCrypto is selected. This removes
   the unused-init/final compiler warnings and avoids compiling the fallback
