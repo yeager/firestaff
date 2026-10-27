@@ -33,7 +33,7 @@ verify_original_archives_unchanged() {
     local index=0
     for archive in "${original_archives[@]}"; do
         if [[ $(firestaff_sha256_file "$archive") != "${original_archive_hashes[$index]}" ]]; then
-            printf 'FAIL: original game archive changed during picker test: %s\\n' "$archive" >&2
+            printf 'FAIL: original game archive changed during picker test: %s\n' "$archive" >&2
             return 1
         fi
         index=$((index + 1))
@@ -75,7 +75,7 @@ PY
         ln -s "$absolute_archive" "$overlay_game_dir/$(basename "$archive")"
         original_archives+=("$absolute_archive")
         original_archive_hashes+=("$archive_hash")
-    done < <(find "$source_game_dir" -maxdepth 1 \\( -type f -o -type l \\) -iname '*.zip' -print0)
+    done < <(find "$source_game_dir" -maxdepth 1 \( -type f -o -type l \) -iname '*.zip' -print0)
 done
 
 if [[ ${#original_archives[@]} == 0 ]]; then
