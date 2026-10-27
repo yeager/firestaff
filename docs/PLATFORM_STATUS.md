@@ -169,6 +169,24 @@ against matching original media and resolved with source or capture evidence.
 A green launch test below is therefore not a substitute for visual, audio,
 input or campaign parity.
 
+On 2026-10-27, the local startup sweep ran against `main` snapshot
+`f6c7ad006` before unrelated Theron commits were merged. DM1 passed
+`dm1_v1_pc34_native_cli_boot`,
+`dm1_v1_atari_st_archive_cli_boot`,
+`dm1_v1_amiga_v20_archive_cli_boot`, and
+`dm1_v1_fmtowns_archive_cli_boot` for English and Japanese routes. CSB passed
+`csb_v1_atari_stx_native_cli_boot`, `csb_v1_amiga_native_cli_boot`, and
+`csb_v1_fmtowns_native_cli_boot`. DM2 passed
+`dm2_v1_dos_native_cli_boot`, `dm2_v1_dos_fr_native_cli_boot`,
+`dm2_v1_mac_native_cli_boot`, `dm2_v1_amiga_native_cli_boot`, and
+`dm2_v1_fmtowns_native_cli_boot`. The initial Towns invocation skipped
+because its source-menu RGB helper had not been built in the incremental
+build directory; after building that test target, the same real-media test
+passed. The original game archives were read in place and left unchanged.
+These SDL dummy-driver checks establish the tested CLI/menu startup and
+bounded runtime routes only; they do not close native display, HiDPI, physical
+input, audible output, visual parity or complete-gameplay gaps.
+
 On 2026-08-30 the local, non-CI DM2 regression set passed against supplied
 archives without extracting or modifying them. It
 covered `dm2_v1_dos_native_cli_boot`, `dm2_v1_dos_fr_native_cli_boot`,
