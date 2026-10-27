@@ -180,6 +180,57 @@ duplicate-edition, container and access-permission checks intact. Continue
 with representative profiling before changing the broader edition index or
 archive-admission work.
 
+2026-10-27 current Mac workstation scan profile: the authentic media root at
+`/Volumes/Extern-disk/FirestaffUserData/data` contained 408 files (3.2 GiB).
+The current Debug executable scanned it in 17.32 s from a fresh isolated app
+cache and 3.91 s on a warm repeat; `/usr/bin/time -lp` reported about 1.03 GiB
+maximum resident memory for the first run and 568 MiB for the warm run. All
+five games were marked READY, but external-only archives were explicitly
+skipped, so this was not a complete archive inventory. The OS file cache was
+not controlled. A five-second `sample` showed repeated native 7z solid-stream
+decoding and Amiga ADF/CAPS/MFM traversal alongside recursive MD5 lookup;
+it did not attribute the observed process peak to one allocation or one
+archive. The current code repeats per-game version-hash passes over the same
+roots, but the profile alone does not prove which walks can be safely shared.
+Follow-up `vmmap` samples during a fresh-cache run recorded an 861 MiB
+physical footprint and 1.0 GiB peak; about 850 MiB was reported in macOS's
+`Malloc Large (empty)` regions. The resulting persistent cache contained only
+1,960 rows (486 KiB), so that cache is not the source of the peak. This
+indicates substantial freed large allocations retained in the process
+allocator, but the region dump did not identify their allocation call sites.
+The native 7z SDK allocator itself is capped at 96 MiB per archive visit; that
+limit does not account for allocations made by other archive and disk-image
+readers. Do not reduce supported media limits based on the peak alone.
+Do not weaken full edition enumeration, same-container ownership, duplicate
+hash handling, media-access validation, or archive completeness markers based
+on this sample. Next profile allocation peaks and archive identity while
+preserving the full all-game report, then compare any shared candidate index
+against the byte-for-byte scan output on the same original-media root.
+
+2026-10-27 CSB FM Towns intake memory follow-up: full macOS malloc stack
+logging traced a 507,062,976-byte heap allocation to
+`m12_admit_csb_fmtowns_archive` → `m12_csb_fmtowns_archive_read_image` →
+`firestaff_zip_extract_by_name_with_progress`. That is the selected authentic
+raw CD image being duplicated into a heap buffer. The intake now uses the
+existing mapped-output ZIP reader and releases the mapping with its matching
+API; the RAR/virtual-path fallback still uses ordinary owned memory. The
+focused authentic `m12_csb_fmtowns_scan_cache_real` test passed for cold
+admission of both language editions and warm receipt reuse (14.92 s). A fresh
+isolated-cache scan of the same five-game original-media root completed in
+12.60 s, marked all five games READY, and reported 908,148,736 bytes maximum
+resident memory / 901,137,560 bytes peak footprint, versus 1,105,756,160 /
+1,098,646,800 bytes in the earlier run. This is roughly an 18% lower recorded
+memory peak, but OS file-cache state was uncontrolled and memory remains high;
+the timing comparison is not a controlled speed benchmark. A post-change
+high-water-mark trace confirms the same 507,062,976-byte image is still
+resident as an anonymous mapping while the CD layout is checked; the change
+avoids retaining that block in malloc's large-allocation cache between scans,
+but does not make CD validation streaming or remove its roughly 0.5 GiB
+working set. External-only
+archive formats were skipped in both scans. Continue tracing the remaining
+high-water allocations and verify all CSB FM Towns fallback formats before
+considering this intake path fully closed.
+
 Current-source M12 single-game menu retest at `c54007b45`: the separate
 `test_m12_main_menu_{dm1,csb,dm2}_only_real_media.sh` checks passed with one
 authentic FM Towns archive in each isolated `~/.firestaff/data/<game>` tree.
