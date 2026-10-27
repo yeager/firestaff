@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 3.0.416 LANGUAGES C)
+project(Firestaff VERSION 3.0.417 LANGUAGES C)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 

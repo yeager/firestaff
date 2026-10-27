@@ -458,17 +458,16 @@
 
 ## 2026-10-25 — authentic pointer interval-table candidate recovered
 
-- Read-only inspection of the authentic US and JP Track 02 BINs found the same
-  26-byte interval-table candidate immediately after all seven `$D515` code
-  windows in each region. Its SHA-256 is
-  `8f9eea35bef73f48d39f09255524608a39188524935170168a44659b1b74b800`; no game
-  bytes are copied into the repository.
-- The disassembly at `$D588` compares the cursor coordinate `$2E7A` against
-  paired thresholds in that table and returns a paired value. This is concrete
-  evidence that the original has coordinate-dependent pointer classification,
-  so full hit regions may be recoverable from authentic media. The seven
-  code copies remain static candidates; the capture does not bind which one
-  executes or what each returned value means.
+- Authentic JP and US Track 02 data contain different 26-byte `$D588`
+  coordinate tables: JP indexes from `$D5A7`, while US indexes from `$D5B5`.
+  Their seven offsets, hashes, and complete bytes are recorded in the
+  source-lock note. The real-media regression verifies each complete regional
+  table at exactly those seven offsets. This secures static classifier input,
+  not the active descriptor, visible region, selected command, or game effect.
+- The disassembly at `$D588` scans paired coordinate thresholds and class
+  bytes from X=`$0c`; negative class bytes also consult the regional
+  `$2e1c/$2e1d` flag before returning. No runtime data flow or click semantics
+  are inferred.
 - The caller first loads a pointer from runtime `$77DC/$77DD` and follows its
   descriptor. Those pointer contents and their source-data lineage are still
   unknown. An additional read-only decode of the preserved post-Akutuba state
@@ -7896,3 +7895,56 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   launch. Continue by using the restored game-owned state to seek a verified
   controller poll and source-bound graphics/CD read before deriving any new
   gameplay or renderer behavior. Keep emulator and BIOS out of runtime.
+- A separate 15-second capture autoloaded this state and logged 1,788
+  instrumented input reads plus a 3,413-row main-RAM consumer sidecar. Injected
+  I, Up, and Right reached controller-register reads at logical PCs `$44C1`
+  and `$44D2` (reported physical PCs `$0D04C1` and `$0D04D2`); the sampled
+  register values changed on the injected frames. That initial trace is only a
+  game-runtime input-read receipt; it does not show whether those reads cause
+  party movement or identify the source of code/data loaded into memory.
+- A maintained-wrapper retry explicitly confirmed state autoload and recorded
+  `$44D2` at physical `$0D04D2` with MPR2 `$68`. Its 128-step instruction
+  follow shows `LDA $1000` returning `$3F`, followed by
+  `AND #$0F; ORA $28B8; EOR #$FF; STA $28B8; CMP #$0F; BNE $44E6; RTS`.
+  The exact 16-byte window `ad0010290f0db82849ff8db828c90fd0` occurs seven
+  times in authentic JP Track 02 MD5
+  `b7afb338ad31be1025b53f9aff12d73a`; MAME `unidasm -arch h6280` decodes the
+  same instructions. This binds the executing byte pattern to the JP image
+  and shows a controller-register read feeding `$28B8`, but does not select
+  which of the seven source copies supplied the runtime code or prove a CD
+  transfer origin. It also does not show a party movement or VDC effect.
+- The maintained wrapper still exits at final validation because this
+  `pce_fast` build emits no VDC VRAM snapshot. The code/input/RAM receipts are
+  retained privately on trv2. Next capture must bind the executing JP copy to
+  authenticated Track 02 source-transfer receipts, then trace a resulting
+  party/world state change and same-session VDC output before implementing
+  behavior. Keep emulator and BIOS out of runtime.
+
+## 2026-10-27 — official JP save-state capture emits VDC snapshots but lacks CD origin
+
+- Rebuilt the instrumented Mednafen binary through
+  `scripts/build_mednafen_theron_irq2_trace.sh`; its SHA-256 is
+  `19daccfac19e4cc847e6f4b6e0e0045a24e6523bba73676e09807b90caeb288` and it
+  contains the PCE Fast VDC snapshot instrumentation. The maintained capture
+  wrapper confirmed autoload of the authentic JP in-dungeon state
+  (`10a929bd1ef15462a7bc59926cb960dd`).
+- The bounded run emitted complete close-time VRAM, VCE, SAT, VDC-register and
+  main-RAM snapshots. VRAM SHA-256 is
+  `59142028b5f6f401fdb30fd0f2852ba55f4eac83a63e1a63a30523ab7837d97`; VCE
+  SHA-256 is `ba02dbd81cc0c9aaff2532e429f27cc433aeb11c9d56a70f0d1e3ecda0b2875`;
+  SAT SHA-256 is `e31fdd6b60edb2238ea270e7ce325a5113c1f6f81d7376e598eb270fb1b74465`.
+  VDC registers were `bxr=0000 byr=0000 mwr=005a hsr=0503 hdr=0327 vsr=2302
+  vdr=00c7 vcr=00e2 cr=00c8` at the close-time boundary.
+- Scripted I/Up/Right events reached the non-System-Card `$44C1` controller
+  poll at frames 120, 300 and 480, with raw masks `0010`, `0020`, `0010` and
+  values `3E`, `3D`, `3E`. The `$44D2` poll remained at `3F`. Its party-RAM
+  sidecar contains 2,386 writes but no replay-frame field. Without a matched
+  no-input run or before/after state boundary, these final snapshots cannot
+  establish an input-caused party or pixel change.
+- Capture ended blocked with zero CD IRQs and zero authenticated CD-to-RAM
+  receipts: loading this state bypasses the Track 02-to-bank-$68 transfer that
+  would identify which of the seven identical code copies populated the
+  runtime window. The private bundle is retained under
+  `/dev/shm/theron-jp-gameplay-save-20261027/official-wrapper-pass-1/`.
+  Source-transfer provenance and a source-bound, input-caused VDC/world change
+  remain required before implementing rendering behavior.

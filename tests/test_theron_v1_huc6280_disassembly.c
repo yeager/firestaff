@@ -146,6 +146,73 @@ static void verify_buffer_setup_candidates(const char *path,
     assert(matches == expected_count);
 }
 
+/* Source: docs/source-lock/theron-disassembly/
+ * theron-jp-runtime-input-poll-bank-alias-20261009.md:388-457, HuC6280
+ * helper $D588. JP indexes at $D5A7; US indexes at $D5B5. This verifies
+ * authentic raw-BIN tables only; it does not bind descriptors or commands. */
+static void verify_pointer_classifier_threshold_candidates(
+    const char *path, Theron_Track02Variant variant) {
+    static const uint32_t jp_offsets[] = {
+        0x09d1e7u, 0x0e69e7u, 0x1301e7u, 0x1799e7u,
+        0x1c31e7u, 0x20c9e7u, 0x2561e7u
+    };
+    static const uint32_t us_offsets[] = {
+        0x09db33u, 0x0e7333u, 0x130b33u, 0x17a333u,
+        0x1c3b33u, 0x20d333u, 0x256b33u
+    };
+    static const unsigned char jp_table[] = {
+        0x0cu, 0xffu, 0x0bu, 0xa2u, 0x8au, 0x86u, 0x89u, 0x71u,
+        0x88u, 0x5eu, 0x87u, 0x4bu, 0x05u, 0x40u, 0x12u, 0xffu,
+        0x11u, 0x88u, 0x10u, 0x76u, 0x0fu, 0x62u, 0x0eu, 0x4fu,
+        0x0du, 0x3du
+    };
+    static const unsigned char us_table[] = {
+        0x12u, 0xffu, 0x11u, 0x88u, 0x10u, 0x76u, 0x0fu, 0x62u,
+        0x0eu, 0x4fu, 0x0du, 0x3du, 0xadu, 0xbbu, 0x2eu, 0x4au,
+        0xadu, 0x3bu, 0x2eu, 0x6au, 0xc9u, 0x6fu, 0x90u, 0x28u,
+        0xc9u, 0xd0u
+    };
+    const uint32_t *expected_offsets;
+    const unsigned char *table;
+    const size_t table_size = sizeof(jp_table);
+    const size_t expected_count = THERON_V1_HUC6280_CALLEE_CANDIDATE_COUNT;
+    FILE *file = fopen(path, "rb");
+    unsigned char *bytes;
+    long file_size;
+    size_t matches = 0u;
+
+    assert(variant == THERON_TRACK02_VARIANT_US_BIN ||
+           variant == THERON_TRACK02_VARIANT_JP_BIN);
+    if (variant == THERON_TRACK02_VARIANT_JP_BIN) {
+        expected_offsets = jp_offsets;
+        table = jp_table;
+    } else {
+        expected_offsets = us_offsets;
+        table = us_table;
+    }
+    assert(sizeof(us_table) == table_size);
+    assert(file != NULL);
+    assert(fseek(file, 0L, SEEK_END) == 0);
+    file_size = ftell(file);
+    assert(file_size > 0L);
+    assert(fseek(file, 0L, SEEK_SET) == 0);
+    bytes = (unsigned char *)malloc((size_t)file_size);
+    assert(bytes != NULL);
+    assert(fread(bytes, 1u, (size_t)file_size, file) == (size_t)file_size);
+    assert(fclose(file) == 0);
+
+    for (size_t offset = 0u;
+         offset + table_size <= (size_t)file_size; ++offset) {
+        if (memcmp(bytes + offset, table, table_size) == 0) {
+            assert(matches < expected_count);
+            assert((uint32_t)offset == expected_offsets[matches]);
+            ++matches;
+        }
+    }
+    free(bytes);
+    assert(matches == expected_count);
+}
+
 static void verify(const char *env_name, const char *name,
                    Theron_Track02Variant variant,
                    const char *label) {
@@ -357,6 +424,7 @@ static void verify(const char *env_name, const char *name,
     if (variant == THERON_TRACK02_VARIANT_US_BIN ||
         variant == THERON_TRACK02_VARIANT_JP_BIN) {
         verify_buffer_setup_candidates(path, variant);
+        verify_pointer_classifier_threshold_candidates(path, variant);
         verify_stage2_vce_palette(path, variant, receipt.source_md5);
     }
     printf("PASS: authentic %s HuC6280 disassembly source md5=%s fragment=%08x",

@@ -35,8 +35,12 @@ run_game_picker_case() {
     local input_method=${5:-keyboard}
     local platform=${6:-FM Towns}
     local menu_data_root=${7:-$data_root}
-    local home="$scratch/$game_id-$input_method-home"
-    local log="$scratch/$game_id-$input_method.log"
+    local case_id=${8:-$game_id-$input_method}
+    local source_mode=${9:-exact}
+    local edition_pattern=$edition
+    local edition_label=$edition
+    local home="$scratch/$case_id-home"
+    local log="$scratch/$case_id.log"
     local source_hash
 
     mkdir -p "$home"
@@ -61,25 +65,116 @@ run_game_picker_case() {
         cat "$log" >&2
         return 1
     fi
-    if ! grep -Fq "launch phase=game-handoff mode=menu game=$game_id platform=$platform edition=$edition source=$game_archive" "$log"; then
-        printf 'FAIL: no-game main-menu selection did not launch authentic %s %s media from %s\n' "$game_id" "$platform" "$game_archive" >&2
-        cat "$log" >&2
-        return 1
+    if [[ "$source_mode" == exact ]]; then
+        if ! grep -Fq "launch phase=game-handoff mode=menu game=$game_id platform=$platform edition=$edition source=$game_archive" "$log"; then
+            printf 'FAIL: no-game main-menu selection did not launch authentic %s %s media from %s\n' "$game_id" "$platform" "$game_archive" >&2
+            cat "$log" >&2
+            return 1
+        fi
+    elif [[ "$source_mode" == resolved ]]; then
+        if [[ "$edition_pattern" == re:* ]]; then
+            edition_pattern=${edition_pattern#re:}
+            edition_label=$edition_pattern
+        else
+            edition_pattern=$(printf '%s' "$edition_pattern" | sed 's/[][(){}.^$+?|\\]/\\&/g')
+        fi
+        if ! grep -Eq "launch phase=game-handoff mode=menu game=$game_id platform=$platform edition=$edition_pattern source=.+" "$log"; then
+            printf 'FAIL: no-game main-menu selection did not resolve authentic %s %s media (%s)\n' "$game_id" "$platform" "$edition" >&2
+            cat "$log" >&2
+            return 1
+        fi
+    else
+        printf 'FAIL: unsupported source assertion mode: %s\n' "$source_mode" >&2
+        return 2
     fi
     if [[ $(firestaff_sha256_file "$game_archive") != "$source_hash" ]]; then
         printf 'FAIL: original %s source changed during menu launch\n' "$game_id" >&2
         return 1
     fi
     printf 'PASS: no-game M12 main menu %s selected %s and handed off its authentic %s %s edition\n' \
-        "$input_method" "$game_id" "$platform" "$edition"
+        "$input_method" "$game_id" "$platform" "$edition_label"
 }
 
-run_game_picker_case dm1 "$dm1_archive" \
-    'wait-scan-complete,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en
-run_game_picker_case csb "$csb_archive" \
-    'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en
-run_game_picker_case dm2 "$dm2_archive" \
-    'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-ja
+run_alternate_platform_picker_case() {
+    local game_id=$1
+    local source_archive=$2
+    local down_count=$3
+    local platform=$4
+    local edition=$5
+    local navigation='wait-scan-complete,wait20'
+    local game_card_index=0
+    local index
+    case "$game_id" in
+        dm1) game_card_index=0 ;;
+        csb) game_card_index=1 ;;
+        dm2) game_card_index=2 ;;
+    esac
+    for ((index = 0; index < game_card_index; ++index)); do
+        navigation+=",key:down,wait20"
+    done
+    navigation+=",key:enter,wait20"
+    for ((index = 0; index < down_count; ++index)); do
+        navigation+=",key:down,wait20"
+    done
+    navigation+=",key:enter,wait20,key:enter,wait20,key:enter"
+    run_game_picker_case "$game_id" "$source_archive" "$navigation" \
+        "$edition" keyboard "$platform" "$data_root" \
+        "$game_id-$platform-picker" resolved
+}
+
+if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 ]]; then
+    run_game_picker_case dm1 "$dm1_archive" \
+        'wait-scan-complete,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en
+    run_game_picker_case csb "$csb_archive" \
+        'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en
+    run_game_picker_case dm2 "$dm2_archive" \
+        'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-ja
+fi
+
+# Exercise alternate-platform selection from the no-game main menu for DM1,
+# CSB, and DM2 with authentic, independently verified media. The first three
+# game cards are DM1/CSB/DM2 respectively; these cases select the
+# platform card, original presentation, then launch. Source archives are
+# hashed before and after by run_game_picker_case.
+if [[ -f "$data_root/dm1/Dungeon-Master_DOS_EN_Version-34.zip" ]]; then
+    run_alternate_platform_picker_case dm1 \
+        "$data_root/dm1/Dungeon-Master_DOS_EN_Version-34.zip" 1 PC pc34-en
+fi
+if [[ -f "$data_root/dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip" ]]; then
+    run_alternate_platform_picker_case dm1 \
+        "$data_root/dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip" 2 Atari\ ST \
+        're:st(10a-en|10b-en|11-en|12-en|12-de|13-fr)'
+fi
+if [[ -f "$data_root/dm1/Dungeon-Master_Amiga_EN_Version-20.zip" ]]; then
+    run_alternate_platform_picker_case dm1 \
+        "$data_root/dm1/Dungeon-Master_Amiga_EN_Version-20.zip" 3 Amiga \
+        're:amiga(20-en|20-fr|20-de|21-en|36-multi|demo-en)'
+fi
+if [[ -f "$data_root/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip" ]]; then
+    run_alternate_platform_picker_case csb \
+        "$data_root/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip" 1 Amiga \
+        're:amiga(31-en|31-multi|35-en|35-multi)'
+fi
+if [[ -f "$data_root/csb/chaos_strikes_back_ftl.zip" ]]; then
+    run_alternate_platform_picker_case csb \
+        "$data_root/csb/chaos_strikes_back_ftl.zip" 2 'Atari ST' \
+        're:st20-21(-hd)?-en'
+fi
+if [[ -f "$data_root/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip" ]]; then
+    run_alternate_platform_picker_case dm2 \
+        "$data_root/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip" 1 PC pc-en
+fi
+if [[ -f "$data_root/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip" ]]; then
+    run_alternate_platform_picker_case dm2 \
+        "$data_root/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip" 2 Amiga amiga-en
+fi
+if [[ -f "$data_root/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip" ]]; then
+    run_alternate_platform_picker_case dm2 \
+        "$data_root/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip" 3 Macintosh mac-en-retail
+fi
+if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} == 1 ]]; then
+    exit 0
+fi
 
 # Users may select one per-game folder as the collection root. The launcher
 # must still discover sibling game folders instead of limiting the menu to
