@@ -1,7 +1,7 @@
 # Firestaff TODO — DM2
 
-2026-10-27 authentic Amiga no-game launcher runtime: current `main` at
-`c1c951fa` was built on TRV2 and selected the original
+2026-10-27 authentic Amiga no-game launcher runtime: `main` at
+`7333c882` selected the original
 `Dungeon-Master-II-Skullkeep_Amiga_EN.zip` from the no-game M12 menu. The route
 selected DM2 → Amiga → `amiga-en`, completed the original title/New Game input,
 and reached level 0 at `(1,8)` with one original champion. The runtime receipt
@@ -10,7 +10,17 @@ fallback draws; the source archive hash was unchanged. The opt-in
 `FIRESTAFF_MAIN_MENU_GAME=dm2-amiga` case and the focused
 `m12_main_menu_dm2_amiga_runtime_real_media` CTest now cover this
 menu-to-runtime route. This proves the tested startup path, not full Amiga
-campaign, native input, audio, or visual parity.
+campaign, physical input, audio, or visual parity.
+
+2026-10-27 authentic Amiga CLI and pointer-menu retest: `main` at `7333c882`
+was built on TRV2 and `dm2_v1_amiga_native_cli_boot` passed against the
+original Amiga ZIP (141.53 seconds). It covers the game → platform → Original
+pointer route, the Amiga title/New Game path, the first runtime viewport and
+HUD regions, and direct `--game dm2 --platform amiga` boot-probe input cases.
+The ZIP SHA-256 remained unchanged. The test initially failed because its
+pointer-only menu run allowed just 3 seconds; a 30-second process budget passes
+with the authentic archive. SDL dummy verifies these bounded source paths and
+receipts, not physical pointer behavior or full campaign parity.
 
 2026-10-27 indoor live-missile compositor status: each production indoor
 composition now builds `DM2_V1_IndoorLiveMissilePlan` from authenticated live
@@ -28,12 +38,11 @@ Japanese archive. The separate authentic-media main-menu selection test also
 passed for DM2 PC and FM Towns Japanese. DOS French, Macintosh English, and
 Amiga English direct-CLI cases in that symlink-based matrix were skipped
 because their data-root symlinks point to missing files; no substitute media
-was used. Amiga English now also passes the authentic no-game M12 route to its
-first runtime from the installed original archive. The extracted-install M11
-title route and installer-ZIP route remain covered by a dedicated real-media
-regression. The symlink-based direct-CLI matrix remains open for the skipped
-editions. SDL dummy verifies the exercised source startup and handoff paths,
-not native display or physical input parity.
+was used. Amiga English separately passes the authentic no-game M12 route and
+the dedicated `dm2_v1_amiga_native_cli_boot` regression against the installed
+original archive. The direct-CLI matrix remains open for DOS French and
+Macintosh English. SDL dummy verifies the exercised source startup and
+handoff paths, not native display or physical input parity.
 
 2026-10-25 selected DM2 PC loose-language owner: the authentic DOS English
 and French archives share a dungeon payload but have different GRAPHICS.DAT
