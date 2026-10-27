@@ -10,8 +10,10 @@ were read in place; no game media was copied into the repository.
 | JP Rev. 1 | MD5 `b7afb338ad31be1025b53f9aff12d73a`; SHA-256 `d076b2dd64476256803e84985f10c1b4460364dd064ba351c2b7bc89d70d09fb` | `0x0a7344`, `0x0f0b44`, `0x13a344`, `0x183b44`, `0x1cd344`, `0x216b44`, `0x260344` |
 | US | MD5 `f23601102138f87c33025877767ebf76`; SHA-256 `f0474eae8f7c660b94dba7053b2a8e32b7c41330d7e7d3f255b113489731f565` | `0x0a7c74`, `0x0f1474`, `0x13ac74`, `0x184474`, `0x1cdc74`, `0x217474`, `0x260c74` |
 
-These are the seven exact `$A704` setup-fragment matches already locked by
+These are the seven exact setup-fragment matches already locked by
 [`theron-track02-buffer-setup-candidate-20261027.md`](theron-track02-buffer-setup-candidate-20261027.md).
+Only the first JP match is currently mapped to logical `$A704` by that static
+listing.
 
 ## Bytes following the setup
 
