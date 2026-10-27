@@ -11036,6 +11036,39 @@ static int m11_push_script_event_token(const char* token, size_t len) {
     buffer[len] = '\0';
     memset(&ev, 0, sizeof(ev));
 
+    if (strcmp(buffer, "touch-swipe-up") == 0 ||
+        strcmp(buffer, "touch-swipe-left") == 0) {
+        const int swipeUp = strcmp(buffer, "touch-swipe-up") == 0;
+        const float startX = swipeUp ? 0.50f : 0.60f;
+        const float startY = swipeUp ? 0.55f : 0.40f;
+        const float endX = swipeUp ? 0.50f : 0.32f;
+        const float endY = swipeUp ? 0.25f : 0.40f;
+        int phase;
+        for (phase = 0; phase < 3; ++phase) {
+            const float x = phase == 0 ? startX : endX;
+            const float y = phase == 0 ? startY : endY;
+            memset(&ev, 0, sizeof(ev));
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+            ev.type = phase == 0 ? SDL_EVENT_FINGER_DOWN
+                     : phase == 1 ? SDL_EVENT_FINGER_MOTION
+                                  : SDL_EVENT_FINGER_UP;
+            ev.tfinger.touchID = 1;
+            ev.tfinger.fingerID = 0;
+#else
+            ev.type = phase == 0 ? SDL_FINGERDOWN
+                     : phase == 1 ? SDL_FINGERMOTION
+                                  : SDL_FINGERUP;
+            ev.tfinger.touchId = 1;
+            ev.tfinger.fingerId = 0;
+#endif
+            ev.tfinger.x = x;
+            ev.tfinger.y = y;
+            ev.tfinger.pressure = phase == 2 ? 0.0f : 1.0f;
+            SDL_PushEvent(&ev);
+        }
+        return 1;
+    }
+
     if (strncmp(buffer, "key:", 4) == 0) {
         const char *keyName = buffer + 4;
         int commandModifier = strncmp(keyName, "command+", 8) == 0;
@@ -11118,6 +11151,10 @@ static int m11_script_event_token_is_valid(const char* token, size_t len) {
     }
     memcpy(buffer, token, len);
     buffer[len] = '\0';
+    if (strcmp(buffer, "touch-swipe-up") == 0 ||
+        strcmp(buffer, "touch-swipe-left") == 0) {
+        return 1;
+    }
     if (strncmp(buffer, "key:", 4) == 0) {
         const char *keyName = buffer + 4;
         if (strncmp(keyName, "command+", 8) == 0) keyName += 8;

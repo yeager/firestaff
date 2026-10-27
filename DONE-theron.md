@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-27 — route Theron touch swipes through native input
+
+The SDL touch ingress now translates Theron's gesture-gate transport IDs to
+the same M12 movement inputs used by native controls. Up and left swipes were
+verified through the normal SDL queue with authenticated USA Track 02
+(`f23601102138f87c33025877767ebf76`): the runtime probe reported `MOVE` for
+swipe-up and `TURN` with direction west for swipe-left. Gate IDs remain
+distinct from the retail PCE action bytes documented in
+`theron_v1_mechanics.h:38-49`. The complete `test_theron_v1_sdl_input_events.sh`
+suite passed on trv2 with a Debug build and authentic media. Full Theron
+parity remains open; touch-target sizing and broader gameplay coverage are
+not established by this check.
+
 ## 2026-10-27 — skip launch cards when selecting Theron
 
 Theron selection from the native game list now enters the existing validated

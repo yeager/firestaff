@@ -38839,12 +38839,28 @@ M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
     return r;
 }
 
-static M12_MenuInput m11_touch_gesture_command_to_input(int command)
+static M12_MenuInput m11_touch_gesture_command_to_input(FsGgGameId game,
+                                                         int command)
 {
     /* ReDMCSB DEFS.H:238-243 names C001..C006; COMMAND.C F0380 dispatches
      * the very same queue entries to CLIKMENU.C F0365/F0366.  Keep this
      * translation beside the touch ingress rather than manufacturing a
      * second movement path. */
+    if (game == FS_GG_GAME_THERON) {
+        /* THQUEST.ASM T520/T560 route party placement and movement;
+         * theron_v1_mechanics.h:38-49 records the retail PCE action bytes.
+         * The gate's 0x10..0x15 values are transport IDs, so translate their
+         * movement meanings to the M12 tokens used by native controls. */
+        switch (command) {
+        case FS_GG_CMD_THERON_FORWARD: return M12_MENU_INPUT_UP;
+        case FS_GG_CMD_THERON_BACK: return M12_MENU_INPUT_DOWN;
+        case FS_GG_CMD_THERON_TURN_L: return M12_MENU_INPUT_TURN_LEFT;
+        case FS_GG_CMD_THERON_TURN_R: return M12_MENU_INPUT_TURN_RIGHT;
+        case FS_GG_CMD_THERON_STRAFE_L: return M12_MENU_INPUT_STRAFE_LEFT;
+        case FS_GG_CMD_THERON_STRAFE_R: return M12_MENU_INPUT_STRAFE_RIGHT;
+        default: return M12_MENU_INPUT_NONE;
+        }
+    }
     switch (command) {
     case 1: return M12_MENU_INPUT_TURN_LEFT;
     case 2: return M12_MENU_INPUT_TURN_RIGHT;
@@ -38943,7 +38959,7 @@ M11_GameInputResult M11_GameView_HandleTouchEvent(M11_GameViewState* state,
                                          gesture, &command, NULL) &&
         command.accepted) {
         M12_MenuInput input = m11_touch_gesture_command_to_input(
-            command.gameCommand);
+            fs_gesture_gate_active_game(), command.gameCommand);
         if (input != M12_MENU_INPUT_NONE) {
             return M11_GameView_HandleInput(state, input);
         }
