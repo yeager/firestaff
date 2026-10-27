@@ -129,10 +129,11 @@ on the PRS3 menu capture. See
   routes, not Firestaff's runtime menu or the Saturn display consumer. The
   repeated Continue capture again verifies all five Japanese TITLE.BIN sprites
   against 1,441 screenshot pixels, but its NBG0 bitmap has zero exact matches
-  against authentic retail data. Its VDP2 and SH-2 write traces overflowed
-  before the endpoint, so they do not establish the bitmap producer. The raw
-  run and snapshot-only source-join report are retained outside Git; see the
-  Japanese menu section in `docs/nexus_startup.md`.
+  against authentic retail data. A later complete frame-windowed SH-2 capture
+  binds all 15,264 writes in a bounded NBG0 frame segment, in order, to a retail
+  row-copy routine, but does not recover the source asset or cover the full
+  bitmap. The independent source join remains unbound; see the Japanese menu
+  section in `docs/nexus_startup.md`.
   earlier paired raw-trace experiments below remain valid negative results for
   their sampled windows, but they are no longer the only input evidence. Keep
   the production gate closed while identifying menu/face material ownership

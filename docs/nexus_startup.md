@@ -1258,6 +1258,26 @@ admission. Raw capture files and reports are kept outside Git in the
 `ymir_nexus_menu_vdp2_provenance_20261027` external evidence bundle; its
 `SHA256SUMS.txt` validates the retained files.
 
+A follow-up authentic Japanese capture used a VDP1 frame window and a complete
+SH-2 trace (`796,230` rows, capacity `1,000,000`, zero dropped). At frame
+`7,716`, all `15,264` width-one VDP2 writes below VRAM address `0x20000` occur
+exactly once as one contiguous, ordered sequence in the master SH-2 trace,
+starting at row `780,966`. The sequence has one call context: PC `0x06023128`,
+caller return `0x06023176`, target `0x06023108`. All `14,784` distinct written
+byte addresses agree with the final VDP2 VRAM snapshot. The read-only Ghidra
+decompilation of hash-verified Japanese `DM.BIN`
+(`3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124`) shows
+`FUN_06023108` as a byte-wise row copier that advances the destination by a
+runtime pitch; `FUN_06023144` dispatches to it for this call path. This binds
+the observed frame's bounded NBG0 byte writes to that retail copy routine. It
+does not recover the copy source's original asset ownership, cover the full
+131,072-byte bitmap, or establish renderer semantics. The independent bitmap
+comparison therefore remains `source_join=unbound` and
+`semantic_admission=blocked`. Reproduce the ordered trace join with
+`scripts/analyze_nexus_vdp2_sh2_write_join.py`; raw captures and Ghidra output
+are retained in
+`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_nbg0_sh2_complete_20261027/`.
+
 This is authentic input-correlated source evidence for the Japanese menu
 selection state. It does not establish the complete `TITLE.BIN` decoding,
 mouse hit regions, Firestaff input handling, or production renderer admission.
