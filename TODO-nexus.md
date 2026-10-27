@@ -1,6 +1,6 @@
 # Firestaff TODO — Nexus
 
-Reviewed 2026-10-24. The items below track open work and include completed
+Reviewed 2026-10-27. The items below track open work and include completed
 diagnostics as context. Verified evidence is also recorded in the Nexus capture
 and reverse-engineering records and in [DONE-nexus.md](DONE-nexus.md).
 
@@ -18,10 +18,20 @@ the English retail revision admitted by
 `scripts/analyze_nexus_vdp1_source_join.py`. The deterministic Ymir title-menu
 capture below uses the Japanese disc and Japanese BIOS. Its VDP1-to-resource
 join therefore cannot establish source ownership for the installed English
-menu archive. Capture the same title/menu interval from the English retail
-disc and join it against this installed authentic data before changing the
-production renderer gate. Keep the Japanese capture as separate regional
-evidence.
+menu archive. A separate 2026-10-27 Ymir capture now uses the authentic English
+retail disc and USA 1.01a BIOS. Ymir reads `0DMSTRT.BIN`, then logs a CD Block
+soft reset; the run has no `DM.BIN` read. Its frame-12467 VDP1 snapshot contains
+168 command rows, but the last command's CMDLINK target is absent and the list
+has no END command. Against the installed English `MENU.BPK`, 86 of 162 PRS3
+surfaces have direct byte matches in VDP1 VRAM; none of 132 textured command
+source starts falls within those ranges. This proves residency only, not that
+the surfaces are drawn or that the title menu is displayed. The VDP2 write
+trace dropped 1,376,570 rows, and SCU DMA overflow is unknown, so neither gives
+complete transfer provenance. The English renderer gate remains closed. The
+capture metadata and reproduction details are in
+[`docs/nexus_startup.md`](docs/nexus_startup.md#english-retail-boot-attempt-and-menu-asset-residency-2026-10-27);
+raw capture files remain on the external evidence volume. Keep the Japanese
+capture as separate regional evidence.
 
 2026-10-27 TRV2 Firestaff v3.0.415 direct CLI probe against the authentic
 Japanese Saturn corpus selected `DM.BIN` (MD5
