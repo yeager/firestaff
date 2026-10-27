@@ -28,26 +28,12 @@ declare -a original_archive_hashes=()
 # archives. Build a symlink-only view of every top-level ZIP so picker
 # ordering and edition availability stay intact without exposing extracted
 # trees. Snapshot each original archive so the test verifies it stays intact.
-for game_id in dm1 csb dm2; do
-    source_game_dir="$data_root/$game_id"
-    overlay_game_dir="$archive_data_root/$game_id"
-    mkdir -p "$overlay_game_dir"
-    if [[ ! -d "$source_game_dir" ]]; then
-        continue
-    fi
-    while IFS= read -r -d '' archive; do
-        ln -s "$archive" "$overlay_game_dir/$(basename "$archive")"
-        original_archives+=("$archive")
-        original_archive_hashes+=("$(firestaff_sha256_file "$archive")")
-    done < <(find "$source_game_dir" -maxdepth 1 -type f -iname '*.zip' -print0)
-done
-
 verify_original_archives_unchanged() {
     local archive
     local index=0
     for archive in "${original_archives[@]}"; do
         if [[ $(firestaff_sha256_file "$archive") != "${original_archive_hashes[$index]}" ]]; then
-            printf 'FAIL: original game archive changed during picker test: %s\n' "$archive" >&2
+            printf 'FAIL: original game archive changed during picker test: %s\\n' "$archive" >&2
             return 1
         fi
         index=$((index + 1))
@@ -68,6 +54,29 @@ cleanup() {
     exit "$test_status"
 }
 trap cleanup EXIT HUP INT TERM
+
+for game_id in dm1 csb dm2; do
+    source_game_dir="$data_root/$game_id"
+    overlay_game_dir="$archive_data_root/$game_id"
+    mkdir -p "$overlay_game_dir"
+    if [[ ! -d "$source_game_dir" ]]; then
+        continue
+    fi
+    while IFS= read -r -d '' archive; do
+        [[ -f "$archive" ]] || continue
+        absolute_archive=$(python3 - "$archive" <<'PY'
+import os
+import sys
+
+print(os.path.abspath(sys.argv[1]))
+PY
+)
+        archive_hash=$(firestaff_sha256_file "$absolute_archive")
+        ln -s "$absolute_archive" "$overlay_game_dir/$(basename "$archive")"
+        original_archives+=("$absolute_archive")
+        original_archive_hashes+=("$archive_hash")
+    done < <(find "$source_game_dir" -maxdepth 1 \\( -type f -o -type l \\) -iname '*.zip' -print0)
+done
 
 if [[ ${#original_archives[@]} == 0 ]]; then
     echo 'SKIP: no authentic top-level ZIP archives are available for DM1, CSB or DM2'
