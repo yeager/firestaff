@@ -33,12 +33,12 @@ source.
 
 | Resource | Status |
 |---|---|
-| `TITLE.CG` + `TITLE.BIN` | MAPD/TIBG decoding and five retail images are verified. An authentic Japanese title capture binds the complete `TITLE.CG` member to its VDP2 upload and the MAPD palette to CRAM; the visible NBG0 bitmap's producer is also traced. The display consumer, MAPD order, layer placement and timing are still unbound. See [title source audit](nexus_title.md#japanese-retail-title-vdp2-receipt). |
-| `LOGOBG.DG2` | PP pixels and a 256-entry BGR555 palette are verified. Neither occurs in the measured Japanese title-frame VDP2 memory/CRAM, so it is not admitted as the NBG0 source; no other display role is proven. |
+| `TITLE.CG` + `TITLE.BIN` | MAPD/TIBG decoding and five retail images verified for the canonical profile and documented English revision; VDP2 placement is missing |
+| `LOGOBG.DG2` | PP pixels and a 256-entry BGR555 palette are verified; layer/timing is missing |
 | `WARNING.BIN`, `GAMEOVER.BIN`, `STABG.BIN` | real surfaces are decoded and receive byte provenance; presentation is missing |
 | `FACE.BIN` | The JP retail member is verified as 45,104 bytes (`bd9ca16ea68043984e2804067b6cd66f`): 20 variable-length, 56×56 PRS3 portraits with source palettes. The PLRD roster-to-portrait ordinal and the VDP1 destination/order are still unobserved. |
 | `FONT256.S2D` | 242 CG tiles are retained in production source; Saturn page/attribute/glyph mapping is missing |
-| `MENU.BPK` | All 162 PRS3 surfaces decode to source-bound bytes. In one complete authentic Japanese menu frame, 86 whole surfaces are byte-resident in VDP1 VRAM, but none of 137 textured command sources starts in those ranges. The capture does not establish that `MENU.BPK` supplies the visible menu. Ownership, ordering, CLUT and VDP1/VDP2 composition remain unbound; see the [menu snapshot join](NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md). |
+| `MENU.BPK` | 162 PRS3 surfaces decode to source-bound indexed bytes; the exact title-menu draw ownership, ordering, CLUT, and VDP1/VDP2 composition are not established |
 | Saturn Backup RAM | `nexus_v1_saturn_bkr_parse` reads hash-pinned 32 KiB card directories and block chains, returning exact opaque payload bytes; native save selection, payload interpretation, and runtime loading remain missing |
 | Mednafen visual baseline | A clean J-BIOS capture against authentic retail shows black boot followed by the original intro FMV without input; menu/LEV01 identity remains missing |
 
@@ -105,7 +105,7 @@ It held Start during capture frames 0 through 59 and captured 120 frames with
 --capture-start-frame 0 --capture-start-hold 60`. The profile and raw dumps
 were removed after inspection; the displayed title-menu image and VDP1 receipt
 are retained in
-[`nexus_v1_ymir_deterministic_start_menu_20261026`](../../parity-evidence/verification/nexus_v1_ymir_deterministic_start_menu_20261026/README.md).
+[`nexus_v1_ymir_deterministic_start_menu_20261026`](../parity-evidence/verification/nexus_v1_ymir_deterministic_start_menu_20261026/README.md).
 
 The capture completed at VDP1 frame 59 with command cursor 178 and 178 rows
 for that frame. Its complete trace had 10,668 rows from frames 0 through 59,
@@ -158,7 +158,7 @@ champion dungeon view. The image digest was
 `87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`; the
 capture receipt notes that its transfer/source chain was not retained. This
 demonstrates the retail route, not Firestaff's BKR-to-engine handoff. See
-[`nexus-continue-real-bup-20261025`](../../parity-evidence/verification/nexus-continue-real-bup-20261025/README.md).
+[`nexus-continue-real-bup-20261025`](../parity-evidence/verification/nexus-continue-real-bup-20261025/README.md).
 
 An independent 2,200-frame no-present replay on 2026-10-26 used the same
 authenticated Japanese IPL, retail CUE, retained title-prompt state, and the
@@ -423,7 +423,7 @@ Continue left the screen unchanged because no save was present; that attempt
 did not verify save loading.
 Together, these are retail startup/input observations, not Firestaff parity.
 The capture environment, key mapping, and per-action limitations are recorded
-in [`parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`](../../parity-evidence/verification/keyboard-mouse-debug-20261024/README.md).
+in [`parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`](../parity-evidence/verification/keyboard-mouse-debug-20261024/README.md).
 
 ## Retail Continue with an authentic save (2026-10-25)
 
@@ -443,7 +443,7 @@ that profile and was not edited directly. Ymir 0.4.1
 ran with `--debug` on TRV2 against the Japanese retail cue (SHA-256
 `878b3bc223bb56e99626dbaa2946d17fb349a2a67a10cd4423742d8ab30b8699`). The
 retained screenshots and their hashes are in
-[`parity-evidence/verification/nexus-continue-real-bup-20261025/README.md`](../../parity-evidence/verification/nexus-continue-real-bup-20261025/README.md).
+[`parity-evidence/verification/nexus-continue-real-bup-20261025/README.md`](../parity-evidence/verification/nexus-continue-real-bup-20261025/README.md).
 This demonstrates the retail save-load route under Ymir with a BUP reported as
 retail-written. Because its transfer chain was not retained, the save's retail
 provenance is not independently established. It does not prove Firestaff
@@ -504,10 +504,10 @@ Down selects Continue, and A confirms New Game into the dungeon. A fresh profile
 with no game save leaves Continue on the same menu and does not prove a save-load
 route. This establishes retail behavior only; it is not Firestaff parity.
 Capture details and screenshots are recorded in
-[`parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`](../../parity-evidence/verification/keyboard-mouse-debug-20261024/README.md).
+[`parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`](../parity-evidence/verification/keyboard-mouse-debug-20261024/README.md).
 
 The historical direct-CLI probe in
-[`parity-evidence/verification/nexus_cli_direct_start_block_20261024/README.md`](../../parity-evidence/verification/nexus_cli_direct_start_block_20261024/README.md)
+[`parity-evidence/verification/nexus_cli_direct_start_block_20261024/README.md`](../parity-evidence/verification/nexus_cli_direct_start_block_20261024/README.md)
 reached the ready title frame but reported `menu=0` and `levelLoaded=0` after
 one scripted Return. It did not start Nexus. That receipt names a MENU.BPK PRS3
 capture blocker for that build; it should not be read as proof that decoding
@@ -1012,7 +1012,7 @@ still does not provide CLUT source ownership or admit a Firestaff renderer.
 
 - DMWeb Nexus file formats and DMN Data File Decoder.
 - `src/nexus/nexus_v1_engine.c` and `src/nexus/nexus_v1_title.c`.
-- `docs/nexus/NEXUS_RUNTIME_CAPTURE.md`.
+- `docs/NEXUS_RUNTIME_CAPTURE.md`.
 - [NEXUS_STRICT_FIDELITY_INVENTORY.md](NEXUS_STRICT_FIDELITY_INVENTORY.md).
 
 ## Cold-boot title menu and retail menu navigation (2026-10-27)
@@ -1117,7 +1117,7 @@ Firestaff rendering.
 Raw capture bytes remain outside Git under
 `/Volumes/Extern-disk/firestaff-data/`. Hashes, analyzer output, and
 reproduction commands are recorded in
-[`nexus_v1_menu_candidate_source_join_20261027`](../../parity-evidence/verification/nexus_v1_menu_candidate_source_join_20261027/README.md).
+[`nexus_v1_menu_candidate_source_join_20261027`](../parity-evidence/verification/nexus_v1_menu_candidate_source_join_20261027/README.md).
 
 ## English-version boot attempt and menu-asset residency (2026-10-27)
 
@@ -1202,7 +1202,7 @@ bundle.
 This establishes the English-version emulator's cold-boot-to-menu path. It does
 not establish Firestaff menu rendering or input, Continue/save loading, or
 playable-level, viewport, or HUD parity. See the
-[English cold-boot evidence receipt](../../parity-evidence/verification/nexus_english_coldboot_menu_20261027/README.md)
+[English cold-boot evidence receipt](../parity-evidence/verification/nexus_english_coldboot_menu_20261027/README.md)
 for hashes and reproduction commands.
 
 ## Authentic Japanese title-menu Down selection (2026-10-27)
@@ -1351,4 +1351,31 @@ selection state. It does not establish the complete `TITLE.BIN` decoding,
 mouse hit regions, Firestaff input handling, or production renderer admission.
 The full external capture,
 hashes, and reproduction command are in the
-[Japanese Down-selection capture receipt](../../parity-evidence/verification/nexus_japanese_menu_down_selection_20261027/README.md).
+[Japanese Down-selection capture receipt](../parity-evidence/verification/nexus_japanese_menu_down_selection_20261027/README.md).
+
+## Japanese menu-state NBG0 storage join (2026-10-27)
+
+The separate paired menu capture at
+`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_menu_sh2_bound_20261027/`
+contains a strong authentic source-to-storage match. Japanese `TITLE.BIN`
+bytes `0x2526..0xa0a5` (31,616 bytes; end-exclusive `0xa0a6`; full member SHA-256
+`51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3`)
+match WorkRAMH address `0x060ac2a6` exactly. Under the previously verified
+304-byte row width and 512-byte stride, 30,561 of those bytes match the active
+NBG0 8bpp bitmap in the frame-8047 snapshot. All 96 leading rows match; the
+1,055 differences are in the final eight rows. The complete VDP2 trace records
+2,432 writes to those rows at frame 7,716, of which 1,377 values equal the
+matching `TITLE.BIN` bytes; the frame-windowed trace shows no later VRAM or
+CRAM writes before the frame-8047 snapshot.
+
+Run `scripts/verify_nexus_title_nbg0_title_bin_storage.py` with that Ymir dump
+directory and a `--data-dir` containing the authenticated Japanese retail
+files to reproduce the storage join. The bundle's SHA-256 manifest covers the
+capture inputs.
+
+The capture does not contain a same-run SH-2 source-read trace, and no complete
+pixel join establishes which NBG0 bytes are visible after VDP1 composition.
+Treat this as source-to-NBG0 storage evidence only; title/menu display
+ownership and production renderer admission remain blocked. See
+[`nexus_title.md`](nexus_title.md#japanese-menu-state-nbg0-storage-join-2026-10-27)
+for the detailed source and layout receipt.
