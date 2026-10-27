@@ -8641,6 +8641,7 @@ static void m12_startup_menu_handle_input(M12_StartupMenuState* state,
             state->view = M12_MENU_VIEW_CHANGELOG;
             break;
         case M12_MENU_INPUT_BACK:
+            state->deferredTheronSelectionPending = 0;
             state->shouldExit = 1;
             break;
         case M12_MENU_INPUT_LEFT:

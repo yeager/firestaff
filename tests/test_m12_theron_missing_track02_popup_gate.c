@@ -419,6 +419,30 @@ static void check_early_theron_selection_waits_for_scan(char* dataDir) {
     CHECK(state.launchRequested == 0);
     CHECK(state.messageIsMissingGameData == 0);
     M12_StartupMenu_Destroy(&state);
+
+    M12_StartupMenu_InitWithDataDir(&state, dataDir, NULL);
+    force_english_locale(&state);
+    if (state.view == M12_MENU_VIEW_MESSAGE) {
+        M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    }
+    seed_theron_unavailable_with_metadata(&state, 0);
+    state.selectedIndex = 4;
+    state.deferredScanPending = 0;
+    state.deferredScanActive = 1;
+    state.deferredScanCompletedGameMask = 0U;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    CHECK(state.deferredTheronSelectionPending == 1);
+
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    CHECK(state.deferredTheronSelectionPending == 0);
+    CHECK(state.shouldExit == 1);
+    state.deferredScanActive = 0;
+    state.deferredScanCompletedGameMask = theronScanCompleted;
+    (void)M12_StartupMenu_Update(&state);
+    CHECK(state.view == M12_MENU_VIEW_MAIN);
+    CHECK(state.launchRequested == 0);
+    CHECK(state.messageIsMissingGameData == 0);
+    M12_StartupMenu_Destroy(&state);
 }
 
 static void check_options_launch_popup_surfaces_track02_hint(char* dataDir) {

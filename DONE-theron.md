@@ -19,6 +19,15 @@ Theron media is absent. No game bytes were copied or modified. Shell syntax,
 Python compilation, `po/update.sh --check`, and `git diff --check` passed. Full
 Theron parity remains open.
 
+## 2026-10-27 — cancel a pending Theron selection on Back
+
+Pressing Back while Theron's deferred media scan is pending now clears the
+queued selection before requesting launcher exit. This prevents the next menu
+update from opening a Track 02 message after the player asked to leave. A
+focused regression publishes the Theron scan result after Back and verifies
+that the launcher remains on its main view without launching or showing a
+message. No game-media bytes are used by this input-state regression.
+
 ## 2026-10-26 — verify and decode the runtime initializer helper candidates
 
 The raw-BIN HuC6280 disassembly receipt checks the ten-byte helper reached by
