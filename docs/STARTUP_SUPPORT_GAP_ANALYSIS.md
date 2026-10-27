@@ -1,6 +1,6 @@
 # Five-game startup support gap analysis
 
-Reconciled with repository `main` at `f6c7ad00` on 2026-10-27. The latest
+Reconciled with repository `main` at `5b0f36fc` on 2026-10-27. The latest
 published release is v3.0.417 (published at 06:59 UTC). GitHub Actions release
 run `40463344704` completed its seven platform build and packaging jobs
 successfully (Windows x86_64, macOS x86_64/arm64, Linux x86_64/arm64, Android
@@ -70,6 +70,14 @@ The current evidence does not establish complete five-game startup support.
   sends authentic Japanese Track 02 swipe-up and swipe-left events through the
   SDL queue and checks movement and turning. The test does not establish the
   complete touch-control map or state-driven renderer parity.
+- The pointer-trace hook now identifies the complete `JSR $C1DF` opcode and
+  operands without a caller-PC range. Its regression test inspects the
+  instrumenter's generated condition and rejects missing instruction bytes or
+  added predicates. A bounded authentic JP save-state repeat recorded calls at
+  `$B2B1`, `$B37A`, and `$B437`, but no CD IRQ, transition, or command RAM
+  writes. The trace still does not bind these calls to a source LBA, usable
+  world-hit rectangles, or command dispatch; it adds diagnostic coverage, not
+  native pointer support.
 - The `m11_dm1_hoc_stair_torch_pc34` real-media test now sends the ordinary
   M11 backward-movement input from authentic PC34 HoC corridor cell (4,15)
   toward the original stairs at (3,15). The test target compiled and linked in
