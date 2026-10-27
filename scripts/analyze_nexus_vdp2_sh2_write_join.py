@@ -78,12 +78,13 @@ def find_contiguous(
 
 
 def main() -> int:
+    """Validate and report the selected VDP2-to-SH-2 trace join."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("bundle", type=Path, help="Ymir raw capture bundle directory")
     parser.add_argument(
         "--frame",
         type=int,
-        help="VDP1 frame matching the final VRAM snapshot (defaults to the last traced frame)",
+        help="VDP1 frame to join (defaults to the last VDP2 trace frame)",
     )
     parser.add_argument(
         "--vram-end-exclusive",
@@ -115,24 +116,58 @@ def main() -> int:
     base = int(sh2_receipt["address_begin"], 0)
     end = int(sh2_receipt["address_end_exclusive"], 0)
     vdp2_rows: list[tuple[int, int, int, int]] = []
+    vdp2_trace_frames: list[int] = []
     with (dumps / "vdp2-memory-write-trace.csv").open(newline="", encoding="utf-8") as stream:
         for row in csv.DictReader(stream):
+            vdp2_trace_frames.append(int(row["vdp1_frame"]))
             address = int(row["address"], 0)
             if row["memory"] == "VRAM" and address < args.vram_end_exclusive:
                 vdp2_rows.append((int(row["vdp1_frame"]), address, int(row["width"]), int(row["value"], 0)))
     if not vdp2_rows:
         parser.error("no VDP2 VRAM writes found in the selected address window")
 
-    frame = args.frame if args.frame is not None else max(row[0] for row in vdp2_rows)
+    latest_vdp2_frame = max(vdp2_trace_frames)
+    frame = args.frame if args.frame is not None else latest_vdp2_frame
+    if frame != latest_vdp2_frame:
+        parser.error(
+            f"selected frame {frame} is not the last frame in the complete VDP2 trace "
+            f"({latest_vdp2_frame})"
+        )
     try:
         snapshot_frame = int(vdp2_receipt["current_vdp1_frame_index"])
-    except (KeyError, ValueError) as error:
-        parser.error(f"VDP2 receipt has no valid final snapshot frame: {error}")
-    if frame != snapshot_frame:
+        trace_frame_min = int(vdp2_receipt["first_vdp1_frame_index"])
+        trace_frame_max = int(vdp2_receipt["last_vdp1_frame_index"])
+        trace_frame_begin = int(vdp2_receipt["trace_vdp1_frame_begin"])
+        trace_frame_end = int(vdp2_receipt["trace_vdp1_frame_end_exclusive"])
+        register_snapshot = read_receipt(dumps / "vdp-register-snapshot.txt")
+        register_snapshot_frame = int(register_snapshot["vdp1_frame_index"])
+    except (KeyError, ValueError, OSError) as error:
+        parser.error(f"VDP2 receipt has no valid frame bounds or final snapshot frame: {error}")
+    if (vdp2_receipt.get("vdp2_vram_file_complete") != "1" or
+            vdp2_receipt.get("vdp2_cram_file_complete") != "1" or
+            vdp2_receipt.get("vdp2_register_file_complete") != "1"):
+        parser.error("VDP2 receipt does not report complete VRAM, CRAM, and register snapshots")
+    if snapshot_frame < frame:
         parser.error(
-            f"selected frame {frame} does not match the final VDP2 snapshot "
-            f"frame {snapshot_frame}"
+            f"final VDP2 snapshot frame {snapshot_frame} precedes selected trace frame {frame}"
         )
+    if register_snapshot_frame != snapshot_frame:
+        parser.error(
+            f"VDP register snapshot frame {register_snapshot_frame} does not match "
+            f"VDP2 memory snapshot frame {snapshot_frame}"
+        )
+    if (min(vdp2_trace_frames) != trace_frame_min or
+            max(vdp2_trace_frames) != trace_frame_max):
+        parser.error("VDP2 receipt frame bounds do not match the complete trace CSV")
+    snapshot_frame_delta = snapshot_frame - frame
+    if snapshot_frame_delta:
+        if (vdp2_receipt.get("trace_vdp1_frame_range_enabled") != "1" or
+                trace_frame_begin > frame or trace_frame_end <= snapshot_frame or
+                trace_frame_min > frame or trace_frame_max != frame):
+            parser.error(
+                "a later VDP2 snapshot is admissible only when a complete frame-windowed "
+                "trace covers the selected frame through the snapshot and contains no later writes"
+            )
     try:
         sh2_frame_min = int(sh2_receipt["sh2_ram_write_frame_min"], 0)
         sh2_frame_max = int(sh2_receipt["sh2_ram_write_frame_max"], 0)
@@ -180,6 +215,9 @@ def main() -> int:
             mismatches.append((address, value, vram[address]))
 
     print(f"frame={frame}")
+    print(f"vdp2_snapshot_frame={snapshot_frame}")
+    print(f"vdp2_snapshot_frame_delta={snapshot_frame_delta}")
+    print(f"vdp2_snapshot_stable_after_trace_frame={int(snapshot_frame_delta == 0 or trace_frame_max == frame)}")
     print(f"vdp2_byte_writes={len(pattern_rows)}")
     print(f"vdp2_unique_addresses={len(final_values)}")
     print(f"sh2_master_rows_in_receipt_range={len(sh2_rows)}")

@@ -1283,8 +1283,9 @@ The analyzer's rejection is reproducible with
 `scripts/analyze_nexus_vdp2_sh2_write_join.py`; raw captures, the exploratory
 report, and Ghidra output are retained in
 `/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_nbg0_sh2_complete_20261027/`.
-A new capture with SH-2 frame bounds (or per-row frame tags) and a matching
-frame-specific VRAM snapshot is required before claiming a temporal join.
+The frame-bounded capture below supplies the missing SH-2 bounds. It also
+checks for a later but byte-equivalent VDP2 VRAM snapshot by requiring a
+complete zero-drop VRAM write trace through the snapshot frame.
 
 A frame-filtered repeat capture now records SH-2 writes only during VDP1
 frame `7,716`. The Ymir receipt reports exact frame bounds `7,716..7,716`,
@@ -1307,6 +1308,27 @@ repeat screenshot is pixel-identical to the prior Continue capture, and the
 current verifier again matches all 1,441 TITLE.BIN sprite pixels. The extended
 trace and xref output are retained in
 `/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_callstack_20261027/`.
+
+A matched cold-boot menu capture keeps the SH-2 trace filtered to frame
+`7,716` while continuing to the complete native menu frame `8,047`. The
+bounded VDP2 VRAM-write trace covers the frame window `7,000`–`8,049`, retains
+`41,443` rows with zero drops, and records no VRAM writes after frame `7,716`.
+The trace contains VRAM writes only, so it does not establish CRAM stability.
+The final VRAM, CRAM, and register snapshots are from frame `8,047`; the
+complete VRAM write trace therefore establishes that the observed memory bytes
+remain unchanged through that snapshot. It does not independently bind the
+PNG to frame `8,047`. The SH-2 frame receipt
+contains `15,264` master rows with exact bounds `7,716..7,716`, zero drops,
+and one contiguous ordered match for all `15,264` byte writes. All `14,784`
+distinct written VRAM bytes agree with the later, unchanged snapshot. The
+matching call chain is
+`0x06023108|0x06023144|0x06040150`. The VDP1 receipt identifies menu frame
+`8,047`, with `178` commands and zero dropped rows; the authentic screenshot
+matches the five verified Japanese `TITLE.BIN` sprite roles at `1,441/1,441`
+nontransparent pixels. The screenshot verifier conservatively reports timing
+as unproven because its PNG does not carry an independent frame number. Raw
+files, verifier output, trace analysis, and hashes are retained in
+`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_menu_sh2_bound_20261027/`.
 
 This is authentic input-correlated source evidence for the Japanese menu
 selection state. It does not establish the complete `TITLE.BIN` decoding,
