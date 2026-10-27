@@ -21,7 +21,7 @@ work, especially for Chaos Strikes Back, Nexus and Theron's Quest.
 
 ## Current status
 
-The status pages were reviewed against `main` at `d18445cc` on 2026-10-27.
+The status pages were reviewed against `main` at `378f9d20` on 2026-10-27.
 They report what has been exercised with real media, not complete game parity.
 
 Firestaff detects real media and exposes only paths with a verified handoff; it

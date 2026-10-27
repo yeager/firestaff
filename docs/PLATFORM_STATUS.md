@@ -1,6 +1,6 @@
 # Game and platform status
 
-**Last status review: 2026-10-27, against main `d18445cc`.** This is the
+**Last status review: 2026-10-27, against main `378f9d20`.** This is the
 operational status matrix. It separates media recognition, verified runtime
 slices and end-to-end playability. A row marked as supported does not mean
 that every menu, save format or visual parity gate is complete.
