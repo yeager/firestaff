@@ -623,7 +623,9 @@ static int is_value_option(const char* value) {
 
 static int is_option_token(const char* value) {
     return value &&
-           (value[0] == '-' ||
+           ((value[0] == '-' && value[1] == '-') ||
+            strcmp(value, "-h") == 0 ||
+            strcmp(value, "-v") == 0 ||
             strncmp(value, "\xE2\x80\x94", 3U) == 0 || /* em dash */
             strncmp(value, "\xE2\x80\x93", 3U) == 0);  /* en dash */
 }

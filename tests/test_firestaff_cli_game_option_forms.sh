@@ -32,6 +32,8 @@ check_form --width 1 --height 4096 --version
 check_form --duration -1 --version
 check_form --duration 0 --version
 check_form --boot-probe-frames 0 --version
+check_form --data-dir -relative-data --version
+check_form --script -script-sequence --version
 
 check_default_startup_stays_in_menu() {
     repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)

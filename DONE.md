@@ -10,6 +10,7 @@ regression test covers the affected forms; the app build, unsupported-platform
 matrix, and authentic DM1 PC Swedish scan-label test passed. The check prevents
 malformed commands from falling through into game-data discovery; it does not
 change valid option values.
+Relative paths beginning with a single dash remain accepted as values.
 
 ## 2026-10-25 — Nexus event-44 analyzer regression coverage
 
