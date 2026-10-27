@@ -1286,6 +1286,18 @@ report, and Ghidra output are retained in
 A new capture with SH-2 frame bounds (or per-row frame tags) and a matching
 frame-specific VRAM snapshot is required before claiming a temporal join.
 
+A repeat capture added four nested call targets to each SH-2 write row. Its
+frame-7716 match has the single chain
+`0x06023108|0x06023144|0x06040150`, identifying `FUN_06040150` as the active
+outer caller. Read-only Ghidra xrefs show `FUN_06040150` is reached by a
+computed call in `FUN_0601128e` at `0x0601153a`; the latter is a per-frame
+runtime loop. This establishes the caller path seen during the capture, but
+does not assign a title-menu semantic name or identify the copy source. The
+repeat screenshot is pixel-identical to the prior Continue capture, and the
+current verifier again matches all 1,441 TITLE.BIN sprite pixels. The extended
+trace and xref output are retained in
+`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_callstack_20261027/`.
+
 This is authentic input-correlated source evidence for the Japanese menu
 selection state. It does not establish the complete `TITLE.BIN` decoding,
 mouse hit regions, Firestaff input handling, or production renderer admission.

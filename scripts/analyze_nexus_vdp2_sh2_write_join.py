@@ -60,7 +60,7 @@ def prefix_table(pattern: list[tuple[int, int, int]]) -> list[int]:
 
 def find_contiguous(
     pattern: list[tuple[int, int, int]],
-    rows: list[tuple[int, int, int, int, int, int]],
+    rows: list[tuple[int, int, int, int, int, int, str]],
 ) -> list[int]:
     table = prefix_table(pattern)
     matches: list[int] = []
@@ -150,7 +150,7 @@ def main() -> int:
     if any(width != 1 for _address, width, _value in pattern_rows):
         parser.error("this analyzer accepts only byte-width VDP2 writes")
 
-    sh2_rows: list[tuple[int, int, int, int, int, int]] = []
+    sh2_rows: list[tuple[int, int, int, int, int, int, str]] = []
     with (dumps / "sh2-memory-write-trace.csv").open(newline="", encoding="utf-8") as stream:
         for row in csv.DictReader(stream):
             if row["sh2"] != "master":
@@ -165,6 +165,7 @@ def main() -> int:
                         int(row["pc"], 0),
                         int(row["caller_return_address"], 0),
                         int(row["caller_target"], 0),
+                        row.get("caller_stack_targets", ""),
                     )
                 )
 
@@ -192,6 +193,9 @@ def main() -> int:
         contexts = sorted(set(row[3:] for row in segment))
         print(f"first_match_context=pc:0x{segment[0][3]:08x},caller_return:0x{segment[0][4]:08x},caller_target:0x{segment[0][5]:08x}")
         print(f"distinct_contexts={len(contexts)}")
+        call_chains = sorted(set(row[6] for row in segment))
+        print(f"distinct_call_chains={len(call_chains)}")
+        print(f"first_call_chain={call_chains[0] or 'unavailable'}")
         print(f"first_sh2_row={start}")
         print(f"last_sh2_row={start + len(segment) - 1}")
 
