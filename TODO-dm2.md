@@ -14,9 +14,12 @@ checked against original DM2 media.
 for the original DOS English archive, Macintosh French SIT media, and FM Towns
 Japanese archive. The separate authentic-media main-menu selection test also
 passed for DM2 PC and FM Towns Japanese. DOS French, Macintosh English, and
-Amiga English cases were skipped because their data-root symlinks point to
-missing files; no substitute media was used. SDL dummy verifies the exercised
-source startup and handoff paths, not native display or physical input parity.
+Amiga English cases in that symlink-based matrix were skipped because their
+data-root symlinks point to missing files; no substitute media was used. The
+Amiga extracted-install M11 title route and installer-ZIP route have since
+passed a dedicated real-media regression. The symlink-based CLI matrix remains
+open for those skipped editions. SDL dummy verifies the exercised source
+startup and handoff paths, not native display or physical input parity.
 
 2026-10-25 selected DM2 PC loose-language owner: the authentic DOS English
 and French archives share a dungeon payload but have different GRAPHICS.DAT
