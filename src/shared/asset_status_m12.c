@@ -2527,10 +2527,9 @@ static int m12_csb_fmtowns_archive_stage(const char* archivePath,
 }
 #endif
 
-/* Production CSB intake: keep the original ZIP and its raw CD image in
- * bounded allocations only.  The older stage-to-path helper remains for
- * development materializers, but normal admission must not create a game
- * image in /tmp or beside the source archive. */
+/* Production CSB intake keeps the ZIP as the source of truth and maps its
+ * large raw CD image only for the duration of validation. Do not materialize
+ * the image in a system temp directory or beside the source archive. */
 static int m12_csb_fmtowns_zip_progress(uint64_t completedBytes,
                                         uint64_t totalBytes,
                                         void* userData) {
@@ -2545,6 +2544,7 @@ static int m12_csb_fmtowns_zip_progress(uint64_t completedBytes,
 static int m12_csb_fmtowns_archive_read_image(
     const char* archivePath, const char* selectedImageMember,
     uint8_t** outImage, size_t* outImageSize,
+    int* outImageMapped,
     CSB_V1_FmtownsCdLayout* layout,
     M12_ScanProgressContext* progress) {
     uint8_t* image = NULL;
@@ -2555,9 +2555,10 @@ static int m12_csb_fmtowns_archive_read_image(
     int pathLength;
     int zipResult;
     if (!archivePath || !selectedImageMember || !selectedImageMember[0] ||
-        !outImage || !outImageSize || !layout) return 0;
+        !outImage || !outImageSize || !outImageMapped || !layout) return 0;
     *outImage = NULL;
     *outImageSize = 0U;
+    *outImageMapped = 0;
     /* The CUE selects the raw data image.  Do not accept the first IMG/BIN
      * member: multi-track archives also carry CDDA files and archive order
      * is not a source-owned boot contract. */
@@ -2566,10 +2567,11 @@ static int m12_csb_fmtowns_archive_read_image(
         (size_t)pathLength >= sizeof(imagePath)) {
         return 0;
     }
-    zipResult = firestaff_zip_extract_by_name_with_progress(
+    zipResult = firestaff_zip_extract_by_name_mapped_with_progress(
         archivePath, selectedImageMember, &image, &imageSize,
         progress ? m12_csb_fmtowns_zip_progress : NULL, progress);
     if (zipResult == -2) return 0;
+    if (zipResult == 0) *outImageMapped = 1;
     if (zipResult != 0 &&
         !asset_read_virtual_path_alloc(imagePath, &image, &imageSize)) {
         /* CUE filenames are case-insensitive on the source DOS filesystem.
@@ -2589,12 +2591,15 @@ static int m12_csb_fmtowns_archive_read_image(
                                    archivePath, alternateImageMember)) < 0 ||
             (size_t)pathLength >= sizeof(imagePath) ||
             !asset_read_virtual_path_alloc(imagePath, &image, &imageSize)) {
-            free(image);
+            if (*outImageMapped) firestaff_zip_free_mapped(image, imageSize);
+            else free(image);
             return 0;
         }
     }
     if (csb_v1_fmtowns_cd_parse(image, imageSize, layout) != 0) {
-        free(image);
+        if (*outImageMapped) firestaff_zip_free_mapped(image, imageSize);
+        else free(image);
+        *outImageMapped = 0;
         return 0;
     }
     *outImage = image;
@@ -2810,6 +2815,7 @@ static int m12_admit_csb_fmtowns_archive(M12_AssetStatus* status,
                 char imageMember[M12_ASSET_DATA_DIR_CAPACITY];
                 char cachedHashes[2][2][33];
                 int cachedReceipt;
+                int imageMapped = 0;
                 uint8_t* image = NULL;
                 size_t imageSize = 0U;
                 CSB_V1_FmtownsCdLayout layout;
@@ -2864,7 +2870,7 @@ static int m12_admit_csb_fmtowns_archive(M12_AssetStatus* status,
                 }
                 if (!m12_csb_fmtowns_archive_read_image(
                         archivePath, imageMember, &image, &imageSize,
-                        &layout, progress)) {
+                        &imageMapped, &layout, progress)) {
                     if (status->scanProgress.cancelRequested ||
                         status->scanProgress.cancelled) return admitted;
                     continue;
@@ -2902,7 +2908,8 @@ static int m12_admit_csb_fmtowns_archive(M12_AssetStatus* status,
                 }
                 m12_csb_fmtowns_store_receipt(archivePath, imageMember,
                                               cachedHashes);
-                free(image);
+                if (imageMapped) firestaff_zip_free_mapped(image, imageSize);
+                else free(image);
                 /* The parenthesized archive name is a downloader duplicate.
                  * Once one retail image has verified both language payloads,
                  * do not decompress its byte-identical sibling again. */
