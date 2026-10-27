@@ -10,19 +10,24 @@
 ## Overview
 
 Nexus V1 has host-side startup routing in `src/nexus/nexus_v1_startup_menu.c`,
-with asset gating in `src/nexus/nexus_v1_launcher.c`. A separate, currently
-unwired reducer in `src/nexus/nexus_v1_retail_title_menu.c` models only the
-authentic title choices and transitions observed in Ymir: initial New Game,
-Down to Continue, Down to Configuration, and the documented Accept results.
+with asset gating in `src/nexus/nexus_v1_launcher.c`. The reducer in `src/nexus/nexus_v1_retail_title_menu.c` models the
+observed title prompt opening the three-choice menu, New Game selected by
+default, Down to Continue, Down to Configuration, and documented Accept
+results. M11 now retains that selection state and consumes those keyboard
+inputs separately from the generic Firestaff save/champion menu. This is an
+input-state integration only: it does not draw the selected retail menu, and
+New Game, Continue, and Configuration still have no production destination
+consumer. Continue availability deliberately does not use Firestaff save files;
+the Saturn BKR intake and payload-to-engine route are not integrated here.
 The historical New Game comparison reported five TITLE.BIN draws and 1,495
 matching nontransparent screenshot pixels. The current
 `verify_nexus_title_sprite_screenshot.py` verifier checks the five-draw
 Japanese Continue layout, including per-pixel CRAM color and priority; it does
 not verify the New Game layout. The retail Continue route also reached a
 loaded dungeon with a BKR image whose hash matches the retained four-champion
-image in `.firestaff/data/nexus`; its transfer chain was not retained. The
-reducer is still unwired. Full-frame Firestaff rendering, option behavior, and
-mouse targeting remain unverified.
+image in `.firestaff/data/nexus`; its transfer chain was not retained.
+Full-frame Firestaff rendering, option behavior, and mouse targeting remain
+unverified.
 
 ## DM1 Menu System Reference
 
@@ -95,7 +100,7 @@ Still blocked or incomplete:
 | Feature | DM1 | Nexus V1 |
 |---------|-----|----------|
 | Title screen | 2D bitmap logo | Real source decode; Saturn placement blocked |
-| Start menu options | New Game / Continue | Host state/input route only; Saturn composition blocked |
+| Start menu options | New Game / Continue | M11 selection input state; renderer and destination routes blocked |
 | Champion roster | Western names (24) | 20 PLRD records |
 | Champion select UI | Sprite-based | State/input route; Saturn presentation blocked |
 | In-game menu | ESC key, 2D panel | No source-bound Nexus route |

@@ -25352,6 +25352,7 @@ static void m11_nexus_release_title(M11_GameViewState* state) {
     state->nexusState.title_active = 0;
     state->nexusState.title_loaded = 0;
     state->nexusState.title_frame = 0;
+    nexus_v1_retail_title_menu_init(&state->nexusState.retail_title_menu);
     state->nexusState.champion_select_active = 0;
     state->nexusState.champion_cursor = 0;
     state->nexusState.champion_select_frame = 0;
@@ -37141,6 +37142,71 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return M11_GAME_INPUT_IGNORED;
         }
         if (state->nexusState.title_active) {
+            if (!state->nexusState.retail_title_menu.menu_active) {
+                if (!nexus_title_full_boot_start_ready(
+                        state->nexusState.title_frame)) {
+                    /* The original title route owns input during its boot
+                     * reveal and start prompt. */
+                } else if (input == M12_MENU_INPUT_ACCEPT ||
+                           input == M12_MENU_INPUT_ACTION) {
+                    Nexus_V1_RetailTitleMenuResult menu_result =
+                        nexus_v1_retail_title_menu_reduce(
+                            &state->nexusState.retail_title_menu,
+                            NEXUS_V1_RETAIL_TITLE_MENU_INPUT_OPEN,
+                            0);
+                    if (menu_result ==
+                        NEXUS_V1_RETAIL_TITLE_MENU_RESULT_MENU_OPENED) {
+                        return M11_GAME_INPUT_REDRAW;
+                    }
+                } else if (input != M12_MENU_INPUT_NONE) {
+                    /* The ready title prompt only admits the captured
+                     * Accept action; do not leak other keys to the generic
+                     * Firestaff title menu. */
+                    return M11_GAME_INPUT_IGNORED;
+                }
+            } else {
+                if (input == M12_MENU_INPUT_DOWN) {
+                    Nexus_V1_RetailTitleMenuResult menu_result =
+                        nexus_v1_retail_title_menu_reduce(
+                            &state->nexusState.retail_title_menu,
+                            NEXUS_V1_RETAIL_TITLE_MENU_INPUT_DOWN,
+                            0);
+                    if (menu_result ==
+                        NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED ||
+                        menu_result ==
+                            NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNVERIFIED_INPUT) {
+                        return M11_GAME_INPUT_REDRAW;
+                    }
+                    return M11_GAME_INPUT_IGNORED;
+                }
+                if (input == M12_MENU_INPUT_ACCEPT ||
+                    input == M12_MENU_INPUT_ACTION) {
+                    Nexus_V1_RetailTitleMenuResult menu_result =
+                        nexus_v1_retail_title_menu_reduce(
+                            &state->nexusState.retail_title_menu,
+                            NEXUS_V1_RETAIL_TITLE_MENU_INPUT_ACCEPT,
+                            0);
+                    if (menu_result ==
+                            NEXUS_V1_RETAIL_TITLE_MENU_RESULT_NO_CONTINUE_SAVE ||
+                        menu_result ==
+                            NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SHOW_LOAD_PANEL ||
+                        menu_result ==
+                            NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SHOW_CONFIGURATION ||
+                        menu_result ==
+                            NEXUS_V1_RETAIL_TITLE_MENU_RESULT_START_NEW_GAME) {
+                        return M11_GAME_INPUT_REDRAW;
+                    }
+                    return M11_GAME_INPUT_IGNORED;
+                }
+                if (input != M12_MENU_INPUT_NONE) {
+                    /* Do not route unobserved retail directions through the
+                     * generic Firestaff save/champion menu. */
+                    return M11_GAME_INPUT_IGNORED;
+                }
+                /* Once opened, the retail menu owns input. In particular,
+                 * do not fall through to Firestaff's generic title route. */
+                return M11_GAME_INPUT_IGNORED;
+            }
             Nexus_V1_LauncherRuntimeStartupSnapshot snapshot;
             Nexus_V1_StartupTitleExecution execution;
             Nexus_V1_StartupHostActionReceipt receipt;

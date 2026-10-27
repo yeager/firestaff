@@ -71,6 +71,18 @@ context-to-champion mapping have not yet been captured. The button trace
 therefore establishes menu navigation only; Firestaff inventory and equip
 actions remain disabled until those runtime joins are verified.
 
+## Firestaff title keyboard ingress
+
+Firestaff now maps Enter and Space to the Nexus startup Action while the
+Nexus title is active, including both SDL key-event paths. At the ready title
+prompt, Action opens an internal retail-menu state with New Game selected;
+Down advances through the two observed selections. The title-menu state is
+kept separate from Firestaff's generic save/champion menu, and the shared
+Firestaff save mask is not treated as Saturn BKR availability. This input
+increment does not render the selected retail menu or execute its destinations.
+The New Game/Continue/Configuration consumers and mouse targeting remain
+blocked until their source, capture, and runtime routes are joined.
+
 ## Retail manual control model
 
 The Japanese retail manual's controller table (printed page 4) documents the

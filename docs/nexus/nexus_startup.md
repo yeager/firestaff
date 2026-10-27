@@ -425,6 +425,19 @@ Together, these are retail startup/input observations, not Firestaff parity.
 The capture environment, key mapping, and per-action limitations are recorded
 in [`parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`](../../parity-evidence/verification/keyboard-mouse-debug-20261024/README.md).
 
+## Firestaff title-menu keyboard state (2026-10-27)
+
+M11 now has a separate state for the observed Japanese retail title menu. The
+ready title prompt accepts the configured Action input to open New Game; Down
+selects Continue and then Configuration. Enter and Space feed Action only
+while the Nexus title is active. The menu choice is not drawn, and accepting
+New Game, Continue, or Configuration does not enter a production destination.
+Continue remains unavailable until Firestaff reads authentic Saturn BKR media;
+the generic Firestaff save-file mask is deliberately not reused. This is an
+input-state increment, not title-menu or gameplay parity. See the
+[Nexus input status](nexus_input.md#firestaff-title-keyboard-ingress) and
+[menu audit](nexus_menus.md).
+
 ## Retail Continue with an authentic save (2026-10-25)
 
 A second isolated Ymir `--debug` run used a reported retail-written 32 KiB

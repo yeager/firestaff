@@ -22214,6 +22214,20 @@ endif()
         COMMAND test_nexus_v1_m11_launcher_handoff_boundary
     )
 
+    add_executable(test_nexus_v1_m11_retail_title_menu
+        tests/test_nexus_v1_m11_retail_title_menu.c)
+    target_include_directories(test_nexus_v1_m11_retail_title_menu PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_nexus_v1_m11_retail_title_menu PRIVATE
+        firestaff_m11 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_m11_retail_title_menu
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME nexus_v1_m11_retail_title_menu
+        COMMAND test_nexus_v1_m11_retail_title_menu)
+
     # -- Theron V1 M12/M11 Launcher Handoff Boundary ---------------
     # Skip-safe gate: M12 launch intent routes the Theron catalog entry,
     # and real staged Track 02 data must enter M11 through the production
@@ -55338,7 +55352,8 @@ endif()
 # Nexus keyboard and hand-pointer host-input contract. Nexus A/D turns follow
 # the authenticated Ymir ControlPad capture; other movement keys use the
 # shared M11 action map. Z toggles the hand pointer and arrows move it in that
-# mode. This data-free regression does not invent retail game content.
+# mode; Return/Space activate the retail title only while it is active. This
+# input-contract regression does not invent retail game content.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_desktop_input_mapping.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/m11_game_input_mapping.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/input_remap_m11.c")

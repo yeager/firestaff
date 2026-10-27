@@ -155,8 +155,11 @@ not a fix and has not passed this real-media test.
   Updated 2026-10-27: the Japanese retail Ymir run now establishes a no-save
   cold boot to the native three-choice menu; a separate single Down press
   selects Continue, and Down/Down/A opens Configuration from that captured
-  menu state. This closes the retail-emulator behavior gap for those observed
-  routes, not Firestaff's runtime menu or the Saturn display consumer. The
+  menu state. Firestaff now retains the same bounded keyboard selection state
+  after the ready title prompt opens the menu, keeping it separate from its
+  generic save/champion route. This does not draw the selected menu or route
+  New Game, Continue, or Configuration into production consumers; continue
+  availability does not yet read Saturn BKR data. The
   repeated Continue capture again verifies all five Japanese TITLE.BIN sprites
   against 1,441 screenshot pixels, but its NBG0 bitmap has zero exact matches
   against authentic retail data. A later exploratory scan found the ordered

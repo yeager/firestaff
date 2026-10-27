@@ -21,11 +21,21 @@ int main(void)
           "retail title menu initializes with New Game selected");
     check(nexus_v1_retail_title_menu_reduce(
               &state,
+              NEXUS_V1_RETAIL_TITLE_MENU_INPUT_OPEN,
+              0) == NEXUS_V1_RETAIL_TITLE_MENU_RESULT_MENU_OPENED &&
+              state.menu_active,
+          "Start opens the retail menu with New Game selected");
+    check(nexus_v1_retail_title_menu_reduce(
+              &state,
               NEXUS_V1_RETAIL_TITLE_MENU_INPUT_ACCEPT,
               0) == NEXUS_V1_RETAIL_TITLE_MENU_RESULT_START_NEW_GAME,
-          "accepting initial New Game selects the observed new-game route");
+          "accepting New Game selects the observed new-game route");
 
     nexus_v1_retail_title_menu_init(&state);
+    check(nexus_v1_retail_title_menu_reduce(
+              &state, NEXUS_V1_RETAIL_TITLE_MENU_INPUT_OPEN, 0) ==
+              NEXUS_V1_RETAIL_TITLE_MENU_RESULT_MENU_OPENED,
+          "Start opens menu before navigation");
     check(nexus_v1_retail_title_menu_reduce(
               &state,
               NEXUS_V1_RETAIL_TITLE_MENU_INPUT_DOWN,

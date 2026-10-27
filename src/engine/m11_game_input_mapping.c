@@ -111,6 +111,22 @@ M12_MenuInput M11_TheronNavigationInputFromScancode(int scancode)
     }
 }
 
+M12_MenuInput M11_NexusStartupMenuInputFromScancode(int scancode,
+                                                    int title_active)
+{
+    if (!title_active) {
+        return M12_MENU_INPUT_NONE;
+    }
+    switch ((SDL_Scancode)scancode) {
+        case SDL_SCANCODE_RETURN:
+        case SDL_SCANCODE_KP_ENTER:
+        case SDL_SCANCODE_SPACE:
+            return M12_MENU_INPUT_ACTION;
+        default:
+            return M12_MENU_INPUT_NONE;
+    }
+}
+
 M12_MenuInput M11_NexusMovementInputFromScancode(int scancode)
 {
     /* The authenticated Ymir ControlPad profile maps host A/D to Saturn

@@ -179,6 +179,9 @@ M12_MenuInput M11_StartupSettingsHorizontalKeyInput(
 M12_MenuInput M11_TheronNavigationInputFromScancode(int scancode);
 /* Nexus D-pad-compatible turn aliases, restricted by the caller to Nexus. */
 M12_MenuInput M11_NexusMovementInputFromScancode(int scancode);
+/* Return/Space are title-menu Accept only while the Nexus title is active. */
+M12_MenuInput M11_NexusStartupMenuInputFromScancode(int scancode,
+                                                    int title_active);
 M12_MenuInput M11_NexusLeaderInputFromScancode(int scancode, int shift_down);
 M12_MenuInput M11_NexusPointerInputFromScancode(int scancode);
 M12_MenuInput M11_NexusPointerInputFromDirections(int up, int down,

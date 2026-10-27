@@ -17,23 +17,26 @@ typedef enum {
 } Nexus_V1_RetailTitleMenuSelection;
 
 typedef enum {
-    NEXUS_V1_RETAIL_TITLE_MENU_INPUT_DOWN = 0,
-    NEXUS_V1_RETAIL_TITLE_MENU_INPUT_ACCEPT = 1,
-    NEXUS_V1_RETAIL_TITLE_MENU_INPUT_UNSUPPORTED = 2
+    NEXUS_V1_RETAIL_TITLE_MENU_INPUT_OPEN = 0,
+    NEXUS_V1_RETAIL_TITLE_MENU_INPUT_DOWN = 1,
+    NEXUS_V1_RETAIL_TITLE_MENU_INPUT_ACCEPT = 2,
+    NEXUS_V1_RETAIL_TITLE_MENU_INPUT_UNSUPPORTED = 3
 } Nexus_V1_RetailTitleMenuInput;
 
 typedef enum {
     NEXUS_V1_RETAIL_TITLE_MENU_RESULT_INVALID = 0,
-    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNCHANGED = 1,
-    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED = 2,
-    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_START_NEW_GAME = 3,
-    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_NO_CONTINUE_SAVE = 4,
-    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SHOW_LOAD_PANEL = 5,
-    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SHOW_CONFIGURATION = 6,
-    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNVERIFIED_INPUT = 7
+    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_MENU_OPENED = 1,
+    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNCHANGED = 2,
+    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED = 3,
+    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_START_NEW_GAME = 4,
+    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_NO_CONTINUE_SAVE = 5,
+    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SHOW_LOAD_PANEL = 6,
+    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SHOW_CONFIGURATION = 7,
+    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNVERIFIED_INPUT = 8
 } Nexus_V1_RetailTitleMenuResult;
 
 typedef struct {
+    int menu_active;
     Nexus_V1_RetailTitleMenuSelection selection;
 } Nexus_V1_RetailTitleMenuState;
 
@@ -41,9 +44,9 @@ typedef struct {
 void nexus_v1_retail_title_menu_init(Nexus_V1_RetailTitleMenuState *state);
 
 /*
- * Apply a captured menu input. Down is admitted only for the observed
- * NEW GAME -> CONTINUE -> CONFIGURATION transitions. Accept actions reflect
- * the retained retail observations; `continue_save_available` must be derived
+ * OPEN begins at the observed start prompt. Down is admitted only for the
+ * observed NEW GAME -> CONTINUE -> CONFIGURATION transitions. Accept actions
+ * reflect the retained retail observations; `continue_save_available` must be derived
  * by the caller from real save media, never inferred by this reducer.
  * Unsupported directions and unobserved movement beyond CONFIGURATION leave
  * state unchanged and return UNVERIFIED_INPUT.
