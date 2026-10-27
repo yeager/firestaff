@@ -84,7 +84,7 @@ msgid "GAME"
 msgstr "HRA"
 
 #: src/ui/menu_startup_m12.c:324 src/ui/menu_startup_m12.c:6423
-#: src/ui/menu_startup_m12.c:11576
+#: src/ui/menu_startup_m12.c:11608
 msgid "GRAPHICS"
 msgstr "GRAFIKA"
 
@@ -412,8 +412,8 @@ msgstr "VULKAN"
 msgid "AVAILABLE"
 msgstr "AVAILABLE"
 
-#: src/ui/menu_startup_m12.c:560 src/ui/menu_startup_m12.c:11601
-#: src/ui/menu_startup_m12.c:13776 src/ui/menu_startup_render_modern_m12.c:2127
+#: src/ui/menu_startup_m12.c:560 src/ui/menu_startup_m12.c:11633
+#: src/ui/menu_startup_m12.c:13808 src/ui/menu_startup_render_modern_m12.c:2127
 msgid "UNAVAILABLE"
 msgstr "UNAVAILABLE"
 
@@ -526,14 +526,14 @@ msgid "REMASTERED"
 msgstr "REMASTROVANÉ"
 
 #: src/ui/menu_startup_m12.c:859 src/ui/menu_startup_m12.c:880
-#: src/ui/menu_startup_m12.c:11016 src/ui/menu_startup_m12.c:11459
+#: src/ui/menu_startup_m12.c:11048 src/ui/menu_startup_m12.c:11491
 #: src/ui/menu_startup_render_modern_m12.c:1543
 #: src/ui/menu_startup_render_modern_m12.c:2788
 msgid "DUNGEON MASTER"
 msgstr "DUNGEON MASTER"
 
 #: src/ui/menu_startup_m12.c:860 src/ui/menu_startup_m12.c:890
-#: src/ui/menu_startup_m12.c:11018 src/ui/menu_startup_m12.c:11473
+#: src/ui/menu_startup_m12.c:11050 src/ui/menu_startup_m12.c:11505
 #: src/ui/menu_startup_render_modern_m12.c:1544
 #: src/ui/menu_startup_render_modern_m12.c:2791
 msgid "CHAOS STRIKES BACK"
@@ -560,16 +560,16 @@ msgstr "CSB UTILITY DISK (FM TOWNS)"
 msgid "CSB UTILITY DISK — HINT ORACLE"
 msgstr "CSB UTILITY DISK — TIP ORACLE"
 
-#: src/ui/menu_startup_m12.c:867 src/ui/menu_startup_m12.c:12554
-#: src/ui/menu_startup_m12.c:12557 src/ui/menu_startup_render_modern_m12.c:1902
+#: src/ui/menu_startup_m12.c:867 src/ui/menu_startup_m12.c:12586
+#: src/ui/menu_startup_m12.c:12589 src/ui/menu_startup_render_modern_m12.c:1902
 #: src/ui/menu_startup_render_modern_m12.c:2175
 msgid "MUSEUM OF LORE"
 msgstr "MUZEUM LEGEND"
 
-#: src/ui/menu_startup_m12.c:868 src/ui/menu_startup_m12.c:9352
-#: src/ui/menu_startup_m12.c:9924 src/ui/menu_startup_m12.c:11212
-#: src/ui/menu_startup_m12.c:12589 src/ui/menu_startup_m12.c:12592
-#: src/ui/menu_startup_m12.c:12737
+#: src/ui/menu_startup_m12.c:868 src/ui/menu_startup_m12.c:9384
+#: src/ui/menu_startup_m12.c:9956 src/ui/menu_startup_m12.c:11244
+#: src/ui/menu_startup_m12.c:12621 src/ui/menu_startup_m12.c:12624
+#: src/ui/menu_startup_m12.c:12769
 msgid "SETTINGS"
 msgstr "SETTINGS"
 
@@ -789,8 +789,8 @@ msgstr "V1 ZACHOVÁVÁ ZÁKLADNÍ CHOVÁNÍ"
 msgid "CHRISTOPHE FONTANEL DOCUMENTED VITAL HISTORY"
 msgstr "CHRISTOPHE FONTANEL ZDOKUMENTOVAL DŮLEŽITOU HISTORII"
 
-#: src/ui/menu_startup_m12.c:914 src/ui/menu_startup_m12.c:12571
-#: src/ui/menu_startup_m12.c:12574
+#: src/ui/menu_startup_m12.c:914 src/ui/menu_startup_m12.c:12603
+#: src/ui/menu_startup_m12.c:12606
 msgid "CREDITS"
 msgstr "TITULKY"
 
@@ -934,8 +934,8 @@ msgstr "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
 msgid "PERSISTED OPTIONS"
 msgstr "PERSISTED OPTIONS"
 
-#: src/ui/menu_startup_m12.c:1138 src/ui/menu_startup_m12.c:11574
-#: src/ui/menu_startup_m12.c:13788
+#: src/ui/menu_startup_m12.c:1138 src/ui/menu_startup_m12.c:11606
+#: src/ui/menu_startup_m12.c:13820
 msgid "LANGUAGE"
 msgstr "LANGUAGE"
 
@@ -959,8 +959,8 @@ msgstr "WINDOW MODE"
 msgid "CHANGES SAVE IMMEDIATELY TO CONFIG"
 msgstr "CHANGES SAVE IMMEDIATELY TO CONFIG"
 
-#: src/ui/menu_startup_m12.c:1144 src/ui/menu_startup_m12.c:11905
-#: src/ui/menu_startup_m12.c:11948
+#: src/ui/menu_startup_m12.c:1144 src/ui/menu_startup_m12.c:11937
+#: src/ui/menu_startup_m12.c:11980
 msgid "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
 msgstr "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
 
@@ -968,7 +968,7 @@ msgstr "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
 msgid "ENTER OR ESC RETURNS TO MENU"
 msgstr "ENTER OR ESC RETURNS TO MENU"
 
-#: src/ui/menu_startup_m12.c:1146 src/ui/menu_startup_m12.c:9362
+#: src/ui/menu_startup_m12.c:1146 src/ui/menu_startup_m12.c:9394
 msgid "READY TO LAUNCH"
 msgstr "READY TO LAUNCH"
 
@@ -1042,11 +1042,11 @@ msgstr "ARCHIVE: %s  OPTION: %s"
 msgid "RESTART WITH THE OPTION, THEN RESCAN GAME DATA"
 msgstr "RESTART WITH THE OPTION, THEN RESCAN GAME DATA"
 
-#: src/ui/menu_startup_m12.c:2040 src/ui/menu_startup_m12.c:9935
+#: src/ui/menu_startup_m12.c:2040 src/ui/menu_startup_m12.c:9967
 msgid "Dungeon Master"
 msgstr "Dungeon Master"
 
-#: src/ui/menu_startup_m12.c:2042 src/ui/menu_startup_m12.c:9935
+#: src/ui/menu_startup_m12.c:2042 src/ui/menu_startup_m12.c:9967
 msgid "Chaos Strikes Back"
 msgstr "Chaos Strikes Back"
 
@@ -1058,7 +1058,7 @@ msgstr "Dungeon Master II: The Legend of Skullkeep"
 msgid "Dungeon Master Nexus"
 msgstr "Dungeon Master Nexus"
 
-#: src/ui/menu_startup_m12.c:2049 src/ui/menu_startup_m12.c:9936
+#: src/ui/menu_startup_m12.c:2049 src/ui/menu_startup_m12.c:9968
 msgid "Theron's Quest"
 msgstr "Theron's Quest"
 
@@ -1084,7 +1084,7 @@ msgid "BUILDING SEARCH ROOTS"
 msgstr "KOŘENY HLEDÁNÍ STAVEB"
 
 #: src/ui/menu_startup_m12.c:2081 src/ui/menu_startup_m12.c:2083
-#: src/ui/menu_startup_m12.c:10752
+#: src/ui/menu_startup_m12.c:10784
 msgid "CHECKING ORIGINAL FILE CANDIDATES"
 msgstr "KONTROLA KANDIDÁTŮ ORIGINÁLNÍCH SOUBORŮ"
 
@@ -1099,9 +1099,9 @@ msgstr "ODPOVÍDAJÍCÍ POŽADOVANÉ SOUBORY"
 #: src/ui/menu_startup_m12.c:2093 src/ui/menu_startup_m12.c:2098
 #: src/ui/menu_startup_m12.c:2464 src/ui/menu_startup_m12.c:2573
 #: src/ui/menu_startup_m12.c:2831 src/ui/menu_startup_m12.c:2940
-#: src/ui/menu_startup_m12.c:10750 src/ui/menu_startup_m12.c:10760
-#: src/ui/menu_startup_m12.c:11896 src/ui/menu_startup_m12.c:11942
-#: src/ui/menu_startup_m12.c:14644
+#: src/ui/menu_startup_m12.c:10782 src/ui/menu_startup_m12.c:10792
+#: src/ui/menu_startup_m12.c:11928 src/ui/menu_startup_m12.c:11974
+#: src/ui/menu_startup_m12.c:14676
 msgid "SCANNING GAME DATA"
 msgstr "PROHLEDÁVÁNÍ HERNÍCH DAT"
 
@@ -1139,8 +1139,8 @@ msgstr "%d FOLDER REQUIRES ACCESS"
 msgid "ALLOW ACCESS IN SYSTEM SETTINGS, THEN RESCAN"
 msgstr "ALLOW ACCESS IN SYSTEM SETTINGS, THEN RESCAN"
 
-#: src/ui/menu_startup_m12.c:2373 src/ui/menu_startup_m12.c:10685
-#: src/ui/menu_startup_m12.c:10819
+#: src/ui/menu_startup_m12.c:2373 src/ui/menu_startup_m12.c:10717
+#: src/ui/menu_startup_m12.c:10851
 msgid "TITLE START AVAILABLE"
 msgstr "TITLE START AVAILABLE"
 
@@ -1161,12 +1161,12 @@ msgid "WAITING FOR CURRENT FILE CHECK TO FINISH"
 msgstr "ČEKÁNÍ NA DOKONČENÍ KONTROLY AKTUÁLNÍHO SOUBORU"
 
 #: src/ui/menu_startup_m12.c:2741 src/ui/menu_startup_m12.c:2968
-#: src/ui/menu_startup_m12.c:14597
+#: src/ui/menu_startup_m12.c:14629
 msgid "DATA SCAN CANCELLED"
 msgstr "SKENOVÁNÍ DAT ZRUŠENO"
 
 #: src/ui/menu_startup_m12.c:2742 src/ui/menu_startup_m12.c:2971
-#: src/ui/menu_startup_m12.c:10762 src/ui/menu_startup_m12.c:14600
+#: src/ui/menu_startup_m12.c:10794 src/ui/menu_startup_m12.c:14632
 msgid "GAME AVAILABILITY WAS NOT UPDATED"
 msgstr "DOSTUPNOST HRY NEBYLA AKTUALIZOVÁNA"
 
@@ -1175,11 +1175,11 @@ msgid "DATA DIRECTORY NOT FOUND"
 msgstr "HERNÍ DATA NENALEZENA"
 
 #: src/ui/menu_startup_m12.c:2784 src/ui/menu_startup_m12.c:2924
-#: src/ui/menu_startup_m12.c:2972 src/ui/menu_startup_m12.c:14601
+#: src/ui/menu_startup_m12.c:2972 src/ui/menu_startup_m12.c:14633
 msgid "CHOOSE AN EXISTING FOLDER"
 msgstr "VYBERTE STÁVAJÍCÍ SLOŽKU"
 
-#: src/ui/menu_startup_m12.c:2969 src/ui/menu_startup_m12.c:14598
+#: src/ui/menu_startup_m12.c:2969 src/ui/menu_startup_m12.c:14630
 msgid "DATA SCAN FAILED"
 msgstr "SKENOVÁNÍ DAT SE NEZDALO"
 
@@ -1211,7 +1211,7 @@ msgstr "EXPORT PC34 SE NEZDAŘIL"
 msgid "CHECK QUICK RESUME SAVE"
 msgstr "ZKONTROLUJTE RYCHLÉ OBNOVENÍ ULOŽIT"
 
-#: src/ui/menu_startup_m12.c:3147 src/ui/menu_startup_m12.c:14077
+#: src/ui/menu_startup_m12.c:3147 src/ui/menu_startup_m12.c:14109
 msgid "NO SAVES FOUND"
 msgstr "NEBYLA NALEZENA ŽÁDNÁ HERNÍ DATA"
 
@@ -1252,7 +1252,7 @@ msgid "CUSTOM MUSIC"
 msgstr "VLASTNÍ"
 
 #: src/ui/menu_startup_m12.c:3510 src/ui/menu_startup_m12.c:3519
-#: src/ui/menu_startup_m12.c:14312 src/ui/menu_startup_m12.c:14317
+#: src/ui/menu_startup_m12.c:14344 src/ui/menu_startup_m12.c:14349
 msgid "CUSTOM MUSIC FOLDER UNCHANGED"
 msgstr "CUSTOM MUSIC FOLDER UNCHANGED"
 
@@ -1275,7 +1275,7 @@ msgid "SELECT A BROAD TTF OR OTF FONT"
 msgstr "VYBERTE ŠIROKÉ PÍSMO TTF NEBO OTF"
 
 #: src/ui/menu_startup_m12.c:3547 src/ui/menu_startup_m12.c:3555
-#: src/ui/menu_startup_m12.c:14349
+#: src/ui/menu_startup_m12.c:14381
 msgid "UNICODE FONT UNCHANGED"
 msgstr "PÍSMO UNICODE NEZMĚNĚNO"
 
@@ -1288,7 +1288,7 @@ msgid "SELECT A .FSART FILE"
 msgstr "VYBERTE CÍL"
 
 #: src/ui/menu_startup_m12.c:3605 src/ui/menu_startup_m12.c:3613
-#: src/ui/menu_startup_m12.c:14390
+#: src/ui/menu_startup_m12.c:14422
 msgid "V2.2 ARTPACK UNCHANGED"
 msgstr "ARTPACK V2.2 NEZMĚNĚNÝ"
 
@@ -1296,8 +1296,8 @@ msgstr "ARTPACK V2.2 NEZMĚNĚNÝ"
 msgid "NEEDS LOGIN"
 msgstr "POTŘEBUJE SE PŘIHLÁSIT"
 
-#: src/ui/menu_startup_m12.c:6118 src/ui/menu_startup_m12.c:11897
-#: src/ui/menu_startup_m12.c:11943
+#: src/ui/menu_startup_m12.c:6118 src/ui/menu_startup_m12.c:11929
+#: src/ui/menu_startup_m12.c:11975
 msgid "READY"
 msgstr "PŘIPRAVEN"
 
@@ -1317,7 +1317,7 @@ msgstr "NASTAVENÍ"
 msgid "SCALE"
 msgstr "SCALE"
 
-#: src/ui/menu_startup_m12.c:6268 src/ui/menu_startup_m12.c:13836
+#: src/ui/menu_startup_m12.c:6268 src/ui/menu_startup_m12.c:13868
 msgid "ASPECT RATIO"
 msgstr "ASPECT RATIO"
 
@@ -1453,7 +1453,7 @@ msgstr "RETROACHIEVEMENTS API TOKEN"
 msgid "RETROACHIEVEMENTS SERVER"
 msgstr "SERVER PRO RETROACHIEVEMENTS"
 
-#: src/ui/menu_startup_m12.c:6303 src/ui/menu_startup_m12.c:14032
+#: src/ui/menu_startup_m12.c:6303 src/ui/menu_startup_m12.c:14064
 msgid "SAVE BROWSER"
 msgstr "ULOŽIT PROHLÍŽEČ"
 
@@ -1541,7 +1541,7 @@ msgstr "ČTĚTE..."
 msgid "GENERAL"
 msgstr "OBECNÉ"
 
-#: src/ui/menu_startup_m12.c:6426 src/ui/menu_startup_m12.c:13727
+#: src/ui/menu_startup_m12.c:6426 src/ui/menu_startup_m12.c:13759
 msgid "RENDERER"
 msgstr "RENDERER"
 
@@ -1561,314 +1561,314 @@ msgstr "DEBUG"
 msgid "APPEARANCE"
 msgstr "VZHLED"
 
-#: src/ui/menu_startup_m12.c:6969 src/ui/menu_startup_m12.c:7028
-#: src/ui/menu_startup_m12.c:11898 src/ui/menu_startup_m12.c:11944
+#: src/ui/menu_startup_m12.c:6969 src/ui/menu_startup_m12.c:7060
+#: src/ui/menu_startup_m12.c:11930 src/ui/menu_startup_m12.c:11976
 msgid "DATA FILES NOT FOUND"
 msgstr "SOUBORY ORIGINÁLU NEBYLY NALEZENY"
 
-#: src/ui/menu_startup_m12.c:7028
+#: src/ui/menu_startup_m12.c:7060
 msgid "ENTER FOR GAME MENU"
 msgstr "ENTER NEBO ESC SE VRÁTÍ DO MENU"
 
-#: src/ui/menu_startup_m12.c:7029
+#: src/ui/menu_startup_m12.c:7061
 msgid "THIS GAME IS NOT SUPPORTED YET"
 msgstr "TATO HRA ZATÍM NENÍ PODPOROVÁNA"
 
-#: src/ui/menu_startup_m12.c:7143
+#: src/ui/menu_startup_m12.c:7175
 msgid "NO DM1 SAVES FOUND"
 msgstr "NEBYLA NALEZENA ŽÁDNÁ HERNÍ DATA"
 
-#: src/ui/menu_startup_m12.c:7144
+#: src/ui/menu_startup_m12.c:7176
 msgid "SAVE OR IMPORT DM1 FIRST"
 msgstr "NEJPRVE ULOŽTE NEBO IMPORTOVAT DM1"
 
-#: src/ui/menu_startup_m12.c:7574
+#: src/ui/menu_startup_m12.c:7606
 msgid "LOADING SAVE"
 msgstr "NAČÍTÁNÍ ULOŽIT"
 
-#: src/ui/menu_startup_m12.c:7616
+#: src/ui/menu_startup_m12.c:7648
 msgid "IMPORTING PARTY"
 msgstr "DOVOZ PARTY"
 
-#: src/ui/menu_startup_m12.c:7654
+#: src/ui/menu_startup_m12.c:7686
 msgid "IMPORT DM1 PARTY TO CSB?"
 msgstr "IMPORTOVAT DM1 PARTY DO CSB?"
 
-#: src/ui/menu_startup_m12.c:7656
+#: src/ui/menu_startup_m12.c:7688
 msgid "ENTER IMPORTS / ESC CANCELS"
 msgstr "ZADEJTE IMPORTY / ESC ZRUŠÍ"
 
-#: src/ui/menu_startup_m12.c:7668
+#: src/ui/menu_startup_m12.c:7700
 msgid "ESC SETTINGS"
 msgstr "NASTAVENÍ"
 
-#: src/ui/menu_startup_m12.c:7672
+#: src/ui/menu_startup_m12.c:7704
 msgid "ENTER LOAD   ACTION IMPORTS TO CSB   SAVE EXPORTS PC34   ESC SETTINGS"
 msgstr "ZADEJTE NAČTÍT AKCI IMPORTY DO CSB ULOŽIT EXPORTY PC34 NASTAVENÍ ESC"
 
-#: src/ui/menu_startup_m12.c:7674
+#: src/ui/menu_startup_m12.c:7706
 msgid "ENTER LOAD   ESC SETTINGS"
 msgstr "ENTER NEBO ESC SE VRÁTÍ DO MENU"
 
-#: src/ui/menu_startup_m12.c:9147 src/ui/menu_startup_m12.c:9359
+#: src/ui/menu_startup_m12.c:9179 src/ui/menu_startup_m12.c:9391
 msgid "NO SOURCE"
 msgstr "ŽÁDNÝ ZDROJ"
 
-#: src/ui/menu_startup_m12.c:9355
+#: src/ui/menu_startup_m12.c:9387
 msgid "SELECT TO VERIFY ORIGINAL DATA"
 msgstr "ORIGINÁL"
 
-#: src/ui/menu_startup_m12.c:9364
+#: src/ui/menu_startup_m12.c:9396
 msgid "MISSING OR MISMATCHED"
 msgstr "CHYBÍ NEBO NESOUHLASÍ"
 
-#: src/ui/menu_startup_m12.c:9924 src/ui/menu_startup_render_modern_m12.c:2103
+#: src/ui/menu_startup_m12.c:9956 src/ui/menu_startup_render_modern_m12.c:2103
 msgid "EXTRAS"
 msgstr "DOPLŇKY"
 
-#: src/ui/menu_startup_m12.c:9924
+#: src/ui/menu_startup_m12.c:9956
 msgid "PLAY"
 msgstr "HRÁT"
 
-#: src/ui/menu_startup_m12.c:9924
+#: src/ui/menu_startup_m12.c:9956
 msgid "QUIT"
 msgstr "KONEC"
 
-#: src/ui/menu_startup_m12.c:9928
+#: src/ui/menu_startup_m12.c:9960
 msgid "Start or continue a game"
 msgstr "Spustit nebo pokračovat ve hře"
 
-#: src/ui/menu_startup_m12.c:9929
+#: src/ui/menu_startup_m12.c:9961
 msgid "Display, video, audio and controls"
 msgstr "Zobrazení, video, zvuk a ovládání"
 
-#: src/ui/menu_startup_m12.c:9930
+#: src/ui/menu_startup_m12.c:9962
 msgid "Museum, bestiary, spell reference and more"
 msgstr "Muzeum, bestiář, přehled kouzel a další"
 
-#: src/ui/menu_startup_m12.c:9931
+#: src/ui/menu_startup_m12.c:9963
 msgid "Exit Firestaff"
 msgstr "Ukončit Firestaff"
 
-#: src/ui/menu_startup_m12.c:9936
+#: src/ui/menu_startup_m12.c:9968
 msgid "DM Nexus"
 msgstr "DM Nexus"
 
-#: src/ui/menu_startup_m12.c:9936
+#: src/ui/menu_startup_m12.c:9968
 msgid "Dungeon Master II"
 msgstr "Dungeon Master II"
 
-#: src/ui/menu_startup_m12.c:9945
+#: src/ui/menu_startup_m12.c:9977
 msgid "V1 / V2.0 / V2.1 / V2.2"
 msgstr "V1 / V2.0 / V2.1 / V2.2"
 
-#: src/ui/menu_startup_m12.c:9946 src/ui/menu_startup_m12.c:9947
+#: src/ui/menu_startup_m12.c:9978 src/ui/menu_startup_m12.c:9979
 msgid "V1 / V2"
 msgstr "V1 / V2"
 
-#: src/ui/menu_startup_m12.c:9948
+#: src/ui/menu_startup_m12.c:9980
 msgid "V1 / SATURN CAPTURE GATED"
 msgstr "V1 / ZÁZNAM SATURN UZAMČEN"
 
-#: src/ui/menu_startup_m12.c:9949
+#: src/ui/menu_startup_m12.c:9981
 msgid "V1 Only (Phase 1)"
 msgstr "Pouze V1 (fáze 1)"
 
-#: src/ui/menu_startup_m12.c:9952 src/ui/menu_startup_m12.c:9953
-#: src/ui/menu_startup_m12.c:9954 src/ui/menu_startup_m12.c:9955
-#: src/ui/menu_startup_m12.c:9956
+#: src/ui/menu_startup_m12.c:9984 src/ui/menu_startup_m12.c:9985
+#: src/ui/menu_startup_m12.c:9986 src/ui/menu_startup_m12.c:9987
+#: src/ui/menu_startup_m12.c:9988
 msgid "No data files"
 msgstr "Žádné datové soubory"
 
-#: src/ui/menu_startup_m12.c:10686
+#: src/ui/menu_startup_m12.c:10718
 msgid "MENU AND CAPTURE PROOFS NOT READY"
 msgstr "MENU AND CAPTURE PROOFS NOT READY"
 
-#: src/ui/menu_startup_m12.c:10687
+#: src/ui/menu_startup_m12.c:10719
 msgid "TITLE START"
 msgstr "TITLE START"
 
-#: src/ui/menu_startup_m12.c:10688
+#: src/ui/menu_startup_m12.c:10720
 msgid "VERIFIED SOURCE DATA"
 msgstr "VERIFIED SOURCE DATA"
 
-#: src/ui/menu_startup_m12.c:10823
+#: src/ui/menu_startup_m12.c:10855
 msgid "VERIFIED TITLE START; MENU AND CAPTURE STILL GATED"
 msgstr "VERIFIED TITLE START; MENU AND CAPTURE STILL GATED"
 
-#: src/ui/menu_startup_m12.c:10861
+#: src/ui/menu_startup_m12.c:10893
 msgid "New Game (Original)"
 msgstr "Nová hra (originál)"
 
-#: src/ui/menu_startup_m12.c:10862
+#: src/ui/menu_startup_m12.c:10894
 msgid "New Game (Original + Filters)"
 msgstr "Nová hra (originál + filtry)"
 
-#: src/ui/menu_startup_m12.c:10863
+#: src/ui/menu_startup_m12.c:10895
 msgid "New Game (Original 10x Upscale)"
 msgstr "Nová hra (originál 10x zvětšení)"
 
-#: src/ui/menu_startup_m12.c:10864
+#: src/ui/menu_startup_m12.c:10896
 msgid "Continue Saved Game"
 msgstr "Pokračovat v uložené hře"
 
-#: src/ui/menu_startup_m12.c:10865
+#: src/ui/menu_startup_m12.c:10897
 msgid "New Game (Modern Graphics)"
 msgstr "Nová hra (moderní grafika)"
 
-#: src/ui/menu_startup_m12.c:10873
+#: src/ui/menu_startup_m12.c:10905
 msgid "Museum of Lore"
 msgstr "Muzeum legend"
 
-#: src/ui/menu_startup_m12.c:10874
+#: src/ui/menu_startup_m12.c:10906
 msgid "Manual / Docs"
 msgstr "Manuál / Dokumentace"
 
-#: src/ui/menu_startup_m12.c:10875
+#: src/ui/menu_startup_m12.c:10907
 msgid "Bestiary"
 msgstr "Bestiář"
 
-#: src/ui/menu_startup_m12.c:10876
+#: src/ui/menu_startup_m12.c:10908
 msgid "Spell Reference"
 msgstr "Přehled kouzel"
 
-#: src/ui/menu_startup_m12.c:10877
+#: src/ui/menu_startup_m12.c:10909
 msgid "Map Viewer"
 msgstr "Prohlížeč map"
 
-#: src/ui/menu_startup_m12.c:10878
+#: src/ui/menu_startup_m12.c:10910
 msgid "Item Encyclopedia"
 msgstr "Encyklopedie předmětů"
 
-#: src/ui/menu_startup_m12.c:10879
+#: src/ui/menu_startup_m12.c:10911
 msgid "Changelog"
 msgstr "Seznam změn"
 
-#: src/ui/menu_startup_m12.c:10880
+#: src/ui/menu_startup_m12.c:10912
 msgid "Screenshot Gallery"
 msgstr "Galerie snímků obrazovky"
 
-#: src/ui/menu_startup_m12.c:10909
+#: src/ui/menu_startup_m12.c:10941
 msgid "NO DATA SOURCE YET"
 msgstr "ŽÁDNÝ ZDROJ"
 
-#: src/ui/menu_startup_m12.c:10982
+#: src/ui/menu_startup_m12.c:11014
 msgid "Up/Down Navigate  |  Enter Select"
 msgstr "Nahoru/dolů navigace  |  Enter výběr"
 
-#: src/ui/menu_startup_m12.c:11006
+#: src/ui/menu_startup_m12.c:11038
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Select"
 msgstr "Escape zpět  |  Nahoru/dolů navigace  |  Enter výběr"
 
-#: src/ui/menu_startup_m12.c:11035
+#: src/ui/menu_startup_m12.c:11067
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Start"
 msgstr "Escape zpět  |  Nahoru/dolů navigace  |  Enter start"
 
-#: src/ui/menu_startup_m12.c:11059
+#: src/ui/menu_startup_m12.c:11091
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Open"
 msgstr "Escape zpět  |  Nahoru/dolů navigace  |  Enter otevřít"
 
-#: src/ui/menu_startup_m12.c:11203
+#: src/ui/menu_startup_m12.c:11235
 msgid "< > Switch tab   Up/Down Navigate   Enter Change"
 msgstr "< > přepnout kartu   Nahoru/dolů navigace   Enter změnit"
 
-#: src/ui/menu_startup_m12.c:11862 src/ui/menu_startup_render_modern_m12.c:2321
+#: src/ui/menu_startup_m12.c:11894 src/ui/menu_startup_render_modern_m12.c:2321
 msgid "NO SUPPORTED NATIVE PLATFORM"
 msgstr "ŽÁDNÁ PODPOROVANÁ NATIVNÍ PLATFORMA"
 
-#: src/ui/menu_startup_m12.c:11863
+#: src/ui/menu_startup_m12.c:11895
 msgid "ESC BACK"
 msgstr "ESC BACK"
 
-#: src/ui/menu_startup_m12.c:11884
+#: src/ui/menu_startup_m12.c:11916
 msgid "V2.1 UPSCALED"
 msgstr "V2.1 UPSCALED"
 
-#: src/ui/menu_startup_m12.c:13704
+#: src/ui/menu_startup_m12.c:13736
 msgid "GAME OPTIONS"
 msgstr "MOŽNOSTI HRY"
 
-#: src/ui/menu_startup_m12.c:13741
+#: src/ui/menu_startup_m12.c:13773
 msgid "ARCHITECTURE"
 msgstr "STAV ARCHIVU"
 
-#: src/ui/menu_startup_m12.c:13754
+#: src/ui/menu_startup_m12.c:13786
 msgid "VERSION"
 msgstr "VERZE"
 
-#: src/ui/menu_startup_m12.c:13775
+#: src/ui/menu_startup_m12.c:13807
 msgid "PATCH"
 msgstr "PATCH"
 
-#: src/ui/menu_startup_m12.c:13801
+#: src/ui/menu_startup_m12.c:13833
 msgid "CHEATS"
 msgstr "CHEATS"
 
-#: src/ui/menu_startup_m12.c:13814
+#: src/ui/menu_startup_m12.c:13846
 msgid "SPEED"
 msgstr "SPEED"
 
-#: src/ui/menu_startup_m12.c:13826
+#: src/ui/menu_startup_m12.c:13858
 msgid "ENABLE CHEATS TO UNLOCK SPEED / HOTKEYS"
 msgstr "AKTIVUJTE PODVÁDĚNÍ PRO ODEMČENÍ RYCHLOSTI / KLÁVESOVÝCH ZKRATEK"
 
-#: src/ui/menu_startup_m12.c:13848
+#: src/ui/menu_startup_m12.c:13880
 msgid "LOCKED BY V1 ORIGINAL MODE"
 msgstr "UZAMČENO REŽIMEM V1 ORIGINÁL"
 
-#: src/ui/menu_startup_m12.c:13858
+#: src/ui/menu_startup_m12.c:13890
 msgid "RESOLUTION"
 msgstr "RESOLUTION"
 
-#: src/ui/menu_startup_m12.c:13872
+#: src/ui/menu_startup_m12.c:13904
 msgid "LOCKED BY V2.0 FILTERED MODE"
 msgstr "UZAMČENO REŽIMEM V1 ORIGINÁL"
 
-#: src/ui/menu_startup_m12.c:13893
+#: src/ui/menu_startup_m12.c:13925
 msgid "> DATA FILES NOT FOUND"
 msgstr "SOUBORY ORIGINÁLU NEBYLY NALEZENY"
 
-#: src/ui/menu_startup_m12.c:13895
+#: src/ui/menu_startup_m12.c:13927
 msgid "> RENDERER UNAVAILABLE"
 msgstr "JÁDRO VYKRESLOVÁNÍ NEDOSTUPNÉ"
 
-#: src/ui/menu_startup_m12.c:13896
+#: src/ui/menu_startup_m12.c:13928
 msgid "> LAUNCH"
 msgstr "> SPUSTIT"
 
-#: src/ui/menu_startup_m12.c:13909
+#: src/ui/menu_startup_m12.c:13941
 msgid "ESC: BACK  ARROWS: NAVIGATE  ENTER: SELECT"
 msgstr "ESC: ZPĚT  ŠIPKY: NAVIGACE  ENTER: VYBRAT"
 
-#: src/ui/menu_startup_m12.c:14307
+#: src/ui/menu_startup_m12.c:14339
 msgid "CUSTOM MUSIC FOLDER SELECTED"
 msgstr "CUSTOM MUSIC FOLDER SELECTED"
 
-#: src/ui/menu_startup_m12.c:14313
+#: src/ui/menu_startup_m12.c:14345
 msgid "NO FOLDER SELECTED"
 msgstr "NO FOLDER SELECTED"
 
-#: src/ui/menu_startup_m12.c:14318
+#: src/ui/menu_startup_m12.c:14350
 msgid "FOLDER MISSING OR PATH TOO LONG"
 msgstr "FOLDER MISSING OR PATH TOO LONG"
 
-#: src/ui/menu_startup_m12.c:14343
+#: src/ui/menu_startup_m12.c:14375
 msgid "UNICODE FONT SELECTED"
 msgstr "VYBRANÉ PÍSMO UNICODE"
 
-#: src/ui/menu_startup_m12.c:14351 src/ui/menu_startup_m12.c:14392
+#: src/ui/menu_startup_m12.c:14383 src/ui/menu_startup_m12.c:14424
 msgid "NO FILE SELECTED"
 msgstr "ŽÁDNÝ SOUBOR NEVYBRÁN"
 
-#: src/ui/menu_startup_m12.c:14352 src/ui/menu_startup_m12.c:14393
+#: src/ui/menu_startup_m12.c:14384 src/ui/menu_startup_m12.c:14425
 msgid "FILE PATH TOO LONG"
 msgstr "FILE PATH TOO LONG"
 
-#: src/ui/menu_startup_m12.c:14377
+#: src/ui/menu_startup_m12.c:14409
 msgid "V2.2 ARTPACK SELECTED"
 msgstr "VYBRANÝ ARTPACK V2.2"
 
-#: src/ui/menu_startup_m12.c:14383
+#: src/ui/menu_startup_m12.c:14415
 msgid "V2.2 ARTPACK REJECTED"
 msgstr "ARTPACK V2.2 ODMÍTNUT"
 
