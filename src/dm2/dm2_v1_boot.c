@@ -3582,6 +3582,72 @@ static int dm2_v1_boot_load_amiga_installer_from_zip(
     return 0;
 }
 
+/* An extracted original Amiga install keeps these three startup streams
+ * beside GRAPHICS.DAT. Give M11 ownership only when every file matches its
+ * authenticated installer payload and parses as the original AN stream.
+ * This reads the user-owned files into bounded RAM; it does not materialize
+ * or synthesize game data. The AN file framing follows DMWeb's animation
+ * format reference (docs/DMWEB_REFERENCE.md:74); frame decoding follows
+ * SKWIN/SkWinCore.cpp::ANIM_DECODE_IMG1 (line 1110; symbol audit at
+ * docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv:1301). */
+static int dm2_v1_boot_load_amiga_loose_animation_media(
+    DM2_V1_BootProfile *profile, const char *data_root)
+{
+    static const char *const names[3] = {
+        "SWSH.DAT", "TITL.DAT", "ENDA.DAT"
+    };
+    static const char *const expected_md5[3] = {
+        "abca5430912a5c2d3d35dd8142740c72",
+        "f023fd370ab1594eeca5b139a244b063",
+        "7f7fc31c4a1f41b8b2afa81953823ff1"
+    };
+    uint8_t *bytes[3] = {NULL, NULL, NULL};
+    size_t sizes[3] = {0u, 0u, 0u};
+    char hashes[3][33] = {{0}};
+    DM2_V1_FmtownsAnimStreamReceipt streams[3];
+    unsigned int index;
+
+    if (!profile || !data_root || !data_root[0]) return 0;
+    memset(streams, 0, sizeof(streams));
+    for (index = 0u; index < 3u; ++index) {
+        char path[1024];
+        if (snprintf(path, sizeof(path), "%s%c%s", data_root,
+                     DM2_PATH_SEP, names[index]) >= (int)sizeof(path) ||
+            !dm2_v1_boot_read_asset_bytes(path, 1024L * 1024L,
+                                          &bytes[index], &sizes[index])) {
+            goto reject;
+        }
+        dm2_md5_bytes_hex(bytes[index], sizes[index], hashes[index]);
+        if (!md5_matches(hashes[index], expected_md5[index]) ||
+            !dm2_v1_fmtowns_anim_stream_parse(bytes[index], sizes[index],
+                                              &streams[index])) {
+            goto reject;
+        }
+    }
+
+    profile->amiga_swsh_bytes = bytes[0];
+    profile->amiga_swsh_byte_count = sizes[0];
+    profile->amiga_titl_bytes = bytes[1];
+    profile->amiga_titl_byte_count = sizes[1];
+    profile->amiga_enda_bytes = bytes[2];
+    profile->amiga_enda_byte_count = sizes[2];
+    snprintf(profile->amiga_swsh_md5, sizeof(profile->amiga_swsh_md5),
+             "%s", hashes[0]);
+    snprintf(profile->amiga_titl_md5, sizeof(profile->amiga_titl_md5),
+             "%s", hashes[1]);
+    snprintf(profile->amiga_enda_md5, sizeof(profile->amiga_enda_md5),
+             "%s", hashes[2]);
+    profile->amiga_swsh_stream = streams[0];
+    profile->amiga_titl_stream = streams[1];
+    profile->amiga_enda_stream = streams[2];
+    profile->amiga_animation_media_verified = 1;
+    return 1;
+
+reject:
+    for (index = 0u; index < 3u; ++index) free(bytes[index]);
+    return 0;
+}
+
 /* ── Scan and verify DM2 assets ─────────────────────────────────────── */
 
 /* The retail PC release is commonly preserved as one ZIP with its DATA
@@ -3994,6 +4060,21 @@ int dm2_v1_boot_scan_assets_with_progress(
             snprintf(profile->asset_root, sizeof(profile->asset_root), "%s",
                      physical_asset_root);
         }
+    }
+
+    /* Extracted Amiga installs retain the original SWSH/TITL/ENDA files
+     * beside the authenticated runtime pair.  Admit the M11 startup owner
+     * from those exact files when the selected source is loose data; archives
+     * continue to use the already-verified ZIP/ADF/LZX payload above. */
+    if (profile->assets_verified &&
+        profile->platform == DM2_PLATFORM_AMIGA_EN &&
+        !profile->amiga_animation_media_verified &&
+        profile->graphics_path[0] &&
+        !strstr(profile->graphics_path, "::")) {
+        char amiga_data_root[sizeof(profile->asset_root)];
+        copy_parent_dir(amiga_data_root, profile->graphics_path);
+        (void)dm2_v1_boot_load_amiga_loose_animation_media(
+            profile, amiga_data_root);
     }
 
     /* Extracted Macintosh installs keep QuickTime's two movie forks beside

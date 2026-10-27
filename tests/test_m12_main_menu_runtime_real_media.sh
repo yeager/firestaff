@@ -6,13 +6,14 @@ app=${1:?usage: test_m12_main_menu_runtime_real_media.sh <firestaff> <data-root>
 data_root=${2:?usage: test_m12_main_menu_runtime_real_media.sh <firestaff> <data-root>}
 selected_game=${FIRESTAFF_MAIN_MENU_GAME:-all}
 case "$selected_game" in
-    all|dm1|csb|dm2|theron) ;;
+    all|dm1|csb|dm2|dm2-amiga|theron) ;;
     *) echo "FAIL: unsupported FIRESTAFF_MAIN_MENU_GAME=$selected_game" >&2; exit 2 ;;
 esac
 
 dm1_archive="$data_root/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"
 csb_archive="$data_root/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"
 dm2_archive="$data_root/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"
+dm2_amiga_archive="$data_root/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip"
 theron_us_track02="$data_root/theron/TQUS02.bin"
 theron_jp_track02="$data_root/theron/TQJP02.bin"
 if [[ ! -x "$app" ]]; then
@@ -45,9 +46,10 @@ run_main_menu_runtime_case() {
     local navigation=$4
     local duration_ms=$5
     local platform=${6:-FM Towns}
-    local home="$scratch/$game_id-home"
-    local log="$scratch/$game_id.log"
-    local probe="$scratch/$game_id-runtime.json"
+    local probe_route=${7:-$game_id}
+    local home="$scratch/$probe_route-home"
+    local log="$scratch/$probe_route.log"
+    local probe="$scratch/$probe_route-runtime.json"
     local archive_hash
 
     mkdir -p "$home"
@@ -73,7 +75,7 @@ run_main_menu_runtime_case() {
         return 1
     fi
 
-    python3 "$(dirname "$0")/verify_main_menu_runtime_probe.py" "$game_id" "$probe"
+    python3 "$(dirname "$0")/verify_main_menu_runtime_probe.py" "$probe_route" "$probe"
 
     if [[ $(firestaff_sha256_file "$archive") != "$archive_hash" ]]; then
         printf 'FAIL: original %s archive changed during menu startup\n' "$game_id" >&2
@@ -143,6 +145,22 @@ run_selected_main_menu_runtime_case csb "$csb_archive" fmtowns-en \
     'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait700,click:52:110,wait10,click:250:50,wait240' 150000
 run_selected_main_menu_runtime_case dm2 "$dm2_archive" fmtowns-ja \
     'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait:2400,click:115:65,click:100:60' 90000
+
+# The DM2 Amiga archive has a separate native GDAT startup menu. Select that
+# platform through M12, finish its original title, then accept New Game and
+# require the authentic Amiga runtime receipt instead of the FM Towns frame.
+if [[ "$selected_game" == all || "$selected_game" == dm2-amiga ]]; then
+  if [[ -f "$dm2_amiga_archive" ]]; then
+    run_main_menu_runtime_case dm2 "$dm2_amiga_archive" amiga-en \
+        'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait:2400,enter' \
+        90000 Amiga dm2-amiga
+  elif [[ "$selected_game" == dm2-amiga ]]; then
+    echo 'SKIP: authentic DM2 Amiga archive is unavailable'
+    exit 77
+  else
+    echo 'SKIP: authentic DM2 Amiga archive is unavailable for menu runtime'
+  fi
+fi
 
 if [[ "$selected_game" == all || "$selected_game" == theron ]]; then
   if [[ -f "$theron_us_track02" ]]; then
