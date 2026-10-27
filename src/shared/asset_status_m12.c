@@ -1070,11 +1070,21 @@ static int m12_admit_dm1_fmtowns_archive(
         "3dc0a932d0e0adfe59878f07c51700c5",
         "fe098f70ce83cfe3f2333565093daf35"
     };
+    /* Keep renamed ZIP discovery working for both the published container
+     * and the user's ZIP repack of its original BIN/CUE media. Admission
+     * below still requires the exact language-specific GRAPHICS.DAT and
+     * DUNGEON.DAT hashes, so the outer archive identity only narrows search. */
+    static const char* const archiveMd5[] = {
+        "1fa2aaf81c1ed47ae6cf58d0bfda87f0",
+        "1510d033f2e22686bf4b4e78e91390a5"
+    };
     size_t rootIndex;
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
         strcmp(g_games[gameIndex].gameId, "dm1") != 0) return 0;
     for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
-        char (*candidate)[ASSET_PATH_MAX] = calloc(259U, sizeof(*candidate));
+        char (*candidate)[ASSET_PATH_MAX] = calloc(
+            2U + 256U * (sizeof(archiveMd5) / sizeof(archiveMd5[0])),
+            sizeof(*candidate));
         size_t candidateCount = 0U;
         size_t candidateIndex;
         int exactFile = preferredArchive && FSP_FileExists(preferredArchive) &&
@@ -1085,7 +1095,7 @@ static int m12_admit_dm1_fmtowns_archive(
             m12_copy_string(candidate[candidateCount++], sizeof(candidate[0]),
                             preferredArchive);
         } else {
-            int discovered;
+            size_t archiveHashIndex;
             snprintf(candidate[candidateCount++], sizeof(candidate[0]), "%s/%s",
                      roots[rootIndex], archiveName);
             snprintf(candidate[candidateCount++], sizeof(candidate[0]), "%s/dm1/%s",
@@ -1094,16 +1104,20 @@ static int m12_admit_dm1_fmtowns_archive(
              * without opening unrelated archives. The ordinary-file collector
              * reuses the scan's physical hash cache; inner CUE/BIN and both
              * language graphics/world hashes below still decide admission. */
-            discovered = asset_collect_files_by_md5(roots[rootIndex],
-                "1fa2aaf81c1ed47ae6cf58d0bfda87f0", candidate + candidateCount,
-                256U, 32);
-            if (discovered < 0) {
-                fprintf(stderr, "firestaff: media-discovery-incomplete game=dm1 platform=fm-towns path=%s reason=%s\n",
-                    roots[rootIndex], discovered == -2 ? "candidate-limit" : "allocation-or-path");
-                free(candidate);
-                return 0;
+            for (archiveHashIndex = 0U;
+                 archiveHashIndex < sizeof(archiveMd5) / sizeof(archiveMd5[0]);
+                 ++archiveHashIndex) {
+                int hashMatches = asset_collect_files_by_md5(
+                    roots[rootIndex], archiveMd5[archiveHashIndex],
+                    candidate + candidateCount, 256U, 32);
+                if (hashMatches < 0) {
+                    fprintf(stderr, "firestaff: media-discovery-incomplete game=dm1 platform=fm-towns path=%s reason=%s\n",
+                        roots[rootIndex], hashMatches == -2 ? "candidate-limit" : "allocation-or-path");
+                    free(candidate);
+                    return 0;
+                }
+                candidateCount += (size_t)hashMatches;
             }
-            candidateCount += (size_t)discovered;
         }
         for (candidateIndex = 0U; candidateIndex < candidateCount;
              ++candidateIndex) {

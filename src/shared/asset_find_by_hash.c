@@ -1207,6 +1207,7 @@ static int is_supported_container_path(const char *path) {
 static int is_known_large_whole_file_hash(const char *expectedMd5) {
     static const char *const largeHashes[] = {
         "1fa2aaf81c1ed47ae6cf58d0bfda87f0", /* Original DM1 FM Towns ZIP, 256597119 bytes */
+        "1510d033f2e22686bf4b4e78e91390a5", /* ZIP-repacked DM1 FM Towns BIN/CUE, 322760817 bytes */
         "e88d60859f65f08fa622e1992b02280f", /* Nexus Saturn data image */
         "96e511c8d36ccbe30a48ba36c59df194", /* Nexus Saturn data image */
         "b7afb338ad31be1025b53f9aff12d73a", /* Theron's Quest JP Track 02 */
