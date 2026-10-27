@@ -22,7 +22,7 @@ if [ ! -f "$campaign_file" ] || [ ! -f "$utility_file" ]; then
         data_root=$(mktemp -d "$scratch_root/csb-hint-oracle.XXXXXX")
         trap 'rm -rf "$data_root"' EXIT HUP INT TERM
         "$seven_zip" x -so "$campaign_archive" \
-            'Chaos Strikes Back for Atari ST Game Disk v2.1 (English).stx' \
+            'Floppy Disks STX/Chaos Strikes Back for Atari ST Game Disk v2.1 (English).stx' \
             > "$data_root/Chaos Strikes Back.stx"
         "$seven_zip" x -so "$utility_archive" \
             'Floppy Disks STX/Chaos Strikes Back for Atari ST Utility Disk v2.1 (English).stx' \
