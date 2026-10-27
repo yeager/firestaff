@@ -1102,9 +1102,12 @@ The installed English `MENU.BPK` matches the authentic retail SHA-256
 VRAM. In that frame, 132 commands are textured sprites and none starts inside
 the matched surface ranges. This proves only that those retail bytes are
 resident in VDP1 VRAM; it does not prove that the title menu is displayed or
-that those surfaces are drawn. The VDP2 write trace dropped 1,376,570 rows,
-and the SCU DMA trace reports unknown overflow, so neither trace establishes
-complete transfer provenance.
+that those surfaces are drawn. The regional snapshot analyzer now accepts the
+authenticated Japanese, English, and French `MENU.BPK` hashes; its English
+report records these counts and keeps `semantic_admission=blocked`. All three
+authentic regional packages decode all 162 PRS3 surfaces with this analyzer.
+The VDP2 write trace dropped 1,376,570 rows, and the SCU DMA trace reports
+unknown overflow, so neither trace establishes complete transfer provenance.
 
 The full capture and analysis are retained on the external evidence volume at
 `/Volumes/Extern-disk/firestaff-data/nexus-english-boot-20261027/english-us-smem-13310/`.
