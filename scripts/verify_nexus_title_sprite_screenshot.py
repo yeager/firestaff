@@ -14,11 +14,11 @@ from PIL import Image
 
 from analyze_nexus_vdp1_source_join import accepted_retail_hashes, ymir_commands
 
-TITLE_MENU_DRAW_COUNT = 4
+TITLE_MENU_DRAW_COUNT = 5
 
 
 def title_menu_draws(commands, vram: bytes, source: bytes):
-    """Find the final four informative 4bpp title-source draws in a frame.
+    """Find the final five informative 4bpp title-source draws in a frame.
 
     Ymir can relocate the VDP1 command table between otherwise equivalent
     cold boots. Identify the menu draws by their exact retail source bytes and
@@ -42,7 +42,7 @@ def title_menu_draws(commands, vram: bytes, source: bytes):
         if retail_offset >= 0:
             matches.append((command_index, address, words, retail_offset, texture))
     if len(matches) < TITLE_MENU_DRAW_COUNT:
-        raise ValueError("fewer than four informative TITLE.BIN draws")
+        raise ValueError("fewer than five informative TITLE.BIN draws")
     return matches[-TITLE_MENU_DRAW_COUNT:]
 
 
