@@ -17,31 +17,34 @@ csb_amiga33_loose_root=${FIRESTAFF_CSB_AMIGA33_LOOSE_ROOT:-"$HOME/.firestaff/dat
 nexus_iso=${FIRESTAFF_NEXUS_ISO:-"$HOME/.firestaff/data/nexus/Dungeon Master Nexus (English).iso"}
 theron_track02=${FIRESTAFF_THERON_TRACK02:-"$HOME/.firestaff/data/theron/TQUS02.bin"}
 
-if [ ! -x "$firestaff_cli" ] || [ ! -f "$mac_archive" ] ||
-   [ ! -f "$towns_archive" ]; then
-    echo "SKIP: original DM2 Macintosh and FM Towns archives are required"
+if [ ! -x "$firestaff_cli" ] || [ ! -f "$towns_archive" ]; then
+    echo "SKIP: Firestaff executable and original DM2 FM Towns archive are required"
     exit 77
 fi
 
-mac_debug=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
-    --game dm2 --platform auto --data-dir "$mac_archive" \
-    --debug --boot-probe --boot-probe-frames 0 2>&1) || {
-    printf '%s\n' "$mac_debug" >&2
-    exit 1
-}
-if ! printf '%s\n' "$mac_debug" | \
-        grep -F 'task=search root' | grep -F "path=$mac_archive" >/dev/null; then
-    echo "FAIL: Mac debug trace omitted the searched archive path on its task record" >&2
-    exit 1
+if [ -f "$mac_archive" ]; then
+    mac_debug=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --game dm2 --platform auto --data-dir "$mac_archive" \
+        --debug --boot-probe --boot-probe-frames 0 2>&1) || {
+        printf '%s\n' "$mac_debug" >&2
+        exit 1
+    }
+    if ! printf '%s\n' "$mac_debug" | \
+            grep -F 'task=search root' | grep -F "path=$mac_archive" >/dev/null; then
+        echo "FAIL: Mac debug trace omitted the searched archive path on its task record" >&2
+        exit 1
+    fi
+    case "$mac_debug" in
+        *"candidate-file=GRAPHICS.DAT"*) ;;
+        *) echo "FAIL: Mac debug trace omitted the catalogued graphics candidate" >&2; exit 1 ;;
+    esac
+    case "$mac_debug" in
+        *"launch phase=game-handoff mode=direct game=dm2 platform=Macintosh edition=mac-en-retail source="*) ;;
+        *) echo "FAIL: Mac debug trace omitted the selected edition" >&2; exit 1 ;;
+    esac
+else
+    echo 'SKIP: DM2 Macintosh debug diagnostics (authentic Mac archive unavailable)'
 fi
-case "$mac_debug" in
-    *"candidate-file=GRAPHICS.DAT"*) ;;
-    *) echo "FAIL: Mac debug trace omitted the catalogued graphics candidate" >&2; exit 1 ;;
-esac
-case "$mac_debug" in
-    *"launch phase=game-handoff mode=direct game=dm2 platform=Macintosh edition=mac-en-retail source="*) ;;
-    *) echo "FAIL: Mac debug trace omitted the selected edition" >&2; exit 1 ;;
-esac
 
 towns_verbose=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     --game dm2 --platform auto --data-dir "$towns_archive" \
@@ -499,7 +502,9 @@ for game_id in dm1 csb dm2 nexus theron; do
     fi
 done
 
-ln -s "$mac_archive" "$combined_root/$(basename "$mac_archive")"
+if [ -f "$mac_archive" ]; then
+    ln -s "$mac_archive" "$combined_root/$(basename "$mac_archive")"
+fi
 ln -s "$towns_archive" "$combined_root/$(basename "$towns_archive")"
 if [ -f "$dos_archive" ]; then
     ln -s "$dos_archive" "$combined_root/$(basename "$dos_archive")"
@@ -513,20 +518,27 @@ combined_auto=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     printf '%s\n' "$combined_auto" >&2
     exit 1
 }
-case "$combined_auto" in
-    *"startup game=dm2 mode=direct platform=auto"*"selected game=dm2 platform=FM Towns edition=fmtowns-ja source="*"platform=FM Towns edition=fmtowns-ja matched source="*"platform=Macintosh edition=mac-en-retail matched source="*) ;;
-    *) echo "FAIL: DM2 AUTO did not prefer FM Towns when Mac retail was also present" >&2; exit 1 ;;
-esac
-combined_mac=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
-    --game dm2 --platform mac --data-dir "$combined_root" \
-    --verbose --boot-probe --boot-probe-frames 0 2>&1) || {
-    printf '%s\n' "$combined_mac" >&2
-    exit 1
-}
-case "$combined_mac" in
-    *"selected game=dm2 platform=Macintosh edition=mac-en-retail source="*) ;;
-    *) echo "FAIL: explicit DM2 Macintosh choice was overridden by FM Towns default" >&2; exit 1 ;;
-esac
+if [ -f "$mac_archive" ]; then
+    case "$combined_auto" in
+        *"startup game=dm2 mode=direct platform=auto"*"selected game=dm2 platform=FM Towns edition=fmtowns-ja source="*"platform=FM Towns edition=fmtowns-ja matched source="*"platform=Macintosh edition=mac-en-retail matched source="*) ;;
+        *) echo "FAIL: DM2 AUTO did not prefer FM Towns when Mac retail was also present" >&2; exit 1 ;;
+    esac
+    combined_mac=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --game dm2 --platform mac --data-dir "$combined_root" \
+        --verbose --boot-probe --boot-probe-frames 0 2>&1) || {
+        printf '%s\n' "$combined_mac" >&2
+        exit 1
+    }
+    case "$combined_mac" in
+        *"selected game=dm2 platform=Macintosh edition=mac-en-retail source="*) ;;
+        *) echo "FAIL: explicit DM2 Macintosh choice was overridden by FM Towns default" >&2; exit 1 ;;
+    esac
+else
+    case "$combined_auto" in
+        *"startup game=dm2 mode=direct platform=auto"*"selected game=dm2 platform=FM Towns edition=fmtowns-ja source="*) ;;
+        *) echo "FAIL: DM2 AUTO did not select FM Towns without Mac retail installed" >&2; exit 1 ;;
+    esac
+fi
 
 verify_mixed_dm2_cli_platform() {
     platform_arg=$1
