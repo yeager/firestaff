@@ -48,6 +48,7 @@ research and must not be copied into current status or wiki pages.
 
 - [README](../README.md) — user-facing overview, supported platforms and quick start
 - [Project status](PROJECT_STATUS.md) — short cross-game status matrix
+- [Five-game startup support gap analysis](STARTUP_SUPPORT_GAP_ANALYSIS.md) — authenticated CLI coverage and unresolved launcher/runtime gaps
 - [Platform status](PLATFORM_STATUS.md) — current status for every game and platform
 - [Active top-10 native-parity queue](parity/ACTIVE_TOP_10.md) — current
   evidence-backed priorities and explicit data blockers
@@ -127,7 +128,7 @@ release, run the focused tests for the affected game, check Markdown links and
 run the build/CI commands in [CI.md](CI.md). Do not commit original game data,
 emulator saves, private capture logs or generated placeholder art.
 
-**Last reviewed:** 2026-10-27 (main `d18445cc`). The current status reflects
+**Last reviewed:** 2026-10-27 (main `fd5912a0`). The current status reflects
 the source and authenticated-media evidence recorded on the linked status and
 per-game work-log pages. Each receipt remains bounded to its cited edition,
 route and test; it does not imply complete parity.
