@@ -15004,6 +15004,13 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                         input = M12_MENU_INPUT_NONE;
                     }
                     M12_StartupMenu_HandleInput(&menuState, input);
+                    if (M12_StartupMenu_TakeRescanAllGamesRequest(
+                            &menuState)) {
+                        m11_rescan_launcher_asset_status(
+                            &menuState, launcherFramebuffer, modernRgba,
+                            useModern, o->debug, &quitRequested);
+                        if (quitRequested) break;
+                    }
                     m11_sync_startup_text_input(&menuState,
                                                 useModern && !gameView.active,
                                                 &startupTextInputActive);

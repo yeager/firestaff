@@ -293,6 +293,18 @@ int main(void) {
         rmdir(root);
         return 1;
     }
+    M12_StartupMenu_HandleInput(&menu, M12_MENU_INPUT_ACCEPT);
+    if (menu.view != M12_MENU_VIEW_MAIN ||
+        !M12_StartupMenu_TakeRescanAllGamesRequest(&menu) ||
+        M12_StartupMenu_TakeRescanAllGamesRequest(&menu)) {
+        fprintf(stderr,
+                "FAIL: dismissing the access message did not request one full rescan\n");
+        M12_StartupMenu_Destroy(&menu);
+        chmod(denied, 0700);
+        rmdir(denied);
+        rmdir(root);
+        return 1;
+    }
     M12_StartupMenu_Destroy(&menu);
 
     /* Startup against a selected collection must preserve the permission
@@ -448,6 +460,7 @@ int main(void) {
             partialOptions.skipScreenshotGalleryScan = 1;
             M12_StartupMenu_InitWithOptions(&menu, NULL, NULL,
                                             &partialOptions);
+            deferredMenuLive = 1;
             menu.languageExplicit = 1;
             menu.settings.languageIndex = 0;
             if (!M12_StartupMenu_SetDataDirectory(&menu, root) ||
@@ -474,30 +487,29 @@ int main(void) {
              * diagnostic is shown. Retrying the same selected root in the
              * open launcher must clear the old denial and keep authentic
              * DM1 available. */
-            if (chmod(denied, 0700) != 0 ||
-                !M12_StartupMenu_SetDataDirectory(&menu, root) ||
-                asset_scan_access_denied_directory_count() != 0 ||
+            if (chmod(denied, 0700) != 0) {
+                fprintf(stderr,
+                        "FAIL: could not grant access before the retry scan\n");
+                goto deferred_scan_failure;
+            }
+            M12_StartupMenu_HandleInput(&menu, M12_MENU_INPUT_ACCEPT);
+            if (!M12_StartupMenu_TakeRescanAllGamesRequest(&menu) ||
+                M12_StartupMenu_TakeRescanAllGamesRequest(&menu)) {
+                fprintf(stderr,
+                        "FAIL: access-message acknowledgement did not request exactly one rescan\n");
+                goto deferred_scan_failure;
+            }
+            M12_StartupMenu_RescanAllGames(&menu, NULL, NULL);
+            M12_StartupMenu_FinalizeDeferredScanMessages(&menu);
+            if (asset_scan_access_denied_directory_count() != 0 ||
                 (archiveReady &&
                  !M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1"))) {
                 fprintf(stderr,
                         "FAIL: rescan after granting folder access did not refresh the authentic DM1 scan\n");
-                M12_StartupMenu_Destroy(&menu);
-                chmod(denied, 0700);
-                chmod(blockedParent, 0700);
-                rmdir(blockedRoot);
-                rmdir(blockedParent);
-                if (archiveLink[0] != '\0') unlink(archiveLink);
-                if (deniedArchive[0] != '\0') {
-                    chmod(deniedArchive, 0600);
-                    unlink(deniedArchive);
-                }
-                if (deniedMediaDir[0] != '\0') rmdir(deniedMediaDir);
-                if (dm1Dir[0] != '\0') rmdir(dm1Dir);
-                rmdir(denied);
-                rmdir(root);
-                return 1;
+                goto deferred_scan_failure;
             }
             M12_StartupMenu_Destroy(&menu);
+            deferredMenuLive = 0;
 
             /* Also cover the user's common recovery path when macOS asks
              * them to restart Firestaff after changing Files & Folders
@@ -599,6 +611,18 @@ deferred_scan_failure:
     (void)chmod(denied, 0700);
 
 cleanup_permission_fixture:
+    if (deniedArchive[0] != '\0') {
+        (void)chmod(deniedArchive, 0600);
+        if (unlink(deniedArchive) != 0 && errno != ENOENT) {
+            perror("remove denied authentic archive copy");
+            return 1;
+        }
+    }
+    if (deniedMediaDir[0] != '\0' &&
+        rmdir(deniedMediaDir) != 0 && errno != ENOENT) {
+        perror("remove denied authentic archive directory");
+        return 1;
+    }
     if (archiveLink[0] != '\0' && unlink(archiveLink) != 0 &&
         errno != ENOENT) {
         perror("remove authentic DM1 archive link");

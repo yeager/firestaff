@@ -2012,6 +2012,7 @@ static void m12_clear_message_view(M12_StartupMenuState* state) {
     state->messageLine2 = "";
     state->messageLine3 = "";
     state->messageIsMissingGameData = 0;
+    state->messageRescanAllGamesOnDismiss = 0;
     state->messageGameId[0] = '\0';
     state->messageReturnView = M12_MENU_VIEW_MAIN;
     state->saveBrowserReturnView = M12_MENU_VIEW_SETTINGS;
@@ -2342,6 +2343,7 @@ static int m12_show_access_denied_popup(M12_StartupMenuState* state) {
     m12_set_buffered_message(
         state, line1, path ? path : "(unknown path)",
         m12_tr(state, "ALLOW ACCESS IN SYSTEM SETTINGS, THEN RESCAN"));
+    state->messageRescanAllGamesOnDismiss = 1;
     return 1;
 }
 
@@ -2668,6 +2670,7 @@ static void m12_show_selected_directory_access_denied(
     m12_set_buffered_message(
         state, line1, path,
         m12_tr(state, "ALLOW ACCESS IN SYSTEM SETTINGS, THEN RESCAN"));
+    state->messageRescanAllGamesOnDismiss = 1;
 }
 
 /* SDL's native folder dialog may return a relative path (notably "." on
@@ -5635,6 +5638,15 @@ void M12_StartupMenu_RescanAllGames(
     }
 }
 
+int M12_StartupMenu_TakeRescanAllGamesRequest(
+    M12_StartupMenuState* state) {
+    int requested;
+    if (!state) return 0;
+    requested = state->rescanAllGamesRequested;
+    state->rescanAllGamesRequested = 0;
+    return requested ? 1 : 0;
+}
+
 void M12_StartupMenu_Init(M12_StartupMenuState* state) {
     M12_StartupMenu_InitWithDataDir(state, NULL, NULL);
 }
@@ -7588,6 +7600,9 @@ static void m12_return_from_message_view(M12_StartupMenuState* state) {
     int returnNav;
     if (!state) {
         return;
+    }
+    if (state->messageRescanAllGamesOnDismiss) {
+        state->rescanAllGamesRequested = 1;
     }
     returnView = state->messageReturnView;
     returnNav = state->messageReturnNavLevel;
