@@ -155,11 +155,13 @@ not a fix and has not passed this real-media test.
   Updated 2026-10-27: the Japanese retail Ymir run now establishes a no-save
   cold boot to the native three-choice menu; a separate single Down press
   selects Continue, and Down/Down/A opens Configuration from that captured
-  menu state. Firestaff now retains the same bounded keyboard selection state
-  after the ready title prompt opens the menu, keeping it separate from its
-  generic save/champion route. This does not draw the selected menu or route
-  New Game, Continue, or Configuration into production consumers; continue
-  availability does not yet read Saturn BKR data. The
+  menu state. Firestaff retains a separate keyboard selection state after the
+  ready title prompt; F, Enter, keypad Enter, Space, Up/Down, and W/S are wired
+  only while the Nexus title is active. An English retail Ymir replay verifies
+  Down to Continue and Up back to a pixel-identical New Game frame. Firestaff
+  still does not draw the selected menu or execute New Game, Continue, or
+  Configuration destinations; Continue execution does not yet read Saturn BKR
+  data. The
   repeated Continue capture again verifies all five Japanese TITLE.BIN sprites
   against 1,441 screenshot pixels, but its NBG0 bitmap has zero exact matches
   against authentic retail data. A later exploratory scan found the ordered
@@ -171,7 +173,7 @@ not a fix and has not passed this real-media test.
   earlier paired raw-trace experiments below remain valid negative results for
   their sampled windows, but they are no longer the only input evidence. Keep
   the production gate closed while identifying menu/face material ownership
-  and wiring the verified selection behavior into Firestaff.
+  and wiring the verified selection behavior to Firestaff's rendered menu.
   The JP window at frames 13000–13039 is bit-identical with and without
   Start/A pulses, so it is non-interactive animation rather than the native
   startup menu. A later same-session control/Start pair establishes that

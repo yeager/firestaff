@@ -12,13 +12,15 @@
 Nexus V1 has host-side startup routing in `src/nexus/nexus_v1_startup_menu.c`,
 with asset gating in `src/nexus/nexus_v1_launcher.c`. The reducer in `src/nexus/nexus_v1_retail_title_menu.c` models the
 observed title prompt opening the three-choice menu, New Game selected by
-default, Down to Continue, Down to Configuration, and documented Accept
-results. M11 now retains that selection state and consumes those keyboard
-inputs separately from the generic Firestaff save/champion menu. This is an
-input-state integration only: it does not draw the selected retail menu, and
-New Game, Continue, and Configuration still have no production destination
-execution route. Continue availability deliberately does not use Firestaff save files;
-the Saturn BKR intake and payload-to-engine route are not integrated here.
+default, vertical navigation, and documented Accept results. M11 retains that
+selection state and consumes keyboard input separately from Firestaff's
+generic save/champion menu. Up/Down and W/S update the internal selection;
+English retail Ymir evidence confirms Down to Continue and Up back to New Game.
+This is input-state integration only: Firestaff does not draw the selected
+retail menu, and New Game, Continue, and Configuration have no production
+destination execution route. Continue availability deliberately does not use
+Firestaff save files; the Saturn BKR intake and payload-to-engine route are not
+integrated here.
 The historical New Game comparison reported five TITLE.BIN draws and 1,495
 matching nontransparent screenshot pixels. The current
 `verify_nexus_title_sprite_screenshot.py` verifier checks the five-draw
@@ -53,10 +55,11 @@ decoded. The Saturn tilemap/CLUT/runtime placement remains capture-gated; no
 ### Menu State Machine
 A Nexus menu system needs states for:
 - Title/Start: authentic New Game/Continue/Configuration states and bounded
-  pad transitions are recorded; the reducer is not wired into runtime startup.
-  Five source-bound sprite draws are verified for Japanese Continue. New Game
-  has historical source-comparison evidence; full menu composition, options
-  behavior, and mouse targeting remain unbound.
+  retail transitions are recorded. M11 wires keyboard Action and vertical
+  selection into an internal reducer; it does not render the choices or route
+  their production destinations. Five source-bound sprite draws are verified
+  for Japanese Continue. New Game has historical source-comparison evidence;
+  full menu composition, options behavior, and mouse targeting remain unbound.
 - Champion Select: source-owned champion records (20 live PLRD/TABL records)
 - Options: Display mode (fullscreen/windowed), audio levels
 - In-Game Menu: ESC pause with stats, inventory, spells, save
@@ -110,7 +113,8 @@ Still blocked or incomplete:
 
 ## Next Steps
 1. Authenticate Saturn menu command/palette/placement capture
-2. Bind the existing startup state/input route to that capture
+2. Bind the existing startup state/input route to that capture and render the
+   selection from the source-owned menu material
 3. Authenticate champion portrait and HUD VDP1 ownership
 4. Bridge only source-proven menu transitions into the engine game loop
 5. Implement save/load using an authenticated Saturn SRAM format
