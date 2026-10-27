@@ -1003,3 +1003,28 @@ native 3D viewport in this run. It does not establish a stable or fully
 interactive level, exact room/resource identity, the full gameplay input
 route, the party HUD, or Firestaff presentation parity. Those remain separate
 gates.
+
+## Additional menu-candidate VDP1 source join (2026-10-27)
+
+A separate Ymir debug dump from the authentic Japanese retail corpus records
+178 VDP1 commands at frame 8050 with no dropped rows. Its command records are
+175/178 identical to the retained title-menu capture at frame 497 when live
+local-coordinate fields are excluded. The three differences occur at command
+indices 171, 172, and 177. Because this dump has no paired screenshot or input
+schedule receipt, it remains a menu candidate rather than a new menu-state
+admission.
+
+Against the hash-verified Japanese retail corpus, 121 of 137 textured VDP1
+commands have informative exact-byte joins, including `LEV00.DGN` Structure2
+spans; 16 command spans remain ambiguous across repeated retail bytes. The
+real Japanese `MENU.BPK` decodes to 162 PRS3 surfaces, of which 86 exact whole
+surface byte sequences are resident in the captured VDP1 VRAM. None of the 137
+textured commands starts inside those matched surface ranges. This establishes
+byte residency and command-source observations only; it does not prove that
+the menu draws `MENU.BPK`, identify the remaining command owners, or authorize
+Firestaff rendering.
+
+Raw capture bytes remain outside Git under
+`/Volumes/Extern-disk/firestaff-data/`. Hashes, analyzer output, and
+reproduction commands are recorded in
+[`nexus_v1_menu_candidate_source_join_20261027`](../parity-evidence/verification/nexus_v1_menu_candidate_source_join_20261027/README.md).
