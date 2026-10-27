@@ -1,0 +1,130 @@
+# Nexus V1 — Bonus Content and Special Editions
+
+## Sources
+- `docs/nexus/nexus_overview.md`
+- `docs/nexus/NEXUS_FILE_CLASSIFICATION.md`
+- `docs/nexus/NEXUS_PLAN.md`
+- `docs/nexus/nexus_save.md`
+- `docs/nexus/nexus_features.md`
+- Saturn CD image: `Dungeon Master Nexus_SEGA-Saturn_JA.zip`
+
+---
+
+## 1. No Special Editions — One Release
+
+Dungeon Master Nexus had **one official release** on one platform:
+
+| Release | Platform | Date | Notes |
+|---------|----------|------|-------|
+| T-9111G V1.003 | Sega Saturn | 1998-02-03 | Only release — no variants |
+
+No special editions, no collector's editions, no GOTY edition, no pre-order bonuses, no demo discs, no shareware release.
+
+---
+
+## 2. What the Disc Includes
+
+The Saturn CD contains the complete game in one release. The disc is structured as:
+
+### Audio Content (CD-DA Tracks)
+```
+Tracks 2–9: Red Book CD-DA tracks present in the retail disc layout.
+```
+The retained DM.BIN/disassembly does not authenticate a level-to-track
+selector, so no per-level mapping is inferred here.
+
+### Video Content
+- **3 AVI cutscenes** (101 MB total): DMV0.AVI (intro, 34 MB), DMV1.AVI (28 MB), DMV2.AVI (ending, 39 MB)
+- Saturn FMV format — these play on the Saturn hardware's video decoder
+
+### Text Files on Disc
+- `DMN_ABS.TXT` — in-game text/inscriptions (Japanese Shift-JIS)
+- `DMN_BIB.TXT` — bibliography/attribution
+- `DMN_CPY.TXT` — copyright notice (1998 Victor Interactive Software / FTL Games / Software Heaven)
+
+---
+
+## 3. No Demo, No Shareware, No Trial
+
+- Not a shareware title — sold as full retail only
+- No demo disc released publicly
+- No beta or promotional disc with exclusive content
+- The disc is self-contained: game + all 8 audio tracks + 3 FMV videos
+
+---
+
+## 4. Firestaff as "Bonus" Content
+
+Firestaff's reimplementation (the `firestaff_nexus` library) is itself a form of bonus content for the series:
+
+### Bonus: Cross-Platform Access
+- The original game only runs on real Saturn hardware (or emulators)
+- Firestaff Nexus builds on Windows/macOS/Linux — effectively the only way to play Nexus today without Saturn hardware
+
+### Bonus: Source Code
+- The original has no source — Firestaff is a clean-room reimplementation
+- Source code in `src/nexus/nexus_v1_*.c` provides full transparency into how the game works
+
+### Bonus: No DRM
+- Original disc required a real Saturn and the game disc
+- Firestaff runs from the extracted data files with no copy protection
+
+### Bonus: New Renderer
+- Original VDP1 software rasterizer (Saturn) vs. Firestaff's CPU/software rasterizer (PC)
+- Different aesthetic but same game logic — a technical bonus for preservation
+
+---
+
+## 5. Secret/Undocumented Features
+
+### Per-Level Task Data (SLEV00-15.BIN)
+- `SDDRVS.TSK` is source-verified as a Saturn sound-driver task; a secondary
+  trigger/script role has not been established.
+- `SLEV00-15.BIN` are authentic per-level files with bounded SH-2-shaped entry
+  profiles. Their event ownership, opcodes, dispatcher and execution ABI are
+  unresolved.
+- Firestaff therefore does not describe a Nexus scripting VM or claim that the
+  files control events, spawns or triggers. This remains preservation research,
+  not shipped functionality.
+
+### DMDF 3D Model Format
+- 30 `.MNS` creature model files — each is a 3D polygon model with animations
+- The DMDF format is unique to Nexus (not used in DM1, CSB, or DM2)
+- Animation frames are embedded as 3D vertex arrays per model
+- This is effectively bonus content: 3D creature models no other DM game has
+
+### FMV in a Dungeon Crawler
+- The 3 AVI cutscenes (intro/ending) are bonus narrative content
+- No other game in the DM series has FMV — this is unique to Nexus
+
+### Japanese-Only Champion Names
+- Japanese champion labels are source-admitted from PLRD/TABL; the live
+  corpus contains 20 records, not an authenticated 24-record roster.
+- Champion portraits in `FACE.BIN` (44 KB) are unique art
+
+---
+
+## 6. Comparison: Nexus vs. DM1/CSB/DM2 Bonus Content
+
+| Bonus Type | DM1 | CSB | DM2 | Nexus |
+|-----------|-----|-----|-----|-------|
+| Demo disc | No | No | No | **No** |
+| Shareware release | No | No | No | **No** |
+| Special edition | No | No | No | **No** |
+| Pre-order bonus | No | No | No | **No** |
+| FMV cutscenes | No | No | No | **Yes (3 AVI)** |
+| Per-level audio | No | No | No | **Yes (8 CD tracks)** |
+| Level scripting | No | No | No | **Unresolved (SLEV*.BIN)** |
+| 3D models | No | No | No | **Yes (30 .MNS)** |
+| Multilingual | EN/JP (separate DAT) | EN | EN only | **JP only** |
+| Cross-platform (modern) | ReDMCSB + DOSBox | Partial | SKULL.ASM + DOSBox | **Firestaff (native)** |
+
+---
+
+## 7. Bonus Content Conclusion
+
+**The original Nexus release had no special editions or bonus discs.** The game
+itself is the content — 137 files on a Saturn CD, including the only FMV in the
+series and unique per-level audio. A scripting VM has not been proven. Firestaff
+keeps the unresolved task files as preservation evidence instead of inventing
+their semantics.

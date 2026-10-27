@@ -19,7 +19,7 @@
  *   src/nexus/nexus_v1_engine.c      nexus_v1_init/read_file/load_level/load_model
  *   src/nexus/nexus_v1_viewport.c    nexus_viewport_render/to_rgba
  *   src/nexus/nexus_v1_saturn_font.c FONT256.S2D parser/glyph draw
- *   docs/NEXUS_FILE_CLASSIFICATION.md DM.BIN/FONT256.S2D/MNS inventory
+ *   docs/nexus/NEXUS_FILE_CLASSIFICATION.md DM.BIN/FONT256.S2D/MNS inventory
  *   docs/FIRESTAFF_GAP_LIST.md       Nexus Track 1 real screen capture row
  */
 

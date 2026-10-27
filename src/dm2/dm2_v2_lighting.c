@@ -14,7 +14,7 @@
  *   dm1_v2_lighting_dynamic_pc34.c — M11 V2 lighting (DM1 V2.2)
  *   dm2_v1_weather.c              — DM2 weather/time API
  *   dm2_v2_outdoor_enhanced.c     — outdoor V2 FX
- *   docs/dm2_time.md              — torch, weather, fog, visibility docs
+ *   docs/dm2/dm2_time.md              — torch, weather, fog, visibility docs
  *
  * Source: SKULL.ASM PROCESS_TIMER_0C  — per-champion torch timers
  *         SKULL.ASM T600              — outdoor viewport rendering
@@ -110,7 +110,7 @@ void dm2_v2_fog_remove_source(DM2_V2_FogState *f, int id) {
 }
 
 /* dm2_v2_fog_set_weather — update global fog from DM2 weather enum.
- * Source: docs/dm2_time.md §Weather / fog/storm visibility reduction.
+ * Source: docs/dm2/dm2_time.md §Weather / fog/storm visibility reduction.
  *   Clear: 0  Rain: 0.1  Fog: 0.5  Storm: 0.3 */
 void dm2_v2_fog_set_weather(DM2_V2_FogState *f, int weather) {
     if (!f) return;
@@ -248,7 +248,7 @@ float dm2_v2_torch_get_intensity(const DM2_V2_LightingState *s, int champion_slo
  * Typically called in response to a dungeon/weather event: when
  * dm2_v2_outdoor_fx.tick detects a lightning event, it calls this.
  * Source: dm2_v2_outdoor_enhanced.c dm2_v2_outdoor_fx_trigger_lightning pattern.
- *         docs/dm2_time.md §Weather §Storm — lightning flash events.
+ *         docs/dm2/dm2_time.md §Weather §Storm — lightning flash events.
  */
 void dm2_v2_lighting_trigger_bloom(DM2_V2_LightingState *s,
                                     uint8_t r, uint8_t g, uint8_t b,
@@ -288,7 +288,7 @@ const char *dm2_v2_lighting_source_evidence(void) {
         "Source: SKULL.ASM PROCESS_TIMER_0C  — per-champion torch timers\n"
         "Source: SKULL.ASM T600              — outdoor viewport rendering\n"
         "Source: SKULL.ASM T560              — indoor dungeon viewport\n"
-        "Source: docs/dm2_time.md §Weather   — fog/storm visibility reduction\n"
+        "Source: docs/dm2/dm2_time.md §Weather   — fog/storm visibility reduction\n"
         "Source: SKWIN/c_bkgrnd.cpp ENVIRONMENT_DRAW_DISTANT_ELEMENT\n"
         "Reference: dm1_v2_lighting_dynamic_pc34.c §V2.2 Dynamic Lighting\n"
         "  v22_flicker_factor / v22_light_rebuild_map\n"

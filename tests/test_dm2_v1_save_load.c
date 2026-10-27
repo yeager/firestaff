@@ -19,9 +19,9 @@
  *  24. Fixture-free external original SKSave corpus census
  *
  * Source refs:
- *   docs/dm2_save_format.md — SUPPRESS codec, slot header layout
- *   docs/dm2_save_slots.md — 10 slots and authenticated DOS header shape
- *   docs/dm2_party_state.md — champion 261-byte format
+ *   docs/dm2/dm2_save_format.md — SUPPRESS codec, slot header layout
+ *   docs/dm2/dm2_save_slots.md — 10 slots and authenticated DOS header shape
+ *   docs/dm2/dm2_party_state.md — champion 261-byte format
  *   ReDMCSB DEFS.H:680-681 — CurrentHealth/MaximumHealth persisted fields
  *   ReDMCSB CHAMPION.C F0320:1727-1737 — damage reaching <=0 calls kill
  *   ReDMCSB CHAMPION.C F0321:1835-1840/F0331:2333-2440 — zero HP blocks damage/regen

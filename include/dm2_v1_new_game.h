@@ -394,13 +394,13 @@ typedef struct {
 /* Serialize session state to a flat byte buffer.
  * Returns bytes written, or -1 on error (buffer too small).
  * Format: see DM2_V1_SessionState layout above.
- * Source: docs/dm2_save_format.md — session serialization */
+ * Source: docs/dm2/dm2_save_format.md — session serialization */
 int dm2_v1_session_serialize(const DM2_V1_SessionState *session,
                                uint8_t *buf, size_t buf_size);
 
 /* Deserialize a byte buffer into a session state.
  * Returns 0 on success, -1 on error (invalid data).
- * Source: docs/dm2_save_format.md — session deserialization */
+ * Source: docs/dm2/dm2_save_format.md — session deserialization */
 int dm2_v1_session_deserialize(DM2_V1_SessionState *session,
                                  const uint8_t *buf, size_t buf_size);
 

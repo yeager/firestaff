@@ -19,7 +19,7 @@ prep that was already in the working tree.
 **Pre-existing path bug fixed** (`src/dm1v2/dm1_v2_modern_assets_pc34.c`).
 `m11_v22_set_manifest_path()` previously walked up ONE level from the
 data dir and resolved to `~/.firestaff/data/assets/dm1/modern/...`
-while the spec at `docs/v2_2_asset_manifest.md` mandates
+while the spec at `docs/shared/v2_2_asset_manifest.md` mandates
 `~/.firestaff/assets/dm1/modern/`. Now walks up TWO levels
 (dataDir → data → ~/.firestaff) before appending `assets/dm1/modern/`.
 Result: `m11_v22_modern_assets_available()` now actually returns 1
@@ -38,7 +38,7 @@ when the asset pack is installed at the spec'd location.
 - `wall_shapes/wall_d3_mossy_hero_01.png` (1254×1254, vision score 4/4/5/5 vs sprite_0077)
 - `creature_shapes/creature_demon_hero_01.png` (1024×1536, vision score 5/5/5/5 vs sprite_0372)
 
-Always-compare vision verification per `docs/v22-asset-style-prompt.md`:
+Always-compare vision verification per `docs/shared/v22-asset-style-prompt.md`:
 side-by-side comparisons in `docs/v22-compare/` (3 hero pairs + 4
 procedural pairs).
 
@@ -165,8 +165,8 @@ src/shared/changelog_m12.c                            (version bump 2.8.1 -> 2.9
 src/ui/menu_startup_m12.c                             (version bump v2.8.1 -> v2.9.0)
 parity-evidence/pass786_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat.md
 parity-evidence/verification/pass786_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat/manifest.json
-docs/v22-asset-style-prompt.md                        (hero art direction)
-docs/v22-batch-progress.md                            (batch progress + next steps)
+docs/shared/v22-asset-style-prompt.md                        (hero art direction)
+docs/shared/v22-batch-progress.md                            (batch progress + next steps)
 docs/v22-compare/                                     (3 hero + 4 proc comparisons)
 ~/.firestaff/assets/dm1/modern/                       (the actual asset pack)
 ```

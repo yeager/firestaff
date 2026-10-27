@@ -12,7 +12,7 @@ Sources:
   SKULL.ASM    — 522128-line disassembly of the DM2 PC executable
   skproject    — C++ reimplementation (SkWinCore.cpp, SkGlobal.h, etc.)
   dm2_v1_*.c   — firestaff implementation source files
-  docs/dm2_*.md — source-lock format documents
+  docs/dm2/dm2_*.md — source-lock format documents
 """
 from __future__ import annotations
 

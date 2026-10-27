@@ -40,7 +40,7 @@ direction and scale, not a normal-speed repeat rate.
 The captures confirm that Z enters the orange cursor mode, all four D-pad
 directions move it, and simultaneous directions move it diagonally. The retail
 manual documents eight-way hand-pointer movement (see the control-table link
-in [`docs/nexus_input.md`](../../../docs/nexus_input.md)). This trace only
+in [`docs/nexus/nexus_input.md`](../../../docs/nexus/nexus_input.md)). This trace only
 measured the four cardinal directions and one diagonal.
 
 ## Mouse limit

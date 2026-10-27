@@ -341,8 +341,8 @@ static void __attribute__((unused)) csb_v22_skip_to_next_object (FILE* fp) {
 /* csb_v22_set_manifest_path — set the path to the modern asset manifest.
  * Called by M12_AssetStatus_Scan() after resolving the data directory.
  * The manifest path is derived as: ~/.firestaff/assets/csb/modern/
- * modern_asset_manifest.json (per docs/v2_2_asset_manifest.md and
- * docs/v2_2_asset_provenance_schema.md).
+ * modern_asset_manifest.json (per docs/shared/v2_2_asset_manifest.md and
+ * docs/shared/v2_2_asset_provenance_schema.md).
  *
  * dataDir is the CSB game data directory path (e.g. ~/.firestaff/data/csb).
  * We walk up two levels to reach ~/.firestaff, then append

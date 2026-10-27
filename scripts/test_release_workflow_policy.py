@@ -14,11 +14,11 @@ def main() -> int:
     text = WORKFLOW.read_text(encoding="utf-8")
     checks = {
         "all release runs share a non-cancelling concurrency group":
-            "group: firestaff-release-daily-limit" in text
+            "group: firestaff-release-12h-cooldown" in text
             and "cancel-in-progress: false" in text,
-        "daily quota is checked before build and immediately before publication":
-            text.count("gh api --paginate \"repos/${GITHUB_REPOSITORY}/releases?per_page=100\"")
-            >= 2,
+        "12-hour cooldown is checked before build and immediately before publication":
+            text.count("python3 scripts/verify_release_cooldown.py --tag") == 2,
+        "workflow has no daily-limit bypass": "override_daily_limit" not in text,
         "draft retries pass an explicit true or false value to gh release edit":
             'release_flags=(--draft="$FIRESTAFF_DRAFT")' in text,
     }

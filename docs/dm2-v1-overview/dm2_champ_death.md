@@ -7,7 +7,7 @@
 - include/dm2_v1_*.h
 - include/dm2_v1_save_load.h
 - docs/dm2-v1-overview/dm2_newfeatures.md (companion system)
-- docs/champ_death.md (DM1 V1 reference — mirror resurrect/reincarnate)
+- docs/shared/champ_death.md (DM1 V1 reference — mirror resurrect/reincarnate)
 - docs/source-lock/csb_champions.md (CSB reincarnation changes)
 
 ---

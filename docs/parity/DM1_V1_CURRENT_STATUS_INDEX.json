@@ -182,12 +182,12 @@
       "use": "Use for recent closed/open-bounded bug rows; verify against this index before re-opening old DM1 gaps."
     },
     {
-      "path": "docs/DM1_V1_BUG_AUDIT.md",
+      "path": "docs/dm1/DM1_V1_BUG_AUDIT.md",
       "status": "PARTIALLY_SUPERSEDED",
       "use": "Historical audit. Treat open rows as verification candidates unless this index, TODO, or FINAL_GAPS still marks them active."
     },
     {
-      "path": "docs/dm1-v1-functional-divergence-report.md",
+      "path": "docs/dm1/dm1-v1-functional-divergence-report.md",
       "status": "PARTIALLY_SUPERSEDED",
       "use": "Historical divergence snapshot. Do not use alone to reopen closed ReDMCSB source-lock work."
     },

@@ -4,7 +4,7 @@
 > set, not current overall parity or playability. For current supported routes
 > and open evidence gaps, use [project status](../docs/PROJECT_STATUS.md),
 > [platform status](../docs/PLATFORM_STATUS.md#therons-quest), and
-> [Theron capture readiness](../docs/THERON_CAPTURE_READINESS.md). In
+> [Theron capture readiness](../docs/theron/THERON_CAPTURE_READINESS.md). In
 > particular, the original-emulator multi-second menu-action hold is still
 > unverified.
 

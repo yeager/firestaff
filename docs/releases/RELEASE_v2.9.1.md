@@ -7,7 +7,7 @@ Skullkeep). Each game now has a per-game modern-asset module
 procedural asset pack at `~/.firestaff/assets/<game>/modern/`, and a
 green ctest target exercising the full manifest-discovery + validation +
 fallback chain. DM1 V2.2 also gains 6 more PBR hero variants (batch 4)
-to bring the DM1 PBR count to 19. `docs/v22-asset-style-prompt.md` is
+to bring the DM1 PBR count to 19. `docs/shared/v22-asset-style-prompt.md` is
 updated to reflect an actual `gpt-image-2` constraint: it does NOT
 support `background: transparent`, and has been silently ignoring that
 parameter for all four PBR batches (verified via `sips -g hasAlpha` on
@@ -77,7 +77,7 @@ HTTP 400 ("Transparent background is not supported for this model"). All
 
 Verified via `sips -g hasAlpha` that **all 19 generated PBR PNGs across
 batches 1–4 have `hasAlpha: no`** — the model has been silently ignoring
-the transparent parameter this entire time. `docs/v22-asset-style-prompt.md`
+the transparent parameter this entire time. `docs/shared/v22-asset-style-prompt.md`
 now documents this explicitly:
 
 - `Background: opaque` for ALL assets (no longer "transparent for
@@ -161,8 +161,8 @@ tests/test_nexus_v22_modern_assets_pc34.c   (new, 227 lines)
 tests/test_dm2_v22_modern_assets_pc34.c     (new, 227 lines)
 
 CMakeLists.txt                              (modified — test targets + ctest wiring + DM2 GLOB)
-docs/v22-asset-style-prompt.md              (modified — gpt-image-2 model constraints + opaque-only note)
-docs/v22-batch-progress.md                  (modified — batch 4 entry + gpt-image-2 finding)
+docs/shared/v22-asset-style-prompt.md              (modified — gpt-image-2 model constraints + opaque-only note)
+docs/shared/v22-batch-progress.md                  (modified — batch 4 entry + gpt-image-2 finding)
 docs/v22-compare/compare_index.json         (modified — hero_batch_4_pairs)
 TODO.md                                     (modified — Theron/Nexus/DM2 Phase 2 entries)
 DONE.md                                     (modified — CSB/Theron/Nexus/DM2 V2.2 entries)

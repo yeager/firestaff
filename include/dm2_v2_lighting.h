@@ -20,12 +20,12 @@
  *   dm2_v1_weather.h              — DM2 weather/time state
  *   dm2_v1_outdoor_renderer.h     — DM2 V1 outdoor sky color
  *   dm2_v2_outdoor_enhanced.h     — outdoor V2 effects (cloud/rain/sway)
- *   docs/dm2_time.md              — time-of-day / weather / torch docs
+ *   docs/dm2/dm2_time.md              — time-of-day / weather / torch docs
  *
  * Source: SKULL.ASM PROCESS_TIMER_0C  — per-champion torch timers
  *         SKULL.ASM T600              — outdoor viewport
  *         SKULL.ASM T560              — indoor viewport
- *         docs/dm2_time.md §Weather   — fog/storm visibility reduction
+ *         docs/dm2/dm2_time.md §Weather   — fog/storm visibility reduction
  *         ReDMCSB PANEL.C:367-428     — DM1 palette lighting (analogy)
  */
 

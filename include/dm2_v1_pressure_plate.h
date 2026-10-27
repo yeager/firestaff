@@ -18,7 +18,7 @@
  *   skproject/SKWIN/SkGlobal.cpp:1112-1170 - dPressurePlatesTable
  *   skproject/SKWIN/DME.h:1456-1504       - pressure_plate_descriptor_t
  *   ReDMCSB MOVESENS.C:1000-1100          - F0268_SENSOR_AddEvent (DM1 parity)
- *   ReDMCSB docs/dm2_sensors.md           - DM2 sensor types
+ *   ReDMCSB docs/dm2/dm2_sensors.md           - DM2 sensor types
  *
  * Pressure plate kinds in DM2:
  *   - WEIGHT (party weight triggers when on plate)

@@ -28,7 +28,7 @@ typedef struct {
     /* Real *.MNS model metadata binding.  Set only after the named file has
      * been opened from the configured Nexus data directory and authenticated
      * as a DMDF container; stays 0 (fail-closed) when the file is absent or
-     * malformed.  Source: docs/NEXUS_FILE_CLASSIFICATION.md MNS inventory,
+     * malformed.  Source: docs/nexus/NEXUS_FILE_CLASSIFICATION.md MNS inventory,
      * nexus_v1_dmdf_model.c DMDF magic check. */
     int mns_bound;
     uint32_t mns_size;
@@ -134,7 +134,7 @@ void nexus_v1_creatures_reset_active(Nexus_V1_CreatureManager *mgr);
  * the file, requires the DMDF magic, and records size + FNV-1a64.
  * Returns 1 when bound, 0 when the file is absent or not a DMDF
  * container (fail-closed; type keeps mns_bound == 0).
- * Source: docs/NEXUS_FILE_CLASSIFICATION.md MNS inventory,
+ * Source: docs/nexus/NEXUS_FILE_CLASSIFICATION.md MNS inventory,
  *         nexus_v1_dmdf_model.c nexus_v1_dmdf_is_valid(). */
 int nexus_v1_creature_bind_mns_metadata(Nexus_V1_CreatureManager *mgr,
                                         int type_idx, const char *path);

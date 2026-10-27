@@ -237,7 +237,7 @@ Recovered unique branches:
 - commit: 4f983325aae3dd7da432f1a291b607f097cdc011
 - ahead/behind vs origin/main: 0	1 (left=origin/main, right=branch)
 - merge-base: f280fc75692fa6b8dabb9fd370521c9ec911a3fc; base state: already_based_on_current_origin_main
-- changed files sample: CMakeLists.txt,action_area_routes_pc34_compat.c action_area_routes_pc34_compat.h,docs/dm1_v1_touchscreen_source_lock_manifest.md parity-evidence/pass_touch_click_zone_matrix.md,test_action_area_routes_pc34_compat_integration.c
+- changed files sample: CMakeLists.txt,action_area_routes_pc34_compat.c action_area_routes_pc34_compat.h,docs/dm1/dm1_v1_touchscreen_source_lock_manifest.md parity-evidence/pass_touch_click_zone_matrix.md,test_action_area_routes_pc34_compat_integration.c
 - git diff --check origin/main...branch: exit 0
 - git merge-tree --write-tree origin/main branch: exit 0
 - scratch rebase onto origin/main: exit 0; scratch head: 4f983325aae3dd7da432f1a291b607f097cdc011

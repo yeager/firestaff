@@ -17,12 +17,12 @@
  *   dm2_v1_weather.h      — 4 weather states, time_fraction
  *   dm2_v1_weather.c      — sky_color implementation
  *   dm2_v2_outdoor_enhanced.h — API
- *   docs/dm2_time.md      — weather / fog / visibility
+ *   docs/dm2/dm2_time.md      — weather / fog / visibility
  *   dm2_v2_lighting.c     — fog map, lightning bloom API
  *
  * Source: SKULL.ASM T600   — outdoor viewport rendering
  *         SKULL.ASM T520   — party/movement tick (time advance)
- *         docs/dm2_time.md §Weather — lightning frame sequences
+ *         docs/dm2/dm2_time.md §Weather — lightning frame sequences
  */
 
 #include "dm2_v2_outdoor_enhanced.h"
@@ -181,8 +181,8 @@ const char *dm2_v2_outdoor_source_evidence(void) {
         "DM2 V2.2 Enhanced Outdoor FX — Phase 4\n"
         "Source: SKULL.ASM T600  — outdoor viewport rendering\n"
         "Source: SKULL.ASM T520  — party/movement tick\n"
-        "Source: docs/dm2_time.md §Weather — fog/storm/rain/lightning\n"
-        "Source: docs/dm2_time.md §Lightning — multi-frame flash sequence\n"
+        "Source: docs/dm2/dm2_time.md §Weather — fog/storm/rain/lightning\n"
+        "Source: docs/dm2/dm2_time.md §Lightning — multi-frame flash sequence\n"
         "Reference: dm1_v2_lighting_dynamic_pc34.c v2_light_update_flicker\n"
         "Reference: dm2_v1_weather.c dm2_v1_weather_sky_color\n"
         "DM2 V2.2: animated cloud drift (cloud_offset, 5 units/s)\n"

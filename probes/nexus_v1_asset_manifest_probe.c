@@ -14,7 +14,7 @@
  *   SDL_VIDEODRIVER=dummy ./build/firestaff_nexus_v1_asset_manifest_probe
  *   SDL_VIDEODRIVER=dummy ./build/firestaff_nexus_v1_asset_manifest_probe ~/.firestaff/data/nexus/
  *
- * Source-lock: docs/NEXUS_FILE_CLASSIFICATION.md
+ * Source-lock: docs/nexus/NEXUS_FILE_CLASSIFICATION.md
  *              docs/source-lock/nexus_v1_phase7_verification_suite_H0357.md
  */
 
@@ -468,7 +468,7 @@ int main(int argc, char **argv) {
 
     printf("═══════════════════════════════════════════════════════\n");
     printf("  Nexus V1 Phase 7 — Asset Manifest Probe\n");
-    printf("  Source-lock: docs/NEXUS_FILE_CLASSIFICATION.md\n");
+    printf("  Source-lock: docs/nexus/NEXUS_FILE_CLASSIFICATION.md\n");
     printf("               docs/source-lock/nexus_v1_phase7_\n");
     printf("               verification_suite_H0357.md\n");
     printf("═══════════════════════════════════════════════════════\n");

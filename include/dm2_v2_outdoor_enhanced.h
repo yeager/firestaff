@@ -13,7 +13,7 @@
  * time_of_day, triggers, torch charges) is untouched.
  *
  * Source: SKULL.ASM T600 — outdoor viewport rendering
- *         docs/dm2_time.md §Weather / §Lightning
+ *         docs/dm2/dm2_time.md §Weather / §Lightning
  */
 
 #include <stdint.h>

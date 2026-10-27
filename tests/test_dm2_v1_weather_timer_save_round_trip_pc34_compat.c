@@ -3,8 +3,8 @@
  * Source-lock (PC 3.4 compatibility layer):
  *   SKULL.ASM skload_table_60 (Game State block write/read)
  *   SKULL.ASM:10620-10710 — timer table encode (PROCESS_TIMER_0C companion)
- *   docs/dm2_save_format.md § Game state block (skload_table_60, 56 bytes)
- *   docs/dm2_save_format.md § Timers table (10 bytes per timer, SUPPRESS)
+ *   docs/dm2/dm2_save_format.md § Game state block (skload_table_60, 56 bytes)
+ *   docs/dm2/dm2_save_format.md § Timers table (10 bytes per timer, SUPPRESS)
  *   ReDMCSB BASE.C F0027/F0029 — weather seed LCG (0xBB40E62D, +11)
  *   skproject/SKULLWIN/c_tim_proc.cpp — PROCESS_TIMER_0C torch timers
  *
@@ -227,7 +227,7 @@ static void test_timer_table_covers_all_timer_ids(void)
  * without a delimiter byte or real DM2 save file.
  *
  * Source anchors:
- *   - docs/dm2_save_format.md § Save Sections: skload_table_60 followed by
+ *   - docs/dm2/dm2_save_format.md § Save Sections: skload_table_60 followed by
  *     "Timers table (10 bytes x wTimersCount, SUPPRESS)"
  *   - ReDMCSB BASE.C F0027/F0029 lines 1688-1765: RNG seed advances via
  *     state * 0xBB40E62D + 11, then weather uses the two low result bits.

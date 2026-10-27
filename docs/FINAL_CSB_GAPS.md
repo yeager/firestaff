@@ -10,7 +10,7 @@ after this session's work.  Each gap classified:
 - **OPEN-BOUNDED** — tractable, can be implemented in a focused commit
 - **OPEN-EXTENSIVE** — out of scope, would need a separate milestone
 
-Source: `docs/csb_gap_*.md` (5 files, 870 lines) plus
+Source: `docs/csb/csb_gap_*.md` (5 files, 870 lines) plus
 `docs/REDMCSB_REFERENCE.md` for the BugsAndChanges.htm
 cross-reference.
 

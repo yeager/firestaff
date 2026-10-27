@@ -167,7 +167,7 @@ void dm2_v2_runtime_fog_rebuild(void);
  *
  * Deterministic fallback: no-op when enhanced outdoor is disabled.
  * Source: dm2_v2_lighting.c dm2_v2_fog_set_weather
- *         docs/dm2_time.md §Weather §Fog */
+ *         docs/dm2/dm2_time.md §Weather §Fog */
 void dm2_v2_runtime_fog_set_weather(int weather);
 
 /* dm2_v2_runtime_set_enhanced_outdoor — enable/disable Phase 4 effects.

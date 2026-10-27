@@ -925,7 +925,7 @@ remain dated records.
   identifies Button I as the menu selector but does not specify a long hold.
   Greatstone SCK is used as a secondary extraction/data-format reference only.
   Neither source establishes the reported 3–5 second timing. See
-  `docs/THERON_CAPTURE_READINESS.md` and `docs/theron_input.md` for the
+  `docs/theron/THERON_CAPTURE_READINESS.md` and `docs/theron/theron_input.md` for the
   current native runtime boundary.
 
 ## 2026-10-24 — require authentic-media and debug receipts in paired captures
@@ -1319,7 +1319,7 @@ autoload remains reference-only: it emitted raw VDC and RAM snapshots, but no
 verified controller delivery, game-command consumer receipt, or CD transition.
 Continue native implementation from authentic game data and source-bound
 semantics. Current viewport and pit consumers remain fail-closed; see
-`docs/THERON_CAPTURE_READINESS.md` and
+`docs/theron/THERON_CAPTURE_READINESS.md` and
 `docs/source-lock/theron-disassembly/theron-pit-gate-evidence-gap-20261024.md`.
 
 ## 2026-10-09 — JP CUE initial-level gameplay meaning remains unproven

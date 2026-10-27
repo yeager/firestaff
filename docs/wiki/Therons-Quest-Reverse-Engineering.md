@@ -11,8 +11,8 @@ reported 2.79 game ticks/s and 4.99 rendered/presented frames/s. The native
 presented capture was black, so visual playability remains open. The run used
 separate SDL key-down events and does not verify a continuous 3–5 second
 button hold. Firestaff gameplay runs natively; external emulator behavior is
-not used as a substitute for its runtime. See [Theron input notes](../theron_input.md)
-and [capture readiness](../THERON_CAPTURE_READINESS.md). DMWeb's original
+not used as a substitute for its runtime. See [Theron input notes](../theron/theron_input.md)
+and [capture readiness](../theron/THERON_CAPTURE_READINESS.md). DMWeb's original
 edition/manual references and Greatstone SCK's extraction corpus inform
 provenance and media handling.
 

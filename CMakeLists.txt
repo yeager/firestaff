@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 3.0.417 LANGUAGES C)
+project(Firestaff VERSION 3.0.418 LANGUAGES C)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
@@ -44223,7 +44223,7 @@ endif()
 # nexus_v1_init / read_file / load_level / tick pipeline against
 # LEV00.DGN, FONT256.S2D, and MENU.BPK from the verified Track 1
 # media. Source-lock: docs/FIRESTAFF_GAP_LIST.md E1 Track 1 row,
-# docs/NEXUS_FILE_CLASSIFICATION.md, docs/source-lock/nexus_v1_phase7_verification_suite_H0357.md.
+# docs/nexus/NEXUS_FILE_CLASSIFICATION.md, docs/source-lock/nexus_v1_phase7_verification_suite_H0357.md.
 add_executable(firestaff_nexus_v1_track1_phase_launch_probe
     probes/nexus_v1_track1_phase_launch_probe.c
     src/nexus/nexus_v1_saturn_font.c
@@ -49731,7 +49731,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
     # Bounded real-artifact boundary for Theron .srm save data.  Data-free
     # when no real Sphenx-format .srm file is staged; honest ABSENT manifest
     # is the expected outcome on the current host.  See
-    # docs/THERON_CAPTURE_READINESS.md for the readiness statement.
+    # docs/theron/THERON_CAPTURE_READINESS.md for the readiness statement.
     add_executable(firestaff_theron_v1_srm_classifier_probe
         probes/theron/firestaff_theron_v1_srm_classifier_probe.c
         src/theron/theron_v1_srm_classifier.c

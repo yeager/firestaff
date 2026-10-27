@@ -860,7 +860,7 @@ static const M12_MenuEntry g_entryTemplate[] = {
     {.title = _("CHAOS STRIKES BACK"), .gameId = "csb", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
     {.title = _("DUNGEON MASTER II"), .gameId = "dm2", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
     {.title = _("DUNGEON MASTER NEXUS"), .gameId = "nexus", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
-    /* BLOCKED_ON_REFERENCE: no source; TurboGrafx-16 / PC Engine release (Hudson Soft, 1992). */
+    /* PC Engine release; availability is based on authentic Track 02 media. */
     {.title = _("THERON'S QUEST"), .gameId = "theron", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
     {.title = _("CSB UTILITY DISK (FM TOWNS)"), .gameId = "csb", .kind = M12_MENU_ENTRY_CSB_FMTOWNS_UTILITY, .sourceKind = M12_MENU_SOURCE_SYSTEM, .available = 1},
     {.title = _("CSB UTILITY DISK — HINT ORACLE"), .gameId = "csb-hint-oracle", .kind = M12_MENU_ENTRY_CSB_HINT_ORACLE, .sourceKind = M12_MENU_SOURCE_SYSTEM, .available = 0},
@@ -4077,7 +4077,7 @@ static int m12_is_valid_quick_resume_path_for_game(
         /* Mac header parsing is preservation evidence, not Resume support.
          * SKProject SKWINSPX/SKSVGAME.CPP DM2_GAME_LOAD (1392-1487) still
          * owns full record/possession reconstruction; see
-         * docs/dm2_save_format.md. */
+         * docs/dm2/dm2_save_format.md. */
         if (!M12_StartupMenu_DM2ResumeSupportedOnSelectedPlatform(state)) {
             return 0;
         }
@@ -9216,9 +9216,6 @@ static const char* m12_entry_status_text(const M12_MenuEntry* entry) {
     if (entry->available) {
         return "READY";
     }
-    if (entry->gameId && strcmp(entry->gameId, "theron") == 0) {
-        return _("NO SOURCE");
-    }
     if (M12_AssetStatus_GameHasCompleteHashSet(entry->gameId)) {
         return "MISSING";
     }
@@ -9236,9 +9233,6 @@ static unsigned char m12_entry_status_fill(const M12_MenuEntry* entry,
     if (entry->available) {
         return selected ? M12_COLOR_YELLOW : M12_COLOR_GREEN;
     }
-    if (entry->gameId && strcmp(entry->gameId, "theron") == 0) {
-        return selected ? M12_COLOR_DARK_GRAY : M12_COLOR_BLACK;
-    }
     if (M12_AssetStatus_GameHasCompleteHashSet(entry->gameId)) {
         return selected ? M12_COLOR_LIGHT_RED : M12_COLOR_MAROON;
     }
@@ -9255,9 +9249,6 @@ static unsigned char m12_entry_status_text_color(const M12_MenuEntry* entry,
     }
     if (entry->available) {
         return M12_COLOR_BLACK;
-    }
-    if (entry->gameId && strcmp(entry->gameId, "theron") == 0) {
-        return M12_COLOR_WHITE;
     }
     return selected ? M12_COLOR_BLACK : M12_COLOR_WHITE;
 }
@@ -9416,8 +9407,12 @@ static const char* m12_game_card_line2(const M12_StartupMenuState* state,
 
 static const char* m12_game_card_line3(const M12_StartupMenuState* state,
                                        const M12_MenuEntry* entry,
-                                       int gameIndex) {
-    const M12_AssetVersionStatus* version;
+                                       int* launchableOut) {
+    M12_StartupLaunchGate gate;
+    int entryIndex;
+    if (launchableOut) {
+        *launchableOut = 0;
+    }
     if (!entry || !state) {
         return "SETTINGS";
     }
@@ -9427,12 +9422,14 @@ static const char* m12_game_card_line3(const M12_StartupMenuState* state,
     if (entry->kind == M12_MENU_ENTRY_CSB_HINT_ORACLE) {
         return _("SELECT TO VERIFY ORIGINAL DATA");
     }
-    version = m12_selected_version_status(state, gameIndex);
-    if (entry->gameId && strcmp(entry->gameId, "theron") == 0) {
-        return _("NO SOURCE");
-    }
-    if (version && version->matched) {
-        return _("READY TO LAUNCH");
+    entryIndex = m12_entry_index_for_game_id(state, entry->gameId);
+    if (entryIndex >= 0 &&
+        M12_StartupMenu_GetLaunchGate(state, entryIndex, &gate) &&
+        gate.handled) {
+        if (launchableOut) {
+            *launchableOut = gate.canLaunch;
+        }
+        return gate.blockedLabel ? gate.blockedLabel : "OFFLINE";
     }
     return _("MISSING OR MISMATCHED");
 }
@@ -9589,6 +9586,8 @@ static void m12_draw_box_art(const M12_StartupMenuState* state,
     unsigned char statusFill = m12_entry_status_fill(entry, 0);
     unsigned char statusText = m12_entry_status_text_color(entry, 0);
     int gameIndex = m12_game_slot_from_id(entry ? entry->gameId : NULL);
+    int launchable = 0;
+    const char* launchStatus = m12_game_card_line3(state, entry, &launchable);
     char hashSummary[64];
 
     m12_format_hash_summary(entry, hashSummary, sizeof(hashSummary));
@@ -9678,9 +9677,8 @@ static void m12_draw_box_art(const M12_StartupMenuState* state,
                            framebufferWidth,
                            framebufferHeight,
                            164,
-                           m12_game_card_line3(state, entry, gameIndex),
-                           entry && gameIndex >= 0 && m12_selected_version_status(state, gameIndex) &&
-                               m12_selected_version_status(state, gameIndex)->matched
+                           launchStatus,
+                           launchable
                                ? &g_textSmallAccent
                                : &g_textSmallMuted);
     if (gameIndex >= 0) {
@@ -9992,10 +9990,6 @@ static void m12_draw_settings_row(unsigned char* framebuffer,
  *   - Unavailable items shown grayed with "[Soon]"
  *   - Active selection highlighted with accent color
  * ══════════════════════════════════════════════════════════════════════ */
-
-static const char *g_main_menu_labels[M12_MAIN_MENU_COUNT] = {
-    _("PLAY"), _("SETTINGS"), _("EXTRAS"), _("QUIT")
-};
 
 static const char *g_main_menu_descriptions[M12_MAIN_MENU_COUNT] = {
     _("Start or continue a game"),
@@ -12280,6 +12274,8 @@ static void m12_draw_modern_sidebar(const M12_StartupMenuState* state,
                              : m12_game_card_fill(entry ? entry->gameId : NULL);
     unsigned char accent = entry && entry->available ? M12_COLOR_YELLOW : M12_COLOR_LIGHT_RED;
     int gameIndex = m12_game_slot_from_id(entry ? entry->gameId : NULL);
+    int launchable = 0;
+    const char* launchStatus = m12_game_card_line3(state, entry, &launchable);
     char hashSummary[64];
     m12_format_hash_summary(entry, hashSummary, sizeof(hashSummary));
     m12_draw_frame(framebuffer,
@@ -12337,9 +12333,8 @@ static void m12_draw_modern_sidebar(const M12_StartupMenuState* state,
                   framebufferHeight,
                   x + 10,
                   y + h / 2 + 31,
-                  entry ? m12_game_card_line3(state, entry, gameIndex) : "",
-                  entry && gameIndex >= 0 && m12_selected_version_status(state, gameIndex) &&
-                      m12_selected_version_status(state, gameIndex)->matched
+                  launchStatus,
+                  launchable
                       ? &g_textSmallAccent
                       : &g_textSmallMuted);
     if (gameIndex >= 0) {
@@ -13497,7 +13492,7 @@ static void m12_draw_manual_docs_view_modern(const M12_StartupMenuState* state,
     };
     static const char* const runbooks[] = {
         "docs/parity/DM1_V1_ORIGINAL_CAPTURE_RUNBOOK.md",
-        "docs/THERON_CAPTURE_READINESS.md",
+        "docs/theron/THERON_CAPTURE_READINESS.md",
         "docs/FIRESTAFF_GAP_LIST.md section G1",
         "GitHub README: https://github.com/yeager/firestaff#readme"
     };
@@ -15829,20 +15824,6 @@ int m12_get_nav_level(void) { return (int)g_nav_level; }
  * SPELL REFERENCE and MAP VIEWER remain unavailable (g_extras
  * available flag = 0) because they have no data source yet.  They
  * will be wired in a follow-up when a data source lands. */
-/* ── Accessibility settings (#10) ─────────────────────────────────── */
-
-static M12_ExtSettingsRow m12_accessibility_settings[] = {
-    {"Font Scale",        "100%",     1, 0},
-    {"High Contrast",     "Off",      1, 0},
-    {"Colorblind Mode",   "Off",      1, 0},
-    {"Screen Reader",     "Off",      0, 0},  /* V2.2 */
-    {"Large Cursor",      "Off",      0, 0},  /* V2.2 */
-    {"Reduced Motion",    "Off",      0, 0},  /* V2.2 */
-    {"Button Hold Time",  "Normal",   0, 0},  /* V2.2 */
-    {"Audio Cues",        "On",       0, 0},  /* V2.2 */
-    {NULL, NULL, 0, 0}
-};
-
 /* ── Default to redesigned menu (#11) ─────────────────────────────── */
 
 int m12_should_use_redesigned_menu(void) {

@@ -15,7 +15,7 @@ It is intentionally a scaffold gate, not a parity claim:
 
 Source of truth:
 - DM2 PC 1.0 EN canonical archive provenance is recorded separately in
-  docs/dm2_source_lock.md and tools/verify_dm2_v1_phase0_provenance_gate.py.
+  docs/dm2/dm2_source_lock.md and tools/verify_dm2_v1_phase0_provenance_gate.py.
 - The overlay capture script is scripts/dosbox_dm2_original_overlay_capture.sh.
 
 Honest scope: this script confirms that the SKULLWIN source anchors the

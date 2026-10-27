@@ -9,7 +9,7 @@
  * 8-bit pixel buffers instead of the original packed 4-bit surface.
  *
  * Source: <local-home>/Documents/skproject-codex-ref/SKULLWIN/c_gfx_decode.cpp
- * Source: docs/dm2_graphics.md — DM2 GDAT image formats (IMG3/IMG9)
+ * Source: docs/dm2/dm2_graphics.md — DM2 GDAT image formats (IMG3/IMG9)
  */
 
 #include "dm2_v1_asset_loader.h"

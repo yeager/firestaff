@@ -34,5 +34,5 @@ retail rectangles, or that a physical desktop mouse works through SDL. A
 paired same-session Work RAM inspection found no event 44 submission and could
 not attribute an observed auxiliary-field change to any individual input; no
 inventory action is inferred. See
-[`docs/nexus_input.md`](../../../docs/nexus_input.md) for the current
+[`docs/nexus/nexus_input.md`](../../../docs/nexus/nexus_input.md) for the current
 retail disassembly and input status.

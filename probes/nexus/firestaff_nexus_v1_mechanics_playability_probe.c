@@ -602,7 +602,7 @@ static PROBE_NOINLINE void probe_real_level_playability(const char *data_dir,
     /* Bind roster creature types to real *.MNS model metadata where the
      * documented model files exist in the data directory.  Binding succeeds
      * exactly for present DMDF containers; absent files stay fail-closed.
-     * Source: docs/NEXUS_FILE_CLASSIFICATION.md MNS inventory,
+     * Source: docs/nexus/NEXUS_FILE_CLASSIFICATION.md MNS inventory,
      *         nexus_v1_dmdf_model.c nexus_v1_dmdf_is_valid(). */
     {
         int t, bound_count = 0, existing = 0, metadata_ok = 1;

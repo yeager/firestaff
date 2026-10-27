@@ -91,8 +91,8 @@ int main(int argc, char **argv) {
     gfx_path = argv[1];
 
     fprintf(stderr, "=== DM2 V1 Asset Loader Probe ===\n");
-    fprintf(stderr, "Source: docs/dm2_v1_phase2_data_formats_H2254.md §3\n");
-    fprintf(stderr, "Source: docs/dm2_graphics.md — GDAT categories (240), IMG3/IMG9\n");
+    fprintf(stderr, "Source: docs/dm2/dm2_v1_phase2_data_formats_H2254.md §3\n");
+    fprintf(stderr, "Source: docs/dm2/dm2_graphics.md — GDAT categories (240), IMG3/IMG9\n");
     fprintf(stderr, "Source: SKULL.ASM T560 — dungeon viewport rendering\n");
     fprintf(stderr, "Source: SKULL.ASM T600 — outdoor viewport rendering\n");
     fprintf(stderr, "Input: %s\n\n", gfx_path);

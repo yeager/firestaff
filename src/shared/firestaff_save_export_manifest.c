@@ -57,7 +57,7 @@
 #define VERSION_THERON_V1 1   /* theron .tqsv format version */
 
 /* DM2 slot-magic tokens. The DM2 slot layout uses 0xBEEF /
- * 0xDEAD sentinels per docs/dm2_save_slots.md. We do not
+ * 0xDEAD sentinels per docs/dm2/dm2_save_slots.md. We do not
  * attempt full layout detection here — the launcher can
  * still pass DM2_V1 explicitly with a synthetic DM2 slot
  * already verified by the DM2 save-load unit tests. */

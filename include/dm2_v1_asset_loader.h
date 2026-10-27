@@ -20,9 +20,9 @@
  *   - IMG9 (9-bit per-pixel) for complex walls
  *   - 8-bit palette-indexed core (c_pixel256) with 16-bit overlay passes
  *
- * Source: docs/dm2_v1_phase2_data_formats_H2254.md §3 — GRAPHICS.DAT structure
- * Source: docs/dm2_graphics.md — GDAT categories, image formats, palette system
- * Source: docs/dm2_platform_data.md — DM2 GRAPHICS.DAT size (~8.6 MB)
+ * Source: docs/dm2/dm2_v1_phase2_data_formats_H2254.md §3 — GRAPHICS.DAT structure
+ * Source: docs/dm2/dm2_graphics.md — GDAT categories, image formats, palette system
+ * Source: docs/dm2/dm2_platform_data.md — DM2 GRAPHICS.DAT size (~8.6 MB)
  * Source: SKULL.ASM T560 — dungeon viewport rendering (indoor)
  * Source: SKULL.ASM T600 — outdoor viewport rendering (sky/terrain)
  * Source: SKULL.ASM — GDAT image decoding (decode_img3_underlay/overlay, decode_img9)
@@ -39,7 +39,7 @@ extern "C" {
 /*
  * DM2 extends categories from 29 (0x1D) to 240 (0xF0).
  * Source: SkGlobal.h:636 — GDAT_CATEGORY_LIMIT (DM2) vs (DM1)
- * Source: docs/dm2_v1_phase2_data_formats_H2254.md §1
+ * Source: docs/dm2/dm2_v1_phase2_data_formats_H2254.md §1
  */
 #define DM2_GDAT_CATEGORY_LIMIT   0xF0   /* skproject extended category limit */
 #define DM1_GDAT_CATEGORY_LIMIT   0x1D   /* 29 categories */
@@ -818,7 +818,7 @@ typedef struct {
 
 /* Initialize asset loader with GRAPHICS.DAT data.
  * Returns 0 on success, -1 on failure.
- * Source: docs/dm2_graphics.md — GDAT file structure */
+ * Source: docs/dm2/dm2_graphics.md — GDAT file structure */
 int dm2_v1_asset_loader_init(DM2_V1_AssetLoader *loader,
                               const uint8_t *data, size_t size);
 
@@ -1447,7 +1447,7 @@ const char *dm2_v1_asset_gdat2_field_name(int field_code);
 
 /* Check if DM2 GRAPHICS.DAT is verified (MD5 matches known good hash).
  * DM2 PC English: 25247ede4dabb6a71e5dabdfbcd5907d (~8.6 MB)
- * Source: docs/dm2_platform_data.md */
+ * Source: docs/dm2/dm2_platform_data.md */
 int dm2_v1_asset_loader_verify(const DM2_V1_AssetLoader *loader);
 
 /* Free asset loader and all owned resources. */

@@ -2,7 +2,7 @@
 **Pass:** H2312
 **Date:** 2026-05-27
 **Game:** Dungeon Master II: Skullkeep (DM2) V1 (PC 3.4 English)
-**Sources:** SKULL.ASM · skproject/SkWin · dm2_v1_*.c · docs/dm2_*.md
+**Sources:** SKULL.ASM · skproject/SkWin · dm2_v1_*.c · docs/dm2/dm2_*.md
 
 ---
 

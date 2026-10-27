@@ -19,8 +19,8 @@
  *   skproject/SKWIN/SkGlobal.cpp:966-1011 - dSpellsTable + shop tables
  *   skproject/SKULLWIN/c_npc.cpp          - NPC dialog + personality table
  *   skproject/SKULLWIN/SKWinGlobal.h:42   - NUM_NPCS=4
- *   ReDMCSB docs/dm2_sensors.md           - SHOP sensor (0x30) details
- *   ReDMCSB docs/dm2_actuators.md         - SHOP_PANEL actuator (0x3F)
+ *   ReDMCSB docs/dm2/dm2_sensors.md           - SHOP sensor (0x30) details
+ *   ReDMCSB docs/dm2/dm2_actuators.md         - SHOP_PANEL actuator (0x3F)
  *
  * Skproject notes:
  *   - Each shop is owned by one NPC (one of NUM_NPCS=4 personalities).
@@ -112,7 +112,7 @@ typedef struct {
     int      active_stock_remaining[DM2_SHOP_MAX_STOCK];
     /* Container tracking for the party-side shop inventory.
      * A slot with is_container != 0 may hold contents_count items inside;
-     * non-empty containers cannot be sold (docs/dm2_inventory.md §5). */
+     * non-empty containers cannot be sold (docs/dm2/dm2_inventory.md §5). */
     uint8_t  inventory_is_container[32];
     uint16_t inventory_contents[32];
     /* Observability. */

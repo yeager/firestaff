@@ -20,9 +20,9 @@
  *   - 86 00 00: Lowest acceptable light level
  *   - 87 00 00: Ambient darkness / sight distance
  *
- * Source: docs/dm2_v1_phase2_data_formats_H2254.md §3
- * Source: docs/dm2_graphics.md — GDAT categories, image formats, palette system
- * Source: docs/dm2_platform_data.md — DM2 GRAPHICS.DAT size (~8.6 MB)
+ * Source: docs/dm2/dm2_v1_phase2_data_formats_H2254.md §3
+ * Source: docs/dm2/dm2_graphics.md — GDAT categories, image formats, palette system
+ * Source: docs/dm2/dm2_platform_data.md — DM2 GRAPHICS.DAT size (~8.6 MB)
  * Source: SKULL.ASM T560 — dungeon viewport rendering
  * Source: SKULL.ASM T600 — outdoor viewport rendering
  * Source: SKULL.ASM — GDAT image decoding (decode_img3_underlay/overlay, decode_img9)
@@ -64,7 +64,7 @@ static const uint8_t DM2_PC_EN_GRAPHICS_MD5[16] DM2_MAYBE_UNUSED = {
  *   - IMG9 (9-bit): complex walls
  *   - Raw bytes: UI elements, fonts
  *
- * Source: docs/dm2_graphics.md §4 — image compression formats
+ * Source: docs/dm2/dm2_graphics.md §4 — image compression formats
  */
 #define DM2_GDAT_HEADER_SIZE     4
 #define DM2_GDAT_CATEGORY_OFFSET_TABLE_SIZE(category_count) ((category_count) * 4)
@@ -4934,9 +4934,9 @@ const char *dm2_v1_asset_loader_source_evidence(void) {
         "Source: skproject SKWIN/SkWinCore.cpp READ_IMG3_DURATION/DECODE_IMG3_UNDERLAY/DECODE_IMG9 lines ~37543-38066\n"
         "Source: skproject SKWIN/DME.h IMG3 lines ~1099-1143\n"
         "Source: skproject SKWIN/defines.h GDAT_CATEGORY_* and dtImage/dtWordValue codes\n"
-        "Source: docs/dm2_v1_phase2_data_formats_H2254.md §3 — GRAPHICS.DAT structure\n"
-        "Source: docs/dm2_graphics.md — GDAT categories (240 vs 29), image formats (IMG3/IMG9)\n"
-        "Source: docs/dm2_platform_data.md — DM2 GRAPHICS.DAT size (~8.6 MB)\n"
+        "Source: docs/dm2/dm2_v1_phase2_data_formats_H2254.md §3 — GRAPHICS.DAT structure\n"
+        "Source: docs/dm2/dm2_graphics.md — GDAT categories (240 vs 29), image formats (IMG3/IMG9)\n"
+        "Source: docs/dm2/dm2_platform_data.md — DM2 GRAPHICS.DAT size (~8.6 MB)\n"
         "Source: SKULL.ASM T560 — dungeon viewport rendering (indoor)\n"
         "Source: SKULL.ASM T600 — outdoor viewport rendering (sky/terrain)\n"
         "Source: ReDMCSB DUNGEON.C:1371-1421 — wall frame table, map coordinate resolution\n"

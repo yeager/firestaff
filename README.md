@@ -21,11 +21,18 @@ work, especially for Chaos Strikes Back, Nexus and Theron's Quest.
 
 ## Current status
 
-The status pages were reviewed against `main` at `378f9d20` on 2026-10-27.
-They report what has been exercised with real media, not complete game parity.
+The status pages were reviewed against repository snapshot `88ef19df` on
+2026-10-27. A fresh build of the local working tree and real-media launcher
+checks confirmed keyboard and mouse selection for all five game cards. The
+normal menu reached a first native runtime for DM1, CSB, DM2 and Theron's
+Quest; Nexus correctly remains blocked at its Saturn menu evidence gate. These
+checks confirm bounded startup paths, not complete game parity.
 
-Firestaff detects real media and exposes only paths with a verified handoff; it
-never borrows data from another edition to fill a gap. The detailed status is kept in
+Firestaff detects real media and exposes paths only after their handoff gates
+pass. Edition ownership is checked per route, and mixed-source combinations
+remain unsupported until their data identity is verified. A known Nexus
+extracted-files-plus-disc ambiguity is documented in the
+[platform status](docs/PLATFORM_STATUS.md). The detailed status is kept in
 [project status](docs/PROJECT_STATUS.md). The published documentation is
 available at [yeager.github.io/firestaff](https://yeager.github.io/firestaff/).
 The [preservation status](docs/PRESERVATION_STATUS_2026-08-11.md) is a dated
@@ -36,7 +43,7 @@ The [preservation status](docs/PRESERVATION_STATUS_2026-08-11.md) is a dated
 | Dungeon Master | PC DOS, Atari ST, Amiga and FM Towns startup and selected dungeon routes have real-media coverage. The PC 3.4 Hall of Champions candidate panel is rendered from authenticated C040/C026 assets. Further gameplay and visual parity work continues. |
 | Chaos Strikes Back | Atari ST, Amiga and FM Towns have bounded real-media runtime routes. FM Towns uses its authenticated entrance palette and MINI.DAT bootstrap state. Amiga F0107 wall ornaments now use source MEDIA720 scales and authentic C696 anchors; matched-frame, palette/light, inscription readability, floor trapdoor, intro timing and audible output remain open. Campaign and save coverage are also incomplete. |
 | Dungeon Master II: Skullkeep | DOS, Amiga, FM Towns and Macintosh have real-media startup and selected runtime coverage. Amiga reaches its initial GDAT-backed M11 frame through the normal start menu with source movement covered. Broader input, save, native display/audio and dungeon-composition parity remain open per edition. |
-| DM Nexus | Saturn disc parsing and bounded MAPD title-asset presentation work from the original CUE/BIN. Ymir reference evidence verifies a no-save Japanese retail cold boot and a separate English-version disc-image cold boot to the native title menu; a separate Japanese New Game replay reaches the native 3D corridor viewport. The English screenshot replay matches the Ymir screenshot pixel-for-pixel, and its source join has 126 informative matches among 137 textured draws. These are emulator results, not Firestaff menu or gameplay support. Firestaff title composition, menu rendering/control, stable gameplay, HUD and dungeon presentation remain capture-gated. |
+| DM Nexus | Saturn disc parsing and source-bound MAPD decoding support a bounded render of the five authentic title planes. Firestaff does not yet reproduce the complete native Saturn title or menu. Ymir reference evidence verifies a no-save Japanese retail cold boot and a separate English-version disc-image cold boot to the native title menu; a separate Japanese New Game replay reaches the native 3D corridor viewport. The English screenshot replay matches the Ymir screenshot pixel-for-pixel, and its source join has 126 informative matches among 137 textured draws. These are emulator results, not Firestaff menu or gameplay support. Full title composition, menu rendering/control, stable gameplay, HUD and dungeon presentation remain capture-gated. |
 | Theron's Quest | Firestaff runs Theron in its native C/SDL runtime. Authentic US and Japanese Track 02 media reach bounded native routes, and source-only loaders verify all seven dungeons in both regions. Three repeated native macOS runs reached a loaded dungeon with nonzero ticks and presented frames; the Firestaff-presented capture was nonblack, but has not been paired with an original-emulator capture. Authentic graphics-bank binding, tile mapping, palette, transitions, combat, audio and save parity remain open. |
 
 ### Dungeon Master II: Skullkeep
@@ -80,7 +87,7 @@ English rather than to text from another edition. See
 
 Focused real-media checks and their current boundaries are documented in
 [TODO-dm2.md](TODO-dm2.md), [DONE-dm2.md](DONE-dm2.md),
-[DM2 platform variants](docs/dm2_variants_platform.md)
+[DM2 platform variants](docs/dm2/dm2_variants_platform.md)
 and the [DM2 FM Towns wiki guide](docs/wiki/DM2-FMTowns-Guide.md).
 
 Theron's Quest uses a DM1-like dungeon keyboard layout in Firestaff:
@@ -213,7 +220,7 @@ optional and never run while playing a game.
 
 | Tool | Purpose | Documentation |
 |---|---|---|
-| Firestaff Artpack Studio | Creates and validates Modern-mode artpacks without modifying original game media. | [Artpack Studio guide](docs/artpack_studio.md) |
+| Firestaff Artpack Studio | Creates and validates Modern-mode artpacks without modifying original game media. | [Artpack Studio guide](docs/shared/artpack_studio.md) |
 | Firestaff Dungeon Studio | Views and edits supported dungeon data, with a built-in screenshot option for documentation and review. | [Dungeon Studio source](scripts/firestaff_dungeon_studio.py) |
 | Firestaff Savegame Editor | Inspects and edits supported save files; always keep a backup of an original save. | [Savegame Editor source](scripts/firestaff_savegame_editor.py) |
 
@@ -227,7 +234,7 @@ packaging. Generated `.mo` files are not stored in the source tree.
 | DM1 | — | PC DOS, Atari ST, Amiga and FM Towns startup and selected dungeon routes | PC-9801 preservation | X68000 |
 | CSB | — | Atari ST, Amiga and FM Towns bounded runtime routes | — | PC-9801, X68000 |
 | DM2 | — | DOS, Amiga, FM Towns and Macintosh startup plus selected runtime routes | Mac JP/FR preservation | X68000 |
-| Nexus | — | Saturn disc/resource parsing and bounded native MAPD title presentation | Saturn demo/fan translations | — |
+| Nexus | — | Saturn disc/resource parsing and bounded rendering of authentic MAPD title planes | Saturn demo/fan translations | — |
 | Theron's Quest | — | PC Engine/TurboGrafx Japanese Rev. 1 title-to-Akutuba route; US authentic Continue to dungeon 2 level 0 with bounded movement; all seven US/JP dungeon sources load | Original transitions, T900 item use/placement, broader campaign/save, presentation, combat and audio parity remain evidence-gated | — |
 
 This table is a summary. Use [Platform status](docs/PLATFORM_STATUS.md) for
@@ -278,11 +285,38 @@ firestaff --game <dm1|csb|dm2|nexus|theron>
 afterward, Firestaff exits. Add `--menu` to open the launcher first and return
 to it after the game ends.
 
+Use the shared data root to choose a game in the five-game launcher:
+
+```bash
+./build/firestaff --menu --data-dir "$HOME/.firestaff/data"
+```
+
+To request one game from the command line, use its game ID:
+
+```bash
+./build/firestaff --game dm1 --data-dir "$HOME/.firestaff/data"
+./build/firestaff --game csb --data-dir "$HOME/.firestaff/data"
+./build/firestaff --game dm2 --data-dir "$HOME/.firestaff/data"
+./build/firestaff --game theron --theron-native us --data-dir "$HOME/.firestaff/data/theron"
+./build/firestaff --game nexus --platform saturn --data-dir "$HOME/.firestaff/data/nexus"
+```
+
+Theron accepts `us` or `jp` with `--theron-native`; choose the region whose
+authentic Track 02 data is installed. Nexus currently admits and renders the
+five authentic MAPD title planes in a bounded sequence, but Firestaff does not
+yet reproduce the native Saturn title composition or menu and its playable
+route remains gated. A
+successful menu selection or data scan does not by itself mean that a game is
+fully playable. See the
+[platform status](docs/PLATFORM_STATUS.md) for each edition's verified scope.
+
 In the startup menu, **Settings → Audio → Music Volume → Off** disables
 music while preserving sound effects and UI audio. `--no-music` applies the
 same choice for a direct CLI launch; `--music` explicitly re-enables it.
 
-Nexus presents admitted retail MAPD title assets from the original CUE/BIN.
+Nexus decodes and renders the five retail MAPD title planes from the original
+CUE/BIN in a bounded sequence. That source-backed asset route does not yet
+reproduce the native Saturn title composition or menu.
 Ymir reference evidence confirms a no-save Japanese retail cold boot and a
 separate English-version disc-image cold boot to the native title menu, plus a
 separate Japanese diagnostic replay from New
@@ -339,7 +373,7 @@ selection actions. These controls have not yet been shown on a rendered
 Theron frame. The mapping does not establish the original game's multi-second
 button-hold timing. For original-menu capture guidance and the current
 unverified hold, see
-[Theron input notes](docs/theron_input.md). The Japanese Rev 1 CUE then
+[Theron input notes](docs/theron/theron_input.md). The Japanese Rev 1 CUE then
 reaches the bounded native Akutuba runtime through
 hash-verified Track 02 records. For a headless, reproducible CLI receipt, use:
 

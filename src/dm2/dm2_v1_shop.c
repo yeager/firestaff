@@ -23,8 +23,8 @@
  *   skproject/SKULLWIN/SKWinGlobal.h:42     - NUM_NPCS=4
  *   skproject/SKWIN/DME.h:1505-1560         - shop_descriptor_t
  *   skproject/SKWIN/SkGlobal.cpp:966-1011   - dSpellsTable + shop tables
- *   ReDMCSB docs/dm2_sensors.md             - SHOP sensor (0x30)
- *   ReDMCSB docs/dm2_actuators.md           - SHOP_PANEL actuator (0x3F)
+ *   ReDMCSB docs/dm2/dm2_sensors.md             - SHOP sensor (0x30)
+ *   ReDMCSB docs/dm2/dm2_actuators.md           - SHOP_PANEL actuator (0x3F)
  *
  * DM2 difference vs DM1:
  *   - DM1 has no shops in-dungeon (only post-game armory in CSB).
@@ -80,7 +80,7 @@ int dm2_v1_shop_item_max_stack(int item_id) {
 int dm2_v1_shop_item_is_container(int item_id) {
     /* The built-in shop catalog contains no containers.  A slot-level
      * container flag (inventory_is_container[]) is used for any container
-     * that enters the party inventory, matching docs/dm2_inventory.md §5. */
+     * that enters the party inventory, matching docs/dm2/dm2_inventory.md §5. */
     (void)item_id;
     return 0;
 }
@@ -216,7 +216,7 @@ int dm2_v1_shop_sell(int shop_id, int inv_idx) {
     item_id = (int)s_state.inventory_item[inv_idx];
     if (item_id <= 0) return (int)DM2_SHOP_RESULT_INVALID_ITEM;
     /* Container restriction: non-empty containers cannot be sold.
-     * Source: docs/dm2_inventory.md §5 (DM2__CHECK_ROOM_FOR_CONTAINER /
+     * Source: docs/dm2/dm2_inventory.md §5 (DM2__CHECK_ROOM_FOR_CONTAINER /
      * DM2_PUT_OBJECT_INTO_CONTAINER semantics). */
     if (s_state.inventory_is_container[inv_idx] &&
         s_state.inventory_contents[inv_idx] > 0) {

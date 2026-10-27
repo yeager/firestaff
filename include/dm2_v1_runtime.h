@@ -12,10 +12,10 @@
  *   SKULL.ASM T560  — dungeon tick, door state machine, actuator processing
  *   SKULL.ASM T048  — input dispatch
  *   SKULL.ASM T800  — outdoor/shop/NPC entry points
- *   docs/dm2_triggers.md      — actuator taxonomy (40+ types)
- *   docs/dm2_actuators.md      — door step-behavior, actuator data
- *   docs/dm2_special_squares.md — teleporter, ladder, door behavior
- *   docs/dm2_sensors.md        — floor/wall sensor types
+ *   docs/dm2/dm2_triggers.md      — actuator taxonomy (40+ types)
+ *   docs/dm2/dm2_actuators.md      — door step-behavior, actuator data
+ *   docs/dm2/dm2_special_squares.md — teleporter, ladder, door behavior
+ *   docs/dm2/dm2_sensors.md        — floor/wall sensor types
  *
  * DM2 key differences from DM1:
  *   - Actuator system: generic sensor/actuator separation (DM1: hardwired)
@@ -1765,8 +1765,8 @@ void dm2_v1_runtime_set_cdda_callback(
 /*
  * Door step-behavior (C00..C06_ACTEFFECT_STEP_*).
  * These are per-door record fields, not actuator types.
- * Source: docs/dm2_actuators.md "Step-behavior modes"
- *         docs/dm2_special_squares.md "DM2 has a second clan door type (0x0A)" */
+ * Source: docs/dm2/dm2_actuators.md "Step-behavior modes"
+ *         docs/dm2/dm2_special_squares.md "DM2 has a second clan door type (0x0A)" */
 typedef enum {
     DM2_DOOR_STEP_NONE          = 0,  /* nothing on step */
     DM2_DOOR_STEP_OPEN          = 1,  /* open on step */
@@ -1778,7 +1778,7 @@ typedef enum {
 } DM2_DoorStepBehavior;
 
 /* Door state machine (DoorBit09, DoorBit10).
- * Source: docs/dm2_actuators.md "Door Actuator Control"
+ * Source: docs/dm2/dm2_actuators.md "Door Actuator Control"
  *         SKULL.ASM T560 door state transitions */
 typedef enum {
     DM2_RUNTIME_DOOR_CLOSED  = 0,
@@ -1800,7 +1800,7 @@ int dm2_v1_runtime_get_door_state(int level, int x, int y);
 /* ── Teleporters ──────────────────────────────────────────────────── */
 
 /* Teleport party to (target_level, tx, ty).
- * Source: docs/dm2_special_squares.md "SDFSM_CMD_X_TELEPORTER (4), SDFSM_CMD_X_ANCHOR (5)" */
+ * Source: docs/dm2/dm2_special_squares.md "SDFSM_CMD_X_TELEPORTER (4), SDFSM_CMD_X_ANCHOR (5)" */
 int dm2_v1_runtime_teleport(int target_level, int tx, int ty);
 
 /* Teleport scope — controls what can use the teleporter.
@@ -1815,7 +1815,7 @@ typedef enum {
 /* ── Pressure plates / floor triggers ─────────────────────────────── */
 
 /* Floor trigger types (sensor side).
- * Source: docs/dm2_sensors.md "Floor Sensors" table
+ * Source: docs/dm2/dm2_sensors.md "Floor Sensors" table
  *         ACTUATOR_FLOOR_TYPE__* in defines.h */
 typedef enum {
     DM2_FLOOR_EVERYTHING       = 0x01,  /* any entity steps */
@@ -1833,7 +1833,7 @@ int dm2_v1_runtime_floor_trigger(int level, int x, int y);
 /* ── Actuators / triggers ──────────────────────────────────────────── */
 
 /* Actuator type taxonomy (effect side).
- * Source: docs/dm2_triggers.md "Actuator Type Taxonomy"
+ * Source: docs/dm2/dm2_triggers.md "Actuator Type Taxonomy"
  *         ACTUATOR_TYPE_* in defines.h */
 typedef enum {
     DM2_ACTUATOR_DM1_WALL_SWITCH       = 0x01,
@@ -1874,7 +1874,7 @@ int dm2_v1_runtime_invoke_square_actuators(int level, int x, int y);
 
 /* Enter shop mode. DM2 shops are accessed via ACTUATOR_TYPE_SHOP_PANEL (0x3F).
  * Source: SKULL.ASM T800 outdoor/shop entry
- *         docs/dm2_interaction.md "SHOP_PANEL opens shop interface" */
+ *         docs/dm2/dm2_interaction.md "SHOP_PANEL opens shop interface" */
 int dm2_v1_runtime_enter_shop(int level, int x, int y);
 
 /* Leave the active shop and write the final shop gold back to the game state.

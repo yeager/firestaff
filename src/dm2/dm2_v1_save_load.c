@@ -2,9 +2,9 @@
  *
  * Source lock:
  *   SKULL.ASM: _2066_#### save/load entry points
- *   docs/dm2_save_format.md — full save format + SUPPRESS codec
- *   docs/dm2_save_slots.md — 10 slots and authenticated DOS header shape
- *   docs/dm2_party_state.md — champion squad persistence, masks
+ *   docs/dm2/dm2_save_format.md — full save format + SUPPRESS codec
+ *   docs/dm2/dm2_save_slots.md — 10 slots and authenticated DOS header shape
+ *   docs/dm2/dm2_party_state.md — champion squad persistence, masks
  *
  * SUPPRESS is a bit-plane RLE codec used throughout the DM2 save file:
  *   every set bit in mask[i] selects the matching bit of data[i]
@@ -1875,9 +1875,9 @@ const char *dm2_v1_save_source_evidence(void)
 {
     return
         "SKULL.ASM: DM2 save/load entry points, SUPPRESS codec\n"
-        "docs/dm2_save_format.md: full format specification\n"
-        "docs/dm2_save_slots.md: 10-slot system and DOS header shape\n"
-        "docs/dm2_party_state.md: champion squad persistence, SUPPRESS masks\n"
+        "docs/dm2/dm2_save_format.md: full format specification\n"
+        "docs/dm2/dm2_save_slots.md: 10-slot system and DOS header shape\n"
+        "docs/dm2/dm2_party_state.md: champion squad persistence, SUPPRESS masks\n"
         "SKULL.ASM: WRITE_RECORD_CHECKCODE, WRITE_MINION_ASSOC\n"
         "SKULL.ASM: _2066_33e7 slot picker, GAME_SAVE/GAME_LOAD\n"
         "Firestaff: dm2_v1_sksave_corpus_scan validates real SKSave corpus "
@@ -2009,7 +2009,7 @@ int dm2_suppress_decode_champion(const uint8_t *in, size_t in_sz,
 /* ════════════════════════════════════════════════════════════════
  * DB handle resolution
  * ObjectID: high byte = pool (0-15), low 24 bits = record index.
- * Source: docs/dm2_save_format.md § DB record pools
+ * Source: docs/dm2/dm2_save_format.md § DB record pools
  * ════════════════════════════════════════════════════════════════ */
 
 uint32_t dm2_db_make_handle(uint8_t pool, uint32_t index)
@@ -2144,7 +2144,7 @@ int dm2_suppress_decode_gamestate(const uint8_t *in, size_t in_sz,
 
 /* ════════════════════════════════════════════════════════════════════════
  * Global variables (flags/bytes/words) — SUPPRESS encoded
- * Source: docs/dm2_save_format.md § Ingame global flags/bytes/words
+ * Source: docs/dm2/dm2_save_format.md § Ingame global flags/bytes/words
  * ════════════════════════════════════════════════════════════════════════ */
 
 #define DM2_GLOBAL_FLAGS_SIZE  8
@@ -2233,7 +2233,7 @@ int dm2_suppress_decode_global_words(const uint8_t *in, size_t in_sz,
 
 /* ════════════════════════════════════════════════════════════════════════
  * Global spell effects (6 bytes, SUPPRESS)
- * Source: docs/dm2_party_state.md § Global spell effects
+ * Source: docs/dm2/dm2_party_state.md § Global spell effects
  * ════════════════════════════════════════════════════════════════════════ */
 
 #define DM2_GLOBAL_SPELL_EFFECTS_SIZE 6
@@ -2268,7 +2268,7 @@ int dm2_suppress_decode_spell_effects(const uint8_t *in, size_t in_sz,
 
 /* ════════════════════════════════════════════════════════════════════════
  * Timers table (10 bytes per timer, SUPPRESS)
- * Source: docs/dm2_save_format.md § Timers table
+ * Source: docs/dm2/dm2_save_format.md § Timers table
  * Types DM2_TimerEntry and DM2_MAX_TIMERS are defined in dm2_v1_save_load.h
  * ════════════════════════════════════════════════════════════════════════ */
 
@@ -2318,7 +2318,7 @@ int dm2_suppress_decode_timer(const uint8_t *in, size_t in_sz,
 
 /* ════════════════════════════════════════════════════════════════════════
  * Minion association table
- * Source: docs/dm2_party_state.md § Minion Association
+ * Source: docs/dm2/dm2_party_state.md § Minion Association
  * ════════════════════════════════════════════════════════════════════════ */
 
 /* Minion table is stored raw (not SUPPRESS) as fixed-size records */
@@ -2394,7 +2394,7 @@ int dm2_champion_inventory_read(uint32_t inventory[DM2_CHAMPION_INVENTORY_SLOTS]
 /* ════════════════════════════════════════════════════════════════════════
  * PC savegame interoperability
  * Detects DM1 vs DM2 savegames and provides import diagnostics.
- * Source: docs/dm2_save_format.md § DM1 vs DM2 Key Format Differences
+ * Source: docs/dm2/dm2_save_format.md § DM1 vs DM2 Key Format Differences
  * ════════════════════════════════════════════════════════════════════════ */
 
 /* Detect the type of PC savegame from raw data or file
@@ -2509,8 +2509,8 @@ const char *dm2_v1_save_phase7_source_evidence(void)
         "Firestaff D2RS: retained diagnostic codec only (not original save I/O)\n"
         "SKULL.ASM: WRITE_RECORD_CHECKCODE for inventory chains\n"
         "SKULL.ASM: WRITE_MINION_ASSOC for minion table\n"
-        "docs/dm2_save_format.md: full save format specification\n"
-        "docs/dm2_save_slots.md: 10-slot system and DOS header shape\n"
-        "docs/dm2_party_state.md: champion squad, inventories, minions\n"
-        "docs/dm2_source_lock.md: Phase 7 implementation evidence\n";
+        "docs/dm2/dm2_save_format.md: full save format specification\n"
+        "docs/dm2/dm2_save_slots.md: 10-slot system and DOS header shape\n"
+        "docs/dm2/dm2_party_state.md: champion squad, inventories, minions\n"
+        "docs/dm2/dm2_source_lock.md: Phase 7 implementation evidence\n";
 }

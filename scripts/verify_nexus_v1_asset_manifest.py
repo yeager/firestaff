@@ -19,7 +19,7 @@ Usage:
   python3 scripts/verify_nexus_v1_asset_manifest.py [data_dir]
   # data_dir defaults to ~/.firestaff/data/nexus/
 
-Provenance: docs/NEXUS_FILE_CLASSIFICATION.md (137 files, disc T-9111G V1.003)
+Provenance: docs/nexus/NEXUS_FILE_CLASSIFICATION.md (137 files, disc T-9111G V1.003)
 """
 
 import sys

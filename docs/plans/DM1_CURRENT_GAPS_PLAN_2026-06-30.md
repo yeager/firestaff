@@ -8,8 +8,8 @@ This plan reconciles the current DM1 gap/bug surface across:
 - `DONE.md`
 - `docs/FINAL_GAPS.md`
 - `docs/FIRESTAFF_GAP_LIST.md`
-- `docs/DM1_V1_BUG_AUDIT.md`
-- `docs/dm1-v1-functional-divergence-report.md`
+- `docs/dm1/DM1_V1_BUG_AUDIT.md`
+- `docs/dm1/dm1-v1-functional-divergence-report.md`
 - `docs/parity/DM1_V1_CAPTURE_GAP_EVIDENCE.md`
 - `docs/parity/PARITY_MATRIX_DM1_V1.md`
 - `docs/parity/V1_BLOCKERS.md`
@@ -60,7 +60,7 @@ small number of live runtime integrations:
 - DM1 V2.2 finished-art/material gates are hardened, but final promotion still
   needs an operator-reviewed real pack and real screenshot/material receipt.
 - Several older docs are stale. `docs/FINAL_GAPS.md` supersedes much of
-  `docs/DM1_V1_BUG_AUDIT.md` and the functional divergence report: F0308 luck,
+  `docs/dm1/DM1_V1_BUG_AUDIT.md` and the functional divergence report: F0308 luck,
   MOV-05/F0284, and most major bug-audit items are fixed or documented. Treat
   older "open" claims as candidates for verification, not as live blockers.
 

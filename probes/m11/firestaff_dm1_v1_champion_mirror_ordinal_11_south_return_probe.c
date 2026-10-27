@@ -240,7 +240,7 @@ int main(int argc, char** argv) {
          * skip cleanly instead of failing unrelated machines. */
         printf("  no (x,y,dir) in map 0 x in [1,3] y in [1,7] carries C127 ordinal 11\n");
         printf("  ordinal 11 is reserved for the C026 atlas row 1, col 3 (per DEFS.H:821-826 M027/M028)\n");
-        printf("  see docs/dm1_gap_portrait_sensor.md for the source-locked 0..23 range\n");
+        printf("  see docs/dm1/dm1_gap_portrait_sensor.md for the source-locked 0..23 range\n");
         printf("SKIP firestaff_dm1_v1_champion_mirror_ordinal_11_south_return_probe "
                "no ordinal-11 sensor in scan box (Hall map may differ from PC 3.4 reference)\n");
         M11_GameView_Shutdown(&game);

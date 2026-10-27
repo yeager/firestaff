@@ -306,7 +306,7 @@ file_manifest.json`. The key canonical hashes for version catalog are:
 claims are best-effort based on file size inspection.
 
 **Known compression candidate:** DM.BIN and LEV*.DGN may use LZSS —
-see `docs/nexus_dungeon.md` and `docs/nexus_issues.md R1`. **Unverified.**
+see `docs/nexus/nexus_dungeon.md` and `docs/nexus/nexus_issues.md R1`. **Unverified.**
 
 ### 3.3 Texture Container — VDP1 BITMAP
 
@@ -314,7 +314,7 @@ Embedded textures in .MNS (DMDF) files use **VDP1 BITMAP format** — Saturn
 hardware texture format. Not a standard PC bitmap format. Compression
 unknown. No decompression implementation exists in Firestaff.
 
-**Source:** `docs/nexus_issues.md M1`, `docs/nexus_graphics.md §8`
+**Source:** `docs/nexus/nexus_issues.md M1`, `docs/nexus/nexus_graphics.md §8`
 
 ---
 
@@ -385,7 +385,7 @@ Estimated contents:
 
 **Status:** Bounded Structure1B/2/3 geometry receipts are implemented;
 the Saturn VDP1 material/command consumer remains unbound.
-See `docs/nexus_issues.md M2` and `docs/nexus_v1_phase2_data_formats_H2321.md §1.5`.
+See `docs/nexus/nexus_issues.md M2` and `docs/nexus/nexus_v1_phase2_data_formats_H2321.md §1.5`.
 
 ### 4.4 Level File Size Distribution
 
@@ -595,7 +595,7 @@ code exists in the ReDMCSB source tree.** Nexus is architecturally a
 roster) but implemented natively for Saturn hardware. All format work
 must proceed from disc inspection alone.
 
-**Source:** `docs/nexus_issues.md R1`; ReDMCSB `Toolchains/` contains no
+**Source:** `docs/nexus/nexus_issues.md R1`; ReDMCSB `Toolchains/` contains no
 Nexus/Saturn directories.
 
 ---
@@ -669,9 +669,9 @@ Disc-image provenance blocked — no disc image present in repository.**
 | `src/nexus/nexus_v1_iso_reader.c` | ISO 9660 + CUE/BIN parser |
 | `include/nexus_v1_dmdf_model.h` | DMDF struct definitions (48B header, 16B vertex) |
 | `src/shared/asset_status_m12.c` | Version catalog with MD5 hashes |
-| `docs/nexus_dungeon.md` | DGN format analysis |
-| `docs/nexus_issues.md` | Open issues (B1 disc image, B2 static lib, R1 ReDMCSB gap) |
-| `docs/NEXUS_FILE_CLASSIFICATION.md` | Original file classification |
+| `docs/nexus/nexus_dungeon.md` | DGN format analysis |
+| `docs/nexus/nexus_issues.md` | Open issues (B1 disc image, B2 static lib, R1 ReDMCSB gap) |
+| `docs/nexus/NEXUS_FILE_CLASSIFICATION.md` | Original file classification |
 | `docs/source-lock/nexus_v1_phase2_data_formats_H2321.md` | Phase 2 data formats |
 
 ---

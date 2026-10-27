@@ -5,7 +5,7 @@
  * Source-lock references:
  *   ReDMCSB PALETTE.C   — DM1 palette load/expand
  *   Saturn VDP1 SDK     — Color RAM format (BGR555, 32 KB / 256 entries)
- *   docs/NEXUS_FILE_CLASSIFICATION.md  — STONE.BIN 4 KB, TITLE.CG 164 KB,
+ *   docs/nexus/NEXUS_FILE_CLASSIFICATION.md  — STONE.BIN 4 KB, TITLE.CG 164 KB,
  *     ITEM.IBS 98 KB
  *
  * Missing or incomplete source palettes remain unavailable. They never

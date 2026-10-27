@@ -16,8 +16,8 @@
 > evidence-gated. Capture tools are research provenance only and are never a
 > Firestaff runtime dependency. See the
 > [current platform status](../PLATFORM_STATUS.md#therons-quest),
-> [capture readiness](../THERON_CAPTURE_READINESS.md) and
-> [input notes](../theron_input.md).
+> [capture readiness](../theron/THERON_CAPTURE_READINESS.md) and
+> [input notes](../theron/theron_input.md).
 
 ## Door movement boundary
 
@@ -34,7 +34,7 @@ returns `BLOCKED`, preserves the party pose, and requests no redraw. A focused
 full-queue regression covers all four turn bindings. This proves error
 reporting and transactional failure handling only; it does not establish
 retail actuator timing, queue capacity, or broader turn parity. See the
-[input notes](../theron_input.md) and [verified work log](../../DONE-theron.md).
+[input notes](../theron/theron_input.md) and [verified work log](../../DONE-theron.md).
 
 ## r30 emulator/capture boundary
 
@@ -203,8 +203,8 @@ ordinary Space/Button I after a four-second RUN hold; the operator reports
 that the selected menu action itself must be held for 3–5 seconds. The latest
 US emulator attempt stayed on System Card 3.0 and did not test that hold. See
 the current
-[capture readiness](../THERON_CAPTURE_READINESS.md) and
-[input notes](../theron_input.md). DMWeb provides retail edition and manual
+[capture readiness](../theron/THERON_CAPTURE_READINESS.md) and
+[input notes](../theron/theron_input.md). DMWeb provides retail edition and manual
 references. Greatstone's Theron material covers a CSBWin custom-dungeon
 conversion, not retail PC Engine data. Neither reference establishes this
 input timing.

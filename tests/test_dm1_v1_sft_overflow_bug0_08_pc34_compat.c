@@ -2,7 +2,7 @@
  * test_dm1_v1_sft_overflow_bug0_08_pc34_compat.c
  *
  * Regression gate for F0502b_DUNGEON_CheckBug0_08SftOverfill_Compat
- * (DUN-05 in docs/dm1-v1-functional-divergence-report.md).
+ * (DUN-05 in docs/dm1/dm1-v1-functional-divergence-report.md).
  *
  * ReDMCSB DUNGEON.C:F0163_DUNGEON_LinkThingToList can overfill the
  * G0283_pT_SquareFirstThings buffer when the dungeon contains more

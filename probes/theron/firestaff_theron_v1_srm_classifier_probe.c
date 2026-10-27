@@ -21,7 +21,7 @@
  * theron_v1_save_load.c slot-N.tqsv coverage; the two are explicitly
  * kept separate because the underlying save models are different
  * (Save Disk cartridge vs. in-game save format).  See
- * docs/THERON_CAPTURE_READINESS.md for the readiness statement.
+ * docs/theron/THERON_CAPTURE_READINESS.md for the readiness statement.
  *
  * Source/evidence: see theron_v1_srm_source_evidence() and
  * docs/DMWEB_REFERENCE.md §6 'Theron's Quest savegame format'.

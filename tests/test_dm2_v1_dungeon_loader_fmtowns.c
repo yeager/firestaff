@@ -82,7 +82,7 @@ static void test_fmtowns_load(const char *path) {
     }
 
     /* File_header.nMaps is the byte at offset 4 (SKWIN/DME.h:93-101,
-     * mirrored by docs/dm2_save_format.md's section order). Both the PC and
+     * mirrored by docs/dm2/dm2_save_format.md's section order). Both the PC and
      * FM Towns releases store 0x2c = 44 there. The old expectation of 28 was
      * reading offset 6, which is cwTextData -- verified against the real
      * files: map descriptors 0..43 are all well-formed with monotonically

@@ -7,7 +7,7 @@
  *   ReDMCSB PANEL.C   — F0120-F0125 panel element drawing
  *   ReDMCSB CEDTINCK.C — CEDT font/text rendering
  *   Saturn SDK        — VDP1 BITMAP command: pixel format Celdat format
- *   docs/NEXUS_FILE_CLASSIFICATION.md — TITLE.CG 164 KB, FACE.BIN 44 KB,
+ *   docs/nexus/NEXUS_FILE_CLASSIFICATION.md — TITLE.CG 164 KB, FACE.BIN 44 KB,
  *     STABG.BIN 52 KB, WARNING.BIN 99 KB, GAMEOVER.BIN 101 KB
  *
  * Saturn VDP1 BITMAP surface format:

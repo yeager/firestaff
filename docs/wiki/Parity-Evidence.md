@@ -121,7 +121,7 @@ same-frame display state produces an image that matches the screenshot
 pixel-for-pixel. The source join has 126 informative byte matches among 137
 textured draws; 11 zero-filled spans are excluded. This is partial source
 provenance and emulator evidence, not Firestaff menu-rendering, input or
-playable-game evidence. See the [English cold-boot receipt](../nexus_startup.md#english-cold-boot-reaches-the-native-title-menu-2026-10-27).
+playable-game evidence. See the [English cold-boot receipt](../nexus/nexus_startup.md#english-cold-boot-reaches-the-native-title-menu-2026-10-27).
 
 The 2026-09-04 `nexus-title-end-to-end-r6` session adds one hash-bound execution
 window for retail disc identity, the exact 17,408 Track 1 FIFO words belonging

@@ -32,7 +32,7 @@
  *
  * The original Saturn save format is not reverse-engineered — this is a
  * Firestaff-native format derived from the state structures documented in
- * docs/nexus_save_state.md and the world model in nexus_v1_world.h.
+ * docs/nexus/nexus_save_state.md and the world model in nexus_v1_world.h.
  * Champion save/load uses the same slot-based design as DM1/CSB.
  */
 

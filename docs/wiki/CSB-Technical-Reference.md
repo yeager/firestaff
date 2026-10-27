@@ -19,7 +19,7 @@ boundaries.
 ## Atari Mania provenance
 
 The locally supplied 23-page Atarimania print PDF is recorded in the
-[CSB Atari Mania reference](https://github.com/yeager/firestaff/blob/main/docs/CSB_ATARIMANIA_REFERENCE.md).
+[CSB Atari Mania reference](https://github.com/yeager/firestaff/blob/main/docs/csb/CSB_ATARIMANIA_REFERENCE.md).
 It identifies the Atari ST product as FTL/Software Heaven's 1989 commercial
 expansion, with two single-sided disks and an original-*Dungeon Master*
 requirement. It is provenance/presentation evidence only: native behavior,

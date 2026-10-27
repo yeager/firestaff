@@ -1,6 +1,6 @@
 # Game and platform status
 
-**Last status review: 2026-10-27, against main `378f9d20`.** This is the
+**Last status review: 2026-10-27, against main `88ef19df`.** This is the
 operational status matrix. It separates media recognition, verified runtime
 slices and end-to-end playability. A row marked as supported does not mean
 that every menu, save format or visual parity gate is complete.
@@ -172,6 +172,12 @@ parity.
 
 ## Latest real-media revalidation
 
+The newer 2026-10-27 local menu check is recorded in the
+[five-game startup analysis](STARTUP_SUPPORT_GAP_ANALYSIS.md#latest-local-real-media-menu-check-2026-10-27).
+It exercises keyboard and mouse selection for all five games, reaches first
+native runtime for DM1, CSB, DM2 and Theron US, and records the expected
+capture-gated Nexus result. It does not claim native-display or audio parity.
+
 Recent reports of DM1/CSB input and presentation faults and DM2/FM Towns
 palette/menu/dungeon faults remain open parity work until they are reproduced
 against matching original media and resolved with source or capture evidence.
@@ -318,7 +324,7 @@ queue acceptance, not audible hardware or retail sound parity.
 
 | Platform | Status | Current scope | Open boundary |
 |---|---|---|---|
-| Sega Saturn | **Verified bounded title-asset route; not playable through Firestaff** | Authentic CUE/BIN media is retained as the sole source owner. Firestaff decodes the retail `TITLE.BIN`/`TITLE.CG` MAPD planes, selector sequence and BGR555 palettes in memory and presents those bounded title assets through CLI and start-menu selection. Ymir reference evidence verifies a Japanese retail and an English-version disc-image no-save cold boot to the native three-choice title menu; the separate Japanese New Game replay reaches a native 3D corridor viewport. Replaying the English screenshot from its captured frame is pixel-exact. Its source join has 126 informative matches among 137 textured draws; 11 zero-filled spans are excluded. These are emulator checkpoints, not Firestaff menu or gameplay evidence. Merged PR #19 adds a capture-only NBG1 tile-fetch address correction tested on an authentic Japanese startup frame. Disc parsing, CDDA ownership, DMDF/DGN/MNS/PRS3 decoding and capture receipts remain separately source-bound. | Full Firestaff Saturn title composition and title-to-menu parity; same-revision consumer evidence for menu/face, HUD and dungeon display; native event/audio playback and full gameplay. |
+| Sega Saturn | **Verified bounded title-asset route; not playable through Firestaff** | A single selected CUE/BIN source can supply authentic title assets, and Firestaff decodes and renders the five retail `TITLE.BIN`/`TITLE.CG` MAPD planes with their palette in a bounded sequence; this is not the complete native Saturn title or menu. The CLI and start-menu paths stop at the capture-gated title/menu handoff. Japanese title-session traces bind the `TITLE.CG` upload, MAPD palette and NBG0 bitmap producer; the display consumer and full composition remain unbound. Ymir references verify Japanese and English no-save cold boots to the native three-choice title menu; a separate Japanese New Game replay reaches a native 3D corridor viewport. The English screenshot replay is pixel-exact with 126 informative retail-byte matches among 137 textured draws; 11 zero-filled spans are excluded. These are emulator checkpoints, not Firestaff native-menu or gameplay evidence. Merged PR #19 adds a capture-only NBG1 tile-fetch address correction tested on authentic startup data. Disc parsing, CDDA ownership, DMDF/DGN/MNS/PRS3 decoding and capture receipts remain source-bound. A real-data launcher check found that a shared directory containing extracted Japanese files and multiple regional discs can select an English supplemental CUE for the Japanese M12 edition: Japanese and English images share `DM.BIN`, so that member alone cannot prove edition ownership. This mixed-source route is not verified; see [Nexus TODO](../TODO-nexus.md#2026-10-27--resolve-nexus-edition-ownership-when-extracted-files-and-discs-coexist). | Complete Saturn title/menu rendering and input, verified edition ownership for mixed extracted/disc directories, same-revision menu/face/HUD/dungeon consumer evidence, native event/audio playback and full gameplay. |
 | Saturn demo or fan translations | **Preservation** | Classified separately from the canonical Japanese retail route. | Independent media and runtime proof. |
 
 ## Theron's Quest

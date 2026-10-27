@@ -23,7 +23,7 @@
  *   ReDMCSB PANEL.C    — panel draw (F0120-F0125)
  *   ReDMCSB CEDTINCK.C — CEDT font/text render
  *   Saturn SDK         — VDP1 bitmap surfaces, VDP2 background layers
- *   docs/NEXUS_FILE_CLASSIFICATION.md  — file sizes / formats
+ *   docs/nexus/NEXUS_FILE_CLASSIFICATION.md  — file sizes / formats
  *
  * Missing, truncated, or unsupported media remains unavailable. No solid
  * placeholder, generated surface, or substitute palette is permitted. */

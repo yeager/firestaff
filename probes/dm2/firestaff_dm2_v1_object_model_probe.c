@@ -128,8 +128,8 @@ int main(int argc, char **argv) {
 
     fprintf(stderr, "=== DM2 V1 Object Model Probe ===\n");
     fprintf(stderr, "Source: ReDMCSB DUNGEON.C:35-60 — thing data byte counts\n");
-    fprintf(stderr, "Source: docs/dm2_actuators.md — actuator/sensor types\n");
-    fprintf(stderr, "Source: docs/dm2_special_squares.md — door/teleporter\n");
+    fprintf(stderr, "Source: docs/dm2/dm2_actuators.md — actuator/sensor types\n");
+    fprintf(stderr, "Source: docs/dm2/dm2_special_squares.md — door/teleporter\n");
     fprintf(stderr, "Input: %s\n\n", dungeon_path);
 
     raw = load_file(dungeon_path, &file_size);

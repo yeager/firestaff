@@ -13,9 +13,9 @@
  *
  * Source: ReDMCSB DEFS.H:985-1116 — MAP/TILE/THING types
  * Source: ReDMCSB DUNGEON.C:35-60 — thing data byte counts
- * Source: docs/dm2_actuators.md — actuator/sensor types
- * Source: docs/dm2_special_squares.md — door/teleporter/pit/ladder
- * Source: docs/dm2_le_objects.md — LE object headers
+ * Source: docs/dm2/dm2_actuators.md — actuator/sensor types
+ * Source: docs/dm2/dm2_special_squares.md — door/teleporter/pit/ladder
+ * Source: docs/dm2/dm2_le_objects.md — LE object headers
  * Source: SkWinCore.cpp:847-852 — item DB type switch
  */
 
@@ -63,7 +63,7 @@ extern const uint8_t dm2_thing_data_byte_count[16];
  *   - Dragon door (0x0A) — skullkeep-specific, color key support
  *   - Animated mirrored door (field 0x20) — unused in standard dungeons
  * Source: SKWin.GDAT2.InternalCodes.txt (door fields)
- * Source: docs/dm2_special_squares.md §8
+ * Source: docs/dm2/dm2_special_squares.md §8
  */
 typedef enum {
     DM2_DOOR_TYPE_NORMAL     = 0x09,
@@ -88,7 +88,7 @@ typedef enum {
 /*
  * Actuators are the output/effect side of DM2's trigger system.
  * Sensors (floor/wall squares) detect conditions and activate actuators.
- * Source: docs/dm2_actuators.md
+ * Source: docs/dm2/dm2_actuators.md
  * Source: SKWIN/defines.h — ACTUATOR_TYPE_* enumeration
  */
 typedef enum {
@@ -133,7 +133,7 @@ typedef enum {
 /* ── DM2 Floor Sensor Types ──────────────────────────────────────── */
 /*
  * Floor sensors detect conditions and activate actuators.
- * Source: docs/dm2_sensors.md
+ * Source: docs/dm2/dm2_sensors.md
  * Source: SKWIN/defines.h — ACTUATOR_FLOOR_TYPE__*
  */
 typedef enum {

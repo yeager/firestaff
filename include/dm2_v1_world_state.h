@@ -11,10 +11,10 @@
  *   - Weather state (rain, fog per outdoor level)
  *   - Timers and tick generators
  *
- * Source: docs/dm2_quest.md — quest system
- * Source: docs/dm2_party_state.md — party/champion state
- * Source: docs/dm2_time.md — timer system
- * Source: docs/dm2_save_format.md — SUPPRESS save format
+ * Source: docs/dm2/dm2_quest.md — quest system
+ * Source: docs/dm2/dm2_party_state.md — party/champion state
+ * Source: docs/dm2/dm2_time.md — timer system
+ * Source: docs/dm2/dm2_save_format.md — SUPPRESS save format
  * Source: SKULL.ASM — world map, quest state
  */
 
@@ -28,7 +28,7 @@ extern "C" {
 /* ── Quest State ─────────────────────────────────────────────────── */
 /*
  * DM2 quest system: global flags, quest log, completion state.
- * Source: docs/dm2_quest.md
+ * Source: docs/dm2/dm2_quest.md
  */
 #define DM2_QUEST_FLAG_COUNT  256
 #define DM2_MAX_QUEST_LOG     32
@@ -53,7 +53,7 @@ typedef struct {
 /* ── Champion/NPC State ──────────────────────────────────────────── */
 /*
  * DM2 champion state: 4 champions, each with HP/MP/stats/inventory.
- * Source: docs/dm2_party_state.md, docs/dm2_champ_types.md
+ * Source: docs/dm2/dm2_party_state.md, docs/dm2/dm2_champ_types.md
  */
 #define DM2_MAX_CHAMPIONS  4
 #define DM2_CHAMP_MAX_HP  999
@@ -104,7 +104,7 @@ typedef struct {
 /* ── Weather State ───────────────────────────────────────────────── */
 /*
  * DM2 outdoor levels have weather: rain, fog.
- * Source: docs/dm2_weather.md, dm2_v1_weather.c
+ * Source: docs/dm2/dm2_weather.md, dm2_v1_weather.c
  */
 typedef enum {
     DM2_WEATHER_CLEAR   = 0,
@@ -154,11 +154,11 @@ typedef struct {
 
 /* Load world state from DM2 SKSave.dat (SUPPRESS-encoded single-file save).
  * Returns world state on success (caller owns), NULL on failure.
- * Source: docs/dm2_save_format.md, SKULL.ASM SUPPRESS compression */
+ * Source: docs/dm2/dm2_save_format.md, SKULL.ASM SUPPRESS compression */
 DM2_WorldState *dm2_v1_world_state_load_from_file(const char *path);
 
 /* Load world state from in-memory SUPPRESS buffer.
- * Source: docs/dm2_save_format.md */
+ * Source: docs/dm2/dm2_save_format.md */
 DM2_WorldState *dm2_v1_world_state_load_from_mem(const uint8_t *data, size_t size);
 
 /* Extract party state from DUNGEON.DAT (without savegame).

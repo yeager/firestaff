@@ -17,8 +17,8 @@
  *
  * Source: CHAMPION.C F0280 — starter party generation
  *         SKULL.ASM T520 — party placement (Hall of Champions 15,15,N)
- *         docs/dm2_party_state.md — champion record, initial stats
- *         docs/dm2_save_format.md — session serialization (1306 bytes)
+ *         docs/dm2/dm2_party_state.md — champion record, initial stats
+ *         docs/dm2/dm2_save_format.md — session serialization (1306 bytes)
  */
 
 #include "dm2_v1_new_game.h"

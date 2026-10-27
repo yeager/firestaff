@@ -1,3 +1,32 @@
+# Firestaff v3.0.418
+
+## User-facing changes
+
+- `Startup game cards`: change readiness reporting to separate media discovery from launch admission and show a pending scan state until each game's source handoff can be checked.
+- `CLI option values`: reject missing text values before they consume a following option, including startup-animation expectations, while preserving valid single-dash paths passed to `--data-dir` and `--script`.
+- `Theron launch flow`: remove redundant platform and presentation cards when the selected authentic Track 02 route can proceed through the native launch gate.
+- `Nexus title assets`: load and render the five authentic Saturn MAPD title planes in a bounded sequence; the native Saturn menu and playable route remain gated.
+- `DM1 and CSB media discovery`: admit the tested repacked FM Towns and CSB Atari/FMTowns source packages through their authenticated media paths.
+
+## Developer changes
+
+- `M12 startup regressions`: verify keyboard and pointer game selection, alternate platform choices, scan readiness, media preservation and launch-gate reporting across the supported games.
+- `CLI argument regressions`: verify missing option-value rejection for text and startup-animation options, valid dash-prefixed path handling, and Theron platform-argument compatibility.
+- `DM1 FM Towns admission`: admit the tested repacked original ZIP by matching its authenticated graphics identity.
+- `CSB FM Towns scan`: update media discovery to bind CD-backed files, and bind the Atari ST hint-oracle check to authentic STX media.
+- `Nexus VDP capture analysis`: validate frame-stable VDP2 snapshots, report missing register snapshots, and keep capture-only SH-2/VDP source joins separate from production renderer admission.
+- `Theron pointer and input probes`: verify the complete C1DF callback condition and bind bounded Japanese and US pointer-command evidence without claiming unverified gameplay effects.
+- `Game documentation`: organize technical references by game and update current support, startup, and edition-ownership boundaries; mixed Nexus extracted/disc directories remain unverified.
+- `GitHub Actions release workflow`: serialize release runs and block publication until 12 hours have elapsed since the previous published release.
+
+## Known limitations
+
+- This release does not establish complete gameplay or visual parity across the five games and supported platforms.
+- `Nexus`: native Saturn title/menu composition, input, New Game/Continue and playable-level startup remain gated; mixed extracted files and regional disc images are not verified as one edition.
+- `Theron's Quest`: startup and selected input routes do not establish state-driven dungeon graphics, complete campaign or full presentation parity.
+- `DM1`, `CSB` and `DM2`: platform-wide viewport, HUD, audio and physical-display parity remain incomplete outside individually verified routes.
+- Original game media and BIOS/firmware are not included in release packages.
+
 # Firestaff v3.0.417
 
 ## User-facing changes
@@ -3366,7 +3395,7 @@ Older release entries describe historical changes. They do not mean that the
 Nexus Saturn runtime is complete: ITEM loot/use, MENU/TEXT/PRS3 presentation,
 VDP1/VDP2 composition and SLEV/MAP/SAL-to-SDDRVS event playback remain
 capture-gated according to `TODO-nexus.md` and
-`docs/NEXUS_PLACEHOLDER_AUDIT.md`.
+`docs/nexus/NEXUS_PLACEHOLDER_AUDIT.md`.
 
 # Firestaff v3.0.304
 
@@ -7504,11 +7533,11 @@ DM1 V1 combat fidelity and bug audit release — systematic audit of the DM1 V1 
   - **MNU-02 (F0757 Thieves Eye duration):** Default is source-locked 0 ticks (the original PC 3.4 broken-by-uninitialised-stack-residue behaviour). Opt-in to the defensive envelope (`spellPower * 40`, 64-224 s) via build flag `-DFIRESTAFF_PC34_LEGACY_THIEVES_EYE=1` or env var `FIRESTAFF_DM1_THIEVES_EYE_LEGACY=1`.
   - **DUN-05 (F0163 BUG0_08 SFT overfill):** A new `F0502b_DUNGEON_CheckBug0_08SftOverfill_Compat` helper runs at dungeon load. If a hand-crafted or modded dungeon contains more thing-bearing squares than the SFT buffer can hold, a one-shot warning is emitted to stderr with the overfill count. Defensive behaviour is preserved.
   - **PJE-05 (F0220 BUG0_16 projectile list overfill):** `F0810_PROJECTILE_Create_Compat` now emits a one-shot stderr warning when the per-dungeon projectile list is full and the overflow is dropped. Cap behaviour unchanged.
-  - See `docs/dm1-v1-functional-divergence-report.md` for full audit context.
+  - See `docs/dm1/dm1-v1-functional-divergence-report.md` for full audit context.
 
 ## Bug Audit
 
-A comprehensive bug audit document is now available at `docs/DM1_V1_BUG_AUDIT.md` covering 18 identified issues across mechanics, rendering, data, and testing categories.
+A comprehensive bug audit document is now available at `docs/dm1/DM1_V1_BUG_AUDIT.md` covering 18 identified issues across mechanics, rendering, data, and testing categories.
 
 ## Verification
 

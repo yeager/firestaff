@@ -8,9 +8,9 @@ static const DM2_V1_QuirkDecision g_dm2_v1_quirk_decisions[] = {
         "Dungeon.dat Edits Only Affect New Games",
         "Existing saves keep using the dungeon snapshot embedded in the save; "
         "changed dungeon.dat files are only consumed by a fresh new-game path.",
-        "docs/dm2_bugs.md: Dungeon.dat Edits Only Affect New Games\n"
-        "docs/dm2_modding.md: dmgame/SKSave state derives from dungeon.dat at save time\n"
-        "docs/dm2_save_format.md: SKSave embeds dungeon header, maps, stacks, text, DB pools, map data, and extra dungeon data\n"
+        "docs/dm2/dm2_bugs.md: Dungeon.dat Edits Only Affect New Games\n"
+        "docs/dm2/dm2_modding.md: dmgame/SKSave state derives from dungeon.dat at save time\n"
+        "docs/dm2/dm2_save_format.md: SKSave embeds dungeon header, maps, stacks, text, DB pools, map data, and extra dungeon data\n"
         "SKULL.ASM: skload_table_60 + STORE_EXTRA_DUNGEON_DATA save/load surface\n"
         "ReDMCSB LOADSAVE.C F0435 lines 2721-2749 restores serialized GLOBAL_DATA before runtime rebuild\n"
         "ReDMCSB SAVEHEAD.C F0429/F0430 lines 13-109 read/write the save header before part payloads",

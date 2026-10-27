@@ -8926,7 +8926,8 @@ static int m11_open_requested_launch_impl(M11_GameViewState* gameView,
                                                        NULL);
             M11_Render_DiscardPresentationTexture();
         }
-        /* Theron's Quest has no source -- no intro needed. */
+        /* Theron enters its native runtime directly; the DM1/CSB title
+         * prelude does not apply to this launch path. */
     }
     if (M11_GameView_OpenSelectedMenuEntry(gameView, menuState)) {
         if (m11_selected_dm1_is_iigs(menuState, launchEntry) &&

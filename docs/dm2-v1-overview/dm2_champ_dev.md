@@ -5,7 +5,7 @@
 - SKULL.ASM (no champion XP/skill advancement found)
 - skproject/SKWIN/SkGlobal.cpp:581-797 (skill command metadata only)
 - include/dm2_v1_*.h
-- docs/game_logic_xp.md (DM1 V1 reference)
+- docs/shared/game_logic_xp.md (DM1 V1 reference)
 - docs/dm2-v1-overview/dm2_newfeatures.md
 
 ---

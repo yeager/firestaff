@@ -20,19 +20,14 @@ on:
         required: true
         type: boolean
         default: false
-      override_daily_limit:
-        description: 'Explicitly allow a second release on the same Stockholm calendar day'
-        required: true
-        type: boolean
-        default: false
 
 permissions:
   contents: read
 
 concurrency:
   # Serialize all release versions so two distinct tags cannot both pass the
-  # daily quota check before either one is published.
-  group: firestaff-release-daily-limit
+  # rolling 12-hour cooldown check before either one is published.
+  group: firestaff-release-12h-cooldown
   cancel-in-progress: false
 
 env:
@@ -53,7 +48,6 @@ jobs:
       draft: ${{ steps.release.outputs.draft }}
       prerelease: ${{ steps.release.outputs.prerelease }}
       release_notes: ${{ steps.release.outputs.release_notes }}
-      override_daily_limit: ${{ steps.release.outputs.override_daily_limit }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -78,12 +72,10 @@ jobs:
             raw_version="${{ github.event.inputs.version }}"
             draft="${{ github.event.inputs.draft }}"
             prerelease="${{ github.event.inputs.prerelease }}"
-            override_daily_limit="${{ github.event.inputs.override_daily_limit }}"
           else
             raw_version="${GITHUB_REF_NAME}"
             draft="false"
             prerelease="false"
-            override_daily_limit="false"
           fi
 
           if [[ -z "${raw_version}" || "${raw_version}" == "null" ]]; then
@@ -123,26 +115,17 @@ jobs:
             --version "$version" \
             --require-audience-sections
 
-          # Use GitHub's published timestamp and the user's Stockholm calendar
-          # day. Same-tag retries update one release and remain allowed.
-          daily_limit_args=(--tag "$tag")
-          if [[ "$override_daily_limit" == "true" ]]; then
-            if [[ "${GITHUB_EVENT_NAME}" != "workflow_dispatch" ]]; then
-              echo "::error::The daily release limit can only be overridden by an explicit workflow dispatch."
-              exit 1
-            fi
-            daily_limit_args+=(--override-daily-limit)
-          fi
+          # Use GitHub's published timestamps and enforce one release per
+          # rolling 12-hour window. Same-tag retries remain idempotent.
           gh api --paginate "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
             --jq '.[] | {tag_name, published_at, draft}' \
-            | python3 scripts/verify_daily_release_limit.py "${daily_limit_args[@]}"
+            | python3 scripts/verify_release_cooldown.py --tag "$tag"
 
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "draft=$draft" >> "$GITHUB_OUTPUT"
           echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
           echo "release_notes=$release_notes" >> "$GITHUB_OUTPUT"
-          echo "override_daily_limit=$override_daily_limit" >> "$GITHUB_OUTPUT"
 
           echo "Release tag: $tag"
           echo "Release notes: $release_notes"
@@ -708,7 +691,6 @@ jobs:
       FIRESTAFF_DRAFT: ${{ needs.preflight.outputs.draft }}
       FIRESTAFF_PRERELEASE: ${{ needs.preflight.outputs.prerelease }}
       FIRESTAFF_RELEASE_NOTES: ${{ needs.preflight.outputs.release_notes }}
-      FIRESTAFF_OVERRIDE_DAILY_LIMIT: ${{ needs.preflight.outputs.override_daily_limit }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v5
@@ -788,21 +770,13 @@ jobs:
             | sort -z \
             | xargs -0 sha256sum > "release-files/Firestaff-${FIRESTAFF_VERSION}-all-assets.sha256"
 
-      - name: Recheck daily release limit before publication
+      - name: Recheck 12-hour release cooldown before publication
         shell: bash
         run: |
           set -euo pipefail
-          daily_limit_args=(--tag "$FIRESTAFF_TAG")
-          if [[ "$FIRESTAFF_OVERRIDE_DAILY_LIMIT" == "true" ]]; then
-            if [[ "${GITHUB_EVENT_NAME}" != "workflow_dispatch" ]]; then
-              echo "::error::The daily release limit can only be overridden by an explicit workflow dispatch."
-              exit 1
-            fi
-            daily_limit_args+=(--override-daily-limit)
-          fi
           gh api --paginate "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
             --jq '.[] | {tag_name, published_at, draft}' \
-            | python3 scripts/verify_daily_release_limit.py "${daily_limit_args[@]}"
+            | python3 scripts/verify_release_cooldown.py --tag "$FIRESTAFF_TAG"
 
       - name: Create or update GitHub Release
         shell: bash

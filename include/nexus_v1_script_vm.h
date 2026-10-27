@@ -5,8 +5,8 @@
 #include "nexus_v1_world.h"  /* for Nexus_WorldOpcode enum */
 
 /* Nexus V1 provisional trigger VM + dispatcher.
- * Source: docs/nexus_triggers.md (unresolved trigger owner),
- * docs/nexus_sensors.md (Nexus trigger model vs DM1/DM2).
+ * Source: docs/nexus/nexus_triggers.md (unresolved trigger owner),
+ * docs/nexus/nexus_sensors.md (Nexus trigger model vs DM1/DM2).
  *
  * SDDRVS.TSK is now classified as a Saturn sound-driver task, not a proven
  * trigger bytecode file. SLEV*.BIN / DGN metadata remain candidate trigger
@@ -188,7 +188,7 @@ void nexus_script_vm_init(Nexus_ScriptVM *vm);
  * Bytes outside that envelope are retained in the runtime receipt but blocked
  * from dispatch; this avoids synthetic fallback trigger rules for unknown
  * real SLEV candidates.
- * Source: docs/nexus_triggers.md unresolved SLEV*.BIN/DGN trigger owner. */
+ * Source: docs/nexus/nexus_triggers.md unresolved SLEV*.BIN/DGN trigger owner. */
 int nexus_script_vm_load_level(Nexus_ScriptVM *vm, int level_index,
                                 const uint8_t *data, int size);
 int nexus_script_vm_load_canonical_level(Nexus_ScriptVM *vm,

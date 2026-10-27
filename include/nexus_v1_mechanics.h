@@ -5,7 +5,7 @@
  * Order per tick: input → movement → square event → creature AI →
  * creature attack → resource drain → script VM → sound.
  * Source: DM1 CLIKMENU.C F0366, MOVESENS.C F0267, CHAMPION.C F0325,
- * F0209_GROUP_ProcessEvents29to41 (ReDMCSB), docs/nexus_*.md.
+ * F0209_GROUP_ProcessEvents29to41 (ReDMCSB), docs/nexus/nexus_*.md.
  *
  * IMPORTANT: Include nexus_v1_engine.h BEFORE this header in .c files
  * that use both Nexus_V1_Engine. nexus_v1_engine.h defines the struct

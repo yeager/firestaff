@@ -27,11 +27,11 @@ static const uint8_t g_sal_opaque_prefix[NEXUS_V1_SAL_OPAQUE_PREFIX_BYTES] = {
 /* Nexus audio receipt table.
  *
  * Source evidence:
- * - docs/NEXUS_FILE_CLASSIFICATION.md:19-22 identifies SNDLEV00-15.SAL
+ * - docs/nexus/NEXUS_FILE_CLASSIFICATION.md:19-22 identifies SNDLEV00-15.SAL
  *   and SNDLEV00-15.MAP as 16 per-level sound banks + 16 mapping tables.
  * - docs/VERIFIED_HASHES.md:154-185 records the verified size/SHA256
  *   pairs for every SNDLEV##.SAL and SNDLEV##.MAP asset.
- * - docs/nexus_audio_format.md records the CD-DA track layout; level
+ * - docs/nexus/nexus_audio_format.md records the CD-DA track layout; level
  *   selection remains unbound.
  *
  * This module is a receipt/classification gate only. It does not parse SAL,
@@ -561,11 +561,11 @@ const char *nexus_v1_audio_status_string(int status) {
 
 const char *nexus_v1_audio_source_evidence(void) {
     return
-        "docs/NEXUS_FILE_CLASSIFICATION.md: SNDLEV00-15.SAL/.MAP inventory\n"
+        "docs/nexus/NEXUS_FILE_CLASSIFICATION.md: SNDLEV00-15.SAL/.MAP inventory\n"
         "docs/VERIFIED_HASHES.md:154-185 verified SAL/MAP sizes + SHA256\n"
         "docs/VERIFIED_HASHES.md:121 verified SDDRVS.TSK size + SHA256\n"
         "SDDRVS.TSK: 68000 entry 0x1000, dispatch 0x1c08, PCM route 0x1f0e\n"
-        "docs/nexus_audio_format.md: CD-DA track layout receipt only\n"
+        "docs/nexus/nexus_audio_format.md: CD-DA track layout receipt only\n"
         "src/nexus/nexus_v1_game.c: level-to-track selector remains opaque\n"
         "Boundary: receipt/classification plus bounded MAP event table parse; "
         "no SAL decode, CD sector read, or playback binding.\n";

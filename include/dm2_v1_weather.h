@@ -5,7 +5,7 @@
 /* DM2 V1 — Weather and Time-of-Day
  * Phase 6 source-lock (2026-05-26)
  * ReDMCSB: SKULL.ASM, skproject/SKULLWIN/c_tim_proc.cpp
- * docs/dm2_time.md, docs/dm2_creatures_gfx.md
+ * docs/dm2/dm2_time.md, docs/dm2/dm2_creatures_gfx.md
  *
  * DM2 outdoor levels have:
  *   - 4 weather states (clear/rain/fog/storm)
@@ -17,7 +17,7 @@
  */
 
 /* ── Weather states ───────────────────────────────────────────────────
- * Source: include/dm2_v1_outdoor_renderer.h, docs/dm2_creatures_gfx.md
+ * Source: include/dm2_v1_outdoor_renderer.h, docs/dm2/dm2_creatures_gfx.md
  * Processed each game tick via dm2_v2_outdoor_fx_tick() */
 
 #define DM2_WEATHER_CLEAR   0

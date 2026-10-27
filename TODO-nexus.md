@@ -40,7 +40,7 @@ establishes an English-version emulator cold-boot-to-menu route, not Firestaff
 menu rendering or input, Continue/save loading, or playable-level parity. Keep the English
 renderer gate closed and keep the Japanese capture as separate regional
 evidence. Capture hashes, output and reproduction commands are in
-[`docs/nexus_startup.md`](docs/nexus_startup.md#english-cold-boot-reaches-the-native-title-menu-2026-10-27);
+[`docs/nexus/nexus_startup.md`](docs/nexus/nexus_startup.md#english-cold-boot-reaches-the-native-title-menu-2026-10-27);
 raw capture files remain on the external evidence volume.
 
 2026-10-27 TRV2 Firestaff v3.0.415 direct CLI probe against the authentic
@@ -120,6 +120,36 @@ frame, but no menu or level is loaded and the startup receipt remains blocked
 on the PRS3 menu capture. See
 [`parity-evidence/verification/nexus_cli_direct_start_block_20261024/README.md`](parity-evidence/verification/nexus_cli_direct_start_block_20261024/README.md).
 
+The title asset loader now keeps `startup_title_vdp_capture_verified` closed
+when it decodes authentic `TITLE.BIN`/`TITLE.CG` MAPD data. That decode admits
+the bounded five-plane asset renderer only; it does not prove Saturn VDP1/VDP2
+composition or open the native title/menu handoff. Preserve this separation
+until a capture-backed production receipt explicitly admits the display
+consumer. A rebuilt real-media pointer-only launcher check now reports
+`title-vdp-owner-compositor-capture-required` for the installed Japanese
+retail image and rejects a playable-runtime claim. See
+[`DONE-nexus.md`](DONE-nexus.md) for the verification record.
+
+## 2026-10-27 — Resolve Nexus edition ownership when extracted files and discs coexist
+
+The authentic shared Nexus data directory contains extracted Japanese-route
+files alongside multiple retail Saturn images. The normal M12 pointer route
+reported `edition=nexus-saturn-jp` from the extracted `DM.BIN`, but the engine
+then opened the English CUE as supplemental media. A working-tree attempt to
+prevent this by matching the disc's `DM.BIN` still selected English: the
+Japanese and English images share that executable, so its byte identity does
+not distinguish their localized resource sets. The real-media regression
+`tests/test_nexus_v1_native_menu_mouse_title.sh` failed on this assertion.
+
+Do not treat a matching `DM.BIN` as proof that an ISO belongs to the selected
+language/revision. Keep extracted data and disc members under one verified
+edition owner, or reject the ambiguous combination. Resolve the selected
+M12 version against a stronger identity (for example, a set of authenticated
+region-specific members or the complete disc identity), then verify that the
+CLI and menu routes open only that owner. Keep the production title/menu gate
+closed. The attempted `DM.BIN`-only selection in the current working tree is
+not a fix and has not passed this real-media test.
+
 - Implement the observed retail title-menu input flow in Firestaff and identify
   the display consumer that places menu and face material.
   Updated 2026-10-27: the Japanese retail Ymir run now establishes a no-save
@@ -134,7 +164,7 @@ on the PRS3 menu capture. See
   no frame bounds or per-row frame tags, so this does not establish a
   frame-scoped producer join. The final VRAM snapshot is frame 8047 while the
   VDP2 write trace ends at frame 7716. Keep source attribution unbound; see the
-  Japanese menu section in `docs/nexus_startup.md`.
+  Japanese menu section in `docs/nexus/nexus_startup.md`.
   earlier paired raw-trace experiments below remain valid negative results for
   their sampled windows, but they are no longer the only input evidence. Keep
   the production gate closed while identifying menu/face material ownership
@@ -186,7 +216,7 @@ on the PRS3 menu capture. See
   instruction stream reads SMPC OREG and a Start pulse changes six bytes in
   the matched input/control memory snapshots. It still does not map those
   bytes to a Start action or menu transition; see the JP controller-reader
-  section in `docs/NEXUS_RUNTIME_CAPTURE.md`.
+  section in `docs/nexus/NEXUS_RUNTIME_CAPTURE.md`.
   A complete 52-frame matched pair then scheduled 13 two-frame button pulses
   and sampled WorkRAMH every four frames. All eight VDP1/VDP2 regions remained
   byte-identical. Two corresponding RAM ranges differed, but their values did
@@ -207,7 +237,7 @@ on the PRS3 menu capture. See
   Start-dependent dispatch or menu receipt. Continue tracing the controller
   state into a source-bound event consumer and capture an actually interactive
   title/menu interval before opening menu admission; see
-  `docs/NEXUS_RUNTIME_CAPTURE.md`.
+  `docs/nexus/NEXUS_RUNTIME_CAPTURE.md`.
 - Resolve the remaining Structure2/VDP1 material, texture, CLUT, raster,
   clipping, animation and composition ownership with real captures. Keep
   unbound bytes and generated fixtures out of production gameplay. In the
@@ -321,5 +351,5 @@ on the PRS3 menu capture. See
   hit rectangle, including the HUD, clipped to Firestaff's 320x200 framebuffer.
   Mouse clicks on the hand pointer and non-movement actions remain blocked
   until the opaque item data, champion context mapping and runtime click effects
-  are established. See `docs/nexus_input.md` and
+  are established. See `docs/nexus/nexus_input.md` and
   `parity-evidence/verification/nexus-leader-cycle-debug-20261025/README.md`.

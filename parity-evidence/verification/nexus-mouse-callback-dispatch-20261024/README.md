@@ -27,7 +27,7 @@ case through those helpers or establish any memory writes, callbacks, or
 item/slot assignment effect. The retail state transition, its mapping to
 Firestaff's champion and equipment fields, and a visible post-click result
 remain unverified. This evidence therefore does not authorize production
-gameplay clicks. See [`docs/nexus_input.md`](../../../docs/nexus_input.md) and
+gameplay clicks. See [`docs/nexus/nexus_input.md`](../../../docs/nexus/nexus_input.md) and
 [`scripts/analyze_nexus_mouse_event_crossrefs.py`](../../../scripts/analyze_nexus_mouse_event_crossrefs.py)
 for the verified dispatch and the specific checked values. The
 `yam\\mouse.c` string references have not been bound to this input route.

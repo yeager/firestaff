@@ -489,7 +489,7 @@ for game_id in dm1 csb dm2 nexus theron; do
             ! printf '%s\n' "$default_output" | \
                 grep -Fq 'NEXUS STARTUP RECEIPT: status=blocked gameId=nexus';
             ! printf '%s\n' "$default_output" | \
-                grep -Fq 'title=1 levelLoaded=0 menu=0 blocker=menu-bpk-prs3-capture-required';
+                grep -Fq 'title=1 levelLoaded=0 menu=0 blocker=title-vdp-owner-compositor-capture-required';
             printf '%s\n' "$default_output" | \
                 grep -Fq 'launch phase=runtime-entered game=nexus';
         }; then

@@ -11,7 +11,7 @@
  * Source-lock reference:
  *   ReDMCSB PALETTE.C — DM1 palette load/apply
  *   Saturn SDK: VDP1 color RAM (32 KB, 16-bit BGR555)
- *   docs/NEXUS_FILE_CLASSIFICATION.md — STONE.BIN 4 KB, TITLE.CG 164 KB
+ *   docs/nexus/NEXUS_FILE_CLASSIFICATION.md — STONE.BIN 4 KB, TITLE.CG 164 KB
  *
  * DGN geometry blob encodes per-square palette indices, allowing
  * texture lookup without loading full texture bitmaps.

@@ -14,7 +14,7 @@
  * touch controller affordances) MUST NOT alter V1 game-logic state.
  *
  * V1 source/format anchors (DM Nexus Saturn):
- *   docs/NEXUS_FILE_CLASSIFICATION.md — full 138-file Saturn asset catalog
+ *   docs/nexus/NEXUS_FILE_CLASSIFICATION.md — full 138-file Saturn asset catalog
  *   Greatstone DM Nexus (greatstone.free.fr/g_dm.html) — dungeon maps,
  *     creature atlas, graphics reference
  *   ReDMCSB DUNGEON.C — dungeon square type dispatch (shared with DM1/CSB)
@@ -78,7 +78,7 @@ typedef enum {
 
     NEXUS_V2_PHASE_DOMAIN_DUNGEON_LOADING = 0,
         /* DM Nexus Saturn DGN level format; DMDF parser.
-         * Source: docs/NEXUS_FILE_CLASSIFICATION.md DGN/DMDF sections;
+         * Source: docs/nexus/NEXUS_FILE_CLASSIFICATION.md DGN/DMDF sections;
          *   Greatstone DM Nexus dungeon map data.
          * V2 must not reinterpret level layout or square types. */
 
@@ -92,7 +92,7 @@ typedef enum {
     NEXUS_V2_PHASE_DOMAIN_CHAMPION_POOL = 2,
         /* Nexus champion pool — 6 slots, Nexus-specific stat growth.
          * Source: nexus_v1_champions.c (ReDMCSB CHAMPION.C F0309);
-         *   docs/NEXUS_FILE_CLASSIFICATION.md CHAMPION.SAV section.
+         *   docs/nexus/NEXUS_FILE_CLASSIFICATION.md CHAMPION.SAV section.
          * V2 HUD must not alter champion stats or party composition. */
 
     NEXUS_V2_PHASE_DOMAIN_COMBAT = 3,
@@ -120,7 +120,7 @@ typedef enum {
     NEXUS_V2_PHASE_DOMAIN_AUDIO = 7,
         /* Saturn CDDA audio + SDDRVS.TSK sound driver task.
          * Source: nexus_v1_sound.c (Saturn SDDRVS.TSK 26 KB driver;
-         *   docs/NEXUS_FILE_CLASSIFICATION.md AUDIO.SF section).
+         *   docs/nexus/NEXUS_FILE_CLASSIFICATION.md AUDIO.SF section).
          * V2 must not alter audio event timing or trigger rules. */
 
     /* ── V2-presentation-eligible domains ── */

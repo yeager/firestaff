@@ -2,7 +2,7 @@
  * Phase 6 source-lock (2026-05-26)
  * ReDMCSB: SKULL.ASM, SKWin.GDAT2.InternalCodes.txt
  * skproject/SKWIN/SkGlobal.h:636 (EXTENDED_GDAT_CATEGORIES)
- * docs/dm2_dungeon_design.md
+ * docs/dm2/dm2_dungeon_design.md
  *
  * DM2: 11 drop slots per creature (GDAT 0x0A-0x14). DropTableSeed RNG.
  * DM1: 1 drop slot per creature.
@@ -181,7 +181,7 @@ const char *dm2_v1_drops_source_evidence(void) {
         "Source: skproject/SKWINSPX/src/v4/skcrture.cpp:2084-2118 (DROP_CREATURE_POSSESSION)\n"
         "Source: skproject/SKWINSPX/src/v0/skdefine.h:898 (CREATURE_STAT_DROP_FIRST=0x0A)\n"
         "Source: skproject/SKULLWIN/c_random.cpp:13-31 (DM2_RAND/DM2_RAND16 LCG)\n"
-        "Source: docs/dm2_dungeon_design.md (11 drop slots, DropTableSeed RNG)\n"
+        "Source: docs/dm2/dm2_dungeon_design.md (11 drop slots, DropTableSeed RNG)\n"
         "DM1 comparison: single drop slot per creature\n"
         "DM2 comparison: 11 drop slots via GDAT category 0x0A, DropTableSeed per-creature RNG\n";
 }

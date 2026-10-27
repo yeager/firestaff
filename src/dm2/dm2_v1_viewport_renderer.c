@@ -30,9 +30,9 @@
  *         ReDMCSB DUNVIEW.C:4119-4270 — F0110 DrawDoorButton, F0111 DrawDoor
  *         ReDMCSB DUNVIEW.C:4351-4382 — F0112 DrawCeilingPit
  *         SKULLWIN/SKWIN/c_gui_vp.cpp — viewport blit order
- *         docs/dm2_graphics.md — drawing pipeline audit
- *         docs/dm2_walls.md — wall/door/floor rendering specifics
- *         docs/dm2_palette.md — DM2 palette system
+ *         docs/dm2/dm2_graphics.md — drawing pipeline audit
+ *         docs/dm2/dm2_walls.md — wall/door/floor rendering specifics
+ *         docs/dm2/dm2_palette.md — DM2 palette system
  */
 
 #include "dm2_v1_viewport_renderer.h"
@@ -11493,8 +11493,8 @@ const char *dm2_v1_viewport_source_evidence(void)
         "Source: skproject/SKWIN/SkWinCore.cpp:1001-1037 — DRAW_CHIP_OF_MAGIC_MAP frame atlas offset\n"
         "Source: skproject/SKWIN/SkWinCore.cpp:10782-10817 — DRAW_MAP_CHIP creature possession item overlays\n"
         "Source: SKULLWIN/SKWIN/c_gui_vp.cpp  — viewport blit order (reference)\n"
-        "Source: docs/dm2_graphics.md         — drawing pipeline audit\n"
-        "Source: docs/dm2_walls.md            — wall/door/floor rendering specifics\n"
-        "Source: docs/dm2_palette.md          — DM2 palette system\n"
+        "Source: docs/dm2/dm2_graphics.md         — drawing pipeline audit\n"
+        "Source: docs/dm2/dm2_walls.md            — wall/door/floor rendering specifics\n"
+        "Source: docs/dm2/dm2_palette.md          — DM2 palette system\n"
         "Reference: dm1_v1_viewport_3d_pc34_compat.c (DM1 draw order, wall blit patterns)\n";
 }

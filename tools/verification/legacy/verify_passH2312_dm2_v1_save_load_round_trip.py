@@ -17,7 +17,7 @@ Schema: firestaff.dm2_v1.save_load_round_trip.v1
 
 Source: SKULL.ASM T4000-T4100 (save/load entry points),
          dm2_v1_save_load.c (SUPPRESS codec, slot manager),
-         docs/dm2_save_format.md, docs/dm2_save_slots.md
+         docs/dm2/dm2_save_format.md, docs/dm2/dm2_save_slots.md
 """
 from __future__ import annotations
 

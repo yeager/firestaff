@@ -8,7 +8,7 @@
  * Phase 6 source-lock (2026-05-26)
  * ReDMCSB: SKULL.ASM, SKWin.GDAT2.InternalCodes.txt
  * skproject/SKWIN/SkGlobal.h:636 (EXTENDED_GDAT_CATEGORIES)
- * docs/dm2_dungeon_design.md
+ * docs/dm2/dm2_dungeon_design.md
  *
  * DM2 extends creature drop tables from 1 slot (DM1) to 11 slots.
  * Each slot: item ID + count + random flags.
@@ -27,7 +27,7 @@
 #define DM2_DROP_SLOT_LAST    20  /* GDAT offset 0x14 */
 
 /* ── Drop table seed field (GDAT per-creature) ─────────────────────────
- * Source: docs/dm2_dungeon_design.md
+ * Source: docs/dm2/dm2_dungeon_design.md
  * DropTableSeed controls RNG for drop determination.
  * Per-slot random flags: varies by slot (specific encoding in GDAT). */
 

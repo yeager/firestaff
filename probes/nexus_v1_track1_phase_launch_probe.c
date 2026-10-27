@@ -100,7 +100,7 @@
  *                                           round-trip field)
  *   include/nexus_v1_champions.h           (champion_pool_serialize
  *                                           size/serialize/deserialize)
- *   docs/NEXUS_FILE_CLASSIFICATION.md      (137 Track 1 asset list)
+ *   docs/nexus/NEXUS_FILE_CLASSIFICATION.md      (137 Track 1 asset list)
  *   docs/FIRESTAFF_GAP_LIST.md             (E1 Track 1 phase-launch row)
  *   docs/source-lock/nexus_v1_phase7_verification_suite_H0357.md
  *
@@ -586,7 +586,7 @@ int main(int argc, char **argv)
     printf("═══════════════════════════════════════════════════════════\n");
     printf("  Nexus V1 Track 1 — full E1 phase-launch handoff probe\n");
     printf("  Source-lock: docs/FIRESTAFF_GAP_LIST.md E1 Track 1 row\n");
-    printf("               docs/NEXUS_FILE_CLASSIFICATION.md (137 assets)\n");
+    printf("               docs/nexus/NEXUS_FILE_CLASSIFICATION.md (137 assets)\n");
     printf("═══════════════════════════════════════════════════════════\n");
 
     if (data_dir && data_dir[0]) {

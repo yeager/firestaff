@@ -2,7 +2,7 @@
  * test_nexus_v1_script_vm.c
  *
  * Data-free Nexus V1 provisional trigger-dispatch regression.
- * Source: docs/nexus_triggers.md and docs/nexus_sensors.md classify
+ * Source: docs/nexus/nexus_triggers.md and docs/nexus/nexus_sensors.md classify
  * SDDRVS.TSK as Saturn sound-driver data. Manual condition/action fixtures
  * must remain inert; canonical SLEV files are parsed only as bounded SH-2
  * task headers and never enable fallback dispatch.

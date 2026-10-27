@@ -1864,7 +1864,7 @@ int main(void)
         CHECK("source evidence cites skproject creature possession overlays",
               e != NULL && strstr(e, "creature possession item overlays") != NULL);
         CHECK("source evidence cites DM2 palette documentation",
-              e != NULL && strstr(e, "docs/dm2_palette.md") != NULL);
+              e != NULL && strstr(e, "docs/dm2/dm2_palette.md") != NULL);
     }
     test_door_rect_contracts();
     test_hud_chrome_render_plan();

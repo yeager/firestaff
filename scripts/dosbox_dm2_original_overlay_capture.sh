@@ -35,12 +35,12 @@
 #   docs/FIRESTAFF_GAP_LIST.md (DM2 original-overlay evidence is OPEN-BOUNDED).
 #
 # Reference materials the verifier ties this script to:
-#   - docs/dm2_viewport.md (RG1R/RG2R/RG3R region queries, 320x136 viewport,
+#   - docs/dm2/dm2_viewport.md (RG1R/RG2R/RG3R region queries, 320x136 viewport,
 #     224x136 backbuffer).
-#   - docs/dm2_hud.md (right-panel system, three-stat panel, portrait classes).
-#   - docs/dm2_input.md (SDL mouse + keyboard path; original SKULLWIN routes
+#   - docs/dm2/dm2_hud.md (right-panel system, three-stat panel, portrait classes).
+#   - docs/dm2/dm2_input.md (SDL mouse + keyboard path; original SKULLWIN routes
 #     use c_Tmouse + IBMIO_USER_INPUT_CHECK).
-#   - docs/dm2_source_lock.md (archive/member identities for the DM2 PC EN
+#   - docs/dm2/dm2_source_lock.md (archive/member identities for the DM2 PC EN
 #     canonical assets).
 #   - tools/verify_dm2_v1_original_overlay_capture_source_lock.py
 #     (source-lock verifier; this script satisfies the route_tool_* rows).

@@ -1,7 +1,7 @@
 /* dm2_v1_progression.c — DM2 V1 Progression Constants
  * Phase 6 source-lock (2026-05-26)
  * ReDMCSB: SKULL.ASM, skproject/SKWIN/SkGlobal.h
- * docs/dm2_champ_changes.md, docs/dm2_dungeon_design.md
+ * docs/dm2/dm2_champ_changes.md, docs/dm2/dm2_dungeon_design.md
  *
  * CRITICAL: DM2 V1 does NOT have XP-based character progression.
  * Stats are FIXED per champion type at creation.
@@ -64,10 +64,10 @@ const char *dm2_v1_progression_source_evidence(void) {
         "ReDMCSB: SKULL.ASM (sha256 a2a04b0ea7c05fd2b2a7a8da5197cdfcccd7d4d0167943caf3a21a079462e099)\n"
         "Source: skproject/SKWIN/SkGlobal.h:37-163 (MAXSPELL_*, CREATURE_AI_TAB_SIZE, MAXAI)\n"
         "Source: skproject/SKWIN/SkGlobal.h:636 (EXTENDED_GDAT_CATEGORIES)\n"
-        "Source: docs/dm2_champ_changes.md (no XP progression, fixed stat increases at creation)\n"
-        "Source: docs/dm2_dungeon_design.md (3 level types, 28 dungeon levels)\n"
-        "Source: docs/dm2_time.md (1440 min/day, time-of-day cycle)\n"
-        "Source: docs/dm2_audio.md (28 music tracks, 16-slot SFX buffer)\n"
+        "Source: docs/dm2/dm2_champ_changes.md (no XP progression, fixed stat increases at creation)\n"
+        "Source: docs/dm2/dm2_dungeon_design.md (3 level types, 28 dungeon levels)\n"
+        "Source: docs/dm2/dm2_time.md (1440 min/day, time-of-day cycle)\n"
+        "Source: docs/dm2/dm2_audio.md (28 music tracks, 16-slot SFX buffer)\n"
         "Source: SKWin.GDAT2.InternalCodes.txt (11 drop slots, DropTableSeed)\n"
         "CRITICAL NOTE: DM2 V1 stat increases are FIXED per champion type at creation.\n"
         "  No XP earned through play. Power progression via equipment, tech, spells, companions.\n";

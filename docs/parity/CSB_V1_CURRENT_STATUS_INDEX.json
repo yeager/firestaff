@@ -233,27 +233,27 @@
       "use": "Use for CSB full-support criteria and non-claims. Interpret together with this index and FINAL_CSB_GAPS for the current bounded functional closures."
     },
     {
-      "path": "docs/csb_gap_champions.md",
+      "path": "docs/csb/csb_gap_champions.md",
       "status": "PARTIALLY_SUPERSEDED",
       "use": "Historical gap detail. FINAL_CSB_GAPS marks these rows closed or audit-only; do not reopen without newer failing evidence."
     },
     {
-      "path": "docs/csb_gap_combat.md",
+      "path": "docs/csb/csb_gap_combat.md",
       "status": "PARTIALLY_SUPERSEDED",
       "use": "Historical gap detail. Use as source rationale, not current blocker list."
     },
     {
-      "path": "docs/csb_gap_dungeon.md",
+      "path": "docs/csb/csb_gap_dungeon.md",
       "status": "PARTIALLY_SUPERSEDED",
       "use": "Historical gap detail. DECOMPDU/header/sensor rows are bounded-closed per FINAL_CSB_GAPS."
     },
     {
-      "path": "docs/csb_gap_graphics.md",
+      "path": "docs/csb/csb_gap_graphics.md",
       "status": "PARTIALLY_SUPERSEDED",
       "use": "Historical gap detail. Keep audit-only rows as documented non-blockers unless runtime evidence contradicts them."
     },
     {
-      "path": "docs/csb_gap_mechanics.md",
+      "path": "docs/csb/csb_gap_mechanics.md",
       "status": "PARTIALLY_SUPERSEDED",
       "use": "Historical gap detail. Use for source context after checking functional disposition above."
     },

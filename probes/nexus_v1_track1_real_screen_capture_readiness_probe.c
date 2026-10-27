@@ -70,9 +70,9 @@
  *                                           nexus_palette_expand_rgba)
  *   include/nexus_v1_rasterizer.h          (Nexus_Framebuffer /
  *                                           NEXUS_FB_W/NEXUS_FB_H)
- *   docs/NEXUS_FILE_CLASSIFICATION.md      (Track 1 file inventory)
+ *   docs/nexus/NEXUS_FILE_CLASSIFICATION.md      (Track 1 file inventory)
  *   docs/FIRESTAFF_GAP_LIST.md             (E1 Track 1 phase-launch row)
- *   docs/nexus_v1_phase2_data_formats_H2321.md
+ *   docs/nexus/nexus_v1_phase2_data_formats_H2321.md
  *
  * Build:
  *   cmake --build build --target firestaff_nexus_v1_track1_real_screen_capture_readiness_probe

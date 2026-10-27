@@ -1,5 +1,24 @@
 # Firestaff DONE — Nexus
 
+## 2026-10-27 — Keep MAPD decoding separate from Saturn capture admission
+
+- Corrected `nexus_title_load`: successfully decoding the five real
+  `TITLE.BIN` MAPD planes into the bounded asset renderer no longer sets
+  `startup_title_vdp_capture_verified`. That field remains fail-closed until
+  a capture-backed Saturn display-consumer receipt admits VDP1/VDP2 ownership
+  and composition.
+- Rebuilt `firestaff` and ran
+  `tests/test_nexus_v1_native_menu_mouse_title.sh` against the installed
+  authentic Japanese Saturn media. Keyboard/mouse launcher selection reached
+  the title route and correctly stopped with
+  `title-vdp-owner-compositor-capture-required`; it did not claim a Nexus menu
+  or playable runtime.
+- The broader
+  `tests/test_firestaff_cli_startup_diagnostics_real_media.sh` matrix also
+  passed its installed-data checks: direct CLI media selection for all five
+  games and Nexus's blocked-start assertion. Its DM2 Macintosh diagnostic was
+  skipped because that authentic archive is not installed.
+
 ## 2026-10-27 — Document English-version Ymir menu reference
 
 - Recorded the authenticated English-version no-save Ymir cold boot to the
@@ -12,7 +31,7 @@
   pages and wiki summaries. They distinguish the English-version disc image
   from the Japanese retail release and state that Nexus is not yet playable
   through Firestaff. Capture hashes and reproduction details remain in
-  `docs/nexus_startup.md`; the raw capture stays outside Git.
+  `docs/nexus/nexus_startup.md`; the raw capture stays outside Git.
 
 ## 2026-10-25 — Desktop input build and authentic menu-route verification
 
@@ -426,7 +445,7 @@ Reviewed 2026-08-26. Completed work only.
 - The Nexus gameplay Tab action cycles the loaded party's leader slot. An
   authentic Ymir `--debug` run on Japanese retail media visibly confirmed L/R
   changes the leader marker and portrait; the guest RAM owner remains unknown.
-  See `docs/nexus_input.md` and
+  See `docs/nexus/nexus_input.md` and
   `parity-evidence/verification/nexus-leader-cycle-debug-20261025/`.
 - The hash-pinned Japanese retail `DM.BIN` event-44 route now has checked
   control flow through its context resolver and slot-pair read/clear/write

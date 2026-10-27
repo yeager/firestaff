@@ -16,7 +16,7 @@ Saturn release (T-9111G V1.003, 1998-02-03, Japan only). Covers endianness,
 byte layout, Provenance Gate reference, and known gaps per data category.
 
 > **Source-lock rule:** Every format claim cites a source file or section in
-> `(src|docs|include)/nexus/` or `docs/NEXUS_FILE_CLASSIFICATION.md`. Where
+> `(src|docs|include)/nexus/` or `docs/nexus/NEXUS_FILE_CLASSIFICATION.md`. Where
 > the original Saturn format is unknown, the Firestaff stub or working
 > hypothesis is explicitly marked STUB / UNKNOWN / INFERRED.
 
@@ -35,9 +35,9 @@ byte layout, Provenance Gate reference, and known gaps per data category.
 > `ITEM.IBS` declarations/icons; 20 `FACE.BIN` portraits; `STABG.BIN`
 > STMP planes/palette; five `TITLE.BIN` MAPD/TIBG maps; 162 `MENU.BPK`
 > PRS3 surface receipts; and `FONT256.S2D` SCR/CG-tile parsing. See
-> `docs/NEXUS_STRICT_FIDELITY_INVENTORY.md`, `docs/nexus_startup.md`,
-> `docs/nexus_menu.md`, `docs/nexus_audio_format.md`, and
-> `docs/nexus_trigger_script_model_status.md` for the current evidence.
+> `docs/nexus/NEXUS_STRICT_FIDELITY_INVENTORY.md`, `docs/nexus/nexus_startup.md`,
+> `docs/nexus/nexus_menu.md`, `docs/nexus/nexus_audio_format.md`, and
+> `docs/nexus/nexus_trigger_script_model_status.md` for the current evidence.
 > These receipts do **not** prove Saturn VDP1/VDP2 placement, text layout,
 > event/action dispatch, SLEV task semantics, SAL playback, or full runtime
 > playability; those remain capture-gated and must not be inferred from the
@@ -76,7 +76,7 @@ inline in each parser. Source: `nexus_v1_dmdf_model.c`, `nexus_v1_dungeon.c`,
 | 1 | MODE1/2352 | ISO 9660 filesystem: game data, 133 MB |
 | 2–9 | CD-DA Audio | Red Book Audio music, 2 levels per track |
 
-Source: `docs/NEXUS_FILE_CLASSIFICATION.md`, `nexus_v1_engine.c`
+Source: `docs/nexus/NEXUS_FILE_CLASSIFICATION.md`, `nexus_v1_engine.c`
 
 ### 2.2 ISO 9660 Reader (`nexus_v1_iso_reader.c/h`)
 
@@ -124,7 +124,7 @@ Reading strategy:
 | 0DMSTRT.BIN | 1 | 39 KB | Startup data |
 | SDDRVS.TSK | 1 | 26 KB | Saturn sound driver |
 
-Source: `docs/NEXUS_FILE_CLASSIFICATION.md` (137-file inventory)
+Source: `docs/nexus/NEXUS_FILE_CLASSIFICATION.md` (137-file inventory)
 
 ### 2.4 Signature Files (Provenance Gate)
 
@@ -170,7 +170,7 @@ All further format claims are best-effort from extracted file analysis.
 because 3D polygon geometry is pre-baked into each DGN file rather than
 computed at runtime.
 
-Source: `docs/NEXUS_FILE_CLASSIFICATION.md`, `docs/nexus_data.md`
+Source: `docs/nexus/NEXUS_FILE_CLASSIFICATION.md`, `docs/nexus/nexus_data.md`
 
 ### 3.2 Layout: Two Sections
 
@@ -222,7 +222,7 @@ DGN data patterns and the mask `& 0x1F` in `nexus_v1_level_get_square()`):
 
 Square semantics (door/teleporter/trap) are handled by **SDDRVS.TSK scripting**
 rather than hardwired type codes (unlike DM1 where types 6/7/9/10/11 are
-compile-time dispatched via `F0267/F0268`). Source: `docs/nexus_squares.md`,
+compile-time dispatched via `F0267/F0268`). Source: `docs/nexus/nexus_squares.md`,
 `nexus_v1_squares.c`.
 
 ### 3.4 Core Structures
@@ -267,7 +267,7 @@ int nexus_v1_level_get_square(const Nexus_V1_Level *level, int x, int y);
 - `nexus_iso_reader.c` can read these files but no parser exists
 - **Status:** STUB — read via `nexus_iso_read_file()`, no parsing
 
-Source: `docs/NEXUS_FILE_CLASSIFICATION.md`
+Source: `docs/nexus/NEXUS_FILE_CLASSIFICATION.md`
 
 ### 4.2 Level Script Files — SLEV\*.BIN
 
@@ -287,8 +287,8 @@ Key difference vs DM1:
   (no recompile needed for new dungeons), which explains the 16-level
   depth vs DM1's 8
 
-Source: `docs/NEXUS_FILE_CLASSIFICATION.md` (SLEV\*.BIN listed),
-`docs/nexus_squares.md` (§3), `nexus_v1_engine.c` (no TSK references found)
+Source: `docs/nexus/NEXUS_FILE_CLASSIFICATION.md` (SLEV\*.BIN listed),
+`docs/nexus/nexus_squares.md` (§3), `nexus_v1_engine.c` (no TSK references found)
 
 ### 4.3 Format Status
 
@@ -347,7 +347,7 @@ equipment slots (weapon, shield, head, torso, etc.) as a flat array vs DM1's
 separate slot encoding. The flat 30-slot model in `Nexus_V1_Champion` is the
 in-memory structure.
 
-Source: `include/nexus_v1_champions.h:inventory[30]`, `docs/nexus_inventory.md`
+Source: `include/nexus_v1_champions.h:inventory[30]`, `docs/nexus/nexus_inventory.md`
 
 ### 5.3 Floor Item Structure
 
@@ -405,7 +405,7 @@ void nexus_v1_font_free(Nexus_V1_Font *font);
 const uint8_t *nexus_v1_font_get_glyph(const Nexus_V1_Font *font, int idx);
 ```
 
-Source: `include/nexus_v1_saturn_font.h`, `docs/nexus_text.md`
+Source: `include/nexus_v1_saturn_font.h`, `docs/nexus/nexus_text.md`
 
 ### 6.2 Shift-JIS Text Encoding
 
@@ -432,7 +432,7 @@ Double-byte JIS X 0208 kanji: not yet implemented → replaced by `'?'`.
 A full lookup table (188 valid lead-byte × 2 trailing-byte combinations)
 would fill ~36 K single-byte-per-entry — implement when kanji support is needed.
 
-Source: `src/nexus/nexus_v1_text.c` (SJIS → UTF-8 converter), `docs/nexus_text.md`
+Source: `src/nexus/nexus_v1_text.c` (SJIS → UTF-8 converter), `docs/nexus/nexus_text.md`
 
 ### 6.3 String Extraction
 
@@ -599,7 +599,7 @@ Total model byte size = `(vertex_count × 10) + (face_count × 6) + texture_size
 | RED_DRA.MNS | — | Red Dragon variant |
 
 Source: `include/nexus_v1_dmdf_model.h`, `src/nexus/nexus_v1_dmdf_model.c`,
-`docs/NEXUS_FILE_CLASSIFICATION.md`, `docs/nexus_graphics.md`
+`docs/nexus/NEXUS_FILE_CLASSIFICATION.md`, `docs/nexus/nexus_graphics.md`
 
 ### 8.2 In-Memory Creature State
 
@@ -636,7 +636,7 @@ typedef struct {
 
 AI state machine: idle → patrol → chase (when party within 3 tiles) →
 attack (when party within 1 tile). Speed modifies chase tick interval.
-Source: `src/nexus/nexus_v1_creatures.c`, `docs/nexus_ai_scripting.md`
+Source: `src/nexus/nexus_v1_creatures.c`, `docs/nexus/nexus_ai_scripting.md`
 
 ### 8.3 Creature Format Status
 
@@ -674,7 +674,7 @@ Standard: **Red Book Audio CD-DA**
 Track switching implemented in `nexus_v1_game.c:nexus_v1_cd_track_for_level()`.
 Actual CD-DA playback: **STUB** (logged, SDL_mixer not yet wired).
 
-Source: `docs/nexus_audio_format.md`, `nexus_v1_engine.c`
+Source: `docs/nexus/nexus_audio_format.md`, `nexus_v1_engine.c`
 
 ### 9.2 Per-Level SFX Banks — SNDLEV\*.SAL
 
@@ -694,7 +694,7 @@ Source: `docs/nexus_audio_format.md`, `nexus_v1_engine.c`
 - **Format: UNKNOWN.** 66–90 bytes at 20 events × 2 fields (ID + offset?)
   ≈ 82 bytes suggests a table: `uint8_t event_id, uint8_t bank, uint16_t offset`
   or `uint16_t sample_offset, uint16_t size` per event
-- Source: `docs/nexus_audio_format.md`, `src/nexus/nexus_v1_sound.c`
+- Source: `docs/nexus/nexus_audio_format.md`, `src/nexus/nexus_v1_sound.c`
 
 ### 9.4 Sound Driver — SDDRVS.TSK
 
@@ -713,7 +713,7 @@ Source: `docs/nexus_audio_format.md`, `nexus_v1_engine.c`
 
 Format: Saturn AVI (custom proprietary codec, not standard AVI).
 Audio stream embedded in AVI container. **Status:** NOT IMPLEMENTED.
-Source: `docs/NEXUS_FILE_CLASSIFICATION.md`, `docs/nexus_audio_format.md`
+Source: `docs/nexus/NEXUS_FILE_CLASSIFICATION.md`, `docs/nexus/nexus_audio_format.md`
 
 ### 9.6 Sound Event API
 
@@ -776,7 +776,7 @@ probes; the retail `firestaff_nexus` target uses a no-op presentation adapter
 until Saturn VDP1 command, CLUT/VRAM destination, and DGN/MNS ownership are
 captured.
 
-Source: `include/nexus_v1_dmdf_model.h`, `docs/nexus_graphics.md`
+Source: `include/nexus_v1_dmdf_model.h`, `docs/nexus/nexus_graphics.md`
 
 ### 10.2 3D Rasterizer (`nexus_v1_rasterizer.c/h`)
 
@@ -792,7 +792,7 @@ Pipeline:
 3. Depth sort transparent faces (painter's algorithm)
 4. Rasterize with texture sampling using DMDF u,v coords
 
-Source: `docs/nexus_graphics.md`, `src/nexus/nexus_v1_rasterizer.c`
+Source: `docs/nexus/nexus_graphics.md`, `src/nexus/nexus_v1_rasterizer.c`
 
 ### 10.3 Math3D (`nexus_v1_math3d.c/h`)
 
@@ -818,7 +818,7 @@ Format: likely Saturn VDP2 background layers (2bpp/4bpp indexed).
 Bounded source parsers/receipts exist, but no VDP2 placement consumer is
 authenticated; host presentation remains blocked.
 
-Source: `docs/NEXUS_FILE_CLASSIFICATION.md`, `src/nexus/nexus_v1_ui_surfaces.c`
+Source: `docs/nexus/NEXUS_FILE_CLASSIFICATION.md`, `src/nexus/nexus_v1_ui_surfaces.c`
 
 ### 10.5 Item Icon Set — ITEM.IBS
 
@@ -830,7 +830,7 @@ Source: `docs/NEXUS_FILE_CLASSIFICATION.md`, `src/nexus/nexus_v1_ui_surfaces.c`
   uses the separate source-receipt/VDP1-admission path in `nexus_v1_dungeon.c`
   and exports no host item renderer
 
-Source: `docs/NEXUS_FILE_CLASSIFICATION.md`
+Source: `docs/nexus/NEXUS_FILE_CLASSIFICATION.md`
 
 ### 10.6 Graphics Format Status
 
@@ -913,7 +913,7 @@ FNV-1a 64-bit hash of world state. Components:
 - Per-item floor state (position, item_id, quantity)
 - Per-square door state (open/closed)
 
-Source: `src/nexus/nexus_v1_world.c`, `docs/nexus_save_format.md`
+Source: `src/nexus/nexus_v1_world.c`, `docs/nexus/nexus_save_format.md`
 
 ### 11.5 Save Format Status
 
@@ -993,7 +993,7 @@ exception: ISO sector LBA is little-endian on disc.
 | CD audio | None (sequenced music) | CD-DA Red Book 8 tracks | Platform CD-audio support needed |
 | FMV | None | 3× DMV\*.AVI cutscenes (101 MB) | AVI demux + codec work |
 
-Source: `docs/nexus_data.md` DM1 comparison tables, `docs/nexus_dungeon.md`
+Source: `docs/nexus/nexus_data.md` DM1 comparison tables, `docs/nexus/nexus_dungeon.md`
 
 ---
 
@@ -1044,14 +1044,14 @@ Source: `docs/nexus_data.md` DM1 comparison tables, `docs/nexus_dungeon.md`
 | Sound stub | `src/nexus/nexus_v1_sound.c` | API surface, 21 event enum entries |
 | Save/load | `src/nexus/nexus_v1_save_load.c` | Full native format, CRC-32, slots |
 | World hash | `src/nexus/nexus_v1_world.c` | FNV-1a 64-bit |
-| Disc manifest | `docs/NEXUS_FILE_CLASSIFICATION.md` | 137-file inventory |
-| Audio spec | `docs/nexus_audio_format.md` | CD-DA + SAL + MAP layout |
-| Text spec | `docs/nexus_text.md` | Font + SJIS + layout gaps |
-| Dungeon fmt | `docs/nexus_dungeon.md` | Level sizes + format overview |
-| Square fmt | `docs/nexus_squares.md` | Type encoding + SDDRVS.TSK vs DM1 |
-| Save fmt | `docs/nexus_save_format.md` | Native format + gaps |
-| Audio gaps | `docs/nexus_sfx.md` | No SFX implementation documented |
-| Inventory fmt | `docs/nexus_inventory.md` | 30-slot model, equipment slots |
+| Disc manifest | `docs/nexus/NEXUS_FILE_CLASSIFICATION.md` | 137-file inventory |
+| Audio spec | `docs/nexus/nexus_audio_format.md` | CD-DA + SAL + MAP layout |
+| Text spec | `docs/nexus/nexus_text.md` | Font + SJIS + layout gaps |
+| Dungeon fmt | `docs/nexus/nexus_dungeon.md` | Level sizes + format overview |
+| Square fmt | `docs/nexus/nexus_squares.md` | Type encoding + SDDRVS.TSK vs DM1 |
+| Save fmt | `docs/nexus/nexus_save_format.md` | Native format + gaps |
+| Audio gaps | `docs/nexus/nexus_sfx.md` | No SFX implementation documented |
+| Inventory fmt | `docs/nexus/nexus_inventory.md` | 30-slot model, equipment slots |
 | Phase 0 | `docs/source-lock/nexus_v1_phase0_provenance_gate_H2315.md` | Provenance gate (disc absent) |
 | Phase 1 | `docs/source-lock/nexus_v1_phase1_boot_H2318.md` | Boot profile (boot profile split) |
 | Phase 4 | `docs/source-lock/nexus_v1_phase4_rendering_pipeline_H0357.md` | Rasterizer + palette |

@@ -44,7 +44,7 @@ static void test_dungeon_dat_new_game_only_decision(void)
           "decision stable key is machine-readable");
     check(strcmp(d->bug_doc_heading,
                  "Dungeon.dat Edits Only Affect New Games") == 0,
-          "decision points at docs/dm2_bugs.md heading");
+          "decision points at docs/dm2/dm2_bugs.md heading");
     check(d->saved_game_snapshot_authoritative == 1,
           "saved-game dungeon snapshot is authoritative");
     check(d->reload_dungeon_dat_for_existing_save == 0,
@@ -55,11 +55,11 @@ static void test_dungeon_dat_new_game_only_decision(void)
                    "decision text names existing saves");
     check_contains(d->decision, "fresh new-game path",
                    "decision text names fresh new-game path");
-    check_contains(d->source_evidence, "docs/dm2_bugs.md",
+    check_contains(d->source_evidence, "docs/dm2/dm2_bugs.md",
                    "evidence cites bug/quirk doc");
-    check_contains(d->source_evidence, "docs/dm2_modding.md",
+    check_contains(d->source_evidence, "docs/dm2/dm2_modding.md",
                    "evidence cites modding doc");
-    check_contains(d->source_evidence, "docs/dm2_save_format.md",
+    check_contains(d->source_evidence, "docs/dm2/dm2_save_format.md",
                    "evidence cites save format doc");
     check_contains(d->source_evidence, "SKULL.ASM",
                    "evidence cites DM2 source surface");

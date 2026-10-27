@@ -79,7 +79,7 @@ memory command. Their SHA-256 values are:
 | `after-button-a.png` | `de45a6b30586452f99bd5ac6bca7cd8a7a878a40c68afd0792fb8e64097a87e9` |
 
 The Firestaff input contract and remaining join requirements are recorded in
-[`docs/nexus_input.md`](../../../docs/nexus_input.md).
+[`docs/nexus/nexus_input.md`](../../../docs/nexus/nexus_input.md).
 
 ## Reproduction
 

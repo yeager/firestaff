@@ -27,7 +27,7 @@
  *   ReDMCSB BLIT.C        -- F0132 blit rect primitive
  *   ReDMCSB DUNGEON.C     -- wall square drawing (F0108)
  *   Saturn VDP1 SDK       -- command list format, local coordinates
- *   docs/NEXUS_FILE_CLASSIFICATION.md -- DMDF .MNS + surface files  */
+ *   docs/nexus/NEXUS_FILE_CLASSIFICATION.md -- DMDF .MNS + surface files  */
 
 /* ─────────────────────────── Public Types ──────────────────────── */
 #define NEXUS_FB_W 320

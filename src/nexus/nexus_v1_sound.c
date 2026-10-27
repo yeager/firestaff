@@ -12,8 +12,8 @@
 static void nexus_sound_free_decoded(Nexus_SoundEngine *eng);
 
 /* Nexus V1 sound system — source-bound SAL directory implementation.
- * Source: docs/nexus_audio_format.md, docs/nexus_sfx.md,
- * docs/nexus_music.md, nexus_v1_engine.c CD track switching.
+ * Source: docs/nexus/nexus_audio_format.md, docs/nexus/nexus_sfx.md,
+ * docs/nexus/nexus_music.md, nexus_v1_engine.c CD track switching.
  *
  * Per-level SFX: SNDLEV00-15.SAL (sound banks, 290-460 KB each)
  *                SNDLEV00-15.MAP (event index, 66-90 bytes each)
@@ -24,7 +24,7 @@ static void nexus_sound_free_decoded(Nexus_SoundEngine *eng);
  * DMWeb's DataID 0 tone-bank directory and PCM entry metadata are decoded;
  * Saturn event dispatch, SDDRVS ABI submission and host playback remain
  * unproven, so no actual SFX playback is admitted.
- * Source: docs/nexus_sfx.md (no SFX implementation found in current source). */
+ * Source: docs/nexus/nexus_sfx.md (no SFX implementation found in current source). */
 
 /* The host event enum is an internal request identifier only. It is not a
  * retail MAP selector and must not acquire a source-looking label here. */
@@ -669,7 +669,7 @@ void nexus_sound_shutdown(Nexus_SoundEngine *eng) {
  * host PCM or assign a 22050 Hz rate until an authenticated SDDRVS/SCSP
  * execution trace binds the consumer.
  * MAP format: 8-byte records (DataID/ID/start/size), terminated by 0xFF.
- * Source: docs/nexus_audio_format.md.
+ * Source: docs/nexus/nexus_audio_format.md.
  * ═══════════════════════════════════════════════════════════════════ */
 
 int nexus_sound_load_level(Nexus_SoundEngine *eng, int level_index,
@@ -1045,7 +1045,7 @@ static int record_event_window(Nexus_SoundEngine *eng,
  *
  * The MAP lookup is performed *before* the playback block check so that the
  * source-bound window is recorded even when SAL decode is unsupported.
- * Source: docs/nexus_audio_format.md, docs/nexus_sfx.md,
+ * Source: docs/nexus/nexus_audio_format.md, docs/nexus/nexus_sfx.md,
  *         nexus_v1_audio_receipt.c verified SNDLEV##.SAL/.MAP sizes. */
 void nexus_sound_play(Nexus_SoundEngine *eng, Nexus_SoundEvent event) {
     Nexus_SfxRuntimeReceipt receipt;

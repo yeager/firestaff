@@ -116,7 +116,7 @@ and English Macintosh versions are explicitly exempt.
 
 | Platform | Version | Lang | Status | Greatstone DB | Local hash | Notes |
 |---|---|---|---|---|---|---|
-| Sega Saturn | 1.0 | JP | 🟣 | — (not in SCK) | yes (DM.BIN 555,144 B) | DMWeb documents the Japan-only Saturn release (catalog `T-9111G`) and Nexus-specific file formats; Greatstone does not list a Saturn Nexus extraction. The hash-verified retail Track 1 drives the bounded native parser/loader route, and admitted MAPD title assets can be presented from original CUE/BIN media. Japanese retail and English-version Ymir cold boots reach the native menu; the English screenshot replay is pixel-exact and its source join has 126 informative matches among 137 textured draws. These emulator references do not make Nexus playable in Firestaff, which still lacks full Saturn title composition and title-to-menu parity. HUD, viewport, audio/event dispatch, and gameplay parity remain capture-gated. |
+| Sega Saturn | 1.0 | JP | 🟣 | — (not in SCK) | yes (DM.BIN 555,144 B) | DMWeb documents the Japan-only Saturn release (catalog `T-9111G`) and Nexus-specific file formats; Greatstone does not list a Saturn Nexus extraction. The hash-verified retail Track 1 drives the bounded native parser/loader route, and Firestaff decodes and renders the five authentic MAPD title planes in a bounded asset sequence, not the complete Saturn title/menu. Japanese retail and English-version Ymir cold boots reach the native menu; the English screenshot replay is pixel-exact and its source join has 126 informative matches among 137 textured draws. These emulator references do not make Nexus playable in Firestaff, which still lacks full Saturn title composition and title-to-menu parity. HUD, viewport, audio/event dispatch, and gameplay parity remain capture-gated. |
 
 **Notes:** DM Nexus uses the proprietary DMDF (Dungeon Master
 Data File) format, completely different from the FTL
@@ -200,7 +200,7 @@ checklist (covered in `docs/DMWEB_REFERENCE.md`):
   `db_data/` paths and the obsolete `c_dm_*` / `c_csb_*` /
   guessed-DM2 404 paths. See FIRESTAFF_GAP_LIST.md A5.
 - `docs/REDMCSB_REFERENCE.md` — Meynaf's decompiled C source
-- `docs/dm2_platform_*.md` and `docs/nexus_platform.md` — the
+- `docs/dm2/dm2_platform_*.md` and `docs/nexus/nexus_platform.md` — the
   per-game deep-dive platform audits
 - `src/shared/asset_find_by_hash.c` — the runtime asset
   discovery probe (uses MD5; mismatch with VERIFIED_HASHES.md

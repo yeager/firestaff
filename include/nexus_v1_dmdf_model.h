@@ -42,7 +42,7 @@ typedef struct {
 } Nexus_V1_Model;
 
 /* ── DMDF embedded BITMAP / palette / string blocks ───────────────
- * Source-lock: docs/nexus_v1_phase2_data_formats_H2321.md §6.5,
+ * Source-lock: docs/nexus/nexus_v1_phase2_data_formats_H2321.md §6.5,
  *   §8.2 VDP1 BITMAP notes ("8bpp (palette) or 16bpp (direct color)
  *   may use 4-bit or 8-bit clut (color look-up table)").
  * Format proposed from the observed Saturn layout, big-endian:

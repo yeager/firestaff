@@ -354,7 +354,7 @@ int dm2_v1_session_deserialize(DM2_V1_SessionState *session,
     session->rain_intensity  = p[26];
     session->weather_padding = p[27];
     /* session_version is an explicit profile marker. Reject stale/mismatched
-     * fixtures before accepting loaded state (docs/dm2_save_format.md § session
+     * fixtures before accepting loaded state (docs/dm2/dm2_save_format.md § session
      * serialization format, byte 28). */
     if (p[28] != DM2_SESSION_VERSION) {
         return -1;
@@ -785,7 +785,7 @@ static int dm2_v1_parse_raw_sksave_dungeon_prefix(
     memset(&candidate, 0, sizeof(candidate));
     candidate.words_big_endian = words_big_endian ? 1u : 0u;
 
-    /* docs/dm2_save_format.md: original SKSave bodies start with a 44-byte
+    /* docs/dm2/dm2_save_format.md: original SKSave bodies start with a 44-byte
      * dungeon header and 16-byte map descriptors. This bounded locator mirrors
      * dm2_v1_dungeon_loader.c's skproject-layout math, then hands off at the
      * documented game-state SUPPRESS block. */
@@ -1840,7 +1840,7 @@ int dm2_v1_session_import_original_payload(DM2_V1_SessionState *session,
 /* ════════════════════════════════════════════════════════════════
  * Session → slot manager integration
  * Source: dm2_v1_save_load.h dm2_sl_save/dm2_sl_load
- *         docs/dm2_save_slots.md — 10-slot SKSave%02u.dat layout
+ *         docs/dm2/dm2_save_slots.md — 10-slot SKSave%02u.dat layout
  * ════════════════════════════════════════════════════════════════ */
 
 /*
@@ -1982,7 +1982,7 @@ DM2_FlowResult dm2_v1_new_game_flow(DM2_V1_SessionState *session,
 /* ════════════════════════════════════════════════════════════════
  * Load game flow
  * Source: dm2_v1_save_load.h dm2_sl_load
- *         docs/dm2_save_format.md — save slot layout
+ *         docs/dm2/dm2_save_format.md — save slot layout
  * ════════════════════════════════════════════════════════════════ */
 
 DM2_FlowResult dm2_v1_load_game_flow(DM2_V1_SessionState *session,

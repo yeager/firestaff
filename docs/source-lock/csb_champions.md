@@ -72,7 +72,7 @@ the twelve random statistic increments.
 
 All packages clear skills and then make exactly twelve `M002_RANDOM(7)`
 increments.  Consequently Luck is exempt from the one-eighth reduction, not
-from the random increment loop.  See `docs/csb_gap_champions.md` for the
+from the random increment loop.  See `docs/csb/csb_gap_champions.md` for the
 complete platform table and Firestaff runtime evidence.
 
 ### 3. New Champion Character Definition Globals (CSB-only)

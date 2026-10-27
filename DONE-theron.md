@@ -230,7 +230,7 @@ behavior and complete visual/state-driven mouse parity remain open.
 
 ## 2026-10-25 — document native Theron mouse behavior
 
-`docs/theron_input.md` now separates Firestaff's keyboard bindings from its
+`docs/theron/theron_input.md` now separates Firestaff's keyboard bindings from its
 desktop mouse controls. It records startup selection/back behavior, the
 dungeon panel actions and hover feedback, right-click back, inert middle-click,
 and the fail-closed behavior for clicks outside the panel. This documents the

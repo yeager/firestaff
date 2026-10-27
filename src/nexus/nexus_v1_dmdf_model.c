@@ -89,7 +89,7 @@ void nexus_v1_dmdf_free(Nexus_V1_Model *model) {
 }
 
 /* ── DMDF embedded BITMAP / palette / string block bounds gates ────
- * Source-lock: docs/nexus_v1_phase2_data_formats_H2321.md §6.5,
+ * Source-lock: docs/nexus/nexus_v1_phase2_data_formats_H2321.md §6.5,
  *   §8.2 VDP1 BITMAP notes ("8bpp (palette) or 16bpp (direct color)
  *   may use 4-bit or 8-bit clut (color look-up table)").
  *
@@ -101,7 +101,7 @@ void nexus_v1_dmdf_free(Nexus_V1_Model *model) {
  * Intentionally parser-only: we expose raw values plus a `valid` flag
  * and do NOT allocate or decode. V1 runtime handoff for bitmap/palette/
  * string blocks remains gated behind real-data evidence (see
- * docs/nexus_v1_phase2_data_formats_H2321.md status §6.10/§8.6). */
+ * docs/nexus/nexus_v1_phase2_data_formats_H2321.md status §6.10/§8.6). */
 
 static void init_bitmap_block(Nexus_DMDFBitmapBlock *out) {
     if (!out) return;

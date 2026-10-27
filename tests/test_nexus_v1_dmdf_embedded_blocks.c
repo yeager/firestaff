@@ -4,7 +4,7 @@
  *
  * Source-lock:
  *   include/nexus_v1_dmdf_model.h, src/nexus/nexus_v1_dmdf_model.c
- *   docs/nexus_v1_phase2_data_formats_H2321.md §6.5 / §8.2
+ *   docs/nexus/nexus_v1_phase2_data_formats_H2321.md §6.5 / §8.2
  *
  * ReDMCSB has no Saturn/Nexus implementation. This parser-level gate is
  * intentionally bounded and decode-free: it verifies that a synthetic DMDF

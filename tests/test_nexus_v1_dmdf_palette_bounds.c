@@ -4,7 +4,7 @@
  *
  * Source-lock:
  *   include/nexus_v1_dmdf_model.h, src/nexus/nexus_v1_dmdf_model.c
- *   docs/nexus_v1_phase2_data_formats_H2321.md §6.5 / §8.2
+ *   docs/nexus/nexus_v1_phase2_data_formats_H2321.md §6.5 / §8.2
  *
  * The DMDF parser used to stop after vertex/face indices and ignore the
  * embedded palette / string blocks entirely, which is fine as long as

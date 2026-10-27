@@ -7,7 +7,7 @@ extern "C" {
 
 /*
  * Evidence-bounded reducer for the Japanese retail title-menu observations
- * retained in docs/nexus_startup.md. This models menu selection and semantic
+ * retained in docs/nexus/nexus_startup.md. This models menu selection and semantic
  * actions only; it does not assign screen geometry or render menu pixels.
  */
 typedef enum {

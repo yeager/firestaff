@@ -184,7 +184,7 @@ void dm2_v2_runtime_init(int scale) {
      *         SKULL.ASM T600 — outdoor viewport rendering
      *         SKULL.ASM T560 — indoor dungeon viewport
      *         ReDMCSB PANEL.C:367-428 — DM1 palette lighting semantics
-     *         docs/dm2_time.md §Weather §Fog §Lightning */
+     *         docs/dm2/dm2_time.md §Weather §Fog §Lightning */
     dm2_v2_lighting_init(&s_lighting);
     dm2_v2_outdoor_fx_init(&s_outdoor_fx);
     s_enhanced_outdoor = 0;
@@ -460,7 +460,7 @@ void dm2_v2_runtime_fog_rebuild(void) {
  *
  * Deterministic fallback: when s_enhanced_outdoor=0, no-op.
  * Source: dm2_v2_lighting.c dm2_v2_fog_set_weather
- *         docs/dm2_time.md §Weather §Fog
+ *         docs/dm2/dm2_time.md §Weather §Fog
  */
 void dm2_v2_runtime_fog_set_weather(int weather) {
     dm2_v2_fog_set_weather(&s_lighting.fog, weather);
@@ -708,7 +708,7 @@ const char *dm2_v2_runtime_source_evidence(void) {
         "Source: SKULL.ASM PROCESS_TIMER_0C — per-champion torch timers\n"
         "Source: SKULL.ASM T600 — outdoor viewport rendering\n"
         "Source: SKULL.ASM T560 — indoor dungeon viewport\n"
-        "Source: docs/dm2_time.md §Weather §Fog §Lightning\n"
+        "Source: docs/dm2/dm2_time.md §Weather §Fog §Lightning\n"
         "Reference: ReDMCSB PANEL.C:367-428 — DM1 palette lighting semantics\n"
         "Reference: dm1_v2_lighting_dynamic_pc34.c §V2.2 Dynamic Lighting\n"
         "  v22_flicker_factor / v22_light_rebuild_map\n"

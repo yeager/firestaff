@@ -14,7 +14,7 @@ Payload roles:
 Schema: firestaff.dm2_v1.canonical_asset_manifest.v1
 
 Source: SKULL.ASM (522128-line disassembly), skproject/SKWIN/SkWinCore.cpp,
-skproject/SkGlobal.h, docs/dm2_*.md source-lock documents.
+skproject/SkGlobal.h, docs/dm2/dm2_*.md source-lock documents.
 """
 from __future__ import annotations
 

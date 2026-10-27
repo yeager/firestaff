@@ -16,7 +16,7 @@ manifests tied to exact disc/version hashes.
 
 ## 1. Canonical Asset Manifest
 
-**Source:** `docs/NEXUS_FILE_CLASSIFICATION.md` (137 files from Sega Saturn ISO
+**Source:** `docs/nexus/NEXUS_FILE_CLASSIFICATION.md` (137 files from Sega Saturn ISO
 Track 1, volume DUNGEONMASTERNEXUS, product T-9111G V1.003, released 1998-02-03).
 
 **Provenance gate:** The 137 game-file SHA256 hashes are computed from the live
@@ -186,7 +186,7 @@ provenance-locked against DM Nexus (Saturn) disc evidence.
 
 | Parser | Source-lock | Provenance |
 |--------|-------------|------------|
-| `nexus_v1_dungeon.c` — DGN parser | ReDMCSB `DUNGEON.C` F0001, F0002 (grid format) | `docs/NEXUS_FILE_CLASSIFICATION.md` (137 files, disc T-9111G) |
+| `nexus_v1_dungeon.c` — DGN parser | ReDMCSB `DUNGEON.C` F0001, F0002 (grid format) | `docs/nexus/NEXUS_FILE_CLASSIFICATION.md` (137 files, disc T-9111G) |
 | `nexus_v1_dmdf_model.c` — DMDF model | ReDMCSB `BLIT.C` F0132 (polygon/vertex) | DMDF magic `0x444D4446` in `.MNS` files |
 | `nexus_v1_iso_reader.c` — CD sector read | Saturn VDP1 Programmer's Guide | MODE1/2352, 2048-byte user data, ISO 9660 |
 | `nexus_v1_palette.c` — STONE.BIN | ReDMCSB `PALETTE.C` | BGR555 × 256 entries in STONE.BIN (4 KB) |

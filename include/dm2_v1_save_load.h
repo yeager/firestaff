@@ -2,9 +2,9 @@
  *
  * Source lock:
  *   SKULL.ASM: save/load entry points, SUPPRESS codec
- *   docs/dm2_save_format.md — full format specification
- *   docs/dm2_save_slots.md — 10-slot system and SKSave header shape
- *   docs/dm2_party_state.md — champion squad persistence
+ *   docs/dm2/dm2_save_format.md — full format specification
+ *   docs/dm2/dm2_save_slots.md — 10-slot system and SKSave header shape
+ *   docs/dm2/dm2_party_state.md — champion squad persistence
  */
 
 #ifndef FIRESTAFF_DM2_V1_SAVE_LOAD_H
@@ -132,7 +132,7 @@ int dm2_v1_save_suppress_symbol_receipt(
  * single-digit sksave0.dat … sksave9.dat input.
  * A slot is a source-shaped c_hex2a header (version 1, printable name);
  * c_hex2a::l_26 == 0xDEADBEEF means an empty in-memory dialog entry.
- * Source: docs/dm2_save_slots.md
+ * Source: docs/dm2/dm2_save_slots.md
  * ════════════════════════════════════════════════════════════════ */
 
 #define DM2_SLOT_MAX      10
@@ -491,7 +491,7 @@ int dm2_suppress_decode_gamestate(const uint8_t *in, size_t in_sz,
 
 /* ════════════════════════════════════════════════════════════════
  * Global variables (flags/bytes/words) — SUPPRESS encoded
- * Source: docs/dm2_save_format.md § Ingame global flags/bytes/words
+ * Source: docs/dm2/dm2_save_format.md § Ingame global flags/bytes/words
  * ════════════════════════════════════════════════════════════════ */
 
 #define DM2_GLOBAL_FLAGS_SIZE  8
@@ -521,7 +521,7 @@ int dm2_suppress_decode_global_words(const uint8_t *in, size_t in_sz,
 
 /* ════════════════════════════════════════════════════════════════
  * Global spell effects (6 bytes, SUPPRESS)
- * Source: docs/dm2_party_state.md § Global spell effects
+ * Source: docs/dm2/dm2_party_state.md § Global spell effects
  * ════════════════════════════════════════════════════════════════ */
 
 #define DM2_GLOBAL_SPELL_EFFECTS_SIZE 6
@@ -535,7 +535,7 @@ int dm2_suppress_decode_spell_effects(const uint8_t *in, size_t in_sz,
 
 /* ════════════════════════════════════════════════════════════════
  * Timers table (10 bytes per timer, SUPPRESS)
- * Source: docs/dm2_save_format.md § Timers table
+ * Source: docs/dm2/dm2_save_format.md § Timers table
  * ════════════════════════════════════════════════════════════════ */
 
 #define DM2_TIMER_ENTRY_SIZE  10
@@ -557,7 +557,7 @@ int dm2_suppress_decode_timer(const uint8_t *in, size_t in_sz,
 
 /* ════════════════════════════════════════════════════════════════
  * Minion association table
- * Source: docs/dm2_party_state.md § Minion Association
+ * Source: docs/dm2/dm2_party_state.md § Minion Association
  * ════════════════════════════════════════════════════════════════ */
 
 #define DM2_MAX_MINIONS 16
@@ -605,7 +605,7 @@ int dm2_leader_possession_read(DM2_LeaderPossession *lp, FILE *f);
 
 /* ════════════════════════════════════════════════════════════════
  * PC savegame interoperability
- * Source: docs/dm2_save_format.md § DM1 vs DM2 Key Format Differences
+ * Source: docs/dm2/dm2_save_format.md § DM1 vs DM2 Key Format Differences
  * ════════════════════════════════════════════════════════════════ */
 
 enum {
@@ -625,7 +625,7 @@ const char *dm2_v1_save_phase7_source_evidence(void);
 
 /* ════════════════════════════════════════════════════════════════
  * Champion persistence — 261 byte SUPPRESS-encoded records
- * Source: docs/dm2_party_state.md
+ * Source: docs/dm2/dm2_party_state.md
  * ════════════════════════════════════════════════════════════════ */
 
 #define DM2_CHAMPION_NAME_FIRST_LEN   8
@@ -678,7 +678,7 @@ int dm2_suppress_decode_champion(const uint8_t *in, size_t in_sz,
 
 /* ════════════════════════════════════════════════════════════════
  * Object/container DB record pools
- * Source: docs/dm2_save_format.md § DB record pools
+ * Source: docs/dm2/dm2_save_format.md § DB record pools
  * ════════════════════════════════════════════════════════════════ */
 
 #define DM2_DB_POOL_COUNT 16

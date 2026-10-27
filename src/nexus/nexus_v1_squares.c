@@ -6,7 +6,7 @@
 /* Nexus V1 special square processing.
  * Source: DM1 DUNGEON.C square type dispatch (SQUARE_TYPE() macro),
  * MOVESENS.C F0267/F0268 (move result + square event processing),
- * CLIKMENU.C:264-276 (stairs special cases), docs/nexus_squares.md.
+ * CLIKMENU.C:264-276 (stairs special cases), docs/nexus/nexus_squares.md.
  * Square type encoding matches DM1: lower 5 bits of square byte.
  * ═══════════════════════════════════════════════════════════════════ */
 
@@ -454,7 +454,7 @@ int nexus_doors_count(void) {
 /* ═══════════════════════════════════════════════════════════════════
  * Square event processing on party entry
  * Source: DM1 MOVESENS.C F0267/F0268, CLIKMENU.C:271-276,
- * docs/nexus_squares.md.
+ * docs/nexus/nexus_squares.md.
  * ═══════════════════════════════════════════════════════════════════ */
 
 int nexus_square_triggers_on_entry(int type) {

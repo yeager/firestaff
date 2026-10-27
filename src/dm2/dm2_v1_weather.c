@@ -1,7 +1,7 @@
 /* dm2_v1_weather.c — DM2 V1 Weather and Time-of-Day
  * Phase 6 source-lock (2026-05-26)
  * ReDMCSB: SKULL.ASM, skproject/SKULLWIN/c_tim_proc.cpp
- * docs/dm2_time.md, docs/dm2_creatures_gfx.md
+ * docs/dm2/dm2_time.md, docs/dm2/dm2_creatures_gfx.md
  *
  * DM2 outdoor: 4 weather states, 1440-minute day cycle, per-champion torch.
  * DM1: no weather, no outdoor areas, single global torch.
@@ -344,8 +344,8 @@ const char *dm2_v1_weather_source_evidence(void) {
         "Source: skproject/SKULLWIN/c_weather.cpp DM2_weather_3df7_0037\n"
         "Source: skproject/SKULLWIN/c_tim_proc.cpp (PROCESS_TIMER_0C, CONTINUE_TICK_GENERATOR)\n"
         "Source: skproject/SKULLWIN/c_timer.cpp (timer system state)\n"
-        "Source: docs/dm2_time.md (time-of-day 0-1439 min, per-champion torch)\n"
-        "Source: docs/dm2_creatures_gfx.md (rain drop sprites from GDAT blitline_48)\n"
+        "Source: docs/dm2/dm2_time.md (time-of-day 0-1439 min, per-champion torch)\n"
+        "Source: docs/dm2/dm2_creatures_gfx.md (rain drop sprites from GDAT blitline_48)\n"
         "Source: include/dm2_v1_outdoor_renderer.h (4 weather states, time_fraction)\n"
         "Source: source-owned timdat/environment globals (required before weather-chain admission)\n"
         "DM1 comparison: NO weather system, NO outdoor, single torch (global)\n"

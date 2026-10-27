@@ -11,7 +11,7 @@
  * gameplay domain).
  *
  * V1 source-lock anchors:
- *   docs/NEXUS_FILE_CLASSIFICATION.md — 138-file Saturn asset catalog
+ *   docs/nexus/NEXUS_FILE_CLASSIFICATION.md — 138-file Saturn asset catalog
  *   Greatstone DM Nexus (greatstone.free.fr/g_dm.html) — maps/atlas
  *   ReDMCSB DUNGEON.C — square type dispatch
  *   ReDMCSB COMMAND.C:2045-2155 — command queue dispatch
@@ -228,7 +228,7 @@ Nexus_V1_PhaseGateDecision nexus_v1_phase_gate_decide(
                 0, v2Active,
                 "nexus_v2_atmosphere.c (Phase 4); "
                 "Saturn VDP2 SDK background effects; "
-                "docs/NEXUS_FILE_CLASSIFICATION.md TITLE.CG section",
+                "docs/nexus/NEXUS_FILE_CLASSIFICATION.md TITLE.CG section",
                 v2Active
                     ? "V2 ATMOSPHERE: Saturn VDP2 atmosphere active"
                     : "V2 ATMOSPHERE: V1 source-locked "
@@ -303,7 +303,7 @@ const char *nexus_v1_phase_gate_source_evidence(void)
 {
     return "nexus_v1_compat_gate.c Phase 0 v1.0.0 "
            "(Nexus V1/V2 domain separation) "
-           "V1 anchors: docs/NEXUS_FILE_CLASSIFICATION.md, "
+           "V1 anchors: docs/nexus/NEXUS_FILE_CLASSIFICATION.md, "
            "Greatstone DM Nexus (greatstone.free.fr/g_dm.html), "
            "ReDMCSB DUNGEON.C/COMMAND.C/CHAMPION.C/MOVESENS.C/GAMELOOP.C, "
            "nexus_v1_*.c (source receipts and capture-gated adapters). "

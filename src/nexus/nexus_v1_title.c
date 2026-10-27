@@ -267,10 +267,12 @@ int nexus_title_load(Nexus_TitleScreen *title, Nexus_V1_Engine *engine) {
         if (data && size > (int)0x0e278U) {
             int cg_size = 0;
             uint8_t *cg = nexus_v1_read_file(engine, "TITLE.CG", &cg_size);
-            engine->startup_title_vdp_capture_verified =
-                nexus_v1_title_decode_mapd(
-                    data + 0x0e278U, (size_t)size - 0x0e278U, cg,
-                    cg_size > 0 ? (size_t)cg_size : 0U, title);
+            /* Asset decoding proves the MAPD source format only.  Keep the
+             * separate VDP capture gate closed until an external Saturn
+             * capture admits its display consumer and composition. */
+            (void)nexus_v1_title_decode_mapd(
+                data + 0x0e278U, (size_t)size - 0x0e278U, cg,
+                cg_size > 0 ? (size_t)cg_size : 0U, title);
             free(cg);
         }
         free(data);
@@ -319,13 +321,15 @@ int nexus_title_load(Nexus_TitleScreen *title, Nexus_V1_Engine *engine) {
          * cg_size for the same reason. */
         int mapd_size = 0;
         uint8_t *mapd = nexus_v1_read_file(engine, "TITLE.BIN", &mapd_size);
-        engine->startup_title_vdp_capture_verified =
-            nexus_v1_title_decode_mapd(
-                mapd && mapd_size > (int)0x0e278U
-                    ? mapd + 0x0e278U : NULL,
-                mapd_size > (int)0x0e278U
-                    ? (size_t)mapd_size - 0x0e278U : 0U,
-                data, (size_t)size, title);
+        /* This bounded renderer consumes decoded source assets; it is not a
+         * Saturn VDP1/VDP2 capture receipt.  Leave
+         * startup_title_vdp_capture_verified at its fail-closed value. */
+        (void)nexus_v1_title_decode_mapd(
+            mapd && mapd_size > (int)0x0e278U
+                ? mapd + 0x0e278U : NULL,
+            mapd_size > (int)0x0e278U
+                ? (size_t)mapd_size - 0x0e278U : 0U,
+            data, (size_t)size, title);
         free(mapd);
     }
 

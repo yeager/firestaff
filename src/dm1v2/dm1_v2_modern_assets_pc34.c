@@ -325,8 +325,8 @@ static int m11_v22_json_document_is_object(const char* text) {
 /* m11_v22_set_manifest_path — set the path to the modern asset manifest.
  * Called by M12_AssetStatus_Scan() after resolving the data directory.
  * The manifest path is derived as: ~/.firestaff/assets/dm1/modern/
- * modern_asset_manifest.json (per docs/v2_2_asset_manifest.md and
- * docs/v2_2_asset_provenance_schema.md).
+ * modern_asset_manifest.json (per docs/shared/v2_2_asset_manifest.md and
+ * docs/shared/v2_2_asset_provenance_schema.md).
  *
  * dataDir is the game data directory path (e.g. ~/.firestaff/data/dm1).
  * We walk up two levels to reach ~/.firestaff, then append

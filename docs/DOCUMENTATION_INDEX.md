@@ -44,6 +44,11 @@ material. A README screenshot may show Firestaff itself, but is never evidence
 for an original game's output. Historical records are being retained as dated
 research and must not be copied into current status or wiki pages.
 
+Per-game technical notes are grouped under `docs/dm1/`, `docs/csb/`,
+`docs/dm2/`, `docs/nexus/` and `docs/theron/`. Shared engine, menu and
+gameplay notes are under `docs/shared/`; cross-game status and project guides
+remain at the top of `docs/`.
+
 ## Start here
 
 - [README](../README.md) — user-facing overview, supported platforms and quick start
@@ -65,11 +70,28 @@ research and must not be copied into current status or wiki pages.
 - [Preservation and provenance](wiki/Preservation.md) — evidence levels, capture manifests and external data rules
 - [Preservation status (reviewed 2026-08-12)](PRESERVATION_STATUS_2026-08-11.md) — cross-game real-media, format and disassembly boundary
 - [External preservation archive](PRESERVATION_ARCHIVE.md) — moved historical runs and checksum manifest
+- [Archived project history](archive/HISTORY-archived-2026-08-08.md) — older mixed completion log
+- [Legacy DM1 tracking list](archive/DM1-tracking-list-2026-05-26.md) — superseded by the current per-game TODO and DONE logs
+- [Latest versioned release summary](releases/RELEASE_3.0.390.md) — older summaries are grouped in the same directory; see the [current changelog](https://github.com/yeager/firestaff/blob/main/RELEASE_NOTES.md)
 - [DMWeb and Greatstone references](DMWEB_REFERENCE.md) — external provenance index
-- [Theron input controls](theron_input.md) — native keyboard mappings, visible in-dungeon mouse movement panel, and Button I/II behavior
-- [Theron real-data inventory](THERON_REALDATA_INVENTORY.md) — Track 02/19 media identities and placeholder boundaries
-- [Theron input notes](theron_input.md) — native controls and the separate, unverified original-emulator menu-hold procedure
-- [Theron capture readiness](THERON_CAPTURE_READINESS.md) — current authenticated `--debug` and emulator evidence, capture requirements, and open runtime joins
+- [Theron input controls](theron/theron_input.md) — native keyboard mappings, visible in-dungeon mouse movement panel, and Button I/II behavior
+- [Theron real-data inventory](theron/THERON_REALDATA_INVENTORY.md) — Track 02/19 media identities and placeholder boundaries
+- [Theron capture readiness](theron/THERON_CAPTURE_READINESS.md) — current authenticated `--debug` and emulator evidence, capture requirements, and open runtime joins
+
+## Per-game technical notes
+
+Focused implementation, format and parity notes are grouped by game. These
+pages provide starting points; current support claims remain in the status
+documents above and in the per-game TODO/DONE logs.
+
+| Folder | Starting points |
+|---|---|
+| DM1 (`docs/dm1/`) | [V1 bug audit](dm1/DM1_V1_BUG_AUDIT.md), [placeholder inventory](dm1/DM1_PLACEHOLDER_INVENTORY.md) |
+| CSB (`docs/csb/`) | [graphics gaps](csb/csb_gap_graphics.md), [mechanics gaps](csb/csb_gap_mechanics.md) |
+| DM2 (`docs/dm2/`) | [overview](dm2/dm2_overview.md), [platform variants](dm2/dm2_variants_platform.md) |
+| Nexus (`docs/nexus/`) | [startup](nexus/nexus_startup.md), [file classification](nexus/NEXUS_FILE_CLASSIFICATION.md) |
+| Theron's Quest (`docs/theron/`) | [capture readiness](theron/THERON_CAPTURE_READINESS.md), [real-data inventory](theron/THERON_REALDATA_INVENTORY.md) |
+| Shared engine and UI (`docs/shared/`) | [launcher options](shared/menu_options.md), [DM1 original entrance reference](shared/menu_startup.md), [champions](shared/champ_classes.md), [AI](shared/ai_creature.md) |
 
 ## Active per-game work logs
 
@@ -77,11 +99,11 @@ These files record implementation evidence and the remaining gaps for each
 game. Read them with the status matrix above: a completed focused check closes
 only the behavior and edition it names.
 
-- [Dungeon Master TODO](../TODO-dm1.md) and [DONE log](../DONE-dm1.md)
-- [Chaos Strikes Back TODO](../TODO-csb.md) and [DONE log](../DONE-csb.md)
-- [Dungeon Master II TODO](../TODO-dm2.md) and [DONE log](../DONE-dm2.md)
-- [Nexus TODO](../TODO-nexus.md) and [DONE log](../DONE-nexus.md)
-- [Theron's Quest TODO](../TODO-theron.md) and [DONE log](../DONE-theron.md)
+- [Dungeon Master TODO](https://github.com/yeager/firestaff/blob/main/TODO-dm1.md) and [DONE log](https://github.com/yeager/firestaff/blob/main/DONE-dm1.md)
+- [Chaos Strikes Back TODO](https://github.com/yeager/firestaff/blob/main/TODO-csb.md) and [DONE log](https://github.com/yeager/firestaff/blob/main/DONE-csb.md)
+- [Dungeon Master II TODO](https://github.com/yeager/firestaff/blob/main/TODO-dm2.md) and [DONE log](https://github.com/yeager/firestaff/blob/main/DONE-dm2.md)
+- [Nexus TODO](https://github.com/yeager/firestaff/blob/main/TODO-nexus.md) and [DONE log](https://github.com/yeager/firestaff/blob/main/DONE-nexus.md)
+- [Theron's Quest TODO](https://github.com/yeager/firestaff/blob/main/TODO-theron.md) and [DONE log](https://github.com/yeager/firestaff/blob/main/DONE-theron.md)
 
 ## Wiki map
 
@@ -90,7 +112,7 @@ wiki and are copied by `scripts/sync_wiki.sh` during release work.
 
 ### CSB Atari ST provenance
 
-- [CSB Atari Mania reference](CSB_ATARIMANIA_REFERENCE.md) — local Atarimania
+- [CSB Atari Mania reference](csb/CSB_ATARIMANIA_REFERENCE.md) — local Atarimania
   print-PDF provenance, stated product facts and strict evidence boundary.
 
 ### Per-game pages
@@ -99,7 +121,7 @@ wiki and are copied by `scripts/sync_wiki.sh` during release work.
 - **CSB:** [technical reference](wiki/CSB-Technical-Reference.md), [DSA and saves](wiki/CSB-DSA-and-Save-Internals.md), [FM Towns guide](wiki/CSB-FMTowns-Guide.md), [reverse engineering](wiki/CSB-Reverse-Engineering.md)
 - **DM2:** [technical reference](wiki/DM2-Technical-Reference.md), [GDAT internals](wiki/DM2-GDAT-Internals.md), [reverse engineering](wiki/DM2-Reverse-Engineering.md), [platform status](PLATFORM_STATUS.md)
 - **Nexus:** [technical reference](wiki/Nexus-Technical-Reference.md), [DGN/PRS3](wiki/Nexus-DGN-and-PRS3-Internals.md), [SAL/MAP](wiki/Nexus-SAL-MAP-Internals.md), [reverse engineering](wiki/Nexus-Reverse-Engineering.md)
-- **Theron:** [technical reference](wiki/Therons-Quest-Technical-Reference.md), [Track 02 internals](wiki/Therons-Quest-Track02-Internals.md), [reverse engineering](wiki/Therons-Quest-Reverse-Engineering.md), [input notes](theron_input.md), [capture readiness](THERON_CAPTURE_READINESS.md)
+- **Theron:** [technical reference](wiki/Therons-Quest-Technical-Reference.md), [Track 02 internals](wiki/Therons-Quest-Track02-Internals.md), [reverse engineering](wiki/Therons-Quest-Reverse-Engineering.md), [input notes](theron/theron_input.md), [capture readiness](theron/THERON_CAPTURE_READINESS.md)
 
 ### Shared pages
 
@@ -128,7 +150,7 @@ release, run the focused tests for the affected game, check Markdown links and
 run the build/CI commands in [CI.md](CI.md). Do not commit original game data,
 emulator saves, private capture logs or generated placeholder art.
 
-**Last reviewed:** 2026-10-27 (main `378f9d20`). The current status reflects
+**Last reviewed:** 2026-10-27 (main `88ef19df`). The current status reflects
 the source and authenticated-media evidence recorded on the linked status and
 per-game work-log pages. Each receipt remains bounded to its cited edition,
 route and test; it does not imply complete parity.

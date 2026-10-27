@@ -1,7 +1,7 @@
 /* dm2_v1_sound.c — DM2 V1 Sound System
  * Phase 6 source-lock (2026-05-26)
  * ReDMCSB: SKULL.ASM, skproject/SKULLWIN/c_sound.h/cpp, c_sfx.cpp
- * docs/dm2_audio.md, docs/dm2_sound_system.md, docs/dm2_sound_combat.md
+ * docs/dm2/dm2_audio.md, docs/dm2/dm2_sound_system.md, docs/dm2/dm2_sound_combat.md
  *
  * DM2 audio: 16-slot SFX ring buffer, SoundBlaster, 29 HMP tracks.
  * DM1 audio: 3-4 voices, AdLib FM, ~10 tracks.
@@ -1881,7 +1881,7 @@ int dm2_v1_sound_schedule_music(uint32_t elapsed_us,
 }
 
 /* dm2_v1_sound_play_music — DM2_PLAY_MUSIC
- * Source: docs/dm2_audio.md (do_music_wav, tMusicMaps[64])
+ * Source: docs/dm2/dm2_audio.md (do_music_wav, tMusicMaps[64])
  * Original: HMP format in GRAPHICS.DAT GDAT MUSICS/<track>/dtHMP/0.
  * Track selection: SONGLIST.DAT[tMusicMaps[dungeon_map_index]] → track number.
  *
@@ -1900,7 +1900,7 @@ int dm2_v1_sound_play_music(int track) {
 }
 
 /* dm2_v1_sound_stop_music — stop all music
- * Source: docs/dm2_audio.md (do_music_stop)
+ * Source: docs/dm2/dm2_audio.md (do_music_stop)
  * Calls al_stop_samples() via c_midi / c_music_wav. */
 int dm2_v1_sound_stop_music(void) {
     /* c_music_wav stops the active sequence before a later title/menu cue
@@ -1938,8 +1938,8 @@ const char *dm2_v1_sound_source_evidence(void) {
         "Source: skproject/SKULLWIN/c_sfx.cpp (16-slot ring buffer SFX)\n"
         "Source: skproject/SKWIN/defines.h (SOUND_STD_*, SOUND_CHAMPION_*, SOUND_CREATURE_*)\n"
         "Source: DMWeb music-trigger notes (29 HMP tracks, SONGLIST.DAT, do_music_wav)\n"
-        "Source: docs/dm2_sound_system.md (c_sound init, PLAYBACK_FREQUENCY=5500/6000 Hz)\n"
-        "Source: docs/dm2_sound_combat.md (all combat sound triggers 0x00-0x92)\n"
+        "Source: docs/dm2/dm2_sound_system.md (c_sound init, PLAYBACK_FREQUENCY=5500/6000 Hz)\n"
+        "Source: docs/dm2/dm2_sound_combat.md (all combat sound triggers 0x00-0x92)\n"
         "DM1 comparison: AdLib FM, 3-4 voices, ~10 tracks, no positional audio\n"
         "DM2 comparison: SoundBlaster, 16-slot buffer, 29 tracks, world-coordinate spatial queue\n"
         "DM2 new: SOUND_STD_EXPLOSION (0x81), glbXAmbientSoundActivated, DM2_QUEUE_NOISE_GEN1/GEN2\n";

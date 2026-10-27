@@ -71,5 +71,5 @@ also treated historical behaviour as a Firestaff defect.
   projectile/explosion behaviours.
 - ReDMCSB `DUNGEON.C:1825` — square-first-Thing overflow.
 - ReDMCSB `BASE.C` and `CHANGE7_01_FIX` — CSB VBlank change.
-- `docs/csb_gap_graphics.md` — CSB graphics source mappings.
+- `docs/csb/csb_gap_graphics.md` — CSB graphics source mappings.
 - `TODO-dm1.md` and `TODO-csb.md` — only open real-data/capture work.

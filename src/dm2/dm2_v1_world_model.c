@@ -403,7 +403,7 @@ const char *dm2_world_source_evidence(void) {
         "Source: ReDMCSB DEFS.H:1048-1116 — MAP descriptor (16 bytes)\n"
         "Source: ReDMCSB HASHBUCKET.C — square type constants, tile bitfields\n"
         "Source: ReDMCSB DECOMPDU.C F0455_FLOPPY_DecompressDungeon — FTL decomp\n"
-        "Source: docs/dm2_v1_phase2_data_formats_H2254.md (SHA256 source-lock)\n"
-        "Source: docs/dm2_dungeon_files.md — DUNGEON.DAT format audit\n"
+        "Source: docs/dm2/dm2_v1_phase2_data_formats_H2254.md (SHA256 source-lock)\n"
+        "Source: docs/dm2/dm2_dungeon_files.md — DUNGEON.DAT format audit\n"
         "Asset: DM2 PC English DUNGEON.DAT 6caccd7875009e82fe2e28e7f6d6adc0 (39,437 bytes)\n";
 }

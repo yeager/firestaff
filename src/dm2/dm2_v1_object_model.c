@@ -12,8 +12,8 @@
  *
  * Source: ReDMCSB DUNGEON.C:35-60 — G0235/G0236 thing tables
  * Source: ReDMCSB DEFS.H:985-1116 — MAP/TILE/THING types
- * Source: docs/dm2_actuators.md — actuator/sensor types
- * Source: docs/dm2_special_squares.md — door/teleporter/pit
+ * Source: docs/dm2/dm2_actuators.md — actuator/sensor types
+ * Source: docs/dm2/dm2_special_squares.md — door/teleporter/pit
  */
 
 #include "dm2_v1_object_model.h"
@@ -94,7 +94,7 @@ int dm2_v1_tile_get_door_state(uint16_t tile_raw) {
 /*
  * dm2_v1_parse_door — parse a door thing record (4 bytes).
  * Layout: [flags:1][type:1][set:1][state:1] + optional target coords
- * Source: ReDMCSB DUNGEON.C:35, docs/dm2_special_squares.md §8
+ * Source: ReDMCSB DUNGEON.C:35, docs/dm2/dm2_special_squares.md §8
  */
 static DM2_Object_Door dm2_v1_parse_door(const uint8_t *data) {
     DM2_Object_Door d;
@@ -112,7 +112,7 @@ static DM2_Object_Door dm2_v1_parse_door(const uint8_t *data) {
 /*
  * dm2_v1_parse_teleporter — parse a teleporter thing record (6 bytes).
  * Layout: [target_x:2_LE][target_y:2_LE][target_level:2_LE]
- * Source: ReDMCSB DUNGEON.C:35, docs/dm2_special_squares.md
+ * Source: ReDMCSB DUNGEON.C:35, docs/dm2/dm2_special_squares.md
  */
 static DM2_Object_Teleporter dm2_v1_parse_teleporter(const uint8_t *data) {
     DM2_Object_Teleporter t;
@@ -129,7 +129,7 @@ static DM2_Object_Teleporter dm2_v1_parse_teleporter(const uint8_t *data) {
 /*
  * dm2_v1_parse_sensor — parse a sensor/actuator thing record (8 bytes).
  * Layout: [sensor_type:1][actuator_type:1][target_id:2][tx:2][ty:2]
- * Source: docs/dm2_sensors.md, docs/dm2_actuators.md
+ * Source: docs/dm2/dm2_sensors.md, docs/dm2/dm2_actuators.md
  */
 static DM2_Object_Sensor dm2_v1_parse_sensor(const uint8_t *data) {
     DM2_Object_Sensor s;
@@ -387,9 +387,9 @@ const char *dm2_v1_object_model_source_evidence(void) {
         "Source: ReDMCSB DUNGEON.C:35-60 — G0235/G0236 thing data byte counts\n"
         "Source: ReDMCSB DEFS.H:985-1116 — MAP/TILE/THING types and door states\n"
         "Source: ReDMCSB DUNGEON.C:993-1015 — MAP/CurrentMap globals\n"
-        "Source: docs/dm2_actuators.md — actuator/sensor types (40+ types)\n"
-        "Source: docs/dm2_sensors.md — floor/wall sensor types\n"
-        "Source: docs/dm2_special_squares.md — door/teleporter/pit/ladder\n"
+        "Source: docs/dm2/dm2_actuators.md — actuator/sensor types (40+ types)\n"
+        "Source: docs/dm2/dm2_sensors.md — floor/wall sensor types\n"
+        "Source: docs/dm2/dm2_special_squares.md — door/teleporter/pit/ladder\n"
         "Source: SKWin.GDAT2.InternalCodes.txt — door strength, color keys, mirror flag\n"
         "Source: SkWinCore.cpp:847-852 — item DB types (dbWeapon=5, dbCloth=6, dbScroll=7, dbMisc=10)\n"
         "Source: skproject SKWIN/SkWinCore.cpp GET_TILE_RECORD_LINK/GET_NEXT_RECORD_LINK — loader-owned square chains through ObjectID w0\n"

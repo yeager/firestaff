@@ -310,7 +310,7 @@ branch stays not-taken while `R2` briefly changes to `0x10`. The branch PC does
 not map to the observed opcode under the current hash-verified `DM.BIN`
 address mapping. This does not bind a menu action or title-to-menu transition;
 keep startup and menu renderer admission closed. Detailed hashes and paths are
-in `docs/NEXUS_RUNTIME_CAPTURE.md`.
+in `docs/nexus/NEXUS_RUNTIME_CAPTURE.md`.
 
 2026-10-24 five-game direct CLI retest: the authentic-media
 `firestaff_cli_startup_diagnostics_real_media` CTest passed in 246 seconds,
@@ -403,8 +403,8 @@ black. The script sent discrete key-down events, not a continuous 3–5 second
 hold. Continue native implementation and connect authentic graphics, palette
 and tile mapping to the renderer. Do not use an emulator to run the game in
 Firestaff. DMWeb's edition/manual pages and Greatstone SCK inform provenance
-and media handling. See [`docs/THERON_CAPTURE_READINESS.md`](docs/THERON_CAPTURE_READINESS.md)
-and [`docs/theron_input.md`](docs/theron_input.md).
+and media handling. See [`docs/theron/THERON_CAPTURE_READINESS.md`](docs/theron/THERON_CAPTURE_READINESS.md)
+and [`docs/theron/theron_input.md`](docs/theron/theron_input.md).
 
 2026-10-25 Amiga MFM scan hot-path measurement: a one-subtraction fast path
 for wrapped bit reads avoids division on the common single-wrap case. On the
@@ -480,7 +480,7 @@ Both 40-frame raw captures are byte-identical across all eight VDP1/VDP2
 regions, so this title window provides no evidence of a menu action or title
 transition. The interactive Nexus start-menu handoff remains unresolved; the
 capture hashes, source binding and limits are recorded in
-`docs/NEXUS_RUNTIME_CAPTURE.md`.
+`docs/nexus/NEXUS_RUNTIME_CAPTURE.md`.
 
 2026-10-22 external archive scan diagnosis: the final `--scan-data` summary
 called skipped archives "no extractor installed" even when `7zz`, `7z`, or
@@ -1171,8 +1171,8 @@ for commit `3fd0f5886`.
 
 Reviewed 2026-09-23. This file contains only work that is still open. Game
 details and acceptance evidence belong in `TODO-<game>.md`; completed work is
-recorded in `DONE-<game>.md`. Historical mixed logs are retained as
-`HISTORY-archived-2026-08-08.md` and in Git history, not as active work.
+recorded in `DONE-<game>.md`. Historical mixed logs are retained in
+`docs/archive/HISTORY-archived-2026-08-08.md` and Git history, not as active work.
 
 - Bind all production paths to user-supplied original media under
   `~/.firestaff/data/<game>`; do not substitute generated gameplay assets.

@@ -67,9 +67,9 @@ int main(int argc, char **argv) {
     if (argc >= 3) save_path = argv[2];
 
     fprintf(stderr, "=== DM2 V1 World State Probe ===\n");
-    fprintf(stderr, "Source: docs/dm2_save_format.md — SUPPRESS compression\n");
-    fprintf(stderr, "Source: docs/dm2_quest.md — quest flags and phases\n");
-    fprintf(stderr, "Source: docs/dm2_party_state.md — party/champion state\n");
+    fprintf(stderr, "Source: docs/dm2/dm2_save_format.md — SUPPRESS compression\n");
+    fprintf(stderr, "Source: docs/dm2/dm2_quest.md — quest flags and phases\n");
+    fprintf(stderr, "Source: docs/dm2/dm2_party_state.md — party/champion state\n");
     fprintf(stderr, "Source: SKULL.ASM T520 — party placement from dungeon\n");
     fprintf(stderr, "Input: %s\n\n", dungeon_path);
 

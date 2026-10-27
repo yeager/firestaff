@@ -39,10 +39,10 @@ typedef struct DM2_V1_GdatDoorOverlayM11CommandPlan DM2_V1_GdatDoorOverlayM11Com
  *         SKULLWIN/SKWIN/c_gui_vp.cpp — viewport blit order
  *         SKULLWIN/SKWIN/c_gfx_blit.h — blitter function matrix
  *         SKULLWIN/SKWIN/c_gfx_main.cpp — DM2_FILL, DM2_blit
- *         docs/dm2_graphics.md — drawing pipeline audit
- *         docs/dm2_walls.md — wall/door/floor rendering specifics
- *         docs/dm2_creatures_gfx.md — creature/item rendering
- *         docs/dm2_palette.md — DM2 palette system
+ *         docs/dm2/dm2_graphics.md — drawing pipeline audit
+ *         docs/dm2/dm2_walls.md — wall/door/floor rendering specifics
+ *         docs/dm2/dm2_creatures_gfx.md — creature/item rendering
+ *         docs/dm2/dm2_palette.md — DM2 palette system
  * ══════════════════════════════════════════════════════════════════════ */
 
 /* ── Viewport geometry ──────────────────────────────────────────── */

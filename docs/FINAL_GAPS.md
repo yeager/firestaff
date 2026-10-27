@@ -161,7 +161,7 @@ stays readable on any theme.
 
 ## Group 8 — Functional divergence report findings
 
-`docs/dm1-v1-functional-divergence-report.md` (dated 2026-06-13)
+`docs/dm1/dm1-v1-functional-divergence-report.md` (dated 2026-06-13)
 lists 68 findings across 13 modules. **That report predates the
 v2.7.13–v2.7.22 source-lock work and is now substantially stale**:
 several of its "Top 10" Major findings have since been implemented.

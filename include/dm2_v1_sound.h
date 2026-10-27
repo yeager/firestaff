@@ -9,7 +9,7 @@
 /* DM2 V1 — Sound System
  * Phase 6 source-lock (2026-05-26)
  * ReDMCSB: SKULL.ASM, skproject/SKULLWIN/c_sound.h/cpp, c_sfx.cpp
- * docs/dm2_audio.md, docs/dm2_sound_system.md, docs/dm2_sound_combat.md
+ * docs/dm2/dm2_audio.md, docs/dm2/dm2_sound_system.md, docs/dm2/dm2_sound_combat.md
  *
  * DM2 audio:
  *   - 16-slot SFX ring buffer (SKWin) vs 3-4 in DM1
@@ -20,7 +20,7 @@
  */
 
 /* ── Sound categories ───────────────────────────────────────────────────
- * Source: skproject/SKWIN/defines.h, docs/dm2_audio.md
+ * Source: skproject/SKWIN/defines.h, docs/dm2/dm2_audio.md
  * GDAT sound entries resolved via DM2_QUERY_SND_ENTRY_INDEX(cls1,cls2,cls3) */
 
 #define DM2_SOUND_CATEGORY_STANDARD   0   /* general SFX */
@@ -30,7 +30,7 @@
 #define DM2_SOUND_CATEGORY_MUSIC      4   /* music tracks */
 
 /* ── Standard SFX constants ───────────────────────────────────────────
- * Source: docs/dm2_audio.md, docs/dm2_sound_combat.md
+ * Source: docs/dm2/dm2_audio.md, docs/dm2/dm2_sound_combat.md
  * Hex values from defines.h (GDAT2 V5, V=0-4) */
 
 #define DM2_SOUND_STD_EXPLOSION        0x81  /* bombs — DM2 new */
@@ -70,14 +70,14 @@
 #define DM2_SOUND_DOOR_STEP            0x8E  /* step on door */
 
 /* ── Playback frequency ───────────────────────────────────────────────
- * Source: docs/dm2_audio.md
+ * Source: docs/dm2/dm2_audio.md
  * DOS original: 5500 Hz. Windows SDL port: 6000 Hz. */
 
 #define DM2_PLAYBACK_FREQUENCY_DOS     5500
 #define DM2_PLAYBACK_FREQUENCY_WIN     6000
 
 /* ── Music track count ─────────────────────────────────────────────────
- * Source: docs/dm2_audio.md
+ * Source: docs/dm2/dm2_audio.md
  * PC release: 29 HMP records are stored in GRAPHICS.DAT GDAT category 4,
  * type 3 (dtHMP). SONGLIST.DAT maps dungeon maps to track numbers. */
 
@@ -254,7 +254,7 @@ typedef struct {
 } DM2_V1_SkprojectSoundReceipt;
 
 /* ── Sound definition entry (per-category lookup) ────────────────────────
- * Source: docs/dm2_audio.md (SoundEntryInfo, glbSoundList[64])
+ * Source: docs/dm2/dm2_audio.md (SoundEntryInfo, glbSoundList[64])
  * DM2_QUERY_SND_ENTRY_INDEX(cls1, cls2, cls3) → entry index → DM2_PLAY_SOUND()
  *
  * Sound entry contains: category, class1, class2, sound ID, volume, pitch.
@@ -272,7 +272,7 @@ typedef struct {
 /* ── DM2-008 audible playback backend (cycle 16) ─────────────────────────
  * Source: skproject/SKWIN/SkwinSDL.cpp (OpenAudio/sdlAudMix, MAX_SB = 16,
  * PLAYBACK_FREQUENCY = 6000 Hz, sample bytes converted 0x80 + raw_byte at
- * alloc time) and docs/dm2_sound_format.md.  GDAT sound raw entries hold a
+ * alloc time) and docs/dm2/dm2_sound_format.md.  GDAT sound raw entries hold a
  * two-byte format header followed by signed 8-bit mono PCM; the decoded
  * unsigned 8-bit stream is payload_byte ^ 0x80, exactly the conversion the
  * source performs (cf. dm2_v1_gdat_sound_toggle_payload). */

@@ -153,7 +153,7 @@ are promoted to production drawing until those observations exist.
 
 ## B. DM1 gaps (specific to game 1)
 
-Source: `docs/FINAL_GAPS.md` (188 lines), `docs/DM1_V1_BUG_AUDIT.md`,
+Source: `docs/FINAL_GAPS.md` (188 lines), `docs/dm1/DM1_V1_BUG_AUDIT.md`,
 dmweb Game Page for Dungeon Master, ReDMCSB decompilation.
 
 ### B1. Capture-gap pairs (from prior TODO audit)
@@ -186,18 +186,18 @@ dmweb Game Page for Dungeon Master, ReDMCSB decompilation.
 | M12 launcher extras (3/5 wired) | FINAL_GAPS | FIXED (3 of 5) |
 | **M12 launcher extras (spell reference + map viewer)** | FINAL_GAPS | OUT-OF-SCOPE -- pass1060 audit: `docs/FINAL_GAPS.md` marks both as lacking a data source; `src/ui/menu_startup_m12.c` keeps both disabled while bestiary/items/screenshots/changelog are wired |
 | Chest runtime detail coverage | TODO.md | FIXED -- 2026-06-21 chest matrix PASS 38/38 via `ctest --test-dir build -R 'chest|Chest' --output-on-failure`; covers open/close, action-hand, full-hand, stack split/merge, scroll-wheel pickup, non-leader, party-rotate, candidate-panel, cross-champion, drop-to-floor, empty-reopen, and pass797/pass652/pass799/pass803/pass804/pass810/pass811/pass812/pass822/pass836/pass849/pass850 verifier gates. Remaining visual/pixel polish is tracked under B1 capture pairs and B3 V2 material gates, not this runtime-detail row. |
-| Inventory route parity for all item types | `docs/dm1_gap_inventory_items.md` | FIXED -- pass1070 audit verifies equip slots, backpack/chest routes, consumables, mouth/eye routes, panel-slot routing, object interaction, and M11 inventory runtime/pixel gates together. The F0352/F0353 eye lifecycle is explicitly covered: releasing C071 restores F0347's normal action-hand panel, closes the transient eye-opened chest, and reopens an action-hand container through ordinary F0333 so the C145 icon is restored. |
-| Champion portrait sensor parity | `docs/dm1_gap_portrait_sensor.md` | FIXED -- pass1059 audit: C127 `sensorData` is a 0..23 C026 atlas ordinal, not 0..7; M11 runtime already clamps to `mirrorCatalog.count`; resurrection test keeps index 23 valid |
+| Inventory route parity for all item types | `docs/dm1/dm1_gap_inventory_items.md` | FIXED -- pass1070 audit verifies equip slots, backpack/chest routes, consumables, mouth/eye routes, panel-slot routing, object interaction, and M11 inventory runtime/pixel gates together. The F0352/F0353 eye lifecycle is explicitly covered: releasing C071 restores F0347's normal action-hand panel, closes the transient eye-opened chest, and reopens an action-hand container through ordinary F0333 so the C145 icon is restored. |
+| Champion portrait sensor parity | `docs/dm1/dm1_gap_portrait_sensor.md` | FIXED -- pass1059 audit: C127 `sensorData` is a 0..23 C026 atlas ordinal, not 0..7; M11 runtime already clamps to `mirrorCatalog.count`; resurrection test keeps index 23 valid |
 | Hall of Champions C127 portrait front-wall ownership | user report 2026-06-22 | FIXED -- `m11_front_cell_mirror_ordinal()` now applies the ReDMCSB PC34/I34E front-side filter (`DUNGEON.C:2573`, `DUNGEON.C:2608-2612`, `DEFS.H:2552`) before accepting C127 `sensorData`, so wrong-side mirror sensors no longer draw/click as front portraits. Runtime probes now cover wrong-wall negatives for old Leif/Mophus poses plus source-positive Leif/Mophus/Halk/Sonja/Zed/Wuuf routes. 2026-06-22 south_return portrait_rect_position slice row: ordinal 16 (CHANI / "SAYYADINA SIHAYA" on PC 3.4 EN) on the south_return route locked via `firestaff_dm1_v1_champion_mirror_ordinal_16_south_return_portrait_rect_position_runtime_probe` (ctest 11/11 PASS, C026 col 0 row 2 source rect, D1C portrait rect painted at (96, 35, 32, 29) with warm_count=322, no floating on side walls, per-ordinal strict dominance 475 vs 86 second-best). 2026-06-23: ordinal-9 west_negative sibling probe `firestaff_dm1_v1_champion_mirror_ordinal_9_west_negative_portrait_rect_position_runtime_probe` (18/18 invariants PASS on local PC 3.4 DUNGEON.DAT) extends wrong-wall corridor-band coverage to ordinal 9 (ZED / "DUKE OF BANVILLE"); cross-checked against ordinal-10 GANDO at `(1,5) DIR_NORTH` (100% pixel match, 4% ordinal-9 drift) so the row=1 portrait band is alive at the source-locked rect without painting the slice target. Companion to the existing ordinal 0/1/2/3/4/6/7/8/9/10 south_return portrait_rect_position probes. |
-| Per-champion C01-C24 stats | `docs/dm1_gap_c01_c24_stats.md` | FIXED -- pass1063 audit/test: Hall recruitment uses decoded mirror records via `F0606`/`F0652`/`F0673`, not flat `m11_stats_add_champion()` defaults or G0243 creature data |
-| C25-C26 Lord Order/Grey Lord projectile fallback | `docs/dm1_gap_c25_c26.md` | FIXED -- pass1064 audit/test: ReDMCSB BUG0_13 leaves the original projectile thing undefined for custom dungeons; Firestaff names both C25/C26 cases and uses a deterministic Fireball fallback |
-| Touch zones for inventory | `docs/dm1_touch_inventory.md` | FIXED -- pass1065 verifies C507..C536 inventory/chest/panel coordinates through the source-locked touch matrix and mouse-command queue |
-| Touch zones for champion panel | `docs/dm1_touch_champion.md` | FIXED -- pass1065 verifies C151..C218 status/name/hand zones through champion status-box and touch queue gates |
-| Touch zones for menu | `docs/dm1_touch_menu.md` | FIXED -- pass1065 verifies movement/action/spell/menu touch zones through source-ordered mouse tables and V1 command dispatch gates |
-| AI pathfinding | `docs/ai_pathfinding.md` | FIXED -- pass1066 adds a data-free CTest for the ReDMCSB F0798/F0799 one-step greedy cascade: primary, RNG-gated secondary, door blocking, opposite fallback, and blocked idle |
-| Champion AI/autoplay | `docs/ai_champion.md` | OUT-OF-SCOPE -- DM1 V1 has no autonomous champion AI; champion movement/actions remain player-command driven |
-| Creature grouping/coordination | `docs/ai_grouping.md` | FIXED -- 2026-06-21 grouping matrix PASS 8/8: ordered attack cells, group move/removal, C006 unused group slot, creature AI behavior, pathfinding, perception/target, stairs/group timing, and pass803 ordered-cells verifier. Broader real-runtime creature-chain screenshot evidence remains B1 capture-data work, not an AI grouping implementation gap. |
-| Creature AI aggro/reaction/spell behavior | `docs/ai_creature.md`, `docs/ai_aggro.md` | FIXED -- pass1067 gates F0790-F0796 perception, visibility/smell, aggro transition, determinism, and target selection; pass1069 adds reaction-event creation, projectile-hit search turn, danger movement/stop-attacking, and existing caster projectile table/payload gates |
+| Per-champion C01-C24 stats | `docs/dm1/dm1_gap_c01_c24_stats.md` | FIXED -- pass1063 audit/test: Hall recruitment uses decoded mirror records via `F0606`/`F0652`/`F0673`, not flat `m11_stats_add_champion()` defaults or G0243 creature data |
+| C25-C26 Lord Order/Grey Lord projectile fallback | `docs/dm1/dm1_gap_c25_c26.md` | FIXED -- pass1064 audit/test: ReDMCSB BUG0_13 leaves the original projectile thing undefined for custom dungeons; Firestaff names both C25/C26 cases and uses a deterministic Fireball fallback |
+| Touch zones for inventory | `docs/dm1/dm1_touch_inventory.md` | FIXED -- pass1065 verifies C507..C536 inventory/chest/panel coordinates through the source-locked touch matrix and mouse-command queue |
+| Touch zones for champion panel | `docs/dm1/dm1_touch_champion.md` | FIXED -- pass1065 verifies C151..C218 status/name/hand zones through champion status-box and touch queue gates |
+| Touch zones for menu | `docs/dm1/dm1_touch_menu.md` | FIXED -- pass1065 verifies movement/action/spell/menu touch zones through source-ordered mouse tables and V1 command dispatch gates |
+| AI pathfinding | `docs/shared/ai_pathfinding.md` | FIXED -- pass1066 adds a data-free CTest for the ReDMCSB F0798/F0799 one-step greedy cascade: primary, RNG-gated secondary, door blocking, opposite fallback, and blocked idle |
+| Champion AI/autoplay | `docs/shared/ai_champion.md` | OUT-OF-SCOPE -- DM1 V1 has no autonomous champion AI; champion movement/actions remain player-command driven |
+| Creature grouping/coordination | `docs/shared/ai_grouping.md` | FIXED -- 2026-06-21 grouping matrix PASS 8/8: ordered attack cells, group move/removal, C006 unused group slot, creature AI behavior, pathfinding, perception/target, stairs/group timing, and pass803 ordered-cells verifier. Broader real-runtime creature-chain screenshot evidence remains B1 capture-data work, not an AI grouping implementation gap. |
+| Creature AI aggro/reaction/spell behavior | `docs/shared/ai_creature.md`, `docs/shared/ai_aggro.md` | FIXED -- pass1067 gates F0790-F0796 perception, visibility/smell, aggro transition, determinism, and target selection; pass1069 adds reaction-event creation, projectile-hit search turn, danger movement/stop-attacking, and existing caster projectile table/payload gates |
 
 ### B3. DM1 V2
 
@@ -274,7 +274,7 @@ dmweb CSB Game Page, and DMWeb's CSB Atari ST edition page.
 
 ## D. DM2 gaps
 
-Source: `docs/NEXUS_PLAN.md` (similar scope), greatstone `g_dm2.html`
+Source: `docs/nexus/NEXUS_PLAN.md` (similar scope), greatstone `g_dm2.html`
 (15 extraction entries), skproject source (DM2 Windows port).
 
 ### D1. DM2 V1 mechanics
@@ -334,7 +334,7 @@ not Macintosh evidence.
 
 ## E. Nexus gaps (Saturn)
 
-Source: `docs/NEXUS_FILE_CLASSIFICATION.md`, `docs/NEXUS_PLAN.md`,
+Source: `docs/nexus/NEXUS_FILE_CLASSIFICATION.md`, `docs/nexus/NEXUS_PLAN.md`,
 Nexus locally verified files in `~/.firestaff/data/nexus/`.
 
 ### E1. V1 phases 0-7
@@ -366,7 +366,7 @@ Nexus locally verified files in `~/.firestaff/data/nexus/`.
 ## F. Theron gaps (PC Engine / TurboGrafx-16)
 
 Source: DMWeb Theron's Quest overview and PC Engine / TurboGrafx-16
-edition pages, `docs/NEXUS_PLAN.md` (similar shape), Theron local
+edition pages, `docs/nexus/NEXUS_PLAN.md` (similar shape), Theron local
 probes.
 
 ### F1. V1
@@ -381,9 +381,9 @@ probes.
 | Dungeon progression (7 dungeons) | PARTIAL — campaign-state projection and bounded level handoffs are tested, but the original stair/exit and completion transactions have not been verified end to end across the seven dungeons. |
 | **JP/US Track 02 BIN/ISO real-asset launch** | FIXED — `tier1_strict_boot_probe` covers Theron JP canonical, Theron JP extras, and Theron US extras booting to the TQR level-load milestone; `theron_v1_launcher_scan_reuse` and `theron_v1_track02_bank` also PASS. |
 | **Theron m11 runtime command proof** | FIXED — 2026-06-21 (commit `cd86d520`): `firestaff_theron_v1_cross_route_mechanics_probe` CTest-gates a real `firestaff --game theron` run via temporary launcher config, captures a M11 run receipt (launch + early command tick), verifies M11 reports source `theron` plus command processing, and proves the M11 run path is launchable on this host. 2026-06-21 (commit `363bf3b9`): `tqr_v1_track02_bank_signal_2026-06-03.md` locks raw Track 02 bank anchors (`0x1F000..0x1FFFF` graphics bank + 0x20000..0x27FFF dialogue + `0x28000..0x2BFFF` map-data) against the CD-ROM2 1MB sector map. |
-| **Theron 24h readiness rollup** | FIXED — 2026-06-21 (commit `a0592d6d`): `tools/theron_24h_readiness.py` + `parity-evidence/verification/theron_24h_readiness/manifest.json` + `docs/THERON_CAPTURE_READINESS.md` roll up 7 Theron V1 readiness gates (track02 bank, save/load, cross-route mechanics, runtime screenshot, dungeon progression, cross-slot, m11 launch) into a single per-day PASS/FAIL line, mirroring the DM1 24h readiness pattern. 2026-06-21 (commit `393d9f64`): `theron: refresh readiness reports` re-emits the manifest with current commit SHAs. |
+| **Theron 24h readiness rollup** | FIXED — 2026-06-21 (commit `a0592d6d`): `tools/theron_24h_readiness.py` + `parity-evidence/verification/theron_24h_readiness/manifest.json` + `docs/theron/THERON_CAPTURE_READINESS.md` roll up 7 Theron V1 readiness gates (track02 bank, save/load, cross-route mechanics, runtime screenshot, dungeon progression, cross-slot, m11 launch) into a single per-day PASS/FAIL line, mirroring the DM1 24h readiness pattern. 2026-06-21 (commit `393d9f64`): `theron: refresh readiness reports` re-emits the manifest with current commit SHAs. |
 | **Theron runtime screenshot readiness** | FIXED — 2026-06-21 (commit `b7dbcd60`): `firestaff_theron_v1_runtime_screenshot_readiness` CTest-gate + `tools/verify_theron_v1_runtime_screenshot_readiness.py` + `parity-evidence/theron_v1_runtime_screenshot_readiness.md` prove the M11 path can produce a Track-02-backed screenshot receipt on the current host. CTest/screenshot gates pass for the launchable Theron paths. |
-| **Theron runtime screenshot README-promotion gate** | FIXED — 2026-06-25: added `tools/verify_theron_v1_runtime_screenshot_promotion_gate.py` + `parity-evidence/verification/theron_v1_runtime_screenshot_promotion_gate/manifest.json` + `parity-evidence/theron_v1_runtime_screenshot_promotion_gate.md` + CTest entry `theron_v1_runtime_screenshot_promotion_gate`. The gate is the source-of-truth guardrail that audits the readiness manifest against an explicit README-eligibility contract (real Firestaff runtime capture, no deterministic fallback assets, `TQR level load` boot marker, semantic Track 02 loader evidence, unique source BMP sha256 per row, valid 320x200 presented BMP) and locks `NO_README_PROMOTION_PERMITTED` until at least one row is `README_ELIGIBLE`. Current host state (2026-06-25): 0/3 rows eligible — every readiness row still uses deterministic fallback assets and shows no semantic Track 02 loader evidence (probe `gameTick=0`, `party.mapIndex=0`, `lastOutcome='THERON READY'`); additionally the three rows share an identical source BMP sha256, which the uniqueness audit flags as a shared-placeholder-fixture smell. `docs/THERON_CAPTURE_READINESS.md` now points to the promotion gate as the single source of truth for whether a Theron capture may be promoted into `verification-screens/` or `docs/compare/`. |
+| **Theron runtime screenshot README-promotion gate** | FIXED — 2026-06-25: added `tools/verify_theron_v1_runtime_screenshot_promotion_gate.py` + `parity-evidence/verification/theron_v1_runtime_screenshot_promotion_gate/manifest.json` + `parity-evidence/theron_v1_runtime_screenshot_promotion_gate.md` + CTest entry `theron_v1_runtime_screenshot_promotion_gate`. The gate is the source-of-truth guardrail that audits the readiness manifest against an explicit README-eligibility contract (real Firestaff runtime capture, no deterministic fallback assets, `TQR level load` boot marker, semantic Track 02 loader evidence, unique source BMP sha256 per row, valid 320x200 presented BMP) and locks `NO_README_PROMOTION_PERMITTED` until at least one row is `README_ELIGIBLE`. Current host state (2026-06-25): 0/3 rows eligible — every readiness row still uses deterministic fallback assets and shows no semantic Track 02 loader evidence (probe `gameTick=0`, `party.mapIndex=0`, `lastOutcome='THERON READY'`); additionally the three rows share an identical source BMP sha256, which the uniqueness audit flags as a shared-placeholder-fixture smell. `docs/theron/THERON_CAPTURE_READINESS.md` now points to the promotion gate as the single source of truth for whether a Theron capture may be promoted into `verification-screens/` or `docs/compare/`. |
 | **DMWeb overview provenance** | FIXED / EVIDENCE-BOUNDED — 2026-06-25: DMWeb's Theron's Quest overview page pins the JP release to 1992-09-18, the USA release to 1993, and the runtime shape as a PC Engine / TurboGrafx-16 CD adaptation with seven small dungeons, between-dungeon saves only, companion skill/item resets, Theron skill/stat retention, and seven relic goals. Remaining work is turning those details into public progression/save/relic receipts rather than broadening the current Track 02 launch claim. |
 | **DMWeb PC Engine / TurboGrafx edition provenance** | FIXED / EVIDENCE-BOUNDED — 2026-06-25: DMWeb's edition page separates JP, USA, and PCEWorks bootleg records; lists JP/USA redump BIN/CUE, CloneCD, and DMFiles ISO/OGG sources; identifies Track 02 as the data track; records tracks 01/03/04 as shared music with Japanese or English speech; lists JP tracks 05-18; and notes the JP Track 17 static-noise defect fixed in the US version. 2026-06-29: `theron_v1_track02_bank` now verifies all three raw US and all three raw JP audio-bank marker tuples (sentinel, id word, and offsets) when matching user-staged Track 02 BINs are present. Remaining work is BIN/CUE-vs-ISO/OGG classification, intro/outro/screenshot receipts, and actual ADPCM/CD-DA decode or playback proof, while keeping the bootleg out of canonical data. |
 | **DMWeb JP/USA retail provenance** | FIXED / EVIDENCE-BOUNDED — 2026-06-25: DMWeb's JP retail page records bar code `4 988002 247950`, 1992-09-18 release, ¥8200 price, jewel-case contents, 142x125x10 mm box, 32-page booklet, back card, spine card, and CD scans; the USA page records bar code `0 92218 00178 8`, 1993 release, jewel-case contents, 142x125x10 mm box, hook-back scan, 32-page booklet, back card, and CD scan. Remaining work is using these as public retail receipts without changing the Track 02 runtime boundary or admitting PCEWorks bootleg media as canonical. |
@@ -624,10 +624,10 @@ Each major section (B-J) is regenerated from its per-domain
 source-of-truth:
 
 - A → `po/validate_po_layout.sh` + `tools/asset-validate/compare_to_greatstone.py --list`
-- B → `docs/FINAL_GAPS.md` + `docs/dm1_gap_*.md` + `docs/ai_*.md`
-- C → `docs/FINAL_CSB_GAPS.md` + `docs/csb_gap_*.md`
-- D → `docs/NEXUS_PLAN.md` (DM2 sections) + `src/dm2/` headers
-- E → `docs/NEXUS_FILE_CLASSIFICATION.md` + `src/nexus/` headers
+- B → `docs/FINAL_GAPS.md` + `docs/dm1/dm1_gap_*.md` + `docs/shared/ai_*.md`
+- C → `docs/FINAL_CSB_GAPS.md` + `docs/csb/csb_gap_*.md`
+- D → `docs/nexus/NEXUS_PLAN.md` (DM2 sections) + `src/dm2/` headers
+- E → `docs/nexus/NEXUS_FILE_CLASSIFICATION.md` + `src/nexus/` headers
 - F → Theron TODO sections + `src/theron/` headers
 - G → `TODO.md` cross-cutting sections
 - H → manual prioritization after the above regenerates

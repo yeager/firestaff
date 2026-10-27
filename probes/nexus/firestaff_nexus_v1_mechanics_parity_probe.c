@@ -27,7 +27,7 @@
  *             DUNGEON.C, COMMAND.C, MOVESENS.C, CHAMPION.C, CLIKMENU.C,
  *             CREATURE.C, LOADSAVE.C, SAVEHEAD.C.
  *             Primary source lock for movement/combat/save lifecycle.
- *   SDDRVS  — SDDRVS.TSK script opcodes documented in docs/nexus_triggers.md.
+ *   SDDRVS  — SDDRVS.TSK script opcodes documented in docs/nexus/nexus_triggers.md.
  */
 
 /* ── System headers ─────────────────────────────────────────────────── */
@@ -1977,12 +1977,12 @@ static PROBE_NOINLINE void probe_creature_wander(void)
 
 /* ═══════════════════════════════════════════════════════════════════════
  * 20. Sound dispatch -- source-locked MAP lookup path, fail-closed by default.
- * Source: src/nexus/nexus_v1_sound.c; docs/nexus_audio_format.md.
+ * Source: src/nexus/nexus_v1_sound.c; docs/nexus/nexus_audio_format.md.
  * ═══════════════════════════════════════════════════════════════════════ */
 static PROBE_NOINLINE void probe_sound_dispatch(void)
 {
     printf("\n[Probe 20: Sound Dispatch -- source-locked MAP lookup]\n");
-    printf("  Source: docs/nexus_audio_format.md; src/nexus/nexus_v1_sound.c\n");
+    printf("  Source: docs/nexus/nexus_audio_format.md; src/nexus/nexus_v1_sound.c\n");
 
     Nexus_SoundEngine eng;
     Nexus_V1_AudioReceipt expected;
@@ -2116,7 +2116,7 @@ int main(int argc, char **argv)
     printf("          MOVESENS.C F0267/F0268/F0276, DUNGEON.C F0029/F0044,\n");
     printf("          CHAMPION.C F0309/F0325, CREATURE.C,\n");
     printf("          LOADSAVE.C F0433/F0434,\n");
-    printf("          SDDRVS.TSK (docs/nexus_triggers.md)\n");
+    printf("          SDDRVS.TSK (docs/nexus/nexus_triggers.md)\n");
     printf("  Probe:  compile/link verification; no game data required\n");
     printf("=================================================================\n");
 

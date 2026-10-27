@@ -825,7 +825,9 @@ int main(int argc, char** argv) {
         }
         if (strcmp(a, "--theron-native") == 0 && i + 1 < argc) {
             theronNative = argv[++i];
-            opts.gameId = "theron";
+            if (!opts.gameId) {
+                opts.gameId = "theron";
+            }
             opts.directLaunch = 1;
             continue;
         }
@@ -1271,6 +1273,11 @@ int main(int argc, char** argv) {
     }
 
     if (theronNative) {
+        if (opts.gameId && strcmp(opts.gameId, "theron") != 0) {
+            fprintf(stderr,
+                    "firestaff: --theron-native can only be used with --game theron\n");
+            return 2;
+        }
         if ((strcmp(theronNative, "us") != 0 &&
              strcmp(theronNative, "jp") != 0) ||
             !opts.gameId || strcmp(opts.gameId, "theron") != 0 ||

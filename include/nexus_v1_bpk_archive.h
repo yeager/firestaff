@@ -332,7 +332,7 @@ const char *nexus_v1_bpk_surface_handoff_status_name(
  * does not authorize Saturn presentation. ReDMCSB has no Saturn/Nexus
  * implementation; this is source-locked to the observed Nexus MENU.BPK file
  * and the documented presentation gap in
- * docs/nexus_v1_phase2_data_formats_H2321.md.
+ * docs/nexus/nexus_v1_phase2_data_formats_H2321.md.
  */
 int nexus_v1_bpk_archive_parse(const uint8_t *data,
                                size_t data_size,

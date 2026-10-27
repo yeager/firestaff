@@ -32,7 +32,7 @@
  *   SKULLWIN/c_creature.cpp: DM2_PROCEED_CCM (CCM b_1a dispatch)
  *   SKULLWIN/c_creature.h: b_1a / b_17 fields
  *   SKWin.GDAT2.InternalCodes.txt (creature category 0x0A, 11 drop slots 0x0A-0x14)
- *   docs/dm2_dungeon_design.md (11 drop slots, DropTableSeed RNG)
+ *   docs/dm2/dm2_dungeon_design.md (11 drop slots, DropTableSeed RNG)
  *   ReDMCSB DEFS.H C040-equivalent dead-instance sentinel
  *
  * Phase 5 (creature/combat parity) followup — 2026-06-22.

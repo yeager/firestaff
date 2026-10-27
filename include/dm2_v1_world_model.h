@@ -14,8 +14,8 @@
  *   ReDMCSB DEFS.H:985-998 — DUNGEON_HEADER (44 bytes)
  *   ReDMCSB DEFS.H:1048-1116 — MAP descriptor (16 bytes)
  *   ReDMCSB HASHBUCKET.C    — square type constants, tile bitfields
- *   docs/dm2_v1_phase2_data_formats_H2254.md (SHA256 source-lock doc)
- *   docs/dm2_dungeon_files.md (DUNGEON.DAT format audit)
+ *   docs/dm2/dm2_v1_phase2_data_formats_H2254.md (SHA256 source-lock doc)
+ *   docs/dm2/dm2_dungeon_files.md (DUNGEON.DAT format audit)
  *
  * Asset hashes (verified):
  *   DM2 PC English DUNGEON.DAT:  6caccd7875009e82fe2e28e7f6d6adc0 (39,437 bytes)
@@ -173,7 +173,7 @@ typedef struct {
 } dm2_tile_t;
 
 /* DM2 Level (one dungeon map).
- * Source: SKULL.ASM T560, docs/dm2_v1_phase2_data_formats_H2254.md */
+ * Source: SKULL.ASM T560, docs/dm2/dm2_v1_phase2_data_formats_H2254.md */
 typedef struct {
     int level_type;  /* 0=OUTDOOR 1=INDOOR 2=BUILDING */
     int            level_index;
@@ -186,7 +186,7 @@ typedef struct {
 } dm2_level_t;
 
 /* DM2 Dungeon World (full in-memory model).
- * Source: SKULL.ASM T560 DUNGEON_Load, docs/dm2_v1_phase2_data_formats_H2254.md */
+ * Source: SKULL.ASM T560 DUNGEON_Load, docs/dm2/dm2_v1_phase2_data_formats_H2254.md */
 typedef struct dm2_dungeon_world {
     dm2_dungeon_header_t header;
     int                  dungeon_id;

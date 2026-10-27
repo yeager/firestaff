@@ -7,10 +7,10 @@
  * The SUPPRESS format is a bit-plane RLE compression used in DM2 saves.
  * For a new game, the initial world state comes from DUNGEON.DAT.
  *
- * Source: docs/dm2_save_format.md — SUPPRESS compression, save sections
- * Source: docs/dm2_quest.md — quest flags and phases
- * Source: docs/dm2_party_state.md — party/champion state
- * Source: docs/dm2_time.md — timer system, game tick
+ * Source: docs/dm2/dm2_save_format.md — SUPPRESS compression, save sections
+ * Source: docs/dm2/dm2_quest.md — quest flags and phases
+ * Source: docs/dm2/dm2_party_state.md — party/champion state
+ * Source: docs/dm2/dm2_time.md — timer system, game tick
  * Source: SKULL.ASM T520 — party placement from dungeon
  */
 
@@ -232,7 +232,7 @@ uint8_t *dm2_v1_world_state_serialize(const DM2_WorldState *state, size_t *out_s
 
 /*
  * dm2_v1_world_state_load_from_mem — load world state from SUPPRESS buffer.
- * Source: docs/dm2_save_format.md
+ * Source: docs/dm2/dm2_save_format.md
  */
 DM2_WorldState *dm2_v1_world_state_load_from_mem(const uint8_t *data, size_t size) {
     if (!data || size == 0u) return NULL;
@@ -354,10 +354,10 @@ void dm2_v1_world_state_free(DM2_WorldState *state) {
 const char *dm2_v1_world_state_source_evidence(void) {
     return
         "DM2 V1 World State — Phase 2 World/Data Ingestion\n"
-        "Source: docs/dm2_save_format.md — SUPPRESS compression, save sections\n"
-        "Source: docs/dm2_quest.md — quest flags and phases\n"
-        "Source: docs/dm2_party_state.md — party/champion state\n"
-        "Source: docs/dm2_time.md — timer system, game tick\n"
+        "Source: docs/dm2/dm2_save_format.md — SUPPRESS compression, save sections\n"
+        "Source: docs/dm2/dm2_quest.md — quest flags and phases\n"
+        "Source: docs/dm2/dm2_party_state.md — party/champion state\n"
+        "Source: docs/dm2/dm2_time.md — timer system, game tick\n"
         "Source: SKULL.ASM T520 — party placement from dungeon\n"
         "Source: SKULL.ASM T000 — DM2 startup, save I/O\n"
         "Source: SKULL.ASM SUPPRESS_WRITER/READER — save compression\n"

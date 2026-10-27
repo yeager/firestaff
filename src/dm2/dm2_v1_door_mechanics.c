@@ -496,7 +496,7 @@ int dm2_door_apply_toggle_step(int current_state, int direction)
  *   byte[0] — door type (should be 0-3; type 0x09=normal, 0x0A=dragon in GDAT2 codes)
  *             In ReDMCSB G0254, door type is the array index (0-3).
  *             DM2 uses a different encoding: 0x09=normal clan, 0x0A=dragon.
- *             These map to G0254 indices as follows (per docs/dm2_special_squares.md):
+ *             These map to G0254 indices as follows (per docs/dm2/dm2_special_squares.md):
  *               0x09 → index 1 (wooden, defense=42) — clan/standard door
  *               0x0A → index 2 (iron, defense=230) — dragon/special door
  *             But ReDMCSB uses direct 0-3 indices. We handle both encodings.
@@ -505,7 +505,7 @@ int dm2_door_apply_toggle_step(int current_state, int direction)
  *   byte[3] — flags: bit 0=locked, bit 1=visible, bit 2=melee-destructible, bit 3=magic-destructible
  *
  * Source: ReDMCSB DUNGEON.C:35 — door thing record layout
- * Source: docs/dm2_special_squares.md §8
+ * Source: docs/dm2/dm2_special_squares.md §8
  */
 int dm2_door_get_type_from_thing_record(const uint8_t thing_record[4]) {
     if (!thing_record) return -1;

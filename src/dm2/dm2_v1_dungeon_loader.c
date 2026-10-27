@@ -50,8 +50,8 @@
  *
  * Source: SKULL.ASM T560 DUNGEON_Load, ReDMCSB DEFS.H:985-998, :1048-1116,
  *         DM2 PC English DUNGEON.DAT binary analysis (39,437 bytes),
- *         docs/dm2_v1_phase2_data_formats_H2254.md §2,
- *         docs/dm2_dungeon_files.md
+ *         docs/dm2/dm2_v1_phase2_data_formats_H2254.md §2,
+ *         docs/dm2/dm2_dungeon_files.md
  */
 
 #include "dm2_v1_dungeon_loader.h"
@@ -137,7 +137,7 @@ dm2_v1_g1_receipt_hash(const uint8_t *data, uint32_t byte_count)
 #define DM2_HDR_RECORD_COUNTS_OFFSET        12
 
 /* File_header field offsets, SKWIN/DME.h:93-101 (mirrored by the section
- * order in docs/dm2_save_format.md):
+ * order in docs/dm2/dm2_save_format.md):
  *     0  w0            random seed
  *     2  cbMapData     map data size in bytes
  *     4  nMaps         map count (U8)

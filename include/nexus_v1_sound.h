@@ -5,8 +5,8 @@
 #include <stdint.h>
 
 /* Nexus V1 sound system — SFX + CD audio.
- * Source: docs/nexus_audio_format.md, docs/nexus_sfx.md,
- * docs/nexus_music.md, nexus_v1_engine.c CD track switching.
+ * Source: docs/nexus/nexus_audio_format.md, docs/nexus/nexus_sfx.md,
+ * docs/nexus/nexus_music.md, nexus_v1_engine.c CD track switching.
  *
  * Per-level SFX: SNDLEV00-15.SAL (sound banks) + SNDLEV00-15.MAP (event map).
  * CD audio: 8 retail Red Book tracks (2-9); level selection is unbound.

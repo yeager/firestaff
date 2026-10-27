@@ -2,7 +2,7 @@
  * test_dm1_v1_projectile_list_overflow_pc34_compat.c
  *
  * Data-free regression gate for the F0810 projectile list capacity
- * hard-cap (PJE-05 in docs/dm1-v1-functional-divergence-report.md).
+ * hard-cap (PJE-05 in docs/dm1/dm1-v1-functional-divergence-report.md).
  *
  * ReDMCSB PROJEXPL.C:F0212_PROJECTILE_Create line ~61 documents
  * BUG0_16: when no projectile thing remains (60 maximum), the

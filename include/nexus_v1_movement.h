@@ -7,7 +7,7 @@
 
 /* Nexus V1 party movement — DM1-compatible grid movement on Nexus maps.
  * Source: DM1 CLIKMENU.C / MOVESENS.C movement pipeline;
- * docs/nexus_input.md (keyboard mapping); ReDMCSB COMMAND.C/F0380.
+ * docs/nexus/nexus_input.md (keyboard mapping); ReDMCSB COMMAND.C/F0380.
  *
  * Commands mirror DM1: forward/backward step (relative to facing),
  * turn left/right 90°, strafe left/right.

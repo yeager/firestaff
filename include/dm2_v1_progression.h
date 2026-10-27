@@ -5,7 +5,7 @@
 /* DM2 V1 — Progression and Game Constants
  * Phase 6 source-lock (2026-05-26)
  * ReDMCSB: SKULL.ASM, skproject/SKWIN/SkGlobal.h
- * docs/dm2_champ_changes.md, docs/dm2_dungeon_design.md
+ * docs/dm2/dm2_champ_changes.md, docs/dm2/dm2_dungeon_design.md
  *
  * CRITICAL: DM2 V1 does NOT have traditional champion XP progression.
  * Stat increases are FIXED per champion type at creation — not earned.
@@ -32,7 +32,7 @@
 #define DM2_DROP_SLOTS_PER_CREATURE   11   /* vs 1 in DM1 */
 
 /* ── Dungeon level types ────────────────────────────────────────────
- * Source: docs/dm2_dungeon_design.md
+ * Source: docs/dm2/dm2_dungeon_design.md
  * DM2 has outdoor areas — DM1 and CSB are purely indoor dungeon. */
 
 #define DM2_LEVEL_OUTDOOR  0   /* sky/ground/tree/building, weather zones */
@@ -41,7 +41,7 @@
 #define DM2_LEVEL_COUNT     3
 
 /* ── Outdoor / time constants ─────────────────────────────────────────
- * Source: include/dm2_v1_game.h, docs/dm2_time.md */
+ * Source: include/dm2_v1_game.h, docs/dm2/dm2_time.md */
 
 #define DM2_TIME_MINUTES_PER_DAY      1440  /* 24h * 60 */
 #define DM2_TIME_START_MINUTES        720   /* noon */
@@ -56,7 +56,7 @@
 #define DM2_COMPANION_LOYALTY_MIN     0
 
 /* ── Champion stat growth ───────────────────────────────────────────
- * Source: docs/dm2_champ_changes.md
+ * Source: docs/dm2/dm2_champ_changes.md
  * DM2 V1: stat increases are FIXED at champion creation, NOT XP-driven.
  * Class bonuses are table lookups at creation time only. */
 
@@ -64,7 +64,7 @@
 #define DM2_CHAMP_LEVEL_MAX            99   /* theoretical max (unused in V1) */
 
 /* ── Dungeon progression ─────────────────────────────────────────────
- * Source: SKULL.ASM header parsing, docs/dm2_dungeon_design.md */
+ * Source: SKULL.ASM header parsing, docs/dm2/dm2_dungeon_design.md */
 
 #define DM2_MAX_DUNGEON_LEVELS        28   /* PC English DM2 */
 #define DM2_LEVEL_EXIT_Y               0   /* exit marker y position */
