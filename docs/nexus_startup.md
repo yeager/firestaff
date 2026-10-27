@@ -660,6 +660,48 @@ control, a Firestaff `NEW GAME` route to a playable level, real-save loading
 through Continue, or HUD parity. Those remain separate production-parity
 gates.
 
+## Cold-boot follow-up after the title prompt (2026-10-27)
+
+A rendered 19,000-frame Ymir run used the authentic Japanese retail disc and
+Japanese IPL in the isolated TRV2 profile. It loaded no emulator save state or
+game save. The profile retained its BIOS setup configuration. With `--debug
+--fast-forward`, Start was held for two frames at capture-loop frames 9,000,
+13,000, and 15,000. The endpoint screenshot is an authentic full-screen frame from
+`DMV0.AVI`, the retail TrueMotion 1.0 video (320×180, approximately 15 fps,
+SHA-256
+`eafb4c638db9ffada9e929d82299562e0a9d3eb73fb2a47858c0de0dc0fa57bb`). Its
+centered 320×180 crop exactly matches decoded video frame 626 after Saturn
+RGB5 quantization: all 57,600 pixels match with zero error. The matching
+VDP1 mode-5 draw reads 320×180 pixels from VRAM byte offset `0x47c00` and
+places them at y=21–200. This confirms authentic video-frame presentation,
+likely the intro FMV in this boot sequence; it is not gameplay, a menu, or HUD
+evidence, and it does not prove which preceding button caused the transition.
+
+The final VDP1 capture is frame 15,907, with four command rows for that frame.
+Its trace retained 785,986 rows and reports zero dropped VDP1 entries. The SCU
+DMA trace retained 16,384 rows but dropped 4,485 (`trace_data_complete=0`), so
+it cannot establish complete transfer provenance. Capture-loop frame 19,000
+and VDP1 frame 15,907 are different counters.
+
+The system executable SHA-256 is
+`f5d94ee84762d81e97f950d6cfc4253b4f72c61dc5c4f376b4296235ed46dcc3`. At
+inspection, the Ymir source worktree was based on commit
+`534ed10c6f7f13a3ba752476eea191be3ab553b4` with a tracked-diff SHA-256 of
+`2442944df961bf0079f61a032b2ca09f3252be4416a28471aee72573b49e4d5d`. These
+identify the observed executable and worktree state; they do not independently
+prove the binary was built from that exact source snapshot.
+
+The evidence bundle is retained at
+`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_rendered_20261027/rendered_menu_candidate_19000/`.
+The screenshot SHA-256 is
+`903e710b455df66a1df79adcdf1e1a9a6c8fdc257833f0eed9e80def840d541a`, the
+run-log SHA-256 is
+`caf636e378d9888b4c97e01b12ddd864b0564e292fceb6f5ffc97b14f442d282`, and
+the checksum-manifest SHA-256 is
+`5284b2c2a29293b30ca5866e8983bdf671f4163ccb529ac84c8e3ef26566bcc1`. All
+35 retained bundle entries passed checksum verification. The screenshot is
+not a Firestaff asset and does not admit title-menu, gameplay, or HUD parity.
+
 ## Complete cold-boot SCU DMA trace (2026-10-27)
 
 A follow-up run used Ymir's explicit SCU DMA trace route with the same
