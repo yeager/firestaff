@@ -16,7 +16,7 @@
 ## Developer changes
 
 - `DM1, CSB and DM2 authentic-media tests`: add and extend original-media coverage for FM Towns handoff, HUD, stairs, doors, DM1 PC34 combat and wall materials, and DM2 live viewport state.
-- `CSB FM Towns launch and viewport regressions`: cover directly selected loose files at the disc root and keep F0111 door panels independent from optional F0110 button assets.
+- `CSB FM Towns launch and viewport regressions`: verify directly selected loose files at the disc root and keep F0111 door panels independent from optional F0110 button assets.
 - `CSB Amiga FTL reader`: bound container and decoded-data reads, correct DATA-area decoding and checksum arithmetic, and add authentic SWSH decode and runtime-route regressions.
 - `FM Towns graphics readers`: add source-locked F20 HUD and wall-ornament tests and CSB stair-state checks against authentic media.
 - `Nexus VDP1 and VDP2 analysis`: add capture-bound command replay, texture and palette resolution, sprite composition, DGN/item material joins, and source-to-capture validation tools; retain the distinction between traced captures and production gameplay.
