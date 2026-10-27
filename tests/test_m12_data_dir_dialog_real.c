@@ -8,10 +8,13 @@
 #include <string.h>
 #ifdef _WIN32
 #include <direct.h>
+#include <process.h>
 #define REMOVE_DIR _rmdir
+#define PROCESS_ID _getpid
 #else
 #include <unistd.h>
 #define REMOVE_DIR rmdir
+#define PROCESS_ID getpid
 #endif
 
 static int failures;
@@ -62,8 +65,8 @@ int main(int argc, char** argv)
     if (failures) goto cleanup;
     if (!temp || !temp[0]) temp = "build";
     CHECK(FSP_CreateDirectoryRecursive(temp), "create task-local scratch parent");
-    snprintf(leaf, sizeof(leaf), "data-dialog-%llu",
-             (unsigned long long)SDL_GetTicksNS());
+    snprintf(leaf, sizeof(leaf), "data-dialog-%ld-%llu",
+             (long)PROCESS_ID(), (unsigned long long)SDL_GetTicksNS());
     CHECK(FSP_JoinPath(scratch, sizeof(scratch), temp, leaf) &&
           !FSP_PathExists(scratch) && FSP_CreateDirectory(scratch),
           "create unique test scratch directory");
