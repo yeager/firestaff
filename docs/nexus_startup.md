@@ -130,18 +130,21 @@ production gates remain closed.
 
 ## Retail title selection captures (2026-10-27)
 
-The cold-boot Ymir capture at VDP1 frame 59 shows `NEW GAME` selected. The
-current five-draw verifier was rerun against its complete Ymir dump and the
-authenticated Japanese `TITLE.BIN` in `.firestaff/data/nexus`. It matched
-1,495 nontransparent sprite pixels across the five final title draws:
-213/213, 213/213, 313/313, 293/293, and 463/463. The retained capture is
-`ymir_nexus_atomic_menu_20261026` on the external evidence disk; its screenshot
-SHA-256 is `8721cce3354bc20b1cd367fd44be3d4ecc60ca65fa89c7d00654e83f5ad7db23`.
+A historical Ymir capture at VDP1 frame 59 loaded a retained title-prompt
+state before Start and shows `NEW GAME` selected. A source comparison against
+the authenticated Japanese `TITLE.BIN` in `.firestaff/data/nexus` reported
+1,495 nontransparent matching sprite pixels across five final title draws:
+213/213, 213/213, 313/313, 293/293, and 463/463. This is historical
+source-comparison evidence, not a cold-boot receipt or a result from the
+current verifier, which validates the Japanese Continue layout only. The
+retained capture is `ymir_nexus_atomic_menu_20261026` on the external evidence
+disk; its screenshot SHA-256 is
+`8721cce3354bc20b1cd367fd44be3d4ecc60ca65fa89c7d00654e83f5ad7db23`.
 
-A second authentic Japanese cold boot pressed Down for two emulated frames and
-shows `CONTINUE` selected at VDP1 frame 8047. The same verifier matched 1,441
-pixels across five TITLE.BIN draws (313/313, 186/186, 186/186, 293/293, and
-463/463). Its external evidence receipt is
+A separate authentic Japanese Ymir capture pressed Down for two emulated
+frames and shows `CONTINUE` selected at VDP1 frame 8047. The current verifier
+matched 1,441 pixels across five TITLE.BIN draws
+(313/313, 186/186, 186/186, 293/293, and 463/463). Its external evidence receipt is
 `ymir_nexus_coldboot_menu_20261027/menu_continue_input_20261027`; screenshot
 SHA-256 `741c620e945b5ab3e05f6bc5d182fc4ada9439071b79718f67326bcdd56c6118`.
 Both checks bind source texture bytes, CRAM colors, sprite priority, and
