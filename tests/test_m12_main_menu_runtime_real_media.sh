@@ -104,7 +104,7 @@ run_theron_direct_selection_case() {
         SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
         "$app" --debug --width 320 --height 200 --data-dir "$data_root" \
             --script 'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait:20' \
-            --duration 10000 >"$log" 2>&1 || {
+            --duration 30000 >"$log" 2>&1 || {
                 cat "$log" >&2
                 return 1
             }

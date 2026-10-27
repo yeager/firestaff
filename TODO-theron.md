@@ -12,16 +12,6 @@
   gameplay meaning, so the `$287F-$2896` consumer and native direct-click gap
   remain open.
 
-## 2026-10-27 — bypass Theron launch cards
-
-- Selecting Theron in the native game list enters the existing validated
-  Track 02 launch path directly, bypassing the single-platform and Run cards.
-  Other games retain their platform and presentation selection flow.
-- Missing or unsupported Track 02 media still fails closed with the current
-  actionable message and returns to the game list when dismissed.
-- Verify the authentic US Track 02 route from the no-game launcher with one
-  Theron selection input; complete native Theron parity remains open.
-
 ## 2026-10-26 — trace-driven decode of the initializer's $43AB helper
 
 - The authenticated JP runtime trace executes `$43AB–$43B4` at physical
