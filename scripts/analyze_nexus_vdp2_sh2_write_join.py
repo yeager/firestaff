@@ -78,6 +78,7 @@ def find_contiguous(
 
 
 def main() -> int:
+    """Validate and report the selected VDP2-to-SH-2 trace join."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("bundle", type=Path, help="Ymir raw capture bundle directory")
     parser.add_argument(
