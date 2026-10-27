@@ -31,6 +31,10 @@ The English layouts each match 1,451
 pixels in authentic Ymir captures. The background bitmap and full screen
 composition remain unbound, so this sprite receipt does not admit a Firestaff
 menu renderer. See the [English title-menu sprite receipt](../../parity-evidence/verification/nexus_english_title_menu_sprite_join_20261027/README.md).
+The paired New Game/Continue captures share byte-identical VDP2 VRAM, CRAM,
+and registers; only VDP1 memory/framebuffer/command bytes differ. This confirms
+the selection change is confined to the observed sprite hardware state while
+leaving the shared NBG0 source unbound.
 The retail Continue route also reached a
 loaded dungeon with a BKR image whose hash matches the retained four-champion
 image in `.firestaff/data/nexus`; its transfer chain was not retained.

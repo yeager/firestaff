@@ -1255,7 +1255,14 @@ background bitmap, full-screen
 composition, upload timing, the Configuration page, or Firestaff's runtime
 menu renderer and input route. The wider English VDP1 source join remains
 partial at 126 of 137 informative draws; its remaining 11 spans are zero
-padding.
+padding. A byte-for-byte pair comparison of the separate New Game and
+Continue savestate replays shows identical full VDP2 VRAM, CRAM, and register
+snapshots at capture frame 5. Their NBG0 bitmap is unchanged (SHA-256
+`b802a3196a9d2183b336ab5c770028670ed658e8ed9ba582046096fc01d23f91`); only
+the compared VDP1 VRAM, framebuffer, and command trace differ. This isolates
+the observed selection change to VDP1 state without identifying the shared
+background's retail producer. Exact VDP2 hashes and changed-byte counts are in the
+[English sprite receipt](../../parity-evidence/verification/nexus_english_title_menu_sprite_join_20261027/README.md).
 
 ## Authentic Japanese title-menu Down selection (2026-10-27)
 

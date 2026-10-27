@@ -50,6 +50,29 @@ textured draws; 11 remaining spans are zero padding. This does not bind the
 NBG0 background image, the complete screen compositor, the original upload
 timing, configuration behavior, or Firestaff's runtime route.
 
+## New Game / Continue state-pair comparison
+
+Both deterministic runs start from the same menu savestate and capture frame
+5. The VDP2 display state is byte-identical between the New Game and Continue
+captures: all 512 KiB of VRAM, all 4 KiB of CRAM, and the 512-byte register
+snapshot. The selected NBG0 bitmap is therefore unchanged across this input
+transition; its 131,072-byte snapshot has SHA-256
+`b802a3196a9d2183b336ab5c770028670ed658e8ed9ba582046096fc01d23f91` and
+contains 18,030 nonzero bytes. Its retail source remains unbound.
+
+Within the compared VDP domains, 42 bytes differ in VDP1 VRAM and 3,978 bytes
+in the display framebuffer; 50 bytes differ in the VDP1 command trace. The
+VDP1 register snapshot is identical. This bounds the observed
+New Game-to-Continue selection change to VDP1 state for the captured pair; it
+does not identify the NBG0 source or prove that frame 5 follows an identical
+live history in both separately restored runs.
+
+| Shared VDP2 domain | SHA-256 (both captures) |
+| --- | --- |
+| VRAM, 524,288 bytes | `16ccb0336e23eb80c169cdd34489ace726114134548a88aceb8ce9183083ed58` |
+| CRAM, 4,096 bytes | `db282593790dec4a2bf8f76293c0458a1a140adc3351650bd56a417f0359e0de` |
+| Registers, 512 bytes | `79efa616c2db727749aa9018864d1ad32c1583935652fafb16534ba69f8e1f2d` |
+
 ## Reproduction
 
 Extract the hash-verified ISO member with `iso_members_in_memory` from

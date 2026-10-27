@@ -37,6 +37,9 @@ placement, and all 1,451 visible pixels in each state. The icon palette has one
 source match; seven identical copies of the text palette remain candidates.
 This does not bind the NBG0 background or remaining screen composition;
 the exact background source and complete display consumer are still unknown.
+The English New Game and Continue captures share byte-identical VDP2 VRAM,
+CRAM and registers, so their observed selection difference is confined to
+VDP1 state; this still leaves the shared NBG0 retail source unbound.
 The Ymir log records `0DMSTRT.BIN` and a CD Block soft reset,
 but no `DM.BIN` read event. Separately, an exact 230,669-byte prefix of the
 authentic 555,144-byte English `DM.BIN` is present at offset `0x10000` in the
