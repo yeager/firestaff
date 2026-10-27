@@ -146,6 +146,61 @@ static void verify_buffer_setup_candidates(const char *path,
     assert(matches == expected_count);
 }
 
+/* Source: authenticated JP/US Track 02 caller bytes following the $A704
+ * setup candidate; exact offsets and regional decode are recorded in
+ * docs/source-lock/theron-disassembly/
+ * theron-track02-buffer-setup-caller-20261027.md. These bytes are static
+ * candidates, not a runtime bank/source-LBA or click-semantics receipt. */
+static void verify_buffer_setup_caller_candidates(
+    const char *path, Theron_Track02Variant variant) {
+    static const uint32_t jp_offsets[] = {
+        0x0a7344u, 0x0f0b44u, 0x13a344u, 0x183b44u,
+        0x1cd344u, 0x216b44u, 0x260344u
+    };
+    static const uint32_t us_offsets[] = {
+        0x0a7c74u, 0x0f1474u, 0x13ac74u, 0x184474u,
+        0x1cdc74u, 0x217474u, 0x260c74u
+    };
+    static const uint8_t jp_caller[] = {
+        0x20u, 0xabu, 0x43u, 0x9cu, 0x1fu, 0x27u, 0x9cu, 0x1du,
+        0x27u, 0xa9u, 0xdfu, 0x8du, 0x1eu, 0x27u, 0xa9u, 0x01u,
+        0x20u, 0x05u, 0x45u, 0x20u, 0xdfu, 0xc1u
+    };
+    static const uint8_t us_caller[] = {
+        0x20u, 0xaeu, 0x43u, 0x9cu, 0x1fu, 0x27u, 0x9cu, 0x1du,
+        0x27u, 0xa9u, 0xdfu, 0x8du, 0x1eu, 0x27u, 0xa9u, 0x01u,
+        0x20u, 0x0bu, 0x45u, 0x20u, 0xdfu, 0xc1u
+    };
+    const uint32_t *offsets;
+    const uint8_t *expected;
+    const size_t candidate_count = THERON_V1_HUC6280_CALLEE_CANDIDATE_COUNT;
+    FILE *file = fopen(path, "rb");
+    uint8_t caller[sizeof(jp_caller)];
+
+    assert(variant == THERON_TRACK02_VARIANT_US_BIN ||
+           variant == THERON_TRACK02_VARIANT_JP_BIN);
+    offsets = variant == THERON_TRACK02_VARIANT_JP_BIN ?
+        jp_offsets : us_offsets;
+    expected = variant == THERON_TRACK02_VARIANT_JP_BIN ?
+        jp_caller : us_caller;
+    assert(sizeof(jp_caller) == sizeof(us_caller));
+    assert(file != NULL);
+    for (size_t i = 0u; i < candidate_count; ++i) {
+        uint8_t candidate[sizeof(caller)];
+        uint8_t expected_candidate[sizeof(caller)];
+        memcpy(expected_candidate, expected, sizeof(expected_candidate));
+        if (variant == THERON_TRACK02_VARIANT_JP_BIN && i == 6u) {
+            /* The seventh JP copy calls $4508; the preceding six call $4505. */
+            expected_candidate[17] = 0x08u;
+        }
+        assert(fseek(file, (long)(offsets[i] + 26u), SEEK_SET) == 0);
+        assert(fread(candidate, 1u, sizeof(candidate), file) ==
+               sizeof(candidate));
+        assert(memcmp(candidate, expected_candidate, sizeof(candidate)) == 0);
+    }
+    assert(fclose(file) == 0);
+}
+
 /* Source: docs/source-lock/theron-disassembly/
  * theron-jp-runtime-input-poll-bank-alias-20261009.md:388-457, HuC6280
  * helper $D588. JP indexes at $D5A7; US indexes at $D5B5. This verifies
@@ -424,6 +479,7 @@ static void verify(const char *env_name, const char *name,
     if (variant == THERON_TRACK02_VARIANT_US_BIN ||
         variant == THERON_TRACK02_VARIANT_JP_BIN) {
         verify_buffer_setup_candidates(path, variant);
+        verify_buffer_setup_caller_candidates(path, variant);
         verify_pointer_classifier_threshold_candidates(path, variant);
         verify_stage2_vce_palette(path, variant, receipt.source_md5);
     }

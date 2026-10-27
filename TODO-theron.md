@@ -29,6 +29,19 @@
   party movement, command semantics, or native rendering mapping. Full method and
   limits: [JP save-state input repeat capture](docs/source-lock/theron-disassembly/theron-jp-save-state-input-repeat-20261027.md).
 
+## 2026-10-27 — static buffer-setup caller sequence recovered
+
+- The 22 bytes after each authenticated JP/US `$A704` setup candidate are now
+  checked in all seven raw offsets per edition. Each sequence initializes
+  `$271D-$271F` and calls `$C1DF`; the JP first six candidates call `$4505`,
+  while the seventh calls `$4508`. All seven US candidates call `$450B`.
+- The different regional and copy-specific call targets are retained as
+  byte-level evidence. A `$4505` listing exists, but no evidence binds the
+  `$A704` candidates or those calls to an executing bank, source LBA, live
+  rectangles, command dispatch, or state transition. Direct viewport clicks
+  therefore remain open. See
+  [buffer-setup caller evidence](docs/source-lock/theron-disassembly/theron-track02-buffer-setup-caller-20261027.md).
+
 ## 2026-10-26 — trace-driven decode of the initializer's $43AB helper
 
 - The authenticated JP runtime trace executes `$43AB–$43B4` at physical
