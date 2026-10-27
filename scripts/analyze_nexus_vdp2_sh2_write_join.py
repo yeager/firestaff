@@ -110,11 +110,12 @@ def main() -> int:
     matches = find_contiguous(pattern_rows, sh2_rows)
     vram = (dumps / "vdp2-vram.bin").read_bytes()
     final_values = {address: value for address, _width, value in pattern_rows}
-    mismatches = [
-        (address, value, vram[address])
-        for address, value in final_values.items()
-        if address >= len(vram) or vram[address] != value
-    ]
+    mismatches = []
+    for address, value in final_values.items():
+        if address >= len(vram):
+            mismatches.append((address, value, None))
+        elif vram[address] != value:
+            mismatches.append((address, value, vram[address]))
 
     print(f"frame={frame}")
     print(f"vdp2_byte_writes={len(pattern_rows)}")
