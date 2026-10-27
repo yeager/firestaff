@@ -120,24 +120,40 @@ frame, but no menu or level is loaded and the startup receipt remains blocked
 on the PRS3 menu capture. See
 [`parity-evidence/verification/nexus_cli_direct_start_block_20261024/README.md`](parity-evidence/verification/nexus_cli_direct_start_block_20261024/README.md).
 
-- Capture the actual interactive title/menu transition and its input contract,
-  including the display consumer that places menu and face material.
+- Implement the observed retail title-menu input flow in Firestaff and identify
+  the display consumer that places menu and face material.
+  Updated 2026-10-27: the Japanese retail Ymir run now establishes a no-save
+  cold boot to the native three-choice menu; a separate single Down press
+  selects Continue, and Down/Down/A opens Configuration from that captured
+  menu state. This closes the retail-emulator behavior gap for those observed
+  routes, not Firestaff's runtime menu or the Saturn display consumer. The
+  repeated Continue capture again verifies all five Japanese TITLE.BIN sprites
+  against 1,441 screenshot pixels, but its NBG0 bitmap has zero exact matches
+  against authentic retail data. Its VDP2 and SH-2 write traces overflowed
+  before the endpoint, so they do not establish the bitmap producer. The raw
+  run and snapshot-only source-join report are retained outside Git; see the
+  Japanese menu section in `docs/nexus_startup.md`.
+  earlier paired raw-trace experiments below remain valid negative results for
+  their sampled windows, but they are no longer the only input evidence. Keep
+  the production gate closed while identifying menu/face material ownership
+  and wiring the verified selection behavior into Firestaff.
   The JP window at frames 13000–13039 is bit-identical with and without
   Start/A pulses, so it is non-interactive animation rather than the native
   startup menu. A later same-session control/Start pair establishes that
   Start is read from the live controller register at frames 18020--18023 by
   SH-2 code, but its 64-frame VDP1/VDP2 output remains byte-identical to the
-  no-input control. That reader is therefore not yet an admitted menu
-  consumer; find the later transition that changes presentation and bind it
-  to the retail menu asset consumer.  A separate post-title control/input
+  no-input control. That specific reader is therefore not an admitted menu
+  consumer. Later Ymir captures establish title-menu and selection transitions,
+  but still do not bind menu/face bytes to an SH-2 upload or VDP1/VDP2 display
+  consumer. A separate post-title control/input
   pair at frames 30000--30119 exercised Start, A, B and C in four distinct
   20-frame pulses.  All eight captured video regions (VDP1 state/VRAM/frame
   buffers/draw selector and VDP2 registers/VRAM/CRAM) were byte-identical to
   the no-input control.  The observed active VDP1 state has two stable
   texture sources for frames 30000--30037, but remains an unbound hardware
-  observation rather than proof of a menu, HUD or dungeon consumer. Search
-  beyond this window for the first input-correlated presentation change. A
-  separate interactive Ymir run on authentic Japanese retail media shows
+  observation rather than proof of a menu, HUD or dungeon consumer. This
+  pair covers only its sampled noninteractive window. Separate
+  interactive Ymir evidence on authentic Japanese retail media shows
   F/Start opening the title menu, S selecting Continue, and J/A confirming
   New Game into the dungeon. A separate ShuttleMouse run shows a button event
   advancing the title into the intro. These establish retail input behavior,

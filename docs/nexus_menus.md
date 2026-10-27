@@ -14,9 +14,15 @@ with asset gating in `src/nexus/nexus_v1_launcher.c`. A separate, currently
 unwired reducer in `src/nexus/nexus_v1_retail_title_menu.c` models only the
 authentic title choices and transitions observed in Ymir: initial New Game,
 Down to Continue, Down to Configuration, and the documented Accept results.
-It deliberately does not supply mouse geometry or render a menu. The Saturn
-menu's exact retail texture, CLUT ownership, placement, and Firestaff runtime
-integration remain unverified.
+The historical New Game comparison reported five TITLE.BIN draws and 1,495
+matching nontransparent screenshot pixels. The current
+`verify_nexus_title_sprite_screenshot.py` verifier checks the five-draw
+Japanese Continue layout, including per-pixel CRAM color and priority; it does
+not verify the New Game layout. The retail Continue route also reached a
+loaded dungeon with a BKR image whose hash matches the retained four-champion
+image in `.firestaff/data/nexus`; its transfer chain was not retained. The
+reducer is still unwired. Full-frame Firestaff rendering, option behavior, and
+mouse targeting remain unverified.
 
 ## DM1 Menu System Reference
 
@@ -43,8 +49,9 @@ decoded. The Saturn tilemap/CLUT/runtime placement remains capture-gated; no
 A Nexus menu system needs states for:
 - Title/Start: authentic New Game/Continue/Configuration states and bounded
   pad transitions are recorded; the reducer is not wired into runtime startup.
-  Menu rendering, options behavior, title animation, and mouse targeting remain
-  unbound.
+  Five source-bound sprite draws are verified for Japanese Continue. New Game
+  has historical source-comparison evidence; full menu composition, options
+  behavior, and mouse targeting remain unbound.
 - Champion Select: source-owned champion records (20 live PLRD/TABL records)
 - Options: Display mode (fullscreen/windowed), audio levels
 - In-Game Menu: ESC pause with stats, inventory, spells, save
@@ -77,7 +84,8 @@ Still blocked or incomplete:
 - Saturn title/start-menu renderer and VDP1/VDP2 placement
 - Champion selection Saturn presentation (party creation pixels)
 - In-game ESC menu
-- Save/load menu (Saturn SRAM format)
+- Firestaff Saturn BKR menu and engine handoff (directory/block-chain parsing
+  and exact payload extraction are implemented)
 - Options/settings menu
 - FMV cutscene playback (DMV0-2.AVI)
 - Credits screen

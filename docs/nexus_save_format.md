@@ -46,6 +46,18 @@ pointer chain from those strings to a Saturn backup-RAM record, checksum,
 load destination, or playable level/position has been established, so they do
 not authorize a native Saturn save decoder.
 
+A read-only Ghidra 12.2 follow-up used the same `DM.BIN` hash
+(`3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124`). The
+`iwa\\loader.c` references lead to generic resource-loader functions at
+`0x06017e30`, `0x06017e6e`, `0x06018298`, and `0x06018520`: they validate and
+relocate resource descriptors and load resource sections. They do not show a
+Saturn Backup RAM reader or writer. The save-event and slot-error strings
+resolve through data references only in this analysis. This rules out that
+loader label as evidence for a Saturn save consumer; it does not rule out a
+different, as-yet-unidentified consumer elsewhere in `DM.BIN`. The raw Ghidra
+references and decompilation are retained outside the repository at
+`/Volumes/Extern-disk/firestaff-evidence/nexus-save-loader-decomp-20261027/`.
+
 ## Boundary
 
 FNXS is a Firestaff interchange/resume format. The four hash-pinned real

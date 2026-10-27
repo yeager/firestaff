@@ -5,8 +5,14 @@ Nexus startup screen. Updated 2026-10-27: an authentic Japanese retail cold
 boot reaches the native `PRESS START BUTTON` title prompt and, with scheduled
 retail controller input, the native three-choice title menu in Ymir. The menu
 was navigated into its Configuration page from a saved diagnostic state.
-Firestaff startup and presentation, the New Game route to stable gameplay, real
-save loading through Continue, and HUD/viewport parity remain unverified.
+Separate captures show New Game selected and Down selecting Continue, with
+five TITLE.BIN sprite draws per state compared with the retail screenshots.
+The historical New Game comparison reported 1,495 matching nontransparent
+pixels. The current `verify_nexus_title_sprite_screenshot.py` verifier checks
+the five-draw Japanese Continue layout only. Ymir also completed
+Continue-to-gameplay with a reported retail-written BKR image. Firestaff's
+runtime title-menu renderer, New Game route to stable gameplay, Saturn BKR
+loading, and HUD/viewport parity remain unverified.
 
 ## Verified initialization order
 
@@ -121,6 +127,38 @@ This makes title-menu capture reproducible without X11 keyboard injection. It
 does not bind a retail menu resource to a Saturn consumer, prove the final
 displayed pixels, or permit Firestaff to present a host-built menu. Those
 production gates remain closed.
+
+## Retail title selection captures (2026-10-27)
+
+A historical Ymir capture at VDP1 frame 59 loaded a retained title-prompt
+state before Start and shows `NEW GAME` selected. A source comparison against
+the authenticated Japanese `TITLE.BIN` in `.firestaff/data/nexus` reported
+1,495 nontransparent matching sprite pixels across five final title draws:
+213/213, 213/213, 313/313, 293/293, and 463/463. This is historical
+source-comparison evidence, not a cold-boot receipt or a result from the
+current verifier, which validates the Japanese Continue layout only. The
+retained capture is `ymir_nexus_atomic_menu_20261026` on the external evidence
+disk; its screenshot SHA-256 is
+`8721cce3354bc20b1cd367fd44be3d4ecc60ca65fa89c7d00654e83f5ad7db23`.
+
+A separate authentic Japanese Ymir capture pressed Down for two emulated
+frames and shows `CONTINUE` selected at VDP1 frame 8047. The current verifier
+matched 1,441 pixels across five TITLE.BIN draws
+(313/313, 186/186, 186/186, 293/293, and 463/463). Its external evidence receipt is
+`ymir_nexus_coldboot_menu_20261027/menu_continue_input_20261027`; screenshot
+SHA-256 `741c620e945b5ab3e05f6bc5d182fc4ada9439071b79718f67326bcdd56c6118`.
+Both checks bind source texture bytes, CRAM colors, sprite priority, and
+individual screenshot pixels. They do not yet reconstruct or admit the full
+retail frame for Firestaff's live renderer.
+
+The retail Continue flow was separately observed in Ymir with a 32 KiB BKR
+image reported as retail-written. Down selected Continue, Accept opened the
+native Load panel, and accepting its internal-memory entry reached a four-
+champion dungeon view. The image digest was
+`87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`; the
+capture receipt notes that its transfer/source chain was not retained. This
+demonstrates the retail route, not Firestaff's BKR-to-engine handoff. See
+[`nexus-continue-real-bup-20261025`](../parity-evidence/verification/nexus-continue-real-bup-20261025/README.md).
 
 An independent 2,200-frame no-present replay on 2026-10-26 used the same
 authenticated Japanese IPL, retail CUE, retained title-prompt state, and the
@@ -1199,6 +1237,26 @@ supports this Japanese `CONTINUE` layout only; it does not validate the earlier
 `NEW GAME` image or the English capture. These are sprite-level source and
 colour joins; whole-screen composition and screenshot-to-dump frame identity
 remain unproven.
+
+A repeated cold boot with the same schedule retained VDP1 frame 8,060. The
+frame-aligned VDP1 receipt again contains 178 commands with no dropped rows,
+and the screenshot has the same SHA-256 as the earlier Continue capture
+(`741c620e945b5ab3e05f6bc5d182fc4ada9439071b79718f67326bcdd56c6118`). The
+current screenshot verifier passes all five sprite roles and all 1,441 visible
+pixels for this repeat capture. A snapshot-only bitmap-source analysis found
+zero exact retail-source matches for NBG0's 131,072-byte bitmap, despite its
+enabled 8bpp bitmap mode and 1,024 title-palette CRAM word matches. It reports
+`source_join=unbound` and `semantic_admission=blocked`.
+
+The accompanying VDP2 memory-write trace is not complete at the displayed
+endpoint: its 250,000 retained rows stop at VDP1 frame 7,729 and it reports
+1,309,722 dropped rows before frame 8,060. The SH-2 VDP2-write trace also
+reports 1,046,883 dropped rows. The SCU DMA trace reached its 1,024-row cap
+without an overflow receipt, so it cannot be treated as complete. These traces
+do not identify the NBG0 bitmap producer or authorize semantic/display
+admission. Raw capture files and reports are kept outside Git in the
+`ymir_nexus_menu_vdp2_provenance_20261027` external evidence bundle; its
+`SHA256SUMS.txt` validates the retained files.
 
 This is authentic input-correlated source evidence for the Japanese menu
 selection state. It does not establish the complete `TITLE.BIN` decoding,
