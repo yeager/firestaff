@@ -948,9 +948,77 @@ if ! grep -Fq -- 'FIRESTAFF_THERON_PCE_FAST_POINTER_TRACE_SUPPORT' "$build_scrip
     printf '%s\n' 'FAIL: C1DF pointer tracing must build and capture with the PCE Fast core' >&2
     exit 1
 fi
-if ! grep -Fq -- 'RdOp(TheronTraceInstructionPC) == 0x20 &&' "$pointer_instrumenter" ||
-   grep -Fq -- 'TheronTraceInstructionPC >= 0xA71E' "$pointer_instrumenter"; then
-    printf '%s\n' 'FAIL: C1DF tracing must recognize JSR $C1DF at every caller address' >&2
+if ! python3 - "$pointer_instrumenter" <<'PY'
+import ast
+import re
+import sys
+from pathlib import Path
+
+instrumenter = Path(sys.argv[1])
+tree = ast.parse(instrumenter.read_text(encoding="utf-8"))
+replacement = None
+for node in ast.walk(tree):
+    if not isinstance(node, ast.Call) or getattr(node.func, "id", None) != "replace_once":
+        continue
+    if len(node.args) < 4:
+        continue
+    try:
+        path = ast.literal_eval(node.args[1])
+        code = ast.literal_eval(node.args[3])
+    except (TypeError, ValueError):
+        continue
+    if path == "src/pce_fast/huc6280.cpp" and "TheronPointerC1DFReturnPC =" in code:
+        replacement = code
+        break
+
+if replacement is None:
+    raise SystemExit("FAIL: generated PCE Fast C1DF hook was not found")
+
+condition_match = re.search(
+    r"\bif\s*\((?P<condition>(?:[^()]|\([^()]*\))*)\)\s*"
+    r"\{\s*TheronPointerC1DFReturnPC\s*=",
+    replacement,
+    re.DOTALL,
+)
+if condition_match is None:
+    raise SystemExit("FAIL: C1DF caller condition was not found")
+
+condition = condition_match.group("condition")
+address = r"RdOp\s*\(\s*TheronTraceInstructionPC\s*(?:\+\s*\d+\s*)?\)"
+number = r"(?:0[xX][0-9a-fA-F]+|\d+)"
+comparison = re.compile(
+    rf"(?P<left_call>{address})\s*(?P<left_op>==|!=|<=|>=|<|>)\s*"
+    rf"(?P<left_value>{number})"
+    rf"|(?P<right_value>{number})\s*"
+    rf"(?P<right_op>==|!=|<=|>=|<|>)\s*(?P<right_call>{address})"
+)
+
+byte_comparisons = set()
+for match in comparison.finditer(condition):
+    if match.group("left_call"):
+        call = match.group("left_call")
+        operator = match.group("left_op")
+        value = match.group("left_value")
+    else:
+        call = match.group("right_call")
+        operator = match.group("right_op")
+        value = match.group("right_value")
+    offset_match = re.search(r"\+\s*(\d+)", call)
+    offset = int(offset_match.group(1)) if offset_match else 0
+    if operator != "==":
+        raise SystemExit("FAIL: C1DF instruction bytes must be matched exactly")
+    byte_comparisons.add((offset, int(value, 0)))
+
+if byte_comparisons != {(0, 0x20), (1, 0xDF), (2, 0xC1)}:
+    raise SystemExit("FAIL: C1DF condition must match opcode 0x20 and operands 0xDF, 0xC1")
+
+unmatched = comparison.sub("", condition)
+unmatched = re.sub(r"\s+|&&|[()]", "", unmatched)
+if unmatched:
+    raise SystemExit("FAIL: C1DF condition contains an additional caller-PC restriction")
+PY
+then
+    printf '%s\n' 'FAIL: C1DF tracing must recognize the complete JSR $C1DF instruction at any caller address' >&2
     exit 1
 fi
 if ! grep -Fq 'PC Engine (CD)/TurboGrafx 16 (CD)/SuperGrafx' "$script" ||
