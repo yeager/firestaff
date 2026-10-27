@@ -20,16 +20,59 @@ fi
 scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$scratch_root"
 scratch=$(mktemp -d "$scratch_root/m12-main-game-picker.XXXXXX")
-scan_cache_home="$scratch/shared-scan-cache-home"
-mkdir -p "$scan_cache_home"
+archive_data_root="$scratch/archive-only-data"
+declare -a original_archives=()
+declare -a original_archive_hashes=()
+
+# The normal data root may contain extracted editions beside original
+# archives. Build a symlink-only view of every top-level ZIP so picker
+# ordering and edition availability stay intact without exposing extracted
+# trees. Snapshot each original archive so the test verifies it stays intact.
+for game_id in dm1 csb dm2; do
+    source_game_dir="$data_root/$game_id"
+    overlay_game_dir="$archive_data_root/$game_id"
+    mkdir -p "$overlay_game_dir"
+    if [[ ! -d "$source_game_dir" ]]; then
+        continue
+    fi
+    while IFS= read -r -d '' archive; do
+        ln -s "$archive" "$overlay_game_dir/$(basename "$archive")"
+        original_archives+=("$archive")
+        original_archive_hashes+=("$(firestaff_sha256_file "$archive")")
+    done < <(find "$source_game_dir" -maxdepth 1 -type f -iname '*.zip' -print0)
+done
+
+verify_original_archives_unchanged() {
+    local archive
+    local index=0
+    for archive in "${original_archives[@]}"; do
+        if [[ $(firestaff_sha256_file "$archive") != "${original_archive_hashes[$index]}" ]]; then
+            printf 'FAIL: original game archive changed during picker test: %s\n' "$archive" >&2
+            return 1
+        fi
+        index=$((index + 1))
+    done
+}
+
 cleanup() {
+    local test_status=$?
+    trap - EXIT HUP INT TERM
+    if ! verify_original_archives_unchanged; then
+        test_status=1
+    fi
     if [[ ${FIRESTAFF_KEEP_TEST_SCRATCH:-0} == 1 ]]; then
         echo "TEST SCRATCH PRESERVED: $scratch"
     else
         rm -rf "$scratch"
     fi
+    exit "$test_status"
 }
 trap cleanup EXIT HUP INT TERM
+
+if [[ ${#original_archives[@]} == 0 ]]; then
+    echo 'SKIP: no authentic top-level ZIP archives are available for DM1, CSB or DM2'
+    exit 77
+fi
 
 run_game_picker_case() {
     local game_id=$1
@@ -49,13 +92,13 @@ run_game_picker_case() {
 
     mkdir -p "$home"
     source_hash=$(firestaff_sha256_file "$game_archive")
-    # Keep each config isolated while sharing the identity-bound asset cache
-    # for the same original-media paths across the picker matrix.
+    # Keep both configuration and HOME isolated so previous cases cannot
+    # supply stale scanner or extracted-asset state.
     FIRESTAFF_CONFIG_PATH="$home/config.toml" \
     FIRESTAFF_DATA="$menu_data_root" \
     FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
     FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
-    HOME="$scan_cache_home" XDG_CONFIG_HOME="$home" APPDATA="$home" \
+    HOME="$home" XDG_CONFIG_HOME="$home" APPDATA="$home" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
         "$app" --debug --width 1920 --height 1080 \
         --data-dir "$menu_data_root" \
@@ -85,9 +128,28 @@ run_game_picker_case() {
         local matching_source=0
         local launch_line
         local logged_source
+        local logged_archive
+        local canonical_archive
+        canonical_archive=$(python3 - "$game_archive" <<'PY'
+import os
+import sys
+
+print(os.path.realpath(sys.argv[1]))
+PY
+)
         while IFS= read -r launch_line; do
             logged_source=${launch_line#* source=}
-            if [[ "$logged_source" == "$game_archive" || "$logged_source" == "$game_archive"::* ]]; then
+            logged_archive=${logged_source%%::*}
+            if [[ ( "$logged_archive" == "$game_archive" ||
+                    "$logged_archive" == "$canonical_archive" ) &&
+                  -f "$logged_archive" &&
+                  $(python3 - "$logged_archive" <<'PY'
+import os
+import sys
+
+print(os.path.realpath(sys.argv[1]))
+PY
+                  ) == "$canonical_archive" ]]; then
                 matching_source=1
                 break
             fi
@@ -118,6 +180,13 @@ run_alternate_platform_picker_case() {
     local navigation='wait-scan-complete,wait20'
     local game_card_index=0
     local index
+    local overlay_archive
+    overlay_archive="$archive_data_root/$game_id/$(basename "$source_archive")"
+    if [[ ! -f "$overlay_archive" ]]; then
+        printf 'FAIL: authentic archive is not present in the archive-only picker view: %s\n' \
+            "$source_archive" >&2
+        return 1
+    fi
     case "$game_id" in
         dm1) game_card_index=0 ;;
         csb) game_card_index=1 ;;
@@ -131,8 +200,8 @@ run_alternate_platform_picker_case() {
         navigation+=",key:down,wait20"
     done
     navigation+=",key:enter,wait20,key:enter,wait20,key:enter"
-    run_game_picker_case "$game_id" "$source_archive" "$navigation" \
-        "$edition" keyboard "$platform" "$data_root" \
+    run_game_picker_case "$game_id" "$overlay_archive" "$navigation" \
+        "$edition" keyboard "$platform" "$archive_data_root" \
         "$game_id-$platform-picker" resolved
     alternate_platform_cases=$((alternate_platform_cases + 1))
 }
@@ -157,10 +226,12 @@ if [[ -f "$data_root/dm1/Dungeon-Master_DOS_EN_Version-34.zip" ]]; then
     run_alternate_platform_picker_case dm1 \
         "$data_root/dm1/Dungeon-Master_DOS_EN_Version-34.zip" 1 PC pc34-en
 fi
-if [[ -f "$data_root/dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip" ]]; then
+if [[ -f "$data_root/dm1/Dungeon-Master_Atari-ST_EN.zip" ]]; then
     run_alternate_platform_picker_case dm1 \
-        "$data_root/dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip" 2 Atari\ ST \
-        're:st(10a-en|10b-en|11-en|12-en|12-de|13-fr)'
+        "$data_root/dm1/Dungeon-Master_Atari-ST_EN.zip" 2 Atari\ ST st10a-en
+elif [[ -f "$data_root/dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip" ]]; then
+    run_alternate_platform_picker_case dm1 \
+        "$data_root/dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip" 2 Atari\ ST st12-en
 fi
 if [[ -f "$data_root/dm1/Dungeon-Master_Amiga_EN_Version-20.zip" ]]; then
     run_alternate_platform_picker_case dm1 \
