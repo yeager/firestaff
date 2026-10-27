@@ -97,10 +97,13 @@ run_theron_direct_selection_case() {
     local log="$scratch/theron-direct-$edition.log"
     local probe="$scratch/theron-direct-$edition-runtime.json"
     local expected_edition=pce-en
+    local track02_dir
     local media_hash
     if [[ "$edition" == jp ]]; then
         expected_edition=pce-jp
     fi
+    track02_dir=$(cd -- "$(dirname -- "$track02")" && pwd -P)
+    track02="$track02_dir/$(basename -- "$track02")"
     mkdir -p "$case_root/theron"
     ln -s "$track02" "$case_root/theron/$(basename "$track02")"
     mkdir -p "$home"
