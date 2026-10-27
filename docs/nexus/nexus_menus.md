@@ -24,7 +24,10 @@ integrated here.
 The `verify_nexus_title_sprite_screenshot.py` verifier now checks five
 source-bound Japanese Continue sprites and the English New Game and Continue
 layouts, including retail `TITLE.BIN` offsets, VDP1 placement, CRAM color,
-priority, and every visible sprite pixel. The English layouts each match 1,451
+priority, both English 16-color palettes to byte-identical ranges in
+`TITLE.BIN`, and every visible sprite pixel. The icon palette is unique at
+`0x1486`; seven identical copies of the text palette are present in `TITLE.BIN`.
+The English layouts each match 1,451
 pixels in authentic Ymir captures. The background bitmap and full screen
 composition remain unbound, so this sprite receipt does not admit a Firestaff
 menu renderer. See the [English title-menu sprite receipt](../../parity-evidence/verification/nexus_english_title_menu_sprite_join_20261027/README.md).

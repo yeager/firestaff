@@ -15,6 +15,9 @@ from analyze_nexus_vdp1_source_join import accepted_retail_hashes, ymir_commands
 
 JAPANESE_TITLE_SHA256 = "51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3"
 ENGLISH_TITLE_SHA256 = "a634e8daf2a581df154b454919ee2ed44e937371668219d7cdf6d0983a613e44"
+ENGLISH_TITLE_MENU_PALETTE_OFFSETS = (
+    0x02F6, 0x0426, 0x0556, 0x0686, 0x07B6, 0x0986, 0x1F06, 0x1486,
+)
 JAPANESE_CONTINUE_DRAW_ROLES = (
     # Retail TITLE.BIN offset, dimensions, visible texels, VDP1 top-left.
     (0x0316, 64, 8, 313, (129, 153)),
@@ -105,7 +108,8 @@ def verify(bundle: Path, screenshot: Path, title_source: Path) -> None:
     source = (read_title_assets(None, title_source)[0]
               if title_source.suffix.lower() == ".cue"
               else title_source.read_bytes())
-    if hashlib.sha256(source).hexdigest() not in accepted_retail_hashes("TITLE.BIN"):
+    source_hash = hashlib.sha256(source).hexdigest()
+    if source_hash not in accepted_retail_hashes("TITLE.BIN"):
         raise ValueError("TITLE.BIN is not an authenticated retail resource")
     vram, frame, commands = ymir_commands(bundle)
     vdp2_vram = (bundle / "vdp2-vram.bin").read_bytes()
@@ -139,6 +143,27 @@ def verify(bundle: Path, screenshot: Path, title_source: Path) -> None:
     for role, (command_index, address, words, retail_offset, texture) in zip(
             roles, selected_draws):
         ctrl, mode, colr, src, size = words[0], words[2], words[3], words[4], words[5]
+        palette_source_offsets = ()
+        if source_hash == ENGLISH_TITLE_SHA256:
+            palette_start = (colr & 0x3F0) * 2
+            palette = cram[palette_start:palette_start + 32]
+            if len(palette) != 32:
+                raise ValueError("truncated captured CRAM palette")
+            matches = []
+            search_from = 0
+            while True:
+                offset = source.find(palette, search_from)
+                if offset < 0:
+                    break
+                matches.append(offset)
+                search_from = offset + 1
+            if (not matches or
+                    any(offset not in ENGLISH_TITLE_MENU_PALETTE_OFFSETS
+                        for offset in matches)):
+                raise ValueError(
+                    f"command {command_index} ({address:#x}) CRAM palette "
+                    "does not match an authenticated TITLE.BIN palette span")
+            palette_source_offsets = tuple(matches)
         priority_index = (colr >> 12) & 7
         priority_reg = int.from_bytes(regs[0xF0 + (priority_index // 2) * 2:
                                            0xF2 + (priority_index // 2) * 2], "big")
@@ -186,10 +211,14 @@ def verify(bundle: Path, screenshot: Path, title_source: Path) -> None:
                 f"{matches}/{count} screenshot matches, "
                 f"expected {expected_visible_texels} visible texels")
         checked.add(command_index)
+        palette_receipt = (
+            " palette_title_bin_offsets=" + ",".join(
+                f"{offset:#x}" for offset in palette_source_offsets)
+            if palette_source_offsets else "")
         print(
             f"frame={frame} command_index={command_index} command={address:#x} "
             f"title_bin_offset={retail_offset:#x} "
-            f"screenshot_matches={matches}/{count}")
+            f"{palette_receipt} screenshot_matches={matches}/{count}")
     if len(checked) != len(roles):
         raise ValueError("one or more source-bound title-menu sprites are missing")
     print(f"menu_state={state_name}")

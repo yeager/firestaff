@@ -32,8 +32,10 @@ surfaces have direct byte matches in VDP1 VRAM, but none of 137 textured command
 within those ranges. The menu screenshot confirms that Ymir displays the
 English-version title menu. A matched retail-menu capture now binds the five
 visible English New Game and Continue VDP1 sprites to `TITLE.BIN` offsets,
-captured CRAM colors, screen placement, and all 1,451 visible pixels in each
-state. This does not bind the NBG0 background or remaining screen composition;
+captured CRAM palette bytes present in authentic `TITLE.BIN` ranges, screen
+placement, and all 1,451 visible pixels in each state. The icon palette has one
+source match; seven identical copies of the text palette remain candidates.
+This does not bind the NBG0 background or remaining screen composition;
 the exact background source and complete display consumer are still unknown.
 The Ymir log records `0DMSTRT.BIN` and a CD Block soft reset,
 but no `DM.BIN` read event. Separately, an exact 230,669-byte prefix of the

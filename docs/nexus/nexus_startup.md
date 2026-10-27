@@ -1239,14 +1239,19 @@ The retail `TITLE.BIN` SHA-256 is
 `a634e8daf2a581df154b454919ee2ed44e937371668219d7cdf6d0983a613e44`. For New
 Game, the five visible VDP1 draws read retail offsets `0x14a6`, `0x14a6`,
 `0x0446`, `0x0576`, and `0x07d6`. For Continue, they read `0x0316`, `0x14a6`,
-`0x14a6`, `0x06a6`, and `0x07d6`. Captured dimensions, VDP1 placement, sprite
-priority, CRAM colors, and VDP2 back-screen composition reproduce all 1,451
-visible pixels in each screenshot. The external captures and extracted retail
+`0x14a6`, `0x06a6`, and `0x07d6`. Their two distinct 16-color palettes match
+captured CRAM bytes to `TITLE.BIN`: the icon palette matches uniquely at
+`0x1486`, while the identical text palette occurs at `0x02f6`, `0x0426`,
+`0x0556`, `0x0686`, `0x07b6`, `0x0986`, and `0x1f06`. The capture cannot
+distinguish which identical text-palette copy was uploaded. Captured dimensions,
+VDP1 placement, sprite priority, CRAM colors, and VDP2 back-screen composition
+reproduce all 1,451 visible pixels in each screenshot. The external captures and extracted retail
 `TITLE.BIN` are retained at
 `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_english_menu_source_join_20261027/`.
 
-This binds the five English menu sprites to authentic `TITLE.BIN` data and the
-captured display colors. It does not bind the background bitmap, full-screen
+This binds the five English menu sprites and both palette tables to authentic
+`TITLE.BIN` data and the captured display colors. It does not bind the
+background bitmap, full-screen
 composition, upload timing, the Configuration page, or Firestaff's runtime
 menu renderer and input route. The wider English VDP1 source join remains
 partial at 126 of 137 informative draws; its remaining 11 spans are zero

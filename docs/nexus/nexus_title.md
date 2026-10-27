@@ -47,7 +47,9 @@ animation route is admitted without capture evidence.
 
 Separate English retail menu captures now bind the five New Game and Continue
 VDP1 sprite draws to exact `TITLE.BIN` byte ranges, captured CRAM colors,
-screen coordinates, and 1,451/1,451 visible pixels per state. The background
+screen coordinates, and 1,451/1,451 visible pixels per state. Their two
+16-color palettes match retail `TITLE.BIN` bytes. The icon palette has a unique
+match at offset `0x1486`; the text palette has seven identical copies. The background
 bitmap, remaining composition, and upload timing remain unbound; the bounded
 sprite receipt does not admit the title/menu renderer. See the
 [English menu sprite source join](../../parity-evidence/verification/nexus_english_title_menu_sprite_join_20261027/README.md).

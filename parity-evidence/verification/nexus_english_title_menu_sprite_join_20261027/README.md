@@ -34,18 +34,21 @@ matched five VDP1 sprite commands to exact source offsets in the English
 captured CRAM color and VDP2 back-screen color. VDP1 horizontal flipping is
 applied before comparison.
 
-| Retail state | Source offsets in command order | Screenshot texels matched |
-| --- | --- | ---: |
-| New Game | `0x14a6`, `0x14a6`, `0x0446`, `0x0576`, `0x07d6` | 1,451 / 1,451 |
-| Continue | `0x0316`, `0x14a6`, `0x14a6`, `0x06a6`, `0x07d6` | 1,451 / 1,451 |
+| Retail state | Sprite offsets in command order | Retail palette byte matches | Screenshot texels matched |
+| --- | --- | --- | ---: |
+| New Game | `0x14a6`, `0x14a6`, `0x0446`, `0x0576`, `0x07d6` | Icon palette: `0x1486`; text palette: `0x02f6`, `0x0426`, `0x0556`, `0x0686`, `0x07b6`, `0x0986`, `0x1f06` | 1,451 / 1,451 |
+| Continue | `0x0316`, `0x14a6`, `0x14a6`, `0x06a6`, `0x07d6` | Icon palette: `0x1486`; text palette: `0x02f6`, `0x0426`, `0x0556`, `0x0686`, `0x07b6`, `0x0986`, `0x1f06` | 1,451 / 1,451 |
 
-Both captures report sprite priority 5 and color ratio 31/32. These receipts
-bind the five visible English menu sprites to retail bytes, palette colors,
-placement, and pixels. The wider source join still finds informative retail
-bytes for only 126 of 137 textured draws; 11 remaining spans are zero padding.
-This does not bind the NBG0 background image, the complete screen compositor,
-the original upload timing, configuration behavior, or Firestaff's runtime
-route.
+The two distinct 32-byte palettes match captured CRAM exactly. The icon palette
+occurs uniquely at `TITLE.BIN` offset `0x1486`; the text palette has identical
+copies at the seven listed offsets, so the capture does not identify which copy
+the game uploaded. Both captures report sprite priority 5 and color ratio
+31/32. These receipts bind the five visible English menu sprites to retail
+texture bytes, retail palette bytes, placement, and screenshot pixels. The
+wider source join still finds informative retail bytes for only 126 of 137
+textured draws; 11 remaining spans are zero padding. This does not bind the
+NBG0 background image, the complete screen compositor, the original upload
+timing, configuration behavior, or Firestaff's runtime route.
 
 ## Reproduction
 
