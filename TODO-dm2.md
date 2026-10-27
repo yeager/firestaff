@@ -1,3 +1,11 @@
+2026-10-27 authentic cross-platform CLI startup matrix: direct startup passed
+for the original DOS English archive, Macintosh French SIT media, and FM Towns
+Japanese archive. The separate authentic-media main-menu selection test also
+passed for DM2 PC and FM Towns Japanese. DOS French, Macintosh English, and
+Amiga English cases were skipped because their data-root symlinks point to
+missing files; no substitute media was used. SDL dummy verifies the exercised
+source startup and handoff paths, not native display or physical input parity.
+
 2026-10-25 selected DM2 PC loose-language owner: the authentic DOS English
 and French archives share a dungeon payload but have different GRAPHICS.DAT
 hashes. A reproduced no-game M12 selection handed off `pc-fr` while the M11

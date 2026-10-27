@@ -7,9 +7,15 @@ and Utility Disk STX members both exist in the authentic Atari
 (`aea724d663554e84393a77c45c010753c5bfb1a3a5a83d1264b5ef2af9aa5c6f`)
 matches the already extracted original STX file. CMake now binds both archive
 inputs to that Atari package, and the extraction pattern includes the member's
-archive path. This fixes the test fixture; the rerun must still prove the
-native in-memory CLI route before the Atari Hint Oracle startup is considered
-verified.
+archive path. `csb_v1_hint_oracle_native_cli_boot` now passes and emits the
+native in-memory readiness receipt from the original Atari R1 media.
+
+2026-10-27 authentic cross-platform CLI startup matrix: the current-source
+real-media cases passed for Atari STX, original Atari, nested Atari ZIP,
+native Atari Utility Disk 7z/Hint Oracle, Amiga A31E/A33M/A35E/CTRaw, and FM
+Towns English/Japanese. The Atari French preservation case remains unverified
+because its original archive is absent. SDL dummy verifies the source startup
+and handoff routes, not native display or physical input parity.
 
 2026-10-27 authentic CSB Amiga A31E archive and mixed-picker retest: the
 installed `Chaos Strikes Back (FTL).zip` is a 901,330-byte ZIP wrapper around
