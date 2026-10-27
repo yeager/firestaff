@@ -25,8 +25,8 @@
   `$02/$03` in all nine runs; general RAM deltas varied and remain opaque.
 - All runs lack CD IRQ, raw-sector binding, and authenticated CD-to-RAM
   receipts because save-state loading bypasses the original transfer. This is
-  repeatable input-coupled screen-memory evidence only; it proves no party
-  movement, command semantics, or native rendering mapping. Full method and
+  repeatable input-coupled screen-memory evidence only; it does not establish
+  party movement, command semantics, or native rendering mapping. Full method and
   limits: [JP save-state input repeat capture](docs/source-lock/theron-disassembly/theron-jp-save-state-input-repeat-20261027.md).
 
 ## 2026-10-26 — trace-driven decode of the initializer's $43AB helper
