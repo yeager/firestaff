@@ -1,6 +1,6 @@
 # Firestaff Wiki
 
-> **Status reviewed 2026-10-27 (main `2d4c2421`).** Firestaff has five active game targets.
+> **Status reviewed 2026-10-27 (main `d18445cc`).** Firestaff has five active game targets.
 > DM1 PC 3.4 V1 has a playable source-owned route; CSB and DM2 have bounded
 > native real-media routes, Theron reaches a loaded JP dungeon with native ticks
 > and rendered frames, and Firestaff presents admitted Nexus MAPD title assets.
