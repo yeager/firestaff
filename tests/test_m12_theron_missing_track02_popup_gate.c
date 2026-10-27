@@ -363,6 +363,64 @@ static void check_card_click_popup_surfaces_track02_hint(char* dataDir) {
     CHECK(popup_lines_cleared(&state));
 }
 
+static void check_early_theron_selection_waits_for_scan(char* dataDir) {
+    M12_StartupMenuState state;
+    const unsigned int allGamesCompleted = (1U << 5) - 1U;
+    const unsigned int theronScanCompleted = 1U << 4;
+
+    M12_StartupMenu_InitWithDataDir(&state, dataDir, NULL);
+    force_english_locale(&state);
+    if (state.view == M12_MENU_VIEW_MESSAGE) {
+        M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    }
+    seed_theron_unavailable_with_metadata(&state, 0);
+    state.selectedIndex = 4;
+    state.deferredScanPending = 1;
+    state.deferredScanCompletedGameMask = 0U;
+
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    CHECK(state.view == M12_MENU_VIEW_MAIN);
+    CHECK(state.selectedIndex == 4);
+    CHECK(state.deferredTheronSelectionPending == 1);
+    CHECK(state.launchRequested == 0);
+
+    state.deferredScanPending = 0;
+    state.deferredScanActive = 1;
+    (void)M12_StartupMenu_Update(&state);
+    CHECK(state.deferredTheronSelectionPending == 1);
+    CHECK(state.view == M12_MENU_VIEW_MAIN);
+
+    state.deferredScanCompletedGameMask = theronScanCompleted;
+    (void)M12_StartupMenu_Update(&state);
+    CHECK(state.deferredTheronSelectionPending == 0);
+    CHECK(state.view == M12_MENU_VIEW_MESSAGE);
+    CHECK(state.messageIsMissingGameData == 1);
+    CHECK(strcmp(state.messageGameId, "theron") == 0);
+
+    M12_StartupMenu_Destroy(&state);
+
+    M12_StartupMenu_InitWithDataDir(&state, dataDir, NULL);
+    force_english_locale(&state);
+    if (state.view == M12_MENU_VIEW_MESSAGE) {
+        M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    }
+    seed_theron_unavailable_with_metadata(&state, 0);
+    state.selectedIndex = 4;
+    state.deferredScanActive = 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    CHECK(state.deferredTheronSelectionPending == 1);
+
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    CHECK(state.deferredTheronSelectionPending == 0);
+    state.deferredScanActive = 0;
+    state.deferredScanCompletedGameMask = allGamesCompleted;
+    (void)M12_StartupMenu_Update(&state);
+    CHECK(state.view == M12_MENU_VIEW_MAIN);
+    CHECK(state.launchRequested == 0);
+    CHECK(state.messageIsMissingGameData == 0);
+    M12_StartupMenu_Destroy(&state);
+}
+
 static void check_options_launch_popup_surfaces_track02_hint(char* dataDir) {
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
@@ -531,6 +589,7 @@ int main(void) {
     check_hash_set_contract();
     check_scan_no_data_marks_theron_unavailable(dataDir);
     check_card_click_popup_surfaces_track02_hint(dataDir);
+    check_early_theron_selection_waits_for_scan(dataDir);
     check_options_launch_popup_surfaces_track02_hint(dataDir);
     check_quick_resume_popup_surfaces_track02_hint(dataDir);
     check_unrelated_games_unaffected_by_theron_gate(dataDir);

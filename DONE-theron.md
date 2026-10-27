@@ -3,19 +3,21 @@
 ## 2026-10-27 — skip launch cards when selecting Theron
 
 Theron selection from the native game list now enters the existing validated
-Track 02 launch path directly. The platform, presentation, and Run cards remain
-available for titles that use them. Missing media keeps the actionable
-Track 02 message and returns to the game list. Verification on trv2: Debug
-build of `firestaff` and `test_m12_theron_missing_track02_popup_gate` passed;
-the authentic US runtime test also passed after connecting to trv2 by IP. With
-only a symlink to the user's original `TQUS02.bin` in the scan root, one
-Theron selection from the no-game menu entered native startup, then the
-existing launcher-to-game route reached Theron's first native runtime. The
-test's direct-selection duration was raised from 10 to 30 seconds after the
-authentic data scan consumed 5.6 seconds and the shorter run timed out before
-input completed. No game bytes were copied. Shell syntax, Python compilation,
-`po/update.sh --check`, and `git diff --check` passed. Full Theron parity
-remains open.
+Track 02 launch path directly. If the player selects Theron before its deferred
+media scan finishes, the selection stays on the game list and resumes as soon
+as the authentic Theron result is published, even if the overall scan
+continues; navigating away cancels it. The platform,
+presentation, and Run cards remain available for titles that use them. Missing
+media keeps the actionable Track 02 message and returns to the game list.
+Verification on trv2: Debug build of `firestaff` and
+`test_m12_theron_missing_track02_popup_gate` passed. With separate scan roots
+containing only symlinks to the user's original US and JP Track 02 BINs, a
+single Theron selection in each edition reached native startup before scan
+completion; the existing US launcher-to-game route also reached Theron's first
+native runtime. The real-media script returns skip status 77 when selected US
+Theron media is absent. No game bytes were copied or modified. Shell syntax,
+Python compilation, `po/update.sh --check`, and `git diff --check` passed. Full
+Theron parity remains open.
 
 ## 2026-10-26 — verify and decode the runtime initializer helper candidates
 

@@ -113,8 +113,8 @@ run_theron_direct_selection_case() {
         HOME="$home" XDG_CONFIG_HOME="$home" APPDATA="$home" \
         SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
         "$app" --debug --width 320 --height 200 --data-dir "$case_root" \
-            --script 'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait:20' \
-            --duration 30000 >"$log" 2>&1 || {
+            --script 'wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait:20' \
+            --duration 60000 >"$log" 2>&1 || {
                 cat "$log" >&2
                 return 1
             }
@@ -149,6 +149,9 @@ if [[ "$selected_game" == all || "$selected_game" == theron ]]; then
         30000 'PC Engine'
   else
     echo 'SKIP: authentic Theron US Track 02 is unavailable'
+    if [[ "$selected_game" == theron ]]; then
+        exit 77
+    fi
   fi
   if [[ -f "$theron_jp_track02" ]]; then
     run_theron_direct_selection_case jp "$theron_jp_track02"
