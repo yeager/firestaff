@@ -699,6 +699,51 @@ boot. It does not label the exact semantic role of each texture, bind the
 palette source, prove transfer-to-frame timing, or admit a Firestaff title-menu
 renderer. The existing production gates remain in force.
 
+## SCU DMA transfers indexed by deterministic capture frame (2026-10-27)
+
+A follow-up authentic cold-boot run added a zero-based CLI capture-loop frame
+to every SCU DMA transfer row. It used the same hash-verified Japanese retail
+disc and BIOS, with no save state or game save. The capture ran 9,120 frames
+with `--debug --capture-no-present --capture-no-render --trace-scu-dma` and the
+same deterministic date/time, intro-skip, and title-prompt inputs documented
+above. The no-render run has no screenshot and cannot establish displayed
+pixels.
+
+The SCU manifest reports 7,986 retained transfers, zero dropped rows, and
+complete trace data. The CSV has 7,987 lines including its header. Transfer
+rows 3347, 3348, 3350, and 3360 are each indexed to capture-loop frame 7564.
+Their complete transfer bytes match the authentic Japanese `TITLE.BIN` at the
+listed offsets, and match both the corresponding captured high-WRAM bytes and
+final VDP1 VRAM bytes:
+
+| Transfer | Capture-loop frame | WRAM source | VDP1 destination | Bytes | `TITLE.BIN` offset |
+|---:|---:|---:|---:|---:|---:|
+| 3347 | 7564 | `0x060aa1c6` | `0x05c47de0` | 1,024 | `0x0446` |
+| 3348 | 7564 | `0x060aa2f6` | `0x05c479e0` | 1,024 | `0x0576` |
+| 3350 | 7564 | `0x060aa556` | `0x05c46f60` | 1,664 | `0x07d6` |
+| 3360 | 7564 | `0x060ab376` | `0x05c44060` | 1,152 | `0x15f6` |
+
+These values are capture-loop frames, not VDP1 frame numbers. The VDP1 receipt
+for this dump ends at VDP1 frame 8037 with 178 commands for that frame; the
+run does not provide an exact mapping between the two counters. The data
+therefore strengthens byte provenance and deterministic timing, but does not
+assign semantic labels to texture spans, identify palette ownership, or prove
+a transfer-to-displayed-frame relation.
+
+The raw dump bundle and reproducible receipt are retained at
+[`scu_dma_frame_index_20261027`](/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/scu_dma_frame_index_20261027/).
+Its README SHA-256 is
+`65c2fe206b937c3dc2a4e09cb1626389db458c9b9f5ca89a01b678a044a07c7d`, its
+checksum-list SHA-256 is
+`e9716f9f444789cba25613cab128e8a92a1400a49888f0948e3ac315e359f849`, and the
+SCU CSV SHA-256 is
+`77e3e2e1e667956092e1fd75b183e5e0929f1dd698d22364171be90561e4a4bb`. All 31
+dump files were verified after transfer to the external evidence disk.
+
+This capture uses the frame-indexed exporter proposed in [Yeager Ymir PR
+#2](https://github.com/yeager/Ymir/pull/2). It remains diagnostic evidence;
+the Firestaff title-menu rendering and interaction gates stay closed.
+
 ## Sources
 
 - DMWeb Nexus file formats and DMN Data File Decoder.
