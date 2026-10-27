@@ -66,6 +66,15 @@ int csb_v1_visible_front_inscription_receipt(
 int csb_v1_inscription_media720_f0635_lines(
     const uint8_t *layout, size_t size, int big_endian, int out_bottom_y[4]);
 
+/* Resolve the native MEDIA720 F0107 wall-ornament anchor from C696.  The
+ * caller supplies the already-scaled bitmap dimensions because F0635 places
+ * the decoded/derived bitmap against the source layout anchor. */
+int csb_v1_inscription_media720_f0635_wall_ornament_anchor(
+    const uint8_t *layout, size_t size, int big_endian,
+    int coordinate_set, int view_wall_index,
+    int bitmap_width, int bitmap_height,
+    int *out_x, int *out_y);
+
 /* F31J DUNGEON.C F0168's second pass.  The first F0168 pass represents each
  * source byte as two letters A..P (apart from literal separators/control
  * bytes); this pass restores the original Shift-JIS byte stream in place.

@@ -243,6 +243,62 @@ int csb_v1_inscription_media720_f0635_lines(
     return found == 4;
 }
 
+int csb_v1_inscription_media720_f0635_wall_ornament_anchor(
+    const uint8_t *layout, size_t size, int be,
+    int coordinate_set, int view_wall_index,
+    int bitmap_width, int bitmap_height,
+    int *out_x, int *out_y)
+{
+    uint16_t ranges, r;
+    size_t records;
+    int zone_index;
+    int found = 0;
+    int record_type = -1;
+    int anchor_x = 0;
+    int anchor_y = 0;
+
+    if (!layout || !out_x || !out_y || size < 4u ||
+        coordinate_set < 0 || coordinate_set > 8 ||
+        view_wall_index < 0 || view_wall_index >= 15 ||
+        bitmap_width <= 0 || bitmap_height <= 0 ||
+        layout_u16(layout, be) != 0xfc0du) return 0;
+    zone_index = 1004 + coordinate_set * 15 + view_wall_index;
+    ranges = layout_u16(layout + 2u, be);
+    if (!ranges || 4u + (size_t)ranges * 4u > size) return 0;
+    records = 4u + (size_t)ranges * 4u;
+    for (r = 0; r < ranges; ++r) {
+        const uint16_t first = layout_u16(layout + 4u + (size_t)r * 4u, be);
+        const uint16_t last = layout_u16(layout + 6u + (size_t)r * 4u, be);
+        uint32_t index;
+        if (last < first) return 0;
+        for (index = first; index <= last; ++index, records += 8u) {
+            uint16_t type, parent;
+            if (records > size || size - records < 8u) return 0;
+            type = layout_u16(layout + records, be);
+            parent = layout_u16(layout + records + 2u, be);
+            if ((int)index == zone_index) {
+                if (found || parent != 4u || (type != 0u && type != 7u))
+                    return 0;
+                record_type = (int)type;
+                anchor_x = (int)(int16_t)layout_u16(layout + records + 4u, be);
+                anchor_y = (int)(int16_t)layout_u16(layout + records + 6u, be);
+                found = 1;
+            }
+        }
+    }
+    if (!found || anchor_x < 0 || anchor_x > 224 ||
+        anchor_y < 0 || anchor_y > 136) return 0;
+
+    /* COORD.C F0635's MEDIA720 cases 0 and 7: the source layout names a
+     * centre anchor; row type 0 centres vertically, while type 7 anchors the
+     * bitmap's bottom edge.  Parent record 4 is the 224x136 viewport. */
+    *out_x = anchor_x - ((bitmap_width + 1) >> 1);
+    *out_y = record_type == 0
+        ? anchor_y - ((bitmap_height + 1) >> 1)
+        : anchor_y - (bitmap_height - 1);
+    return 1;
+}
+
 static void csb_v1_front_square(const CSB_V1_RuntimeProfile *runtime,
                                 int *x, int *y)
 {

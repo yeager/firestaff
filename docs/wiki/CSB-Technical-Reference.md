@@ -1,8 +1,11 @@
 # Chaos Strikes Back (CSB) Technical Reference
 
-> **Status reviewed 2026-09-04.** CSB has native Amiga, Atari ST and FM Towns
-> media paths, broad source-locked engine coverage and ongoing end-to-end
-> runtime hardening.
+> **Status reviewed 2026-10-27.** CSB has bounded native Amiga, Atari ST and
+> FM Towns runtime routes, broad source-locked engine coverage and ongoing
+> parity work. Amiga F0107 now uses source MEDIA720 scales and authentic C696
+> anchors; matched-frame, palette/light, inscription and trapdoor parity remain
+> unverified. A31M/A33M SWSH resources are decoded through a verified playback
+> path, but native intro timing and audible output are not yet verified.
 
 ## Scope
 
@@ -153,6 +156,14 @@ inside its own `0x8001` envelope. These routes are intentionally separate:
 neither an IMG3 decoder nor a different platform's pixels may stand in for a
 missing native record. C001/C004 are examples of authenticated Amiga IMG1
 surfaces, not evidence that every platform shares the same encoding.
+
+The Amiga viewport's F0107 wall-ornament path uses source MEDIA720 scale
+selection and placement anchors decoded from the authentic Amiga `Graphics.DAT`
+item 696. The focused real-data check validates record decoding and selected
+anchor values. It does not establish final framebuffer placement or prove
+palette/light, inscription readability, alcove appearance, floor trapdoor
+visibility or complete Amiga viewport parity; those remain separate capture
+gaps.
 
 ## CSBWin DSA Boundary
 

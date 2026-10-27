@@ -9,6 +9,36 @@ modes, including source palette, runtime, champion selection, movement and
 MINI.DAT item checks. This corrects the test bound; it does not change or claim
 visual parity for the Atari startup animation.
 
+2026-10-27 CSB Amiga A33M runtime retest: the current `firestaff` build
+passed `test_csb_v1_amiga_native_cli_boot.sh` against the installed authentic
+`~/.firestaff/data/csb/amiga33-original` package. The script confirmed menu and
+direct CLI startup, the source-owned startup phase, the first runtime frame,
+movement, and the expanded runtime input matrix. This verifies launch and
+input ownership only; its aperture hash is not a pixel-parity check, so the
+reported black alcoves/torches, unreadable inscriptions, and missing trapdoors
+remain open. The separate ZIP/ADF family decoder test could not run because
+the expected `Chaos Strikes Back (FTL).zip` wrapper is absent on this host;
+the loose authentic A33M `Graphics.DAT` is present, but that test accepts only
+the original ZIP/ADF container route.
+
+2026-10-27 Amiga MEDIA720 F0107 placement: the runtime now resolves the source
+C696 wall-ornament anchor from authenticated Amiga `Graphics.DAT` item 696 and
+applies source MEDIA720 F0107 scales (C30 x/C14 y for the outer D3 side views,
+C14 for the other D3 views, and C21 for D2/D1), then resolves the C696
+type-0/type-7 center or bottom-center anchor. It uses the complete M615 source
+bitmap without PC34 source cropping. This follows ReDMCSB
+`DUNVIEW.C` F0107's `1004 + CoordinateSet * 15 + ViewWallIndex` selection and
+`COORD.C` F0635's MEDIA720 anchor rules. The G0194 coordinate-set/view ordering
+matches the shared compatibility table. The path fails closed if item 696 or
+its selected record is invalid. This removes the concrete PC34-layout
+placement mismatch, but does not establish visual parity: a matched original
+pose is still needed to compare palette/light, alcove/torch appearance,
+inscription contrast, and the separate floor trapdoor path. The CLI test above
+proves startup and input ownership only. The target compiled, and a focused
+utility using the installed original A33M `Graphics.DAT` passed F0635 anchor
+checks for C696 zones 1004, 1034 and 1124 (type 0, type 7, type 0). This checks
+the parser against real bytes, not their final framebuffer placement.
+
 2026-10-26 F0107 wall-ornament blit: the shared ReDMCSB viewport callback
 resolved a layout and material plan, but its final pixel loop copied source
 pixels 1:1 and ignored `sourceScaleX32`, `sourceScaleY32`, horizontal flip,
@@ -64,21 +94,18 @@ gaps and bounds what can be concluded:
   transparency, draw order, palette/light row and inscription raster before
   changing any asset mapping. Use the installed originals; do not replace
   these records with generated art.
-- A concrete cross-platform wall-ornament mismatch exists in that Amiga
+- A concrete cross-platform wall-ornament mismatch existed in that Amiga
   viewport route: the M615 provider supplies original Amiga records, while
-  F0107 calls the PC34 `dm1_v1_wall_ornament_render_plan_pc34`, whose source
-  coordinates/palette and derived-image geometry come from PC GRAPHICS.DAT
-  layout 696/G0205. The source inventory confirms both PC34 and Amiga M615
+  F0107's shared PC34 planner derives its initial source plan from PC
+  GRAPHICS.DAT layout 696/G0205. The source inventory confirms both PC34 and Amiga M615
   use the base-plus-two-per-ornament family, so the numeric ID stride is not
   itself the defect. MEDIA720 defines `M587_VIEW_WALL_D1C_FRONT` as 14; the
   wrapper maps shared row 14 to the PC34 planner's internal row 12. That
   translation is explicitly intended to bridge the two index orders and is
-  not, by itself, proof of a defect. The verified gap is that the selected
-  Amiga pixel is still planned and placed through PC34 layout 696/G0205;
-  source-native Amiga coordinate-set and palette/light handling must be
-  compared before concluding which visible failures this causes. F0107 needs
-  an Amiga-specific plan grounded in original `DUNVIEW.C`/`COORD.C` behavior
-  while retaining exact M615 pixels. The installed authentic A33M
+  not, by itself, proof of a defect. Its final screen placement now uses
+  source-native F0107 scales and C696 anchors from authenticated Amiga item
+  696, as described above. Palette/light handling and matched-frame comparison remain open before
+  concluding which visible failures this causes. The installed authentic A33M
   `Graphics.DAT` has MD5 `61fbfd56887c94adc26888a9491c6611` (749 records);
   its M615 source headers show distinct native dimensions, for example item
   259 is 10x42 and item 260 is 90x56. This confirms the paired originals are
@@ -100,20 +127,12 @@ gaps and bounds what can be concluded:
 - The shared F0107 raster loop applies the render plan's horizontal flip,
   palette map, source scale and transparency through
   `dm1_v1_viewport_3d_blit_wall_ornament_pc34`; those operations are not the
-  remaining Amiga defect. The open gap is earlier in the path: the production
-  Amiga CSB transaction calls `csb_v1_boot_render_viewport_frame_pc34`, whose
-  F0107 planner still derives screen placement from PC34 G0205/layout-696
-  rules. ReDMCSB DUNVIEW.C F0107 and COORD.C F0635 give Amiga its own native
-  coordinate tables and bitmap pairs, so matching record IDs alone does not
-  establish correct Amiga geometry. For example, the authenticated A33M
-  `Graphics.DAT` has distinct M615 records 259 (10x42) and 260 (90x56), while
-  a translated PC34 outer-wall plan can request a 224x136 region. Implement
-  an Amiga-specific plan that binds the selected M615 record to the original
-  Amiga coordinate set and clipping rules, then compare a matched original
-  and Firestaff frame. The installed original `Graphics.DAT` hash is
-  `61fbfd56887c94adc26888a9491c6611`; do not replace its records with
-  reconstructed or generated art. Until the native placement is verified,
-  Amiga CSB wall-ornament and full viewport parity remain open.
+  remaining Amiga defect. The production transaction still uses the shared
+  planner to select M615, but final ornament placement now uses the native
+  anchor from authenticated Amiga C696 item 696. The installed original
+  `Graphics.DAT` hash is `61fbfd56887c94adc26888a9491c6611`; do not replace
+  its records with reconstructed or generated art. Matched-frame verification,
+  palette/light parity, and full viewport parity remain open.
 - The common Amiga FTL/SWSH prelude is now wired for the authenticated A31M/A33M
   multi-language Amiga profile. The launcher reads `SWSH.FTL` beside the
   selected `GRAPHICS.DAT`, requires the known original file fingerprint, then

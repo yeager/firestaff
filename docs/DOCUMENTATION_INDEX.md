@@ -13,7 +13,7 @@ original-media playability or pixel parity.
 | Game | Verified today | Active boundary |
 |---|---|---|
 | Dungeon Master (DM1) | Playable PC 3.4 V1 route; separately verified Atari ST, Amiga and FM Towns starts | Continued original-route captures and V2 visual polish |
-| Chaos Strikes Back (CSB) | Bounded native real-media routes on Atari ST, Amiga and FM Towns | Wider campaign, save and visual-capture evidence |
+| Chaos Strikes Back (CSB) | Bounded native real-media routes on Atari ST, Amiga and FM Towns; Amiga F0107 uses source MEDIA720 scales and authentic C696 anchors, and A31M/A33M SWSH resources have a verified playback path | Matched Amiga frame, palette/light, inscription, floor trapdoor, native intro timing/audio, wider campaign, save and viewport evidence |
 | Dungeon Master II: Skullkeep | Bounded real-media routes on DOS, Amiga, FM Towns and Macintosh | Full record/save ownership and wider source UI, audio and mechanics parity |
 | DM Nexus | Bounded presentation of retail MAPD title assets from Saturn CUE/BIN, plus source-owned disc/format work. A Japanese retail and English-version Ymir cold boot reach the native title menu; the English screenshot replay is pixel-exact and its source join has 126 informative matches among 137 textured draws. These are reference-emulator results, not Firestaff gameplay support. A capture-only NBG1 tile-address correction has an authentic-frame test in merged PR #19 | Full Firestaff Saturn title composition and title-to-menu parity; menu, HUD and dungeon display-consumer evidence; the decoder fix and emulator references do not change production readiness |
 | Theron's Quest | Bounded JP runtime and US startup from authentic Track 02 media; three JP `--debug` runtime loops and source-only loaders for all seven regional dungeons. The Firestaff snapshot route produces a nonblack presented frame | Original-emulator comparison, JP state/map/input join, pit consumer, original presentation, save semantics, later progression and end-to-end gameplay remain unverified |
@@ -70,6 +70,18 @@ research and must not be copied into current status or wiki pages.
 - [Theron input notes](theron_input.md) — native controls and the separate, unverified original-emulator menu-hold procedure
 - [Theron capture readiness](THERON_CAPTURE_READINESS.md) — current authenticated `--debug` and emulator evidence, capture requirements, and open runtime joins
 
+## Active per-game work logs
+
+These files record implementation evidence and the remaining gaps for each
+game. Read them with the status matrix above: a completed focused check closes
+only the behavior and edition it names.
+
+- [Dungeon Master TODO](../TODO-dm1.md) and [DONE log](../DONE-dm1.md)
+- [Chaos Strikes Back TODO](../TODO-csb.md) and [DONE log](../DONE-csb.md)
+- [Dungeon Master II TODO](../TODO-dm2.md) and [DONE log](../DONE-dm2.md)
+- [Nexus TODO](../TODO-nexus.md) and [DONE log](../DONE-nexus.md)
+- [Theron's Quest TODO](../TODO-theron.md) and [DONE log](../DONE-theron.md)
+
 ## Wiki map
 
 The checked-in pages under [`docs/wiki/`](wiki/) are the source for the GitHub
@@ -115,4 +127,7 @@ release, run the focused tests for the affected game, check Markdown links and
 run the build/CI commands in [CI.md](CI.md). Do not commit original game data,
 emulator saves, private capture logs or generated placeholder art.
 
-**Last reviewed:** 2026-10-27 (main `e70c460d`).
+**Last reviewed:** 2026-10-27 (main `2d4c2421`). The latest commit only
+isolates concurrent data-dialog test scratch directories; the prior
+functional status and CI evidence remains tied to the revisions cited on the
+status pages.
