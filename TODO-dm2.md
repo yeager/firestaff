@@ -1,3 +1,15 @@
+# Firestaff TODO — DM2
+
+2026-10-27 indoor live-missile compositor status: each production indoor
+composition now builds `DM2_V1_IndoorLiveMissilePlan` from authenticated live
+DB14 chains and stores it in `last_indoor_live_missile_plan`. The plan is still
+diagnostic state: `dm2_v1_render_indoor_items_and_creatures` does not merge
+those events into the item/creature painter walk or draw them there. The
+separate legacy projectile drain cache also remains unpopulated. Keep the
+projectile pixel and source-order parity gap open until source-ordered current
+slot and successful-creature replay events are consumed by the renderer and
+checked against original DM2 media.
+
 2026-10-27 authentic cross-platform CLI startup matrix: direct startup passed
 for the original DOS English archive, Macintosh French SIT media, and FM Towns
 Japanese archive. The separate authentic-media main-menu selection test also
@@ -214,8 +226,6 @@ verification does not reproduce it. Source reference:
 [SKProject startend.cpp](https://github.com/gbsphenx/skproject/blob/2c59a2c5a7978923ff5c822c15c3479e4d448493/SKWINSPX/src/v5/startend.cpp#L249-L347).
 
 2026-10-18 v3.0.386 original-media CLI/menu retest: `test_dm2_v1_fmtowns_native_cli_boot.sh` passed the reported bare `--game dm2` AUTO route with authentic DOS, Amiga, Macintosh and FM Towns media installed. FM Towns reached the New Game menu within 40 seconds; the presented 320x200 menu RGB matched the independently decoded original `TITLE/0/4` digest `367b54aa92b46d6e`; the normal M12 loop then reached the first champion with original assets and no core fallbacks. `test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh returns` also passed DM2 DOS, Macintosh, Amiga and FM Towns direct-start/return coverage. SDL dummy output does not establish physical MacBook Pro M5 HiDPI presentation or input behavior; the reported native-display failure remains open.
-
-# Firestaff TODO — DM2
 
 2026-10-26 FM Towns champion portrait binding: the live Towns HUD now reads
 `HeroType` from the authenticated source `c_party` champion selected by

@@ -1,3 +1,5 @@
+# Firestaff TODO — CSB
+
 2026-10-27 Atari Hint Oracle real-media test archive binding: the native CLI
 test's campaign archive variable pointed to `chaos_strikes_back_ftl.zip`, an
 Amiga ADF package with no Atari STX member. The original Atari v2.1 campaign
@@ -180,11 +182,15 @@ gaps and bounds what can be concluded:
   extraction tests pass; native-screen timing and audible device output still
   need verification. Other Amiga edition variants remain outside this route.
 - The later title program still differs by edition. A31M/A33M decodes the
-  original `TITL.DAT` schedule. A31E/A35E take their documented direct
-  `BJELoad_R` -> `C03_GAME` boundary; A35M uses the `C08_LANG` selector and
-  does not enter A31's APPA/TITL chain. The A35E/A35M original startup capture
-  is still missing, so verify each retail presentation after the common
-  SWSH prelude before adding any later title page.
+  original `TITL.DAT` schedule; the authentic A33M CLI regression reaches the
+  `startupAnimation=titl-dat` phase. That probe verifies source ownership and
+  handoff state, not that the user sees animated frames. A31E/A35E take their
+  documented direct `BJELoad_R` -> `C03_GAME` boundary; A35M uses the
+  `C08_LANG` selector and does not enter A31's APPA/TITL chain. The A35E/A35M
+  original startup capture is still missing, so verify each retail
+  presentation after the common SWSH prelude before adding any later title
+  page. The reported absence of animation on the user's Amiga remains open
+  until the exact edition and displayed frames are observed.
 - Amiga gameplay effects have a source PCM/Paula transport and the entrance
   switch has a trigger, but `ANIMSND.C` animation-audio owners F1230-F1245
   remain explicitly `fail_closed`; `m11_csb_advance_amiga_titl` advances
@@ -339,8 +345,6 @@ SDL dummy output verifies these startup handoffs, not native display, audio or
 physical input parity.
 
 2026-10-18 v3.0.386 original-media CLI/menu retest: `test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh returns` passed the authentic CSB FM Towns, Atari ST and Amiga routes. Direct `--game csb` exits after Return to Menu without reopening the launcher, and every tested return scan found DM1, CSB and DM2. The diagnostics regression also passed the mixed-installation AUTO preference for original FM Towns over Amiga. These runs used the published arm64 binary with SDL dummy output; physical display/input and complete platform parity remain open.
-
-# Firestaff TODO — CSB
 
 Loose Amiga companion case ownership has original A33M CLI/M12 coverage in
 `csb_v1_amiga_loose_case_real_media` on case-sensitive macOS storage. Native
