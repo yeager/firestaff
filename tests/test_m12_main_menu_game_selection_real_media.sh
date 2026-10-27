@@ -172,6 +172,22 @@ if [[ -f "$data_root/csb/Chaos Strikes Back (FTL).zip" ]]; then
     csb_amiga_archive="$data_root/csb/Chaos Strikes Back (FTL).zip"
 fi
 if [[ -f "$csb_amiga_archive" ]]; then
+    case "$csb_amiga_archive" in
+        "$data_root/csb/Chaos Strikes Back (FTL).zip")
+            expected_csb_amiga_sha256=bff24bffd2e07ff8ac4c96b3c35be93ee3fdfe219d1bf833df247726b2ce3abb
+            ;;
+        "$data_root/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip")
+            expected_csb_amiga_sha256=fa0296c7bf62d806e8b1c45542d8ac225b67f4080026fa7f6fb61c97905f24c0
+            ;;
+        *)
+            printf 'FAIL: unexpected CSB Amiga archive path: %s\n' "$csb_amiga_archive" >&2
+            exit 1
+            ;;
+    esac
+    if [[ $(firestaff_sha256_file "$csb_amiga_archive") != "$expected_csb_amiga_sha256" ]]; then
+        printf 'FAIL: CSB Amiga archive identity drift: %s\n' "$csb_amiga_archive" >&2
+        exit 1
+    fi
     run_alternate_platform_picker_case csb \
         "$csb_amiga_archive" 1 Amiga \
         're:amiga(31-en|31-multi|35-en|35-multi)'
