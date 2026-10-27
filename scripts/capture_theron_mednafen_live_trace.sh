@@ -24,7 +24,16 @@ capture_sound=${THERON_CAPTURE_SOUND:-0}
 # source-compatible `pce` default, and allow `pce_fast` only when Mednafen's
 # own module list advertises it. This only changes the emulator core; it never
 # changes admitted media bytes.
+capture_pointer_c1df_trace=${THERON_CAPTURE_POINTER_C1DF_TRACE:-0}
 capture_mednafen_module=${THERON_CAPTURE_MEDNAFEN_MODULE:-pce}
+if [[ "$capture_pointer_c1df_trace" == 1 ]]; then
+    if [[ -n ${THERON_CAPTURE_MEDNAFEN_MODULE:-} &&
+          "$capture_mednafen_module" != pce_fast ]]; then
+        printf '%s\n' 'FAIL: C1DF pointer tracing requires THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast' >&2
+        exit 1
+    fi
+    capture_mednafen_module=pce_fast
+fi
 capture_arcadecard_setting=pce.arcadecard
 capture_cdbios_setting=pce.cdbios
 capture_input_port_setting=pce.input.port1
@@ -206,6 +215,16 @@ fi
 if [[ "$capture_pce_fast_vram_commit_trace" != 0 &&
       "$capture_pce_fast_vram_commit_trace" != 1 ]]; then
     printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE must be 0 or 1' >&2
+    exit 1
+fi
+if [[ "$capture_pointer_c1df_trace" != 0 &&
+      "$capture_pointer_c1df_trace" != 1 ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_POINTER_C1DF_TRACE must be 0 or 1' >&2
+    exit 1
+fi
+if [[ "$capture_pointer_c1df_trace" == 1 &&
+      "$capture_mednafen_module" != pce_fast ]]; then
+    printf '%s\n' 'FAIL: C1DF pointer tracing requires the PCE Fast module' >&2
     exit 1
 fi
 if [[ "$capture_pce_fast_vram_commit_trace" == 1 &&
@@ -1053,6 +1072,11 @@ require_instrumented_mednafen_binary() {
             return 1
         fi
     done
+    if [[ "$capture_pointer_c1df_trace" == 1 ]] &&
+       ! grep -aFq 'pointer_c1df_begin' "$binary" 2>/dev/null; then
+        printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the C1DF pointer hook; enable FIRESTAFF_THERON_PCE_FAST_POINTER_TRACE_SUPPORT when building it' >&2
+        return 1
+    fi
     return 0
 }
 
@@ -2106,6 +2130,7 @@ transition_rng_generator_context_count=$(trace_count '^rng_generator_context ' "
 transition_rng_code_window_count=$(trace_count '^rng_code_window ' "$rng_code_trace")
 transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$input_trace")
 mouse_trace_row_count=$(trace_count '^(guest_read|guest_write|device_)' "$mouse_trace")
+pointer_c1df_trace_row_count=$(trace_count '^(pointer_pc|pointer_regs|pointer_c1df_begin|pointer_c1df_return|pointer_c1df_step_limit) ' "$mouse_trace")
 transition_vdc_io_write_count=$(trace_count '^vdc_io_write ' "$vdc_io_trace")
 transition_command_ram_write_count=$(trace_count '^command_ram_write ' "$command_ram_trace")
 transition_command_input_write_count=$(trace_count '^input_buffer_write ' "$command_ram_trace")
@@ -2253,6 +2278,8 @@ fi
     printf 'scripted_pce_input_events=%s\n' "$transition_scripted_input_count"
     printf 'pce_input_device=%s\n' "$capture_input_device"
     printf 'mouse_trace_rows=%s\n' "$mouse_trace_row_count"
+    printf 'pointer_c1df_trace_requested=%s\n' "$capture_pointer_c1df_trace"
+    printf 'pointer_c1df_trace_rows=%s\n' "$pointer_c1df_trace_row_count"
     if [[ "$capture_mednafen_module" == pce ]]; then
         printf 'vdc_vram_snapshot_bytes=65536\n'
         printf 'main_ram_snapshot_bytes=8192\n'

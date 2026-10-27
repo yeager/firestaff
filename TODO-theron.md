@@ -7997,5 +7997,6 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   initialization plus source-bound provenance before implementing native
   dungeon targeting; current rectangle captures remain unproven. To build the
   instrumented binary with this core available, set
-  `FIRESTAFF_THERON_PCE_FAST_POINTER_TRACE_SUPPORT=1`; select `pce_fast` for a
-  live capture with `THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast`.
+  `FIRESTAFF_THERON_PCE_FAST_POINTER_TRACE_SUPPORT=1`; run a live capture with
+  `THERON_CAPTURE_POINTER_C1DF_TRACE=1`. That mode selects `pce_fast`, rejects
+  a binary without the C1DF hook, and records the pointer trace row count.

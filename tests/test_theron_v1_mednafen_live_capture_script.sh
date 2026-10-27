@@ -924,6 +924,9 @@ if swift "$quartz_helper" 36 1 0 >/dev/null 2>&1; then
 fi
 if ! grep -Fq -- '-force_module "$capture_mednafen_module"' "$script" ||
    ! grep -Fq -- 'THERON_CAPTURE_MEDNAFEN_MODULE' "$script" ||
+   ! grep -Fq -- 'THERON_CAPTURE_POINTER_C1DF_TRACE' "$script" ||
+   ! grep -Fq -- "pointer_c1df_begin' \"\$binary\"" "$script" ||
+   ! grep -Fq -- 'pointer_c1df_trace_rows=%s' "$script" ||
    ! grep -Fq -- 'mednafen_module=%s' "$script" ||
    ! grep -Fq -- 'capture_arcadecard_setting=pce.arcadecard' "$script" ||
    ! grep -Fq -- 'capture_arcadecard_setting=pce_fast.arcadecard' "$script" ||
@@ -936,6 +939,12 @@ if ! grep -Fq -- '-force_module "$capture_mednafen_module"' "$script" ||
    ! grep -Fq -- '"keyboard 0x0 $pce_scancode"' "$script" ||
    ! grep -Fq -- '"${capture_input_args[@]}"' "$script"; then
     printf 'FAIL: capture script must force the PCE module and disable unrelated Arcade Card emulation\n' >&2
+    exit 1
+fi
+if ! grep -Fq -- 'FIRESTAFF_THERON_PCE_FAST_POINTER_TRACE_SUPPORT' "$build_script" ||
+   ! grep -Fq -- '"$capture_pointer_c1df_trace" == 1' "$script" ||
+   ! grep -Fq -- 'capture_mednafen_module=pce_fast' "$script"; then
+    printf '%s\n' 'FAIL: C1DF pointer tracing must build and capture with the PCE Fast core' >&2
     exit 1
 fi
 if ! grep -Fq 'PC Engine (CD)/TurboGrafx 16 (CD)/SuperGrafx' "$script" ||

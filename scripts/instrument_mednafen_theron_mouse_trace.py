@@ -328,6 +328,7 @@ def instrument(root: Path) -> None:
         "src/pce_fast/huc6280.cpp",
         "  TheronTraceInstructionPC = GetRealPC();\n"
         "  TheronTraceInstructionPhysicalPC = (HuCPU.MPR[TheronTraceInstructionPC >> 13] << 13) | (TheronTraceInstructionPC & 0x1FFF);\n"
+        "\n"
         "  if(Theron3879FastTargetStepsRemaining ||\n",
         "  TheronTraceInstructionPC = GetRealPC();\n"
         "  TheronTraceInstructionPhysicalPC = (HuCPU.MPR[TheronTraceInstructionPC >> 13] << 13) | (TheronTraceInstructionPC & 0x1FFF);\n"
