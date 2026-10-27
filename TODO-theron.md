@@ -7920,3 +7920,32 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   authenticated Track 02 source-transfer receipts, then trace a resulting
   party/world state change and same-session VDC output before implementing
   behavior. Keep emulator and BIOS out of runtime.
+
+## 2026-10-27 — official JP save-state capture emits VDC snapshots but lacks CD origin
+
+- Rebuilt the instrumented Mednafen binary through
+  `scripts/build_mednafen_theron_irq2_trace.sh`; its SHA-256 is
+  `19daccfac19e4cc847e6f4b6e0e0045a24e6523bba73676e09807b90caeb288` and it
+  contains the PCE Fast VDC snapshot instrumentation. The maintained capture
+  wrapper confirmed autoload of the authentic JP in-dungeon state
+  (`10a929bd1ef15462a7bc59926cb960dd`).
+- The bounded run emitted complete close-time VRAM, VCE, SAT, VDC-register and
+  main-RAM snapshots. VRAM SHA-256 is
+  `59142028b5f6f401fdb30fd0f2852ba55f4eac83a63e1a63a30523ab7837d97`; VCE
+  SHA-256 is `ba02dbd81cc0c9aaff2532e429f27cc433aeb11c9d56a70f0d1e3ecda0b2875`;
+  SAT SHA-256 is `e31fdd6b60edb2238ea270e7ce325a5113c1f6f81d7376e598eb270fb1b74465`.
+  VDC registers were `bxr=0000 byr=0000 mwr=005a hsr=0503 hdr=0327 vsr=2302
+  vdr=00c7 vcr=00e2 cr=00c8` at the close-time boundary.
+- Scripted I/Up/Right events reached the non-System-Card `$44C1` controller
+  poll at frames 120, 300 and 480, with raw masks `0010`, `0020`, `0010` and
+  values `3E`, `3D`, `3E`. The `$44D2` poll remained at `3F`. Its party-RAM
+  sidecar contains 2,386 writes but no replay-frame field. Without a matched
+  no-input run or before/after state boundary, these final snapshots cannot
+  establish an input-caused party or pixel change.
+- Capture ended blocked with zero CD IRQs and zero authenticated CD-to-RAM
+  receipts: loading this state bypasses the Track 02-to-bank-$68 transfer that
+  would identify which of the seven identical code copies populated the
+  runtime window. The private bundle is retained under
+  `/dev/shm/theron-jp-gameplay-save-20261027/official-wrapper-pass-1/`.
+  Source-transfer provenance and a source-bound, input-caused VDC/world change
+  remain required before implementing rendering behavior.
