@@ -29,6 +29,22 @@ int main(void) {
                 "Nexus Space should activate the retail title menu"))
         return 1;
     if (!expect(M11_NexusStartupMenuInputFromScancode(
+                    SDL_SCANCODE_UP, 1) == M12_MENU_INPUT_UP,
+                "Nexus Up should select the previous retail title choice"))
+        return 1;
+    if (!expect(M11_NexusStartupMenuInputFromScancode(
+                    SDL_SCANCODE_W, 1) == M12_MENU_INPUT_UP,
+                "Nexus W should select the previous retail title choice"))
+        return 1;
+    if (!expect(M11_NexusStartupMenuInputFromScancode(
+                    SDL_SCANCODE_DOWN, 1) == M12_MENU_INPUT_DOWN,
+                "Nexus Down should select the next retail title choice"))
+        return 1;
+    if (!expect(M11_NexusStartupMenuInputFromScancode(
+                    SDL_SCANCODE_S, 1) == M12_MENU_INPUT_DOWN,
+                "Nexus S should select the next retail title choice"))
+        return 1;
+    if (!expect(M11_NexusStartupMenuInputFromScancode(
                     SDL_SCANCODE_RETURN, 0) == M12_MENU_INPUT_NONE,
                 "Nexus title Accept keys should not become gameplay actions"))
         return 1;

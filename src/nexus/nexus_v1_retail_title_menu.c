@@ -43,6 +43,17 @@ Nexus_V1_RetailTitleMenuResult nexus_v1_retail_title_menu_reduce(
         }
         return NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNVERIFIED_INPUT;
     }
+    if (input == NEXUS_V1_RETAIL_TITLE_MENU_INPUT_UP) {
+        if (state->selection == NEXUS_V1_RETAIL_TITLE_MENU_CONFIGURATION) {
+            state->selection = NEXUS_V1_RETAIL_TITLE_MENU_CONTINUE;
+            return NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED;
+        }
+        if (state->selection == NEXUS_V1_RETAIL_TITLE_MENU_CONTINUE) {
+            state->selection = NEXUS_V1_RETAIL_TITLE_MENU_NEW_GAME;
+            return NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED;
+        }
+        return NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNVERIFIED_INPUT;
+    }
 
     if (input != NEXUS_V1_RETAIL_TITLE_MENU_INPUT_ACCEPT) {
         return NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNVERIFIED_INPUT;

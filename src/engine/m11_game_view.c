@@ -37165,11 +37165,14 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                     return M11_GAME_INPUT_IGNORED;
                 }
             } else {
-                if (input == M12_MENU_INPUT_DOWN) {
+                if (input == M12_MENU_INPUT_DOWN ||
+                    input == M12_MENU_INPUT_UP) {
                     Nexus_V1_RetailTitleMenuResult menu_result =
                         nexus_v1_retail_title_menu_reduce(
                             &state->nexusState.retail_title_menu,
-                            NEXUS_V1_RETAIL_TITLE_MENU_INPUT_DOWN,
+                            input == M12_MENU_INPUT_DOWN
+                                ? NEXUS_V1_RETAIL_TITLE_MENU_INPUT_DOWN
+                                : NEXUS_V1_RETAIL_TITLE_MENU_INPUT_UP,
                             0);
                     if (menu_result ==
                         NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED ||

@@ -39,11 +39,36 @@ int main(void)
         fprintf(stderr, "FAIL: Down selects retail Continue only\n");
         ++failures;
     }
+    if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_UP) !=
+            M11_GAME_INPUT_REDRAW ||
+        state.nexusState.retail_title_menu.selection !=
+            NEXUS_V1_RETAIL_TITLE_MENU_NEW_GAME) {
+        fprintf(stderr, "FAIL: Up returns Continue to New Game\n");
+        ++failures;
+    }
+    if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_DOWN) !=
+            M11_GAME_INPUT_REDRAW ||
+        state.nexusState.retail_title_menu.selection !=
+            NEXUS_V1_RETAIL_TITLE_MENU_CONTINUE ||
+        M11_GameView_HandleInput(&state, M12_MENU_INPUT_DOWN) !=
+            M11_GAME_INPUT_REDRAW ||
+        state.nexusState.retail_title_menu.selection !=
+            NEXUS_V1_RETAIL_TITLE_MENU_CONFIGURATION) {
+        fprintf(stderr, "FAIL: Down advances through Continue to Configuration\n");
+        ++failures;
+    }
+    if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_UP) !=
+            M11_GAME_INPUT_REDRAW ||
+        state.nexusState.retail_title_menu.selection !=
+            NEXUS_V1_RETAIL_TITLE_MENU_CONTINUE) {
+        fprintf(stderr, "FAIL: Up returns Configuration to Continue\n");
+        ++failures;
+    }
     if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_DOWN) !=
             M11_GAME_INPUT_REDRAW ||
         state.nexusState.retail_title_menu.selection !=
             NEXUS_V1_RETAIL_TITLE_MENU_CONFIGURATION) {
-        fprintf(stderr, "FAIL: second Down selects retail Configuration\n");
+        fprintf(stderr, "FAIL: Down returns Continue to Configuration\n");
         ++failures;
     }
     if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_DOWN) !=

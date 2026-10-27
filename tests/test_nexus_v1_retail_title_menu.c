@@ -44,6 +44,18 @@ int main(void)
           "one Down selects Continue");
     check(nexus_v1_retail_title_menu_reduce(
               &state,
+              NEXUS_V1_RETAIL_TITLE_MENU_INPUT_UP,
+              0) == NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED &&
+              state.selection == NEXUS_V1_RETAIL_TITLE_MENU_NEW_GAME,
+          "Up from Continue returns to New Game");
+    check(nexus_v1_retail_title_menu_reduce(
+              &state,
+              NEXUS_V1_RETAIL_TITLE_MENU_INPUT_DOWN,
+              0) == NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED &&
+              state.selection == NEXUS_V1_RETAIL_TITLE_MENU_CONTINUE,
+          "Down from New Game returns to Continue");
+    check(nexus_v1_retail_title_menu_reduce(
+              &state,
               NEXUS_V1_RETAIL_TITLE_MENU_INPUT_ACCEPT,
               0) == NEXUS_V1_RETAIL_TITLE_MENU_RESULT_NO_CONTINUE_SAVE &&
               state.selection == NEXUS_V1_RETAIL_TITLE_MENU_CONTINUE,
@@ -59,6 +71,18 @@ int main(void)
               0) == NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED &&
               state.selection == NEXUS_V1_RETAIL_TITLE_MENU_CONFIGURATION,
           "a second Down selects Configuration");
+    check(nexus_v1_retail_title_menu_reduce(
+              &state,
+              NEXUS_V1_RETAIL_TITLE_MENU_INPUT_UP,
+              0) == NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED &&
+              state.selection == NEXUS_V1_RETAIL_TITLE_MENU_CONTINUE,
+          "Up from Configuration returns to Continue");
+    check(nexus_v1_retail_title_menu_reduce(
+              &state,
+              NEXUS_V1_RETAIL_TITLE_MENU_INPUT_DOWN,
+              0) == NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED &&
+              state.selection == NEXUS_V1_RETAIL_TITLE_MENU_CONFIGURATION,
+          "Down from Continue returns to Configuration");
     check(nexus_v1_retail_title_menu_reduce(
               &state,
               NEXUS_V1_RETAIL_TITLE_MENU_INPUT_ACCEPT,

@@ -19,8 +19,9 @@ typedef enum {
 typedef enum {
     NEXUS_V1_RETAIL_TITLE_MENU_INPUT_OPEN = 0,
     NEXUS_V1_RETAIL_TITLE_MENU_INPUT_DOWN = 1,
-    NEXUS_V1_RETAIL_TITLE_MENU_INPUT_ACCEPT = 2,
-    NEXUS_V1_RETAIL_TITLE_MENU_INPUT_UNSUPPORTED = 3
+    NEXUS_V1_RETAIL_TITLE_MENU_INPUT_UP = 2,
+    NEXUS_V1_RETAIL_TITLE_MENU_INPUT_ACCEPT = 3,
+    NEXUS_V1_RETAIL_TITLE_MENU_INPUT_UNSUPPORTED = 4
 } Nexus_V1_RetailTitleMenuInput;
 
 typedef enum {
@@ -44,9 +45,9 @@ typedef struct {
 void nexus_v1_retail_title_menu_init(Nexus_V1_RetailTitleMenuState *state);
 
 /*
- * OPEN begins at the observed start prompt. Down is admitted only for the
- * observed NEW GAME -> CONTINUE -> CONFIGURATION transitions. Accept actions
- * reflect the retained retail observations; `continue_save_available` must be derived
+ * OPEN begins at the observed start prompt. Down and Up navigate only between
+ * observed retail choices. Accept actions reflect retained retail
+ * observations; `continue_save_available` must be derived
  * by the caller from real save media, never inferred by this reducer.
  * Unsupported directions and unobserved movement beyond CONFIGURATION leave
  * state unchanged and return UNVERIFIED_INPUT.

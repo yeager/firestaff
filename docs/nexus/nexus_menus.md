@@ -17,7 +17,7 @@ results. M11 now retains that selection state and consumes those keyboard
 inputs separately from the generic Firestaff save/champion menu. This is an
 input-state integration only: it does not draw the selected retail menu, and
 New Game, Continue, and Configuration still have no production destination
-consumer. Continue availability deliberately does not use Firestaff save files;
+execution route. Continue availability deliberately does not use Firestaff save files;
 the Saturn BKR intake and payload-to-engine route are not integrated here.
 The historical New Game comparison reported five TITLE.BIN draws and 1,495
 matching nontransparent screenshot pixels. The current

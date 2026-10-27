@@ -428,16 +428,21 @@ in [`parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`](../.
 ## Firestaff title-menu keyboard state (2026-10-27)
 
 M11 now has a separate state for the observed Japanese retail title menu. The
-ready title prompt accepts Action to open New Game; Down selects Continue and
-then Configuration. F matches the observed Ymir desktop binding for Saturn
-Start; Enter and Space are Firestaff keyboard aliases. These keys feed Action
-only while the Nexus title is active. The menu choice is not drawn, and accepting
-New Game, Continue, or Configuration does not enter a production destination.
-Continue remains unavailable until Firestaff reads authentic Saturn BKR media;
+ready title prompt accepts the configured Action input to open the retail menu
+with New Game selected. Up/Down and W/S now
+navigate between the three choices. An authentic English retail Ymir replay
+shows Down selecting Continue; a subsequent Up returns to the original New
+Game screenshot pixel-for-pixel. F matches the observed Ymir desktop binding
+for Saturn Start; Enter, keypad Enter, and Space are Firestaff keyboard aliases. These keys
+feed Action only while the Nexus title is active. The menu choice is not drawn,
+and accepting New Game, Continue, or Configuration does not execute a production destination.
+Continue execution remains unavailable until Firestaff reads authentic Saturn BKR media;
 the generic Firestaff save-file mask is deliberately not reused. This is an
 input-state increment, not title-menu or gameplay parity. See the
 [Nexus input status](nexus_input.md#firestaff-title-keyboard-ingress) and
 [menu audit](nexus_menus.md).
+The paired emulator screenshot hashes and exact replay schedule are in the
+[vertical navigation capture receipt](../../parity-evidence/verification/nexus_menu_vertical_navigation_20261027/README.md).
 
 ## Retail Continue with an authentic save (2026-10-25)
 
