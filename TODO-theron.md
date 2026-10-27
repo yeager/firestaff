@@ -7896,3 +7896,19 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   launch. Continue by using the restored game-owned state to seek a verified
   controller poll and source-bound graphics/CD read before deriving any new
   gameplay or renderer behavior. Keep emulator and BIOS out of runtime.
+- A separate 15-second capture autoloaded this state and logged 1,788
+  instrumented input reads plus a 3,413-row main-RAM consumer sidecar. Injected
+  I, Up, and Right reached controller-register reads at logical PCs `$44C1`
+  and `$44D2` (reported physical PCs `$0D04C1` and `$0D04D2`); the sampled
+  register values changed on the injected frames. This is a game-runtime input
+  read receipt, but it does not establish which instructions produced those
+  reads, how a returned value changes party state, or which Track 02 bytes were
+  transferred to those addresses.
+- A later instruction-byte-instrumented attempt stayed at the title screen
+  instead of autoloading the state and therefore did not revisit those PCs.
+  The wrapper also expects a VDC snapshot absent from this `pce_fast` build, so
+  its overall exit was failure even though the earlier input/RAM sidecars are
+  usable. Next capture must confirm state autoload, bind the executing JP code
+  bytes to authenticated Track 02 source-transfer receipts, and trace any
+  resulting state change before implementing behavior. Keep the evidence
+  private on trv2.
