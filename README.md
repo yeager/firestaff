@@ -432,7 +432,7 @@ documented original formats as additional references. DM2 uses skproject;
 Nexus and Theron's Quest use their respective platform analysis and original
 media.
 
-The [documentation index](https://yeager.github.io/firestaff/DOCUMENTATION_INDEX.md)
+The [documentation index](https://yeager.github.io/firestaff/DOCUMENTATION_INDEX.html)
 links the user guides,
 data notes and technical references. The [project status](docs/PROJECT_STATUS.md)
 is the place to check the current boundary before relying on a development

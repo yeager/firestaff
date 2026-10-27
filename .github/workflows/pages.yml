@@ -3,7 +3,7 @@ name: Deploy GitHub Pages
 on:
   push:
     branches: [main]
-    paths: ["docs/**", ".github/workflows/pages.yml"]
+    paths: ["docs/**", "README.md", "scripts/prepare_pages.py", "scripts/restore_pages_literals.py", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
@@ -23,85 +23,19 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
-      - name: Preserve repository-relative documentation links
-        shell: bash
-        run: |
-          # Links from docs back to the repository README/LICENSE resolve
-          # inside the Pages artifact as well.
-          cp README.md docs/README.md
-          cp README.md docs/README
-          cp LICENSE docs/LICENSE
-          # The Pages artifact is rooted at docs/, so remove the repository
-          # docs/ prefix from links in the copied README. The checked-in
-          # README keeps its repository-relative paths.
-          sed -i \
-            -e 's#(docs/#(#g' \
-            docs/README.md docs/README
-          # The index links to the repository README. Its Pages copy lives
-          # beside the index in the artifact.
-          sed -i \
-            -e 's#(../README\.md)#(README.md)#g' \
-            docs/DOCUMENTATION_INDEX.md
-          # Other technical notes may link back to repository-root work logs.
-          # In the Pages artifact those files are copied into docs/, one level
-          # closer than in the checkout. Remove that single extra parent hop.
-          python3 - <<'PY'
-          from pathlib import Path
-          import os
-          import re
-          from urllib.parse import quote
-
-          root = Path.cwd()
-          docs = root / "docs"
-          root_docs = {"README.md", "LICENSE"}
-          link = re.compile(r"(?P<open>!?\[[^\]]*\]\()(?P<ws>\s*)(?P<target><[^>]+>|[^\s)]+)(?P<tail>[^)]*\))")
-
-          for page in docs.rglob("*.md"):
-              text = page.read_text()
-              def rewrite(match):
-                  raw = match.group("target")
-                  angle = raw.startswith("<") and raw.endswith(">")
-                  target = raw[1:-1] if angle else raw
-                  path, marker, fragment = target.partition("#")
-                  if not path or path.startswith("/"):
-                      return match.group(0)
-                  if page == docs / "README.md" and not (docs / path).exists():
-                      candidate = (root / path).resolve()
-                  elif page == docs / "README.md":
-                      candidate = (docs / path).resolve()
-                  else:
-                      candidate = (page.parent / path).resolve()
-                  if candidate.is_file() and candidate.parent == root and candidate.name in root_docs:
-                      candidate = docs / candidate.name
-                  if not candidate.exists():
-                      return match.group(0)
-                  if candidate.is_relative_to(docs):
-                      new_path = Path(os.path.relpath(candidate, page.parent))
-                      new_target = new_path.as_posix() + (marker + fragment if marker else "")
-                  else:
-                      if not candidate.is_relative_to(root):
-                          return match.group(0)
-                      kind = "tree" if candidate.is_dir() else "blob"
-                      rel = quote(candidate.relative_to(root).as_posix(), safe="/")
-                      new_target = f"https://github.com/yeager/firestaff/{kind}/main/{rel}"
-                      if marker:
-                          new_target += marker + fragment
-                  if angle:
-                      new_target = "<" + new_target + ">"
-                  return match.group("open") + match.group("ws") + new_target + match.group("tail")
-              page.write_text(link.sub(rewrite, text))
-          PY
-          # The Pages artifact is rooted at docs/. Markdown is intentionally
-          # published as source text, so GitHub-style extensionless links must
-          # have matching artifact paths instead of relying on repo rendering.
-          find docs -type f -name '*.md' -print0 | while IFS= read -r -d '' file; do
-            alias="${file%.md}"
-            [ -e "$alias" ] || cp "$file" "$alias"
-          done
+      - name: Prepare Jekyll source and HTML links
+        run: python3 scripts/prepare_pages.py --output _pages_source
       - uses: actions/configure-pages@v5
+      - name: Build documentation as HTML
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./_pages_source
+          destination: ./_site
+      - name: Restore literal Liquid examples
+        run: python3 scripts/restore_pages_literals.py --site _site
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: docs
+          path: ./_site
       - id: deployment
         uses: actions/deploy-pages@v4
         with:
