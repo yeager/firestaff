@@ -7867,7 +7867,7 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   PC Engine control. Direct dungeon-view mouse targeting remains blocked on
   the missing source-bound world-to-screen consumer.
 
-## 2026-10-26 — cold-start RUN still lacks a game-owned transition
+## 2026-10-26 — cold-start RUN capture was inconclusive; dungeon state recovered on 2026-10-27
 
 - A private, authentic Japanese Rev. 1 `pce_fast` capture held RUN for five
   seconds at frames 9600--9899. Scripted input application and controller-read
@@ -7875,7 +7875,24 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   The capture recorded no non-System-Card input poll, raw-sector span, SCSI
   command, authenticated CD-to-RAM origin receipt, CD IRQ, or game `$E009`
   dispatch. It is not evidence of title/menu selection or game launch.
-- Next reference work: capture a same-session transition with a verified
-  game-owned controller poll and source-bound CD-to-RAM receipt before deriving
-  any initial party, level, graphics, control, or renderer behavior. Keep all
-  original media and raw capture artifacts private.
+- On 2026-10-27, an authentic JP in-dungeon state was created and successfully
+  reloaded after restarting Mednafen; see the entry below. This proves the
+  original game can be reached with the current private media setup, but does
+  not retroactively add the missing cold-start receipts listed above.
+
+## 2026-10-27 — authentic JP in-dungeon save state is now reloadable
+
+- A fresh authentic Japan Rev. 1 `pce_fast` session reached the first-person
+  Ak-Tu-Ba dungeon view and produced a 243,284-byte Mednafen `.mc0` state.
+  Mapping Mednafen Save State to SDL Space/scancode 44 and Load State to
+  X/scancode 27 worked where synthetic F5/F1 key events had not. After stopping
+  and restarting the emulator with the same isolated profile, loading the
+  state restored the in-dungeon view. State MD5:
+  `10a929bd1ef15462a7bc59926cb960dd`.
+- Private state and receipts are retained on trv2 under
+  `/dev/shm/theron-jp-gameplay-save-20261027/retry-zx-hotkeys/`; original disc
+  and System Card files were accessed by symlink and were not copied.
+- This is a reference save, not Firestaff savegame support or a native runtime
+  launch. Continue by using the restored game-owned state to seek a verified
+  controller poll and source-bound graphics/CD read before deriving any new
+  gameplay or renderer behavior. Keep emulator and BIOS out of runtime.

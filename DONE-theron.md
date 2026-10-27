@@ -13,6 +13,19 @@ suite passed on trv2 with a Debug build and authentic media. Full Theron
 parity remains open; touch-target sizing and broader gameplay coverage are
 not established by this check.
 
+## 2026-10-27 — verify Japanese Theron touch-swipe input
+
+Extended `test_theron_v1_jp_sdl_input_events.sh` to enable the native touch
+controls and send swipe-up and swipe-left through the ordinary SDL event queue
+after launching authentic Japan Rev. 1 Track 02
+(`b7afb338ad31be1025b53f9aff12d73a`). The focused Firestaff Debug build passed
+on trv2, and the seven-route JP regression passed three consecutive runs.
+Runtime probes reported `MOVE` for swipe-up and `TURN` with west-facing
+direction for swipe-left. To remove timing flakes in the existing short
+gameplay routes, the test now allows 5 seconds and waits 32 frames after input.
+This adds Japanese SDL transport coverage only and does not establish broad
+touch-layout or gameplay parity.
+
 ## 2026-10-27 — skip launch cards when selecting Theron
 
 Theron selection from the native game list now enters the existing validated
