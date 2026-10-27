@@ -1430,6 +1430,19 @@ if ! grep -Fq 'stage2_system_card_receipt="${trace}.stage2-system-card"' "$scrip
     printf 'FAIL: capture script must preserve a separate fail-closed stage-two loader receipt\n' >&2
     exit 1
 fi
+if ! grep -Fq 'instrument_mednafen_theron_pce_fast_a1a9_init_trace.py' "$build_script" ||
+   ! grep -Fq 'b1 = RdAtPC();' \
+       "$repo/scripts/instrument_mednafen_theron_pce_fast_a1a9_init_trace.py" ||
+   ! grep -Fq 'opcode=%02x bytes=%02x' \
+       "$repo/scripts/instrument_mednafen_theron_pce_fast_a1a9_init_trace.py" ||
+   ! grep -Fq 'HuCPU.A, X_local, Y_local, HuCPU.S, P_local, b1' \
+       "$repo/scripts/instrument_mednafen_theron_pce_fast_a1a9_init_trace.py" ||
+   ! grep -Fq 'pce_fast_a1a9_init_trace="${trace}.a1a9-init"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_A1A9_INIT_TRACE="$pce_fast_a1a9_init_trace"' "$script" ||
+   ! grep -Fq '"$pce_fast_a1a9_init_trace"' "$script"; then
+    printf '%s\n' 'FAIL: A1A9 trace must use live HuC6280 register locals and preserve its capture sidecar' >&2
+    exit 1
+fi
 if ! grep -Fq 'resolve_mednafen_window_id_with_retry "$mednafen_ui_pid"' "$script" ||
    ! grep -Fq 'for ((attempt = 0; attempt < attempts; ++attempt)); do' "$script" ||
    ! grep -Fq 'xdotool search --onlyvisible --pid "$target_pid"' "$script" ||

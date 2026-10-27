@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify the observed $43AB -> $07 -> $279F Theron runtime data flow."""
+"""Verify register-local A1A9 trace evidence for the $43AB selector path."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from collections import Counter
 from pathlib import Path
 
 
-SOURCE_MARKER = "mednafen-pce-fast-a1a9-initializer-code-v1"
+SOURCE_MARKER = "mednafen-pce-fast-a1a9-initializer-fetch-v2"
 EXPECTED_A1A9 = ("a1a9", "0e01a9", "628d80288d8128")
 EXPECTED_CALL = ("a1be", "0e01be", "20ab439c1f279c")
 EXPECTED_BRANCH = ("43ad", "0d03ad", "0f0602a9028507")
@@ -23,7 +23,6 @@ EXPECTED_ASL = (
     ("c296", "0d2296", "0a"),
 )
 INSTRUCTION_WINDOW_SIZE = 128
-EXPECTED_WINDOW_COUNT = 45
 
 
 def parse_fields(line: str) -> dict[str, str]:
@@ -42,13 +41,9 @@ def instruction(row: dict[str, str]) -> tuple[str, str, str]:
 def unique_instruction_index(
     window: list[dict[str, str]], expected: tuple[str, str, str], label: str
 ) -> int:
-    matches = [
-        index for index, row in enumerate(window) if instruction(row) == expected
-    ]
+    matches = [index for index, row in enumerate(window) if instruction(row) == expected]
     if len(matches) != 1:
-        raise ValueError(
-            f"expected one {label} instruction in its A1A9 window, got {len(matches)}"
-        )
+        raise ValueError(f"expected one {label} instruction in its A1A9 window, got {len(matches)}")
     return matches[0]
 
 
@@ -69,6 +64,10 @@ def verify(lines: list[str]) -> tuple[int, Counter[str], int]:
                 f"non-contiguous instruction sequence at row {sequence}: "
                 f"got {row.get('sequence', 'missing')}"
             )
+        if len(row["bytes"]) != 14 or row["opcode"] != row["bytes"][:2]:
+            raise ValueError(
+                f"fetched opcode does not match the mapped instruction byte at row {sequence}"
+            )
 
     if len(rows) % INSTRUCTION_WINDOW_SIZE:
         raise ValueError(
@@ -79,22 +78,17 @@ def verify(lines: list[str]) -> tuple[int, Counter[str], int]:
     branches: Counter[str] = Counter()
     stores: list[str] = []
     consumer_inputs: list[str] = []
-    consumers: list[int] = []
-    indexed_x: Counter[tuple[str, str]] = Counter()
     validated_a1a9_entries = 0
-    starts = range(0, len(rows), INSTRUCTION_WINDOW_SIZE)
-    for window_number, start in enumerate(starts):
+    for window_number, start in enumerate(range(0, len(rows), INSTRUCTION_WINDOW_SIZE)):
         window = rows[start : start + INSTRUCTION_WINDOW_SIZE]
         if instruction(window[0]) != EXPECTED_A1A9:
-            raise ValueError(
-                f"A1A9 window {window_number} does not start at the authenticated entry"
-            )
+            raise ValueError(f"A1A9 window {window_number} does not start at the authenticated entry")
 
         call_index = unique_instruction_index(window, EXPECTED_CALL, "$A1BE JSR")
+        if call_index == 0:
+            raise ValueError(f"A1A9 window {window_number} has no preceding entry instruction")
         branch_index = unique_instruction_index(window, EXPECTED_BRANCH, "$43AB branch")
-        consumer_index = unique_instruction_index(
-            window, EXPECTED_CONSUMER, "$C292 consumer"
-        )
+        consumer_index = unique_instruction_index(window, EXPECTED_CONSUMER, "$C292 consumer")
         if not call_index < branch_index < consumer_index:
             raise ValueError(
                 f"A1A9 window {window_number} does not order its $A1BE call, "
@@ -125,9 +119,7 @@ def verify(lines: list[str]) -> tuple[int, Counter[str], int]:
         stores.append(stored_value)
 
         if consumer_index + 6 >= len(window):
-            raise ValueError(
-                f"truncated $C292 consumer sequence in A1A9 window {window_number}"
-            )
+            raise ValueError(f"truncated $C292 consumer sequence in A1A9 window {window_number}")
         result = window[consumer_index + 1]["a"]
         if result not in {"00", "02"}:
             raise ValueError(f"$C292 loaded unexpected A=${result}")
@@ -157,37 +149,24 @@ def verify(lines: list[str]) -> tuple[int, Counter[str], int]:
             raise ValueError("expected sampled TAX bytes after the $279F store")
         if instruction(window[consumer_index + 6]) != EXPECTED_INDEXED_READ:
             raise ValueError("expected sampled LDA $4842,X bytes after TAX")
-        indexed_x[(result, window[consumer_index + 6]["x"])] += 1
-        consumers.append(expected)
-
-    recorded_a1a9_entries = sum(instruction(row) == EXPECTED_A1A9 for row in rows)
-    if recorded_a1a9_entries != validated_a1a9_entries:
+        if window[consumer_index + 6]["x"] != stored:
+            raise ValueError(
+                f"live X=${window[consumer_index + 6]['x']} does not match the "
+                f"$279F value ${stored} in A1A9 window {window_number}"
+            )
+    if not stores or len(stores) != len(consumer_inputs):
         raise ValueError(
-            f"recorded A1A9 entries ({recorded_a1a9_entries}) and validated windows "
-            f"({validated_a1a9_entries}) differ"
+            f"helper stores ({len(stores)}) and $07 consumers ({len(consumer_inputs)}) differ"
         )
-    if validated_a1a9_entries != EXPECTED_WINDOW_COUNT:
-        raise ValueError(
-            f"expected {EXPECTED_WINDOW_COUNT} validated A1A9 entries, "
-            f"got {validated_a1a9_entries}"
-        )
+    if stores != consumer_inputs:
+        raise ValueError("$07 consumer values do not match the preceding helper stores")
     if len(stores) != validated_a1a9_entries:
         raise ValueError(
             f"validated A1A9 entries ({validated_a1a9_entries}) and "
             f"$43AB helper calls ({len(stores)}) differ"
         )
-    if not stores or len(stores) != len(consumers):
-        raise ValueError(
-            f"helper stores ({len(stores)}) and $07 consumers ({len(consumers)}) differ"
-        )
-    if stores != consumer_inputs:
-        raise ValueError("$07 consumer values do not match the preceding helper stores")
-    if branches != Counter({"43b0": 23, "43b2": 22}):
-        raise ValueError(f"unexpected $43AB branch counts: {dict(branches)}")
-    if Counter(f"{value:02x}" for value in consumers) != Counter({"10": 23, "00": 22}):
-        raise ValueError("unexpected $279F selector result counts")
-    if indexed_x != Counter({("02", "10"): 23, ("00", "10"): 22}):
-        raise ValueError(f"unexpected following X-register observations: {dict(indexed_x)}")
+    if set(branches) != {"43b0", "43b2"}:
+        raise ValueError(f"trace did not cover both $43AB paths: {dict(branches)}")
 
     return len(rows), branches, validated_a1a9_entries
 
@@ -197,16 +176,13 @@ def main() -> int:
         print(f"usage: {Path(sys.argv[0]).name} TRACE", file=sys.stderr)
         return 2
     try:
-        rows, branches, calls = verify(
-            Path(sys.argv[1]).read_text(encoding="utf-8").splitlines()
-        )
+        rows, branches, calls = verify(Path(sys.argv[1]).read_text(encoding="utf-8").splitlines())
     except (OSError, ValueError, KeyError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1
     print(
         "PASS: rows={} calls={} branch_fallthrough_43b0={} "
-        "branch_taken_43b2={} zp07_to_279f_trace_correlation=verified "
-        "following_indexed_X_stays_10=observed".format(
+        "branch_taken_43b2={} zp07_to_279f_to_X=verified".format(
             rows, calls, branches["43b0"], branches["43b2"]
         )
     )

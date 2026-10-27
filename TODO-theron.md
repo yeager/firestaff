@@ -14,12 +14,19 @@
   consumers and producers before assigning game behavior. The runtime CD
   source LBA, the semantic meaning of `$06/$07`, and native input/click parity
   remain unresolved.
-- The same 45 windows also correlate the `$07` read at `$C292` with three
-  `ASL A` byte windows and `$00/$10` stores to `$279F`. At `$C29B`, however,
-  recorded X remains `$10` in both result cases, so the capture does not prove
-  that `$279F` controls `LDA $4842,X`. Add fetched-opcode and post-instruction
-  register tracing before assigning lookup semantics. The adjacent `$27A1`
-  and `$05/$06` helper callers remain unbound.
+- The corrected 3,840-row capture has 30 validated windows. The fetched opcode
+  matches the mapped code byte in every row; the `$07` read at `$C292`, three
+  `ASL A` windows, `$00/$10` stores to `$279F`, and live X at `$C29B` correlate
+  in all windows (15 `$10`, 15 `$00`). The trace patch samples Mednafen's
+  execution-local registers rather than stale CPU struct members. Operand
+  fetches, CD-to-RAM provenance, and gameplay meaning remain unproven. Runtime
+  execution of the `$27A1` and `$05/$06` caller candidates is unbound.
+- Static JP Track 02 candidates add a possible `$27A1` chain: `$4B4B` calls
+  `$43AB` and stores A to `$27A1`, while `$43BF` loads `$27A1` into `$07`.
+  Separate seven-copy callers invoke `$43C5` around `$27A0/$2926` updates.
+  These are static code windows, not runtime or gameplay proof. Next, bind one
+  exact caller copy, `$43BF`, and the `$C292` `$07` consumer in a same-session
+  trace with CD source provenance before assigning semantics.
 - Evidence and decode references:
   [`theron-jp-43ab-zero-page-flag-helper-20261026.md`](docs/source-lock/theron-disassembly/theron-jp-43ab-zero-page-flag-helper-20261026.md).
 

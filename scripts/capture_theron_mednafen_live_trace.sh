@@ -1172,6 +1172,7 @@ main_ram_snapshot="${trace}.ram"
 bram_snapshot="${trace}.bram"
 pce_fast_main_ram_snapshot="${trace}.pce-fast.ram"
 pce_fast_a1b7_bmt_write_trace="${trace}.a1b7-bmt-write"
+pce_fast_a1a9_init_trace="${trace}.a1a9-init"
 pce_fast_vram_snapshot="${trace}.pce-fast.vram"
 pce_fast_vce_snapshot="${trace}.pce-fast.vce"
 pce_fast_vdc_sat_snapshot="${trace}.pce-fast.sat"
@@ -1227,6 +1228,7 @@ rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_comman
     "$vram_snapshot" "$vce_snapshot" "$vdc_state_snapshot" "$vdc_sat_snapshot" \
     "$vdc_io_trace" "$main_ram_snapshot" "$bram_snapshot" \
     "$pce_fast_main_ram_snapshot" "$pce_fast_party_ram_trace" \
+    "$pce_fast_a1a9_init_trace" \
     "$command_ram_trace" "$command_code_snapshot" "$command_ram_before_snapshot" \
     "$command_ram_after_snapshot" "$transition_receipt" \
     "$scripted_input_consumption_receipt" "$stage2_system_card_receipt"
@@ -1489,6 +1491,7 @@ launch=(
     FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE="$pce_fast_vram_commit_trace_env" \
     FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT="$pce_fast_vram_commit_trace_limit" \
     FIRESTAFF_THERON_PCE_FAST_A1B7_BMT_WRITE_TRACE="$pce_fast_a1b7_bmt_write_trace" \
+    FIRESTAFF_THERON_PCE_FAST_A1A9_INIT_TRACE="$pce_fast_a1a9_init_trace" \
     FIRESTAFF_THERON_PCE_FAST_PARTY_RAM_TRACE="$pce_fast_party_ram_trace" \
     FIRESTAFF_THERON_SAVE_MANAGER_CODE_DUMP="$save_manager_code_dump" \
     FIRESTAFF_THERON_COMMAND_RAM_TRACE="$command_ram_trace" \
@@ -1763,7 +1766,7 @@ if [[ ! -s "$trace" ]] || ! grep -Fqx 'source=mednafen-pce-instrumented' "$trace
     printf '%s\n' 'FAIL: Mednafen did not produce a provenance-marked live trace' >&2
     exit 1
 fi
-if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$cd_data_port_read_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" "$pce_fast_a1b7_bmt_write_trace" "$pce_fast_movement_context_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace"; then
+if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$cd_data_port_read_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" "$pce_fast_a1b7_bmt_write_trace" "$pce_fast_a1a9_init_trace" "$pce_fast_movement_context_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace"; then
     printf '%s\n' 'FAIL: Mednafen emitted a literal backslash-n in a trace record' >&2
     exit 1
 fi
