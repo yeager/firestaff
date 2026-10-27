@@ -30,8 +30,12 @@ Replaying the English screenshot from the captured same-frame state reproduces
 every RGB pixel exactly. In that English capture, 86 of 162 PRS3 `MENU.BPK`
 surfaces have direct byte matches in VDP1 VRAM, but none of 137 textured command source starts falls
 within those ranges. The menu screenshot confirms that Ymir displays the
-English-version title menu, but the exact visible asset owner and its CLUT are
-not identified. The Ymir log records `0DMSTRT.BIN` and a CD Block soft reset,
+English-version title menu. A matched retail-menu capture now binds the five
+visible English New Game and Continue VDP1 sprites to `TITLE.BIN` offsets,
+captured CRAM colors, screen placement, and all 1,451 visible pixels in each
+state. This does not bind the NBG0 background or remaining screen composition;
+the exact background source and complete display consumer are still unknown.
+The Ymir log records `0DMSTRT.BIN` and a CD Block soft reset,
 but no `DM.BIN` read event. Separately, an exact 230,669-byte prefix of the
 authentic 555,144-byte English `DM.BIN` is present at offset `0x10000` in the
 WRAM snapshot. This proves prefix residency, not that the whole file was
@@ -75,22 +79,26 @@ negative result; neither capture authorizes renderer admission.
 An earlier cold-start capture requested 400 frames but retained only 48 before
 its 45-second timeout, before its scheduled Start input at capture frame 300.
 These earlier captures are incomplete or negative provenance observations.
-The 2026-10-27 controlled English-version capture now establishes that this
-disc image cold boots to the three-choice title menu, with a complete VDP1 command
-trace and a partial source join. It does not identify which scheduled input
-caused the transition or bind the visible menu to its VDP1 sources and CLUTs.
-Keep the production menu gate closed until that source/display ownership is
-joined and Firestaff's own title/menu route is verified against the same
-English assets.
+The 2026-10-27 controlled English-version capture establishes that this disc
+image cold boots to the three-choice title menu, with a complete VDP1 command
+trace and a partial source join. A matched menu-state capture now binds the
+five English New Game and Continue sprite draws to authentic `TITLE.BIN`
+offsets, captured CRAM colors, placement, and screenshot pixels. The NBG0
+background source and full-screen consumer remain unbound; neither capture
+identifies which scheduled input caused the cold-boot title transition. Keep
+the production menu gate closed until the background and complete display
+ownership are joined and Firestaff's own title/menu route is verified against
+the same English assets.
 
 PR #19 merged the corrected NBG1 TileFetcher address path and a scroll-offset
 regression. Its focused test verifies the bounded name-table fetch behavior;
 this does not bind the
 NBG1 data to FONT256, MENU.BPK or a retail text/display consumer, and does not
 change menu, HUD, viewport or production-readiness gates. Keep the next work
-focused on identifying the visible English menu's retail source/CLUT owners,
-isolating the input that changes the title state, and wiring the verified
-route into Firestaff without opening a renderer gate prematurely.
+focused on identifying the authentic NBG0 background source and complete
+English display consumer, authenticating the title input transition, and
+wiring the verified sprite and input routes into Firestaff without opening a
+renderer gate prematurely.
 
 The 2026-10-26 Mednafen `.mca` startup capture is not evidence of a loaded
 authentic backup card. Mednafen 1.32.1 uses the `mca` suffix for its autosave
@@ -163,7 +171,9 @@ not a fix and has not passed this real-media test.
   Configuration destinations; Continue execution does not yet read Saturn BKR
   data. The
   repeated Continue capture again verifies all five Japanese TITLE.BIN sprites
-  against 1,441 screenshot pixels, but its NBG0 bitmap has zero exact matches
+  against 1,441 screenshot pixels. The English verifier now also validates the
+  five `TITLE.BIN` sprites in New Game and Continue, each against 1,451 pixels.
+  The NBG0 bitmap in the Japanese Continue capture has zero exact matches
   against authentic retail data. A later exploratory scan found the ordered
   VDP2 byte-write sequence in the SH-2 trace, but the retained SH-2 receipt has
   no frame bounds or per-row frame tags, so this does not establish a

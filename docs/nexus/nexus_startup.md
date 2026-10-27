@@ -7,9 +7,9 @@ retail controller input, the native three-choice title menu in Ymir. The menu
 was navigated into its Configuration page from a saved diagnostic state.
 Separate captures show New Game selected and Down selecting Continue, with
 five TITLE.BIN sprite draws per state compared with the retail screenshots.
-The historical New Game comparison reported 1,495 matching nontransparent
-pixels. The current `verify_nexus_title_sprite_screenshot.py` verifier checks
-the five-draw Japanese Continue layout only. Ymir also completed
+The `verify_nexus_title_sprite_screenshot.py` verifier now checks the five-draw
+Japanese Continue layout and the English New Game and Continue layouts against
+authentic retail source bytes and captured CRAM. Ymir also completed
 Continue-to-gameplay with a reported retail-written BKR image. Firestaff's
 runtime title-menu renderer, New Game route to stable gameplay, Saturn BKR
 loading, and HUD/viewport parity remain unverified.
@@ -1224,6 +1224,34 @@ playable-level, viewport, or HUD parity. See the
 [English cold-boot evidence receipt](../../parity-evidence/verification/nexus_english_coldboot_menu_20261027/README.md)
 for hashes and reproduction commands.
 
+## English retail title-menu sprite ownership (2026-10-27)
+
+A follow-up used a copy of the authentic English menu savestate
+(`a997636cb5b40745e1065827361d3653c07475e716c8397542f36c372514f62b`) in a
+separate Ymir profile on TRV2. The copied savestate, English retail ISO and CUE,
+and USA 1.01a IPL hashes are recorded in the [sprite source receipt](../../parity-evidence/verification/nexus_english_title_menu_sprite_join_20261027/README.md).
+One 12-frame run held no input and retained New Game. A second run held Down
+for four frames beginning at capture frame 4 and retained Continue. Both
+frame-aligned VDP1 bundles identify frame 5, contain all 178 command rows, and
+report zero dropped rows.
+
+The retail `TITLE.BIN` SHA-256 is
+`a634e8daf2a581df154b454919ee2ed44e937371668219d7cdf6d0983a613e44`. For New
+Game, the five visible VDP1 draws read retail offsets `0x14a6`, `0x14a6`,
+`0x0446`, `0x0576`, and `0x07d6`. For Continue, they read `0x0316`, `0x14a6`,
+`0x14a6`, `0x06a6`, and `0x07d6`. Captured dimensions, VDP1 placement, sprite
+priority, CRAM colors, and VDP2 back-screen composition reproduce all 1,451
+visible pixels in each screenshot. The external captures and extracted retail
+`TITLE.BIN` are retained at
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_english_menu_source_join_20261027/`.
+
+This binds the five English menu sprites to authentic `TITLE.BIN` data and the
+captured display colors. It does not bind the background bitmap, full-screen
+composition, upload timing, the Configuration page, or Firestaff's runtime
+menu renderer and input route. The wider English VDP1 source join remains
+partial at 126 of 137 informative draws; its remaining 11 spans are zero
+padding.
+
 ## Authentic Japanese title-menu Down selection (2026-10-27)
 
 A fresh isolated Ymir profile cold-booted the hash-verified Japanese retail
@@ -1247,15 +1275,14 @@ separate four-draw source-offset observation at `TITLE.BIN` offsets `0x15f6`,
 `0x0446`, `0x0576`, and `0x07d6`; this verifier does not claim to validate that
 capture.
 
-The Japanese `CONTINUE` screenshot verifier reads `TITLE.BIN` from the
-authentic CUE/BIN in memory and matches all 1,441 nontransparent pixels across
-these five menu draws. It requires the captured retail offsets, dimensions,
-positions and visible-pixel counts, and checks the 4bpp CRAM lookup, priority 5
-and 31/32 top-screen ratio over the captured VDP2 back screen. It currently
-supports this Japanese `CONTINUE` layout only; it does not validate the earlier
-`NEW GAME` image or the English capture. These are sprite-level source and
-colour joins; whole-screen composition and screenshot-to-dump frame identity
-remain unproven.
+The verifier reads `TITLE.BIN` from the authentic CUE/BIN in memory and checks
+the Japanese `CONTINUE` layout plus English `NEW GAME` and `CONTINUE` layouts.
+For each it requires the captured retail offsets, dimensions, positions, and
+visible-pixel counts, then checks the 4bpp CRAM lookup, priority 5, and 31/32
+top-screen ratio over the captured VDP2 back screen. The English layouts each
+match 1,451 visible pixels. These remain sprite-level source and color joins;
+whole-screen composition and screenshot-to-dump frame identity remain
+unproven.
 
 A repeated cold boot with the same schedule retained VDP1 frame 8,060. The
 frame-aligned VDP1 receipt again contains 178 commands with no dropped rows,

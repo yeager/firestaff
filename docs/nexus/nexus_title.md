@@ -45,6 +45,13 @@ loaded by the Nexus engine. A complete Saturn title consumer is not yet
 implemented: no VDP1/VDP2 placement, palette upload order, or executable-side
 animation route is admitted without capture evidence.
 
+Separate English retail menu captures now bind the five New Game and Continue
+VDP1 sprite draws to exact `TITLE.BIN` byte ranges, captured CRAM colors,
+screen coordinates, and 1,451/1,451 visible pixels per state. The background
+bitmap, remaining composition, and upload timing remain unbound; the bounded
+sprite receipt does not admit the title/menu renderer. See the
+[English menu sprite source join](../../parity-evidence/verification/nexus_english_title_menu_sprite_join_20261027/README.md).
+
 The bounded `MAPD/TIBG` receipt also requires the complete section: five
 64×28 maps followed by sixteen big-endian palette words (`0x8c74` bytes from
 the MAPD start). A shorter block is rejected before palette reads; this is

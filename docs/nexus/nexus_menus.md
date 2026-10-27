@@ -21,11 +21,14 @@ retail menu, and New Game, Continue, and Configuration have no production
 destination execution route. Continue availability deliberately does not use
 Firestaff save files; the Saturn BKR intake and payload-to-engine route are not
 integrated here.
-The historical New Game comparison reported five TITLE.BIN draws and 1,495
-matching nontransparent screenshot pixels. The current
-`verify_nexus_title_sprite_screenshot.py` verifier checks the five-draw
-Japanese Continue layout, including per-pixel CRAM color and priority; it does
-not verify the New Game layout. The retail Continue route also reached a
+The `verify_nexus_title_sprite_screenshot.py` verifier now checks five
+source-bound Japanese Continue sprites and the English New Game and Continue
+layouts, including retail `TITLE.BIN` offsets, VDP1 placement, CRAM color,
+priority, and every visible sprite pixel. The English layouts each match 1,451
+pixels in authentic Ymir captures. The background bitmap and full screen
+composition remain unbound, so this sprite receipt does not admit a Firestaff
+menu renderer. See the [English title-menu sprite receipt](../../parity-evidence/verification/nexus_english_title_menu_sprite_join_20261027/README.md).
+The retail Continue route also reached a
 loaded dungeon with a BKR image whose hash matches the retained four-champion
 image in `.firestaff/data/nexus`; its transfer chain was not retained.
 Full-frame Firestaff rendering, option behavior, and mouse targeting remain
