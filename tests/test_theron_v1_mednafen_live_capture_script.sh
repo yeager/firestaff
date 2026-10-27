@@ -7,6 +7,7 @@ quartz_helper=$repo/scripts/send_theron_macos_quartz_keypair.swift
 quartz_grab_helper=$repo/scripts/send_theron_macos_quartz_chord.swift
 runtime_verifier=$repo/scripts/verify_theron_mednafen_sdl2_runtime.sh
 build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
+pointer_instrumenter=$repo/scripts/instrument_mednafen_theron_mouse_trace.py
 bram_helper=$repo/scripts/prepare_theron_authentic_bram.sh
 adpcm_context_patch=$repo/scripts/mednafen_1.32.1_theron_adpcm_fifo_ram_trace_context.patch
 adpcm_playback_patch=$repo/scripts/mednafen_1.32.1_theron_adpcm_playback_trace.patch
@@ -945,6 +946,11 @@ if ! grep -Fq -- 'FIRESTAFF_THERON_PCE_FAST_POINTER_TRACE_SUPPORT' "$build_scrip
    ! grep -Fq -- '"$capture_pointer_c1df_trace" == 1' "$script" ||
    ! grep -Fq -- 'capture_mednafen_module=pce_fast' "$script"; then
     printf '%s\n' 'FAIL: C1DF pointer tracing must build and capture with the PCE Fast core' >&2
+    exit 1
+fi
+if ! grep -Fq -- 'RdOp(TheronTraceInstructionPC) == 0x20 &&' "$pointer_instrumenter" ||
+   grep -Fq -- 'TheronTraceInstructionPC >= 0xA71E' "$pointer_instrumenter"; then
+    printf '%s\n' 'FAIL: C1DF tracing must recognize JSR $C1DF at every caller address' >&2
     exit 1
 fi
 if ! grep -Fq 'PC Engine (CD)/TurboGrafx 16 (CD)/SuperGrafx' "$script" ||
