@@ -8885,3 +8885,19 @@ T900/original inventory semantics. No synthetic media was used.
   the original-emulator multi-second menu-action hold, original presentation,
   save semantics, campaign progression and end-to-end gameplay remain open.
 - Historical source-lock records remain dated evidence and were not rewritten.
+
+# 2026-10-27 — verify direct M12 Theron startup for both retail editions
+
+- The authentic-media M12 selection regression now isolates US and JP Track
+  02 images in separate data roots and checks the edition-specific runtime
+  hash after a single Theron selection. The US route continues through the
+  existing first-runtime check; the JP route verifies the native
+  `theron-startup-0` handoff.
+- On TRV2, repeated native Debug loops passed for US Track 02 MD5
+  `f23601102138f87c33025877767ebf76` and JP Track 02 MD5
+  `b7afb338ad31be1025b53f9aff12d73a`. The first JP loop exposed and fixed a
+  test-only assumption that every region logs `pce-en`; the runtime correctly
+  selected `pce-jp`.
+- This verifies edition selection and startup handoff only. It does not prove
+  source-driven dungeon rendering, direct world clicks, or complete Theron
+  parity.
