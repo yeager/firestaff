@@ -14,7 +14,36 @@ from PIL import Image
 
 from analyze_nexus_vdp1_source_join import accepted_retail_hashes, ymir_commands
 
-EXPECTED = {0xD8E0: 213, 0xD900: 213, 0xD920: 313, 0xD940: 293, 0xD960: 463}
+TITLE_MENU_DRAW_COUNT = 4
+
+
+def title_menu_draws(commands, vram: bytes, source: bytes):
+    """Find the final four informative 4bpp title-source draws in a frame.
+
+    Ymir can relocate the VDP1 command table between otherwise equivalent
+    cold boots. Identify the menu draws by their exact retail source bytes and
+    ordering, never by emulator-specific command addresses.
+    """
+    matches = []
+    for command_index, (address, words) in enumerate(commands):
+        control, mode, colour, source_address, size = (
+            words[0], words[2], words[3], words[4], words[5])
+        if control & 0xC00F or mode != 0x80:
+            continue
+        width, height = ((size >> 8) & 63) * 8, size & 255
+        if width <= 0 or height <= 0:
+            continue
+        source_offset = source_address * 8
+        texture_size = width * height // 2
+        texture = vram[source_offset:source_offset + texture_size]
+        if (len(texture) != texture_size or not any(texture)):
+            continue
+        retail_offset = source.find(texture)
+        if retail_offset >= 0:
+            matches.append((command_index, address, words, retail_offset, texture))
+    if len(matches) < TITLE_MENU_DRAW_COUNT:
+        raise ValueError("fewer than four informative TITLE.BIN draws")
+    return matches[-TITLE_MENU_DRAW_COUNT:]
 
 
 def verify(bundle: Path, screenshot: Path, title: Path) -> None:
@@ -48,13 +77,10 @@ def verify(bundle: Path, screenshot: Path, title: Path) -> None:
     if image.size != (640, 448):
         raise ValueError("expected the retained 2x screenshot")
     source = title.read_bytes()
+    selected_draws = title_menu_draws(commands, vram, source)
     checked = set()
-    for address, words in commands:
-        if address not in EXPECTED:
-            continue
+    for command_index, address, words, retail_offset, texture in selected_draws:
         ctrl, mode, colr, src, size = words[0], words[2], words[3], words[4], words[5]
-        if ctrl & 0xC00F or mode != 0x80:
-            raise ValueError("unexpected title sprite format")
         priority_index = (colr >> 12) & 7
         priority_reg = int.from_bytes(regs[0xF0 + (priority_index // 2) * 2:
                                            0xF2 + (priority_index // 2) * 2], "big")
@@ -68,9 +94,6 @@ def verify(bundle: Path, screenshot: Path, title: Path) -> None:
         if ratio != 31:
             raise ValueError("unexpected title sprite colour ratio")
         width, height = ((size >> 8) & 63) * 8, size & 255
-        texture = vram[src * 8:src * 8 + width * height // 2]
-        if not texture or source.find(texture) < 0:
-            raise ValueError("title texture does not match retail bytes")
         count = matches = 0
         for y in range(height):
             for x in range(width):
@@ -98,12 +121,17 @@ def verify(bundle: Path, screenshot: Path, title: Path) -> None:
                             for shift in (0, 5, 10))
                 count += 1
                 matches += image.getpixel((screen_x, screen_y)) == rgb
-        if count != EXPECTED[address] or matches != count:
-            raise ValueError(f"sprite {address:#x}: {matches}/{count} screenshot matches")
-        checked.add(address)
-        print(f"frame={frame} command={address:#x} screenshot_matches={matches}/{count}")
-    if checked != set(EXPECTED):
-        raise ValueError("one or more title sprites are missing")
+        if count <= 0 or matches != count:
+            raise ValueError(
+                f"command {command_index} ({address:#x}): "
+                f"{matches}/{count} screenshot matches")
+        checked.add(command_index)
+        print(
+            f"frame={frame} command_index={command_index} command={address:#x} "
+            f"title_bin_offset={retail_offset:#x} "
+            f"screenshot_matches={matches}/{count}")
+    if len(checked) != TITLE_MENU_DRAW_COUNT:
+        raise ValueError("one or more source-bound title-menu sprites are missing")
     print("sprite_priority=5 ratio=31/32 lower_layer=VDP2_back_screen timing=unproven")
 
 

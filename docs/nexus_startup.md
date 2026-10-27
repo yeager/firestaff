@@ -1187,9 +1187,17 @@ corresponding ordered draws. The first three source spans change in the
 Down-selected capture and the fourth remains the same. The VDP1 command table
 relocates between runs, so the comparison uses draw order and source bytes.
 
+The command-independent screenshot verifier matches all 1,128 nontransparent
+pixels in these four menu draws to the `CONTINUE` screenshot. It also verifies
+the exact 4bpp CRAM lookup, priority 5 and 31/32 top-screen ratio over the
+captured VDP2 back screen. The same verifier matches all 1,282 visible pixels
+in the earlier `NEW GAME` image despite its different VDP1 command addresses.
+These are sprite-level source and colour joins; whole-screen composition and
+the screenshot-to-dump frame identity remain unproven.
+
 This is authentic input-correlated source evidence for the Japanese menu
-selection state. It does not establish the complete `TITLE.BIN` decoding and
-palette contract, menu display composition, mouse hit regions, Firestaff
-input handling, or production renderer admission. The full external capture,
+selection state. It does not establish the complete `TITLE.BIN` decoding,
+mouse hit regions, Firestaff input handling, or production renderer admission.
+The full external capture,
 hashes, and reproduction command are in the
 [Japanese Down-selection capture receipt](../parity-evidence/verification/nexus_japanese_menu_down_selection_20261027/README.md).

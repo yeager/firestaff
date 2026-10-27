@@ -26,9 +26,14 @@ spans while retaining the fourth. Command-table addresses differ between the
 two runs, so the comparison is by draw order and source bytes.
 
 This proves an authentic input-correlated VDP1 source change alongside the
-visible selection. It does not prove the full `TITLE.BIN` decode/CLUT contract,
-complete menu composition, mouse hit regions, Firestaff input handling, or
-production renderer admission.
+visible selection. The generalized screenshot verifier matches all 1,128
+nontransparent pixels in these four draws to the captured screenshot and
+validates their 4bpp palette lookup, priority 5, 31/32 top ratio, and VDP2
+back-screen contribution. The same verifier also matches all 1,282 visible
+pixels in the retained `NEW GAME` capture, despite its different VDP1 command
+addresses. This does not prove the full `TITLE.BIN` decode contract, complete
+menu composition, mouse hit regions, Firestaff input handling, or production
+renderer admission. Screenshot-to-dump frame identity remains unproven.
 
 ## Reproduction
 
@@ -58,4 +63,6 @@ bundle at
 Its `SHA256SUMS.txt` covers the screenshot, memory dumps, source-join report,
 and run log. The source join against the authentic Japanese `.firestaff/data`
 corpus returns 126 informative byte matches among 137 textured draws and keeps
-`semantic_admission=blocked`.
+`semantic_admission=blocked`. `scripts/verify_nexus_title_sprite_screenshot.py`
+validates the four source-bound menu sprites against the screenshot; its
+per-command results are retained as `screenshot-verification.txt`.
