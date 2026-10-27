@@ -4,6 +4,7 @@ set -euo pipefail
 
 app=${1:?usage: test_m12_main_menu_game_selection_real_media.sh <firestaff> <data-root>}
 data_root=${2:?usage: test_m12_main_menu_game_selection_real_media.sh <firestaff> <data-root>}
+data_root=$(CDPATH= cd -- "$data_root" && pwd -P)
 
 dm1_archive="$data_root/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"
 csb_archive="$data_root/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"
