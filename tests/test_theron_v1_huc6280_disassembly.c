@@ -94,6 +94,58 @@ static void verify_stage2_vce_palette(const char *path,
     assert(palette.groups[1].nonblack_entry_count == 15u);
 }
 
+/* This static Track 02 fragment initializes a four-byte prefix at $287f,
+ * then copies it through an overlapping TII into $2883-$2896. Its runtime
+ * bank/LBA and gameplay meaning are not established by this raw-BIN check. */
+static void verify_buffer_setup_candidates(const char *path,
+                                           Theron_Track02Variant variant) {
+    static const uint32_t jp_offsets[] = {
+        0x0a7344u, 0x0f0b44u, 0x13a344u, 0x183b44u,
+        0x1cd344u, 0x216b44u, 0x260344u
+    };
+    static const uint32_t us_offsets[] = {
+        0x0a7c74u, 0x0f1474u, 0x13ac74u, 0x184474u,
+        0x1cdc74u, 0x217474u, 0x260c74u
+    };
+    static const unsigned char fragment[] = {
+        0xa9u, 0x97u, 0x8du, 0x1au, 0x27u, 0x62u, 0x8du,
+        0x80u, 0x28u, 0x8du, 0x81u, 0x28u, 0x8du, 0x82u,
+        0x28u, 0x3au, 0x8du, 0x7fu, 0x28u, 0x73u, 0x7fu,
+        0x28u, 0x83u, 0x28u, 0x14u, 0x00u
+    };
+    const uint32_t *expected_offsets;
+    const size_t expected_count = THERON_V1_HUC6280_CALLEE_CANDIDATE_COUNT;
+    FILE *file = fopen(path, "rb");
+    unsigned char *bytes;
+    long file_size;
+    size_t matches = 0u;
+
+    assert(variant == THERON_TRACK02_VARIANT_US_BIN ||
+           variant == THERON_TRACK02_VARIANT_JP_BIN);
+    expected_offsets = variant == THERON_TRACK02_VARIANT_JP_BIN ?
+        jp_offsets : us_offsets;
+    assert(file != NULL);
+    assert(fseek(file, 0L, SEEK_END) == 0);
+    file_size = ftell(file);
+    assert(file_size > 0L);
+    assert(fseek(file, 0L, SEEK_SET) == 0);
+    bytes = (unsigned char *)malloc((size_t)file_size);
+    assert(bytes != NULL);
+    assert(fread(bytes, 1u, (size_t)file_size, file) == (size_t)file_size);
+    assert(fclose(file) == 0);
+
+    for (size_t offset = 0u;
+         offset + sizeof(fragment) <= (size_t)file_size; ++offset) {
+        if (memcmp(bytes + offset, fragment, sizeof(fragment)) == 0) {
+            assert(matches < expected_count);
+            assert((uint32_t)offset == expected_offsets[matches]);
+            ++matches;
+        }
+    }
+    free(bytes);
+    assert(matches == expected_count);
+}
+
 static void verify(const char *env_name, const char *name,
                    Theron_Track02Variant variant,
                    const char *label) {
@@ -304,6 +356,7 @@ static void verify(const char *env_name, const char *name,
             0x46360d97u));
     if (variant == THERON_TRACK02_VARIANT_US_BIN ||
         variant == THERON_TRACK02_VARIANT_JP_BIN) {
+        verify_buffer_setup_candidates(path, variant);
         verify_stage2_vce_palette(path, variant, receipt.source_md5);
     }
     printf("PASS: authentic %s HuC6280 disassembly source md5=%s fragment=%08x",
