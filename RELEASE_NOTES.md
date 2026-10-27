@@ -2,7 +2,7 @@
 
 ## User-facing changes
 
-- `Theron startup`: selecting Theron bypasses redundant platform and presentation cards and proceeds through the authenticated Track 02 launch gate.
+- `Theron startup flow`: update game selection to skip redundant platform and presentation cards, then start through the authenticated Track 02 launch gate.
 
 ## Developer changes
 
@@ -10,7 +10,7 @@
 - `Theron input evidence`: verify Japanese touch-swipe routes and repeatable in-dungeon save-state captures; observed VRAM/SAT changes do not establish movement transactions, native CD boot, or full campaign/display parity.
 - `Theron pointer-classifier tests`: verify source-derived Japanese and US pointer-table boundaries; this validates the classifier evidence without claiming full runtime parity.
 - `Cross-platform startup evidence`: distinguish verified runtime, menu and capture checkpoints from claims that the available evidence does not establish.
-- `Nexus startup documentation`: qualify the Ymir cold-boot checkpoint and SCU DMA conclusions against retained capture evidence.
+- `Nexus startup evidence`: update the Ymir cold-boot checkpoint and SCU DMA claims to match retained capture evidence.
 - `Startup localization`: refresh the generated catalogs after source-string changes.
 - `Release metadata`: update the project version and regenerate the reproducible SPDX source SBOM for v3.0.417.
 
