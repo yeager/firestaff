@@ -6,7 +6,7 @@
 
 ## Developer changes
 
-- `DM1, CSB and DM2 launcher tests`: cover authenticated alternate PC, Atari ST, Amiga and Macintosh platform selections from the no-game menu and verify original archives remain unchanged.
+- `DM1, CSB and DM2 launcher tests`: exercise available authenticated alternate PC, Atari ST, Amiga and Macintosh platform selections from the no-game menu and verify original archives remain unchanged.
 - `Theron input evidence`: verify Japanese touch-swipe routes and repeatable in-dungeon save-state captures; observed VRAM/SAT changes do not establish movement transactions, native CD boot, or full campaign/display parity.
 - `Theron pointer-classifier tests`: verify source-derived Japanese and US pointer-table boundaries; this validates the classifier evidence without claiming full runtime parity.
 - `Cross-platform startup evidence`: distinguish verified runtime, menu and capture checkpoints from claims that the available evidence does not establish.
