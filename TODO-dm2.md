@@ -1,5 +1,17 @@
 # Firestaff TODO — DM2
 
+2026-10-27 authentic Amiga no-game launcher runtime: current `main` at
+`c1c951fa` was built on TRV2 and selected the original
+`Dungeon-Master-II-Skullkeep_Amiga_EN.zip` from the no-game M12 menu. The route
+selected DM2 → Amiga → `amiga-en`, completed the original title/New Game input,
+and reached level 0 at `(1,8)` with one original champion. The runtime receipt
+reported Amiga platform 6, accepted real assets, no core fallbacks, and zero
+fallback draws; the source archive hash was unchanged. The opt-in
+`FIRESTAFF_MAIN_MENU_GAME=dm2-amiga` case and the focused
+`m12_main_menu_dm2_amiga_runtime_real_media` CTest now cover this
+menu-to-runtime route. This proves the tested startup path, not full Amiga
+campaign, native input, audio, or visual parity.
+
 2026-10-27 indoor live-missile compositor status: each production indoor
 composition now builds `DM2_V1_IndoorLiveMissilePlan` from authenticated live
 DB14 chains and stores it in `last_indoor_live_missile_plan`. The plan is still
@@ -14,12 +26,14 @@ checked against original DM2 media.
 for the original DOS English archive, Macintosh French SIT media, and FM Towns
 Japanese archive. The separate authentic-media main-menu selection test also
 passed for DM2 PC and FM Towns Japanese. DOS French, Macintosh English, and
-Amiga English cases in that symlink-based matrix were skipped because their
-data-root symlinks point to missing files; no substitute media was used. The
-Amiga extracted-install M11 title route and installer-ZIP route have since
-passed a dedicated real-media regression. The symlink-based CLI matrix remains
-open for those skipped editions. SDL dummy verifies the exercised source
-startup and handoff paths, not native display or physical input parity.
+Amiga English direct-CLI cases in that symlink-based matrix were skipped
+because their data-root symlinks point to missing files; no substitute media
+was used. Amiga English now also passes the authentic no-game M12 route to its
+first runtime from the installed original archive. The extracted-install M11
+title route and installer-ZIP route remain covered by a dedicated real-media
+regression. The symlink-based direct-CLI matrix remains open for the skipped
+editions. SDL dummy verifies the exercised source startup and handoff paths,
+not native display or physical input parity.
 
 2026-10-25 selected DM2 PC loose-language owner: the authentic DOS English
 and French archives share a dungeon payload but have different GRAPHICS.DAT
