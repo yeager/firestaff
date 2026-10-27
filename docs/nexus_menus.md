@@ -9,11 +9,14 @@
 
 ## Overview
 
-Nexus V1 has a host-side startup state/input route in
-`src/nexus/nexus_v1_startup_menu.c`, with asset gating in
-`src/nexus/nexus_v1_launcher.c`. It covers save/new-game selection, champion
-selection, input receipts, and engine transition. This does not claim that the
-retail Saturn menu pixels, CLUT ownership, or VDP1/VDP2 placement are known.
+Nexus V1 has host-side startup routing in `src/nexus/nexus_v1_startup_menu.c`,
+with asset gating in `src/nexus/nexus_v1_launcher.c`. A separate, currently
+unwired reducer in `src/nexus/nexus_v1_retail_title_menu.c` models only the
+authentic title choices and transitions observed in Ymir: initial New Game,
+Down to Continue, Down to Configuration, and the documented Accept results.
+It deliberately does not supply mouse geometry or render a menu. The Saturn
+menu's exact retail texture, CLUT ownership, placement, and Firestaff runtime
+integration remain unverified.
 
 ## DM1 Menu System Reference
 
@@ -38,8 +41,10 @@ decoded. The Saturn tilemap/CLUT/runtime placement remains capture-gated; no
 
 ### Menu State Machine
 A Nexus menu system needs states for:
-- Title/Start: retail title/menu consumer unproven; host New Game/Continue
-  state route exists, while Options and title animation remain unbound
+- Title/Start: authentic New Game/Continue/Configuration states and bounded
+  pad transitions are recorded; the reducer is not wired into runtime startup.
+  Menu rendering, options behavior, title animation, and mouse targeting remain
+  unbound.
 - Champion Select: source-owned champion records (20 live PLRD/TABL records)
 - Options: Display mode (fullscreen/windowed), audio levels
 - In-Game Menu: ESC pause with stats, inventory, spells, save
