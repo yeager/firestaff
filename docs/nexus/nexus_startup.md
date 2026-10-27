@@ -1325,9 +1325,9 @@ matching call chain is
 `0x06023108|0x06023144|0x06040150`. The VDP1 receipt identifies menu frame
 `8,047`, with `178` commands and zero dropped rows; the authentic screenshot
 matches the five verified Japanese `TITLE.BIN` sprite roles at `1,441/1,441`
-nontransparent pixels. The screenshot verifier conservatively reports timing
-as unproven because its PNG does not carry an independent frame number. Raw
-files, verifier output, trace analysis, and hashes are retained in
+nontransparent pixels. The screenshot verifier's original invocation
+conservatively reported timing as unproven because the PNG has no embedded
+frame number. Raw files, verifier output, trace analysis, and hashes are retained in
 `/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_menu_sh2_bound_20261027/`.
 
 A fresh repeat cold boot on the frame-tracing Ymir fork independently captured
@@ -1335,11 +1335,15 @@ the Continue screenshot and VDP1 receipt in one run. Its screenshot hash is
 identical to the image above, and its complete VDP1 capture receipt places the
 image at frame `8,047` with all `178` commands and zero dropped rows. Its
 15,264-row SH-2 trace is also byte-for-byte identical to the frame-7716 trace
-used by the paired VDP2 evidence above. This reproduces the menu image and the
-source-write sequence, while keeping the original screenshot verifier's
-pixel-level timing result conservative. The new run did not include a VDP2
-write trace, so the stable-snapshot proof remains the separate paired capture.
-The full raw repeat capture, its run log, receipt, and hashes are retained in
+used by the paired VDP2 evidence above. The screenshot verifier now accepts
+`--run-log` for a complete Ymir capture: it checks that the screenshot is in
+the same capture directory, the log names that screenshot exactly once, and
+the VDP1 capture and register receipts agree on the frame. With this repeat
+capture it reports `timing=paired_capture_frame:8047` while still matching all
+five authentic sprite roles pixel-for-pixel. This reproduces the menu image
+and source-write sequence. The new run did not include a VDP2 write trace, so
+the stable-snapshot proof remains the separate paired capture. The full raw
+repeat capture, its run log, receipt, and hashes are retained in
 `/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_menu_frame_windowed_sh2_20261027/`.
 
 This is authentic input-correlated source evidence for the Japanese menu
