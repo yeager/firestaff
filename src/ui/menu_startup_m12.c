@@ -2209,7 +2209,7 @@ static void m12_show_missing_game_data_file_popup(M12_StartupMenuState* state,
      * missing-media error if the player reaches a game card early. Leave the
      * card in place so scan progress remains visible and the choice can be
      * retried against the finished snapshot. */
-    if (state->deferredScanActive &&
+    if ((state->deferredScanPending || state->deferredScanActive) &&
         !(state->deferredScanCompletedGameMask &
           m12_deferred_game_bit(gameId))) {
         return;
@@ -10815,7 +10815,7 @@ int M12_StartupMenu_GetLaunchGate(
         }
     }
     gate.dataReady = gate.boot.dataReady;
-    if (state->deferredScanActive &&
+    if ((state->deferredScanPending || state->deferredScanActive) &&
         (!entry->gameId ||
          !(state->deferredScanCompletedGameMask &
            m12_deferred_game_bit(entry->gameId)))) {
