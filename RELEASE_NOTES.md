@@ -1,3 +1,26 @@
+# Firestaff v3.0.417
+
+## User-facing changes
+
+- `Theron startup`: selecting Theron bypasses redundant platform and presentation cards and proceeds through the authenticated Track 02 launch gate.
+
+## Developer changes
+
+- `DM1, CSB and DM2 launcher tests`: cover authenticated alternate PC, Atari ST, Amiga and Macintosh platform selections from the no-game menu and verify original archives remain unchanged.
+- `Theron input tests`: verify Japanese touch-swipe routes with authentic media; these checks do not claim broader campaign or display parity.
+- `Cross-platform startup evidence`: distinguish verified runtime, menu and capture checkpoints from claims that the available evidence does not establish.
+- `Nexus startup documentation`: qualify the Ymir cold-boot checkpoint and SCU DMA conclusions against retained capture evidence.
+- `Startup localization`: refresh the generated catalogs after source-string changes.
+- `Release metadata`: update the project version and regenerate the reproducible SPDX source SBOM for v3.0.417.
+
+## Known limitations
+
+- The release does not establish full gameplay or visual parity across all games and platforms.
+- `DM1`, `CSB` and `DM2`: platform-wide viewport, HUD, combat and physical-display parity remain incomplete outside the individually verified paths.
+- `Nexus`: capture analysis does not establish a complete production New Game/Continue route to a playable level.
+- `Theron's Quest`: startup and selected input checks do not establish complete campaign or dungeon-rendering parity.
+- Original game media and BIOS/firmware are not included in release packages.
+
 # Firestaff v3.0.416
 
 ## User-facing changes
