@@ -1,8 +1,8 @@
 # Five-game startup support gap analysis
 
-Reconciled with repository `main` at `f6585ca2` on 2026-10-27. The latest
-published release is v3.0.416 (published at 01:54 UTC). GitHub Actions release
-run `40434369420` completed its seven platform build and packaging jobs
+Reconciled with repository `main` at `f6c7ad00` on 2026-10-27. The latest
+published release is v3.0.417 (published at 06:59 UTC). GitHub Actions release
+run `40463344704` completed its seven platform build and packaging jobs
 successfully (Windows x86_64, macOS x86_64/arm64, Linux x86_64/arm64, Android
 arm64 and iOS arm64), then published 23 release assets. These results verify
 compilation and packaging, not game startup. Recent changes add authentic Japanese Theron input evidence and Nexus retail
@@ -10,6 +10,24 @@ reference captures. The Nexus captures now verify a no-save route to the native
 three-choice menu and a separate diagnostic replay to the native 3D corridor;
 they do not establish Firestaff's Nexus startup or renderer. Runtime receipts
 cited below remain tied to their stated revisions unless noted otherwise.
+The latest Nexus evidence separates raw Japanese `DM.BIN` placement at
+`0x06010000` from the older trace-specific static code mapping at
+`0x06010040`. The installed English `MENU.BPK` still needs a same-session
+English title/menu capture and source join; Japanese capture evidence does
+not admit the English renderer gate.
+The matched Japanese runtime trace now binds a strided zero-fill loop to VDP1
+CLUT address aliases, but it does not establish palette upload or ownership.
+Since the earlier gap review, the M12 platform card now displays a pending
+deferred scan as `SCANNING GAME DATA` instead of implying that files are
+missing. The launch gate still waits for that game's completed scan receipt.
+An authentic US Theron keypad test also corrects its expected pose after a
+backward step followed by KP8; it changes the regression expectation, not game
+movement behavior.
+Two additional authentic US Theron cold-start probes reached only the
+System Card; controller delivery was observed, but no CD interrupt, sector
+transfer, or title-menu transition was established. This is negative evidence
+for that bounded route and does not validate or invalidate viewport-click
+semantics after a game-owned handoff.
 The repository contains checks
 against authentic media for all five games, but “available,”
 “selected,” “handed off,” and “entered a playable runtime” are separate states.
@@ -20,10 +38,10 @@ The current evidence does not establish complete five-game startup support.
 | Game | Direct CLI evidence | Main-menu evidence | Current startup result |
 |---|---|---|---|
 | DM1 | The authentic-media CLI diagnostics exercise direct selection and source-owned startup. | The picker test covers keyboard and mouse handoff; the mixed-media AUTO route enters through the no-game menu and reaches its authentic first runtime frame. | First runtime is verified on bounded real-media routes. Platform-wide parity and native physical input remain open. |
-| CSB | The authentic-media CLI diagnostics exercise direct selection and source-owned startup. | The picker test covers keyboard and mouse handoff; the runtime test checks the authentic starting party and viewport receipt. | First runtime is verified on bounded real-media routes. Platform-wide parity and native physical input remain open. |
+| CSB | The authentic-media CLI diagnostics exercise direct selection and source-owned startup. | The picker test covers keyboard and mouse handoff; the runtime test checks the authentic starting party and viewport receipt. | First runtime is verified on bounded real-media routes. In Amiga CSB, the shared F0107 ornament planner still applies PC34 placement rules; the missing work is native Amiga coordinate mapping and matched-frame verification, not blitter scaling, flip, palette mapping or transparency ([authentic evidence and remaining gap](../TODO-csb.md)). Platform-wide parity and native physical input remain open. |
 | DM2 | The authentic-media CLI diagnostics cover direct selection; platform-specific checks include the complete timed FM Towns title sequence. The French DOS loose-file route now also preserves its selected graphics owner into the first loaded runtime. | The picker test covers keyboard and mouse handoff; the runtime test checks the authentic first party and frame. | First runtime is verified on bounded real-media routes, including the selected French DOS loose-file case. Other edition and native interaction coverage remains incomplete. |
-| Theron | The CLI diagnostics reach its source-owned runtime handoff. | The picker test covers keyboard and mouse handoff; the runtime test checks a loaded authentic Track 02 state. Tab champion cycling and Z/X/Space exercise keyboard actions on authentic USA Track 02; the Japanese Track 02 SDL test covers swipe-up movement and swipe-left turning. | Runtime state, native frames and these input routes are reached, but the native dungeon image is not yet driven by the authenticated world/graphics state. A recent nonblack Firestaff capture has not been paired with an original-emulator capture. |
-| Nexus | A TRV2 v3.0.415 CLI run used authentic Japanese `DM.BIN` (MD5 `e88d60859f65f08fa622e1992b02280f`): after 110 boot-probe frames and one scripted Enter, it reported `titleReady=1`, `levelLoaded=0`, `menu=0`, blocker `menu-bpk-prs3-capture-required`. The authentic-data mouse test likewise reaches only that capture-gated Firestaff title route. No Nexus case exists in the first-runtime probe matrix. | An authentic Japanese retail Ymir cold boot with no emulator or game save reaches the native three-choice title menu after scheduled Start inputs. No-input, Down/Continue, and Configuration behavior are separately verified from diagnostic state 3. From that same no-save menu state, a separate replay with `NEW GAME` selected and a two-frame A input reaches the native 3D corridor viewport after 1,200 frames; the complete VDP1 trace has zero drops, and the capture has no party HUD. These are retail emulator checkpoints, not Firestaff startup or presentation evidence. Firestaff's title composition, menu rendering/control, Continue with real save data, stable gameplay, HUD and viewport parity remain unverified. The English `MENU.BPK` still lacks the source-bound English capture required by the renderer gate; the Saturn BKR parser remains container-level and is not wired to save selection or loading ([cold-boot retail menu and navigation](nexus_startup.md#cold-boot-title-menu-and-retail-menu-navigation-2026-10-27), [New Game viewport checkpoint](nexus_startup.md#new-game-reaches-the-native-3d-viewport-2026-10-27), [SCU-to-VDP1 correlation](nexus_startup.md#scu-dma-to-vdp1-frame-correlation-2026-10-27), [retail Continue evidence](nexus_startup.md#retail-continue-with-an-authentic-save-2026-10-25)). | **Not startable as a playable game yet.** |
+| Theron | The CLI diagnostics reach its source-owned runtime handoff. | The picker test covers keyboard and mouse handoff; the runtime test checks a loaded authentic Track 02 state. Tab champion cycling and Z/X/Space exercise keyboard actions on authentic USA Track 02; the Japanese Track 02 SDL test covers swipe-up movement and swipe-left turning. The authentic US raw-bin regression checks backward followed by KP8 forward to the source-backed starting square. Separate bounded US reference cold starts reached only the System Card; they do not establish a game-owned menu transition. | Runtime state, native frames and these input routes are reached, but the native dungeon image is not yet driven by the authenticated world/graphics state. A recent nonblack Firestaff capture has not been paired with an original-emulator capture. |
+| Nexus | A historical TRV2 v3.0.415 CLI run used authentic Japanese `DM.BIN` (MD5 `e88d60859f65f08fa622e1992b02280f`): after 110 boot-probe frames and one scripted Enter, it reported `titleReady=1`, `levelLoaded=0`, `menu=0`, blocker `menu-bpk-prs3-capture-required`. Current source has advanced: the real English `MENU.BPK` byte decoder verifies all 162 PRS3 surfaces, but keeps decoded pixels out of the renderer until Saturn palette, VDP1 upload and display ownership are joined to a matching capture. The authentic-data mouse test still reaches only the capture-gated title route, and no Nexus case exists in the first-runtime probe matrix. | An authentic Japanese retail Ymir cold boot with no emulator or game save reaches the native three-choice title menu after scheduled Start inputs. No-input, Down/Continue, and Configuration behavior are separately verified from diagnostic state 3. From that same no-save menu state, a separate replay with `NEW GAME` selected and a two-frame A input reaches the native 3D corridor viewport after 1,200 frames; the complete VDP1 trace has zero drops, and the capture has no party HUD. These are retail emulator checkpoints, not Firestaff startup or presentation evidence. Firestaff's title composition, menu rendering/control, Continue with real save data, stable gameplay, HUD and viewport parity remain unverified. Japanese capture evidence does not satisfy the source-bound English renderer gate. The Saturn BKR parser remains container-level and is not wired to save selection or loading ([cold-boot retail menu and navigation](nexus_startup.md#cold-boot-title-menu-and-retail-menu-navigation-2026-10-27), [New Game viewport checkpoint](nexus_startup.md#new-game-reaches-the-native-3d-viewport-2026-10-27), [SCU-to-VDP1 correlation](nexus_startup.md#scu-dma-to-vdp1-frame-correlation-2026-10-27), [retail Continue evidence](nexus_startup.md#retail-continue-with-an-authentic-save-2026-10-25), [current decoder and strict boundary](NEXUS_STRICT_FIDELITY_INVENTORY.md#startup)). | **Not startable as a playable game yet.** |
 
 ## What the existing checks prove
 
@@ -32,6 +50,11 @@ The current evidence does not establish complete five-game startup support.
   success condition is a `game-handoff` receipt, not a loaded level.
   Duplicate first-row DM1, CSB and DM2 mouse handoffs were removed; the
   remaining five-card mouse matrix retains one center click for each card.
+- `tests/test_m12_polished_ui_flow.c` now distinguishes pending deferred scans,
+  active scans and missing media. Pending and active states render the
+  scanning indicator, while a game remains launch-gated until its own scan
+  receipt completes. This fixes the card's temporary status display; it does
+  not turn a handoff into a playable start.
 - [`tests/test_m12_main_menu_runtime_real_media.sh`](../tests/test_m12_main_menu_runtime_real_media.sh)
   exercises first-runtime probes for DM1, CSB, DM2, and Theron. The verifier
   requires an active runtime and `levelLoaded=1`; Nexus is not included.
@@ -107,6 +130,11 @@ The current evidence does not establish complete five-game startup support.
   source-backed coverage in the active runtime input and SDL event-loop checks.
   This closes that input-path defect; it does not establish full input or
   renderer parity.
+- `tests/test_theron_v1_raw_bin_runtime_boot.sh` checks the authentic US Track
+  02 route `down,key:kp8` as one backward step followed by one forward step,
+  including both action receipts and the returned position. This corrects a
+  prior expected-coordinate error; it does not add movement behavior or close
+  the native viewport gap.
 - [`tests/test_firestaff_cli_startup_diagnostics_real_media.sh`](../tests/test_firestaff_cli_startup_diagnostics_real_media.sh)
   checks discovery and direct CLI startup for all five IDs. Its Nexus-specific
   assertion rejects a false `runtime-entered` receipt and requires the blocked

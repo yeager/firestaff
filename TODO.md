@@ -4,6 +4,23 @@ The current five-game startup evidence matrix and remaining Nexus/Theron
 runtime-entry gaps are consolidated in
 [`docs/STARTUP_SUPPORT_GAP_ANALYSIS.md`](docs/STARTUP_SUPPORT_GAP_ANALYSIS.md).
 
+2026-10-27 TRV2 verification at source revision `f582f57d` against the
+authentic `.firestaff/data` roots: a clean Debug build produced `firestaff`
+and both focused Theron disassembly/capture test targets. The disassembly
+test passed; the real VRAM-capture CTest skipped without its required capture
+environment. Supplying the retained cold-start capture explicitly still did
+not bind it to the production viewport. The real-media M12 selection test
+passed keyboard and mouse handoff for all five games, including the default
+`.firestaff/data` and sibling-folder discovery cases. Its first-runtime test
+passed for DM1, CSB, DM2 FM Towns, and Theron PC Engine. The 14-route CLI
+boot sweep reached `boot-probe-ready` for 12 routes; DM2 Macintosh was
+`missing-media` (no authentic Mac image in the configured DM2 data folder),
+and Nexus Saturn remained blocked before its menu and playable level
+(`menu=0`, `levelLoaded=0`). These headless receipts establish route/media
+selection and bounded runtime entry only; they do not establish complete
+gameplay or native presentation parity. No synthetic media was used and the
+original archives were hash-checked by the menu tests.
+
 2026-10-26 local M12 source audit found several paths using a fixed game
 option slot as a menu-row index: CLI `--game` preselection, Quick Resume,
 save-browser load/import, Quick Resume card art, selected-launch preparation,
