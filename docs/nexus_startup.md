@@ -522,13 +522,20 @@ CLUT source remain open.
 The narrowed trace provides disassembly anchors in authentic Japanese
 `DM.BIN` (SHA-256
 `3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124`) at load
-base `0x06010040`: the recorded call target is `0x0602623c` (file offset
-`0x161fc`), with writes observed at `0x0602625c` and `0x0602626c` (offsets
-`0x1621c` and `0x1622c`); the trace's caller-return field is `0x06027064`
-(offset `0x17024`). These instructions are concrete reverse-engineering
-targets, not yet an authenticated asset-upload routine. The four captured
-32-byte CLUTs also have no direct or word-swapped exact match in the 126
-hash-accepted Japanese retail files, so their palette source remains unbound.
+base `0x06010040`: its call-target field is `0x0602623c` (file offset
+`0x161fc`), and its caller-return field is `0x06027064` (offset `0x17024`).
+The trace labels write rows with PCs `0x0602625c` and `0x0602626c` (offsets
+`0x1621c` and `0x1622c`), but static SH-2 disassembly exposes an attribution
+mismatch: `0x0602625c` is `tst r0,r0`, while `0x0602626c` is `mov.b r5,@r4`
+inside a loop that advances `r4` by 16. The trace reports four-byte writes at
+both PCs, despite the latter instruction being a byte store. Therefore these
+PCs and call fields identify a candidate routine for further tracing; they do
+not yet identify the exact store instruction or authenticate a graphics
+upload routine. The function also copies a 256-byte block through a helper
+before modifying its local buffer, but the trace does not join that buffer to
+the observed texture spans. The four captured 32-byte CLUTs also have no
+direct or word-swapped exact match in the 126 hash-accepted Japanese retail
+files, so their palette source remains unbound.
 
 FONT256's authenticated Character Generator bytes now remain in the engine's
 source object for the future Saturn consumer. This does not admit glyph coding,
