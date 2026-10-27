@@ -707,11 +707,11 @@ log SHA-256 is
 `DMV0_FRAME_MATCH.txt` SHA-256 is
 `51081a26e28878ac6f90a102fe79c76a51c519d3aba5c23f7e9b4612364d298f`; the
 `TM_BIN_AVI_DISPATCH.txt` SHA-256 is
-`8ccfcd8af5ee6afdd0b11607fb990838bdb0a51a767211a37c638060191359c3`;
+`884a62d68879edec2239fcafb0addec581c3e27ae252ddc606c4240303658d40`;
 `README.md` SHA-256 is
 `42ee176d4a06c539864fbcd4e68a176ea1ea579627be31ea0699faa5d0ade67a`; and
 `SHA256SUMS.txt` SHA-256 is
-`1e0c9e940632e99e063b27af0f498896ebbef7a3123cad7547525e0f309432fb`. All 37
+`6d831e2f30bbf32031ae0586f152a5ee0aef80d67cec0183a76fba8a7ed27ae1`. All 37
 listed bundle files passed checksum verification. This is diagnostic evidence;
 it is not a Firestaff asset or a parity admission.
 
@@ -728,9 +728,19 @@ The module entry routine at file offset `0x00` reads the selector at SH-2
 address `0x00200000` at PC `0x0601006c`. It branches on values 0, 1, or 2 and
 loads the corresponding AVI pointer from its literal pool at offsets
 `0x260`, `0x264`, and `0x268`. It calls the shared playback routine at
-`0x06010eec`; the DMV0 branch passes `0x000a0000` in `r5`. After playback,
-the entry routine clears byte `0x0020000b` and jumps through the vector at
-`0x00200010`. The exact SH-4 disassembly excerpt and reproducible command are retained at
+`0x06010eec`; the DMV0 branch passes `0x000a0000` in `r5`. After the shared
+playback call returns, the routine makes further calls and reads the word at
+`0x06029978`. If it is not 2, control branches to `0x060100e0`. If it is 2,
+the code tests the word addressed by `r14`: when nonzero, it clears byte
+`0x0020000b` and branches to `0x060100e0`; when zero, it loads a call target
+from `0x0600026c` and calls through that pointer. These are static control-flow
+observations, not proof of the values used during cold boot or the following
+menu transition.
+
+The retained excerpt was produced with GNU objdump's `-m sh4` decoder setting.
+The retail Saturn CPU is SH-2; this evidence claims only the displayed opcode
+bytes and their compatible control flow, not an SH-4 execution target. The
+reproducible command and raw output are retained at
 `/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_rendered_20261027/rendered_menu_candidate_19000/TM_BIN_AVI_DISPATCH.txt`.
 
 This is high-confidence static evidence of a retail three-video dispatcher and
