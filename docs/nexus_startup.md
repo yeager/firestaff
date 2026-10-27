@@ -1284,8 +1284,8 @@ The analyzer's rejection is reproducible with
 report, and Ghidra output are retained in
 `/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_nbg0_sh2_complete_20261027/`.
 The frame-bounded capture below supplies the missing SH-2 bounds. It also
-checks for a later but byte-equivalent VDP2 snapshot by requiring a complete
-zero-drop VRAM/CRAM write trace through the snapshot frame.
+checks for a later but byte-equivalent VDP2 VRAM snapshot by requiring a
+complete zero-drop VRAM write trace through the snapshot frame.
 
 A frame-filtered repeat capture now records SH-2 writes only during VDP1
 frame `7,716`. The Ymir receipt reports exact frame bounds `7,716..7,716`,
@@ -1311,11 +1311,13 @@ trace and xref output are retained in
 
 A matched cold-boot menu capture keeps the SH-2 trace filtered to frame
 `7,716` while continuing to the complete native menu frame `8,047`. The
-bounded VDP2 trace covers frames `7,000`–`8,049`, retains `41,443` rows with
-zero drops, and records no VRAM or CRAM writes after frame `7,716`. Its final
-VRAM, CRAM, and register snapshots are from frame `8,047`; the complete write
-trace therefore establishes that the memory bytes written at frame `7,716`
-remain unchanged through the menu screenshot frame. The SH-2 frame receipt
+bounded VDP2 VRAM-write trace covers the frame window `7,000`–`8,049`, retains
+`41,443` rows with zero drops, and records no VRAM writes after frame `7,716`.
+The trace contains VRAM writes only, so it does not establish CRAM stability.
+The final VRAM, CRAM, and register snapshots are from frame `8,047`; the
+complete VRAM write trace therefore establishes that the observed memory bytes
+remain unchanged through that snapshot. It does not independently bind the
+PNG to frame `8,047`. The SH-2 frame receipt
 contains `15,264` master rows with exact bounds `7,716..7,716`, zero drops,
 and one contiguous ordered match for all `15,264` byte writes. All `14,784`
 distinct written VRAM bytes agree with the later, unchanged snapshot. The
