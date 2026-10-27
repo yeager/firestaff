@@ -12,6 +12,23 @@
   gameplay meaning, so the `$287F-$2896` consumer and native direct-click gap
   remain open.
 
+## 2026-10-27 — repeated JP save-state input captures remain screen-only
+
+- Three isolated 12-second reference captures per condition replayed the same
+  authentic in-dungeon Japanese save state: no input, `up@120:60`, and
+  `right@120:60`. The input-consumption verifier passed all six directional
+  runs at the non-System-Card poll `$44D2` (physical PC `$0D04D2`). The three
+  no-input RAM/VRAM/VCE/SAT/VDC snapshots were byte-identical.
+- Each repeated directional input produced a byte-identical VRAM and SAT
+  snapshot. Relative to its paired control, UP changed 2 VRAM/2 SAT bytes and
+  RIGHT changed 90 VRAM/3 SAT bytes. Final RAM fields `$2040/$2041` remained
+  `$02/$03` in all nine runs; general RAM deltas varied and remain opaque.
+- All runs lack CD IRQ, raw-sector binding, and authenticated CD-to-RAM
+  receipts because save-state loading bypasses the original transfer. This is
+  repeatable input-coupled screen-memory evidence only; it proves no party
+  movement, command semantics, or native rendering mapping. Full method and
+  limits: [JP save-state input repeat capture](docs/source-lock/theron-disassembly/theron-jp-save-state-input-repeat-20261027.md).
+
 ## 2026-10-26 — trace-driven decode of the initializer's $43AB helper
 
 - The authenticated JP runtime trace executes `$43AB–$43B4` at physical
