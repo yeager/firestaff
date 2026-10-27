@@ -1177,23 +1177,23 @@ loaded no emulator state or game save; Ymir created a new internal backup-RAM
 image in the fresh profile. No retail data was modified.
 
 The 8,047 VDP1 frame contains 178 commands, and the command trace is complete
-with no dropped rows. The final four active texture draws have exact byte
-matches in the authentic Japanese `TITLE.BIN`: the two 288-byte draws at VDP1
-source `0x42e60` match file offset `0x1b36`; the 256-byte draw at `0x475e0`
-matches offset `0x06a6`; and the 416-byte draw at `0x46f60` matches offset
-`0x07d6`. The earlier retained cold-boot image with `NEW GAME` selected uses
-`TITLE.BIN` offsets `0x15f6`, `0x0446`, `0x0576`, and `0x07d6` for the
-corresponding ordered draws. The first three source spans change in the
-Down-selected capture and the fourth remains the same. The VDP1 command table
-relocates between runs, so the comparison uses draw order and source bytes.
+with no dropped rows. The final five active texture draws have exact byte
+matches in the authentic Japanese `TITLE.BIN`: command 171 at VDP1 source
+`0x481e0` reads 256 bytes matching offset `0x0316`; commands 172 and 173 at
+`0x42e60` each read 288 bytes matching offset `0x1b36`; command 174 at
+`0x475e0` reads 256 bytes matching offset `0x06a6`; and command 175 at
+`0x46f60` reads 416 bytes matching offset `0x07d6`. The earlier retained
+cold-boot image with `NEW GAME` selected has an earlier four-draw comparison
+at `TITLE.BIN` offsets `0x15f6`, `0x0446`, `0x0576`, and `0x07d6`. The current
+five-draw verifier has not been rerun against that capture. The VDP1 command
+table relocates between runs, so comparison uses draw order and source bytes.
 
-The command-independent screenshot verifier matches all 1,128 nontransparent
-pixels in these four menu draws to the `CONTINUE` screenshot. It also verifies
-the exact 4bpp CRAM lookup, priority 5 and 31/32 top-screen ratio over the
-captured VDP2 back screen. The same verifier matches all 1,282 visible pixels
-in the earlier `NEW GAME` image despite its different VDP1 command addresses.
-These are sprite-level source and colour joins; whole-screen composition and
-the screenshot-to-dump frame identity remain unproven.
+The command-independent screenshot verifier matches all 1,441 nontransparent
+pixels in these five menu draws to the `CONTINUE` screenshot. It also verifies
+the exact 4bpp CRAM lookup, priority 5 and 31/32 sprite ratio over the captured
+VDP2 back screen. These are sprite-level source and colour joins;
+whole-screen composition and screenshot-to-dump frame identity remain
+unproven.
 
 This is authentic input-correlated source evidence for the Japanese menu
 selection state. It does not establish the complete `TITLE.BIN` decoding,
