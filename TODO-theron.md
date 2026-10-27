@@ -7900,15 +7900,23 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   instrumented input reads plus a 3,413-row main-RAM consumer sidecar. Injected
   I, Up, and Right reached controller-register reads at logical PCs `$44C1`
   and `$44D2` (reported physical PCs `$0D04C1` and `$0D04D2`); the sampled
-  register values changed on the injected frames. This is a game-runtime input
-  read receipt, but it does not establish which instructions produced those
-  reads, how a returned value changes party state, or which Track 02 bytes were
-  transferred to those addresses.
-- A later instruction-byte-instrumented attempt stayed at the title screen
-  instead of autoloading the state and therefore did not revisit those PCs.
-  The wrapper also expects a VDC snapshot absent from this `pce_fast` build, so
-  its overall exit was failure even though the earlier input/RAM sidecars are
-  usable. Next capture must confirm state autoload, bind the executing JP code
-  bytes to authenticated Track 02 source-transfer receipts, and trace any
-  resulting state change before implementing behavior. Keep the evidence
-  private on trv2.
+  register values changed on the injected frames. That initial trace is only a
+  game-runtime input-read receipt; it does not show whether those reads cause
+  party movement or identify the source of code/data loaded into memory.
+- A maintained-wrapper retry explicitly confirmed state autoload and recorded
+  `$44D2` at physical `$0D04D2` with MPR2 `$68`. Its 128-step instruction
+  follow shows `LDA $1000` returning `$3F`, followed by
+  `AND #$0F; ORA $28B8; EOR #$FF; STA $28B8; CMP #$0F; BNE $44E6; RTS`.
+  The exact 16-byte window `ad0010290f0db82849ff8db828c90fd0` occurs seven
+  times in authentic JP Track 02 MD5
+  `b7afb338ad31be1025b53f9aff12d73a`; MAME `unidasm -arch h6280` decodes the
+  same instructions. This binds the executing byte pattern to the JP image
+  and shows a controller-register read feeding `$28B8`, but does not select
+  which of the seven source copies supplied the runtime code or prove a CD
+  transfer origin. It also does not show a party movement or VDC effect.
+- The maintained wrapper still exits at final validation because this
+  `pce_fast` build emits no VDC VRAM snapshot. The code/input/RAM receipts are
+  retained privately on trv2. Next capture must bind the executing JP copy to
+  authenticated Track 02 source-transfer receipts, then trace a resulting
+  party/world state change and same-session VDC output before implementing
+  behavior. Keep emulator and BIOS out of runtime.
