@@ -368,7 +368,8 @@ must not be promoted into a native menu route or substitute title artwork.
 ## Static SH-2 disassembly correction — 2026-08-26
 
 The hash-verified retail `DM.BIN` was fully disassembled directly from the
-original CUE member in memory with its verified load base `0x06010040`.
+original CUE member in memory using the frame-specific static code mapping
+`0x06010040`.
 The frame-12596 PC tag `0x0602312c` is the loop checkpoint immediately after
 the relevant instructions: `mov.b @r5+,r1` at `0x06023120` and `mov.b r1,@r4`
 at `0x06023128`. The tag itself decodes as `cmp/pl r14`; its following branch

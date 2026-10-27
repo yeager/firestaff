@@ -1531,8 +1531,10 @@ transition. Its branch-trace SHA-256 values are
 `1d3f0ec113b0383cfc65c76482f89220ff4878572628ebf20bead43245a6ad01`
 (input) and
 `8933f0358b0ffcb943e40bd4700eb5e56bf9da83b46b250564f3291663e74c30`
-(control). Under `scripts/analyze_nexus_tm_bin_vdp_owner.py`'s static
-`DM.BIN` load base `0x06010040`, this PC maps to file offset `0x29250`. The
+(control). Under `scripts/analyze_nexus_tm_bin_vdp_owner.py`'s historical static
+`DM.BIN` code mapping `0x06010040`, this PC maps to file offset `0x29250`.
+This mapping is a code-location hypothesis for that older trace, not a global
+raw-image placement. The
 hash-verified Japanese `DM.BIN`
 (`3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124`)
 contains opcode `0x8903` at that offset, not the runtime-traced `0x8d5d`.

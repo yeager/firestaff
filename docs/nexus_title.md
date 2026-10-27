@@ -181,7 +181,8 @@ title NBG0 update plus same-frame SH-2 RAM and CD source provenance.
 The later bounded JP witness now establishes the observed VDP2 transport. In
 the frame-12596 producer window, 32,850 NBG0 clear writes carry PC tag
 `0x060230ac` and 31,616 byte-lane writes carry PC tag `0x0602312c`. The
-full `DM.BIN` disassembly uses verified load base `0x06010040`: the latter tag
+full `DM.BIN` disassembly uses the frame-specific static code mapping
+`0x06010040`: the latter tag
 is the checkpoint immediately after `mov.b @r5+,r1` at `0x06023120` and the
 VDP2 store `mov.b r1,@r4` at `0x06023128`. Replaying all
 64,466 writes
@@ -345,7 +346,8 @@ widening that semantic claim. Its 48-word windows at `0x060230ac`,
 `DM.BIN` CUE member at offsets `0x1306c`, `0x756b0` and `0x130ec` respectively.
 `scripts/analyze_nexus_vdp2_writer_code.py --cue <retail.cue>` reads those
 members in memory and checks their SHA-256 before reporting the match. The
-full SuperH disassembly, with `DM.BIN` at load base `0x06010040`, resolves the
+full SuperH disassembly, using the frame-specific static code mapping
+`0x06010040`, resolves the
 tag as post-store loop control: source `mov.b @r5+,r1` is at `0x06023120`,
 store `mov.b r1,@r4` at `0x06023128`, and `cmp/pl r14` at `0x0602312c`.
 The reproducible full-member scan in

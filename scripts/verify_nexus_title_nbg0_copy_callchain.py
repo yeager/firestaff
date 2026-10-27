@@ -21,6 +21,8 @@ from analyze_nexus_title_vdp2_source import cue_track1, iso_members_in_memory
 
 
 DM_SHA256 = "3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124"
+# Static code mapping for the frame-12596 title-copy receipt only. Other
+# captures place raw DM.BIN bytes at 0x06010000 and may run different code.
 DM_BASE = 0x06010040
 COPY_PC = 0x0602312C
 COPY_ENTRY = 0x06023112

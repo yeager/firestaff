@@ -21,6 +21,8 @@ EXPECTED = {
     "TM.BIN": (160044, "d87485fe6eba1f6e9fbbf487f5fcdd994911136905e6172e5bb5bc0122407eb6"),
 }
 VDP1_REQUIRED = {0x25D00000, 0x25D00002, 0x25D00006, 0x25D00008, 0x25D0000A, 0x25D00010}
+# Static address mappings used to label scan results. DM.BIN's raw WorkRAMH
+# image was separately observed at 0x06010000; do not treat this as universal.
 LOAD_BASE = {"DM.BIN": 0x06010040, "TM.BIN": 0x06010000}
 
 
