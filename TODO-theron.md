@@ -20,13 +20,14 @@
 ## 2026-10-27 — USA command-dispatch bytes map to seven Track 02 candidates
 
 - The 64 KiB code-page snapshot taken when the original mouse Button I path
-  first wrote `$28B8` contains all four traced routines at `$CCDB`, `$D34D`,
-  `$D395` and `$D3A0`. Each 32-byte window exactly matches seven copies in
-  authentic USA Track 02, at raw file offsets `671579`, `972635`, `1273691`,
-  `1574747`, `1875803`, `2176859` and `2477915` (raw-sector offset 1259 in
-  each candidate sector). The complete 64 KiB page does not match the full
-  Track 02 image, and these duplicate spans do not identify which source copy
-  supplied the runtime page.
+  first wrote `$28B8` contains four traced 32-byte code windows at `$CCDB`,
+  `$D34D`, `$D395` and `$D3A0`. The `$CCDB` window base offsets are
+  `671579`, `972635`, `1273691`, `1574747`, `1875803`, `2176859` and
+  `2477915`; each corresponding candidate has raw-sector offset 1259. The
+  other windows occur at displacements `+1954`, `+2026` and `+2037` from those
+  respective bases. The complete 64 KiB page does not match the full Track 02
+  image, and these duplicate spans do not identify which source copy supplied
+  the runtime page.
 - The three repeated standard-PCE Button I captures have identical `$2905`
   dispatch reads and identical code-page SHA-256
   `57920b254fe1199799052879146b96731638afc41ebe03ce17db5e1d21e842ca`.
