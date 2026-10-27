@@ -146,6 +146,57 @@ static void verify_buffer_setup_candidates(const char *path,
     assert(matches == expected_count);
 }
 
+/* The private JP PCE Fast trace matched 155 logged instruction-byte records
+ * in $C1DF-$C2FF against this authentic Track 02 window. The same exact
+ * 256-byte window occurs in six retail copies; this raw-media check preserves
+ * those candidates without claiming which copy supplied the loaded bank or
+ * assigning the routine a gameplay meaning. See
+ * docs/source-lock/theron-disassembly/theron-jp-c1df-runtime-candidates-20261027.md. */
+static void verify_jp_c1df_runtime_candidates(const char *path) {
+    static const uint32_t offsets[] = {
+        0x09723fu, 0x0e0a3fu, 0x12a23fu,
+        0x173a3fu, 0x1bd23fu, 0x206a3fu
+    };
+    uint8_t window[256];
+    FILE *file = fopen(path, "rb");
+    uint8_t *bytes;
+    long file_size;
+    uint64_t hash = UINT64_C(0xcbf29ce484222325);
+    size_t matches = 0u;
+
+    assert(file != NULL);
+    assert(fseek(file, 0L, SEEK_END) == 0);
+    file_size = ftell(file);
+    assert(file_size > 0L && (uint64_t)file_size <= SIZE_MAX);
+    assert(fseek(file, 0L, SEEK_SET) == 0);
+    bytes = (uint8_t *)malloc((size_t)file_size);
+    assert(bytes != NULL);
+    assert(fread(bytes, 1u, (size_t)file_size, file) == (size_t)file_size);
+    assert(fclose(file) == 0);
+
+    assert((size_t)offsets[0] + sizeof(window) <= (size_t)file_size);
+    memcpy(window, bytes + offsets[0], sizeof(window));
+    for (size_t i = 0u; i < sizeof(window); ++i) {
+        hash ^= window[i];
+        hash *= UINT64_C(0x100000001b3);
+    }
+    assert(hash == UINT64_C(0x86752173c063b9f9));
+    for (size_t i = 0u; i < sizeof(offsets) / sizeof(offsets[0]); ++i) {
+        assert((size_t)offsets[i] + sizeof(window) <= (size_t)file_size);
+        assert(memcmp(bytes + offsets[i], window, sizeof(window)) == 0);
+    }
+    for (size_t offset = 0u;
+         offset + sizeof(window) <= (size_t)file_size; ++offset) {
+        if (memcmp(bytes + offset, window, sizeof(window)) == 0) {
+            assert(matches < sizeof(offsets) / sizeof(offsets[0]));
+            assert((uint32_t)offset == offsets[matches]);
+            ++matches;
+        }
+    }
+    free(bytes);
+    assert(matches == sizeof(offsets) / sizeof(offsets[0]));
+}
+
 /* Source: authenticated JP/US Track 02 caller bytes following the $A704
  * setup candidate; exact offsets and regional decode are recorded in
  * docs/source-lock/theron-disassembly/
@@ -482,6 +533,9 @@ static void verify(const char *env_name, const char *name,
         verify_buffer_setup_caller_candidates(path, variant);
         verify_pointer_classifier_threshold_candidates(path, variant);
         verify_stage2_vce_palette(path, variant, receipt.source_md5);
+        if (variant == THERON_TRACK02_VARIANT_JP_BIN) {
+            verify_jp_c1df_runtime_candidates(path);
+        }
     }
     printf("PASS: authentic %s HuC6280 disassembly source md5=%s fragment=%08x",
            label, receipt.source_md5, (unsigned)receipt.fragment_fnv1a);

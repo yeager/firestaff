@@ -95,6 +95,21 @@
   LBA or prove they are world-hit tests. Source attribution, live rectangle
   data, command dispatch, and native pointer behavior remain open.
 
+## 2026-10-27 — C1DF runtime bytes joined to six JP retail copies
+
+- The corrected private trace contains 155 instruction records across 77
+  unique PCs in `$C1DF-$C2FF`. All logged opcodes and two following bytes
+  match the authentic JP Track 02 window at six identical offsets, beginning
+  at `0x9723f`; the 256-byte window hash and exact offset list are locked by
+  `test_theron_v1_huc6280_disassembly` and recorded in
+  [the C1DF candidate note](docs/source-lock/theron-disassembly/theron-jp-c1df-runtime-candidates-20261027.md).
+- The visible entry calls `$5981` and `$C39E`, then branches through code that
+  reads a record via zero-page `$01` and writes `$27xx` and `$A0-$A3`. This
+  establishes a runtime-to-retail-byte match for repeated candidates, not
+  which copy was loaded or what the record means. The save-state run still
+  has no source-LBA receipt, command write, or state transition; mouse and
+  world-click semantics remain open.
+
 ## 2026-10-26 — trace-driven decode of the initializer's $43AB helper
 
 - The authenticated JP runtime trace executes `$43AB–$43B4` at physical
