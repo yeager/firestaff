@@ -472,6 +472,32 @@ This is static control-flow evidence only. It does not identify which media
 duplicate was loaded, which RTS is taken for any input, or the meaning of the
 indexed table values. No movement semantics or runtime US path is inferred.
 
+### Static `$D588` coordinate-table bytes
+
+The 26-byte table immediately following the `$D515..$D5A6` code extent is
+identical across all seven candidates in both authentic editions. Its SHA-256
+is `8f9eea35bef73f48d39f09255524608a39188524935170168a44659b1b74b800`; the
+bytes are:
+
+```text
+0c ff 0b a2 8a 86 89 71 88 5e 87 4b 05 40 12 ff
+11 88 10 76 0f 62 0e 4f 0d 3d
+```
+
+The JP table begins at raw offsets `0x9d1e7`, `0xe69e7`, `0x1301e7`,
+`0x1799e7`, `0x1c31e7`, `0x20c9e7`, and `0x2561e7`. The US table begins at
+`0x9db25`, `0xe7325`, `0x130b25`, `0x17a325`, `0x1c3b25`, `0x20d325`, and
+`0x256b25`. `tests/test_theron_v1_huc6280_disassembly.c` checks the complete
+26-byte sequence at exactly these seven offsets for each edition.
+
+The disassembly at `$D588` starts with X=`$0c`, compares the regional cursor
+byte (`$2e7a` JP, `$2e7b` US) with the odd-position bytes while decrementing X
+by two, and loads the paired even-position byte from the table. Cursor value
+`$ff` returns early; negative class bytes are masked and can fall back to
+`$06` according to the regional flag (`$2e1c` JP, `$2e1d` US). This describes
+static classifier mechanics only. It does not map a class to a visible region,
+active descriptor, command, or resulting gameplay effect.
+
 `tests/test_theron_v1_runtime_input_poll_media_candidates.py` checks both
 regional hashes, exact occurrence counts/offsets for the poll, consumer,
 caller-branch, and regional indexed-table signatures; the `$D515` callee
