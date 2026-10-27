@@ -5,8 +5,11 @@ Nexus startup screen. Updated 2026-10-27: an authentic Japanese retail cold
 boot reaches the native `PRESS START BUTTON` title prompt and, with scheduled
 retail controller input, the native three-choice title menu in Ymir. The menu
 was navigated into its Configuration page from a saved diagnostic state.
-Firestaff startup and presentation, the New Game route to stable gameplay, real
-save loading through Continue, and HUD/viewport parity remain unverified.
+Separate captures show New Game selected and Down selecting Continue, with
+five TITLE.BIN sprite draws per state checked against the retail screenshots.
+Ymir also completed Continue-to-gameplay with a reported retail-written BKR
+image. Firestaff's runtime title-menu renderer, New Game route to stable
+gameplay, Saturn BKR loading, and HUD/viewport parity remain unverified.
 
 ## Verified initialization order
 
@@ -121,6 +124,35 @@ This makes title-menu capture reproducible without X11 keyboard injection. It
 does not bind a retail menu resource to a Saturn consumer, prove the final
 displayed pixels, or permit Firestaff to present a host-built menu. Those
 production gates remain closed.
+
+## Retail title selection captures (2026-10-27)
+
+The cold-boot Ymir capture at VDP1 frame 59 shows `NEW GAME` selected. The
+current five-draw verifier was rerun against its complete Ymir dump and the
+authenticated Japanese `TITLE.BIN` in `.firestaff/data/nexus`. It matched
+1,495 nontransparent sprite pixels across the five final title draws:
+213/213, 213/213, 313/313, 293/293, and 463/463. The retained capture is
+`ymir_nexus_atomic_menu_20261026` on the external evidence disk; its screenshot
+SHA-256 is `8721cce3354bc20b1cd367fd44be3d4ecc60ca65fa89c7d00654e83f5ad7db23`.
+
+A second authentic Japanese cold boot pressed Down for two emulated frames and
+shows `CONTINUE` selected at VDP1 frame 8047. The same verifier matched 1,441
+pixels across five TITLE.BIN draws (313/313, 186/186, 186/186, 293/293, and
+463/463). Its external evidence receipt is
+`ymir_nexus_coldboot_menu_20261027/menu_continue_input_20261027`; screenshot
+SHA-256 `741c620e945b5ab3e05f6bc5d182fc4ada9439071b79718f67326bcdd56c6118`.
+Both checks bind source texture bytes, CRAM colors, sprite priority, and
+individual screenshot pixels. They do not yet reconstruct or admit the full
+retail frame for Firestaff's live renderer.
+
+The retail Continue flow was separately observed in Ymir with a 32 KiB BKR
+image reported as retail-written. Down selected Continue, Accept opened the
+native Load panel, and accepting its internal-memory entry reached a four-
+champion dungeon view. The image digest was
+`87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`; the
+capture receipt notes that its transfer/source chain was not retained. This
+demonstrates the retail route, not Firestaff's BKR-to-engine handoff. See
+[`nexus-continue-real-bup-20261025`](../parity-evidence/verification/nexus-continue-real-bup-20261025/README.md).
 
 An independent 2,200-frame no-present replay on 2026-10-26 used the same
 authenticated Japanese IPL, retail CUE, retained title-prompt state, and the
