@@ -1,6 +1,6 @@
 # Five-game startup support gap analysis
 
-Reconciled with repository `main` at `378f9d20` on 2026-10-27. The latest
+Reconciled with repository `main` at `8fb841da` on 2026-10-27. The latest
 published release is v3.0.417 (published at 06:59 UTC). GitHub Actions release
 run `40463344704` completed its seven platform build and packaging jobs
 successfully (Windows x86_64, macOS x86_64/arm64, Linux x86_64/arm64, Android
@@ -235,6 +235,86 @@ external archive tools were disabled. The OS file cache was not controlled,
 and scan completion time is not a measurement of time to first menu input.
 This remains a one-host profile, not evidence of a general speedup or full
 archive inventory.
+
+## Targeted authentic CLI and M12 verification (2026-10-27)
+
+The v3.0.417 macOS arm64 executable was exercised with authentic archives from
+the external Firestaff data collection. Tests used an isolated data root
+containing only DM1, CSB, and DM2, with original archives reached through
+symlinks. The picker test verified that source archive hashes stayed unchanged.
+
+- `test_m12_main_menu_runtime_real_media.sh`, selected separately for DM1,
+  CSB, and DM2, passed all three no-game M12 routes to the first loaded
+  FM Towns runtime. The verifier requires an active game and `levelLoaded=1`.
+- `test_m12_main_menu_game_selection_real_media.sh` passed keyboard and mouse
+  selection for DM1, CSB, and DM2. Authentic menu handoffs were observed for
+  DM1 FM Towns, PC-34, Atari ST, and Amiga; CSB FM Towns, Atari ST, and Amiga;
+  and DM2 FM Towns and PC. This is edition-selection/handoff evidence, not a
+  first-runtime receipt for every listed edition. The test reported the
+  Nexus and Theron source archives unavailable in this isolated root.
+- `test_dm1_v1_atari_st_archive_cli_boot.sh` passed against authentic English
+  Atari ST v1.2 media. Direct startup and the M12 route reached the first HoC
+  hall; the test confirmed the original C127 choice and passed its native
+  input matrix.
+- `test_dm1_v1_atari_st_11_archive_cli_boot.sh` passed against the authentic
+  v1.1 STX member from the original software archive. Direct STX CLI and M12
+  retained the selected disk owner, reached the first HoC hall, and confirmed
+  the source C127 choice with live input.
+- `test_dm1_v1_amiga36_original_media_cli_boot.sh` passed against authentic
+  Amiga 3.6 media. Direct CLI and M12 reached the first runtime pose; English,
+  French, and German dungeon remaps, the source C696 zones, 64 door steps, and
+  fifteen native driver palette steps were verified. Original emulator frame
+  alignment, audible output, and full viewport parity remain unverified.
+- `test_dm1_v1_pc34_native_cli_boot.sh` passed against the authentic PC-34
+  archive. Direct CLI, no-platform CLI, and M12 reached the loaded runtime;
+  the test covered the 53-frame title, 32 selector-door steps at 70 Hz, the
+  fresh-input selector, Resume/Credits/Quit routes, HoC choice, and the native
+  input matrix. Its debug checks also verified FPS/CPU reporting and explicit
+  GPU-availability reporting. These startup results do not prove full dungeon
+  viewport or gameplay parity.
+- `test_dm1_v1_fmtowns_archive_cli_boot.sh` passed against authentic English
+  and Japanese FM Towns media. The M12 route reached the first runtime; title
+  palette, 60 Hz timing, source-owned entrance cadence, and TMENU/EDM and
+  TMENU/JDM handoffs with their native input matrices were verified.
+- `test_firestaff_iigs_cli_real_media.sh` passed against authenticated original
+  Apple IIGS 2.0 and 2.1 disk members. Both direct CLI and M12 routes reached
+  active dungeon runtime; original title and mouse-gated entrance behavior
+  were checked. GS F0128 pixel parity and GS F0129 remain unverified.
+- `test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh direct-exit` passed
+  for direct `--game dm1`, `--game csb`, and `--game dm2` launches. Each route
+  reached its runtime handoff, accepted Return to Menu, then exited without
+  reopening M12 or rescanning. The individual platform routes were DM1 PC-34,
+  CSB Atari ST, and DM2 FM Towns in the separate real-media probes; the
+  matrix's own direct-exit cases use FM Towns for all three.
+- Separate direct `--game` boot probes omitted `--platform` for all three
+  priority games and selected their authentic FM Towns editions, confirming
+  the default-platform rule on the no-platform CLI path.
+- `test_dm2_unsupported_platform_cli.sh` passed the DM1/CSB/DM2 direct and
+  menu rejection matrix, including removed PC-9821 aliases, before any scan or
+  startup began.
+- CSB's authentic Atari STX, Amiga 3.3 loose media plus FTL Amiga archive, and
+  FM Towns ZIP suites passed their native CLI/M12 startup checks. Atari reached
+  the source C200 transition; Amiga reached A33M and FTL A31E runtime with the
+  source input matrix; FM Towns reached the authentic `MINI.DAT` party through
+  M12 and preserved selected loose-file ownership. These checks do not prove
+  complete cross-platform viewport parity.
+- DM2's authentic DOS ZIP suite passed the visible startup-menu, New Game,
+  runtime viewport/floor/HUD and AUTO-discovery checks. Its Japanese FM Towns
+  ZIP suite passed bare `--game dm2` default selection, New Game and first-
+  champion runtime, with a 320x200 runtime capture. The authentic French
+  Macintosh `.sit` suite reached the first real-asset runtime and confirmed
+  the source files remained byte-identical.
+- The expected DM2 Amiga ZIP is a broken self-referencing symlink in the
+  current user data directory, and no original Amiga archive was present on
+  the external media. Therefore DM2 Amiga startup could not be revalidated in
+  this run; its existing route evidence is not a substitute for this missing
+  current-media check.
+
+These checks improve confidence in the targeted launcher routes, but they do
+not establish complete startup parity. Remaining work includes first-runtime
+verification for every selectable edition, native display and physical-input
+paths, saved-game routes, and complete game sessions. No Nexus or Theron game
+was intentionally launched in the isolated rerun.
 
 ## Remaining startup work
 
