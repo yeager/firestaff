@@ -59,7 +59,7 @@ def main() -> int:
     parser.add_argument(
         "--frame",
         type=int,
-        help="last traced VDP1 frame (defaults to the last traced frame; earlier frames lack a matching final VRAM snapshot)",
+        help="VDP1 frame matching the final VRAM snapshot (defaults to the last traced frame)",
     )
     parser.add_argument(
         "--vram-end-exclusive",
@@ -86,12 +86,15 @@ def main() -> int:
     if not vdp2_rows:
         parser.error("no VDP2 VRAM writes found in the selected address window")
 
-    latest_vdp2_frame = max(row[0] for row in vdp2_rows)
-    frame = args.frame if args.frame is not None else latest_vdp2_frame
-    if frame != latest_vdp2_frame:
+    frame = args.frame if args.frame is not None else max(row[0] for row in vdp2_rows)
+    try:
+        snapshot_frame = int(vdp2_receipt["current_vdp1_frame_index"])
+    except (KeyError, ValueError) as error:
+        parser.error(f"VDP2 receipt has no valid final snapshot frame: {error}")
+    if frame != snapshot_frame:
         parser.error(
-            f"selected frame {frame} is not the latest traced VDP2 frame "
-            f"{latest_vdp2_frame}; vdp2-vram.bin contains only the final snapshot"
+            f"selected frame {frame} does not match the final VDP2 snapshot "
+            f"frame {snapshot_frame}"
         )
     try:
         sh2_frame_min = int(sh2_receipt["sh2_ram_write_frame_min"], 0)
