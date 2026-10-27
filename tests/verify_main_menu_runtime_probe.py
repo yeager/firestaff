@@ -9,6 +9,23 @@ with open(probe_path, encoding="utf-8") as source:
     probe = json.load(source)
 startup = probe["startup"]
 party = probe["party"]
+if game_id == "theron-direct":
+    if (
+        probe.get("launchedEver") != 1
+        or probe.get("active") != 1
+        or probe.get("sourceId") != "theron"
+        or probe.get("bootAssetMd5") != "f23601102138f87c33025877767ebf76"
+        or startup.get("receiptReady") != 1
+        or startup.get("phase") != "theron-startup-0"
+        or startup.get("startupActive") != 1
+        or startup.get("levelLoaded") != 0
+    ):
+        raise SystemExit(
+            f"FAIL: one Theron selection missed the native startup handoff: {probe}"
+        )
+    print("PASS: one no-game M12 Theron selection entered native startup")
+    raise SystemExit(0)
+
 if (
     probe.get("launchedEver") != 1
     or probe.get("active") != 1

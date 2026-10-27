@@ -6985,6 +6985,38 @@ static void m12_activate_selected(M12_StartupMenuState* state) {
             state->activatedIndex = -1;
             return;
         }
+        if (entry->gameId && strcmp(entry->gameId, "theron") == 0) {
+            /* Theron has one native platform. Selecting it starts the
+             * authenticated launch path directly instead of showing the
+             * platform, presentation, and Run cards used by multi-platform
+             * titles. Keep the saved per-game settings and reuse the normal
+             * launch gate, including its Track 02 media admission. */
+            state->gameCardFlowStage = 2;
+            state->gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
+            state->view = M12_MENU_VIEW_GAME_OPTIONS;
+            state->launchRequested = 0;
+            state->quickResumeLaunchRequested = 0;
+            if (state->gameOptions[gi].presentationModeIndex ==
+                M12_PRESENTATION_V22_MODERN) {
+                /* Theron has no admitted V2.2 art pack. Match direct
+                 * --game behavior by resolving a stale global V2.2 choice
+                 * to its supported V2.1 presentation. */
+                state->gameOptions[gi].presentationModeIndex =
+                    M12_PRESENTATION_V21_UPSCALED;
+                state->settings.graphicsIndex =
+                    M12_PRESENTATION_V21_UPSCALED;
+                m12_apply_presentation_card_preset(
+                    state, M12_PRESENTATION_V21_UPSCALED);
+                m12_enforce_mode_constraints(
+                    &state->gameOptions[gi], M12_PRESENTATION_V21_UPSCALED);
+            }
+            M12_StartupMenu_HandleInput(state, M12_MENU_INPUT_ACCEPT);
+            /* Launch errors can be reported after this selection returns to
+             * M11. Every such message must return to the game list. */
+            state->messageReturnView = M12_MENU_VIEW_MAIN;
+            state->messageReturnNavLevel = (int)M12_NAV_MAIN;
+            return;
+        }
         int count = M12_StartupMenu_GetPlatformCardArchitectures(
             entry->gameId, platforms);
         int requestedArchitecture = state->gameOptions[gi].architectureIndex;

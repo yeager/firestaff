@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-27 — skip launch cards when selecting Theron
+
+Theron selection from the native game list now enters the existing validated
+Track 02 launch path directly. The platform, presentation, and Run cards remain
+available for titles that use them. Missing media keeps the actionable
+Track 02 message and returns to the game list. Verification on trv2: Debug
+build of `firestaff` and `test_m12_theron_missing_track02_popup_gate` passed;
+the interactive authentic-media launch probe was not rerun because the trv2
+hostname did not resolve. Shell syntax, Python compilation, and `git diff
+--check` passed. Full Theron parity remains open.
+
 ## 2026-10-26 — verify and decode the runtime initializer helper candidates
 
 The raw-BIN HuC6280 disassembly receipt checks the ten-byte helper reached by
