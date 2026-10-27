@@ -3,6 +3,7 @@
 ## User-facing changes
 
 - `Theron startup flow`: update game selection to skip redundant platform and presentation cards, then start through the authenticated Track 02 launch gate.
+- `Startup scan readiness`: prevent game cards from reporting missing data while background discovery is pending, and allow launch only after that game’s scan result is complete.
 
 ## Developer changes
 
