@@ -744,6 +744,53 @@ This capture uses the frame-indexed exporter proposed in [Yeager Ymir PR
 #2](https://github.com/yeager/Ymir/pull/2). It remains diagnostic evidence;
 the Firestaff title-menu rendering and interaction gates stay closed.
 
+## SCU DMA to VDP1 frame correlation (2026-10-27)
+
+A subsequent run used Ymir's trace-bundle v4, which records the VDP1 frame
+index immediately before and after each deterministic capture-loop frame. Four
+SCU DMA transfers at capture-loop frame 7564 all have VDP1 frame 6890 both
+before and after the emulated frame. This pins the transfers to VDP1 frame
+6890, rather than estimating their VDP1 time from the overall capture length.
+
+The full bytes of transfers 3347, 3348, 3350, and 3360 match authentic Japanese
+`TITLE.BIN` offsets `0x0446`, `0x0576`, `0x07d6`, and `0x15f6`. Each
+transfer's source bytes match captured high WRAM, and its destination bytes
+match the final VDP1 VRAM snapshot.
+
+The same run's final VDP1 frame is 8037. Its 178-command trace has five
+textured draws at indices 171–175 reading from those four VDP1 destinations:
+two 192×3 draws at `0x44060`, then 64×8 at `0x47de0`, 64×8 at `0x479e0`,
+and 64×13 at `0x46f60`. The source byte counts and addresses match the
+transfer destinations and `TITLE.BIN` joins. A check of the SCU trace found
+no later SCU DMA writes overlapping these four destination ranges. This binds
+the authentic resource bytes to VDP1 command reads in one cold-boot run; it
+does not establish CLUT ownership or exclude intervening CPU writes.
+
+The five corresponding command records in the earlier rendered native-menu
+capture at VDP1 frame 8050 match these draw words, geometry, and source
+addresses; only their VDP1 link word differs. That separate rendered capture
+has the retained menu screenshot
+[`title-menu.png`](/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/title-menu.png),
+SHA-256
+`8721cce3354bc20b1cd367fd44be3d4ecc60ca65fa89c7d00654e83f5ad7db23`.
+The current trace-v4 run used no-render mode and has no screenshot, so it
+cannot establish its own displayed pixels.
+
+The complete raw capture and receipt are retained at
+[`scu_dma_vdp1_frame_map_20261027`](/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/scu_dma_vdp1_frame_map_20261027/).
+Its README SHA-256 is
+`5fb18214931b5837b9e7fcaf02d933cc91f7f741d45d59c4fffce6a0033875bb`, the
+checksum-list SHA-256 is
+`ccb38a615a5ae0f5d1dbf514431a2ad17e77f0b21877852e213140b30ac21a18`, and
+the SCU trace CSV SHA-256 is
+`2b008715262da43fb9d675a87cc92695a36eb64a26a3e014af3dda89a6e7b6e8`.
+All 32 dump files were verified after copying to the external evidence disk.
+The supporting exporter update is in [Yeager Ymir PR
+#2](https://github.com/yeager/Ymir/pull/2).
+
+This is stronger source-to-command evidence for the native menu path, but it
+still does not provide CLUT source ownership or admit a Firestaff renderer.
+
 ## Sources
 
 - DMWeb Nexus file formats and DMN Data File Decoder.
