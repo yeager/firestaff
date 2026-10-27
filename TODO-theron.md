@@ -1,3 +1,17 @@
+## 2026-10-27 — static Track 02 buffer-setup candidates recovered
+
+- A byte-exact sweep of authentic JP Rev. 1 and US Track 02 BINs found the
+  same 26-byte setup fragment at seven offsets per edition. The JP disassembly
+  establishes `STA $2880-$2882`, then `STA $287F` with A=`$FF`, followed by
+  `TII $287F,$2883,$0014`; the overlapping forward copy propagates the
+  four-byte `$FF,0,0,0` prefix through the remaining buffer. The source-lock
+  note records both editions' hashes, offsets, fragment hash, and limitations.
+- `test_theron_v1_huc6280_disassembly` now checks the complete raw-BIN sweep
+  against those seven offsets for each edition. This is static source evidence
+  only. It does not bind a runtime bank, source LBA, live descriptor table, or
+  gameplay meaning, so the `$287F-$2896` consumer and native direct-click gap
+  remain open.
+
 ## 2026-10-26 — trace-driven decode of the initializer's $43AB helper
 
 - The authenticated JP runtime trace executes `$43AB–$43B4` at physical
