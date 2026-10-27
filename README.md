@@ -289,6 +289,7 @@ Saturn title composition or menu rendering/control. PR #19 contains a
 capture-only NBG1 tilemap decoder fix with an authentic-frame test. Firestaff's
 menu, HUD, viewport and dungeon routes remain fail-closed until their real
 consumer ownership and presentation evidence is bound.
+
 Firestaff never delegates Nexus startup or gameplay to Mednafen (or another
 emulator); emulator tooling is used only outside the product to obtain and
 validate capture evidence.
