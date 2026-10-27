@@ -18,20 +18,29 @@ the English retail revision admitted by
 `scripts/analyze_nexus_vdp1_source_join.py`. The deterministic Ymir title-menu
 capture below uses the Japanese disc and Japanese BIOS. Its VDP1-to-resource
 join therefore cannot establish source ownership for the installed English
-menu archive. A separate 2026-10-27 Ymir capture now uses the authentic English
-retail disc and USA 1.01a BIOS. Ymir reads `0DMSTRT.BIN`, then logs a CD Block
-soft reset; the run has no `DM.BIN` read. Its frame-12467 VDP1 snapshot contains
-168 command rows, but the last command's CMDLINK target is absent and the list
-has no END command. Against the installed English `MENU.BPK`, 86 of 162 PRS3
-surfaces have direct byte matches in VDP1 VRAM; none of 132 textured command
-source starts falls within those ranges. This proves residency only, not that
-the surfaces are drawn or that the title menu is displayed. The VDP2 write
-trace dropped 1,376,570 rows, and SCU DMA overflow is unknown, so neither gives
-complete transfer provenance. The English renderer gate remains closed. The
-capture metadata and reproduction details are in
-[`docs/nexus_startup.md`](docs/nexus_startup.md#english-retail-boot-attempt-and-menu-asset-residency-2026-10-27);
-raw capture files remain on the external evidence volume. Keep the Japanese
-capture as separate regional evidence.
+menu archive. A separate controlled 2026-10-27 Ymir cold boot used the
+authentic English retail disc and USA 1.01a BIOS and reached the native
+three-choice title menu. Its frame-13106 VDP1 trace is complete, with 178
+command rows and no drops. The source join finds informative authentic retail
+bytes for 126 of 137 textured draws; the other 11 spans are zero padding and
+are excluded. This remains partial source evidence, not complete surface,
+palette, ordering, or consumer ownership.
+
+In that English capture, 86 of 162 PRS3 `MENU.BPK` surfaces have direct byte
+matches in VDP1 VRAM, but none of 137 textured command source starts falls
+within those ranges. The menu screenshot confirms that Ymir displays the
+English retail title menu, but the exact visible asset owner and its CLUT are
+not identified. The Ymir log records `0DMSTRT.BIN` and a CD Block soft reset,
+but no `DM.BIN` read event. Separately, an exact 230,669-byte prefix of the
+authentic 555,144-byte English `DM.BIN` is present at offset `0x10000` in the
+WRAM snapshot. This proves prefix residency, not that the whole file was
+loaded or how the logged read path works. The English capture therefore
+establishes a retail cold-boot-to-menu route, not Firestaff menu rendering or
+input, Continue/save loading, or playable-level parity. Keep the English
+renderer gate closed and keep the Japanese capture as separate regional
+evidence. Capture hashes, output and reproduction commands are in
+[`docs/nexus_startup.md`](docs/nexus_startup.md#english-cold-boot-reaches-the-native-title-menu-2026-10-27);
+raw capture files remain on the external evidence volume.
 
 2026-10-27 TRV2 Firestaff v3.0.415 direct CLI probe against the authentic
 Japanese Saturn corpus selected `DM.BIN` (MD5
@@ -64,18 +73,23 @@ title-to-menu transition. Keep this separate from the English merged-disc
 negative result; neither capture authorizes renderer admission.
 An earlier cold-start capture requested 400 frames but retained only 48 before
 its 45-second timeout, before its scheduled Start input at capture frame 300.
-These are incomplete or negative provenance observations, not menu or
-renderer evidence. Keep the Nexus menu gate closed until a complete,
-session-bound English capture identifies the retail VDP1/CLUT composition and
-interactive title-to-menu transition.
+These earlier captures are incomplete or negative provenance observations.
+The 2026-10-27 controlled English capture now establishes that authentic retail
+cold boot reaches the three-choice title menu, with a complete VDP1 command
+trace and a partial source join. It does not identify which scheduled input
+caused the transition or bind the visible menu to its VDP1 sources and CLUTs.
+Keep the production menu gate closed until that source/display ownership is
+joined and Firestaff's own title/menu route is verified against the same
+English assets.
 
 PR #19 merged the corrected NBG1 TileFetcher address path and a scroll-offset
 regression. Its focused test verifies the bounded name-table fetch behavior;
 this does not bind the
 NBG1 data to FONT256, MENU.BPK or a retail text/display consumer, and does not
 change menu, HUD, viewport or production-readiness gates. Keep the next work
-focused on a same-session retail source-to-display join and the interactive
-title-to-menu transition.
+focused on identifying the visible English menu's retail source/CLUT owners,
+isolating the input that changes the title state, and wiring the verified
+route into Firestaff without opening a renderer gate prematurely.
 
 The 2026-10-26 Mednafen `.mca` startup capture is not evidence of a loaded
 authentic backup card. Mednafen 1.32.1 uses the `mca` suffix for its autosave
