@@ -1,3 +1,16 @@
+2026-10-27 Atari Hint Oracle real-media test archive binding: the native CLI
+test's campaign archive variable pointed to `chaos_strikes_back_ftl.zip`, an
+Amiga ADF package with no Atari STX member. The original Atari v2.1 campaign
+and Utility Disk STX members both exist in the authentic Atari
+`Game,Chaos_Strikes_Back,Atari_ST,Software.7z` archive under
+`Floppy Disks STX/`. The campaign member's SHA-256
+(`aea724d663554e84393a77c45c010753c5bfb1a3a5a83d1264b5ef2af9aa5c6f`)
+matches the already extracted original STX file. CMake now binds both archive
+inputs to that Atari package, and the extraction pattern includes the member's
+archive path. This fixes the test fixture; the rerun must still prove the
+native in-memory CLI route before the Atari Hint Oracle startup is considered
+verified.
+
 2026-10-27 authentic CSB Amiga A31E archive and mixed-picker retest: the
 installed `Chaos Strikes Back (FTL).zip` is a 901,330-byte ZIP wrapper around
 the original `Chaos Strikes Back (FTL) A.adf`, not the separately locked
