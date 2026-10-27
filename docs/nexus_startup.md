@@ -1182,18 +1182,23 @@ matches in the authentic Japanese `TITLE.BIN`: command 171 at VDP1 source
 `0x481e0` reads 256 bytes matching offset `0x0316`; commands 172 and 173 at
 `0x42e60` each read 288 bytes matching offset `0x1b36`; command 174 at
 `0x475e0` reads 256 bytes matching offset `0x06a6`; and command 175 at
-`0x46f60` reads 416 bytes matching offset `0x07d6`. The earlier retained
-cold-boot image with `NEW GAME` selected has an earlier four-draw comparison
-at `TITLE.BIN` offsets `0x15f6`, `0x0446`, `0x0576`, and `0x07d6`. The current
-five-draw verifier has not been rerun against that capture. The VDP1 command
-table relocates between runs, so comparison uses draw order and source bytes.
+`0x46f60` reads 416 bytes matching offset `0x07d6`. The command table relocates
+between runs, so the screenshot verifier selects roles by retail source offset,
+dimensions, screen position and visible-pixel count rather than command
+address. The earlier retained cold-boot image with `NEW GAME` selected has a
+separate four-draw source-offset observation at `TITLE.BIN` offsets `0x15f6`,
+`0x0446`, `0x0576`, and `0x07d6`; this verifier does not claim to validate that
+capture.
 
-The command-independent screenshot verifier matches all 1,441 nontransparent
-pixels in these five menu draws to the `CONTINUE` screenshot. It also verifies
-the exact 4bpp CRAM lookup, priority 5 and 31/32 sprite ratio over the captured
-VDP2 back screen. These are sprite-level source and colour joins;
-whole-screen composition and screenshot-to-dump frame identity remain
-unproven.
+The Japanese `CONTINUE` screenshot verifier reads `TITLE.BIN` from the
+authentic CUE/BIN in memory and matches all 1,441 nontransparent pixels across
+these five menu draws. It requires the captured retail offsets, dimensions,
+positions and visible-pixel counts, and checks the 4bpp CRAM lookup, priority 5
+and 31/32 top-screen ratio over the captured VDP2 back screen. It currently
+supports this Japanese `CONTINUE` layout only; it does not validate the earlier
+`NEW GAME` image or the English capture. These are sprite-level source and
+colour joins; whole-screen composition and screenshot-to-dump frame identity
+remain unproven.
 
 This is authentic input-correlated source evidence for the Japanese menu
 selection state. It does not establish the complete `TITLE.BIN` decoding,

@@ -28,13 +28,16 @@ selection markers and the selected row change. Command table addresses differ
 between the runs, so the comparison is by draw order and source bytes.
 
 This proves an authentic input-correlated VDP1 source change alongside the
-visible selection. The generalized screenshot verifier matches all 1,441
-nontransparent pixels in these five draws to the captured screenshot and
-validates their 4bpp palette lookup, priority 5, 31/32 top ratio, and VDP2
-back-screen contribution. This does not prove the full `TITLE.BIN` decode
-contract, complete menu composition, mouse hit regions, Firestaff input
-handling, or production
-renderer admission. Screenshot-to-dump frame identity remains unproven.
+visible selection. The Japanese `CONTINUE` verifier identifies all five roles
+by their ordered retail offsets, dimensions, screen positions and visible
+texel counts; it does not use Ymir command addresses to identify them. It
+matches all 1,441 nontransparent pixels to the captured screenshot and checks
+their 4bpp palette lookup, priority 5, 31/32 top ratio and VDP2 back-screen
+contribution. The verifier intentionally rejects other regional resources and
+does not validate the earlier `NEW GAME` capture. This does not prove the full
+`TITLE.BIN` decode contract, complete menu composition, mouse hit regions,
+Firestaff input handling or production renderer admission.
+Screenshot-to-dump frame identity remains unproven.
 
 ## Reproduction
 
@@ -55,15 +58,23 @@ ymir-sdl3 --debug --profile "$PROFILE" \
   --capture-pad-input 780:right:2 --capture-pad-input 800:right:2 \
   --capture-pad-input 830:a:2 --capture-pad-input 7000:start:2 \
   --capture-pad-input 9000:start:60 --capture-pad-input 9100:down:2 \
-  "/home/trv2/.firestaff/data/nexus/Dungeon Master Nexus (Japan).cue"
+  "$HOME/.firestaff/data/nexus/Dungeon Master Nexus (Japan).cue"
 ```
 
 The fresh-profile setup and full Ymir log are retained in the external capture
-bundle at
-`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/menu_continue_input_20261027/`.
+bundle under `$FIRESTAFF_EVIDENCE_ROOT/ymir_nexus_coldboot_menu_20261027/`.
 Its `SHA256SUMS.txt` covers the screenshot, memory dumps, source-join report,
 and run log. The source join against the authentic Japanese `.firestaff/data`
 corpus returns 126 informative byte matches among 137 textured draws and keeps
-`semantic_admission=blocked`. `scripts/verify_nexus_title_sprite_screenshot.py`
-validates the five source-bound menu sprites against the screenshot; its
-per-command results are retained as `screenshot-verification.txt`.
+`semantic_admission=blocked`. The verifier reads `TITLE.BIN` from this
+authentic CUE/BIN in memory and validates the five ordered Japanese
+`CONTINUE` sprite roles against the screenshot:
+
+```sh
+BUNDLE="$FIRESTAFF_EVIDENCE_ROOT/ymir_nexus_coldboot_menu_20261027/menu_continue_input_20261027"
+python3 scripts/verify_nexus_title_sprite_screenshot.py \
+  "$BUNDLE/dumps" "$BUNDLE/screenshots/menu-down.png" \
+  "$HOME/.firestaff/data/nexus/Dungeon Master Nexus (Japan).cue"
+```
+
+The per-command results are retained as `screenshot-verification.txt`.
