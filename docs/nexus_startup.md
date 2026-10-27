@@ -972,3 +972,34 @@ Ymir after a no-save cold boot. It does not prove the semantic purpose of
 every input across regions, a stable New Game transition to a playable level,
 Continue behavior with real save data, Firestaff menu rendering, or gameplay
 HUD/viewport parity. Those remain separate parity gates.
+
+## New Game reaches the native 3D viewport (2026-10-27)
+
+A short Ymir replay loaded diagnostic slot 3 from the no-save cold-boot menu
+capture, where `NEW GAME` was selected. It pressed Control Pad 1 A for two
+capture frames and advanced 1,200 frames with `--debug --fast-forward
+--capture-no-present`. The final 640×448 image is the native first-person
+corridor viewport. Its SHA-256 is
+`8ede95f1fd777eda69ebcfc91d0268194e501f145306eb1fc2971ed0113a2274`,
+matching the previously retained retail viewport checkpoint.
+
+The complete VDP1 trace retained 137,849 rows with zero drops. The final
+capture is VDP1 frame 1,005 with 151 command rows; the 1,200-frame Ymir
+capture-loop counter is separate. The screenshot shows no party HUD. The
+diagnostic profile was isolated under TRV2 `/dev/shm`; no retail save or
+Firestaff data was modified.
+
+The screenshot, VDP1 register/trace receipts, run log, and checksum manifest
+are retained at
+`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_rendered_20261027/replay_new_game_from_menu/`.
+The screenshot SHA-256 is
+`8ede95f1fd777eda69ebcfc91d0268194e501f145306eb1fc2971ed0113a2274`;
+the checksum manifest SHA-256 is
+`c10afefda0c76e2786a321b40942939bd252c31dee6bcdfb11f2c8978ee5b845`.
+Every listed artifact passed verification.
+
+This verifies that selecting `NEW GAME` from the native retail menu reached a
+native 3D viewport in this run. It does not establish a stable or fully
+interactive level, exact room/resource identity, the full gameplay input
+route, the party HUD, or Firestaff presentation parity. Those remain separate
+gates.
