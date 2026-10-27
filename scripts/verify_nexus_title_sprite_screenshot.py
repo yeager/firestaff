@@ -10,8 +10,6 @@ import argparse
 import hashlib
 from pathlib import Path
 
-from PIL import Image
-
 from analyze_nexus_vdp1_source_join import accepted_retail_hashes, ymir_commands
 
 TITLE_MENU_DRAW_COUNT = 5
@@ -47,6 +45,8 @@ def title_menu_draws(commands, vram: bytes, source: bytes):
 
 
 def verify(bundle: Path, screenshot: Path, title: Path) -> None:
+    from PIL import Image
+
     if hashlib.sha256(title.read_bytes()).hexdigest() not in accepted_retail_hashes("TITLE.BIN"):
         raise ValueError("TITLE.BIN is not an authenticated retail resource")
     vram, frame, commands = ymir_commands(bundle)
