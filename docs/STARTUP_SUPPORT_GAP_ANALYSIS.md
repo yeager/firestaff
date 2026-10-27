@@ -1,8 +1,8 @@
 # Five-game startup support gap analysis
 
-Reconciled with repository `main` at `88ef19df` on 2026-10-27. The latest
-published release is v3.0.417 (published at 06:59 UTC). GitHub Actions release
-run `40463344704` completed its seven platform build and packaging jobs
+Reconciled with repository `main` at `582f8b9d` on 2026-10-27. The latest
+published release is v3.0.418 (published at 19:56 UTC). GitHub Actions release
+run `40570781398` completed its seven platform build and packaging jobs
 successfully (Windows x86_64, macOS x86_64/arm64, Linux x86_64/arm64, Android
 arm64 and iOS arm64), then published 23 release assets. These results verify
 compilation and packaging, not game startup. The 2026-10-27 current-source
@@ -68,6 +68,12 @@ The current evidence does not establish complete five-game startup support.
 - [`tests/test_m12_main_menu_game_selection_real_media.sh`](../tests/test_m12_main_menu_game_selection_real_media.sh)
   verifies five-card keyboard/mouse selection and authentic-media handoff. Its
   success condition is a `game-handoff` receipt, not a loaded level.
+  A 2026-10-27 TRV2 run against authentic media also verified the documented
+  default `~/.firestaff/data/<game>` path for all five games: FM Towns DM1,
+  CSB and DM2, Japanese Saturn Nexus, and PC Engine Theron. Each default-root
+  case used an isolated HOME/config and checked that its original source file
+  or archive remained unchanged. This proves discovery and menu handoff; it
+  does not turn Nexus's capture-gated title route into a playable runtime.
   Duplicate first-row DM1, CSB and DM2 mouse handoffs were removed; the
   remaining five-card mouse matrix retains one center click for each card.
 - `tests/test_m12_polished_ui_flow.c` now distinguishes pending deferred scans,
