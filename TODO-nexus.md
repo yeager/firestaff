@@ -151,8 +151,8 @@ on the PRS3 menu capture. See
   buffers/draw selector and VDP2 registers/VRAM/CRAM) were byte-identical to
   the no-input control.  The observed active VDP1 state has two stable
   texture sources for frames 30000--30037, but remains an unbound hardware
-  observation rather than proof of a menu, HUD or dungeon consumer. Search
-  this pair covers only its sampled noninteractive window. Separate
+  observation rather than proof of a menu, HUD or dungeon consumer. This
+  pair covers only its sampled noninteractive window. Separate
   interactive Ymir evidence on authentic Japanese retail media shows
   F/Start opening the title menu, S selecting Continue, and J/A confirming
   New Game into the dungeon. A separate ShuttleMouse run shows a button event
