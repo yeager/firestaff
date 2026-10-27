@@ -566,7 +566,12 @@ when offsets are calculated from `0x06010000`. At `0x0608ba46`, the matching
 retail instruction is `mov.l r5,@r4`; the complete 2,447-row trace records
 2,446 four-byte zero writes from that PC into VDP1 CLUT addresses
 `0x05c01000` and `0x05c01010`, plus one earlier two-byte `0x8000` write. The
-trace has zero dropped rows. This binds a real clear loop in this capture.
+trace has zero dropped rows. In the matched retail body at `0x0608ba34`, the
+routine masks its start pointer with `0x1ffffff0`, ORs in `0x40000000`, sets
+the store value to zero, then writes one longword and
+advances the pointer by 16 bytes until it reaches the computed end. This is a
+strided initialization clear, not evidence of a palette upload or palette
+ownership.
 
 This raw image placement must not be conflated with the older frame-12596
 title-copy receipt's static `0x06010040` code mapping. The newer snapshot has
