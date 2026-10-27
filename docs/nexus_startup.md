@@ -1080,3 +1080,35 @@ Raw capture bytes remain outside Git under
 `/Volumes/Extern-disk/firestaff-data/`. Hashes, analyzer output, and
 reproduction commands are recorded in
 [`nexus_v1_menu_candidate_source_join_20261027`](../parity-evidence/verification/nexus_v1_menu_candidate_source_join_20261027/README.md).
+
+## English retail boot attempt and menu-asset residency (2026-10-27)
+
+A separate run used the authentic English retail ISO and the installed system
+Ymir executable on TRV2. The earlier empty-profile attempt stalled before
+reading the game startup file. A follow-up profile reused the Japanese
+profile's saved SMPC persistence bytes as emulator setup state, with the
+English disc and USA 1.01a BIOS. This changed no disc or game-save data.
+
+Ymir logged a read of authentic `0DMSTRT.BIN` (SHA-256
+`8a026f155af27cfd43a33b29f7da5b75ee7b09b2c4f016fc3be1ebb4787d20b6`) followed
+by a CD Block soft reset. It did not log a `DM.BIN` read. The resulting VDP1
+snapshot is frame 12467 with 168 command rows, but the trace ends before the
+last command's CMDLINK target and has no END command. The complete-command
+source join therefore rejects it.
+
+The installed English `MENU.BPK` matches the authentic retail SHA-256
+`f2f78dddfe37a5ff414775ae888f164624e987059934b034ba36299cc769d2ca`. Of its
+162 bounded PRS3 surfaces, 86 have exact byte matches in the captured VDP1
+VRAM. In that frame, 132 commands are textured sprites and none starts inside
+the matched surface ranges. This proves only that those retail bytes are
+resident in VDP1 VRAM; it does not prove that the title menu is displayed or
+that those surfaces are drawn. The VDP2 write trace dropped 1,376,570 rows,
+and the SCU DMA trace reports unknown overflow, so neither trace establishes
+complete transfer provenance.
+
+The full capture and analysis are retained on the external evidence volume at
+`/Volumes/Extern-disk/firestaff-data/nexus-english-boot-20261027/english-us-smem-13310/`.
+This narrows the English boot gap to the CD Block/reset path after
+`0DMSTRT.BIN`; menu parity remains unverified until the run reaches a complete
+retail title command list and binds its source spans and CLUTs to the English
+assets.
