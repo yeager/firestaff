@@ -1113,7 +1113,56 @@ unknown overflow, so neither trace establishes complete transfer provenance.
 
 The full capture and analysis are retained on the external evidence volume at
 `/Volumes/Extern-disk/firestaff-data/nexus-english-boot-20261027/english-us-smem-13310/`.
-This narrows the English boot gap to the CD Block/reset path after
-`0DMSTRT.BIN`; menu parity remains unverified until the run reaches a complete
-retail title command list and binds its source spans and CLUTs to the English
-assets.
+A later controlled run supersedes that conclusion. Its full VDP1 command list
+and native English menu are documented below; the earlier run remains useful
+only as an incomplete capture receipt.
+
+## English cold boot reaches the native title menu (2026-10-27)
+
+A fresh controlled run used the authentic English retail disc, USA 1.01a IPL
+ROM, and the installed Ymir 0.4.2-dev executable on TRV2 with debug tracing
+enabled. The ISO SHA-256 is
+`16786e6165d8cbf7f6394dd9bc7171fbb561c1ba40b77ad7cba3c275fde2804e`, the CUE
+SHA-256 is
+`b96f01e2f8ce3ab9c8e4a33d5a0c7076cdc1bfd247a85a1454e6c36c8a616f33`, and the
+IPL ROM SHA-256 is
+`96e106f740ab448cf89f0dd49dfbac7fe5391cb6bd6e14ad5e3061c13330266f`. The
+emulator profile reused Japanese SMPC persistence bytes for setup; no emulator
+save state was loaded and no game save was present. No disc or save data was
+modified.
+
+The retained screenshot shows the English retail title screen and all three
+native choices: `NEW GAME`, `CONTINUE`, and `CONFIGURATION`. Its SHA-256 is
+`341cb38191bfbb563912d6ef0c6e2989d51eb6136d48fcffee197cafd7264810`. A
+read-only replay of the same-frame VDP1 display framebuffer, NBG0 bitmap, VDP2
+CRAM, and registers reconstructs a 320×224 image that matches every RGB pixel
+when scaled 2× to the screenshot. The registers enable only NBG0 as an 8bpp
+bitmap (`BGON=0x0001`, `CHCTLA=0x0013`). This verifies same-frame composition
+but does not identify the bitmap's retail source or admit the capture-only
+replay as a production renderer. The frame-aligned VDP1 bundle is frame 13106
+with 178 command rows, a complete trace, and zero dropped rows. The retail
+source join binds nonzero texture bytes for
+126 of 137 textured draws; the other 11 source spans are all zero and are
+excluded as uninformative padding. This is partial byte provenance, not
+complete surface, palette, order, or consumer ownership.
+
+The authentic English `MENU.BPK` still has 86 of 162 decoded PRS3 surfaces
+whose bytes occur in VDP1 VRAM, but none of the 137 textured command source
+starts falls inside those matched surface ranges. The capture therefore does
+not establish that `MENU.BPK` supplies the visible menu. The native screen is
+visible in Ymir, while Firestaff's production title/menu composition and
+presentation remain unimplemented or unadmitted by the existing evidence
+gates.
+
+Ymir's log records `0DMSTRT.BIN` and a CD Block soft reset, but no
+`DM.BIN` file-read event. Independently, the captured `wram-hi.bin` contains an
+exact 230,669-byte prefix of the authenticated 555,144-byte English `DM.BIN`
+at raw dump offset `0x10000`; this proves that this prefix was resident in WRAM,
+not that the full file was loaded or that the log's read path is understood.
+The retained evidence is stored outside Git in the local external capture
+bundle.
+This establishes the English retail emulator's cold-boot-to-menu path. It does
+not establish Firestaff menu rendering or input, Continue/save loading, or
+playable-level, viewport, or HUD parity. See the
+[English cold-boot evidence receipt](../parity-evidence/verification/nexus_english_coldboot_menu_20261027/README.md)
+for hashes and reproduction commands.
