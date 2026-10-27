@@ -33,7 +33,10 @@ check_form --duration 0 --version
 check_form --boot-probe-frames 0 --version
 
 check_default_startup_stays_in_menu() {
-    scratch=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-default-startup.XXXXXX") || exit 1
+    repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+    scratch_root="$repo_root/.codex-scratch"
+    mkdir -p "$scratch_root"
+    scratch=$(mktemp -d "$scratch_root/default-startup.XXXXXX") || exit 1
     mkdir -p "$scratch/data"
     set +e
     output=$(HOME="$scratch" \
