@@ -3088,7 +3088,7 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
         const M12_AssetVersionStatus *selected_version;
         char selected_cache_marker[80];
         const int requested = requested_modes[mode_index];
-        int tick;
+        unsigned int tick;
         unsigned int last_vbl = 0u;
         int animation_pixels_visible = 0;
         int runtime_hud_pixels_visible = 0;
@@ -3184,7 +3184,9 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
                 continue;
             }
         }
-        for (tick = 0; tick < 800 && view.csbState.startup_title_active;
+        for (tick = 0;
+             tick < view.csbAtariStAnimationEndVbl + 3u &&
+                 view.csbState.startup_title_active;
              ++tick) {
             const unsigned int expected_vbl =
                 (unsigned int)(((unsigned long)(tick + 1) * 20u * 50u) /
@@ -3206,6 +3208,9 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
         }
         expect_true(animation_pixels_visible,
                     "Atari ST ANIMATE.SCR presents source-backed animation frames");
+        /* ANIMATE.SCR's authentic waited-VBL count exceeds the former fixed
+         * 800-tick test bound. Drive the host scheduler through the exact
+         * source-owned finish boundary instead of ending mid-title. */
         expect_true(!view.csbState.startup_title_active &&
                         view.csbState.level_loaded &&
                         view.csbAtariStRuntimeHandoffComplete,

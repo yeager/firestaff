@@ -1,3 +1,14 @@
+2026-10-27 Atari ST M12/M11 handoff regression bound: the real-media
+`csb_v1_atari_st_m12_m11_real_media_handoff` test stopped after 800 source
+VBlanks, while the selected authentic ANIMATE.SCR trace waits 2036. The title
+was correctly still active at the old test limit; the production runtime
+handoff then appeared to fail and downstream C127/C160 checks were premature.
+The test now advances through the authenticated trace's own end-VBlank plus a
+three-tick guard. The complete handoff test passes across its presentation
+modes, including source palette, runtime, champion selection, movement and
+MINI.DAT item checks. This corrects the test bound; it does not change or claim
+visual parity for the Atari startup animation.
+
 2026-10-26 F0107 wall-ornament blit: the shared ReDMCSB viewport callback
 resolved a layout and material plan, but its final pixel loop copied source
 pixels 1:1 and ignored `sourceScaleX32`, `sourceScaleY32`, horizontal flip,
