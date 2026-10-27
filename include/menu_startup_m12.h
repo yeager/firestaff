@@ -701,6 +701,7 @@ typedef struct M12_StartupMenuState {
     int deferredScanPending;
     int deferredScanActive;
     unsigned int deferredScanCompletedGameMask;
+    int deferredTheronSelectionPending;
     int debugStartup;
     M12_AssetScanProgress deferredScanProgress;
     void* deferredScanJob;

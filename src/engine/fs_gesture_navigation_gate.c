@@ -70,18 +70,7 @@ enum {
     FS_GG_CMD_MOVE_FORWARD = 3,
     FS_GG_CMD_MOVE_RIGHT   = 4,
     FS_GG_CMD_MOVE_BACK    = 5,
-    FS_GG_CMD_MOVE_LEFT    = 6,
-
-    /* Theron's Quest on PC Engine — same logical axes, smaller id set.
-     * Source: theron_v1_mechanics.h; kept opaque here so the gate does
-     * not pull in the PCE runtime headers. */
-    FS_GG_CMD_THERON_FORWARD = 0x10,
-    FS_GG_CMD_THERON_BACK    = 0x11,
-    FS_GG_CMD_THERON_TURN_L  = 0x12,
-    FS_GG_CMD_THERON_TURN_R  = 0x13,
-    FS_GG_CMD_THERON_STRAFE_L= 0x14,
-    FS_GG_CMD_THERON_STRAFE_R= 0x15,
-    FS_GG_CMD_THERON_NONE    = 0x00
+    FS_GG_CMD_MOVE_LEFT    = 6
 };
 
 /* ── Recognizer state ────────────────────────────────────────────────── */
@@ -186,11 +175,10 @@ static const FsGestureGameRow kPerGameTable[] = {
     { FS_GG_GAME_NEXUS, FS_GG_GESTURE_DRAG,              -1, 0, 0, "Drag is not a movement gesture; existing Nexus touch zone hit-test absorbs drags" },
 
     /* ── Theron (FS_GG_GAME_THERON) ──────────────────────────────────── */
-    /* Source-locked against theron_v1_mechanics.h + THQUEST.ASM T520/T560
-     * (smooth movement/turn).  Theron is the odd one out: it does not
-     * reuse ReDMCSB C001..C006.  The gate therefore maps to Theron PCE
-     * command ids and keeps them opaque via the FS_GG_CMD_THERON_*
-     * constants at the top of this file. */
+    /* Source-locked against THQUEST.ASM T520/T560 and
+     * theron_v1_mechanics.h:38-49 (retail PCE action bytes). Theron does not
+     * reuse ReDMCSB C001..C006; FS_GG_CMD_THERON_* are separate gesture-gate
+     * transport IDs translated to native M12 inputs by the M11 ingress. */
     { FS_GG_GAME_THERON, FS_GG_GESTURE_SWIPE_UP,          FS_GG_CMD_THERON_FORWARD,  1, 0, "THQUEST.ASM T520 + theron_v1_mechanics.h Theron-forward" },
     { FS_GG_GAME_THERON, FS_GG_GESTURE_SWIPE_DOWN,        FS_GG_CMD_THERON_BACK,     1, 0, "THQUEST.ASM T520 + theron_v1_mechanics.h Theron-back" },
     { FS_GG_GAME_THERON, FS_GG_GESTURE_SWIPE_LEFT,        FS_GG_CMD_THERON_TURN_L,   0, 1, "THQUEST.ASM T560 + theron_v1_mechanics.h Theron-turn-left" },

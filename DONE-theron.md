@@ -1,5 +1,46 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-27 — route Theron touch swipes through native input
+
+The SDL touch ingress now translates Theron's gesture-gate transport IDs to
+the same M12 movement inputs used by native controls. Up and left swipes were
+verified through the normal SDL queue with authenticated USA Track 02
+(`f23601102138f87c33025877767ebf76`): the runtime probe reported `MOVE` for
+swipe-up and `TURN` with direction west for swipe-left. Gate IDs remain
+distinct from the retail PCE action bytes documented in
+`theron_v1_mechanics.h:38-49`. The complete `test_theron_v1_sdl_input_events.sh`
+suite passed on trv2 with a Debug build and authentic media. Full Theron
+parity remains open; touch-target sizing and broader gameplay coverage are
+not established by this check.
+
+## 2026-10-27 — skip launch cards when selecting Theron
+
+Theron selection from the native game list now enters the existing validated
+Track 02 launch path directly. If the player selects Theron before its deferred
+media scan finishes, the selection stays on the game list and resumes as soon
+as the authentic Theron result is published, even if the overall scan
+continues; navigating away cancels it. The platform,
+presentation, and Run cards remain available for titles that use them. Missing
+media keeps the actionable Track 02 message and returns to the game list.
+Verification on trv2: Debug build of `firestaff` and
+`test_m12_theron_missing_track02_popup_gate` passed. With separate scan roots
+containing only symlinks to the user's original US and JP Track 02 BINs, a
+single Theron selection in each edition reached native startup before scan
+completion; the existing US launcher-to-game route also reached Theron's first
+native runtime. The real-media script returns skip status 77 when selected US
+Theron media is absent. No game bytes were copied or modified. Shell syntax,
+Python compilation, `po/update.sh --check`, and `git diff --check` passed. Full
+Theron parity remains open.
+
+## 2026-10-27 — cancel a pending Theron selection on Back
+
+Pressing Back while Theron's deferred media scan is pending now clears the
+queued selection before requesting launcher exit. This prevents the next menu
+update from opening a Track 02 message after the player asked to leave. A
+focused regression publishes the Theron scan result after Back and verifies
+that the launcher remains on its main view without launching or showing a
+message. No game-media bytes are used by this input-state regression.
+
 ## 2026-10-26 — verify and decode the runtime initializer helper candidates
 
 The raw-BIN HuC6280 disassembly receipt checks the ten-byte helper reached by
@@ -8868,3 +8909,19 @@ T900/original inventory semantics. No synthetic media was used.
   the original-emulator multi-second menu-action hold, original presentation,
   save semantics, campaign progression and end-to-end gameplay remain open.
 - Historical source-lock records remain dated evidence and were not rewritten.
+
+# 2026-10-27 — verify direct M12 Theron startup for both retail editions
+
+- The authentic-media M12 selection regression now isolates US and JP Track
+  02 images in separate data roots and checks the edition-specific runtime
+  hash after a single Theron selection. The US route continues through the
+  existing first-runtime check; the JP route verifies the native
+  `theron-startup-0` handoff.
+- On TRV2, repeated native Debug loops passed for US Track 02 MD5
+  `f23601102138f87c33025877767ebf76` and JP Track 02 MD5
+  `b7afb338ad31be1025b53f9aff12d73a`. The first JP loop exposed and fixed a
+  test-only assumption that every region logs `pce-en`; the runtime correctly
+  selected `pce-jp`.
+- This verifies edition selection and startup handoff only. It does not prove
+  source-driven dungeon rendering, direct world clicks, or complete Theron
+  parity.

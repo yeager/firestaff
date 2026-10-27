@@ -6945,6 +6945,11 @@ static void m12_activate_selected(M12_StartupMenuState* state) {
     if (!entry) {
         return;
     }
+    if (state->deferredTheronSelectionPending &&
+        !(entry->kind == M12_MENU_ENTRY_GAME && entry->gameId &&
+          strcmp(entry->gameId, "theron") == 0)) {
+        state->deferredTheronSelectionPending = 0;
+    }
     if (m12_retry_dm1_language_scan(state,state->selectedIndex,1)) return;
     if (entry->kind == M12_MENU_ENTRY_SETTINGS) {
         state->view = M12_MENU_VIEW_SETTINGS;
@@ -6983,6 +6988,48 @@ static void m12_activate_selected(M12_StartupMenuState* state) {
         int platforms[M12_ARCH_COUNT];
         if (gi < 0) {
             state->activatedIndex = -1;
+            return;
+        }
+        if (entry->gameId && strcmp(entry->gameId, "theron") == 0) {
+            if ((state->deferredScanPending || state->deferredScanActive) &&
+                !(state->deferredScanCompletedGameMask &
+                  M12_DEFERRED_SCAN_THERON)) {
+                /* Keep an early selection on the game list. The UI update
+                 * resumes it after the scanner publishes the complete
+                 * Theron result. */
+                state->deferredTheronSelectionPending = 1;
+                return;
+            }
+            state->deferredTheronSelectionPending = 0;
+            /* Theron has one native platform. Selecting it starts the
+             * authenticated launch path directly instead of showing the
+             * platform, presentation, and Run cards used by multi-platform
+             * titles. Keep the saved per-game settings and reuse the normal
+             * launch gate, including its Track 02 media admission. */
+            state->gameCardFlowStage = 2;
+            state->gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
+            state->view = M12_MENU_VIEW_GAME_OPTIONS;
+            state->launchRequested = 0;
+            state->quickResumeLaunchRequested = 0;
+            if (state->gameOptions[gi].presentationModeIndex ==
+                M12_PRESENTATION_V22_MODERN) {
+                /* Theron has no admitted V2.2 art pack. Match direct
+                 * --game behavior by resolving a stale global V2.2 choice
+                 * to its supported V2.1 presentation. */
+                state->gameOptions[gi].presentationModeIndex =
+                    M12_PRESENTATION_V21_UPSCALED;
+                state->settings.graphicsIndex =
+                    M12_PRESENTATION_V21_UPSCALED;
+                m12_apply_presentation_card_preset(
+                    state, M12_PRESENTATION_V21_UPSCALED);
+                m12_enforce_mode_constraints(
+                    &state->gameOptions[gi], M12_PRESENTATION_V21_UPSCALED);
+            }
+            M12_StartupMenu_HandleInput(state, M12_MENU_INPUT_ACCEPT);
+            /* Launch errors can be reported after this selection returns to
+             * M11. Every such message must return to the game list. */
+            state->messageReturnView = M12_MENU_VIEW_MAIN;
+            state->messageReturnNavLevel = (int)M12_NAV_MAIN;
             return;
         }
         int count = M12_StartupMenu_GetPlatformCardArchitectures(
@@ -7035,6 +7082,29 @@ static void m12_activate_selected(M12_StartupMenuState* state) {
     } else {
         m12_show_missing_game_data_popup(state, entry->gameId);
     }
+}
+
+static int m12_resume_deferred_theron_selection(
+    M12_StartupMenuState* state) {
+    if (!state || !state->deferredTheronSelectionPending) {
+        return 0;
+    }
+    if (!(state->deferredScanCompletedGameMask &
+          M12_DEFERRED_SCAN_THERON)) {
+        if (state->deferredScanPending || state->deferredScanActive) {
+            return 0;
+        }
+        state->deferredTheronSelectionPending = 0;
+        return 0;
+    }
+    if (state->view != M12_MENU_VIEW_MAIN ||
+        state->selectedIndex != state->activatedIndex) {
+        state->deferredTheronSelectionPending = 0;
+        return 0;
+    }
+    state->deferredTheronSelectionPending = 0;
+    m12_activate_selected(state);
+    return 1;
 }
 
 /* DM2's original GAME_LOAD/RESUME path owns a bitmap dialogue surface
@@ -8531,6 +8601,7 @@ static void m12_startup_menu_handle_input(M12_StartupMenuState* state,
 
     switch (input) {
         case M12_MENU_INPUT_UP:
+            state->deferredTheronSelectionPending = 0;
             if (state->quickResumeAvailable) {
                 if (state->selectedIndex <= 0) {
                     state->selectedIndex = state->selectedIndex == -1 ? count - 1 : -1;
@@ -8542,6 +8613,7 @@ static void m12_startup_menu_handle_input(M12_StartupMenuState* state,
             }
             break;
         case M12_MENU_INPUT_DOWN:
+            state->deferredTheronSelectionPending = 0;
             if (state->quickResumeAvailable) {
                 if (state->selectedIndex == -1) {
                     state->selectedIndex = 0;
@@ -8569,6 +8641,7 @@ static void m12_startup_menu_handle_input(M12_StartupMenuState* state,
             state->view = M12_MENU_VIEW_CHANGELOG;
             break;
         case M12_MENU_INPUT_BACK:
+            state->deferredTheronSelectionPending = 0;
             state->shouldExit = 1;
             break;
         case M12_MENU_INPUT_LEFT:
@@ -14533,6 +14606,9 @@ int M12_StartupMenu_Update(M12_StartupMenuState* state) {
         changed = 1;
     }
     if (m12_update_deferred_startup_scan(state)) {
+        changed = 1;
+    }
+    if (m12_resume_deferred_theron_selection(state)) {
         changed = 1;
     }
     job = (M12_DataDirScanJob*)state->dataDirScanJob;

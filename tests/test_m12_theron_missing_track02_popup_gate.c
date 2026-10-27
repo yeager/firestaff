@@ -23,8 +23,8 @@
  *      `M12_AssetStatus_GameHasCompleteHashSet("theron")` still
  *      returns 1 — proving the launcher has the catalog it needs to
  *      produce the user-facing Track 02 hint.
- *   3. Game-card click on the unavailable Theron card surfaces the
- *      Track 02 specific popup (not the generic popup), with line1
+ *   3. Selecting the unavailable Theron card skips the platform/Run
+ *      cards and surfaces the Track 02 specific popup (not the generic popup), with line1
  *      prefixed "THERON", line2 starting with the per-role required
  *      file list "MISSING: ...", and an actionable hint that names
  *      the .BIN/.ISO extension. launchRequested stays 0 and
@@ -118,8 +118,18 @@ static int isolate_empty_data_dir(char out[M12_ASSET_DATA_DIR_CAPACITY]) {
     snprintf(out, M12_ASSET_DATA_DIR_CAPACITY, "%s", tmp);
     return 1;
 #else
-    char tmpTemplate[] = "/tmp/firestaff_theron_track02_empty_XXXXXX";
-    char* made = mkdtemp(tmpTemplate);
+    const char* scratchRoot = getenv("FIRESTAFF_TEST_SCRATCH");
+    char scratchTemplate[M12_ASSET_DATA_DIR_CAPACITY];
+    char* made;
+    if (!scratchRoot || !scratchRoot[0]) {
+        scratchRoot = ".";
+    }
+    if (snprintf(scratchTemplate, sizeof(scratchTemplate),
+                 "%s/firestaff_theron_track02_empty_XXXXXX",
+                 scratchRoot) < 0) {
+        return 0;
+    }
+    made = mkdtemp(scratchTemplate);
     if (!made) {
         return 0;
     }
@@ -174,9 +184,8 @@ static int render_smoke_nonblank(const M12_StartupMenuState* state, const char* 
     return 1;
 }
 
-/* Seed Theron with synthetic Track 02 metadata so the launcher enters
- * GAME_OPTIONS for the click path. The card itself stays unavailable
- * (because theronAvailable=0) so clicking it routes to the popup. */
+/* Seed only the catalog/status fields needed to exercise the missing-media
+ * message path. No synthetic Track 02 bytes are supplied or accepted. */
 static void seed_theron_unavailable_with_metadata(M12_StartupMenuState* state,
                                                   int synthAvailableFlag) {
     int gi = 4;  /* theron is the 5th catalog entry */
@@ -315,11 +324,8 @@ static void check_card_click_popup_surfaces_track02_hint(char* dataDir) {
     seed_theron_unavailable_with_metadata(&state, 0);
     state.selectedIndex = theronIndex;
 
-    /* Selecting the game opens its platform cards. A second accept on the
-     * unavailable JP/US platform card must surface the missing-media hint. */
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
-    CHECK(state.view == M12_MENU_VIEW_GAME_OPTIONS);
-    CHECK(state.gameCardFlowStage == 0);
+    /* Selecting Theron goes straight to the same launch gate used by the
+     * Run action. Missing original media must surface its actionable hint. */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
 
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
@@ -347,14 +353,96 @@ static void check_card_click_popup_surfaces_track02_hint(char* dataDir) {
     intent = M12_StartupMenu_GetLaunchIntent(&state);
     CHECK(intent.valid == 0);
 
-    CHECK(render_smoke_nonblank(&state, "theron card click Track 02 popup"));
+    CHECK(render_smoke_nonblank(&state, "theron direct launch Track 02 popup"));
 
-    /* Dismissal returns to the platform cards with no leaked launch request. */
+    /* Dismissal returns to the game list with no Run card or launch request. */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
-    CHECK(state.view == M12_MENU_VIEW_GAME_OPTIONS);
+    CHECK(state.view == M12_MENU_VIEW_MAIN);
     CHECK(state.launchRequested == 0);
     CHECK(state.quickResumeLaunchRequested == 0);
     CHECK(popup_lines_cleared(&state));
+}
+
+static void check_early_theron_selection_waits_for_scan(char* dataDir) {
+    M12_StartupMenuState state;
+    const unsigned int allGamesCompleted = (1U << 5) - 1U;
+    const unsigned int theronScanCompleted = 1U << 4;
+
+    M12_StartupMenu_InitWithDataDir(&state, dataDir, NULL);
+    force_english_locale(&state);
+    if (state.view == M12_MENU_VIEW_MESSAGE) {
+        M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    }
+    seed_theron_unavailable_with_metadata(&state, 0);
+    state.selectedIndex = 4;
+    state.deferredScanPending = 1;
+    state.deferredScanCompletedGameMask = 0U;
+
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    CHECK(state.view == M12_MENU_VIEW_MAIN);
+    CHECK(state.selectedIndex == 4);
+    CHECK(state.deferredTheronSelectionPending == 1);
+    CHECK(state.launchRequested == 0);
+
+    state.deferredScanPending = 0;
+    state.deferredScanActive = 1;
+    (void)M12_StartupMenu_Update(&state);
+    CHECK(state.deferredTheronSelectionPending == 1);
+    CHECK(state.view == M12_MENU_VIEW_MAIN);
+
+    state.deferredScanCompletedGameMask = theronScanCompleted;
+    (void)M12_StartupMenu_Update(&state);
+    CHECK(state.deferredTheronSelectionPending == 0);
+    CHECK(state.view == M12_MENU_VIEW_MESSAGE);
+    CHECK(state.messageIsMissingGameData == 1);
+    CHECK(strcmp(state.messageGameId, "theron") == 0);
+
+    M12_StartupMenu_Destroy(&state);
+
+    M12_StartupMenu_InitWithDataDir(&state, dataDir, NULL);
+    force_english_locale(&state);
+    if (state.view == M12_MENU_VIEW_MESSAGE) {
+        M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    }
+    seed_theron_unavailable_with_metadata(&state, 0);
+    state.selectedIndex = 4;
+    state.deferredScanActive = 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    CHECK(state.deferredTheronSelectionPending == 1);
+
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    CHECK(state.deferredTheronSelectionPending == 0);
+    state.deferredScanActive = 0;
+    state.deferredScanCompletedGameMask = allGamesCompleted;
+    (void)M12_StartupMenu_Update(&state);
+    CHECK(state.view == M12_MENU_VIEW_MAIN);
+    CHECK(state.launchRequested == 0);
+    CHECK(state.messageIsMissingGameData == 0);
+    M12_StartupMenu_Destroy(&state);
+
+    M12_StartupMenu_InitWithDataDir(&state, dataDir, NULL);
+    force_english_locale(&state);
+    if (state.view == M12_MENU_VIEW_MESSAGE) {
+        M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    }
+    seed_theron_unavailable_with_metadata(&state, 0);
+    state.selectedIndex = 4;
+    state.deferredScanPending = 0;
+    state.deferredScanActive = 1;
+    state.deferredScanCompletedGameMask = 0U;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    CHECK(state.deferredTheronSelectionPending == 1);
+
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    CHECK(state.deferredTheronSelectionPending == 0);
+    CHECK(state.shouldExit == 1);
+    state.deferredScanActive = 0;
+    state.deferredScanCompletedGameMask = theronScanCompleted;
+    (void)M12_StartupMenu_Update(&state);
+    CHECK(state.view == M12_MENU_VIEW_MAIN);
+    CHECK(state.launchRequested == 0);
+    CHECK(state.messageIsMissingGameData == 0);
+    M12_StartupMenu_Destroy(&state);
 }
 
 static void check_options_launch_popup_surfaces_track02_hint(char* dataDir) {
@@ -525,6 +613,7 @@ int main(void) {
     check_hash_set_contract();
     check_scan_no_data_marks_theron_unavailable(dataDir);
     check_card_click_popup_surfaces_track02_hint(dataDir);
+    check_early_theron_selection_waits_for_scan(dataDir);
     check_options_launch_popup_surfaces_track02_hint(dataDir);
     check_quick_resume_popup_surfaces_track02_hint(dataDir);
     check_unrelated_games_unaffected_by_theron_gate(dataDir);

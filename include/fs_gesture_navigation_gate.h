@@ -89,6 +89,18 @@ typedef enum {
     FS_GG_GAME_THERON = 5 /* stable slot reserved for Theron */
 } FsGgGameId;
 
+/* Firestaff gesture-gate IDs for Theron. These are transport IDs only; the
+ * M11 ingress must translate them to M12 input tokens before dispatch. The
+ * retail command values remain in theron_v1_mechanics.h. */
+enum {
+    FS_GG_CMD_THERON_FORWARD = 0x10,
+    FS_GG_CMD_THERON_BACK = 0x11,
+    FS_GG_CMD_THERON_TURN_L = 0x12,
+    FS_GG_CMD_THERON_TURN_R = 0x13,
+    FS_GG_CMD_THERON_STRAFE_L = 0x14,
+    FS_GG_CMD_THERON_STRAFE_R = 0x15
+};
+
 #define FS_GG_GAME_ID_COUNT 6
 #define FS_GG_GAME_ID_INVALID (-1)
 
