@@ -697,8 +697,8 @@ inspection, its source worktree was based on commit
 identify the observed executable and source worktree state; they do not
 independently prove the binary was built from that exact source snapshot.
 
-The screenshot, raw Ymir dumps, run log, and reproducible RGB5 comparison
-receipt are retained at
+The screenshot, raw Ymir dumps, run log, reproducible RGB5 comparison, and
+retail TM.BIN disassembly receipts are retained at
 `/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_rendered_20261027/rendered_menu_candidate_19000/`.
 The screenshot SHA-256 is
 `903e710b455df66a1df79adcdf1e1a9a6c8fdc257833f0eed9e80def840d541a`; the run
@@ -706,12 +706,49 @@ log SHA-256 is
 `caf636e378d9888b4c97e01b12ddd864b0564e292fceb6f5ffc97b14f442d282`; the
 `DMV0_FRAME_MATCH.txt` SHA-256 is
 `51081a26e28878ac6f90a102fe79c76a51c519d3aba5c23f7e9b4612364d298f`; the
+`TM_BIN_AVI_DISPATCH.txt` SHA-256 is
+`8ccfcd8af5ee6afdd0b11607fb990838bdb0a51a767211a37c638060191359c3`;
 `README.md` SHA-256 is
-`33da1383f0019009b7c0b585501e450874b168d50052a16a3b371669dccca42c`; and
+`42ee176d4a06c539864fbcd4e68a176ea1ea579627be31ea0699faa5d0ade67a`; and
 `SHA256SUMS.txt` SHA-256 is
-`0a62c37cdc6f64629968683dc2f9484071b675965cfae71dc9189f861f6e9288`. All 36
+`1e0c9e940632e99e063b27af0f498896ebbef7a3123cad7547525e0f309432fb`. All 37
 listed bundle files passed checksum verification. This is diagnostic evidence;
 it is not a Firestaff asset or a parity admission.
+
+## Retail TM.BIN video dispatcher disassembly (2026-10-27)
+
+The authentic Japanese retail `TM.BIN` is 160,044 bytes with SHA-256
+`d87485fe6eba1f6e9fbbf487f5fcdd994911136905e6172e5bb5bc0122407eb6`.
+With load base `0x06010000`, the three embedded video-name strings map to:
+`DMV0.AVI` at file offset `0x1968c` / runtime `0x0602968c`,
+`DMV1.AVI` at `0x19698` / `0x06029698`, and `DMV2.AVI` at `0x196a4` /
+`0x060296a4`.
+
+The module entry routine at file offset `0x00` reads the selector at SH-2
+address `0x00200000` at PC `0x0601006c`. It branches on values 0, 1, or 2 and
+loads the corresponding AVI pointer from its literal pool at offsets
+`0x260`, `0x264`, and `0x268`. It calls the shared playback routine at
+`0x06010eec`; the DMV0 branch passes `0x000a0000` in `r5`. After playback,
+the entry routine clears byte `0x0020000b` and jumps through the vector at
+`0x00200010`. The exact SH-4 disassembly excerpt and reproducible command are retained at
+`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_rendered_20261027/rendered_menu_candidate_19000/TM_BIN_AVI_DISPATCH.txt`.
+
+This is high-confidence static evidence of a retail three-video dispatcher and
+shared playback call. Together with the exact DMV0 frame-626 pixel match above,
+it connects the rendered screenshot to the authentic video path. It does not
+show which caller sets selector `0x00200000` during cold boot, establish
+selector 0 as the startup default, identify the Start skip behavior, or prove
+how the three-choice menu is entered. The load base is supported by the AVI
+pointer arithmetic and the documented TM overlay mapping at file offset
+`0x4500` to runtime `0x06014500`; it remains a disassembly load hypothesis.
+
+`DM.BIN` contains resource-string anchors for `MENU.BPK`, `yam\menu.c`,
+`FONT256.S2D`, and `STABG.BIN` at offsets `0x373b4–0x373d8`, and
+`TITLE.CG` / `TITLE.BIN` at `0x38e6c` / `0x38e78`. These strings do not
+identify the title-menu entry routine. The next useful dynamic trace should
+capture SH-2 call/branch edges and selector/return globals around cold-boot
+loop frames 6,900–7,100 and 8,900–9,120, then correlate them with Start reads
+and frame-indexed VDP1 commands.
 
 ## Complete cold-boot SCU DMA trace (2026-10-27)
 
