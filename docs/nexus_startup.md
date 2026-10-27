@@ -533,9 +533,12 @@ PCs and call fields identify a candidate routine for further tracing; they do
 not yet identify the exact store instruction or authenticate a graphics
 upload routine. The function also copies a 256-byte block through a helper
 before modifying its local buffer, but the trace does not join that buffer to
-the observed texture spans. The four captured 32-byte CLUTs also have no
-direct or word-swapped exact match in the 126 hash-accepted Japanese retail
-files, so their palette source remains unbound.
+the observed texture spans. The separate frame-correlated SCU DMA evidence
+below joins `TITLE.BIN` ranges to final VDP1 memory and command reads; it does
+not resolve this SH-2 trace's PC attribution or rule out later CPU writes.
+The four captured 32-byte CLUTs also have no direct or word-swapped exact
+match in the 126 hash-accepted Japanese retail files, so their palette source
+remains unbound.
 
 FONT256's authenticated Character Generator bytes now remain in the engine's
 source object for the future Saturn consumer. This does not admit glyph coding,
