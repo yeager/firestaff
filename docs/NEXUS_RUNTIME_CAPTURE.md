@@ -1537,8 +1537,8 @@ hash-verified Japanese `DM.BIN`
 (`3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124`)
 contains opcode `0x8903` at that offset, not the runtime-traced `0x8d5d`.
 This direct mapping therefore does not bind the branch to a retail code span;
-relocation or runtime code provenance remains unknown. The input/action
-consumer and title-to-menu transition remain unverified.
+relocation or runtime code provenance remains unknown. The retail input/action
+consumer and Firestaff's production title-to-menu parity remain unverified.
 
 The rendered frames are in
 `/home/trv2/work/firestaff-nexus-title-start-pair-real15/`; the branch pair is

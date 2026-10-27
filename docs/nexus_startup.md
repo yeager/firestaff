@@ -1,10 +1,10 @@
 # Dungeon Master Nexus — startup status
 
 This is an evidence report for startup, not a specification for a completed
-Nexus startup screen. Updated 2026-10-26: an authentic Japanese retail cold
-boot now reaches the Nexus title/logo in Ymir with deterministic BIOS input.
-The title-to-menu transition, gameplay entry, and HUD are still unverified in
-Firestaff.
+Nexus startup screen. Updated 2026-10-27: an authentic Japanese retail cold
+boot now reaches the Nexus native title menu in Ymir with deterministic BIOS
+and controller input. Firestaff title-menu, gameplay-entry, and HUD parity are
+still unverified.
 
 ## Verified initialization order
 
@@ -482,6 +482,50 @@ or that MENU.BPK is unrelated to the title menu. Surface ordering, CLUT,
 consumer, placement, and input-to-action dispatch still require a same-session
 Saturn trace.
 
+## Cold-boot menu command/source observation (2026-10-27)
+
+The direct cold-boot menu capture retained a frame-aligned VDP1 VRAM snapshot
+and a complete command trace. In the captured menu frame, five textured VDP1
+commands reference byte spans that each match exactly once in the authentic
+Japanese `TITLE.BIN`: two 24×24 spans at file offset `0x15f6` and three 4bpp
+text-sized spans at offsets `0x0446`, `0x0576`, and `0x07d6`. The screenshot
+shows the paired selector graphics and the three menu labels, so these are
+strong candidate source spans for the visible menu elements. This observation
+does not establish each source span's semantic identity, the Saturn upload
+route, or the palette's source owner.
+
+The same capture's VDP1 VRAM was checked against every decoded surface in the
+hash-pinned Japanese `MENU.BPK` (SHA-256
+`740ab2a864f04b89cddb172ce2560044fcc8c6a7f98ae2fe50461aa8da886636`). Although
+162 PRS3 surfaces decode, none of the captured textured command source starts
+falls within an exact matched MENU.BPK surface range. This narrows the current
+menu asset lead toward `TITLE.BIN`; it does not prove MENU.BPK is unrelated or
+that Firestaff can yet compose the menu. The captured data and trace remain
+external at
+[`ymir_nexus_coldboot_menu_20261027`](/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/).
+
+The four distinct 32-byte VDP1 CLUT blocks used by these commands were also
+compared directly and word-swapped against all 126 hash-accepted Japanese
+retail files in the local corpus. None matched; five files with unaccepted
+hashes were excluded. A full VDP1-window SH-2 write trace hit its 250,000-row
+limit and dropped 45,183,915 master-SH-2 rows, so it cannot establish upload
+ownership. A second cold boot narrowed tracing to `0x05c29000..0x05c48000` and
+completed 205,300 rows with zero drops. The final VDP1 VRAM hash matched the
+visual capture, but the trace values do not reconstruct the final texture
+spans and the trace has no per-frame markers. Thus the SH-2 writer path and
+CLUT source remain open.
+
+The narrowed trace provides disassembly anchors in authentic Japanese
+`DM.BIN` (SHA-256
+`3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124`) at load
+base `0x06010040`: the recorded call target is `0x0602623c` (file offset
+`0x161fc`), with writes observed at `0x0602625c` and `0x0602626c` (offsets
+`0x1621c` and `0x1622c`); the trace's caller-return field is `0x06027064`
+(offset `0x17024`). These instructions are concrete reverse-engineering
+targets, not yet an authenticated asset-upload routine. The four captured
+32-byte CLUTs also have no direct or word-swapped exact match in the 126
+hash-accepted Japanese retail files, so their palette source remains unbound.
+
 FONT256's authenticated Character Generator bytes now remain in the engine's
 source object for the future Saturn consumer. This does not admit glyph coding,
 page/PND attributes, layer placement, or text writing; `font_loaded` remains
@@ -551,7 +595,7 @@ the boot-dump receipt on the external evidence disk and
 [full capture receipt and SHA-256 identities](NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md#full-ymir-title-frame-capture-replay)
 for the menu-state reproduction command and exact scope.
 
-## Deterministic cold boot reaches the Nexus title/logo (2026-10-26)
+## Deterministic cold boot reaches the native title menu (2026-10-27)
 
 Ymir 0.4.2-dev was built on TRV2 with the repeatable
 `--capture-pad-input FRAME:BUTTON:HOLD` option (submitted to the Yeager Ymir
@@ -562,32 +606,52 @@ profile used the authenticated Japanese Saturn BIOS
 and the real Japanese retail cue
 `/home/trv2/.firestaff/data/nexus/Dungeon Master Nexus (Japan).cue`. The
 isolated profile was marked onboarded to bypass Ymir's first-run UI; no game
-state was loaded.
+state or saved game was loaded.
 
 The deterministic boot schedule pressed Right at frames 700, 720, 740, 760,
-780, and 800, A at frame 830 to confirm the Japanese BIOS date/time screen,
-then Start at frame 7000. The 9000-frame capture shows the real Nexus logo and
-copyright; its captured emulation frame is 7977. A 10000-frame capture remains
-on that logo, while a 12000-frame capture has advanced into the game's canyon
-intro. These independent captures demonstrate BIOS exit and authentic retail
-boot progression to the logo and attract sequence.
+780, and 800, then A at frame 830 to confirm the Japanese BIOS date/time
+screen. It sent Start for 2 frames at frame 7000 to advance past the opening
+intro, then held Start for 60 frames at frame 9000 on the title prompt. The
+9120-frame capture shows the retail title menu with `NEW GAME` selected above
+`CONTINUE` and `CONFIGURATION`. This is a direct cold-boot capture: the run
+loaded no emulator state and no game save.
 
-The screenshots and hashes are retained outside the repository:
+The emulator was Ymir 0.4.2-dev with `--debug`, built on TRV2 from the branch
+that adds repeatable `--capture-pad-input FRAME:BUTTON:HOLD` scheduling. The
+authentic Japanese cue SHA-256 is
+`878b3bc223bb56e99626dbaa2946d17fb349a2a67a10cd4423742d8ab30b8699`. The
+controller-scheduler change is submitted to the Yeager Ymir fork in
+[PR #1](https://github.com/yeager/Ymir/pull/1).
 
-| Boot capture | SHA-256 |
-|---|---|
-| [`ymir_nexus_coldboot9000_20261026.png`](/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot9000_20261026.png) | `5ede8daf82936b7323563c01d56534f2eb140cec981865c16548ac52ccccc921` |
-| [`ymir_nexus_coldboot10000_20261026.png`](/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot10000_20261026.png) | `deff9f5bebaaa448ba5a897f40bda764e38c84da59e0e1bd344467b0a0c667fd` |
-| [`ymir_nexus_coldboot12000_20261026.png`](/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot12000_20261026.png) | `4be897d6b35d79c059de45f835611f824e695f381cf76c46312ea60743f207ba` |
+The cold-boot menu screenshot, complete raw memory dump, source-join report,
+and bounded SH-2 write traces are retained on the external evidence volume.
+`SHA256SUMS.txt` covers the screenshot, all 30 dump files, the Japanese
+`MENU.BPK`, the source-join report, and both write-trace captures.
 
-This does not establish that Start reaches the native title menu: on this
-schedule, Start at frame 7000 leads into the logo/attract sequence, and the
-later capture shows the canyon intro. A separately retained title-prompt
-state shows `PRESS START BUTTON`, but it is a saved-state replay and must not
-be presented as a cold-boot result. The native menu choices, menu input
-dispatch, new-game entry, continue/save behavior, and playable HUD therefore
-remain open gates. This evidence is from Ymir and does not admit a Firestaff
-render path or claim gameplay parity.
+| Artifact | Location | SHA-256 |
+|---|---|---|
+| Native title-menu screenshot | [`title-menu.png`](/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/title-menu.png) | `8721cce3354bc20b1cd367fd44be3d4ecc60ca65fa89c7d00654e83f5ad7db23` |
+| Source-join report | [`vdp1-source-join.txt`](/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/vdp1-source-join.txt) | `5df73daf4a37f187e0f3e4805d68d7f4870703839e5fb9b2d4c26f8cf12dc3a3` |
+| Complete narrowed SH-2 write trace | [`sh2-memory-write-trace.csv`](/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/sh2-write-narrow/sh2-memory-write-trace.csv) | `53502102c1dcdc0c511983bfaf0ce7e017fe711f26a393e353eea162a82f001d` |
+| Trace receipt | [`sh2-memory-write-trace-bundle.txt`](/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/sh2-write-narrow/sh2-memory-write-trace-bundle.txt) | `c463f5d77a57c7883fd2e22ae3bf69aa41823264ad25f804f0535b634b560166` |
+| Dump and screenshot manifest | [`SHA256SUMS.txt`](/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/SHA256SUMS.txt) | `30d4c019f5dccf090553a1e9328b185c1e90305d5c89f50a2f554fef87bc403b` |
+
+The exact command was:
+
+```sh
+ymir-sdl3 --debug --capture-boot-frames 9120 --dump-memory --capture-screenshot \
+  --capture-pad-input 700:right:2 --capture-pad-input 720:right:2 \
+  --capture-pad-input 740:right:2 --capture-pad-input 760:right:2 \
+  --capture-pad-input 780:right:2 --capture-pad-input 800:right:2 \
+  --capture-pad-input 830:a:2 --capture-pad-input 7000:start:2 \
+  --capture-pad-input 9000:start:60 \
+  "/home/trv2/.firestaff/data/nexus/Dungeon Master Nexus (Japan).cue"
+```
+
+This closes the Ymir cold-boot-to-title-menu evidence gap. It does not establish
+that Firestaff renders or controls this menu, that `NEW GAME` reaches a playable
+level through Firestaff, that Continue loads a real save, or that the HUD is
+correct. Those remain separate production-parity gates.
 
 ## Sources
 

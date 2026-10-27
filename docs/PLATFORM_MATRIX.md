@@ -116,7 +116,7 @@ and English Macintosh versions are explicitly exempt.
 
 | Platform | Version | Lang | Status | Greatstone DB | Local hash | Notes |
 |---|---|---|---|---|---|---|
-| Sega Saturn | 1.0 | JP | 🟣 | — (not in SCK) | yes (DM.BIN 555,144 B) | DMWeb documents the Japan-only Saturn release (catalog `T-9111G`) and Nexus-specific file formats; Greatstone does not list a Saturn Nexus extraction. The hash-verified retail Track 1 drives the bounded native parser/loader route, and admitted MAPD title assets can be presented from original CUE/BIN media. This does not establish full Saturn title composition or the title-to-menu transition. Menu, HUD, viewport, audio/event dispatch, and gameplay parity remain capture-gated. |
+| Sega Saturn | 1.0 | JP | 🟣 | — (not in SCK) | yes (DM.BIN 555,144 B) | DMWeb documents the Japan-only Saturn release (catalog `T-9111G`) and Nexus-specific file formats; Greatstone does not list a Saturn Nexus extraction. The hash-verified retail Track 1 drives the bounded native parser/loader route, and admitted MAPD title assets can be presented from original CUE/BIN media. Ymir reference evidence now confirms retail cold boot to the native title menu; Firestaff still lacks full Saturn title composition and title-to-menu parity. HUD, viewport, audio/event dispatch, and gameplay parity remain capture-gated. |
 
 **Notes:** DM Nexus uses the proprietary DMDF (Dungeon Master
 Data File) format, completely different from the FTL
