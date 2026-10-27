@@ -44,8 +44,9 @@ script does not bind its host-relative motion to that capture's exact
 `$3C/$78` cursor coordinate; see
 [`theron-original-viewport-command-capture-2026-08-21.md`](../theron-original-viewport-command-capture-2026-08-21.md).
 
-Button II held for the same 180 updates did not write `$2905`. Party RAM
-`$203F/$2040/$2041` remained `$01/$02/$03` in all three Button I captures.
+Button II held for the same 180 updates did not write `$2905`. The final
+main-RAM snapshot reported BaseRAM `$203F/$2040/$2041` as `$01/$02/$03` in all
+three Button I captures.
 The full mouse trace hashes differ between runs because they include other
 runtime observations; the ordered queue writes and consumer PCs above matched
 in all three loops.

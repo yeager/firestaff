@@ -3,13 +3,14 @@
 - PCE Fast rejected the preserved authentic Ak-Tu-Ba state, but the same
   instrumented Mednafen binary loaded it under the standard `pce` module.
   Four isolated horizontal mouse deltas (4, 16, 32 and 64) each loaded the
-  state and left the observed hover command at `$50`; the brief Button I
+  state and left the observed hover values at `$00/$50`; the brief Button I
   sample did not queue a command.
 - Three separate standard-PCE captures held mouse Button I for 180 device
   updates after a 64-unit horizontal delta. Every run wrote `$50` to `$2905`
   at `$CCDB`, read it at `$D34D` and `$D395`, and cleared it to `$00` at
-  `$D3A0`. Button II did not produce a `$2905` write. All three Button I runs
-  retained party RAM `$203F/$2040/$2041 = 01/02/03`.
+  `$D3A0`. Button II did not produce a `$2905` write. The final main-RAM
+  snapshot reported BaseRAM `$203F/$2040/$2041 = 01/02/03` in all three Button
+  I captures.
 - The save-state captures still have `transition=missing` and zero
   authenticated CD-to-RAM receipts. This verifies the original command queue
   route from an authentic saved gameplay state, not the runtime media-sector
