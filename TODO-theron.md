@@ -53,6 +53,22 @@
   therefore remain open. See
   [buffer-setup caller evidence](docs/source-lock/theron-disassembly/theron-track02-buffer-setup-caller-20261027.md).
 
+## 2026-10-27 — C1DF cold-start probes stop at the System Card
+
+- Two bounded TRV2 reference captures used the authentic US CUE, verified
+  System Card 3.0 and a disposable Mednafen copy with the C1DF instruction
+  hook. The replay plans `run@480:300` and `run@2400:300` were both applied
+  and read by the System Card poll at `$E4C5` (witness sequence 3270). Each
+  capture reported zero CD IRQ callbacks, zero raw-sector spans, zero
+  authenticated CD-to-RAM receipts, `transition=missing`, and zero C1DF trace
+  rows.
+- The replay counter advances with controller-read polling; its values are
+  not video frames or wall-clock seconds. These runs therefore establish only
+  System Card input delivery, not a Theron title-menu handoff or execution of
+  the `$A704 → $C1DF` caller. Obtain a same-session game-owned handoff and
+  source-bound runtime data before interpreting pointer rectangles or adding
+  native world-click behavior.
+
 ## 2026-10-26 — trace-driven decode of the initializer's $43AB helper
 
 - The authenticated JP runtime trace executes `$43AB–$43B4` at physical
