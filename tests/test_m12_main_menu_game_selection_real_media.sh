@@ -167,9 +167,13 @@ if [[ -f "$data_root/dm1/Dungeon-Master_Amiga_EN_Version-20.zip" ]]; then
         "$data_root/dm1/Dungeon-Master_Amiga_EN_Version-20.zip" 3 Amiga \
         're:amiga(20-en|20-fr|20-de|21-en|36-multi|demo-en)'
 fi
-if [[ -f "$data_root/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip" ]]; then
+csb_amiga_archive="$data_root/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip"
+if [[ -f "$data_root/csb/Chaos Strikes Back (FTL).zip" ]]; then
+    csb_amiga_archive="$data_root/csb/Chaos Strikes Back (FTL).zip"
+fi
+if [[ -f "$csb_amiga_archive" ]]; then
     run_alternate_platform_picker_case csb \
-        "$data_root/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip" 1 Amiga \
+        "$csb_amiga_archive" 1 Amiga \
         're:amiga(31-en|31-multi|35-en|35-multi)'
 fi
 if [[ -f "$data_root/csb/chaos_strikes_back_ftl.zip" ]]; then
