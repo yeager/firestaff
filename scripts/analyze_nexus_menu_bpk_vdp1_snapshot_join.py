@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Compare real MENU.BPK PRS3 surfaces with one VDP1 VRAM snapshot.
 
-This is a narrow source-byte observation tool.  It accepts only the
-hash-verified Japanese retail MENU.BPK, decodes its declared indexed PRS3
-surfaces with the documented DMWeb grammar, and reports exact whole-surface
-matches in a supplied VDP1 VRAM dump.  A match does not establish a Saturn
-upload route, CLUT, placement, command ordering, or renderer permission.
+This is a narrow source-byte observation tool. It accepts only hash-verified
+Japanese, English, or French retail MENU.BPK files, decodes their declared
+indexed PRS3 surfaces with the documented DMWeb grammar, and reports exact
+whole-surface matches in a supplied VDP1 VRAM dump. A match does not establish
+a Saturn upload route, CLUT, placement, command ordering, or renderer permission.
 """
 
 from __future__ import annotations
@@ -16,10 +16,23 @@ import hashlib
 from pathlib import Path
 
 
-JAPANESE_MENU_BPK_SHA256 = (
-    "740ab2a864f04b89cddb172ce2560044fcc8c6a7f98ae2fe50461aa8da886636"
-)
+RETAIL_MENU_BPK_SHA256 = {
+    "Japanese": "740ab2a864f04b89cddb172ce2560044fcc8c6a7f98ae2fe50461aa8da886636",
+    "English": "f2f78dddfe37a5ff414775ae888f164624e987059934b034ba36299cc769d2ca",
+    "French": "c4e2427f54083e92cdf38f3b1f296e135bdb007de227431be690cc41381fd543",
+}
 VDP1_TRACE_REQUIRED_COLUMNS = {"word0", "word4"}
+
+
+def verified_menu_region_digest(digest: str) -> str | None:
+    """Return the retail region only for an authenticated MENU.BPK SHA-256."""
+    return next((region for region, accepted in RETAIL_MENU_BPK_SHA256.items()
+                 if digest == accepted), None)
+
+
+def verified_menu_region(menu: bytes) -> str | None:
+    """Return the retail region only for an authenticated MENU.BPK revision."""
+    return verified_menu_region_digest(hashlib.sha256(menu).hexdigest())
 
 
 def be32(data: bytes, offset: int) -> int:
@@ -236,8 +249,9 @@ def main() -> int:
         return 1
     menu_hash = hashlib.sha256(menu).hexdigest()
     vram_hash = hashlib.sha256(vram).hexdigest()
-    if menu_hash != JAPANESE_MENU_BPK_SHA256:
-        print("NEXUS_MENU_BPK_VDP1_JOIN_INVALID: MENU.BPK hash is not Japanese retail")
+    menu_region = verified_menu_region(menu)
+    if menu_region is None:
+        print("NEXUS_MENU_BPK_VDP1_JOIN_INVALID: MENU.BPK hash is not an authenticated retail region")
         return 1
     if len(vram) != 512 * 1024:
         print("NEXUS_MENU_BPK_VDP1_JOIN_INVALID: VDP1 snapshot is not 512 KiB")
@@ -271,6 +285,7 @@ def main() -> int:
             )
     matched_ranges = merge_ranges(matched_ranges)
     print(f"menu_bpk_sha256={menu_hash}")
+    print(f"menu_region={menu_region}")
     print(f"vdp1_vram_sha256={vram_hash}")
     print(f"decoded_prs3_surfaces={len(decoded)}")
     print(f"whole_surface_byte_matches={matches}/{len(decoded)}")

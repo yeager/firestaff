@@ -13,6 +13,7 @@ from analyze_nexus_menu_bpk_vdp1_snapshot_join import (
     merge_ranges,
     surface_offsets,
     surface_offset_summary,
+    verified_menu_region_digest,
 )
 
 BUILD = Path(__file__).resolve().parents[1] / "build"
@@ -20,6 +21,18 @@ BUILD.mkdir(exist_ok=True)
 
 
 class SnapshotJoinTests(unittest.TestCase):
+    def test_accepts_only_hash_verified_retail_menu_regions(self) -> None:
+        cases = (
+            ("Japanese", "740ab2a864f04b89cddb172ce2560044fcc8c6a7f98ae2fe50461aa8da886636"),
+            ("English", "f2f78dddfe37a5ff414775ae888f164624e987059934b034ba36299cc769d2ca"),
+            ("French", "c4e2427f54083e92cdf38f3b1f296e135bdb007de227431be690cc41381fd543"),
+        )
+        for region, digest in cases:
+            with self.subTest(region=region):
+                self.assertEqual(verified_menu_region_digest(digest), region)
+        self.assertIsNone(verified_menu_region_digest(
+            "3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124"))
+
     def test_enumerates_overlapping_direct_and_word_swapped_occurrences(self) -> None:
         direct, swapped = surface_offsets(b"\x12\x34\x12\x34", b"\x12\x34")
         self.assertEqual(direct, [0, 2])
