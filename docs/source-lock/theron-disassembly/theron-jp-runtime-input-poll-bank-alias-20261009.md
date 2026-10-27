@@ -474,21 +474,33 @@ indexed table values. No movement semantics or runtime US path is inferred.
 
 ### Static `$D588` coordinate-table bytes
 
-The 26-byte table immediately following the `$D515..$D5A6` code extent is
-identical across all seven candidates in both authentic editions. Its SHA-256
-is `8f9eea35bef73f48d39f09255524608a39188524935170168a44659b1b74b800`; the
-bytes are:
+The JP `$D588` routine indexes a 26-byte table at `$D5A7`; all seven JP
+candidates contain the same table, SHA-256
+`8f9eea35bef73f48d39f09255524608a39188524935170168a44659b1b74b800`:
 
 ```text
 0c ff 0b a2 8a 86 89 71 88 5e 87 4b 05 40 12 ff
 11 88 10 76 0f 62 0e 4f 0d 3d
 ```
 
-The JP table begins at raw offsets `0x9d1e7`, `0xe69e7`, `0x1301e7`,
-`0x1799e7`, `0x1c31e7`, `0x20c9e7`, and `0x2561e7`. The US table begins at
-`0x9db25`, `0xe7325`, `0x130b25`, `0x17a325`, `0x1c3b25`, `0x20d325`, and
-`0x256b25`. `tests/test_theron_v1_huc6280_disassembly.c` checks the complete
-26-byte sequence at exactly these seven offsets for each edition.
+Its raw offsets are `0x9d1e7`, `0xe69e7`, `0x1301e7`, `0x1799e7`,
+`0x1c31e7`, `0x20c9e7`, and `0x2561e7`.
+
+The US routine uses a regional table at `$D5B5`, 14 bytes after the JP
+address. Its 26 bytes are identical across all seven US candidates, SHA-256
+`43ea232887365afd0574e0bc9e613001f321b35a9c83e78cc16b5c142bb8dcab`:
+
+```text
+12 ff 11 88 10 76 0f 62 0e 4f 0d 3d ad bb 2e 4a
+ad 3b 2e 6a c9 6f 90 28 c9 d0
+```
+
+Its raw offsets are `0x9db33`, `0xe7333`, `0x130b33`, `0x17a333`,
+`0x1c3b33`, `0x20d333`, and `0x256b33`. The real-media regression
+`test_theron_v1_huc6280_disassembly` checks each edition's complete table at
+exactly its seven indexed-data offsets. The 26-byte sequence at raw offset
+`0x9db25` is not the complete US classifier table; US `$D588` indexes from
+`$D5B5` and reads through `$D5CE`.
 
 The disassembly at `$D588` starts with X=`$0c`, compares the regional cursor
 byte (`$2e7a` JP, `$2e7b` US) with the odd-position bytes while decrementing X

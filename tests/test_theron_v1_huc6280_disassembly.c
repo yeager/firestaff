@@ -148,8 +148,8 @@ static void verify_buffer_setup_candidates(const char *path,
 
 /* Source: docs/source-lock/theron-disassembly/
  * theron-jp-runtime-input-poll-bank-alias-20261009.md:388-457, HuC6280
- * helper $D588. This verifies authentic raw-BIN copies only; it does not bind
- * a runtime descriptor or returned class to a game command. */
+ * helper $D588. JP indexes at $D5A7; US indexes at $D5B5. This verifies
+ * authentic raw-BIN tables only; it does not bind descriptors or commands. */
 static void verify_pointer_classifier_threshold_candidates(
     const char *path, Theron_Track02Variant variant) {
     static const uint32_t jp_offsets[] = {
@@ -157,16 +157,24 @@ static void verify_pointer_classifier_threshold_candidates(
         0x1c31e7u, 0x20c9e7u, 0x2561e7u
     };
     static const uint32_t us_offsets[] = {
-        0x09db25u, 0x0e7325u, 0x130b25u, 0x17a325u,
-        0x1c3b25u, 0x20d325u, 0x256b25u
+        0x09db33u, 0x0e7333u, 0x130b33u, 0x17a333u,
+        0x1c3b33u, 0x20d333u, 0x256b33u
     };
-    static const unsigned char table[] = {
+    static const unsigned char jp_table[] = {
         0x0cu, 0xffu, 0x0bu, 0xa2u, 0x8au, 0x86u, 0x89u, 0x71u,
         0x88u, 0x5eu, 0x87u, 0x4bu, 0x05u, 0x40u, 0x12u, 0xffu,
         0x11u, 0x88u, 0x10u, 0x76u, 0x0fu, 0x62u, 0x0eu, 0x4fu,
         0x0du, 0x3du
     };
+    static const unsigned char us_table[] = {
+        0x12u, 0xffu, 0x11u, 0x88u, 0x10u, 0x76u, 0x0fu, 0x62u,
+        0x0eu, 0x4fu, 0x0du, 0x3du, 0xadu, 0xbbu, 0x2eu, 0x4au,
+        0xadu, 0x3bu, 0x2eu, 0x6au, 0xc9u, 0x6fu, 0x90u, 0x28u,
+        0xc9u, 0xd0u
+    };
     const uint32_t *expected_offsets;
+    const unsigned char *table;
+    const size_t table_size = sizeof(jp_table);
     const size_t expected_count = THERON_V1_HUC6280_CALLEE_CANDIDATE_COUNT;
     FILE *file = fopen(path, "rb");
     unsigned char *bytes;
@@ -175,8 +183,14 @@ static void verify_pointer_classifier_threshold_candidates(
 
     assert(variant == THERON_TRACK02_VARIANT_US_BIN ||
            variant == THERON_TRACK02_VARIANT_JP_BIN);
-    expected_offsets = variant == THERON_TRACK02_VARIANT_JP_BIN ?
-        jp_offsets : us_offsets;
+    if (variant == THERON_TRACK02_VARIANT_JP_BIN) {
+        expected_offsets = jp_offsets;
+        table = jp_table;
+    } else {
+        expected_offsets = us_offsets;
+        table = us_table;
+    }
+    assert(sizeof(us_table) == table_size);
     assert(file != NULL);
     assert(fseek(file, 0L, SEEK_END) == 0);
     file_size = ftell(file);
@@ -188,8 +202,8 @@ static void verify_pointer_classifier_threshold_candidates(
     assert(fclose(file) == 0);
 
     for (size_t offset = 0u;
-         offset + sizeof(table) <= (size_t)file_size; ++offset) {
-        if (memcmp(bytes + offset, table, sizeof(table)) == 0) {
+         offset + table_size <= (size_t)file_size; ++offset) {
+        if (memcmp(bytes + offset, table, table_size) == 0) {
             assert(matches < expected_count);
             assert((uint32_t)offset == expected_offsets[matches]);
             ++matches;
