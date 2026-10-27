@@ -144,6 +144,7 @@ int main(void) {
     unsigned char selectedPresentationView[320 * 200];
     unsigned char scanningCardView[320 * 200];
     unsigned char pendingCardView[320 * 200];
+    unsigned char unavailableCardView[320 * 200];
     unsigned char compactPresentationView[320 * 100];
     int originalSetting;
 
@@ -272,10 +273,16 @@ int main(void) {
                 !launchGate.dataReady,
                 "DM2 must stay gated until its own scan receipt is complete")) return 1;
     state.deferredScanActive = 0;
+    state.deferredScanPending = 1;
     M12_StartupMenu_Draw(&state, pendingCardView, 320, 200);
-    if (!expect(rendered_rows_differ(scanningCardView, pendingCardView,
+    if (!expect(!rendered_rows_differ(scanningCardView, pendingCardView,
+                                     320, 0, 200),
+                "pending and active scans should both show scanning status")) return 1;
+    state.deferredScanPending = 0;
+    M12_StartupMenu_Draw(&state, unavailableCardView, 320, 200);
+    if (!expect(rendered_rows_differ(scanningCardView, unavailableCardView,
                                     320, 0, 200),
-                "platform card should distinguish active scan from missing media")) return 1;
+                "platform card should distinguish scanning from missing media")) return 1;
     state.assetStatus.dm2Available = 1;
     force_menu_game_available(&state, 2, "dm2", "SKULLKEEP");
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
