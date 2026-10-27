@@ -655,11 +655,11 @@ ymir-sdl3 --debug --capture-boot-frames 9120 --dump-memory --capture-screenshot 
   "/home/trv2/.firestaff/data/nexus/Dungeon Master Nexus (Japan).cue"
 ```
 
-This closes the Ymir cold-boot-to-title-prompt evidence gap only. It does not
-establish cold-boot entry to the three-choice menu, Firestaff menu rendering or
-control, a Firestaff `NEW GAME` route to a playable level, real-save loading
-through Continue, or HUD parity. Those remain separate production-parity
-gates.
+This closes the Ymir cold-boot-to-native-menu evidence gap. The separate
+New Game replay also reaches a native 3D viewport, as recorded below. These
+emulator results do not establish Firestaff menu rendering or control, a stable
+interactive gameplay route, real-save loading through Continue, or HUD parity.
+Those remain separate production-parity gates.
 
 ## Cold-boot follow-up: exact retail FMV frame match (2026-10-27)
 
