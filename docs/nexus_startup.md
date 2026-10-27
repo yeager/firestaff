@@ -1166,3 +1166,30 @@ not establish Firestaff menu rendering or input, Continue/save loading, or
 playable-level, viewport, or HUD parity. See the
 [English cold-boot evidence receipt](../parity-evidence/verification/nexus_english_coldboot_menu_20261027/README.md)
 for hashes and reproduction commands.
+
+## Authentic Japanese title-menu Down selection (2026-10-27)
+
+A fresh isolated Ymir profile cold-booted the hash-verified Japanese retail
+disc with the authenticated Japanese IPL. After the established BIOS date/time
+and title-prompt input schedule, Control Pad 1 Down was held for two frames at
+capture frame 9,100. The native screenshot shows `CONTINUE` selected. The run
+loaded no emulator state or game save; Ymir created a new internal backup-RAM
+image in the fresh profile. No retail data was modified.
+
+The 8,047 VDP1 frame contains 178 commands, and the command trace is complete
+with no dropped rows. The final four active texture draws have exact byte
+matches in the authentic Japanese `TITLE.BIN`: the two 288-byte draws at VDP1
+source `0x42e60` match file offset `0x1b36`; the 256-byte draw at `0x475e0`
+matches offset `0x06a6`; and the 416-byte draw at `0x46f60` matches offset
+`0x07d6`. The earlier retained cold-boot image with `NEW GAME` selected uses
+`TITLE.BIN` offsets `0x15f6`, `0x0446`, `0x0576`, and `0x07d6` for the
+corresponding ordered draws. The first three source spans change in the
+Down-selected capture and the fourth remains the same. The VDP1 command table
+relocates between runs, so the comparison uses draw order and source bytes.
+
+This is authentic input-correlated source evidence for the Japanese menu
+selection state. It does not establish the complete `TITLE.BIN` decoding and
+palette contract, menu display composition, mouse hit regions, Firestaff
+input handling, or production renderer admission. The full external capture,
+hashes, and reproduction command are in the
+[Japanese Down-selection capture receipt](../parity-evidence/verification/nexus_japanese_menu_down_selection_20261027/README.md).
