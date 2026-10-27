@@ -1,3 +1,19 @@
+## 2026-10-27 — scripted mouse probes reject the current USA save state
+
+- Three isolated TRV2 loops requested the same four PCE Fast mouse samples
+  against authentic USA Track 02 media and the preserved Ak-Tu-Ba state. The
+  instrumented binary emitted the same four `device_script` rows and mouse
+  trace SHA-256 (`952d8be319d190b9a9e890d1304f3a7ea2a16d2a1796aab49abb77400453655f`)
+  in each loop.
+- Mednafen reported `Theron autoload state failed` in every run. The trace had
+  `transition=missing`, zero CD IRQ callbacks, zero authenticated CD-to-RAM
+  receipts and zero command RAM writes. These runs verify deterministic input
+  injection only; they provide no game-state, pointer-command, or mouse-parity
+  evidence. See the [save-state compatibility note](docs/source-lock/theron-disassembly/theron-us-scripted-mouse-state-compatibility-20261027.md).
+- Next: create or identify an authentic gameplay save state compatible with
+  the selected instrumented Mednafen build, then repeat the mouse probes from
+  that state. Preserve CD-to-RAM provenance as a separate requirement.
+
 ## 2026-10-27 — static Track 02 buffer-setup candidates recovered
 
 - A byte-exact sweep of authentic JP Rev. 1 and US Track 02 BINs found the
