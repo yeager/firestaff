@@ -195,7 +195,7 @@ def main() -> int:
         print(f"distinct_contexts={len(contexts)}")
         call_chains = sorted(set(row[6] for row in segment))
         print(f"distinct_call_chains={len(call_chains)}")
-        print(f"first_call_chain={call_chains[0] or 'unavailable'}")
+        print(f"first_call_chain={segment[0][6] or 'unavailable'}")
         print(f"first_sh2_row={start}")
         print(f"last_sh2_row={start + len(segment) - 1}")
 
