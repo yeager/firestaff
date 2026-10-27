@@ -131,9 +131,9 @@ if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 ]]; then
         'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-ja
 fi
 
-# Exercise platform selection from the no-game main menu for every supported
-# DM1, CSB, and DM2 architecture with authentic, independently verified media.
-# The first three cards are DM1/CSB/DM2 respectively; these cases select the
+# Exercise alternate-platform selection from the no-game main menu for DM1,
+# CSB, and DM2 with authentic, independently verified media. The first three
+# game cards are DM1/CSB/DM2 respectively; these cases select the
 # platform card, original presentation, then launch. Source archives are
 # hashed before and after by run_game_picker_case.
 if [[ -f "$data_root/dm1/Dungeon-Master_DOS_EN_Version-34.zip" ]]; then
