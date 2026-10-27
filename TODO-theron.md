@@ -7995,4 +7995,7 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   those jump targets. No new emulator capture was made. Next use a cold
   authentic JP runtime capture and require input-linked rectangle
   initialization plus source-bound provenance before implementing native
-  dungeon targeting; current rectangle captures remain unproven.
+  dungeon targeting; current rectangle captures remain unproven. To build the
+  instrumented binary with this core available, set
+  `FIRESTAFF_THERON_PCE_FAST_POINTER_TRACE_SUPPORT=1`; select `pce_fast` for a
+  live capture with `THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast`.
