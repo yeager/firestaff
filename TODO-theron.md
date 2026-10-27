@@ -1,18 +1,20 @@
-## 2026-10-27 — scripted mouse probes reject the current USA save state
+## 2026-10-27 — authentic USA save state verifies the original Button I dispatch
 
-- Three isolated TRV2 loops requested the same four PCE Fast mouse samples
-  against authentic USA Track 02 media and the preserved Ak-Tu-Ba state. The
-  instrumented binary emitted the same four `device_script` rows and mouse
-  trace SHA-256 (`952d8be319d190b9a9e890d1304f3a7ea2a16d2a1796aab49abb77400453655f`)
-  in each loop.
-- Mednafen reported `Theron autoload state failed` in every run. The trace had
-  `transition=missing`, zero CD IRQ callbacks, zero authenticated CD-to-RAM
-  receipts and zero command RAM writes. These runs verify deterministic input
-  injection only; they provide no game-state, pointer-command, or mouse-parity
-  evidence. See the [save-state compatibility note](docs/source-lock/theron-disassembly/theron-us-scripted-mouse-state-compatibility-20261027.md).
-- Next: create or identify an authentic gameplay save state compatible with
-  the selected instrumented Mednafen build, then repeat the mouse probes from
-  that state. Preserve CD-to-RAM provenance as a separate requirement.
+- PCE Fast rejected the preserved authentic Ak-Tu-Ba state, but the same
+  instrumented Mednafen binary loaded it under the standard `pce` module.
+  Four isolated horizontal mouse deltas (4, 16, 32 and 64) each loaded the
+  state and left the observed hover command at `$50`; the brief Button I
+  sample did not queue a command.
+- Three separate standard-PCE captures held mouse Button I for 180 device
+  updates after a 64-unit horizontal delta. Every run wrote `$50` to `$2905`
+  at `$CCDB`, read it at `$D34D` and `$D395`, and cleared it to `$00` at
+  `$D3A0`. Button II did not produce a `$2905` write. All three Button I runs
+  retained party RAM `$203F/$2040/$2041 = 01/02/03`.
+- The save-state captures still have `transition=missing` and zero
+  authenticated CD-to-RAM receipts. This verifies the original command queue
+  route from an authentic saved gameplay state, not the runtime media-sector
+  source, a world-click effect, or complete native mouse parity. Details and
+  hashes: [standard-PCE mouse command trace](docs/source-lock/theron-disassembly/theron-us-scripted-mouse-state-compatibility-20261027.md).
 
 ## 2026-10-27 — static Track 02 buffer-setup candidates recovered
 
