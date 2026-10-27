@@ -458,17 +458,16 @@
 
 ## 2026-10-25 — authentic pointer interval-table candidate recovered
 
-- Read-only inspection of the authentic US and JP Track 02 BINs found the same
-  26-byte interval-table candidate immediately after all seven `$D515` code
-  windows in each region. Its SHA-256 is
-  `8f9eea35bef73f48d39f09255524608a39188524935170168a44659b1b74b800`; no game
-  bytes are copied into the repository.
-- The disassembly at `$D588` compares the cursor coordinate `$2E7A` against
-  paired thresholds in that table and returns a paired value. This is concrete
-  evidence that the original has coordinate-dependent pointer classification,
-  so full hit regions may be recoverable from authentic media. The seven
-  code copies remain static candidates; the capture does not bind which one
-  executes or what each returned value means.
+- Authentic JP and US Track 02 data contain different 26-byte `$D588`
+  coordinate tables: JP indexes from `$D5A7`, while US indexes from `$D5B5`.
+  Their seven offsets, hashes, and complete bytes are recorded in the
+  source-lock note. The real-media regression verifies each complete regional
+  table at exactly those seven offsets. This secures static classifier input,
+  not the active descriptor, visible region, selected command, or game effect.
+- The disassembly at `$D588` scans paired coordinate thresholds and class
+  bytes from X=`$0c`; negative class bytes also consult the regional
+  `$2e1c/$2e1d` flag before returning. No runtime data flow or click semantics
+  are inferred.
 - The caller first loads a pointer from runtime `$77DC/$77DD` and follows its
   descriptor. Those pointer contents and their source-data lineage are still
   unknown. An additional read-only decode of the preserved post-Akutuba state
