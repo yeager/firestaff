@@ -1,18 +1,44 @@
-## 2026-10-27 — scripted mouse probes reject the current USA save state
+## 2026-10-27 — authentic USA save state verifies the original Button I dispatch
 
-- Three isolated TRV2 loops requested the same four PCE Fast mouse samples
-  against authentic USA Track 02 media and the preserved Ak-Tu-Ba state. The
-  instrumented binary emitted the same four `device_script` rows and mouse
-  trace SHA-256 (`952d8be319d190b9a9e890d1304f3a7ea2a16d2a1796aab49abb77400453655f`)
-  in each loop.
-- Mednafen reported `Theron autoload state failed` in every run. The trace had
-  `transition=missing`, zero CD IRQ callbacks, zero authenticated CD-to-RAM
-  receipts and zero command RAM writes. These runs verify deterministic input
-  injection only; they provide no game-state, pointer-command, or mouse-parity
-  evidence. See the [save-state compatibility note](docs/source-lock/theron-disassembly/theron-us-scripted-mouse-state-compatibility-20261027.md).
-- Next: create or identify an authentic gameplay save state compatible with
-  the selected instrumented Mednafen build, then repeat the mouse probes from
-  that state. Preserve CD-to-RAM provenance as a separate requirement.
+- PCE Fast rejected the preserved authentic Ak-Tu-Ba state, but the same
+  instrumented Mednafen binary loaded it under the standard `pce` module.
+  Four isolated horizontal mouse deltas (4, 16, 32 and 64) each loaded the
+  state and left the observed hover values at `$00/$50`; the brief Button I
+  sample did not queue a command.
+- Three separate standard-PCE captures held mouse Button I for 180 device
+  updates after a 64-unit horizontal delta. Every run wrote `$50` to `$2905`
+  at `$CCDB`, read it at `$D34D` and `$D395`, and cleared it to `$00` at
+  `$D3A0`. Button II did not produce a `$2905` write. The final main-RAM
+  snapshot reported BaseRAM `$203F/$2040/$2041 = 01/02/03` in all three Button
+  I captures.
+- The save-state captures still have `transition=missing` and zero
+  authenticated CD-to-RAM receipts. This verifies the original command queue
+  route from an authentic saved gameplay state, not the runtime media-sector
+  source, a world-click effect, or complete native mouse parity. Details and
+  hashes: [standard-PCE mouse command trace](docs/source-lock/theron-disassembly/theron-us-scripted-mouse-state-compatibility-20261027.md).
+
+## 2026-10-27 — USA command-dispatch bytes map to seven Track 02 candidates
+
+- The 64 KiB code-page snapshot taken when the original mouse Button I path
+  first wrote `$28B8` contains four traced 32-byte code windows at `$CCDB`,
+  `$D34D`, `$D395` and `$D3A0`. The `$CCDB` window base offsets are
+  `671579`, `972635`, `1273691`, `1574747`, `1875803`, `2176859` and
+  `2477915`; each corresponding candidate has raw-sector offset 1259. The
+  other windows occur at displacements `+1954`, `+2026` and `+2037` from those
+  respective bases. The complete 64 KiB page does not match the full Track 02
+  image, and these duplicate spans do not identify which source copy supplied
+  the runtime page.
+- The three repeated standard-PCE Button I captures have identical `$2905`
+  dispatch reads and identical code-page SHA-256
+  `57920b254fe1199799052879146b96731638afc41ebe03ce17db5e1d21e842ca`.
+  This strengthens byte-window reproducibility from the authentic save state,
+  while `transition=missing` and zero authenticated CD-to-RAM receipts remain.
+- A retail-source regression scans the authentic USA Track 02 hash for all
+  four observed runtime windows and pins the seven candidate offsets. This is
+  static source correlation; a cold-start CD-sector-to-bank receipt, a
+  world-state effect, and native mouse parity remain open.
+
+Details: [USA command-dispatch source candidates](docs/source-lock/theron-disassembly/theron-us-command-dispatch-source-candidates-20261027.md).
 
 ## 2026-10-27 — static Track 02 buffer-setup candidates recovered
 
