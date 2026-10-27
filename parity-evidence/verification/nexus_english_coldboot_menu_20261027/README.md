@@ -31,6 +31,25 @@ a complete trace, and zero dropped rows. The command trace SHA-256 is
 VRAM dump SHA-256 is
 `d6fa4fcfcfc7982fd64fd53aa6ac910c8a8b027e5da70a0d00e917edb6a57eb7`.
 
+## Captured display composition
+
+The frame's VDP2 registers enable only NBG0 (`BGON=0x0001`) and configure it as
+a bitmap layer (`CHCTLA=0x0013`). A read-only replay of the captured VDP1
+display framebuffer, NBG0 bitmap, VDP2 CRAM, and register-driven color
+calculation produced a 320×224 image. Nearest-neighbour 2× scaling matched every
+RGB pixel of the retained 640×448 Ymir screenshot. This binds the screenshot to
+the same-frame raw snapshots and confirms the emulator composition. It does
+not identify the NBG0 bitmap's named retail source or admit this capture-only
+compositor as Firestaff's production renderer.
+
+| Capture component | SHA-256 |
+| --- | --- |
+| `vdp1-fbs.bin` | `1a16318769e2a9f58fe85caef391140939a08665161ed7d11edd52784c62b383` |
+| `vdp2-vram.bin` | `16ccb0336e23eb80c169cdd34489ace726114134548a88aceb8ce9183083ed58` |
+| `vdp2-cram.bin` | `db282593790dec4a2bf8f76293c0458a1a140adc3351650bd56a417f0359e0de` |
+| `vdp2-registers.bin` | `e69d03094ef856922413e073cb9078015e52849786268d6421c7df00a655965e` |
+| Replayed native-size PNG | `e2ac0b3eef315f5d18517db7f67faee0483a49efd85c01f49c9126afe0c32d1b` |
+
 The authenticated English `MENU.BPK` has SHA-256
 `f2f78dddfe37a5ff414775ae888f164624e987059934b034ba36299cc769d2ca`. The
 snapshot analyzer decodes all 162 PRS3 surfaces and finds 86 whole-surface byte

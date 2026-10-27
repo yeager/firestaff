@@ -1133,9 +1133,15 @@ modified.
 
 The retained screenshot shows the English retail title screen and all three
 native choices: `NEW GAME`, `CONTINUE`, and `CONFIGURATION`. Its SHA-256 is
-`341cb38191bfbb563912d6ef0c6e2989d51eb6136d48fcffee197cafd7264810`. The
-frame-aligned VDP1 bundle is frame 13106 with 178 command rows, a complete trace,
-and zero dropped rows. The retail source join binds nonzero texture bytes for
+`341cb38191bfbb563912d6ef0c6e2989d51eb6136d48fcffee197cafd7264810`. A
+read-only replay of the same-frame VDP1 display framebuffer, NBG0 bitmap, VDP2
+CRAM, and registers reconstructs a 320×224 image that matches every RGB pixel
+when scaled 2× to the screenshot. The registers enable only NBG0 as an 8bpp
+bitmap (`BGON=0x0001`, `CHCTLA=0x0013`). This verifies same-frame composition
+but does not identify the bitmap's retail source or admit the capture-only
+replay as a production renderer. The frame-aligned VDP1 bundle is frame 13106
+with 178 command rows, a complete trace, and zero dropped rows. The retail
+source join binds nonzero texture bytes for
 126 of 137 textured draws; the other 11 source spans are all zero and are
 excluded as uninformative padding. This is partial byte provenance, not
 complete surface, palette, order, or consumer ownership.
