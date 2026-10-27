@@ -1258,6 +1258,56 @@ admission. Raw capture files and reports are kept outside Git in the
 `ymir_nexus_menu_vdp2_provenance_20261027` external evidence bundle; its
 `SHA256SUMS.txt` validates the retained files.
 
+A follow-up authentic Japanese capture retained a complete SH-2 trace
+(`796,230` rows, capacity `1,000,000`, zero dropped) and a VDP2 trace window
+covering frames `7,550`–`7,716`. An exploratory offline scan reported that the
+`15,264` width-one VDP2 writes below address `0x20000` at frame `7,716` appear
+as one ordered sequence in the SH-2 master trace, starting at row `780,966`,
+with one call context (PC `0x06023128`, caller return `0x06023176`, target
+`0x06023108`). This is a candidate sequence match, not a frame-scoped producer
+join: SH-2 rows have no frame tags and the retained SH-2 receipt contains no
+frame bounds. The final VDP2 VRAM snapshot is frame `8,047`, after the VDP2
+trace ends, so its byte agreement cannot establish which frame produced the
+SH-2 sequence. The committed analyzer therefore fails closed on this retained
+bundle instead of reproducing the exploratory attribution.
+
+Read-only Ghidra decompilation of hash-verified Japanese `DM.BIN`
+(`3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124`) shows
+`FUN_06023108` as a byte-wise row copier that advances the destination by a
+runtime pitch; `FUN_06023144` dispatches to it for the observed call path. This
+identifies a plausible retail copy routine but does not prove it generated the
+frame-`7,716` writes, recover the source asset ownership, cover the full
+131,072-byte bitmap, or establish renderer semantics. The independent bitmap
+comparison remains `source_join=unbound` and `semantic_admission=blocked`.
+The analyzer's rejection is reproducible with
+`scripts/analyze_nexus_vdp2_sh2_write_join.py`; raw captures, the exploratory
+report, and Ghidra output are retained in
+`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_nbg0_sh2_complete_20261027/`.
+A new capture with SH-2 frame bounds (or per-row frame tags) and a matching
+frame-specific VRAM snapshot is required before claiming a temporal join.
+
+A frame-filtered repeat capture now records SH-2 writes only during VDP1
+frame `7,716`. The Ymir receipt reports exact frame bounds `7,716..7,716`,
+3,866 master rows, and zero dropped rows; the VDP2 trace and VRAM/register
+snapshot identify the same frame. The analyzer confirms one contiguous ordered
+match across all 3,866 writes, all 3,866 final byte values agree with the
+selected-frame VRAM snapshot, and there are zero mismatches. The call chain is
+`0x06023108|0x06023144|0x06040150`. This removes timing ambiguity in the
+earlier unfiltered SH-2 trace. The raw capture is retained in
+`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_frame_aligned_20261027/`.
+
+A repeat capture added four nested call targets to each SH-2 write row. Its
+frame-7716 match has the single chain
+`0x06023108|0x06023144|0x06040150`, identifying `FUN_06040150` as the active
+outer caller. Read-only Ghidra xrefs show `FUN_06040150` is reached by a
+computed call in `FUN_0601128e` at `0x0601153a`; the latter is a per-frame
+runtime loop. This establishes the caller path seen during the capture, but
+does not assign a title-menu semantic name or identify the copy source. The
+repeat screenshot is pixel-identical to the prior Continue capture, and the
+current verifier again matches all 1,441 TITLE.BIN sprite pixels. The extended
+trace and xref output are retained in
+`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_callstack_20261027/`.
+
 This is authentic input-correlated source evidence for the Japanese menu
 selection state. It does not establish the complete `TITLE.BIN` decoding,
 mouse hit regions, Firestaff input handling, or production renderer admission.
