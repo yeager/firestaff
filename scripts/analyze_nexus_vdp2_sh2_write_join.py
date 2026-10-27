@@ -141,7 +141,7 @@ def main() -> int:
         trace_frame_end = int(vdp2_receipt["trace_vdp1_frame_end_exclusive"])
         register_snapshot = read_receipt(dumps / "vdp-register-snapshot.txt")
         register_snapshot_frame = int(register_snapshot["vdp1_frame_index"])
-    except (KeyError, ValueError) as error:
+    except (KeyError, ValueError, OSError) as error:
         parser.error(f"VDP2 receipt has no valid frame bounds or final snapshot frame: {error}")
     if (vdp2_receipt.get("vdp2_vram_file_complete") != "1" or
             vdp2_receipt.get("vdp2_cram_file_complete") != "1" or
