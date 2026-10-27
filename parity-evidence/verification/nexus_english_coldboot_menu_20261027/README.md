@@ -2,9 +2,8 @@
 
 This receipt records an authentic English retail cold boot reaching the
 three-choice Nexus title menu in Ymir. Raw game files, emulator dumps, and the
-screenshot stay outside Git under
-`/Volumes/Extern-disk/firestaff-data/nexus-english-controlled-boot-16001-20261027/`.
-This report contains metadata and reproduction commands only.
+screenshot stay outside Git in the local external evidence bundle. This report
+contains metadata and reproduction commands only.
 
 ## Inputs and run scope
 
@@ -73,11 +72,13 @@ file was loaded or how the logged read path works.
 ## Reproduction
 
 From the Firestaff repository root, set `NEXUS_DATA` to the local directory
-containing the authenticated English Nexus files (normally
-`.firestaff/data/nexus`):
+containing the authenticated English Nexus files. The default is
+`$HOME/.firestaff/data/nexus`. Set `CAPTURE` to the local directory containing
+the retained capture bundle:
 
 ```sh
-CAPTURE=/Volumes/Extern-disk/firestaff-data/nexus-english-controlled-boot-16001-20261027
+NEXUS_DATA="${NEXUS_DATA:-$HOME/.firestaff/data/nexus}"
+: "${CAPTURE:?Set CAPTURE to the local directory containing the capture bundle}"
 
 python3 scripts/analyze_nexus_menu_bpk_vdp1_snapshot_join.py \
   "$NEXUS_DATA/MENU.BPK" \
@@ -86,7 +87,7 @@ python3 scripts/analyze_nexus_menu_bpk_vdp1_snapshot_join.py \
   --vdp1-command-trace-frame 13106
 
 python3 scripts/analyze_nexus_vdp1_source_join.py \
-  "$CAPTURE/dumps" --data-dir "$NEXUS_DATA" --frame 13106 --ymir-bundle
+  "$CAPTURE/dumps" --data-dir "$NEXUS_DATA" --ymir-bundle
 ```
 
 The capture and complete analyzer outputs remain in the external directory as

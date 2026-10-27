@@ -1159,8 +1159,8 @@ Ymir's log records `0DMSTRT.BIN` and a CD Block soft reset, but no
 exact 230,669-byte prefix of the authenticated 555,144-byte English `DM.BIN`
 at raw dump offset `0x10000`; this proves that this prefix was resident in WRAM,
 not that the full file was loaded or that the log's read path is understood.
-The retained evidence is under
-`/Volumes/Extern-disk/firestaff-data/nexus-english-controlled-boot-16001-20261027/`.
+The retained evidence is stored outside Git in the local external capture
+bundle.
 This establishes the English retail emulator's cold-boot-to-menu path. It does
 not establish Firestaff menu rendering or input, Continue/save loading, or
 playable-level, viewport, or HUD parity. See the
