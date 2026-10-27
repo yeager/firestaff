@@ -8,7 +8,7 @@ Holding Control Pad 1 Down for two frames at capture frame 9,100 selected
 capture receipt reports frame 8,047, 178 command rows, a complete trace, and
 zero dropped rows.
 
-The final five menu textured draws have exact byte matches in the
+The final five textured menu draws have exact byte matches in the
 hash-verified Japanese retail `TITLE.BIN` (SHA-256
 `51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3`):
 
