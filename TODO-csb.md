@@ -86,36 +86,23 @@ gaps and bounds what can be concluded:
   capture is still needed to assess readability, placement, and contrast in a
   live Amiga pose. Side-wall unreadable plaques still use the shared PC34
   F0107 planner/raster path described above.
-- The shared F0107 raster loop has a separate, directly verified gap: its
-  `DM1_WallOrnamentRenderPlanPc34` provides `flipHorizontal`,
-  `paletteMapValid`/`paletteMap`, and source-scale metadata, and the material
-  planner populates those fields. The final loop in
-  `dm1_viewport_3d_draw_wall_ornament_f0107` copies source pixels directly
-  after testing only `transparentColor`; it does not apply the requested flip,
-  palette map or scale. This is on the production Amiga CSB path: M11 calls
-  `csb_v1_boot_render_viewport_frame_pc34`, which reaches this shared draw
-  loop and commits its candidate frame; the separate M11 host-material
-  presenter that handles these plan fields is not called for that CSB frame.
-  So the production CSB renderer drops operations specified by its plan,
-  including for side-view M615 records. Concrete case: Amiga D3R2 uses
-  shared view row 1, translated to planner row 14. For global ornament 0 the
-  planner selects M615 item 259 (native 10x42) and sets
-  `flipHorizontal=1` plus source scale 30/14; the Amiga provider returns that
-  same item 259 for either orientation, while the F0107 raster loop copies
-  up to 10x42 unchanged and reads it left-to-right. The produced right-side
-  image therefore contradicts the plan. This plan/raster mismatch is
-  established; a source-matched capture is still needed to measure its exact
-  visual effect. The authentic A33M IMG1 records make the size conflict
-  concrete: D3R2 global wall ornament 0 asks for M615 item 259, whose original
-  header is 10x42, while the translated PC34 outer-wall plan requests a
-  224x136 destination. The production loop clips its requested 224x136 copy
-  to the 10x42 source and copies those pixels 1:1; it neither expands the
-  native Amiga bitmap nor applies the plan's D3 palette or mirror. Item 260 is
-  a distinct 90x56 record, confirming M615 is perspective-specific and that a
-  correct Amiga layout must resolve the selected record and native screen
-  rectangle together. These dimensions come directly from the installed
-  authenticated `Graphics.DAT` (MD5
-  `61fbfd56887c94adc26888a9491c6611`), not generated or reconstructed art.
+- The shared F0107 raster loop applies the render plan's horizontal flip,
+  palette map, source scale and transparency through
+  `dm1_v1_viewport_3d_blit_wall_ornament_pc34`; those operations are not the
+  remaining Amiga defect. The open gap is earlier in the path: the production
+  Amiga CSB transaction calls `csb_v1_boot_render_viewport_frame_pc34`, whose
+  F0107 planner still derives screen placement from PC34 G0205/layout-696
+  rules. ReDMCSB DUNVIEW.C F0107 and COORD.C F0635 give Amiga its own native
+  coordinate tables and bitmap pairs, so matching record IDs alone does not
+  establish correct Amiga geometry. For example, the authenticated A33M
+  `Graphics.DAT` has distinct M615 records 259 (10x42) and 260 (90x56), while
+  a translated PC34 outer-wall plan can request a 224x136 region. Implement
+  an Amiga-specific plan that binds the selected M615 record to the original
+  Amiga coordinate set and clipping rules, then compare a matched original
+  and Firestaff frame. The installed original `Graphics.DAT` hash is
+  `61fbfd56887c94adc26888a9491c6611`; do not replace its records with
+  reconstructed or generated art. Until the native placement is verified,
+  Amiga CSB wall-ornament and full viewport parity remain open.
 - The common Amiga FTL/SWSH prelude is now wired for the authenticated A31M/A33M
   multi-language Amiga profile. The launcher reads `SWSH.FTL` beside the
   selected `GRAPHICS.DAT`, requires the known original file fingerprint, then
