@@ -56,7 +56,11 @@ def find_contiguous(
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("bundle", type=Path, help="Ymir raw capture bundle directory")
-    parser.add_argument("--frame", type=int, help="VDP1 frame; defaults to the last traced frame")
+    parser.add_argument(
+        "--frame",
+        type=int,
+        help="last traced VDP1 frame (defaults to the last traced frame; earlier frames lack a matching final VRAM snapshot)",
+    )
     parser.add_argument(
         "--vram-end-exclusive",
         type=lambda value: int(value, 0),
@@ -82,7 +86,13 @@ def main() -> int:
     if not vdp2_rows:
         parser.error("no VDP2 VRAM writes found in the selected address window")
 
-    frame = args.frame if args.frame is not None else max(row[0] for row in vdp2_rows)
+    latest_vdp2_frame = max(row[0] for row in vdp2_rows)
+    frame = args.frame if args.frame is not None else latest_vdp2_frame
+    if frame != latest_vdp2_frame:
+        parser.error(
+            f"selected frame {frame} is not the latest traced VDP2 frame "
+            f"{latest_vdp2_frame}; vdp2-vram.bin contains only the final snapshot"
+        )
     try:
         sh2_frame_min = int(sh2_receipt["sh2_ram_write_frame_min"], 0)
         sh2_frame_max = int(sh2_receipt["sh2_ram_write_frame_max"], 0)
