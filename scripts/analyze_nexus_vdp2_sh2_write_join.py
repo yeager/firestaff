@@ -83,6 +83,17 @@ def main() -> int:
         parser.error("no VDP2 VRAM writes found in the selected address window")
 
     frame = args.frame if args.frame is not None else max(row[0] for row in vdp2_rows)
+    try:
+        sh2_frame_min = int(sh2_receipt["sh2_ram_write_frame_min"], 0)
+        sh2_frame_max = int(sh2_receipt["sh2_ram_write_frame_max"], 0)
+    except (KeyError, ValueError) as error:
+        parser.error(f"SH-2 receipt has no valid frame bounds: {error}")
+    if sh2_frame_min != frame or sh2_frame_max != frame:
+        parser.error(
+            f"SH-2 trace bounds {sh2_frame_min}..{sh2_frame_max} must equal "
+            f"the selected VDP2 frame {frame}; SH-2 rows have no per-row frame tag"
+        )
+
     pattern_rows = [row[1:] for row in vdp2_rows if row[0] == frame]
     if not pattern_rows:
         parser.error(f"no VDP2 VRAM writes found for frame {frame}")
