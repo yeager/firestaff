@@ -1,6 +1,6 @@
 # Five-game startup support gap analysis
 
-Reconciled with repository `main` at `fa660c09` on 2026-10-27. The latest
+Reconciled with repository `main` at `582f8b9d` on 2026-10-27. The latest
 published release is v3.0.418 (published at 19:56 UTC). GitHub Actions release
 run `40570781398` completed its seven platform build and packaging jobs
 successfully (Windows x86_64, macOS x86_64/arm64, Linux x86_64/arm64, Android
