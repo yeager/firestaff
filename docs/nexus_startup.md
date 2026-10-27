@@ -2,9 +2,10 @@
 
 This is an evidence report for startup, not a specification for a completed
 Nexus startup screen. Updated 2026-10-27: an authentic Japanese retail cold
-boot now reaches the Nexus native title menu in Ymir with deterministic BIOS
-and controller input. Firestaff title-menu, gameplay-entry, and HUD parity are
-still unverified.
+boot reaches the native `PRESS START BUTTON` title prompt in Ymir with BIOS
+and controller input. The three-choice title menu has not yet been verified as
+a clean-cold-boot result, and Firestaff startup, gameplay-entry, and HUD parity
+remain unverified.
 
 ## Verified initialization order
 
@@ -482,17 +483,19 @@ or that MENU.BPK is unrelated to the title menu. Surface ordering, CLUT,
 consumer, placement, and input-to-action dispatch still require a same-session
 Saturn trace.
 
-## Cold-boot menu command/source observation (2026-10-27)
+## Native title-menu command/source observation (2026-10-27; startup provenance limited)
 
-The direct cold-boot menu capture retained a frame-aligned VDP1 VRAM snapshot
-and a complete command trace. In the captured menu frame, five textured VDP1
-commands reference byte spans that each match exactly once in the authentic
-Japanese `TITLE.BIN`: two 24×24 spans at file offset `0x15f6` and three 4bpp
-text-sized spans at offsets `0x0446`, `0x0576`, and `0x07d6`. The screenshot
-shows the paired selector graphics and the three menu labels, so these are
-strong candidate source spans for the visible menu elements. This observation
-does not establish each source span's semantic identity, the Saturn upload
-route, or the palette's source owner.
+A retained Ymir menu-state capture has a frame-aligned VDP1 VRAM snapshot and
+a complete command trace. The available record does not establish that its
+three-choice screen followed a fresh cold boot in the same run; treat it as a
+native menu-state reference, not cold-boot-to-menu proof. In that captured
+menu frame, five textured VDP1 commands reference byte spans that each match
+exactly once in the authentic Japanese `TITLE.BIN`: two 24×24 spans at file
+offset `0x15f6` and three 4bpp text-sized spans at offsets `0x0446`, `0x0576`,
+and `0x07d6`. The screenshot shows paired selector graphics and three menu
+labels, making these strong candidate source spans for those visible elements.
+This observation does not establish each source span's semantic identity, the
+Saturn upload route, or the palette's source owner.
 
 The same capture's VDP1 VRAM was checked against every decoded surface in the
 hash-pinned Japanese `MENU.BPK` (SHA-256
@@ -595,7 +598,7 @@ the boot-dump receipt on the external evidence disk and
 [full capture receipt and SHA-256 identities](NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md#full-ymir-title-frame-capture-replay)
 for the menu-state reproduction command and exact scope.
 
-## Deterministic cold boot reaches the native title menu (2026-10-27)
+## Deterministic cold boot reaches the native title prompt (2026-10-27)
 
 Ymir 0.4.2-dev was built on TRV2 with the repeatable
 `--capture-pad-input FRAME:BUTTON:HOLD` option (submitted to the Yeager Ymir
@@ -612,9 +615,10 @@ The deterministic boot schedule pressed Right at frames 700, 720, 740, 760,
 780, and 800, then A at frame 830 to confirm the Japanese BIOS date/time
 screen. It sent Start for 2 frames at frame 7000 to advance past the opening
 intro, then held Start for 60 frames at frame 9000 on the title prompt. The
-9120-frame capture shows the retail title menu with `NEW GAME` selected above
-`CONTINUE` and `CONFIGURATION`. This is a direct cold-boot capture: the run
-loaded no emulator state and no game save.
+9,120-frame rendered capture shows the native `PRESS START BUTTON` title
+prompt. It does not show the three-choice `NEW GAME` / `CONTINUE` /
+`CONFIGURATION` menu. The run loaded no emulator state and no game save, so it
+verifies cold boot to the title prompt only.
 
 The emulator was Ymir 0.4.2-dev with `--debug`, built on TRV2 from the branch
 that adds repeatable `--capture-pad-input FRAME:BUTTON:HOLD` scheduling. The
@@ -623,14 +627,16 @@ authentic Japanese cue SHA-256 is
 controller-scheduler change is submitted to the Yeager Ymir fork in
 [PR #1](https://github.com/yeager/Ymir/pull/1).
 
-The cold-boot menu screenshot, complete raw memory dump, source-join report,
-and bounded SH-2 write traces are retained on the external evidence volume.
-`SHA256SUMS.txt` covers the screenshot, all 30 dump files, the Japanese
-`MENU.BPK`, the source-join report, and both write-trace captures.
+The rendered title-prompt screenshot, complete raw memory dump, source-join
+report, and bounded SH-2 write traces are retained on the external evidence
+volume. `SHA256SUMS.txt` covers the screenshot, all 30 dump files, the Japanese
+`MENU.BPK`, the source-join report, and both write-trace captures. The separate
+three-choice menu screenshot is a retained menu-state reference whose clean
+cold-boot provenance is not established.
 
 | Artifact | Location | SHA-256 |
 |---|---|---|
-| Native title-menu screenshot | `/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/title-menu.png` | `8721cce3354bc20b1cd367fd44be3d4ecc60ca65fa89c7d00654e83f5ad7db23` |
+| Native three-choice menu-state reference (not cold-boot evidence) | `/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/title-menu.png` | `8721cce3354bc20b1cd367fd44be3d4ecc60ca65fa89c7d00654e83f5ad7db23` |
 | Source-join report | `/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/vdp1-source-join.txt` | `5df73daf4a37f187e0f3e4805d68d7f4870703839e5fb9b2d4c26f8cf12dc3a3` |
 | Complete narrowed SH-2 write trace | `/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/sh2-write-narrow/sh2-memory-write-trace.csv` | `53502102c1dcdc0c511983bfaf0ce7e017fe711f26a393e353eea162a82f001d` |
 | Trace receipt | `/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/sh2-write-narrow/sh2-memory-write-trace-bundle.txt` | `c463f5d77a57c7883fd2e22ae3bf69aa41823264ad25f804f0535b634b560166` |
@@ -648,10 +654,11 @@ ymir-sdl3 --debug --capture-boot-frames 9120 --dump-memory --capture-screenshot 
   "/home/trv2/.firestaff/data/nexus/Dungeon Master Nexus (Japan).cue"
 ```
 
-This closes the Ymir cold-boot-to-title-menu evidence gap. It does not establish
-that Firestaff renders or controls this menu, that `NEW GAME` reaches a playable
-level through Firestaff, that Continue loads a real save, or that the HUD is
-correct. Those remain separate production-parity gates.
+This closes the Ymir cold-boot-to-title-prompt evidence gap only. It does not
+establish cold-boot entry to the three-choice menu, Firestaff menu rendering or
+control, a Firestaff `NEW GAME` route to a playable level, real-save loading
+through Continue, or HUD parity. Those remain separate production-parity
+gates.
 
 ## Complete cold-boot SCU DMA trace (2026-10-27)
 
@@ -728,9 +735,11 @@ pixels.
 The SCU manifest reports 7,986 retained transfers, zero dropped rows, and
 complete trace data. The CSV has 7,987 lines including its header. Transfer
 rows 3347, 3348, 3350, and 3360 are each indexed to capture-loop frame 7564.
-Their complete transfer bytes match the authentic Japanese `TITLE.BIN` at the
-listed offsets, and match both the corresponding captured high-WRAM bytes and
-final VDP1 VRAM bytes:
+At each listed source address in the final high-WRAM snapshot and destination
+range in the final VDP1 VRAM snapshot, the bytes independently match the
+corresponding authentic Japanese `TITLE.BIN` span. The metadata row counts and
+addresses align these snapshots; the trace itself does not contain transfer
+payload bytes:
 
 | Transfer | Capture-loop frame | WRAM source | VDP1 destination | Bytes | `TITLE.BIN` offset |
 |---:|---:|---:|---:|---:|---:|
@@ -768,19 +777,20 @@ SCU DMA transfers at capture-loop frame 7564 all have VDP1 frame 6890 both
 before and after the emulated frame. This pins the transfers to VDP1 frame
 6890, rather than estimating their VDP1 time from the overall capture length.
 
-The full bytes of transfers 3347, 3348, 3350, and 3360 match authentic Japanese
-`TITLE.BIN` offsets `0x0446`, `0x0576`, `0x07d6`, and `0x15f6`. Each
-transfer's source bytes match captured high WRAM, and its destination bytes
-match the final VDP1 VRAM snapshot.
+The final high-WRAM source spans and final VDP1 VRAM destination spans for
+transfers 3347, 3348, 3350, and 3360 independently match authentic Japanese
+`TITLE.BIN` offsets `0x0446`, `0x0576`, `0x07d6`, and `0x15f6`. The trace records
+addresses, counts, and timing metadata, not the bytes on the DMA bus.
 
 The same run's final VDP1 frame is 8037. Its 178-command trace has five
 textured draws at indices 171–175 reading from those four VDP1 destinations:
 two 192×3 draws at `0x44060`, then 64×8 at `0x47de0`, 64×8 at `0x479e0`,
 and 64×13 at `0x46f60`. The source byte counts and addresses match the
 transfer destinations and `TITLE.BIN` joins. A check of the SCU trace found
-no later SCU DMA writes overlapping these four destination ranges. This binds
-the authentic resource bytes to VDP1 command reads in one cold-boot run; it
-does not establish CLUT ownership or exclude intervening CPU writes.
+no later SCU DMA writes overlapping these four destination ranges. This correlates the final snapshot bytes with VDP1 command reads in one
+cold-boot run. It does not prove that the SCU DMA bus transferred those exact
+bytes, because the trace is metadata-only and later CPU writes are not
+excluded. CLUT ownership also remains unresolved.
 
 The five corresponding command records in the earlier rendered native-menu
 capture at VDP1 frame 8050 match these draw words, geometry, and source
