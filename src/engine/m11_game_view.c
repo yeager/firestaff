@@ -1315,6 +1315,64 @@ static int m11_csb_media720_inscription_lines(
     return ok;
 }
 
+static int m11_csb_amiga_wall_ornament_geometry(
+    void *user_data, int coordinate_set, int view_wall_index,
+    int source_width, int source_height,
+    int *out_source_x, int *out_source_y,
+    int *out_scale_x32, int *out_scale_y32,
+    int *out_x, int *out_y)
+{
+    const M11_GameViewState *state = (const M11_GameViewState *)user_data;
+    const M11_AssetLoader *loader;
+    CSB_V1_AmigaGraphicsItem item;
+    const uint8_t *layout;
+    size_t layout_size;
+    int scale_x32, scale_y32;
+    int bitmap_width, bitmap_height;
+    if (!state || !out_source_x || !out_source_y || !out_scale_x32 ||
+        !out_scale_y32 || !out_x || !out_y || source_width <= 0 ||
+        source_width > 32768 || source_height <= 0 || source_height > 32768 ||
+        view_wall_index < 0 || view_wall_index >= 15)
+        return 0;
+    /* ReDMCSB DUNVIEW.C MEDIA720 F0107 uses C30 x / C14 y for the
+     * outer D3 side views, C14 for other D3 views, and C21 for D2 and D1.
+     * These are source values, not PC34's D1 scale of 32. */
+    if (view_wall_index <= 1) {
+        scale_x32 = 30;
+        scale_y32 = 14;
+    } else if (view_wall_index <= 6) {
+        scale_x32 = 14;
+        scale_y32 = 14;
+    } else {
+        scale_x32 = 21;
+        scale_y32 = 21;
+    }
+    bitmap_width = (source_width * scale_x32 + (scale_x32 >> 1)) >> 5;
+    bitmap_height = (source_height * scale_y32 + (scale_y32 >> 1)) >> 5;
+    if (bitmap_width <= 0 || bitmap_height <= 0) return 0;
+    loader = &state->assetLoader;
+    if (!loader->csbAmiga ||
+        !loader->csbAmigaData || loader->csbAmigaDataSize <= 0 ||
+        !csb_v1_amiga_graphics_item(loader->csbAmigaData,
+            (size_t)loader->csbAmigaDataSize, 696u, &item) ||
+        item.compressedByteCount != item.decompressedByteCount ||
+        (size_t)item.dataOffset > (size_t)loader->csbAmigaDataSize ||
+        (size_t)item.decompressedByteCount >
+            (size_t)loader->csbAmigaDataSize - item.dataOffset) return 0;
+    layout = loader->csbAmigaData + item.dataOffset;
+    layout_size = item.decompressedByteCount;
+    /* ReDMCSB DUNVIEW.C G0194's MEDIA720 table matches the shared ordinal
+     * table; F0107 then indexes C696 as C1004 + set*15 + view-wall. */
+    if (!csb_v1_inscription_media720_f0635_wall_ornament_anchor(
+        layout, layout_size, 1, coordinate_set, view_wall_index,
+        bitmap_width, bitmap_height, out_x, out_y)) return 0;
+    *out_source_x = 0;
+    *out_source_y = 0;
+    *out_scale_x32 = scale_x32;
+    *out_scale_y32 = scale_y32;
+    return 1;
+}
+
 /* ReDMCSB DUNGEON.C F0172 publishes the selected native C02 while F0107
  * consumes M648. MEDIA020 uses G0203 and MEDIA720 resolves C1000..C1003
  * from selected C696 material. F31J's F0644 path remains closed. */
@@ -7051,6 +7109,9 @@ static int m11_csb_render_amiga_runtime_viewport(M11_GameViewState *state,
     binding.real_graphics_session = 1;
     binding.graphic_provider_callback = m11_csb_amiga_viewport_graphic_provider;
     binding.graphic_provider_user_data = (void *)state;
+    binding.wall_ornament_geometry_callback =
+        m11_csb_amiga_wall_ornament_geometry;
+    binding.wall_ornament_geometry_user_data = (void *)state;
     memset(&counts, 0, sizeof(counts));
     if (!csb_v1_boot_render_viewport_frame_pc34((void *)state->csbBootProfile,
             candidate, framebuffer_width, framebuffer_height, &binding,

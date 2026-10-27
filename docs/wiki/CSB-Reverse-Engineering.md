@@ -284,6 +284,14 @@ the shared `DM1_ViewportWallOrnamentOrdinalCallback` used by
 `dm1_viewport_3d_draw_frame` — the same callback contract DM1's CSB-style
 path (as opposed to the M11 monolithic path) uses.
 
+For the Amiga runtime, the F0107 callback applies the source MEDIA720 scale
+selection and resolves placement from authentic Amiga `Graphics.DAT` item 696
+(C696). It fails closed when the item or selected zone is invalid and uses the
+full M615 source bitmap without PC34 source cropping. The real-media utility
+check covers parsing and selected anchors only; matched-frame placement,
+palette/light, alcove/inscription appearance and the floor-trapdoor path still
+need independent verification. See the [CSB evidence ledger](../../TODO-csb.md).
+
 ### Per-depth/per-element decomposition
 
 Unlike DM1's M11 path (a single large `m11_draw_viewport` with inline

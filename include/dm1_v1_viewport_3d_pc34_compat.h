@@ -235,6 +235,16 @@ typedef int (*DM1_ViewportWallAspectCallback)(
     int map_x, int map_y, int view_wall_index,
     int *out_inscription_line_count);
 
+/* Optional source-owned F0107 geometry for native platform wall ornaments.
+ * The callback resolves source scale, crop, and F0635 placement from the
+ * original coordinate set/view row and bitmap dimensions. */
+typedef int (*DM1_ViewportWallOrnamentGeometryCallback)(
+    void *user_data, int coordinate_set, int view_wall_index,
+    int source_width, int source_height,
+    int *out_source_x, int *out_source_y,
+    int *out_scale_x32, int *out_scale_y32,
+    int *out_x, int *out_y);
+
 /* Wall set bitmap indices — from DUNVIEW.C G2107_WallSet[15] (I34E) */
 typedef enum {
     DM1_WALL_D0R = 0,
@@ -1037,6 +1047,9 @@ typedef struct {
     void *wall_ornament_ordinal_user_data;
     DM1_ViewportWallAspectCallback wall_aspect_callback;
     void *wall_aspect_user_data;
+    DM1_ViewportWallOrnamentGeometryCallback
+        wall_ornament_geometry_callback;
+    void *wall_ornament_geometry_user_data;
 
     /* Last D3L2/D3R2 source-ordered F0115/door/field runtime decision.
      * Metadata only: this does not claim original pixel parity or install

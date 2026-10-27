@@ -20,7 +20,7 @@ it does not prove captured pixel identity or complete viewport parity.
 
 2026-10-26 F20 champion names and status bars: the DM1 FM Towns HUD now draws
 non-selected champion names
-champion names from the original M653 picture-library font (asset 557) into
+from the original M653 picture-library font (asset 557) into
 COORD.C C159..C162 using F0635 C163..C166 geometry. It follows CHAMDRAW.C
 F0292's centered six-pixel cells, dark-gray name fields, gold leader name, and
 light-gray non-leader/dead names; the inventory champion remains named in its

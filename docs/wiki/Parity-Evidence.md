@@ -1,6 +1,6 @@
 # Parity Evidence
 
-> **Status reviewed 2026-10-27.** Evidence is cross-game and bounded. A green
+> **Status reviewed 2026-10-27 (main `d18445cc`).** Evidence is cross-game and bounded. A green
 > parser or fixture test is not automatically a real-media runtime claim.
 
 ## What Are Pass Documents?
@@ -72,6 +72,13 @@ full campaign parity.
 Its native Enter/Accept command reaches that authenticated FTLCODE handoff;
 CSB `--platform pc` instead fails closed before selecting media, since no
 original DOS/PC edition exists.
+
+For CSB Amiga, the F0107 wall-ornament route now applies the original MEDIA720
+scale selection and resolves type-0/type-7 placement anchors from authentic
+Amiga Graphics.DAT item C696. Focused real-data checks confirm the parser and
+selected anchors; they do not confirm framebuffer placement, palette/light
+parity, inscription readability or the separate floor-trapdoor renderer.
+See [the CSB evidence ledger](../../TODO-csb.md) for the exact boundary.
 
 ### DM2
 

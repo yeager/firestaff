@@ -4405,6 +4405,39 @@ static void dm1_viewport_3d_draw_wall_ornament_f0107(
             if (plan.width <= 0 || plan.height <= 0 || plan.srcX < 0 ||
                 plan.srcY < 0 || plan.srcX >= gfx_w || plan.srcY >= gfx_h ||
                 state->viewport_stride < DM1_VIEWPORT_WIDTH) return;
+            if (state->wall_ornament_geometry_callback) {
+                int source_x = 0, source_y = 0;
+                int scale_x32 = 0, scale_y32 = 0;
+                int scaled_width, scaled_height;
+                int native_x, native_y;
+                int64_t scaled_width_64, scaled_height_64;
+                if (!state->wall_ornament_geometry_callback(
+                        state->wall_ornament_geometry_user_data,
+                        coord_set, view_wall_index, gfx_w, gfx_h,
+                        &source_x, &source_y, &scale_x32, &scale_y32,
+                        &native_x, &native_y) ||
+                    source_x < 0 || source_y < 0 || source_x >= gfx_w ||
+                    source_y >= gfx_h || scale_x32 <= 0 || scale_x32 > 1024 ||
+                    scale_y32 <= 0 || scale_y32 > 1024) return;
+                scaled_width_64 =
+                    (((int64_t)(gfx_w - source_x) * scale_x32) +
+                     (scale_x32 >> 1)) >> 5;
+                scaled_height_64 =
+                    (((int64_t)(gfx_h - source_y) * scale_y32) +
+                     (scale_y32 >> 1)) >> 5;
+                if (scaled_width_64 <= 0 || scaled_width_64 > 32768 ||
+                    scaled_height_64 <= 0 || scaled_height_64 > 32768) return;
+                scaled_width = (int)scaled_width_64;
+                scaled_height = (int)scaled_height_64;
+                plan.dstX = native_x;
+                plan.dstY = native_y;
+                plan.srcX = source_x;
+                plan.srcY = source_y;
+                plan.sourceScaleX32 = scale_x32;
+                plan.sourceScaleY32 = scale_y32;
+                plan.width = scaled_width;
+                plan.height = scaled_height;
+            }
             (void)dm1_v1_viewport_3d_blit_wall_ornament_pc34(
                 state->viewport_pixels, DM1_VIEWPORT_WIDTH,
                 DM1_VIEWPORT_HEIGHT, state->viewport_stride,

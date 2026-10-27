@@ -4406,6 +4406,8 @@ void csb_v1_viewport_apply_runtime_drawer_binding(
         cfg->v22_f0128_replacement_count = 0;
         cfg->graphic_provider_callback = NULL;
         cfg->graphic_provider_user_data = NULL;
+        cfg->wall_ornament_geometry_callback = NULL;
+        cfg->wall_ornament_geometry_user_data = NULL;
         return;
     }
     cfg->object_sprite_drawer = binding->object_sprite_drawer;
@@ -4451,6 +4453,10 @@ void csb_v1_viewport_apply_runtime_drawer_binding(
     cfg->first_frame_material_raster_hash = 0u;
     cfg->graphic_provider_callback = binding->graphic_provider_callback;
     cfg->graphic_provider_user_data = binding->graphic_provider_user_data;
+    cfg->wall_ornament_geometry_callback =
+        binding->wall_ornament_geometry_callback;
+    cfg->wall_ornament_geometry_user_data =
+        binding->wall_ornament_geometry_user_data;
 }
 
 void csb_v1_viewport_runtime_draw_counts_reset(
@@ -5276,6 +5282,10 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
     vp.wall_ornament_ordinal_user_data = cfg->wall_ornament_ordinal_user_data;
     vp.wall_aspect_callback = cfg->wall_aspect_callback;
     vp.wall_aspect_user_data = cfg->wall_aspect_user_data;
+    vp.wall_ornament_geometry_callback =
+        cfg->wall_ornament_geometry_callback;
+    vp.wall_ornament_geometry_user_data =
+        cfg->wall_ornament_geometry_user_data;
 
     /* Wire dungeon grid for CSB back-wall rendering (D3L2/D3R2/D2L2/D2R2).
      * The dungeon grid enables element-specific routing for CSB four-sided
