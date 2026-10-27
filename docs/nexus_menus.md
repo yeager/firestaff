@@ -49,8 +49,9 @@ decoded. The Saturn tilemap/CLUT/runtime placement remains capture-gated; no
 A Nexus menu system needs states for:
 - Title/Start: authentic New Game/Continue/Configuration states and bounded
   pad transitions are recorded; the reducer is not wired into runtime startup.
-  Five source-bound sprite draws per selected state are verified, while full
-  menu composition, options behavior, and mouse targeting remain unbound.
+  Five source-bound sprite draws are verified for Japanese Continue. New Game
+  has historical source-comparison evidence; full menu composition, options
+  behavior, and mouse targeting remain unbound.
 - Champion Select: source-owned champion records (20 live PLRD/TABL records)
 - Options: Display mode (fullscreen/windowed), audio levels
 - In-Game Menu: ESC pause with stats, inventory, spells, save
