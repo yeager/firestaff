@@ -124,7 +124,9 @@ run_pose_probe "$turn_alias_left_output" "$startup_script,key:home" '1,0,3'
 run_pose_probe "$turn_alias_right_output" "$startup_script,key:kp6" '1,0,1'
 # KP8 is a native forward alias.  The script injects a real SDL keydown into
 # the regular event loop after moving onto a source-backed open tile.
-run_pose_probe "$forward_alias_keypad_output" "$startup_script,down,key:kp8" '1,2,0'
+# Move one tile backward, then verify KP8 moves forward along the same
+# authentic open route and returns to the source-backed starting square.
+run_pose_probe "$forward_alias_keypad_output" "$startup_script,down,key:kp8" '1,0,0'
 run_pose_probe "$mouse_turn_left_output" "$startup_script,click:204:144" '1,0,3'
 run_pose_probe "$mouse_turn_right_output" "$startup_script,click:292:144" '1,0,1'
 run_pose_probe "$mouse_forward_output" "$startup_script,down,click:248:144" '1,0,0'
@@ -146,7 +148,11 @@ if ! grep -Fq 'party=1,0,0 champions=2 runtimeTick=0' "$baseline_output" ||
    ! grep -Fq 'party=1,1,0 champions=2 runtimeTick=3' "$keyboard_left_output" ||
    ! grep -Fq 'party=1,0,3 champions=2 runtimeTick=0' "$turn_alias_left_output" ||
    ! grep -Fq 'party=1,0,1 champions=2 runtimeTick=0' "$turn_alias_right_output" ||
-   ! grep -Fq 'party=1,2,0 champions=2 runtimeTick=2' "$forward_alias_keypad_output" ||
+   ! grep -Fq 'party=1,0,0 champions=2 runtimeTick=2' "$forward_alias_keypad_output" ||
+   ! grep -Fq 'input=backward result=1 action="MOVE" outcome="THERON STEPPED BACK"' \
+       "$forward_alias_keypad_output" ||
+   ! grep -Fq 'input=forward result=1 action="MOVE" outcome="THERON ADVANCED"' \
+       "$forward_alias_keypad_output" ||
    ! grep -Fq 'party=1,0,3 champions=2 runtimeTick=0' "$mouse_turn_left_output" ||
    ! grep -Fq 'party=1,0,1 champions=2 runtimeTick=0' "$mouse_turn_right_output" ||
    ! grep -Fq 'party=1,0,0 champions=2 runtimeTick=2' "$mouse_forward_output" ||
