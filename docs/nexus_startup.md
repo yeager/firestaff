@@ -550,6 +550,17 @@ hash-verified retail `DM.BIN`. The initial SH-2 instructions at that address
 load the stack pointer and jump to `0x06010014`, so this is a concrete raw
 image placement and entry-vector observation, not a synthetic fixture.
 
+Static SH-2 decoding of the authenticated bytes gives a concrete early boot
+sequence. The vector at `0x06010000` loads SP=`0x060ffffc` and jumps to
+`0x06010014`. That entry calls a byte-clear helper at `0x06010026`; the helper
+reads its start and end pointers from `0x060465b0` and `0x060465b4` and writes
+zero bytes up to the end pointer. The entry then clears the word at
+`0x06082ea8` and calls the function pointer stored at `0x0601005c`, whose
+retail value is `0x06010f44`. If that call returns, the entry branches to a
+self-loop at `0x06010022`. This establishes the static boot path in authentic
+code; this no-render memory capture does not by itself prove which initializer
+branches run or what the display shows.
+
 The same image matches `DM.BIN` at `0x0602623c`, `0x0608ba34`, and `0x0608b940`
 when offsets are calculated from `0x06010000`. At `0x0608ba46`, the matching
 retail instruction is `mov.l r5,@r4`; the complete 2,447-row trace records
