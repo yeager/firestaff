@@ -16271,6 +16271,19 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_utility_flow_action_contract
     )
 
+    add_executable(test_nexus_v1_retail_title_menu
+        tests/test_nexus_v1_retail_title_menu.c
+        src/nexus/nexus_v1_retail_title_menu.c)
+    target_include_directories(test_nexus_v1_retail_title_menu PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_retail_title_menu
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME nexus_v1_retail_title_menu
+        COMMAND test_nexus_v1_retail_title_menu)
+
     add_executable(test_nexus_v1_startup_title_pointer_contract
         tests/test_nexus_v1_startup_title_pointer_contract.c
         src/nexus/nexus_v1_startup_menu.c
