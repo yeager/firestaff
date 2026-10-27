@@ -1,16 +1,15 @@
 # Five-game startup support gap analysis
 
-Reconciled with repository `main` at `6e03c4706` on 2026-10-26. The latest
-published release is v3.0.415 (published at 13:06 UTC); current `main` has
-advanced to the v3.0.416 candidate and contains later evidence changes, but no
-release has been created from them. The v3.0.415 GitHub Actions release run
-`40325408361` completed the seven platform build and packaging jobs
+Reconciled with repository `main` at `759dcc96e` on 2026-10-27. The latest
+published release is v3.0.416 (published at 01:54 UTC). GitHub Actions release
+run `40434369420` completed its seven platform build and packaging jobs
 successfully (Windows x86_64, macOS x86_64/arm64, Linux x86_64/arm64, Android
 arm64 and iOS arm64), then published 23 release assets. These results verify
-compilation and packaging, not game startup. Its release notes use the v3.0.414
-runtime receipts and it did not run a new five-game startup matrix. Runtime
-receipts cited below remain the recorded runs at their stated revisions; they
-were not rerun during this documentation update.
+compilation and packaging, not game startup. The commits merged after the
+release contain Nexus evidence documentation and authentic Japanese Theron
+touch-input coverage; they do not claim to close either game's runtime-rendering
+gap. Runtime receipts cited below remain the recorded runs at their stated
+revisions; they were not rerun during this documentation update.
 The repository contains checks
 against authentic media for all five games, but “available,”
 “selected,” “handed off,” and “entered a playable runtime” are separate states.
@@ -23,8 +22,8 @@ The current evidence does not establish complete five-game startup support.
 | DM1 | The authentic-media CLI diagnostics exercise direct selection and source-owned startup. | The picker test covers keyboard and mouse handoff; the mixed-media AUTO route enters through the no-game menu and reaches its authentic first runtime frame. | First runtime is verified on bounded real-media routes. Platform-wide parity and native physical input remain open. |
 | CSB | The authentic-media CLI diagnostics exercise direct selection and source-owned startup. | The picker test covers keyboard and mouse handoff; the runtime test checks the authentic starting party and viewport receipt. | First runtime is verified on bounded real-media routes. Platform-wide parity and native physical input remain open. |
 | DM2 | The authentic-media CLI diagnostics cover direct selection; platform-specific checks include the complete timed FM Towns title sequence. The French DOS loose-file route now also preserves its selected graphics owner into the first loaded runtime. | The picker test covers keyboard and mouse handoff; the runtime test checks the authentic first party and frame. | First runtime is verified on bounded real-media routes, including the selected French DOS loose-file case. Other edition and native interaction coverage remains incomplete. |
-| Theron | The CLI diagnostics reach its source-owned runtime handoff. | The picker test covers keyboard and mouse handoff; the runtime test checks a loaded authentic Track 02 state. Tab champion cycling and the documented Z/X/Space controls now exercise the normal SDL event loop on authentic USA Track 02. | Runtime state, native frames and these keyboard actions are reached, but the native dungeon image is not yet driven by the authenticated world/graphics state. A recent nonblack Firestaff capture has not been paired with an original-emulator capture. |
-| Nexus | A fresh TRV2 v3.0.415 CLI run used authentic Japanese `DM.BIN` (MD5 `e88d60859f65f08fa622e1992b02280f`): after 110 boot-probe frames and one scripted Enter, it reported `titleReady=1`, `levelLoaded=0`, `menu=0`, blocker `menu-bpk-prs3-capture-required`. The authentic-data mouse test likewise reaches only that capture-gated Firestaff title route. No Nexus case exists in the first-runtime probe matrix. | Ymir now has a direct authentic Japanese cold-boot capture through the BIOS date/time page to the native title menu (`NEW GAME`, `CONTINUE`, `CONFIGURATION`), with no state or game-save load. Separate retail captures show the Japanese `LOAD` row and a later load into the four-champion HUD and first-person viewport. These are emulator/reference checkpoints only; they do not admit Firestaff's production menu, save loader, or runtime. The installed English `MENU.BPK` still lacks the source-bound English capture required by the renderer gate. The Saturn BKR parser remains container-level and is not wired to save selection or loading ([cold-boot-to-menu evidence](nexus_startup.md#deterministic-cold-boot-reaches-the-native-title-menu-2026-10-27), [retail continue evidence](nexus_startup.md#retail-continue-with-an-authentic-save-2026-10-25)). | **Not startable as a playable game yet.** |
+| Theron | The CLI diagnostics reach its source-owned runtime handoff. | The picker test covers keyboard and mouse handoff; the runtime test checks a loaded authentic Track 02 state. Tab champion cycling and Z/X/Space exercise keyboard actions on authentic USA Track 02; the Japanese Track 02 SDL test covers swipe-up movement and swipe-left turning. | Runtime state, native frames and these input routes are reached, but the native dungeon image is not yet driven by the authenticated world/graphics state. A recent nonblack Firestaff capture has not been paired with an original-emulator capture. |
+| Nexus | A fresh TRV2 v3.0.415 CLI run used authentic Japanese `DM.BIN` (MD5 `e88d60859f65f08fa622e1992b02280f`): after 110 boot-probe frames and one scripted Enter, it reported `titleReady=1`, `levelLoaded=0`, `menu=0`, blocker `menu-bpk-prs3-capture-required`. The authentic-data mouse test likewise reaches only that capture-gated Firestaff title route. No Nexus case exists in the first-runtime probe matrix. | Ymir reaches the authentic Japanese title menu from cold boot without loading a save. A frame-correlated SCU trace binds four `TITLE.BIN` spans to WRAM, VDP1 transfers and native menu draw commands; a separate rendered capture has the same draw records. This proves bytes for those draws, but not their CLUT ownership or full presentation. Separate retail captures show the Japanese `LOAD` row and a later load into the four-champion HUD and first-person viewport. These are emulator/reference checkpoints only; they do not admit Firestaff's production menu, save loader, or runtime. The installed English `MENU.BPK` still lacks the source-bound English capture required by the renderer gate. The Saturn BKR parser remains container-level and is not wired to save selection or loading ([cold-boot-to-menu evidence](nexus_startup.md#deterministic-cold-boot-reaches-the-native-title-menu-2026-10-27), [SCU-to-VDP1 correlation](nexus_startup.md#scu-dma-to-vdp1-frame-correlation-2026-10-27), [retail continue evidence](nexus_startup.md#retail-continue-with-an-authentic-save-2026-10-25)). | **Not startable as a playable game yet.** |
 
 ## What the existing checks prove
 
@@ -44,6 +43,10 @@ The current evidence does not establish complete five-game startup support.
   sends Tab, Z and Space through SDL key-down events after authentic USA Track
   02 startup and checks champion cycling, Button I/II keyboard routing and
   gameplay ticks. It does not establish full game input or renderer parity.
+- [`tests/test_theron_v1_jp_sdl_input_events.sh`](../tests/test_theron_v1_jp_sdl_input_events.sh)
+  sends authentic Japanese Track 02 swipe-up and swipe-left events through the
+  SDL queue and checks movement and turning. The test does not establish the
+  complete touch-control map or state-driven renderer parity.
 - The `m11_dm1_hoc_stair_torch_pc34` real-media test now sends the ordinary
   M11 backward-movement input from authentic PC34 HoC corridor cell (4,15)
   toward the original stairs at (3,15). The test target compiled and linked in
