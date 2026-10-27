@@ -345,3 +345,48 @@ unproven. The API reports `capture_only=1` and `renderer_permitted=0`; it does
 not yet feed the live Firestaff viewport, prove the startup sequence, or test
 controller and mouse interaction. The evidence dumps remain on the external
 disk and are not committed.
+
+### Frame 8047 repeat menu capture
+
+The later `ymir_nexus_menu_source_wide_frame_read_20261027` capture provides a
+second full-frame replay, now paired with the Japanese Continue-menu screenshot
+in one Ymir run. Its VDP1 trace contains 331,364 rows, including all 178
+commands for frame 8047, and reports zero dropped rows. The matching register
+receipt also names frame 8047. The C replay matches all 286,720 pixels in the
+640×448 screenshot exactly after 2× scaling.
+
+| Capture input | SHA-256 |
+| --- | --- |
+| `vdp1-fbs.bin` | `2752a34f5d200c965e2fe5c35ff6f973361319d769a2d76944af2c7b0f480979` |
+| `vdp2-vram.bin` | `de1a77427dc62457eb4b59fa0424fd25e9768ce229505445311929d3bdae405c` |
+| `vdp2-cram.bin` | `db282593790dec4a2bf8f76293c0458a1a140adc3351650bd56a417f0359e0de` |
+| `vdp2-registers.bin` | `e69d03094ef856922413e073cb9078015e52849786268d6421c7df00a655965e` |
+| `vdp1-command-trace.csv` | `d13fcede5adcad648b9c167df9c54eb928760185886bf667223f1272bd505e98` |
+| Frame-8047 screenshot | `741c620e945b5ab3e05f6bc5d182fc4ada9439071b79718f67326bcdd56c6118` |
+
+The replay reports 70,239 direct VDP1 framebuffer pixels, 1,441 type-6
+palette pixels, and 18,513 NBG0 overlays. These counts differ from the older
+frame-59 capture while covering the same full 320×224 output. The separate
+source verifier binds all 1,441 visible Japanese menu-sprite texels to
+`TITLE.BIN`. The screenshot has no embedded frame number; the run log and
+register receipt bind it to the same capture run, while exact acquisition-frame
+identity remains unproven.
+
+Reproduce this paired capture against the authentic Japanese data and retained
+external evidence:
+
+```sh
+python3 tests/test_nexus_ymir_title_capture_parity.py \
+  /path/to/test_nexus_v1_vdp2_capture_compositor \
+  /Volumes/Extern-disk/firestaff-evidence/ymir_nexus_menu_source_wide_frame_read_20261027/dumps \
+  '/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_menu_source_wide_frame_read_20261027/screenshots/DUNGEON MASTER NEXUS [T-9111G]-20261027T194440.170.png' \
+  --run-log /Volumes/Extern-disk/firestaff-evidence/ymir_nexus_menu_source_wide_frame_read_20261027/run.log
+```
+
+Both profiles are capture-only and keep `renderer_permitted=0`. The exact
+composition replay uses the emulator's final display framebuffer, VDP2 memory,
+CRAM, and registers as inputs; it does not reconstruct the menu from retail
+assets or admit them to Firestaff's live startup renderer. The Japanese source
+read trace still omits byte values at access time, and the NBG0 source join is
+partial. Runtime input, mouse hit areas, startup presentation, save loading,
+and playable-level/HUD parity remain open.

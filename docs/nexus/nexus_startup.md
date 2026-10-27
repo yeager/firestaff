@@ -1336,3 +1336,25 @@ mouse hit regions, Firestaff input handling, or production renderer admission.
 The full external capture,
 hashes, and reproduction command are in the
 [Japanese Down-selection capture receipt](../../parity-evidence/verification/nexus_japanese_menu_down_selection_20261027/README.md).
+
+## Full Japanese title-menu capture replay (2026-10-27)
+
+The retained frame-8047 Ymir run now reproduces the complete 320×224 display
+from its captured VDP1 framebuffer, VDP2 VRAM, CRAM and registers. The C replay
+matches every pixel in the same-run 640×448 screenshot (286,720 subpixels)
+after 2× scaling. Its VDP1 trace contains 178 frame-8047 commands and reports
+zero dropped rows. The VDP1 register receipt also names frame 8047. Five
+Japanese `TITLE.BIN` menu-sprite roles account for 1,441 visible texels; the
+remaining output is accounted for by captured VDP1 direct pixels, captured
+VDP1 palette pixels and NBG0 overlays. The pixel counts and input digests are
+recorded in
+[`NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md`](NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md).
+
+This is a full captured-frame composition check, not a renderer admission. The
+replay consumes Ymir display and VDP snapshots, not a Firestaff runtime upload
+from retail assets. The screenshot has no embedded frame number, so exact
+acquisition-frame identity remains unproven. The Japanese SH-2 read receipt
+observes a full 31,616-address source pass at frame 6,893 but records no values
+and dropped 860,856 unrelated master rows; the NBG0 storage join remains
+partial. Runtime menu presentation, keyboard handling, mouse hit areas, save
+loading and playable-level/HUD parity are still open.
