@@ -277,8 +277,10 @@ presentation boundary.
   `DM.BIN` is SHA-256
   `3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124`;
   the code window also does not match that file at the documented
-  `0x06010040` load base. Do not infer a `DM.BIN` routine or source owner from
-  the runtime PC alone. Traces and all game data remain on TRV2.
+  `0x06010040` static code mapping. A later raw WorkRAMH snapshot confirms
+  DM.BIN image bytes at `0x06010000`, so neither value is a universal runtime
+  mapping for every capture. Do not infer a `DM.BIN` routine or source owner
+  from the runtime PC alone. Traces and all game data remain on TRV2.
 
 ## 2026-09-28 — Fresh JP VDP1 window did not reproduce the retained sources
 

@@ -521,8 +521,9 @@ CLUT source remain open.
 
 The narrowed trace provides disassembly anchors in authentic Japanese
 `DM.BIN` (SHA-256
-`3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124`) at load
-base `0x06010040`: its call-target field is `0x0602623c` (file offset
+`3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124`) under
+the historical static code mapping `0x06010040`: its call-target field is
+`0x0602623c` (file offset
 `0x161fc`), and its caller-return field is `0x06027064` (offset `0x17024`).
 The trace labels write rows with PCs `0x0602625c` and `0x0602626c` (offsets
 `0x1621c` and `0x1622c`), but static SH-2 disassembly exposes an attribution
@@ -539,6 +540,42 @@ not resolve this SH-2 trace's PC attribution or rule out later CPU writes.
 The four captured 32-byte CLUTs also have no direct or word-swapped exact
 match in the 126 hash-accepted Japanese retail files, so their palette source
 remains unbound.
+
+### Raw DM.BIN placement in the later Ymir capture
+
+A separate authentic JP Ymir debug capture reached VDP1 capture frame 13,096.
+Its 1 MiB `wram-hi.bin` is the raw WorkRAMH image at `0x06000000`; the first
+256 bytes at `0x06010000` exactly equal bytes `0x0000`--`0x00ff` of the
+hash-verified retail `DM.BIN`. The initial SH-2 instructions at that address
+load the stack pointer and jump to `0x06010014`, so this is a concrete raw
+image placement and entry-vector observation, not a synthetic fixture.
+
+Static SH-2 decoding of the authenticated bytes gives a concrete early boot
+sequence. The vector at `0x06010000` loads SP=`0x060ffffc` and jumps to
+`0x06010014`. That entry calls a byte-clear helper at `0x06010026`; the helper
+reads its start and end pointers from `0x060465b0` and `0x060465b4` and writes
+zero bytes up to the end pointer. The entry then clears the word at
+`0x06082ea8` and calls the function pointer stored at `0x0601005c`, whose
+retail value is `0x06010f44`. If that call returns, the entry branches to a
+self-loop at `0x06010022`. This establishes the static boot path in authentic
+code; this no-render memory capture does not by itself prove which initializer
+branches run or what the display shows.
+
+The same image matches `DM.BIN` at `0x0602623c`, `0x0608ba34`, and `0x0608b940`
+when offsets are calculated from `0x06010000`. At `0x0608ba46`, the matching
+retail instruction is `mov.l r5,@r4`; the complete 2,447-row trace records
+2,446 four-byte zero writes from that PC into VDP1 CLUT addresses
+`0x05c01000` and `0x05c01010`, plus one earlier two-byte `0x8000` write. The
+trace has zero dropped rows. This binds a real clear loop in this capture.
+
+This raw image placement must not be conflated with the older frame-12596
+title-copy receipt's static `0x06010040` code mapping. The newer snapshot has
+different bytes at runtime PCs `0x0602312c`, `0x0602625c`, and `0x0602626c`;
+thus the old mapping and instruction attribution are capture-specific and do
+not establish a global `DM.BIN` executable base. The older SH-2 trace still
+does not identify its exact store instruction or prove a texture upload.
+Selected raw evidence is retained at
+`/Volumes/Extern-disk/firestaff-data/nexus-menu-clut-writer-trace-20261027/`.
 
 FONT256's authenticated Character Generator bytes now remain in the engine's
 source object for the future Saturn consumer. This does not admit glyph coding,
