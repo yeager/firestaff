@@ -2343,3 +2343,7 @@ only. Active work is in `TODO.md` and `TODO-<game>.md`.
   still selects FM Towns when no platform is specified, and conflicting Atari
   ST or Amiga selections fail before media scanning. The focused
   `fmtowns_edition_option_validation` test covers both conflicts and orders.
+- The CLI now rejects a missing `--boot-probe-expect-startup-animation` value
+  when another option follows, instead of consuming that option as the
+  animation expectation and continuing with an unintended launch. The CLI
+  option-form regression covers this case.

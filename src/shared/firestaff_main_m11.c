@@ -610,6 +610,7 @@ static int is_value_option(const char* value) {
         "--theron-vdc-state", "--theron-vdc-sat", "--theron-vdc-io",
         "--boot-probe-expect-phase", "--boot-probe-expect-party",
         "--boot-probe-expect-asset-md5", "--save",
+        "--boot-probe-expect-startup-animation",
         "--dm2-english-companion", "--ra-user", "--ra-token"
     };
     size_t i;

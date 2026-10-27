@@ -231,6 +231,7 @@ check_missing_value_before_option --script
 check_missing_value_before_option --data-dir
 check_missing_value_before_option --theron-native
 check_missing_value_before_option --save
+check_missing_value_before_option --boot-probe-expect-startup-animation
 
 for scale in 0 1 2 3 4 5 1x 2x 3x 4x fit stretch; do
     check_form --scale-mode "$scale" --version
