@@ -663,52 +663,54 @@ gates.
 ## Cold-boot follow-up: exact retail FMV frame match (2026-10-27)
 
 A rendered 19,000-frame Ymir run used the authentic Japanese retail disc and
-Japanese IPL in the isolated TRV2 profile. The run loaded no emulator save
-state or game save; the profile retained its BIOS setup configuration. It ran
-with `--debug --fast-forward` and held Start for two frames at capture-loop
-frames 9,000, 13,000, and 15,000.
+Japanese IPL in the isolated TRV2 profile. It loaded no emulator save state or
+game save; the profile retained its BIOS setup configuration. With `--debug
+--fast-forward`, Start was held for two frames at capture-loop frames 9,000,
+13,000, and 15,000.
 
-The endpoint screenshot is not a gameplay frame. It is an exact match to
-zero-based frame 626 of the authentic Japanese retail `DMV0.AVI` video. The
-AVI SHA-256 is
+The endpoint screenshot is an exact match to zero-based frame 626 of the
+authentic Japanese retail `DMV0.AVI` video. The AVI SHA-256 is
 `eafb4c638db9ffada9e929d82299562e0a9d3eb73fb2a47858c0de0dc0fa57bb`; it is
 RIFF AVI using TrueMotion 1.0 at 320×180 and approximately 15 fps. The native
 Ymir screenshot is 640×448. Its centered crop `image[42:402:2, ::2]` matches
-all 57,600 decoded frame pixels after Saturn RGB5 quantization
-(`& 0xF8`), with zero mismatches.
+all 57,600 decoded frame pixels after Saturn RGB5 quantization (`& 0xF8`),
+with zero mismatches.
 
-The final VDP1 capture frame is 15,907 and has four command rows. Its complete
-trace retains 785,986 rows with zero drops. The video draw at command offset
-`0x40` uses PMOD `0x0028` (colour mode 5), SRCA `0x8f80` (VRAM byte offset
+The final VDP1 capture is frame 15,907, with four command rows and 785,986
+retained trace rows with zero drops. The video draw at command offset `0x40`
+uses PMOD `0x0028` (colour mode 5), SRCA `0x8f80` (VRAM byte offset
 `0x47c00`), and SIZE `0x28b4` (320×180), placing the image at y=21–200.
-Capture-loop frame 19,000 and VDP1 frame 15,907 are separate counters.
+Capture-loop frame 19,000 and VDP1 frame 15,907 are separate counters. The
+SCU DMA trace retained 16,384 rows but dropped 4,485
+(`trace_data_complete=0`), so it cannot provide complete transfer provenance.
 
 This confirms authentic full-screen video output, likely the opening FMV in
 this boot sequence. It does not prove which input selected or started the
 video, the three-choice menu transition, a stable playable level, gameplay,
-or HUD. The SCU DMA trace retained 16,384 rows but dropped 4,485
-(`trace_data_complete=0`); it cannot provide complete transfer provenance.
+or HUD.
 
 The Ymir executable SHA-256 is
 `f5d94ee84762d81e97f950d6cfc4253b4f72c61dc5c4f376b4296235ed46dcc3`. At
-inspection, the source worktree was based on commit
+inspection, its source worktree was based on commit
 `534ed10c6f7f13a3ba752476eea191be3ab553b4` with tracked-diff SHA-256
 `2442944df961bf0079f61a032b2ca09f3252be4416a28471aee72573b49e4d5d`. These
 identify the observed executable and source worktree state; they do not
 independently prove the binary was built from that exact source snapshot.
 
-The screenshot, raw Ymir dumps, and a reproducible RGB5 comparison receipt are
-retained at
+The screenshot, raw Ymir dumps, run log, and reproducible RGB5 comparison
+receipt are retained at
 `/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_rendered_20261027/rendered_menu_candidate_19000/`.
 The screenshot SHA-256 is
-`903e710b455df66a1df79adcdf1e1a9a6c8fdc257833f0eed9e80def840d541a`;
+`903e710b455df66a1df79adcdf1e1a9a6c8fdc257833f0eed9e80def840d541a`; the run
+log SHA-256 is
+`caf636e378d9888b4c97e01b12ddd864b0564e292fceb6f5ffc97b14f442d282`; the
 `DMV0_FRAME_MATCH.txt` SHA-256 is
-`51081a26e28878ac6f90a102fe79c76a51c519d3aba5c23f7e9b4612364d298f`;
+`51081a26e28878ac6f90a102fe79c76a51c519d3aba5c23f7e9b4612364d298f`; the
 `README.md` SHA-256 is
 `33da1383f0019009b7c0b585501e450874b168d50052a16a3b371669dccca42c`; and
 `SHA256SUMS.txt` SHA-256 is
-`0a62c37cdc6f64629968683dc2f9484071b675965cfae71dc9189f861f6e9288`. All
-36 listed files passed checksum verification. This is diagnostic evidence;
+`0a62c37cdc6f64629968683dc2f9484071b675965cfae71dc9189f861f6e9288`. All 36
+listed bundle files passed checksum verification. This is diagnostic evidence;
 it is not a Firestaff asset or a parity admission.
 
 ## Complete cold-boot SCU DMA trace (2026-10-27)

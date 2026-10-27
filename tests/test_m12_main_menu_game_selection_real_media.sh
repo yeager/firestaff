@@ -8,7 +8,11 @@ data_root=${2:?usage: test_m12_main_menu_game_selection_real_media.sh <firestaff
 dm1_archive="$data_root/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"
 csb_archive="$data_root/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"
 dm2_archive="$data_root/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"
-if [[ ! -x "$app" || ! -f "$dm1_archive" || ! -f "$csb_archive" || ! -f "$dm2_archive" ]]; then
+if [[ ! -x "$app" ]]; then
+    echo 'SKIP: Firestaff executable is unavailable'
+    exit 77
+fi
+if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 && ( ! -f "$dm1_archive" || ! -f "$csb_archive" || ! -f "$dm2_archive" ) ]]; then
     echo 'SKIP: authentic DM1, CSB and DM2 FM Towns archives are required'
     exit 77
 fi
@@ -78,7 +82,17 @@ run_game_picker_case() {
         else
             edition_pattern=$(printf '%s' "$edition_pattern" | sed 's/[][(){}.^$+?|\\]/\\&/g')
         fi
-        if ! grep -Eq "launch phase=game-handoff mode=menu game=$game_id platform=$platform edition=$edition_pattern source=.+" "$log"; then
+        local matching_source=0
+        local launch_line
+        local logged_source
+        while IFS= read -r launch_line; do
+            logged_source=${launch_line#* source=}
+            if [[ "$logged_source" == "$game_archive" || "$logged_source" == "$game_archive"::* ]]; then
+                matching_source=1
+                break
+            fi
+        done < <(grep -E "launch phase=game-handoff mode=menu game=$game_id platform=$platform edition=$edition_pattern[[:space:]]+source=.+$" "$log" || true)
+        if [[ $matching_source != 1 ]]; then
             printf 'FAIL: no-game main-menu selection did not resolve authentic %s %s media (%s)\n' "$game_id" "$platform" "$edition" >&2
             cat "$log" >&2
             return 1
@@ -120,7 +134,10 @@ run_alternate_platform_picker_case() {
     run_game_picker_case "$game_id" "$source_archive" "$navigation" \
         "$edition" keyboard "$platform" "$data_root" \
         "$game_id-$platform-picker" resolved
+    alternate_platform_cases=$((alternate_platform_cases + 1))
 }
+
+alternate_platform_cases=0
 
 if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 ]]; then
     run_game_picker_case dm1 "$dm1_archive" \
@@ -150,9 +167,29 @@ if [[ -f "$data_root/dm1/Dungeon-Master_Amiga_EN_Version-20.zip" ]]; then
         "$data_root/dm1/Dungeon-Master_Amiga_EN_Version-20.zip" 3 Amiga \
         're:amiga(20-en|20-fr|20-de|21-en|36-multi|demo-en)'
 fi
-if [[ -f "$data_root/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip" ]]; then
+csb_amiga_archive="$data_root/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip"
+if [[ -f "$data_root/csb/Chaos Strikes Back (FTL).zip" ]]; then
+    csb_amiga_archive="$data_root/csb/Chaos Strikes Back (FTL).zip"
+fi
+if [[ -f "$csb_amiga_archive" ]]; then
+    case "$csb_amiga_archive" in
+        "$data_root/csb/Chaos Strikes Back (FTL).zip")
+            expected_csb_amiga_sha256=bff24bffd2e07ff8ac4c96b3c35be93ee3fdfe219d1bf833df247726b2ce3abb
+            ;;
+        "$data_root/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip")
+            expected_csb_amiga_sha256=fa0296c7bf62d806e8b1c45542d8ac225b67f4080026fa7f6fb61c97905f24c0
+            ;;
+        *)
+            printf 'FAIL: unexpected CSB Amiga archive path: %s\n' "$csb_amiga_archive" >&2
+            exit 1
+            ;;
+    esac
+    if [[ $(firestaff_sha256_file "$csb_amiga_archive") != "$expected_csb_amiga_sha256" ]]; then
+        printf 'FAIL: CSB Amiga archive identity drift: %s\n' "$csb_amiga_archive" >&2
+        exit 1
+    fi
     run_alternate_platform_picker_case csb \
-        "$data_root/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip" 1 Amiga \
+        "$csb_amiga_archive" 1 Amiga \
         're:amiga(31-en|31-multi|35-en|35-multi)'
 fi
 if [[ -f "$data_root/csb/chaos_strikes_back_ftl.zip" ]]; then
@@ -173,6 +210,10 @@ if [[ -f "$data_root/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip" ]]; then
         "$data_root/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip" 3 Macintosh mac-en-retail
 fi
 if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} == 1 ]]; then
+    if [[ $alternate_platform_cases == 0 ]]; then
+        echo 'SKIP: no authentic alternate-platform archives are available'
+        exit 77
+    fi
     exit 0
 fi
 

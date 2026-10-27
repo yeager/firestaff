@@ -8,6 +8,7 @@
 
 - `DM1, CSB and DM2 launcher tests`: cover authenticated alternate PC, Atari ST, Amiga and Macintosh platform selections from the no-game menu and verify original archives remain unchanged.
 - `Theron input tests`: verify Japanese touch-swipe routes with authentic media; these checks do not claim broader campaign or display parity.
+- `Theron pointer-classifier tests`: verify source-derived Japanese and US pointer-table boundaries; this validates the classifier evidence without claiming full runtime parity.
 - `Cross-platform startup evidence`: distinguish verified runtime, menu and capture checkpoints from claims that the available evidence does not establish.
 - `Nexus startup documentation`: qualify the Ymir cold-boot checkpoint and SCU DMA conclusions against retained capture evidence.
 - `Startup localization`: refresh the generated catalogs after source-string changes.
