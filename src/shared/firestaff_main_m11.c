@@ -603,6 +603,31 @@ static int is_game_id(const char* value) {
             strcmp(value, "theron") == 0);
 }
 
+static int is_value_option(const char* value) {
+    static const char* const options[] = {
+        "--script", "--data-dir", "--lang", "--theron-native",
+        "--theron-vram-snapshot", "--theron-vce-snapshot",
+        "--theron-vdc-state", "--theron-vdc-sat", "--theron-vdc-io",
+        "--boot-probe-expect-phase", "--boot-probe-expect-party",
+        "--boot-probe-expect-asset-md5", "--save",
+        "--dm2-english-companion", "--ra-user", "--ra-token"
+    };
+    size_t i;
+
+    if (!value) return 0;
+    for (i = 0U; i < sizeof(options) / sizeof(options[0]); ++i) {
+        if (strcmp(value, options[i]) == 0) return 1;
+    }
+    return 0;
+}
+
+static int is_option_token(const char* value) {
+    return value &&
+           (value[0] == '-' ||
+            strncmp(value, "\xE2\x80\x94", 3U) == 0 || /* em dash */
+            strncmp(value, "\xE2\x80\x93", 3U) == 0);  /* en dash */
+}
+
 /* Accept the conventional --option=value spelling as well as the space form.
  * The two typographic dash aliases make a pasted command from macOS Notes,
  * Messages or rich-text documentation recoverable instead of inexplicably
@@ -726,6 +751,12 @@ int main(int argc, char** argv) {
     for (int i = 1; i < argc; ++i) {
         const char* a = argv[i];
         const char* inlineGameId;
+        if (is_value_option(a) &&
+            (i + 1 >= argc || !argv[i + 1][0] ||
+             is_option_token(argv[i + 1]))) {
+            fprintf(stderr, "firestaff: %s requires a value\n", a);
+            return 2;
+        }
         if (strcmp(a, "--help") == 0 || strcmp(a, "-h") == 0) {
             usage(argv[0]);
             return 0;

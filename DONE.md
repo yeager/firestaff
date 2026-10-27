@@ -1,5 +1,16 @@
 # Firestaff DONE — cross-game completed work
 
+## 2026-10-27 — CLI text-option values fail before startup
+
+The argument parser now rejects a following command-line switch when a
+value-taking text option such as `--script`, `--data-dir`, `--theron-native`,
+or `--save` has no value. Previously, for example, `--data-dir --debug` could
+consume `--debug` as a path and continue into launcher startup. The CLI option
+regression test covers the affected forms; the app build, unsupported-platform
+matrix, and authentic DM1 PC Swedish scan-label test passed. The check prevents
+malformed commands from falling through into game-data discovery; it does not
+change valid option values.
+
 ## 2026-10-25 — Nexus event-44 analyzer regression coverage
 
 The new event-44 instruction checks passed against the hash-verified retail

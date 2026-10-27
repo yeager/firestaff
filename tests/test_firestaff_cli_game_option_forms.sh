@@ -1,6 +1,7 @@
 #!/bin/sh
 # Keep pasted macOS rich-text commands and conventional --option=value
-# invocations on the same parser path as --game <id>. Also guard the ordinary
+# invocations on the same parser path as --game <id>. Reject missing option
+# values before they can consume another switch, and guard the ordinary
 # no-game app start against accidentally entering a DM1 direct launch.
 
 set -eu
@@ -207,6 +208,27 @@ check_missing_value() {
 
 check_missing_value --game '--game requires dm1, csb, dm2, nexus, or theron'
 check_missing_value --platform '--platform requires a value:'
+
+check_missing_value_before_option() {
+    option=$1
+    output=$("$firestaff_bin" "$option" --debug --version 2>&1) && {
+        printf 'fail: %s consumed --debug as its value\n%s\n' "$option" "$output" >&2
+        exit 1
+    }
+    case "$output" in
+        *"$option requires a value"*) ;;
+        *)
+            printf 'fail: %s did not reject a following option as a missing value\n%s\n' \
+                "$option" "$output" >&2
+            exit 1
+            ;;
+    esac
+}
+
+check_missing_value_before_option --script
+check_missing_value_before_option --data-dir
+check_missing_value_before_option --theron-native
+check_missing_value_before_option --save
 
 for scale in 0 1 2 3 4 5 1x 2x 3x 4x fit stretch; do
     check_form --scale-mode "$scale" --version
