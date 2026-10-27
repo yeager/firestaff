@@ -7978,3 +7978,21 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   `/dev/shm/theron-jp-gameplay-save-20261027/official-wrapper-pass-1/`.
   Source-transfer provenance and a source-bound, input-caused VDC/world change
   remain required before implementing rendering behavior.
+
+## 2026-10-27 — extend the pointer trace across the `$C1DF` helper
+
+- The disposable Mednafen mouse-trace instrumenter now records reads and writes
+  to `$271D-$271F`, includes caller `$A71E-$A733`, and opens a bounded 4096-
+  instruction window when the caller invokes `$C1DF`. The trace records the
+  call start and return (or explicit step limit), PC/opcode/register state,
+  MPR and matching guest-memory accesses. This is instrumentation support,
+  not evidence that the helper implements a click or maps dungeon coordinates.
+- The instrumenter applies to an isolated copy of the existing instrumented
+  Mednafen source on trv2. Its configured build passed, and direct
+  `pce_fast/huc6280.o` and `pce_fast/input.o` compilation also passed. The
+  direct `pce_fast` compile caught and fixed a C++ control-flow issue caused by
+  the CPU's block-move `goto` labels; trace locals are now declared before
+  those jump targets. No new emulator capture was made. Next use a cold
+  authentic JP runtime capture and require input-linked rectangle
+  initialization plus source-bound provenance before implementing native
+  dungeon targeting; current rectangle captures remain unproven.
