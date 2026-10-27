@@ -69,6 +69,32 @@
   source-bound runtime data before interpreting pointer rectangles or adding
   native world-click behavior.
 
+## 2026-10-27 — C1DF call-site filter corrected
+
+- Review of the authentic JP in-dungeon save-state trace found that the
+  instrumenter's zero C1DF-row result was a false negative: the hook only
+  recognized `JSR $C1DF` calls whose caller PC was `$A71E-$A733`, while the
+  observed caller was `$A1D1`. The `$A1A9-$A1D3` runtime window executes the
+  call under MPR5 `$68`; its 43 bytes match six JP Track 02 setup candidates,
+  so the exact source occurrence is not yet identified.
+- The same save-state session showed the `$D123` routine classifying pointer
+  coordinates against six four-byte records at `$287F-$2896`; all observed
+  record bytes were `$FF`. This save-state load bypasses CD reads, and the
+  observed runs produced no command writes or gameplay-state change. These
+  bytes do not establish usable hitboxes or a mouse-to-command mapping.
+- The instrumentation now recognizes the opcode and operands for `JSR
+  $C1DF` at any caller PC, and its script test guards against restoring the
+  old address filter. A rebuild (`8dc5faf9b89dfc917e751ec4403072c2a8bd6a27e4d4ba880f27bab3dadd7097`)
+  and bounded repeat on the same authentic JP save state recorded calls at
+  `$B2B1`, `$B37A`, and `$B437`. The first two reached the 4,096-instruction
+  trace limit without a return marker; the third had no return or limit marker
+  before capture shutdown. The capture still had zero CD IRQ callbacks,
+  `transition=missing`, and zero command RAM writes. Its mouse trace hash is
+  `3c42994bfffb2c8d3a0335a9befe146d62561a0b9a0cd8f657f4e7497c8e6126`.
+  This confirms the hook sees these calls, but does not identify their source
+  LBA or prove they are world-hit tests. Source attribution, live rectangle
+  data, command dispatch, and native pointer behavior remain open.
+
 ## 2026-10-26 — trace-driven decode of the initializer's $43AB helper
 
 - The authenticated JP runtime trace executes `$43AB–$43B4` at physical
