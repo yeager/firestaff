@@ -14,12 +14,15 @@ with asset gating in `src/nexus/nexus_v1_launcher.c`. A separate, currently
 unwired reducer in `src/nexus/nexus_v1_retail_title_menu.c` models only the
 authentic title choices and transitions observed in Ymir: initial New Game,
 Down to Continue, Down to Configuration, and the documented Accept results.
-The initial New Game and Continue captures each have five TITLE.BIN draws
-verified against the screenshot, including per-pixel CRAM color and priority.
-The retail Continue route also reached a loaded dungeon with a BKR image whose
-hash matches the retained four-champion image in `.firestaff/data/nexus`; its
-transfer chain was not retained. The reducer is still unwired. Full-frame
-Firestaff rendering, option behavior, and mouse targeting remain unverified.
+The historical New Game comparison reported five TITLE.BIN draws and 1,495
+matching nontransparent screenshot pixels. The current
+`verify_nexus_title_sprite_screenshot.py` verifier checks the five-draw
+Japanese Continue layout, including per-pixel CRAM color and priority; it does
+not verify the New Game layout. The retail Continue route also reached a
+loaded dungeon with a BKR image whose hash matches the retained four-champion
+image in `.firestaff/data/nexus`; its transfer chain was not retained. The
+reducer is still unwired. Full-frame Firestaff rendering, option behavior, and
+mouse targeting remain unverified.
 
 ## DM1 Menu System Reference
 

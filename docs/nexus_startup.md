@@ -6,10 +6,13 @@ boot reaches the native `PRESS START BUTTON` title prompt and, with scheduled
 retail controller input, the native three-choice title menu in Ymir. The menu
 was navigated into its Configuration page from a saved diagnostic state.
 Separate captures show New Game selected and Down selecting Continue, with
-five TITLE.BIN sprite draws per state checked against the retail screenshots.
-Ymir also completed Continue-to-gameplay with a reported retail-written BKR
-image. Firestaff's runtime title-menu renderer, New Game route to stable
-gameplay, Saturn BKR loading, and HUD/viewport parity remain unverified.
+five TITLE.BIN sprite draws per state compared with the retail screenshots.
+The historical New Game comparison reported 1,495 matching nontransparent
+pixels. The current `verify_nexus_title_sprite_screenshot.py` verifier checks
+the five-draw Japanese Continue layout only. Ymir also completed
+Continue-to-gameplay with a reported retail-written BKR image. Firestaff's
+runtime title-menu renderer, New Game route to stable gameplay, Saturn BKR
+loading, and HUD/viewport parity remain unverified.
 
 ## Verified initialization order
 
