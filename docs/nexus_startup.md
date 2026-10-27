@@ -1235,6 +1235,26 @@ supports this Japanese `CONTINUE` layout only; it does not validate the earlier
 colour joins; whole-screen composition and screenshot-to-dump frame identity
 remain unproven.
 
+A repeated cold boot with the same schedule retained VDP1 frame 8,060. The
+frame-aligned VDP1 receipt again contains 178 commands with no dropped rows,
+and the screenshot has the same SHA-256 as the earlier Continue capture
+(`741c620e945b5ab3e05f6bc5d182fc4ada9439071b79718f67326bcdd56c6118`). The
+current screenshot verifier passes all five sprite roles and all 1,441 visible
+pixels for this repeat capture. A snapshot-only bitmap-source analysis found
+zero exact retail-source matches for NBG0's 131,072-byte bitmap, despite its
+enabled 8bpp bitmap mode and 1,024 title-palette CRAM word matches. It reports
+`source_join=unbound` and `semantic_admission=blocked`.
+
+The accompanying VDP2 memory-write trace is not complete at the displayed
+endpoint: its 250,000 retained rows stop at VDP1 frame 7,729 and it reports
+1,309,722 dropped rows before frame 8,060. The SH-2 VDP2-write trace also
+reports 1,046,883 dropped rows. The SCU DMA trace reached its 1,024-row cap
+without an overflow receipt, so it cannot be treated as complete. These traces
+do not identify the NBG0 bitmap producer or authorize semantic/display
+admission. Raw capture files and reports are kept outside Git in the
+`ymir_nexus_menu_vdp2_provenance_20261027` external evidence bundle; its
+`SHA256SUMS.txt` validates the retained files.
+
 This is authentic input-correlated source evidence for the Japanese menu
 selection state. It does not establish the complete `TITLE.BIN` decoding,
 mouse hit regions, Firestaff input handling, or production renderer admission.
