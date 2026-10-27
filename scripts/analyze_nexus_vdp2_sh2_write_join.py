@@ -22,6 +22,30 @@ def read_receipt(path: Path) -> dict[str, str]:
     return fields
 
 
+def require_complete_trace(
+    path: Path,
+    receipt: dict[str, str],
+    name: str,
+    dropped_fields: tuple[str, ...],
+) -> None:
+    if receipt.get("bundle_complete") != "1" or receipt.get("trace_file_complete") != "1":
+        raise ValueError(f"{name} receipt does not report a complete bundle and trace file")
+    try:
+        expected_rows = int(receipt["trace_rows"])
+        dropped_rows = [int(receipt[field]) for field in dropped_fields]
+    except (KeyError, ValueError) as error:
+        raise ValueError(f"{name} receipt lacks valid trace row or drop counts") from error
+    if expected_rows < 1 or any(count < 0 for count in dropped_rows) or sum(dropped_rows) != 0:
+        raise ValueError(f"{name} receipt reports an empty or dropped trace")
+
+    with path.open(newline="", encoding="utf-8") as stream:
+        actual_rows = sum(1 for _row in csv.DictReader(stream))
+    if actual_rows != expected_rows:
+        raise ValueError(
+            f"{name} receipt declares {expected_rows} trace rows, but CSV has {actual_rows}"
+        )
+
+
 def prefix_table(pattern: list[tuple[int, int, int]]) -> list[int]:
     table = [0] * len(pattern)
     matched = 0
@@ -72,8 +96,21 @@ def main() -> int:
     dumps = args.bundle / "dumps"
     vdp2_receipt = read_receipt(dumps / "vdp2-memory-write-bundle.txt")
     sh2_receipt = read_receipt(dumps / "sh2-memory-write-trace-bundle.txt")
-    if vdp2_receipt.get("bundle_complete") != "1" or sh2_receipt.get("bundle_complete") != "1":
-        parser.error("both VDP2 and SH-2 trace receipts must report bundle_complete=1")
+    try:
+        require_complete_trace(
+            dumps / "vdp2-memory-write-trace.csv",
+            vdp2_receipt,
+            "VDP2",
+            ("trace_dropped_total",),
+        )
+        require_complete_trace(
+            dumps / "sh2-memory-write-trace.csv",
+            sh2_receipt,
+            "SH-2",
+            ("master_dropped", "slave_dropped"),
+        )
+    except ValueError as error:
+        parser.error(str(error))
 
     base = int(sh2_receipt["address_begin"], 0)
     end = int(sh2_receipt["address_end_exclusive"], 0)
