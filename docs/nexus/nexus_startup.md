@@ -1355,9 +1355,10 @@ hashes, and reproduction command are in the
 
 ## Japanese menu-state NBG0 storage join (2026-10-27)
 
-The separate paired menu capture at
-`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_menu_sh2_bound_20261027/`
-contains a strong authentic source-to-storage match. Japanese `TITLE.BIN`
+The paired Japanese menu capture at
+`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_menu_source_wide_frame_read_20261027/`
+contains a frame-tagged source-address read pass as well as the source-to-storage
+match. Japanese `TITLE.BIN`
 bytes `0x2526..0xa0a5` (31,616 bytes; end-exclusive `0xa0a6`; full member SHA-256
 `51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3`)
 match WorkRAMH address `0x060ac2a6` exactly. Under the previously verified
@@ -1368,14 +1369,25 @@ NBG0 8bpp bitmap in the frame-8047 snapshot. All 96 leading rows match; the
 matching `TITLE.BIN` bytes; the frame-windowed trace shows no later VRAM or
 CRAM writes before the frame-8047 snapshot.
 
-Run `scripts/verify_nexus_title_nbg0_title_bin_storage.py` with that Ymir dump
-directory and a `--data-dir` containing the authenticated Japanese retail
-files to reproduce the storage join. The bundle's SHA-256 manifest covers the
-capture inputs.
+The same run's SH-2 read trace records one contiguous ordered byte-read pass
+over all 31,616 addresses at frame 6,893, with PC `0x06023124`, caller target
+`0x06023108`, and caller return `0x06023176`. The SH-2 write trace is complete
+with zero drops and records writes to this WorkRAM span only through frame
+6,890. The read trace itself retained 250,000 rows and dropped 860,856 other
+master reads, so it is globally incomplete even though the full contiguous
+source-address pass is present. The trace records no values at read time; the
+final WorkRAM byte join does not prove those exact values were present when
+read, and the traces do not cover non-CPU DMA writes.
 
-The capture does not contain a same-run SH-2 source-read trace, and no complete
-pixel join establishes which NBG0 bytes are visible after VDP1 composition.
-Treat this as source-to-NBG0 storage evidence only; title/menu display
-ownership and production renderer admission remain blocked. See
-[`nexus_title.md`](nexus_title.md#japanese-menu-state-nbg0-storage-join-2026-10-27)
+Run `scripts/verify_nexus_title_nbg0_title_bin_storage.py` and
+`scripts/verify_nexus_title_nbg0_source_read_trace.py` with the Ymir dump
+directory and a `--data-dir` containing the authenticated Japanese retail
+files to reproduce the storage and address-pass joins. The bundle's
+`SHA256SUMS.txt` covers all retained files.
+
+No complete pixel join establishes which NBG0 bytes are visible after VDP1
+composition. Treat this as bounded SH-2 address-read and NBG0 storage evidence;
+title/menu display ownership and production renderer admission remain blocked.
+See
+[`nexus_title.md`](nexus_title.md#japanese-menu-state-nbg0-source-and-storage-join-2026-10-27)
 for the detailed source and layout receipt.

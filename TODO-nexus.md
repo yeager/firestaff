@@ -144,8 +144,11 @@ on the PRS3 menu capture. See
   `TITLE.BIN` span exactly resident in WorkRAM and matched 30,561 bytes under
   the verified 304-byte/512-stride layout in the active NBG0 frame-8047
   snapshot. The last eight rows were written at frame 7716; 1,377 of their
-  2,432 values match the source span. This is source-to-storage evidence, not a
-  same-run SH-2 source-read or complete final-pixel join. Keep renderer
+  2,432 values match the source span. A same-run SH-2 trace records a
+  contiguous 31,616-byte source-address read pass at frame 6893 (PC
+  `0x06023124`, target `0x06023108`); the capped trace dropped other rows and
+  contains no read values. This strengthens source-path evidence but does not
+  establish access-time values or complete final-pixel ownership. Keep renderer
   admission blocked; see the Japanese menu sections in `docs/nexus_startup.md`
   and `docs/nexus_title.md`.
   earlier paired raw-trace experiments below remain valid negative results for
@@ -158,10 +161,11 @@ on the PRS3 menu capture. See
   Start is read from the live controller register at frames 18020--18023 by
   SH-2 code, but its 64-frame VDP1/VDP2 output remains byte-identical to the
   no-input control. That specific reader is therefore not an admitted menu
-  consumer. Later Ymir captures establish title-menu and selection transitions,
-  but still do not bind menu/face bytes to an SH-2 upload or VDP1/VDP2 display
-  consumer. A separate post-title control/input
-  pair at frames 30000--30119 exercised Start, A, B and C in four distinct
+  consumer. Later Ymir captures establish title-menu and selection transitions
+  and record a frame-tagged read pass across the Japanese `TITLE.BIN` source
+  address, but do not prove read values or bind the full menu/face image to a
+  complete upload or VDP1/VDP2 display consumer. A separate post-title
+  control/input pair at frames 30000--30119 exercised Start, A, B and C in four distinct
   20-frame pulses.  All eight captured video regions (VDP1 state/VRAM/frame
   buffers/draw selector and VDP2 registers/VRAM/CRAM) were byte-identical to
   the no-input control.  The observed active VDP1 state has two stable
