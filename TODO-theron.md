@@ -12,6 +12,17 @@
   gameplay meaning, so the `$287F-$2896` consumer and native direct-click gap
   remain open.
 
+## 2026-10-27 — correct the authentic US keypad-forward regression
+
+- A fresh TRV2 Debug build against authentic US Track 02 showed that the
+  regression's `down,key:kp8` sequence returns to its starting square: the
+  source-backed runtime reports one backward step followed by one forward
+  step. The test previously expected an extra tile of movement. It now checks
+  both input receipts and the returned pose, and passed three consecutive
+  loops.
+- This corrects a test expectation; it adds no gameplay behavior and does not
+  close direct viewport clicks or state-driven dungeon rendering.
+
 ## 2026-10-27 — repeated JP save-state input captures remain screen-only
 
 - Three isolated 12-second reference captures per condition replayed the same
