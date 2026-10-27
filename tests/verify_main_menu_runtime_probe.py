@@ -13,6 +13,7 @@ with open(probe_path, encoding="utf-8") as source:
     probe = json.load(source)
 startup = probe["startup"]
 party = probe["party"]
+expected_source_id = "dm2" if game_id == "dm2-amiga" else game_id
 if game_id.startswith("theron-direct-"):
     expected_track02_md5_by_route = {
         "theron-direct-us": "f23601102138f87c33025877767ebf76",
@@ -43,7 +44,7 @@ if game_id.startswith("theron-direct-"):
 if (
     probe.get("launchedEver") != 1
     or probe.get("active") != 1
-    or probe.get("sourceId") != game_id
+    or probe.get("sourceId") != expected_source_id
     or startup.get("receiptReady") != 1
     or startup.get("startupActive") != 0
     or startup.get("levelLoaded") != 1
@@ -95,6 +96,26 @@ elif game_id == "dm2":
     ):
         raise SystemExit(
             f"FAIL: DM2 menu start missed its authentic first party: {probe}"
+        )
+elif game_id == "dm2-amiga":
+    runtime = probe.get("dm2RuntimeFrame", {})
+    # DM2_PLATFORM_AMIGA_EN is enum value 6 in include/dm2_v1_boot.h.
+    if (
+        startup.get("phase") != "dm2-runtime"
+        or probe.get("dm2Startup", {}).get("platform") != 6
+        or runtime
+        != {"accepted": 1, "realAssets": 1, "noCoreFallbacks": 1, "fallbackDraws": 0}
+        or (
+            party.get("mapIndex"),
+            party.get("mapX"),
+            party.get("mapY"),
+            party.get("direction"),
+            party.get("championCount"),
+        )
+        != (0, 1, 8, 0, 1)
+    ):
+        raise SystemExit(
+            f"FAIL: DM2 Amiga menu start missed its authentic first runtime: {probe}"
         )
 elif game_id == "theron":
     if (
