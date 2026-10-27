@@ -923,3 +923,51 @@ still does not provide CLUT source ownership or admit a Firestaff renderer.
 - `src/nexus/nexus_v1_engine.c` and `src/nexus/nexus_v1_title.c`.
 - `docs/NEXUS_RUNTIME_CAPTURE.md`.
 - [NEXUS_STRICT_FIDELITY_INVENTORY.md](NEXUS_STRICT_FIDELITY_INVENTORY.md).
+
+## Cold-boot title menu and retail menu navigation (2026-10-27)
+
+A rendered Ymir 0.4.2-dev run on TRV2 used the authentic Japanese retail
+disc and BIOS in an isolated profile. It loaded no emulator state or game
+save. After confirming the BIOS date/time screen, the deterministic schedule
+sent Start for two frames at capture-loop frames 9,000 and 13,000, then one
+frame at 15,000. At 16,000 capture-loop frames, the rendered retail screen is
+the native three-choice menu: `NEW GAME`, `CONTINUE`, and
+`CONFIGURATION`. This extends the clean-boot evidence beyond the title
+prompt; it remains an emulator capture, not a Firestaff menu implementation.
+
+The endpoint was saved as diagnostic emulator slot 3. Reloading that state
+and advancing two frames with no input leaves the main menu visible. From the
+same state, one frame of Down moves the selection from `NEW GAME` to
+`CONTINUE`. Two one-frame Down pulses followed by a one-frame A pulse open
+the native `CONFIGURATION` page, which displays Music, Sound, Game level,
+Monster gauge, and Exit. These short replay captures establish that Ymir's
+frame-indexed input route drives these visible menu transitions from this
+authentic retail state. The saved emulator state contains no game save.
+
+The final capture receipt reports VDP1 frame 13,108 and command cursor 168.
+These are distinct from the 16,000-loop-frame capture counter. The evidence
+bundle, screenshots, run log, VDP dumps, and saved state are retained on the
+external evidence disk at
+`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_rendered_20261027/`.
+The cold-boot menu screenshot SHA-256 is
+`2b64c0baeb8f006f68176eb1f70bc7e4c626db9ec77f2157a1d20daef89387ec`;
+the no-input replay is
+`4476cc68722372b9f57b237374801a12bcfdac6d2e8aa068f575aa8bc87960c4`;
+the Down replay is
+`70ef5517ba73309fb63722a2af3c553e7863e02ab10ebf1414bc19a1cf9548a1`;
+and the Configuration replay is
+`dffac2f786b92b543ddfed7b6eb969d50b5f2b7e115a5e1a2423537c01e18427`.
+All 24 retained files in the new bundle pass its SHA-256 manifest.
+
+The original run used `--debug --capture-boot-frames 16000
+--dump-memory --capture-screenshot --capture-save-state 3` with deterministic
+Start pulses at frames 9,000, 13,000, and 15,000. The navigation replays used
+`--load-state 3 --capture-frames` with no input, Down, or Down/Down/A
+respectively. The full commands and hashes are recorded in the external
+bundle README.
+
+This establishes a native retail menu and a narrow menu-navigation route in
+Ymir after a no-save cold boot. It does not prove the semantic purpose of
+every input across regions, a stable New Game transition to a playable level,
+Continue behavior with real save data, Firestaff menu rendering, or gameplay
+HUD/viewport parity. Those remain separate parity gates.
