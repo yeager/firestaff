@@ -666,12 +666,16 @@ A rendered 19,000-frame Ymir run used the authentic Japanese retail disc and
 Japanese IPL in the isolated TRV2 profile. It loaded no emulator save state or
 game save. The profile retained its BIOS setup configuration. With `--debug
 --fast-forward`, Start was held for two frames at capture-loop frames 9,000,
-13,000, and 15,000. The endpoint screenshot shows a dark, textured 3D
-dungeon-like scene, unlike the title-prompt image at frame 9,120 and the
-logo/title animation seen in a separate 14,500-frame run. This is visual
-progression evidence only: the separate captures do not prove which input
-caused the transition, identify a stable playable level, or establish the
-three-choice menu or HUD.
+13,000, and 15,000. The endpoint screenshot is an authentic full-screen frame from
+`DMV0.AVI`, the retail TrueMotion 1.0 video (320×180, approximately 15 fps,
+SHA-256
+`eafb4c638db9ffada9e929d82299562e0a9d3eb73fb2a47858c0de0dc0fa57bb`). Its
+centered 320×180 crop exactly matches decoded video frame 626 after Saturn
+RGB5 quantization: all 57,600 pixels match with zero error. The matching
+VDP1 mode-5 draw reads 320×180 pixels from VRAM byte offset `0x47c00` and
+places them at y=21–200. This confirms authentic video-frame presentation,
+likely the intro FMV in this boot sequence; it is not gameplay, a menu, or HUD
+evidence, and it does not prove which preceding button caused the transition.
 
 The final VDP1 capture is frame 15,907, with four command rows for that frame.
 Its trace retained 785,986 rows and reports zero dropped VDP1 entries. The SCU
