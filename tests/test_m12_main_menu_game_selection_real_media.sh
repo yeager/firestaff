@@ -31,6 +31,9 @@ declare -a original_archive_hashes=()
 verify_original_archives_unchanged() {
     local archive
     local index=0
+    if [[ ${#original_archives[@]} == 0 ]]; then
+        return 0
+    fi
     for archive in "${original_archives[@]}"; do
         if [[ $(firestaff_sha256_file "$archive") != "${original_archive_hashes[$index]}" ]]; then
             printf 'FAIL: original game archive changed during picker test: %s\n' "$archive" >&2
@@ -285,9 +288,28 @@ if [[ -f "$data_root/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip" ]]; then
     run_alternate_platform_picker_case dm2 \
         "$data_root/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip" 2 Amiga amiga-en
 fi
-if [[ -f "$data_root/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip" ]]; then
+dm2_mac_archive=""
+dm2_mac_archive_present=0
+# Keep this identity aligned with tests/test_dm2_v1_real_media_hash_lock.sh;
+# local collections may contain a stale same-named alias beside the retail ZIP.
+expected_dm2_mac_sha256=dfea2fe53988784bc1525d6ad90ab881d260b74cd6a855e0eb35d04001ecfe5b
+for candidate in \
+    "$data_root/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip" \
+    "$data_root/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip"; do
+    if [[ -f "$candidate" ]]; then
+        dm2_mac_archive_present=1
+        if [[ $(firestaff_sha256_file "$candidate") == "$expected_dm2_mac_sha256" ]]; then
+            dm2_mac_archive=$candidate
+            break
+        fi
+    fi
+done
+if [[ -n "$dm2_mac_archive" ]]; then
     run_alternate_platform_picker_case dm2 \
-        "$data_root/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip" 3 Macintosh mac-en-retail
+        "$dm2_mac_archive" 3 Macintosh mac-en-retail
+elif [[ $dm2_mac_archive_present == 1 ]]; then
+    echo 'FAIL: no DM2 Macintosh archive matches the locked retail SHA-256' >&2
+    exit 1
 fi
 if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} == 1 ]]; then
     if [[ $alternate_platform_cases == 0 ]]; then
