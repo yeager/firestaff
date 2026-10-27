@@ -350,17 +350,21 @@ run_default_root_game_picker_case() {
     local game_archive=$2
     local navigation=$3
     local edition=$4
+    local platform=${5:-FM Towns}
     local home="$scratch/default-root-$game_id-home"
-    local data_home="$scratch/default-data-home"
+    local data_home="$scratch/default-data-$game_id-home"
     local log="$scratch/default-root-$game_id.log"
-    local graphics_member='DATA/GRAPHICS.DAT'
+    local source_member=''
     local source_path
     local source_hash
 
-    if [[ "$game_id" == csb ]]; then
-        graphics_member='CDATA/GRAPHICS.DAT'
-    fi
-    source_path="$data_home/.firestaff/data/$game_id/$(basename "$game_archive")::$graphics_member"
+    case "$game_id" in
+        dm1|dm2) source_member='::DATA/GRAPHICS.DAT' ;;
+        csb) source_member='::CDATA/GRAPHICS.DAT' ;;
+        nexus|theron) ;;
+        *) printf 'FAIL: unsupported default-root game: %s\n' "$game_id" >&2; return 2 ;;
+    esac
+    source_path="$data_home/.firestaff/data/$game_id/$(basename "$game_archive")$source_member"
     source_hash=$(firestaff_sha256_file "$game_archive")
     mkdir -p "$home" "$data_home/.firestaff"
     if [[ ! -e "$data_home/.firestaff/data" ]]; then
@@ -380,8 +384,8 @@ run_default_root_game_picker_case() {
         return 1
     }
     if ! grep -Fq 'startup game=none mode=menu' "$log" ||
-       ! grep -Fq "launch phase=game-handoff mode=menu game=$game_id platform=FM Towns edition=$edition source=$source_path" "$log"; then
-        printf 'FAIL: default .firestaff/data menu did not launch authentic %s FM Towns media\n' "$game_id" >&2
+       ! grep -Fq "launch phase=game-handoff mode=menu game=$game_id platform=$platform edition=$edition source=$source_path" "$log"; then
+        printf 'FAIL: default .firestaff/data menu did not launch authentic %s %s media\n' "$game_id" "$platform" >&2
         cat "$log" >&2
         return 1
     fi
@@ -389,7 +393,7 @@ run_default_root_game_picker_case() {
         printf 'FAIL: default .firestaff/data menu changed the original %s archive\n' "$game_id" >&2
         return 1
     fi
-    printf 'PASS: default .firestaff/data menu launched authentic %s FM Towns\n' "$game_id"
+    printf 'PASS: default .firestaff/data menu launched authentic %s %s\n' "$game_id" "$platform"
 }
 
 run_default_root_game_picker_case dm1 "$dm1_archive" \
@@ -398,6 +402,23 @@ run_default_root_game_picker_case csb "$csb_archive" \
     'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en
 run_default_root_game_picker_case dm2 "$dm2_archive" \
     'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-ja
+
+# The other two games must resolve from the same documented default root.
+# Their retail startup media is a loose binary rather than a platform archive.
+if [[ -f "$data_root/nexus/DM.BIN" ]]; then
+    run_default_root_game_picker_case nexus "$data_root/nexus/DM.BIN" \
+        'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
+        nexus-saturn-jp Saturn
+else
+    echo 'SKIP: authentic Nexus Saturn DM.BIN is unavailable for default-root startup'
+fi
+if [[ -f "$data_root/theron/TQUS02.bin" ]]; then
+    run_default_root_game_picker_case theron "$data_root/theron/TQUS02.bin" \
+        'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
+        pce-en 'PC Engine'
+else
+    echo 'SKIP: authentic Theron PC Engine TQUS02.bin is unavailable for default-root startup'
+fi
 
 # Nexus and Theron use their original loose media in this data root. These
 # cases exercise the same five-game launcher selector without requiring the
