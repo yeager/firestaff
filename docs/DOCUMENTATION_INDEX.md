@@ -128,7 +128,7 @@ release, run the focused tests for the affected game, check Markdown links and
 run the build/CI commands in [CI.md](CI.md). Do not commit original game data,
 emulator saves, private capture logs or generated placeholder art.
 
-**Last reviewed:** 2026-10-27 (main `fd5912a0`). The current status reflects
+**Last reviewed:** 2026-10-27 (main `378f9d20`). The current status reflects
 the source and authenticated-media evidence recorded on the linked status and
 per-game work-log pages. Each receipt remains bounded to its cited edition,
 route and test; it does not imply complete parity.
