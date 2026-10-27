@@ -4,22 +4,22 @@ on:
   push:
     branches: [main]
     paths: ["docs/**", "README.md", "scripts/prepare_pages.py", "scripts/restore_pages_literals.py", ".github/workflows/pages.yml"]
+  pull_request:
+    paths: ["docs/**", "README.md", "scripts/prepare_pages.py", "scripts/restore_pages_literals.py", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: pages
+  group: pages-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
+    permissions:
+      contents: read
+      pages: read
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
@@ -36,6 +36,18 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./_site
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-24.04
+    steps:
       - id: deployment
         uses: actions/deploy-pages@v4
         with:
