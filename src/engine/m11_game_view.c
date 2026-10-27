@@ -37145,6 +37145,21 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             Nexus_V1_StartupTitleExecution execution;
             Nexus_V1_StartupHostActionReceipt receipt;
             M11_GameInputResult result;
+            /* Validate the next-screen evidence before applying the action
+             * receipt: applying it can clear title_active, which would make
+             * a post-transition check miss the blocked route. */
+            if ((input == M12_MENU_INPUT_ACCEPT ||
+                 input == M12_MENU_INPUT_ACTION) &&
+                nexus_title_full_boot_start_ready(
+                    state->nexusState.title_frame) &&
+                (!state->nexusState.startup_host_capture_ready ||
+                 !state->nexusState.startup_menu_capture_uses_real_assets ||
+                 !state->nexusState.startup_title_menu_capture_route_joined ||
+                 !state->nexusState.startup_host_route_capture_matrix_ready ||
+                 !state->nexusState.startup_host_route_capture_matrix_exact)) {
+                m11_set_status(state, "ASSETS", "NEXUS MENU CAPTURE REQUIRED");
+                return M11_GAME_INPUT_REDRAW;
+            }
             m11_nexus_runtime_startup_snapshot(state, &snapshot);
             if (!nexus_v1_launcher_startup_execute_title_firestaff_input_from_snapshot(
                     &snapshot,
@@ -37154,20 +37169,6 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 return M11_GAME_INPUT_IGNORED;
             }
             result = m11_nexus_apply_startup_action_receipt(state, &receipt);
-            /* TITLE.CG timing alone does not authorize the next screen. The
-             * Saturn MENU.BPK route must have a real-asset capture joined to
-             * this exact host caller before ACCEPT can leave the title. */
-            if (input == M12_MENU_INPUT_ACCEPT &&
-                state->nexusState.title_active &&
-                nexus_title_full_boot_start_ready(state->nexusState.title_frame) &&
-                (!state->nexusState.startup_host_capture_ready ||
-                 !state->nexusState.startup_menu_capture_uses_real_assets ||
-                 !state->nexusState.startup_title_menu_capture_route_joined ||
-                 !state->nexusState.startup_host_route_capture_matrix_ready ||
-                 !state->nexusState.startup_host_route_capture_matrix_exact)) {
-                m11_set_status(state, "ASSETS", "NEXUS MENU CAPTURE REQUIRED");
-                return M11_GAME_INPUT_REDRAW;
-            }
             return result;
         }
         if (state->nexusState.startup_save_select_active) {
