@@ -1,6 +1,6 @@
 # Parity Evidence
 
-> **Status reviewed 2026-09-09.** Evidence is cross-game and bounded. A green
+> **Status reviewed 2026-10-27.** Evidence is cross-game and bounded. A green
 > parser or fixture test is not automatically a real-media runtime claim.
 
 ## What Are Pass Documents?
@@ -107,6 +107,14 @@ palette bank 0 and hardware scroll origin `(0,0)`. It is intentionally not a
 retail asset-to-VDP join; STABG stays no-draw until that separate proof exists.
 The full 512×256 indexed NBG1 span and its 256-entry CRAM are also decoded
 from that authentic capture in native code, but remain capture-only evidence.
+
+The 2026-10-27 English-version cold-boot receipt verifies a Ymir reference
+checkpoint at the native three-choice title menu. Replaying the captured
+same-frame display state produces an image that matches the screenshot
+pixel-for-pixel. The source join has 126 informative byte matches among 137
+textured draws; 11 zero-filled spans are excluded. This is partial source
+provenance and emulator evidence, not Firestaff menu-rendering, input or
+playable-game evidence. See the [English cold-boot receipt](../nexus_startup.md#english-cold-boot-reaches-the-native-title-menu-2026-10-27).
 
 The 2026-09-04 `nexus-title-end-to-end-r6` session adds one hash-bound execution
 window for retail disc identity, the exact 17,408 Track 1 FIFO words belonging

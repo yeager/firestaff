@@ -1,10 +1,13 @@
 # Firestaff Wiki
 
-> **Status reviewed 2026-10-24.** Firestaff has five active game targets.
+> **Status reviewed 2026-10-27 (main `e70c460d`).** Firestaff has five active game targets.
 > DM1 PC 3.4 V1 has a playable source-owned route; CSB and DM2 have bounded
 > native real-media routes, Theron reaches a loaded JP dungeon with native ticks
-> and rendered frames, and Firestaff presents admitted Nexus MAPD title assets;
-> original-emulator comparison and full Saturn presentation remain unverified.
+> and rendered frames, and Firestaff presents admitted Nexus MAPD title assets.
+> Ymir reaches the Japanese retail and English-version Nexus title menus, with a
+> pixel-exact English screenshot replay, but this is reference evidence and
+> Firestaff still does not start Nexus as a playable game. Full Saturn
+> presentation remains unverified.
 > See [Project status](https://github.com/yeager/firestaff/blob/main/docs/PROJECT_STATUS.md),
 > [preservation status](../PRESERVATION_STATUS_2026-08-11.md) and the
 > [documentation index](../DOCUMENTATION_INDEX.md) for the canonical matrix.

@@ -4,12 +4,13 @@ Firestaff is a clean-room engine for the Dungeon Master games. It reads the
 original files you own, identifies each edition by its content hash and keeps
 that data separate from the program.
 
-Firestaff can start verified original media for Dungeon Master, Chaos Strikes
-Back and Dungeon Master II: Skullkeep across their supported platforms.
-Coverage is deliberately conservative: a route is available only when the
-selected edition has a verified native handoff. Full campaign, save and visual
-parity remain active work, especially for Chaos Strikes Back, Nexus and
-Theron's Quest.
+Firestaff has bounded native routes for Dungeon Master, Chaos Strikes Back,
+Dungeon Master II: Skullkeep and Theron's Quest using verified original media.
+Nexus is available in the launcher and has Saturn data and asset support, but
+does not yet reach playable gameplay through Firestaff. Coverage is deliberately
+conservative: a route is available only when the selected edition has a
+verified native handoff. Full campaign, save and visual parity remain active
+work, especially for Chaos Strikes Back, Nexus and Theron's Quest.
 
 [![CI](https://github.com/yeager/firestaff/actions/workflows/verify.yml/badge.svg)](https://github.com/yeager/firestaff/actions/workflows/verify.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -20,7 +21,7 @@ Theron's Quest.
 
 ## Current status
 
-The table was reviewed on 2026-10-24. It reports what has been exercised
+The table was reviewed on 2026-10-27. It reports what has been exercised
 with real media, not a claim of complete game parity.
 
 Firestaff detects real media and exposes only paths with a verified handoff; it
@@ -36,7 +37,7 @@ separates source/disassembly evidence, real-media receipts and open routes.
 | Dungeon Master | PC DOS, Atari ST, Amiga and FM Towns startup and selected dungeon routes have real-media coverage. The PC 3.4 Hall of Champions candidate panel is rendered from authenticated C040/C026 assets. Further gameplay and visual parity work continues. |
 | Chaos Strikes Back | Amiga, Atari ST and FM Towns startup routes have real-media coverage. FM Towns uses its own authenticated entrance palette and MINI.DAT bootstrap state. Campaign, saves and presentation parity are still being completed. |
 | Dungeon Master II: Skullkeep | DOS, Amiga, FM Towns and Macintosh have real-media startup and selected runtime coverage. Amiga reaches its initial GDAT-backed M11 frame through the normal start menu with source movement covered. Broader input, save, native display/audio and dungeon-composition parity remain open per edition. |
-| DM Nexus | Saturn disc parsing and bounded MAPD title-asset presentation work from the original CUE/BIN. Ymir reference evidence now verifies a no-save Japanese retail cold boot to the native title menu and the New Game route to a native 3D corridor viewport. Full Firestaff title composition, menu rendering/control, stable gameplay, HUD and dungeon presentation remain capture-gated. |
+| DM Nexus | Saturn disc parsing and bounded MAPD title-asset presentation work from the original CUE/BIN. Ymir reference evidence verifies a no-save Japanese retail cold boot and a separate English-version disc-image cold boot to the native title menu; a separate Japanese New Game replay reaches the native 3D corridor viewport. The English screenshot replay matches the Ymir screenshot pixel-for-pixel, and its source join has 126 informative matches among 137 textured draws. These are emulator results, not Firestaff menu or gameplay support. Firestaff title composition, menu rendering/control, stable gameplay, HUD and dungeon presentation remain capture-gated. |
 | Theron's Quest | Firestaff runs Theron in its native C/SDL runtime. Authentic US and Japanese Track 02 media reach bounded native routes, and source-only loaders verify all seven dungeons in both regions. Three repeated native macOS runs reached a loaded dungeon with nonzero ticks and presented frames; the Firestaff-presented capture was nonblack, but has not been paired with an original-emulator capture. Authentic graphics-bank binding, tile mapping, palette, transitions, combat, audio and save parity remain open. |
 
 ### Dungeon Master II: Skullkeep
@@ -112,9 +113,10 @@ Firestaff's SDL input path. The runtime reported about 2.8 game ticks/s and
 5 rendered/presented frames/s in one interval. A follow-up native Linux Debug
 run on trv2 used Xvfb only as the SDL display and authentic JP Rev. 1 Track 02;
 it reached `theron-runtime`, loaded map 0 and advanced 73 game ticks in 18
-seconds. No emulator ran the game. The presented-surface capture remains
-black: original graphics-bank binding, palette and dungeon tile mapping are
-not yet connected to the renderer. These runs confirm native startup, input
+seconds. No emulator ran the game. The latest Firestaff-presented capture is
+nonblack, but has not been paired with an original-emulator capture; original
+graphics-bank binding, palette and dungeon tile mapping are not yet connected
+to a validated renderer. These runs confirm native startup, input
 and tick-loop progress, not a visually playable game or complete parity.
 Source-only verification of all seven dungeon records establishes data
 admission, not campaign parity. Native movement, transitions, combat, audio,
@@ -282,13 +284,16 @@ music while preserving sound effects and UI audio. `--no-music` applies the
 same choice for a direct CLI launch; `--music` explicitly re-enables it.
 
 Nexus presents admitted retail MAPD title assets from the original CUE/BIN.
-Ymir reference evidence confirms a no-save Japanese retail cold boot to the
-native title menu and a diagnostic replay from New Game to a native 3D corridor
-viewport. These are emulator results; they do not establish Firestaff's full
-Saturn title composition or menu rendering/control. PR #19 contains a
-capture-only NBG1 tilemap decoder fix with an authentic-frame test. Firestaff's
-menu, HUD, viewport and dungeon routes remain fail-closed until their real
-consumer ownership and presentation evidence is bound.
+Ymir reference evidence confirms a no-save Japanese retail cold boot and a
+separate English-version disc-image cold boot to the native title menu, plus a
+separate Japanese diagnostic replay from New
+Game to a native 3D corridor viewport. Replaying the English screenshot from
+the captured frame reproduces it pixel-for-pixel; the English source join has
+126 informative matches among 137 textured draws, with 11 zero-filled spans
+excluded. These are emulator results; they do not establish Firestaff's full
+Saturn title composition or menu rendering/control. Firestaff's menu, HUD,
+viewport and dungeon routes remain fail-closed until their real consumer
+ownership and presentation evidence is bound.
 
 Firestaff never delegates Nexus startup or gameplay to Mednafen (or another
 emulator); emulator tooling is used only outside the product to obtain and

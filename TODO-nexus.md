@@ -14,29 +14,30 @@ those bytes to the authentic Saturn save/load implementation.
 
 The current workstation's authentic `~/.firestaff/data/nexus/MENU.BPK` has
 SHA-256 `f2f78dddfe37a5ff414775ae888f164624e987059934b034ba36299cc769d2ca`,
-the English retail revision admitted by
+the authenticated English-version image admitted by
 `scripts/analyze_nexus_vdp1_source_join.py`. The deterministic Ymir title-menu
 capture below uses the Japanese disc and Japanese BIOS. Its VDP1-to-resource
 join therefore cannot establish source ownership for the installed English
 menu archive. A separate controlled 2026-10-27 Ymir cold boot used the
-authentic English retail disc and USA 1.01a BIOS and reached the native
-three-choice title menu. Its frame-13106 VDP1 trace is complete, with 178
-command rows and no drops. The source join finds informative authentic retail
+authenticated English-version disc image and USA 1.01a BIOS and reached the
+native three-choice title menu. Its frame-13106 VDP1 trace is complete, with 178
+command rows and no drops. The source join finds informative source
 bytes for 126 of 137 textured draws; the other 11 spans are zero padding and
 are excluded. This remains partial source evidence, not complete surface,
 palette, ordering, or consumer ownership.
 
-In that English capture, 86 of 162 PRS3 `MENU.BPK` surfaces have direct byte
-matches in VDP1 VRAM, but none of 137 textured command source starts falls
+Replaying the English screenshot from the captured same-frame state reproduces
+every RGB pixel exactly. In that English capture, 86 of 162 PRS3 `MENU.BPK`
+surfaces have direct byte matches in VDP1 VRAM, but none of 137 textured command source starts falls
 within those ranges. The menu screenshot confirms that Ymir displays the
-English retail title menu, but the exact visible asset owner and its CLUT are
+English-version title menu, but the exact visible asset owner and its CLUT are
 not identified. The Ymir log records `0DMSTRT.BIN` and a CD Block soft reset,
 but no `DM.BIN` read event. Separately, an exact 230,669-byte prefix of the
 authentic 555,144-byte English `DM.BIN` is present at offset `0x10000` in the
 WRAM snapshot. This proves prefix residency, not that the whole file was
 loaded or how the logged read path works. The English capture therefore
-establishes a retail cold-boot-to-menu route, not Firestaff menu rendering or
-input, Continue/save loading, or playable-level parity. Keep the English
+establishes an English-version emulator cold-boot-to-menu route, not Firestaff
+menu rendering or input, Continue/save loading, or playable-level parity. Keep the English
 renderer gate closed and keep the Japanese capture as separate regional
 evidence. Capture hashes, output and reproduction commands are in
 [`docs/nexus_startup.md`](docs/nexus_startup.md#english-cold-boot-reaches-the-native-title-menu-2026-10-27);
@@ -74,8 +75,8 @@ negative result; neither capture authorizes renderer admission.
 An earlier cold-start capture requested 400 frames but retained only 48 before
 its 45-second timeout, before its scheduled Start input at capture frame 300.
 These earlier captures are incomplete or negative provenance observations.
-The 2026-10-27 controlled English capture now establishes that authentic retail
-cold boot reaches the three-choice title menu, with a complete VDP1 command
+The 2026-10-27 controlled English-version capture now establishes that this
+disc image cold boots to the three-choice title menu, with a complete VDP1 command
 trace and a partial source join. It does not identify which scheduled input
 caused the transition or bind the visible menu to its VDP1 sources and CLUTs.
 Keep the production menu gate closed until that source/display ownership is

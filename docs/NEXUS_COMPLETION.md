@@ -823,6 +823,18 @@ the emulator evidence gap from system startup through the native title menu.
 Firestaff menu rendering, playable-level entry, real save loading, HUD, and
 gameplay parity remain unverified. The exact input schedule, screenshot hash,
 complete raw memory dump, and reproduction command are recorded in
-[`nexus_startup.md`](nexus_startup.md#deterministic-cold-boot-reaches-the-native-title-menu-2026-10-27).
+[`nexus_startup.md`](nexus_startup.md#deterministic-cold-boot-reaches-the-native-title-prompt-2026-10-27).
 The Ymir controller scheduler is submitted separately in
 [yeager/Ymir PR #1](https://github.com/yeager/Ymir/pull/1).
+
+## English-version cold-boot reference (2026-10-27)
+
+A separate authenticated English-version disc-image cold boot reaches the same
+native three-choice title menu without an emulator state or game save. Replaying
+the captured same-frame VDP1/VDP2 display state reproduces the retained
+640×448 screenshot pixel-for-pixel. The source join has 126 informative matches
+among 137 textured draws; 11 zero-filled spans are excluded. The visible menu
+asset and CLUT owner remain unidentified, so this reference does not open
+Firestaff's production menu or renderer gate. It also does not establish
+playable-level entry, save loading, HUD or gameplay parity. Details and hashes
+are in [the English cold-boot receipt](nexus_startup.md#english-cold-boot-reaches-the-native-title-menu-2026-10-27).

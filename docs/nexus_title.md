@@ -53,7 +53,7 @@ format validation only and does not authorize Saturn presentation.
 ### Retail MAPD preservation observation
 
 Decoding the five authenticated 512×224 indexed maps from the external
-English retail corpus produces five distinct source images whose visible
+English-version corpus produces five distinct source images whose visible
 letterforms are `N`, `E`, `X`, `U`, and `S`, respectively. This identifies the
 content of the five MAPD planes; it does not establish their Saturn display
 order, frame timing, VDP2 layer assignment, or executable title-state owner.

@@ -1,9 +1,18 @@
 # Game and platform status
 
-**Last full review: 2026-10-24.** This is the
+**Last full review: 2026-10-27, against main `e70c460d`.** This is the
 operational status matrix. It separates media recognition, verified runtime
 slices and end-to-end playability. A row marked as supported does not mean
 that every menu, save format or visual parity gate is complete.
+
+The preceding `main` revision `e70c460d` had successful GitHub Actions main CI run
+[`40487479502`](https://github.com/yeager/firestaff/actions/runs/40487479502)
+and Pages deployment run
+[`40487479478`](https://github.com/yeager/firestaff/actions/runs/40487479478)
+completed successfully after PR #142 merged. These checks establish that
+revision's build, test and documentation deployment status; they do not
+establish that all five games are playable. The original-media startup sweep
+below is dated history and has not been rerun at that revision.
 
 On 2026-10-20, the current `main` commit `f97398d8` passed another local
 original-media startup sweep. DM1 passed the Atari ST 1.2, Amiga 3.6, English
@@ -309,7 +318,7 @@ queue acceptance, not audible hardware or retail sound parity.
 
 | Platform | Status | Current scope | Open boundary |
 |---|---|---|---|
-| Sega Saturn Japanese | **Verified bounded title-asset route** | Authentic CUE/BIN media is retained as the sole source owner. Firestaff decodes the retail `TITLE.BIN`/`TITLE.CG` MAPD planes, selector sequence and BGR555 palettes in memory and presents those bounded title assets through CLI and start-menu selection. Ymir reference evidence now verifies direct retail cold boot to the native title menu. Merged PR #19 adds a capture-only NBG1 tile-fetch address correction tested on an authentic Japanese startup frame; none of this establishes full Firestaff title composition or menu parity. Disc parsing, CDDA ownership, DMDF/DGN/MNS/PRS3 decoding and capture receipts remain separately source-bound. | Full Firestaff Saturn title composition and title-to-menu parity; same-revision consumer evidence for menu/face, HUD and dungeon display; native event/audio playback and full gameplay. |
+| Sega Saturn | **Verified bounded title-asset route; not playable through Firestaff** | Authentic CUE/BIN media is retained as the sole source owner. Firestaff decodes the retail `TITLE.BIN`/`TITLE.CG` MAPD planes, selector sequence and BGR555 palettes in memory and presents those bounded title assets through CLI and start-menu selection. Ymir reference evidence verifies a Japanese retail and an English-version disc-image no-save cold boot to the native three-choice title menu; the separate Japanese New Game replay reaches a native 3D corridor viewport. Replaying the English screenshot from its captured frame is pixel-exact. Its source join has 126 informative matches among 137 textured draws; 11 zero-filled spans are excluded. These are emulator checkpoints, not Firestaff menu or gameplay evidence. Merged PR #19 adds a capture-only NBG1 tile-fetch address correction tested on an authentic Japanese startup frame. Disc parsing, CDDA ownership, DMDF/DGN/MNS/PRS3 decoding and capture receipts remain separately source-bound. | Full Firestaff Saturn title composition and title-to-menu parity; same-revision consumer evidence for menu/face, HUD and dungeon display; native event/audio playback and full gameplay. |
 | Saturn demo or fan translations | **Preservation** | Classified separately from the canonical Japanese retail route. | Independent media and runtime proof. |
 
 ## Theron's Quest

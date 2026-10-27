@@ -18,8 +18,8 @@ source for missing exact members.
 
 | Area | Verified | Remaining |
 |---|---|---|
-| Startup | TITLE/MAPD, LOGOBG, WARNING/GAMEOVER/STABG, FACE, and FONT bytes; NBG1 tile addresses decoded in an authentic capture by merged PR #19; Ymir reference confirms direct Japanese retail cold boot to the native title menu | Firestaff Saturn VDP2 asset ownership, timing, text mapping, full title composition, and title-to-menu parity |
-| Menu | MENU.BPK/BPPK, 162 PRS3 surfaces, and pixel decoding | CLUT, VDP1 upload, placement, and menu sequence |
+| Startup | TITLE/MAPD, LOGOBG, WARNING/GAMEOVER/STABG, FACE, and FONT bytes; NBG1 tile addresses decoded in an authentic capture by merged PR #19; Japanese retail and English-version Ymir cold boots reach the native title menu; the English screenshot replay is pixel-exact and its source join has 126 informative matches among 137 textured draws | Firestaff Saturn VDP2 asset ownership, timing, text mapping, full title composition, and title-to-menu parity; emulator evidence does not make Nexus playable through Firestaff |
+| Menu | MENU.BPK/BPPK, 162 PRS3 surfaces, and pixel decoding; a Ymir English-version reference screenshot replay matches its capture pixel-for-pixel | CLUT, VDP1 upload, placement, and menu sequence; the visible menu is not yet bound to MENU.BPK or Firestaff's production renderer |
 | HUD | STABG tiles/palette and DM.BIN hit rectangles | input/VDP consumer and runtime-state binding |
 | Viewport | DGN Structure1B/2 and MNS/DMDF census | Structure3 face owner, mesh transform, VDP1 command/texture use |
 | Runtime | SLEV/SAL/MAP bounded receipts | event/action dispatch and sound selector |

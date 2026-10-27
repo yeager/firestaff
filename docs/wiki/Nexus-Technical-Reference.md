@@ -1,7 +1,10 @@
 # Dungeon Master Nexus Technical Reference
 
-> **Status reviewed 2026-10-24.** The retail Japanese CUE/BIN drives a native
-> MAPD title sequence. A capture-only NBG1 tile-fetch address correction is
+> **Status reviewed 2026-10-27.** Japanese retail and English-version Ymir cold boots
+> reach the native title menu; the English screenshot replay is pixel-exact.
+> This is reference-emulator evidence only and does not make Nexus playable
+> through Firestaff. The retail Japanese CUE/BIN drives a native MAPD title
+> sequence. A capture-only NBG1 tile-fetch address correction is
 > verified against an authentic startup frame in merged PR #19. Menu, HUD,
 > dungeon composition and full playability remain open because each needs its
 > own source-bound display consumer evidence.

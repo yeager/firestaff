@@ -65,7 +65,7 @@ open visual, input, save, audio or campaign-parity rows below.
 | Chaos Strikes Back | **Verified start route** — STX title→FTLCODE, CLI and menu | **Verified start route** — EN/JP F31 package | **Not released** | **Verified start route** — A31E/A31M ZIP→ADF, CLI and menu | Outside target | Outside target |
 | Dungeon Master II: Skullkeep | Not released | **Verified start route** — authenticated Towns startup/input/CD-audio slices | **Verified start route** — hash-verified GDAT/G1 startup/runtime | **Verified start route** — original installer media, title/New Game/runtime | Outside target | Outside target |
 | Theron's Quest | Outside target | Outside target | Outside target | Outside target | **Verified start route** — JP and US Track 02 CUE/BIN, CLI and menu | Outside target |
-| Dungeon Master Nexus | Outside target | Outside target | Outside target | Outside target | Outside target | **Verified bounded MAPD asset presentation** — retail JP CUE/BIN assets are decoded and presented; Ymir verifies retail cold boot to native title menu; Firestaff title composition/menu parity, HUD and dungeon remain unverified |
+| Dungeon Master Nexus | Outside target | Outside target | Outside target | Outside target | Outside target | **Verified bounded MAPD asset presentation; not playable** — retail CUE/BIN assets are decoded and presented; Japanese retail and English-version Ymir cold boots reach the native menu, and the English screenshot replay is pixel-exact. These are emulator references; Firestaff title composition/menu parity, HUD and dungeon remain unverified |
 
 `ZIP→ADF` means nested archives are traversed in memory, not unpacked to
 disk. CSB's PC-shaped CSBWin files are reverse-engineering evidence, never

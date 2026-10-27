@@ -1081,9 +1081,9 @@ Raw capture bytes remain outside Git under
 reproduction commands are recorded in
 [`nexus_v1_menu_candidate_source_join_20261027`](../parity-evidence/verification/nexus_v1_menu_candidate_source_join_20261027/README.md).
 
-## English retail boot attempt and menu-asset residency (2026-10-27)
+## English-version boot attempt and menu-asset residency (2026-10-27)
 
-A separate run used the authentic English retail ISO and the installed system
+A separate run used the authenticated English-version ISO and the installed system
 Ymir executable on TRV2. The earlier empty-profile attempt stalled before
 reading the game startup file. A follow-up profile reused the Japanese
 profile's saved SMPC persistence bytes as emulator setup state, with the
@@ -1119,7 +1119,7 @@ only as an incomplete capture receipt.
 
 ## English cold boot reaches the native title menu (2026-10-27)
 
-A fresh controlled run used the authentic English retail disc, USA 1.01a IPL
+A fresh controlled run used the authenticated English-version disc image, USA 1.01a IPL
 ROM, and the installed Ymir 0.4.2-dev executable on TRV2 with debug tracing
 enabled. The ISO SHA-256 is
 `16786e6165d8cbf7f6394dd9bc7171fbb561c1ba40b77ad7cba3c275fde2804e`, the CUE
@@ -1131,7 +1131,7 @@ emulator profile reused Japanese SMPC persistence bytes for setup; no emulator
 save state was loaded and no game save was present. No disc or save data was
 modified.
 
-The retained screenshot shows the English retail title screen and all three
+The retained screenshot shows the English-version title screen and all three
 native choices: `NEW GAME`, `CONTINUE`, and `CONFIGURATION`. Its SHA-256 is
 `341cb38191bfbb563912d6ef0c6e2989d51eb6136d48fcffee197cafd7264810`. A
 read-only replay of the same-frame VDP1 display framebuffer, NBG0 bitmap, VDP2
@@ -1161,7 +1161,7 @@ at raw dump offset `0x10000`; this proves that this prefix was resident in WRAM,
 not that the full file was loaded or that the log's read path is understood.
 The retained evidence is stored outside Git in the local external capture
 bundle.
-This establishes the English retail emulator's cold-boot-to-menu path. It does
+This establishes the English-version emulator's cold-boot-to-menu path. It does
 not establish Firestaff menu rendering or input, Continue/save loading, or
 playable-level, viewport, or HUD parity. See the
 [English cold-boot evidence receipt](../parity-evidence/verification/nexus_english_coldboot_menu_20261027/README.md)

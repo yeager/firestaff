@@ -1,5 +1,19 @@
 # Firestaff DONE — Nexus
 
+## 2026-10-27 — Document English-version Ymir menu reference
+
+- Recorded the authenticated English-version no-save Ymir cold boot to the
+  native three-choice menu alongside the Japanese retail checkpoints.
+- A replay of the captured same-frame state reproduces the English screenshot
+  pixel-for-pixel. The source join has 126 informative matches among 137
+  textured draws; 11 zero-filled spans are excluded. This remains partial
+  provenance and does not identify the visible menu asset/CLUT owner.
+- Updated the README, status matrices, startup gap analysis, Nexus reference
+  pages and wiki summaries. They distinguish the English-version disc image
+  from the Japanese retail release and state that Nexus is not yet playable
+  through Firestaff. Capture hashes and reproduction details remain in
+  `docs/nexus_startup.md`; the raw capture stays outside Git.
+
 ## 2026-10-25 — Desktop input build and authentic menu-route verification
 
 A clean Linux Release build of `firestaff` completed with the unified desktop
