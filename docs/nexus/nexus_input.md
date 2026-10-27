@@ -73,9 +73,11 @@ actions remain disabled until those runtime joins are verified.
 
 ## Firestaff title keyboard ingress
 
-Firestaff now maps Enter and Space to the Nexus startup Action while the
-Nexus title is active, including both SDL key-event paths. At the ready title
-prompt, Action opens an internal retail-menu state with New Game selected;
+Firestaff maps F, Enter, and Space to the Nexus startup Action while the
+Nexus title is active, including both SDL key-event paths. F matches the
+observed Ymir desktop binding for Saturn Start; Enter and Space are host
+keyboard aliases. At the ready title prompt, Action opens an internal
+retail-menu state with New Game selected;
 Down advances through the two observed selections. The title-menu state is
 kept separate from Firestaff's generic save/champion menu, and the shared
 Firestaff save mask is not treated as Saturn BKR availability. This input

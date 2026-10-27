@@ -17,6 +17,10 @@ int main(void) {
     /* Nexus uses its captured D-pad turn mapping for A/D and keeps the shared
      * DM1 bindings for the remaining movement keys. */
     if (!expect(M11_NexusStartupMenuInputFromScancode(
+                    SDL_SCANCODE_F, 1) == M12_MENU_INPUT_ACTION,
+                "Nexus F should activate the retail title menu"))
+        return 1;
+    if (!expect(M11_NexusStartupMenuInputFromScancode(
                     SDL_SCANCODE_RETURN, 1) == M12_MENU_INPUT_ACTION,
                 "Nexus Enter should activate the retail title menu"))
         return 1;

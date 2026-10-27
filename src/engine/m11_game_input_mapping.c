@@ -118,6 +118,7 @@ M12_MenuInput M11_NexusStartupMenuInputFromScancode(int scancode,
         return M12_MENU_INPUT_NONE;
     }
     switch ((SDL_Scancode)scancode) {
+        case SDL_SCANCODE_F:
         case SDL_SCANCODE_RETURN:
         case SDL_SCANCODE_KP_ENTER:
         case SDL_SCANCODE_SPACE:
