@@ -1,3 +1,20 @@
+2026-10-27 authentic CSB Amiga A31E archive and mixed-picker retest: the
+installed `Chaos Strikes Back (FTL).zip` is a 901,330-byte ZIP wrapper around
+the original `Chaos Strikes Back (FTL) A.adf`, not the separately locked
+1,159,589-byte archive wrapper. Firestaff's native scanner identified the
+embedded original Amiga `GRAPHICS.DAT` as MD5
+`21197b1d4994fd835c403d5a33dcac2b`; the boot probe reported
+`variant=csb-amiga-a31e`. `test_csb_v1_amiga_adf_archive_cli_boot.sh` passed
+the authentic ZIP-to-ADF route through the source entrance, menu launch and
+native movement. The mixed-platform portion of
+`test_m12_main_menu_game_selection_real_media.sh` initially rejected the
+locally installed wrappers because its accepted outer ZIP hashes were stale.
+The test now admits the known wrapper hashes only; the subsequent original-
+media menu run passed DM1 PC, Atari ST and Amiga, CSB Amiga and Atari ST, and
+DM2 PC selection. Archive hashes were checked before and after each handoff.
+These SDL dummy runs prove source selection and launch routing, not native
+display or visual parity.
+
 2026-10-27 Atari ST M12/M11 handoff regression bound: the real-media
 `csb_v1_atari_st_m12_m11_real_media_handoff` test stopped after 800 source
 VBlanks, while the selected authentic ANIMATE.SCR trace waits 2036. The title

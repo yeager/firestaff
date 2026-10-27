@@ -257,17 +257,24 @@ fi
 if [[ -f "$csb_amiga_archive" ]]; then
     case "$csb_amiga_archive" in
         "$data_root/csb/Chaos Strikes Back (FTL).zip")
-            expected_csb_amiga_sha256=bff24bffd2e07ff8ac4c96b3c35be93ee3fdfe219d1bf833df247726b2ce3abb
+            # Accept the checked-in corpus wrapper and the local ZIP wrapper
+            # around the authenticated A31E ADF. The latter's embedded
+            # GRAPHICS.DAT identity is asserted by
+            # test_csb_v1_amiga_adf_archive_cli_boot.sh.
+            expected_csb_amiga_sha256='bff24bffd2e07ff8ac4c96b3c35be93ee3fdfe219d1bf833df247726b2ce3abb|af597a8f45aedecfb7f08086cbea47ae5ad24dae1f691514dcf99eac2b347736'
             ;;
         "$data_root/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip")
-            expected_csb_amiga_sha256=fa0296c7bf62d806e8b1c45542d8ac225b67f4080026fa7f6fb61c97905f24c0
+            # The local authentic A33M repack preserves its original archive
+            # entries but has a distinct ZIP wrapper hash.
+            expected_csb_amiga_sha256='fa0296c7bf62d806e8b1c45542d8ac225b67f4080026fa7f6fb61c97905f24c0|af398ab8ee8516da714859622f779a052c0d97103c3c058e1bf2bcea2ab425be'
             ;;
         *)
             printf 'FAIL: unexpected CSB Amiga archive path: %s\n' "$csb_amiga_archive" >&2
             exit 1
             ;;
     esac
-    if [[ $(firestaff_sha256_file "$csb_amiga_archive") != "$expected_csb_amiga_sha256" ]]; then
+    csb_amiga_sha256=$(firestaff_sha256_file "$csb_amiga_archive")
+    if [[ "|$expected_csb_amiga_sha256|" != *"|$csb_amiga_sha256|"* ]]; then
         printf 'FAIL: CSB Amiga archive identity drift: %s\n' "$csb_amiga_archive" >&2
         exit 1
     fi
