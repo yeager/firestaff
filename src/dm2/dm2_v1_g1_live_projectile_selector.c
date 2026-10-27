@@ -153,4 +153,3 @@ int dm2_v1_g1_live_flying_item_selector_receipt(
     if (out_selector) *out_selector = selector;
     return 1;
 }
-
