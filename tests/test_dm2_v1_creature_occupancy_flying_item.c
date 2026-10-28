@@ -472,6 +472,129 @@ static void test_indoor_render_receipts_accumulate(void)
           s.last_frame_composition.indoor_draw_order_fallback_creature_count == 1);
 }
 
+static void test_live_missile_draw_order_and_creature_replay(void)
+{
+    DM2_V1_IndoorLiveMissilePlan missiles;
+    DM2_V1_IndoorLiveMissileDrawPlan draws;
+    uint8_t creature_draw_success[
+        DM2_V1_INDOOR_STATIC_OBJECT_PASS_COUNT]
+        [DM2_V1_INDOOR_STATIC_OBJECT_SLOT_COUNT];
+
+    memset(&missiles, 0, sizeof(missiles));
+    memset(creature_draw_success, 0, sizeof(creature_draw_success));
+    missiles.valid = 1;
+    missiles.event_count = 4;
+    /* Cell 3 uses the center display order. Missiles occupy iterations 1, 2,
+     * 7, and 9. The successful creature at 9 must replay 2 and 7, excluding
+     * the slot at 1 because it lies outside the seven-slot lookback. */
+    missiles.events[0].source_pass = 17;
+    missiles.events[0].source_cell = 3;
+    missiles.events[0].display_index = 1;
+    missiles.events[0].live.source.view_position_5x5 = 4;
+    missiles.events[0].live.source.chain_ordinal = 1;
+    missiles.events[1].source_pass = 17;
+    missiles.events[1].source_cell = 3;
+    missiles.events[1].display_index = 2;
+    missiles.events[1].live.source.view_position_5x5 = 1;
+    missiles.events[1].live.source.chain_ordinal = 2;
+    missiles.events[2].source_pass = 17;
+    missiles.events[2].source_cell = 3;
+    missiles.events[2].display_index = 7;
+    missiles.events[2].live.source.view_position_5x5 = 6;
+    missiles.events[2].live.source.chain_ordinal = 3;
+    missiles.events[3].source_pass = 17;
+    missiles.events[3].source_cell = 3;
+    missiles.events[3].display_index = 9;
+    missiles.events[3].live.source.view_position_5x5 = 7;
+    missiles.events[3].live.source.chain_ordinal = 4;
+    creature_draw_success[17][9] = 1;
+    CHECK("live DB14 draw schedule records seven-slot replay after creature success",
+          dm2_v1_viewport_build_indoor_live_missile_draw_plan(
+              &missiles, creature_draw_success, &draws) == 1 &&
+          draws.valid == 1 && draws.event_count == 6 &&
+          draws.events[0].missile_event_index == 0 &&
+          draws.events[0].draw_kind ==
+              DM2_V1_INDOOR_LIVE_MISSILE_DRAW_CURRENT &&
+          draws.events[0].display_index == 1 &&
+          draws.events[1].missile_event_index == 1 &&
+          draws.events[1].draw_kind ==
+              DM2_V1_INDOOR_LIVE_MISSILE_DRAW_CURRENT &&
+          draws.events[1].display_index == 2 &&
+          draws.events[2].missile_event_index == 2 &&
+          draws.events[2].draw_kind ==
+              DM2_V1_INDOOR_LIVE_MISSILE_DRAW_CURRENT &&
+          draws.events[2].display_index == 7 &&
+          draws.events[3].missile_event_index == 1 &&
+          draws.events[3].draw_kind ==
+              DM2_V1_INDOOR_LIVE_MISSILE_DRAW_CREATURE_REPLAY &&
+          draws.events[3].display_index == 9 &&
+          draws.events[3].replay_slot_index == 2 &&
+          draws.events[4].missile_event_index == 2 &&
+          draws.events[4].draw_kind ==
+              DM2_V1_INDOOR_LIVE_MISSILE_DRAW_CREATURE_REPLAY &&
+          draws.events[4].display_index == 9 &&
+          draws.events[4].replay_slot_index == 7 &&
+          draws.events[5].missile_event_index == 3 &&
+          draws.events[5].draw_kind ==
+              DM2_V1_INDOOR_LIVE_MISSILE_DRAW_CURRENT &&
+          draws.events[5].display_index == 9 &&
+          draws.events[5].replay_slot_index == 9);
+
+    memset(creature_draw_success, 0, sizeof(creature_draw_success));
+    CHECK("failed or absent creature draw does not replay prior missiles",
+          dm2_v1_viewport_build_indoor_live_missile_draw_plan(
+              &missiles, creature_draw_success, &draws) == 1 &&
+          draws.valid == 1 && draws.event_count == 4 &&
+          draws.events[0].draw_kind ==
+              DM2_V1_INDOOR_LIVE_MISSILE_DRAW_CURRENT &&
+          draws.events[1].draw_kind ==
+              DM2_V1_INDOOR_LIVE_MISSILE_DRAW_CURRENT &&
+          draws.events[2].draw_kind ==
+              DM2_V1_INDOOR_LIVE_MISSILE_DRAW_CURRENT &&
+          draws.events[3].draw_kind ==
+              DM2_V1_INDOOR_LIVE_MISSILE_DRAW_CURRENT);
+
+    {
+        DM2_V1_IndoorLiveMissileEvent swap = missiles.events[0];
+        missiles.events[0] = missiles.events[1];
+        missiles.events[1] = swap;
+    }
+    CHECK("unsorted live chains are rejected instead of inventing source order",
+          dm2_v1_viewport_build_indoor_live_missile_draw_plan(
+              &missiles, creature_draw_success, &draws) == 0 &&
+          draws.valid == 0 && draws.event_count == 0);
+
+    memset(&missiles, 0, sizeof(missiles));
+    memset(creature_draw_success, 0, sizeof(creature_draw_success));
+    missiles.valid = 1;
+    missiles.event_count = 1;
+    /* The player-tile DM2_DRAW_STATIC_OBJECT pass stops after source order
+     * slot 14, even though the center order table has 25 entries. Positions
+     * 6 resolves to slot 7; position 16 is outside the source iteration. */
+    missiles.events[0].source_pass = 20;
+    missiles.events[0].source_cell = 0;
+    missiles.events[0].display_index =
+        dm2_v1_viewport_static_object_display_index(0, 6);
+    missiles.events[0].live.source.view_position_5x5 = 6;
+    missiles.events[0].live.source.chain_ordinal = 1;
+    creature_draw_success[20][14] = 1;
+    CHECK("player-tile pass follows its 15 source iterations and replay window",
+          missiles.events[0].display_index == 7 &&
+          dm2_v1_viewport_static_object_display_index(0, 16) == -1 &&
+          dm2_v1_viewport_build_indoor_live_missile_draw_plan(
+              &missiles, creature_draw_success, &draws) == 1 &&
+          draws.valid == 1 && draws.event_count == 2 &&
+          draws.events[0].missile_event_index == 0 &&
+          draws.events[0].draw_kind ==
+              DM2_V1_INDOOR_LIVE_MISSILE_DRAW_CURRENT &&
+          draws.events[0].display_index == 7 &&
+          draws.events[1].missile_event_index == 0 &&
+          draws.events[1].draw_kind ==
+              DM2_V1_INDOOR_LIVE_MISSILE_DRAW_CREATURE_REPLAY &&
+          draws.events[1].display_index == 14 &&
+          draws.events[1].replay_slot_index == 7);
+}
+
 int main(void)
 {
     test_creature_occupancy_5x5();
@@ -483,6 +606,7 @@ int main(void)
     test_occupancy_ordering();
     test_indoor_item_creature_draw_order();
     test_indoor_render_receipts_accumulate();
+    test_live_missile_draw_order_and_creature_replay();
     printf("DM2 V1 creature occupancy and flying item: %d/%d passed\n",
            passed, checks);
     return passed == checks ? 0 : 1;
