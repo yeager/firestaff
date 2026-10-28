@@ -1912,6 +1912,42 @@ disassembly and checkpoint receipts are recorded in the external evidence
 folder's `coldboot-readtrace-boot12000/` and `coldboot-title-checkpoint/`
 subdirectories.
 
+A same-run coldboot trace on TRV2 now covers frames 0–11,999 with the authentic
+BKR installed. It records 10,849 one-byte reads in bus range
+`0x180000..0x200000`, 1,328 distinct addresses, and zero dropped rows. The
+trace's most frequent PCs are `0x06003d68` and `0x0600289c` (2,550 reads each),
+`0x060034b0` (2,040), and `0x060028f2`/`0x06002900` (1,770 each). Same-run
+WRAM-HI disassembly shows byte reads and subsequent stores at these sites,
+consistent with early BUP enumeration/copy work. Ymir's trace records no read
+values, so it does not prove payload bytes were consumed as game state or
+identify a Nexus save field.
+
+A second coldboot run captured SH-2 writes only in WRAM-HI code window
+`0x06002800..0x06004000`, alongside the same BUP-read window. The write
+receipt is complete: 9,761 rows, zero dropped rows on either CPU, spanning
+frames 209–6,096. Every retained write is from the master SH-2. The dominant
+writer PCs are low addresses `0x000002b0` (1,536 rows), `0x00001fe4` and
+`0x00001ffe` (1,644 each), and `0x00002364` (2,844); these are in the
+firmware/vector region of the same-run WRAM-HI snapshot, before the captured
+game routines. They account for initial writes over the selected range and
+must not be mistaken for writes by the BUP enumeration routines. Runtime game
+PCs in the selected window contribute only a small tail, including
+`0x06002f54` (48 rows) and four rows each at `0x06002fd6`, `0x06003056`, and
+`0x0600306a`. This trace does not establish the code-copy source or identify
+save-payload fields. The per-write values, receipt, same-run memory image and
+log are preserved in the external evidence folder's
+`coldboot-targeted-write-trace-20261029/` directory.
+
+A later checkpoint at boot frame 14,900 shows the Japanese title logo. A
+replay from that checkpoint with Start, Down and A reaches the authentic Load
+screen row `B01 0:16 NORMAL`, but records zero new BUP-window reads. This
+narrowly places the observed BUP read activity earlier in startup than this
+checkpoint; it does not tie those reads to the later Continue action. The
+BKR loader and its payload-to-runtime mapping remain unbound. Full trace,
+disassembly and checkpoint receipts are recorded in the external evidence
+folder's `coldboot-readtrace-boot12000/` and `coldboot-title-checkpoint/`
+subdirectories.
+
 The accepted-save capture's VDP1 snapshot is frame 2,173 with 83 commands. Its
 complete command trace contains 175,042 rows with zero dropped rows. The
 capture commands, logs, screenshots, memory/VDP dumps, hashes and scope limits
