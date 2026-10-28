@@ -1587,8 +1587,34 @@ after accepting New Game, without a visible champion-select screen. The
 replay does not identify the active room or establish a stable playable
 checkpoint, so changing `level_loaded`, party coordinates, or title mode here
 would invent runtime state. The native New Game transition still needs a
-source-backed room/load receipt and a matching real-media test before this
-input can be wired to gameplay.
+source-backed room/load receipt before Firestaff can enter gameplay from this
+menu.
+
+## Retail Up input changes the first viewport (2026-10-28)
+
+Ymir 0.4.2-dev was replayed on TRV2 from the authenticated Japanese retail
+New Game menu state, with no retail save loaded. Two runs loaded the same
+state, accepted New Game for two frames, and advanced 1,800 capture frames to
+VDP1 frame 1,605. The control run had no further input. The paired run asserted
+Control Pad 1 Up for one frame at capture frame 1,500.
+
+The control screenshot is byte-identical to the earlier A-only viewport
+capture (`8ede95f1fd777eda69ebcfc91d0268194e501f145306eb1fc2971ed0113a2274`).
+The Up screenshot differs (`f1dd18e6aec0560c5144739d17adfdde4c5d67dc9796db0890b9ceac57dc8657`).
+Both selected-frame VDP1 traces contain 151 ordered commands with zero drops;
+106 command records have changed words after Up, mainly vertex coordinates.
+The VDP1 framebuffer differs at 136,598 bytes, and WRAM-HI differs at 956
+bytes. This confirms that the retail game reacts to Up after New Game. It does
+not establish a stable room, exact party coordinates, HUD behavior, or a
+Firestaff gameplay route.
+
+The DGN join matches 78 of 138 textured draws, with 55 face-owner matches;
+semantic admission remains blocked. The complete trace also contains
+pre-frame records after an earlier END command, so whole-file trace auditing
+rejects it; the selected frame's extracted command chain passes. Full logs,
+screenshots, memory dumps, frame audits, and the reproduction command are
+retained at
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_new_game_capture_20261028/`.
 
 This is a full captured-frame composition check, not a renderer admission. The
 replay consumes Ymir display and VDP snapshots, not a Firestaff runtime upload
