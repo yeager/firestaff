@@ -1922,20 +1922,24 @@ consistent with early BUP enumeration/copy work. Ymir's trace records no read
 values, so it does not prove payload bytes were consumed as game state or
 identify a Nexus save field.
 
-A second coldboot run captured SH-2 writes only in WRAM-HI code window
+A second coldboot run captured SH-2 writes only to WRAM-HI window
 `0x06002800..0x06004000`, alongside the same BUP-read window. The write
 receipt is complete: 9,761 rows, zero dropped rows on either CPU, spanning
 frames 209–6,096. Every retained write is from the master SH-2. The dominant
 writer PCs are low addresses `0x000002b0` (1,536 rows), `0x00001fe4` and
 `0x00001ffe` (1,644 each), and `0x00002364` (2,844); these are in the
-firmware/vector region of the same-run WRAM-HI snapshot, before the captured
-game routines. They account for initial writes over the selected range and
-must not be mistaken for writes by the BUP enumeration routines. Runtime game
-PCs in the selected window contribute only a small tail, including
-`0x06002f54` (48 rows) and four rows each at `0x06002fd6`, `0x06003056`, and
-`0x0600306a`. This trace does not establish the code-copy source or identify
-save-payload fields. The per-write values, receipt, same-run memory image and
-log are preserved in the external evidence folder's
+same-run Japanese Saturn BIOS image (SHA-256
+`dcfef4b99605f872b6c3b6d05c045385cdea3d1b702906a0ed930df7bcb7deac`), not
+WRAM-HI. BIOS disassembly identifies `0x000002b0` as a longword store,
+`0x00001fe4` and `0x00001ffe` as byte stores in a helper path, and
+`0x00002364` as a byte-copy loop (`mov.b @r0+,r1; mov.b r1,@r7`) writing to
+the destination pointer in `r7`. The trace shows these BIOS PCs writing into
+the selected WRAM-HI window, but does not by itself identify the call site's
+purpose or prove that copied bytes are BKR payload. Runtime game PCs in the
+selected window contribute a small tail, including `0x06002f54` (48 rows) and
+four rows each at `0x06002fd6`, `0x06003056`, and `0x0600306a`. Save-payload
+fields remain unidentified. The per-write values, receipt, same-run memory
+image and log are preserved in the external evidence folder's
 `coldboot-targeted-write-trace-20261029/` directory.
 
 A later checkpoint at boot frame 14,900 shows the Japanese title logo. A
