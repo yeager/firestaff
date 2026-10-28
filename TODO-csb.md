@@ -216,15 +216,16 @@ gaps and bounds what can be concluded:
   extraction tests pass; native-screen timing and audible device output still
   need verification. Other Amiga edition variants remain outside this route.
 - The later title program still differs by edition. A31M/A33M decodes the
-  original `TITL.DAT` schedule; the authentic A33M CLI regression reaches the
-  `startupAnimation=titl-dat` phase. That probe verifies source ownership and
-  handoff state, not that the user sees animated frames. A31E/A35E take their
-  documented direct `BJELoad_R` -> `C03_GAME` boundary; A35M uses the
-  `C08_LANG` selector and does not enter A31's APPA/TITL chain. The A35E/A35M
-  original startup capture is still missing, so verify each retail
-  presentation after the common SWSH prelude before adding any later title
-  page. The reported absence of animation on the user's Amiga remains open
-  until the exact edition and displayed frames are observed.
+  original `TITL.DAT` schedule. On 2026-10-28, presented-screen captures
+  against authentic A33M media at boot-probe idle frames 0, 127, and 300
+  produced distinct 320x200 RGB images and title frames 0, 1, and 26. This
+  confirms that the decoded A33M animation changes pixels in Firestaff's SDL
+  presentation buffer; it does not verify a native display or the user's exact
+  edition. A31E/A35E take their documented direct `BJELoad_R` -> `C03_GAME`
+  boundary; A35M uses the `C08_LANG` selector and does not enter A31's
+  APPA/TITL chain. Original startup captures for A35E/A35M are still missing.
+  The report of absent animation on the user's Amiga therefore remains open
+  until that machine's edition and native display output are captured.
 - The generic Amiga animation `SO` event path remains unsupported. ReDMCSB
   `ANIM.C` F1186/F1207/F1223 dispatches an `SO` record through `ANIMSND.C`
   F1248 and the paired Paula channel owners; Firestaff's TITL frame updater
@@ -253,6 +254,16 @@ has exactly the `AN`, `PL`, `EN`, 30 `DL`, `DO` record sequence and no `SO`
 event. Therefore adding the generic `SO` dispatcher would not add sound to
 this title animation; its intro audio is the preceding `SWSH.FTL` Paula
 sample. Keep device-output verification separate from record parsing.
+
+2026-10-28 A33M presented-frame capture: with the installed original Amiga 3.3
+media and the SDL presented-screenshot hook, boot-probe idle frames 0, 127,
+and 300 report TITL frames 0, 1, and 26. The captured 320x200 RGB images have
+SHA-256 `84a8702a0d7cc71fefd6b3ee6d6ab6d5dc4abd1eed16a44579a86a597ad81f45`,
+`8af6ced5fb95f0de23d3b5e2938305d2d870223eed61b468ec9ddeb078d6e595`, and
+`8e22ab08a87284a17d54cdd1031edf5159cdb7c41863181d90a2d153486ba5f8`,
+respectively. This proves changing animation pixels reach SDL presentation
+for A33M in the headless capture path. It does not establish what appears on a
+native display or resolve the report for the user's unidentified edition.
 
 2026-10-26 CSB Amiga SWSH runtime: the A31M/A33M FTL prelude now plays from
 the selected Amiga source profile instead of falling through to the PC
