@@ -1,3 +1,43 @@
+2026-10-28 PC34 binary-analysis tooling check: the original DOS 3.4 `DM.EXE`
+is LZEXE 0.91-packed. The `yeager/pcrecomp` tools successfully unpack it with
+`tools/drm/unlzexe.py`; `tools/disasm/decode16.py --resident` decodes its
+17,680-byte resident image. The same path decodes the authentic `FIRES`,
+`EGA`, `VGA`, `TANDY`, `ANIM`, and `IBMIO` modules. On `FIRES`, the
+Borland-oriented large-model helper clipped the data tail at file offset
+`0x275CE`; its heuristic map resolved 2,417/2,421 far calls and 939/940 near
+calls. ReDMCSB `DM.C`'s `MEDIA707_I34E_I34M` launcher identifies the module
+roles: it verifies the video driver, `IBMIO`, and `FIRES`, then executes the
+selected driver with the I/O and game modules. The matching messages and
+module names in the authentic binary confirm that `DM.EXE` is the setup
+launcher and `FIRES` is the main game module. This gives a useful starting
+call graph for comparing the game module with ReDMCSB and Firestaff, but does
+not identify behavior by itself. Treat
+`tools/disasm/analyze.py` as a rough aid only: its analyzer and report are
+Civilization-specific, it labels the binary as Civilization, and its
+heuristic function boundaries are not verified DM1 symbols. Any address used
+to guide a Firestaff change must first be mapped to DM1 behavior or source.
+The current `v3.0.419` Firestaff binary also passed
+`tests/test_dm1_v1_pc34_native_cli_boot.sh` against the authentic PC34 archive:
+the auto-platform CLI, Original menu, title interruption, optional-SWSH
+fallback, selector Enter/Resume/Quit inputs, and the native input/runtime
+matrix all passed. The source timing receipt measured 53 title frames and 32
+selector-door steps. Headless SDL confirms source routing and scripted input;
+it does not establish native-display or physical-input parity.
+The same `v3.0.419` binary passed
+`tests/test_m12_main_menu_game_selection_real_media.sh` against the complete
+authentic local collection. Keyboard and mouse selected each of the five
+game cards and reached each owner's original runtime handoff. The default
+`~/.firestaff/data` root independently launched DM1, CSB, DM2, Nexus and
+Theron; the archive-backed cases also retained source hashes. The matrix
+covers the staged editions selected by this collection, not every supported
+edition/platform pair, and uses SDL dummy rather than physical input.
+The same binary passed `tests/test_firestaff_cli_startup_diagnostics_real_media.sh`:
+debug startup receipts, FM Towns defaults, invalid/unsupported platform
+handling, authentic media resolution, and fallback selection passed. The
+optional DM2 Macintosh diagnostic case was skipped because its authentic
+archive is unavailable. These startup checks use headless SDL and do not
+establish native-display parity.
+
 2026-10-28 DM1 Amiga 2.0 archive recheck against the current local corpus:
 `~/.firestaff/data/dm1/Dungeon-Master_Amiga_EN_Version-20.zip` has SHA-256
 `f2b76bb9a818590ee84db37e4bbb5fa84ce0fb93e3f2135807b70c0545fb6ec9` and
