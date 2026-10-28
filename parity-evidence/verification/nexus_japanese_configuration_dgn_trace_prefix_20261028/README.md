@@ -6,9 +6,9 @@ materials. It is source evidence only; it does not admit a 3D renderer.
 
 ## Capture
 
-The external capture is
-`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_jp_config_selection_preaccept_20261028/configuration/`.
-Its screenshot shows the Configuration page over the active dungeon scene.
+The authentic capture is retained outside Git in operator-managed evidence
+storage. Its screenshot shows the Configuration page over the active dungeon
+scene.
 The VDP1 receipt identifies frame 599, 168 observed commands, a complete trace
 file, and zero dropped trace rows. The authentic Japanese `TITLE.BIN` SHA-256
 is `51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3`.
@@ -61,5 +61,5 @@ observed Ymir execution order without requiring an END command, since this
 capture ends before the display list is proven complete. The full-chain mode
 continues to validate CMDLINK transitions and END.
 
-The complete report and raw captures remain on the external evidence volume;
-no game media or emulator dumps are included in Git.
+The complete report and raw captures remain in operator-managed external
+evidence storage; no game media or emulator dumps are included in Git.

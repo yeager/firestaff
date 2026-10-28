@@ -95,9 +95,9 @@ def mns_surfaces(data_dir: Path) -> list[tuple[str, bytes]]:
     return surfaces
 
 
-def dgn_structure2_surfaces(data_dir: Path) -> list[tuple[str, bytes]]:
+def dgn_structure2_surfaces(data_dir: Path) -> list[tuple[str, int, bytes]]:
     """Return bounded raw image spans from the canonical LEV00..LEV15 set."""
-    surfaces: list[tuple[str, bytes]] = []
+    surfaces: list[tuple[str, int, bytes]] = []
     for level in range(16):
         name = f"LEV{level:02d}.DGN"
         path = data_dir / name
@@ -137,7 +137,8 @@ def dgn_structure2_surfaces(data_dir: Path) -> list[tuple[str, bytes]]:
             start = payload_start + relative
             surfaces.append((
                 f"{name}[Structure2={image_id} encoding=0x{encoding:04x} "
-                f"{width}x{height}]", data[start:start + image_bytes]))
+                f"{width}x{height}]", encoding,
+                data[start:start + image_bytes]))
             descriptor_index += 1
             cursor += 20
         else:
@@ -384,6 +385,7 @@ def main() -> int:
     )
     retail_files, rejected_files = authenticated_retail_files(args.data_dir)
     joined_draws = 0
+    dgn_structure2_joined_draws = 0
     for offset, colour_mode, source_offset, source in draws:
         source_hash = hashlib.sha256(source).hexdigest()
         exact: list[str] = []
@@ -395,7 +397,12 @@ def main() -> int:
                 exact.append(name)
             if swapped_words(surface) == source:
                 swapped_exact.append(name)
-        for name, surface in dgn:
+        expected_encoding = 0x0008 if colour_mode == 1 else (
+            0x0028 if colour_mode == 5 else None
+        )
+        for name, encoding, surface in dgn:
+            if encoding != expected_encoding:
+                continue
             if surface == source:
                 dgn_exact.append(name)
             if swapped_words(surface) == source:
@@ -405,8 +412,13 @@ def main() -> int:
             exact or swapped_exact or dgn_exact or dgn_swapped_exact or
             file_exact or file_word_swap
         ) and has_informative_source(source)
+        dgn_structure2_joined = bool(
+            dgn_exact or dgn_swapped_exact
+        ) and has_informative_source(source)
         if draw_joined:
             joined_draws += 1
+        if dgn_structure2_joined:
+            dgn_structure2_joined_draws += 1
         print(
             f"command_offset=0x{offset:05x} colour_mode={colour_mode} "
             f"source_offset=0x{source_offset:05x} source_bytes={len(source)} "
@@ -426,6 +438,7 @@ def main() -> int:
         print(f"retail_files_hash_rejected={rejected_files}")
         print(f"source_informative={int(has_informative_source(source))}")
     print(f"source_joined_draws={joined_draws}/{len(draws)}")
+    print(f"dgn_structure2_joined_draws={dgn_structure2_joined_draws}/{len(draws)}")
     print("source_join=" + aggregate_source_join_status(len(draws), joined_draws))
     print("semantic_admission=blocked")
     return 0

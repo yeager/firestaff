@@ -441,18 +441,20 @@ and HUD effects in retail gameplay. Japanese Configuration-page parity and
 New Game/Continue destination execution remain open. See
 `docs/nexus/nexus_startup.md` and `docs/nexus/nexus_title.md`.
 
-The Ymir Configuration-page frame 119 source scan now finds exact DGN
-Structure2 byte matches for 132 of 148 textured VDP1 draws and whole-file
-`LEV00.DGN` matches for 113 draws. These are source candidates only: repeated
-bytes leave instance ownership ambiguous, and CLUT, palette, placement, camera,
-and complete scene output remain unbound. Continue by joining command UV/CLUT
-and geometry state to a specific `LEV00.DGN` cell/face and the retail scene
-setup path. See
+The authentic English Ymir Configuration-page frame 119 source scan examined
+148 textured VDP1 draws. It found exact DGN Structure2 image spans for 121
+informative draws; 11 additional draws are all-zero transparent textures.
+The broader retail-resource join matches 137 informative draws, while 113
+image spans also occur in whole-file `LEV00.DGN`. These are source candidates
+only: repeated bytes leave instance ownership ambiguous, and the active cell,
+face, placement, camera, and complete scene output remain unbound. Continue by
+joining command UV/CLUT and geometry state to a specific `LEV00.DGN` cell/face
+and the retail scene setup path. See
 `parity-evidence/verification/nexus_english_configuration_scene_dgn_join_20261028/README.md`.
 
-The frame-119 DGN sequence join now matches 128/132 textured VDP1 draws when
-both indexed image/CLUT pairs and direct-color spans are checked. Of those, 112
-have candidate Structure3 face-owner rows, often with multiple possible owners.
-Four draws do not match a DGN material, and 16 matched draws have no face-owner
+The frame-119 DGN sequence join matches all 121 informative draws (113 indexed
+image/CLUT pairs and 8 direct-color spans); 11 draws are transparent all-zero
+textures. Of the matched draws, 105 have candidate Structure3 face-owner rows,
+often with multiple possible owners. Sixteen matched draws have no face-owner
 row. Determine the active owner and transform from the Saturn SH-2 draw setup
 before using these materials to render the Configuration scene.

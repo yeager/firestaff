@@ -39,10 +39,15 @@ def state_copr(state: str) -> int:
 
 def dgn_match_index(data_dir: Path, *, ymir_byte_order: bool = False):
     index = {}
-    for name, image, palette in dgn_materials(data_dir):
+    for name, encoding, image, palette in dgn_materials(data_dir):
+        mode = 1 if encoding == 0x0008 else 5
         normalized_image = image if ymir_byte_order else swapped_words(image)
-        normalized_palette = (palette if ymir_byte_order else swapped_words(palette)) if palette else b""
-        index.setdefault((normalized_image, normalized_palette), []).append(name)
+        normalized_palette = (
+            palette if ymir_byte_order else swapped_words(palette)
+        ) if palette else b""
+        index.setdefault(
+            (mode, normalized_image, normalized_palette), []
+        ).append(name)
     return index
 
 
@@ -163,7 +168,8 @@ def main() -> int:
             # retail material. Keep it separate from informative misses.
             transparent_zero_filled_offsets.append(record.offset)
             continue
-        names = matches.get((material["source"], material["palette"]), [])
+        names = matches.get((material["mode"], material["source"],
+                             material["palette"]), [])
         if not names:
             unmatched_offsets.append(record.offset)
             continue

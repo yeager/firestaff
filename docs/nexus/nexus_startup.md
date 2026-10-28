@@ -1602,6 +1602,12 @@ palette entries for seven captured states. Run
 `python3 scripts/verify_nexus_english_configuration_page.py <evidence-dir> <TITLE.BIN>`
 to repeat the byte-level checks.
 
+M11 initializes these reducer defaults when it initializes the game view. While
+Configuration is active, the renderer leaves the back-screen clear instead of
+reusing the five-plane title image. The authentic capture shows a different
+scene behind this page, and its DGN/VDP2 background composition is still
+unbound.
+
 Firestaff's English-region reducer and renderer draw that authentic page
 foreground, animate its source-bound focus marker, route keyboard and mouse
 selection, and return to the title menu on Exit/B. This does not establish the
@@ -1612,28 +1618,29 @@ open. Evidence uses authentic retail data; no synthetic game assets are used.
 
 ## English Configuration scene texture-source receipt (2026-10-28)
 
-A source scan of the authentic Ymir page capture at frame 119 examined 148
-textured VDP1 draws. Exact retail joins bind 132 draw spans to one or more
-decoded DGN Structure2 image spans; 113 spans also occur byte-for-byte in
-`LEV00.DGN`. Five informative draws remain without an exact Structure2 match,
-and 11 other spans contain only uninformative zero bytes. This advances texture
-source identification for the scene visible behind the Configuration UI.
+A source scan of the authentic English Ymir page capture at frame 119 examined
+148 textured VDP1 draws. Exact DGN Structure2 image spans bind 121 informative
+draws; 11 other draws are transparent all-zero textures. The broader join
+matches 137 informative spans across all hash-admitted retail resources, and
+113 image spans also occur byte-for-byte in `LEV00.DGN`. Sixteen informative
+draws have no exact DGN Structure2 match. This advances texture-source
+identification for the scene visible behind the Configuration UI.
 
 Repeated image bytes across the level files leave some joins ambiguous. The
-receipt does not yet bind the active level instance, map cell/face ownership,
+receipt does not yet bind the active level instance, map-cell and face ownership,
 CLUT, palette, geometry placement, camera, complete composition, or Firestaff
 output. It does not admit a guessed DGN scene as a runtime background. See the
 [source-join receipt](../../parity-evidence/verification/nexus_english_configuration_scene_dgn_join_20261028/README.md)
 and its retained external capture bundle.
 
-A second pass now joins the Ymir command chain's indexed source bytes and CLUTs,
-as well as direct-color pixels, against authentic DGN Structure2 materials. It
-matches 128 of 132 textured draws (120 indexed image/CLUT pairs and 8 direct
-color spans); 112 matched draws have one or more Structure3 face-owner rows.
-Four draws remain without an exact material match, and 16 matched draws lack a
-face-owner row. Because material bytes are reused across levels and face rows,
-these are candidate owners rather than active-instance assignments. See the
-expanded [source-join receipt](../../parity-evidence/verification/nexus_english_configuration_scene_dgn_join_20261028/README.md).
+A second pass joins the Ymir command chain's indexed source bytes and CLUTs, as
+well as direct-color pixels, against authentic DGN Structure2 materials. Of
+132 textured draws, 11 are transparent all-zero textures; all remaining 121
+informative draws match (113 indexed image/CLUT pairs and 8 direct-color
+spans). Of those matched draws, 105 have one or more Structure3 face-owner
+rows, while 16 have none. Because material bytes are reused across levels and
+face rows, these are candidate owners rather than active-instance assignments.
+See the expanded [source-join receipt](../../parity-evidence/verification/nexus_english_configuration_scene_dgn_join_20261028/README.md).
 
 ## Japanese Configuration scene trace prefix (2026-10-28)
 
@@ -1653,4 +1660,5 @@ scene, consistent with a floor or menu backdrop. The active level/map selector
 and geometry owner remain unproven. Camera transform, culling, display origin,
 VDP2 composition and other settings states also remain unproven, so renderer
 admission stays blocked. See the [trace-prefix receipt](../../parity-evidence/verification/nexus_japanese_configuration_dgn_trace_prefix_20261028/README.md)
-and the retained [Japanese retail capture](/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_jp_config_selection_preaccept_20261028/configuration/).
+and the authentic Japanese retail capture retained in operator-managed
+external evidence storage.

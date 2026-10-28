@@ -25084,6 +25084,9 @@ void M11_GameView_Init(M11_GameViewState* state) {
     }
     m11_dm1_c13_visible_runtime_handoff_clear(state);
     memset(state, 0, sizeof(*state));
+    /* Nexus Configuration starts from the retail hardware defaults, even
+     * before a title frame opens its menu. */
+    nexus_v1_retail_title_menu_init(&state->nexusState.retail_title_menu);
     dm1_spell_init(&state->dm1SpellCasting);
     dm1_v1_text_init(&state->dm1V1TextMessage);
     firestaff_ra_overlay_init(&state->retroAchievementsOverlay);
@@ -64516,12 +64519,16 @@ static void m11_nexus_startup_exec_boot_title_frame(
         return;
     }
     nexus_fb_init(&nexusFb);
-    nexus_render_title((const Nexus_TitleScreen*)(
-                           context->state
-                               ? context->state->nexusTitleScreen
-                               : NULL),
-                       &nexusFb,
-                       command->title_frame + nexus_title_boot_warning_frames());
+    if (!context->state ||
+        !context->state->nexusState.retail_title_menu.configuration_active) {
+        nexus_render_title((const Nexus_TitleScreen*)(
+                               context->state
+                                   ? context->state->nexusTitleScreen
+                                   : NULL),
+                           &nexusFb,
+                           command->title_frame +
+                               nexus_title_boot_warning_frames());
+    }
     if (context->state && context->state->nexusState.retail_title_menu.menu_active) {
         (void)nexus_v1_retail_title_menu_render(
             (const Nexus_TitleScreen*)context->state->nexusTitleScreen,

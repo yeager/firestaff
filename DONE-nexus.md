@@ -1,5 +1,19 @@
 # Firestaff DONE — Nexus
 
+## 2026-10-28 — Correct English Configuration scene match accounting
+
+- Re-ran both source joiners against the authentic English Ymir frame-119
+  capture and hash-verified local Nexus media. The source scan examined 148
+  draws: 121 informative spans match DGN Structure2; 16 other informative
+  spans match other admitted retail resources but not DGN Structure2, and 11
+  spans are zero-filled. The DGN command join confirms 113 indexed image/CLUT
+  matches and 8 direct-color matches; 105 have candidate Structure3 owners.
+- Added explicit DGN-only counts and VDP1/DGN encoding checks so source-span
+  matches cannot cross indexed and direct-color formats. The report remains
+  candidate evidence only; active face, camera, placement and composition are
+  unbound.
+- Reproduction details and limitations: [English Configuration DGN join](parity-evidence/verification/nexus_english_configuration_scene_dgn_join_20261028/README.md).
+
 ## 2026-10-28 — Join Japanese Configuration scene commands to retail DGN
 
 - Added a Ymir trace-prefix reader for complete capture files whose current
