@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Compare retained Nexus title sprites with a Ymir screenshot and VRAM dump.
 
-The screenshot follows the capture bundle; matches do not prove frame identity.
+An optional Ymir run log can establish that a screenshot and complete VDP1
+frame receipt belong to the same capture run. It does not bind the screenshot
+save event to that frame, so exact screenshot frame identity remains unproven.
 """
 
 from __future__ import annotations
@@ -72,7 +74,54 @@ def title_menu_draws(commands, vram: bytes, source: bytes):
     return selected
 
 
-def verify(bundle: Path, screenshot: Path, title_source: Path) -> None:
+def same_capture_run(bundle: Path, screenshot: Path, run_log: Path,
+                     frame: int) -> str:
+    """Confirm same-run evidence without claiming screenshot frame identity."""
+    capture_root = run_log.resolve().parent
+    if bundle.resolve().parent != capture_root:
+        raise ValueError("VDP1 bundle and run log must share the same capture directory")
+    screenshot_path = screenshot.resolve()
+    try:
+        screenshot_path.relative_to(capture_root)
+    except ValueError as error:
+        raise ValueError("paired screenshot must be retained beside the capture run log") from error
+
+    logged_screenshots = []
+    for line in run_log.read_text(encoding="utf-8", errors="replace").splitlines():
+        marker = "Screenshot saved to "
+        if marker in line:
+            logged_path = Path(line.split(marker, 1)[1].strip()).expanduser()
+            if not logged_path.is_absolute():
+                logged_path = capture_root / logged_path
+            logged_screenshots.append(logged_path.resolve())
+    if logged_screenshots.count(screenshot_path) != 1:
+        raise ValueError(
+            "run log does not identify the supplied screenshot by its full path")
+
+    def receipt(path: Path) -> dict[str, str]:
+        result = {}
+        for line in path.read_text(encoding="ascii").splitlines():
+            if "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            if key in result:
+                raise ValueError(f"duplicate capture receipt field {key}")
+            result[key] = value
+        return result
+
+    capture = receipt(bundle / "vdp1-capture-bundle.txt")
+    registers = receipt(bundle / "vdp-register-snapshot.txt")
+    if (capture.get("format") != "ymir-vdp1-capture-bundle-v1" or
+            capture.get("trace_file_complete") != "1" or
+            capture.get("trace_dropped_total") != "0" or
+            int(capture.get("capture_frame_index", "-1")) != frame or
+            int(registers.get("vdp1_frame_index", "-1")) != frame):
+        raise ValueError("VDP1 capture and register receipts do not bind the same complete frame")
+    return "same_capture_run"
+
+
+def verify(bundle: Path, screenshot: Path, title_source: Path,
+           run_log: Path | None = None) -> None:
     from PIL import Image
 
     # A CUE reads the authentic resource from the disc image in memory. A
@@ -167,7 +216,10 @@ def verify(bundle: Path, screenshot: Path, title_source: Path) -> None:
             f"screenshot_matches={matches}/{count}")
     if len(checked) != len(JAPANESE_CONTINUE_DRAW_ROLES):
         raise ValueError("one or more source-bound title-menu sprites are missing")
-    print("sprite_priority=5 ratio=31/32 lower_layer=VDP2_back_screen timing=unproven")
+    timing = "unproven"
+    if run_log is not None:
+        timing = same_capture_run(bundle, screenshot, run_log, frame)
+    print(f"sprite_priority=5 ratio=31/32 lower_layer=VDP2_back_screen timing={timing}")
 
 
 if __name__ == "__main__":
@@ -176,5 +228,7 @@ if __name__ == "__main__":
     parser.add_argument("screenshot", type=Path)
     parser.add_argument("title_source", type=Path,
                         help="authenticated TITLE.BIN or CUE whose disc is read in memory")
+    parser.add_argument("--run-log", type=Path,
+                        help="Ymir run log from the same capture directory as the screenshot")
     args = parser.parse_args()
-    verify(args.bundle, args.screenshot, args.title_source)
+    verify(args.bundle, args.screenshot, args.title_source, args.run_log)

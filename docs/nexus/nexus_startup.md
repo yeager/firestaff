@@ -33,12 +33,12 @@ source.
 
 | Resource | Status |
 |---|---|
-| `TITLE.CG` + `TITLE.BIN` | MAPD/TIBG decoding and five retail images are verified. An authentic Japanese title capture binds the complete `TITLE.CG` member to its VDP2 upload and the MAPD palette to CRAM; the visible NBG0 bitmap's producer is also traced. The display consumer, MAPD order, layer placement and timing are still unbound. See [title source audit](nexus_title.md#japanese-retail-title-vdp2-receipt). |
-| `LOGOBG.DG2` | PP pixels and a 256-entry BGR555 palette are verified. Neither occurs in the measured Japanese title-frame VDP2 memory/CRAM, so it is not admitted as the NBG0 source; no other display role is proven. |
+| `TITLE.CG` + `TITLE.BIN` | MAPD/TIBG decoding and five retail images verified for the canonical profile and documented English revision; VDP2 placement is missing |
+| `LOGOBG.DG2` | PP pixels and a 256-entry BGR555 palette are verified; layer/timing is missing |
 | `WARNING.BIN`, `GAMEOVER.BIN`, `STABG.BIN` | real surfaces are decoded and receive byte provenance; presentation is missing |
 | `FACE.BIN` | The JP retail member is verified as 45,104 bytes (`bd9ca16ea68043984e2804067b6cd66f`): 20 variable-length, 56×56 PRS3 portraits with source palettes. The PLRD roster-to-portrait ordinal and the VDP1 destination/order are still unobserved. |
 | `FONT256.S2D` | 242 CG tiles are retained in production source; Saturn page/attribute/glyph mapping is missing |
-| `MENU.BPK` | All 162 PRS3 surfaces decode to source-bound bytes. In one complete authentic Japanese menu frame, 86 whole surfaces are byte-resident in VDP1 VRAM, but none of 137 textured command sources starts in those ranges. The capture does not establish that `MENU.BPK` supplies the visible menu. Ownership, ordering, CLUT and VDP1/VDP2 composition remain unbound; see the [menu snapshot join](NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md). |
+| `MENU.BPK` | 162 PRS3 surfaces decode to source-bound indexed bytes; the exact title-menu draw ownership, ordering, CLUT, and VDP1/VDP2 composition are not established |
 | Saturn Backup RAM | `nexus_v1_saturn_bkr_parse` reads hash-pinned 32 KiB card directories and block chains, returning exact opaque payload bytes; native save selection, payload interpretation, and runtime loading remain missing |
 | Mednafen visual baseline | A clean J-BIOS capture against authentic retail shows black boot followed by the original intro FMV without input; menu/LEV01 identity remains missing |
 
@@ -1012,7 +1012,7 @@ still does not provide CLUT source ownership or admit a Firestaff renderer.
 
 - DMWeb Nexus file formats and DMN Data File Decoder.
 - `src/nexus/nexus_v1_engine.c` and `src/nexus/nexus_v1_title.c`.
-- `docs/nexus/NEXUS_RUNTIME_CAPTURE.md`.
+- `NEXUS_RUNTIME_CAPTURE.md`.
 - [NEXUS_STRICT_FIDELITY_INVENTORY.md](NEXUS_STRICT_FIDELITY_INVENTORY.md).
 
 ## Cold-boot title menu and retail menu navigation (2026-10-27)
@@ -1325,10 +1325,27 @@ matching call chain is
 `0x06023108|0x06023144|0x06040150`. The VDP1 receipt identifies menu frame
 `8,047`, with `178` commands and zero dropped rows; the authentic screenshot
 matches the five verified Japanese `TITLE.BIN` sprite roles at `1,441/1,441`
-nontransparent pixels. The screenshot verifier conservatively reports timing
-as unproven because its PNG does not carry an independent frame number. Raw
-files, verifier output, trace analysis, and hashes are retained in
+nontransparent pixels. The screenshot verifier's original invocation
+conservatively reported timing as unproven because the PNG has no embedded
+frame number. Raw files, verifier output, trace analysis, and hashes are retained in
 `/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_menu_sh2_bound_20261027/`.
+
+A fresh repeat cold boot on the frame-tracing Ymir fork independently captured
+the Continue screenshot and VDP1 receipt in one run. Its screenshot hash is
+identical to the image above, and its complete VDP1 capture receipt names frame
+`8,047` with all `178` commands and zero dropped rows. Its
+15,264-row SH-2 trace is also byte-for-byte identical to the frame-7716 trace
+used by the paired VDP2 evidence above. The screenshot verifier now accepts
+`--run-log` for a complete Ymir capture: it checks that the screenshot is in
+the same capture directory, the log names that screenshot exactly once, and
+the VDP1 capture and register receipts agree on frame 8,047. It reports
+`timing=same_capture_run`; the log does not bind the screenshot save event to
+that frame, so exact screenshot-frame identity remains unproven. The verifier
+still matches all five authentic sprite roles pixel-for-pixel. This reproduces
+the menu image and source-write sequence. The new run did not include a VDP2
+write trace, so the stable-snapshot proof remains the separate paired capture.
+The full raw repeat capture, its run log, receipt, and hashes are retained in
+`ymir_nexus_menu_frame_windowed_sh2_20261027` external evidence bundle (not tracked in the repository).
 
 This is authentic input-correlated source evidence for the Japanese menu
 selection state. It does not establish the complete `TITLE.BIN` decoding,
@@ -1339,22 +1356,57 @@ hashes, and reproduction command are in the
 
 ## Full Japanese title-menu capture replay (2026-10-27)
 
-The retained frame-8047 Ymir run now reproduces the complete 320×224 display
+The retained frame-8047 Ymir run reconstructs the complete 320×224 display
 from its captured VDP1 framebuffer, VDP2 VRAM, CRAM and registers. The C replay
 matches every pixel in the same-run 640×448 screenshot (286,720 subpixels)
 after 2× scaling. Its VDP1 trace contains 178 frame-8047 commands and reports
-zero dropped rows. The VDP1 register receipt also names frame 8047. Five
-Japanese `TITLE.BIN` menu-sprite roles account for 1,441 visible texels; the
-remaining output is accounted for by captured VDP1 direct pixels, captured
-VDP1 palette pixels and NBG0 overlays. The pixel counts and input digests are
-recorded in
+zero dropped rows. Five Japanese `TITLE.BIN` menu-sprite roles account for
+1,441 visible texels; the remaining output is accounted for by captured VDP1
+direct pixels, captured VDP1 palette pixels and NBG0 overlays. The screenshot
+has no embedded frame number, so exact acquisition-frame identity remains
+unproven. The pixel counts and input digests are recorded in
 [`NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md`](NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md).
 
-This is a full captured-frame composition check, not a renderer admission. The
+This is a captured-frame composition check, not a renderer admission. The
 replay consumes Ymir display and VDP snapshots, not a Firestaff runtime upload
-from retail assets. The screenshot has no embedded frame number, so exact
-acquisition-frame identity remains unproven. The Japanese SH-2 read receipt
-observes a full 31,616-address source pass at frame 6,893 but records no values
-and dropped 860,856 unrelated master rows; the NBG0 storage join remains
-partial. Runtime menu presentation, keyboard handling, mouse hit areas, save
-loading and playable-level/HUD parity are still open.
+from retail assets. Runtime menu presentation, keyboard handling, mouse hit
+areas, save loading and playable-level/HUD parity remain open.
+
+## Japanese menu-state NBG0 storage join (2026-10-27)
+
+The retained Japanese Ymir capture contains a frame-tagged source-address read
+pass and a source-to-storage match. Japanese `TITLE.BIN` bytes
+`0x2526..0xa0a5` (31,616 bytes; end-exclusive `0xa0a6`; full member SHA-256
+`51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3`)
+match WorkRAMH address `0x060ac2a6` exactly. Under the verified 304-byte row
+width and 512-byte stride, 30,561 bytes match the active NBG0 8bpp bitmap in
+the frame-8047 snapshot. All 96 leading rows match; the 1,055 differences are
+in the final eight rows. The complete VDP2 trace records 2,432 writes to those
+rows at frame 7,716, of which 1,377 values equal the corresponding source
+bytes. The frame-windowed trace has no later VRAM or CRAM writes before the
+frame-8047 snapshot; the register receipt is checked at frame 8,047 only.
+
+The same run's SH-2 read trace records one contiguous ordered byte-read pass
+over all 31,616 addresses at frame 6,893, with PC `0x06023124`, caller target
+`0x06023108`, and caller return `0x06023176`. The complete SH-2 write trace
+records writes to this WorkRAM span only through frame 6,890. The read trace
+retained 250,000 rows and dropped 860,856 other master reads, so it is globally
+incomplete even though the contiguous source-address pass is present. It
+records no values at read time; the final WorkRAM join does not prove those
+bytes were present when read, and the traces do not cover non-CPU DMA writes.
+
+Run `scripts/verify_nexus_title_nbg0_title_bin_storage.py` and
+`scripts/verify_nexus_title_nbg0_source_read_trace.py` against the retained Ymir
+dump and either the authenticated Japanese retail files or the original
+Japanese CUE; CUE members are read in memory. This reproduces the storage and
+address-pass joins without substituting synthetic title data. The evidence
+bundle's `SHA256SUMS.txt` covers its retained files. The screenshot verifier
+can report a paired frame only when the
+original screenshot remains at the full path recorded in that run's log; a
+relocated copy is not treated as frame-paired.
+
+No complete pixel join establishes which NBG0 bytes are visible after VDP1
+composition. Treat this as bounded SH-2 address-read and NBG0 storage evidence;
+title/menu display ownership and production renderer admission remain blocked.
+See [`nexus_title.md`](nexus_title.md#japanese-menu-state-nbg0-source-and-storage-join-2026-10-27)
+for the detailed source and layout receipt.

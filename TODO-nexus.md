@@ -92,6 +92,18 @@ focused on identifying the visible English menu's retail source/CLUT owners,
 isolating the input that changes the title state, and wiring the verified
 route into Firestaff without opening a renderer gate prematurely.
 
+2026-10-27 repeat evidence: a fresh Japanese cold boot on the frame-tracing
+Ymir fork saved a same-run VDP1 receipt and Continue screenshot. The VDP1
+receipt names frame 8047, but the run log does not bind the screenshot save
+event to that exact frame. The complete VDP1 trace has 178 frame-8047 commands
+with zero drops. Its PNG and all 15,264 frame-7716 SH-2 writes are byte-for-byte
+identical to the previous capture used for the paired, stable VDP2 snapshot
+analysis. This reproduces the observed menu frame and source-write sequence.
+The new run did not include VDP2 write tracing, so it does not replace the
+paired snapshot receipt or open any Firestaff rendering/input gate. Raw
+outputs and hashes are retained at
+`ymir_nexus_menu_frame_windowed_sh2_20261027` external evidence bundle (not tracked in the repository).
+
 The 2026-10-26 Mednafen `.mca` startup capture is not evidence of a loaded
 authentic backup card. Mednafen 1.32.1 uses the `mca` suffix for its autosave
 state via `MDFNMKF_STATE`/`filesys.path_state`; `filesys.path_savbackup` is a
@@ -120,56 +132,25 @@ frame, but no menu or level is loaded and the startup receipt remains blocked
 on the PRS3 menu capture. See
 [`parity-evidence/verification/nexus_cli_direct_start_block_20261024/README.md`](parity-evidence/verification/nexus_cli_direct_start_block_20261024/README.md).
 
-The title asset loader now keeps `startup_title_vdp_capture_verified` closed
-when it decodes authentic `TITLE.BIN`/`TITLE.CG` MAPD data. That decode admits
-the bounded five-plane asset renderer only; it does not prove Saturn VDP1/VDP2
-composition or open the native title/menu handoff. Preserve this separation
-until a capture-backed production receipt explicitly admits the display
-consumer. A rebuilt real-media pointer-only launcher check now reports
-`title-vdp-owner-compositor-capture-required` for the installed Japanese
-retail image and rejects a playable-runtime claim. See
-[`DONE-nexus.md`](DONE-nexus.md) for the verification record.
-
-## 2026-10-27 — Resolve Nexus edition ownership when extracted files and discs coexist
-
-The authentic shared Nexus data directory contains extracted Japanese-route
-files alongside multiple retail Saturn images. The normal M12 pointer route
-reported `edition=nexus-saturn-jp` from the extracted `DM.BIN`, but the engine
-then opened the English CUE as supplemental media. A working-tree attempt to
-prevent this by matching the disc's `DM.BIN` still selected English: the
-Japanese and English images share that executable, so its byte identity does
-not distinguish their localized resource sets. The real-media regression
-`tests/test_nexus_v1_native_menu_mouse_title.sh` failed on this assertion.
-
-Do not treat a matching `DM.BIN` as proof that an ISO belongs to the selected
-language/revision. Keep extracted data and disc members under one verified
-edition owner, or reject the ambiguous combination. Resolve the selected
-M12 version against a stronger identity (for example, a set of authenticated
-region-specific members or the complete disc identity), then verify that the
-CLI and menu routes open only that owner. Keep the production title/menu gate
-closed. The attempted `DM.BIN`-only selection in the current working tree is
-not a fix and has not passed this real-media test.
-
 - Implement the observed retail title-menu input flow in Firestaff and identify
   the display consumer that places menu and face material.
   Updated 2026-10-27: the Japanese retail Ymir run now establishes a no-save
   cold boot to the native three-choice menu; a separate single Down press
   selects Continue, and Down/Down/A opens Configuration from that captured
   menu state. This closes the retail-emulator behavior gap for those observed
-  routes, not Firestaff's runtime menu or live renderer. The frame-8047 repeat
-  capture now reconstructs all 286,720 screenshot pixels exactly from Ymir's
-  VDP1 display buffer and VDP2/CRAM snapshots; its 178-command VDP1 trace has
-  zero drops, and its screenshot is retained in the same run. This closes the
-  captured-frame composition gap, but the screenshot has no embedded frame
-  number, and capture replay does not prove that Firestaff can produce the
-  image from retail assets. All 1,441 visible Japanese menu-sprite texels match
-  authenticated `TITLE.BIN`. A 31,616-byte `TITLE.BIN` span matches WorkRAMH;
-  30,561 bytes match NBG0 storage under the verified row layout. The frame-6893
-  SH-2 read trace observes the full source-address pass, but drops 860,856 other
-  master reads and records no read values. Source-to-display asset ownership
-  therefore remains partial; see
-  `docs/nexus/NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md` and
-  `docs/nexus/nexus_startup.md`.
+Routes, not Firestaff's runtime menu or the Saturn display consumer, are now
+observed in the retail emulator. The frame-8047 replay reconstructs all 286,720
+screenshot pixels from captured VDP1/VDP2 state, but the PNG has no embedded
+frame number, so exact acquisition-frame identity remains unproven. Five
+Japanese `TITLE.BIN` sprite roles match 1,441 visible texels. The authenticated
+31,616-byte title span matches WorkRAMH; 30,561 bytes match the active NBG0
+bitmap under the verified row layout. Frame 7,716 records 2,432 writes to the
+last eight rows, 1,377 matching source bytes. The frame-6,893 SH-2 trace records
+the complete ordered source-address pass but no read values and dropped
+860,856 unrelated rows. This strengthens source-path evidence but does not
+prove access-time values or full asset ownership. Keep renderer admission
+blocked; see [`docs/nexus/nexus_startup.md`](docs/nexus/nexus_startup.md) and
+[`docs/nexus/nexus_title.md`](docs/nexus/nexus_title.md).
   earlier paired raw-trace experiments below remain valid negative results for
   their sampled windows, but they are no longer the only input evidence. Keep
   the production gate closed while identifying menu/face material ownership
@@ -180,10 +161,11 @@ not a fix and has not passed this real-media test.
   Start is read from the live controller register at frames 18020--18023 by
   SH-2 code, but its 64-frame VDP1/VDP2 output remains byte-identical to the
   no-input control. That specific reader is therefore not an admitted menu
-  consumer. Later Ymir captures establish title-menu and selection transitions,
-  but still do not bind menu/face bytes to an SH-2 upload or VDP1/VDP2 display
-  consumer. A separate post-title control/input
-  pair at frames 30000--30119 exercised Start, A, B and C in four distinct
+  consumer. Later Ymir captures establish title-menu and selection transitions
+  and record a frame-tagged read pass across the Japanese `TITLE.BIN` source
+  address, but do not prove read values or bind the full menu/face image to a
+  complete upload or VDP1/VDP2 display consumer. A separate post-title
+  control/input pair at frames 30000--30119 exercised Start, A, B and C in four distinct
   20-frame pulses.  All eight captured video regions (VDP1 state/VRAM/frame
   buffers/draw selector and VDP2 registers/VRAM/CRAM) were byte-identical to
   the no-input control.  The observed active VDP1 state has two stable
