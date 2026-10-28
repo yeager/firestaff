@@ -13,7 +13,13 @@ changing the original files. The `.sit` container itself is not unpacked by
 the ZIP-only CTest. The older missing-media results below describe the Oct 27
 sweep and should not be treated as current DM2 Macintosh evidence. For DM1 and
 CSB, local archive integrity is verified; their specific startup/decoder
-tests were not rerun in this check. See the per-game TODOs for remaining gaps.
+tests were not rerun in this check. A fresh 2026-10-28 run of
+`dm2_v1_mac_extracted_native_cli_boot` passed both direct CLI and M12 launcher
+routes against the original extracted Macintosh English files, including the
+movie, new-game, champion selection, movement and first loaded runtime frame.
+The test hashes the original Graphics, Dungeon and Title files before and
+after. SDL dummy verifies the startup and runtime handoff path, not native
+display/audio/input parity. See the per-game TODOs for remaining gaps.
 
 2026-10-27 TRV2 verification at source revision `f582f57d` against the
 authentic `.firestaff/data` roots: a clean Debug build produced `firestaff`
