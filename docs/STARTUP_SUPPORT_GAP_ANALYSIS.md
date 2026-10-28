@@ -1,6 +1,6 @@
 # Five-game startup support gap analysis
 
-Reconciled with repository `main` at `f8ebf0d25` on 2026-10-28. The latest
+Reconciled with repository `main` at `6e94066d` on 2026-10-28. The latest
 published release is v3.0.418 (published on 2026-10-27). The release workflow
 verified packaging, not gameplay startup. Current authentic-media CLI routes
 include DM1 PC34, DOS, Atari ST, Amiga and FM Towns; CSB Atari, Amiga and FM
@@ -103,6 +103,32 @@ path as `GRAPHICS.DAT`, while the regression expected `graphics.dat`. The test
 now compares the path case-insensitively; the game/file identity remains the
 assertion. The authenticated Amiga demo archive/loose-file CLI and M12 test
 passes after this correction.
+
+### DM1 Amiga 2.0–2.2 startup recheck
+
+The authentic Amiga software archive exists at
+`~/.firestaff/data/dm1/Game,Dungeon_Master,Amiga,Software.7z`, but the local
+build initially lacked the `test_dm1_v1_amiga20_french_startup_real_media`
+probe executable, so CTest marked the German 2.0, French 2.0, and English
+2.1/2.2 routes skipped before reading the archive. After building that target,
+all three skip-safe CTests passed against the original archive:
+
+- German Amiga 2.0: the media probe verified the original ADF, graphics,
+  SWSH, and dungeon hashes; direct CLI and M12 reached the loaded runtime.
+- French Amiga 2.0: the probe selected the original ADF bytes, verified the
+  source-owned graphics and SWSH identities, and direct CLI/M12 completed the
+  authenticated title and entrance routes.
+- English Amiga 2.1 and 2.2: both original ADFs passed their media receipts;
+  each direct CLI and M12 route completed the source title, entrance, and
+  paired-dungeon load.
+
+The tests create their ZIP wrappers only in scratch from bytes read from the
+original archive; the original archive is not modified. The Amiga 2.0 M12
+regression also now spaces its scripted menu inputs across M12 frames and
+allows 10 seconds for the launch, avoiding the earlier no-launch flake. That
+targeted regression passed twice after the adjustment. These are bounded
+startup receipts and do not establish native Amiga display/input or full
+campaign parity.
 
 ## Route matrix
 
