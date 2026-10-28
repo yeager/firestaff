@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify a cold-start CD data-port trace against authentic JP Track 02."""
+"""Verify bounded CD data-port traces against authentic JP Track 02."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ TRACK02_INDEX1_FILE_OFFSET = 526_848
 SECTOR_BYTES = 2_352
 USER_DATA_OFFSET = 16
 USER_DATA_BYTES = 2_048
-OBSERVED_BYTES = 4_096
+MAX_OBSERVED_BYTES = 65_536
 TRACE_HEADER = "source=mednafen-pce-fast-cd-data-port-read"
 TRACE_HEADER_WITH_READER_PC = "source=mednafen-pce-fast-cd-data-port-read-with-reader-pc"
 TRACE_HEADER_WITH_READER_MPR_CONTEXT = "source=mednafen-pce-fast-cd-data-port-read-with-reader-mpr-context"
@@ -86,8 +86,10 @@ def verify(trace_path: Path, track02_path: Path) -> tuple[bytes, list[dict[str, 
     ):
         raise ValueError("unexpected CD data-port trace header")
     rows = [parse_row(line, index + 2) for index, line in enumerate(lines[1:])]
-    if len(rows) != OBSERVED_BYTES:
-        raise ValueError(f"expected {OBSERVED_BYTES} data-port rows, found {len(rows)}")
+    if not rows or len(rows) > MAX_OBSERVED_BYTES:
+        raise ValueError(
+            f"expected 1-{MAX_OBSERVED_BYTES} data-port rows, found {len(rows)}"
+        )
     if reader_mpr_trace != all("reader_mpr_slot" in row for row in rows):
         raise ValueError("reader MPR fields do not match the trace header")
 
@@ -122,9 +124,17 @@ def verify(trace_path: Path, track02_path: Path) -> tuple[bytes, list[dict[str, 
                     f"reader-PC fields require the reader-PC trace header at row {sequence}"
                 )
 
-    # Pass 2 independently recomputes the two sector and raw-file offsets.
+    # Pass 2 independently recomputes each row's sector and raw-file offsets.
+    # Long instrumented captures can read non-adjacent sectors; validate each
+    # observed byte against its own CD source receipt instead of assuming the
+    # entire trace is one contiguous 4096-byte bootstrap read.
     for sequence, row in enumerate(rows):
-        sector_index, user_offset = divmod(sequence, USER_DATA_BYTES)
+        sector_index = row["source_lba"] - TRACK02_START_LBA
+        user_offset = row["source_user_offset"]
+        if not 0 <= sector_index < TRACK02_END_LBA - TRACK02_START_LBA:
+            raise ValueError(f"source LBA is outside JP Track 02 at row {sequence}")
+        if not 0 <= user_offset < USER_DATA_BYTES:
+            raise ValueError(f"source user offset is outside its sector at row {sequence}")
         expected_offset = (
             TRACK02_INDEX1_FILE_OFFSET
             + sector_index * SECTOR_BYTES
@@ -136,8 +146,6 @@ def verify(trace_path: Path, track02_path: Path) -> tuple[bytes, list[dict[str, 
             or row["track02_end_lba"] != TRACK02_END_LBA
             or row["track02_index1_file_offset"] != TRACK02_INDEX1_FILE_OFFSET
             or row["track02_sector_bytes"] != SECTOR_BYTES
-            or row["source_lba"] != TRACK02_START_LBA + sector_index
-            or row["source_user_offset"] != user_offset
             or row["source_raw_offset"] != USER_DATA_OFFSET + user_offset
             or row["track02_raw_file_offset"] != expected_offset
         ):
@@ -165,8 +173,19 @@ def main() -> int:
         return 1
 
     loop_count = 5 if "reader_mpr_slot" in rows[0] else 4 if "reader_pc" in rows[0] else 3
-    print(f"PASS: {loop_count} verification loops; 4096 bytes match authentic JP Track 02")
-    print(f"source_lbas={rows[0]['source_lba']}-{rows[-1]['source_lba']}")
+    source_spans = 1
+    for previous, current in zip(rows, rows[1:]):
+        if current["track02_raw_file_offset"] != previous["track02_raw_file_offset"] + 1:
+            source_spans += 1
+    source_lbas = sorted({row["source_lba"] for row in rows})
+    print(
+        f"PASS: {loop_count} verification loops; {len(observed)} bytes match "
+        "authentic JP Track 02"
+    )
+    print(
+        f"source_lbas={source_lbas[0]}-{source_lbas[-1]} "
+        f"unique_lbas={len(source_lbas)} source_spans={source_spans}"
+    )
     print(f"observed_sha256={hashlib.sha256(observed).hexdigest()}")
     if "reader_pc" in rows[0]:
         print(f"reader_pc=0x{rows[0]['reader_pc']:04x} physical_pc=0x{rows[0]['reader_physical_pc']:06x}")

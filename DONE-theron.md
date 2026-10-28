@@ -8977,3 +8977,18 @@ T900/original inventory semantics. No synthetic media was used.
 - This verifies edition selection and startup handoff only. It does not prove
   source-driven dungeon rendering, direct world clicks, or complete Theron
   parity.
+
+## 2026-10-28 — validate large authentic JP CD data-port traces
+
+- `scripts/verify_theron_jp_cd_data_port_trace.py` now validates each row's
+  source LBA, sector user offset, raw-file offset and byte against the
+  authenticated JP Rev. 1 Track 02 image. It supports bounded non-contiguous
+  traces up to the instrumentation's 65,536-row limit.
+- On TRV2, three verification loops accepted a 65,536-row capture spanning
+  32 distinct source spans and a second run accepted the legacy 4,096-byte
+  bootstrap capture. Both matched authentic Track 02 media byte-for-byte.
+- The existing stage-2 candidate verifier also matched the 15-byte candidates
+  at LBAs 4521 and 4589 to direct bank-$80 writes in this same capture.
+- The larger trace remains transport evidence only: it does not bind CD reads
+  causally to individual RAM writes or identify the loaded dungeon
+  decoder/consumer.

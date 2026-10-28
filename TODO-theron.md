@@ -8174,3 +8174,28 @@ this is distinct from the authenticated combined-RAR title-audio path above.
 - References: [original PCE manual](https://www.tg-16.com/contributors/bernie/Dungeon_Master/Dungeon_Master.pdf),
   indexed by the [DMWeb PC Engine/TurboGrafx edition page](http://dmweb.free.fr/games/therons-quest/editions/pc-engine-turbografx/);
   [Greatstone's RTC conversion notes](https://www.dungeon-master.com/forum/viewtopic.php?t=26586).
+
+## 2026-10-28 — verify bounded multi-span JP CD data-port captures
+
+- Extended `scripts/verify_theron_jp_cd_data_port_trace.py` to validate each
+  source receipt independently, allowing bounded captures to contain
+  non-adjacent Track 02 sectors while retaining the 65,536-row limit and all
+  authentic-media byte and address checks.
+- Three runs against the retained TRV2 capture
+  `firestaff-theron-menu-hold-20261028` verified all 65,536 port-read bytes
+  against JP Rev. 1 Track 02 MD5
+  `b7afb338ad31be1025b53f9aff12d73a`. The trace covers 32 distinct source
+  spans across LBAs 3590–5215 and has stable observed-byte SHA-256
+  `3f1eb0892c2ae33083beceedf76c4716ea92fe47bc6923cb65d2d097143b4edb`.
+  The earlier 4,096-byte bootstrap capture also passed, preserving its
+  existing behavior.
+- This establishes that the sampled CD data-port bytes match the authentic
+  JP image. It does not join those reads causally to destination RAM writes,
+  identify the `$23AD` decoder input/output, or prove a gameplay transition;
+  the capture ended at its instrumentation limit with `transition=missing`.
+- The existing stage-2 candidate verifier also passed against this capture:
+  its 15-byte candidates at LBAs 4521 and 4589 appear in both the authentic
+  CD-port reads and direct bank-$80 write rows. This is same-capture byte
+  correlation, not proof that a particular read caused a particular write.
+  Continue with a causally joined transfer and decoder-consumer trace before
+  deriving dungeon semantics or enabling drawing.
