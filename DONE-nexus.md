@@ -1,5 +1,22 @@
 # Firestaff DONE — Nexus
 
+## 2026-10-28 — Render verified regional title-menu foreground sprites
+
+- Added bounded title-menu rendering for English New Game/Continue and
+  Japanese New Game/Continue. Each layout is selected only for a matching
+  full-size regional `TITLE.BIN` fingerprint; sprite spans, placements and
+  palette offsets come from authentic Ymir captures and retail data.
+- The Japanese Continue markers use the palette at `0x1b16`; Japanese New Game
+  markers use `0x15d6`. Text palette bytes match seven identical retail copies.
+  The renderer uses the captured 31/32 color calculation over the black
+  back-screen. It does not draw the unbound background or Configuration page.
+- The source verifier matches all visible sprite texels against the retained
+  authentic screenshots: English New Game 1,451/1,451, English Continue
+  1,451/1,451, Japanese New Game 1,495/1,495, and Japanese Continue 1,441/1,441.
+  Screenshot-to-command-frame identity remains unproven.
+- Built `firestaff_nexus` and `firestaff_m11`; the four screenshot/source
+  verifier runs passed. No game media or emulator dumps were added to Git.
+
 ## 2026-10-27 — Keep MAPD decoding separate from Saturn capture admission
 
 - Corrected `nexus_title_load`: successfully decoding the five real
