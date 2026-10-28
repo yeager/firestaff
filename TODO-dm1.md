@@ -1723,11 +1723,16 @@ parity.
 - Reproduce and correct the remaining reported retail HoC interaction/viewport
   set as one source-locked pass: presented-frame evidence for object-bearing
   Eye scroll reads, Vi altar wall material, stairs occlusion, complete door
-  composition, pressure-plate near/far visibility, wall-torch placement, and
-  held-item striping/loss on inventory placement. The authentic PC 3.4
-  runtime regression now follows normal movement and C127/C040 recruitment to
-  HoC (4,15), picks up the source WATER through a rendered C080 mouse target, and
-  places it in backpack slot 1. It then picks up scroll 0 through C080 and
+  composition, pressure-plate far-view visibility, wall-torch placement, and
+  held-item striping/loss on inventory placement. The HoC pressure plate at
+  map 0 (6,9) now uses its original 62x21 bitmap clipped at native size to the
+  64x25 D1C zone. An authentic PC34 test confirms that suppressing its sensor
+  ornament changes the viewport from the adjacent square (7,9); it does not
+  establish pixel parity or far-view visibility. See `DONE-dm1.md`. The
+  authentic PC 3.4 runtime regression follows normal movement and C127/C040
+  recruitment to HoC (4,15), picks up the source WATER through a rendered C080
+  mouse target, and places it in backpack slot 1. It then picks up scroll 0
+  through C080 and
   holds Eye through separate production
   press/release calls. It now captures the presented C101 panel before,
   during and after Eye, matches opaque C023 source pixels and M653 text ink,
