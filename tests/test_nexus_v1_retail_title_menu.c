@@ -131,6 +131,17 @@ int main(void)
               state.music_enabled && state.stereo_enabled &&
               !state.easy_level_enabled && state.monster_gauge_enabled,
           "English Configuration page opens with captured retail defaults");
+    check(nexus_v1_retail_title_menu_select_configuration_pointer(
+              &state, 100, 83) ==
+              NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED &&
+              state.configuration_row == NEXUS_V1_RETAIL_CONFIGURATION_SOUND &&
+              state.music_enabled && state.stereo_enabled,
+          "Sound row owns its first pointer scanline without changing Music");
+    check(nexus_v1_retail_title_menu_reduce(
+              &state, NEXUS_V1_RETAIL_TITLE_MENU_INPUT_UP, 0) ==
+              NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED &&
+              state.configuration_row == NEXUS_V1_RETAIL_CONFIGURATION_MUSIC,
+          "Up from the Sound pointer boundary returns to Music");
     check(nexus_v1_retail_title_menu_reduce(
               &state, NEXUS_V1_RETAIL_TITLE_MENU_INPUT_RIGHT, 0) ==
               NEXUS_V1_RETAIL_TITLE_MENU_RESULT_CONFIGURATION_CHANGED &&

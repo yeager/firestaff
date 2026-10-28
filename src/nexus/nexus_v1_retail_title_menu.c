@@ -168,7 +168,7 @@ nexus_v1_retail_title_menu_select_configuration_pointer(
         x >= 320 || y < 0 || y >= 224) {
         return NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNVERIFIED_INPUT;
     }
-    if (y >= 60 && y < 84) {
+    if (y >= 60 && y < 83) {
         row = NEXUS_V1_RETAIL_CONFIGURATION_MUSIC;
     } else if (y >= 83 && y < 106) {
         row = NEXUS_V1_RETAIL_CONFIGURATION_SOUND;
