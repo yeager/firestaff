@@ -1022,6 +1022,27 @@ int main(void) {
                             "real Nexus title boot does not claim a dungeon path");
                 expect_true(view.active == 1 && view.startedFromLauncher == 1,
                             "real Nexus title boot remains an active launcher session");
+                expect_true(advance_nexus_title_to_frame(
+                                &view,
+                                (unsigned int)nexus_title_boot_start_ready_frames(),
+                                128),
+                            "real Nexus title-only boot reaches the startup hold");
+                expect_true(M11_GameView_HandleInput(&view,
+                                                     M12_MENU_INPUT_ACTION) ==
+                                M11_GAME_INPUT_REDRAW &&
+                                view.nexusState.title_active == 1 &&
+                                view.nexusState.startup_save_select_active == 0 &&
+                                view.nexusState.champion_select_active == 0,
+                            "real Nexus title-only boot blocks Action without a captured menu route");
+                expect_true(M11_GameView_HandleInput(&view,
+                                                     M12_MENU_INPUT_ACCEPT) ==
+                                M11_GAME_INPUT_REDRAW &&
+                                view.nexusState.title_active == 1 &&
+                                view.nexusState.startup_save_select_active == 0 &&
+                                view.nexusState.champion_select_active == 0 &&
+                                strstr(view.lastOutcome,
+                                       "NEXUS MENU CAPTURE REQUIRED") != NULL,
+                            "real Nexus title-only boot blocks Accept before any unverified transition");
                 M11_GameView_Shutdown(&view);
                 nexus_v1_launcher_shutdown();
                 goto real_media_complete;
