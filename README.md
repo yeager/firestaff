@@ -21,12 +21,17 @@ work, especially for Chaos Strikes Back, Nexus and Theron's Quest.
 
 ## Current status
 
-The status pages were reviewed against repository snapshot `88ef19df` on
-2026-10-27. A fresh build of the local working tree and real-media launcher
-checks confirmed keyboard and mouse selection for all five game cards. The
-normal menu reached a first native runtime for DM1, CSB, DM2 and Theron's
-Quest; Nexus correctly remains blocked at its Saturn menu evidence gate. These
-checks confirm bounded startup paths, not complete game parity.
+The status pages were reviewed on 2026-10-28 against a working tree based
+on `main` commit `56f99cdcf`. Fast-dev compilation and the authentic-media
+`test_m12_main_menu_game_selection_real_media.sh` confirmed keyboard and mouse
+selection for all five game cards and no-game default-root handoff for all
+five games. The no-game launcher opens while the full scan continues and
+publishes game cards as each source handoff is admitted. Separate real-media
+runs reached the Firestaff runtime for DM1, CSB, DM2 and Theron's Quest. Nexus
+currently stops at its Saturn title evidence gate, so its media discovery and
+card availability do not establish a playable game. These SDL dummy and CLI
+checks do not verify native display, audio, or physical input, and do not
+establish complete game parity.
 
 Firestaff detects real media and exposes paths only after their handoff gates
 pass. Edition ownership is checked per route, and mixed-source combinations
@@ -174,7 +179,11 @@ route.
 No game data is included. Keep your legally owned files in any directory and
 tell Firestaff where to look. It searches recursively and can inspect supported
 loose files, ZIP archives and disc-image containers without relying on
-filenames.
+filenames. Archives that need an external command-line tool are skipped by
+default. To allow an installed `7zz`, `7z`, or `bsdtar` to inspect them, pass
+`--enable-external-archive-tools` to the scan or game-launch command. The
+scan output identifies archive candidates it skipped. See [game-data setup](docs/DATA_SETUP.md)
+for details.
 
 For the DAT-based games, `GRAPHICS.DAT` and `DUNGEON.DAT` must come from the
 same original edition. The launcher rejects incomplete or mismatched pairs.
@@ -275,6 +284,7 @@ firestaff --game <dm1|csb|dm2|nexus|theron>
           --csb-fmtowns-ja
           --csb-utility-disk
           --scan-data
+          --enable-external-archive-tools
           --fullscreen
           --scale-mode <n>
           --no-music | --music

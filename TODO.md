@@ -682,6 +682,43 @@ runtime through the title movie and mirror selection, moved twice, passed AUTO
 selection and Back/exit checks, and preserved the original archive. The
 Nexus title gate and other per-game/per-platform runtime gaps remain open.
 
+2026-10-28 full-library scan latency correction: the measurements below still
+describe the time to finish scanning the entire collection, but they overstate
+the delay before the launcher appears. The current no-game path defers the
+all-game scan, starts it alongside the three-second startup intro, and enters
+the interactive menu while the worker continues. DM1, CSB and DM2 cards become
+eligible as their scans finish. Nexus's BPK metadata receipt is refreshed at
+the end of its own scan, so its card can unlock before Theron's later scan.
+Theron remains gated until the final CUE ownership and loader-receipt refresh;
+an explicit `--game` launch also keeps its synchronous edition-selection scan.
+The long full-collection scan remains a performance gap, but it no longer
+blocks the no-game launcher from opening. This correction is based on
+`main_loop_m11.c`'s deferred-scan startup path, the Nexus/Theron media refresh
+boundaries in `asset_status_m12.c`, and `menu_startup_m12.c`'s per-game
+completion mask. On Oct 28, the fast-dev build scanned the installed
+original-media collection in 6.52 seconds with the default external-tool
+policy; all five games were READY, while 15 `.7z`, `.rar`, `.sit`, or related
+archive candidates were reported as skipped. Repeating the scan with the
+explicit `--enable-external-archive-tools` option read those candidates, again
+reported all five games READY, and took 24.25 seconds. The second run followed
+the first and the OS file cache was uncontrolled, so these are warm, local
+observations rather than a cold-scan benchmark. They measure synchronous
+`--scan-data`, not time to first interactive menu frame or native input.
+
+2026-10-28 current-source progressive startup verification: the fast-dev
+application build succeeded, and
+`test_firestaff_cli_startup_diagnostics_real_media.sh` passed against the
+installed original media. The no-game launcher discovered all five games;
+its partial snapshot reported Nexus available while Theron's final scan was
+still pending. Direct CLI boot probes selected the expected authentic
+platforms for all five games. Nexus deliberately stopped at `title-entered`
+with `levelLoaded=0` and a blocked startup receipt, so this verifies media
+selection and menu admission timing, not playable Nexus gameplay. The script's
+Macintosh ZIP branch skipped because this installation has extracted/SIT media
+instead; the separate extracted-file DM2 test covers that layout. SDL dummy
+output does not verify native display, audio or physical input, and this run
+did not measure total scan time.
+
 2026-10-19 full-library scan cache follow-up: the persistent digest cache now
 uses indexed path lookups instead of walking every cached member for each
 archive entry. Native 7z entries and nested Amiga ADF contents also reuse
@@ -690,8 +727,9 @@ Two no-game debug starts against the installed 436-file, 4.3 GiB original-media
 collection completed in 20.98 and 18.00 seconds, including the requested
 one-second menu duration; the earlier runs took about 27 seconds for the scan.
 The complete original-media DM1/CSB/DM2 CLI diagnostics passed in 268.36
-seconds. The scan still delays the interactive menu, and these headless runs
-do not establish native video/audio or physical-input behavior.
+seconds. Those historical runs predate the deferred interactive scan path;
+they do not establish current menu latency, native video/audio, or
+physical-input behavior.
 
 2026-10-19 persisted single-file launcher selection: the no-game startup now
 promotes a remembered media file to its surrounding collection root, so the
@@ -699,9 +737,10 @@ default launcher can discover neighboring DM1, CSB and DM2 installations.
 An explicit file-valued `--data-dir` remains scoped to that selected source.
 Verified with an isolated config pointing at the authentic DM1 Amiga 3.6 ZIP;
 the default launch stayed in `mode=menu`, found DM1/CSB/DM2, and did not hand
-off to a game. Startup responsiveness remains an open issue because the full
-collection scan still takes 18 to 21 seconds in the current Mac mini M4 debug
-runs.
+off to a game. The recorded 18-to-21-second full-collection scan remains a
+historical scan-cost measurement; current no-game menu entry overlaps scanning
+with the startup intro. DM1/CSB/DM2 unlock progressively, Nexus after its own
+BPK metadata refresh, and Theron after its final CUE/loader refresh.
 
 2026-10-19 full-library no-selection launch check on the Mac mini M4:
 starting the current build with `--menu --debug --data-dir
@@ -710,11 +749,13 @@ authentic original data for DM1, CSB, DM2, Nexus and Theron's Quest, and made
 no game-handoff. The local `m11_direct_launch_prepare_all_games` CTest also
 passed against the installed original-media collection. The no-selection
 scanner reported completion at about 27 seconds on both initial and repeated
-runs; the second run took 57.18 seconds total with a 30-second menu duration,
-so the measured scan accounts for most of that startup delay. These checks
+runs; the second run took 57.18 seconds total with a 30-second menu duration.
+These measurements predate the deferred interactive scan path and record full
+scan cost rather than current menu-entry latency. These checks
 used SDL dummy video/audio and confirm availability/menu state, not native
-window interaction or first gameplay frames for all five titles. Treat the
-long full-library scan as an open startup-performance gap.
+window interaction or first gameplay frames for all five titles. The long
+full-library scan remains an open performance gap; see the 2026-10-28
+correction above for its current effect on menu and per-game launch readiness.
 
 2026-10-19 current-source original-media CLI startup matrix:
 `ctest --test-dir .codex-scratch/scan-locale-build-xcode -j 2

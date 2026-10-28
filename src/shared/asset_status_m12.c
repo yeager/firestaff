@@ -8946,6 +8946,13 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
         m12_preserve_dm1_game_data_root(status, i);
         m12_report_dm1_selected_files(status, i, requestedDataDir);
         m12_admit_dm1_iigs(status, i, roots, rootCount, requestedDataDir, options);
+        if (strcmp(g_games[i].gameId, "nexus") == 0) {
+            /* Nexus can publish as soon as its own admission is complete.
+             * Its optional BPK trailer receipt is independent of Theron's
+             * later CUE/Track 02 refresh, so do not hold the Nexus menu card
+             * until that final game finishes scanning. */
+            m12_refresh_nexus_bpk_trailer_metadata(status, roots, rootCount);
+        }
     }
     if (!m12_scan_progress_update(&progressCtx,
                                   "refreshing media metadata",
@@ -8960,7 +8967,6 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
     m12_refresh_theron_media_status(status, roots, rootCount);
     m12_refresh_theron_track02_loader_receipt(status);
 
-    m12_refresh_nexus_bpk_trailer_metadata(status, roots, rootCount);
     m12_refresh_v22_modern_asset_status(status);
     /* Launcher diagnostic: external archives that were skipped because no
      * supported extractor (7zz/7z/bsdtar) is installed. Surfaced on the

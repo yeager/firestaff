@@ -117,6 +117,17 @@ mouse flow and stopped at the same title gate. These SDL dummy runs prove
 authentic data selection and title handoff only; they do not prove an in-game
 Nexus menu, save load, or playable level.
 
+2026-10-28 current-working-tree direct CLI probe against the authentic
+Japanese retail `DM.BIN`: `--game nexus --platform saturn --data-dir
+~/.firestaff/data/nexus/DM.BIN --boot-probe --boot-probe-frames 0` selected
+edition `nexus-saturn-jp` with asset MD5
+`e88d60859f65f08fa622e1992b02280f`. The receipt remains
+`status=blocked title=1 levelLoaded=0 menu=0` with blocker
+`title-vdp-owner-compositor-capture-required`; the frame is `nexus-title` at
+48/102. This confirms the current authentic-media CLI source selection and
+pinpoints the still-unresolved Firestaff title/menu composition gate. It is
+not a playable-level start.
+
 An older 600-frame Mednafen capture on the authentic English merged disc
 (`run-authentic-merged-menu-20260811`, disc SHA-256
 `5ab2fbd572d454e4a9df024e2bb6b3cd30f84018c3e650bd945bd52742edd83d`) does

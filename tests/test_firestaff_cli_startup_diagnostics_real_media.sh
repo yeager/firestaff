@@ -369,6 +369,14 @@ if [ -f "$dm1_towns_archive" ] && [ -f "$csb_towns_archive" ] &&
             "$no_game_output" >&2
         exit 1
     }
+    if [ -f "$nexus_iso" ] && [ -f "$theron_track02" ]; then
+        printf '%s\n' "$no_game_output" | \
+            grep -Fq 'firestaff: scan partial-ready games=dm1:yes,csb:yes,dm2:yes,nexus:yes,theron:no' || {
+            printf 'FAIL: deferred scan did not publish authentic Nexus before the final Theron scan\n%s\n' \
+                "$no_game_output" >&2
+            exit 1
+        }
+    fi
     expected_scan_games='dm1:yes,csb:yes,dm2:yes'
     if [ -f "$nexus_iso" ]; then
         expected_scan_games="$expected_scan_games,nexus:yes"

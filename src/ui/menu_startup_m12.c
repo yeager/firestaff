@@ -4855,8 +4855,10 @@ static unsigned int m12_deferred_completed_game_mask(
     if (strcmp(progress->currentGameId, "nexus") == 0)
         return M12_DEFERRED_SCAN_DM1 | M12_DEFERRED_SCAN_CSB |
                M12_DEFERRED_SCAN_DM2;
-    /* Nexus and Theron depend on the shared metadata refresh after this loop.
-     * Keep them gated until the worker publishes the complete scan result. */
+    if (strcmp(progress->currentGameId, "theron") == 0)
+        return M12_DEFERRED_SCAN_DM1 | M12_DEFERRED_SCAN_CSB |
+               M12_DEFERRED_SCAN_DM2 | M12_DEFERRED_SCAN_NEXUS;
+    /* Theron's CUE ownership and loader receipt are finalized after the loop. */
     return 0U;
 }
 
@@ -14529,12 +14531,16 @@ static int m12_update_deferred_startup_scan(M12_StartupMenuState* state) {
         m12_sync_card_art(state);
         if (state->debugStartup) {
             fprintf(stderr,
-                    "firestaff: scan partial-ready games=dm1:%s,csb:%s,dm2:%s\n",
+                    "firestaff: scan partial-ready games=dm1:%s,csb:%s,dm2:%s,nexus:%s,theron:%s\n",
                     M12_AssetStatus_GameAvailable(&state->assetStatus, "dm1")
                         ? "yes" : "no",
                     M12_AssetStatus_GameAvailable(&state->assetStatus, "csb")
                         ? "yes" : "no",
                     M12_AssetStatus_GameAvailable(&state->assetStatus, "dm2")
+                        ? "yes" : "no",
+                    M12_AssetStatus_GameAvailable(&state->assetStatus, "nexus")
+                        ? "yes" : "no",
+                    M12_AssetStatus_GameAvailable(&state->assetStatus, "theron")
                         ? "yes" : "no");
         }
     }

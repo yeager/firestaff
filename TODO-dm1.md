@@ -19,6 +19,16 @@ Amiga archive. The Amiga demo case was unverified at that time because its
 archive was not staged. SDL dummy verifies these launch and source-handoff paths,
 not native display or physical input parity.
 
+2026-10-28 authentic Amiga 2.0 menu pacing retest: the updated
+`dm1_v1_amiga_v20_archive_cli_boot` passed against the installed original
+ZIP -> ZIP -> ADF preservation archive using the fast-dev build. It covers
+normal and saved CLI boots, source movement, the M12 Amiga card/menu handoff,
+Quick Resume at the authenticated saved pose, title/SWSH quit paths, all 18
+F0437 zoom deadlines, and F0441 door cadence before reaching the first runtime
+frame. Giving each menu input 20 M12 frames prevents scripted input bursts
+from crossing the native presentation phases. This is original-media SDL
+coverage, not native display or physical-input parity.
+
 2026-10-27 FM Towns AUTO discovery with a repacked ZIP: the authentic
 `Dungeon-Master_FM-Towns_JA-EN.zip` on the external data disk contains the
 original BIN/CUE media and authentic language-specific graphics/world hashes,
@@ -121,7 +131,53 @@ M11 route, but it does not rule out a native-window/event-loop or frame
 presentation hang. Capture the reported native run and matching DOSBox-X
 original pose, then audit the route-specific frame timer, F0115/F0107 asset
 composition, C10 glyph raster/palette, F0128 stairs dispatch and frame
-ownership before changing any mapping. Do not substitute generated assets.
+ownership before changing any mapping. Use the [DMWeb PC DOS Level 00 map](http://dmweb.free.fr/games/dungeon-master/solutions/maps-christophef/level-00/)
+for Hall of Champions: its inscription list places “Hall Of Champions” at
+(08,04) and “Vi Altar Of Rebirth” at (04,17). Level 01 is a separate map and
+must not be used to locate those HoC features. The [GreatStone PC 3.4
+GRAPHICS.DAT index](http://greatstone.free.fr/dm/db_data/dm_pc_34/graphics.dat/graphics.dat.html)
+labels 0258 as the wall-text font; 0261/0262 and 0265/0266 as square and
+arched alcoves; 0335/0336 and 0351/0352 as empty and full torch holders; and
+0049–0057 and 0058–0063 as visible and invisible floor-pit views. Those IDs
+were checked against the installed original PC 3.4 `DATA/GRAPHICS.DAT` (713
+entries): Firestaff's GRAPHICS.DAT reader extracted the listed entries,
+including 0258 at 288x8, 0261/0262 at 16x48 and 90x56, 0265/0266 at 28x48
+and 96x56, and the torch-holder pairs at 20x40/24x54 and 24x48/24x53. The
+PC34 wall-ornament selector derives the bank from `259 + 2 * globalIndex`
+(`src/dm1/dm1_v1_wall_ornament_pc34_compat.c`); the renderer then loads that
+graphic and applies C696 zones, palette, transparency and scale
+(`src/engine/m11_game_view.c`). This verifies resource presence and the
+candidate ID relationship, not the pixels Firestaff presents for the HoC
+state. For the reported HoC floor pressure plate, GreatStone separately labels
+0391–0396 square pressure pads, 0409–0414 round pressure plates, and 0427–0432
+tiny pressure pads; all 18 entries also decode from the original archive. The
+HoC square-pad route is specifically anchored in `src/engine/m11_game_view.c`:
+the PC34 floor bank starts at 385 with six perspective variants per type, so
+global floor-ornament index 1 at D1C (increment 5) selects graphic 396
+(62x21). The native-clipped fallback exists because the source G0206 D1C zone
+is 64x25, larger than that original bitmap. This identifies the authentic
+asset and intended selector. On 2026-10-28, the current-tree
+`test_m11_dm1_pc34_first_monster_combat_real` probe was built and run through
+its shield-layer wrapper against the original DOS PC 3.4 archive. It passed
+twice: authentic map 0 plate `(6,9)`, viewed from `(7,9,d3)`, had sensor
+ornament ordinal 4, and suppressing only that sensor's ornament changed the
+rendered viewport hash. This proves the plate contributes pixels in that
+tested approach, not that its appearance or contrast matches the original.
+The regression does not assert the emitted graphic ID; capture a matched
+original/Firestaff Level 00 frame and assert the selected graphic and pixel
+pattern before closing the visual report. Keep pressure-pad graphics distinct
+from floor-pit graphics 0049–0063; do not substitute generated assets.
+
+The same-day `test_m11_dm1_hoc_wall_material_receipt_pc34` run against the
+original archive also passed: the authentic stair torch rendered, was picked
+up and equipped, carried light through the real stairs transition, and every
+ordinary HoC wall-ornament ordinal in the test reached the framebuffer from
+original material. This verifies source-backed draw admission for those tested
+views, but the regression checks source pixels/receipts rather than unique
+ornament appearance or matched native palette and composition. Keep the
+reported “same black hole” alcove/torch concern open until a matched original
+and Firestaff capture establishes whether the remaining gap is map selection,
+palette/transparency, scaling, or draw order.
 
 2026-10-25 Apple IIGS mouth interaction: ReDMCSB PANEL.C F0349:1824-1850
 allows water/waterskin icons with charges and original potion Things when the

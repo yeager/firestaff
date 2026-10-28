@@ -172,11 +172,16 @@ parity.
 
 ## Latest real-media revalidation
 
-The newer 2026-10-27 local menu check is recorded in the
-[five-game startup analysis](STARTUP_SUPPORT_GAP_ANALYSIS.md#latest-local-real-media-menu-check-2026-10-27).
-It exercises keyboard and mouse selection for all five games, reaches first
-native runtime for DM1, CSB, DM2 and Theron US, and records the expected
-capture-gated Nexus result. It does not claim native-display or audio parity.
+On 2026-10-28, `test_m12_main_menu_game_selection_real_media.sh` passed
+against the current working tree and the installed original-media root. It
+verified keyboard and mouse selection for all five game cards, plus default-
+root menu handoff for DM1, CSB, DM2, Nexus and Theron. These card and handoff
+receipts do not claim that every selection reaches a playable runtime: Nexus
+remains capture-gated at its Saturn title. The 2026-10-27 first-runtime matrix
+and reproduction details remain in the [five-game startup
+analysis](STARTUP_SUPPORT_GAP_ANALYSIS.md#latest-local-real-media-menu-check-2026-10-27).
+The SDL dummy run does not establish native-display, audio or physical-input
+parity.
 
 Recent reports of DM1/CSB input and presentation faults and DM2/FM Towns
 palette/menu/dungeon faults remain open parity work until they are reproduced

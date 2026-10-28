@@ -147,6 +147,20 @@ firestaff --scan-data
 firestaff --data-dir /path/to/your/games --scan-data
 ```
 
+By default, scanning does not invoke external archive programs. If your
+original media is only present in an archive that the native readers do not
+support, opt in explicitly for the scan or launch:
+
+```bash
+firestaff --enable-external-archive-tools --scan-data
+firestaff --enable-external-archive-tools --game dm1
+```
+
+This allows an installed `7zz`, `7z`, or `bsdtar` to inspect archive members;
+it can increase scan time. The scanner reports archive candidates it skipped
+and does not unpack game files beside the original archive. This option must
+be supplied to each command that needs it.
+
 ### Scan cache
 
 Firestaff stores verified file hashes in its local scan cache.  On a later
