@@ -1288,26 +1288,28 @@ trace links that buffer to the bitmap, so the overlap remains an unproven
 producer candidate. Details and hashes are in the
 [English sprite receipt](../../parity-evidence/verification/nexus_english_title_menu_sprite_join_20261027/README.md).
 
-## Japanese Continue foreground rendering (2026-10-28)
+## Japanese New Game and Continue foreground rendering (2026-10-28)
 
 The Japanese Continue layout is admitted only for the authenticated Japanese
 retail `TITLE.BIN` (SHA-256
 `51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3`, FNV-1a64
-`064414f722d0409c`). Firestaff draws its five source-bound foreground sprites
-at the frame-8047 capture positions. A scan of all 137 ISO members from the
-authentic Japanese CUE binds the text CRAM palette bytes to seven identical
-copies in `TITLE.BIN` (`0x02f6`, `0x0426`, `0x0556`, `0x0686`, `0x07b6`,
-`0x0986`, and `0x1f06`). The two selection markers' palette matches uniquely
-at `0x1b16`. The renderer uses those regional palette bytes and the captured
-31/32 blend over the verified black back-screen. It does not substitute
-English art or color.
+`064414f722d0409c`). Firestaff draws five source-bound foreground sprites
+for both observed Japanese menu selections. The New Game frame 8,050 markers
+use source offset `0x15f6`, with their palette uniquely at `0x15d6`; Continue
+frame 8,047 uses marker source `0x1b36`, with its palette uniquely at
+`0x1b16`. Text CRAM palette bytes match seven identical copies in `TITLE.BIN`
+(`0x02f6`, `0x0426`, `0x0556`, `0x0686`, `0x07b6`, `0x0986`, and `0x1f06`).
+The renderer uses those regional palette bytes and the captured 31/32 blend
+over the verified black back-screen. It does not substitute English art or
+color.
 
-`verify_nexus_title_sprite_screenshot.py` confirms the five source spans,
-regional palette bytes, and all 1,441 visible texels against the retained
-Japanese Continue screenshot. The screenshot's exact acquisition frame remains
-unproven. Japanese New Game, the background, Configuration, full-screen
-composition, input/hit areas, Continue loading, and gameplay HUD/viewport
-remain open. See the [Japanese Continue evidence receipt](../../parity-evidence/verification/nexus_japanese_menu_down_selection_20261027/README.md).
+`verify_nexus_title_sprite_screenshot.py` confirms all five source spans,
+regional palette bytes, and all 1,495 visible New Game texels and 1,441 visible
+Continue texels against their retained Japanese screenshots. The screenshot's
+exact acquisition-frame identity remains unproven. The background,
+Configuration, full-screen composition, mouse hit areas, Continue loading, and
+gameplay HUD/viewport remain open. See the
+[Japanese sprite evidence receipt](../../parity-evidence/verification/nexus_japanese_title_menu_sprite_join_20261028/README.md).
 
 ## Authentic Japanese title-menu Down selection (2026-10-27)
 

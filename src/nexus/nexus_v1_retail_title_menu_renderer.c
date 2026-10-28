@@ -5,6 +5,7 @@
 enum {
     NEXUS_TITLE_BIN_BYTES = 112216,
     NEXUS_TITLE_MENU_ENGLISH_ICON_PALETTE = 0x1486,
+    NEXUS_TITLE_MENU_JAPANESE_NEW_GAME_ICON_PALETTE = 0x15d6,
     NEXUS_TITLE_MENU_JAPANESE_ICON_PALETTE = 0x1b16,
     NEXUS_TITLE_MENU_TEXT_PALETTE = 0x02f6,
     NEXUS_TITLE_MENU_ICON_COLOR_BASE = 224,
@@ -45,6 +46,14 @@ static const Nexus_V1_RetailTitleMenuSprite k_japanese_continue_sprites[] = {
     {0x1b36, 24, 24, 104, 156, NEXUS_TITLE_MENU_JAPANESE_ICON_PALETTE, NEXUS_TITLE_MENU_ICON_COLOR_BASE},
     {0x1b36, 24, 24, 191, 156, NEXUS_TITLE_MENU_JAPANESE_ICON_PALETTE, NEXUS_TITLE_MENU_ICON_COLOR_BASE},
     {0x06a6, 64,  8, 128, 165, NEXUS_TITLE_MENU_TEXT_PALETTE, NEXUS_TITLE_MENU_TEXT_COLOR_BASE},
+    {0x07d6,104,  8, 109, 177, NEXUS_TITLE_MENU_TEXT_PALETTE, NEXUS_TITLE_MENU_TEXT_COLOR_BASE}
+};
+
+static const Nexus_V1_RetailTitleMenuSprite k_japanese_new_game_sprites[] = {
+    {0x15f6, 24, 24, 104, 144, NEXUS_TITLE_MENU_JAPANESE_NEW_GAME_ICON_PALETTE, NEXUS_TITLE_MENU_ICON_COLOR_BASE},
+    {0x15f6, 24, 24, 191, 144, NEXUS_TITLE_MENU_JAPANESE_NEW_GAME_ICON_PALETTE, NEXUS_TITLE_MENU_ICON_COLOR_BASE},
+    {0x0446, 64,  8, 129, 153, NEXUS_TITLE_MENU_TEXT_PALETTE, NEXUS_TITLE_MENU_TEXT_COLOR_BASE},
+    {0x0576, 64,  8, 128, 165, NEXUS_TITLE_MENU_TEXT_PALETTE, NEXUS_TITLE_MENU_TEXT_COLOR_BASE},
     {0x07d6,104,  8, 109, 177, NEXUS_TITLE_MENU_TEXT_PALETTE, NEXUS_TITLE_MENU_TEXT_COLOR_BASE}
 };
 
@@ -154,13 +163,20 @@ int nexus_v1_retail_title_menu_render(const Nexus_TitleScreen *title,
     source_size = title->retail_menu_source_size;
     source_hash = fnv1a64(source, source_size);
     if (title->retail_menu_source_region == NEXUS_V1_TITLE_MENU_SOURCE_JAPANESE) {
-        if (source_hash != NEXUS_TITLE_BIN_JAPANESE_FNV1A64 ||
-            state->selection != NEXUS_V1_RETAIL_TITLE_MENU_CONTINUE) {
+        if (source_hash != NEXUS_TITLE_BIN_JAPANESE_FNV1A64) {
             return 0;
         }
-        sprites = k_japanese_continue_sprites;
-        sprite_count = sizeof(k_japanese_continue_sprites) /
-                       sizeof(k_japanese_continue_sprites[0]);
+        if (state->selection == NEXUS_V1_RETAIL_TITLE_MENU_NEW_GAME) {
+            sprites = k_japanese_new_game_sprites;
+            sprite_count = sizeof(k_japanese_new_game_sprites) /
+                           sizeof(k_japanese_new_game_sprites[0]);
+        } else if (state->selection == NEXUS_V1_RETAIL_TITLE_MENU_CONTINUE) {
+            sprites = k_japanese_continue_sprites;
+            sprite_count = sizeof(k_japanese_continue_sprites) /
+                           sizeof(k_japanese_continue_sprites[0]);
+        } else {
+            return 0;
+        }
     } else if (title->retail_menu_source_region != NEXUS_V1_TITLE_MENU_SOURCE_ENGLISH ||
                source_hash != NEXUS_TITLE_BIN_ENGLISH_FNV1A64) {
         return 0;

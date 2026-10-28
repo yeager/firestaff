@@ -37,9 +37,9 @@ placement, and all 1,451 visible pixels in each state. The icon palette has one
 source match; seven identical copies of the text palette remain candidates.
 Firestaff now draws those five authenticated English foreground sprites for
 New Game and Continue from the exact hash-pinned `TITLE.BIN`, plus the five
-authenticated Japanese Continue sprites and their source-bound regional
-palettes. This does not bind or render the shared background, Japanese
-New Game, Configuration, or destination execution; full menu composition
+authenticated Japanese New Game and Continue sprites and their source-bound
+regional palettes. This does not bind or render the shared background or
+Configuration, or implement destination execution; full menu composition
 remains open.
 This does not bind the NBG0 background or remaining screen composition;
 the exact background source and complete display consumer are still unknown.
@@ -183,9 +183,9 @@ not a fix and has not passed this real-media test.
   only while the Nexus title is active. An English retail Ymir replay verifies
   Down to Continue and Up back to a pixel-identical New Game frame. Firestaff
   renders the hash-pinned English New Game and Continue foreground sprites
-  and the Japanese Continue sprites from their authentic regional `TITLE.BIN`
-  and source-bound palettes, but does not render the background or Japanese
-  New Game/Configuration layouts. New Game, Continue, and Configuration
+  and both Japanese title-menu selections from their authentic regional
+  `TITLE.BIN` and source-bound palettes, but does not render the background or
+  Configuration layout. New Game, Continue, and Configuration
   destinations remain unimplemented; Continue execution does not yet read
   Saturn BKR data. The repeated Continue capture verifies all five Japanese
   `TITLE.BIN` sprites against 1,441 screenshot pixels. The English verifier

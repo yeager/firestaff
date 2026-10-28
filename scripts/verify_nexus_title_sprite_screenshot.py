@@ -19,7 +19,15 @@ ENGLISH_TITLE_MENU_PALETTE_OFFSETS = (
     0x02F6, 0x0426, 0x0556, 0x0686, 0x07B6, 0x0986, 0x1F06, 0x1486,
 )
 JAPANESE_TITLE_MENU_PALETTE_OFFSETS = (
-    0x02F6, 0x0426, 0x0556, 0x0686, 0x07B6, 0x0986, 0x1F06, 0x1B16,
+    0x02F6, 0x0426, 0x0556, 0x0686, 0x07B6, 0x0986, 0x1F06,
+    0x15D6, 0x1B16,
+)
+JAPANESE_NEW_GAME_DRAW_ROLES = (
+    (0x15F6, 24, 24, 213, (104, 144)),
+    (0x15F6, 24, 24, 213, (191, 144)),
+    (0x0446, 64, 8, 313, (129, 153)),
+    (0x0576, 64, 8, 293, (128, 165)),
+    (0x07D6, 104, 8, 463, (109, 177)),
 )
 JAPANESE_CONTINUE_DRAW_ROLES = (
     # Retail TITLE.BIN offset, dimensions, visible texels, VDP1 top-left.
@@ -50,7 +58,8 @@ ENGLISH_CONTINUE_DRAW_ROLES = (
 def title_menu_layouts(source: bytes):
     source_hash = hashlib.sha256(source).hexdigest()
     if source_hash == JAPANESE_TITLE_SHA256:
-        return (("japanese-continue", JAPANESE_CONTINUE_DRAW_ROLES),)
+        return (("japanese-new-game", JAPANESE_NEW_GAME_DRAW_ROLES),
+                ("japanese-continue", JAPANESE_CONTINUE_DRAW_ROLES))
     if source_hash == ENGLISH_TITLE_SHA256:
         return (("english-new-game", ENGLISH_NEW_GAME_DRAW_ROLES),
                 ("english-continue", ENGLISH_CONTINUE_DRAW_ROLES))
@@ -63,7 +72,7 @@ def title_menu_draws(commands, vram: bytes, source: bytes):
     The display-list address changes between cold boots. Role identity comes
     from the authenticated retail source offset, dimensions, and screen
     position, not from emulator-specific command addresses. Supported
-    layouts are the Japanese CONTINUE state and English NEW GAME / CONTINUE.
+    layouts are the Japanese and English NEW GAME / CONTINUE states.
     """
     matches = []
     for command_index, (address, words) in enumerate(commands):
@@ -162,8 +171,12 @@ def verify(bundle: Path, screenshot: Path, title_source: Path) -> None:
                 search_from = offset + 1
             if source_hash == JAPANESE_TITLE_SHA256:
                 allowed_offsets = JAPANESE_TITLE_MENU_PALETTE_OFFSETS
-                expected_offsets = ((0x1B16,) if role[0] == 0x1B36
-                                    else JAPANESE_TITLE_MENU_PALETTE_OFFSETS[:-1])
+                icon_palette_offsets = {
+                    0x15F6: (0x15D6,),
+                    0x1B36: (0x1B16,),
+                }
+                expected_offsets = icon_palette_offsets.get(
+                    role[0], JAPANESE_TITLE_MENU_PALETTE_OFFSETS[:7])
             else:
                 allowed_offsets = ENGLISH_TITLE_MENU_PALETTE_OFFSETS
                 expected_offsets = ((0x1486,) if role[0] == 0x14A6
