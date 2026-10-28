@@ -1,3 +1,5 @@
+# Firestaff TODO — DM1
+
 2026-10-28 PC34 binary-analysis tooling check: the original DOS 3.4 `DM.EXE`
 is LZEXE 0.91-packed. The `yeager/pcrecomp` tools successfully unpack it with
 `tools/drm/unlzexe.py`; `tools/disasm/decode16.py --resident` decodes its
@@ -898,8 +900,6 @@ against the original G20E/G21E ProDOS media. Direct CLI and M12 startup covered
 both editions; the native M11 input probe also stepped in the Hall. The source
 archive hash remained unchanged. This confirms the existing first-world
 handoff, not the unfinished IIGS intro, audible DOC playback or full campaign.
-
-# Firestaff TODO — DM1
 
 2026-10-20 PC34 I34E TITLE input ownership: ReDMCSB `ANIM.C:2113-2114`
 checks `F0539_INPUT_Cconis` before allowing an interrupted frame, and PC34
