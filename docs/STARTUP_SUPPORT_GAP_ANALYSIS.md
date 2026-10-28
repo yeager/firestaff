@@ -15,24 +15,29 @@ present locally and pass archive integrity checks, but their decoder/startup
 tests were not rerun in this review. These bounded CLI checks use SDL dummy
 and do not establish native display, physical input, or full gameplay. Recent
 changes also add authentic Japanese Theron input evidence and Nexus retail
-reference captures. The Nexus captures verify no-save Japanese and English
-routes to the native three-choice title menu and a separate Japanese
-diagnostic replay to the native 3D corridor; they do not establish Firestaff's
-Nexus startup or renderer. Replaying the
-English screenshot from its captured frame is pixel-exact. Its complete VDP1
-command trace has 126 informative source matches among 137 textured draws; 11
-zero-filled spans are excluded. The source join is partial and menu asset,
-palette, and display ownership remain unproven. Runtime receipts cited below
-remain tied to their stated revisions unless noted otherwise.
+reference captures. Ymir reaches the Japanese and English three-choice title
+menu on cold boot, and a separate Japanese diagnostic New Game replay reaches
+the native 3D corridor. Firestaff now renders source-bound English and Japanese
+New Game/Continue foreground sprites and selected Configuration sprites from
+authentic `TITLE.BIN`; source-bound mouse selection is verified for the
+Japanese Configuration row. The shared background/full-screen menu composition
+and New Game, Continue, and Configuration destination execution remain open.
+Firestaff has not entered a Nexus playable level. Replaying the English
+screenshot from its captured frame is pixel-exact. Its complete VDP1 command
+trace has 126 informative source matches among 137 textured draws; 11 zero-
+filled spans are excluded. The source join remains partial, with menu
+background, full palette/display ownership, and destination execution
+unproven. Runtime receipts cited below remain tied to their stated revisions
+unless noted otherwise.
 The latest Nexus evidence separates raw Japanese `DM.BIN` placement at
 `0x06010000` from the older trace-specific static code mapping at
 `0x06010040`. The English-version `MENU.BPK` has an authenticated hash and is
 accepted by the regional snapshot analyzer. In the same-session English
 capture, 86 of 162 surfaces have direct byte matches in VDP1 VRAM, but none of
-137 textured commands starts inside those matched ranges. The screenshot
-confirms that Ymir displays the native English title menu; the `MENU.BPK`
-matches therefore establish residency, not visible-menu ownership or
-source/CLUT binding for Firestaff. Its production renderer gate remains closed.
+137 textured commands starts inside those matched ranges. This establishes
+`MENU.BPK` residency, not visible-menu ownership. Firestaff's bounded title
+renderer instead uses separately verified `TITLE.BIN` foreground sprites; the
+shared background and complete display composition remain unbound.
 The matched Japanese runtime trace now binds a strided zero-fill loop to VDP1
 CLUT address aliases, but it does not establish palette upload or ownership.
 Since the earlier gap review, the M12 platform card now displays a pending
@@ -101,7 +106,7 @@ passes after this correction.
 | CSB | Current-source authentic-media CLI routes pass for Atari STX, original Atari, nested Atari ZIP, Atari Utility Disk 7z/Hint Oracle, Amiga A31E/A33M/A35E/CTRaw, and FM Towns English/Japanese. The Atari French archive is absent. | The picker test covers keyboard and mouse handoff; the runtime test checks the authentic starting party and viewport receipt. | First runtime is verified on bounded routes. In Amiga CSB, F0107 now uses source MEDIA720 scales and authentic Amiga C696 anchors for M615 ornaments; matched-frame, palette/light, trapdoor and platform-wide viewport parity remain open ([evidence and remaining gap](../TODO-csb.md)). Native physical input remains open. |
 | DM2 | Current-source direct CLI routes pass for the original DOS English archive, Macintosh French SIT media, FM Towns Japanese, and Amiga English ZIP. The authentic Macintosh English extracted-files regression covers CLI and M12 startup to first runtime; the `.sit` container itself is not unpacked by the ZIP-only archive test. DOS French archive coverage remains incomplete. | The picker test covers keyboard and mouse handoff for PC and FM Towns Japanese; Amiga has a no-game M12 runtime test; the new Macintosh English regression also covers extracted-file M12 launch. | First runtime is verified on bounded routes, including DOS French loose files, Macintosh English extracted files and Amiga English. Physical input, native presentation and full edition parity remain open ([`TODO-dm2.md`](../TODO-dm2.md)). |
 | Theron | Authentic Japanese Rev. 1 Track 02 reaches the native title → stage → Soul Room → Akutuba runtime route. The US Continue path restores an authentic save and reaches dungeon 2, level 0; all seven dungeon sources load from authentic regional media. | The picker test covers keyboard and mouse handoff; the runtime test checks a loaded authentic Track 02 state. The US no-game M12 route and Japanese Track 02 SDL test exercise authentic startup/input paths. Tab champion cycling and Z/X/Space exercise keyboard actions on authentic USA Track 02; the Japanese Track 02 SDL test covers swipe-up movement and swipe-left turning. The authentic US raw-bin regression checks backward followed by KP8 forward to the source-backed starting square. An authentic USA Ak-Tu-Ba save-state replay under standard PCE confirmed Button I queues `$50` at `$2905` and the guest consumes it; Button II did not. The save-state capture has no CD-to-RAM provenance and does not bind that dispatch to a world-state change, so it proves command-queue dispatch only. Separate bounded US reference cold starts reached only the System Card; they do not establish a game-owned menu transition. | Runtime state, native frames and bounded input routes are reached, but the native dungeon image is not yet driven by the authenticated world/graphics state. A recent nonblack Firestaff capture has not been paired with an original-emulator capture. Later progression, full save semantics, audio and end-to-end parity remain open. |
-| Nexus | A historical TRV2 v3.0.415 CLI run used authentic Japanese `DM.BIN` (MD5 `e88d60859f65f08fa622e1992b02280f`): after 110 boot-probe frames and one scripted Enter, it reported `titleReady=1`, `levelLoaded=0`, `menu=0`, blocker `menu-bpk-prs3-capture-required`. Current source has advanced: the English-version `MENU.BPK` byte decoder verifies all 162 PRS3 surfaces, but keeps decoded pixels out of the renderer until Saturn palette, VDP1 upload and display ownership are joined to a matching capture. The authentic-data mouse test still reaches only the capture-gated title route, and no Nexus case exists in the first-runtime probe matrix. | An authentic Japanese retail Ymir cold boot with no emulator or game save reaches the native three-choice title menu after scheduled Start inputs. No-input, Down/Continue, and Configuration behavior are separately verified from diagnostic state 3. From that same no-save menu state, a separate replay with `NEW GAME` selected and a two-frame A input reaches the native 3D corridor viewport after 1,200 frames; the complete VDP1 trace has zero drops, and the capture has no party HUD. A separate English-version disc-image cold boot reaches the three-choice menu. Its source join is partial, with 126 informative matches among 137 textured draws, and menu asset, palette and display ownership remain unproven. These are emulator checkpoints, not Firestaff startup or presentation evidence. Firestaff's title composition, menu rendering/control, Continue with real save data, stable gameplay, HUD and viewport parity remain unverified. The English Ymir capture does not establish Firestaff menu display, input, or renderer readiness. The Saturn BKR parser remains container-level and is not wired to save selection or loading ([English cold-boot capture](nexus/nexus_startup.md#english-cold-boot-reaches-the-native-title-menu-2026-10-27), [cold-boot retail menu and navigation](nexus/nexus_startup.md#cold-boot-title-menu-and-retail-menu-navigation-2026-10-27), [New Game viewport checkpoint](nexus/nexus_startup.md#new-game-reaches-the-native-3d-viewport-2026-10-27), [SCU-to-VDP1 correlation](nexus/nexus_startup.md#scu-dma-to-vdp1-frame-correlation-2026-10-27), [retail Continue evidence](nexus/nexus_startup.md#retail-continue-with-an-authentic-save-2026-10-25), [current decoder and strict boundary](nexus/NEXUS_STRICT_FIDELITY_INVENTORY.md#startup)). | **Not startable as a playable game yet.** |
+| Nexus | Authentic Japanese `DM.BIN` is selected and the CLI reaches the Nexus title state, but the boot receipt remains `titleReady=1`, `levelLoaded=0`; the M12 route hands off to the same not-yet-playable title. Firestaff now renders source-bound English and Japanese New Game/Continue foreground sprites and selected Configuration sprites from authentic `TITLE.BIN`; Japanese Configuration mouse selection is verified. The shared title background and full-screen composition remain unbound. | Authentic Ymir cold boots reach the Japanese and English three-choice menu; a separate Japanese retail replay reaches the native 3D corridor after New Game. These are reference captures, not Firestaff gameplay. Firestaff menu selection is partially source-bound, but New Game, Continue/save loading, and Configuration destinations are not implemented. | **Not startable as a playable game yet.** Menu foreground rendering and selection are partial; no Firestaff Nexus level, HUD, or gameplay route is verified. See [`TODO-nexus.md`](../TODO-nexus.md) and [`NEXUS_STRICT_FIDELITY_INVENTORY.md`](nexus/NEXUS_STRICT_FIDELITY_INVENTORY.md#startup). |
 
 ## What the existing checks prove
 
@@ -218,13 +223,13 @@ passes after this correction.
   checks discovery and direct CLI startup for all five IDs. Its Nexus-specific
   assertion rejects a false `runtime-entered` receipt and requires the blocked
   menu/level gate, so a passing test is not evidence that Nexus is playable.
-- [`docs/nexus/nexus_startup.md`](nexus/nexus_startup.md) records authentic Ymir title,
-  cold-boot, title, menu, load-row, and loaded-HUD observations from Japanese
-  retail media. A direct cold-boot capture now reaches the native title menu;
-  separate saved-state runs characterize title-menu and gameplay input. These
-  do not prove that Firestaff renders or dispatches the menu. They do not
-  satisfy the English `MENU.BPK` source-binding gate or establish Firestaff
-  save selection/loading or level startup.
+- [`docs/nexus/nexus_startup.md`](nexus/nexus_startup.md) records authentic Ymir
+  title, cold-boot, menu, load-row, and loaded-HUD observations. Current
+  Firestaff code renders source-bound English/Japanese title-menu foregrounds
+  from authentic `TITLE.BIN` and handles bounded row selection, but the shared
+  background, complete composition, destination dispatch, Continue/save
+  loading, and level startup remain open. These partial renderer results do
+  not satisfy the `MENU.BPK` ownership gate or establish a playable level.
 - These tests use SDL dummy video/audio and authentic installed media. They do
   not establish native window presentation, physical input, audible output,
   complete game playthroughs, or cross-platform gameplay parity.
