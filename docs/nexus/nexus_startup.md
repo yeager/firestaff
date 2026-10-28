@@ -1609,3 +1609,19 @@ selection, and return to the title menu on Exit/B. This does not establish the
 difficulty effects, HUD effects, or full startup composition. The Japanese
 Configuration page and New Game/Continue destination execution also remain
 open. Evidence uses authentic retail data; no synthetic game assets are used.
+
+## English Configuration scene texture-source receipt (2026-10-28)
+
+A source scan of the authentic Ymir page capture at frame 119 examined 148
+textured VDP1 draws. Exact retail joins bind 132 draw spans to one or more
+decoded DGN Structure2 image spans; 113 spans also occur byte-for-byte in
+`LEV00.DGN`. Five informative draws remain without an exact Structure2 match,
+and 11 other spans contain only uninformative zero bytes. This advances texture
+source identification for the scene visible behind the Configuration UI.
+
+Repeated image bytes across the level files leave some joins ambiguous. The
+receipt does not yet bind the active level instance, map cell/face ownership,
+CLUT, palette, geometry placement, camera, complete composition, or Firestaff
+output. It does not admit a guessed DGN scene as a runtime background. See the
+[source-join receipt](../../parity-evidence/verification/nexus_english_configuration_scene_dgn_join_20261028/README.md)
+and its retained external capture bundle.

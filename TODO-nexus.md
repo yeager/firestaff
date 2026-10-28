@@ -427,3 +427,12 @@ composition, then trace setting persistence and prove the audio, difficulty,
 and HUD effects in retail gameplay. Japanese Configuration-page parity and
 New Game/Continue destination execution remain open. See
 `docs/nexus/nexus_startup.md` and `docs/nexus/nexus_title.md`.
+
+The Ymir Configuration-page frame 119 source scan now finds exact DGN
+Structure2 byte matches for 132 of 148 textured VDP1 draws and whole-file
+`LEV00.DGN` matches for 113 draws. These are source candidates only: repeated
+bytes leave instance ownership ambiguous, and CLUT, palette, placement, camera,
+and complete scene output remain unbound. Continue by joining command UV/CLUT
+and geometry state to a specific `LEV00.DGN` cell/face and the retail scene
+setup path. See
+`parity-evidence/verification/nexus_english_configuration_scene_dgn_join_20261028/README.md`.
