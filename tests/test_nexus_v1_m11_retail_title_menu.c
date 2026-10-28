@@ -150,6 +150,18 @@ int main(void)
                         "FAIL: Japanese Configuration row opens from a mouse click\n");
                 ++failures;
             }
+            state.nexusState.retail_title_menu.music_enabled = 0;
+            if (M11_GameView_HandlePointerButton(
+                    &state, 185, 83, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+                    M11_GAME_INPUT_REDRAW ||
+                state.nexusState.retail_title_menu.configuration_row !=
+                    NEXUS_V1_RETAIL_CONFIGURATION_SOUND ||
+                state.nexusState.retail_title_menu.music_enabled != 0 ||
+                state.nexusState.retail_title_menu.stereo_enabled != 0) {
+                fprintf(stderr,
+                        "FAIL: y=83 selects Sound without changing Music\n");
+                ++failures;
+            }
             if (M11_GameView_HandlePointerButton(
                     &state, 250, 115, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
                     M11_GAME_INPUT_REDRAW ||
@@ -164,6 +176,8 @@ int main(void)
                         "FAIL: Japanese retail Configuration responds to mouse and Exit\n");
                 ++failures;
             }
+            state.nexusState.retail_title_menu.music_enabled = 1;
+            state.nexusState.retail_title_menu.stereo_enabled = 1;
             state.nexusState.retail_title_menu.selection =
                 NEXUS_V1_RETAIL_TITLE_MENU_CONTINUE;
             title_screen->retail_menu_source_region =
