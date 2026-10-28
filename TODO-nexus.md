@@ -38,13 +38,13 @@ source match; seven identical copies of the text palette remain candidates.
 Firestaff now draws those five authenticated English foreground sprites for
 New Game and Continue from the exact hash-pinned `TITLE.BIN`, plus the five
 authenticated Japanese New Game and Continue sprites and their source-bound
-regional palettes. This does not bind or render the shared background or
-Configuration, or implement destination execution; full menu composition
-remains open.
-Firestaff's startup mouse now opens the retail menu and selects the
-source-bound New Game and Continue rows. Configuration selection remains
-gated until its selected-state renderer is source-bound; destination
-activation and save loading remain open.
+regional palettes. A Japanese Configuration-selected capture now binds five
+foreground sprites, their palettes, positions and 1,453 visible screenshot
+pixels to authentic `TITLE.BIN`. Firestaff renders this Japanese selection and
+its startup mouse can select that row. English Configuration rendering remains
+gated pending its own selected-state capture and source join. Neither change
+binds the shared background or implements destination execution; full menu
+composition remains open. Destination activation and save loading remain open.
 This does not bind the NBG0 background or remaining screen composition;
 the exact background source and complete display consumer are still unknown.
 The English New Game and Continue captures share byte-identical VDP2 VRAM,

@@ -2,6 +2,7 @@
 #include "nexus_v1_engine.h"
 #include "nexus_v1_title.h"
 #include <stdint.h>
+#include <stdlib.h>
 #include "nexus_v1_retail_title_menu.h"
 
 #include <stdio.h>
@@ -130,11 +131,40 @@ int main(void)
         fprintf(stderr, "FAIL: authentic Continue row responds to mouse\n");
         ++failures;
     }
+    {
+        Nexus_TitleScreen *title_screen = calloc(1, sizeof(*title_screen));
+        if (!title_screen) {
+            fprintf(stderr, "FAIL: allocate regional title source receipt\n");
+            ++failures;
+        } else {
+            title_screen->retail_menu_source_region =
+                NEXUS_V1_TITLE_MENU_SOURCE_JAPANESE;
+            state.nexusTitleScreen = title_screen;
+            if (M11_GameView_HandlePointerButton(
+                    &state, 150, 181, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+                    M11_GAME_INPUT_REDRAW ||
+                state.nexusState.retail_title_menu.selection !=
+                    NEXUS_V1_RETAIL_TITLE_MENU_CONFIGURATION) {
+                fprintf(stderr,
+                        "FAIL: source-bound Japanese Configuration row responds to mouse\n");
+                ++failures;
+            }
+            if (M11_GameView_HandlePointerButton(
+                    &state, 150, 181, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+                    M11_GAME_INPUT_IGNORED ||
+                state.nexusState.retail_title_menu.selection !=
+                    NEXUS_V1_RETAIL_TITLE_MENU_CONFIGURATION) {
+                fprintf(stderr,
+                        "FAIL: clicking selected Configuration does not redraw\n");
+                ++failures;
+            }
+        }
+    }
     if (M11_GameView_HandlePointerButton(
             &state, 150, 195, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
             M11_GAME_INPUT_IGNORED ||
         state.nexusState.retail_title_menu.selection !=
-            NEXUS_V1_RETAIL_TITLE_MENU_CONTINUE) {
+            NEXUS_V1_RETAIL_TITLE_MENU_CONFIGURATION) {
         fprintf(stderr, "FAIL: clicks outside title rows do not change selection\n");
         ++failures;
     }

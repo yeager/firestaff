@@ -76,7 +76,8 @@ Nexus_V1_RetailTitleMenuResult nexus_v1_retail_title_menu_reduce(
 Nexus_V1_RetailTitleMenuResult nexus_v1_retail_title_menu_select_pointer(
     Nexus_V1_RetailTitleMenuState *state,
     int x,
-    int y)
+    int y,
+    int configuration_renderable)
 {
     Nexus_V1_RetailTitleMenuSelection selection;
 
@@ -88,12 +89,14 @@ Nexus_V1_RetailTitleMenuResult nexus_v1_retail_title_menu_select_pointer(
 
     /* These row bounds are the VDP1 text command extents retained by
      * verify_nexus_title_sprite_screenshot.py. The Ymir screenshot is 2x the
-     * 320x224 native coordinate space. Configuration is deliberately not
-     * selectable until its selected-state renderer is source-bound. */
+     * 320x224 native coordinate space. */
     if (y >= 153 && y < 161 && x >= 129 && x < 193) {
         selection = NEXUS_V1_RETAIL_TITLE_MENU_NEW_GAME;
     } else if (y >= 165 && y < 173 && x >= 128 && x < 192) {
         selection = NEXUS_V1_RETAIL_TITLE_MENU_CONTINUE;
+    } else if (configuration_renderable && y >= 177 && y < 185 &&
+               x >= 109 && x < 213) {
+        selection = NEXUS_V1_RETAIL_TITLE_MENU_CONFIGURATION;
     } else {
         return NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNVERIFIED_INPUT;
     }

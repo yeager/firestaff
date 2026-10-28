@@ -38433,9 +38433,15 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
                 ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
         {
+            const Nexus_TitleScreen *title =
+                (const Nexus_TitleScreen *)state->nexusTitleScreen;
+            const int configuration_renderable =
+                title && title->retail_menu_source_region ==
+                             NEXUS_V1_TITLE_MENU_SOURCE_JAPANESE;
             Nexus_V1_RetailTitleMenuResult menu_result =
                 nexus_v1_retail_title_menu_select_pointer(
-                    &state->nexusState.retail_title_menu, x, y);
+                    &state->nexusState.retail_title_menu, x, y,
+                    configuration_renderable);
             return menu_result ==
                     NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED
                 ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
