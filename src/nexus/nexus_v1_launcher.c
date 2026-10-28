@@ -37,6 +37,7 @@ int nexus_v1_launcher_bind_saturn_card_boot_route(Nexus_V1_Engine *e,uint64_t ep
 #include "nexus_v1_save.h"
 #include "nexus_v1_viewport.h"
 #include "nexus_v1_world.h"
+#include "asset_find_by_hash.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -234,6 +235,8 @@ int nexus_v1_launcher_start_retail_new_game(
     }
     dm_bin = nexus_v1_read_file(&s_engine, "DM.BIN", &dm_bin_size);
     if (!dm_bin || dm_bin_size <= 0 ||
+        !asset_memory_matches_md5(dm_bin, (size_t)dm_bin_size,
+                                  dm_source.canonical_md5) ||
         !nexus_v1_game_parse_retail_start_entry(
             dm_bin, (size_t)dm_bin_size, NEXUS_V1_FIRST_PLAYABLE_LEVEL,
             &start)) {
@@ -5709,8 +5712,10 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
                 : "retail-start-source-or-level-blocked";
             return 1;
         }
-        /* Start loading changes the engine state consumed by the rest of this
-         * handoff. Rebuild asset ownership from that state before deciding
+        /* The source-owned start is committed once its DGN cell receipt is
+         * ready. If a later viewport/material gate rejects presentation,
+         * retain this validated pose so another handoff can retry. Rebuild
+         * asset ownership from the changed engine state before deciding
          * whether the caller may enter the dungeon route. */
         if (!nexus_v1_launcher_startup_assets_from_runtime_state(
                 state, &assets) ||
