@@ -1,3 +1,25 @@
+## 2026-10-28 — disassemble the authentic System Card controller branch
+
+- MAME `unidasm -arch h6280` disassembly of the authentic System Card 3.0
+  (`ff1a674273fe3540ccef576376407d1d`) maps the live controller poll at
+  `$E4B4/$E4C5`. It samples direction and button nibbles from `$1000`, updates
+  `$2228/$222D`, then tests the per-pad mask at `$2227` and the values `$04`
+  and `$0C` before dispatching through `($2284)`. The bounded excerpt and
+  address mapping are in
+  [the controller-poll disassembly](docs/source-lock/theron-disassembly/theron-system-card3-controller-poll-e4b0.asm).
+- Fresh authentic JP Rev. 1 captures verified controller delivery for (a)
+  `run@600:300,i@1500:300,ii@2400:300` and (b) overlapping
+  `i@600:300,ii@601:299,run@1200:300`. These duration values count scripted
+  input-update intervals; they are not wall-clock seconds. The poll returned
+  active-low values `$37` for RUN, `$3E` for I, `$3D` for II, and `$3C` for
+  I+II at `$E4C5`. The scripted-input receipt passed for the combined-input
+  capture.
+- Neither capture reached a game-owned poll or CD boot path: the combined
+  capture had zero CD IRQs and ended with `transition=missing`; its 15,218
+  controller transactions remained at the System Card poll. The static
+  `$222D == $04` / `$2228 == $0C` branch is a candidate for further tracing,
+  not evidence that I+II starts the game. Keep the menu handoff unresolved.
+
 ## 2026-10-28 — authentic Japanese save-state mouse replay remains screen-only
 
 - Three repeated PCE Fast mouse-script captures and three no-script controls
