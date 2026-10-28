@@ -1882,6 +1882,18 @@ are recorded at
 `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/README.md`;
 the Load-screen source-start receipt is in `load-screen-menu-bpk-source-join.md`
 within that evidence folder.
+
+For the same-frame Load-screen VDP2 snapshot (frame 559), a bounded exact-byte
+scan checked 410 verified retail bitmap candidates from `MENU.BPK`,
+`FONT256.S2D`, `TITLE.BIN`/`TITLE.CG`, and `STABG.BIN` against the active NBG0
+bitmap span. It found no exact source span. A separate scan parsed 1,266
+Structure2 palettes from all 16 authenticated DGN levels and found no exact raw
+or word-swapped match in captured CRAM; the `MENU.BPK` palette also had no
+exact match. This leaves NBG0's producer and palette unresolved. The broader
+partial-byte scan exceeded its 10-minute limit, so no negative conclusion is
+drawn from partial matches. The bounded-scan results are recorded in the
+external evidence folder's `load-screen-menu-bpk-source-join.md`.
+
 The bundle contains no BKR payload. This establishes the retail game's
 Continue-to-gameplay behavior in Ymir with the retained corpus save; it does
 not establish that Firestaff loads the BKR, executes Continue, or renders the
