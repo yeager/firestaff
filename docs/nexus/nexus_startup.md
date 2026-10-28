@@ -1571,6 +1571,25 @@ This does not establish the NBG0 title background, full-screen composition,
 Configuration page controls, New Game destination execution, Continue/save
 loading, or gameplay viewport/HUD parity.
 
+## New Game input is not yet dispatched (2026-10-28)
+
+The authenticated retail menu reducer returns
+`NEXUS_V1_RETAIL_TITLE_MENU_RESULT_START_NEW_GAME` when Accept is pressed on
+New Game. In `M11_GameView_HandleInput`, the current retail-menu branch groups
+that result with redraw-only outcomes and returns while `title_active` remains
+set. The title screen therefore stays active; the input does not start the
+level.
+
+The older Firestaff startup-action path is not a proven substitute: its
+`NEXUS_V1_STARTUP_ACTION_NEW_GAME` execution opens Firestaff's champion-select
+mode. The retained Ymir cold-boot replay instead reaches a native 3D viewport
+after accepting New Game, without a visible champion-select screen. The
+replay does not identify the active room or establish a stable playable
+checkpoint, so changing `level_loaded`, party coordinates, or title mode here
+would invent runtime state. The native New Game transition still needs a
+source-backed room/load receipt and a matching real-media test before this
+input can be wired to gameplay.
+
 This is a full captured-frame composition check, not a renderer admission. The
 replay consumes Ymir display and VDP snapshots, not a Firestaff runtime upload
 from retail assets. The screenshot has no embedded frame number, so exact
@@ -1581,3 +1600,93 @@ and dropped 860,856 unrelated master rows; the NBG0 storage join remains
   selection, Configuration page controls, save loading, and playable-level/HUD
   parity remain open. New Game, Continue, and Configuration foregrounds and
   mouse rows are source-bound for both authenticated regions as described above.
+
+## English Configuration page foreground (2026-10-28)
+
+An isolated Ymir 0.4.2-dev `--debug` run used the authenticated English retail
+disc and USA 1.01a IPL. A copied diagnostic profile entered the native
+Configuration page, saved deterministic state slots, and replayed each input
+from the same menu state. The retail `TITLE.BIN` SHA-256 is
+`a634e8daf2a581df154b454919ee2ed44e937371668219d7cdf6d0983a613e44`.
+The reproduction captures and raw data are retained in
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-english-configuration-page-evidence-20261028/`.
+
+The page defaults are Music ON, Sound STEREO, Game Level NORMAL, and Monster
+Gauge ON, with Music focused. Up/down changes the focused row; A/Right changes
+the selected value; A on Exit and B return to the title menu. The captured
+Ymir foreground has 189 VDP1 commands and zero dropped rows. Its text, values,
+and animated focus markers join to authentic `TITLE.BIN`; the production C
+renderer probe reproduces the complete 320x224 indexed foreground and all 256
+palette entries for seven captured states. Run
+`python3 scripts/verify_nexus_english_configuration_page.py <evidence-dir> <TITLE.BIN>`
+to repeat the byte-level checks.
+
+M11 initializes these reducer defaults when it initializes the game view. While
+Configuration is active, the renderer leaves the back-screen clear instead of
+reusing the five-plane title image. The authentic capture shows a different
+scene behind this page, and its DGN/VDP2 background composition is still
+unbound.
+
+Firestaff's English- and Japanese-region reducer and renderer draw that
+authentic page foreground, animate its source-bound focus marker, route
+keyboard and mouse selection, and return to the title menu on Exit/B. The
+Japanese configuration foreground uses the hash-verified Japanese retail
+`TITLE.BIN`; all 71 retained text, palette, and marker spans used by the page
+are byte-identical to their English-file counterparts. Its 14 visible text
+sprites match all 12,518 pixels in the authentic Japanese Ymir screenshot. Run
+`python3 scripts/verify_nexus_japanese_configuration_page.py <japanese-TITLE.BIN>
+<configuration.png> --english-title <english-TITLE.BIN>` to repeat the
+production-renderer, screenshot, and 71-span comparison checks.
+The captured Japanese page is only the initial state; it does not establish
+Japanese input interaction captures, marker-animation pixels, the 3D/DGN page
+background, setting persistence across cold boot, audio switching, difficulty
+effects, HUD effects, or full startup composition. New Game/Continue destination
+execution also remains open. Evidence uses authentic retail data; no synthetic
+game assets are used.
+
+## English Configuration scene texture-source receipt (2026-10-28)
+
+A source scan of the authentic English Ymir page capture at frame 119 examined
+148 textured VDP1 draws. Exact DGN Structure2 image spans bind 121 informative
+draws; 11 other draws are transparent all-zero textures. The broader join
+matches 137 informative spans across all hash-admitted retail resources, and
+113 image spans also occur byte-for-byte in `LEV00.DGN`. Sixteen informative
+draws have no exact DGN Structure2 match. This advances texture-source
+identification for the scene visible behind the Configuration UI.
+
+Repeated image bytes across the level files leave some joins ambiguous. The
+receipt does not yet bind the active level instance, map-cell and face ownership,
+CLUT, palette, geometry placement, camera, complete composition, or Firestaff
+output. It does not admit a guessed DGN scene as a runtime background. See the
+[source-join receipt](../../parity-evidence/verification/nexus_english_configuration_scene_dgn_join_20261028/README.md)
+and its retained external capture bundle.
+
+A second pass joins the Ymir command chain's indexed source bytes and CLUTs, as
+well as direct-color pixels, against authentic DGN Structure2 materials. Of
+132 textured draws, 11 are transparent all-zero textures; all remaining 121
+informative draws match (113 indexed image/CLUT pairs and 8 direct-color
+spans). Of those matched draws, 105 have one or more Structure3 face-owner
+rows, while 16 have none. Because material bytes are reused across levels and
+face rows, these are candidate owners rather than active-instance assignments.
+See the expanded [source-join receipt](../../parity-evidence/verification/nexus_english_configuration_scene_dgn_join_20261028/README.md).
+
+## Japanese Configuration scene trace prefix (2026-10-28)
+
+An authentic Japanese retail capture at frame 599 shows the Configuration page
+over its dungeon scene. Its complete Ymir trace file contains 168 executed
+commands and no dropped rows, but the observed frame prefix ends before VDP1
+END. A new analyzer mode validates the trace receipt and captured command
+cursor without treating that prefix as a completed display list.
+
+Of the 132 textured draws in the observed prefix, 11 use transparent
+all-zero textures and contain no visible texels. The other 121 draws join
+exact image/CLUT or direct-colour spans to the 16 canonical retail DGN files;
+105 matches have at least one candidate Structure3 face owner, while 16 have
+none. Those 16 are early distorted-sprite quads using five 48x48 materials
+from `LEV00.DGN`; their vertices form a receding tiled plane in the lower
+scene, consistent with a floor or menu backdrop. The active level/map selector
+and geometry owner remain unproven. Camera transform, culling, display origin,
+VDP2 composition and other settings states also remain unproven, so renderer
+admission stays blocked. See the [trace-prefix receipt](../../parity-evidence/verification/nexus_japanese_configuration_dgn_trace_prefix_20261028/README.md)
+and the authentic Japanese retail capture retained in operator-managed
+external evidence storage.

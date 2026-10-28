@@ -9,13 +9,16 @@
 extern "C" {
 #endif
 
-/* Draw only the Japanese and English VDP1 sprite layouts authenticated
- * against retail TITLE.BIN, captured CRAM, placement and screenshot pixels.
- * This deliberately does not draw the unbound NBG0/background. Returns 1
- * only when a retained layout was consumed. */
+/* Draw only the Japanese and English title-menu layouts and the regional
+ * Configuration foreground authenticated against retail TITLE.BIN, captured
+ * CRAM, placement and screenshot pixels. The Configuration text spans are
+ * byte-identical in both admitted regional files. This deliberately does not
+ * draw the unbound NBG0/background. Returns 1 only when a retained layout was
+ * consumed. */
 int nexus_v1_retail_title_menu_render(const Nexus_TitleScreen *title,
                                      const Nexus_V1_RetailTitleMenuState *state,
-                                     Nexus_Framebuffer *framebuffer);
+                                     Nexus_Framebuffer *framebuffer,
+                                     int animation_frame);
 
 #ifdef __cplusplus
 }

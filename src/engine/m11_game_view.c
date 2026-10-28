@@ -25084,6 +25084,9 @@ void M11_GameView_Init(M11_GameViewState* state) {
     }
     m11_dm1_c13_visible_runtime_handoff_clear(state);
     memset(state, 0, sizeof(*state));
+    /* Nexus Configuration starts from the retail hardware defaults, even
+     * before a title frame opens its menu. */
+    nexus_v1_retail_title_menu_init(&state->nexusState.retail_title_menu);
     dm1_spell_init(&state->dm1SpellCasting);
     dm1_v1_text_init(&state->dm1V1TextMessage);
     firestaff_ra_overlay_init(&state->retroAchievementsOverlay);
@@ -37166,6 +37169,33 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                     return M11_GAME_INPUT_IGNORED;
                 }
             } else {
+                if (state->nexusState.retail_title_menu.configuration_active) {
+                    Nexus_V1_RetailTitleMenuInput menu_input;
+                    Nexus_V1_RetailTitleMenuResult menu_result;
+                    if (input == M12_MENU_INPUT_DOWN) {
+                        menu_input = NEXUS_V1_RETAIL_TITLE_MENU_INPUT_DOWN;
+                    } else if (input == M12_MENU_INPUT_UP) {
+                        menu_input = NEXUS_V1_RETAIL_TITLE_MENU_INPUT_UP;
+                    } else if (input == M12_MENU_INPUT_RIGHT) {
+                        menu_input = NEXUS_V1_RETAIL_TITLE_MENU_INPUT_RIGHT;
+                    } else if (input == M12_MENU_INPUT_BACK) {
+                        menu_input = NEXUS_V1_RETAIL_TITLE_MENU_INPUT_BACK;
+                    } else if (input == M12_MENU_INPUT_ACCEPT ||
+                               input == M12_MENU_INPUT_ACTION) {
+                        menu_input = NEXUS_V1_RETAIL_TITLE_MENU_INPUT_ACCEPT;
+                    } else {
+                        return M11_GAME_INPUT_IGNORED;
+                    }
+                    menu_result = nexus_v1_retail_title_menu_reduce(
+                        &state->nexusState.retail_title_menu, menu_input, 0);
+                    return menu_result ==
+                                   NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED ||
+                               menu_result ==
+                                   NEXUS_V1_RETAIL_TITLE_MENU_RESULT_CONFIGURATION_CHANGED ||
+                               menu_result ==
+                                   NEXUS_V1_RETAIL_TITLE_MENU_RESULT_CONFIGURATION_CLOSED
+                        ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+                }
                 if (input == M12_MENU_INPUT_DOWN ||
                     input == M12_MENU_INPUT_UP) {
                     Nexus_V1_RetailTitleMenuResult menu_result =
@@ -37198,6 +37228,19 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                             NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SHOW_CONFIGURATION ||
                         menu_result ==
                             NEXUS_V1_RETAIL_TITLE_MENU_RESULT_START_NEW_GAME) {
+                        if (menu_result ==
+                                NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SHOW_CONFIGURATION) {
+                            const Nexus_TitleScreen *title =
+                                (const Nexus_TitleScreen *)state->nexusTitleScreen;
+                            if (title &&
+                                (title->retail_menu_source_region ==
+                                     NEXUS_V1_TITLE_MENU_SOURCE_JAPANESE ||
+                                 title->retail_menu_source_region ==
+                                     NEXUS_V1_TITLE_MENU_SOURCE_ENGLISH)) {
+                                (void)nexus_v1_retail_title_menu_enter_configuration(
+                                    &state->nexusState.retail_title_menu);
+                            }
+                        }
                         return M11_GAME_INPUT_REDRAW;
                     }
                     return M11_GAME_INPUT_IGNORED;
@@ -38423,6 +38466,27 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
                 state->nexusState.title_frame)) {
             return M11_GAME_INPUT_IGNORED;
         }
+        if (state->nexusState.retail_title_menu.configuration_active) {
+            const Nexus_TitleScreen *title =
+                (const Nexus_TitleScreen *)state->nexusTitleScreen;
+            if (!title ||
+                (title->retail_menu_source_region !=
+                     NEXUS_V1_TITLE_MENU_SOURCE_JAPANESE &&
+                 title->retail_menu_source_region !=
+                     NEXUS_V1_TITLE_MENU_SOURCE_ENGLISH)) {
+                return M11_GAME_INPUT_IGNORED;
+            }
+            Nexus_V1_RetailTitleMenuResult menu_result =
+                nexus_v1_retail_title_menu_select_configuration_pointer(
+                    &state->nexusState.retail_title_menu, x, y);
+            return menu_result ==
+                           NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED ||
+                       menu_result ==
+                           NEXUS_V1_RETAIL_TITLE_MENU_RESULT_CONFIGURATION_CHANGED ||
+                       menu_result ==
+                           NEXUS_V1_RETAIL_TITLE_MENU_RESULT_CONFIGURATION_CLOSED
+                ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+        }
         if (!state->nexusState.retail_title_menu.menu_active) {
             Nexus_V1_RetailTitleMenuResult menu_result =
                 nexus_v1_retail_title_menu_reduce(
@@ -38445,6 +38509,18 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
                 nexus_v1_retail_title_menu_select_pointer(
                     &state->nexusState.retail_title_menu, x, y,
                     configuration_renderable);
+            if (configuration_renderable &&
+                state->nexusState.retail_title_menu.selection ==
+                    NEXUS_V1_RETAIL_TITLE_MENU_CONFIGURATION &&
+                (menu_result ==
+                     NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED ||
+                 menu_result ==
+                     NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNCHANGED) &&
+                nexus_v1_retail_title_menu_enter_configuration(
+                    &state->nexusState.retail_title_menu) ==
+                    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SHOW_CONFIGURATION) {
+                return M11_GAME_INPUT_REDRAW;
+            }
             return menu_result ==
                     NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED
                 ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
@@ -64461,17 +64537,22 @@ static void m11_nexus_startup_exec_boot_title_frame(
         return;
     }
     nexus_fb_init(&nexusFb);
-    nexus_render_title((const Nexus_TitleScreen*)(
-                           context->state
-                               ? context->state->nexusTitleScreen
-                               : NULL),
-                       &nexusFb,
-                       command->title_frame + nexus_title_boot_warning_frames());
+    if (!context->state ||
+        !context->state->nexusState.retail_title_menu.configuration_active) {
+        nexus_render_title((const Nexus_TitleScreen*)(
+                               context->state
+                                   ? context->state->nexusTitleScreen
+                                   : NULL),
+                           &nexusFb,
+                           command->title_frame +
+                               nexus_title_boot_warning_frames());
+    }
     if (context->state && context->state->nexusState.retail_title_menu.menu_active) {
         (void)nexus_v1_retail_title_menu_render(
             (const Nexus_TitleScreen*)context->state->nexusTitleScreen,
             &context->state->nexusState.retail_title_menu,
-            &nexusFb);
+            &nexusFb,
+            command->title_frame);
     }
     for (color = 0; color < 256; ++color) {
         uint32_t rgba = nexusFb.palette[color];

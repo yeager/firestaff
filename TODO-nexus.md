@@ -4,11 +4,30 @@ Reviewed 2026-10-28. The items below track open work and include completed
 diagnostics as context. Verified evidence is also recorded in the Nexus capture
 and reverse-engineering records and in [DONE-nexus.md](DONE-nexus.md).
 
+The Japanese and English retail Configuration foregrounds now render from
+hash-verified `TITLE.BIN` files and share byte-identical UI text/palette spans.
+Japanese-region keyboard/mouse state routing is covered by the M11 runtime
+test. The retained Japanese Ymir screenshot captures only the initial settings
+page; Japanese state changes and marker animation still need authentic captures.
+
 The C Saturn BKR container parser is now verified against all four
 hash-pinned samples reported as retail-written; see DONE-nexus.md. Remaining Continue work is the
 source-bound payload schema and retail save-selection/load consumer. Do not
 promote the parser's opaque payload bytes into runtime state without joining
 those bytes to the authentic Saturn save/load implementation.
+
+An authentic Japanese Configuration-page capture now yields a Ymir VDP1 trace
+prefix with all 121 informative draws joined to canonical DGN material bytes,
+including indexed CLUTs and direct-colour surfaces. The other 11 draws are
+transparent all-zero textures. This is not enough to render the scene: 16
+matched draws lack candidate face-owner rows, and multiple levels/faces share
+materials. Active level, selected faces, camera transform, culling, screen
+origin, VDP2 composition, and Japanese settings interaction states still need
+authentic joins. See the [DGN trace-prefix receipt](parity-evidence/verification/nexus_japanese_configuration_dgn_trace_prefix_20261028/README.md).
+The 16 draws without Structure3 owners use five 48x48 `LEV00.DGN` materials
+and form a receding tiled plane at the bottom of the scene, consistent with a
+floor or menu backdrop. Identify the active level/map selector and prove this
+geometry's owner before adding a runtime compositor.
 
 ## Current evidence boundary
 
@@ -416,3 +435,32 @@ not a fix and has not passed this real-media test.
   until the opaque item data, champion context mapping and runtime click effects
   are established. See `docs/nexus/nexus_input.md` and
   `parity-evidence/verification/nexus-leader-cycle-debug-20261025/README.md`.
+
+## English Configuration page remaining parity
+
+The authentic English retail Configuration page now has source-bound foreground
+rendering, keyboard/mouse navigation, and Exit/B return behavior. Ymir
+`--debug` captures and the production-renderer verifier establish the foreground
+and four initial values. Continue with the real 3D/DGN background source and
+composition, then trace setting persistence and prove the audio, difficulty,
+and HUD effects in retail gameplay. Japanese Configuration-page parity and
+New Game/Continue destination execution remain open. See
+`docs/nexus/nexus_startup.md` and `docs/nexus/nexus_title.md`.
+
+The authentic English Ymir Configuration-page frame 119 source scan examined
+148 textured VDP1 draws. It found exact DGN Structure2 image spans for 121
+informative draws; 11 additional draws are all-zero transparent textures.
+The broader retail-resource join matches 137 informative draws, while 113
+image spans also occur in whole-file `LEV00.DGN`. These are source candidates
+only: repeated bytes leave instance ownership ambiguous, and the active cell,
+face, placement, camera, and complete scene output remain unbound. Continue by
+joining command UV/CLUT and geometry state to a specific `LEV00.DGN` cell/face
+and the retail scene setup path. See
+`parity-evidence/verification/nexus_english_configuration_scene_dgn_join_20261028/README.md`.
+
+The frame-119 DGN sequence join matches all 121 informative draws (113 indexed
+image/CLUT pairs and 8 direct-color spans); 11 draws are transparent all-zero
+textures. Of the matched draws, 105 have candidate Structure3 face-owner rows,
+often with multiple possible owners. Sixteen matched draws have no face-owner
+row. Determine the active owner and transform from the Saturn SH-2 draw setup
+before using these materials to render the Configuration scene.

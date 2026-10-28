@@ -9,6 +9,7 @@ enum {
     NEXUS_TITLE_MENU_JAPANESE_ICON_PALETTE = 0x1b16,
     NEXUS_TITLE_MENU_TEXT_PALETTE = 0x02f6,
     NEXUS_TITLE_MENU_ICON_COLOR_BASE = 224,
+    NEXUS_TITLE_MENU_INACTIVE_TEXT_COLOR_BASE = 208,
     NEXUS_TITLE_MENU_TEXT_COLOR_BASE = 240
 };
 
@@ -21,10 +22,35 @@ typedef struct {
     uint16_t height;
     int16_t x;
     int16_t y;
-    uint16_t palette_offset;
+    uint32_t palette_offset;
     uint8_t colour_base;
     uint8_t flip_x;
 } Nexus_V1_RetailTitleMenuSprite;
+
+static void load_capture_palette(const uint8_t *source,
+                                 size_t source_offset,
+                                 uint8_t colour_base,
+                                 uint32_t palette[256]);
+static int draw_sprite(const uint8_t *source,
+                       size_t source_size,
+                       const Nexus_V1_RetailTitleMenuSprite *sprite,
+                       Nexus_Framebuffer *framebuffer);
+
+typedef struct {
+    uint32_t source_offset;
+    uint32_t palette_offset;
+} Nexus_V1_RetailMenuMarkerFrame;
+
+static const Nexus_V1_RetailMenuMarkerFrame k_english_configuration_marker_frames[] = {
+    {0x15f6,0x15d6}, {0x1746,0x1726}, {0x1896,0x1876}, {0x19e6,0x19c6},
+    {0x1b36,0x1b16}, {0x1c86,0x1c66}, {0x1dd6,0x1db6}, {0x0b76,0x0b56},
+    {0x0cc6,0x0ca6}, {0x0e16,0x0df6}, {0x0f66,0x0f46}, {0x10b6,0x1096},
+    {0x1206,0x11e6}, {0x1356,0x1336}, {0x14a6,0x1486}
+};
+
+static const int k_english_configuration_marker_frame_start[] = {
+    0, 2, 4, 7, 9, 12, 14, 17, 19, 22, 24, 27, 29, 32, 34
+};
 
 static const Nexus_V1_RetailTitleMenuSprite k_new_game_sprites[] = {
     {0x14a6, 24, 24, 104, 144, NEXUS_TITLE_MENU_ENGLISH_ICON_PALETTE, NEXUS_TITLE_MENU_ICON_COLOR_BASE, 0},
@@ -49,6 +75,133 @@ static const Nexus_V1_RetailTitleMenuSprite k_english_configuration_sprites[] = 
     {0x1dd6, 24, 24, 211, 168, 0x1db6, NEXUS_TITLE_MENU_ICON_COLOR_BASE, 1},
     {0x09a6,104,  8, 109, 177, NEXUS_TITLE_MENU_TEXT_PALETTE, NEXUS_TITLE_MENU_TEXT_COLOR_BASE, 0}
 };
+
+static int render_retail_configuration_page(
+    const uint8_t *source,
+    size_t source_size,
+    const Nexus_V1_RetailTitleMenuState *state,
+    Nexus_Framebuffer *framebuffer,
+    int animation_frame)
+{
+    Nexus_V1_RetailTitleMenuSprite sprites[18];
+    const uint32_t active_palette = 0x170aa;
+    const uint32_t inactive_palette = 0x172d2;
+    const int row_y[] = {60, 83, 106, 128, 175};
+    const int marker_right_x[] = {234, 295, 271, 233, 68};
+    size_t count = 0;
+    size_t index;
+    uint32_t music_on_palette = state->music_enabled ? active_palette : inactive_palette;
+    uint32_t music_off_palette = state->music_enabled ? inactive_palette : active_palette;
+    uint8_t music_on_base = state->music_enabled
+                                ? NEXUS_TITLE_MENU_TEXT_COLOR_BASE
+                                : NEXUS_TITLE_MENU_INACTIVE_TEXT_COLOR_BASE;
+    uint8_t music_off_base = state->music_enabled
+                                 ? NEXUS_TITLE_MENU_INACTIVE_TEXT_COLOR_BASE
+                                 : NEXUS_TITLE_MENU_TEXT_COLOR_BASE;
+    uint32_t sound_mono_palette = state->stereo_enabled ? inactive_palette : active_palette;
+    uint32_t sound_stereo_palette = state->stereo_enabled ? active_palette : inactive_palette;
+    uint8_t sound_mono_base = state->stereo_enabled
+                                  ? NEXUS_TITLE_MENU_INACTIVE_TEXT_COLOR_BASE
+                                  : NEXUS_TITLE_MENU_TEXT_COLOR_BASE;
+    uint8_t sound_stereo_base = state->stereo_enabled
+                                    ? NEXUS_TITLE_MENU_TEXT_COLOR_BASE
+                                    : NEXUS_TITLE_MENU_INACTIVE_TEXT_COLOR_BASE;
+    uint32_t level_normal_palette = state->easy_level_enabled ? inactive_palette : active_palette;
+    uint32_t level_easy_palette = state->easy_level_enabled ? active_palette : inactive_palette;
+    uint8_t level_normal_base = state->easy_level_enabled
+                                   ? NEXUS_TITLE_MENU_INACTIVE_TEXT_COLOR_BASE
+                                   : NEXUS_TITLE_MENU_TEXT_COLOR_BASE;
+    uint8_t level_easy_base = state->easy_level_enabled
+                                  ? NEXUS_TITLE_MENU_TEXT_COLOR_BASE
+                                  : NEXUS_TITLE_MENU_INACTIVE_TEXT_COLOR_BASE;
+    uint32_t gauge_on_palette = state->monster_gauge_enabled ? active_palette : inactive_palette;
+    uint32_t gauge_off_palette = state->monster_gauge_enabled ? inactive_palette : active_palette;
+    uint8_t gauge_on_base = state->monster_gauge_enabled
+                                ? NEXUS_TITLE_MENU_TEXT_COLOR_BASE
+                                : NEXUS_TITLE_MENU_INACTIVE_TEXT_COLOR_BASE;
+    uint8_t gauge_off_base = state->monster_gauge_enabled
+                                 ? NEXUS_TITLE_MENU_INACTIVE_TEXT_COLOR_BASE
+                                 : NEXUS_TITLE_MENU_TEXT_COLOR_BASE;
+    int marker_phase = animation_frame % 37;
+    size_t marker_frame = 0;
+
+    if (state->configuration_row < NEXUS_V1_RETAIL_CONFIGURATION_MUSIC ||
+        state->configuration_row > NEXUS_V1_RETAIL_CONFIGURATION_EXIT ||
+        (state->music_enabled != 0 && state->music_enabled != 1) ||
+        (state->stereo_enabled != 0 && state->stereo_enabled != 1) ||
+        (state->easy_level_enabled != 0 && state->easy_level_enabled != 1) ||
+        (state->monster_gauge_enabled != 0 &&
+         state->monster_gauge_enabled != 1)) {
+        return 0;
+    }
+    if (marker_phase < 0) {
+        marker_phase += 37;
+    }
+    while (marker_frame + 1 < sizeof(k_english_configuration_marker_frame_start) /
+                                      sizeof(k_english_configuration_marker_frame_start[0]) &&
+           marker_phase >= k_english_configuration_marker_frame_start[marker_frame + 1]) {
+        ++marker_frame;
+    }
+
+#define ADD_CONFIG_SPRITE(offset, w, h, x, y, palette, base, flip) \
+    do { \
+        sprites[count++] = (Nexus_V1_RetailTitleMenuSprite){ \
+            (offset), (w), (h), (x), (y), (palette), (base), (flip) \
+        }; \
+    } while (0)
+
+    ADD_CONFIG_SPRITE(0x1a592,232,37,45,20,active_palette,
+                      NEXUS_TITLE_MENU_TEXT_COLOR_BASE,0);
+    ADD_CONFIG_SPRITE(0x170ca,56,18,31,65,0x170aa,
+                      NEXUS_TITLE_MENU_TEXT_COLOR_BASE,0);
+    ADD_CONFIG_SPRITE(0x172f2,24,13,175,67,music_on_palette,music_on_base,0);
+    ADD_CONFIG_SPRITE(0x1748a,32,14,205,66,music_off_palette,music_off_base,0);
+    ADD_CONFIG_SPRITE(0x1787e,56,17,31,88,0x170aa,
+                      NEXUS_TITLE_MENU_TEXT_COLOR_BASE,0);
+    ADD_CONFIG_SPRITE(0x17a8a,64,12,174,89,sound_mono_palette,sound_mono_base,0);
+    ADD_CONFIG_SPRITE(0x17dea,56,12,243,89,sound_stereo_palette,sound_stereo_base,0);
+    ADD_CONFIG_SPRITE(0x183f2,104,16,29,111,0x170aa,
+                      NEXUS_TITLE_MENU_TEXT_COLOR_BASE,0);
+    ADD_CONFIG_SPRITE(0x18762,56,13,175,111,level_normal_palette,level_normal_base,0);
+    ADD_CONFIG_SPRITE(0x18a9a,40,13,236,111,level_easy_palette,level_easy_base,0);
+    ADD_CONFIG_SPRITE(0x19132,128,18,31,132,0x170aa,
+                      NEXUS_TITLE_MENU_TEXT_COLOR_BASE,0);
+    ADD_CONFIG_SPRITE(0x195e2,24,13,175,134,gauge_on_palette,gauge_on_base,0);
+    ADD_CONFIG_SPRITE(0x1977a,32,14,204,133,gauge_off_palette,gauge_off_base,0);
+    ADD_CONFIG_SPRITE(0x1a40e,40,17,31,179,0x170aa,
+                      NEXUS_TITLE_MENU_TEXT_COLOR_BASE,0);
+    if (state->configuration_row <= NEXUS_V1_RETAIL_CONFIGURATION_EXIT) {
+        int marker_y = row_y[state->configuration_row];
+        const Nexus_V1_RetailMenuMarkerFrame *marker =
+            &k_english_configuration_marker_frames[marker_frame];
+        ADD_CONFIG_SPRITE(marker->source_offset,24,24,10,marker_y,
+                          marker->palette_offset,
+                          NEXUS_TITLE_MENU_ICON_COLOR_BASE,0);
+        ADD_CONFIG_SPRITE(marker->source_offset,24,24,
+                          marker_right_x[state->configuration_row],marker_y,
+                          marker->palette_offset,
+                          NEXUS_TITLE_MENU_ICON_COLOR_BASE,1);
+    }
+#undef ADD_CONFIG_SPRITE
+
+    if (count > sizeof(sprites) / sizeof(sprites[0])) {
+        return 0;
+    }
+    for (index = 0; index < count; ++index) {
+        if ((size_t)sprites[index].source_offset +
+                ((size_t)sprites[index].width * sprites[index].height) / 2U >
+                source_size ||
+            source_size < (size_t)sprites[index].palette_offset + 32U) {
+            return 0;
+        }
+        load_capture_palette(source, sprites[index].palette_offset,
+                             sprites[index].colour_base, framebuffer->palette);
+        if (!draw_sprite(source, source_size, &sprites[index], framebuffer)) {
+            return 0;
+        }
+    }
+    return 1;
+}
 
 static const Nexus_V1_RetailTitleMenuSprite k_japanese_continue_sprites[] = {
     {0x0316, 64,  8, 129, 153, NEXUS_TITLE_MENU_TEXT_PALETTE, NEXUS_TITLE_MENU_TEXT_COLOR_BASE, 0},
@@ -166,7 +319,8 @@ static int draw_sprite(const uint8_t *source,
 
 int nexus_v1_retail_title_menu_render(const Nexus_TitleScreen *title,
                                      const Nexus_V1_RetailTitleMenuState *state,
-                                     Nexus_Framebuffer *framebuffer)
+                                     Nexus_Framebuffer *framebuffer,
+                                     int animation_frame)
 {
     const Nexus_V1_RetailTitleMenuSprite *sprites;
     size_t sprite_count;
@@ -183,6 +337,21 @@ int nexus_v1_retail_title_menu_render(const Nexus_TitleScreen *title,
     source = title->retail_menu_source_bytes;
     source_size = title->retail_menu_source_size;
     source_hash = fnv1a64(source, source_size);
+    if (state->configuration_active) {
+        const int english_source =
+            title->retail_menu_source_region ==
+                NEXUS_V1_TITLE_MENU_SOURCE_ENGLISH &&
+            source_hash == NEXUS_TITLE_BIN_ENGLISH_FNV1A64;
+        const int japanese_source =
+            title->retail_menu_source_region ==
+                NEXUS_V1_TITLE_MENU_SOURCE_JAPANESE &&
+            source_hash == NEXUS_TITLE_BIN_JAPANESE_FNV1A64;
+        if (!english_source && !japanese_source) {
+            return 0;
+        }
+        return render_retail_configuration_page(source, source_size, state,
+                                                 framebuffer, animation_frame);
+    }
     if (title->retail_menu_source_region == NEXUS_V1_TITLE_MENU_SOURCE_JAPANESE) {
         if (source_hash != NEXUS_TITLE_BIN_JAPANESE_FNV1A64) {
             return 0;

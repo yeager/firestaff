@@ -1,5 +1,60 @@
 # Firestaff DONE — Nexus
 
+## 2026-10-28 — Source-bind Japanese Configuration foreground and mouse route
+
+- Enabled the Configuration foreground for the hash-verified Japanese retail
+  `TITLE.BIN`. The 14 UI text sprites and active/inactive palettes are read from
+  real retail offsets, whose 71 text, palette and marker spans match the
+  English retail source byte-for-byte.
+- Opened Configuration with Accept and routed pointer row/value/Exit input for
+  both admitted retail regions. The M11 integration test covers Japanese
+  Configuration mouse selection and exit.
+- Added `scripts/verify_nexus_japanese_configuration_page.py`. It compiles the
+  production renderer, checks seven menu states against decoded Japanese retail
+  bytes, and matches all 12,518 visible text pixels against an authentic Ymir
+  screenshot. Scene background, Japanese interaction-state captures, and exact
+  marker-animation pixels remain unverified. No synthetic game assets were
+  added.
+
+## 2026-10-28 — Correct English Configuration scene match accounting
+
+- Re-ran both source joiners against the authentic English Ymir frame-119
+  capture and hash-verified local Nexus media. The source scan examined 148
+  draws: 121 informative spans match DGN Structure2; 16 other informative
+  spans match other admitted retail resources but not DGN Structure2, and 11
+  spans are zero-filled. The DGN command join confirms 113 indexed image/CLUT
+  matches and 8 direct-color matches; 105 have candidate Structure3 owners.
+- Added explicit DGN-only counts and VDP1/DGN encoding checks so source-span
+  matches cannot cross indexed and direct-color formats. The report remains
+  candidate evidence only; active face, camera, placement and composition are
+  unbound.
+- Reproduction details and limitations: [English Configuration DGN join](parity-evidence/verification/nexus_english_configuration_scene_dgn_join_20261028/README.md).
+
+## 2026-10-28 — Join Japanese Configuration scene commands to retail DGN
+
+- Added a Ymir trace-prefix reader for complete capture files whose current
+  frame has not reached VDP1 END. It validates the capture receipt, command
+  indices and addresses, current-command cursor, zero dropped rows, and VRAM
+  size without claiming that the observed display list is complete.
+- Applied it to the authentic Japanese Configuration-page capture at frame
+  599. Of 132 textured draws, 11 are all-zero indexed textures with
+  transparency enabled and no visible texels. All remaining 121 informative
+  draws join to authentic DGN Structure2 bytes and matching indexed CLUT or
+  direct-colour data; 105 have at least one candidate Structure3 face owner.
+  Sixteen matched draws have no candidate face-owner row.
+- The joins still leave shared material ownership, active level instance,
+  selected faces, camera transform, culling, display origin, and VDP2
+  composition unresolved. Renderer admission remains blocked. The full report
+  and capture are retained on the external evidence volume; no retail data was
+  added to Git.
+- The 16 matched draws without face-owner rows are early distorted-sprite
+  quads using five 48x48 materials from `LEV00.DGN`. Their vertices form a
+  receding tiled plane at the bottom of the scene, consistent with a floor or
+  menu backdrop; the active level and map selector remain unproven. Ymir source
+  confirms the 11 all-zero indexed draws are transparent with the captured
+  PMOD. No rendering permission follows from these candidate roles.
+- Receipt: [Japanese Configuration DGN trace prefix](parity-evidence/verification/nexus_japanese_configuration_dgn_trace_prefix_20261028/README.md).
+
 ## 2026-10-28 — Bind a partial Japanese title source span to NBG0 writes
 
 - Added a bounded verifier for the complete authentic Ymir VDP2 write trace.
@@ -524,3 +579,10 @@ Reviewed 2026-08-26. Completed work only.
   execution, Continue/save loading, and gameplay/HUD parity remain open. See
   `docs/nexus/nexus_startup.md` and `docs/nexus/nexus_title.md` for the evidence
   boundary.
+
+## 2026-10-28 — English retail Configuration page foreground
+
+- The English-region title runtime now opens and renders the authentic retail Configuration page foreground, including value sprites and the animated focus marker from hash-verified `TITLE.BIN`.
+- Ymir 0.4.2-dev `--debug` captures establish defaults (Music ON, Sound STEREO, Game Level NORMAL, Monster Gauge ON), keyboard row/value navigation, and Exit/B return to the title menu. Mouse row/value routing is covered by the runtime tests.
+- The production C renderer matches the captured 320x224 indexed foreground and all 256 palette entries for seven real capture states. Reproduce with `scripts/verify_nexus_english_configuration_page.py` and the captured evidence directory documented in `docs/nexus/nexus_startup.md`.
+- The 3D/DGN page background, cold-boot setting persistence, audio/difficulty/HUD effects, Japanese Configuration page, and New Game/Continue destination execution remain open. No synthetic game art was introduced.

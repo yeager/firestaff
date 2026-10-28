@@ -26,8 +26,8 @@ from analyze_nexus_vdp1_source_join import (
 from fixtures.nexus_v1_disc_file_hashes import DISC_HASH
 
 
-def dgn_materials(data_dir: Path) -> list[tuple[str, bytes, bytes]]:
-    materials: list[tuple[str, bytes, bytes]] = []
+def dgn_materials(data_dir: Path) -> list[tuple[str, int, bytes, bytes]]:
+    materials: list[tuple[str, int, bytes, bytes]] = []
     for level in range(16):
         name = f"LEV{level:02d}.DGN"
         data = (data_dir / name).read_bytes()
@@ -52,18 +52,20 @@ def dgn_materials(data_dir: Path) -> list[tuple[str, bytes, bytes]]:
             height = be16(descriptor, 8)
             image_offset = be32(descriptor, 12)
             palette_offset = be32(descriptor, 16)
-            if encoding != 0x0008 or width == 0 or height == 0:
+            if encoding not in (0x0008, 0x0028) or width == 0 or height == 0:
                 cursor += 20
                 descriptor_index += 1
                 continue
-            image_size = (width * height + 1) // 2
-            palette_size = 16 * 2
+            image_size = ((width * height + 1) // 2
+                          if encoding == 0x0008 else width * height * 2)
+            palette_size = 16 * 2 if encoding == 0x0008 else 0
             if (image_offset + image_size > useful or
                     palette_offset + palette_size > useful):
                 raise ValueError(f"{name} Structure2 material is unbounded")
             materials.append((
                 f"{name}[Structure2={image_id} encoding=0x{encoding:04x} "
                 f"{width}x{height}]",
+                encoding,
                 data[base + image_offset:base + image_offset + image_size],
                 data[base + palette_offset:base + palette_offset + palette_size],
             ))
@@ -138,6 +140,8 @@ def main() -> int:
         if control & 0xC000 or (control & 0x000F) > 2:
             continue
         mode = (words[2] >> 3) & 0x7
+        if mode not in (1, 5):
+            continue
         width = ((words[5] >> 8) & 0x003F) * 8
         height = words[5] & 0x00FF
         bits = 4 if mode <= 1 else 8 if mode <= 4 else 16
@@ -146,9 +150,13 @@ def main() -> int:
         if source_size <= 0:
             continue
         source = vram[source_offset:source_offset + source_size]
-        matches = [m for m in materials if swapped_words(m[1]) == source]
+        expected_encoding = 0x0008 if mode == 1 else 0x0028
+        matches = [m for m in materials
+                   if m[1] == expected_encoding and
+                   swapped_words(m[2]) == source]
         clut_word = (words[3] & ~0x3) << 2
-        captured_palette = vram[clut_word * 2:clut_word * 2 + 32]
+        captured_palette = (vram[clut_word * 2:clut_word * 2 + 32]
+                            if mode == 1 else b"")
         coordinates = tuple(
             struct.unpack("<h", struct.pack("<H", words[index]))[0]
             for index in range(6, 14)
@@ -165,10 +173,15 @@ def main() -> int:
         if not matches:
             print("dgn_material=none")
             continue
-        for name, _, palette in matches:
-            palette_match = captured_palette == swapped_words(palette)
+        for name, _, _, palette in matches:
+            palette_match = (captured_palette == swapped_words(palette)
+                             if mode == 1 else None)
             print(f"dgn_material={name}")
-            print(f"dgn_palette_match={'verified' if palette_match else 'none'}")
+            palette_result = (
+                "not_applicable" if palette_match is None else
+                "verified" if palette_match else "none"
+            )
+            print(f"dgn_palette_match={palette_result}")
             print("vdp1_coordinates_observed=verified")
             image_match = re.search(r"Structure2=(\d+)", name)
             image_id = int(image_match.group(1)) if image_match else -1
@@ -181,9 +194,13 @@ def main() -> int:
                   ("|".join(owners) if owners else "none"))
             print("dgn_face_selector_join=" +
                   ("verified" if owners else "unbound"))
-        print("source_clut_join=verified" if any(
-            captured_palette == swapped_words(palette) for _, _, palette in matches
-        ) else "source_clut_join=unbound")
+        if mode == 1:
+            print("source_clut_join=verified" if any(
+                captured_palette == swapped_words(palette)
+                for _, _, _, palette in matches
+            ) else "source_clut_join=unbound")
+        else:
+            print("source_clut_join=not_applicable")
     print("semantic_admission=blocked")
     return 0
 
