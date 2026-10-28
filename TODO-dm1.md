@@ -1,11 +1,22 @@
+2026-10-28 Amiga demo media availability correction: the authentic demo
+archive is now present at `~/.firestaff/data/dm1/dm-amiga-demo-en.zip`.
+`unzip -t` reports no archive errors. Its `graphics.dat` and `DemoDun.dat`
+members have MD5s `491ca939f9abb33ceeb26619b841fe91` and
+`78848e1a2d3d5a11e5954deb8c7b772b`, matching the preserved original files
+under `amiga-demo-v20-sgt/DungeonMaster/`. The archive-availability statement
+in the 2026-10-27 matrix below is stale. The CTest
+`dm1_v1_amiga_demo_archive_cli_boot` covers direct CLI, the M12 route and
+unchanged original-media checks, but this media inspection did not execute
+that test; current-source startup verification remains open until it runs.
+
 2026-10-27 authentic cross-platform CLI startup matrix: the current-source
 real-media CLI cases passed for PC34 (including the nested archive), DOS
 English/French, Atari ST 1.0a/1.0b/1.1/1.2/German/French, Amiga HD/2.0/2.0
 German/2.0 French/2.1-2.2 English/3.6, and FM Towns. The three Amiga 2.0
 language tests initially skipped because their media-probe helper had not been
 built; after building that helper, all three passed against the original
-Amiga archive. The Amiga demo case remains unverified because its original
-archive is absent. SDL dummy verifies these launch and source-handoff paths,
+Amiga archive. The Amiga demo case was unverified at that time because its
+archive was not staged. SDL dummy verifies these launch and source-handoff paths,
 not native display or physical input parity.
 
 2026-10-27 FM Towns AUTO discovery with a repacked ZIP: the authentic
