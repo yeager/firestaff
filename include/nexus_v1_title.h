@@ -72,6 +72,12 @@ typedef struct {
     uint64_t decoded_map_cell_fnv1a64[NEXUS_V1_TITLE_MAP_COUNT];
     int decoded_map_count;
     int decoded_map_source_bound;
+    /* Authentic English retail TITLE.BIN retained only when its complete
+     * byte fingerprint matches the sprite capture corpus. The admitted
+     * source span is consumed by the narrow VDP1 title-menu sprite renderer. */
+    uint8_t *retail_menu_source_bytes;
+    size_t retail_menu_source_size;
+    int retail_menu_source_english_verified;
 } Nexus_TitleScreen;
 
 /* DMWeb TITLE.BIN MAPD/TIBG composition: five 64x28 maps selecting the

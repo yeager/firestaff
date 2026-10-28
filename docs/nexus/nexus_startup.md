@@ -1079,8 +1079,10 @@ bundle README.
 This establishes a native retail menu and a narrow menu-navigation route in
 Ymir after a no-save cold boot. It does not prove the semantic purpose of
 every input across regions, a stable New Game transition to a playable level,
-Continue behavior with real save data, Firestaff menu rendering, or gameplay
-HUD/viewport parity. Those remain separate parity gates.
+Continue behavior with real save data, Firestaff menu input or destination
+execution, or gameplay HUD/viewport parity. The English foreground sprite
+rendering is implemented as described below; the background and full-screen
+composition remain open.
 
 ## New Game reaches the native 3D viewport (2026-10-27)
 
@@ -1226,6 +1228,17 @@ for hashes and reproduction commands.
 
 ## English retail title-menu sprite ownership (2026-10-27)
 
+Firestaff now has a bounded renderer for the authenticated English `NEW GAME`
+and `CONTINUE` VDP1 sprites described below. It accepts only the exact
+hash-pinned English retail `TITLE.BIN`, retains that source buffer with the
+loaded title, and draws the five captured sprites and their captured palette
+colors at the verified positions over the existing title framebuffer. This
+implements those foreground sprites only. The background bitmap remains
+unbound, and the renderer does not claim full-screen composition, Japanese or
+Configuration parity, or New Game/Continue destination execution. The runtime
+menu reducer remains responsible for selection; an unsupported selection is
+left to the existing title renderer.
+
 A follow-up used a copy of the authentic English menu savestate
 (`a997636cb5b40745e1065827361d3653c07475e716c8397542f36c372514f62b`) in a
 separate Ymir profile on TRV2. The copied savestate, English retail ISO and CUE,
@@ -1250,10 +1263,10 @@ reproduce all 1,451 visible pixels in each screenshot. The external captures and
 `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_english_menu_source_join_20261027/`.
 
 This binds the five English menu sprites and both palette tables to authentic
-`TITLE.BIN` data and the captured display colors. It does not bind the
-background bitmap, full-screen
-composition, upload timing, the Configuration page, or Firestaff's runtime
-menu renderer and input route. The wider English VDP1 source join remains
+`TITLE.BIN` data and the captured display colors. Firestaff renders the two
+verified foreground layouts, but this does not bind the background bitmap,
+full-screen composition, upload timing, the Configuration page, or the complete
+menu interaction route. The wider English VDP1 source join remains
 partial at 126 of 137 informative draws; its remaining 11 spans are zero
 padding. A byte-for-byte pair comparison of the separate New Game and
 Continue savestate replays shows identical full VDP2 VRAM, CRAM, and register

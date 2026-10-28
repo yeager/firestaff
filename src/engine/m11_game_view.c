@@ -31,6 +31,7 @@
 #include "nexus_v1_startup_layout.h"
 #include "nexus_v1_startup_menu.h"
 #include "nexus_v1_title.h"
+#include "nexus_v1_retail_title_menu_renderer.h"
 #include "nexus_v1_viewport.h"
 #include "nexus_v1_warning_dgt2_m11_presentation.h"
 #include "nexus_v1_world.h"
@@ -64403,6 +64404,12 @@ static void m11_nexus_startup_exec_boot_title_frame(
                                : NULL),
                        &nexusFb,
                        command->title_frame + nexus_title_boot_warning_frames());
+    if (context->state && context->state->nexusState.retail_title_menu.menu_active) {
+        (void)nexus_v1_retail_title_menu_render(
+            (const Nexus_TitleScreen*)context->state->nexusTitleScreen,
+            &context->state->nexusState.retail_title_menu,
+            &nexusFb);
+    }
     for (color = 0; color < 256; ++color) {
         uint32_t rgba = nexusFb.palette[color];
         rgb6[color][0] = (uint8_t)((rgba >> 18) & 0x3fu);

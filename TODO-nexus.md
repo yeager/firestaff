@@ -35,6 +35,10 @@ visible English New Game and Continue VDP1 sprites to `TITLE.BIN` offsets,
 captured CRAM palette bytes present in authentic `TITLE.BIN` ranges, screen
 placement, and all 1,451 visible pixels in each state. The icon palette has one
 source match; seven identical copies of the text palette remain candidates.
+Firestaff now draws those five authenticated English foreground sprites for
+New Game and Continue from the exact hash-pinned `TITLE.BIN`. This does not
+bind or render the shared background, Japanese or Configuration screens, or
+destination execution; full menu composition remains open.
 This does not bind the NBG0 background or remaining screen composition;
 the exact background source and complete display consumer are still unknown.
 The English New Game and Continue captures share byte-identical VDP2 VRAM,
