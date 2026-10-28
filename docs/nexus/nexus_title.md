@@ -142,20 +142,21 @@ New Game `(129,153,64,8)` or Continue `(128,165,64,8)` using the authenticated
 VDP1 text-command rectangles in native 320x224 coordinates. These are the
 retained Ymir command positions also checked against the 640x448 screenshot by
 `scripts/verify_nexus_title_sprite_screenshot.py`. Clicks outside these
-rectangles leave the menu selection unchanged. The Japanese Configuration row
-at `(109,177,104,8)` is now selectable when the authenticated Japanese title
-source is active. Its selected-state renderer uses exact `TITLE.BIN` textures
-at offsets `0x0316`, `0x0576`, `0x1746`, and `0x09a6`, with the captured
-palette at `0x1726` for its two horizontally oriented markers. The matching
-Ymir capture verifies all 1,453 visible pixels; see
-`scripts/verify_nexus_japanese_configuration_capture.py` and the capture receipt
-in `docs/nexus/nexus_startup.md`.
+rectangles leave the menu selection unchanged. The Configuration row at
+`(109,177,104,8)` is now selectable for authenticated English and Japanese
+title sources. The Japanese selected-state renderer uses exact `TITLE.BIN`
+textures at offsets `0x0316`, `0x0576`, `0x1746`, and `0x09a6`, with the
+captured palette at `0x1726` for its two horizontally oriented markers. Its
+Ymir capture verifies all 1,453 visible pixels. The English renderer uses
+textures at `0x0316`, `0x0576`, `0x1dd6`, and `0x09a6`, with marker palette
+`0x1db6`; its text matches 1,069/1,069 screenshot pixels. The English markers'
+final RGB depends on the unbound title background. See both regional capture
+verifiers and receipts in `docs/nexus/nexus_startup.md`.
 
-English Configuration rendering remains gated until its selected state has an
-equivalent source, palette, placement, and screenshot join. This adds row
-selection and foreground rendering only. It does not establish retail mouse
-activation semantics, the unbound title background, New Game destination
-execution, Continue/save loading, or the Configuration page controls.
+This adds selected-row foreground rendering and row selection only. It does
+not establish the unbound title background, full-screen composition, New Game
+destination execution, Continue/save loading, or the Configuration page
+controls.
 
 
 An authenticated producer trace narrows the `TITLE.CG` result further. In

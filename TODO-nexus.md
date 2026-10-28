@@ -41,10 +41,14 @@ authenticated Japanese New Game and Continue sprites and their source-bound
 regional palettes. A Japanese Configuration-selected capture now binds five
 foreground sprites, their palettes, positions and 1,453 visible screenshot
 pixels to authentic `TITLE.BIN`. Firestaff renders this Japanese selection and
-its startup mouse can select that row. English Configuration rendering remains
-gated pending its own selected-state capture and source join. Neither change
-binds the shared background or implements destination execution; full menu
-composition remains open. Destination activation and save loading remain open.
+its startup mouse can select that row. An English Configuration-selected Ymir
+capture now binds its five foreground commands, regional palette, placement,
+and horizontal flip to authentic English `TITLE.BIN`; Firestaff renders the
+same row and accepts its mouse selection. The three English text sprites match
+1,069 screenshot pixels, while the markers' final RGB depends on the unbound
+NBG0 background. Neither regional result binds the shared background or
+implements destination execution; full menu composition remains open.
+Destination activation and save loading remain open.
 This does not bind the NBG0 background or remaining screen composition;
 the exact background source and complete display consumer are still unknown.
 The English New Game and Continue captures share byte-identical VDP2 VRAM,

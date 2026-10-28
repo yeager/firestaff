@@ -149,6 +149,19 @@ int main(void)
                         "FAIL: source-bound Japanese Configuration row responds to mouse\n");
                 ++failures;
             }
+            state.nexusState.retail_title_menu.selection =
+                NEXUS_V1_RETAIL_TITLE_MENU_CONTINUE;
+            title_screen->retail_menu_source_region =
+                NEXUS_V1_TITLE_MENU_SOURCE_ENGLISH;
+            if (M11_GameView_HandlePointerButton(
+                    &state, 150, 181, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+                    M11_GAME_INPUT_REDRAW ||
+                state.nexusState.retail_title_menu.selection !=
+                    NEXUS_V1_RETAIL_TITLE_MENU_CONFIGURATION) {
+                fprintf(stderr,
+                        "FAIL: source-bound English Configuration row responds to mouse\n");
+                ++failures;
+            }
             if (M11_GameView_HandlePointerButton(
                     &state, 150, 181, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
                     M11_GAME_INPUT_IGNORED ||

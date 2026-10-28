@@ -489,18 +489,38 @@ Reviewed 2026-08-26. Completed work only.
   separate path. This does not bind its context index or opaque auxiliary word
   to Firestaff's champion/inventory model. The reproducible checker is
   `scripts/analyze_nexus_mouse_event_crossrefs.py`.
+
 ## 2026-10-28 — Japanese retail Configuration title selection
 
 - Firestaff now renders the selected Japanese Configuration title row from
   authentic regional `TITLE.BIN` sprite and palette spans. The mirrored right
   marker follows the captured VDP1 horizontal-flip flag.
-- Mouse selection now accepts the Japanese Configuration row only when the
-  authenticated Japanese retail title source is active.
+- Mouse selection accepts the Japanese Configuration row when the authenticated
+  Japanese retail title source is active.
 - The real Ymir capture verifier binds five VDP1 commands to retail texture and
   palette bytes and checks all 1,453 visible screenshot texels. The production
   C renderer's output was independently compared against the same authentic
   capture and matched all 1,453 texels.
-- English Configuration selection, full title background and composition,
+- English Configuration support, full title background and composition,
   destination execution, Continue/save loading, and gameplay/HUD parity remain
   open. See `docs/nexus/nexus_startup.md` and
   `docs/nexus/nexus_title.md` for the evidence boundary.
+
+## 2026-10-28 — English retail Configuration title selection
+
+- A Ymir `--debug` menu-state replay on authentic English retail media selected
+  Configuration with one scheduled Control Pad 1 Up pulse.
+- Firestaff renders the five English Configuration-selected foreground
+  sprites from hash-verified `TITLE.BIN` texture and palette bytes, including
+  the flipped right marker. Mouse selection is enabled for this authenticated
+  English region.
+- The capture verifier binds all five VDP1 commands, source spans, CRAM
+  palettes, placement, priority, color-calculation ratio and 1,069 screenshot
+  text pixels. Marker screenshot RGB depends on the still-unbound NBG0
+  background.
+- The production C renderer's framebuffer index map matches all 1,459 source
+  texels from the captured commands with zero differing pixels.
+- Full title background/composition, Configuration page controls, destination
+  execution, Continue/save loading, and gameplay/HUD parity remain open. See
+  `docs/nexus/nexus_startup.md` and `docs/nexus/nexus_title.md` for the evidence
+  boundary.
