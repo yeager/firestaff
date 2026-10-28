@@ -13267,7 +13267,7 @@ if(BUILD_TESTING)
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         )
         set_tests_properties(m11_dm1_floor_pit_runtime_capture_pc34 PROPERTIES
-            ENVIRONMENT "FIRESTAFF_DM1_DATA_DIR=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
+            ENVIRONMENT "FIRESTAFF_DM1_DATA_DIR=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_CONFIG_PATH=${CMAKE_CURRENT_BINARY_DIR}/test-runtime/dm1-floor-pit-startup-menu.toml"
             LABELS "dm1;dos;pc34;real-media;runtime-render;floor-pit")
     endif()
 
