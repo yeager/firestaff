@@ -55,7 +55,9 @@ jobs:
       - name: Install Pillow
         run: bash scripts/ci/install_apt_packages.sh python3-pil
       - name: Verify source-state-bound paired capture diffs
-        run: python3 tests/test_paired_capture_diff.py
+        run: |
+          python3 tests/test_paired_capture_diff.py
+          python3 tests/test_theron_huc6280_trace_diff.py
 
   nexus-tooling-regressions:
     runs-on: ubuntu-24.04

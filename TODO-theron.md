@@ -8296,3 +8296,16 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   capture an authentic invocation, compare execution, or prove game behavior.
   The full differential trace remains open; no decoder or parity claim follows
   from this check.
+- Added `tools/theron/compare_huc6280_traces.py` following the comparison
+  discipline in `yeager/pcrecomp/tools/lift/difftest.py`: require matching
+  input identity and full initial CPU/MPR/memory identity, compare ordered
+  fetch/read/write/MPR events, then report named final-state and changed-byte
+  differences. It rejects truncated traces, non-`$2392` termination, invalid
+  MPR address resolution and unsupported records. Tool-format fixtures verify
+  only the comparator; they are explicitly not game evidence. The report always
+  says `parity_claim=not-established`.
+- This creates the comparison tool, not either side of the comparison. No
+  authenticated `$2390 -> $23AD -> $2392` runtime trace or matching C-lift
+  trace exists yet. The authentic Track 02 input, live MPR setup, all accessed
+  source/output bytes, and final memory/register state remain required before
+  any decoder behavior or Theron gameplay parity can be claimed.
