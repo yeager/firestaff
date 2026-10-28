@@ -39,6 +39,17 @@ material routes are consumed with their verified source transforms and checked
 against original DM2 media. The
 separate legacy projectile drain cache remains unpopulated.
 
+2026-10-28 live DB14 source selector binding: each indoor missile event now
+retains the selector resolved from its active record pool and linked object.
+Events without a valid selector identity are omitted and mark the plan partial;
+they no longer appear as executable source draw calls. The source-ordered draw
+planner rejects events whose selector identity does not match the live DB14.
+The HME-242 FM Towns Fireball test requires the plan to carry the same original
+`CREATURES/0x0d/<effect>` selector that the active runtime resolves. The focused
+draw-order test covers rejection of an unresolved selector. This closes the
+source identity join only: it does not decode/draw missile pixels or verify the
+two `TEMP_PICST`/`DRAW_ITEM` bitmap transforms.
+
 2026-10-27 authentic cross-platform CLI startup matrix: direct startup passed
 for the original DOS English archive, Macintosh French SIT media, and FM Towns
 Japanese archive. The separate authentic-media main-menu selection test also

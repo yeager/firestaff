@@ -740,6 +740,7 @@ int dm2_v1_viewport_build_indoor_live_missile_plan(
     for (size_t i = 0u; i < snapshot_count; ++i) {
         const DM2_V1_RuntimeVisibleMissileSnapshot *live = &snapshots[i];
         DM2_V1_IndoorLiveMissileEvent event;
+        DM2_V1_G1DirectMissileReceipt missile_receipt;
         int source_cell;
         int source_pass;
         int display_index;
@@ -762,6 +763,20 @@ int dm2_v1_viewport_build_indoor_live_missile_plan(
         if (display_index < 0) continue;
         if (!live->timer_valid) out_plan->partial = 1;
         event.live = *live;
+        if (!dm2_v1_runtime_live_missile_selector_receipt(
+                live->source.object_id, &missile_receipt,
+                &event.selector) ||
+            !missile_receipt.valid ||
+            missile_receipt.object_id != live->source.object_id ||
+            !event.selector.valid || !event.selector.identity_hash ||
+            event.selector.missile_object_id != live->source.object_id) {
+            /* SKProject c_gui_vp.cpp::DM2_DRAW_FLYING_ITEM resolves the
+             * linked object's class and image selector before either the
+             * TEMP_PICST or DRAW_ITEM route. An unresolved DB14 is not a
+             * source draw call; omit it and expose the incomplete chain. */
+            out_plan->partial = 1;
+            continue;
+        }
         event.source_cell = (int16_t)source_cell;
         event.source_pass = (int16_t)source_pass;
         event.display_index = (int16_t)display_index;
@@ -811,7 +826,10 @@ int dm2_v1_viewport_build_indoor_live_missile_draw_plan(
         if (event->source_cell < 0 || event->source_cell > 15 ||
             event->source_pass < 0 ||
             event->source_pass >= DM2_V1_INDOOR_STATIC_OBJECT_PASS_COUNT ||
-            event->live.source.view_position_5x5 > 24u) {
+            event->live.source.view_position_5x5 > 24u ||
+            !event->selector.valid || !event->selector.identity_hash ||
+            event->selector.missile_object_id !=
+                event->live.source.object_id) {
             out_plan->valid = 0;
             out_plan->event_count = 0;
             return 0;

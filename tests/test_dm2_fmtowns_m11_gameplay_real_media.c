@@ -2123,7 +2123,14 @@ int main(void)
                     event->live.timer.timer_index == live_timer.timer_index) {
                     live_plan_found = event->source_cell == 0 &&
                         event->source_pass == 20 &&
-                        event->display_index >= 0;
+                        event->display_index >= 0 &&
+                        event->selector.valid &&
+                        event->selector.missile_object_id ==
+                            event->live.source.object_id &&
+                        event->selector.class1 == 0x0du &&
+                        event->selector.class2 == live_selector.class2 &&
+                        event->selector.identity_hash ==
+                            live_selector.identity_hash;
                     live_plan_event_index = i;
                     break;
                 }
