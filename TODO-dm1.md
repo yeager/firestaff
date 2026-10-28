@@ -1,3 +1,14 @@
+2026-10-28 authentic PC34 HoC pressure plate perspective coverage: the
+`m11_dm1_pc34_first_monster_combat_real` original-media probe now checks the
+same map-0 plate `(6,9)` from normal movement poses `(7,9)`, `(8,9)` and
+`(9,9)`, facing west at D1C/D2C/D3C. Against the installed DOS 3.4 archive,
+all three routes resolve authentic square-pad entries 0396/0394/0392 and each
+changes the indexed viewport hash when only the plate sensor ornament is
+suppressed. This covers all three center-depth bitmap selectors and real
+movement in/out of the adjacent tiles. It does not establish final RGB
+contrast or a matched DOSBox-X/original-game frame; the user-reported
+invisibility remains open pending that presentation comparison.
+
 2026-10-28 Amiga demo media availability correction: the authentic demo
 archive is now present at `~/.firestaff/data/dm1/dm-amiga-demo-en.zip`.
 `unzip -t` reports no archive errors. Its `graphics.dat` and `DemoDun.dat`
@@ -1798,12 +1809,13 @@ parity.
 - Reproduce and correct the remaining reported retail HoC interaction/viewport
   set as one source-locked pass: presented-frame evidence for object-bearing
   Eye scroll reads, Vi altar wall material, stairs occlusion, complete door
-  composition, pressure-plate far-view visibility, wall-torch placement, and
-  held-item striping/loss on inventory placement. The HoC pressure plate at
-  map 0 (6,9) now uses its original 62x21 bitmap clipped at native size to the
-  64x25 D1C zone. An authentic PC34 test confirms that suppressing its sensor
-  ornament changes the viewport from the adjacent square (7,9); it does not
-  establish pixel parity or far-view visibility. See `DONE-dm1.md`. The
+  composition, pressure-plate final-presentation contrast, wall-torch placement,
+  and held-item striping/loss on inventory placement. The HoC pressure plate at
+  map 0 (6,9) uses its original 62x21 bitmap clipped at native size to the
+  64x25 D1C zone. The authentic PC34 regression verifies original square-pad
+  entries 0396/0394/0392 at D1C/D2C/D3C and indexed-pixel contribution from
+  normal adjacent poses. It does not establish final RGB contrast or pixel
+  parity against the original game. See `DONE-dm1.md`. The
   authentic PC 3.4 runtime regression follows normal movement and C127/C040
   recruitment to HoC (4,15), picks up the source WATER through a rendered C080
   mouse target, and places it in backpack slot 1. It then picks up scroll 0

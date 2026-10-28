@@ -111,7 +111,10 @@ static unsigned int viewport_fnv1a(const unsigned char* pixels)
     return hash;
 }
 
-static int verify_hoc_plate_changes_indexed_view(M11_GameViewState* state)
+static int verify_hoc_plate_changes_indexed_view(M11_GameViewState* state,
+                                                  int relativeForward,
+                                                  int partyX,
+                                                  int expectedGraphicIndex)
 {
     unsigned char framebuffer[320 * 200];
     unsigned int renderedHash;
@@ -119,13 +122,14 @@ static int verify_hoc_plate_changes_indexed_view(M11_GameViewState* state)
     struct DungeonThings_Compat* things;
     unsigned short sensorThing;
     struct DungeonSensor_Compat* plateSensor = NULL;
+    DM1_FloorOrnamentRenderPlanPc34 plan = {0};
     unsigned char savedOrdinal;
     int safety = 0;
     int mapX = -1, mapY = -1;
     int ordinal;
     int globalOrnamentIndex;
     if (!state || state->world.party.mapIndex != 0 ||
-        state->world.party.mapX != 7 || state->world.party.mapY != 9 ||
+        state->world.party.mapX != partyX || state->world.party.mapY != 9 ||
         state->world.party.direction != 3) {
         if (state) {
             fprintf(stderr, "plate view pose map=%d party=(%d,%d,d%d)\n",
@@ -134,29 +138,30 @@ static int verify_hoc_plate_changes_indexed_view(M11_GameViewState* state)
         }
         return 0;
     }
-    /* The authentic route turns west at (7,9), placing the pressure plate
-     * in the source F0108 D1-center slot before stepping onto it. */
-    if (!M11_GameView_ProbeViewportCellClass(state, 1, 0, &mapX, &mapY,
-            NULL, NULL, NULL, NULL, NULL) || mapX != 6 || mapY != 9) {
-        fprintf(stderr, "plate target probe=(%d,%d)\n", mapX, mapY);
+    /* Probe the exact authentic plate square through normal viewport geometry. */
+    if (!M11_GameView_ProbeViewportCellClass(state, relativeForward, 0,
+            &mapX, &mapY, NULL, NULL, NULL, NULL, NULL) ||
+        mapX != 6 || mapY != 9) {
+        fprintf(stderr, "plate target probe at D%d=(%d,%d)\n",
+                relativeForward, mapX, mapY);
         return 0;
     }
-    ordinal = M11_GameView_GetFloorOrnamentOrdinal(state, 1, 0);
-    if (ordinal <= 0) {
-        fputs("plate target has no floor ornament ordinal\n", stderr);
-        return 0;
-    }
-    if (ordinal > 16) {
-        fprintf(stderr, "plate target ordinal out of range: %d\n", ordinal);
+    ordinal = M11_GameView_GetFloorOrnamentOrdinal(
+        state, relativeForward, 0);
+    if (ordinal <= 0 || ordinal > 16) {
+        fprintf(stderr, "plate target has invalid floor ornament ordinal: %d\n",
+                ordinal);
         return 0;
     }
     globalOrnamentIndex = state->floorOrnamentIndices[0][ordinal - 1];
     if (globalOrnamentIndex != 1 ||
-        dm1_v1_floor_ornament_graphic_index_pc34(globalOrnamentIndex, 5) != 396) {
+        !dm1_v1_floor_ornament_render_plan_pc34(
+            relativeForward, 0, globalOrnamentIndex, &plan) ||
+        plan.blit.graphicIndex != expectedGraphicIndex) {
         fprintf(stderr,
-                "HoC plate selected unexpected original material (ordinal=%d global=%d graphic=%d)\n",
-                ordinal, globalOrnamentIndex,
-                dm1_v1_floor_ornament_graphic_index_pc34(globalOrnamentIndex, 5));
+                "HoC plate selected unexpected material at D%dC (ordinal=%d global=%d graphic=%d expected=%d)\n",
+                relativeForward, ordinal, globalOrnamentIndex,
+                plan.blit.graphicIndex, expectedGraphicIndex);
         return 0;
     }
     things = state->world.things;
@@ -165,7 +170,7 @@ static int verify_hoc_plate_changes_indexed_view(M11_GameViewState* state)
         return 0;
     }
     sensorThing = F0511_DUNGEON_GetSquareFirstThing_Compat(
-        state->world.dungeon, things, 0, 6, 9);
+        state->world.dungeon, things, 0, mapX, mapY);
     while (sensorThing != THING_ENDOFLIST && sensorThing != THING_NONE &&
            safety++ < 64) {
         if (THING_GET_TYPE(sensorThing) == THING_TYPE_SENSOR) {
@@ -186,9 +191,8 @@ static int verify_hoc_plate_changes_indexed_view(M11_GameViewState* state)
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(state, framebuffer, 320, 200);
     renderedHash = viewport_fnv1a(framebuffer);
-    /* Re-render the same authentic world with only this sensor's ornament
-     * admission suppressed. A viewport difference now proves the plate
-     * itself contributed pixels; unrelated walls/items cancel out. */
+    /* Re-render the authentic world with only this sensor's ornament
+     * suppressed. A hash difference proves an indexed pixel contribution. */
     savedOrdinal = plateSensor->ornamentOrdinal;
     plateSensor->ornamentOrdinal = 0;
     memset(framebuffer, 0, sizeof(framebuffer));
@@ -197,12 +201,12 @@ static int verify_hoc_plate_changes_indexed_view(M11_GameViewState* state)
     plateSensor->ornamentOrdinal = savedOrdinal;
     if (renderedHash == suppressedHash) {
         fprintf(stderr,
-                "plate render unchanged by sensor suppression (%08x)\n",
-                renderedHash);
+                "plate render unchanged at D%dC (%08x)\n",
+                relativeForward, renderedHash);
         return 0;
     }
-    printf("PASS: authentic PC34 HoC pressure plate (6,9) uses GRAPHICS.DAT 0396 and changes indexed viewport pixels from (7,9), ordinal=%d\n",
-           ordinal);
+    printf("PASS: authentic PC34 HoC pressure plate (6,9) selects GRAPHICS.DAT %04d and changes indexed viewport pixels at D%dC from (%d,9), ordinal=%d\n",
+           expectedGraphicIndex, relativeForward, partyX, ordinal);
     return 1;
 }
 
@@ -378,8 +382,62 @@ int main(void)
             }
             for (tick = 0; tick < 5; ++tick)
                 audited_idle_tick(&state, &eventAudit);
-            if (!verify_hoc_plate_changes_indexed_view(&state)) {
-                fputs("FAIL: authentic PC34 HoC pressure plate at (6,9) does not change indexed viewport pixels from the approach\n",
+            if (!verify_hoc_plate_changes_indexed_view(&state, 1, 7, 396)) {
+                fputs("FAIL: authentic PC34 HoC plate did not change indexed pixels at D1C\n",
+                      stderr);
+                M11_GameView_Shutdown(&state);
+                return 1;
+            }
+            if (audited_input(&state, M12_MENU_INPUT_DOWN, &eventAudit) ==
+                    M11_GAME_INPUT_IGNORED) {
+                fputs("FAIL: authentic route could not step back for the D2C plate view\n",
+                      stderr);
+                M11_GameView_Shutdown(&state);
+                return 1;
+            }
+            for (tick = 0; tick < 5; ++tick)
+                audited_idle_tick(&state, &eventAudit);
+            if (!verify_hoc_plate_changes_indexed_view(&state, 2, 8, 394)) {
+                fputs("FAIL: authentic PC34 HoC plate did not change indexed pixels at D2C\n",
+                      stderr);
+                M11_GameView_Shutdown(&state);
+                return 1;
+            }
+            if (audited_input(&state, M12_MENU_INPUT_DOWN, &eventAudit) ==
+                    M11_GAME_INPUT_IGNORED) {
+                fputs("FAIL: authentic route could not step back for the D3C plate view\n",
+                      stderr);
+                M11_GameView_Shutdown(&state);
+                return 1;
+            }
+            for (tick = 0; tick < 5; ++tick)
+                audited_idle_tick(&state, &eventAudit);
+            if (!verify_hoc_plate_changes_indexed_view(&state, 3, 9, 392)) {
+                fputs("FAIL: authentic PC34 HoC plate did not change indexed pixels at D3C\n",
+                      stderr);
+                M11_GameView_Shutdown(&state);
+                return 1;
+            }
+            if (audited_input(&state, M12_MENU_INPUT_UP, &eventAudit) ==
+                    M11_GAME_INPUT_IGNORED) {
+                fputs("FAIL: authentic route could not return from D3C to D2C\n",
+                      stderr);
+                M11_GameView_Shutdown(&state);
+                return 1;
+            }
+            for (tick = 0; tick < 5; ++tick)
+                audited_idle_tick(&state, &eventAudit);
+            if (audited_input(&state, M12_MENU_INPUT_UP, &eventAudit) ==
+                    M11_GAME_INPUT_IGNORED) {
+                fputs("FAIL: authentic route could not return to the HoC plate approach\n",
+                      stderr);
+                M11_GameView_Shutdown(&state);
+                return 1;
+            }
+            for (tick = 0; tick < 5; ++tick)
+                audited_idle_tick(&state, &eventAudit);
+            if (state.world.party.mapX != 7 || state.world.party.mapY != 9) {
+                fputs("FAIL: authentic route did not return to the HoC plate approach\n",
                       stderr);
                 M11_GameView_Shutdown(&state);
                 return 1;
