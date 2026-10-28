@@ -64,14 +64,17 @@ static int timeline_try_merge_event(
 
 /* ReDMCSB TIMELINE.C F0234 compares same-time events by source type and
  * priority before using the source event-pool address as its final key.
- * M11's compatibility queue does not own the original event-pool slots, so
- * use stable insertion order when either component is unavailable. */
+ * M11 has partial type/priority receipts but no original event-pool slots:
+ * within a known type, authenticated priorities precede unknown priorities;
+ * equal or unknown priorities retain stable insertion order. */
 static int timeline_event_precedes_same_tick(
     const struct TimelineEvent_Compat* a,
     const struct TimelineEvent_Compat* b)
 {
     int aType;
     int bType;
+    int aPriorityValid;
+    int bPriorityValid;
     if (a->kind != TIMELINE_EVENT_CREATURE_REACTION ||
         b->kind != TIMELINE_EVENT_CREATURE_REACTION ||
         a->aux2 < DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE ||
@@ -83,9 +86,12 @@ static int timeline_event_precedes_same_tick(
     aType = a->aux2;
     bType = b->aux2;
     if (aType != bType) return aType > bType;
-    if ((a->aux4 & TIMELINE_AUX4_SOURCE_PRIORITY_VALID) &&
-        (b->aux4 & TIMELINE_AUX4_SOURCE_PRIORITY_VALID) &&
-        (a->aux4 & 0xff) != (b->aux4 & 0xff)) {
+    aPriorityValid =
+        (a->aux4 & TIMELINE_AUX4_SOURCE_PRIORITY_VALID) != 0;
+    bPriorityValid =
+        (b->aux4 & TIMELINE_AUX4_SOURCE_PRIORITY_VALID) != 0;
+    if (aPriorityValid != bPriorityValid) return aPriorityValid;
+    if (aPriorityValid && (a->aux4 & 0xff) != (b->aux4 & 0xff)) {
         return (a->aux4 & 0xff) > (b->aux4 & 0xff);
     }
     return 0;

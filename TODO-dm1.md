@@ -1813,8 +1813,10 @@ parity.
   255-MovementTicks where creature metadata is available, and original-save
   imports retain the native C29-C41 type in aux2 and priority in aux4. Its
   high-bit validity marker and priority byte fit the existing 44-byte event,
-  so runtime serialization preserves them. Untyped events keep stable
-  insertion order. This is a partial bridge, not complete scheduler parity:
+  so runtime serialization preserves them. For one known type, valid
+  priorities precede unknown priorities; equal or unknown priorities keep
+  stable insertion order. Untyped events also keep stable insertion order.
+  This is a partial bridge, not complete scheduler parity:
   source-pool address is not represented, and non-creature event families
   still need native type/priority mapping and source-backed coverage. Do not
   treat the seeded queue regression as proof of the complete admission

@@ -553,7 +553,7 @@ static void test_d9_source_ordered_group_reactions(void)
 {
     struct TimelineQueue_Compat queue;
     struct TimelineEvent_Compat event;
-    struct TimelineEvent_Compat popped[6];
+    struct TimelineEvent_Compat popped[8];
     struct TimelineEvent_Compat restored;
     unsigned char bytes[TIMELINE_EVENT_SERIALIZED_SIZE];
     int i;
@@ -578,10 +578,16 @@ static void test_d9_source_ordered_group_reactions(void)
                                 0, 0, 6);
     CHECK(F0721_TIMELINE_Schedule_Compat(&queue, &event),
           "D9f: another C29 with unknown priority schedules");
+    event = make_reaction_event(DM1_EVENT_UPDATE_BEHAVIOR_GROUP, 0, 0, 7);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&queue, &event),
+          "D9g: unknown-priority C37 schedules before its known peer");
+    event = make_reaction_event(DM1_EVENT_UPDATE_BEHAVIOR_GROUP, 50, 1, 8);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&queue, &event),
+          "D9h: known-priority C37 schedules after its unknown peer");
 
-    for (i = 0; i < 6; ++i) {
+    for (i = 0; i < 8; ++i) {
         CHECK(F0723_TIMELINE_Pop_Compat(&queue, &popped[i]),
-              "D9g: pop source-ordered event");
+              "D9i: pop source-ordered event");
     }
     CHECK(popped[0].aux0 == 3 && popped[0].aux2 ==
               DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0,
@@ -590,25 +596,30 @@ static void test_d9_source_ordered_group_reactions(void)
           "D9i: higher F0180 C37 priority precedes lower priority");
     CHECK(popped[2].aux0 == 5,
           "D9j: same type/priority keeps stable insertion pending source slot");
-    CHECK(popped[3].aux0 == 1,
-          "D9k: lower F0180 C37 priority follows higher priority");
-    CHECK(popped[4].aux0 == 4 && popped[4].aux2 ==
+    CHECK(popped[3].aux0 == 8 && (popped[3].aux4 & 0xff) == 50,
+          "D9k: known C37 priority precedes unknown priority");
+    CHECK(popped[4].aux0 == 1 && (popped[4].aux4 & 0xff) == 10,
+          "D9l: lower known C37 priority follows higher priority");
+    CHECK(popped[5].aux0 == 7 && popped[5].aux2 ==
+              DM1_EVENT_UPDATE_BEHAVIOR_GROUP,
+          "D9m: unknown C37 follows known priorities stably");
+    CHECK(popped[6].aux0 == 4 && popped[6].aux2 ==
               DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE,
-          "D9l: lower source C29 follows C37");
-    CHECK(popped[5].aux0 == 6,
-          "D9m: unknown C29 source-slot tie keeps stable insertion order");
+          "D9n: lower source C29 follows C37");
+    CHECK(popped[7].aux0 == 6,
+          "D9o: unknown C29 source-slot tie keeps stable insertion order");
 
     CHECK(F0725_TIMELINE_EventSerialize_Compat(
               &popped[1], bytes, sizeof(bytes)),
-          "D9n: source-ordered event serializes in legacy format");
+          "D9p: source-ordered event serializes in legacy format");
     CHECK(F0726_TIMELINE_EventDeserialize_Compat(
               &restored, bytes, sizeof(bytes)),
-          "D9o: legacy event deserializes");
+          "D9q: legacy event deserializes");
     CHECK(TIMELINE_EVENT_SERIALIZED_SIZE == 44 && restored.aux2 ==
               DM1_EVENT_UPDATE_BEHAVIOR_GROUP &&
               (restored.aux4 & TIMELINE_AUX4_SOURCE_PRIORITY_VALID) != 0 &&
               (restored.aux4 & 0xff) == 200,
-          "D9p: 44-byte event retains its source C37 type and priority");
+          "D9r: 44-byte event retains its source C37 type and priority");
 }
 
 /* ------------------------------------------------------------------
