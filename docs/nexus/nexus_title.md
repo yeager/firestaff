@@ -202,6 +202,24 @@ this receipt. The later same-session receipts bind the source pointer/RAM
 producer and its CDB provenance; the display consumer is still absent, so this
 is not permission to present a native title composition.
 
+### Ymir trace dispatch optimization — 2026-10-28
+
+Ymir's VDP2 debug tracer now filters writes by enabled state, memory type,
+address interval and optional absolute VDP1 frame interval before acquiring
+the ring-buffer lock. The change is on the existing Yeager fork branch
+`codex/nexus-vdp2-frame-window-20261027` at commit
+`c967459a809af4ab2c3160e7fd6a947f19f78291`. It builds successfully in the
+shared TRV2 build at `/opt/ymir/build-capture-payload`; the resulting binary
+passes its `--help` smoke check. Build verification and binary SHA-256 are
+recorded on the external evidence disk in
+`firestaff-evidence/nexus/ymir-vdp2-prefilter-c967459a.md`.
+
+The capture already running when this build completed has the prior binary
+mapped and does not measure the prefilter. Its frame loop remains in progress;
+Ymir writes trace and memory artifacts only when all requested frames finish.
+The next capture must use the verified shared binary before its output can be
+used to evaluate trace-filter performance or infer retail presentation.
+
 ### Independent bounded copy-delta receipt — 2026-08-27
 
 The supplied Japanese CUE/BIN media and matching Japanese 1.01 BIOS were also
