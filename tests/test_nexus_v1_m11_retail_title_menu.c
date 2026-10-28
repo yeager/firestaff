@@ -31,6 +31,15 @@ int main(void)
         fprintf(stderr, "FAIL: Start opens the retail menu\n");
         ++failures;
     }
+    if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_ACCEPT) !=
+            M11_GAME_INPUT_REDRAW ||
+        !state.nexusState.title_active ||
+        !state.nexusState.retail_title_menu.menu_active ||
+        state.nexusState.champion_select_active) {
+        fprintf(stderr,
+                "FAIL: retail New Game dispatch stays on the title when no authenticated launcher is initialized\n");
+        ++failures;
+    }
     if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_DOWN) !=
             M11_GAME_INPUT_REDRAW ||
         state.nexusState.retail_title_menu.selection !=
@@ -121,6 +130,16 @@ int main(void)
             M11_GAME_INPUT_REDRAW ||
         !state.nexusState.retail_title_menu.menu_active) {
         fprintf(stderr, "FAIL: title prompt mouse click opens retail menu\n");
+        ++failures;
+    }
+    if (M11_GameView_HandlePointerButton(
+            &state, 150, 156, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+            M11_GAME_INPUT_REDRAW ||
+        !state.nexusState.title_active ||
+        !state.nexusState.retail_title_menu.menu_active ||
+        state.nexusState.champion_select_active) {
+        fprintf(stderr,
+                "FAIL: retail New Game mouse click dispatch stays on title when launcher is unavailable\n");
         ++failures;
     }
     if (M11_GameView_HandlePointerButton(

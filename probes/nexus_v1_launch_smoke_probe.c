@@ -21,6 +21,7 @@
 #include "nexus_v1_engine.h"
 #include "nexus_v1_dungeon.h"
 #include "nexus_v1_game.h"
+#include "nexus_v1_launcher.h"
 #include "nexus_v1_mechanics_fwd.h" /* Nexus_MechanicsState forward declaration */
 #include <stdio.h>
 #include <stdlib.h>
@@ -184,6 +185,37 @@ int main(int argc, char **argv) {
     printf("\n[Step 4: Shutdown]\n");
     nexus_v1_shutdown(&engine);
     PROBE_ASSERT(1, "nexus_v1_shutdown completed without crash");
+
+    /* The launcher path now consumes the retail DM.BIN start table, verifies
+     * the exact loaded bytes, loads canonical LEV01, and admits its authored
+     * start cell. Use only the real corpus supplied to this probe. */
+    printf("\n[Step 5: Retail New Game Start]\n");
+    rc = nexus_v1_launcher_init(data_dir);
+    PROBE_ASSERT(rc == 0, "launcher initializes from the supplied retail corpus");
+    if (rc == 0) {
+        Nexus_V1_DungeonStartReceipt start_receipt;
+        Nexus_V1_Engine *launcher_engine = nexus_v1_launcher_get_engine();
+        int start_ok = nexus_v1_launcher_start_retail_new_game(
+            &start_receipt);
+        PROBE_ASSERT(start_ok == 1 &&
+                         start_receipt.status ==
+                             NEXUS_V1_DUNGEON_START_READY &&
+                         start_receipt.level == 1 &&
+                         start_receipt.requested_x == 29 &&
+                         start_receipt.requested_y == 47 &&
+                         start_receipt.requested_dir == 0 &&
+                         start_receipt.dgn_cell_consumed == 1 &&
+                         start_receipt.blocks_runtime == 0,
+                     "retail New Game admits level 1 pose (29,47,North)");
+        PROBE_ASSERT(launcher_engine && launcher_engine->level_loaded &&
+                         launcher_engine->game.game_started &&
+                         launcher_engine->game.current_level == 1 &&
+                         launcher_engine->game.party_x == 29 &&
+                         launcher_engine->game.party_y == 47 &&
+                         launcher_engine->game.party_dir == 0,
+                     "authenticated LEV01 and retail pose reach launcher runtime");
+        nexus_v1_launcher_shutdown();
+    }
 
     printf("\n═══════════════════════════════════════════════════════════\n");
     printf("  Result: %d PASS, %d FAIL\n", g_pass, g_fail);

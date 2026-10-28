@@ -1571,24 +1571,166 @@ This does not establish the NBG0 title background, full-screen composition,
 Configuration page controls, New Game destination execution, Continue/save
 loading, or gameplay viewport/HUD parity.
 
-## New Game input is not yet dispatched (2026-10-28)
+## Retail New Game input reaches the authenticated level loader (2026-10-28)
 
 The authenticated retail menu reducer returns
 `NEXUS_V1_RETAIL_TITLE_MENU_RESULT_START_NEW_GAME` when Accept is pressed on
-New Game. In `M11_GameView_HandleInput`, the current retail-menu branch groups
-that result with redraw-only outcomes and returns while `title_active` remains
-set. The title screen therefore stays active; the input does not start the
-level.
+New Game. M11 now sends that result to the retail start path for both
+keyboard/controller Accept and the retail mouse row. The path authenticates
+the supplied `DM.BIN`, parses its level-1 record, loads the selected
+hash-verified `LEV01.DGN`, validates the retail start cell, and asks the
+existing source-gated runtime handoff to prepare the viewport and HUD.
 
-The older Firestaff startup-action path is not a proven substitute: its
+The older Firestaff startup-action path is not used as a substitute: its
 `NEXUS_V1_STARTUP_ACTION_NEW_GAME` execution opens Firestaff's champion-select
-mode. The retained Ymir cold-boot replay instead reaches a native 3D viewport
-after accepting New Game, without a visible champion-select screen. The
-replay does not identify the active room or establish a stable playable
-checkpoint, so changing `level_loaded`, party coordinates, or title mode here
-would invent runtime state. The native New Game transition still needs a
-source-backed room/load receipt and a matching real-media test before this
-input can be wired to gameplay.
+mode. The retail path retains the parser's authenticated level-start receipt
+and does not open champion selection. If downstream DGN, viewport, or HUD
+receipts still block presentation, M11 restores the observed title menu and
+reports the source-backed blocker; a repeated New Game action can retry the
+handoff without reloading or inventing a start pose. The parser and launcher
+probe pass with authentic media, but the M11 keyboard/mouse transition has not
+yet been captured in Ymir. This change therefore establishes the retail
+loader handoff, not a playable viewport or complete gameplay parity.
+
+## Retail Up input changes the first viewport (2026-10-28)
+
+Ymir 0.4.2-dev was replayed on TRV2 from the authenticated Japanese retail
+New Game menu state, with no retail save loaded. Two runs loaded the same
+state, accepted New Game for two frames, and advanced 1,800 capture frames to
+VDP1 frame 1,605. The control run had no further input. The paired run asserted
+Control Pad 1 Up for one frame at capture frame 1,500.
+
+The control screenshot is byte-identical to the earlier A-only viewport
+capture (`8ede95f1fd777eda69ebcfc91d0268194e501f145306eb1fc2971ed0113a2274`).
+The Up screenshot differs (`f1dd18e6aec0560c5144739d17adfdde4c5d67dc9796db0890b9ceac57dc8657`).
+Both selected-frame VDP1 traces contain 151 ordered commands with zero drops;
+106 command records have changed words after Up, mainly vertex coordinates.
+The VDP1 framebuffer differs at 136,598 bytes, and WRAM-HI differs at 956
+bytes. This confirms that the retail game reacts to Up after New Game. It does
+not establish a stable room, exact party coordinates, HUD behavior, or a
+Firestaff gameplay route.
+
+The DGN join matches 78 of 138 textured draws, with 55 face-owner matches;
+semantic admission remains blocked. The complete trace also contains
+pre-frame records after an earlier END command, so whole-file trace auditing
+rejects it; the selected frame's extracted command chain passes. Full logs,
+screenshots, memory dumps, frame audits, and the reproduction command are
+retained at
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_new_game_capture_20261028/`.
+
+Follow-up timing probes show that Up at capture frame 100 is too early: at
+frame 120 the screenshot is still in the transition and is pixel-identical to
+the control; only three WRAM-HI bytes differ. Up at frame 400 also leaves the
+frame-600 screenshot identical to control. Up at frame 1,000 produces the
+same final screenshot as the frame-1,500 Up run. These probes bound the
+observed response to after frame 400 and by frame 1,000, but do not identify
+the exact transition frame. The paired captures are retained in the
+`paired-up-120/`, `paired-up-400-600/`, and `paired-up-1000-1800/`
+subdirectories. The frame-120 SH-2 trace dropped records and is not used.
+
+A separate complete ten-frame high-WRAM SH-2 trace contains 174,354 writes
+with no drops, but its final screenshot still shows the title menu. Ghidra
+maps its frequent writers to buffer clearing, entity-grid/list setup, fixed-
+point transforms, and polygon emission. In the later 1,800-frame dumps, four
+active type-`0x0f` rows in the 20-entry entity pool have object tile
+coordinates `(9,24)`, `(7,26)`, `(38,25)`, and `(36,27)`; these remain
+unchanged between control and Up. No source evidence binds those rows to the
+controlled player or identifies a New Game writer for player position and
+facing. The captured transition therefore still does not provide a safe
+Firestaff start pose. The complete short trace and the timing-probe notes are
+retained in `startup-sh2-trace-10frames/` and the paired subdirectories above.
+
+## New Game loads the retail per-level start record (2026-10-28)
+
+A follow-up Ymir `--debug` replay traced SH-2 reads and writes in
+`[0x06064000,0x06065000)` for 1,800 frames. The accepted run loaded the same
+New Game-selected state, held A for two frames at capture frame 0, and held Up
+for one frame at frame 1,000. Its complete trace recorded 61,982 reads and
+5,850 writes with zero dropped rows. A no-input replay of the same state and
+duration recorded 40,295 reads and 3,007 writes, also with zero drops.
+
+Only the accepted run recorded the one-time parser writes to the structure at
+`0x06064544`: words `1`, `0x8000`, `29`, and `47` at offsets `+0`, `+2`, `+4`,
+and `+6`, followed by zeroed dwords at `+0x0c` and `+0x10`. Ghidra on the
+hash-verified `DM.BIN` maps those stores to `FUN_0602022c`; the function copies
+the fields from an input record. `FUN_06020fee` later reads offsets `+4` and
+`+6` and passes them, along with other fields, to an indirect initializer. Its
+caller chain reaches `FUN_060110ac` from `FUN_06010f44`. These trace and
+decompilation receipts bind the values to the accepted New Game execution and
+the generic level-loader path.
+
+Follow-up static analysis found the source table at `DM.BIN+0x39550`
+(`0x06049550` at the analyzed load base). It contains 16 eight-byte entries.
+`FUN_06011984` checks the selected entry's word at `+2`, then copies its level,
+coordinates and angle into the loader structure; it is called from
+`FUN_0601128e`. The level-1 bytes are `00 01 00 01 1d 2f 80 00`, yielding
+level 1, enabled flag 1, `(29,47)`, and angle word `0x8000`. This agrees with
+the accepted New Game trace through `FUN_0602022c`. The `(29,47)` LEV01 cell
+is passable in the hash-verified retail DGN, confirming a source-authored
+level-1 loader coordinate. A separate `FUN_060110ac` branch writes `(32,39)`
+for a zero argument; those stores did not appear in the accepted New Game
+trace and are not substituted for the selected table entry.
+
+Enabled table entries use angle words `0x0000`, `0x4000`, `0x8000`, and
+`0xc000`, consistent with quarter-turns in a 16-bit angle field.
+`FUN_0601f584` stores the value in an object field, but its analyzed caller
+chain does not bind `0x8000` to a world axis or Firestaff's
+north/east/south/west enum. The native runtime therefore still blocks starting
+gameplay until that mapping is established. Raw Ymir traces and Ghidra exports
+are retained externally in
+`nexus_new_game_capture_20261028/config-struct-sh2-trace-1800/` with the
+no-input control beside it.
+
+## Paired left/right input from the New Game scene (2026-10-28)
+
+Two isolated Ymir `--debug --fast-forward` replays loaded the same retained
+New Game savestate and scheduled the same A press at frame 0. One pressed left
+for one frame at frame 1,500; the other pressed right for one frame at the same
+point. Both captured frame 1,800. The screenshots differ at 216,860 pixels,
+WRAM-HI at 3,011 bytes, VDP1 framebuffer at 209,996 bytes, and VDP1 VRAM at
+3,808 bytes; WRAM-LO and VDP2 VRAM are byte-identical. The generic loader
+record at `0x06064544..0x0606456f` is identical and retains level 1, angle
+`0x8000`, and `(29,47)`. The angle word at WRAM-HI offsets `0x746d0`,
+`0x792be`, and `0x9705e` is `0x8000` in the no-turn baseline, `0x8064` after
+left, and `0x7f9c` after right. The companion word at `0x746ca` changes to
+`+100` and `-100`. The frame-10 SH-2 trace records PC `0x06010cfa`
+initializing `0x060792be` to `0x8000` in `FUN_06010cf4`, with object base
+`0x060792b0`. An Up/control pair changes the big-endian 32-bit field at object
+offset `+8` (`0x060792b8`) from `0x003b6000` to `0x003b5c00` while the angle remains
+`0x8000`; the `+0` position field remains `0x0024e000`. These are 16.16
+coordinates: the retail table cell center `(29,47)` maps exactly to
+`((29+0.5)*1.25, (47+0.5)*1.25) = (0x0024e000, 0x003b6000)`. The Up
+input moves only Y by `-0x400`, with angle unchanged. In this captured level-1
+start, Up therefore moves toward decreasing DGN Y, which is Firestaff North;
+the retail heading `0x8000` maps to North. The one-frame left/right angle
+changes (`+100`/`-100`) are consistent with that mapping. This binds the
+level-1 retail start heading, but does not establish mappings for every angle
+word or the complete gameplay ownership path.
+
+The launcher now parses the selected eight-byte record from hash-verified
+`DM.BIN` and admits only this calibrated level-1 heading to a New Game start.
+It loads the hash-verified `LEV01.DGN`, checks `(29,47)` against the loaded
+cell geometry, and creates the dungeon-start receipt before producing the
+runtime handoff. Other raw headings remain unmapped and are rejected. The
+viewport, material, and HUD routes retain their independent evidence gates;
+this loader change does not establish complete playability. The `firestaff`
+target compiled successfully on TRV2. The real-data
+`nexus_v1_launch_smoke_probe` passed 22/22 checks, including this launcher
+start receipt. It does not exercise the interactive M11 route or provide a
+Ymir capture of that handoff.
+
+A read-only pass through the existing DGN parser on authentic LEV01 shows an
+open chamber at `(29,47)` and a single square-type-8 passage at `(29,48)`,
+bounded by walls at `(28,48)` and `(30,48)`. The frame-1800 scene shows a
+narrow opening ahead, visually consistent with facing toward the single
+passage. A 164-frame left hold instead ends at angle `0x293d` and a close wall
+view, not at the simple expected quarter-turn value; an immediate frame-1665
+capture reproduces that result. The long-hold comparison remains confounded and
+is not used to establish the heading mapping; the paired one-frame input plus exact fixed-point start
+coordinates provide the level-1 direction evidence. Screenshots,
+complete memory dumps, reproduction details, and artifact hashes are retained
+in external evidence at
+`nexus_start_heading_turn_20261028/`.
 
 This is a full captured-frame composition check, not a renderer admission. The
 replay consumes Ymir display and VDP snapshots, not a Firestaff runtime upload

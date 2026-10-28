@@ -2,6 +2,7 @@
 #ifndef NEXUS_V1_GAME_H
 #define NEXUS_V1_GAME_H
 #include <stdint.h>
+#include <stddef.h>
 #include "nexus_v1_dungeon.h"
 
 /* Nexus V1 game state — ties together DM1 logic + Nexus 3D assets. */
@@ -11,6 +12,18 @@
  * distinction explicit so a title asset cannot become a playable map. */
 #define NEXUS_V1_TITLE_LEVEL 0
 #define NEXUS_V1_FIRST_PLAYABLE_LEVEL 1
+#define NEXUS_V1_RETAIL_START_TABLE_OFFSET 0x39550U
+#define NEXUS_V1_RETAIL_START_TABLE_ENTRY_COUNT 16
+#define NEXUS_V1_RETAIL_START_TABLE_ENTRY_SIZE 8U
+
+typedef struct {
+    int level;
+    int enabled;
+    int x;
+    int y;
+    uint16_t retail_heading;
+    int party_dir;
+} Nexus_V1_RetailStartEntry;
 
 typedef enum {
     NEXUS_V1_DUNGEON_START_MISSING = 0,
@@ -53,6 +66,12 @@ typedef struct {
 
 void nexus_v1_game_init(Nexus_V1_GameState *state, const char *data_dir);
 int nexus_v1_game_load_level(Nexus_V1_GameState *state, int level);
+/* Parse one entry from the authentic DM.BIN start table. The caller must
+ * authenticate DM.BIN before passing its bytes. Direction is resolved only
+ * for headings calibrated against retail input and map coordinates. */
+int nexus_v1_game_parse_retail_start_entry(
+    const uint8_t *dm_bin, size_t dm_bin_size, int level,
+    Nexus_V1_RetailStartEntry *out_entry);
 int nexus_v1_game_resolve_dungeon_start(
     const Nexus_V1_Level *level,
     int requested_level,

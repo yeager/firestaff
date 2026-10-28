@@ -25,6 +25,10 @@ static const char *const g_nexus_level_md5[NEXUS_MAX_LEVELS] = {
     "5e6e237074f1e6b0decc629868a51f3c"
 };
 
+static uint16_t nexus_v1_game_read_be16(const uint8_t *bytes) {
+    return (uint16_t)(((uint16_t)bytes[0] << 8) | (uint16_t)bytes[1]);
+}
+
 void nexus_v1_game_init(Nexus_V1_GameState *state, const char *data_dir) {
     if (!state) return;
     memset(state, 0, sizeof(*state));
@@ -41,6 +45,58 @@ void nexus_v1_game_init(Nexus_V1_GameState *state, const char *data_dir) {
     state->dungeon_start.party_y = -1;
     state->dungeon_start.party_dir = -1;
     state->dungeon_start.blocks_runtime = 1;
+}
+
+int nexus_v1_game_parse_retail_start_entry(
+    const uint8_t *dm_bin,
+    size_t dm_bin_size,
+    int level,
+    Nexus_V1_RetailStartEntry *out_entry)
+{
+    Nexus_V1_RetailStartEntry entry;
+    size_t offset;
+    const uint8_t *record;
+
+    if (!out_entry) return 0;
+    memset(out_entry, 0, sizeof(*out_entry));
+    out_entry->level = level;
+    out_entry->x = -1;
+    out_entry->y = -1;
+    out_entry->party_dir = -1;
+    if (!dm_bin || level < NEXUS_V1_FIRST_PLAYABLE_LEVEL ||
+        level >= NEXUS_V1_RETAIL_START_TABLE_ENTRY_COUNT) {
+        return 0;
+    }
+    offset = (size_t)NEXUS_V1_RETAIL_START_TABLE_OFFSET +
+        (size_t)level * NEXUS_V1_RETAIL_START_TABLE_ENTRY_SIZE;
+    if (offset > dm_bin_size ||
+        dm_bin_size - offset < NEXUS_V1_RETAIL_START_TABLE_ENTRY_SIZE) {
+        return 0;
+    }
+    record = dm_bin + offset;
+    memset(&entry, 0, sizeof(entry));
+    entry.level = (int)nexus_v1_game_read_be16(record);
+    entry.enabled = (int)nexus_v1_game_read_be16(record + 2);
+    entry.x = (int)record[4];
+    entry.y = (int)record[5];
+    entry.retail_heading = nexus_v1_game_read_be16(record + 6);
+    entry.party_dir = -1;
+
+    /* The level-1 heading is the only table heading currently calibrated to
+     * a named DGN axis: retail Up moves toward decreasing Y at 0x8000. Do not
+     * extrapolate other raw angles into host directions without a clean
+     * cardinal-turn capture. */
+    if (entry.level != level || entry.enabled != 1 ||
+        entry.x >= NEXUS_MAX_MAP_SIZE || entry.y >= NEXUS_MAX_MAP_SIZE) {
+        *out_entry = entry;
+        return 0;
+    }
+    if (level == NEXUS_V1_FIRST_PLAYABLE_LEVEL &&
+        entry.retail_heading == 0x8000U) {
+        entry.party_dir = 0; /* Firestaff North: DGN Y decreases. */
+    }
+    *out_entry = entry;
+    return 1;
 }
 
 int nexus_v1_game_resolve_dungeon_start(

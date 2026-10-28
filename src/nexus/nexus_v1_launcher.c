@@ -37,6 +37,7 @@ int nexus_v1_launcher_bind_saturn_card_boot_route(Nexus_V1_Engine *e,uint64_t ep
 #include "nexus_v1_save.h"
 #include "nexus_v1_viewport.h"
 #include "nexus_v1_world.h"
+#include "asset_find_by_hash.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -201,6 +202,94 @@ int nexus_v1_launcher_load_level(int level) {
     }
     printf("Nexus launcher: loaded level %d\n", level);
     return 0;
+}
+
+int nexus_v1_launcher_start_retail_new_game(
+    Nexus_V1_DungeonStartReceipt *out_receipt)
+{
+    Nexus_V1_LevelAuxSourceReceipt dm_source;
+    Nexus_V1_RetailStartEntry start;
+    Nexus_V1_DungeonStartReceipt receipt;
+    uint8_t *dm_bin;
+    int dm_bin_size = 0;
+    int resolved;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->status = NEXUS_V1_DUNGEON_START_MISSING;
+    out_receipt->level = NEXUS_V1_FIRST_PLAYABLE_LEVEL;
+    out_receipt->requested_x = -1;
+    out_receipt->requested_y = -1;
+    out_receipt->requested_dir = -1;
+    out_receipt->party_x = -1;
+    out_receipt->party_y = -1;
+    out_receipt->party_dir = -1;
+    out_receipt->blocks_runtime = 1;
+    if (!s_initialized) return 0;
+    if (s_engine.level_loaded) {
+        /* A validated start remains committed if a later presentation gate
+         * blocks. Let the same retail New Game input retry that handoff. */
+        if (s_engine.game.game_started &&
+            s_engine.game.current_level == NEXUS_V1_FIRST_PLAYABLE_LEVEL &&
+            s_engine.game.dungeon_start.status ==
+                NEXUS_V1_DUNGEON_START_READY &&
+            !s_engine.game.dungeon_start.blocks_runtime) {
+            *out_receipt = s_engine.game.dungeon_start;
+            return 1;
+        }
+        return 0;
+    }
+
+    memset(&dm_source, 0, sizeof(dm_source));
+    if (nexus_v1_named_asset_source_receipt(
+            &s_engine, "DM.BIN", &dm_source) != 0 ||
+        !dm_source.canonical_hash_verified) {
+        return 0;
+    }
+    dm_bin = nexus_v1_read_file(&s_engine, "DM.BIN", &dm_bin_size);
+    if (!dm_bin || dm_bin_size <= 0 ||
+        !asset_memory_matches_md5(dm_bin, (size_t)dm_bin_size,
+                                  dm_source.canonical_md5) ||
+        !nexus_v1_game_parse_retail_start_entry(
+            dm_bin, (size_t)dm_bin_size, NEXUS_V1_FIRST_PLAYABLE_LEVEL,
+            &start)) {
+        free(dm_bin);
+        return 0;
+    }
+    free(dm_bin);
+    if (start.party_dir < 0 || start.party_dir > 3) {
+        out_receipt->status = NEXUS_V1_DUNGEON_START_BLOCKED_DIRECTION;
+        out_receipt->requested_x = start.x;
+        out_receipt->requested_y = start.y;
+        out_receipt->requested_dir = start.party_dir;
+        out_receipt->party_x = start.x;
+        out_receipt->party_y = start.y;
+        out_receipt->party_dir = start.party_dir;
+        return 0;
+    }
+
+    /* Install only the source-owned pose before loading LEV01. The loader
+     * authenticates the DGN and rejects a blocked destination; the resolved
+     * receipt below records the exact cell consumed by runtime. */
+    s_engine.game.party_x = start.x;
+    s_engine.game.party_y = start.y;
+    s_engine.game.party_dir = start.party_dir;
+    s_engine.game.game_started = 1;
+    if (nexus_v1_launcher_load_level(start.level) != 0) {
+        nexus_v1_launcher_clear_failed_level_state(&s_engine);
+        return 0;
+    }
+    resolved = nexus_v1_game_resolve_dungeon_start(
+        &s_engine.current_level, start.level, start.x, start.y,
+        start.party_dir, &receipt);
+    if (!resolved || !nexus_v1_game_apply_dungeon_start(
+            &s_engine.game, &receipt)) {
+        nexus_v1_launcher_clear_failed_level_state(&s_engine);
+        *out_receipt = receipt;
+        return 0;
+    }
+    *out_receipt = receipt;
+    return 1;
 }
 
 Nexus_V1_Engine *nexus_v1_launcher_get_engine(void) {
@@ -5579,7 +5668,10 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
                                                              &assets) ||
         !nexus_v1_launcher_startup_asset_handoff_from_parts(
             state->engine,
-            state->engine ? state->engine->level_loaded : 0,
+            state->engine &&
+                    (state->engine->level_loaded ||
+                     execution->kind ==
+                         NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON),
             assets.title_route_ready,
             &assets,
             NULL,
@@ -5617,6 +5709,38 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
         out_receipt->status_scope = execution->status_scope;
         out_receipt->status = execution->status;
         return 1;
+    }
+
+    if (state->engine && !state->engine->level_loaded) {
+        Nexus_V1_DungeonStartReceipt start_receipt;
+        memset(&start_receipt, 0, sizeof(start_receipt));
+        if (state->engine != nexus_v1_launcher_get_engine() ||
+            !nexus_v1_launcher_start_retail_new_game(&start_receipt)) {
+            out_receipt->route = NEXUS_V1_STARTUP_RUNTIME_HANDOFF_DGN_BLOCKED;
+            out_receipt->dgn_render_blocked = 1;
+            out_receipt->status_scope = "START";
+            out_receipt->status = start_receipt.status ==
+                    NEXUS_V1_DUNGEON_START_BLOCKED_DIRECTION
+                ? "retail-heading-unmapped"
+                : "retail-start-source-or-level-blocked";
+            return 1;
+        }
+        /* The source-owned start is committed once its DGN cell receipt is
+         * ready. If a later viewport/material gate rejects presentation,
+         * retain this validated pose so another handoff can retry. Rebuild
+         * asset ownership from the changed engine state before deciding
+         * whether the caller may enter the dungeon route. */
+        if (!nexus_v1_launcher_startup_assets_from_runtime_state(
+                state, &assets) ||
+            !nexus_v1_launcher_startup_asset_handoff_from_parts(
+                state->engine, state->engine->level_loaded,
+                assets.title_route_ready, &assets, NULL, &asset_handoff)) {
+            out_receipt->route = NEXUS_V1_STARTUP_RUNTIME_HANDOFF_ASSET_BLOCKED;
+            out_receipt->dgn_render_blocked = 1;
+            out_receipt->status_scope = "ASSETS";
+            out_receipt->status = "post-start-asset-receipt-failed";
+            return 1;
+        }
     }
 
     out_receipt->level_loaded = state->engine && state->engine->level_loaded;

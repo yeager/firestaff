@@ -25724,11 +25724,70 @@ static int m11_nexus_refresh_startup_host_caller(
         return 0;
     }
     m11_nexus_apply_startup_host_caller_receipt(state, out_receipt);
+    if (state->nexusEngine && state->nexusEngine->game.game_started &&
+        state->nexusEngine->level_loaded) {
+        state->nexusState.level_loaded = 1;
+        state->nexusState.party_x = state->nexusEngine->game.party_x;
+        state->nexusState.party_y = state->nexusEngine->game.party_y;
+        state->nexusState.party_dir = state->nexusEngine->game.party_dir;
+        state->nexusState.tick_count = state->nexusEngine->game.tick_count;
+    }
     m11_nexus_cache_host_dgn_commands(state,
                                       out_receipt,
                                       dgn_commands,
                                       max_dgn_commands);
     return 1;
+}
+
+static M11_GameInputResult m11_nexus_start_retail_new_game(
+    M11_GameViewState *state)
+{
+    Nexus_V1_DungeonStartReceipt start_receipt;
+    Nexus_V1_StartupDrawCommand startup_commands[80];
+    Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
+    Nexus_V1_StartupHostCallerReceipt host_caller_receipt;
+
+    if (!state || !state->nexusEngine) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (!nexus_v1_launcher_start_retail_new_game(&start_receipt)) {
+        m11_set_status(state, "NEXUS START",
+                       nexus_v1_dungeon_start_status_name(
+                           start_receipt.status));
+        return M11_GAME_INPUT_REDRAW;
+    }
+
+    state->nexusState.level_loaded = state->nexusEngine->level_loaded;
+    state->nexusState.party_x = state->nexusEngine->game.party_x;
+    state->nexusState.party_y = state->nexusEngine->game.party_y;
+    state->nexusState.party_dir = state->nexusEngine->game.party_dir;
+    state->nexusState.tick_count = state->nexusEngine->game.tick_count;
+    state->nexusState.title_active = 0;
+    state->nexusState.retail_title_menu.menu_active = 0;
+    state->nexusState.retail_title_menu.configuration_active = 0;
+    state->nexusState.startup_save_select_active = 0;
+    state->nexusState.champion_select_active = 0;
+
+    /* Let the existing source-gated DGN, viewport, and HUD consumers decide
+     * whether the authenticated level can be presented. If any consumer is
+     * still blocked, restore the observed retail menu while retaining the
+     * committed start receipt so the same action can retry after evidence is
+     * added. */
+    if (!m11_nexus_refresh_startup_host_caller(
+            state, M12_MENU_INPUT_NONE, startup_commands,
+            (int)(sizeof(startup_commands) / sizeof(startup_commands[0])),
+            commands, (int)(sizeof(commands) / sizeof(commands[0])),
+            &host_caller_receipt) ||
+        state->nexusState.startup_dgn_render_blocked ||
+        state->nexusState.startup_dgn_viewport_host_blocks_runtime ||
+        !state->nexusState.startup_dgn_render_ready) {
+        state->nexusState.title_active = 1;
+        state->nexusState.retail_title_menu.menu_active = 1;
+        m11_set_status(state, "NEXUS START",
+                       m11_nexus_startup_render_blocker_message(state));
+        return M11_GAME_INPUT_REDRAW;
+    }
+    return M11_GAME_INPUT_REDRAW;
 }
 
 static int m11_path_has_extension(const char* path, const char* ext) {
@@ -37229,6 +37288,10 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                         menu_result ==
                             NEXUS_V1_RETAIL_TITLE_MENU_RESULT_START_NEW_GAME) {
                         if (menu_result ==
+                            NEXUS_V1_RETAIL_TITLE_MENU_RESULT_START_NEW_GAME) {
+                            return m11_nexus_start_retail_new_game(state);
+                        }
+                        if (menu_result ==
                                 NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SHOW_CONFIGURATION) {
                             const Nexus_TitleScreen *title =
                                 (const Nexus_TitleScreen *)state->nexusTitleScreen;
@@ -38509,6 +38572,14 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
                 nexus_v1_retail_title_menu_select_pointer(
                     &state->nexusState.retail_title_menu, x, y,
                     configuration_renderable);
+            if (state->nexusState.retail_title_menu.selection ==
+                    NEXUS_V1_RETAIL_TITLE_MENU_NEW_GAME &&
+                (menu_result ==
+                     NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED ||
+                 menu_result ==
+                     NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNCHANGED)) {
+                return m11_nexus_start_retail_new_game(state);
+            }
             if (configuration_renderable &&
                 state->nexusState.retail_title_menu.selection ==
                     NEXUS_V1_RETAIL_TITLE_MENU_CONFIGURATION &&

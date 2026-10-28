@@ -83,11 +83,13 @@ warning, game-over, STMP and LOGOBG surfaces, and completed five engine ticks
 without materializing game data.  The CUE binding check also verified the
 original raw BIN bindings for CD tracks 2–9.
 
-This is a media and native-launch result only.  It deliberately does **not**
-promote CDDA playback, the Saturn title/menu handoff, or a playable start:
-the real CDDA consumer and the source-owned LEV01 level/x/y/facing witness
-remain unbound.  `LEV00` remains a title-only asset and the engine therefore
-fails closed before it can invent a start pose.
+This is a media and native-launch result only. It does **not** promote CDDA
+playback or a playable start. Later New Game tracing and static table analysis
+bound the retail LEV01 start level and coordinates `(29,47)`. Paired input and
+fixed-point pose evidence now map the level-1 heading `0x8000` to Firestaff
+North. Full title/menu handoff, gameplay ownership, and the real CDDA consumer
+remain unbound. `LEV00` remains title-only, and runtime start is still
+fail-closed until gameplay ownership is complete.
 
 ## Japanese held-START SMPC witness — 2026-08-27
 
@@ -285,13 +287,53 @@ member was statically disassembled in memory.  The resulting identities are:
 
 `DM.BIN+0x366b8` and `+0x36990` contain the generic `LEV%02d.DGN`
 format; the nearby `+0x36744`/`+0x36788` strings identify debug level
-selection/loading, and `+0x36a18` names `SLEV%02d.BIN`.  There is no literal
-`LEV01` reference apart from unrelated `SNDLEV01` text, and no static table or
-call chain proves a new-game event, a `LEV01` consumer, or an `(x, y, facing)`
-tuple.  This is negative semantic evidence, not a reason to substitute a
-walkable cell or another inferred pose.  The native resolver therefore remains
-capture-gated until an authenticated execution trace or save-consumer record
-binds all four values.
+selection/loading, and `+0x36a18` names `SLEV%02d.BIN`. There is no literal
+`LEV01` reference apart from unrelated `SNDLEV01` text. A later focused
+disassembly identified the separate 16-entry per-level start table at
+`DM.BIN+0x39550` (runtime `0x06049550`); the generic format strings alone do
+not establish its meaning or player ownership.
+
+A read-only Ghidra 12.2 follow-up on the same `DM.BIN` hash confirmed the load
+base at `0x06010000` and mapped `FUN_06017e6e` to a generic level-resource
+loader referenced by the `LEV%02d.DGN` format string. It is called from
+`FUN_06020fee`, whose caller is `FUN_060110ac`. `FUN_06020fee` passes
+coordinate-like structure fields to an indirect initializer. This narrows the
+generic loader path. A later New Game trace and table consumer establish that
+a per-level record is copied into this loader structure; the angle field still
+needs a Firestaff direction mapping before runtime admission.
+
+A paired 1,800-frame Ymir `--debug` trace then compared the accepted New Game
+input with a no-input control while tracing `[0x06064000,0x06065000)`. Both
+receipts are complete with zero dropped rows. Only the accepted run records
+`FUN_0602022c` writing words `1`, `0x8000`, `29`, and `47` into
+`0x06064544..0x0606454b`; `FUN_06020fee` later reads the coordinate words at
+`+4` and `+6`. Follow-up Ghidra analysis identified the retail table source:
+the 16-entry table at `DM.BIN+0x39550` is read by `FUN_06011984`, called from
+`FUN_0601128e`, and copied into the same loader structure. Its level-1 entry
+is `00 01 00 01 1d 2f 80 00`: level 1, enabled flag 1, coordinates `(29,47)`,
+and angle word `0x8000`. Enabled entries use `0x0000`, `0x4000`, `0x8000`, or
+`0xc000`, consistent with quarter-turns in a 16-bit angle field. The accepted
+New Game trace reaches the same structure through `FUN_0602022c`. The
+`(29,47)` cell is passable in the hash-verified retail LEV01 DGN, so this is a
+source-owned level-1 loader coordinate, not a guessed walkable cell.
+`FUN_0601f584` stores the angle in the live pose object. A paired Up/control
+capture reads its 16.16 position fields: `(29,47)` maps exactly to
+`(0x0024e000, 0x003b6000)`, and Up changes Y to `0x003b5c00` while angle
+`0x8000` remains unchanged. Thus this level-1 start faces Firestaff North,
+where Up movement decreases DGN Y. One-frame left/right inputs change the
+angle by `+100`/`-100`, consistent with this orientation. This proves the
+level-1 direction mapping only; other table headings and the complete gameplay
+ownership path remain unverified. The native start path now authenticates
+`DM.BIN`, parses that level-1 entry, loads canonical `LEV01.DGN`, validates the
+start cell, and emits a dungeon-start receipt before continuing the runtime
+handoff. Viewport, material, and HUD routes still have separate evidence gates,
+so this is not yet a playable-start result. TRV2 compiled the `firestaff`
+target, and the authentic-data `nexus_v1_launch_smoke_probe` passed 22/22,
+including the new launcher start receipt. The interactive M11 path has not yet
+been captured in Ymir. The loader tuple itself remains unchanged by paired Up
+input. Exact trace and Ghidra export hashes are in the external
+`nexus_new_game_capture_20261028/config-struct-sh2-trace-1800/` evidence
+directory.
 
 ## LEV01 door and entrance-source boundaries — 2026-08-27
 
