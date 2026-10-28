@@ -16,6 +16,15 @@ source-bound payload schema and retail save-selection/load consumer. Do not
 promote the parser's opaque payload bytes into runtime state without joining
 those bytes to the authentic Saturn save/load implementation.
 
+2026-10-28 retail New Game loader route: the M11 retail menu now sends
+keyboard/controller Accept and the retail mouse row to the same source-gated
+New Game path. Against authentic Japanese retail media, the regression
+authenticates `DM.BIN`, parses the level-1 start record, loads hash-verified
+`LEV01.DGN`, validates `(29,47,North)`, and records the engine pose for both
+input routes. The viewport/HUD receipts still block the runtime handoff and
+restore the title; there is no paired Ymir capture of the Firestaff handoff.
+This closes the retail start-record/loader route, not the playable-start gap.
+
 An authentic Japanese Configuration-page capture now yields a Ymir VDP1 trace
 prefix with all 121 informative draws joined to canonical DGN material bytes,
 including indexed CLUTs and direct-colour surfaces. The other 11 draws are
@@ -222,8 +231,11 @@ not a fix and has not passed this real-media test.
   foreground sprites and Japanese New Game, Continue, and Configuration
   sprites from authentic regional `TITLE.BIN` data and source-bound palettes.
   The shared background and full Configuration page remain unrendered. New
-  Game, Continue, and Configuration destinations remain unimplemented;
-  Continue execution does not yet read Saturn BKR data. The Japanese New Game
+  Game now reaches the authenticated `DM.BIN`/`LEV01.DGN` loader and emits the
+  retail level-1 start receipt, but the downstream viewport/HUD gate still
+  blocks a playable handoff. Continue execution does not yet read Saturn BKR
+  save data, and Configuration destination behavior remains unimplemented.
+  The Japanese New Game
   and Continue captures each verify five `TITLE.BIN` sprites and 1,441
   screenshot texels; the English states each verify 1,451. The Japanese
   Configuration-selected capture verifies five sprites and 1,453 texels. The
@@ -443,8 +455,9 @@ rendering, keyboard/mouse navigation, and Exit/B return behavior. Ymir
 `--debug` captures and the production-renderer verifier establish the foreground
 and four initial values. Continue with the real 3D/DGN background source and
 composition, then trace setting persistence and prove the audio, difficulty,
-and HUD effects in retail gameplay. Japanese Configuration-page parity and
-New Game/Continue destination execution remain open. See
+and HUD effects in retail gameplay. Japanese Configuration-page parity
+remains open. The New Game loader receipt is now verified, but its viewport/HUD
+handoff remains blocked; Continue/save execution is still open. See
 `docs/nexus/nexus_startup.md` and `docs/nexus/nexus_title.md`.
 
 The authentic English Ymir Configuration-page frame 119 source scan examined

@@ -18,10 +18,13 @@ generic save/champion menu. Up/Down and W/S update the internal selection;
 English retail Ymir evidence confirms Down to Continue and Up back to New Game.
 Firestaff draws only the capture-verified foreground sprites for English New
 Game/Continue and Japanese New Game/Continue/Configuration selections. The
-shared background and full-screen composition remain unbound. Accepting New
-Game, Continue, or Configuration has no production destination route. Continue
-availability deliberately does not use Firestaff save files; the Saturn BKR
-intake and payload-to-engine route are not integrated here.
+shared background and full-screen composition remain unbound. New Game Accept
+now reaches the authenticated `DM.BIN`/`LEV01.DGN` loader and records the
+retail level-1 start pose for keyboard/controller and mouse input, but the
+viewport/HUD handoff still restores the title. Continue/save loading and
+Configuration destination behavior are not integrated. Continue availability
+deliberately does not use Firestaff save files; the Saturn BKR intake and
+payload-to-engine route are not integrated here.
 The `verify_nexus_title_sprite_screenshot.py` verifier checks the Japanese and
 English New Game/Continue layouts, including retail `TITLE.BIN` offsets, VDP1
 placement, CRAM color, priority, English 16-color palettes against exact
@@ -38,11 +41,11 @@ The paired New Game/Continue captures share byte-identical VDP2 VRAM, CRAM,
 and registers; only VDP1 memory/framebuffer/command bytes differ. This confirms
 the selection change is confined to the observed sprite hardware state while
 leaving the shared NBG0 source unbound.
-The retail Continue route also reached a
-loaded dungeon with a BKR image whose hash matches the retained four-champion
-image in `.firestaff/data/nexus`; its transfer chain was not retained.
-Full-frame Firestaff rendering, option behavior, and mouse targeting remain
-unverified.
+The Ymir retail Continue route also reached a loaded dungeon with a BKR image
+whose hash matches the retained four-champion image in `.firestaff/data/nexus`;
+its transfer chain was not retained. This is reference-emulator evidence, not
+Firestaff Continue support. Full-frame Firestaff menu composition, setting
+behavior, and mouse targeting outside the verified row remain unverified.
 
 ## DM1 Menu System Reference
 
@@ -71,8 +74,11 @@ A Nexus menu system needs states for:
   retail transitions are recorded. M11 wires keyboard Action and vertical
   selection into an internal reducer, with source-bound foreground rendering
   for English New Game/Continue and Japanese New Game/Continue/Configuration.
-  The shared background, full composition, and production destinations remain
-  unbound. Options behavior and mouse targeting also remain unverified.
+  The shared background and full composition remain unbound. New Game reaches
+  the authenticated level-start loader but remains blocked by viewport/HUD
+  receipts; Continue/save and Configuration destinations remain unimplemented.
+  Options behavior and mouse targeting outside the verified rows also remain
+  unverified.
 - Champion Select: source-owned champion records (20 live PLRD/TABL records)
 - Options: Display mode (fullscreen/windowed), audio levels
 - In-Game Menu: ESC pause with stats, inventory, spells, save
@@ -117,7 +123,7 @@ Still blocked or incomplete:
 | Feature | DM1 | Nexus V1 |
 |---------|-----|----------|
 | Title screen | 2D bitmap logo | Real source decode; Saturn placement blocked |
-| Start menu options | New Game / Continue | M11 selection state and foreground sprites; destination routes blocked |
+| Start menu options | New Game / Continue | M11 selection and foreground sprites; New Game loader receipt verified, but viewport/HUD handoff blocked; Continue/save route absent |
 | Champion roster | Western names (24) | 20 PLRD records |
 | Champion select UI | Sprite-based | State/input route; Saturn presentation blocked |
 | In-game menu | ESC key, 2D panel | No source-bound Nexus route |
@@ -126,10 +132,13 @@ Still blocked or incomplete:
 | Menu rendering | SDL blit | VDP1/VDP2 consumer unbound |
 
 ## Next Steps
-1. Authenticate Saturn menu command/palette/placement capture
-2. Bind the existing startup state/input route to that capture and render the
-   selection from the source-owned menu material
+1. Bind the shared Saturn background and full-screen composition to a complete
+   source-owned display capture
+2. Admit the New Game route past independent viewport/HUD gates and capture the
+   resulting Firestaff presentation against the same retail state
 3. Authenticate champion portrait and HUD VDP1 ownership
-4. Bridge only source-proven menu transitions into the engine game loop
-5. Implement save/load using an authenticated Saturn SRAM format
+4. Integrate Continue with the authenticated Saturn BKR payload and save
+   selection, and implement Configuration destination behavior from source
+   captures
+5. Verify title-to-level input timing and pose against matching retail captures
 6. Add FMV playback only after authentic DMV0-2.AVI ownership is proven

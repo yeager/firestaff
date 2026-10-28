@@ -1567,9 +1567,11 @@ rendering are now enabled. The complete screenshot, dumps, log, reproduction
 command and hashes are retained under
 `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_english_config_menu_20261028/`.
 
-This does not establish the NBG0 title background, full-screen composition,
-Configuration page controls, New Game destination execution, Continue/save
-loading, or gameplay viewport/HUD parity.
+These capture-backed renderer checks do not establish the NBG0 title
+background, full-screen composition, or gameplay viewport/HUD parity. The
+following section records the later M11 New Game loader receipt; reaching that
+receipt still does not pass the presentation gate. Continue/save loading also
+remains open.
 
 ## Retail New Game input reaches the authenticated level loader (2026-10-28)
 
