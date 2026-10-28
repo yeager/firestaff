@@ -293,6 +293,15 @@ walkable cell or another inferred pose.  The native resolver therefore remains
 capture-gated until an authenticated execution trace or save-consumer record
 binds all four values.
 
+A read-only Ghidra 12.2 follow-up on the same `DM.BIN` hash confirmed the load
+base at `0x06010000` and mapped `FUN_06017e6e` to a generic level-resource
+loader referenced by the `LEV%02d.DGN` format string. It is called from
+`FUN_06020fee`, whose caller is `FUN_060110ac`. `FUN_06020fee` passes
+coordinate-like structure fields to an indirect initializer, but the call
+chain is not tied to New Game, the controlled player, or a facing value. This
+narrows the generic loader path without changing the pose gate: there is still
+no source-owned `LEV01` New Game handoff or player start tuple.
+
 ## LEV01 door and entrance-source boundaries — 2026-08-27
 
 DMWeb's Nexus DGN specification, checked against the hash-verified JP
