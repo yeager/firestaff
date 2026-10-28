@@ -1581,3 +1581,31 @@ and dropped 860,856 unrelated master rows; the NBG0 storage join remains
   selection, Configuration page controls, save loading, and playable-level/HUD
   parity remain open. New Game, Continue, and Configuration foregrounds and
   mouse rows are source-bound for both authenticated regions as described above.
+
+## English Configuration page foreground (2026-10-28)
+
+An isolated Ymir 0.4.2-dev `--debug` run used the authenticated English retail
+disc and USA 1.01a IPL. A copied diagnostic profile entered the native
+Configuration page, saved deterministic state slots, and replayed each input
+from the same menu state. The retail `TITLE.BIN` SHA-256 is
+`a634e8daf2a581df154b454919ee2ed44e937371668219d7cdf6d0983a613e44`.
+The reproduction captures and raw data are retained in
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-english-configuration-page-evidence-20261028/`.
+
+The page defaults are Music ON, Sound STEREO, Game Level NORMAL, and Monster
+Gauge ON, with Music focused. Up/down changes the focused row; A/Right changes
+the selected value; A on Exit and B return to the title menu. The captured
+Ymir foreground has 189 VDP1 commands and zero dropped rows. Its text, values,
+and animated focus markers join to authentic `TITLE.BIN`; the production C
+renderer probe reproduces the complete 320x224 indexed foreground and all 256
+palette entries for seven captured states. Run
+`python3 scripts/verify_nexus_english_configuration_page.py <evidence-dir> <TITLE.BIN>`
+to repeat the byte-level checks.
+
+Firestaff's English-region reducer and renderer draw that authentic page
+foreground, animate its source-bound focus marker, route keyboard and mouse
+selection, and return to the title menu on Exit/B. This does not establish the
+3D/DGN page background, setting persistence across cold boot, audio switching,
+difficulty effects, HUD effects, or full startup composition. The Japanese
+Configuration page and New Game/Continue destination execution also remain
+open. Evidence uses authentic retail data; no synthetic game assets are used.

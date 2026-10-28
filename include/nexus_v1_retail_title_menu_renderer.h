@@ -15,7 +15,8 @@ extern "C" {
  * only when a retained layout was consumed. */
 int nexus_v1_retail_title_menu_render(const Nexus_TitleScreen *title,
                                      const Nexus_V1_RetailTitleMenuState *state,
-                                     Nexus_Framebuffer *framebuffer);
+                                     Nexus_Framebuffer *framebuffer,
+                                     int animation_frame);
 
 #ifdef __cplusplus
 }

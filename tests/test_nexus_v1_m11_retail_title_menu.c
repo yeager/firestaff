@@ -171,6 +171,55 @@ int main(void)
                         "FAIL: clicking selected Configuration does not redraw\n");
                 ++failures;
             }
+            if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_ACCEPT) !=
+                    M11_GAME_INPUT_REDRAW ||
+                !state.nexusState.retail_title_menu.configuration_active ||
+                state.nexusState.retail_title_menu.music_enabled != 1) {
+                fprintf(stderr,
+                        "FAIL: English Configuration enters its retail page with Music ON\n");
+                ++failures;
+            }
+            if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_DOWN) !=
+                    M11_GAME_INPUT_REDRAW ||
+                state.nexusState.retail_title_menu.configuration_row !=
+                    NEXUS_V1_RETAIL_CONFIGURATION_SOUND ||
+                M11_GameView_HandleInput(&state, M12_MENU_INPUT_ACCEPT) !=
+                    M11_GAME_INPUT_REDRAW ||
+                state.nexusState.retail_title_menu.stereo_enabled) {
+                fprintf(stderr,
+                        "FAIL: Configuration keyboard navigation changes Stereo to Mono\n");
+                ++failures;
+            }
+            if (M11_GameView_HandlePointerButton(
+                    &state, 250, 115, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+                    M11_GAME_INPUT_REDRAW ||
+                state.nexusState.retail_title_menu.configuration_row !=
+                    NEXUS_V1_RETAIL_CONFIGURATION_LEVEL ||
+                !state.nexusState.retail_title_menu.easy_level_enabled) {
+                fprintf(stderr,
+                        "FAIL: Configuration mouse selects the authentic Easy option\n");
+                ++failures;
+            }
+            if (M11_GameView_HandlePointerButton(
+                    &state, 40, 185, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+                    M11_GAME_INPUT_REDRAW ||
+                state.nexusState.retail_title_menu.configuration_active) {
+                fprintf(stderr,
+                        "FAIL: Configuration mouse activates the Exit row\n");
+                ++failures;
+            }
+            if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_ACCEPT) !=
+                    M11_GAME_INPUT_REDRAW ||
+                !state.nexusState.retail_title_menu.configuration_active ||
+                M11_GameView_HandleInput(&state, M12_MENU_INPUT_BACK) !=
+                    M11_GAME_INPUT_REDRAW ||
+                state.nexusState.retail_title_menu.configuration_active ||
+                state.nexusState.retail_title_menu.selection !=
+                    NEXUS_V1_RETAIL_TITLE_MENU_CONFIGURATION) {
+                fprintf(stderr,
+                        "FAIL: B returns Configuration to the retail title menu\n");
+                ++failures;
+            }
         }
     }
     if (M11_GameView_HandlePointerButton(

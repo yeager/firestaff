@@ -569,3 +569,18 @@ the title is a 3D animation or that a particular DMV file precedes it.
 | Animation | None (static) | Not proven; executable/capture route remains gated |
 | Language | English | Per-revision text status; no global language claim |
 | Impl status | Complete (ReDMCSB) | Source decode exists; Saturn presentation remains gated |
+
+### English retail Configuration page
+
+The English retail Configuration page foreground is now rendered from
+hash-verified `TITLE.BIN` bytes. Its measured defaults are Music ON, Sound
+STEREO, Game Level NORMAL and Monster Gauge ON. Keyboard Up/Down navigates the
+five rows, A/Right changes values, and A on Exit or B returns to the title
+menu. Mouse selection maps to the captured row and value rectangles. The
+source-bound focus marker animates from the retail sprite frames. Production
+renderer output is checked against authentic Ymir `--debug` captures by
+`scripts/verify_nexus_english_configuration_page.py`.
+
+Only the foreground and menu input behavior are established. The page's 3D/DGN
+background, settings persistence and actual audio/difficulty/HUD effects are
+not yet bound; Japanese page parity and full startup composition remain open.

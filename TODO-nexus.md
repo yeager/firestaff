@@ -416,3 +416,14 @@ not a fix and has not passed this real-media test.
   until the opaque item data, champion context mapping and runtime click effects
   are established. See `docs/nexus/nexus_input.md` and
   `parity-evidence/verification/nexus-leader-cycle-debug-20261025/README.md`.
+
+## English Configuration page remaining parity
+
+The authentic English retail Configuration page now has source-bound foreground
+rendering, keyboard/mouse navigation, and Exit/B return behavior. Ymir
+`--debug` captures and the production-renderer verifier establish the foreground
+and four initial values. Continue with the real 3D/DGN background source and
+composition, then trace setting persistence and prove the audio, difficulty,
+and HUD effects in retail gameplay. Japanese Configuration-page parity and
+New Game/Continue destination execution remain open. See
+`docs/nexus/nexus_startup.md` and `docs/nexus/nexus_title.md`.
