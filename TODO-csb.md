@@ -7,6 +7,21 @@ Amiga AU2 entry path and capture its original screen before claiming Amiga
 Hint Oracle parity. Current unit and original-media checks establish page
 decoding and surface composition only.
 
+2026-10-28 AU2 save-format source audit: ReDMCSB `HINTLOAD.C` compiles the
+same save-header and word-deobfuscation routines for Atari and Amiga Hint
+Oracle builds. The Amiga AU2 utility reads `1CSBGAME.DAT`; its utility-only
+header starts with `0xDEAD`, which Firestaff's existing CSB save decoder
+already recognizes and routes to the 1408-byte compact champion section. The
+installed authentic AU2 utility contains `HCSB.HTC` MD5
+`c06862298f193b1fe479eaeff6acd57e` and `HCSB.DAT` MD5
+`7496b3b8b9ff6e2368eac9a16be8230b`, both known R3/R2-R3 assets. No Amiga
+`1CSBGAME.DAT` or `MINI.DAT` save is installed under `.firestaff/data/csb`,
+so end-to-end Amiga save selection is not currently verifiable from this
+machine. Remaining runtime work is to admit the authenticated AU2 pair and
+implement its HCSB.DAT-backed labels and Amiga control rectangles; do not
+duplicate or rewrite the already shared save decoder without contrary real
+save evidence.
+
 2026-10-27 Atari Hint Oracle real-media test archive binding: the native CLI
 test's campaign archive variable pointed to `chaos_strikes_back_ftl.zip`, an
 Amiga ADF package with no Atari STX member. The original Atari v2.1 campaign
