@@ -33,6 +33,8 @@ log="$scratch/firestaff.log"
 
 # Start with no CLI game/menu selection and only CSB in the documented user
 # data tree. Moving down once must reach CSB even while DM1 is unavailable.
+# Full Towns ZIP scanning plus the native CSB startup takes longer on a
+# software-rendered host than the title input sequence alone.
 (
     unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
     FIRESTAFF_CONFIG_PATH="$home/config.toml" \
@@ -42,7 +44,7 @@ log="$scratch/firestaff.log"
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
         "$app" --debug --width 320 --height 200 \
         --script 'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait700,click:52:110,wait10,click:250:50,wait240' \
-        --duration 30000
+        --duration 60000
 ) >"$log" 2>&1 || {
     cat "$log" >&2
     exit 1
@@ -104,7 +106,7 @@ back_log="$scratch/back-firestaff.log"
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
         "$app" --debug --width 320 --height 200 \
         --script 'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:escape,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait700,click:52:110,wait10,click:250:50,wait240' \
-        --duration 30000
+        --duration 60000
 ) >"$back_log" 2>&1 || {
     cat "$back_log" >&2
     exit 1
