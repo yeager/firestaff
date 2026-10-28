@@ -1,5 +1,21 @@
 # Firestaff DONE — Nexus
 
+## 2026-10-28 — Source-bind Japanese Configuration foreground and mouse route
+
+- Enabled the Configuration foreground for the hash-verified Japanese retail
+  `TITLE.BIN`. The 14 UI text sprites and active/inactive palettes are read from
+  real retail offsets, whose 71 text, palette and marker spans match the
+  English retail source byte-for-byte.
+- Opened Configuration with Accept and routed pointer row/value/Exit input for
+  both admitted retail regions. The M11 integration test covers Japanese
+  Configuration mouse selection and exit.
+- Added `scripts/verify_nexus_japanese_configuration_page.py`. It compiles the
+  production renderer, checks seven menu states against decoded Japanese retail
+  bytes, and matches all 12,518 visible text pixels against an authentic Ymir
+  screenshot. Scene background, Japanese interaction-state captures, and exact
+  marker-animation pixels remain unverified. No synthetic game assets were
+  added.
+
 ## 2026-10-28 — Correct English Configuration scene match accounting
 
 - Re-ran both source joiners against the authentic English Ymir frame-119

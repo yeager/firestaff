@@ -35,9 +35,10 @@ int main(int argc, char **argv)
     int easy;
     int gauge;
     int animation_frame;
+    int source_region = NEXUS_V1_TITLE_MENU_SOURCE_ENGLISH;
     int result = 1;
 
-    if (argc != 9 ||
+    if ((argc != 9 && argc != 10) ||
         !parse_int(argv[3], &row) ||
         !parse_int(argv[4], &music) ||
         !parse_int(argv[5], &stereo) ||
@@ -45,11 +46,16 @@ int main(int argc, char **argv)
         !parse_int(argv[7], &gauge) ||
         !parse_int(argv[8], &animation_frame) ||
         row > NEXUS_V1_RETAIL_CONFIGURATION_EXIT || music > 1 ||
-        stereo > 1 || easy > 1 || gauge > 1) {
+        stereo > 1 || easy > 1 || gauge > 1 ||
+        (argc == 10 && strcmp(argv[9], "japanese") != 0 &&
+         strcmp(argv[9], "english") != 0)) {
         fprintf(stderr,
-                "usage: %s TITLE.BIN OUTPUT ROW MUSIC STEREO EASY GAUGE FRAME\n",
-                argc > 0 ? argv[0] : "probe_nexus_english_configuration_renderer");
+                "usage: %s TITLE.BIN OUTPUT ROW MUSIC STEREO EASY GAUGE FRAME [english|japanese]\n",
+                argc > 0 ? argv[0] : "probe_nexus_retail_configuration_renderer");
         return 2;
+    }
+    if (argc == 10 && strcmp(argv[9], "japanese") == 0) {
+        source_region = NEXUS_V1_TITLE_MENU_SOURCE_JAPANESE;
     }
 
     memset(&title, 0, sizeof(title));
@@ -69,7 +75,7 @@ int main(int argc, char **argv)
     fclose(input);
     input = NULL;
     title.retail_menu_source_size = TITLE_BIN_BYTES;
-    title.retail_menu_source_region = NEXUS_V1_TITLE_MENU_SOURCE_ENGLISH;
+    title.retail_menu_source_region = source_region;
 
     nexus_v1_retail_title_menu_init(&state);
     state.menu_active = 1;

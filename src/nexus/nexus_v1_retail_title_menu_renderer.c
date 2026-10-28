@@ -76,7 +76,7 @@ static const Nexus_V1_RetailTitleMenuSprite k_english_configuration_sprites[] = 
     {0x09a6,104,  8, 109, 177, NEXUS_TITLE_MENU_TEXT_PALETTE, NEXUS_TITLE_MENU_TEXT_COLOR_BASE, 0}
 };
 
-static int render_english_configuration_page(
+static int render_retail_configuration_page(
     const uint8_t *source,
     size_t source_size,
     const Nexus_V1_RetailTitleMenuState *state,
@@ -338,13 +338,19 @@ int nexus_v1_retail_title_menu_render(const Nexus_TitleScreen *title,
     source_size = title->retail_menu_source_size;
     source_hash = fnv1a64(source, source_size);
     if (state->configuration_active) {
-        if (title->retail_menu_source_region !=
-                NEXUS_V1_TITLE_MENU_SOURCE_ENGLISH ||
-            source_hash != NEXUS_TITLE_BIN_ENGLISH_FNV1A64) {
+        const int english_source =
+            title->retail_menu_source_region ==
+                NEXUS_V1_TITLE_MENU_SOURCE_ENGLISH &&
+            source_hash == NEXUS_TITLE_BIN_ENGLISH_FNV1A64;
+        const int japanese_source =
+            title->retail_menu_source_region ==
+                NEXUS_V1_TITLE_MENU_SOURCE_JAPANESE &&
+            source_hash == NEXUS_TITLE_BIN_JAPANESE_FNV1A64;
+        if (!english_source && !japanese_source) {
             return 0;
         }
-        return render_english_configuration_page(source, source_size, state,
-                                                  framebuffer, animation_frame);
+        return render_retail_configuration_page(source, source_size, state,
+                                                 framebuffer, animation_frame);
     }
     if (title->retail_menu_source_region == NEXUS_V1_TITLE_MENU_SOURCE_JAPANESE) {
         if (source_hash != NEXUS_TITLE_BIN_JAPANESE_FNV1A64) {

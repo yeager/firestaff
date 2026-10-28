@@ -1608,13 +1608,22 @@ reusing the five-plane title image. The authentic capture shows a different
 scene behind this page, and its DGN/VDP2 background composition is still
 unbound.
 
-Firestaff's English-region reducer and renderer draw that authentic page
-foreground, animate its source-bound focus marker, route keyboard and mouse
-selection, and return to the title menu on Exit/B. This does not establish the
-3D/DGN page background, setting persistence across cold boot, audio switching,
-difficulty effects, HUD effects, or full startup composition. The Japanese
-Configuration page and New Game/Continue destination execution also remain
-open. Evidence uses authentic retail data; no synthetic game assets are used.
+Firestaff's English- and Japanese-region reducer and renderer draw that
+authentic page foreground, animate its source-bound focus marker, route
+keyboard and mouse selection, and return to the title menu on Exit/B. The
+Japanese configuration foreground uses the hash-verified Japanese retail
+`TITLE.BIN`; all 71 retained text, palette, and marker spans used by the page
+are byte-identical to their English-file counterparts. Its 14 visible text
+sprites match all 12,518 pixels in the authentic Japanese Ymir screenshot. Run
+`python3 scripts/verify_nexus_japanese_configuration_page.py <japanese-TITLE.BIN>
+<configuration.png> --english-title <english-TITLE.BIN>` to repeat the
+production-renderer, screenshot, and 71-span comparison checks.
+The captured Japanese page is only the initial state; it does not establish
+Japanese input interaction captures, marker-animation pixels, the 3D/DGN page
+background, setting persistence across cold boot, audio switching, difficulty
+effects, HUD effects, or full startup composition. New Game/Continue destination
+execution also remains open. Evidence uses authentic retail data; no synthetic
+game assets are used.
 
 ## English Configuration scene texture-source receipt (2026-10-28)
 

@@ -4,6 +4,12 @@ Reviewed 2026-10-28. The items below track open work and include completed
 diagnostics as context. Verified evidence is also recorded in the Nexus capture
 and reverse-engineering records and in [DONE-nexus.md](DONE-nexus.md).
 
+The Japanese and English retail Configuration foregrounds now render from
+hash-verified `TITLE.BIN` files and share byte-identical UI text/palette spans.
+Japanese-region keyboard/mouse state routing is covered by the M11 runtime
+test. The retained Japanese Ymir screenshot captures only the initial settings
+page; Japanese state changes and marker animation still need authentic captures.
+
 The C Saturn BKR container parser is now verified against all four
 hash-pinned samples reported as retail-written; see DONE-nexus.md. Remaining Continue work is the
 source-bound payload schema and retail save-selection/load consumer. Do not

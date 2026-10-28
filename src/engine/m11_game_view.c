@@ -37232,8 +37232,11 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                 NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SHOW_CONFIGURATION) {
                             const Nexus_TitleScreen *title =
                                 (const Nexus_TitleScreen *)state->nexusTitleScreen;
-                            if (title && title->retail_menu_source_region ==
-                                             NEXUS_V1_TITLE_MENU_SOURCE_ENGLISH) {
+                            if (title &&
+                                (title->retail_menu_source_region ==
+                                     NEXUS_V1_TITLE_MENU_SOURCE_JAPANESE ||
+                                 title->retail_menu_source_region ==
+                                     NEXUS_V1_TITLE_MENU_SOURCE_ENGLISH)) {
                                 (void)nexus_v1_retail_title_menu_enter_configuration(
                                     &state->nexusState.retail_title_menu);
                             }
@@ -38466,8 +38469,11 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
         if (state->nexusState.retail_title_menu.configuration_active) {
             const Nexus_TitleScreen *title =
                 (const Nexus_TitleScreen *)state->nexusTitleScreen;
-            if (!title || title->retail_menu_source_region !=
-                              NEXUS_V1_TITLE_MENU_SOURCE_ENGLISH) {
+            if (!title ||
+                (title->retail_menu_source_region !=
+                     NEXUS_V1_TITLE_MENU_SOURCE_JAPANESE &&
+                 title->retail_menu_source_region !=
+                     NEXUS_V1_TITLE_MENU_SOURCE_ENGLISH)) {
                 return M11_GAME_INPUT_IGNORED;
             }
             Nexus_V1_RetailTitleMenuResult menu_result =
@@ -38503,6 +38509,18 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
                 nexus_v1_retail_title_menu_select_pointer(
                     &state->nexusState.retail_title_menu, x, y,
                     configuration_renderable);
+            if (configuration_renderable &&
+                state->nexusState.retail_title_menu.selection ==
+                    NEXUS_V1_RETAIL_TITLE_MENU_CONFIGURATION &&
+                (menu_result ==
+                     NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED ||
+                 menu_result ==
+                     NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNCHANGED) &&
+                nexus_v1_retail_title_menu_enter_configuration(
+                    &state->nexusState.retail_title_menu) ==
+                    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SHOW_CONFIGURATION) {
+                return M11_GAME_INPUT_REDRAW;
+            }
             return menu_result ==
                     NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED
                 ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;

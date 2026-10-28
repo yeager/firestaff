@@ -244,7 +244,8 @@ def expected_index_map(title: bytes, case: PageCase) -> bytes:
 
 
 def verify_production_renderer(root: Path, title: bytes, title_path: Path,
-                               evidence_root: Path, cc: str) -> None:
+                               evidence_root: Path, cc: str,
+                               source_region: str = "english") -> None:
     with tempfile.TemporaryDirectory(prefix="firestaff-nexus-config-") as tmp:
         binary = Path(tmp) / "probe"
         output = Path(tmp) / "renderer.bin"
@@ -262,6 +263,7 @@ def verify_production_renderer(root: Path, title: bytes, title_path: Path,
                 str(binary), str(title_path), str(output),
                 str(case.row), str(case.music), str(case.stereo),
                 str(case.easy), str(case.gauge), str(case.animation_frame),
+                source_region,
             ], check=True, cwd=root)
             rendered = output.read_bytes()
             expected = expected_index_map(title, case)

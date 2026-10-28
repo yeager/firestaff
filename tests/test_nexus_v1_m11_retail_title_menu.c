@@ -144,9 +144,24 @@ int main(void)
                     &state, 150, 181, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
                     M11_GAME_INPUT_REDRAW ||
                 state.nexusState.retail_title_menu.selection !=
-                    NEXUS_V1_RETAIL_TITLE_MENU_CONFIGURATION) {
+                    NEXUS_V1_RETAIL_TITLE_MENU_CONFIGURATION ||
+                !state.nexusState.retail_title_menu.configuration_active) {
                 fprintf(stderr,
-                        "FAIL: source-bound Japanese Configuration row responds to mouse\n");
+                        "FAIL: Japanese Configuration row opens from a mouse click\n");
+                ++failures;
+            }
+            if (M11_GameView_HandlePointerButton(
+                    &state, 250, 115, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+                    M11_GAME_INPUT_REDRAW ||
+                state.nexusState.retail_title_menu.configuration_row !=
+                    NEXUS_V1_RETAIL_CONFIGURATION_LEVEL ||
+                !state.nexusState.retail_title_menu.easy_level_enabled ||
+                M11_GameView_HandlePointerButton(
+                    &state, 40, 185, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+                    M11_GAME_INPUT_REDRAW ||
+                state.nexusState.retail_title_menu.configuration_active) {
+                fprintf(stderr,
+                        "FAIL: Japanese retail Configuration responds to mouse and Exit\n");
                 ++failures;
             }
             state.nexusState.retail_title_menu.selection =
@@ -157,26 +172,14 @@ int main(void)
                     &state, 150, 181, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
                     M11_GAME_INPUT_REDRAW ||
                 state.nexusState.retail_title_menu.selection !=
-                    NEXUS_V1_RETAIL_TITLE_MENU_CONFIGURATION) {
+                    NEXUS_V1_RETAIL_TITLE_MENU_CONFIGURATION ||
+                !state.nexusState.retail_title_menu.configuration_active) {
                 fprintf(stderr,
-                        "FAIL: source-bound English Configuration row responds to mouse\n");
+                        "FAIL: English Configuration row opens from a mouse click\n");
                 ++failures;
             }
-            if (M11_GameView_HandlePointerButton(
-                    &state, 150, 181, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
-                    M11_GAME_INPUT_IGNORED ||
-                state.nexusState.retail_title_menu.selection !=
-                    NEXUS_V1_RETAIL_TITLE_MENU_CONFIGURATION) {
-                fprintf(stderr,
-                        "FAIL: clicking selected Configuration does not redraw\n");
-                ++failures;
-            }
-            if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_ACCEPT) !=
-                    M11_GAME_INPUT_REDRAW ||
-                !state.nexusState.retail_title_menu.configuration_active ||
-                state.nexusState.retail_title_menu.music_enabled != 1) {
-                fprintf(stderr,
-                        "FAIL: English Configuration enters its retail page with Music ON\n");
+            if (state.nexusState.retail_title_menu.music_enabled != 1) {
+                fprintf(stderr, "FAIL: English Configuration opens with Music ON\n");
                 ++failures;
             }
             if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_DOWN) !=
