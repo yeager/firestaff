@@ -1,11 +1,16 @@
 # Five-game startup support gap analysis
 
-Release metadata checked against GitHub `main` at `6bd8bdda` on 2026-10-28.
+Release metadata checked against GitHub `main` at `1e9ca4ec` on 2026-10-29.
 The latest published release is v3.0.419 (published on 2026-10-28 from
 `71bf83b2`). Its GitHub Actions run completed all nine jobs successfully.
-The current `main` revision `6bd8bdda` is later than that tag and has successful
-verification and Pages Actions runs; its source is not included in those
-packages. The release workflow verifies packaging, not gameplay startup.
+The current `main` revision `1e9ca4ec` is later than that tag. Its verification
+Actions run `40784119711` completed successfully across Linux, Windows, and
+macOS; its source is not included in the published packages. The release
+workflow verifies packaging, not gameplay startup. The latest update also
+extends real-media Swedish startup-debug localization checks to DM1 PC34, CSB
+FM Towns, and DM2 FM Towns. Those focused tests check explicit and saved
+Swedish preferences, localized scan labels, authentic edition selection, and
+the boot-probe boundary; they do not establish full startup or gameplay parity.
 Current authentic-media CLI routes
 include DM1 PC34, DOS, Atari ST, Amiga and FM Towns; CSB Atari, Amiga and FM
 Towns; DM2 DOS English/French, Macintosh English/French, FM Towns Japanese
