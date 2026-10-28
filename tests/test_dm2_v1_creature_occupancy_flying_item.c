@@ -563,6 +563,36 @@ static void test_live_missile_draw_order_and_creature_replay(void)
           dm2_v1_viewport_build_indoor_live_missile_draw_plan(
               &missiles, creature_draw_success, &draws) == 0 &&
           draws.valid == 0 && draws.event_count == 0);
+
+    memset(&missiles, 0, sizeof(missiles));
+    memset(creature_draw_success, 0, sizeof(creature_draw_success));
+    missiles.valid = 1;
+    missiles.event_count = 1;
+    /* The player-tile DM2_DRAW_STATIC_OBJECT pass stops after source order
+     * slot 14, even though the center order table has 25 entries. Positions
+     * 6 resolves to slot 7; position 16 is outside the source iteration. */
+    missiles.events[0].source_pass = 20;
+    missiles.events[0].source_cell = 0;
+    missiles.events[0].display_index =
+        dm2_v1_viewport_static_object_display_index(0, 6);
+    missiles.events[0].live.source.view_position_5x5 = 6;
+    missiles.events[0].live.source.chain_ordinal = 1;
+    creature_draw_success[20][14] = 1;
+    CHECK("player-tile pass follows its 15 source iterations and replay window",
+          missiles.events[0].display_index == 7 &&
+          dm2_v1_viewport_static_object_display_index(0, 16) == -1 &&
+          dm2_v1_viewport_build_indoor_live_missile_draw_plan(
+              &missiles, creature_draw_success, &draws) == 1 &&
+          draws.valid == 1 && draws.event_count == 2 &&
+          draws.events[0].missile_event_index == 0 &&
+          draws.events[0].draw_kind ==
+              DM2_V1_INDOOR_LIVE_MISSILE_DRAW_CURRENT &&
+          draws.events[0].display_index == 7 &&
+          draws.events[1].missile_event_index == 0 &&
+          draws.events[1].draw_kind ==
+              DM2_V1_INDOOR_LIVE_MISSILE_DRAW_CREATURE_REPLAY &&
+          draws.events[1].display_index == 14 &&
+          draws.events[1].replay_slot_index == 7);
 }
 
 int main(void)
