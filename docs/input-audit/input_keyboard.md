@@ -115,7 +115,8 @@ Firestaff-only shortcuts remain deliberately separate from the source table:
 - `F6` through `F8`, `F10` through `F12`, `L`, `R`, `X`, `G`, `P`, `C`,
   `V`, `U`, `M`, `I`, `Tab`, `WASD`, `Q/E`, and `Home/End`: accessibility,
   presentation, or quality-of-life controls. `F10` remains the live graphics
-  scale control.
+  scale control; `Control+H` opens the same graphics-scale popup as an
+  alternative to the MacBook function-key mapping.
 
 The source-compatible scope here is the PC-34/I34E/I34M keyboard command
 tables. Platform-specific Amiga, Atari ST, Apple IIgs, and console raw-input

@@ -12457,6 +12457,10 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                                        gameViewResult)) {
                 return M12_MENU_INPUT_NONE;
             }
+            if (gameView && gameView->active && ev.key.key == SDLK_H &&
+                (ev.key.mod & SDL_KMOD_CTRL)) {
+                return M12_MENU_INPUT_GRAPHICS_POPUP;
+            }
             if (m11_game_view_is_csb(gameView)) {
                 M12_MenuInput csbInput = M12_MENU_INPUT_NONE;
                 if (m11_csb_sdl_key_to_menu_input((int)ev.key.key,
@@ -13148,6 +13152,11 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                                        (int)ev.key.keysym.sym,
                                                        gameViewResult)) {
                 return M12_MENU_INPUT_NONE;
+            }
+            if (gameView && gameView->active &&
+                ev.key.keysym.sym == SDLK_h &&
+                (ev.key.keysym.mod & KMOD_CTRL)) {
+                return M12_MENU_INPUT_GRAPHICS_POPUP;
             }
             if (m11_game_view_is_csb(gameView)) {
                 M12_MenuInput csbInput = M12_MENU_INPUT_NONE;
