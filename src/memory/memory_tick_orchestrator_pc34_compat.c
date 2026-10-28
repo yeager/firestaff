@@ -12001,6 +12001,7 @@ static void orch_schedule_generated_group_wandering_event_compat(
     int mapY)
 {
     struct TimelineEvent_Compat wander;
+    struct DM1CreatureInfo_Compat creatureInfo;
     DM1_V1_GeneratedGroupPlacementPlanPc34 plan;
     if (!world || !group) return;
 
@@ -12028,6 +12029,17 @@ static void orch_schedule_generated_group_wandering_event_compat(
     wander.aux2 = plan.wanderEventType;
     wander.aux3 = 0;
     wander.aux4 = 0x100;
+    /* GROUP.C F0180:332-338 stores C37 and Priority=255-MovementTicks.
+     * The C37 must still be scheduled if creature metadata is unavailable;
+     * only the comparator hint is optional. */
+    if (F0890d_ORCH_GetCreatureInfoForWorld_Compat(
+            world, group->creatureType, &creatureInfo) &&
+        creatureInfo.movementTicks >= 0 && creatureInfo.movementTicks <= 255) {
+        wander.sourceType = (uint8_t)plan.wanderEventType;
+        wander.sourcePriority = (uint8_t)(255 - creatureInfo.movementTicks);
+        wander.sourceOrderFlags = TIMELINE_SOURCE_ORDER_TYPE_VALID |
+                                  TIMELINE_SOURCE_ORDER_PRIORITY_VALID;
+    }
     if (F0721_TIMELINE_Schedule_Compat(&world->timeline, &wander) &&
         group->behavior >= DM1_BEHAVIOR_USELESS4) {
         /* GROUP.C F0180:328-330 resets only nonpersistent behaviors. */
@@ -13129,11 +13141,13 @@ static int orch_f0209_insert_next_event_f0238_compat(
     uint32_t f0179UpdateTime)
 {
     struct TimelineEvent_Compat next;
+    struct DM1CreatureInfo_Compat creatureInfo;
     struct TimelineQueue_Compat timelineBefore;
     struct RngState_Compat rngBefore;
     struct DM1GroupAddEventPlan_Compat addPlan;
     int aspectBefore[4];
     uint32_t requestedTime;
+    int sourcePriorityValid;
 
     if (!world || !applyPlan || !activeGroup || !ai || !group ||
         !applyPlan->shouldScheduleNextEvent ||
@@ -13141,6 +13155,11 @@ static int orch_f0209_insert_next_event_f0238_compat(
         applyPlan->nextEventType > DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
         return 0;
     }
+
+    memset(&creatureInfo, 0, sizeof(creatureInfo));
+    sourcePriorityValid = F0890d_ORCH_GetCreatureInfoForWorld_Compat(
+        world, group->creatureType, &creatureInfo) &&
+        creatureInfo.movementTicks >= 0 && creatureInfo.movementTicks <= 255;
 
     requestedTime = applyPlan->nextEventFireAtTick;
     timelineBefore = world->timeline;
@@ -13169,6 +13188,12 @@ static int orch_f0209_insert_next_event_f0238_compat(
     next.aux2 = addPlan.eventType;
     next.aux3 = (int)addPlan.ticks;
     next.aux4 = 0x100; /* EVENT.C.Ticks is source-owned, never inferred. */
+    if (sourcePriorityValid) {
+        next.sourceType = (uint8_t)addPlan.eventType;
+        next.sourcePriority = (uint8_t)(255 - creatureInfo.movementTicks);
+        next.sourceOrderFlags = TIMELINE_SOURCE_ORDER_TYPE_VALID |
+                                TIMELINE_SOURCE_ORDER_PRIORITY_VALID;
+    }
     if (!F0721_TIMELINE_Schedule_Compat(&world->timeline, &next)) {
         world->timeline = timelineBefore;
         world->masterRng = rngBefore;
@@ -13249,6 +13274,10 @@ static int orch_f0209_begin_attack_compat(
         next.aux2 = plan.eventType;
         next.aux3 = plan.ticks;
         next.aux4 = 0x100;
+        next.sourceType = (uint8_t)plan.eventType;
+        next.sourcePriority = (uint8_t)(255 - ctx->creatureInfo.movementTicks);
+        next.sourceOrderFlags = TIMELINE_SOURCE_ORDER_TYPE_VALID |
+                                TIMELINE_SOURCE_ORDER_PRIORITY_VALID;
         if (!F0721_TIMELINE_Schedule_Compat(&queue, &next)) return 0;
     }
     world->timeline = queue;

@@ -59,7 +59,17 @@ struct TimelineEvent_Compat {
     int aux2;
     int aux3;
     int aux4;
+    /* Source comparator evidence for event families whose native type and
+     * priority have been authenticated. These are runtime-only fields: the
+     * established 44-byte event wire format remains unchanged. A zero flag
+     * means retain stable insertion order for that comparator component. */
+    uint8_t sourceOrderFlags;
+    uint8_t sourceType;
+    uint8_t sourcePriority;
 };
+
+#define TIMELINE_SOURCE_ORDER_TYPE_VALID     0x01u
+#define TIMELINE_SOURCE_ORDER_PRIORITY_VALID 0x02u
 
 struct TimelineQueue_Compat {
     uint32_t nowTick;

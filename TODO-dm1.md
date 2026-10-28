@@ -1806,15 +1806,19 @@ parity.
   initialization and successful staged RNG publication. Obtain original traces
   beyond the bounded multi-group scan-order and partial-admission rollback tests.
   Check Couatl sound emission and edition-specific metadata beyond I34.
-  F0180:333 event priority (255-MovementTicks) still needs integration.
-  Timeline scheduling currently sorts only by
-  time and preserves insertion order on ties; TIMELINE.C:143-151 requires
-  time, descending original event type, descending priority, then source-slot
-  order. The 44-byte serialized event has no dedicated priority/slot fields.
-  Audit all event mappings and persistence before changing this shared queue;
-  adding only a C37 priority would not establish original ordering.
-  Do not treat the seeded two-event regression as
-  proof of this complete admission sequence.
+  ReDMCSB TIMELINE.C F0234:126-151 orders equal-time events by descending
+  native type, descending priority, then ascending source event-pool address.
+  The M11 queue now preserves those first two keys for C29-C41 events when
+  authenticated: C37 admission and generated continuations attach
+  255-MovementTicks where creature metadata is available, and original-save
+  imports retain the native C29-C41 type/priority bytes. Untyped events keep
+  stable insertion order. This is a partial bridge, not complete scheduler
+  parity: source-pool address is not represented, non-creature event families
+  still need native type/priority mapping, and the 44-byte runtime queue
+  serialization does not persist comparator metadata. Resume imports can
+  recover C29-C41 priority from the authentic event record; other save paths
+  and live runtime ordering still need source-backed coverage. Do not treat
+  the seeded queue regression as proof of the complete admission sequence.
 
 - Extend the new shared prior-square history to full original-runtime
   capture verification: compare consecutive live M11 wander moves and exact
