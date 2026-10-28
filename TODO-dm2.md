@@ -1,5 +1,21 @@
 # Firestaff TODO — DM2
 
+2026-10-28 Macintosh English media availability correction: the authentic
+StuffIt source archive is present at
+`~/.firestaff/data/dm2/Dungeon Master II for Macintosh English.sit` (SHA-256
+`bcb4153bfad6c72a78f5b1c9c191b9aa3fcff552dfea215fb922514a15fae9d3`). Its
+original extracted application files are also present under
+`~/.firestaff/data/dm2/mac-en/Dungeon Master II/DMFiles/`; `Graphics.dat`
+matches the catalogued retail MD5 `5cab25f6b975957eae4a203174e7f2a6` and
+`Dungeon.dat` is present. The 2026-10-27 statement below that the Macintosh
+English archive was absent is stale. The new
+`dm2_v1_mac_extracted_native_cli_boot` CTest consumes the extracted original
+files directly: authentic direct CLI and M12 routes reached first runtime
+with the Macintosh Graphics.dat identity, and the test verified that the
+original Graphics, Dungeon and Title files were unchanged. The `.sit` container
+itself is not unpacked by the ZIP-only `dm2_v1_mac_native_cli_boot` case; do not
+repackage game data to satisfy that harness.
+
 2026-10-27 authentic Amiga no-game launcher runtime: `main` at
 `7333c882` selected the original
 `Dungeon-Master-II-Skullkeep_Amiga_EN.zip` from the no-game M12 menu. The route
@@ -64,15 +80,13 @@ cover this extracted-only installation layout.
 2026-10-27 authentic cross-platform CLI startup matrix: direct startup passed
 for the original DOS English archive, Macintosh French SIT media, and FM Towns
 Japanese archive. The separate authentic-media main-menu selection test also
-passed for DM2 PC and FM Towns Japanese. DOS French, Macintosh English, and
-Amiga English direct-CLI cases in that symlink-based matrix were skipped
-because their data-root symlinks point to missing files; no substitute media
-was used. Amiga English separately passes the authentic no-game M12 route and
-the dedicated `dm2_v1_amiga_native_cli_boot` regression against the installed
-original archive. The direct-CLI matrix remains open for DOS French.
-Macintosh English extracted-directory CLI and M12 paths are now covered
-separately against the installed original files. SDL dummy verifies the exercised source startup and
-handoff paths, not native display or physical input parity.
+passed for DM2 PC and FM Towns Japanese. DOS French direct CLI remains open
+because its expected original archive was not staged for that matrix. The
+Macintosh English direct CLI and M12 routes are separately covered against
+the extracted original files; Amiga English passes its own authentic CLI and
+no-game M12 regressions against the original archive. SDL dummy verifies the
+exercised source startup and handoff paths, not native display or physical
+input parity.
 
 2026-10-25 selected DM2 PC loose-language owner: the authentic DOS English
 and French archives share a dungeon payload but have different GRAPHICS.DAT
