@@ -1,10 +1,11 @@
 # Five-game startup support gap analysis
 
-Release metadata checked against GitHub `main` at `3bbcc5cc` on 2026-10-28.
+Release metadata checked against GitHub `main` at `6bd8bdda` on 2026-10-28.
 The latest published release is v3.0.419 (published on 2026-10-28 from
 `71bf83b2`). Its GitHub Actions run completed all nine jobs successfully.
-Main has since advanced beyond that tag, so its current source is not included
-in those packages. The release workflow verifies packaging, not gameplay startup.
+The current `main` revision `6bd8bdda` is later than that tag and has successful
+verification and Pages Actions runs; its source is not included in those
+packages. The release workflow verifies packaging, not gameplay startup.
 Current authentic-media CLI routes
 include DM1 PC34, DOS, Atari ST, Amiga and FM Towns; CSB Atari, Amiga and FM
 Towns; DM2 DOS English/French, Macintosh English/French, FM Towns Japanese
