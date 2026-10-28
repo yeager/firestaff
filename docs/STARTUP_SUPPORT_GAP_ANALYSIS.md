@@ -10,10 +10,10 @@ and Theron's Japanese Rev. 1 title-to-Akutuba plus US Continue to dungeon 2,
 level 0. The new `dm2_v1_mac_extracted_native_cli_boot` regression records
 direct CLI and M12 startup of DM2 Macintosh English from extracted original
 files to first runtime; the `.sit` container itself is not unpacked by the
-ZIP-only CTest. The French DM2 DOS ZIP passes the native CLI/M12 startup test
-with `FIRESTAFF_DM2_DOS_FR_ARCHIVE` pointed at the original archive in
-`~/Downloads`; CTest now exposes that path as a cache option while keeping the
-standard game-data path as its default. The DM1 Amiga demo archive also passes
+ZIP-only CTest. The authentic French DM2 DOS ZIP now resides under the standard
+`~/.firestaff/data/dm2` root, and its native CLI/M12 CTest passes with the
+default archive path. CTest also accepts a custom
+`FIRESTAFF_DM2_DOS_FR_ARCHIVE` path. The DM1 Amiga demo archive also passes
 its authentic CLI/M12 startup test
 (`tests/test_dm1_v1_amiga_demo_archive_cli_boot.sh`) against the original ZIP.
 The CSB Amiga ZIP/ADF wrapper passes archive integrity checks, but its
@@ -185,18 +185,18 @@ synthetic game data or establish native display/input parity.
 - **DM2:** DOS English, French DOS, extracted Macintosh English, Macintosh
   French, and Amiga English passed. The FM Towns Japanese M12 route also
   passed after its `test_dm2_v1_fmtowns_menu_source_rgb` helper target was
-  built. The French DOS ZIP was found in `~/Downloads` and passed the native
-  CLI/M12 test directly from that location. The Macintosh English ZIP wrapper
-  is absent; the installed Mac `.sit` source is covered through the
+  built. The French DOS ZIP passed the native CLI/M12 CTest from the standard
+  game-data root without an archive-path override. The Macintosh English ZIP
+  wrapper is absent; the installed Mac `.sit` source is covered through the
   extracted-original-files CLI/M12 test.
 
 Missing helper executables explain local CTest skips when the corresponding
 source archives are present; build the named helper target before treating a
-skip as absent media. The French DM2 DOS ZIP in `~/Downloads` passed when the
-native test script was pointed at it directly. CTest now accepts a configured
-`FIRESTAFF_DM2_DOS_FR_ARCHIVE` path while retaining the standard game-data
-directory as its default. The French CSB Atari archive remains unavailable
-locally, so that route is still unverified. The local test matrix proves only
+skip as absent media. The DM2 French test's CMake cache option
+`FIRESTAFF_DM2_DOS_FR_ARCHIVE` keeps the standard game-data directory as its
+default and allows another authentic archive path when needed. The French CSB
+Atari archive remains unavailable locally, so that route is still unverified.
+The local test matrix proves only
 the listed startup/handoff paths; it does not close the reported renderer,
 HUD, audio, physical-input, or full-gameplay gaps.
 
