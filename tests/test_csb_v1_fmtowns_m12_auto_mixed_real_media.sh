@@ -424,8 +424,8 @@ towns_archive_link="$amiga_media_root/$(basename "$towns_archive")"
 atari_archive_link="$amiga_media_root/$(basename "$atari_archive")"
 amiga_archive_link="$amiga_media_root/$(basename "$amiga_archive")"
 towns_source="$towns_archive_link::CDATA/GRAPHICS.DAT"
-atari_source="$atari_archive_link::Chaos Strikes Back for Atari ST Game Disk v2.1 (English).stx::GRAPHICS.DAT"
-amiga_source="$amiga_archive_link::DM Chaos Strikes Back/DM Chaos Strikes Back - Disk 1.adf::graphics.dat"
+atari_source="$atari_archive_link::Chaos Strikes Back for Atari ST v2.1 (English).zip::Chaos Strikes Back for Atari ST Game Disk v2.1 (English).stx::GRAPHICS.DAT"
+amiga_source="$amiga_archive_link::Graphics.DAT"
 mixed_direct_cli_platform fm-towns "FM Towns" fmtowns-en csb-fmtowns-en \
     f31-title-anm 6fc7d5b9 title-anm 405b757038eea3c263e60f240854d6de \
     "$towns_archive_link" "$towns_source"
