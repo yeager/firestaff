@@ -8394,3 +8394,32 @@ this is distinct from the authenticated combined-RAR title-audio path above.
 - Preserve these negative results as acquisition evidence only. Continue
   identifying the game-owned transition into the Track 02 decoder; do not
   treat the raw probe build, input polling, or CD traffic as decoder parity.
+
+## 2026-10-28 — replayed the manual's cold-start controls on authentic US media
+
+- A first attempt with the existing configured Mednafen source produced no
+  replay events in PCE Fast; it is discarded as an input trial. The separate
+  trace build was corrected by applying the checked-in
+  `mednafen_1.32.1_theron_scripted_pce_fast_input.patch` to a private copy and
+  rebuilding with `make -j1`. The capture binary SHA-256 was
+  `59d9040a3f84a50fc80b8b9873145bba635c16b3fc079660885644046c4f18ef`.
+- The six-minute cold start used authentic US Track 02
+  (`f23601102138f87c33025877767ebf76`) and System Card 3.0
+  (`ff1a674273fe3540ccef576376407d1d`), without a save-state. The scheduled
+  input plan followed the original manual's startup order—Run, Run to cancel
+  the opening animation, Down, then Button I ([manual, "Starting the Game"]
+  (https://mocagh.org/ftl/theronsquest-manual.pdf)). It was accepted
+  (`valid=1 events=4`): Run at frame 9600 for 300 frames, Run at 12000, Down
+  at 12060, and Button I at 12120 for 30 frames.
+  The input receipt records Run as raw `$0008` / poll value `$37`, Down as raw
+  `$0040` / `$3B`, and Button I as raw `$0001` / `$3E`.
+- Polling remained at System Card `$E4B4/$E4C5` for 524,284 samples each; four
+  further reads were at `$42AB/$42B2`. The capture did not reach a recorded
+  `$2390 -> $23AD -> $2392` invocation, emitted no raw decoder trace, and did
+  not produce a game-owned transition receipt. The input trace hash is
+  `9a664c55b615bf6857cf4ba59eecf32fe9fc13e595ad37be2ac4d32dad43bca6`.
+- This proves that all four controls reached the emulated PCE input port. It
+  does not prove the opening animation or title menu was visible, so it does
+  not establish that the manual's menu sequence failed. Keep menu visibility,
+  the game-owned handoff, and decoder semantics open; do not use this BIOS
+  polling trace as `$23AD` or gameplay evidence.
