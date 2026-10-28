@@ -302,6 +302,17 @@ chain is not tied to New Game, the controlled player, or a facing value. This
 narrows the generic loader path without changing the pose gate: there is still
 no source-owned `LEV01` New Game handoff or player start tuple.
 
+A paired 1,800-frame Ymir `--debug` trace then compared the accepted New Game
+input with a no-input control while tracing `[0x06064000,0x06065000)`. Both
+receipts are complete with zero dropped rows. Only the accepted run records
+`FUN_0602022c` writing words `1`, `0x8000`, `29`, and `47` into
+`0x06064544..0x0606454b`; `FUN_06020fee` later reads the coordinate words at
+`+4` and `+6`. The record type and controlled-player ownership remain unknown.
+The tuple is unchanged by the paired Up input and is not admitted as a start
+pose. Exact trace and Ghidra export hashes are in the external
+`nexus_new_game_capture_20261028/config-struct-sh2-trace-1800/` evidence
+directory.
+
 ## LEV01 door and entrance-source boundaries — 2026-08-27
 
 DMWeb's Nexus DGN specification, checked against the hash-verified JP
