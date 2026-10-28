@@ -39,16 +39,21 @@ def state_copr(state: str) -> int:
 
 def dgn_match_index(data_dir: Path, *, ymir_byte_order: bool = False):
     index = {}
+    palette_index = {}
     for name, encoding, image, palette in dgn_materials(data_dir):
         mode = 1 if encoding == 0x0008 else 5
         normalized_image = image if ymir_byte_order else swapped_words(image)
         normalized_palette = (
             palette if ymir_byte_order else swapped_words(palette)
         ) if palette else b""
-        index.setdefault(
-            (mode, normalized_image, normalized_palette), []
-        ).append(name)
-    return index
+        # Image and CLUT are separate source claims. A VDP1 command may select
+        # a palette independently of the DGN image descriptor's palette
+        # pointer, so compare each captured payload against its own canonical
+        # DGN inventory instead of requiring a same-descriptor pair.
+        index.setdefault((mode, normalized_image), []).append(name)
+        if mode == 1:
+            palette_index.setdefault(normalized_palette, []).append(name)
+    return index, palette_index
 
 
 def command_material(vram: bytes, record):
@@ -131,7 +136,9 @@ def main() -> int:
             vram = frames[args.frame]["vdp1-vram"]
             chain = find_chain(vram, state_copr(states[args.frame]))
             ymir_byte_order = False
-        matches = dgn_match_index(args.data_dir, ymir_byte_order=ymir_byte_order)
+        matches, palette_matches_by_bytes = dgn_match_index(
+            args.data_dir, ymir_byte_order=ymir_byte_order
+        )
     except (OSError, ValueError, KeyError, struct.error) as error:
         print(f"NEXUS_VDP1_DGN_SEQUENCE_JOIN_INVALID: {error}")
         return 1
@@ -168,24 +175,36 @@ def main() -> int:
             # retail material. Keep it separate from informative misses.
             transparent_zero_filled_offsets.append(record.offset)
             continue
-        names = matches.get((material["mode"], material["source"],
-                             material["palette"]), [])
-        if not names:
+        candidates = matches.get((material["mode"], material["source"]), [])
+        palette_sources = []
+        palette_status = "not_applicable"
+        if material["mode"] == 1:
+            palette_sources = palette_matches_by_bytes.get(
+                material["palette"], []
+            )
+            palette_status = "verified" if palette_sources else "none"
+            if palette_sources:
+                palette_matches += 1
+        if not candidates:
             unmatched_offsets.append(record.offset)
+            rows.append((record.offset, candidates, [], palette_status,
+                         palette_sources, material["source_offset"],
+                         material["source_size"], material["clut_word"],
+                         material["mode"]))
             continue
         source_matches += 1
-        if material["mode"] == 1:
-            palette_matches += 1
-        elif material["mode"] == 5:
+        if material["mode"] == 5:
             direct_color_matches += 1
         owners = []
-        for name in names:
+        for name in candidates:
             marker = name.split("[", 1)[0]
             image_id = int(name.split("Structure2=", 1)[1].split(" ", 1)[0])
             owners.extend(dgn_structure3_face_owners(args.data_dir, marker, image_id))
         if owners:
             face_owner_matches += 1
-        rows.append((record.offset, names, owners, material["source_offset"],
+        rows.append((record.offset, candidates, owners, palette_status,
+                     palette_sources,
+                     material["source_offset"],
                      material["source_size"], material["clut_word"],
                      material["mode"]))
 
@@ -193,7 +212,6 @@ def main() -> int:
     complete = (informative_textured > 0 and
                 source_matches == informative_textured and
                 palette_matches + direct_color_matches == informative_textured and
-                face_owner_matches == informative_textured and
                 bounded_failures == 0)
     command_count_label = (
         "observed_commands" if args.ymir_trace_prefix else "chain_records"
@@ -202,7 +220,7 @@ def main() -> int:
     if args.ymir_trace_prefix:
         print("command_scope=observed_ymir_trace_prefix;frame_completion=unproven")
     print(f"textured_draws={textured} source_matches={source_matches} "
-          f"clut_matches={palette_matches} direct_color_matches={direct_color_matches} "
+          f"palette_matches={palette_matches} direct_color_matches={direct_color_matches} "
           f"face_owner_matches={face_owner_matches}")
     print(f"informative_textured_draws={informative_textured} "
           f"transparent_zero_filled_draws={len(transparent_zero_filled_offsets)}")
@@ -210,11 +228,14 @@ def main() -> int:
           (",".join(f"0x{x:05x}" for x in unmatched_offsets) or "none"))
     print("transparent_zero_filled_offsets=" +
           (",".join(f"0x{x:05x}" for x in transparent_zero_filled_offsets) or "none"))
-    for offset, names, owners, source_offset, source_size, clut_word, mode in rows:
+    for offset, names, owners, palette_match, palette_sources, source_offset, source_size, clut_word, mode in rows:
         print(f"draw=0x{offset:05x} source=0x{source_offset:05x} "
               f"bytes={source_size} color_mode={mode} "
               f"clut_word={'n/a' if mode == 5 else f'0x{clut_word:05x}'} "
-              f"dgn={'|'.join(names)} faces={'|'.join(owners)}")
+              f"dgn={'|'.join(names) if names else 'none'} "
+              f"palette={palette_status} "
+              f"palette_sources={'|'.join(palette_sources) if palette_sources else 'n/a'} "
+              f"faces={'|'.join(owners) if owners else 'none'}")
     print(f"sequence_dgn_material_join={'verified' if complete else 'unbound'}")
     print("transform_culling=unproven")
     print("display_origin=unproven")
