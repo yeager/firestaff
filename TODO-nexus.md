@@ -18,6 +18,10 @@ matched draws lack candidate face-owner rows, and multiple levels/faces share
 materials. Active level, selected faces, camera transform, culling, screen
 origin, VDP2 composition, and Japanese settings interaction states still need
 authentic joins. See the [DGN trace-prefix receipt](parity-evidence/verification/nexus_japanese_configuration_dgn_trace_prefix_20261028/README.md).
+The 16 draws without Structure3 owners use five 48x48 `LEV00.DGN` materials
+and form a receding tiled plane at the bottom of the scene, consistent with a
+floor or menu backdrop. Identify the active level/map selector and prove this
+geometry's owner before adding a runtime compositor.
 
 ## Current evidence boundary
 

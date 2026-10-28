@@ -17,6 +17,12 @@
   composition unresolved. Renderer admission remains blocked. The full report
   and capture are retained on the external evidence volume; no retail data was
   added to Git.
+- The 16 matched draws without face-owner rows are early distorted-sprite
+  quads using five 48x48 materials from `LEV00.DGN`. Their vertices form a
+  receding tiled plane at the bottom of the scene, consistent with a floor or
+  menu backdrop; the active level and map selector remain unproven. Ymir source
+  confirms the 11 all-zero indexed draws are transparent with the captured
+  PMOD. No rendering permission follows from these candidate roles.
 - Receipt: [Japanese Configuration DGN trace prefix](parity-evidence/verification/nexus_japanese_configuration_dgn_trace_prefix_20261028/README.md).
 
 ## 2026-10-28 — Bind a partial Japanese title source span to NBG0 writes

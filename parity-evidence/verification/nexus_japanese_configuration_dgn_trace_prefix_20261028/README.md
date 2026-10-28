@@ -33,6 +33,16 @@ composition. Therefore
 `semantic_admission=blocked`; Firestaff must not use these joins as permission
 to draw a reconstructed scene.
 
+The 16 matched draws without Structure3 face-owner rows are all early
+VDP1 distorted-sprite quads. Their five distinct 48x48 indexed materials
+(Structure2 IDs 1 through 5) all come from `LEV00.DGN`; their screen vertices
+form a receding tiled plane along the lower scene. This is consistent with a
+floor or menu backdrop, but it does not prove a Structure1F map selector or
+active level instance. The zero-filled spans above are confirmed invisible for
+this capture by VDP1 mode 1 and PMOD `0x048c`: Ymir source commit
+`534ed10c6f7f13a3ba752476eea191be3ab553b4` treats CLUT index zero as
+transparent, and PMOD bit 6 does not disable transparency.
+
 ## Reproduction
 
 With the authentic retail files installed in `.firestaff/data/nexus`, run:
