@@ -17,23 +17,27 @@ typedef enum {
 } Nexus_V1_RetailTitleMenuSelection;
 
 typedef enum {
-    NEXUS_V1_RETAIL_TITLE_MENU_INPUT_DOWN = 0,
-    NEXUS_V1_RETAIL_TITLE_MENU_INPUT_ACCEPT = 1,
-    NEXUS_V1_RETAIL_TITLE_MENU_INPUT_UNSUPPORTED = 2
+    NEXUS_V1_RETAIL_TITLE_MENU_INPUT_OPEN = 0,
+    NEXUS_V1_RETAIL_TITLE_MENU_INPUT_DOWN = 1,
+    NEXUS_V1_RETAIL_TITLE_MENU_INPUT_UP = 2,
+    NEXUS_V1_RETAIL_TITLE_MENU_INPUT_ACCEPT = 3,
+    NEXUS_V1_RETAIL_TITLE_MENU_INPUT_UNSUPPORTED = 4
 } Nexus_V1_RetailTitleMenuInput;
 
 typedef enum {
     NEXUS_V1_RETAIL_TITLE_MENU_RESULT_INVALID = 0,
-    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNCHANGED = 1,
-    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED = 2,
-    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_START_NEW_GAME = 3,
-    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_NO_CONTINUE_SAVE = 4,
-    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SHOW_LOAD_PANEL = 5,
-    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SHOW_CONFIGURATION = 6,
-    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNVERIFIED_INPUT = 7
+    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_MENU_OPENED = 1,
+    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNCHANGED = 2,
+    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED = 3,
+    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_START_NEW_GAME = 4,
+    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_NO_CONTINUE_SAVE = 5,
+    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SHOW_LOAD_PANEL = 6,
+    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SHOW_CONFIGURATION = 7,
+    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNVERIFIED_INPUT = 8
 } Nexus_V1_RetailTitleMenuResult;
 
 typedef struct {
+    int menu_active;
     Nexus_V1_RetailTitleMenuSelection selection;
 } Nexus_V1_RetailTitleMenuState;
 
@@ -41,9 +45,9 @@ typedef struct {
 void nexus_v1_retail_title_menu_init(Nexus_V1_RetailTitleMenuState *state);
 
 /*
- * Apply a captured menu input. Down is admitted only for the observed
- * NEW GAME -> CONTINUE -> CONFIGURATION transitions. Accept actions reflect
- * the retained retail observations; `continue_save_available` must be derived
+ * OPEN begins at the observed start prompt. Down and Up navigate only between
+ * observed retail choices. Accept actions reflect retained retail
+ * observations; `continue_save_available` must be derived
  * by the caller from real save media, never inferred by this reducer.
  * Unsupported directions and unobserved movement beyond CONFIGURATION leave
  * state unchanged and return UNVERIFIED_INPUT.
@@ -52,6 +56,15 @@ Nexus_V1_RetailTitleMenuResult nexus_v1_retail_title_menu_reduce(
     Nexus_V1_RetailTitleMenuState *state,
     Nexus_V1_RetailTitleMenuInput input,
     int continue_save_available);
+
+/* Select a source-bound title row from authenticated retail sprite rectangles
+ * in 320x224 Saturn screen coordinates. `configuration_renderable` is true
+ * only for a region whose selected Configuration sprites are source-bound. */
+Nexus_V1_RetailTitleMenuResult nexus_v1_retail_title_menu_select_pointer(
+    Nexus_V1_RetailTitleMenuState *state,
+    int x,
+    int y,
+    int configuration_renderable);
 
 #ifdef __cplusplus
 }

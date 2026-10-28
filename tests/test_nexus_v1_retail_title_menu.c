@@ -21,17 +21,39 @@ int main(void)
           "retail title menu initializes with New Game selected");
     check(nexus_v1_retail_title_menu_reduce(
               &state,
+              NEXUS_V1_RETAIL_TITLE_MENU_INPUT_OPEN,
+              0) == NEXUS_V1_RETAIL_TITLE_MENU_RESULT_MENU_OPENED &&
+              state.menu_active,
+          "Start opens the retail menu with New Game selected");
+    check(nexus_v1_retail_title_menu_reduce(
+              &state,
               NEXUS_V1_RETAIL_TITLE_MENU_INPUT_ACCEPT,
               0) == NEXUS_V1_RETAIL_TITLE_MENU_RESULT_START_NEW_GAME,
-          "accepting initial New Game selects the observed new-game route");
+          "accepting New Game selects the observed new-game route");
 
     nexus_v1_retail_title_menu_init(&state);
+    check(nexus_v1_retail_title_menu_reduce(
+              &state, NEXUS_V1_RETAIL_TITLE_MENU_INPUT_OPEN, 0) ==
+              NEXUS_V1_RETAIL_TITLE_MENU_RESULT_MENU_OPENED,
+          "Start opens menu before navigation");
     check(nexus_v1_retail_title_menu_reduce(
               &state,
               NEXUS_V1_RETAIL_TITLE_MENU_INPUT_DOWN,
               0) == NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED &&
               state.selection == NEXUS_V1_RETAIL_TITLE_MENU_CONTINUE,
           "one Down selects Continue");
+    check(nexus_v1_retail_title_menu_reduce(
+              &state,
+              NEXUS_V1_RETAIL_TITLE_MENU_INPUT_UP,
+              0) == NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED &&
+              state.selection == NEXUS_V1_RETAIL_TITLE_MENU_NEW_GAME,
+          "Up from Continue returns to New Game");
+    check(nexus_v1_retail_title_menu_reduce(
+              &state,
+              NEXUS_V1_RETAIL_TITLE_MENU_INPUT_DOWN,
+              0) == NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED &&
+              state.selection == NEXUS_V1_RETAIL_TITLE_MENU_CONTINUE,
+          "Down from New Game returns to Continue");
     check(nexus_v1_retail_title_menu_reduce(
               &state,
               NEXUS_V1_RETAIL_TITLE_MENU_INPUT_ACCEPT,
@@ -51,6 +73,18 @@ int main(void)
           "a second Down selects Configuration");
     check(nexus_v1_retail_title_menu_reduce(
               &state,
+              NEXUS_V1_RETAIL_TITLE_MENU_INPUT_UP,
+              0) == NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED &&
+              state.selection == NEXUS_V1_RETAIL_TITLE_MENU_CONTINUE,
+          "Up from Configuration returns to Continue");
+    check(nexus_v1_retail_title_menu_reduce(
+              &state,
+              NEXUS_V1_RETAIL_TITLE_MENU_INPUT_DOWN,
+              0) == NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED &&
+              state.selection == NEXUS_V1_RETAIL_TITLE_MENU_CONFIGURATION,
+          "Down from Continue returns to Configuration");
+    check(nexus_v1_retail_title_menu_reduce(
+              &state,
               NEXUS_V1_RETAIL_TITLE_MENU_INPUT_ACCEPT,
               0) ==
               NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SHOW_CONFIGURATION,
@@ -61,6 +95,35 @@ int main(void)
               0) == NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNVERIFIED_INPUT &&
               state.selection == NEXUS_V1_RETAIL_TITLE_MENU_CONFIGURATION,
           "unverified input does not invent a transition");
+
+    nexus_v1_retail_title_menu_init(&state);
+    check(nexus_v1_retail_title_menu_select_pointer(&state, 150, 153, 1) ==
+              NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNVERIFIED_INPUT &&
+              !state.menu_active,
+          "pointer cannot select before the retail menu opens");
+    check(nexus_v1_retail_title_menu_reduce(
+              &state, NEXUS_V1_RETAIL_TITLE_MENU_INPUT_OPEN, 0) ==
+              NEXUS_V1_RETAIL_TITLE_MENU_RESULT_MENU_OPENED,
+          "open retail menu before pointer selection");
+    check(nexus_v1_retail_title_menu_select_pointer(&state, 150, 153, 1) ==
+              NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNCHANGED &&
+              state.selection == NEXUS_V1_RETAIL_TITLE_MENU_NEW_GAME,
+          "authentic New Game text rectangle selects the first row");
+    check(nexus_v1_retail_title_menu_select_pointer(&state, 150, 165, 1) ==
+              NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED &&
+              state.selection == NEXUS_V1_RETAIL_TITLE_MENU_CONTINUE,
+          "authentic Continue text rectangle selects the second row");
+    check(nexus_v1_retail_title_menu_select_pointer(&state, 150, 168, 1) ==
+              NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNCHANGED,
+          "pointer includes the Continue row's last pixel");
+    check(nexus_v1_retail_title_menu_select_pointer(&state, 150, 177, 0) ==
+              NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNVERIFIED_INPUT &&
+              state.selection == NEXUS_V1_RETAIL_TITLE_MENU_CONTINUE,
+          "Configuration pointer stays gated without a regional selected renderer");
+    check(nexus_v1_retail_title_menu_select_pointer(&state, 150, 177, 1) ==
+              NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED &&
+              state.selection == NEXUS_V1_RETAIL_TITLE_MENU_CONFIGURATION,
+          "source-bound Configuration row accepts pointer selection");
 
     if (failures != 0) {
         fprintf(stderr, "test_nexus_v1_retail_title_menu: %d failure(s)\n",

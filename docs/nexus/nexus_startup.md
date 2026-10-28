@@ -7,12 +7,15 @@ retail controller input, the native three-choice title menu in Ymir. The menu
 was navigated into its Configuration page from a saved diagnostic state.
 Separate captures show New Game selected and Down selecting Continue, with
 five TITLE.BIN sprite draws per state compared with the retail screenshots.
-The historical New Game comparison reported 1,495 matching nontransparent
-pixels. The current `verify_nexus_title_sprite_screenshot.py` verifier checks
-the five-draw Japanese Continue layout only. Ymir also completed
-Continue-to-gameplay with a reported retail-written BKR image. Firestaff's
-runtime title-menu renderer, New Game route to stable gameplay, Saturn BKR
-loading, and HUD/viewport parity remain unverified.
+The `verify_nexus_title_sprite_screenshot.py` verifier now checks the five-draw
+Japanese Continue layout and the English New Game and Continue layouts against
+authentic retail source bytes and captured CRAM. Ymir also completed
+Continue-to-gameplay with a reported retail-written BKR image. Firestaff now
+renders authenticated English and Japanese New Game/Continue/Configuration
+foreground sprites from regional `TITLE.BIN` data. English Configuration text
+pixels match its Ymir capture; final marker RGB remains background-dependent.
+The shared background, full-screen composition, menu destination execution,
+Continue loading, and gameplay HUD/viewport remain unimplemented or unverified.
 
 ## Verified initialization order
 
@@ -33,12 +36,12 @@ source.
 
 | Resource | Status |
 |---|---|
-| `TITLE.CG` + `TITLE.BIN` | MAPD/TIBG decoding and five retail images verified for the canonical profile and documented English revision; VDP2 placement is missing |
-| `LOGOBG.DG2` | PP pixels and a 256-entry BGR555 palette are verified; layer/timing is missing |
+| `TITLE.CG` + `TITLE.BIN` | MAPD/TIBG decoding and five retail images are verified. An authentic Japanese title capture binds the complete `TITLE.CG` member to its VDP2 upload and the MAPD palette to CRAM; the visible NBG0 bitmap's producer is also traced. The display consumer, MAPD order, layer placement and timing are still unbound. See [title source audit](nexus_title.md#japanese-retail-title-vdp2-receipt). |
+| `LOGOBG.DG2` | PP pixels and a 256-entry BGR555 palette are verified. Neither occurs in the measured Japanese title-frame VDP2 memory/CRAM, so it is not admitted as the NBG0 source; no other display role is proven. |
 | `WARNING.BIN`, `GAMEOVER.BIN`, `STABG.BIN` | real surfaces are decoded and receive byte provenance; presentation is missing |
 | `FACE.BIN` | The JP retail member is verified as 45,104 bytes (`bd9ca16ea68043984e2804067b6cd66f`): 20 variable-length, 56×56 PRS3 portraits with source palettes. The PLRD roster-to-portrait ordinal and the VDP1 destination/order are still unobserved. |
 | `FONT256.S2D` | 242 CG tiles are retained in production source; Saturn page/attribute/glyph mapping is missing |
-| `MENU.BPK` | 162 PRS3 surfaces decode to source-bound indexed bytes; the exact title-menu draw ownership, ordering, CLUT, and VDP1/VDP2 composition are not established |
+| `MENU.BPK` | All 162 PRS3 surfaces decode to source-bound bytes. In one complete authentic Japanese menu frame, 86 whole surfaces are byte-resident in VDP1 VRAM, but none of 137 textured command sources starts in those ranges. The capture does not establish that `MENU.BPK` supplies the visible menu. Ownership, ordering, CLUT and VDP1/VDP2 composition remain unbound; see the [menu snapshot join](NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md). |
 | Saturn Backup RAM | `nexus_v1_saturn_bkr_parse` reads hash-pinned 32 KiB card directories and block chains, returning exact opaque payload bytes; native save selection, payload interpretation, and runtime loading remain missing |
 | Mednafen visual baseline | A clean J-BIOS capture against authentic retail shows black boot followed by the original intro FMV without input; menu/LEV01 identity remains missing |
 
@@ -424,6 +427,28 @@ did not verify save loading.
 Together, these are retail startup/input observations, not Firestaff parity.
 The capture environment, key mapping, and per-action limitations are recorded
 in [`parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`](../../parity-evidence/verification/keyboard-mouse-debug-20261024/README.md).
+
+## Firestaff title-menu keyboard state (2026-10-27)
+
+M11 now has a separate state for the observed Japanese retail title menu. The
+ready title prompt accepts the configured Action input to open the retail menu
+with New Game selected. Up/Down and W/S now
+navigate between the three choices. An authentic English retail Ymir replay
+shows Down selecting Continue; a subsequent Up returns to the original New
+Game screenshot pixel-for-pixel. F matches the observed Ymir desktop binding
+for Saturn Start; Enter, keypad Enter, and Space are Firestaff keyboard aliases. These keys
+feed Action only while the Nexus title is active. At this stage, the menu choice
+was not drawn; subsequent capture-backed work added regional foreground sprites
+for selected menu states, while the shared background and full-screen composition
+remain unbound. Accepting New Game, Continue, or Configuration still does not
+execute a production destination. Continue execution remains unavailable until
+Firestaff reads authentic Saturn BKR media;
+the generic Firestaff save-file mask is deliberately not reused. This is an
+input-state increment, not title-menu or gameplay parity. See the
+[Nexus input status](nexus_input.md#firestaff-title-keyboard-ingress) and
+[menu audit](nexus_menus.md).
+The paired emulator screenshot hashes and exact replay schedule are in the
+[vertical navigation capture receipt](../../parity-evidence/verification/nexus_menu_vertical_navigation_20261027/README.md).
 
 ## Retail Continue with an authentic save (2026-10-25)
 
@@ -1012,7 +1037,7 @@ still does not provide CLUT source ownership or admit a Firestaff renderer.
 
 - DMWeb Nexus file formats and DMN Data File Decoder.
 - `src/nexus/nexus_v1_engine.c` and `src/nexus/nexus_v1_title.c`.
-- `NEXUS_RUNTIME_CAPTURE.md`.
+- `docs/nexus/NEXUS_RUNTIME_CAPTURE.md`.
 - [NEXUS_STRICT_FIDELITY_INVENTORY.md](NEXUS_STRICT_FIDELITY_INVENTORY.md).
 
 ## Cold-boot title menu and retail menu navigation (2026-10-27)
@@ -1060,8 +1085,10 @@ bundle README.
 This establishes a native retail menu and a narrow menu-navigation route in
 Ymir after a no-save cold boot. It does not prove the semantic purpose of
 every input across regions, a stable New Game transition to a playable level,
-Continue behavior with real save data, Firestaff menu rendering, or gameplay
-HUD/viewport parity. Those remain separate parity gates.
+Continue behavior with real save data, Firestaff menu input or destination
+execution, or gameplay HUD/viewport parity. The English foreground sprite
+rendering is implemented as described below; the background and full-screen
+composition remain open.
 
 ## New Game reaches the native 3D viewport (2026-10-27)
 
@@ -1200,10 +1227,108 @@ not that the full file was loaded or that the log's read path is understood.
 The retained evidence is stored outside Git in the local external capture
 bundle.
 This establishes the English-version emulator's cold-boot-to-menu path. It does
-not establish Firestaff menu rendering or input, Continue/save loading, or
-playable-level, viewport, or HUD parity. See the
+not establish complete Firestaff menu composition or input, Continue/save
+loading, or playable-level, viewport, or HUD parity. See the
 [English cold-boot evidence receipt](../../parity-evidence/verification/nexus_english_coldboot_menu_20261027/README.md)
 for hashes and reproduction commands.
+
+## English retail title-menu sprite ownership (2026-10-27)
+
+Firestaff now has a bounded renderer for the authenticated English `NEW GAME`
+and `CONTINUE` VDP1 sprites described below. It accepts only the exact
+hash-pinned English retail `TITLE.BIN`, retains that source buffer with the
+loaded title, and draws the five captured sprites and their captured palette
+colors at the verified positions over the existing title framebuffer. This
+implements those foreground sprites only. The background bitmap remains
+unbound, and the renderer does not claim full-screen composition, Japanese New
+Game, Configuration, or destination execution. The runtime menu reducer
+remains responsible for selection; an unsupported selection is left to the
+existing title renderer.
+
+A follow-up used a copy of the authentic English menu savestate
+(`a997636cb5b40745e1065827361d3653c07475e716c8397542f36c372514f62b`) in a
+separate Ymir profile on TRV2. The copied savestate, English retail ISO and CUE,
+and USA 1.01a IPL hashes are recorded in the [sprite source receipt](../../parity-evidence/verification/nexus_english_title_menu_sprite_join_20261027/README.md).
+One 12-frame run held no input and retained New Game. A second run held Down
+for four frames beginning at capture frame 4 and retained Continue. Both
+frame-aligned VDP1 bundles identify frame 5, contain all 178 command rows, and
+report zero dropped rows.
+
+The retail `TITLE.BIN` SHA-256 is
+`a634e8daf2a581df154b454919ee2ed44e937371668219d7cdf6d0983a613e44`. For New
+Game, the five visible VDP1 draws read retail offsets `0x14a6`, `0x14a6`,
+`0x0446`, `0x0576`, and `0x07d6`. For Continue, they read `0x0316`, `0x14a6`,
+`0x14a6`, `0x06a6`, and `0x07d6`. Their two distinct 16-color palettes match
+captured CRAM bytes to `TITLE.BIN`: the icon palette matches uniquely at
+`0x1486`, while the identical text palette occurs at `0x02f6`, `0x0426`,
+`0x0556`, `0x0686`, `0x07b6`, `0x0986`, and `0x1f06`. The capture cannot
+distinguish which identical text-palette copy was uploaded. Captured dimensions,
+VDP1 placement, sprite priority, CRAM colors, and VDP2 back-screen composition
+reproduce all 1,451 visible pixels in each screenshot. The external captures and extracted retail
+`TITLE.BIN` are retained at
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_english_menu_source_join_20261027/`.
+
+This binds the five English menu sprites and both palette tables to authentic
+`TITLE.BIN` data and the captured display colors. Firestaff renders the two
+verified foreground layouts, but this does not bind the background bitmap,
+full-screen composition, upload timing, the Configuration page, or the complete
+menu interaction route. The wider English VDP1 source join remains
+partial at 126 of 137 informative draws; its remaining 11 spans are zero
+padding. A byte-for-byte pair comparison of the separate New Game and
+Continue savestate replays shows identical full VDP2 VRAM, CRAM, and register
+snapshots at capture frame 5. Their NBG0 bitmap is unchanged (SHA-256
+`b802a3196a9d2183b336ab5c770028670ed658e8ed9ba582046096fc01d23f91`); only
+the compared VDP1 VRAM, framebuffer, and command trace differ. This isolates
+the observed selection change to VDP1 state without identifying the shared
+background's retail producer. Exact VDP2 hashes and changed-byte counts are in the
+[English sprite receipt](../../parity-evidence/verification/nexus_english_title_menu_sprite_join_20261027/README.md).
+The bounded retail-source scan reports zero exact NBG0 matches across 410
+decoded sources from the authenticated English disc members; its result remains
+`source_join=unbound` and `semantic_admission=blocked`.
+An additional raw-byte scan finds one sparse 1,603-byte overlap between
+`TITLE.BIN` (`0xa2b6`) and NBG0 (`0x102b0`); the same bytes appear once in the
+captured SH-2 WRAM-high snapshot. Only 23 bytes are nonzero, and no VDP2 write
+trace links that buffer to the bitmap, so the overlap remains an unproven
+producer candidate. Details and hashes are in the
+[English sprite receipt](../../parity-evidence/verification/nexus_english_title_menu_sprite_join_20261027/README.md).
+
+## Japanese New Game and Continue foreground rendering (2026-10-28)
+
+The Japanese New Game and Continue layouts are admitted only for the
+authenticated Japanese retail `TITLE.BIN` (SHA-256
+`51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3`, FNV-1a64
+`064414f722d0409c`). Firestaff draws five source-bound foreground sprites
+for both observed Japanese menu selections. The New Game frame 8,050 markers
+use source offset `0x15f6`, with their palette uniquely at `0x15d6`; Continue
+frame 8,047 uses marker source `0x1b36`, with its palette uniquely at
+`0x1b16`. Text CRAM palette bytes match seven identical copies in `TITLE.BIN`
+(`0x02f6`, `0x0426`, `0x0556`, `0x0686`, `0x07b6`, `0x0986`, and `0x1f06`).
+The renderer uses those regional palette bytes and the captured 31/32 blend
+over the verified black back-screen. It does not substitute English art or
+color.
+
+`verify_nexus_title_sprite_screenshot.py` confirms all five source spans,
+regional palette bytes, and all 1,495 visible New Game texels and 1,441 visible
+Continue texels against their retained Japanese screenshots. The screenshot's
+exact acquisition-frame identity remains unproven. The background,
+full-screen composition, Configuration page controls, Continue loading, and
+gameplay HUD/viewport remain open. Both regional Configuration renderers and
+all three regional title-row mouse selections are source-bound. See the
+[Japanese sprite evidence receipt](../../parity-evidence/verification/nexus_japanese_title_menu_sprite_join_20261028/README.md).
+
+The two captures have byte-identical first 128 KiB of VDP2 VRAM (NBG0),
+SHA-256 `0a3b8b5ba0bd9e9c4b549d136961b44439d2534cbb7060c5bcbdca6da9c53d08`,
+with 18,513 nonzero bytes. No complete decoded Japanese retail source matches
+that bitmap. A separate, complete frame-tagged VDP2 trace joins a 921-byte raw
+span from Japanese `TITLE.BIN` `TITL` record 2 (`0xb438 + 0x46a`) to NBG0
+offset `0xd404`. Retail
+frame 6,869 clears that span; frame 7,729 writes 608 matching byte lanes, and
+replaying the intervening writes reconstructs all 921 source bytes. The bound
+snapshot is frame 8,060. Its 295 nonzero pixels occupy native NBG0 coordinates
+`x=13..307, y=106`, the blue divider below the logo in the paired Ymir
+screenshot. This verifies a partial source-to-VRAM transport, not the full
+bitmap decode, layer meaning, or presentation. See the
+[NBG0 source-trace receipt](../../parity-evidence/verification/nexus_japanese_title_menu_sprite_join_20261028/README.md#frame-bound-nbg0-source-span).
 
 ## Authentic Japanese title-menu Down selection (2026-10-27)
 
@@ -1228,15 +1353,14 @@ separate four-draw source-offset observation at `TITLE.BIN` offsets `0x15f6`,
 `0x0446`, `0x0576`, and `0x07d6`; this verifier does not claim to validate that
 capture.
 
-The Japanese `CONTINUE` screenshot verifier reads `TITLE.BIN` from the
-authentic CUE/BIN in memory and matches all 1,441 nontransparent pixels across
-these five menu draws. It requires the captured retail offsets, dimensions,
-positions and visible-pixel counts, and checks the 4bpp CRAM lookup, priority 5
-and 31/32 top-screen ratio over the captured VDP2 back screen. It currently
-supports this Japanese `CONTINUE` layout only; it does not validate the earlier
-`NEW GAME` image or the English capture. These are sprite-level source and
-colour joins; whole-screen composition and screenshot-to-dump frame identity
-remain unproven.
+The verifier reads `TITLE.BIN` from the authentic CUE/BIN in memory and checks
+the Japanese `CONTINUE` layout plus English `NEW GAME` and `CONTINUE` layouts.
+For each it requires the captured retail offsets, dimensions, positions, and
+visible-pixel counts, then checks the 4bpp CRAM lookup, priority 5, and 31/32
+top-screen ratio over the captured VDP2 back screen. The English layouts each
+match 1,451 visible pixels. These remain sprite-level source and color joins;
+whole-screen composition and screenshot-to-dump frame identity remain
+unproven.
 
 A repeated cold boot with the same schedule retained VDP1 frame 8,060. The
 frame-aligned VDP1 receipt again contains 178 commands with no dropped rows,
@@ -1325,88 +1449,135 @@ matching call chain is
 `0x06023108|0x06023144|0x06040150`. The VDP1 receipt identifies menu frame
 `8,047`, with `178` commands and zero dropped rows; the authentic screenshot
 matches the five verified Japanese `TITLE.BIN` sprite roles at `1,441/1,441`
-nontransparent pixels. The screenshot verifier's original invocation
-conservatively reported timing as unproven because the PNG has no embedded
-frame number. Raw files, verifier output, trace analysis, and hashes are retained in
+nontransparent pixels. The screenshot verifier conservatively reports timing
+as unproven because its PNG does not carry an independent frame number. Raw
+files, verifier output, trace analysis, and hashes are retained in
 `/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_menu_sh2_bound_20261027/`.
 
-A fresh repeat cold boot on the frame-tracing Ymir fork independently captured
-the Continue screenshot and VDP1 receipt in one run. Its screenshot hash is
-identical to the image above, and its complete VDP1 capture receipt names frame
-`8,047` with all `178` commands and zero dropped rows. Its
-15,264-row SH-2 trace is also byte-for-byte identical to the frame-7716 trace
-used by the paired VDP2 evidence above. The screenshot verifier now accepts
-`--run-log` for a complete Ymir capture: it checks that the screenshot is in
-the same capture directory, the log names that screenshot exactly once, and
-the VDP1 capture and register receipts agree on frame 8,047. It reports
-`timing=same_capture_run`; the log does not bind the screenshot save event to
-that frame, so exact screenshot-frame identity remains unproven. The verifier
-still matches all five authentic sprite roles pixel-for-pixel. This reproduces
-the menu image and source-write sequence. The new run did not include a VDP2
-write trace, so the stable-snapshot proof remains the separate paired capture.
-The full raw repeat capture, its run log, receipt, and hashes are retained in
-`ymir_nexus_menu_frame_windowed_sh2_20261027` external evidence bundle (not tracked in the repository).
-
 This is authentic input-correlated source evidence for the Japanese menu
-selection state. It does not establish the complete `TITLE.BIN` decoding,
-mouse hit regions, Firestaff input handling, or production renderer admission.
+selection state. It does not establish complete `TITLE.BIN` decoding, mouse
+hit regions, Firestaff input handling, or full-menu renderer admission. The
+Japanese Continue foreground sprites have since been admitted and rendered as
+described above.
 The full external capture,
 hashes, and reproduction command are in the
 [Japanese Down-selection capture receipt](../../parity-evidence/verification/nexus_japanese_menu_down_selection_20261027/README.md).
 
+A fresh repeat cold boot on the frame-tracing Ymir fork captured the Continue
+screenshot and VDP1 receipt in one run. The retained image is pixel-identical
+to the earlier screenshot, and the complete VDP1 receipt identifies frame
+`8,047` with 178 commands and zero dropped rows. Its SH-2 trace is byte-for-byte
+identical to the frame-7716 trace in the paired VDP2 analysis. The screenshot
+was saved to an ephemeral `/dev/shm` path recorded in `run.log`, then retained
+under the external evidence bundle. Because that retained copy is no longer at
+the logged full path, `verify_nexus_title_sprite_screenshot.py --run-log`
+rejects it; verification without `--run-log` matches all five authentic
+Japanese sprites and reports `timing=unproven`. The log does not bind the
+screenshot save event to frame 8,047, so exact screenshot-frame identity is
+unproven. This repeat confirms the menu image and source-write sequence, but it
+does not replace the paired VDP2 trace or admit a Firestaff renderer. The
+capture and hashes are retained in
+`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_menu_frame_windowed_sh2_20261027/`.
+
 ## Full Japanese title-menu capture replay (2026-10-27)
 
-The retained frame-8047 Ymir run reconstructs the complete 320×224 display
+The retained frame-8047 Ymir run now reproduces the complete 320×224 display
 from its captured VDP1 framebuffer, VDP2 VRAM, CRAM and registers. The C replay
 matches every pixel in the same-run 640×448 screenshot (286,720 subpixels)
 after 2× scaling. Its VDP1 trace contains 178 frame-8047 commands and reports
-zero dropped rows. Five Japanese `TITLE.BIN` menu-sprite roles account for
-1,441 visible texels; the remaining output is accounted for by captured VDP1
-direct pixels, captured VDP1 palette pixels and NBG0 overlays. The screenshot
-has no embedded frame number, so exact acquisition-frame identity remains
-unproven. The pixel counts and input digests are recorded in
+zero dropped rows. The VDP1 register receipt also names frame 8047. Five
+Japanese `TITLE.BIN` menu-sprite roles account for 1,441 visible texels; the
+remaining output is accounted for by captured VDP1 direct pixels, captured
+VDP1 palette pixels and NBG0 overlays. The pixel counts and input digests are
+recorded in
 [`NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md`](NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md).
 
-This is a captured-frame composition check, not a renderer admission. The
+## Japanese Configuration selection rendering (2026-10-28)
+
+A `--debug` Ymir replay loaded the authenticated Japanese retail title-menu
+state in an isolated TRV2 profile and captured the main menu with Configuration
+selected. The same-run VDP1 receipt records 168 traced commands and zero
+dropped rows. Its next command cursor is 168, so the following VDP1 display
+list begins at `168 * 32 = 0x1500`. Five menu sprite records at `0x1560` through
+`0x15e0` join byte-for-byte to the Japanese retail `TITLE.BIN`:
+
+| Role | `TITLE.BIN` offset | Position | Screenshot texels |
+| --- | ---: | ---: | ---: |
+| New Game, inactive | `0x0316` | `(129,153)` | 313/313 |
+| Continue, inactive | `0x0576` | `(128,165)` | 293/293 |
+| Configuration marker, left | `0x1746` | `(85,168)` | 192/192 |
+| Configuration marker, right, flipped | `0x1746` | `(211,168)` | 192/192 |
+| Configuration, selected | `0x09a6` | `(109,177)` | 463/463 |
+
+The two marker palettes match the retail palette at `TITLE.BIN` offset
+`0x1726`. Text CRAM palette bytes match the identical retail palette copies
+at `0x02f6`, `0x0426`, `0x0556`, `0x0686`, `0x07b6`, `0x0986`, and `0x1f06`.
+The verifier
+`scripts/verify_nexus_japanese_configuration_capture.py` checks command bytes,
+source spans, palettes, sprite priority, blend ratio, placement, horizontal
+flip, and all 1,453 nontransparent pixels against the retained 640×448 image.
+An isolated C probe ran Firestaff's production renderer against the authentic
+Japanese `TITLE.BIN`; all 1,453 emitted sprite pixels match the Ymir screenshot.
+
+Firestaff renders the five Japanese Configuration-selected foreground sprites
+and accepts mouse clicks in the source-bound native row rectangle
+`(109,177,104,8)`. The screenshot, complete VDP1/VDP2 dumps, logs, and hashes
+are retained under
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_jp_config_selection_preaccept_20261028/`.
+The English Configuration capture and production-renderer check are documented
+below. The shared title background, full-screen composition, menu destination
+execution, Continue/save loading, and gameplay viewport/HUD parity remain open.
+
+## English Configuration selection rendering (2026-10-28)
+
+A Ymir 0.4.2-dev `--debug` replay used the authentic English retail Saturn disc,
+USA 1.01a IPL, and a copied diagnostic profile. The loaded Ymir state opens the
+native title menu with Continue selected. One Control Pad 1 Up pulse at capture
+frame 30 selects Configuration. This is a menu-state replay, not cold-boot
+evidence. The paired screenshot SHA-256 is
+`725fdfb6ef795606ffeebb34d734dccfc9e813aff9c23a4628149ce61dc76304`.
+
+The same-run trace ends at VDP1 frame 59 and contains 178 commands with zero
+dropped rows. Five commands join to the hash-verified English retail
+`TITLE.BIN` (SHA-256
+`a634e8daf2a581df154b454919ee2ed44e937371668219d7cdf6d0983a613e44`):
+
+| Role | `TITLE.BIN` offset | Position | Visible texels | Screenshot check |
+| --- | ---: | ---: | ---: | ---: |
+| New Game, inactive | `0x0316` | `(129,153)` | 313 | 313/313 |
+| Continue, inactive | `0x0576` | `(128,165)` | 293 | 293/293 |
+| Configuration marker, left | `0x1dd6` | `(85,168)` | 195 | Background-dependent |
+| Configuration marker, right, flipped | `0x1dd6` | `(211,168)` | 195 | Background-dependent |
+| Configuration, selected | `0x09a6` | `(109,177)` | 463 | 463/463 |
+
+The marker palettes match the retail palette at `TITLE.BIN` offset `0x1db6`.
+The text palettes match the seven identical retail copies at `0x02f6`,
+`0x0426`, `0x0556`, `0x0686`, `0x07b6`, `0x0986`, and `0x1f06`. The marker
+source, palette, position, horizontal flip, VDP2 priority and 31/32 color
+calculation are verified. The screenshot's marker RGB also includes the
+underlying NBG0 image, whose full source and composition remain unbound.
+
+`scripts/verify_nexus_english_configuration_capture.py` checks the complete
+VDP1 frame trace, exact source spans, CRAM palettes, registers and all 1,069
+visible text pixels. A separate C probe compiled Firestaff's production
+renderer against authentic English `TITLE.BIN`; its 320x224 framebuffer index
+map matches all 1,459 source-visible sprite texels from the Ymir commands with
+zero differing pixels. English Configuration row selection and foreground
+rendering are now enabled. The complete screenshot, dumps, log, reproduction
+command and hashes are retained under
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_english_config_menu_20261028/`.
+
+This does not establish the NBG0 title background, full-screen composition,
+Configuration page controls, New Game destination execution, Continue/save
+loading, or gameplay viewport/HUD parity.
+
+This is a full captured-frame composition check, not a renderer admission. The
 replay consumes Ymir display and VDP snapshots, not a Firestaff runtime upload
-from retail assets. Runtime menu presentation, keyboard handling, mouse hit
-areas, save loading and playable-level/HUD parity remain open.
-
-## Japanese menu-state NBG0 storage join (2026-10-27)
-
-The retained Japanese Ymir capture contains a frame-tagged source-address read
-pass and a source-to-storage match. Japanese `TITLE.BIN` bytes
-`0x2526..0xa0a5` (31,616 bytes; end-exclusive `0xa0a6`; full member SHA-256
-`51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3`)
-match WorkRAMH address `0x060ac2a6` exactly. Under the verified 304-byte row
-width and 512-byte stride, 30,561 bytes match the active NBG0 8bpp bitmap in
-the frame-8047 snapshot. All 96 leading rows match; the 1,055 differences are
-in the final eight rows. The complete VDP2 trace records 2,432 writes to those
-rows at frame 7,716, of which 1,377 values equal the corresponding source
-bytes. The frame-windowed trace has no later VRAM or CRAM writes before the
-frame-8047 snapshot; the register receipt is checked at frame 8,047 only.
-
-The same run's SH-2 read trace records one contiguous ordered byte-read pass
-over all 31,616 addresses at frame 6,893, with PC `0x06023124`, caller target
-`0x06023108`, and caller return `0x06023176`. The complete SH-2 write trace
-records writes to this WorkRAM span only through frame 6,890. The read trace
-retained 250,000 rows and dropped 860,856 other master reads, so it is globally
-incomplete even though the contiguous source-address pass is present. It
-records no values at read time; the final WorkRAM join does not prove those
-bytes were present when read, and the traces do not cover non-CPU DMA writes.
-
-Run `scripts/verify_nexus_title_nbg0_title_bin_storage.py` and
-`scripts/verify_nexus_title_nbg0_source_read_trace.py` against the retained Ymir
-dump and either the authenticated Japanese retail files or the original
-Japanese CUE; CUE members are read in memory. This reproduces the storage and
-address-pass joins without substituting synthetic title data. The evidence
-bundle's `SHA256SUMS.txt` covers its retained files. The screenshot verifier
-can report a paired frame only when the
-original screenshot remains at the full path recorded in that run's log; a
-relocated copy is not treated as frame-paired.
-
-No complete pixel join establishes which NBG0 bytes are visible after VDP1
-composition. Treat this as bounded SH-2 address-read and NBG0 storage evidence;
-title/menu display ownership and production renderer admission remain blocked.
-See [`nexus_title.md`](nexus_title.md#japanese-menu-state-nbg0-source-and-storage-join-2026-10-27)
-for the detailed source and layout receipt.
+from retail assets. The screenshot has no embedded frame number, so exact
+acquisition-frame identity remains unproven. The Japanese SH-2 read receipt
+observes a full 31,616-address source pass at frame 6,893 but records no values
+and dropped 860,856 unrelated master rows; the NBG0 storage join remains
+  partial. Full runtime menu composition, keyboard behavior beyond verified
+  selection, Configuration page controls, save loading, and playable-level/HUD
+  parity remain open. New Game, Continue, and Configuration foregrounds and
+  mouse rows are source-bound for both authenticated regions as described above.

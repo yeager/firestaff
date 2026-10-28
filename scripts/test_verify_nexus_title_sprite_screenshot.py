@@ -42,13 +42,22 @@ class AuthenticJapaneseContinueTests(unittest.TestCase):
         with contextlib.redirect_stdout(output):
             verify(self.bundle, self.screenshot, self.cue)
         report = output.getvalue()
-        for expected in (
-                "title_bin_offset=0x316 screenshot_matches=313/313",
-                "title_bin_offset=0x1b36 screenshot_matches=186/186",
-                "title_bin_offset=0x6a6 screenshot_matches=293/293",
-                "title_bin_offset=0x7d6 screenshot_matches=463/463",
-                "sprite_priority=5 ratio=31/32 lower_layer=VDP2_back_screen"):
-            self.assertIn(expected, report)
+        lines = report.splitlines()
+        for source_offset, palette, matches in (
+                ("0x316", "0x2f6", "313/313"),
+                ("0x1b36", "0x1b16", "186/186"),
+                ("0x6a6", "0x2f6", "293/293"),
+                ("0x7d6", "0x2f6", "463/463")):
+            self.assertTrue(any(
+                f"title_bin_offset={source_offset}" in line and
+                f"palette_title_bin_offsets={palette}" in line and
+                f"screenshot_matches={matches}" in line
+                for line in lines),
+                f"missing source/palette/pixel receipt for {source_offset}: {report}")
+        self.assertEqual(sum("title_bin_offset=" in line for line in lines), 5)
+        self.assertIn("menu_state=japanese-continue", report)
+        self.assertIn(
+            "sprite_priority=5 ratio=31/32 lower_layer=VDP2_back_screen", report)
 
     def test_english_retail_media_is_not_misreported_as_japanese_capture(self):
         english_cue = _path_from_env("FIRESTAFF_NEXUS_EN_CUE")
@@ -93,6 +102,11 @@ class CaptureRunReceiptTests(unittest.TestCase):
                     "vdp1_frame_index=8047\n", encoding="ascii")
 
                 status = same_capture_run(bundle, screenshot, run_log, 8047)
+                relocated_screenshot = root / "retained-copy.png"
+                relocated_screenshot.write_bytes(screenshot.read_bytes())
+                with self.assertRaisesRegex(
+                        ValueError, "run log does not identify the supplied screenshot"):
+                    same_capture_run(bundle, relocated_screenshot, run_log, 8047)
         finally:
             if created_scratch_root:
                 scratch_root.rmdir()

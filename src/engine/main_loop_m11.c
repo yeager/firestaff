@@ -12504,6 +12504,15 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             }
             if (gameView && gameView->active) {
                 M12_MenuInput mappedInput = M12_MENU_INPUT_NONE;
+                if (gameView->sourceKind == M11_GAME_SOURCE_NEXUS_DGN &&
+                    gameView->nexusState.title_active) {
+                    mappedInput = M11_NexusStartupMenuInputFromScancode(
+                        (int)ev.key.scancode,
+                        gameView->nexusState.title_active);
+                    if (mappedInput != M12_MENU_INPUT_NONE) {
+                        return mappedInput;
+                    }
+                }
                 if (m11_game_view_is_theron(gameView)) {
                     const int gameplayInput =
                         m11_game_view_supports_held_motion_input(gameView);
@@ -13174,6 +13183,15 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             }
             if (gameView && gameView->active) {
                 M12_MenuInput mappedInput = M12_MENU_INPUT_NONE;
+                if (gameView->sourceKind == M11_GAME_SOURCE_NEXUS_DGN &&
+                    gameView->nexusState.title_active) {
+                    mappedInput = M11_NexusStartupMenuInputFromScancode(
+                        (int)ev.key.scancode,
+                        gameView->nexusState.title_active);
+                    if (mappedInput != M12_MENU_INPUT_NONE) {
+                        return mappedInput;
+                    }
+                }
                 if (m11_game_view_is_theron(gameView)) {
                     const int gameplayInput =
                         m11_game_view_supports_held_motion_input(gameView);

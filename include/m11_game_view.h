@@ -22,6 +22,7 @@
 #include "dm1_v1_iigs_installation.h"
 #include "dm1_v1_iigs_audio.h"
 #include "nexus_v1_dungeon.h"
+#include "nexus_v1_retail_title_menu.h"
 #include "nexus_v1_hud_hit_rects.h"
 #include "nexus_v1_light_runtime.h"
 #include "dm1_v1_vblank_timing.h"
@@ -1310,6 +1311,9 @@ typedef struct {
         int title_active;
         int title_loaded;
         int title_frame;
+        /* Evidence-bounded Japanese retail title choice, independent of the
+         * generic Firestaff startup/save menu. */
+        Nexus_V1_RetailTitleMenuState retail_title_menu;
         int champion_select_active;
         int champion_cursor;
         int champion_select_frame;

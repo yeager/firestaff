@@ -31,6 +31,7 @@
 #include "nexus_v1_startup_layout.h"
 #include "nexus_v1_startup_menu.h"
 #include "nexus_v1_title.h"
+#include "nexus_v1_retail_title_menu_renderer.h"
 #include "nexus_v1_viewport.h"
 #include "nexus_v1_warning_dgt2_m11_presentation.h"
 #include "nexus_v1_world.h"
@@ -25352,6 +25353,7 @@ static void m11_nexus_release_title(M11_GameViewState* state) {
     state->nexusState.title_active = 0;
     state->nexusState.title_loaded = 0;
     state->nexusState.title_frame = 0;
+    nexus_v1_retail_title_menu_init(&state->nexusState.retail_title_menu);
     state->nexusState.champion_select_active = 0;
     state->nexusState.champion_cursor = 0;
     state->nexusState.champion_select_frame = 0;
@@ -37141,6 +37143,74 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return M11_GAME_INPUT_IGNORED;
         }
         if (state->nexusState.title_active) {
+            if (!state->nexusState.retail_title_menu.menu_active) {
+                if (!nexus_title_full_boot_start_ready(
+                        state->nexusState.title_frame)) {
+                    /* The original title route owns input during its boot
+                     * reveal and start prompt. */
+                } else if (input == M12_MENU_INPUT_ACCEPT ||
+                           input == M12_MENU_INPUT_ACTION) {
+                    Nexus_V1_RetailTitleMenuResult menu_result =
+                        nexus_v1_retail_title_menu_reduce(
+                            &state->nexusState.retail_title_menu,
+                            NEXUS_V1_RETAIL_TITLE_MENU_INPUT_OPEN,
+                            0);
+                    if (menu_result ==
+                        NEXUS_V1_RETAIL_TITLE_MENU_RESULT_MENU_OPENED) {
+                        return M11_GAME_INPUT_REDRAW;
+                    }
+                } else if (input != M12_MENU_INPUT_NONE) {
+                    /* The ready title prompt only admits the captured
+                     * Accept action; do not leak other keys to the generic
+                     * Firestaff title menu. */
+                    return M11_GAME_INPUT_IGNORED;
+                }
+            } else {
+                if (input == M12_MENU_INPUT_DOWN ||
+                    input == M12_MENU_INPUT_UP) {
+                    Nexus_V1_RetailTitleMenuResult menu_result =
+                        nexus_v1_retail_title_menu_reduce(
+                            &state->nexusState.retail_title_menu,
+                            input == M12_MENU_INPUT_DOWN
+                                ? NEXUS_V1_RETAIL_TITLE_MENU_INPUT_DOWN
+                                : NEXUS_V1_RETAIL_TITLE_MENU_INPUT_UP,
+                            0);
+                    if (menu_result ==
+                        NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED ||
+                        menu_result ==
+                            NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNVERIFIED_INPUT) {
+                        return M11_GAME_INPUT_REDRAW;
+                    }
+                    return M11_GAME_INPUT_IGNORED;
+                }
+                if (input == M12_MENU_INPUT_ACCEPT ||
+                    input == M12_MENU_INPUT_ACTION) {
+                    Nexus_V1_RetailTitleMenuResult menu_result =
+                        nexus_v1_retail_title_menu_reduce(
+                            &state->nexusState.retail_title_menu,
+                            NEXUS_V1_RETAIL_TITLE_MENU_INPUT_ACCEPT,
+                            0);
+                    if (menu_result ==
+                            NEXUS_V1_RETAIL_TITLE_MENU_RESULT_NO_CONTINUE_SAVE ||
+                        menu_result ==
+                            NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SHOW_LOAD_PANEL ||
+                        menu_result ==
+                            NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SHOW_CONFIGURATION ||
+                        menu_result ==
+                            NEXUS_V1_RETAIL_TITLE_MENU_RESULT_START_NEW_GAME) {
+                        return M11_GAME_INPUT_REDRAW;
+                    }
+                    return M11_GAME_INPUT_IGNORED;
+                }
+                if (input != M12_MENU_INPUT_NONE) {
+                    /* Do not route unobserved retail directions through the
+                     * generic Firestaff save/champion menu. */
+                    return M11_GAME_INPUT_IGNORED;
+                }
+                /* Once opened, the retail menu owns input. In particular,
+                 * do not fall through to Firestaff's generic title route. */
+                return M11_GAME_INPUT_IGNORED;
+            }
             Nexus_V1_LauncherRuntimeStartupSnapshot snapshot;
             Nexus_V1_StartupTitleExecution execution;
             Nexus_V1_StartupHostActionReceipt receipt;
@@ -38349,25 +38419,36 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
         return M11_GAME_INPUT_IGNORED;
     }
     if (state->nexusState.title_active) {
-        if (!state->nexusState.startup_host_capture_ready ||
-            !state->nexusState.startup_menu_capture_uses_real_assets ||
-            !state->nexusState.startup_title_menu_capture_route_joined ||
-            !state->nexusState.startup_host_route_capture_matrix_ready ||
-            !state->nexusState.startup_host_route_capture_matrix_exact) {
-            m11_set_status(state, "ASSETS", "NEXUS MENU CAPTURE REQUIRED");
+        if (!nexus_title_full_boot_start_ready(
+                state->nexusState.title_frame)) {
             return M11_GAME_INPUT_IGNORED;
         }
-        Nexus_V1_LauncherRuntimeStartupSnapshot snapshot;
-        Nexus_V1_StartupTitleExecution execution;
-        Nexus_V1_StartupHostActionReceipt receipt;
-        m11_nexus_runtime_startup_snapshot(state, &snapshot);
-        if (!nexus_v1_launcher_startup_execute_title_pointer_from_snapshot(
-                &snapshot,
-                &execution,
-                &receipt)) {
-            return M11_GAME_INPUT_IGNORED;
+        if (!state->nexusState.retail_title_menu.menu_active) {
+            Nexus_V1_RetailTitleMenuResult menu_result =
+                nexus_v1_retail_title_menu_reduce(
+                    &state->nexusState.retail_title_menu,
+                    NEXUS_V1_RETAIL_TITLE_MENU_INPUT_OPEN,
+                    0);
+            return menu_result ==
+                    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_MENU_OPENED
+                ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
-        return m11_nexus_apply_startup_action_receipt(state, &receipt);
+        {
+            const Nexus_TitleScreen *title =
+                (const Nexus_TitleScreen *)state->nexusTitleScreen;
+            const int configuration_renderable =
+                title && (title->retail_menu_source_region ==
+                              NEXUS_V1_TITLE_MENU_SOURCE_JAPANESE ||
+                          title->retail_menu_source_region ==
+                              NEXUS_V1_TITLE_MENU_SOURCE_ENGLISH);
+            Nexus_V1_RetailTitleMenuResult menu_result =
+                nexus_v1_retail_title_menu_select_pointer(
+                    &state->nexusState.retail_title_menu, x, y,
+                    configuration_renderable);
+            return menu_result ==
+                    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED
+                ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+        }
     }
     if (state->nexusState.startup_save_select_active) {
         /* The startup layout helpers retain compatibility hit regions for
@@ -40033,6 +40114,13 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         if (nexusStartupPointer != M11_GAME_INPUT_IGNORED) {
             return nexusStartupPointer;
         }
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN &&
+        state->nexusState.title_active) {
+        /* The title owns the pointer even when a click misses its verified
+         * menu rows. Do not pass an unhandled title click into the dungeon
+         * viewport hit-test. */
+        return M11_GAME_INPUT_IGNORED;
     }
     if (state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) {
         const Nexus_HitRect *game_screen = NULL;
@@ -64379,6 +64467,12 @@ static void m11_nexus_startup_exec_boot_title_frame(
                                : NULL),
                        &nexusFb,
                        command->title_frame + nexus_title_boot_warning_frames());
+    if (context->state && context->state->nexusState.retail_title_menu.menu_active) {
+        (void)nexus_v1_retail_title_menu_render(
+            (const Nexus_TitleScreen*)context->state->nexusTitleScreen,
+            &context->state->nexusState.retail_title_menu,
+            &nexusFb);
+    }
     for (color = 0; color < 256; ++color) {
         uint32_t rgba = nexusFb.palette[color];
         rgb6[color][0] = (uint8_t)((rgba >> 18) & 0x3fu);

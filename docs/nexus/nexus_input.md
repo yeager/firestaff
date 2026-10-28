@@ -71,6 +71,24 @@ context-to-champion mapping have not yet been captured. The button trace
 therefore establishes menu navigation only; Firestaff inventory and equip
 actions remain disabled until those runtime joins are verified.
 
+## Firestaff title keyboard ingress
+
+Firestaff maps F, Enter, keypad Enter, and Space to the Nexus startup Action while the
+Nexus title is active, including both SDL key-event paths. F matches the
+observed Ymir desktop binding for Saturn Start; Enter and Space are host
+keyboard aliases. At the ready title prompt, Action opens an internal
+retail-menu state with New Game selected. Up/Down arrows and W/S navigate the
+three choices. The English retail capture verifies Down from New Game to
+Continue and Up back to New Game with a pixel-identical final screenshot. The
+title-menu state is kept separate from Firestaff's generic save/champion menu,
+and the shared Firestaff save mask is not treated as Saturn BKR availability.
+This input increment did not itself render the selected retail menu. Later
+capture-backed work added source-bound foreground sprites for English
+New Game/Continue and Japanese New Game/Continue/Configuration; full-screen
+composition and production destinations remain blocked. Mouse targeting also
+remains unverified. See
+the [vertical navigation capture receipt](../../parity-evidence/verification/nexus_menu_vertical_navigation_20261027/README.md).
+
 ## Retail manual control model
 
 The Japanese retail manual's controller table (printed page 4) documents the

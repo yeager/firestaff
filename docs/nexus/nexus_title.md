@@ -41,9 +41,20 @@ Nexus's real-time 3D approach.
 ## 3. Firestaff Title Screen Implementation
 
 The source-owned `TITLE.CG` decode exists in `nexus_v1_ui_surfaces.c` and is
-loaded by the Nexus engine. A complete Saturn title consumer is not yet
-implemented: no VDP1/VDP2 placement, palette upload order, or executable-side
-animation route is admitted without capture evidence.
+loaded by the Nexus engine. Capture-backed foreground sprites now have bounded
+per-state VDP1 placement and palette rendering. The shared title background,
+complete VDP1/VDP2 composition, palette upload sequence, and executable-side
+animation route remain unimplemented.
+
+Separate English retail menu captures now bind the five New Game and Continue
+VDP1 sprite draws to exact `TITLE.BIN` byte ranges, captured CRAM colors,
+screen coordinates, and 1,451/1,451 visible pixels per state. Their two
+16-color palettes match retail `TITLE.BIN` bytes. The icon palette has a unique
+match at offset `0x1486`; the text palette has seven identical copies. The background
+bitmap, remaining composition, and upload timing remain unbound; the bounded
+sprite receipt admits only the per-state foreground renderer, not the complete
+title/menu renderer. See the
+[English menu sprite source join](../../parity-evidence/verification/nexus_english_title_menu_sprite_join_20261027/README.md).
 
 The bounded `MAPD/TIBG` receipt also requires the complete section: five
 64×28 maps followed by sixteen big-endian palette words (`0x8c74` bytes from
@@ -105,6 +116,48 @@ only the complete word-swapped `TITLE.CG` member in title-frame VDP2 VRAM, at
 an encoded, decompressed, transformed, or partial NBG0 source, but it rules
 out treating any other complete disc file as that bitmap without a producer
 trace.
+
+### Japanese title-menu partial NBG0 source join
+
+A separate complete Japanese menu-session trace joins a partial raw source
+span: the 921 bytes at relative offset `0x46a` in `TITLE.BIN` `TITL` record 2
+(file offset `0xb8a2`, record offset `0xb438`) are resident at VDP2 NBG0 VRAM
+`0xd404` in the frame-8,060 snapshot. Frame 6,869 clears the full span and
+frame 7,729 writes 608 byte lanes matching the authentic retail source; replay
+of intervening frame-tagged writes reconstructs the span exactly. The
+295 nonzero pixels form the blue divider at native coordinates `x=13..307,
+y=106` below the title logo in the paired screenshot. The
+reproduction command and trace/snapshot hashes are recorded in the
+[Japanese menu evidence receipt](../../parity-evidence/verification/nexus_japanese_title_menu_sprite_join_20261028/README.md#frame-bound-nbg0-source-span).
+
+This is a partial source-to-VRAM receipt only. It does not provide a complete
+decoded source for the 131,072-byte NBG0 bitmap or identify the display
+consumer, so it does not admit title rendering.
+
+### Host mouse selection for the retail title rows
+
+The Firestaff title prompt now opens the same retail menu reducer when clicked
+as when the keyboard Start action is pressed. Once open, mouse clicks select
+New Game `(129,153,64,8)` or Continue `(128,165,64,8)` using the authenticated
+VDP1 text-command rectangles in native 320x224 coordinates. These are the
+retained Ymir command positions also checked against the 640x448 screenshot by
+`scripts/verify_nexus_title_sprite_screenshot.py`. Clicks outside these
+rectangles leave the menu selection unchanged. The Configuration row at
+`(109,177,104,8)` is now selectable for authenticated English and Japanese
+title sources. The Japanese selected-state renderer uses exact `TITLE.BIN`
+textures at offsets `0x0316`, `0x0576`, `0x1746`, and `0x09a6`, with the
+captured palette at `0x1726` for its two horizontally oriented markers. Its
+Ymir capture verifies all 1,453 visible pixels. The English renderer uses
+textures at `0x0316`, `0x0576`, `0x1dd6`, and `0x09a6`, with marker palette
+`0x1db6`; its text matches 1,069/1,069 screenshot pixels. The English markers'
+final RGB depends on the unbound title background. See both regional capture
+verifiers and receipts in `docs/nexus/nexus_startup.md`.
+
+This adds selected-row foreground rendering and row selection only. It does
+not establish the unbound title background, full-screen composition, New Game
+destination execution, Continue/save loading, or the Configuration page
+controls.
+
 
 An authenticated producer trace narrows the `TITLE.CG` result further. In
 the retail JP transition interval after frame 12500, SH-2 PC `0x06041fa0`
@@ -193,6 +246,29 @@ this receipt. The later same-session receipts bind the source pointer/RAM
 producer and its CDB provenance; the display consumer is still absent, so this
 is not permission to present a native title composition.
 
+### Ymir trace dispatch optimization — 2026-10-28
+
+Ymir's VDP2 debug tracer now filters writes by enabled state, memory type,
+address interval and optional absolute VDP1 frame interval before acquiring
+the ring-buffer lock. The change is on the existing Yeager fork branch
+`codex/nexus-vdp2-frame-window-20261027` at commit
+`c967459a809af4ab2c3160e7fd6a947f19f78291`. It builds successfully in the
+shared TRV2 build at `/opt/ymir/build-capture-payload`; the resulting binary
+passes its `--help` smoke check. Build verification and binary SHA-256 are
+recorded on the external evidence disk in
+`firestaff-evidence/nexus/ymir-vdp2-prefilter-c967459a.md`.
+
+The capture already running when this build completed had the prior binary
+mapped and did not measure the prefilter. It was stopped after 3 h 44 min
+without reaching the post-loop dump stage. A 100-frame run with the new binary
+was stopped after 10 min without a dump; both runs remained CPU-active, and
+seed slot 3 was preserved. Ymir writes trace and memory artifacts only after
+the complete requested frame loop. The tracer prefilter alone does not make
+this route practical: `--debug` also selects the instrumented Saturn core
+execution path, which carries a documented performance penalty. A future
+capture needs selective core tracing or bounded streaming before this run can
+supply evidence. Neither attempt changes the source-presentation admission.
+
 ### Independent bounded copy-delta receipt — 2026-08-27
 
 The supplied Japanese CUE/BIN media and matching Japanese 1.01 BIOS were also
@@ -206,7 +282,8 @@ now replays those writes over the captured frame-5 VDP2 bus-order baseline and
 reproduces frame 6 byte-for-byte. It rejects a foreign, later, or same-frame
 baseline. This independently verifies the observed copy delta without filling
 untraced bytes with a synthetic zero image. It remains a producer receipt;
-the VDP1/VDP2 display consumer, title input, and native renderer stay blocked.
+separate capture-backed work renders selected foreground sprites, but the
+shared VDP1/VDP2 background consumer and full native title renderer stay blocked.
 
 The same CUE/BIOS pair was then captured for 120 frames with the producer's
 documented `0x10` button mask asserted for frame 12,596. The input trace

@@ -72,7 +72,18 @@ typedef struct {
     uint64_t decoded_map_cell_fnv1a64[NEXUS_V1_TITLE_MAP_COUNT];
     int decoded_map_count;
     int decoded_map_source_bound;
+    /* Authentic regional retail TITLE.BIN retained only when its complete
+     * byte fingerprint matches an admitted sprite-capture corpus. */
+    uint8_t *retail_menu_source_bytes;
+    size_t retail_menu_source_size;
+    int retail_menu_source_region;
 } Nexus_TitleScreen;
+
+enum {
+    NEXUS_V1_TITLE_MENU_SOURCE_NONE = 0,
+    NEXUS_V1_TITLE_MENU_SOURCE_JAPANESE = 1,
+    NEXUS_V1_TITLE_MENU_SOURCE_ENGLISH = 2
+};
 
 /* DMWeb TITLE.BIN MAPD/TIBG composition: five 64x28 maps selecting the
  * 8x8 4bpp tiles stored in TITLE.CG.  This is a source-format decoder only;

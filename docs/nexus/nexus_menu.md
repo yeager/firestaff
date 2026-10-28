@@ -108,7 +108,8 @@ rectangles are Saturn VDP coordinates.
 
 ## 6. Still blocked or incomplete
 
-- Authenticated Saturn menu renderer and VDP1/VDP2 placement
+- Complete Saturn menu composition, including the shared background and
+  full VDP1/VDP2 placement; source-bound per-state foreground sprites exist
 - Champion-selection Saturn presentation (3D/VDP1 portraits, party formation)
 - In-game ESC menu
 - Save/load menu (Saturn SRAM format)

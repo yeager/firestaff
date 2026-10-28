@@ -1,5 +1,40 @@
 # Firestaff DONE — Nexus
 
+## 2026-10-28 — Bind a partial Japanese title source span to NBG0 writes
+
+- Added a bounded verifier for the complete authentic Ymir VDP2 write trace.
+  It authenticates the Japanese CUE and `TITLE.BIN`, checks the matching
+  frame-8,060 snapshot receipts, proves a frame-6,869 clear and replays the
+  frame-7,729 byte writes to reconstruct a 921-byte `TITL` record 2 span at
+  NBG0 offset `0xd404`.
+- The span at `TITLE.BIN+0xb8a2` contains 295 nonzero bytes. Full bitmap decode
+  forming the native one-row title divider at `x=13..307, y=106`. Full bitmap
+  decode and display consumer work remain open; no presentation admission or
+  synthetic data was added.
+- Verification used the retained external capture bundle and local authentic
+  Japanese CUE. Raw media and emulator dumps remain outside Git.
+
+## 2026-10-28 — Render verified regional title-menu foreground sprites
+
+- Added bounded title-menu rendering for English New Game/Continue and
+  Japanese New Game/Continue/Configuration selections. Each layout is selected
+  only for a matching
+  full-size regional `TITLE.BIN` fingerprint; sprite spans, placements and
+  palette offsets come from authentic Ymir captures and retail data.
+- The Japanese Continue markers use the palette at `0x1b16`; Japanese New Game
+  markers use `0x15d6`. Text palette bytes match seven identical retail copies.
+  The renderer uses the captured 31/32 color calculation over the black
+  back-screen. It does not draw the unbound background or full Configuration
+  page.
+- The source verifier matches all visible sprite texels against the retained
+  authentic screenshots: English New Game 1,451/1,451, English Continue
+  1,451/1,451, Japanese New Game 1,495/1,495, Japanese Continue 1,441/1,441,
+  and Japanese Configuration 1,453/1,453.
+  Screenshot-to-command-frame identity remains unproven.
+- The four English/Japanese New Game and Continue checks and the separate
+  Japanese Configuration capture verifier pass against the authentic CUE and
+  retained Ymir screenshots. No game media or emulator dumps were added to Git.
+
 ## 2026-10-27 — Keep MAPD decoding separate from Saturn capture admission
 
 - Corrected `nexus_title_load`: successfully decoding the five real
@@ -454,3 +489,38 @@ Reviewed 2026-08-26. Completed work only.
   separate path. This does not bind its context index or opaque auxiliary word
   to Firestaff's champion/inventory model. The reproducible checker is
   `scripts/analyze_nexus_mouse_event_crossrefs.py`.
+
+## 2026-10-28 — Japanese retail Configuration title selection
+
+- Firestaff now renders the selected Japanese Configuration title row from
+  authentic regional `TITLE.BIN` sprite and palette spans. The mirrored right
+  marker follows the captured VDP1 horizontal-flip flag.
+- Mouse selection accepts the Japanese Configuration row when the authenticated
+  Japanese retail title source is active.
+- The real Ymir capture verifier binds five VDP1 commands to retail texture and
+  palette bytes and checks all 1,453 visible screenshot texels. The production
+  C renderer's output was independently compared against the same authentic
+  capture and matched all 1,453 texels.
+- English Configuration support, full title background and composition,
+  destination execution, Continue/save loading, and gameplay/HUD parity remain
+  open. See `docs/nexus/nexus_startup.md` and
+  `docs/nexus/nexus_title.md` for the evidence boundary.
+
+## 2026-10-28 — English retail Configuration title selection
+
+- A Ymir `--debug` menu-state replay on authentic English retail media selected
+  Configuration with one scheduled Control Pad 1 Up pulse.
+- Firestaff renders the five English Configuration-selected foreground
+  sprites from hash-verified `TITLE.BIN` texture and palette bytes, including
+  the flipped right marker. Mouse selection is enabled for this authenticated
+  English region.
+- The capture verifier binds all five VDP1 commands, source spans, CRAM
+  palettes, placement, priority, color-calculation ratio and 1,069 screenshot
+  text pixels. Marker screenshot RGB depends on the still-unbound NBG0
+  background.
+- The production C renderer's framebuffer index map matches all 1,459 source
+  texels from the captured commands with zero differing pixels.
+- Full title background/composition, Configuration page controls, destination
+  execution, Continue/save loading, and gameplay/HUD parity remain open. See
+  `docs/nexus/nexus_startup.md` and `docs/nexus/nexus_title.md` for the evidence
+  boundary.

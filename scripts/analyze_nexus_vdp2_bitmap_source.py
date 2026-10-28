@@ -4,8 +4,10 @@
 The VDP2 register receipt identifies the active bitmap geometry, while this
 tool performs only bounded byte-domain joins against authenticated retail
 `MENU.BPK` PRS3 output, `FONT256.S2D` character-generator bytes, and the five
-DMWeb TITLE.BIN MAPD/TIBG maps expanded through TITLE.CG. A partial or absent
-match is evidence, never permission to render or assign ownership.
+DMWeb TITLE.BIN MAPD/TIBG maps expanded through TITLE.CG. For NBG0 it also
+reports a sampled raw TITLE.BIN span and any exact copy in captured WRAM as an
+unproven producer candidate. A partial or absent match is evidence, never
+permission to render or assign ownership.
 """
 
 from __future__ import annotations
@@ -350,6 +352,7 @@ def ymir_bundle_frame(bundle: Path) -> tuple[dict[str, bytes], int, str]:
 
 
 def longest_nonzero_match(source: bytes, target: bytes) -> tuple[int, int, int]:
+    """Return the longest sampled exact source span, considering every target hit."""
     best = (0, 0, 0)
     if len(source) < 32:
         return best
@@ -357,16 +360,27 @@ def longest_nonzero_match(source: bytes, target: bytes) -> tuple[int, int, int]:
         chunk = source[source_offset:source_offset + 32]
         if sum(value != 0 for value in chunk) < 8:
             continue
-        target_offset = target.find(chunk)
-        if target_offset < 0:
-            continue
-        length = 32
-        while (source_offset + length < len(source) and
-               target_offset + length < len(target) and
-               source[source_offset + length] == target[target_offset + length]):
-            length += 1
-        if length > best[0]:
-            best = (length, source_offset, target_offset)
+        search_from = 0
+        while True:
+            target_offset = target.find(chunk, search_from)
+            if target_offset < 0:
+                break
+            left = 0
+            while (source_offset - left - 1 >= 0 and
+                   target_offset - left - 1 >= 0 and
+                   source[source_offset - left - 1] ==
+                   target[target_offset - left - 1]):
+                left += 1
+            length = 32
+            while (source_offset + length < len(source) and
+                   target_offset + length < len(target) and
+                   source[source_offset + length] ==
+                   target[target_offset + length]):
+                length += 1
+            total = left + length
+            if total > best[0]:
+                best = (total, source_offset - left, target_offset - left)
+            search_from = target_offset + 1
     return best
 
 
@@ -482,6 +496,35 @@ def main() -> int:
                 ranked.append((run, name, source_offset, target_offset))
         for run, name, source_offset, target_offset in sorted(ranked, reverse=True)[:8]:
             print(f"{layer}_partial_match={name} bytes={run} source_offset=0x{source_offset:x} bitmap_offset=0x{target_offset:x}")
+        if layer == "NBG0" and title_bin:
+            run, source_offset, target_offset = longest_nonzero_match(
+                title_bin, bitmap)
+            if run:
+                span = title_bin[source_offset:source_offset + run]
+                nonzero = sum(value != 0 for value in span)
+                occurrences = title_bin.count(span)
+                target_occurrences = bitmap.count(span)
+                print(
+                    f"NBG0_raw_TITLE.BIN_candidate_bytes={run} "
+                    f"nonzero_bytes={nonzero} "
+                    f"title_bin_offset=0x{source_offset:x} "
+                    f"bitmap_offset=0x{target_offset:x} "
+                    f"title_bin_occurrences={occurrences} "
+                    f"bitmap_occurrences={target_occurrences}")
+                wram_path = (
+                    args.capture / "wram-hi.bin"
+                    if args.capture.is_dir() else None)
+                if wram_path and wram_path.is_file():
+                    wram_hi = wram_path.read_bytes()
+                    wram_offset = wram_hi.find(span)
+                    wram_occurrences = wram_hi.count(span)
+                    wram_offset_text = (
+                        f"0x{wram_offset:x}" if wram_offset >= 0 else "none")
+                    print(
+                        f"NBG0_raw_TITLE.BIN_WRAM_hi_offset="
+                        f"{wram_offset_text} "
+                        f"occurrences={wram_occurrences}")
+                print("NBG0_raw_TITLE.BIN_candidate_status=unproven")
         print(f"{layer}_exact_source_matches={layer_exact}")
     cram = frame["vdp2-cram"]
     palette_swap = b"".join(title_palette[offset:offset + 2][::-1]

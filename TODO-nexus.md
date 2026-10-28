@@ -1,6 +1,6 @@
 # Firestaff TODO — Nexus
 
-Reviewed 2026-10-27. The items below track open work and include completed
+Reviewed 2026-10-28. The items below track open work and include completed
 diagnostics as context. Verified evidence is also recorded in the Nexus capture
 and reverse-engineering records and in [DONE-nexus.md](DONE-nexus.md).
 
@@ -30,16 +30,52 @@ Replaying the English screenshot from the captured same-frame state reproduces
 every RGB pixel exactly. In that English capture, 86 of 162 PRS3 `MENU.BPK`
 surfaces have direct byte matches in VDP1 VRAM, but none of 137 textured command source starts falls
 within those ranges. The menu screenshot confirms that Ymir displays the
-English-version title menu, but the exact visible asset owner and its CLUT are
-not identified. The Ymir log records `0DMSTRT.BIN` and a CD Block soft reset,
+English-version title menu. A matched retail-menu capture now binds the five
+visible English New Game and Continue VDP1 sprites to `TITLE.BIN` offsets,
+captured CRAM palette bytes present in authentic `TITLE.BIN` ranges, screen
+placement, and all 1,451 visible pixels in each state. The icon palette has one
+source match; seven identical copies of the text palette remain candidates.
+Firestaff now draws those five authenticated English foreground sprites for
+New Game and Continue from the exact hash-pinned `TITLE.BIN`, plus the five
+authenticated Japanese New Game and Continue sprites and their source-bound
+regional palettes. A Japanese Configuration-selected capture now binds five
+foreground sprites, their palettes, positions and 1,453 visible screenshot
+pixels to authentic `TITLE.BIN`. Firestaff renders this Japanese selection and
+its startup mouse can select that row. An English Configuration-selected Ymir
+capture now binds its five foreground commands, regional palette, placement,
+and horizontal flip to authentic English `TITLE.BIN`; Firestaff renders the
+same row and accepts its mouse selection. The three English text sprites match
+1,069 screenshot pixels, while the markers' final RGB depends on the unbound
+NBG0 background. Neither regional result binds the shared background or
+implements destination execution; full menu composition remains open.
+Destination activation and save loading remain open.
+This does not bind the NBG0 background or remaining screen composition;
+the exact background source and complete display consumer are still unknown.
+The English New Game and Continue captures share byte-identical VDP2 VRAM,
+CRAM and registers, so their observed selection difference is confined to
+VDP1 state; this still leaves the shared NBG0 retail source unbound.
+The Japanese New Game and Continue captures also have identical NBG0 VRAM
+(SHA-256 `0a3b8b5ba0bd9e9c4b549d136961b44439d2534cbb7060c5bcbdca6da9c53d08`);
+scanning all authentic Japanese disc members finds no complete decoded source
+match. A complete frame-tagged VDP2 trace now proves that a 921-byte raw span
+from `TITL` record 2 in Japanese `TITLE.BIN` (`0xb438 + 0x46a`) is written
+into NBG0: frame 6,869 clears the span, then frame 7,729 writes 608 byte lanes
+that, with the intervening
+captured writes, reconstruct the authentic source bytes exactly. This joins a
+partial source span, not the full NBG0 bitmap or its display meaning.
+An exact but sparse 1,603-byte `TITLE.BIN`/NBG0/WRAM-high overlap is a trace
+target only; without frame-bound VDP2 writes it does not identify a producer.
+The Ymir log records `0DMSTRT.BIN` and a CD Block soft reset,
 but no `DM.BIN` read event. Separately, an exact 230,669-byte prefix of the
 authentic 555,144-byte English `DM.BIN` is present at offset `0x10000` in the
 WRAM snapshot. This proves prefix residency, not that the whole file was
-loaded or how the logged read path works. The English capture therefore
-establishes an English-version emulator cold-boot-to-menu route, not Firestaff
-menu rendering or input, Continue/save loading, or playable-level parity. Keep the English
-renderer gate closed and keep the Japanese capture as separate regional
-evidence. Capture hashes, output and reproduction commands are in
+loaded or how the logged read path works. The English capture establishes the
+English-version emulator cold-boot-to-menu route. Firestaff now renders the
+authenticated English New Game/Continue foreground sprites and Japanese New
+Game/Continue/Configuration sprites. This does not establish full menu
+composition, Continue/save loading, or playable-level parity. Keep the shared
+background and remaining regional renderer gates closed. Capture hashes,
+output, and reproduction commands are in
 [`docs/nexus/nexus_startup.md`](docs/nexus/nexus_startup.md#english-cold-boot-reaches-the-native-title-menu-2026-10-27);
 raw capture files remain on the external evidence volume.
 
@@ -75,34 +111,26 @@ negative result; neither capture authorizes renderer admission.
 An earlier cold-start capture requested 400 frames but retained only 48 before
 its 45-second timeout, before its scheduled Start input at capture frame 300.
 These earlier captures are incomplete or negative provenance observations.
-The 2026-10-27 controlled English-version capture now establishes that this
-disc image cold boots to the three-choice title menu, with a complete VDP1 command
-trace and a partial source join. It does not identify which scheduled input
-caused the transition or bind the visible menu to its VDP1 sources and CLUTs.
-Keep the production menu gate closed until that source/display ownership is
-joined and Firestaff's own title/menu route is verified against the same
-English assets.
+The 2026-10-27 controlled English-version capture establishes that this disc
+image cold boots to the three-choice title menu, with a complete VDP1 command
+trace and a partial source join. A matched menu-state capture now binds the
+five English New Game and Continue sprite draws to authentic `TITLE.BIN`
+offsets, captured CRAM colors, placement, and screenshot pixels. The NBG0
+background source and full-screen consumer remain unbound; neither capture
+identifies which scheduled input caused the cold-boot title transition. Keep
+the production menu gate closed until the background and complete display
+ownership are joined and Firestaff's own title/menu route is verified against
+the same English assets.
 
 PR #19 merged the corrected NBG1 TileFetcher address path and a scroll-offset
 regression. Its focused test verifies the bounded name-table fetch behavior;
 this does not bind the
 NBG1 data to FONT256, MENU.BPK or a retail text/display consumer, and does not
 change menu, HUD, viewport or production-readiness gates. Keep the next work
-focused on identifying the visible English menu's retail source/CLUT owners,
-isolating the input that changes the title state, and wiring the verified
-route into Firestaff without opening a renderer gate prematurely.
-
-2026-10-27 repeat evidence: a fresh Japanese cold boot on the frame-tracing
-Ymir fork saved a same-run VDP1 receipt and Continue screenshot. The VDP1
-receipt names frame 8047, but the run log does not bind the screenshot save
-event to that exact frame. The complete VDP1 trace has 178 frame-8047 commands
-with zero drops. Its PNG and all 15,264 frame-7716 SH-2 writes are byte-for-byte
-identical to the previous capture used for the paired, stable VDP2 snapshot
-analysis. This reproduces the observed menu frame and source-write sequence.
-The new run did not include VDP2 write tracing, so it does not replace the
-paired snapshot receipt or open any Firestaff rendering/input gate. Raw
-outputs and hashes are retained at
-`ymir_nexus_menu_frame_windowed_sh2_20261027` external evidence bundle (not tracked in the repository).
+focused on identifying the authentic NBG0 background source and complete
+English display consumer, authenticating the title input transition, and
+wiring the verified sprite and input routes into Firestaff without opening a
+renderer gate prematurely.
 
 The 2026-10-26 Mednafen `.mca` startup capture is not evidence of a loaded
 authentic backup card. Mednafen 1.32.1 uses the `mca` suffix for its autosave
@@ -132,29 +160,77 @@ frame, but no menu or level is loaded and the startup receipt remains blocked
 on the PRS3 menu capture. See
 [`parity-evidence/verification/nexus_cli_direct_start_block_20261024/README.md`](parity-evidence/verification/nexus_cli_direct_start_block_20261024/README.md).
 
+The title asset loader now keeps `startup_title_vdp_capture_verified` closed
+when it decodes authentic `TITLE.BIN`/`TITLE.CG` MAPD data. That decode admits
+the bounded five-plane asset renderer only; it does not prove Saturn VDP1/VDP2
+composition or open the native title/menu handoff. Preserve this separation
+until a capture-backed production receipt explicitly admits the display
+consumer. A rebuilt real-media pointer-only launcher check now reports
+`title-vdp-owner-compositor-capture-required` for the installed Japanese
+retail image and rejects a playable-runtime claim. See
+[`DONE-nexus.md`](DONE-nexus.md) for the verification record.
+
+## 2026-10-27 — Resolve Nexus edition ownership when extracted files and discs coexist
+
+The authentic shared Nexus data directory contains extracted Japanese-route
+files alongside multiple retail Saturn images. The normal M12 pointer route
+reported `edition=nexus-saturn-jp` from the extracted `DM.BIN`, but the engine
+then opened the English CUE as supplemental media. A working-tree attempt to
+prevent this by matching the disc's `DM.BIN` still selected English: the
+Japanese and English images share that executable, so its byte identity does
+not distinguish their localized resource sets. The real-media regression
+`tests/test_nexus_v1_native_menu_mouse_title.sh` failed on this assertion.
+
+Do not treat a matching `DM.BIN` as proof that an ISO belongs to the selected
+language/revision. Keep extracted data and disc members under one verified
+edition owner, or reject the ambiguous combination. Resolve the selected
+M12 version against a stronger identity (for example, a set of authenticated
+region-specific members or the complete disc identity), then verify that the
+CLI and menu routes open only that owner. Keep the production title/menu gate
+closed. The attempted `DM.BIN`-only selection in the current working tree is
+not a fix and has not passed this real-media test.
+
 - Implement the observed retail title-menu input flow in Firestaff and identify
   the display consumer that places menu and face material.
-  Updated 2026-10-27: the Japanese retail Ymir run now establishes a no-save
+  Updated 2026-10-28: the Japanese retail Ymir run establishes a no-save
   cold boot to the native three-choice menu; a separate single Down press
   selects Continue, and Down/Down/A opens Configuration from that captured
-  menu state. This closes the retail-emulator behavior gap for those observed
-Routes, not Firestaff's runtime menu or the Saturn display consumer, are now
-observed in the retail emulator. The frame-8047 replay reconstructs all 286,720
-screenshot pixels from captured VDP1/VDP2 state, but the PNG has no embedded
-frame number, so exact acquisition-frame identity remains unproven. Five
-Japanese `TITLE.BIN` sprite roles match 1,441 visible texels. The authenticated
-31,616-byte title span matches WorkRAMH; 30,561 bytes match the active NBG0
-bitmap under the verified row layout. Frame 7,716 records 2,432 writes to the
-last eight rows, 1,377 matching source bytes. The frame-6,893 SH-2 trace records
-the complete ordered source-address pass but no read values and dropped
-860,856 unrelated rows. This strengthens source-path evidence but does not
-prove access-time values or full asset ownership. Keep renderer admission
-blocked; see [`docs/nexus/nexus_startup.md`](docs/nexus/nexus_startup.md) and
-[`docs/nexus/nexus_title.md`](docs/nexus/nexus_title.md).
-  earlier paired raw-trace experiments below remain valid negative results for
+  menu state. Firestaff retains a separate keyboard selection state after the
+  ready title prompt; F, Enter, keypad Enter, Space, Up/Down, and W/S are wired
+  only while the Nexus title is active. An English retail Ymir replay verifies
+  Down to Continue and Up back to a pixel-identical New Game frame. Firestaff
+  renders English New Game, Continue, and Configuration selected-state
+  foreground sprites and Japanese New Game, Continue, and Configuration
+  sprites from authentic regional `TITLE.BIN` data and source-bound palettes.
+  The shared background and full Configuration page remain unrendered. New
+  Game, Continue, and Configuration destinations remain unimplemented;
+  Continue execution does not yet read Saturn BKR data. The Japanese New Game
+  and Continue captures each verify five `TITLE.BIN` sprites and 1,441
+  screenshot texels; the English states each verify 1,451. The Japanese
+  Configuration-selected capture verifies five sprites and 1,453 texels. The
+  English Configuration capture verifies five VDP1 commands against retail
+  assets, with all 1,069 text pixels matched; marker RGB remains dependent on
+  the unbound background. The frame-8047 replay
+  reconstructs all 286,720 screenshot pixels from Ymir's VDP1 display buffer
+  and VDP2/CRAM snapshots, with 178 VDP1 commands and zero dropped rows.
+  A same-run repeat has the same screenshot hash and a complete frame-8047
+  VDP1 trace, but the retained PNG is a copy whose path differs from the
+  ephemeral path in `run.log`; the `--run-log` verifier rejects that relocated
+  copy and exact screenshot-frame identity remains unproven. A frame-tagged
+  SH-2 trace records 15,264 writes at frame 7,716; a separate frame-6,893
+  source-read pass covers all 31,616 Japanese `TITLE.BIN` bytes but records no
+  values and drops 860,856 unrelated reads. The final NBG0 snapshot has a
+  30,561-byte storage match under the verified row layout, not a complete
+  pixel/source join. See the Japanese and English menu sections in
+  `docs/nexus/nexus_startup.md` and the
+  [snapshot join](docs/nexus/NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md).
+  These captures strengthen retail evidence; they do not prove full Firestaff
+  menu composition, source ownership, or destination execution. Keep those
+  gates closed.
+  Earlier paired raw-trace experiments below remain valid negative results for
   their sampled windows, but they are no longer the only input evidence. Keep
-  the production gate closed while identifying menu/face material ownership
-  and wiring the verified selection behavior into Firestaff.
+  full-menu admission closed while binding background and face-material
+  ownership and verifying any remaining region-specific layouts.
   The JP window at frames 13000–13039 is bit-identical with and without
   Start/A pulses, so it is non-interactive animation rather than the native
   startup menu. A later same-session control/Start pair establishes that
@@ -162,10 +238,10 @@ blocked; see [`docs/nexus/nexus_startup.md`](docs/nexus/nexus_startup.md) and
   SH-2 code, but its 64-frame VDP1/VDP2 output remains byte-identical to the
   no-input control. That specific reader is therefore not an admitted menu
   consumer. Later Ymir captures establish title-menu and selection transitions
-  and record a frame-tagged read pass across the Japanese `TITLE.BIN` source
-  address, but do not prove read values or bind the full menu/face image to a
-  complete upload or VDP1/VDP2 display consumer. A separate post-title
-  control/input pair at frames 30000--30119 exercised Start, A, B and C in four distinct
+  and record a frame-tagged source-address read pass, but do not prove the read
+  values or bind the full menu/face image to a complete upload or display
+  consumer. A separate post-title control/input
+  pair at frames 30000--30119 exercised Start, A, B and C in four distinct
   20-frame pulses.  All eight captured video regions (VDP1 state/VRAM/frame
   buffers/draw selector and VDP2 registers/VRAM/CRAM) were byte-identical to
   the no-input control.  The observed active VDP1 state has two stable
