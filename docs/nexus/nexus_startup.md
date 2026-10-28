@@ -1891,8 +1891,26 @@ binds those image bytes to the Load-screen display list, but not their CLUT
 palette, visible role, save-row text, or complete panel composition. A bounded
 SH-2 read trace started from the saved title-menu state recorded zero BUP
 reads; the save list had already been discovered before that state was saved.
-The BKR scan/load routine is therefore still unbound. Its next useful capture
-must include the cold boot before save-list discovery.
+
+A same-run coldboot trace on TRV2 now covers frames 0–11,999 with the authentic
+BKR installed. It records 10,849 one-byte reads in bus range
+`0x180000..0x200000`, 1,328 distinct addresses, and zero dropped rows. The
+trace's most frequent PCs are `0x06003d68` and `0x0600289c` (2,550 reads each),
+`0x060034b0` (2,040), and `0x060028f2`/`0x06002900` (1,770 each). Same-run
+WRAM-HI disassembly shows byte reads and subsequent stores at these sites,
+consistent with early BUP enumeration/copy work. Ymir's trace records no read
+values, so it does not prove payload bytes were consumed as game state or
+identify a Nexus save field.
+
+A later checkpoint at boot frame 14,900 shows the Japanese title logo. A
+replay from that checkpoint with Start, Down and A reaches the authentic Load
+screen row `B01 0:16 NORMAL`, but records zero new BUP-window reads. This
+narrowly places the observed BUP read activity earlier in startup than this
+checkpoint; it does not tie those reads to the later Continue action. The
+BKR loader and its payload-to-runtime mapping remain unbound. Full trace,
+disassembly and checkpoint receipts are recorded in the external evidence
+folder's `coldboot-readtrace-boot12000/` and `coldboot-title-checkpoint/`
+subdirectories.
 
 The accepted-save capture's VDP1 snapshot is frame 2,173 with 83 commands. Its
 complete command trace contains 175,042 rows with zero dropped rows. The
