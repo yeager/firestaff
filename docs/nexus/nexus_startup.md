@@ -1846,6 +1846,25 @@ external evidence storage.
 
 ## Continue reaches gameplay with the retained authentic BKR (2026-10-28)
 
+### Save-slot time discrepancy
+
+The retained 2025 capture `parity-evidence/verification/nexus-continue-real-bup-20261025/03-load-screen.png`
+(SHA-256
+`5e20c31980926e599343b25dbdc1bc75b945ee382e9c313439996fc08b633444`)
+shows `B01 0:06 NORMAL`. The 2028 capture
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/authentic-bkr-continue-device.png`
+(SHA-256
+`2b86fe32898e79009ac2cc5cf33f961e0ebcd61489c9f93a9717f9e0c13ea8fb`)
+shows `B01 0:16 NORMAL`. Both reports identify the same 32 KiB BKR SHA-256
+`87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`; the
+2028 run also verified that the source image and profile copy were unchanged
+after loading. The runs used different Ymir versions (0.4.1 and 0.4.2-dev)
+and different boot/input schedules. The available evidence does not determine
+why the displayed time differs. These are capture-specific observations; do
+not treat either time as an established property of the BKR or infer a BKR
+mutation. Resolving the cause requires a controlled replay with the same
+Ymir build, profile initialization, and frame-exact input schedule.
+
 Ymir `0.4.2-dev` was run on TRV2 with the hash-verified Japanese retail disc,
 Japanese IPL and an isolated profile. The profile's internal backup RAM was a
 byte-for-byte copy of
