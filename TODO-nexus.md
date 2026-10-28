@@ -436,3 +436,10 @@ and complete scene output remain unbound. Continue by joining command UV/CLUT
 and geometry state to a specific `LEV00.DGN` cell/face and the retail scene
 setup path. See
 `parity-evidence/verification/nexus_english_configuration_scene_dgn_join_20261028/README.md`.
+
+The frame-119 DGN sequence join now matches 128/132 textured VDP1 draws when
+both indexed image/CLUT pairs and direct-color spans are checked. Of those, 112
+have candidate Structure3 face-owner rows, often with multiple possible owners.
+Four draws do not match a DGN material, and 16 matched draws have no face-owner
+row. Determine the active owner and transform from the Saturn SH-2 draw setup
+before using these materials to render the Configuration scene.

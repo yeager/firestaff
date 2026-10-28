@@ -1625,3 +1625,12 @@ CLUT, palette, geometry placement, camera, complete composition, or Firestaff
 output. It does not admit a guessed DGN scene as a runtime background. See the
 [source-join receipt](../../parity-evidence/verification/nexus_english_configuration_scene_dgn_join_20261028/README.md)
 and its retained external capture bundle.
+
+A second pass now joins the Ymir command chain's indexed source bytes and CLUTs,
+as well as direct-color pixels, against authentic DGN Structure2 materials. It
+matches 128 of 132 textured draws (120 indexed image/CLUT pairs and 8 direct
+color spans); 112 matched draws have one or more Structure3 face-owner rows.
+Four draws remain without an exact material match, and 16 matched draws lack a
+face-owner row. Because material bytes are reused across levels and face rows,
+these are candidate owners rather than active-instance assignments. See the
+expanded [source-join receipt](../../parity-evidence/verification/nexus_english_configuration_scene_dgn_join_20261028/README.md).

@@ -52,12 +52,13 @@ def dgn_materials(data_dir: Path) -> list[tuple[str, bytes, bytes]]:
             height = be16(descriptor, 8)
             image_offset = be32(descriptor, 12)
             palette_offset = be32(descriptor, 16)
-            if encoding != 0x0008 or width == 0 or height == 0:
+            if encoding not in (0x0008, 0x0028) or width == 0 or height == 0:
                 cursor += 20
                 descriptor_index += 1
                 continue
-            image_size = (width * height + 1) // 2
-            palette_size = 16 * 2
+            image_size = ((width * height + 1) // 2
+                          if encoding == 0x0008 else width * height * 2)
+            palette_size = 16 * 2 if encoding == 0x0008 else 0
             if (image_offset + image_size > useful or
                     palette_offset + palette_size > useful):
                 raise ValueError(f"{name} Structure2 material is unbounded")
