@@ -1,6 +1,6 @@
 # Five-game startup support gap analysis
 
-Reconciled with repository `main` at `573667ec` on 2026-10-28. The latest
+Reconciled with repository `main` at `1ec86f00` on 2026-10-28. The latest
 published release is v3.0.418 (published on 2026-10-27). The release workflow
 verified packaging, not gameplay startup. Current authentic-media CLI routes
 include DM1 PC34, DOS, Atari ST, Amiga and FM Towns; CSB Atari, Amiga and FM
