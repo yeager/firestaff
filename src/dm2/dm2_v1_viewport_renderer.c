@@ -740,6 +740,7 @@ int dm2_v1_viewport_build_indoor_live_missile_plan(
     for (size_t i = 0u; i < snapshot_count; ++i) {
         const DM2_V1_RuntimeVisibleMissileSnapshot *live = &snapshots[i];
         DM2_V1_IndoorLiveMissileEvent event;
+        DM2_V1_G1DirectMissileReceipt missile_receipt;
         int source_cell;
         int source_pass;
         int display_index;
@@ -762,6 +763,20 @@ int dm2_v1_viewport_build_indoor_live_missile_plan(
         if (display_index < 0) continue;
         if (!live->timer_valid) out_plan->partial = 1;
         event.live = *live;
+        if (!dm2_v1_runtime_live_missile_selector_receipt(
+                live->source.object_id, &missile_receipt,
+                &event.selector) ||
+            !missile_receipt.valid ||
+            missile_receipt.object_id != live->source.object_id ||
+            !event.selector.valid || !event.selector.identity_hash ||
+            event.selector.missile_object_id != live->source.object_id) {
+            /* SKProject c_gui_vp.cpp::DM2_DRAW_FLYING_ITEM resolves the
+             * linked object's class and image selector before either the
+             * TEMP_PICST or DRAW_ITEM route. An unresolved DB14 is not a
+             * source draw call; omit it and expose the incomplete chain. */
+            out_plan->partial = 1;
+            continue;
+        }
         event.source_cell = (int16_t)source_cell;
         event.source_pass = (int16_t)source_pass;
         event.display_index = (int16_t)display_index;
@@ -784,6 +799,168 @@ int dm2_v1_viewport_build_indoor_live_missile_plan(
         }
         out_plan->events[j] = event;
     }
+    return 1;
+}
+
+int dm2_v1_viewport_build_indoor_live_missile_draw_plan(
+    const DM2_V1_IndoorLiveMissilePlan *missile_plan,
+    const uint8_t creature_draw_success[
+        DM2_V1_INDOOR_STATIC_OBJECT_PASS_COUNT]
+        [DM2_V1_INDOOR_STATIC_OBJECT_SLOT_COUNT],
+    DM2_V1_IndoorLiveMissileDrawPlan *out_plan)
+{
+    if (!out_plan) return 0;
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!missile_plan || !missile_plan->valid || !creature_draw_success ||
+        missile_plan->event_count < 0 ||
+        missile_plan->event_count > (int)DM2_V1_MAX_INDOOR_LIVE_MISSILES) {
+        return 0;
+    }
+    out_plan->valid = 1;
+    out_plan->partial = missile_plan->partial;
+
+    for (int i = 0; i < missile_plan->event_count; ++i) {
+        const DM2_V1_IndoorLiveMissileEvent *event =
+            &missile_plan->events[i];
+        int expected_pass;
+        if (event->source_cell < 0 || event->source_cell > 15 ||
+            event->source_pass < 0 ||
+            event->source_pass >= DM2_V1_INDOOR_STATIC_OBJECT_PASS_COUNT ||
+            event->live.source.view_position_5x5 > 24u ||
+            !event->selector.valid || !event->selector.identity_hash ||
+            event->selector.missile_object_id !=
+                event->live.source.object_id) {
+            out_plan->valid = 0;
+            out_plan->event_count = 0;
+            return 0;
+        }
+        expected_pass = event->source_cell == 0 ? 20 :
+            dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(
+                event->source_cell);
+        if (expected_pass != event->source_pass ||
+            dm2_v1_viewport_static_object_display_index(
+                event->source_cell,
+                event->live.source.view_position_5x5) !=
+                event->display_index) {
+            out_plan->valid = 0;
+            out_plan->event_count = 0;
+            return 0;
+        }
+        if (i > 0) {
+            const DM2_V1_IndoorLiveMissileEvent *previous =
+                &missile_plan->events[i - 1];
+            if (event->source_pass < previous->source_pass ||
+                (event->source_pass == previous->source_pass &&
+                 (event->display_index < previous->display_index ||
+                  (event->display_index == previous->display_index &&
+                   event->live.source.chain_ordinal <
+                       previous->live.source.chain_ordinal)))) {
+                out_plan->valid = 0;
+                out_plan->event_count = 0;
+                return 0;
+            }
+        }
+    }
+
+    /* SKProject commit 2c59a2c5a7978923ff5c822c15c3479e4d448493,
+     * SKWINSPX/src/v5/skguivwp.cpp::DM2_DRAW_STATIC_OBJECT lines 4365-4418:
+     * walk one of three display-order tables per source cell. After an
+     * accepted creature draw, scan the preceding seven iterations in
+     * ascending order, test the missile mask by 5x5 position, then test the
+     * current slot. The live G1 chain receipt supplies the mask's DB14
+     * positions without consulting the legacy projectile drain. */
+    for (int pass = 0;
+         pass < DM2_V1_INDOOR_STATIC_OBJECT_PASS_COUNT; ++pass) {
+        int cell = -1;
+        uint8_t order[DM2_V1_INDOOR_STATIC_OBJECT_SLOT_COUNT];
+        int slot_count;
+        uint32_t missile_mask = 0u;
+        for (int i = 0; i < missile_plan->event_count; ++i) {
+            const DM2_V1_IndoorLiveMissileEvent *event =
+                &missile_plan->events[i];
+            if (event->source_pass != pass) continue;
+            if (cell < 0) cell = event->source_cell;
+            else if (cell != event->source_cell) {
+                out_plan->valid = 0;
+                out_plan->event_count = 0;
+                return 0;
+            }
+            missile_mask |= 1u << event->live.source.view_position_5x5;
+        }
+        if (cell < 0) continue;
+        slot_count = dm2_v1_viewport_static_object_display_order(
+            cell, order);
+        if (slot_count <= 0) {
+            out_plan->partial = 1;
+            continue;
+        }
+        if (slot_count > DM2_V1_INDOOR_STATIC_OBJECT_SLOT_COUNT) {
+            out_plan->valid = 0;
+            out_plan->event_count = 0;
+            return 0;
+        }
+
+        for (int slot_index = 0; slot_index < slot_count; ++slot_index) {
+            const uint8_t current_position = order[slot_index];
+            if (creature_draw_success[pass][slot_index]) {
+                int first_replay = slot_index - 7;
+                if (first_replay < 0) first_replay = 0;
+                for (int replay = first_replay; replay < slot_index; ++replay) {
+                    const uint8_t position = order[replay];
+                    if ((missile_mask & (1u << position)) == 0u) continue;
+                    for (int i = 0; i < missile_plan->event_count; ++i) {
+                        const DM2_V1_IndoorLiveMissileEvent *missile =
+                            &missile_plan->events[i];
+                        DM2_V1_IndoorLiveMissileDrawEvent *draw;
+                        if (missile->source_pass != pass ||
+                            missile->live.source.view_position_5x5 != position)
+                            continue;
+                        if (out_plan->event_count >=
+                            (int)DM2_V1_MAX_INDOOR_LIVE_MISSILE_DRAWS) {
+                            out_plan->valid = 0;
+                            out_plan->event_count = 0;
+                            return 0;
+                        }
+                        draw = &out_plan->events[out_plan->event_count++];
+                        draw->missile_event_index = (uint16_t)i;
+                        draw->source_pass = (int16_t)pass;
+                        /* The replay call occurs after the current creature
+                         * slot; replay_slot_index identifies the older
+                         * missile position being revisited. */
+                        draw->display_index = (int16_t)slot_index;
+                        draw->draw_kind =
+                            DM2_V1_INDOOR_LIVE_MISSILE_DRAW_CREATURE_REPLAY;
+                        draw->replay_slot_index = (uint8_t)replay;
+                    }
+                }
+            }
+
+            if ((missile_mask & (1u << current_position)) != 0u) {
+                for (int i = 0; i < missile_plan->event_count; ++i) {
+                    const DM2_V1_IndoorLiveMissileEvent *missile =
+                        &missile_plan->events[i];
+                    DM2_V1_IndoorLiveMissileDrawEvent *draw;
+                    if (missile->source_pass != pass ||
+                        missile->live.source.view_position_5x5 != current_position)
+                        continue;
+                    if (out_plan->event_count >=
+                        (int)DM2_V1_MAX_INDOOR_LIVE_MISSILE_DRAWS) {
+                        out_plan->valid = 0;
+                        out_plan->event_count = 0;
+                        return 0;
+                    }
+                    draw = &out_plan->events[out_plan->event_count++];
+                    draw->missile_event_index = (uint16_t)i;
+                    draw->source_pass = (int16_t)pass;
+                    draw->display_index = (int16_t)slot_index;
+                    draw->draw_kind =
+                        DM2_V1_INDOOR_LIVE_MISSILE_DRAW_CURRENT;
+                    draw->replay_slot_index = (uint8_t)slot_index;
+                }
+            }
+        }
+    }
+    if (missile_plan->partial) out_plan->partial = 1;
     return 1;
 }
 
@@ -7801,9 +7978,9 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
 
 /* ── Creatures ───────────────────────────────────────────────────── */
 
-static void dm2_v1_render_creature_row(DM2_V1_ViewportState *s,
-                                      const DM2_V1_CreatureRender *c,
-                                      int i)
+static int dm2_v1_render_creature_row(DM2_V1_ViewportState *s,
+                                     const DM2_V1_CreatureRender *c,
+                                     int i)
 {
     uint8_t *vp = s->framebuffer;
     int stride = s->fb_stride;
@@ -7867,7 +8044,7 @@ static void dm2_v1_render_creature_row(DM2_V1_ViewportState *s,
                                 pixels, src_w, src_h, src_stride))) {
                         dm2_v1_block_source_material(
                             s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CREATURE);
-                        return;
+                        return 0;
                     }
                 } else if (c->source_kind == 2 &&
                     (!s->g1_creature_map_chip_materials ||
@@ -7879,7 +8056,7 @@ static void dm2_v1_render_creature_row(DM2_V1_ViewportState *s,
                         s->active_asset_palette_hash))) {
                     dm2_v1_block_source_material(
                         s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CREATURE);
-                    return;
+                    return 0;
                 }
                 if (c->source_kind == 2 &&
                     s->g1_scene_creature_material_ready &&
@@ -7898,7 +8075,7 @@ static void dm2_v1_render_creature_row(DM2_V1_ViewportState *s,
                          s->g1_scene_creature_material_palette_hash)) {
                     dm2_v1_block_source_material(
                         s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CREATURE);
-                    return;
+                    return 0;
                 }
                 if (dm2_v1_viewport_creature_asset_blit(c,
                                                         src_w,
@@ -7958,10 +8135,11 @@ static void dm2_v1_render_creature_row(DM2_V1_ViewportState *s,
              * graphics that the original cannot render. */
             dm2_v1_block_source_material(
                 s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CREATURE);
-            return;
+            return 0;
         }
 
-    }
+    return drawn_asset;
+}
 
 static void dm2_v1_reset_creature_render_receipts(DM2_V1_ViewportState *s)
 {
@@ -7999,7 +8177,7 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
     dm2_v1_reset_creature_render_receipts(s);
 
     for (int i = 0; i < plan.creature_count; i++) {
-        dm2_v1_render_creature_row(s, &plan.creatures[i], i);
+        (void)dm2_v1_render_creature_row(s, &plan.creatures[i], i);
     }
 }
 
@@ -8232,9 +8410,15 @@ void dm2_v1_render_indoor_items_and_creatures(DM2_V1_ViewportState *s)
     DM2_V1_CreatureRenderPlan creature_plan;
     DM2_V1_IndoorDrawOrderReceipt receipt;
     DM2_V1_IndoorLiveMissilePlan live_missile_plan;
+    uint8_t creature_draw_success[
+        DM2_V1_INDOOR_STATIC_OBJECT_PASS_COUNT]
+        [DM2_V1_INDOOR_STATIC_OBJECT_SLOT_COUNT];
 
     if (!s) return;
     memset(&live_missile_plan, 0, sizeof(live_missile_plan));
+    memset(creature_draw_success, 0, sizeof(creature_draw_success));
+    memset(&s->last_indoor_live_missile_draw_plan, 0,
+           sizeof(s->last_indoor_live_missile_draw_plan));
     (void)dm2_v1_viewport_build_indoor_live_missile_plan(
         s, &live_missile_plan);
     s->last_indoor_live_missile_plan = live_missile_plan;
@@ -8269,10 +8453,27 @@ void dm2_v1_render_indoor_items_and_creatures(DM2_V1_ViewportState *s)
             dm2_v1_render_item_row(s, &item_plan.items[event->plan_index], i);
         } else if (event->kind == DM2_V1_INDOOR_DRAW_ORDER_CREATURE &&
                    event->plan_index < creature_plan.creature_count) {
-            dm2_v1_render_creature_row(
-                s, &creature_plan.creatures[event->plan_index], i);
+            if (dm2_v1_render_creature_row(
+                    s, &creature_plan.creatures[event->plan_index], i) &&
+                event->source_pass >= 0 &&
+                event->source_pass <
+                    DM2_V1_INDOOR_STATIC_OBJECT_PASS_COUNT &&
+                event->display_index >= 0 &&
+                event->display_index <
+                    DM2_V1_INDOOR_STATIC_OBJECT_SLOT_COUNT) {
+                creature_draw_success[event->source_pass]
+                                     [event->display_index] = 1u;
+            }
         }
     }
+    s->last_frame_composition.indoor_live_missile_draw_plan_valid =
+        dm2_v1_viewport_build_indoor_live_missile_draw_plan(
+            &live_missile_plan, creature_draw_success,
+            &s->last_indoor_live_missile_draw_plan);
+    s->last_frame_composition.indoor_live_missile_draw_plan_partial =
+        s->last_indoor_live_missile_draw_plan.partial;
+    s->last_frame_composition.indoor_live_missile_draw_call_count =
+        s->last_indoor_live_missile_draw_plan.event_count;
 }
 
 void dm2_v1_render_creature_possession_items(DM2_V1_ViewportState *s)

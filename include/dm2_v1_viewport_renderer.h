@@ -818,6 +818,9 @@ typedef struct {
     int indoor_draw_order_source_ordered_count;
     int indoor_draw_order_fallback_item_count;
     int indoor_draw_order_fallback_creature_count;
+    int indoor_live_missile_draw_plan_valid;
+    int indoor_live_missile_draw_plan_partial;
+    int indoor_live_missile_draw_call_count;
     int hud_top_bar_material_consumed;
     int hud_top_bar_command_consumed;
     int hud_status_panel_material_consumed;
@@ -1559,6 +1562,11 @@ typedef struct {
 #define DM2_V1_MAX_INDOOR_LIVE_MISSILES DM2_V1_G1_VISIBLE_MISSILE_MAX
 typedef struct {
     DM2_V1_RuntimeVisibleMissileSnapshot live;
+    /* Source DM2_DRAW_FLYING_ITEM resolves the DB14's linked object through
+     * QUERY_CLS1/QUERY_CLS2 before selecting TEMP_PICST or DRAW_ITEM. Keep
+     * that authentic GDAT key with the event instead of treating every DB14
+     * as a drawable missile. */
+    DM2_V1_G1FlyingItemSelectorReceipt selector;
     int16_t source_cell;
     int16_t source_pass;
     int16_t display_index;
@@ -1571,6 +1579,32 @@ typedef struct {
     DM2_V1_IndoorLiveMissileEvent events[
         DM2_V1_MAX_INDOOR_LIVE_MISSILES];
 } DM2_V1_IndoorLiveMissilePlan;
+
+/* A source-ordered DB14 draw call. A single live missile can occur more than
+ * once when a successfully drawn creature replays one of the previous seven
+ * source slots. This is an execution schedule only; pixel consumption remains
+ * gated by the flying-item material/transform receipts. */
+#define DM2_V1_INDOOR_STATIC_OBJECT_PASS_COUNT 21
+#define DM2_V1_INDOOR_STATIC_OBJECT_SLOT_COUNT 25
+#define DM2_V1_MAX_INDOOR_LIVE_MISSILE_DRAWS \
+    (DM2_V1_MAX_INDOOR_LIVE_MISSILES * 8)
+#define DM2_V1_INDOOR_LIVE_MISSILE_DRAW_CURRENT 1u
+#define DM2_V1_INDOOR_LIVE_MISSILE_DRAW_CREATURE_REPLAY 2u
+typedef struct {
+    uint16_t missile_event_index;
+    int16_t source_pass;
+    int16_t display_index;
+    uint8_t draw_kind;
+    uint8_t replay_slot_index;
+} DM2_V1_IndoorLiveMissileDrawEvent;
+
+typedef struct {
+    int valid;
+    int partial;
+    int event_count;
+    DM2_V1_IndoorLiveMissileDrawEvent events[
+        DM2_V1_MAX_INDOOR_LIVE_MISSILE_DRAWS];
+} DM2_V1_IndoorLiveMissileDrawPlan;
 
 typedef struct {
     DM2_V1_ItemRender item;
@@ -1966,6 +2000,7 @@ typedef struct {
     DM2_V1_ViewportFrameCompositionReceipt last_frame_composition;
     DM2_V1_IndoorDrawOrderReceipt last_indoor_draw_order_receipt;
     DM2_V1_IndoorLiveMissilePlan last_indoor_live_missile_plan;
+    DM2_V1_IndoorLiveMissileDrawPlan last_indoor_live_missile_draw_plan;
     DM2_V1_ViewportM11FrameReceipt last_m11_frame_receipt;
     int last_door_button_asset_blit_valid;
     int last_door_button_asset_src_w;
@@ -2548,6 +2583,12 @@ int dm2_v1_viewport_build_indoor_draw_order(
 int dm2_v1_viewport_build_indoor_live_missile_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_IndoorLiveMissilePlan *out_plan);
+int dm2_v1_viewport_build_indoor_live_missile_draw_plan(
+    const DM2_V1_IndoorLiveMissilePlan *missile_plan,
+    const uint8_t creature_draw_success[
+        DM2_V1_INDOOR_STATIC_OBJECT_PASS_COUNT]
+        [DM2_V1_INDOOR_STATIC_OBJECT_SLOT_COUNT],
+    DM2_V1_IndoorLiveMissileDrawPlan *out_plan);
 int dm2_v1_viewport_build_carried_item_render_plan(
     const DM2_V1_ViewportState *s,
     DM2_V1_CarriedItemRenderPlan *out_plan);

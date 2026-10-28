@@ -10426,6 +10426,7 @@ static void m11_write_autotest_runtime_probe(const char* path,
             "  \"dm2RuntimeFrame\": {\"accepted\": %d, \"realAssets\": %d, \"noCoreFallbacks\": %d, \"fallbackDraws\": %d},\n"
             "  \"dm2FrameOwnership\": {\"runtimeOwned\": %d, \"fullGdatValid\": %d, \"valid\": %d, \"floorCeilingBlits\": %d, \"floorCeilingRequiredMask\": %u, \"floorCeilingConsumedMask\": %u, \"floorCeilingPaletteBlits\": %d, \"wallBlits\": %d, \"hudBlits\": %d, \"sceneControlConsumed\": %d, \"blockedMaterials\": %d, \"fallbackDraws\": %d},\n"
             "  \"dm2M11Frame\": {\"valid\": %d, \"floorCeilingComplete\": %d, \"mapLoadToken\": %u, \"sceneControlHash\": %u, \"sceneLightHash\": %u, \"floorMaterialHash\": %u, \"ceilingMaterialHash\": %u, \"wallPlanHash\": %u, \"presentationStateHash\": %u},\n"
+            "  \"dm2LiveMissileDrawSchedule\": {\"valid\": %d, \"partial\": %d, \"calls\": %d},\n"
             "  \"dm2FmtownsStartup\": {\"titleBound\": %d, \"titleFinished\": %d, \"titleRejected\": %d, \"swooshActive\": %d, \"frameIndex\": %u, \"frameCount\": %u, \"frameTicksRemaining\": %u, \"timerAccumulatorUs\": %u},\n"
             "  \"csbViewportHash\": %u,\n"
             "  \"script\": {\"waitFramesRemaining\": %d, \"pending\": %d},\n"
@@ -10478,6 +10479,12 @@ static void m11_write_autotest_runtime_probe(const char* path,
             (unsigned int)dm2M11FrameReceipt.ceiling_material_hash,
             (unsigned int)dm2M11FrameReceipt.wall_material_plan_hash,
             (unsigned int)dm2M11FrameReceipt.presentation_state_hash,
+            dm2M11FrameReceipt.composition
+                .indoor_live_missile_draw_plan_valid,
+            dm2M11FrameReceipt.composition
+                .indoor_live_missile_draw_plan_partial,
+            dm2M11FrameReceipt.composition
+                .indoor_live_missile_draw_call_count,
             gameView ? gameView->dm2FmtownsTitleBound : 0,
             gameView ? gameView->dm2FmtownsTitleFinished : 0,
             gameView ? gameView->dm2FmtownsTitleRejected : 0,

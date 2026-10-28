@@ -101,6 +101,96 @@ static void audited_idle_tick(M11_GameViewState* state,
     collect_runtime_events(&state->world, audit);
 }
 
+static unsigned int viewport_fnv1a(const unsigned char* pixels)
+{
+    unsigned int hash = 2166136261u;
+    size_t i;
+    for (i = 33u * 320u; i < 168u * 320u; ++i)
+        hash = (hash ^ pixels[i]) * 16777619u;
+    return hash;
+}
+
+static int verify_hoc_plate_visible(M11_GameViewState* state)
+{
+    unsigned char framebuffer[320 * 200];
+    unsigned int renderedHash;
+    unsigned int suppressedHash;
+    struct DungeonThings_Compat* things;
+    unsigned short sensorThing;
+    struct DungeonSensor_Compat* plateSensor = NULL;
+    unsigned char savedOrdinal;
+    int safety = 0;
+    int mapX = -1, mapY = -1;
+    int ordinal;
+    if (!state || state->world.party.mapIndex != 0 ||
+        state->world.party.mapX != 7 || state->world.party.mapY != 9 ||
+        state->world.party.direction != 3) {
+        if (state) {
+            fprintf(stderr, "plate view pose map=%d party=(%d,%d,d%d)\n",
+                    state->world.party.mapIndex, state->world.party.mapX,
+                    state->world.party.mapY, state->world.party.direction);
+        }
+        return 0;
+    }
+    /* The authentic route turns west at (7,9), placing the pressure plate
+     * in the source F0108 D1-center slot before stepping onto it. */
+    if (!M11_GameView_ProbeViewportCellClass(state, 1, 0, &mapX, &mapY,
+            NULL, NULL, NULL, NULL, NULL) || mapX != 6 || mapY != 9) {
+        fprintf(stderr, "plate target probe=(%d,%d)\n", mapX, mapY);
+        return 0;
+    }
+    ordinal = M11_GameView_GetFloorOrnamentOrdinal(state, 1, 0);
+    if (ordinal <= 0) {
+        fputs("plate target has no floor ornament ordinal\n", stderr);
+        return 0;
+    }
+    things = state->world.things;
+    if (!things || !things->sensors) {
+        fputs("plate sensor table missing\n", stderr);
+        return 0;
+    }
+    sensorThing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        state->world.dungeon, things, 0, 6, 9);
+    while (sensorThing != THING_ENDOFLIST && sensorThing != THING_NONE &&
+           safety++ < 64) {
+        if (THING_GET_TYPE(sensorThing) == THING_TYPE_SENSOR) {
+            int index = THING_GET_INDEX(sensorThing);
+            if (index >= 0 && index < things->sensorCount) {
+                plateSensor = &things->sensors[index];
+                break;
+            }
+        }
+        sensorThing = F0512_DUNGEON_GetThingNext_Compat(things, sensorThing);
+    }
+    if (!plateSensor || plateSensor->ornamentOrdinal != ordinal) {
+        fprintf(stderr,
+                "plate sensor missing or ordinal mismatch (sensor=%d ordinal=%d)\n",
+                plateSensor ? (int)plateSensor->ornamentOrdinal : -1, ordinal);
+        return 0;
+    }
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(state, framebuffer, 320, 200);
+    renderedHash = viewport_fnv1a(framebuffer);
+    /* Re-render the same authentic world with only this sensor's ornament
+     * admission suppressed. A viewport difference now proves the plate
+     * itself contributed pixels; unrelated walls/items cancel out. */
+    savedOrdinal = plateSensor->ornamentOrdinal;
+    plateSensor->ornamentOrdinal = 0;
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(state, framebuffer, 320, 200);
+    suppressedHash = viewport_fnv1a(framebuffer);
+    plateSensor->ornamentOrdinal = savedOrdinal;
+    if (renderedHash == suppressedHash) {
+        fprintf(stderr,
+                "plate render unchanged by sensor suppression (%08x)\n",
+                renderedHash);
+        return 0;
+    }
+    printf("PASS: authentic PC34 HoC pressure plate (6,9) visibly contributes from (7,9), ordinal=%d\n",
+           ordinal);
+    return 1;
+}
+
 int main(void)
 {
     const char *archive = getenv("FIRESTAFF_DM1_PC34_ARCHIVE");
@@ -264,6 +354,30 @@ int main(void)
     }
     initialChampionHp = state.world.party.champions[0].hp.current;
     for (i = 0u; i < sizeof(route_to_scroll) / sizeof(route_to_scroll[0]); ++i) {
+        if (i == 13u) {
+            if (audited_input(&state, M12_MENU_INPUT_TURN_LEFT, &eventAudit) ==
+                    M11_GAME_INPUT_IGNORED) {
+                fputs("FAIL: authentic route could not turn toward the Hall plate\n", stderr);
+                M11_GameView_Shutdown(&state);
+                return 1;
+            }
+            for (tick = 0; tick < 5; ++tick)
+                audited_idle_tick(&state, &eventAudit);
+            if (!verify_hoc_plate_visible(&state)) {
+                fputs("FAIL: authentic PC34 HoC pressure plate at (6,9) is not visible from the approach\n",
+                      stderr);
+                M11_GameView_Shutdown(&state);
+                return 1;
+            }
+            if (audited_input(&state, M12_MENU_INPUT_TURN_RIGHT, &eventAudit) ==
+                    M11_GAME_INPUT_IGNORED) {
+                fputs("FAIL: authentic route could not restore heading from the Hall plate\n", stderr);
+                M11_GameView_Shutdown(&state);
+                return 1;
+            }
+            for (tick = 0; tick < 5; ++tick)
+                audited_idle_tick(&state, &eventAudit);
+        }
         M11_GameInputResult result =
             audited_input(&state, route_to_scroll[i], &eventAudit);
         if (result == M11_GAME_INPUT_IGNORED) {

@@ -136,6 +136,17 @@ static int advance_nexus_title_to_frame(M11_GameViewState* view,
     return view->nexusState.title_frame >= target;
 }
 
+/* These booleans are a route-admission seam for downstream input tests. They
+ * are not derived from the authentic game-data fixtures in this test. */
+static void admit_nexus_title_menu_route_for_test(M11_GameViewState* view) {
+    if (!view) return;
+    view->nexusState.startup_host_capture_ready = 1;
+    view->nexusState.startup_menu_capture_uses_real_assets = 1;
+    view->nexusState.startup_title_menu_capture_route_joined = 1;
+    view->nexusState.startup_host_route_capture_matrix_ready = 1;
+    view->nexusState.startup_host_route_capture_matrix_exact = 1;
+}
+
 static int count_nonzero_region(const unsigned char* pixels,
                                 int fb_w,
                                 int fb_h,
@@ -1011,6 +1022,30 @@ int main(void) {
                             "real Nexus title boot does not claim a dungeon path");
                 expect_true(view.active == 1 && view.startedFromLauncher == 1,
                             "real Nexus title boot remains an active launcher session");
+                expect_true(advance_nexus_title_to_frame(
+                                &view,
+                                (unsigned int)nexus_title_boot_start_ready_frames(),
+                                128),
+                            "real Nexus title-only boot reaches the startup hold");
+                view.lastOutcome[0] = '\0';
+                expect_true(M11_GameView_HandleInput(&view,
+                                                     M12_MENU_INPUT_ACTION) ==
+                                M11_GAME_INPUT_REDRAW &&
+                                view.nexusState.title_active == 1 &&
+                                view.nexusState.startup_save_select_active == 0 &&
+                                view.nexusState.champion_select_active == 0 &&
+                                strstr(view.lastOutcome,
+                                       "NEXUS MENU CAPTURE REQUIRED") != NULL,
+                            "real Nexus title-only boot blocks Action without a captured menu route");
+                expect_true(M11_GameView_HandleInput(&view,
+                                                     M12_MENU_INPUT_ACCEPT) ==
+                                M11_GAME_INPUT_REDRAW &&
+                                view.nexusState.title_active == 1 &&
+                                view.nexusState.startup_save_select_active == 0 &&
+                                view.nexusState.champion_select_active == 0 &&
+                                strstr(view.lastOutcome,
+                                       "NEXUS MENU CAPTURE REQUIRED") != NULL,
+                            "real Nexus title-only boot blocks Accept before any unverified transition");
                 M11_GameView_Shutdown(&view);
                 nexus_v1_launcher_shutdown();
                 goto real_media_complete;
@@ -1034,8 +1069,9 @@ int main(void) {
                                 view.nexusState.title_active == 1 &&
                                 view.nexusState.startup_save_select_active == 0 &&
                                 view.nexusState.champion_select_active == 0 &&
-                                strstr(view.lastOutcome, "blocked-faces") != NULL,
-                            "real Nexus compact FACE.BIN blocks startup before champion rendering");
+                                strstr(view.lastOutcome,
+                                       "NEXUS MENU CAPTURE REQUIRED") != NULL,
+                            "real Nexus title blocks before any unverified startup-menu route");
                 M11_GameView_Shutdown(&view);
                 nexus_v1_launcher_shutdown();
                 goto real_media_complete;
@@ -1114,11 +1150,25 @@ int main(void) {
                             (unsigned int)nexus_title_boot_start_ready_frames(),
                             128),
                         "real Nexus title completes startup hold");
+            expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
+                            M11_GAME_INPUT_REDRAW &&
+                            view.nexusState.title_active == 1 &&
+                            view.nexusState.startup_save_select_active == 0 &&
+                            view.nexusState.champion_select_active == 0,
+                        "real Nexus title blocks Action without a captured menu route");
+            expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                            M11_GAME_INPUT_REDRAW &&
+                            view.nexusState.title_active == 1 &&
+                            view.nexusState.startup_save_select_active == 0 &&
+                            view.nexusState.champion_select_active == 0 &&
+                            strstr(view.lastOutcome, "NEXUS MENU CAPTURE REQUIRED") != NULL,
+                        "real Nexus title blocks Accept before applying an unverified transition");
+            admit_nexus_title_menu_route_for_test(&view);
             expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                             M11_GAME_INPUT_REDRAW,
-                        "real Nexus title phase advances on accept after hold");
+                        "admitted Nexus title route advances after the startup hold");
             expect_true(view.nexusState.title_active == 0,
-                        "real Nexus title phase clears after input");
+                        "admitted Nexus title route clears the title phase");
             if (view.nexusState.startup_save_select_active) {
                 while (view.nexusState.startup_save_selected_row + 1 <
                        view.nexusState.startup_save_row_count) {
@@ -1324,8 +1374,15 @@ int main(void) {
                                     "M11 Nexus save-slot title completes startup hold");
                         expect_true(M11_GameView_HandleInput(
                                         &view, M12_MENU_INPUT_ACCEPT) ==
+                                        M11_GAME_INPUT_REDRAW &&
+                                        view.nexusState.title_active == 1 &&
+                                        view.nexusState.startup_save_select_active == 0,
+                                    "M11 Nexus save-slot title blocks an unverified menu transition");
+                        admit_nexus_title_menu_route_for_test(&view);
+                        expect_true(M11_GameView_HandleInput(
+                                        &view, M12_MENU_INPUT_ACCEPT) ==
                                         M11_GAME_INPUT_REDRAW,
-                                    "M11 Nexus title advances to save selection after hold");
+                                    "M11 Nexus admitted title route advances after hold");
                         expect_true(view.nexusState.startup_save_select_active == 1,
                                     "M11 Nexus startup exposes save selection when slots exist");
                         expect_true(view.nexusState.startup_save_slot_mask ==
@@ -1391,6 +1448,7 @@ int main(void) {
                                         (unsigned int)nexus_title_boot_start_ready_frames(),
                                         128),
                                     "M11 Nexus save-slot NEW GAME title completes startup hold");
+                        admit_nexus_title_menu_route_for_test(&view);
                         expect_true(M11_GameView_HandleInput(
                                         &view, M12_MENU_INPUT_ACCEPT) ==
                                         M11_GAME_INPUT_REDRAW,

@@ -4123,12 +4123,12 @@ if(BUILD_TESTING)
         ENVIRONMENT "FIRESTAFF_DM1_ATARI_ST_7Z=$ENV{HOME}/.firestaff/data/dm1/Game,Dungeon_Master,Atari_ST,Software.7z"
         SKIP_RETURN_CODE 77)
     add_test(
-        NAME csb_pc_cli_rejected_before_renderer
+        NAME unsupported_game_platforms_cli_rejected_before_renderer
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_reject_pc_before_renderer.sh"
             "$<TARGET_FILE:firestaff>"
     )
-    set_tests_properties(csb_pc_cli_rejected_before_renderer PROPERTIES
-        LABELS "csb;startup;cli;fail-fast;no-media-required"
+    set_tests_properties(unsupported_game_platforms_cli_rejected_before_renderer PROPERTIES
+        LABELS "dm2;csb;startup;cli;fail-fast;no-media-required"
         TIMEOUT 10)
     add_test(
         NAME csb_v1_hint_oracle_native_7z_cli_boot

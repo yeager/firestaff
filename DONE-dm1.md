@@ -1,3 +1,12 @@
+- 2026-10-28: Fixed the authentic PC34 HoC pressure plate at map 0 (6,9),
+  which the viewport omitted because its 62x21 source bitmap is smaller than
+  the 64x25 G0206 D1C zone. The renderer now clips the original C10-transparent
+  bitmap at native size, matching ReDMCSB `DUNVIEW.C` F0108/F0791. The
+  real-media regression compares the presented viewport with only the plate's
+  sensor ornament suppressed; the Linux build and PC34 CTest passed. This
+  verifies the plate's contribution from the authentic approach pose (7,9),
+  not full DM1 platform or viewport parity.
+
 - 2026-10-24: Rebuilt the DM1 combat test targets from current source and ran
   `ctest -R '^m11_dm1_.*first_monster_combat_real$'`; all five passed against
   installed original media: PC34, Amiga 2.0, Atari ST 1.2, FM Towns and Amiga
