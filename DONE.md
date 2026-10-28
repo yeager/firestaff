@@ -3,8 +3,8 @@
 ## 2026-10-28 — CSB Atari archive discovery in return-to-menu test
 
 The authentic return-to-menu regression now falls back to the installed
-`Chaos Strikes Back.stx` or `Chaos Strikes Back (FTL).zip` when the historical
-`chaos_strikes_back_ftl.zip` alias is absent. An explicit
+`Chaos Strikes Back.stx` when the historical `chaos_strikes_back_ftl.zip`
+alias is absent. It does not treat an Amiga FTL ZIP as Atari media. An explicit
 `FIRESTAFF_CSB_ATARI_ARCHIVE` override still takes precedence. On TRV2, the
 CSB Atari ST and mixed CSB Amiga/Atari return cases passed with authentic
 media and the updated test script. Both reported availability for all five

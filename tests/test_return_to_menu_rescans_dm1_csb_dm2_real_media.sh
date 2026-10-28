@@ -12,17 +12,12 @@ csb_archive=${FIRESTAFF_CSB_FMTOWNS_ARCHIVE:-"$data_root/csb/Dungeon-Master-Chao
 csb_atari_archive=${FIRESTAFF_CSB_ATARI_ARCHIVE:-"$data_root/csb/chaos_strikes_back_ftl.zip"}
 if [ -z "${FIRESTAFF_CSB_ATARI_ARCHIVE:-}" ] &&
    [ ! -f "$csb_atari_archive" ]; then
-    # Prefer the original Atari STX when present. Some installed collections
-    # retain the same authentic release under a descriptive filename rather
-    # than the historical test-corpus alias above.
-    for candidate in \
-        "$data_root/csb/Chaos Strikes Back.stx" \
-        "$data_root/csb/Chaos Strikes Back (FTL).zip"; do
-        if [ -f "$candidate" ]; then
-            csb_atari_archive=$candidate
-            break
-        fi
-    done
+    # Some installed collections retain the authentic Atari archive under a
+    # descriptive filename rather than the historical test-corpus alias.
+    candidate="$data_root/csb/Chaos Strikes Back.stx"
+    if [ -f "$candidate" ]; then
+        csb_atari_archive=$candidate
+    fi
 fi
 csb_amiga_archive=${FIRESTAFF_CSB_AMIGA_ARCHIVE:-"$data_root/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip"}
 dm2_archive=${FIRESTAFF_DM2_FMTOWNS_ARCHIVE:-"$data_root/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"}
