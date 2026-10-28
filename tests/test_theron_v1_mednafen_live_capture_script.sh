@@ -52,6 +52,50 @@ cleanup_capture_test_temporaries() {
     done
 }
 trap cleanup_capture_test_temporaries EXIT
+
+# The reference-only capture wrapper accepts one bounded delta/button sample
+# per PCE mouse-device update. Validate this path before a real capture is
+# attempted; valid input reaches the missing-media SKIP below, while malformed
+# samples must fail before Mednafen can launch.
+mouse_capture_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_INPUT_DEVICE=mouse \
+    THERON_CAPTURE_MOUSE_INPUT_SCRIPT='127,-127,0;0,0,1' \
+    "$script" 2>&1) || {
+    printf 'FAIL: bounded mouse input script was rejected:\n%s\n' \
+        "$mouse_capture_output" >&2
+    exit 1
+}
+if [[ "$mouse_capture_output" != *'SKIP: MEDNAFEN_BIN'* ]]; then
+    printf 'FAIL: valid mouse input did not pass validation to the no-media boundary:\n%s\n' \
+        "$mouse_capture_output" >&2
+    exit 1
+fi
+
+while IFS='|' read -r device plan expected_error; do
+    [[ -n "$device" ]] || continue
+    if env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+        "THERON_CAPTURE_INPUT_DEVICE=$device" \
+        "THERON_CAPTURE_MOUSE_INPUT_SCRIPT=$plan" \
+        "$script" >"$input_test_dir/mouse-invalid.stdout" \
+        2>"$input_test_dir/mouse-invalid.stderr"; then
+        printf 'FAIL: mouse input validator accepted device=%s plan=%s\n' \
+            "$device" "$plan" >&2
+        exit 1
+    fi
+    if ! grep -Fq "$expected_error" "$input_test_dir/mouse-invalid.stderr"; then
+        printf 'FAIL: mouse input rejection lacked the expected diagnostic for %s|%s\n' \
+            "$device" "$plan" >&2
+        cat "$input_test_dir/mouse-invalid.stderr" >&2
+        exit 1
+    fi
+done <<'THERON_MOUSE_INPUT_INVALID_CASES'
+gamepad|1,0,0|requires THERON_CAPTURE_INPUT_DEVICE=mouse
+mouse|128,0,0|must be under 8192 characters
+mouse|0,0,16|must be under 8192 characters
+mouse|0,0|must be under 8192 characters
+THERON_MOUSE_INPUT_INVALID_CASES
+printf '%s\n' 'PASS: reference mouse input validator accepts bounded samples and rejects malformed input'
+
 cat >"$input_test_dir/consumed.trace" <<'THERON_CONSUMED_INPUT'
 source=mednafen-pce-scripted-input
 scripted_pce_input_event frame=9600 key=run mask=0008 hold=90

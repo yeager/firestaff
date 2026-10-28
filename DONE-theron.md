@@ -1,5 +1,14 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-28 — validate authentic mouse-capture samples
+
+The reference-only Mednafen capture regression now checks the bounded
+`dx,dy,button-mask` sample format used to collect real Theron mouse evidence.
+Valid edge-range samples pass to the explicit no-media boundary; wrong-device,
+malformed, and out-of-range samples are rejected before launch. The capture
+suite passed locally. This protects evidence collection only: it adds no
+Firestaff mouse behavior and does not establish new gameplay parity.
+
 ## 2026-10-27 — route Theron touch swipes through native input
 
 The SDL touch ingress now translates Theron's gesture-gate transport IDs to
