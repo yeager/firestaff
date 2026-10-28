@@ -1,0 +1,16 @@
+title: Firestaff documentation
+description: Source-faithful documentation for Firestaff.
+url: https://yeager.github.io
+baseurl: /firestaff
+markdown: kramdown
+kramdown:
+  input: GFM
+  hard_wrap: false
+  auto_ids: true
+defaults:
+  - scope:
+      path: ""
+      type: pages
+    values:
+      layout: default
+      render_with_liquid: false

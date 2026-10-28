@@ -10,6 +10,15 @@ dm1_atari_archive=${FIRESTAFF_DM1_ATARI_ARCHIVE:-"$data_root/dm1/Dungeon-Master_
 dm1_amiga36_archive=${FIRESTAFF_DM1_AMIGA36_ARCHIVE:-"$data_root/dm1/Dungeon-Master_Amiga_36.zip"}
 csb_archive=${FIRESTAFF_CSB_FMTOWNS_ARCHIVE:-"$data_root/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"}
 csb_atari_archive=${FIRESTAFF_CSB_ATARI_ARCHIVE:-"$data_root/csb/chaos_strikes_back_ftl.zip"}
+if [ -z "${FIRESTAFF_CSB_ATARI_ARCHIVE:-}" ] &&
+   [ ! -f "$csb_atari_archive" ]; then
+    # Some installed collections retain the authentic Atari archive under a
+    # descriptive filename rather than the historical test-corpus alias.
+    candidate="$data_root/csb/Chaos Strikes Back.stx"
+    if [ -f "$candidate" ]; then
+        csb_atari_archive=$candidate
+    fi
+fi
 csb_amiga_archive=${FIRESTAFF_CSB_AMIGA_ARCHIVE:-"$data_root/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip"}
 dm2_archive=${FIRESTAFF_DM2_FMTOWNS_ARCHIVE:-"$data_root/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"}
 dm2_dos_archive=${FIRESTAFF_DM2_DOS_ARCHIVE:-"$data_root/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"}
@@ -435,9 +444,11 @@ if [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
         'key:enter,key:enter,key:enter,wait:5,key:escape,wait:10,key:enter' \
         30000 'startup-frame game=dm1 .*phase=dm1-runtime .*level-loaded=1 map=0 party=1,3 dir=2' \
         'launch phase=game-handoff mode=menu game=dm1 platform=FM Towns edition=fmtowns-en source=.*/data/dm1/.*GRAPHICS.DAT'
+    # Scanning the complete real-media tree before the CSB FM Towns title
+    # handoff can exceed the original 30s bound on software-rendered hosts.
     run_return_to_menu_case csb fm-towns \
         'key:enter,key:enter,key:enter,wait:700,click:52:110,wait:10,click:250:50,wait:240,back,wait:10,enter' \
-        30000 'startup-frame game=csb .*phase=inactive .*level-loaded=1 map=4 party=22,18 dir=2 champions=1' \
+        60000 'startup-frame game=csb .*phase=inactive .*level-loaded=1 map=4 party=22,18 dir=2 champions=1' \
         'CSB READY: gameId=csb dataDir=.*/data/csb/.*variant=csb-fmtowns-en .*handoff=f31-title-anm'
     fi
     if [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
@@ -449,7 +460,7 @@ if [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
             "$data_root" 320 200 dm1-mouse-return
         run_return_to_menu_case csb fm-towns \
             'key:enter,key:enter,key:enter,wait:700,click:52:110,wait:10,click:250:50,wait:240,wait-game-runtime,back,wait:10,click:110:109' \
-            45000 'startup-frame game=csb .*phase=inactive .*level-loaded=1 map=4 party=22,18 dir=2 champions=1' \
+            60000 'startup-frame game=csb .*phase=inactive .*level-loaded=1 map=4 party=22,18 dir=2 champions=1' \
             'CSB READY: gameId=csb dataDir=.*/data/csb/.*variant=csb-fmtowns-en .*handoff=f31-title-anm' \
             "$data_root" 320 200 csb-mouse-return
     fi
@@ -462,9 +473,9 @@ if [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
         for token in up up up up turn-left up up up turn-left \
             up up up up up turn-right up up turn-right up turn-left \
             up up turn-right up turn-left up up turn-left; do
-            dm1_atari_route+=",wait30,$token"
+            dm1_atari_route="$dm1_atari_route,wait30,$token"
         done
-        dm1_atari_route+=',wait30,click:384:236,wait10,click:420:300,wait30,key:kp6,wait60,wait-game-runtime,key:escape,enter'
+        dm1_atari_route="$dm1_atari_route,wait30,click:384:236,wait10,click:420:300,wait30,key:kp6,wait60,wait-game-runtime,key:escape,enter"
         run_return_to_menu_case dm1 atari-st "$dm1_atari_route" \
             120000 'startup-frame game=dm1 .*phase=dm1-runtime .*level-loaded=1' \
             'DM1 READY: gameId=dm1 dataDir=.*/dm1/.*handoff=atari-st-dmcsb1' \

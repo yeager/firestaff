@@ -36,9 +36,11 @@ captured CRAM palette bytes present in authentic `TITLE.BIN` ranges, screen
 placement, and all 1,451 visible pixels in each state. The icon palette has one
 source match; seven identical copies of the text palette remain candidates.
 Firestaff now draws those five authenticated English foreground sprites for
-New Game and Continue from the exact hash-pinned `TITLE.BIN`. This does not
-bind or render the shared background, Japanese or Configuration screens, or
-destination execution; full menu composition remains open.
+New Game and Continue from the exact hash-pinned `TITLE.BIN`, plus the five
+authenticated Japanese Continue sprites and their source-bound regional
+palettes. This does not bind or render the shared background, Japanese
+New Game, Configuration, or destination execution; full menu composition
+remains open.
 This does not bind the NBG0 background or remaining screen composition;
 the exact background source and complete display consumer are still unknown.
 The English New Game and Continue captures share byte-identical VDP2 VRAM,
@@ -50,11 +52,13 @@ The Ymir log records `0DMSTRT.BIN` and a CD Block soft reset,
 but no `DM.BIN` read event. Separately, an exact 230,669-byte prefix of the
 authentic 555,144-byte English `DM.BIN` is present at offset `0x10000` in the
 WRAM snapshot. This proves prefix residency, not that the whole file was
-loaded or how the logged read path works. The English capture therefore
-establishes an English-version emulator cold-boot-to-menu route, not Firestaff
-menu rendering or input, Continue/save loading, or playable-level parity. Keep the English
-renderer gate closed and keep the Japanese capture as separate regional
-evidence. Capture hashes, output and reproduction commands are in
+loaded or how the logged read path works. The English capture establishes the
+English-version emulator cold-boot-to-menu route. Firestaff now renders the
+authenticated English New Game/Continue foreground sprites and Japanese
+Continue foreground sprites. This does not establish full menu composition or
+input, Continue/save loading, or playable-level parity. Keep background and
+remaining regional renderer gates closed. Capture hashes, output and
+reproduction commands are in
 [`docs/nexus/nexus_startup.md`](docs/nexus/nexus_startup.md#english-cold-boot-reaches-the-native-title-menu-2026-10-27);
 raw capture files remain on the external evidence volume.
 
@@ -178,23 +182,36 @@ not a fix and has not passed this real-media test.
   ready title prompt; F, Enter, keypad Enter, Space, Up/Down, and W/S are wired
   only while the Nexus title is active. An English retail Ymir replay verifies
   Down to Continue and Up back to a pixel-identical New Game frame. Firestaff
-  still does not draw the selected menu or execute New Game, Continue, or
-  Configuration destinations; Continue execution does not yet read Saturn BKR
-  data. The
-  repeated Continue capture again verifies all five Japanese TITLE.BIN sprites
-  against 1,441 screenshot pixels. The English verifier now also validates the
-  five `TITLE.BIN` sprites in New Game and Continue, each against 1,451 pixels.
-  The NBG0 bitmap in the Japanese Continue capture has zero exact matches
-  against authentic retail data. A later exploratory scan found the ordered
-  VDP2 byte-write sequence in the SH-2 trace, but the retained SH-2 receipt has
-  no frame bounds or per-row frame tags, so this does not establish a
-  frame-scoped producer join. The final VRAM snapshot is frame 8047 while the
-  VDP2 write trace ends at frame 7716. Keep source attribution unbound; see the
+  renders the hash-pinned English New Game and Continue foreground sprites
+  and the Japanese Continue sprites from their authentic regional `TITLE.BIN`
+  and source-bound palettes, but does not render the background or Japanese
+  New Game/Configuration layouts. New Game, Continue, and Configuration
+  destinations remain unimplemented; Continue execution does not yet read
+  Saturn BKR data. The repeated Continue capture verifies all five Japanese
+  `TITLE.BIN` sprites against 1,441 screenshot pixels. The English verifier
+  validates the five sprites in New Game and Continue, each against 1,451
+  pixels. The Japanese NBG0 bitmap has zero exact matches against authentic
+  retail data. A later exploratory scan found the ordered VDP2 byte-write
+  sequence in the SH-2 trace, but the retained SH-2 receipt has no frame bounds
+  or per-row frame tags; its final VRAM snapshot is frame 8047 while the VDP2
+  write trace ends at frame 7716. Keep source attribution unbound; see the
   Japanese menu section in `docs/nexus/nexus_startup.md`.
-  earlier paired raw-trace experiments below remain valid negative results for
+  This closes the retail-emulator behavior gap for those observed routes, not
+  complete Firestaff startup parity. The frame-8047 replay
+  reconstructs all 286,720 screenshot pixels exactly from Ymir's VDP1 display
+  buffer and VDP2/CRAM snapshots; its 178-command VDP1 trace has zero drops.
+  The screenshot has no embedded frame number. All 1,441 visible Japanese
+  menu-sprite texels match authenticated `TITLE.BIN`. A 31,616-byte
+  `TITLE.BIN` span matches WorkRAMH; 30,561 bytes match NBG0 storage under the
+  verified row layout. The frame-6893 SH-2 read trace observes the full
+  source-address pass, but drops 860,856 other master reads and records no read
+  values. Source-to-display ownership remains partial; see
+  `docs/nexus/NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md` and
+  `docs/nexus/nexus_startup.md`.
+  Earlier paired raw-trace experiments below remain valid negative results for
   their sampled windows, but they are no longer the only input evidence. Keep
-  the production gate closed while identifying menu/face material ownership
-  and wiring the verified selection behavior to Firestaff's rendered menu.
+  full-menu admission closed while binding background and face-material
+  ownership and implementing the remaining regional menu layouts.
   The JP window at frames 13000–13039 is bit-identical with and without
   Start/A pulses, so it is non-interactive animation rather than the native
   startup menu. A later same-session control/Start pair establishes that

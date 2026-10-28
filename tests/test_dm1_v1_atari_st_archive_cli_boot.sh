@@ -115,13 +115,15 @@ print("PASS: authentic DM1 Atari ST start menu confirms C127 ordinal 14 and rout
 PY
 
 # The third platform card is Atari ST.  This verifies pointer-only card
-# selection against the supplied nested preservation archive.
+# selection against the supplied nested preservation archive. Keep enough
+# time for software-rendered pointer frames on loaded hosts; successful launch
+# still exits immediately through FIRESTAFF_EXIT_AFTER_LAUNCH.
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --width 1920 --height 1080 --menu --game dm1 --platform atari-st \
     --data-dir "$archive" \
     --script 'wait20,click:700:262,wait20,click:1458:405,wait20,click:450:405,wait20' \
-    --duration 3000 >/dev/null 2>&1
+    --duration 15000 >/dev/null 2>&1
 
 gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --game dm1 --platform atari-st --data-dir "$archive" \

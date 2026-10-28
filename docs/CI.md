@@ -79,6 +79,12 @@ gh run view <run-id> --repo yeager/firestaff --log-failed
 The repository must not contain original game data. CI intentionally runs the
 asset checks with an empty data directory.
 
+GitHub Pages renders the Markdown documentation as HTML with the workflow in
+`.github/workflows/pages.yml`. `scripts/prepare_pages.py` creates an ephemeral
+source tree, rewrites repository-relative links to the generated `.html`
+routes, and protects literal Liquid examples. The Jekyll build writes only to
+the Pages artifact; tracked Markdown sources remain unchanged.
+
 Documentation changes should also update the cross-game status in
 [`PROJECT_STATUS.md`](PROJECT_STATUS.md) and the page map in
 [`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md) when a public claim changes.

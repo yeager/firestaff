@@ -430,6 +430,12 @@ PY
 archive_source_dir=$(cd "$(dirname "$archive")" && pwd)
 for sibling_archive in "$archive_source_dir"/*.zip; do
     [[ -f "$sibling_archive" ]] || continue
+    # This case proves that the loose PC-34 pair remains discoverable beside
+    # other authentic editions. The selected archive is the same PC-34 media
+    # already represented by the loose copy above; including it would let the
+    # scanner correctly choose the duplicate archive and invalidate the
+    # loose-source assertion below.
+    [[ "$sibling_archive" -ef "$archive" ]] && continue
     ln -s "$sibling_archive" \
         "$mixed_media_data/$(basename "$sibling_archive")"
 done
@@ -1047,12 +1053,14 @@ PY
 
 # Physical card coordinates use the explicit launcher canvas, making this a
 # real mouse-only game -> PC -> Original launch rather than a keyboard alias.
+# Keep the watchdog generous for all three pointer frames on loaded hosts;
+# FIRESTAFF_EXIT_AFTER_LAUNCH still exits as soon as the launch is confirmed.
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --width 1920 --height 1080 --menu --game dm1 --platform pc \
     --data-dir "$archive" \
     --script 'wait20,click:700:262,wait20,click:934:405,wait20,click:450:405,wait20' \
-    --duration 3000 >/dev/null 2>&1
+    --duration 15000 >/dev/null 2>&1
 
 # The authentic PC-3.4 dungeon starts at (map=0,x=1,y=3,dir=2).  A native
 # `up` input advances to y=4; this proves the selected archive has reached

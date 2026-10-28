@@ -206,12 +206,14 @@ fi
 # platform picker's first row. Select
 # CSB, that card, and Original solely through pointer events on the explicit
 # launcher canvas, then require the ordinary native launch exit.
+# Allow enough software-rendered frames on loaded hosts; the launch exit still
+# occurs immediately after FIRESTAFF_EXIT_AFTER_LAUNCH observes the handoff.
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     --width 1920 --height 1080 --menu --game csb --platform atari-st \
     --data-dir "$media_path" \
     --script 'wait20,click:1173:262,wait20,click:1458:405,wait20,click:450:405,wait20' \
-    --duration 3000 >/dev/null 2>&1
+    --duration 15000 >/dev/null 2>&1
 
 for mode in v1 v21; do
     case "$mode" in v1) expected_mode=0;; v21) expected_mode=2;; esac
