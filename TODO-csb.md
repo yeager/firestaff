@@ -88,10 +88,13 @@ input ownership only; its aperture hash is not a pixel-parity check, so the
 reported black alcoves/torches, unreadable inscriptions, and missing trapdoors
 remain open. At that check, the separate ZIP/ADF family decoder test was
 reported unavailable because its expected `Chaos Strikes Back (FTL).zip`
-wrapper was not staged. That exact wrapper is now present in the data root;
-rerun the decoder test before claiming the ZIP/ADF family route is verified.
-The loose authentic A33M `Graphics.DAT` remains available for its separate
-runtime checks.
+wrapper was not staged. On 2026-10-28, the exact authentic wrapper was tested
+with `csb_v1_amiga_adf_archive_cli_boot`: the native ZIP-to-ADF decoder passed,
+direct CLI and M12 routes reached the source entrance, and scripted movement
+reached the authentic runtime pose. The test also confirms the original ZIP
+hash remains unchanged. This closes that startup/decoder gap only; visual,
+audio, physical-input and campaign parity remain open. The loose authentic
+A33M `Graphics.DAT` remains available for its separate runtime checks.
 
 2026-10-27 Amiga MEDIA720 F0107 placement: the runtime now resolves the source
 C696 wall-ornament anchor from authenticated Amiga `Graphics.DAT` item 696 and

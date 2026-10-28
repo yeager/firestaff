@@ -34,9 +34,12 @@ edition/platform pair, and uses SDL dummy rather than physical input.
 The same binary passed `tests/test_firestaff_cli_startup_diagnostics_real_media.sh`:
 debug startup receipts, FM Towns defaults, invalid/unsupported platform
 handling, authentic media resolution, and fallback selection passed. The
-optional DM2 Macintosh diagnostic case was skipped because its authentic
-archive is unavailable. These startup checks use headless SDL and do not
-establish native-display parity.
+optional DM2 Macintosh subsection was skipped because that diagnostics script
+expects an archive format not provided by the installed `.sit` container.
+The separate `dm2_v1_mac_extracted_native_cli_boot` test passed against the
+authentic extracted Macintosh English files through both direct CLI and M12
+startup. These startup checks use headless SDL and do not establish
+native-display parity.
 
 2026-10-28 DM1 Amiga 2.0 archive recheck against the current local corpus:
 `~/.firestaff/data/dm1/Dungeon-Master_Amiga_EN_Version-20.zip` has SHA-256
