@@ -1,9 +1,10 @@
 # Japanese Nexus title-menu sprite join — 2026-10-28
 
-This receipt records the Japanese New Game and Continue foreground sprite
-joins against authentic retail source bytes, captured CRAM, and retained Ymir
-screenshots. Game media and capture dumps remain on the external evidence
-volume. No synthetic artwork or game data was used.
+This receipt records the Japanese New Game, Continue, and Configuration
+selected-state foreground sprite joins against authentic retail source bytes,
+captured CRAM, and retained Ymir screenshots. Game media and capture dumps
+remain on the external evidence volume. No synthetic artwork or game data was
+used.
 
 ## Authenticated inputs
 
@@ -17,6 +18,8 @@ volume. No synthetic artwork or game data was used.
   `8721cce3354bc20b1cd367fd44be3d4ecc60ca65fa89c7d00654e83f5ad7db23`
 - Continue screenshot SHA-256:
   `741c620e945b5ab3e05f6bc5d182fc4ada9439071b79718f67326bcdd56c6118`
+- Configuration-selected screenshot SHA-256:
+  `0bf10ad77812ec97af4b2ef5b1c4c39895158fc6c62bb9d6a9ef88939687a4d8`
 
 The source was read from the authentic Japanese CUE/ISO in memory. A scan of
 all 137 ISO members found byte-exact CRAM palette matches in Japanese
@@ -28,6 +31,7 @@ all 137 ISO members found byte-exact CRAM palette matches in Japanese
 | --- | ---: | --- | --- | --- | ---: |
 | New Game | 8050 | `0x15f6`, `0x15f6`, `0x0446`, `0x0576`, `0x07d6` | `0x15d6` | `0x02f6`, `0x0426`, `0x0556`, `0x0686`, `0x07b6`, `0x0986`, `0x1f06` | 1,495 / 1,495 |
 | Continue | 8047 | `0x0316`, `0x1b36`, `0x1b36`, `0x06a6`, `0x07d6` | `0x1b16` | `0x02f6`, `0x0426`, `0x0556`, `0x0686`, `0x07b6`, `0x0986`, `0x1f06` | 1,441 / 1,441 |
+| Configuration selected | 11 | `0x0316`, `0x0576`, `0x1746`, `0x1746`, `0x09a6` | `0x1726` | `0x02f6`, `0x0426`, `0x0556`, `0x0686`, `0x07b6`, `0x0986`, `0x1f06` | 1,453 / 1,453 |
 
 The icon palettes each have one exact 32-byte match in the retail file. Seven
 identical text-palette copies remain candidates; the screenshots do not
@@ -36,6 +40,9 @@ identify which copy was uploaded. Both captures report sprite priority 5,
 verifier checks each visible sprite texel against the screenshot using the
 captured CRAM and back-screen state. The screenshot has no independent frame
 number, so exact screenshot-to-command-frame identity remains unproven.
+
+The Configuration verifier confirms the selected foreground row only; it does
+not cover the Configuration page, its controls, or menu activation semantics.
 
 The New Game and Continue captures have byte-identical first 128 KiB of VDP2
 VRAM, the configured NBG0 bitmap: SHA-256
@@ -91,9 +98,14 @@ python3 scripts/verify_nexus_title_sprite_screenshot.py \
   /Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/menu_continue_input_20261027/dumps \
   /Volumes/Extern-disk/firestaff-evidence/ymir_nexus_coldboot_menu_20261027/menu_continue_input_20261027/screenshots/menu-down.png \
   "$HOME/.firestaff/data/nexus/Dungeon Master Nexus (Japan).cue"
+
+python3 scripts/verify_nexus_japanese_configuration_capture.py \
+  /Volumes/Extern-disk/firestaff-evidence/nexus/nexus_jp_config_selection_preaccept_20261028/dumps \
+  /Volumes/Extern-disk/firestaff-evidence/nexus/nexus_jp_config_selection_preaccept_20261028/config_selected.png \
+  "$HOME/.firestaff/data/nexus/Dungeon Master Nexus (Japan).cue"
 ```
 
 The capture bundles and raw retail media are external evidence, not Git
 payloads. This receipt proves only the listed foreground sprite layouts; it
-does not admit the shared background or Configuration, or prove mouse hit
-areas, save loading, or gameplay parity.
+does not admit the shared background or full Configuration page, or prove
+mouse hit areas, save loading, or gameplay parity.

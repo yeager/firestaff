@@ -67,11 +67,11 @@ authentic 555,144-byte English `DM.BIN` is present at offset `0x10000` in the
 WRAM snapshot. This proves prefix residency, not that the whole file was
 loaded or how the logged read path works. The English capture establishes the
 English-version emulator cold-boot-to-menu route. Firestaff now renders the
-authenticated English New Game/Continue foreground sprites and Japanese
-Continue foreground sprites. This does not establish full menu composition or
-input, Continue/save loading, or playable-level parity. Keep background and
-remaining regional renderer gates closed. Capture hashes, output and
-reproduction commands are in
+authenticated English New Game/Continue foreground sprites and Japanese New
+Game/Continue/Configuration sprites. This does not establish full menu
+composition, Continue/save loading, or playable-level parity. Keep the shared
+background and remaining regional renderer gates closed. Capture hashes,
+output, and reproduction commands are in
 [`docs/nexus/nexus_startup.md`](docs/nexus/nexus_startup.md#english-cold-boot-reaches-the-native-title-menu-2026-10-27);
 raw capture files remain on the external evidence volume.
 
@@ -196,11 +196,12 @@ not a fix and has not passed this real-media test.
   only while the Nexus title is active. An English retail Ymir replay verifies
   Down to Continue and Up back to a pixel-identical New Game frame. Firestaff
   renders the hash-pinned English New Game and Continue foreground sprites
-  and both Japanese title-menu selections from their authentic regional
-  `TITLE.BIN` and source-bound palettes, but does not render the background or
-  Configuration layout. New Game, Continue, and Configuration
-  destinations remain unimplemented; Continue execution does not yet read
-  Saturn BKR data. The repeated Continue capture verifies all five Japanese
+  and Japanese New Game, Continue, and Configuration selected-state sprites
+  from authentic regional `TITLE.BIN` data and source-bound palettes. The
+  shared background and full Configuration page remain unrendered. New Game,
+  Continue, and Configuration destinations remain unimplemented; Continue
+  execution does not yet read Saturn BKR data. The repeated Continue capture
+  verifies all five Japanese
   `TITLE.BIN` sprites against 1,441 screenshot pixels. The English verifier
   validates the five sprites in New Game and Continue, each against 1,451
   pixels. The Japanese NBG0 bitmap has zero exact matches against authentic

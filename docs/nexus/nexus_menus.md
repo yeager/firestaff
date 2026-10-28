@@ -16,21 +16,24 @@ default, vertical navigation, and documented Accept results. M11 retains that
 selection state and consumes keyboard input separately from Firestaff's
 generic save/champion menu. Up/Down and W/S update the internal selection;
 English retail Ymir evidence confirms Down to Continue and Up back to New Game.
-This is input-state integration only: Firestaff does not draw the selected
-retail menu, and New Game, Continue, and Configuration have no production
-destination execution route. Continue availability deliberately does not use
-Firestaff save files; the Saturn BKR intake and payload-to-engine route are not
-integrated here.
-The `verify_nexus_title_sprite_screenshot.py` verifier now checks five
-source-bound Japanese Continue sprites and the English New Game and Continue
-layouts, including retail `TITLE.BIN` offsets, VDP1 placement, CRAM color,
-priority, both English 16-color palettes to byte-identical ranges in
-`TITLE.BIN`, and every visible sprite pixel. The icon palette is unique at
+Firestaff draws only the capture-verified foreground sprites for English New
+Game/Continue and Japanese New Game/Continue/Configuration selections. The
+shared background and full-screen composition remain unbound. Accepting New
+Game, Continue, or Configuration has no production destination route. Continue
+availability deliberately does not use Firestaff save files; the Saturn BKR
+intake and payload-to-engine route are not integrated here.
+The `verify_nexus_title_sprite_screenshot.py` verifier checks the Japanese and
+English New Game/Continue layouts, including retail `TITLE.BIN` offsets, VDP1
+placement, CRAM color, priority, English 16-color palettes against exact
+`TITLE.BIN` ranges, and every visible sprite pixel. The dedicated
+`verify_nexus_japanese_configuration_capture.py` checks the Japanese
+Configuration-selected state. The icon palette is unique at
 `0x1486`; seven identical copies of the text palette are present in `TITLE.BIN`.
 The English layouts each match 1,451
-pixels in authentic Ymir captures. The background bitmap and full screen
-composition remain unbound, so this sprite receipt does not admit a Firestaff
-menu renderer. See the [English title-menu sprite receipt](../../parity-evidence/verification/nexus_english_title_menu_sprite_join_20261027/README.md).
+pixels in authentic Ymir captures. Separate Japanese New Game and Configuration
+verifiers cover their captured foreground layouts. The background bitmap and
+full-screen composition remain unbound, so only the per-state foreground
+renderer is admitted. See the [English title-menu sprite receipt](../../parity-evidence/verification/nexus_english_title_menu_sprite_join_20261027/README.md).
 The paired New Game/Continue captures share byte-identical VDP2 VRAM, CRAM,
 and registers; only VDP1 memory/framebuffer/command bytes differ. This confirms
 the selection change is confined to the observed sprite hardware state while
@@ -66,10 +69,10 @@ decoded. The Saturn tilemap/CLUT/runtime placement remains capture-gated; no
 A Nexus menu system needs states for:
 - Title/Start: authentic New Game/Continue/Configuration states and bounded
   retail transitions are recorded. M11 wires keyboard Action and vertical
-  selection into an internal reducer; it does not render the choices or route
-  their production destinations. Five source-bound sprite draws are verified
-  for Japanese Continue. New Game has historical source-comparison evidence;
-  full menu composition, options behavior, and mouse targeting remain unbound.
+  selection into an internal reducer, with source-bound foreground rendering
+  for English New Game/Continue and Japanese New Game/Continue/Configuration.
+  The shared background, full composition, and production destinations remain
+  unbound. Options behavior and mouse targeting also remain unverified.
 - Champion Select: source-owned champion records (20 live PLRD/TABL records)
 - Options: Display mode (fullscreen/windowed), audio levels
 - In-Game Menu: ESC pause with stats, inventory, spells, save
@@ -99,7 +102,8 @@ Present as bounded host/source diagnostics:
 - CD audio/SAL provenance and selection management (playback remains capture-gated)
 
 Still blocked or incomplete:
-- Saturn title/start-menu renderer and VDP1/VDP2 placement
+- Complete Saturn title/start-menu composition and its VDP1/VDP2 background;
+  only source-bound per-state foreground sprites are rendered
 - Champion selection Saturn presentation (party creation pixels)
 - In-game ESC menu
 - Firestaff Saturn BKR menu and engine handoff (directory/block-chain parsing
@@ -113,7 +117,7 @@ Still blocked or incomplete:
 | Feature | DM1 | Nexus V1 |
 |---------|-----|----------|
 | Title screen | 2D bitmap logo | Real source decode; Saturn placement blocked |
-| Start menu options | New Game / Continue | M11 selection input state; renderer and destination routes blocked |
+| Start menu options | New Game / Continue | M11 selection state and foreground sprites; destination routes blocked |
 | Champion roster | Western names (24) | 20 PLRD records |
 | Champion select UI | Sprite-based | State/input route; Saturn presentation blocked |
 | In-game menu | ESC key, 2D panel | No source-bound Nexus route |

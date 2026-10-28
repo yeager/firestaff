@@ -436,9 +436,12 @@ navigate between the three choices. An authentic English retail Ymir replay
 shows Down selecting Continue; a subsequent Up returns to the original New
 Game screenshot pixel-for-pixel. F matches the observed Ymir desktop binding
 for Saturn Start; Enter, keypad Enter, and Space are Firestaff keyboard aliases. These keys
-feed Action only while the Nexus title is active. The menu choice is not drawn,
-and accepting New Game, Continue, or Configuration does not execute a production destination.
-Continue execution remains unavailable until Firestaff reads authentic Saturn BKR media;
+feed Action only while the Nexus title is active. At this stage, the menu choice
+was not drawn; subsequent capture-backed work added regional foreground sprites
+for selected menu states, while the shared background and full-screen composition
+remain unbound. Accepting New Game, Continue, or Configuration still does not
+execute a production destination. Continue execution remains unavailable until
+Firestaff reads authentic Saturn BKR media;
 the generic Firestaff save-file mask is deliberately not reused. This is an
 input-state increment, not title-menu or gameplay parity. See the
 [Nexus input status](nexus_input.md#firestaff-title-keyboard-ingress) and

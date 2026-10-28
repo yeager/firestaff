@@ -41,9 +41,10 @@ Nexus's real-time 3D approach.
 ## 3. Firestaff Title Screen Implementation
 
 The source-owned `TITLE.CG` decode exists in `nexus_v1_ui_surfaces.c` and is
-loaded by the Nexus engine. A complete Saturn title consumer is not yet
-implemented: no VDP1/VDP2 placement, palette upload order, or executable-side
-animation route is admitted without capture evidence.
+loaded by the Nexus engine. Capture-backed foreground sprites now have bounded
+per-state VDP1 placement and palette rendering. The shared title background,
+complete VDP1/VDP2 composition, palette upload sequence, and executable-side
+animation route remain unimplemented.
 
 Separate English retail menu captures now bind the five New Game and Continue
 VDP1 sprite draws to exact `TITLE.BIN` byte ranges, captured CRAM colors,
@@ -51,7 +52,8 @@ screen coordinates, and 1,451/1,451 visible pixels per state. Their two
 16-color palettes match retail `TITLE.BIN` bytes. The icon palette has a unique
 match at offset `0x1486`; the text palette has seven identical copies. The background
 bitmap, remaining composition, and upload timing remain unbound; the bounded
-sprite receipt does not admit the title/menu renderer. See the
+sprite receipt admits only the per-state foreground renderer, not the complete
+title/menu renderer. See the
 [English menu sprite source join](../../parity-evidence/verification/nexus_english_title_menu_sprite_join_20261027/README.md).
 
 The bounded `MAPD/TIBG` receipt also requires the complete section: five
@@ -279,7 +281,8 @@ now replays those writes over the captured frame-5 VDP2 bus-order baseline and
 reproduces frame 6 byte-for-byte. It rejects a foreign, later, or same-frame
 baseline. This independently verifies the observed copy delta without filling
 untraced bytes with a synthetic zero image. It remains a producer receipt;
-the VDP1/VDP2 display consumer, title input, and native renderer stay blocked.
+separate capture-backed work renders selected foreground sprites, but the
+shared VDP1/VDP2 background consumer and full native title renderer stay blocked.
 
 The same CUE/BIOS pair was then captured for 120 frames with the producer's
 documented `0x10` button mask asserted for frame 12,596. The input trace
