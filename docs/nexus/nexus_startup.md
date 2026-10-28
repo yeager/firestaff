@@ -1588,9 +1588,13 @@ and does not open champion selection. If downstream DGN, viewport, or HUD
 receipts still block presentation, M11 restores the observed title menu and
 reports the source-backed blocker; a repeated New Game action can retry the
 handoff without reloading or inventing a start pose. The parser and launcher
-probe pass with authentic media, but the M11 keyboard/mouse transition has not
-yet been captured in Ymir. This change therefore establishes the retail
-loader handoff, not a playable viewport or complete gameplay parity.
+probes pass with authentic media. The M11 retail-menu regression also starts
+the launcher from the real extracted corpus, accepts New Game once through
+keyboard input and once through the mouse row, and verifies the committed
+level-1 receipt and `(29,47,North)` engine pose in both cases. Both paths pass
+locally with the authentic retail corpus. There is still no Ymir capture of
+the M11 handoff, and this test establishes the loader route rather than a
+playable viewport or complete gameplay parity.
 
 ## Retail Up input changes the first viewport (2026-10-28)
 

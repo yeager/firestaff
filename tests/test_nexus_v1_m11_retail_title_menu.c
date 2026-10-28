@@ -1,5 +1,7 @@
 #include "m11_game_view.h"
 #include "nexus_v1_engine.h"
+#include "nexus_v1_launcher.h"
+#include "nexus_v1_movement.h"
 #include "nexus_v1_title.h"
 #include <stdint.h>
 #include <stdlib.h>
@@ -267,6 +269,72 @@ int main(void)
         ++failures;
     }
     M11_GameView_Shutdown(&state);
+    {
+        const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+        if (data_dir && data_dir[0] &&
+            nexus_v1_launcher_init(data_dir) == 0) {
+            int input_kind;
+            for (input_kind = 0; input_kind < 2; ++input_kind) {
+                M11_GameViewState live_state;
+                Nexus_V1_Engine *engine = nexus_v1_launcher_get_engine();
+                M11_GameInputResult input_result;
+                M11_GameView_Init(&live_state);
+                live_state.active = 1;
+                live_state.sourceKind = M11_GAME_SOURCE_NEXUS_DGN;
+                live_state.nexusEngine = engine;
+                live_state.nexusState.title_active = 1;
+                live_state.nexusState.title_frame = 0;
+                while (!nexus_title_full_boot_start_ready(
+                           live_state.nexusState.title_frame)) {
+                    ++live_state.nexusState.title_frame;
+                }
+                nexus_v1_retail_title_menu_init(
+                    &live_state.nexusState.retail_title_menu);
+                (void)M11_GameView_HandleInput(
+                    &live_state, M12_MENU_INPUT_ACTION);
+                if (input_kind == 0) {
+                    input_result = M11_GameView_HandleInput(
+                        &live_state, M12_MENU_INPUT_ACCEPT);
+                } else {
+                    input_result = M11_GameView_HandlePointerButton(
+                        &live_state, 150, 156,
+                        DM1_V1_MOUSE_MASK_LEFT_PC34);
+                }
+                if (!engine || input_result != M11_GAME_INPUT_REDRAW ||
+                    !engine->level_loaded || !engine->game.game_started ||
+                    engine->game.current_level !=
+                        NEXUS_V1_FIRST_PLAYABLE_LEVEL ||
+                    engine->game.dungeon_start.status !=
+                        NEXUS_V1_DUNGEON_START_READY ||
+                    engine->game.party_x != 29 ||
+                    engine->game.party_y != 47 ||
+                    engine->game.party_dir != NEXUS_DIR_NORTH ||
+                    live_state.nexusState.champion_select_active) {
+                    fprintf(stderr,
+                            "FAIL: authentic retail New Game %s handoff\n",
+                            input_kind == 0 ? "keyboard" : "mouse");
+                    ++failures;
+                } else {
+                    printf("PASS: authentic retail New Game %s handoff (level %d, %d,%d,N)\n",
+                           input_kind == 0 ? "keyboard" : "mouse",
+                           engine->game.current_level,
+                           engine->game.party_x,
+                           engine->game.party_y);
+                }
+                M11_GameView_Shutdown(&live_state);
+                nexus_v1_launcher_shutdown();
+                if (input_kind == 0 &&
+                    nexus_v1_launcher_init(data_dir) != 0) {
+                    fprintf(stderr,
+                            "FAIL: reinitialize authentic Nexus launcher for mouse route\n");
+                    ++failures;
+                    break;
+                }
+            }
+        } else {
+            puts("SKIP: authentic Nexus media unavailable for M11 New Game handoff");
+        }
+    }
     if (failures == 0) {
         puts("PASS: Nexus retail title input stays within its evidence-bounded state");
     }

@@ -22240,6 +22240,8 @@ endif()
     add_test(
         NAME nexus_v1_m11_retail_title_menu
         COMMAND test_nexus_v1_m11_retail_title_menu)
+    set_tests_properties(nexus_v1_m11_retail_title_menu PROPERTIES
+        ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus")
 
     # -- Theron V1 M12/M11 Launcher Handoff Boundary ---------------
     # Skip-safe gate: M12 launch intent routes the Theron catalog entry,
