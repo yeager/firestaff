@@ -8270,3 +8270,18 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   input. Until that comparison passes, the decoder remains a bounded research
   walk and its output stays opaque; no dungeon, object, or tile meaning is
   inferred.
+- Mednafen 1.32.1's PCE Fast CPU exposes the needed hook points in
+  `HuC6280_Run`, `RdAtPC`/`RdOp`, `RdMem`/`WrMem`, direct `HU_Page1` accesses,
+  block-move handlers, and `SET_MPR`. Start at the caller's `$2390` BSR to
+  `$23AD`, retain trace state through scheduler yields during block moves, and
+  close when the `$23AD` return reaches `$2392`. Record code fetches and
+  logical/physical address mappings; fetches bypass `RdMem`/`WrMem`, and
+  zero-page/stack accesses bypass those helpers too. Preserve MPR slot 8 for
+  the PC-overflow sentinel. Static caller bytes are in
+  `theron-us-bank1f-consumer.asm:30-44`.
+- The instrumented Mednafen source available on TRV2 is an exported source
+  copy without a Git revision or recorded upstream archive checksum. Treat it
+  as read-only input and copy it into a fresh task-specific build directory
+  before applying instrumentation. A global sequence number only orders
+  events; it does not establish CD-sector-to-buffer causality, which requires
+  carrying per-byte LBA/offset origins through the CD FIFO and memory writes.
