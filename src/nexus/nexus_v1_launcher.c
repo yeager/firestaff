@@ -225,7 +225,20 @@ int nexus_v1_launcher_start_retail_new_game(
     out_receipt->party_y = -1;
     out_receipt->party_dir = -1;
     out_receipt->blocks_runtime = 1;
-    if (!s_initialized || s_engine.level_loaded) return 0;
+    if (!s_initialized) return 0;
+    if (s_engine.level_loaded) {
+        /* A validated start remains committed if a later presentation gate
+         * blocks. Let the same retail New Game input retry that handoff. */
+        if (s_engine.game.game_started &&
+            s_engine.game.current_level == NEXUS_V1_FIRST_PLAYABLE_LEVEL &&
+            s_engine.game.dungeon_start.status ==
+                NEXUS_V1_DUNGEON_START_READY &&
+            !s_engine.game.dungeon_start.blocks_runtime) {
+            *out_receipt = s_engine.game.dungeon_start;
+            return 1;
+        }
+        return 0;
+    }
 
     memset(&dm_source, 0, sizeof(dm_source));
     if (nexus_v1_named_asset_source_receipt(

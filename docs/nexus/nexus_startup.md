@@ -1571,24 +1571,26 @@ This does not establish the NBG0 title background, full-screen composition,
 Configuration page controls, New Game destination execution, Continue/save
 loading, or gameplay viewport/HUD parity.
 
-## New Game input is not yet dispatched (2026-10-28)
+## Retail New Game input reaches the authenticated level loader (2026-10-28)
 
 The authenticated retail menu reducer returns
 `NEXUS_V1_RETAIL_TITLE_MENU_RESULT_START_NEW_GAME` when Accept is pressed on
-New Game. In `M11_GameView_HandleInput`, the current retail-menu branch groups
-that result with redraw-only outcomes and returns while `title_active` remains
-set. The title screen therefore stays active; the input does not start the
-level.
+New Game. M11 now sends that result to the retail start path for both
+keyboard/controller Accept and the retail mouse row. The path authenticates
+the supplied `DM.BIN`, parses its level-1 record, loads the selected
+hash-verified `LEV01.DGN`, validates the retail start cell, and asks the
+existing source-gated runtime handoff to prepare the viewport and HUD.
 
-The older Firestaff startup-action path is not a proven substitute: its
+The older Firestaff startup-action path is not used as a substitute: its
 `NEXUS_V1_STARTUP_ACTION_NEW_GAME` execution opens Firestaff's champion-select
-mode. The retained Ymir cold-boot replay instead reaches a native 3D viewport
-after accepting New Game, without a visible champion-select screen. The
-replay does not identify the active room or establish a stable playable
-checkpoint, so changing `level_loaded`, party coordinates, or title mode here
-would invent runtime state. The native New Game transition still needs a
-source-backed room/load receipt before Firestaff can enter gameplay from this
-menu.
+mode. The retail path retains the parser's authenticated level-start receipt
+and does not open champion selection. If downstream DGN, viewport, or HUD
+receipts still block presentation, M11 restores the observed title menu and
+reports the source-backed blocker; a repeated New Game action can retry the
+handoff without reloading or inventing a start pose. The parser and launcher
+probe pass with authentic media, but the M11 keyboard/mouse transition has not
+yet been captured in Ymir. This change therefore establishes the retail
+loader handoff, not a playable viewport or complete gameplay parity.
 
 ## Retail Up input changes the first viewport (2026-10-28)
 
