@@ -1669,9 +1669,13 @@ level-1 loader coordinate. A separate `FUN_060110ac` branch writes `(32,39)`
 for a zero argument; those stores did not appear in the accepted New Game
 trace and are not substituted for the selected table entry.
 
-The angle word is not yet mapped to Firestaff's north/east/south/west enum.
-Therefore the native runtime still blocks starting gameplay until that mapping
-is established. Raw Ymir traces and Ghidra exports are retained externally in
+Enabled table entries use angle words `0x0000`, `0x4000`, `0x8000`, and
+`0xc000`, consistent with quarter-turns in a 16-bit angle field.
+`FUN_0601f584` stores the value in an object field, but its analyzed caller
+chain does not bind `0x8000` to a world axis or Firestaff's
+north/east/south/west enum. The native runtime therefore still blocks starting
+gameplay until that mapping is established. Raw Ymir traces and Ghidra exports
+are retained externally in
 `nexus_new_game_capture_20261028/config-struct-sh2-trace-1800/` with the
 no-input control beside it.
 

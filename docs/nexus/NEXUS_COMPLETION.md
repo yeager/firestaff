@@ -310,13 +310,16 @@ receipts are complete with zero dropped rows. Only the accepted run records
 the 16-entry table at `DM.BIN+0x39550` is read by `FUN_06011984`, called from
 `FUN_0601128e`, and copied into the same loader structure. Its level-1 entry
 is `00 01 00 01 1d 2f 80 00`: level 1, enabled flag 1, coordinates `(29,47)`,
-and angle word `0x8000`. The accepted New Game trace reaches the same structure
-through `FUN_0602022c`. The `(29,47)` cell is passable in the hash-verified
-retail LEV01 DGN, so this is a source-owned level-1 loader coordinate, not a
-guessed walkable cell. The angle encoding has not yet been mapped to Firestaff's
-north/east/south/west convention, so runtime direction admission remains
-closed. The tuple is unchanged by the paired Up input. Exact trace and Ghidra
-export hashes are in the external
+and angle word `0x8000`. Enabled entries use `0x0000`, `0x4000`, `0x8000`, or
+`0xc000`, consistent with quarter-turns in a 16-bit angle field. The accepted
+New Game trace reaches the same structure through `FUN_0602022c`. The
+`(29,47)` cell is passable in the hash-verified retail LEV01 DGN, so this is a
+source-owned level-1 loader coordinate, not a guessed walkable cell.
+`FUN_0601f584` stores the angle in an object field, but the available
+disassembly does not bind `0x8000` to a world axis or Firestaff's
+north/east/south/west convention. Runtime direction admission therefore
+remains closed. The tuple is unchanged by the paired Up input. Exact trace and
+Ghidra export hashes are in the external
 `nexus_new_game_capture_20261028/config-struct-sh2-trace-1800/` evidence
 directory.
 
