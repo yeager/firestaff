@@ -81,10 +81,14 @@ probe_saved_input strafe-left 0 4,15,2
 probe_saved_input action 0 4,15,2
 
 # Returning from presentation must retain the authenticated Amiga card,
-# rather than selecting the first (unavailable FM Towns) platform.
+# rather than selecting the first (unavailable FM Towns) platform. Give each
+# scripted input its own M12 frames: the native edition and asset scan can
+# take longer than a single host frame, and input bursts can cross menu phases.
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
-    --platform amiga --data-dir "$archive" --script enter,enter,back,enter,enter --duration 1000 2>&1)" || {
+    --platform amiga --data-dir "$archive" \
+    --script 'wait20,enter,wait20,enter,wait20,back,wait20,enter,wait20,enter' \
+    --duration 10000 2>&1)" || {
     printf '%s\n' "$menu_output" >&2
     exit 1
 }
