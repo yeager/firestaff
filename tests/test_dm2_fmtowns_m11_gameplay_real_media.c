@@ -2004,9 +2004,15 @@ int main(void)
         DM2_V1_RuntimeVisibleMissileSnapshot live_snapshots[16];
         DM2_V1_ViewportState live_viewport;
         DM2_V1_IndoorLiveMissilePlan live_plan;
+        DM2_V1_IndoorLiveMissileDrawPlan live_draw_plan;
+        uint8_t live_creature_draw_success[
+            DM2_V1_INDOOR_STATIC_OBJECT_PASS_COUNT]
+            [DM2_V1_INDOOR_STATIC_OBJECT_SLOT_COUNT];
         size_t live_snapshot_count = 0u;
         int live_snapshot_found = 0;
         int live_plan_found = 0;
+        int live_plan_event_index = -1;
+        int live_draw_found = 0;
         uint8_t count_before = 0u, count_active = 0u, count_expired = 0u;
         int selected = dm2_v1_runtime_select_mac_charsheet_champion(0);
         int spell_ready = selected &&
@@ -2098,6 +2104,9 @@ int main(void)
               "HME-242 live Fireball is reachable through the active G1 source tile chain");
         memset(&live_viewport, 0, sizeof(live_viewport));
         memset(&live_plan, 0, sizeof(live_plan));
+        memset(&live_draw_plan, 0, sizeof(live_draw_plan));
+        memset(live_creature_draw_success, 0,
+               sizeof(live_creature_draw_success));
         live_viewport.party_x = dm2_v1_runtime_get_party_x();
         live_viewport.party_y = dm2_v1_runtime_get_party_y();
         live_viewport.party_dir = dm2_v1_runtime_get_party_dir();
@@ -2115,12 +2124,31 @@ int main(void)
                     live_plan_found = event->source_cell == 0 &&
                         event->source_pass == 20 &&
                         event->display_index >= 0;
+                    live_plan_event_index = i;
                     break;
                 }
             }
         }
         check(live_plan_found,
               "HME-242 live Fireball enters the SKProject center-cell missile draw plan");
+        if (live_plan_found && live_plan_event_index >= 0 &&
+            dm2_v1_viewport_build_indoor_live_missile_draw_plan(
+                &live_plan, live_creature_draw_success, &live_draw_plan) &&
+            live_draw_plan.valid) {
+            for (int i = 0; i < live_draw_plan.event_count; ++i) {
+                const DM2_V1_IndoorLiveMissileDrawEvent *draw =
+                    &live_draw_plan.events[i];
+                if (draw->missile_event_index ==
+                        (uint16_t)live_plan_event_index &&
+                    draw->draw_kind ==
+                        DM2_V1_INDOOR_LIVE_MISSILE_DRAW_CURRENT) {
+                    live_draw_found = 1;
+                    break;
+                }
+            }
+        }
+        check(live_draw_found,
+              "HME-242 authentic Fireball produces its source current-slot draw call");
     }
     M11_GameView_Shutdown(&view);
     if (failures) return 1;

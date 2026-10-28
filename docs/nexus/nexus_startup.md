@@ -105,7 +105,7 @@ It held Start during capture frames 0 through 59 and captured 120 frames with
 --capture-start-frame 0 --capture-start-hold 60`. The profile and raw dumps
 were removed after inspection; the displayed title-menu image and VDP1 receipt
 are retained in
-[`nexus_v1_ymir_deterministic_start_menu_20261026`](../parity-evidence/verification/nexus_v1_ymir_deterministic_start_menu_20261026/README.md).
+[`nexus_v1_ymir_deterministic_start_menu_20261026`](../../parity-evidence/verification/nexus_v1_ymir_deterministic_start_menu_20261026/README.md).
 
 The capture completed at VDP1 frame 59 with command cursor 178 and 178 rows
 for that frame. Its complete trace had 10,668 rows from frames 0 through 59,
@@ -158,7 +158,7 @@ champion dungeon view. The image digest was
 `87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`; the
 capture receipt notes that its transfer/source chain was not retained. This
 demonstrates the retail route, not Firestaff's BKR-to-engine handoff. See
-[`nexus-continue-real-bup-20261025`](../parity-evidence/verification/nexus-continue-real-bup-20261025/README.md).
+[`nexus-continue-real-bup-20261025`](../../parity-evidence/verification/nexus-continue-real-bup-20261025/README.md).
 
 An independent 2,200-frame no-present replay on 2026-10-26 used the same
 authenticated Japanese IPL, retail CUE, retained title-prompt state, and the
@@ -423,7 +423,7 @@ Continue left the screen unchanged because no save was present; that attempt
 did not verify save loading.
 Together, these are retail startup/input observations, not Firestaff parity.
 The capture environment, key mapping, and per-action limitations are recorded
-in [`parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`](../parity-evidence/verification/keyboard-mouse-debug-20261024/README.md).
+in [`parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`](../../parity-evidence/verification/keyboard-mouse-debug-20261024/README.md).
 
 ## Retail Continue with an authentic save (2026-10-25)
 
@@ -443,7 +443,7 @@ that profile and was not edited directly. Ymir 0.4.1
 ran with `--debug` on TRV2 against the Japanese retail cue (SHA-256
 `878b3bc223bb56e99626dbaa2946d17fb349a2a67a10cd4423742d8ab30b8699`). The
 retained screenshots and their hashes are in
-[`parity-evidence/verification/nexus-continue-real-bup-20261025/README.md`](../parity-evidence/verification/nexus-continue-real-bup-20261025/README.md).
+[`parity-evidence/verification/nexus-continue-real-bup-20261025/README.md`](../../parity-evidence/verification/nexus-continue-real-bup-20261025/README.md).
 This demonstrates the retail save-load route under Ymir with a BUP reported as
 retail-written. Because its transfer chain was not retained, the save's retail
 provenance is not independently established. It does not prove Firestaff
@@ -504,10 +504,10 @@ Down selects Continue, and A confirms New Game into the dungeon. A fresh profile
 with no game save leaves Continue on the same menu and does not prove a save-load
 route. This establishes retail behavior only; it is not Firestaff parity.
 Capture details and screenshots are recorded in
-[`parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`](../parity-evidence/verification/keyboard-mouse-debug-20261024/README.md).
+[`parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`](../../parity-evidence/verification/keyboard-mouse-debug-20261024/README.md).
 
 The historical direct-CLI probe in
-[`parity-evidence/verification/nexus_cli_direct_start_block_20261024/README.md`](../parity-evidence/verification/nexus_cli_direct_start_block_20261024/README.md)
+[`parity-evidence/verification/nexus_cli_direct_start_block_20261024/README.md`](../../parity-evidence/verification/nexus_cli_direct_start_block_20261024/README.md)
 reached the ready title frame but reported `menu=0` and `levelLoaded=0` after
 one scripted Return. It did not start Nexus. That receipt names a MENU.BPK PRS3
 capture blocker for that build; it should not be read as proof that decoding
@@ -1012,7 +1012,7 @@ still does not provide CLUT source ownership or admit a Firestaff renderer.
 
 - DMWeb Nexus file formats and DMN Data File Decoder.
 - `src/nexus/nexus_v1_engine.c` and `src/nexus/nexus_v1_title.c`.
-- `docs/NEXUS_RUNTIME_CAPTURE.md`.
+- `NEXUS_RUNTIME_CAPTURE.md`.
 - [NEXUS_STRICT_FIDELITY_INVENTORY.md](NEXUS_STRICT_FIDELITY_INVENTORY.md).
 
 ## Cold-boot title menu and retail menu navigation (2026-10-27)
@@ -1117,7 +1117,7 @@ Firestaff rendering.
 Raw capture bytes remain outside Git under
 `/Volumes/Extern-disk/firestaff-data/`. Hashes, analyzer output, and
 reproduction commands are recorded in
-[`nexus_v1_menu_candidate_source_join_20261027`](../parity-evidence/verification/nexus_v1_menu_candidate_source_join_20261027/README.md).
+[`nexus_v1_menu_candidate_source_join_20261027`](../../parity-evidence/verification/nexus_v1_menu_candidate_source_join_20261027/README.md).
 
 ## English-version boot attempt and menu-asset residency (2026-10-27)
 
@@ -1202,7 +1202,7 @@ bundle.
 This establishes the English-version emulator's cold-boot-to-menu path. It does
 not establish Firestaff menu rendering or input, Continue/save loading, or
 playable-level, viewport, or HUD parity. See the
-[English cold-boot evidence receipt](../parity-evidence/verification/nexus_english_coldboot_menu_20261027/README.md)
+[English cold-boot evidence receipt](../../parity-evidence/verification/nexus_english_coldboot_menu_20261027/README.md)
 for hashes and reproduction commands.
 
 ## Authentic Japanese title-menu Down selection (2026-10-27)
@@ -1351,43 +1351,61 @@ selection state. It does not establish the complete `TITLE.BIN` decoding,
 mouse hit regions, Firestaff input handling, or production renderer admission.
 The full external capture,
 hashes, and reproduction command are in the
-[Japanese Down-selection capture receipt](../parity-evidence/verification/nexus_japanese_menu_down_selection_20261027/README.md).
+[Japanese Down-selection capture receipt](../../parity-evidence/verification/nexus_japanese_menu_down_selection_20261027/README.md).
+
+## Full Japanese title-menu capture replay (2026-10-27)
+
+The retained frame-8047 Ymir run reconstructs the complete 320×224 display
+from its captured VDP1 framebuffer, VDP2 VRAM, CRAM and registers. The C replay
+matches every pixel in the same-run 640×448 screenshot (286,720 subpixels)
+after 2× scaling. Its VDP1 trace contains 178 frame-8047 commands and reports
+zero dropped rows. Five Japanese `TITLE.BIN` menu-sprite roles account for
+1,441 visible texels; the remaining output is accounted for by captured VDP1
+direct pixels, captured VDP1 palette pixels and NBG0 overlays. The screenshot
+has no embedded frame number, so exact acquisition-frame identity remains
+unproven. The pixel counts and input digests are recorded in
+[`NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md`](NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md).
+
+This is a captured-frame composition check, not a renderer admission. The
+replay consumes Ymir display and VDP snapshots, not a Firestaff runtime upload
+from retail assets. Runtime menu presentation, keyboard handling, mouse hit
+areas, save loading and playable-level/HUD parity remain open.
 
 ## Japanese menu-state NBG0 storage join (2026-10-27)
 
-The paired Japanese menu capture at
-`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_menu_source_wide_frame_read_20261027/`
-contains a frame-tagged source-address read pass as well as the source-to-storage
-match. Japanese `TITLE.BIN`
-bytes `0x2526..0xa0a5` (31,616 bytes; end-exclusive `0xa0a6`; full member SHA-256
+The retained Japanese Ymir capture contains a frame-tagged source-address read
+pass and a source-to-storage match. Japanese `TITLE.BIN` bytes
+`0x2526..0xa0a5` (31,616 bytes; end-exclusive `0xa0a6`; full member SHA-256
 `51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3`)
-match WorkRAMH address `0x060ac2a6` exactly. Under the previously verified
-304-byte row width and 512-byte stride, 30,561 of those bytes match the active
-NBG0 8bpp bitmap in the frame-8047 snapshot. All 96 leading rows match; the
-1,055 differences are in the final eight rows. The complete VDP2 trace records
-2,432 writes to those rows at frame 7,716, of which 1,377 values equal the
-matching `TITLE.BIN` bytes; the frame-windowed trace shows no later VRAM or
-CRAM writes before the frame-8047 snapshot.
+match WorkRAMH address `0x060ac2a6` exactly. Under the verified 304-byte row
+width and 512-byte stride, 30,561 bytes match the active NBG0 8bpp bitmap in
+the frame-8047 snapshot. All 96 leading rows match; the 1,055 differences are
+in the final eight rows. The complete VDP2 trace records 2,432 writes to those
+rows at frame 7,716, of which 1,377 values equal the corresponding source
+bytes. The frame-windowed trace has no later VRAM or CRAM writes before the
+frame-8047 snapshot; the register receipt is checked at frame 8,047 only.
 
 The same run's SH-2 read trace records one contiguous ordered byte-read pass
 over all 31,616 addresses at frame 6,893, with PC `0x06023124`, caller target
-`0x06023108`, and caller return `0x06023176`. The SH-2 write trace is complete
-with zero drops and records writes to this WorkRAM span only through frame
-6,890. The read trace itself retained 250,000 rows and dropped 860,856 other
-master reads, so it is globally incomplete even though the full contiguous
-source-address pass is present. The trace records no values at read time; the
-final WorkRAM byte join does not prove those exact values were present when
-read, and the traces do not cover non-CPU DMA writes.
+`0x06023108`, and caller return `0x06023176`. The complete SH-2 write trace
+records writes to this WorkRAM span only through frame 6,890. The read trace
+retained 250,000 rows and dropped 860,856 other master reads, so it is globally
+incomplete even though the contiguous source-address pass is present. It
+records no values at read time; the final WorkRAM join does not prove those
+bytes were present when read, and the traces do not cover non-CPU DMA writes.
 
 Run `scripts/verify_nexus_title_nbg0_title_bin_storage.py` and
-`scripts/verify_nexus_title_nbg0_source_read_trace.py` with the Ymir dump
-directory and a `--data-dir` containing the authenticated Japanese retail
-files to reproduce the storage and address-pass joins. The bundle's
-`SHA256SUMS.txt` covers all retained files.
+`scripts/verify_nexus_title_nbg0_source_read_trace.py` against the retained Ymir
+dump and either the authenticated Japanese retail files or the original
+Japanese CUE; CUE members are read in memory. This reproduces the storage and
+address-pass joins without substituting synthetic title data. The evidence
+bundle's `SHA256SUMS.txt` covers its retained files. The screenshot verifier
+can report a paired frame only when the
+original screenshot remains at the full path recorded in that run's log; a
+relocated copy is not treated as frame-paired.
 
 No complete pixel join establishes which NBG0 bytes are visible after VDP1
 composition. Treat this as bounded SH-2 address-read and NBG0 storage evidence;
 title/menu display ownership and production renderer admission remain blocked.
-See
-[`nexus_title.md`](nexus_title.md#japanese-menu-state-nbg0-source-and-storage-join-2026-10-27)
+See [`nexus_title.md`](nexus_title.md#japanese-menu-state-nbg0-source-and-storage-join-2026-10-27)
 for the detailed source and layout receipt.

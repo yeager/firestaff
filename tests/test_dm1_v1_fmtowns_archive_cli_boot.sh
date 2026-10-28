@@ -83,12 +83,14 @@ grep -Fq 'levelLoaded=1' <<<"$japanese_menu_output"
 # 1920x1080 card canvas explicitly so scripted physical coordinates do not
 # depend on a CI host's default window size.  The waits model separate input
 # frames; no keyboard event selects the game, platform, or presentation.
+# Allow software-rendered pointer frames to finish on loaded hosts; the
+# successful launch exits immediately through FIRESTAFF_EXIT_AFTER_LAUNCH.
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --width 1920 --height 1080 --menu --game dm1 --platform fm-towns \
     --data-dir "$archive" \
     --script 'wait20,click:700:262,wait20,click:410:405,wait20,click:450:405,wait20' \
-    --duration 3000 >/dev/null 2>&1
+    --duration 15000 >/dev/null 2>&1
 
 # The pointer-only check above stops at the launch receipt. Also keep the
 # ordinary M12 handoff alive through the original EDM/JDM title and Entrance

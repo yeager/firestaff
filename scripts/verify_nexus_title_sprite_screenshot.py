@@ -90,9 +90,13 @@ def paired_capture_frame(bundle: Path, screenshot: Path, run_log: Path,
     for line in run_log.read_text(encoding="utf-8", errors="replace").splitlines():
         marker = "Screenshot saved to "
         if marker in line:
-            logged_screenshots.append(Path(line.split(marker, 1)[1].strip()).name)
-    if logged_screenshots.count(screenshot_path.name) != 1:
-        raise ValueError("run log does not identify exactly one copy of the supplied screenshot")
+            logged_path = Path(line.split(marker, 1)[1].strip()).expanduser()
+            if not logged_path.is_absolute():
+                logged_path = capture_root / logged_path
+            logged_screenshots.append(logged_path.resolve())
+    if logged_screenshots.count(screenshot_path) != 1:
+        raise ValueError(
+            "run log does not identify the supplied screenshot by its full path")
 
     def receipt(path: Path) -> dict[str, str]:
         result = {}

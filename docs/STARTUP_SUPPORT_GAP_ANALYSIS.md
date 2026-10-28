@@ -1,8 +1,8 @@
 # Five-game startup support gap analysis
 
-Reconciled with repository `main` at `88ef19df` on 2026-10-27. The latest
-published release is v3.0.417 (published at 06:59 UTC). GitHub Actions release
-run `40463344704` completed its seven platform build and packaging jobs
+Reconciled with repository `main` at `7333c882` on 2026-10-27. The latest
+published release is v3.0.418 (published at 19:56 UTC). GitHub Actions release
+run `40570781398` completed its seven platform build and packaging jobs
 successfully (Windows x86_64, macOS x86_64/arm64, Linux x86_64/arm64, Android
 arm64 and iOS arm64), then published 23 release assets. These results verify
 compilation and packaging, not game startup. The 2026-10-27 current-source
@@ -13,12 +13,14 @@ Macintosh French and FM Towns Japanese routes listed in `TODO-dm2.md`; and
 Theron's Japanese Rev. 1 title-to-Akutuba route plus the US Continue route to
 dungeon 2, level 0. The CSB Atari Hint Oracle also passes with the original
 Atari R1 media. The Amiga demo, CSB Atari French preservation case, and DM2
-DOS French, Macintosh English and Amiga English cases remain unverified
-because their authentic archives are absent. These CLI checks use SDL dummy
-and verify the exercised source startup/handoff paths, not native display,
-physical input, or full gameplay. Recent changes also add authentic Japanese
-Theron input evidence and Nexus retail reference captures. The Nexus
-captures verify no-save Japanese and English routes to the native three-choice
+DOS French and Macintosh English direct CLI cases remain unverified because
+their authentic archives are absent. The DM2 Amiga English direct CLI test
+passed from original media on TRV2; its no-game M12 route also selected the
+archive and reached level 0 with an Amiga runtime receipt. These CLI checks
+use SDL dummy and verify the exercised source startup/handoff paths, not
+native display, physical input, or full gameplay. Recent changes also add
+authentic Japanese Theron input evidence and Nexus retail reference captures.
+The Nexus captures verify no-save Japanese and English routes to the native three-choice
 title menu and a separate Japanese diagnostic replay to the native 3D corridor;
 they do not establish Firestaff's Nexus startup or renderer. Replaying the
 English screenshot from its captured frame is pixel-exact. Its complete VDP1
@@ -59,7 +61,7 @@ The current evidence does not establish complete five-game startup support.
 |---|---|---|---|
 | DM1 | Current-source authentic-media CLI routes pass for PC34 (including a nested archive), DOS English/French, Atari ST 1.0a/1.0b/1.1/1.2/German/French, Amiga HD/2.0/2.0 German/2.0 French/2.1–2.2 English/3.6, and FM Towns. The original Amiga demo archive is absent. | The picker test covers keyboard and mouse handoff; the mixed-media AUTO route enters through the no-game menu and reaches its authentic first runtime frame. | First runtime is verified for the named media routes, but native display/input, campaign depth, and full edition parity remain open. See [`TODO-dm1.md`](../TODO-dm1.md). |
 | CSB | Current-source authentic-media CLI routes pass for Atari STX, original Atari, nested Atari ZIP, Atari Utility Disk 7z/Hint Oracle, Amiga A31E/A33M/A35E/CTRaw, and FM Towns English/Japanese. The Atari French archive is absent. | The picker test covers keyboard and mouse handoff; the runtime test checks the authentic starting party and viewport receipt. | First runtime is verified on bounded routes. In Amiga CSB, F0107 now uses source MEDIA720 scales and authentic Amiga C696 anchors for M615 ornaments; matched-frame, palette/light, trapdoor and platform-wide viewport parity remain open ([evidence and remaining gap](../TODO-csb.md)). Native physical input remains open. |
-| DM2 | Current-source direct CLI routes pass for the original DOS English archive, Macintosh French SIT media, and FM Towns Japanese. DOS French, Macintosh English, and Amiga English archives are absent. | The picker test covers keyboard and mouse handoff for PC and FM Towns Japanese; the runtime test checks the authentic first party and frame. | First runtime is verified on bounded routes, including the selected French DOS loose-file route. Other editions and native interaction coverage remain incomplete ([`TODO-dm2.md`](../TODO-dm2.md)). |
+| DM2 | Current-source direct CLI routes pass for the original DOS English archive, Macintosh French SIT media, FM Towns Japanese, and Amiga English ZIP (including first-runtime and input probes). DOS French and Macintosh English archives remain absent. | The picker test covers keyboard and mouse handoff for PC and FM Towns Japanese; the Amiga test covers the no-game M12 route and pointer selection through Original. | First runtime is verified on bounded routes, including DOS French loose files and Amiga English. Other editions and physical input coverage remain incomplete ([`TODO-dm2.md`](../TODO-dm2.md)). |
 | Theron | Authentic Japanese Rev. 1 Track 02 reaches the native title → stage → Soul Room → Akutuba runtime route. The US Continue path restores an authentic save and reaches dungeon 2, level 0; all seven dungeon sources load from authentic regional media. | The picker test covers keyboard and mouse handoff; the runtime test checks a loaded authentic Track 02 state. The US no-game M12 route and Japanese Track 02 SDL test exercise authentic startup/input paths. Tab champion cycling and Z/X/Space exercise keyboard actions on authentic USA Track 02; the Japanese Track 02 SDL test covers swipe-up movement and swipe-left turning. The authentic US raw-bin regression checks backward followed by KP8 forward to the source-backed starting square. An authentic USA Ak-Tu-Ba save-state replay under standard PCE confirmed Button I queues `$50` at `$2905` and the guest consumes it; Button II did not. The save-state capture has no CD-to-RAM provenance and does not bind that dispatch to a world-state change, so it proves command-queue dispatch only. Separate bounded US reference cold starts reached only the System Card; they do not establish a game-owned menu transition. | Runtime state, native frames and bounded input routes are reached, but the native dungeon image is not yet driven by the authenticated world/graphics state. A recent nonblack Firestaff capture has not been paired with an original-emulator capture. Later progression, full save semantics, audio and end-to-end parity remain open. |
 | Nexus | A historical TRV2 v3.0.415 CLI run used authentic Japanese `DM.BIN` (MD5 `e88d60859f65f08fa622e1992b02280f`): after 110 boot-probe frames and one scripted Enter, it reported `titleReady=1`, `levelLoaded=0`, `menu=0`, blocker `menu-bpk-prs3-capture-required`. Current source has advanced: the English-version `MENU.BPK` byte decoder verifies all 162 PRS3 surfaces, but keeps decoded pixels out of the renderer until Saturn palette, VDP1 upload and display ownership are joined to a matching capture. The authentic-data mouse test still reaches only the capture-gated title route, and no Nexus case exists in the first-runtime probe matrix. | An authentic Japanese retail Ymir cold boot with no emulator or game save reaches the native three-choice title menu after scheduled Start inputs. No-input, Down/Continue, and Configuration behavior are separately verified from diagnostic state 3. From that same no-save menu state, a separate replay with `NEW GAME` selected and a two-frame A input reaches the native 3D corridor viewport after 1,200 frames; the complete VDP1 trace has zero drops, and the capture has no party HUD. A separate English-version disc-image cold boot reaches the three-choice menu. Its source join is partial, with 126 informative matches among 137 textured draws, and menu asset, palette and display ownership remain unproven. These are emulator checkpoints, not Firestaff startup or presentation evidence. Firestaff's title composition, menu rendering/control, Continue with real save data, stable gameplay, HUD and viewport parity remain unverified. The English Ymir capture does not establish Firestaff menu display, input, or renderer readiness. The Saturn BKR parser remains container-level and is not wired to save selection or loading ([English cold-boot capture](nexus/nexus_startup.md#english-cold-boot-reaches-the-native-title-menu-2026-10-27), [cold-boot retail menu and navigation](nexus/nexus_startup.md#cold-boot-title-menu-and-retail-menu-navigation-2026-10-27), [New Game viewport checkpoint](nexus/nexus_startup.md#new-game-reaches-the-native-3d-viewport-2026-10-27), [SCU-to-VDP1 correlation](nexus/nexus_startup.md#scu-dma-to-vdp1-frame-correlation-2026-10-27), [retail Continue evidence](nexus/nexus_startup.md#retail-continue-with-an-authentic-save-2026-10-25), [current decoder and strict boundary](nexus/NEXUS_STRICT_FIDELITY_INVENTORY.md#startup)). | **Not startable as a playable game yet.** |
 
@@ -68,6 +70,12 @@ The current evidence does not establish complete five-game startup support.
 - [`tests/test_m12_main_menu_game_selection_real_media.sh`](../tests/test_m12_main_menu_game_selection_real_media.sh)
   verifies five-card keyboard/mouse selection and authentic-media handoff. Its
   success condition is a `game-handoff` receipt, not a loaded level.
+  A 2026-10-27 TRV2 run against authentic media also verified the documented
+  default `~/.firestaff/data/<game>` path for all five games: FM Towns DM1,
+  CSB and DM2, Japanese Saturn Nexus, and PC Engine Theron. Each default-root
+  case used an isolated HOME/config and checked that its original source file
+  or archive remained unchanged. This proves discovery and menu handoff; it
+  does not turn Nexus's capture-gated title route into a playable runtime.
   Duplicate first-row DM1, CSB and DM2 mouse handoffs were removed; the
   remaining five-card mouse matrix retains one center click for each card.
 - `tests/test_m12_polished_ui_flow.c` now distinguishes pending deferred scans,
@@ -310,11 +318,12 @@ symlinks. The picker test verified that source archive hashes stayed unchanged.
   champion runtime, with a 320x200 runtime capture. The authentic French
   Macintosh `.sit` suite reached the first real-asset runtime and confirmed
   the source files remained byte-identical.
-- The expected DM2 Amiga ZIP is a broken self-referencing symlink in the
-  current user data directory, and no original Amiga archive was present on
-  the external media. Therefore DM2 Amiga startup could not be revalidated in
-  this run; its existing route evidence is not a substitute for this missing
-  current-media check.
+- At the time of the macOS v3.0.417 run, the expected DM2 Amiga ZIP was a
+  broken self-referencing symlink in that test's data directory, and no
+  original Amiga archive was present on its external media. A later TRV2
+  current-main run used the installed original ZIP: `dm2_v1_amiga_native_cli_boot`
+  passed the direct CLI and pointer-menu routes, while the focused M12 runtime
+  test reached level 0 with real assets. The Amiga archive remained unchanged.
 
 These checks improve confidence in the targeted launcher routes, but they do
 not establish complete startup parity. Remaining work includes first-runtime

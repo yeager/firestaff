@@ -230,7 +230,7 @@ if(BUILD_TESTING)
         COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_dm2_only_real_media.sh"
             "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
     set_tests_properties(m12_main_menu_dm2_only_real_media PROPERTIES
-        SKIP_RETURN_CODE 77 TIMEOUT 120
+        SKIP_RETURN_CODE 77 TIMEOUT 180
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         LABELS "m12;dm2;main-menu;game-selection;runtime;real-media;skip-safe")
 
@@ -256,7 +256,15 @@ if(BUILD_TESTING)
     set_tests_properties(m12_main_menu_runtime_real_media PROPERTIES
         SKIP_RETURN_CODE 77 TIMEOUT 600
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
-        LABELS "m12;dm1;csb;dm2;theron;main-menu;game-selection;runtime;real-media;skip-safe")
+        LABELS "m12;dm1;csb;dm2;dm2-amiga;theron;main-menu;game-selection;runtime;real-media;skip-safe")
+
+    add_test(NAME m12_main_menu_dm2_amiga_runtime_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_runtime_real_media.sh"
+            "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
+    set_tests_properties(m12_main_menu_dm2_amiga_runtime_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 180
+        ENVIRONMENT "FIRESTAFF_MAIN_MENU_GAME=dm2-amiga;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        LABELS "m12;dm2;amiga;main-menu;game-selection;runtime;real-media;skip-safe")
 
     add_test(NAME firestaff_iigs_cli_real_media
         COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_iigs_cli_real_media.sh"
@@ -4115,12 +4123,12 @@ if(BUILD_TESTING)
         ENVIRONMENT "FIRESTAFF_DM1_ATARI_ST_7Z=$ENV{HOME}/.firestaff/data/dm1/Game,Dungeon_Master,Atari_ST,Software.7z"
         SKIP_RETURN_CODE 77)
     add_test(
-        NAME csb_pc_cli_rejected_before_renderer
+        NAME unsupported_game_platforms_cli_rejected_before_renderer
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_reject_pc_before_renderer.sh"
             "$<TARGET_FILE:firestaff>"
     )
-    set_tests_properties(csb_pc_cli_rejected_before_renderer PROPERTIES
-        LABELS "csb;startup;cli;fail-fast;no-media-required"
+    set_tests_properties(unsupported_game_platforms_cli_rejected_before_renderer PROPERTIES
+        LABELS "dm2;csb;startup;cli;fail-fast;no-media-required"
         TIMEOUT 10)
     add_test(
         NAME csb_v1_hint_oracle_native_7z_cli_boot

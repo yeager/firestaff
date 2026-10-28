@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="{{ page.description | default: site.description | escape }}">
+    <title>{% if page.title %}{{ page.title | escape }} · {% endif %}{{ site.title | escape }}</title>
+    <link rel="stylesheet" href="{{ '/assets/docs.css' | relative_url }}">
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <a class="site-name" href="{{ '/' | relative_url }}">Firestaff</a>
+      <nav aria-label="Primary navigation">
+        <a href="{{ '/DOCUMENTATION_INDEX.html' | relative_url }}">Documentation</a>
+        <a href="{{ '/PROJECT_STATUS.html' | relative_url }}">Project status</a>
+        <a href="{{ '/PLATFORM_STATUS.html' | relative_url }}">Platforms</a>
+        <a href="https://github.com/yeager/firestaff">GitHub</a>
+      </nav>
+    </header>
+    <div class="page-shell">
+      <aside class="side-nav" aria-label="Documentation shortcuts">
+        <p class="nav-heading">Start here</p>
+        <a href="{{ '/DOCUMENTATION_INDEX.html' | relative_url }}">Documentation index</a>
+        <a href="{{ '/PROJECT_STATUS.html' | relative_url }}">Project status</a>
+        <a href="{{ '/PLATFORM_STATUS.html' | relative_url }}">Platform status</a>
+        <a href="{{ '/DATA_SETUP.html' | relative_url }}">Game data setup</a>
+        <a href="{{ '/STARTUP_SUPPORT_GAP_ANALYSIS.html' | relative_url }}">Startup support</a>
+      </aside>
+      <main id="main" class="document">
+        {{ content }}
+      </main>
+    </div>
+    <footer class="site-footer">
+      Markdown source and project history are maintained in the
+      <a href="https://github.com/yeager/firestaff">Firestaff repository</a>.
+    </footer>
+  </body>
+</html>

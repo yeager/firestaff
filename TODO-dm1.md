@@ -3148,10 +3148,20 @@ instead of PC34 rectangles. The successful DM1 Towns path draws C028's four
 packed 32x29 portrait through C175..C178. The 2026-10-26 follow-up binds
 non-selected champion names to M653 asset 557 and the C159/C163 F0635 zones,
 and source-driven health/stamina/mana bars to C195..C206. Hand widgets remain
-cleared until their F20 material routes are source-bound. F20 C028 backgrounds
-use DATA.C's fixed G0046 values; unlike
+source-bound through C211..C218, F0291 frame materials and F0038 object-icon
+materials; the 2026-10-27 original-media follow-up below verifies this bounded
+route. F20 C028 backgrounds use DATA.C's fixed G0046 values; unlike
 MEDIA720, F20 does not apply the invisibility palette remap. Pixel and
 geometry tests cover F20E/F20J C028 and C175
 placements. This is bounded core HUD work, not a fixed or parity-tested F20
 HUD. Add an M11 framebuffer capture against the original game before claiming
 visual parity.
+
+2026-10-27 F20 hand-widget material follow-up: the DM1 Towns renderer now
+draws source-resolved empty, wounded, acting and occupied hand slots in the
+F20 champion zones. `test_m11_dm1_fmtowns_graphics_real_media` passes against
+the installed original FM Towns archive; it checks C211..C218 zone geometry,
+original 18x18 frame graphics 33/34/35, and the original Apple icon atlas
+region for both English F20E and Japanese F20J. Its pixel composition check
+does not capture the live M11 framebuffer or compare it with an original-game
+frame. Hand-widget parity and full F20 HUD parity therefore remain open.

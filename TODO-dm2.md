@@ -1,10 +1,55 @@
+# Firestaff TODO — DM2
+
+2026-10-27 authentic Amiga no-game launcher runtime: `main` at
+`7333c882` selected the original
+`Dungeon-Master-II-Skullkeep_Amiga_EN.zip` from the no-game M12 menu. The route
+selected DM2 → Amiga → `amiga-en`, completed the original title/New Game input,
+and reached level 0 at `(1,8)` with one original champion. The runtime receipt
+reported Amiga platform 6, accepted real assets, no core fallbacks, and zero
+fallback draws; the source archive hash was unchanged. The opt-in
+`FIRESTAFF_MAIN_MENU_GAME=dm2-amiga` case and the focused
+`m12_main_menu_dm2_amiga_runtime_real_media` CTest now cover this
+menu-to-runtime route. This proves the tested startup path, not full Amiga
+campaign, physical input, audio, or visual parity.
+
+2026-10-27 authentic Amiga CLI and pointer-menu retest: `main` at `7333c882`
+was built on TRV2 and `dm2_v1_amiga_native_cli_boot` passed against the
+original Amiga ZIP (141.53 seconds). It covers the game → platform → Original
+pointer route, the Amiga title/New Game path, the first runtime viewport and
+HUD regions, and direct `--game dm2 --platform amiga` boot-probe input cases.
+The ZIP SHA-256 remained unchanged. The test initially failed because its
+pointer-only menu run allowed just 3 seconds; a 30-second process budget passes
+with the authentic archive. SDL dummy verifies these bounded source paths and
+receipts, not physical pointer behavior or full campaign parity.
+
+2026-10-28 indoor live-missile compositor status: the production indoor pass
+now builds a source-order draw-call schedule from the authenticated live DB14
+G1 chains. It emits each missile at its current display slot and emits the
+preceding seven-slot replay only after that creature's verified material blit
+succeeds. The replay window follows the cell's SKProject display-order table,
+and the missile position mask is derived from the captured DB14 5x5 positions.
+The schedule is retained as diagnostic/execution metadata; it does not yet
+consume missile pixels. The focused source-order test covers current draws,
+ascending replay order, the seven-slot window, and the no-creature-success
+case. The authentic HME-242 FM Towns real-media test now requires the live
+Fireball to produce a current-slot draw call. The `--debug` runtime probe also
+reports schedule validity, partial status and source draw-call count. Keep
+pixel parity open until the special TEMP_PICST and ordinary flying-item
+material routes are consumed with their verified source transforms and checked
+against original DM2 media. The
+separate legacy projectile drain cache remains unpopulated.
+
 2026-10-27 authentic cross-platform CLI startup matrix: direct startup passed
 for the original DOS English archive, Macintosh French SIT media, and FM Towns
 Japanese archive. The separate authentic-media main-menu selection test also
 passed for DM2 PC and FM Towns Japanese. DOS French, Macintosh English, and
-Amiga English cases were skipped because their data-root symlinks point to
-missing files; no substitute media was used. SDL dummy verifies the exercised
-source startup and handoff paths, not native display or physical input parity.
+Amiga English direct-CLI cases in that symlink-based matrix were skipped
+because their data-root symlinks point to missing files; no substitute media
+was used. Amiga English separately passes the authentic no-game M12 route and
+the dedicated `dm2_v1_amiga_native_cli_boot` regression against the installed
+original archive. The direct-CLI matrix remains open for DOS French and
+Macintosh English. SDL dummy verifies the exercised source startup and
+handoff paths, not native display or physical input parity.
 
 2026-10-25 selected DM2 PC loose-language owner: the authentic DOS English
 and French archives share a dungeon payload but have different GRAPHICS.DAT
@@ -112,12 +157,14 @@ original GDAT class, effect and image-selector branch. The source Fireball
 tests prove combat damage, but this plan check alone proves record-to-image
 selection; it does not prove pixel drawing, timer-directed animation, or
 painter order.
-Before claiming projectile-render parity, bind snapshots of the authenticated
-visible G1 DB14 chains and their source timers to the viewport handoff, preserve
-ObjectID direction and chain ordinal, then merge normal and seven-slot
-creature-associated replay events into `DM2_DRAW_STATIC_OBJECT`'s indoor draw
-schedule. The production draw-cache count remains unpopulated, and the
-authentic HME-242 test does not yet assert source-order presentation.
+The viewport now converts authenticated visible DB14 snapshots into a
+source-order draw-call schedule. It validates source cell/pass/display keys,
+records the current-slot call, and records the prior seven-slot calls only
+after a creature's verified material blit succeeds. The HME-242 original-media
+test checks that its live Fireball reaches a current-slot call. This schedule
+does not draw projectile pixels: the TEMP_PICST animation and ordinary item
+material paths still need verified destination transforms before they can be
+consumed. The separate legacy projectile draw-cache count remains unpopulated.
 
 2026-10-26 SKProject source trace tightened the compositor contract. In
 `DM2_DRAW_STATIC_OBJECT`, `table1d6afe[cell]` selects one of three 25-slot
@@ -131,11 +178,11 @@ replays are part of each cell's source pass, not a global projectile overlay.
 `QUERY_OBJECT_5x5_POS(ObjectID, view_direction)` equals that slot. Its special
 DB14 class1 `0x0d` path reads the linked timer phase and uses a GDAT `0x0b`
 selector plus TEMP_PICST; ordinary DB14 items take a separate item draw path.
-Firestaff's live snapshot already captures the DB14 ObjectID, chain ordinal,
-5x5 position, timer index and energy, but production does not yet pass those
-snapshots to the indoor compositor. Do not infer source ordering from F0810's
-movement direction or claim timer-driven pixel parity from the selector-only
-real-media test.
+Firestaff's live snapshot captures the DB14 ObjectID, chain ordinal, 5x5
+position, timer index and energy. The viewport now turns those snapshots into a
+source-order current/replay draw-call schedule using the authenticated ObjectID
+direction and cell display table. Do not infer source ordering from F0810's
+movement direction or claim timer-driven pixel parity from selector evidence.
 
 2026-10-26 runtime prerequisites: `dm2_v1_viewport_static_object_cell_for_map`
 now inverts the complete SKProject `table1d6ad0` forward/lateral table for all
@@ -147,15 +194,14 @@ then exposes the active `wvalueB` as `action_word`; this avoids reading the
 immutable save timer table after runtime changes and avoids conflating timers
 that share a source index. Unit tests cover the rotated cell/pass mapping, and
 the authentic HME-242 Fireball runtime test verifies the live DB14-to-timer
-join. These bridges remain evidence only and are not yet consumed by rendering.
+join. These bridges now feed the source-order draw-call schedule, but do not yet
+feed projectile bitmap pixels.
 
-Next implementation gate: feed authenticated visible DB14 chains and their
-active timer receipts into the per-slot compositor, emit current-slot and
-successful-creature seven-slot replay events in source order, and test that
-receipt against original DM2 media. Only after that should the renderer replace
-its trailing global projectile pass; separately verify the DB14 class1 `0x0d`
-TEMP_PICST animation and ordinary flying-item material path against captured
-source-phase frames.
+Next implementation gate: bind the scheduled DB14 calls to the two source
+render routes and verify their destination transforms against captured source
+phase frames and original DM2 media. The current/replay schedule is still
+metadata and does not replace the unpopulated legacy draw-cache path or produce
+projectile pixels.
 
 References: `include/dm2_v1_projectile_pc34_compat.h`,
 `src/dm2/dm2_v1_projectile_pc34_compat.c`,
@@ -214,8 +260,6 @@ verification does not reproduce it. Source reference:
 [SKProject startend.cpp](https://github.com/gbsphenx/skproject/blob/2c59a2c5a7978923ff5c822c15c3479e4d448493/SKWINSPX/src/v5/startend.cpp#L249-L347).
 
 2026-10-18 v3.0.386 original-media CLI/menu retest: `test_dm2_v1_fmtowns_native_cli_boot.sh` passed the reported bare `--game dm2` AUTO route with authentic DOS, Amiga, Macintosh and FM Towns media installed. FM Towns reached the New Game menu within 40 seconds; the presented 320x200 menu RGB matched the independently decoded original `TITLE/0/4` digest `367b54aa92b46d6e`; the normal M12 loop then reached the first champion with original assets and no core fallbacks. `test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh returns` also passed DM2 DOS, Macintosh, Amiga and FM Towns direct-start/return coverage. SDL dummy output does not establish physical MacBook Pro M5 HiDPI presentation or input behavior; the reported native-display failure remains open.
-
-# Firestaff TODO — DM2
 
 2026-10-26 FM Towns champion portrait binding: the live Towns HUD now reads
 `HeroType` from the authenticated source `c_party` champion selected by
@@ -1371,8 +1415,7 @@ DB14 to its live timer receipt when available. The viewport now collects
 those live snapshots from the in-bounds `table1d7029` static-object cells and
 queries the center/player cell separately at the final source pass; it orders
 the resulting receipt by source pass, display slot and chain order. The HME-242
-real-media test verifies that the live Fireball enters the center-cell plan.
-This plan is currently evidence only and is not yet consumed for pixels. Next,
-add DB14 draw events and creature-success replay to the indoor compositor, then
-bind TEMP_PICST placement/frame selection before those events can draw
-authenticated GDAT material.
+real-media test verifies that the live Fireball enters the center-cell call
+schedule. The schedule does not consume pixels. Next, bind TEMP_PICST
+placement/frame selection and ordinary flying-item materials to their proven
+destination transforms before drawing.

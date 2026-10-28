@@ -21,12 +21,13 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --script 'key:enter,key:enter,key:escape,key:enter,key:enter' --duration 1000 >/dev/null 2>&1
 
 # DM2's third platform card is Amiga; retain the real archive through a
-# pointer-only game -> platform -> Original selection.
+# pointer-only game -> platform -> Original selection. Scanning the full
+# archive-backed menu can outlast the earlier 3-second smoke-test budget.
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --width 1920 --height 1080 --menu --game dm2 --platform amiga --data-dir "$archive" \
     --script 'wait20,click:1645:262,wait20,click:1458:405,wait20,click:450:405,wait20' \
-    --duration 3000 >/dev/null 2>&1
+    --duration 30000 >/dev/null 2>&1
 
 # Amiga startup is owned by the original SWSH.DAT -> TITL.DAT streams.
 # Their source tick waits total 1,345 50 Hz VBlanks for this archive.  The

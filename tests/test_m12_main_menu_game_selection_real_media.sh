@@ -22,22 +22,23 @@ scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$scratch_root"
 scratch=$(mktemp -d "$scratch_root/m12-main-game-picker.XXXXXX")
 archive_data_root="$scratch/archive-only-data"
-declare -a original_archives=()
-declare -a original_archive_hashes=()
+declare -a original_sources=()
+declare -a original_source_hashes=()
 
 # The normal data root may contain extracted editions beside original
-# archives. Build a symlink-only view of every top-level ZIP so picker
-# ordering and edition availability stay intact without exposing extracted
-# trees. Snapshot each original archive so the test verifies it stays intact.
-verify_original_archives_unchanged() {
-    local archive
+# archives. Build a symlink-only view of top-level ZIP archives and the raw
+# CSB Atari STX source so picker ordering and edition availability stay intact
+# without exposing extracted trees. Snapshot each source so the test verifies
+# it stays intact.
+verify_original_sources_unchanged() {
+    local source
     local index=0
-    if [[ ${#original_archives[@]} == 0 ]]; then
+    if [[ ${#original_sources[@]} == 0 ]]; then
         return 0
     fi
-    for archive in "${original_archives[@]}"; do
-        if [[ $(firestaff_sha256_file "$archive") != "${original_archive_hashes[$index]}" ]]; then
-            printf 'FAIL: original game archive changed during picker test: %s\n' "$archive" >&2
+    for source in "${original_sources[@]}"; do
+        if [[ $(firestaff_sha256_file "$source") != "${original_source_hashes[$index]}" ]]; then
+            printf 'FAIL: original game source changed during picker test: %s\n' "$source" >&2
             return 1
         fi
         index=$((index + 1))
@@ -47,7 +48,7 @@ verify_original_archives_unchanged() {
 cleanup() {
     local test_status=$?
     trap - EXIT HUP INT TERM
-    if ! verify_original_archives_unchanged; then
+    if ! verify_original_sources_unchanged; then
         test_status=1
     fi
     if [[ ${FIRESTAFF_KEEP_TEST_SCRATCH:-0} == 1 ]]; then
@@ -77,12 +78,13 @@ PY
 )
         archive_hash=$(firestaff_sha256_file "$absolute_archive")
         ln -s "$absolute_archive" "$overlay_game_dir/$(basename "$archive")"
-        original_archives+=("$absolute_archive")
-        original_archive_hashes+=("$archive_hash")
-    done < <(find "$source_game_dir" -maxdepth 1 \( -type f -o -type l \) -iname '*.zip' -print0)
+        original_sources+=("$absolute_archive")
+        original_source_hashes+=("$archive_hash")
+    done < <(find "$source_game_dir" -maxdepth 1 \( -type f -o -type l \) \
+        \( -iname '*.zip' -o -iname '*.stx' \) -print0)
 done
 
-if [[ ${#original_archives[@]} == 0 ]]; then
+if [[ ${#original_sources[@]} == 0 ]]; then
     echo 'SKIP: no authentic top-level ZIP archives are available for DM1, CSB or DM2'
     exit 77
 fi
@@ -190,13 +192,14 @@ run_alternate_platform_picker_case() {
     local down_count=$3
     local platform=$4
     local edition=$5
+    local picker_data_root=${6:-$archive_data_root}
     local navigation='wait-scan-complete,wait20'
     local game_card_index=0
     local index
     local overlay_archive
-    overlay_archive="$archive_data_root/$game_id/$(basename "$source_archive")"
+    overlay_archive="$picker_data_root/$game_id/$(basename "$source_archive")"
     if [[ ! -f "$overlay_archive" ]]; then
-        printf 'FAIL: authentic archive is not present in the archive-only picker view: %s\n' \
+        printf 'FAIL: authentic source is not present in the isolated picker view: %s\n' \
             "$source_archive" >&2
         return 1
     fi
@@ -214,7 +217,7 @@ run_alternate_platform_picker_case() {
     done
     navigation+=",key:enter,wait20,key:enter,wait20,key:enter"
     run_game_picker_case "$game_id" "$overlay_archive" "$navigation" \
-        "$edition" keyboard "$platform" "$archive_data_root" \
+        "$edition" keyboard "$platform" "$picker_data_root" \
         "$game_id-$platform-picker" resolved
     alternate_platform_cases=$((alternate_platform_cases + 1))
 }
@@ -250,6 +253,10 @@ if [[ -f "$data_root/dm1/Dungeon-Master_Amiga_EN_Version-20.zip" ]]; then
     run_alternate_platform_picker_case dm1 \
         "$data_root/dm1/Dungeon-Master_Amiga_EN_Version-20.zip" 3 Amiga \
         're:amiga(20-en|20-fr|20-de|21-en|36-multi|demo-en)'
+elif [[ -f "$data_root/dm1/Dungeon-Master_Amiga_EN.zip" ]]; then
+    run_alternate_platform_picker_case dm1 \
+        "$data_root/dm1/Dungeon-Master_Amiga_EN.zip" 3 Amiga \
+        're:amiga20-en'
 fi
 csb_amiga_archive="$data_root/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip"
 if [[ -f "$data_root/csb/Chaos Strikes Back (FTL).zip" ]]; then
@@ -283,7 +290,28 @@ if [[ -f "$csb_amiga_archive" ]]; then
         "$csb_amiga_archive" 1 Amiga \
         're:amiga(31-en|31-multi|35-en|35-multi)'
 fi
-if [[ -f "$data_root/csb/chaos_strikes_back_ftl.zip" ]]; then
+if [[ -f "$data_root/csb/Chaos Strikes Back.stx" ]]; then
+    csb_atari_picker_root="$scratch/csb-atari-stx-picker-data"
+    for game_id in dm1 csb dm2; do
+        mkdir -p "$csb_atari_picker_root/$game_id"
+        while IFS= read -r -d '' source_archive; do
+            source_basename=$(basename "$source_archive")
+            # Keep the other game cards and CSB platforms available so the
+            # scripted selection follows the same menu route, while removing
+            # only the Atari ZIP that could win over this authentic raw STX.
+            if [[ "$game_id" == csb &&
+                  ( "$source_basename" == 'Chaos Strikes Back (FTL).zip' ||
+                    "$source_basename" == chaos_strikes_back_ftl.zip ) ]]; then
+                continue
+            fi
+            ln -s "$source_archive" \
+                "$csb_atari_picker_root/$game_id/$source_basename"
+        done < <(find "$archive_data_root/$game_id" -maxdepth 1 -type l -print0)
+    done
+    run_alternate_platform_picker_case csb \
+        "$data_root/csb/Chaos Strikes Back.stx" 2 'Atari ST' \
+        're:st20-21(-hd)?-en' "$csb_atari_picker_root"
+elif [[ -f "$data_root/csb/chaos_strikes_back_ftl.zip" ]]; then
     run_alternate_platform_picker_case csb \
         "$data_root/csb/chaos_strikes_back_ftl.zip" 2 'Atari ST' \
         're:st20-21(-hd)?-en'
@@ -350,17 +378,21 @@ run_default_root_game_picker_case() {
     local game_archive=$2
     local navigation=$3
     local edition=$4
+    local platform=${5:-FM Towns}
     local home="$scratch/default-root-$game_id-home"
-    local data_home="$scratch/default-data-home"
+    local data_home="$scratch/default-data-$game_id-home"
     local log="$scratch/default-root-$game_id.log"
-    local graphics_member='DATA/GRAPHICS.DAT'
+    local source_member=''
     local source_path
     local source_hash
 
-    if [[ "$game_id" == csb ]]; then
-        graphics_member='CDATA/GRAPHICS.DAT'
-    fi
-    source_path="$data_home/.firestaff/data/$game_id/$(basename "$game_archive")::$graphics_member"
+    case "$game_id" in
+        dm1|dm2) source_member='::DATA/GRAPHICS.DAT' ;;
+        csb) source_member='::CDATA/GRAPHICS.DAT' ;;
+        nexus|theron) ;;
+        *) printf 'FAIL: unsupported default-root game: %s\n' "$game_id" >&2; return 2 ;;
+    esac
+    source_path="$data_home/.firestaff/data/$game_id/$(basename "$game_archive")$source_member"
     source_hash=$(firestaff_sha256_file "$game_archive")
     mkdir -p "$home" "$data_home/.firestaff"
     if [[ ! -e "$data_home/.firestaff/data" ]]; then
@@ -380,8 +412,8 @@ run_default_root_game_picker_case() {
         return 1
     }
     if ! grep -Fq 'startup game=none mode=menu' "$log" ||
-       ! grep -Fq "launch phase=game-handoff mode=menu game=$game_id platform=FM Towns edition=$edition source=$source_path" "$log"; then
-        printf 'FAIL: default .firestaff/data menu did not launch authentic %s FM Towns media\n' "$game_id" >&2
+       ! grep -Fq "launch phase=game-handoff mode=menu game=$game_id platform=$platform edition=$edition source=$source_path" "$log"; then
+        printf 'FAIL: default .firestaff/data menu did not launch authentic %s %s media\n' "$game_id" "$platform" >&2
         cat "$log" >&2
         return 1
     fi
@@ -389,7 +421,7 @@ run_default_root_game_picker_case() {
         printf 'FAIL: default .firestaff/data menu changed the original %s archive\n' "$game_id" >&2
         return 1
     fi
-    printf 'PASS: default .firestaff/data menu launched authentic %s FM Towns\n' "$game_id"
+    printf 'PASS: default .firestaff/data menu launched authentic %s %s\n' "$game_id" "$platform"
 }
 
 run_default_root_game_picker_case dm1 "$dm1_archive" \
@@ -398,6 +430,23 @@ run_default_root_game_picker_case csb "$csb_archive" \
     'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en
 run_default_root_game_picker_case dm2 "$dm2_archive" \
     'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-ja
+
+# The other two games must resolve from the same documented default root.
+# Their retail startup media is a loose binary rather than a platform archive.
+if [[ -f "$data_root/nexus/DM.BIN" ]]; then
+    run_default_root_game_picker_case nexus "$data_root/nexus/DM.BIN" \
+        'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
+        nexus-saturn-jp Saturn
+else
+    echo 'SKIP: authentic Nexus Saturn DM.BIN is unavailable for default-root startup'
+fi
+if [[ -f "$data_root/theron/TQUS02.bin" ]]; then
+    run_default_root_game_picker_case theron "$data_root/theron/TQUS02.bin" \
+        'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
+        pce-en 'PC Engine'
+else
+    echo 'SKIP: authentic Theron PC Engine TQUS02.bin is unavailable for default-root startup'
+fi
 
 # Nexus and Theron use their original loose media in this data root. These
 # cases exercise the same five-game launcher selector without requiring the

@@ -388,9 +388,10 @@ The frame-8047 snapshot matches 30,561 of 31,616 source bytes; all 96 leading ro
 match exactly, while the 1,055 differing bytes are confined to the final eight
 rows. The complete frame-windowed VDP2 trace records those final eight rows at
 frame 7,716 (2,432 byte writes), with 1,377 values matching the corresponding
-source bytes. VDP2 memory, CRAM, and registers remain unchanged from frame 7,716
-through the frame-8047 snapshot. The reproduction command is in
-[`docs/nexus_startup.md`](nexus_startup.md#japanese-menu-state-nbg0-storage-join-2026-10-27).
+source bytes. The verifier requires no VRAM or CRAM writes after frame 7,716 through the
+frame-8047 snapshot; the register receipt is checked only at frame 8,047. The
+reproduction command is in
+[`docs/nexus/nexus_startup.md`](nexus_startup.md#japanese-menu-state-nbg0-storage-join-2026-10-27).
 
 This is authentic same-run address-read and source-to-storage evidence for the
 sampled Japanese menu state. It does not establish read values or which NBG0

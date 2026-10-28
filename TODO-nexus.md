@@ -40,7 +40,7 @@ establishes an English-version emulator cold-boot-to-menu route, not Firestaff
 menu rendering or input, Continue/save loading, or playable-level parity. Keep the English
 renderer gate closed and keep the Japanese capture as separate regional
 evidence. Capture hashes, output and reproduction commands are in
-[`docs/nexus_startup.md`](docs/nexus_startup.md#english-cold-boot-reaches-the-native-title-menu-2026-10-27);
+[`docs/nexus/nexus_startup.md`](docs/nexus/nexus_startup.md#english-cold-boot-reaches-the-native-title-menu-2026-10-27);
 raw capture files remain on the external evidence volume.
 
 2026-10-27 TRV2 Firestaff v3.0.415 direct CLI probe against the authentic
@@ -137,20 +137,19 @@ on the PRS3 menu capture. See
   cold boot to the native three-choice menu; a separate single Down press
   selects Continue, and Down/Down/A opens Configuration from that captured
   menu state. This closes the retail-emulator behavior gap for those observed
-  routes, not Firestaff's runtime menu or the Saturn display consumer. The
-  repeated Continue capture again verifies all five Japanese TITLE.BIN sprites
-  against 1,441 screenshot pixels. The full NBG0 bitmap has no complete exact
-  retail-file match, but a later storage verifier found a 31,616-byte Japanese
-  `TITLE.BIN` span exactly resident in WorkRAM and matched 30,561 bytes under
-  the verified 304-byte/512-stride layout in the active NBG0 frame-8047
-  snapshot. The last eight rows were written at frame 7716; 1,377 of their
-  2,432 values match the source span. A same-run SH-2 trace records a
-  contiguous 31,616-byte source-address read pass at frame 6893 (PC
-  `0x06023124`, target `0x06023108`); the capped trace dropped other rows and
-  contains no read values. This strengthens source-path evidence but does not
-  establish access-time values or complete final-pixel ownership. Keep renderer
-  admission blocked; see the Japanese menu sections in `docs/nexus_startup.md`
-  and `docs/nexus_title.md`.
+Routes, not Firestaff's runtime menu or the Saturn display consumer, are now
+observed in the retail emulator. The frame-8047 replay reconstructs all 286,720
+screenshot pixels from captured VDP1/VDP2 state, but the PNG has no embedded
+frame number, so exact acquisition-frame identity remains unproven. Five
+Japanese `TITLE.BIN` sprite roles match 1,441 visible texels. The authenticated
+31,616-byte title span matches WorkRAMH; 30,561 bytes match the active NBG0
+bitmap under the verified row layout. Frame 7,716 records 2,432 writes to the
+last eight rows, 1,377 matching source bytes. The frame-6,893 SH-2 trace records
+the complete ordered source-address pass but no read values and dropped
+860,856 unrelated rows. This strengthens source-path evidence but does not
+prove access-time values or full asset ownership. Keep renderer admission
+blocked; see [`docs/nexus/nexus_startup.md`](docs/nexus/nexus_startup.md) and
+[`docs/nexus/nexus_title.md`](docs/nexus/nexus_title.md).
   earlier paired raw-trace experiments below remain valid negative results for
   their sampled windows, but they are no longer the only input evidence. Keep
   the production gate closed while identifying menu/face material ownership
@@ -203,7 +202,7 @@ on the PRS3 menu capture. See
   instruction stream reads SMPC OREG and a Start pulse changes six bytes in
   the matched input/control memory snapshots. It still does not map those
   bytes to a Start action or menu transition; see the JP controller-reader
-  section in `docs/NEXUS_RUNTIME_CAPTURE.md`.
+  section in `docs/nexus/NEXUS_RUNTIME_CAPTURE.md`.
   A complete 52-frame matched pair then scheduled 13 two-frame button pulses
   and sampled WorkRAMH every four frames. All eight VDP1/VDP2 regions remained
   byte-identical. Two corresponding RAM ranges differed, but their values did
@@ -224,7 +223,7 @@ on the PRS3 menu capture. See
   Start-dependent dispatch or menu receipt. Continue tracing the controller
   state into a source-bound event consumer and capture an actually interactive
   title/menu interval before opening menu admission; see
-  `docs/NEXUS_RUNTIME_CAPTURE.md`.
+  `docs/nexus/NEXUS_RUNTIME_CAPTURE.md`.
 - Resolve the remaining Structure2/VDP1 material, texture, CLUT, raster,
   clipping, animation and composition ownership with real captures. Keep
   unbound bytes and generated fixtures out of production gameplay. In the
@@ -338,5 +337,5 @@ on the PRS3 menu capture. See
   hit rectangle, including the HUD, clipped to Firestaff's 320x200 framebuffer.
   Mouse clicks on the hand pointer and non-movement actions remain blocked
   until the opaque item data, champion context mapping and runtime click effects
-  are established. See `docs/nexus_input.md` and
+  are established. See `docs/nexus/nexus_input.md` and
   `parity-evidence/verification/nexus-leader-cycle-debug-20261025/README.md`.

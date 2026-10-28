@@ -607,6 +607,8 @@ typedef struct M12_StartupMenuState {
     char messageLine2Storage[256];
     char messageLine3Storage[160];
     int messageIsMissingGameData;
+    int messageRescanAllGamesOnDismiss;
+    int rescanAllGamesRequested;
     char messageGameId[16];
     M12_MenuView messageReturnView;
     int messageReturnNavLevel;
@@ -753,6 +755,9 @@ void M12_StartupMenu_RescanAllGames(
     M12_StartupMenuState* state,
     M12_AssetStatusScanProgressFn progressFn,
     void* progressUserData);
+/* Consume the rescan request attached to an access-denied message. */
+int M12_StartupMenu_TakeRescanAllGamesRequest(
+    M12_StartupMenuState* state);
 /* Mac DM2 save parsing currently stops before the complete SKProject
  * DM2_GAME_LOAD record/possession stream, so Resume is unavailable there. */
 int M12_StartupMenu_DM2ResumeSupportedOnSelectedPlatform(

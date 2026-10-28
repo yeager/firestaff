@@ -93,7 +93,7 @@ typedef struct {
     uint32_t cram_offset;
 } Nexus_V1_Vdp2BitmapCaptureReceipt;
 
-/* Inputs for the exact Ymir frame-59 Nexus title-menu capture lane. The two
+/* Inputs for the observed Ymir Nexus title-menu capture lane. The two
  * caller attestations bind the independently retained Ymir dump bundle and
  * complete VDP1 trace; this function never authenticates files itself. */
 typedef struct {

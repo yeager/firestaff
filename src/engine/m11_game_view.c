@@ -47849,6 +47849,36 @@ static int m11_draw_dm1_media009_floor_ornament(
                                 framebuffer, fbW, fbH);
 }
 
+/* ReDMCSB DUNVIEW.C F0791/F0108 (F0108:3995-3998) blits the native bitmap
+ * through the selected G0206 zone with C10 transparency. F0791 clips at the
+ * zone; it does not scale a short bitmap to fill it. */
+static void m11_draw_dm1_floor_ornament_native_clipped(
+    const M11_AssetSlot* slot, unsigned char* framebuffer, int fbW, int fbH,
+    const M11_DM1ZoneBlit* blit, int flipHorizontal)
+{
+    int width, height, y;
+    if (!slot || !slot->loaded || !slot->pixels || !framebuffer || !blit ||
+        fbW <= 0 || fbH <= 0 ||
+        slot->width == 0u || slot->height == 0u ||
+        blit->width <= 0 || blit->height <= 0) return;
+    width = (int)slot->width < blit->width ? (int)slot->width : blit->width;
+    height = (int)slot->height < blit->height ? (int)slot->height : blit->height;
+    for (y = 0; y < height; ++y) {
+        int dy = M11_VIEWPORT_Y + blit->dstY + y;
+        int x;
+        if (dy < 0 || dy >= fbH) continue;
+        for (x = 0; x < width; ++x) {
+            int dx = M11_VIEWPORT_X + blit->dstX + x;
+            int sx = flipHorizontal ? (int)slot->width - 1 - x : x;
+            unsigned char pixel;
+            if (dx < 0 || dx >= fbW) continue;
+            pixel = slot->pixels[(size_t)y * slot->width + (size_t)sx];
+            if (pixel != 10u)
+                framebuffer[(size_t)dy * (size_t)fbW + (size_t)dx] = pixel;
+        }
+    }
+}
+
 static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
                                          unsigned char* framebuffer,
                                          int fbW,
@@ -47915,9 +47945,23 @@ static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
         blit.dstY = plan.blit.dstY;
         blit.width = plan.blit.width;
         blit.height = plan.blit.height;
-        (void)m11_draw_dm1_zone_blit_maybe_flip(state, framebuffer, fbW, fbH,
-                                                &blit, 10,
-                                                plan.flipHorizontal);
+        if (!m11_draw_dm1_zone_blit_maybe_flip(state, framebuffer, fbW, fbH,
+                                               &blit, 10,
+                                               plan.flipHorizontal)) {
+            /* G0206 D1C is 64x25 pixels, while the authentic HoC plate is
+             * 62x21. F0791 clips the native bitmap to its zone; a crop check
+             * would discard it and scaling would distort its original art. */
+            unsigned int graphicIndex = m11_wallset_graphic_index_for_state(
+                state, (unsigned int)blit.graphicIndex);
+            const M11_AssetSlot* slot = graphicIndex == M11_GFX_UNAVAILABLE
+                ? NULL : M11_AssetLoader_Load(
+                    (M11_AssetLoader*)&state->assetLoader, graphicIndex);
+            if (slot && slot->loaded && slot->pixels &&
+                slot->width > 0u && slot->height > 0u) {
+                m11_draw_dm1_floor_ornament_native_clipped(
+                    slot, framebuffer, fbW, fbH, &blit, plan.flipHorizontal);
+            }
+        }
     }
 }
 

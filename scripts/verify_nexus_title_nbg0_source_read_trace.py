@@ -15,6 +15,8 @@ import csv
 import hashlib
 from pathlib import Path
 
+from analyze_nexus_title_vdp2_source import read_title_assets
+
 
 TITLE_BIN_SHA256 = "51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3"
 TITLE_BIN_SOURCE_OFFSET = 0x2526
@@ -23,6 +25,7 @@ WRAM_SOURCE_OFFSET = 0x0AC2A6
 SOURCE_ADDRESS = 0x060AC2A6
 SOURCE_END = SOURCE_ADDRESS + SOURCE_BYTES
 SOURCE_READ_FRAME = 6893
+LAST_SOURCE_WRITE_FRAME = 6890
 SOURCE_READ_PC = "0x6023124"
 SOURCE_READ_CALLER_RETURN = "0x6023176"
 SOURCE_READ_CALLER_TARGET = "0x6023108"
@@ -102,12 +105,15 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture", type=Path,
                         help="Ymir dump folder containing memory-read receipts")
-    parser.add_argument("--data-dir", required=True, type=Path,
-                        help="directory containing the authentic Japanese TITLE.BIN")
+    asset_source = parser.add_mutually_exclusive_group(required=True)
+    asset_source.add_argument("--data-dir", type=Path,
+                              help="directory containing authenticated Nexus title assets")
+    asset_source.add_argument("--cue", type=Path,
+                              help="authentic Nexus CUE; members are read in memory")
     args = parser.parse_args()
 
     try:
-        title_bin = (args.data_dir / "TITLE.BIN").read_bytes()
+        title_bin = read_title_assets(args.data_dir, args.cue)[0]
         if hashlib.sha256(title_bin).hexdigest() != TITLE_BIN_SHA256:
             raise ValueError("TITLE.BIN is not the authenticated Japanese retail file")
         source = title_bin[TITLE_BIN_SOURCE_OFFSET:TITLE_BIN_SOURCE_OFFSET + SOURCE_BYTES]
@@ -157,8 +163,11 @@ def main() -> int:
         with (args.capture / "sh2-memory-write-trace.csv").open(
                 "r", encoding="ascii", newline="") as stream:
             write_reader = csv.DictReader(stream)
-            if write_reader.fieldnames is None or "vdp1_frame" not in write_reader.fieldnames:
-                raise ValueError("SH-2 write trace has no frame field")
+            required_write_columns = {"vdp1_frame", "address", "width"}
+            if (write_reader.fieldnames is None or
+                    not required_write_columns <= set(write_reader.fieldnames)):
+                raise ValueError(
+                    "SH-2 write trace lacks frame, address, or width fields")
             write_rows = list(write_reader)
         if len(write_rows) != expected_write_rows:
             raise ValueError("SH-2 write trace row count differs from its receipt")
@@ -176,11 +185,13 @@ def main() -> int:
                 raise ValueError("invalid SH-2 write width")
             if address >= SOURCE_END or address + width <= SOURCE_ADDRESS:
                 raise ValueError("write row lies outside the filtered source span")
-            if (frame_index == SOURCE_READ_FRAME and address < SOURCE_END and
-                    address + width > SOURCE_ADDRESS):
+            if (frame_index > LAST_SOURCE_WRITE_FRAME and
+                    address < SOURCE_END and address + width > SOURCE_ADDRESS):
                 source_writes += 1
         if source_writes:
-            raise ValueError("SH-2 modified the TITLE.BIN source span during the trace interval")
+            raise ValueError(
+                "SH-2 modified the TITLE.BIN source span after frame "
+                f"{LAST_SOURCE_WRITE_FRAME}")
     except (OSError, UnicodeError, ValueError) as error:
         print(f"NEXUS_TITLE_NBG0_SOURCE_READ_INVALID: {error}")
         return 1

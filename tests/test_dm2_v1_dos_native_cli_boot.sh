@@ -139,12 +139,14 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --script 'key:enter,key:enter,key:enter' --duration 1000 >/dev/null 2>&1
 
 # DM2's second platform card is PC.  This is the public mouse-only card path
-# to Original, using the authenticated DOS archive directly in memory.
+# to Original, using the authenticated DOS archive directly in memory. Leave
+# headroom for 1920x1080 software-rendered clicks on loaded hosts; a successful
+# launch still exits immediately through FIRESTAFF_EXIT_AFTER_LAUNCH.
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --width 1920 --height 1080 --menu --game dm2 --platform pc --data-dir "$archive" \
     --script 'wait20,click:1645:262,wait20,click:934:405,wait20,click:450:405,wait20' \
-    --duration 3000 >/dev/null 2>&1
+    --duration 15000 >/dev/null 2>&1
 
 # Exercise the ordinary M12 → M11 path through DOS's admitted MVE intro,
 # source New-Game command and first loaded dungeon frame. The intro owns its

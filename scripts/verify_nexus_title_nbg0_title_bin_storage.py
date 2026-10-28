@@ -13,6 +13,8 @@ import csv
 import hashlib
 from pathlib import Path
 
+from analyze_nexus_title_vdp2_source import read_title_assets
+
 TITLE_BIN_SHA256 = "51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3"
 TITLE_BIN_SOURCE_OFFSET = 0x2526
 SOURCE_BYTES = 31616
@@ -63,12 +65,15 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture", type=Path,
                         help="Ymir dump directory containing VDP2/WRAM receipts")
-    parser.add_argument("--data-dir", required=True, type=Path,
-                        help="directory containing hash-verified Japanese TITLE.BIN")
+    asset_source = parser.add_mutually_exclusive_group(required=True)
+    asset_source.add_argument("--data-dir", type=Path,
+                              help="directory containing authenticated Nexus title assets")
+    asset_source.add_argument("--cue", type=Path,
+                              help="authentic Nexus CUE; members are read in memory")
     args = parser.parse_args()
 
     try:
-        title_bin = (args.data_dir / "TITLE.BIN").read_bytes()
+        title_bin = read_title_assets(args.data_dir, args.cue)[0]
         title_hash = hashlib.sha256(title_bin).hexdigest()
         if title_hash != TITLE_BIN_SHA256:
             raise ValueError("TITLE.BIN is not the authenticated Japanese retail file")
@@ -110,9 +115,9 @@ def main() -> int:
             0x00: 0x8000,  # TVMD: display enabled
             0x20: 0x0001,  # BGON: NBG0 enabled
             0x28: 0x0013,  # CHCTLA: NBG0 8bpp bitmap
-            0x2C: 0x0000,  # PLSZ
-            0x30: 0x0000,  # BMPNA
-            0x34: 0x0000,  # MPOFN
+            0x2C: 0x0000,  # BMPNA
+            0x30: 0x0000,  # PNCN0
+            0x34: 0x0000,  # PNCN2
             0x70: 0x0000,  # SCXIN0
             0x72: 0x0000,  # SCXDN0
             0x74: 0x0000,  # SCYIN0
@@ -140,6 +145,20 @@ def main() -> int:
         writes = read_vdp2_trace(args.capture / "vdp2-memory-write-trace.csv")
         if len(writes) != int(snapshot.get("trace_rows", "-1")):
             raise ValueError("VDP2 trace row count differs from its receipt")
+        if not writes:
+            raise ValueError("VDP2 write trace is empty")
+        trace_frames = [frame for frame, _area, _address, _width, _value in writes]
+        first_frame = int(snapshot.get("first_vdp1_frame_index", "-1"))
+        last_frame = int(snapshot.get("last_vdp1_frame_index", "-1"))
+        if (min(trace_frames) != first_frame or max(trace_frames) != last_frame or
+                last_frame != COPY_FRAME):
+            raise ValueError("VDP2 trace frame range differs from its receipt")
+        post_copy_vdp2_writes = [
+            row for row in writes
+            if COPY_FRAME < row[0] <= SNAPSHOT_FRAME and
+            row[1] in ("VRAM", "CRAM")]
+        if post_copy_vdp2_writes:
+            raise ValueError("VDP2 VRAM or CRAM changed after the frame-7716 copy")
         tail_rows = []
         tail_start_address = VDP2_DESTINATION_OFFSET + TAIL_ROW * ROW_STRIDE
         tail_end_address = VDP2_DESTINATION_OFFSET + ROW_COUNT * ROW_STRIDE
