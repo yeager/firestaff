@@ -1,3 +1,18 @@
+## 2026-10-28 — authentic Japanese save-state mouse replay remains screen-only
+
+- Three repeated PCE Fast mouse-script captures and three no-script controls
+  used the same authentic Japan Rev. 1 Track 02 and in-dungeon save. Every
+  scripted trace recorded the four requested device samples; the control
+  traces did not. All captures lacked CD IRQ, authenticated CD-to-RAM, and
+  transition receipts and recorded no `$2905` command write.
+- Both conditions wrote `$00/$50` to `$2911` from `$D26D/$D282`; this does
+  not establish that `$2911` is mouse hover state. The close-time VRAM and RAM
+  comparisons varied with capture timing and do not establish an input-caused
+  state or rendering change.
+- Keep the native viewport-click and state-driven-rendering gaps open. The
+  trace identities, capture recipe, results, and evidence limits are recorded
+  in [the Japanese save-state mouse trace note](docs/source-lock/theron-disassembly/theron-jp-authentic-save-mouse-input-20261028.md).
+
 ## 2026-10-27 — authentic USA save state verifies the original Button I dispatch
 
 - PCE Fast rejected the preserved authentic Ak-Tu-Ba state, but the same
