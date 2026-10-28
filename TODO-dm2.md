@@ -16,6 +16,17 @@ original Graphics, Dungeon and Title files were unchanged. The `.sit` container
 itself is not unpacked by the ZIP-only `dm2_v1_mac_native_cli_boot` case; do not
 repackage game data to satisfy that harness.
 
+2026-10-28 French DOS startup gap rechecked against the installed original
+archive `~/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_DOS_FR.zip`
+(SHA-256 `265ea1564334735212d1460b277aece0ce719a5875222ab6a8bd7b3e37981923`).
+The existing `test_dm2_v1_dos_fr_native_cli_boot.sh` passed when run with that
+archive path instead of the stale CMake cache override pointing into Downloads.
+It verifies the M12 New Game route, source runtime boundary, complete HUD with
+original assets and no fallback draws, then direct CLI startup and movement.
+This closes the previously noted DOS French startup-test gap for the installed
+archive and these routes; it does not establish physical display/input parity
+or complete DM2 platform parity.
+
 2026-10-27 authentic Amiga no-game launcher runtime: `main` at
 `7333c882` selected the original
 `Dungeon-Master-II-Skullkeep_Amiga_EN.zip` from the no-game M12 menu. The route
