@@ -225,13 +225,17 @@ gaps and bounds what can be concluded:
   presentation after the common SWSH prelude before adding any later title
   page. The reported absence of animation on the user's Amiga remains open
   until the exact edition and displayed frames are observed.
-- Amiga gameplay effects have a source PCM/Paula transport and the entrance
-  switch has a trigger, but `ANIMSND.C` animation-audio owners F1230-F1245
-  remain explicitly `fail_closed`; `m11_csb_advance_amiga_titl` advances
-  frames without dispatching animation sound cues. Existing SDL dummy
-  startup checks cannot prove device output. Add authentic cue/timing
-  ownership from the original stream, then verify audible output on a real
-  audio device; do not substitute generated sound.
+- The generic Amiga animation `SO` event path remains unsupported. ReDMCSB
+  `ANIM.C` F1186/F1207/F1223 dispatches an `SO` record through `ANIMSND.C`
+  F1248 and the paired Paula channel owners; Firestaff's TITL frame updater
+  handles only its visual `DL` records. This is a gap for animation streams
+  that actually contain `SO` records. It does not explain a silent A33M title:
+  the authentic A33M `TITL.DAT` (MD5
+  `5b590ea3a6f5eed513b5678b01468ee4`) contains `AN`, `PL`, `EN`, 30 `DL`, and
+  `DO` records, with no `SO`. ReDMCSB `APPA.C:51-53` runs `SWSH` before
+  `TITL`; the audible intro sample belongs to the separate `SWSH.FTL` path
+  already wired above. Verify that sample on a real audio device and capture
+  the user's exact Amiga edition before extending title-audio support.
 
 2026-10-28 CSB Amiga SWSH audio diagnostic correction: the startup completion
 receipt used to print `audio=played` whenever `M11_Audio_Init` returned true.
@@ -241,6 +245,14 @@ device queue. The receipt now distinguishes `device-unavailable`,
 `no-samples-queued`, and `queued`. Queueing is still not proof of audible
 output; verify on a real audio device. This does not close the separate
 ANIMSND animation-cue gap above.
+
+2026-10-28 CSB Amiga title-audio source audit: the original source archive's
+`ANIM.C` F1186 (`SO` step), F1207 and F1223 feed `ANIMSND.C` F1248. The
+installed authentic A33M `TITL.DAT` hash `5b590ea3a6f5eed513b5678b01468ee4`
+has exactly the `AN`, `PL`, `EN`, 30 `DL`, `DO` record sequence and no `SO`
+event. Therefore adding the generic `SO` dispatcher would not add sound to
+this title animation; its intro audio is the preceding `SWSH.FTL` Paula
+sample. Keep device-output verification separate from record parsing.
 
 2026-10-26 CSB Amiga SWSH runtime: the A31M/A33M FTL prelude now plays from
 the selected Amiga source profile instead of falling through to the PC
