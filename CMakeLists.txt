@@ -11223,8 +11223,13 @@ if(NOT MSVC)
 endif()
 add_executable(firestaff_csb_v1_hint_oracle_graphics_surface_probe
     probes/csb/firestaff_csb_v1_hint_oracle_graphics_surface_probe.c
-    src/csb/csb_hint_oracle_graphics_surface.c src/csb/csb_hint_oracle_dat_real_scan.c
-    src/csb/csb_hint_oracle_dat.c src/csb/csb_hint_oracle_htc.c src/shared/asset_find_by_hash.c src/shared/fs_portable_compat.c)
+    src/csb/csb_hint_oracle_graphics_surface.c
+    src/csb/csb_hint_oracle_dat_real_scan.c
+    src/csb/csb_hint_oracle_dat.c
+    src/csb/csb_hint_oracle_htc.c
+    src/csb/csb_hint_oracle_htc_real_scan.c
+    src/shared/asset_find_by_hash.c
+    src/shared/fs_portable_compat.c)
 target_include_directories(firestaff_csb_v1_hint_oracle_graphics_surface_probe PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(firestaff_csb_v1_hint_oracle_graphics_surface_probe PRIVATE firestaff_m10)
 
