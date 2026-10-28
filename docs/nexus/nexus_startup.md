@@ -1679,6 +1679,28 @@ are retained externally in
 `nexus_new_game_capture_20261028/config-struct-sh2-trace-1800/` with the
 no-input control beside it.
 
+## Paired left/right input from the New Game scene (2026-10-28)
+
+Two isolated Ymir `--debug --fast-forward` replays loaded the same retained
+New Game savestate and scheduled the same A press at frame 0. One pressed left
+for one frame at frame 1,500; the other pressed right for one frame at the same
+point. Both captured frame 1,800. The screenshots differ at 216,860 pixels,
+WRAM-HI at 3,011 bytes, VDP1 framebuffer at 209,996 bytes, and VDP1 VRAM at
+3,808 bytes; WRAM-LO and VDP2 VRAM are byte-identical. The generic loader
+record at `0x06064544..0x0606456f` is identical and retains level 1, angle
+`0x8000`, and `(29,47)`. This proves the paired input changes rendered/runtime
+state, but does not identify the angle's world-axis mapping.
+
+A read-only pass through the existing DGN parser on authentic LEV01 shows an
+open chamber at `(29,47)` and a single square-type-8 passage at `(29,48)`,
+bounded by walls at `(28,48)` and `(30,48)`. The frame-1800 scene shows a
+narrow opening ahead, which is consistent with facing toward increasing Y.
+That geometric comparison is a hypothesis: no direct Saturn camera-axis
+mapping has been established, and Firestaff does not use it. Screenshots,
+complete memory dumps, reproduction details, and artifact hashes are retained
+in external evidence at
+`nexus_start_heading_turn_20261028/`.
+
 This is a full captured-frame composition check, not a renderer admission. The
 replay consumes Ymir display and VDP snapshots, not a Firestaff runtime upload
 from retail assets. The screenshot has no embedded frame number, so exact
