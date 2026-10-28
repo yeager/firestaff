@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+## 2026-10-28 — DM1 HoC floor pressure plate
+
+The authentic PC34 Hall of Champions plate at map 0 (6,9) now renders from
+the original 62x21 C10 graphic. The viewport clips it at native size into the
+64x25 G0206 D1C zone instead of dropping it when the bitmap is smaller than
+the zone. A real-media regression confirms its pixels contribute from the
+approach pose; Linux compilation and the focused PC34 CTest passed. Other
+platform and viewport parity remains open.
+
 ## 2026-10-28 — Unsupported game/platform CLI regression coverage
 
 The fail-fast CLI test now covers both CSB PC and DM2 Atari ST. Against the
