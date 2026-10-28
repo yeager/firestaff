@@ -214,11 +214,16 @@ passes its `--help` smoke check. Build verification and binary SHA-256 are
 recorded on the external evidence disk in
 `firestaff-evidence/nexus/ymir-vdp2-prefilter-c967459a.md`.
 
-The capture already running when this build completed has the prior binary
-mapped and does not measure the prefilter. Its frame loop remains in progress;
-Ymir writes trace and memory artifacts only when all requested frames finish.
-The next capture must use the verified shared binary before its output can be
-used to evaluate trace-filter performance or infer retail presentation.
+The capture already running when this build completed had the prior binary
+mapped and did not measure the prefilter. It was stopped after 3 h 44 min
+without reaching the post-loop dump stage. A 100-frame run with the new binary
+was stopped after 10 min without a dump; both runs remained CPU-active, and
+seed slot 3 was preserved. Ymir writes trace and memory artifacts only after
+the complete requested frame loop. The tracer prefilter alone does not make
+this route practical: `--debug` also selects the instrumented Saturn core
+execution path, which carries a documented performance penalty. A future
+capture needs selective core tracing or bounded streaming before this run can
+supply evidence. Neither attempt changes the source-presentation admission.
 
 ### Independent bounded copy-delta receipt — 2026-08-27
 
