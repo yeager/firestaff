@@ -38525,8 +38525,8 @@ int M11_GameView_MapTheronPresentedControlPointToSource(
 {
     int target_w = M11_THERON_MOUSE_CANVAS_W;
     int target_h = M11_THERON_MOUSE_CANVAS_H;
-    int row;
-    int column;
+    int source_x;
+    int source_y;
 
     if (!state || !out_x || !out_y ||
         state->sourceKind != M11_GAME_SOURCE_THERON_TRACK02 ||
@@ -38538,38 +38538,31 @@ int M11_GameView_MapTheronPresentedControlPointToSource(
                                          state->presentationWidth,
                                          state->presentationHeight,
                                          &target_w, &target_h);
-    if (target_w <= 0 || target_h <= 0) return 0;
+    if (target_w <= 0 || target_h <= 0 || presented_x < 0 ||
+        presented_y < 0 || presented_x >= target_w ||
+        presented_y >= target_h) return 0;
 
-    /* Resolve the actual presented pixel against the same floor-scaled cell
-     * edges used when the 320x200 host panel is drawn. The ordinary inverse
-     * transform rounds down and loses which side of a fractional edge the
-     * pixel occupied (for example y=590 at 1280x960 maps to source y=122,
-     * while the visible first-row edge is source y=123). */
-    for (row = 0; row < M11_THERON_MOUSE_ROWS; ++row) {
-        for (column = 0; column < M11_THERON_MOUSE_COLUMNS; ++column) {
-            const int source_x = M11_THERON_MOUSE_PANEL_X +
-                                 column * M11_THERON_MOUSE_CELL_W;
-            const int source_y = M11_THERON_MOUSE_PANEL_Y +
-                                 row * M11_THERON_MOUSE_CELL_H;
-            const int x0 = (int)((int64_t)source_x * target_w /
-                                 M11_THERON_MOUSE_CANVAS_W);
-            const int y0 = (int)((int64_t)source_y * target_h /
-                                 M11_THERON_MOUSE_CANVAS_H);
-            const int x1 = (int)((int64_t)(source_x +
-                                 M11_THERON_MOUSE_CELL_W) * target_w /
-                                 M11_THERON_MOUSE_CANVAS_W);
-            const int y1 = (int)((int64_t)(source_y +
-                                 M11_THERON_MOUSE_CELL_H) * target_h /
-                                 M11_THERON_MOUSE_CANVAS_H);
-            if (presented_x >= x0 && presented_x < x1 &&
-                presented_y >= y0 && presented_y < y1) {
-                *out_x = source_x + M11_THERON_MOUSE_CELL_W / 2;
-                *out_y = source_y + M11_THERON_MOUSE_CELL_H / 2;
-                return 1;
-            }
-        }
-    }
-    return 0;
+    /* The renderer samples each presented pixel from the source framebuffer
+     * with floor(presented * source / target). Use that exact inverse before
+     * hit-testing the source-space panel. Forward-scaled cell edges can claim
+     * a pixel one row early at fractional ratios (for example y=590 at
+     * 1280x960 samples source y=122; the first row starts at source y=123). */
+    source_x = (int)((int64_t)presented_x * M11_THERON_MOUSE_CANVAS_W /
+                     target_w);
+    source_y = (int)((int64_t)presented_y * M11_THERON_MOUSE_CANVAS_H /
+                     target_h);
+    if (m11_theron_mouse_control_input_at(state, source_x, source_y) ==
+        M12_MENU_INPUT_NONE) return 0;
+
+    *out_x = M11_THERON_MOUSE_PANEL_X +
+        ((source_x - M11_THERON_MOUSE_PANEL_X) /
+         M11_THERON_MOUSE_CELL_W) * M11_THERON_MOUSE_CELL_W +
+        M11_THERON_MOUSE_CELL_W / 2;
+    *out_y = M11_THERON_MOUSE_PANEL_Y +
+        ((source_y - M11_THERON_MOUSE_PANEL_Y) /
+         M11_THERON_MOUSE_CELL_H) * M11_THERON_MOUSE_CELL_H +
+        M11_THERON_MOUSE_CELL_H / 2;
+    return 1;
 }
 
 static int m11_csb_fmtowns_inventory_slot_rectangle(

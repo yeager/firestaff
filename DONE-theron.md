@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-29 — preserve Theron mouse and touch coordinate semantics
+
+The Theron host mouse-panel adapter now inverse-maps each presented pixel with
+the same floor sampling used by the renderer before testing the source-space
+control panel. This prevents fractional-resolution edge pixels from being
+misclassified. The adapter is bypassed while the graphics popup is active, and
+touch input continues through the ordinary presentation inverse transform.
+The authentic USA SDL input test passed on the TRV2 Debug build with original
+Track 02 media, including a regression check that the popup receives the
+unmodified `182,123` source point. The authentic Japan Rev. 1 SDL input test
+also passed on that build. These targeted input checks do not establish full
+Theron parity; remaining gaps stay open in TODO.
+
 ## 2026-10-28 — rerun authentic regional input probes on current Debug build
 
 Built the native `firestaff` executable from `main` commit `e0bd5afd2` on

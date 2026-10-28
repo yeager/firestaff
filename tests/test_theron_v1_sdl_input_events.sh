@@ -33,6 +33,7 @@ keyboard_action_probe=$(mktemp "$scratch_root/firestaff-theron-sdl-keyboard-acti
 touch_forward_probe=$(mktemp "$scratch_root/firestaff-theron-sdl-touch-forward.XXXXXX")
 touch_turn_probe=$(mktemp "$scratch_root/firestaff-theron-sdl-touch-turn.XXXXXX")
 fractional_panel_probe=$(mktemp "$scratch_root/firestaff-theron-sdl-fractional-panel.XXXXXX")
+popup_panel_probe=$(mktemp "$scratch_root/firestaff-theron-sdl-popup-panel.XXXXXX")
 held_output=$(mktemp "$scratch_root/firestaff-theron-sdl-held-output.XXXXXX")
 released_output=$(mktemp "$scratch_root/firestaff-theron-sdl-released-output.XXXXXX")
 panel_output=$(mktemp "$scratch_root/firestaff-theron-sdl-panel-output.XXXXXX")
@@ -44,11 +45,14 @@ keyboard_action_output=$(mktemp "$scratch_root/firestaff-theron-sdl-keyboard-act
 touch_forward_output=$(mktemp "$scratch_root/firestaff-theron-sdl-touch-forward-output.XXXXXX")
 touch_turn_output=$(mktemp "$scratch_root/firestaff-theron-sdl-touch-turn-output.XXXXXX")
 fractional_panel_output=$(mktemp "$scratch_root/firestaff-theron-sdl-fractional-panel-output.XXXXXX")
+popup_panel_output=$(mktemp "$scratch_root/firestaff-theron-sdl-popup-panel-output.XXXXXX")
 touch_config=$(mktemp "$scratch_root/firestaff-theron-sdl-touch-config.XXXXXX")
 fractional_config=$(mktemp "$scratch_root/firestaff-theron-sdl-fractional-config.XXXXXX")
+popup_config=$(mktemp "$scratch_root/firestaff-theron-sdl-popup-config.XXXXXX")
 printf 'touch_controls_index = 1\ninput_mode_index = 0\n' >"$touch_config"
 printf 'touch_controls_index = 1\ninput_mode_index = 0\ngame_4_resolution = 4\n' >"$fractional_config"
-trap 'rm -f "$held_probe" "$released_probe" "$panel_probe" "$item_probe" "$side_probe" "$action_probe" "$left_turn_probe" "$keyboard_action_probe" "$touch_forward_probe" "$touch_turn_probe" "$held_output" "$released_output" "$panel_output" "$item_output" "$side_output" "$action_output" "$left_turn_output" "$keyboard_action_output" "$touch_forward_output" "$touch_turn_output" "$fractional_panel_probe" "$fractional_panel_output" "$touch_config" "$fractional_config"' EXIT
+printf 'touch_controls_index = 1\ninput_mode_index = 0\ngame_4_resolution = 4\n' >"$popup_config"
+trap 'rm -f "$held_probe" "$released_probe" "$panel_probe" "$item_probe" "$side_probe" "$action_probe" "$left_turn_probe" "$keyboard_action_probe" "$touch_forward_probe" "$touch_turn_probe" "$held_output" "$released_output" "$panel_output" "$item_output" "$side_output" "$action_output" "$left_turn_output" "$keyboard_action_output" "$touch_forward_output" "$touch_turn_output" "$fractional_panel_probe" "$fractional_panel_output" "$popup_panel_probe" "$popup_panel_output" "$touch_config" "$fractional_config" "$popup_config"' EXIT
 
 startup_script='enter,enter,down,down,down,down,down,down,enter,down,enter,tab'
 run_event_route() {
@@ -108,9 +112,12 @@ run_event_route "$touch_forward_probe" "$touch_forward_output" \
     'touch-swipe-up,wait:8'
 run_event_route "$touch_turn_probe" "$touch_turn_output" \
     'touch-swipe-left,wait:8'
-# Exercise a visible panel pixel whose output edge falls between logical rows.
+# Exercise both sides of the fractional first-row edge: target y=590 still
+# samples source y=122, while y=591 samples the first control row at y=123.
 run_event_route "$fractional_panel_probe" "$fractional_panel_output" \
-    'click:729:590,wait:8' 1280 960 v21 "$fractional_config"
+    'click:729:590,click:729:591,wait:8' 1280 960 v21 "$fractional_config"
+run_event_route "$popup_panel_probe" "$popup_panel_output" \
+    'key:f10,click:729:591,wait:8' 1280 960 v21 "$popup_config"
 
 python3 - "$held_probe" "$released_probe" "$panel_probe" "$item_probe" \
     "$side_probe" "$action_probe" "$left_turn_probe" "$keyboard_action_probe" \
@@ -216,6 +223,8 @@ grep -Eq 'game-action game=theron tick=[0-9]+ input=pointer-left point=292,151 r
 grep -Eq 'game-action game=theron tick=[0-9]+ input=pointer-left point=204,151 result=1 action="MOVE" outcome="THERON STEPPED LEFT"' "$side_output"
 grep -Eq 'game-action game=theron tick=[0-9]+ input=pointer-left point=204,132 result=1 action="TURN" outcome="LEFT"' "$left_turn_output"
 grep -Eq 'game-action game=theron tick=[0-9]+ input=pointer-left point=204,132 result=1 action="TURN" outcome="LEFT"' "$fractional_panel_output"
+grep -Eq 'game-action game=theron tick=[0-9]+ input=pointer-left point=182,123 ' "$popup_panel_output"
+! grep -Eq 'game-action game=theron tick=[0-9]+ input=pointer-left point=204,132 ' "$popup_panel_output"
 grep -Eq 'game-action game=theron tick=[0-9]+ input=pointer-left point=204,170 result=1 action="CHAMPION" outcome="ACTIVE CHAMPION CHANGED"' "$action_output"
 grep -Eq 'game-action game=theron tick=[0-9]+ input=pointer-left point=292,189 result=1 action="WAIT" outcome="THERON TICK"' "$action_output"
 grep -Eq 'game-action game=theron tick=[0-9]+ input=cycle-champion result=1 action="CHAMPION" outcome="ACTIVE CHAMPION CHANGED"' "$keyboard_action_output"

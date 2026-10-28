@@ -1331,7 +1331,8 @@ static int m11_map_window_pointer_to_game_source(
         *outY = framebufferY;
         return 1;
     }
-    if (M11_GameView_MapTheronPresentedControlPointToSource(
+    if (!gameView->graphicsPopupActive &&
+        M11_GameView_MapTheronPresentedControlPointToSource(
             gameView, framebufferX, framebufferY, outX, outY)) {
         return 1;
     }
@@ -1343,6 +1344,43 @@ static int m11_map_window_pointer_to_game_source(
             gameView->presentationHeight,
             &framebufferX,
             &framebufferY);
+    *outX = framebufferX;
+    *outY = framebufferY;
+    return 1;
+}
+
+static int m11_map_window_touch_to_game_source(
+    const M11_GameViewState* gameView,
+    int windowX,
+    int windowY,
+    int* outX,
+    int* outY)
+{
+    int framebufferX;
+    int framebufferY;
+
+    if (!gameView || !outX || !outY ||
+        !M11_Render_MapWindowToFramebuffer(windowX, windowY,
+                                           &framebufferX, &framebufferY)) {
+        return 0;
+    }
+    /* F31J C06 owns an observed native 640x400 selector. Keep its
+     * source-native touch coordinates just like the mouse route. */
+    if (M11_GameView_GetCsbFmtownsUtilityJapaneseFrame(
+            gameView, NULL, NULL, NULL)) {
+        *outX = framebufferX;
+        *outY = framebufferY;
+        return 1;
+    }
+    /* Touch gestures consume source-space points. Do not route them through
+     * Theron's desktop mouse-panel hit test: the panel belongs only to mouse
+     * input, while touches use the normal presentation inverse transform. */
+    (void)M11_MapPresentedGamePointToSourceForPresentation(
+        gameView->presentationMode,
+        gameView->presentationWidth,
+        gameView->presentationHeight,
+        &framebufferX,
+        &framebufferY);
     *outX = framebufferX;
     *outY = framebufferY;
     return 1;
@@ -1401,8 +1439,8 @@ static int m11_map_normalized_touch_to_game_source(
     windowY = (int)(normalizedY * (float)windowH);
     if (windowX >= windowW) windowX = windowW - 1;
     if (windowY >= windowH) windowY = windowH - 1;
-    return m11_map_window_pointer_to_game_source(gameView, windowX, windowY,
-                                                  outX, outY);
+    return m11_map_window_touch_to_game_source(gameView, windowX, windowY,
+                                                outX, outY);
 }
 
 static void m11_sync_source_object_cursor(const M11_GameViewState* gameView) {
