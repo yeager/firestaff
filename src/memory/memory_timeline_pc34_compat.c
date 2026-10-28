@@ -97,6 +97,53 @@ static int timeline_event_precedes_same_tick(
     return 0;
 }
 
+/* Sort only authenticated native reaction events within one time bucket.
+ * Other event kinds remain in their original slots, so source comparisons
+ * can cross an untyped event without changing the relative order of those
+ * untyped events. */
+static void timeline_insert_source_reaction(
+    struct TimelineQueue_Compat* queue,
+    int first,
+    int eventIndex)
+{
+    int slots[TIMELINE_QUEUE_CAPACITY];
+    int slotCount = 0;
+    int index;
+    int insertion;
+    const struct TimelineEvent_Compat moving = queue->events[eventIndex];
+
+    if (moving.kind != TIMELINE_EVENT_CREATURE_REACTION ||
+        moving.aux2 < DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE ||
+        moving.aux2 > DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+        return;
+    }
+
+    for (index = first; index < eventIndex; ++index) {
+        const struct TimelineEvent_Compat* event = &queue->events[index];
+        if (event->kind == TIMELINE_EVENT_CREATURE_REACTION &&
+            event->aux2 >= DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE &&
+            event->aux2 <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+            slots[slotCount++] = index;
+        }
+    }
+    slots[slotCount++] = eventIndex;
+
+    insertion = slotCount - 1;
+    for (index = 0; index < slotCount - 1; ++index) {
+        if (timeline_event_precedes_same_tick(
+                &moving, &queue->events[slots[index]])) {
+            insertion = index;
+            break;
+        }
+    }
+    if (insertion < slotCount - 1) {
+        for (index = slotCount - 1; index > insertion; --index) {
+            queue->events[slots[index]] = queue->events[slots[index - 1]];
+        }
+        queue->events[slots[insertion]] = moving;
+    }
+}
+
 int F0720_TIMELINE_Init_Compat(
     struct TimelineQueue_Compat* queue,
     uint32_t nowTick)
@@ -112,6 +159,7 @@ int F0721_TIMELINE_Schedule_Compat(
     const struct TimelineEvent_Compat* event)
 {
     int insertIndex;
+    int first;
     if (queue == 0 || !timeline_event_is_valid(event)) return 0;
     if (!timeline_queue_has_valid_count(queue)) return 0;
     if (timeline_try_merge_event(queue, event)) return 1;
@@ -120,16 +168,19 @@ int F0721_TIMELINE_Schedule_Compat(
     insertIndex = queue->count;
     while (insertIndex > 0) {
         const struct TimelineEvent_Compat* prior = &queue->events[insertIndex - 1];
-        if (prior->fireAtTick < event->fireAtTick ||
-            (prior->fireAtTick == event->fireAtTick &&
-             !timeline_event_precedes_same_tick(event, prior))) {
-            break;
-        }
+        if (prior->fireAtTick <= event->fireAtTick) break;
         queue->events[insertIndex] = queue->events[insertIndex - 1];
         insertIndex--;
     }
     queue->events[insertIndex] = *event;
     queue->count++;
+
+    first = insertIndex;
+    while (first > 0 &&
+           queue->events[first - 1].fireAtTick == event->fireAtTick) {
+        --first;
+    }
+    timeline_insert_source_reaction(queue, first, insertIndex);
     return 1;
 }
 

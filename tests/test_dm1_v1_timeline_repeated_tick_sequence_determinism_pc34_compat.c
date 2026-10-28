@@ -622,6 +622,46 @@ static void test_d9_source_ordered_group_reactions(void)
           "D9r: 44-byte event retains its source C37 type and priority");
 }
 
+static void test_d9_reactions_sort_across_untyped_events(void)
+{
+    struct TimelineQueue_Compat queue;
+    struct TimelineEvent_Compat event;
+    struct TimelineEvent_Compat popped[4];
+    int i;
+
+    F0720_TIMELINE_Init_Compat(&queue, 0u);
+    event = make_reaction_event(
+        DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE, 0, 0, 1);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&queue, &event),
+          "D10a: C29 schedules before untyped events");
+    event = make_event(TIMELINE_EVENT_DOOR_ANIMATE, 500u, 0, 0, 0, 0,
+                       0, 0, 0, 0, 0);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&queue, &event),
+          "D10b: door event schedules between reactions");
+    event = make_event(TIMELINE_EVENT_SPELL_TICK, 500u, 0, 0, 0, 0,
+                       0, 0, 0, 0, 0);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&queue, &event),
+          "D10c: spell event schedules after door event");
+    event = make_reaction_event(
+        DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0, 0, 0, 2);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&queue, &event),
+          "D10d: higher C38 schedules after C29 and untyped events");
+
+    for (i = 0; i < 4; ++i) {
+        CHECK(F0723_TIMELINE_Pop_Compat(&queue, &popped[i]),
+              "D10e: pop events after cross-kind ordering");
+    }
+    CHECK(popped[0].kind == TIMELINE_EVENT_CREATURE_REACTION &&
+              popped[0].aux2 == DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0,
+          "D10f: C38 precedes C29 across untyped events");
+    CHECK(popped[1].kind == TIMELINE_EVENT_DOOR_ANIMATE &&
+              popped[2].kind == TIMELINE_EVENT_SPELL_TICK,
+          "D10g: untyped door and spell events retain their relative order");
+    CHECK(popped[3].kind == TIMELINE_EVENT_CREATURE_REACTION &&
+              popped[3].aux2 == DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE,
+          "D10h: C29 follows C38 across untyped events");
+}
+
 /* ------------------------------------------------------------------
  *  main
  * ------------------------------------------------------------------ */
@@ -640,6 +680,7 @@ int main(void) {
     test_d7_repeated_tick_sequence_determinism();
     test_d8_pop_sequence_equal_tick_tiebreak();
     test_d9_source_ordered_group_reactions();
+    test_d9_reactions_sort_across_untyped_events();
 
     printf("\n%d/%d checks passed\n", g_checks - g_failures, g_checks);
     if (g_failures > 0) {

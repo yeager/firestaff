@@ -1815,8 +1815,8 @@ parity.
   high-bit validity marker and priority byte fit the existing 44-byte event,
   so runtime serialization preserves them. For one known type, valid
   priorities precede unknown priorities; equal or unknown priorities keep
-  stable insertion order. Untyped events also keep stable insertion order.
-  This is a partial bridge, not complete scheduler parity:
+  stable insertion order. Reactions sort across untyped event slots, which
+  retain their own order. This is a partial bridge, not complete scheduler parity:
   source-pool address is not represented, and non-creature event families
   still need native type/priority mapping and source-backed coverage. Do not
   treat the seeded queue regression as proof of the complete admission
