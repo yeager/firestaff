@@ -85,10 +85,11 @@ original raw BIN bindings for CD tracks 2–9.
 
 This is a media and native-launch result only. It does **not** promote CDDA
 playback or a playable start. Later New Game tracing and static table analysis
-bound the retail LEV01 start level and coordinates `(29,47)`; the angle-to-host
-direction mapping, full title/menu handoff, and real CDDA consumer remain
-unbound. `LEV00` remains title-only, and runtime start is still fail-closed
-until the heading mapping and gameplay ownership path are complete.
+bound the retail LEV01 start level and coordinates `(29,47)`. Paired input and
+fixed-point pose evidence now map the level-1 heading `0x8000` to Firestaff
+North. Full title/menu handoff, gameplay ownership, and the real CDDA consumer
+remain unbound. `LEV00` remains title-only, and runtime start is still
+fail-closed until gameplay ownership is complete.
 
 ## Japanese held-START SMPC witness — 2026-08-27
 
@@ -315,11 +316,16 @@ and angle word `0x8000`. Enabled entries use `0x0000`, `0x4000`, `0x8000`, or
 New Game trace reaches the same structure through `FUN_0602022c`. The
 `(29,47)` cell is passable in the hash-verified retail LEV01 DGN, so this is a
 source-owned level-1 loader coordinate, not a guessed walkable cell.
-`FUN_0601f584` stores the angle in an object field, but the available
-disassembly does not bind `0x8000` to a world axis or Firestaff's
-north/east/south/west convention. Runtime direction admission therefore
-remains closed. The tuple is unchanged by the paired Up input. Exact trace and
-Ghidra export hashes are in the external
+`FUN_0601f584` stores the angle in the live pose object. A paired Up/control
+capture reads its 16.16 position fields: `(29,47)` maps exactly to
+`(0x0024e000, 0x003b6000)`, and Up changes Y to `0x003b5c00` while angle
+`0x8000` remains unchanged. Thus this level-1 start faces Firestaff North,
+where Up movement decreases DGN Y. One-frame left/right inputs change the
+angle by `+100`/`-100`, consistent with this orientation. This proves the
+level-1 direction mapping only; other table headings and the complete gameplay
+ownership path remain unverified, so runtime admission remains fail-closed. The
+loader tuple itself remains unchanged by paired Up input. Exact trace and Ghidra
+export hashes are in the external
 `nexus_new_game_capture_20261028/config-struct-sh2-trace-1800/` evidence
 directory.
 

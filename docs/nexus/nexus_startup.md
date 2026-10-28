@@ -1693,11 +1693,17 @@ record at `0x06064544..0x0606456f` is identical and retains level 1, angle
 left, and `0x7f9c` after right. The companion word at `0x746ca` changes to
 `+100` and `-100`. The frame-10 SH-2 trace records PC `0x06010cfa`
 initializing `0x060792be` to `0x8000` in `FUN_06010cf4`, with object base
-`0x060792b0`. An Up/control pair changes adjacent word data at `0x060792b8`
-from `0x60000000` to `0x5c000000` while the angle remains `0x8000`. Together
-these observations bind the table angle to a live, input-adjusted pose object
-and show the signed left/right adjustment. They do not identify the position
-component's DGN axis or the angle's cardinal/world-axis mapping.
+`0x060792b0`. An Up/control pair changes the big-endian 32-bit field at object
+offset `+8` (`0x060792b8`) from `0x003b6000` to `0x003b5c00` while the angle remains
+`0x8000`; the `+0` position field remains `0x0024e000`. These are 16.16
+coordinates: the retail table cell center `(29,47)` maps exactly to
+`((29+0.5)*1.25, (47+0.5)*1.25) = (0x0024e000, 0x003b6000)`. The Up
+input moves only Y by `-0x400`, with angle unchanged. In this captured level-1
+start, Up therefore moves toward decreasing DGN Y, which is Firestaff North;
+the retail heading `0x8000` maps to North. The one-frame left/right angle
+changes (`+100`/`-100`) are consistent with that mapping. This binds the
+level-1 retail start heading, but does not establish mappings for every angle
+word or the complete gameplay ownership path.
 
 A read-only pass through the existing DGN parser on authentic LEV01 shows an
 open chamber at `(29,47)` and a single square-type-8 passage at `(29,48)`,
@@ -1705,8 +1711,9 @@ bounded by walls at `(28,48)` and `(30,48)`. The frame-1800 scene shows a
 narrow opening ahead, visually consistent with facing toward the single
 passage. A 164-frame left hold instead ends at angle `0x293d` and a close wall
 view, not at the simple expected quarter-turn value; an immediate frame-1665
-capture reproduces that result. Neither visual comparison proves the
-cardinal/world-axis mapping, and Firestaff does not use them. Screenshots,
+capture reproduces that result. The long-hold comparison remains confounded and
+is not used to establish the heading mapping; the paired one-frame input plus exact fixed-point start
+coordinates provide the level-1 direction evidence. Screenshots,
 complete memory dumps, reproduction details, and artifact hashes are retained
 in external evidence at
 `nexus_start_heading_turn_20261028/`.
