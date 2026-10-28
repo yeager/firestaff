@@ -2928,8 +2928,11 @@ static void test_runtime_materializer_binds_original_group_reaction(void)
               loaded_world.timeline.events[2].aux2 ==
                   DM1_EVENT_GROUP_REACTION_HIT_BY_PROJECTILE &&
               loaded_world.timeline.events[2].aux3 == 3 &&
-              (loaded_world.timeline.events[2].aux4 & 0x100) != 0,
-          "C29 preserves F0209 group identity, C.Ticks, and priority provenance");
+              (loaded_world.timeline.events[2].aux4 & 0x100) != 0 &&
+              (loaded_world.timeline.events[2].aux4 & 0xff) == 7 &&
+              (loaded_world.timeline.events[2].aux4 &
+               TIMELINE_AUX4_SOURCE_PRIORITY_VALID) != 0,
+          "C29 preserves F0209 identity, C.Ticks, and F0234 priority");
 }
 
 static void test_runtime_materializer_recovers_missing_primary_from_backup(void)

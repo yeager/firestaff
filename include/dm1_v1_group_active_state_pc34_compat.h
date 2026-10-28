@@ -93,6 +93,7 @@ int F0180_DM1_GROUP_StartWandering_Compat(
     int map_x,
     int map_y,
     uint32_t game_time,
+    int movement_ticks,
     struct TimelineEvent_Compat *out_event,
     DM1_V1_F0180_StartWanderingReceipt_PC34 *out_receipt);
 

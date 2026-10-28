@@ -5901,8 +5901,10 @@ static int materialize_original_pc34_group_reaction_event(
     }
 
     /* ReDMCSB TIMELINE.C F0261:1858-1863 extracts C29..C41 and calls
-     * GROUP.C F0209 with B.Location and C.Ticks.  Resolve the group from
-     * the original SFT chain rather than inventing an M10 group identity. */
+     * GROUP.C F0209 with B.Location and C.Ticks. F0234:126-151 also orders
+     * equal-time events by native type and priority. Resolve the group from
+     * the original SFT chain and retain those comparator fields rather than
+     * inventing an M10 group identity or priority. */
     memset(out_event, 0, sizeof(*out_event));
     out_event->kind = TIMELINE_EVENT_CREATURE_REACTION;
     out_event->fireAtTick = src->map_time & 0x00ffffffu;
@@ -5915,7 +5917,8 @@ static int materialize_original_pc34_group_reaction_event(
     out_event->aux3 = (int)read_u16_le(&src->c_cell);
     /* Keep the source byte while marking aux3 as an original C.Ticks
      * payload; M10-generated reactions retain their legacy tick route. */
-    out_event->aux4 = (int)src->priority | 0x100;
+    out_event->aux4 = (int)src->priority | 0x100 |
+                      TIMELINE_AUX4_SOURCE_PRIORITY_VALID;
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
@@ -6021,7 +6024,8 @@ static int dm1_original_save_group_reaction_runtime_receipt(
                 runtime->aux1 != world->things->groups[group_index].creatureType ||
                 runtime->aux2 != source->type ||
                 runtime->aux3 != (int)read_u16_le(&source->c_cell) ||
-                runtime->aux4 != ((int)source->priority | 0x100)) {
+                runtime->aux4 != ((int)source->priority | 0x100 |
+                                  TIMELINE_AUX4_SOURCE_PRIORITY_VALID)) {
                 continue;
             }
             consumed[runtime_index] = 1;

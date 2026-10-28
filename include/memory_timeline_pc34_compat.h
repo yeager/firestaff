@@ -61,6 +61,11 @@ struct TimelineEvent_Compat {
     int aux4;
 };
 
+/* Native priority is stored in aux4's low byte for C29-C41 source events.
+ * This marker authenticates that byte for the M11 ordering comparator while
+ * preserving TimelineEvent_Compat's 44-byte in-memory and wire layouts. */
+#define TIMELINE_AUX4_SOURCE_PRIORITY_VALID 0x400
+
 struct TimelineQueue_Compat {
     uint32_t nowTick;
     int count;

@@ -192,6 +192,7 @@ int F0180_DM1_GROUP_StartWandering_Compat(
     int map_x,
     int map_y,
     uint32_t game_time,
+    int movement_ticks,
     struct TimelineEvent_Compat *out_event,
     DM1_V1_F0180_StartWanderingReceipt_PC34 *out_receipt)
 {
@@ -200,7 +201,8 @@ int F0180_DM1_GROUP_StartWandering_Compat(
     if (out_event) memset(out_event, 0, sizeof(*out_event));
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     if (!out_event || !out_receipt || group_index < 0 ||
-        creature_type < 0 || map_index < 0 || map_x < 0 || map_y < 0) {
+        creature_type < 0 || map_index < 0 || map_x < 0 || map_y < 0 ||
+        movement_ticks < 0 || movement_ticks > 255) {
         return 0;
     }
 
@@ -214,7 +216,8 @@ int F0180_DM1_GROUP_StartWandering_Compat(
     event.aux1 = creature_type;
     /* GROUP.C F0180:332-334: C37 with explicit C.Ticks=0. */
     event.aux2 = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
-    event.aux4 = 0x100;
+    event.aux4 = 0x100 | TIMELINE_AUX4_SOURCE_PRIORITY_VALID |
+                 (255 - movement_ticks);
     *out_event = event;
 
     out_receipt->valid = 1;

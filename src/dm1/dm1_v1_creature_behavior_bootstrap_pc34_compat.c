@@ -1,4 +1,5 @@
 #include "dm1_v1_creature_behavior_bootstrap_pc34_compat.h"
+#include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_event_timer_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_timeline_pc34_compat.h"
@@ -63,6 +64,7 @@ int dm1_v1_creature_behavior_bootstrap_pc34(
 
         {
             struct TimelineEvent_Compat ev;
+            struct DM1CreatureInfo_Compat creatureInfo;
             memset(&ev, 0, sizeof(ev));
             ev.kind = TIMELINE_EVENT_CREATURE_REACTION;
             ev.fireAtTick = world->gameTick + 1;
@@ -72,6 +74,13 @@ int dm1_v1_creature_behavior_bootstrap_pc34(
             ev.aux0 = gi;
             ev.aux1 = group->creatureType;
             ev.aux2 = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+            if (F0890d_ORCH_GetCreatureInfoForWorld_Compat(
+                    world, group->creatureType, &creatureInfo) &&
+                creatureInfo.movementTicks >= 0 &&
+                creatureInfo.movementTicks <= 255) {
+                ev.aux4 = TIMELINE_AUX4_SOURCE_PRIORITY_VALID |
+                          (255 - creatureInfo.movementTicks);
+            }
 
             if (F0721_TIMELINE_Schedule_Compat(&world->timeline, &ev)) {
                 result.events_scheduled++;

@@ -142,18 +142,27 @@ int main(void)
           "F0195 deletes only C29 through C41 before starting C37");
     CHECK(world.timeline.events[1].kind == TIMELINE_EVENT_CREATURE_REACTION &&
               world.timeline.events[1].fireAtTick == 201 &&
-              world.timeline.events[1].mapX == 0 &&
+              world.timeline.events[1].mapX == 1 &&
               world.timeline.events[1].mapY == 0 &&
-              world.timeline.events[1].aux0 == 0 &&
+              world.timeline.events[1].aux0 == 1 &&
               world.timeline.events[1].aux2 == DM1_EVENT_UPDATE_BEHAVIOR_GROUP &&
               world.timeline.events[1].aux3 == 0 &&
-              world.timeline.events[1].aux4 == 0x100,
-          "F0195 starts the first group wandering at GameTime plus one");
+              (world.timeline.events[1].aux4 & 0x100) != 0 &&
+              (world.timeline.events[1].aux4 &
+               TIMELINE_AUX4_SOURCE_PRIORITY_VALID) != 0 &&
+              (world.timeline.events[1].aux4 & 0xff) == 248,
+          "F0195 orders the faster second group first at GameTime plus one");
     CHECK(world.timeline.events[2].kind == TIMELINE_EVENT_CREATURE_REACTION &&
-              world.timeline.events[2].mapX == 1 &&
+              world.timeline.events[2].fireAtTick == 201 &&
+              world.timeline.events[2].mapX == 0 &&
               world.timeline.events[2].mapY == 0 &&
-              world.timeline.events[2].aux0 == 1,
-          "F0195 starts the second group wandering from its raw C04 square");
+              world.timeline.events[2].aux0 == 0 &&
+              world.timeline.events[2].aux2 == DM1_EVENT_UPDATE_BEHAVIOR_GROUP &&
+              (world.timeline.events[2].aux4 & 0x100) != 0 &&
+              (world.timeline.events[2].aux4 &
+               TIMELINE_AUX4_SOURCE_PRIORITY_VALID) != 0 &&
+              (world.timeline.events[2].aux4 & 0xff) == 135,
+          "F0195 retains the slower first group from its raw C04 square");
 
     /* PC3.4 F0196 owns 110 ACTIVE_GROUP slots.  This is distinct from the
      * 60-slot Atari branch in GROUP.C. F0195 must admit every C04 here. */

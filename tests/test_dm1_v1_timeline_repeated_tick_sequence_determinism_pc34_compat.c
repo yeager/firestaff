@@ -5,12 +5,10 @@
  *
  * Source-locked against:
  *   - ReDMCSB TIMELINE.C F0234_TIMELINE_IsEventABeforeEventB (lines 126-237)
- *     — comparator for the timeline: fireAtTick primary key, then
- *       stable insertion order for equal-tick events. The Firestaff
- *       timeline scheduler mirrors this contract via F0721's
- *       insertion-sort (src/memory/memory_timeline_pc34_compat.c:78-96)
- *       which advances `insertIndex` only while
- *       `prior->fireAtTick > event->fireAtTick` (strict >).
+ *     — comparator for the timeline: fireAtTick, descending source type,
+ *       descending priority, then source event-pool address. Firestaff's
+ *       M11 queue retains stable insertion order where original comparator
+ *       evidence or the original event-pool slot is unavailable.
  *   - ReDMCSB TIMELINE.C F0652_MergeEvent (lines 423-485) — door
  *     animation events at the same Map_Time+MapXY merge into the
  *     prior event by overwriting aux1 (`C.A.Effect`). Firestaff
@@ -51,10 +49,11 @@
  *   D7 Multi-replay determinism — running the same N-event
  *      sequence multiple times in the same process yields
  *      bit-identical final queue state.
- *   D8 Pop sequence determinism — popping all events in
- *      fireAtTick order yields the same popped sequence across
- *      runs with insertion-order tiebreaking for equal-tick
- *      events.
+ *   D8 Pop sequence determinism — untyped events retain stable insertion
+ *      order.
+ *   D9 Source order — authenticated C29-C41 source types sort descending;
+ *      F0180 C37 priority sorts descending when supplied in aux4; unavailable
+ *      source-pool address ties remain stable.
  *
  * Data-free, deterministic, source-locked. No DUNGEON.DAT, no
  * GRAPHICS.DAT, no game assets, no IO. Constructs events directly
@@ -62,6 +61,7 @@
  */
 
 #include "memory_timeline_pc34_compat.h"
+#include "dm1_v1_event_timer_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -531,6 +531,138 @@ static void test_d8_pop_sequence_equal_tick_tiebreak(void) {
 }
 
 /* ------------------------------------------------------------------
+ *  D9 — Source-backed C29-C41 order and F0180 C37 priority
+ * ------------------------------------------------------------------ */
+
+static struct TimelineEvent_Compat make_reaction_event(
+    int source_type, int source_priority, int priority_valid, int group_index)
+{
+    struct TimelineEvent_Compat event = make_event(
+        TIMELINE_EVENT_CREATURE_REACTION, 500u, 0, 1, 1, 0,
+        group_index, 0, source_type, 0, 0x100);
+    /* The native source type is aux2; authenticate an available priority in
+     * aux4 without changing the established 44-byte event layout. */
+    if (priority_valid) {
+        event.aux4 |= TIMELINE_AUX4_SOURCE_PRIORITY_VALID |
+                      (source_priority & 0xff);
+    }
+    return event;
+}
+
+static void test_d9_source_ordered_group_reactions(void)
+{
+    struct TimelineQueue_Compat queue;
+    struct TimelineEvent_Compat event;
+    struct TimelineEvent_Compat popped[8];
+    struct TimelineEvent_Compat restored;
+    unsigned char bytes[TIMELINE_EVENT_SERIALIZED_SIZE];
+    int i;
+
+    F0720_TIMELINE_Init_Compat(&queue, 0u);
+    event = make_reaction_event(DM1_EVENT_UPDATE_BEHAVIOR_GROUP, 10, 1, 1);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&queue, &event),
+          "D9a: lower-priority C37 schedules");
+    event = make_reaction_event(DM1_EVENT_UPDATE_BEHAVIOR_GROUP, 200, 1, 2);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&queue, &event),
+          "D9b: higher-priority C37 schedules");
+    event = make_reaction_event(DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0, 30, 1, 3);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&queue, &event),
+          "D9c: C38 schedules");
+    event = make_reaction_event(DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE, 0, 0, 4);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&queue, &event),
+          "D9d: C29 schedules");
+    event = make_reaction_event(DM1_EVENT_UPDATE_BEHAVIOR_GROUP, 200, 1, 5);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&queue, &event),
+          "D9e: equal-priority C37 schedules");
+    event = make_reaction_event(DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE,
+                                0, 0, 6);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&queue, &event),
+          "D9f: another C29 with unknown priority schedules");
+    event = make_reaction_event(DM1_EVENT_UPDATE_BEHAVIOR_GROUP, 0, 0, 7);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&queue, &event),
+          "D9g: unknown-priority C37 schedules before its known peer");
+    event = make_reaction_event(DM1_EVENT_UPDATE_BEHAVIOR_GROUP, 50, 1, 8);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&queue, &event),
+          "D9h: known-priority C37 schedules after its unknown peer");
+
+    for (i = 0; i < 8; ++i) {
+        CHECK(F0723_TIMELINE_Pop_Compat(&queue, &popped[i]),
+              "D9i: pop source-ordered event");
+    }
+    CHECK(popped[0].aux0 == 3 && popped[0].aux2 ==
+              DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0,
+          "D9h: higher source C38 precedes C37");
+    CHECK(popped[1].aux0 == 2 && (popped[1].aux4 & 0xff) == 200,
+          "D9i: higher F0180 C37 priority precedes lower priority");
+    CHECK(popped[2].aux0 == 5,
+          "D9j: same type/priority keeps stable insertion pending source slot");
+    CHECK(popped[3].aux0 == 8 && (popped[3].aux4 & 0xff) == 50,
+          "D9k: known C37 priority precedes unknown priority");
+    CHECK(popped[4].aux0 == 1 && (popped[4].aux4 & 0xff) == 10,
+          "D9l: lower known C37 priority follows higher priority");
+    CHECK(popped[5].aux0 == 7 && popped[5].aux2 ==
+              DM1_EVENT_UPDATE_BEHAVIOR_GROUP,
+          "D9m: unknown C37 follows known priorities stably");
+    CHECK(popped[6].aux0 == 4 && popped[6].aux2 ==
+              DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE,
+          "D9n: lower source C29 follows C37");
+    CHECK(popped[7].aux0 == 6,
+          "D9o: unknown C29 source-slot tie keeps stable insertion order");
+
+    CHECK(F0725_TIMELINE_EventSerialize_Compat(
+              &popped[1], bytes, sizeof(bytes)),
+          "D9p: source-ordered event serializes in legacy format");
+    CHECK(F0726_TIMELINE_EventDeserialize_Compat(
+              &restored, bytes, sizeof(bytes)),
+          "D9q: legacy event deserializes");
+    CHECK(TIMELINE_EVENT_SERIALIZED_SIZE == 44 && restored.aux2 ==
+              DM1_EVENT_UPDATE_BEHAVIOR_GROUP &&
+              (restored.aux4 & TIMELINE_AUX4_SOURCE_PRIORITY_VALID) != 0 &&
+              (restored.aux4 & 0xff) == 200,
+          "D9r: 44-byte event retains its source C37 type and priority");
+}
+
+static void test_d9_reactions_sort_across_untyped_events(void)
+{
+    struct TimelineQueue_Compat queue;
+    struct TimelineEvent_Compat event;
+    struct TimelineEvent_Compat popped[4];
+    int i;
+
+    F0720_TIMELINE_Init_Compat(&queue, 0u);
+    event = make_reaction_event(
+        DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE, 0, 0, 1);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&queue, &event),
+          "D10a: C29 schedules before untyped events");
+    event = make_event(TIMELINE_EVENT_DOOR_ANIMATE, 500u, 0, 0, 0, 0,
+                       0, 0, 0, 0, 0);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&queue, &event),
+          "D10b: door event schedules between reactions");
+    event = make_event(TIMELINE_EVENT_SPELL_TICK, 500u, 0, 0, 0, 0,
+                       0, 0, 0, 0, 0);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&queue, &event),
+          "D10c: spell event schedules after door event");
+    event = make_reaction_event(
+        DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0, 0, 0, 2);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&queue, &event),
+          "D10d: higher C38 schedules after C29 and untyped events");
+
+    for (i = 0; i < 4; ++i) {
+        CHECK(F0723_TIMELINE_Pop_Compat(&queue, &popped[i]),
+              "D10e: pop events after cross-kind ordering");
+    }
+    CHECK(popped[0].kind == TIMELINE_EVENT_CREATURE_REACTION &&
+              popped[0].aux2 == DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0,
+          "D10f: C38 precedes C29 across untyped events");
+    CHECK(popped[1].kind == TIMELINE_EVENT_DOOR_ANIMATE &&
+              popped[2].kind == TIMELINE_EVENT_SPELL_TICK,
+          "D10g: untyped door and spell events retain their relative order");
+    CHECK(popped[3].kind == TIMELINE_EVENT_CREATURE_REACTION &&
+              popped[3].aux2 == DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE,
+          "D10h: C29 follows C38 across untyped events");
+}
+
+/* ------------------------------------------------------------------
  *  main
  * ------------------------------------------------------------------ */
 
@@ -547,6 +679,8 @@ int main(void) {
     test_d6_serialize_round_trip_determinism();
     test_d7_repeated_tick_sequence_determinism();
     test_d8_pop_sequence_equal_tick_tiebreak();
+    test_d9_source_ordered_group_reactions();
+    test_d9_reactions_sort_across_untyped_events();
 
     printf("\n%d/%d checks passed\n", g_checks - g_failures, g_checks);
     if (g_failures > 0) {
