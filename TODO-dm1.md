@@ -117,7 +117,18 @@ viewport. Reproduced the exact original PC34 archive and rebuilt the current
 source. Focused authentic-media CTests passed for inscription font/stale-state
 rendering, HoC wall material/torch receipt, and floor-pit viewport capture;
 they prove selected source material and destination pixels, not the reported
-native presented frame or full pixel parity. Current PC34 F0438 code requests
+native presented frame or full pixel parity.
+On 2026-10-28, a Swedish catalog regression exposed that Original mode was
+replacing the authentic PC34 TextString with a translation and procedural
+U+00C4 glyph even though the original M648 font and source text were present.
+Original now renders the decoded DUNGEON.DAT text through M648; translated
+inscriptions remain available in Modern mode. Rebuilt and ran
+`m11_dm1_all_visible_inscription_stale_state_pc34` against the authentic DOS
+PC 3.4 archive with the Swedish catalog loaded: all 56 visible poses matched
+the original M648 raster in Original mode, and the Modern translation check
+passed. This restores original-mode source fidelity but does not measure
+subjective readability or compare a matched original-game frame. Current PC34
+F0438 code requests
 55 ms after each of its 31 visible door frames (about 1.71 s total before any
 host scheduling overrun), using the documented fast-loop correction rather
 than the raw one-VBlank interval. This is a requested minimum cadence, not a

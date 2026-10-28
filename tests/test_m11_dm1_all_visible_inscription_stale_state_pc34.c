@@ -320,6 +320,11 @@ int main(void)
         return getenv("FIRESTAFF_DM1_DATA_DIR") ? 1 : 0;
     }
     state.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
+    if (fs_po_load(FIRESTAFF_SOURCE_DIR "/po/dm1.sv.po") <= 0) {
+        fprintf(stderr, "Swedish DM1 catalog unavailable\n");
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
     state.world.party.championCount = 0;
     font = M11_AssetLoader_Load(&state.assetLoader,
                                 DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34);
@@ -375,9 +380,10 @@ int main(void)
         }
     }
 
-    /* TextString 4 is real PC34 "HALL OF\nCHAMPIONS" material. Its Swedish
-     * final presentation is "HJÄLTARNAS\nSAL": prove the U+00C4 cell while
-     * retaining the original receipt and M648 palette ownership. */
+    /* Original mode above must keep the authentic TextString 4 and M648
+     * pixels even with a Swedish catalog loaded. Modern mode may translate
+     * it to "HJÄLTARNAS\nSAL"; prove its U+00C4 host glyph while retaining
+     * the original receipt and M648 palette ownership. */
     for (i = 0; i < poseCount; ++i) {
         if (poses[i].textStringIndex == 4) {
             static const unsigned char capital_a_diaeresis[7] = {
@@ -388,11 +394,6 @@ int main(void)
             int pixel;
             int row;
             int col;
-            if (fs_po_load(FIRESTAFF_SOURCE_DIR "/po/dm1.sv.po") <= 0) {
-                fprintf(stderr, "Swedish DM1 catalog unavailable\n");
-                M11_GameView_Shutdown(&state);
-                return 1;
-            }
             for (pixel = 0; pixel < (int)font->width * (int)font->height;
                  ++pixel) {
                 if (font->pixels[pixel] !=
@@ -405,6 +406,7 @@ int main(void)
             state.world.party.mapX = poses[i].partyX;
             state.world.party.mapY = poses[i].partyY;
             state.world.party.direction = poses[i].direction;
+            state.presentationMode = M12_PRESENTATION_V22_MODERN;
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&state, framebuffer, kFramebufferWidth,
                               kFramebufferHeight);

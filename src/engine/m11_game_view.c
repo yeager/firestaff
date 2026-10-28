@@ -48421,13 +48421,21 @@ static int m11_draw_dm1_inscription_glyph_line(
 }
 
 static const char* m11_dm1_inscription_presentation_text(
+    const M11_GameViewState* state,
     const DM1_V1_InscriptionHostMaterialReceiptPc34* material,
     char* key,
     size_t keyCapacity)
 {
     const char* translated;
-    if (!material || !material->sourceText[0] || !key || keyCapacity == 0u) {
+    if (!state || !material || !material->sourceText[0] || !key ||
+        keyCapacity == 0u) {
         return NULL;
+    }
+    /* Original mode must present the actual DUNGEON.DAT bytes through the
+     * original M648 atlas.  Modern-only localization may use extended host
+     * glyphs for characters absent from that game font. */
+    if (state->presentationMode == M12_PRESENTATION_V1_ORIGINAL) {
+        return material->sourceText;
     }
     /* Keep shipped qualified keys literal at the gettext call site so the
      * catalog extractor cannot lose them when POT/PO files are refreshed. */
@@ -48751,7 +48759,7 @@ static void m11_draw_dm1_front_wall_inscription_material(
         return;
     }
     presentationText = m11_dm1_inscription_presentation_text(
-        &material, translationKey, sizeof(translationKey));
+        state, &material, translationKey, sizeof(translationKey));
     if (presentationText && strcmp(presentationText, material.sourceText) != 0 &&
         m11_draw_dm1_translated_inscription(fontSlot, presentationText,
                                              framebuffer, fbW, fbH)) {
