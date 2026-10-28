@@ -10,12 +10,17 @@ five TITLE.BIN sprite draws per state compared with the retail screenshots.
 The `verify_nexus_title_sprite_screenshot.py` verifier now checks the five-draw
 Japanese Continue layout and the English New Game and Continue layouts against
 authentic retail source bytes and captured CRAM. Ymir also completed
-Continue-to-gameplay with a reported retail-written BKR image. Firestaff now
-renders authenticated English and Japanese New Game/Continue/Configuration
-foreground sprites from regional `TITLE.BIN` data. English Configuration text
-pixels match its Ymir capture; final marker RGB remains background-dependent.
-The shared background, full-screen composition, menu destination execution,
-Continue loading, and gameplay HUD/viewport remain unimplemented or unverified.
+Continue-to-gameplay with the corpus-retained BKR image whose SHA-256 is
+`87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`: the
+retail Load screen showed `B01 0:16 NORMAL`, then entered the four-champion
+dungeon view. The isolated BKR copy retained its hash after loading. A paired
+Up-input replay changed the rendered gameplay view. These captures verify the
+retail reference flow in Ymir only. Firestaff now renders authenticated English
+and Japanese New Game/Continue/Configuration foreground sprites from regional
+`TITLE.BIN` data. English Configuration text pixels match its Ymir capture;
+final marker RGB remains background-dependent. The shared background,
+full-screen composition, Firestaff menu destination execution, Continue loading,
+and gameplay HUD/viewport remain unimplemented or unverified.
 
 ## Verified initialization order
 
@@ -1838,3 +1843,35 @@ VDP2 composition and other settings states also remain unproven, so renderer
 admission stays blocked. See the [trace-prefix receipt](../../parity-evidence/verification/nexus_japanese_configuration_dgn_trace_prefix_20261028/README.md)
 and the authentic Japanese retail capture retained in operator-managed
 external evidence storage.
+
+## Continue reaches gameplay with the retained authentic BKR (2026-10-28)
+
+Ymir `0.4.2-dev` was run on TRV2 with the hash-verified Japanese retail disc,
+Japanese IPL and an isolated profile. The profile's internal backup RAM was a
+byte-for-byte copy of
+`nexus-four-champion-retail-written-20260926.bkr` from the authentic Nexus data
+corpus (SHA-256
+`87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`). No
+emulator save state or game save was loaded during the cold boot. After the
+retail title menu appeared, Down and A opened Continue's Load screen, which
+listed the internal-memory entry `B01 0:16 NORMAL`. A second A accepted that
+entry. The next capture shows a dungeon view with four champion HUD panels.
+The BKR source and isolated profile copy retained the same SHA-256 after the
+load.
+
+From the accepted-save emulator state, equal 300-frame replays were captured
+with no input and with Control Pad Up held for 60 frames. The two 640x448
+images differ at 239,180 pixels. This confirms that the loaded retail view
+responds visibly to the scheduled input; it does not identify the complete
+movement mapping or prove Firestaff input parity.
+
+The accepted-save capture's VDP1 snapshot is frame 2,173 with 83 commands. Its
+complete command trace contains 175,042 rows with zero dropped rows. The
+capture commands, logs, screenshots, memory/VDP dumps, hashes and scope limits
+are recorded in the [external evidence bundle](
+../../../../firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/README.md).
+The bundle contains no BKR payload. This establishes the retail game's
+Continue-to-gameplay behavior in Ymir with the retained corpus save; it does
+not establish that Firestaff loads the BKR, executes Continue, or renders the
+captured viewport and HUD. Those production routes remain gated on their own
+source-bound parsing, composition and input evidence.
