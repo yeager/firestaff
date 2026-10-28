@@ -15106,6 +15106,20 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     M11_GameView_AdvanceIdleTick(&gameView);
                 m11_debug_dm1_combat_tick(&gameView);
                 m11_debug_game_events(&gameView);
+                /* DM2 FM Towns TWANIM is clocked by source Timer-A ticks.
+                 * When the host loop catches up more than one tick, the
+                 * eventual presentation below contains only the newest
+                 * decoded image. Record each source state here so --debug
+                 * does not hide animation frames that elapsed during that
+                 * catch-up batch. This is diagnostic only; source timing and
+                 * presentation cadence remain unchanged. */
+                if (o->debug &&
+                    gameView.sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
+                    (gameView.dm2FmtownsTitleBound ||
+                     gameView.dm2FmtownsTitleFinished)) {
+                    m11_debug_trace_startup_frame(&debugStartupTrace,
+                                                  &gameView, o->gameId);
+                }
                 if (tickResult == M11_GAME_INPUT_REDRAW) {
                     if (gameView.sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
                         gameView.dm2State.startup_menu_active &&

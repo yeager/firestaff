@@ -4346,6 +4346,17 @@ if(BUILD_TESTING)
         TIMEOUT 300
     )
     add_test(
+        NAME dm2_v1_fmtowns_debug_source_frame_trace_real_media
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_fmtowns_debug_source_frame_trace.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(dm2_v1_fmtowns_debug_source_frame_trace_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;dm2;fmtowns;startup;cli;debug;real-media;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch/dm2-fmtowns-debug"
+        TIMEOUT 60
+    )
+    add_test(
         NAME firestaff_dm1_scan_debug_localization_real_media
         COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_dm1_scan_debug_localization_real_media.sh"
             "$<TARGET_FILE:firestaff>"

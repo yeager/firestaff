@@ -1,5 +1,18 @@
 # Firestaff TODO — DM2
 
+2026-10-28 FM Towns `--debug` source-frame trace: the combined startup
+diagnostics CTest failed on the M4 because the main loop logged only after a
+batch of overdue Timer-A ticks, hiding intermediate TWANIM source-frame states
+from the trace. The animation still completed its 225-frame source sequence
+at 26,211 ms with no rejected records. `main_loop_m11.c` now records each DM2
+FM Towns source state as each timer tick is consumed; this is diagnostic only
+and does not change the source clock or rendered-frame cadence. The focused
+`dm2_v1_fmtowns_debug_source_frame_trace_real_media` CTest passes against the
+installed original Japanese FM Towns ZIP and records all 224 displayable
+frame indices in the source trace plus completion. During scheduler catch-up,
+intermediate frames can still be skipped by presentation. This trace proves
+source progression, not that every frame reached the native display.
+
 2026-10-28 Macintosh English media availability correction: the authentic
 StuffIt source archive is present at
 `~/.firestaff/data/dm2/Dungeon Master II for Macintosh English.sit` (SHA-256

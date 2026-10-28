@@ -97,6 +97,20 @@ all three hashes matched before and after testing. These bounded SDL-dummy
 checks establish only the named card-to-owner startup routes, not physical
 display/input, native presentation, or complete platform parity.
 
+### 2026-10-28 DM2 FM Towns debug trace follow-up
+
+The first local run of the combined startup-diagnostics script failed its
+TWANIM frame-trace assertion: the normal direct `--game dm2 --debug` route
+completed the authenticated 225-frame sequence in 26,211 ms, but catch-up
+batches hid some intermediate source states from the debug log. The trace now
+records each DM2 FM Towns source state as its Timer-A tick is consumed. The
+new focused `dm2_v1_fmtowns_debug_source_frame_trace_real_media` CTest passes
+against the installed original Japanese FM Towns ZIP and records every
+displayable source-frame index and completion without boot-probe fast-forward.
+This closes the debug trace gap only. The runtime may still skip presenting
+intermediate frames during scheduler catch-up; native display parity remains
+unverified.
+
 ### 2026-10-28 current TRV2 no-game menu follow-up
 
 The Debug build from this worktree ran against the currently installed
