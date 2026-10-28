@@ -8992,3 +8992,18 @@ T900/original inventory semantics. No synthetic media was used.
 - The larger trace remains transport evidence only: it does not bind CD reads
   causally to individual RAM writes or identify the loaded dungeon
   decoder/consumer.
+
+## 2026-10-28 — verify ordered authentic CD-to-bank-$80 byte windows
+
+- Split the shared event counter into a follow-up patch so the existing
+  Mednafen target-write patch remains applicable to its original source
+  context. The complete instrumented patch set applied in three TRV2 loops,
+  and the PCE Fast objects and emulator rebuilt successfully with `-j1`.
+- A fresh authentic JP Rev. 1 capture recorded 65,536 CD-port reads and 77
+  target writes. Three verifier loops confirmed the 15-byte windows at LBAs
+  4521 and 4589 were each read from Track 02 and immediately followed by
+  byte-equal writes to bank `$80` offsets 0–14.
+- This verifies ordered byte correspondence for those captured windows. It
+  does not prove complete Theron parity, the `$23AD` decode path, or a
+  gameplay transition; the capture had no CD IRQ or authenticated transition
+  receipt.

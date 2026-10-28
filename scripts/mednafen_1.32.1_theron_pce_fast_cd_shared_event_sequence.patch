@@ -1,0 +1,64 @@
+diff --git a/src/pce_fast/huc.cpp b/src/pce_fast/huc.cpp
+index 7e01363..58270d7 100644
+--- a/src/pce_fast/huc.cpp
++++ b/src/pce_fast/huc.cpp
+@@ -75,6 +75,8 @@ static DECLFR(HuCRead)
+  return ROMSpace[A];
+ }
+FIRESTAFF_PATCH_BLANK_CONTEXT
++extern uint32 TheronTraceCDSharedEventSequence;
++
+ static void TheronTraceCDRAMTargetWrite(uint32 address, uint8 value)
+ {
+  static FILE *trace = NULL;
+@@ -96,14 +98,15 @@ static void TheronTraceCDRAMTargetWrite(uint32 address, uint8 value)
+    return;
+   fputs("source=mednafen-pce-fast-cd-ram-target-write\n", trace);
+  }
+- fprintf(trace, "cd_ram_target_write sequence=%u physical_address=%06x logical_window_offset=%04x old=%02x value=%02x writer_pc=%04x writer_physical_pc=%06x mpr2=%02x block_move=%u bmt_src=%04x bmt_source_physical=%06x bmt_dest=%04x bmt_length=%04x a=%02x x=%02x y=%02x s=%02x p=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x\n",
++ const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
++ fprintf(trace, "cd_ram_target_write sequence=%u physical_address=%06x logical_window_offset=%04x old=%02x value=%02x writer_pc=%04x writer_physical_pc=%06x mpr2=%02x block_move=%u bmt_src=%04x bmt_source_physical=%06x bmt_dest=%04x bmt_length=%04x a=%02x x=%02x y=%02x s=%02x p=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x event_sequence=%u\n",
+          count++, address, stage2_target ? address - stage2_first : address - 0x68 * 8192, ROMSpace[address], value,
+          TheronTraceInstructionPC, TheronTraceInstructionPhysicalPC, HuCPU.MPR[2],
+          HuCPU.in_block_move, HuCPU.bmt_src,
+          ((uint32)HuCPU.MPR[(HuCPU.bmt_src >> 13) & 7] << 13) | (HuCPU.bmt_src & 0x1fff),
+          HuCPU.bmt_dest, HuCPU.bmt_length, HuCPU.A, HuCPU.X, HuCPU.Y, HuCPU.S, HuCPU.P,
+          HuCPU.MPR[0], HuCPU.MPR[1], HuCPU.MPR[2], HuCPU.MPR[3],
+-         HuCPU.MPR[4], HuCPU.MPR[5], HuCPU.MPR[6], HuCPU.MPR[7]);
++         HuCPU.MPR[4], HuCPU.MPR[5], HuCPU.MPR[6], HuCPU.MPR[7], event_sequence);
+  fflush(trace);
+ }
+FIRESTAFF_PATCH_BLANK_CONTEXT
+diff --git a/src/pce_fast/pcecd.cpp b/src/pce_fast/pcecd.cpp
+index 44424a0..63b71cb 100644
+--- a/src/pce_fast/pcecd.cpp
++++ b/src/pce_fast/pcecd.cpp
+@@ -37,6 +37,8 @@ using namespace Mednafen;
+ namespace MDFN_IEN_PCE_FAST
+ {
+FIRESTAFF_PATCH_BLANK_CONTEXT
++uint32 TheronTraceCDSharedEventSequence = 0;
++
+ //#define PCECD_DEBUG
+FIRESTAFF_PATCH_BLANK_CONTEXT
+ static unsigned int OC_Multiplier;
+@@ -281,7 +283,8 @@ static void TheronTraceCDDataPortRead(uint16 cpu_pc, uint32 source_lba, uint16 u
+  const unsigned reader_mpr_slot = (cpu_pc >> 13) & 7;
+  const uint8 reader_mpr = HuCPU.MPR[reader_mpr_slot];
+  const uint32 reader_physical_pc = ((uint32)reader_mpr << 13) | (cpu_pc & 0x1fff);
+- fprintf(trace, "cd_data_port_read sequence=%u cpu_pc=%04x address=1808 value=%02x reader_pc=%04x reader_physical_pc=%06x reader_mpr_slot=%u reader_mpr0=%02x reader_mpr1=%02x reader_mpr2=%02x reader_mpr3=%02x reader_mpr4=%02x reader_mpr5=%02x reader_mpr6=%02x reader_mpr7=%02x source_valid=%u source_lba=%u source_user_offset=%u source_raw_offset=%u track02_start_lba=%u track02_end_lba=%u track02_index1_file_offset=%u track02_sector_bytes=%u track02_raw_file_offset=%llu\n",
++ const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
++ fprintf(trace, "cd_data_port_read sequence=%u cpu_pc=%04x address=1808 value=%02x reader_pc=%04x reader_physical_pc=%06x reader_mpr_slot=%u reader_mpr0=%02x reader_mpr1=%02x reader_mpr2=%02x reader_mpr3=%02x reader_mpr4=%02x reader_mpr5=%02x reader_mpr6=%02x reader_mpr7=%02x source_valid=%u source_lba=%u source_user_offset=%u source_raw_offset=%u track02_start_lba=%u track02_end_lba=%u track02_index1_file_offset=%u track02_sector_bytes=%u track02_raw_file_offset=%llu event_sequence=%u\n",
+          count++, cpu_pc, value, cpu_pc, reader_physical_pc, reader_mpr_slot,
+          HuCPU.MPR[0], HuCPU.MPR[1], HuCPU.MPR[2], HuCPU.MPR[3],
+          HuCPU.MPR[4], HuCPU.MPR[5], HuCPU.MPR[6], HuCPU.MPR[7],
+@@ -291,7 +294,8 @@ static void TheronTraceCDDataPortRead(uint16 cpu_pc, uint32 source_lba, uint16 u
+          source_valid && source_lba >= track02_start_lba && source_lba < track02_end_lba ?
+           (unsigned long long)track02_index1_file_offset +
+            (unsigned long long)(source_lba - track02_start_lba) * track02_sector_bytes +
+-           (track02_sector_bytes == 2352 ? raw_sector_offset : user_data_offset) : 0ULL);
++           (track02_sector_bytes == 2352 ? raw_sector_offset : user_data_offset) : 0ULL,
++         event_sequence);
+  fflush(trace);
+ }
+ static INLINE uint8 read_1808(int32 timestamp)

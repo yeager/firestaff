@@ -450,6 +450,7 @@ pce_fast_indirect_target_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fas
 runtime_code_window_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_44d2_runtime_code_window.patch
 cd_ram_runtime_window_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_ram_runtime_window_trace.patch
 cd_ram_target_write_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_ram_target_write_trace.patch
+cd_shared_event_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_shared_event_sequence.patch
 pce_fast_main_ram_consumer_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_consumer_read.patch
 if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
    ! grep -Fq 'theron_pce_fast_3879_indirect_target_trace.patch' "$build_script" ||
@@ -516,6 +517,10 @@ if ! awk '
     exit 1
 fi
 if ! grep -Fq 'theron_pce_fast_cd_ram_target_write_trace.patch' "$build_script" ||
+   ! grep -Fq 'theron_pce_fast_cd_shared_event_sequence.patch' "$build_script" ||
+   ! grep -Fq 'extern uint32 TheronTraceCDSharedEventSequence;' "$cd_shared_event_patch_file" ||
+   ! grep -Fq 'TheronTraceCDSharedEventSequence = 0' "$cd_shared_event_patch_file" ||
+   ! grep -Fq 'event_sequence=%u' "$cd_shared_event_patch_file" ||
    ! grep -Fq 'cd_ram_target_write sequence=%u physical_address=%06x' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'block_move=%u bmt_src=%04x bmt_source_physical=%06x bmt_dest=%04x bmt_length=%04x' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'HuCPU.in_block_move, HuCPU.bmt_src' "$cd_ram_target_write_patch_file" ||
@@ -533,6 +538,7 @@ if ! grep -Fq 'theron_pce_fast_cd_ram_target_write_trace.patch' "$build_script" 
    ! grep -Fq 'TheronTraceCDRAMTargetWrite(A, V);' "$cd_ram_target_write_patch_file" ||
    grep -Fq '\\n' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'cd_data_port_read sequence=%u cpu_pc=%04x address=1808 value=%02x reader_pc=%04x reader_physical_pc=%06x reader_mpr_slot=%u reader_mpr0=%02x' "$cd_ram_target_write_patch_file" ||
+   ! grep -Fq 'track02_raw_file_offset=%llu event_sequence=%u' "$cd_shared_event_patch_file" ||
    ! grep -Fq 'reader_mpr7=%02x source_valid=%u' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'reader_physical_pc = ((uint32)reader_mpr << 13) | (cpu_pc & 0x1fff)' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'TheronTraceCDDataPortRead(HuCPU.PC, source_lba' "$cd_ram_target_write_patch_file" ||

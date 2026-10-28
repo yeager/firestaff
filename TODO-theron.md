@@ -1285,16 +1285,16 @@ physical PC, the active MPR slot, and MPR0–MPR7 for each source-bound read. Th
 verifiers check the logical-to-physical mapping formula while retaining support
 for earlier trace formats. This context can identify the executing bank at a
 CD-port read; the independent CD-read and RAM-write traces still do not prove
-read-to-write causality.
+read-to-write causality. A shared monotonic event sequence is now emitted by
+both selected CD-port reads and target RAM writes. It orders logged events but
+does not itself prove source-to-destination causality.
 
-The complete Mednafen patch set applies successfully to the authentic 1.32.1
-source in the focused patch-only test. Existing authentic JP Rev. 1 captures
-still verify byte-for-byte against Track 02, and the stage-two verifier confirms
-same-capture candidate-byte correlation only. No emulator was rebuilt and no
-capture with the new MPR fields has been collected, so runtime mapping remains
-unverified. Next, build the instrumented emulator and collect a source-bound
-capture; add a shared event or cycle identifier before making any causal
-read-to-write claim.
+The complete Mednafen patch set applied in three loops to authentic 1.32.1
+source. A PCE Fast-enabled emulator was rebuilt on TRV2, and a fresh authentic
+JP Rev. 1 capture records shared event IDs on CD-port reads and target RAM
+writes. The ordered candidate windows are verified below; runtime mapping is
+observed, but the trace still lacks a CPU source address for each write and
+does not prove the decoder's full transfer path or a gameplay transition.
 
 ## 2026-10-09 -- held-input replay does not distinguish idle game-loop writes
 
@@ -8193,9 +8193,17 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   JP image. It does not join those reads causally to destination RAM writes,
   identify the `$23AD` decoder input/output, or prove a gameplay transition;
   the capture ended at its instrumentation limit with `transition=missing`.
-- The existing stage-2 candidate verifier also passed against this capture:
-  its 15-byte candidates at LBAs 4521 and 4589 appear in both the authentic
-  CD-port reads and direct bank-$80 write rows. This is same-capture byte
-  correlation, not proof that a particular read caused a particular write.
-  Continue with a causally joined transfer and decoder-consumer trace before
-  deriving dungeon semantics or enabling drawing.
+- A fresh 60-second PCE Fast capture now carries a shared monotonic event ID on
+  CD-port reads and target RAM writes. Three checks against its authentic JP
+  Track 02 capture matched the 15-byte windows at LBAs 4521 and 4589 to direct
+  bank-$80 writes; each sampled byte read is immediately followed by a byte-
+  equal write at the corresponding `$100000` offset. The candidate window
+  hashes are `799e28674ea2ae783b9b3530ff8a6dd116312ab2a499eb7380cdeb7fc4da5e45`
+  and `e38cfd5571a9f549328bafe29b84ae3f6d648d9d02e6a2efd66e1a989bf1b27c`.
+- This strengthens the evidence from same-capture correlation to ordered
+  byte correspondence for these two windows. The trace still does not record
+  a CPU source address for each destination write, identify the `$23AD`
+  decoder's input/output, or prove a gameplay transition: the capture ended
+  without IRQ or authenticated CD-to-RAM transition receipts. Continue with
+  source-address and decoder-consumer evidence before deriving dungeon
+  semantics or enabling drawing.

@@ -271,6 +271,12 @@ sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$target_write_patch" \
     > "$target_write_rendered"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$target_write_rendered"
+shared_event_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_shared_event_sequence.patch"
+shared_event_rendered="$build_root/theron-pce-fast-cd-shared-event.rendered.patch"
+sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$shared_event_patch" \
+    > "$shared_event_rendered"
+git -C "$build_root/source" apply --recount --whitespace=nowarn \
+    "$shared_event_rendered"
 fast_vdc_snapshot_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_vdc_snapshot.patch"
 fast_vdc_snapshot_rendered="$build_root/theron-pce-fast-vdc-snapshot.rendered.patch"
 sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$fast_vdc_snapshot_patch" \

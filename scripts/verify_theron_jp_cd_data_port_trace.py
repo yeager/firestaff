@@ -36,7 +36,8 @@ def parse_row(line: str, line_number: int) -> dict[str, int]:
         r"source_user_offset=(\d+) source_raw_offset=(\d+) "
         r"track02_start_lba=(\d+) track02_end_lba=(\d+) "
         r"track02_index1_file_offset=(\d+) track02_sector_bytes=(\d+) "
-        r"track02_raw_file_offset=(\d+)",
+        r"track02_raw_file_offset=(\d+)"
+        r"(?: event_sequence=(\d+))?",
         line,
     )
     if not match:
@@ -57,6 +58,8 @@ def parse_row(line: str, line_number: int) -> dict[str, int]:
         "track02_sector_bytes": int(groups[source_index + 7]),
         "track02_raw_file_offset": int(groups[source_index + 8]),
     }
+    if groups[-1] is not None:
+        row["event_sequence"] = int(groups[-1])
     if groups[1] is not None:
         row["cpu_pc"] = int(groups[1], 16)
     if groups[4] is not None:
@@ -94,6 +97,11 @@ def verify(trace_path: Path, track02_path: Path) -> tuple[bytes, list[dict[str, 
         raise ValueError("reader MPR fields do not match the trace header")
 
     # Pass 1 checks the trace's ordered sequence and source metadata.
+    event_sequences = [row["event_sequence"] for row in rows if "event_sequence" in row]
+    if event_sequences and (len(event_sequences) != len(rows) or any(
+        current <= previous for previous, current in zip(event_sequences, event_sequences[1:])
+    )):
+        raise ValueError("shared event sequence is missing or out of order")
     for sequence, row in enumerate(rows):
         if row["sequence"] != sequence or row["address"] != 0x1808:
             raise ValueError(f"unexpected sequence or data-port address at row {sequence}")

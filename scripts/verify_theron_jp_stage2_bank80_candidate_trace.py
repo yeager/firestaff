@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Verify authentic-media CD reads and matching bank-$80 writes in one capture.
 
-This verifies same-capture byte correlation only. The separate traces do not
-prove that a particular CD-port read caused a particular bank-$80 write.
+This verifies authentic-media bytes and, when shared event IDs are present,
+their immediate ordered correspondence with bank-$80 writes. It does not
+observe a CPU-level source address for each write.
 """
 
 from __future__ import annotations
@@ -37,7 +38,7 @@ def fields(line: str, prefix: str, line_number: int) -> dict[str, str]:
     return result
 
 
-def read_trace(path: Path) -> dict[int, list[dict[str, str]]]:
+def read_trace(path: Path) -> tuple[dict[int, list[dict[str, str]]], dict[int, dict[str, str]]]:
     lines = path.read_text(encoding="ascii").splitlines()
     mpr_context = "source=mednafen-pce-fast-cd-data-port-read-with-reader-mpr-context"
     if not lines or lines[0] not in (
@@ -47,13 +48,24 @@ def read_trace(path: Path) -> dict[int, list[dict[str, str]]]:
     ):
         raise ValueError("unexpected CD data-port trace header")
     rows: dict[int, list[dict[str, str]]] = {lba: [] for lba in CANDIDATE_LBAS}
+    event_rows: dict[int, dict[str, str]] = {}
     expected_sequence = 0
+    previous_event_sequence = -1
+    event_rows_missing = 0
     for line_number, line in enumerate(lines[1:], 2):
         row = fields(line, "cd_data_port_read", line_number)
         sequence = int(row["sequence"])
         if sequence != expected_sequence:
             raise ValueError(f"non-contiguous CD read sequence at line {line_number}")
         expected_sequence += 1
+        if "event_sequence" in row:
+            event_sequence = int(row["event_sequence"])
+            if event_sequence <= previous_event_sequence:
+                raise ValueError(f"non-increasing shared event sequence at line {line_number}")
+            previous_event_sequence = event_sequence
+            event_rows[event_sequence] = row
+        else:
+            event_rows_missing += 1
         if lines[0] == mpr_context:
             try:
                 reader_pc = int(row["reader_pc"], 16)
@@ -77,7 +89,9 @@ def read_trace(path: Path) -> dict[int, list[dict[str, str]]]:
         lba = int(row["source_lba"])
         if lba in rows:
             rows[lba].append(row)
-    return rows
+    if event_rows and event_rows_missing:
+        raise ValueError("shared event sequence is missing from some CD read rows")
+    return rows, event_rows
 
 
 def verify(write_path: Path, read_path: Path, track02_path: Path) -> dict[int, bytes]:
@@ -90,7 +104,7 @@ def verify(write_path: Path, read_path: Path, track02_path: Path) -> dict[int, b
     if len(raw) != EXPECTED_TRACK02_BYTES or hashlib.md5(raw).hexdigest() != EXPECTED_TRACK02_MD5:
         raise ValueError("Track 02 is not the authenticated JP Rev. 1 BIN")
 
-    reads = read_trace(read_path)
+    reads, read_events = read_trace(read_path)
     candidate_bytes: dict[int, bytes] = {}
     for lba in CANDIDATE_LBAS:
         rows = [row for row in reads[lba] if int(row["source_user_offset"]) < WINDOW_BYTES]
@@ -118,12 +132,21 @@ def verify(write_path: Path, read_path: Path, track02_path: Path) -> dict[int, b
     groups: list[list[dict[str, str]]] = []
     current: list[dict[str, str]] = []
     expected_sequence = 0
+    previous_event_sequence = -1
+    event_rows_missing = 0
     for line_number, line in enumerate(lines[1:], 2):
         row = fields(line, "cd_ram_target_write", line_number)
         sequence = int(row["sequence"])
         if sequence != expected_sequence:
             raise ValueError(f"non-contiguous target-write sequence at line {line_number}")
         expected_sequence += 1
+        if "event_sequence" in row:
+            event_sequence = int(row["event_sequence"])
+            if event_sequence <= previous_event_sequence:
+                raise ValueError(f"non-increasing shared event sequence at line {line_number}")
+            previous_event_sequence = event_sequence
+        else:
+            event_rows_missing += 1
         if row.get("writer_pc") == "ea9c" and row.get("mpr2") == "80" and row.get("block_move") == "0":
             if int(row["physical_address"], 16) == 0x100000 + len(current):
                 current.append(row)
@@ -133,14 +156,36 @@ def verify(write_path: Path, read_path: Path, track02_path: Path) -> dict[int, b
                 continue
         current = []
 
+    if previous_event_sequence >= 0 and event_rows_missing:
+        raise ValueError("shared event sequence is missing from some target-write rows")
+
     observed_writes: list[bytes] = []
+    observed_aligned_writes: dict[int, list[dict[str, str]]] = {lba: [] for lba in CANDIDATE_LBAS}
     for group in groups:
         data = bytes(int(row["value"], 16) for row in group)
         if all(int(row["physical_address"], 16) == 0x100000 + offset for offset, row in enumerate(group)):
             observed_writes.append(data)
+            if read_events and all("event_sequence" in row for row in group):
+                for lba in CANDIDATE_LBAS:
+                    aligned = True
+                    for offset, write_row in enumerate(group):
+                        write_event = int(write_row["event_sequence"])
+                        read_row = read_events.get(write_event - 1)
+                        if (
+                            read_row is None
+                            or int(read_row["value"], 16) != int(write_row["value"], 16)
+                            or int(read_row.get("source_lba", -1)) != lba
+                            or int(read_row.get("source_user_offset", -1)) != offset
+                        ):
+                            aligned = False
+                            break
+                    if aligned:
+                        observed_aligned_writes[lba].append(group)
     for lba, source in candidate_bytes.items():
         if source not in observed_writes:
             raise ValueError(f"authentic CD-read bytes at LBA {lba} have no matching direct bank-$80 write window")
+        if read_events and not observed_aligned_writes[lba]:
+            raise ValueError(f"CD reads at LBA {lba} lack an immediately ordered byte-matched bank-$80 write window")
     return candidate_bytes
 
 
@@ -155,10 +200,14 @@ def main() -> int:
     except (OSError, UnicodeError, ValueError, KeyError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1
-    print("PASS: authentic Track 02 bytes read at candidate LBAs match direct bank-$80 writes in the same capture")
+    print("PASS: authentic Track 02 bytes at candidate LBAs match direct bank-$80 write windows")
     for lba, data in candidates.items():
         print(f"candidate_lba={lba} bytes={len(data)} sha256={hashlib.sha256(data).hexdigest()}")
-    print("LIMIT: same-capture correlation only; no source-to-destination causal lineage is established")
+    if any("event_sequence" in row for rows in read_trace(args.read_trace)[0].values() for row in rows):
+        print("PASS: each candidate byte read is immediately followed by a byte-equal write at the corresponding bank-$80 offset")
+        print("LIMIT: event ordering and byte correspondence do not expose the CPU's source address for each write")
+    else:
+        print("LIMIT: older trace format proves same-capture correlation only; no ordered read/write correspondence")
     return 0
 
 
