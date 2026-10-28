@@ -4,6 +4,17 @@ The current five-game startup evidence matrix and remaining Nexus/Theron
 runtime-entry gaps are consolidated in
 [`docs/STARTUP_SUPPORT_GAP_ANALYSIS.md`](docs/STARTUP_SUPPORT_GAP_ANALYSIS.md).
 
+2026-10-28 authentic-media status correction: the DM1 Amiga demo ZIP, the CSB
+Amiga `Chaos Strikes Back (FTL).zip`, and the DM2 Macintosh English StuffIt
+archive plus its extracted original files are present under the configured
+`.firestaff/data` tree. The DM2 extracted-files regression added on `main`
+records successful direct CLI and M12 startup to first runtime without
+changing the original files. The `.sit` container itself is not unpacked by
+the ZIP-only CTest. The older missing-media results below describe the Oct 27
+sweep and should not be treated as current DM2 Macintosh evidence. For DM1 and
+CSB, local archive integrity is verified; their specific startup/decoder
+tests were not rerun in this check. See the per-game TODOs for remaining gaps.
+
 2026-10-27 TRV2 verification at source revision `f582f57d` against the
 authentic `.firestaff/data` roots: a clean Debug build produced `firestaff`
 and both focused Theron disassembly/capture test targets. The disassembly
