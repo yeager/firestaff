@@ -17,12 +17,16 @@ csb_amiga33_loose_root=${FIRESTAFF_CSB_AMIGA33_LOOSE_ROOT:-"$HOME/.firestaff/dat
 nexus_iso=${FIRESTAFF_NEXUS_ISO:-"$HOME/.firestaff/data/nexus/Dungeon Master Nexus (English).iso"}
 theron_track02=${FIRESTAFF_THERON_TRACK02:-"$HOME/.firestaff/data/theron/TQUS02.bin"}
 
+is_media_source() {
+    [ -f "$1" ] || [ -d "$1" ]
+}
+
 if [ ! -x "$firestaff_cli" ] || [ ! -f "$towns_archive" ]; then
     echo "SKIP: Firestaff executable and original DM2 FM Towns archive are required"
     exit 77
 fi
 
-if [ -f "$mac_archive" ]; then
+if is_media_source "$mac_archive"; then
     mac_debug=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
         --game dm2 --platform auto --data-dir "$mac_archive" \
         --debug --boot-probe --boot-probe-frames 0 2>&1) || {
@@ -42,6 +46,7 @@ if [ -f "$mac_archive" ]; then
         *"launch phase=game-handoff mode=direct game=dm2 platform=Macintosh edition=mac-en-retail source="*) ;;
         *) echo "FAIL: Mac debug trace omitted the selected edition" >&2; exit 1 ;;
     esac
+    echo 'PASS: DM2 Macintosh English direct CLI identifies the authentic retail source'
 else
     echo 'SKIP: DM2 Macintosh debug diagnostics (authentic Mac archive unavailable)'
 fi
@@ -197,21 +202,21 @@ fi
 # archives already selected above; no game data is copied or synthesized.
 default_home=$(mktemp -d "${PWD}/.firestaff-default-data-home.XXXXXX")
 default_data_root="$default_home/.firestaff/data"
-link_default_game_archive() {
+link_default_game_media() {
     game_id=$1
     archive_path=$2
-    if [ -f "$archive_path" ]; then
+    if is_media_source "$archive_path"; then
         mkdir -p "$default_data_root/$game_id"
         ln -s "$archive_path" \
             "$default_data_root/$game_id/$(basename "$archive_path")"
     fi
 }
-link_default_game_archive dm2 "$mac_archive"
-link_default_game_archive dm2 "$towns_archive"
-link_default_game_archive dm1 "$dm1_towns_archive"
-link_default_game_archive csb "$csb_towns_archive"
-link_default_game_archive nexus "$nexus_iso"
-link_default_game_archive theron "$theron_track02"
+link_default_game_media dm2 "$mac_archive"
+link_default_game_media dm2 "$towns_archive"
+link_default_game_media dm1 "$dm1_towns_archive"
+link_default_game_media csb "$csb_towns_archive"
+link_default_game_media nexus "$nexus_iso"
+link_default_game_media theron "$theron_track02"
 
 # The default no-game start now overlaps collection discovery with the branded
 # intro. Close during the real scan to prove that the window remains responsive
@@ -502,7 +507,7 @@ for game_id in dm1 csb dm2 nexus theron; do
     fi
 done
 
-if [ -f "$mac_archive" ]; then
+if is_media_source "$mac_archive"; then
     ln -s "$mac_archive" "$combined_root/$(basename "$mac_archive")"
 fi
 ln -s "$towns_archive" "$combined_root/$(basename "$towns_archive")"
@@ -518,7 +523,7 @@ combined_auto=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     printf '%s\n' "$combined_auto" >&2
     exit 1
 }
-if [ -f "$mac_archive" ]; then
+if is_media_source "$mac_archive"; then
     case "$combined_auto" in
         *"startup game=dm2 mode=direct platform=auto"*"selected game=dm2 platform=FM Towns edition=fmtowns-ja source="*"platform=FM Towns edition=fmtowns-ja matched source="*"platform=Macintosh edition=mac-en-retail matched source="*) ;;
         *) echo "FAIL: DM2 AUTO did not prefer FM Towns when Mac retail was also present" >&2; exit 1 ;;
@@ -533,6 +538,7 @@ if [ -f "$mac_archive" ]; then
         *"selected game=dm2 platform=Macintosh edition=mac-en-retail source="*) ;;
         *) echo "FAIL: explicit DM2 Macintosh choice was overridden by FM Towns default" >&2; exit 1 ;;
     esac
+    echo 'PASS: DM2 AUTO prefers FM Towns while explicit selection boots Macintosh English'
 else
     case "$combined_auto" in
         *"startup game=dm2 mode=direct platform=auto"*"selected game=dm2 platform=FM Towns edition=fmtowns-ja source="*) ;;
