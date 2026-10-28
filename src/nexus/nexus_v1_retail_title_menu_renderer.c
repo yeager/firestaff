@@ -42,6 +42,14 @@ static const Nexus_V1_RetailTitleMenuSprite k_english_continue_sprites[] = {
     {0x07d6,104,  8, 109, 177, NEXUS_TITLE_MENU_TEXT_PALETTE, NEXUS_TITLE_MENU_TEXT_COLOR_BASE, 0}
 };
 
+static const Nexus_V1_RetailTitleMenuSprite k_english_configuration_sprites[] = {
+    {0x0316, 64,  8, 129, 153, NEXUS_TITLE_MENU_TEXT_PALETTE, NEXUS_TITLE_MENU_TEXT_COLOR_BASE, 0},
+    {0x0576, 64,  8, 128, 165, NEXUS_TITLE_MENU_TEXT_PALETTE, NEXUS_TITLE_MENU_TEXT_COLOR_BASE, 0},
+    {0x1dd6, 24, 24,  85, 168, 0x1db6, NEXUS_TITLE_MENU_ICON_COLOR_BASE, 0},
+    {0x1dd6, 24, 24, 211, 168, 0x1db6, NEXUS_TITLE_MENU_ICON_COLOR_BASE, 1},
+    {0x09a6,104,  8, 109, 177, NEXUS_TITLE_MENU_TEXT_PALETTE, NEXUS_TITLE_MENU_TEXT_COLOR_BASE, 0}
+};
+
 static const Nexus_V1_RetailTitleMenuSprite k_japanese_continue_sprites[] = {
     {0x0316, 64,  8, 129, 153, NEXUS_TITLE_MENU_TEXT_PALETTE, NEXUS_TITLE_MENU_TEXT_COLOR_BASE, 0},
     {0x1b36, 24, 24, 104, 156, NEXUS_TITLE_MENU_JAPANESE_ICON_PALETTE, NEXUS_TITLE_MENU_ICON_COLOR_BASE, 0},
@@ -204,6 +212,10 @@ int nexus_v1_retail_title_menu_render(const Nexus_TitleScreen *title,
         sprites = k_english_continue_sprites;
         sprite_count = sizeof(k_english_continue_sprites) /
                        sizeof(k_english_continue_sprites[0]);
+    } else if (state->selection == NEXUS_V1_RETAIL_TITLE_MENU_CONFIGURATION) {
+        sprites = k_english_configuration_sprites;
+        sprite_count = sizeof(k_english_configuration_sprites) /
+                       sizeof(k_english_configuration_sprites[0]);
     } else {
         return 0;
     }

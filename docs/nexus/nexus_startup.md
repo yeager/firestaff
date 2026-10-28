@@ -11,10 +11,11 @@ The `verify_nexus_title_sprite_screenshot.py` verifier now checks the five-draw
 Japanese Continue layout and the English New Game and Continue layouts against
 authentic retail source bytes and captured CRAM. Ymir also completed
 Continue-to-gameplay with a reported retail-written BKR image. Firestaff now
-renders authenticated English New Game/Continue sprites and Japanese New
-Game/Continue/Configuration sprites from regional `TITLE.BIN` data. The shared
-background, full composition, English Configuration selection, Continue
-loading, and gameplay HUD/viewport remain unimplemented or unverified.
+renders authenticated English and Japanese New Game/Continue/Configuration
+foreground sprites from regional `TITLE.BIN` data. English Configuration text
+pixels match its Ymir capture; final marker RGB remains background-dependent.
+The shared background, full-screen composition, menu destination execution,
+Continue loading, and gameplay HUD/viewport remain unimplemented or unverified.
 
 ## Verified initialization order
 
@@ -1307,9 +1308,9 @@ color.
 regional palette bytes, and all 1,495 visible New Game texels and 1,441 visible
 Continue texels against their retained Japanese screenshots. The screenshot's
 exact acquisition-frame identity remains unproven. The background,
-full-screen composition, English Configuration selection, Continue loading,
-and gameplay HUD/viewport remain open. Japanese Configuration rendering and
-all three Japanese title-row mouse regions are now source-bound. See the
+full-screen composition, Configuration page controls, Continue loading, and
+gameplay HUD/viewport remain open. Both regional Configuration renderers and
+all three regional title-row mouse selections are source-bound. See the
 [Japanese sprite evidence receipt](../../parity-evidence/verification/nexus_japanese_title_menu_sprite_join_20261028/README.md).
 
 The two captures have byte-identical first 128 KiB of VDP2 VRAM (NBG0),
@@ -1499,14 +1500,57 @@ flip, and all 1,453 nontransparent pixels against the retained 640×448 image.
 An isolated C probe ran Firestaff's production renderer against the authentic
 Japanese `TITLE.BIN`; all 1,453 emitted sprite pixels match the Ymir screenshot.
 
-Firestaff now renders the five Japanese Configuration-selected foreground
-sprites and accepts mouse clicks in the source-bound native row rectangle
+Firestaff renders the five Japanese Configuration-selected foreground sprites
+and accepts mouse clicks in the source-bound native row rectangle
 `(109,177,104,8)`. The screenshot, complete VDP1/VDP2 dumps, logs, and hashes
 are retained under
 `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_jp_config_selection_preaccept_20261028/`.
-English Configuration rendering, the shared title background, full-screen
-composition, menu destination execution, Continue/save loading, and gameplay
-viewport/HUD parity remain open.
+The English Configuration capture and production-renderer check are documented
+below. The shared title background, full-screen composition, menu destination
+execution, Continue/save loading, and gameplay viewport/HUD parity remain open.
+
+## English Configuration selection rendering (2026-10-28)
+
+A Ymir 0.4.2-dev `--debug` replay used the authentic English retail Saturn disc,
+USA 1.01a IPL, and a copied diagnostic profile. The loaded Ymir state opens the
+native title menu with Continue selected. One Control Pad 1 Up pulse at capture
+frame 30 selects Configuration. This is a menu-state replay, not cold-boot
+evidence. The paired screenshot SHA-256 is
+`725fdfb6ef795606ffeebb34d734dccfc9e813aff9c23a4628149ce61dc76304`.
+
+The same-run trace ends at VDP1 frame 59 and contains 178 commands with zero
+dropped rows. Five commands join to the hash-verified English retail
+`TITLE.BIN` (SHA-256
+`a634e8daf2a581df154b454919ee2ed44e937371668219d7cdf6d0983a613e44`):
+
+| Role | `TITLE.BIN` offset | Position | Visible texels | Screenshot check |
+| --- | ---: | ---: | ---: | ---: |
+| New Game, inactive | `0x0316` | `(129,153)` | 313 | 313/313 |
+| Continue, inactive | `0x0576` | `(128,165)` | 293 | 293/293 |
+| Configuration marker, left | `0x1dd6` | `(85,168)` | 195 | Background-dependent |
+| Configuration marker, right, flipped | `0x1dd6` | `(211,168)` | 195 | Background-dependent |
+| Configuration, selected | `0x09a6` | `(109,177)` | 463 | 463/463 |
+
+The marker palettes match the retail palette at `TITLE.BIN` offset `0x1db6`.
+The text palettes match the seven identical retail copies at `0x02f6`,
+`0x0426`, `0x0556`, `0x0686`, `0x07b6`, `0x0986`, and `0x1f06`. The marker
+source, palette, position, horizontal flip, VDP2 priority and 31/32 color
+calculation are verified. The screenshot's marker RGB also includes the
+underlying NBG0 image, whose full source and composition remain unbound.
+
+`scripts/verify_nexus_english_configuration_capture.py` checks the complete
+VDP1 frame trace, exact source spans, CRAM palettes, registers and all 1,069
+visible text pixels. A separate C probe compiled Firestaff's production
+renderer against authentic English `TITLE.BIN`; its 320x224 framebuffer index
+map matches all 1,459 source-visible sprite texels from the Ymir commands with
+zero differing pixels. English Configuration row selection and foreground
+rendering are now enabled. The complete screenshot, dumps, log, reproduction
+command and hashes are retained under
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_english_config_menu_20261028/`.
+
+This does not establish the NBG0 title background, full-screen composition,
+Configuration page controls, New Game destination execution, Continue/save
+loading, or gameplay viewport/HUD parity.
 
 This is a full captured-frame composition check, not a renderer admission. The
 replay consumes Ymir display and VDP snapshots, not a Firestaff runtime upload
@@ -1515,6 +1559,6 @@ acquisition-frame identity remains unproven. The Japanese SH-2 read receipt
 observes a full 31,616-address source pass at frame 6,893 but records no values
 and dropped 860,856 unrelated master rows; the NBG0 storage join remains
   partial. Full runtime menu composition, keyboard behavior beyond verified
-  selection, English Configuration rendering, save loading and playable-level/
-  HUD parity remain open. Japanese New Game, Continue, and Configuration
-  foregrounds and mouse rows are source-bound as described above.
+  selection, Configuration page controls, save loading, and playable-level/HUD
+  parity remain open. New Game, Continue, and Configuration foregrounds and
+  mouse rows are source-bound for both authenticated regions as described above.
