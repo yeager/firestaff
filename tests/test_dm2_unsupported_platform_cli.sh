@@ -117,7 +117,15 @@ expect_unsupported_pair dm2 atari-st 'Atari ST'
 expect_unsupported_pair dm2 pce 'PC Engine'
 expect_unsupported_pair dm2 saturn Saturn
 expect_unsupported_pair dm2 apple-iigs 'Apple IIGS'
-echo 'PASS: unsupported DM1/CSB/DM2 platforms are rejected for direct and menu launches'
+# The same common CLI guard covers the two other game owners. Keep these
+# checks here because platform compatibility is validated before any game
+# media scan, regardless of which runtime implements the selected game.
+expect_unsupported_pair nexus pc PC
+expect_unsupported_pair nexus amiga Amiga
+expect_unsupported_pair theron pc PC
+expect_unsupported_pair theron amiga Amiga
+expect_unsupported_pair theron saturn Saturn
+echo 'PASS: unsupported platform pairs across all five games are rejected for direct and menu launches'
 
 removed_archive=${FIRESTAFF_DM2_REMOVED_ARCHIVE:-}
 if [ -n "$removed_archive" ] && [ -f "$removed_archive" ]; then
