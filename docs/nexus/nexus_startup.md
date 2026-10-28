@@ -1332,18 +1332,19 @@ frame number. Raw files, verifier output, trace analysis, and hashes are retaine
 
 A fresh repeat cold boot on the frame-tracing Ymir fork independently captured
 the Continue screenshot and VDP1 receipt in one run. Its screenshot hash is
-identical to the image above, and its complete VDP1 capture receipt places the
-image at frame `8,047` with all `178` commands and zero dropped rows. Its
+identical to the image above, and its complete VDP1 capture receipt names frame
+`8,047` with all `178` commands and zero dropped rows. Its
 15,264-row SH-2 trace is also byte-for-byte identical to the frame-7716 trace
 used by the paired VDP2 evidence above. The screenshot verifier now accepts
 `--run-log` for a complete Ymir capture: it checks that the screenshot is in
 the same capture directory, the log names that screenshot exactly once, and
-the VDP1 capture and register receipts agree on the frame. With this repeat
-capture it reports `timing=paired_capture_frame:8047` while still matching all
-five authentic sprite roles pixel-for-pixel. This reproduces the menu image
-and source-write sequence. The new run did not include a VDP2 write trace, so
-the stable-snapshot proof remains the separate paired capture. The full raw
-repeat capture, its run log, receipt, and hashes are retained in
+the VDP1 capture and register receipts agree on frame 8,047. It reports
+`timing=same_capture_run`; the log does not bind the screenshot save event to
+that frame, so exact screenshot-frame identity remains unproven. The verifier
+still matches all five authentic sprite roles pixel-for-pixel. This reproduces
+the menu image and source-write sequence. The new run did not include a VDP2
+write trace, so the stable-snapshot proof remains the separate paired capture.
+The full raw repeat capture, its run log, receipt, and hashes are retained in
 `ymir_nexus_menu_frame_windowed_sh2_20261027` external evidence bundle (not tracked in the repository).
 
 This is authentic input-correlated source evidence for the Japanese menu

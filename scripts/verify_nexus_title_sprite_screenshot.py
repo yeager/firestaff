@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Compare retained Nexus title sprites with a Ymir screenshot and VRAM dump.
 
-An optional Ymir run log can bind a screenshot saved in the same capture folder
-to the complete VDP1 frame receipt. Without it, pixel matches do not prove
-frame identity.
+An optional Ymir run log can establish that a screenshot and complete VDP1
+frame receipt belong to the same capture run. It does not bind the screenshot
+save event to that frame, so exact screenshot frame identity remains unproven.
 """
 
 from __future__ import annotations
@@ -74,9 +74,9 @@ def title_menu_draws(commands, vram: bytes, source: bytes):
     return selected
 
 
-def paired_capture_frame(bundle: Path, screenshot: Path, run_log: Path,
-                         frame: int) -> int:
-    """Return the frame only when the run log and VDP1 receipt pair the image."""
+def same_capture_run(bundle: Path, screenshot: Path, run_log: Path,
+                     frame: int) -> str:
+    """Confirm same-run evidence without claiming screenshot frame identity."""
     capture_root = run_log.resolve().parent
     if bundle.resolve().parent != capture_root:
         raise ValueError("VDP1 bundle and run log must share the same capture directory")
@@ -117,7 +117,7 @@ def paired_capture_frame(bundle: Path, screenshot: Path, run_log: Path,
             int(capture.get("capture_frame_index", "-1")) != frame or
             int(registers.get("vdp1_frame_index", "-1")) != frame):
         raise ValueError("VDP1 capture and register receipts do not bind the same complete frame")
-    return frame
+    return "same_capture_run"
 
 
 def verify(bundle: Path, screenshot: Path, title_source: Path,
@@ -218,8 +218,7 @@ def verify(bundle: Path, screenshot: Path, title_source: Path,
         raise ValueError("one or more source-bound title-menu sprites are missing")
     timing = "unproven"
     if run_log is not None:
-        timing_frame = paired_capture_frame(bundle, screenshot, run_log, frame)
-        timing = f"paired_capture_frame:{timing_frame}"
+        timing = same_capture_run(bundle, screenshot, run_log, frame)
     print(f"sprite_priority=5 ratio=31/32 lower_layer=VDP2_back_screen timing={timing}")
 
 

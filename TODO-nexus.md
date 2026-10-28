@@ -93,14 +93,15 @@ isolating the input that changes the title state, and wiring the verified
 route into Firestaff without opening a renderer gate prematurely.
 
 2026-10-27 repeat evidence: a fresh Japanese cold boot on the frame-tracing
-Ymir fork saved a same-run VDP1 receipt and Continue screenshot at frame 8047.
-The complete VDP1 trace has 178 frame-8047 commands with zero drops. Its PNG
-and all 15,264 frame-7716 SH-2 writes are byte-for-byte identical to the
-previous capture used for the paired, stable VDP2 snapshot analysis. This
-reproduces the observed menu frame and source-write sequence; the new run did
-not include VDP2 write tracing, so it does not replace the paired snapshot
-receipt or open any Firestaff rendering/input gate. Raw outputs and hashes are
-retained at
+Ymir fork saved a same-run VDP1 receipt and Continue screenshot. The VDP1
+receipt names frame 8047, but the run log does not bind the screenshot save
+event to that exact frame. The complete VDP1 trace has 178 frame-8047 commands
+with zero drops. Its PNG and all 15,264 frame-7716 SH-2 writes are byte-for-byte
+identical to the previous capture used for the paired, stable VDP2 snapshot
+analysis. This reproduces the observed menu frame and source-write sequence.
+The new run did not include VDP2 write tracing, so it does not replace the
+paired snapshot receipt or open any Firestaff rendering/input gate. Raw
+outputs and hashes are retained at
 `ymir_nexus_menu_frame_windowed_sh2_20261027` external evidence bundle (not tracked in the repository).
 
 The 2026-10-26 Mednafen `.mca` startup capture is not evidence of a loaded

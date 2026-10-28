@@ -173,6 +173,11 @@ def main() -> int:
         expected_indices = list(range(expected_tail_start, SOURCE_BYTES))
         if [index for index, _ in tail_rows] != expected_indices:
             raise ValueError("frame-7716 NBG0 tail writes are incomplete or reordered")
+        for index, value in tail_rows:
+            row, column = divmod(index, ROW_BYTES)
+            address = VDP2_DESTINATION_OFFSET + row * ROW_STRIDE + column
+            if vram[address] != value:
+                raise ValueError("frame-7716 NBG0 tail writes differ from final VRAM")
         equal_tail_writes = sum(value == source[index]
                                 for index, value in tail_rows)
         if equal_tail_writes != 1377:
