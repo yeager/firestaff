@@ -1149,3 +1149,12 @@ Reviewed 2026-08-29. Completed work only.
   source-visible click/continue input sequence. It checks the initial party
   position, runtime receipt, viewport hash, one handoff, and unchanged original
   archive hash; the local M4 run passed.
+- 2026-10-28: Hint Oracle page decoding now follows ReDMCSB `HINTHINT.C`
+  223-254: decompress one hint stream and select each NUL-terminated display
+  page from it. The authentic Amiga Utility Disk 3 English `HCSB.HTC` decoded
+  all 513 pages across 219 hints. `HINTTEXT.C` 73-103 and `DEFS.H` 4512-4520
+  also distinguish the 256x27 ST/AU1 font from AU2's 256x72 raw-ASCII font;
+  the data-backed renderer now accepts both. The unit tests pass, and the
+  original Amiga `HCSB.DAT` + `HCSB.HTC` render three distinct pages. This
+  validates the source surface and text path, not native Amiga UI integration
+  or full-screen pixel parity.

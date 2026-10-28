@@ -315,30 +315,18 @@ int csb_hint_oracle_htc_real_decompress_first_page(
     size_t out_capacity,
     size_t *out_size)
 {
-    CSB_HintOracleHTC_Hint hint;
-    const uint8_t *comp = NULL;
-    size_t comp_size = 0u;
     int rc;
 
     if (!cache || !cache->loaded || !out_buf || !out_size ||
         out_capacity == 0u) {
         return CSB_HINT_ORACLE_HTC_REAL_ERR_ARGUMENT;
     }
-    rc = csb_hint_oracle_htc_get_hint(&cache->htc, hint_index, &hint);
+    rc = csb_hint_oracle_htc_decode_hint_page(
+        &cache->htc, hint_index, 1u, out_buf, out_capacity, out_size);
     if (rc != CSB_HINT_ORACLE_HTC_OK) {
-        return CSB_HINT_ORACLE_HTC_REAL_ERR_NOT_LOADED;
-    }
-    rc = csb_hint_oracle_htc_get_hint_content_slice(&cache->htc,
-                                                    hint_index,
-                                                    &comp, &comp_size);
-    if (rc != CSB_HINT_ORACLE_HTC_OK || !comp || comp_size == 0u) {
-        return CSB_HINT_ORACLE_HTC_REAL_ERR_READ;
-    }
-    rc = csb_hint_oracle_htc_lzw_decompress(comp, comp_size,
-                                           out_buf, out_capacity,
-                                           out_size);
-    if (rc != CSB_HINT_ORACLE_HTC_OK) {
-        return CSB_HINT_ORACLE_HTC_REAL_ERR_PARSE;
+        return rc == CSB_HINT_ORACLE_HTC_ERR_OUTPUT_TOO_SMALL
+            ? CSB_HINT_ORACLE_HTC_REAL_ERR_OUTPUT_TOO_SMALL
+            : CSB_HINT_ORACLE_HTC_REAL_ERR_PARSE;
     }
     return CSB_HINT_ORACLE_HTC_REAL_OK;
 }

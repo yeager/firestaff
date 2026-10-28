@@ -113,15 +113,30 @@ int csb_hint_oracle_htc_get_hint_content_slice(
     const uint8_t **out_compressed,
     size_t *out_compressed_size);
 
-/* Return one original Hint Oracle page. `page_number` is one-based, matching
- * ReDMCSB HINTHINT.C's C12_GET_HINT_TITLE_OR_PAGE contract: zero selects the
- * title and page numbers 1..page_count select decompressed page content. */
+/* Return the compressed storage slice associated with one authored page.
+ * `page_number` is one-based. A zero-length slice is valid: ReDMCSB stores
+ * multi-page hint text in one compressed stream and separates the decoded
+ * page strings with NUL bytes. Use csb_hint_oracle_htc_decode_hint_page()
+ * to get display text for any page. */
 int csb_hint_oracle_htc_get_hint_page_slice(
     const CSB_HintOracleHTC *htc,
     size_t hint_index,
     size_t page_number,
     const uint8_t **out_compressed,
     size_t *out_compressed_size);
+
+/* Decode one display page from a hint. ReDMCSB HINTHINT.C loads the hint's
+ * compressed stream once, then selects page N by advancing through NUL-
+ * terminated strings. The returned text is copied to `out_buf` and
+ * NUL-terminated; `*out_size` excludes that terminator. Empty pages are
+ * valid and return size zero. */
+int csb_hint_oracle_htc_decode_hint_page(
+    const CSB_HintOracleHTC *htc,
+    size_t hint_index,
+    size_t page_number,
+    uint8_t *out_buf,
+    size_t out_capacity,
+    size_t *out_size);
 
 int csb_hint_oracle_htc_lzw_decompress(const uint8_t *compressed,
                                        size_t compressed_size,

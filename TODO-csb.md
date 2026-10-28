@@ -1,5 +1,12 @@
 # Firestaff TODO — CSB
 
+2026-10-28 Hint Oracle platform gap: the source-derived HTC page decoder and
+graphics surface now accept authentic Amiga Utility Disk 3 English data, but
+the live Hint Oracle UI/runtime route is still Atari-only. Add a source-owned
+Amiga AU2 entry path and capture its original screen before claiming Amiga
+Hint Oracle parity. Current unit and original-media checks establish page
+decoding and surface composition only.
+
 2026-10-27 Atari Hint Oracle real-media test archive binding: the native CLI
 test's campaign archive variable pointed to `chaos_strikes_back_ftl.zip`, an
 Amiga ADF package with no Atari STX member. The original Atari v2.1 campaign

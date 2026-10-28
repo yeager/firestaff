@@ -211,8 +211,8 @@ int csb_hint_oracle_htc_real_get_hint_name(
     char *buf,
     size_t buf_size);
 
-/* Decompress the first page of hint `hint_index` into `out_buf`.
- * `*out_size` is set to the decompressed byte count.
+/* Decode the first display page of hint `hint_index` into `out_buf`.
+ * `*out_size` is the printable text byte count, excluding the NUL.
  * Returns CSB_HINT_ORACLE_HTC_REAL_OK or one of the standard
  * error codes. */
 int csb_hint_oracle_htc_real_decompress_first_page(

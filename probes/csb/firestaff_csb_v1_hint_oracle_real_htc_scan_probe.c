@@ -192,11 +192,11 @@ int main(int argc, char **argv)
     CHECK(cache.htc.hint_count > 0u,
           "real HCSB.HTC exposes at least one hint record");
     CHECK(cache.htc.page_count > 0u,
-          "real HCSB.HTC exposes at least one compressed page");
+          "real HCSB.HTC exposes at least one display page");
 
-    /* HINTHINT.C selects pages by a one-based page number within the
-     * selected hint. Exercise that exact selector for every authored page,
-     * rather than checking only each hint's first page. */
+    /* HINTHINT.C decompresses one stream per hint and selects a one-based
+     * display page by walking its NUL-terminated strings. Exercise every
+     * authored page, including the later pages stored in that same stream. */
     for (i = 0u; i < cache.htc.hint_count; ++i) {
         CSB_HintOracleHTC_Hint hint;
         size_t page_number;
@@ -204,30 +204,30 @@ int main(int argc, char **argv)
                   CSB_HINT_ORACLE_HTC_OK,
               "real-asset hint record is readable");
         for (page_number = 1u; page_number <= hint.page_count; ++page_number) {
-            const uint8_t *compressed = NULL;
-            size_t compressed_size = 0u;
-            size_t decoded_size = 0u;
-            int page_rc = csb_hint_oracle_htc_get_hint_page_slice(
-                &cache.htc, i, page_number, &compressed, &compressed_size);
-            CHECK(page_rc == CSB_HINT_ORACLE_HTC_OK && compressed != NULL,
-                  "real-asset authored page has a bounded slice");
+            int page_rc;
+            page_size = 0u;
+            page_rc = csb_hint_oracle_htc_decode_hint_page(
+                &cache.htc, i, page_number, page_buf, sizeof(page_buf),
+                &page_size);
+            CHECK(page_rc == CSB_HINT_ORACLE_HTC_OK,
+                  "real-asset display page decodes from its hint stream");
             if (page_rc == CSB_HINT_ORACLE_HTC_OK) {
-                if (compressed_size == 0u) {
+                CHECK(page_size < sizeof(page_buf) &&
+                          page_buf[page_size] == '\0',
+                      "real-asset display page is bounded and terminated");
+                if (page_size == 0u) {
                     ++empty_pages;
                 } else {
-                    CHECK(csb_hint_oracle_htc_lzw_decompress(
-                              compressed, compressed_size, page_buf,
-                              sizeof(page_buf), &decoded_size) ==
-                              CSB_HINT_ORACLE_HTC_OK && decoded_size > 0u,
-                          "real-asset non-empty page decompresses");
+                    CHECK(is_printable_ascii(page_buf, page_size),
+                          "real-asset display page contains printable text");
                 }
             }
             ++pages_checked;
         }
     }
     CHECK(pages_checked == cache.htc.page_count,
-          "per-hint page ranges cover the real page table exactly");
-    printf("authored_pages=%zu empty_pages=%zu nonempty_pages=%zu\n",
+          "per-hint display pages cover the real page table exactly");
+    printf("display_pages=%zu empty_pages=%zu text_pages=%zu\n",
            pages_checked, empty_pages, pages_checked - empty_pages);
 
     /* Cross-check the matched MD5 against the known list. */
@@ -246,7 +246,7 @@ int main(int argc, char **argv)
               "matched MD5 is one of the source-cited known hashes");
     }
 
-    /* Hint 0: name + first-page decompression. */
+    /* Hint 0: name + source-accurate first display page. */
     rc = csb_hint_oracle_htc_real_get_hint_name(&cache, 0u, hint_name,
                                                 sizeof(hint_name));
     CHECK(rc == CSB_HINT_ORACLE_HTC_REAL_OK,
@@ -263,18 +263,10 @@ int main(int argc, char **argv)
           "real-asset hint 0 first-page decompression succeeds");
     CHECK(page_size > 0u,
           "real-asset hint 0 first page produces non-empty content");
-    /* The HTC LZW decompressor includes the trailing NUL terminator in
- * the output size. Treat printable ASCII as "all bytes up to the
- * first NUL (or end) are printable"; ignore any trailing NUL bytes. */
+    /* The page decoder returns exactly one NUL-terminated display page;
+     * out_size excludes that terminator. */
     {
         size_t content_end = page_size;
-        size_t j;
-        for (j = 0u; j < page_size; ++j) {
-            if (page_buf[j] == 0u) {
-                content_end = j;
-                break;
-            }
-        }
         page_buf[page_size] = '\0';
         CHECK(content_end > 0u && is_printable_ascii(page_buf, content_end),
               "real-asset hint 0 first page is printable ASCII");

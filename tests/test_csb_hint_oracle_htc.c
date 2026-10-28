@@ -7,6 +7,7 @@
  *   - dmweb/ReDMCSB big-endian HTC table layout
  *   - location-to-hint matching including the 255/255 "any XY" rule
  *   - compressed content slicing by first-page length
+ *   - source-accurate extraction of NUL-separated display pages
  *   - bounded HTC LZW decompression including ReDMCSB's 0x90 repeat marker
  *
  * Non-claims:
@@ -70,6 +71,24 @@ static size_t pack_literal_string(const char *text,
     return pack_codes_9bit(codes, len, out, out_cap);
 }
 
+static size_t pack_literal_bytes(const uint8_t *bytes,
+                                 size_t byte_count,
+                                 uint8_t *out,
+                                 size_t out_cap)
+{
+    uint16_t codes[256];
+    size_t i;
+
+    if (!bytes || byte_count == 0u ||
+        byte_count > sizeof(codes) / sizeof(codes[0])) {
+        return 0u;
+    }
+    for (i = 0u; i < byte_count; ++i) {
+        codes[i] = bytes[i];
+    }
+    return pack_codes_9bit(codes, byte_count, out, out_cap);
+}
+
 static void write_hint_record(uint8_t *dst,
                               const char *name,
                               uint16_t first_page,
@@ -90,12 +109,18 @@ static size_t build_fixture(uint8_t *buf, size_t cap)
 {
     uint8_t content0[96];
     uint8_t content1[32];
+    static const uint8_t content0_text[] = {
+        'C', 'a', 's', 't', '\0',
+        'Z', 'O', 'K', 'A', 'T', 'H', 'R', 'A', '\0',
+        'S', 'p', 'e', 'l', 'l', '\0'
+    };
     size_t content0_len;
     size_t content1_len;
     size_t off = 0;
 
-    content0_len = pack_literal_string("Cast/ZOKATHRA", content0,
-                                       sizeof(content0));
+    content0_len = pack_literal_bytes(content0_text,
+                                      sizeof(content0_text),
+                                      content0, sizeof(content0));
     content1_len = pack_literal_string("Anywhere", content1,
                                        sizeof(content1));
 
@@ -200,10 +225,12 @@ static int test_content_slices_and_lzw(void)
 {
     uint8_t buf[256];
     uint8_t decoded[64];
+    uint8_t page_text[24];
     CSB_HintOracleHTC htc;
     const uint8_t *compressed = NULL;
     size_t compressed_size = 0;
     size_t decoded_size = 0;
+    size_t page_size = 0;
     size_t size = build_fixture(buf, sizeof(buf));
 
     ASSERT_TRUE(csb_hint_oracle_htc_parse(buf, size, &htc) ==
@@ -217,7 +244,27 @@ static int test_content_slices_and_lzw(void)
     ASSERT_TRUE(csb_hint_oracle_htc_lzw_decompress(
         compressed, compressed_size, decoded, sizeof(decoded),
         &decoded_size) == CSB_HINT_ORACLE_HTC_OK);
-    ASSERT_TRUE(strcmp((const char *)decoded, "Cast/ZOKATHRA") == 0);
+    ASSERT_TRUE(memcmp(decoded, "Cast\0ZOKATHRA\0Spell\0", 20u) == 0);
+
+    ASSERT_TRUE(csb_hint_oracle_htc_decode_hint_page(
+        &htc, 0u, 1u, page_text, sizeof(page_text), &page_size) ==
+        CSB_HINT_ORACLE_HTC_OK);
+    ASSERT_TRUE(page_size == 4u && strcmp((const char *)page_text, "Cast") == 0);
+    ASSERT_TRUE(csb_hint_oracle_htc_decode_hint_page(
+        &htc, 0u, 2u, page_text, sizeof(page_text), &page_size) ==
+        CSB_HINT_ORACLE_HTC_OK);
+    ASSERT_TRUE(page_size == 8u &&
+                strcmp((const char *)page_text, "ZOKATHRA") == 0);
+    ASSERT_TRUE(csb_hint_oracle_htc_decode_hint_page(
+        &htc, 0u, 3u, page_text, sizeof(page_text), &page_size) ==
+        CSB_HINT_ORACLE_HTC_OK);
+    ASSERT_TRUE(page_size == 5u && strcmp((const char *)page_text, "Spell") == 0);
+    ASSERT_TRUE(csb_hint_oracle_htc_decode_hint_page(
+        &htc, 0u, 4u, page_text, sizeof(page_text), &page_size) ==
+        CSB_HINT_ORACLE_HTC_ERR_BAD_HINT_RANGE);
+    ASSERT_TRUE(csb_hint_oracle_htc_decode_hint_page(
+        &htc, 0u, 2u, page_text, 4u, &page_size) ==
+        CSB_HINT_ORACLE_HTC_ERR_OUTPUT_TOO_SMALL);
 
     ASSERT_TRUE(csb_hint_oracle_htc_get_hint_content_slice(
         &htc, 1u, &compressed, &compressed_size) ==
@@ -231,6 +278,10 @@ static int test_content_slices_and_lzw(void)
         &htc, 0u, 1u, &compressed, &compressed_size) ==
         CSB_HINT_ORACLE_HTC_OK);
     ASSERT_TRUE(compressed == htc.contents);
+    ASSERT_TRUE(csb_hint_oracle_htc_get_hint_page_slice(
+        &htc, 0u, 2u, &compressed, &compressed_size) ==
+        CSB_HINT_ORACLE_HTC_OK);
+    ASSERT_TRUE(compressed_size == 0u);
     ASSERT_TRUE(csb_hint_oracle_htc_get_hint_page_slice(
         &htc, 1u, 1u, &compressed, &compressed_size) ==
         CSB_HINT_ORACLE_HTC_OK);

@@ -12,7 +12,43 @@ for(i=0;i<16u;++i)s->font_palette_indices[i]=(uint8_t)i;
 if(s->controls[4u]>15u||s->controls[5u]>15u)goto bad;
 s->font_palette_indices[s->controls[5u]]=(uint8_t)s->controls[4u];
 s->font_palette_indices_valid=1;
-s->pixels=(uint8_t*)malloc(CSB_HINT_ORACLE_GRAPHICS_SURFACE_WIDTH*CSB_HINT_ORACLE_GRAPHICS_SURFACE_HEIGHT);s->font_pixels=(uint8_t*)malloc(CSB_HINT_ORACLE_FONT_SURFACE_WIDTH*CSB_HINT_ORACLE_FONT_SURFACE_HEIGHT);if(!s->pixels||!s->font_pixels)goto bad;if(!csb_hint_oracle_dat_img2_decode(img,ni,&s->width,&s->height,s->pixels,64000,NULL)||s->width!=320||s->height!=200||!csb_hint_oracle_dat_img2_decode(font,nf,&s->font_width,&s->font_height,s->font_pixels,CSB_HINT_ORACLE_FONT_SURFACE_WIDTH*CSB_HINT_ORACLE_FONT_SURFACE_HEIGHT,NULL)||s->font_width!=CSB_HINT_ORACLE_FONT_SURFACE_WIDTH||s->font_height!=CSB_HINT_ORACLE_FONT_SURFACE_HEIGHT||!csb_hint_oracle_dat_palette_decode(pal,np,s->rgb4))goto bad;return 0;bad:csb_hint_oracle_graphics_surface_free(s);return -4;}
-int csb_hint_oracle_graphics_surface_blit_st_text(const CSB_HintOracleGraphicsSurface *s,uint8_t *f,size_t n,int x,int y,const char *t){int px,py;if(!s||!f||!t||!s->font_pixels||s->font_width!=256u||s->font_height!=27u||n<64000u)return 0;for(;*t;++t,x+=9){unsigned char c=(unsigned char)*t;unsigned char g;if(c<' '||c>0x7fu)continue;g=(unsigned char)(c-' ');if(!g)continue;for(py=0;py<9;++py)for(px=0;px<8;++px){int dx=x+px,dy=y+py;uint8_t p=s->font_pixels[((size_t)(g>>5u)*9u+(size_t)py)*256u+((size_t)(g&31u)*8u+(size_t)px)];if(dx>=0&&dx<320&&dy>=0&&dy<200&&p!=12u)f[(size_t)dy*320u+(size_t)dx]=s->font_palette_indices_valid?s->font_palette_indices[p]:p;}}return 1;}
+s->pixels=(uint8_t*)malloc(CSB_HINT_ORACLE_GRAPHICS_SURFACE_WIDTH*CSB_HINT_ORACLE_GRAPHICS_SURFACE_HEIGHT);s->font_pixels=(uint8_t*)malloc(CSB_HINT_ORACLE_FONT_SURFACE_WIDTH*CSB_HINT_ORACLE_FONT_SURFACE_MAX_HEIGHT);if(!s->pixels||!s->font_pixels)goto bad;if(!csb_hint_oracle_dat_img2_decode(img,ni,&s->width,&s->height,s->pixels,64000,NULL)||s->width!=320||s->height!=200||!csb_hint_oracle_dat_img2_decode(font,nf,&s->font_width,&s->font_height,s->font_pixels,CSB_HINT_ORACLE_FONT_SURFACE_WIDTH*CSB_HINT_ORACLE_FONT_SURFACE_MAX_HEIGHT,NULL)||s->font_width!=CSB_HINT_ORACLE_FONT_SURFACE_WIDTH||(s->font_height!=CSB_HINT_ORACLE_FONT_SURFACE_HEIGHT_ST&&s->font_height!=CSB_HINT_ORACLE_FONT_SURFACE_HEIGHT_AU2)||!csb_hint_oracle_dat_palette_decode(pal,np,s->rgb4))goto bad;return 0;bad:csb_hint_oracle_graphics_surface_free(s);return -4;}
+int csb_hint_oracle_graphics_surface_blit_st_text(const CSB_HintOracleGraphicsSurface *s,uint8_t *f,size_t n,int x,int y,const char *t){int px,py;if(!s||!f||!t||!s->font_pixels||s->font_width!=256u||(s->font_height!=CSB_HINT_ORACLE_FONT_SURFACE_HEIGHT_ST&&s->font_height!=CSB_HINT_ORACLE_FONT_SURFACE_HEIGHT_AU2)||n<64000u)return 0;for(;*t;++t,x+=9){unsigned char c=(unsigned char)*t;unsigned char g;if(c<' '||c>0x7fu)continue;g=(unsigned char)(s->font_height==CSB_HINT_ORACLE_FONT_SURFACE_HEIGHT_AU2?c:c-' ');if(!g)continue;for(py=0;py<9;++py)for(px=0;px<8;++px){int dx=x+px,dy=y+py;uint8_t p=s->font_pixels[((size_t)(g>>5u)*9u+(size_t)py)*256u+((size_t)(g&31u)*8u+(size_t)px)];if(dx>=0&&dx<320&&dy>=0&&dy<200&&p!=12u)f[(size_t)dy*320u+(size_t)dx]=s->font_palette_indices_valid?s->font_palette_indices[p]:p;}}return 1;}
 int csb_hint_oracle_graphics_surface_blit_st_centered_box(const CSB_HintOracleGraphicsSurface *s,uint8_t *f,size_t n,int l,int r,int t,int b,const char *text){char line[80];int y;if(!s||!f||!text||l>r||t>b)return 0;y=t+11;while(*text&&y<=b){const char *p=text;size_t take=0u,last_space=(size_t)-1;while(*p&&*p!='/'&&take<sizeof(line)-1u){if(*p==' ')last_space=take;if((int)((take+1u)*9u)>r-l)break;++take;++p;}if(!take&&*p!='/'&&*p){take=1u;p=text+1;}if(*p&&*p!='/'&&last_space!=(size_t)-1&&take<(size_t)(p-text))take=last_space;while(take&&text[take-1u]==' ')--take;memcpy(line,text,take);line[take]='\0';if(!csb_hint_oracle_graphics_surface_blit_st_text(s,f,n,l+((r-l-(int)(take*9u))/2),y,line))return 0;y+=11;text+=take;while(*text==' ')++text;if(*text=='/')++text;}return 1;}
-int csb_hint_oracle_graphics_surface_render_st_hint_page(const CSB_HintOracleGraphicsSurface *s,const CSB_HintOracleHTC *h,size_t hi,size_t pn,uint8_t *f,size_t n){CSB_HintOracleHTC_Hint hint;const uint8_t *packed;size_t packed_n,plain_n;uint8_t plain[2240];if(!s||!h||!f||n<64000u||!s->pixels||s->width!=320u||s->height!=200u)return 0;if(csb_hint_oracle_htc_get_hint(h,hi,&hint)||csb_hint_oracle_htc_get_hint_page_slice(h,hi,pn,&packed,&packed_n))return 0;memcpy(f,s->pixels,64000u);if(!csb_hint_oracle_graphics_surface_blit_st_centered_box(s,f,n,10,309,5,30,hint.name))return 0;if(!packed_n)return 1;if(csb_hint_oracle_htc_lzw_decompress(packed,packed_n,plain,sizeof(plain),&plain_n)||!plain_n)return 0;plain[sizeof(plain)-1u]=0;return csb_hint_oracle_graphics_surface_blit_st_centered_box(s,f,n,34,285,31,164,(const char*)plain);}
+int csb_hint_oracle_graphics_surface_render_st_hint_page(
+    const CSB_HintOracleGraphicsSurface *surface,
+    const CSB_HintOracleHTC *htc,
+    size_t hint_index,
+    size_t page_number,
+    uint8_t *frame,
+    size_t frame_size)
+{
+    CSB_HintOracleHTC_Hint hint;
+    uint8_t page_text[2240];
+    size_t page_size = 0u;
+
+    if (!surface || !htc || !frame || frame_size < 64000u ||
+        !surface->pixels || surface->width != 320u ||
+        surface->height != 200u) {
+        return 0;
+    }
+    if (csb_hint_oracle_htc_get_hint(htc, hint_index, &hint) !=
+            CSB_HINT_ORACLE_HTC_OK ||
+        csb_hint_oracle_htc_decode_hint_page(
+            htc, hint_index, page_number, page_text, sizeof(page_text),
+            &page_size) != CSB_HINT_ORACLE_HTC_OK) {
+        return 0;
+    }
+    if (page_size >= sizeof(page_text) || page_text[page_size] != '\0') {
+        return 0;
+    }
+
+    memcpy(frame, surface->pixels, 64000u);
+    if (!csb_hint_oracle_graphics_surface_blit_st_centered_box(
+            surface, frame, frame_size, 10, 309, 5, 30, hint.name)) {
+        return 0;
+    }
+    return csb_hint_oracle_graphics_surface_blit_st_centered_box(
+        surface, frame, frame_size, 34, 285, 31, 164,
+        (const char *)page_text);
+}
