@@ -48,8 +48,12 @@ CRAM and registers, so their observed selection difference is confined to
 VDP1 state; this still leaves the shared NBG0 retail source unbound.
 The Japanese New Game and Continue captures also have identical NBG0 VRAM
 (SHA-256 `0a3b8b5ba0bd9e9c4b549d136961b44439d2534cbb7060c5bcbdca6da9c53d08`);
-scanning all authentic Japanese disc members finds no exact source match. A
-921-byte `TITLE.BIN` overlap with only 295 nonzero bytes remains unproven.
+scanning all authentic Japanese disc members finds no complete decoded source
+match. A complete frame-tagged VDP2 trace now proves that a 921-byte raw span
+from Japanese `TITLE.BIN` at `0xb8a2` is written into NBG0: frame 6,869 clears
+the span and frame 7,729 writes 608 byte lanes that, with the intervening
+captured writes, reconstruct the authentic source bytes exactly. This joins a
+partial source span, not the full NBG0 bitmap or its display meaning.
 An exact but sparse 1,603-byte `TITLE.BIN`/NBG0/WRAM-high overlap is a trace
 target only; without frame-bound VDP2 writes it does not identify a producer.
 The Ymir log records `0DMSTRT.BIN` and a CD Block soft reset,

@@ -1313,9 +1313,14 @@ gameplay HUD/viewport remain open. See the
 
 The two captures have byte-identical first 128 KiB of VDP2 VRAM (NBG0),
 SHA-256 `0a3b8b5ba0bd9e9c4b549d136961b44439d2534cbb7060c5bcbdca6da9c53d08`,
-with 18,513 nonzero bytes. The Japanese retail-source scan found no exact NBG0
-match. A 921-byte overlap with `TITLE.BIN` at `0xb8a2` contains 295 nonzero
-bytes and also occurs in WRAM-high; its producer and role remain unproven.
+with 18,513 nonzero bytes. No complete decoded Japanese retail source matches
+that bitmap. A separate, complete frame-tagged VDP2 trace joins a 921-byte raw
+span at Japanese `TITLE.BIN` offset `0xb8a2` to NBG0 offset `0xd404`. Retail
+frame 6,869 clears that span; frame 7,729 writes 608 matching byte lanes, and
+replaying the intervening writes reconstructs all 921 source bytes. The bound
+snapshot is frame 8,060. This verifies a partial source-to-VRAM transport, not
+the full bitmap decode, layer meaning, or presentation. See the
+[NBG0 source-trace receipt](../../parity-evidence/verification/nexus_japanese_title_menu_sprite_join_20261028/README.md#frame-bound-nbg0-source-span).
 
 ## Authentic Japanese title-menu Down selection (2026-10-27)
 

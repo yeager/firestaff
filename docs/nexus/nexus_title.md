@@ -115,6 +115,20 @@ an encoded, decompressed, transformed, or partial NBG0 source, but it rules
 out treating any other complete disc file as that bitmap without a producer
 trace.
 
+### Japanese title-menu partial NBG0 source join
+
+A separate complete Japanese menu-session trace joins a partial raw source
+span: the 921 bytes at `TITLE.BIN+0xb8a2` are resident at VDP2 NBG0 VRAM
+`0xd404` in the frame-8,060 snapshot. Frame 6,869 clears the full span and
+frame 7,729 writes 608 byte lanes matching the authentic retail source; replay
+of intervening frame-tagged writes reconstructs the span exactly. The
+reproduction command and trace/snapshot hashes are recorded in the
+[Japanese menu evidence receipt](../../parity-evidence/verification/nexus_japanese_title_menu_sprite_join_20261028/README.md#frame-bound-nbg0-source-span).
+
+This is a partial source-to-VRAM receipt only. It does not provide a complete
+decoded source for the 131,072-byte NBG0 bitmap or identify the display
+consumer, so it does not admit title rendering.
+
 An authenticated producer trace narrows the `TITLE.CG` result further. In
 the retail JP transition interval after frame 12500, SH-2 PC `0x06041fa0`
 performs 167,935 of 167,936 VDP2 VRAM byte writes (the remaining write is at

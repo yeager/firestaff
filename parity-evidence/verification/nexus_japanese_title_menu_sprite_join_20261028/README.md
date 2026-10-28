@@ -40,10 +40,39 @@ number, so exact screenshot-to-command-frame identity remains unproven.
 The New Game and Continue captures have byte-identical first 128 KiB of VDP2
 VRAM, the configured NBG0 bitmap: SHA-256
 `0a3b8b5ba0bd9e9c4b549d136961b44439d2534cbb7060c5bcbdca6da9c53d08`, with
-18,513 nonzero bytes. The full Japanese retail-source scan found no exact
-NBG0 source match. A 921-byte overlap with `TITLE.BIN` at `0xb8a2` contains 295
-nonzero bytes and also occurs in the captured bitmap and WRAM-high dump; it is
-an unproven producer candidate, not a background admission.
+18,513 nonzero bytes. The full Japanese retail-source scan found no complete
+decoded NBG0 source match.
+
+## Frame-bound NBG0 source span
+
+A complete Ymir VDP2 write trace from the Japanese retail title session binds
+a partial raw-source span to the final NBG0 snapshot. The trace receipt records
+1,559,722 rows, zero dropped writes, and writes through frame 7,729; its
+frame-8,060 VDP2 snapshot has `BGON=0x0001`, `CHCTLA=0x0013`, `BMPNA=0`,
+`PLSZ=2`, and `MPOFN=0`.
+
+The verified Japanese retail `TITLE.BIN` bytes at `0xb8a2` (921 bytes,
+SHA-256 `6b9a333965267770333949175397a1faab028dd9d64d9f76ff9ae7a9e5d093fd`,
+295 nonzero bytes) map to VDP2 VRAM offset `0xd404`. Frame 6,869 writes zero
+to each byte in that span. After replaying every subsequent frame-tagged
+write, the 608 byte lanes written in frame 7,729 all match their retail source
+offsets and the complete 921-byte target equals `TITLE.BIN`.
+
+Reproduce this check against the external capture and authentic local CUE:
+
+```sh
+python3 scripts/verify_nexus_title_nbg0_source_trace.py \
+  /Volumes/Extern-disk/firestaff-evidence/ymir_nexus_vdp2_complete_trace_receipt_20261027/dumps \
+  --cue "$HOME/.firestaff/data/nexus/Dungeon Master Nexus (Japan).cue"
+```
+
+The trace CSV SHA-256 is
+`c9007575bf688e8d4f8da1d85bd3632b46c18fdefa8eb32979f780b8b92befb3`; the
+captured NBG0 snapshot file SHA-256 is
+`de1a77427dc62457eb4b59fa0424fd25e9768ce229505445311929d3bdae405c`.
+This joins only 921 bytes. It does not decode the full NBG0 bitmap or establish
+the complete layer consumer or native screen presentation; semantic admission
+remains blocked.
 
 ## Reproduction
 
