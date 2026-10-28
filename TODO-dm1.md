@@ -6,8 +6,12 @@ members have MD5s `491ca939f9abb33ceeb26619b841fe91` and
 under `amiga-demo-v20-sgt/DungeonMaster/`. The archive-availability statement
 in the 2026-10-27 matrix below is stale. The CTest
 `dm1_v1_amiga_demo_archive_cli_boot` covers direct CLI, the M12 route and
-unchanged original-media checks, but this media inspection did not execute
-that test; current-source startup verification remains open until it runs.
+unchanged original-media checks. On 2026-10-28, the current `firestaff`
+executable passed the test against this archive: direct CLI and M12 startup
+selected the demo edition and loaded its first level; extracted loose files
+also passed direct and menu routes, and original archive/member hashes were
+unchanged. SDL dummy verifies these source launch and handoff paths, not native
+display, physical input, complete demo gameplay or visual parity.
 
 2026-10-27 authentic cross-platform CLI startup matrix: the current-source
 real-media CLI cases passed for PC34 (including the nested archive), DOS
