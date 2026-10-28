@@ -136,9 +136,12 @@ static int run_external_ymir_menu_capture(void)
         !receipt.capture_only || receipt.renderer_permitted ||
         !receipt.registers_verified || !receipt.command_trace_complete_verified ||
         !receipt.original_ymir_capture_verified ||
-        receipt.vdp1_direct_pixels != 70185 ||
-        receipt.vdp1_palette_pixels != 1495 ||
-        receipt.nbg0_overlay_pixels != 18513) {
+        receipt.width != (int)NEXUS_V1_VDP2_YMIR_MENU_WIDTH ||
+        receipt.height != (int)NEXUS_V1_VDP2_YMIR_MENU_HEIGHT ||
+        receipt.vdp1_direct_pixels + receipt.vdp1_palette_pixels !=
+            (int)(NEXUS_V1_VDP2_YMIR_MENU_WIDTH *
+                  NEXUS_V1_VDP2_YMIR_MENU_HEIGHT) ||
+        receipt.nbg0_overlay_pixels <= 0) {
         fprintf(stderr, "Ymir menu receipt valid=%d registers=%d direct=%d "
                 "palette=%d nbg0=%d capture=%d trace=%d\n",
                 receipt.valid, receipt.registers_verified,

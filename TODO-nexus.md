@@ -156,15 +156,20 @@ not a fix and has not passed this real-media test.
   cold boot to the native three-choice menu; a separate single Down press
   selects Continue, and Down/Down/A opens Configuration from that captured
   menu state. This closes the retail-emulator behavior gap for those observed
-  routes, not Firestaff's runtime menu or the Saturn display consumer. The
-  repeated Continue capture again verifies all five Japanese TITLE.BIN sprites
-  against 1,441 screenshot pixels, but its NBG0 bitmap has zero exact matches
-  against authentic retail data. A later exploratory scan found the ordered
-  VDP2 byte-write sequence in the SH-2 trace, but the retained SH-2 receipt has
-  no frame bounds or per-row frame tags, so this does not establish a
-  frame-scoped producer join. The final VRAM snapshot is frame 8047 while the
-  VDP2 write trace ends at frame 7716. Keep source attribution unbound; see the
-  Japanese menu section in `docs/nexus/nexus_startup.md`.
+  routes, not Firestaff's runtime menu or live renderer. The frame-8047 repeat
+  capture now reconstructs all 286,720 screenshot pixels exactly from Ymir's
+  VDP1 display buffer and VDP2/CRAM snapshots; its 178-command VDP1 trace has
+  zero drops, and its screenshot is retained in the same run. This closes the
+  captured-frame composition gap, but the screenshot has no embedded frame
+  number, and capture replay does not prove that Firestaff can produce the
+  image from retail assets. All 1,441 visible Japanese menu-sprite texels match
+  authenticated `TITLE.BIN`. A 31,616-byte `TITLE.BIN` span matches WorkRAMH;
+  30,561 bytes match NBG0 storage under the verified row layout. The frame-6893
+  SH-2 read trace observes the full source-address pass, but drops 860,856 other
+  master reads and records no read values. Source-to-display asset ownership
+  therefore remains partial; see
+  `docs/nexus/NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md` and
+  `docs/nexus/nexus_startup.md`.
   earlier paired raw-trace experiments below remain valid negative results for
   their sampled windows, but they are no longer the only input evidence. Keep
   the production gate closed while identifying menu/face material ownership
