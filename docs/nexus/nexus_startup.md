@@ -1638,7 +1638,7 @@ facing. The captured transition therefore still does not provide a safe
 Firestaff start pose. The complete short trace and the timing-probe notes are
 retained in `startup-sh2-trace-10frames/` and the paired subdirectories above.
 
-## New Game initializes a loader record; party ownership remains open (2026-10-28)
+## New Game loads the retail per-level start record (2026-10-28)
 
 A follow-up Ymir `--debug` replay traced SH-2 reads and writes in
 `[0x06064000,0x06065000)` for 1,800 frames. The accepted run loaded the same
@@ -1657,15 +1657,23 @@ caller chain reaches `FUN_060110ac` from `FUN_06010f44`. These trace and
 decompilation receipts bind the values to the accepted New Game execution and
 the generic level-loader path.
 
-The record's type and ownership are still unknown. The final structure bytes
-for `(29,47)` match the paired runs both with and without Up, so they are not
-the observed movement result. A separate `FUN_060110ac` branch writes `(32,39)`
-when its argument is zero, but that branch's writes did not appear in this
-accepted trace. Neither tuple is therefore admitted as the controlled party's
-start pose. Firestaff remains fail-closed pending the record's source and
-player-ownership proof. Raw Ymir traces and Ghidra exports are retained
-externally in `nexus_new_game_capture_20261028/config-struct-sh2-trace-1800/`
-with the no-input control beside it.
+Follow-up static analysis found the source table at `DM.BIN+0x39550`
+(`0x06049550` at the analyzed load base). It contains 16 eight-byte entries.
+`FUN_06011984` checks the selected entry's word at `+2`, then copies its level,
+coordinates and angle into the loader structure; it is called from
+`FUN_0601128e`. The level-1 bytes are `00 01 00 01 1d 2f 80 00`, yielding
+level 1, enabled flag 1, `(29,47)`, and angle word `0x8000`. This agrees with
+the accepted New Game trace through `FUN_0602022c`. The `(29,47)` LEV01 cell
+is passable in the hash-verified retail DGN, confirming a source-authored
+level-1 loader coordinate. A separate `FUN_060110ac` branch writes `(32,39)`
+for a zero argument; those stores did not appear in the accepted New Game
+trace and are not substituted for the selected table entry.
+
+The angle word is not yet mapped to Firestaff's north/east/south/west enum.
+Therefore the native runtime still blocks starting gameplay until that mapping
+is established. Raw Ymir traces and Ghidra exports are retained externally in
+`nexus_new_game_capture_20261028/config-struct-sh2-trace-1800/` with the
+no-input control beside it.
 
 This is a full captured-frame composition check, not a renderer admission. The
 replay consumes Ymir display and VDP snapshots, not a Firestaff runtime upload
