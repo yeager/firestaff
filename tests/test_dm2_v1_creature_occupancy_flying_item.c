@@ -578,6 +578,11 @@ static void test_live_missile_draw_order_and_creature_replay(void)
           dm2_v1_viewport_build_indoor_live_missile_draw_plan(
               &missiles, creature_draw_success, &draws) == 0 &&
           draws.valid == 0 && draws.event_count == 0);
+    {
+        DM2_V1_IndoorLiveMissileEvent swap = missiles.events[0];
+        missiles.events[0] = missiles.events[1];
+        missiles.events[1] = swap;
+    }
 
     {
         DM2_V1_G1FlyingItemSelectorReceipt selector =
