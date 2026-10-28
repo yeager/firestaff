@@ -1,3 +1,25 @@
+## 2026-10-29 — scripted mouse deltas still do not bind guest pointer targets
+
+- Four isolated reference captures used the authentic USA Ak-Tu-Ba state
+  (`f17f377df210b4a3ae904a13fb85a7f0`), USA Track 02 and System Card 3.0.
+  The existing Mednafen mouse injector was given `(60,120)`, `(121,98)`, the
+  sign-reversed `(−121,−98)`, and a split cumulative horizontal movement.
+- The first three captures observed the original queue `$2905=$50` and hover
+  `$2911=$50`, including the nominal right-column candidate. The device trace
+  records deltas and latch values, not the guest's final pointer coordinates.
+  The loaded state lacks Mednafen's serialized mouse fields, and its latch
+  deltas have reversed signs, so these results cannot be treated as a valid
+  reproduction of the previously captured `$79/$62 → $74` point.
+- All captures report `transition=missing` and zero authenticated CD-to-RAM
+  receipts because loading the state bypasses loader provenance. Raw traces and
+  the wrapper snapshot are retained in the task-specific external-disk
+  evidence folder; its README records the capture inputs and limits. The
+  trace hashes and exact limits are recorded in [the scripted mouse replay
+  report](docs/source-lock/theron-disassembly/theron-scripted-mouse-delta-replay-20261029.md).
+- Next, bind device deltas to the game's guest pointer state in a controlled
+  original-session trace, then reproduce the `$74` control before sweeping
+  boundaries. Do not publish new hitboxes or mouse actions from these probes.
+
 ## 2026-10-28 — map Theron panel clicks against presented pixel bounds
 
 - The authenticated USA Track 02 SDL integration test failed at the first
