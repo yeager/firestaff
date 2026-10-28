@@ -1,5 +1,13 @@
 # Firestaff TODO — CSB
 
+2026-10-28 Amiga ZIP/ADF test-media availability correction: the exact
+`Chaos Strikes Back (FTL).zip` path used by CMake is present under
+`~/.firestaff/data/csb/` (901,330 bytes). `unzip -t` passes and the archive
+contains `Chaos Strikes Back (FTL) A.adf`. The older note below saying this
+wrapper was absent is stale. This integrity inspection did not run the
+ZIP/ADF decoder or startup test; verify that route against the original ADF
+member before closing the gap. No game data was repackaged for this check.
+
 2026-10-28 Hint Oracle AU2 runtime: the runtime now selects authenticated
 Amiga AU2 R2/R3 English HCSB.HTC plus the shared English HCSB.DAT from the
 native `0xDEAD` save prefix. It uses the original AU2 strings, font, screen,
@@ -78,10 +86,12 @@ direct CLI startup, the source-owned startup phase, the first runtime frame,
 movement, and the expanded runtime input matrix. This verifies launch and
 input ownership only; its aperture hash is not a pixel-parity check, so the
 reported black alcoves/torches, unreadable inscriptions, and missing trapdoors
-remain open. The separate ZIP/ADF family decoder test could not run because
-the expected `Chaos Strikes Back (FTL).zip` wrapper is absent on this host;
-the loose authentic A33M `Graphics.DAT` is present, but that test accepts only
-the original ZIP/ADF container route.
+remain open. At that check, the separate ZIP/ADF family decoder test was
+reported unavailable because its expected `Chaos Strikes Back (FTL).zip`
+wrapper was not staged. That exact wrapper is now present in the data root;
+rerun the decoder test before claiming the ZIP/ADF family route is verified.
+The loose authentic A33M `Graphics.DAT` remains available for its separate
+runtime checks.
 
 2026-10-27 Amiga MEDIA720 F0107 placement: the runtime now resolves the source
 C696 wall-ornament anchor from authenticated Amiga `Graphics.DAT` item 696 and
