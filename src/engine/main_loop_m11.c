@@ -1331,6 +1331,10 @@ static int m11_map_window_pointer_to_game_source(
         *outY = framebufferY;
         return 1;
     }
+    if (M11_GameView_MapTheronPresentedControlPointToSource(
+            gameView, framebufferX, framebufferY, outX, outY)) {
+        return 1;
+    }
     /* V1_ORIGINAL returns 0 (pass-through): framebuffer coords ARE
      * source coords (320x200).  Only fail on NULL pointers. */
     (void)M11_MapPresentedGamePointToSourceForPresentation(

@@ -38486,20 +38486,23 @@ static const char *m11_theron_mouse_control_label(int row, int column)
 static M12_MenuInput m11_theron_mouse_control_input_at(
     const M11_GameViewState *state, int x, int y)
 {
-    int width = state ? state->presentationWidth : 0;
-    int height = state ? state->presentationHeight : 0;
     int logical_x;
     int logical_y;
     int column;
     int row;
 
-    if (width <= 0) width = M11_THERON_MOUSE_CANVAS_W;
-    if (height <= 0) height = M11_THERON_MOUSE_CANVAS_H;
-    if (x < 0 || y < 0 || x >= width || y >= height) {
+    /* main_loop_m11 maps SDL window positions through the active
+     * presentation target before dispatching pointer callbacks. These
+     * coordinates are already in the native 320x200 game framebuffer; using
+     * presentationWidth/Height here would scale them a second time and make
+     * the host panel unclickable in V2.1/V2.2 or a selected V1 target. */
+    (void)state;
+    if (x < 0 || y < 0 || x >= M11_THERON_MOUSE_CANVAS_W ||
+        y >= M11_THERON_MOUSE_CANVAS_H) {
         return M12_MENU_INPUT_NONE;
     }
-    logical_x = (int)((int64_t)x * M11_THERON_MOUSE_CANVAS_W / width);
-    logical_y = (int)((int64_t)y * M11_THERON_MOUSE_CANVAS_H / height);
+    logical_x = x;
+    logical_y = y;
     if (logical_x < M11_THERON_MOUSE_PANEL_X ||
         logical_x >= M11_THERON_MOUSE_PANEL_X +
                          M11_THERON_MOUSE_COLUMNS * M11_THERON_MOUSE_CELL_W ||
@@ -38514,6 +38517,59 @@ static M12_MenuInput m11_theron_mouse_control_input_at(
     row = (logical_y - M11_THERON_MOUSE_PANEL_Y) /
           M11_THERON_MOUSE_CELL_H;
     return g_m11_theron_mouse_inputs[row][column];
+}
+
+int M11_GameView_MapTheronPresentedControlPointToSource(
+    const M11_GameViewState *state, int presented_x, int presented_y,
+    int *out_x, int *out_y)
+{
+    int target_w = M11_THERON_MOUSE_CANVAS_W;
+    int target_h = M11_THERON_MOUSE_CANVAS_H;
+    int row;
+    int column;
+
+    if (!state || !out_x || !out_y ||
+        state->sourceKind != M11_GAME_SOURCE_THERON_TRACK02 ||
+        state->theronState.startup_phase != THERON_STARTUP_PHASE_IN_DUNGEON ||
+        !state->theronState.level_loaded) {
+        return 0;
+    }
+    (void)M11_GameView_PresentationTarget(state->presentationMode,
+                                         state->presentationWidth,
+                                         state->presentationHeight,
+                                         &target_w, &target_h);
+    if (target_w <= 0 || target_h <= 0) return 0;
+
+    /* Resolve the actual presented pixel against the same floor-scaled cell
+     * edges used when the 320x200 host panel is drawn. The ordinary inverse
+     * transform rounds down and loses which side of a fractional edge the
+     * pixel occupied (for example y=590 at 1280x960 maps to source y=122,
+     * while the visible first-row edge is source y=123). */
+    for (row = 0; row < M11_THERON_MOUSE_ROWS; ++row) {
+        for (column = 0; column < M11_THERON_MOUSE_COLUMNS; ++column) {
+            const int source_x = M11_THERON_MOUSE_PANEL_X +
+                                 column * M11_THERON_MOUSE_CELL_W;
+            const int source_y = M11_THERON_MOUSE_PANEL_Y +
+                                 row * M11_THERON_MOUSE_CELL_H;
+            const int x0 = (int)((int64_t)source_x * target_w /
+                                 M11_THERON_MOUSE_CANVAS_W);
+            const int y0 = (int)((int64_t)source_y * target_h /
+                                 M11_THERON_MOUSE_CANVAS_H);
+            const int x1 = (int)((int64_t)(source_x +
+                                 M11_THERON_MOUSE_CELL_W) * target_w /
+                                 M11_THERON_MOUSE_CANVAS_W);
+            const int y1 = (int)((int64_t)(source_y +
+                                 M11_THERON_MOUSE_CELL_H) * target_h /
+                                 M11_THERON_MOUSE_CANVAS_H);
+            if (presented_x >= x0 && presented_x < x1 &&
+                presented_y >= y0 && presented_y < y1) {
+                *out_x = source_x + M11_THERON_MOUSE_CELL_W / 2;
+                *out_y = source_y + M11_THERON_MOUSE_CELL_H / 2;
+                return 1;
+            }
+        }
+    }
+    return 0;
 }
 
 static int m11_csb_fmtowns_inventory_slot_rectangle(

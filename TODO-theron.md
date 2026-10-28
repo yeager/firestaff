@@ -1,3 +1,24 @@
+## 2026-10-28 — map Theron panel clicks against presented pixel bounds
+
+- The authenticated USA Track 02 SDL integration test failed at the first
+  dungeon panel sequence. The debug receipt showed SDL clicks arriving at
+  `(301,128)` while the runtime presentation target was 1280x960; the Theron
+  panel hit-test normalized those already-mapped 320x200 source coordinates a
+  second time and returned no action.
+- The source-space hit-test fix made regular SDL panel routes pass, but the
+  1280x960 edge case then reproduced the separate inverse-rounding loss: the
+  visible pixel `(729,590)` arrived as source `(182,122)`, one row above the
+  first host button. Added a Theron-only pre-inverse hit test against the
+  floor-scaled presentation rectangles; the focused debug route now reports
+  the expected logical cell center `(204,132)` and `TURN LEFT` action.
+- The full `theron_v1_sdl_input_events` test passed on TRV2 against authentic
+  USA Track 02 (`f23601102138f87c33025877767ebf76`). It exercises keyboard,
+  Button II, standard mouse-panel movement/items, touch, and a 1280x960
+  fractional-edge click. The fractional fixture uses its own resolution
+  config so the other real-media routes retain their ordinary 320x224 window.
+- This failure concerns Firestaff's host panel. Direct world-space mouse
+  targets and complete Theron parity remain open.
+
 ## 2026-10-28 — disassemble the authentic System Card controller branch
 
 - MAME `unidasm -arch h6280` disassembly of the authentic System Card 3.0

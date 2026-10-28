@@ -2349,6 +2349,12 @@ M11_GameInputResult M11_GameView_HandlePointerButtonRelease(
     int x,
     int y,
     int buttonMask);
+int M11_GameView_MapTheronPresentedControlPointToSource(
+    const M11_GameViewState* state,
+    int presentedX,
+    int presentedY,
+    int* outX,
+    int* outY);
 int M11_GameView_CsbFmtownsUtilityTextInputActive(
     const M11_GameViewState* state);
 M11_GameInputResult M11_GameView_ConsumeCsbFmtownsUtilityTextInput(
