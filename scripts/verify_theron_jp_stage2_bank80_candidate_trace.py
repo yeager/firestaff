@@ -16,6 +16,10 @@ from pathlib import Path
 
 EXPECTED_TRACK02_MD5 = "b7afb338ad31be1025b53f9aff12d73a"
 EXPECTED_TRACK02_BYTES = 8_102_640
+EXPECTED_SYSTEM_CARD_MD5 = "ff1a674273fe3540ccef576376407d1d"
+EXPECTED_SYSTEM_CARD_BYTES = 262_656
+SYSTEM_CARD_HEADER_BYTES = 512
+SYSTEM_CARD_EA99_BYTES = bytes.fromhex("ad 08 18 91 fa")
 TRACK02_START_LBA = 3_590
 TRACK02_INDEX1_FILE_OFFSET = 526_848
 SECTOR_BYTES = 2_352
@@ -94,7 +98,12 @@ def read_trace(path: Path) -> tuple[dict[int, list[dict[str, str]]], dict[int, d
     return rows, event_rows
 
 
-def verify(write_path: Path, read_path: Path, track02_path: Path) -> dict[int, bytes]:
+def verify(
+    write_path: Path,
+    read_path: Path,
+    track02_path: Path,
+    system_card_path: Path | None = None,
+) -> tuple[dict[int, bytes], bool]:
     if write_path.parent.resolve() != read_path.parent.resolve() or \
        write_path.name.removesuffix(".cd-ram-target-write") != \
        read_path.name.removesuffix(".cd-data-port-read"):
@@ -103,6 +112,19 @@ def verify(write_path: Path, read_path: Path, track02_path: Path) -> dict[int, b
     raw = track02_path.read_bytes()
     if len(raw) != EXPECTED_TRACK02_BYTES or hashlib.md5(raw).hexdigest() != EXPECTED_TRACK02_MD5:
         raise ValueError("Track 02 is not the authenticated JP Rev. 1 BIN")
+
+    system_card_verified = False
+    if system_card_path is not None:
+        system_card = system_card_path.read_bytes()
+        if (
+            len(system_card) != EXPECTED_SYSTEM_CARD_BYTES
+            or hashlib.md5(system_card).hexdigest() != EXPECTED_SYSTEM_CARD_MD5
+        ):
+            raise ValueError("System Card is not the authenticated Mednafen System Card 3 image")
+        loader_offset = SYSTEM_CARD_HEADER_BYTES + 0x0A99
+        if system_card[loader_offset : loader_offset + len(SYSTEM_CARD_EA99_BYTES)] != SYSTEM_CARD_EA99_BYTES:
+            raise ValueError("System Card bytes at logical $EA99 do not decode as LDA $1808; STA ($FA),Y")
+        system_card_verified = True
 
     reads, read_events = read_trace(read_path)
     candidate_bytes: dict[int, bytes] = {}
@@ -113,6 +135,8 @@ def verify(write_path: Path, read_path: Path, track02_path: Path) -> dict[int, b
         values = bytearray()
         for offset, row in enumerate(rows):
             raw_offset = TRACK02_INDEX1_FILE_OFFSET + (lba - TRACK02_START_LBA) * SECTOR_BYTES + USER_DATA_OFFSET + offset
+            if read_events and int(row.get("cpu_pc", "0"), 16) != 0xEA99:
+                raise ValueError(f"CD byte at LBA {lba}, user offset {offset} was not read at System Card PC $EA99")
             if int(row["source_user_offset"]) != offset or int(row["source_raw_offset"]) != USER_DATA_OFFSET + offset:
                 raise ValueError(f"unexpected source offset at LBA {lba}, user offset {offset}")
             if (int(row["track02_start_lba"]) != TRACK02_START_LBA or
@@ -148,6 +172,8 @@ def verify(write_path: Path, read_path: Path, track02_path: Path) -> dict[int, b
         else:
             event_rows_missing += 1
         if row.get("writer_pc") == "ea9c" and row.get("mpr2") == "80" and row.get("block_move") == "0":
+            if read_events and int(row.get("writer_physical_pc", "0"), 16) != 0x000A9C:
+                raise ValueError(f"bank-$80 write at line {line_number} has an invalid System Card physical PC")
             if int(row["physical_address"], 16) == 0x100000 + len(current):
                 current.append(row)
                 if len(current) == WINDOW_BYTES:
@@ -186,7 +212,7 @@ def verify(write_path: Path, read_path: Path, track02_path: Path) -> dict[int, b
             raise ValueError(f"authentic CD-read bytes at LBA {lba} have no matching direct bank-$80 write window")
         if read_events and not observed_aligned_writes[lba]:
             raise ValueError(f"CD reads at LBA {lba} lack an immediately ordered byte-matched bank-$80 write window")
-    return candidate_bytes
+    return candidate_bytes, system_card_verified
 
 
 def main() -> int:
@@ -194,9 +220,12 @@ def main() -> int:
     parser.add_argument("write_trace", type=Path)
     parser.add_argument("read_trace", type=Path)
     parser.add_argument("track02", type=Path)
+    parser.add_argument("--system-card", type=Path, help="authenticate the System Card LDA/STA loader bytes")
     args = parser.parse_args()
     try:
-        candidates = verify(args.write_trace, args.read_trace, args.track02)
+        candidates, system_card_verified = verify(
+            args.write_trace, args.read_trace, args.track02, args.system_card
+        )
     except (OSError, UnicodeError, ValueError, KeyError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1
@@ -204,8 +233,10 @@ def main() -> int:
     for lba, data in candidates.items():
         print(f"candidate_lba={lba} bytes={len(data)} sha256={hashlib.sha256(data).hexdigest()}")
     if any("event_sequence" in row for rows in read_trace(args.read_trace)[0].values() for row in rows):
-        print("PASS: each candidate byte read is immediately followed by a byte-equal write at the corresponding bank-$80 offset")
-        print("LIMIT: event ordering and byte correspondence do not expose the CPU's source address for each write")
+        print("PASS: each candidate byte was read at logical PC $EA99 and immediately followed by a byte-equal write at PC $EA9C")
+        if system_card_verified:
+            print("PASS: authentic System Card bytes decode as LDA $1808 at $EA99 and STA ($FA),Y at $EA9C")
+        print("LIMIT: the capture covers two 15-byte windows and does not establish the full loader or gameplay transition")
     else:
         print("LIMIT: older trace format proves same-capture correlation only; no ordered read/write correspondence")
     return 0

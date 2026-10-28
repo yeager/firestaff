@@ -1285,16 +1285,16 @@ physical PC, the active MPR slot, and MPR0–MPR7 for each source-bound read. Th
 verifiers check the logical-to-physical mapping formula while retaining support
 for earlier trace formats. This context can identify the executing bank at a
 CD-port read; the independent CD-read and RAM-write traces still do not prove
-read-to-write causality. A shared monotonic event sequence is now emitted by
-both selected CD-port reads and target RAM writes. It orders logged events but
-does not itself prove source-to-destination causality.
+read-to-write causality. A shared monotonic event sequence is emitted by both
+selected CD-port reads and target RAM writes. Use it together with instruction
+PCs and authentic System Card bytes; ordering alone is not causal evidence.
 
 The complete Mednafen patch set applied in three loops to authentic 1.32.1
 source. A PCE Fast-enabled emulator was rebuilt on TRV2, and a fresh authentic
 JP Rev. 1 capture records shared event IDs on CD-port reads and target RAM
-writes. The ordered candidate windows are verified below; runtime mapping is
-observed, but the trace still lacks a CPU source address for each write and
-does not prove the decoder's full transfer path or a gameplay transition.
+writes. Two byte windows now match the disassembled System Card's direct
+CD-port load and banked RAM store. The broader decoder path and a gameplay
+transition remain unverified.
 
 ## 2026-10-09 -- held-input replay does not distinguish idle game-loop writes
 
@@ -8193,17 +8193,23 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   JP image. It does not join those reads causally to destination RAM writes,
   identify the `$23AD` decoder input/output, or prove a gameplay transition;
   the capture ended at its instrumentation limit with `transition=missing`.
-- A fresh 60-second PCE Fast capture now carries a shared monotonic event ID on
-  CD-port reads and target RAM writes. Three checks against its authentic JP
-  Track 02 capture matched the 15-byte windows at LBAs 4521 and 4589 to direct
-  bank-$80 writes; each sampled byte read is immediately followed by a byte-
-  equal write at the corresponding `$100000` offset. The candidate window
+- A fresh 60-second PCE Fast capture carries a shared event ID and logical
+  instruction PC on each CD-port read and target RAM write. The read hook uses
+  `TheronTraceInstructionPC`; the previous raw fast PC pointer produced
+  misleading reader-PC values and is not used as evidence.
+- Authentic System Card 3.0 MD5
+  `ff1a674273fe3540ccef576376407d1d` maps logical `$EA99` to file offset
+  `$0C99` after Mednafen's 512-byte header skip. The bytes `AD 08 18 91 FA`
+  disassemble as `LDA $1808` at `$EA99` followed by `STA ($FA),Y` at `$EA9C`.
+  The verifier checks this BIOS identity and instruction sequence when given
+  `--system-card`.
+- Three checks against the fresh authentic JP Track 02 capture matched the
+  15-byte windows at LBAs 4521 and 4589 to bank-$80 writes. Each sampled
+  `$EA99` CD-port read is followed by a byte-equal `$EA9C` store at the
+  corresponding `$100000` offset. The candidate window
   hashes are `799e28674ea2ae783b9b3530ff8a6dd116312ab2a499eb7380cdeb7fc4da5e45`
   and `e38cfd5571a9f549328bafe29b84ae3f6d648d9d02e6a2efd66e1a989bf1b27c`.
-- This strengthens the evidence from same-capture correlation to ordered
-  byte correspondence for these two windows. The trace still does not record
-  a CPU source address for each destination write, identify the `$23AD`
-  decoder's input/output, or prove a gameplay transition: the capture ended
-  without IRQ or authenticated CD-to-RAM transition receipts. Continue with
-  source-address and decoder-consumer evidence before deriving dungeon
-  semantics or enabling drawing.
+- This verifies the direct CD-port-to-bank-$80 store for the two captured
+  windows, not the full loader or the `$23AD` decoder's input/output. The
+  capture ended without a CD IRQ or gameplay transition. Continue tracing the
+  loaded consumer before deriving dungeon semantics or enabling drawing.

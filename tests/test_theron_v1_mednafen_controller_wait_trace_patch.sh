@@ -541,7 +541,7 @@ if ! grep -Fq 'theron_pce_fast_cd_ram_target_write_trace.patch' "$build_script" 
    ! grep -Fq 'track02_raw_file_offset=%llu event_sequence=%u' "$cd_shared_event_patch_file" ||
    ! grep -Fq 'reader_mpr7=%02x source_valid=%u' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'reader_physical_pc = ((uint32)reader_mpr << 13) | (cpu_pc & 0x1fff)' "$cd_ram_target_write_patch_file" ||
-   ! grep -Fq 'TheronTraceCDDataPortRead(HuCPU.PC, source_lba' "$cd_ram_target_write_patch_file" ||
+   ! grep -Fq 'TheronTraceCDDataPortRead(TheronTraceInstructionPC, source_lba' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'if(count >= 65536)' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'TheronTraceInstructionPC >= 0xEA80' "$pce_fast_main_ram_consumer_patch_file" ||
    ! grep -Fq 'per_offset[offset] >= 16 && !target_writer_read' "$pce_fast_main_ram_consumer_patch_file" ||

@@ -9001,9 +9001,19 @@ T900/original inventory semantics. No synthetic media was used.
   and the PCE Fast objects and emulator rebuilt successfully with `-j1`.
 - A fresh authentic JP Rev. 1 capture recorded 65,536 CD-port reads and 77
   target writes. Three verifier loops confirmed the 15-byte windows at LBAs
-  4521 and 4589 were each read from Track 02 and immediately followed by
-  byte-equal writes to bank `$80` offsets 0–14.
-- This verifies ordered byte correspondence for those captured windows. It
-  does not prove complete Theron parity, the `$23AD` decode path, or a
-  gameplay transition; the capture had no CD IRQ or authenticated transition
-  receipt.
+  4521 and 4589 were each read at System Card PC `$EA99` and immediately
+  followed by byte-equal writes at `$EA9C` to bank `$80` offsets 0–14.
+- The PCE Fast CD-read hook now records `TheronTraceInstructionPC`, the
+  logical opcode PC, instead of truncating the internal fast PC pointer. Three
+  repeated authentic-media checks verify all 65,536 reads at logical `$EA99`
+  against Track 02; the selected writes carry logical `$EA9C` and physical
+  `$000A9C`.
+- MAME `unidasm -arch h6280` decoded authentic System Card 3.0 bytes at file
+  offset `$0C99` (512-byte header plus physical address `$0A99`) as
+  `LDA $1808` followed by `STA ($FA),Y`. The verifier authenticates the BIOS
+  MD5 and instruction bytes with `--system-card`; the bounded listing is
+  recorded in
+  [theron-system-card3-cd-port-copy-ea99.asm](docs/source-lock/theron-disassembly/theron-system-card3-cd-port-copy-ea99.asm).
+- This proves the direct CD-port-to-bank-$80 store for these two windows. It
+  does not prove complete Theron parity, the `$23AD` decoder path, or gameplay;
+  the capture had no CD IRQ or gameplay transition.
