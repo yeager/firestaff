@@ -439,6 +439,42 @@ reports the outer edge and validates the observed PR for internal consistency;
 it does not invent a direct caller. The transform, palette selection, layer
 composition and public title presentation remain unbound.
 
+### Japanese menu-state NBG0 source and storage join (2026-10-27)
+
+The hash-pinned Japanese `TITLE.BIN`
+(`51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3`)
+contains a 31,616-byte span at file offset `0x2526`. In the paired Ymir menu
+capture, the final WorkRAMH snapshot at `0x060ac2a6` contains that span exactly.
+The verifier `scripts/verify_nexus_title_nbg0_title_bin_storage.py` checks the
+asset hash and the byte-for-byte match against the authentic Japanese data.
+
+Mapping the source through the previously verified 304-byte rows and 512-byte
+stride places it in the active NBG0 8bpp bitmap at VDP2 offset `0x1008`. In the
+paired frame-windowed Ymir run, the SH-2 read trace records a contiguous,
+ordered, one-byte read of all 31,616 source addresses at frame 6,893. The read
+PC is `0x06023124`, with caller target `0x06023108` and caller return
+`0x06023176`. A complete, zero-drop SH-2 write trace records writes to this
+WorkRAM span only through frame 6,890. The read trace hit its 250,000-row
+capacity and dropped 860,856 other master reads, so only the observed contiguous
+pass is asserted. Its rows contain no read values; the final WorkRAM snapshot
+does not establish those values at access time, and SH-2 tracing does not cover
+non-CPU DMA writes.
+
+The frame-8047 snapshot matches 30,561 of 31,616 source bytes; all 96 leading rows
+match exactly, while the 1,055 differing bytes are confined to the final eight
+rows. The complete frame-windowed VDP2 trace records those final eight rows at
+frame 7,716 (2,432 byte writes), with 1,377 values matching the corresponding
+source bytes. The verifier requires no VRAM or CRAM writes after frame 7,716 through the
+frame-8047 snapshot; the register receipt is checked only at frame 8,047. The
+reproduction command is in
+[`docs/nexus/nexus_startup.md`](nexus_startup.md#japanese-menu-state-nbg0-storage-join-2026-10-27).
+
+This is authentic same-run address-read and source-to-storage evidence for the
+sampled Japanese menu state. It does not establish read values or which NBG0
+pixels survive VDP1 occlusion and match the final screen. Keep title/menu
+display ownership and production renderer admission blocked until those paths
+are verified.
+
 The complete 190-record VDP1 chain contains 177 non-empty texture spans,
 including the bounded type-0 windows at VDP1 VRAM `0x4fba0` (448 bytes) and
 `0x4c580` (1,952 bytes). Every one is an exact span of the word-swapped real

@@ -16,7 +16,7 @@ import os
 import unittest
 from pathlib import Path
 
-from verify_nexus_title_sprite_screenshot import verify
+from verify_nexus_title_sprite_screenshot import same_capture_run, verify
 
 
 def _path_from_env(name: str) -> Path | None:
@@ -72,6 +72,46 @@ class AuthenticJapaneseContinueTests(unittest.TestCase):
             self.skipTest("authentic partial VDP capture not supplied")
         with self.assertRaises(FileNotFoundError):
             verify(incomplete_bundle, self.screenshot, self.cue)
+
+
+class CaptureRunReceiptTests(unittest.TestCase):
+    def test_run_log_and_receipt_report_same_run_without_frame_claim(self):
+        import tempfile
+
+        repo_root = Path(__file__).resolve().parents[1]
+        scratch_root = repo_root / "build-pr153-capture-run-test"
+        created_scratch_root = not scratch_root.exists()
+        scratch_root.mkdir(exist_ok=True)
+        try:
+            with tempfile.TemporaryDirectory(
+                    prefix="nexus-capture-run-", dir=scratch_root) as directory:
+                root = Path(directory)
+                bundle = root / "dumps"
+                bundle.mkdir()
+                screenshot = root / "screenshots" / "menu.png"
+                screenshot.parent.mkdir()
+                screenshot.write_bytes(b"test screenshot path")
+                run_log = root / "run.log"
+                run_log.write_text(
+                    f"Screenshot saved to {screenshot}\n", encoding="utf-8")
+                (bundle / "vdp1-capture-bundle.txt").write_text(
+                    "format=ymir-vdp1-capture-bundle-v1\n"
+                    "trace_file_complete=1\ntrace_dropped_total=0\n"
+                    "capture_frame_index=8047\n", encoding="ascii")
+                (bundle / "vdp-register-snapshot.txt").write_text(
+                    "vdp1_frame_index=8047\n", encoding="ascii")
+
+                status = same_capture_run(bundle, screenshot, run_log, 8047)
+                relocated_screenshot = root / "retained-copy.png"
+                relocated_screenshot.write_bytes(screenshot.read_bytes())
+                with self.assertRaisesRegex(
+                        ValueError, "run log does not identify the supplied screenshot"):
+                    same_capture_run(bundle, relocated_screenshot, run_log, 8047)
+        finally:
+            if created_scratch_root:
+                scratch_root.rmdir()
+
+        self.assertEqual(status, "same_capture_run")
 
 
 if __name__ == "__main__":

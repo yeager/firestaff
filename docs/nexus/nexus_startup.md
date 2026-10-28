@@ -1462,6 +1462,22 @@ The full external capture,
 hashes, and reproduction command are in the
 [Japanese Down-selection capture receipt](../../parity-evidence/verification/nexus_japanese_menu_down_selection_20261027/README.md).
 
+A fresh repeat cold boot on the frame-tracing Ymir fork captured the Continue
+screenshot and VDP1 receipt in one run. The retained image is pixel-identical
+to the earlier screenshot, and the complete VDP1 receipt identifies frame
+`8,047` with 178 commands and zero dropped rows. Its SH-2 trace is byte-for-byte
+identical to the frame-7716 trace in the paired VDP2 analysis. The screenshot
+was saved to an ephemeral `/dev/shm` path recorded in `run.log`, then retained
+under the external evidence bundle. Because that retained copy is no longer at
+the logged full path, `verify_nexus_title_sprite_screenshot.py --run-log`
+rejects it; verification without `--run-log` matches all five authentic
+Japanese sprites and reports `timing=unproven`. The log does not bind the
+screenshot save event to frame 8,047, so exact screenshot-frame identity is
+unproven. This repeat confirms the menu image and source-write sequence, but it
+does not replace the paired VDP2 trace or admit a Firestaff renderer. The
+capture and hashes are retained in
+`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_menu_frame_windowed_sh2_20261027/`.
+
 ## Full Japanese title-menu capture replay (2026-10-27)
 
 The retained frame-8047 Ymir run now reproduces the complete 320×224 display

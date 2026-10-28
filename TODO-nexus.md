@@ -200,28 +200,26 @@ not a fix and has not passed this real-media test.
   from authentic regional `TITLE.BIN` data and source-bound palettes. The
   shared background and full Configuration page remain unrendered. New Game,
   Continue, and Configuration destinations remain unimplemented; Continue
-  execution does not yet read Saturn BKR data. The repeated Continue capture
-  verifies all five Japanese
-  `TITLE.BIN` sprites against 1,441 screenshot pixels. The English verifier
-  validates the five sprites in New Game and Continue, each against 1,451
-  pixels. The Japanese NBG0 bitmap has zero exact matches against authentic
-  retail data. A later exploratory scan found the ordered VDP2 byte-write
-  sequence in the SH-2 trace, but the retained SH-2 receipt has no frame bounds
-  or per-row frame tags; its final VRAM snapshot is frame 8047 while the VDP2
-  write trace ends at frame 7716. Keep source attribution unbound; see the
-  Japanese menu section in `docs/nexus/nexus_startup.md`.
-  This closes the retail-emulator behavior gap for those observed routes, not
-  complete Firestaff startup parity. The frame-8047 replay
-  reconstructs all 286,720 screenshot pixels exactly from Ymir's VDP1 display
-  buffer and VDP2/CRAM snapshots; its 178-command VDP1 trace has zero drops.
-  The screenshot has no embedded frame number. All 1,441 visible Japanese
-  menu-sprite texels match authenticated `TITLE.BIN`. A 31,616-byte
-  `TITLE.BIN` span matches WorkRAMH; 30,561 bytes match NBG0 storage under the
-  verified row layout. The frame-6893 SH-2 read trace observes the full
-  source-address pass, but drops 860,856 other master reads and records no read
-  values. Source-to-display ownership remains partial; see
-  `docs/nexus/NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md` and
-  `docs/nexus/nexus_startup.md`.
+  execution does not yet read Saturn BKR data. The Japanese New Game and
+  Continue captures each verify five `TITLE.BIN` sprites, 1,441 screenshot
+  texels; the English states each verify 1,451. The Configuration-selected
+  capture verifies five sprites and 1,453 texels. The frame-8047 replay
+  reconstructs all 286,720 screenshot pixels from Ymir's VDP1 display buffer
+  and VDP2/CRAM snapshots, with 178 VDP1 commands and zero dropped rows.
+  A same-run repeat has the same screenshot hash and a complete frame-8047
+  VDP1 trace, but the retained PNG is a copy whose path differs from the
+  ephemeral path in `run.log`; the `--run-log` verifier rejects that relocated
+  copy and exact screenshot-frame identity remains unproven. A frame-tagged
+  SH-2 trace records 15,264 writes at frame 7,716; a separate frame-6,893
+  source-read pass covers all 31,616 Japanese `TITLE.BIN` bytes but records no
+  values and drops 860,856 unrelated reads. The final NBG0 snapshot has a
+  30,561-byte storage match under the verified row layout, not a complete
+  pixel/source join. See the Japanese menu section in
+  `docs/nexus/nexus_startup.md` and the
+  [snapshot join](docs/nexus/NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md).
+  These captures strengthen retail evidence; they do not prove full Firestaff
+  menu composition, source ownership, or destination execution. Keep those
+  gates closed.
   Earlier paired raw-trace experiments below remain valid negative results for
   their sampled windows, but they are no longer the only input evidence. Keep
   full-menu admission closed while binding background and face-material
@@ -232,8 +230,9 @@ not a fix and has not passed this real-media test.
   Start is read from the live controller register at frames 18020--18023 by
   SH-2 code, but its 64-frame VDP1/VDP2 output remains byte-identical to the
   no-input control. That specific reader is therefore not an admitted menu
-  consumer. Later Ymir captures establish title-menu and selection transitions,
-  but still do not bind menu/face bytes to an SH-2 upload or VDP1/VDP2 display
+  consumer. Later Ymir captures establish title-menu and selection transitions
+  and record a frame-tagged source-address read pass, but do not prove the read
+  values or bind the full menu/face image to a complete upload or display
   consumer. A separate post-title control/input
   pair at frames 30000--30119 exercised Start, A, B and C in four distinct
   20-frame pulses.  All eight captured video regions (VDP1 state/VRAM/frame
