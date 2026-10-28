@@ -8249,3 +8249,24 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   windows, not the full loader or the `$23AD` decoder's input/output. The
   capture ended without a CD IRQ or gameplay transition. Continue tracing the
   loaded consumer before deriving dungeon semantics or enabling drawing.
+
+## 2026-10-28 — define the authentic `$23AD` differential lift check
+
+- `pcrecomp` is an x86 static-recompilation toolkit, so its lifter and CPU
+  runtime are not reusable for Theron's HuC6280. Its differential-check
+  method is applicable: run the same guest bytes and initial CPU/memory state
+  in a reference CPU and the C lift, then compare register state and ordered
+  memory effects. See [pcrecomp](https://github.com/sp00nznet/pcrecomp) and
+  its [differential lift checker](https://github.com/sp00nznet/pcrecomp/blob/main/tools/lift/difftest.py).
+- The Firestaff lift in `src/theron/theron_v1_track02_level_data_blocks.c`
+  still uses flat source/destination buffers and a separate host pointer
+  table. Retail `$23AD-$252A` changes MPR mappings through `$2459` and `$246E`
+  using values at `$3B7E-$3B85`; source bytes alone therefore do not establish
+  the equivalent memory accesses.
+- Before treating any decoded resource as game data, capture an authentic
+  `$23AD` invocation with its resource bytes, entry registers and MPRs, each
+  source read and destination/pointer-table write in order, and final CPU and
+  memory state. Compare that trace against the C lift using the same captured
+  input. Until that comparison passes, the decoder remains a bounded research
+  walk and its output stays opaque; no dungeon, object, or tile meaning is
+  inferred.
