@@ -109,6 +109,35 @@ int main(void)
         ++failures;
     }
 
+    nexus_v1_retail_title_menu_init(&state.nexusState.retail_title_menu);
+    state.nexusState.title_active = 1;
+    state.nexusState.title_frame = 0;
+    while (!nexus_title_full_boot_start_ready(state.nexusState.title_frame)) {
+        ++state.nexusState.title_frame;
+    }
+    if (M11_GameView_HandlePointerButton(
+            &state, 10, 10, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+            M11_GAME_INPUT_REDRAW ||
+        !state.nexusState.retail_title_menu.menu_active) {
+        fprintf(stderr, "FAIL: title prompt mouse click opens retail menu\n");
+        ++failures;
+    }
+    if (M11_GameView_HandlePointerButton(
+            &state, 150, 168, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+            M11_GAME_INPUT_REDRAW ||
+        state.nexusState.retail_title_menu.selection !=
+            NEXUS_V1_RETAIL_TITLE_MENU_CONTINUE) {
+        fprintf(stderr, "FAIL: authentic Continue row responds to mouse\n");
+        ++failures;
+    }
+    if (M11_GameView_HandlePointerButton(
+            &state, 150, 195, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+            M11_GAME_INPUT_IGNORED ||
+        state.nexusState.retail_title_menu.selection !=
+            NEXUS_V1_RETAIL_TITLE_MENU_CONTINUE) {
+        fprintf(stderr, "FAIL: clicks outside title rows do not change selection\n");
+        ++failures;
+    }
     M11_GameView_Shutdown(&state);
     if (failures == 0) {
         puts("PASS: Nexus retail title input stays within its evidence-bounded state");

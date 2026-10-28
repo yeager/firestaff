@@ -132,6 +132,22 @@ This is a partial source-to-VRAM receipt only. It does not provide a complete
 decoded source for the 131,072-byte NBG0 bitmap or identify the display
 consumer, so it does not admit title rendering.
 
+### Host mouse selection for the retail title rows
+
+The Firestaff title prompt now opens the same retail menu reducer when clicked
+as when the keyboard Start action is pressed. Once open, mouse clicks select
+New Game `(129,153,64,8)` or Continue `(128,165,64,8)` using the authenticated
+VDP1 text-command rectangles in native 320x224 coordinates. These are the
+retained Ymir command positions also checked against the 640x448 screenshot by
+`scripts/verify_nexus_title_sprite_screenshot.py`. Clicks outside these
+rectangles leave the menu selection unchanged. Configuration remains gated
+because its selected-state renderer has not been source-bound.
+
+This adds pointer selection only. It does not establish retail mouse
+activation semantics or implement New Game, Continue/save loading, or the
+Configuration page. Those destinations remain gated on their authentic
+consumer and transition evidence.
+
 An authenticated producer trace narrows the `TITLE.CG` result further. In
 the retail JP transition interval after frame 12500, SH-2 PC `0x06041fa0`
 performs 167,935 of 167,936 VDP2 VRAM byte writes (the remaining write is at

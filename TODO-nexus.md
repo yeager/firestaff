@@ -41,6 +41,10 @@ authenticated Japanese New Game and Continue sprites and their source-bound
 regional palettes. This does not bind or render the shared background or
 Configuration, or implement destination execution; full menu composition
 remains open.
+Firestaff's startup mouse now opens the retail menu and selects the
+source-bound New Game and Continue rows. Configuration selection remains
+gated until its selected-state renderer is source-bound; destination
+activation and save loading remain open.
 This does not bind the NBG0 background or remaining screen composition;
 the exact background source and complete display consumer are still unknown.
 The English New Game and Continue captures share byte-identical VDP2 VRAM,

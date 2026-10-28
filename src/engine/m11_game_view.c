@@ -38418,25 +38418,28 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
         return M11_GAME_INPUT_IGNORED;
     }
     if (state->nexusState.title_active) {
-        if (!state->nexusState.startup_host_capture_ready ||
-            !state->nexusState.startup_menu_capture_uses_real_assets ||
-            !state->nexusState.startup_title_menu_capture_route_joined ||
-            !state->nexusState.startup_host_route_capture_matrix_ready ||
-            !state->nexusState.startup_host_route_capture_matrix_exact) {
-            m11_set_status(state, "ASSETS", "NEXUS MENU CAPTURE REQUIRED");
+        if (!nexus_title_full_boot_start_ready(
+                state->nexusState.title_frame)) {
             return M11_GAME_INPUT_IGNORED;
         }
-        Nexus_V1_LauncherRuntimeStartupSnapshot snapshot;
-        Nexus_V1_StartupTitleExecution execution;
-        Nexus_V1_StartupHostActionReceipt receipt;
-        m11_nexus_runtime_startup_snapshot(state, &snapshot);
-        if (!nexus_v1_launcher_startup_execute_title_pointer_from_snapshot(
-                &snapshot,
-                &execution,
-                &receipt)) {
-            return M11_GAME_INPUT_IGNORED;
+        if (!state->nexusState.retail_title_menu.menu_active) {
+            Nexus_V1_RetailTitleMenuResult menu_result =
+                nexus_v1_retail_title_menu_reduce(
+                    &state->nexusState.retail_title_menu,
+                    NEXUS_V1_RETAIL_TITLE_MENU_INPUT_OPEN,
+                    0);
+            return menu_result ==
+                    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_MENU_OPENED
+                ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
-        return m11_nexus_apply_startup_action_receipt(state, &receipt);
+        {
+            Nexus_V1_RetailTitleMenuResult menu_result =
+                nexus_v1_retail_title_menu_select_pointer(
+                    &state->nexusState.retail_title_menu, x, y);
+            return menu_result ==
+                    NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED
+                ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+        }
     }
     if (state->nexusState.startup_save_select_active) {
         /* The startup layout helpers retain compatibility hit regions for
@@ -40102,6 +40105,13 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         if (nexusStartupPointer != M11_GAME_INPUT_IGNORED) {
             return nexusStartupPointer;
         }
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN &&
+        state->nexusState.title_active) {
+        /* The title owns the pointer even when a click misses its verified
+         * menu rows. Do not pass an unhandled title click into the dungeon
+         * viewport hit-test. */
+        return M11_GAME_INPUT_IGNORED;
     }
     if (state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) {
         const Nexus_HitRect *game_screen = NULL;

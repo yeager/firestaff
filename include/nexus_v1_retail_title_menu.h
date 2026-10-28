@@ -57,6 +57,15 @@ Nexus_V1_RetailTitleMenuResult nexus_v1_retail_title_menu_reduce(
     Nexus_V1_RetailTitleMenuInput input,
     int continue_save_available);
 
+/* Select a source-bound New Game or Continue title row from the authenticated
+ * retail sprite rectangles in 320x224 Saturn screen coordinates. The
+ * Configuration selected-state renderer is not yet source-bound, so that row
+ * remains gated. */
+Nexus_V1_RetailTitleMenuResult nexus_v1_retail_title_menu_select_pointer(
+    Nexus_V1_RetailTitleMenuState *state,
+    int x,
+    int y);
+
 #ifdef __cplusplus
 }
 #endif

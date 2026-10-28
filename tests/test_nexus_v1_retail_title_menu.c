@@ -96,6 +96,31 @@ int main(void)
               state.selection == NEXUS_V1_RETAIL_TITLE_MENU_CONFIGURATION,
           "unverified input does not invent a transition");
 
+    nexus_v1_retail_title_menu_init(&state);
+    check(nexus_v1_retail_title_menu_select_pointer(&state, 150, 153) ==
+              NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNVERIFIED_INPUT &&
+              !state.menu_active,
+          "pointer cannot select before the retail menu opens");
+    check(nexus_v1_retail_title_menu_reduce(
+              &state, NEXUS_V1_RETAIL_TITLE_MENU_INPUT_OPEN, 0) ==
+              NEXUS_V1_RETAIL_TITLE_MENU_RESULT_MENU_OPENED,
+          "open retail menu before pointer selection");
+    check(nexus_v1_retail_title_menu_select_pointer(&state, 150, 153) ==
+              NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNCHANGED &&
+              state.selection == NEXUS_V1_RETAIL_TITLE_MENU_NEW_GAME,
+          "authentic New Game text rectangle selects the first row");
+    check(nexus_v1_retail_title_menu_select_pointer(&state, 150, 165) ==
+              NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED &&
+              state.selection == NEXUS_V1_RETAIL_TITLE_MENU_CONTINUE,
+          "authentic Continue text rectangle selects the second row");
+    check(nexus_v1_retail_title_menu_select_pointer(&state, 150, 168) ==
+              NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNCHANGED,
+          "pointer includes the Continue row's last pixel");
+    check(nexus_v1_retail_title_menu_select_pointer(&state, 150, 177) ==
+              NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNVERIFIED_INPUT &&
+              state.selection == NEXUS_V1_RETAIL_TITLE_MENU_CONTINUE,
+          "Configuration pointer stays gated until its selected renderer is bound");
+
     if (failures != 0) {
         fprintf(stderr, "test_nexus_v1_retail_title_menu: %d failure(s)\n",
                 failures);

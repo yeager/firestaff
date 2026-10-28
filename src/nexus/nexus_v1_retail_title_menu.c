@@ -72,3 +72,35 @@ Nexus_V1_RetailTitleMenuResult nexus_v1_retail_title_menu_reduce(
         return NEXUS_V1_RETAIL_TITLE_MENU_RESULT_INVALID;
     }
 }
+
+Nexus_V1_RetailTitleMenuResult nexus_v1_retail_title_menu_select_pointer(
+    Nexus_V1_RetailTitleMenuState *state,
+    int x,
+    int y)
+{
+    Nexus_V1_RetailTitleMenuSelection selection;
+
+    if (!state || state->menu_active != 1 || x < 0 || y < 0 ||
+        state->selection < NEXUS_V1_RETAIL_TITLE_MENU_NEW_GAME ||
+        state->selection > NEXUS_V1_RETAIL_TITLE_MENU_CONFIGURATION) {
+        return NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNVERIFIED_INPUT;
+    }
+
+    /* These row bounds are the VDP1 text command extents retained by
+     * verify_nexus_title_sprite_screenshot.py. The Ymir screenshot is 2x the
+     * 320x224 native coordinate space. Configuration is deliberately not
+     * selectable until its selected-state renderer is source-bound. */
+    if (y >= 153 && y < 161 && x >= 129 && x < 193) {
+        selection = NEXUS_V1_RETAIL_TITLE_MENU_NEW_GAME;
+    } else if (y >= 165 && y < 173 && x >= 128 && x < 192) {
+        selection = NEXUS_V1_RETAIL_TITLE_MENU_CONTINUE;
+    } else {
+        return NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNVERIFIED_INPUT;
+    }
+
+    if (state->selection == selection) {
+        return NEXUS_V1_RETAIL_TITLE_MENU_RESULT_UNCHANGED;
+    }
+    state->selection = selection;
+    return NEXUS_V1_RETAIL_TITLE_MENU_RESULT_SELECTION_CHANGED;
+}
