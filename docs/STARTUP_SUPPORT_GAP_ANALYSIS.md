@@ -10,12 +10,16 @@ and Theron's Japanese Rev. 1 title-to-Akutuba plus US Continue to dungeon 2,
 level 0. The new `dm2_v1_mac_extracted_native_cli_boot` regression records
 direct CLI and M12 startup of DM2 Macintosh English from extracted original
 files to first runtime; the `.sit` container itself is not unpacked by the
-ZIP-only CTest. The French DM2 DOS ZIP now passes the native CLI/M12 startup
-test from `~/Downloads`; CSB Atari French preservation remains unverified.
-The DM1 Amiga demo ZIP and CSB Amiga ZIP/ADF wrapper are
-present locally and pass archive integrity checks, but their decoder/startup
-tests were not rerun in this review. For Nexus, the retail New Game input now
-reaches the hash-verified `LEV01.DGN` loader and produces a source-bound
+ZIP-only CTest. The French DM2 DOS ZIP passes the native CLI/M12 startup test
+with `FIRESTAFF_DM2_DOS_FR_ARCHIVE` pointed at the original archive in
+`~/Downloads`; CTest now exposes that path as a cache option while keeping the
+standard game-data path as its default. The DM1 Amiga demo archive also passes
+its authentic CLI/M12 startup test
+(`tests/test_dm1_v1_amiga_demo_archive_cli_boot.sh`) against the original ZIP.
+The CSB Amiga ZIP/ADF wrapper passes archive integrity checks, but its
+decoder/startup tests were not rerun in this review. CSB Atari French
+preservation remains unverified. For Nexus, retail New Game input now reaches
+the hash-verified `LEV01.DGN` loader and produces a source-bound
 level-1 `(29,47,North)` receipt from keyboard and mouse routes; the separate
 viewport/HUD gates still prevent a playable runtime handoff. These bounded CLI
 checks use SDL dummy and do not establish native display, physical input, or
@@ -27,8 +31,9 @@ the native 3D corridor. Firestaff now renders source-bound English and Japanese
 New Game/Continue foreground sprites and selected Configuration sprites from
 authentic `TITLE.BIN`; source-bound mouse selection is verified for the
 Japanese Configuration row. The shared background/full-screen menu composition
-The New Game path now reaches the authenticated level loader and emits the
-retail level-1 start receipt, but the viewport/HUD handoff remains fail-closed.
+is still unbound. The New Game path reaches the authenticated level loader and
+emits the retail level-1 start receipt, but the viewport/HUD handoff remains
+fail-closed.
 Continue/save loading and Configuration destination behavior also remain
 open, so Firestaff has not entered a Nexus playable level. Replaying the English
 screenshot from its captured frame is pixel-exact. Its complete VDP1 command
