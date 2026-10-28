@@ -8351,11 +8351,25 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   capture gate, not a claim that the stream is a complete differential input:
   the raw format currently lacks full entry/final CPU and memory snapshots,
   authenticated disc identity, and CD-sector provenance.
-- Two bounded cold starts using the authentic US CUE and System Card reached
+- Three bounded cold starts using the authentic US CUE and System Card reached
   the title/runtime input polling path and recorded authentic CD reads. The
-  first held Run for 300 frames; the second also tapped I at frame 12000.
-  Neither reached the `$2390 -> $23AD` call, so neither emitted the requested
-  raw invocation trace. The capture tool correctly rejected both as incomplete.
+  first held Run for 300 frames; the second added a one-frame I tap at frame
+  12000; the third held I for 300 frames and then tried two short I presses
+  followed by a 300-frame Run hold. The instrumented controller poll received
+  the scheduled masks, but none of the runs reached the `$2390 -> $23AD` call
+  or emitted the requested raw invocation trace. The capture tool correctly
+  rejected all three as incomplete.
+- These negative input trials do not identify the retail menu action or
+  establish that the game was at the expected visible menu. Continue from a
+  verified in-dungeon state for game-owned runtime behavior; keep cold-start
+  loader/decompressor provenance as a separate acquisition gap.
+- Two further authentic JP Rev. 1 cold starts used the documented startup
+  replay, first with a one-second Run hold and then with the required four-
+  second Run hold plus four short I presses. Both recorded stage-2 selector
+  execution and authentic Track 02 reads, but neither emitted a `$23AD`
+  invocation trace. The controller receipts prove scheduled input delivery;
+  without a visible-menu capture or a game-owned handoff they do not establish
+  that the intended New Game/File 1 route completed.
 - Preserve these negative results as acquisition evidence only. Continue
   identifying the game-owned transition into the Track 02 decoder; do not
   treat the raw probe build, input polling, or CD traffic as decoder parity.
