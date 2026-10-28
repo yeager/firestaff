@@ -46,6 +46,10 @@ the exact background source and complete display consumer are still unknown.
 The English New Game and Continue captures share byte-identical VDP2 VRAM,
 CRAM and registers, so their observed selection difference is confined to
 VDP1 state; this still leaves the shared NBG0 retail source unbound.
+The Japanese New Game and Continue captures also have identical NBG0 VRAM
+(SHA-256 `0a3b8b5ba0bd9e9c4b549d136961b44439d2534cbb7060c5bcbdca6da9c53d08`);
+scanning all authentic Japanese disc members finds no exact source match. A
+921-byte `TITLE.BIN` overlap with only 295 nonzero bytes remains unproven.
 An exact but sparse 1,603-byte `TITLE.BIN`/NBG0/WRAM-high overlap is a trace
 target only; without frame-bound VDP2 writes it does not identify a producer.
 The Ymir log records `0DMSTRT.BIN` and a CD Block soft reset,

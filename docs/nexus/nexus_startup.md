@@ -1290,8 +1290,8 @@ producer candidate. Details and hashes are in the
 
 ## Japanese New Game and Continue foreground rendering (2026-10-28)
 
-The Japanese Continue layout is admitted only for the authenticated Japanese
-retail `TITLE.BIN` (SHA-256
+The Japanese New Game and Continue layouts are admitted only for the
+authenticated Japanese retail `TITLE.BIN` (SHA-256
 `51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3`, FNV-1a64
 `064414f722d0409c`). Firestaff draws five source-bound foreground sprites
 for both observed Japanese menu selections. The New Game frame 8,050 markers
@@ -1310,6 +1310,12 @@ exact acquisition-frame identity remains unproven. The background,
 Configuration, full-screen composition, mouse hit areas, Continue loading, and
 gameplay HUD/viewport remain open. See the
 [Japanese sprite evidence receipt](../../parity-evidence/verification/nexus_japanese_title_menu_sprite_join_20261028/README.md).
+
+The two captures have byte-identical first 128 KiB of VDP2 VRAM (NBG0),
+SHA-256 `0a3b8b5ba0bd9e9c4b549d136961b44439d2534cbb7060c5bcbdca6da9c53d08`,
+with 18,513 nonzero bytes. The Japanese retail-source scan found no exact NBG0
+match. A 921-byte overlap with `TITLE.BIN` at `0xb8a2` contains 295 nonzero
+bytes and also occurs in WRAM-high; its producer and role remain unproven.
 
 ## Authentic Japanese title-menu Down selection (2026-10-27)
 

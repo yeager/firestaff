@@ -37,6 +37,14 @@ verifier checks each visible sprite texel against the screenshot using the
 captured CRAM and back-screen state. The screenshot has no independent frame
 number, so exact screenshot-to-command-frame identity remains unproven.
 
+The New Game and Continue captures have byte-identical first 128 KiB of VDP2
+VRAM, the configured NBG0 bitmap: SHA-256
+`0a3b8b5ba0bd9e9c4b549d136961b44439d2534cbb7060c5bcbdca6da9c53d08`, with
+18,513 nonzero bytes. The full Japanese retail-source scan found no exact
+NBG0 source match. A 921-byte overlap with `TITLE.BIN` at `0xb8a2` contains 295
+nonzero bytes and also occurs in the captured bitmap and WRAM-high dump; it is
+an unproven producer candidate, not a background admission.
+
 ## Reproduction
 
 ```sh
