@@ -84,7 +84,10 @@ for route in direct menu; do
         cat "$scratch/$route.log" >&2
         exit 1
     fi
-    grep -Fq "graphicsPath=$scratch/graphics.dat" "$scratch/$route.log"
+    # APFS and other case-insensitive filesystems may report the original
+    # asset path as GRAPHICS.DAT even though this ZIP member is lowercase.
+    # The path identity is the assertion; filesystem spelling is not.
+    grep -Fiq "graphicsPath=$scratch/graphics.dat" "$scratch/$route.log"
     if [[ "$route" = direct ]]; then
         grep -Fq 'phase=dm1-runtime' "$scratch/$route.log"
         grep -Fq 'levelLoaded=1' "$scratch/$route.log"
