@@ -1,5 +1,13 @@
 # Firestaff DONE — cross-game completed work
 
+## 2026-10-28 — Unsupported game/platform CLI regression coverage
+
+The fail-fast CLI test now covers both CSB PC and DM2 Atari ST. Against the
+TRV2 app build, both combinations emitted their game-specific diagnostic and
+exited before SDL renderer initialization or media scanning. The test requires
+no game archives and does not imply that other game/platform routes have been
+fully verified.
+
 ## 2026-10-28 — CSB Atari archive discovery in return-to-menu test
 
 The authentic return-to-menu regression now falls back to the installed
