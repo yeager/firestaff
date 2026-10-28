@@ -118,10 +118,13 @@ trace.
 ### Japanese title-menu partial NBG0 source join
 
 A separate complete Japanese menu-session trace joins a partial raw source
-span: the 921 bytes at `TITLE.BIN+0xb8a2` are resident at VDP2 NBG0 VRAM
+span: the 921 bytes at relative offset `0x46a` in `TITLE.BIN` `TITL` record 2
+(file offset `0xb8a2`, record offset `0xb438`) are resident at VDP2 NBG0 VRAM
 `0xd404` in the frame-8,060 snapshot. Frame 6,869 clears the full span and
 frame 7,729 writes 608 byte lanes matching the authentic retail source; replay
 of intervening frame-tagged writes reconstructs the span exactly. The
+295 nonzero pixels form the blue divider at native coordinates `x=13..307,
+y=106` below the title logo in the paired screenshot. The
 reproduction command and trace/snapshot hashes are recorded in the
 [Japanese menu evidence receipt](../../parity-evidence/verification/nexus_japanese_title_menu_sprite_join_20261028/README.md#frame-bound-nbg0-source-span).
 

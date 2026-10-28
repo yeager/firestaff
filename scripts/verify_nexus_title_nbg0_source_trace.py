@@ -32,6 +32,9 @@ SNAPSHOT_FRAME = 8060
 SNAPSHOT_NBG0_SHA256 = (
     "0a3b8b5ba0bd9e9c4b549d136961b44439d2534cbb7060c5bcbdca6da9c53d08"
 )
+TITLE_RECORD_OFFSET = 0xB438
+TITLE_RECORD_END = 0xD068
+TITLE_RECORD_RELATIVE_OFFSET = 0x046A
 
 
 def read_receipt(path: Path, expected_format: str) -> dict[str, str]:
@@ -72,10 +75,42 @@ def main() -> int:
         title_bin = read_assets(None, args.cue, {"TITLE.BIN"})["TITLE.BIN"]
         if sha256(title_bin) != JAPANESE_TITLE_BIN_SHA256:
             raise ValueError("Japanese TITLE.BIN hash mismatch")
+        if (title_bin[:4] != b"RES*" or
+                int.from_bytes(title_bin[4:8], "big") != len(title_bin) or
+                int.from_bytes(title_bin[8:10], "big") != 60):
+            raise ValueError("TITLE.BIN RES* directory header is invalid")
+        title_records = []
+        for index in range(60):
+            entry = title_bin[12 + index * 12:24 + index * 12]
+            if len(entry) != 12:
+                raise ValueError("TITLE.BIN RES* directory is truncated")
+            title_records.append((entry[:4], int.from_bytes(entry[4:8], "big"),
+                                  int.from_bytes(entry[8:12], "big")))
+        title_record = next((row for row in title_records
+                             if row[0] == b"TITL" and row[1] == 2), None)
+        if (title_record is None or title_record[2] != TITLE_RECORD_OFFSET or
+                title_bin[TITLE_RECORD_OFFSET:TITLE_RECORD_OFFSET + 10] !=
+                b"TITL\0\0\0\2PP"):
+            raise ValueError("TITLE.BIN TITL record 2 identity is invalid")
+        following_offsets = [offset for _magic, _record_id, offset in title_records
+                             if offset > TITLE_RECORD_OFFSET]
+        record_end = min(following_offsets) if following_offsets else len(title_bin)
         source = title_bin[TITLE_SOURCE_OFFSET:
                            TITLE_SOURCE_OFFSET + TITLE_SOURCE_BYTES]
-        if len(source) != TITLE_SOURCE_BYTES:
-            raise ValueError("TITLE.BIN source span is truncated")
+        if (len(source) != TITLE_SOURCE_BYTES or record_end != TITLE_RECORD_END or
+                TITLE_SOURCE_OFFSET - TITLE_RECORD_OFFSET !=
+                TITLE_RECORD_RELATIVE_OFFSET or
+                TITLE_SOURCE_OFFSET < TITLE_RECORD_OFFSET or
+                TITLE_SOURCE_OFFSET + TITLE_SOURCE_BYTES > record_end):
+            raise ValueError("TITLE.BIN source span is outside TITL record 2")
+        source_pixels = [NBG0_TITLE_OFFSET + index
+                         for index, value in enumerate(source) if value]
+        source_rows = {address // 512 for address in source_pixels}
+        if len(source_rows) != 1:
+            raise ValueError("joined source span is not the observed one-row layer")
+        source_x_min = min(address % 512 for address in source_pixels)
+        source_x_max = max(address % 512 for address in source_pixels)
+        source_y = next(iter(source_rows))
 
         vdp_receipt = read_receipt(
             args.bundle / "vdp2-memory-write-bundle.txt",
@@ -202,8 +237,12 @@ def main() -> int:
     print(f"japanese_title_bin_sha256={JAPANESE_TITLE_BIN_SHA256}")
     print(f"title_source_offset=0x{TITLE_SOURCE_OFFSET:x}")
     print(f"title_source_bytes={TITLE_SOURCE_BYTES}")
+    print("title_source_record=TITL/id2")
+    print(f"title_source_record_offset=0x{TITLE_RECORD_OFFSET:x}")
+    print(f"title_source_record_relative_offset=0x{TITLE_RECORD_RELATIVE_OFFSET:x}")
     print(f"title_source_sha256={sha256(source)}")
     print(f"title_source_nonzero_bytes={sum(value != 0 for value in source)}")
+    print(f"title_source_nonzero_bounds={source_x_min},{source_y}-{source_x_max},{source_y}")
     print(f"vdp2_trace_rows={rows_seen}")
     print(f"title_span_clear_frame={CLEAR_FRAME}")
     print(f"title_span_copy_frame={COPY_FRAME}")

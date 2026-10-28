@@ -5,10 +5,11 @@
 - Added a bounded verifier for the complete authentic Ymir VDP2 write trace.
   It authenticates the Japanese CUE and `TITLE.BIN`, checks the matching
   frame-8,060 snapshot receipts, proves a frame-6,869 clear and replays the
-  frame-7,729 byte writes to reconstruct the 921-byte retail source span at
+  frame-7,729 byte writes to reconstruct a 921-byte `TITL` record 2 span at
   NBG0 offset `0xd404`.
 - The span at `TITLE.BIN+0xb8a2` contains 295 nonzero bytes. Full bitmap decode
-  and display consumer work remain open; no presentation admission or
+  forming the native one-row title divider at `x=13..307, y=106`. Full bitmap
+  decode and display consumer work remain open; no presentation admission or
   synthetic data was added.
 - Verification used the retained external capture bundle and local authentic
   Japanese CUE. Raw media and emulator dumps remain outside Git.

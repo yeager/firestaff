@@ -50,8 +50,9 @@ The Japanese New Game and Continue captures also have identical NBG0 VRAM
 (SHA-256 `0a3b8b5ba0bd9e9c4b549d136961b44439d2534cbb7060c5bcbdca6da9c53d08`);
 scanning all authentic Japanese disc members finds no complete decoded source
 match. A complete frame-tagged VDP2 trace now proves that a 921-byte raw span
-from Japanese `TITLE.BIN` at `0xb8a2` is written into NBG0: frame 6,869 clears
-the span and frame 7,729 writes 608 byte lanes that, with the intervening
+from `TITL` record 2 in Japanese `TITLE.BIN` (`0xb438 + 0x46a`) is written
+into NBG0: frame 6,869 clears the span, then frame 7,729 writes 608 byte lanes
+that, with the intervening
 captured writes, reconstruct the authentic source bytes exactly. This joins a
 partial source span, not the full NBG0 bitmap or its display meaning.
 An exact but sparse 1,603-byte `TITLE.BIN`/NBG0/WRAM-high overlap is a trace

@@ -51,12 +51,17 @@ a partial raw-source span to the final NBG0 snapshot. The trace receipt records
 frame-8,060 VDP2 snapshot has `BGON=0x0001`, `CHCTLA=0x0013`, `BMPNA=0`,
 `PLSZ=2`, and `MPOFN=0`.
 
-The verified Japanese retail `TITLE.BIN` bytes at `0xb8a2` (921 bytes,
-SHA-256 `6b9a333965267770333949175397a1faab028dd9d64d9f76ff9ae7a9e5d093fd`,
-295 nonzero bytes) map to VDP2 VRAM offset `0xd404`. Frame 6,869 writes zero
-to each byte in that span. After replaying every subsequent frame-tagged
+The verified Japanese retail `TITLE.BIN` `TITL` record 2 begins at `0xb438`;
+the joined span is at relative offset `0x46a` (file offset `0xb8a2`). Those
+921 bytes have SHA-256
+`6b9a333965267770333949175397a1faab028dd9d64d9f76ff9ae7a9e5d093fd` and
+295 nonzero values. They map to VDP2 VRAM offset `0xd404`. Frame 6,869 writes
+zero to each byte in that span. After replaying every subsequent frame-tagged
 write, the 608 byte lanes written in frame 7,729 all match their retail source
 offsets and the complete 921-byte target equals `TITLE.BIN`.
+The 295 nonzero indices form a one-pixel line at native NBG0 coordinates
+`x=13..307, y=106`, matching the blue divider below the title logo in the
+paired 640×448 Ymir screenshot.
 
 Reproduce this check against the external capture and authentic local CUE:
 
