@@ -1,3 +1,21 @@
+# Firestaff v3.0.419
+
+## User-facing changes
+
+- `Dungeon Master I`: fix wall ornament placement by preserving the source map offset used by the PC-3.4 compatibility path.
+
+## Developer changes
+
+- `CSB Amiga startup audio`: change startup diagnostics to report queued audio for the authentic Amiga media route.
+- `DM1 Hall of Champions`: verify floor-plate visibility across depth variants and palette contrast against real PC-3.4 assets.
+- `Five-game startup`: verify real-media menu selection for DM1, DM2, CSB, Theron and Nexus; update the gap analysis to distinguish menu handoff from playable-game support.
+- `Authentic media coverage`: update DM2 French archive and CSB Amiga title/audio evidence.
+
+## Known limitations
+
+- `Nexus` and `Theron's Quest`: startup evidence does not establish complete playable campaign parity.
+- Original game media, saves and firmware are not included in release packages.
+
 # Firestaff v3.0.418
 
 ## User-facing changes

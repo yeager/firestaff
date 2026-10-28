@@ -1,33 +1,23 @@
-2026-10-28 TRV2 re-verification against the currently installed Amiga media:
-`m11_dm1_hoc_wall_material_receipt_pc34` passes on this source revision and
-the installed DOS 3.4 corpus. The wider
-`m12_main_menu_game_selection_real_media` selection test passed DM1 FM Towns,
-CSB FM Towns, DM2 FM Towns, DM1 PC34 and DM1 Atari ST, then failed at DM1
-Amiga 2.0. The installed `Dungeon-Master_Amiga_EN_Version-20.zip` has SHA-256
-`6977b1042769c0f6ea22cb42fa7308ed609242dc0eeebd1e00d68660bdb37e2b`; its
-outer ZIP contains one nested ZIP, which contains one ADF. On a picker view
-containing only this archive, the scanner found `Dungeon.dat` but reported
-the required graphics file missing and all DM1 editions unavailable. The
-direct `dm1_v1_amiga_v20_archive_cli_boot` consequently stopped with
-`game unavailable for --game: dm1`. This does not mean that every Amiga route
-is unavailable: the separately installed original `Dungeon-Master_Amiga_EN.zip`
-authenticates as `amiga20-en`, and both direct CLI boot and a no-game M12
-selection reached the DM1 Amiga runtime with its nested `[HD].adf` as owner.
-The menu check used a picker view containing only that original archive and
-verified the `game-handoff` receipt. Keep the named v2.0 preservation-package
-route unresolved while retaining this tested HD Amiga launch route.
+2026-10-28 DM1 Amiga 2.0 archive recheck against the current local corpus:
+`~/.firestaff/data/dm1/Dungeon-Master_Amiga_EN_Version-20.zip` has SHA-256
+`f2b76bb9a818590ee84db37e4bbb5fa84ce0fb93e3f2135807b70c0545fb6ec9` and
+contains the retail, alternate, and two save-disk ZIP/ADF sets. A fresh local
+`firestaff` build launched its exact nested retail ADF from both direct CLI and
+M12. The direct probe reported the authenticated Amiga 2.0 English graphics
+MD5 `6a2f135b53c2220f0251fa103e2a6e7e`, `phase=dm1-runtime`, and
+`levelLoaded=1`. `test_dm1_v1_amiga_v20_archive_cli_boot.sh` passed against this
+original archive, including CLI resume, M12 New Game and Quick Resume, SWSH,
+F0437 title timing, F0441 door cadence, and a real movement input; the test
+confirmed the source archive hash was unchanged. The in-memory
+`test_dm1_v1_amiga_graphics_dat` also passes all 116 assertions after its save
+test initializes the Amiga big-endian target profile.
 
-A second `m12_dm1_catalog_real_media`
-check passed FM Towns and Atari ST but failed the staged-source ownership
-assertions for PC34 and Amiga 2.0: the current PC34 owner is its archive rather
-than the expected extracted directory, and Amiga 2.0 resolves through the
-separate `Dungeon-Master_Amiga_EN.zip` HD package rather than the named v2.0
-archive. The Amiga graphics-data test also failed 35 checks against the
-currently staged v2.0 path, including its SWSH identity and save-disk member.
-The earlier same-day Amiga pass has no recorded archive digest, so it does not
-verify this currently staged copy. Treat the supplied Amiga v2.0 corpus/test
-binding as unresolved; do not claim that this copy launches until the
-original members and their hashes are reconciled. No media was modified.
+The earlier TRV2 result is a different archive copy: SHA-256
+`6977b1042769c0f6ea22cb42fa7308ed609242dc0eeebd1e00d68660bdb37e2b`. Its
+scan and CLI failures were not reproduced against the current local copy, so
+they are not evidence that the current corpus cannot launch. Keep the TRV2
+copy-specific result open for a separate recheck rather than treating it as
+the status of this verified local route. No original media was modified.
 
 2026-10-28 authentic PC34 wall-ornament offset regression: the lazy M11
 ornament cache recomputed the raw-map byte offset from live SFT and Thing

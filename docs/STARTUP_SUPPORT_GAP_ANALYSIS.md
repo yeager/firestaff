@@ -78,10 +78,26 @@ Atari ST selection, before its exact DM1 Amiga 2.0 archive assertion failed.
 The separately installed `Dungeon-Master_Amiga_EN.zip` HD package authenticates
 as DM1 Amiga 2.0 and passed both direct CLI startup and a no-game M12 keyboard
 selection to the `amiga20-en` handoff. The currently staged
-`Dungeon-Master_Amiga_EN_Version-20.zip` copy did not pass its direct CLI or
-graphics/save-media checks; its digest, contents, and failure are recorded in
-[`TODO-dm1.md`](../TODO-dm1.md). Keep that exact preservation-package route
-open without treating it as proof that DM1 Amiga has no supported launch path.
+`Dungeon-Master_Amiga_EN_Version-20.zip` copy on TRV2 did not pass its direct
+CLI check; its digest and host-specific failure are recorded in
+[`TODO-dm1.md`](../TODO-dm1.md). This is distinct from the current local
+archive copy and must not be generalized to it.
+
+### DM1 Amiga 2.0 local archive verification
+
+On the local host, the current archive has SHA-256
+`f2b76bb9a818590ee84db37e4bbb5fa84ce0fb93e3f2135807b70c0545fb6ec9`. A fresh
+Debug `firestaff` build launched its exact nested retail ADF from direct CLI
+and M12. `test_dm1_v1_amiga_v20_archive_cli_boot.sh` passed the authenticated
+CLI, Quick Resume, menu, title, entrance-door, and movement checks. The
+in-memory `test_dm1_v1_amiga_graphics_dat` passed 116/116 checks after its save
+test setup was corrected to represent the Amiga big-endian target profile.
+The boot probe identified the expected Amiga 2.0 English graphics MD5 and
+reported `levelLoaded=1`; the test also confirmed the original archive hash
+was unchanged. The different TRV2 archive hash
+(`6977b1042769c0f6ea22cb42fa7308ed609242dc0eeebd1e00d68660bdb37e2b`)
+still needs its own reproduction before that host-specific failure can be
+resolved or attributed to runtime code.
 
 With the standard per-user data root, the launcher scan completed with all
 five games marked available. Keyboard selection then handed off Nexus Saturn

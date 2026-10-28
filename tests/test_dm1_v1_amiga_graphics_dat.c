@@ -624,8 +624,8 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
     }
     fclose(stream);
     memset(&receipt, 0, sizeof(receipt));
-    CHECK(firestaff_zip_extract_by_suffix(archive, save_zip, &inner,
-                                          &inner_size) == 0,
+    CHECK(firestaff_zip_extract_by_name(archive, save_zip, &inner,
+                                        &inner_size) == 0,
           "real_save_outer_zip_member");
     if (!inner) return;
     CHECK(firestaff_zip_extract_memory_by_suffix(inner, inner_size, save_adf,
@@ -839,6 +839,12 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
         M11_GameView_Init(&resumed_view);
         resumed_view.active = 1;
         strcpy(resumed_view.sourceId, "dm1");
+        /* The original A20 startup binds its selected GRAPHICS.DAT through
+         * the big-endian Amiga legacy loader profile before F0435 can import
+         * a save. Keep that authenticated target-profile gate in this
+         * save-only unit path too. */
+        resumed_view.assetLoader.legacyDm1 = 1;
+        resumed_view.assetLoader.legacyBigEndian = 1;
         CHECK(M11_GameView_LoadDm1OriginalAmigaSaveBytes(
                   &resumed_view, receipt.primary_bytes, receipt.primary_size,
                   "amiga-save-adf::DMGAMEG.DAT") == 1 &&
@@ -868,6 +874,8 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
         M11_GameView_Init(&archived_view);
         archived_view.active = 1;
         strcpy(archived_view.sourceId, "dm1");
+        archived_view.assetLoader.legacyDm1 = 1;
+        archived_view.assetLoader.legacyBigEndian = 1;
         CHECK(M11_GameView_LoadDm1SavePath(&archived_view, virtual_save_path,
                                            NULL) == 1 &&
               archived_view.world.gameTick ==
@@ -919,6 +927,8 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
     M11_GameView_Init(&backup_view);
     backup_view.active = 1;
     strcpy(backup_view.sourceId, "dm1");
+    backup_view.assetLoader.legacyDm1 = 1;
+    backup_view.assetLoader.legacyBigEndian = 1;
     CHECK(M11_GameView_LoadDm1SavePath(&backup_view,
                                        backup_virtual_save_path,
                                        &backup_used) == 1 &&
@@ -965,6 +975,8 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
             M11_GameView_Init(&backup_only_view);
             backup_only_view.active = 1;
             strcpy(backup_only_view.sourceId, "dm1");
+            backup_only_view.assetLoader.legacyDm1 = 1;
+            backup_only_view.assetLoader.legacyBigEndian = 1;
             CHECK(M11_GameView_LoadDm1SavePath(
                       &backup_only_view, backup_only_save_path,
                       &automatic_backup_used) == 1 &&
