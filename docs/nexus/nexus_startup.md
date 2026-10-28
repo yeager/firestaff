@@ -1571,6 +1571,25 @@ This does not establish the NBG0 title background, full-screen composition,
 Configuration page controls, New Game destination execution, Continue/save
 loading, or gameplay viewport/HUD parity.
 
+## New Game input is not yet dispatched (2026-10-28)
+
+The authenticated retail menu reducer returns
+`NEXUS_V1_RETAIL_TITLE_MENU_RESULT_START_NEW_GAME` when Accept is pressed on
+New Game. In `M11_GameView_HandleInput`, the current retail-menu branch groups
+that result with redraw-only outcomes and returns while `title_active` remains
+set. The title screen therefore stays active; the input does not start the
+level.
+
+The older Firestaff startup-action path is not a proven substitute: its
+`NEXUS_V1_STARTUP_ACTION_NEW_GAME` execution opens Firestaff's champion-select
+mode. The retained Ymir cold-boot replay instead reaches a native 3D viewport
+after accepting New Game, without a visible champion-select screen. The
+replay does not identify the active room or establish a stable playable
+checkpoint, so changing `level_loaded`, party coordinates, or title mode here
+would invent runtime state. The native New Game transition still needs a
+source-backed room/load receipt and a matching real-media test before this
+input can be wired to gameplay.
+
 This is a full captured-frame composition check, not a renderer admission. The
 replay consumes Ymir display and VDP snapshots, not a Firestaff runtime upload
 from retail assets. The screenshot has no embedded frame number, so exact
