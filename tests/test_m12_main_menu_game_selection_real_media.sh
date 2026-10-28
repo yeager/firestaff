@@ -22,22 +22,23 @@ scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$scratch_root"
 scratch=$(mktemp -d "$scratch_root/m12-main-game-picker.XXXXXX")
 archive_data_root="$scratch/archive-only-data"
-declare -a original_archives=()
-declare -a original_archive_hashes=()
+declare -a original_sources=()
+declare -a original_source_hashes=()
 
 # The normal data root may contain extracted editions beside original
-# archives. Build a symlink-only view of every top-level ZIP so picker
-# ordering and edition availability stay intact without exposing extracted
-# trees. Snapshot each original archive so the test verifies it stays intact.
-verify_original_archives_unchanged() {
-    local archive
+# archives. Build a symlink-only view of top-level ZIP archives and the raw
+# CSB Atari STX source so picker ordering and edition availability stay intact
+# without exposing extracted trees. Snapshot each source so the test verifies
+# it stays intact.
+verify_original_sources_unchanged() {
+    local source
     local index=0
-    if [[ ${#original_archives[@]} == 0 ]]; then
+    if [[ ${#original_sources[@]} == 0 ]]; then
         return 0
     fi
-    for archive in "${original_archives[@]}"; do
-        if [[ $(firestaff_sha256_file "$archive") != "${original_archive_hashes[$index]}" ]]; then
-            printf 'FAIL: original game archive changed during picker test: %s\n' "$archive" >&2
+    for source in "${original_sources[@]}"; do
+        if [[ $(firestaff_sha256_file "$source") != "${original_source_hashes[$index]}" ]]; then
+            printf 'FAIL: original game source changed during picker test: %s\n' "$source" >&2
             return 1
         fi
         index=$((index + 1))
@@ -47,7 +48,7 @@ verify_original_archives_unchanged() {
 cleanup() {
     local test_status=$?
     trap - EXIT HUP INT TERM
-    if ! verify_original_archives_unchanged; then
+    if ! verify_original_sources_unchanged; then
         test_status=1
     fi
     if [[ ${FIRESTAFF_KEEP_TEST_SCRATCH:-0} == 1 ]]; then
@@ -77,12 +78,13 @@ PY
 )
         archive_hash=$(firestaff_sha256_file "$absolute_archive")
         ln -s "$absolute_archive" "$overlay_game_dir/$(basename "$archive")"
-        original_archives+=("$absolute_archive")
-        original_archive_hashes+=("$archive_hash")
-    done < <(find "$source_game_dir" -maxdepth 1 \( -type f -o -type l \) -iname '*.zip' -print0)
+        original_sources+=("$absolute_archive")
+        original_source_hashes+=("$archive_hash")
+    done < <(find "$source_game_dir" -maxdepth 1 \( -type f -o -type l \) \
+        \( -iname '*.zip' -o -iname '*.stx' \) -print0)
 done
 
-if [[ ${#original_archives[@]} == 0 ]]; then
+if [[ ${#original_sources[@]} == 0 ]]; then
     echo 'SKIP: no authentic top-level ZIP archives are available for DM1, CSB or DM2'
     exit 77
 fi
@@ -250,6 +252,10 @@ if [[ -f "$data_root/dm1/Dungeon-Master_Amiga_EN_Version-20.zip" ]]; then
     run_alternate_platform_picker_case dm1 \
         "$data_root/dm1/Dungeon-Master_Amiga_EN_Version-20.zip" 3 Amiga \
         're:amiga(20-en|20-fr|20-de|21-en|36-multi|demo-en)'
+elif [[ -f "$data_root/dm1/Dungeon-Master_Amiga_EN.zip" ]]; then
+    run_alternate_platform_picker_case dm1 \
+        "$data_root/dm1/Dungeon-Master_Amiga_EN.zip" 3 Amiga \
+        're:amiga20-en'
 fi
 csb_amiga_archive="$data_root/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip"
 if [[ -f "$data_root/csb/Chaos Strikes Back (FTL).zip" ]]; then
@@ -283,7 +289,11 @@ if [[ -f "$csb_amiga_archive" ]]; then
         "$csb_amiga_archive" 1 Amiga \
         're:amiga(31-en|31-multi|35-en|35-multi)'
 fi
-if [[ -f "$data_root/csb/chaos_strikes_back_ftl.zip" ]]; then
+if [[ -f "$data_root/csb/Chaos Strikes Back.stx" ]]; then
+    run_alternate_platform_picker_case csb \
+        "$data_root/csb/Chaos Strikes Back.stx" 2 'Atari ST' \
+        're:st20-21(-hd)?-en'
+elif [[ -f "$data_root/csb/chaos_strikes_back_ftl.zip" ]]; then
     run_alternate_platform_picker_case csb \
         "$data_root/csb/chaos_strikes_back_ftl.zip" 2 'Atari ST' \
         're:st20-21(-hd)?-en'
