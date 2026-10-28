@@ -8152,3 +8152,25 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   `FIRESTAFF_THERON_PCE_FAST_POINTER_TRACE_SUPPORT=1`; run a live capture with
   `THERON_CAPTURE_POINTER_C1DF_TRACE=1`. That mode selects `pce_fast`, rejects
   a binary without the C1DF hook, and records the pointer trace row count.
+## 2026-10-28 — distinguish the authentic PCE Fast Run poll from game startup
+
+- A fresh TRV2 cold start used authenticated Japanese Rev. 1 Track 02 and
+  System Card 3.0 with an isolated, PCE-Fast-enabled Mednafen build. The
+  controller trace records the System Card polling Run (`raw=0008`) at
+  `$E4B4/$E4C5` over frames 5312–7651. This confirms Run reached the ROM's
+  controller read path, but the capture produced no CD IRQ, raw-sector span,
+  SCSI read, or `$E009` dispatch and no game transition. Button I, Button II,
+  and Up were not observed in the ROM poll trace; do not infer them from host
+  events alone.
+- The PCE Fast drive hooks record source-bound reads from the CD data port,
+  but no authenticated CD-to-RAM origin receipt. The capture therefore does
+  not identify why this module remained in the System Card path. Compare it
+  with the standard-PCE cold-start trace before changing loader or input code.
+- The original manual's startup instructions identify Run as the game-start
+  action. The manual does not specify a multi-second hold. Greatstone's
+  Theron's Quest conversion is explicitly a custom RTC adaptation and
+  documents deviations from retail behavior; use it only as secondary
+  dungeon/data-format evidence, not as PCE menu or input truth.
+- References: [original PCE manual](https://www.tg-16.com/contributors/bernie/Dungeon_Master/Dungeon_Master.pdf),
+  indexed by the [DMWeb PC Engine/TurboGrafx edition page](http://dmweb.free.fr/games/therons-quest/editions/pc-engine-turbografx/);
+  [Greatstone's RTC conversion notes](https://www.dungeon-master.com/forum/viewtopic.php?t=26586).
