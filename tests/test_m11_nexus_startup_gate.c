@@ -1027,12 +1027,15 @@ int main(void) {
                                 (unsigned int)nexus_title_boot_start_ready_frames(),
                                 128),
                             "real Nexus title-only boot reaches the startup hold");
+                view.lastOutcome[0] = '\0';
                 expect_true(M11_GameView_HandleInput(&view,
                                                      M12_MENU_INPUT_ACTION) ==
                                 M11_GAME_INPUT_REDRAW &&
                                 view.nexusState.title_active == 1 &&
                                 view.nexusState.startup_save_select_active == 0 &&
-                                view.nexusState.champion_select_active == 0,
+                                view.nexusState.champion_select_active == 0 &&
+                                strstr(view.lastOutcome,
+                                       "NEXUS MENU CAPTURE REQUIRED") != NULL,
                             "real Nexus title-only boot blocks Action without a captured menu route");
                 expect_true(M11_GameView_HandleInput(&view,
                                                      M12_MENU_INPUT_ACCEPT) ==
