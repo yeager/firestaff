@@ -1868,8 +1868,8 @@ movement mapping or prove Firestaff input parity.
 The accepted-save capture's VDP1 snapshot is frame 2,173 with 83 commands. Its
 complete command trace contains 175,042 rows with zero dropped rows. The
 capture commands, logs, screenshots, memory/VDP dumps, hashes and scope limits
-are recorded in the [external evidence bundle](
-../../../../firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/README.md).
+are recorded at
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/README.md`.
 The bundle contains no BKR payload. This establishes the retail game's
 Continue-to-gameplay behavior in Ymir with the retained corpus save; it does
 not establish that Firestaff loads the BKR, executes Continue, or renders the
