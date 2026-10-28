@@ -7,6 +7,7 @@
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_floor_ornament_pc34_compat.h"
 #include "menu_input_m12.h"
+#include "render_sdl_m11.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -102,23 +103,14 @@ static void audited_idle_tick(M11_GameViewState* state,
     collect_runtime_events(&state->world, audit);
 }
 
-static unsigned int viewport_fnv1a(const unsigned char* pixels)
-{
-    unsigned int hash = 2166136261u;
-    size_t i;
-    for (i = 33u * 320u; i < 168u * 320u; ++i)
-        hash = (hash ^ pixels[i]) * 16777619u;
-    return hash;
-}
-
 static int verify_hoc_plate_changes_indexed_view(M11_GameViewState* state,
                                                   int relativeForward,
                                                   int partyX,
                                                   int expectedGraphicIndex)
 {
     unsigned char framebuffer[320 * 200];
-    unsigned int renderedHash;
-    unsigned int suppressedHash;
+    unsigned char rendered[320 * 200];
+    uint8_t palette[256][3];
     struct DungeonThings_Compat* things;
     unsigned short sensorThing;
     struct DungeonSensor_Compat* plateSensor = NULL;
@@ -190,23 +182,61 @@ static int verify_hoc_plate_changes_indexed_view(M11_GameViewState* state,
     }
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(state, framebuffer, 320, 200);
-    renderedHash = viewport_fnv1a(framebuffer);
+    memcpy(rendered, framebuffer, sizeof(rendered));
     /* Re-render the authentic world with only this sensor's ornament
-     * suppressed. A hash difference proves an indexed pixel contribution. */
+     * suppressed to recover the original floor pixels beneath the plate. */
     savedOrdinal = plateSensor->ornamentOrdinal;
     plateSensor->ornamentOrdinal = 0;
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(state, framebuffer, 320, 200);
-    suppressedHash = viewport_fnv1a(framebuffer);
     plateSensor->ornamentOrdinal = savedOrdinal;
-    if (renderedHash == suppressedHash) {
-        fprintf(stderr,
-                "plate render unchanged at D%dC (%08x)\n",
-                relativeForward, renderedHash);
-        return 0;
+    {
+        int x, y;
+        unsigned int changed = 0;
+        unsigned int outsideZone = 0;
+        unsigned int lowContrast = 0;
+        unsigned int minRgbDelta = 766u;
+        int zoneLeft = plan.blit.dstX;
+        int zoneRight = zoneLeft + plan.blit.width;
+        int zoneTop = 33 + plan.blit.dstY;
+        int zoneBottom = zoneTop + plan.blit.height;
+        /* Ignore index-only changes that collapse to the same color. Every
+         * source-zone pixel must differ visibly from the authentic PC34
+         * palette-mapped floor with the sensor ornament suppressed. */
+        if (!M11_Render_CopyIndexedPaletteRgb8(palette)) {
+            fputs("PC34 indexed presentation palette is unavailable\n", stderr);
+            return 0;
+        }
+        for (y = 33; y < 168; ++y) for (x = 48; x < 272; ++x) {
+            size_t at = (size_t)y * 320u + (size_t)x;
+            if (rendered[at] != framebuffer[at]) {
+                unsigned int rgbDelta = 0;
+                int channel;
+                ++changed;
+                if (x < zoneLeft || x >= zoneRight ||
+                    y < zoneTop || y >= zoneBottom) {
+                    ++outsideZone;
+                }
+                for (channel = 0; channel < 3; ++channel) {
+                    int a = palette[rendered[at]][channel];
+                    int b = palette[framebuffer[at]][channel];
+                    rgbDelta += (unsigned int)(a > b ? a - b : b - a);
+                }
+                if (rgbDelta < minRgbDelta) minRgbDelta = rgbDelta;
+                if (rgbDelta < 60u) ++lowContrast;
+            }
+        }
+        if (changed == 0u || outsideZone != 0u || lowContrast != 0u) {
+            fprintf(stderr,
+                    "HoC plate RGB contribution invalid at D%dC: pixels=%u outside-zone=%u low-contrast=%u min-RGB-L1=%u\n",
+                    relativeForward, changed, outsideZone, lowContrast,
+                    minRgbDelta);
+            return 0;
+        }
+        printf("PASS: authentic PC34 HoC pressure plate (6,9) selects GRAPHICS.DAT %04d and changes %u in-zone pixels at D%dC from (%d,9), minimum RGB-L1 contrast=%u\n",
+               expectedGraphicIndex, changed, relativeForward, partyX,
+               minRgbDelta);
     }
-    printf("PASS: authentic PC34 HoC pressure plate (6,9) selects GRAPHICS.DAT %04d and changes indexed viewport pixels at D%dC from (%d,9), ordinal=%d\n",
-           expectedGraphicIndex, relativeForward, partyX, ordinal);
     return 1;
 }
 
