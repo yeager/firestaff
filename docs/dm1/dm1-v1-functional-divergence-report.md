@@ -482,11 +482,11 @@
 - **Functional impact:** CPSF status variables (e.g. `G0417_B_PartyHasBeenOnThisMap`, etc.) are reset by the new path independently.
 - **Severity:** Minor (intentional split)
 
-### STP-02 — F0438 `START_DoorsAnimation` (entrance door opening) is referenced but not in new path
-- **ReDMCSB reference:** `ENTRANCE.C:F0438_START_DoorsAnimation` (the 31-step entrance door opening animation). BUG0_71 in the same source: a missing VBlank guard.
-- **Firestaff state:** `src/frontend/entrance_frontend_pc34_compat.c:122` documents the F0438 path as the source-of-truth for the entrance animation. The actual animation is done by the entrance_frontend, not by F0438. BUG0_71 is preserved.
-- **Functional impact:** Entrance animation works. The new path is not source-locked to F0438.
-- **Severity:** Minor (intentional split)
+### STP-02 — F0438 entrance timing is host-paced
+- **ReDMCSB reference:** `ENTRANCE.C:F0438_START_DoorsAnimation` defines 31 visible four-pixel door steps and notes that its raw one-VBlank loop can be too fast on modern computers (BUG0_71).
+- **Firestaff state:** The M11 entrance executor consumes the source-ordered 31-step geometry. PC34 requests a 55 ms minimum interval for each door frame through `ENTRANCE_Compat_GetDoorFrameDelayMs`; presentation time is counted toward that interval. The original raw one-VBlank cadence is therefore not preserved. Current code requests about 1.71 seconds for the 31 frames, but no paired native PC34 capture measures the presented interval.
+- **Functional impact:** Source geometry and ordering are covered, but the reported native door speed has not been confirmed or disproved against an original PC34 capture. Keep the user's timing report open; do not infer native parity from the requested delay or headless tests.
+- **Severity:** Open native timing comparison
 
 ---
 
@@ -503,7 +503,7 @@
 | BUG0_41 | Megamax compiler bug (antifire/antimagic ignored) | Megamax packages only | Preserved only for verified Atari ST source; other packages retain their actual statistic | Resolved source variant |
 | BUG0_45 | Vitality wound probability reversed | Preserved (except Megamax Atari via BUG0_41) | Preserved through the F0739c F0307(Vitality) wound-selection route; Megamax Atari source identity forces the original unaffected behaviour | Resolved source variant |
 | BUG0_66 | Smoke on source map (vs destination) | Preserved | Preserved in amalgam | Cosmetic |
-| BUG0_71 | Missing VBlank guard in entrance | Preserved | Preserved (entrance_frontend_pc34_compat.c) | Cosmetic |
+| BUG0_71 | Missing VBlank guard in original entrance loop | Preserved | Raw fast cadence is intentionally countered by a 55 ms PC34 frame interval; actual native timing is unmeasured | Open native timing comparison |
 | BUG0_72 | `>=` vs `>` in F0310 stat clamp | Preserved | **Not preserved** (CHM-06) | Minor |
 | BUG0_78 | Door-wound missing parens | Preserved | **Preserved** (CHS-02) | Cosmetic (intentional) |
 | BUG0_81 | Uninitialised `damage` in weak-branch | Preserved | Unclear (combat.c:401) | Minor |
@@ -513,7 +513,7 @@
 | BUG0_75 | Champion portrait ordinal not reset | Preserved | Preserved in amalgam | Cosmetic |
 | BUG0_76 | Same text on multiple wall sides | Preserved | Preserved in amalgam | Cosmetic |
 
-> **Net behavior change:** Firestaff deliberately hardens the unsafe BUG0_16 path and retains documented policy differences such as BUG0_72. BUG0_41 and BUGX_XX are selected from the original compiler/package family rather than treated as global fixes. F0308's ordinary Luck route is no longer part of that divergence list. The original's 4 most-cited intentional bugs (BUG0_26, BUG0_66, BUG0_78, BUG0_71) are preserved.
+> **Net behavior change:** Firestaff deliberately hardens the unsafe BUG0_16 path and retains documented policy differences such as BUG0_72. BUG0_41 and BUGX_XX are selected from the original compiler/package family rather than treated as global fixes. F0308's ordinary Luck route is no longer part of that divergence list. BUG0_26, BUG0_66 and BUG0_78 remain preserved; BUG0_71's raw timing is deliberately countered by the host door-frame interval, whose native presentation still needs comparison.
 
 ---
 
@@ -523,10 +523,13 @@
 |----------|-------|-----------|
 | Critical | 0     | 0%        |
 | Major    | 13    | 19%       |
-| Minor    | 40    | 59%       |
+| Minor    | 39    | 57%       |
+| Open     | 1     | 1%        |
 | Cosmetic | 5     | 7%        |
 | N/A (source-locked match) | 10 | 15%   |
 | **Total findings** | **68** | **100%** |
+
+Percentages are rounded and may not sum to 100%.
 
 Note: 68 findings, of which 18 are explicit non-duplications of the prior `DM1_V1_BUG_AUDIT.md` (BUG-101..BUG-118) and are referenced in this report as verification points. **Net new findings beyond the prior audit: 50.**
 

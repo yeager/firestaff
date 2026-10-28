@@ -103,10 +103,13 @@ viewport. Reproduced the exact original PC34 archive and rebuilt the current
 source. Focused authentic-media CTests passed for inscription font/stale-state
 rendering, HoC wall material/torch receipt, and floor-pit viewport capture;
 they prove selected source material and destination pixels, not the reported
-native presented frame or full pixel parity. Existing source times the shared
-PC34 F0438 entrance transition at 31 steps with nominal 40 ms waits; no paired
-native timing capture yet distinguishes that transition from I34E's separate
-32-step selector door. Added `m11_dm1_hoc_stair_torch_pc34` to send the normal
+native presented frame or full pixel parity. Current PC34 F0438 code requests
+55 ms after each of its 31 visible door frames (about 1.71 s total before any
+host scheduling overrun), using the documented fast-loop correction rather
+than the raw one-VBlank interval. This is a requested minimum cadence, not a
+measured native interval; no paired native timing capture yet distinguishes
+that entrance from I34E's separate 32-step selector door. Added
+`m11_dm1_hoc_stair_torch_pc34` to send the normal
 M11 backward-movement input from the authentic HoC corridor at (4,15) onto
 the original stairs at (3,15); the PC34 archive confirms those tile types,
 and GitHub Actions compiled and linked the test on Linux, macOS and Windows.
