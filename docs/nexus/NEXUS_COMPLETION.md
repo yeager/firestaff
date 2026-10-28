@@ -327,8 +327,11 @@ ownership path remain unverified. The native start path now authenticates
 `DM.BIN`, parses that level-1 entry, loads canonical `LEV01.DGN`, validates the
 start cell, and emits a dungeon-start receipt before continuing the runtime
 handoff. Viewport, material, and HUD routes still have separate evidence gates,
-so this is not yet a playable-start result. The loader tuple itself remains
-unchanged by paired Up input. Exact trace and Ghidra export hashes are in the external
+so this is not yet a playable-start result. TRV2 compiled the `firestaff`
+target, and the authentic-data `nexus_v1_launch_smoke_probe` passed 22/22,
+including the new launcher start receipt. The interactive M11 path has not yet
+been captured in Ymir. The loader tuple itself remains unchanged by paired Up
+input. Exact trace and Ghidra export hashes are in the external
 `nexus_new_game_capture_20261028/config-struct-sh2-trace-1800/` evidence
 directory.
 

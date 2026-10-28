@@ -1712,8 +1712,10 @@ cell geometry, and creates the dungeon-start receipt before producing the
 runtime handoff. Other raw headings remain unmapped and are rejected. The
 viewport, material, and HUD routes retain their independent evidence gates;
 this loader change does not establish complete playability. The `firestaff`
-target compiled successfully on TRV2 with this route in place; no runtime
-capture has yet exercised the new handoff.
+target compiled successfully on TRV2. The real-data
+`nexus_v1_launch_smoke_probe` passed 22/22 checks, including this launcher
+start receipt. It does not exercise the interactive M11 route or provide a
+Ymir capture of that handoff.
 
 A read-only pass through the existing DGN parser on authentic LEV01 shows an
 open chamber at `(29,47)` and a single square-type-8 passage at `(29,48)`,
