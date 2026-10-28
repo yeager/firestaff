@@ -1688,15 +1688,25 @@ point. Both captured frame 1,800. The screenshots differ at 216,860 pixels,
 WRAM-HI at 3,011 bytes, VDP1 framebuffer at 209,996 bytes, and VDP1 VRAM at
 3,808 bytes; WRAM-LO and VDP2 VRAM are byte-identical. The generic loader
 record at `0x06064544..0x0606456f` is identical and retains level 1, angle
-`0x8000`, and `(29,47)`. This proves the paired input changes rendered/runtime
-state, but does not identify the angle's world-axis mapping.
+`0x8000`, and `(29,47)`. The angle word at WRAM-HI offsets `0x746d0`,
+`0x792be`, and `0x9705e` is `0x8000` in the no-turn baseline, `0x8064` after
+left, and `0x7f9c` after right. The companion word at `0x746ca` changes to
+`+100` and `-100`. The frame-10 SH-2 trace records PC `0x06010cfa`
+initializing `0x060792be` to `0x8000` in `FUN_06010cf4`, with object base
+`0x060792b0`. An Up/control pair changes adjacent word data at `0x060792b8`
+from `0x60000000` to `0x5c000000` while the angle remains `0x8000`. Together
+these observations bind the table angle to a live, input-adjusted pose object
+and show the signed left/right adjustment. They do not identify the position
+component's DGN axis or the angle's cardinal/world-axis mapping.
 
 A read-only pass through the existing DGN parser on authentic LEV01 shows an
 open chamber at `(29,47)` and a single square-type-8 passage at `(29,48)`,
 bounded by walls at `(28,48)` and `(30,48)`. The frame-1800 scene shows a
-narrow opening ahead, which is consistent with facing toward increasing Y.
-That geometric comparison is a hypothesis: no direct Saturn camera-axis
-mapping has been established, and Firestaff does not use it. Screenshots,
+narrow opening ahead, visually consistent with facing toward the single
+passage. A 164-frame left hold instead ends at angle `0x293d` and a close wall
+view, not at the simple expected quarter-turn value; an immediate frame-1665
+capture reproduces that result. Neither visual comparison proves the
+cardinal/world-axis mapping, and Firestaff does not use them. Screenshots,
 complete memory dumps, reproduction details, and artifact hashes are retained
 in external evidence at
 `nexus_start_heading_turn_20261028/`.
