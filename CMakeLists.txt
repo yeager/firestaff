@@ -4207,10 +4207,13 @@ if(BUILD_TESTING)
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_dos_fr_native_cli_boot.sh"
             "$<TARGET_FILE:firestaff>"
     )
+    set(FIRESTAFF_DM2_DOS_FR_ARCHIVE
+        "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_FR.zip"
+        CACHE FILEPATH "Authentic French DM2 DOS archive used by its startup test")
     set_tests_properties(dm2_v1_dos_fr_native_cli_boot PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm2;dos;french;startup;cli;real-media;native;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM2_DOS_FR_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_FR.zip"
+        ENVIRONMENT "FIRESTAFF_DM2_DOS_FR_ARCHIVE=${FIRESTAFF_DM2_DOS_FR_ARCHIVE}"
         # Two independent sessions traverse the authentic French archive:
         # one M12 menu runtime route and one direct input/runtime probe.
         TIMEOUT 120
