@@ -32,6 +32,9 @@ bytes and emulator memory dumps are not included in this repository.
 Reproduction from the isolated Ymir profile:
 
 ```sh
+: "${profile:?Set profile to the isolated Ymir profile with the verified IPL and menu savestates}"
+: "${disc:?Set disc to the verified English retail CUE or supported disc image}"
+
 ymir-sdl3 --debug --fast-forward --profile "$profile" --load-state 1 \
   --capture-frames 8 --capture-pad-input 0:down:1 --dump-memory \
   --capture-screenshot --capture-save-state 2 --capture-no-present "$disc"
