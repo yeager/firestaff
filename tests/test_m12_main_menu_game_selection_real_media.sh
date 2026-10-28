@@ -192,13 +192,14 @@ run_alternate_platform_picker_case() {
     local down_count=$3
     local platform=$4
     local edition=$5
+    local picker_data_root=${6:-$archive_data_root}
     local navigation='wait-scan-complete,wait20'
     local game_card_index=0
     local index
     local overlay_archive
-    overlay_archive="$archive_data_root/$game_id/$(basename "$source_archive")"
+    overlay_archive="$picker_data_root/$game_id/$(basename "$source_archive")"
     if [[ ! -f "$overlay_archive" ]]; then
-        printf 'FAIL: authentic archive is not present in the archive-only picker view: %s\n' \
+        printf 'FAIL: authentic source is not present in the isolated picker view: %s\n' \
             "$source_archive" >&2
         return 1
     fi
@@ -216,7 +217,7 @@ run_alternate_platform_picker_case() {
     done
     navigation+=",key:enter,wait20,key:enter,wait20,key:enter"
     run_game_picker_case "$game_id" "$overlay_archive" "$navigation" \
-        "$edition" keyboard "$platform" "$archive_data_root" \
+        "$edition" keyboard "$platform" "$picker_data_root" \
         "$game_id-$platform-picker" resolved
     alternate_platform_cases=$((alternate_platform_cases + 1))
 }
@@ -290,9 +291,26 @@ if [[ -f "$csb_amiga_archive" ]]; then
         're:amiga(31-en|31-multi|35-en|35-multi)'
 fi
 if [[ -f "$data_root/csb/Chaos Strikes Back.stx" ]]; then
+    csb_atari_picker_root="$scratch/csb-atari-stx-picker-data"
+    for game_id in dm1 csb dm2; do
+        mkdir -p "$csb_atari_picker_root/$game_id"
+        while IFS= read -r -d '' source_archive; do
+            source_basename=$(basename "$source_archive")
+            # Keep the other game cards and CSB platforms available so the
+            # scripted selection follows the same menu route, while removing
+            # only the Atari ZIP that could win over this authentic raw STX.
+            if [[ "$game_id" == csb &&
+                  ( "$source_basename" == 'Chaos Strikes Back (FTL).zip' ||
+                    "$source_basename" == chaos_strikes_back_ftl.zip ) ]]; then
+                continue
+            fi
+            ln -s "$source_archive" \
+                "$csb_atari_picker_root/$game_id/$source_basename"
+        done < <(find "$archive_data_root/$game_id" -maxdepth 1 -type l -print0)
+    done
     run_alternate_platform_picker_case csb \
         "$data_root/csb/Chaos Strikes Back.stx" 2 'Atari ST' \
-        're:st20-21(-hd)?-en'
+        're:st20-21(-hd)?-en' "$csb_atari_picker_root"
 elif [[ -f "$data_root/csb/chaos_strikes_back_ftl.zip" ]]; then
     run_alternate_platform_picker_case csb \
         "$data_root/csb/chaos_strikes_back_ftl.zip" 2 'Atari ST' \
