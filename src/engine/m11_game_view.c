@@ -42958,8 +42958,6 @@ static void m11_ensure_ornament_cache(M11_GameViewState* state, int mapIndex) {
     uint8_t* dungeonBytes = NULL;
     size_t dungeonByteCount = 0u;
     int i;
-    int totalColumns;
-    long thingDataTotalBytes;
 
     if (!state || !state->world.dungeon || !state->world.dungeon->loaded) return;
     dun = state->world.dungeon;
@@ -43029,29 +43027,15 @@ static void m11_ensure_ornament_cache(M11_GameViewState* state, int mapIndex) {
         dungeonByteCount = expandedSize;
     }
 
-    /* Compute the raw data section offset with the same complete layout as
-     * F0502_DUNGEON_LoadTileData_Compat.  Text words precede the typed Thing
-     * records in PC34 DUNGEON.DAT; omitting them shifts every map metadata
-     * table and turns real wall ornaments into unrelated graphic indices. */
-    totalColumns = 0;
-    for (i = 0; i < (int)dun->header.mapCount; ++i) {
-        totalColumns += dun->maps[i].width;
-    }
-    thingDataTotalBytes = 0;
-    for (i = 0; i < 16; ++i) {
-        thingDataTotalBytes += (long)dun->header.thingCounts[i] *
-                               (long)s_thingDataByteCount[i];
-    }
-    rawDataFileOffset = DUNGEON_HEADER_SIZE +
-                        (long)dun->header.mapCount * DUNGEON_MAP_DESC_SIZE +
-                        (long)totalColumns * 2 +
-                        (long)dun->header.squareFirstThingCount * 2 +
-                        (long)dun->header.textDataWordCount * 2 +
-                        thingDataTotalBytes;
+    /* The shared loader records this source offset before runtime object
+     * pools reserve extra SFT and Thing slots. Recomputing it from the live
+     * header shifts later maps into unrelated bytes after those counts grow. */
+    rawDataFileOffset = dun->rawMapDataFileOffset;
     mapFileOffset = rawDataFileOffset + (long)m->rawMapDataByteOffset;
 
     /* Read only the source-owned metadata span after the map's squares. */
-    if (mapFileOffset < 0 || (unsigned long long)mapFileOffset > dungeonByteCount ||
+    if (rawDataFileOffset <= 0 || mapFileOffset < rawDataFileOffset ||
+        (unsigned long long)mapFileOffset > dungeonByteCount ||
         (size_t)squareCount > dungeonByteCount - (size_t)mapFileOffset ||
         (size_t)metaSize > dungeonByteCount - (size_t)mapFileOffset -
                            (size_t)squareCount) {

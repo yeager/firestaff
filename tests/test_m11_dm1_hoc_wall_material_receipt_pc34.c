@@ -10,6 +10,7 @@
 #include "dm1_v1_wall_ornament_pc34_compat.h"
 #include "m11_game_view.h"
 #include "memory_dungeon_dat_pc34_compat.h"
+#include "asset_find_by_hash.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -217,10 +218,11 @@ static int verify_wall_ornament_pixel(
             if (receipt->paletteMapValid) {
                 expected = receipt->paletteMap[expected & 0x0f];
             }
-            return framebuffer[(receipt->destinationY + destinationY) *
-                                   kFramebufferWidth +
-                               receipt->destinationX + destinationX] ==
-                (unsigned char)(16 | expected);
+            if (framebuffer[(receipt->destinationY + destinationY) *
+                            kFramebufferWidth + receipt->destinationX +
+                            destinationX] == (unsigned char)(16 | expected)) {
+                return 1;
+            }
         }
     }
     return 0;
@@ -360,6 +362,125 @@ static int verify_all_ordinary_hoc_wall_ornaments(
     return 0;
 }
 
+static int verify_real_pc34_wall_ornament_tables_across_maps(
+    M11_GameViewState *state,
+    unsigned char *framebuffer)
+{
+    const struct DungeonDatState_Compat *dungeon;
+    uint8_t *sourceBytes = NULL;
+    size_t sourceByteCount = 0u;
+    long sourceRawMapOffset;
+    int mapIndex;
+    int ok = 1;
+
+    if (!state || !framebuffer || !state->world.dungeon ||
+        !state->world.dungeon->loaded || !state->world.dungeon->maps ||
+        !asset_read_path_alloc(state->dungeonPath, &sourceBytes,
+                               &sourceByteCount) ||
+        !sourceBytes || sourceByteCount < DUNGEON_HEADER_SIZE + 2u) {
+        free(sourceBytes);
+        return 0;
+    }
+    dungeon = state->world.dungeon;
+    if (sourceBytes[0] == 0x81u && sourceBytes[1] == 0x04u) {
+        /* This regression is intentionally tied to the authentic DOS PC34
+         * archive selected by this test, not to a made-up decompressed map. */
+        free(sourceBytes);
+        return 0;
+    }
+    sourceRawMapOffset = (long)sourceByteCount - 2L -
+                         (long)(sourceBytes[2] |
+                               ((unsigned short)sourceBytes[3] << 8));
+    if (sourceRawMapOffset <= 0 ||
+        dungeon->rawMapDataFileOffset != sourceRawMapOffset) {
+        fprintf(stderr,
+                "PC34 raw map offset mismatch: loader=%ld source=%ld\n",
+                dungeon->rawMapDataFileOffset, sourceRawMapOffset);
+        free(sourceBytes);
+        return 0;
+    }
+
+    /* Runtime startup reserves fresh SFT and Thing slots, so the live header
+     * counts no longer describe the bytes in this original DUNGEON.DAT. */
+    if (dungeon->header.squareFirstThingCount <=
+            (unsigned short)(sourceBytes[10] |
+                             ((unsigned short)sourceBytes[11] << 8))) {
+        fprintf(stderr, "PC34 runtime SFT reserve was not present in this test\n");
+        free(sourceBytes);
+        return 0;
+    }
+
+    for (mapIndex = 0; mapIndex < (int)dungeon->header.mapCount; ++mapIndex) {
+        const struct DungeonMapDesc_Compat *map = &dungeon->maps[mapIndex];
+        int x;
+        int y;
+        int foundPassable = 0;
+        int ordinal;
+        long mapOffset;
+        int squareCount = (int)map->width * (int)map->height;
+
+        if (map->wallOrnamentCount == 0) continue;
+        mapOffset = sourceRawMapOffset + (long)map->rawMapDataByteOffset;
+        if (mapOffset < sourceRawMapOffset || squareCount <= 0 ||
+            (size_t)mapOffset > sourceByteCount ||
+            (size_t)squareCount + (size_t)map->creatureTypeCount >
+                sourceByteCount - (size_t)mapOffset ||
+            map->wallOrnamentCount > DM1_WALL_ORN_MAX) {
+            ok = 0;
+            break;
+        }
+
+        for (x = 0; x < (int)map->width && !foundPassable; ++x) {
+            for (y = 0; y < (int)map->height && !foundPassable; ++y) {
+                const unsigned char square = dungeon->tiles[mapIndex].squareData[
+                    x * (int)map->height + y];
+                const int element = (square & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+                if (element == DUNGEON_ELEMENT_CORRIDOR ||
+                    element == DUNGEON_ELEMENT_STAIRS) {
+                    state->world.party.mapIndex = mapIndex;
+                    state->world.party.mapX = x;
+                    state->world.party.mapY = y;
+                    state->world.party.direction = 0;
+                    foundPassable = 1;
+                }
+            }
+        }
+        if (!foundPassable) {
+            fprintf(stderr, "PC34 map %d has ornaments but no passable test tile\n",
+                    mapIndex);
+            ok = 0;
+            break;
+        }
+
+        memset(framebuffer, 0, kFramebufferWidth * kFramebufferHeight);
+        M11_GameView_Draw(state, framebuffer,
+                          kFramebufferWidth, kFramebufferHeight);
+        if (!state->ornamentCacheLoaded[mapIndex]) {
+            fprintf(stderr, "PC34 wall ornament cache did not load map %d\n",
+                    mapIndex);
+            ok = 0;
+            break;
+        }
+        for (ordinal = 0; ordinal < (int)map->wallOrnamentCount; ++ordinal) {
+            const size_t sourceIndex = (size_t)mapOffset +
+                (size_t)squareCount + (size_t)map->creatureTypeCount +
+                (size_t)ordinal;
+            const int expected = sourceBytes[sourceIndex];
+            if (state->wallOrnamentIndices[mapIndex][ordinal] != expected) {
+                fprintf(stderr,
+                        "PC34 map %d wall ordinal %d: cache=%d source=%d\n",
+                        mapIndex, ordinal,
+                        state->wallOrnamentIndices[mapIndex][ordinal], expected);
+                ok = 0;
+                break;
+            }
+        }
+        if (!ok) break;
+    }
+    free(sourceBytes);
+    return ok;
+}
+
 /* The torch beside the first HoC stairs is a map-owned wall ornament with
  * an associated source Thing and sensor chain. Verify its exact GRAPHICS.DAT
  * material at the actual wall cell; a generic ornament sample could miss it. */
@@ -446,6 +567,7 @@ static int verify_hoc_stair_torch_wall_asset(
                     for (side = -1; side <= 1; ++side) {
                         int mapX = -1, mapY = -1, element = -1;
                         int ordinal = -1, portrait = -1, inscription = -1;
+                        int sourceGlobalIndex = -1;
                         M11_Dm1WallOrnamentHostPresentationReceipt receipt;
                         if (!M11_GameView_ProbeViewportRenderMetadata(
                                 state, forward, side, &mapX, &mapY, &element,
@@ -453,6 +575,12 @@ static int verify_hoc_stair_torch_wall_asset(
                             mapX != 3 || mapY != 14 ||
                             element != DUNGEON_ELEMENT_WALL || ordinal <= 0 ||
                             portrait >= 0 || inscription >= 0) continue;
+                        if (!dm1_v1_ornament_cache_global_index_pc34(
+                                state->ornamentCacheLoaded[0] ? 1 : 0,
+                                state->wallOrnamentIndices[0],
+                                DM1_WALL_ORN_MAX, ordinal,
+                                &sourceGlobalIndex) ||
+                            sourceGlobalIndex < 0) continue;
 
                         memset(framebuffer, 0,
                                kFramebufferWidth * kFramebufferHeight);
@@ -461,11 +589,12 @@ static int verify_hoc_stair_torch_wall_asset(
                         memset(&receipt, 0, sizeof(receipt));
                         M11_GameView_GetDm1WallOrnamentHostPresentationReceipt(
                             &receipt);
-                        if (receipt.valid && receipt.globalOrnamentIndex == 32 &&
+                        if (receipt.valid &&
+                            receipt.globalOrnamentIndex == sourceGlobalIndex &&
                             verify_wall_ornament_pixel(state, framebuffer,
                                                       &receipt)) {
-                            printf("ok: critical PC34 HoC stair TORCH wall ornament rendered from original GRAPHICS.DAT at party=(%d,%d,d%d)\n",
-                                   x, y, direction);
+                            printf("ok: critical PC34 HoC stair TORCH wall ornament rendered from original GRAPHICS.DAT (selector %d) at party=(%d,%d,d%d)\n",
+                                   sourceGlobalIndex, x, y, direction);
                             return 1;
                         }
                     }
@@ -714,6 +843,10 @@ int main(void)
     }
     if (!verify_hoc_stair_torch_pickup(&state, framebuffer)) {
         fprintf(stderr, "real PC34 HoC stair torch could not be picked up through M11\n");
+        goto fail;
+    }
+    if (!verify_real_pc34_wall_ornament_tables_across_maps(&state, framebuffer)) {
+        fprintf(stderr, "real PC34 wall ornament metadata drifted across maps\n");
         goto fail;
     }
     if (!verify_all_ordinary_hoc_wall_ornaments(&state, framebuffer)) {

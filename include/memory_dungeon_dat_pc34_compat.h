@@ -103,6 +103,10 @@ struct DungeonDatState_Compat {
     int             dungeonColumnCount;
     struct DungeonMapTiles_Compat* tiles;  /* [header.mapCount], NULL until tiles loaded */
     long                          fileSize;
+    /* Byte offset of the raw map data within the expanded source body. Keep
+     * this source-owned value because live object-pool reservations can
+     * enlarge header counts after loading. */
+    long                          rawMapDataFileOffset;
     int                           loaded;
     int                           tilesLoaded;
     /* A PC34 save tail is already checksum-validated by F0435. Retain the

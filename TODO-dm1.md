@@ -1,3 +1,15 @@
+2026-10-28 authentic PC34 wall-ornament offset regression: the lazy M11
+ornament cache recomputed the raw-map byte offset from live SFT and Thing
+counts. PC34 startup reserves additional runtime pool entries, so these counts
+no longer describe the original `DUNGEON.DAT`; later map tables were read from
+unrelated bytes. The dungeon loaders now retain the source raw-map offset
+before pool reservation, and `m11_dm1_hoc_wall_material_receipt_pc34` compares
+every original PC34 map wall-ornament table against its authenticated archive
+bytes after the live pools have grown. The real-media regression passes,
+including presentation of all ordinary HoC wall ornaments. This verifies the
+source-selected material and visible original pixels, but does not prove
+matched native palette/composition or close the reported black-hole concern.
+
 2026-10-28 authentic PC34 HoC pressure plate perspective coverage: the
 `m11_dm1_pc34_first_monster_combat_real` original-media probe now checks the
 same map-0 plate `(6,9)` from normal movement poses `(7,9)`, `(8,9)` and
@@ -200,15 +212,14 @@ matched original/Firestaff Level 00 frames before closing the visual report.
 Keep pressure-pad graphics distinct from floor-pit graphics 0049–0063; do not substitute generated assets.
 
 The same-day `test_m11_dm1_hoc_wall_material_receipt_pc34` run against the
-original archive also passed: the authentic stair torch rendered, was picked
-up and equipped, carried light through the real stairs transition, and every
-ordinary HoC wall-ornament ordinal in the test reached the framebuffer from
-original material. This verifies source-backed draw admission for those tested
-views, but the regression checks source pixels/receipts rather than unique
-ornament appearance or matched native palette and composition. Keep the
+original archive also passed: it compares cached wall selectors across every
+PC34 map with wall ornaments to the original `DUNGEON.DAT`, then renders every
+ordinary HoC wall-ornament ordinal. It also verifies the stair torch's
+original `GRAPHICS.DAT` pixels, pickup/equip and light through the real stairs
+transition. This verifies source-backed selection and visible source pixels,
+but not unique appearance in a matched native palette/composition. Keep the
 reported “same black hole” alcove/torch concern open until a matched original
-and Firestaff capture establishes whether the remaining gap is map selection,
-palette/transparency, scaling, or draw order.
+and Firestaff capture settles the remaining visual gap.
 
 2026-10-25 Apple IIGS mouth interaction: ReDMCSB PANEL.C F0349:1824-1850
 allows water/waterskin icons with charges and original potion Things when the

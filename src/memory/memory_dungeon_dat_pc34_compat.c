@@ -425,6 +425,7 @@ int F0502_DUNGEON_LoadTileData_Compat(
                         (long)state->header.squareFirstThingCount * 2 +
                         (long)state->header.textDataWordCount * 2 +
                         thingDataTotalBytes;
+                state->rawMapDataFileOffset = rawDataFileOffset;
         }
 
         state->tiles = (struct DungeonMapTiles_Compat*)calloc(
@@ -1071,6 +1072,7 @@ static int load_tail_buffer_compat_endian(
         (void)thingDataOffset;
 
         rawMapOffset = off;
+        state->rawMapDataFileOffset = rawMapOffset;
         rawMapByteCount = (int)state->header.rawMapDataByteCount;
         if (rawMapByteCount < 0 ||
             off + rawMapByteCount + checksumTrailerBytes != byteCount) {
