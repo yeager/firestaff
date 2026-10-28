@@ -25724,6 +25724,14 @@ static int m11_nexus_refresh_startup_host_caller(
         return 0;
     }
     m11_nexus_apply_startup_host_caller_receipt(state, out_receipt);
+    if (state->nexusEngine && state->nexusEngine->game.game_started &&
+        state->nexusEngine->level_loaded) {
+        state->nexusState.level_loaded = 1;
+        state->nexusState.party_x = state->nexusEngine->game.party_x;
+        state->nexusState.party_y = state->nexusEngine->game.party_y;
+        state->nexusState.party_dir = state->nexusEngine->game.party_dir;
+        state->nexusState.tick_count = state->nexusEngine->game.tick_count;
+    }
     m11_nexus_cache_host_dgn_commands(state,
                                       out_receipt,
                                       dgn_commands,

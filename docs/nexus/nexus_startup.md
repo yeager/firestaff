@@ -1705,6 +1705,16 @@ changes (`+100`/`-100`) are consistent with that mapping. This binds the
 level-1 retail start heading, but does not establish mappings for every angle
 word or the complete gameplay ownership path.
 
+The launcher now parses the selected eight-byte record from hash-verified
+`DM.BIN` and admits only this calibrated level-1 heading to a New Game start.
+It loads the hash-verified `LEV01.DGN`, checks `(29,47)` against the loaded
+cell geometry, and creates the dungeon-start receipt before producing the
+runtime handoff. Other raw headings remain unmapped and are rejected. The
+viewport, material, and HUD routes retain their independent evidence gates;
+this loader change does not establish complete playability. The `firestaff`
+target compiled successfully on TRV2 with this route in place; no runtime
+capture has yet exercised the new handoff.
+
 A read-only pass through the existing DGN parser on authentic LEV01 shows an
 open chamber at `(29,47)` and a single square-type-8 passage at `(29,48)`,
 bounded by walls at `(28,48)` and `(30,48)`. The frame-1800 scene shows a

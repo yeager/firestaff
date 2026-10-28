@@ -61,6 +61,10 @@ int nexus_v1_launcher_init(const char *data_dir);
  * Calls nexus_v1_load_level() on the singleton.
  * Returns 0 on success, -1 if launcher not init'd or level load failed. */
 int nexus_v1_launcher_load_level(int level);
+/* Start the first retail dungeon only from a hash-verified DM.BIN start-table
+ * entry whose heading has an evidence-backed Firestaff direction. */
+int nexus_v1_launcher_start_retail_new_game(
+    Nexus_V1_DungeonStartReceipt *out_receipt);
 
 typedef struct {
     int valid;
