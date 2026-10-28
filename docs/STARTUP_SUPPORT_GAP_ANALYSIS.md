@@ -1,6 +1,6 @@
 # Five-game startup support gap analysis
 
-Reconciled with GitHub `main` at `455a4e5b` on 2026-10-28. The latest
+Reconciled with GitHub `main` at `71c09abd` on 2026-10-28. The latest
 published release is v3.0.418 (published on 2026-10-27). The release workflow
 verified packaging, not gameplay startup. Current authentic-media CLI routes
 include DM1 PC34, DOS, Atari ST, Amiga and FM Towns; CSB Atari, Amiga and FM
@@ -16,9 +16,16 @@ default archive path. CTest also accepts a custom
 `FIRESTAFF_DM2_DOS_FR_ARCHIVE` path. The DM1 Amiga demo archive also passes
 its authentic CLI/M12 startup test
 (`tests/test_dm1_v1_amiga_demo_archive_cli_boot.sh`) against the original ZIP.
-The CSB Amiga ZIP/ADF wrapper passes archive integrity checks, but its
-decoder/startup tests were not rerun in this review. CSB Atari French
-preservation remains unverified. For Nexus, retail New Game input now reaches
+The CSB Amiga ZIP/ADF wrapper's authentic decoder/startup test was rerun on
+2026-10-28 and passed direct CLI and M12 startup through the source entrance
+to authentic movement. CSB Atari French preservation remains unverified. On
+2026-10-28, `m12_main_menu_game_selection_real_media` also passed keyboard and
+mouse selection/handoff for all five game cards against authentic local media,
+including default-root launches; `firestaff_cli_startup_diagnostics_real_media`
+passed its direct CLI source-resolution and platform checks. Dedicated
+DM1 Amiga demo, CSB Amiga archive, and extracted DM2 Macintosh English tests
+also passed their CLI and menu routes. These checks establish only the named
+startup/handoff bounds. For Nexus, retail New Game input now reaches
 the hash-verified `LEV01.DGN` loader and produces a source-bound
 level-1 `(29,47,North)` receipt from keyboard and mouse routes; the separate
 viewport/HUD gates still prevent a playable runtime handoff. These bounded CLI
