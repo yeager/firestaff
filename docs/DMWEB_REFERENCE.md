@@ -251,14 +251,19 @@ dmweb's "What is the use of the Green Gem, Magnifier, Rabbit's Foot, Ekkhard Cro
 ### 6. Theron's Quest savegame format and reference boundary
 
 Greatstone's SCK site publishes a custom-dungeon extraction named "Theron's
-Quest Conversion"; it is not the retail PC Engine CD game. DMWeb documents the
+Quest Conversion"; the SCK 1.2 announcement explicitly lists it among the
+CSBWin custom dungeons. This establishes the conversion's format context, not
+that it is the retail PC Engine CD game or a specification of its runtime.
+Use its maps or records only as comparative leads, then verify them against
+authentic regional media and source-bound consumers. DMWeb documents the
 retail editions, manual and Save Disk context. These are secondary provenance
 references. The original PC Engine manual describes up to three native save
 files, automatic saves when a stage is cleared, and Button I for selecting a
 file; it does not document the multi-second menu hold reported by the operator.
 Do not infer retail save fields or input timing from the CSBWin conversion or a
 community save archive. See [Greatstone's SCK announcement and supported
-formats](https://www.dungeon-master.com/forum/viewtopic.php?t=24916).
+formats](https://www.dungeon-master.com/forum/viewtopic.php?t=27879), plus its
+[custom-dungeon gallery](http://greatstone.free.fr/dm/g_cd.html).
 
 
 Implementation status is not established by the older sentence above: the
