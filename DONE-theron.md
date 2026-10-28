@@ -1,5 +1,22 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-28 — rerun authentic regional input probes on current Debug build
+
+Built the native `firestaff` executable from `main` commit `e0bd5afd2` on
+TRV2 with CMake Debug and one build job. The USA raw-BIN runtime probe passed
+with authentic Track 02 (`f23601102138f87c33025877767ebf76`), verifying native
+startup, movement/turning, and the source-backed mouse-panel actions for
+champion cycling, wait, pickup, item selection, and drop. The Japan Rev. 1
+raw-BIN startup probe also passed with authentic Track 02
+(`b7afb338ad31be1025b53f9aff12d73a`) and its staged authentic Track 19 bank,
+verifying the Japanese runtime, movement/turning, and mouse-panel routes.
+Both probes use Firestaff's `--debug` boot path and real user media.
+
+These checks confirm the bounded existing routes on the current source. They
+do not establish direct dungeon-view mouse targets, state-driven gameplay
+rendering, campaign transitions, or complete Theron parity; those remain open
+in TODO.
+
 ## 2026-10-28 — require observed SDL key pairs in bounded reference captures
 
 The reference-only Mednafen host-input trace now retains up to 4096 SDL events
