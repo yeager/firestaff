@@ -6,6 +6,15 @@ both pass, including localized scan task labels, selection of the authentic
 English edition from the bilingual archive, and the boot-probe boundary.
 This covers startup localization only, not full CSB/platform parity.
 
+2026-10-29 selected-archive return-to-menu regression: the authentic bilingual
+FM Towns archive passes direct-file CLI selection through M12, the source
+title and entrance, the first runtime, and return to the launcher. The return
+scan infers the surrounding `data` root and reports DM1, CSB, and DM2 as
+available. The test preserves the archive's original filename because the
+renamed-container probe did not resolve an edition; arbitrary renamed CSB
+archives are not verified. This is bounded startup/return coverage, not full
+CSB platform parity.
+
 2026-10-28 Amiga ZIP/ADF test-media availability correction: the exact
 `Chaos Strikes Back (FTL).zip` path used by CMake is present under
 `~/.firestaff/data/csb/` (901,330 bytes). `unzip -t` passes and the archive
