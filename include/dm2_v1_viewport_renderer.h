@@ -1562,6 +1562,11 @@ typedef struct {
 #define DM2_V1_MAX_INDOOR_LIVE_MISSILES DM2_V1_G1_VISIBLE_MISSILE_MAX
 typedef struct {
     DM2_V1_RuntimeVisibleMissileSnapshot live;
+    /* Source DM2_DRAW_FLYING_ITEM resolves the DB14's linked object through
+     * QUERY_CLS1/QUERY_CLS2 before selecting TEMP_PICST or DRAW_ITEM. Keep
+     * that authentic GDAT key with the event instead of treating every DB14
+     * as a drawable missile. */
+    DM2_V1_G1FlyingItemSelectorReceipt selector;
     int16_t source_cell;
     int16_t source_pass;
     int16_t display_index;

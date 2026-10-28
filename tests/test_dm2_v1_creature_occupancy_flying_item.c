@@ -12,6 +12,18 @@
 static int checks;
 static int passed;
 
+static void mark_live_missile_selector(
+    DM2_V1_IndoorLiveMissileEvent *event, uint16_t object_id)
+{
+    if (!event) return;
+    event->live.source.object_id = object_id;
+    event->selector.valid = 1;
+    event->selector.missile_object_id = object_id;
+    event->selector.class1 = 0x0du;
+    event->selector.class2 = 0x22u;
+    event->selector.identity_hash = (uint32_t)object_id + 1u;
+}
+
 static int fetch_test_sprite(void *user,
                              int gdat_index,
                              const uint8_t **out_pixels,
@@ -507,6 +519,9 @@ static void test_live_missile_draw_order_and_creature_replay(void)
     missiles.events[3].display_index = 9;
     missiles.events[3].live.source.view_position_5x5 = 7;
     missiles.events[3].live.source.chain_ordinal = 4;
+    for (int i = 0; i < missiles.event_count; ++i)
+        mark_live_missile_selector(&missiles.events[i],
+                                   (uint16_t)(0x3800 + i));
     creature_draw_success[17][9] = 1;
     CHECK("live DB14 draw schedule records seven-slot replay after creature success",
           dm2_v1_viewport_build_indoor_live_missile_draw_plan(
@@ -564,6 +579,17 @@ static void test_live_missile_draw_order_and_creature_replay(void)
               &missiles, creature_draw_success, &draws) == 0 &&
           draws.valid == 0 && draws.event_count == 0);
 
+    {
+        DM2_V1_G1FlyingItemSelectorReceipt selector =
+            missiles.events[0].selector;
+        missiles.events[0].selector.valid = 0;
+        CHECK("draw plan rejects a DB14 without an authentic object selector",
+              dm2_v1_viewport_build_indoor_live_missile_draw_plan(
+                  &missiles, creature_draw_success, &draws) == 0 &&
+              draws.valid == 0 && draws.event_count == 0);
+        missiles.events[0].selector = selector;
+    }
+
     memset(&missiles, 0, sizeof(missiles));
     memset(creature_draw_success, 0, sizeof(creature_draw_success));
     missiles.valid = 1;
@@ -577,6 +603,7 @@ static void test_live_missile_draw_order_and_creature_replay(void)
         dm2_v1_viewport_static_object_display_index(0, 6);
     missiles.events[0].live.source.view_position_5x5 = 6;
     missiles.events[0].live.source.chain_ordinal = 1;
+    mark_live_missile_selector(&missiles.events[0], 0x3800u);
     creature_draw_success[20][14] = 1;
     CHECK("player-tile pass follows its 15 source iterations and replay window",
           missiles.events[0].display_index == 7 &&
