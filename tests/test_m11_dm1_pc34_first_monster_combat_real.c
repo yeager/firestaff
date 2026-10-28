@@ -111,7 +111,7 @@ static unsigned int viewport_fnv1a(const unsigned char* pixels)
     return hash;
 }
 
-static int verify_hoc_plate_visible(M11_GameViewState* state)
+static int verify_hoc_plate_changes_indexed_view(M11_GameViewState* state)
 {
     unsigned char framebuffer[320 * 200];
     unsigned int renderedHash;
@@ -201,7 +201,7 @@ static int verify_hoc_plate_visible(M11_GameViewState* state)
                 renderedHash);
         return 0;
     }
-    printf("PASS: authentic PC34 HoC pressure plate (6,9) uses GRAPHICS.DAT 0396 and visibly contributes from (7,9), ordinal=%d\n",
+    printf("PASS: authentic PC34 HoC pressure plate (6,9) uses GRAPHICS.DAT 0396 and changes indexed viewport pixels from (7,9), ordinal=%d\n",
            ordinal);
     return 1;
 }
@@ -378,8 +378,8 @@ int main(void)
             }
             for (tick = 0; tick < 5; ++tick)
                 audited_idle_tick(&state, &eventAudit);
-            if (!verify_hoc_plate_visible(&state)) {
-                fputs("FAIL: authentic PC34 HoC pressure plate at (6,9) is not visible from the approach\n",
+            if (!verify_hoc_plate_changes_indexed_view(&state)) {
+                fputs("FAIL: authentic PC34 HoC pressure plate at (6,9) does not change indexed viewport pixels from the approach\n",
                       stderr);
                 M11_GameView_Shutdown(&state);
                 return 1;

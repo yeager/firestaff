@@ -181,11 +181,11 @@ twice: authentic map 0 plate `(6,9)`, viewed from `(7,9,d3)`, had sensor
 ornament ordinal 4, resolved through the authentic map table to global floor
 ornament index 1, and selected original GRAPHICS.DAT entry 0396 for D1C. The
 test asserts that ID and that suppressing only the sensor's ornament changes
-the rendered viewport hash. This proves source selection and pixel
-contribution in that tested approach, not that its appearance, pixel pattern
-or contrast matches the original. Capture matched original/Firestaff Level 00
-frames before closing the visual report. Keep pressure-pad graphics distinct
-from floor-pit graphics 0049–0063; do not substitute generated assets.
+the indexed viewport hash. This proves source selection and a change to indexed
+framebuffer pixels in that tested approach; it does not check final RGB
+presentation, plate contrast, or matched original-game appearance. Capture
+matched original/Firestaff Level 00 frames before closing the visual report.
+Keep pressure-pad graphics distinct from floor-pit graphics 0049–0063; do not substitute generated assets.
 
 The same-day `test_m11_dm1_hoc_wall_material_receipt_pc34` run against the
 original archive also passed: the authentic stair torch rendered, was picked
