@@ -249,17 +249,26 @@ static uint64_t nexus_title_source_fnv1a64(const uint8_t *bytes, size_t size)
     return value;
 }
 
-static int nexus_title_retain_english_menu_source(Nexus_TitleScreen *title,
-                                                 uint8_t *data,
-                                                 size_t size)
+static int nexus_title_retain_verified_menu_source(Nexus_TitleScreen *title,
+                                                  uint8_t *data,
+                                                  size_t size)
 {
-    if (!title || !data || size != NEXUS_V1_TITLE_BIN_BYTES ||
-        nexus_title_source_fnv1a64(data, size) != UINT64_C(0xf512153befe61770)) {
+    uint64_t fingerprint;
+    int region;
+    if (!title || !data || size != NEXUS_V1_TITLE_BIN_BYTES) {
+        return 0;
+    }
+    fingerprint = nexus_title_source_fnv1a64(data, size);
+    if (fingerprint == UINT64_C(0x064414f722d0409c)) {
+        region = NEXUS_V1_TITLE_MENU_SOURCE_JAPANESE;
+    } else if (fingerprint == UINT64_C(0xf512153befe61770)) {
+        region = NEXUS_V1_TITLE_MENU_SOURCE_ENGLISH;
+    } else {
         return 0;
     }
     title->retail_menu_source_bytes = data;
     title->retail_menu_source_size = size;
-    title->retail_menu_source_english_verified = 1;
+    title->retail_menu_source_region = region;
     return 1;
 }
 
@@ -301,7 +310,7 @@ int nexus_title_load(Nexus_TitleScreen *title, Nexus_V1_Engine *engine) {
                 cg_size > 0 ? (size_t)cg_size : 0U, title);
             free(cg);
         }
-        if (!nexus_title_retain_english_menu_source(
+        if (!nexus_title_retain_verified_menu_source(
                 title, data, size > 0 ? (size_t)size : 0U)) {
             free(data);
         }
@@ -359,7 +368,7 @@ int nexus_title_load(Nexus_TitleScreen *title, Nexus_V1_Engine *engine) {
             mapd_size > (int)0x0e278U
                 ? (size_t)mapd_size - 0x0e278U : 0U,
             data, (size_t)size, title);
-        if (!nexus_title_retain_english_menu_source(
+        if (!nexus_title_retain_verified_menu_source(
                 title, mapd, mapd_size > 0 ? (size_t)mapd_size : 0U)) {
             free(mapd);
         }
@@ -382,7 +391,7 @@ void nexus_title_free(Nexus_TitleScreen *title) {
     free(title->retail_menu_source_bytes);
     title->retail_menu_source_bytes = NULL;
     title->retail_menu_source_size = 0;
-    title->retail_menu_source_english_verified = 0;
+    title->retail_menu_source_region = NEXUS_V1_TITLE_MENU_SOURCE_NONE;
     free(title->pixels);
     free(title->warning_pixels);
     memset(title, 0, sizeof(*title));

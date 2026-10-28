@@ -18,6 +18,9 @@ ENGLISH_TITLE_SHA256 = "a634e8daf2a581df154b454919ee2ed44e937371668219d7cdf6d098
 ENGLISH_TITLE_MENU_PALETTE_OFFSETS = (
     0x02F6, 0x0426, 0x0556, 0x0686, 0x07B6, 0x0986, 0x1F06, 0x1486,
 )
+JAPANESE_TITLE_MENU_PALETTE_OFFSETS = (
+    0x02F6, 0x0426, 0x0556, 0x0686, 0x07B6, 0x0986, 0x1F06, 0x1B16,
+)
 JAPANESE_CONTINUE_DRAW_ROLES = (
     # Retail TITLE.BIN offset, dimensions, visible texels, VDP1 top-left.
     (0x0316, 64, 8, 313, (129, 153)),
@@ -144,7 +147,7 @@ def verify(bundle: Path, screenshot: Path, title_source: Path) -> None:
             roles, selected_draws):
         ctrl, mode, colr, src, size = words[0], words[2], words[3], words[4], words[5]
         palette_source_offsets = ()
-        if source_hash == ENGLISH_TITLE_SHA256:
+        if source_hash in (ENGLISH_TITLE_SHA256, JAPANESE_TITLE_SHA256):
             palette_start = (colr & 0x3F0) * 2
             palette = cram[palette_start:palette_start + 32]
             if len(palette) != 32:
@@ -157,9 +160,17 @@ def verify(bundle: Path, screenshot: Path, title_source: Path) -> None:
                     break
                 matches.append(offset)
                 search_from = offset + 1
+            if source_hash == JAPANESE_TITLE_SHA256:
+                allowed_offsets = JAPANESE_TITLE_MENU_PALETTE_OFFSETS
+                expected_offsets = ((0x1B16,) if role[0] == 0x1B36
+                                    else JAPANESE_TITLE_MENU_PALETTE_OFFSETS[:-1])
+            else:
+                allowed_offsets = ENGLISH_TITLE_MENU_PALETTE_OFFSETS
+                expected_offsets = ((0x1486,) if role[0] == 0x14A6
+                                    else ENGLISH_TITLE_MENU_PALETTE_OFFSETS[:-1])
             if (not matches or
-                    any(offset not in ENGLISH_TITLE_MENU_PALETTE_OFFSETS
-                        for offset in matches)):
+                    any(offset not in allowed_offsets for offset in matches) or
+                    not set(matches).issubset(expected_offsets)):
                 raise ValueError(
                     f"command {command_index} ({address:#x}) CRAM palette "
                     "does not match an authenticated TITLE.BIN palette span")

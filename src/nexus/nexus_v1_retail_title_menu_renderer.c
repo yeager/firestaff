@@ -3,14 +3,16 @@
 #include <string.h>
 
 enum {
-    NEXUS_TITLE_BIN_ENGLISH_BYTES = 112216,
-    NEXUS_TITLE_MENU_ICON_PALETTE = 0x1486,
+    NEXUS_TITLE_BIN_BYTES = 112216,
+    NEXUS_TITLE_MENU_ENGLISH_ICON_PALETTE = 0x1486,
+    NEXUS_TITLE_MENU_JAPANESE_ICON_PALETTE = 0x1b16,
     NEXUS_TITLE_MENU_TEXT_PALETTE = 0x02f6,
     NEXUS_TITLE_MENU_ICON_COLOR_BASE = 224,
     NEXUS_TITLE_MENU_TEXT_COLOR_BASE = 240
 };
 
 #define NEXUS_TITLE_BIN_ENGLISH_FNV1A64 UINT64_C(0xf512153befe61770)
+#define NEXUS_TITLE_BIN_JAPANESE_FNV1A64 UINT64_C(0x064414f722d0409c)
 
 typedef struct {
     uint32_t source_offset;
@@ -18,23 +20,32 @@ typedef struct {
     uint16_t height;
     int16_t x;
     int16_t y;
-    uint8_t icon_palette;
+    uint16_t palette_offset;
+    uint8_t colour_base;
 } Nexus_V1_RetailTitleMenuSprite;
 
 static const Nexus_V1_RetailTitleMenuSprite k_new_game_sprites[] = {
-    {0x14a6, 24, 24, 104, 144, 1},
-    {0x14a6, 24, 24, 191, 144, 1},
-    {0x0446, 64,  8, 129, 153, 0},
-    {0x0576, 64,  8, 128, 165, 0},
-    {0x07d6,104,  8, 109, 177, 0}
+    {0x14a6, 24, 24, 104, 144, NEXUS_TITLE_MENU_ENGLISH_ICON_PALETTE, NEXUS_TITLE_MENU_ICON_COLOR_BASE},
+    {0x14a6, 24, 24, 191, 144, NEXUS_TITLE_MENU_ENGLISH_ICON_PALETTE, NEXUS_TITLE_MENU_ICON_COLOR_BASE},
+    {0x0446, 64,  8, 129, 153, NEXUS_TITLE_MENU_TEXT_PALETTE, NEXUS_TITLE_MENU_TEXT_COLOR_BASE},
+    {0x0576, 64,  8, 128, 165, NEXUS_TITLE_MENU_TEXT_PALETTE, NEXUS_TITLE_MENU_TEXT_COLOR_BASE},
+    {0x07d6,104,  8, 109, 177, NEXUS_TITLE_MENU_TEXT_PALETTE, NEXUS_TITLE_MENU_TEXT_COLOR_BASE}
 };
 
-static const Nexus_V1_RetailTitleMenuSprite k_continue_sprites[] = {
-    {0x0316, 64,  8, 129, 153, 0},
-    {0x14a6, 24, 24, 104, 156, 1},
-    {0x14a6, 24, 24, 191, 156, 1},
-    {0x06a6, 64,  8, 128, 165, 0},
-    {0x07d6,104,  8, 109, 177, 0}
+static const Nexus_V1_RetailTitleMenuSprite k_english_continue_sprites[] = {
+    {0x0316, 64,  8, 129, 153, NEXUS_TITLE_MENU_TEXT_PALETTE, NEXUS_TITLE_MENU_TEXT_COLOR_BASE},
+    {0x14a6, 24, 24, 104, 156, NEXUS_TITLE_MENU_ENGLISH_ICON_PALETTE, NEXUS_TITLE_MENU_ICON_COLOR_BASE},
+    {0x14a6, 24, 24, 191, 156, NEXUS_TITLE_MENU_ENGLISH_ICON_PALETTE, NEXUS_TITLE_MENU_ICON_COLOR_BASE},
+    {0x06a6, 64,  8, 128, 165, NEXUS_TITLE_MENU_TEXT_PALETTE, NEXUS_TITLE_MENU_TEXT_COLOR_BASE},
+    {0x07d6,104,  8, 109, 177, NEXUS_TITLE_MENU_TEXT_PALETTE, NEXUS_TITLE_MENU_TEXT_COLOR_BASE}
+};
+
+static const Nexus_V1_RetailTitleMenuSprite k_japanese_continue_sprites[] = {
+    {0x0316, 64,  8, 129, 153, NEXUS_TITLE_MENU_TEXT_PALETTE, NEXUS_TITLE_MENU_TEXT_COLOR_BASE},
+    {0x1b36, 24, 24, 104, 156, NEXUS_TITLE_MENU_JAPANESE_ICON_PALETTE, NEXUS_TITLE_MENU_ICON_COLOR_BASE},
+    {0x1b36, 24, 24, 191, 156, NEXUS_TITLE_MENU_JAPANESE_ICON_PALETTE, NEXUS_TITLE_MENU_ICON_COLOR_BASE},
+    {0x06a6, 64,  8, 128, 165, NEXUS_TITLE_MENU_TEXT_PALETTE, NEXUS_TITLE_MENU_TEXT_COLOR_BASE},
+    {0x07d6,104,  8, 109, 177, NEXUS_TITLE_MENU_TEXT_PALETTE, NEXUS_TITLE_MENU_TEXT_COLOR_BASE}
 };
 
 static uint16_t read_be16(const uint8_t *bytes)
@@ -56,8 +67,8 @@ static uint64_t fnv1a64(const uint8_t *bytes, size_t size)
 static uint8_t blend_channel_over_black(uint16_t bgr555, unsigned shift)
 {
     unsigned component = ((unsigned)bgr555 >> shift) & 31U;
-    /* Captured English menu sprites use VDP1 colour calculation ratio 31/32
-     * over the authenticated black VDP2 back-screen at these visible texels. */
+    /* Captured Japanese and English menu sprites use VDP1 colour calculation
+     * ratio 31/32 over the authenticated black back-screen at visible texels. */
     return (uint8_t)(((component << 3U) * 31U) / 32U);
 }
 
@@ -96,9 +107,7 @@ static int draw_sprite(const uint8_t *source,
         return 0;
     }
     pixels = source + sprite->source_offset;
-    colour_base = sprite->icon_palette
-        ? NEXUS_TITLE_MENU_ICON_COLOR_BASE
-        : NEXUS_TITLE_MENU_TEXT_COLOR_BASE;
+    colour_base = sprite->colour_base;
     for (y = 0; y < sprite->height; ++y) {
         int x;
         int screen_y = sprite->y + y;
@@ -136,35 +145,41 @@ int nexus_v1_retail_title_menu_render(const Nexus_TitleScreen *title,
     size_t source_size;
     uint64_t source_hash;
     if (!title || !state || !framebuffer || !state->menu_active ||
-        !title->retail_menu_source_english_verified ||
+        title->retail_menu_source_region == NEXUS_V1_TITLE_MENU_SOURCE_NONE ||
         !title->retail_menu_source_bytes ||
-        title->retail_menu_source_size != NEXUS_TITLE_BIN_ENGLISH_BYTES) {
+        title->retail_menu_source_size != NEXUS_TITLE_BIN_BYTES) {
         return 0;
     }
     source = title->retail_menu_source_bytes;
     source_size = title->retail_menu_source_size;
     source_hash = fnv1a64(source, source_size);
-    if (source_hash != NEXUS_TITLE_BIN_ENGLISH_FNV1A64) {
+    if (title->retail_menu_source_region == NEXUS_V1_TITLE_MENU_SOURCE_JAPANESE) {
+        if (source_hash != NEXUS_TITLE_BIN_JAPANESE_FNV1A64 ||
+            state->selection != NEXUS_V1_RETAIL_TITLE_MENU_CONTINUE) {
+            return 0;
+        }
+        sprites = k_japanese_continue_sprites;
+        sprite_count = sizeof(k_japanese_continue_sprites) /
+                       sizeof(k_japanese_continue_sprites[0]);
+    } else if (title->retail_menu_source_region != NEXUS_V1_TITLE_MENU_SOURCE_ENGLISH ||
+               source_hash != NEXUS_TITLE_BIN_ENGLISH_FNV1A64) {
         return 0;
-    }
-    if (state->selection == NEXUS_V1_RETAIL_TITLE_MENU_NEW_GAME) {
+    } else if (state->selection == NEXUS_V1_RETAIL_TITLE_MENU_NEW_GAME) {
         sprites = k_new_game_sprites;
         sprite_count = sizeof(k_new_game_sprites) / sizeof(k_new_game_sprites[0]);
     } else if (state->selection == NEXUS_V1_RETAIL_TITLE_MENU_CONTINUE) {
-        sprites = k_continue_sprites;
-        sprite_count = sizeof(k_continue_sprites) / sizeof(k_continue_sprites[0]);
+        sprites = k_english_continue_sprites;
+        sprite_count = sizeof(k_english_continue_sprites) /
+                       sizeof(k_english_continue_sprites[0]);
     } else {
         return 0;
     }
-    if (source_size < NEXUS_TITLE_MENU_TEXT_PALETTE + 32U ||
-        source_size < NEXUS_TITLE_MENU_ICON_PALETTE + 32U) {
-        return 0;
-    }
-    load_capture_palette(source, NEXUS_TITLE_MENU_TEXT_PALETTE,
-                         NEXUS_TITLE_MENU_TEXT_COLOR_BASE, framebuffer->palette);
-    load_capture_palette(source, NEXUS_TITLE_MENU_ICON_PALETTE,
-                         NEXUS_TITLE_MENU_ICON_COLOR_BASE, framebuffer->palette);
     for (index = 0; index < sprite_count; ++index) {
+        if (source_size < (size_t)sprites[index].palette_offset + 32U) {
+            return 0;
+        }
+        load_capture_palette(source, sprites[index].palette_offset,
+                             sprites[index].colour_base, framebuffer->palette);
         if (!draw_sprite(source, source_size, &sprites[index], framebuffer)) {
             return 0;
         }
