@@ -15,6 +15,36 @@ s->font_palette_indices_valid=1;
 s->pixels=(uint8_t*)malloc(CSB_HINT_ORACLE_GRAPHICS_SURFACE_WIDTH*CSB_HINT_ORACLE_GRAPHICS_SURFACE_HEIGHT);s->font_pixels=(uint8_t*)malloc(CSB_HINT_ORACLE_FONT_SURFACE_WIDTH*CSB_HINT_ORACLE_FONT_SURFACE_MAX_HEIGHT);if(!s->pixels||!s->font_pixels)goto bad;if(!csb_hint_oracle_dat_img2_decode(img,ni,&s->width,&s->height,s->pixels,64000,NULL)||s->width!=320||s->height!=200||!csb_hint_oracle_dat_img2_decode(font,nf,&s->font_width,&s->font_height,s->font_pixels,CSB_HINT_ORACLE_FONT_SURFACE_WIDTH*CSB_HINT_ORACLE_FONT_SURFACE_MAX_HEIGHT,NULL)||s->font_width!=CSB_HINT_ORACLE_FONT_SURFACE_WIDTH||(s->font_height!=CSB_HINT_ORACLE_FONT_SURFACE_HEIGHT_ST&&s->font_height!=CSB_HINT_ORACLE_FONT_SURFACE_HEIGHT_AU2)||!csb_hint_oracle_dat_palette_decode(pal,np,s->rgb4))goto bad;return 0;bad:csb_hint_oracle_graphics_surface_free(s);return -4;}
 int csb_hint_oracle_graphics_surface_blit_st_text(const CSB_HintOracleGraphicsSurface *s,uint8_t *f,size_t n,int x,int y,const char *t){int px,py;if(!s||!f||!t||!s->font_pixels||s->font_width!=256u||(s->font_height!=CSB_HINT_ORACLE_FONT_SURFACE_HEIGHT_ST&&s->font_height!=CSB_HINT_ORACLE_FONT_SURFACE_HEIGHT_AU2)||n<64000u)return 0;for(;*t;++t,x+=9){unsigned char c=(unsigned char)*t;unsigned char g;if(c<' '||c>0x7fu)continue;g=(unsigned char)(s->font_height==CSB_HINT_ORACLE_FONT_SURFACE_HEIGHT_AU2?c:c-' ');if(!g)continue;for(py=0;py<9;++py)for(px=0;px<8;++px){int dx=x+px,dy=y+py;uint8_t p=s->font_pixels[((size_t)(g>>5u)*9u+(size_t)py)*256u+((size_t)(g&31u)*8u+(size_t)px)];if(dx>=0&&dx<320&&dy>=0&&dy<200&&p!=12u)f[(size_t)dy*320u+(size_t)dx]=s->font_palette_indices_valid?s->font_palette_indices[p]:p;}}return 1;}
 int csb_hint_oracle_graphics_surface_blit_st_centered_box(const CSB_HintOracleGraphicsSurface *s,uint8_t *f,size_t n,int l,int r,int t,int b,const char *text){char line[80];int y;if(!s||!f||!text||l>r||t>b)return 0;y=t+11;while(*text&&y<=b){const char *p=text;size_t take=0u,last_space=(size_t)-1;while(*p&&*p!='/'&&take<sizeof(line)-1u){if(*p==' ')last_space=take;if((int)((take+1u)*9u)>r-l)break;++take;++p;}if(!take&&*p!='/'&&*p){take=1u;p=text+1;}if(*p&&*p!='/'&&last_space!=(size_t)-1&&take<(size_t)(p-text))take=last_space;while(take&&text[take-1u]==' ')--take;memcpy(line,text,take);line[take]='\0';if(!csb_hint_oracle_graphics_surface_blit_st_text(s,f,n,l+((r-l-(int)(take*9u))/2),y,line))return 0;y+=11;text+=take;while(*text==' ')++text;if(*text=='/')++text;}return 1;}
+int csb_hint_oracle_graphics_surface_get_au2_text(
+    const CSB_HintOracleGraphicsSurface *surface, size_t text_index,
+    const char **out_text)
+{
+    const uint8_t *segment;
+    size_t segment_size;
+    size_t offset = 0u;
+    size_t index;
+
+    if (!surface || !out_text || !surface->source.loaded ||
+        csb_hint_oracle_dat_get_segment(&surface->source.archive, 4u,
+                                        &segment, &segment_size) !=
+            CSB_HINT_ORACLE_DAT_OK) {
+        return 0;
+    }
+    for (index = 0u; index < text_index; ++index) {
+        const uint8_t *terminator;
+        if (offset >= segment_size) return 0;
+        terminator = (const uint8_t *)memchr(segment + offset, '\0',
+                                             segment_size - offset);
+        if (!terminator) return 0;
+        offset = (size_t)(terminator - segment) + 1u;
+    }
+    if (offset >= segment_size ||
+        !memchr(segment + offset, '\0', segment_size - offset)) {
+        return 0;
+    }
+    *out_text = (const char *)(segment + offset);
+    return 1;
+}
 int csb_hint_oracle_graphics_surface_render_st_hint_page(
     const CSB_HintOracleGraphicsSurface *surface,
     const CSB_HintOracleHTC *htc,

@@ -38,6 +38,11 @@ int csb_hint_oracle_graphics_surface_blit_st_centered_box(
     const CSB_HintOracleGraphicsSurface *surface, uint8_t *frame,
     size_t frame_size, int left, int right, int top, int bottom,
     const char *text);
+/* Return a borrowed NUL-terminated string from the AU2 HCSB.DAT text table
+ * (graphic 4). The pointer remains valid until the surface is freed. */
+int csb_hint_oracle_graphics_surface_get_au2_text(
+    const CSB_HintOracleGraphicsSurface *surface, size_t text_index,
+    const char **out_text);
 int csb_hint_oracle_graphics_surface_render_st_hint_page(
     const CSB_HintOracleGraphicsSurface *surface,
     const CSB_HintOracleHTC *htc, size_t hint_index, size_t page_number,

@@ -46,6 +46,7 @@ typedef struct {
     int16_t timer_capacity;
     int16_t item16_capacity;
     size_t initial_word_bytes;    /* 0, or DMWeb's ignored 0x5223/0xDEAD */
+    uint16_t initial_word_magic;  /* 0xDEAD Amiga AU2, 0x5223 X68000 */
     size_t character_data_bytes;  /* 3328 Atari, 1408 Amiga/X68000 */
     size_t character_record_bytes;/* 800 Atari, 320 Amiga/X68000 */
     size_t dungeon_offset;

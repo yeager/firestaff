@@ -163,6 +163,7 @@ int csb_v1_atari_save_decode_pc34_compat(const uint8_t *bytes,
     size_t timer_bytes;
     size_t queue_bytes;
     size_t initial_bytes;
+    uint16_t initial_magic;
     size_t character_bytes;
     size_t character_record_bytes;
     uint16_t key;
@@ -171,6 +172,7 @@ int csb_v1_atari_save_decode_pc34_compat(const uint8_t *bytes,
     if (!bytes || !out_info) return CSB_V1_ATARI_SAVE_ERR_NULL;
     memset(out_info, 0, sizeof(*out_info));
     initial_bytes = csb_initial_word_bytes(bytes, size);
+    initial_magic = initial_bytes ? read_be16(bytes) : 0u;
     character_bytes = initial_bytes ? CSB_COMPACT_CHARACTER_BYTES
                                     : CSB_CHARACTER_BYTES;
     character_record_bytes = initial_bytes ? CSB_COMPACT_CHARACTER_RECORD_BYTES
@@ -245,6 +247,7 @@ int csb_v1_atari_save_decode_pc34_compat(const uint8_t *bytes,
     out_info->timer_capacity = (int16_t)block3[CSB_BLOCK3_TIMER_CAPACITY_WORD];
     out_info->item16_capacity = (int16_t)block3[CSB_BLOCK3_ITEM16_CAPACITY_WORD];
     out_info->initial_word_bytes = initial_bytes;
+    out_info->initial_word_magic = initial_magic;
     out_info->character_data_bytes = character_bytes;
     out_info->character_record_bytes = character_record_bytes;
     out_info->dungeon_offset = initial_bytes + offset;

@@ -28134,6 +28134,7 @@ int M11_GameView_StartCsbHintOracle(M11_GameViewState *state,
 {
     CSB_HintOracleAtariRuntime *runtime;
     CSB_V1_AtariSaveInfo *save_info;
+    CSB_HintOracleRuntimeProfile profile;
     char resolved_save_path[FSP_PATH_MAX];
     if (!state || !dataDir || !dataDir[0] ||
         !m11_csb_hint_oracle_resolve_native_save(
@@ -28146,9 +28147,27 @@ int M11_GameView_StartCsbHintOracle(M11_GameViewState *state,
         return 0;
     }
     csb_hint_oracle_atari_runtime_init(runtime);
-    if (csb_hint_oracle_atari_runtime_load_assets(runtime, dataDir, NULL, 8) !=
-            CSB_HINT_ORACLE_ATARI_RUNTIME_OK ||
-        !m11_csb_hint_oracle_read_native_save(resolved_save_path, save_info)) {
+    if (!m11_csb_hint_oracle_read_native_save(resolved_save_path, save_info)) {
+        csb_hint_oracle_atari_runtime_free(runtime);
+        free(runtime);
+        free(save_info);
+        return 0;
+    }
+    if (save_info->initial_word_magic == 0xdeadu) {
+        profile = CSB_HINT_ORACLE_RUNTIME_PROFILE_AMIGA_AU2_EN;
+    } else if (save_info->initial_word_magic == 0u) {
+        profile = CSB_HINT_ORACLE_RUNTIME_PROFILE_ATARI_R1;
+    } else {
+        /* DMWeb identifies 0x5223 as the X68000/multilingual save prefix.
+         * This Hint Oracle runtime has no authenticated matching FTL profile. */
+        csb_hint_oracle_atari_runtime_free(runtime);
+        free(runtime);
+        free(save_info);
+        return 0;
+    }
+    if (csb_hint_oracle_atari_runtime_load_assets_for_profile(
+            runtime, dataDir, NULL, 8, profile) !=
+        CSB_HINT_ORACLE_ATARI_RUNTIME_OK) {
         csb_hint_oracle_atari_runtime_free(runtime);
         free(runtime);
         free(save_info);
@@ -28158,7 +28177,10 @@ int M11_GameView_StartCsbHintOracle(M11_GameViewState *state,
     state->csbHintOracleSaveInfo = save_info;
     state->active = 1;
     state->sourceKind = M11_GAME_SOURCE_CSB_HINT_ORACLE;
-    snprintf(state->sourceId, sizeof(state->sourceId), "csb-hint-oracle-atari-r1");
+    snprintf(state->sourceId, sizeof(state->sourceId), "%s",
+             runtime->profile == CSB_HINT_ORACLE_RUNTIME_PROFILE_AMIGA_AU2_EN
+                 ? "csb-hint-oracle-amiga-au2-en"
+                 : "csb-hint-oracle-atari-r1");
     m11_set_status(state, "CSB UTILITY DISK", "HINT ORACLE");
     return 1;
 }

@@ -100,9 +100,53 @@ static int test_real_atari_r1_triplet_if_staged(void)
     return 1;
 }
 
+static int test_real_amiga_au2_r3_assets_if_staged(void)
+{
+    const char *root = getenv("FIRESTAFF_CSB_HINT_ORACLE_AMIGA_DATA_DIR");
+    CSB_HintOracleAtariRuntime runtime;
+    const char *text = NULL;
+    uint8_t frame[64000];
+    if (!root || !root[0]) {
+        puts("csb_hint_oracle_atari_runtime: SKIP (FIRESTAFF_CSB_HINT_ORACLE_AMIGA_DATA_DIR unset)");
+        return 1;
+    }
+    csb_hint_oracle_atari_runtime_init(&runtime);
+    CHECK(csb_hint_oracle_atari_runtime_load_assets(&runtime, root, NULL, 4) ==
+          CSB_HINT_ORACLE_ATARI_RUNTIME_OK);
+    CHECK(runtime.profile == CSB_HINT_ORACLE_RUNTIME_PROFILE_AMIGA_AU2_EN);
+    CHECK(strcmp(runtime.htc_panel.cache.matched_md5,
+                 CSB_HINT_ORACLE_AMIGA_AU2_R3_HTC_MD5) == 0);
+    CHECK(strcmp(runtime.graphics.source.matched_md5,
+                 CSB_HINT_ORACLE_AMIGA_AU2_EN_DAT_MD5) == 0);
+    CHECK(runtime.graphics.font_height == CSB_HINT_ORACLE_FONT_SURFACE_HEIGHT_AU2);
+    CHECK(csb_hint_oracle_graphics_surface_get_au2_text(
+              &runtime.graphics, 0u, &text) &&
+          strcmp(text,
+                 "Chaos Strikes Back/Hint Oracle//Please insert a Chaos Strikes Back saved game disk in drive DF0://Then press LOAD") == 0);
+    CHECK(csb_hint_oracle_graphics_surface_get_au2_text(
+              &runtime.graphics, 9u, &text) && strcmp(text, "LOAD") == 0);
+    CHECK(csb_hint_oracle_graphics_surface_get_au2_text(
+              &runtime.graphics, 17u, &text) &&
+          strcmp(text, "1CSBGAME.DAT") == 0);
+    CHECK(csb_hint_oracle_atari_runtime_render_frame(
+              &runtime, frame, sizeof(frame)) ==
+          CSB_HINT_ORACLE_ATARI_RUNTIME_OK);
+    CHECK(memcmp(frame, runtime.graphics.pixels, sizeof(frame)) != 0);
+    /* ReDMCSB HINTDATA.C MEDIA767_AU2E starts LOAD at x=110; the Atari
+     * R1 LOAD zone starts at x=127. A missing save receipt must be rejected
+     * only after the AU2 hit zone has actually claimed the click. */
+    CHECK(csb_hint_oracle_atari_runtime_handle_click(
+              &runtime, 111, 180, NULL) ==
+          CSB_HINT_ORACLE_ATARI_RUNTIME_ERR_ARGUMENT);
+    csb_hint_oracle_atari_runtime_free(&runtime);
+    return 1;
+}
+
 int main(void)
 {
-    int ok = test_not_ready_fails_closed() && test_real_atari_r1_triplet_if_staged();
+    int ok = test_not_ready_fails_closed() &&
+             test_real_atari_r1_triplet_if_staged() &&
+             test_real_amiga_au2_r3_assets_if_staged();
     puts(ok ? "csb_hint_oracle_atari_runtime: PASS" : "csb_hint_oracle_atari_runtime: FAIL");
     return ok ? 0 : 1;
 }

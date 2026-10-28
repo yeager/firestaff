@@ -1,11 +1,13 @@
 # Firestaff TODO — CSB
 
-2026-10-28 Hint Oracle platform gap: the source-derived HTC page decoder and
-graphics surface now accept authentic Amiga Utility Disk 3 English data, but
-the live Hint Oracle UI/runtime route is still Atari-only. Add a source-owned
-Amiga AU2 entry path and capture its original screen before claiming Amiga
-Hint Oracle parity. Current unit and original-media checks establish page
-decoding and surface composition only.
+2026-10-28 Hint Oracle AU2 runtime: the runtime now selects authenticated
+Amiga AU2 R2/R3 English HCSB.HTC plus the shared English HCSB.DAT from the
+native `0xDEAD` save prefix. It uses the original AU2 strings, font, screen,
+and source-derived pointer rectangles. Original-media tests verify these
+assets and the initial AU2 LOAD interaction. End-to-end hint selection still
+needs an authentic Amiga `1CSBGAME.DAT`; none is installed under
+`.firestaff/data/csb`, so do not claim save-to-hint parity until one is
+available. The explicit `--save` path is available for that validation.
 
 2026-10-28 AU2 save-format source audit: ReDMCSB `HINTLOAD.C` compiles the
 same save-header and word-deobfuscation routines for Atari and Amiga Hint
@@ -17,10 +19,10 @@ installed authentic AU2 utility contains `HCSB.HTC` MD5
 `7496b3b8b9ff6e2368eac9a16be8230b`, both known R3/R2-R3 assets. No Amiga
 `1CSBGAME.DAT` or `MINI.DAT` save is installed under `.firestaff/data/csb`,
 so end-to-end Amiga save selection is not currently verifiable from this
-machine. Remaining runtime work is to admit the authenticated AU2 pair and
-implement its HCSB.DAT-backed labels and Amiga control rectangles; do not
-duplicate or rewrite the already shared save decoder without contrary real
-save evidence.
+machine. AU2 asset/profile selection is now implemented; validate the
+compact save receipt and hint selection when an authentic Amiga save becomes
+available. Do not duplicate or rewrite the already shared save decoder
+without contrary real save evidence.
 
 2026-10-27 Atari Hint Oracle real-media test archive binding: the native CLI
 test's campaign archive variable pointed to `chaos_strikes_back_ftl.zip`, an

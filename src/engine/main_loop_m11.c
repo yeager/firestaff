@@ -14178,14 +14178,16 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     }
     if (!quitRequested && o->csbHintOracle) {
         if (!M11_GameView_StartCsbHintOracle(&gameView, o->dataDir, o->savePath)) {
-            fprintf(stderr, "firestaff: CSB Hint Oracle requires verified Atari R1 HCSB media and a native MINI.DAT\n");
+            fprintf(stderr, "firestaff: CSB Hint Oracle requires a verified Utility Disk HCSB pair and a valid native CSB save; pass --save for an explicit save path\n");
             runRc = 3;
             goto cleanup;
         }
         launchedEver = 1;
         fprintf(stdout,
-                "CSB HINT ORACLE READY: save=%s source=atari-r1 native=in-memory\n",
-                o->savePath && o->savePath[0] ? o->savePath : "auto");
+                "CSB HINT ORACLE READY: save=%s source=%s native=in-memory\n",
+                o->savePath && o->savePath[0] ? o->savePath : "auto",
+                strcmp(gameView.sourceId, "csb-hint-oracle-amiga-au2-en") == 0
+                    ? "amiga-au2-en" : "atari-r1");
         if (exitAfterLaunch && !o->bootProbe) {
             goto cleanup;
         }
