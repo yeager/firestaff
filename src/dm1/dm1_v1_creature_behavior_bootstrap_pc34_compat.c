@@ -78,11 +78,8 @@ int dm1_v1_creature_behavior_bootstrap_pc34(
                     world, group->creatureType, &creatureInfo) &&
                 creatureInfo.movementTicks >= 0 &&
                 creatureInfo.movementTicks <= 255) {
-                ev.sourceType = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
-                ev.sourcePriority =
-                    (uint8_t)(255 - creatureInfo.movementTicks);
-                ev.sourceOrderFlags = TIMELINE_SOURCE_ORDER_TYPE_VALID |
-                                      TIMELINE_SOURCE_ORDER_PRIORITY_VALID;
+                ev.aux4 = TIMELINE_AUX4_SOURCE_PRIORITY_VALID |
+                          (255 - creatureInfo.movementTicks);
             }
 
             if (F0721_TIMELINE_Schedule_Compat(&world->timeline, &ev)) {

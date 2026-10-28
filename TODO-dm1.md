@@ -1811,14 +1811,14 @@ parity.
   The M11 queue now preserves those first two keys for C29-C41 events when
   authenticated: C37 admission and generated continuations attach
   255-MovementTicks where creature metadata is available, and original-save
-  imports retain the native C29-C41 type/priority bytes. Untyped events keep
-  stable insertion order. This is a partial bridge, not complete scheduler
-  parity: source-pool address is not represented, non-creature event families
-  still need native type/priority mapping, and the 44-byte runtime queue
-  serialization does not persist comparator metadata. Resume imports can
-  recover C29-C41 priority from the authentic event record; other save paths
-  and live runtime ordering still need source-backed coverage. Do not treat
-  the seeded queue regression as proof of the complete admission sequence.
+  imports retain the native C29-C41 type in aux2 and priority in aux4. Its
+  high-bit validity marker and priority byte fit the existing 44-byte event,
+  so runtime serialization preserves them. Untyped events keep stable
+  insertion order. This is a partial bridge, not complete scheduler parity:
+  source-pool address is not represented, and non-creature event families
+  still need native type/priority mapping and source-backed coverage. Do not
+  treat the seeded queue regression as proof of the complete admission
+  sequence.
 
 - Extend the new shared prior-square history to full original-runtime
   capture verification: compare consecutive live M11 wander moves and exact

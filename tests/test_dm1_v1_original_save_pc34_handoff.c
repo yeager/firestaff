@@ -2929,11 +2929,9 @@ static void test_runtime_materializer_binds_original_group_reaction(void)
                   DM1_EVENT_GROUP_REACTION_HIT_BY_PROJECTILE &&
               loaded_world.timeline.events[2].aux3 == 3 &&
               (loaded_world.timeline.events[2].aux4 & 0x100) != 0 &&
-              loaded_world.timeline.events[2].sourceType ==
-                  DM1_EVENT_GROUP_REACTION_HIT_BY_PROJECTILE &&
-              loaded_world.timeline.events[2].sourcePriority == 7 &&
-              (loaded_world.timeline.events[2].sourceOrderFlags &
-               TIMELINE_SOURCE_ORDER_PRIORITY_VALID) != 0,
+              (loaded_world.timeline.events[2].aux4 & 0xff) == 7 &&
+              (loaded_world.timeline.events[2].aux4 &
+               TIMELINE_AUX4_SOURCE_PRIORITY_VALID) != 0,
           "C29 preserves F0209 identity, C.Ticks, and F0234 priority");
 }
 
@@ -3879,10 +3877,10 @@ static void test_original_save_later_map_group_transition(void)
           "F0194/F0195 source queue initializes");
     world.timeline.events[world.timeline.count++] = (struct TimelineEvent_Compat){
         TIMELINE_EVENT_CREATURE_TICK, 401u, 0, 0, 0, 0, 0,
-        AI_STATE_WANDER, 0, 0, 0, 0u, 0u, 0u };
+        AI_STATE_WANDER, 0, 0, 0 };
     world.timeline.events[world.timeline.count++] = (struct TimelineEvent_Compat){
         TIMELINE_EVENT_CREATURE_REACTION, 401u, 1, 0, 0, 0, 0, 0,
-        DM1_EVENT_REACTION_DANGER_ON_SQUARE, 0, 0, 0u, 0u, 0u };
+        DM1_EVENT_REACTION_DANGER_ON_SQUARE, 0, 0 };
 
     CHECK(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
           "F0003 later-map transition accepts loaded C04 owners");

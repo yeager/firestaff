@@ -134,11 +134,9 @@ int main(void)
               wander_event.aux0 == 5 &&
               wander_event.aux1 == 12 &&
               wander_event.aux2 == DM1_EVENT_UPDATE_BEHAVIOR_GROUP &&
-              wander_event.aux3 == 0 && wander_event.aux4 == 0x100 &&
-              wander_event.sourceType == DM1_EVENT_UPDATE_BEHAVIOR_GROUP &&
-              wander_event.sourcePriority == 247 &&
-              (wander_event.sourceOrderFlags &
-               TIMELINE_SOURCE_ORDER_PRIORITY_VALID),
+              wander_event.aux3 == 0 &&
+              wander_event.aux4 ==
+                  (0x100 | TIMELINE_AUX4_SOURCE_PRIORITY_VALID | 247),
           "F0180 schedules C37 at game time plus one with 255-MovementTicks priority");
     check(wander_receipt.valid && wander_receipt.source_symbol &&
               strcmp(wander_receipt.source_symbol,

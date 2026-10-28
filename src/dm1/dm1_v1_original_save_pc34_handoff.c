@@ -5917,11 +5917,8 @@ static int materialize_original_pc34_group_reaction_event(
     out_event->aux3 = (int)read_u16_le(&src->c_cell);
     /* Keep the source byte while marking aux3 as an original C.Ticks
      * payload; M10-generated reactions retain their legacy tick route. */
-    out_event->aux4 = (int)src->priority | 0x100;
-    out_event->sourceType = src->type;
-    out_event->sourcePriority = src->priority;
-    out_event->sourceOrderFlags = TIMELINE_SOURCE_ORDER_TYPE_VALID |
-                                  TIMELINE_SOURCE_ORDER_PRIORITY_VALID;
+    out_event->aux4 = (int)src->priority | 0x100 |
+                      TIMELINE_AUX4_SOURCE_PRIORITY_VALID;
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
@@ -6027,7 +6024,8 @@ static int dm1_original_save_group_reaction_runtime_receipt(
                 runtime->aux1 != world->things->groups[group_index].creatureType ||
                 runtime->aux2 != source->type ||
                 runtime->aux3 != (int)read_u16_le(&source->c_cell) ||
-                runtime->aux4 != ((int)source->priority | 0x100)) {
+                runtime->aux4 != ((int)source->priority | 0x100 |
+                                  TIMELINE_AUX4_SOURCE_PRIORITY_VALID)) {
                 continue;
             }
             consumed[runtime_index] = 1;

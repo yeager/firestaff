@@ -216,11 +216,8 @@ int F0180_DM1_GROUP_StartWandering_Compat(
     event.aux1 = creature_type;
     /* GROUP.C F0180:332-334: C37 with explicit C.Ticks=0. */
     event.aux2 = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
-    event.aux4 = 0x100;
-    event.sourceType = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
-    event.sourcePriority = (uint8_t)(255 - movement_ticks);
-    event.sourceOrderFlags = TIMELINE_SOURCE_ORDER_TYPE_VALID |
-                             TIMELINE_SOURCE_ORDER_PRIORITY_VALID;
+    event.aux4 = 0x100 | TIMELINE_AUX4_SOURCE_PRIORITY_VALID |
+                 (255 - movement_ticks);
     *out_event = event;
 
     out_receipt->valid = 1;

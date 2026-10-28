@@ -147,7 +147,9 @@ int main(void)
               world.timeline.events[1].aux0 == 0 &&
               world.timeline.events[1].aux2 == DM1_EVENT_UPDATE_BEHAVIOR_GROUP &&
               world.timeline.events[1].aux3 == 0 &&
-              world.timeline.events[1].aux4 == 0x100,
+              (world.timeline.events[1].aux4 & 0x100) != 0 &&
+              (world.timeline.events[1].aux4 &
+               TIMELINE_AUX4_SOURCE_PRIORITY_VALID) != 0,
           "F0195 starts the first group wandering at GameTime plus one");
     CHECK(world.timeline.events[2].kind == TIMELINE_EVENT_CREATURE_REACTION &&
               world.timeline.events[2].mapX == 1 &&

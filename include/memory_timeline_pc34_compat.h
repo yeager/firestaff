@@ -59,17 +59,12 @@ struct TimelineEvent_Compat {
     int aux2;
     int aux3;
     int aux4;
-    /* Source comparator evidence for event families whose native type and
-     * priority have been authenticated. These are runtime-only fields: the
-     * established 44-byte event wire format remains unchanged. A zero flag
-     * means retain stable insertion order for that comparator component. */
-    uint8_t sourceOrderFlags;
-    uint8_t sourceType;
-    uint8_t sourcePriority;
 };
 
-#define TIMELINE_SOURCE_ORDER_TYPE_VALID     0x01u
-#define TIMELINE_SOURCE_ORDER_PRIORITY_VALID 0x02u
+/* Native priority is stored in aux4's low byte for C29-C41 source events.
+ * This marker authenticates that byte for the M11 ordering comparator while
+ * preserving TimelineEvent_Compat's 44-byte in-memory and wire layouts. */
+#define TIMELINE_AUX4_SOURCE_PRIORITY_VALID 0x400
 
 struct TimelineQueue_Compat {
     uint32_t nowTick;

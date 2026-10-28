@@ -12035,10 +12035,8 @@ static void orch_schedule_generated_group_wandering_event_compat(
     if (F0890d_ORCH_GetCreatureInfoForWorld_Compat(
             world, group->creatureType, &creatureInfo) &&
         creatureInfo.movementTicks >= 0 && creatureInfo.movementTicks <= 255) {
-        wander.sourceType = (uint8_t)plan.wanderEventType;
-        wander.sourcePriority = (uint8_t)(255 - creatureInfo.movementTicks);
-        wander.sourceOrderFlags = TIMELINE_SOURCE_ORDER_TYPE_VALID |
-                                  TIMELINE_SOURCE_ORDER_PRIORITY_VALID;
+        wander.aux4 |= TIMELINE_AUX4_SOURCE_PRIORITY_VALID |
+                       (255 - creatureInfo.movementTicks);
     }
     if (F0721_TIMELINE_Schedule_Compat(&world->timeline, &wander) &&
         group->behavior >= DM1_BEHAVIOR_USELESS4) {
@@ -13189,10 +13187,8 @@ static int orch_f0209_insert_next_event_f0238_compat(
     next.aux3 = (int)addPlan.ticks;
     next.aux4 = 0x100; /* EVENT.C.Ticks is source-owned, never inferred. */
     if (sourcePriorityValid) {
-        next.sourceType = (uint8_t)addPlan.eventType;
-        next.sourcePriority = (uint8_t)(255 - creatureInfo.movementTicks);
-        next.sourceOrderFlags = TIMELINE_SOURCE_ORDER_TYPE_VALID |
-                                TIMELINE_SOURCE_ORDER_PRIORITY_VALID;
+        next.aux4 |= TIMELINE_AUX4_SOURCE_PRIORITY_VALID |
+                     (255 - creatureInfo.movementTicks);
     }
     if (!F0721_TIMELINE_Schedule_Compat(&world->timeline, &next)) {
         world->timeline = timelineBefore;
@@ -13274,10 +13270,8 @@ static int orch_f0209_begin_attack_compat(
         next.aux2 = plan.eventType;
         next.aux3 = plan.ticks;
         next.aux4 = 0x100;
-        next.sourceType = (uint8_t)plan.eventType;
-        next.sourcePriority = (uint8_t)(255 - ctx->creatureInfo.movementTicks);
-        next.sourceOrderFlags = TIMELINE_SOURCE_ORDER_TYPE_VALID |
-                                TIMELINE_SOURCE_ORDER_PRIORITY_VALID;
+        next.aux4 |= TIMELINE_AUX4_SOURCE_PRIORITY_VALID |
+                     (255 - ctx->creatureInfo.movementTicks);
         if (!F0721_TIMELINE_Schedule_Compat(&queue, &next)) return 0;
     }
     world->timeline = queue;

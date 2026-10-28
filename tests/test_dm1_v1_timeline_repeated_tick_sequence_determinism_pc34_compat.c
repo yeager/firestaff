@@ -52,7 +52,7 @@
  *   D8 Pop sequence determinism — untyped events retain stable insertion
  *      order.
  *   D9 Source order — authenticated C29-C41 source types sort descending;
- *      F0180 C37 priority sorts descending when supplied; unavailable
+ *      F0180 C37 priority sorts descending when supplied in aux4; unavailable
  *      source-pool address ties remain stable.
  *
  * Data-free, deterministic, source-locked. No DUNGEON.DAT, no
@@ -540,10 +540,11 @@ static struct TimelineEvent_Compat make_reaction_event(
     struct TimelineEvent_Compat event = make_event(
         TIMELINE_EVENT_CREATURE_REACTION, 500u, 0, 1, 1, 0,
         group_index, 0, source_type, 0, 0x100);
-    /* Let F0721 infer the native type from the C29-C41 payload. */
+    /* The native source type is aux2; authenticate an available priority in
+     * aux4 without changing the established 44-byte event layout. */
     if (priority_valid) {
-        event.sourceOrderFlags = TIMELINE_SOURCE_ORDER_PRIORITY_VALID;
-        event.sourcePriority = (uint8_t)source_priority;
+        event.aux4 |= TIMELINE_AUX4_SOURCE_PRIORITY_VALID |
+                      (source_priority & 0xff);
     }
     return event;
 }
@@ -582,16 +583,16 @@ static void test_d9_source_ordered_group_reactions(void)
         CHECK(F0723_TIMELINE_Pop_Compat(&queue, &popped[i]),
               "D9g: pop source-ordered event");
     }
-    CHECK(popped[0].aux0 == 3 && popped[0].sourceType ==
+    CHECK(popped[0].aux0 == 3 && popped[0].aux2 ==
               DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0,
           "D9h: higher source C38 precedes C37");
-    CHECK(popped[1].aux0 == 2 && popped[1].sourcePriority == 200,
+    CHECK(popped[1].aux0 == 2 && (popped[1].aux4 & 0xff) == 200,
           "D9i: higher F0180 C37 priority precedes lower priority");
     CHECK(popped[2].aux0 == 5,
           "D9j: same type/priority keeps stable insertion pending source slot");
     CHECK(popped[3].aux0 == 1,
           "D9k: lower F0180 C37 priority follows higher priority");
-    CHECK(popped[4].aux0 == 4 && popped[4].sourceType ==
+    CHECK(popped[4].aux0 == 4 && popped[4].aux2 ==
               DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE,
           "D9l: lower source C29 follows C37");
     CHECK(popped[5].aux0 == 6,
@@ -603,11 +604,11 @@ static void test_d9_source_ordered_group_reactions(void)
     CHECK(F0726_TIMELINE_EventDeserialize_Compat(
               &restored, bytes, sizeof(bytes)),
           "D9o: legacy event deserializes");
-    CHECK(TIMELINE_EVENT_SERIALIZED_SIZE == 44 && restored.sourceType ==
+    CHECK(TIMELINE_EVENT_SERIALIZED_SIZE == 44 && restored.aux2 ==
               DM1_EVENT_UPDATE_BEHAVIOR_GROUP &&
-              !(restored.sourceOrderFlags &
-                TIMELINE_SOURCE_ORDER_PRIORITY_VALID),
-          "D9p: 44-byte save stays compatible and rebinds only recoverable C37 type");
+              (restored.aux4 & TIMELINE_AUX4_SOURCE_PRIORITY_VALID) != 0 &&
+              (restored.aux4 & 0xff) == 200,
+          "D9p: 44-byte event retains its source C37 type and priority");
 }
 
 /* ------------------------------------------------------------------

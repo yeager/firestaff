@@ -1751,7 +1751,12 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
             if (!sourceReceiptWorld ||
                 (!has_original_c3c4_receipt &&
                  (type != DM1_EVENT_UPDATE_BEHAVIOR_GROUP ||
-                  src->aux4 != 0x100 || src->aux3 != 0)) ||
+                  (src->aux4 != 0x100 &&
+                   (!(src->aux4 & TIMELINE_AUX4_SOURCE_PRIORITY_VALID) ||
+                    (src->aux4 &
+                     ~(0x100 | TIMELINE_AUX4_SOURCE_PRIORITY_VALID | 0xff)) !=
+                        0)) ||
+                  src->aux3 != 0)) ||
                 src->kind != TIMELINE_EVENT_CREATURE_REACTION ||
                 src->aux2 != type || (src->aux4 & 0x100) == 0 ||
                 src->aux0 < 0 || !things || !things->groups ||

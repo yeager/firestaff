@@ -70,32 +70,25 @@ static int timeline_event_precedes_same_tick(
     const struct TimelineEvent_Compat* a,
     const struct TimelineEvent_Compat* b)
 {
-    if ((a->sourceOrderFlags & TIMELINE_SOURCE_ORDER_TYPE_VALID) &&
-        (b->sourceOrderFlags & TIMELINE_SOURCE_ORDER_TYPE_VALID) &&
-        a->sourceType != b->sourceType) {
-        return a->sourceType > b->sourceType;
+    int aType;
+    int bType;
+    if (a->kind != TIMELINE_EVENT_CREATURE_REACTION ||
+        b->kind != TIMELINE_EVENT_CREATURE_REACTION ||
+        a->aux2 < DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE ||
+        a->aux2 > DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3 ||
+        b->aux2 < DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE ||
+        b->aux2 > DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+        return 0;
     }
-    if ((a->sourceOrderFlags & TIMELINE_SOURCE_ORDER_TYPE_VALID) &&
-        (b->sourceOrderFlags & TIMELINE_SOURCE_ORDER_TYPE_VALID) &&
-        a->sourceType == b->sourceType &&
-        (a->sourceOrderFlags & TIMELINE_SOURCE_ORDER_PRIORITY_VALID) &&
-        (b->sourceOrderFlags & TIMELINE_SOURCE_ORDER_PRIORITY_VALID) &&
-        a->sourcePriority != b->sourcePriority) {
-        return a->sourcePriority > b->sourcePriority;
+    aType = a->aux2;
+    bType = b->aux2;
+    if (aType != bType) return aType > bType;
+    if ((a->aux4 & TIMELINE_AUX4_SOURCE_PRIORITY_VALID) &&
+        (b->aux4 & TIMELINE_AUX4_SOURCE_PRIORITY_VALID) &&
+        (a->aux4 & 0xff) != (b->aux4 & 0xff)) {
+        return (a->aux4 & 0xff) > (b->aux4 & 0xff);
     }
     return 0;
-}
-
-static void timeline_event_bind_reaction_source_order(
-    struct TimelineEvent_Compat* event)
-{
-    if (!event || event->kind != TIMELINE_EVENT_CREATURE_REACTION ||
-        event->aux2 < DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE ||
-        event->aux2 > DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
-        return;
-    }
-    event->sourceType = (uint8_t)event->aux2;
-    event->sourceOrderFlags |= TIMELINE_SOURCE_ORDER_TYPE_VALID;
 }
 
 int F0720_TIMELINE_Init_Compat(
@@ -112,28 +105,24 @@ int F0721_TIMELINE_Schedule_Compat(
     struct TimelineQueue_Compat* queue,
     const struct TimelineEvent_Compat* event)
 {
-    struct TimelineEvent_Compat scheduledEvent;
     int insertIndex;
     if (queue == 0 || !timeline_event_is_valid(event)) return 0;
     if (!timeline_queue_has_valid_count(queue)) return 0;
     if (timeline_try_merge_event(queue, event)) return 1;
     if (queue->count >= TIMELINE_QUEUE_CAPACITY) return 0;
 
-    scheduledEvent = *event;
-    timeline_event_bind_reaction_source_order(&scheduledEvent);
-
     insertIndex = queue->count;
     while (insertIndex > 0) {
         const struct TimelineEvent_Compat* prior = &queue->events[insertIndex - 1];
-        if (prior->fireAtTick < scheduledEvent.fireAtTick ||
-            (prior->fireAtTick == scheduledEvent.fireAtTick &&
-             !timeline_event_precedes_same_tick(&scheduledEvent, prior))) {
+        if (prior->fireAtTick < event->fireAtTick ||
+            (prior->fireAtTick == event->fireAtTick &&
+             !timeline_event_precedes_same_tick(event, prior))) {
             break;
         }
         queue->events[insertIndex] = queue->events[insertIndex - 1];
         insertIndex--;
     }
-    queue->events[insertIndex] = scheduledEvent;
+    queue->events[insertIndex] = *event;
     queue->count++;
     return 1;
 }
@@ -225,10 +214,6 @@ int F0726_TIMELINE_EventDeserialize_Compat(
     event->aux2 = read_i32_le(buf + 32);
     event->aux3 = read_i32_le(buf + 36);
     event->aux4 = read_i32_le(buf + 40);
-    event->sourceOrderFlags = 0u;
-    event->sourceType = 0u;
-    event->sourcePriority = 0u;
-    timeline_event_bind_reaction_source_order(event);
     return 1;
 }
 
