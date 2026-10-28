@@ -266,9 +266,11 @@ int main(void)
     REQUIRE(M11_GameView_HandleInput(&game, M12_MENU_INPUT_UP) !=
                 M11_GAME_INPUT_IGNORED,
             "production movement crosses the first-door passage");
-    /* Native Amiga/Atari C37/C38 cadence can leave an attack beyond the
-     * immediate PC34 window. Wait for the source event, not a fixed
-     * five-tick interval. */
+    /* ReDMCSB GROUP.C:2099-2127 lets C37 select attack behavior and schedule
+     * the per-creature C38 event with its native turn delay; GROUP.C:2335ff
+     * handles that later event and only then attempts the actual attack.
+     * Confirm the C37 transition first, then wait for an attack emission that
+     * also reduces champion HP. Do not treat scheduling C38 as damage. */
     for (i = 0; i < 64 &&
                 game.world.lifecycle.lastCreatureAttackTime == attackBefore;
          ++i)
@@ -276,10 +278,7 @@ int main(void)
     if (!(game.world.party.mapIndex == 1 && game.world.party.mapX == 6 &&
           game.world.party.direction == 2 &&
           game.world.lifecycle.lastCreatureAttackTime != attackBefore &&
-          game.world.things->groups[169].behavior == DM1_BEHAVIOR_ATTACK &&
-          game.world.party.champions[0].hp.current <= initialChampionHp &&
-          (isAtari ||
-           game.world.party.champions[0].hp.current < initialChampionHp))) {
+          game.world.things->groups[169].behavior == DM1_BEHAVIOR_ATTACK)) {
         fprintf(stderr,
                 "combat diagnostic: platform=%s party=(%d,%d,%d,%d) "
                 "tick=%u attack=%u before=%u hp=%u initialHp=%u",
@@ -324,11 +323,7 @@ int main(void)
                 game.world.lifecycle.lastCreatureAttackTime != attackBefore &&
                 game.world.things->groups[169].behavior == DM1_BEHAVIOR_ATTACK,
             "authentic map-1 creature enters its source attack behavior");
-    if (!isAtari) {
-        REQUIRE(game.world.party.champions[0].hp.current < initialChampionHp,
-                "authentic first monster attack deals damage to the champion");
-    }
-    if (isAtari) {
+    {
         int landedAttack = 0;
         for (i = 0; i < 4000 &&
                     !landedAttack;
@@ -351,7 +346,7 @@ int main(void)
         }
         REQUIRE(landedAttack &&
                     game.world.party.champions[0].hp.current < initialChampionHp,
-                "authentic Atari ST creature eventually lands a repeated attack");
+                "authentic platform creature eventually lands a source-timeline attack");
     }
     naturalDamage = (unsigned int)(initialChampionHp -
         game.world.party.champions[0].hp.current);

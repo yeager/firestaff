@@ -16,6 +16,16 @@ not identify behavior by itself. Treat
 Civilization-specific, it labels the binary as Civilization, and its
 heuristic function boundaries are not verified DM1 symbols. Any address used
 to guide a Firestaff change must first be mapped to DM1 behavior or source.
+2026-10-28 first-monster timing test correction: ReDMCSB `GROUP.C` shows
+that C37 selects attack behavior and schedules the per-creature C38 event
+(`GROUP.C:2099-2127`); C38 performs the later attack attempt
+(`GROUP.C:2335ff`). The shared Amiga/Atari/FMTowns test had treated the C37
+transition as if damage had already landed. It now waits for an emitted
+creature attack that also lowers champion HP. The authentic PC34, Amiga 2.0,
+Atari ST 1.2, FM Towns, and Amiga 3.6 combat tests all pass with that source
+timeline. This corrects the test's timing assumption; it changes no game
+logic and verifies only the covered first-monster encounter.
+
 The current `v3.0.419` Firestaff binary also passed
 `tests/test_dm1_v1_pc34_native_cli_boot.sh` against the authentic PC34 archive:
 the auto-platform CLI, Original menu, title interruption, optional-SWSH
