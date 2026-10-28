@@ -20,6 +20,20 @@
   `$222D == $04` / `$2228 == $0C` branch is a candidate for further tracing,
   not evidence that I+II starts the game. Keep the menu handoff unresolved.
 
+## 2026-10-28 — four-second Run cold starts still stop at System Card
+
+- Four hash-verified JP cold starts scheduled the mapped Run key for four real
+  seconds at offsets 10, 15, 25, and 40 seconds. The System Card poll at
+  `$E4C5` observed active-low `$37` in 145–149 samples per capture.
+- All four ended with `transition=missing`, zero CD IRQ callbacks, zero
+  non-System-Card PCE-CD reads, zero raw-sector spans, and zero game-owned
+  `$E009` dispatches. The captures prove host-to-System-Card input delivery;
+  they do not prove that the title menu was visible or that Theron's own input
+  consumer received Run. Do not infer that Run is ineffective or that the
+  four-second hold is insufficient.
+- Trace hashes and exact limits are recorded in [the cold-start Run hold
+  capture](docs/source-lock/theron-disassembly/theron-jp-cold-start-four-second-run-20261028.md).
+
 ## 2026-10-28 — authentic Japanese save-state mouse replay remains screen-only
 
 - Three repeated PCE Fast mouse-script captures and three no-script controls
