@@ -1,6 +1,6 @@
 # Five-game startup support gap analysis
 
-Reconciled with repository `main` at `1ec86f00` on 2026-10-28. The latest
+Reconciled with repository `main` at `b30b31b6` on 2026-10-28. The latest
 published release is v3.0.418 (published on 2026-10-27). The release workflow
 verified packaging, not gameplay startup. Current authentic-media CLI routes
 include DM1 PC34, DOS, Atari ST, Amiga and FM Towns; CSB Atari, Amiga and FM
@@ -65,6 +65,23 @@ against authentic media for all five games, but “available,”
 The current evidence does not establish complete five-game startup support.
 
 ## 2026-10-28 local real-media retest
+
+### Targeted DM1/CSB/DM2 regression follow-up
+
+After `main` reached `744ac459`, a local Debug build ran a seven-case
+real-media CTest selection covering DM1, CSB and DM2 only. Six tests passed:
+the DM1, CSB and DM2 M12 card-to-runtime routes, the DM2 Amiga M12 runtime,
+the DM1 PC-34 CLI/input matrix, and the CSB Atari STX CLI boot. The DM1 PC-34
+test passed in 477 seconds and exercises more than startup, including source
+menu interaction, HoC actions, inventory/champion input and debug performance
+telemetry. The French DM2 DOS CLI test was marked `Skipped` immediately by
+CTest in this build; this run therefore adds no French DOS result. The test
+selection completed in 1,081.53 seconds. The run was on the local macOS host,
+not `trv2`. `AGENTS.md` requires the dedicated `trv2` host for large test
+selections, so this run is noncompliant and is retained as an exploratory
+observation only; it is not accepted validation evidence. Its SDL-dummy
+results do not establish native display/GPU behavior or complete gameplay
+parity.
 
 The installed DM2 Macintosh English StuffIt archive was recovered from the
 user's Downloads folder and its SHA-256 matched the preservation listing. The
