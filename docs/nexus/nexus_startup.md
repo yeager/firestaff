@@ -1616,6 +1616,28 @@ screenshots, memory dumps, frame audits, and the reproduction command are
 retained at
 `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_new_game_capture_20261028/`.
 
+Follow-up timing probes show that Up at capture frame 100 is too early: at
+frame 120 the screenshot is still in the transition and is pixel-identical to
+the control; only three WRAM-HI bytes differ. Up at frame 400 also leaves the
+frame-600 screenshot identical to control. Up at frame 1,000 produces the
+same final screenshot as the frame-1,500 Up run. These probes bound the
+observed response to after frame 400 and by frame 1,000, but do not identify
+the exact transition frame. The paired captures are retained in the
+`paired-up-120/`, `paired-up-400-600/`, and `paired-up-1000-1800/`
+subdirectories. The frame-120 SH-2 trace dropped records and is not used.
+
+A separate complete ten-frame high-WRAM SH-2 trace contains 174,354 writes
+with no drops, but its final screenshot still shows the title menu. Ghidra
+maps its frequent writers to buffer clearing, entity-grid/list setup, fixed-
+point transforms, and polygon emission. In the later 1,800-frame dumps, four
+active type-`0x0f` rows in the 20-entry entity pool have object tile
+coordinates `(9,24)`, `(7,26)`, `(38,25)`, and `(36,27)`; these remain
+unchanged between control and Up. No source evidence binds those rows to the
+controlled player or identifies a New Game writer for player position and
+facing. The captured transition therefore still does not provide a safe
+Firestaff start pose. The complete short trace and the timing-probe notes are
+retained in `startup-sh2-trace-10frames/` and the paired subdirectories above.
+
 This is a full captured-frame composition check, not a renderer admission. The
 replay consumes Ymir display and VDP snapshots, not a Firestaff runtime upload
 from retail assets. The screenshot has no embedded frame number, so exact
