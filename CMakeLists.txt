@@ -4356,17 +4356,29 @@ if(BUILD_TESTING)
         ENVIRONMENT "FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch/dm2-fmtowns-debug"
         TIMEOUT 60
     )
-    add_test(
-        NAME firestaff_dm1_scan_debug_localization_real_media
-        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_dm1_scan_debug_localization_real_media.sh"
-            "$<TARGET_FILE:firestaff>"
-    )
-    set_tests_properties(firestaff_dm1_scan_debug_localization_real_media PROPERTIES
-        SKIP_RETURN_CODE 77
-        LABELS "dm1;startup;cli;debug;localization;real-media;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM1_PC_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_LOCALE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/po;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy"
-        TIMEOUT 90
-    )
+    foreach(_scan_localization_case IN ITEMS
+            "dm1|pc|pc34-en|dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+            "csb|fmtowns|fmtowns-en|csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"
+            "dm2|fmtowns|fmtowns-ja|dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip")
+        string(REPLACE "|" ";" _scan_localization_fields "${_scan_localization_case}")
+        list(GET _scan_localization_fields 0 _scan_game)
+        list(GET _scan_localization_fields 1 _scan_platform)
+        list(GET _scan_localization_fields 2 _scan_edition)
+        list(GET _scan_localization_fields 3 _scan_archive)
+        add_test(
+            NAME "firestaff_${_scan_game}_scan_debug_localization_real_media"
+            COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_scan_debug_localization_real_media.sh"
+                "$<TARGET_FILE:firestaff>" "${_scan_game}" "${_scan_platform}"
+                "${_scan_edition}" "${FIRESTAFF_WORKSPACE_DATA_DIR}/${_scan_archive}"
+        )
+        set_tests_properties(
+            "firestaff_${_scan_game}_scan_debug_localization_real_media" PROPERTIES
+            SKIP_RETURN_CODE 77
+            LABELS "${_scan_game};startup;cli;debug;localization;real-media;skip-safe"
+            ENVIRONMENT "FIRESTAFF_LOCALE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/po;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch/scan-localization"
+            TIMEOUT 120
+        )
+    endforeach()
     add_test(
         NAME return_to_menu_rescans_dm1_csb_dm2_real_media
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh"

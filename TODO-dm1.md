@@ -1,5 +1,11 @@
 # Firestaff TODO — DM1
 
+2026-10-28: The real-media localized startup-debug regression now has a
+parameterized test shared by DM1, CSB, and DM2. Its DM1 PC34 case passes for
+explicit Swedish and the saved Swedish language profile, checking both scan
+task labels, authentic edition selection, and the boot-probe boundary. This
+covers startup localization only, not full DM1/platform parity.
+
 2026-10-28 PC34 binary-analysis tooling check: the original DOS 3.4 `DM.EXE`
 is LZEXE 0.91-packed. The `yeager/pcrecomp` tools successfully unpack it with
 `tools/drm/unlzexe.py`; `tools/disasm/decode16.py --resident` decodes its

@@ -1,5 +1,11 @@
 # Firestaff TODO — DM2
 
+2026-10-28: Added a shared real-media startup-debug localization regression
+for DM2 FM Towns. Explicit Swedish and the saved Swedish language profile
+both pass, including localized scan task labels, selection of the authentic
+Japanese edition, and the boot-probe boundary. This covers startup
+localization only, not full DM2/platform parity.
+
 2026-10-28 FM Towns `--debug` source-frame trace: the combined startup
 diagnostics CTest failed on the M4 because the main loop logged only after a
 batch of overdue Timer-A ticks, hiding intermediate TWANIM source-frame states

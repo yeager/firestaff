@@ -1,5 +1,11 @@
 # Firestaff TODO — CSB
 
+2026-10-28: Added a shared real-media startup-debug localization regression
+for CSB FM Towns. Explicit Swedish and the saved Swedish language profile
+both pass, including localized scan task labels, selection of the authentic
+English edition from the bilingual archive, and the boot-probe boundary.
+This covers startup localization only, not full CSB/platform parity.
+
 2026-10-28 Amiga ZIP/ADF test-media availability correction: the exact
 `Chaos Strikes Back (FTL).zip` path used by CMake is present under
 `~/.firestaff/data/csb/` (901,330 bytes). `unzip -t` passes and the archive
