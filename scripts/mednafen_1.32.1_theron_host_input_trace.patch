@@ -19,7 +19,7 @@ diff --git a/src/drivers/input.cpp b/src/drivers/input.cpp
 +{
 + va_list args;
 +
-+ if(TheronHostInputTraceCount >= 64)
++ if(TheronHostInputTraceCount >= 4096)
 +  return;
 + if(!TheronHostInputTrace)
 + {

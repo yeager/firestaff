@@ -36,6 +36,32 @@ if [[ ! -x "$scripted_input_consumption_verifier" ]]; then
     printf '%s\n' 'FAIL: scripted-input consumption verifier is not executable' >&2
     exit 1
 fi
+if ! grep -Fq 'wait_for_host_key_scancode_presses' "$script" ||
+   ! grep -Fq 'host_key_sequence_scancodes' "$script" ||
+   ! grep -Fq 'did not observe host key down' "$script"; then
+    printf '%s\n' 'FAIL: live capture must require an observed SDL key-down for every requested host key' >&2
+    exit 1
+fi
+host_key_gate_dir=$(mktemp -d "$repo/build/theron-host-key-gate.XXXXXX")
+trap 'rm -rf -- "$host_key_gate_dir"' EXIT
+cat >"$host_key_gate_dir/input.trace" <<'THERON_HOST_KEY_TRACE'
+host_key_event type=up scancode=91 repeat=0
+host_key_event type=down scancode=91 repeat=0
+host_key_event type=up scancode=91 repeat=0
+host_key_event type=down scancode=91 repeat=0
+THERON_HOST_KEY_TRACE
+sed -n '/^wait_for_host_key_scancode_presses() {/,/^}/p' "$script" \
+    >"$host_key_gate_dir/press-gate.sh"
+if ! bash -c 'source "$1"; wait_for_host_key_scancode_presses "$2" 91 1 1' _ \
+    "$host_key_gate_dir/press-gate.sh" "$host_key_gate_dir/input.trace" 2>/dev/null; then
+    printf '%s\n' 'FAIL: one complete host key press was not recognized' >&2
+    exit 1
+fi
+if bash -c 'source "$1"; wait_for_host_key_scancode_presses "$2" 91 2 1' _ \
+    "$host_key_gate_dir/press-gate.sh" "$host_key_gate_dir/input.trace" 2>/dev/null; then
+    printf '%s\n' 'FAIL: an unmatched key-down was counted as a complete host key press' >&2
+    exit 1
+fi
 mkdir -p "$repo/build"
 python3 "$repo/tests/test_theron_scripted_input_patch_parser.py"
 bash "$repo/tests/test_theron_authentic_bram.sh"

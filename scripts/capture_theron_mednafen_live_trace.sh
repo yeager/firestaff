@@ -1042,6 +1042,30 @@ wait_for_host_key_events() {
     return 1
 }
 
+wait_for_host_key_scancode_presses() {
+    local file=$1
+    local scancode=$2
+    local expected_count=$3
+    local attempts=${4:-40}
+    local attempt observed_count
+    local event="host_key_event type=down scancode=$scancode repeat=0"
+    local release="host_key_event type=up scancode=$scancode repeat=0"
+
+    for ((attempt = 0; attempt < attempts; ++attempt)); do
+        observed_count=$(awk -v down="$event" -v up="$release" '
+            $0 == down && !held { held = 1; next }
+            $0 == up && held { presses++; held = 0 }
+            END { print presses + 0 }
+        ' "$file" 2>/dev/null || true)
+        observed_count=${observed_count:-0}
+        if (( observed_count >= expected_count )); then
+            return 0
+        fi
+        sleep 0.25
+    done
+    return 1
+}
+
 wait_for_trace_producer() {
     local file=$1
     local attempts=$2
@@ -1549,13 +1573,20 @@ if [[ "$host_input_requested" == 1 ]]; then
     host_key_sequence_codes=()
     host_key_sequence_delays=()
     host_key_sequence_holds=()
+    host_key_sequence_scancodes=()
     if [[ -n "$host_key_sequence" ]]; then
         IFS=',' read -r -a host_key_sequence_entries <<<"$host_key_sequence"
         host_key_repeats=${#host_key_sequence_entries[@]}
         for host_key_sequence_entry in "${host_key_sequence_entries[@]}"; do
             host_key_sequence_label=${host_key_sequence_entry%@*}
+            case "$host_key_sequence_label" in
+                run|return) host_key_sequence_key=run ;;
+                select) host_key_sequence_key=select ;;
+                *) host_key_sequence_key=$host_key_sequence_label ;;
+            esac
             host_key_sequence_delays+=("${host_key_sequence_entry#*@}")
             host_key_sequence_codes+=("$(capture_host_key_for_label "$host_key_sequence_label")")
+            host_key_sequence_scancodes+=("$(capture_profile_scancode "pce.input.port1.gamepad.$host_key_sequence_key")")
         done
         if [[ -n "$host_key_holds" ]]; then
             IFS=',' read -r -a host_key_sequence_holds <<<"$host_key_holds"
@@ -1766,6 +1797,26 @@ if [[ "$host_input_requested" == 1 ]]; then
                 kill "$mednafen_pid" 2>/dev/null || true
                 wait "$mednafen_pid" 2>/dev/null || true
                 printf '%s\n' 'FAIL: Quartz global HID delivery requires Mednafen to own the foreground' >&2
+                exit 1
+            fi
+        fi
+        if [[ -n "$host_key_sequence" ]]; then
+            host_key_current_scancode=${host_key_sequence_scancodes[$((host_key_attempt - 1))]}
+            host_key_expected_scancode_downs=0
+            for ((host_key_scancode_index = 0;
+                  host_key_scancode_index < host_key_attempt;
+                  ++host_key_scancode_index)); do
+                if [[ "${host_key_sequence_scancodes[$host_key_scancode_index]}" == "$host_key_current_scancode" ]]; then
+                    ((host_key_expected_scancode_downs += 1))
+                fi
+            done
+            if ! wait_for_host_key_scancode_presses "$input_trace" \
+                "$host_key_current_scancode" "$host_key_expected_scancode_downs" 40; then
+                kill "$mednafen_pid" 2>/dev/null || true
+                wait "$mednafen_pid" 2>/dev/null || true
+                printf 'FAIL: Mednafen did not observe host key down %s (SDL scancode %s, occurrence %s)\n' \
+                    "$host_key_current_code" "$host_key_current_scancode" \
+                    "$host_key_expected_scancode_downs" >&2
                 exit 1
             fi
         fi

@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-28 — require observed SDL key pairs in bounded reference captures
+
+The reference-only Mednafen host-input trace now retains up to 4096 SDL events
+instead of stopping at 64, and the capture wrapper requires an ordered,
+nonrepeat key-down/key-up pair for each scheduled host key using the isolated
+profile's SDL scancode. Its regression checks accept a complete pair and reject
+an unmatched key-down, including a preceding unrelated key-up. The Mednafen
+patch set applied cleanly to an isolated source copy and built on TRV2. One
+authentic JP capture observed Run/I/I/Up and reached raw-sector loading, but
+ended without byte-exact CD-to-RAM receipts (`transition=missing`). This closes
+only the capture-tool input-observation gap; native Theron keyboard/gameplay
+parity remains open in TODO.
+
 ## 2026-10-28 — validate authentic mouse-capture samples
 
 The reference-only Mednafen capture regression now checks the bounded

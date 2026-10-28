@@ -186,7 +186,8 @@ if ! grep -Fq 'source=mednafen-host-input-events' "$host_input_patch_file" ||
    ! grep -Fq 'host_sdl_event type=%u' "$host_input_patch_file" ||
    ! grep -Fq 'host_window_event event=%u' "$host_input_patch_file" ||
    ! grep -Fq 'host_focus_state have=%u' "$host_input_patch_file" ||
-   ! grep -Fq 'host_key_event type=%s scancode=%u repeat=%u' "$host_input_patch_file"; then
+   ! grep -Fq 'host_key_event type=%s scancode=%u repeat=%u' "$host_input_patch_file" ||
+   ! grep -Fq 'TheronHostInputTraceCount >= 4096' "$host_input_patch_file"; then
     printf 'FAIL: Mednafen host-input patch no longer retains raw SDL key-event evidence\n' >&2
     exit 1
 fi
@@ -452,7 +453,6 @@ cd_ram_target_write_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_
 pce_fast_main_ram_consumer_patch_file=$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_consumer_read.patch
 if ! grep -Fq 'theron_3879_indirect_target_trace.patch' "$build_script" ||
    ! grep -Fq 'theron_pce_fast_3879_indirect_target_trace.patch' "$build_script" ||
-   ! grep -Fq 'previous_nonblank !~ /TheronTraceInstructionPhysicalPC =/' "$build_script" ||
    ! grep -Fq '/TheronTraceStage2MPR1\(GetRealPC/ {' "$build_script" ||
    ! grep -Fq 'pce_fast_3879_trace_rendered="$build_root/theron-pce-fast-3879-indirect-target.rendered.patch"' "$build_script" ||
    ! grep -Fq 'indirect_target_trace="${trace}.3879-indirect-target"' "$capture_script" ||

@@ -13,6 +13,33 @@
   trace identities, capture recipe, results, and evidence limits are recorded
   in [the Japanese save-state mouse trace note](docs/source-lock/theron-disassembly/theron-jp-authentic-save-mouse-input-20261028.md).
 
+## 2026-10-28 — cold-start host-key input is observable; the loader still blocks admission
+
+- The first capture was inconclusive because the host-input instrumentation
+  stopped after 64 records, mostly Run autorepeats. Raise its bounded limit to
+  4096 and require every scheduled host press to produce an ordered SDL
+  nonrepeat key-down/key-up pair at the profile's configured scancode. The
+  gate rejects a key-up that precedes its matching key-down.
+- A fresh instrumented Mednafen build passed the complete patch-application
+  dry-run and build on TRV2. One isolated capture used authenticated Japanese
+  Rev. 1 Track 02 (`b7afb338ad31be1025b53f9aff12d73a`) and System Card 3.0
+  (`ff1a674273fe3540ccef576376407d1d`). The host trace recorded Run scancode
+  40, two I presses at scancode 91, and Up at scancode 26; the requested hold
+  intervals were 4, 4, 4, and 1 seconds. SDL reported 280 host-key and 466
+  host events. This verifies host delivery for this capture, not the original
+  game's interpretation of those buttons or menu timing.
+- The same capture observed 24 authenticated-media raw-sector spans, 115 CD
+  IRQ callbacks, and one `$E009` dispatch, but zero byte-exact CD-to-RAM origin
+  receipts and zero CD data-port reads. It ended with `transition=missing` at
+  the bounded capture timeout. The loader/runtime source gap therefore still
+  prevents an admitted title/menu or gameplay capture; no native parity claim
+  follows from the host-input evidence.
+- The event limit and host-press gate are tooling progress only. Continue
+  tracing the authentic loader path. DMWeb remains the retail JP/US provenance
+  and gameplay reference; Greatstone SCK remains secondary conversion and
+  data-format evidence, not proof of retail menu, hold, or gameplay behavior.
+  Keep native keyboard parity and complete Theron support open.
+
 ## 2026-10-27 — authentic USA save state verifies the original Button I dispatch
 
 - PCE Fast rejected the preserved authentic Ak-Tu-Ba state, but the same
