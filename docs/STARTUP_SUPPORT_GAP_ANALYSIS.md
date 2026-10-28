@@ -68,17 +68,20 @@ The current evidence does not establish complete five-game startup support.
 
 ### Targeted DM1/CSB/DM2 regression follow-up
 
-After `main` reached `744ac459`, the local Debug build ran a seven-case
-real-media CTest selection covering DM1, CSB and DM2 only. Six tests passed:
+After `main` reached `744ac459`, a Debug build on the dedicated TRV2 host ran
+a seven-case real-media CTest selection covering DM1, CSB and DM2 only. An
+earlier local execution is excluded from accepted validation evidence because
+the repository requires large test selections to run on TRV2. Six tests
+passed:
 the DM1, CSB and DM2 M12 card-to-runtime routes, the DM2 Amiga M12 runtime,
 the DM1 PC-34 CLI/input matrix, and the CSB Atari STX CLI boot. The DM1 PC-34
-test passed in 477 seconds and exercises more than startup, including source
+test passed in 700.23 seconds and exercises more than startup, including source
 menu interaction, HoC actions, inventory/champion input and debug performance
-telemetry. The French DM2 DOS CLI test was marked `Skipped` immediately by
-CTest in this build; this run therefore adds no French DOS result. The test
-selection completed in 1,081.53 seconds. These SDL-dummy runs verify only the
-listed scripted real-media routes, not native display/GPU behavior or complete
-gameplay parity.
+telemetry. The French DM2 DOS CLI test was marked `Skipped` because its
+authentic archive is not staged on TRV2; this run adds no French DOS result.
+The test selection completed in 923.43 seconds. These SDL-dummy runs verify
+only the listed scripted real-media routes, not native display/GPU behavior
+or complete gameplay parity.
 
 The installed DM2 Macintosh English StuffIt archive was recovered from the
 user's Downloads folder and its SHA-256 matched the preservation listing. The
