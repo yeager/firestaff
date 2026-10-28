@@ -459,6 +459,14 @@ int main(void)
     }
     for (tick = 0; tick < 5; ++tick)
         audited_idle_tick(&state, &eventAudit);
+    if (partyShieldDefense == 0) {
+        /* The authentic group can emit a source attack that misses. Keep
+         * advancing the real timeline until its ordinary attack lands. */
+        for (tick = 0; tick < 1500 &&
+             state.world.party.champions[0].hp.current >= initialChampionHp &&
+             !state.partyDead && !state.world.partyDead; ++tick)
+            audited_idle_tick(&state, &eventAudit);
+    }
     if (state.world.party.mapIndex != 1 || state.world.party.mapX != 6 ||
         state.world.party.mapY < 0 || state.world.party.mapY >=
             (int)state.world.dungeon->maps[1].height ||
@@ -477,6 +485,9 @@ int main(void)
         ? (unsigned int)(initialChampionHp -
                          state.world.party.champions[0].hp.current)
         : 0u;
+    /* Compare the authenticated baseline damage before shielding subsequent
+     * retries, so a source miss cannot kill the party during PUNCH coverage. */
+    state.world.magic.partyShieldDefense = 100u;
     {
         int group169Active = 0;
         int group169StateKind = -1;
@@ -528,56 +539,59 @@ int main(void)
             state.world.lifecycle.champions[0].skills20[1].experience;
         const int32_t fightXpBefore =
             state.world.lifecycle.champions[0].skills20[9].experience;
+        const int32_t ninjaXpStart = ninjaXpBefore;
+        const int32_t fightXpStart = fightXpBefore;
         monsterHpBeforePunch = group_health_total(
             &state.world.things->groups[169]);
+        monsterHpAfterPunch = monsterHpBeforePunch;
         /* ReDMCSB MENU.C:803-840, F0391 selects an action-list row and
-         * dispatches F0407 before clearing the acting champion. */
-        if (!M11_GameView_GetV1ActionIconCellZone(0,
-                &clickX, &clickY, &clickW, &clickH) ||
-            audited_pointer(&state,
-                clickX + clickW / 2, clickY + clickH / 2,
-                M11_DM1_MOUSE_MASK_LEFT, &eventAudit) == M11_GAME_INPUT_IGNORED ||
-            state.actingChampionOrdinal != 1 ||
-            !M11_GameView_GetActingActionIndices(&state, actions) ||
-            actions[0] != 6 || actions[1] != 7 || actions[2] != 8) {
-            fputs("FAIL: pointer click did not open first champion action list\n", stderr);
-            M11_GameView_Shutdown(&state);
-            return 1;
+         * dispatches F0407 before clearing the acting champion. PUNCH uses
+         * source randomness and can miss, so retry through the ordinary
+         * cooldown/action-menu path until the original group takes damage. */
+        for (int punchAttempt = 0;
+             punchAttempt < 24 && monsterHpAfterPunch >= monsterHpBeforePunch;
+             ++punchAttempt) {
+            int waitGuard = 0;
+            while (state.actionDisabledTicks[0] > 0 && waitGuard++ < 256)
+                audited_idle_tick(&state, &eventAudit);
+            if (state.actionDisabledTicks[0] > 0 ||
+                !M11_GameView_GetV1ActionIconCellZone(0,
+                    &clickX, &clickY, &clickW, &clickH) ||
+                audited_pointer(&state,
+                    clickX + clickW / 2, clickY + clickH / 2,
+                    M11_DM1_MOUSE_MASK_LEFT, &eventAudit) == M11_GAME_INPUT_IGNORED ||
+                state.actingChampionOrdinal != 1 ||
+                !M11_GameView_GetActingActionIndices(&state, actions) ||
+                actions[0] != 6 || actions[1] != 7 || actions[2] != 8 ||
+                !M11_GameView_GetV1ActionMenuRowZone(0,
+                    &clickX, &clickY, &clickW, &clickH) ||
+                audited_pointer(&state,
+                    clickX + clickW / 2, clickY + clickH / 2,
+                    M11_DM1_MOUSE_MASK_LEFT, &eventAudit) == M11_GAME_INPUT_IGNORED) {
+                fputs("FAIL: ordinary pointer route could not repeat first-monster PUNCH\n",
+                      stderr);
+                M11_GameView_Shutdown(&state);
+                return 1;
+            }
+            for (tick = 0; tick < 5; ++tick)
+                audited_idle_tick(&state, &eventAudit);
+            monsterHpAfterPunch = group_health_total(
+                &state.world.things->groups[169]);
         }
-        if (!M11_GameView_GetV1ActionMenuRowZone(0,
-                &clickX, &clickY, &clickW, &clickH) ||
-            audited_pointer(&state,
-                clickX + clickW / 2, clickY + clickH / 2,
-                M11_DM1_MOUSE_MASK_LEFT, &eventAudit) == M11_GAME_INPUT_IGNORED) {
-            fputs("FAIL: pointer click did not dispatch first-monster action\n", stderr);
-            M11_GameView_Shutdown(&state);
-            return 1;
-        }
-        for (tick = 0; tick < 5; ++tick)
-            audited_idle_tick(&state, &eventAudit);
-        monsterHpAfterPunch = group_health_total(
-            &state.world.things->groups[169]);
-        /* ReDMCSB MENU.C:382-390,427-440 maps the visible first action to
-         * PUNCH (index 6), 8 base experience, skill 9 (FIGHT). CHAMPION.C:
-         * 874-895 mirrors that award to base skill 1 (NINJA). */
-        if (state.world.lifecycle.champions[0].skills20[1].experience <=
-                ninjaXpBefore ||
-            state.world.lifecycle.champions[0].skills20[9].experience <=
-                fightXpBefore ||
-            state.world.lifecycle.champions[0].skills20[1].experience -
-                ninjaXpBefore !=
-            state.world.lifecycle.champions[0].skills20[9].experience -
-                fightXpBefore) {
-            fputs("FAIL: live PUNCH did not award matching Ninja/Fight XP\n",
-                  stderr);
+        /* PUNCH awards 8 base experience to skill 9 (FIGHT) and mirrors it
+         * to skill 1 (NINJA), even on an ordinary miss. */
+        if (state.world.lifecycle.champions[0].skills20[1].experience <= ninjaXpStart ||
+            state.world.lifecycle.champions[0].skills20[9].experience <= fightXpStart ||
+            state.world.lifecycle.champions[0].skills20[1].experience - ninjaXpStart !=
+                state.world.lifecycle.champions[0].skills20[9].experience - fightXpStart) {
+            fputs("FAIL: live PUNCH did not award matching Ninja/Fight XP\n", stderr);
             M11_GameView_Shutdown(&state);
             return 1;
         }
         if (monsterHpAfterPunch >= monsterHpBeforePunch) {
             fprintf(stderr,
-                    "FAIL: authentic PC34 PUNCH awarded XP but did not "
-                    "reduce group #169 HP (%u -> %u)\n",
-                    monsterHpBeforePunch, monsterHpAfterPunch);
+                    "FAIL: authentic PC34 PUNCH missed all %d source retries against group #169 (%u HP)\n",
+                    24, monsterHpBeforePunch);
             M11_GameView_Shutdown(&state);
             return 1;
         }
