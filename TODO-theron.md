@@ -8277,12 +8277,15 @@ this is distinct from the authenticated combined-RAR title-audio path above.
 
 ## 2026-10-28 — define the authentic `$23AD` differential lift check
 
-- `pcrecomp` is an x86 static-recompilation toolkit, so its lifter and CPU
-  runtime are not reusable for Theron's HuC6280. Its differential-check
-  method is applicable: run the same guest bytes and initial CPU/memory state
-  in a reference CPU and the C lift, then compare register state and ordered
-  memory effects. See [pcrecomp](https://github.com/sp00nznet/pcrecomp) and
-  its [differential lift checker](https://github.com/sp00nznet/pcrecomp/blob/main/tools/lift/difftest.py).
+- `yeager/pcrecomp` is an x86 static-recompilation toolkit, so its lifter,
+  Unicorn-backed x86 reference, and CPU runtime are not reusable for Theron's
+  HuC6280. Its `tools/lift/difftest.py` demonstrates the useful comparison
+  method: execute identical instruction bytes from identical initial state,
+  then compare architectural state and guest-memory effects. Firestaff must
+  provide a HuC6280 reference trace and compare its own C lift; the pcrecomp
+  code itself is not part of this runtime. See [yeager/pcrecomp](https://github.com/yeager/pcrecomp),
+  its [differential checker](https://github.com/yeager/pcrecomp/blob/main/tools/lift/difftest.py),
+  and [the current Firestaff comparator](tools/theron/compare_huc6280_traces.py).
 - The Firestaff lift in `src/theron/theron_v1_track02_level_data_blocks.c`
   still uses flat source/destination buffers and a separate host pointer
   table. Retail `$23AD-$252A` changes MPR mappings through `$2459` and `$246E`
