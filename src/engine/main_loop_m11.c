@@ -6054,7 +6054,12 @@ static int m11_play_ftl_swoosh_for_game_if_available(
                     fprintf(stderr,
                         "firestaff: startup-source-complete game=csb phase=amiga-swsh-ftl profile=%s frames=%u source-vblanks=%u audio=%s\n",
                         amigaMd5, sourceFrames, sourceVblanks,
-                        amigaAudioInitialized ? "played" : "unavailable");
+                        !amigaAudioInitialized ||
+                                !M11_Audio_IsAvailable(&amigaAudio)
+                            ? "device-unavailable"
+                            : (amigaAudio.queuedSampleCount > 0
+                                   ? "queued"
+                                   : "no-samples-queued"));
                 }
             }
             if (!amigaComplete && g_m11_debug_startup_detail &&

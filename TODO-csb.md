@@ -233,6 +233,15 @@ gaps and bounds what can be concluded:
   ownership from the original stream, then verify audible output on a real
   audio device; do not substitute generated sound.
 
+2026-10-28 CSB Amiga SWSH audio diagnostic correction: the startup completion
+receipt used to print `audio=played` whenever `M11_Audio_Init` returned true.
+That API also returns true when the SDL backend or output device is
+unavailable, and PCM acceptance alone does not prove samples entered the
+device queue. The receipt now distinguishes `device-unavailable`,
+`no-samples-queued`, and `queued`. Queueing is still not proof of audible
+output; verify on a real audio device. This does not close the separate
+ANIMSND animation-cue gap above.
+
 2026-10-26 CSB Amiga SWSH runtime: the A31M/A33M FTL prelude now plays from
 the selected Amiga source profile instead of falling through to the PC
 `SWOOSH` search. The real-media regression verifies the palette events, logo
