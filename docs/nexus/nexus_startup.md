@@ -1344,7 +1344,7 @@ five authentic sprite roles pixel-for-pixel. This reproduces the menu image
 and source-write sequence. The new run did not include a VDP2 write trace, so
 the stable-snapshot proof remains the separate paired capture. The full raw
 repeat capture, its run log, receipt, and hashes are retained in
-`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_menu_frame_windowed_sh2_20261027/`.
+`ymir_nexus_menu_frame_windowed_sh2_20261027` external evidence bundle (not tracked in the repository).
 
 This is authentic input-correlated source evidence for the Japanese menu
 selection state. It does not establish the complete `TITLE.BIN` decoding,

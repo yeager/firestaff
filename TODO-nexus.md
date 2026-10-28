@@ -101,7 +101,7 @@ reproduces the observed menu frame and source-write sequence; the new run did
 not include VDP2 write tracing, so it does not replace the paired snapshot
 receipt or open any Firestaff rendering/input gate. Raw outputs and hashes are
 retained at
-`/Volumes/Extern-disk/firestaff-evidence/ymir_nexus_menu_frame_windowed_sh2_20261027/`.
+`ymir_nexus_menu_frame_windowed_sh2_20261027` external evidence bundle (not tracked in the repository).
 
 The 2026-10-26 Mednafen `.mca` startup capture is not evidence of a loaded
 authentic backup card. Mednafen 1.32.1 uses the `mca` suffix for its autosave
