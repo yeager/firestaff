@@ -1,6 +1,6 @@
 # Firestaff TODO — Nexus
 
-Reviewed 2026-10-27. The items below track open work and include completed
+Reviewed 2026-10-28. The items below track open work and include completed
 diagnostics as context. Verified evidence is also recorded in the Nexus capture
 and reverse-engineering records and in [DONE-nexus.md](DONE-nexus.md).
 
@@ -192,22 +192,25 @@ not a fix and has not passed this real-media test.
 
 - Implement the observed retail title-menu input flow in Firestaff and identify
   the display consumer that places menu and face material.
-  Updated 2026-10-27: the Japanese retail Ymir run now establishes a no-save
+  Updated 2026-10-28: the Japanese retail Ymir run establishes a no-save
   cold boot to the native three-choice menu; a separate single Down press
   selects Continue, and Down/Down/A opens Configuration from that captured
   menu state. Firestaff retains a separate keyboard selection state after the
   ready title prompt; F, Enter, keypad Enter, Space, Up/Down, and W/S are wired
   only while the Nexus title is active. An English retail Ymir replay verifies
   Down to Continue and Up back to a pixel-identical New Game frame. Firestaff
-  renders the hash-pinned English New Game and Continue foreground sprites
-  and Japanese New Game, Continue, and Configuration selected-state sprites
-  from authentic regional `TITLE.BIN` data and source-bound palettes. The
-  shared background and full Configuration page remain unrendered. New Game,
-  Continue, and Configuration destinations remain unimplemented; Continue
-  execution does not yet read Saturn BKR data. The Japanese New Game and
-  Continue captures each verify five `TITLE.BIN` sprites, 1,441 screenshot
-  texels; the English states each verify 1,451. The Configuration-selected
-  capture verifies five sprites and 1,453 texels. The frame-8047 replay
+  renders English New Game, Continue, and Configuration selected-state
+  foreground sprites and Japanese New Game, Continue, and Configuration
+  sprites from authentic regional `TITLE.BIN` data and source-bound palettes.
+  The shared background and full Configuration page remain unrendered. New
+  Game, Continue, and Configuration destinations remain unimplemented;
+  Continue execution does not yet read Saturn BKR data. The Japanese New Game
+  and Continue captures each verify five `TITLE.BIN` sprites and 1,441
+  screenshot texels; the English states each verify 1,451. The Japanese
+  Configuration-selected capture verifies five sprites and 1,453 texels. The
+  English Configuration capture verifies five VDP1 commands against retail
+  assets, with all 1,069 text pixels matched; marker RGB remains dependent on
+  the unbound background. The frame-8047 replay
   reconstructs all 286,720 screenshot pixels from Ymir's VDP1 display buffer
   and VDP2/CRAM snapshots, with 178 VDP1 commands and zero dropped rows.
   A same-run repeat has the same screenshot hash and a complete frame-8047
@@ -218,7 +221,7 @@ not a fix and has not passed this real-media test.
   source-read pass covers all 31,616 Japanese `TITLE.BIN` bytes but records no
   values and drops 860,856 unrelated reads. The final NBG0 snapshot has a
   30,561-byte storage match under the verified row layout, not a complete
-  pixel/source join. See the Japanese menu section in
+  pixel/source join. See the Japanese and English menu sections in
   `docs/nexus/nexus_startup.md` and the
   [snapshot join](docs/nexus/NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md).
   These captures strengthen retail evidence; they do not prove full Firestaff
@@ -227,7 +230,7 @@ not a fix and has not passed this real-media test.
   Earlier paired raw-trace experiments below remain valid negative results for
   their sampled windows, but they are no longer the only input evidence. Keep
   full-menu admission closed while binding background and face-material
-  ownership and implementing the remaining regional menu layouts.
+  ownership and verifying any remaining region-specific layouts.
   The JP window at frames 13000–13039 is bit-identical with and without
   Start/A pulses, so it is non-interactive animation rather than the native
   startup menu. A later same-session control/Start pair establishes that
