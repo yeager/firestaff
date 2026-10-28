@@ -1,6 +1,6 @@
 # Five-game startup support gap analysis
 
-Reconciled with GitHub `main` at `f4ceb5e5` on 2026-10-28. The latest
+Reconciled with GitHub `main` at `455a4e5b` on 2026-10-28. The latest
 published release is v3.0.418 (published on 2026-10-27). The release workflow
 verified packaging, not gameplay startup. Current authentic-media CLI routes
 include DM1 PC34, DOS, Atari ST, Amiga and FM Towns; CSB Atari, Amiga and FM
@@ -68,6 +68,30 @@ The repository contains checks
 against authentic media for all five games, but “available,”
 “selected,” “handed off,” and “entered a playable runtime” are separate states.
 The current evidence does not establish complete five-game startup support.
+
+### 2026-10-28 current TRV2 no-game menu follow-up
+
+The Debug build from this worktree ran against the currently installed
+`~/.firestaff/data` corpus. `m12_main_menu_game_selection_real_media` passed
+the default FM Towns launch handoffs for DM1, CSB, and DM2, plus DM1 PC34 and
+Atari ST selection, before its exact DM1 Amiga 2.0 archive assertion failed.
+The separately installed `Dungeon-Master_Amiga_EN.zip` HD package authenticates
+as DM1 Amiga 2.0 and passed both direct CLI startup and a no-game M12 keyboard
+selection to the `amiga20-en` handoff. The currently staged
+`Dungeon-Master_Amiga_EN_Version-20.zip` copy did not pass its direct CLI or
+graphics/save-media checks; its digest, contents, and failure are recorded in
+[`TODO-dm1.md`](../TODO-dm1.md). Keep that exact preservation-package route
+open without treating it as proof that DM1 Amiga has no supported launch path.
+
+With the standard per-user data root, the launcher scan completed with all
+five games marked available. Keyboard selection then handed off Nexus Saturn
+from the original `nexus/DM.BIN` and Theron PC Engine from the original
+`theron/TQUS02.bin`. Together with the preceding DM1/CSB/DM2 menu handoffs and
+the separate authentic Amiga HD handoff, this verifies tested menu selection
+and source handoff for each game in this corpus. These exits occur at the
+handoff boundary; they do not establish complete gameplay. Nexus still lacks
+the viewport/HUD receipts required for a playable-level handoff, and SDL dummy
+does not verify native display or physical input.
 
 ## 2026-10-28 local and TRV2 real-media retest
 
