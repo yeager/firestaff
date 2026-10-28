@@ -8285,3 +8285,14 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   before applying instrumentation. A global sequence number only orders
   events; it does not establish CD-sector-to-buffer causality, which requires
   carrying per-byte LBA/offset origins through the CD FIFO and memory writes.
+- `scripts/validate_mednafen_theron_huc6280_23ad_hooks.py` performs a read-only
+  check for the required Mednafen 1.32.1 hook anchors. On the TRV2 source copy
+  it passed with `huc6280.cpp` SHA-256
+  `362dbafa3b655c863f9948eef709b351ab9d8fda60c26da6749d002c2f9c7ab3` and
+  `huc6280_ops.inc` SHA-256
+  `532c11e53e678920aa548ebd65cf68d630bf0a819fb188f35236281bd6766882`.
+  This establishes only that the expected source hook sites exist. It does
+  not establish upstream archive identity, compile an instrumented emulator,
+  capture an authentic invocation, compare execution, or prove game behavior.
+  The full differential trace remains open; no decoder or parity claim follows
+  from this check.
