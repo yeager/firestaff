@@ -15,16 +15,21 @@ is `51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3`.
 
 ## DGN material join
 
-The trace prefix contains 132 textured draws. Against the 16 authentic DGN
-level files, 128 draws match exact Structure2 bytes and the corresponding
-VDP1 CLUT or direct-colour bytes: 120 indexed image/CLUT pairs and 8
+The trace prefix contains 132 textured draws. Eleven are all-zero indexed
+textures with transparent pixels enabled, so they have no visible texels and
+cannot identify a retail material. The remaining 121 informative draws match
+exact Structure2 image and corresponding VDP1 CLUT or direct-colour bytes in
+the 16 authentic DGN level files: 113 indexed image/CLUT pairs and 8
 direct-colour images. At least one possible Structure3 face owner exists for
-112 matches. Four command addresses remain unmatched: `0x013c0`, `0x00c00`,
-`0x014c0`, and `0x00cc0`.
+105 matches; 16 matched draws have no candidate face-owner row. There are no
+unmatched informative draw spans in this prefix.
 
-Many matched materials are shared by multiple levels or faces. The receipt does
-not identify the active level instance, selected face for each draw, camera
-transform, culling, display origin, or VDP2 composition. Therefore
+The eleven zero-filled command addresses are `0x01360`, `0x013a0`, `0x013c0`,
+`0x00be0`, `0x00c00`, `0x01280`, `0x00c60`, `0x01480`, `0x014a0`,
+`0x014c0`, and `0x00cc0`. Many matched materials are shared by multiple
+levels or faces. The receipt does not identify the active level instance,
+selected face for each draw, camera transform, culling, display origin, or VDP2
+composition. Therefore
 `semantic_admission=blocked`; Firestaff must not use these joins as permission
 to draw a reconstructed scene.
 

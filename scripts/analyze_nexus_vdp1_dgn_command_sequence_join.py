@@ -127,7 +127,7 @@ def main() -> int:
             chain = find_chain(vram, state_copr(states[args.frame]))
             ymir_byte_order = False
         matches = dgn_match_index(args.data_dir, ymir_byte_order=ymir_byte_order)
-    except (OSError, ValueError, struct.error) as error:
+    except (OSError, ValueError, KeyError, struct.error) as error:
         print(f"NEXUS_VDP1_DGN_SEQUENCE_JOIN_INVALID: {error}")
         return 1
 
@@ -141,6 +141,7 @@ def main() -> int:
     face_owner_matches = 0
     bounded_failures = 0
     unmatched_offsets = []
+    transparent_zero_filled_offsets = []
     rows = []
     for record in chain:
         material = command_material(vram, record)
@@ -154,6 +155,14 @@ def main() -> int:
         # DGN bytes are source-file big-endian words; the capture is the
         # VDP1 little-endian word image.  The index is already normalized to
         # the capture representation, so compare the raw captured spans.
+        if (material["mode"] == 1 and
+                not (record.words[2] & 0x0040) and
+                not any(material["source"])):
+            # In indexed mode with transparent pixels enabled, an all-zero
+            # texture contributes no visible texels and cannot identify a
+            # retail material. Keep it separate from informative misses.
+            transparent_zero_filled_offsets.append(record.offset)
+            continue
         names = matches.get((material["source"], material["palette"]), [])
         if not names:
             unmatched_offsets.append(record.offset)
@@ -174,9 +183,11 @@ def main() -> int:
                      material["source_size"], material["clut_word"],
                      material["mode"]))
 
-    complete = (textured > 0 and source_matches == textured and
-                palette_matches + direct_color_matches == textured and
-                face_owner_matches == textured and
+    informative_textured = textured - len(transparent_zero_filled_offsets)
+    complete = (informative_textured > 0 and
+                source_matches == informative_textured and
+                palette_matches + direct_color_matches == informative_textured and
+                face_owner_matches == informative_textured and
                 bounded_failures == 0)
     command_count_label = (
         "observed_commands" if args.ymir_trace_prefix else "chain_records"
@@ -187,8 +198,12 @@ def main() -> int:
     print(f"textured_draws={textured} source_matches={source_matches} "
           f"clut_matches={palette_matches} direct_color_matches={direct_color_matches} "
           f"face_owner_matches={face_owner_matches}")
+    print(f"informative_textured_draws={informative_textured} "
+          f"transparent_zero_filled_draws={len(transparent_zero_filled_offsets)}")
     print(f"bounded_failures={bounded_failures} unmatched_offsets=" +
           (",".join(f"0x{x:05x}" for x in unmatched_offsets) or "none"))
+    print("transparent_zero_filled_offsets=" +
+          (",".join(f"0x{x:05x}" for x in transparent_zero_filled_offsets) or "none"))
     for offset, names, owners, source_offset, source_size, clut_word, mode in rows:
         print(f"draw=0x{offset:05x} source=0x{source_offset:05x} "
               f"bytes={source_size} color_mode={mode} "

@@ -1643,11 +1643,12 @@ commands and no dropped rows, but the observed frame prefix ends before VDP1
 END. A new analyzer mode validates the trace receipt and captured command
 cursor without treating that prefix as a completed display list.
 
-The 132 textured draws in the observed prefix join 128 exact image/CLUT or
-direct-colour spans to the 16 canonical retail DGN files; 112 matches have at
-least one candidate Structure3 face owner. Four draws remain unmatched.
-Shared material identities do not identify the active level instance or the
-selected face. Camera transform, culling, display origin, VDP2 composition and
-other settings states also remain unproven, so renderer admission stays
+Of the 132 textured draws in the observed prefix, 11 use transparent
+all-zero textures and contain no visible texels. The other 121 draws join
+exact image/CLUT or direct-colour spans to the 16 canonical retail DGN files;
+105 matches have at least one candidate Structure3 face owner, while 16 have
+none. Shared material identities do not identify the active level instance or
+the selected face. Camera transform, culling, display origin, VDP2 composition
+and other settings states also remain unproven, so renderer admission stays
 blocked. See the [trace-prefix receipt](../../parity-evidence/verification/nexus_japanese_configuration_dgn_trace_prefix_20261028/README.md)
 and the retained [Japanese retail capture](/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_jp_config_selection_preaccept_20261028/configuration/).

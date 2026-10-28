@@ -7,9 +7,11 @@
   indices and addresses, current-command cursor, zero dropped rows, and VRAM
   size without claiming that the observed display list is complete.
 - Applied it to the authentic Japanese Configuration-page capture at frame
-  599. Of 132 textured draws, 128 join to authentic DGN Structure2 bytes and
-  matching indexed CLUT or direct-colour data; 112 have at least one candidate
-  Structure3 face owner. Four draws remain unmatched.
+  599. Of 132 textured draws, 11 are all-zero indexed textures with
+  transparency enabled and no visible texels. All remaining 121 informative
+  draws join to authentic DGN Structure2 bytes and matching indexed CLUT or
+  direct-colour data; 105 have at least one candidate Structure3 face owner.
+  Sixteen matched draws have no candidate face-owner row.
 - The joins still leave shared material ownership, active level instance,
   selected faces, camera transform, culling, display origin, and VDP2
   composition unresolved. Renderer admission remains blocked. The full report
