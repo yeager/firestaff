@@ -18,7 +18,11 @@ tests were not rerun in this check. A fresh 2026-10-28 run of
 routes against the original extracted Macintosh English files, including the
 movie, new-game, champion selection, movement and first loaded runtime frame.
 The test hashes the original Graphics, Dungeon and Title files before and
-after. SDL dummy verifies the startup and runtime handoff path, not native
+after. The same current-source check also passed the authentic DM1 Amiga demo
+archive CLI/M12 test through the SWSH, title, entrance and runtime phases, and
+the CSB Amiga ZIP-to-ADF CLI/M12 test through its source entrance and movement
+receipt. Those tests hash or otherwise preserve their original archives. SDL
+dummy verifies the exercised startup and runtime handoffs, not native
 display/audio/input parity. See the per-game TODOs for remaining gaps.
 
 2026-10-27 TRV2 verification at source revision `f582f57d` against the
