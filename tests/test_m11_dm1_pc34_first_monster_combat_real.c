@@ -5,6 +5,7 @@
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
+#include "dm1_v1_floor_ornament_pc34_compat.h"
 #include "menu_input_m12.h"
 
 #include <stdio.h>
@@ -122,6 +123,7 @@ static int verify_hoc_plate_visible(M11_GameViewState* state)
     int safety = 0;
     int mapX = -1, mapY = -1;
     int ordinal;
+    int globalOrnamentIndex;
     if (!state || state->world.party.mapIndex != 0 ||
         state->world.party.mapX != 7 || state->world.party.mapY != 9 ||
         state->world.party.direction != 3) {
@@ -142,6 +144,19 @@ static int verify_hoc_plate_visible(M11_GameViewState* state)
     ordinal = M11_GameView_GetFloorOrnamentOrdinal(state, 1, 0);
     if (ordinal <= 0) {
         fputs("plate target has no floor ornament ordinal\n", stderr);
+        return 0;
+    }
+    if (ordinal > 16) {
+        fprintf(stderr, "plate target ordinal out of range: %d\n", ordinal);
+        return 0;
+    }
+    globalOrnamentIndex = state->floorOrnamentIndices[0][ordinal - 1];
+    if (globalOrnamentIndex != 1 ||
+        dm1_v1_floor_ornament_graphic_index_pc34(globalOrnamentIndex, 5) != 396) {
+        fprintf(stderr,
+                "HoC plate selected unexpected original material (ordinal=%d global=%d graphic=%d)\n",
+                ordinal, globalOrnamentIndex,
+                dm1_v1_floor_ornament_graphic_index_pc34(globalOrnamentIndex, 5));
         return 0;
     }
     things = state->world.things;
@@ -186,7 +201,7 @@ static int verify_hoc_plate_visible(M11_GameViewState* state)
                 renderedHash);
         return 0;
     }
-    printf("PASS: authentic PC34 HoC pressure plate (6,9) visibly contributes from (7,9), ordinal=%d\n",
+    printf("PASS: authentic PC34 HoC pressure plate (6,9) uses GRAPHICS.DAT 0396 and visibly contributes from (7,9), ordinal=%d\n",
            ordinal);
     return 1;
 }

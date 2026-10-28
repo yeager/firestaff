@@ -128,10 +128,13 @@ original `Dungeon-Master_DOS_EN.zip`; its ordinary M11 backward input entered
 the authentic stairs and next level, and the original torch remained equipped
 and lit level one. This does not reproduce the reported hang in that tested
 M11 route, but it does not rule out a native-window/event-loop or frame
-presentation hang. Capture the reported native run and matching DOSBox-X
-original pose, then audit the route-specific frame timer, F0115/F0107 asset
-composition, C10 glyph raster/palette, F0128 stairs dispatch and frame
-ownership before changing any mapping. Use the [DMWeb PC DOS Level 00 map](http://dmweb.free.fr/games/dungeon-master/solutions/maps-christophef/level-00/)
+presentation hang. Rebuilt and reran `m11_dm1_hoc_stair_torch_pc34` on
+2026-10-28 against the authentic PC 3.4 archive; the same source-input stair
+transition and carried light passed. Capture the reported native run and
+matching DOSBox-X original pose, then audit the route-specific frame timer,
+F0115/F0107 asset composition, C10 glyph raster/palette, F0128 stairs
+dispatch and frame ownership before changing any mapping. Use the
+[DMWeb PC DOS Level 00 map](http://dmweb.free.fr/games/dungeon-master/solutions/maps-christophef/level-00/)
 for Hall of Champions: its inscription list places “Hall Of Champions” at
 (08,04) and “Vi Altar Of Rebirth” at (04,17). Level 01 is a separate map and
 must not be used to locate those HoC features. The [GreatStone PC 3.4
@@ -160,12 +163,13 @@ asset and intended selector. On 2026-10-28, the current-tree
 `test_m11_dm1_pc34_first_monster_combat_real` probe was built and run through
 its shield-layer wrapper against the original DOS PC 3.4 archive. It passed
 twice: authentic map 0 plate `(6,9)`, viewed from `(7,9,d3)`, had sensor
-ornament ordinal 4, and suppressing only that sensor's ornament changed the
-rendered viewport hash. This proves the plate contributes pixels in that
-tested approach, not that its appearance or contrast matches the original.
-The regression does not assert the emitted graphic ID; capture a matched
-original/Firestaff Level 00 frame and assert the selected graphic and pixel
-pattern before closing the visual report. Keep pressure-pad graphics distinct
+ornament ordinal 4, resolved through the authentic map table to global floor
+ornament index 1, and selected original GRAPHICS.DAT entry 0396 for D1C. The
+test asserts that ID and that suppressing only the sensor's ornament changes
+the rendered viewport hash. This proves source selection and pixel
+contribution in that tested approach, not that its appearance, pixel pattern
+or contrast matches the original. Capture matched original/Firestaff Level 00
+frames before closing the visual report. Keep pressure-pad graphics distinct
 from floor-pit graphics 0049–0063; do not substitute generated assets.
 
 The same-day `test_m11_dm1_hoc_wall_material_receipt_pc34` run against the
