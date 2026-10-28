@@ -8106,9 +8106,13 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   and restarting the emulator with the same isolated profile, loading the
   state restored the in-dungeon view. State MD5:
   `10a929bd1ef15462a7bc59926cb960dd`.
-- Private state and receipts are retained on trv2 under
+- At capture time, a working copy and receipts were written on trv2 under
   `/dev/shm/theron-jp-gameplay-save-20261027/retry-zx-hotkeys/`; original disc
-  and System Card files were accessed by symlink and were not copied.
+  and System Card files were accessed by symlink and were not copied. This
+  particular capture directory and its 2026-10-27 `.mc0` are no longer
+  available (checked 2026-10-28). A different authentic JP in-dungeon state
+  used by the October 28 mouse captures persists as `.mca` and is recorded
+  below.
 - This is a reference save, not Firestaff savegame support or a native runtime
   launch. Continue by using the restored game-owned state to seek a verified
   controller poll and source-bound graphics/CD read before deriving any new
@@ -8166,6 +8170,27 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   `/dev/shm/theron-jp-gameplay-save-20261027/official-wrapper-pass-1/`.
   Source-transfer provenance and a source-bound, input-caused VDC/world change
   remain required before implementing rendering behavior.
+
+## 2026-10-28 — verified persistent copy of the authentic JP dungeon state
+
+- A TRV2 audit found the documented authentic Ak-Tu-Ba in-dungeon state under
+  `/home/trv2/firestaff-theron-evidence/emulator-created-20261003/state/theron-jp-akutuba-dungeon-capture.mca`.
+  It is 229,390 bytes, MD5
+  `14dec90b96ec3e14622ec0fab535a92f`, and SHA-256
+  `ef7755d97fb05c024344796eb3b8c5552f4c241bc02952cd90cc9c8e0105a6b5`.
+  A second file under
+  `/home/trv2/.cache/firestaff-theron-mouse-sweep-20261024-r1/state/` is
+  byte-identical. Its gzip header and identity match the in-dungeon state
+  used by the October 28 mouse captures.
+- The earlier `/dev/shm` capture bundle is gone, but the persistent state is
+  still available and must not be moved or deleted. It can support repeated
+  input/render observations; loading it bypasses cold-start CD transfer and
+  does not by itself supply `$23AD` decoder inputs or source-LBA provenance.
+- The HuC6280 comparator still has no authentic
+  `$2390 -> $23AD -> $2392` reference trace or matching C-lift trace. Use the
+  recovered state only for captures whose target routine actually executes;
+  create a fresh state through the original media path for loader/decoder
+  evidence rather than presenting save-state replay as cold-start parity.
 
 ## 2026-10-27 — extend the pointer trace across the `$C1DF` helper
 
