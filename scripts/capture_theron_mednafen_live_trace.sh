@@ -26,6 +26,7 @@ capture_sound=${THERON_CAPTURE_SOUND:-0}
 # changes admitted media bytes.
 capture_pointer_c1df_trace=${THERON_CAPTURE_POINTER_C1DF_TRACE:-0}
 capture_mednafen_module=${THERON_CAPTURE_MEDNAFEN_MODULE:-pce}
+huc6280_23ad_trace=${THERON_CAPTURE_HUC6280_23AD_TRACE_OUTPUT:-}
 if [[ "$capture_pointer_c1df_trace" == 1 ]]; then
     if [[ -n ${THERON_CAPTURE_MEDNAFEN_MODULE:-} &&
           "$capture_mednafen_module" != pce_fast ]]; then
@@ -33,6 +34,16 @@ if [[ "$capture_pointer_c1df_trace" == 1 ]]; then
         exit 1
     fi
     capture_mednafen_module=pce_fast
+fi
+if [[ -n "$huc6280_23ad_trace" ]]; then
+    if [[ "$capture_mednafen_module" != pce_fast ]]; then
+        printf '%s\n' 'FAIL: HuC6280 $23AD trace requires THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast' >&2
+        exit 1
+    fi
+    if [[ -n ${THERON_CAPTURE_AUTOLOAD_STATE:-} ]]; then
+        printf '%s\n' 'FAIL: HuC6280 $23AD trace requires a cold start from original media; save-state autoload bypasses loader provenance' >&2
+        exit 1
+    fi
 fi
 capture_arcadecard_setting=pce.arcadecard
 capture_cdbios_setting=pce.cdbios
@@ -1096,6 +1107,11 @@ require_instrumented_mednafen_binary() {
             return 1
         fi
     done
+    if [[ -n "$huc6280_23ad_trace" ]] &&
+       ! grep -aFq 'FIRESTAFF_THERON_HUC6280_23AD_TRACE' "$binary" 2>/dev/null; then
+        printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the HuC6280 $23AD hook; enable FIRESTAFF_THERON_HUC6280_23AD_TRACE_SUPPORT when building it' >&2
+        return 1
+    fi
     if [[ "$capture_pointer_c1df_trace" == 1 ]] &&
        ! grep -aFq 'pointer_c1df_begin' "$binary" 2>/dev/null; then
         printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the C1DF pointer hook; enable FIRESTAFF_THERON_PCE_FAST_POINTER_TRACE_SUPPORT when building it' >&2
@@ -1256,6 +1272,14 @@ if [[ -n "$replay_input_script" ]] &&
 fi
 
 mkdir -p "$trace_dir" "$capture_scratch_root"
+if [[ -n "$huc6280_23ad_trace" ]]; then
+    if [[ -e "$huc6280_23ad_trace" || -L "$huc6280_23ad_trace" ]]; then
+        printf 'FAIL: refusing to overwrite existing HuC6280 trace: %s\n' \
+            "$huc6280_23ad_trace" >&2
+        exit 1
+    fi
+    mkdir -p "$(dirname -- "$huc6280_23ad_trace")"
+fi
 for pce_fast_snapshot in "$pce_fast_vram_snapshot" "$pce_fast_vce_snapshot" \
     "$pce_fast_vdc_sat_snapshot" "$pce_fast_vdc_state_snapshot"; do
     if [[ -e "$pce_fast_snapshot" || -L "$pce_fast_snapshot" ]]; then
@@ -1548,6 +1572,7 @@ launch=(
     FIRESTAFF_THERON_COMMAND_RAM_BEFORE_SNAPSHOT="$command_ram_before_snapshot" \
     FIRESTAFF_THERON_COMMAND_RAM_AFTER_SNAPSHOT="$command_ram_after_snapshot" \
     FIRESTAFF_THERON_VDC_IO_TRACE_LIMIT="$vdc_io_trace_limit" \
+    FIRESTAFF_THERON_HUC6280_23AD_TRACE="$huc6280_23ad_trace" \
     SDL_VIDEODRIVER="$capture_sdl_video_driver" \
     SDL_AUDIODRIVER=dummy \
     "$mednafen_bin" \
@@ -1841,9 +1866,20 @@ if [[ ! -s "$trace" ]] || ! grep -Fqx 'source=mednafen-pce-instrumented' "$trace
     printf '%s\n' 'FAIL: Mednafen did not produce a provenance-marked live trace' >&2
     exit 1
 fi
-if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$cd_data_port_read_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" "$pce_fast_a1b7_bmt_write_trace" "$pce_fast_a1a9_init_trace" "$pce_fast_movement_context_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace"; then
+if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$cd_data_port_read_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" "$pce_fast_a1b7_bmt_write_trace" "$pce_fast_a1a9_init_trace" "$pce_fast_movement_context_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace" ${huc6280_23ad_trace:+"$huc6280_23ad_trace"}; then
     printf '%s\n' 'FAIL: Mednafen emitted a literal backslash-n in a trace record' >&2
     exit 1
+fi
+if [[ -n "$huc6280_23ad_trace" ]]; then
+    if [[ ! -s "$huc6280_23ad_trace" ]] ||
+       ! grep -Fq 'format=firestaff-huc6280-23ad-raw-trace-v1' "$huc6280_23ad_trace" ||
+       ! grep -Fq 'call=BSR pc=2390' "$huc6280_23ad_trace" ||
+       ! grep -Fq 'kind=return_rts' "$huc6280_23ad_trace" ||
+       grep -Fq 'truncated=event_limit' "$huc6280_23ad_trace"; then
+        printf 'FAIL: requested HuC6280 capture did not produce one complete bounded $23AD invocation: %s\n' \
+            "$huc6280_23ad_trace" >&2
+        exit 1
+    fi
 fi
 if [[ -s "$indirect_target_trace" ]] && ! trace_files_are_line_delimited "$indirect_target_trace"; then
     printf '%s\n' 'FAIL: Mednafen emitted a literal backslash-n in the indirect-target trace' >&2

@@ -8337,3 +8337,25 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   trace exists yet. The authentic Track 02 input, live MPR setup, all accessed
   source/output bytes, and final memory/register state remain required before
   any decoder behavior or Theron gameplay parity can be claimed.
+
+## 2026-10-28 — add an opt-in raw `$23AD` capture probe
+
+- Added `scripts/apply_mednafen_theron_huc6280_23ad_trace.py` and an opt-in
+  `FIRESTAFF_THERON_HUC6280_23AD_TRACE_SUPPORT=1` build path. It instruments a
+  disposable Mednafen source copy, validates its hook anchors, and bounds the
+  raw event stream. The isolated PCE Fast build completed on TRV2; its binary
+  contains the trace marker and the PCE Fast module.
+- `scripts/capture_theron_mednafen_live_trace.sh` accepts an optional raw trace
+  path, requires a cold start from original media, rejects overwrite, and
+  checks that an emitted trace has a `$2390` call and `$2392` return. This is a
+  capture gate, not a claim that the stream is a complete differential input:
+  the raw format currently lacks full entry/final CPU and memory snapshots,
+  authenticated disc identity, and CD-sector provenance.
+- Two bounded cold starts using the authentic US CUE and System Card reached
+  the title/runtime input polling path and recorded authentic CD reads. The
+  first held Run for 300 frames; the second also tapped I at frame 12000.
+  Neither reached the `$2390 -> $23AD` call, so neither emitted the requested
+  raw invocation trace. The capture tool correctly rejected both as incomplete.
+- Preserve these negative results as acquisition evidence only. Continue
+  identifying the game-owned transition into the Track 02 decoder; do not
+  treat the raw probe build, input polling, or CD traffic as decoder parity.
