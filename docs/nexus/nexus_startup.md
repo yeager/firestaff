@@ -1865,11 +1865,23 @@ images differ at 239,180 pixels. This confirms that the loaded retail view
 responds visibly to the scheduled input; it does not identify the complete
 movement mapping or prove Firestaff input parity.
 
+A repeated Load-screen capture at VDP1 frame 559 has 17 command rows and zero
+dropped rows. All three textured VDP1 source starts fall in exact-resident
+Japanese `MENU.BPK` PRS3 surfaces: entries 90, 96, and 97, each 16x16. This
+binds those image bytes to the Load-screen display list, but not their CLUT
+palette, visible role, save-row text, or complete panel composition. A bounded
+SH-2 read trace started from the saved title-menu state recorded zero BUP
+reads; the save list had already been discovered before that state was saved.
+The BKR scan/load routine is therefore still unbound. Its next useful capture
+must include the cold boot before save-list discovery.
+
 The accepted-save capture's VDP1 snapshot is frame 2,173 with 83 commands. Its
 complete command trace contains 175,042 rows with zero dropped rows. The
 capture commands, logs, screenshots, memory/VDP dumps, hashes and scope limits
 are recorded at
-`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/README.md`.
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/README.md`;
+the Load-screen source-start receipt is in `load-screen-menu-bpk-source-join.md`
+within that evidence folder.
 The bundle contains no BKR payload. This establishes the retail game's
 Continue-to-gameplay behavior in Ymir with the retained corpus save; it does
 not establish that Firestaff loads the BKR, executes Continue, or renders the
