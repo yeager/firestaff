@@ -606,6 +606,12 @@ identity, start pose, HUD/viewport consumer, or SLEV/SAL dispatch is verified.
 Saturn BIOS, disc, and capture bytes remain outside the repository and must not
 be treated as a Firestaff distribution.
 
+**Historical snapshot (2026-08-13; superseded).** The gate counts and
+readiness figures below describe only the evidence available on that date.
+They are not the current Nexus status. For current source and runtime gates,
+see the [strict source-fidelity inventory](NEXUS_STRICT_FIDELITY_INVENTORY.md)
+and the [startup/menu evidence log](nexus_startup.md).
+
 | Area | Verified gates | Implementation coverage | Production readiness | Primary blocker |
 |---|---:|---:|---:|---|
 | Startup | 3/6 | 50.0 % | 0 % | The J-BIOS/media pair is now available and a reset frame is validated, but no valid startup→menu witness exists |
@@ -622,10 +628,11 @@ replace the area mean, because an area would otherwise weigh more merely for
 having more sub-gates. For the prioritized startup → menu → HUD/viewport chain,
 with weights 30/35/35, implementation coverage is
 `50,0 × 0,30 + 37,5 × 0,35 + 14,3 × 0,35 = 33,1 %`.
-Production readiness is currently 0% for both measures: the validated J
-capture is a reset/transport witness without startup→menu identity, and the
-existing E-BIOS/French capture likewise opens no semantic runtime consumer.
-The figures must not be averaged across models.
+In this 2026-08-13 snapshot, production readiness was 0% for both measures:
+the validated J capture was a reset/transport witness without startup→menu
+identity, and the existing E-BIOS/French capture likewise opened no semantic
+runtime consumer. These historical figures must not be averaged across models
+or presented as the current gate counts.
 
 ## External retail corpus
 
