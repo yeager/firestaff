@@ -10,6 +10,14 @@ source-bound payload schema and retail save-selection/load consumer. Do not
 promote the parser's opaque payload bytes into runtime state without joining
 those bytes to the authentic Saturn save/load implementation.
 
+An authentic Japanese Configuration-page capture now yields a Ymir VDP1 trace
+prefix with 128 of 132 textured draws joined to canonical DGN material bytes,
+including indexed CLUTs and direct-colour surfaces. This is not enough to
+render the scene: 4 draws remain unmatched and multiple levels/faces share
+materials. Active level, selected faces, camera transform, culling, screen
+origin, VDP2 composition, and Japanese settings interaction states still need
+authentic joins. See the [DGN trace-prefix receipt](parity-evidence/verification/nexus_japanese_configuration_dgn_trace_prefix_20261028/README.md).
+
 ## Current evidence boundary
 
 The current workstation's authentic `~/.firestaff/data/nexus/MENU.BPK` has

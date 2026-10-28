@@ -1,5 +1,22 @@
 # Firestaff DONE — Nexus
 
+## 2026-10-28 — Join Japanese Configuration scene commands to retail DGN
+
+- Added a Ymir trace-prefix reader for complete capture files whose current
+  frame has not reached VDP1 END. It validates the capture receipt, command
+  indices and addresses, current-command cursor, zero dropped rows, and VRAM
+  size without claiming that the observed display list is complete.
+- Applied it to the authentic Japanese Configuration-page capture at frame
+  599. Of 132 textured draws, 128 join to authentic DGN Structure2 bytes and
+  matching indexed CLUT or direct-colour data; 112 have at least one candidate
+  Structure3 face owner. Four draws remain unmatched.
+- The joins still leave shared material ownership, active level instance,
+  selected faces, camera transform, culling, display origin, and VDP2
+  composition unresolved. Renderer admission remains blocked. The full report
+  and capture are retained on the external evidence volume; no retail data was
+  added to Git.
+- Receipt: [Japanese Configuration DGN trace prefix](parity-evidence/verification/nexus_japanese_configuration_dgn_trace_prefix_20261028/README.md).
+
 ## 2026-10-28 — Bind a partial Japanese title source span to NBG0 writes
 
 - Added a bounded verifier for the complete authentic Ymir VDP2 write trace.

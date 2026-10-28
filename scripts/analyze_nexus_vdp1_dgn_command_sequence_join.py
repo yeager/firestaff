@@ -17,7 +17,13 @@ from pathlib import Path
 
 from analyze_nexus_saturn_runtime_capture import frame_regions
 from analyze_nexus_vdp1_command_sequence import Record, find_chain
-from analyze_nexus_vdp1_source_join import be16, be32, swapped_words, ymir_commands
+from analyze_nexus_vdp1_source_join import (
+    be16,
+    be32,
+    swapped_words,
+    ymir_commands,
+    ymir_trace_prefix,
+)
 from analyze_nexus_vdp1_dgn_material_join import (
     dgn_materials,
     dgn_structure3_face_owners,
@@ -96,11 +102,16 @@ def main() -> int:
     parser.add_argument("--capture-frames", type=int)
     parser.add_argument("--ymir-bundle", action="store_true",
                         help="read the authenticated command trace and VDP1 VRAM from a Ymir dump directory")
+    parser.add_argument("--ymir-trace-prefix", action="store_true",
+                        help="analyze observed Ymir trace commands without requiring a frame-ending END command")
     parser.add_argument("--require-complete", action="store_true")
     args = parser.parse_args()
     try:
-        if args.ymir_bundle:
-            vram, captured_frame, traced_commands = ymir_commands(args.capture)
+        if args.ymir_bundle and args.ymir_trace_prefix:
+            raise ValueError("choose either --ymir-bundle or --ymir-trace-prefix")
+        if args.ymir_bundle or args.ymir_trace_prefix:
+            trace_reader = ymir_trace_prefix if args.ymir_trace_prefix else ymir_commands
+            vram, captured_frame, traced_commands = trace_reader(args.capture)
             if captured_frame != args.frame:
                 raise ValueError(
                     f"requested frame {args.frame} differs from Ymir bundle frame {captured_frame}")
@@ -167,7 +178,12 @@ def main() -> int:
                 palette_matches + direct_color_matches == textured and
                 face_owner_matches == textured and
                 bounded_failures == 0)
-    print(f"frame={args.frame} chain_records={len(chain)}")
+    command_count_label = (
+        "observed_commands" if args.ymir_trace_prefix else "chain_records"
+    )
+    print(f"frame={args.frame} {command_count_label}={len(chain)}")
+    if args.ymir_trace_prefix:
+        print("command_scope=observed_ymir_trace_prefix;frame_completion=unproven")
     print(f"textured_draws={textured} source_matches={source_matches} "
           f"clut_matches={palette_matches} direct_color_matches={direct_color_matches} "
           f"face_owner_matches={face_owner_matches}")

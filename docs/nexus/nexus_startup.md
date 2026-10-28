@@ -1634,3 +1634,20 @@ Four draws remain without an exact material match, and 16 matched draws lack a
 face-owner row. Because material bytes are reused across levels and face rows,
 these are candidate owners rather than active-instance assignments. See the
 expanded [source-join receipt](../../parity-evidence/verification/nexus_english_configuration_scene_dgn_join_20261028/README.md).
+
+## Japanese Configuration scene trace prefix (2026-10-28)
+
+An authentic Japanese retail capture at frame 599 shows the Configuration page
+over its dungeon scene. Its complete Ymir trace file contains 168 executed
+commands and no dropped rows, but the observed frame prefix ends before VDP1
+END. A new analyzer mode validates the trace receipt and captured command
+cursor without treating that prefix as a completed display list.
+
+The 132 textured draws in the observed prefix join 128 exact image/CLUT or
+direct-colour spans to the 16 canonical retail DGN files; 112 matches have at
+least one candidate Structure3 face owner. Four draws remain unmatched.
+Shared material identities do not identify the active level instance or the
+selected face. Camera transform, culling, display origin, VDP2 composition and
+other settings states also remain unproven, so renderer admission stays
+blocked. See the [trace-prefix receipt](../../parity-evidence/verification/nexus_japanese_configuration_dgn_trace_prefix_20261028/README.md)
+and the retained [Japanese retail capture](/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_jp_config_selection_preaccept_20261028/configuration/).

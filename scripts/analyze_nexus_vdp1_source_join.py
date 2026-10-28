@@ -269,6 +269,58 @@ def ymir_commands(bundle: Path) -> tuple[bytes, int, list[tuple[int, tuple[int, 
     return vram, frame, commands
 
 
+def ymir_trace_prefix(bundle: Path) -> tuple[bytes, int, list[tuple[int, tuple[int, ...]]]]:
+    """Read a complete Ymir trace snapshot without claiming its frame ended.
+
+    Ymir's trace file can be complete while the captured frame's command list
+    is still a prefix.  In that case the final observed command need not carry
+    END and may link to an address whose commands have not executed yet.
+    Preserve the observed execution order and validate the capture receipt,
+    indices, addresses, and dump bounds; callers must not treat the result as
+    a completed display list.
+    """
+    with (bundle / "vdp1-capture-bundle.txt").open(encoding="ascii") as stream:
+        receipt = {}
+        for line in stream:
+            key, value = line.rstrip("\n").split("=", 1)
+            if key in receipt:
+                raise ValueError("duplicate Ymir receipt field")
+            receipt[key] = value
+    if (receipt.get("format") != "ymir-vdp1-capture-bundle-v1" or
+            receipt.get("trace_file_complete") != "1" or
+            receipt.get("trace_dropped_total") != "0"):
+        raise ValueError("incomplete or dropped Ymir VDP1 trace")
+    frame = int(receipt["capture_frame_index"])
+    if receipt.get("trace_file") != "vdp1-command-trace.csv":
+        raise ValueError("unexpected Ymir VDP1 trace filename")
+    with (bundle / "vdp1-command-trace.csv").open(
+            newline="", encoding="ascii") as stream:
+        rows = list(csv.DictReader(stream))
+    if len(rows) != int(receipt["trace_rows"]):
+        raise ValueError("Ymir trace row count mismatch")
+    selected = [row for row in rows if int(row["frame"]) == frame]
+    if len(selected) != int(receipt["trace_rows_for_capture_frame"]):
+        raise ValueError("Ymir capture frame row count mismatch")
+    commands = []
+    for index, row in enumerate(selected):
+        address = int(row["address"], 0)
+        words = tuple(int(row[f"word{i}"], 0) for i in range(16))
+        if int(row["index"]) != index:
+            raise ValueError("Ymir command indices are not contiguous")
+        if address < 0 or address % 32 or address + 32 > 512 * 1024:
+            raise ValueError("Ymir command address is out of bounds or unaligned")
+        commands.append((address, words))
+    if not commands:
+        raise ValueError("Ymir capture frame has no commands")
+    if (int(receipt["capture_next_command_index"]) != len(commands) or
+            int(receipt["capture_current_command_address"]) != commands[-1][0]):
+        raise ValueError("Ymir capture cursor does not match its trace prefix")
+    vram = (bundle / "vdp1-vram.bin").read_bytes()
+    if len(vram) != 512 * 1024:
+        raise ValueError("Ymir VDP1 VRAM size mismatch")
+    return vram, frame, commands
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture", type=Path)
