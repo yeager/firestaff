@@ -50,6 +50,17 @@ draw-order test covers rejection of an unresolved selector. This closes the
 source identity join only: it does not decode/draw missile pixels or verify the
 two `TEMP_PICST`/`DRAW_ITEM` bitmap transforms.
 
+2026-10-28 extracted DM2 Macintosh English startup: direct CLI and the M12
+start-menu route both passed against the installed original `DMFiles` files.
+The test completed the authentic `Title.MooV`, New Game and mirror selection,
+then moved the party twice. Both routes retained the Macintosh English
+`Graphics.dat` identity, loaded the first level and accepted a real-asset
+runtime frame with no core fallbacks. The focused regression also checks
+1920x1080 menu drawable geometry and hashes the original Graphics, Dungeon,
+and Title files before and after. SDL dummy does not verify native display,
+audio or physical input parity. The zip/SIT archive-only test still does not
+cover this extracted-only installation layout.
+
 2026-10-27 authentic cross-platform CLI startup matrix: direct startup passed
 for the original DOS English archive, Macintosh French SIT media, and FM Towns
 Japanese archive. The separate authentic-media main-menu selection test also
@@ -58,8 +69,9 @@ Amiga English direct-CLI cases in that symlink-based matrix were skipped
 because their data-root symlinks point to missing files; no substitute media
 was used. Amiga English separately passes the authentic no-game M12 route and
 the dedicated `dm2_v1_amiga_native_cli_boot` regression against the installed
-original archive. The direct-CLI matrix remains open for DOS French and
-Macintosh English. SDL dummy verifies the exercised source startup and
+original archive. The direct-CLI matrix remains open for DOS French.
+Macintosh English extracted-directory CLI and M12 paths are now covered
+separately against the installed original files. SDL dummy verifies the exercised source startup and
 handoff paths, not native display or physical input parity.
 
 2026-10-25 selected DM2 PC loose-language owner: the authentic DOS English
