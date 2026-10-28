@@ -1,6 +1,6 @@
 # Five-game startup support gap analysis
 
-Release metadata checked against GitHub `main` at `b8a2abdc` on 2026-10-28.
+Release metadata checked against GitHub `main` at `3bbcc5cc` on 2026-10-28.
 The latest published release is v3.0.419 (published on 2026-10-28 from
 `71bf83b2`). Its GitHub Actions run completed all nine jobs successfully.
 Main has since advanced beyond that tag, so its current source is not included
@@ -78,6 +78,24 @@ The repository contains checks
 against authentic media for all five games, but “available,”
 “selected,” “handed off,” and “entered a playable runtime” are separate states.
 The current evidence does not establish complete five-game startup support.
+
+### 2026-10-28 clean-main DM1/CSB/DM2 menu retest on TRV2
+
+A detached, clean checkout of `main` at `3bbcc5cc` was configured with
+`BUILD_TESTING=ON`, `CMAKE_BUILD_TYPE=Release`, and the TRV2
+`~/.firestaff/data` root. The target app built successfully with at most two
+compile jobs. The in-scope original-media test selection passed 3/3:
+`m12_main_menu_dm1_only_real_media` (123.92 s),
+`m12_main_menu_csb_only_real_media` (126.55 s), and
+`m12_main_menu_dm2_only_real_media` (132.67 s). Each covers that game's
+no-game M12 card selection and FM Towns handoff against its installed original
+Japanese/English archive. The DM1 archive SHA-256 was
+`c0c940e6e7c056998ce592c343f2817fabe071b05779fce305e7d927aa6721f3`, CSB was
+`54b40c1fd0b18ca2df1dbcd70c6cb07fb0333d540b99f8108b1fca84aa192b88`, and
+DM2 was `ed68fd6dc0072d7da9e29f87049fecf50da4414b938b140bcfdda5b9d5e69708`;
+all three hashes matched before and after testing. These bounded SDL-dummy
+checks establish only the named card-to-owner startup routes, not physical
+display/input, native presentation, or complete platform parity.
 
 ### 2026-10-28 current TRV2 no-game menu follow-up
 
