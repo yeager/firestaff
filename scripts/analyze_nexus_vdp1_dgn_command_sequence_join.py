@@ -216,7 +216,7 @@ def main() -> int:
     if args.ymir_trace_prefix:
         print("command_scope=observed_ymir_trace_prefix;frame_completion=unproven")
     print(f"textured_draws={textured} source_matches={source_matches} "
-          f"clut_matches={palette_matches} direct_color_matches={direct_color_matches} "
+          f"palette_matches={palette_matches} direct_color_matches={direct_color_matches} "
           f"face_owner_matches={face_owner_matches}")
     print(f"informative_textured_draws={informative_textured} "
           f"transparent_zero_filled_draws={len(transparent_zero_filled_offsets)}")
