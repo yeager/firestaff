@@ -9030,20 +9030,29 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   LBA 4,230, user offset 1,086, read in that capture. These source-byte matches
   support game-code ownership for the observed readers; the precise loading
   path and the semantic role of the decoded data are not yet established.
+- Disassembly of the authentic runtime snapshot around `$1F1C3E` shows a byte
+  refill helper: it loads through `($2E)`, stores to `$0E`, advances the
+  `$2E/$2F` pointer, stores the refill count in `$0F`, and updates `$12/$13`
+  before returning to the adjacent `$1F1C34` loop. That loop rotates `$0E`,
+  `$10`, and `$11` while extracting bits. The observed `$0D` reads therefore
+  enter a bit-reading path; no subsequent decoded-output destination or
+  gameplay structure has yet been traced. The bounded follow-up should capture
+  writes from this routine and its caller, with physical addresses and the
+  active MPR mapping, before assigning the data a game meaning.
 - Next: repair the capture plan so every scripted event is followed by a
   controller poll while its hold is active. Then trace the observed reader
   routines and destination effects through a coherent gameplay/render
   transition. Keep the adjacent `$F425` ADPCM-buffer copy separate unless its
   own source and consumer are independently established.
 
-- A follow-up cold US run on 2026-10-29 shortened the replay to ten events and
-  left more than 2,000 frames after the final hold. It still returned
-  `BLOCKED`: the last Button I event had no controller-port poll before its
-  hold expired (`events=10/10`, `input_reads=78,388`), and the capture receipt
-  says `transition=missing`. Its authenticated media, System Card, and BRAM
-  hashes match the preceding run; there was no autoload state. The raw `$23AD`
-  trace contains 1,121,433 lines and the bounded consumer trace 65,537 lines.
-  The capture harness removes its temporary receipt files on exit, so this run
-  is not independently eligible for the receipt-gated candidate verifier.
-  This repeated poll gap means the replay still needs an input plan that
-  demonstrably exposes every held mask before proceeding to semantic tracing.
+- A follow-up cold US run on 2026-10-29 shortened the replay to ten events.
+  It still returned `BLOCKED`: the final Button I event had no controller-port
+  poll exposing its mask during its 15-frame hold (`events=10/10`,
+  `input_reads=78,388`), and the transition receipt says `transition=missing`.
+  Its authenticated media, System Card, and BRAM hashes match the preceding
+  run; there was no autoload state. The raw `$23AD` trace contained 1,121,433
+  lines and the bounded consumer trace 65,537 lines. Those raw r4 traces were
+  later removed during TRV2 disk cleanup, so the candidate-read verifier cannot
+  be rerun on this capture. This repeated poll gap means the replay still needs
+  an input plan that demonstrably exposes every held mask before proceeding to
+  semantic tracing.
