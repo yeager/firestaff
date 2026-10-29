@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-29 — bound cold-start graphics trace tooling
+
+The reference-only Mednafen capture now accepts an explicit CD-RAM target
+write limit and a larger bounded PCE Fast VWR limit. Regression checks cover
+the option bounds and patch application; both focused tests passed three
+consecutive loops on TRV2. Gitleaks found no secrets in the staged changes,
+and the cross-platform GitHub Actions run passed on PR #185. R3/R4/R5 evidence
+and trace hashes are recorded in
+`docs/source-lock/theron-disassembly/theron-jp-run-hold-gated-vwr-capture-20261029.md`.
+These changes improve reference capture only. They do not prove an
+authenticated cold handoff, source-to-VRAM causality, or native rendering
+parity; those gaps remain open in `TODO-theron.md`.
+
 ## 2026-10-29 — load authenticated Stage-2 VCE colors into native palette state
 
 Added `theron_v1_track02_load_stage2_vce_palette()`. It reuses the exact
