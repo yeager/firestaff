@@ -2316,12 +2316,17 @@ Theron_Track02SignalStatus theron_v1_track02_load_stage2_vce_palette(
     status = theron_v1_track02_read_stage2_vce_palette(
         track02_data, track02_size, md5_hex, &receipt);
     if (status != THERON_TRACK02_SIGNAL_OK) return status;
-    if (tqr_palette_load_group(
-            out_state, receipt.payload,
-            (int)receipt.vce_palette_start_index,
-            (int)receipt.vce_palette_entry_count) !=
-        (int)receipt.vce_palette_entry_count) {
-        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    if (receipt.vce_palette_start_index != 0x00e0u ||
+        receipt.vce_palette_entry_count != 32u) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    for (size_t i = 0u; i < receipt.vce_palette_entry_count; ++i) {
+        uint16_t word = (uint16_t)(receipt.payload[i * 2u] |
+            ((uint16_t)receipt.payload[i * 2u + 1u] << 8u));
+        size_t index = (size_t)receipt.vce_palette_start_index + i;
+        out_state->entries[index].bgr333 = (uint16_t)(word & 0x01ffu);
+        out_state->entries[index].rgba =
+            tqr_bgr333_to_rgba((uint16_t)(word & 0x01ffu));
     }
     if (out_receipt) *out_receipt = receipt;
     return THERON_TRACK02_SIGNAL_OK;
