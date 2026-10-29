@@ -13,8 +13,9 @@ page; Japanese state changes and marker animation still need authentic captures.
 The C Saturn BKR container parser is verified against all four hash-pinned
 samples reported as retail-written; see DONE-nexus.md. A bounded C probe now
 validates the retail `DMNEXUS__01` payload offsets, champion count, party
-leader index, and current/maximum stamina pair against decompiled retail code
-and all four authentic images. Other champion-record fields remain opaque.
+leader index, current/maximum stamina pair, and bounded value/limit pair
+against decompiled retail code and all four authentic images. Other
+champion-record fields remain opaque.
 Retail Continue's BKR named-entry lookup,
 complete payload transfer,
 and checksum gate are source-bound. The remaining work is to identify the

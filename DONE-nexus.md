@@ -1,5 +1,18 @@
 # Firestaff DONE — Nexus
 
+## 2026-10-29 — Bound the authentic save value/limit pair
+
+- `FUN_0602eb4c` projects signed source halfwords at champion-record offsets
+  `+0x40/+0x42` to runtime longwords `+0x10/+0x14`. `FUN_060361a8` adjusts
+  the first value within the second value's ceiling. The retained Ymir trace
+  shows retail changing `18/20` to `19/20`.
+- The BKR probe exposes this as a bounded value/limit pair, without guessing
+  whether the field means level, experience, or another game concept. The
+  authentic corpus test verifies `18/20` in every champion record across all
+  four retail-written saves.
+- This does not complete the champion schema or apply a Saturn save to the
+  Firestaff engine.
+
 ## 2026-10-29 — Bind the authentic BKR stamina pair
 
 - `FUN_0602eb4c` projects signed save halfwords at champion-record offsets

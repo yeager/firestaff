@@ -42,6 +42,8 @@ typedef struct {
     uint32_t party_leader_index;
     int32_t champion_stamina_current[NEXUS_V1_SATURN_BKR_MAX_PARTY];
     int32_t champion_stamina_max[NEXUS_V1_SATURN_BKR_MAX_PARTY];
+    int32_t champion_bounded_value[NEXUS_V1_SATURN_BKR_MAX_PARTY];
+    int32_t champion_bounded_limit[NEXUS_V1_SATURN_BKR_MAX_PARTY];
     uint32_t champion_records_offset;
     uint32_t champion_record_stride;
     uint32_t champion_records_bytes;
@@ -60,8 +62,9 @@ int nexus_v1_saturn_bkr_parse(
 
 /* Validate the source-relative offsets, roster count, leader index, record
  * stride, and bounded span observed in hash-verified retail payloads. Extract
- * only the current/maximum stamina pair whose source and runtime operations
- * are bound by retail SH-2 decompilation. Other champion fields stay opaque. */
+ * only the current/maximum stamina pair and bounded value/limit pair whose
+ * source and runtime operations are bound by retail SH-2 decompilation. Other
+ * champion fields stay opaque. */
 int nexus_v1_saturn_bkr_nexus_payload_probe(
     const Nexus_V1_SaturnBkrEntry *entry,
     const uint8_t *payload, size_t payload_size,

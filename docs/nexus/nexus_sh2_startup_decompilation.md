@@ -190,8 +190,13 @@ runtime `+0x08`, subtracts a caller-provided amount, routes values below one
 through damage handling, and clamps against runtime `+0x0c`; this binds those
 cells as current and maximum stamina. Every record in the two-, three-, and
 ordinary four-champion saves contains `66/67`; the leader-index-3 save contains
-`67/67`. The probe leaves every other champion field opaque and does not yet
-load a champion into the Firestaff engine.
+`67/67`. The probe also extracts source `+0x40/+0x42`, mechanically projected
+to runtime `+0x10/+0x14`. `FUN_060361a8` adjusts the first value up while below
+the second and decrements it if it is above the second. All four authentic
+saves contain `18/20`; the Ymir captures contain `19/20` after the retail
+update. This supports only the behavioral labels bounded value and limit; it
+does not identify the game's domain meaning. Other champion fields remain
+opaque, and the probe does not load a champion into the Firestaff engine.
 
 Several mechanically copied fields change after the initial loader writes.
 The source `+0x40` to runtime `+0x10` field is 18 in the save and 19 in all

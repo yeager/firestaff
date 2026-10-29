@@ -3,8 +3,9 @@
 
 The two inputs must be the same run's raw 1 MiB WorkRAM-HI and WorkRAM-Low
 files. This checks fields whose copy/conversion operations are visible in the
-pcrecomp/Ghidra decompilation. It also checks the current/maximum stamina
-invariant established by the retail updater; other save fields remain unnamed.
+pcrecomp/Ghidra decompilation. It also checks the stamina and bounded-value
+invariants established by retail updater functions; other save fields remain
+unnamed.
 """
 
 from __future__ import annotations
@@ -233,8 +234,9 @@ def verify(
     traced_differences: list[str] = []
     unresolved_differences: list[str] = []
     # Keep each operation explicit against FUN_0602eb4c's decompilation.
-    # Except for the stamina pair source +0x3c/+0x3e -> runtime +0x08/+0x0c,
-    # these offsets prove mechanical projection only and assign no meaning.
+    # The stamina pair (+0x3c/+0x3e -> +0x08/+0x0c) and bounded-value pair
+    # (+0x40/+0x42 -> +0x10/+0x14) have limited behavioral names from retail
+    # updater decompilation. Other offsets prove mechanical projection only.
     byte_copies = (
         (0x00, 0x2C, 6),
         (0x06, 0x32, 1),
@@ -367,6 +369,13 @@ def verify(
                 f"champion record {index} has invalid current/maximum stamina: "
                 f"{stamina_current}/{stamina_max}"
             )
+        bounded_value = struct.unpack_from(">i", hi, target + 0x10)[0]
+        bounded_limit = struct.unpack_from(">i", hi, target + 0x14)[0]
+        if bounded_value > bounded_limit:
+            raise ValueError(
+                f"champion record {index} exceeds bounded-value limit: "
+                f"{bounded_value}/{bounded_limit}"
+            )
         for source_field, target_field in unsigned_halfword_copies:
             expected = struct.unpack_from(">H", payload, source + source_field)[0]
             actual = struct.unpack_from(">H", hi, target + target_field)[0]
@@ -423,6 +432,7 @@ def verify(
             "partial_with_unresolved_final_snapshot_differences"
         ),
         "stamina_pair_semantics=current/maximum_verified",
+        "bounded_pair_semantics=value/limit_only",
         "other_save_field_semantics=unassigned",
         "complete_continue_parity=unproven",
     ]
