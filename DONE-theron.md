@@ -9392,3 +9392,23 @@ native rendering, or Theron parity. The private evidence bundle is at
   authenticated CD-to-RAM receipt, `$E009` dispatch, or gameplay transition
   was observed. This completes a diagnostic instrumentation task only; it
   establishes no player-visible behavior or Theron parity.
+
+
+## 2026-10-29 — join JP poll-code copy to authentic source and input poll
+
+- A cold JP Rev. 1 PCE Fast reference capture recorded all 21 writes from
+  System Card PC `$EA9C` into physical `$0D04D2–$0D04E6`, MPR2 `$68`. Each
+  write immediately followed a same-valued `$EA99` CD data-port read whose
+  authenticated source was the original Track 02 at LBA 3,625. The reusable
+  source-join verifier passed for all 21 addresses.
+- The same capture accepted all 12 replay events. During the 300-frame UP
+  hold, game code at `$44C1` read direction select `SEL=1` with raw `$0010`
+  and active-low result `$3E` on each frame from 17,600 through 17,899. The
+  adjacent `$44D2` read used the button-select phase and returned idle `$3F`.
+  The verifier now reports the actual matching read rather than a later
+  unmatched read in that poll routine.
+- Focused source-join and live-capture verifier checks passed three loops.
+  No CD IRQ, authenticated gameplay handoff, `$E009` dispatch, party-state
+  change, visible gameplay effect, or full Theron parity was established. This
+  completes source and controller-poll evidence only; movement/rendering
+  behavior remains open.

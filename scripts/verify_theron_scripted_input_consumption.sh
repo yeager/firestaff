@@ -99,24 +99,24 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" \
             }
             return
         }
-        if (!pending_poll_classified) {
-            pc = tolower(read_pc)
-            if (pc == "e4b7" || pc == "e4c8" ||
-                pc == "e4b4" || pc == "e4c5")
-                system_card_poll_reads++
-            else
-                non_system_card_poll_reads++
-            pending_poll_classified = 1
-        }
         if (selected_bank_matches(raw_value, returned_value,
                                   read_sel, pending_mask)) {
+            if (!pending_poll_classified) {
+                pc = tolower(read_pc)
+                if (pc == "e4b7" || pc == "e4c8" ||
+                    pc == "e4b4" || pc == "e4c5")
+                    system_card_poll_reads++
+                else
+                    non_system_card_poll_reads++
+                pending_poll_classified = 1
+            }
             if (read_sel == 1)
                 pending_direction_read = 1
             else
                 pending_button_read = 1
         }
         if ((!pending_direction_mask || pending_direction_read) &&
-            (!pending_button_mask || pending_button_read)) {
+            (!pending_button_mask || pending_button_read) && !pending_read) {
             pending_read = 1
             controller_read_witness_sequence = input_reads
             controller_read_witness_pc = read_pc

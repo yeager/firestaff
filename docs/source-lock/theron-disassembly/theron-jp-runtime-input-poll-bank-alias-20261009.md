@@ -64,9 +64,14 @@ The instrumented Mednafen binary was MD5
 logical PC `$44D2`, all with MPR-derived physical PC `$0D04D2`; the shared
 input-trace SHA-256 is
 `e151c48723b0f5b95bb0991d8626189716fdde6c60cf515231607997a099dac5`.
-The scripted-input verifier reports four event frames applied, followed by
+The scripted-input verifier reported four event frames applied, followed by
 controller reads exposing each scripted mask, and four non-System-Card poll
-witnesses at `$44D2`.
+witnesses at `$44D2`. A later audit found that the verifier could overwrite a
+matching direction-read witness with the next unmatched read in the same poll
+routine. The old capture's PC attribution is therefore not independently
+verified by the retained summary. The cold-start follow-up below records the
+direction-bank match at `$44C1` and distinguishes it from the adjacent
+button-bank read at `$44D2`.
 
 `$0D04D2` is consistent with MPR2 `$68` and the `$04D2` offset within its
 8-KiB page. Thus, in these captures, the CPU reports the same logical PC while
@@ -605,3 +610,28 @@ retained JP cold capture in three consecutive runs, verifying 30 immediate
 `$EA99` read to `$EA9C` store joins across 15 bank-`$80` addresses from LBAs
 4521 and 4589. That capture does not include writes to the
 `$0D04D2–$0D04E6` poll window, so the poll code's source remains unresolved.
+
+
+## Cold-start source and direction-poll follow-up (2026-10-29)
+
+A later 300-second cold JP Rev. 1 capture closes the source-LBA gap described
+above. All 21 immediate `$EA99` CD-read to `$EA9C` store joins in physical
+`$0D04D2–$0D04E6` resolve to original Track 02 LBA 3,625 with MPR2 `$68`.
+The trace also contains 42 `$EA9C` writes to the same physical window with
+MPR2 `$80`; the reusable verifier scopes by the requested MPR before
+validating the selected window. The source-bound join is evidence of copying
+the 21 bytes into runtime RAM, not proof that those bytes cause gameplay.
+
+The same replay verifies a 300-frame UP hold: code at `$44C1` reads the
+direction bank (`SEL=1`) with raw `$0010` and active-low result `$3E` for every
+frame 17,600–17,899. The adjacent `$44D2` sample is the button-bank phase and
+returns `$3F`; it is not the UP witness. The corrected verifier attributes
+the witness to `$44C1`. This establishes delivery of the direction mask to a
+non-System-Card poll in the copied runtime routine, not a movement action.
+
+The run remains `BLOCKED` for gameplay: it produced no CD IRQ, authenticated
+CD-to-game-RAM handoff, `$E009` dispatch, or visible state/render change.
+Continue by following the `$44C1` caller into an authenticated party-state or
+VDC consumer, and keep native movement/rendering closed until that effect is
+source-bound. Private input, CD-read, and RAM-write trace hashes are recorded
+in `TODO-theron.md`; raw traces and original media remained on TRV2.

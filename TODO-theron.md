@@ -9155,3 +9155,38 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   established. Next identify the authentic source of the `$EA9C` writes and
   arrange a replay whose input masks overlap a game poll before tracing a
   visible state/render effect.
+
+
+## 2026-10-29 — authenticate poll-code source and game input sample
+
+- A new 300-second cold JP Rev. 1 capture used the original Track 02 and full
+  System Card with no save-state autoload. It joins all 21 `$EA9C` writes to
+  the immediately preceding `$EA99` reads at Track 02 LBA 3,625, writing the
+  bytes to physical `$0D04D2–$0D04E6` with MPR2 `$68`. The 21 selected writes
+  cover all 21 target addresses. This closes the earlier source-LBA gap for
+  this runtime poll-code copy.
+- The same replay applied all 12 scheduled inputs and the active-low UP
+  direction mask was read on every frame 17,600–17,899 by non-System-Card code
+  at `$44C1` (`SEL=1`, raw `$0010`, returned `$3E`). The adjacent `$44D2`
+  sample is the button-bank phase and reads idle `$3F`; it must not be cited as
+  the UP sample. The scripted-input verifier now attributes its witness to the
+  matching read and ignores later unmatched reads when choosing the witness.
+- The capture still ended `BLOCKED`: no CD IRQ, authenticated CD-to-RAM
+  gameplay receipt, `$E009` dispatch, or gameplay transition was observed.
+  Delivery of UP to a game-code poll and authentication of the poll-code copy
+  do not prove that the input changed party state or caused a visible effect.
+  Next trace the `$44C1` caller and its party-state or rendering consumer using
+  the existing source-bound instrumentation; keep action and rendering parity
+  open until such an effect is observed.
+- `verify_theron_cd_ram_source_join.py` now filters writes by the requested
+  MPR2 before validating that window. The capture also contained unrelated
+  `$EA9C` writes into the same physical address window with MPR2 `$80`; those
+  are excluded from the `$68` join. The filter change and the scripted-input
+  witness attribution regression passed three consecutive focused test
+  loops.
+- Private trace SHA-256: input
+  `e61e2b5b69316bd7492703ecdb90074782977273dc28880cfed97951e84d17e4`, CD
+  reads `464f0e6cd97c3899c03733a342abb97818455d216b3e14ed21435398f6c78339`,
+  and RAM writes
+  `9530d3ee32a8acd3c2f5104851595ce48ac9faf0daacc4083fdfe418297b5cff`.
+  Raw traces and original media remained on TRV2 and are not committed.

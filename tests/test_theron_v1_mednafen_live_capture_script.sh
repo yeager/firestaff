@@ -408,6 +408,36 @@ if [[ "$legacy_pce_receipt" != *'event_frames_with_scripted_mask_read=1'* ||
         "$legacy_pce_receipt" >&2
     exit 1
 fi
+cat >"$input_test_dir/direction-witness-attribution.trace" <<'THERON_DIRECTION_WITNESS_ATTRIBUTION'
+scripted_pce_input_event frame=62 key=up mask=0010 hold=2
+scripted_pce_input_apply frame=62 physical=0000 scripted=0010 combined=0010
+pce_input_read frame=62 cpu_pc=44c1 register=1000 raw=0010 sel=1 clr=0 index=0 value=3e
+pce_input_read frame=62 cpu_pc=44d2 register=1000 raw=0010 sel=0 clr=0 index=0 value=3f
+THERON_DIRECTION_WITNESS_ATTRIBUTION
+direction_witness_receipt=$("$scripted_input_consumption_verifier" \
+    "$input_test_dir/direction-witness-attribution.trace" up@62:2 4)
+if [[ "$direction_witness_receipt" != *'controller_read_witness_pc=44c1'* ||
+      "$direction_witness_receipt" != *'non_system_card_poll_reads=1'* ]]; then
+    printf 'FAIL: a later unselected read overwrote the active direction witness:\n%s\n' \
+        "$direction_witness_receipt" >&2
+    exit 1
+fi
+cat >"$input_test_dir/non-game-idle-poll.trace" <<'THERON_NON_GAME_IDLE_POLL'
+scripted_pce_input_event frame=63 key=up mask=0010 hold=2
+scripted_pce_input_apply frame=63 physical=0000 scripted=0010 combined=0010
+pce_input_read frame=63 cpu_pc=44d2 register=1000 raw=0000 sel=0 clr=0 index=0 value=3f
+pce_input_read frame=63 cpu_pc=e4c8 register=1000 raw=0010 sel=1 clr=0 index=0 value=3e
+THERON_NON_GAME_IDLE_POLL
+non_game_idle_receipt=$("$scripted_input_consumption_verifier" \
+    "$input_test_dir/non-game-idle-poll.trace" up@63:2 4)
+if [[ "$non_game_idle_receipt" != *'controller_read_witness_pc=e4c8'* ||
+      "$non_game_idle_receipt" != *'system_card_poll_reads=1'* ||
+      "$non_game_idle_receipt" != *'non_system_card_poll_reads=0'* ||
+      "$non_game_idle_receipt" != *'game_or_non_system_card_poll_boundary=not_observed'* ]]; then
+    printf 'FAIL: an idle non-game poll was counted as consuming scripted input:\n%s\n' \
+        "$non_game_idle_receipt" >&2
+    exit 1
+fi
 cat >"$input_test_dir/legacy-mirrored-port.trace" <<'THERON_LEGACY_MIRRORED_PORT'
 scripted_pce_input_event frame=61 key=run mask=0008 hold=2
 scripted_pce_input_apply frame=61 physical=0000 scripted=0008 combined=0008
