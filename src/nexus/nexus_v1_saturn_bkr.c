@@ -236,3 +236,50 @@ done:
     *out_receipt = receipt;
     return ok;
 }
+
+int nexus_v1_saturn_bkr_nexus_payload_probe(
+    const Nexus_V1_SaturnBkrEntry *entry,
+    const uint8_t *payload, size_t payload_size,
+    Nexus_V1_SaturnBkrNexusPayloadReceipt *out_receipt)
+{
+    Nexus_V1_SaturnBkrNexusPayloadReceipt receipt;
+    uint32_t champion_count;
+    uint32_t records_offset = 0x0CCU + 0x50U;
+    uint32_t records_stride = 0x0E0U;
+    uint32_t declared_span;
+    uint32_t records_bytes;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (out_receipt) *out_receipt = receipt;
+    if (!entry || !payload || !out_receipt ||
+        memcmp(entry->name, "DMNEXUS__01", sizeof("DMNEXUS__01")) != 0 ||
+        entry->payload_bytes != 20480U || payload_size != entry->payload_bytes ||
+        read_be32(payload + 0x54U) != 0x10U ||
+        read_be32(payload + 0x58U) != 0xCCU) {
+        return 0;
+    }
+
+    champion_count = payload[0x62U];
+    declared_span = read_be16(payload + 0x0AU);
+    if (champion_count == 0U || champion_count > 4U ||
+        declared_span != 0x274U + champion_count * records_stride) {
+        return 0;
+    }
+    records_bytes = champion_count * records_stride;
+    if (records_offset > payload_size ||
+        records_bytes > payload_size - records_offset ||
+        records_offset + records_bytes > declared_span ||
+        declared_span > payload_size) {
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.payload_bytes = (uint32_t)payload_size;
+    receipt.champion_count = champion_count;
+    receipt.champion_records_offset = records_offset;
+    receipt.champion_record_stride = records_stride;
+    receipt.champion_records_bytes = records_bytes;
+    receipt.declared_payload_span = declared_span;
+    *out_receipt = receipt;
+    return 1;
+}

@@ -11,11 +11,13 @@ test. The retained Japanese Ymir screenshot captures only the initial settings
 page; Japanese state changes and marker animation still need authentic captures.
 
 The C Saturn BKR container parser is verified against all four hash-pinned
-samples reported as retail-written; see DONE-nexus.md. Retail Continue's BKR
-named-entry lookup, complete payload transfer, and checksum gate are now
-source-bound. The remaining work is to identify the payload schema and the
-post-load consumer that applies the loaded state. Keep payload bytes opaque
-until that mapping is established; do not infer game state from FNXS or another
+samples reported as retail-written; see DONE-nexus.md. A bounded C probe now
+validates the retail `DMNEXUS__01` payload offsets, champion count, and opaque
+champion-record table against the decompiled loader and all four authentic
+images. Retail Continue's BKR named-entry lookup, complete payload transfer,
+and checksum gate are source-bound. The remaining work is to identify the
+champion field schema and the post-load consumer that applies the loaded state.
+Keep unbound payload fields opaque; do not infer game state from FNXS or another
 Dungeon Master version.
 
 A 2026-10-29 Ymir cold boot with the authentic two-champion BKR installed in

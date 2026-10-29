@@ -164,6 +164,14 @@ projection checks per record (24, 36, and 48 for the captured two-, three-,
 and four-champion saves). The field offsets are checked directly against
 `FUN_0602eb4c` and the same-run WorkRAM dumps.
 
+Firestaff's Saturn BKR parser now has a bounded `DMNEXUS__01` payload probe.
+It checks the two source-relative offsets (`0x10` and `0xcc`), the retail
+champion count at payload `+0x62`, the champion table at `0x11c`, its `0xe0`
+source stride, and the captured count-dependent payload span. The real-data
+test applies this probe to all four hash-pinned retail-written images. It
+returns the record bounds while keeping every champion field opaque; it does
+not yet load a champion into the Firestaff engine.
+
 The source `+0x40` to runtime `+0x10` projection differs in all three roster
 snapshots: the save contains 18 and final WRAM has 19. In the leader-index-3
 run, the complete retained trace covers this field

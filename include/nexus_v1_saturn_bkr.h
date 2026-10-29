@@ -31,6 +31,19 @@ typedef struct {
     uint32_t payload_bytes;
 } Nexus_V1_SaturnBkrReceipt;
 
+/* Bounded structural receipt for the retail DMNEXUS__01 payload. Champion
+ * records stay opaque: this only reports the source table exposed by the
+ * retail Continue loader and does not assign field meanings. */
+typedef struct {
+    int valid;
+    uint32_t payload_bytes;
+    uint32_t champion_count;
+    uint32_t champion_records_offset;
+    uint32_t champion_record_stride;
+    uint32_t champion_records_bytes;
+    uint32_t declared_payload_span;
+} Nexus_V1_SaturnBkrNexusPayloadReceipt;
+
 /* Parse a Saturn Backup RAM image and copy each game payload, in directory
  * order, to caller-owned storage. The destination must be at least image_size
  * bytes, which bounds the total copied payload for every valid card image.
@@ -40,6 +53,15 @@ int nexus_v1_saturn_bkr_parse(
     Nexus_V1_SaturnBkrEntry *entries, size_t entry_capacity,
     uint8_t *payload_storage, size_t payload_capacity,
     Nexus_V1_SaturnBkrReceipt *out_receipt);
+
+/* Validate the source-relative offsets, roster count, record stride, and
+ * bounded span observed in the hash-verified retail payloads and SH-2
+ * decompilation. Does not interpret champion records or materialize runtime
+ * state. */
+int nexus_v1_saturn_bkr_nexus_payload_probe(
+    const Nexus_V1_SaturnBkrEntry *entry,
+    const uint8_t *payload, size_t payload_size,
+    Nexus_V1_SaturnBkrNexusPayloadReceipt *out_receipt);
 
 #ifdef __cplusplus
 }

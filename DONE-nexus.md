@@ -153,6 +153,18 @@ Nexus menu/gameplay parity or full Theron parity.
   independently established because its original transfer chain was not
   retained.
 
+## 2026-10-29 — Bound the authentic Nexus Continue payload roster
+
+- Added a C probe for the decompilation-bound `DMNEXUS__01` source-relative
+  pointers, roster count, `0x11c` source table, `0xe0` stride, and
+  count-dependent payload span. Champion record contents remain opaque.
+- Extended the real-data regression across all four SHA-256-pinned retail BKR
+  images and verified that mutations to the source pointer or roster count are
+  rejected. The CTest uses the private authentic corpus and is labeled
+  `real_data;no_synthetic`.
+- The probe does not map these records into Firestaff's champion structure or
+  implement Continue; the engine handoff remains open.
+
 ## 2026-10-24 — Verified title and media diagnostics
 
 ## Available local retail media

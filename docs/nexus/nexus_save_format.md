@@ -1,6 +1,6 @@
 # Nexus V1 Save File Format
 
-## Status: Firestaff-native FNXS implemented; Saturn payload transfer verified, schema unresolved
+## Status: Firestaff-native FNXS implemented; Saturn BKR payload structure partially verified, engine loading unresolved
 
 Firestaff has a portable, little-endian native save container named `FNXS`.
 It is used for Firestaff resume, save browsing, and save export/import. It is
@@ -88,8 +88,11 @@ payloads differ across the two-, three-, and four-champion samples. Bytes
 three-, and four-champion samples respectively; these values follow
 `0x0274 + champion_count * 0x00e0`. Every byte from the observed value to the
 end of the 20,480-byte payload is zero in these four samples. The independent
-four-champion sample has the same observed value. This is a count-correlated
-payload-boundary observation; it does not identify the boundary field's
-consumer or prove a 224-byte champion record. Original Saturn save import
-remains gated until the payload mapping and source-owned consumer are
-identified and exercised against the retail game.
+four-champion sample has the same observed value. The pcrecomp/Ghidra
+decompilation of `FUN_0602eb4c` verifies a `0xe0` source stride while copying
+the roster records, and the real-data probe exposes their bounded table at
+payload offset `0x11c`. The probe preserves each record as opaque bytes; it
+does not identify the individual field meanings or prove the meaning of the
+count-correlated boundary field. Original Saturn save import remains gated
+until the payload mapping and source-owned consumer are identified and
+exercised against the retail game.

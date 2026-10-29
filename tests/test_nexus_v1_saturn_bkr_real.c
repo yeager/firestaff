@@ -9,21 +9,26 @@ typedef struct {
     const char *filename;
     const char *sha256;
     const char *payload_sha256;
+    uint32_t champion_count;
 } CorpusFile;
 
 static const CorpusFile corpus[] = {
     {"nexus-two-champion-retail-written-20260926.bkr",
      "3d60856119df55ffa4937d13b5dc7487157c7c6b131a999a2e61683316679634",
-     "9c969745745acc7f843148abf78f114ab56e82b39b7f01251b6407a0d9fdf4eb"},
+     "9c969745745acc7f843148abf78f114ab56e82b39b7f01251b6407a0d9fdf4eb",
+     2U},
     {"nexus-three-champion-retail-written-20260926.bkr",
      "d9c86de3b0c668f9961a16529b1d5fd72f3e095823f8f0021cf8db8bfba48e9b",
-     "1e7e20ee72cdc57c50557ec6bf6325be22c299558a9b8f2731a78877d89725a3"},
+     "1e7e20ee72cdc57c50557ec6bf6325be22c299558a9b8f2731a78877d89725a3",
+     3U},
     {"nexus-four-champion-retail-written-20260926.bkr",
      "87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035",
-     "1c460c65cc6156843ec4e0c1c8ca4ae3667241cc46a04151624b578e478c47e5"},
+     "1c460c65cc6156843ec4e0c1c8ca4ae3667241cc46a04151624b578e478c47e5",
+     4U},
     {"nexus-four-champion-leader-3-retail-written-20260926.bkr",
      "319ed84080a90eaeafb1bfa85ca4405a0153f4c85fda76ee7c557b34ac276867",
-     "b77461232e7cf3485be0e179b5feab777c91efa187d0ad6bdcc7bb9867058e3e"}
+     "b77461232e7cf3485be0e179b5feab777c91efa187d0ad6bdcc7bb9867058e3e",
+     4U}
 };
 
 static int read_file(const char *path, uint8_t **out, size_t *out_size)
@@ -100,9 +105,11 @@ int main(void)
         size_t image_size = 0U;
         Nexus_V1_SaturnBkrEntry entries[NEXUS_V1_SATURN_BKR_MAX_ENTRIES];
         Nexus_V1_SaturnBkrReceipt receipt;
+        Nexus_V1_SaturnBkrNexusPayloadReceipt payload_receipt;
         int image_hash_valid;
         int parse_valid;
         int payload_hash_valid = 0;
+        int malformed_payloads_rejected = 0;
         int path_length = snprintf(path, sizeof(path), "%s/%s", root,
                                    corpus[file_index].filename);
         if (path_length < 0 || (size_t)path_length >= sizeof(path) ||
@@ -115,6 +122,7 @@ int main(void)
         payload = (uint8_t *)calloc(image_size, 1U);
         memset(entries, 0, sizeof(entries));
         memset(&receipt, 0, sizeof(receipt));
+        memset(&payload_receipt, 0, sizeof(payload_receipt));
         image_hash_valid = payload &&
             firestaff_x68k_media_receipt_sha256_hex(
                 image, image_size, digest, sizeof(digest)) == 0 &&
@@ -131,6 +139,40 @@ int main(void)
                     sizeof(payload_digest)) == 0 &&
                 strcmp(payload_digest, corpus[file_index].payload_sha256) == 0;
         }
+        if (parse_valid && receipt.entry_count == 1U &&
+            entries[0].payload_offset + entries[0].payload_bytes <= image_size) {
+            (void)nexus_v1_saturn_bkr_nexus_payload_probe(
+                &entries[0], payload + entries[0].payload_offset,
+                entries[0].payload_bytes, &payload_receipt);
+        }
+        if (payload_receipt.valid) {
+            uint8_t changed_payload[20480];
+            Nexus_V1_SaturnBkrNexusPayloadReceipt rejected_receipt;
+            const uint8_t *authentic_payload =
+                payload + entries[0].payload_offset;
+
+            /* Derive negative cases from the real payload so the regression
+             * tests rejection without adding a synthetic Nexus save fixture. */
+            memcpy(changed_payload, authentic_payload,
+                   sizeof(changed_payload));
+            changed_payload[0x5BU] ^= 1U;
+            memset(&rejected_receipt, 0, sizeof(rejected_receipt));
+            if (!nexus_v1_saturn_bkr_nexus_payload_probe(
+                    &entries[0], changed_payload,
+                    sizeof(changed_payload), &rejected_receipt) &&
+                !rejected_receipt.valid) {
+                memcpy(changed_payload, authentic_payload,
+                       sizeof(changed_payload));
+                changed_payload[0x62U] = 5U;
+                memset(&rejected_receipt, 0, sizeof(rejected_receipt));
+                if (!nexus_v1_saturn_bkr_nexus_payload_probe(
+                        &entries[0], changed_payload,
+                        sizeof(changed_payload), &rejected_receipt) &&
+                    !rejected_receipt.valid) {
+                    malformed_payloads_rejected = 1;
+                }
+            }
+        }
         if (!image_hash_valid || !parse_valid ||
             !receipt.valid || receipt.image_bytes != 32768U ||
             receipt.block_bytes != 64U || receipt.block_count != 512U ||
@@ -139,23 +181,37 @@ int main(void)
             entries[0].payload_bytes != 20480U ||
             entries[0].allocated_block_count != 354U ||
             entries[0].payload_offset != 0U ||
-            !payload_hash_valid) {
+            !payload_hash_valid || !payload_receipt.valid ||
+            payload_receipt.champion_count != corpus[file_index].champion_count ||
+            payload_receipt.champion_records_offset != 0x11CU ||
+            payload_receipt.champion_record_stride != 0xE0U ||
+            payload_receipt.champion_records_bytes !=
+                corpus[file_index].champion_count * 0xE0U ||
+            payload_receipt.declared_payload_span !=
+                0x274U + corpus[file_index].champion_count * 0xE0U ||
+            !malformed_payloads_rejected) {
             fprintf(stderr,
                     "FAIL: authentic BKR parse/hash mismatch: %s "
                     "image_hash=%d parse=%d valid=%d geometry=%u/%u "
                     "entries=%u payload=%u name=%s allocated=%u "
-                    "payload_hash=%d\n",
+                    "payload_hash=%d roster=%u/%u records=%u+%u span=%u bad_payloads=%d\n",
                     corpus[file_index].filename, image_hash_valid, parse_valid,
                     receipt.valid, receipt.block_bytes, receipt.block_count,
                     receipt.entry_count, receipt.payload_bytes, entries[0].name,
-                    entries[0].allocated_block_count, payload_hash_valid);
+                    entries[0].allocated_block_count, payload_hash_valid,
+                    payload_receipt.champion_count,
+                    corpus[file_index].champion_count,
+                    payload_receipt.champion_records_offset,
+                    payload_receipt.champion_record_stride,
+                    payload_receipt.declared_payload_span,
+                    malformed_payloads_rejected);
             failed = 1;
         } else {
             payloads[file_index] = payload;
             payload_sizes[file_index] = entries[0].payload_bytes;
-            printf("PASS: %s (%u-byte image, %u-byte opaque game payload)\n",
+            printf("PASS: %s (%u-byte image, %u-byte payload, %u opaque champion records)\n",
                    corpus[file_index].filename, receipt.image_bytes,
-                   entries[0].payload_bytes);
+                   entries[0].payload_bytes, payload_receipt.champion_count);
             payload = NULL;
         }
         free(payload);
