@@ -1,0 +1,14 @@
+Read-only pointer-literal check against authentic Japanese retail media.
+
+Image: DM.BIN
+SHA-256: 3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124
+Load address used by the preserved Ghidra analysis: 0x06010000
+Pointer global address: 0x0603a660
+File offset: 0x0603a660 - 0x06010000 = 0x0002a660
+Bytes at file offset 0x0002a660: 06 06 46 10
+Big-endian pointer value: 0x06064610
+
+The bytes were read from the local authentic-media copy
+~/.firestaff/data/nexus/DM.BIN. The recorded SHA-256 matches the Japanese
+retail DM.BIN identity cited in this evidence bundle. No disassembly database
+or external pointer-resolution artifact is required for this address check.

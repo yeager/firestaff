@@ -309,6 +309,20 @@ Event 44 has a hash-verified source-side slot-pair path, but its runtime
 held-item effects and Firestaff state mapping are not verified. Production
 inventory and equipment clicks remain disabled until those joins are captured.
 
+The hash-pinned Japanese retail `DM.BIN` disassembly now traces this poller in
+more detail. Relative mouse deltas update the cursor coordinates; a matched
+`0x2e` descriptor row queues event 46, which is consumed before the current
+coordinates are checked against the live hitbox records. The hitbox scan runs
+only when the runtime hit-test pointer at `0x06035158` is nonzero; only then can
+a matching record queue its own event and argument. Thus an event-44 action can
+be downstream of the guarded event-46 hit test without event 44 being a second
+mouse-poll event. The selected descriptor table depends on runtime state, and
+the available retail captures do not expose a populated live table or a
+scheduled ShuttleMouse report. The report therefore proves the static path but
+does not identify the physical `0x0400` trigger, the live row selected for a
+click, or a visible gameplay action. See the [static trace and preserved
+Ghidra logs](../../parity-evidence/verification/nexus-shuttle-mouse-event-path-20261029/README.md).
+
 For a controlled Ymir run, save a baseline and post-action high-WRAM dump from
 the same retail savestate with Debug > Dump all memory, then compare them with
 `scripts/analyze_nexus_inventory_wram_pair.py`. The tool checks that both

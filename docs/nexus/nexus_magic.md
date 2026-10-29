@@ -12,12 +12,25 @@ Firestaff UI declarations and diagnostic C code do not prove retail semantics.
 - The Japanese retail `DM.BIN` has 32 big-endian halfwords at offset `0x38368`
   matching bytes in `src/nexus/nexus_v1_magic.c`. The match establishes bytes,
   not the complete table meaning or any cast effect.
-- Static analysis found a champion-row byte used in a threshold for accepting
-  or rejecting the next rune in a four-entry sequence. Its semantic name and
-  dynamic input path are unknown.
+- Follow-up static analysis places `FUN_0603a472` on a four-index ITEM.IBS
+  action-eligibility path. Its helper reads champion-row `+0x18` as one input
+  to an eligibility threshold, while related selectors update a distinct
+  `+0x35..+0x38` state block. Available caller and capture evidence does not
+  connect that path to the Magic composer at `+0x3d/+0x3e` or to casting. Do
+  not interpret its four indices as the composer's four rune entries.
+- The BKR receipt exposes byte `+0x09` as `champion_byte_09_runtime_35`.
+  `champion_rune_sequence_cursor` remains as a deprecated source-compatibility
+  alias only; its domain meaning is unresolved.
 - The Japanese retail manual documents Control Pad Y opening the Magic window;
   an authentic Ymir `--debug` capture verifies that entry action from the
   retained gameplay checkpoint.
+- Authentic paired-input captures and decompilation confirm the retail
+  composer stores its cursor at champion row `+0x3d` and its four action slots
+  at `+0x3e..+0x41`, using `0xDA + 6*cursor + action`. All six cursor-0
+  numeric choices and costs (1–6 mana) have been captured; their rune names
+  and the Nexus menu's coordinate-to-index table are not yet identified. A
+  four-action sequence fills the composer buffer, but any final validator and cast path remain
+  unverified.
 
 See [`nexus_spells.md`](nexus_spells.md) for evidence hashes, capture details,
 and the bounded interpretation.
@@ -26,9 +39,9 @@ and the bounded interpretation.
 
 Firestaff production links `nexus_v1_magic_runtime_noop.c`. Spell lookup,
 mana-cost, cast, and damage APIs fail closed. The desktop route does not yet
-open or render the retail Magic window. Rune selection, sequence validation,
-mana mutation, target selection, effect dispatch, and save changes are not
-implemented as admitted Nexus behavior.
+open or render the retail Magic window. The confirmed retail composer behavior
+is not yet implemented in Firestaff; final sequence validation, target
+selection, effect dispatch, and save changes also remain unverified.
 
 Keep the diagnostic source-study file out of gameplay. Do not substitute DM1
 tables or synthetic item/spell data for missing retail joins.

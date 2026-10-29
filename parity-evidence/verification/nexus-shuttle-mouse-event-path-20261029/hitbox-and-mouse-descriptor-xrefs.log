@@ -1,0 +1,99 @@
+openjdk version "25.0.5" 2026-10-20 LTS
+OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS)
+OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode)
+INFO  Using log config file: jar:file:/home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Framework/Generic/lib/Generic.jar!/generic.log4j.xml (LoggingInitialization)
+INFO  Using log file: /home/trv2/.config/ghidra/ghidra_12.2_PUBLIC/application.log (LoggingInitialization)
+INFO  Loading user preferences: /home/trv2/.config/ghidra/ghidra_12.2_PUBLIC/preferences (Preferences)
+INFO  Loading previous preferences: /home/trv2/.config/ghidra/ghidra_12.1.4_PUBLIC/preferences (Preferences)
+INFO  Searching for classes... (ClassSearcher)
+INFO  Class search complete (2166 ms) (ClassSearcher)
+INFO  Initializing SSL Context (DefaultSSLContextInitializer)
+INFO  Initializing Random Number Generator... (SecureRandomFactory)
+INFO  Random Number Generator initialization complete: NativePRNGNonBlocking (SecureRandomFactory)
+INFO  Loaded 120 trusted CA certificate(s) from /etc/ssl/certs/ca-certificates.crt (UnixSystemTrustKeyStoreUtil)
+INFO  Loaded 120 trusted CA certificates from the OS trust store. (DefaultTrustManagerFactory)
+INFO  Loaded 118 trusted CA certificates from the Java default trust store. (DefaultTrustManagerFactory)
+INFO  Headless startup complete (4463 ms) (AnalyzeHeadless)
+INFO  Class searcher loaded 60 extension points (19 false positives) (ClassSearcher)
+INFO  HEADLESS Script Paths:
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/Base/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/SystemEmulation/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/PDB/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/FileFormats/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/VersionTracking/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Debug/Debugger-rmi-trace/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/GnuDemangler/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/PyGhidra/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Processors/Atmel/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Processors/DATA/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/WildcardAssembler/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/FunctionID/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Processors/JVM/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Debug/Debugger/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/DecompilerDependent/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/Decompiler/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Processors/8051/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Processors/PIC/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/BytePatterns/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/MicrosoftCodeAnalyzer/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/Swift/ghidra_scripts
+    /home/trv2/pcrecomp-d3d8-c19b3b7-hardening/tools/ghidra
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/BSim/ghidra_scripts (HeadlessAnalyzer)
+INFO  HEADLESS: execution starts (HeadlessAnalyzer)
+INFO  Opening existing project: /dev/shm/ghidra-nexus-pad-events-20261029/NexusPadEvents (HeadlessAnalyzer)
+INFO  Opening project: /dev/shm/ghidra-nexus-pad-events-20261029/NexusPadEvents (HeadlessProject)
+INFO  REPORT: Processing read-only project file: /DM.BIN (HeadlessAnalyzer)
+INFO  REPORT: Execute script: FindRefs.java '0x0607fb84' '0x0607fb86' '0x0607fb88' '0x0607fb8a' '0x0607fb8c' '0x0607fb90' '0x0604b31c' '0x0604b37c' '0x0604b3d0'  (HeadlessAnalyzer)
+INFO  SCRIPT: /home/trv2/pcrecomp-d3d8-c19b3b7-hardening/tools/ghidra/FindRefs.java (HeadlessAnalyzer)
+INFO  FindRefs.java> ===== refs to 0x607fb84 (DAT_0607fb84) ===== (GhidraScript)
+INFO  FindRefs.java>   WRITE in FUN_060347d8 @0x06034800 (GhidraScript)
+INFO  FindRefs.java>   READ in FUN_060349cc @0x060349d2 (GhidraScript)
+INFO  FindRefs.java>   PARAM in FUN_060349cc @0x060349d0 (GhidraScript)
+INFO  FindRefs.java>   WRITE in FUN_060349cc @0x06034a26 (GhidraScript)
+INFO  FindRefs.java>   READ in FUN_060349cc @0x06034a2a (GhidraScript)
+INFO  FindRefs.java>   DATA in <none> @0x060348ec (GhidraScript)
+INFO  FindRefs.java>   READ in FUN_06034f1c @0x06035100 (GhidraScript)
+INFO  FindRefs.java>   DATA in <none> @0x06035154 (GhidraScript)
+INFO  FindRefs.java>   (8 unique reference site(s)) (GhidraScript)
+INFO  FindRefs.java> ===== refs to 0x607fb86 (DAT_0607fb86) ===== (GhidraScript)
+INFO  FindRefs.java>   WRITE in FUN_060347d8 @0x06034802 (GhidraScript)
+INFO  FindRefs.java>   READ in FUN_060349cc @0x060349fa (GhidraScript)
+INFO  FindRefs.java>   WRITE in FUN_060349cc @0x06034a28 (GhidraScript)
+INFO  FindRefs.java>   READ in FUN_060349cc @0x06034a52 (GhidraScript)
+INFO  FindRefs.java>   READ in FUN_06034f1c @0x06035108 (GhidraScript)
+INFO  FindRefs.java>   (5 unique reference site(s)) (GhidraScript)
+INFO  FindRefs.java> ===== refs to 0x607fb88 (DAT_0607fb88) ===== (GhidraScript)
+INFO  FindRefs.java>   WRITE in FUN_06034ad0 @0x06034b02 (GhidraScript)
+INFO  FindRefs.java>   READ in FUN_06034b22 @0x06034b46 (GhidraScript)
+INFO  FindRefs.java>   DATA in <none> @0x06034ba4 (GhidraScript)
+INFO  FindRefs.java>   (3 unique reference site(s)) (GhidraScript)
+INFO  FindRefs.java> ===== refs to 0x607fb8a (<unnamed>) ===== (GhidraScript)
+INFO  FindRefs.java>   (0 unique reference site(s)) (GhidraScript)
+INFO  FindRefs.java> ===== refs to 0x607fb8c (DAT_0607fb8c) ===== (GhidraScript)
+INFO  FindRefs.java>   WRITE in FUN_060347d8 @0x06034814 (GhidraScript)
+INFO  FindRefs.java>   READ in FUN_06034b22 @0x06034b4a (GhidraScript)
+INFO  FindRefs.java>   READ in FUN_06034b22 @0x06034b50 (GhidraScript)
+INFO  FindRefs.java>   WRITE in FUN_06034b22 @0x06034b54 (GhidraScript)
+INFO  FindRefs.java>   DATA in <none> @0x060348fc (GhidraScript)
+INFO  FindRefs.java>   DATA in <none> @0x06034b7c (GhidraScript)
+INFO  FindRefs.java>   READ in <none> @0x06034a7e (GhidraScript)
+INFO  FindRefs.java>   WRITE in <none> @0x06034a86 (GhidraScript)
+INFO  FindRefs.java>   DATA in <none> @0x06034aa8 (GhidraScript)
+INFO  FindRefs.java>   (9 unique reference site(s)) (GhidraScript)
+INFO  FindRefs.java> ===== refs to 0x607fb90 (DAT_0607fb90) ===== (GhidraScript)
+INFO  FindRefs.java>   WRITE in FUN_06034ad0 @0x06034b14 (GhidraScript)
+INFO  FindRefs.java>   WRITE in FUN_06034ad0 @0x06034b18 (GhidraScript)
+INFO  FindRefs.java>   READ in FUN_06034b22 @0x06034b30 (GhidraScript)
+INFO  FindRefs.java>   DATA in <none> @0x06034bac (GhidraScript)
+INFO  FindRefs.java>   (4 unique reference site(s)) (GhidraScript)
+INFO  FindRefs.java> ===== refs to 0x604b31c (DAT_0604b31c) ===== (GhidraScript)
+INFO  FindRefs.java>   DATA in FUN_06034eba @0x06034ebe (GhidraScript)
+INFO  FindRefs.java>   PARAM in FUN_06024b44 @0x06024b82 (GhidraScript)
+INFO  FindRefs.java>   DATA in <none> @0x06024c10 (GhidraScript)
+INFO  FindRefs.java>   (3 unique reference site(s)) (GhidraScript)
+INFO  FindRefs.java> ===== refs to 0x604b37c (DAT_0604b37c) ===== (GhidraScript)
+INFO  FindRefs.java>   PARAM in FUN_06024b44 @0x06024b88 (GhidraScript)
+INFO  FindRefs.java>   DATA in <none> @0x06024c14 (GhidraScript)
+INFO  FindRefs.java>   (2 unique reference site(s)) (GhidraScript)
+INFO  FindRefs.java> ===== refs to 0x604b3d0 (<unnamed>) ===== (GhidraScript)
+INFO  FindRefs.java>   (0 unique reference site(s)) (GhidraScript)

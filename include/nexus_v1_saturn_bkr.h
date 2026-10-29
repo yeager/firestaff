@@ -40,9 +40,14 @@ typedef struct {
     uint32_t payload_bytes;
     uint32_t champion_count;
     uint32_t party_leader_index;
-    /* Retail BKR byte +0x09 maps to the four-entry rune-sequence position
-     * at champion runtime +0x35; the raw byte preserves the inactive value. */
-    uint8_t champion_rune_sequence_cursor[NEXUS_V1_SATURN_BKR_MAX_PARTY];
+    /* Retail BKR byte +0x09 maps to champion runtime +0x35. Its domain
+     * meaning is unresolved; keep the byte opaque until its consumer is bound. */
+    union {
+        uint8_t champion_byte_09_runtime_35[NEXUS_V1_SATURN_BKR_MAX_PARTY];
+        /* Deprecated source-compatibility alias. The byte remains opaque and
+         * is not established as a rune-sequence cursor. */
+        uint8_t champion_rune_sequence_cursor[NEXUS_V1_SATURN_BKR_MAX_PARTY];
+    };
     int32_t champion_health_current[NEXUS_V1_SATURN_BKR_MAX_PARTY];
     int32_t champion_max_health[NEXUS_V1_SATURN_BKR_MAX_PARTY];
     int32_t champion_stamina_current[NEXUS_V1_SATURN_BKR_MAX_PARTY];

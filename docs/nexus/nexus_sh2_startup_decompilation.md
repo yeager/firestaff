@@ -331,17 +331,21 @@ different two-byte descriptors. `PTR_FUN_060296b4` resolves to
 a nonzero sliced path. The authentic adjusted values enter that nonzero path.
 Its caller `FUN_060296d8` invokes `FUN_060295b8` in one mode path. This links
 the fields to retail presentation work, but their helper-level interpretation
-and domain meanings are still unknown. `FUN_06039f76` independently reads
-row `+0x18` while computing a threshold used by `FUN_0603a472`; for selected
-rune categories it compares the saved value with category-specific constants
-and increases the threshold on a match. `FUN_0603a472` uses that result to
-accept or reject the next rune in a champion's four-entry spell sequence.
-Thus source `+0x44` / runtime `+0x18` affects retail rune-sequence validation,
-although its domain name and complete Firestaff-side requirements remain
-unknown. The authentic dynamic read path during spell input has not yet been
-traced.
+and domain meanings are still unknown. Follow-up static analysis places
+`FUN_0603a472` and its related helpers on an ITEM.IBS action-selector path.
+The earlier four-entry Magic-validator interpretation was unsupported: Magic
+composer `FUN_0602a234` does not call this helper, and no full-buffer submit or
+cast edge to these functions has been established. The helper reads runtime
+`+0x18` for some 40-byte ITEM.IBS records, while related selectors update
+separate `+0x35..+0x38` state. No evidence identifies those indices as the
+composer's entries or connects the helper to the displayed Magic window. Trace
+the action-selector path and identify this saved field's semantics
+independently.
 The disassembly scan and complete decompilation are retained in the operator-
 managed external evidence bundle's `field-consumer-scan-20261029/` directory.
+The narrowed ITEM.IBS eligibility interpretation and preserved selector/field
+logs are also recorded in
+[`nexus-bkr-item-action-eligibility-20261029`](../../parity-evidence/verification/nexus-bkr-item-action-eligibility-20261029/README.md).
 
 Re-run against retained authentic captures with:
 

@@ -19,9 +19,10 @@ The health pair at source `+0x38/+0x3a` loads as `47/47`; New Game initializes
 the same runtime cells from PLRD health. Its post-load update behavior remains
 untraced. The mana pair at source `+0x40/+0x42` loads as `18/20` and
 updates to `19/20`; New Game initializes the same runtime cells from PLRD
-mana. Payload byte `+0x09` projects to runtime `+0x35`, which the retail spell
-rune-sequence routines use as a cursor; the BKR receipt now exposes that byte.
-It is `2` in every champion record across the four hash-verified retail BKR
+mana. Payload byte `+0x09` projects to runtime `+0x35`, which follow-up static
+analysis places on an ITEM.IBS action-selector path; its domain meaning
+remains unresolved. The BKR receipt exposes that byte. It is `2` in every
+champion record across the four hash-verified retail BKR
 images and is not yet connected to Firestaff's spell-input state. Other
 champion-record fields remain opaque.
 Retail Continue's BKR named-entry lookup,
@@ -111,14 +112,18 @@ for positive values. Its caller invokes it in one mode path. This establishes
 a presentation use, but not the fields' interpretation or a coordinate
 system. The complete consumer set and semantics for both fields, the rest of
 the record, the source-owned post-load consumer, and Firestaff runtime
-integration remain open. `FUN_06039f76` also reads runtime `+0x18` to adjust a
-threshold used by `FUN_0603a472` when accepting the next rune in a champion's
-spell sequence. Trace this access during authentic spell input and identify
-the saved field's full semantics before implementing its Firestaff equivalent.
+integration remain open. Follow-up static analysis places `FUN_0603a472` on a
+four-index ITEM.IBS eligibility path; its helper reads runtime `+0x18` for
+some 40-byte records and its related selector state is `+0x35..+0x38`. The
+earlier four-entry Magic-validator interpretation conflated that selector with
+the composer's separate `+0x3d/+0x3e` buffer. No call from the composer or
+connection to a cast has been established. Identify the saved field's meaning
+and any relationship to the displayed Magic window independently.
 Reproduction and retained evidence are documented in
 [`nexus_sh2_startup_decompilation.md`](docs/nexus/nexus_sh2_startup_decompilation.md#continue-payload-transfer-2026-10-29).
-The Ghidra field-consumer scan is retained in the external
-`field-consumer-scan-20261029/` evidence bundle.
+The Ghidra field-consumer scan remains in the external evidence bundle; its
+relevant decompilation and caller logs are preserved in
+`parity-evidence/verification/nexus-bkr-item-action-eligibility-20261029/`.
 
 The four authentic BKR samples all contain `a3 88 96 80 80 00` at the start
 of every champion record. In the authentic Japanese Track 1 `RLOWFIX.BIN`,
@@ -553,19 +558,51 @@ not a fix and has not passed this real-media test.
   exact `MENU.BPK` surfaces (entries 99–106 and 144); Up matches the no-input
   control. All nine commands use 8bpp bank mode, and all 31 nonzero palette
   indices in those joined surfaces match both Japanese `MENU.BPK` PALT and
-  same-run captured CRAM. Rune names, sequence acceptance, full dispatch,
-  composition, and casting remain unverified. The static Ghidra audit found
-  generic `MENU.BPK` record/draw helpers and separate sequence validator/mutator
-  functions, but no direct link from entries 99–106/144 to rune fields or the
-  command producer. Follow-up GUI captures show Down and one-frame A each
-  change the visible ring; SH-2 traces read `FUN_0603a472` and row `+0x35` via
-  `FUN_0603a55c`, but neither input writes offsets `+0x35..+0x38` and the
-  snapshots retain their original bytes. This does not prove rune selection
-  or cast acceptance. Next, trace input dispatch and the producer of changed
-  VDP1 ring commands to distinguish cursor movement from selection/commit;
-  then follow confirmed commit through sequence writes and validator result.
+  same-run captured CRAM. Rune names, final spell acceptance, full dispatch,
+  and casting remain unverified. Static analysis found generic
+  `MENU.BPK` record/draw helpers but no direct relation from entries 99–106/144
+  to rune names. Decompilation identifies `FUN_0602a234` as a sequence-composer
+  callback: it computes cost, gates on current mana, writes
+  `0xDA + cursor*6 + selection` at `+0x3e+cursor`, then advances the cursor
+  stored at `+0x3d`. The four action slots are `+0x3e..+0x41`.
+  Authentic GUI captures confirm all six cursor-0 values `0xDA..0xDF`, with
+  costs 1..6, using cardinal and simultaneous diagonal input schedules. Four
+  A actions fill the composer buffer as `DA E0 E6 EC`, cursor index 3, and
+  observed mana changes from `0x12` to `0x09` across the four-A capture; this
+  is the total balance change, not a per-action cost claim for cursor positions
+  1–3. The fourth append returns its unchanged cursor value
+  3 before the common UI update; recovered static caller sites discard it. A
+  separate command-8 branch recalculates aggregate mana, but no spell-execution
+  meaning is established. The direction handler maps logical events 0/1/2/3 to
+  Up/Right/Down/Left, and the retail packet's active-high masks are traced
+  through debounce to event `0x28`; physical Saturn electrical signaling is
+  not established. In the authentic Y-open state, menu `+0x24` is null and
+  `FUN_060328c6` performs no mapping; Down changes the generic menu item index
+  0→4 without proving that index 4 is a rune. The Nexus coordinate-to-selection
+  table and glyph meanings,
+  final spell validator, and cast behavior remain open. Follow-up decompilation
+  identifies `FUN_0603a472` as a four-index ITEM.IBS eligibility helper that
+  reads runtime `+0x18` for some records; its selector uses row `+0x35..+0x38`,
+  separate from composer `+0x3d/+0x3e`. Its relationship to the displayed Magic
+  window remains unproven. Paired authentic captures now bind the six values to selected-
+  state Japanese `MENU.BPK` entries 107–112 and command-88 VDP1 source addresses
+  and coordinates, without naming glyphs. Next, recover the retail
+  coordinate-to-index table and trace full-buffer submission to any actual
+  validator or cast consumer.
   Preserve the capture receipt under
   `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-magic-down-input-trace-20261029/`.
+  The hash-verified callback decompilation is under
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-magic-input-callback-static-20261029/`.
+  Direction-event decompilation is under
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-dpad-menu-selection-20261029/`.
+  The selected-surface join is at
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-menu-action-surface-bindings-20261029.md`,
+  and the fourth-slot caller audit is at
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/magic-fourth-slot-status-20261029/`.
+  The packet-to-event decompilation is at
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-saturn-pad-event-path-20261029/`.
+  The Y-open null-table trace is at
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/magic-menu-coordinate-map-20261029/`.
   An independent 2026-10-25 Ymir `--debug` comparison loaded a hash-verified
   authentic JP gameplay savestate into a private profile: the no-input reload
   changed 0.00175% of pixels, W-forward changed 3.08408%, and A-left changed
@@ -598,11 +635,15 @@ not a fix and has not passed this real-media test.
   actual retail state owner to the authentic champion/inventory model before
   opening the production equipment-click route. The verified consumer at `0x21c84`
   special-cases only IDs 38, 39, 40, 49, 52, 56, and 57; IDs 13 and 44 reach
-  its generic `bad event data` diagnostic. The separate mouse poller filters
-  for event 46 before it invokes the hit scanner; it does not separately
-  consume event 44. Continue tracing the held-item helper and capture a
-  controlled click's guest RAM and visible result before enabling pointer
-  actions.
+  its generic `bad event data` diagnostic. Static disassembly now verifies
+  relative cursor updates, both mouse descriptor-table alternatives, and the
+  event-46 hit-test dispatch; matching live hitbox rows enqueue their own
+  event/argument pairs afterward. No retained capture supplies a populated
+  runtime table or scheduled ShuttleMouse report, so the physical `0x0400`
+  trigger and live click-to-action binding remain unknown. Continue tracing
+  the held-item helper and capture a controlled click's guest RAM and visible
+  result before enabling pointer actions. See
+  `parity-evidence/verification/nexus-shuttle-mouse-event-path-20261029/README.md`.
   See `parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`.
   See also `parity-evidence/verification/nexus-mouse-callback-dispatch-20261024/README.md`.
   Firestaff now has a host Z toggle, logical pointer motion through keyboard
