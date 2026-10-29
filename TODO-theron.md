@@ -8986,18 +8986,15 @@ this is distinct from the authenticated combined-RAR title-audio path above.
 
 ## 2026-10-29 — observe reads from the decoded output window
 
-- The authentic `$23AD` trace writes physical `$0D0000–$0D13C7`, but the
-  existing PCE Fast main-RAM consumer probe only records `$1F0000–$1F7FFF`.
-  Therefore the current consumer capture cannot show whether game-owned code
-  reads the decoded output; its lack of `$0D` reads is unobserved, not evidence
-  that no consumer exists.
-- The byte-join verifier was run against the authentic TRV2 capture. It
-  confirmed the single decoder return and all 5,064 ordered destination bytes
+- The authentic `$23AD` trace writes physical `$0D0000–$0D13C7`. A bounded
+  PCE Fast consumer hook can now select that physical range. The byte-join
+  verifier confirms one decoder return and all 5,064 ordered destination bytes
   with SHA-256
-  `9adf13522e818ee49de16ac1020a7697c3416877e6bc6baa918840d7e963f8ee`; the
-  existing filtered consumer trace reports zero reads in that range. This is
-  still not evidence of a missing consumer because that trace did not observe
-  the `$0D` destination.
+  `9adf13522e818ee49de16ac1020a7697c3416877e6bc6baa918840d7e963f8ee`.
+  The shared-sequence join found 29,618 post-decode output-range reads touching
+  all 5,064 addresses; 6,111 reads matched the decoded byte across 3,130
+  addresses. The updated verifier reports total span coverage separately from
+  byte-equal candidates.
 - A second verifier now joins post-write reads using the shared PCE Fast event
   sequence and reports equal-byte read candidates with physical PC and captured
   code bytes. It deliberately does not label candidates as game-owned or claim
@@ -9024,7 +9021,11 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   6,111 byte-equal reads across 3,130 unique output addresses.
 - The recorded reader at physical PC `$1042AB` executed bytes
   `B1 00 9D E0 47 C8 E8 B1`; these match authentic Track 02 LBA 4,241, user
-  offset 683, read in the same capture. The RAM-resident reader at `$1F1C3E`
+  offset 683, read in the same capture. The sequence is `LDA ($00),Y`,
+  `STA $47E0,X`, `INY`, `INX`, then another indirect load. It byte-copies at
+  least 1,052 unique decoded-buffer bytes, all matching the output, to logical
+  `$47E0,X`; the physical destination depends on the active MPR2 mapping and
+  still needs a write trace. The RAM-resident reader at `$1F1C3E`
   executed bytes `B2 2E 85 0E E6 2E D0 02 E6 2F 86 0F A5 12 D0 02`; they match
   both the final PCE Fast RAM snapshot at offset `$1C3E` and authentic Track 02
   LBA 4,230, user offset 1,086, read in that capture. These source-byte matches
@@ -9037,25 +9038,36 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   `$10`, and `$11` while extracting bits. The observed `$0D` reads therefore
   enter a bit-reading path. Its output destination is now observed below, but
   its gameplay structure and meaning remain unknown.
-- The opt-in PCE Fast code-bank write trace is now integrated into the
-  instrumented reference build. It records writes from physical PC
-  `$1F1C00–$1F1CFF` into physical `$0D0000–$0D1FFF`, including logical and
-  physical addresses, MPRs, registers, and the shared event sequence, with a
-  65,536-record cap. The complete Mednafen patch set applied on TRV2 and its
-  PCE Fast `-j1` build completed; the capture-script regression passed three
-  consecutive loops. A cold authentic USA run with this trace wrote 5,520
-  records to `$0D0000–$0D13C7`; its writer PCs were `$1F1C8D` (2,711 writes)
-  and `$1F1CE6` (2,809 writes). MPR3 was `$68`, mapping logical `$6000` to
-  physical `$0D0000`. All recorded logical/physical pairs matched the active
-  MPR translation, and the shared event sequence increased monotonically.
-- The same run's bounded `$23AD` trace contains 3,272 exact
-  address/value/PC matches for writes at logical PCs `$3C8D` and `$3CE6`; each
-  write-trace event sequence follows the corresponding `$23AD` event by one.
-  The remaining 2,248 write-trace records have no matching `$23AD` memory-write
-  record in the captured window and remain unattributed. The existing
-  post-decode read verifier reproduced the authentic 5,064-byte output digest
-  and found 6,219 byte-equal read candidates across 3,182 addresses; that is
-  candidate evidence only, not proof of semantic or gameplay use.
+- The opt-in PCE Fast code-bank write trace now covers physical PCs
+  `$1F1C00–$1F1DFF` and records writes into physical `$0D0000–$0D1FFF` with the
+  logical and physical destinations, MPRs, and shared event sequence. The
+  former `$1F1CFF` upper limit missed writes at `$1F1D1D`. On a new cold
+  authentic USA run, the trace recorded 10,128 writes. The reusable verifier
+  joined all 5,064 ordered `$23AD` output writes to an exact address/value code
+  trace row one shared-sequence step later: 1,840 at `$1F1C8D`, 1,432 at
+  `$1F1CE6`, and 1,792 at `$1F1D1D`. The other 5,064 code-window writes occur
+  after decoder return and remain unattributed. This replaces the earlier
+  incomplete 3,272-match result and its 2,248 unexplained rows.
+- A bounded write trace for the observed `$1042AB` reader was then narrowed to
+  physical `$1047E0–$1048DF` after the broad two-bank window reached its
+  65,536-row cap before the decoder returned. The narrow authentic capture
+  recorded 12,928 target writes without truncation. Post-decode `$1042AB`
+  reads matched the authentic output byte at 1,052 unique source addresses;
+  1,972 of 2,012 byte-equal reads were followed immediately in the shared
+  event sequence by a `$1042AD` write of the same byte. Its runtime code bytes
+  are `9D E0 47`, the store in `STA $47E0,X`; the recorded logical and physical
+  destinations map through MPR2=`$82` to `$1047E0–$10485E`, with 64 unique
+  destination addresses. This verifies a byte-copy operation from the
+  decoded buffer. It does not identify the copied structure or prove a
+  rendering or gameplay effect.
+- The current cold capture still returned `BLOCKED`: the final scripted
+  controller mask had no poll witness (`events=12/12`, `input_reads=78,518`),
+  and the transition receipt says `transition=missing`. It recorded no CD IRQ,
+  `$E009` dispatch, or gameplay transition. Next follow the copied bytes from
+  `$47E0` through the bit-reader's later consumers to a proven game-state or
+  rendering effect, and repair the replay so each held mask has a poll witness.
+  Keep the adjacent `$F425` ADPCM-buffer copy separate unless its own source
+  and consumer are independently established.
 - The capture remained `BLOCKED`: the final scripted button event had no
   controller-poll witness during its hold and the receipt says
   `transition=missing`. No gameplay or render transition is claimed.

@@ -40,7 +40,7 @@
 +  }
 + }
 + if(TheronTraceInstructionPhysicalPC < 0x1F1C00 ||
-+    TheronTraceInstructionPhysicalPC >= 0x1F1D00 ||
++    TheronTraceInstructionPhysicalPC >= 0x1F1E00 ||
 +    physical_address < 0x0D0000 || physical_address >= 0x0D2000 ||
 +    count >= 65536)
 +  return;

@@ -9303,6 +9303,31 @@ native rendering, or Theron parity. The private evidence bundle is at
   render parity is claimed; semantic attribution and full native Theron
   support remain open.
 
+## 2026-10-29 — verify decoded-buffer writes and byte-copy loop
+
+- The PCE Fast code-bank writer filter now extends through physical PC
+  `$1F1DFF`; the former `$1F1CFF` end omitted writes at `$1F1D1D`. The new
+  `verify_theron_decoder_write_trace.py` joins code-window records to ordered
+  `$23AD` writes by physical address, byte, and shared event sequence. On a
+  cold authentic USA capture it matched all 5,064 decoder output writes, one
+  shared-sequence step later: 1,840 from `$1F1C8D`, 1,432 from `$1F1CE6`, and
+  1,792 from `$1F1D1D`. The capture had 10,128 code-window write rows; the
+  remaining 5,064 occurred after decoder return and are still unattributed.
+- The opt-in PCE Fast main-RAM target-write trace records bounded effective
+  logical/physical destinations, MPRs, fetched writer bytes, and shared event
+  sequence. The `verify_theron_decoded_buffer_copy.py` verifier joins it to
+  `$1042AB` reads and `$1042AD` stores. In an authentic cold USA capture, 1,972
+  of 2,012 byte-equal reads were immediately followed by an equal-byte store
+  at the next shared sequence. The destination rows verify MPR2=`$82`, with
+  64 unique physical destinations from `$1047E0` through `$10485E`; 1,052
+  unique decoded-buffer source addresses were observed. This proves a byte-copy
+  operation only, not the copied structure's meaning or a rendered effect.
+- The focused verifier tests passed three loops. Both authentic capture
+  verifiers passed against the TRV2 traces. The capture still returned
+  `BLOCKED` because the final scripted input mask had no controller-poll
+  witness; it recorded no CD IRQ, `$E009` dispatch, or gameplay transition.
+  Semantic use, rendered effects, and full native Theron parity remain open.
+
 ## 2026-10-29 — honor the configured PCE Fast consumer trace limit
 
 - The PCE Fast main-RAM consumer hook now uses the validated

@@ -1587,6 +1587,7 @@ code_ram_write_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_code_ram_wri
 if [[ ! -f "$code_ram_write_patch" ]] ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE' "$code_ram_write_patch" ||
    ! grep -Fq 'TheronTraceInstructionPhysicalPC < 0x1F1C00' "$code_ram_write_patch" ||
+   ! grep -Fq 'TheronTraceInstructionPhysicalPC >= 0x1F1E00' "$code_ram_write_patch" ||
    ! grep -Fq 'physical_address < 0x0D0000 || physical_address >= 0x0D2000' "$code_ram_write_patch" ||
    ! grep -Fq 'static void TheronTraceA1B7BMTWrite(uint32 physical_destination,' "$code_ram_write_patch" ||
    ! grep -Fq 'mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x' "$code_ram_write_patch" ||
@@ -1605,6 +1606,34 @@ if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE_ERROR' "$code_ram_
    ! grep -Fq '[[ ! -s "$pce_fast_code_ram_write_trace" ]]' "$script" ||
    ! grep -Fq 'source=mednafen-pce-fast-code-ram-write event_sequence_source=TheronTraceCDSharedEventSequence' "$script"; then
     printf '%s\n' 'FAIL: PCE Fast code-bank RAM-write trace failures and missing receipts must be rejected' >&2
+    exit 1
+fi
+main_ram_target_write_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_target_write_trace.patch"
+if [[ ! -f "$main_ram_target_write_patch" ]] ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_TARGET_WRITE_RANGE' "$main_ram_target_write_patch" ||
+   ! grep -Fq 'TheronTracePCEFastMainRAMTargetWrite(A, physical, V);' "$main_ram_target_write_patch" ||
+   ! grep -Fq 'writer_code_bytes=%s' "$main_ram_target_write_patch" ||
+   ! grep -Fq 'event_sequence=%u' "$main_ram_target_write_patch" ||
+   grep -Fq 'HuCPU.A' "$main_ram_target_write_patch" ||
+   grep -Fq 'HuCPU.X' "$main_ram_target_write_patch" ||
+   grep -Fq 'HuCPU.Y' "$main_ram_target_write_patch" ||
+   ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_main_ram_target_write_trace.patch' "$build_script" ||
+   ! grep -Fq 'THERON_CAPTURE_PCE_FAST_MAIN_RAM_TARGET_WRITE_RANGE' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_TARGET_WRITE_RANGE="$pce_fast_main_ram_target_write_range"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_TARGET_WRITE_TRACE_ERROR' "$script" ||
+   ! grep -Fq 'pce_fast_main_ram_target_writes=%s' "$script"; then
+    printf '%s\n' 'FAIL: bounded PCE Fast target-write tracing must retain MPRs, code bytes and the shared event sequence' >&2
+    exit 1
+fi
+target_write_trace_assignment_line=$(grep -n '^pce_fast_main_ram_target_write_trace=' "$script" | head -n 1 | cut -d: -f1)
+target_write_trace_wait_line=$(grep -n '^wait "\$mednafen_pid"$' "$script" | cut -d: -f1)
+target_write_trace_validation_line=$(grep -nF 'FAIL: Mednafen did not produce a valid PCE Fast main-RAM target-write trace' "$script" | cut -d: -f1)
+if [[ ! "$target_write_trace_assignment_line" =~ ^[0-9]+$ ||
+      ! "$target_write_trace_wait_line" =~ ^[0-9]+$ ||
+      ! "$target_write_trace_validation_line" =~ ^[0-9]+$ ]] ||
+   (( target_write_trace_assignment_line >= target_write_trace_wait_line ||
+      target_write_trace_validation_line <= target_write_trace_wait_line )); then
+    printf '%s\n' 'FAIL: target-write trace path must be assigned before launch and validated after Mednafen exits' >&2
     exit 1
 fi
 code_ram_write_build_invalid_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
