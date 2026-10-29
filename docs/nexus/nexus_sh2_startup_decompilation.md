@@ -131,6 +131,26 @@ image is included in the repository. Full trace, WRAM captures, run log,
 decompilation output, hashes, and reproduction details are in the external
 evidence folder's `coldboot-continue-readtrace-20261029/` directory.
 
+A follow-up pcrecomp/Ghidra pass decompiled `FUN_0602eb4c` and its callers.
+`FindRefs.java` confirms that `FUN_0602250e` calls it through the computed
+call at `0x06022570`; `FUN_0602250e` is itself reached from `FUN_060110ac` at
+`0x0601113a`. The decompilation shows `FUN_0602eb4c` forming both source
+pointers from the structure base and the 32-bit offsets at `+4` and `+8`, then
+storing a stack-local address relative to that base back to `+8`. The same
+function-code ranges from the earlier Ghidra project match this Continue run's
+`wram-hi.bin` byte for byte: `FUN_0600357c` (`0x0600357c..0x060036dc`, SHA-256
+`30d7c8dd756305c10d79e0fc71449bacb14f1918093b0c571513ac8a052aff88`),
+`FUN_0602250e` (`0x0602250e..0x06022668`, SHA-256
+`871fa46b70f316dc1e5bf0f01c2b63f4e16911141694b56e7dd22088a08b0f28`), and
+`FUN_0602eb4c` (`0x0602eb4c..0x0602ef52`, SHA-256
+`1365fcbbec44210570f9f57b3347b7fdfc1d2fe154cfefed78f4604addf51b86`).
+This confirms the observed access and fixup instructions against the captured
+retail code. It still does not name the substructures or establish the later
+consumer of the stack-relative field. The follow-up decompilation and caller
+reference outputs are in
+`coldboot-continue-readtrace-20261029/pcrecomp-ghidra-payload-followup-20261029/`
+within the operator-managed external evidence bundle.
+
 The bounded write-trace receipt and same-run instruction bytes are in the
 adjacent external evidence folder
 `coldboot-continue-write-trace-20261029/`. The next step is to identify the

@@ -38,9 +38,11 @@ offset `0x58`, then PC `0x0602ec94` replaces it with stack-derived
 runtime relocation remain unresolved. The containing function resolves the
 fields at structure offsets `+4` and `+8` as base-relative source addresses;
 the four authentic payloads contain `0x10` and `0xcc`, pointing from structure
-offset `0x50` to offsets `0x60` and `0x11c`. Identify the substructure schema
-and the transformed field's consumer before implementing payload-to-engine
-state. See
+offset `0x50` to offsets `0x60` and `0x11c`. pcrecomp/Ghidra identifies the
+containing function as `FUN_0602eb4c`; its code bytes and the named-entry copy
+function match the same-run Ymir capture. Identify the substructure schema and
+the transformed field's consumer before implementing payload-to-engine state.
+See
 [`nexus_sh2_startup_decompilation.md`](docs/nexus/nexus_sh2_startup_decompilation.md#continue-payload-transfer-2026-10-29).
 
 The 2026-10-29 Load-panel VDP2 trace now joins the retail SH-2 writer at
