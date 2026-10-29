@@ -67,11 +67,14 @@ additional trace does not decode other fields or demonstrate a Firestaff
 Continue route. Its logs, dumps, checksums, and projection report are retained
 in the external `wram-consumer-trace-20261029/` evidence directory.
 
-Firestaff's bounded C reader now accepts one caller-selected card path up to
-4 MiB, requires exactly one `DMNEXUS__01` entry, and returns the card, entry,
-and verified roster metadata. It frees the extracted payload after probing;
-it neither searches for a card nor writes or applies save data. The title menu
-does not yet select this file or resume the game from it.
+Firestaff's bounded C reader accepts one caller-selected card path up to 4 MiB,
+requires exactly one `DMNEXUS__01` entry, and validates the card, entry, and
+verified roster metadata. `nexus_v1_saturn_bkr_read_nexus_file` copies the
+authentic payload bytes into a caller-owned buffer only after the complete card
+and payload pass validation. The existing probe wrapper discards those bytes
+after reporting metadata. Neither function searches for a card or applies
+payload fields to runtime state. The title menu does not yet select this file
+or resume the game from it.
 
 The authentic `DM.BIN` does contain save-related diagnostic strings in the
 retail data image: `EV_SAVE`, `EV_SAVELOAD`, `Slot Operation Error`, and the

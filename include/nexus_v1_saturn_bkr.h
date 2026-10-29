@@ -88,6 +88,16 @@ int nexus_v1_saturn_bkr_probe_nexus_file(
     const char *path,
     Nexus_V1_SaturnBkrNexusFileReceipt *out_receipt);
 
+/* Read the explicitly selected card and copy its single validated
+ * DMNEXUS__01 payload to caller-owned storage. The caller supplies capacity;
+ * on failure the receipt is cleared and no partial payload is reported.
+ * This preserves the retail payload bytes and does not apply them to runtime
+ * game state. */
+int nexus_v1_saturn_bkr_read_nexus_file(
+    const char *path,
+    uint8_t *payload_out, size_t payload_capacity,
+    Nexus_V1_SaturnBkrNexusFileReceipt *out_receipt);
+
 #ifdef __cplusplus
 }
 #endif

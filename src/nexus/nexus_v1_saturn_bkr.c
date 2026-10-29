@@ -314,8 +314,9 @@ int nexus_v1_saturn_bkr_nexus_payload_probe(
     return 1;
 }
 
-int nexus_v1_saturn_bkr_probe_nexus_file(
+int nexus_v1_saturn_bkr_read_nexus_file(
     const char *path,
+    uint8_t *payload_out, size_t payload_capacity,
     Nexus_V1_SaturnBkrNexusFileReceipt *out_receipt)
 {
     Nexus_V1_SaturnBkrNexusFileReceipt receipt;
@@ -331,7 +332,8 @@ int nexus_v1_saturn_bkr_probe_nexus_file(
 
     memset(&receipt, 0, sizeof(receipt));
     if (out_receipt) *out_receipt = receipt;
-    if (!path || !path[0] || !out_receipt || !(file = fopen(path, "rb")))
+    if (!path || !path[0] || !payload_out || !payload_capacity ||
+        !out_receipt || !(file = fopen(path, "rb")))
         goto done;
     if (fseek(file, 0L, SEEK_END) != 0 ||
         (file_bytes = ftell(file)) <= 0 ||
@@ -371,9 +373,13 @@ int nexus_v1_saturn_bkr_probe_nexus_file(
         !nexus_v1_saturn_bkr_nexus_payload_probe(
             &receipt.entry,
             payload_storage + receipt.entry.payload_offset,
-            receipt.entry.payload_bytes, &receipt.nexus_payload)) {
+            receipt.entry.payload_bytes, &receipt.nexus_payload) ||
+        receipt.entry.payload_bytes > payload_capacity) {
         goto done;
     }
+    memcpy(payload_out,
+           payload_storage + receipt.entry.payload_offset,
+           receipt.entry.payload_bytes);
     receipt.valid = 1;
     *out_receipt = receipt;
     ok = 1;
@@ -383,5 +389,29 @@ done:
     free(payload_storage);
     free(image);
     if (!ok && out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    return ok;
+}
+
+int nexus_v1_saturn_bkr_probe_nexus_file(
+    const char *path,
+    Nexus_V1_SaturnBkrNexusFileReceipt *out_receipt)
+{
+    Nexus_V1_SaturnBkrNexusFileReceipt receipt;
+    uint8_t *payload = NULL;
+    int ok;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (out_receipt) *out_receipt = receipt;
+    if (!out_receipt) return 0;
+    payload = (uint8_t *)malloc(NEXUS_V1_SATURN_BKR_MAX_IMAGE_BYTES);
+    if (!payload) return 0;
+    ok = nexus_v1_saturn_bkr_read_nexus_file(
+        path, payload, NEXUS_V1_SATURN_BKR_MAX_IMAGE_BYTES, &receipt);
+    free(payload);
+    if (ok) {
+        *out_receipt = receipt;
+    } else {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+    }
     return ok;
 }
