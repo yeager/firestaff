@@ -132,6 +132,21 @@
   pointer descriptor and command consumer, and reproduce the evidence in a
   cold original-media session before changing native hit testing.
 
+## 2026-10-29 — disassemble the runtime pointer writer
+
+- A new PCE Fast build records bounded opcode windows through the active MPR
+  mapping at changed candidate writes. Three patch-application loops passed,
+  and the isolated Mednafen 1.32.1 build completed with `-j1` on TRV2.
+- The Japanese `$CCD5..$CCEE` window matches seven copies in authentic
+  `TQJP02.bin`. MAME disassembly shows a four-entry indexed store loop using
+  `$2911`, `$C7` and `$C9`; the captured writes used X values 2 and 3. This is
+  useful dataflow evidence, not a proven cursor or hitbox table. See the
+  [runtime writer-window report](docs/source-lock/theron-disassembly/theron-jp-runtime-pointer-writer-window-20261029.md).
+- The older mixed capture's `$2904/$2905` writes did not reproduce in two new
+  runs, and all save-state captures lack CD-to-RAM provenance. Next, recover a
+  reproducible command dispatch and `$D39D` opcode window, then bind the live
+  code to a cold original-media load before changing input behavior.
+
 ## 2026-10-28 — map Theron panel clicks against presented pixel bounds
 
 - The authenticated USA Track 02 SDL integration test failed at the first
