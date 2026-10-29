@@ -80,17 +80,17 @@ for sample in sys.argv[1].split(";"):
     if not re.fullmatch(r"[1-9][0-9]{0,6}", repeat_text):
         raise SystemExit(1)
     repeat = int(repeat_text)
-    if repeat > 1000000 or not re.fullmatch(r"-?[0-9]+,-?[0-9]+,-?[0-9]+", parts[0]):
+    if repeat > 20000 or not re.fullmatch(r"-?[0-9]+,-?[0-9]+,-?[0-9]+", parts[0]):
         raise SystemExit(1)
     dx, dy, buttons = map(int, parts[0].split(","))
     if not (-127 <= dx <= 127 and -127 <= dy <= 127 and 0 <= buttons <= 15):
         raise SystemExit(1)
     total_updates += repeat
-    if total_updates > 1000000:
+    if total_updates > 20000:
         raise SystemExit(1)
 PY
     then
-        printf '%s\n' 'FAIL: mouse input script must be under 8192 characters with dx,dy,button-mask samples and optional *repeat counts up to 1000000' >&2
+        printf '%s\n' 'FAIL: mouse input script must be under 8192 characters with dx,dy,button-mask samples and optional *repeat counts (at most 20000 total updates)' >&2
         exit 1
     fi
 fi

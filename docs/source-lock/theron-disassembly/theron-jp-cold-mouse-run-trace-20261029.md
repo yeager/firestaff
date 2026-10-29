@@ -11,6 +11,8 @@ The capture used authentic Japan Rev. 1 Track 02 (MD5
 with port 1 set to its mouse device, no save-state, no autosave, and the
 capture's isolated profile. The instrumented binary SHA-256 is
 `b89d44d8a77f0f70abb21054e9db5eb428bf63b9ad3c76d00de83b7f475c3dfa`.
+Mednafen logged the Japanese SBI sidecar as missing; the capture does not
+establish that this caused the absent game handoff.
 
 The cold input plan used the supported compressed sample form
 `dx,dy,button-mask*repeat`. It waited 9,600 mouse updates, held the Run bit
@@ -41,7 +43,8 @@ They contain no copy of the game media, firmware, or save-state in Git.
 The mouse-script parser now accepts optional bounded `*repeat` counts. A
 single compressed token can represent a long cold-start wait without
 exceeding the 8,191-byte environment-script limit. Each repeat count and the
-expanded total are capped at 1,000,000 input updates. The C++ instrumenter
+expanded total are capped at 20,000 input updates, matching the bounded mouse
+trace capacity. The C++ instrumenter
 patch applied to a clean Mednafen source copy; the incremental build compiled
 the new parser. Three loops of valid cases and five malformed/out-of-range
 cases passed the shell validator.

@@ -34,6 +34,11 @@ log and hash manifest
 are at
 `/home/trv2/firestaff-theron-evidence/capture/theron-jp-story-to-dungeon-20261029-r2/`.
 
+The separate [cold mouse-mode Run trace](../source-lock/theron-disassembly/theron-jp-cold-mouse-run-trace-20261029.md)
+records Run and Button I at the original System Card poll, but the game
+handoff still lacks CD IRQ and loader receipts. Mednafen also logged the
+Japanese SBI sidecar missing; its role in the missing handoff is unknown.
+
 ## 2026-10-29 — authentic Japanese stage-message advancement captured
 
 A cold Japanese Rev. 1 reference run used original Track 02, the canonical

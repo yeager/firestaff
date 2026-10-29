@@ -438,7 +438,7 @@ def instrument(root: Path) -> None:
         "  char *repeat_end = NULL;\n"
         "  *repeat_marker = 0;\n"
         "  repeat = strtoul(repeat_marker + 1, &repeat_end, 10);\n"
-        "  if(repeat < 1 || repeat > 1000000 || !repeat_end || *repeat_end)\n"
+        "  if(repeat < 1 || repeat > 20000 || !repeat_end || *repeat_end)\n"
         "   return false;\n"
         " }\n"
         " int parsed = 0;\n"

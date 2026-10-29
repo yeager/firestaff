@@ -20,15 +20,18 @@
 ## 2026-10-29 — compressed mouse script reaches late cold-start polls; BIOS handoff remains open
 
 - The live Mednafen mouse-script grammar now supports `dx,dy,button-mask*repeat`
-  with per-token and total limits of 1,000,000 updates. This lets bounded
-  captures wait through long authentic boot intervals without inflating the
-  8,191-byte script field. The instrumenter patch applied to clean Mednafen
+  with per-token and total limits of 20,000 updates, matching the bounded
+  device trace capacity. A single bounded capture can now wait through a long
+  authentic boot interval without inflating the 8,191-byte script field. The
+  instrumenter patch applied to clean Mednafen
   1.32.1 sources and its incremental `pce_fast` build passed.
 - Three loops of accepted script forms and five malformed/bounds-rejected
   forms passed. A cold authentic Japanese Rev. 1 PCE Fast capture then traced
   Run as active-low `$37` and Button I as `$3E` at System Card poll `$E4C5`.
   The CPU stayed in the System Card through frame 10,384; no CD IRQ, game
   handoff, authenticated CD-to-RAM receipt or C1DF pointer call was observed.
+  Mednafen also logged the Japanese SBI sidecar missing, which may affect the
+  route but is not established as the cause.
   Details and capture hashes are in
   [`the cold mouse Run trace`](docs/source-lock/theron-disassembly/theron-jp-cold-mouse-run-trace-20261029.md).
 - This confirms delivery of those mouse button bits, not a Theron menu action.
@@ -702,13 +705,14 @@ Details: [USA command-dispatch source candidates](docs/source-lock/theron-disass
 ## 2026-10-25 — DM1-like native keyboard and mouse parity
 
 - Reference clarification: the retail USA manual defines direction-key and
-  Button I/II controls, while the DMWeb Encyclopaedia notes that the original
-  TurboGrafx version has no mouse. Firestaff's 4x3 panel is a desktop mouse
-  convenience over supported native commands, not reconstruction of an
-  original mouse interface. Keep its host bounds separate from game data; any
-  direct viewport-click feature must be designed as an explicit Firestaff UX
-  over the authenticated native renderer and object state. The manual and
-  DMWeb references are recorded in
+  Button I/II controls but does not document mouse input. A DMWeb forum answer
+  says the original TurboGrafx version has no mouse; the 2026-10-29 authentic
+  PCE Fast capture supersedes that broad claim for cursor motion, which is
+  visibly controlled by PCE mouse movement. Guest coordinates and click-to-
+  command behavior remain unresolved. Firestaff's 4x3 panel still dispatches
+  supported native commands with host UI bounds; any direct viewport-click
+  feature needs source-backed targets over the authenticated native renderer
+  and object state. The manual and DMWeb references are recorded in
   [`theron-button-ii-manual-source-lock.md`](docs/source-lock/theron-button-ii-manual-source-lock.md).
 
 - Rebuilt the current PR commit natively on TRV2 and ran
