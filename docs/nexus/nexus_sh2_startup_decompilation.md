@@ -84,6 +84,32 @@ readers process directory metadata. No payload read or payload-to-runtime
 mapping has been identified. The full follow-up Ghidra output is retained as
 `decompilation-readers-followup.log` in the same external evidence folder.
 
+## Slot-detail callback candidate (2026-10-29)
+
+A hash-locked static pass over the authentic Japanese `DM.BIN` verifies a
+companion callback pointer at `0x06025a68` to `0x06027132`. The setup code
+stores it in an object field at `+0x6c`; a separate callback occupies `+0x70`.
+The 342-byte callback body is SHA-256 pinned. Its selected-slot pointer cell
+resolves to `0x0607952c`, it references helper `0x060232b4`, and its literals
+include `" save comment %s\n"`, `" EASY"`, and `" NORMAL"`. These facts make
+`FUN_06027132` a plausible slot-detail formatter.
+
+This static path does not show that the callback runs on the retail Load panel,
+that it formats the visible `B01 0:16 NORMAL` row, or that `%s` reads the BKR
+directory comment. The authentic card comment remains `B01  0:06N`; its relation
+to the displayed row is unresolved. `scripts/verify_nexus_bkr_slot_detail_static.py`
+checks the pointer, instruction, literal, and callback-byte anchors against the
+hash-verified Japanese `DM.BIN` without copying game data into the repository.
+A runtime trace joining the selected slot, helper inputs, formatted buffer, and
+same-frame Load-panel capture remains the next proof step.
+
+Reproduce with:
+
+```sh
+python3 scripts/verify_nexus_bkr_slot_detail_static.py \
+  --dm-bin .firestaff/data/nexus/DM.BIN
+```
+
 ## Continue payload transfer (2026-10-29)
 
 A separate Ymir cold boot used the authentic two-champion BKR from

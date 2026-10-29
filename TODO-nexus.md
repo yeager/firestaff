@@ -32,9 +32,13 @@ retail title reducer still receives `has_continue = 0`, and
 next integration step is explicit real-card selection and a separate BKR
 catalog/load state; do not infer the active card by scanning unrelated
 installation data. Keep final load confirmation gated until the remaining
-champion fields and retail state consumer are mapped. The authentic Load-panel
-capture still lacks complete NBG0/NBG1 composition and text/border source joins;
-see `docs/nexus/nexus_startup.md` and the saved Ymir `--debug` captures.
+champion fields and retail state consumer are mapped. A hash-verified
+static `DM.BIN` pass identifies a slot-detail callback with
+comment and difficulty strings, but it is not yet tied to the visible Load row
+or BKR directory bytes. Trace its arguments and formatted buffer against a
+same-frame authentic Ymir Load capture before implementing the row. The Load-
+panel capture also lacks complete NBG0/NBG1 composition and text/border source
+joins; see `docs/nexus/nexus_startup.md` and the saved Ymir `--debug` captures.
 
 A separate Ymir cold boot tested the retail Start control in the New Game
 view. Start displayed `PAUSE`; a second Start returned to the byte-identical
