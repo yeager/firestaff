@@ -563,11 +563,14 @@ not a fix and has not passed this real-media test.
   `MENU.BPK` record/draw helpers but no direct relation from entries 99–106/144
   to rune names. Decompilation identifies `FUN_0602a234` as a sequence-composer
   callback: it computes cost, gates on current mana, writes
-  `0xDA + cursor*6 + selection` at `+0x3e+cursor`, then advances cursor `+0x3d`.
+  `0xDA + cursor*6 + selection` at `+0x3e+cursor`, then advances the cursor
+  stored at `+0x3d`. The four action slots are `+0x3e..+0x41`.
   Authentic GUI captures confirm all six cursor-0 values `0xDA..0xDF`, with
   costs 1..6, using cardinal and simultaneous diagonal input schedules. Four
   A actions fill the composer buffer as `DA E0 E6 EC`, cursor index 3, and
-  total mana 9 from 18. The fourth append returns its unchanged cursor value
+  observed mana changes from `0x12` to `0x09` across the four-A capture; this
+  is the total balance change, not a per-action cost claim for cursor positions
+  1–3. The fourth append returns its unchanged cursor value
   3 before the common UI update; recovered static caller sites discard it. A
   separate command-8 branch recalculates aggregate mana, but no spell-execution
   meaning is established. The direction handler maps logical events 0/1/2/3 to

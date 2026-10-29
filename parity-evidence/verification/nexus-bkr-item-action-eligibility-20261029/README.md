@@ -10,7 +10,11 @@ was changed. `SHA256SUMS` covers these copies and this report.
 ## Supported relationships
 
 - `FUN_0603a472` checks a four-index selector against records addressed from
-  the ITEM.IBS metadata base at `0x06064610`, with 40-byte record stride. It
+  the ITEM.IBS metadata base at `0x06064610`, with 40-byte record stride. In
+  the hash-pinned Japanese `DM.BIN`, the pointer literal at file offset
+  `0x2a660` is `06 06 46 10`, which resolves big-endian to `0x06064610` when
+  the image is loaded at `0x06010000`. The preserved
+  `pointer-resolution.txt` records this direct retail-byte check. The helper
   returns an eligibility result; the table's domain names are not recovered.
 - `FUN_0603a55c` and `FUN_0603a602` are direct callers that read and update a
   separate selector state at champion-row offsets `+0x35`, `+0x36`, and
@@ -36,6 +40,8 @@ selector state and the separate Magic composer.
 
 ## Preserved logs
 
+- `pointer-resolution.txt`: hash-pinned retail image identity, load address,
+  pointer-literal offset and bytes, and the resolved big-endian address.
 - `input-dispatch-decomp.log`: retail event dispatcher, composer, and
   `FUN_0603a472` decompilation.
 - `decomp-targets.log`: composer helpers and `+0x35..+0x38` selector callers.

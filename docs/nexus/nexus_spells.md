@@ -91,9 +91,12 @@ fixture behavior do not establish Nexus retail semantics.
   demonstrated Magic validator. No writes land
   in row offsets `+0x35..+0x38`; `wram-hi.bin` retains `02 00 78 00` for rows 0
   and 1 and zero for rows 2 and 3. The composer buffer at `+0x3d/+0x3e` is a
-  distinct state area. A four-A capture fills all four slots with action 0,
-  leaving row `+0x3d..+0x42` as `03 DA E0 E6 EC 80` and mana at `0x09` from an
-  initial `0x12`. The fourth append returns its unchanged cursor value 3 and
+  distinct state area. The cursor is at `+0x3d`; the four action slots are at
+  `+0x3e..+0x41`. A four-A capture fills all four slots with action 0, leaving
+  row `+0x3d..+0x42` as `03 DA E0 E6 EC 80`. Across that capture the observed
+  mana byte changes from `0x12` to `0x09`; this records the total balance change
+  and does not establish individual costs at cursor positions 1–3. The fourth
+  append returns its unchanged cursor value 3 and
   skips the common UI update; recovered caller sites discard that value. It
   proves a full composer buffer, not final spell acceptance. A separate
   command-8 branch recalculates aggregate mana, but no spell-execution consumer
