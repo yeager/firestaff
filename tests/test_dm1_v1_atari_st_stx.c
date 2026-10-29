@@ -34,6 +34,8 @@ int main(void)
         size_t graphics_size = 0u;
         size_t extracted_size = 0u;
         unsigned char *image = NULL;
+        unsigned char *nested_zip = NULL;
+        size_t nested_zip_size = 0u;
         size_t graphics_capacity = 1024u * 1024u;
         size_t dungeon_capacity = 128u * 1024u;
         unsigned char *graphics_bytes = (unsigned char *)malloc(graphics_capacity);
@@ -43,8 +45,20 @@ int main(void)
         uint16_t height = 0u;
         int decoded_records = 0;
         uint16_t i;
-        assert(firestaff_zip_extract_by_suffix(archive, ".stx", &image, &size) == 0 &&
-               image && graphics_bytes && dungeon_bytes && pixels);
+        /* Original Atari collections may wrap the disk image in an outer
+         * ZIP which itself contains the ZIP holding the STX.  Prefer a
+         * direct STX member for older collections, then inspect the nested
+         * original ZIP in memory without writing or modifying game media. */
+        if (firestaff_zip_extract_by_suffix(archive, ".stx", &image, &size) != 0) {
+            assert(firestaff_zip_extract_by_suffix(
+                       archive, ".zip", &nested_zip, &nested_zip_size) == 0 &&
+                   nested_zip && nested_zip_size > 0u);
+            assert(firestaff_zip_extract_memory_by_suffix(
+                       nested_zip, nested_zip_size, ".stx", &image, &size) == 0 &&
+                   image && size > 0u);
+            free(nested_zip);
+        }
+        assert(image && size > 0u && graphics_bytes && dungeon_bytes && pixels);
         assert(dm1_v1_atari_st_stx_open(image, size, &stx));
         assert(stx.sector_count == 800u);
         assert(dm1_v1_atari_st_stx_extract_file(
