@@ -1,4 +1,5 @@
 #include "asset_status_m12.h"
+#include "main_loop_m11.h"
 #include "menu_startup_m12.h"
 
 #include <stdio.h>
@@ -100,7 +101,8 @@ int main(int argc, char** argv) {
     for (tries = 0; tries < versionCount &&
                     state.gameOptions[1].versionIndex != versionIndex;
          ++tries) {
-        send_input(M12_MENU_INPUT_RIGHT);
+        send_input(M11_StartupHorizontalKeyInput(
+            SDLK_RIGHT, &state, 0, 0));
     }
     CHECK(state.gameOptions[1].versionIndex == versionIndex &&
               state.gameOptions[1].architectureIndex == M12_ARCH_AMIGA,

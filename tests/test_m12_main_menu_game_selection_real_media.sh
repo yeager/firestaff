@@ -290,6 +290,16 @@ if [[ -f "$csb_amiga_archive" ]]; then
         "$csb_amiga_archive" 1 Amiga \
         're:amiga(31-en|31-multi|35-en|35-multi)'
 fi
+csb_amiga_multi_archive="$data_root/csb/Game,Chaos_Strikes_Back,Amiga,Software.7z"
+if [[ -f "$csb_amiga_multi_archive" ]]; then
+    # Exercise actual SDL keyboard routing through Game Options. Right on the
+    # version row changes the authentic A31 English selection to the matching
+    # A31 multilingual edition before launch.
+    run_game_picker_case csb "$csb_amiga_multi_archive" \
+        'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:down,wait20,key:enter,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:down,wait20,key:right,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter' \
+        amiga31-multi keyboard Amiga "$data_root" \
+        csb-amiga-version-right-arrow resolved
+fi
 if [[ -f "$data_root/csb/Chaos Strikes Back.stx" ]]; then
     csb_atari_picker_root="$scratch/csb-atari-stx-picker-data"
     for game_id in dm1 csb dm2; do

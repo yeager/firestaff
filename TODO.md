@@ -9,6 +9,18 @@ that exact edition and architecture. This closes a regression-test gap for
 same-platform multi-edition selection; it does not claim a full runtime boot
 or Amiga gameplay parity. The test skips when authentic A35E data is absent.
 
+2026-10-29 launcher keyboard-routing follow-up: the application event loop
+previously translated horizontal arrows only in Settings. The real Game
+Options view also needs them to change platform, edition, and row values.
+Firestaff now routes Left/Right to Game Options while preserving active-game
+controls and text editing. `m12_csb_amiga_version_menu_real_media` exercises
+the shared live key mapper while selecting authentic CSB Amiga 3.5 English;
+the full-app real-media picker matrix additionally selects authentic A31
+multilingual CSB through an SDL Right key and verifies the edition handoff.
+The targeted source test and a full-app SDL dummy session both passed. These
+checks prove the menu input path and handoff only, not native-device input or
+complete CSB gameplay parity.
+
 2026-10-29 launcher data-root follow-up at `8a04294f`: the authentic-media
 return-scan mutation test passed both directions. Removing the staged original
 CSB archive while DM1 was running made CSB unavailable after returning to the

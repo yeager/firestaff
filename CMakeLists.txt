@@ -28474,7 +28474,7 @@ endif()
         tests/test_m12_csb_amiga_version_menu_real_media.c
     )
     target_link_libraries(test_m12_csb_amiga_version_menu_real_media PRIVATE
-        firestaff_m12)
+        firestaff_m11)
     if(NOT MSVC)
         target_compile_options(test_m12_csb_amiga_version_menu_real_media PRIVATE
             -Wall -Wextra -O2)
