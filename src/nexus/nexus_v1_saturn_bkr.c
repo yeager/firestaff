@@ -292,7 +292,7 @@ int nexus_v1_saturn_bkr_nexus_payload_probe(
         uint32_t champion;
         for (champion = 0U; champion < champion_count; ++champion) {
             uint32_t record_offset = records_offset + champion * records_stride;
-            receipt.champion_rune_sequence_cursor[champion] =
+            receipt.champion_byte_09_runtime_35[champion] =
                 payload[record_offset + 0x09U];
             receipt.champion_health_current[champion] =
                 read_be_s16(payload + record_offset + 0x38U);
