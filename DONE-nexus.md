@@ -1,5 +1,20 @@
 # Firestaff DONE — Nexus
 
+## 2026-10-29 — Expose the authentic bounded recovery pair
+
+- `FUN_0602eb4c` projects signed BKR halfwords at champion offsets `+0x38/+0x3a`
+  to runtime longwords `+0/+4`. `FUN_060361a8` caps increases at the gap
+  between the two values, supporting bounded recovery behavior while leaving
+  the game's domain semantics unnamed.
+- The BKR receipt now exposes the pair as `champion_recovery_current` and
+  `champion_recovery_maximum`. All present champion records in the four
+  hash-pinned retail saves contain `47/47`. The leader-index-3 Ymir trace
+  captures the load writes at frame 12931; no later update to the pair appears
+  in that trace.
+- The authentic-data regression checks both the direct payload probe and
+  selected-file probe. Full BKR application to the engine and playable
+  Continue remain open.
+
 ## 2026-10-29 — Bound the authentic save value/limit pair
 
 - `FUN_0602eb4c` projects signed source halfwords at champion-record offsets

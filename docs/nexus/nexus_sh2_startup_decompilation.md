@@ -198,8 +198,15 @@ count at payload `+0x62`, the party leader index at `+0x61`, the champion table
 at `0x11c`, its `0xe0` source stride, and the captured count-dependent payload
 span. The real-data test applies this probe to all four hash-pinned
 retail-written images. It returns the record bounds and leader index, and
-extracts the signed stamina pair at source `+0x3c/+0x3e`, which the loader
-projects to runtime `+0x08/+0x0c`. The retail updater `FUN_060360fc` reads
+extracts three signed champion pairs. Source `+0x38/+0x3a` projects to runtime
+`+0/+4`; `FUN_060361a8` bounds an increment by the gap between those values.
+They are exposed as recovery current and maximum, with domain semantics left
+unassigned. All present records in the four authentic saves contain `47/47`.
+The leader-index-3 Ymir trace records the load writes at frame 12931 but no
+later writes to this pair, so the updater behavior is established by static
+decompilation rather than a captured runtime update. The probe also extracts
+the signed stamina pair at source `+0x3c/+0x3e`, which the loader projects to
+runtime `+0x08/+0x0c`. The retail updater `FUN_060360fc` reads
 runtime `+0x08`, subtracts a caller-provided amount, routes values below one
 through damage handling, and clamps against runtime `+0x0c`; this binds those
 cells as current and maximum stamina. Every record in the two-, three-, and

@@ -121,6 +121,14 @@ champion field pair is now semantically bound: signed source halfwords at
 updater subtracts from the first and clamps it against the second, identifying
 them as current and maximum stamina. The four authentic saves contain `66/67`
 for each champion except the leader-index-3 save, which contains `67/67`.
+A preceding signed pair at source `+0x38/+0x3a` projects to runtime longwords
+`+0/+4`. `FUN_060361a8` compares the first value with the second and caps an
+increment at their gap, supporting bounded recovery behavior without
+identifying the game's domain for these fields. The probe exposes them as
+`champion_recovery_current` and `champion_recovery_maximum`. Every present
+champion in all four authentic saves has `47/47`. The leader-index-3 Ymir trace
+captures those values loading at frame 12931; it contains no later writes to
+this pair, so runtime recovery has not been dynamically observed.
 A second pair at source `+0x40/+0x42` projects to runtime `+0x10/+0x14`;
 retail updates keep its first value at or below the second. It is exposed only
 as a bounded value and limit, without an inferred domain label. All four
