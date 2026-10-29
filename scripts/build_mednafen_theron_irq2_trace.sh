@@ -16,6 +16,7 @@ pce_fast_snapshot=${FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_SNAPSHOT_SUPPORT:-0}
 pce_fast_vram_commit_trace=${FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_SUPPORT:-0}
 pce_fast_pointer_trace=${FIRESTAFF_THERON_PCE_FAST_POINTER_TRACE_SUPPORT:-0}
 pce_fast_huc6280_23ad_trace=${FIRESTAFF_THERON_HUC6280_23AD_TRACE_SUPPORT:-0}
+pce_fast_code_ram_write_trace=${FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE_SUPPORT:-0}
 # An explicit build root keeps parallel local investigations from reusing an
 # instrumented binary produced from a different patch revision.
 build_root=${FIRESTAFF_MEDNAFEN_BUILD_ROOT:-"$repo/.codex-scratch/mednafen-firestaff-irq2-trace"}
@@ -43,6 +44,10 @@ if [[ "$pce_fast_pointer_trace" != 0 && "$pce_fast_pointer_trace" != 1 ]]; then
 fi
 if [[ "$pce_fast_huc6280_23ad_trace" != 0 && "$pce_fast_huc6280_23ad_trace" != 1 ]]; then
     printf 'FAIL: FIRESTAFF_THERON_HUC6280_23AD_TRACE_SUPPORT must be 0 or 1\n' >&2
+    exit 2
+fi
+if [[ "$pce_fast_code_ram_write_trace" != 0 && "$pce_fast_code_ram_write_trace" != 1 ]]; then
+    printf 'FAIL: FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE_SUPPORT must be 0 or 1\n' >&2
     exit 2
 fi
 if [ ! -f "$source_root/src/drivers/debugger.cpp" ] ||
@@ -360,6 +365,8 @@ if ! awk '
 fi
 python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_drator_route.py" \
     "$build_root/source"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_code_ram_write_trace.patch"
 
 if [[ "$patch_only" == 1 ]]; then
     # Tests use the exact production patch order without paying for a rebuild.
@@ -401,6 +408,9 @@ if [[ "$pce_fast_snapshot" == 1 || "$pce_fast_vram_commit_trace" == 1 ||
     configure_pce_fast=(--enable-pce-fast)
 fi
 if [[ "$pce_fast_huc6280_23ad_trace" == 1 ]]; then
+    configure_pce_fast=(--enable-pce-fast)
+fi
+if [[ "$pce_fast_code_ram_write_trace" == 1 ]]; then
     configure_pce_fast=(--enable-pce-fast)
 fi
 # The PCE interpreter's unoptimized frame exceeds the default macOS emulator

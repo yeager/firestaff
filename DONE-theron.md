@@ -9281,3 +9281,24 @@ native rendering, or Theron parity. The private evidence bundle is at
 - This completes one authentic capture and chronology validation. Causal
   loader provenance, gameplay handoff, other editions, and complete native
   Theron parity remain open.
+
+## 2026-10-29 — trace decoded-buffer destination writes
+
+- Added an opt-in PCE Fast reference-build option and capture flag for bounded
+  writes from physical PC `$1F1C00–$1F1CFF` into physical RAM
+  `$0D0000–$0D1FFF`. Records include logical and physical addresses, the active
+  MPR mapping, registers, and the shared event sequence; the cap is 65,536.
+- The isolated Mednafen patch set applied and the PCE Fast build completed on
+  TRV2 with `-j1`. The capture-script regression passed three consecutive
+  loops, and a cold authentic USA capture wrote 5,520 records at
+  `$0D0000–$0D13C7`. Each recorded logical/physical address pair agrees with
+  its MPR translation.
+- A bounded `$23AD` trace has 3,272 exact address/value/PC matches with the
+  new trace; each matched event is ordered one shared-sequence step later.
+  Another 2,248 records remain unmatched to `$23AD` memory-write events and
+  need separate attribution. The authentic decoder output digest remains
+  `9adf13522e818ee49de16ac1020a7697c3416877e6bc6baa918840d7e963f8ee`.
+- The capture was blocked by a missing controller-poll witness for its final
+  scripted button event and reports `transition=missing`. No gameplay or
+  render parity is claimed; semantic attribution and full native Theron
+  support remain open.
