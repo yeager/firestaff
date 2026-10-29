@@ -1,7 +1,7 @@
 # Dungeon Master Nexus — startup status
 
 This is an evidence report for startup, not a specification for a completed
-Nexus startup screen. Updated 2026-10-27: an authentic Japanese retail cold
+Nexus startup screen. Updated 2026-10-29: an authentic Japanese retail cold
 boot reaches the native `PRESS START BUTTON` title prompt and, with scheduled
 retail controller input, the native three-choice title menu in Ymir. The menu
 was navigated into its Configuration page from a saved diagnostic state.
