@@ -46,6 +46,20 @@ fixture behavior do not establish Nexus retail semantics.
   meaning, full dispatch ownership, complete screen composition, or renderer
   permission. Reproducible palette-join receipts are in the external capture
   directory above.
+- A follow-up used the same hash-identified Y-open state with GUI presentation
+  enabled and traced SH-2 reads/writes around the champion rows. Holding Down
+  for 90 frames changed 3,704 screenshot pixels and VDP1 rows 78–82 and 87–88
+  relative to no input. The one-frame A screenshot differs by 4,632 pixels;
+  its trace ends at frame 88 versus control's frame 89, so that count includes
+  a one-frame endpoint offset. At common frame 88, A changes VDP1 rows 25,
+  79–84, and 88. These captures show a rendered response to both inputs, but
+  do not label the ring sprites or prove a selected rune or accepted cast.
+  All three traces read `FUN_0603a472` and the row `+0x35` bytes through
+  `FUN_0603a55c`; none writes row offsets `+0x35..+0x38`. The corresponding
+  `wram-hi.bin` snapshots remain `02 00 78 00` for rows 0 and 1 and zero for
+  rows 2 and 3. The A capture ends at frame 88 with a complete trace and no
+  dropped records. Full data and hashes are retained at
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-magic-down-input-trace-20261029/`.
 - Static Ghidra analysis of the hash-verified Japanese `DM.BIN` finds the
   `MENU.BPK` resource string in `FUN_060286a4`, called indirectly by
   `FUN_06010f44`. Generic draw helpers include `FUN_06029188` and
@@ -75,18 +89,21 @@ implementation or substitute DM1 tables for these missing retail joins.
 
 ## Next evidence needed
 
-The directional probe now has a hash-identified Y-open source state reused
-across all five same-state runs; that source save remains distinct from the
-separately retained Y-entry receipt. Nine VDP1 command sources and their 31
-active palette indices are bound to authentic `MENU.BPK` surfaces, PALT, and
-same-run CRAM. The next probe should trace one controlled direction from this
-state through writes to champion-row offsets `+0x35/+0x36/+0x38`, calls and
-return values around `FUN_0603a472`, and the producer of VDP1 command rows
-79–88. The `+0x18` consumer and cast path remain separate work. Do not assign
-rune field names or implement the Firestaff route until the input-to-validator
-and input-to-surface relations are captured. Then trace casting through mana
-changes, target/effect state, random inputs, animation, and visible output.
+The directional probe has a hash-identified Y-open source state reused across
+the same-state runs; that save remains distinct from the separately retained
+Y-entry receipt. Nine VDP1 command sources and their 31 active palette indices
+are bound to authentic `MENU.BPK` surfaces, PALT, and same-run CRAM. The
+follow-up confirms that Down and A alter the visible ring while the candidate
+sequence bytes remain unchanged, even as the retail validator and sequence
+helper are read. Next, trace the input dispatch and the producer of the changed
+VDP1 ring commands to distinguish cursor movement from selection and commit.
+Then follow a confirmed commit through sequence writes and validator result,
+and continue casting through mana changes, target/effect state, random inputs,
+animation, and visible output. Do not assign rune field names or implement the
+Firestaff route from sprite appearance alone. The `+0x18` consumer remains a
+separate work item.
 
 Raw emulator states, screenshots, logs, and memory traces remain outside Git
-in `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/nexus-magic-window-input-20261029/` and
-`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/magic-window-dpad-inputs-20261029/`.
+in `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/nexus-magic-window-input-20261029/`,
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/magic-window-dpad-inputs-20261029/`, and
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-magic-down-input-trace-20261029/`.

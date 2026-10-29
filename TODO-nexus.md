@@ -557,10 +557,15 @@ not a fix and has not passed this real-media test.
   composition, and casting remain unverified. The static Ghidra audit found
   generic `MENU.BPK` record/draw helpers and separate sequence validator/mutator
   functions, but no direct link from entries 99–106/144 to rune fields or the
-  command producer. Next, trace one direction from the same Y-open checkpoint
-  through row offsets `+0x35/+0x36/+0x38`, `FUN_0603a472` calls/returns, and the
-  producer of command rows 79–88. Preserve the capture receipt under
-  `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/magic-window-dpad-inputs-20261029/`.
+  command producer. Follow-up GUI captures show Down and one-frame A each
+  change the visible ring; SH-2 traces read `FUN_0603a472` and row `+0x35` via
+  `FUN_0603a55c`, but neither input writes offsets `+0x35..+0x38` and the
+  snapshots retain their original bytes. This does not prove rune selection
+  or cast acceptance. Next, trace input dispatch and the producer of changed
+  VDP1 ring commands to distinguish cursor movement from selection/commit;
+  then follow confirmed commit through sequence writes and validator result.
+  Preserve the capture receipt under
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-magic-down-input-trace-20261029/`.
   An independent 2026-10-25 Ymir `--debug` comparison loaded a hash-verified
   authentic JP gameplay savestate into a private profile: the no-input reload
   changed 0.00175% of pixels, W-forward changed 3.08408%, and A-left changed
