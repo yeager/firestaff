@@ -14,7 +14,7 @@ if [[ ! -s "$trace" ]]; then
     exit 1
 fi
 if [[ ! "$read_limit" =~ ^[1-9][0-9]*$ ]] ||
-   (( read_limit > 2097152 )); then
+   (( read_limit > 8388608 )); then
     printf '%s\n' 'BLOCKED: scripted-input read limit is invalid' >&2
     exit 1
 fi

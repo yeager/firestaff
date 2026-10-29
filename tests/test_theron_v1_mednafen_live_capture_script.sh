@@ -140,6 +140,15 @@ if [[ "$consumption_receipt" != *'event_frames_with_apply=1'* ||
         "$consumption_receipt" >&2
     exit 1
 fi
+"$scripted_input_consumption_verifier" \
+    "$input_test_dir/consumed.trace" run@9600:90 8388608 >/dev/null
+if "$scripted_input_consumption_verifier" \
+    "$input_test_dir/consumed.trace" run@9600:90 8388609 \
+    >"$input_test_dir/oversized-read-limit.stdout" \
+    2>"$input_test_dir/oversized-read-limit.stderr"; then
+    printf '%s\n' 'FAIL: scripted-input verifier accepted a read limit above its bound' >&2
+    exit 1
+fi
 cat >"$input_test_dir/system-card-only.trace" <<'THERON_SYSTEM_CARD_INPUT'
 scripted_pce_input_event frame=9600 key=run mask=0008 hold=90
 scripted_pce_input_apply frame=9600 physical=0000 scripted=0008 combined=0008
@@ -861,8 +870,8 @@ if ! grep -Fq 'THERON_CAPTURE_INPUT_TRACE_LIMIT' "$script" ||
    ! grep -Fq 'input_trace_limit_default=65536' "$script" ||
    ! grep -Fq 'input_trace_limit_default=1048576' "$script" ||
    ! grep -Fq '|| -n "$host_key" || -n "$host_key_sequence"' "$script" ||
-   ! grep -Fq 'input_trace_limit < 65536 || input_trace_limit > 2097152' "$script" ||
-   ! grep -Fq 'read_limit > 2097152' "$scripted_input_consumption_verifier" ||
+   ! grep -Fq 'input_trace_limit < 65536 || input_trace_limit > 8388608' "$script" ||
+   ! grep -Fq 'read_limit > 8388608' "$scripted_input_consumption_verifier" ||
    ! grep -Fq 'verify_theron_scripted_input_consumption.sh' "$script" ||
    ! grep -Fq 'event_frames_followed_by_controller_read' "$scripted_input_consumption_verifier" ||
    ! grep -Fq 'event_frames_with_scripted_mask_read' "$scripted_input_consumption_verifier" ||
