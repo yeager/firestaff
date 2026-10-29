@@ -34,6 +34,30 @@ The next admissible implementation step is to capture the same session's
 VDP1/VDP2/CRAM state and the displayed frame around this dispatcher.  Only
 that join may unblock the existing real title or `MENU.BPK` render gates.
 
+## BUP format signature check (2026-10-29)
+
+A same-run Ymir read trace records five reads at SH-2 PC `0x06002a12`, all at
+bus address `0x180001`, and 80 reads at `0x06002a2a`, at
+`0x180001, 0x180003, ... 0x18001f` five times. These instruction addresses
+were disassembled with the architecture-neutral Ghidra scripts
+`DecompAddrs.java`, `DisasmRange.java`, and `FindRefs.java` from
+[`yeager/pcrecomp`](https://github.com/yeager/pcrecomp) commit
+`a85ea970f9e0640ab6546d2ca7a01fccb132973d`. The retained `RuntimeRAM`
+Ghidra project used an earlier full RAM snapshot, but the code bytes at
+`0x06002780..0x06002a20` match the same-run trace's `wram-hi.bin` exactly.
+
+Ghidra shows that `FUN_0600233e` writes the ASCII text `BackUpRam Format`.
+`FUN_060029ea` calls that helper and compares 16 bytes, stepping two bus bytes
+at a time; `FUN_06002672` calls the routine at `0x060027a8` and `0x06002878`.
+The matching trace PCs therefore identify these early BUP reads as format
+signature probing. The full 10,849-row trace contains other instruction sites
+and is not wholly explained by this one routine. Since the trace records
+addresses and PCs but not values, this does not show the save-directory
+contents, decode any BKR payload fields, or map a Continue save into runtime
+state. The exact exports and trace join are in the operator-managed
+`coldboot-readtrace-boot12000/pcrecomp-ghidra-analysis-20261029/` evidence
+folder.
+
 ## Rejected startup candidate
 
 The retained Mednafen capture from the `nexus-save-input-sweep-20261008`

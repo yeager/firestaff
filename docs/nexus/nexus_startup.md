@@ -1911,9 +1911,15 @@ BKR installed. It records 10,849 one-byte reads in bus range
 trace's most frequent PCs are `0x06003d68` and `0x0600289c` (2,550 reads each),
 `0x060034b0` (2,040), and `0x060028f2`/`0x06002900` (1,770 each). Same-run
 WRAM-HI disassembly shows byte reads and subsequent stores at these sites,
-consistent with early BUP enumeration/copy work. Ymir's trace records no read
-values, so it does not prove payload bytes were consumed as game state or
-identify a Nexus save field.
+consistent with early BUP handling. A same-session, exact code-window join
+using pcrecomp's generic Ghidra scripts identifies a subset of the trace at
+PCs `0x06002a12` and `0x06002a2a` as comparisons against the literal
+`BackUpRam Format` signature. That confirms early BUP-format probing, not
+save-payload parsing. The trace records no read values, so it does not prove
+payload bytes were consumed as game state or identify a Nexus save field. See
+the [BUP signature decompilation receipt](nexus_sh2_startup_decompilation.md#bup-format-signature-check-2026-10-29)
+and the external evidence folder's
+`coldboot-readtrace-boot12000/pcrecomp-ghidra-analysis-20261029/` directory.
 
 A later checkpoint at boot frame 14,900 shows the Japanese title logo. A
 replay from that checkpoint with Start, Down and A reaches the authentic Load

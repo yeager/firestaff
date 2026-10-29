@@ -24,6 +24,13 @@ but does not identify payload fields or implement Firestaff Continue. See the
 cold-boot receipt in
 [`nexus_startup.md`](docs/nexus/nexus_startup.md#two-champion-bkr-cold-boot-2026-10-29).
 
+The early Ymir BUP-read trace now has a source-code join for a subset of its
+reads: SH-2 PCs `0x06002a12` and `0x06002a2a` compare against the literal
+`BackUpRam Format` signature. This confirms startup format detection, not
+payload interpretation. The remaining save payload schema and Continue load
+consumer still require a same-session source-bound join; see
+[`nexus_sh2_startup_decompilation.md`](docs/nexus/nexus_sh2_startup_decompilation.md#bup-format-signature-check-2026-10-29).
+
 2026-10-28 retail New Game loader route: the M11 retail menu now sends
 keyboard/controller Accept and the retail mouse row to the same source-gated
 New Game path. Against authentic Japanese retail media, the regression

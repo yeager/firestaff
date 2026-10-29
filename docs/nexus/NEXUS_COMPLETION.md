@@ -904,3 +904,9 @@ composition, and production gameplay remain unverified. Reproduction commands,
 hashes, captures and the savestate-method correction are recorded in
 [`nexus_startup.md`](nexus_startup.md#two-champion-bkr-cold-boot-2026-10-29)
 and the operator-managed evidence bundle linked there.
+
+A source-window join using pcrecomp's generic Ghidra scripts identifies a
+subset of the early BUP reads as the retail `BackUpRam Format` signature
+check. The rest of the 10,849-row trace, the save payload schema, and the
+Continue-to-engine state mapping remain unresolved; see
+[`nexus_sh2_startup_decompilation.md`](nexus_sh2_startup_decompilation.md#bup-format-signature-check-2026-10-29).
