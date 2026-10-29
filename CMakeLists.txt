@@ -258,6 +258,23 @@ if(BUILD_TESTING)
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         LABELS "m12;dm1;csb;dm2;dm2-amiga;theron;main-menu;game-selection;runtime;real-media;skip-safe")
 
+    foreach(route IN ITEMS dm1-pc dm1-atari-st csb-atari-st dm2-pc)
+        if(route MATCHES "^dm1-")
+            set(route_game_label "dm1")
+        elseif(route MATCHES "^csb-")
+            set(route_game_label "csb")
+        else()
+            set(route_game_label "dm2")
+        endif()
+        add_test(NAME "m12_main_menu_${route}_runtime_real_media"
+            COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_alternate_platform_runtime_real_media.sh"
+                "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}" "${route}")
+        set_tests_properties("m12_main_menu_${route}_runtime_real_media" PROPERTIES
+            SKIP_RETURN_CODE 77 TIMEOUT 300
+            ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+            LABELS "m12;${route_game_label};main-menu;game-selection;alternate-platform;runtime;real-media;skip-safe")
+    endforeach()
+
     add_test(NAME m12_main_menu_dm2_amiga_runtime_real_media
         COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_runtime_real_media.sh"
             "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
