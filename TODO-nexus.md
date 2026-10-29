@@ -108,9 +108,13 @@ of roster row 2; its TABL entries resolve to raw codes `0x88`, `0x65`, and
 `+0x2c`. This binds a real name prefix to a source roster row but leaves the
 two `0x80` bytes and the text consumer unresolved. All current save samples
 use this same prefix, so they do not establish how other roster names are
-stored. Continue by tracing runtime offset `+0x2c` to its renderer and by
-capturing a retail save with a different roster member before decoding the
-remaining bytes or loading BKR data into Firestaff. Details are in
+stored. Decompilation now identifies runtime `+0x2c` as the champion-name
+string slot: the New Game initializer copies a NUL-terminated roster name to
+it, and the BKR importer copies the six saved bytes to the same slot. The
+sample's final `00` is its terminator, but the `0x80` suffix and glyph mapping
+remain unresolved. Trace the runtime string consumer and capture a retail save
+with a different roster member before decoding the remaining bytes or loading
+BKR names into Firestaff's `name_ascii` or `name_jp` fields. Details are in
 [`nexus_save_format.md`](docs/nexus/nexus_save_format.md#name-byte-comparison-against-the-japanese-roster).
 
 The 2026-10-29 Load-panel VDP2 trace now joins the retail SH-2 writer at

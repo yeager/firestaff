@@ -153,6 +153,17 @@ This cross-file match identifies row 2 as the source of the saved three-code
 name prefix and is consistent with the authenticated runtime copy of source
 bytes `+0x00..+0x05` to runtime bytes `+0x2c..+0x31`. It does not establish the
 meaning of the saved `0x80 0x80` suffix, whether those bytes are padding or
-editable name state, or the complete Saturn text-rendering path. Firestaff
-therefore keeps the BKR name bytes opaque and does not turn them into visible
-text yet. No Japanese game data was added to the repository.
+editable name state, or the complete Saturn text-rendering path.
+
+Decompilation of the New Game roster initializer `FUN_0603b014` shows it
+selecting a PLRD-like roster record at `roster_base + 0x40 * roster_index`,
+copying its NUL-terminated name bytes to champion runtime offset `+0x2c`, and
+writing a terminator at `+0x31`. The BKR importer `FUN_0602eb4c` copies the
+six bytes at save-record offset `+0x00` to that same runtime name slot. Thus
+the authentic sample's final `00` terminates the copied six-byte slot. This
+maps the BKR span to the runtime champion-name string, but does not decode its
+glyphs or explain `0x80 0x80`; Firestaff keeps those bytes opaque and does not
+turn them into visible text. A save with a different roster member and a
+trace of the runtime string consumer are still needed before mapping the
+bytes to `name_ascii` or `name_jp`. No Japanese game data was added to the
+repository.
