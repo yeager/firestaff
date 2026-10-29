@@ -131,6 +131,7 @@ pce_fast_vce_write_trace_limit=${THERON_CAPTURE_PCE_FAST_VCE_WRITE_TRACE_LIMIT:-
 pce_fast_44d2_follow_limit=${THERON_CAPTURE_PCE_FAST_44D2_FOLLOW_LIMIT:-128}
 cd_data_read_trace_limit=${THERON_CAPTURE_PCE_FAST_CD_DATA_READ_TRACE_LIMIT:-65536}
 cd_data_read_start_at_track02=${THERON_CAPTURE_PCE_FAST_CD_DATA_READ_START_AT_TRACK02:-0}
+cd_ram_target_write_trace_limit=${THERON_CAPTURE_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT:-8192}
 input_trace_limit_default=65536
 if [[ -n "$replay_input_script" || -n "$host_key" || -n "$host_key_sequence" ]]; then
     # Long boot/replay plans can reach the old 65,536-read ceiling before the
@@ -203,6 +204,23 @@ fi
 if [[ "$cd_data_read_start_at_track02" == 1 &&
       "$capture_mednafen_module" != pce_fast ]]; then
     printf '%s\n' 'FAIL: Track 02 CD data-read filtering requires the PCE Fast module' >&2
+    exit 1
+fi
+if [[ ! "$cd_ram_target_write_trace_limit" =~ ^[0-9]+$ ]] ||
+   (( cd_ram_target_write_trace_limit < 1 ||
+      cd_ram_target_write_trace_limit > 1048576 )); then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT must be an integer from 1 through 1048576' >&2
+    exit 1
+fi
+if [[ ! "$pce_fast_vram_commit_trace_limit" =~ ^[0-9]+$ ]] ||
+   (( pce_fast_vram_commit_trace_limit < 1 ||
+      pce_fast_vram_commit_trace_limit > 4194304 )); then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT must be an integer from 1 through 4194304' >&2
+    exit 1
+fi
+if [[ ! "$pce_fast_vce_write_trace_limit" =~ ^[0-9]+$ ]] ||
+   (( pce_fast_vce_write_trace_limit < 1 || pce_fast_vce_write_trace_limit > 1048576 )); then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_VCE_WRITE_TRACE_LIMIT must be an integer from 1 through 1048576' >&2
     exit 1
 fi
 
@@ -282,17 +300,6 @@ fi
 if [[ "$capture_pce_fast_vram_commit_trace" == 1 &&
       "$capture_mednafen_module" != pce_fast ]]; then
     printf '%s\n' 'FAIL: PCE Fast VRAM commit tracing requires THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast' >&2
-    exit 1
-fi
-if [[ ! "$pce_fast_vram_commit_trace_limit" =~ ^[0-9]+$ ]] ||
-   (( pce_fast_vram_commit_trace_limit < 1 ||
-      pce_fast_vram_commit_trace_limit > 1048576 )); then
-    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT must be an integer from 1 through 1048576' >&2
-    exit 1
-fi
-if [[ ! "$pce_fast_vce_write_trace_limit" =~ ^[0-9]+$ ]] ||
-   (( pce_fast_vce_write_trace_limit < 1 || pce_fast_vce_write_trace_limit > 1048576 )); then
-    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_VCE_WRITE_TRACE_LIMIT must be an integer from 1 through 1048576' >&2
     exit 1
 fi
 if [[ ! "$pce_fast_44d2_follow_limit" =~ ^[0-9]+$ ]] ||
@@ -1588,6 +1595,7 @@ launch=(
     FIRESTAFF_THERON_3879_TRACE="$indirect_target_trace" \
     FIRESTAFF_THERON_44D2_FOLLOW_LIMIT="$pce_fast_44d2_follow_limit" \
     FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE="$cd_ram_target_write_trace" \
+    FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT="$cd_ram_target_write_trace_limit" \
     FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_TRACE="$cd_data_port_read_trace" \
     FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_TRACE_LIMIT="$cd_data_read_trace_limit" \
     FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_START_AT_TRACK02="$cd_data_read_start_at_track02" \
@@ -2500,6 +2508,7 @@ fi
     printf 'byte_exact_origin_ram_receipts=%s\n' "$transition_origin_ram_receipt_count"
     printf 'authenticated_cd_ram_receipts=%s\n' "$transition_authenticated_cd_ram_count"
     printf 'cd_ram_target_writes=%s\n' "$transition_cd_ram_target_write_count"
+    printf 'cd_ram_target_write_trace_limit=%s\n' "$cd_ram_target_write_trace_limit"
     printf 'cd_data_port_reads=%s\n' "$transition_cd_data_port_read_count"
     printf 'cd_data_port_read_trace_limit=%s\n' "$cd_data_read_trace_limit"
     printf 'cd_data_port_read_start_at_track02=%s\n' "$cd_data_read_start_at_track02"

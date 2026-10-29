@@ -8856,3 +8856,25 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   gameplay input, then capture the required longer CD/RAM/VWR join without
   exhausting pre-game trace budgets. Do not infer a menu action, dungeon
   scene, or rendering mapping from this failed capture.
+
+## 2026-10-29 — repeat Japanese cold-start capture with bounded input trace
+
+- R4 produced an authentic first-person dungeon screenshot. Its input-read
+  trace stopped at 1,048,576 rows, so only the first nine of eleven scripted
+  events had CPU-read witnesses. The VWR trace reached the new 4,194,304-row
+  ceiling; the 4,752,372-event merge reported `merged_limit_reached`.
+- R5 raised the input-read ceiling to 4,194,304. All eleven scripted masks
+  were applied and read at port 0, but all event-window witnesses remained
+  System Card polls at `$E4C5`. Later reads at `$44C1/$44D2` and `$42AB/$42B2`
+  occurred outside those event windows. The reference screenshot and both
+  receipts are recorded in
+  `docs/source-lock/theron-disassembly/theron-jp-run-hold-gated-vwr-capture-20261029.md`.
+- Neither run proves a cold game handoff or native renderer parity. R5 still
+  has 483,328 source-valid Track 02 reads, 172 CD-RAM target writes, no
+  authenticated CD-to-RAM receipts, no CD IRQ callbacks, no non-System-Card
+  CD reads, no `$E009` dispatch, and `transition=missing`. Its VWR and merged
+  event streams also reach their configured bounds.
+- Next: derive an authenticated game-owned handoff trigger from the captured
+  code and source reads, then use it to bound a smaller post-handoff VWR trace.
+  Preserve the parity target; do not infer a causal source-to-render mapping
+  from the time-ordered chronology.

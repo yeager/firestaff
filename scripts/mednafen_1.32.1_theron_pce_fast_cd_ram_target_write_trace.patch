@@ -1,6 +1,6 @@
 --- a/src/pce_fast/huc.cpp
 +++ b/src/pce_fast/huc.cpp
-@@ -73,15 +73,49 @@
+@@ -73,15 +73,57 @@
  static DECLFR(HuCRead)
  {
   return ROMSpace[A];
@@ -10,12 +10,20 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +{
 + static FILE *trace = NULL;
 + static unsigned count = 0;
++ static unsigned trace_limit = 0;
++ if(!trace_limit)
++ {
++  const char *limit_text = getenv("FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT");
++  char *end = NULL;
++  const unsigned long parsed = limit_text && *limit_text ? strtoul(limit_text, &end, 10) : 8192UL;
++  trace_limit = end && *end == 0 && parsed >= 1UL && parsed <= 1048576UL ? (unsigned)parsed : 8192U;
++ }
 + const uint32 first = 0x68 * 8192 + 0x089f;
 + const uint32 last = 0x68 * 8192 + 0x08ab;
 + const uint32 stage2_first = 0x80 * 8192;
 + const uint32 stage2_last = stage2_first + 0x10;
 + const bool stage2_target = address >= stage2_first && address <= stage2_last;
-+ if((!stage2_target && (address < first || address > last)) || count >= 8192)
++ if((!stage2_target && (address < first || address > last)) || count >= trace_limit)
 +  return;
 + if(!trace)
 + {

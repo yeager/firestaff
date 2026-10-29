@@ -96,6 +96,61 @@ if [[ "$cd_filter_valid_output" != *'SKIP:'* ]]; then
     printf '%s\n' 'FAIL: valid CD data-read settings did not reach the missing-media gate' >&2
     exit 1
 fi
+cd_ram_write_limit_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT=0 \
+    "$script" 2>&1) && {
+    printf '%s\n' 'FAIL: CD RAM target-write trace accepted a zero limit' >&2
+    exit 1
+}
+if [[ "$cd_ram_write_limit_output" != *'THERON_CAPTURE_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT must be an integer from 1 through 1048576'* ]]; then
+    printf '%s\n' 'FAIL: invalid CD RAM target-write limit lacked a precise diagnostic' >&2
+    exit 1
+fi
+cd_ram_write_valid_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast \
+    THERON_CAPTURE_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT=262144 \
+    "$script" 2>&1) || {
+    printf '%s\n' 'FAIL: valid CD RAM target-write trace limit was rejected' >&2
+    exit 1
+}
+if [[ "$cd_ram_write_valid_output" != *'SKIP:'* ]]; then
+    printf '%s\n' 'FAIL: valid CD RAM target-write limit did not reach the missing-media gate' >&2
+    exit 1
+fi
+cd_ram_write_patch=$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_ram_target_write_trace.patch
+if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT' "$cd_ram_write_patch" ||
+   ! grep -Fq 'count >= trace_limit' "$cd_ram_write_patch" ||
+   grep -Fq 'count >= 8192' "$cd_ram_write_patch" ||
+   ! grep -Fq 'cd_ram_target_write_trace_limit=%s' "$script"; then
+    printf '%s\n' 'FAIL: CD RAM target-write cap must be bounded, configurable and receipted' >&2
+    exit 1
+fi
+vram_commit_limit_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast \
+    THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE=1 \
+    THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_START_AT_TRACK02=1 \
+    THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT=4194305 \
+    "$script" 2>&1) && {
+    printf '%s\n' 'FAIL: PCE Fast VRAM commit trace accepted a limit above its maximum' >&2
+    exit 1
+}
+if [[ "$vram_commit_limit_output" != *'THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT must be an integer from 1 through 4194304'* ]]; then
+    printf '%s\n' 'FAIL: invalid PCE Fast VRAM commit limit lacked a precise diagnostic' >&2
+    exit 1
+fi
+vram_commit_max_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast \
+    THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE=1 \
+    THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_START_AT_TRACK02=1 \
+    THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT=4194304 \
+    "$script" 2>&1) || {
+    printf '%s\n' 'FAIL: maximum PCE Fast VRAM commit trace limit was rejected' >&2
+    exit 1
+}
+if [[ "$vram_commit_max_output" != *'SKIP: MEDNAFEN_BIN'* ]]; then
+    printf '%s\n' 'FAIL: maximum PCE Fast VRAM commit limit did not reach the missing-media gate' >&2
+    exit 1
+fi
 python3 "$repo/tests/test_theron_scripted_input_patch_parser.py"
 python3 "$repo/tests/test_theron_mouse_input_parser.py"
 bash "$repo/tests/test_theron_authentic_bram.sh"

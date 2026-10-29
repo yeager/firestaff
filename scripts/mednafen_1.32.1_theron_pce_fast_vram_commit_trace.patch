@@ -55,7 +55,7 @@
 +  {
 +   char *end = NULL;
 +   const unsigned long parsed = strtoul(limit_text, &end, 10);
-+   if(end && !*end && parsed >= 1 && parsed <= 1048576)
++   if(end && !*end && parsed >= 1 && parsed <= 4194304)
 +    TheronPCEFastVRAMCommitLimit = (unsigned)parsed;
 +  }
 +  if(!path || !*path)

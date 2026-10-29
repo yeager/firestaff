@@ -18,7 +18,7 @@ if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3' "$patch_file" ||
    ! grep -Fq 'TheronTracePCEFastVCEWrite(4, V, trace_address, trace_old_color, vce.color_table[trace_address]);' "$patch_file" ||
    ! grep -Fq 'TheronTracePCEFastVCEWrite(5, V, trace_address, trace_old_color, vce.color_table[trace_address]);' "$patch_file" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT' "$patch_file" ||
-   ! grep -Fq 'parsed >= 1 && parsed <= 1048576' "$patch_file" ||
+   ! grep -Fq 'parsed >= 1 && parsed <= 4194304' "$patch_file" ||
    ! grep -Fq 'fopen(path, "wx")' "$patch_file" ||
    ! grep -Fq 'TheronTraceInstructionPC' "$patch_file" ||
    ! grep -Fq 'TheronTraceInstructionPhysicalPC' "$patch_file" ||
