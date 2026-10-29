@@ -12,7 +12,7 @@
 - `Theron evidence`: verify decoded-buffer copies and Japanese input-poll source provenance; add a bounded PCE Fast position-transfer observer without claiming movement parity.
 - `Startup documentation`: update the five-game evidence boundary and correct the superseded CSB Amiga inscription-gap entry.
 - `DM1 X68000`: update the real-media checksum probe while keeping private game data out of the repository.
-- `Nexus startup`: verify regional owner selection and matching supplemental media; preserve the capture-gated title compositor boundary.
+- `Nexus startup`: verify regional owner selection and matching supplemental media; document the production title-compositor receipt gate and retain it until source-bound display evidence exists.
 - `Release metadata`: update the project version and reproducible SPDX source SBOM.
 
 ## Known limitations

@@ -362,6 +362,15 @@ consumer. A rebuilt real-media pointer-only launcher check now reports
 retail image and rejects a playable-runtime claim. See
 [`DONE-nexus.md`](DONE-nexus.md) for the verification record.
 
+The production gate is also source-audited: `nexus_v1_launcher_fill_startup_assets_receipt`
+requires `engine->startup_title_vdp_capture_verified`, and the production
+`nexus_title_load` path resets that field to zero. No production assignment to
+one exists; only synthetic launcher-test setup does so. Do not clear the gate
+by assigning the flag. The next implementation step is a narrow receipt that
+binds an authentic same-session displayed title frame, VDP1/VDP2 state, source
+spans, palette and placement to the production composition consumer. The real
+New Game input and `LEV01.DGN` start-position handoff remain separate gates.
+
 ## 2026-10-29 — Keep extracted Nexus resources and supplemental media in one region
 
 Resolved the shared-`DM.BIN` misidentification with authentic regional
