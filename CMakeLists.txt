@@ -4210,6 +4210,17 @@ if(BUILD_TESTING)
     set(FIRESTAFF_DM2_DOS_FR_ARCHIVE
         "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_FR.zip"
         CACHE FILEPATH "Authentic French DM2 DOS archive used by its startup test")
+    # A cached absolute path can outlive a data-directory migration. Preserve
+    # an existing explicit override, but fall back to the canonical originals
+    # root when that cached location has gone stale and the archive is present
+    # under .firestaff/data/dm2.
+    if(NOT EXISTS "${FIRESTAFF_DM2_DOS_FR_ARCHIVE}" AND
+       EXISTS "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_FR.zip")
+        set(FIRESTAFF_DM2_DOS_FR_ARCHIVE
+            "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_FR.zip")
+        message(STATUS
+            "Using canonical DM2 French DOS archive: ${FIRESTAFF_DM2_DOS_FR_ARCHIVE}")
+    endif()
     set_tests_properties(dm2_v1_dos_fr_native_cli_boot PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm2;dos;french;startup;cli;real-media;native;skip-safe"
@@ -28458,6 +28469,28 @@ endif()
     )
     set_tests_properties(m12_launcher_options_runtime_handoff PROPERTIES
         ENVIRONMENT "TMPDIR=${CMAKE_CURRENT_BINARY_DIR}/launcher-options-scratch;SDL_VIDEODRIVER=dummy;FIRESTAFF_TEST_DM1_DATA_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1")
+
+    add_executable(test_m12_csb_amiga_version_menu_real_media
+        tests/test_m12_csb_amiga_version_menu_real_media.c
+    )
+    target_link_libraries(test_m12_csb_amiga_version_menu_real_media PRIVATE
+        firestaff_m11)
+    if(NOT MSVC)
+        target_compile_options(test_m12_csb_amiga_version_menu_real_media PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m12_csb_amiga_version_menu_real_media
+        COMMAND bash
+            "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_csb_amiga_version_menu_real_media.sh"
+            "$<TARGET_FILE:test_m12_csb_amiga_version_menu_real_media>"
+            "${FIRESTAFF_WORKSPACE_DATA_DIR}"
+    )
+    set_tests_properties(m12_csb_amiga_version_menu_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;csb;amiga;launcher;version-selection;real-media;skip-safe"
+        ENVIRONMENT "FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        TIMEOUT 120)
 
     add_executable(test_m12_version_changelog_consistency
         tests/test_m12_version_changelog_consistency.c

@@ -1,5 +1,21 @@
 # Firestaff DONE — cross-game completed work
 
+## 2026-10-29 — Launcher horizontal keys in Game Options
+
+The SDL keyboard path now routes Left and Right to Game Options, where the
+selected platform, edition, and option values can be changed. Before this
+fix, horizontal arrows were translated only in Settings, so the real-media
+CSB version-selection menu could not use its keyboard edition control. The
+settings key-routing test and authentic CSB Amiga 3.5 menu-selection CTest
+passed. A full-app SDL dummy run with the original CSB Amiga 3.1 media also
+used one Right key in Game Options and handed off `amiga31-multi`. The full
+real-media picker regression now includes that route. On 2026-10-29, its
+platform-only matrix completed with exit code 0 against the installed
+originals: DM1 PC/Atari/Amiga, CSB Amiga (including the Right-key edition
+change)/Atari, and DM2 PC/Amiga (eight handoffs). Active-game input and
+text-edit arrows remain routed to their existing handlers; native physical
+keyboard behavior and full CSB gameplay parity are not claimed.
+
 ## 2026-10-28 — DM1 HoC floor pressure plate
 
 The authentic PC34 Hall of Champions plate at map 0 (6,9) now renders from

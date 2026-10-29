@@ -12034,13 +12034,14 @@ static int m11_event_requests_window_close(const SDL_Event* event) {
 #endif
 }
 
-M12_MenuInput M11_StartupSettingsHorizontalKeyInput(
+M12_MenuInput M11_StartupHorizontalKeyInput(
     int keycode,
     const M12_StartupMenuState* menuState,
     int gameplayActive,
     int textEditingActive) {
     if (!menuState || gameplayActive || textEditingActive ||
-        menuState->view != M12_MENU_VIEW_SETTINGS) {
+        (menuState->view != M12_MENU_VIEW_SETTINGS &&
+         menuState->view != M12_MENU_VIEW_GAME_OPTIONS)) {
         return M12_MENU_INPUT_NONE;
     }
     if (keycode == SDLK_LEFT) return M12_MENU_INPUT_LEFT;
@@ -12634,7 +12635,7 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             }
             {
                 M12_MenuInput settingsInput =
-                    M11_StartupSettingsHorizontalKeyInput(
+                    M11_StartupHorizontalKeyInput(
                         (int)ev.key.key,
                         menuState,
                         gameView && gameView->active,

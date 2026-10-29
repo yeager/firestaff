@@ -1,5 +1,68 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-29 CSB launcher edition-row follow-up, based on `584028e1`: the new
+`m12_csb_amiga_version_menu_real_media` CTest passed against the installed
+original CSB Amiga 3.5 English archive. It navigates the public M12 menu input
+path from the CSB game card through the Amiga platform and Game Options, cycles
+to the matched `amiga35-en` edition, and confirms the launch intent retains
+that exact edition and architecture. This closes a regression-test gap for
+same-platform multi-edition selection; it does not claim a full runtime boot
+or Amiga gameplay parity. The test skips when authentic A35E data is absent.
+
+2026-10-29 launcher keyboard-routing follow-up: the application event loop
+previously translated horizontal arrows only in Settings. The real Game
+Options view also needs them to change platform, edition, and row values.
+Firestaff now routes Left/Right to Game Options while preserving active-game
+controls and text editing. `m12_csb_amiga_version_menu_real_media` exercises
+the shared live key mapper while selecting authentic CSB Amiga 3.5 English;
+the full-app real-media picker matrix additionally selects authentic A31
+multilingual CSB through an SDL Right key and verifies the edition handoff.
+The targeted source test and a full-app SDL dummy session both passed. The
+2026-10-29 platform-only authentic-media matrix completed successfully with
+eight DM1/CSB/DM2 edition handoffs. These checks prove the menu input path and
+handoff only, not native-device input or complete CSB gameplay parity.
+
+2026-10-29 launcher data-root follow-up at `8a04294f`: the authentic-media
+return-scan mutation test passed both directions. Removing the staged original
+CSB archive while DM1 was running made CSB unavailable after returning to the
+launcher while DM1 and DM2 remained available; adding the original CSB archive
+during the same DM1 runtime made all three priority games available on return.
+The DM2 DOS selected-archive test also passed after its staged archive was
+removed during gameplay: DM2 returned to the launcher and the scan reported
+the availability of the remaining original game media. A direct default-start
+check with authentic data under the standard data root reported
+`startup game=none mode=menu`, completed the scan for all five games, and
+performed no game handoff.
+The shared-collection M12 session also passed: it launched DM1 from an explicit
+per-game data directory, rescanned the collection, launched CSB, returned and
+rescanned again, while retaining authentic DM1 and CSB edition identities and
+discovering DM2 from the same collection. The tests used the existing
+2026-10-29 05:49 local app build, which includes the current runtime changes;
+subsequent `main` commits are test or documentation changes. These SDL-dummy
+receipts cover dynamic discovery and the named shared-root handoffs only. They
+do not establish native display/input or complete gameplay parity. No launcher
+behavior defect was reproduced in these cases.
+
+2026-10-29 current-main DM1/CSB/DM2 launcher audit at `5b65ec09`: the
+authentic-media no-game M12 menu tests passed separately for DM1 FM Towns,
+CSB FM Towns, and DM2 FM Towns, including each game's first-runtime receipt
+and Back/reselect route (3/3). The mixed game/platform picker test passed its
+seven available alternate-edition routes: DM1 PC, Atari ST, and Amiga; CSB
+Amiga and Atari ST; DM2 PC and Amiga. The unsupported-platform fail-fast
+matrix and CLI option-form test also passed (2/2). The tested app binary was
+built before `5b65ec09`, whose only change is the DM1 Atari STX test source;
+the runtime code therefore matches this checkout. The three authentic-media
+DM1 PC, CSB FM Towns, and DM2 FM Towns Swedish scan/debug localization checks
+also passed (3/3). A separate data-root containing only DM1, CSB, and DM2
+original archives passed 19 no-game menu handoffs across keyboard and mouse
+selection, seven alternate platform editions, per-game collection roots, and
+the standard `.firestaff/data` root. Mouse-driven Return to Menu also passed
+for DM1 PC, CSB FM Towns, and DM2 FM Towns; each rescan reported all five
+installed games available (3/3). These SDL dummy runs verify only the named
+launcher selections and runtime handoffs, not native display, audio, physical
+input, untested editions, or complete game parity. No source behavior change
+was needed and no release was created.
+
 The current five-game startup evidence matrix and remaining Nexus/Theron
 runtime-entry gaps are consolidated in
 [`docs/STARTUP_SUPPORT_GAP_ANALYSIS.md`](docs/STARTUP_SUPPORT_GAP_ANALYSIS.md).

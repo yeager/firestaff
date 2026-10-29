@@ -37,7 +37,7 @@ static void test_keyboard_settings_tab_routing(void) {
     state.view = M12_MENU_VIEW_SETTINGS;
     state.settingsTabIndex = M12_SETTINGS_TAB_GAME;
 
-    input = M11_StartupSettingsHorizontalKeyInput(
+    input = M11_StartupHorizontalKeyInput(
         SDLK_RIGHT, &state, 0, 0);
     CHECK(input == M12_MENU_INPUT_RIGHT,
           "launcher Right arrow routes to settings tab navigation");
@@ -45,7 +45,7 @@ static void test_keyboard_settings_tab_routing(void) {
     CHECK(state.settingsTabIndex == M12_SETTINGS_TAB_GRAPHICS,
           "keyboard Right advances from Game to Graphics settings");
 
-    input = M11_StartupSettingsHorizontalKeyInput(
+    input = M11_StartupHorizontalKeyInput(
         SDLK_LEFT, &state, 0, 0);
     CHECK(input == M12_MENU_INPUT_LEFT,
           "launcher Left arrow routes to settings tab navigation");
@@ -53,16 +53,23 @@ static void test_keyboard_settings_tab_routing(void) {
     CHECK(state.settingsTabIndex == M12_SETTINGS_TAB_GAME,
           "keyboard Left returns from Graphics to Game settings");
 
-    CHECK(M11_StartupSettingsHorizontalKeyInput(
+    CHECK(M11_StartupHorizontalKeyInput(
               SDLK_RIGHT, &state, 1, 0) == M12_MENU_INPUT_NONE,
           "active-game Right arrow is left to gameplay routing");
-    CHECK(M11_StartupSettingsHorizontalKeyInput(
+    CHECK(M11_StartupHorizontalKeyInput(
               SDLK_LEFT, &state, 0, 1) == M12_MENU_INPUT_NONE,
           "text-edit Left arrow is left to the editor");
     state.view = M12_MENU_VIEW_MAIN;
-    CHECK(M11_StartupSettingsHorizontalKeyInput(
+    CHECK(M11_StartupHorizontalKeyInput(
               SDLK_RIGHT, &state, 0, 0) == M12_MENU_INPUT_NONE,
           "main-menu Right arrow keeps existing movement mapping");
+    state.view = M12_MENU_VIEW_GAME_OPTIONS;
+    CHECK(M11_StartupHorizontalKeyInput(
+              SDLK_RIGHT, &state, 0, 0) == M12_MENU_INPUT_RIGHT,
+          "game-options Right arrow routes to selected-value cycling");
+    CHECK(M11_StartupHorizontalKeyInput(
+              SDLK_LEFT, &state, 0, 0) == M12_MENU_INPUT_LEFT,
+          "game-options Left arrow routes to selected-value cycling");
 }
 
 int main(void) {
