@@ -536,3 +536,13 @@ textures. Of the matched draws, 105 have candidate Structure3 face-owner rows,
 often with multiple possible owners. Sixteen matched draws have no face-owner
 row. Determine the active owner and transform from the Saturn SH-2 draw setup
 before using these materials to render the Configuration scene.
+
+The authentic Load-panel NBG0 work now binds an 86-byte `MENU.BPK[55]` source
+span to its frame-bounded SH-2 and VDP2 VRAM writes. The Load-panel NBG0
+palette and complete bitmap composition remain unresolved. A separate
+frame-536 CRAM routine at `0x06038e30` is a retail color animation that updates
+a four-row WRAM table; no evidence joins that table to the menu surface or
+NBG0 color indices. Continue source tracing for the actual NBG0 palette and
+screen producer before admitting a Load-panel renderer. See
+`docs/nexus/nexus_startup.md` and the external trace bundle's
+`nbg0-menu-source-trace.txt` and Ghidra decompilation log.

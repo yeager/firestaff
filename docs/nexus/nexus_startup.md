@@ -2091,3 +2091,18 @@ unbound. It does not admit a Firestaff Load-panel renderer. The analyzer output
 and Ghidra decompilation are retained in the external trace bundle's
 `nbg0-menu-source-trace.txt` and
 `nbg0-writers-ghidra-decompilation.log` files.
+
+### Load-panel frame-536 CRAM writer identification (2026-10-29)
+
+Ghidra decompilation of Japanese retail `DM.BIN` at `0x06038e30` identifies
+the frame-536 CRAM-writing routine as a frame-driven color animation. It
+updates one of four 32-color rows from a WRAM table and advances per-row
+counters; additional branches update a separate color component and an
+independent scalar animation. The trace's CRAM writes at `0x05f00100` through
+`0x05f00106` therefore belong to this animation routine. No source join ties
+its WRAM table to `MENU.BPK[55]` or to the six observed NBG0 pixel values.
+The routine is useful retail-code context, but it does not resolve the
+Load-panel bitmap palette or composition. The Ghidra log and its input/runtime
+provenance are retained in the external Load-panel trace evidence directory;
+the analysis used pcrecomp's `DecompAddrs.java` with SH-2 big-endian code at
+the retail address map.
