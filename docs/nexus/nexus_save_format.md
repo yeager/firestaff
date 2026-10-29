@@ -145,9 +145,12 @@ Follow-up static analysis places `FUN_0603a472`, `FUN_0603a55c`, and
 offsets `+0x35`, `+0x36`, and `+0x38`. This does not establish a Magic sequence
 cursor or connect the field to the composer at `+0x3d/+0x3e`; the payload
 probe therefore exposes it as `champion_byte_09_runtime_35` pending domain
-identification. All four image-hash-verified BKR files have value `2` in every
-champion record; their extracted payload hashes match the four pinned corpus
-payloads. Other champion and world fields remain opaque. Original Saturn save
+identification. The selector's eligibility helper also reads runtime `+0x18`
+for some ITEM.IBS records; that saved field's domain meaning and any relation
+to the displayed Magic window remain unproven. All four image-hash-verified
+BKR files have value `2` in every champion record; their extracted payload
+hashes match the four pinned corpus payloads. Other champion and world fields
+remain opaque. Original Saturn save
 import remains gated until the complete semantic payload mapping and
 source-owned consumer are identified and
 exercised against the retail game.

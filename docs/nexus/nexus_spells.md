@@ -14,12 +14,15 @@ fixture behavior do not establish Nexus retail semantics.
   into the diagnostic implementation in `src/nexus/nexus_v1_magic.c`. This
   byte match verifies the table contents only; it does not establish the
   meaning of every index or spell effect.
-- Earlier static notes connected `FUN_06039f76` and `FUN_0603a472` to
-  four-entry rune validation. Follow-up decompilation reclassifies
-  `FUN_0603a472` as a separate ITEM.IBS action-selector path; no call from the
-  Magic composer or evidence that it validates this composer buffer has been
-  found. Runtime row `+0x18`'s meaning and its relationship to Magic remain
-  unresolved. See `docs/nexus/nexus_sh2_startup_decompilation.md`.
+- Earlier static notes called `FUN_06039f76` / `FUN_0603a472` a four-entry
+  rune validator. The recovered code instead shows a four-index ITEM.IBS
+  eligibility helper. It reads runtime champion `+0x18` when evaluating some
+  records, while related selectors update separate row state at `+0x35..+0x38`.
+  This differs from the observed Magic composer buffer at `+0x3d/+0x3e`; no
+  call from the composer or evidence that this helper validates that buffer
+  has been found. The helper's broader gameplay role and any relationship to
+  the displayed Magic window remain unproven. See
+  `docs/nexus/nexus_sh2_startup_decompilation.md`.
 - The Japanese retail manual documents Control Pad Y as opening the Magic
   window. A 2026-10-29 authentic Ymir `--debug` capture scheduled Y for one
   frame from a gameplay checkpoint loaded from the real BKR and showed the

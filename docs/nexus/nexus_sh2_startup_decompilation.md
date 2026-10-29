@@ -335,11 +335,17 @@ and domain meanings are still unknown. Follow-up static analysis places
 `FUN_0603a472` and its related helpers on an ITEM.IBS action-selector path.
 The earlier four-entry Magic-validator interpretation was unsupported: Magic
 composer `FUN_0602a234` does not call this helper, and no full-buffer submit or
-cast edge to these functions has been established. The `+0x18` threshold read
-is therefore not yet connected to Magic; trace the action-selector path and
-identify this saved field's semantics independently.
+cast edge to these functions has been established. The helper reads runtime
+`+0x18` for some 40-byte ITEM.IBS records, while related selectors update
+separate `+0x35..+0x38` state. No evidence identifies those indices as the
+composer's entries or connects the helper to the displayed Magic window. Trace
+the action-selector path and identify this saved field's semantics
+independently.
 The disassembly scan and complete decompilation are retained in the operator-
 managed external evidence bundle's `field-consumer-scan-20261029/` directory.
+The narrowed ITEM.IBS eligibility interpretation and preserved selector/field
+logs are also recorded in
+[`nexus-bkr-item-action-eligibility-20261029`](../../parity-evidence/verification/nexus-bkr-item-action-eligibility-20261029/README.md).
 
 Re-run against retained authentic captures with:
 

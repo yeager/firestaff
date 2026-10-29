@@ -112,16 +112,18 @@ for positive values. Its caller invokes it in one mode path. This establishes
 a presentation use, but not the fields' interpretation or a coordinate
 system. The complete consumer set and semantics for both fields, the rest of
 the record, the source-owned post-load consumer, and Firestaff runtime
-integration remain open. Follow-up static analysis places `FUN_0603a472` and
-its related helpers on an ITEM.IBS action-selector path; the earlier four-entry
-Magic-validator interpretation was unsupported. The Magic composer does not
-call this helper, and no full-buffer submit or cast edge has been established.
-The `+0x18` threshold read is not yet connected to Magic. Trace the action-
-selector path and identify this saved field's semantics independently.
+integration remain open. Follow-up static analysis places `FUN_0603a472` on a
+four-index ITEM.IBS eligibility path; its helper reads runtime `+0x18` for
+some 40-byte records and its related selector state is `+0x35..+0x38`. The
+earlier four-entry Magic-validator interpretation conflated that selector with
+the composer's separate `+0x3d/+0x3e` buffer. No call from the composer or
+connection to a cast has been established. Identify the saved field's meaning
+and any relationship to the displayed Magic window independently.
 Reproduction and retained evidence are documented in
 [`nexus_sh2_startup_decompilation.md`](docs/nexus/nexus_sh2_startup_decompilation.md#continue-payload-transfer-2026-10-29).
-The Ghidra field-consumer scan is retained in the external
-`field-consumer-scan-20261029/` evidence bundle.
+The Ghidra field-consumer scan remains in the external evidence bundle; its
+relevant decompilation and caller logs are preserved in
+`parity-evidence/verification/nexus-bkr-item-action-eligibility-20261029/`.
 
 The four authentic BKR samples all contain `a3 88 96 80 80 00` at the start
 of every champion record. In the authentic Japanese Track 1 `RLOWFIX.BIN`,
@@ -575,10 +577,11 @@ not a fix and has not passed this real-media test.
   `FUN_060328c6` performs no mapping; Down changes the generic menu item index
   0→4 without proving that index 4 is a rune. The Nexus coordinate-to-selection
   table and glyph meanings,
-  final spell validator, and cast behavior remain open. Follow-up decompilation identifies `FUN_0603a472` and
-  row `+0x35` operations as an ITEM.IBS action-selector path, not a demonstrated
-  Magic validator; composer fields `+0x3d/+0x3e` are distinct from
-  `+0x35..+0x38`. Paired authentic captures now bind the six values to selected-
+  final spell validator, and cast behavior remain open. Follow-up decompilation
+  identifies `FUN_0603a472` as a four-index ITEM.IBS eligibility helper that
+  reads runtime `+0x18` for some records; its selector uses row `+0x35..+0x38`,
+  separate from composer `+0x3d/+0x3e`. Its relationship to the displayed Magic
+  window remains unproven. Paired authentic captures now bind the six values to selected-
   state Japanese `MENU.BPK` entries 107–112 and command-88 VDP1 source addresses
   and coordinates, without naming glyphs. Next, recover the retail
   coordinate-to-index table and trace full-buffer submission to any actual

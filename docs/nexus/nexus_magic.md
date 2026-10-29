@@ -12,9 +12,12 @@ Firestaff UI declarations and diagnostic C code do not prove retail semantics.
 - The Japanese retail `DM.BIN` has 32 big-endian halfwords at offset `0x38368`
   matching bytes in `src/nexus/nexus_v1_magic.c`. The match establishes bytes,
   not the complete table meaning or any cast effect.
-- Follow-up static analysis places the champion-row byte and
-  `FUN_0603a472` on a separate ITEM.IBS action-selector path. No evidence
-  currently connects that path to Magic composer validation or casting.
+- Follow-up static analysis places `FUN_0603a472` on a four-index ITEM.IBS
+  action-eligibility path. Its helper reads champion-row `+0x18` as one input
+  to an eligibility threshold, while related selectors update a distinct
+  `+0x35..+0x38` state block. Available caller and capture evidence does not
+  connect that path to the Magic composer at `+0x3d/+0x3e` or to casting. Do
+  not interpret its four indices as the composer's four rune entries.
 - The Japanese retail manual documents Control Pad Y opening the Magic window;
   an authentic Ymir `--debug` capture verifies that entry action from the
   retained gameplay checkpoint.
