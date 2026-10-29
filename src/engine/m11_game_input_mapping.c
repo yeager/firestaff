@@ -252,9 +252,13 @@ M12_MenuInput M11_TheronNavigationInputFromKeycode(int keycode)
         case SDLK_x: return M12_MENU_INPUT_BACK;
 #endif
         case SDLK_UP: return M12_MENU_INPUT_UP;
+        case SDLK_KP_8: return M12_MENU_INPUT_UP;
         case SDLK_DOWN: return M12_MENU_INPUT_DOWN;
+        case SDLK_KP_2: return M12_MENU_INPUT_DOWN;
         case SDLK_LEFT: return M12_MENU_INPUT_LEFT;
+        case SDLK_KP_4: return M12_MENU_INPUT_LEFT;
         case SDLK_RIGHT: return M12_MENU_INPUT_RIGHT;
+        case SDLK_KP_6: return M12_MENU_INPUT_RIGHT;
         default: return M12_MENU_INPUT_NONE;
     }
 }

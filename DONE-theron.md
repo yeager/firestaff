@@ -1,5 +1,15 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-29 — align keypad navigation keycode fallback
+
+Mapped keypad 8/2/4/6 in `M11_TheronNavigationInputFromKeycode()` to the same
+up/down/left/right tokens as the existing scancode route. Added paired
+regression assertions. A focused SDL3 check passed three loops. The broader
+`test_m11_gamepad_csb_input_bridge` binary reports two Nexus scancode
+assertion failures outside this Theron change; its four new Theron keypad
+assertions passed. This closes only host startup-navigation
+alias parity, not Theron gameplay mouse targeting.
+
 ## 2026-10-29 — make C1DF instruction tracing opt-in
 
 The capture flag `THERON_CAPTURE_POINTER_C1DF_TRACE` now controls the detailed
