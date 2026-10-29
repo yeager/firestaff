@@ -127,6 +127,7 @@ replay_post_dungeon_overlay=${THERON_CAPTURE_REPLAY_POST_DUNGEON_OVERLAY:-0}
 rng_consumer_sample_limit=${THERON_CAPTURE_RNG_CONSUMER_SAMPLE_LIMIT:-512}
 rng_consumer_window_limit=${THERON_CAPTURE_RNG_CONSUMER_WINDOW_LIMIT:-32}
 main_ram_consumer_sample_limit=${THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT:-65536}
+pce_fast_main_ram_consumer_range=${THERON_CAPTURE_PCE_FAST_MAIN_RAM_CONSUMER_RANGE:-}
 movement_data_read_sample_limit=${THERON_CAPTURE_MOVEMENT_DATA_READ_SAMPLE_LIMIT:-128}
 vdc_io_trace_limit=${THERON_CAPTURE_VDC_IO_TRACE_LIMIT:-65536}
 capture_pce_fast_vram_commit_trace=${THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE:-0}
@@ -270,6 +271,21 @@ if [[ ! "$main_ram_consumer_sample_limit" =~ ^[0-9]+$ ]] ||
    (( main_ram_consumer_sample_limit < 4096 || main_ram_consumer_sample_limit > 1048576 )); then
     printf '%s\n' 'FAIL: THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT must be an integer from 4096 through 1048576' >&2
     exit 1
+fi
+if [[ -n "$pce_fast_main_ram_consumer_range" ]]; then
+    if [[ "$capture_mednafen_module" != pce_fast ]] ||
+       [[ ! "$pce_fast_main_ram_consumer_range" =~ ^[[:xdigit:]]{1,6}-[[:xdigit:]]{1,6}$ ]]; then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_MAIN_RAM_CONSUMER_RANGE requires the pce_fast module and two hexadecimal addresses' >&2
+        exit 1
+    fi
+    range_first_text=${pce_fast_main_ram_consumer_range%%-*}
+    range_last_text=${pce_fast_main_ram_consumer_range#*-}
+    range_first=$((16#$range_first_text))
+    range_last=$((16#$range_last_text))
+    if (( range_first > range_last || range_last > 0x1FFFFF )); then
+        printf '%s\n' 'FAIL: PCE Fast consumer range must be ordered and end at or below 1fffff' >&2
+        exit 1
+    fi
 fi
 if [[ ! "$movement_data_read_sample_limit" =~ ^[0-9]+$ ]] ||
    (( movement_data_read_sample_limit < 1 || movement_data_read_sample_limit > 256 )); then
@@ -1612,7 +1628,7 @@ launch=(
     FIRESTAFF_THERON_PCE_FAST_TRACK02_INDEX1_FILE_OFFSET="$track02_index1_file_offset" \
     FIRESTAFF_THERON_PCE_FAST_TRACK02_SECTOR_BYTES="$track02_sector_bytes" \
     FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE="$main_ram_consumer_trace" \
-    FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE="${FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE:-}" \
+    FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE="$pce_fast_main_ram_consumer_range" \
     FIRESTAFF_THERON_SELECTED_RECORD_TRACE="$selected_record_trace" \
     FIRESTAFF_THERON_MAIN_RAM_CONSUMER_SAMPLE_LIMIT="$main_ram_consumer_sample_limit" \
     FIRESTAFF_THERON_MAIN_RAM_TARGET_TRACE="$main_ram_target_trace" \

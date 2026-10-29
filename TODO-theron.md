@@ -8991,14 +8991,30 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   Therefore the current consumer capture cannot show whether game-owned code
   reads the decoded output; its lack of `$0D` reads is unobserved, not evidence
   that no consumer exists.
+- The byte-join verifier was run against the authentic TRV2 capture. It
+  confirmed the single decoder return and all 5,064 ordered destination bytes
+  with SHA-256
+  `9adf13522e818ee49de16ac1020a7697c3416877e6bc6baa918840d7e963f8ee`; the
+  existing filtered consumer trace reports zero reads in that range. This is
+  still not evidence of a missing consumer because that trace did not observe
+  the `$0D` destination.
+- A second verifier now joins post-write reads using the shared PCE Fast event
+  sequence and reports equal-byte read candidates with physical PC and captured
+  code bytes. It deliberately does not label candidates as game-owned or claim
+  semantic use. Its synthetic boundary tests pass in three loops, and it parses
+  the authentic decoder stream with the expected output digest. It now rejects
+  legacy consumer traces without the shared-sequence header instead of treating
+  an unobserved destination as an empty read result.
 - An opt-in range is being added to the PCE Fast consumer probe:
   `FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE=0d0000-0d13c7`. It must
   remain disabled by default, reject malformed/out-of-bounds ranges, and keep
   the existing 65,536-event cap. The patch applies after the existing PCE Fast
   consumer instrumentation in an isolated TRV2 source copy. Compilation and
   an authentic capture remain unverified.
-- Next: validate patch application and compilation on TRV2, then make a fresh
-  authentic cold US capture. Require a code-byte-backed, non-System-Card PC to
-  read bytes from the `$23AD` destination range before claiming a gameplay
-  handoff. Keep the adjacent `$F425` ADPCM-buffer copy separate unless its own
-  source and game consumer are independently established.
+- Next: validate the shared-sequence patch application and compilation on TRV2,
+  then make a fresh authentic cold US capture with range
+  `0d0000-0d13c7`. Authenticate the reader's executing bytes and map before
+  identifying code ownership, then establish a coherent consumer and a later
+  gameplay/render transition. Keep the adjacent `$F425` ADPCM-buffer copy
+  separate unless its own source and game consumer are independently
+  established.

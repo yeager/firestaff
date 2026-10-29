@@ -26,7 +26,7 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
  {
 --- a/src/pce_fast/pce.cpp
 +++ b/src/pce_fast/pce.cpp
-@@ -111,8 +111,78 @@
+@@ -111,8 +111,80 @@
  void TheronTraceDirectMainRAMWrite(uint32 offset, uint8 old_value, uint8 value)
  {
   if(HuCPU.MPR[1] == 0xF8 && offset < 0x100)
@@ -35,6 +35,7 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +void TheronTraceMainRAMConsumerRead(uint32 logical_address, uint32 physical_address,
 +                                    uint8 value)
 +{
++ extern uint32 TheronTraceCDSharedEventSequence;
 + static FILE *trace = NULL;
 + static unsigned count = 0;
 + static unsigned per_offset[8192] = {};
@@ -93,10 +94,11 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +  trace = fopen(path, "w");
 +  if(!trace)
 +   return;
-+  fputs("source=mednafen-pce-fast-main-ram-consumer-read\n", trace);
++  fputs("source=mednafen-pce-fast-main-ram-consumer-read event_sequence_source=TheronTraceCDSharedEventSequence\n", trace);
 + }
-+ fprintf(trace, "main_ram_consumer_read sequence=%u logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x reader_code_bytes=%s a=%02x x=%02x y=%02x sp=%02x p=%02x\n",
-+         count++, logical_address & 0xFFFF, physical_address, value,
++ const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
++ fprintf(trace, "main_ram_consumer_read sequence=%u event_sequence=%u logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x reader_code_bytes=%s a=%02x x=%02x y=%02x sp=%02x p=%02x\n",
++         count++, event_sequence, logical_address & 0xFFFF, physical_address, value,
 +         TheronTraceInstructionPC, TheronTraceInstructionPhysicalPC,
 +         reader_code_bytes, HuCPU.A, HuCPU.X, HuCPU.Y, HuCPU.S, HuCPU.P);
 + fflush(trace);
