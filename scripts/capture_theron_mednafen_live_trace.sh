@@ -1285,6 +1285,7 @@ if [[ "$capture_pce_fast_vram_commit_trace" == 1 ]]; then
     fi
 fi
 pce_fast_party_ram_trace="${trace}.pce-fast-party-ram"
+pce_fast_pointer_ram_write_trace="${trace}.pce-fast-pointer-ram-write"
 save_manager_code_dump="${trace}.save-manager-code"
 command_ram_trace="${trace}.command-ram"
 command_consumer_trace="${trace}.command-consumer"
@@ -1333,6 +1334,7 @@ rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_comman
     "$vram_snapshot" "$vce_snapshot" "$vdc_state_snapshot" "$vdc_sat_snapshot" \
     "$vdc_io_trace" "$main_ram_snapshot" "$bram_snapshot" \
     "$pce_fast_main_ram_snapshot" "$pce_fast_party_ram_trace" \
+    "$pce_fast_pointer_ram_write_trace" \
     "$pce_fast_a1a9_init_trace" \
     "$command_ram_trace" "$command_code_snapshot" "$command_ram_before_snapshot" \
     "$command_ram_after_snapshot" "$transition_receipt" \
@@ -1600,6 +1602,7 @@ launch=(
     FIRESTAFF_THERON_PCE_FAST_A1B7_BMT_WRITE_TRACE="$pce_fast_a1b7_bmt_write_trace" \
     FIRESTAFF_THERON_PCE_FAST_A1A9_INIT_TRACE="$pce_fast_a1a9_init_trace" \
     FIRESTAFF_THERON_PCE_FAST_PARTY_RAM_TRACE="$pce_fast_party_ram_trace" \
+    FIRESTAFF_THERON_POINTER_RAM_WRITE_TRACE="$pce_fast_pointer_ram_write_trace" \
     FIRESTAFF_THERON_SAVE_MANAGER_CODE_DUMP="$save_manager_code_dump" \
     FIRESTAFF_THERON_COMMAND_RAM_TRACE="$command_ram_trace" \
     FIRESTAFF_THERON_COMMAND_CONSUMER_TRACE="$command_consumer_trace" \
@@ -1901,7 +1904,7 @@ if [[ ! -s "$trace" ]] || ! grep -Fqx 'source=mednafen-pce-instrumented' "$trace
     printf '%s\n' 'FAIL: Mednafen did not produce a provenance-marked live trace' >&2
     exit 1
 fi
-if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$cd_data_port_read_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" "$pce_fast_a1b7_bmt_write_trace" "$pce_fast_a1a9_init_trace" "$pce_fast_movement_context_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace" ${huc6280_23ad_trace:+"$huc6280_23ad_trace"}; then
+if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$cd_data_port_read_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" "$pce_fast_a1b7_bmt_write_trace" "$pce_fast_a1a9_init_trace" "$pce_fast_pointer_ram_write_trace" "$pce_fast_movement_context_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace" ${huc6280_23ad_trace:+"$huc6280_23ad_trace"}; then
     printf '%s\n' 'FAIL: Mednafen emitted a literal backslash-n in a trace record' >&2
     exit 1
 fi
@@ -2356,6 +2359,7 @@ transition_rng_code_window_count=$(trace_count '^rng_code_window ' "$rng_code_tr
 transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$input_trace")
 mouse_trace_row_count=$(trace_count '^(guest_read|guest_write|device_)' "$mouse_trace")
 pointer_c1df_trace_row_count=$(trace_count '^(pointer_pc|pointer_regs|pointer_c1df_begin|pointer_c1df_return|pointer_c1df_step_limit) ' "$mouse_trace")
+pointer_ram_write_row_count=$(trace_count '^pointer_ram_write ' "$pce_fast_pointer_ram_write_trace")
 transition_vdc_io_write_count=$(trace_count '^vdc_io_write ' "$vdc_io_trace")
 transition_command_ram_write_count=$(trace_count '^command_ram_write ' "$command_ram_trace")
 transition_command_input_write_count=$(trace_count '^input_buffer_write ' "$command_ram_trace")
@@ -2505,6 +2509,7 @@ fi
     printf 'mouse_trace_rows=%s\n' "$mouse_trace_row_count"
     printf 'pointer_c1df_trace_requested=%s\n' "$capture_pointer_c1df_trace"
     printf 'pointer_c1df_trace_rows=%s\n' "$pointer_c1df_trace_row_count"
+    printf 'pointer_ram_write_trace_rows=%s\n' "$pointer_ram_write_row_count"
     if [[ "$capture_mednafen_module" == pce ]]; then
         printf 'vdc_vram_snapshot_bytes=65536\n'
         printf 'main_ram_snapshot_bytes=8192\n'

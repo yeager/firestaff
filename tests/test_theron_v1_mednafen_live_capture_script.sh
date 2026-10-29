@@ -1018,6 +1018,14 @@ if ! grep -Fq -- 'FIRESTAFF_THERON_PCE_FAST_POINTER_TRACE_SUPPORT' "$build_scrip
     printf '%s\n' 'FAIL: C1DF pointer tracing must build and capture with the PCE Fast core' >&2
     exit 1
 fi
+if ! grep -Fq -- 'A == 0x21D6 || (A >= 0x28FC && A <= 0x2905)' "$pointer_instrumenter" ||
+   ! grep -Fq -- 'TheronPointerAddress(A) || TheronPointerCandidateAddress(A) ||' "$pointer_instrumenter" ||
+   ! grep -Fq -- 'FIRESTAFF_THERON_POINTER_RAM_WRITE_TRACE' "$pointer_instrumenter" ||
+   ! grep -Fq -- 'FIRESTAFF_THERON_POINTER_RAM_WRITE_TRACE="$pce_fast_pointer_ram_write_trace"' "$script" ||
+   ! grep -Fq -- 'pointer_ram_write_trace_rows=%s' "$script"; then
+    printf '%s\n' 'FAIL: mouse pointer traces must watch and report the candidate RAM writes' >&2
+    exit 1
+fi
 if ! python3 - "$pointer_instrumenter" <<'PY'
 import ast
 import re

@@ -288,6 +288,10 @@ def instrument(root: Path) -> None:
         "        A == 0x2E3B || A == 0x2E7A || A == 0x2E7B ||\n"
         "        A == 0x2EBA || A == 0x2EBB;\n"
         "}\n"
+        "static bool TheronPointerCandidateAddress(unsigned int A)\n"
+        "{\n"
+        " return A == 0x21D6 || (A >= 0x28FC && A <= 0x2905);\n"
+        "}\n"
         "static bool TheronPointerCodePC(unsigned int pc)\n"
         "{\n"
         " return TheronPointerC1DFActive ||\n"
@@ -505,10 +509,88 @@ def instrument(root: Path) -> None:
         "{\n"
         " uint8 wmpr = HuCPU.MPR[A >> 13];\n"
         " uint32 physical = (wmpr << 13) | (A & 0x1FFF);\n"
-        " if(TheronPointerAddress(A) ||\n"
+        " if(TheronPointerAddress(A) || TheronPointerCandidateAddress(A) ||\n"
         "    TheronPointerCodePC(TheronTraceInstructionPC))\n"
         "  TheronTracePointerAccess(\"guest_write\", A, physical, V, wmpr);\n"
         " HuCPU.PCEWrite[wmpr](physical, V);\n"
+        "}\n",
+    )
+    replace_once(
+        root,
+        "src/pce_fast/pce.cpp",
+        "void TheronTraceDirectMainRAMWrite(uint32 offset, uint8 old_value, uint8 value)\n"
+        "{\n"
+        " (void)old_value;\n"
+        " if(HuCPU.MPR[1] == 0xF8 && offset < 0x100)\n"
+        "  TheronTracePartyRAMWrite(offset, value);\n"
+        "}\n",
+        "static void TheronTracePointerCandidateRAMWrite(uint32 offset,\n"
+        "                                                uint8 old_value,\n"
+        "                                                uint8 value)\n"
+        "{\n"
+        " static FILE *trace = NULL;\n"
+        " static unsigned count = 0;\n"
+        " if(IsSGX || old_value == value ||\n"
+        "    !(offset == 0x01D6 ||\n"
+        "      (offset >= 0x08FC && offset <= 0x0905)) || count >= 4096)\n"
+        "  return;\n"
+        " if(!trace)\n"
+        " {\n"
+        "  const char *path = getenv(\"FIRESTAFF_THERON_POINTER_RAM_WRITE_TRACE\");\n"
+        "  if(!path || !*path) return;\n"
+        "  trace = fopen(path, \"w\");\n"
+        "  if(!trace) return;\n"
+        "  fputs(\"source=mednafen-pce-fast-pointer-ram-write\\n\", trace);\n"
+        " }\n"
+        " fprintf(trace, \"pointer_ram_write sequence=%u logical=%04x physical=%06x old=%02x value=%02x writer_pc=%04x writer_physical_pc=%06x\\n\",\n"
+        "         count++, 0x2000 + (offset & 0x1FFF),\n"
+        "         0x1F0000 + (offset & 0x1FFF), old_value, value,\n"
+        "         TheronTraceInstructionPC, TheronTraceInstructionPhysicalPC);\n"
+        " fflush(trace);\n"
+        "}\n"
+        "void TheronTraceDirectMainRAMWrite(uint32 offset, uint8 old_value, uint8 value)\n"
+        "{\n"
+        " TheronTracePointerCandidateRAMWrite(offset, old_value, value);\n"
+        " if(HuCPU.MPR[1] == 0xF8 && offset < 0x100)\n"
+        "  TheronTracePartyRAMWrite(offset, value);\n"
+        "}\n",
+    )
+    replace_once(
+        root,
+        "src/pce_fast/pce.cpp",
+        "static DECLFW(BaseRAMWrite)\n"
+        "{\n"
+        " TheronTracePartyRAMWrite(A, V);\n"
+        " const size_t offset = (size_t)A - (0xF8 * 8192);\n"
+        " TheronTraceA1B7BMTWrite(A, offset, BaseRAM[offset], V);\n"
+        " BaseRAM[offset] = V;\n"
+        "}\n",
+        "static DECLFW(BaseRAMWrite)\n"
+        "{\n"
+        " TheronTracePartyRAMWrite(A, V);\n"
+        " const size_t offset = (size_t)A - (0xF8 * 8192);\n"
+        " TheronTraceA1B7BMTWrite(A, offset, BaseRAM[offset], V);\n"
+        " TheronTracePointerCandidateRAMWrite(offset, BaseRAM[offset], V);\n"
+        " BaseRAM[offset] = V;\n"
+        "}\n",
+    )
+    replace_once(
+        root,
+        "src/pce_fast/pce.cpp",
+        "static DECLFW(BaseRAMWrite_Mirrored)\n"
+        "{\n"
+        " TheronTracePartyRAMWrite(A, V);\n"
+        " const size_t offset = A & 0x1FFF;\n"
+        " TheronTraceA1B7BMTWrite(A, offset, BaseRAM[offset], V);\n"
+        " BaseRAM[offset] = V;\n"
+        "}\n",
+        "static DECLFW(BaseRAMWrite_Mirrored)\n"
+        "{\n"
+        " TheronTracePartyRAMWrite(A, V);\n"
+        " const size_t offset = A & 0x1FFF;\n"
+        " TheronTraceA1B7BMTWrite(A, offset, BaseRAM[offset], V);\n"
+        " TheronTracePointerCandidateRAMWrite(offset, BaseRAM[offset], V);\n"
+        " BaseRAM[offset] = V;\n"
         "}\n",
     )
 

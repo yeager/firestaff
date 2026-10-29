@@ -115,6 +115,23 @@
   original-session trace, then reproduce the `$74` control before sweeping
   boundaries. Do not publish new hitboxes or mouse actions from these probes.
 
+## 2026-10-29 — isolate Japanese pointer-table writes by input condition
+
+- Four paired Japanese Rev. 1 PCE Fast reference captures reused one authentic
+  Ak-Tu-Ba save state and instrumented binary. The zero-input and movement-only
+  controls made no writes in the watched `$28FC..$2905` BaseRAM range. Button
+  I-only input wrote candidate bytes at `$28FE/$28FF` and `$2902/$2903`; the
+  mixed movement-plus-Button-I run also wrote `$28FC/$2900` and `$50` at
+  `$2904/$2905`. Writer PCs include `$CCD8`, `$CCDD`, `$CCE2`, and `$D39D`.
+- This isolates an input-linked write difference but does not identify the
+  pointer table, cursor coordinates, hit target, or command semantics. All
+  captures lack authenticated CD-to-RAM provenance because the save state
+  bypasses cold startup. See the
+  [candidate-address write isolation report](docs/source-lock/theron-disassembly/theron-jp-pointer-table-write-isolation-20261029.md).
+- Next: disassemble the bounded writer windows, join the bytes to the original
+  pointer descriptor and command consumer, and reproduce the evidence in a
+  cold original-media session before changing native hit testing.
+
 ## 2026-10-28 — map Theron panel clicks against presented pixel bounds
 
 - The authenticated USA Track 02 SDL integration test failed at the first
