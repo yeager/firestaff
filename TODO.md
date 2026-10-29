@@ -8,10 +8,14 @@ seven available alternate-edition routes: DM1 PC, Atari ST, and Amiga; CSB
 Amiga and Atari ST; DM2 PC and Amiga. The unsupported-platform fail-fast
 matrix and CLI option-form test also passed (2/2). The tested app binary was
 built before `5b65ec09`, whose only change is the DM1 Atari STX test source;
-the runtime code therefore matches this checkout. These SDL dummy runs verify
-only the named launcher selections and runtime handoffs, not native display,
-audio, physical input, untested editions, or complete game parity. No source
-behavior change was needed and no release was created.
+the runtime code therefore matches this checkout. The three authentic-media
+DM1 PC, CSB FM Towns, and DM2 FM Towns Swedish scan/debug localization checks
+also passed (3/3). Finally, mouse-driven Return to Menu passed for DM1 PC, CSB
+FM Towns, and DM2 FM Towns; each rescan reported all five installed games
+available (3/3). These SDL dummy runs verify only the named launcher
+selections and runtime handoffs, not native display, audio, physical input,
+untested editions, or complete game parity. No source behavior change was
+needed and no release was created.
 
 The current five-game startup evidence matrix and remaining Nexus/Theron
 runtime-entry gaps are consolidated in
