@@ -1,4 +1,5 @@
 #include "csb_v1_atari_st_animation_discovery.h"
+#include "fs_portable_compat.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -14,6 +15,50 @@ static const char *const g_csb_atari_animation_runtime_chain_hashes[] = {
     "18abdf771f37e8953bf95ba2f462469d", /* FTLCODE, Atari ST CSB 2.0 */
     NULL
 };
+
+static int csb_v1_atari_st_animation_discover_nested_utility(
+    const char *archive_path,
+    CSB_V1_AtariStAnimationDiscoveryReceipt *out)
+{
+    static const char *const utility_members[] = {
+        "Floppy Disks STX/Chaos Strikes Back for Atari ST Utility Disk "
+            "v2.1 (English).stx",
+        "Floppy Disks STX/Chaos Strikes Back for Atari ST Utility Disk "
+            "v2.0 (English).stx"
+    };
+    char script_path[ASSET_PATH_MAX];
+    char data_path[ASSET_PATH_MAX];
+    size_t utility_index;
+
+    if (!archive_path || !archive_path[0] || !out) return 0;
+    for (utility_index = 0u;
+         utility_index < sizeof(utility_members) / sizeof(utility_members[0]);
+         ++utility_index) {
+        int script_length = snprintf(script_path, sizeof(script_path),
+            "%s::%s::ANIMATE.SCR", archive_path,
+            utility_members[utility_index]);
+        int data_length = snprintf(data_path, sizeof(data_path),
+            "%s::%s::ANIMATE.DAT", archive_path,
+            utility_members[utility_index]);
+        if (script_length < 0 ||
+            (size_t)script_length >= sizeof(script_path) || data_length < 0 ||
+            (size_t)data_length >= sizeof(data_path) ||
+            !asset_file_matches_md5(script_path,
+                g_csb_atari_animation_hashes[0]) ||
+            !asset_file_matches_md5(data_path,
+                g_csb_atari_animation_hashes[1])) {
+            continue;
+        }
+        snprintf(out->script_path, sizeof(out->script_path), "%s", script_path);
+        snprintf(out->data_path, sizeof(out->data_path), "%s", data_path);
+        snprintf(out->source_identity, sizeof(out->source_identity), "%s",
+                 archive_path);
+        out->source_is_virtual = 1;
+        out->valid = 1;
+        return 1;
+    }
+    return 0;
+}
 
 static int csb_v1_atari_st_animation_source_identity(
     const char *path, char out[ASSET_PATH_MAX], int *is_virtual)
@@ -63,6 +108,20 @@ int csb_v1_atari_st_animation_discover(
     if (!search_root || !search_root[0]) return 0;
     memset(paths, 0, sizeof(paths));
     memset(matched, 0, sizeof(matched));
+    if (csb_v1_atari_st_animation_discover_nested_utility(search_root, out)) {
+        return 1;
+    }
+    {
+        char archive_path[ASSET_PATH_MAX];
+        if (FSP_DirExists(search_root) &&
+            FSP_FindUniqueFileIgnoreCase(search_root,
+                "Game,Chaos_Strikes_Back,Atari_ST,Software.7z",
+                archive_path, sizeof(archive_path)) == 1 &&
+            csb_v1_atari_st_animation_discover_nested_utility(archive_path,
+                                                               out)) {
+            return 1;
+        }
+    }
     if (asset_find_all_by_md5_list(search_root, g_csb_atari_animation_hashes,
             paths, matched, 2, 8) != 2 || !matched[0] || !matched[1] ||
         !csb_v1_atari_st_animation_source_identity(paths[0], script_identity,

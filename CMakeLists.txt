@@ -42332,13 +42332,11 @@ add_executable(test_nexus_v1_dgn_material_raster
     add_executable(test_csb_v1_atari_st_animation_discovery
         tests/test_csb_v1_atari_st_animation_discovery.c
         src/csb/csb_v1_atari_st_animation_discovery.c
-        src/shared/asset_find_by_hash.c
-        src/shared/fs_portable_compat.c
     )
     target_include_directories(test_csb_v1_atari_st_animation_discovery PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
-    target_link_libraries(test_csb_v1_atari_st_animation_discovery PRIVATE firestaff_zip_extract)
+    target_link_libraries(test_csb_v1_atari_st_animation_discovery PRIVATE firestaff_m12)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_atari_st_animation_discovery PRIVATE
             -std=c99 -Wall -Wextra -pedantic -O2)

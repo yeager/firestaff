@@ -6800,6 +6800,7 @@ static int m11_csb_prepare_atari_st_animation_handoff(
     const CSB_V1_BootProfile *profile;
     CSB_V1_AtariStAnimationTraceReceipt trace;
     CSB_V1_AtariStAnimationSession *session = NULL;
+    char sibling_utility_root[FSP_PATH_MAX];
 
     if (!state || !state->csbBootProfile) return 0;
     profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
@@ -6827,16 +6828,40 @@ static int m11_csb_prepare_atari_st_animation_handoff(
                 state->csbAtariStAnimationSoundBytes) || !trace.valid ||
             trace.waited_vbl_count == 0u) {
             csb_v1_atari_st_animation_session_close(session);
-            return 0;
+            session = NULL;
+            sibling_utility_root[0] = '\0';
+            if (!FSP_DirExists(profile->utility_search_root) ||
+                !FSP_ParentDir(sibling_utility_root,
+                    sizeof(sibling_utility_root), profile->utility_search_root) ||
+                !csb_v1_atari_st_animation_session_open(sibling_utility_root,
+                    &session, &trace,
+                    state->csbAtariStAnimationSoundData,
+                    state->csbAtariStAnimationSoundBytes) || !trace.valid ||
+                trace.waited_vbl_count == 0u) {
+                csb_v1_atari_st_animation_session_close(session);
+                fprintf(stderr,
+                        "firestaff: csb-atari-animation unavailable asset=%s utility=%s\n",
+                        profile->asset_root,
+                        profile->utility_search_root);
+                return 0;
+            }
+            state->csbAtariStAnimationSession = session;
+            snprintf(state->csbAtariStAnimationSourceRoot,
+                     sizeof(state->csbAtariStAnimationSourceRoot), "%s",
+                     sibling_utility_root);
+        } else {
+            state->csbAtariStAnimationSession = session;
+            snprintf(state->csbAtariStAnimationSourceRoot,
+                     sizeof(state->csbAtariStAnimationSourceRoot), "%s",
+                     profile->utility_search_root);
         }
-        state->csbAtariStAnimationSession = session;
-        snprintf(state->csbAtariStAnimationSourceRoot,
-                 sizeof(state->csbAtariStAnimationSourceRoot), "%s",
-                 profile->utility_search_root);
     }
     if (trace.played_sound_count >
         CSB_V1_ATARI_ST_ANIMATION_MAX_PLAYED_SOUNDS) return 0;
     state->csbAtariStAnimationEndVbl = trace.waited_vbl_count;
+    fprintf(stderr, "firestaff: csb-atari-animation source=%s waited-vbl=%u\n",
+            state->csbAtariStAnimationSourceRoot,
+            (unsigned int)trace.waited_vbl_count);
     state->csbAtariStAnimationSoundCount = trace.played_sound_count;
     memset(state->csbAtariStAnimationSoundPlayed, 0,
            sizeof(state->csbAtariStAnimationSoundPlayed));
@@ -26433,7 +26458,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         sibling_media_dir[0] = '\0';
         if ((!utility_search_dir || !utility_search_dir[0] ||
              (dd && strcmp(utility_search_dir, dd) == 0)) && dd && dd[0] &&
-            FSP_FileExists(dd) &&
+            FSP_PathExists(dd) &&
             FSP_ParentDir(sibling_media_dir, sizeof(sibling_media_dir), dd)) {
             utility_search_dir = sibling_media_dir;
         }

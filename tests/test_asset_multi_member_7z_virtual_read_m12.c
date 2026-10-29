@@ -83,6 +83,41 @@ int main(void)
         free(bytes);
     }
 
+    {
+        char virtual_path[ASSET_PATH_MAX * 2];
+        static const char *const utility_members[] = {
+            "ANIMATE.SCR", "ANIMATE.DAT"
+        };
+        static const char *const utility_disks[] = {
+            "Floppy Disks STX/Chaos Strikes Back for Atari ST Utility Disk "
+                "v2.1 (English).stx",
+            "Floppy Disks STX/Chaos Strikes Back for Atari ST Utility Disk "
+                "v2.0 (English).stx"
+        };
+        static const char *const utility_md5[] = {
+            "4174d6de5384323072b185640ed31723",
+            "9f8feb269c959c9fe722ac08f99d9c35"
+        };
+        {
+            int disk_index;
+            for (disk_index = 0; disk_index < 2; ++disk_index) {
+                for (i = 0; i < 2; ++i) {
+                    if (snprintf(virtual_path, sizeof(virtual_path),
+                            "%s::%s::%s", archive,
+                            utility_disks[disk_index], utility_members[i]) < 0 ||
+                        !asset_file_matches_md5(virtual_path,
+                            utility_md5[i])) {
+                        fprintf(stderr,
+                            "FAIL: nested Atari utility asset %s in %s was "
+                            "not read and hash verified\n",
+                            utility_members[i], utility_disks[disk_index]);
+                        return 1;
+                    }
+                }
+            }
+        }
+    }
+
     puts("M12 authentic CSB Atari multi-member 7z read and scan: PASS");
     return 0;
 }

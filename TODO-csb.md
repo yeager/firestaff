@@ -111,6 +111,22 @@ hash remains unchanged. This closes that startup/decoder gap only; visual,
 audio, physical-input and campaign parity remain open. The loose authentic
 A33M `Graphics.DAT` remains available for its separate runtime checks.
 
+2026-10-29 CSB Atari ST intro regression: a direct launch from the usual
+`.firestaff/data/csb` layout found the selected v2.1 campaign STX but missed
+the matching Utility STX nested in `Game,Chaos_Strikes_Back,Atari_ST,Software.7z`.
+It silently fell through to the unrelated generic startup route and left the
+intro after about two seconds. Discovery now checks the parent media directory,
+hash-verifies `ANIMATE.SCR` and `ANIMATE.DAT` inside the authentic v2.0/v2.1
+Utility STX members in memory, and binds the script's 2,036-VBlank handoff.
+The original-media CLI trace reaches the loaded dungeon after about 40.7
+seconds. `asset_multi_member_7z_virtual_read_m12`,
+`csb_v1_atari_st_animation_discovery_unit`,
+`csb_v1_atari_st_vblank`, `csb_v1_atari_original_archive_cli_boot`, and
+`csb_v1_atari_utility_mini_cli_resume` passed with the installed original
+media. This closes the direct-launch intro timing regression and verifies the
+tested CLI/menu movement and resume paths only; sustained campaign, physical
+display/audio, and pixel parity remain open.
+
 2026-10-27 Amiga MEDIA720 F0107 placement: the runtime now resolves the source
 C696 wall-ornament anchor from authenticated Amiga `Graphics.DAT` item 696 and
 applies source MEDIA720 F0107 scales (C30 x/C14 y for the outer D3 side views,
