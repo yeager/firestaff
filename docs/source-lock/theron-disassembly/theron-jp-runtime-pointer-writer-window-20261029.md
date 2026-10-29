@@ -74,8 +74,11 @@ Button I samples with the new binary (`r12`) and the earlier binary (`r13`)
 produced only the four writes above; both captures had 2,988 input
 transactions, while `r7` had 1,909. The additional `$2904/$2905` result is
 therefore not yet reproducible and must not be treated as click semantics.
-The `$D39D` routine still needs a runtime opcode window from a reproducible
-input sequence.
+The static `$D395` window is now decoded in both regional binaries, but the
+older `$D39D` logical-PC label is not bound to that candidate code. It still
+needs a same-session trace with executed opcode bytes, active MPRs, physical
+PC and source-LBA provenance; see the
+[`$D39D` source-disassembly note](theron-d39d-static-source-disassembly-20261029.md).
 
 Private sidecars and save-state remain on TRV2. No game media, save-state,
 firmware, or raw RAM snapshot was added to Git. This reference disassembly

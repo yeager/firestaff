@@ -17,6 +17,29 @@
   controlled mouse deltas with game-owned pointer coordinates and the original
   hover/click command result. Do not infer hitboxes from save-state runs.
 
+## 2026-10-29 — qualify saved-state `$D39D` command-PC attribution
+
+- A static disassembly of the `$D395` window in both authentic regional Track
+  02 files shows a bounded indexed-record loop. It does not directly read
+  `$2905` or mouse coordinates. USA and JP window offsets, hashes and the
+  regional helper-call variants are recorded in
+  [the `$D39D` source disassembly](docs/source-lock/theron-disassembly/theron-d39d-static-source-disassembly-20261029.md).
+- Earlier saved-state instrumentation reports `$2905` accesses at `$D395` and
+  `$D3A0`, but those static locations are `STZ $BA` and an operand byte if the
+  matched retail bank is active. Keep the RAM observations; treat their PC
+  attribution as unresolved until a live MPR/physical-PC/opcode trace is joined
+  to authenticated CD-to-RAM provenance. The old traces do not identify a
+  pointer routine, command consumer, hitbox or world-state effect.
+- Three additional standard-PCE loops with `dx=4` plus Button I produced
+  byte-identical command/consumer sidecars to zero-delta-plus-Button-I and the
+  earlier large-delta control. The device logged the input, but guest pointer
+  fields and `$2905` observations did not change. This saved-state/script route
+  does not calibrate mouse motion; all runs remain transition/provenance
+  blocked. See the [bounded matched-control report](docs/source-lock/theron-disassembly/theron-scripted-mouse-delta-replay-20261029.md).
+- Next: capture the logical and physical PC, MPR, executed opcode bytes and
+  effective address for a repeated authenticated mouse control; then resolve
+  the caller and source LBA before changing direct native world-click behavior.
+
 ## 2026-10-29 — standard PCE mouse scripts honor bounded repeats; coordinate join remains open
 
 - The Mednafen mouse-script instrumenter now inserts one shared parser into the
@@ -299,10 +322,12 @@
   snapshot reported BaseRAM `$203F/$2040/$2041 = 01/02/03` in all three Button
   I captures.
 - The save-state captures still have `transition=missing` and zero
-  authenticated CD-to-RAM receipts. This verifies the original command queue
-  route from an authentic saved gameplay state, not the runtime media-sector
-  source, a world-click effect, or complete native mouse parity. Details and
-  hashes: [standard-PCE mouse command trace](docs/source-lock/theron-disassembly/theron-us-scripted-mouse-state-compatibility-20261027.md).
+  authenticated CD-to-RAM receipts. They record an input-linked `$2905`
+  observation from an authentic saved gameplay state, but do not verify which
+  code consumed or cleared it: later static comparison found that the reported
+  `$D395/$D3A0` PCs do not match those accesses in the candidate retail window.
+  The runtime bank and source remain unbound; see the
+  [`$D39D` attribution correction](docs/source-lock/theron-disassembly/theron-d39d-static-source-disassembly-20261029.md).
 
 ## 2026-10-27 — USA command-dispatch bytes map to seven Track 02 candidates
 
@@ -316,14 +341,18 @@
   image, and these duplicate spans do not identify which source copy supplied
   the runtime page.
 - The three repeated standard-PCE Button I captures have identical `$2905`
-  dispatch reads and identical code-page SHA-256
+  RAM observations and identical code-page SHA-256
   `57920b254fe1199799052879146b96731638afc41ebe03ce17db5e1d21e842ca`.
-  This strengthens byte-window reproducibility from the authentic save state,
-  while `transition=missing` and zero authenticated CD-to-RAM receipts remain.
+  This strengthens observation repeatability from the authentic save state,
+  but not the reported logical PC attribution or code identity: `transition=missing`
+  and zero authenticated CD-to-RAM receipts remain.
 - A retail-source regression scans the authentic USA Track 02 hash for all
   four observed runtime windows and pins the seven candidate offsets. This is
   static source correlation; a cold-start CD-sector-to-bank receipt, a
-  world-state effect, and native mouse parity remain open.
+  world-state effect, and native mouse parity remain open. The later `$D395`
+  disassembly shows the captured `$D395/$D3A0` access labels do not match those
+  retail instructions when the candidate bank is active; see the attribution
+  correction above.
 
 Details: [USA command-dispatch source candidates](docs/source-lock/theron-disassembly/theron-us-command-dispatch-source-candidates-20261027.md).
 
@@ -8670,3 +8699,17 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   Next, obtain a source-bound runtime capture that joins mouse input to a
   game-owned cursor/target update before implementing dungeon coordinate
   mapping. Native Theron mouse parity remains open.
+
+## 2026-10-29 — fix PCE Fast VCE register 5 capture validation
+
+- A fresh cold JP trace was rejected by the capture wrapper despite containing
+  a valid HuC6260 register 5 write (`input=01 old=120 value=120`). Mednafen
+  1.32.1 applies input bit 0 to the palette high bit, while the wrapper
+  incorrectly checked bit 1.
+- Updated the wrapper's expected-value check and added a regression assertion
+  to the live-capture script test. The focused test passed three consecutive
+  runs and `git diff --check` is clean.
+- The pending high-limit capture should preserve enough VWR records for
+  source-graphics chronology validation. Source-bound handoff and complete
+  renderer evidence remain open; the earlier rejected wrapper run is not a
+  complete capture.

@@ -27,9 +27,9 @@ The movement-only result is distinct from the Button I-only result: `r9`
 produced no writes in the watched range, while `r10` wrote `$3C` to `$28FE`
 and `$28FF` from PC `$CCDD`, and `$78` to `$2902` and `$2903` from PC `$CCE2`.
 The mixed `r7` run also wrote `$3C` to `$28FC`, `$78` to `$2900`, and `$50`
-to `$2904` and `$2905`; the original later cleared `$2904/$2905` from
-`$D39D`. This associates writes with the mixed input condition but does not
-show which movement/click interaction selected them.
+to `$2904` and `$2905`; instrumentation attributed a later clear to `$D39D`.
+This associates the RAM observations with the mixed input condition but does
+not show which movement/click interaction selected them.
 
 The 8 KiB final BaseRAM snapshot hashes were:
 
@@ -51,11 +51,14 @@ coordinate, hit target, or command meaning. In particular, `r10` did not write
 trigger or a valid hit region. Do not implement or document new hitboxes from
 these observations.
 
-Next, disassemble the bounded writer windows around `$CCD8`, `$CCDD`, `$CCE2`,
-and `$D39D`, identify whether the candidate bytes belong to a pointer table,
-and reproduce the same result in a cold original-media session with
-authenticated loader provenance. Firestaff's native world-click path and
-state-driven renderer remain open.
+Next, bind the bounded writer windows around `$CCD8`, `$CCDD`, `$CCE2`, and the
+reported `$D39D` access to the executed bank and source. A static `$D395`
+disassembly is now available, but the old `$D39D` logical-PC label does not
+match the candidate retail instruction stream when that mapping is active; see
+the [`$D39D` source-disassembly note](theron-d39d-static-source-disassembly-20261029.md).
+Reproduce the pointer/command effect in a cold original-media session with
+authenticated loader provenance before identifying a target. Firestaff's
+native world-click path and state-driven renderer remain open.
 
 Private traces and save-state remain on TRV2 in the four capture directories
 whose names end in `r7`, `r8`, `r9`, and `r10` under

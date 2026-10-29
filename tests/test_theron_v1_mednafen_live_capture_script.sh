@@ -836,6 +836,11 @@ if ! grep -Fq 'mednafen_1.32.1_theron_vram_vce_snapshot.patch' "$build_script" |
     printf 'FAIL: live capture must retain same-instant VDC VRAM, VCE palette and HuC6270 register snapshots\n' >&2
     exit 1
 fi
+if ! grep -Fq 'old_color % 256 + (input_byte % 2) * 256' "$script" ||
+   grep -Fq 'int(input_byte / 2) % 2' "$script"; then
+    printf 'FAIL: PCE Fast VCE register 5 validation must use input bit 0 for the color high bit\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'mednafen_1.32.1_theron_vdc_io_trace.patch' "$build_script" ||
    ! grep -Fq 'FIRESTAFF_THERON_VDC_IO_TRACE="$vdc_io_trace"' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_VDC_IO_TRACE_V1' "$script" ||
