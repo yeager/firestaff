@@ -50,6 +50,16 @@ typedef struct {
     uint32_t declared_payload_span;
 } Nexus_V1_SaturnBkrNexusPayloadReceipt;
 
+/* Receipt for one explicitly selected card file. This only validates the
+ * container and exposes proven metadata; it does not load or apply game
+ * state. */
+typedef struct {
+    int valid;
+    Nexus_V1_SaturnBkrReceipt card;
+    Nexus_V1_SaturnBkrEntry entry;
+    Nexus_V1_SaturnBkrNexusPayloadReceipt nexus_payload;
+} Nexus_V1_SaturnBkrNexusFileReceipt;
+
 /* Parse a Saturn Backup RAM image and copy each game payload, in directory
  * order, to caller-owned storage. The destination must be at least image_size
  * bytes, which bounds the total copied payload for every valid card image.
@@ -69,6 +79,13 @@ int nexus_v1_saturn_bkr_nexus_payload_probe(
     const Nexus_V1_SaturnBkrEntry *entry,
     const uint8_t *payload, size_t payload_size,
     Nexus_V1_SaturnBkrNexusPayloadReceipt *out_receipt);
+
+/* Probe one caller-selected path. The file is read only into bounded memory,
+ * and succeeds only when the card contains exactly one valid DMNEXUS__01
+ * payload. No card discovery or payload application occurs. */
+int nexus_v1_saturn_bkr_probe_nexus_file(
+    const char *path,
+    Nexus_V1_SaturnBkrNexusFileReceipt *out_receipt);
 
 #ifdef __cplusplus
 }

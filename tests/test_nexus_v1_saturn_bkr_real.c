@@ -111,8 +111,10 @@ int main(void)
         Nexus_V1_SaturnBkrEntry entries[NEXUS_V1_SATURN_BKR_MAX_ENTRIES];
         Nexus_V1_SaturnBkrReceipt receipt;
         Nexus_V1_SaturnBkrNexusPayloadReceipt payload_receipt;
+        Nexus_V1_SaturnBkrNexusFileReceipt file_receipt;
         int image_hash_valid;
         int parse_valid;
+        int file_probe_valid;
         int payload_hash_valid = 0;
         int malformed_payloads_rejected = 0;
         int path_length = snprintf(path, sizeof(path), "%s/%s", root,
@@ -128,6 +130,9 @@ int main(void)
         memset(entries, 0, sizeof(entries));
         memset(&receipt, 0, sizeof(receipt));
         memset(&payload_receipt, 0, sizeof(payload_receipt));
+        memset(&file_receipt, 0, sizeof(file_receipt));
+        file_probe_valid = nexus_v1_saturn_bkr_probe_nexus_file(
+            path, &file_receipt);
         image_hash_valid = payload &&
             firestaff_x68k_media_receipt_sha256_hex(
                 image, image_size, digest, sizeof(digest)) == 0 &&
@@ -218,7 +223,15 @@ int main(void)
                 }
             }
         }
-        if (!image_hash_valid || !parse_valid ||
+        if (!image_hash_valid || !parse_valid || !file_probe_valid ||
+            !file_receipt.valid || file_receipt.card.entry_count != 1U ||
+            strcmp(file_receipt.entry.name, "DMNEXUS__01") != 0 ||
+            file_receipt.entry.payload_bytes != 20480U ||
+            !file_receipt.nexus_payload.valid ||
+            file_receipt.nexus_payload.champion_count !=
+                corpus[file_index].champion_count ||
+            file_receipt.nexus_payload.party_leader_index !=
+                corpus[file_index].party_leader_index ||
             !receipt.valid || receipt.image_bytes != 32768U ||
             receipt.block_bytes != 64U || receipt.block_count != 512U ||
             receipt.entry_count != 1U || receipt.payload_bytes != 20480U ||
@@ -238,11 +251,12 @@ int main(void)
             !malformed_payloads_rejected || failed) {
             fprintf(stderr,
                     "FAIL: authentic BKR parse/hash mismatch: %s "
-                    "image_hash=%d parse=%d valid=%d geometry=%u/%u "
+                    "image_hash=%d parse=%d file_probe=%d valid=%d geometry=%u/%u "
                     "entries=%u payload=%u name=%s allocated=%u "
                     "payload_hash=%d roster=%u/%u leader=%u/%u records=%u+%u span=%u bad_payloads=%d\n",
                     corpus[file_index].filename, image_hash_valid, parse_valid,
-                    receipt.valid, receipt.block_bytes, receipt.block_count,
+                    file_probe_valid, receipt.valid, receipt.block_bytes,
+                    receipt.block_count,
                     receipt.entry_count, receipt.payload_bytes, entries[0].name,
                     entries[0].allocated_block_count, payload_hash_valid,
                     payload_receipt.champion_count,

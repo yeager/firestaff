@@ -234,6 +234,18 @@ Nexus menu/gameplay parity or full Theron parity.
 - The probe does not map these records into Firestaff's champion structure or
   implement Continue; the engine handoff remains open.
 
+## 2026-10-29 — Probe one explicitly selected Saturn card file
+
+- Added a path-based, read-only BKR file probe with a 4 MiB input bound. It
+  requires exactly one `DMNEXUS__01` entry and the existing verified payload
+  receipt, then returns only card and roster metadata; payload bytes are freed
+  and no gameplay state is applied.
+- Exercised the path probe against all four authentic, hash-pinned retail card
+  images. It does not scan the game-data directory or decide which card the
+  player selected.
+- The launcher and Load-panel flow still need explicit card-selection state,
+  full save mapping, and a verified engine handoff before Continue is playable.
+
 ## 2026-10-24 — Verified title and media diagnostics
 
 ## Available local retail media

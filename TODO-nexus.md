@@ -572,8 +572,10 @@ composition, then trace setting persistence and prove the audio, difficulty,
 and HUD effects in retail gameplay. Japanese Configuration-page parity
 remains open. The New Game loader receipt is now verified, but its viewport/HUD
 handoff remains blocked. Retail Continue payload transfer and a bounded set of
-runtime roster-field projections are verified in Ymir; Firestaff's BKR loading,
-complete state mapping, and playable Continue handoff remain open. See
+runtime roster-field projections are verified in Ymir. Firestaff can now probe
+one explicitly selected BKR file with bounded memory and return verified card
+and roster metadata, but the Load UI does not yet select a card or apply its
+payload. Complete state mapping and a playable Continue handoff remain open. See
 `docs/nexus/nexus_startup.md` and `docs/nexus/nexus_title.md`.
 
 The authentic English Ymir Configuration-page frame 119 source scan examined
