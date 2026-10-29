@@ -1,12 +1,16 @@
 # Five-game startup support gap analysis
 
-Release metadata checked against GitHub `main` at `a926fb22` on 2026-10-29.
-The latest published release is v3.0.419 (published on 2026-10-28 from
-`71bf83b2`). Its GitHub Actions run completed all nine jobs successfully.
-The current `main` revision `a926fb22` is later than that tag. Its verification
-Actions run `40784988000` and Pages run `40784988003` completed successfully;
-its source is not included in the published packages. The release
-workflow verifies packaging, not gameplay startup. The latest update also
+Release metadata checked against GitHub `main` at `6c769738` on 2026-10-29.
+The latest published release remains v3.0.419 (published on 2026-10-28 from
+tag commit `71bf83b2`). Current `main` is newer than that release and its
+source is not included in the published packages. Verification Actions run
+`40807507592` for current `main` completed successfully. The release workflow
+verifies packaging, not gameplay startup. Since v3.0.419, commit `01cc1181`
+aligned DM1 Atari ST multi-member 7z required-file receipts with the
+AUTO-selected launch edition. The focused virtual-start test and authentic
+Atari ST 1.1, 1.0b and 1.0a CLI tests passed; these verify the named source
+owners and routes, not every Atari edition or complete game parity. Current
+`main` also
 extends real-media Swedish startup-debug localization checks to DM1 PC34, CSB
 FM Towns, and DM2 FM Towns. Those focused tests check explicit and saved
 Swedish preferences, localized scan labels, authentic edition selection, and
