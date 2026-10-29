@@ -1,5 +1,18 @@
 # Firestaff DONE — Nexus
 
+## 2026-10-29 — Join authentic BKR name prefix to Japanese PLRD roster
+
+- Extracted the Japanese `RLOWFIX.BIN` from the authentic Track 1 image in
+  memory and verified its 72,332-byte SHA-256 against the pinned retail
+  identity. Compared its PLRD/TABL entries against all four hash-verified BKR
+  payloads without adding original media to Git.
+- Every champion record in these saves starts with `a3 88 96 80 80 00`.
+  The first three bytes uniquely match PLRD roster row 2 and TABL codes
+  `0x88`, `0x65`, `0x6d`; the loader copies six bytes to runtime `+0x2c`.
+- Documented the unresolved two-byte suffix, the missing runtime text
+  consumer, and the need for an authentic save with a different roster member.
+  This is a partial source join, not a BKR import or text-rendering feature.
+
 ## 2026-10-29 — Expand authentic BKR roster projection checks
 
 - Extended the pcrecomp/Ghidra-directed analyzer to verify 83 loader

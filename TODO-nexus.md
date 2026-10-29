@@ -62,6 +62,19 @@ remain open.
 Reproduction and retained evidence are documented in
 [`nexus_sh2_startup_decompilation.md`](docs/nexus/nexus_sh2_startup_decompilation.md#continue-payload-transfer-2026-10-29).
 
+The four authentic BKR samples all contain `a3 88 96 80 80 00` at the start
+of every champion record. In the authentic Japanese Track 1 `RLOWFIX.BIN`,
+the prefix `a3 88 96` uniquely matches the first three PLRD name-table indices
+of roster row 2; its TABL entries resolve to raw codes `0x88`, `0x65`, and
+`0x6d`. The retail loader copies all six source bytes to runtime offset
+`+0x2c`. This binds a real name prefix to a source roster row but leaves the
+two `0x80` bytes and the text consumer unresolved. All current save samples
+use this same prefix, so they do not establish how other roster names are
+stored. Continue by tracing runtime offset `+0x2c` to its renderer and by
+capturing a retail save with a different roster member before decoding the
+remaining bytes or loading BKR data into Firestaff. Details are in
+[`nexus_save_format.md`](docs/nexus/nexus_save_format.md#name-byte-comparison-against-the-japanese-roster).
+
 The 2026-10-29 Load-panel VDP2 trace now joins the retail SH-2 writer at
 `0x06023640` to all 352 VDP2 halfword events on frame 659. The selected NBG1
 name table maps 176 writes to visible cells x=1..16, y=6..16; each PND is
