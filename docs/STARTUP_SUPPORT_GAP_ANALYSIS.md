@@ -86,6 +86,8 @@ reported runtime handoff for those routes under SDL's dummy video driver; they
 do not prove native presentation or full gameplay. The broader
 `m12_main_menu_game_selection_real_media` run exceeded its 420-second CTest
 timeout on this host. Its partial output is not counted as a passing test.
+The no-media `unsupported_game_platforms_cli_rejected_before_renderer` test
+also passed, confirming invalid game/platform pairs fail before the renderer.
 
 The latest Nexus evidence separates raw Japanese `DM.BIN` placement at
 `0x06010000` from the older trace-specific static code mapping at
