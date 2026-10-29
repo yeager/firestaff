@@ -636,15 +636,19 @@ must keep its menu/gameplay gate closed. No fallback or synthetic game data
 was used. The checks ran with original media in place and left its archive
 contents unchanged.
 
-The same installed-data investigation exposed an edition-isolation gap when
-extracted Nexus files and more than one Saturn image share a directory. M12
-reported the Japanese edition from extracted `DM.BIN`, while the runtime
-opened the English CUE as supplemental media. Comparing only `DM.BIN` does not
-fix this: the authentic Japanese and English images share that executable,
-and the focused mouse-launch regression failed after selecting English for
-the Japanese M12 route. No cross-edition-safe handoff is verified for this
-mixed directory until the selected edition is tied to a stronger authenticated
-disc/resource identity. See [Nexus TODO](../TODO-nexus.md#2026-10-27--resolve-nexus-edition-ownership-when-extracted-files-and-discs-coexist).
+The installed-data investigation found an edition-isolation bug when
+extracted Nexus resources and multiple regional Saturn images share a
+directory. M12 had labeled the extracted `DM.BIN` as Japanese even though the
+Japanese and English releases share that executable, then opened the English
+CUE as supplemental media. This is now resolved for extracted JP/EN/FR owners:
+M12 uses authenticated regional `RLOWFIX.BIN` plus at least two localized UI
+resource hashes, and the engine admits only supplemental media with the
+canonical shared `DM.BIN` and matching regional members. The authentic JP and
+staged EN menu tests passed on TRV2; the EN case also rejected the authentic
+Japanese CUE as supplemental media.
+The title compositor gate remains closed. A CUE-only data root without a
+recognized full ISO or extracted owner is still rejected by M12 before the
+engine can open it. See [Nexus TODO](../TODO-nexus.md#2026-10-29--keep-extracted-nexus-resources-and-supplemental-media-in-one-region).
 
 These results update the earlier isolated rerun above, which did not include
 Nexus or Theron. They do not establish native window presentation, audible

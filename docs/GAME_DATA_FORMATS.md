@@ -72,7 +72,11 @@ More detail on GDAT and the G1 record graph is in
 
 Nexus is a Sega Saturn game. Preserve the complete CUE/BIN image or an
 equivalent verified extraction; individual files are useful evidence but are
-not a replacement for the source disc.
+not a replacement for the source disc. Current launcher admission requires a
+recognized full-image identity or authenticated extracted resources. A
+CUE-only directory with its tracks but without either recognized owner is not
+yet launchable, even though the Nexus engine can read CUE/BIN media after M12
+admits the source.
 
 | Family | Container or record form | Current use |
 |---|---|---|

@@ -455,11 +455,46 @@ static const M12_VersionSpec g_dm2Versions[] = {
 };
 
 static const M12_VersionSpec g_nexusVersions[] = {
-    {"nexus", "nexus-saturn-jp", "Nexus Sega Saturn JP (extracted)", "Saturn JP", g_nexusArchiveNames, "e88d60859f65f08fa622e1992b02280f", M12_ARCH_SATURN},
+    /* DM.BIN is byte-identical across the Japanese retail and English/French
+     * fan-translation discs. It is an admission marker, not region evidence.
+     * The Japanese extracted profile is populated only by the regional
+     * RLOWFIX/TITLE/MENU/FONT fingerprint below. */
+    {"nexus", "nexus-saturn-jp", "Nexus Sega Saturn JP (extracted)", "Saturn JP", g_nexusArchiveNames, "", M12_ARCH_SATURN},
     {"nexus", "nexus", "Nexus original Sega Saturn JP", "nexus", g_nexusArchiveNames, "96e511c8d36ccbe30a48ba36c59df194", M12_ARCH_SATURN},
     {"nexus", "nexus2", "Nexus V2 upscaled graphics", "nexus2", g_nexusArchiveNames, "", M12_ARCH_SATURN},
     {"nexus", "nexus-saturn-en-fan-v2", "Nexus Sega Saturn English fan translation v2", "Saturn EN v2", g_nexusEnglishIsoNames, "cf158b32f342c168fc570d36a0f1c637", M12_ARCH_SATURN},
-    {"nexus", "nexus-saturn-fr-fan", "Nexus Sega Saturn French fan translation", "Saturn FR", g_nexusFrenchIsoNames, "2efb0e8c41f01dea3faa41328ce87f46", M12_ARCH_SATURN}
+    {"nexus", "nexus-saturn-fr-fan", "Nexus Sega Saturn French fan translation", "Saturn FR", g_nexusFrenchIsoNames, "2efb0e8c41f01dea3faa41328ce87f46", M12_ARCH_SATURN},
+    {"nexus", "nexus-saturn-en-extracted", "Nexus Sega Saturn English (extracted resources)", "Saturn EN extracted", g_nexusArchiveNames, "", M12_ARCH_SATURN},
+    {"nexus", "nexus-saturn-fr-extracted", "Nexus Sega Saturn French (extracted resources)", "Saturn FR extracted", g_nexusArchiveNames, "", M12_ARCH_SATURN}
+};
+
+typedef struct {
+    const char* versionId;
+    const char* rlowfixMd5;
+    const char* titleMd5;
+    const char* menuMd5;
+    const char* fontMd5;
+} M12_NexusExtractedRegionSpec;
+
+/* These fingerprints are from the authenticated regional retail resources.
+ * DM.BIN is intentionally absent: its hash is shared by all three regions. */
+static const M12_NexusExtractedRegionSpec g_nexusExtractedRegions[] = {
+    {"nexus-saturn-jp",
+     "bb650a4e6f7b6374ba8aa86a61f8f523",
+     "693e0f451da462072ff39dfec553c544",
+     "c2776768ff25287c79013a1452253ca0",
+     "427735a9997e4324815867105788bf49"},
+    {"nexus-saturn-en-extracted",
+     "14c3a7e6fed2dc9e53a727640d4c9348",
+     "0b293be24d06eb550b27442ac9e8924c",
+     "a6f2272a4f6cb3c6b3b33012bc5b15ed",
+     "7bea3db1ccfe7cd8f32e364685cb0937"},
+    {"nexus-saturn-fr-extracted",
+     "ecbecff383d6ee8330e68e38417be9c8",
+     "5c917a7db5bb0409d5d84086886c9aa6",
+     "fcf8a00fbb92593ed9ae908f8e285cda",
+     "fc1de196b359ae2f56a1c1fee94a6dbf"},
+    {NULL, NULL, NULL, NULL, NULL}
 };
 
 /* Theron's Quest — PC Engine / TurboGrafx-16 (Hudson Soft, 1992).
@@ -5333,6 +5368,114 @@ static int m12_nexus_version_index_for_md5(const char* md5) {
     return -1;
 }
 
+static int m12_nexus_extracted_profile_index(const char* versionId) {
+    size_t i;
+    if (!versionId) return -1;
+    for (i = 0U; i < sizeof(g_nexusVersions) / sizeof(g_nexusVersions[0]); ++i) {
+        if (g_nexusVersions[i].versionId &&
+            strcmp(g_nexusVersions[i].versionId, versionId) == 0) {
+            return (int)i;
+        }
+    }
+    return -1;
+}
+
+/* Resolve a materialized Saturn tree by a canonical regional RLOWFIX plus at
+ * least two independently localized UI members. Every present fingerprint
+ * member must agree with the RLOWFIX region; shared DM.BIN is never evidence
+ * for Japanese ownership. */
+static int m12_nexus_resolve_extracted_profile(
+    const char* root,
+    int* outVersionIndex,
+    char matchedPath[M12_ASSET_DATA_DIR_CAPACITY],
+    char matchedMd5[M12_ASSET_MD5_CAPACITY]) {
+    static const char* const memberNames[] = {
+        "TITLE.BIN", "MENU.BPK", "FONT256.S2D", NULL
+    };
+    char path[M12_ASSET_DATA_DIR_CAPACITY];
+    char actualMd5[M12_ASSET_MD5_CAPACITY];
+    const char* expectedMd5;
+    int regionIndex = -1;
+    int versionIndex;
+    int matchedMembers = 0;
+    size_t i;
+    if (outVersionIndex) *outVersionIndex = -1;
+    if (!root || !FSP_DirExists(root) ||
+        !FSP_JoinPath(path, sizeof(path), root, "RLOWFIX.BIN") ||
+        !m12_file_md5_hex(path, actualMd5)) {
+        return 0;
+    }
+    for (i = 0U; g_nexusExtractedRegions[i].versionId; ++i) {
+        if (strcmp(actualMd5, g_nexusExtractedRegions[i].rlowfixMd5) == 0) {
+            regionIndex = (int)i;
+            break;
+        }
+    }
+    if (regionIndex < 0) return 0;
+
+    for (i = 0U; memberNames[i]; ++i) {
+        if (!FSP_JoinPath(path, sizeof(path), root, memberNames[i])) return 0;
+        if (!FSP_FileExists(path)) continue;
+        expectedMd5 = i == 0U ? g_nexusExtractedRegions[regionIndex].titleMd5
+                     : i == 1U ? g_nexusExtractedRegions[regionIndex].menuMd5
+                               : g_nexusExtractedRegions[regionIndex].fontMd5;
+        if (!m12_file_md5_hex(path, actualMd5) ||
+            strcmp(actualMd5, expectedMd5) != 0) {
+            return 0;
+        }
+        matchedMembers++;
+    }
+    if (matchedMembers < 2) return 0;
+
+    versionIndex = m12_nexus_extracted_profile_index(
+        g_nexusExtractedRegions[regionIndex].versionId);
+    if (versionIndex < 0 ||
+        !FSP_JoinPath(path, sizeof(path), root, "RLOWFIX.BIN") ||
+        !m12_file_md5_hex(path, actualMd5)) {
+        return 0;
+    }
+    if (matchedPath) {
+        m12_copy_string(matchedPath, M12_ASSET_DATA_DIR_CAPACITY, path);
+    }
+    if (matchedMd5) {
+        m12_copy_string(matchedMd5, M12_ASSET_MD5_CAPACITY, actualMd5);
+    }
+    if (outVersionIndex) *outVersionIndex = versionIndex;
+    return 1;
+}
+
+/* The Nexus engine prefers a complete extracted tree over any co-located
+ * image. If that tree is present, sibling ISO identities cannot own its
+ * runtime route unless their region agrees with the extracted fingerprint. */
+static int m12_nexus_has_extracted_owner(const char* root) {
+    char path[M12_ASSET_DATA_DIR_CAPACITY];
+    if (!root || !FSP_DirExists(root) ||
+        !FSP_JoinPath(path, sizeof(path), root, "DM.BIN") ||
+        !asset_file_matches_md5(
+            path, "e88d60859f65f08fa622e1992b02280f") ||
+        !FSP_JoinPath(path, sizeof(path), root, "LEV01.DGN")) {
+        return 0;
+    }
+    return FSP_FileExists(path);
+}
+
+static int m12_nexus_find_extracted_owner_root(
+    const char* searchRoot,
+    char outRoot[M12_ASSET_DATA_DIR_CAPACITY]) {
+    if (!searchRoot || !outRoot) return 0;
+    if (m12_nexus_has_extracted_owner(searchRoot)) {
+        m12_copy_string(outRoot, M12_ASSET_DATA_DIR_CAPACITY, searchRoot);
+        return 1;
+    }
+    if (FSP_JoinPath(outRoot, M12_ASSET_DATA_DIR_CAPACITY,
+                     searchRoot, "nexus") &&
+        m12_nexus_has_extracted_owner(outRoot)) {
+        return 1;
+    }
+    outRoot[0] = '\0';
+    return 0;
+}
+
 static int m12_nexus_path_is_fan_translation_container(const char* path) {
     char container[ASSET_PATH_MAX];
     char md5[M12_ASSET_MD5_CAPACITY];
@@ -5600,6 +5743,9 @@ static int m12_try_match_direct_nexus_request(
     int* outVersionIndex) {
     char scanRoot[M12_ASSET_DATA_DIR_CAPACITY];
     char fastRoots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY];
+    const char* requestedExtension;
+    int explicitCueRequest;
+    int explicitIsoRequest;
     size_t matchedRootIndex;
     size_t i;
     if (outVersionIndex) {
@@ -5608,6 +5754,11 @@ static int m12_try_match_direct_nexus_request(
     if (!requestedDataDir || requestedDataDir[0] == '\0') {
         return 0;
     }
+    requestedExtension = strrchr(requestedDataDir, '.');
+    explicitCueRequest = FSP_FileExists(requestedDataDir) &&
+        m12_ascii_equals_ignore_case(requestedExtension, ".cue");
+    explicitIsoRequest = FSP_FileExists(requestedDataDir) &&
+        m12_ascii_equals_ignore_case(requestedExtension, ".iso");
     if (FSP_FileExists(requestedDataDir)) {
         char md5[M12_ASSET_MD5_CAPACITY];
         int versionIndex = -1;
@@ -5641,6 +5792,9 @@ static int m12_try_match_direct_nexus_request(
                 }
                 return 1;
             }
+            /* An explicit ISO without a known full-image digest is unknown;
+             * do not silently substitute extracted siblings or another disc. */
+            if (explicitIsoRequest) return 0;
         }
         if (!FSP_ParentDir(scanRoot, sizeof(scanRoot), requestedDataDir)) {
             m12_copy_string(scanRoot, sizeof(scanRoot), ".");
@@ -5650,6 +5804,21 @@ static int m12_try_match_direct_nexus_request(
     } else {
         return 0;
     }
+    /* A selected directory or extracted DM.BIN belongs to its complete local
+     * tree. Use its regional fingerprint before considering sibling images;
+     * if the owner exists but its region is incomplete or contradictory,
+     * leave the direct request unresolved instead of relabeling it from a
+     * neighboring ISO. Explicit CUE requests retain their existing path. */
+    if (!explicitCueRequest && m12_nexus_has_extracted_owner(scanRoot)) {
+        int versionIndex = -1;
+        if (!m12_nexus_resolve_extracted_profile(
+                scanRoot, &versionIndex, matchedPath, matchedMd5)) {
+            return 0;
+        }
+        m12_copy_string(runtimeRoot, M12_ASSET_DATA_DIR_CAPACITY, scanRoot);
+        if (outVersionIndex) *outVersionIndex = versionIndex;
+        return 1;
+    }
     /* Prefer canonical loose Saturn images in the explicitly selected Nexus
      * directory.  The same directory can retain an archival .7z alongside
      * already extracted English/French ISOs; recursive matching must not
@@ -5658,7 +5827,7 @@ static int m12_try_match_direct_nexus_request(
      * the file's mtime or size changes. */
     memset(fastRoots, 0, sizeof(fastRoots));
     m12_copy_string(fastRoots[0], sizeof(fastRoots[0]), scanRoot);
-    for (i = 3U; i < sizeof(g_nexusVersions) / sizeof(g_nexusVersions[0]); ++i) {
+    for (i = 3U; i < 5U; ++i) {
         if (m12_try_match_version_fast_candidates(fastRoots, 1U,
                                                   &g_nexusVersions[i],
                                                   matchedPath, matchedMd5,
@@ -5672,7 +5841,7 @@ static int m12_try_match_direct_nexus_request(
      * shared inner DM.BIN marker.  The English/French discs intentionally
      * retain the retail executable, so a generic DM.BIN lookup otherwise
      * mislabels the selected ISO as Japanese. */
-    for (i = 3U; i < sizeof(g_nexusVersions) / sizeof(g_nexusVersions[0]); ++i) {
+    for (i = 3U; i < 5U; ++i) {
         if (m12_try_match_version(scanRoot,
                                   &g_nexusVersions[i],
                                   matchedPath,
@@ -5683,6 +5852,19 @@ static int m12_try_match_direct_nexus_request(
             if (outVersionIndex) {
                 *outVersionIndex = (int)i;
             }
+            return 1;
+        }
+    }
+    /* Exact EN/FR container hashes above remain stronger evidence when a
+     * loose regional image is present. Otherwise, admit extracted Saturn
+     * resources only when RLOWFIX and at least two localized members agree. */
+    {
+        int versionIndex = -1;
+        if (m12_nexus_resolve_extracted_profile(
+                scanRoot, &versionIndex, matchedPath, matchedMd5)) {
+            m12_copy_string(runtimeRoot, M12_ASSET_DATA_DIR_CAPACITY,
+                            scanRoot);
+            if (outVersionIndex) *outVersionIndex = versionIndex;
             return 1;
         }
     }
@@ -5889,6 +6071,51 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
                                           (int)md5Count,
                                           32);
     }
+    if (strcmp(gameSpec->gameId, "nexus") == 0) {
+        for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
+            char extractedRoot[M12_ASSET_DATA_DIR_CAPACITY];
+            char regionPath[M12_ASSET_DATA_DIR_CAPACITY];
+            char regionMd5[M12_ASSET_MD5_CAPACITY];
+            int profileIndex = -1;
+            int preferredImageIndex = -1;
+            size_t versionIndex;
+            if (!m12_nexus_find_extracted_owner_root(
+                    roots[rootIndex], extractedRoot)) {
+                continue;
+            }
+            if (m12_nexus_resolve_extracted_profile(
+                    extractedRoot, &profileIndex,
+                    regionPath, regionMd5)) {
+                const char* profileId = g_nexusVersions[profileIndex].versionId;
+                const char* imageId = NULL;
+                if (strcmp(profileId, "nexus-saturn-jp") == 0) {
+                    imageId = "nexus";
+                } else if (strcmp(profileId, "nexus-saturn-en-extracted") == 0) {
+                    imageId = "nexus-saturn-en-fan-v2";
+                } else if (strcmp(profileId, "nexus-saturn-fr-extracted") == 0) {
+                    imageId = "nexus-saturn-fr-fan";
+                }
+                preferredImageIndex = m12_nexus_extracted_profile_index(imageId);
+            }
+            /* The engine's source order prefers this extracted owner. Keep a
+             * sibling full-image row only when its region agrees; an unknown
+             * or conflicting tree owns no EN/FR/JP image profile. */
+            for (versionIndex = 0U;
+                 versionIndex < sizeof(g_nexusVersions) / sizeof(g_nexusVersions[0]);
+                 ++versionIndex) {
+                const char* id = g_nexusVersions[versionIndex].versionId;
+                int isFullImageProfile = id &&
+                    (strcmp(id, "nexus") == 0 ||
+                     strcmp(id, "nexus-saturn-en-fan-v2") == 0 ||
+                     strcmp(id, "nexus-saturn-fr-fan") == 0);
+                if (isFullImageProfile &&
+                    (int)versionIndex != preferredImageIndex) {
+                    rootMatched[rootIndex][versionIndex] = 0;
+                    rootMatchedPaths[rootIndex][versionIndex][0] = '\0';
+                }
+            }
+        }
+    }
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING
     if (strcmp(gameSpec->gameId, "dm2") == 0) {
         /* Repeated original graphics may include an incomplete first copy.
@@ -6093,6 +6320,50 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
         }
     }
 
+    /* The directory-wide scan cannot express a multi-file Nexus region
+     * signature as one asset hash. Publish the extracted profile only after
+     * the shared hash inventory, using the authenticated RLOWFIX plus two
+     * agreeing localized resource hashes. Full-image rows above remain
+     * available and retain their exact-container provenance. */
+    if (strcmp(gameSpec->gameId, "nexus") == 0) {
+        for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
+            char extractedRoot[M12_ASSET_DATA_DIR_CAPACITY];
+            char regionPath[M12_ASSET_DATA_DIR_CAPACITY];
+            char regionMd5[M12_ASSET_MD5_CAPACITY];
+            int regionVersionIndex = -1;
+            M12_AssetVersionStatus* version;
+            if (!m12_nexus_find_extracted_owner_root(
+                    roots[rootIndex], extractedRoot)) {
+                continue;
+            }
+            if (!m12_nexus_resolve_extracted_profile(
+                    extractedRoot, &regionVersionIndex,
+                    regionPath, regionMd5) ||
+                regionVersionIndex < 0 ||
+                regionVersionIndex >= (int)gameSpec->versionCount) {
+                continue;
+            }
+            version = &status->versions[gameIndex][regionVersionIndex];
+            if (version->matched) continue;
+            version->matched = 1;
+            m12_copy_string(version->matchedPath,
+                            sizeof(version->matchedPath), regionPath);
+            m12_copy_string(version->matchedMd5,
+                            sizeof(version->matchedMd5), regionMd5);
+            matchedAny = 1;
+            m12_copy_string(status->runtimeDataDirs[gameIndex],
+                            sizeof(status->runtimeDataDirs[gameIndex]),
+                            extractedRoot);
+            if (dataDirResolvedToMatchedRoot &&
+                !*dataDirResolvedToMatchedRoot && !userExplicitDataDir) {
+                m12_copy_string(status->dataDir, sizeof(status->dataDir),
+                                extractedRoot);
+                *dataDirResolvedToMatchedRoot = 1;
+            }
+            break;
+        }
+    }
+
     if (retainFmtowns) {
         for (i = 0U; i < gameSpec->versionCount; ++i) {
             const M12_AssetVersionStatus* retained = &retainedFmtowns[i];
@@ -6108,10 +6379,9 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
 
     if (strcmp(gameSpec->gameId, "nexus") == 0) {
         /* A fan-translation ISO may contain the unchanged Japanese DM.BIN.
-         * The ISO hash is the stronger container identity; do not leave the
-         * inner marker as a competing Japanese profile, or the first-match
-         * launcher path will silently select the wrong provenance.  A loose
-         * standalone DM.BIN remains a valid Japanese extracted profile. */
+         * The exact container hash is the stronger identity. Extracted
+         * profiles are admitted only by the multi-file regional fingerprint
+         * above; DM.BIN alone is never a Japanese profile. */
         for (i = 0U; i < gameSpec->versionCount; ++i) {
             M12_AssetVersionStatus* version = &status->versions[gameIndex][i];
             if (!version->matched || !version->matchedPath[0] ||

@@ -27023,7 +27023,12 @@ int M11_GameView_ResolveNexusRuntimeDataDir(const M11_GameLaunchSpec* spec,
             }
         } else if (m11_path_tail_equals_ascii(candidate, "DM.BIN") ||
                    m11_path_tail_equals_ascii(candidate, "SEGADATA.BIN") ||
+                   m11_path_tail_equals_ascii(candidate, "RLOWFIX.BIN") ||
                    m11_path_has_extension(candidate, ".DGN")) {
+            /* Extracted regional profiles are authenticated by RLOWFIX.BIN,
+             * but Nexus runtime readers consume the complete sibling data
+             * tree. Keep the verified member as provenance while resolving
+             * its parent as the runtime owner, just like DM.BIN. */
             if (FSP_ParentDir(outPath, (size_t)outPathSize, candidate) &&
                 outPath[0] != '\0') {
                 return 1;

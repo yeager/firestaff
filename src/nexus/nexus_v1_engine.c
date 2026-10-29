@@ -292,12 +292,12 @@ int nexus_v1_dgn_bytes_match_canonical_md5(
  * same fact in O(entry size).  The full-tree scan re-read GB-scale asset
  * directories once per boot file and pushed cold-cache Nexus launches
  * past every runtime-gate timeout. */
-static int nexus_v1_iso_entry_matches_canonical_md5(
-    Nexus_V1_Engine *engine, const Nexus_ISOFile *file, const char *md5) {
+static int nexus_v1_iso_reader_entry_matches_canonical_md5(
+    Nexus_ISOReader *reader, const Nexus_ISOFile *file, const char *md5) {
     uint8_t *entry_bytes;
     int entry_size;
     int verified;
-    if (!engine || !file || !md5 || file->size == 0U ||
+    if (!reader || !file || !md5 || file->size == 0U ||
         file->size > 64U * 1024U * 1024U) {
         return 0;
     }
@@ -305,12 +305,18 @@ static int nexus_v1_iso_entry_matches_canonical_md5(
     if (!entry_bytes) {
         return 0;
     }
-    entry_size = nexus_iso_read_file(&engine->iso, file, entry_bytes,
+    entry_size = nexus_iso_read_file(reader, file, entry_bytes,
                                      (int)file->size);
     verified = entry_size == (int)file->size &&
         nexus_v1_dgn_bytes_match_canonical_md5(entry_bytes, entry_size, md5);
     free(entry_bytes);
     return verified;
+}
+
+static int nexus_v1_iso_entry_matches_canonical_md5(
+    Nexus_V1_Engine *engine, const Nexus_ISOFile *file, const char *md5) {
+    return engine && nexus_v1_iso_reader_entry_matches_canonical_md5(
+        &engine->iso, file, md5);
 }
 
 void nexus_v1_dgn_renderer_handoff_require_canonical_source(
@@ -2513,7 +2519,9 @@ static uint8_t *nexus_v1_read_iso_reader_file(
 static uint8_t *nexus_v1_read_iso_file(Nexus_V1_Engine *engine,
                                        const Nexus_ISOFile *file,
                                        int *out_size);
-static int find_iso(const char *dir, char *disc_path, int max_len);
+static int find_iso(const char *dir, char *disc_path, int max_len,
+                    const Nexus_V1_Engine *extracted_owner,
+                    const char *required_rlowfix_md5);
 
 /* Use the source-owned ISO reader for loose images and for the real ISO
  * member inside an external Nexus archive.  A Saturn ZIP contains its CUE,
@@ -2752,11 +2760,106 @@ static uint8_t *nexus_v1_read_iso_file(Nexus_V1_Engine *engine,
                                                    out_size) : NULL;
 }
 
+static const char *nexus_v1_extracted_rlowfix_md5(
+    const Nexus_V1_Engine *engine) {
+    char path[512];
+    uint8_t *bytes;
+    int size = 0;
+    int i;
+    const char *md5 = NULL;
+    if (!engine || !engine->data_dir[0] ||
+        snprintf(path, sizeof(path), "%s/RLOWFIX.BIN", engine->data_dir) >=
+            (int)sizeof(path)) {
+        return NULL;
+    }
+    bytes = nexus_read_host_file(path, &size);
+    if (!bytes || size <= 0) {
+        free(bytes);
+        return NULL;
+    }
+    for (i = 0; g_nexus_known_boot_files[i].name; ++i) {
+        if (strcasecmp(g_nexus_known_boot_files[i].name, "RLOWFIX.BIN") == 0 &&
+            nexus_v1_dgn_bytes_match_canonical_md5(
+                bytes, size, g_nexus_known_boot_files[i].md5)) {
+            md5 = g_nexus_known_boot_files[i].md5;
+            break;
+        }
+    }
+    free(bytes);
+    return md5;
+}
+
+static int nexus_v1_iso_matches_extracted_region(
+    const Nexus_V1_Engine *engine, Nexus_ISOReader *reader,
+    const char *rlowfix_md5) {
+    static const char *const regional_files[] = {
+        "TITLE.BIN", "MENU.BPK", "FONT256.S2D", "LOGOBG.DG2", NULL
+    };
+    const Nexus_ISOFile *dm;
+    const Nexus_ISOFile *rlowfix;
+    char path[512];
+    size_t i;
+    int matching_members = 1;
+    if (!engine || !reader || !rlowfix_md5 ||
+        !(dm = nexus_iso_find(reader, "DM.BIN")) ||
+        !nexus_v1_iso_reader_entry_matches_canonical_md5(
+            reader, dm, "e88d60859f65f08fa622e1992b02280f") ||
+        !(rlowfix = nexus_iso_find(reader, "RLOWFIX.BIN")) ||
+        !nexus_v1_iso_reader_entry_matches_canonical_md5(
+            reader, rlowfix, rlowfix_md5)) {
+        return 0;
+    }
+    for (i = 0U; regional_files[i]; ++i) {
+        const Nexus_ISOFile *member;
+        uint8_t *extracted;
+        uint8_t *disc;
+        int extracted_size = 0;
+        int disc_size;
+        if (snprintf(path, sizeof(path), "%s/%s", engine->data_dir,
+                     regional_files[i]) >= (int)sizeof(path)) {
+            return 0;
+        }
+        if (!nexus_path_is_file(path)) continue;
+        extracted = nexus_read_host_file(path, &extracted_size);
+        member = nexus_iso_find(reader, regional_files[i]);
+        if (!extracted || extracted_size <= 0 || !member ||
+            member->size != (uint32_t)extracted_size ||
+            member->size > 64U * 1024U * 1024U) {
+            free(extracted);
+            return 0;
+        }
+        disc = (uint8_t *)malloc(member->size);
+        if (!disc) {
+            free(extracted);
+            return 0;
+        }
+        disc_size = nexus_iso_read_file(reader, member, disc,
+                                        (int)member->size);
+        if (disc_size != extracted_size ||
+            memcmp(extracted, disc, member->size) != 0) {
+            free(extracted);
+            free(disc);
+            return 0;
+        }
+        free(extracted);
+        free(disc);
+        matching_members++;
+    }
+    return matching_members >= 3;
+}
+
 static void nexus_v1_try_open_supplemental_iso(Nexus_V1_Engine *engine) {
     char disc_path[512];
+    const char *region_md5;
     int n;
     if (!engine || engine->source != NEXUS_SRC_EXTRACTED ||
-        !find_iso(engine->data_dir, disc_path, sizeof(disc_path))) {
+        !(region_md5 = nexus_v1_extracted_rlowfix_md5(engine)) ||
+        !find_iso(engine->data_dir, disc_path, sizeof(disc_path), engine,
+                  region_md5)) {
+        if (engine && engine->source == NEXUS_SRC_EXTRACTED) {
+            printf("Nexus: no verified supplemental ISO matches the "
+                   "extracted localized resources\n");
+        }
         return;
     }
     if (nexus_path_has_ext(disc_path, ".cue")) {
@@ -2766,7 +2869,8 @@ static void nexus_v1_try_open_supplemental_iso(Nexus_V1_Engine *engine) {
     }
     if (n > 0 && nexus_iso_is_nexus(&engine->supplemental_iso)) {
         engine->supplemental_iso_valid = 1;
-        printf("Nexus: supplemental retail ISO %s with %d files\n",
+        printf("Nexus: supplemental retail ISO %s with %d files "
+               "(localized resources verified)\n",
                disc_path, n);
         return;
     }
@@ -2788,7 +2892,9 @@ static int nexus_try_open_disc_path(Nexus_V1_Engine *engine, const char *path) {
 
 /* Try to find ISO/CUE/BIN in data directory — cross-platform */
 #ifdef _WIN32
-static int find_iso(const char *dir, char *disc_path, int max_len) {
+static int find_iso(const char *dir, char *disc_path, int max_len,
+                    const Nexus_V1_Engine *extracted_owner,
+                    const char *required_rlowfix_md5) {
     static const char* const patterns[] = {"*.cue", "*.bin", "*.iso", "*.zip", "*.7z", NULL};
     WIN32_FIND_DATAA fd;
     HANDLE h = INVALID_HANDLE_VALUE;
@@ -2805,7 +2911,10 @@ static int find_iso(const char *dir, char *disc_path, int max_len) {
                      fd.cFileName);
             memset(&candidate, 0, sizeof(candidate));
             opened = nexus_open_disc_reader(&candidate, candidate_path);
-            if (opened > 0 && nexus_iso_is_nexus(&candidate)) {
+            if (opened > 0 && nexus_iso_is_nexus(&candidate) &&
+                (!extracted_owner ||
+                 nexus_v1_iso_matches_extracted_region(
+                     extracted_owner, &candidate, required_rlowfix_md5))) {
                 snprintf(disc_path, max_len, "%s", candidate_path);
                 nexus_iso_close(&candidate);
                 FindClose(h);
@@ -2819,7 +2928,9 @@ static int find_iso(const char *dir, char *disc_path, int max_len) {
     return 0;
 }
 #else
-static int find_iso(const char *dir, char *disc_path, int max_len) {
+static int find_iso(const char *dir, char *disc_path, int max_len,
+                    const Nexus_V1_Engine *extracted_owner,
+                    const char *required_rlowfix_md5) {
     static const char* const exts[] = {".cue", ".bin", ".iso", ".zip", ".7z", NULL};
     DIR *d = opendir(dir);
     struct dirent *ent;
@@ -2839,7 +2950,10 @@ static int find_iso(const char *dir, char *disc_path, int max_len) {
                          ent->d_name);
                 memset(&candidate, 0, sizeof(candidate));
                 opened = nexus_open_disc_reader(&candidate, candidate_path);
-                if (opened > 0 && nexus_iso_is_nexus(&candidate)) {
+                if (opened > 0 && nexus_iso_is_nexus(&candidate) &&
+                    (!extracted_owner ||
+                     nexus_v1_iso_matches_extracted_region(
+                         extracted_owner, &candidate, required_rlowfix_md5))) {
                     snprintf(disc_path, max_len, "%s", candidate_path);
                     nexus_iso_close(&candidate);
                     closedir(d);
@@ -3297,7 +3411,7 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     if (engine->source == NEXUS_SRC_NONE && nexus_path_is_file(data_dir)) {
         (void)nexus_try_open_disc_path(engine, data_dir);
     } else if (engine->source == NEXUS_SRC_NONE &&
-               find_iso(data_dir, disc_path, sizeof(disc_path))) {
+               find_iso(data_dir, disc_path, sizeof(disc_path), NULL, NULL)) {
         (void)nexus_try_open_disc_path(engine, disc_path);
     }
 

@@ -1,5 +1,23 @@
 # Firestaff DONE — Nexus
 
+## 2026-10-29 — Verify regional ownership for extracted Saturn resources
+
+- M12 now distinguishes extracted Japanese, English, and French Nexus data by
+  authentic `RLOWFIX.BIN` plus at least two matching localized
+  `TITLE.BIN`/`MENU.BPK`/`FONT256.S2D` fingerprints. The byte-identical
+  `DM.BIN` no longer proves a Japanese edition by itself.
+- A supplemental Saturn CUE/ISO is admitted to an extracted runtime only when
+  its canonical shared `DM.BIN`, `RLOWFIX.BIN`, and at least two present
+  localized resources agree with the extracted region. The authentic Japanese
+  CUE in the staged English test remained unattached.
+- On TRV2, the real JP and staged real EN menu tests passed through the
+  capture-gated title route. Direct `DM.BIN` launches retained the matching
+  extracted region and supplemental CUE; the canonical EN ISO menu route
+  retained its full-image edition. No game-media bytes were modified.
+- This does not open the native title/menu compositor gate. A standalone CUE
+  with its referenced tracks but without a recognized ISO or extracted owner
+  is still rejected by M12; direct CUE-only launcher admission remains open.
+
 ## 2026-10-29 — Identify the authentic BKR health pair
 
 - The BKR source halfwords at champion offsets `+0x38/+0x3a` map to runtime

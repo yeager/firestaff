@@ -362,25 +362,33 @@ consumer. A rebuilt real-media pointer-only launcher check now reports
 retail image and rejects a playable-runtime claim. See
 [`DONE-nexus.md`](DONE-nexus.md) for the verification record.
 
-## 2026-10-27 — Resolve Nexus edition ownership when extracted files and discs coexist
+## 2026-10-29 — Keep extracted Nexus resources and supplemental media in one region
 
-The authentic shared Nexus data directory contains extracted Japanese-route
-files alongside multiple retail Saturn images. The normal M12 pointer route
-reported `edition=nexus-saturn-jp` from the extracted `DM.BIN`, but the engine
-then opened the English CUE as supplemental media. A working-tree attempt to
-prevent this by matching the disc's `DM.BIN` still selected English: the
-Japanese and English images share that executable, so its byte identity does
-not distinguish their localized resource sets. The real-media regression
-`tests/test_nexus_v1_native_menu_mouse_title.sh` failed on this assertion.
+Resolved the shared-`DM.BIN` misidentification with authentic regional
+fingerprints. M12 now identifies extracted JP, EN, and FR resources from the
+canonical `RLOWFIX.BIN` hash plus at least two matching `TITLE.BIN`,
+`MENU.BPK`, and `FONT256.S2D` hashes; every present fingerprint member must
+agree. The shared executable alone is no longer treated as Japanese proof.
+When an extracted directory is selected, the Nexus engine attaches a
+supplemental CUE/ISO only when its canonical shared `DM.BIN`, `RLOWFIX.BIN`,
+and at least two localized UI members match that extracted region. A
+conflicting or unknown neighboring disc is left unattached.
 
-Do not treat a matching `DM.BIN` as proof that an ISO belongs to the selected
-language/revision. Keep extracted data and disc members under one verified
-edition owner, or reject the ambiguous combination. Resolve the selected
-M12 version against a stronger identity (for example, a set of authenticated
-region-specific members or the complete disc identity), then verify that the
-CLI and menu routes open only that owner. Keep the production title/menu gate
-closed. The attempted `DM.BIN`-only selection in the current working tree is
-not a fix and has not passed this real-media test.
+The updated `tests/test_nexus_v1_native_menu_mouse_title.sh` passed on TRV2
+with authentic JP data and an authentic staged EN data set. Both menu pointer
+routes reached the existing title compositor capture gate. Direct `DM.BIN`
+launches retained their extracted JP/EN profile and selected matching CUEs;
+the EN menu route with its canonical full image retained the EN ISO identity,
+and the authentic Japanese CUE was rejected as supplemental media for the EN
+extraction.
+These checks do not establish a playable title/menu or open the compositor
+gate.
+
+One CLI admission gap remains: a directory containing only an authentic CUE
+and its referenced tracks, with no canonical full ISO or extracted Nexus
+members, is still rejected by M12 before the Nexus engine can open the CUE.
+The engine's CUE reader is not sufficient to claim launcher support. Add
+source-bound CUE admission before documenting this layout as launchable.
 
 - Implement the observed retail title-menu input flow in Firestaff and identify
   the display consumer that places menu and face material.

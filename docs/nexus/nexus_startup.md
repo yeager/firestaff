@@ -31,10 +31,16 @@ and gameplay HUD/viewport remain unimplemented or unverified.
 ## Verified initialization order
 
 `nexus_v1_init()` first selects a hash-verified extracted corpus when `DM.BIN`
-and the authentic DGN corpus are available as real loose files. `LEV00.DGN` is
-a title/entry resource; the first playable level is `LEV01.DGN`. A valid
-co-located retail ISO can then be read as a supplementary source for exact ISO
-members. If only ISO data is available, the ISO reader is used directly.
+and the authentic DGN corpus are available as real loose files. Extracted JP,
+EN, and FR ownership additionally requires the canonical regional
+`RLOWFIX.BIN` hash plus at least two agreeing localized title/menu/font
+fingerprints. `LEV00.DGN` is a title/entry resource; the first playable level
+is `LEV01.DGN`. A co-located retail ISO/CUE is admitted as a supplementary
+source only when its canonical shared `DM.BIN`, regional `RLOWFIX.BIN`, and
+localized resources agree with that extracted owner. If only a recognized
+full ISO is selected, the ISO reader is used directly. A CUE-only directory
+without a recognized extracted owner or full-image identity is not yet
+admitted by M12.
 
 After source selection, the engine attempts to read real `RLOWFIX.BIN`, startup
 surfaces, `FACE.BIN`, `FONT256.S2D`, sound metadata, and other source files.
