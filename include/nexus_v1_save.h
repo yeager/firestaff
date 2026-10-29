@@ -31,8 +31,9 @@
  *   DM Nexus (Saturn): memory card format (8 KB blocks, proprietary header)
  *
  * The original Saturn BKR container parser and retail Continue payload
- * transfer are documented, but the payload schema and post-load engine-state
- * mapping remain unresolved. FNXS is therefore still a Firestaff-native
+ * transfer are documented, and health, stamina, and mana pairs are mapped.
+ * The rest of the payload schema and post-load engine-state mapping remain
+ * unresolved. FNXS is therefore still a Firestaff-native
  * format derived from the state structures documented in
  * docs/nexus/nexus_save_state.md and the world model in nexus_v1_world.h.
  * Champion save/load uses the same slot-based design as DM1/CSB.
