@@ -8446,7 +8446,7 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   the game-owned handoff, and decoder semantics open; do not use this BIOS
   polling trace as `$23AD` or gameplay evidence.
 
-## 2026-10-29 — source-to-VRAM event join: tooling ready, capture pending
+## 2026-10-29 — source-to-VRAM event join: gameplay capture pending
 
 - The opt-in PCE Fast VWR commit trace now consumes the shared event sequence
   also used by the CD data-port read and CD RAM target-write traces. The live
@@ -8461,11 +8461,21 @@ this is distinct from the authenticated combined-RAR title-audio path above.
 - Next: capture authentic Theron gameplay with CD, RAM-target and VWR traces
   in one session. Bind any candidate bytes to a source LBA before pursuing the
   world-square, BAT, tile-index and palette joins.
-- Open limits: the VWR hook excludes DMA; VCE color-table data writes can now
-  be captured and optionally joined to this chronology, but no authentic VCE
-  trace has been produced. Chronology alone is not causal byte provenance.
-  The production renderer still lacks an authenticated source-to-world-cell
-  and tile-bank mapping, so this tooling does not establish visual parity.
+- A separate cold Japanese Rev. 1 boot/title-menu capture produced an
+  authentic 11,592-row VCE write stream and 1,024-byte endpoint snapshot. It
+  used the canonical headerless System Card 3.0 ROM body (MD5
+  `38179df8f4ac870017db21ebcbf53114`) and raw Japanese Track 02 (MD5
+  `b7afb338ad31be1025b53f9aff12d73a`), with no save-state. The stream passes
+  the Firestaff event-merger parser; a real screenshot shows `NEW GAME`
+  selected after a four-second Run hold. Private evidence is retained at
+  `/home/trv2/firestaff-theron-evidence/capture/theron-vce-title-20261029-r1/`.
+- Open limits: this trace is title-menu evidence only; the full headered
+  System Card source image and optional SBI file were unavailable, and no
+  dungeon transition occurred. It does not join VCE writes to CD reads,
+  RAM-target writes, or VWR commits. The VWR hook excludes DMA; chronology
+  alone is not causal byte provenance. The production renderer still lacks an
+  authenticated source-to-world-cell and tile-bank mapping, so gameplay visual
+  parity remains unproven.
 - Audited the existing operator-local `theron-spawn-search-r26` bundle: its
   receipt records authentic US Track 02 and System Card identities, no loaded
   save state, an observed startup transition, and zero non-System-Card CD

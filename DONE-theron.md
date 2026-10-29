@@ -9064,3 +9064,19 @@ T900/original inventory semantics. No synthetic media was used.
 - No authentic VCE trace was captured in this work. This verifies capture-tool
   instrumentation only; it does not prove palette provenance, tile mapping,
   native renderer behavior, or Theron gameplay parity.
+
+## 2026-10-29 — capture an authentic Japanese title-menu VCE trace
+
+An isolated TRV2 Mednafen 1.32.1 PCE Fast run used the canonical headerless
+Japanese System Card 3.0 ROM body and authentic Japanese Rev. 1 Track 02. It
+produced 11,592 ordered VCE writes across 512 palette addresses, a 1,024-byte
+close-time palette snapshot, and a real runtime screenshot. The Firestaff
+event-merger parser accepted the complete trace. The screenshot shows the
+title menu with `NEW GAME` selected after a four-second Run hold.
+
+The full headered System Card image and optional SBI file were unavailable.
+The run used no save-state and did not transition into dungeon gameplay. The
+evidence documents the trace hook against real startup/title-menu behavior;
+it does not establish dungeon palette provenance, source-to-tile mapping,
+native rendering, or Theron parity. The private evidence bundle is at
+`/home/trv2/firestaff-theron-evidence/capture/theron-vce-title-20261029-r1/`.

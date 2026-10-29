@@ -278,9 +278,20 @@ to `<trace>.pce-fast.vce-write` when color-table writes occur and adds it to
 the shared event-order JSONL. Register 4 and 5 records identify the palette
 address, old/new 9-bit value and guest instruction address. The chronology
 establishes temporal order only; it does not prove causal CD-to-palette data
-flow, DMA writes, tile use, or world-cell mapping. No authentic VCE write
-stream has been captured yet, so this instrumentation does not establish
-palette or gameplay parity. An older operator-local
+flow, DMA writes, tile use, or world-cell mapping. A cold Japanese Rev. 1
+boot/title-menu capture now provides an authentic VCE write stream with 11,592
+ordered records over all 512 palette addresses. The Firestaff event-merger
+parser accepts every row. A paired real runtime screenshot still shows
+`NEW GAME` selected after a four-second Run hold. The private TRV2 evidence
+bundle is
+`/home/trv2/firestaff-theron-evidence/capture/theron-vce-title-20261029-r1/`.
+This capture used the hash-verified canonical headerless System Card 3.0 ROM
+body (`38179df8f4ac870017db21ebcbf53114`) and authentic Japanese Rev. 1 Track
+02 (`b7afb338ad31be1025b53f9aff12d73a`), without an autoload state. The full
+headered System Card image was unavailable and the optional SBI file was
+missing. This does not verify the original firmware container or reach dungeon
+gameplay, and therefore does not establish Theron gameplay parity. An older
+operator-local
 `theron-spawn-search-r26` bundle contains a 1,024-byte VCE endpoint snapshot,
 but its receipt records zero non-System-Card CD reads. Treat it as a palette
 snapshot only, not a Theron dungeon palette or source-to-tile mapping.
