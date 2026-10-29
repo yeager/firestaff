@@ -58,6 +58,32 @@ state. The exact exports and trace join are in the operator-managed
 `coldboot-readtrace-boot12000/pcrecomp-ghidra-analysis-20261029/` evidence
 folder.
 
+## BUP directory scan routines (2026-10-29)
+
+The same `pcrecomp` Ghidra scripts were run against a temporary copy of the
+retained `RuntimeRAM` project for the other high-frequency read PCs. The
+decompiled code windows were checked byte-for-byte against the same-run Ymir
+`wram-hi.bin`: `0x06003480..0x06003580` has SHA-256
+`f1775352f1b30911173a0e56f94b8d855b06fcafbf756980aecff8fc5afe64ab`, and
+`0x06003d30..0x06003de0` has SHA-256
+`a67c5c6fe08b515b1dfaa098deee7dce089cfe3f5f159fce430637b246c93aae`.
+
+The trace's 2,040 reads at `0x060034b0` are in `FUN_06003434`. That routine
+walks fixed-stride records, checks an allocation bitmap, and compares the
+record's 12-byte name field against a caller-provided string. The 2,550 reads
+at `0x06003d68` are in `FUN_06003d30`, which counts set allocation-bitmap
+entries. These are BUP directory/space metadata operations; they do not read
+the Nexus save payload. The `0x0600289c`, `0x060028f2`, and `0x06002900`
+readers also lie in `FUN_06002672`, whose observed code iterates configured
+records and applies an allocation bitmap, but their exact role in the startup
+flow is not established here.
+
+This narrows the interpretation of the major trace sites: the confirmed
+signature reads probe the BUP format, and the decompiled high-frequency
+readers process directory metadata. No payload read or payload-to-runtime
+mapping has been identified. The full follow-up Ghidra output is retained as
+`decompilation-readers-followup.log` in the same external evidence folder.
+
 ## Rejected startup candidate
 
 The retained Mednafen capture from the `nexus-save-input-sweep-20261008`

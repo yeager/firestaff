@@ -1910,14 +1910,15 @@ BKR installed. It records 10,849 one-byte reads in bus range
 `0x180000..0x200000`, 1,328 distinct addresses, and zero dropped rows. The
 trace's most frequent PCs are `0x06003d68` and `0x0600289c` (2,550 reads each),
 `0x060034b0` (2,040), and `0x060028f2`/`0x06002900` (1,770 each). Same-run
-WRAM-HI disassembly shows byte reads and subsequent stores at these sites,
-consistent with early BUP handling. A same-session, exact code-window join
-using pcrecomp's generic Ghidra scripts identifies a subset of the trace at
-PCs `0x06002a12` and `0x06002a2a` as comparisons against the literal
-`BackUpRam Format` signature. That confirms early BUP-format probing, not
-save-payload parsing. The trace records no read values, so it does not prove
-payload bytes were consumed as game state or identify a Nexus save field. See
-the [BUP signature decompilation receipt](nexus_sh2_startup_decompilation.md#bup-format-signature-check-2026-10-29)
+WRAM-HI disassembly and `pcrecomp` Ghidra decompilation identify the hot
+`0x060034b0` and `0x06003d68` sites as backup-directory name matching and
+allocation-bitmap counting. Other hot readers inside `FUN_06002672` also walk
+configured records and apply the allocation bitmap, but their exact startup
+role is unresolved. PCs `0x06002a12` and `0x06002a2a` compare against the
+literal `BackUpRam Format` signature. These findings establish format probing
+and directory/space metadata handling, not save-payload parsing. The trace
+records no read values and identifies no Nexus payload field. See the
+[BUP and directory decompilation receipts](nexus_sh2_startup_decompilation.md#bup-directory-scan-routines-2026-10-29)
 and the external evidence folder's
 `coldboot-readtrace-boot12000/pcrecomp-ghidra-analysis-20261029/` directory.
 
@@ -1935,11 +1936,12 @@ A same-run coldboot trace on TRV2 now covers frames 0–11,999 with the authenti
 BKR installed. It records 10,849 one-byte reads in bus range
 `0x180000..0x200000`, 1,328 distinct addresses, and zero dropped rows. The
 trace's most frequent PCs are `0x06003d68` and `0x0600289c` (2,550 reads each),
-`0x060034b0` (2,040), and `0x060028f2`/`0x06002900` (1,770 each). Same-run
-WRAM-HI disassembly shows byte reads and subsequent stores at these sites,
-consistent with early BUP enumeration/copy work. Ymir's trace records no read
-values, so it does not prove payload bytes were consumed as game state or
-identify a Nexus save field.
+`0x060034b0` (2,040), and `0x060028f2`/`0x06002900` (1,770 each). The
+decompiled `0x060034b0` and `0x06003d68` sites process backup-directory names
+and allocation metadata; the other hot sites in `FUN_06002672` walk records
+and apply an allocation bitmap. The exact role of those other sites remains
+unresolved. The trace records no read values and does not identify any Nexus
+save-payload field; see the [decompilation receipts](nexus_sh2_startup_decompilation.md#bup-directory-scan-routines-2026-10-29).
 
 A second coldboot run captured SH-2 writes only to WRAM-HI window
 `0x06002800..0x06004000`, alongside the same BUP-read window. The write
