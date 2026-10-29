@@ -26,7 +26,7 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
  {
 --- a/src/pce_fast/pce.cpp
 +++ b/src/pce_fast/pce.cpp
-@@ -111,8 +111,139 @@
+@@ -111,8 +111,178 @@
  void TheronTraceDirectMainRAMWrite(uint32 offset, uint8 old_value, uint8 value)
  {
   if(HuCPU.MPR[1] == 0xF8 && offset < 0x100)
@@ -43,7 +43,9 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 + static unsigned sample_limit;
 + static bool sample_limit_initialized;
 + static bool main_ram_sample_limit_reported;
++ static bool per_offset_sample_limit_reported;
 + static bool target_range_sample_limit_reported;
++ static bool trace_failed;
 + static unsigned per_offset[8192] = {};
 + static bool target_range_initialized;
 + static bool target_range_enabled;
@@ -84,6 +86,29 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +   }
 +  }
 + }
++ if(trace_failed)
++  return;
++ if(!trace)
++ {
++  const char *path = getenv("FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE");
++  if(!path || !*path)
++   return;
++  trace = fopen(path, "w");
++  if(!trace)
++  {
++   trace_failed = true;
++   fputs("FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_TRACE_ERROR error=open\n", stderr);
++   fflush(stderr);
++   return;
++  }
++  if(fprintf(trace, "source=mednafen-pce-fast-main-ram-consumer-read event_sequence_source=TheronTraceCDSharedEventSequence\n") < 0 || fflush(trace) != 0)
++  {
++   trace_failed = true;
++   fputs("FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_TRACE_ERROR error=header\n", stderr);
++   fflush(stderr);
++   return;
++  }
++ }
 + if((physical_address < 0x1F0000 || physical_address >= 0x1F8000) &&
 +    (!target_range_enabled || physical_address < target_range_first ||
 +     physical_address > target_range_last))
@@ -98,9 +123,16 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 + {
 +  if(trace && !target_range_sample_limit_reported)
 +  {
-+   fprintf(trace, "main_ram_consumer_truncated=target_range_sample_limit limit=%u\n", sample_limit);
-+   fflush(trace);
-+   target_range_sample_limit_reported = true;
++   const int write_result = fprintf(trace, "main_ram_consumer_truncated=target_range_sample_limit limit=%u\n", sample_limit);
++   const int flush_result = fflush(trace);
++   if(write_result < 0 || flush_result != 0)
++   {
++    trace_failed = true;
++    fputs("FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_TRACE_ERROR error=truncation\n", stderr);
++    fflush(stderr);
++   }
++   else
++    target_range_sample_limit_reported = true;
 +  }
 +  return;
 + }
@@ -108,14 +140,36 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 + {
 +  if(trace && !main_ram_sample_limit_reported)
 +  {
-+   fprintf(trace, "main_ram_consumer_truncated=main_ram_sample_limit limit=%u\n", sample_limit);
-+   fflush(trace);
-+   main_ram_sample_limit_reported = true;
++   const int write_result = fprintf(trace, "main_ram_consumer_truncated=main_ram_sample_limit limit=%u\n", sample_limit);
++   const int flush_result = fflush(trace);
++   if(write_result < 0 || flush_result != 0)
++   {
++    trace_failed = true;
++    fputs("FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_TRACE_ERROR error=truncation\n", stderr);
++    fflush(stderr);
++   }
++   else
++    main_ram_sample_limit_reported = true;
 +  }
 +  return;
 + }
 + if(!target_range_read && per_offset[offset] >= 16 && !target_writer_read)
++ {
++  if(trace && !per_offset_sample_limit_reported)
++  {
++   const int write_result = fprintf(trace, "main_ram_consumer_truncated=main_ram_sample_limit reason=per_offset_sample_limit offset=%04x limit=16\n", offset);
++   const int flush_result = fflush(trace);
++   if(write_result < 0 || flush_result != 0)
++   {
++    trace_failed = true;
++    fputs("FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_TRACE_ERROR error=truncation\n", stderr);
++    fflush(stderr);
++   }
++   else
++    per_offset_sample_limit_reported = true;
++  }
 +  return;
++ }
 + char reader_code_bytes[17] = "unavailable";
 + if((TheronTraceInstructionPC & 0x1FFF) <= 0x1FF8)
 + {
@@ -124,43 +178,28 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +  for(unsigned i = 0; i < 8; i++)
 +   snprintf(reader_code_bytes + i * 2, 3, "%02x", reader_code[i]);
 + }
-+ if(!trace)
-+ {
-+  const char *path = getenv("FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE");
-+  if(!path || !*path)
-+   return;
-+  trace = fopen(path, "w");
-+  if(!trace)
-+   return;
-+  fputs("source=mednafen-pce-fast-main-ram-consumer-read event_sequence_source=TheronTraceCDSharedEventSequence\n", trace);
-+ }
 + const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
-+ fprintf(trace, "main_ram_consumer_read sequence=%u event_sequence=%u sample_class=%s logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x reader_code_bytes=%s a=%02x x=%02x y=%02x sp=%02x p=%02x\n",
++ const int write_result = fprintf(trace, "main_ram_consumer_read sequence=%u event_sequence=%u sample_class=%s logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x reader_code_bytes=%s a=%02x x=%02x y=%02x sp=%02x p=%02x\n",
 +         count++, event_sequence, target_range_read ? "target_range" : "main_ram",
 +         logical_address & 0xFFFF, physical_address, value,
 +         TheronTraceInstructionPC, TheronTraceInstructionPhysicalPC,
 +         reader_code_bytes, HuCPU.A, HuCPU.X, HuCPU.Y, HuCPU.S, HuCPU.P);
-+ fflush(trace);
++ const int flush_result = fflush(trace);
++ if(write_result < 0 || flush_result != 0)
++ {
++  trace_failed = true;
++  fputs("FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_TRACE_ERROR error=write\n", stderr);
++  fflush(stderr);
++  return;
++ }
 + if(target_range_read)
 + {
 +  target_range_sample_count++;
-+  if(target_range_sample_count >= sample_limit && !target_range_sample_limit_reported)
-+  {
-+   fprintf(trace, "main_ram_consumer_truncated=target_range_sample_limit limit=%u\n", sample_limit);
-+   fflush(trace);
-+   target_range_sample_limit_reported = true;
-+  }
 + }
 + else
 + {
 +  main_ram_sample_count++;
 +  per_offset[offset]++;
-+  if(main_ram_sample_count >= sample_limit && !main_ram_sample_limit_reported)
-+  {
-+   fprintf(trace, "main_ram_consumer_truncated=main_ram_sample_limit limit=%u\n", sample_limit);
-+   fflush(trace);
-+   main_ram_sample_limit_reported = true;
-+  }
 + }
 +}
  static DECLFW(BaseRAMWrite)

@@ -223,8 +223,9 @@ Consumer reads can be bounded with
 range selected by `THERON_CAPTURE_PCE_FAST_MAIN_RAM_CONSUMER_RANGE` each have
 their own limit, so early default-RAM reads cannot consume the selected range's
 budget. Records identify `sample_class`; each stream writes its own explicit
-truncation marker at the cap. A truncated stream is incomplete for absence or
-coverage claims.
+truncation marker when a configured sample cap or the per-address cap drops a
+read. Reaching the total cap alone does not mark a stream truncated. A truncated
+stream is incomplete for absence or coverage claims.
 
 ## 2026-10-29 — decoded-buffer read candidates
 

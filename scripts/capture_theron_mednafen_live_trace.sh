@@ -260,6 +260,22 @@ if [[ "$menu_route" == drator-generator ]]; then
     fi
 fi
 
+if [[ ! "$main_ram_consumer_sample_limit" =~ ^[0-9]+$ ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT must be an integer from 4096 through 1048576' >&2
+    exit 1
+fi
+while [[ "$main_ram_consumer_sample_limit" == 0* && "$main_ram_consumer_sample_limit" != 0 ]]; do
+    main_ram_consumer_sample_limit=${main_ram_consumer_sample_limit#0}
+done
+if (( ${#main_ram_consumer_sample_limit} > 7 )); then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT must be an integer from 4096 through 1048576' >&2
+    exit 1
+fi
+main_ram_consumer_sample_limit=$((10#$main_ram_consumer_sample_limit))
+if (( main_ram_consumer_sample_limit < 4096 || main_ram_consumer_sample_limit > 1048576 )); then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT must be an integer from 4096 through 1048576' >&2
+    exit 1
+fi
 if [[ -z "$mednafen_bin" || -z "$cue" || -z "$system_card" || -z "$trace" ]]; then
     printf '%s\n' 'SKIP: MEDNAFEN_BIN, THERON_US_CUE/THERON_CUE, THERON_SYSTEM_CARD, and THERON_LIVE_TRACE_OUTPUT are required'
     exit 0
@@ -276,11 +292,6 @@ fi
 if [[ ! "$rng_consumer_window_limit" =~ ^[0-9]+$ ]] ||
    (( rng_consumer_window_limit < 1 || rng_consumer_window_limit > 1024 )); then
     printf '%s\n' 'FAIL: THERON_CAPTURE_RNG_CONSUMER_WINDOW_LIMIT must be an integer from 1 through 1024' >&2
-    exit 1
-fi
-if [[ ! "$main_ram_consumer_sample_limit" =~ ^[0-9]+$ ]] ||
-   (( main_ram_consumer_sample_limit < 4096 || main_ram_consumer_sample_limit > 1048576 )); then
-    printf '%s\n' 'FAIL: THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT must be an integer from 4096 through 1048576' >&2
     exit 1
 fi
 if [[ -n "$pce_fast_main_ram_consumer_range" ]]; then
@@ -2003,6 +2014,18 @@ if [[ "$pce_fast_code_ram_write_trace_enabled" == 1 ]]; then
         printf '%s\n' 'FAIL: Mednafen did not produce a valid PCE Fast code-bank RAM-write trace' >&2
         exit 1
     fi
+fi
+
+if [[ "$capture_mednafen_module" == pce_fast ]] &&
+   grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_TRACE_ERROR' "$stderr_file"; then
+    printf '%s\n' 'FAIL: Mednafen reported an error while writing the PCE Fast main-RAM consumer trace' >&2
+    exit 1
+fi
+if [[ "$capture_mednafen_module" == pce_fast ]] &&
+   { [[ ! -s "$main_ram_consumer_trace" ]] ||
+     ! grep -Fqx 'source=mednafen-pce-fast-main-ram-consumer-read event_sequence_source=TheronTraceCDSharedEventSequence' "$main_ram_consumer_trace"; }; then
+    printf '%s\n' 'FAIL: Mednafen did not produce a valid PCE Fast main-RAM consumer trace' >&2
+    exit 1
 fi
 
 if [[ ! -s "$trace" ]] || ! grep -Fqx 'source=mednafen-pce-instrumented' "$trace"; then

@@ -74,6 +74,26 @@ if [[ "$cd_limit_output" != *'THERON_CAPTURE_PCE_FAST_CD_DATA_READ_TRACE_LIMIT m
     printf '%s\n' 'FAIL: invalid CD data-read limit lacked a precise diagnostic' >&2
     exit 1
 fi
+main_ram_consumer_octal_limit_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT=04000000 \
+    "$script" 2>&1) && {
+    printf '%s\n' 'FAIL: decimal main-RAM consumer limit above its maximum was accepted through octal parsing' >&2
+    exit 1
+}
+if [[ "$main_ram_consumer_octal_limit_output" != *'THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT must be an integer from 4096 through 1048576'* ]]; then
+    printf '%s\n' 'FAIL: out-of-range leading-zero main-RAM consumer limit lacked a precise diagnostic' >&2
+    exit 1
+fi
+main_ram_consumer_zero_padded_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT=0004096 \
+    "$script" 2>&1) || {
+    printf '%s\n' 'FAIL: valid zero-padded main-RAM consumer limit was rejected' >&2
+    exit 1
+}
+if [[ "$main_ram_consumer_zero_padded_output" != *'SKIP:'* ]]; then
+    printf '%s\n' 'FAIL: valid zero-padded main-RAM consumer limit did not reach the missing-media gate' >&2
+    exit 1
+fi
 cd_filter_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
     THERON_CAPTURE_MEDNAFEN_MODULE=pce \
     THERON_CAPTURE_PCE_FAST_CD_DATA_READ_START_AT_TRACK02=1 \
@@ -1820,9 +1840,14 @@ if [[ ! -f "$party_ram_consumer_read_patch" ]] ||
    ! grep -Fq 'sample_class=%s' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'main_ram_consumer_truncated=target_range_sample_limit limit=%u' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'main_ram_consumer_truncated=main_ram_sample_limit limit=%u' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'reason=per_offset_sample_limit offset=%04x limit=16' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_TRACE_ERROR error=write' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_TRACE_ERROR error=truncation' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'main_ram_consumer_target_range_reads=%s' "$script" ||
    ! grep -Fq 'main_ram_consumer_target_range_truncated=%s' "$script" ||
    ! grep -Fq 'main_ram_consumer_truncated=%s' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_TRACE_ERROR' "$script" ||
+   ! grep -Fq 'source=mednafen-pce-fast-main-ram-consumer-read event_sequence_source=TheronTraceCDSharedEventSequence' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'target_range_enabled = true' "$party_ram_consumer_read_patch" ||
    ! grep -Fq '!target_range_enabled || physical_address < target_range_first' "$party_ram_consumer_read_patch" ||
@@ -1836,6 +1861,25 @@ if [[ ! -f "$party_ram_consumer_read_patch" ]] ||
    ! grep -Fq 'char reader_code_bytes[17] = "unavailable"' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'for(unsigned i = 0; i < 8; i++)' "$party_ram_consumer_read_patch"; then
     printf '%s\n' 'FAIL: pce_fast main-RAM consumer trace must sample bounded reads with source-positioned instruction bytes' >&2
+    exit 1
+fi
+if ! awk '
+    /if\(target_range_read && target_range_sample_count >= sample_limit\)/ { target_limit=NR }
+    /main_ram_consumer_truncated=target_range_sample_limit/ { target_marker=NR }
+    /target_range_sample_count\+\+/ { target_increment=NR }
+    /if\(!target_range_read && main_ram_sample_count >= sample_limit\)/ { main_limit=NR }
+    /main_ram_consumer_truncated=main_ram_sample_limit limit=/ { main_marker=NR }
+    /main_ram_sample_count\+\+/ { main_increment=NR }
+    /per_offset\[offset\] >= 16/ { offset_limit=NR }
+    /main_ram_consumer_truncated=main_ram_sample_limit reason=per_offset_sample_limit/ { offset_marker=NR }
+    /per_offset\[offset\]\+\+/ { offset_increment=NR }
+    END {
+        if (!(target_limit < target_marker && target_marker < target_increment &&
+              main_limit < main_marker && main_marker < main_increment &&
+              offset_limit < offset_marker && offset_marker < offset_increment)) exit 1
+    }
+' "$party_ram_consumer_read_patch"; then
+    printf '%s\n' 'FAIL: consumer truncation markers must report a dropped read after a cap, not merely reaching it' >&2
     exit 1
 fi
 if ! grep -Fq 'if(HuCPU.MPR[1] == 0xF8 && offset < 0x100)' "$party_ram_trace_patch" ||

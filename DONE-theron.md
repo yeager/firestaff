@@ -9307,9 +9307,10 @@ native rendering, or Theron parity. The private evidence bundle is at
 
 - The PCE Fast main-RAM consumer hook now uses the validated
   `FIRESTAFF_THERON_MAIN_RAM_CONSUMER_SAMPLE_LIMIT` instead of a separate fixed
-  65,536-event ceiling, and records an explicit truncation line when the cap is
-  reached. The capture receipt reports both the event count and whether that
-  marker occurred.
+  65,536-event ceiling. Total-cap truncation is reported only when a later
+  eligible read is dropped, so an exact-cap trace is not marked truncated. The
+  per-address sample cap also reports dropped reads. The capture receipt reports
+  the read count and all truncation markers.
 - The complete instrumented Mednafen patch set passed patch-only application
   on TRV2. A compile exposed a weak location anchor in the neighboring
   code-RAM writer patch; replacing it with the unique following function
