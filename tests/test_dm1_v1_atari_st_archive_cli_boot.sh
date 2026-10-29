@@ -13,9 +13,6 @@ fi
 app=$1
 archive=${FIRESTAFF_DM1_ATARI_ST_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip"}
 # Both authenticated English Atari ST v1.2 media revisions are supported.
-# The nested image distributed as "Dungeon Master V1.2 (1987)(FTL)(en)[!]"
-# has the latter GRAPHICS.DAT identity; do not reject it merely because a
-# different preservation dump was used when this probe was first written.
 expected_md5s=(
     b3cfd84e44cdf07ce2eeba47e87f772b
     9ce2eaf7a9e78620e3f17594437caffa
@@ -71,8 +68,29 @@ test_scratch=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$test_scratch"
 menu_probe_json="$test_scratch/dm1-atari-menu-runtime-$$.json"
 menu_home="$test_scratch/dm1-atari-menu-home-$$"
+discovery_root="$test_scratch/dm1-atari-menu-discovery-$$"
 mkdir -p "$menu_home"
-trap 'rm -f "$menu_probe_json"; rm -rf "$menu_home"' EXIT
+mkdir -p "$discovery_root/dm1"
+ln -s "$archive" "$discovery_root/dm1/$(basename "$archive")"
+trap 'rm -f "$menu_probe_json"; rm -rf "$menu_home" "$discovery_root"' EXIT
+
+# The ordinary start-menu scan searches the collection root rather than an
+# explicitly selected archive. It must discover the same authentic v1.2 disk.
+discovery_log="$test_scratch/dm1-atari-menu-discovery-$$.log"
+HOME="$menu_home" XDG_CONFIG_HOME="$menu_home/.config" APPDATA="$menu_home" \
+FIRESTAFF_CONFIG_PATH="$menu_home/config.toml" \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+    "$app" --menu --debug --verbose --data-dir "$discovery_root" \
+    --script 'wait-scan-complete,escape' --duration 1500 >"$discovery_log" 2>&1 || {
+        cat "$discovery_log" >&2; exit 1;
+    }
+grep -Fq "dm1 platform=Atari ST edition=st12-en matched source=$discovery_root/dm1/$(basename "$archive")::" \
+    "$discovery_log" || {
+        cat "$discovery_log" >&2
+        echo 'FAIL: persisted-root menu scan did not discover authentic DM1 Atari ST v1.2 media' >&2
+        exit 1
+    }
+
 bash "$(dirname "${BASH_SOURCE[0]}")/verify_dm1_atari_first_hall_handoff.sh" \
     "$app" "$archive" 'English v1.2'
 

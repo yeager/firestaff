@@ -1495,7 +1495,7 @@ static int m12_admit_dm1_atari_st_nested_archive(
     static const char innerName[] = "Dungeon Master (1987)(FTL)[!].zip";
     static const char stxName[] = "Dungeon Master (1987)(FTL)[!].stx";
     static const char directStxName[] =
-        "Dungeon Master V1.2 (1987)(FTL)(en)[!].stx";
+        "Dungeon Master for Atati ST v1.2 (English).stx";
     static const char sevenZipStxName[] =
         "Floppy Disks STX/Dungeon Master for Atati ST v1.1 (English).stx";
     size_t rootIndex;
