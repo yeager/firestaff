@@ -312,6 +312,20 @@ mechanical projections per record, but do not carry write traces for their
 post-load changes. These checks still assign no domain names to `+0x18/+0x1a`,
 do not decode any remaining record bytes, and do not prove that Firestaff maps
 or renders the resulting state.
+
+A read-only Ghidra 12.2 scan found another access to runtime champion row
+offset `+0x1a` in `FUN_060373d0`. This routine derives its row pointer from
+`PTR_DAT_06037438` and `DAT_0603741c`; both resolve to the same row base
+(`0x0607fba0`) and `0x013c` stride used by `FUN_060361a8`. On one event path,
+it advances the row's `+0x1a` halfword by a constant, clamps it to another
+constant, and stores it while decrementing an event nibble. This confirms a
+second retail event routine consumes and updates the same field, but does not
+identify its game-domain meaning. `FUN_060366b8` is the direct caller of
+`FUN_060361a8` and invokes it for active non-leader champions. The consumer
+set and source meanings of both fields remain open.
+The disassembly scan and complete decompilation are retained in the operator-
+managed external evidence bundle's `field-consumer-scan-20261029/` directory.
+
 Re-run against retained authentic captures with:
 
 ```sh

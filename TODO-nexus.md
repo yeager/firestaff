@@ -100,11 +100,18 @@ Ymir trace now explains all 16 final-value differences across four tracked
 fields:
 source `+0x3c` / runtime `+0x08`, source `+0x40` / runtime `+0x10`, source
 `+0x44` / runtime `+0x18`, and source `+0x46` / runtime `+0x1a`, across all
-four records. These offsets remain mechanically verified and unnamed; the
-rest of the record, field semantics, source-owned post-load consumer, and
-Firestaff runtime integration remain open.
+four records. These offsets remain mechanically verified and unnamed. A
+read-only Ghidra scan found a second runtime `+0x1a` access in
+`FUN_060373d0`, which uses the same champion-row base and `0x13c` stride as
+the BKR importer and updates the halfword on an event path. This narrows the
+next source investigation but does not establish the field's domain meaning.
+The consumer set and semantics for both fields, the rest of the record, the
+source-owned post-load consumer, and Firestaff runtime integration remain
+open.
 Reproduction and retained evidence are documented in
 [`nexus_sh2_startup_decompilation.md`](docs/nexus/nexus_sh2_startup_decompilation.md#continue-payload-transfer-2026-10-29).
+The Ghidra field-consumer scan is retained in the external
+`field-consumer-scan-20261029/` evidence bundle.
 
 The four authentic BKR samples all contain `a3 88 96 80 80 00` at the start
 of every champion record. In the authentic Japanese Track 1 `RLOWFIX.BIN`,
