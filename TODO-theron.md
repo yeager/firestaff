@@ -8983,3 +8983,22 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   `page1_read`; the parser and regression fixture now accept digits in event
   kinds. Continue by tracing the relevant post-return RAM effects to a proven
   loader/gameplay consumer, then cover other authentic editions.
+
+## 2026-10-29 — observe reads from the decoded output window
+
+- The authentic `$23AD` trace writes physical `$0D0000–$0D13C7`, but the
+  existing PCE Fast main-RAM consumer probe only records `$1F0000–$1F7FFF`.
+  Therefore the current consumer capture cannot show whether game-owned code
+  reads the decoded output; its lack of `$0D` reads is unobserved, not evidence
+  that no consumer exists.
+- An opt-in range is being added to the PCE Fast consumer probe:
+  `FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE=0d0000-0d13c7`. It must
+  remain disabled by default, reject malformed/out-of-bounds ranges, and keep
+  the existing 65,536-event cap. The patch applies after the existing PCE Fast
+  consumer instrumentation in an isolated TRV2 source copy. Compilation and
+  an authentic capture remain unverified.
+- Next: validate patch application and compilation on TRV2, then make a fresh
+  authentic cold US capture. Require a code-byte-backed, non-System-Card PC to
+  read bytes from the `$23AD` destination range before claiming a gameplay
+  handoff. Keep the adjacent `$F425` ADPCM-buffer copy separate unless its own
+  source and game consumer are independently established.

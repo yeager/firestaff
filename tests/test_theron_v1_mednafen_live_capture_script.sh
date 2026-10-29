@@ -1507,6 +1507,7 @@ if ! grep -Fq 'capture_pce_fast_vram_commit_trace" == 1' "$script" ||
 fi
 if ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace"' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE="$main_ram_consumer_trace"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE="${FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE:-}"' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_CONSUMER_SAMPLE_LIMIT="$main_ram_consumer_sample_limit"' "$script" ||
    ! grep -Fq 'main_ram_loader_tii_transfers=%s' "$script" ||
    ! grep -Fq 'continuation_tii_source_3c80=%s' "$script" ||
@@ -1742,7 +1743,11 @@ if [[ ! -f "$party_ram_consumer_read_patch" ]] ||
    ! grep -Fq 'TheronTraceMainRAMConsumerRead(A, physical_address, value)' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'static unsigned per_offset[8192] = {};' "$party_ram_consumer_read_patch" ||
-   ! grep -Fq 'count >= 65536 || (per_offset[offset] >= 16 && !target_writer_read)' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'count >= 65536 || (per_offset[offset] >= 16 && !target_writer_read &&' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'target_range_enabled = true' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq '!target_range_enabled || physical_address < target_range_first' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'const bool target_range_read = target_range_enabled' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'const bool target_writer_read = TheronTraceInstructionPC >= 0xEA80' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'physical_address < 0x1F0000 || physical_address >= 0x1F8000' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'offset = physical_address & 0x1FFF' "$party_ram_consumer_read_patch" ||

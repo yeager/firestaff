@@ -26,7 +26,7 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
  {
 --- a/src/pce_fast/pce.cpp
 +++ b/src/pce_fast/pce.cpp
-@@ -111,9 +111,48 @@
+@@ -111,8 +111,78 @@
  void TheronTraceDirectMainRAMWrite(uint32 offset, uint8 old_value, uint8 value)
  {
   if(HuCPU.MPR[1] == 0xF8 && offset < 0x100)
@@ -38,13 +38,44 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 + static FILE *trace = NULL;
 + static unsigned count = 0;
 + static unsigned per_offset[8192] = {};
++ static bool target_range_initialized;
++ static bool target_range_enabled;
++ static uint32 target_range_first;
++ static uint32 target_range_last;
 + unsigned offset;
-+ if(physical_address < 0x1F0000 || physical_address >= 0x1F8000)
++ if(!target_range_initialized)
++ {
++  target_range_initialized = true;
++  const char *range_text = getenv("FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE");
++  if(range_text && *range_text)
++  {
++   char *separator = NULL;
++   char *end = NULL;
++   unsigned long first = strtoul(range_text, &separator, 16);
++   unsigned long last = 0;
++   if(separator && *separator == '-')
++    last = strtoul(separator + 1, &end, 16);
++   if(separator && *separator == '-' && end && end != separator + 1 && !*end &&
++      first <= last && last <= 0x1FFFFF)
++   {
++    target_range_first = first;
++    target_range_last = last;
++    target_range_enabled = true;
++   }
++  }
++ }
++ if((physical_address < 0x1F0000 || physical_address >= 0x1F8000) &&
++    (!target_range_enabled || physical_address < target_range_first ||
++     physical_address > target_range_last))
 +  return;
 + offset = physical_address & 0x1FFF;
 + const bool target_writer_read = TheronTraceInstructionPC >= 0xEA80 &&
 +                                 TheronTraceInstructionPC <= 0xEAB0;
-+ if(count >= 65536 || (per_offset[offset] >= 16 && !target_writer_read))
++ const bool target_range_read = target_range_enabled &&
++                                physical_address >= target_range_first &&
++                                physical_address <= target_range_last;
++ if(count >= 65536 || (per_offset[offset] >= 16 && !target_writer_read &&
++                        !target_range_read))
 +  return;
 + char reader_code_bytes[17] = "unavailable";
 + if((TheronTraceInstructionPC & 0x1FFF) <= 0x1FF8)
