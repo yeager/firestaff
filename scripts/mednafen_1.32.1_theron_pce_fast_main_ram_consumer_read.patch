@@ -26,7 +26,7 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
  {
 --- a/src/pce_fast/pce.cpp
 +++ b/src/pce_fast/pce.cpp
-@@ -111,8 +111,80 @@
+@@ -111,8 +111,102 @@
  void TheronTraceDirectMainRAMWrite(uint32 offset, uint8 old_value, uint8 value)
  {
   if(HuCPU.MPR[1] == 0xF8 && offset < 0x100)
@@ -38,12 +38,28 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 + extern uint32 TheronTraceCDSharedEventSequence;
 + static FILE *trace = NULL;
 + static unsigned count = 0;
++ static unsigned sample_limit;
++ static bool sample_limit_initialized;
++ static bool sample_limit_reported;
 + static unsigned per_offset[8192] = {};
 + static bool target_range_initialized;
 + static bool target_range_enabled;
 + static uint32 target_range_first;
 + static uint32 target_range_last;
 + unsigned offset;
++ if(!sample_limit_initialized)
++ {
++  sample_limit_initialized = true;
++  sample_limit = 65536;
++  const char *limit_text = getenv("FIRESTAFF_THERON_MAIN_RAM_CONSUMER_SAMPLE_LIMIT");
++  if(limit_text && *limit_text)
++  {
++   char *end = NULL;
++   unsigned long parsed_limit = strtoul(limit_text, &end, 10);
++   if(end && !*end && parsed_limit >= 4096 && parsed_limit <= 1048576)
++    sample_limit = parsed_limit;
++  }
++ }
 + if(!target_range_initialized)
 + {
 +  target_range_initialized = true;
@@ -75,7 +91,7 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 + const bool target_range_read = target_range_enabled &&
 +                                physical_address >= target_range_first &&
 +                                physical_address <= target_range_last;
-+ if(count >= 65536 || (per_offset[offset] >= 16 && !target_writer_read &&
++ if(count >= sample_limit || (per_offset[offset] >= 16 && !target_writer_read &&
 +                        !target_range_read))
 +  return;
 + char reader_code_bytes[17] = "unavailable";
@@ -103,6 +119,12 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +         reader_code_bytes, HuCPU.A, HuCPU.X, HuCPU.Y, HuCPU.S, HuCPU.P);
 + fflush(trace);
 + per_offset[offset]++;
++ if(count >= sample_limit && !sample_limit_reported)
++ {
++  fprintf(trace, "main_ram_consumer_truncated=sample_limit limit=%u\n", sample_limit);
++  fflush(trace);
++  sample_limit_reported = true;
++ }
 +}
  static DECLFW(BaseRAMWrite)
  {

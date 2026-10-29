@@ -9302,3 +9302,19 @@ native rendering, or Theron parity. The private evidence bundle is at
   scripted button event and reports `transition=missing`. No gameplay or
   render parity is claimed; semantic attribution and full native Theron
   support remain open.
+
+## 2026-10-29 — honor the configured PCE Fast consumer trace limit
+
+- The PCE Fast main-RAM consumer hook now uses the validated
+  `FIRESTAFF_THERON_MAIN_RAM_CONSUMER_SAMPLE_LIMIT` instead of a separate fixed
+  65,536-event ceiling, and records an explicit truncation line when the cap is
+  reached. The capture receipt reports both the event count and whether that
+  marker occurred.
+- The complete instrumented Mednafen patch set passed patch-only application
+  on TRV2. A compile exposed a weak location anchor in the neighboring
+  code-RAM writer patch; replacing it with the unique following function
+  declaration fixed the placement. The corrected PCE Fast build completed on
+  TRV2 with `-j1`, and the binary contains both instrumentation markers.
+- Capture-script regressions passed three consecutive loops. The cap and
+  truncation behavior have not yet been exercised in a live capture; no new
+  consumer coverage, gameplay transition, or Theron parity is claimed.

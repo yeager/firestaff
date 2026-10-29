@@ -1567,6 +1567,7 @@ if [[ ! -f "$code_ram_write_patch" ]] ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE' "$code_ram_write_patch" ||
    ! grep -Fq 'TheronTraceInstructionPhysicalPC < 0x1F1C00' "$code_ram_write_patch" ||
    ! grep -Fq 'physical_address < 0x0D0000 || physical_address >= 0x0D2000' "$code_ram_write_patch" ||
+   ! grep -Fq 'static void TheronTraceA1B7BMTWrite(uint32 physical_destination,' "$code_ram_write_patch" ||
    ! grep -Fq 'mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x' "$code_ram_write_patch" ||
    ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_code_ram_write_trace.patch' "$build_script"; then
     printf '%s\n' 'FAIL: PCE Fast code-window RAM-write trace must retain source PC, mapping and bounded destination writes' >&2
@@ -1813,7 +1814,10 @@ if [[ ! -f "$party_ram_consumer_read_patch" ]] ||
    ! grep -Fq 'TheronTraceMainRAMConsumerRead(A, physical_address, value)' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'static unsigned per_offset[8192] = {};' "$party_ram_consumer_read_patch" ||
-   ! grep -Fq 'count >= 65536 || (per_offset[offset] >= 16 && !target_writer_read &&' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_CONSUMER_SAMPLE_LIMIT' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'count >= sample_limit || (per_offset[offset] >= 16 && !target_writer_read &&' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'main_ram_consumer_truncated=sample_limit limit=%u' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'main_ram_consumer_truncated=%s' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'target_range_enabled = true' "$party_ram_consumer_read_patch" ||
    ! grep -Fq '!target_range_enabled || physical_address < target_range_first' "$party_ram_consumer_read_patch" ||

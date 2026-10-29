@@ -10,9 +10,7 @@
 + HuCPU.PCEWrite[wmpr](physical, V);
 --- a/src/pce_fast/pce.cpp
 +++ b/src/pce_fast/pce.cpp
-@@ -311,2 +311,51 @@
-  per_offset[offset]++;
- }
+@@ -311,1 +311,50 @@
 +void TheronTracePCEFastCodeRAMWrite(uint32 logical_address,
 +                                           uint32 physical_address, uint8 value)
 +{
@@ -62,3 +60,4 @@
 +  fflush(stderr);
 + }
 +}
+ static void TheronTraceA1B7BMTWrite(uint32 physical_destination,

@@ -9077,3 +9077,12 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   be rerun on this capture. This repeated poll gap means the replay still needs
   an input plan that demonstrably exposes every held mask before proceeding to
   semantic tracing.
+- Review found that the capture wrapper accepted
+  `THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT` through 1,048,576, while the
+  instrumented C hook still stopped silently at 65,536. This would make a full
+  consumer capture falsely appear complete. The pending correction makes the
+  hook honor the validated limit and emit an explicit truncation receipt at
+  the cap. The corrected patch series passed patch-only application and a
+  PCE Fast `-j1` build on TRV2; the capture-script regression passed three
+  consecutive loops. A cold authentic capture using the corrected hook is
+  still required before relying on its coverage receipt.
