@@ -16,9 +16,9 @@
  * image. The probe locates the FTL magic (0x6160 big-endian,
  * greatstone d_ftl.html "20-byte common header") inside the
  * real HDM using the classifier's explicit windowed scanner,
- * parses the smallest embeddable FTL we find, and verifies
- * the FTL-declared area_1 in-memory size fits the on-disk
- * media class.
+ * parses embedded FTLs, verifies their BSS area_1 sizes fit
+ * the on-disk media class, and records the documented
+ * checksums for both parseable real-media modules.
  *
  * Source of truth:
  *   - greatstone d_ftl.html "20-byte common header" magic
@@ -34,14 +34,16 @@
  *
  * What the probe deliberately does NOT do:
  *   - It does NOT extract FTL payloads to disk.
- *   - It does NOT decompress HUNK_DATA / HUNK_CODE.
- *   - It does NOT pass judgement on the embedded FTL
- *     resources beyond "fits in HDM" / "fails to parse" /
- *     "parses with N hunks and BSS area_1 = K bytes".
- *   - It does NOT claim original-vs-cracked-vs-save-disk
- *     authenticity. The DMWeb page is explicit that the
- *     public DMFiles HDM lacks the protection sector; that
- *     receipt is locked down by
+ *   - It does NOT establish the 0x5223 HUNK_CODE compression
+ *     format: neither parseable CODE hunk in the staged HDM
+ *     begins with that signature.
+ *   - It does NOT interpret FTL resources or execute 68k code.
+ *     The optional local FTLCODE reference classifies the
+ *     11-byte CODE modification in the cracked module only;
+ *     it does not classify the whole disk as original,
+ *     cracked, or save-disk media. The DMWeb page is explicit
+ *     that the public DMFiles HDM lacks the protection sector;
+ *     that receipt is handled by
  *     firestaff_x68k_media_receipt_real_corpus_probe.
  *
  * Skip-safe: the probe exits 0 with a SKIP message when no
@@ -117,6 +119,14 @@ static const char* kDefaultCandidatePaths[] = {
         "DungeonMasterX68000version30Japanese.hdm",
 };
 
+/* Optional original-data positive control; never copied into the repository.
+ * CI hosts without this private preservation/reference file remain skip-safe. */
+static const char* kDefaultOriginalFtlPaths[] = {
+    "$HOME/Reference/Original/X30J/FTLCODE",
+    "$HOME/redmcsb/Reference/Original/X30J/FTLCODE",
+    "$HOME/ReDMCSB/Reference/Original/X30J/FTLCODE",
+};
+
 static char* expand_home(const char* path) {
     if (!path) return NULL;
     if (strncmp(path, "$HOME", 5) != 0) {
@@ -164,6 +174,29 @@ static char* resolve_hdm_path(const char** out_logged_kind) {
     return NULL;
 }
 
+static char* resolve_original_ftl_path(void) {
+    const char* env = getenv("FIRESTAFF_X68K_ORIGINAL_FTL_PATH");
+    if (env && env[0]) {
+        char* copy = (char*)malloc(strlen(env) + 1u);
+        if (!copy) return NULL;
+        memcpy(copy, env, strlen(env) + 1u);
+        return copy;
+    }
+    size_t n = sizeof(kDefaultOriginalFtlPaths) /
+               sizeof(kDefaultOriginalFtlPaths[0]);
+    for (size_t i = 0; i < n; ++i) {
+        char* expanded = expand_home(kDefaultOriginalFtlPaths[i]);
+        if (!expanded) continue;
+        FILE* f = fopen(expanded, "rb");
+        if (f) {
+            fclose(f);
+            return expanded;
+        }
+        free(expanded);
+    }
+    return NULL;
+}
+
 static uint8_t* read_file_all(const char* path, size_t* out_size) {
     if (!path || !out_size) return NULL;
     FILE* f = fopen(path, "rb");
@@ -200,14 +233,28 @@ static uint8_t* read_file_all(const char* path, size_t* out_size) {
  * candidate's bss.data_area1_memory_size via *out_area1
  * (or 0 if none parse). Returns the number of parseable
  * FTL containers found. */
+typedef struct {
+    size_t modules_with_checksums;
+    size_t common_matches;
+    size_t bss_matches;
+    size_t data_matches;
+    size_t code_matches;
+    size_t code_mismatches;
+    size_t code_unsupported;
+    const uint8_t* cracked_code_mismatch;
+    size_t cracked_code_mismatch_size;
+} X68kFtlChecksumReceipt;
+
 static size_t scan_ftl_candidates(const uint8_t* hdm,
                                   size_t hdm_size,
                                   size_t max_candidates,
                                   uint32_t* out_area1,
-                                  size_t* out_first_offset) {
-    if (!hdm || !out_area1 || !out_first_offset) return 0u;
+                                  size_t* out_first_offset,
+                                  X68kFtlChecksumReceipt* checksum_receipt) {
+    if (!hdm || !out_area1 || !out_first_offset || !checksum_receipt) return 0u;
     *out_area1 = 0u;
     *out_first_offset = 0u;
+    memset(checksum_receipt, 0, sizeof(*checksum_receipt));
     size_t parseable = 0u;
     size_t inspected = 0u;
     for (size_t off = 0u;
@@ -220,6 +267,48 @@ static size_t scan_ftl_candidates(const uint8_t* hdm,
             hdm + off, hdm_size - off, &ftl);
         if (rc != 0) continue;
         ++parseable;
+        if (ftl.code_index < 0 ||
+            !ftl.hunks[ftl.code_index].payload ||
+            ftl.hunks[ftl.code_index].size < 2u) {
+            fprintf(stderr,
+                    "FAIL: parsed X68000 FTL at offset %zu has no bounded CODE payload\n",
+                    off);
+            ++g_fail;
+            continue;
+        }
+        FirestaffFtlChecksumReport sums;
+        memset(&sums, 0, sizeof(sums));
+        if (FirestaffFtlContainer_VerifyChecksums(hdm + off, hdm_size - off,
+                                                  &ftl, &sums) == 0 &&
+            sums.has_required_bss_data_code) {
+            ++checksum_receipt->modules_with_checksums;
+            if (sums.common_header.status == FIRESTAFF_FTL_CHECK_MATCH)
+                ++checksum_receipt->common_matches;
+            if (sums.bss_hunk.status == FIRESTAFF_FTL_CHECK_MATCH)
+                ++checksum_receipt->bss_matches;
+            if (sums.data_hunk.status == FIRESTAFF_FTL_CHECK_MATCH)
+                ++checksum_receipt->data_matches;
+            if (sums.code_hunk.status == FIRESTAFF_FTL_CHECK_MATCH)
+                ++checksum_receipt->code_matches;
+            else if (sums.code_hunk.status == FIRESTAFF_FTL_CHECK_MISMATCH) {
+                ++checksum_receipt->code_mismatches;
+                checksum_receipt->cracked_code_mismatch =
+                    ftl.hunks[ftl.code_index].payload;
+                checksum_receipt->cracked_code_mismatch_size =
+                    ftl.hunks[ftl.code_index].size;
+            }
+            const FirestaffFtlHunkHeader* code = &ftl.hunks[ftl.code_index];
+            if (sums.code_hunk.status ==
+                FIRESTAFF_FTL_CHECK_UNSUPPORTED_COMPRESSED_CODE)
+                ++checksum_receipt->code_unsupported;
+            printf("  NOTE: FTL module offset=%zu (0x%zx), CODE prefix=%02x%02x, "
+                   "checksum status header/BSS/DATA/CODE=%d/%d/%d/%d "
+                   "(CODE expected=%04x actual=%04x)\n",
+                   off, off, code->payload[0], code->payload[1],
+                   sums.common_header.status, sums.bss_hunk.status,
+                   sums.data_hunk.status, sums.code_hunk.status,
+                   sums.code_hunk.expected, sums.code_hunk.actual);
+        }
         if (*out_first_offset == 0u) {
             *out_first_offset = off;
         }
@@ -233,6 +322,75 @@ static size_t scan_ftl_candidates(const uint8_t* hdm,
         }
     }
     return parseable;
+}
+
+/* If the private original FTL reference exists locally, use it as a positive
+ * control for the known cracked module. The reference is read in place and
+ * is never copied into build output or the source tree. */
+static int verify_original_code_control(
+    const X68kFtlChecksumReceipt* checksum_receipt) {
+    char* path = resolve_original_ftl_path();
+    size_t original_size = 0u;
+    uint8_t* original_bytes;
+    FirestaffFtlContainer original;
+    FirestaffFtlChecksumReport sums;
+    size_t differing_bytes = 0u;
+    int valid = 1;
+
+    if (!path) {
+        skip("INV_X68K_FTL_HANDOFF_REAL_11",
+             "no local original FTLCODE reference found; cracked CODE discrepancy remains unclassified");
+        return 0;
+    }
+    original_bytes = read_file_all(path, &original_size);
+    if (!original_bytes ||
+        FirestaffFtlContainer_Parse(original_bytes, original_size,
+                                    &original) != 0 ||
+        original.code_index < 0 ||
+        FirestaffFtlContainer_VerifyChecksums(original_bytes, original_size,
+                                               &original, &sums) != 0) {
+        fprintf(stderr, "FAIL: could not parse original FTL control %s\n", path);
+        fail("INV_X68K_FTL_HANDOFF_REAL_11",
+             "local original FTLCODE control could not be parsed");
+        free(original_bytes);
+        free(path);
+        return -1;
+    }
+    if (checksum_receipt->code_matches != 1u ||
+        checksum_receipt->code_mismatches != 1u ||
+        sums.code_hunk.status != FIRESTAFF_FTL_CHECK_MATCH ||
+        !original.hunks[original.code_index].payload ||
+        original.hunks[original.code_index].size < 2u ||
+        !checksum_receipt->cracked_code_mismatch ||
+        original.hunks[original.code_index].size !=
+            checksum_receipt->cracked_code_mismatch_size) {
+        valid = 0;
+    } else {
+        const uint8_t* control_code = original.hunks[original.code_index].payload;
+        const uint8_t* cracked_code = checksum_receipt->cracked_code_mismatch;
+        size_t code_size = original.hunks[original.code_index].size;
+        for (size_t i = 0; i < code_size; ++i) {
+            if (control_code[i] != cracked_code[i]) ++differing_bytes;
+        }
+        if (differing_bytes != 11u) valid = 0;
+    }
+    if (valid) {
+        pass("INV_X68K_FTL_HANDOFF_REAL_11",
+             "original CODE checksum matches; cracked module differs at the expected 11 code bytes");
+        printf("  NOTE: original reference=%s, CODE checksum=%04x, "
+               "byte differences in cracked module=%zu\n",
+               path, sums.code_hunk.actual, differing_bytes);
+    } else {
+        fail("INV_X68K_FTL_HANDOFF_REAL_11",
+             "original CODE control did not confirm the known 11-byte cracked-module change");
+        printf("  NOTE: original reference=%s, CODE status=%d, "
+               "CODE checksum expected/actual=%04x/%04x, differing bytes=%zu\n",
+               path, sums.code_hunk.status, sums.code_hunk.expected,
+               sums.code_hunk.actual, differing_bytes);
+    }
+    free(original_bytes);
+    free(path);
+    return valid ? 1 : -1;
 }
 
 int main(void) {
@@ -342,10 +500,11 @@ int main(void) {
      * instruction/data words. */
     uint32_t first_area1 = 0u;
     size_t first_ftl_off = 0u;
+    X68kFtlChecksumReceipt checksum_receipt;
     size_t parseable = scan_ftl_candidates(
         hdm, hdm_size,
         X68K_HDM_MAX_FTL_CANDIDATES,
-        &first_area1, &first_ftl_off);
+        &first_area1, &first_ftl_off, &checksum_receipt);
 
     if (full_window_magic >= parseable && full_window_magic > 0u) {
         pass("INV_X68K_FTL_HANDOFF_REAL_04",
@@ -355,6 +514,42 @@ int main(void) {
         fail("INV_X68K_FTL_HANDOFF_REAL_04",
              "explicit full-HDM FTL magic scan did not cover "
              "parseable embedded resources");
+    }
+
+    /* Handoff #10: receipt and verify each parseable module's documented
+     * common/BSS/DATA/CODE checksums as encoded in the real HDM. Common,
+     * BSS, and DATA must match. CODE results are reported as evidence; a raw
+     * mismatch is not promoted to a decode result or silently suppressed. */
+    if (checksum_receipt.modules_with_checksums == parseable && parseable >= 2u &&
+        checksum_receipt.common_matches == parseable &&
+        checksum_receipt.bss_matches == parseable &&
+        checksum_receipt.data_matches == parseable &&
+        checksum_receipt.code_matches + checksum_receipt.code_mismatches ==
+            parseable && checksum_receipt.code_unsupported == 0u) {
+        pass("INV_X68K_FTL_HANDOFF_REAL_10",
+             "two real-media modules have matching common/BSS/DATA checksums; CODE checksums inspected and reported");
+        printf("  NOTE: checksum receipts modules=%zu common=%zu BSS=%zu DATA=%zu "
+               "CODE match=%zu mismatch=%zu; unsupported compressed CODE=%zu\n",
+               checksum_receipt.modules_with_checksums,
+               checksum_receipt.common_matches, checksum_receipt.bss_matches,
+               checksum_receipt.data_matches, checksum_receipt.code_matches,
+               checksum_receipt.code_mismatches,
+               checksum_receipt.code_unsupported);
+    } else {
+        fail("INV_X68K_FTL_HANDOFF_REAL_10",
+             "real-media checksum receipt did not meet the supported BSS/DATA/CODE reporting invariants");
+        printf("  NOTE: modules=%zu common=%zu BSS=%zu DATA=%zu CODE match=%zu "
+               "mismatch=%zu unsupported=%zu\n",
+               checksum_receipt.modules_with_checksums,
+               checksum_receipt.common_matches, checksum_receipt.bss_matches,
+               checksum_receipt.data_matches, checksum_receipt.code_matches,
+               checksum_receipt.code_mismatches,
+               checksum_receipt.code_unsupported);
+    }
+    int original_control = verify_original_code_control(&checksum_receipt);
+    if (original_control < 0 && g_fail == 0) {
+        fail("INV_X68K_FTL_HANDOFF_REAL_11",
+             "original-code positive control failed without recording a failure");
     }
     printf("  NOTE: full-HDM raw magic candidates = %u; "
            "parseable FTL count = %zu\n",

@@ -1,5 +1,19 @@
 # Firestaff TODO — DM1
 
+2026-10-29 X68000 real-media FTL checksum receipt: the cracked usable
+X68000 HDM staged under ignored `build/test-scratch/x68k-fresh/` parses as
+two embedded FTL modules at byte offsets 73,728 (`0x12000`) and 460,800
+(`0x70800`). The probe verifies matching common-header, BSS, and DATA
+checksums for both and records both CODE checksum outcomes: `0d15` matches on
+the first; the second has stored `63e6` versus calculated `6405`. A read-only
+comparison with local `Reference/Original/X30J/FTLCODE` confirms its CODE sum
+is `63e6` and exactly 11 bytes in the cracked module differ from it, explaining
+the mismatch as crack-modified code. Neither CODE payload has the documented
+`0x5223` signature, so this is not evidence for the `0x5223` decoder. It also
+does not extract assets, execute 68k code, or establish X68000 launch support.
+Still needed: a matching-format authentic corpus for 0x5223 verification and
+X68000 resource/runtime work.
+
 2026-10-29 original-media regression recheck: `m11_dm1_pc34_first_monster_combat_real`
 passed (1.83 seconds) against the authentic PC34 archive. It verifies the
 covered HoC-to-first-monster route, repeated PUNCH action and creature damage;
