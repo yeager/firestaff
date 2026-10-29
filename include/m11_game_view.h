@@ -1107,6 +1107,9 @@ typedef struct {
      * 2 = C3 THE END/300-tick hold, 3 = credits/wait input. */
     int endgameF0444PresentationPhase;
     int endgameTheEndDelayRemainingTicks;
+    /* ReDMCSB ENDGAME.C F0444 pre-decrements a 900-count loop before each
+     * queue/delay pass, so restart/quit owns 899 source ticks after THE END. */
+    int endgameRestartWaitRemainingTicks;
     int endgameBuzzRequestCount;
 
     /* Dialog box overlay for text-plaque inspection.

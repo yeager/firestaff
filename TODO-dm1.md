@@ -2647,9 +2647,12 @@ Reviewed 2026-08-29. Only open work is listed here.
 - Capture original PC 3.4 overlays and cadence for the now implemented F0444
   champion-screen input transition into C3 `THE END` and C005 credits. The
   separate non-victory F0435 restart success/failure branches are now wired
-  without host relaunch, but still require an original runtime capture using
-  an authentic loadable save and a rejected/corrupt save before pixel/cadence
-  parity can be promoted. The live victory path correctly disables restart.
+  without host relaunch. The authentic `FIRES` executable statically confirms
+  the 900-count pre-decremented input loop; Firestaff now models its 899
+  queue/delay passes and falls through to C005 on timeout. Runtime parity still
+  requires an authentic loadable save and a rejected/corrupt save in DOSBox,
+  including restart success, restart failure restoration, and timeout cadence.
+  The live victory path correctly disables restart.
 
 The missing C13 save/capture corpus is deferred rather than a release blocker
 for the native media paths currently under active work. When an

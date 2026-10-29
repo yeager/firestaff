@@ -85,7 +85,16 @@ int main(void) {
     }
     CHECK(state.endgameTheEndDelayRemainingTicks == 0);
     CHECK(state.endgameF0444PresentationPhase == 2);
+    CHECK(state.endgameRestartWaitRemainingTicks == 899);
+    for (i = 0; i < 898; ++i) {
+        CHECK(M11_GameView_AdvanceIdleTick(&state) == M11_GAME_INPUT_REDRAW);
+        CHECK(state.endgameF0444PresentationPhase == 2);
+    }
+    CHECK(state.endgameRestartWaitRemainingTicks == 1);
+    CHECK(M11_GameView_AdvanceIdleTick(&state) == M11_GAME_INPUT_REDRAW);
+    CHECK(state.endgameRestartWaitRemainingTicks == 0);
+    CHECK(state.endgameF0444PresentationPhase == 3);
     CHECK(state.world.gameTick == gameTick);
-    puts("PASS: DM1 F0446 delays and F0444 THE END hold preserve source order");
+    puts("PASS: DM1 F0446 delays and F0444 bounded restart window preserve source order");
     return 0;
 }

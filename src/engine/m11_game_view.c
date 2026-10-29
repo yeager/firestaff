@@ -32609,11 +32609,27 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         state->endgameTheEndDelayRemainingTicks--;
         if (state->endgameTheEndDelayRemainingTicks == 0) {
             /* The F0446 victory route disabled restart and falls through to
-             * C005. A non-victory F0444 route retains phase 2 while its
-             * restart controls/process-queue window owns input. */
+             * C005. A non-victory F0444 route starts the source's bounded
+             * pre-decremented 900-count queue window (899 passes). */
             if (!state->endgameRestartAllowed) {
                 state->endgameF0444PresentationPhase = 3;
+            } else {
+                state->endgameRestartWaitRemainingTicks = 899;
             }
+        }
+        return M11_GAME_INPUT_REDRAW;
+    }
+    if (state->gameWon && state->endgameF0444PresentationPhase == 2 &&
+        state->endgameRestartAllowed) {
+        /* ReDMCSB ENDGAME.C F0444:558-590 sets AL=900, pre-decrements it,
+         * pumps the command queue and delays once per pass.  The original
+         * image's 900-count loop therefore admits 899 passes before C005. */
+        if (state->endgameRestartWaitRemainingTicks > 0) {
+            state->endgameRestartWaitRemainingTicks--;
+        }
+        if (state->endgameRestartWaitRemainingTicks <= 0) {
+            state->endgameRestartWaitRemainingTicks = 0;
+            state->endgameF0444PresentationPhase = 3;
         }
         return M11_GAME_INPUT_REDRAW;
     }
@@ -38087,6 +38103,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             }
             state->endgameF0444PresentationPhase = 2;
             state->endgameTheEndDelayRemainingTicks = 300;
+            state->endgameRestartWaitRemainingTicks = 0;
             if (state->dm1MusicSourceBound) {
                 (void)M11_Audio_RequestSourceMusicTrack(&state->audioState, 3);
             }
@@ -40461,6 +40478,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             }
             state->endgameF0444PresentationPhase = 2;
             state->endgameTheEndDelayRemainingTicks = 300;
+            state->endgameRestartWaitRemainingTicks = 0;
             if (state->dm1MusicSourceBound) {
                 (void)M11_Audio_RequestSourceMusicTrack(&state->audioState, 3);
             }
@@ -40500,12 +40518,14 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                 state->endgameFinalHandoffReady = 0;
                 state->endgameF0444PresentationPhase = 0;
                 state->endgameTheEndDelayRemainingTicks = 0;
+                state->endgameRestartWaitRemainingTicks = 0;
                 return M11_GAME_INPUT_REDRAW;
             }
             state->endgameRestartRequested = 0;
             if (restartLoadDecision.returnToTheEnd) {
                 state->endgameF0444PresentationPhase = 2;
                 state->endgameTheEndDelayRemainingTicks = 300;
+                state->endgameRestartWaitRemainingTicks = 0;
                 if (state->dm1MusicSourceBound) {
                     (void)M11_Audio_RequestSourceMusicTrack(
                         &state->audioState, 3);
