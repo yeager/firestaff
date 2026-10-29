@@ -1,3 +1,12 @@
+- 2026-10-29: Fixed a DM1 Atari ST preservation-archive receipt mismatch. The
+  launcher selected the authentic ST 1.1 member from the original multi-edition
+  7z, but the shared required-file rows still described the earlier ST 1.0
+  member. Those rows now use the same authenticated AUTO edition selector as
+  launch admission. The focused 7z receipt test passed; rebuilt-app CLI/menu
+  tests passed for ST 1.1, 1.0b and 1.0a, and the Apple IIGS original-media
+  startup test passed. These headless checks verify discovery and startup
+  ownership, not native display or complete gameplay parity.
+
 - 2026-10-28: Fixed the authentic PC34 HoC pressure plate at map 0 (6,9),
   which the viewport omitted because its 62x21 source bitmap is smaller than
   the 64x25 G0206 D1C zone. The renderer now clips the original C10-transparent
