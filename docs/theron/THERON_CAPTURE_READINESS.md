@@ -219,9 +219,12 @@ source bytes, and a later gameplay/render transition. See the
 [decoded-buffer bit-reader note](../source-lock/theron-disassembly/theron-us-decoded-buffer-bit-reader-20261029.md).
 Consumer reads can be bounded with
 `THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT` (4,096–1,048,576; default
-65,536). The instrumented hook uses this same limit and writes an explicit
-`main_ram_consumer_truncated=sample_limit` record when the cap is reached;
-captures with that record are incomplete for absence or coverage claims.
+65,536). The default `$1F0000–$1F7FFF` consumer stream and an optional physical
+range selected by `THERON_CAPTURE_PCE_FAST_MAIN_RAM_CONSUMER_RANGE` each have
+their own limit, so early default-RAM reads cannot consume the selected range's
+budget. Records identify `sample_class`; each stream writes its own explicit
+truncation marker at the cap. A truncated stream is incomplete for absence or
+coverage claims.
 
 ## Earlier 2026-10-24 — TRV2 headless native full-loop presentation check
 

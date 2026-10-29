@@ -9079,10 +9079,18 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   semantic tracing.
 - Review found that the capture wrapper accepted
   `THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT` through 1,048,576, while the
-  instrumented C hook still stopped silently at 65,536. This would make a full
-  consumer capture falsely appear complete. The pending correction makes the
-  hook honor the validated limit and emit an explicit truncation receipt at
-  the cap. The corrected patch series passed patch-only application and a
-  PCE Fast `-j1` build on TRV2; the capture-script regression passed three
-  consecutive loops. A cold authentic capture using the corrected hook is
-  still required before relying on its coverage receipt.
+  instrumented C hook still stopped silently at 65,536. That limit is now
+  configurable and has an explicit truncation receipt. A cold authentic test
+  then showed that its shared budget filled with default `$1F0000–$1F7FFF`
+  reads before any selected `$0D0000–$0D13C7` consumer reads were captured.
+  The independent-limit correction passed patch-only application and a PCE
+  Fast `-j1` build on TRV2. A cold authentic USA capture recorded exactly
+  4,096 reads in each class and separate truncation markers. The bounded
+  `$23AD` trace verified one ordered 5,064-byte output against the expected
+  digest, but the 4,096 selected `$0D0000–$0D13C7` reads all occurred before
+  the decoder's final output write. The verifier therefore found zero
+  post-decode byte-equal reads. The input driver also missed a scripted poll;
+  the capture recorded no gameplay transition. Next, narrow the selected
+  physical range or adjust the cold input schedule to sample after decode, then
+  trace any read candidates into a source-bound game-state or rendering effect.
+  Current evidence proves neither consumer ownership nor gameplay use.

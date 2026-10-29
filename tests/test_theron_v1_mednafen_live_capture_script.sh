@@ -1815,8 +1815,13 @@ if [[ ! -f "$party_ram_consumer_read_patch" ]] ||
    ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'static unsigned per_offset[8192] = {};' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_CONSUMER_SAMPLE_LIMIT' "$party_ram_consumer_read_patch" ||
-   ! grep -Fq 'count >= sample_limit || (per_offset[offset] >= 16 && !target_writer_read &&' "$party_ram_consumer_read_patch" ||
-   ! grep -Fq 'main_ram_consumer_truncated=sample_limit limit=%u' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'target_range_sample_count >= sample_limit' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'main_ram_sample_count >= sample_limit' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'sample_class=%s' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'main_ram_consumer_truncated=target_range_sample_limit limit=%u' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'main_ram_consumer_truncated=main_ram_sample_limit limit=%u' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'main_ram_consumer_target_range_reads=%s' "$script" ||
+   ! grep -Fq 'main_ram_consumer_target_range_truncated=%s' "$script" ||
    ! grep -Fq 'main_ram_consumer_truncated=%s' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'target_range_enabled = true' "$party_ram_consumer_read_patch" ||

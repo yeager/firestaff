@@ -2462,7 +2462,11 @@ transition_main_ram_e009_data_read_count=$(trace_count '^main_ram_e009_data_read
 transition_main_ram_e009_return_count=$(trace_count '^main_ram_e009_return ' "$cd_trace")
 transition_main_ram_e009_register_write_count=$(trace_count '^main_ram_e009_register_write ' "$cd_trace")
 transition_main_ram_consumer_read_count=$(trace_count '^main_ram_consumer_read ' "$main_ram_consumer_trace")
+transition_main_ram_consumer_default_read_count=$(trace_count '^main_ram_consumer_read .*sample_class=main_ram ' "$main_ram_consumer_trace")
+transition_main_ram_consumer_target_range_read_count=$(trace_count '^main_ram_consumer_read .*sample_class=target_range ' "$main_ram_consumer_trace")
 transition_main_ram_consumer_truncated_count=$(trace_count '^main_ram_consumer_truncated=' "$main_ram_consumer_trace")
+transition_main_ram_consumer_default_truncated_count=$(trace_count '^main_ram_consumer_truncated=main_ram_sample_limit ' "$main_ram_consumer_trace")
+transition_main_ram_consumer_target_range_truncated_count=$(trace_count '^main_ram_consumer_truncated=target_range_sample_limit ' "$main_ram_consumer_trace")
 transition_pce_fast_code_ram_write_count=$(trace_count '^pce_fast_code_ram_write ' "$pce_fast_code_ram_write_trace")
 transition_main_ram_target_read_count=$(trace_count '^main_ram_target_read ' "$main_ram_target_trace")
 transition_main_ram_target_write_count=$(trace_count '^main_ram_target_write ' "$main_ram_target_trace")
@@ -2609,7 +2613,11 @@ fi
     printf 'main_ram_e009_returns=%s\n' "$transition_main_ram_e009_return_count"
     printf 'main_ram_e009_register_writes=%s\n' "$transition_main_ram_e009_register_write_count"
     printf 'main_ram_consumer_reads=%s\n' "$transition_main_ram_consumer_read_count"
+    printf 'main_ram_consumer_default_reads=%s\n' "$transition_main_ram_consumer_default_read_count"
+    printf 'main_ram_consumer_target_range_reads=%s\n' "$transition_main_ram_consumer_target_range_read_count"
     printf 'main_ram_consumer_truncated=%s\n' "$transition_main_ram_consumer_truncated_count"
+    printf 'main_ram_consumer_default_truncated=%s\n' "$transition_main_ram_consumer_default_truncated_count"
+    printf 'main_ram_consumer_target_range_truncated=%s\n' "$transition_main_ram_consumer_target_range_truncated_count"
     printf 'main_ram_consumer_sample_limit=%s\n' "$main_ram_consumer_sample_limit"
     printf 'pce_fast_code_ram_writes=%s\n' "$transition_pce_fast_code_ram_write_count"
     printf 'pce_fast_code_ram_write_trace_enabled=%s\n' "$pce_fast_code_ram_write_trace_enabled"

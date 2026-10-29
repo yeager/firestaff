@@ -9315,6 +9315,12 @@ native rendering, or Theron parity. The private evidence bundle is at
   code-RAM writer patch; replacing it with the unique following function
   declaration fixed the placement. The corrected PCE Fast build completed on
   TRV2 with `-j1`, and the binary contains both instrumentation markers.
-- Capture-script regressions passed three consecutive loops. The cap and
-  truncation behavior have not yet been exercised in a live capture; no new
-  consumer coverage, gameplay transition, or Theron parity is claimed.
+- Capture-script regressions passed three consecutive loops. A cold authentic
+  USA run with independent 4,096-read caps captured 4,096 default reads and
+  4,096 selected `$0D0000–$0D13C7` reads, with a separate truncation marker for
+  each stream. The `$23AD` trace contained one complete 5,064-byte output with
+  the expected SHA-256, but all sampled `$0D` reads preceded its final write;
+  the verifier found zero post-decode output-range reads. The capture also
+  missed the requested scripted-input polls and recorded no gameplay
+  transition. This validates sampling and one decoder output only; it does not
+  establish consumer ownership, gameplay use, or Theron parity.

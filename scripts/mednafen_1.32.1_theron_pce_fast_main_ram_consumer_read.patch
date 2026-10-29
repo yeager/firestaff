@@ -26,7 +26,7 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
  {
 --- a/src/pce_fast/pce.cpp
 +++ b/src/pce_fast/pce.cpp
-@@ -111,8 +111,102 @@
+@@ -111,8 +111,139 @@
  void TheronTraceDirectMainRAMWrite(uint32 offset, uint8 old_value, uint8 value)
  {
   if(HuCPU.MPR[1] == 0xF8 && offset < 0x100)
@@ -38,9 +38,12 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 + extern uint32 TheronTraceCDSharedEventSequence;
 + static FILE *trace = NULL;
 + static unsigned count = 0;
++ static unsigned main_ram_sample_count = 0;
++ static unsigned target_range_sample_count = 0;
 + static unsigned sample_limit;
 + static bool sample_limit_initialized;
-+ static bool sample_limit_reported;
++ static bool main_ram_sample_limit_reported;
++ static bool target_range_sample_limit_reported;
 + static unsigned per_offset[8192] = {};
 + static bool target_range_initialized;
 + static bool target_range_enabled;
@@ -91,8 +94,27 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 + const bool target_range_read = target_range_enabled &&
 +                                physical_address >= target_range_first &&
 +                                physical_address <= target_range_last;
-+ if(count >= sample_limit || (per_offset[offset] >= 16 && !target_writer_read &&
-+                        !target_range_read))
++ if(target_range_read && target_range_sample_count >= sample_limit)
++ {
++  if(trace && !target_range_sample_limit_reported)
++  {
++   fprintf(trace, "main_ram_consumer_truncated=target_range_sample_limit limit=%u\n", sample_limit);
++   fflush(trace);
++   target_range_sample_limit_reported = true;
++  }
++  return;
++ }
++ if(!target_range_read && main_ram_sample_count >= sample_limit)
++ {
++  if(trace && !main_ram_sample_limit_reported)
++  {
++   fprintf(trace, "main_ram_consumer_truncated=main_ram_sample_limit limit=%u\n", sample_limit);
++   fflush(trace);
++   main_ram_sample_limit_reported = true;
++  }
++  return;
++ }
++ if(!target_range_read && per_offset[offset] >= 16 && !target_writer_read)
 +  return;
 + char reader_code_bytes[17] = "unavailable";
 + if((TheronTraceInstructionPC & 0x1FFF) <= 0x1FF8)
@@ -113,17 +135,32 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +  fputs("source=mednafen-pce-fast-main-ram-consumer-read event_sequence_source=TheronTraceCDSharedEventSequence\n", trace);
 + }
 + const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
-+ fprintf(trace, "main_ram_consumer_read sequence=%u event_sequence=%u logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x reader_code_bytes=%s a=%02x x=%02x y=%02x sp=%02x p=%02x\n",
-+         count++, event_sequence, logical_address & 0xFFFF, physical_address, value,
++ fprintf(trace, "main_ram_consumer_read sequence=%u event_sequence=%u sample_class=%s logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x reader_code_bytes=%s a=%02x x=%02x y=%02x sp=%02x p=%02x\n",
++         count++, event_sequence, target_range_read ? "target_range" : "main_ram",
++         logical_address & 0xFFFF, physical_address, value,
 +         TheronTraceInstructionPC, TheronTraceInstructionPhysicalPC,
 +         reader_code_bytes, HuCPU.A, HuCPU.X, HuCPU.Y, HuCPU.S, HuCPU.P);
 + fflush(trace);
-+ per_offset[offset]++;
-+ if(count >= sample_limit && !sample_limit_reported)
++ if(target_range_read)
 + {
-+  fprintf(trace, "main_ram_consumer_truncated=sample_limit limit=%u\n", sample_limit);
-+  fflush(trace);
-+  sample_limit_reported = true;
++  target_range_sample_count++;
++  if(target_range_sample_count >= sample_limit && !target_range_sample_limit_reported)
++  {
++   fprintf(trace, "main_ram_consumer_truncated=target_range_sample_limit limit=%u\n", sample_limit);
++   fflush(trace);
++   target_range_sample_limit_reported = true;
++  }
++ }
++ else
++ {
++  main_ram_sample_count++;
++  per_offset[offset]++;
++  if(main_ram_sample_count >= sample_limit && !main_ram_sample_limit_reported)
++  {
++   fprintf(trace, "main_ram_consumer_truncated=main_ram_sample_limit limit=%u\n", sample_limit);
++   fflush(trace);
++   main_ram_sample_limit_reported = true;
++  }
 + }
 +}
  static DECLFW(BaseRAMWrite)
