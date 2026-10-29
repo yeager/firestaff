@@ -7,14 +7,17 @@
 - `Launcher navigation`: change horizontal-key handling in game options and rescan installed media when returning from supported game routes.
 - `Launcher localization`: update Swedish scan-progress localization across the five game selections.
 - `Theron mouse input`: change fractional panel-coordinate handling so mouse clicks reach the correct regions.
+- `CSB Atari ST runtime`: add source-backed creature and projectile routines, original traversal timing, clipping, and native HUD/assets.
 
 ## Developer changes
 
 - `Five-game startup`: expand authentic-media verification for platform selection, archive return scans, unsupported platform rejection, and localized scanning across DM1, DM2, CSB, Theron and Nexus.
 - `DM1 and DM2 media routes`: verify nested Atari STX discovery, Atari archive edition receipts, French DOS data-root lookup, mixed extracted Macintosh media priority, and FM Towns title timing.
 - `CSB Amiga launcher`: verify edition selection using original media.
+- `CSB Atari ST compatibility`: verify campaign/group events, projectile and creature plans, animation scheduling, clipping, bar graphs, and utility-disk resume against original media.
+- `DM2 Macintosh startup`: use the authentic extracted `DMFiles` tree for diagnostics and return-to-menu coverage when the ZIP alias is unavailable.
 - `Nexus evidence`: correct independent VDP1 image and CLUT joins and DGN palette reporting; trace authentic startup and Load-panel sources without enabling the still-gated Saturn game route.
-- `Theron capture analysis`: match authentic decoder output and trace the decoded-buffer consumer and post-return ADPCM copy; retain the distinction between source evidence and verified gameplay.
+- `Theron capture analysis`: match authentic decoder output; independently bound default and selected-range consumer reads; report dropped reads and trace-write errors; distinguish byte-equal read candidates from verified gameplay use.
 - `DM2 Amiga palette`: verify the active 16-color stripe against original media while documenting remaining viewport and HUD parity gaps.
 - `Release metadata`: update the project version and regenerate the reproducible SPDX source SBOM.
 
