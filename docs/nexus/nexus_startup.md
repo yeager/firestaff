@@ -2026,3 +2026,26 @@ screenshots were byte-identical. Those captures are retained separately as a
 method check and are not used as BKR evidence. Full command, hashes, log and
 screenshot are in the external evidence folder's
 `coldboot-two-champion-20261029/` directory.
+
+### Load-panel VDP2 longword writer join (2026-10-29)
+
+A replay from the authentic BIOS title-logo checkpoint reached the retail Load
+panel with the real `B01 0:16 NORMAL` row. At VDP1 frame 659, the complete Ymir
+VDP2 trace contains 352 VRAM halfword events. The same-frame SH-2 trace contains
+176 32-bit stores at PC `0x06023640`; expanding each big-endian longword into
+its upper and lower halfwords reproduces all 352 VDP2 events in exact order,
+with identical byte addresses and values. The read-only check is:
+
+```sh
+python3 scripts/analyze_nexus_vdp2_sh2_long_write_join.py \
+  /path/to/load-screen-vdp2-trace-20261029 \
+  --frame 659 --pc 0x06023640
+```
+
+The captured WRAM-HI bytes disassemble at `0x06023640` to `mov.l r13,@r6`,
+followed by a four-byte address increment and a loop branch. This joins the
+retail writer to the VDP2 bus events and confirms the longword byte order. It
+does not establish the buffer's content semantics, the menu layer that consumes
+it, or a rendered source asset. The screenshot, complete zero-drop traces,
+WRAM-HI image, disassembly excerpt, analyzer output and hashes are retained in
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/load-screen-vdp2-trace-20261029/`.
