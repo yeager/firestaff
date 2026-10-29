@@ -60,6 +60,25 @@ filled spans are excluded. The source join remains partial, with menu
 background, full palette/display ownership, and destination execution
 unproven. Runtime receipts cited below remain tied to their stated revisions
 unless noted otherwise.
+
+### 2026-10-30 DM1/CSB/DM2 real-media startup sweep
+
+On the local host, the `main` build at `d0962f37` passed the debug boot-probe
+matrix against the installed original-media collection: DM1 PC, Amiga, Atari
+ST and FM Towns; CSB Amiga, Atari ST and FM Towns; DM2 PC, Amiga, FM Towns and
+Macintosh. All 11 routes returned `boot-probe-ready`. DM1 reached
+`dm1-runtime`; CSB reached its platform-specific entrance/animation/title
+startup phases; DM2 reached `dm2-startup-menu`. The probes used SDL's dummy
+video driver and establish only those reported startup receipts, not native
+presentation, physical input, complete animation playback or gameplay parity.
+
+A separate bare CLI check for each priority game omitted `--platform`,
+`FIRESTAFF_DATA` and `FIRESTAFF_ORIGINALS_DIR`. With the standard user data
+root, DM1 and CSB selected their installed FM Towns editions and DM2 selected
+FM Towns Japanese; all three logged a direct game handoff. This verifies the
+default data-root and platform-auto routes on this host only. It does not
+replace per-platform testing or establish that a game is playable.
+
 The latest Nexus evidence separates raw Japanese `DM.BIN` placement at
 `0x06010000` from the older trace-specific static code mapping at
 `0x06010040`. The English-version `MENU.BPK` has an authenticated hash and is
