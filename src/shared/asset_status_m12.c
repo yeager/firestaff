@@ -1478,11 +1478,10 @@ static int m12_admit_dm1_amiga_archive_packages(
     return 0;
 }
 
-/* The supplied Atari preservation collection contains several releases, but
- * only its [!] member is the unmodified original disk.  Keep crack variants
- * out of the launch path and inspect that ZIP -> ZIP -> STX chain in RAM.
- * The final GRAPHICS.DAT digest still has to match an enumerated Atari
- * release before this publishes anything to a launcher. */
+/** Admit only authenticated Atari ST media from the supplied preservation
+ * archives. The [!] nested ZIP and v1.2 STX routes are read in memory, and
+ * their file digests must match a known release before the launcher sees them.
+ */
 static int m12_admit_dm1_atari_st_nested_archive(
     M12_AssetStatus* status, int gameIndex,
     const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
