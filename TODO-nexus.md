@@ -10,11 +10,13 @@ Japanese-region keyboard/mouse state routing is covered by the M11 runtime
 test. The retained Japanese Ymir screenshot captures only the initial settings
 page; Japanese state changes and marker animation still need authentic captures.
 
-The C Saturn BKR container parser is now verified against all four
-hash-pinned samples reported as retail-written; see DONE-nexus.md. Remaining Continue work is the
-source-bound payload schema and retail save-selection/load consumer. Do not
-promote the parser's opaque payload bytes into runtime state without joining
-those bytes to the authentic Saturn save/load implementation.
+The C Saturn BKR container parser is verified against all four hash-pinned
+samples reported as retail-written; see DONE-nexus.md. Retail Continue's BKR
+named-entry lookup, complete payload transfer, and checksum gate are now
+source-bound. The remaining work is to identify the payload schema and the
+post-load consumer that applies the loaded state. Keep payload bytes opaque
+until that mapping is established; do not infer game state from FNXS or another
+Dungeon Master version.
 
 A 2026-10-29 Ymir cold boot with the authentic two-champion BKR installed in
 internal backup RAM reached the native Load panel, displayed `B01 0:16 NORMAL`,
@@ -29,8 +31,16 @@ The 2026-10-29 Continue trace now binds all 20,480 reads at SH-2 PC
 sequence. Ghidra also binds the caller to the named-entry lookup, WRAM-L
 destination `0x00204000`, and checksum gate. This establishes the retail
 payload transfer, but not its field schema or the later mapping into
-Firestaff's game model. Continue with the post-transfer consumers and validate
-the four differing bytes before implementing payload-to-engine state. See
+Firestaff's game model. A bounded follow-up write trace identifies the writer
+of the four differing bytes: the copy routine writes `00 00 00 cc` at payload
+offset `0x58`, then PC `0x0602ec94` replaces it with stack-derived
+`05 ef bf 3c` nine frames later. Its meaning and whether this is a required
+runtime relocation remain unresolved. The containing function resolves the
+fields at structure offsets `+4` and `+8` as base-relative source addresses;
+the four authentic payloads contain `0x10` and `0xcc`, pointing from structure
+offset `0x50` to offsets `0x60` and `0x11c`. Identify the substructure schema
+and the transformed field's consumer before implementing payload-to-engine
+state. See
 [`nexus_sh2_startup_decompilation.md`](docs/nexus/nexus_sh2_startup_decompilation.md#continue-payload-transfer-2026-10-29).
 
 2026-10-28 retail New Game loader route: the M11 retail menu now sends

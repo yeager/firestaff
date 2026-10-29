@@ -41,13 +41,21 @@ A separate 2026-10-29 cold-boot Ymir trace now joins the complete authentic
 20,480-byte `DMNEXUS__01` payload address sequence to SH-2 PC `0x06003680`.
 Ghidra caller analysis binds the read to the named-entry lookup, destination
 WRAM-L address `0x00204000`, and a retail checksum check. The captured final
-buffer matches all but four payload bytes (`0x58..0x5b`); the write timing and
-cause are unknown. This identifies the retail container-to-buffer transfer,
-not the payload's game-state schema or its post-load consumer. Firestaff does
-not yet import this format or apply its data to the game engine. Details and
-hashes are recorded in
+buffer matches all but four payload bytes (`0x58..0x5b`). A follow-up write
+trace shows PC `0x06003682` copies the file bytes there, then PC `0x0602ec94`
+writes `0x05efbf3c` over them nine frames later. The containing retail
+function resolves fields at structure offsets `+4` and `+8` as offsets from
+the structure base before reading the pointed-to regions. All four authentic
+payloads contain `0x10` and `0xcc` in those fields at payload offset `0x50`,
+pointing to source offsets `0x60` and `0x11c`. After using the second source
+region, the function overwrites its offset field with a stack-derived value.
+This establishes a source-relative offset pair and an in-place pointer/fixup
+operation, but not the pointed-to data schemas or the transformed field's
+later consumer. Firestaff does not yet import this format or apply its data to
+the game engine. Details and hashes are recorded in
 [`nexus_sh2_startup_decompilation.md`](nexus_sh2_startup_decompilation.md#continue-payload-transfer-2026-10-29)
-and the operator-managed external evidence bundle.
+and the operator-managed external evidence bundle's
+`coldboot-continue-write-trace-20261029/` directory.
 
 The authentic `DM.BIN` does contain save-related diagnostic strings in the
 retail data image: `EV_SAVE`, `EV_SAVELOAD`, `Slot Operation Error`, and the

@@ -107,16 +107,35 @@ the payload checksum using `FUN_0602268a`. Thus the retail Continue path's
 authentic payload transfer and checksum gate are now source-bound.
 
 The captured final WRAM-L buffer at address `0x00204000` matches 20,476 of
-the 20,480 payload bytes. Only offsets `0x58..0x5b` differ (`00 00 00 cc` in
-the file versus `05 ef bf 3c` in captured WRAM); the cause and timing of this
-mutation are not established. This evidence does not decode payload fields,
-identify the later game-state consumer, or establish a Firestaff engine-state
-mapping. The analysis used `DecompAddrs.java`, `DisasmRange.java`, and
+the 20,480 payload bytes. A second same-route capture with SH-2 writes enabled
+shows the copy routine at `0x06003682` writes the original bytes `00 00 00 cc`
+at payload offsets `0x58..0x5b` on frame 12,922; PC `0x0602ec94` overwrites
+those four bytes with `05 ef bf 3c` on frame 12,931. The latter instruction
+stores a stack-derived value at `r2+8`; in this invocation `r2` is
+`0x00204050`. Same-run disassembly of the containing function shows it first
+loads 32-bit fields at offsets `+4` and `+8` from that structure and adds the
+structure base to each before using them as source addresses. All four
+authentic BKR payloads have `0x10` and `0xcc` at payload offsets `0x54` and
+`0x58`; with the structure base at payload offset `0x50`, these resolve to
+substructures at payload offsets `0x60` and `0x11c`. Thus those two fields are
+source-relative offsets for this routine. The function later overwrites the
+second offset with a stack-derived value after using the pointed-to source
+region. This is evidence for an in-place runtime pointer/fixup transformation,
+but does not identify the substructure schemas, the transformed field's later
+consumer, or the complete loaded-state mapping. It does not establish a
+Firestaff engine-state mapping. The caller analysis used `DecompAddrs.java`,
+`DisasmRange.java`, and
 `FindRefs.java` from [`yeager/pcrecomp`](https://github.com/yeager/pcrecomp)
 commit `a85ea970f9e0640ab6546d2ca7a01fccb132973d`; no retail payload or disc
 image is included in the repository. Full trace, WRAM captures, run log,
 decompilation output, hashes, and reproduction details are in the external
 evidence folder's `coldboot-continue-readtrace-20261029/` directory.
+
+The bounded write-trace receipt and same-run instruction bytes are in the
+adjacent external evidence folder
+`coldboot-continue-write-trace-20261029/`. The next step is to identify the
+stack-derived field's consumer and confirm whether the mutation is an
+intentional relocation before assigning schema semantics.
 
 ## Rejected startup candidate
 

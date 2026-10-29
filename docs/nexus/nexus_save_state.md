@@ -20,10 +20,12 @@ the serializers in `src/nexus/nexus_v1_save_load.c`.
 Four authentic Mednafen Backup RAM images in the private real-data corpus
 contain a `DMNEXUS__01` entry with a 20,480-byte payload. A 2026-10-29 Ymir
 cold-boot trace and SH-2 caller analysis source-bind retail lookup, transfer to
-WRAM-L at `0x00204000`, and checksum validation. The final captured buffer has
-four changed bytes relative to the BKR payload; their writer and timing are
-unknown. The payload fields and later consumer that applies loaded state to
-the retail engine are not identified. Preserve the payload as opaque
+WRAM-L at `0x00204000`, and checksum validation. A second trace identifies the
+writer and timing of the four-byte difference at payload offset `0x58`: PC
+`0x0602ec94` stores a stack-derived value nine frames after the byte copy. Its
+meaning and role in load-time relocation are not established. The payload
+fields and later consumer that applies loaded state to the retail engine are
+not identified. Preserve the payload as opaque
 read-only bytes: do not infer champion or world fields by analogy with FNXS or
 another Dungeon Master version. Saturn save import remains blocked until those
 fields and the post-load state mapping are source-bound.

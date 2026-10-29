@@ -36,8 +36,11 @@ A 2026-10-29 Ymir cold-boot trace with an authentic two-champion BKR now
 source-binds the retail Continue payload transfer: the retail game reads the
 complete `DMNEXUS__01` entry and copies it to WRAM-L at `0x00204000`, then
 checks its checksum. The final memory snapshot differs from the BKR at four
-payload bytes; the cause is unknown. This establishes container-to-runtime
-transfer, but not payload fields, the later consumer that applies the loaded
-state, or a Firestaff engine-state mapping. Firestaff's Saturn import and
-Continue handoff therefore remain unimplemented. See
+payload bytes. A targeted write trace identifies a stack-derived 32-bit value
+written by PC `0x0602ec94` over payload offset `0x58` nine frames after the
+copy; the field meaning and whether this is an intentional runtime relocation
+remain unknown. This establishes container-to-runtime transfer, but not
+payload fields, the later consumer that applies the loaded state, or a
+Firestaff engine-state mapping. Firestaff's Saturn import and Continue
+handoff therefore remain unimplemented. See
 [`nexus_sh2_startup_decompilation.md`](nexus_sh2_startup_decompilation.md#continue-payload-transfer-2026-10-29).
