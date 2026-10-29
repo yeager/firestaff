@@ -99,10 +99,15 @@ outside its address window. The party leader index is now independently
 identified at payload `+0x61`: `FUN_0602eb4c` sign-extends this byte into the
 runtime context at `+0x0c`, and all four authentic payloads match same-run
 WorkRAM at `0x0608009c` (indices `0, 0, 0, 3` for rosters of `2, 3, 4, 4`).
-The bounded BKR probe validates that this index is inside the roster. Other
-champion and world fields remain opaque. Original Saturn save import remains
-gated until the complete semantic payload mapping and source-owned consumer
-are identified and exercised against the retail game.
+The bounded BKR probe validates that this index is inside the roster. One
+champion field pair is now semantically bound: signed source halfwords at
+`+0x3c/+0x3e` project to runtime longwords at `+0x08/+0x0c`. The retail
+updater subtracts from the first and clamps it against the second, identifying
+them as current and maximum stamina. The four authentic saves contain `66/67`
+for each champion except the leader-index-3 save, which contains `67/67`.
+Other champion and world fields remain opaque. Original Saturn save import
+remains gated until the complete semantic payload mapping and source-owned
+consumer are identified and exercised against the retail game.
 
 ### Name-byte comparison against the Japanese roster
 

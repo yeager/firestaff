@@ -2,8 +2,9 @@
 """Verify decompiled Continue field copies against authentic Ymir RAM dumps.
 
 The two inputs must be the same run's raw 1 MiB WorkRAM-HI and WorkRAM-Low
-files. This checks only fields whose copy/conversion operations are visible in
-the pcrecomp/Ghidra decompilation; it does not assign save-field semantics.
+files. This checks fields whose copy/conversion operations are visible in the
+pcrecomp/Ghidra decompilation. It also checks the current/maximum stamina
+invariant established by the retail updater; other save fields remain unnamed.
 """
 
 from __future__ import annotations
@@ -231,9 +232,9 @@ def verify(
     differences: list[str] = []
     traced_differences: list[str] = []
     unresolved_differences: list[str] = []
-    # Keep each operation explicit against FUN_0602eb4c's decompilation. The
-    # offsets prove mechanical projection only; they do not assign meanings
-    # to the source or runtime fields.
+    # Keep each operation explicit against FUN_0602eb4c's decompilation.
+    # Except for the stamina pair source +0x3c/+0x3e -> runtime +0x08/+0x0c,
+    # these offsets prove mechanical projection only and assign no meaning.
     byte_copies = (
         (0x00, 0x2C, 6),
         (0x06, 0x32, 1),
@@ -359,6 +360,13 @@ def verify(
                 matches.append(
                     f"record{index}:s16+0x{source_field:x}->s32+0x{target_field:x}"
                 )
+        stamina_current = struct.unpack_from(">i", hi, target + 0x08)[0]
+        stamina_max = struct.unpack_from(">i", hi, target + 0x0C)[0]
+        if stamina_current < 0 or stamina_max < stamina_current:
+            raise ValueError(
+                f"champion record {index} has invalid current/maximum stamina: "
+                f"{stamina_current}/{stamina_max}"
+            )
         for source_field, target_field in unsigned_halfword_copies:
             expected = struct.unpack_from(">H", payload, source + source_field)[0]
             actual = struct.unpack_from(">H", hi, target + target_field)[0]
@@ -414,7 +422,8 @@ def verify(
             "partial_runtime_update_observed" if not unresolved_differences else
             "partial_with_unresolved_final_snapshot_differences"
         ),
-        "save_field_semantics=unassigned",
+        "stamina_pair_semantics=current/maximum_verified",
+        "other_save_field_semantics=unassigned",
         "complete_continue_parity=unproven",
     ]
 

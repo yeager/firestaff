@@ -183,9 +183,15 @@ checks the two source-relative offsets (`0x10` and `0xcc`), the retail champion
 count at payload `+0x62`, the party leader index at `+0x61`, the champion table
 at `0x11c`, its `0xe0` source stride, and the captured count-dependent payload
 span. The real-data test applies this probe to all four hash-pinned
-retail-written images. It returns the record bounds and leader index while
-keeping all other champion fields opaque; it does not yet load a champion into
-the Firestaff engine.
+retail-written images. It returns the record bounds and leader index, and
+extracts the signed stamina pair at source `+0x3c/+0x3e`, which the loader
+projects to runtime `+0x08/+0x0c`. The retail updater `FUN_060360fc` reads
+runtime `+0x08`, subtracts a caller-provided amount, routes values below one
+through damage handling, and clamps against runtime `+0x0c`; this binds those
+cells as current and maximum stamina. Every record in the two-, three-, and
+ordinary four-champion saves contains `66/67`; the leader-index-3 save contains
+`67/67`. The probe leaves every other champion field opaque and does not yet
+load a champion into the Firestaff engine.
 
 Several mechanically copied fields change after the initial loader writes.
 The source `+0x40` to runtime `+0x10` field is 18 in the save and 19 in all

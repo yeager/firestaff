@@ -11,25 +11,27 @@ typedef struct {
     const char *payload_sha256;
     uint32_t champion_count;
     uint32_t party_leader_index;
+    int32_t champion_stamina_current;
+    int32_t champion_stamina_max;
 } CorpusFile;
 
 static const CorpusFile corpus[] = {
     {"nexus-two-champion-retail-written-20260926.bkr",
      "3d60856119df55ffa4937d13b5dc7487157c7c6b131a999a2e61683316679634",
      "9c969745745acc7f843148abf78f114ab56e82b39b7f01251b6407a0d9fdf4eb",
-     2U, 0U},
+     2U, 0U, 66, 67},
     {"nexus-three-champion-retail-written-20260926.bkr",
      "d9c86de3b0c668f9961a16529b1d5fd72f3e095823f8f0021cf8db8bfba48e9b",
      "1e7e20ee72cdc57c50557ec6bf6325be22c299558a9b8f2731a78877d89725a3",
-     3U, 0U},
+     3U, 0U, 66, 67},
     {"nexus-four-champion-retail-written-20260926.bkr",
      "87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035",
      "1c460c65cc6156843ec4e0c1c8ca4ae3667241cc46a04151624b578e478c47e5",
-     4U, 0U},
+     4U, 0U, 66, 67},
     {"nexus-four-champion-leader-3-retail-written-20260926.bkr",
      "319ed84080a90eaeafb1bfa85ca4405a0153f4c85fda76ee7c557b34ac276867",
      "b77461232e7cf3485be0e179b5feab777c91efa187d0ad6bdcc7bb9867058e3e",
-     4U, 3U}
+     4U, 3U, 67, 67}
 };
 
 static int read_file(const char *path, uint8_t **out, size_t *out_size)
@@ -151,6 +153,22 @@ int main(void)
             Nexus_V1_SaturnBkrNexusPayloadReceipt rejected_receipt;
             const uint8_t *authentic_payload =
                 payload + entries[0].payload_offset;
+            uint32_t champion;
+
+            for (champion = 0U; champion < payload_receipt.champion_count;
+                 ++champion) {
+                if (payload_receipt.champion_stamina_current[champion] !=
+                        corpus[file_index].champion_stamina_current ||
+                    payload_receipt.champion_stamina_max[champion] !=
+                        corpus[file_index].champion_stamina_max) {
+                    fprintf(stderr,
+                            "FAIL: authentic stamina mismatch: %s champion=%u current=%d max=%d\n",
+                            corpus[file_index].filename, champion,
+                            payload_receipt.champion_stamina_current[champion],
+                            payload_receipt.champion_stamina_max[champion]);
+                    failed = 1;
+                }
+            }
 
             /* Derive negative cases from the real payload so the regression
              * tests rejection without adding a synthetic Nexus save fixture. */
@@ -209,7 +227,7 @@ int main(void)
                 corpus[file_index].champion_count * 0xE0U ||
             payload_receipt.declared_payload_span !=
                 0x274U + corpus[file_index].champion_count * 0xE0U ||
-            !malformed_payloads_rejected) {
+            !malformed_payloads_rejected || failed) {
             fprintf(stderr,
                     "FAIL: authentic BKR parse/hash mismatch: %s "
                     "image_hash=%d parse=%d valid=%d geometry=%u/%u "
@@ -231,9 +249,11 @@ int main(void)
         } else {
             payloads[file_index] = payload;
             payload_sizes[file_index] = entries[0].payload_bytes;
-            printf("PASS: %s (%u-byte image, %u-byte payload, %u opaque champion records)\n",
+            printf("PASS: %s (%u-byte image, %u-byte payload, %u champions, stamina %d/%d)\n",
                    corpus[file_index].filename, receipt.image_bytes,
-                   entries[0].payload_bytes, payload_receipt.champion_count);
+                   entries[0].payload_bytes, payload_receipt.champion_count,
+                   payload_receipt.champion_stamina_current[0],
+                   payload_receipt.champion_stamina_max[0]);
             payload = NULL;
         }
         free(payload);

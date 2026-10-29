@@ -30,6 +30,12 @@ static uint32_t read_be32(const uint8_t *bytes)
         ((uint32_t)bytes[2] << 8) | bytes[3];
 }
 
+static int32_t read_be_s16(const uint8_t *bytes)
+{
+    uint32_t value = read_be16(bytes);
+    return (value & 0x8000U) != 0U ? (int32_t)value - 0x10000 : (int32_t)value;
+}
+
 static int block_range_valid(uint32_t block, uint32_t block_count)
 {
     return block >= 2U && block < block_count;
@@ -281,6 +287,16 @@ int nexus_v1_saturn_bkr_nexus_payload_probe(
     receipt.payload_bytes = (uint32_t)payload_size;
     receipt.champion_count = champion_count;
     receipt.party_leader_index = (uint32_t)party_leader_index;
+    {
+        uint32_t champion;
+        for (champion = 0U; champion < champion_count; ++champion) {
+            uint32_t record_offset = records_offset + champion * records_stride;
+            receipt.champion_stamina_current[champion] =
+                read_be_s16(payload + record_offset + 0x3CU);
+            receipt.champion_stamina_max[champion] =
+                read_be_s16(payload + record_offset + 0x3EU);
+        }
+    }
     receipt.champion_records_offset = records_offset;
     receipt.champion_record_stride = records_stride;
     receipt.champion_records_bytes = records_bytes;

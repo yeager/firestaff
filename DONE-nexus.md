@@ -1,5 +1,18 @@
 # Firestaff DONE — Nexus
 
+## 2026-10-29 — Bind the authentic BKR stamina pair
+
+- `FUN_0602eb4c` projects signed save halfwords at champion-record offsets
+  `+0x3c/+0x3e` to runtime longwords `+0x08/+0x0c`. The retail updater
+  `FUN_060360fc` subtracts from `+0x08`, handles values below one as damage,
+  and clamps against `+0x0c`, identifying current and maximum stamina.
+- The bounded BKR probe returns this pair for each champion. The regression
+  checks all four hash-pinned authentic saves: `66/67` for each champion in
+  the two-, three-, and ordinary four-champion samples, and `67/67` in the
+  leader-index-3 sample. No synthetic game data was added.
+- All remaining champion fields stay opaque, and applying Saturn Continue
+  state to Firestaff's engine remains open.
+
 ## 2026-10-29 — Bind the authentic BKR party leader index
 
 - pcrecomp/Ghidra decompilation of `FUN_0602eb4c` shows payload byte `+0x61`

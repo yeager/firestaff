@@ -13,11 +13,13 @@ page; Japanese state changes and marker animation still need authentic captures.
 The C Saturn BKR container parser is verified against all four hash-pinned
 samples reported as retail-written; see DONE-nexus.md. A bounded C probe now
 validates the retail `DMNEXUS__01` payload offsets, champion count, party
-leader index, and opaque champion-record table against the decompiled loader
-and all four authentic images. Retail Continue's BKR named-entry lookup,
+leader index, and current/maximum stamina pair against decompiled retail code
+and all four authentic images. Other champion-record fields remain opaque.
+Retail Continue's BKR named-entry lookup,
 complete payload transfer,
 and checksum gate are source-bound. The remaining work is to identify the
-champion field schema and the post-load consumer that applies the loaded state.
+rest of the champion field schema and the post-load consumer that applies the
+loaded state.
 Keep unbound payload fields opaque; do not infer game state from FNXS or another
 Dungeon Master version.
 
