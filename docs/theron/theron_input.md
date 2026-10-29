@@ -22,10 +22,16 @@ are research instruments only and do not run or replace the game in Firestaff.
 | Select        | —                 |                |
 
 The PC Engine retail manual documents the D-pad moving an on-screen cursor,
-Button I acting on items and controls, and Button II cancelling. It does not
-document a physical mouse device. The hand visible in the dungeon screenshot
-is the original game's cursor; its presence does not prove that emulated mouse
-input can move it. See the [TurboGrafx-16 instruction manual, pp. 4–6](https://www.tg-16.com/contributors/bernie/Dungeon_Master/Dungeon_Master.pdf).
+Button I acting on items and controls, and Button II cancelling. It describes
+controller cursor movement but does not describe mouse input; see the
+[TurboGrafx-16 instruction manual, pp. 4–6](https://www.tg-16.com/contributors/bernie/Dungeon_Master/Dungeon_Master.pdf).
+A cold authentic Japanese Rev. 1 reference run then switched Mednafen port 1
+to its PCE mouse device. A pair of dungeon screenshots differs only around the
+original hand cursor after host-mouse movement, so visual cursor motion is now
+confirmed. The PCE Fast module's mouse port is documented by
+[Mednafen](https://mednafen.github.io/documentation/pce_fast.html). This
+reference result does not identify absolute cursor coordinates, establish
+click-to-command behavior, or prove native Firestaff parity.
 
 Firestaff adds desktop mouse controls as a host-side convenience. During
 startup, left-click selects and right-click goes back. During dungeon play,

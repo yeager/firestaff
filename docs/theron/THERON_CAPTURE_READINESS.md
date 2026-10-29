@@ -5,6 +5,17 @@ only as an external reference instrument for authentic original-game behavior
 and data capture; it is never part of the shipped runtime or a substitute for
 native Firestaff gameplay.
 
+## 2026-10-29 — PCE mouse motion visibly moves the original cursor
+
+A cold authentic Japanese Rev. 1 Mednafen PCE Fast run switched port 1 to the
+emulated mouse at the dungeon. Two screenshots with host-mouse positions 150
+screen pixels apart differ only in a 41×51-pixel box around the original hand
+cursor. This confirms visual cursor motion in the original game. It does not
+identify guest coordinates or prove what a click does: the probe has no
+command or state-transition receipt, and the later click's black viewport is
+inconclusive. See the
+[source-locked capture note](../source-lock/theron-disassembly/theron-jp-mouse-pointer-motion-20261029.md).
+
 ## 2026-10-29 — cold Japanese reference route reaches dungeon view
 
 A fresh Mednafen 1.32.1 `pce_fast` run opened the authentic Japanese Rev. 1

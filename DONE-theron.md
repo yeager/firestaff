@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-29 — verify original Theron cursor response to PCE mouse motion
+
+A cold Mednafen PCE Fast run using authentic Japanese Rev. 1 media switched
+port 1 to its mouse device at the first dungeon. Two captures 150 host-screen
+pixels apart differed only in a 41×51-pixel box around the original hand
+cursor (708 changed pixels). This is visual evidence that mouse motion moves
+the original cursor. The run did not produce game-owned coordinates, a command
+write, or a click-result receipt; a later click's black viewport is
+inconclusive. The [capture note](docs/source-lock/theron-disassembly/theron-jp-mouse-pointer-motion-20261029.md)
+records hashes and the remaining gaps. No source media, BIOS, save-state, or
+RAM image was added to the bundle.
+
 ## 2026-10-29 — bound merged source-graphics chronology completeness
 
 The PCE Fast source-graphics merger now records the configured VRAM/VCE

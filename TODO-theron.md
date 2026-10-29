@@ -1,3 +1,22 @@
+## 2026-10-29 — authentic mouse motion moves the Theron hand cursor; click semantics remain open
+
+- A cold Mednafen PCE Fast run used authentic Japanese Rev. 1 media and the
+  headerless System Card 3.0 body, then switched port 1 from gamepad to mouse
+  at the dungeon. Two screenshots taken after host-mouse positions 150 screen
+  pixels apart differ only in a 41×51-pixel box around the original hand
+  cursor (708 changed pixels). This confirms visible cursor response to
+  emulated PCE mouse motion; the [PCE Fast device reference](https://mednafen.github.io/documentation/pce_fast.html)
+  documents the mouse port.
+- This was a screenshot-only probe: it has no guest-input trace, source
+  coordinate receipt, command-buffer write, target receipt or state-transition
+  receipt. A later click was followed by a black viewport, so its effect is
+  inconclusive. No hitbox or click mapping is justified yet. Evidence and
+  limits are in
+  [the pointer-motion capture note](docs/source-lock/theron-disassembly/theron-jp-mouse-pointer-motion-20261029.md).
+- Next: reproduce cursor motion with bounded game-owned pointer coordinates,
+  join the Button I action to its command consumer, and test clicks against
+  source-backed controls before implementing direct Firestaff world clicks.
+
 ## 2026-10-29 — cold Japanese route reaches the first-person dungeon; input provenance remains open
 
 - A fresh Mednafen 1.32.1 `pce_fast` run opened authentic Japanese Rev. 1 media
