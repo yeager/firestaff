@@ -149,6 +149,32 @@ if "$scripted_input_consumption_verifier" \
     printf '%s\n' 'FAIL: scripted-input verifier accepted a read limit above its bound' >&2
     exit 1
 fi
+cat >"$input_test_dir/mirrored-port.trace" <<'THERON_MIRRORED_INPUT_PORT'
+scripted_pce_input_event frame=72 key=run mask=0008 hold=60
+scripted_pce_input_apply frame=72 physical=0000 scripted=0008 combined=0008
+pce_input_read frame=72 cpu_pc=42ab register=138d raw=0008 sel=0 clr=0 index=0 value=07
+THERON_MIRRORED_INPUT_PORT
+mirrored_port_receipt=$("$scripted_input_consumption_verifier" \
+    "$input_test_dir/mirrored-port.trace" run@72:60 8)
+if [[ "$mirrored_port_receipt" != *'event_frames_with_scripted_mask_read=1'* ||
+      "$mirrored_port_receipt" != *'controller_read_witness_pc=42ab'* ||
+      "$mirrored_port_receipt" != *'game_or_non_system_card_poll_boundary=observed'* ]]; then
+    printf 'FAIL: a mirrored PCE port-0 read was not verified:\n%s\n' \
+        "$mirrored_port_receipt" >&2
+    exit 1
+fi
+cat >"$input_test_dir/mirrored-wrong-index.trace" <<'THERON_MIRRORED_WRONG_INPUT_INDEX'
+scripted_pce_input_event frame=73 key=run mask=0008 hold=60
+scripted_pce_input_apply frame=73 physical=0000 scripted=0008 combined=0008
+pce_input_read frame=73 cpu_pc=42ab register=1394 raw=0008 sel=0 clr=0 index=4 value=37
+THERON_MIRRORED_WRONG_INPUT_INDEX
+if "$scripted_input_consumption_verifier" \
+    "$input_test_dir/mirrored-wrong-index.trace" run@73:60 8 \
+    >"$input_test_dir/mirrored-wrong-index.stdout" \
+    2>"$input_test_dir/mirrored-wrong-index.stderr"; then
+    printf '%s\n' 'FAIL: a mirrored read from controller index 4 was accepted as port 0' >&2
+    exit 1
+fi
 cat >"$input_test_dir/system-card-only.trace" <<'THERON_SYSTEM_CARD_INPUT'
 scripted_pce_input_event frame=9600 key=run mask=0008 hold=90
 scripted_pce_input_apply frame=9600 physical=0000 scripted=0008 combined=0008
@@ -195,6 +221,21 @@ if [[ "$legacy_pce_receipt" != *'event_frames_with_scripted_mask_read=1'* ||
       "$legacy_pce_receipt" != *'controller_read_witness_pc=44ca'* ]]; then
     printf 'FAIL: the PCE raw-read/result pair was not verified as one consumed poll:\n%s\n' \
         "$legacy_pce_receipt" >&2
+    exit 1
+fi
+cat >"$input_test_dir/legacy-mirrored-port.trace" <<'THERON_LEGACY_MIRRORED_PORT'
+scripted_pce_input_event frame=61 key=run mask=0008 hold=2
+scripted_pce_input_apply frame=61 physical=0000 scripted=0008 combined=0008
+pce_input_read frame=61 cpu_pc=42ab register=13ff raw=0008 sel=0 clr=0 index=0
+pce_input_port0 raw=0008
+pce_input_result frame=61 cpu_pc=42ab register=13ff raw=0008 value=07 sel=0 clr=0 index=0 sp=f2 stack=4b436d74
+THERON_LEGACY_MIRRORED_PORT
+legacy_mirrored_receipt=$("$scripted_input_consumption_verifier" \
+    "$input_test_dir/legacy-mirrored-port.trace" run@61:2 4)
+if [[ "$legacy_mirrored_receipt" != *'event_frames_with_scripted_mask_read=1'* ||
+      "$legacy_mirrored_receipt" != *'controller_read_witness_pc=42ab'* ]]; then
+    printf 'FAIL: legacy PCE raw/result pairing rejected a mirrored port read:\n%s\n' \
+        "$legacy_mirrored_receipt" >&2
     exit 1
 fi
 cat >"$input_test_dir/out-of-window-read.trace" <<'THERON_OUT_OF_WINDOW_INPUT'

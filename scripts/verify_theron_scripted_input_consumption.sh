@@ -59,6 +59,9 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
     # Mednafen 1.32.1 PCE Fast INPUT_Read selects the direction nibble with
     # SEL=1 and the button nibble with SEL=0; its visible value is active-low.
     # The raw pad word alone therefore cannot establish what the guest read.
+    # ReadIO dispatches the whole $1000-$13FF mirror to INPUT_Read (Mednafen
+    # src/pce_fast/ioread.inc); the read_index field selects the controller
+    # (src/pce_fast/input.cpp). Accept the hardware mirror, then require port 0.
     function selected_bank_matches(raw, value, sel, mask,    nibble) {
         if (raw < 0 || value < 0 || sel < 0 || !contains_mask(raw, mask))
             return 0
@@ -125,15 +128,17 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
             failure = "trace exceeds its declared controller-read limit"
             next
         }
-        if (pending_frame != "" && pending_apply &&
-            $0 ~ / register=1000([[:space:]]|$)/) {
+        if (pending_frame != "" && pending_apply) {
             raw_value = -1
             returned_value = -1
             read_sel = -1
             read_index = -1
+            read_register = ""
             read_pc = ""
             read_frame = ""
             for (i = 1; i <= NF; i++) {
+                if ($i ~ /^register=[0-9a-fA-F]+$/)
+                    read_register = tolower(substr($i, 10))
                 if ($i ~ /^raw=[0-9a-fA-F]+$/)
                     raw_value = hex_to_dec(substr($i, 5))
                 if ($i ~ /^value=[0-9a-fA-F]+$/)
@@ -147,22 +152,26 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
                 if ($i ~ /^frame=[0-9]+$/)
                     read_frame = substr($i, 7)
             }
-            if (returned_value >= 0) {
-                accept_controller_read(raw_value, returned_value, read_sel,
-                                       read_index, read_pc, read_frame)
-                pending_result = 0
-            } else {
-                # The original PCE core emits the raw port sample and the
-                # returned active-low byte as adjacent trace records. Pair
-                # them without counting one CPU poll twice; PCE Fast emits
-                # both values on its single pce_input_read row.
-                pending_result = 1
-                pending_result_pc = read_pc
-                pending_result_register = "1000"
-                pending_result_raw = raw_value
-                pending_result_sel = read_sel
-                pending_result_index = read_index
-                pending_result_frame = read_frame
+            register_value = hex_to_dec(read_register)
+            if (register_value >= 4096 && register_value <= 5119) {
+                if (returned_value >= 0) {
+                    accept_controller_read(raw_value, returned_value,
+                                           read_sel, read_index, read_pc,
+                                           read_frame)
+                    pending_result = 0
+                } else {
+                    # The original PCE core emits the raw port sample and the
+                    # returned active-low byte as adjacent trace records. Pair
+                    # them without counting one CPU poll twice; PCE Fast emits
+                    # both values on its single pce_input_read row.
+                    pending_result = 1
+                    pending_result_pc = read_pc
+                    pending_result_register = read_register
+                    pending_result_raw = raw_value
+                    pending_result_sel = read_sel
+                    pending_result_index = read_index
+                    pending_result_frame = read_frame
+                }
             }
         }
         next

@@ -8802,9 +8802,16 @@ this is distinct from the authenticated combined-RAR title-audio path above.
 - A fresh TRV2 Mednafen 1.32.1 build with the current VRAM, VCE, C1DF and
   HuC6280 `$23AD` instrumentation accepted 12 scripted Run/Button I events
   from the authentic JP Rev. 1 CUE and System Card. The verifier confirmed
-  all 12 masks were applied and read, but every scheduled poll was classified
-  as System Card code; it observed no non-System-Card controller poll. The
-  wrapper rejected the run because it lacked one complete `$23AD` invocation.
+  all 12 masks were applied and read at port 0, but the classified reads for
+  those events were System Card polls. A separate game-owned `$42AB/$42B2`
+  multitap scan read mirrored controller registers `$138D..$1394` at index 4
+  with raw `$0000`; this did not consume the scheduled port-0 mask. The old
+  verifier missed this scan because it recognized only register `$1000`.
+  Corrected disassembly of the trace's CD-RAM-resident code confirms the reads
+  are PCE input-handler accesses; see
+  `docs/source-lock/theron-disassembly/theron-jp-cold-input-trace-20261029.md`.
+  The wrapper rejected the run because it lacked one complete `$23AD`
+  invocation.
   The 65,536-row CD data-port and 1,048,576-row VWR streams also reached their
   configured caps. See
   `docs/source-lock/theron-disassembly/theron-jp-cold-input-trace-20261029.md`.
