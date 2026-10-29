@@ -1,5 +1,406 @@
 # Firestaff TODO — CSB
 
+2026-10-29 CSB Atari source-order verification: corrected the F0128 wall
+traversal to dispatch F0116-F0126 in ReDMCSB call order, with F0127/D0C
+after D0L/D0R. F0115 cell dispatch now uses a tested event plan for each
+cell's object-then-creature order and the source creature scale mapping
+D3=16/32, D2=20/32, D1/D0=32/32. Front-facing door passes remain split around
+the door material. The app build, F0115 cell/creature planner tests (2/2),
+projectile planner test (1/1), F0128 schedule test (1/1), and full original
+Atari STX CLI campaign (1/1, including the
+source animation handoff) pass. This verifies ordering contracts and startup
+against original media, not viewport pixel parity. A standalone projectile
+planner decodes authentic C558 G0210/G0215/G0218 data; the live renderer now
+uses it for source-matched C14 projectiles with C15 selectors, original M613
+bitmaps, G0075 palette changes, flips and C10 transparency. The full Atari
+STX campaign and real-media projectile-plan test pass, but the stock campaign
+does not contain a live C14 scenario, so the rendered projectile pixels still
+lack an end-to-end assertion. Item/weapon C14 selectors fail closed until
+Atari G0237/G0238 is admitted. Explosion/Fluxcage and F0113 teleporter/field
+composition remain absent, and the Atari HUD lacks ReDMCSB's complete dynamic
+champion presentation. Add source-derived projectile, explosion and field
+regressions before claiming functional parity.
+
+2026-10-29 CSB Atari alcove-order correction: the order-zero F0115 object
+pass is now dispatched only for the D1C front-wall view square. ReDMCSB
+`DUNVIEW.C` F0107:7843 calls it only after drawing that wall and confirming
+the front ornament is an alcove; side-wall and D2 alcoves do not open this
+pass. The M11 app build and original Atari dungeon metadata probe pass. The
+available original v2.1 game disk's `DUNGEON.DAT` contains only the two Prison
+maps, no G0192 alcove selectors and no floor-item records, so a populated
+campaign alcove still needs a separate original-media runtime capture.
+
+2026-10-29 CSB Atari F0115 cell compositing correction: the live scheduled
+renderer now processes each F0128 view cell in source order, drawing that
+cell's floor objects before its creature. Door cells retain separate ordered
+passes. This follows ReDMCSB `DUNVIEW.C` F0115:4820-5201, where the object
+chain is traversed and the matching creature is drawn before advancing to the
+next packed view-cell ordinal. The previous renderer drew all objects for a
+square before all creatures, allowing a nearer sprite to cover an unrelated
+far object. The M11/app build, F0115/F0128/F0132 unit tests, all 5,184
+authentic Atari C558 creature plans, and original-media Atari ST campaign
+regression pass after the correction. The F0107 front-wall path now recognizes
+the three G0192 alcove selectors and dispatches order-zero F0115 against the
+opposite-facing cell using original G0209/G0218 data. A real-media run that
+reaches a populated alcove still needs to verify this branch. Projectile and
+explosion composition remains open; this does not establish visual parity.
+
+2026-10-29 CSB Atari F0107 source-data correction: the MEDIA379/G20E
+wall-ornament presenter now reads the ReDMCSB MEDIA353/MEDIA009 G0194 and
+G0205 source constants and the G0198/G0199 palettes. These values are not
+stored at the corresponding-looking offsets in CSB C558; C558 remains the
+owner of the live object metadata used by F0115. The presenter now selects
+the source bitmap pair by wall orientation and scales from the source depth
+dimensions into the selected view rectangle. Packed Atari assets may expose a
+smaller decoded pixel surface than F0129's logical G0205 source span, so that
+surface difference now clips the optional ornament sample instead of aborting
+the entire viewport. The app build and native-asset loader test pass; the full
+original-media Atari CLI campaign regression also passes, including the HUD
+bar screenshot assertion, recruitment, inventory input, the C05 door button,
+map-1 stairs, monster movement/damage, and launcher handoff. F0107's D2
+front-wall crop is now represented in the unpacked-pixel presenter: it derives
+the intermediate width from the D2C G0205 coordinate. ReDMCSB aliases
+`AL0089_i_PixelWidth` and `AL0089_i_X` to one local; the D2L source X is the
+D2C `X2-X1` span minus the D2L `X2-X1` span, while D2R starts at source X 0.
+F0132 then clips those ranges to the selected D2 box. Atari ST is
+`S10EA`/`MEDIA009`, where
+F0132 receives a signed `int16_t` source X and aligns packed 4-bit source and
+destination nibbles; the unsigned `MEDIA351` declaration belongs to the
+`G14ED/G20E/G21E` family and must not be used to infer ST behavior. The
+pixel-level clipping is equivalent after asset unpacking. The updated M11
+build and `csb_v1_atari_f0132_clip` unit test pass; the unit test checks all
+eight source G0205 sets. The full `csb_v1_atari_stx_native_cli_boot` campaign
+also passes with the original STX game disk and Atari ST Software 7z utility
+disk. Its screenshot assertions cover viewport presence and HUD bars, not
+ornament pixels, so this is not yet an ornament visual-parity claim.
+
+2026-10-29 CSB Atari creature coverage expansion: the live F0115 creature
+drawer now accepts an Atari view-square, orientation, and authentic cell-order
+word, then consumes active C04 records at every F0116-F0127 square in the
+F0128 schedule. Front-facing doors dispatch both source door passes. D0L and
+D0R retain their distinct MEDIA020 view indices instead of collapsing to D0C.
+The Atari C558 plan/asset tests, F0128 schedule unit test, and the full
+original-media Atari CLI campaign regression pass after this expansion. This remains
+an interim source-coverage step: object and creature sprites now follow the
+F0128 cell order but remain composited after the static wall plan, so exact
+geometry interleaving/occlusion, alcove and
+wall ornament passes, projectile/explosion handling, and visual parity are
+still open.
+
+2026-10-29 CSB Atari cell composition correction: the F0128 renderer now
+composites each scheduled cell's floor-object pass immediately before that
+cell's creature pass. Previously it painted every scheduled floor object
+first and overlaid all creatures afterward, allowing distant objects to
+incorrectly cover nearer creatures. Door-front cells retain both object
+passes and both creature passes. The source cell-plan, native C558/bitmap
+tests and build pass; the full real-media Atari campaign test remains the
+runtime regression check. This corrects one compositing order only; static
+walls and ornaments still precede the scheduled sprites, and alcove,
+projectile, explosion, and full visual parity work remains open.
+
+2026-10-29 CSB Atari floor-object coverage expansion: replaced the ad hoc
+D0C/D1C object selection with the ReDMCSB F0128 square schedule and F0115
+ordered-cell decoder. Each authentic map thing chain is re-walked in source
+order for every requested cell; floor objects use F0141/G0237 aspect lookup,
+native C558 G0218 coordinates, source scaling/palette/flip logic, and the
+absolute-cell G0217 pile row. Door-front squares dispatch both object passes.
+The C558 object/creature loader, F0115 plan, and F0128 schedule tests pass
+against original media. The full Atari CLI campaign regression also passes
+with the installed STX/retail campaign media. Alcove-only F0115 calls, exact
+interleaving with F0107/F0108/F0109 wall material, and projectile/explosion/
+field passes remain open; this expansion is not visual parity.
+
+2026-10-29 Atari ST F0115 object-buffer bounds: the live D0C/D1C object pass
+renders through `m11_draw_dm1_media009_object`, whose destination coordinates
+include the full-screen Atari viewport origin `(48,33)`. Its temporary buffer
+was only 224 pixels wide and copied the viewport at x=0, so object writes were
+shifted and could corrupt adjacent rows. The staging surface is now 320x200
+with the source viewport copied in and out at `(48,33)`. The app-only CMake
+build succeeds. The captured starting pose contains no visible floor object,
+so it does not verify item pixels or pile placement. The original-media
+Atari ST CLI regression now passes recruitment of two C127 champions, F1/F2
+inventory input, the C05 door button, the map-1 stair transition, monster
+movement and champion damage, and start-menu C200 handoff. Its earlier
+recruitment failure was a test-route defect: it stopped one square short and
+clicked at window x=224, which mapped to source x=112 instead of the C127
+portrait at x=160. The campaign door click also omitted the viewport origin.
+The corrected full test now passes against both the Atari v2.1 STX and retail
+campaign media; the nested ZIP is selected from the preservation archive.
+
+2026-10-29 CSB Atari live-renderer coverage gap: source review shows that
+`m11_csb_present_atari_st_runtime_viewport` currently builds a CSBWin material
+plan for stone walls, pits, stairs, facing doors, a limited set of door
+switches, and nearby weapons. ReDMCSB Atari `DUNVIEW.C` also executes separate
+passes for floor ornaments (`F0108`), door ornaments, map-specific wall
+ornaments and alcove contents (`F0107`/`F0109`), floor objects, and creatures.
+The current Atari viewport path calls `m11_csb_atari_st_draw_near_objects` for
+ordinary floor items on selected D0/D1 cells, but still has no full counterpart
+to `F0115`'s per-cell THING schedule for creatures, projectiles, or explosions.
+This explains why startup and movement can succeed while play still looks
+broken. Implement the missing source passes from Atari runtime records and the
+Atari `GRAPHICS.DAT` decode. Preserve the native Atari coordinate source and its
+actual draw bounds for `CLIKVIEW.C F0377` hit testing; do not assume Amiga or
+PC34 geometry can stand in for Atari. ReDMCSB anchors: `DUNVIEW.C F0107`
+3502-3938, `F0108` 3940-4008, `F0109` 4013 onward, and `F0115` 4547 onward;
+`COORD.C F0635` is the coordinate-zone resolver where the selected platform
+provides those source zones. Verify each pass against the original Atari
+campaign media before claiming parity. The Atari intro itself is separately
+clocked at 50 Hz. A fresh original-media `--debug` run on the M4 with SDL's
+dummy video driver recorded 2,035 tracked presents, zero skipped source frames,
+and 2,036 required VBlanks; the last tracked frame was at 41.8 seconds. This
+confirms the local source cadence, not the visible timing on the user's display.
+Keep the source clock unchanged until a physical-display trace shows missed or
+accelerated frames.
+
+2026-10-29 CSB Atari HUD coverage gap: `m11_csb_present_atari_st_runtime_hud`
+composes the static C232 material plan on ordinary gameplay frames, then adds
+inventory-only C017, backpack icons, food/water, chest, and life-force values
+when the inventory panel is active. ReDMCSB `CHAMDRAW.C F0292` calls
+`F0287_CHAMPION_DrawBarGraphs` for each champion with statistics enabled.
+Atari M11 now applies the authentic G0055/G0056 masks to live champion health,
+stamina, and mana in ReDMCSB CHAMDRAW.C F0287's executable calculation order,
+while preserving the original 25-row height rounding and champion colors.
+This is intentionally distinguished from the DATA.C table comment, which
+labels offsets as health/mana/stamina; F0287's Atari loop computes health,
+stamina, then mana before applying masks. The data-free
+`csb_v1_atari_hud_bar_graphs_unit` test covers masks, pixel positions, empty,
+partial, and full bars. The `csb_v1_m11_prison_runtime_hud_pc34` integration
+test passed, but its C232 checks cover static source-material rectangles and
+do not assert the dynamic F0287 bars against Atari captures or changing
+real-media stats. The numeric values are intentionally drawn by F0290 only
+for the selected inventory champion, so their absence outside inventory is
+expected. Validate the bars against a source-derived Atari screenshot before
+claiming complete HUD parity. The C232 layout, inventory panel, portraits,
+icons, and viewport remain separate parity work; do not treat this bar-graph
+addition or the static C232 page as the whole HUD.
+
+2026-10-29 CSB Atari F0287 original-media check: the native Atari CLI
+regression now captures its real two-champion campaign route and checks all
+six health/mana/stamina bars at the G0055/G0056 positions, with distinct
+source champion colors and full 25-row height. `csb_v1_atari_stx_native_cli_boot`
+passes against the installed Atari STX and Utility media (148.75 seconds).
+The check proves live HUD integration and source geometry for two recruited
+champions; it does not compare partial bar heights or settle full HUD/viewport
+parity.
+
+2026-10-29 CSB Atari creature-table admission: ReDMCSB `DUNVIEW.C` G0219 and
+G0224 were located in the selected original C558 record at offsets 832 and 264.
+M11 validates and retains the source C558 for the live D1C creature pass. The
+original-media asset test verifies every G0219 front-image size against its
+corresponding M618 bitmap and bounds-checks the full G0224 table against the
+224x136 Atari viewport. The v2.1 hard-disk `GRAPHICS.DAT` passes.
+
+2026-10-29 CSB Atari F0115 creature planning: added a standalone planner that
+uses the selected Atari C558 G0219/G0224 bytes and caller-supplied G0243 data
+to resolve source cell occupancy, centered/half-square placement, native
+bitmap pose, G0224 anchors, Atari base index 446, and D3/D2 transparency
+mapping. The original-media probe verifies a centered Scorpion at D3C and the
+D0L coordinate fold, including the source-facing front pose. The real C558
+test passes. The first live path now connects this planner to the D1C view-cell
+order and native M618 bitmap blitter. ReDMCSB review caught an out-of-range
+vertical G0223 shift lookup and a mismatch with `M078_SCALED_DIMENSION`; both
+are fixed, with exact M078 rounding covered by the unit test. This remains a
+narrow D1C pass: D2/D3, D1L/R, door split passes, centered alcoves, special D2
+front images, projectiles, and explosions are not implemented. D2/D3 palette
+mapping now uses the map-ordered F0093 Atari replacement palette, and `--debug`
+records each actual creature blit's map, cell, type, asset, bounds, palette
+depth, transparency, mirroring, and pixel count. A real campaign screenshot
+still shows the broken view reported by the user; the narrow pass does not
+establish visual parity.
+
+2026-10-29 Atari F0115 object pass update: D0C/D1C now walks the complete
+visible square THING chain, admits item records through the shared F0141 type
+and subtype mapping, selects the native G0209 aspect, and draws the original
+Atari C558 bitmap using G0218 placement plus the established source scale,
+palette, flip, and pile-shift rules. This replaces the 46-weapon lookup and
+hard-coded coordinates. The pass is still limited to D0C/D1C and has no native
+projectile, explosion, field, or alcove pass. Build succeeds and
+the original Atari object-asset validation passes. A full original-media
+campaign CLI test also passes its recruitment route and the subsequent door,
+stairs, monster movement/damage, and launcher handoff. This verifies gameplay
+input/state paths; it does not prove floor-object pixels, piles, deeper cells,
+or complete viewport rendering.
+
+2026-10-29 Atari F0115 pile-shift direction correction: ReDMCSB computes the
+G0217 shift-row base from the object's absolute map cell after converting the
+current view-cell ordinal through party direction. The Atari renderer used the
+relative view cell's parity instead, selecting the wrong source pile shift on
+half of the viewing orientations. A shared F0115 helper now reconstructs the
+absolute cell and bounds the 16-row G0217 index; its unit check covers all
+party directions, four view cells and eight pile positions. The original-media
+CSB Atari CLI campaign regression and C558 creature-plan test both pass. The
+campaign route does not place a floor object in view, so pixel-level pile
+placement still requires an authentic object-bearing view. `--debug` now logs
+the source view-square, relative and absolute cell, THING id, subtype, G0217
+shift index, and draw result when an Atari object pass runs.
+
+Follow-up comparison against the installed Atari ST v2.1 media verified that
+the decoded `GRAPHICS.DAT` item `0x22e` wall rectangles exactly match the
+12-row `G0163_aauc_Graphic558_Frame_Walls` values in `DUNVIEW.C`. The loaded
+wall bitmaps at indices 84-89 also have dimensions matching their native
+frames. This rules out the static wall-coordinate table as the cause of the
+reported screen; continue investigating the omitted source passes and their
+runtime state instead of replacing correct geometry with guessed values.
+
+2026-10-29 CSB Atari original-media gameplay retest: CTest
+`csb_v1_atari_stx_native_cli_boot` passed against the user's Atari ST v2.1
+STX and retail 7z campaign media. It exercises title-to-runtime handoff,
+movement, champion recruitment, the button door, stairs, map-1 monster
+movement and champion damage, plus launcher and default-route selection. A
+separate `--debug` input run confirmed the first UP moves the original party
+from map 0 `(9,0)` to `(9,1)` and publishes a viewport hash. These checks prove
+source gameplay/input paths, not that the current viewport rendering looks
+correct; the rendering passes listed above remain outstanding. The 40.7-second
+intro timing was measured with SDL dummy video and does not verify a physical
+display's cadence.
+
+2026-10-29 CSB Atari startup cadence recheck: ran the current debug build on
+Apple M4/macOS with a 1920x1080 60 Hz Cocoa/Metal display, 960x600 drawable,
+and VSync disabled. At elapsed 25.7 seconds, the authenticated Atari title
+had advanced to source frame 1,274, consistent with the source's 50 Hz VBlank
+clock. This does not reproduce an accelerated intro on that host. It does not
+verify the user's M5/display path or guarantee that every frame was presented;
+keep the source cadence unchanged until a capture demonstrates a timing error.
+
+2026-10-29 CSB Atari door-switch asset index correction: the earlier note
+claiming that Atari ST uses index 453 was wrong. ReDMCSB `DEFS.H` assigns
+`M634_GRAPHIC_FIRST_DOOR_BUTTON=315` in `MEDIA020`, which explicitly includes
+`G20E` (CSB Atari ST). Index 453 belongs to the later `MEDIA720` bank for
+IIGS, Amiga, FM Towns, and Macintosh; it is not the Atari ST v2.1 bank. The
+native Atari draw correctly requests 315. Keep this platform distinction and
+investigate the remaining button layout/hit-zone behavior and omitted Atari
+rendering passes separately.
+
+2026-10-29 CSB Atari live pointer geometry gap: source review of
+ReDMCSB `DUNVIEW.C` MEDIA720 shows the Atari path drawing through
+`F0791_DUNGEONVIEW_DrawBitmapXX`, deriving its active pixel zones through
+`F0635_`, copying the current D1C door-button or wall-ornament rectangle to
+`G2210_aai_XYZ_DungeonViewClickable[C05]`, and accumulating actual rendered
+floor-object bounds into the corresponding `G2210` rows. `CLIKVIEW.C F0377`
+then hit-tests those current rows with `F0798_COMMAND_IsPointInZone`.
+Firestaff's shared `m11_process_csb_v1_c080_click` uses fixed PC34 object-pile
+boxes and a fixed `{160,175,44,52}` door-button rectangle for Atari ST too.
+The Atari `G0208` D1C door-button source record itself is
+`{160,175,44,52,8,9}`, so that one button's current hit rectangle matches the
+source dimensions and is not established as a bug. The source-derived zones
+for floor-object piles and rendered wall ornaments are not carried into Atari
+C080, and the Atari renderer currently omits those object/ornament passes.
+Implement those render receipts and use their bounds for hit testing before
+claiming pickup or wall-sensor parity; verify against original campaign media.
+
+2026-10-29 Atari ST real-session campaign route: the native CLI regression now
+uses the original Atari campaign package and hard-disk `DUNGEON.DAT` with
+ordinary inputs only. Starting from the original `(9,0)` spawn, it recruits
+the two retail C127 champions, clicks the original C05 button on the closed
+door at map 0 `(18,6)`, reaches the map-0 stairs at `(19,7)`, and transitions
+to map 1 `(18,4)`. The source handoff initializes all 12 original C04 groups
+and their C37 behavior events. A subsequent `--debug` wait records authentic
+group movement and champion health changes. The complete
+`csb_v1_atari_stx_native_cli_boot` CTest passed in 147.79 seconds with the
+original media staged. This closes the gap between the earlier controlled
+combat pose and a normal launcher-to-campaign route; it does not prove parity
+for every map, creature, combat action, or physical display.
+
+2026-10-29 Atari ST real-media handoff test repair: the M12/M11 integration
+test extracted the original campaign and Utility STX files into a temporary
+root, then incorrectly tried to reopen `MINI.DAT` through the sibling 7z
+archive path. It now reads the save directly from the extracted original
+Utility STX member. The Atari startup, save-resume, handoff, VBlank, source
+text, and real campaign-group test set passed together (8/8) before the
+campaign test was tightened to use the original C127 champion. After that
+change, the edited campaign-group test was rebuilt and passed individually.
+This fixes a test-fixture path mismatch; it does not expand gameplay-parity
+claims.
+
+2026-10-29 original Atari Utility save combat check: `--debug` resumed the
+authentic `HardDisk/2009-02-22 PP/MINI.DAT` from the original Atari archive
+and reported one champion at map 4 `(22,18)`, with zero active monster groups
+and no pending monster events. A follow-up `--debug` CLI route moved the
+authentic saved party to `(22,19)`, then `(22,20)`, turned east, and recorded a
+blocked forward attempt without changing position. This verifies ordinary
+Atari movement and turn dispatch from that save, but the save cannot
+demonstrate live combat.
+Original campaign map 1 does contain authenticated C04 groups, and the focused
+source-event test exercises their C37/C38 path using authentic group and
+champion records, but relocates the party to a controlled adjacent test pose
+rather than replaying a normal saved encounter. Real-session combat behavior
+therefore remains unverified.
+
+2026-10-29 CSB Atari mixed-library startup regression: a normal debug launch
+from `~/.firestaff/data/csb` selected the authentic Atari ST v2.1 package but
+also played the sibling Amiga A31M `SWSH.FTL` prelude before Atari
+`ANIMATE.SCR`. ReDMCSB `APPA.C` assigns that prelude to the selected Amiga
+program, not to every CSB installation containing Amiga media. M11 now checks
+the selected M12 edition architecture before binding the Amiga prelude. A
+normal original-media Atari run now starts directly at `csb-atari-st-animation`
+with `waited-vbl=2036`; it does not log `amiga-swsh-ftl`. The original Amiga
+ADF archive boot and Amiga multi-language CLI startup tests pass after the
+change. The user's native display, intro frame presentation, and full campaign
+parity still need independent verification.
+
+2026-10-29 CSB Atari intro timing recheck: a full original-media `--debug`
+launch from the Atari STX completed ANIMATE.SCR's 2,036 source VBlanks in
+40,734 ms and reached map 0 at `(9,0)`, matching the 50 Hz source clock. Debug
+now reports `startup-frame-gap` when presented Atari source frames are skipped
+and a summary at FTLCODE handoff. This run reported 2,035 tracked loop presents
+through VBlank 2,035 and zero skipped intervals; the initial presentation may
+precede loop tracking. The native CLI/menu test, source-text real-media test,
+campaign monster-event test, M11 Atari handoff test, and startup cadence test
+pass against the available original media. The reported acceleration is not
+reproduced in this environment; test the user's display path before changing
+the source 50 Hz clock. This evidence covers startup and one campaign attack
+path, not the reported broader gameplay breakage or complete Atari parity.
+
+2026-10-29 Atari ST/runtime parity finding: ReDMCSB `MAIN.C F003` runs
+`F0194 → map load → F0195` on party-map changes; `GROUP1.C F0195` visits
+only the first C04 on each square, removes stale group events with F0181,
+admits it with F0183, and starts F0180's C37 at `GameTime + 1`. Firestaff's
+CSB F0195 had no production callers and only materialized active states. It
+now runs during the initial dungeon handoff and after stairs, pits,
+teleporters, and DSA party transfers, and mirrors the first-C04/event-start
+semantics. The focused `csb_v1_f0195_group_add_all_active_groups_pc34_compat`
+CTest passes. The original Atari campaign test also selects authentic map-1
+C04 `0x1003` at `(1,10)` and loads AIRWING's champion record from the original
+C127 catalogue. In a controlled adjacent party pose `(1,9)`, source C37
+changes the group to C6, queues C38/C39, and reduces AIRWING's health from
+300 to 275. The group, champion, and campaign data are authentic; the test
+pose is controlled, so this proves one real-data combat event path rather
+than normal-session combat. Other creature types, attack cells, combat
+outcomes, and sustained campaign parity remain open.
+Destination-group initialization failures on stairs, pits, and teleporters
+now have a dedicated runtime receipt and an M11 debug/status report. This
+keeps a completed map change distinct from a failed monster-group handoff;
+the helper's invalid-dungeon and full-C37-queue failure cases are fault-tested.
+End-to-end transition-caller fault injection remains open.
+
+The Atari STX on trv2 starts and resolves authentic campaign assets, but that
+installation has no Utility STX/archive containing `ANIMATE.SCR`; the `--debug`
+run therefore stopped before the source title animation/runtime handoff.
+The reported fast intro was not reproduced by the local original-media
+`--debug` timing run, which measured 2,036 VBlanks at about 50 Hz (40.7
+seconds). This does not rule out missed or visually skipped frames on the
+affected machine; inspect presented frames on that hardware before changing
+source timing.
+
+On 2026-10-29, a normal `--game csb --platform atari --debug` run with the
+local original Atari STX logged all 2,036 source VBlanks over 40,707 ms
+(49.99 Hz). The live M11 input path also accepted Enter/Action during
+`ANIMATE.SCR` and jumped directly to the final VBlank. Ordinary host input is
+now ignored throughout that title sequence so a repeated or premature key
+cannot shorten it or enter gameplay before the source handoff. The deterministic
+boot-probe fast-forward remains available to tests. A focused real-media test
+checks ignored Up/Enter/Action/Back input and the natural FTLCODE handoff.
+Gameplay parity after the handoff remains unverified for this report.
+
+2026-10-29 CSB Atari `--debug` coverage: the authentic Utility `MINI.DAT`
+resume route now reports the live CSB runtime's active-monster count,
+positions/cell masks for each active group, projectile count, and explosion
+count after a real input. The report reads the source-owned Atari runtime,
+not the stale compatibility-world mirror. It does not claim creature health
+or full combat coverage: melee result receipts remain the only current
+monster-health evidence, and the Atari Utility save has not yet yielded an
+authenticated combat encounter. Sustained campaign mechanics remain open.
+
 2026-10-28: Added a shared real-media startup-debug localization regression
 for CSB FM Towns. Explicit Swedish and the saved Swedish language profile
 both pass, including localized scan task labels, selection of the authentic
@@ -110,6 +511,47 @@ reached the authentic runtime pose. The test also confirms the original ZIP
 hash remains unchanged. This closes that startup/decoder gap only; visual,
 audio, physical-input and campaign parity remain open. The loose authentic
 A33M `Graphics.DAT` remains available for its separate runtime checks.
+
+2026-10-29 CSB Atari ST intro regression: a direct launch from the usual
+`.firestaff/data/csb` layout found the selected v2.1 campaign STX but missed
+the matching Utility STX nested in `Game,Chaos_Strikes_Back,Atari_ST,Software.7z`.
+It silently fell through to the unrelated generic startup route and left the
+intro after about two seconds. Discovery now checks the parent media directory,
+hash-verifies `ANIMATE.SCR` and `ANIMATE.DAT` inside the authentic v2.0/v2.1
+Utility STX members in memory, and binds the script's 2,036-VBlank handoff.
+The original-media CLI trace reaches the loaded dungeon after about 40.7
+seconds. `asset_multi_member_7z_virtual_read_m12`,
+`csb_v1_atari_st_animation_discovery_unit`,
+`csb_v1_atari_st_vblank`, `csb_v1_atari_original_archive_cli_boot`, and
+`csb_v1_atari_utility_mini_cli_resume` passed with the installed original
+media. This closes the direct-launch intro timing regression and verifies the
+tested CLI/menu movement and resume paths only; sustained campaign, physical
+display/audio, and pixel parity remain open.
+
+2026-10-29 Atari ST wall-clock retest: running the authentic v2.1 campaign
+STX with its Utility archive and `--debug` reached the source handoff at
+40.727 seconds after 2,036 VBlanks, matching the original 50 Hz trace. This
+local build does not reproduce an accelerated intro. A normal, non-probe
+SDL run logged frame 2035 at 40.704 seconds and crossed to runtime at 40.737
+seconds. The host scheduler uses 20 ms Atari source ticks and carries elapsed
+time debt; it does not double-advance the title clock. Process CPU was high in
+the SDL dummy run (about 15–35% of one core), so performance on a native host
+and the user's original build remain unverified. No timing change is
+justified without reproducing the fast sequence on the affected build.
+The same normal-timing run from the standard `~/.firestaff/data/csb` root
+selected the Atari v2.1 STX nested inside the bilingual ZIP and resolved its
+matching Utility archive; it crossed at frame 2036 after 40.737 seconds.
+The original-media Atari CLI regression now exercises that same shared data
+root and requires the source asset identity, 2,036-VBlank duration, and
+runtime handoff; the complete test passed in 146.78 seconds.
+
+A fresh campaign boot has no active champions until the player recruits them
+from the original campaign; the native Atari CLI test already exercises two
+recruitments and subsequent movement. That is bounded startup/movement
+evidence, not combat parity. The authentic Utility `MINI.DAT` tested so far
+loads one champion at a pose with no active monster groups. Validate a real
+combat encounter and the full utility/import flow before claiming Atari
+campaign play is complete.
 
 2026-10-27 Amiga MEDIA720 F0107 placement: the runtime now resolves the source
 C696 wall-ornament anchor from authenticated Amiga `Graphics.DAT` item 696 and
@@ -971,3 +1413,43 @@ Towns provider now restores the active wall-set bank for M645 offsets 0..17.
 Data-free index boundaries pass, and authentic English/Japanese Towns handoff
 tests still pass. Frame-level comparison of F31 wall graphics and HUD remains
 open.
+
+2026-10-29 CSB Atari static HUD overlap: an original-media runtime capture showed
+C232 food/water/poison material covering the middle of the dungeon while the
+inventory was closed. ReDMCSB `DEFS.H:8152` declares
+`F0345_INVENTORY_DrawPanel_FoodWaterPoisoned` separately from the fixed C232
+direction/movement/magic controls. The static
+HUD plan now contains only those six always-visible controls; the food/water
+panel remains on the inventory path, which already gates it on the selected
+champion. The real Atari HUD composition test and M11 prison HUD integration
+pass, and a new original-media runtime capture confirms the large panel no
+longer covers the viewport. This does not resolve the still-incomplete Atari
+F0115 projectile/explosion and object passes, the need for an original-media
+alcove encounter check, or establish pixel parity for the remaining blue/noisy
+viewport appearance.
+
+2026-10-29 CSB Atari F0128 schedule model: added a source-locked schedule for
+the three D4 object-only F0115 calls followed by F0116-F0127 in traversal
+order. The table includes MEDIA020's negative D4 view-square ids, ordinary
+square order words, conditional zero-order alcove calls, front-door passes,
+and static-only D3L2 / D3R2 edges. The live Atari presenter consumes this
+schedule and now interleaves each cell's objects and creature in its source
+order. It also dispatches front alcove objects after F0107 identifies a G0192
+selector. ReDMCSB `DUNVIEW.C:8468-8477` owns the D4
+calls, `:6434`, `:6570`, `:6717`, `:6970`, `:7121`, `:7309`, and `:7843`
+contain the alcove call sites, and `:8490-8542` owns square-call traversal.
+The F0128 schedule unit test and original-media Atari ST startup campaign pass.
+The test route has not yet asserted a populated alcove draw or the complete
+F0115 projectile/explosion passes.
+
+2026-10-29 CSB dungeon metadata: the source-format loader now exposes a
+bounds-checked accessor for original G0261 wall-ornament selector bytes.
+ReDMCSB DUNGEON.C F0173 places them after square and creature-type bytes; the
+accessor reads those bytes directly from the retained, expanded DUNGEON.DAT
+payload instead of copying or synthesizing them. The authentic Amiga and Atari
+dungeon probes compare its result byte-for-byte with the expanded original and
+pass; the Atari case reads DUNGEON.DAT from the nested 7z member in RAM.
+The Atari-specific F0107 presenter consumes the G0261 accessor with authentic
+G0192/G0194/G0205 source tables; F0115 now draws G0209 objects in the matching
+alcove lane. A real-media run that visibly reaches an alcove with an item is
+still required before claiming that route verified.

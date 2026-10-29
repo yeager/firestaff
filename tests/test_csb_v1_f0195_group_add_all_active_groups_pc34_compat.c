@@ -21,6 +21,7 @@ static void put_le16(unsigned char *bytes, int offset, unsigned short value)
 int main(void)
 {
     CSB_V1_RuntimeProfile profile;
+    CSB_V1_InputCommandRuntimeResult transition_result;
     CSB_V1_DungeonData dungeon;
     CSB_V1_F0183ActiveGroupReceiptPc34 receipt;
     unsigned char raw[120];
@@ -57,7 +58,7 @@ int main(void)
     put_le16(raw, 92, 0xfffeu);
     raw[96] = 7u;
     raw[97] = 0xffu;
-    put_le16(raw, 106, 0x0100u);
+    put_le16(raw, 106, 0x0104u);
 
     csb_v1_runtime_init(&profile, NULL);
     profile.dungeon_handle = &dungeon;
@@ -96,9 +97,58 @@ int main(void)
               profile.active_group_state[1].cells == 0xffu &&
               profile.active_group_state[1].directions == 0x0055u,
           "F0195 follows a mixed C03/C04 thing chain");
+    CHECK((raw[106] & 0x0fu) == 0u,
+          "F0195 resets only transient C04 behavior before F0180");
+    CHECK(profile.timeline_queue.eventCount == 2u,
+          "F0195 schedules one initial C37 event for each admitted square");
+    {
+        int i;
+        int found00 = 0;
+        int found10 = 0;
+        for (i = 0; i < (int)profile.timeline_queue.eventCount; ++i) {
+            const struct DM1_Event_V1 *event =
+                &profile.timeline_queue.events[i];
+            if (event->type != DM1_EVENT_UPDATE_BEHAVIOR_GROUP ||
+                event->map_time != DM1_MAP_TIME_MAKE(0, 201u)) {
+                continue;
+            }
+            if (event->b_mapX == 0u && event->b_mapY == 0u) found00 = 1;
+            if (event->b_mapX == 1u && event->b_mapY == 0u) found10 = 1;
+        }
+        CHECK(found00 && found10,
+              "F0195 starts each group's source behavior one tick after map load");
+    }
     CHECK(csb_v1_runtime_f0195_group_add_all_active_groups(&profile) == 0 &&
-              profile.active_group_state_count == 2u,
-          "F0195 does not duplicate already active groups");
+              profile.active_group_state_count == 2u &&
+              profile.timeline_queue.eventCount == 2u,
+          "F0195 replaces per-square C37 events without duplicating groups");
+
+    memset(&transition_result, 0, sizeof(transition_result));
+    profile.dungeon_handle = NULL;
+    CHECK(csb_v1_runtime_initialize_destination_groups(
+              &profile, &transition_result) == -1 &&
+              transition_result.runtime_transition_failed == 1,
+          "destination transition receipt reports invalid group-source state");
+
+    profile.dungeon_handle = &dungeon;
+    CHECK(dm1v1_event_queue_init(&profile.timeline_queue, profile.game_time) == 1,
+          "initialize a fresh event queue for capacity fault injection");
+    {
+        int i;
+        struct DM1_Event_V1 filler;
+        memset(&filler, 0, sizeof(filler));
+        filler.type = DM1_EVENT_PLAY_SOUND;
+        for (i = 0; i < DM1_EVENT_MAX_COUNT; ++i) {
+            filler.map_time = DM1_MAP_TIME_MAKE(0, (uint32_t)(300u + i));
+            CHECK(dm1v1_event_add(&profile.timeline_queue, &filler) >= 0,
+                  "fill source event queue to capacity");
+        }
+    }
+    memset(&transition_result, 0, sizeof(transition_result));
+    CHECK(csb_v1_runtime_initialize_destination_groups(
+              &profile, &transition_result) < 0 &&
+              transition_result.runtime_transition_failed == 1,
+          "destination transition reports a full queue that rejects C37");
 
     return failures == 0 ? 0 : 1;
 }

@@ -53,14 +53,21 @@
 #include "fmtowns_bios_host.h"
 #include "fmtowns_tbios_shim.h"
 #include "csb_v1_csbwin_layout_0232.h"
+#include "csb_v1_atari_hud_bar_graphs.h"
 #include "csb_v1_csbwin_planar_bitmap.h"
 #include "csb_v1_graphics_atari_st_loader_pc34_compat.h"
 #include "csb_v1_audio_runtime_pc34_compat.h"
 #include "csb_v1_atari_st_animation_assets.h"
+#include "csb_v1_atari_f0115_creature_plan.h"
+#include "csb_v1_atari_f0115_projectile_plan.h"
+#include "csb_v1_atari_f0128_cell_schedule.h"
+#include "csb_v1_atari_st_wall_ornament_data.h"
+#include "csb_v1_atari_f0132_clip.h"
 #include "csb_v1_amiga_graphics_dat.h"
 #include "csb_v1_amiga_titl_dat.h"
 #include "csb_v1_startup_session_contract_pc34_compat.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
+#include "csb_v1_dungeon_world_pc34_compat.h"
 #include "dungeon_decompressor_ftl.h"
 #include "csb_v1_f0093_replacement_palette_pc34_compat.h"
 #include "csb_v1_input_command_bridge_pc34_compat.h"
@@ -1034,6 +1041,11 @@ static int m11_draw_creature_sprite_source_anchored(
     int creatureType,
     int creatureDir);
 static int m11_dm1_media009_metadata(M11_GameViewState* state);
+static int m11_dm1_media009_square(int forward, int side);
+static int m11_draw_dm1_media009_object(
+    const M11_GameViewState* state, unsigned char* framebuffer, int fbW, int fbH,
+    int thingType, int subtype, int relativeCell, int pileIndex,
+    int forward, int side, int alcove, int projectileAspect);
 static int m11_draw_dm1_media009_wall_ornament(
     const M11_GameViewState* state, unsigned char* framebuffer, int fbW, int fbH,
     int globalIndex, int viewWallIndex, int unreadableLineCount);
@@ -5104,6 +5116,7 @@ static int m11_csb_present_atari_st_runtime_hud(
     CSB_V1_CSBWinLayout0232 layout;
     CSB_V1_CSBWinHudMaterialPlan0232 plan;
     CSB_V1_CSBWinHudCompositionReceipt0232 receipt;
+    CSB_V1_AtariHudChampionBars champion_bars[4];
     unsigned char candidate[320 * 200];
     int y;
 
@@ -5172,6 +5185,24 @@ static int m11_csb_present_atari_st_runtime_hud(
          * pixel layer; it leaves only this source text undrawn. */
         (void)m11_csb_draw_csbwin_inventory_life_forces(state, candidate);
     }
+    memset(champion_bars, 0, sizeof(champion_bars));
+    for (y = 0; y < state->world.party.championCount && y < 4; ++y) {
+        const struct ChampionState_Compat *champion =
+            &state->world.party.champions[y];
+        champion_bars[y].present = champion->present;
+        champion_bars[y].statistics_enabled = champion->present;
+        champion_bars[y].current[0] = champion->hp.current;
+        champion_bars[y].maximum[0] = champion->hp.maximum;
+        /* ReDMCSB CHAMDRAW.C F0287 writes heights in executable order:
+         * health, stamina, mana. G0055/G0056 indices 1 and 2 then map those
+         * heights to their source mask/offset pairs. */
+        champion_bars[y].current[1] = champion->stamina.current;
+        champion_bars[y].maximum[1] = champion->stamina.maximum;
+        champion_bars[y].current[2] = champion->mana.current;
+        champion_bars[y].maximum[2] = champion->mana.maximum;
+    }
+    if (!csb_v1_atari_hud_draw_bar_graphs(candidate, sizeof(candidate),
+                                          champion_bars)) return 0;
     for (y = 0; y < 200; ++y) {
         memcpy(framebuffer + (size_t)y * (size_t)framebuffer_width,
                candidate + (size_t)y * 320u, 320u);
@@ -5457,157 +5488,1033 @@ static int m11_csb_atari_st_draw_ceiling_pit(
         viewport, viewport_width, viewport_height);
 }
 
-/* CSBWin's Viewport.cpp::FloorAndCeilingOnly builds a 224x136 packed page:
- * 29 rows ceiling, 37 rows black and 70 rows floor.  The active decoder
- * yields the same source pixels as indexed bytes, so re-pack them through
- * the reversible four-plane boundary before TAG0088b2-equivalent wall
- * commands consume their byte strides. */
-/* ReDMCSB DUNGEON.C G0237 rows 23..68 select Atari MEDIA009 DUNVIEW.C
- * G0209's native object aspect. DEFS.H M612=360. These 46 entries are the
- * resulting {graphic, pixel width, height, G0218 coordinate set} for DB5.
- * Every distinct source graphic was decoded from original Atari ST v2.1
- * GRAPHICS.DAT and had the G0209 dimensions. This pass still covers only
- * the first matching DB5 thing per visible cell in the source D1C front/back
- * and D0C back passes, even when unrelated records precede it in the chain.
- * None of these 46 G0209 aspects has FLIP_ON_RIGHT or ALCOVE graphic flags;
- * complete F0115 ordering is pending. */
-static const struct {
-    uint16_t graphic;
-    uint8_t width;
-    uint8_t height;
-    uint8_t coordinate_set;
-} m11_csb_atari_st_db5_d1c_material[46] = {
-    {399,16,3,1}, {399,16,3,1}, {396,64,7,1}, {398,32,8,0},
-    {372,64,4,1}, {373,80,8,1}, {373,80,8,1}, {400,80,9,1},
-    {378,32,9,0}, {373,80,8,1}, {373,80,8,1}, {373,80,8,1},
-    {373,80,8,1}, {373,80,8,1}, {373,80,8,1}, {373,80,8,1},
-    {403,80,15,1}, {373,80,8,1}, {374,64,17,0}, {374,64,17,0},
-    {382,64,14,1}, {382,64,14,1}, {394,80,16,0}, {404,64,10,1},
-    {405,64,19,0}, {375,80,17,2}, {406,80,25,2}, {377,48,5,1},
-    {407,48,7,1}, {372,64,4,1}, {408,16,7,1}, {409,32,5,1},
-    {410,16,9,1}, {411,64,11,1}, {372,64,4,1}, {392,32,3,1},
-    {392,32,3,1}, {372,64,4,1}, {372,64,4,1}, {372,64,4,1},
-    {412,64,14,0}, {393,64,5,1}, {391,80,9,1}, {426,32,14,0},
-    {406,80,25,2}, {443,80,13,1}
-};
-
-static int m11_csb_atari_st_draw_near_weapon(
+/* ReDMCSB DUNVIEW.C F0115 resolves active C04 groups through G0243/G0219
+ * and places their original M618 pixels using the selected Atari C558. */
+static int m11_csb_atari_st_draw_creature_groups(
     M11_GameViewState *state, const CSB_V1_DungeonData *dungeon,
-    const CSB_V1_RuntimeProfile *runtime, unsigned char *viewport, int view_cell)
+    const CSB_V1_RuntimeProfile *runtime, unsigned char *framebuffer,
+    int framebuffer_width, int framebuffer_height,
+    int forward, int side, int view_square, uint16_t cell_order,
+    int only_view_cell)
 {
-    static const unsigned char d2_palette[16] =
-        {0,1,2,3,4,3,6,7,5,9,10,11,12,13,14,15};
-    const M11_AssetSlot *graphic;
-    const uint8_t *record;
+    static const int8_t shift[3][8] = {
+        {0,1,2,3,0,-3,-2,-1},
+        {0,1,1,2,0,-2,-1,-1},
+        {0,1,1,1,0,-1,-1,-1}
+    };
+    CSB_V1_AtariF0115CellOrder order;
+    int map_x;
+    int map_y;
     int thing;
-    int type;
-    int size;
-    int subtype;
-    int graphic_index;
-    int width;
-    int height;
-    int bottom;
-    int left;
-    int top;
-    int x;
-    int y;
-    int cell;
-    int coordinate_set;
-    int center;
-    int scaled;
-    int drawn_width;
-    int drawn_height;
-    int chain_step;
-    unsigned int x_step = 0u;
-    unsigned int y_step = 0u;
+    int safety;
+    int decoded_order;
 
-    if (!state || !dungeon || !runtime || !viewport) return 0;
-    x = runtime->party_x + (view_cell == 1 ? 0 : (int[]){ 0, 1, 0, -1 }[runtime->party_dir & 3]);
-    y = runtime->party_y + (view_cell == 1 ? 0 : (int[]){ -1, 0, 1, 0 }[runtime->party_dir & 3]);
-    if (csb_v1_dungeon_get_square_type(dungeon, runtime->current_level, x, y) != 1)
-        return 0;
-    thing = csb_v1_dungeon_get_first_thing(dungeon, runtime->current_level, x, y);
+    if (!state || !dungeon || !runtime || !framebuffer ||
+        framebuffer_width < 320 || framebuffer_height < 200 ||
+        forward < 0 || forward > 3 || side < -1 || side > 1 ||
+        (!forward && !side && view_square != 9) ||
+        view_square < 0 || view_square > 11 ||
+        !state->csbAtariStRuntimeHandoffComplete ||
+        !m11_dm1_media009_metadata(state)) {
+        return -1;
+    }
+    decoded_order = csb_v1_atari_f0115_decode_cell_order(cell_order, &order);
+    if (decoded_order < 0) return -1;
+    if (decoded_order == 0) return 0;
+    map_x = runtime->party_x +
+        (int[]){0,1,0,-1}[runtime->party_dir & 3] * forward +
+        (int[]){1,0,-1,0}[runtime->party_dir & 3] * side;
+    map_y = runtime->party_y +
+        (int[]){-1,0,1,0}[runtime->party_dir & 3] * forward +
+        (int[]){0,1,0,-1}[runtime->party_dir & 3] * side;
+    if (csb_v1_dungeon_get_square_type(dungeon, runtime->current_level,
+                                       map_x, map_y) < 0) return 0;
+    thing = csb_v1_dungeon_get_first_thing(dungeon, runtime->current_level,
+                                           map_x, map_y);
     if (thing < 0) return 0;
-    /* F0115 restarts at the square's first THING for each view cell and
-     * follows F0159 through non-object records. A visible DB5 can therefore
-     * sit after a text/actuator or an object in a different cell. This
-     * bounded pass still draws only the first admitted DB5 in this cell. */
-    for (chain_step = 0; chain_step < 16384; ++chain_step) {
+    for (safety = 0; safety < 16384; ++safety) {
+        const uint16_t group_thing = (uint16_t)thing;
+        const uint8_t *record;
+        int type = -1;
+        int record_size = 0;
         int next;
-        cell = (((unsigned)thing >> 14) - (runtime->party_dir & 3)) & 3;
-        record = csb_v1_dungeon_get_thing_record(dungeon, (uint16_t)thing,
-                                                   &type, NULL, &size);
+
+        record = csb_v1_dungeon_get_thing_record(
+            dungeon, group_thing, &type, NULL, &record_size);
         if (!record) return -1;
-        if (type == 5 && size >= 4 &&
-            !(view_cell == 1 ? cell > 1 :
-              view_cell == 2 ? cell >= 2 : cell < 2))
-            break;
-        next = csb_v1_dungeon_f0159_get_next_thing_pc34(
-            dungeon, (uint16_t)thing);
+        if (type == THING_TYPE_GROUP) {
+            CSB_V1_RuntimeGroupOverlayInfo group;
+            const CSB_V1_RuntimeActiveGroupState *active = NULL;
+            const struct CreatureBehaviorProfile_Compat *creature;
+            unsigned active_index;
+
+            if (!csb_v1_runtime_group_overlay_info(dungeon, group_thing,
+                                                    &group)) return -1;
+            creature = CREATURE_GetProfile_Compat(group.creature_type);
+            if (creature) {
+                for (active_index = 0u;
+                     active_index < runtime->active_group_state_count &&
+                     active_index < CSB_V1_RUNTIME_ACTIVE_GROUP_CAP;
+                     ++active_index) {
+                    const CSB_V1_RuntimeActiveGroupState *candidate =
+                        &runtime->active_group_state[active_index];
+                    if (candidate->valid &&
+                        candidate->group_thing == group_thing &&
+                        candidate->map_index == runtime->current_level &&
+                        candidate->map_x == map_x && candidate->map_y == map_y) {
+                        active = candidate;
+                        break;
+                    }
+                }
+            }
+            /* The source reads ACTIVE_GROUP for each map-local C04. Do not
+             * invent orientation/aspect when the simulation has no such row. */
+            if (active && creature && record_size >= 16) {
+                unsigned order_index;
+                for (order_index = 0u; order_index < order.count; ++order_index) {
+                    CSB_V1_AtariF0115CreatureInput input;
+                    CSB_V1_AtariF0115CreaturePlan plan;
+                    const M11_AssetSlot *bitmap;
+                    unsigned int width;
+                    unsigned int height;
+                    unsigned int draw_byte_width;
+                    unsigned int draw_width;
+                    unsigned int draw_height;
+                    unsigned int scale32;
+                    unsigned int shift_set;
+                    unsigned int pose_index;
+                    unsigned char palette[16];
+                    unsigned char transparent_color;
+                    int left;
+                    int top;
+                    int y;
+                    int result;
+                    unsigned int pixels_written = 0u;
+
+                    if (only_view_cell >= 0 &&
+                        order.view_cell[order_index] !=
+                            (unsigned int)only_view_cell) continue;
+
+                    memset(&input, 0, sizeof(input));
+                    input.c558 = state->csbAtariStCreatureC558;
+                    input.c558_size = sizeof(state->csbAtariStCreatureC558);
+                    input.creature_type = group.creature_type;
+                    input.creature_count_minus_one = group.visible_count - 1;
+                    input.cells = active->cells;
+                    input.directions = active->directions;
+                    memcpy(input.aspect, active->aspect, sizeof(input.aspect));
+                    input.creature_size = creature->attributes & 3;
+                    input.graphic_info = (uint16_t)dm1_creature_graphic_info(
+                        group.creature_type);
+                    input.party_direction = runtime->party_dir & 3;
+                    input.view_square = view_square;
+                    input.view_cell = order.view_cell[order_index];
+                    input.remaining_view_cells = order.remaining_after[order_index];
+                    input.drawing_last_back_row_cell =
+                        order.drawing_last_back_row_cell[order_index];
+                    result = csb_v1_atari_f0115_plan_creature(&input, &plan);
+                    if (result < 0) return -1;
+                    if (result == 0) continue;
+                    if (plan.source_depth == 0) {
+                        unsigned int color_index;
+                        for (color_index = 0u; color_index < 16u;
+                             ++color_index) {
+                            palette[color_index] = (unsigned char)color_index;
+                        }
+                    } else if (!m11_creature_palette_for_depth(
+                                   state, group.creature_type,
+                                   plan.source_depth == 2 ? 2 : 1, palette)) {
+                        return -1;
+                    }
+                    transparent_color = palette[
+                        (unsigned int)plan.transparent_color & 15u];
+                    if (plan.bitmap_index < 446 || plan.bitmap_index >= 563 ||
+                        !m11_csb_install_runtime_source_graphic(
+                            state, (unsigned int)plan.bitmap_index)) return -1;
+                    bitmap = M11_AssetLoader_Load(&state->assetLoader,
+                                                  (unsigned int)plan.bitmap_index);
+                    width = (unsigned int)plan.source_byte_width * 2u;
+                    height = (unsigned int)plan.height;
+                    if (!bitmap || !bitmap->loaded || !bitmap->pixels ||
+                        bitmap->width != width || bitmap->height != height)
+                        return -1;
+                    /* ReDMCSB DEFS.H:2489-2513. MEDIA020 Atari uses
+                     * D3=16/32, D2=20/32 and native D1/D0=32/32. */
+                    scale32 = csb_v1_atari_f0115_scale_for_depth(
+                        plan.source_depth);
+                    if (scale32 == 0u) return -1;
+                    /* ReDMCSB DEFS.H M078 rounds from the 32ths scale by
+                     * adding scale >> 1 before shifting. Scale byte width,
+                     * then restore two pixels per Atari byte; scaling pixel
+                     * width directly gives different odd-size results. */
+                    draw_byte_width = csb_v1_atari_f0115_scaled_dimension(
+                        (unsigned int)plan.source_byte_width, scale32);
+                    draw_width = draw_byte_width * 2u;
+                    draw_height = csb_v1_atari_f0115_scaled_dimension(
+                        height, scale32);
+                    if (draw_width == 0u || draw_height == 0u) continue;
+                    shift_set = plan.source_depth == 2 ? 2u :
+                        plan.source_depth == 1 ? 1u : 0u;
+                    pose_index = plan.creature_index < 0 ? 0u :
+                        (unsigned int)plan.creature_index;
+                    if (pose_index > 3u) return -1;
+                    left = 48 + plan.anchor_x + shift[shift_set][
+                        input.aspect[pose_index] & 7u] -
+                        (int)draw_byte_width + 1;
+                    top = 33 + plan.anchor_y + shift[shift_set][
+                        ((input.aspect[pose_index] >> 3) & 7u)] -
+                        (int)draw_height + 1;
+                    for (y = 0; y < (int)draw_height; ++y) {
+                        const int destination_y = top + y;
+                        const unsigned int source_y =
+                            (unsigned int)y * height / draw_height;
+                        int x;
+                        if (destination_y < 33 || destination_y >= 169 ||
+                            destination_y >= framebuffer_height) continue;
+                        for (x = 0; x < (int)draw_width; ++x) {
+                            const int destination_x = left + x;
+                            unsigned int source_x =
+                                (unsigned int)x * width / draw_width;
+                            unsigned char color;
+                            if (destination_x < 48 || destination_x >= 272 ||
+                                destination_x >= framebuffer_width) continue;
+                            if (plan.mirrored) source_x = width - 1u - source_x;
+                            color = bitmap->pixels[(size_t)source_y * width + source_x];
+                            color = palette[color & 15u];
+                            if (color == transparent_color) continue;
+                            framebuffer[(size_t)destination_y *
+                                (size_t)framebuffer_width +
+                                (size_t)destination_x] = color & 15u;
+                            ++pixels_written;
+                        }
+                    }
+                    if (state->debugMovementTraceEnabled) {
+                        fprintf(stderr,
+                                "firestaff: viewport game=csb platform=atari "
+                                "pass=f0115-creature map=%d square=%d "
+                                "cell=%d thing=0x%04x type=%d creature=%d "
+                                "view-cell=%u bitmap=%d depth=%d "
+                                "source=%ux%u destination=%d,%d %ux%u "
+                                "palette-depth=%d transparent=%u "
+                                "mirror=%d pixels=%u\n",
+                                runtime->current_level, view_square,
+                                plan.absolute_cell,
+                                (unsigned)group_thing, type,
+                                group.creature_type, input.view_cell,
+                                plan.bitmap_index, plan.source_depth,
+                                width, height, left, top, draw_width,
+                                draw_height, plan.source_depth,
+                                transparent_color, plan.mirrored,
+                                pixels_written);
+                    }
+                }
+            }
+            /* ReDMCSB has one creature-group owner per square. */
+            return 0;
+        }
+        next = csb_v1_dungeon_f0159_get_next_thing_pc34(dungeon, group_thing);
         if (next == 0xfffeu || next == 0xffffu) return 0;
         thing = next;
     }
-    if (chain_step == 16384) return -1;
-    subtype = record[2] & 0x7f;
-    if (subtype >= 46) return 0;
-    graphic_index = m11_csb_atari_st_db5_d1c_material[subtype].graphic;
-    width = m11_csb_atari_st_db5_d1c_material[subtype].width;
-    height = m11_csb_atari_st_db5_d1c_material[subtype].height;
-    coordinate_set = m11_csb_atari_st_db5_d1c_material[subtype].coordinate_set;
-    /* Atari G0218: D1C front cells 0/1 at x83/141,y96 (set2 y98),
-     * back cells 3/2 at x76/148,y111 (set2 y115), and D0C cells
-     * 0/1 at x66/158,y131 (set2 y135). F0115's first-object
-     * G0217/G0223 shift is (+2,-3) for even absolute cells, (-3,-3) for odd. */
-    center = view_cell == 1 ? (cell == 0 ? 66 : 158) :
-        view_cell == 2 ? (cell == 0 ? 83 : 141) :
-        (cell == 3 ? 76 : 148);
-    center += (((unsigned)thing >> 14) & 1u) ? -3 : 2;
-    bottom = (view_cell == 1 ? 131 : view_cell == 2 ? 96 : 111) +
-        (coordinate_set == 2 ? (view_cell == 1 ? 4 : view_cell == 2 ? 2 : 4) : 0) - 3;
-    scaled = view_cell == 2;
-    /* Atari F0115 M078 rounds object byte width and height independently.
-     * D1C front cells use C20_SCALE_D2 and F0129's D2 palette. */
-    drawn_width = scaled ? (((width / 2 * 20 + 10) >> 5) << 1) : width;
-    drawn_height = scaled ? ((height * 20 + 10) >> 5) : height;
-    if (drawn_width == 0 || drawn_height == 0) return 0;
-    left = center - drawn_width / 2 + 1;
-    top = bottom - drawn_height + 1;
-    if (left < 0 || left + drawn_width > 224 || top < 0 || bottom >= 136 ||
-        !m11_csb_install_runtime_source_graphic(state,
-                                                (unsigned int)graphic_index))
-        return -1;
-    graphic = M11_AssetLoader_Load(&state->assetLoader,
-                                   (unsigned int)graphic_index);
-    if (!graphic || !graphic->loaded || !graphic->pixels ||
-        graphic->width != (unsigned)width ||
-        graphic->height != (unsigned)height) return -1;
-    if (scaled) {
-        x_step = (1024u * (unsigned)width / (unsigned)drawn_width) << 6;
-        y_step = (1024u * (unsigned)height / (unsigned)drawn_height) << 6;
+    return -1;
+}
+
+/* ReDMCSB DUNVIEW.C F0115 draws floor objects once per requested view cell.
+ * Rewalk each authentic square chain in source order so pile shifts advance
+ * only for objects assigned to that cell. */
+static int m11_csb_atari_st_draw_objects_for_square(
+    M11_GameViewState *state, const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_RuntimeProfile *runtime, uint8_t *framebuffer,
+    int framebuffer_width, int framebuffer_height,
+    int forward, int side, int view_square, uint16_t cell_order,
+    int only_view_cell)
+{
+    CSB_V1_AtariF0115CellOrder order;
+    int map_x;
+    int map_y;
+    int first_thing;
+    int decoded_order;
+    unsigned order_index;
+
+    if (!state || !dungeon || !runtime || !framebuffer ||
+        framebuffer_width < 320 || framebuffer_height < 200 ||
+        forward < 0 || forward > 3 || side < -1 || side > 1 ||
+        (!forward && !side && view_square != 9) ||
+        view_square < 0 || view_square > 11 ||
+        !m11_dm1_media009_metadata(state)) return -1;
+    /* Atari MEDIA020 G0218 has no ordinary floor-item rows for D0L/R. */
+    if (view_square > 9) return 0;
+    decoded_order = csb_v1_atari_f0115_decode_cell_order(cell_order, &order);
+    if (decoded_order < 0) return -1;
+    if (decoded_order == 0) return 0; /* the separate alcove-only F0115 call */
+
+    map_x = runtime->party_x +
+        (int[]){0,1,0,-1}[runtime->party_dir & 3] * forward +
+        (int[]){1,0,-1,0}[runtime->party_dir & 3] * side;
+    map_y = runtime->party_y +
+        (int[]){-1,0,1,0}[runtime->party_dir & 3] * forward +
+        (int[]){0,1,0,-1}[runtime->party_dir & 3] * side;
+    if (csb_v1_dungeon_get_square_type(dungeon, runtime->current_level,
+                                       map_x, map_y) < 0) return 0;
+    first_thing = csb_v1_dungeon_get_first_thing(
+        dungeon, runtime->current_level, map_x, map_y);
+    if (first_thing < 0) return 0;
+
+    for (order_index = 0u; order_index < order.count; ++order_index) {
+        const int view_cell = order.view_cell[order_index];
+        const unsigned absolute_cell =
+            ((unsigned)view_cell + (unsigned)(runtime->party_dir & 3)) & 3u;
+        unsigned int pile_ordinal = 0u;
+        int thing = first_thing;
+        int chain_step;
+        int saw_end = 0;
+
+        if (only_view_cell >= 0 && view_cell != only_view_cell) continue;
+
+        for (chain_step = 0; chain_step < 16384; ++chain_step) {
+            const uint16_t thing_id = (uint16_t)thing;
+            const unsigned thing_cell = (unsigned)(thing_id >> 14);
+            const uint8_t *record;
+            int type = -1;
+            int record_size = 0;
+            int next;
+
+            record = csb_v1_dungeon_get_thing_record(
+                dungeon, thing_id, &type, NULL, &record_size);
+            if (!record) return -1;
+            if (type >= 5 && type <= 10 && record_size >= 4 &&
+                thing_cell == absolute_cell) {
+                CSB_V1_F0141G0209ObjectInfoReceiptPc34 object_info;
+                if (csb_v1_runtime_f0141_g0209_object_info_receipt_pc34(
+                        dungeon, thing_id, &object_info) && object_info.valid) {
+                    unsigned int shift_index;
+                    int result;
+                    if (!csb_v1_atari_f0115_object_shift_index(
+                            runtime->party_dir & 3, view_cell,
+                            pile_ordinal, &shift_index)) return -1;
+                    result = m11_draw_dm1_media009_object(
+                        state, framebuffer, framebuffer_width,
+                        framebuffer_height, object_info.thing_type,
+                        object_info.subtype, view_cell, (int)shift_index,
+                        forward, side, 0, -1);
+                    if (state->debugMovementTraceEnabled) {
+                        fprintf(stderr,
+                                "firestaff: viewport game=csb platform=atari "
+                                "pass=f0115-object map=%d square=%d "
+                                "view-cell=%d absolute-cell=%u thing=0x%04x "
+                                "type=%d subtype=%d shift-index=%u result=%d\n",
+                                runtime->current_level, view_square, view_cell,
+                                absolute_cell, (unsigned)thing_id,
+                                object_info.thing_type, object_info.subtype,
+                                shift_index, result);
+                    }
+                    if (result < 0) return -1;
+                    if (result > 0) ++pile_ordinal;
+                }
+            }
+            next = csb_v1_dungeon_f0159_get_next_thing_pc34(dungeon, thing_id);
+            if (next == 0xfffeu || next == 0xffffu) {
+                saw_end = 1;
+                break;
+            }
+            thing = next;
+        }
+        if (!saw_end) return -1;
     }
-    /* BLTSHRNK.C F0129 Atari: 10-bit source/destination ratio promoted to
-     * 16.16, with a half-source-pixel bias. Indexed input is the lossless
-     * decode of the four-plane native bitmap; the D2 table stores colors
-     * multiplied by ten for the original jump table. */
-    for (int row = 0; row < drawn_height; ++row) {
-        const unsigned int sy = scaled ?
-            ((y_step / 2u + 32767u + (unsigned)row * y_step) >> 16) :
-            (unsigned)row;
-        for (int col = 0; col < drawn_width; ++col) {
-            const unsigned int sx = scaled ?
-                ((x_step / 2u + 32767u + (unsigned)col * x_step) >> 16) :
-                (unsigned)col;
-            unsigned char source;
-            unsigned char pixel;
-            if (sx >= (unsigned)width || sy >= (unsigned)height) return -1;
-            source = graphic->pixels[sy * width + sx];
-            if (source >= 16u) return -1;
-            pixel = scaled ? d2_palette[source] : source;
-            if (pixel != 10u)
-                viewport[(top + row) * 224 + left + col] = pixel;
+    return 0;
+}
+
+/* ReDMCSB DUNVIEW.C F0115:4820-5200 draws the floor objects for one view
+ * cell, then F0115:5201 draws that cell's creature before advancing to the
+ * next cell. Keep those layers interleaved to preserve source occlusion. */
+static int m11_csb_atari_st_draw_projectiles_for_cell(
+    M11_GameViewState *state, const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_RuntimeProfile *runtime, uint8_t *framebuffer,
+    int framebuffer_width, int framebuffer_height,
+    int forward, int side, int view_square, int view_cell)
+{
+    enum { VIEWPORT_ORIGIN_X = 48, VIEWPORT_ORIGIN_Y = 33 };
+    const int map_x = runtime->party_x +
+        (int[]){0,1,0,-1}[runtime->party_dir & 3] * forward +
+        (int[]){1,0,-1,0}[runtime->party_dir & 3] * side;
+    const int map_y = runtime->party_y +
+        (int[]){-1,0,1,0}[runtime->party_dir & 3] * forward +
+        (int[]){0,1,0,-1}[runtime->party_dir & 3] * side;
+    const unsigned absolute_cell =
+        ((unsigned)view_cell + (unsigned)(runtime->party_dir & 3)) & 3u;
+    int projectile_index;
+
+    if (!state || !dungeon || !runtime || !framebuffer ||
+        framebuffer_width < 320 || framebuffer_height < 200 ||
+        view_square < 0 || view_square >= 10 || view_cell < 0 ||
+        view_cell >= 4 || !m11_dm1_media009_metadata(state)) {
+        return 0;
+    }
+
+    for (projectile_index = 0;
+         projectile_index < PROJECTILE_LIST_CAPACITY;
+         ++projectile_index) {
+        const struct ProjectileInstance_Compat *projectile =
+            &runtime->projectiles.entries[projectile_index];
+        uint16_t projectile_thing;
+        const uint8_t *record;
+        int thing_type = -1;
+        int record_size = 0;
+        int source_slot;
+        int selector = 0;
+        CSB_V1_AtariF0115ProjectileInput input;
+        CSB_V1_AtariF0115ProjectilePlan plan;
+        int plan_result;
+        const M11_AssetSlot *asset;
+        const unsigned char *palette = NULL;
+        int left;
+        int top;
+        int drawn = 0;
+        int source_chain_contains = 0;
+        int thing;
+        int guard;
+
+        if (projectile->reserved3 == 0 || projectile->slotIndex < 0 ||
+            projectile->slotIndex > 0x03ff ||
+            projectile->mapIndex != runtime->current_level ||
+            projectile->mapX != map_x || projectile->mapY != map_y ||
+            (projectile->cell & 3) != (int)absolute_cell) {
+            continue;
+        }
+
+        /* ReDMCSB F0115 admits only a live C14 thing in this square/cell.
+         * The C14 Thing index is the runtime slot; validate that exact source
+         * record and the source Slot/energy/attack before asking F0142. */
+        projectile_thing = (uint16_t)((absolute_cell << 14) |
+            (14u << 10) | (unsigned)projectile->slotIndex);
+        record = csb_v1_dungeon_get_thing_record(
+            dungeon, projectile_thing, &thing_type, NULL, &record_size);
+        if (!record || thing_type != 14 || record_size < 8 ||
+            record[4] != (uint8_t)projectile->kineticEnergy ||
+            record[5] != (uint8_t)projectile->attack) {
+            if (state->debugMovementTraceEnabled) {
+                fprintf(stderr,
+                    "firestaff: viewport game=csb platform=atari "
+                    "pass=f0115-projectile status=source-c14-mismatch "
+                    "slot=%d map=%d x=%d y=%d cell=%u\n",
+                    projectile->slotIndex, runtime->current_level,
+                    map_x, map_y, absolute_cell);
+            }
+            continue;
+        }
+        thing = csb_v1_dungeon_get_first_thing(
+            dungeon, runtime->current_level, map_x, map_y);
+        for (guard = 0; thing >= 0 && guard < 1024 &&
+             thing != CSB_THING_ENDOFLIST && thing != CSB_THING_PARTY;
+             ++guard) {
+            const uint16_t current = (uint16_t)thing;
+            int current_type = -1;
+            int current_size = 0;
+            const uint8_t *current_record = csb_v1_dungeon_get_thing_record(
+                dungeon, current, &current_type, NULL, &current_size);
+            if (!current_record) break;
+            if (current == projectile_thing && current_type == 14 &&
+                current_size >= 8) {
+                source_chain_contains = 1;
+                break;
+            }
+            thing = csb_v1_dungeon_f0159_get_next_thing_pc34(
+                dungeon, current);
+            if (thing == 0xfffe || thing == 0xffff) break;
+        }
+        if (!source_chain_contains) continue;
+
+        source_slot = (int)((uint16_t)record[2] |
+                            ((uint16_t)record[3] << 8));
+        if ((((unsigned)source_slot >> 10) & 0x0fu) == 15u) {
+            /* C15 selectors come from the authenticated C14 Slot itself.
+             * For item-backed C14s, Atari's G0237/G0238 source table is not
+             * currently admitted; do not substitute the PC34 tables. */
+            if (!csb_v1_atari_f0115_resolve_f0142_selector(
+                    (uint16_t)source_slot, 0, 0, &selector)) {
+                continue;
+            }
+        } else {
+            if (state->debugMovementTraceEnabled) {
+                fprintf(stderr,
+                    "firestaff: viewport game=csb platform=atari "
+                    "pass=f0115-projectile status=selector-unavailable "
+                    "slot=%d source-slot=0x%04x associated=0x%04x\n",
+                    projectile->slotIndex, (unsigned)source_slot,
+                    (unsigned)(uint16_t)projectile->reserved1);
+            }
+            continue;
+        }
+
+        memset(&input, 0, sizeof(input));
+        input.c558 = state->csbAtariStCreatureC558;
+        input.c558_size = sizeof(state->csbAtariStCreatureC558);
+        input.f0142_selector = selector;
+        input.view_square = view_square;
+        input.view_cell = view_cell;
+        input.projectile_direction = projectile->direction & 3;
+        input.party_direction = runtime->party_dir & 3;
+        input.map_x = map_x;
+        input.map_y = map_y;
+        input.kinetic_energy = record[4];
+        plan_result = csb_v1_atari_f0115_plan_projectile(&input, &plan);
+        if (plan_result == CSB_V1_ATARI_F0115_PROJECTILE_NOT_VISIBLE) {
+            continue;
+        }
+        if (plan_result != CSB_V1_ATARI_F0115_PROJECTILE_DRAW_PROJECTILE) {
+            if (state->debugMovementTraceEnabled) {
+                fprintf(stderr,
+                    "firestaff: viewport game=csb platform=atari "
+                    "pass=f0115-projectile status=plan-rejected "
+                    "slot=%d selector=%d plan=%d square=%d cell=%d\n",
+                    projectile->slotIndex, selector, plan_result,
+                    view_square, view_cell);
+            }
+            continue;
+        }
+        if (!m11_csb_install_runtime_source_graphic(
+                state, (unsigned int)plan.native_graphic_index)) {
+            if (state->debugMovementTraceEnabled) {
+                fprintf(stderr,
+                    "firestaff: viewport game=csb platform=atari "
+                    "pass=f0115-projectile status=bitmap-unavailable "
+                    "slot=%d selector=%d graphic=%d\n",
+                    projectile->slotIndex, selector,
+                    plan.native_graphic_index);
+            }
+            continue;
+        }
+        asset = M11_AssetLoader_Load(
+            (M11_AssetLoader *)&state->assetLoader,
+            (unsigned)plan.native_graphic_index);
+        if (!asset || !asset->loaded || !asset->pixels ||
+            asset->width != plan.source_byte_width * 2 ||
+            asset->height != plan.source_height) {
+            continue;
+        }
+        if (plan.palette_change_index == 0) {
+            palette = state->dm1NativeObjectPalettes;
+        } else if (plan.palette_change_index == 1) {
+            palette = state->dm1NativeObjectPalettes + 16;
+        } /* G0075 entries 2/3 use the identity/no-change table. */
+
+        left = VIEWPORT_ORIGIN_X + plan.source_coordinate_x -
+               plan.draw_byte_width + 1;
+        top = VIEWPORT_ORIGIN_Y + plan.destination_center_y -
+             (plan.draw_height >> 1) + ((plan.draw_height & 1) == 0);
+        for (int y = 0; y < plan.draw_height; ++y) {
+            const int sample_y = plan.flip_vertical
+                ? plan.draw_height - 1 - y : y;
+            const int dy = top + y;
+            const unsigned source_y = (unsigned)(
+                (((uint64_t)asset->height << 16) /
+                 (unsigned)plan.draw_height) / 2u + 32767u +
+                (uint64_t)sample_y *
+                (((uint64_t)asset->height << 16) /
+                 (unsigned)plan.draw_height)) >> 16;
+            if (dy < VIEWPORT_ORIGIN_Y || dy >= VIEWPORT_ORIGIN_Y + 136 ||
+                dy < 0 || dy >= framebuffer_height || source_y >= asset->height) {
+                continue;
+            }
+            for (int x = 0; x < plan.draw_width_pixels; ++x) {
+                const int sample_x = plan.flip_horizontal
+                    ? plan.draw_width_pixels - 1 - x : x;
+                const int dx = left + x;
+                const unsigned source_x = (unsigned)(
+                    (((uint64_t)asset->width << 16) /
+                     (unsigned)plan.draw_width_pixels) / 2u + 32767u +
+                    (uint64_t)sample_x *
+                    (((uint64_t)asset->width << 16) /
+                     (unsigned)plan.draw_width_pixels)) >> 16;
+                unsigned char color;
+                if (dx < VIEWPORT_ORIGIN_X || dx >= VIEWPORT_ORIGIN_X + 224 ||
+                    dx < 0 || dx >= framebuffer_width ||
+                    source_x >= asset->width) {
+                    continue;
+                }
+                color = asset->pixels[source_y * asset->width + source_x];
+                if (palette) color = palette[color & 0x0fu];
+                if (color == 10u) continue; /* Atari C10 transparency. */
+                framebuffer[(size_t)dy * (size_t)framebuffer_width +
+                            (size_t)dx] = color;
+                drawn = 1;
+            }
+        }
+        if (state->debugMovementTraceEnabled) {
+            fprintf(stderr,
+                "firestaff: viewport game=csb platform=atari "
+                "pass=f0115-projectile status=%s slot=%d c14=0x%04x "
+                "source-slot=0x%04x selector=%d map=%d:%d,%d cell=%u "
+                "square=%d view-cell=%d graphic=%d scale=%d palette=%d "
+                "flip=%d%d rect=%d,%d,%d,%d\n",
+                drawn ? "drawn" : "clipped-or-transparent",
+                projectile->slotIndex, projectile_thing,
+                (unsigned)source_slot, selector, runtime->current_level,
+                map_x, map_y, absolute_cell, view_square, view_cell,
+                plan.native_graphic_index, plan.source_scale_32,
+                plan.palette_change_index, plan.flip_horizontal,
+                plan.flip_vertical, left, top, plan.draw_width_pixels,
+                plan.draw_height);
         }
     }
+    return 0;
+}
+
+static int m11_csb_atari_st_draw_f0115_pass(
+    M11_GameViewState *state, const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_RuntimeProfile *runtime, uint8_t *framebuffer,
+    int forward, int side, int view_square, uint16_t cell_order)
+{
+    /* Four view cells each emit object/creature/projectile, followed by the
+     * source-owned explosion and Fluxcage passes. The latter two are not yet
+     * bound to Atari graphics, but reserving them here preserves the source
+     * schedule without aborting the visible object/creature layers. */
+    CSB_V1_AtariF0115PassEvent events[14];
+    int event_count;
+    int event_index;
+
+    event_count = csb_v1_atari_f0115_plan_pass_events(
+        cell_order, events, sizeof(events) / sizeof(events[0]));
+    if (event_count < 0) return -1;
+    /* A zero order is the alcove-only pass dispatched directly by F0107. */
+    for (event_index = 0; event_index < event_count; ++event_index) {
+        const CSB_V1_AtariF0115PassEvent *event = &events[event_index];
+        const int view_cell = (int)event->view_cell;
+        int result;
+        if (event->layer == CSB_V1_ATARI_F0115_OBJECT_LAYER) {
+            result = m11_csb_atari_st_draw_objects_for_square(
+                state, dungeon, runtime, framebuffer, 320, 200,
+                forward, side, view_square, cell_order, view_cell);
+        } else if (event->layer == CSB_V1_ATARI_F0115_CREATURE_LAYER) {
+            result = m11_csb_atari_st_draw_creature_groups(
+                state, dungeon, runtime, framebuffer, 320, 200,
+                forward, side, view_square, cell_order, view_cell);
+        } else if (event->layer == CSB_V1_ATARI_F0115_PROJECTILE_LAYER) {
+            result = m11_csb_atari_st_draw_projectiles_for_cell(
+                state, dungeon, runtime, framebuffer, 320, 200,
+                forward, side, view_square, view_cell);
+        } else {
+            /* Explosion/Fluxcage are separate source owners and remain
+             * unbound; do not fold their materials into the projectile pass. */
+            continue;
+        }
+        if (result < 0) return result;
+    }
+    return 0;
+}
+
+/* ReDMCSB DUNVIEW.C F0116-F0124 first asks F0107 whether the front
+ * ornament is one of G0192's alcove types. A zero-order F0115 call then
+ * walks only the opposite-facing cell and uses G0218's alcove coordinate. */
+static int m11_csb_atari_st_draw_alcove_objects(
+    M11_GameViewState *state, const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_RuntimeProfile *runtime, uint8_t *framebuffer,
+    int framebuffer_width, int framebuffer_height,
+    int forward, int side, int view_square)
+{
+    const unsigned absolute_cell =
+        ((unsigned)(runtime->party_dir & 3) + 2u) & 3u;
+    const int map_x = runtime->party_x +
+        (int[]){0,1,0,-1}[runtime->party_dir & 3] * forward +
+        (int[]){1,0,-1,0}[runtime->party_dir & 3] * side;
+    const int map_y = runtime->party_y +
+        (int[]){-1,0,1,0}[runtime->party_dir & 3] * forward +
+        (int[]){0,1,0,-1}[runtime->party_dir & 3] * side;
+    const int source_view_square = m11_dm1_media009_square(forward, side);
+    int thing;
+    int links = 0;
+    unsigned shift_index = 2u + ((absolute_cell & 1u) << 3u);
+
+    thing = csb_v1_dungeon_get_first_thing(
+        dungeon, runtime->current_level, map_x, map_y);
+    while (thing >= 0 && thing != CSB_THING_ENDOFLIST &&
+           thing != CSB_THING_PARTY && links++ < 4096) {
+        const uint16_t thing_id = (uint16_t)thing;
+        const unsigned thing_cell = thing_id >> 14;
+        const uint8_t *record;
+        int type = -1;
+        int record_size = 0;
+        int next;
+
+        record = csb_v1_dungeon_get_thing_record(
+            dungeon, thing_id, &type, NULL, &record_size);
+        if (!record) return -1;
+        if (type >= CSB_THING_TYPE_WEAPON && type <= CSB_THING_TYPE_JUNK &&
+            record_size >= 4 && thing_cell == absolute_cell) {
+            CSB_V1_F0141G0209ObjectInfoReceiptPc34 object_info;
+            if (csb_v1_runtime_f0141_g0209_object_info_receipt_pc34(
+                    dungeon, thing_id, &object_info) && object_info.valid) {
+                const int drawn = m11_draw_dm1_media009_object(
+                    state, framebuffer, framebuffer_width, framebuffer_height,
+                    object_info.thing_type, object_info.subtype, 0,
+                    (int)shift_index, forward, side, 1, -1);
+                if (state->debugMovementTraceEnabled) {
+                    fprintf(stderr,
+                            "firestaff: viewport game=csb platform=atari "
+                            "pass=f0115-alcove map=%d square=%d "
+                            "view-square=%d cell=%u thing=0x%04x "
+                            "type=%d subtype=%d shift-index=%u result=%d\n",
+                            runtime->current_level, source_view_square,
+                            view_square,
+                            absolute_cell, (unsigned)thing_id, type,
+                            object_info.subtype, shift_index, drawn);
+                }
+            }
+            ++shift_index;
+            if (shift_index >= 14u) shift_index = 2u;
+        }
+        next = csb_v1_dungeon_f0159_get_next_thing_pc34(dungeon, thing_id);
+        if (next == 0xfffeu || next == 0xffffu) return 0;
+        thing = next;
+    }
+    return links >= 4096 ? -1 : 0;
+}
+
+/* ReDMCSB DUNVIEW.C F0107 (MEDIA379/G20E) uses source constants G0194 and
+ * G0205 to select the ornament coordinate set and view. Those tables are
+ * compiled into the Atari game; they are not fields in CSB's C558 record. */
+static int m11_csb_atari_st_draw_wall_ornament(
+    M11_GameViewState *state, const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_RuntimeProfile *runtime, uint8_t *frame,
+    int frame_width, int frame_height, int forward, int right,
+    unsigned view_index)
+{
+    static const uint8_t side_for_view[13] = {
+        1, 3, 2, 2, 2, 1, 3, 2, 2, 2, 1, 3, 2
+    };
+    static const uint8_t source_view_for_view[13] = {
+        10, 11, 12, 12, 12, 10, 11, 12, 12, 12, 10, 11, 12
+    };
+    static const uint8_t bitmap_increment_for_view[13] = {
+        0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1
+    };
+    const M11_AssetSlot *asset;
+    const uint8_t *coordinate;
+    uint16_t graphic;
+    uint16_t thing;
+    unsigned local_ordinal = 0u;
+    unsigned global_ordinal;
+    unsigned coordinate_set;
+    unsigned source_x;
+    unsigned source_y;
+    unsigned source_width;
+    unsigned source_height;
+    unsigned sample_width;
+    unsigned sample_height;
+    unsigned target_width;
+    unsigned target_height;
+    unsigned blit_bitmap_width;
+    int16_t blit_source_x;
+    CSB_V1_AtariF0132VisibleSpan visible_span;
+    unsigned x;
+    unsigned y;
+    int map_x;
+    int map_y;
+    int raw_square;
+    int links;
+    int is_alcove = 0;
+
+    if (!state || !dungeon || !runtime || !frame || view_index >= 13u ||
+        !m11_dm1_media009_metadata(state) ||
+        csb_v1_dungeon_f0150_get_relative_location_pc34(
+            runtime->party_dir, forward, right, runtime->party_x,
+            runtime->party_y, &map_x, &map_y) != 0) return 0;
+    raw_square = csb_v1_dungeon_f0151_get_square_pc34(
+        dungeon, runtime->current_level, map_x, map_y);
+    if (raw_square < 0 || ((raw_square >> 5) & 7) != 0) return 1;
+
+    /* ReDMCSB DUNGEON.C F0171 chooses deterministic map ornaments from the
+     * wall-side flag and MAP.RandomWallOrnamentCount before F0172 applies
+     * explicit sensors. F0192 marks three map ornaments as alcoves, which
+     * F0171 removes from this random-only route. */
+    {
+        static const uint8_t random_masks[4][4] = {
+            { 0u, 4u, 2u, 1u }, { 0u, 2u, 1u, 8u },
+            { 0u, 1u, 8u, 4u }, { 0u, 8u, 4u, 2u }
+        };
+        const unsigned direction = (unsigned)runtime->party_dir & 3u;
+        const unsigned side = side_for_view[view_index];
+        const uint8_t allowed = random_masks[direction][side];
+        const int count = dungeon->map_random_wall_ornament_count[
+            runtime->current_level];
+        if ((raw_square & allowed) != 0 && count > 0 && count <= 30) {
+            const int side_turn = (int)((direction + side) & 3u);
+            const int ornament_y = map_y + 1;
+            const uint16_t value1 = (uint16_t)(2000u +
+                ((unsigned)map_x << 5u) +
+                (unsigned)ornament_y * (unsigned)(side_turn + 1));
+            const uint16_t value2 = (uint16_t)(3000u +
+                ((unsigned)runtime->current_level << 6u) +
+                (unsigned)dungeon->level_widths[runtime->current_level] +
+                (unsigned)dungeon->level_heights[runtime->current_level]);
+            const uint16_t product1 = (uint16_t)((uint32_t)value1 * 31417u);
+            const uint16_t product2 = (uint16_t)((uint32_t)value2 * 11u);
+            const uint16_t seeded = (uint16_t)((product1 >> 1u) +
+                product2 + dungeon->ornament_random_seed);
+            const unsigned random_index = (unsigned)((seeded >> 2u) % 30u);
+            if (random_index < (unsigned)count &&
+                random_index < (unsigned)dungeon->map_wall_ornament_count[
+                    runtime->current_level]) {
+                uint8_t selected;
+                if (csb_v1_dungeon_get_wall_ornament_index(
+                        dungeon, runtime->current_level, (int)random_index,
+                        &selected) && selected != 1u && selected != 2u &&
+                    selected != 3u) {
+                    local_ordinal = random_index + 1u;
+                }
+            }
+        }
+    }
+    /* ReDMCSB DUNGEON.C F0172 stores a one-based ornament ordinal in the
+     * right/front/left square-aspect slot. Thing cell is the top two handle
+     * bits (M011_CELL); Remote.OrnamentOrdinal is the high nibble of the
+     * sensor flags word in the original eight-byte SENSOR record. */
+    thing = (uint16_t)csb_v1_dungeon_get_first_thing(
+        dungeon, runtime->current_level, map_x, map_y);
+    links = 0;
+    while (thing != CSB_THING_ENDOFLIST && thing != CSB_THING_PARTY &&
+           links++ < 4096) {
+        const int type = (thing >> 10) & 15;
+        const uint8_t *record;
+        int size = 0;
+        if (type > CSB_THING_TYPE_SENSOR) break;
+        if ((((thing >> 14) - runtime->party_dir) & 3) ==
+                (int)side_for_view[view_index]) {
+            uint16_t flags;
+            record = csb_v1_dungeon_get_thing_record(
+                dungeon, thing, NULL, NULL, &size);
+            if (record && type == CSB_THING_TYPE_TEXTSTRING && size >= 4) {
+                /* ReDMCSB DUNGEON.C F0172 routes a visible TEXTSTRING to
+                 * the current map's final wall-ornament slot. */
+                flags = (uint16_t)(record[2] | ((uint16_t)record[3] << 8));
+                if ((flags & 1u) != 0u) {
+                    local_ordinal = (unsigned)dungeon->map_wall_ornament_count[
+                        runtime->current_level] + 1u;
+                    break;
+                }
+            } else if (record && type == CSB_THING_TYPE_SENSOR && size >= 6) {
+                flags = (uint16_t)(record[4] | ((uint16_t)record[5] << 8));
+                if ((flags >> 12) != 0u) {
+                    local_ordinal = (unsigned)(flags >> 12);
+                    break;
+                }
+            }
+        }
+        thing = csb_v1_dungeon_f0159_get_next_thing_pc34(dungeon, thing);
+    }
+    if (local_ordinal == 0u) return 1;
+    --local_ordinal;
+    if (local_ordinal > (unsigned)dungeon->map_wall_ornament_count[
+            runtime->current_level]) return 0;
+    if (local_ordinal == (unsigned)dungeon->map_wall_ornament_count[
+            runtime->current_level]) {
+        global_ordinal = 0u; /* F0174's final slot is the inscription. */
+    } else {
+        uint8_t selected;
+        if (!csb_v1_dungeon_get_wall_ornament_index(
+                dungeon, runtime->current_level, (int)local_ordinal,
+                &selected)) return 0;
+        global_ordinal = selected;
+    }
+    if (global_ordinal >= 60u) return 0;
+    {
+        unsigned alcove_index;
+        for (alcove_index = 0u;
+             alcove_index < sizeof(csb_atari_st_g0192_alcove) /
+                            sizeof(csb_atari_st_g0192_alcove[0]);
+             ++alcove_index) {
+            if (global_ordinal == csb_atari_st_g0192_alcove[alcove_index]) {
+                is_alcove = 1;
+                break;
+            }
+        }
+    }
+    coordinate_set = csb_atari_st_g0194[global_ordinal];
+    if (coordinate_set >= 8u) return 0;
+    coordinate = csb_atari_st_g0205[coordinate_set][view_index];
+    {
+        const uint8_t *source_coordinate =
+            csb_atari_st_g0205[coordinate_set][source_view_for_view[view_index]];
+        source_width = (unsigned)source_coordinate[4] * 2u;
+        source_height = source_coordinate[5];
+    }
+    source_x = coordinate[0];
+    source_y = coordinate[2];
+    target_width = (unsigned)coordinate[1] - source_x + 1u;
+    target_height = coordinate[5];
+    blit_bitmap_width = target_width;
+    blit_source_x = 0;
+    if (view_index == 7u || view_index == 9u) {
+        /* ReDMCSB DUNVIEW.C F0107 (MEDIA009): derive the D2L/D2R front
+         * intermediate width from the adjacent D2C coordinate entry. The
+         * final F0132 blit keeps the selected D2 box and clips its signed
+         * source X; D2L shifts by X2-X1 while D2R starts at source X zero. */
+        const uint8_t *d2c_coordinate =
+            csb_atari_st_g0205[coordinate_set][8];
+        blit_bitmap_width = (unsigned)d2c_coordinate[1] -
+                            d2c_coordinate[0] + 1u;
+        if (view_index == 7u) {
+            /* In DUNVIEW.C, AL0089_i_PixelWidth and AL0089_i_X alias
+             * L0089_i_Multiple. Keep the source value (D2C X2-X1), then
+             * subtract this D2L box's X2-X1 before F0132. */
+            blit_source_x = (int16_t)(
+                ((int)d2c_coordinate[1] - (int)d2c_coordinate[0]) -
+                ((int)coordinate[1] - (int)coordinate[0]));
+        }
+    }
+    if (target_width == 0u || target_height == 0u ||
+        source_width == 0u || source_height == 0u ||
+        blit_bitmap_width == 0u || blit_bitmap_width > UINT16_MAX ||
+        target_width > UINT16_MAX ||
+        source_x + target_width > (unsigned)frame_width ||
+        source_y + target_height > (unsigned)frame_height) return 0;
+    if (!csb_v1_atari_f0132_visible_span(
+            blit_source_x, (uint16_t)blit_bitmap_width,
+            (uint16_t)target_width, &visible_span)) return 0;
+    graphic = (uint16_t)(259u + global_ordinal * 2u +
+                         bitmap_increment_for_view[view_index]);
+    if (!m11_csb_install_runtime_source_graphic(state, graphic)) return 0;
+    asset = M11_AssetLoader_Load(&state->assetLoader, graphic);
+    if (!asset || !asset->loaded || !asset->pixels ||
+        asset->width == 0u || asset->height == 0u) return 1;
+    /* G0205's byte width is F0129's logical source span. Some accepted Atari
+     * archive decoders expose a narrower pixel surface for the same packed
+     * source. Consume the available source rectangle rather than aborting the
+     * entire F0128 viewport because a decorative overlay has different pitch. */
+    sample_width = source_width < asset->width ? source_width : asset->width;
+    sample_height = source_height < asset->height ? source_height : asset->height;
+    if (sample_width == 0u || sample_height == 0u) return 1;
+    for (y = 0u; y < target_height; ++y) {
+        const unsigned sy = y * sample_height / target_height;
+        for (x = 0u; x < visible_span.pixel_count; ++x) {
+            const unsigned bitmap_x = visible_span.source_offset + x;
+            const unsigned sx = bitmap_x * sample_width / blit_bitmap_width;
+            const unsigned flipped = (view_index == 1u || view_index == 6u ||
+                                      view_index == 11u)
+                ? asset->width - 1u - sx : sx;
+            const uint8_t source_color = asset->pixels[
+                (size_t)sy * asset->width + flipped];
+            uint8_t color;
+            if (source_color == 10u) continue;
+            color = source_color < 16u
+                ? (view_index <= 4u
+                    ? csb_atari_st_g0198_d3[source_color]
+                    : csb_atari_st_g0199_d2[source_color])
+                : source_color;
+            if (color > 15u) continue;
+            frame[(size_t)(source_y + y) * frame_width + source_x +
+                  visible_span.destination_offset + x] = color;
+        }
+    }
+    /* ReDMCSB DUNVIEW.C F0107 calls the zero-order F0115 pass only after
+     * drawing the D1C front wall (view square M606). Side-wall ornaments and
+     * D2 ornaments may use the same source artwork, but do not open the
+     * alcove-object drawing pass. */
+    /* F0107's true result requests the zero-order F0115 pass for each
+     * forward-facing wall ornament: D3L/D3R/D3C, D2L/D2R/D2C and D1C. */
+    if (is_alcove && (view_index == 2u || view_index == 3u ||
+                      view_index == 4u || view_index == 7u ||
+                      view_index == 8u || view_index == 9u ||
+                      view_index == 12u)) {
+        return m11_csb_atari_st_draw_alcove_objects(
+                   state, dungeon, runtime, frame, frame_width, frame_height,
+                   forward, right, view_index) < 0 ? 0 : 1;
+    }
     return 1;
+}
+
+static int m11_csb_atari_st_draw_scheduled_cell(
+    M11_GameViewState *state, const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_RuntimeProfile *runtime, uint8_t *viewport,
+    uint8_t source_function, unsigned pass)
+{
+    enum { FRAME_WIDTH = 320, FRAME_HEIGHT = 200 };
+    enum {
+        M11_CSB_ATARI_F0115_NORMAL = 0,
+        M11_CSB_ATARI_F0115_DOOR_PASS1 = 1,
+        M11_CSB_ATARI_F0115_DOOR_PASS2 = 2
+    };
+    uint8_t frame[FRAME_WIDTH * FRAME_HEIGHT];
+    const CSB_V1_AtariF0128CellScheduleEntry *entries;
+    size_t count;
+    size_t index;
+    int row;
+
+    if (!state || !dungeon || !runtime || !viewport ||
+        source_function < 116u || source_function > 127u || pass > 2u) {
+        return -1;
+    }
+    memset(frame, 0, sizeof(frame));
+    for (row = 0; row < 136; ++row) {
+        memcpy(frame + (size_t)(33 + row) * FRAME_WIDTH + 48,
+               viewport + (size_t)row * 224u, 224u);
+    }
+    entries = csb_v1_atari_f0128_cell_schedule(&count);
+    if (!entries) return -1;
+    for (index = 0u; index < count; ++index) {
+        const CSB_V1_AtariF0128CellScheduleEntry *entry = &entries[index];
+        int map_x;
+        int map_y;
+        int square_type;
+        int raw_square;
+        int stairs_side;
+        int result;
+        uint16_t order;
+
+        if (entry->source_function != source_function) continue;
+        if (entry->view_square < 0 || entry->view_square > 11 ||
+            entry->normal_order_count == 0u) return -1;
+        map_x = runtime->party_x +
+            (int[]){0,1,0,-1}[runtime->party_dir & 3] * entry->forward +
+            (int[]){1,0,-1,0}[runtime->party_dir & 3] * entry->right;
+        map_y = runtime->party_y +
+            (int[]){-1,0,1,0}[runtime->party_dir & 3] * entry->forward +
+            (int[]){0,1,0,-1}[runtime->party_dir & 3] * entry->right;
+        square_type = csb_v1_dungeon_get_square_type(
+            dungeon, runtime->current_level, map_x, map_y);
+        if (square_type < 0) return 0;
+        raw_square = csb_v1_dungeon_f0152_get_relative_square_pc34(
+            dungeon, runtime->current_level, runtime->party_dir,
+            entry->forward, entry->right, runtime->party_x, runtime->party_y);
+        if (raw_square < 0) return 0;
+        stairs_side = square_type == 3 &&
+            (((raw_square >> 3) & 1) == (runtime->party_dir & 1));
+
+        if (square_type == 4 && csb_v1_csbwin_viewport_door_is_facing(
+                (uint8_t)raw_square, runtime->party_dir)) {
+            if (pass == M11_CSB_ATARI_F0115_NORMAL ||
+                !entry->door_pass1_order || !entry->door_pass2_order) {
+                return 0;
+            }
+            order = pass == M11_CSB_ATARI_F0115_DOOR_PASS1
+                ? entry->door_pass1_order : entry->door_pass2_order;
+            result = m11_csb_atari_st_draw_f0115_pass(
+                state, dungeon, runtime, frame, entry->forward,
+                entry->right, entry->view_square, order);
+        } else {
+            /* A wall returns after F0107; its conditional alcove F0115 pass
+             * is dispatched immediately by draw_wall_ornament(). */
+            if (pass != M11_CSB_ATARI_F0115_NORMAL || square_type == 0) {
+                return 0;
+            }
+            order = entry->normal_orders[0];
+            if ((square_type == 4 || stairs_side) &&
+                entry->normal_order_count > 1u) {
+                order = entry->normal_orders[1];
+            }
+            result = m11_csb_atari_st_draw_f0115_pass(
+                state, dungeon, runtime, frame, entry->forward,
+                entry->right, entry->view_square, order);
+        }
+        if (result < 0) return result;
+        break;
+    }
+    if (index == count) return -1;
+    for (row = 0; row < 136; ++row) {
+        memcpy(viewport + (size_t)row * 224u,
+               frame + (size_t)(33 + row) * FRAME_WIDTH + 48, 224u);
+    }
+    return 0;
 }
 
 static int m11_csb_present_atari_st_runtime_viewport(
@@ -5627,6 +6534,23 @@ static int m11_csb_present_atari_st_runtime_viewport(
         {3, -2}, {3, -1}, {3, 0}, {3, 1}, {3, 2},
         {2, -1}, {2, 0}, {2, 1}, {1, -1}, {1, 0}, {1, 1},
         {0, -1}, {0, 0}, {0, 1}
+    };
+    /* Wall-plan storage is enum-sorted; F0128's source traversal is not.
+     * Preserve the two static D3 edges, then F0116..F0126 call order. */
+    static const CSB_V1_CSBWinViewportWall f0128_wall_order[] = {
+        CSB_V1_CSBWIN_VIEWPORT_WALL_F3L2,
+        CSB_V1_CSBWIN_VIEWPORT_WALL_F3R2,
+        CSB_V1_CSBWIN_VIEWPORT_WALL_F3L1,
+        CSB_V1_CSBWIN_VIEWPORT_WALL_F3R1,
+        CSB_V1_CSBWIN_VIEWPORT_WALL_F3,
+        CSB_V1_CSBWIN_VIEWPORT_WALL_F2L1,
+        CSB_V1_CSBWIN_VIEWPORT_WALL_F2R1,
+        CSB_V1_CSBWIN_VIEWPORT_WALL_F2,
+        CSB_V1_CSBWIN_VIEWPORT_WALL_F1L1,
+        CSB_V1_CSBWIN_VIEWPORT_WALL_F1R1,
+        CSB_V1_CSBWIN_VIEWPORT_WALL_F1,
+        CSB_V1_CSBWIN_VIEWPORT_WALL_F0L1,
+        CSB_V1_CSBWIN_VIEWPORT_WALL_F0R1
     };
     const CSB_V1_BootProfile *profile;
     const CSB_V1_DungeonData *dungeon;
@@ -5701,18 +6625,45 @@ static int m11_csb_present_atari_st_runtime_viewport(
            floor->pixels, (size_t)VIEWPORT_WIDTH * FLOOR_HEIGHT);
     for (draw_index = 0u; draw_index < material_plan.wall_command_count;
          ++draw_index) {
-        const CSB_V1_CSBWinViewportMaterialCommand *draw =
-            &material_plan.wall_commands[draw_index];
+        const CSB_V1_CSBWinViewportMaterialCommand *draw = NULL;
         const M11_AssetSlot *wall;
         uint8_t *packed = NULL;
         size_t packed_size = 0u;
+        size_t command_index;
         CSB_V1_CSBWinPlanarBitmap packed_wall;
         int square_type;
         int raw_square;
+        uint8_t source_function = 0u;
 
+        if (draw_index >= sizeof(f0128_wall_order) /
+                              sizeof(f0128_wall_order[0])) return 0;
+        for (command_index = 0u;
+             command_index < material_plan.wall_command_count;
+             ++command_index) {
+            if (material_plan.wall_commands[command_index].wall ==
+                f0128_wall_order[draw_index]) {
+                draw = &material_plan.wall_commands[command_index];
+                break;
+            }
+        }
+        if (!draw) return 0;
         if ((unsigned)draw->wall >= CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT ||
             draw->wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F0) {
             return 0;
+        }
+        switch (draw->wall) {
+            case CSB_V1_CSBWIN_VIEWPORT_WALL_F3L1: source_function = 116u; break;
+            case CSB_V1_CSBWIN_VIEWPORT_WALL_F3R1: source_function = 117u; break;
+            case CSB_V1_CSBWIN_VIEWPORT_WALL_F3: source_function = 118u; break;
+            case CSB_V1_CSBWIN_VIEWPORT_WALL_F2L1: source_function = 119u; break;
+            case CSB_V1_CSBWIN_VIEWPORT_WALL_F2R1: source_function = 120u; break;
+            case CSB_V1_CSBWIN_VIEWPORT_WALL_F2: source_function = 121u; break;
+            case CSB_V1_CSBWIN_VIEWPORT_WALL_F1L1: source_function = 122u; break;
+            case CSB_V1_CSBWIN_VIEWPORT_WALL_F1R1: source_function = 123u; break;
+            case CSB_V1_CSBWIN_VIEWPORT_WALL_F1: source_function = 124u; break;
+            case CSB_V1_CSBWIN_VIEWPORT_WALL_F0L1: source_function = 125u; break;
+            case CSB_V1_CSBWIN_VIEWPORT_WALL_F0R1: source_function = 126u; break;
+            default: break; /* F3L2/F3R2 are static edges without F0115. */
         }
         raw_square = csb_v1_dungeon_f0152_get_relative_square_pc34(
             dungeon, profile->runtime.current_level, profile->runtime.party_dir,
@@ -5745,6 +6696,9 @@ static int m11_csb_present_atari_st_runtime_viewport(
                 !m11_csb_blit_atari_st_viewport_graphic(
                     state, graphic, mirrored, &layout.floor_pit_rectangles[rect],
                     viewport, VIEWPORT_WIDTH, VIEWPORT_HEIGHT)) return 0;
+            if (source_function && m11_csb_atari_st_draw_scheduled_cell(
+                    state, dungeon, &profile->runtime, viewport,
+                    source_function, 0u) < 0) return 0;
             continue;
         }
         if (square_type == 3) { /* roomSTAIRS */
@@ -5759,6 +6713,9 @@ static int m11_csb_present_atari_st_runtime_viewport(
                 !m11_csb_blit_atari_st_viewport_graphic(
                     state, graphic, mirrored, projection, viewport,
                     VIEWPORT_WIDTH, VIEWPORT_HEIGHT)) return 0;
+            if (source_function && m11_csb_atari_st_draw_scheduled_cell(
+                    state, dungeon, &profile->runtime, viewport,
+                    source_function, 0u) < 0) return 0;
             continue;
         }
         if (square_type == 4 && csb_v1_csbwin_viewport_door_is_facing(
@@ -5779,6 +6736,9 @@ static int m11_csb_present_atari_st_runtime_viewport(
             if (!m11_csb_door_panel_family_for_wall(draw->wall, &family)) {
                 continue;
             }
+            if (source_function && m11_csb_atari_st_draw_scheduled_cell(
+                    state, dungeon, &profile->runtime, viewport,
+                    source_function, 1u) < 0) return 0;
             if (!csb_v1_csbwin_viewport_build_door_frame_plan(
                     &layout, family, &door_plan)) return 0;
             for (door_draw = 0u; door_draw < door_plan.count; ++door_draw) {
@@ -5812,6 +6772,9 @@ static int m11_csb_present_atari_st_runtime_viewport(
                     draw->wall >= CSB_V1_CSBWIN_VIEWPORT_WALL_F1L1 ? 0u :
                     draw->wall >= CSB_V1_CSBWIN_VIEWPORT_WALL_F2L1 ? 1u : 2u,
                     &door_state, &db0_mode, &has_switch, &panel_graphic)) {
+                if (source_function && m11_csb_atari_st_draw_scheduled_cell(
+                        state, dungeon, &profile->runtime, viewport,
+                        source_function, 2u) < 0) return 0;
                 continue;
             }
             if (!csb_v1_csbwin_viewport_door_panel_projections(
@@ -5840,9 +6803,16 @@ static int m11_csb_present_atari_st_runtime_viewport(
                 if (!csb_v1_csbwin_viewport_door_switch_projection(
                         &layout, switch_lane, &switch_projection) ||
                     !m11_csb_blit_atari_st_viewport_graphic(
+                        /* ReDMCSB DEFS.H MEDIA020 M634 assigns the CSB
+                         * Atari ST (G20E) door-button family to native
+                         * GRAPHICS.DAT index 315. Index 453 belongs to the
+                         * later MEDIA720 layout. */
                         state, 315u, 0, switch_projection, viewport,
                         VIEWPORT_WIDTH, VIEWPORT_HEIGHT)) return 0;
             }
+            if (source_function && m11_csb_atari_st_draw_scheduled_cell(
+                    state, dungeon, &profile->runtime, viewport,
+                    source_function, 2u) < 0) return 0;
             continue;
         }
         /* CSBWin Codea59a.cpp::SummarizeRoomInfo routes an unrevealed
@@ -5852,14 +6822,11 @@ static int m11_csb_present_atari_st_runtime_viewport(
          * owns a different source command. */
         if (!csb_v1_csbwin_viewport_square_uses_stone_material(
                 (uint8_t)raw_square)) {
-            if (draw->wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F1 &&
-                square_type == 1) {
-                if (m11_csb_atari_st_draw_near_weapon(
-                        state, dungeon, &profile->runtime, viewport, 2) < 0 ||
-                    m11_csb_atari_st_draw_near_weapon(
-                        state, dungeon, &profile->runtime, viewport, 0) < 0)
-                    return 0;
-            }
+            /* Open, corridor, teleporter and side-door/stairs cells reach
+             * F0115 without a stone wall bitmap. */
+            if (source_function && m11_csb_atari_st_draw_scheduled_cell(
+                    state, dungeon, &profile->runtime, viewport,
+                    source_function, 0u) < 0) return 0;
             continue;
         }
         if (!m11_csb_install_runtime_source_graphic(state, draw->graphic_index)) {
@@ -5886,10 +6853,92 @@ static int m11_csb_present_atari_st_runtime_viewport(
             return 0;
         }
         free(packed);
+        /* ReDMCSB DUNVIEW.C F0116-F0127 call F0107 for each visible face
+         * after its wall material.  The two edge squares own both their
+         * lateral and forward-facing ornament views. */
+        switch (draw->wall) {
+            case CSB_V1_CSBWIN_VIEWPORT_WALL_F3L1:
+                if (!m11_csb_atari_st_draw_wall_ornament(
+                        state, dungeon, &profile->runtime, viewport,
+                        VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 3, -1, 0u) ||
+                    !m11_csb_atari_st_draw_wall_ornament(
+                        state, dungeon, &profile->runtime, viewport,
+                        VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 3, -1, 2u)) return 0;
+                break;
+            case CSB_V1_CSBWIN_VIEWPORT_WALL_F3:
+                if (!m11_csb_atari_st_draw_wall_ornament(
+                        state, dungeon, &profile->runtime, viewport,
+                        VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 3, 0, 3u)) return 0;
+                break;
+            case CSB_V1_CSBWIN_VIEWPORT_WALL_F3R1:
+                if (!m11_csb_atari_st_draw_wall_ornament(
+                        state, dungeon, &profile->runtime, viewport,
+                        VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 3, 1, 1u) ||
+                    !m11_csb_atari_st_draw_wall_ornament(
+                        state, dungeon, &profile->runtime, viewport,
+                        VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 3, 1, 4u)) return 0;
+                break;
+            case CSB_V1_CSBWIN_VIEWPORT_WALL_F2L1:
+                if (!m11_csb_atari_st_draw_wall_ornament(
+                        state, dungeon, &profile->runtime, viewport,
+                        VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 2, -1, 5u) ||
+                    !m11_csb_atari_st_draw_wall_ornament(
+                        state, dungeon, &profile->runtime, viewport,
+                        VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 2, -1, 7u)) return 0;
+                break;
+            case CSB_V1_CSBWIN_VIEWPORT_WALL_F2:
+                if (!m11_csb_atari_st_draw_wall_ornament(
+                        state, dungeon, &profile->runtime, viewport,
+                        VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 2, 0, 8u)) return 0;
+                break;
+            case CSB_V1_CSBWIN_VIEWPORT_WALL_F2R1:
+                if (!m11_csb_atari_st_draw_wall_ornament(
+                        state, dungeon, &profile->runtime, viewport,
+                        VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 2, 1, 6u) ||
+                    !m11_csb_atari_st_draw_wall_ornament(
+                        state, dungeon, &profile->runtime, viewport,
+                        VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 2, 1, 9u)) return 0;
+                break;
+            case CSB_V1_CSBWIN_VIEWPORT_WALL_F1L1:
+                if (!m11_csb_atari_st_draw_wall_ornament(
+                        state, dungeon, &profile->runtime, viewport,
+                        VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 1, -1, 10u)) return 0;
+                break;
+            case CSB_V1_CSBWIN_VIEWPORT_WALL_F1:
+                if (!m11_csb_atari_st_draw_wall_ornament(
+                        state, dungeon, &profile->runtime, viewport,
+                        VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 1, 0, 12u)) return 0;
+                break;
+            case CSB_V1_CSBWIN_VIEWPORT_WALL_F1R1:
+                if (!m11_csb_atari_st_draw_wall_ornament(
+                        state, dungeon, &profile->runtime, viewport,
+                        VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 1, 1, 11u)) return 0;
+                break;
+            default:
+                break;
+        }
+        /* Stone walls enter F0115 only through the conditional alcove pass
+         * dispatched immediately by draw_wall_ornament(). */
+        if (source_function && m11_csb_atari_st_draw_scheduled_cell(
+                state, dungeon, &profile->runtime, viewport,
+                source_function, 0u) < 0) return 0;
     }
-    /* F0115 draws D0C's back cells after the nearer side-wall passes. */
-    if (m11_csb_atari_st_draw_near_weapon(
-            state, dungeon, &profile->runtime, viewport, 1) < 0) return 0;
+    /* F0127 owns D0C, which has no wall material command. Keep its F0115
+     * transaction after F0125/F0126, as in ReDMCSB's F0128 tail. */
+    if (m11_csb_atari_st_draw_scheduled_cell(
+            state, dungeon, &profile->runtime, viewport, 127u, 0u) < 0) {
+        return 0;
+    }
+    /* ANIM.C yields the same retained ST screen that M11 used for its final
+     * title frame.  The native F0128 runtime page owns only the 224x136
+     * viewport; C232 paints the HUD separately below. Clear the old title
+     * before committing that page so pixels outside the viewport cannot
+     * leak from ANIMATE.SCR. The Entrance micro-dungeon is composited into
+     * C004 and must keep its caller-owned frame intact. */
+    if (!entrance_micro_dungeon) {
+        memset(framebuffer, 0,
+               (size_t)framebuffer_width * (size_t)framebuffer_height);
+    }
     for (y = 0; y < VIEWPORT_HEIGHT; ++y) {
         memcpy(framebuffer + (size_t)(VIEWPORT_Y + y) * framebuffer_width + VIEWPORT_X,
                viewport + (size_t)y * VIEWPORT_WIDTH, VIEWPORT_WIDTH);
@@ -6800,6 +7849,7 @@ static int m11_csb_prepare_atari_st_animation_handoff(
     const CSB_V1_BootProfile *profile;
     CSB_V1_AtariStAnimationTraceReceipt trace;
     CSB_V1_AtariStAnimationSession *session = NULL;
+    char sibling_utility_root[FSP_PATH_MAX];
 
     if (!state || !state->csbBootProfile) return 0;
     profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
@@ -6827,16 +7877,40 @@ static int m11_csb_prepare_atari_st_animation_handoff(
                 state->csbAtariStAnimationSoundBytes) || !trace.valid ||
             trace.waited_vbl_count == 0u) {
             csb_v1_atari_st_animation_session_close(session);
-            return 0;
+            session = NULL;
+            sibling_utility_root[0] = '\0';
+            if (!FSP_DirExists(profile->utility_search_root) ||
+                !FSP_ParentDir(sibling_utility_root,
+                    sizeof(sibling_utility_root), profile->utility_search_root) ||
+                !csb_v1_atari_st_animation_session_open(sibling_utility_root,
+                    &session, &trace,
+                    state->csbAtariStAnimationSoundData,
+                    state->csbAtariStAnimationSoundBytes) || !trace.valid ||
+                trace.waited_vbl_count == 0u) {
+                csb_v1_atari_st_animation_session_close(session);
+                fprintf(stderr,
+                        "firestaff: csb-atari-animation unavailable asset=%s utility=%s\n",
+                        profile->asset_root,
+                        profile->utility_search_root);
+                return 0;
+            }
+            state->csbAtariStAnimationSession = session;
+            snprintf(state->csbAtariStAnimationSourceRoot,
+                     sizeof(state->csbAtariStAnimationSourceRoot), "%s",
+                     sibling_utility_root);
+        } else {
+            state->csbAtariStAnimationSession = session;
+            snprintf(state->csbAtariStAnimationSourceRoot,
+                     sizeof(state->csbAtariStAnimationSourceRoot), "%s",
+                     profile->utility_search_root);
         }
-        state->csbAtariStAnimationSession = session;
-        snprintf(state->csbAtariStAnimationSourceRoot,
-                 sizeof(state->csbAtariStAnimationSourceRoot), "%s",
-                 profile->utility_search_root);
     }
     if (trace.played_sound_count >
         CSB_V1_ATARI_ST_ANIMATION_MAX_PLAYED_SOUNDS) return 0;
     state->csbAtariStAnimationEndVbl = trace.waited_vbl_count;
+    fprintf(stderr, "firestaff: csb-atari-animation source=%s waited-vbl=%u\n",
+            state->csbAtariStAnimationSourceRoot,
+            (unsigned int)trace.waited_vbl_count);
     state->csbAtariStAnimationSoundCount = trace.played_sound_count;
     memset(state->csbAtariStAnimationSoundPlayed, 0,
            sizeof(state->csbAtariStAnimationSoundPlayed));
@@ -14015,7 +15089,9 @@ static int m11_csb_bind_verified_dungeon_world_snapshot(
     const CSB_V1_DungeonData *source;
     struct ChampionMirrorCatalog_Compat catalogue;
     struct GameWorld_Compat world;
+    uint8_t *snapshot_bytes;
     uint32_t seed;
+    int source_big_endian;
     int world_loaded;
 
     if (!state || !profile || direct_save_requested ||
@@ -14026,15 +15102,36 @@ static int m11_csb_bind_verified_dungeon_world_snapshot(
         return 0;
     }
     source = profile->runtime.dungeon_handle;
-    if (!source->raw_data || source->raw_size <= 0 ||
+    if (!source->raw_data || source->raw_size < 2 ||
         source->raw_size > INT_MAX || source->level_count <= 0) {
         return 0;
     }
+    source_big_endian =
+        profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+        profile->variant_id == CSB_V1_VARIANT_ST21_EN ||
+        m11_csb_is_amiga_a31_profile(profile) ||
+        m11_csb_is_amiga_a35e_profile(profile) ||
+        m11_csb_is_amiga_a35m_profile(profile);
 
     /* The source header's ornament seed is the only seed admitted to this
      * non-authoritative query model.  Its RNG is never advanced by CSB input. */
     seed = (uint32_t)source->ornament_random_seed;
     memset(&world, 0, sizeof(world));
+    snapshot_bytes = (uint8_t *)malloc((size_t)source->raw_size);
+    if (!snapshot_bytes) {
+        return 0;
+    }
+    memcpy(snapshot_bytes, source->raw_data, (size_t)source->raw_size);
+    /* Native 68k CSB normalizes database words to runtime byte order, but
+     * leaves the final checksum trailer in source big-endian order. The
+     * shared query parser consumes normalized little-endian bodies, so
+     * normalize this trailer only in the private snapshot. */
+    if (source_big_endian) {
+        uint8_t trailing_checksum = snapshot_bytes[source->raw_size - 2];
+        snapshot_bytes[source->raw_size - 2] =
+            snapshot_bytes[source->raw_size - 1];
+        snapshot_bytes[source->raw_size - 1] = trailing_checksum;
+    }
     /* CSB's boot reader has already authenticated and decoded the dungeon
      * bytes into this source-owned handle.  Re-open neither a package image
      * (STX/ADF) nor an archive virtual path here: the generic file loader
@@ -14042,7 +15139,8 @@ static int m11_csb_bind_verified_dungeon_world_snapshot(
      * from these exact bytes keeps the handoff source-faithful and entirely
      * in memory for every supported CSB platform. */
     world_loaded = F0882_WORLD_InitFromDungeonDatBuffer_Compat(
-        source->raw_data, source->raw_size, seed, &world);
+        snapshot_bytes, source->raw_size, seed, &world);
+    free(snapshot_bytes);
     if (!world_loaded) {
         /* F0882 releases its local allocations on a failed parse.  Its
          * caller-visible struct can still contain those retired addresses,
@@ -14173,6 +15271,8 @@ static int m11_csb_apply_boot_runtime_receipt(
     } else if (receipt->bind_graphics_to_runtime_asset_loader &&
         receipt->graphics_path[0] != '\0' &&
         !m11_csb_is_amiga_profile(receipt->profile) &&
+        receipt->profile->variant_id != CSB_V1_VARIANT_ST20_EN &&
+        receipt->profile->variant_id != CSB_V1_VARIANT_ST21_EN &&
         M11_AssetLoader_Init(&state->assetLoader, receipt->graphics_path)) {
         state->assetsAvailable = 1;
         if (receipt->load_original_font_from_graphics) {
@@ -14191,6 +15291,15 @@ static int m11_csb_apply_boot_runtime_receipt(
         /* Native CSB Amiga IMG1 records are now cached by their own decoder.
          * The loader has no PC34 file/runtime state, so later consumers can
          * use only these authenticated Amiga pixels. */
+        state->assetsAvailable = 1;
+    }
+    if (!state->assetsAvailable &&
+        (receipt->profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+         receipt->profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
+        M11_AssetLoader_InitCsbAtariStFromFile(&state->assetLoader,
+                                               receipt->graphics_path)) {
+        /* Bind the source CSB DMCSB1 decoder. Atari material must not fall
+         * through to the PC34 IMG3 loader or a decode-only placeholder. */
         state->assetsAvailable = 1;
     }
     if (!state->assetsAvailable &&
@@ -26433,7 +27542,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         sibling_media_dir[0] = '\0';
         if ((!utility_search_dir || !utility_search_dir[0] ||
              (dd && strcmp(utility_search_dir, dd) == 0)) && dd && dd[0] &&
-            FSP_FileExists(dd) &&
+            FSP_PathExists(dd) &&
             FSP_ParentDir(sibling_media_dir, sizeof(sibling_media_dir), dd)) {
             utility_search_dir = sibling_media_dir;
         }
@@ -37025,6 +38134,23 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
     if (!state || !state->active) {
         return M11_GAME_INPUT_IGNORED;
     }
+    {
+        const CSB_V1_BootProfile *csb_profile =
+            state->sourceKind == M11_GAME_SOURCE_CSB_BOOT
+                ? (const CSB_V1_BootProfile *)state->csbBootProfile : NULL;
+        if (csb_profile &&
+            (csb_profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+             csb_profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
+            state->csbState.startup_title_active &&
+            !state->bootProbeFastForward) {
+            /* Keep keyboard/controller commands out of the original
+             * ANIMATE.SCR sequence. Besides preserving its full source
+             * VBlank duration, this prevents a held/repeated key from
+             * entering gameplay before FTLCODE. Deterministic boot probes
+             * may still use their explicit fast-forward input. */
+            return M11_GAME_INPUT_IGNORED;
+        }
+    }
     if (state->dm1IigsActive) {
         /* Native first-world scope: feed real WORLD commands without
          * entering PC-specific spell/inventory/save or startup overlays.
@@ -37229,18 +38355,18 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         const CSB_V1_BootProfile *csb_profile =
             (const CSB_V1_BootProfile *)state->csbBootProfile;
         /* The Atari ST direct-start path has already authenticated the
-         * ANIMATE/CHAOS/FTLCODE chain. ACCEPT is its explicit launcher handoff
-         * command: advance to the source script's final VBlank and cross the
-         * same verified ANIM.C -> FTLCODE boundary. Without this branch, an
-         * Enter delivered by the native CLI is silently routed through the
-         * unrelated PC34 startup dispatcher and the real ST route can never
-         * be started interactively. */
+         * ANIMATE/CHAOS/FTLCODE chain. Only the deterministic boot-probe
+         * harness may fast-forward it; ordinary keyboard input stays locked
+         * until the source script reaches its final VBlank naturally. */
         if (csb_profile &&
             (csb_profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
              csb_profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
             state->csbState.startup_title_active &&
             !state->csbStartupRuntimeAssetSession &&
             (input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_ACTION)) {
+            if (!state->bootProbeFastForward) {
+                return M11_GAME_INPUT_IGNORED;
+            }
             if (state->csbAtariStAnimationEndVbl == 0u) {
                 return M11_GAME_INPUT_IGNORED;
             }
@@ -40298,6 +41424,27 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         if (state->csbState.startup_title_active ||
             state->csbState.startup_entrance_active) {
             return M11_GAME_INPUT_IGNORED;
+        }
+    }
+
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        (buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0 &&
+        !state->inventoryPanelActive && !state->candidateMirrorPanelActive &&
+        state->csbBootProfile) {
+        const CSB_V1_BootProfile *profile =
+            (const CSB_V1_BootProfile *)state->csbBootProfile;
+        if (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+            profile->variant_id == CSB_V1_VARIANT_ST21_EN) {
+            int mirror_ordinal = -1;
+            int viewport_x, viewport_y;
+            csb_v1_boot_viewport_origin_pc34(profile, &viewport_x, &viewport_y);
+            if (m11_front_cell_mirror_ordinal(state) >= 0 &&
+                m11_front_mirror_hit_test(state, x - viewport_x,
+                    y - viewport_y, &mirror_ordinal) &&
+                m11_select_mirror_candidate_by_ordinal(state,
+                                                       mirror_ordinal)) {
+                return M11_GAME_INPUT_REDRAW;
+            }
         }
     }
 
@@ -44299,10 +45446,16 @@ static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* stat
                                                          int localY) {
     int queued;
     unsigned short leaderHand;
+    int mirrorOrdinal = -1;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
         !state->csbBootProfile) {
         return M11_GAME_INPUT_IGNORED;
+    }
+    if (m11_front_cell_mirror_ordinal(state) >= 0 &&
+        m11_front_mirror_hit_test(state, localX, localY, &mirrorOrdinal) &&
+        m11_select_mirror_candidate_by_ordinal(state, mirrorOrdinal)) {
+        return M11_GAME_INPUT_REDRAW;
     }
     /* ReDMCSB CLIKVIEW.C F0377 publishes the D1C F0110 button rectangle as
      * C05.  Firestaff's admitted PC34 button material is ordinal 1, whose
@@ -44384,16 +45537,6 @@ static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* stat
      * drawn portrait to prove that this is the visible source candidate,
      * rather than treating the broad C05 ornament rectangle as a synthetic
      * mirror target. */
-    {
-        int mirror_ordinal = -1;
-        if (m11_front_mirror_hit_test(state, localX, localY, &mirror_ordinal)) {
-            return m11_select_mirror_candidate_by_ordinal(state,
-                                                            mirror_ordinal)
-                ? M11_GAME_INPUT_REDRAW
-                : M11_GAME_INPUT_IGNORED;
-        }
-    }
-
     if (!m11_point_in_source_box(localX, localY, g_wallOrnamentBox)) {
         return M11_GAME_INPUT_IGNORED;
     }
@@ -44408,6 +45551,21 @@ static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* stat
             &leaderHand);
     if (queued <= 0) {
         return M11_GAME_INPUT_IGNORED;
+    }
+    /* ReDMCSB MOVESENS.C F0275 routes C127 straight to REVIVE.C F0280,
+     * independently of the ordinary sensor queue. Consume the runtime's
+     * newly populated C040 candidate panel after that source-owned click. */
+    if (m11_csb_refresh_party_mirror_from_runtime(state) &&
+        state->csbState.c040_panel_session_active) {
+        state->candidateMirrorPanelActive = 1;
+        state->candidateMirrorOrdinal = state->world.party.championCount;
+        state->candidateMirrorPartyIndex = state->world.party.championCount;
+        state->inventoryPanelActive = 0;
+        state->inventorySelectedSlot = -1;
+        state->dm1InventoryChampionOrdinal = 0;
+        m11_set_status(state, "MIRROR", "RESURRECT OR REINCARNATE");
+        m11_refresh_hash(state);
+        return M11_GAME_INPUT_REDRAW;
     }
     if (leaderHand == THING_NONE || leaderHand == THING_ENDOFLIST) {
         DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
@@ -44442,6 +45600,13 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
         const CSB_V1_BootProfile *profile =
             (const CSB_V1_BootProfile *)state->csbBootProfile;
         if (m11_csb_is_fmtowns_profile(profile)) {
+            int viewport_x, viewport_y;
+            csb_v1_boot_viewport_origin_pc34(profile, &viewport_x, &viewport_y);
+            localX = x - viewport_x;
+            localY = y - viewport_y;
+        } else if (profile &&
+                   (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+                    profile->variant_id == CSB_V1_VARIANT_ST21_EN)) {
             int viewport_x, viewport_y;
             csb_v1_boot_viewport_origin_pc34(profile, &viewport_x, &viewport_y);
             localX = x - viewport_x;
@@ -45164,6 +46329,7 @@ static int m11_front_mirror_host_material_ready(const M11_GameViewState* state) 
     const M11_AssetSlot* portraits;
     const M11_AssetSlot* backing;
     DM1_V1_ObjectIconSourceZonePc34 sourceZone;
+    int atari_source = 0;
 
     if (!state || !state->active ||
         !m11_get_front_cell(state, &frontCell) ||
@@ -45199,15 +46365,26 @@ static int m11_front_mirror_host_material_ready(const M11_GameViewState* state) 
 
     backing = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                    (unsigned int)renderReceipt.backingGraphicIndex);
+    if (m11_source_is_csb(state) && state->csbBootProfile) {
+        const CSB_V1_BootProfile* profile =
+            (const CSB_V1_BootProfile*)state->csbBootProfile;
+        atari_source = profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+                       profile->variant_id == CSB_V1_VARIANT_ST21_EN;
+    }
     if (!backing || !backing->loaded || !backing->pixels ||
         renderReceipt.backingSourceX < 0 || renderReceipt.backingSourceY < 0 ||
         renderReceipt.backingSourceWidth <= 0 ||
         renderReceipt.backingSourceHeight <= 0 ||
         renderReceipt.backingWidth <= 0 || renderReceipt.backingHeight <= 0 ||
-        renderReceipt.backingSourceX + renderReceipt.backingSourceWidth >
-            (int)backing->width ||
-        renderReceipt.backingSourceY + renderReceipt.backingSourceHeight >
-            (int)backing->height ||
+        (atari_source
+             ? (renderReceipt.backingGraphicIndex != 346 ||
+                backing->width != 32u || backing->height != 28u ||
+                renderReceipt.backingSourceX != 0 ||
+                renderReceipt.backingSourceY != 0)
+             : (renderReceipt.backingSourceX +
+                    renderReceipt.backingSourceWidth > (int)backing->width ||
+                renderReceipt.backingSourceY +
+                    renderReceipt.backingSourceHeight > (int)backing->height)) ||
         !DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
             &renderReceipt, 0, 1, &hostDraw) ||
         !hostDraw.valid || !hostDraw.drawChampionPortrait ||
@@ -51719,18 +52896,29 @@ static int m11_dm1_media009_metadata(M11_GameViewState* state)
     const void* source;
     long sourceSize;
     size_t length = 0;
-    if (!m11_is_dm1_media009(state)) return 0;
-    source = state->assetLoader.atariStDm1 ? state->assetLoader.atariStData
-                                         : state->assetLoader.legacyData;
-    sourceSize = state->assetLoader.atariStDm1 ? state->assetLoader.atariStDataSize
-                                              : state->assetLoader.legacyDataSize;
+    const int csbAtari = state &&
+        state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        state->assetLoader.csbAtariSt;
+    if (!m11_is_dm1_media009(state) && !csbAtari) return 0;
+    source = csbAtari ? state->assetLoader.csbAtariStGraphics.dat_bytes :
+        state->assetLoader.atariStDm1 ? state->assetLoader.atariStData
+                                     : state->assetLoader.legacyData;
+    sourceSize = csbAtari
+        ? (long)state->assetLoader.csbAtariStGraphics.dat_byte_count
+        : state->assetLoader.atariStDm1 ? state->assetLoader.atariStDataSize
+                                       : state->assetLoader.legacyDataSize;
     if (state->dm1NativeObjectMetadataSource == source &&
         state->dm1NativeObjectMetadataSourceSize == sourceSize)
         return state->dm1NativeObjectMetadataValid;
     state->dm1NativeObjectMetadataSource = source;
     state->dm1NativeObjectMetadataSourceSize = sourceSize;
     state->dm1NativeObjectMetadataValid = 0;
-    if (state->assetLoader.atariStDm1) {
+    if (csbAtari) {
+        int count = csb_atari_st_graphics_loader_read_item(
+            &state->assetLoader.csbAtariStGraphics, 558u, raw, sizeof(raw));
+        if (count != (int)sizeof(raw)) return 0;
+        length = (size_t)count;
+    } else if (state->assetLoader.atariStDm1) {
         DM1_V1_AtariStGraphicsDat dat;
         int count;
         if (!dm1_v1_atari_st_graphics_open(source, (size_t)sourceSize, &dat)) return 0;
@@ -51746,6 +52934,50 @@ static int m11_dm1_media009_metadata(M11_GameViewState* state)
         const unsigned char* aspect = raw + 1642 + i*6;
         if (!aspect[2] || !aspect[3] || aspect[5] >= 3 ||
             360 + aspect[0] >= 446) return 0;
+    }
+    if (csbAtari) {
+        static const unsigned char atari_d3_palette[16] =
+            {0,12,1,3,4,3,0,6,3,9,10,11,0,2,14,13};
+        static const unsigned char atari_d2_palette[16] =
+            {0,1,2,3,4,3,6,7,5,9,10,11,12,13,14,15};
+        int i;
+        /* CSB Atari's C558 is the authority for F0115 object placement and
+         * aspect data. Validate only the tables this caller consumes;
+         * DM1 wall/floor ornament bounds are not part of this admission.
+         * ReDMCSB DUNVIEW.C MEDIA379 defines G0213/G0214 as direct Atari
+         * color indices, unlike the x10 byte representation in the DM1
+         * generic metadata. */
+        for (i = 0; i < 27; ++i) {
+            const unsigned char *aspect = raw + 832 + i * 12;
+            const unsigned first_native =
+                ((unsigned)aspect[0] << 8) | aspect[1];
+            const unsigned coordinate_set = aspect[10] >> 4;
+            if (first_native >= 117u || aspect[4] == 0u ||
+                aspect[5] == 0u || coordinate_set >= 3u ||
+                (aspect[11] & 15u) >= 13u || (aspect[11] >> 4) >= 13u) {
+                return 0;
+            }
+        }
+        for (i = 0; i < 330; i += 2) {
+            if (raw[264 + i] >= 224u || raw[264 + i + 1] > 135u)
+                return 0;
+        }
+        for (i = 0; i < 150; ++i) {
+            const unsigned char x = raw[1156 + i * 2];
+            const unsigned char y = raw[1157 + i * 2];
+            if (x >= 224u || y > 136u) return 0;
+        }
+        /* F0107's G0194/G0205 geometry and G0198/G0199 palettes are
+         * MEDIA379 source constants. Do not read DM1 C558 offsets here. */
+        memcpy(state->dm1NativeObjectCoordinates, raw + 1156, 300);
+        memcpy(state->dm1NativeObjectAspects, raw + 1642, 510);
+        memcpy(state->dm1NativeObjectPalettes, atari_d3_palette,
+               sizeof(atari_d3_palette));
+        memcpy(state->dm1NativeObjectPalettes + sizeof(atari_d3_palette),
+               atari_d2_palette, sizeof(atari_d2_palette));
+        memcpy(state->csbAtariStCreatureC558, raw, sizeof(raw));
+        state->dm1NativeObjectMetadataValid = 1;
+        return 1;
     }
     for (int i = 0; i < 32; ++i)
         if (raw[1518+i] > 150 || raw[1518+i] % 10) return 0;
@@ -51770,9 +53002,11 @@ static int m11_dm1_media009_metadata(M11_GameViewState* state)
 
 static int m11_dm1_media009_square(int forward, int side)
 {
-    if (forward < 0 || forward > 3 || side < -1 || side > 1 || (!forward && side))
+    if (forward < 0 || forward > 3 || side < -1 || side > 1)
         return -1;
-    return forward ? (3-forward)*3 + (side < 0 ? 1 : side > 0 ? 2 : 0) : 9;
+    return forward ? (3-forward)*3 +
+        (side < 0 ? 1 : side > 0 ? 2 : 0) :
+        (side < 0 ? 10 : side > 0 ? 11 : 9);
 }
 
 static int m11_dm1_media009_object_graphic(const M11_GameViewState* state, int aspectIndex)
@@ -51830,6 +53064,9 @@ static int m11_draw_dm1_media009_object(
     graphic = 360 + aspect[0];
     alcove = alcove && !lane && (aspect[4]&0x10);
     if (alcove) ++graphic;
+    if (state->assetLoader.csbAtariSt &&
+        !m11_csb_install_runtime_source_graphic(
+            state, (unsigned int)graphic)) return 0;
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, (unsigned)graphic);
     if (!slot || !slot->loaded || !slot->pixels ||
         slot->width != aspect[2]*2 || slot->height != aspect[3]) return 0;
@@ -51897,7 +53134,11 @@ static int m11_draw_dm1_media009_object(
             sx = (xstep/2u+32767u+(unsigned)nativeX*xstep)>>16;
             if (sx >= slot->width) continue;
             color = slot->pixels[sy*slot->width+sx];
-            if (palette) color = palette[color&15]/10;
+            if (palette) {
+                color = state->assetLoader.csbAtariSt
+                    ? palette[color & 15]
+                    : palette[color & 15] / 10;
+            }
             if (color != 10) { framebuffer[dy*fbW+dx] = color; drawn = 1; }
         }
     }
@@ -68720,6 +69961,40 @@ static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* sta
             m11_set_status(state, "CSB", "INPUT REJECTED");
             return M11_GAME_INPUT_IGNORED;
         }
+        if (state->debugMovementTraceEnabled && bridge.mapped) {
+            const CSB_V1_InputCommandRuntimeResult *runtime =
+                &bridge.runtime_result;
+            fprintf(stderr,
+                    "firestaff: csb-input command=%d key=0x%04x "
+                    "queue={dequeued:%d movement-gate:%d command:%d} "
+                    "from=%d,%d,%d to=%d,%d,%d "
+                    "step={attempted:%d applied:%d blocked:%d "
+                    "destination:%d,%d square-type:%d door:%d fakewall:%d "
+                    "group:%d} cooldown-before=%d cooldown-after=%d "
+                    "runtime-changed=%d unsupported=%d\n",
+                    runtime->queue_result.command,
+                    bridge.event.keyCode,
+                    runtime->queue_result.dequeued,
+                    runtime->queue_result.movementDisabledGate,
+                    runtime->queue_result.command,
+                    runtime->old_party_x, runtime->old_party_y,
+                    runtime->old_party_dir,
+                    runtime->new_party_x, runtime->new_party_y,
+                    runtime->new_party_dir,
+                    runtime->movement_step_attempted,
+                    runtime->movement_step_applied,
+                    runtime->movement_blocked_by_wall,
+                    runtime->movement_destination_x,
+                    runtime->movement_destination_y,
+                    runtime->movement_destination_square_type,
+                    runtime->movement_blocked_by_door,
+                    runtime->movement_blocked_by_fakewall,
+                    runtime->movement_blocked_by_group,
+                    state->world.disabledMovementTicks,
+                    runtime->disabled_movement_ticks_after,
+                    runtime->runtime_state_changed,
+                    runtime->unsupported_runtime_command);
+        }
         if (bridge.mapped) {
             if (first_post_c040_tick != 0u) {
                 CSB_V1_StartupRuntimeAssetSession_PC34 *session =
@@ -68752,6 +70027,27 @@ static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* sta
                 M11_GameView_ProcessTickEmissions(state);
             }
             m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
+            if (bridge.runtime_result.runtime_transition_failed) {
+                const char* transition =
+                    bridge.runtime_result.teleporter_transition_applied
+                        ? "teleporter"
+                        : bridge.runtime_result.stair_transition_applied
+                              ? "stairs"
+                              : bridge.runtime_result.pit_fall_applied
+                                    ? "pit"
+                                    : "unknown";
+                fprintf(stderr,
+                        "firestaff: game-transition game=csb "
+                        "result=destination-groups-failed type=%s "
+                        "from-level=%d to-level=%d party=%d,%d\n",
+                        transition,
+                        bridge.runtime_result.old_party_level,
+                        bridge.runtime_result.new_party_level,
+                        state->world.party.mapX,
+                        state->world.party.mapY);
+                m11_set_status(state, "CSB", "DESTINATION GROUPS FAILED");
+                return M11_GAME_INPUT_REDRAW;
+            }
             if (bridge.runtime_result.movement_step_applied) {
                 state->world.disabledMovementTicks =
                     bridge.runtime_result.disabled_movement_ticks_after;

@@ -64,6 +64,29 @@ for mode in 0 1 2; do
     printf '%s\n' "$output" | grep -Eq 'csbViewportHash=[1-9][0-9]*'
 done
 
+# `--debug` must inspect the live CSB runtime rather than the compatibility
+# world mirror. Use the authentic Utility MINI.DAT and one ordinary host
+# action so the report captures the restored party, active monster groups,
+# and source-owned projectile/explosion lists without modifying game data.
+debug_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy timeout 45s \
+    "$firestaff" --debug --game csb --platform atari-st \
+    --data-dir "$campaign" --save "$save" --script action --duration 1000 2>&1)
+printf '%s\n' "$debug_output" | grep -Fq \
+    'game-action game=csb tick=native input=action'
+printf '%s\n' "$debug_output" | grep -Fq 'last-ui-action='
+printf '%s\n' "$debug_output" | grep -Fq 'last-ui-outcome='
+printf '%s\n' "$debug_output" | grep -Eq \
+    'game-state game=csb source=csb-runtime .*active-monsters=[0-9]+ pending-monster-behavior-events=[0-9]+ projectiles=[0-9]+ explosions=[0-9]+'
+printf '%s\n' "$debug_output" | grep -Fq \
+    'game-debug-capabilities game=csb source=csb-runtime'
+printf '%s\n' "$debug_output" | grep -Fq \
+    'monster-groups=source-active-group-state'
+if printf '%s\n' "$debug_output" | grep -Eq \
+    'active-monsters=[1-9][0-9]*'; then
+    printf '%s\n' "$debug_output" | grep -Fq \
+        'type=monster-group thing=0x'
+fi
+
 # The CLI probes above bypass M12. Also exercise the real Quick Resume row
 # with the same original Atari ST campaign and Utility STX MINI.DAT.
 menu_temp_dir=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-atari-menu-resume.XXXXXX")

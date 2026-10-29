@@ -1,4 +1,5 @@
 #include "csb_v1_atari_st_animation_discovery.h"
+#include "fs_portable_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,12 +24,33 @@ int main(void)
     char animate_ftl_path[ASSET_PATH_MAX];
     char chaos_ftl_path[ASSET_PATH_MAX];
     char ftlcode_path[ASSET_PATH_MAX];
+    char archive_path[ASSET_PATH_MAX];
+    char nested_script_path[ASSET_PATH_MAX];
+    char nested_data_path[ASSET_PATH_MAX];
 
     CHECK(!csb_v1_atari_st_animation_discover(NULL, &receipt),
           "Atari animation discovery rejects an absent search root");
     CHECK(!csb_v1_atari_st_animation_discover_runtime_chain(NULL, &runtime_chain),
           "Atari animation runtime-chain discovery rejects an absent search root");
     if (root && root[0]) {
+        if (FSP_DirExists(root)) {
+            CHECK(FSP_JoinPath(archive_path, sizeof(archive_path), root,
+                      "Game,Chaos_Strikes_Back,Atari_ST,Software.7z"),
+                  "Atari source archive path builds from data root");
+        } else {
+            snprintf(archive_path, sizeof(archive_path), "%s", root);
+        }
+        CHECK(snprintf(nested_script_path, sizeof(nested_script_path),
+                  "%s::Floppy Disks STX/Chaos Strikes Back for Atari ST Utility Disk v2.1 (English).stx::ANIMATE.SCR",
+                  archive_path) > 0 &&
+                  snprintf(nested_data_path, sizeof(nested_data_path),
+                  "%s::Floppy Disks STX/Chaos Strikes Back for Atari ST Utility Disk v2.1 (English).stx::ANIMATE.DAT",
+                  archive_path) > 0 &&
+                  asset_file_matches_md5(nested_script_path,
+                      "4174d6de5384323072b185640ed31723") &&
+                  asset_file_matches_md5(nested_data_path,
+                      "9f8feb269c959c9fe722ac08f99d9c35"),
+              "nested Atari Utility STX members are readable and hash verified");
         CHECK(csb_v1_atari_st_animation_discover(root, &receipt) &&
                   receipt.valid &&
                   strstr(receipt.script_path, "ANIMATE.SCR") != NULL &&

@@ -4353,7 +4353,7 @@ if(BUILD_TESTING)
     set_tests_properties(firestaff_cli_startup_diagnostics_real_media PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm1;csb;dm2;nexus;theron;startup;cli;real-media;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM2_MAC_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip;FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip;FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_FM-Towns_JA-EN.zip;FIRESTAFF_DM1_PC_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN.zip;FIRESTAFF_DM1_PC98_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_PC-98_EN.zip;FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_AMIGA_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip;FIRESTAFF_NEXUS_ISO=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (English).iso;FIRESTAFF_THERON_TRACK02=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQUS02.bin"
+        ENVIRONMENT "FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip;FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_FM-Towns_JA-EN.zip;FIRESTAFF_DM1_PC_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN.zip;FIRESTAFF_DM1_PC98_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_PC-98_EN.zip;FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_AMIGA_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip;FIRESTAFF_NEXUS_ISO=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (English).iso;FIRESTAFF_THERON_TRACK02=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQUS02.bin"
         TIMEOUT 300
     )
     add_test(
@@ -4400,7 +4400,7 @@ if(BUILD_TESTING)
     set_tests_properties(return_to_menu_rescans_dm1_csb_dm2_real_media PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm1;csb;dm2;fmtowns;startup;launcher;return-to-menu;real-media;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_FM-Towns_JA-EN.zip;FIRESTAFF_DM1_ATARI_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip;FIRESTAFF_DM1_AMIGA36_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Amiga_36.zip;FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip;FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip;FIRESTAFF_DM2_MAC_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip;FIRESTAFF_DM2_AMIGA_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_FM-Towns_JA-EN.zip;FIRESTAFF_DM1_ATARI_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip;FIRESTAFF_DM1_AMIGA36_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Amiga_36.zip;FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip;FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip;FIRESTAFF_DM2_AMIGA_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         # This authentic-media matrix replays several platform-specific
         # intros and input routes; the complete local corpus takes about
         # 1,178 seconds on the Mac mini, leaving too little room at 1,200.
@@ -7108,6 +7108,7 @@ add_library(firestaff_m10 STATIC
     src/csb/csb_v1_csbwin_dungeon_tail.c
     src/csb/csb_v1_csbwin_graphics_signature_gate.c
     src/csb/csb_v1_csbwin_layout_0232.c
+    src/csb/csb_v1_atari_hud_bar_graphs.c
     src/csb/csb_v1_csbwin_objdesc_022f.c
     src/csb/csb_v1_csbwin_viewport_graphics_map.c
     src/csb/csb_v1_csbwin_planar_bitmap.c
@@ -7841,6 +7842,10 @@ set(M11_SOURCES
     src/csb/csb_v1_atari_save_decode_pc34_compat.c
     src/csb/csb_v1_atari_st_vblank.c
     src/csb/csb_v1_atari_st_animation_assets.c
+    src/csb/csb_v1_atari_f0115_creature_plan.c
+    src/csb/csb_v1_atari_f0115_projectile_plan.c
+    src/csb/csb_v1_atari_f0128_cell_schedule.c
+    src/csb/csb_v1_atari_f0132_clip.c
     src/csb/csb_v1_audio_runtime_pc34_compat.c
     src/csb/csb_v1_atari_st_animation_discovery.c
     src/csb/csb_v1_animation_script.c
@@ -18691,7 +18696,7 @@ endif()
     )
     set_tests_properties(csb_v1_m11_prison_runtime_hud_pc34 PROPERTIES
         SKIP_RETURN_CODE 77
-        ENVIRONMENT "FIRESTAFF_CSB_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back.stx;FIRESTAFF_CSB_ATARI_MINI=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back Utility.stx::MINI.DAT"
+        ENVIRONMENT "FIRESTAFF_CSB_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back.stx;FIRESTAFF_CSB_ATARI_MINI=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z::HardDisk/2009-02-22 PP/MINI.DAT"
         LABELS "csb;real_data;m11;hud")
     add_test(
         NAME csb_v1_real_media_hash_lock
@@ -18903,7 +18908,7 @@ endif()
         COMMAND test_csb_v1_m11_prison_runtime_hud_pc34
     )
     set_tests_properties(csb_v20_m11_prison_runtime_hud_pc34 PROPERTIES
-        ENVIRONMENT "FIRESTAFF_CSB_PRESENTATION_MODE=1;FIRESTAFF_CSB_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back.stx;FIRESTAFF_CSB_ATARI_MINI=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back Utility.stx::MINI.DAT"
+        ENVIRONMENT "FIRESTAFF_CSB_PRESENTATION_MODE=1;FIRESTAFF_CSB_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back.stx;FIRESTAFF_CSB_ATARI_MINI=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z::HardDisk/2009-02-22 PP/MINI.DAT"
         SKIP_RETURN_CODE 77
         LABELS "csb;real_data;m11;hud;v20;skip_safe")
     add_test(
@@ -18911,7 +18916,7 @@ endif()
         COMMAND test_csb_v1_m11_prison_runtime_hud_pc34
     )
     set_tests_properties(csb_v21_m11_prison_runtime_hud_pc34 PROPERTIES
-        ENVIRONMENT "FIRESTAFF_CSB_PRESENTATION_MODE=2;FIRESTAFF_CSB_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back.stx;FIRESTAFF_CSB_ATARI_MINI=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back Utility.stx::MINI.DAT"
+        ENVIRONMENT "FIRESTAFF_CSB_PRESENTATION_MODE=2;FIRESTAFF_CSB_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back.stx;FIRESTAFF_CSB_ATARI_MINI=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z::HardDisk/2009-02-22 PP/MINI.DAT"
         SKIP_RETURN_CODE 77
         LABELS "csb;real_data;m11;hud;v21;skip_safe")
 
@@ -42235,9 +42240,8 @@ add_executable(test_nexus_v1_dgn_material_raster
         LABELS "tier2;csb;csbwin_custom_resource;data_free"
     )
 
-    # Atari ST CSB ANIMATE.SCR is a big-endian instruction stream that drives
-    # the original animation player. Keep its parser separate from the PC34
-    # startup renderer until authentic Atari animation assets are consumed.
+    # Atari ST CSB ANIMATE.SCR drives the source-backed startup animation.
+    # Keep its parser contracts independently testable.
     add_executable(test_csb_v1_animation_script
         tests/test_csb_v1_animation_script.c
         src/csb/csb_v1_animation_script.c
@@ -42282,19 +42286,11 @@ add_executable(test_nexus_v1_dgn_material_raster
 
     add_executable(test_csb_v1_atari_st_animation_assets
         tests/test_csb_v1_atari_st_animation_assets.c
-        src/csb/csb_v1_atari_st_animation_assets.c
-        src/csb/csb_v1_atari_st_animation_discovery.c
-        src/csb/csb_v1_animation_script.c
-        src/csb/csb_v1_graphics_atari_st_loader_pc34_compat.c
-        src/csb/csb_v1_graphics_lzw_pc34_compat.c
-        src/csb/csb_v1_startup_img3_decode_pc34_compat.c
-        src/shared/asset_find_by_hash.c
-        src/shared/fs_portable_compat.c
     )
     target_include_directories(test_csb_v1_atari_st_animation_assets PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
-    target_link_libraries(test_csb_v1_atari_st_animation_assets PRIVATE firestaff_zip_extract)
+    target_link_libraries(test_csb_v1_atari_st_animation_assets PRIVATE firestaff_m12)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_atari_st_animation_assets PRIVATE
             -std=c99 -Wall -Wextra -pedantic -O2)
@@ -42311,7 +42307,7 @@ add_executable(test_nexus_v1_dgn_material_raster
         COMMAND test_csb_v1_atari_st_animation_assets
     )
     set_tests_properties(csb_v1_atari_st_animation_assets_real PROPERTIES
-        ENVIRONMENT "FIRESTAFF_CSB_ANIMATE_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back Utility.stx;FIRESTAFF_CSB_ANIMATE_CACHE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb"
+        ENVIRONMENT "FIRESTAFF_CSB_ANIMATE_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z;FIRESTAFF_CSB_ANIMATE_CACHE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb"
         SKIP_RETURN_CODE 77
         LABELS "tier2;csb;atari;animation;title;audio;real-media;in-memory;native;skip-safe"
     )
@@ -42332,13 +42328,11 @@ add_executable(test_nexus_v1_dgn_material_raster
     add_executable(test_csb_v1_atari_st_animation_discovery
         tests/test_csb_v1_atari_st_animation_discovery.c
         src/csb/csb_v1_atari_st_animation_discovery.c
-        src/shared/asset_find_by_hash.c
-        src/shared/fs_portable_compat.c
     )
     target_include_directories(test_csb_v1_atari_st_animation_discovery PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
-    target_link_libraries(test_csb_v1_atari_st_animation_discovery PRIVATE firestaff_zip_extract)
+    target_link_libraries(test_csb_v1_atari_st_animation_discovery PRIVATE firestaff_m12)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_atari_st_animation_discovery PRIVATE
             -std=c99 -Wall -Wextra -pedantic -O2)
@@ -42744,6 +42738,19 @@ add_executable(test_nexus_v1_dgn_material_raster
         LABELS "tier2;csb;csbwin_custom_resource;data_free"
     )
 
+    add_executable(test_csb_v1_atari_hud_bar_graphs
+        tests/test_csb_v1_atari_hud_bar_graphs.c
+        src/csb/csb_v1_atari_hud_bar_graphs.c
+    )
+    target_include_directories(test_csb_v1_atari_hud_bar_graphs PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    add_test(NAME csb_v1_atari_hud_bar_graphs_unit
+        COMMAND test_csb_v1_atari_hud_bar_graphs)
+    set_tests_properties(csb_v1_atari_hud_bar_graphs_unit PROPERTIES
+        LABELS "tier2;csb;atari;hud;unit;data_free"
+    )
+
     add_executable(test_csb_v1_fmtowns_stairs
         tests/test_csb_v1_fmtowns_stairs.c
     )
@@ -42907,7 +42914,7 @@ add_executable(test_nexus_v1_dgn_material_raster
         COMMAND test_csb_v1_atari_save_decode_pc34_compat)
     set_tests_properties(csb_v1_atari_save_decode_pc34_compat PROPERTIES
         SKIP_RETURN_CODE 77
-        ENVIRONMENT "FIRESTAFF_CSB_ATARI_MINI=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back Utility.stx::MINI.DAT"
+        ENVIRONMENT "FIRESTAFF_CSB_ATARI_MINI=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z::HardDisk/2009-02-22 PP/MINI.DAT"
         LABELS "tier2;csb;save;real_data;skip_safe")
     add_executable(test_csb_v1_atari_save_runtime_handoff_pc34_compat
         tests/test_csb_v1_atari_save_runtime_handoff_pc34_compat.c
@@ -42924,7 +42931,7 @@ add_executable(test_nexus_v1_dgn_material_raster
         COMMAND test_csb_v1_atari_save_runtime_handoff_pc34_compat)
     set_tests_properties(csb_v1_atari_save_runtime_handoff_pc34_compat PROPERTIES
         SKIP_RETURN_CODE 77
-        ENVIRONMENT "FIRESTAFF_CSB_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/csb-atari-save-handoff;FIRESTAFF_CSB_ATARI_MINI=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back Utility.stx::MINI.DAT"
+        ENVIRONMENT "FIRESTAFF_CSB_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/csb-atari-save-handoff;FIRESTAFF_CSB_ATARI_MINI=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z::HardDisk/2009-02-22 PP/MINI.DAT"
         LABELS "tier2;csb;save;runtime;real_data;skip_safe")
 
     # CSB Hint Oracle UI/runtime binding surface.
@@ -50605,6 +50612,23 @@ set_tests_properties(csb_v1_atari_source_text_runtime_real PROPERTIES
     LABELS "csb;atari;runtime;real_data;no_synthesis"
     ENVIRONMENT
         "FIRESTAFF_CSB_ATARI_STX=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back.stx")
+add_executable(test_csb_v1_atari_campaign_group_events_real
+    tests/test_csb_v1_atari_campaign_group_events_real.c)
+target_include_directories(test_csb_v1_atari_campaign_group_events_real PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_csb_v1_atari_campaign_group_events_real PRIVATE
+    firestaff_m11)
+if(NOT MSVC)
+    target_compile_options(test_csb_v1_atari_campaign_group_events_real PRIVATE
+        -Wall -Wextra -Werror -O2)
+endif()
+add_test(NAME csb_v1_atari_campaign_group_events_real
+    COMMAND test_csb_v1_atari_campaign_group_events_real)
+set_tests_properties(csb_v1_atari_campaign_group_events_real PROPERTIES
+    SKIP_RETURN_CODE 77
+    LABELS "csb;atari;runtime;campaign;monsters;real_data;controlled_scenario"
+    ENVIRONMENT
+        "FIRESTAFF_CSB_ATARI_STX=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back.stx;FIRESTAFF_CSB_ATARI_MINI=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z::HardDisk/2009-02-22 PP/MINI.DAT")
 target_include_directories(extract_all_sprites PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/tools)
 target_link_libraries(extract_all_sprites PRIVATE firestaff_m10)
 if(NOT MSVC)
@@ -55769,6 +55793,110 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_asset_loader_blit_pc34_com
         NAME m11_asset_loader_blit_pc34_compat
         COMMAND test_m11_asset_loader_blit_pc34_compat
     )
+endif()
+
+# Original CSB Atari ST object images use DMCSB1 + Atari LZW/RLE, not the
+# PC34 IMG3 reader. Check every G0209 object bitmap against the selected
+# authenticated Atari media and verify cache/query dimensions agree.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_native_asset_loader.c")
+    add_executable(test_csb_v1_atari_native_asset_loader
+        tests/test_csb_v1_atari_native_asset_loader.c
+    )
+    target_link_libraries(test_csb_v1_atari_native_asset_loader PRIVATE firestaff_m11)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_atari_native_asset_loader PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_atari_native_asset_loader_unit
+        COMMAND test_csb_v1_atari_native_asset_loader)
+    set_tests_properties(csb_v1_atari_native_asset_loader_unit PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;csb;atari;assets;skip-safe")
+    add_test(NAME csb_v1_atari_native_asset_loader_real
+        COMMAND test_csb_v1_atari_native_asset_loader)
+    set_tests_properties(csb_v1_atari_native_asset_loader_real PROPERTIES
+        ENVIRONMENT "FIRESTAFF_CSB_ATARI_GRAPHICS=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back.stx/Chaos Strikes Back for Atari ST Game Disk v2.1 (English).stx::GRAPHICS.DAT"
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;csb;atari;assets;real-media;skip-safe")
+endif()
+
+# ReDMCSB DUNVIEW.C F0115 source plan for live CSB Atari creatures. This
+# probe reads the selected original C558; it is skipped when that user-owned
+# Atari package is not available in the local development workspace.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_f0115_creature_plan.c")
+    add_executable(test_csb_v1_atari_f0115_creature_plan
+        tests/test_csb_v1_atari_f0115_creature_plan.c
+        src/csb/csb_v1_atari_f0115_creature_plan.c
+    )
+    target_link_libraries(test_csb_v1_atari_f0115_creature_plan PRIVATE firestaff_m11)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_atari_f0115_creature_plan PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_atari_f0115_creature_plan_real
+        COMMAND test_csb_v1_atari_f0115_creature_plan)
+    set_tests_properties(csb_v1_atari_f0115_creature_plan_real PROPERTIES
+        ENVIRONMENT "FIRESTAFF_CSB_ATARI_GRAPHICS=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back.stx/Chaos Strikes Back for Atari ST Game Disk v2.1 (English).stx::GRAPHICS.DAT"
+        SKIP_RETURN_CODE 77
+        LABELS "csb;atari;f0115;creatures;real-media;skip-safe")
+    add_test(NAME csb_v1_atari_f0115_cell_order_unit
+        COMMAND test_csb_v1_atari_f0115_creature_plan --unit)
+    set_tests_properties(csb_v1_atari_f0115_cell_order_unit PROPERTIES
+        LABELS "csb;atari;f0115;viewport;unit;skip-safe")
+endif()
+
+# ReDMCSB DUNGEON.C F0142 + DUNVIEW.C F0115 source plan for CSB Atari
+# projectiles. It validates original C558 metadata from the user's media.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_f0115_projectile_plan.c")
+    add_executable(test_csb_v1_atari_f0115_projectile_plan
+        tests/test_csb_v1_atari_f0115_projectile_plan.c
+        src/csb/csb_v1_atari_f0115_projectile_plan.c
+    )
+    target_link_libraries(test_csb_v1_atari_f0115_projectile_plan PRIVATE firestaff_m11)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_atari_f0115_projectile_plan PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_atari_f0115_projectile_plan_real
+        COMMAND test_csb_v1_atari_f0115_projectile_plan)
+    set_tests_properties(csb_v1_atari_f0115_projectile_plan_real PROPERTIES
+        ENVIRONMENT "FIRESTAFF_CSB_ATARI_GRAPHICS=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back.stx/Chaos Strikes Back for Atari ST Game Disk v2.1 (English).stx::GRAPHICS.DAT"
+        SKIP_RETURN_CODE 77
+        LABELS "csb;atari;f0115;projectiles;real-media;skip-safe")
+endif()
+
+# Source-locked ReDMCSB F0128 traversal schedule; no game media required.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_f0128_cell_schedule.c")
+    add_executable(test_csb_v1_atari_f0128_cell_schedule
+        tests/test_csb_v1_atari_f0128_cell_schedule.c
+        src/csb/csb_v1_atari_f0128_cell_schedule.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_atari_f0128_cell_schedule PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_atari_f0128_cell_schedule
+        COMMAND test_csb_v1_atari_f0128_cell_schedule)
+    set_tests_properties(csb_v1_atari_f0128_cell_schedule PROPERTIES
+        LABELS "csb;atari;f0128;viewport;unit;skip-safe")
+endif()
+
+# Signed source-box clipping used by the ReDMCSB CSB Atari F0107/F0132 route.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_f0132_clip.c")
+    add_executable(test_csb_v1_atari_f0132_clip
+        tests/test_csb_v1_atari_f0132_clip.c
+        src/csb/csb_v1_atari_f0132_clip.c
+    )
+    target_include_directories(test_csb_v1_atari_f0132_clip PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_atari_f0132_clip PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_atari_f0132_clip
+        COMMAND test_csb_v1_atari_f0132_clip)
+    set_tests_properties(csb_v1_atari_f0132_clip PROPERTIES
+        LABELS "csb;atari;f0107;f0132;viewport;unit;skip-safe")
 endif()
 
 # M11 V2.0/V2.1 filter chain clamp contract. Pins the V2 visual
@@ -62798,6 +62926,12 @@ set_tests_properties(csb_v1_amiga_dungeon_probe PROPERTIES
     SKIP_RETURN_CODE 77
     ENVIRONMENT "FIRESTAFF_CSB_AMIGA_DUNGEON=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back (FTL).zip::Chaos Strikes Back (FTL) A.adf::DUNGEON.DAT"
     LABELS "csb;amiga;real_data")
+add_test(NAME csb_v1_atari_dungeon_metadata_probe
+    COMMAND test_csb_v1_amiga_dungeon_probe --atari)
+set_tests_properties(csb_v1_atari_dungeon_metadata_probe PROPERTIES
+    SKIP_RETURN_CODE 77
+    ENVIRONMENT "FIRESTAFF_CSB_ATARI_DUNGEON=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z::HardDisk/2009-02-22 PP/DUNGEON.DAT"
+    LABELS "csb;atari;real_data;dungeon;ornaments")
 
 add_executable(test_dungeon_decompressor_ftl_bounds
     tests/test_dungeon_decompressor_ftl_bounds.c

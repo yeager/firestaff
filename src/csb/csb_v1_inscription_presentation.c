@@ -243,26 +243,21 @@ int csb_v1_inscription_media720_f0635_lines(
     return found == 4;
 }
 
-int csb_v1_inscription_media720_f0635_wall_ornament_anchor(
-    const uint8_t *layout, size_t size, int be,
-    int coordinate_set, int view_wall_index,
-    int bitmap_width, int bitmap_height,
-    int *out_x, int *out_y)
+static int media720_f0635_bitmap_anchor(
+    const uint8_t *layout, size_t size, int be, int zone_index,
+    int bitmap_width, int bitmap_height, int *out_x, int *out_y)
 {
     uint16_t ranges, r;
     size_t records;
-    int zone_index;
     int found = 0;
     int record_type = -1;
     int anchor_x = 0;
     int anchor_y = 0;
 
     if (!layout || !out_x || !out_y || size < 4u ||
-        coordinate_set < 0 || coordinate_set > 8 ||
-        view_wall_index < 0 || view_wall_index >= 15 ||
+        zone_index < 0 || zone_index > 32767 ||
         bitmap_width <= 0 || bitmap_height <= 0 ||
         layout_u16(layout, be) != 0xfc0du) return 0;
-    zone_index = 1004 + coordinate_set * 15 + view_wall_index;
     ranges = layout_u16(layout + 2u, be);
     if (!ranges || 4u + (size_t)ranges * 4u > size) return 0;
     records = 4u + (size_t)ranges * 4u;
@@ -270,10 +265,12 @@ int csb_v1_inscription_media720_f0635_wall_ornament_anchor(
         const uint16_t first = layout_u16(layout + 4u + (size_t)r * 4u, be);
         const uint16_t last = layout_u16(layout + 6u + (size_t)r * 4u, be);
         uint32_t index;
-        if (last < first) return 0;
+        size_t record_count;
+        if (last < first || last > 32767u) return 0;
+        record_count = (size_t)last - first + 1u;
+        if (record_count > (size - records) / 8u) return 0;
         for (index = first; index <= last; ++index, records += 8u) {
             uint16_t type, parent;
-            if (records > size || size - records < 8u) return 0;
             type = layout_u16(layout + records, be);
             parent = layout_u16(layout + records + 2u, be);
             if ((int)index == zone_index) {
@@ -297,6 +294,19 @@ int csb_v1_inscription_media720_f0635_wall_ornament_anchor(
         ? anchor_y - ((bitmap_height + 1) >> 1)
         : anchor_y - (bitmap_height - 1);
     return 1;
+}
+
+int csb_v1_inscription_media720_f0635_wall_ornament_anchor(
+    const uint8_t *layout, size_t size, int be,
+    int coordinate_set, int view_wall_index,
+    int bitmap_width, int bitmap_height,
+    int *out_x, int *out_y)
+{
+    if (coordinate_set < 0 || coordinate_set > 8 ||
+        view_wall_index < 0 || view_wall_index >= 15) return 0;
+    return media720_f0635_bitmap_anchor(
+        layout, size, be, 1004 + coordinate_set * 15 + view_wall_index,
+        bitmap_width, bitmap_height, out_x, out_y);
 }
 
 static void csb_v1_front_square(const CSB_V1_RuntimeProfile *runtime,

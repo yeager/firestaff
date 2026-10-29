@@ -106,18 +106,152 @@ static void csb_decode_map_bitfield_a(uint16_t raw, int *level, int *width, int 
     if (height) *height = (int)(((raw >> 11) & 0x1Fu) + 1U);
 }
 
-static void csb_swap_big_endian_dungeon_words(uint8_t *buf, int size) {
-    int pos;
+static void csb_swap_u16(uint8_t *buf, int offset, int size) {
     uint8_t tmp;
+    if (!buf || offset < 0 || offset + 1 >= size) return;
+    tmp = buf[offset];
+    buf[offset] = buf[offset + 1];
+    buf[offset + 1] = tmp;
+}
 
-    if (!buf || size < 6) return;
-    for (pos = 0; pos < 4 && pos + 1 < size; pos += 2) {
-        tmp = buf[pos]; buf[pos] = buf[pos + 1]; buf[pos + 1] = tmp;
+/* Convert the Atari/M68K DUNGEON.DAT structures to the little-endian
+ * in-memory layout consumed by the CSBWin-compatible runtime. This must be
+ * field-aware: GROUP.Type/Cells and MAP.OffsetMapX/OffsetMapY are adjacent
+ * byte fields, not words. A whole-buffer word swap silently exchanges them
+ * and corrupts other byte-oriented tables after the thing records. */
+static int csb_swap_big_endian_dungeon_words(uint8_t *buf, int size) {
+    uint32_t columns = 0;
+    uint32_t square_first_count;
+    uint32_t text_word_count;
+    uint32_t thing_base;
+    uint32_t raw_map_base;
+    uint32_t map_data_bytes = 0;
+    uint32_t thing_data_bytes = 0;
+    uint32_t counts[CSB_THING_TYPE_COUNT];
+    uint32_t offsets[CSB_THING_TYPE_COUNT];
+    uint32_t total_bytes;
+    int map_count;
+    int type;
+    int i;
+
+    if (!buf || size < CSB_DUNGEON_HEADER_SIZE) return 0;
+
+    /* DUNGEON_HEADER: seed and raw-map byte count, byte-sized map count,
+     * then 16-bit counts/offsets. ReDMCSB DEFS.H. */
+    csb_swap_u16(buf, 0, size);
+    csb_swap_u16(buf, 2, size);  /* RawMapDataByteCount */
+    map_count = buf[4];
+    if (map_count < 1 || map_count > CSB_V1_MAX_LEVELS || buf[5] != 0 ||
+        CSB_DUNGEON_HEADER_SIZE + map_count * CSB_DUNGEON_MAP_DESC_SIZE > size)
+        return 0;
+    csb_swap_u16(buf, 6, size);  /* TextDataWordCount */
+    csb_swap_u16(buf, 8, size);  /* InitialPartyLocation */
+    csb_swap_u16(buf, 10, size); /* SquareFirstThingCount */
+    for (i = 0; i < CSB_THING_TYPE_COUNT; ++i)
+        csb_swap_u16(buf, 12 + i * 2, size);
+
+    for (i = 0; i < map_count; ++i) {
+        const int base = CSB_DUNGEON_HEADER_SIZE + i * CSB_DUNGEON_MAP_DESC_SIZE;
+        uint16_t dimensions;
+        uint32_t width;
+        if (base + CSB_DUNGEON_MAP_DESC_SIZE > size) return 0;
+        csb_swap_u16(buf, base, size); /* RawMapDataByteOffset */
+        /* bytes 2..7: compiler padding/unreferenced plus X/Y byte fields */
+        csb_swap_u16(buf, base + 8, size);  /* MAP.A */
+        csb_swap_u16(buf, base + 10, size); /* MAP.B */
+        csb_swap_u16(buf, base + 12, size); /* MAP.C */
+        csb_swap_u16(buf, base + 14, size); /* MAP.D */
+        dimensions = (uint16_t)buf[base + 8] |
+                     ((uint16_t)buf[base + 9] << 8);
+        width = ((dimensions >> 6) & 0x1fu) + 1u;
+        columns += width;
     }
-    /* Header bytes 4..5 are map_count/unreferenced, not a uint16. */
-    for (pos = 6; pos + 1 < size; pos += 2) {
-        tmp = buf[pos]; buf[pos] = buf[pos + 1]; buf[pos + 1] = tmp;
+
+    square_first_count = (uint32_t)buf[10] | ((uint32_t)buf[11] << 8);
+    text_word_count = (uint32_t)buf[6] | ((uint32_t)buf[7] << 8);
+    for (type = 0; type < CSB_THING_TYPE_COUNT; ++type) {
+        const uint32_t record_size = (uint32_t)csb_thing_data_record_byte_count(type);
+        counts[type] = (uint32_t)buf[12 + type * 2] |
+                       ((uint32_t)buf[13 + type * 2] << 8);
+        if (type == 0) offsets[type] = CSB_DUNGEON_HEADER_SIZE +
+                                       (uint32_t)map_count * CSB_DUNGEON_MAP_DESC_SIZE +
+                                       columns * 2u + square_first_count * 2u +
+                                       text_word_count * 2u;
+        else offsets[type] = offsets[type - 1] + counts[type - 1] *
+                             (uint32_t)csb_thing_data_record_byte_count(type - 1);
+        thing_data_bytes += counts[type] * record_size;
     }
+    thing_base = offsets[0];
+    raw_map_base = thing_base + thing_data_bytes;
+    if (raw_map_base >= (uint32_t)size) return 0;
+
+    /* Word arrays: square first-things and text are THING/unsigned-int. */
+    {
+        uint32_t offset = CSB_DUNGEON_HEADER_SIZE +
+                          (uint32_t)map_count * CSB_DUNGEON_MAP_DESC_SIZE;
+        uint32_t words = columns + square_first_count + text_word_count;
+        uint32_t word;
+        for (word = 0; word < words; ++word)
+            csb_swap_u16(buf, (int)(offset + word * 2u), size);
+    }
+
+    /* Thing records follow their source structures in DEFS.H. All records
+     * start with a THING Next word. Only multi-word fields after that are
+     * listed below; byte fields (including GROUP.Type/Cells and projectile
+     * energy/attack) remain untouched. */
+    for (type = 0; type < CSB_THING_TYPE_COUNT; ++type) {
+        uint32_t index;
+        const uint32_t record_size = (uint32_t)csb_thing_data_record_byte_count(type);
+        for (index = 0; index < counts[type]; ++index) {
+            const int base = (int)(offsets[type] + index * record_size);
+            int field;
+            if ((uint32_t)base + record_size > (uint32_t)size) return 0;
+            csb_swap_u16(buf, base, size); /* Next */
+            switch (type) {
+            case 4: /* GROUP: Next, Slot, Type, Cells, Health[4], bitfields */
+            case 9: /* CONTAINER: Next, Slot, packed word, unreferenced word */
+                csb_swap_u16(buf, base + 2, size);
+                for (field = 6; field < (int)record_size; field += 2)
+                    csb_swap_u16(buf, base + field, size);
+                break;
+            case 14: /* PROJECTILE: Next, Slot, two byte fields, event index */
+                csb_swap_u16(buf, base + 2, size);
+                csb_swap_u16(buf, base + 6, size);
+                break;
+            default:
+                /* Remaining native records contain consecutive 16-bit words. */
+                for (field = 2; field + 1 < (int)record_size; field += 2)
+                    csb_swap_u16(buf, base + field, size);
+                break;
+            }
+        }
+    }
+
+    /* Raw map squares are byte codes; each map's metadata is also byte
+     * oriented (creature and ornament indices). Preserve both verbatim. */
+    total_bytes = raw_map_base;
+    for (i = 0; i < map_count; ++i) {
+        const int base = CSB_DUNGEON_HEADER_SIZE + i * CSB_DUNGEON_MAP_DESC_SIZE;
+        const uint16_t raw_a = (uint16_t)buf[base + 8] |
+                               ((uint16_t)buf[base + 9] << 8);
+        const uint16_t raw_b = (uint16_t)buf[base + 10] |
+                               ((uint16_t)buf[base + 11] << 8);
+        const uint16_t raw_c = (uint16_t)buf[base + 12] |
+                               ((uint16_t)buf[base + 13] << 8);
+        const uint32_t width = ((raw_a >> 6) & 0x1fu) + 1u;
+        const uint32_t height = ((raw_a >> 11) & 0x1fu) + 1u;
+        const uint32_t bytes = width * height + ((raw_c >> 4) & 0x0fu) +
+                               (raw_b & 0x0fu) + ((raw_b >> 4) & 0x0fu) +
+                               ((raw_b >> 8) & 0x0fu) + ((raw_b >> 12) & 0x0fu);
+        const uint32_t relative = (uint32_t)buf[base] |
+                                  ((uint32_t)buf[base + 1] << 8);
+        if (raw_map_base + relative + bytes > (uint32_t)size) return 0;
+        if (raw_map_base + relative + bytes > total_bytes)
+            total_bytes = raw_map_base + relative + bytes;
+        map_data_bytes += bytes;
+    }
+    (void)map_data_bytes;
+    return total_bytes <= (uint32_t)size;
 }
 
 static uint8_t *csb_decode_dungeon_if_needed(const uint8_t *dat, int dat_size, int *out_size) {
@@ -143,7 +277,10 @@ static uint8_t *csb_decode_dungeon_if_needed(const uint8_t *dat, int dat_size, i
             return NULL;
         }
         if (big_endian_wrapped) {
-            csb_swap_big_endian_dungeon_words(decoded, (int)decomp_size);
+            if (!csb_swap_big_endian_dungeon_words(decoded, (int)decomp_size)) {
+                free(decoded);
+                return NULL;
+            }
         }
         *out_size = (int)decomp_size;
         return decoded;
@@ -226,6 +363,8 @@ int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_siz
              * in the high nibble. PANEL.C F0337 bypasses the normal light
              * calculation entirely for map difficulty zero. */
             out->map_wall_ornament_count[i] = (int)(raw_bit_b & 0x0Fu);
+            out->map_random_wall_ornament_count[i] =
+                (int)((raw_bit_b >> 4) & 0x0Fu);
             out->map_floor_ornament_count[i] = (int)((raw_bit_b >> 8) & 0x0Fu);
             out->map_random_floor_ornament_count[i] = (int)((raw_bit_b >> 12) & 0x0Fu);
             out->map_creature_type_count[i] = (int)((raw_bit_c >> 4) & 0x0Fu);
@@ -290,21 +429,22 @@ int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_siz
             out->level_offsets[i] = (int)abs_offset;
         }
 
-        /* Extract per-map floor ornament index tables from the metadata
-         * bytes that follow each map's square data in DUNGEON.DAT.
-         * Layout: squares + creatureTypes + wallOrnaments + floorOrnaments.
-         * Source: ReDMCSB DUNGEON.C F0173 lines 2758-2762 */
+        /* Extract the per-map floor ornament index table from metadata
+         * following square, creature-type, and wall-ornament bytes.
+         * Source: ReDMCSB DUNGEON.C F0173 lines 2758-2762. */
         for (i = 0; i < levels; i++) {
             uint32_t sq_bytes = (uint32_t)out->level_widths[i] *
                                 (uint32_t)out->level_heights[i];
-            uint32_t meta_offset = (uint32_t)out->level_offsets[i] + sq_bytes +
+            uint32_t floor_offset = (uint32_t)out->level_offsets[i] + sq_bytes +
                 (uint32_t)out->map_creature_type_count[i] +
                 (uint32_t)out->map_wall_ornament_count[i];
             int fc = out->map_floor_ornament_count[i];
             int j;
             for (j = 0; j < 16; j++) {
-                if (j < fc && (meta_offset + (uint32_t)j) < (uint32_t)decoded_size) {
-                    out->map_floor_ornament_indices[i][j] = decoded[meta_offset + j];
+                if (j < fc && floor_offset + (uint32_t)j <
+                                  (uint32_t)decoded_size) {
+                    out->map_floor_ornament_indices[i][j] =
+                        decoded[floor_offset + (uint32_t)j];
                 } else {
                     out->map_floor_ornament_indices[i][j] = 0;
                 }
@@ -738,6 +878,38 @@ int csb_v1_dungeon_get_square_type(const CSB_V1_DungeonData *d, int level, int x
     int v = csb_v1_dungeon_get_raw_square(d, level, x, y);
     if (v < 0) return -1;
     return (d && d->square_bytes == 1) ? ((v >> 5) & 0x07) : (v & 0x1F);
+}
+
+int csb_v1_dungeon_get_wall_ornament_index(
+    const CSB_V1_DungeonData *d, int level, int local_ordinal,
+    uint8_t *out_global_index)
+{
+    size_t square_bytes;
+    size_t offset;
+
+    if (out_global_index) *out_global_index = 0u;
+    if (!d || !d->raw_data || d->raw_size <= 0 || !out_global_index ||
+        d->square_bytes != 1 ||
+        level < 0 || level >= d->level_count || local_ordinal < 0 ||
+        local_ordinal >= d->map_wall_ornament_count[level] ||
+        d->level_offsets[level] < 0 || d->level_widths[level] <= 0 ||
+        d->level_heights[level] <= 0 ||
+        d->level_widths[level] > CSB_V1_MAX_SQUARE_SIZE ||
+        d->level_heights[level] > CSB_V1_MAX_SQUARE_SIZE ||
+        d->map_wall_ornament_count[level] > 16 ||
+        d->map_creature_type_count[level] < 0 ||
+        d->map_creature_type_count[level] > 16) {
+        return 0;
+    }
+    square_bytes = (size_t)d->level_widths[level] *
+                   (size_t)d->level_heights[level];
+    offset = (size_t)d->level_offsets[level] + square_bytes +
+             (size_t)d->map_creature_type_count[level] +
+             (size_t)local_ordinal;
+    if (offset >= (size_t)d->raw_size) return 0;
+    /* ReDMCSB DUNGEON.C F0173 copies the selected G0261 entry verbatim. */
+    *out_global_index = d->raw_data[offset];
+    return 1;
 }
 
 int csb_v1_dungeon_get_first_thing(const CSB_V1_DungeonData *d, int level, int x, int y) {

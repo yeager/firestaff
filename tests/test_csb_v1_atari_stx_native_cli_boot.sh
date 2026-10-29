@@ -6,9 +6,13 @@ media_path="${FIRESTAFF_CSB_ATARI_STX:-$HOME/.firestaff/data/csb/Chaos Strikes B
 archive_path="${FIRESTAFF_CSB_ATARI_STX_ARCHIVE:-$HOME/.firestaff/data/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z}"
 archive_data_root="${FIRESTAFF_CSB_ATARI_ARCHIVE_DATA_ROOT:-}"
 menu_probe=""
+runtime_screenshot_dir=""
+champion_screenshot_dir=""
 
 cleanup() {
     if [ -n "$menu_probe" ]; then rm -f "$menu_probe"; fi
+    if [ -n "$runtime_screenshot_dir" ]; then rm -rf "$runtime_screenshot_dir"; fi
+    if [ -n "$champion_screenshot_dir" ]; then rm -rf "$champion_screenshot_dir"; fi
 }
 trap cleanup EXIT HUP INT TERM
 
@@ -44,7 +48,9 @@ case "$title_output" in
         ;;
 esac
 
-runtime_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+runtime_screenshot_dir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-atari-runtime.XXXXXX")"
+runtime_output="$(FIRESTAFF_AUTOTEST_SCREENSHOT_DIR="$runtime_screenshot_dir" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     --game csb --platform atari-st --data-dir "$media_path" \
     --boot-probe --boot-probe-frames 180 --script enter \
     --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 2>&1)" || {
@@ -65,6 +71,49 @@ case "$runtime_output" in
         exit 1
         ;;
 esac
+python3 - "$runtime_screenshot_dir" <<'PY'
+import glob
+import os
+import struct
+import sys
+
+screenshots = glob.glob(os.path.join(sys.argv[1], "*.bmp"))
+if len(screenshots) != 1:
+    raise SystemExit("FAIL: Atari runtime screenshot was not captured exactly once")
+with open(screenshots[0], "rb") as image:
+    header = image.read(54)
+    if len(header) != 54 or header[:2] != b"BM":
+        raise SystemExit("FAIL: Atari runtime screenshot is not a BMP")
+    pixel_offset = struct.unpack_from("<I", header, 10)[0]
+    width, signed_height = struct.unpack_from("<ii", header, 18)
+    bits_per_pixel = struct.unpack_from("<H", header, 28)[0]
+    compression = struct.unpack_from("<I", header, 30)[0]
+    height = abs(signed_height)
+    if (width, height, bits_per_pixel, compression) != (320, 200, 24, 0):
+        raise SystemExit("FAIL: Atari runtime screenshot has an unexpected pixel layout")
+    stride = (width * 3 + 3) & ~3
+    image.seek(pixel_offset)
+    rows = [image.read(stride) for _ in range(height)]
+    if any(len(row) != stride for row in rows):
+        raise SystemExit("FAIL: Atari runtime screenshot is truncated")
+
+    def pixel(x, y):
+        storage_y = height - 1 - y if signed_height > 0 else y
+        offset = x * 3
+        b, g, r = rows[storage_y][offset:offset + 3]
+        return (r, g, b)
+
+    # The Atari viewport is (48,33)..(271,168). This upper-left strip is
+    # outside both F0128 and the verified C232 HUD; it must not retain the
+    # colorful final ANIMATE.SCR page after the FTLCODE handoff.
+    background = pixel(0, 0)
+    if any(pixel(x, y) != background for y in range(33) for x in range(48)):
+        raise SystemExit("FAIL: Atari title pixels leaked outside the runtime viewport")
+    viewport_colors = {pixel(x, y) for y in range(33, 169) for x in range(48, 272)}
+    if len(viewport_colors) < 4:
+        raise SystemExit("FAIL: Atari runtime viewport was not drawn in the screenshot")
+print("PASS: Atari handoff clears the retained title outside the original viewport")
+PY
 
 movement_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     --game csb --platform atari-st --data-dir "$media_path" \
@@ -87,6 +136,63 @@ case "$movement_output" in
         exit 1
         ;;
 esac
+
+# The installed-library route is the normal user-facing --data-dir shape:
+# select Atari from the shared CSB root, where the campaign STX is nested in
+# the bilingual ZIP and ANIMATE.SCR/DAT is in the sibling retail archive.
+# Require the original script identity and its source-owned 2,036-VBlank
+# handoff, so a generic two-second fallback can never pass this regression.
+if [ -n "$archive_data_root" ] && [ -d "$archive_data_root" ]; then
+    data_root_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --debug --game csb --platform atari \
+        --data-dir "$archive_data_root" \
+        --boot-probe --boot-probe-frames 2 --script 'wait:2036' \
+        --boot-probe-expect-runtime --duration 0 2>&1)" || {
+        printf '%s\n' "$data_root_output" >&2
+        exit 1
+    }
+    printf '%s\n' "$data_root_output" | grep -Fq \
+        'csb-atari-animation' || {
+        echo "FAIL: CSB Atari shared data-root launch did not bind its source animation" >&2
+        printf '%s\n' "$data_root_output" >&2
+        exit 1
+    }
+    printf '%s\n' "$data_root_output" | grep -Fq 'waited-vbl=2036' || {
+        echo "FAIL: CSB Atari shared data-root launch lost the original 2,036-VBlank duration" >&2
+        printf '%s\n' "$data_root_output" >&2
+        exit 1
+    }
+    case "$data_root_output" in
+        *assetMd5=ebf6a57af3f27782e358c0490bfd2f2e*phase=inactive*startupActive=0*levelLoaded=1*map=0*party=9,0,2*) ;;
+        *)
+            echo "FAIL: CSB Atari shared data-root launch did not hand off to the original runtime" >&2
+            printf '%s\n' "$data_root_output" >&2
+            exit 1
+            ;;
+    esac
+
+    # A normal direct launch from the same shared library must run only the
+    # selected Atari startup. The CSB data root also contains an Amiga ADF;
+    # its APPA.C SWSH.FTL prelude must not be inserted before Atari ANIMATE.SCR.
+    direct_intro_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy timeout 15s \
+        "$firestaff_cli" --debug --game csb --platform atari \
+        --data-dir "$archive_data_root" --duration 2500 2>&1)" || {
+        printf '%s\n' "$direct_intro_output" >&2
+        exit 1
+    }
+    printf '%s\n' "$direct_intro_output" | grep -Fq \
+        'csb-atari-animation' || {
+        echo "FAIL: normal CSB Atari launch did not select ANIMATE.SCR" >&2
+        printf '%s\n' "$direct_intro_output" >&2
+        exit 1
+    }
+    if printf '%s\n' "$direct_intro_output" | grep -Fq \
+        'phase=amiga-swsh-ftl'; then
+        echo "FAIL: CSB Atari launch incorrectly played the sibling Amiga SWSH.FTL prelude" >&2
+        printf '%s\n' "$direct_intro_output" >&2
+        exit 1
+    fi
+fi
 
 # Every input probe starts from the same verified STX title/runtime sequence.
 # This preserves the original starting cell as the comparison anchor instead
@@ -128,18 +234,21 @@ probe_runtime_input action       9,0,2
 # Keep the authenticated first-champion route in the production CLI loop.
 # Explicit wait:32 tokens advance host loop frames between commands, including
 # after title acceptance; no pose or save state is injected by the test.
+atari_two_champion_route='enter,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,strafe-left,wait:32,right,wait:32,right,wait:32,click:320:164,wait:32,click:260:230,wait:32,strafe-left,wait:32,right,wait:32,up,wait:32,up,wait:32,right,wait:32,up,wait:32,left,wait:32,click:320:164,wait:32,click:260:230'
 if [ -e "$archive_path" ]; then
-    champion_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+    champion_screenshot_dir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-atari-champions.XXXXXX")"
+    champion_output="$(FIRESTAFF_AUTOTEST_SCREENSHOT_DIR="$champion_screenshot_dir" \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
         --width 640 --height 400 --game csb --platform atari-st --data-dir "$archive_path" \
         --boot-probe --boot-probe-frames 2 \
-        --script 'enter,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,strafe-left,wait:32,right,wait:32,right,wait:32,click:224:164,click:260:230,wait:32,strafe-left,wait:32,right,wait:32,up,wait:32,up,wait:32,up,wait:32,right,wait:32,right,wait:32,up,wait:32,left,wait:32,up,wait:32,left,wait:32,click:224:164,wait:32,click:260:230,wait:32,strafe-left,key:f1,key:f2' \
+        --script "$atari_two_champion_route,key:f1,key:f2" \
         --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
         --duration 0 2>&1)" || {
         printf '%s\n' "$champion_output" >&2
         exit 1
     }
     case "$champion_output" in
-        *assetMd5=ebf6a57af3f27782e358c0490bfd2f2e*phase=inactive*levelLoaded=1*'party=11,7,1'*'champions=2'*dm1HocCandidatePanel=0*dm1HocCandidateOrdinal=-1*dm1InventoryPanel=1*) ;;
+        *assetMd5=ebf6a57af3f27782e358c0490bfd2f2e*phase=inactive*levelLoaded=1*'party=11,9,1'*'champions=2'*dm1HocCandidatePanel=0*dm1HocCandidateOrdinal=-1*dm1InventoryPanel=1*) ;;
         *)
             echo "FAIL: authentic Atari CLI route did not recruit both C127 champions, resume movement, and open the F1/F2 inventory"
             printf '%s\n' "$champion_output" >&2
@@ -153,6 +262,93 @@ if [ -e "$archive_path" ]; then
     printf '%s\n' "$champion_output" | grep -Eq 'csbViewportHash=[1-9][0-9]*' || {
         echo "FAIL: authentic Atari CLI route lost its viewport receipt after second-recruit movement" >&2
         printf '%s\n' "$champion_output" >&2
+        exit 1
+    }
+    python3 - "$champion_screenshot_dir" <<'PY'
+import glob
+import os
+import struct
+import sys
+
+screenshots = glob.glob(os.path.join(sys.argv[1], "*.bmp"))
+if len(screenshots) != 1:
+    raise SystemExit("FAIL: Atari two-champion HUD screenshot was not captured exactly once")
+with open(screenshots[0], "rb") as image:
+    header = image.read(54)
+    if len(header) != 54 or header[:2] != b"BM":
+        raise SystemExit("FAIL: Atari two-champion HUD screenshot is not a BMP")
+    pixel_offset = struct.unpack_from("<I", header, 10)[0]
+    width, signed_height = struct.unpack_from("<ii", header, 18)
+    bits_per_pixel = struct.unpack_from("<H", header, 28)[0]
+    compression = struct.unpack_from("<I", header, 30)[0]
+    height = abs(signed_height)
+    if (width, height, bits_per_pixel, compression) != (320, 200, 24, 0):
+        raise SystemExit("FAIL: Atari two-champion HUD screenshot has an unexpected pixel layout")
+    stride = (width * 3 + 3) & ~3
+    image.seek(pixel_offset)
+    rows = [image.read(stride) for _ in range(height)]
+    if any(len(row) != stride for row in rows):
+        raise SystemExit("FAIL: Atari two-champion HUD screenshot is truncated")
+
+    def pixel(x, y):
+        storage_y = height - 1 - y if signed_height > 0 else y
+        offset = x * 3
+        b, g, r = rows[storage_y][offset:offset + 3]
+        return (r, g, b)
+
+    # ReDMCSB CHAMDRAW.C F0287 and DATA.C G0055/G0056 put four-pixel
+    # champion bars at x=46/53/60 and x=115/122/129 respectively, y=2..26.
+    # The original-media CLI route recruits two champions with full stats.
+    first = [pixel(x, 2) for x in (46, 53, 60)]
+    second = [pixel(x, 2) for x in (115, 122, 129)]
+    background = pixel(50, 2)
+    if any(color == background for color in first + second):
+        raise SystemExit("FAIL: a live Atari champion bar is missing from the HUD screenshot")
+    if len(set(first)) != 1 or len(set(second)) != 1 or first[0] == second[0]:
+        raise SystemExit("FAIL: Atari champion bar masks or source champion colors are wrong")
+    for x in (46, 53, 60, 115, 122, 129):
+        if pixel(x, 26) != pixel(x, 2):
+            raise SystemExit("FAIL: a full Atari champion bar does not span source rows 2 through 26")
+print("PASS: original-media Atari HUD draws all three live bars in both source champion slots")
+PY
+
+    # Continue a fresh original campaign through the retail button door and
+    # stairs using ordinary CLI input. The source map starts the party at
+    # (9,0), places the first two C127 mirrors on the route, and has a button
+    # door at (18,6) before the map-1 stair at (19,7). Let the real map-1
+    # groups act after the transition so debug proves movement and damage
+    # from authentic C04/C37 records rather than a controlled test pose.
+    campaign_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --debug --width 640 --height 400 --game csb --platform atari-st \
+        --data-dir "$archive_path" --boot-probe --boot-probe-frames 2 \
+        --script "$atari_two_champion_route,wait:32,strafe-left,wait:32,down,wait:32,down,wait:32,strafe-left,wait:32,strafe-left,wait:32,up,wait:32,up,wait:32,up,wait:32,strafe-right,wait:32,up,wait:32,up,wait:32,strafe-left,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,up,wait:32,click:432:162,wait:64,up,wait:32,up,wait:32,strafe-right,wait:500" \
+        --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
+        --duration 0 2>&1)" || {
+        printf '%s\n' "$campaign_output" >&2
+        exit 1
+    }
+    printf '%s\n' "$campaign_output" | grep -Fq \
+        'input=pointer-click point=216,81 result=1 last-ui-action="CSB" last-ui-outcome="DOOR SWITCH"' || {
+        echo "FAIL: authentic Atari campaign did not activate the source button door" >&2
+        printf '%s\n' "$campaign_output" >&2
+        exit 1
+    }
+    printf '%s\n' "$campaign_output" | grep -Fq \
+        'level=1 party=18,4,0 dir=2 champions=2 leader=0 active-monsters=12' || {
+        echo "FAIL: authentic Atari stair transition did not load map-1 monster groups" >&2
+        printf '%s\n' "$campaign_output" >&2
+        exit 1
+    }
+    printf '%s\n' "$campaign_output" | grep -Fq \
+        'type=monster-moved' || {
+        echo "FAIL: authentic Atari map-1 groups did not move during the real-time wait" >&2
+        printf '%s\n' "$campaign_output" >&2
+        exit 1
+    }
+    printf '%s\n' "$campaign_output" | grep -Fq \
+        'target=champion index=' || {
+        echo "FAIL: authentic Atari map-1 combat did not report champion health changes" >&2
+        printf '%s\n' "$campaign_output" >&2
         exit 1
     }
 else

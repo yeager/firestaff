@@ -1,6 +1,8 @@
 #ifndef FIRESTAFF_ASSET_LOADER_M11_H
 #define FIRESTAFF_ASSET_LOADER_M11_H
 
+#include "csb_v1_graphics_atari_st_loader_pc34_compat.h"
+
 /*
  * asset_loader_m11 — M11 GRAPHICS.DAT asset loader and blitter.
  *
@@ -91,6 +93,11 @@ typedef struct {
     long atariStDataSize;
     int atariStDm1;
 
+    /* CSB Atari ST DMCSB1 source. This is the same outer table shape as
+     * DM1's ST data, but its LZW/RLE stream is owned by the CSB decoder. */
+    CSB_AtariStLoader csbAtariStGraphics;
+    int csbAtariSt;
+
     /* CSB Amiga DMCSB2 source.  Its IMG1 records are intentionally separate
      * from both PC34 IMG3 and DM1's legacy IMG2 layout. */
     unsigned char *csbAmigaData;
@@ -155,6 +162,8 @@ int M11_AssetLoader_InitDm1IigsFromFile(M11_AssetLoader* loader,
 int M11_AssetLoader_InitDm1AtariStFromBuffer(M11_AssetLoader* loader,
                                              const unsigned char *data,
                                              long size);
+int M11_AssetLoader_InitCsbAtariStFromFile(M11_AssetLoader* loader,
+                                           const char *graphicsDatPath);
 int M11_AssetLoader_InitDm1AtariStFromFile(M11_AssetLoader* loader,
                                            const char *graphicsDatPath);
 

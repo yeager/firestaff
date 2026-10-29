@@ -77,6 +77,8 @@ typedef struct CSB_V1_DungeonData {
     int map_difficulty[CSB_V1_MAX_LEVELS];
     int map_experience_multiplier[CSB_V1_MAX_LEVELS];
     int map_wall_ornament_count[CSB_V1_MAX_LEVELS];
+    /* ReDMCSB DEFS.H MAP.B RandomWallOrnamentCount (bits 4..7). */
+    int map_random_wall_ornament_count[CSB_V1_MAX_LEVELS];
     int map_floor_ornament_count[CSB_V1_MAX_LEVELS];
     int map_random_floor_ornament_count[CSB_V1_MAX_LEVELS];
     int map_creature_type_count[CSB_V1_MAX_LEVELS];
@@ -152,6 +154,13 @@ int csb_v1_dungeon_initial_party_pose_pc34(const CSB_V1_DungeonData *d,
  *           M034_SQUARE_TYPE macro
  */
 int csb_v1_dungeon_get_square_type(const CSB_V1_DungeonData *d, int level, int x, int y);
+
+/* ReDMCSB DUNGEON.C F0173 stores G0261 wall ornament selectors directly
+ * after each map's square bytes and creature-type selectors. Read one
+ * original source byte without duplicating or reshaping map metadata. */
+int csb_v1_dungeon_get_wall_ornament_index(
+    const CSB_V1_DungeonData *d, int level, int local_ordinal,
+    uint8_t *out_global_index);
 
 /* Return the square's first thing.
  * Returns -1 if d is NULL, raw_data is NULL, or coordinates out of bounds.
