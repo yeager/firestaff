@@ -79,6 +79,14 @@ FM Towns Japanese; all three logged a direct game handoff. This verifies the
 default data-root and platform-auto routes on this host only. It does not
 replace per-platform testing or establish that a game is playable.
 
+The three isolated no-game M12 checks also passed for DM1, CSB and DM2. Five
+additional authentic-media M12 routes passed: DM1 PC34 and Atari ST, CSB Atari
+ST, and DM2 PC and Amiga. These verify game-card/platform selection and the
+reported runtime handoff for those routes under SDL's dummy video driver; they
+do not prove native presentation or full gameplay. The broader
+`m12_main_menu_game_selection_real_media` run exceeded its 420-second CTest
+timeout on this host. Its partial output is not counted as a passing test.
+
 The latest Nexus evidence separates raw Japanese `DM.BIN` placement at
 `0x06010000` from the older trace-specific static code mapping at
 `0x06010040`. The English-version `MENU.BPK` has an authenticated hash and is
