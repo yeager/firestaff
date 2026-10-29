@@ -4,9 +4,8 @@
 
 - The BKR source halfwords at champion offsets `+0x38/+0x3a` map to runtime
   `+0/+4`. `FUN_0603b014` initializes those same runtime cells from the PLRD
-  health value, and `FUN_060361a8` increments the current value toward its
-  maximum. The pair is therefore current/maximum health, not an unnamed
-  recovery pair.
+  health value. The pair is therefore current/maximum health, not an unnamed
+  recovery pair. Health updates after Continue have not yet been bound.
 - The BKR receipt and authentic-media regression now expose and check the
   values as `champion_health_current` and `champion_max_health` across all four
   hash-pinned retail saves. The engine still does not apply a complete Saturn

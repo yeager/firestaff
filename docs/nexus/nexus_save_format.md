@@ -125,12 +125,11 @@ A preceding signed pair at source `+0x38/+0x3a` projects to runtime longwords
 `+0/+4`. `FUN_0603b014`, the New Game roster initializer, fills the same
 runtime cells from the source PLRD health value at `+6`, placing the value in
 both current and maximum slots. Combined with the BKR importer projection,
-this identifies the saved pair as current and maximum health. The retail
-updater `FUN_060361a8` increments current health up to maximum health. The
-probe exposes these fields as `champion_health_current` and
-`champion_max_health`. Every present champion in all four authentic saves has
-`47/47`; the leader-index-3 Ymir trace captures those values loading at frame
-12931 but has no later writes to the pair.
+this identifies the saved pair as current and maximum health. The probe
+exposes these fields as `champion_health_current` and `champion_max_health`.
+Every present champion in all four authentic saves has `47/47`; the
+leader-index-3 Ymir trace captures those values loading at frame 12931 but has
+no later writes to the pair. Health updates after Continue remain untraced.
 A second pair at source `+0x40/+0x42` projects to runtime `+0x10/+0x14`.
 `FUN_0603b014` initializes these cells from the PLRD mana value at `+0x0a`,
 identifying the pair as current and maximum mana. `FUN_060361a8` increments
