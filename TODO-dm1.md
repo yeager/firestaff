@@ -1,5 +1,11 @@
 # Firestaff TODO — DM1
 
+2026-10-29 original-media regression recheck: `m11_dm1_pc34_first_monster_combat_real`
+passed (1.83 seconds) against the authentic PC34 archive. It verifies the
+covered HoC-to-first-monster route, repeated PUNCH action and creature damage;
+it does not prove every attack type, encounter or DM1 platform. The broader
+gameplay parity work remains open.
+
 2026-10-28: The real-media localized startup-debug regression now has a
 parameterized test shared by DM1, CSB, and DM2. Its DM1 PC34 case passes for
 explicit Swedish and the saved Swedish language profile, checking both scan
