@@ -54,9 +54,11 @@ retail data image: `EV_SAVE`, `EV_SAVELOAD`, `Slot Operation Error`, and the
 `iwa\\loader.c` source label. Their file offsets are recorded as `0x36fec`,
 `0x36ff4`, `0x36c58`, and `0x36980` respectively (SH-2 address base
 `0x06010000`). These are string/provenance observations only. No verified
-pointer chain from those strings to a Saturn backup-RAM record, checksum,
-load destination, or playable level/position has been established, so they do
-not authorize a native Saturn save decoder.
+pointer chain from these strings to a Saturn backup-RAM record has been
+established, so the strings alone do not authorize a native Saturn save
+decoder. The independent BUP runtime trace above does establish a named-entry
+read, WRAM destination, and checksum gate, but still does not identify the
+payload schema or loaded-state consumer.
 
 A read-only Ghidra 12.2 follow-up used the same `DM.BIN` hash
 (`3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124`). The

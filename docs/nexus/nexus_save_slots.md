@@ -12,5 +12,7 @@ confused with the original Saturn memory-card record layout.
 - `nexus_v1_save_scan()` enumerates and validates slots.
 - `nexus_v1_save()` and `nexus_v1_load()` write and read validated FNXS data.
 - `nexus_v1_save_delete()` removes a Firestaff-native slot.
-- The original Saturn save route remains blocked until a played,
-  source-bound memory-card consumer is captured.
+- Retail Continue has been traced through BKR named-entry lookup, payload
+  transfer, and checksum validation using an authentic save. Firestaff's
+  Saturn slot selection and load route remain blocked until payload semantics
+  and the post-load engine-state mapping are source-bound.

@@ -1925,12 +1925,14 @@ and the external evidence folder's
 A later checkpoint at boot frame 14,900 shows the Japanese title logo. A
 replay from that checkpoint with Start, Down and A reaches the authentic Load
 screen row `B01 0:16 NORMAL`, but records zero new BUP-window reads. This
-narrowly places the observed BUP read activity earlier in startup than this
-checkpoint; it does not tie those reads to the later Continue action. The
-BKR loader and its payload-to-runtime mapping remain unbound. Full trace,
-disassembly and checkpoint receipts are recorded in the external evidence
-folder's `coldboot-readtrace-boot12000/` and `coldboot-title-checkpoint/`
-subdirectories.
+narrowly places this boot trace's BUP read activity earlier in startup than
+the checkpoint. A separate cold-boot Continue trace binds the accepted payload
+read to `DMNEXUS__01`, its WRAM-L destination, and checksum gate; it does not
+identify payload fields or the later game-state consumer. See the
+[Continue payload transfer receipt](nexus_sh2_startup_decompilation.md#continue-payload-transfer-2026-10-29).
+Full trace, disassembly and checkpoint receipts are recorded in the external
+evidence folder's `coldboot-readtrace-boot12000/` and
+`coldboot-title-checkpoint/` subdirectories.
 
 A same-run coldboot trace on TRV2 now covers frames 0–11,999 with the authentic
 BKR installed. It records 10,849 one-byte reads in bus range
@@ -1966,12 +1968,14 @@ image and log are preserved in the external evidence folder's
 A later checkpoint at boot frame 14,900 shows the Japanese title logo. A
 replay from that checkpoint with Start, Down and A reaches the authentic Load
 screen row `B01 0:16 NORMAL`, but records zero new BUP-window reads. This
-narrowly places the observed BUP read activity earlier in startup than this
-checkpoint; it does not tie those reads to the later Continue action. The
-BKR loader and its payload-to-runtime mapping remain unbound. Full trace,
-disassembly and checkpoint receipts are recorded in the external evidence
-folder's `coldboot-readtrace-boot12000/` and `coldboot-title-checkpoint/`
-subdirectories.
+narrowly places this trace's BUP read activity earlier in startup than the
+checkpoint. A separate cold-boot Continue trace binds the accepted payload
+read to `DMNEXUS__01`, its WRAM-L destination, and checksum gate; it does not
+identify payload fields or the later game-state consumer. See the
+[Continue payload transfer receipt](nexus_sh2_startup_decompilation.md#continue-payload-transfer-2026-10-29).
+Full trace, disassembly and checkpoint receipts are recorded in the external
+evidence folder's `coldboot-readtrace-boot12000/` and
+`coldboot-title-checkpoint/` subdirectories.
 
 The accepted-save capture's VDP1 snapshot is frame 2,173 with 83 commands. Its
 complete command trace contains 175,042 rows with zero dropped rows. The
