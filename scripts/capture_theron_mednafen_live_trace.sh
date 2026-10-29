@@ -1961,11 +1961,13 @@ if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace"
 fi
 if [[ -n "$huc6280_23ad_trace" ]]; then
     if [[ ! -s "$huc6280_23ad_trace" ]] ||
-       ! grep -Fq 'format=firestaff-huc6280-23ad-raw-trace-v1' "$huc6280_23ad_trace" ||
+       ! grep -Fq 'format=firestaff-huc6280-23ad-raw-trace-v2' "$huc6280_23ad_trace" ||
        ! grep -Fq 'caller_signature fnv1a=699e8da1' "$huc6280_23ad_trace" ||
        ! grep -Fq 'call=BSR caller=' "$huc6280_23ad_trace" ||
        ! grep -Fq 'routine_fnv1a=3056f96c' "$huc6280_23ad_trace" ||
        ! grep -Fq 'kind=return_rts' "$huc6280_23ad_trace" ||
+       ! grep -Fq 'kind=post_return_window_begin' "$huc6280_23ad_trace" ||
+       ! grep -Fq 'shared_event_sequence=TheronTraceCDSharedEventSequence' "$huc6280_23ad_trace" ||
        grep -Fq 'truncated=event_limit' "$huc6280_23ad_trace"; then
         printf 'FAIL: requested HuC6280 capture did not produce one complete bounded $23AD invocation: %s\n' \
             "$huc6280_23ad_trace" >&2
@@ -2257,6 +2259,12 @@ if [[ "$capture_mednafen_module" == pce_fast ]]; then
             merge_source_graphics_args+=(
                 --vce-write "$pce_fast_vce_write_trace"
                 --vce-write-limit "$pce_fast_vce_write_trace_limit"
+            )
+        fi
+        if [[ -n "$huc6280_23ad_trace" ]]; then
+            merge_source_graphics_args+=(
+                --huc6280-23ad "$huc6280_23ad_trace"
+                --huc6280-23ad-limit 2000000
             )
         fi
         merge_source_graphics_args+=(--output "$pce_fast_source_graphics_event_order")

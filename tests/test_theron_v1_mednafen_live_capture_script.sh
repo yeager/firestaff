@@ -645,6 +645,10 @@ if ! grep -Fq 'caller_hash == 0x699e8da1' "$huc6280_23ad_probe" ||
    ! grep -Fq 'expected_offsets[4] = { 2, 5, 7, 10 }' "$huc6280_23ad_probe" ||
    ! grep -Fq 'FirestaffTheron23ADCallerCandidateStage < 4' "$huc6280_23ad_probe" ||
    ! grep -Fq 'FirestaffTheron23ADEventLimit = 2000000' "$huc6280_23ad_probe" ||
+   ! grep -Fq 'FirestaffTheron23ADPostReturnEventLimit = 200000' "$huc6280_23ad_probe" ||
+   ! grep -Fq 'TheronTraceCDSharedEventSequence++' "$huc6280_23ad_probe" ||
+   ! grep -Fq 'FirestaffTheron23ADPostReturn ? "post_return" : "decoder"' "$huc6280_23ad_probe" ||
+   ! grep -Fq 'FirestaffTheron23ADPostReturn = true' "$huc6280_23ad_probe" ||
    ! grep -Fq 'value == 0xa5 && pc <= 0xfe81' "$huc6280_23ad_probe" ||
    ! grep -Fq 'FirestaffTheron23ADStackPC = call_pc + 1' "$huc6280_23ad_probe" ||
    ! grep -Fq 'pc == (uint32)FirestaffTheron23ADRoutinePC + 0x7cu' "$huc6280_23ad_probe" ||
@@ -653,6 +657,8 @@ if ! grep -Fq 'caller_hash == 0x699e8da1' "$huc6280_23ad_probe" ||
    grep -Fq 'physical_pc >= 0x1f2386' "$huc6280_23ad_probe" ||
    ! grep -Fq 'return=%04x stack_return=%04x mpr=' "$huc6280_23ad_probe" ||
    ! grep -Fq 'call=BSR caller=' "$script" ||
+   ! grep -Fq -- '--huc6280-23ad "$huc6280_23ad_trace"' "$script" ||
+   ! grep -Fq -- '--huc6280-23ad-limit 2000000' "$script" ||
    ! grep -Fq 'routine_fnv1a=3056f96c' "$script" ||
    ! grep -Fq 'L2429:  rts' \
        "$repo/docs/source-lock/theron-disassembly/theron-us-bank1f-consumer.asm"; then

@@ -107,3 +107,19 @@ copied into the repository. The enclosing cold-run verifier still reports
 `transition=missing` and zero authenticated CD-to-game-RAM receipts; full-level
 completion, causal loader provenance, gameplay handoff, and other editions
 remain open.
+
+## Bounded post-return timeline instrumentation
+
+The opt-in `$23AD` probe now keeps a bounded window after the matched `$2429`
+return, capped at 200,000 post-return events. This window can include the
+caller and downstream RAM consumer activity. Its records share the PCE Fast
+CD/VWR/VCE event counter and can be merged into one chronology. The merger
+labels the result as temporal ordering only; the shared sequence does not
+establish causal data flow. A `post_return_truncated=event_limit` footer is
+reported as possible truncation in the merged metadata.
+
+The merger test passed three loops on TRV2. The complete instrumented Mednafen
+1.32.1 PCE Fast build, with both the VWR and `$23AD` hooks enabled, completed
+there with `-j1`. This verifies patch application and compilation only. No new
+authentic capture using the post-return window has been made, and the evidence
+above still records the gameplay handoff and loader provenance gaps.

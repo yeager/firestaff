@@ -8936,3 +8936,26 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   verifier still reports `transition=missing` and zero authenticated
   CD-to-game-RAM receipts. Full-level completion and other editions remain
   unproven.
+
+## 2026-10-29 — authentic later-level decoder context remains unresolved
+
+- Probed all seven hash-admitted US and JP Track 02 later-level spans with the
+  current native `$23AD` lift in three loops. With an empty pointer-table seed,
+  all 42 edition/level attempts stopped at `POINTER_TABLE`. As a diagnostic
+  only, seeding the table by interpreting the compressed frame bytes as
+  little-endian pointers still stopped at `DESTINATION` in 39 attempts and
+  `POINTER_TABLE` in three. The probe used destination base `$6000`, which is
+  established for the one separately captured invocation but not for these
+  later-level spans; those failures do not prove the retail decoder fails.
+- No guessed seed or generated game payload was retained. The spans pass their
+  authentic media admission hashes, but the source-bound MPR map, destination
+  base, pointer-table contents at call entry, and frame-chain relationship for
+  these later-level calls are still unknown.
+- Next: capture one of these exact admitted source spans in a cold retail run,
+  recording the effective source and destination windows, pointer-table bytes
+  before and during `$23AD`, and the downstream consumer. Then compare that
+  invocation byte for byte before extending native support to more spans.
+- The trace tooling now provides a bounded 200,000-event post-return window
+  and merges `$23AD` events into the existing CD/VWR/VCE chronology by shared
+  sequence. The instrumentation builds, but has not yet been used for a new
+  authentic capture; the next capture must record and verify this full join.

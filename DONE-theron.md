@@ -9244,3 +9244,17 @@ native rendering, or Theron parity. The private evidence bundle is at
 - This strengthens capture completeness reporting and malformed-input cleanup;
   it adds no new emulator capture or evidence of Theron graphics/gameplay
   parity.
+
+## 2026-10-29 — extend the `$23AD` trace through the caller return
+
+- The opt-in `$23AD` trace now continues after the matched `$2429` RTS for at
+  most 200,000 events. It shares the CD/VWR/VCE chronology counter, and the
+  streaming merger retains caller-signature, BSR, decoder, and post-return
+  event types. A post-return event-limit footer marks the joined timeline as
+  possibly truncated.
+- The focused merger regression passed three loops on TRV2. The complete
+  instrumented Mednafen 1.32.1 PCE Fast build passed there with the VWR and
+  `$23AD` trace options enabled and `-j1`.
+- No new authentic post-return capture was made. This completes trace-tool
+  support only; causal CD-to-RAM provenance, gameplay handoff, and full
+  Theron parity remain open.
