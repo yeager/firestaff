@@ -40,8 +40,8 @@ typedef struct {
     uint32_t payload_bytes;
     uint32_t champion_count;
     uint32_t party_leader_index;
-    int32_t champion_recovery_current[NEXUS_V1_SATURN_BKR_MAX_PARTY];
-    int32_t champion_recovery_maximum[NEXUS_V1_SATURN_BKR_MAX_PARTY];
+    int32_t champion_health_current[NEXUS_V1_SATURN_BKR_MAX_PARTY];
+    int32_t champion_max_health[NEXUS_V1_SATURN_BKR_MAX_PARTY];
     int32_t champion_stamina_current[NEXUS_V1_SATURN_BKR_MAX_PARTY];
     int32_t champion_stamina_max[NEXUS_V1_SATURN_BKR_MAX_PARTY];
     int32_t champion_bounded_value[NEXUS_V1_SATURN_BKR_MAX_PARTY];

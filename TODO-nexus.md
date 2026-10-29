@@ -13,11 +13,12 @@ page; Japanese state changes and marker animation still need authentic captures.
 The C Saturn BKR container parser is verified against all four hash-pinned
 samples reported as retail-written; see DONE-nexus.md. A bounded C probe now
 validates the retail `DMNEXUS__01` payload offsets, champion count, party
-leader index, bounded recovery pair, current/maximum stamina pair, and bounded
+leader index, current/maximum health, current/maximum stamina, and bounded
 value/limit pair against decompiled retail code and all four authentic images.
-The recovery pair at source `+0x38/+0x3a` loads as `47/47`; the updater's
-bounded-increase behavior is statically decompiled, but not yet captured
-changing those values at runtime. Other champion-record fields remain opaque.
+The health pair at source `+0x38/+0x3a` loads as `47/47`; New Game initializes
+the same runtime cells from PLRD health, and the retail updater increments
+current health toward maximum. A capture has not yet observed that pair change
+after Continue. Other champion-record fields remain opaque.
 Retail Continue's BKR named-entry lookup,
 complete payload transfer,
 and checksum gate are source-bound. The remaining work is to identify the

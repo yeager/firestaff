@@ -11,8 +11,8 @@ typedef struct {
     const char *payload_sha256;
     uint32_t champion_count;
     uint32_t party_leader_index;
-    int32_t champion_recovery_current;
-    int32_t champion_recovery_maximum;
+    int32_t champion_health_current;
+    int32_t champion_max_health;
     int32_t champion_stamina_current;
     int32_t champion_stamina_max;
     int32_t champion_bounded_value;
@@ -166,16 +166,16 @@ int main(void)
 
             for (champion = 0U; champion < payload_receipt.champion_count;
                  ++champion) {
-                if (payload_receipt.champion_recovery_current[champion] !=
-                        corpus[file_index].champion_recovery_current ||
-                    payload_receipt.champion_recovery_maximum[champion] !=
-                        corpus[file_index].champion_recovery_maximum ||
+                if (payload_receipt.champion_health_current[champion] !=
+                        corpus[file_index].champion_health_current ||
+                    payload_receipt.champion_max_health[champion] !=
+                        corpus[file_index].champion_max_health ||
                     file_receipt.nexus_payload.
-                            champion_recovery_current[champion] !=
-                        corpus[file_index].champion_recovery_current ||
+                            champion_health_current[champion] !=
+                        corpus[file_index].champion_health_current ||
                     file_receipt.nexus_payload.
-                            champion_recovery_maximum[champion] !=
-                        corpus[file_index].champion_recovery_maximum ||
+                            champion_max_health[champion] !=
+                        corpus[file_index].champion_max_health ||
                     payload_receipt.champion_stamina_current[champion] !=
                         corpus[file_index].champion_stamina_current ||
                     payload_receipt.champion_stamina_max[champion] !=
@@ -185,10 +185,10 @@ int main(void)
                     payload_receipt.champion_bounded_limit[champion] !=
                         corpus[file_index].champion_bounded_limit) {
                     fprintf(stderr,
-                            "FAIL: authentic champion field mismatch: %s champion=%u recovery=%d/%d stamina=%d/%d bounded=%d/%d\n",
+                            "FAIL: authentic champion field mismatch: %s champion=%u health=%d/%d stamina=%d/%d bounded=%d/%d\n",
                             corpus[file_index].filename, champion,
-                            payload_receipt.champion_recovery_current[champion],
-                            payload_receipt.champion_recovery_maximum[champion],
+                            payload_receipt.champion_health_current[champion],
+                            payload_receipt.champion_max_health[champion],
                             payload_receipt.champion_stamina_current[champion],
                             payload_receipt.champion_stamina_max[champion],
                             payload_receipt.champion_bounded_value[champion],
@@ -285,11 +285,11 @@ int main(void)
         } else {
             payloads[file_index] = payload;
             payload_sizes[file_index] = entries[0].payload_bytes;
-            printf("PASS: %s (%u-byte image, %u-byte payload, %u champions, recovery %d/%d, stamina %d/%d, bounded %d/%d)\n",
+            printf("PASS: %s (%u-byte image, %u-byte payload, %u champions, health %d/%d, stamina %d/%d, bounded %d/%d)\n",
                    corpus[file_index].filename, receipt.image_bytes,
                    entries[0].payload_bytes, payload_receipt.champion_count,
-                   payload_receipt.champion_recovery_current[0],
-                   payload_receipt.champion_recovery_maximum[0],
+                   payload_receipt.champion_health_current[0],
+                   payload_receipt.champion_max_health[0],
                    payload_receipt.champion_stamina_current[0],
                    payload_receipt.champion_stamina_max[0],
                    payload_receipt.champion_bounded_value[0],

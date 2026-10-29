@@ -1,19 +1,26 @@
 # Firestaff DONE — Nexus
 
-## 2026-10-29 — Expose the authentic bounded recovery pair
+## 2026-10-29 — Identify the authentic BKR health pair
+
+- The BKR source halfwords at champion offsets `+0x38/+0x3a` map to runtime
+  `+0/+4`. `FUN_0603b014` initializes those same runtime cells from the PLRD
+  health value, and `FUN_060361a8` increments the current value toward its
+  maximum. The pair is therefore current/maximum health, not an unnamed
+  recovery pair.
+- The BKR receipt and authentic-media regression now expose and check the
+  values as `champion_health_current` and `champion_max_health` across all four
+  hash-pinned retail saves. The engine still does not apply a complete Saturn
+  Continue payload.
+
+## Superseded — Initial conservative label for the health pair
 
 - `FUN_0602eb4c` projects signed BKR halfwords at champion offsets `+0x38/+0x3a`
   to runtime longwords `+0/+4`. `FUN_060361a8` caps increases at the gap
-  between the two values, supporting bounded recovery behavior while leaving
-  the game's domain semantics unnamed.
-- The BKR receipt now exposes the pair as `champion_recovery_current` and
-  `champion_recovery_maximum`. All present champion records in the four
-  hash-pinned retail saves contain `47/47`. The leader-index-3 Ymir trace
-  captures the load writes at frame 12931; no later update to the pair appears
-  in that trace.
-- The authentic-data regression checks both the direct payload probe and
-  selected-file probe. Full BKR application to the engine and playable
-  Continue remain open.
+  between the two values. These were initially described as recovery fields
+  because the domain had not yet been identified. Follow-up evidence in the
+  section above maps them to current and maximum health; the receipt and real
+  media check now use health names. Full BKR application to the engine and
+  playable Continue remain open.
 
 ## 2026-10-29 — Bound the authentic save value/limit pair
 
