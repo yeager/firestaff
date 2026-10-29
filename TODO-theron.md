@@ -8881,3 +8881,58 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   code and source reads, then use it to bound a smaller post-handoff VWR trace.
   Preserve the parity target; do not infer a causal source-to-render mapping
   from the time-ordered chronology.
+
+## 2026-10-29 — correct the `$23AD` trace return boundary
+
+- Static inspection of the hash-locked US/JP bank-$1f listing found that the
+  `$2390` caller's return boundary is `$2429 RTS`; `$252A` belongs to the
+  following helper code. Corrected the opt-in Mednafen probe to stop only at
+  `$2429` with the dynamically mapped logical operand address still on the
+  stack.
+- A subsequent probe compared derived physical addresses with `$1F2390` and
+  `$1F2429`, implicitly assuming the hash-locked ISO projection was live at
+  MPR `$F9`. The projection does not establish that runtime mapping. A fresh
+  600-second authentic US run emitted no trace, which remains inconclusive.
+- Replaced that mapping assumption with exact retail byte signatures: a
+  five-opcode prefix gates the caller's 30-byte FNV-1a `$699E8DA1`, followed
+  by the 382-byte routine's FNV-1a `$3056F96C`. The opt-in probe records the
+  observed logical PC and MPR
+  map, validates the caller-relative BSR and its pushed operand-address word,
+  and recognizes the terminal RTS at offset `$7C` from the matched routine
+  entry. A full TRV2 rebuild and fresh original-media run are pending. No
+  decoder or gameplay parity is established. See
+  [the `$23AD` trace-boundary record](docs/source-lock/theron-disassembly/theron-23ad-trace-boundary-20261029.md).
+- A fourth cold-start run reached the research generator's start receipt, but
+  its experimental detector used `$AD` rather than the authentic `$A5` opcode
+  for `LDA $30`; that run was stopped before interpreting a missing trace. The
+  detector now searches the source-bound `$A5/$8D/$A5/$8D/$44` prefix and
+  applies the full caller hash only at the candidate BSR.
+- A correctly configured cold USA run used the original CUE, System Card 3.0
+  and authenticated Ak-Tu-Ba Backup RAM. It reached the generator start and
+  level-03 re-entry. The live caller matched at logical `$3B86` with MPR slot
+  1=`$F8`, and the routine entry at `$3BAD` matched the 382-byte retail hash.
+  The 20,000- and 250,000-event bounds ended before the caller return. At
+  250,000 events the compressed input count had fallen from `$0A36` to `$076A`,
+  leaving 1,898 bytes. A 2,000,000-event capture then recorded one full
+  invocation: 921,436 lines, no truncation, the terminal RTS at logical
+  `$3C29`, and trace SHA-256
+  `3668f340372938c2a366237d11dd63158eb8c312e8372d0716f684eb968465bb`.
+  This proves dynamic routine control flow and fetched retail bytes. The
+  enclosing capture was still rejected with `transition=missing` and zero
+  authenticated CD-to-game-RAM receipts, so loader provenance and gameplay
+  handoff remain open. The raw trace was deleted after recording its hash and
+  summary; see the [trace-boundary evidence](docs/source-lock/theron-disassembly/theron-23ad-trace-boundary-20261029.md).
+- [x] Compare the authentic `$23AD` source and destination streams against the
+  native decoder for the captured US resource. The original Track 02 resource
+  at normalized LBA 1871, offset 6, supplied 2,614 bytes; its 5,064 runtime
+  writes match the native output byte for byte. This exposed and fixed the
+  pointer-table index arithmetic at `L2496`: the retail routine subtracts one
+  from each token byte before indexing. A focused `$0105` boundary vector
+  covers the arithmetic. Source and output hashes and exact decode counts are
+  recorded in `DONE-theron.md` and the trace-boundary evidence document.
+- [ ] Establish causal disc-to-game-RAM provenance and a gameplay handoff.
+  The current trace proves a complete `$23AD` invocation and exact source and
+  output parity for one authentic US resource, but the enclosing cold-run
+  verifier still reports `transition=missing` and zero authenticated
+  CD-to-game-RAM receipts. Full-level completion and other editions remain
+  unproven.

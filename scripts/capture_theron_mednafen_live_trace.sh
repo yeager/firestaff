@@ -242,6 +242,10 @@ if [[ "$menu_route" == drator-generator ]]; then
         printf '%s\n' 'FAIL: cold-start drator-generator requires a RUN replay event at frame 9600' >&2
         exit 1
     fi
+    if [[ "$replay_input_port" != 0 ]]; then
+        printf '%s\n' 'FAIL: drator-generator research input is source-bound to PCE controller port 0' >&2
+        exit 1
+    fi
 fi
 
 if [[ -z "$mednafen_bin" || -z "$cue" || -z "$system_card" || -z "$trace" ]]; then
@@ -1958,7 +1962,9 @@ fi
 if [[ -n "$huc6280_23ad_trace" ]]; then
     if [[ ! -s "$huc6280_23ad_trace" ]] ||
        ! grep -Fq 'format=firestaff-huc6280-23ad-raw-trace-v1' "$huc6280_23ad_trace" ||
-       ! grep -Fq 'call=BSR pc=2390' "$huc6280_23ad_trace" ||
+       ! grep -Fq 'caller_signature fnv1a=699e8da1' "$huc6280_23ad_trace" ||
+       ! grep -Fq 'call=BSR caller=' "$huc6280_23ad_trace" ||
+       ! grep -Fq 'routine_fnv1a=3056f96c' "$huc6280_23ad_trace" ||
        ! grep -Fq 'kind=return_rts' "$huc6280_23ad_trace" ||
        grep -Fq 'truncated=event_limit' "$huc6280_23ad_trace"; then
         printf 'FAIL: requested HuC6280 capture did not produce one complete bounded $23AD invocation: %s\n' \
