@@ -1968,7 +1968,7 @@ if [[ -n "$huc6280_23ad_trace" ]]; then
        ! grep -Fq 'kind=return_rts' "$huc6280_23ad_trace" ||
        ! grep -Fq 'kind=post_return_window_begin' "$huc6280_23ad_trace" ||
        ! grep -Fq 'shared_event_sequence=TheronTraceCDSharedEventSequence' "$huc6280_23ad_trace" ||
-       grep -Fq 'truncated=event_limit' "$huc6280_23ad_trace"; then
+       grep -Fqx 'truncated=event_limit' "$huc6280_23ad_trace"; then
         printf 'FAIL: requested HuC6280 capture did not produce one complete bounded $23AD invocation: %s\n' \
             "$huc6280_23ad_trace" >&2
         exit 1

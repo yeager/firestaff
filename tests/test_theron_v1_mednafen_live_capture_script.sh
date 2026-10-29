@@ -646,6 +646,22 @@ if ! grep -Fq 'extern unsigned TheronPCEFastScriptFrame;' "$drator_route_instrum
     printf '%s\n' 'FAIL: injected route helper must declare the frame counter and cache the environment mode per emulator process' >&2
     exit 1
 fi
+if ! grep -Fq "grep -Fqx 'truncated=event_limit' \"\$huc6280_23ad_trace\"" "$script"; then
+    printf '%s\n' 'FAIL: bounded post-return capture must not be rejected as a truncated decoder trace' >&2
+    exit 1
+fi
+cat >"$host_key_gate_dir/huc6280.trace" <<'HUC6280_TRUNCATION_MARKERS'
+post_return_truncated=event_limit
+HUC6280_TRUNCATION_MARKERS
+if grep -Fqx 'truncated=event_limit' "$host_key_gate_dir/huc6280.trace"; then
+    printf '%s\n' 'FAIL: post-return window truncation was mistaken for an incomplete decoder trace' >&2
+    exit 1
+fi
+printf '%s\n' 'truncated=event_limit' >>"$host_key_gate_dir/huc6280.trace"
+if ! grep -Fqx 'truncated=event_limit' "$host_key_gate_dir/huc6280.trace"; then
+    printf '%s\n' 'FAIL: incomplete decoder trace marker was not recognized' >&2
+    exit 1
+fi
 if ! grep -Fq 'caller_hash == 0x699e8da1' "$huc6280_23ad_probe" ||
    ! grep -Fq 'routine_hash == 0x3056f96c' "$huc6280_23ad_probe" ||
    ! grep -Fq 'expected_opcodes[4] = { 0x8d, 0xa5, 0x8d, 0x44 }' "$huc6280_23ad_probe" ||
