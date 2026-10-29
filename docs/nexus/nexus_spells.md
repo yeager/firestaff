@@ -14,11 +14,12 @@ fixture behavior do not establish Nexus retail semantics.
   into the diagnostic implementation in `src/nexus/nexus_v1_magic.c`. This
   byte match verifies the table contents only; it does not establish the
   meaning of every index or spell effect.
-- Static Ghidra analysis found that retail `FUN_06039f76` reads runtime
-  champion-row offset `+0x18` while computing a threshold used by
-  `FUN_0603a472`. The latter accepts or rejects the next rune in a four-entry
-  sequence. The field's domain meaning and dynamic input path remain unknown.
-  See `docs/nexus/nexus_sh2_startup_decompilation.md`.
+- Earlier static notes connected `FUN_06039f76` and `FUN_0603a472` to
+  four-entry rune validation. Follow-up decompilation reclassifies
+  `FUN_0603a472` as a separate ITEM.IBS action-selector path; no call from the
+  Magic composer or evidence that it validates this composer buffer has been
+  found. Runtime row `+0x18`'s meaning and its relationship to Magic remain
+  unresolved. See `docs/nexus/nexus_sh2_startup_decompilation.md`.
 - The Japanese retail manual documents Control Pad Y as opening the Magic
   window. A 2026-10-29 authentic Ymir `--debug` capture scheduled Y for one
   frame from a gameplay checkpoint loaded from the real BKR and showed the
@@ -52,23 +53,47 @@ fixture behavior do not establish Nexus retail semantics.
   relative to no input. The one-frame A screenshot differs by 4,632 pixels;
   its trace ends at frame 88 versus control's frame 89, so that count includes
   a one-frame endpoint offset. At common frame 88, A changes VDP1 rows 25,
-  79–84, and 88. These captures show a rendered response to both inputs, but
-  do not label the ring sprites or prove a selected rune or accepted cast.
-  All three traces read `FUN_0603a472` and the row `+0x35` bytes through
-  `FUN_0603a55c`; none writes row offsets `+0x35..+0x38`. The corresponding
-  `wram-hi.bin` snapshots remain `02 00 78 00` for rows 0 and 1 and zero for
-  rows 2 and 3. The A capture ends at frame 88 with a complete trace and no
-  dropped records. Full data and hashes are retained at
+  79–84, and 88. Static decompilation identifies `FUN_0602a234` as the menu
+  sequence-composer callback. It calculates action cost through
+  `FUN_0602d144`, applies the mana delta through `FUN_0602d1ec`, then stores
+  `0xDA + cursor * 6 + action` at row `+0x3e + cursor` and advances the cursor
+  at `+0x3d`. The entry store is skipped if the mana update fails. A-only
+  writes `+0x3e=0xDA`, advances `+0x3d` to 1, and reduces row-0 mana from 18
+  to 17. Cardinal and simultaneous diagonal input schedules confirm all six
+  cursor-0 choices: indices 0–5 write `0xDA`–`0xDF` and cost 1–6 mana in order.
+  Up/A, Up+Right/A, Right/A, Down+Right/A, Down/A, and Down+Left/A reached
+  those values respectively. These commits fill the authentic composer and
+  pay the action costs; they do not prove a complete spell was accepted or
+  cast. Left+A from the initial selection leaves cursor and mana unchanged.
+  Static decompilation maps logical D-pad event values 0/1/2/3 to Up/Right/
+  Down/Left and confirms that the menu's current selection index is passed to
+  the composer callback. The Nexus-specific coordinate-to-index table remains
+  unknown.
+- These captures also read `FUN_0603a472` and `FUN_0603a55c`, but the static
+  call graph places them on a separate ITEM.IBS action-selector path, not a
+  demonstrated Magic validator. No writes land
+  in row offsets `+0x35..+0x38`; `wram-hi.bin` retains `02 00 78 00` for rows 0
+  and 1 and zero for rows 2 and 3. The composer buffer at `+0x3d/+0x3e` is a
+  distinct state area. A four-A capture fills all four slots with action 0,
+  leaving row `+0x3d..+0x42` as `03 DA E0 E6 EC 80` and mana at `0x09` from an
+  initial `0x12`. The writer returns status 3 when appending the fourth slot;
+  this proves a full composer buffer, not final spell acceptance. Capture
+  traces are complete with no dropped VDP1 rows. Emulator data and hashes are retained at
   `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-magic-down-input-trace-20261029/`.
+  Ghidra excerpts and callback analysis are retained at
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-magic-input-callback-static-20261029/`.
+  Direction-handler decompilation is retained at
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-dpad-menu-selection-20261029/`.
 - Static Ghidra analysis of the hash-verified Japanese `DM.BIN` finds the
   `MENU.BPK` resource string in `FUN_060286a4`, called indirectly by
   `FUN_06010f44`. Generic draw helpers include `FUN_06029188` and
   `FUN_060292e0`; the analysis does not connect these or decoded entries
   99–106/144 to the observed Magic-window command block or D-pad state.
-  `FUN_0603a472` validates a four-entry sequence and is called by mutators
-  `FUN_0603a55c` and `FUN_0603a602`, which update row offsets `+0x35`, `+0x36`,
-  and `+0x38`. No direct relation to the captured commands or menu surfaces is
-  established. The bounded raw-byte scan found no direct table of the matching
+  Follow-up static analysis identifies `FUN_0603a472`, `FUN_0603a55c`, and
+  `FUN_0603a602` as an ITEM.IBS action-selector path that reads/updates row
+  offsets `+0x35`, `+0x36`, and `+0x38`; no relation to the Magic composer
+  buffer at `+0x3d/+0x3e` or to a cast has been established. The bounded
+  raw-byte scan found no direct table of the matching
   entry IDs; it cannot rule out indirect encodings. See the [static audit
   report](</Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/magic-window-menu-bpk-static-semantic-audit-20261029/README.md>).
 
@@ -92,16 +117,17 @@ implementation or substitute DM1 tables for these missing retail joins.
 The directional probe has a hash-identified Y-open source state reused across
 the same-state runs; that save remains distinct from the separately retained
 Y-entry receipt. Nine VDP1 command sources and their 31 active palette indices
-are bound to authentic `MENU.BPK` surfaces, PALT, and same-run CRAM. The
-follow-up confirms that Down and A alter the visible ring while the candidate
-sequence bytes remain unchanged, even as the retail validator and sequence
-helper are read. Next, trace the input dispatch and the producer of the changed
-VDP1 ring commands to distinguish cursor movement from selection and commit.
-Then follow a confirmed commit through sequence writes and validator result,
-and continue casting through mana changes, target/effect state, random inputs,
-animation, and visible output. Do not assign rune field names or implement the
-Firestaff route from sprite appearance alone. The `+0x18` consumer remains a
-separate work item.
+are bound to authentic `MENU.BPK` surfaces, PALT, and same-run CRAM. A-only
+Authentic captures now confirm all six numeric action choices at cursor 0,
+their `0xDA + cursor * 6 + action` encoding, and a four-slot composer buffer.
+The D-pad direction event handler is decompiled, but the Nexus menu's
+coordinate-to-index table, glyph meanings, and physical pad-bit producer
+  remain open. Next, bind the six values to their retail `MENU.BPK` surfaces and
+  identify the full-buffer submit path and any actual validator/cast consumer,
+  including mana, target/effect state,
+random inputs, animation, save changes, and visible output. Do not assign rune
+names from sprite appearance alone. The `+0x18` consumer remains a separate
+work item.
 
 Raw emulator states, screenshots, logs, and memory traces remain outside Git
 in `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/nexus-magic-window-input-20261029/`,

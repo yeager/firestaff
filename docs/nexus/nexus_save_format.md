@@ -140,15 +140,16 @@ current mana toward its maximum. The probe exposes these fields as
 `champion_mana_current` and `champion_max_mana`. All four authentic saves
 contain `18/20`, while the captured post-update runtime values are `19/20`.
 The byte at source `+0x09` is copied to runtime champion offset `+0x35`.
-Retail functions `FUN_0603a472` and `FUN_0603a55c` consume that runtime byte as
-the position in a four-entry rune sequence, while `FUN_0603a602` initializes
-the sequence and `FUN_0603798e` resets it. The payload probe exposes it as
-`champion_rune_sequence_cursor`; this is save metadata only and is not yet
-connected to Firestaff's spell input state. All four image-hash-verified BKR
-files have cursor value `2` in every champion record; their extracted payload
-hashes match the four pinned corpus payloads. Other champion and world fields
-remain opaque. Original Saturn save import remains gated until the complete
-semantic payload mapping and source-owned consumer are identified and
+Follow-up static analysis places `FUN_0603a472`, `FUN_0603a55c`, and
+`FUN_0603a602` on an ITEM.IBS action-selector path that reads or updates
+offsets `+0x35`, `+0x36`, and `+0x38`. This does not establish a Magic sequence
+cursor or connect the field to the composer at `+0x3d/+0x3e`; the payload
+probe therefore exposes it as `champion_byte_09_runtime_35` pending domain
+identification. All four image-hash-verified BKR files have value `2` in every
+champion record; their extracted payload hashes match the four pinned corpus
+payloads. Other champion and world fields remain opaque. Original Saturn save
+import remains gated until the complete semantic payload mapping and
+source-owned consumer are identified and
 exercised against the retail game.
 
 ### Name-byte comparison against the Japanese roster

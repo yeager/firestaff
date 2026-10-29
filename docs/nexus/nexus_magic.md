@@ -12,12 +12,19 @@ Firestaff UI declarations and diagnostic C code do not prove retail semantics.
 - The Japanese retail `DM.BIN` has 32 big-endian halfwords at offset `0x38368`
   matching bytes in `src/nexus/nexus_v1_magic.c`. The match establishes bytes,
   not the complete table meaning or any cast effect.
-- Static analysis found a champion-row byte used in a threshold for accepting
-  or rejecting the next rune in a four-entry sequence. Its semantic name and
-  dynamic input path are unknown.
+- Follow-up static analysis places the champion-row byte and
+  `FUN_0603a472` on a separate ITEM.IBS action-selector path. No evidence
+  currently connects that path to Magic composer validation or casting.
 - The Japanese retail manual documents Control Pad Y opening the Magic window;
   an authentic Ymir `--debug` capture verifies that entry action from the
   retained gameplay checkpoint.
+- Authentic paired-input captures and decompilation confirm the retail
+  composer stores four action slots at champion row `+0x3d/+0x3e..+0x41` using
+  `0xDA + 6*cursor + action`. All six cursor-0 numeric choices and costs
+  (1–6 mana) have been captured; their rune names and the Nexus menu's
+  coordinate-to-index table are not yet identified. A four-action sequence
+  fills the composer buffer, but any final validator and cast path remain
+  unverified.
 
 See [`nexus_spells.md`](nexus_spells.md) for evidence hashes, capture details,
 and the bounded interpretation.
@@ -26,9 +33,9 @@ and the bounded interpretation.
 
 Firestaff production links `nexus_v1_magic_runtime_noop.c`. Spell lookup,
 mana-cost, cast, and damage APIs fail closed. The desktop route does not yet
-open or render the retail Magic window. Rune selection, sequence validation,
-mana mutation, target selection, effect dispatch, and save changes are not
-implemented as admitted Nexus behavior.
+open or render the retail Magic window. The confirmed retail composer behavior
+is not yet implemented in Firestaff; final sequence validation, target
+selection, effect dispatch, and save changes also remain unverified.
 
 Keep the diagnostic source-study file out of gameplay. Do not substitute DM1
 tables or synthetic item/spell data for missing retail joins.

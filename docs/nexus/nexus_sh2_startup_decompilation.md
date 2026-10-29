@@ -331,15 +331,13 @@ different two-byte descriptors. `PTR_FUN_060296b4` resolves to
 a nonzero sliced path. The authentic adjusted values enter that nonzero path.
 Its caller `FUN_060296d8` invokes `FUN_060295b8` in one mode path. This links
 the fields to retail presentation work, but their helper-level interpretation
-and domain meanings are still unknown. `FUN_06039f76` independently reads
-row `+0x18` while computing a threshold used by `FUN_0603a472`; for selected
-rune categories it compares the saved value with category-specific constants
-and increases the threshold on a match. `FUN_0603a472` uses that result to
-accept or reject the next rune in a champion's four-entry spell sequence.
-Thus source `+0x44` / runtime `+0x18` affects retail rune-sequence validation,
-although its domain name and complete Firestaff-side requirements remain
-unknown. The authentic dynamic read path during spell input has not yet been
-traced.
+and domain meanings are still unknown. Follow-up static analysis places
+`FUN_0603a472` and its related helpers on an ITEM.IBS action-selector path.
+The earlier four-entry Magic-validator interpretation was unsupported: Magic
+composer `FUN_0602a234` does not call this helper, and no full-buffer submit or
+cast edge to these functions has been established. The `+0x18` threshold read
+is therefore not yet connected to Magic; trace the action-selector path and
+identify this saved field's semantics independently.
 The disassembly scan and complete decompilation are retained in the operator-
 managed external evidence bundle's `field-consumer-scan-20261029/` directory.
 
