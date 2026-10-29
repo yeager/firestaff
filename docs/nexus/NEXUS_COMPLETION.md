@@ -622,7 +622,7 @@ and the [startup/menu evidence log](nexus_startup.md).
 | SLEV/SAL/SDDRVS | 2/8 | 25.0 % | 0 % | Corpus, driver, and write traces exist; selector, codec, MAP binding, event dispatch, and actual playback are unproven |
 
 The arithmetic mean of implementation coverage is
-`(50,0 + 37,5 + 57,1 + 75,0 + 14,3 + 25,0) / 6 = 44,0 %`.
+`(50,0 + 37,5 + 57,1 + 75,0 + 14,3 + 25,0) / 6 = 43,2 %`.
 As a checksum, the named gates are `22/48 = 45,8 %`; that figure does not
 replace the area mean, because an area would otherwise weigh more merely for
 having more sub-gates. For the prioritized startup → menu → HUD/viewport chain,
