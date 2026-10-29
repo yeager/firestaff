@@ -887,3 +887,19 @@ asset and CLUT owner remain unidentified, so this reference does not open
 Firestaff's production menu or renderer gate. It also does not establish
 playable-level entry, save loading, HUD or gameplay parity. Details and hashes
 are in [the English cold-boot receipt](nexus_startup.md#english-cold-boot-reaches-the-native-title-menu-2026-10-27).
+
+## Authentic BKR Continue reference (2026-10-28–29)
+
+Ymir `0.4.2-dev` on TRV2 cold-booted the authentic Japanese retail disc with
+the corpus-retained four-champion BKR in internal backup RAM. The native
+Continue route displayed `B01 0:16 NORMAL`, accepted the save, and reached a
+dungeon view with four champion HUD panels. A separate 2026-10-29 cold boot
+with the authentic two-champion BKR also reached the native Load panel and
+displayed `B01 0:16 NORMAL`; the profile's BUP image retained the BKR hash.
+These are retail-reference results in Ymir. The two-champion capture does not
+identify payload fields, and neither result wires Firestaff's BKR parser to
+live backup RAM or the engine load path. Firestaff Continue, complete menu
+composition, and production gameplay remain unverified. Reproduction commands,
+hashes, captures and the savestate-method correction are recorded in
+[`nexus_startup.md`](nexus_startup.md#two-champion-bkr-cold-boot-2026-10-29)
+and the operator-managed evidence bundle linked there.
