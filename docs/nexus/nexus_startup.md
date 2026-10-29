@@ -2054,3 +2054,14 @@ not show that this tile contributes visible pixels or identify any source
 asset, palette, or text consumer. The screenshot, complete zero-drop traces,
 WRAM-HI image, disassembly excerpt, analyzer output and hashes are retained in
 `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/load-screen-vdp2-trace-20261029/`.
+
+The same frame's 8bpp NBG0 bitmap was checked separately against 410 decoded
+and hash-verified retail candidates from `MENU.BPK`, `FONT256.S2D`,
+`TITLE.BIN`/`TITLE.CG`, and `STABG.BIN`. None is an exact byte span in the
+131,072-byte bitmap. The `TITLE.BIN` palette is present in CRAM at byte offset
+1024, but the `MENU.BPK` and `STABG.BIN` palettes and all 1,266 parsed DGN
+Structure2 palettes have no exact raw or word-swapped CRAM match. This does
+not identify the NBG0 producer or prove which palette NBG0 uses. The bounded
+check skips the analyzer's expensive partial-span ranking with `--exact-only`;
+its complete output is retained as `nbg0-bitmap-exact-source-scan.txt` in the
+same external evidence directory.
