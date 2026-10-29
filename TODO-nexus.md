@@ -13,9 +13,11 @@ page; Japanese state changes and marker animation still need authentic captures.
 The C Saturn BKR container parser is verified against all four hash-pinned
 samples reported as retail-written; see DONE-nexus.md. A bounded C probe now
 validates the retail `DMNEXUS__01` payload offsets, champion count, party
-leader index, current/maximum stamina pair, and bounded value/limit pair
-against decompiled retail code and all four authentic images. Other
-champion-record fields remain opaque.
+leader index, bounded recovery pair, current/maximum stamina pair, and bounded
+value/limit pair against decompiled retail code and all four authentic images.
+The recovery pair at source `+0x38/+0x3a` loads as `47/47`; the updater's
+bounded-increase behavior is statically decompiled, but not yet captured
+changing those values at runtime. Other champion-record fields remain opaque.
 Retail Continue's BKR named-entry lookup,
 complete payload transfer,
 and checksum gate are source-bound. The remaining work is to identify the
@@ -33,6 +35,13 @@ installation data. Keep final load confirmation gated until the remaining
 champion fields and retail state consumer are mapped. The authentic Load-panel
 capture still lacks complete NBG0/NBG1 composition and text/border source joins;
 see `docs/nexus/nexus_startup.md` and the saved Ymir `--debug` captures.
+
+A separate Ymir cold boot tested the retail Start control in the New Game
+view. Start displayed `PAUSE`; a second Start returned to the byte-identical
+unpaused view. The interval produced zero SH-2 writes to the BUP bus and the
+fresh internal BUP still contains no entries. Save creation and the in-game
+save command remain unresolved; see the authentic input/BUP trace receipt in
+the external evidence folder.
 
 A 2026-10-29 Ymir cold boot with the authentic two-champion BKR installed in
 internal backup RAM reached the native Load panel, displayed `B01 0:16 NORMAL`,

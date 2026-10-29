@@ -182,10 +182,16 @@ or an identified guest RAM field have been reproduced. Item use, inventory,
 spells, combat, sensors, doors, and level transitions remain fail-closed.
 
 In a loaded Nexus dungeon, Space toggles Firestaff's host pause. Ymir evidence
-records that the retail Start button displayed the `PAUSE` overlay; whether
-retail gameplay resumes on a second press remains unverified. Firestaff's host
-pause freezes the session tick and host audio until Space is pressed again.
-This does not reproduce the retail `PAUSE` graphic or menu.
+records that retail Start displays the `PAUSE` overlay. A controlled Ymir
+replay from that paused checkpoint pressed Start once more and returned to the
+byte-identical New Game view, verifying retail resume. Pressing A while paused
+did not change the captured image. The isolated internal BUP stayed empty, and
+a complete SH-2 write trace over the BUP bus range recorded zero writes during
+the New Game interval. These captures do not identify the save command or
+prove that Start opens a save menu. Firestaff's host pause freezes the session
+tick and host audio until Space is pressed again; it does not reproduce the
+retail `PAUSE` graphic.
+See the [authentic Ymir input and BUP trace](../../../../firestaff-evidence/nexus/nexus_new_game_save_probe_20261029/README.md).
 
 With pointer mode off, left-click within the authentic Nexus movement-pad
 rectangle parsed from `DM.BIN` to send the corresponding desktop movement
