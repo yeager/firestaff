@@ -1646,6 +1646,27 @@ dynamic receipt binds any candidate sector to the runtime bank. See
 
 # Firestaff TODO — Theron's Quest
 
+## 2026-10-29 — X11 cold start does not prove the Theron handoff
+
+- A fresh cold PCE Fast capture used authentic Japanese Rev. 1 media, System
+  Card 3.0 and `xdotool` key-down/up events through an X11 window. The scheduled
+  Run and Button I sequence produced 532 host-key events, 936 SDL events and
+  1,048,576 controller transactions; the input trace reached its configured
+  1,048,576-record limit. The receipt found no CD IRQ callbacks, no SCSI read
+  commands or sector bindings, no authenticated CD-to-RAM receipt, and
+  `transition=missing`. Thus host keyboard delivery is verified, but a game
+  menu action and transfer into Theron's code are not.
+- VWR and merged graphics chronology also reached their 1,048,576-record
+  limits (`merged_limit_reached`); do not treat the resulting chronology as a
+  complete graphics capture. The bounded trace was removed from TRV2 after
+  recording the receipt; no game media, firmware, or raw trace was added here.
+- The Mednafen log reported the Japanese SBI sidecar missing. The installed
+  Theron media inventory currently has no `.sbi` file, so a source-bound replay
+  that depends on that sidecar cannot yet be performed. This absence is not
+  established as the cause of the missing transition. Obtain authentic
+  subchannel data or establish that the edition does not require it before
+  using another cold-start capture to claim handoff progress.
+
 ## Earlier 2026-10-24 — native debug boot-probe boundary
 
 A clean Firestaff build from commit `2748eed3db4a3a9d7b1db2e1522b050440b3e0a2`
