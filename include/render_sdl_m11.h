@@ -364,6 +364,10 @@ int  M11_Render_MapWindowToFramebuffer(int windowX,
 /* Dimensions of the current source/presentation target used by
  * M11_Render_MapWindowToFramebuffer. */
 int  M11_Render_GetContentSize(int* outWidth, int* outHeight);
+/* Dimensions of the actual uploaded image sampled by the renderer. These may
+ * differ from the content target when nearest presentation resamples to the
+ * drawable size before uploading. */
+int  M11_Render_GetPresentedSize(int* outWidth, int* outHeight);
 /* Current SDL logical window and physical renderer-output dimensions. The
  * latter differs on HiDPI displays and is useful to diagnose the final
  * presentation transform without changing the source framebuffer. */

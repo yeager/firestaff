@@ -38634,12 +38634,38 @@ static M12_MenuInput m11_theron_mouse_control_input_at(
     return g_m11_theron_mouse_inputs[row][column];
 }
 
+/* The window mapper returns an index in the configured content target, while
+ * nearest presentation may upload a differently sized CPU-resampled image.
+ * Select the last uploaded pixel represented by that target index, then undo
+ * the renderer's floor-based source sampling. */
+static int m11_theron_target_axis_to_source(int target_position,
+                                           int target_size,
+                                           int presented_size,
+                                           int source_size)
+{
+    int64_t presented_position;
+
+    if (target_position < 0 || target_size <= 0 || presented_size <= 0 ||
+        source_size <= 0) {
+        return -1;
+    }
+    presented_position =
+        (((int64_t)target_position + 1) * presented_size + target_size - 1) /
+        target_size - 1;
+    if (presented_position < 0 || presented_position >= presented_size) {
+        return -1;
+    }
+    return (int)(presented_position * source_size / presented_size);
+}
+
 int M11_GameView_MapTheronPresentedControlPointToSource(
     const M11_GameViewState *state, int presented_x, int presented_y,
     int *out_x, int *out_y)
 {
     int target_w = M11_THERON_MOUSE_CANVAS_W;
     int target_h = M11_THERON_MOUSE_CANVAS_H;
+    int presented_w;
+    int presented_h;
     int source_x;
     int source_y;
 
@@ -38657,15 +38683,21 @@ int M11_GameView_MapTheronPresentedControlPointToSource(
         presented_y < 0 || presented_x >= target_w ||
         presented_y >= target_h) return 0;
 
-    /* The renderer samples each presented pixel from the source framebuffer
-     * with floor(presented * source / target). Use that exact inverse before
-     * hit-testing the source-space panel. Forward-scaled cell edges can claim
-     * a pixel one row early at fractional ratios (for example y=590 at
-     * 1280x960 samples source y=122; the first row starts at source y=123). */
-    source_x = (int)((int64_t)presented_x * M11_THERON_MOUSE_CANVAS_W /
-                     target_w);
-    source_y = (int)((int64_t)presented_y * M11_THERON_MOUSE_CANVAS_H /
-                     target_h);
+    /* Most presentations upload exactly the target size. Nearest mode can
+     * instead CPU-resample to the drawable dimensions (for example, a
+     * 666x499 upload for a 667x500 target), so use the actual upload geometry
+     * that produced the visible panel pixels. */
+    presented_w = target_w;
+    presented_h = target_h;
+    (void)M11_Render_GetPresentedSize(&presented_w, &presented_h);
+
+    source_x = m11_theron_target_axis_to_source(
+        presented_x, target_w, presented_w, M11_THERON_MOUSE_CANVAS_W);
+    source_y = m11_theron_target_axis_to_source(
+        presented_y, target_h, presented_h, M11_THERON_MOUSE_CANVAS_H);
+    if (source_x < 0 || source_y < 0 ||
+        source_x >= M11_THERON_MOUSE_CANVAS_W ||
+        source_y >= M11_THERON_MOUSE_CANVAS_H) return 0;
     if (m11_theron_mouse_control_input_at(state, source_x, source_y) ==
         M12_MENU_INPUT_NONE) return 0;
 
