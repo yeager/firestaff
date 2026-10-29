@@ -1,3 +1,13 @@
+# Unreleased
+
+## User-facing changes
+
+- `DM2 Amiga`: select the authentic scene and light-level palette for the active dungeon viewport, correcting the cyan/orange color corruption.
+
+## Developer changes
+
+- `DM2 Amiga palette`: validate the active displayed 16-color stripe against original Amiga media in the M11 NEW GAME path; retain the remaining viewport and HUD parity gaps as open work.
+
 # Firestaff v3.0.419
 
 ## User-facing changes
