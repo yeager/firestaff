@@ -1870,6 +1870,13 @@ not treat either time as an established property of the BKR or infer a BKR
 mutation. Resolving the cause requires a controlled replay with the same
 Ymir build, profile initialization, and frame-exact input schedule.
 
+The authentic two-champion cold boot below reproduces the UI string
+`B01 0:16 NORMAL` with a different 32 KiB BKR. The directory comment bytes
+extracted by the BKR parser are `B01  0:06N` in each of the four hash-pinned
+retail-written corpus images. The available evidence does not establish that
+the retail Load panel copies or formats that directory comment; do not use it
+as a decoded save-time or mode field.
+
 Ymir `0.4.2-dev` was run on TRV2 with the hash-verified Japanese retail disc,
 Japanese IPL and an isolated profile. The profile's internal backup RAM was a
 byte-for-byte copy of
