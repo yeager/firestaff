@@ -322,7 +322,12 @@ constant, and stores it while decrementing an event nibble. This confirms a
 second retail event routine consumes and updates the same field, but does not
 identify its game-domain meaning. `FUN_060366b8` is the direct caller of
 `FUN_060361a8` and invokes it for active non-leader champions. The consumer
-set and source meanings of both fields remain open.
+set and source meanings of both fields remain open. Another routine,
+`FUN_060295b8`, selects the same indexed row, reads both `+0x18` and `+0x1a`,
+adds `0x0400` to each, and passes them separately to a resource helper with
+different two-byte descriptors. Its caller `FUN_060296d8` invokes it in one
+of its mode paths. This links the fields to retail presentation work, but the
+helper's coordinate system and the fields' domain meanings are still unknown.
 The disassembly scan and complete decompilation are retained in the operator-
 managed external evidence bundle's `field-consumer-scan-20261029/` directory.
 

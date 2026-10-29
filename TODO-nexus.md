@@ -105,9 +105,11 @@ read-only Ghidra scan found a second runtime `+0x1a` access in
 `FUN_060373d0`, which uses the same champion-row base and `0x13c` stride as
 the BKR importer and updates the halfword on an event path. This narrows the
 next source investigation but does not establish the field's domain meaning.
-The consumer set and semantics for both fields, the rest of the record, the
-source-owned post-load consumer, and Firestaff runtime integration remain
-open.
+`FUN_060295b8` also reads both fields from that same indexed row, adds `0x0400`
+and passes them to a resource helper; its caller invokes it in one mode path.
+The helper's coordinate system is unresolved. The complete consumer set and
+semantics for both fields, the rest of the record, the source-owned post-load
+consumer, and Firestaff runtime integration remain open.
 Reproduction and retained evidence are documented in
 [`nexus_sh2_startup_decompilation.md`](docs/nexus/nexus_sh2_startup_decompilation.md#continue-payload-transfer-2026-10-29).
 The Ghidra field-consumer scan is retained in the external
