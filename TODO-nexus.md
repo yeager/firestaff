@@ -49,11 +49,12 @@ The source-record stride (`0xe0`) and runtime-record stride (`0x13c`) are now
 verified from the retail code constants. A reproducible analyzer restores the
 traced four-byte fixup for payload hash verification and compares the
 decompilation-specified projections across authentic two-, three-, and
-four-champion captures (22, 33, and 44 copies). A complete Ymir write trace
-also follows the `+0x08` runtime field in all four records of the leader-3
-save: each loads 67 and is later updated through `FUN_060360fc` to 66. The
-mechanical projection and these retail writes are verified; field semantics,
-the rest of the record, and Firestaff's runtime integration remain open.
+four-champion captures (24, 36, and 48 projection checks). The leader-3 Ymir
+trace follows the `+0x08` field in all four records from load 67 to retail
+updates ending at 66. It also captures the `+0x10` field for three records,
+from load 18 to a later write of 19; the fourth address was outside the trace
+window. Field semantics, the rest of the record, and Firestaff's runtime
+integration remain open.
 Reproduction and retained evidence are documented in
 [`nexus_sh2_startup_decompilation.md`](docs/nexus/nexus_sh2_startup_decompilation.md#continue-payload-transfer-2026-10-29).
 
@@ -313,9 +314,10 @@ not a fix and has not passed this real-media test.
   Game now reaches the authenticated `DM.BIN`/`LEV01.DGN` loader and emits the
   retail level-1 start receipt, but the downstream viewport/HUD gate still
   blocks a playable handoff. Ymir now proves the retail Continue BKR lookup,
-  payload read, checksum gate, and 22 selected roster-field projections from
-  an authentic two-champion save. Firestaff still does not load Saturn BKR
-  state, and Configuration destination behavior remains unimplemented.
+  payload read, checksum gate, and 24/36/48 selected roster-field
+  projections from authentic two-, three-, and four-champion saves.
+  Firestaff still does not load Saturn BKR state, and Configuration
+  destination behavior remains unimplemented.
   The Japanese New Game
   and Continue captures each verify five `TITLE.BIN` sprites and 1,441
   screenshot texels; the English states each verify 1,451. The Japanese

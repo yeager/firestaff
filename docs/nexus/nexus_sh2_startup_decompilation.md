@@ -158,22 +158,29 @@ captured 20,480-byte source against the authentic `DMNEXUS__01` payload. The
 hash matches. The decompiled constants give a source-record stride of `0xe0`
 and a runtime-record stride of `0x13c`; the captured world context reports two
 records. Across both records, the analyzer verifies six byte-copy spans and
-five signed-halfword-to-longword conversions per record between payload
-offset `0x11c` and the runtime array at `0x0607fba0`. The field offsets are
-checked directly against `FUN_0602eb4c` and the same-run WorkRAM dumps.
+six signed-halfword-to-longword conversions per record between payload
+offset `0x11c` and the runtime array at `0x0607fba0`. This yields 12
+projection checks per record (24, 36, and 48 for the captured two-, three-,
+and four-champion saves). The field offsets are checked directly against
+`FUN_0602eb4c` and the same-run WorkRAM dumps.
 
-The same analyzer also verifies 33 and 44 projections for authentic
-three- and four-champion saves. A four-champion save with leader index 3 has
-four runtime values that differ from the corresponding loaded halfword:
-source `+0x3c` is 67, while the final runtime `+0x08` value is 66. A complete
-Ymir SH-2 write trace covering all four destination fields captures the same
-sequence for each record: loader write 67 at frame 12931, updater writes 68
-and 67 at frame 13055, then 64 and 66 at frame 13951. Every post-load write
-joins to `FUN_060360fc`; the retained pcrecomp/Ghidra decompilation shows that
-routine subtracting a caller-provided value from the runtime `+8` longword and
-clamping it. Thus all four differences are explained by later retail writes,
-not by a failed BKR transfer. This does not establish the semantic name of
-that field or of the caller's values.
+The source `+0x40` to runtime `+0x10` projection differs in all three roster
+snapshots: the save contains 18 and final WRAM has 19. In the leader-index-3
+run, the complete retained trace covers this field
+for three champions and records the loader write of 18 at frame 12931 followed
+by a write of 19 at frame 13951, PC `0x06036272`, inside `FUN_060361a8`. The
+decompilation shows this routine increasing the runtime `+0x10` value toward
+the paired `+0x14` maximum. The trace's address range ends before the fourth
+champion's `+0x10` field, so that one update remains untraced.
+
+The leader-index-3 save also has four differences at source `+0x3c` / runtime
+`+0x08`: 67 in the save and 66 in final WRAM. The all-record write trace
+captures loader value 67 at frame 12931, updater writes 68 and 67 at frame
+13055, then 64 and 66 at frame 13951 for all four champions. Each post-load
+write joins to `FUN_060360fc`; decompilation shows it subtracting a
+caller-provided value from the runtime `+8` longword and clamping it. These
+traces explain seven of the eight leader-index-3 final-value differences.
+They do not assign semantic names to the fields or the caller's values.
 
 These checks establish only the listed mechanical projections and the traced
 post-load updates. They assign no field names, do not decode the rest of each
@@ -183,7 +190,7 @@ Re-run against retained authentic captures with:
 ```sh
 python3 scripts/analyze_nexus_bkr_runtime_projection.py \
   /path/to/coldboot-continue-readtrace-20261029/wram-hi.bin \
-  /path/to/nexus_bkr_projection_matrix_20261029/four-wram-lo.bin
+  /path/to/coldboot-continue-readtrace-20261029/wram-lo.bin
 ```
 
 For the leader-3 update sequence, pass the all-record trace and its bundle:
@@ -196,8 +203,10 @@ python3 scripts/analyze_nexus_bkr_runtime_projection.py \
   --leader3-write-trace-bundle /path/to/nexus_bkr_projection_matrix_20261029/leader-3-all-record-write-trace-bundle.txt
 ```
 
-The trace covers 8,619 writes with no dropped rows and has 24 writes to the
-four target fields. Captures, logs, trace, decompilation output, and SHA-256
+The trace covers 8,619 writes with no dropped rows. It contains 24 writes to
+the four `+0x08` fields and nine writes to the first three `+0x10` fields; the
+fourth `+0x10` address is outside its bounded range. Captures, logs, trace,
+decompilation output, and SHA-256
 manifest are in the external evidence folder
 `nexus_bkr_projection_matrix_20261029/`. The separate pointer fixup's
 consumer and the payload schema remain open.
