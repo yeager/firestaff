@@ -73,7 +73,7 @@ def be_value_bytes(value: int, width: int) -> bytes:
 
 
 def verify_runtime_animation_palt(wram_hi: bytes, rhifix: bytes
-                                  ) -> tuple[int, int, str]:
+                                  ) -> tuple[int, int, str, bytes]:
     """Join the animation table to its exact source bytes in RHIFIX.BIN."""
     def read_wram_u32(address: int) -> int:
         offset = address - SH2_RAM_BASE
@@ -132,7 +132,51 @@ def verify_runtime_animation_palt(wram_hi: bytes, rhifix: bytes
         raise ValueError("runtime PALT version 0 payload differs")
     if rhifix[RHIFIX_PALT0_OFFSET:RHIFIX_PALT0_OFFSET + len(palt0)] != palt0:
         raise ValueError("runtime PALT version 0 is not byte-identical to RHIFIX.BIN")
-    return archive_address, palt0_address, hashlib.sha256(palt0).hexdigest()
+    return archive_address, palt0_address, hashlib.sha256(palt0).hexdigest(), palt0
+
+
+def verify_animation_index_sequence(capture: Path, palt0: bytes
+                                    ) -> tuple[list[int], list[int]]:
+    """Prove the frame-655 source index from the traced rolling PALT sequence."""
+    frames = list(range(623, 656, 4))
+    indices = list(range(23, 32))
+    expected = [(frame, int.from_bytes(palt0[index * 2:index * 2 + 2], "big"))
+                for frame, index in zip(frames, indices)]
+
+    sh2_receipt = read_receipt(
+        capture / "sh2-vdp2-write-trace-bundle.txt",
+        "ymir-sh2-vdp2-write-trace-bundle-v1",
+    )
+    if (sh2_receipt.get("trace_file_complete") != "1" or
+            sh2_receipt.get("master_dropped") != "0" or
+            sh2_receipt.get("slave_dropped") != "0"):
+        raise ValueError("animation-index SH-2 trace is incomplete or dropped")
+    sh2_events: list[tuple[int, int]] = []
+    with (capture / sh2_receipt.get(
+            "trace_file", "sh2-vdp2-write-trace.csv")).open(
+            encoding="ascii", newline="") as stream:
+        for row in csv.DictReader(stream):
+            if (row.get("sh2") == "master" and row.get("pc") == "0x6038eda" and
+                    row.get("caller_target") == "0x6038e30" and
+                    row.get("address") == "0x5f00106" and row.get("width") == "2" and
+                    int(row["vdp1_frame"]) in frames):
+                sh2_events.append((int(row["vdp1_frame"]), int(row["value"], 16)))
+    if sh2_events != expected:
+        raise ValueError(
+            "retail animation writer values do not match PALT v0 indices 23..31")
+
+    bus_events: list[tuple[int, int]] = []
+    with (capture / "vdp2-memory-write-trace.csv").open(
+            encoding="ascii", newline="") as stream:
+        for row in csv.DictReader(stream):
+            if (row.get("memory") == "CRAM" and row.get("address") == "0x106" and
+                    row.get("width") == "2" and
+                    int(row["vdp1_frame"]) in frames):
+                bus_events.append((int(row["vdp1_frame"]), int(row["value"], 16)))
+    if bus_events != expected:
+        raise ValueError(
+            "VDP2 CRAM bus values do not match the traced PALT v0 index sequence")
+    return frames, indices
 
 
 def menu_surface_dimensions(data: bytes) -> dict[str, tuple[int, int]]:
@@ -366,8 +410,10 @@ def main() -> int:
         # The raw Ymir WorkRAM-HI image is addressed from 0x06000000. Check the
         # observed store opcode against the authenticated DM.BIN code mapping.
         wram_hi = (args.capture / "wram-hi.bin").read_bytes()
-        runtime_archive, runtime_palt0, runtime_palt0_hash = \
+        runtime_archive, runtime_palt0, runtime_palt0_hash, runtime_palt0_bytes = \
             verify_runtime_animation_palt(wram_hi, rhifix)
+        animation_frames, animation_indices = verify_animation_index_sequence(
+            args.capture, runtime_palt0_bytes)
         code_offset = WRITER_PC - SH2_BASE
         ram_offset = WRITER_PC - SH2_RAM_BASE
         code = dm_bin[code_offset:code_offset + 32]
@@ -552,6 +598,9 @@ def main() -> int:
     print(f"runtime_animation_palt0_sha256={runtime_palt0_hash}")
     print("runtime_animation_palt0_to_res_record=verified")
     print("animation_cram_value_membership=0xffff-present-in-runtime-palt0")
+    print("animation_index_sequence_frames=" + ",".join(map(str, animation_frames)))
+    print("animation_index_sequence=" + ",".join(map(str, animation_indices)))
+    print("animated_palette_override_source_index=31-sequence-derived")
     if palette_receipt:
         (source_pixels, compared_pixels, indices,
          visible_palt_matches, total_palt_matches,
@@ -573,7 +622,6 @@ def main() -> int:
                   {0x0C, 0x0D, 0x80, 0x81, 0x82, 0x83})))
         print("animated_palette_override_index=0x83")
         print("animated_palette_override_writer=0x06038eda@frame655")
-        print("animated_palette_override_source_index=not-captured")
         print(f"screenshot_sha256={screenshot_hash}")
         print("visible_nbg0_palette_to_screenshot=verified")
     else:

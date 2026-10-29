@@ -2154,11 +2154,15 @@ animation table slot `0x06079b08`; Ghidra dataflow shows the frame-driven CRAM
 writer reads through that slot. The 512-byte runtime PALT v0 table has SHA-256
 `1c81908014b51fc25f52a6400048b4449f723a2a807b83842231b09d676bbf5a` and
 matches `RHIFIX.BIN` exactly at offset `0x1140`. It contains `0xffff`, the
-value observed in the frame-655 CRAM write. The frame-659 capture does not
-establish which table index supplied that frame-655 value. This runtime table
-is not byte-identical to the trailing `MENU.BPK` PALT. The analyzer verifies
-the archive records, single version-byte change, pointer slot, and source
-table bytes against the authentic capture and file.
+value observed in the frame-655 CRAM write. Nine SH-2 and VDP2 CRAM writes at
+address `0x106`, from frames 623 through 655 at four-frame intervals, match
+PALT v0 indices 23 through 31 in order. The decompiled routine increments its
+table counter modulo 32, so this sequence identifies frame 655's source index
+as 31; index 0 also contains `0xffff`, but does not match the preceding ramp.
+This runtime table is not byte-identical to the trailing `MENU.BPK` PALT. The
+analyzer verifies the archive records, single version-byte change, pointer
+slot, source table bytes, and traced index sequence against the authentic
+capture and file.
 This binds the visible CRAM output and identifies
 the static MENU.BPK palette values for 41 used indices, while leaving direct
 bulk palette-transfer ownership, zero-index pixels, and other screen layers

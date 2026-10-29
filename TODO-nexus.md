@@ -553,7 +553,8 @@ snapshot now join the animation's PALT v0 pointer slot to a live `RES*` record;
 its 512-byte payload is an exact match for `RHIFIX.BIN` at offset `0x1140`, and
 the live archive differs from that hash-verified file only at version byte
 `0x0b`. The table contains the `0xffff` value seen in the frame-655 CRAM write;
-the exact source index at frame 655 remains unbound. Direct bulk
+nine four-frame-spaced writes match PALT indices 23–31 in order, identifying
+index 31 for frame 655. Direct bulk
 static-palette-transfer ownership and complete
 bitmap composition remain unresolved. Continue source tracing for the CRAM
 static-palette upload, full-screen producer, and transparent-pixel composition before
