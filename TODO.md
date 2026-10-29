@@ -1,5 +1,20 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-29 current-main startup retest at `737508d0` after PR #200: the
+authentic-media no-game M12 first-runtime cases passed separately for DM1,
+CSB, and DM2 using the installed FM Towns editions. The four alternate
+platform menu-to-runtime cases also passed: DM1 PC, DM1 Atari ST, CSB Atari
+ST, and DM2 PC-DOS. CSB Atari ST found the original Utility disk archive in
+the per-game data directory and completed its startup animation before
+reaching a nonzero viewport receipt and movement step. The CSB Atari
+animation asset, real-media, and discovery tests passed 3/3. The original DM1
+Apple IIGS 2.0/2.1 CLI and M12 real-media test reached active dungeon runtime
+for both editions. The checks used authentic local media and verified source
+archives remained unchanged where the harness provides hashes. These results
+cover the named source paths only; they do not establish every edition,
+native display/input parity, or full campaign playability. No new startup
+failure was reproduced in these routes, and no release was created.
+
 2026-10-29 CSB launcher edition-row follow-up, based on `584028e1`: the new
 `m12_csb_amiga_version_menu_real_media` CTest passed against the installed
 original CSB Amiga 3.5 English archive. It navigates the public M12 menu input

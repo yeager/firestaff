@@ -1,15 +1,16 @@
 # Five-game startup support gap analysis
 
-Release metadata checked against GitHub `main` at `6c769738` on 2026-10-29.
-The latest published release remains v3.0.419 (published on 2026-10-28 from
-tag commit `71bf83b2`). Current `main` is newer than that release and its
-source is not included in the published packages. Verification Actions run
-`40807507592` for current `main` completed successfully. The release workflow
-verifies packaging, not gameplay startup. Since v3.0.419, commit `01cc1181`
-aligned DM1 Atari ST multi-member 7z required-file receipts with the
-AUTO-selected launch edition. The focused virtual-start test and authentic
-Atari ST 1.1, 1.0b and 1.0a CLI tests passed; these verify the named source
-owners and routes, not every Atari edition or complete game parity. Current
+Release metadata checked against GitHub `main` at `737508d0` on 2026-10-29.
+The latest published release is v3.0.420 (published on 2026-10-29 from tag
+commit `8224d5c8`). Current `main` is newer than that release, so its later
+source changes are not included in the published package. The v3.0.420
+release workflow verifies packaging, not gameplay startup. PR #200's
+cross-platform CMake builds, verification, localization, asset-hygiene,
+repository-media, and policy checks passed before it was merged; CodeRabbit
+was still processing at merge time. Since v3.0.420, main includes the CSB
+Atari Utility-media search fix and real-media alternate-platform menu runtime
+tests. Those prove only the named routes, not every Atari edition or complete
+game parity. Current
 `main` also
 extends real-media Swedish startup-debug localization checks to DM1 PC34, CSB
 FM Towns, and DM2 FM Towns. Those focused tests check explicit and saved
@@ -585,6 +586,22 @@ not establish complete startup parity. Remaining work includes first-runtime
 verification for every selectable edition, native display and physical-input
 paths, saved-game routes, and complete game sessions. No Nexus or Theron game
 was intentionally launched in the isolated rerun.
+
+### 2026-10-29 post-merge DM1/CSB/DM2 startup retest
+
+On main at `737508d0`, the authentic-media no-game M12 first-runtime test
+passed separately for DM1, CSB, and DM2 using their installed FM Towns
+editions. The four alternate-platform M12-to-runtime routes passed as well:
+DM1 PC, DM1 Atari ST, CSB Atari ST, and DM2 PC-DOS. The CSB Atari route found
+the original Utility disk archive in `data/csb`, completed its startup
+animation, and reached an active runtime with a nonzero viewport receipt and
+one movement step. Its animation asset unit, real-media, and discovery tests
+passed 3/3. The authentic DM1 Apple IIGS 2.0 and 2.1 CLI/M12 test also passed
+for both versions and reached active dungeon runtime. These runs used SDL's
+dummy video/audio drivers and do not verify a physical display or input
+device. They verify the listed start routes only; additional selectable
+editions, saved-game routes, native presentation, and complete gameplay
+remain open.
 
 ## Latest local real-media menu check (2026-10-27)
 
