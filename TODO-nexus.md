@@ -24,12 +24,14 @@ but does not identify payload fields or implement Firestaff Continue. See the
 cold-boot receipt in
 [`nexus_startup.md`](docs/nexus/nexus_startup.md#two-champion-bkr-cold-boot-2026-10-29).
 
-The early Ymir BUP-read trace now has a source-code join for a subset of its
-reads: SH-2 PCs `0x06002a12` and `0x06002a2a` compare against the literal
-`BackUpRam Format` signature. This confirms startup format detection, not
-payload interpretation. The remaining save payload schema and Continue load
-consumer still require a same-session source-bound join; see
-[`nexus_sh2_startup_decompilation.md`](docs/nexus/nexus_sh2_startup_decompilation.md#bup-format-signature-check-2026-10-29).
+The 2026-10-29 Continue trace now binds all 20,480 reads at SH-2 PC
+`0x06003680` to the exact authentic `DMNEXUS__01` BKR payload address
+sequence. Ghidra also binds the caller to the named-entry lookup, WRAM-L
+destination `0x00204000`, and checksum gate. This establishes the retail
+payload transfer, but not its field schema or the later mapping into
+Firestaff's game model. Continue with the post-transfer consumers and validate
+the four differing bytes before implementing payload-to-engine state. See
+[`nexus_sh2_startup_decompilation.md`](docs/nexus/nexus_sh2_startup_decompilation.md#continue-payload-transfer-2026-10-29).
 
 2026-10-28 retail New Game loader route: the M11 retail menu now sends
 keyboard/controller Accept and the retail mouse row to the same source-gated

@@ -84,6 +84,40 @@ readers process directory metadata. No payload read or payload-to-runtime
 mapping has been identified. The full follow-up Ghidra output is retained as
 `decompilation-readers-followup.log` in the same external evidence folder.
 
+## Continue payload transfer (2026-10-29)
+
+A separate Ymir cold boot used the authentic two-champion BKR from
+`.firestaff/data/nexus` in internal backup RAM, selected its real save row,
+and accepted it. Ymir's SH-2 read trace covered `[0x180000,0x200000)` for
+17,000 frames: 44,650 rows, no dropped master/slave events. At PC
+`0x06003680`, the trace has exactly 20,480 byte reads, with unique monotonic
+bus addresses from `0x18072d` through `0x18b1d3`. Walking the authentic BKR
+directory continuation chain with Firestaff's read-only BKR parser yields the
+20,480-byte `DMNEXUS__01` payload. Mapping each payload stream byte to its
+Saturn bus address (`0x180001 + 2 * raw_payload_offset`) reproduces the full
+observed address sequence exactly. The payload SHA-256 is
+`9c969745745acc7f843148abf78f114ab56e82b39b7f01251b6407a0d9fdf4eb`.
+
+The caller chain in the retained Ghidra project joins the read to the save
+consumer: `FUN_060220c0` passes the name `DMNEXUS__01` and destination
+`0x00204000` to `FUN_0600335a`; that routine validates the BUP, looks up the
+named entry through `FUN_06003434`, then calls `FUN_0600357c` to transfer its
+payload bytes. `FUN_060220c0` subsequently calls `FUN_06022668`, which checks
+the payload checksum using `FUN_0602268a`. Thus the retail Continue path's
+authentic payload transfer and checksum gate are now source-bound.
+
+The captured final WRAM-L buffer at address `0x00204000` matches 20,476 of
+the 20,480 payload bytes. Only offsets `0x58..0x5b` differ (`00 00 00 cc` in
+the file versus `05 ef bf 3c` in captured WRAM); the cause and timing of this
+mutation are not established. This evidence does not decode payload fields,
+identify the later game-state consumer, or establish a Firestaff engine-state
+mapping. The analysis used `DecompAddrs.java`, `DisasmRange.java`, and
+`FindRefs.java` from [`yeager/pcrecomp`](https://github.com/yeager/pcrecomp)
+commit `a85ea970f9e0640ab6546d2ca7a01fccb132973d`; no retail payload or disc
+image is included in the repository. Full trace, WRAM captures, run log,
+decompilation output, hashes, and reproduction details are in the external
+evidence folder's `coldboot-continue-readtrace-20261029/` directory.
+
 ## Rejected startup candidate
 
 The retained Mednafen capture from the `nexus-save-input-sweep-20261008`
