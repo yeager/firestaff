@@ -133,9 +133,10 @@ the highlighted control changes.
   Rev. 1 Track 02 runtime tests also exercise the panel's turn and movement
   commands against each region's loaded dungeon state. The Japanese test
   asserts both click receipts and the resulting party pose. These checks cover
-  Firestaff's host panel, not original PCE mouse support or direct world-space
-  clicks. The normal SDL-loop regression also uses the panel to pick up the
-  authentic level-0 SANDALS, reselect that source-backed item and drop it;
+  Firestaff's host panel, not direct control of the original PCE cursor or
+  world-space click behavior. The normal SDL-loop regression also uses the
+  panel to pick up the authentic level-0 SANDALS, reselect that
+  source-backed item and drop it;
   three consecutive TRV2 Debug runs verify the mapped pointer receipts and
   resulting party state against USA Track 02.
   The SDL-loop regression also clicks TURN L, STEP R then STEP L over a

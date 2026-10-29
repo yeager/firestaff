@@ -659,8 +659,11 @@ Details: [USA command-dispatch source candidates](docs/source-lock/theron-disass
   Back. This avoids a quit modal intercepting the direction key.
 - 🔒 Direct world clicks remain disabled until Firestaff has a state-driven
   dungeon renderer and a validated desktop screen-to-world mapping. The
-  original PC Engine game has no mouse interface, so this is a host feature,
-  not original cursor parity.
+  earlier assumption that the original PC Engine game had no mouse interface
+  was superseded by the 2026-10-29 authentic PCE mouse-mode capture: mouse
+  motion visibly moves the original hand cursor. The host panel is still a
+  Firestaff feature; original click behavior and source-coordinate mapping
+  remain unverified.
 
 ## 2026-10-25 — mouse trace tool validation and truncation reporting
 
@@ -720,14 +723,15 @@ Details: [USA command-dispatch source candidates](docs/source-lock/theron-disass
   With no source-owned dungeon cancel surface active, Firestaff now consumes
   the token as an ignored input and preserves the authentic party pose and
   world tick; this does not claim an in-dungeon cancel transition.
-- Mouse support is still partial. The original PC Engine game has no mouse
-  interface. The visible 4x3 Firestaff panel dispatches
+- Mouse support is still partial. The authentic original hand cursor responds
+  visually to PCE mouse movement, but its guest coordinates and click
+  semantics are not bound yet. The visible 4x3 Firestaff panel dispatches
   native Theron inputs and now highlights the hovered control. Direct world
   clicks remain disabled, and the Firestaff pointer art is not drawn in the
   native dungeon view. Do not copy DM1's hit regions. The `$D515/$D588`
   interval candidate and live `$77DC` dispatch/descriptor path remain
-  disassembly questions; they do not establish mouse behavior or desktop
-  coordinates for the original game.
+  disassembly questions; they do not yet establish source-derived desktop
+  coordinates or click behavior for the original game.
 - `theron_v1_sdl_input_events` also verifies a real SDL left-click through
   the host mouse panel on authenticated US Track 02. Three consecutive TRV2
   Debug runs passed for two panel turns followed by a forward move, the Button
