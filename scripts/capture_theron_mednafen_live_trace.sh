@@ -71,15 +71,26 @@ import re
 
 if len(sys.argv[1]) >= 8192:
     raise SystemExit(1)
+total_updates = 0
 for sample in sys.argv[1].split(";"):
-    if not re.fullmatch(r"-?[0-9]+,-?[0-9]+,-?[0-9]+", sample):
+    parts = sample.split("*")
+    if len(parts) > 2:
         raise SystemExit(1)
-    dx, dy, buttons = map(int, sample.split(","))
+    repeat_text = parts[1] if len(parts) == 2 else "1"
+    if not re.fullmatch(r"[1-9][0-9]{0,6}", repeat_text):
+        raise SystemExit(1)
+    repeat = int(repeat_text)
+    if repeat > 1000000 or not re.fullmatch(r"-?[0-9]+,-?[0-9]+,-?[0-9]+", parts[0]):
+        raise SystemExit(1)
+    dx, dy, buttons = map(int, parts[0].split(","))
     if not (-127 <= dx <= 127 and -127 <= dy <= 127 and 0 <= buttons <= 15):
+        raise SystemExit(1)
+    total_updates += repeat
+    if total_updates > 1000000:
         raise SystemExit(1)
 PY
     then
-        printf '%s\n' 'FAIL: THERON_CAPTURE_MOUSE_INPUT_SCRIPT must be under 8192 characters and contain semicolon-separated decimal dx,dy,button-mask samples' >&2
+        printf '%s\n' 'FAIL: mouse input script must be under 8192 characters with dx,dy,button-mask samples and optional *repeat counts up to 1000000' >&2
         exit 1
     fi
 fi

@@ -17,6 +17,24 @@
   join the Button I action to its command consumer, and test clicks against
   source-backed controls before implementing direct Firestaff world clicks.
 
+## 2026-10-29 — compressed mouse script reaches late cold-start polls; BIOS handoff remains open
+
+- The live Mednafen mouse-script grammar now supports `dx,dy,button-mask*repeat`
+  with per-token and total limits of 1,000,000 updates. This lets bounded
+  captures wait through long authentic boot intervals without inflating the
+  8,191-byte script field. The instrumenter patch applied to clean Mednafen
+  1.32.1 sources and its incremental `pce_fast` build passed.
+- Three loops of accepted script forms and five malformed/bounds-rejected
+  forms passed. A cold authentic Japanese Rev. 1 PCE Fast capture then traced
+  Run as active-low `$37` and Button I as `$3E` at System Card poll `$E4C5`.
+  The CPU stayed in the System Card through frame 10,384; no CD IRQ, game
+  handoff, authenticated CD-to-RAM receipt or C1DF pointer call was observed.
+  Details and capture hashes are in
+  [`the cold mouse Run trace`](docs/source-lock/theron-disassembly/theron-jp-cold-mouse-run-trace-20261029.md).
+- This confirms delivery of those mouse button bits, not a Theron menu action.
+  The transition blocker remains open; use the visually confirmed cold route
+  with source-bound handoff evidence before interpreting game behavior.
+
 ## 2026-10-29 — cold Japanese route reaches the first-person dungeon; input provenance remains open
 
 - A fresh Mednafen 1.32.1 `pce_fast` run opened authentic Japanese Rev. 1 media

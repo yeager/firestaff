@@ -23,11 +23,12 @@ disc without loading a save-state. It showed story pages, a fade and then a
 first-person dungeon after six separate 250 ms Button I presses. This
 supersedes the earlier r1 capture's stopping point: a dungeon screenshot is
 now available, but the r2 run did not include an instrumented guest-input,
-CD-to-RAM, or command receipt. Mednafen reported the SBI sidecar missing, and
-the full headered System Card image was unavailable. The screenshot shows the
-original hand cursor, but does not prove mouse input can move it. The retail
-manual documents D-pad cursor movement and Button I actions; it does not
-document physical mouse input. This capture does not prove the transition's
+CD-to-RAM, or command receipt. A separate mouse-mode capture confirms that
+host-mouse motion moves the original hand cursor; neither screenshot sequence
+proves the guest coordinates or click behavior. Mednafen reported the SBI
+sidecar missing, and the full headered System Card image was unavailable. The
+retail manual documents D-pad cursor movement and Button I actions; it does not
+document physical mouse input. These captures do not prove the transition's
 source provenance, gameplay behavior, or Firestaff parity. Private screenshots,
 log and hash manifest
 are at
