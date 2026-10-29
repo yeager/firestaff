@@ -36,6 +36,13 @@ fixture behavior do not establish Nexus retail semantics.
   casting. This probe's source savestate is documented separately and is not
   byte-identical to the state in the Y-entry receipt. Raw evidence is retained
   at `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/magic-window-dpad-inputs-20261029/`.
+- The frame-89 VDP1 snapshots also join nine command source starts to decoded
+  entries 99–106 and 144 in hash-verified Japanese `MENU.BPK`. Down, Left, and
+  Right reorder references to entries 99–106 at command indices 79–88; Up
+  keeps the control command list. This binds those command source bytes to
+  retail MENU.BPK surfaces, but does not establish rune names, surface meaning,
+  CLUT ownership, or renderer permission. The full analyzer reports are in the
+  external capture directory above.
 
 ## Firestaff production boundary
 

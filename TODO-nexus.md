@@ -548,7 +548,12 @@ not a fix and has not passed this real-media test.
   inventory, and spell semantics remain open. An authentic 2026-10-29 Ymir
   `--debug` replay verified retail Control Pad Y opens the Magic window from a
   real BKR-loaded gameplay state; Firestaff still does not render or route
-  that panel. Rune input, sequence validation, and casting remain unverified.
+  that panel. A second authentic replay from a saved Y-open state confirms
+  Down/Left/Right change the screenshot and reorder VDP1 references to nine
+  exact `MENU.BPK` surfaces (entries 99–106 and 144); Up matches the no-input
+  control. Rune names, sequence acceptance, CLUT ownership, and casting remain
+  unverified. Preserve the capture receipt under
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/magic-window-dpad-inputs-20261029/`.
   An independent 2026-10-25 Ymir `--debug` comparison loaded a hash-verified
   authentic JP gameplay savestate into a private profile: the no-input reload
   changed 0.00175% of pixels, W-forward changed 3.08408%, and A-left changed
