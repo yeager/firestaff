@@ -2,7 +2,7 @@
 set -eu
 . "$(dirname "$0")/lib/portable_sha256.sh"
 
-app=${1:?usage: test_dm2_v1_mac_fr_native_cli_boot.sh <firestaff>}
+app=${1:?usage: test_dm2_v1_mac_fr_named_sit_identity.sh <firestaff>}
 mac_root=${FIRESTAFF_DM2_MAC_FR_DIR:-"$HOME/.firestaff/data/dm2-extras/mac-fr/Dungeon Master II"}
 archive=${FIRESTAFF_DM2_MAC_FR_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_Mac_FR.sit"}
 dmfiles="$mac_root/DMFiles"
@@ -45,9 +45,32 @@ fi
 
 if [ ! -f "$dmfiles/Graphics.dat" ] || [ ! -f "$dmfiles/Dungeon.dat" ] ||
    [ ! -f "$dmfiles/md.dat" ] || [ ! -f "$dmfiles/qstrat.dat" ]; then
-    echo 'SKIP: authentic extracted DM2 Macintosh French files or source archive are not staged'
+    echo 'SKIP: Macintosh files from the French-named SIT or its source archive are not staged'
     exit 77
 fi
+
+python3 - "$dmfiles" <<'PY'
+import hashlib
+import os
+import sys
+
+root = sys.argv[1]
+expected = {
+    "Graphics.dat": "5cab25f6b975957eae4a203174e7f2a6",
+    "Dungeon.dat": "719ae78bc124027806c65491a256827d",
+    "md.dat": "a1692c182344952b6bffcb82e2e2f06e",
+    "qstrat.dat": "535bcbd371347cbcadf61e35d51c1d46",
+}
+for name, wanted in expected.items():
+    path = os.path.join(root, name)
+    with open(path, "rb") as stream:
+        actual = hashlib.md5(stream.read()).hexdigest()
+    if actual != wanted:
+        raise SystemExit(
+            f"FAIL: {name} is not the known Macintosh English runtime payload"
+        )
+print("PASS: French-named SIT contains the known Macintosh English four-file tuple")
+PY
 
 graphics_before=$(firestaff_sha256_file "$dmfiles/Graphics.dat")
 dungeon_before=$(firestaff_sha256_file "$dmfiles/Dungeon.dat")
@@ -62,7 +85,7 @@ if ! FIRESTAFF_CONFIG_PATH="$scratch/config.toml" \
      --width 320 --height 200 \
      --script 'wait:1200,key:enter,wait:30,click:115:65,wait:30,click:112:130,wait-game-runtime,back' \
      --duration 70000 --debug >"$scratch/startup.log" 2>&1; then
-    echo 'FAIL: authentic extracted DM2 Macintosh French files did not start' >&2
+    echo 'FAIL: DM2 Macintosh files from the French-named SIT did not start' >&2
     exit 1
 fi
 python3 - "$scratch/runtime.json" <<'PY'
@@ -89,11 +112,11 @@ if (
     or script.get("pending") != 0
 ):
     raise SystemExit(f"FAIL: authentic Mac data did not reach runtime: {probe}")
-print("PASS: authentic extracted DM2 Macintosh files reach the first real-asset runtime")
+print("PASS: French-named SIT reaches runtime as Macintosh English; this is not French-edition evidence")
 PY
 
 [ "$graphics_before" = "$(firestaff_sha256_file "$dmfiles/Graphics.dat")" ]
 [ "$dungeon_before" = "$(firestaff_sha256_file "$dmfiles/Dungeon.dat")" ]
 [ "$music_before" = "$(firestaff_sha256_file "$dmfiles/md.dat")" ]
 [ "$strings_before" = "$(firestaff_sha256_file "$dmfiles/qstrat.dat")" ]
-echo 'PASS: original DM2 Macintosh files remain byte-identical'
+echo 'PASS: extracted files from the French-named SIT remain byte-identical'

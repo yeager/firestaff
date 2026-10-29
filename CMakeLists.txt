@@ -4277,14 +4277,14 @@ if(BUILD_TESTING)
         TIMEOUT 180
     )
     add_test(
-        NAME dm2_v1_mac_fr_native_cli_boot
-        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_fr_native_cli_boot.sh"
+        NAME dm2_v1_mac_fr_named_sit_identity_real_media
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_fr_named_sit_identity.sh"
             "$<TARGET_FILE:firestaff>"
     )
-    set_tests_properties(dm2_v1_mac_fr_native_cli_boot PROPERTIES
+    set_tests_properties(dm2_v1_mac_fr_named_sit_identity_real_media PROPERTIES
         SKIP_RETURN_CODE 77
-        LABELS "tier2;dm2;macintosh;french;startup;cli;real-media;native;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM2_MAC_FR_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2-extras/mac-fr/Dungeon Master II;FIRESTAFF_DM2_MAC_FR_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_FR.sit;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy"
+        LABELS "tier2;dm2;macintosh;archive-name;identity;startup;cli;real-media;native;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_FR_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2-extras/mac-fr/Dungeon Master II;FIRESTAFF_DM2_MAC_FR_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_FR.sit;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy"
         TIMEOUT 120
     )
     add_test(

@@ -1,5 +1,20 @@
 # Firestaff TODO — DM2
 
+2026-10-29 Macintosh French-labelled media identity correction: I extracted
+the supplied English and French-named `.sit` archives into ignored
+`build/test-scratch/` and compared all 11 relative entries. Every data fork
+matched, and all FinderInfo and ResourceFork extended-attribute hashes matched
+as well. In particular both archives contain the same `Graphics.dat`
+(`5cab25f6b975957eae4a203174e7f2a6`), `Dungeon.dat`
+(`719ae78bc124027806c65491a256827d`), `md.dat`
+(`a1692c182344952b6bffcb82e2e2f06e`) and `qstrat.dat`
+(`535bcbd371347cbcadf61e35d51c1d46`). The current real-media test reaches a
+Macintosh English runtime from the French-named archive; it is not evidence of
+a French game build or French text. Keep Macintosh French unadvertised until
+distinct original media and source-owned French behavior are verified. The
+`dm2_v1_mac_fr_named_sit_identity_real_media` test name and output now state
+this boundary explicitly.
+
 2026-10-28: Added a shared real-media startup-debug localization regression
 for DM2 FM Towns. Explicit Swedish and the saved Swedish language profile
 both pass, including localized scan task labels, selection of the authentic
@@ -115,15 +130,17 @@ audio or physical input parity. The zip/SIT archive-only test still does not
 cover this extracted-only installation layout.
 
 2026-10-27 authentic cross-platform CLI startup matrix: direct startup passed
-for the original DOS English archive, Macintosh French SIT media, and FM Towns
-Japanese archive. The separate authentic-media main-menu selection test also
-passed for DM2 PC and FM Towns Japanese. DOS French direct CLI remains open
-because its expected original archive was not staged for that matrix. The
-Macintosh English direct CLI and M12 routes are separately covered against
-the extracted original files; Amiga English passes its own authentic CLI and
-no-game M12 regressions against the original archive. SDL dummy verifies the
-exercised source startup and handoff paths, not native display or physical
-input parity.
+for the original DOS English archive, the French-named Macintosh SIT, and the
+FM Towns Japanese archive. The separate authentic-media main-menu selection
+test also passed for DM2 PC and FM Towns Japanese. DOS French direct CLI remains
+open because its expected original archive was not staged for that matrix. The
+Macintosh English direct CLI and M12 routes are separately covered against the
+extracted original files; Amiga English passes its own authentic CLI and
+no-game M12 regressions against the original archive. The 2026-10-29 identity
+comparison established that the French-named SIT's application, forks, and
+DMFiles match the English SIT; this test therefore proves English startup only.
+SDL dummy verifies the exercised source startup and handoff paths, not native
+display or physical input parity.
 
 2026-10-25 selected DM2 PC loose-language owner: the authentic DOS English
 and French archives share a dungeon payload but have different GRAPHICS.DAT
@@ -354,33 +371,27 @@ authentic DOS, Macintosh, Amiga, and FM Towns startup routes, including the
 long FM Towns title and New Game path through the first champion. SDL dummy
 does not establish native display, audio output, or physical input parity.
 
-2026-10-21 French original-media startup follow-up:
+2026-10-21 French-labelled original-media startup follow-up:
 `dm2_v1_dos_fr_native_cli_boot` passed from the authentic DOS French archive.
-The French Macintosh CLI test passed after extracting the authentic
+The Macintosh CLI test passed after extracting the French-named
 `Dungeon-Master-II-Skullkeep_Mac_FR.sit` into ignored task scratch and pointing
 it at those original files; the route reached the first runtime frame with
 real assets and no core fallbacks, and the test verified the extracted files
-remained byte-identical. SDL dummy does not verify native Macintosh display,
-sound output or physical input. This does not prove that Firestaff identifies
-or runs the French edition.
+remained byte-identical. The later English-vs-French-named SIT comparison
+showed that all extracted files and relevant Macintosh resource forks match;
+the runtime identity is Macintosh English. SDL dummy does not verify native
+Macintosh display, sound output or physical input. This is not French-edition
+startup evidence.
 
-2026-10-26 French Macintosh identity audit: the authentic French SIT contains
-`Graphics.dat` (`5cab25f6b975957eae4a203174e7f2a6`) and `Dungeon.dat`
-(`719ae78bc124027806c65491a256827d`), the same pair used by the English retail
-profile, plus French `md.dat` (`a1692c182344952b6bffcb82e2e2f06e`) and
-`qstrat.dat` (`535bcbd371347cbcadf61e35d51c1d46e`). The current startup test
-reaches a real-asset frame but asserts platform enum 4 (Macintosh English),
-and general scanning reports readiness from the shared graphics identity.
-The test extracts the French SIT but reports platform enum 4 (Macintosh
-English), so it demonstrates only that the shared graphics/dungeon pair can
-reach the Mac English runtime from that directory. It does not show that the
-French `md.dat` or `qstrat.dat` is read. Keep French Macintosh
-preservation-only until admission and boot bind the complete same-owner
-four-file tuple, distinguish the English tuple, and source/runtime evidence
-shows how `qstrat.dat` supplies French text. Do not add a second
-version row keyed only by the shared graphics hash: it would mislabel English
-installs too. The test should assert the French identity and a French-owned
-runtime behavior before the edition is advertised as supported.
+2026-10-26 Macintosh French-labelled archive identity audit: an initial
+four-file check showed that the SIT carries the English Macintosh graphics,
+dungeon, music-map, and qstrat hashes, but did not compare the complete SIT
+contents against the English archive. The 2026-10-29 comparison found all 11
+extracted entries, their data forks, and their FinderInfo/ResourceFork hashes
+identical. The startup test reports Macintosh English and proves only the
+English runtime. Keep Macintosh French preservation-only until distinct
+original media and French-owned runtime behavior are verified; do not add a
+version row keyed only by the shared graphics hash.
 
 2026-10-21 no-game main-menu selection:
 `test_m12_main_menu_game_selection_real_media` passed both keyboard and mouse
@@ -425,18 +436,19 @@ The English Mac runtime cannot be selected from the Japanese graphics hash;
 establish the Japanese startup/application and audio ownership from source and
 original media before admitting it as playable.
 
-2026-10-20 authentic Macintosh French SIT startup: the supplied original
+2026-10-20 startup using the French-named Macintosh SIT (later identified as
+English-identical media): the supplied original
 `Dungeon-Master-II-Skullkeep_Mac_FR.sit`, extracted with `unar` outside the
 repository, contains the retail `DMFiles` directory and original Macintosh
-resource forks. `test_dm2_v1_mac_fr_native_cli_boot.sh` now checks this real
+resource forks. `test_dm2_v1_mac_fr_named_sit_identity.sh` checks this
 installation through `--game dm2 --platform mac`: M12 reaches the first
-champion with the original Macintosh graphics/dungeon, reports real assets with
-no core fallbacks, and exits on Back. The extracted data files remain
-byte-identical. This directory does not bind the HFS CD `Title.MooV` startup
-movie; the complete CD-image movie route remains separately covered by
-`test_dm2_v1_mac_native_cli_boot.sh`. The short boot-probe-only attempt was
-inconclusive because it ended before the real Macintosh start-menu sequence;
-use the full scripted runtime test for this route.
+champion with original Macintosh graphics/dungeon, reports real assets with no
+core fallbacks, and exits on Back. A later comparison of the English and
+French-named SITs found their complete extracted application, resource forks
+and DMFiles identical, so this is English Macintosh startup evidence rather
+than proof of a French edition. This extracted directory does not bind the HFS
+CD `Title.MooV` startup movie; the complete CD-image movie route remains
+separately covered by `test_dm2_v1_mac_native_cli_boot.sh`.
 
 2026-10-15 orphan-first loose graphics discovery is verified with two authentic
 copies on DOS, Macintosh, FM Towns and Amiga. Selected orphan rejection also
