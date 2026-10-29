@@ -9412,3 +9412,16 @@ native rendering, or Theron parity. The private evidence bundle is at
   change, visible gameplay effect, or full Theron parity was established. This
   completes source and controller-poll evidence only; movement/rendering
   behavior remains open.
+
+## 2026-10-29 — add source-audited PCE Fast TII position tracing
+
+- Added and source-audited a bounded Mednafen PCE Fast observer for the
+  original `$C1FA` position-copy TII. The trace schema includes opcode PC/MPR,
+  transfer length, and source/destination logical and physical provenance.
+- The isolated PCE Fast object and executable rebuilt on TRV2 with `-j1`; the
+  instrumented binary marker and format fields were verified. The focused
+  live-capture script test passed three consecutive loops, as did Python syntax
+  validation and `git diff --check`.
+- Runtime exercise remains open: the authentic JP save-state replay observed
+  `$2905=$04` but no position transfer. No movement parity is claimed; the
+  required positive capture and map identity remain in `TODO-theron.md`.

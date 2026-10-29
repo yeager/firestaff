@@ -9190,3 +9190,25 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   and RAM writes
   `9530d3ee32a8acd3c2f5104851595ce48ac9faf0daacc4083fdfe418297b5cff`.
   Raw traces and original media remained on TRV2 and are not committed.
+
+## 2026-10-29 — validate the PCE Fast TII position observer at runtime
+
+- Added a capture-only observer for the original `$C1FA` `TII $20B4,$2040,$0002`
+  position transfer. It records the latched opcode PC/MPR, source and
+  destination logical/physical addresses and MPRs, byte value, and remaining
+  block-transfer length. A source audit confirms that PCE Fast `BMT_TII` calls
+  `WrMem(destination, RdMem(source))` and retains the latched PC across yields.
+- The isolated PCE Fast object and executable rebuilt on TRV2 with `-j1`; the
+  executable includes the observer. The focused live-capture test passed three
+  loops, along with Python syntax validation and `git diff --check`.
+- The authentic JP Rev. 1 PCE Fast replay loaded the user-created state and
+  wrote command `$2905=$04`, but made no `$2040/$2041` write and produced zero
+  TII observer rows. The position remained `$02/$03`; the bounded capture was
+  also blocked before cold CD/loader receipts. This does not prove whether the
+  movement was blocked by map geometry or another runtime condition. The active
+  JP map for that state is still unresolved.
+- Next bind the active map and destination tile from authentic Track 02/runtime
+  evidence, then run an accepted command plus an identical no-input control.
+  Require both ordered `$C1FA` transfer bytes and the position delta before
+  claiming runtime observer validation or movement parity. Details are in
+  `docs/source-lock/theron-disassembly/theron-pce-fast-tii-position-observer-20261029.md`.

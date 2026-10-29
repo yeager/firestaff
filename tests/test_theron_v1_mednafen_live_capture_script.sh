@@ -1091,6 +1091,12 @@ if [[ ! -f "$pce_fast_movement_context_instrumenter" ]] ||
    ! grep -Fq 'frame=%u' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'mpr0=%02x' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'mpr7=%02x' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'TheronPCEFastMovementTIIPositionCommit' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'HuCPU.in_block_move == IBM_TII' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'source_physical_address=%06x' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'source_mpr=%02x' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'opcode_pc=%04x opcode_mpr=%02x opcode_physical_pc=%06x bmt_remaining=%04x source_logical_address=%04x' "$pce_fast_movement_context_instrumenter" ||
+   grep -Fq 'live_pc=' "$pce_fast_movement_context_instrumenter" ||
    grep -Fq 'GetRealPC_EXTERNAL' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'TheronPCEFastMovementRuntimeStateWrite' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq '0x2000u + zero_page_address' "$pce_fast_movement_context_instrumenter" ||
