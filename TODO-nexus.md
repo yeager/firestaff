@@ -45,6 +45,18 @@ the transformed field's consumer before implementing payload-to-engine state.
 See
 [`nexus_sh2_startup_decompilation.md`](docs/nexus/nexus_sh2_startup_decompilation.md#continue-payload-transfer-2026-10-29).
 
+The source-record stride (`0xe0`) and runtime-record stride (`0x13c`) are now
+verified from the retail code constants. A reproducible analyzer restores the
+traced four-byte fixup for payload hash verification and compares the
+decompilation-specified projections across authentic two-, three-, and
+four-champion captures (22, 33, and 44 copies). A complete Ymir write trace
+also follows the `+0x08` runtime field in all four records of the leader-3
+save: each loads 67 and is later updated through `FUN_060360fc` to 66. The
+mechanical projection and these retail writes are verified; field semantics,
+the rest of the record, and Firestaff's runtime integration remain open.
+Reproduction and retained evidence are documented in
+[`nexus_sh2_startup_decompilation.md`](docs/nexus/nexus_sh2_startup_decompilation.md#continue-payload-transfer-2026-10-29).
+
 The 2026-10-29 Load-panel VDP2 trace now joins the retail SH-2 writer at
 `0x06023640` to all 352 VDP2 halfword events on frame 659. The selected NBG1
 name table maps 176 writes to visible cells x=1..16, y=6..16; each PND is
@@ -300,8 +312,10 @@ not a fix and has not passed this real-media test.
   The shared background and full Configuration page remain unrendered. New
   Game now reaches the authenticated `DM.BIN`/`LEV01.DGN` loader and emits the
   retail level-1 start receipt, but the downstream viewport/HUD gate still
-  blocks a playable handoff. Continue execution does not yet read Saturn BKR
-  save data, and Configuration destination behavior remains unimplemented.
+  blocks a playable handoff. Ymir now proves the retail Continue BKR lookup,
+  payload read, checksum gate, and 22 selected roster-field projections from
+  an authentic two-champion save. Firestaff still does not load Saturn BKR
+  state, and Configuration destination behavior remains unimplemented.
   The Japanese New Game
   and Continue captures each verify five `TITLE.BIN` sprites and 1,441
   screenshot texels; the English states each verify 1,451. The Japanese
@@ -524,7 +538,9 @@ and four initial values. Continue with the real 3D/DGN background source and
 composition, then trace setting persistence and prove the audio, difficulty,
 and HUD effects in retail gameplay. Japanese Configuration-page parity
 remains open. The New Game loader receipt is now verified, but its viewport/HUD
-handoff remains blocked; Continue/save execution is still open. See
+handoff remains blocked. Retail Continue payload transfer and a bounded set of
+runtime roster-field projections are verified in Ymir; Firestaff's BKR loading,
+complete state mapping, and playable Continue handoff remain open. See
 `docs/nexus/nexus_startup.md` and `docs/nexus/nexus_title.md`.
 
 The authentic English Ymir Configuration-page frame 119 source scan examined
