@@ -36,9 +36,23 @@ static correlation to authentic source bytes, not dynamic source-LBA identity.
 
 ## Evidence boundary
 
+### 2026-10-29 attribution correction
+
+The address matches below remain valid static byte-window matches, and the
+saved-state instrumentation did record the listed `$2905` values. However,
+the later [`$D395` source disassembly](theron-d39d-static-source-disassembly-20261029.md)
+shows that the matched retail `$D395` instruction is `STZ $BA`; `$D3A0` is an
+operand byte inside `LDA $B4`. If that source mapping is active, neither
+instruction performs the reported `$2905` access. The trace did not include
+live MPR/physical-PC/opcode evidence or a CD-to-RAM receipt. Therefore these
+logical-PC labels are unresolved and must not be used to identify the
+`$2905` consumer or clear routine. Repeated RAM observations remain diagnostic
+save-state evidence only.
+
 The captures establish original command dispatch from the authentic saved
-gameplay state. Their transition receipts report `transition=missing` and zero
-authenticated CD-to-RAM receipts. This candidate inventory does not prove
+gameplay state at the instrumented RAM boundary, but not the consuming code.
+Their transition receipts report `transition=missing` and zero authenticated
+CD-to-RAM receipts. This candidate inventory does not prove
 which Track 02 copy supplied the bytes, bind the relative mouse delta to the
 viewport coordinates `$3C/$78`, show a world-state change, or establish full
 native pointer parity. Keep command semantics and native world-click

@@ -1,3 +1,315 @@
+## 2026-10-29 — authenticated Stage-2 colors are available; screen binding remains open
+
+- `theron_v1_track02_load_stage2_vce_palette()` copies the authentic regional
+  Stage-2 palette words into entries `$E0-$FF` of a native palette state after
+  checking Track 02 identity, dispatch entry, routine bytes and payload bounds.
+- Real JP and US BIN tests passed three loops on TRV2. The helper does not
+  establish which screen or dungeon layer uses these colors. No viewport route
+  is admitted by this data, and it must not clear the synthetic-rendering
+  guard or set `palette_route_verified`.
+- Next: capture a cold, source-bound execution of the palette loader and join
+  its selected data to the game-owned VDC/BAT/tile state before using it for
+  any screen rendering.
+
+## 2026-10-29 — bound cold CD source tracing to Track 02
+
+- The Mednafen PCE Fast CD data-port trace keeps its default 65,536-row
+  all-source cap. For source joins it can now select source-valid reads inside
+  Track 02 and raise the explicit cap up to 1,048,576 rows. The capture wrapper
+  validates the options and records both settings in the transition receipt;
+  filtering does not change emulated CD behavior or the independent RAM/VDC
+  traces.
+- The cold authentic JP run exercised the new filter and recorded 483,328
+  source-valid reads from Track 02 (LBA 3,590–5,259). The `$D515` candidate at
+  raw offset 643,413 was read by the System Card at `$EA99`; this is not proof
+  of a copy into the game bank or execution.
+- All 11 scheduled input events reached active-low controller reads at System
+  Card PC `$E4C5`; no scheduled mask reached a non-System-Card poll during its
+  hold. No complete bounded HuC6280 `$23AD` call or authenticated CD-to-game-RAM
+  receipt was captured, and the VWR trace reached its cap. The Japanese SBI
+  sidecar was absent, but this run does not prove that it caused the missing
+  handoff. Native gameplay input and dungeon projection therefore remain open.
+- Full trace counts, hashes, setup and limits are recorded in
+  [the cold filtered capture note](docs/source-lock/theron-disassembly/theron-jp-cold-track02-filtered-input-20261029.md).
+- Next: obtain a cold run that reaches the game-owned controller poll, then
+  join loaded `$D515/$D588` code and pointer descriptors to the Button-I result
+  and VDC destination before enabling native world clicks or projection.
+
+## 2026-10-29 — C1DF CPU tracing is opt-in; pointer/action join remains open
+
+- The PCE Fast C1DF instruction/register trace now follows
+  `THERON_CAPTURE_POINTER_C1DF_TRACE`. With the flag off, a capture reports
+  zero `pointer_pc`/`pointer_regs`/`pointer_c1df_*` rows; with it on, it records
+  the requested bounded trace. The ordinary mouse-device and watched pointer
+  RAM accesses remain available independently.
+- The full Mednafen patch chain applied to an isolated TRV2 copy and a serial
+  `-j1` PCE Fast build completed. Three loops of the focused capture regression
+  passed. An A/B run used authentic JP Rev. 1 Track 02, System Card 3.0 and the
+  preserved Ak-Tu-Ba state: zero C1DF rows with tracing off, 16,199 rows with
+  it on. Both runs report `transition=missing` because save-state loading
+  bypasses original loader provenance; this verifies trace gating only.
+- Evidence hashes and limits are in
+  [the C1DF trace-gate note](docs/source-lock/theron-disassembly/theron-pointer-c1df-opt-in-trace-20261029.md).
+- Next: use the opt-in instruction trace in a cold source-bound run to join
+  controlled mouse deltas with game-owned pointer coordinates and the original
+  hover/click command result. Do not infer hitboxes from save-state runs.
+
+## 2026-10-29 — qualify saved-state `$D39D` command-PC attribution
+
+- A static disassembly of the `$D395` window in both authentic regional Track
+  02 files shows a bounded indexed-record loop. It does not directly read
+  `$2905` or mouse coordinates. USA and JP window offsets, hashes and the
+  regional helper-call variants are recorded in
+  [the `$D39D` source disassembly](docs/source-lock/theron-disassembly/theron-d39d-static-source-disassembly-20261029.md).
+- Earlier saved-state instrumentation reports `$2905` accesses at `$D395` and
+  `$D3A0`, but those static locations are `STZ $BA` and an operand byte if the
+  matched retail bank is active. Keep the RAM observations; treat their PC
+  attribution as unresolved until a live MPR/physical-PC/opcode trace is joined
+  to authenticated CD-to-RAM provenance. The old traces do not identify a
+  pointer routine, command consumer, hitbox or world-state effect.
+- Three additional standard-PCE loops with `dx=4` plus Button I produced
+  byte-identical command/consumer sidecars to zero-delta-plus-Button-I and the
+  earlier large-delta control. The device logged the input, but guest pointer
+  fields and `$2905` observations did not change. This saved-state/script route
+  does not calibrate mouse motion; all runs remain transition/provenance
+  blocked. See the [bounded matched-control report](docs/source-lock/theron-disassembly/theron-scripted-mouse-delta-replay-20261029.md).
+- Next: capture the logical and physical PC, MPR, executed opcode bytes and
+  effective address for a repeated authenticated mouse control; then resolve
+  the caller and source LBA before changing direct native world-click behavior.
+
+## 2026-10-29 — standard PCE mouse scripts honor bounded repeats; coordinate join remains open
+
+- The Mednafen mouse-script instrumenter now inserts one shared parser into the
+  standard PCE and PCE Fast input paths. It expands `*repeat`, rejects
+  malformed samples, and caps expanded scripted updates at 20,000.
+- The compiled parser regression and live-capture script passed three loops.
+  The complete Theron Mednafen patch set applied to three isolated TRV2 source
+  copies, and a serial `-j1` build compiled both PCE cores.
+- A reference run with authentic USA Track 02, System Card 3.0 and the
+  preserved Ak-Tu-Ba save state sent `1,0,0*3;0,0,1;0,0,0`. Its device trace
+  records three horizontal input units across two latches and the Button I
+  mask. This verifies script expansion and device delivery only. The save-state
+  run has no authenticated CD-to-RAM receipt and reports `transition=missing`;
+  it does not establish guest pointer coordinates, click targets, or native
+  Theron parity. Evidence and hashes are in
+  [the mouse repeat parser note](docs/source-lock/theron-disassembly/theron-mouse-input-repeat-parser-20261029.md).
+- Next: join controlled mouse deltas to game-owned pointer state and the
+  original command/result path in a source-bound session before implementing
+  direct viewport clicks.
+
+## 2026-10-29 — authentic mouse motion moves the Theron hand cursor; click semantics remain open
+
+- A cold Mednafen PCE Fast run used authentic Japanese Rev. 1 media and the
+  headerless System Card 3.0 body, then switched port 1 from gamepad to mouse
+  at the dungeon. Two screenshots taken after host-mouse positions 150 screen
+  pixels apart differ only in a 41×51-pixel box around the original hand
+  cursor (708 changed pixels). This confirms visible cursor response to
+  emulated PCE mouse motion; the [PCE Fast device reference](https://mednafen.github.io/documentation/pce_fast.html)
+  documents the mouse port.
+- This was a screenshot-only probe: it has no guest-input trace, source
+  coordinate receipt, command-buffer write, target receipt or state-transition
+  receipt. A later click was followed by a black viewport, so its effect is
+  inconclusive. No hitbox or click mapping is justified yet. Evidence and
+  limits are in
+  [the pointer-motion capture note](docs/source-lock/theron-disassembly/theron-jp-mouse-pointer-motion-20261029.md).
+- Next: reproduce cursor motion with bounded game-owned pointer coordinates,
+  join the Button I action to its command consumer, and test clicks against
+  source-backed controls before implementing direct Firestaff world clicks.
+
+## 2026-10-29 — compressed mouse script reaches late cold-start polls; BIOS handoff remains open
+
+- The live Mednafen mouse-script grammar now supports `dx,dy,button-mask*repeat`
+  with per-token and total limits of 20,000 updates, matching the bounded
+  device trace capacity. A single bounded capture can now wait through a long
+  authentic boot interval without inflating the 8,191-byte script field. The
+  instrumenter patch applied to clean Mednafen
+  1.32.1 sources and its incremental `pce_fast` build passed.
+- Three loops of accepted script forms and five malformed/bounds-rejected
+  forms passed. A cold authentic Japanese Rev. 1 PCE Fast capture then traced
+  Run as active-low `$37` and Button I as `$3E` at System Card poll `$E4C5`.
+  The CPU stayed in the System Card through frame 10,384; no CD IRQ, game
+  handoff, authenticated CD-to-RAM receipt or C1DF pointer call was observed.
+  Mednafen also logged the Japanese SBI sidecar missing, which may affect the
+  route but is not established as the cause.
+  Details and capture hashes are in
+  [`the cold mouse Run trace`](docs/source-lock/theron-disassembly/theron-jp-cold-mouse-run-trace-20261029.md).
+- This confirms delivery of those mouse button bits, not a Theron menu action.
+  The transition blocker remains open; use the visually confirmed cold route
+  with source-bound handoff evidence before interpreting game behavior.
+
+## 2026-10-29 — cold Japanese route reaches the first-person dungeon; input provenance remains open
+
+- A fresh Mednafen 1.32.1 `pce_fast` run opened authentic Japanese Rev. 1 media
+  and a canonical headerless System Card 3.0 body, with `autosave 0` and no
+  loaded state. Four-second Button I holds advanced the cold route through
+  new-game, file, stage and story steps; six separate 250 ms Button I presses
+  advanced the story and the final screenshot shows a first-person dungeon.
+- The screenshots are real emulator output, but this run produced no
+  instrumented guest-input, CD-to-RAM, or gameplay-command receipt. Mednafen
+  also reported the Japanese SBI sidecar missing. The full headered System
+  Card image was unavailable. This establishes a visual route to the dungeon
+  only, not source-bound transition semantics, mouse behavior, or Firestaff
+  parity. The screenshot also shows the original hand cursor. The retail
+  [TurboGrafx-16 manual, pp. 4–6](https://www.tg-16.com/contributors/bernie/Dungeon_Master/Dungeon_Master.pdf)
+  documents D-pad cursor movement and Button I actions; it does not document
+  physical mouse input. The private bundle, without media, firmware, save-state
+  or raw RAM, is
+  `/home/trv2/firestaff-theron-evidence/capture/theron-jp-story-to-dungeon-20261029-r2/`.
+- Next: reproduce the route with bounded input and CD-to-RAM provenance, then
+  bind original pointer deltas to guest pointer coordinates and the command
+  consumer before changing direct dungeon-view mouse behavior.
+
+## 2026-10-29 — source graphics chronology marks bounded-stream limits
+
+- The source-graphics event merger now receives configured CD data-read, CD
+  RAM-write, VWR, and VCE limits and records per-stream counts. Reaching any
+  configured limit marks chronology as
+  `possible_truncation_at_event_limit`; the capture receipt reports
+  `merged_limit_reached`, so it no longer looks unqualifiedly
+  complete. A stream below its limit is marked accordingly, while calls that
+  supply no bounds say `not_checked`.
+- The focused merger test passed with Python 3.9 and 3.13, including exact-cap
+  metadata and clean rejection of non-ASCII/oversized sequence input. The
+  live-capture script regression and `bash -n` passed as well. The Mednafen
+  patch-application portion was not rerun, and no original-media capture was
+  produced for this follow-up.
+
+## 2026-10-29 — gate VWR capture at the first authentic Track 02 read
+
+- The opt-in PCE Fast VWR trace mode now omits VRAM-commit records until the
+  CD trace observes the first source-valid read inside Track 02. Its V4 header
+  records the filtered-prefix scope, and the merged chronology identifies the
+  VWR stream in `filtered_prefix_streams`. Default captures retain the
+  unfiltered V3 behavior.
+- The patch chain applied and built on TRV2. A cold capture with authentic
+  Japanese Rev. 1 media opened the gate at source LBA 3590 (shared event
+  24,768,120); its first VWR record has sequence 0 at event 24,779,401. The
+  output metadata records the filtered prefix. This authenticates the gate's
+  trace boundary, not graphics causality or world-cell meaning.
+- The VWR stream later reached its 1,048,576-record cap, so the merged file is
+  marked `possible_truncation_at_event_limit`. The capture verifier also
+  timed out before observing two of eleven scheduled controller masks. No
+  dungeon gameplay was confirmed. Continue with bounded input/capture work;
+  do not treat this as native Theron parity.
+
+## 2026-10-29 — cold replay confirms controller reads; BIOS handoff remains open
+
+- The bounded input trace and its verifier now allow up to 2,097,152 records.
+  Three focused capture-script regression loops passed. The previous one
+  million-record ceiling truncated before the last scheduled cold-route input.
+- A new no-save-state PCE Fast capture used authentic Japanese Rev. 1 Track 02
+  and the headerless System Card 3.0 body. It followed the visually recorded
+  route: a four-second Run hold, four four-second Button I holds, then six
+  longer Button I presses to tolerate the BIOS poll gaps. All eleven scripted
+  masks have apply and controller-read witnesses; the last witness is at
+  System Card PC `$E4C5`, sequence 1,737,370. This verifies delivery to the
+  BIOS poll only.
+- The first source-valid Track 02 read is LBA 3590 at shared event 24,768,120;
+  the first VWR commit is sequence 0 at event 24,779,401. The merged stream
+  marks the VWR prefix as filtered and reports the 1,048,576-record VWR cap.
+  Event order is temporal evidence only, not graphics causality.
+- The run still reports zero CD IRQ callbacks, zero authenticated CD-to-RAM
+  receipts, no non-System-Card controller poll, and `transition=missing`.
+  It did not confirm dungeon gameplay. Next reproduce the visual route through
+  the same host-key path while tracing controller reads and BIOS handoff; do
+  not infer gameplay from button delivery or claim native Theron parity.
+
+## 2026-10-29 — authenticate stage-message advancement; gameplay still not reached
+
+- A cold Mednafen reference run used authentic Japanese Rev. 1 Track 02 and
+  the canonical headerless System Card 3.0 body, with the original Japanese
+  SBI sidecar and no save-state. Real runtime screenshots show the Ak-Tu-Ba
+  stage card, its first story page after Button I, and a later story page after
+  another short Button I press.
+- The input trace records Button I at the System Card poll (`raw=0001`,
+  active-low value `$3E`). The successive screenshots confirm that the short
+  press advanced the displayed story page. The run stopped at the story text;
+  it did not reach hero selection or first-person dungeon gameplay.
+- The full headered System Card image was unavailable. The private evidence
+  bundle, containing screenshots and compressed traces but no source media or
+  BIOS, is `/home/trv2/firestaff-theron-evidence/capture/theron-menu-progression-20261029-r1/`.
+  Its manifest pins the three screenshots and both traces. This establishes
+  one original menu transition only; it does not establish page-advance
+  semantics, dungeon admission, or native Theron parity.
+- Next: continue from the authentic stage-message sequence through the Soul
+  Room and into a first-person dungeon, retaining the original-media and
+  controller receipts at each transition.
+
+## 2026-10-29 — scripted mouse deltas still do not bind guest pointer targets
+
+- Four isolated reference captures used the authentic USA Ak-Tu-Ba state
+  (`f17f377df210b4a3ae904a13fb85a7f0`), USA Track 02 and System Card 3.0.
+  The existing Mednafen mouse injector was given `(60,120)`, `(121,98)`, the
+  sign-reversed `(−121,−98)`, and a split cumulative horizontal movement.
+- The first three captures observed the original queue `$2905=$50` and hover
+  `$2911=$50`, including the nominal right-column candidate. The device trace
+  records deltas and latch values, not the guest's final pointer coordinates.
+  The loaded state lacks Mednafen's serialized mouse fields, and its latch
+  deltas have reversed signs, so these results cannot be treated as a valid
+  reproduction of the previously captured `$79/$62 → $74` point.
+- All captures report `transition=missing` and zero authenticated CD-to-RAM
+  receipts because loading the state bypasses loader provenance. Raw traces and
+  the wrapper snapshot are retained in the task-specific external-disk
+  evidence folder; its README records the capture inputs and limits. The
+  trace hashes and exact limits are recorded in [the scripted mouse replay
+  report](docs/source-lock/theron-disassembly/theron-scripted-mouse-delta-replay-20261029.md).
+- Next, bind device deltas to the game's guest pointer state in a controlled
+  original-session trace, then reproduce the `$74` control before sweeping
+  boundaries. Do not publish new hitboxes or mouse actions from these probes.
+
+## 2026-10-29 — isolate Japanese pointer-table writes by input condition
+
+- Four paired Japanese Rev. 1 PCE Fast reference captures reused one authentic
+  Ak-Tu-Ba save state and instrumented binary. The zero-input and movement-only
+  controls made no writes in the watched `$28FC..$2905` BaseRAM range. Button
+  I-only input wrote candidate bytes at `$28FE/$28FF` and `$2902/$2903`; the
+  mixed movement-plus-Button-I run also wrote `$28FC/$2900` and `$50` at
+  `$2904/$2905`. Writer PCs include `$CCD8`, `$CCDD`, `$CCE2`, and `$D39D`.
+- This isolates an input-linked write difference but does not identify the
+  pointer table, cursor coordinates, hit target, or command semantics. All
+  captures lack authenticated CD-to-RAM provenance because the save state
+  bypasses cold startup. See the
+  [candidate-address write isolation report](docs/source-lock/theron-disassembly/theron-jp-pointer-table-write-isolation-20261029.md).
+- Next: disassemble the bounded writer windows, join the bytes to the original
+  pointer descriptor and command consumer, and reproduce the evidence in a
+  cold original-media session before changing native hit testing.
+
+## 2026-10-29 — disassemble the runtime pointer writer
+
+- A new PCE Fast build records bounded opcode windows through the active MPR
+  mapping at changed candidate writes. Three patch-application loops passed,
+  and the isolated Mednafen 1.32.1 build completed with `-j1` on TRV2.
+- The Japanese `$CCD5..$CCEE` window matches seven copies in authentic
+  `TQJP02.bin`. MAME disassembly shows a four-entry indexed store loop using
+  `$2911`, `$C7` and `$C9`; the captured writes used X values 2 and 3. This is
+  useful dataflow evidence, not a proven cursor or hitbox table. See the
+  [runtime writer-window report](docs/source-lock/theron-disassembly/theron-jp-runtime-pointer-writer-window-20261029.md).
+- The older mixed capture's `$2904/$2905` writes did not reproduce in two new
+  runs, and all save-state captures lack CD-to-RAM provenance. Next, recover a
+  reproducible command dispatch and `$D39D` opcode window, then bind the live
+  code to a cold original-media load before changing input behavior.
+
+## 2026-10-28 — map Theron panel clicks against presented pixel bounds
+
+- The authenticated USA Track 02 SDL integration test failed at the first
+  dungeon panel sequence. The debug receipt showed SDL clicks arriving at
+  `(301,128)` while the runtime presentation target was 1280x960; the Theron
+  panel hit-test normalized those already-mapped 320x200 source coordinates a
+  second time and returned no action.
+- The source-space hit-test fix made regular SDL panel routes pass, but the
+  1280x960 edge case then reproduced the separate inverse-rounding loss: the
+  visible pixel `(729,590)` arrived as source `(182,122)`, one row above the
+  first host button. Added a Theron-only pre-inverse hit test against the
+  floor-scaled presentation rectangles; the focused debug route now reports
+  the expected logical cell center `(204,132)` and `TURN LEFT` action.
+- The full `theron_v1_sdl_input_events` test passed on TRV2 against authentic
+  USA Track 02 (`f23601102138f87c33025877767ebf76`). It exercises keyboard,
+  Button II, standard mouse-panel movement/items, touch, and a 1280x960
+  fractional-edge click. The fractional fixture uses its own resolution
+  config so the other real-media routes retain their ordinary 320x224 window.
+- This failure concerns Firestaff's host panel. Direct world-space mouse
+  targets and complete Theron parity remain open.
+
 ## 2026-10-28 — disassemble the authentic System Card controller branch
 
 - MAME `unidasm -arch h6280` disassembly of the authentic System Card 3.0
@@ -90,10 +402,12 @@
   snapshot reported BaseRAM `$203F/$2040/$2041 = 01/02/03` in all three Button
   I captures.
 - The save-state captures still have `transition=missing` and zero
-  authenticated CD-to-RAM receipts. This verifies the original command queue
-  route from an authentic saved gameplay state, not the runtime media-sector
-  source, a world-click effect, or complete native mouse parity. Details and
-  hashes: [standard-PCE mouse command trace](docs/source-lock/theron-disassembly/theron-us-scripted-mouse-state-compatibility-20261027.md).
+  authenticated CD-to-RAM receipts. They record an input-linked `$2905`
+  observation from an authentic saved gameplay state, but do not verify which
+  code consumed or cleared it: later static comparison found that the reported
+  `$D395/$D3A0` PCs do not match those accesses in the candidate retail window.
+  The runtime bank and source remain unbound; see the
+  [`$D39D` attribution correction](docs/source-lock/theron-disassembly/theron-d39d-static-source-disassembly-20261029.md).
 
 ## 2026-10-27 — USA command-dispatch bytes map to seven Track 02 candidates
 
@@ -107,14 +421,18 @@
   image, and these duplicate spans do not identify which source copy supplied
   the runtime page.
 - The three repeated standard-PCE Button I captures have identical `$2905`
-  dispatch reads and identical code-page SHA-256
+  RAM observations and identical code-page SHA-256
   `57920b254fe1199799052879146b96731638afc41ebe03ce17db5e1d21e842ca`.
-  This strengthens byte-window reproducibility from the authentic save state,
-  while `transition=missing` and zero authenticated CD-to-RAM receipts remain.
+  This strengthens observation repeatability from the authentic save state,
+  but not the reported logical PC attribution or code identity: `transition=missing`
+  and zero authenticated CD-to-RAM receipts remain.
 - A retail-source regression scans the authentic USA Track 02 hash for all
   four observed runtime windows and pins the seven candidate offsets. This is
   static source correlation; a cold-start CD-sector-to-bank receipt, a
-  world-state effect, and native mouse parity remain open.
+  world-state effect, and native mouse parity remain open. The later `$D395`
+  disassembly shows the captured `$D395/$D3A0` access labels do not match those
+  retail instructions when the candidate bank is active; see the attribution
+  correction above.
 
 Details: [USA command-dispatch source candidates](docs/source-lock/theron-disassembly/theron-us-command-dispatch-source-candidates-20261027.md).
 
@@ -542,8 +860,11 @@ Details: [USA command-dispatch source candidates](docs/source-lock/theron-disass
   Back. This avoids a quit modal intercepting the direction key.
 - 🔒 Direct world clicks remain disabled until Firestaff has a state-driven
   dungeon renderer and a validated desktop screen-to-world mapping. The
-  original PC Engine game has no mouse interface, so this is a host feature,
-  not original cursor parity.
+  earlier assumption that the original PC Engine game had no mouse interface
+  was superseded by the 2026-10-29 authentic PCE mouse-mode capture: mouse
+  motion visibly moves the original hand cursor. The host panel is still a
+  Firestaff feature; original click behavior and source-coordinate mapping
+  remain unverified.
 
 ## 2026-10-25 — mouse trace tool validation and truncation reporting
 
@@ -564,13 +885,14 @@ Details: [USA command-dispatch source candidates](docs/source-lock/theron-disass
 ## 2026-10-25 — DM1-like native keyboard and mouse parity
 
 - Reference clarification: the retail USA manual defines direction-key and
-  Button I/II controls, while the DMWeb Encyclopaedia notes that the original
-  TurboGrafx version has no mouse. Firestaff's 4x3 panel is a desktop mouse
-  convenience over supported native commands, not reconstruction of an
-  original mouse interface. Keep its host bounds separate from game data; any
-  direct viewport-click feature must be designed as an explicit Firestaff UX
-  over the authenticated native renderer and object state. The manual and
-  DMWeb references are recorded in
+  Button I/II controls but does not document mouse input. A DMWeb forum answer
+  says the original TurboGrafx version has no mouse; the 2026-10-29 authentic
+  PCE Fast capture supersedes that broad claim for cursor motion, which is
+  visibly controlled by PCE mouse movement. Guest coordinates and click-to-
+  command behavior remain unresolved. Firestaff's 4x3 panel still dispatches
+  supported native commands with host UI bounds; any direct viewport-click
+  feature needs source-backed targets over the authenticated native renderer
+  and object state. The manual and DMWeb references are recorded in
   [`theron-button-ii-manual-source-lock.md`](docs/source-lock/theron-button-ii-manual-source-lock.md).
 
 - Rebuilt the current PR commit natively on TRV2 and ran
@@ -603,14 +925,15 @@ Details: [USA command-dispatch source candidates](docs/source-lock/theron-disass
   With no source-owned dungeon cancel surface active, Firestaff now consumes
   the token as an ignored input and preserves the authentic party pose and
   world tick; this does not claim an in-dungeon cancel transition.
-- Mouse support is still partial. The original PC Engine game has no mouse
-  interface. The visible 4x3 Firestaff panel dispatches
+- Mouse support is still partial. The authentic original hand cursor responds
+  visually to PCE mouse movement, but its guest coordinates and click
+  semantics are not bound yet. The visible 4x3 Firestaff panel dispatches
   native Theron inputs and now highlights the hovered control. Direct world
   clicks remain disabled, and the Firestaff pointer art is not drawn in the
   native dungeon view. Do not copy DM1's hit regions. The `$D515/$D588`
   interval candidate and live `$77DC` dispatch/descriptor path remain
-  disassembly questions; they do not establish mouse behavior or desktop
-  coordinates for the original game.
+  disassembly questions; they do not yet establish source-derived desktop
+  coordinates or click behavior for the original game.
 - `theron_v1_sdl_input_events` also verifies a real SDL left-click through
   the host mouse panel on authenticated US Track 02. Three consecutive TRV2
   Debug runs passed for two panel turns followed by a forward move, the Button
@@ -1362,6 +1685,27 @@ dynamic receipt binds any candidate sector to the runtime bank. See
 `docs/source-lock/theron-disassembly/theron-jp-party-ram-writer-runtime-20261009.md`.
 
 # Firestaff TODO — Theron's Quest
+
+## 2026-10-29 — X11 cold start does not prove the Theron handoff
+
+- A fresh cold PCE Fast capture used authentic Japanese Rev. 1 media, System
+  Card 3.0 and `xdotool` key-down/up events through an X11 window. The scheduled
+  Run and Button I sequence produced 532 host-key events, 936 SDL events and
+  1,048,576 controller transactions; the input trace reached its configured
+  1,048,576-record limit. The receipt found no CD IRQ callbacks, no SCSI read
+  commands or sector bindings, no authenticated CD-to-RAM receipt, and
+  `transition=missing`. Thus host keyboard delivery is verified, but a game
+  menu action and transfer into Theron's code are not.
+- VWR and merged graphics chronology also reached their 1,048,576-record
+  limits (`merged_limit_reached`); do not treat the resulting chronology as a
+  complete graphics capture. The bounded trace was removed from TRV2 after
+  recording the receipt; no game media, firmware, or raw trace was added here.
+- The Mednafen log reported the Japanese SBI sidecar missing. The installed
+  Theron media inventory currently has no `.sbi` file, so a source-bound replay
+  that depends on that sidecar cannot yet be performed. This absence is not
+  established as the cause of the missing transition. Obtain authentic
+  subchannel data or establish that the edition does not require it before
+  using another cold-start capture to claim handoff progress.
 
 ## Earlier 2026-10-24 — native debug boot-probe boundary
 
@@ -8373,3 +8717,167 @@ this is distinct from the authenticated combined-RAR title-audio path above.
 - Preserve these negative results as acquisition evidence only. Continue
   identifying the game-owned transition into the Track 02 decoder; do not
   treat the raw probe build, input polling, or CD traffic as decoder parity.
+
+## 2026-10-28 — replayed the manual's cold-start controls on authentic US media
+
+- A first attempt with the existing configured Mednafen source produced no
+  replay events in PCE Fast; it is discarded as an input trial. The separate
+  trace build was corrected by applying the checked-in
+  `mednafen_1.32.1_theron_scripted_pce_fast_input.patch` to a private copy and
+  rebuilding with `make -j1`. The capture binary SHA-256 was
+  `59d9040a3f84a50fc80b8b9873145bba635c16b3fc079660885644046c4f18ef`.
+- The six-minute cold start used authentic US Track 02
+  (`f23601102138f87c33025877767ebf76`) and System Card 3.0
+  (`ff1a674273fe3540ccef576376407d1d`), without a save-state. The scheduled
+  input plan followed the original manual's startup order—Run, Run to cancel
+  the opening animation, Down, then Button I ([manual, "Starting the Game"]
+  (https://mocagh.org/ftl/theronsquest-manual.pdf)). It was accepted
+  (`valid=1 events=4`): Run at frame 9600 for 300 frames, Run at 12000, Down
+  at 12060, and Button I at 12120 for 30 frames.
+  The input receipt records Run as raw `$0008` / poll value `$37`, Down as raw
+  `$0040` / `$3B`, and Button I as raw `$0001` / `$3E`.
+- Polling remained at System Card `$E4B4/$E4C5` for 524,284 samples each; four
+  further reads were at `$42AB/$42B2`. The capture did not reach a recorded
+  `$2390 -> $23AD -> $2392` invocation, emitted no raw decoder trace, and did
+  not produce a game-owned transition receipt. The input trace hash is
+  `9a664c55b615bf6857cf4ba59eecf32fe9fc13e595ad37be2ac4d32dad43bca6`.
+- This proves that all four controls reached the emulated PCE input port. It
+  does not prove the opening animation or title menu was visible, so it does
+  not establish that the manual's menu sequence failed. Keep menu visibility,
+  the game-owned handoff, and decoder semantics open; do not use this BIOS
+  polling trace as `$23AD` or gameplay evidence.
+
+## 2026-10-29 — source-to-VRAM event join: gameplay capture pending
+
+- The opt-in PCE Fast VWR commit trace now consumes the shared event sequence
+  also used by the CD data-port read and CD RAM target-write traces. The live
+  capture script can merge these streams into a JSONL chronology and records
+  its status, row count and SHA-256. The merger rejects incorrect trace
+  headers, malformed records, duplicate cross-stream IDs and non-increasing
+  per-stream IDs.
+- Three local test loops passed for the merger and capture shell syntax. The
+  complete Mednafen patch set applied to an isolated copy of pristine 1.32.1
+  on TRV2 and built with `-j1`; `pce_fast/vdc.o` compiled and the binary
+  contains the V3 schema and `event_sequence` format marker.
+- Next: capture authentic Theron gameplay with CD, RAM-target and VWR traces
+  in one session. Bind any candidate bytes to a source LBA before pursuing the
+  world-square, BAT, tile-index and palette joins.
+- A separate cold Japanese Rev. 1 boot/title-menu capture produced an
+  authentic 11,592-row VCE write stream and 1,024-byte endpoint snapshot. It
+  used the canonical headerless System Card 3.0 ROM body (MD5
+  `38179df8f4ac870017db21ebcbf53114`) and raw Japanese Track 02 (MD5
+  `b7afb338ad31be1025b53f9aff12d73a`), with no save-state. The stream passes
+  the Firestaff event-merger parser; a real screenshot shows `NEW GAME`
+  selected after a four-second Run hold. Private evidence is retained at
+  `/home/trv2/firestaff-theron-evidence/capture/theron-vce-title-20261029-r1/`.
+- Open limits: this trace is title-menu evidence only; the full headered
+  System Card source image and optional SBI file were unavailable, and no
+  dungeon transition occurred. It does not join VCE writes to CD reads,
+  RAM-target writes, or VWR commits. The VWR hook excludes DMA; chronology
+  alone is not causal byte provenance. The production renderer still lacks an
+  authenticated source-to-world-cell and tile-bank mapping, so gameplay visual
+  parity remains unproven.
+- Audited the existing operator-local `theron-spawn-search-r26` bundle: its
+  receipt records authentic US Track 02 and System Card identities, no loaded
+  save state, an observed startup transition, and zero non-System-Card CD
+  reads. The 1,024-byte VCE file is an endpoint palette snapshot, not a write
+  stream, and the bundle does not prove a Theron dungeon palette.
+
+## 2026-10-29 — trace authentic-state PCE mouse serial input
+
+- A matched pair of authentic JP dungeon-state `pce_fast` captures shows a
+  scripted +12 X delta changing the controller read at `$44C1` from the
+  zero-delta value `$30` to `$3F` for frames 301–312. This confirms delivery
+  into the original mouse serial-read path.
+- In both runs, `$28B8` followed the same `$00` then `$F0` writes, `$2912` was
+  stored as `$00`, and the instrumented candidate pointer-write stream was
+  identical. VRAM, SAT and VCE snapshots also matched. The RAM snapshots still
+  differ at 17 bytes, and both runs lack authenticated CD-to-RAM provenance
+  and a game transition; do not attribute those RAM differences or claim that
+  mouse movement has no gameplay effect.
+- The evidence and remaining limits are recorded in
+  `docs/source-lock/theron-disassembly/theron-jp-mouse-serial-consumer-capture-20261029.md`.
+  Next, obtain a source-bound runtime capture that joins mouse input to a
+  game-owned cursor/target update before implementing dungeon coordinate
+  mapping. Native Theron mouse parity remains open.
+
+## 2026-10-29 — fix PCE Fast VCE register 5 capture validation
+
+- A fresh cold JP trace was rejected by the capture wrapper despite containing
+  a valid HuC6260 register 5 write (`input=01 old=120 value=120`). Mednafen
+  1.32.1 applies input bit 0 to the palette high bit, while the wrapper
+  incorrectly checked bit 1.
+- Updated the wrapper's expected-value check and added a regression assertion
+  to the live-capture script test. The focused test passed three consecutive
+  runs and `git diff --check` is clean.
+- The pending high-limit capture should preserve enough VWR records for
+  source-graphics chronology validation. Source-bound handoff and complete
+  renderer evidence remain open; the earlier rejected wrapper run is not a
+  complete capture.
+
+## 2026-10-29 — accept the CD reader-MPR trace header
+
+- A cold JP capture emitted the newer CD data-port header with reader MPR
+  context, while the source-graphics merger accepted only the earlier header.
+  The merger now accepts both exact headers, and the new header is covered by
+  a test fixture. Three merger regression loops passed.
+- The preserved partial capture contains 47 adjacent, byte-equal CD-read/RAM-
+  write pairs. The observed bytes and BIOS instructions support a direct copy
+  of those specific bytes; the trace does not cover subsequent VWR events.
+  The VWR and CD streams hit limits, two scheduled input masks were unseen,
+  and the dungeon scene was not independently confirmed. See the
+  [cold loader byte-copy capture](docs/source-lock/theron-disassembly/theron-jp-cold-loader-byte-copy-capture-20261029.md).
+- Next: reduce pre-game trace volume or add a bounded start condition so VWR
+  coverage continues through source-bound reads, then repeat a cold capture
+  with all scheduled inputs and a real screenshot verified.
+
+## 2026-10-29 — raise the cold input trace bound and retry JP startup
+
+- Raised the bounded live/scripted input-read ceiling from 2,097,152 to
+  8,388,608 so long cold-start routes can retain later input evidence. The
+  verifier now has direct boundary coverage for accepting the maximum and
+  rejecting maximum plus one. Three test loops passed; the staged Gitleaks
+  scan found no leaks. The change is on PR #185 at `0684b1030`, whose GitHub
+  Actions runs completed successfully.
+- A fresh TRV2 Mednafen 1.32.1 build with the current VRAM, VCE, C1DF and
+  HuC6280 `$23AD` instrumentation accepted 12 scripted Run/Button I events
+  from the authentic JP Rev. 1 CUE and System Card. The verifier confirmed
+  all 12 masks were applied and read at port 0, but the classified reads for
+  those events were System Card polls. A separate game-owned `$42AB/$42B2`
+  multitap scan read mirrored controller registers `$138D..$1394` at index 4
+  with raw `$0000`; this did not consume the scheduled port-0 mask. The old
+  verifier missed this scan because it recognized only register `$1000`.
+  Corrected disassembly of the trace's CD-RAM-resident code confirms the reads
+  are PCE input-handler accesses; see
+  `docs/source-lock/theron-disassembly/theron-jp-cold-input-trace-20261029.md`.
+  The wrapper rejected the run because it lacked one complete `$23AD`
+  invocation.
+  The 65,536-row CD data-port and 1,048,576-row VWR streams also reached their
+  configured caps. See
+  `docs/source-lock/theron-disassembly/theron-jp-cold-input-trace-20261029.md`.
+- Next: establish the actual cold menu-to-game handoff before scheduling
+  gameplay input, then capture the required longer CD/RAM/VWR join without
+  exhausting pre-game trace budgets. Do not infer a menu action, dungeon
+  scene, or rendering mapping from this failed capture.
+
+## 2026-10-29 — repeat Japanese cold-start capture with bounded input trace
+
+- R4 produced an authentic first-person dungeon screenshot. Its input-read
+  trace stopped at 1,048,576 rows, so only the first nine of eleven scripted
+  events had CPU-read witnesses. The VWR trace reached the new 4,194,304-row
+  ceiling; the 4,752,372-event merge reported `merged_limit_reached`.
+- R5 raised the input-read ceiling to 4,194,304. All eleven scripted masks
+  were applied and read at port 0, but all event-window witnesses remained
+  System Card polls at `$E4C5`. Later reads at `$44C1/$44D2` and `$42AB/$42B2`
+  occurred outside those event windows. The reference screenshot and both
+  receipts are recorded in
+  `docs/source-lock/theron-disassembly/theron-jp-run-hold-gated-vwr-capture-20261029.md`.
+- Neither run proves a cold game handoff or native renderer parity. R5 still
+  has 483,328 source-valid Track 02 reads, 172 CD-RAM target writes, no
+  authenticated CD-to-RAM receipts, no CD IRQ callbacks, no non-System-Card
+  CD reads, no `$E009` dispatch, and `transition=missing`. Its VWR and merged
+  event streams also reach their configured bounds.
+- Next: derive an authenticated game-owned handoff trigger from the captured
+  code and source reads, then use it to bound a smaller post-handoff VWR trace.
+  Preserve the parity target; do not infer a causal source-to-render mapping
+  from the time-ordered chronology.

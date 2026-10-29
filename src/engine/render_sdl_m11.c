@@ -3102,6 +3102,16 @@ int M11_Render_GetContentSize(int* outWidth, int* outHeight) {
     return 1;
 }
 
+int M11_Render_GetPresentedSize(int* outWidth, int* outHeight) {
+    if (!g_state.initialised || !outWidth || !outHeight ||
+        g_state.presentedW <= 0 || g_state.presentedH <= 0) {
+        return 0;
+    }
+    *outWidth = g_state.presentedW;
+    *outHeight = g_state.presentedH;
+    return 1;
+}
+
 int M11_Render_GetWindowAndDrawableSize(int* outWindowWidth,
                                        int* outWindowHeight,
                                        int* outDrawableWidth,

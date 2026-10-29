@@ -1,21 +1,26 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ $# -ne 3 ]]; then
-    printf 'usage: %s TRACE PLAN READ_LIMIT\n' "${0##*/}" >&2
+if [[ $# -lt 3 || $# -gt 4 ]]; then
+    printf 'usage: %s TRACE PLAN READ_LIMIT [PCE_INPUT_INDEX]\n' "${0##*/}" >&2
     exit 2
 fi
 
 trace=$1
 plan=$2
 read_limit=$3
+expected_input_index=${4:-0}
 if [[ ! -s "$trace" ]]; then
     printf '%s\n' 'BLOCKED: scripted-input trace is missing or empty' >&2
     exit 1
 fi
 if [[ ! "$read_limit" =~ ^[1-9][0-9]*$ ]] ||
-   (( read_limit > 1048576 )); then
+   (( read_limit > 8388608 )); then
     printf '%s\n' 'BLOCKED: scripted-input read limit is invalid' >&2
+    exit 1
+fi
+if [[ ! "$expected_input_index" =~ ^[0-4]$ ]]; then
+    printf '%s\n' 'BLOCKED: PCE input index must be an integer from 0 through 4' >&2
     exit 1
 fi
 if [[ -z "$plan" ]]; then
@@ -30,7 +35,8 @@ if (( expected_events == 0 )); then
     exit 1
 fi
 
-awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
+awk -v expected_events="$expected_events" -v read_limit="$read_limit" \
+    -v expected_input_index="$expected_input_index" '
     function hex_to_dec(text,    i, digit, value) {
         text = tolower(text)
         sub(/^0x/, "", text)
@@ -59,6 +65,10 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
     # Mednafen 1.32.1 PCE Fast INPUT_Read selects the direction nibble with
     # SEL=1 and the button nibble with SEL=0; its visible value is active-low.
     # The raw pad word alone therefore cannot establish what the guest read.
+    # ReadIO dispatches the whole $1000-$13FF mirror to INPUT_Read (Mednafen
+    # src/pce_fast/ioread.inc); the read_index field selects the controller
+    # (src/pce_fast/input.cpp). Accept the hardware mirror, then require the
+    # explicitly selected input slot.
     function selected_bank_matches(raw, value, sel, mask,    nibble) {
         if (raw < 0 || value < 0 || sel < 0 || !contains_mask(raw, mask))
             return 0
@@ -76,7 +86,7 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
     function accept_controller_read(raw_value, returned_value, read_sel,
                                     read_index, read_pc, read_frame) {
         if (pending_frame == "" || !pending_apply ||
-            read_index != 0 || read_pc !~ /^[0-9a-fA-F]+$/ ||
+            read_index != expected_input_index || read_pc !~ /^[0-9a-fA-F]+$/ ||
             read_frame !~ /^[0-9]+$/)
             return
         # Source order alone cannot prove that a CPU poll saw an event while
@@ -125,15 +135,17 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
             failure = "trace exceeds its declared controller-read limit"
             next
         }
-        if (pending_frame != "" && pending_apply &&
-            $0 ~ / register=1000([[:space:]]|$)/) {
+        if (pending_frame != "" && pending_apply) {
             raw_value = -1
             returned_value = -1
             read_sel = -1
             read_index = -1
+            read_register = ""
             read_pc = ""
             read_frame = ""
             for (i = 1; i <= NF; i++) {
+                if ($i ~ /^register=[0-9a-fA-F]+$/)
+                    read_register = tolower(substr($i, 10))
                 if ($i ~ /^raw=[0-9a-fA-F]+$/)
                     raw_value = hex_to_dec(substr($i, 5))
                 if ($i ~ /^value=[0-9a-fA-F]+$/)
@@ -147,22 +159,26 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
                 if ($i ~ /^frame=[0-9]+$/)
                     read_frame = substr($i, 7)
             }
-            if (returned_value >= 0) {
-                accept_controller_read(raw_value, returned_value, read_sel,
-                                       read_index, read_pc, read_frame)
-                pending_result = 0
-            } else {
-                # The original PCE core emits the raw port sample and the
-                # returned active-low byte as adjacent trace records. Pair
-                # them without counting one CPU poll twice; PCE Fast emits
-                # both values on its single pce_input_read row.
-                pending_result = 1
-                pending_result_pc = read_pc
-                pending_result_register = "1000"
-                pending_result_raw = raw_value
-                pending_result_sel = read_sel
-                pending_result_index = read_index
-                pending_result_frame = read_frame
+            register_value = hex_to_dec(read_register)
+            if (register_value >= 4096 && register_value <= 5119) {
+                if (returned_value >= 0) {
+                    accept_controller_read(raw_value, returned_value,
+                                           read_sel, read_index, read_pc,
+                                           read_frame)
+                    pending_result = 0
+                } else {
+                    # The original PCE core emits the raw port sample and the
+                    # returned active-low byte as adjacent trace records. Pair
+                    # them without counting one CPU poll twice; PCE Fast emits
+                    # both values on its single pce_input_read row.
+                    pending_result = 1
+                    pending_result_pc = read_pc
+                    pending_result_register = read_register
+                    pending_result_raw = raw_value
+                    pending_result_sel = read_sel
+                    pending_result_index = read_index
+                    pending_result_frame = read_frame
+                }
             }
         }
         next
@@ -205,21 +221,31 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
     /^scripted_pce_input_apply / {
         apply_frame = ""
         scripted_mask = ""
+        apply_port = ""
         for (i = 1; i <= NF; i++) {
             if ($i ~ /^frame=[0-9]+$/)
                 apply_frame = substr($i, 7)
             if ($i ~ /^scripted=[0-9a-fA-F]+$/)
                 scripted_mask = substr($i, 10)
+            if ($i ~ /^port=[0-4]$/)
+                apply_port = substr($i, 6)
         }
         if (pending_frame != "" && apply_frame == pending_frame &&
-            scripted_mask != "" && scripted_mask !~ /^0+$/)
-            pending_apply = 1
+            scripted_mask != "" && scripted_mask !~ /^0+$/) {
+            if (apply_port == "" && expected_input_index == 0)
+                pending_apply = 1
+            else if (apply_port == expected_input_index)
+                pending_apply = 1
+            else
+                failure = "scripted input apply receipt targets a different controller slot"
+        }
         next
     }
     /^scripted_pce_input_event / {
         event_frame = ""
         event_mask = ""
         event_hold = ""
+        event_port = ""
         for (i = 1; i <= NF; i++)
             if ($i ~ /^frame=[0-9]+$/)
                 event_frame = substr($i, 7)
@@ -227,6 +253,8 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
                 event_mask = substr($i, 6)
             else if ($i ~ /^hold=[1-9][0-9]*$/)
                 event_hold = substr($i, 6)
+            else if ($i ~ /^port=[0-4]$/)
+                event_port = substr($i, 6)
         if (event_frame == "") {
             failure = "a scripted event has no numeric frame"
             next
@@ -242,6 +270,12 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
         }
         if (event_hold == "") {
             failure = "a scripted event has no positive hold interval"
+            next
+        }
+        if (event_port == "" && expected_input_index == 0)
+            event_port = "0"
+        if (event_port != expected_input_index) {
+            failure = "scripted input event targets a different controller slot"
             next
         }
         if (pending_frame != "" && event_frame != pending_frame) {
@@ -307,6 +341,7 @@ awk -v expected_events="$expected_events" -v read_limit="$read_limit" '
         }
         printf "source=mednafen-scripted-input-consumption-v1\n"
         printf "scripted_input_events=%d\n", events
+        printf "scripted_input_port_index=%d\n", expected_input_index
         printf "event_frames_with_apply=%d\n", frames_with_apply
         printf "event_frames_followed_by_controller_read=%d\n", frames_with_controller_read
         printf "event_frames_with_scripted_mask_read=%d\n", frames_with_mask_match

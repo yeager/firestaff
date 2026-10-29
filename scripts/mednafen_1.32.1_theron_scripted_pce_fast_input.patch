@@ -5,17 +5,26 @@
 +#include <limits.h>
 @@ -89,1 +91,49 @@
 +unsigned TheronPCEFastScriptFrame;
-+static void TheronPCEFastScriptInputFrame(uint16 *data)
++static void TheronPCEFastScriptInputFrame(uint16 *data, unsigned *port)
 +{
 + static bool initialized, valid;
++ static unsigned port_index;
 + static struct { unsigned frame, duration; uint16 mask; bool emitted; char key[8]; } events[32];
 + static unsigned count;
 + if(!initialized)
 + {
 +  initialized = true;
 +  const char *script = getenv("FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT");
++  const char *port_text = getenv("FIRESTAFF_THERON_REPLAY_INPUT_PORT");
 +  const char *cursor = script;
 +  valid = script && *script;
++  if(port_text && *port_text)
++  {
++   char *port_end = NULL;
++   const unsigned long parsed_port = strtoul(port_text, &port_end, 10);
++   if(port_end == port_text || *port_end || parsed_port > 4) valid = false;
++   else port_index = (unsigned)parsed_port;
++  }
 +  while(valid && *cursor && count < 32)
 +  {
 +   const char *at = strchr(cursor, '@'), *next = at ? strchr(at + 1, ',') : NULL;
@@ -42,28 +51,30 @@
 +  if(valid && (!count || *cursor)) valid = false;
 +  TheronPCEFastInputTraceInit();
 +  if(TheronPCEFastInputTrace && script && *script)
-+   { fprintf(TheronPCEFastInputTrace, "scripted_pce_input_plan valid=%u events=%u\n", valid ? 1 : 0, count); fflush(TheronPCEFastInputTrace); }
++   { fprintf(TheronPCEFastInputTrace, "scripted_pce_input_plan valid=%u events=%u port=%u\n", valid ? 1 : 0, count, port_index); fflush(TheronPCEFastInputTrace); }
 + }
++ if(port) *port = port_index;
 + unsigned frame = ++TheronPCEFastScriptFrame; uint16 mask = 0;
 + if(valid) for(unsigned i = 0; i < count; i++)
 + {
 +  if(!events[i].emitted && frame == events[i].frame)
-+  { if(TheronPCEFastInputTrace) fprintf(TheronPCEFastInputTrace, "scripted_pce_input_event frame=%u key=%s mask=%04x hold=%u\n", frame, events[i].key, events[i].mask, events[i].duration); events[i].emitted = true; }
++  { if(TheronPCEFastInputTrace) fprintf(TheronPCEFastInputTrace, "scripted_pce_input_event frame=%u key=%s mask=%04x hold=%u port=%u\n", frame, events[i].key, events[i].mask, events[i].duration, port_index); events[i].emitted = true; }
 +  if(frame >= events[i].frame && frame - events[i].frame < events[i].duration) mask |= events[i].mask;
 + }
-+ if(mask) { *data |= mask; if(TheronPCEFastInputTrace) { fprintf(TheronPCEFastInputTrace, "scripted_pce_input_apply frame=%u scripted=%04x\n", frame, mask); fflush(TheronPCEFastInputTrace); } }
++ if(mask) { *data |= mask; if(TheronPCEFastInputTrace) { fprintf(TheronPCEFastInputTrace, "scripted_pce_input_apply frame=%u scripted=%04x port=%u\n", frame, mask, port_index); fflush(TheronPCEFastInputTrace); } }
 +}
 +
  void PCEINPUT_SettingChanged(const char *name)
 @@ -131,2 +181,4 @@
  void INPUT_Frame(void)
  {
-+ uint16 scripted_port0 = 0;
-+ TheronPCEFastScriptInputFrame(&scripted_port0);
++ uint16 scripted_mask = 0;
++ unsigned scripted_port = 0;
++ TheronPCEFastScriptInputFrame(&scripted_mask, &scripted_port);
   for(int x = 0; x < 5; x++)
   {
 @@ -137,3 +189,5 @@
    {
     uint16 new_data = data_ptr[x][0] | (data_ptr[x][1] << 8);
-+   if(x == 0) new_data |= scripted_port0;
++   if(x == (int)scripted_port) new_data |= scripted_mask;
     pce_jp_data[x] = new_data;

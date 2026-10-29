@@ -164,11 +164,19 @@ int main(void) {
           M12_MENU_INPUT_STRAFE_RIGHT);
     CHECK(M11_TheronNavigationInputFromKeycode(SDLK_UP) ==
           M12_MENU_INPUT_UP);
+    CHECK(M11_TheronNavigationInputFromKeycode(SDLK_KP_8) ==
+          M12_MENU_INPUT_UP);
     CHECK(M11_TheronNavigationInputFromKeycode(SDLK_DOWN) ==
+          M12_MENU_INPUT_DOWN);
+    CHECK(M11_TheronNavigationInputFromKeycode(SDLK_KP_2) ==
           M12_MENU_INPUT_DOWN);
     CHECK(M11_TheronNavigationInputFromKeycode(SDLK_LEFT) ==
           M12_MENU_INPUT_LEFT);
+    CHECK(M11_TheronNavigationInputFromKeycode(SDLK_KP_4) ==
+          M12_MENU_INPUT_LEFT);
     CHECK(M11_TheronNavigationInputFromKeycode(SDLK_RIGHT) ==
+          M12_MENU_INPUT_RIGHT);
+    CHECK(M11_TheronNavigationInputFromKeycode(SDLK_KP_6) ==
           M12_MENU_INPUT_RIGHT);
     /* In the loaded dungeon, Theron's key layout matches DM1 while still
      * producing the Theron movement tokens. */

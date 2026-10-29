@@ -48478,6 +48478,12 @@ if(BUILD_TESTING AND THERON_SOURCES)
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_mednafen_pce_fast_vram_commit_patch.sh
     )
     add_test(
+        NAME theron_pce_fast_source_graphics_event_merge
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_pce_fast_source_graphics_event_merge.py
+            ${CMAKE_CURRENT_BINARY_DIR}/theron-source-graphics-event-merge-test
+    )
+    add_test(
         NAME theron_v1_track02_dungeon_handoff_artifact_verifier
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_dungeon_handoff_artifact_verifier.sh
     )

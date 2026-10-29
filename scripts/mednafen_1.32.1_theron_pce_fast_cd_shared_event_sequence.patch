@@ -33,11 +33,12 @@ diff --git a/src/pce_fast/pcecd.cpp b/src/pce_fast/pcecd.cpp
 index 44424a0..63b71cb 100644
 --- a/src/pce_fast/pcecd.cpp
 +++ b/src/pce_fast/pcecd.cpp
-@@ -37,6 +37,8 @@ using namespace Mednafen;
+@@ -37,6 +37,9 @@ using namespace Mednafen;
  namespace MDFN_IEN_PCE_FAST
  {
 FIRESTAFF_PATCH_BLANK_CONTEXT
 +uint32 TheronTraceCDSharedEventSequence = 0;
++bool TheronTracePCEFastVWRTraceGateOpen = false;
 +
  //#define PCECD_DEBUG
 FIRESTAFF_PATCH_BLANK_CONTEXT

@@ -9,7 +9,7 @@
  #include "huc.h"
  #include "pcecd.h"
  #include <mednafen/cputest/cputest.h>
-@@ -54,0 +57,91 @@
+@@ -54,0 +57,172 @@
 +/* Optional PCE Fast capture-only trace.  The hook observes committed CPU
 + * VWR words in Mednafen 1.32.1 src/pce_fast/vdc.cpp::VDC_Write(), after
 + * VRAM[MAWR] is assigned and before MAWR advances (upstream line 572).  It
@@ -19,6 +19,9 @@
 +static unsigned TheronPCEFastVRAMCommitLimit = 65536;
 +static bool TheronPCEFastVRAMCommitInitialized;
 +static bool TheronPCEFastVRAMCommitDisabled;
++static bool TheronPCEFastVRAMCommitStartAtTrack02;
++extern uint32 TheronTraceCDSharedEventSequence;
++extern bool TheronTracePCEFastVWRTraceGateOpen;
 +
 +/* HuC6280 opcode fetches use FastPageR in mednafen-1.32.1
 + * src/pce_fast/huc6280.cpp::RdOp() (line 172), populated by SET_MPR()
@@ -45,12 +48,14 @@
 + {
 +  const char *path = getenv("FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE");
 +  const char *limit_text = getenv("FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT");
++  const char *start_mode = getenv("FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_START_AT_TRACK02");
 +  TheronPCEFastVRAMCommitInitialized = true;
++  TheronPCEFastVRAMCommitStartAtTrack02 = start_mode && start_mode[0] == '1' && !start_mode[1];
 +  if(limit_text && *limit_text)
 +  {
 +   char *end = NULL;
 +   const unsigned long parsed = strtoul(limit_text, &end, 10);
-+   if(end && !*end && parsed >= 1 && parsed <= 1048576)
++   if(end && !*end && parsed >= 1 && parsed <= 4194304)
 +    TheronPCEFastVRAMCommitLimit = (unsigned)parsed;
 +  }
 +  if(!path || !*path)
@@ -64,7 +69,11 @@
 +   TheronPCEFastVRAMCommitDisabled = true;
 +   return;
 +  }
-+  fputs("FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V2\n"
++  fputs(TheronPCEFastVRAMCommitStartAtTrack02 ?
++        "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V4\n"
++        "source=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window\n"
++        "scope=cpu-port-vwr-commits-only;dma-writes-excluded;prefix=omitted-until-first-source-valid-track02-read\n" :
++        "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3\n"
 +        "source=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window\n"
 +        "scope=cpu-port-vwr-commits-only;dma-writes-excluded\n",
 +        TheronPCEFastVRAMCommitTrace);
@@ -72,11 +81,15 @@
 + const uint16 logical_pc = TheronTraceInstructionPC;
 + const unsigned mpr_slot = logical_pc >> 13;
 + const unsigned mpr_bank = HuCPU.MPR[mpr_slot];
++ const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
++ if(TheronPCEFastVRAMCommitStartAtTrack02 &&
++    !TheronTracePCEFastVWRTraceGateOpen)
++  return;
 + uint8 code_bytes[8];
 + uint8 code_mpr_banks[8];
 + TheronPCEFastReadCodeWindow(logical_pc, code_bytes, code_mpr_banks);
 + if(fprintf(TheronPCEFastVRAMCommitTrace,
-+            "vram_commit sequence=%u chip=%d display_counter=%u logical_pc=%04x physical_pc=%06x mpr_slot=%u mpr_bank=%02x code_mpr_banks=%02x%02x%02x%02x%02x%02x%02x%02x code_bytes=%02x%02x%02x%02x%02x%02x%02x%02x address=%04x value=%04x low=%02x high=%02x",
++            "vram_commit sequence=%u chip=%d display_counter=%u logical_pc=%04x physical_pc=%06x mpr_slot=%u mpr_bank=%02x code_mpr_banks=%02x%02x%02x%02x%02x%02x%02x%02x code_bytes=%02x%02x%02x%02x%02x%02x%02x%02x address=%04x value=%04x low=%02x high=%02x event_sequence=%u",
 +            TheronPCEFastVRAMCommitCount, chip, display_counter,
 +            (unsigned)logical_pc,
 +            (unsigned)TheronTraceInstructionPhysicalPC,
@@ -90,7 +103,8 @@
 +            (unsigned)code_bytes[4], (unsigned)code_bytes[5],
 +            (unsigned)code_bytes[6], (unsigned)code_bytes[7],
 +            (unsigned)address, (unsigned)value,
-+            (unsigned)(value & 0xFF), (unsigned)(value >> 8)) < 0 ||
++            (unsigned)(value & 0xFF), (unsigned)(value >> 8),
++            event_sequence) < 0 ||
 +    fputc('\n', TheronPCEFastVRAMCommitTrace) == EOF ||
 +    fflush(TheronPCEFastVRAMCommitTrace) != 0)
 + {
@@ -101,5 +115,95 @@
 + }
 + TheronPCEFastVRAMCommitCount++;
 +}
-@@ -572,0 +665,1 @@
++
++/* Capture HuC6260 color-table data writes with the same shared ordering as
++ * the CD-port, RAM-target and VWR traces. Address-port changes are reflected
++ * by the address recorded on each color write. */
++static FILE *TheronPCEFastVCEWriteTrace;
++static unsigned TheronPCEFastVCEWriteCount;
++static unsigned TheronPCEFastVCEWriteLimit = 65536;
++static bool TheronPCEFastVCEWriteInitialized;
++static bool TheronPCEFastVCEWriteDisabled;
++
++static void TheronTracePCEFastVCEWrite(unsigned reg, uint8 input,
++                                       uint16 address, uint16 old_color,
++                                       uint16 new_color)
++{
++ if(TheronPCEFastVCEWriteDisabled ||
++    TheronPCEFastVCEWriteCount >= TheronPCEFastVCEWriteLimit)
++  return;
++ if(!TheronPCEFastVCEWriteInitialized)
++ {
++  const char *path = getenv("FIRESTAFF_THERON_PCE_FAST_VCE_WRITE_TRACE");
++  const char *limit_text = getenv("FIRESTAFF_THERON_PCE_FAST_VCE_WRITE_TRACE_LIMIT");
++  TheronPCEFastVCEWriteInitialized = true;
++  if(limit_text && *limit_text)
++  {
++   char *end = NULL;
++   const unsigned long parsed = strtoul(limit_text, &end, 10);
++   if(end && !*end && parsed >= 1 && parsed <= 1048576)
++    TheronPCEFastVCEWriteLimit = (unsigned)parsed;
++  }
++  if(!path || !*path)
++  {
++   TheronPCEFastVCEWriteDisabled = true;
++   return;
++  }
++  TheronPCEFastVCEWriteTrace = fopen(path, "wx");
++  if(!TheronPCEFastVCEWriteTrace)
++  {
++   TheronPCEFastVCEWriteDisabled = true;
++   return;
++  }
++  fputs("FIRESTAFF_THERON_PCE_FAST_VCE_WRITE_TRACE_V1\n"
++        "source=mednafen-1.32.1-pce-fast-vdc-vce-write\n"
++        "scope=color-table-data-writes-only;address-port-writes-excluded\n",
++        TheronPCEFastVCEWriteTrace);
++ }
++ const uint16 logical_pc = TheronTraceInstructionPC;
++ const unsigned mpr_slot = logical_pc >> 13;
++ const unsigned mpr_bank = HuCPU.MPR[mpr_slot];
++ const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
++ const uint32 physical_pc = (mpr_bank << 13) | (logical_pc & 0x1FFF);
++ if(fprintf(TheronPCEFastVCEWriteTrace,
++            "vce_write sequence=%u event_sequence=%u reg=%u address=%03x input=%02x old=%03x value=%03x logical_pc=%04x physical_pc=%06x mpr_slot=%u mpr_bank=%02x",
++            TheronPCEFastVCEWriteCount, event_sequence, reg,
++            (unsigned)address, (unsigned)input,
++            (unsigned)old_color, (unsigned)new_color,
++            (unsigned)logical_pc, (unsigned)physical_pc,
++            mpr_slot, mpr_bank) < 0 ||
++    fputc('\n', TheronPCEFastVCEWriteTrace) == EOF ||
++    fflush(TheronPCEFastVCEWriteTrace) != 0)
++ {
++  fclose(TheronPCEFastVCEWriteTrace);
++  TheronPCEFastVCEWriteTrace = NULL;
++  TheronPCEFastVCEWriteDisabled = true;
++  return;
++ }
++ TheronPCEFastVCEWriteCount++;
++}
+@@ -433,5 +593,8 @@
+ DECLFW(VCE_Write)
+ {
+  //printf("%04x %02x, %04x\n", A, V, HuCPU.PC);
+- switch(A&0x7)
++ const unsigned reg = A & 0x7;
++ const uint16 trace_address = vce.ctaddress;
++ const uint16 trace_old_color = vce.color_table[trace_address];
++ switch(reg)
+  {
+@@ -440,4 +603,5 @@
+   case 4: vce.color_table[vce.ctaddress] &= 0x100;
+FIRESTAFF_PATCH_TAB_CONTEXT  vce.color_table[vce.ctaddress] |= V;
+FIRESTAFF_PATCH_TAB_CONTEXT  FixPCache(vce.ctaddress);
++          TheronTracePCEFastVCEWrite(4, V, trace_address, trace_old_color, vce.color_table[trace_address]);
+           break;
+@@ -445,5 +611,6 @@
+   case 5: vce.color_table[vce.ctaddress] &= 0xFF;
+FIRESTAFF_PATCH_TAB_CONTEXT  vce.color_table[vce.ctaddress] |= (V & 1) << 8;
+FIRESTAFF_PATCH_TAB_CONTEXT  FixPCache(vce.ctaddress);
++          TheronTracePCEFastVCEWrite(5, V, trace_address, trace_old_color, vce.color_table[trace_address]);
+FIRESTAFF_PATCH_TAB_CONTEXT  vce.ctaddress = (vce.ctaddress + 1) & 0x1FF;
+FIRESTAFF_PATCH_TAB_CONTEXT  break;
+@@ -572,0 +732,1 @@
 +                TheronTracePCEFastVRAMCommit(chip, vdc->display_counter, vdc->MAWR, (V << 8) | vdc->write_latch);

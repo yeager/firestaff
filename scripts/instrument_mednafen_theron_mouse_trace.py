@@ -16,6 +16,126 @@ def replace_once(root: Path, relative_path: str, old: str, new: str) -> None:
     path.write_text(source.replace(old, new, 1), encoding="utf-8")
 
 
+def mouse_input_parser_source() -> str:
+    """Return the shared bounded mouse-script parser inserted into both PCE cores."""
+    return r'''static char TheronMouseInputScriptBuffer[8192];
+static char *TheronMouseInputScriptCursor;
+static bool TheronMouseInputScriptInitialized;
+static unsigned TheronMouseInputUpdateCount;
+static unsigned TheronMouseInputScriptUpdateCount;
+static unsigned TheronMouseInputRepeatRemaining;
+static int16 TheronMouseInputRepeatDeltaX, TheronMouseInputRepeatDeltaY;
+static uint8 TheronMouseInputRepeatButtons;
+static bool TheronParseMouseNumber(const char **cursor, bool allow_negative,
+                                   int *result)
+{
+ int sign = 1;
+ if(**cursor == '-')
+ {
+  if(!allow_negative) return false;
+  sign = -1;
+  (*cursor)++;
+ }
+ if(**cursor < '0' || **cursor > '9') return false;
+ int value = 0;
+ do
+ {
+  if(value > 10000) return false;
+  value = value * 10 + (**cursor - '0');
+  (*cursor)++;
+ }
+ while(**cursor >= '0' && **cursor <= '9');
+ *result = sign * value;
+ return true;
+}
+static bool TheronNextMouseInput(int16 *delta_x, int16 *delta_y,
+                                 uint8 *buttons)
+{
+ TheronMouseInputUpdateCount++;
+ if(!TheronMouseInputScriptInitialized)
+ {
+  const char *value = getenv("FIRESTAFF_THERON_MOUSE_INPUT_SCRIPT");
+  TheronMouseInputScriptInitialized = true;
+  if(value && strlen(value) < sizeof(TheronMouseInputScriptBuffer))
+  {
+   strcpy(TheronMouseInputScriptBuffer, value);
+   TheronMouseInputScriptCursor = TheronMouseInputScriptBuffer;
+  }
+ }
+ if(TheronMouseInputRepeatRemaining)
+ {
+  TheronMouseInputRepeatRemaining--;
+  TheronMouseInputScriptUpdateCount++;
+  *delta_x = TheronMouseInputRepeatDeltaX;
+  *delta_y = TheronMouseInputRepeatDeltaY;
+  *buttons = TheronMouseInputRepeatButtons;
+  return true;
+ }
+ if(!TheronMouseInputScriptCursor || !*TheronMouseInputScriptCursor ||
+    TheronMouseInputScriptUpdateCount >= 20000)
+  return false;
+ char *token = TheronMouseInputScriptCursor;
+ char *separator = strchr(token, ';');
+ if(separator)
+ {
+  *separator = 0;
+  TheronMouseInputScriptCursor = separator + 1;
+ }
+ else TheronMouseInputScriptCursor = NULL;
+ char *repeat_marker = strchr(token, '*');
+ unsigned repeat = 1;
+ if(repeat_marker)
+ {
+  *repeat_marker = 0;
+  const char *repeat_text = repeat_marker + 1;
+  if(!*repeat_text) return false;
+  repeat = 0;
+  for(const char *digit = repeat_text; *digit; digit++)
+  {
+   if(*digit < '0' || *digit > '9' || repeat > 2000) return false;
+   repeat = repeat * 10 + (unsigned)(*digit - '0');
+  }
+  if(!repeat || repeat > 20000) return false;
+ }
+ if(repeat > 20000 - TheronMouseInputScriptUpdateCount) return false;
+ const char *cursor = token;
+ int dx, dy, button;
+ if(!TheronParseMouseNumber(&cursor, true, &dx) || *cursor++ != ',' ||
+    !TheronParseMouseNumber(&cursor, true, &dy) || *cursor++ != ',' ||
+    !TheronParseMouseNumber(&cursor, false, &button) || *cursor ||
+    dx < -127 || dx > 127 || dy < -127 || dy > 127 ||
+    button < 0 || button > 15)
+  return false;
+ TheronMouseInputScriptUpdateCount++;
+ TheronMouseInputRepeatRemaining = repeat - 1;
+ TheronMouseInputRepeatDeltaX = (int16)dx;
+ TheronMouseInputRepeatDeltaY = (int16)dy;
+ TheronMouseInputRepeatButtons = (uint8)button;
+ *delta_x = (int16)dx;
+ *delta_y = (int16)dy;
+ *buttons = (uint8)button;
+ return true;
+}
+'''
+
+
+def pointer_c1df_trace_gate_source() -> str:
+    """Return the opt-in C1DF trace gate shared with the capture flag."""
+    return r'''static bool TheronPointerC1DFTraceEnabledAttempted;
+static bool TheronPointerC1DFTraceEnabled;
+static bool TheronIsPointerC1DFTraceEnabled(void)
+{
+ if(!TheronPointerC1DFTraceEnabledAttempted)
+ {
+  const char *value = getenv("FIRESTAFF_THERON_POINTER_C1DF_TRACE");
+  TheronPointerC1DFTraceEnabled = value && value[0] == '1' && value[1] == 0;
+  TheronPointerC1DFTraceEnabledAttempted = true;
+ }
+ return TheronPointerC1DFTraceEnabled;
+}
+'''
+
+
 def instrument(root: Path) -> None:
     replace_once(
         root,
@@ -127,42 +247,8 @@ def instrument(root: Path) -> None:
         "static FILE *TheronMouseDeviceTrace;\n"
         "static bool TheronMouseDeviceTraceAttempted;\n"
         "static unsigned int TheronMouseDeviceTraceCount;\n"
-        "static char TheronMouseInputScriptBuffer[8192];\n"
-        "static char *TheronMouseInputScriptCursor;\n"
-        "static bool TheronMouseInputScriptInitialized;\n"
-        "static bool TheronNextMouseInput(int16 *delta_x, int16 *delta_y,\n"
-        "                                uint8 *buttons)\n"
-        "{\n"
-        " if(!TheronMouseInputScriptInitialized)\n"
-        " {\n"
-        "  const char *value = getenv(\"FIRESTAFF_THERON_MOUSE_INPUT_SCRIPT\");\n"
-        "  TheronMouseInputScriptInitialized = true;\n"
-        "  if(value && strlen(value) < sizeof(TheronMouseInputScriptBuffer))\n"
-        "  {\n"
-        "   strcpy(TheronMouseInputScriptBuffer, value);\n"
-        "   TheronMouseInputScriptCursor = TheronMouseInputScriptBuffer;\n"
-        "  }\n"
-        " }\n"
-        " if(!TheronMouseInputScriptCursor || !*TheronMouseInputScriptCursor)\n"
-        "  return false;\n"
-        " char *token = TheronMouseInputScriptCursor;\n"
-        " char *separator = strchr(token, ';');\n"
-        " if(separator)\n"
-        " {\n"
-        "  *separator = 0;\n"
-        "  TheronMouseInputScriptCursor = separator + 1;\n"
-        " }\n"
-        " else TheronMouseInputScriptCursor = NULL;\n"
-        " int dx = 0, dy = 0, button = 0;\n"
-        " if(sscanf(token, \"%d,%d,%d\", &dx, &dy, &button) != 3 ||\n"
-        "    dx < -127 || dx > 127 || dy < -127 || dy > 127 ||\n"
-        "    button < 0 || button > 15)\n"
-        "  return false;\n"
-        " *delta_x = (int16)dx; *delta_y = (int16)dy;\n"
-        " *buttons = (uint8)button;\n"
-        " return true;\n"
-        "}\n"
-        "static void TheronTraceMouseDevice(const char *event, int x, int y,\n"
+        + mouse_input_parser_source()
+        + "static void TheronTraceMouseDevice(const char *event, int x, int y,\n"
         "                                   unsigned int buttons)\n"
         "{\n"
         " if(!TheronMouseDeviceTrace)\n"
@@ -223,7 +309,8 @@ def instrument(root: Path) -> None:
         "static bool TheronPointerTraceAttempted;\n"
         "static unsigned TheronPointerTraceCount;\n"
         "static bool TheronPointerTraceTruncationReported;\n"
-        "static unsigned int TheronPointerC1DFReturnPC;\n"
+        + pointer_c1df_trace_gate_source()
+        + "static unsigned int TheronPointerC1DFReturnPC;\n"
         "static unsigned TheronPointerC1DFStepsRemaining;\n"
         "static bool TheronPointerC1DFActive;\n"
         "static void TheronReportPointerTraceTruncation(void)\n"
@@ -282,14 +369,21 @@ def instrument(root: Path) -> None:
         "        (A >= 0x77CE && A <= 0x77DB) ||\n"
         "        (A >= 0x77DC && A <= 0x77E9) ||\n"
         "        (A >= 0xD5A7 && A <= 0xD5B6) ||\n"
+        "        A == 0x28B8 ||\n"
         "        (A >= 0x00C5 && A <= 0x00CA) ||\n"
         "        (A >= 0x271D && A <= 0x271F) || A == 0x2911 ||\n"
+        "        A == 0x2912 ||\n"
         "        A == 0x2E1C || A == 0x2E1D || A == 0x2E3A ||\n"
         "        A == 0x2E3B || A == 0x2E7A || A == 0x2E7B ||\n"
         "        A == 0x2EBA || A == 0x2EBB;\n"
         "}\n"
+        "static bool TheronPointerCandidateAddress(unsigned int A)\n"
+        "{\n"
+        " return A == 0x21D6 || (A >= 0x28FC && A <= 0x2905);\n"
+        "}\n"
         "static bool TheronPointerCodePC(unsigned int pc)\n"
         "{\n"
+        " if(!TheronIsPointerC1DFTraceEnabled()) return false;\n"
         " return TheronPointerC1DFActive ||\n"
         "        (pc >= 0xA71E && pc <= 0xA733) ||\n"
         "        (pc >= 0xD120 && pc <= 0xD1FF) ||\n"
@@ -364,16 +458,19 @@ def instrument(root: Path) -> None:
         "                            TheronTraceInstructionPC,\n"
         "                            TheronTraceInstructionPhysicalPC, 0,\n"
         "                            HuCPU.MPR[TheronTraceInstructionPC >> 13]);\n"
-        "  if(RdOp(TheronTraceInstructionPC) == 0x20 &&\n"
+        "  if(TheronIsPointerC1DFTraceEnabled())\n"
+        "  {\n"
+        "   if(RdOp(TheronTraceInstructionPC) == 0x20 &&\n"
         "     RdOp(TheronTraceInstructionPC + 1) == 0xDF &&\n"
         "     RdOp(TheronTraceInstructionPC + 2) == 0xC1)\n"
-        "  {\n"
-        "   TheronPointerC1DFReturnPC = (TheronTraceInstructionPC + 3) & 0xFFFF;\n"
-        "   TheronPointerC1DFStepsRemaining = 4096;\n"
-        "   TheronTracePointerAccess(\"pointer_c1df_begin\",\n"
+        "   {\n"
+        "    TheronPointerC1DFReturnPC = (TheronTraceInstructionPC + 3) & 0xFFFF;\n"
+        "    TheronPointerC1DFStepsRemaining = 4096;\n"
+        "    TheronTracePointerAccess(\"pointer_c1df_begin\",\n"
         "                            TheronTraceInstructionPC,\n"
         "                            TheronTraceInstructionPhysicalPC, 0,\n"
         "                            HuCPU.MPR[TheronTraceInstructionPC >> 13]);\n"
+        "   }\n"
         "  }\n\n"
         "  if(Theron3879FastTargetStepsRemaining ||\n",
     )
@@ -391,44 +488,8 @@ def instrument(root: Path) -> None:
         "static FILE *TheronMouseDeviceTrace;\n"
         "static bool TheronMouseDeviceTraceAttempted;\n"
         "static unsigned TheronMouseDeviceTraceCount;\n"
-        "static char TheronMouseInputScriptBuffer[8192];\n"
-        "static char *TheronMouseInputScriptCursor;\n"
-        "static bool TheronMouseInputScriptInitialized;\n"
-        "static unsigned TheronMouseInputUpdateCount;\n"
-        "static bool TheronNextMouseInput(int16 *delta_x, int16 *delta_y,\n"
-        "                                uint8 *buttons)\n"
-        "{\n"
-        " if(!TheronMouseInputScriptInitialized)\n"
-        " {\n"
-        "  const char *value = getenv(\"FIRESTAFF_THERON_MOUSE_INPUT_SCRIPT\");\n"
-        "  TheronMouseInputScriptInitialized = true;\n"
-        "  if(value && strlen(value) < sizeof(TheronMouseInputScriptBuffer))\n"
-        "  {\n"
-        "   strcpy(TheronMouseInputScriptBuffer, value);\n"
-        "   TheronMouseInputScriptCursor = TheronMouseInputScriptBuffer;\n"
-        "  }\n"
-        " }\n"
-        " TheronMouseInputUpdateCount++;\n"
-        " if(!TheronMouseInputScriptCursor || !*TheronMouseInputScriptCursor)\n"
-        "  return false;\n"
-        " char *token = TheronMouseInputScriptCursor;\n"
-        " char *separator = strchr(token, ';');\n"
-        " if(separator)\n"
-        " {\n"
-        "  *separator = 0;\n"
-        "  TheronMouseInputScriptCursor = separator + 1;\n"
-        " }\n"
-        " else TheronMouseInputScriptCursor = NULL;\n"
-        " int dx = 0, dy = 0, button = 0;\n"
-        " if(sscanf(token, \"%d,%d,%d\", &dx, &dy, &button) != 3 ||\n"
-        "    dx < -127 || dx > 127 || dy < -127 || dy > 127 ||\n"
-        "    button < 0 || button > 15)\n"
-        "  return false;\n"
-        " *delta_x = (int16)dx; *delta_y = (int16)dy;\n"
-        " *buttons = (uint8)button;\n"
-        " return true;\n"
-        "}\n"
-        "static void TheronTraceMouseDevice(const char *event, int x, int y,\n"
+        + mouse_input_parser_source()
+        + "static void TheronTraceMouseDevice(const char *event, int x, int y,\n"
         "                                   unsigned int buttons)\n"
         "{\n"
         " if(!TheronMouseDeviceTrace)\n"
@@ -475,10 +536,109 @@ def instrument(root: Path) -> None:
         "{\n"
         " uint8 wmpr = HuCPU.MPR[A >> 13];\n"
         " uint32 physical = (wmpr << 13) | (A & 0x1FFF);\n"
-        " if(TheronPointerAddress(A) ||\n"
+        " if(TheronPointerAddress(A) || TheronPointerCandidateAddress(A) ||\n"
         "    TheronPointerCodePC(TheronTraceInstructionPC))\n"
         "  TheronTracePointerAccess(\"guest_write\", A, physical, V, wmpr);\n"
         " HuCPU.PCEWrite[wmpr](physical, V);\n"
+        "}\n",
+    )
+    replace_once(
+        root,
+        "src/pce_fast/pce.cpp",
+        "void TheronTraceDirectMainRAMWrite(uint32 offset, uint8 old_value, uint8 value)\n"
+        "{\n"
+        " (void)old_value;\n"
+        " if(HuCPU.MPR[1] == 0xF8 && offset < 0x100)\n"
+        "  TheronTracePartyRAMWrite(offset, value);\n"
+        "}\n",
+        "static void TheronTracePointerCodeWindow(char *out, size_t out_size,\n"
+        "                                         unsigned int logical_pc)\n"
+        "{\n"
+        " unsigned i;\n"
+        " if(!out || out_size < 65) return;\n"
+        " for(i = 0; i < 32; ++i)\n"
+        " {\n"
+        "  unsigned int address = (logical_pc - 8 + i) & 0xFFFF;\n"
+        "  uint8 bank = HuCPU.MPR[address >> 13];\n"
+        "  uint32 physical = (bank << 13) | (address & 0x1FFF);\n"
+        "  snprintf(out + i * 2, 3, \"%02x\", HuCPU.PCERead[bank](physical));\n"
+        " }\n"
+        " out[64] = 0;\n"
+        "}\n"
+        "static void TheronTracePointerCandidateRAMWrite(uint32 offset,\n"
+        "                                                uint8 old_value,\n"
+        "                                                uint8 value)\n"
+        "{\n"
+        " static FILE *trace = NULL;\n"
+        " static unsigned count = 0;\n"
+        " char code_window[65];\n"
+        " unsigned int code_start;\n"
+        " if(IsSGX || old_value == value ||\n"
+        "    !(offset == 0x01D6 ||\n"
+        "      (offset >= 0x08FC && offset <= 0x0905)) || count >= 4096)\n"
+        "  return;\n"
+        " if(!trace)\n"
+        " {\n"
+        "  const char *path = getenv(\"FIRESTAFF_THERON_POINTER_RAM_WRITE_TRACE\");\n"
+        "  if(!path || !*path) return;\n"
+        "  trace = fopen(path, \"w\");\n"
+        "  if(!trace) return;\n"
+        "  fputs(\"source=mednafen-pce-fast-pointer-ram-write\\n\", trace);\n"
+        " }\n"
+        " code_start = (TheronTraceInstructionPC - 8) & 0xFFFF;\n"
+        " TheronTracePointerCodeWindow(code_window, sizeof(code_window),\n"
+        "                             TheronTraceInstructionPC);\n"
+        " fprintf(trace, \"pointer_ram_write sequence=%u logical=%04x physical=%06x old=%02x value=%02x writer_pc=%04x writer_physical_pc=%06x writer_mpr=%02x code_start=%04x code_window=%s\\n\",\n"
+        "         count++, 0x2000 + (offset & 0x1FFF),\n"
+        "         0x1F0000 + (offset & 0x1FFF), old_value, value,\n"
+        "         TheronTraceInstructionPC, TheronTraceInstructionPhysicalPC,\n"
+        "         HuCPU.MPR[TheronTraceInstructionPC >> 13], code_start,\n"
+        "         code_window);\n"
+        " fflush(trace);\n"
+        "}\n"
+        "void TheronTraceDirectMainRAMWrite(uint32 offset, uint8 old_value, uint8 value)\n"
+        "{\n"
+        " TheronTracePointerCandidateRAMWrite(offset, old_value, value);\n"
+        " if(HuCPU.MPR[1] == 0xF8 && offset < 0x100)\n"
+        "  TheronTracePartyRAMWrite(offset, value);\n"
+        "}\n",
+    )
+    replace_once(
+        root,
+        "src/pce_fast/pce.cpp",
+        "static DECLFW(BaseRAMWrite)\n"
+        "{\n"
+        " TheronTracePartyRAMWrite(A, V);\n"
+        " const size_t offset = (size_t)A - (0xF8 * 8192);\n"
+        " TheronTraceA1B7BMTWrite(A, offset, BaseRAM[offset], V);\n"
+        " BaseRAM[offset] = V;\n"
+        "}\n",
+        "static DECLFW(BaseRAMWrite)\n"
+        "{\n"
+        " TheronTracePartyRAMWrite(A, V);\n"
+        " const size_t offset = (size_t)A - (0xF8 * 8192);\n"
+        " TheronTraceA1B7BMTWrite(A, offset, BaseRAM[offset], V);\n"
+        " TheronTracePointerCandidateRAMWrite(offset, BaseRAM[offset], V);\n"
+        " BaseRAM[offset] = V;\n"
+        "}\n",
+    )
+    replace_once(
+        root,
+        "src/pce_fast/pce.cpp",
+        "static DECLFW(BaseRAMWrite_Mirrored)\n"
+        "{\n"
+        " TheronTracePartyRAMWrite(A, V);\n"
+        " const size_t offset = A & 0x1FFF;\n"
+        " TheronTraceA1B7BMTWrite(A, offset, BaseRAM[offset], V);\n"
+        " BaseRAM[offset] = V;\n"
+        "}\n",
+        "static DECLFW(BaseRAMWrite_Mirrored)\n"
+        "{\n"
+        " TheronTracePartyRAMWrite(A, V);\n"
+        " const size_t offset = A & 0x1FFF;\n"
+        " TheronTraceA1B7BMTWrite(A, offset, BaseRAM[offset], V);\n"
+        " TheronTracePointerCandidateRAMWrite(offset, BaseRAM[offset], V);\n"
+        " BaseRAM[offset] = V;\n"
         "}\n",
     )
 

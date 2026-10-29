@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "theron_v1_palette.h"
 #include "theron_v1_world.h"
 
 #define THERON_TRACK02_MAX_BANK_ANCHORS 3u
@@ -633,6 +634,16 @@ Theron_Track02SignalStatus theron_v1_track02_read_stage2_vce_palette(
     size_t track02_size,
     const char *md5_hex,
     Theron_Track02Stage2VcePalette *out_palette);
+
+/* Copy the hash-verified Stage-2 VCE words into palette entries $E0-$FF.
+ * This exposes authentic colors but does not establish which screen uses
+ * them and does not mark any renderer palette route as verified. */
+Theron_Track02SignalStatus theron_v1_track02_load_stage2_vce_palette(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    TQR_PaletteState *out_state,
+    Theron_Track02Stage2VcePalette *out_receipt);
 
 Theron_Track02SignalStatus theron_v1_track02_colorize_startup_bitmap_route(
     const Theron_Track02StartupBitmapAtlasRoute *indexed_route,

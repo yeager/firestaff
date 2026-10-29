@@ -28,9 +28,11 @@
  *     render coordinates in include/theron_v2_hud_overlay_pc34.h
  *     (compass 16,12; rune slots 36+i*6,8 4x4; action strip
  *     16+i*32,208 28x14; champion bars 4+i*62,184 60x8).
- * The original game is gamepad-driven: Theron has no mouse route
- * tables and no per-button hit zones.  The Firestaff touch runtime
- * (src/theron/theron_v2_touch_runtime.c) is gesture-based
+ * The retail manual documents D-pad cursor movement. An authentic PCE mouse
+ * reference capture also shows host-mouse motion moving the original hand
+ * cursor, but guest coordinates and click semantics are not yet joined to
+ * source. There are no admitted full per-button hit-zone tables. The
+ * Firestaff touch runtime (src/theron/theron_v2_touch_runtime.c) is gesture-based
  * (swipe -> ReDMCSB C001-C006 movement commands) and treats HUD
  * chrome as an exclusion guard, so most zones below are
  * presentational indicators, not command targets — commandId 0 marks

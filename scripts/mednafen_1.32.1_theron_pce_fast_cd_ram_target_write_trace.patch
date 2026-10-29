@@ -1,6 +1,6 @@
 --- a/src/pce_fast/huc.cpp
 +++ b/src/pce_fast/huc.cpp
-@@ -73,15 +73,49 @@
+@@ -73,15 +73,57 @@
  static DECLFR(HuCRead)
  {
   return ROMSpace[A];
@@ -10,12 +10,20 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +{
 + static FILE *trace = NULL;
 + static unsigned count = 0;
++ static unsigned trace_limit = 0;
++ if(!trace_limit)
++ {
++  const char *limit_text = getenv("FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT");
++  char *end = NULL;
++  const unsigned long parsed = limit_text && *limit_text ? strtoul(limit_text, &end, 10) : 8192UL;
++  trace_limit = end && *end == 0 && parsed >= 1UL && parsed <= 1048576UL ? (unsigned)parsed : 8192U;
++ }
 + const uint32 first = 0x68 * 8192 + 0x089f;
 + const uint32 last = 0x68 * 8192 + 0x08ab;
 + const uint32 stage2_first = 0x80 * 8192;
 + const uint32 stage2_last = stage2_first + 0x10;
 + const bool stage2_target = address >= stage2_first && address <= stage2_last;
-+ if((!stage2_target && (address < first || address > last)) || count >= 8192)
++ if((!stage2_target && (address < first || address > last)) || count >= trace_limit)
 +  return;
 + if(!trace)
 + {
@@ -60,7 +68,7 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +#include "pce.h"
 FIRESTAFF_PATCH_BLANK_CONTEXT
  namespace MDFN_IEN_PCE_FAST
-@@ -261,17 +261,69 @@
+@@ -261,17 +261,98 @@
 +static void TheronTraceCDDataPortRead(uint16 cpu_pc, uint32 source_lba, uint16 user_data_offset,
 +                                      uint16 raw_sector_offset, uint32 track02_start_lba,
 +                                      uint32 track02_end_lba, uint32 track02_index1_file_offset,
@@ -68,8 +76,12 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +{
 + static FILE *trace = NULL;
 + static unsigned count = 0;
-+ if(count >= 65536)
-+  return;
++ static unsigned trace_limit = 0;
++ static bool start_at_track02 = false;
++ static bool trace_options_initialized = false;
++ static bool start_vram_trace_at_track02 = false;
++ static bool start_vram_trace_mode_initialized = false;
++ extern bool TheronTracePCEFastVWRTraceGateOpen;
 + if(!trace)
 + {
 +  const char *path = getenv("FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_TRACE");
@@ -80,6 +92,31 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +   return;
 +  fputs("source=mednafen-pce-fast-cd-data-port-read-with-reader-mpr-context\n", trace);
 + }
++ if(!trace_options_initialized)
++ {
++  const char *limit_text = getenv("FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_TRACE_LIMIT");
++  const char *start_text = getenv("FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_START_AT_TRACK02");
++  char *end = NULL;
++  const unsigned long parsed = limit_text && *limit_text ? strtoul(limit_text, &end, 10) : 65536UL;
++  trace_limit = end && *end == 0 && parsed >= 65536UL && parsed <= 1048576UL ?
++    (unsigned)parsed : 65536U;
++  start_at_track02 = start_text && start_text[0] == '1' && start_text[1] == 0;
++  trace_options_initialized = true;
++ }
++ if(start_at_track02 && (!source_valid || source_lba < track02_start_lba ||
++                         source_lba >= track02_end_lba))
++  return;
++ if(count >= trace_limit)
++  return;
++ if(!start_vram_trace_mode_initialized)
++ {
++  const char *start_mode = getenv("FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_START_AT_TRACK02");
++  start_vram_trace_at_track02 = start_mode && start_mode[0] == '1' && !start_mode[1];
++  start_vram_trace_mode_initialized = true;
++ }
++ if(start_vram_trace_at_track02 && source_valid &&
++    source_lba >= track02_start_lba && source_lba < track02_end_lba)
++  TheronTracePCEFastVWRTraceGateOpen = true;
 + const unsigned reader_mpr_slot = (cpu_pc >> 13) & 7;
 + const uint8 reader_mpr = HuCPU.MPR[reader_mpr_slot];
 + const uint32 reader_physical_pc = ((uint32)reader_mpr << 13) | (cpu_pc & 0x1fff);

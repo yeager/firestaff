@@ -5,6 +5,53 @@ only as an external reference instrument for authentic original-game behavior
 and data capture; it is never part of the shipped runtime or a substitute for
 native Firestaff gameplay.
 
+## 2026-10-29 — PCE mouse motion visibly moves the original cursor
+
+A cold authentic Japanese Rev. 1 Mednafen PCE Fast run switched port 1 to the
+emulated mouse at the dungeon. Two screenshots with host-mouse positions 150
+screen pixels apart differ only in a 41×51-pixel box around the original hand
+cursor. This confirms visual cursor motion in the original game. It does not
+identify guest coordinates or prove what a click does: the probe has no
+command or state-transition receipt, and the later click's black viewport is
+inconclusive. See the
+[source-locked capture note](../source-lock/theron-disassembly/theron-jp-mouse-pointer-motion-20261029.md).
+
+## 2026-10-29 — cold Japanese reference route reaches dungeon view
+
+A fresh Mednafen 1.32.1 `pce_fast` run opened the authentic Japanese Rev. 1
+disc without loading a save-state. It showed story pages, a fade and then a
+first-person dungeon after six separate 250 ms Button I presses. This
+supersedes the earlier r1 capture's stopping point: a dungeon screenshot is
+now available, but the r2 run did not include an instrumented guest-input,
+CD-to-RAM, or command receipt. A separate mouse-mode capture confirms that
+host-mouse motion moves the original hand cursor; neither screenshot sequence
+proves the guest coordinates or click behavior. Mednafen reported the SBI
+sidecar missing, and the full headered System Card image was unavailable. The
+retail manual documents D-pad cursor movement and Button I actions; it does not
+document physical mouse input. These captures do not prove the transition's
+source provenance, gameplay behavior, or Firestaff parity. Private screenshots,
+log and hash manifest
+are at
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-story-to-dungeon-20261029-r2/`.
+
+The separate [cold mouse-mode Run trace](../source-lock/theron-disassembly/theron-jp-cold-mouse-run-trace-20261029.md)
+records Run and Button I at the original System Card poll, but the game
+handoff still lacks CD IRQ and loader receipts. Mednafen also logged the
+Japanese SBI sidecar missing; its role in the missing handoff is unknown.
+
+## 2026-10-29 — authentic Japanese stage-message advancement captured
+
+A cold Japanese Rev. 1 reference run used original Track 02, the canonical
+headerless System Card 3.0 body, and the original SBI sidecar without loading
+a save-state. Three real screenshots capture the Ak-Tu-Ba stage card, its
+first story page after Button I, and a later page after another short Button I
+press. The active-low Button I poll value `$3E` is present in the controller
+trace. This proves one visible story-page transition after controller input.
+It does not show hero selection or a dungeon, and it does not establish native
+parity. The full headered card image was unavailable. Private evidence,
+including hashes, is retained at
+`/home/trv2/firestaff-theron-evidence/capture/theron-menu-progression-20261029-r1/`.
+
 ## 2026-10-26 — PCE Fast captures default to a close-time snapshot signal
 
 The reference capture launcher now defaults PCE Fast to `TERM` unless the
@@ -49,8 +96,22 @@ span, SCSI command, authenticated CD-to-RAM origin receipt, CD IRQ, or game
 `$E009` dispatch. The capture helper therefore rejected it as
 `transition=missing`. This proves delivery of the requested long RUN hold to
 the original controller path only. It does not prove a Theron title/menu
-action, game launch, dungeon admission, or native runtime parity. The raw
-capture remains operator-local and is discarded after the summary is recorded.
+action, game launch, dungeon admission, or native runtime parity. Raw capture
+artifacts are discarded after the summary is recorded.
+
+## Bounded cold CD-read trace options
+
+The PCE Fast reference wrapper leaves the CD data-port trace at its historical
+65,536-row all-source cap by default. A cold source-join capture may set
+`THERON_CAPTURE_PCE_FAST_CD_DATA_READ_START_AT_TRACK02=1` to record only
+source-valid data-port reads whose LBA falls inside the selected Track 02, and
+`THERON_CAPTURE_PCE_FAST_CD_DATA_READ_TRACE_LIMIT` to choose a cap from 65,536
+through 1,048,576 rows. The wrapper records both values in its transition
+receipt. This filter applies only to that diagnostic sidecar; separate
+CD-to-RAM, CPU, VDC and VCE traces keep their own bounds and meanings. It does
+not prove a CD-to-RAM consumer or screen mapping until those receipts are
+joined in the same cold session. The 2026-10-29 Japanese cold capture and its
+limits are summarized in the [filtered Track 02 capture note](../source-lock/theron-disassembly/theron-jp-cold-track02-filtered-input-20261029.md).
 
 ## 2026-10-24 — authentic runtime input comparison remains inconclusive
 
@@ -268,6 +329,33 @@ admission/CLI test was reverted after this source mismatch was identified.
 Keep capture files operator-local; game-owned JP rendering remains blocked.
 
 ## Local media boundary
+
+The PCE Fast reference-capture wrapper can optionally record HuC6260 VCE
+color-table data writes alongside CD data-port reads, CD RAM target writes,
+and CPU-port VWR commits. Set
+`THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE=1` with
+`THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast`; the wrapper writes the VCE stream
+to `<trace>.pce-fast.vce-write` when color-table writes occur and adds it to
+the shared event-order JSONL. Register 4 and 5 records identify the palette
+address, old/new 9-bit value and guest instruction address. The chronology
+establishes temporal order only; it does not prove causal CD-to-palette data
+flow, DMA writes, tile use, or world-cell mapping. A cold Japanese Rev. 1
+boot/title-menu capture now provides an authentic VCE write stream with 11,592
+ordered records over all 512 palette addresses. The Firestaff event-merger
+parser accepts every row. A paired real runtime screenshot still shows
+`NEW GAME` selected after a four-second Run hold. The private TRV2 evidence
+bundle is
+`/home/trv2/firestaff-theron-evidence/capture/theron-vce-title-20261029-r1/`.
+This capture used the hash-verified canonical headerless System Card 3.0 ROM
+body (`38179df8f4ac870017db21ebcbf53114`) and authentic Japanese Rev. 1 Track
+02 (`b7afb338ad31be1025b53f9aff12d73a`), without an autoload state. The full
+headered System Card image was unavailable and the optional SBI file was
+missing. This does not verify the original firmware container or reach dungeon
+gameplay, and therefore does not establish Theron gameplay parity. An older
+operator-local
+`theron-spawn-search-r26` bundle contains a 1,024-byte VCE endpoint snapshot,
+but its receipt records zero non-System-Card CD reads. Treat it as a palette
+snapshot only, not a Theron dungeon palette or source-to-tile mapping.
 
 Theron capture uses user-supplied System Card firmware, CUE/BIN and other
 original media selected from operator-local storage. None of those payloads

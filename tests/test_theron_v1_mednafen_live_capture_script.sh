@@ -63,7 +63,96 @@ if bash -c 'source "$1"; wait_for_host_key_scancode_presses "$2" 91 2 1' _ \
     exit 1
 fi
 mkdir -p "$repo/build"
+cd_limit_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_PCE_FAST_CD_DATA_READ_TRACE_LIMIT=65535 \
+    "$script" 2>&1) && {
+    printf '%s\n' 'FAIL: CD data-read trace accepted a limit below its bounded minimum' >&2
+    exit 1
+}
+if [[ "$cd_limit_output" != *'THERON_CAPTURE_PCE_FAST_CD_DATA_READ_TRACE_LIMIT must be an integer from 65536 through 1048576'* ]]; then
+    printf '%s\n' 'FAIL: invalid CD data-read limit lacked a precise diagnostic' >&2
+    exit 1
+fi
+cd_filter_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_MEDNAFEN_MODULE=pce \
+    THERON_CAPTURE_PCE_FAST_CD_DATA_READ_START_AT_TRACK02=1 \
+    "$script" 2>&1) && {
+    printf '%s\n' 'FAIL: Track 02 CD data-read filtering accepted the standard PCE module' >&2
+    exit 1
+}
+if [[ "$cd_filter_output" != *'Track 02 CD data-read filtering requires the PCE Fast module'* ]]; then
+    printf '%s\n' 'FAIL: invalid CD data-read module lacked a precise diagnostic' >&2
+    exit 1
+fi
+cd_filter_valid_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast \
+    THERON_CAPTURE_PCE_FAST_CD_DATA_READ_TRACE_LIMIT=262144 \
+    THERON_CAPTURE_PCE_FAST_CD_DATA_READ_START_AT_TRACK02=1 \
+    "$script" 2>&1) || {
+    printf '%s\n' 'FAIL: valid bounded Track 02 CD data-read settings were rejected' >&2
+    exit 1
+}
+if [[ "$cd_filter_valid_output" != *'SKIP:'* ]]; then
+    printf '%s\n' 'FAIL: valid CD data-read settings did not reach the missing-media gate' >&2
+    exit 1
+fi
+cd_ram_write_limit_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT=0 \
+    "$script" 2>&1) && {
+    printf '%s\n' 'FAIL: CD RAM target-write trace accepted a zero limit' >&2
+    exit 1
+}
+if [[ "$cd_ram_write_limit_output" != *'THERON_CAPTURE_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT must be an integer from 1 through 1048576'* ]]; then
+    printf '%s\n' 'FAIL: invalid CD RAM target-write limit lacked a precise diagnostic' >&2
+    exit 1
+fi
+cd_ram_write_valid_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast \
+    THERON_CAPTURE_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT=262144 \
+    "$script" 2>&1) || {
+    printf '%s\n' 'FAIL: valid CD RAM target-write trace limit was rejected' >&2
+    exit 1
+}
+if [[ "$cd_ram_write_valid_output" != *'SKIP:'* ]]; then
+    printf '%s\n' 'FAIL: valid CD RAM target-write limit did not reach the missing-media gate' >&2
+    exit 1
+fi
+cd_ram_write_patch=$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_ram_target_write_trace.patch
+if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT' "$cd_ram_write_patch" ||
+   ! grep -Fq 'count >= trace_limit' "$cd_ram_write_patch" ||
+   grep -Fq 'count >= 8192' "$cd_ram_write_patch" ||
+   ! grep -Fq 'cd_ram_target_write_trace_limit=%s' "$script"; then
+    printf '%s\n' 'FAIL: CD RAM target-write cap must be bounded, configurable and receipted' >&2
+    exit 1
+fi
+vram_commit_limit_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast \
+    THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE=1 \
+    THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_START_AT_TRACK02=1 \
+    THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT=4194305 \
+    "$script" 2>&1) && {
+    printf '%s\n' 'FAIL: PCE Fast VRAM commit trace accepted a limit above its maximum' >&2
+    exit 1
+}
+if [[ "$vram_commit_limit_output" != *'THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT must be an integer from 1 through 4194304'* ]]; then
+    printf '%s\n' 'FAIL: invalid PCE Fast VRAM commit limit lacked a precise diagnostic' >&2
+    exit 1
+fi
+vram_commit_max_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast \
+    THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE=1 \
+    THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_START_AT_TRACK02=1 \
+    THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT=4194304 \
+    "$script" 2>&1) || {
+    printf '%s\n' 'FAIL: maximum PCE Fast VRAM commit trace limit was rejected' >&2
+    exit 1
+}
+if [[ "$vram_commit_max_output" != *'SKIP: MEDNAFEN_BIN'* ]]; then
+    printf '%s\n' 'FAIL: maximum PCE Fast VRAM commit limit did not reach the missing-media gate' >&2
+    exit 1
+fi
 python3 "$repo/tests/test_theron_scripted_input_patch_parser.py"
+python3 "$repo/tests/test_theron_mouse_input_parser.py"
 bash "$repo/tests/test_theron_authentic_bram.sh"
 input_test_dir=$(mktemp -d "$repo/build/theron-input-consumption.XXXXXX")
 swift_module_cache=
@@ -139,6 +228,62 @@ if [[ "$consumption_receipt" != *'event_frames_with_apply=1'* ||
         "$consumption_receipt" >&2
     exit 1
 fi
+"$scripted_input_consumption_verifier" \
+    "$input_test_dir/consumed.trace" run@9600:90 8388608 >/dev/null
+if "$scripted_input_consumption_verifier" \
+    "$input_test_dir/consumed.trace" run@9600:90 8388609 \
+    >"$input_test_dir/oversized-read-limit.stdout" \
+    2>"$input_test_dir/oversized-read-limit.stderr"; then
+    printf '%s\n' 'FAIL: scripted-input verifier accepted a read limit above its bound' >&2
+    exit 1
+fi
+cat >"$input_test_dir/mirrored-port.trace" <<'THERON_MIRRORED_INPUT_PORT'
+scripted_pce_input_event frame=72 key=run mask=0008 hold=60
+scripted_pce_input_apply frame=72 physical=0000 scripted=0008 combined=0008
+pce_input_read frame=72 cpu_pc=42ab register=138d raw=0008 sel=0 clr=0 index=0 value=07
+THERON_MIRRORED_INPUT_PORT
+mirrored_port_receipt=$("$scripted_input_consumption_verifier" \
+    "$input_test_dir/mirrored-port.trace" run@72:60 8)
+if [[ "$mirrored_port_receipt" != *'event_frames_with_scripted_mask_read=1'* ||
+      "$mirrored_port_receipt" != *'controller_read_witness_pc=42ab'* ||
+      "$mirrored_port_receipt" != *'game_or_non_system_card_poll_boundary=observed'* ]]; then
+    printf 'FAIL: a mirrored PCE port-0 read was not verified:\n%s\n' \
+        "$mirrored_port_receipt" >&2
+    exit 1
+fi
+cat >"$input_test_dir/mirrored-slot-four.trace" <<'THERON_MIRRORED_SLOT_FOUR_INPUT'
+scripted_pce_input_event frame=74 key=run mask=0008 hold=60 port=4
+scripted_pce_input_apply frame=74 physical=0000 scripted=0008 port=4
+pce_input_read frame=74 cpu_pc=42ab register=1394 raw=0008 sel=0 clr=0 index=4 value=37
+THERON_MIRRORED_SLOT_FOUR_INPUT
+slot_four_receipt=$("$scripted_input_consumption_verifier" \
+    "$input_test_dir/mirrored-slot-four.trace" run@74:60 8 4)
+if [[ "$slot_four_receipt" != *'scripted_input_port_index=4'* ||
+      "$slot_four_receipt" != *'event_frames_with_scripted_mask_read=1'* ||
+      "$slot_four_receipt" != *'controller_read_witness_pc=42ab'* ]]; then
+    printf 'FAIL: selected PCE input slot 4 did not produce an attributed read:\n%s\n' \
+        "$slot_four_receipt" >&2
+    exit 1
+fi
+if "$scripted_input_consumption_verifier" \
+    "$input_test_dir/mirrored-slot-four.trace" run@74:60 8 \
+    >"$input_test_dir/mirrored-slot-four-default.stdout" \
+    2>"$input_test_dir/mirrored-slot-four-default.stderr"; then
+    printf '%s\n' 'FAIL: selected PCE input slot 4 was accepted under default slot 0' >&2
+    exit 1
+fi
+cat >"$input_test_dir/mirrored-wrong-index.trace" <<'THERON_MIRRORED_WRONG_INPUT_INDEX'
+scripted_pce_input_event frame=73 key=run mask=0008 hold=60
+scripted_pce_input_apply frame=73 physical=0000 scripted=0008 combined=0008
+pce_input_read frame=73 cpu_pc=42ab register=1394 raw=0008 sel=0 clr=0 index=4 value=37
+THERON_MIRRORED_WRONG_INPUT_INDEX
+if "$scripted_input_consumption_verifier" \
+    "$input_test_dir/mirrored-wrong-index.trace" run@73:60 8 \
+    >"$input_test_dir/mirrored-wrong-index.stdout" \
+    2>"$input_test_dir/mirrored-wrong-index.stderr"; then
+    printf '%s\n' 'FAIL: a mirrored read from controller index 4 was accepted as port 0' >&2
+    exit 1
+fi
 cat >"$input_test_dir/system-card-only.trace" <<'THERON_SYSTEM_CARD_INPUT'
 scripted_pce_input_event frame=9600 key=run mask=0008 hold=90
 scripted_pce_input_apply frame=9600 physical=0000 scripted=0008 combined=0008
@@ -185,6 +330,21 @@ if [[ "$legacy_pce_receipt" != *'event_frames_with_scripted_mask_read=1'* ||
       "$legacy_pce_receipt" != *'controller_read_witness_pc=44ca'* ]]; then
     printf 'FAIL: the PCE raw-read/result pair was not verified as one consumed poll:\n%s\n' \
         "$legacy_pce_receipt" >&2
+    exit 1
+fi
+cat >"$input_test_dir/legacy-mirrored-port.trace" <<'THERON_LEGACY_MIRRORED_PORT'
+scripted_pce_input_event frame=61 key=run mask=0008 hold=2
+scripted_pce_input_apply frame=61 physical=0000 scripted=0008 combined=0008
+pce_input_read frame=61 cpu_pc=42ab register=13ff raw=0008 sel=0 clr=0 index=0
+pce_input_port0 raw=0008
+pce_input_result frame=61 cpu_pc=42ab register=13ff raw=0008 value=07 sel=0 clr=0 index=0 sp=f2 stack=4b436d74
+THERON_LEGACY_MIRRORED_PORT
+legacy_mirrored_receipt=$("$scripted_input_consumption_verifier" \
+    "$input_test_dir/legacy-mirrored-port.trace" run@61:2 4)
+if [[ "$legacy_mirrored_receipt" != *'event_frames_with_scripted_mask_read=1'* ||
+      "$legacy_mirrored_receipt" != *'controller_read_witness_pc=42ab'* ]]; then
+    printf 'FAIL: legacy PCE raw/result pairing rejected a mirrored port read:\n%s\n' \
+        "$legacy_mirrored_receipt" >&2
     exit 1
 fi
 cat >"$input_test_dir/out-of-window-read.trace" <<'THERON_OUT_OF_WINDOW_INPUT'
@@ -405,6 +565,15 @@ if route_output=$(THERON_CAPTURE_MENU_ROUTE=drator-generator \
 fi
 if [[ "$route_output" != *'RUN replay event at frame 9600'* ]]; then
     printf 'FAIL: cold-start drator-generator did not enforce the authentic RUN handoff frame\n' >&2
+    exit 1
+fi
+if route_output=$(THERON_CAPTURE_REPLAY_INPUT_PORT=5 bash "$script" 2>&1); then
+    printf '%s\n' 'FAIL: capture accepted PCE input slot 5 outside the supported range' >&2
+    exit 1
+fi
+if [[ "$route_output" != *'THERON_CAPTURE_REPLAY_INPUT_PORT must be an integer from 0 through 4'* ]]; then
+    printf 'FAIL: invalid scripted PCE input slot lacked a precise diagnostic:\n%s\n' \
+        "$route_output" >&2
     exit 1
 fi
 route_output=$(THERON_CAPTURE_MENU_ROUTE=drator-generator \
@@ -835,6 +1004,11 @@ if ! grep -Fq 'mednafen_1.32.1_theron_vram_vce_snapshot.patch' "$build_script" |
     printf 'FAIL: live capture must retain same-instant VDC VRAM, VCE palette and HuC6270 register snapshots\n' >&2
     exit 1
 fi
+if ! grep -Fq 'old_color % 256 + (input_byte % 2) * 256' "$script" ||
+   grep -Fq 'int(input_byte / 2) % 2' "$script"; then
+    printf 'FAIL: PCE Fast VCE register 5 validation must use input bit 0 for the color high bit\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'mednafen_1.32.1_theron_vdc_io_trace.patch' "$build_script" ||
    ! grep -Fq 'FIRESTAFF_THERON_VDC_IO_TRACE="$vdc_io_trace"' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_VDC_IO_TRACE_V1' "$script" ||
@@ -855,7 +1029,8 @@ if ! grep -Fq 'THERON_CAPTURE_INPUT_TRACE_LIMIT' "$script" ||
    ! grep -Fq 'input_trace_limit_default=65536' "$script" ||
    ! grep -Fq 'input_trace_limit_default=1048576' "$script" ||
    ! grep -Fq '|| -n "$host_key" || -n "$host_key_sequence"' "$script" ||
-   ! grep -Fq 'input_trace_limit < 65536 || input_trace_limit > 1048576' "$script" ||
+   ! grep -Fq 'input_trace_limit < 65536 || input_trace_limit > 8388608' "$script" ||
+   ! grep -Fq 'read_limit > 8388608' "$scripted_input_consumption_verifier" ||
    ! grep -Fq 'verify_theron_scripted_input_consumption.sh' "$script" ||
    ! grep -Fq 'event_frames_followed_by_controller_read' "$scripted_input_consumption_verifier" ||
    ! grep -Fq 'event_frames_with_scripted_mask_read' "$scripted_input_consumption_verifier" ||
@@ -1016,6 +1191,19 @@ if ! grep -Fq -- 'FIRESTAFF_THERON_PCE_FAST_POINTER_TRACE_SUPPORT' "$build_scrip
    ! grep -Fq -- '"$capture_pointer_c1df_trace" == 1' "$script" ||
    ! grep -Fq -- 'capture_mednafen_module=pce_fast' "$script"; then
     printf '%s\n' 'FAIL: C1DF pointer tracing must build and capture with the PCE Fast core' >&2
+    exit 1
+fi
+if ! grep -Fq -- 'A == 0x21D6 || (A >= 0x28FC && A <= 0x2905)' "$pointer_instrumenter" ||
+   ! grep -Fq -- 'TheronTracePointerCodeWindow' "$pointer_instrumenter" ||
+   ! grep -Fq -- 'HuCPU.PCERead[bank](physical)' "$pointer_instrumenter" ||
+   ! grep -Fq -- 'code_window=%s' "$pointer_instrumenter" ||
+   ! grep -Fq -- 'A == 0x28B8' "$pointer_instrumenter" ||
+   ! grep -Fq -- 'A == 0x2912' "$pointer_instrumenter" ||
+   ! grep -Fq -- 'TheronPointerAddress(A) || TheronPointerCandidateAddress(A) ||' "$pointer_instrumenter" ||
+   ! grep -Fq -- 'FIRESTAFF_THERON_POINTER_RAM_WRITE_TRACE' "$pointer_instrumenter" ||
+   ! grep -Fq -- 'FIRESTAFF_THERON_POINTER_RAM_WRITE_TRACE="$pce_fast_pointer_ram_write_trace"' "$script" ||
+   ! grep -Fq -- 'pointer_ram_write_trace_rows=%s' "$script"; then
+    printf '%s\n' 'FAIL: mouse pointer traces must watch and report the candidate RAM writes' >&2
     exit 1
 fi
 if ! python3 - "$pointer_instrumenter" <<'PY'
@@ -1198,9 +1386,12 @@ if ! awk '
 fi
 if ! grep -Fq 'mednafen_1.32.1_theron_scripted_pce_fast_input.patch' "$repo/scripts/build_mednafen_theron_irq2_trace.sh" ||
    ! grep -Fq 'FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT' "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_fast_input.patch" ||
-   ! grep -Fq 'scripted_pce_input_event frame=%u key=%s mask=%04x hold=%u' "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_fast_input.patch" ||
-   ! grep -Fq 'if(x == 0) new_data |= scripted_port0' "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_fast_input.patch"; then
-    printf '%s\n' 'FAIL: pce_fast replay input must be bounded, traced, and applied only to controller port 0' >&2
+   ! grep -Fq 'FIRESTAFF_THERON_REPLAY_INPUT_PORT' "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_fast_input.patch" ||
+   ! grep -Fq 'scripted_pce_input_event frame=%u key=%s mask=%04x hold=%u port=%u' "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_fast_input.patch" ||
+   ! grep -Fq 'if(x == (int)scripted_port) new_data |= scripted_mask' "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_fast_input.patch" ||
+   ! grep -Fq 'FIRESTAFF_THERON_REPLAY_INPUT_PORT="$replay_input_port"' "$script" ||
+   ! grep -Fq 'scripted_pce_input_port=%s' "$script"; then
+    printf '%s\n' 'FAIL: pce_fast replay input must expose and report the configured controller slot' >&2
     exit 1
 fi
 if ! grep -Fq 'if [[ "$capture_mednafen_module" == pce ]]; then' "$script" ||
@@ -1237,6 +1428,8 @@ if ! grep -Fq 'require_instrumented_mednafen_binary()' "$script" ||
     exit 1
 fi
 if ! grep -Fq 'capture_pce_fast_vram_commit_trace" == 1' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_START_AT_TRACK02' "$script" ||
+   ! grep -Fq 'prefix=omitted-until-first-source-valid-track02-read' "$script" ||
    ! grep -Fq "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE' \"\$mednafen_bin\"" "$script" ||
    ! grep -Fq 'MEDNAFEN_BIN lacks the required PCE Fast VRAM commit instrumentation' "$script"; then
     printf '%s\n' 'FAIL: PCE Fast VRAM capture must reject a binary missing its commit-trace producer before launch' >&2

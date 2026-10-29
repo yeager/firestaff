@@ -21,17 +21,29 @@ are research instruments only and do not run or replace the game in Firestaff.
 | Run           | Return            |                |
 | Select        | —                 |                |
 
-The original PC Engine release has no mouse interface. Firestaff adds desktop
-mouse controls as a host-side convenience. During
+The PC Engine retail manual documents the D-pad moving an on-screen cursor,
+Button I acting on items and controls, and Button II cancelling. It describes
+controller cursor movement but does not describe mouse input; see the
+[TurboGrafx-16 instruction manual, pp. 4–6](https://www.tg-16.com/contributors/bernie/Dungeon_Master/Dungeon_Master.pdf).
+A cold authentic Japanese Rev. 1 reference run then switched Mednafen port 1
+to its PCE mouse device. A pair of dungeon screenshots differs only around the
+original hand cursor after host-mouse movement, so visual cursor motion is now
+confirmed. The PCE Fast module's mouse port is documented by
+[Mednafen](https://mednafen.github.io/documentation/pce_fast.html). This
+reference result does not identify absolute cursor coordinates, establish
+click-to-command behavior, or prove native Firestaff parity.
+
+Firestaff adds desktop mouse controls as a host-side convenience. During
 startup, left-click selects and right-click goes back. During dungeon play,
 left-click activates one of the twelve visible control-panel actions. Holding
 right mouse while pressing a direction key applies the manual's Button II
 simplified-movement modifier; a right click by itself does not advance a tick.
 Middle-click is inert. Moving the pointer highlights a panel control. Clicks
-outside the panel currently do not trigger a game action. Direct clicks in the
-dungeon view require a state-driven renderer and a Firestaff screen-to-world
-mapping; they are not original Theron hit regions. Short and long touch
-gestures send Button I and Button II, respectively.
+outside the panel currently do not trigger a game action. Mapping desktop
+coordinates to the original in-game cursor and its action consumer remains
+open; the renderer must also update from native game state for world clicks to
+show their result. Short and long touch gestures send Button I and Button II,
+respectively.
 
 ## Startup menu
 
@@ -84,7 +96,12 @@ its lower-right corner. Its first two rows provide **TURN L**, **FORWARD**,
 the selected source item, **USE** the object ahead, and **WAIT** one tick.
 These buttons send the same native Theron input tokens as the corresponding
 keyboard actions. Their captions use the active Theron translation catalog.
-The panel scales with the game's presentation size. Japanese and Chinese
+The panel is hit-tested in the native 320x200 game framebuffer after SDL
+pointer coordinates have been mapped through the selected presentation mode.
+At fractional scales, panel clicks are resolved against the actual presented
+pixel bounds before the inverse transform so visible edge pixels remain
+clickable.
+Japanese and Chinese
 captions use ASCII romanizations because the native small font does not
 contain CJK glyphs.
 Hovering a control highlights it. Pointer movement requests a redraw only when
@@ -116,9 +133,10 @@ the highlighted control changes.
   Rev. 1 Track 02 runtime tests also exercise the panel's turn and movement
   commands against each region's loaded dungeon state. The Japanese test
   asserts both click receipts and the resulting party pose. These checks cover
-  Firestaff's host panel, not original PCE mouse support or direct world-space
-  clicks. The normal SDL-loop regression also uses the panel to pick up the
-  authentic level-0 SANDALS, reselect that source-backed item and drop it;
+  Firestaff's host panel, not direct control of the original PCE cursor or
+  world-space click behavior. The normal SDL-loop regression also uses the
+  panel to pick up the authentic level-0 SANDALS, reselect that
+  source-backed item and drop it;
   three consecutive TRV2 Debug runs verify the mapped pointer receipts and
   resulting party state against USA Track 02.
   The SDL-loop regression also clicks TURN L, STEP R then STEP L over a

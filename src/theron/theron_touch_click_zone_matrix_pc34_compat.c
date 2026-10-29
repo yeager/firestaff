@@ -135,8 +135,10 @@ const char* THERON_TOUCHCLICK_Compat_GetSourceEvidence(void) {
            "160/4, RELIC 220/4, CHAMP_BAR 4+62i/184/60x8, ACTION "
            "16+32i/208/28x14) and include/theron_v2_hud_overlay_pc34.h "
            "render coordinates (rune slots 36+6i,8 4x4); anchored to "
-           "THQUEST.ASM T600/T900 claims; the original game is "
-           "gamepad-driven with no mouse route tables — gesture runtime "
+           "THQUEST.ASM T600/T900 claims; the original hand cursor "
+           "responds visually to PCE mouse motion, but no "
+           "complete source-bound mouse hit-zone table or click semantics "
+           "are admitted; gesture runtime "
            "in src/theron/theron_v2_touch_runtime.c treats HUD chrome "
            "as an exclusion guard.";
 }

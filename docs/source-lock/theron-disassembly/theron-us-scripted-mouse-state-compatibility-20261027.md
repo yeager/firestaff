@@ -38,8 +38,8 @@ command_consumer_read logical_address=2905 value=50 reader_pc=d395
 command_ram_write logical_address=2905 value=00 writer_pc=d3a0
 ```
 
-The `$50` command agrees with the earlier source-locked viewport capture,
-which records the original hover path and `$2905=$50` dispatch. This delta
+The `$50` value agrees with the earlier source-locked viewport capture, which
+records the original hover path and `$2905=$50` RAM observation. This delta
 script does not bind its host-relative motion to that capture's exact
 `$3C/$78` cursor coordinate; see
 [`theron-original-viewport-command-capture-2026-08-21.md`](../theron-original-viewport-command-capture-2026-08-21.md).
@@ -52,11 +52,14 @@ runtime observations; the ordered queue writes and consumer PCs above matched
 in all three loops.
 
 Each save-state capture reports `transition=missing` and
-`authenticated_cd_ram_receipts=0`. The `$2905` queue evidence is therefore a
-runtime command-dispatch observation from the authentic saved state, not a
-CD-sector-to-RAM provenance receipt. The observed `$50` command and unchanged
-party coordinates do not establish a world-click effect or complete mouse
-parity.
+`authenticated_cd_ram_receipts=0`. The `$2905` writes and reads are therefore
+RAM instrumentation observations from the authentic saved state, not a
+CD-sector-to-RAM provenance receipt. A subsequent static decode found that
+the reported `$D395/$D3A0` consumer/clear PCs do not match the candidate retail
+instructions if that bank is active. The logical-PC attribution remains
+unresolved; see the [`$D395` correction](theron-d39d-static-source-disassembly-20261029.md).
+The observed `$50` value and unchanged party coordinates do not establish a
+world-click effect or complete mouse parity.
 
 The instrumenter is `scripts/instrument_mednafen_theron_mouse_trace.py`; it
 injects the parsed deltas and button mask in the PCE and PCE Fast mouse device
@@ -66,3 +69,14 @@ command bytes and their mouse-coordinate inputs to a source-LBA-backed session,
 then determine whether a viewport target causes an authentic world-state
 change. A save-state capture alone cannot prove the CD sector that supplied
 runtime bytes.
+
+### 2026-10-29 matched mouse-motion control
+
+Three standard-PCE loops with an authentic USA Ak-Tu-Ba save and the scripted
+`dx=4` plus Button-I input were compared with zero-delta-plus-Button-I and the
+earlier large-delta control. All command-RAM and consumer sidecars were
+byte-identical. The guest input device recorded `x=4` and latched `x=-4`, but
+the guest fields `$20C7/$20C9`, hover `$2911`, and queue `$2905` matched the
+controls. The save-state route therefore does not show mouse motion changing
+the guest pointer/command state. The exact sidecar hashes and capture limits
+are in the [2026-10-29 matched-control report](theron-scripted-mouse-delta-replay-20261029.md).

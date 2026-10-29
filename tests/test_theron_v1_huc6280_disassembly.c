@@ -1,4 +1,5 @@
 #include "theron_v1_huc6280_disassembly.h"
+#include "theron_v1_palette.h"
 #include "theron_v1_track02.h"
 
 #include <assert.h>
@@ -62,6 +63,7 @@ static void verify_stage2_vce_palette(const char *path,
     FILE *file = fopen(path, "rb");
     long file_size;
     uint8_t *bytes;
+    TQR_PaletteState state;
     Theron_Track02Stage2VcePalette palette;
     Theron_Track02SignalStatus status;
 
@@ -75,9 +77,9 @@ static void verify_stage2_vce_palette(const char *path,
     assert(fread(bytes, 1u, (size_t)file_size, file) == (size_t)file_size);
     assert(fclose(file) == 0);
 
+    tqr_palette_init_defaults(&state);
     status = theron_v1_track02_read_stage2_vce_palette(
         bytes, (size_t)file_size, md5_hex, &palette);
-    free(bytes);
     assert(status == THERON_TRACK02_SIGNAL_OK);
     assert(palette.variant == variant);
     assert(palette.dispatch_entry_verified);
@@ -92,6 +94,32 @@ static void verify_stage2_vce_palette(const char *path,
     assert(palette.groups[0].valid && palette.groups[1].valid);
     assert(palette.groups[0].nonblack_entry_count == 16u);
     assert(palette.groups[1].nonblack_entry_count == 15u);
+    status = theron_v1_track02_load_stage2_vce_palette(
+        bytes, (size_t)file_size, md5_hex, &state, &palette);
+    assert(status == THERON_TRACK02_SIGNAL_OK);
+    assert(palette.payload_verified);
+    assert(state.entries[0xdfu].bgr333 == 0u);
+    assert(state.entries[0x100u].bgr333 == 0u);
+    for (size_t i = 0u; i < 32u; ++i) {
+        uint16_t word = (uint16_t)(bytes[palette.payload_raw_offset + i * 2u] |
+            ((uint16_t)bytes[palette.payload_raw_offset + i * 2u + 1u] << 8u));
+        assert(state.entries[0xe0u + i].bgr333 == (word & 0x01ffu));
+        assert(state.entries[0xe0u + i].rgba ==
+               tqr_bgr333_to_rgba(word & 0x01ffu));
+    }
+    {
+        TQR_PaletteState rejected_state;
+        uint16_t original_word;
+        tqr_palette_init_defaults(&rejected_state);
+        rejected_state.entries[0xe0u].bgr333 = 0x0155u;
+        original_word = rejected_state.entries[0xe0u].bgr333;
+        status = theron_v1_track02_load_stage2_vce_palette(
+            bytes, (size_t)file_size - 1u, md5_hex,
+            &rejected_state, NULL);
+        assert(status != THERON_TRACK02_SIGNAL_OK);
+        assert(rejected_state.entries[0xe0u].bgr333 == original_word);
+    }
+    free(bytes);
 }
 
 /* This static Track 02 fragment initializes a four-byte prefix at $287f,

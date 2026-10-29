@@ -38601,20 +38601,23 @@ static const char *m11_theron_mouse_control_label(int row, int column)
 static M12_MenuInput m11_theron_mouse_control_input_at(
     const M11_GameViewState *state, int x, int y)
 {
-    int width = state ? state->presentationWidth : 0;
-    int height = state ? state->presentationHeight : 0;
     int logical_x;
     int logical_y;
     int column;
     int row;
 
-    if (width <= 0) width = M11_THERON_MOUSE_CANVAS_W;
-    if (height <= 0) height = M11_THERON_MOUSE_CANVAS_H;
-    if (x < 0 || y < 0 || x >= width || y >= height) {
+    /* main_loop_m11 maps SDL window positions through the active
+     * presentation target before dispatching pointer callbacks. These
+     * coordinates are already in the native 320x200 game framebuffer; using
+     * presentationWidth/Height here would scale them a second time and make
+     * the host panel unclickable in V2.1/V2.2 or a selected V1 target. */
+    (void)state;
+    if (x < 0 || y < 0 || x >= M11_THERON_MOUSE_CANVAS_W ||
+        y >= M11_THERON_MOUSE_CANVAS_H) {
         return M12_MENU_INPUT_NONE;
     }
-    logical_x = (int)((int64_t)x * M11_THERON_MOUSE_CANVAS_W / width);
-    logical_y = (int)((int64_t)y * M11_THERON_MOUSE_CANVAS_H / height);
+    logical_x = x;
+    logical_y = y;
     if (logical_x < M11_THERON_MOUSE_PANEL_X ||
         logical_x >= M11_THERON_MOUSE_PANEL_X +
                          M11_THERON_MOUSE_COLUMNS * M11_THERON_MOUSE_CELL_W ||
@@ -38629,6 +38632,84 @@ static M12_MenuInput m11_theron_mouse_control_input_at(
     row = (logical_y - M11_THERON_MOUSE_PANEL_Y) /
           M11_THERON_MOUSE_CELL_H;
     return g_m11_theron_mouse_inputs[row][column];
+}
+
+/* The window mapper returns an index in the configured content target, while
+ * nearest presentation may upload a differently sized CPU-resampled image.
+ * Select the last uploaded pixel represented by that target index, then undo
+ * the renderer's floor-based source sampling. */
+static int m11_theron_target_axis_to_source(int target_position,
+                                           int target_size,
+                                           int presented_size,
+                                           int source_size)
+{
+    int64_t presented_position;
+
+    if (target_position < 0 || target_size <= 0 || presented_size <= 0 ||
+        source_size <= 0) {
+        return -1;
+    }
+    presented_position =
+        (((int64_t)target_position + 1) * presented_size + target_size - 1) /
+        target_size - 1;
+    if (presented_position < 0 || presented_position >= presented_size) {
+        return -1;
+    }
+    return (int)(presented_position * source_size / presented_size);
+}
+
+int M11_GameView_MapTheronPresentedControlPointToSource(
+    const M11_GameViewState *state, int presented_x, int presented_y,
+    int *out_x, int *out_y)
+{
+    int target_w = M11_THERON_MOUSE_CANVAS_W;
+    int target_h = M11_THERON_MOUSE_CANVAS_H;
+    int presented_w;
+    int presented_h;
+    int source_x;
+    int source_y;
+
+    if (!state || !out_x || !out_y ||
+        state->sourceKind != M11_GAME_SOURCE_THERON_TRACK02 ||
+        state->theronState.startup_phase != THERON_STARTUP_PHASE_IN_DUNGEON ||
+        !state->theronState.level_loaded) {
+        return 0;
+    }
+    (void)M11_GameView_PresentationTarget(state->presentationMode,
+                                         state->presentationWidth,
+                                         state->presentationHeight,
+                                         &target_w, &target_h);
+    if (target_w <= 0 || target_h <= 0 || presented_x < 0 ||
+        presented_y < 0 || presented_x >= target_w ||
+        presented_y >= target_h) return 0;
+
+    /* Most presentations upload exactly the target size. Nearest mode can
+     * instead CPU-resample to the drawable dimensions (for example, a
+     * 666x499 upload for a 667x500 target), so use the actual upload geometry
+     * that produced the visible panel pixels. */
+    presented_w = target_w;
+    presented_h = target_h;
+    (void)M11_Render_GetPresentedSize(&presented_w, &presented_h);
+
+    source_x = m11_theron_target_axis_to_source(
+        presented_x, target_w, presented_w, M11_THERON_MOUSE_CANVAS_W);
+    source_y = m11_theron_target_axis_to_source(
+        presented_y, target_h, presented_h, M11_THERON_MOUSE_CANVAS_H);
+    if (source_x < 0 || source_y < 0 ||
+        source_x >= M11_THERON_MOUSE_CANVAS_W ||
+        source_y >= M11_THERON_MOUSE_CANVAS_H) return 0;
+    if (m11_theron_mouse_control_input_at(state, source_x, source_y) ==
+        M12_MENU_INPUT_NONE) return 0;
+
+    *out_x = M11_THERON_MOUSE_PANEL_X +
+        ((source_x - M11_THERON_MOUSE_PANEL_X) /
+         M11_THERON_MOUSE_CELL_W) * M11_THERON_MOUSE_CELL_W +
+        M11_THERON_MOUSE_CELL_W / 2;
+    *out_y = M11_THERON_MOUSE_PANEL_Y +
+        ((source_y - M11_THERON_MOUSE_PANEL_Y) /
+         M11_THERON_MOUSE_CELL_H) * M11_THERON_MOUSE_CELL_H +
+        M11_THERON_MOUSE_CELL_H / 2;
+    return 1;
 }
 
 static int m11_csb_fmtowns_inventory_slot_rectangle(
