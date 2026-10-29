@@ -57,11 +57,13 @@ An exact-source scan of this frame's NBG0 bitmap found no complete match among
 separate frame-bounded join now binds 57 nonzero pixels from authentic Japanese
 `MENU.BPK` surface 55 to both the SH-2 writer and VDP2 bus trace at NBG0 offset
 `0xe6f`; Ghidra identifies the caller as the retail menu-image renderer. This
-is a partial pixel-index transport join, not a palette or screen-composition
-match. The TITLE palette occurs in CRAM, but no exact MENU/STABG or DGN
-Structure2 palette match was found. Identify the full NBG0 producer, active
-palette, and remaining composition before admitting a Firestaff Load-panel
-renderer. See the frame-bounded evidence and reproduction command in
+is a partial pixel-index transport join. A same-state screenshot comparison
+now verifies direct CRAM output for all 42 visible nonzero NBG0 indices, but
+the retail resource that supplied those colors, the remaining bitmap producer,
+and complete screen composition remain unbound. No exact MENU/STABG or DGN
+Structure2 palette asset match was found. Identify the full NBG0 producer,
+palette resource owner, and remaining composition before admitting a Firestaff
+Load-panel renderer. See the frame-bounded evidence and reproduction command in
 [`nexus_startup.md`](docs/nexus/nexus_startup.md#frame-bounded-menu-bpk-to-nbg0-source-span-2026-10-29).
 
 2026-10-28 retail New Game loader route: the M11 retail menu now sends
@@ -538,11 +540,15 @@ row. Determine the active owner and transform from the Saturn SH-2 draw setup
 before using these materials to render the Configuration scene.
 
 The authentic Load-panel NBG0 work now binds an 86-byte `MENU.BPK[55]` source
-span to its frame-bounded SH-2 and VDP2 VRAM writes. The Load-panel NBG0
-palette and complete bitmap composition remain unresolved. A separate
+span to its frame-bounded SH-2 and VDP2 VRAM writes. The captured CRAM palette
+output is pixel-exact against the Ymir screenshot for 43,889 visible NBG0
+pixels; its retail resource owner and complete bitmap composition remain
+unresolved. A separate
 frame-536 CRAM routine at `0x06038e30` is a retail color animation that updates
 a four-row WRAM table; no evidence joins that table to the menu surface or
-NBG0 color indices. Continue source tracing for the actual NBG0 palette and
-screen producer before admitting a Load-panel renderer. See
+NBG0 color-index source. Continue source tracing for the CRAM resource owner,
+full-screen producer, and transparent-pixel composition before admitting a
+Load-panel renderer. See
 `docs/nexus/nexus_startup.md` and the external trace bundle's
-`nbg0-menu-source-trace.txt` and Ghidra decompilation log.
+`nbg0-menu-source-trace.txt`, `nbg0-palette-screenshot-join.txt`, and Ghidra
+decompilation logs.

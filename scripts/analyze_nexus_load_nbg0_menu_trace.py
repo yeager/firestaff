@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Join one authentic MENU.BPK surface to the Load-panel NBG0 writer trace.
 
-This is a narrow source-to-VRAM transport receipt. It does not identify the
-palette or prove the full screen composition, so it never admits rendering.
+This is a narrow source-to-VRAM and palette-to-screenshot receipt. It does
+not prove the full screen composition, so it never admits rendering.
 """
 
 from __future__ import annotations
@@ -34,7 +34,8 @@ SH2_RAM_BASE = 0x06000000
 VDP2_VRAM_BASE = 0x05E00000
 
 
-def read_receipt(path: Path, expected_format: str) -> dict[str, str]:
+def read_receipt(path: Path, expected_format: str,
+                 require_complete: bool = True) -> dict[str, str]:
     fields: dict[str, str] = {}
     for line in path.read_text(encoding="ascii").splitlines():
         if not line or "=" not in line:
@@ -43,7 +44,8 @@ def read_receipt(path: Path, expected_format: str) -> dict[str, str]:
         if key in fields:
             raise ValueError(f"duplicate {key} in {path.name}")
         fields[key] = value
-    if fields.get("format") != expected_format or fields.get("bundle_complete") != "1":
+    if (fields.get("format") != expected_format or
+            (require_complete and fields.get("bundle_complete") != "1")):
         raise ValueError(f"incomplete or unsupported {path.name}")
     return fields
 
@@ -52,6 +54,64 @@ def be_value_bytes(value: int, width: int) -> bytes:
     if width not in (1, 2, 4) or value < 0 or value >= 1 << (8 * width):
         raise ValueError("invalid SH-2 VDP2 trace value")
     return bytes((value,)) if width == 1 else value.to_bytes(width, "big")
+
+
+def verify_nbg0_screenshot(capture: Path, regions: dict[str, bytes],
+                           screenshot: Path, frame: int
+                           ) -> tuple[int, int, set[int], str]:
+    """Match every visible nonzero NBG0 pixel to its retail CRAM output."""
+    from PIL import Image
+
+    registers = regions["vdp2-regs"]
+    reg = lambda offset: read_u16(registers, offset, "big")
+    snapshot = read_receipt(capture / "vdp-register-snapshot.txt",
+                            "ymir-vdp-register-snapshot-v1", False)
+    vdp1 = read_receipt(capture / "vdp1-capture-bundle.txt",
+                        "ymir-vdp1-capture-bundle-v1", False)
+    if (int(snapshot.get("vdp1_frame_index", "-1")) != frame or
+            int(vdp1.get("capture_frame_index", "-1")) != frame or
+            vdp1.get("trace_file_complete") != "1" or
+            vdp1.get("trace_dropped_total") != "0" or
+            int(vdp1.get("trace_rows_for_capture_frame", "0")) < 1 or
+            int(snapshot.get("vdp2_register_bytes", "0")) != 512):
+        raise ValueError("screenshot evidence does not match the captured VDP frame")
+    if (reg(0x00) != 0x8000 or not (reg(0x20) & 1) or
+            reg(0x28) != 0x0013 or reg(0x2C) != 0 or reg(0xE6) != 0 or
+            (reg(0xEC) & 1) == 0 or reg(0x108) != 0x1000):
+        raise ValueError("frame does not enable NBG0 8bpp bitmap CRAM rendering")
+    ratio = 31 - (reg(0x108) & 31)
+
+    image = Image.open(screenshot).convert("RGB")
+    if image.size != (640, 448):
+        raise ValueError("expected the retained 640x448 2x Ymir screenshot")
+    vram = regions["vdp2-vram"]
+    cram = regions["vdp2-cram"]
+    seen_indices: set[int] = set()
+    source_pixels = 0
+    compared_pixels = 0
+    for y in range(224):
+        for x in range(320):
+            color_index = vram[y * 512 + x]
+            if color_index == 0:
+                continue
+            source_pixels += 1
+            seen_indices.add(color_index)
+            word = read_u16(cram, color_index * 2, "big")
+            expected_rgb = tuple(
+                ((((word >> shift) & 31) << 3) * ratio) // 32
+                for shift in (0, 5, 10)
+            )
+            for dy in (0, 1):
+                for dx in (0, 1):
+                    if image.getpixel((x * 2 + dx, y * 2 + dy)) != expected_rgb:
+                        raise ValueError(
+                            f"NBG0 palette/screenshot mismatch at ({x}, {y}), "
+                            f"index {color_index:#04x}")
+                    compared_pixels += 1
+    if source_pixels == 0:
+        raise ValueError("visible NBG0 bitmap contains no nonzero pixels")
+    screenshot_hash = hashlib.sha256(screenshot.read_bytes()).hexdigest()
+    return source_pixels, compared_pixels, seen_indices, screenshot_hash
 
 
 def main() -> int:
@@ -63,6 +123,8 @@ def main() -> int:
                               help="authenticated extracted Japanese Nexus data")
     source_group.add_argument("--cue", type=Path,
                               help="authenticated Japanese retail CUE")
+    parser.add_argument("--screenshot", type=Path,
+                        help="same-state 640x448 Ymir screenshot for NBG0 palette verification")
     args = parser.parse_args()
 
     try:
@@ -173,6 +235,10 @@ def main() -> int:
             raise ValueError(
                 f"VDP2 bus trace did not bind every nonzero source pixel: "
                 f"{len(matched_vdp2)}/{len(expected_nonzero)}")
+        palette_receipt = None
+        if args.screenshot:
+            palette_receipt = verify_nbg0_screenshot(
+                args.capture, regions, args.screenshot, capture_frame)
     except (KeyError, OSError, TypeError, ValueError, UnicodeError) as error:
         print(f"NEXUS_LOAD_NBG0_MENU_TRACE_INVALID: {error}")
         return 1
@@ -196,7 +262,16 @@ def main() -> int:
     print(f"vdp2_bus_events_in_span={vdp2_events}")
     print(f"matched_nonzero_vdp2_bus_pixels={len(matched_vdp2)}/{len(expected_nonzero)}")
     print("source_to_nbg0_transport=verified")
-    print("palette_and_screen_composition=unbound")
+    if palette_receipt:
+        source_pixels, compared_pixels, indices, screenshot_hash = palette_receipt
+        print(f"visible_nbg0_palette_indices={len(indices)}")
+        print(f"visible_nbg0_source_pixels={source_pixels}")
+        print(f"screenshot_pixels_matched={compared_pixels}")
+        print(f"screenshot_sha256={screenshot_hash}")
+        print("visible_nbg0_palette_to_screenshot=verified")
+    else:
+        print("visible_nbg0_palette_to_screenshot=unverified")
+    print("full_screen_composition=unbound")
     print("semantic_admission=blocked")
     return 0
 

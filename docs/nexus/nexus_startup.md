@@ -1991,7 +1991,8 @@ scan checked 410 verified retail bitmap candidates from `MENU.BPK`,
 bitmap span. It found no exact source span. A separate scan parsed 1,266
 Structure2 palettes from all 16 authenticated DGN levels and found no exact raw
 or word-swapped match in captured CRAM; the `MENU.BPK` palette also had no
-exact match. This leaves NBG0's producer and palette unresolved. The broader
+exact match. This leaves the retail source owners for NBG0's producer and
+palette unresolved. The broader
 partial-byte scan exceeded its 10-minute limit, so no negative conclusion is
 drawn from partial matches. The bounded-scan results are recorded in the
 external evidence folder's `load-screen-menu-bpk-source-join.md`.
@@ -2060,9 +2061,11 @@ and hash-verified retail candidates from `MENU.BPK`, `FONT256.S2D`,
 `TITLE.BIN`/`TITLE.CG`, and `STABG.BIN`. None is an exact byte span in the
 131,072-byte bitmap. The `TITLE.BIN` palette is present in CRAM at byte offset
 1024, but the `MENU.BPK` and `STABG.BIN` palettes and all 1,266 parsed DGN
-Structure2 palettes have no exact raw or word-swapped CRAM match. This does
-not identify the NBG0 producer or prove which palette NBG0 uses. The bounded
-check skips the analyzer's expensive partial-span ranking with `--exact-only`;
+Structure2 palettes have no exact raw or word-swapped CRAM match. This exact
+resource scan does not identify the NBG0 producer or the retail resource that
+supplied its palette. A separate same-state screenshot join verifies the
+captured CRAM output for every visible nonzero NBG0 index. The bounded check
+skips the analyzer's expensive partial-span ranking with `--exact-only`;
 its complete output is retained as `nbg0-bitmap-exact-source-scan.txt` in the
 same external evidence directory.
 
@@ -2085,9 +2088,10 @@ Reproduce the Firestaff trace join with
 `scripts/analyze_nexus_load_nbg0_menu_trace.py`.
 
 This binds a small source-pixel span to the active NBG0 bitmap transport. The
-span has six distinct byte values; the active CRAM palette, the surface's
-visual role, the remaining bitmap, and full-screen composition remain
-unbound. It does not admit a Firestaff Load-panel renderer. The analyzer output
+span has six distinct byte values. Its full visible palette join is recorded
+below; the surface's visual role, the remaining retail bitmap source, and
+full-screen composition remain unbound. It does not admit a Firestaff
+Load-panel renderer. The analyzer output
 and Ghidra decompilation are retained in the external trace bundle's
 `nbg0-menu-source-trace.txt` and
 `nbg0-writers-ghidra-decompilation.log` files.
@@ -2101,8 +2105,22 @@ counters; additional branches update a separate color component and an
 independent scalar animation. The trace's CRAM writes at `0x05f00100` through
 `0x05f00106` therefore belong to this animation routine. No source join ties
 its WRAM table to `MENU.BPK[55]` or to the six observed NBG0 pixel values.
-The routine is useful retail-code context, but it does not resolve the
-Load-panel bitmap palette or composition. The Ghidra log and its input/runtime
-provenance are retained in the external Load-panel trace evidence directory;
+The routine is useful retail-code context, but it does not identify the retail
+asset that supplied the Load-panel CRAM colors. The Ghidra log and its
+input/runtime provenance are retained in the external Load-panel trace evidence directory;
 the analysis used pcrecomp's `DecompAddrs.java` with SH-2 big-endian code at
 the retail address map.
+
+### Load-panel NBG0 palette-to-screenshot join (2026-10-29)
+
+The frame-659 Ymir screenshot is an exact 2x match for all 43,889 nonzero
+NBG0 pixels in the visible 320x224 viewport after direct 8bpp CRAM lookup and
+the captured 31/32 color-calculation ratio: 175,556 screenshot pixels across
+the four 2x output samples per source pixel. The check covers all 42 distinct
+visible palette indices. It binds the active CRAM color output to the retail
+screenshot, while leaving zero-index pixels, the source asset for the CRAM
+values, and other screen layers outside this join. Reproduce it with
+`scripts/analyze_nexus_load_nbg0_menu_trace.py --screenshot
+/path/to/load-screen.png` against the authenticated Japanese retail data and
+complete trace bundle. The analyzer output is retained as
+`nbg0-palette-screenshot-join.txt` in the external evidence directory.
