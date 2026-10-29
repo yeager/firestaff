@@ -9423,5 +9423,8 @@ native rendering, or Theron parity. The private evidence bundle is at
   live-capture script test passed three consecutive loops, as did Python syntax
   validation and `git diff --check`.
 - Runtime exercise remains open: the authentic JP save-state replay observed
-  `$2905=$04` but no position transfer. No movement parity is claimed; the
-  required positive capture and map identity remain in `TODO-theron.md`.
+  `$2905=$04`, while the bounded movement-context trace recorded no
+  `$2040/$2041` `runtime_state_write` rows and the gated `$C1FA` TII observer
+  produced zero rows. These records do not establish that no position write
+  occurred outside the traced rows. No movement parity is claimed; the required
+  positive capture and map identity remain in `TODO-theron.md`.

@@ -49,16 +49,19 @@ A 10-second PCE Fast replay used the authentic JP Rev. 1 Track 02 cue (MD5
 `right@1:140,down@2:33,i@145:5`. The state loaded and exposed controller input.
 At frame 145, the original wrote `$2905=$04` at `$CCD8`; it cleared the command
 at frame 151. The final BaseRAM snapshot retained position `$2040/$2041=02/03`.
-The movement-context trace contains no `$C1FA` TII position rows and no
-`$2040/$2041` position writes. The capture ended `BLOCKED` because save-state
-autoload bypassed the cold CD IRQ and authenticated CD-to-RAM receipts.
+The bounded movement-context trace recorded no `$2040/$2041`
+`runtime_state_write` rows, and the gated `$C1FA` TII observer recorded zero
+rows. The capture ended `BLOCKED` because save-state autoload bypassed the cold
+CD IRQ and authenticated CD-to-RAM receipts; these bounded traces do not prove
+that no position writes occurred outside their recorded rows.
 
 This is negative capture evidence only. The save state reports position
 `(2,3)` and bank bytes `$20DA/$20DB=01/00`, but the active JP dungeon map is
 unresolved. As documented in
-`theron-pce-fast-akutuba-ram-capture-2026-10-03.md`, the same coordinate can
-have different passability across candidate maps. The missing position write
-must not be attributed to a specific collision or input defect.
+`../theron-pce-fast-akutuba-ram-capture-2026-10-03.md`, the same coordinate can
+have different passability across candidate maps. The absence of position-write
+rows in these bounded traces must not be attributed to a specific collision or
+input defect.
 
 The capture-only binary was rebuilt on TRV2 with `-j1`; SHA-256:
 `507b1024181356f410634666175cb7a7060e900e3f11d27171dc90ebfcb6214c`.

@@ -9202,9 +9202,11 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   executable includes the observer. The focused live-capture test passed three
   loops, along with Python syntax validation and `git diff --check`.
 - The authentic JP Rev. 1 PCE Fast replay loaded the user-created state and
-  wrote command `$2905=$04`, but made no `$2040/$2041` write and produced zero
-  TII observer rows. The position remained `$02/$03`; the bounded capture was
-  also blocked before cold CD/loader receipts. This does not prove whether the
+  wrote command `$2905=$04`; the bounded movement-context trace recorded no
+  `$2040/$2041` `runtime_state_write` rows, and the gated `$C1FA` TII observer
+  produced zero rows. The position remained `$02/$03`; the bounded capture was
+  also blocked before cold CD/loader receipts. These trace results do not prove
+  that no position writes occurred outside the recorded rows or whether the
   movement was blocked by map geometry or another runtime condition. The active
   JP map for that state is still unresolved.
 - Next bind the active map and destination tile from authentic Track 02/runtime
