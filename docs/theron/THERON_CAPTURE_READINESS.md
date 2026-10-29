@@ -269,6 +269,19 @@ Keep capture files operator-local; game-owned JP rendering remains blocked.
 
 ## Local media boundary
 
+The PCE Fast reference-capture wrapper can optionally record HuC6260 VCE
+color-table data writes alongside CD data-port reads, CD RAM target writes,
+and CPU-port VWR commits. Set
+`THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE=1` with
+`THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast`; the wrapper writes the VCE stream
+to `<trace>.pce-fast.vce-write` when color-table writes occur and adds it to
+the shared event-order JSONL. Register 4 and 5 records identify the palette
+address, old/new 9-bit value and guest instruction address. The chronology
+establishes temporal order only; it does not prove causal CD-to-palette data
+flow, DMA writes, tile use, or world-cell mapping. No authentic VCE write
+stream has been captured yet, so this instrumentation does not establish
+palette or gameplay parity.
+
 Theron capture uses user-supplied System Card firmware, CUE/BIN and other
 original media selected from operator-local storage. None of those payloads
 may be committed to GitHub. The repository check is
