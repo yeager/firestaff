@@ -68,7 +68,12 @@ fixture behavior do not establish Nexus retail semantics.
   Static decompilation maps logical D-pad event values 0/1/2/3 to Up/Right/
   Down/Left and confirms that the menu's current selection index is passed to
   the composer callback. The Nexus-specific coordinate-to-index table remains
-  unknown.
+  unknown. A paired-capture source join now binds all six cursor-0 values to
+  selected-state Japanese `MENU.BPK` entries 107–112 and VDP1 command 88's
+  source addresses and coordinates. This identifies the selected retail
+  surfaces, not their rune names. The six-way source join and capture hashes
+  are documented at
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-menu-action-surface-bindings-20261029.md`.
 - These captures also read `FUN_0603a472` and `FUN_0603a55c`, but the static
   call graph places them on a separate ITEM.IBS action-selector path, not a
   demonstrated Magic validator. No writes land
@@ -76,9 +81,14 @@ fixture behavior do not establish Nexus retail semantics.
   and 1 and zero for rows 2 and 3. The composer buffer at `+0x3d/+0x3e` is a
   distinct state area. A four-A capture fills all four slots with action 0,
   leaving row `+0x3d..+0x42` as `03 DA E0 E6 EC 80` and mana at `0x09` from an
-  initial `0x12`. The writer returns status 3 when appending the fourth slot;
-  this proves a full composer buffer, not final spell acceptance. Capture
-  traces are complete with no dropped VDP1 rows. Emulator data and hashes are retained at
+  initial `0x12`. The fourth append returns its unchanged cursor value 3 and
+  skips the common UI update; recovered caller sites discard that value. It
+  proves a full composer buffer, not final spell acceptance. A separate
+  command-8 branch recalculates aggregate mana, but no spell-execution consumer
+  is proven. Capture traces are complete with no dropped VDP1 rows. The
+  callsite audit is at
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/magic-fourth-slot-status-20261029/`.
+  Emulator data and hashes are retained at
   `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-magic-down-input-trace-20261029/`.
   Ghidra excerpts and callback analysis are retained at
   `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-magic-input-callback-static-20261029/`.
@@ -117,14 +127,13 @@ implementation or substitute DM1 tables for these missing retail joins.
 The directional probe has a hash-identified Y-open source state reused across
 the same-state runs; that save remains distinct from the separately retained
 Y-entry receipt. Nine VDP1 command sources and their 31 active palette indices
-are bound to authentic `MENU.BPK` surfaces, PALT, and same-run CRAM. A-only
-Authentic captures now confirm all six numeric action choices at cursor 0,
-their `0xDA + cursor * 6 + action` encoding, and a four-slot composer buffer.
-The D-pad direction event handler is decompiled, but the Nexus menu's
+are bound to authentic `MENU.BPK` surfaces, PALT, and same-run CRAM. Paired
+captures now bind all six numeric action choices at cursor 0 to selected-state
+entries 107–112, their captured VDP1 source addresses, and coordinates. The
+D-pad direction event handler is decompiled, but the Nexus menu's
 coordinate-to-index table, glyph meanings, and physical pad-bit producer
-  remain open. Next, bind the six values to their retail `MENU.BPK` surfaces and
-  identify the full-buffer submit path and any actual validator/cast consumer,
-  including mana, target/effect state,
+remain open. Identify the full-buffer submit path and any actual validator/cast
+consumer, including mana, target/effect state,
 random inputs, animation, save changes, and visible output. Do not assign rune
 names from sprite appearance alone. The `+0x18` consumer remains a separate
 work item.

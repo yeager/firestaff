@@ -565,20 +565,30 @@ not a fix and has not passed this real-media test.
   Authentic GUI captures confirm all six cursor-0 values `0xDA..0xDF`, with
   costs 1..6, using cardinal and simultaneous diagonal input schedules. Four
   A actions fill the composer buffer as `DA E0 E6 EC`, cursor index 3, and
-  total mana 9 from 18. The decompiled direction handler maps logical events
+  total mana 9 from 18. The fourth append returns its unchanged cursor value
+  3 before the common UI update; recovered static caller sites discard it. A
+  separate command-8 branch recalculates aggregate mana, but no spell-execution
+  meaning is established. The decompiled direction handler maps logical events
   0/1/2/3 to Up/Right/Down/Left, but the Nexus coordinate-to-selection table,
   glyph meanings, physical pad-bit producer, final spell validator, and cast
   behavior remain open. Follow-up decompilation identifies `FUN_0603a472` and
   row `+0x35` operations as an ITEM.IBS action-selector path, not a demonstrated
   Magic validator; composer fields `+0x3d/+0x3e` are distinct from
-  `+0x35..+0x38`. Next, bind the six composer values to retail surfaces and
-  trace full-buffer submission to its actual validator and cast consumer.
+  `+0x35..+0x38`. Paired authentic captures now bind the six values to selected-
+  state Japanese `MENU.BPK` entries 107–112 and command-88 VDP1 source addresses
+  and coordinates, without naming glyphs. Next, recover the retail
+  coordinate-to-index table and trace full-buffer submission to any actual
+  validator or cast consumer.
   Preserve the capture receipt under
   `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-magic-down-input-trace-20261029/`.
   The hash-verified callback decompilation is under
   `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-magic-input-callback-static-20261029/`.
   Direction-event decompilation is under
   `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-dpad-menu-selection-20261029/`.
+  The selected-surface join is at
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-menu-action-surface-bindings-20261029.md`,
+  and the fourth-slot caller audit is at
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/magic-fourth-slot-status-20261029/`.
   An independent 2026-10-25 Ymir `--debug` comparison loaded a hash-verified
   authentic JP gameplay savestate into a private profile: the no-input reload
   changed 0.00175% of pixels, W-forward changed 3.08408%, and A-left changed
