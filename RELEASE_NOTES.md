@@ -1,12 +1,29 @@
-# Unreleased
+# Firestaff v3.0.420
 
 ## User-facing changes
 
-- `DM2 Amiga`: select the authentic scene and light-level palette for the active dungeon viewport, correcting the cyan/orange color corruption.
+- `DM2 Amiga viewport`: apply the authentic scene and light-level palette, correcting cyan and orange color corruption in the tested dungeon view.
+- `DM1 PC-3.4 endgame`: change endgame waits to use VGA-rate frames and bound the restart input window.
+- `Launcher navigation`: change horizontal-key handling in game options and rescan installed media when returning from supported game routes.
+- `Launcher localization`: update Swedish scan-progress localization across the five game selections.
+- `Theron mouse input`: change fractional panel-coordinate handling so mouse clicks reach the correct regions.
 
 ## Developer changes
 
-- `DM2 Amiga palette`: validate the active displayed 16-color stripe against original Amiga media in the M11 NEW GAME path; retain the remaining viewport and HUD parity gaps as open work.
+- `Five-game startup`: expand authentic-media verification for platform selection, archive return scans, unsupported platform rejection, and localized scanning across DM1, DM2, CSB, Theron and Nexus.
+- `DM1 and DM2 media routes`: verify nested Atari STX discovery, Atari archive edition receipts, French DOS data-root lookup, mixed extracted Macintosh media priority, and FM Towns title timing.
+- `CSB Amiga launcher`: verify edition selection using original media.
+- `Nexus evidence`: correct independent VDP1 image and CLUT joins and DGN palette reporting; trace authentic startup and Load-panel sources without enabling the still-gated Saturn game route.
+- `Theron capture analysis`: match authentic decoder output and trace the decoded-buffer consumer and post-return ADPCM copy; retain the distinction between source evidence and verified gameplay.
+- `DM2 Amiga palette`: verify the active 16-color stripe against original media while documenting remaining viewport and HUD parity gaps.
+- `Release metadata`: update the project version and regenerate the reproducible SPDX source SBOM.
+
+## Known limitations
+
+- `Nexus`: Saturn title/menu composition, input, New Game/Continue and playable-level startup remain gated; the evidence in this release does not establish a complete playable route.
+- `Theron's Quest`: verified startup and selected input/capture paths do not establish complete campaign or presentation parity.
+- `DM1, CSB and DM2`: platform-wide viewport, HUD, audio and physical-display parity remain incomplete outside individually verified routes.
+- Original game media, saves and firmware are not included in release packages.
 
 # Firestaff v3.0.419
 
