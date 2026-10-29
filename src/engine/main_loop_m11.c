@@ -14722,6 +14722,12 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 idleAccumulatorMs += loopDeltaMs;
             /* DM1 V1: feed elapsed time to VBlank simulation */
             DM1_V1_VBlankTiming_Update(&gameView.vblankTiming, loopDeltaMs);
+            if (M11_GameView_AdvanceDm1Pc34EndgameClockMs(
+                    &gameView, loopDeltaMs) == M11_GAME_INPUT_REDRAW) {
+                m11_draw_game_frame_for_loop(&gameView, o->debug,
+                    &perfLoopDrawMs, &perfLoopDrawCount);
+                gameFrameNeedsPresent = 1;
+            }
             /* Preserve subsecond frame time; ordinary frames are much shorter
              * than one second. The view resets the remainder per session. */
             (void)M11_GameView_TickSessionTimerMs(&gameView, loopDeltaMs);

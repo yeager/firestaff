@@ -2489,6 +2489,12 @@ Reviewed 2026-08-29. Only open work is listed here.
   equivalent coverage gates. Decode selected retail bytes first and retain
   them as the stable msgid/fallback; key ambiguous dungeon text by media
   identity plus text index. Never modify or replace original data.
+- Preserve the PC3.4 endgame's source clock end to end. ReDMCSB's VGA
+  `M526_WaitVerticalBlank` is ~70 Hz; F0446 `Delay(780)`, the final
+  `Delay(600)`, F0444 `Delay(300)`, and the 899-pass restart window now
+  advance on a rational 70 Hz host clock rather than the 200 ms gameplay
+  idle tick. Confirm sequence timing and presentation against an original
+  executable capture; cross-platform endgame cadence remains unverified.
 - Validate the completed F0128 source-order executor against authenticated
   same-state original captures. HoC sensor/material-plan checks pass with
   French DOS original data (24 directional portraits), but do not render

@@ -32507,6 +32507,100 @@ int M11_GameView_LoadDm1FmtownsMenuFontIfAvailable(M11_GameViewState* state) {
     return 1;
 }
 
+static M11_GameInputResult m11_advance_endgame_source_vblank(
+    M11_GameViewState* state) {
+    if (!state || !state->gameWon) return M11_GAME_INPUT_IGNORED;
+    /* ReDMCSB ENDGAME.C F0445/F0446 executes each delayed replay event and
+     * final Delay on VGA VBlank edges. */
+    if (state->endgameFinalDelayPendingTicks > 0) {
+        state->endgameFinalDelayPendingTicks--;
+        if (state->endgameFuseSequenceDelayRemainingTicks > 0)
+            state->endgameFuseSequenceDelayRemainingTicks--;
+        return M11_GAME_INPUT_REDRAW;
+    }
+    if (state->endgameFuseSequenceFrameReplayRemainingTicks > 0) {
+        if (state->endgameFuseSequenceReplayCursor <
+            state->endgameFuseSequenceReplayEventCount) {
+            int cursor = state->endgameFuseSequenceReplayCursor;
+            state->endgameFuseSequenceCurrentReplayType =
+                state->endgameFuseSequenceReplayTypes[cursor];
+            state->endgameFuseSequenceCurrentReplayAttack =
+                state->endgameFuseSequenceReplayAttacks[cursor];
+            state->endgameFuseSequenceCurrentReplayCreatureType =
+                state->endgameFuseSequenceReplayCreatureTypes[cursor];
+            state->endgameFuseSequenceReplayCursor++;
+            state->endgameFinalDelayPendingTicks =
+                state->endgameFuseSequenceReplayDelayTicks[cursor];
+        } else {
+            state->endgameFuseSequenceCurrentReplayType =
+                M11_ENDGAME_F0445_EVENT_NONE;
+            state->endgameFuseSequenceCurrentReplayAttack = 0;
+            state->endgameFuseSequenceCurrentReplayCreatureType = 0;
+        }
+        state->endgameFuseSequenceFrameReplayRemainingTicks--;
+        if (state->endgameFuseSequenceFrameReplayRemainingTicks == 0 &&
+            state->endgameFuseSequenceDelayRemainingTicks <= 0)
+            state->endgameFinalHandoffReady = 1;
+        return M11_GAME_INPUT_REDRAW;
+    }
+    if (state->endgameFuseSequenceDelayRemainingTicks > 0) {
+        state->endgameFuseSequenceDelayRemainingTicks--;
+        if (state->endgameFuseSequenceDelayRemainingTicks == 0) {
+            state->endgameFinalHandoffReady = 1;
+            state->endgameF0444PresentationPhase = 1;
+        }
+        return M11_GAME_INPUT_REDRAW;
+    }
+    if (state->endgameF0444PresentationPhase == 2 &&
+        state->endgameTheEndDelayRemainingTicks > 0) {
+        state->endgameTheEndDelayRemainingTicks--;
+        if (state->endgameTheEndDelayRemainingTicks == 0) {
+            if (!state->endgameRestartAllowed)
+                state->endgameF0444PresentationPhase = 3;
+            else
+                state->endgameRestartWaitRemainingTicks = 899;
+        }
+        return M11_GAME_INPUT_REDRAW;
+    }
+    if (state->endgameF0444PresentationPhase == 2 &&
+        state->endgameRestartAllowed) {
+        if (state->endgameRestartWaitRemainingTicks > 0)
+            state->endgameRestartWaitRemainingTicks--;
+        if (state->endgameRestartWaitRemainingTicks <= 0) {
+            state->endgameRestartWaitRemainingTicks = 0;
+            state->endgameF0444PresentationPhase = 3;
+        }
+        return M11_GAME_INPUT_REDRAW;
+    }
+    return M11_GAME_INPUT_IGNORED;
+}
+
+static int m11_dm1_pc34_endgame_vblank_clock(
+    const M11_GameViewState* state) {
+    return state && strcmp(state->sourceId, "dm1") == 0 &&
+           state->vblankTiming.pc34PitInputWait;
+}
+
+M11_GameInputResult M11_GameView_AdvanceDm1Pc34EndgameClockMs(
+    M11_GameViewState* state, uint32_t elapsedMs) {
+    const uint64_t threshold = 1000u;
+    uint64_t added, edges;
+    M11_GameInputResult result = M11_GAME_INPUT_IGNORED;
+    if (!state || !state->active || M11_GameView_IsPaused(state) ||
+        !state->gameWon || strcmp(state->sourceId, "dm1") != 0 ||
+        !state->vblankTiming.pc34PitInputWait) return result;
+    added = (uint64_t)elapsedMs * DM1_V1_VGA_VBLANK_HZ;
+    edges = added / threshold;
+    state->endgameVblankPhase += added % threshold;
+    edges += state->endgameVblankPhase / threshold;
+    state->endgameVblankPhase %= threshold;
+    while (edges-- > 0u) {
+        M11_GameInputResult edge = m11_advance_endgame_source_vblank(state);
+        if (edge == M11_GAME_INPUT_REDRAW) result = edge;
+    }
+    return result;
+}
+
 M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
     int mouthRedraw;
     if (!state || !state->active || M11_GameView_IsPaused(state)) {
@@ -32562,14 +32656,15 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
      * victory-message redraw. Consume an event-local delay before allowing
      * the next replay frame; neither this wait nor the final Delay(600)
      * advances G0313/world.gameTick or gameplay systems. */
-    if (state->gameWon && state->endgameFinalDelayPendingTicks > 0) {
+    if (!m11_dm1_pc34_endgame_vblank_clock(state) && state->gameWon &&
+        state->endgameFinalDelayPendingTicks > 0) {
         state->endgameFinalDelayPendingTicks--;
         if (state->endgameFuseSequenceDelayRemainingTicks > 0) {
             state->endgameFuseSequenceDelayRemainingTicks--;
         }
         return M11_GAME_INPUT_REDRAW;
     }
-    if (state->gameWon &&
+    if (!m11_dm1_pc34_endgame_vblank_clock(state) && state->gameWon &&
         state->endgameFuseSequenceFrameReplayRemainingTicks > 0) {
         if (state->endgameFuseSequenceReplayCursor <
             state->endgameFuseSequenceReplayEventCount) {
@@ -32596,7 +32691,8 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         }
         return M11_GAME_INPUT_REDRAW;
     }
-    if (state->gameWon && state->endgameFuseSequenceDelayRemainingTicks > 0) {
+    if (!m11_dm1_pc34_endgame_vblank_clock(state) && state->gameWon &&
+        state->endgameFuseSequenceDelayRemainingTicks > 0) {
         state->endgameFuseSequenceDelayRemainingTicks--;
         if (state->endgameFuseSequenceDelayRemainingTicks == 0) {
             state->endgameFinalHandoffReady = 1;
@@ -32604,7 +32700,8 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         }
         return M11_GAME_INPUT_REDRAW;
     }
-    if (state->gameWon && state->endgameF0444PresentationPhase == 2 &&
+    if (!m11_dm1_pc34_endgame_vblank_clock(state) && state->gameWon &&
+        state->endgameF0444PresentationPhase == 2 &&
         state->endgameTheEndDelayRemainingTicks > 0) {
         state->endgameTheEndDelayRemainingTicks--;
         if (state->endgameTheEndDelayRemainingTicks == 0) {
@@ -32619,7 +32716,8 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         }
         return M11_GAME_INPUT_REDRAW;
     }
-    if (state->gameWon && state->endgameF0444PresentationPhase == 2 &&
+    if (!m11_dm1_pc34_endgame_vblank_clock(state) && state->gameWon &&
+        state->endgameF0444PresentationPhase == 2 &&
         state->endgameRestartAllowed) {
         /* ReDMCSB ENDGAME.C F0444:558-590 sets AL=900, pre-decrements it,
          * pumps the command queue and delays once per pass.  The original
