@@ -101,12 +101,16 @@ CSB FM Towns (`return_to_menu_rescans_csb_selected_archive_real_media`,
 starts from the exact archive path in an isolated `data/<game>` collection,
 reaches that edition's first runtime, returns to M12, and verifies that the
 scan infers the collection root and sees DM1, CSB, and DM2. The staged links
-preserve the original archive bytes and, for CSB, the original archive
-filename: an earlier generic alias produced `source=none`, so arbitrary
-renamed CSB-container detection remains unverified. Nexus and Theron are not
-staged in these three focused cases. These receipts prove only the named
-selected-archive startup/return routes and do not establish full platform or
-gameplay parity.
+preserve the original archive bytes. An earlier generic alias produced
+`source=none`; a focused 2026-10-29 regression now proves both explicit CLI
+selection and no-game M12 discovery for an authentic CSB FM Towns ZIP under a
+neutral basename. The scanner checks the in-archive CUE, raw CD layout, and
+recognized graphics/dungeon hashes; the M12 test uses an isolated CSB-only
+data root and verifies the original archive hash is unchanged. Automatic
+discovery is bounded to direct ZIP children, and RAR admission remains limited
+to its existing canonical route. Nexus and Theron are not staged in these
+focused cases. These receipts prove only the named selected-archive startup
+and return routes and do not establish full platform or gameplay parity.
 
 ### 2026-10-28 clean-main DM1/CSB/DM2 menu retest on TRV2
 

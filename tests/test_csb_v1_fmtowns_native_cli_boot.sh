@@ -109,6 +109,32 @@ case "$auto_title_output" in
         ;;
 esac
 
+# A selected ZIP's basename is only a locator.  Verify the same unmodified
+# retail archive still authenticates when the user has given it a neutral
+# local name; edition identity comes from the CUE, CD layout and file hashes.
+renamed_archive="$isolated_home/renamed-csb-retail.zip"
+if ! ln -s "$data_dir" "$renamed_archive" 2>/dev/null; then
+    ln "$data_dir" "$renamed_archive"
+fi
+renamed_title_output="$(SDL_VIDEODRIVER=dummy run_firestaff \
+    --game csb --data-dir "$renamed_archive" --platform fm-towns $edition_arg \
+    --boot-probe --boot-probe-frames 2 --boot-probe-expect-startup-active 1 \
+    --boot-probe-expect-runtime-tick-max 0 --duration 0 2>&1)" || {
+    printf '%s\n' "$renamed_title_output" >&2
+    exit 1
+}
+if ! printf '%s\n' "$renamed_title_output" | grep -Fq \
+    "CSB READY: gameId=csb dataDir=$renamed_archive variant=csb-fmtowns-$language" ||
+   ! printf '%s\n' "$renamed_title_output" | grep -Fq \
+    'phase=csb-fmtowns-title' ||
+   ! printf '%s\n' "$renamed_title_output" | grep -Fq \
+    'handoff=f31-title-anm'; then
+    echo 'FAIL: explicit renamed CSB FM Towns ZIP did not retain its authentic source owner' >&2
+    printf '%s\n' "$renamed_title_output" >&2
+    exit 1
+fi
+echo 'PASS: explicit renamed CSB FM Towns ZIP authenticates from its contents'
+
 switch_output="$(SDL_VIDEODRIVER=dummy run_firestaff \
     --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg --boot-probe \
     --boot-probe-frames 700 --boot-probe-expect-phase csb-fmtowns-switch \

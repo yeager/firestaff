@@ -1,5 +1,18 @@
 # Firestaff TODO — CSB
 
+2026-10-29 CSB FM Towns renamed-ZIP discovery: the scanner previously
+admitted only two hard-coded ZIP basenames, so an authentic archive selected
+under a neutral name was reported unavailable. It now enumerates ZIP files in
+the selected CSB data root, parses the in-archive CUE and raw CD image, and
+requires the recognized CSB FM Towns graphics and dungeon hashes. Explicit
+file selection remains scoped to that exact archive; automatic directory
+discovery checks its direct ZIP children. A real-media regression reaches the
+TITLE.ANM handoff through direct CLI selection, and a separate no-game M12
+regression discovers an isolated renamed ZIP and hands it off. The existing
+native CSB FM Towns CLI test and the new menu test pass against the installed
+original archive, whose SHA-256 is checked before and after. This adds ZIP
+discovery only; it does not broaden RAR support or establish gameplay parity.
+
 2026-10-29 CSB Atari source-order verification: corrected the F0128 wall
 traversal to dispatch F0116-F0126 in ReDMCSB call order, with F0127/D0C
 after D0L/D0R. F0115 cell dispatch now uses a tested event plan for each
@@ -412,9 +425,10 @@ FM Towns archive passes direct-file CLI selection through M12, the source
 title and entrance, the first runtime, and return to the launcher. The return
 scan infers the surrounding `data` root and reports DM1, CSB, and DM2 as
 available. The test preserves the archive's original filename because the
-renamed-container probe did not resolve an edition; arbitrary renamed CSB
-archives are not verified. This is bounded startup/return coverage, not full
-CSB platform parity.
+earlier renamed-container probe did not resolve an edition; the 2026-10-29
+renamed-ZIP follow-up above adds direct CLI and no-game M12 coverage for that
+case. This remains bounded startup/return coverage, not full CSB platform
+parity.
 
 2026-10-28 Amiga ZIP/ADF test-media availability correction: the exact
 `Chaos Strikes Back (FTL).zip` path used by CMake is present under

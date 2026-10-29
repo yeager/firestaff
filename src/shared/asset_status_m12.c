@@ -2793,6 +2793,124 @@ static int m12_csb_fmtowns_publish_language(
 static const M12_AssetVersionStatus* m12_first_matched_version(
     const M12_AssetStatus* status, int gameIndex);
 
+enum { M12_CSB_FMTOWNS_ZIP_CANDIDATES_MAX = 256 };
+typedef struct {
+    char paths[M12_CSB_FMTOWNS_ZIP_CANDIDATES_MAX][M12_ASSET_DATA_DIR_CAPACITY];
+    size_t count;
+} M12_CsbFmtownsZipCandidates;
+
+static int m12_csb_fmtowns_is_zip_name(const char* name) {
+    const char* dot = name ? strrchr(name, '.') : NULL;
+    return dot && m12_ascii_equals_ignore_case(dot, ".zip");
+}
+
+static int m12_csb_fmtowns_add_archive_candidate(
+    M12_CsbFmtownsZipCandidates* candidates, const char* path,
+    int allowCanonicalRar) {
+    static const char canonicalRar[] = "Chaos Strikes Back for FM-Towns.rar";
+    const char* leaf;
+    const char* slash;
+    size_t i;
+    if (!candidates || !path || !path[0]) return -3;
+    slash = strrchr(path, '/');
+    {
+        const char* backslash = strrchr(path, '\\');
+        if (backslash && (!slash || backslash > slash)) slash = backslash;
+    }
+    leaf = slash ? slash + 1 : path;
+    if ((!m12_csb_fmtowns_is_zip_name(leaf)) &&
+        !(allowCanonicalRar && m12_ascii_equals_ignore_case(leaf, canonicalRar))) {
+        return 1;
+    }
+    if (!FSP_FileExists(path) || FSP_DirExists(path)) return 1;
+    for (i = 0U; i < candidates->count; ++i) {
+        if (m12_ascii_equals_ignore_case(candidates->paths[i], path)) return 1;
+    }
+    if (candidates->count == M12_CSB_FMTOWNS_ZIP_CANDIDATES_MAX) return -2;
+    m12_copy_string(candidates->paths[candidates->count],
+                    sizeof(candidates->paths[0]), path);
+    ++candidates->count;
+    return 1;
+}
+
+static int m12_csb_fmtowns_collect_directory_zips(
+    M12_CsbFmtownsZipCandidates* candidates, const char* directory,
+    M12_ScanProgressContext* progress) {
+    int result = 1;
+    size_t entriesVisited = 0U;
+    const size_t previousCount = candidates ? candidates->count : 0U;
+    if (!candidates || !FSP_DirExists(directory)) return 1;
+#ifdef _WIN32
+    WIN32_FIND_DATAA entry;
+    char pattern[M12_ASSET_DATA_DIR_CAPACITY];
+    HANDLE search;
+    if (!FSP_JoinPath(pattern, sizeof(pattern), directory, "*")) return -3;
+    search = FindFirstFileA(pattern, &entry);
+    if (search == INVALID_HANDLE_VALUE)
+        return GetLastError() == ERROR_FILE_NOT_FOUND ? 1 : -1;
+    do {
+        char entryPath[M12_ASSET_DATA_DIR_CAPACITY];
+        if (strcmp(entry.cFileName, ".") == 0 ||
+            strcmp(entry.cFileName, "..") == 0) continue;
+        ++entriesVisited;
+        if ((progress && progress->options && progress->options->cancelFlag &&
+             *progress->options->cancelFlag) || entriesVisited % 32U == 0U) {
+            if (!m12_scan_progress_update(progress, "enumerating ZIP candidates",
+                                          "csb", directory, 0)) {
+                result = 0;
+                break;
+            }
+        }
+        if ((entry.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0U) continue;
+        if (!m12_csb_fmtowns_is_zip_name(entry.cFileName)) continue;
+        if (!FSP_JoinPath(entryPath, sizeof(entryPath), directory,
+                          entry.cFileName)) {
+            result = -3;
+            break;
+        }
+        result = m12_csb_fmtowns_add_archive_candidate(candidates, entryPath, 0);
+        if (result < 0) break;
+    } while (FindNextFileA(search, &entry));
+    if (result > 0 && GetLastError() != ERROR_NO_MORE_FILES) result = -1;
+    FindClose(search);
+#else
+    DIR* dir = opendir(directory);
+    struct dirent* entry;
+    if (!dir) return -1;
+    for (;;) {
+        errno = 0;
+        entry = readdir(dir);
+        if (!entry) {
+            if (errno != 0) result = -1;
+            break;
+        }
+        if (strcmp(entry->d_name, ".") == 0 ||
+            strcmp(entry->d_name, "..") == 0) continue;
+        if (!m12_csb_fmtowns_is_zip_name(entry->d_name)) continue;
+        ++entriesVisited;
+        if ((progress && progress->options && progress->options->cancelFlag &&
+             *progress->options->cancelFlag) || entriesVisited % 32U == 0U) {
+            if (!m12_scan_progress_update(progress, "enumerating ZIP candidates",
+                                          "csb", directory, 0)) {
+                result = 0;
+                break;
+            }
+        }
+        char entryPath[M12_ASSET_DATA_DIR_CAPACITY];
+        if (!FSP_JoinPath(entryPath, sizeof(entryPath), directory, entry->d_name)) {
+            result = -3;
+            break;
+        }
+        if (FSP_DirExists(entryPath)) continue;
+        result = m12_csb_fmtowns_add_archive_candidate(candidates, entryPath, 0);
+        if (result < 0) break;
+    }
+    if (closedir(dir) != 0 && result > 0) result = -1;
+#endif
+    if (result <= 0) candidates->count = previousCount;
+    return result;
+}
+
 static int m12_admit_csb_fmtowns_archive(M12_AssetStatus* status,
                                          int gameIndex,
                                          const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
@@ -2830,8 +2948,66 @@ static int m12_admit_csb_fmtowns_archive(M12_AssetStatus* status,
         for (candidateRootIndex = 0U;
              candidateRootIndex < candidateRootCount;
              ++candidateRootIndex) {
-            for (archiveIndex = 0U; archiveNames[archiveIndex] != NULL; ++archiveIndex) {
-                char archivePath[M12_ASSET_DATA_DIR_CAPACITY];
+            M12_CsbFmtownsZipCandidates candidates = {0};
+            int selectedFile = FSP_FileExists(candidateRoots[candidateRootIndex]) &&
+                               !FSP_DirExists(candidateRoots[candidateRootIndex]);
+            if (selectedFile) {
+                /* An explicit ZIP is a precise selection. Its basename
+                 * locates the file; the CUE, CD layout and authenticated
+                 * language hashes below establish CSB identity. Keep the
+                 * historical canonical RAR route, without broadening RAR
+                 * discovery or relying on its filename for ZIP media. */
+                (void)m12_csb_fmtowns_add_archive_candidate(
+                    &candidates, candidateRoots[candidateRootIndex], 1);
+            } else {
+                for (archiveIndex = 0U; archiveNames[archiveIndex] != NULL;
+                     ++archiveIndex) {
+                    char knownPath[M12_ASSET_DATA_DIR_CAPACITY];
+                    if (!FSP_JoinPath(knownPath, sizeof(knownPath),
+                                      candidateRoots[candidateRootIndex],
+                                      archiveNames[archiveIndex])) continue;
+                    (void)m12_csb_fmtowns_add_archive_candidate(
+                        &candidates, knownPath, 1);
+                }
+                {
+                    int collectionResult = m12_csb_fmtowns_collect_directory_zips(
+                        &candidates, candidateRoots[candidateRootIndex], progress);
+                    if (collectionResult == 0) return admitted;
+                    /* A directory error or the candidate bound should not
+                     * discard known canonical packages. The collector rolls
+                     * back only its generic ZIP additions in that case. */
+                }
+                /* Keep fallback order stable when the filesystem returns
+                 * directory entries in a different order. Known names stay
+                 * ahead of generic ZIP candidates. */
+                size_t genericStart = 0U;
+                for (archiveIndex = 0U; archiveNames[archiveIndex] != NULL;
+                     ++archiveIndex) {
+                    char knownPath[M12_ASSET_DATA_DIR_CAPACITY];
+                    if (FSP_JoinPath(knownPath, sizeof(knownPath),
+                                     candidateRoots[candidateRootIndex],
+                                     archiveNames[archiveIndex]) &&
+                        FSP_FileExists(knownPath) && !FSP_DirExists(knownPath)) {
+                        ++genericStart;
+                    }
+                }
+                for (size_t i = genericStart + 1U; i < candidates.count; ++i) {
+                    char value[M12_ASSET_DATA_DIR_CAPACITY];
+                    size_t j = i;
+                    m12_copy_string(value, sizeof(value), candidates.paths[i]);
+                    while (j > genericStart &&
+                           strcmp(candidates.paths[j - 1U], value) > 0) {
+                        m12_copy_string(candidates.paths[j],
+                                        sizeof(candidates.paths[j]),
+                                        candidates.paths[j - 1U]);
+                        --j;
+                    }
+                    m12_copy_string(candidates.paths[j],
+                                    sizeof(candidates.paths[j]), value);
+                }
+            }
+            for (archiveIndex = 0U; archiveIndex < candidates.count; ++archiveIndex) {
+                const char* archivePath = candidates.paths[archiveIndex];
                 char imageMember[M12_ASSET_DATA_DIR_CAPACITY];
                 char cachedHashes[2][2][33];
                 int cachedReceipt;
@@ -2839,26 +3015,6 @@ static int m12_admit_csb_fmtowns_archive(M12_AssetStatus* status,
                 uint8_t* image = NULL;
                 size_t imageSize = 0U;
                 CSB_V1_FmtownsCdLayout layout;
-                const char* archiveLeaf;
-                if (FSP_FileExists(candidateRoots[candidateRootIndex]) &&
-                    !FSP_DirExists(candidateRoots[candidateRootIndex])) {
-                /* `--data-dir <archive>` is a precise media selection, not
-                 * permission to scan its parent and select a different CSB
-                 * package. The generic hash walker accepts a file root, but
-                 * FM Towns also has to unwrap the nested CD image here. */
-                    archiveLeaf = strrchr(candidateRoots[candidateRootIndex], '/');
-                    if (!archiveLeaf) archiveLeaf = strrchr(candidateRoots[candidateRootIndex], '\\');
-                    archiveLeaf = archiveLeaf ? archiveLeaf + 1 : candidateRoots[candidateRootIndex];
-                    if (strcmp(archiveLeaf, archiveNames[archiveIndex]) != 0 ||
-                        snprintf(archivePath, sizeof(archivePath), "%s",
-                                 candidateRoots[candidateRootIndex]) >= (int)sizeof(archivePath)) {
-                        continue;
-                    }
-                } else if (snprintf(archivePath, sizeof(archivePath), "%s/%s",
-                                    candidateRoots[candidateRootIndex], archiveNames[archiveIndex]) >=
-                               (int)sizeof(archivePath)) {
-                    continue;
-                }
                 if (!m12_scan_progress_update(progress,
                                               "authenticating ZIP candidate",
                                               "csb", archivePath, 0)) {
