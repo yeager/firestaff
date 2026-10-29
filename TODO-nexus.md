@@ -571,7 +571,10 @@ not a fix and has not passed this real-media test.
   meaning is established. The direction handler maps logical events 0/1/2/3 to
   Up/Right/Down/Left, and the retail packet's active-high masks are traced
   through debounce to event `0x28`; physical Saturn electrical signaling is
-  not established. The Nexus coordinate-to-selection table, glyph meanings,
+  not established. In the authentic Y-open state, menu `+0x24` is null and
+  `FUN_060328c6` performs no mapping; Down changes the generic menu item index
+  0→4 without proving that index 4 is a rune. The Nexus coordinate-to-selection
+  table and glyph meanings,
   final spell validator, and cast behavior remain open. Follow-up decompilation identifies `FUN_0603a472` and
   row `+0x35` operations as an ITEM.IBS action-selector path, not a demonstrated
   Magic validator; composer fields `+0x3d/+0x3e` are distinct from
@@ -592,6 +595,8 @@ not a fix and has not passed this real-media test.
   `/Volumes/Extern-disk/firestaff-evidence/nexus/magic-fourth-slot-status-20261029/`.
   The packet-to-event decompilation is at
   `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-saturn-pad-event-path-20261029/`.
+  The Y-open null-table trace is at
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/magic-menu-coordinate-map-20261029/`.
   An independent 2026-10-25 Ymir `--debug` comparison loaded a hash-verified
   authentic JP gameplay savestate into a private profile: the no-input reload
   changed 0.00175% of pixels, W-forward changed 3.08408%, and A-left changed

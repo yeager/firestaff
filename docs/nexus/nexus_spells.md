@@ -70,8 +70,14 @@ fixture behavior do not establish Nexus retail semantics.
   masks through debounce, descriptors, event `0x28`, and the menu handler.
   This proves the internal bit mapping, not physical connector signaling. The
   menu's current selection index is passed to the composer callback. The
-  Nexus-specific coordinate-to-index table remains
-  unknown. A paired-capture source join now binds all six cursor-0 values to
+  Nexus-specific coordinate-to-index table remains unknown. In the authentic
+  Y-open checkpoint, the menu object's `+0x24` table pointer is null, so
+  `FUN_060328c6` exits without lookup or selected-index write. `FUN_060327c8`
+  changes the generic menu item index from 0 to 4 on Down, but this does not
+  establish that index 4 is a rune. The table bytes and closed-to-open
+  transition remain unobserved. Evidence is retained at
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/magic-menu-coordinate-map-20261029/`.
+  A paired-capture source join now binds all six cursor-0 values to
   selected-state Japanese `MENU.BPK` entries 107–112 and VDP1 command 88's
   source addresses and coordinates. This identifies the selected retail
   surfaces, not their rune names. The six-way source join and capture hashes
@@ -136,6 +142,9 @@ entries 107–112, their captured VDP1 source addresses, and coordinates. The
 D-pad direction event handler and retail controller-packet-to-event path
 are decompiled, but the Nexus menu's coordinate-to-index table and glyph
 meanings remain open. Physical Saturn electrical signaling is not established.
+In the retained Y-open state, menu `+0x24` is null and Down changes the generic
+menu item index from 0 to 4; that index has no established rune meaning. No
+authentic closed-to-open checkpoint was available for this trace.
 Identify the full-buffer submit path and any actual validator/cast
 consumer, including mana, target/effect state,
 random inputs, animation, save changes, and visible output. Do not assign rune
