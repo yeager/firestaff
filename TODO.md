@@ -10,12 +10,15 @@ matrix and CLI option-form test also passed (2/2). The tested app binary was
 built before `5b65ec09`, whose only change is the DM1 Atari STX test source;
 the runtime code therefore matches this checkout. The three authentic-media
 DM1 PC, CSB FM Towns, and DM2 FM Towns Swedish scan/debug localization checks
-also passed (3/3). Finally, mouse-driven Return to Menu passed for DM1 PC, CSB
-FM Towns, and DM2 FM Towns; each rescan reported all five installed games
-available (3/3). These SDL dummy runs verify only the named launcher
-selections and runtime handoffs, not native display, audio, physical input,
-untested editions, or complete game parity. No source behavior change was
-needed and no release was created.
+also passed (3/3). A separate data-root containing only DM1, CSB, and DM2
+original archives passed 19 no-game menu handoffs across keyboard and mouse
+selection, seven alternate platform editions, per-game collection roots, and
+the standard `.firestaff/data` root. Mouse-driven Return to Menu also passed
+for DM1 PC, CSB FM Towns, and DM2 FM Towns; each rescan reported all five
+installed games available (3/3). These SDL dummy runs verify only the named
+launcher selections and runtime handoffs, not native display, audio, physical
+input, untested editions, or complete game parity. No source behavior change
+was needed and no release was created.
 
 The current five-game startup evidence matrix and remaining Nexus/Theron
 runtime-entry gaps are consolidated in
