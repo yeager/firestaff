@@ -24,6 +24,16 @@ loaded state.
 Keep unbound payload fields opaque; do not infer game state from FNXS or another
 Dungeon Master version.
 
+The bounded BKR parser remains outside the production Continue route. M11's
+retail title reducer still receives `has_continue = 0`, and
+`SHOW_LOAD_PANEL` currently redraws without entering a Load-panel state. The
+next integration step is explicit real-card selection and a separate BKR
+catalog/load state; do not infer the active card by scanning unrelated
+installation data. Keep final load confirmation gated until the remaining
+champion fields and retail state consumer are mapped. The authentic Load-panel
+capture still lacks complete NBG0/NBG1 composition and text/border source joins;
+see `docs/nexus/nexus_startup.md` and the saved Ymir `--debug` captures.
+
 A 2026-10-29 Ymir cold boot with the authentic two-champion BKR installed in
 internal backup RAM reached the native Load panel, displayed `B01 0:16 NORMAL`,
 and accepted the save to reach a dungeon view with two champion HUD panels. The
