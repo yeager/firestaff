@@ -1,5 +1,14 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-29 CSB launcher edition-row follow-up, based on `584028e1`: the new
+`m12_csb_amiga_version_menu_real_media` CTest passed against the installed
+original CSB Amiga 3.5 English archive. It navigates the public M12 menu input
+path from the CSB game card through the Amiga platform and Game Options, cycles
+to the matched `amiga35-en` edition, and confirms the launch intent retains
+that exact edition and architecture. This closes a regression-test gap for
+same-platform multi-edition selection; it does not claim a full runtime boot
+or Amiga gameplay parity. The test skips when authentic A35E data is absent.
+
 2026-10-29 launcher data-root follow-up at `8a04294f`: the authentic-media
 return-scan mutation test passed both directions. Removing the staged original
 CSB archive while DM1 was running made CSB unavailable after returning to the
