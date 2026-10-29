@@ -568,10 +568,11 @@ not a fix and has not passed this real-media test.
   total mana 9 from 18. The fourth append returns its unchanged cursor value
   3 before the common UI update; recovered static caller sites discard it. A
   separate command-8 branch recalculates aggregate mana, but no spell-execution
-  meaning is established. The decompiled direction handler maps logical events
-  0/1/2/3 to Up/Right/Down/Left, but the Nexus coordinate-to-selection table,
-  glyph meanings, physical pad-bit producer, final spell validator, and cast
-  behavior remain open. Follow-up decompilation identifies `FUN_0603a472` and
+  meaning is established. The direction handler maps logical events 0/1/2/3 to
+  Up/Right/Down/Left, and the retail packet's active-high masks are traced
+  through debounce to event `0x28`; physical Saturn electrical signaling is
+  not established. The Nexus coordinate-to-selection table, glyph meanings,
+  final spell validator, and cast behavior remain open. Follow-up decompilation identifies `FUN_0603a472` and
   row `+0x35` operations as an ITEM.IBS action-selector path, not a demonstrated
   Magic validator; composer fields `+0x3d/+0x3e` are distinct from
   `+0x35..+0x38`. Paired authentic captures now bind the six values to selected-
@@ -589,6 +590,8 @@ not a fix and has not passed this real-media test.
   `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-menu-action-surface-bindings-20261029.md`,
   and the fourth-slot caller audit is at
   `/Volumes/Extern-disk/firestaff-evidence/nexus/magic-fourth-slot-status-20261029/`.
+  The packet-to-event decompilation is at
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-saturn-pad-event-path-20261029/`.
   An independent 2026-10-25 Ymir `--debug` comparison loaded a hash-verified
   authentic JP gameplay savestate into a private profile: the no-input reload
   changed 0.00175% of pixels, W-forward changed 3.08408%, and A-left changed

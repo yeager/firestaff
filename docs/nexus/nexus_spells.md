@@ -66,8 +66,11 @@ fixture behavior do not establish Nexus retail semantics.
   pay the action costs; they do not prove a complete spell was accepted or
   cast. Left+A from the initial selection leaves cursor and mana unchanged.
   Static decompilation maps logical D-pad event values 0/1/2/3 to Up/Right/
-  Down/Left and confirms that the menu's current selection index is passed to
-  the composer callback. The Nexus-specific coordinate-to-index table remains
+  Down/Left and traces the authentic retail packet's active-high direction
+  masks through debounce, descriptors, event `0x28`, and the menu handler.
+  This proves the internal bit mapping, not physical connector signaling. The
+  menu's current selection index is passed to the composer callback. The
+  Nexus-specific coordinate-to-index table remains
   unknown. A paired-capture source join now binds all six cursor-0 values to
   selected-state Japanese `MENU.BPK` entries 107–112 and VDP1 command 88's
   source addresses and coordinates. This identifies the selected retail
@@ -130,9 +133,10 @@ Y-entry receipt. Nine VDP1 command sources and their 31 active palette indices
 are bound to authentic `MENU.BPK` surfaces, PALT, and same-run CRAM. Paired
 captures now bind all six numeric action choices at cursor 0 to selected-state
 entries 107–112, their captured VDP1 source addresses, and coordinates. The
-D-pad direction event handler is decompiled, but the Nexus menu's
-coordinate-to-index table, glyph meanings, and physical pad-bit producer
-remain open. Identify the full-buffer submit path and any actual validator/cast
+D-pad direction event handler and retail controller-packet-to-event path
+are decompiled, but the Nexus menu's coordinate-to-index table and glyph
+meanings remain open. Physical Saturn electrical signaling is not established.
+Identify the full-buffer submit path and any actual validator/cast
 consumer, including mana, target/effect state,
 random inputs, animation, save changes, and visible output. Do not assign rune
 names from sprite appearance alone. The `+0x18` consumer remains a separate
