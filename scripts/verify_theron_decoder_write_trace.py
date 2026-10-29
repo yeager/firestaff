@@ -74,8 +74,12 @@ def read_code_writes(path: Path) -> list[dict[str, str]]:
                 raise ValueError(f"{path}:{line_number}: code-write event sequence is not increasing")
             if not 0x1F1C00 <= pc < 0x1F1E00:
                 raise ValueError(f"{path}:{line_number}: code-write PC is outside the configured window")
+            # The trace hook may capture other writes inside the configured
+            # RAM window. Keep them out of the decoder-output join, but do not
+            # reject an otherwise valid trace row.
             if not DESTINATION_FIRST <= address < DESTINATION_END:
-                raise ValueError(f"{path}:{line_number}: code-write destination is outside decoder output")
+                prior_sequence = sequence
+                continue
             item["_sequence"] = str(sequence)
             item["_address"] = f"{address:06x}"
             item["_value"] = str(parse_hex(item, "value", 2))

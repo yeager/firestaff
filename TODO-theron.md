@@ -9025,7 +9025,8 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   `STA $47E0,X`, `INY`, `INX`, then another indirect load. It byte-copies at
   least 1,052 unique decoded-buffer bytes, all matching the output, to logical
   `$47E0,X`; the physical destination depends on the active MPR2 mapping and
-  still needs a write trace. The RAM-resident reader at `$1F1C3E`
+  is verified by the target-write trace below. The next step is to trace later
+  consumers of those copied bytes. The RAM-resident reader at `$1F1C3E`
   executed bytes `B2 2E 85 0E E6 2E D0 02 E6 2F 86 0F A5 12 D0 02`; they match
   both the final PCE Fast RAM snapshot at offset `$1C3E` and authentic Track 02
   LBA 4,230, user offset 1,086, read in that capture. These source-byte matches

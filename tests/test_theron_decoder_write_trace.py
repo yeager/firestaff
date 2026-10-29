@@ -59,6 +59,10 @@ class DecoderCodeWriteTraceTest(unittest.TestCase):
                 f"pce_fast_code_ram_write sequence={LENGTH} event_sequence={1001 + LENGTH} "
                 f"physical_address={FIRST:06x} value=ff writer_physical_pc=1f1d1d\n"
             )
+            out.write(
+                f"pce_fast_code_ram_write sequence={LENGTH + 1} event_sequence={1002 + LENGTH} "
+                f"physical_address={FIRST + LENGTH:06x} value=ff writer_physical_pc=1f1d1d\n"
+            )
 
     def run_verifier(self, decoder: Path, code: Path, digest: str) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
@@ -90,6 +94,7 @@ class DecoderCodeWriteTraceTest(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn("exact_decoder_write_matches=5064", result.stdout)
             self.assertIn("decoder_output_writes_without_exact_code_trace_match=0", result.stdout)
+            self.assertIn("code_window_write_rows=5065", result.stdout)
             self.assertIn("unmatched_code_window_writes_after_decoder_return=1", result.stdout)
             self.assertIn("decoder_writer_physical_pc=1f1d1d exact_matches=5064", result.stdout)
 

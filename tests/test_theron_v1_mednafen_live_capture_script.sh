@@ -95,6 +95,26 @@ if [[ "$main_ram_consumer_zero_padded_output" != *'SKIP:'* ]]; then
     printf '%s\n' 'FAIL: valid zero-padded main-RAM consumer limit did not reach the missing-media gate' >&2
     exit 1
 fi
+pce_fast_target_write_octal_limit_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_PCE_FAST_MAIN_RAM_TARGET_WRITE_SAMPLE_LIMIT=09000000 \
+    "$script" 2>&1) && {
+    printf '%s\n' 'FAIL: decimal PCE Fast target-write limit above its maximum was accepted through octal parsing' >&2
+    exit 1
+}
+if [[ "$pce_fast_target_write_octal_limit_output" != *'THERON_CAPTURE_PCE_FAST_MAIN_RAM_TARGET_WRITE_SAMPLE_LIMIT must be an integer from 4096 through 1048576'* ]]; then
+    printf '%s\n' 'FAIL: out-of-range leading-zero PCE Fast target-write limit lacked a precise diagnostic' >&2
+    exit 1
+fi
+pce_fast_target_write_zero_padded_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_PCE_FAST_MAIN_RAM_TARGET_WRITE_SAMPLE_LIMIT=00008192 \
+    "$script" 2>&1) || {
+    printf '%s\n' 'FAIL: valid zero-padded PCE Fast target-write limit was rejected' >&2
+    exit 1
+}
+if [[ "$pce_fast_target_write_zero_padded_output" != *'SKIP:'* ]]; then
+    printf '%s\n' 'FAIL: valid zero-padded PCE Fast target-write limit did not reach the missing-media gate' >&2
+    exit 1
+fi
 cd_filter_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
     THERON_CAPTURE_MEDNAFEN_MODULE=pce \
     THERON_CAPTURE_PCE_FAST_CD_DATA_READ_START_AT_TRACK02=1 \

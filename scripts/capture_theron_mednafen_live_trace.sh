@@ -278,6 +278,16 @@ if (( main_ram_consumer_sample_limit < 4096 || main_ram_consumer_sample_limit > 
     printf '%s\n' 'FAIL: THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT must be an integer from 4096 through 1048576' >&2
     exit 1
 fi
+if [[ ! "$pce_fast_main_ram_target_write_sample_limit" =~ ^0*([0-9]{1,7})$ ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_MAIN_RAM_TARGET_WRITE_SAMPLE_LIMIT must be an integer from 4096 through 1048576' >&2
+    exit 1
+fi
+target_write_sample_limit_digits=${BASH_REMATCH[1]}
+target_write_sample_limit=$((10#$target_write_sample_limit_digits))
+if (( target_write_sample_limit < 4096 || target_write_sample_limit > 1048576 )); then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_MAIN_RAM_TARGET_WRITE_SAMPLE_LIMIT must be an integer from 4096 through 1048576' >&2
+    exit 1
+fi
 if [[ -z "$mednafen_bin" || -z "$cue" || -z "$system_card" || -z "$trace" ]]; then
     printf '%s\n' 'SKIP: MEDNAFEN_BIN, THERON_US_CUE/THERON_CUE, THERON_SYSTEM_CARD, and THERON_LIVE_TRACE_OUTPUT are required'
     exit 0
@@ -310,11 +320,6 @@ if [[ -n "$pce_fast_main_ram_consumer_range" ]]; then
         printf '%s\n' 'FAIL: PCE Fast consumer range must be ordered and end at or below 1fffff' >&2
         exit 1
     fi
-fi
-if [[ ! "$pce_fast_main_ram_target_write_sample_limit" =~ ^[0-9]+$ ]] ||
-   (( pce_fast_main_ram_target_write_sample_limit < 4096 || pce_fast_main_ram_target_write_sample_limit > 1048576 )); then
-    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_MAIN_RAM_TARGET_WRITE_SAMPLE_LIMIT must be an integer from 4096 through 1048576' >&2
-    exit 1
 fi
 if [[ -n "$pce_fast_main_ram_target_write_range" ]]; then
     if [[ "$capture_mednafen_module" != pce_fast ]] ||
