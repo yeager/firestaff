@@ -144,7 +144,9 @@ Retail functions `FUN_0603a472` and `FUN_0603a55c` consume that runtime byte as
 the position in a four-entry rune sequence, while `FUN_0603a602` initializes
 the sequence and `FUN_0603798e` resets it. The payload probe exposes it as
 `champion_rune_sequence_cursor`; this is save metadata only and is not yet
-connected to Firestaff's spell input state. Other champion and world fields
+connected to Firestaff's spell input state. All four image-hash-verified BKR
+files have cursor value `2` in every champion record; their extracted payload
+hashes match the four pinned corpus payloads. Other champion and world fields
 remain opaque. Original Saturn save import remains gated until the complete
 semantic payload mapping and source-owned consumer are identified and
 exercised against the retail game.
