@@ -551,8 +551,10 @@ not a fix and has not passed this real-media test.
   that panel. A second authentic replay from a saved Y-open state confirms
   Down/Left/Right change the screenshot and reorder VDP1 references to nine
   exact `MENU.BPK` surfaces (entries 99–106 and 144); Up matches the no-input
-  control. Rune names, sequence acceptance, CLUT ownership, and casting remain
-  unverified. Preserve the capture receipt under
+  control. All nine commands use 8bpp bank mode, and all 31 nonzero palette
+  indices in those joined surfaces match both Japanese `MENU.BPK` PALT and
+  same-run captured CRAM. Rune names, sequence acceptance, full dispatch,
+  composition, and casting remain unverified. Preserve the capture receipt under
   `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/magic-window-dpad-inputs-20261029/`.
   An independent 2026-10-25 Ymir `--debug` comparison loaded a hash-verified
   authentic JP gameplay savestate into a private profile: the no-input reload

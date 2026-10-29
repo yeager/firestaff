@@ -40,9 +40,12 @@ fixture behavior do not establish Nexus retail semantics.
   entries 99–106 and 144 in hash-verified Japanese `MENU.BPK`. Down, Left, and
   Right reorder references to entries 99–106 at command indices 79–88; Up
   keeps the control command list. This binds those command source bytes to
-  retail MENU.BPK surfaces, but does not establish rune names, surface meaning,
-  CLUT ownership, or renderer permission. The full analyzer reports are in the
-  external capture directory above.
+  authentic Japanese MENU.BPK surfaces. All nine commands use VDP1 8bpp bank
+  mode; for all 31 nonzero indices in those joined surfaces, the PALT word
+  matches the same-run CRAM word. This does not establish rune names, surface
+  meaning, full dispatch ownership, complete screen composition, or renderer
+  permission. Reproducible palette-join receipts are in the external capture
+  directory above.
 
 ## Firestaff production boundary
 
