@@ -554,7 +554,12 @@ not a fix and has not passed this real-media test.
   control. All nine commands use 8bpp bank mode, and all 31 nonzero palette
   indices in those joined surfaces match both Japanese `MENU.BPK` PALT and
   same-run captured CRAM. Rune names, sequence acceptance, full dispatch,
-  composition, and casting remain unverified. Preserve the capture receipt under
+  composition, and casting remain unverified. The static Ghidra audit found
+  generic `MENU.BPK` record/draw helpers and separate sequence validator/mutator
+  functions, but no direct link from entries 99–106/144 to rune fields or the
+  command producer. Next, trace one direction from the same Y-open checkpoint
+  through row offsets `+0x35/+0x36/+0x38`, `FUN_0603a472` calls/returns, and the
+  producer of command rows 79–88. Preserve the capture receipt under
   `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/magic-window-dpad-inputs-20261029/`.
   An independent 2026-10-25 Ymir `--debug` comparison loaded a hash-verified
   authentic JP gameplay savestate into a private profile: the no-input reload

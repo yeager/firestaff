@@ -46,6 +46,17 @@ fixture behavior do not establish Nexus retail semantics.
   meaning, full dispatch ownership, complete screen composition, or renderer
   permission. Reproducible palette-join receipts are in the external capture
   directory above.
+- Static Ghidra analysis of the hash-verified Japanese `DM.BIN` finds the
+  `MENU.BPK` resource string in `FUN_060286a4`, called indirectly by
+  `FUN_06010f44`. Generic draw helpers include `FUN_06029188` and
+  `FUN_060292e0`; the analysis does not connect these or decoded entries
+  99–106/144 to the observed Magic-window command block or D-pad state.
+  `FUN_0603a472` validates a four-entry sequence and is called by mutators
+  `FUN_0603a55c` and `FUN_0603a602`, which update row offsets `+0x35`, `+0x36`,
+  and `+0x38`. No direct relation to the captured commands or menu surfaces is
+  established. The bounded raw-byte scan found no direct table of the matching
+  entry IDs; it cannot rule out indirect encodings. See the [static audit
+  report](</Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/magic-window-menu-bpk-static-semantic-audit-20261029/README.md>).
 
 ## Firestaff production boundary
 
@@ -64,14 +75,17 @@ implementation or substitute DM1 tables for these missing retail joins.
 
 ## Next evidence needed
 
-Continue from a reproducible authentic Magic-window checkpoint. The first
-directional replay is retained, but its exact source savestate differs from
-the Y-entry receipt. Establish one checkpoint's provenance, repeat the
-directional inputs while joining changed VDP1 commands to retail menu
-surfaces, then trace rune acceptance and the `+0x18` consumer before assigning
-field names or implementing the Firestaff route. Only then trace casting
-through mana changes, target/effect state, random inputs, animation, and
-visible output.
+The directional probe now has a hash-identified Y-open source state reused
+across all five same-state runs; that source save remains distinct from the
+separately retained Y-entry receipt. Nine VDP1 command sources and their 31
+active palette indices are bound to authentic `MENU.BPK` surfaces, PALT, and
+same-run CRAM. The next probe should trace one controlled direction from this
+state through writes to champion-row offsets `+0x35/+0x36/+0x38`, calls and
+return values around `FUN_0603a472`, and the producer of VDP1 command rows
+79–88. The `+0x18` consumer and cast path remain separate work. Do not assign
+rune field names or implement the Firestaff route until the input-to-validator
+and input-to-surface relations are captured. Then trace casting through mana
+changes, target/effect state, random inputs, animation, and visible output.
 
 Raw emulator states, screenshots, logs, and memory traces remain outside Git
 in `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/nexus-magic-window-input-20261029/` and
