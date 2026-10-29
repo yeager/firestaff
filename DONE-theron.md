@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-29 — verify native keyboard and mouse routes against JP and US data
+
+A clean CMake Debug build of PR #185 completed on TRV2 with one job. The
+authentic-data regressions `test_theron_v1_raw_bin_runtime_boot.sh` (USA
+Track 02, MD5 `f23601102138f87c33025877767ebf76`) and
+`test_theron_v1_jp_raw_bin_startup.sh` (Japan Rev. 1 Track 02, MD5
+`b7afb338ad31be1025b53f9aff12d73a`) each passed three loops. The checks
+covered native startup, keyboard movement/turning and Firestaff mouse-panel
+actions, including source-backed US item pickup, selection and drop. These
+headless native tests do not prove original-screen parity, direct clicks in
+the dungeon view or complete campaign gameplay.
+
 ## 2026-10-29 — align keypad navigation keycode fallback
 
 Mapped keypad 8/2/4/6 in `M11_TheronNavigationInputFromKeycode()` to the same
