@@ -36,16 +36,18 @@ champion fields and retail state consumer are mapped. A hash-verified callback
 decompilation and Ymir trace now bind the authentic BKR comment suffix `N` to
 the visible `NORMAL` difficulty label. The selected comment prefix is also
 copied into the callback's text buffer, and enlarged inspection of the
-authentic capture confirms the full row `B01 0:06 NORMAL`. The retail row text
+authentic capture confirms the full row `B01  0:06 NORMAL`. The retail row text
 path is mapped from the selected BKR comment through glyph conversion and
 drawing. The Load-panel capture still lacks complete NBG0/NBG1 composition and
 text/border source joins; see
 `docs/nexus/nexus_startup.md` and the saved Ymir `--debug` captures.
+The callback's EASY-suffix branch is statically identified but has not been
+verified with an authentic EASY BKR card.
 
 The 2026-10-29 authentic Load-panel replay and callback decompilation confirm
 the selected card's `B01  0:06N` comment is copied, its `N` suffix selects the
 visible `NORMAL` label, and the assembled string is glyph-rendered. The
-authentic screenshot shows `B01 0:06 NORMAL`. See the trace and capture
+authentic screenshot shows `B01  0:06 NORMAL`. See the trace and capture
 bundle on the external evidence disk and
 `docs/nexus/nexus_sh2_startup_decompilation.md`.
 
@@ -57,7 +59,7 @@ save command remain unresolved; see the authentic input/BUP trace receipt in
 the external evidence folder.
 
 A 2026-10-29 Ymir cold boot with the authentic two-champion BKR installed in
-internal backup RAM reached the native Load panel, displayed `B01 0:06 NORMAL`,
+internal backup RAM reached the native Load panel, displayed `B01  0:06 NORMAL`,
 and accepted the save to reach a dungeon view with two champion HUD panels. The
 BUP image retained its source hash. This verifies the retail reference flow
 but does not identify payload fields or implement Firestaff Continue. See the

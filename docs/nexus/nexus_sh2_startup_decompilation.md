@@ -105,7 +105,7 @@ close most of that gap. In Ymir's
 selection inputs. At PC `0x060271f8` it writes the ten bytes `B01  0:06N` to
 stack address `0x060ffedc` on both updates. Those bytes match the directory
 comment at offset `0x90` in the authentic two-champion card, and the visible
-Load row reads `B01 0:06 NORMAL`. Ghidra decompilation of this same retail
+Load row reads `B01  0:06 NORMAL`. Ghidra decompilation of this same retail
 callback shows it selects a 12-byte slot record, copies the comment at
 `record + 0x10 + 12 * slot`, removes a final `E` or `N`, and appends the
 corresponding `" EASY"` or `" NORMAL"` label. It then passes the assembled
@@ -114,6 +114,9 @@ runtime bytes and control flow therefore bind the displayed difficulty label
 to the authentic BKR comment suffix. The traced card comment says `0:06`, and
 enlarged inspection of the authentic screenshot confirms the visible row also
 says `0:06`.
+The static branch also maps suffix `E` to ` EASY`, but the retained authentic
+runtime capture exercises only `N`; an authentic EASY card has not yet been
+traced.
 
 A same-run read trace records consumers of that exact stack buffer. The call
 target `0x0604265c` is a NUL-terminated string append routine: it advances to
