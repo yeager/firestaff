@@ -9302,3 +9302,33 @@ native rendering, or Theron parity. The private evidence bundle is at
   scripted button event and reports `transition=missing`. No gameplay or
   render parity is claimed; semantic attribution and full native Theron
   support remain open.
+
+## 2026-10-29 — honor the configured PCE Fast consumer trace limit
+
+- The PCE Fast main-RAM consumer hook now uses the validated
+  `FIRESTAFF_THERON_MAIN_RAM_CONSUMER_SAMPLE_LIMIT` instead of a separate fixed
+  65,536-event ceiling. Total-cap truncation is reported only when a later
+  eligible read is dropped, so an exact-cap trace is not marked truncated. The
+  per-address sample cap also reports dropped reads. The capture receipt reports
+  the read count and all truncation markers.
+- The complete instrumented Mednafen patch set passed patch-only application
+  on TRV2. A compile exposed a weak location anchor in the neighboring
+  code-RAM writer patch; replacing it with the unique following function
+  declaration fixed the placement. The corrected PCE Fast build completed on
+  TRV2 with `-j1`, and the binary contains both instrumentation markers.
+- Capture-script regressions passed three consecutive loops. A cold authentic
+  USA run with independent 4,096-read caps captured 4,096 default reads and
+  4,096 selected `$0D0000–$0D13C7` reads, with a separate truncation marker for
+  each stream. The `$23AD` trace contained one complete 5,064-byte output with
+  the expected SHA-256, but all sampled `$0D` reads preceded its final write;
+  the verifier found zero post-decode output-range reads. The capture also
+  missed the requested scripted-input polls and recorded no gameplay
+  transition. A follow-up cold capture with a 65,536-record aggregate cap
+  verified 29,618 output-range reads after the decoder's final write. Those
+  reads covered all 5,064 output addresses; 6,111 were byte-equal to decoded
+  output across 3,130 addresses. The follow-up used an earlier aggregate-cap
+  binary, so its range/default counts were re-derived from physical addresses;
+  the split-cap behavior is established by the preceding capture and build.
+  Both runs missed the final scripted-input poll and recorded no gameplay
+  transition. The read PCs remain candidates; no ownership, gameplay use, or
+  Theron parity is claimed.

@@ -9077,3 +9077,26 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   be rerun on this capture. This repeated poll gap means the replay still needs
   an input plan that demonstrably exposes every held mask before proceeding to
   semantic tracing.
+- Review found that the capture wrapper accepted
+  `THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT` through 1,048,576, while the
+  instrumented C hook still stopped silently at 65,536. That limit is now
+  configurable and has an explicit truncation receipt. A cold authentic test
+  then showed that its shared budget filled with default `$1F0000–$1F7FFF`
+  reads before any selected `$0D0000–$0D13C7` consumer reads were captured.
+  The independent-limit correction passed patch-only application and a PCE
+  Fast `-j1` build on TRV2. A cold authentic USA capture recorded exactly
+  4,096 reads in each class with separate truncation markers. In a follow-up
+  cold run, an earlier aggregate-cap binary recorded 53,790 reads in the
+  selected `$0D0000–$0D13C7` range and 11,746 in default `$1F0000–$1F7FFF` RAM.
+  The `$23AD` trace again verified one ordered 5,064-byte output against the
+  expected digest. After its final write, the consumer trace read all 5,064
+  output addresses 29,618 times; 6,111 reads matched decoded bytes at 3,130
+  addresses. Prominent reader PCs include `$104287`, `$1042AB`, and `$1F1C3E`.
+  This is byte-equal read-candidate evidence only; it does not establish the
+  routines' source ownership, the downstream write effect, or gameplay use.
+  The scripted input still missed a controller poll, and the capture recorded
+  no CD IRQ, `$E009` dispatch, or gameplay transition. Next disassemble the
+  candidate readers, trace their bounded destination writes, and join those
+  writes to an authentic game-state or rendering effect. The follow-up used an
+  earlier aggregate-cap binary without sample-class fields; its stream counts
+  were re-derived from the physical address fields.

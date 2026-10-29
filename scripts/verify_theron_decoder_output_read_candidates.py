@@ -80,8 +80,9 @@ def decoder_output(path: Path, expected_sha256: str) -> tuple[bytes, int]:
 
 def read_candidates(
     path: Path, output: bytes, final_write_event_sequence: int
-) -> tuple[int, set[int], Counter]:
+) -> tuple[int, set[int], set[int], Counter]:
     seen = 0
+    output_addresses_read: set[int] = set()
     matching_addresses: set[int] = set()
     pc_groups: Counter = Counter()
     with path.open(encoding="utf-8", errors="strict") as trace:
@@ -112,11 +113,12 @@ def read_candidates(
                 continue
             seen += 1
             offset = address - DESTINATION_FIRST
+            output_addresses_read.add(address)
             if output[offset] != value:
                 continue
             matching_addresses.add(address)
             pc_groups[(pc, code)] += 1
-    return seen, matching_addresses, pc_groups
+    return seen, output_addresses_read, matching_addresses, pc_groups
 
 
 def main() -> int:
@@ -140,7 +142,7 @@ def main() -> int:
         output, final_write_sequence = decoder_output(
             args.decoder_trace, args.expected_output_sha256.lower()
         )
-        reads, addresses, groups = read_candidates(
+        reads, output_addresses, matching_addresses, groups = read_candidates(
             args.consumer_trace, output, final_write_sequence
         )
     except (OSError, UnicodeError, ValueError) as exc:
@@ -150,12 +152,13 @@ def main() -> int:
     print(f"decoder_output_bytes={len(output)}")
     print(f"decoder_output_sha256={hashlib.sha256(output).hexdigest()}")
     print(f"post_decode_reads_in_output_range={reads}")
+    print(f"unique_output_addresses_read={len(output_addresses)}")
     print(f"byte_equal_read_count={sum(groups.values())}")
-    print(f"unique_output_addresses_read={len(addresses)}")
+    print(f"unique_byte_equal_output_addresses={len(matching_addresses)}")
     for (pc, code), count in sorted(groups.items()):
         print(f"read_candidate physical_pc={pc:06x} code_bytes={code or 'unavailable'} reads={count}")
     print("classification=byte-equal read candidates; ownership and gameplay use unproven")
-    if args.require_candidate and not addresses:
+    if args.require_candidate and not matching_addresses:
         print("FAIL: no post-decode byte-equal output read candidate", file=sys.stderr)
         return 1
     return 0

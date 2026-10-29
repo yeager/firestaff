@@ -217,6 +217,30 @@ rejects missing or invalid trace receipts. This instrumentation is for reference
 output remains untrusted for native rendering until matched to authentic code,
 source bytes, and a later gameplay/render transition. See the
 [decoded-buffer bit-reader note](../source-lock/theron-disassembly/theron-us-decoded-buffer-bit-reader-20261029.md).
+Consumer reads can be bounded with
+`THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT` (4,096–1,048,576; default
+65,536). The default `$1F0000–$1F7FFF` consumer stream and an optional physical
+range selected by `THERON_CAPTURE_PCE_FAST_MAIN_RAM_CONSUMER_RANGE` each have
+their own limit, so early default-RAM reads cannot consume the selected range's
+budget. Records identify `sample_class`; each stream writes its own explicit
+truncation marker when a configured sample cap or the per-address cap drops a
+read. Reaching the total cap alone does not mark a stream truncated. A truncated
+stream is incomplete for absence or coverage claims.
+
+## 2026-10-29 — decoded-buffer read candidates
+
+A follow-up cold USA reference capture verified the ordered 5,064-byte `$23AD`
+output, then recorded 29,618 reads from that physical output span. All 5,064
+output addresses were read after the final decoder write; 6,111 reads matched
+the corresponding decoded byte across 3,130 addresses. The strongest reader
+groups are physical PCs `$1042AB`, `$1042B2`, `$104287`, `$10428C`, and
+`$1F1C3E`. This run used an earlier aggregate-cap trace binary, so its
+per-stream counts were reconstructed from physical addresses; separate stream
+caps were independently exercised in the preceding capture. The run did not
+record a CD IRQ, `$E009` dispatch, or gameplay transition, and the last
+scripted input lacked a controller-poll witness. These reads remain candidates
+until their destination writes are traced into an authentic game-state or
+rendering effect. See the [decoder bit-reader note](../source-lock/theron-disassembly/theron-us-decoded-buffer-bit-reader-20261029.md).
 
 ## Earlier 2026-10-24 — TRV2 headless native full-loop presentation check
 

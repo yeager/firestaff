@@ -66,3 +66,18 @@ later authentic game state before assigning semantics or enabling a native
 renderer route. Keep the capture gate explicit: the subsequent r4 attempt did
 not witness the final scripted Button I mask, and its raw traces were removed
 during TRV2 cleanup.
+
+## Follow-up authentic read-candidate capture
+
+A later cold USA capture used the same authentic Track 02, System Card, and
+Backup RAM, with no autoloaded state. The bounded `$23AD` trace again verified
+the ordered 5,064-byte output and SHA-256 above. An earlier aggregate-cap
+consumer-trace binary recorded 29,618 reads from the output span after its
+final decoder write. Those reads touched all 5,064 output addresses; 6,111
+reads matched the decoded byte at 3,130 addresses. The strongest reader groups
+were physical PCs `$1042AB` and `$1042B2` (2,012 byte-equal reads each),
+`$104287` and `$10428C` (928 each), and `$1F1C3E` (130). These are
+byte-equality candidates only. The runtime receipt reported no CD IRQ, game
+`$E009` dispatch, or gameplay transition, and the scripted input plan missed
+its final controller-poll witness. The raw trace remains private on TRV2;
+neither downstream write effects nor semantic ownership are established.

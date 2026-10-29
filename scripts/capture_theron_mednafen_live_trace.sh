@@ -260,6 +260,22 @@ if [[ "$menu_route" == drator-generator ]]; then
     fi
 fi
 
+if [[ ! "$main_ram_consumer_sample_limit" =~ ^[0-9]+$ ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT must be an integer from 4096 through 1048576' >&2
+    exit 1
+fi
+while [[ "$main_ram_consumer_sample_limit" == 0* && "$main_ram_consumer_sample_limit" != 0 ]]; do
+    main_ram_consumer_sample_limit=${main_ram_consumer_sample_limit#0}
+done
+if (( ${#main_ram_consumer_sample_limit} > 7 )); then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT must be an integer from 4096 through 1048576' >&2
+    exit 1
+fi
+main_ram_consumer_sample_limit=$((10#$main_ram_consumer_sample_limit))
+if (( main_ram_consumer_sample_limit < 4096 || main_ram_consumer_sample_limit > 1048576 )); then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT must be an integer from 4096 through 1048576' >&2
+    exit 1
+fi
 if [[ -z "$mednafen_bin" || -z "$cue" || -z "$system_card" || -z "$trace" ]]; then
     printf '%s\n' 'SKIP: MEDNAFEN_BIN, THERON_US_CUE/THERON_CUE, THERON_SYSTEM_CARD, and THERON_LIVE_TRACE_OUTPUT are required'
     exit 0
@@ -276,11 +292,6 @@ fi
 if [[ ! "$rng_consumer_window_limit" =~ ^[0-9]+$ ]] ||
    (( rng_consumer_window_limit < 1 || rng_consumer_window_limit > 1024 )); then
     printf '%s\n' 'FAIL: THERON_CAPTURE_RNG_CONSUMER_WINDOW_LIMIT must be an integer from 1 through 1024' >&2
-    exit 1
-fi
-if [[ ! "$main_ram_consumer_sample_limit" =~ ^[0-9]+$ ]] ||
-   (( main_ram_consumer_sample_limit < 4096 || main_ram_consumer_sample_limit > 1048576 )); then
-    printf '%s\n' 'FAIL: THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT must be an integer from 4096 through 1048576' >&2
     exit 1
 fi
 if [[ -n "$pce_fast_main_ram_consumer_range" ]]; then
@@ -2005,6 +2016,18 @@ if [[ "$pce_fast_code_ram_write_trace_enabled" == 1 ]]; then
     fi
 fi
 
+if [[ "$capture_mednafen_module" == pce_fast ]] &&
+   grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_TRACE_ERROR' "$stderr_file"; then
+    printf '%s\n' 'FAIL: Mednafen reported an error while writing the PCE Fast main-RAM consumer trace' >&2
+    exit 1
+fi
+if [[ "$capture_mednafen_module" == pce_fast ]] &&
+   { [[ ! -s "$main_ram_consumer_trace" ]] ||
+     ! grep -Fqx 'source=mednafen-pce-fast-main-ram-consumer-read event_sequence_source=TheronTraceCDSharedEventSequence' "$main_ram_consumer_trace"; }; then
+    printf '%s\n' 'FAIL: Mednafen did not produce a valid PCE Fast main-RAM consumer trace' >&2
+    exit 1
+fi
+
 if [[ ! -s "$trace" ]] || ! grep -Fqx 'source=mednafen-pce-instrumented' "$trace"; then
     printf '%s\n' 'FAIL: Mednafen did not produce a provenance-marked live trace' >&2
     exit 1
@@ -2462,6 +2485,11 @@ transition_main_ram_e009_data_read_count=$(trace_count '^main_ram_e009_data_read
 transition_main_ram_e009_return_count=$(trace_count '^main_ram_e009_return ' "$cd_trace")
 transition_main_ram_e009_register_write_count=$(trace_count '^main_ram_e009_register_write ' "$cd_trace")
 transition_main_ram_consumer_read_count=$(trace_count '^main_ram_consumer_read ' "$main_ram_consumer_trace")
+transition_main_ram_consumer_default_read_count=$(trace_count '^main_ram_consumer_read .*sample_class=main_ram ' "$main_ram_consumer_trace")
+transition_main_ram_consumer_target_range_read_count=$(trace_count '^main_ram_consumer_read .*sample_class=target_range ' "$main_ram_consumer_trace")
+transition_main_ram_consumer_truncated_count=$(trace_count '^main_ram_consumer_truncated=' "$main_ram_consumer_trace")
+transition_main_ram_consumer_default_truncated_count=$(trace_count '^main_ram_consumer_truncated=main_ram_sample_limit ' "$main_ram_consumer_trace")
+transition_main_ram_consumer_target_range_truncated_count=$(trace_count '^main_ram_consumer_truncated=target_range_sample_limit ' "$main_ram_consumer_trace")
 transition_pce_fast_code_ram_write_count=$(trace_count '^pce_fast_code_ram_write ' "$pce_fast_code_ram_write_trace")
 transition_main_ram_target_read_count=$(trace_count '^main_ram_target_read ' "$main_ram_target_trace")
 transition_main_ram_target_write_count=$(trace_count '^main_ram_target_write ' "$main_ram_target_trace")
@@ -2608,6 +2636,12 @@ fi
     printf 'main_ram_e009_returns=%s\n' "$transition_main_ram_e009_return_count"
     printf 'main_ram_e009_register_writes=%s\n' "$transition_main_ram_e009_register_write_count"
     printf 'main_ram_consumer_reads=%s\n' "$transition_main_ram_consumer_read_count"
+    printf 'main_ram_consumer_default_reads=%s\n' "$transition_main_ram_consumer_default_read_count"
+    printf 'main_ram_consumer_target_range_reads=%s\n' "$transition_main_ram_consumer_target_range_read_count"
+    printf 'main_ram_consumer_truncated=%s\n' "$transition_main_ram_consumer_truncated_count"
+    printf 'main_ram_consumer_default_truncated=%s\n' "$transition_main_ram_consumer_default_truncated_count"
+    printf 'main_ram_consumer_target_range_truncated=%s\n' "$transition_main_ram_consumer_target_range_truncated_count"
+    printf 'main_ram_consumer_sample_limit=%s\n' "$main_ram_consumer_sample_limit"
     printf 'pce_fast_code_ram_writes=%s\n' "$transition_pce_fast_code_ram_write_count"
     printf 'pce_fast_code_ram_write_trace_enabled=%s\n' "$pce_fast_code_ram_write_trace_enabled"
     printf 'main_ram_target_reads=%s\n' "$transition_main_ram_target_read_count"
