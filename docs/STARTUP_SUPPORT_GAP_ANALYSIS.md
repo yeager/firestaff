@@ -1,21 +1,16 @@
 # Five-game startup support gap analysis
 
-Release metadata checked against GitHub `main` at `737508d0` on 2026-10-29.
-The latest published release is v3.0.420 (published on 2026-10-29 from tag
-commit `8224d5c8`). Current `main` is newer than that release, so its later
-source changes are not included in the published package. The v3.0.420
-release workflow verifies packaging, not gameplay startup. PR #200's
-cross-platform CMake builds, verification, localization, asset-hygiene,
-repository-media, and policy checks passed before it was merged; CodeRabbit
-was still processing at merge time. Since v3.0.420, main includes the CSB
-Atari Utility-media search fix and real-media alternate-platform menu runtime
-tests. Those prove only the named routes, not every Atari edition or complete
-game parity. Current
-`main` also
-extends real-media Swedish startup-debug localization checks to DM1 PC34, CSB
-FM Towns, and DM2 FM Towns. Those focused tests check explicit and saved
-Swedish preferences, localized scan labels, authentic edition selection, and
-the boot-probe boundary; they do not establish full startup or gameplay parity.
+Evidence metadata refreshed on 2026-10-30 for the v3.0.421 candidate, based on
+the successful PR #202 merge to `main` at `9de6898a1` plus the local Nexus
+regional-owner fix. The latest published release remains v3.0.420 (published
+2026-10-29 from tag commit `8224d5c8`); the candidate contains later source
+changes that are not in that package. The v3.0.420 workflow verifies
+packaging, not gameplay startup. The route records below are individually
+dated and establish only the named checks, not every edition or complete game
+parity. Real-media Swedish startup-debug localization checks cover DM1 PC34,
+CSB FM Towns, and DM2 FM Towns; these test explicit and saved preferences,
+localized scan labels, edition selection, and the boot-probe boundary, not full
+gameplay parity.
 Current authentic-media CLI routes
 include DM1 PC34, DOS, Atari ST, Amiga and FM Towns; CSB Atari, Amiga and FM
 Towns; DM2 DOS English/French, Macintosh English, FM Towns Japanese and Amiga

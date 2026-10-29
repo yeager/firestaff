@@ -1395,16 +1395,13 @@ edition and source-media provenance that binds its `dungeon.dat`,
 # row is published directly by the original renderer path, never inferred
 # from host brightness. Remaining work is authenticated platform trace
 # evidence for this complete consumer.
-- The front-inscription gap also affects the Amiga runtime's generic readability
-  contract: `m11_draw_csb_front_inscription` is present only in the
-  `m11_render_csb_boot_viewport` path at line 6047; the A31/A35 surface
-  presenter invokes `m11_csb_render_amiga_runtime_viewport` directly at line
-  7361 and then composes HUD surfaces without a front-M648 pass. The CSB
-  profile still provides the authentic shared byte-map and M648 graphic 258,
-  and M11 binds a read-only query world from those exact decoded bytes. Thus
-  there is no evidence that the source text or source dungeon is missing; it
-  is the Amiga frame composition call site that omits the authentic font pass.
-  The previously reported floor-trapdoor symptom remains capture-gated: the
+- The earlier Amiga front-inscription wiring gap is resolved: the
+  A31/A35 runtime transaction calls `m11_draw_csb_front_inscription` on its
+  candidate frame before commit, using authentic M648 graphic 258 and the
+  MEDIA720 F0635 line zones. This wires the source pass but does not yet prove
+  live-frame readability, placement, contrast, or pixel parity; keep those
+  checks open until a same-state original capture is compared. The previously
+  reported floor-trapdoor symptom remains capture-gated: the
   Amiga provider accepts the pit records 49..69, the source dungeon is the
   canonical shared `DUNGEON.DAT` (MD5
   `6695d2acebce49f95db1d8f3a5c733de`), and the map/aspect grids use matching

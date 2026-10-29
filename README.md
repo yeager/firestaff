@@ -21,23 +21,22 @@ work, especially for Chaos Strikes Back, Nexus and Theron's Quest.
 
 ## Current status
 
-The status pages were reviewed on 2026-10-28 against a working tree based
-on `main` commit `56f99cdcf`. Fast-dev compilation and the authentic-media
-`test_m12_main_menu_game_selection_real_media.sh` confirmed keyboard and mouse
-selection for all five game cards and no-game default-root handoff for all
-five games. The no-game launcher opens while the full scan continues and
-publishes game cards as each source handoff is admitted. Separate real-media
-runs reached the Firestaff runtime for DM1, CSB, DM2 and Theron's Quest. Nexus
-currently stops at its Saturn title evidence gate, so its media discovery and
-card availability do not establish a playable game. These SDL dummy and CLI
-checks do not verify native display, audio, or physical input, and do not
+The status pages were reviewed on 2026-10-30 for the v3.0.421 candidate. The
+latest full five-card authentic-media selection check verified keyboard and
+mouse selection plus default-root handoff for DM1, CSB, DM2, Nexus and Theron.
+Separate real-media runtime checks reached Firestaff gameplay for DM1, CSB,
+DM2 and Theron's Quest. Candidate Nexus tests verified JP/EN extracted-owner
+selection and matching supplemental-disc binding, but Nexus still stops at its
+Saturn title compositor gate and is not a playable route. These SDL dummy and
+CLI checks do not verify native display, audio, or physical input, and do not
 establish complete game parity.
 
 Firestaff detects real media and exposes paths only after their handoff gates
-pass. Edition ownership is checked per route, and mixed-source combinations
-remain unsupported until their data identity is verified. A known Nexus
-extracted-files-plus-disc ambiguity is documented in the
-[platform status](docs/PLATFORM_STATUS.md). The detailed status is kept in
+pass. Edition ownership is checked per route. Extracted Nexus JP/EN/FR owners
+now use regional identity hashes, and supplemental discs must match the owner;
+authentic JP and EN menu checks passed. A CUE-only root without a recognized
+ISO or extracted owner remains rejected, and the title compositor gate stays
+closed. The detailed status is kept in
 [project status](docs/PROJECT_STATUS.md). The published documentation is
 available at [yeager.github.io/firestaff](https://yeager.github.io/firestaff/).
 The [preservation status](docs/PRESERVATION_STATUS_2026-08-11.md) is a dated

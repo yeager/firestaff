@@ -10,6 +10,7 @@
 
 - `Alternate-platform launcher`: verify authentic-media menu selection and handoff paths for DM1, CSB and DM2.
 - `Theron evidence`: verify decoded-buffer copies and Japanese input-poll source provenance; add a bounded PCE Fast position-transfer observer without claiming movement parity.
+- `Startup documentation`: update the five-game evidence boundary and correct the superseded CSB Amiga inscription-gap entry.
 - `DM1 X68000`: update the real-media checksum probe while keeping private game data out of the repository.
 - `Nexus startup`: verify regional owner selection and matching supplemental media; preserve the capture-gated title compositor boundary.
 - `Release metadata`: update the project version and reproducible SPDX source SBOM.
