@@ -3,6 +3,12 @@
 **Audit date:** 2026-05-25
 **Sources:** `src/nexus/nexus_v1_magic.c`, `include/nexus_v1_magic.h`, `include/firestaff_spell_ui.h`, `include/firestaff_spell_ref.h`, `docs/shared/spells_system.md` (DM1 V1)
 
+> **Evidence status (2026-10-29).** The material below is a historical
+> DM1-derived source study, not a verified description of Nexus retail magic.
+> Its formulas, rune names, spell list, and cast gates are not source-locked
+> for retail behavior. The production target links fail-closed spell stubs.
+> See [`nexus_spells.md`](nexus_spells.md) for the current evidence and limits.
+
 ---
 
 ## 1. Overview

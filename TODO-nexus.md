@@ -545,7 +545,10 @@ not a fix and has not passed this real-media test.
   behavior. Tab cycles the loaded party leader forward and Shift+Tab cycles
   backward in Firestaff's desktop controls. The reverse direction is a host
   keyboard convenience; the native cursor action contract and attack,
-  inventory, and spell semantics remain open.
+  inventory, and spell semantics remain open. An authentic 2026-10-29 Ymir
+  `--debug` replay verified retail Control Pad Y opens the Magic window from a
+  real BKR-loaded gameplay state; Firestaff still does not render or route
+  that panel. Rune input, sequence validation, and casting remain unverified.
   An independent 2026-10-25 Ymir `--debug` comparison loaded a hash-verified
   authentic JP gameplay savestate into a private profile: the no-input reload
   changed 0.00175% of pixels, W-forward changed 3.08408%, and A-left changed

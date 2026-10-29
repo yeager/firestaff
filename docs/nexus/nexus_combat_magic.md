@@ -1,5 +1,10 @@
 # Nexus V1 — Magic in Combat
 
+> **Evidence status (2026-10-29).** This page's DM1-inheritance and potion
+> statements are historical design assumptions, not verified Nexus retail
+> behavior. The production spell path remains fail-closed. See
+> [`nexus_spells.md`](nexus_spells.md) for current evidence and limits.
+
 ## Source
 - `src/nexus/nexus_v1_magic.c` — spell casting, mana cost
 

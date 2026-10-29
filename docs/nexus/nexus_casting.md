@@ -3,6 +3,11 @@
 **Audit date:** 2026-05-25
 **Sources:** `src/nexus/nexus_v1_magic.c`, `include/nexus_v1_magic.h`, `include/nexus_v1_champions.h`, `include/firestaff_spell_ui.h`, `include/firestaff_spell_ref.h`, `src/nexus/nexus_v1_champions.c`
 
+> **Evidence status (2026-10-29).** This is a historical source-study page.
+> DM1-derived cast costs, skill gates, and spell assumptions below are not
+> verified Nexus retail behavior. The production target links fail-closed
+> spell stubs. See [`nexus_spells.md`](nexus_spells.md) for current evidence.
+
 ---
 
 ## 1. Overview

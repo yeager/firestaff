@@ -14,6 +14,14 @@ changed 5.08610%. The before/after captures and source hashes are recorded in
 This independently confirms retail ControlPad movement from a stable gameplay
 state; it does not establish Firestaff runtime parity or ShuttleMouse actions.
 
+A 2026-10-29 Ymir `--debug` replay loaded a gameplay checkpoint derived from
+the authentic Japanese BKR, then scheduled Control Pad Y for one frame. The
+captured retail screen shows the native Magic window. This verifies the
+manual-documented Y entry action in that state. It does not verify rune input,
+spell casting, or Firestaff's desktop route. The screenshot, states, hashes,
+log, and bounded SH-2 trace are documented in
+[`nexus_magic_window_y_debug_20261029`](../../parity-evidence/verification/nexus_magic_window_y_debug_20261029/README.md).
+
 The isolated Ymir ControlPad profile mapped `W/S/A/D` to Saturn D-pad
 up/down/left/right, `J` to A, `O` to Z, and `F` to Start. In a fresh profile
 with an empty BUP, F opened the title menu and S selected `CONTINUE`; a Right
@@ -174,8 +182,10 @@ desktop movement surface: the upper row maps to turn left, forward, and turn
 right; the lower row maps to strafe left, backward, and strafe right. This
 host mapping uses the retail rectangle but does not claim to reproduce the
 unresolved callback's cell semantics. Clicks elsewhere and hand-pointer clicks
-remain inert. A/B/Y/C actions remain inert until their retail consumers are
-traced. Tab cycles to the next party leader and Shift+Tab cycles to the
+remain inert. Firestaff keeps A/B/C actions inert until their retail consumers
+are traced. Retail Y is verified to open the Magic window, but Firestaff's Y
+route remains inert until the window renderer and rune-input sequence are
+joined to authentic Nexus data. Tab cycles to the next party leader and Shift+Tab cycles to the
 previous party leader in Firestaff's desktop controls. The reverse direction
 is a host keyboard convenience; it does not claim that the retail L/R events
 or an identified guest RAM field have been reproduced. Item use, inventory,
