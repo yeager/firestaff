@@ -213,6 +213,15 @@ def verify(
         raise ValueError(
             f"{variant} count mismatch: payload={source_count}, runtime={champion_count}"
         )
+    party_leader_index = struct.unpack_from(">b", payload, 0x61)[0]
+    runtime_party_leader_index = struct.unpack_from(">i", hi, WORLD_CONTEXT_OFFSET + 0x0C)[0]
+    if not 0 <= party_leader_index < champion_count:
+        raise ValueError(f"{variant} party leader index is outside the roster")
+    if runtime_party_leader_index != party_leader_index:
+        raise ValueError(
+            f"{variant} party leader index mismatch: payload={party_leader_index}, "
+            f"runtime={runtime_party_leader_index}"
+        )
     if SOURCE_RECORD_OFFSET + champion_count * source_stride > len(payload):
         raise ValueError("source champion records exceed the captured payload")
     if CHAMPION_ARRAY_OFFSET + champion_count * target_stride > len(hi):
@@ -385,6 +394,8 @@ def verify(
         f"authentic_payload_variant={variant}",
         "payload_source_offsets=0x10,0xcc",
         f"champion_count={champion_count}",
+        f"party_leader_index={party_leader_index}",
+        f"party_leader_index_projection=payload+0x61->runtime+0x{WORLD_CONTEXT_OFFSET + 0x0C:05x}",
         f"source_champion_stride=0x{source_stride:x}",
         f"target_champion_stride=0x{target_stride:x}",
         f"matched_projection_checks={len(matches)}",

@@ -31,13 +31,14 @@ typedef struct {
     uint32_t payload_bytes;
 } Nexus_V1_SaturnBkrReceipt;
 
-/* Bounded structural receipt for the retail DMNEXUS__01 payload. Champion
- * records stay opaque: this only reports the source table exposed by the
- * retail Continue loader and does not assign field meanings. */
+/* Bounded receipt for the retail DMNEXUS__01 payload. Champion records stay
+ * opaque. The party leader index is supported by the retail decompilation
+ * and matching authentic payload/WorkRAM captures. */
 typedef struct {
     int valid;
     uint32_t payload_bytes;
     uint32_t champion_count;
+    uint32_t party_leader_index;
     uint32_t champion_records_offset;
     uint32_t champion_record_stride;
     uint32_t champion_records_bytes;

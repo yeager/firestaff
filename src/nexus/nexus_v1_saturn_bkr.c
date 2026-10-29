@@ -244,6 +244,7 @@ int nexus_v1_saturn_bkr_nexus_payload_probe(
 {
     Nexus_V1_SaturnBkrNexusPayloadReceipt receipt;
     uint32_t champion_count;
+    int32_t party_leader_index;
     uint32_t records_offset = 0x0CCU + 0x50U;
     uint32_t records_stride = 0x0E0U;
     uint32_t declared_span;
@@ -260,8 +261,11 @@ int nexus_v1_saturn_bkr_nexus_payload_probe(
     }
 
     champion_count = payload[0x62U];
+    party_leader_index = (int8_t)payload[0x61U];
     declared_span = read_be16(payload + 0x0AU);
     if (champion_count == 0U || champion_count > 4U ||
+        party_leader_index < 0 ||
+        (uint32_t)party_leader_index >= champion_count ||
         declared_span != 0x274U + champion_count * records_stride) {
         return 0;
     }
@@ -276,6 +280,7 @@ int nexus_v1_saturn_bkr_nexus_payload_probe(
     receipt.valid = 1;
     receipt.payload_bytes = (uint32_t)payload_size;
     receipt.champion_count = champion_count;
+    receipt.party_leader_index = (uint32_t)party_leader_index;
     receipt.champion_records_offset = records_offset;
     receipt.champion_record_stride = records_stride;
     receipt.champion_records_bytes = records_bytes;

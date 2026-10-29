@@ -1,5 +1,18 @@
 # Firestaff DONE — Nexus
 
+## 2026-10-29 — Bind the authentic BKR party leader index
+
+- pcrecomp/Ghidra decompilation of `FUN_0602eb4c` shows payload byte `+0x61`
+  sign-extended into runtime context `+0x0c`. All four authentic BKR payloads
+  match same-run Ymir WorkRAM at `0x0608009c`, including the leader-index-3
+  save (`0, 0, 0, 3` across the two-, three-, and four-champion samples).
+- The bounded BKR probe now returns this index and rejects negative or
+  out-of-roster values. The real-data test uses all four hash-pinned saves and
+  derives malformed cases from authentic payload bytes; it introduces no
+  synthetic save fixture.
+- This identifies one context field only. Complete payload mapping, engine
+  state application, and playable Continue remain open.
+
 ## 2026-10-29 — Join authentic BKR name prefix to Japanese PLRD roster
 
 - Extracted the Japanese `RLOWFIX.BIN` from the authentic Track 1 image in

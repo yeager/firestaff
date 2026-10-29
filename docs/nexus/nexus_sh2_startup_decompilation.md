@@ -167,13 +167,25 @@ explicit in the analyzer so each check can be reviewed against the
 decompilation and same-run WorkRAM dumps. These offsets remain mechanically
 verified fields; they do not supply semantic names.
 
-Firestaff's Saturn BKR parser now has a bounded `DMNEXUS__01` payload probe.
-It checks the two source-relative offsets (`0x10` and `0xcc`), the retail
-champion count at payload `+0x62`, the champion table at `0x11c`, its `0xe0`
-source stride, and the captured count-dependent payload span. The real-data
-test applies this probe to all four hash-pinned retail-written images. It
-returns the record bounds while keeping every champion field opaque; it does
-not yet load a champion into the Firestaff engine.
+One context field has a semantic cross-check beyond the champion table. The
+decompilation assigns payload byte `+0x61` (the signed byte at source context
+`+1`) to the runtime context's signed 32-bit field at `+0x0c`. The roster count
+is captured at runtime context offset `0x80090`, placing that field at
+`0x0608009c`. All four authentic captures match this projection exactly:
+source/runtime indices are `0/0`, `0/0`, `0/0`, and `3/3` for roster sizes
+2, 3, 4, and 4. The capture manifest identifies the last sample as
+leader-index-3. The BKR probe now validates this party leader index as a roster
+member. No other context or champion field semantics are inferred from this
+match.
+
+Firestaff's Saturn BKR parser has a bounded `DMNEXUS__01` payload probe. It
+checks the two source-relative offsets (`0x10` and `0xcc`), the retail champion
+count at payload `+0x62`, the party leader index at `+0x61`, the champion table
+at `0x11c`, its `0xe0` source stride, and the captured count-dependent payload
+span. The real-data test applies this probe to all four hash-pinned
+retail-written images. It returns the record bounds and leader index while
+keeping all other champion fields opaque; it does not yet load a champion into
+the Firestaff engine.
 
 Several mechanically copied fields change after the initial loader writes.
 The source `+0x40` to runtime `+0x10` field is 18 in the save and 19 in all

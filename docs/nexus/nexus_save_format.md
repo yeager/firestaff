@@ -95,11 +95,14 @@ and four-champion captures now match 83 decompilation-directed operations
 per record, including repeated tables and byte/word conversions. Several
 fields are updated after loading; the leader-3 trace joins 13 of 16
 final-value differences to the retail updater, with three record-3 fields
-outside its address window. The bounded BKR probe still preserves champion
-records as opaque bytes and does not assign field meanings or identify the
-count-correlated boundary field. Original Saturn save import remains gated
-until the complete semantic payload mapping and source-owned consumer are
-identified and exercised against the retail game.
+outside its address window. The party leader index is now independently
+identified at payload `+0x61`: `FUN_0602eb4c` sign-extends this byte into the
+runtime context at `+0x0c`, and all four authentic payloads match same-run
+WorkRAM at `0x0608009c` (indices `0, 0, 0, 3` for rosters of `2, 3, 4, 4`).
+The bounded BKR probe validates that this index is inside the roster. Other
+champion and world fields remain opaque. Original Saturn save import remains
+gated until the complete semantic payload mapping and source-owned consumer
+are identified and exercised against the retail game.
 
 ### Name-byte comparison against the Japanese roster
 
