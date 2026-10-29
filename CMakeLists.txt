@@ -4210,6 +4210,17 @@ if(BUILD_TESTING)
     set(FIRESTAFF_DM2_DOS_FR_ARCHIVE
         "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_FR.zip"
         CACHE FILEPATH "Authentic French DM2 DOS archive used by its startup test")
+    # A cached absolute path can outlive a data-directory migration. Preserve
+    # an existing explicit override, but fall back to the canonical originals
+    # root when that cached location has gone stale and the archive is present
+    # under .firestaff/data/dm2.
+    if(NOT EXISTS "${FIRESTAFF_DM2_DOS_FR_ARCHIVE}" AND
+       EXISTS "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_FR.zip")
+        set(FIRESTAFF_DM2_DOS_FR_ARCHIVE
+            "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_FR.zip")
+        message(STATUS
+            "Using canonical DM2 French DOS archive: ${FIRESTAFF_DM2_DOS_FR_ARCHIVE}")
+    endif()
     set_tests_properties(dm2_v1_dos_fr_native_cli_boot PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm2;dos;french;startup;cli;real-media;native;skip-safe"
