@@ -143,8 +143,11 @@ cd_ram_write_patch=$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_ram_target_w
 if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT' "$cd_ram_write_patch" ||
    ! grep -Fq 'count >= trace_limit' "$cd_ram_write_patch" ||
    grep -Fq 'count >= 8192' "$cd_ram_write_patch" ||
+   ! grep -Fq 'poll_first = 0x68 * 8192 + 0x04d2' "$cd_ram_write_patch" ||
+   ! grep -Fq 'poll_last = 0x68 * 8192 + 0x04e6' "$cd_ram_write_patch" ||
+   ! grep -Fq '(!stage2_target && !poll_target && !existing_target)' "$cd_ram_write_patch" ||
    ! grep -Fq 'cd_ram_target_write_trace_limit=%s' "$script"; then
-    printf '%s\n' 'FAIL: CD RAM target-write cap must be bounded, configurable and receipted' >&2
+    printf '%s\n' 'FAIL: bounded CD RAM target-write trace must include the source-locked poll-code window' >&2
     exit 1
 fi
 vram_commit_limit_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \

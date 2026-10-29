@@ -577,3 +577,23 @@ Track 02 sequences but does not identify which was loaded. Then follow the
 poll's caller to an observable party-position or screen change before
 assigning movement semantics or treating these controller polls as completed
 gameplay actions.
+
+## Cold-start write-trace follow-up (2026-10-29)
+
+A fresh instrumented cold JP Rev. 1 run extended the bounded target-write hook
+to physical bank `$68` offsets `$04D2–$04E6`. The capture recorded 483,328
+source-bound Track 02 data-port reads spanning LBAs 3590–5259. None came from
+the seven duplicate candidate LBAs 3849, 3977, 4105, 4233, 4361, 4489, or
+4617; this run therefore does not join the runtime bank to any static source
+candidate. The hook did record all 21 expected byte values at the 21 poll
+window offsets, in sequence, with MPR2 `$68` and writer PC `$EA9C`. That is
+same-run target-write evidence, but the source of those writes is still
+unknown.
+
+The same cold run logged 64 runtime `$44D2` code windows, 60 at physical PC
+`$0D04D2`. Eleven scripted inputs were consumed at System Card PC `$E4C5`,
+but no game poll was witnessed during their holds. The capture had no CD IRQ,
+authenticated CD-to-RAM receipt, `$E009` dispatch, or gameplay transition.
+This result neither links the scripted input to the bank-`$68` writes nor
+establishes a visible gameplay effect. Continue with a targeted trace of the
+`$EA9C` writer's source and an input replay that overlaps a witnessed game poll.

@@ -9357,3 +9357,21 @@ native rendering, or Theron parity. The private evidence bundle is at
   Both runs missed the final scripted-input poll and recorded no gameplay
   transition. The read PCs remain candidates; no ownership, gameplay use, or
   Theron parity is claimed.
+## 2026-10-29 — extend bounded runtime poll-code write tracing
+
+- Extended the capture-only PCE Fast CD RAM writer trace to include physical
+  bank `$68` offsets `$04D2–$04E6`, the 21-byte runtime poll sequence. The
+  isolated patch chain applied cleanly and the instrumented PCE Fast build
+  completed on TRV2 with `-j1`. Focused decoder, capture-verifier, and script
+  checks passed three consecutive loops; shell syntax and `git diff --check`
+  passed.
+- A cold authentic JP Rev. 1 capture recorded 21 ordered writes of the
+  expected poll-code bytes to bank `$68`, all at writer PC `$EA9C`. It also
+  recorded 60 exact physical-PC `$0D04D2` runtime windows among 64 hits.
+  The trace contained 483,328 source-bound Track 02 reads, but none came from
+  the seven known duplicate static candidates. The runtime write's source
+  therefore remains unproven. Scripted input consumption was observed only
+  at System Card PC `$E4C5`; no in-hold game-poll witness, CD IRQ,
+  authenticated CD-to-RAM receipt, `$E009` dispatch, or gameplay transition
+  was observed. This completes a diagnostic instrumentation task only; it
+  establishes no player-visible behavior or Theron parity.

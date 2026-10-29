@@ -9112,3 +9112,20 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   writes to an authentic game-state or rendering effect. The follow-up used an
   earlier aggregate-cap binary without sample-class fields; its stream counts
   were re-derived from the physical address fields.
+- A cold authentic JP Rev. 1 capture on 2026-10-29 extended the bounded CD
+  RAM write trace to include runtime poll code `$0D04D2–$0D04E6`. The patch
+  applied to the isolated Mednafen source, the instrumented PCE Fast build
+  completed on TRV2, and the focused verifier/script checks passed three
+  loops. The 300-second capture verified 483,328 source-bound Track 02 data
+  reads and 64 runtime `$44D2` windows (60 with exact physical PC `$0D04D2`).
+  It recorded all 21 expected poll-code bytes written in order to bank `$68`
+  by PC `$EA9C`; this proves a runtime RAM write, not its source. None of the
+  seven identical static Track 02 candidates was read during the capture, so
+  the source-LBA-to-bank mapping remains unresolved. Eleven scripted inputs
+  were consumed at System Card PC `$E4C5`, without a poll witness during their
+  holds. The run recorded no CD IRQ, authenticated CD-to-RAM receipt, `$E009`
+  dispatch, or gameplay transition (`transition=missing`). Do not claim that
+  these input events caused the poll-code writes or that gameplay parity is
+  established. Next identify the authentic source of the `$EA9C` writes and
+  arrange a replay whose input masks overlap a game poll before tracing a
+  visible state/render effect.
