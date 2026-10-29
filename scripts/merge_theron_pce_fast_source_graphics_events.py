@@ -14,20 +14,29 @@ from typing import Iterator
 
 EVENT_FIELD = re.compile(r"(?:^| )event_sequence=([0-9]+)(?: |$)")
 TRACE_HEADERS = {
-    "cd_data_port_read": ((
-        "source=mednafen-pce-fast-cd-data-port-read",
-        "source=mednafen-pce-fast-cd-data-port-read-with-reader-mpr-context",
-    ),),
+    "cd_data_port_read": (
+        ("source=mednafen-pce-fast-cd-data-port-read",),
+        ("source=mednafen-pce-fast-cd-data-port-read-with-reader-mpr-context",),
+    ),
     "cd_ram_target_write": (("source=mednafen-pce-fast-cd-ram-target-write",),),
     "vram_commit": (
-        ("FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3",),
-        ("source=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window",),
-        ("scope=cpu-port-vwr-commits-only;dma-writes-excluded",),
+        (
+            "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3",
+            "source=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window",
+            "scope=cpu-port-vwr-commits-only;dma-writes-excluded",
+        ),
+        (
+            "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V4",
+            "source=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window",
+            "scope=cpu-port-vwr-commits-only;dma-writes-excluded;prefix=omitted-until-first-source-valid-track02-read",
+        ),
     ),
     "vce_write": (
-        ("FIRESTAFF_THERON_PCE_FAST_VCE_WRITE_TRACE_V1",),
-        ("source=mednafen-1.32.1-pce-fast-vdc-vce-write",),
-        ("scope=color-table-data-writes-only;address-port-writes-excluded",),
+        (
+            "FIRESTAFF_THERON_PCE_FAST_VCE_WRITE_TRACE_V1",
+            "source=mednafen-1.32.1-pce-fast-vdc-vce-write",
+            "scope=color-table-data-writes-only;address-port-writes-excluded",
+        ),
     ),
 }
 
@@ -38,15 +47,21 @@ class TraceError(ValueError):
 
 def records(path: Path, event_type: str) -> Iterator[tuple[int, str]]:
     previous = -1
-    headers = TRACE_HEADERS[event_type]
+    header_variants = TRACE_HEADERS[event_type]
+    header_count = len(header_variants[0])
+    candidates = list(header_variants)
     header_index = 0
     with path.open("r", encoding="ascii") as stream:
         for line_number, raw in enumerate(stream, 1):
             line = raw.rstrip("\n")
             if not line:
                 continue
-            if header_index < len(headers):
-                if line not in headers[header_index]:
+            if header_index < header_count:
+                candidates = [
+                    variant for variant in candidates
+                    if variant[header_index] == line
+                ]
+                if not candidates:
                     raise TraceError(f"{path}:{line_number}: unexpected trace header")
                 header_index += 1
                 continue
@@ -60,7 +75,7 @@ def records(path: Path, event_type: str) -> Iterator[tuple[int, str]]:
                 raise TraceError(f"{path}:{line_number}: event_sequence is not strictly increasing")
             previous = sequence
             yield sequence, line
-    if header_index != len(headers):
+    if header_index != header_count:
         raise TraceError(f"{path}: missing trace header")
 
 
@@ -132,6 +147,10 @@ def main() -> int:
             stream_counts[event_type] >= limit
             for event_type, limit in limits.items()
         )
+        filtered_prefix_streams = []
+        with inputs[2][1].open("r", encoding="ascii") as vram_trace:
+            if vram_trace.readline().rstrip("\n") == "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V4":
+                filtered_prefix_streams.append("vram_commit")
         with args.output.open("x", encoding="ascii", newline="\n") as output:
             created_output = True
             output.write(json.dumps({
@@ -139,6 +158,7 @@ def main() -> int:
                 "ordering": "shared_event_sequence",
                 "interpretation": "temporal_order_only_not_causal_dataflow",
                 "streams": [event_type for event_type, _ in inputs],
+                "filtered_prefix_streams": filtered_prefix_streams,
                 "completeness": (
                     "possible_truncation_at_event_limit" if limit_reached else
                     "below_configured_event_limits" if limits else "not_checked"

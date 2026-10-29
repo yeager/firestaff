@@ -134,6 +134,24 @@
   loops. The mednafen patch-application portion skipped because its source
   tree was not supplied; no build or original-media capture was run.
 
+## 2026-10-29 — gate VWR capture at the first authentic Track 02 read
+
+- The opt-in PCE Fast VWR trace mode now omits VRAM-commit records until the
+  CD trace observes the first source-valid read inside Track 02. Its V4 header
+  records the filtered-prefix scope, and the merged chronology identifies the
+  VWR stream in `filtered_prefix_streams`. Default captures retain the
+  unfiltered V3 behavior.
+- The patch chain applied and built on TRV2. A cold capture with authentic
+  Japanese Rev. 1 media opened the gate at source LBA 3590 (shared event
+  24,768,120); its first VWR record has sequence 0 at event 24,779,401. The
+  output metadata records the filtered prefix. This authenticates the gate's
+  trace boundary, not graphics causality or world-cell meaning.
+- The VWR stream later reached its 1,048,576-record cap, so the merged file is
+  marked `possible_truncation_at_event_limit`. The capture verifier also
+  timed out before observing two of eleven scheduled controller masks. No
+  dungeon gameplay was confirmed. Continue with bounded input/capture work;
+  do not treat this as native Theron parity.
+
 ## 2026-10-29 — authenticate stage-message advancement; gameplay still not reached
 
 - A cold Mednafen reference run used authentic Japanese Rev. 1 Track 02 and

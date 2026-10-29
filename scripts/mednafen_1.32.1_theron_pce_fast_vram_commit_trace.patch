@@ -9,7 +9,7 @@
  #include "huc.h"
  #include "pcecd.h"
  #include <mednafen/cputest/cputest.h>
-@@ -54,0 +57,161 @@
+@@ -54,0 +57,172 @@
 +/* Optional PCE Fast capture-only trace.  The hook observes committed CPU
 + * VWR words in Mednafen 1.32.1 src/pce_fast/vdc.cpp::VDC_Write(), after
 + * VRAM[MAWR] is assigned and before MAWR advances (upstream line 572).  It
@@ -19,7 +19,9 @@
 +static unsigned TheronPCEFastVRAMCommitLimit = 65536;
 +static bool TheronPCEFastVRAMCommitInitialized;
 +static bool TheronPCEFastVRAMCommitDisabled;
++static bool TheronPCEFastVRAMCommitStartAtTrack02;
 +extern uint32 TheronTraceCDSharedEventSequence;
++extern bool TheronTracePCEFastVWRTraceGateOpen;
 +
 +/* HuC6280 opcode fetches use FastPageR in mednafen-1.32.1
 + * src/pce_fast/huc6280.cpp::RdOp() (line 172), populated by SET_MPR()
@@ -46,7 +48,9 @@
 + {
 +  const char *path = getenv("FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE");
 +  const char *limit_text = getenv("FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT");
++  const char *start_mode = getenv("FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_START_AT_TRACK02");
 +  TheronPCEFastVRAMCommitInitialized = true;
++  TheronPCEFastVRAMCommitStartAtTrack02 = start_mode && start_mode[0] == '1' && !start_mode[1];
 +  if(limit_text && *limit_text)
 +  {
 +   char *end = NULL;
@@ -65,7 +69,11 @@
 +   TheronPCEFastVRAMCommitDisabled = true;
 +   return;
 +  }
-+  fputs("FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3\n"
++  fputs(TheronPCEFastVRAMCommitStartAtTrack02 ?
++        "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V4\n"
++        "source=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window\n"
++        "scope=cpu-port-vwr-commits-only;dma-writes-excluded;prefix=omitted-until-first-source-valid-track02-read\n" :
++        "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3\n"
 +        "source=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window\n"
 +        "scope=cpu-port-vwr-commits-only;dma-writes-excluded\n",
 +        TheronPCEFastVRAMCommitTrace);
@@ -74,6 +82,9 @@
 + const unsigned mpr_slot = logical_pc >> 13;
 + const unsigned mpr_bank = HuCPU.MPR[mpr_slot];
 + const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
++ if(TheronPCEFastVRAMCommitStartAtTrack02 &&
++    !TheronTracePCEFastVWRTraceGateOpen)
++  return;
 + uint8 code_bytes[8];
 + uint8 code_mpr_banks[8];
 + TheronPCEFastReadCodeWindow(logical_pc, code_bytes, code_mpr_banks);

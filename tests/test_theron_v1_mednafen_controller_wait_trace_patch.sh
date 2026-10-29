@@ -527,6 +527,9 @@ if ! grep -Fq 'theron_pce_fast_cd_ram_target_write_trace.patch' "$build_script" 
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_TRACE' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'uint8 ret = PCECD_Drive_GetDB();' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'source_lba >= track02_start_lba && source_lba < track02_end_lba' "$cd_ram_target_write_patch_file" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_START_AT_TRACK02' "$cd_ram_target_write_patch_file" ||
+   ! grep -Fq 'TheronTracePCEFastVWRTraceGateOpen = true' "$cd_ram_target_write_patch_file" ||
+   ! grep -Fq 'bool TheronTracePCEFastVWRTraceGateOpen = false' "$cd_shared_event_patch_file" ||
    ! grep -Fq 'static void TheronTraceCDDataPortRead(uint16 cpu_pc, uint32 source_lba' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'PCECD_Drive_GetLastRawSectorDataOrigin(&source_lba, &user_data_offset, &raw_sector_offset)' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'PCECD_Drive_GetTrack02StartLBA()' "$cd_ram_target_write_patch_file" ||

@@ -1256,6 +1256,8 @@ if ! grep -Fq 'require_instrumented_mednafen_binary()' "$script" ||
     exit 1
 fi
 if ! grep -Fq 'capture_pce_fast_vram_commit_trace" == 1' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_START_AT_TRACK02' "$script" ||
+   ! grep -Fq 'prefix=omitted-until-first-source-valid-track02-read' "$script" ||
    ! grep -Fq "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE' \"\$mednafen_bin\"" "$script" ||
    ! grep -Fq 'MEDNAFEN_BIN lacks the required PCE Fast VRAM commit instrumentation' "$script"; then
     printf '%s\n' 'FAIL: PCE Fast VRAM capture must reject a binary missing its commit-trace producer before launch' >&2

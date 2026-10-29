@@ -10,6 +10,8 @@ event_merger="$repo/scripts/merge_theron_pce_fast_source_graphics_events.py"
 cmake_file="$repo/CMakeLists.txt"
 
 if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3' "$patch_file" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V4' "$patch_file" ||
+   ! grep -Fq 'TheronTracePCEFastVWRTraceGateOpen' "$patch_file" ||
    ! grep -Fq 'source=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window' "$patch_file" ||
    ! grep -Fq 'scope=cpu-port-vwr-commits-only;dma-writes-excluded' "$patch_file" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VCE_WRITE_TRACE_V1' "$patch_file" ||
@@ -31,6 +33,8 @@ if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3' "$patch_file" ||
    ! grep -Fq 'TheronTracePCEFastVRAMCommit(chip, vdc->display_counter, vdc->MAWR, (V << 8) | vdc->write_latch);' "$patch_file" ||
    ! grep -Fq 'THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE' "$capture_script" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE="$pce_fast_vram_commit_trace_env"' "$capture_script" ||
+   ! grep -Fq 'THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_START_AT_TRACK02' "$capture_script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_START_AT_TRACK02="$pce_fast_vram_commit_start_at_track02"' "$capture_script" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VCE_WRITE_TRACE="$pce_fast_vce_write_trace_env"' "$capture_script" ||
    ! grep -Fq 'pce_fast_vce_write_trace_status=%s' "$capture_script" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3' "$capture_script" ||

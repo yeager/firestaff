@@ -126,6 +126,7 @@ movement_data_read_sample_limit=${THERON_CAPTURE_MOVEMENT_DATA_READ_SAMPLE_LIMIT
 vdc_io_trace_limit=${THERON_CAPTURE_VDC_IO_TRACE_LIMIT:-65536}
 capture_pce_fast_vram_commit_trace=${THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE:-0}
 pce_fast_vram_commit_trace_limit=${THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT:-65536}
+pce_fast_vram_commit_start_at_track02=${THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_START_AT_TRACK02:-0}
 pce_fast_vce_write_trace_limit=${THERON_CAPTURE_PCE_FAST_VCE_WRITE_TRACE_LIMIT:-65536}
 pce_fast_44d2_follow_limit=${THERON_CAPTURE_PCE_FAST_44D2_FOLLOW_LIMIT:-128}
 input_trace_limit_default=65536
@@ -238,6 +239,16 @@ fi
 if [[ "$capture_pce_fast_vram_commit_trace" != 0 &&
       "$capture_pce_fast_vram_commit_trace" != 1 ]]; then
     printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE must be 0 or 1' >&2
+    exit 1
+fi
+if [[ "$pce_fast_vram_commit_start_at_track02" != 0 &&
+      "$pce_fast_vram_commit_start_at_track02" != 1 ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_START_AT_TRACK02 must be 0 or 1' >&2
+    exit 1
+fi
+if [[ "$pce_fast_vram_commit_start_at_track02" == 1 &&
+      "$capture_pce_fast_vram_commit_trace" != 1 ]]; then
+    printf '%s\n' 'FAIL: starting VWR trace at Track 02 requires VRAM commit tracing' >&2
     exit 1
 fi
 if [[ "$capture_pointer_c1df_trace" != 0 &&
@@ -1598,6 +1609,7 @@ launch=(
     FIRESTAFF_THERON_PCE_FAST_VDC_STATE_SNAPSHOT="$pce_fast_vdc_state_snapshot" \
     FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE="$pce_fast_vram_commit_trace_env" \
     FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT="$pce_fast_vram_commit_trace_limit" \
+    FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_START_AT_TRACK02="$pce_fast_vram_commit_start_at_track02" \
     FIRESTAFF_THERON_PCE_FAST_VCE_WRITE_TRACE="$pce_fast_vce_write_trace_env" \
     FIRESTAFF_THERON_PCE_FAST_VCE_WRITE_TRACE_LIMIT="$pce_fast_vce_write_trace_limit" \
     FIRESTAFF_THERON_PCE_FAST_A1B7_BMT_WRITE_TRACE="$pce_fast_a1b7_bmt_write_trace" \
@@ -2047,7 +2059,8 @@ else
     pce_fast_vram_commit_trace_sha256=unavailable
     if [[ "$capture_pce_fast_vram_commit_trace" == 1 ]]; then
         if [[ ! -s "$pce_fast_vram_commit_trace" ]] ||
-           ! awk -v limit="$pce_fast_vram_commit_trace_limit" '
+           ! awk -v limit="$pce_fast_vram_commit_trace_limit" \
+               -v filtered_prefix="$pce_fast_vram_commit_start_at_track02" '
                function is_hex(value, length_expected) {
                    return length(value) == length_expected && value !~ /[^0-9a-f]/
                }
@@ -2059,9 +2072,17 @@ else
                    }
                    return result
                }
-               NR == 1 { if ($0 != "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3") exit 1; next }
+               NR == 1 {
+                   expected_version = filtered_prefix == 1 ? "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V4" : "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3"
+                   if ($0 != expected_version) exit 1
+                   next
+               }
                NR == 2 { if ($0 != "source=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window") exit 1; next }
-               NR == 3 { if ($0 != "scope=cpu-port-vwr-commits-only;dma-writes-excluded") exit 1; next }
+               NR == 3 {
+                   expected_scope = filtered_prefix == 1 ? "scope=cpu-port-vwr-commits-only;dma-writes-excluded;prefix=omitted-until-first-source-valid-track02-read" : "scope=cpu-port-vwr-commits-only;dma-writes-excluded"
+                   if ($0 != expected_scope) exit 1
+                   next
+               }
                /^vram_commit / {
                    if (NF != 15 || $1 != "vram_commit") exit 1
                    split($2, sequence_field, "=")
@@ -2527,6 +2548,7 @@ fi
         printf 'pce_fast_vdc_sat_sha256=%s\n' "$pce_fast_sat_sha256"
         printf 'pce_fast_vdc_state_sha256=%s\n' "$pce_fast_vdc_state_sha256"
         printf 'pce_fast_vram_commit_trace_requested=%s\n' "$capture_pce_fast_vram_commit_trace"
+        printf 'pce_fast_vram_commit_start_at_track02=%s\n' "$pce_fast_vram_commit_start_at_track02"
         printf 'pce_fast_vram_commit_trace_limit=%s\n' "$pce_fast_vram_commit_trace_limit"
         printf 'pce_fast_vram_commit_trace_count=%s\n' "$pce_fast_vram_commit_trace_count"
         printf 'pce_fast_vram_commit_trace_sha256=%s\n' "$pce_fast_vram_commit_trace_sha256"

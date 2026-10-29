@@ -30,6 +30,7 @@ def run_case(
     vram_limit: Optional[int] = None,
     vce_limit: Optional[int] = None,
     expected_completeness: str = "not_checked",
+    expected_filtered_prefix_streams: Optional[list[str]] = None,
 ) -> None:
     case = root / name
     case.mkdir()
@@ -77,6 +78,10 @@ def run_case(
             raise AssertionError(f"wrong merged chronology metadata: {rows[0]!r}")
         if rows[0].get("completeness") != expected_completeness:
             raise AssertionError(f"wrong merged completeness metadata: {rows[0]!r}")
+        if rows[0].get("filtered_prefix_streams") != (
+            expected_filtered_prefix_streams or []
+        ):
+            raise AssertionError(f"wrong filtered-prefix metadata: {rows[0]!r}")
         expected_bounded_streams = {}
         if vram_limit is not None:
             count = sum(line.startswith("vram_commit ") for line in trace_data[2].splitlines())
@@ -138,6 +143,15 @@ run_case(
     "source=mednafen-pce-fast-cd-ram-target-write\ncd_ram_target_write sequence=0 event_sequence=5\n",
     "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3\nsource=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window\nscope=cpu-port-vwr-commits-only;dma-writes-excluded\nvram_commit sequence=0 event_sequence=9\n",
     0,
+)
+run_case(
+    "track02-triggered-vram-prefix",
+    "source=mednafen-pce-fast-cd-data-port-read-with-reader-mpr-context\ncd_data_port_read sequence=0 event_sequence=12\n",
+    "source=mednafen-pce-fast-cd-ram-target-write\ncd_ram_target_write sequence=0 event_sequence=15\n",
+    "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V4\nsource=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window\nscope=cpu-port-vwr-commits-only;dma-writes-excluded;prefix=omitted-until-first-source-valid-track02-read\nvram_commit sequence=0 event_sequence=19\n",
+    0,
+    expected_sequences=[12, 15, 19],
+    expected_filtered_prefix_streams=["vram_commit"],
 )
 run_case(
     "below-event-limits",
