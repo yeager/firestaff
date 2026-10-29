@@ -9005,16 +9005,54 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   the authentic decoder stream with the expected output digest. It now rejects
   legacy consumer traces without the shared-sequence header instead of treating
   an unobserved destination as an empty read result.
-- An opt-in range is being added to the PCE Fast consumer probe:
-  `FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE=0d0000-0d13c7`. It must
-  remain disabled by default, reject malformed/out-of-bounds ranges, and keep
-  the existing 65,536-event cap. The patch applies after the existing PCE Fast
-  consumer instrumentation in an isolated TRV2 source copy. Compilation and
-  an authentic capture remain unverified.
-- Next: validate the shared-sequence patch application and compilation on TRV2,
-  then make a fresh authentic cold US capture with range
-  `0d0000-0d13c7`. Authenticate the reader's executing bytes and map before
-  identifying code ownership, then establish a coherent consumer and a later
-  gameplay/render transition. Keep the adjacent `$F425` ADPCM-buffer copy
-  separate unless its own source and game consumer are independently
-  established.
+- The opt-in PCE Fast range
+  `FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE=0d0000-0d13c7` was applied
+  and compiled in a full isolated TRV2 build with `-j1`. It remains disabled
+  by default, validates ordered hexadecimal endpoints within the 2 MiB physical
+  bus, and retains the existing 65,536-event cap.
+- A fresh cold capture used the authentic USA Track 02 (MD5
+  `f23601102138f87c33025877767ebf76`), headered System Card 3.0 and the
+  authenticated USA Backup RAM. The capture script returned `BLOCKED` because
+  the final scripted Button I event at frame 13,275 had no controller poll
+  during its 15-frame hold; its transition receipt correctly says
+  `transition=missing`. The raw decoder and consumer traces were preserved and
+  can still establish the bounded byte-level observations below.
+- The capture contains exactly one `$23AD` return and 5,064 ordered writes to
+  physical `$0D0000–$0D13C7`, with SHA-256
+  `9adf13522e818ee49de16ac1020a7697c3416877e6bc6baa918840d7e963f8ee`. The
+  shared-sequence join found 29,618 reads after the final write, including
+  6,111 byte-equal reads across 3,130 unique output addresses.
+- The recorded reader at physical PC `$1042AB` executed bytes
+  `B1 00 9D E0 47 C8 E8 B1`; these match authentic Track 02 LBA 4,241, user
+  offset 683, read in the same capture. The RAM-resident reader at `$1F1C3E`
+  executed bytes `B2 2E 85 0E E6 2E D0 02 E6 2F 86 0F A5 12 D0 02`; they match
+  both the final PCE Fast RAM snapshot at offset `$1C3E` and authentic Track 02
+  LBA 4,230, user offset 1,086, read in that capture. These source-byte matches
+  support game-code ownership for the observed readers; the precise loading
+  path and the semantic role of the decoded data are not yet established.
+- Disassembly of the authentic runtime snapshot around `$1F1C3E` shows a byte
+  refill helper: it loads through `($2E)`, stores to `$0E`, advances the
+  `$2E/$2F` pointer, stores the refill count in `$0F`, and updates `$12/$13`
+  before returning to the adjacent `$1F1C34` loop. That loop rotates `$0E`,
+  `$10`, and `$11` while extracting bits. The observed `$0D` reads therefore
+  enter a bit-reading path; no subsequent decoded-output destination or
+  gameplay structure has yet been traced. The bounded follow-up should capture
+  writes from this routine and its caller, with physical addresses and the
+  active MPR mapping, before assigning the data a game meaning.
+- Next: repair the capture plan so every scripted event is followed by a
+  controller poll while its hold is active. Then trace the observed reader
+  routines and destination effects through a coherent gameplay/render
+  transition. Keep the adjacent `$F425` ADPCM-buffer copy separate unless its
+  own source and consumer are independently established.
+
+- A follow-up cold US run on 2026-10-29 shortened the replay to ten events.
+  It still returned `BLOCKED`: the final Button I event had no controller-port
+  poll exposing its mask during its 15-frame hold (`events=10/10`,
+  `input_reads=78,388`), and the transition receipt says `transition=missing`.
+  Its authenticated media, System Card, and BRAM hashes match the preceding
+  run; there was no autoload state. The raw `$23AD` trace contained 1,121,433
+  lines and the bounded consumer trace 65,537 lines. Those raw r4 traces were
+  later removed during TRV2 disk cleanup, so the candidate-read verifier cannot
+  be rerun on this capture. This repeated poll gap means the replay still needs
+  an input plan that demonstrably exposes every held mask before proceeding to
+  semantic tracing.
