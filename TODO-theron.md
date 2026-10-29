@@ -161,15 +161,18 @@
 
 ## 2026-10-29 — source graphics chronology marks bounded-stream limits
 
-- The source-graphics event merger now receives the configured VWR and VCE
-  limits and records per-stream counts. If a stream reaches its limit, its
-  merged chronology says `possible_truncation_at_event_limit`, and the capture
-  receipt reports `merged_limit_reached`; it no longer looks unqualifiedly
+- The source-graphics event merger now receives configured CD data-read, CD
+  RAM-write, VWR, and VCE limits and records per-stream counts. Reaching any
+  configured limit marks chronology as
+  `possible_truncation_at_event_limit`; the capture receipt reports
+  `merged_limit_reached`, so it no longer looks unqualifiedly
   complete. A stream below its limit is marked accordingly, while calls that
   supply no bounds say `not_checked`.
-- Focused merger cases and the static patch contract passed three consecutive
-  loops. The mednafen patch-application portion skipped because its source
-  tree was not supplied; no build or original-media capture was run.
+- The focused merger test passed with Python 3.9 and 3.13, including exact-cap
+  metadata and clean rejection of non-ASCII/oversized sequence input. The
+  live-capture script regression and `bash -n` passed as well. The Mednafen
+  patch-application portion was not rerun, and no original-media capture was
+  produced for this follow-up.
 
 ## 2026-10-29 — gate VWR capture at the first authentic Track 02 read
 

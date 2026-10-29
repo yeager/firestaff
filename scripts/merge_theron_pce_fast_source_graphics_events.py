@@ -105,7 +105,9 @@ def merge(inputs: list[tuple[str, Path]]) -> Iterator[dict[str, object]]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cd-data-port", required=True, type=Path)
+    parser.add_argument("--cd-data-port-limit", type=int)
     parser.add_argument("--cd-ram-target", required=True, type=Path)
+    parser.add_argument("--cd-ram-target-limit", type=int)
     parser.add_argument("--vram-commit", required=True, type=Path)
     parser.add_argument("--vram-commit-limit", type=int)
     parser.add_argument("--vce-write", type=Path)
@@ -120,13 +122,22 @@ def main() -> int:
     ]
     if args.vce_write is not None:
         inputs.append(("vce_write", args.vce_write))
-    if args.vram_commit_limit is not None and args.vram_commit_limit < 1:
-        parser.error("--vram-commit-limit must be positive")
-    if args.vce_write_limit is not None and args.vce_write_limit < 1:
-        parser.error("--vce-write-limit must be positive")
+    limit_arguments = (
+        ("--cd-data-port-limit", args.cd_data_port_limit),
+        ("--cd-ram-target-limit", args.cd_ram_target_limit),
+        ("--vram-commit-limit", args.vram_commit_limit),
+        ("--vce-write-limit", args.vce_write_limit),
+    )
+    for option, limit in limit_arguments:
+        if limit is not None and limit < 1:
+            parser.error(f"{option} must be positive")
     if args.vce_write_limit is not None and args.vce_write is None:
         parser.error("--vce-write-limit requires --vce-write")
     limits: dict[str, int] = {}
+    if args.cd_data_port_limit is not None:
+        limits["cd_data_port_read"] = args.cd_data_port_limit
+    if args.cd_ram_target_limit is not None:
+        limits["cd_ram_target_write"] = args.cd_ram_target_limit
     if args.vram_commit_limit is not None:
         limits["vram_commit"] = args.vram_commit_limit
     if args.vce_write_limit is not None:
@@ -174,7 +185,7 @@ def main() -> int:
             }, separators=(",", ":")) + "\n")
             for record in merge(inputs):
                 output.write(json.dumps(record, separators=(",", ":")) + "\n")
-    except (OSError, TraceError) as error:
+    except (OSError, ValueError) as error:
         if created_output:
             try:
                 args.output.unlink(missing_ok=True)

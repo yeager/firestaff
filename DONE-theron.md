@@ -9201,3 +9201,18 @@ evidence documents the trace hook against real startup/title-menu behavior;
 it does not establish dungeon palette provenance, source-to-tile mapping,
 native rendering, or Theron parity. The private evidence bundle is at
 `/home/trv2/firestaff-theron-evidence/capture/theron-vce-title-20261029-r1/`.
+
+## 2026-10-29 — mark every bounded source-graphics stream
+
+- The shared chronology records configured caps and record counts for CD
+  data-port reads, CD RAM-target writes, VWR commits, and VCE writes. Reaching
+  any configured cap marks the result as possibly truncated and is reflected
+  in the capture receipt.
+- The merger removes partial output when input decoding or integer conversion
+  raises a `ValueError`. Its focused test passed with Python 3.9 and 3.13,
+  including the CD and VWR/VCE cap metadata cases and malformed byte/sequence
+  inputs. The live-capture script regression, shell syntax, and whitespace
+  checks passed.
+- This strengthens capture completeness reporting and malformed-input cleanup;
+  it adds no new emulator capture or evidence of Theron graphics/gameplay
+  parity.

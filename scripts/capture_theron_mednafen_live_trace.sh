@@ -2241,7 +2241,9 @@ if [[ "$capture_mednafen_module" == pce_fast ]]; then
           -s "$cd_data_port_read_trace" && -s "$cd_ram_target_write_trace" ]]; then
         merge_source_graphics_args=(
             --cd-data-port "$cd_data_port_read_trace" \
+            --cd-data-port-limit "$cd_data_read_trace_limit" \
             --cd-ram-target "$cd_ram_target_write_trace" \
+            --cd-ram-target-limit "$cd_ram_target_write_trace_limit" \
             --vram-commit "$pce_fast_vram_commit_trace" \
             --vram-commit-limit "$pce_fast_vram_commit_trace_limit" \
         )
