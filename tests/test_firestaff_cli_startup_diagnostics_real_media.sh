@@ -486,8 +486,9 @@ for game_id in dm1 csb dm2 nexus theron; do
     fi
 done
 
-if is_media_source "$mac_archive"; then
-    ln -s "$mac_archive" "$combined_root/$(basename "$mac_archive")"
+if is_media_source "$mac_diagnostics_source"; then
+    ln -s "$mac_diagnostics_source" \
+        "$combined_root/$(basename "$mac_diagnostics_source")"
 fi
 ln -s "$towns_archive" "$combined_root/$(basename "$towns_archive")"
 if [ -f "$dos_archive" ]; then
@@ -502,7 +503,7 @@ combined_auto=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     printf '%s\n' "$combined_auto" >&2
     exit 1
 }
-if is_media_source "$mac_archive"; then
+if is_media_source "$mac_diagnostics_source"; then
     case "$combined_auto" in
         *"startup game=dm2 mode=direct platform=auto"*"selected game=dm2 platform=FM Towns edition=fmtowns-ja source="*"platform=FM Towns edition=fmtowns-ja matched source="*"platform=Macintosh edition=mac-en-retail matched source="*) ;;
         *) echo "FAIL: DM2 AUTO did not prefer FM Towns when Mac retail was also present" >&2; exit 1 ;;
