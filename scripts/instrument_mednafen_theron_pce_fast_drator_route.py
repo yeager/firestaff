@@ -12,6 +12,9 @@ ROUTE_HELPERS = r'''
 /* Research-only route through the authenticated original menu handlers.
  * Every state-changing write requires the same instruction signatures as
  * the standard PCE reference route. */
+extern unsigned TheronPCEFastScriptFrame;
+
+static int TheronFastDratorMenuRouteMode = -1;
 static unsigned TheronFastDratorMenuStage;
 static unsigned TheronFastDratorScenarioStep;
 static unsigned TheronFastDratorOverlayAcceptCount;
@@ -21,11 +24,22 @@ static unsigned TheronFastDratorGeneratorRouteStage;
 static unsigned TheronFastDratorGeneratorRouteDelay;
 static unsigned TheronFastDratorGeneratorInputStartFrame;
 
+static int TheronPCEFastDratorMenuRouteMode(void)
+{
+ if(TheronFastDratorMenuRouteMode < 0)
+ {
+  const char *route = getenv("FIRESTAFF_THERON_MENU_ROUTE");
+  TheronFastDratorMenuRouteMode = !route ? 0 :
+      !strcmp(route, "drator") ? 1 :
+      !strcmp(route, "drator-generator") ? 2 : 0;
+ }
+ return TheronFastDratorMenuRouteMode;
+}
+
 static void TheronPCEFastDratorMenuRouteStep(unsigned pc)
 {
- const char *route = getenv("FIRESTAFF_THERON_MENU_ROUTE");
- if(!route || (strcmp(route, "drator") &&
-                strcmp(route, "drator-generator"))) return;
+ const int route = TheronPCEFastDratorMenuRouteMode();
+ if(!route) return;
  if(TheronFastDratorMenuStage == 0 && pc == 0x7557 &&
     RdMem(0x7552) == 0x44 && RdMem(0x7553) == 0xf5 &&
     RdMem(0x7554) == 0x20 && RdMem(0x7555) == 0x63 &&
@@ -91,7 +105,7 @@ static void TheronPCEFastDratorMenuRouteStep(unsigned pc)
   fflush(stderr);
  }
 
- if(!strcmp(route, "drator-generator") && TheronFastDratorMenuStage == 4)
+ if(route == 2 && TheronFastDratorMenuStage == 4)
  {
   const uint8 level = RdMem(0x2031);
   const uint8 direction = RdMem(0x203f);
@@ -136,8 +150,7 @@ static void TheronPCEFastDratorMenuRouteStep(unsigned pc)
 
 uint16 TheronPCEFastDratorGeneratorInputMask(void)
 {
- const char *route = getenv("FIRESTAFF_THERON_MENU_ROUTE");
- if(!route || strcmp(route, "drator-generator")) return 0;
+ if(TheronPCEFastDratorMenuRouteMode() != 2) return 0;
  if(TheronFastDratorGeneratorRouteStage != 1 &&
     TheronFastDratorGeneratorRouteStage != 3) return 0;
  const unsigned route_frame = TheronPCEFastScriptFrame -

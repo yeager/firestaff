@@ -639,6 +639,13 @@ if ! grep -Fq 'instrument_mednafen_theron_pce_fast_drator_route.py' "$build_scri
     printf '%s\n' 'FAIL: PCE Fast Drator route must be signature-gated and wired to controller port 0' >&2
     exit 1
 fi
+drator_route_instrumenter="$repo/scripts/instrument_mednafen_theron_pce_fast_drator_route.py"
+if ! grep -Fq 'extern unsigned TheronPCEFastScriptFrame;' "$drator_route_instrumenter" ||
+   ! grep -Fq 'static int TheronPCEFastDratorMenuRouteMode(void)' "$drator_route_instrumenter" ||
+   [[ $(grep -c 'getenv("FIRESTAFF_THERON_MENU_ROUTE")' "$drator_route_instrumenter") != 1 ]]; then
+    printf '%s\n' 'FAIL: injected route helper must declare the frame counter and cache the environment mode per emulator process' >&2
+    exit 1
+fi
 if ! grep -Fq 'caller_hash == 0x699e8da1' "$huc6280_23ad_probe" ||
    ! grep -Fq 'routine_hash == 0x3056f96c' "$huc6280_23ad_probe" ||
    ! grep -Fq 'expected_opcodes[4] = { 0x8d, 0xa5, 0x8d, 0x44 }' "$huc6280_23ad_probe" ||
