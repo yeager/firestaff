@@ -1992,6 +1992,19 @@ wait "$mednafen_pid"
 status=$?
 set -e
 
+if [[ "$pce_fast_code_ram_write_trace_enabled" == 1 ]]; then
+    if grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE_ERROR' "$stderr_file"; then
+        printf '%s\n' 'FAIL: Mednafen reported an error while writing the PCE Fast code-bank RAM trace' >&2
+        exit 1
+    fi
+    if [[ ! -s "$pce_fast_code_ram_write_trace" ]] ||
+       ! grep -Fqx 'source=mednafen-pce-fast-code-ram-write event_sequence_source=TheronTraceCDSharedEventSequence' \
+           "$pce_fast_code_ram_write_trace"; then
+        printf '%s\n' 'FAIL: Mednafen did not produce a valid PCE Fast code-bank RAM-write trace' >&2
+        exit 1
+    fi
+fi
+
 if [[ ! -s "$trace" ]] || ! grep -Fqx 'source=mednafen-pce-instrumented' "$trace"; then
     printf '%s\n' 'FAIL: Mednafen did not produce a provenance-marked live trace' >&2
     exit 1

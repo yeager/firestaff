@@ -10,7 +10,7 @@
 + HuCPU.PCEWrite[wmpr](physical, V);
 --- a/src/pce_fast/pce.cpp
 +++ b/src/pce_fast/pce.cpp
-@@ -311,2 +311,33 @@
+@@ -311,2 +311,51 @@
   per_offset[offset]++;
  }
 +void TheronTracePCEFastCodeRAMWrite(uint32 logical_address,
@@ -18,23 +18,35 @@
 +{
 + static FILE *trace = NULL;
 + static unsigned count = 0;
++ static int trace_failed = 0;
 + extern uint32 TheronTraceCDSharedEventSequence;
++ const char *path = getenv("FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE");
++ if(trace_failed || !path || !*path)
++  return;
++ if(!trace)
++ {
++  trace = fopen(path, "w");
++  if(!trace)
++  {
++   trace_failed = 1;
++   fputs("FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE_ERROR error=open\n", stderr);
++   fflush(stderr);
++   return;
++  }
++  if(fprintf(trace, "source=mednafen-pce-fast-code-ram-write event_sequence_source=TheronTraceCDSharedEventSequence\n") < 0 || fflush(trace) != 0)
++  {
++   trace_failed = 1;
++   fputs("FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE_ERROR error=header\n", stderr);
++   fflush(stderr);
++   return;
++  }
++ }
 + if(TheronTraceInstructionPhysicalPC < 0x1F1C00 ||
 +    TheronTraceInstructionPhysicalPC >= 0x1F1D00 ||
 +    physical_address < 0x0D0000 || physical_address >= 0x0D2000 ||
 +    count >= 65536)
 +  return;
-+ if(!trace)
-+ {
-+  const char *path = getenv("FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE");
-+  if(!path || !*path)
-+   return;
-+  trace = fopen(path, "w");
-+  if(!trace)
-+   return;
-+  fputs("source=mednafen-pce-fast-code-ram-write event_sequence_source=TheronTraceCDSharedEventSequence\n", trace);
-+ }
-+ fprintf(trace,
++ const int write_result = fprintf(trace,
 +         "pce_fast_code_ram_write sequence=%u event_sequence=%u logical_address=%04x physical_address=%06x value=%02x writer_pc=%04x writer_physical_pc=%06x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x a=%02x x=%02x y=%02x sp=%02x p=%02x\n",
 +         count++, TheronTraceCDSharedEventSequence++, logical_address & 0xFFFF,
 +         physical_address, value, TheronTraceInstructionPC,
@@ -42,5 +54,11 @@
 +         HuCPU.MPR[2], HuCPU.MPR[3], HuCPU.MPR[4], HuCPU.MPR[5],
 +         HuCPU.MPR[6], HuCPU.MPR[7], HuCPU.A, HuCPU.X, HuCPU.Y, HuCPU.S,
 +         HuCPU.P);
-+ fflush(trace);
++ const int flush_result = fflush(trace);
++ if(write_result < 0 || flush_result != 0)
++ {
++  trace_failed = 1;
++  fputs("FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE_ERROR error=write\n", stderr);
++  fflush(stderr);
++ }
 +}

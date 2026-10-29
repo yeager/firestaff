@@ -212,7 +212,8 @@ An opt-in PCE Fast write trace is available for the source-bound routine window
 instrumented reference binary, then `THERON_CAPTURE_PCE_FAST_CODE_RAM_WRITE_TRACE=1`
 on a PCE Fast capture. It records the CPU logical and physical write addresses,
 active MPR values, instruction PC, registers, and a shared event sequence,
-capped at 65,536 records. This instrumentation is for reference captures only;
+capped at 65,536 records. The hook reports open/write errors and capture validation
+rejects missing or invalid trace receipts. This instrumentation is for reference captures only;
 output remains untrusted for native rendering until matched to authentic code,
 source bytes, and a later gameplay/render transition. See the
 [decoded-buffer bit-reader note](../source-lock/theron-disassembly/theron-us-decoded-buffer-bit-reader-20261029.md).
