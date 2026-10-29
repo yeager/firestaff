@@ -52,12 +52,17 @@ content or source-asset ownership. Identify the active NBG1 consumer and bind
 the displayed panel and text to authentic source data before admitting a
 Firestaff Load-panel renderer. See the Load-panel writer evidence in
 [`nexus_startup.md`](docs/nexus/nexus_startup.md#load-panel-vdp2-longword-writer-join-2026-10-29).
-An exact-source scan of this frame's NBG0 bitmap found no match among 410
-decoded authentic menu, font, title, and static-background candidates. The
-TITLE palette occurs in CRAM, but no exact MENU/STABG or DGN Structure2 palette
-match was found. Identify the NBG0 producer and active palette before using it
-for a Firestaff Load-panel background. The bounded output is retained beside
-the frame trace on the external evidence disk.
+An exact-source scan of this frame's NBG0 bitmap found no complete match among
+410 decoded authentic menu, font, title, and static-background candidates. A
+separate frame-bounded join now binds 57 nonzero pixels from authentic Japanese
+`MENU.BPK` surface 55 to both the SH-2 writer and VDP2 bus trace at NBG0 offset
+`0xe6f`; Ghidra identifies the caller as the retail menu-image renderer. This
+is a partial pixel-index transport join, not a palette or screen-composition
+match. The TITLE palette occurs in CRAM, but no exact MENU/STABG or DGN
+Structure2 palette match was found. Identify the full NBG0 producer, active
+palette, and remaining composition before admitting a Firestaff Load-panel
+renderer. See the frame-bounded evidence and reproduction command in
+[`nexus_startup.md`](docs/nexus/nexus_startup.md#frame-bounded-menu-bpk-to-nbg0-source-span-2026-10-29).
 
 2026-10-28 retail New Game loader route: the M11 retail menu now sends
 keyboard/controller Accept and the retail mouse row to the same source-gated

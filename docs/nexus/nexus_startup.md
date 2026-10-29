@@ -2065,3 +2065,29 @@ not identify the NBG0 producer or prove which palette NBG0 uses. The bounded
 check skips the analyzer's expensive partial-span ranking with `--exact-only`;
 its complete output is retained as `nbg0-bitmap-exact-source-scan.txt` in the
 same external evidence directory.
+
+### Frame-bounded MENU.BPK-to-NBG0 source span (2026-10-29)
+
+The authentic Japanese `MENU.BPK` (SHA-256
+`740ab2a864f04b89cddb172ce2560044fcc8c6a7f98ae2fe50461aa8da886636`) contains
+an 86-byte span in decoded surface 55, beginning at source offset `0x4a`. It
+matches NBG0 VRAM offset `0xe6f` in the frame-659 Load-panel snapshot. All 57
+nonzero source pixels have matching writes in both independent frame-536
+traces: the SH-2 writer at `0x060230e8` and the VDP2 VRAM bus trace. The
+captured writer call stack reaches `FUN_06029188`. Ghidra decompilation of the
+hash-verified Japanese `DM.BIN` shows that this menu-image routine resolves
+the image surface and dispatches through `0x060292c8` to `FUN_060230d2`, whose
+row copier skips zero pixels. The writer opcode and loaded WorkRAM-HI bytes
+match the retail executable. The pseudocode export used Ghidra 12.2 with the
+`SuperH:BE:32:SH-2` language, importing `DM.BIN` at `0x06010000` and running
+[pcrecomp's `DecompAddrs.java`](https://github.com/yeager/pcrecomp/blob/main/tools/ghidra/DecompAddrs.java).
+Reproduce the Firestaff trace join with
+`scripts/analyze_nexus_load_nbg0_menu_trace.py`.
+
+This binds a small source-pixel span to the active NBG0 bitmap transport. The
+span has six distinct byte values; the active CRAM palette, the surface's
+visual role, the remaining bitmap, and full-screen composition remain
+unbound. It does not admit a Firestaff Load-panel renderer. The analyzer output
+and Ghidra decompilation are retained in the external trace bundle's
+`nbg0-menu-source-trace.txt` and
+`nbg0-writers-ghidra-decompilation.log` files.
