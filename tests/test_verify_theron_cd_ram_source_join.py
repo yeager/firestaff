@@ -80,6 +80,18 @@ class CDToRAMSourceJoinTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "no target writes"):
             self.join()
 
+    def test_ignores_other_mpr_windows_before_joining_selected_window(self) -> None:
+        other_window_write = self.writes[0].copy()
+        other_window_write.update(event_sequence="41", sequence="0", mpr2="80")
+        self.reads.append({**self.reads[0], "event_sequence": 42})
+        self.writes[0].update(event_sequence="43", sequence="1")
+        self.writes.insert(0, other_window_write)
+
+        joined = self.join()
+
+        self.assertEqual(len(joined), 1)
+        self.assertEqual(joined[0][1]["mpr2"], "68")
+
 
 if __name__ == "__main__":
     unittest.main()

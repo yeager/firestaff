@@ -74,9 +74,10 @@ def join_rows(
             raise ValueError(f"incomplete target-write context at row {line_number - 1}")
         if int(write["writer_pc"], 16) != expected_writer_pc:
             continue
+        if expected_mpr2 is not None and int(write["mpr2"], 16) != expected_mpr2:
+            continue
         if (
             int(write["writer_physical_pc"], 16) != 0x0A9C
-            or (expected_mpr2 is not None and int(write["mpr2"], 16) != expected_mpr2)
         ):
             raise ValueError(f"target write is not the expected System Card store at row {line_number - 1}")
 
