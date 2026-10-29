@@ -2039,13 +2039,18 @@ with identical byte addresses and values. The read-only check is:
 ```sh
 python3 scripts/analyze_nexus_vdp2_sh2_long_write_join.py \
   /path/to/load-screen-vdp2-trace-20261029 \
-  --frame 659 --pc 0x06023640
+  --frame 659 --pc 0x06023640 --inspect-nbg1-map
 ```
 
 The captured WRAM-HI bytes disassemble at `0x06023640` to `mov.l r13,@r6`,
-followed by a four-byte address increment and a loop branch. This joins the
-retail writer to the VDP2 bus events and confirms the longword byte order. It
-does not establish the buffer's content semantics, the menu layer that consumes
-it, or a rendered source asset. The screenshot, complete zero-drop traces,
+followed by a four-byte address increment and a loop branch. The frame register
+snapshot has `BGON=0x0007`, `CHCTLA=0x0013`, `PNCN1=0`, `PLSZ=0`, `MPOFN=0`, and
+`MAP1A/MAP1B=0x1717`; this selects the NBG1 name-table base at `0x5c000` for
+the bounded decoder. All 176 PND writes land in visible cells x=1..16 and
+y=6..16. They contain the same raw pair `0x2000/0x1100`; the corresponding
+32-byte character pattern at VRAM `0x22000` is all zero in the captured
+snapshot. This binds the writer to a visible NBG1 name-table region, but does
+not show that this tile contributes visible pixels or identify any source
+asset, palette, or text consumer. The screenshot, complete zero-drop traces,
 WRAM-HI image, disassembly excerpt, analyzer output and hashes are retained in
 `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/load-screen-vdp2-trace-20261029/`.

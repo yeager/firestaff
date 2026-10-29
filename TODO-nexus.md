@@ -43,6 +43,16 @@ and the transformed field's consumer before implementing payload-to-engine
 state. See
 [`nexus_sh2_startup_decompilation.md`](docs/nexus/nexus_sh2_startup_decompilation.md#continue-payload-transfer-2026-10-29).
 
+The 2026-10-29 Load-panel VDP2 trace now joins the retail SH-2 writer at
+`0x06023640` to all 352 VDP2 halfword events on frame 659. The selected NBG1
+name table maps 176 writes to visible cells x=1..16, y=6..16; each PND is
+`0x2000/0x1100`, and the referenced 32-byte character pattern is zero-filled
+in that capture. This establishes NBG1 name-table writes, not rendered menu
+content or source-asset ownership. Identify the active NBG1 consumer and bind
+the displayed panel and text to authentic source data before admitting a
+Firestaff Load-panel renderer. See the Load-panel writer evidence in
+[`nexus_startup.md`](docs/nexus/nexus_startup.md#load-panel-vdp2-longword-writer-join-2026-10-29).
+
 2026-10-28 retail New Game loader route: the M11 retail menu now sends
 keyboard/controller Accept and the retail mouse row to the same source-gated
 New Game path. Against authentic Japanese retail media, the regression
