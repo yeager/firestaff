@@ -6,6 +6,13 @@ both pass, including localized scan task labels, selection of the authentic
 Japanese edition, and the boot-probe boundary. This covers startup
 localization only, not full DM2/platform parity.
 
+2026-10-29 selected-archive return-to-menu regression: the authentic DOS
+English archive passed direct-file CLI selection through M12, first runtime,
+and return to the launcher after the harness was generalized for DM1/CSB.
+The return scan found the surrounding collection and reported DM1, CSB, and
+DM2 as available. This verifies the bounded DOS route only, not full DM2
+platform parity.
+
 2026-10-28 FM Towns `--debug` source-frame trace: the combined startup
 diagnostics CTest failed on the M4 because the main loop logged only after a
 batch of overdue Timer-A ticks, hiding intermediate TWANIM source-frame states

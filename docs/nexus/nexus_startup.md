@@ -10,12 +10,17 @@ five TITLE.BIN sprite draws per state compared with the retail screenshots.
 The `verify_nexus_title_sprite_screenshot.py` verifier now checks the five-draw
 Japanese Continue layout and the English New Game and Continue layouts against
 authentic retail source bytes and captured CRAM. Ymir also completed
-Continue-to-gameplay with a reported retail-written BKR image. Firestaff now
-renders authenticated English and Japanese New Game/Continue/Configuration
-foreground sprites from regional `TITLE.BIN` data. English Configuration text
-pixels match its Ymir capture; final marker RGB remains background-dependent.
-The shared background, full-screen composition, menu destination execution,
-Continue loading, and gameplay HUD/viewport remain unimplemented or unverified.
+Continue-to-gameplay with the corpus-retained BKR image whose SHA-256 is
+`87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`: the
+retail Load screen showed `B01 0:16 NORMAL`, then entered the four-champion
+dungeon view. The isolated BKR copy retained its hash after loading. A paired
+Up-input replay changed the rendered gameplay view. These captures verify the
+retail reference flow in Ymir only. Firestaff now renders authenticated English
+and Japanese New Game/Continue/Configuration foreground sprites from regional
+`TITLE.BIN` data. English Configuration text pixels match its Ymir capture;
+final marker RGB remains background-dependent. The shared background,
+full-screen composition, Firestaff menu destination execution, Continue loading,
+and gameplay HUD/viewport remain unimplemented or unverified.
 
 ## Verified initialization order
 
@@ -1838,3 +1843,96 @@ VDP2 composition and other settings states also remain unproven, so renderer
 admission stays blocked. See the [trace-prefix receipt](../../parity-evidence/verification/nexus_japanese_configuration_dgn_trace_prefix_20261028/README.md)
 and the authentic Japanese retail capture retained in operator-managed
 external evidence storage.
+
+## Continue reaches gameplay with the retained authentic BKR (2026-10-28)
+
+### Save-slot time discrepancy
+
+The retained 2025 capture `parity-evidence/verification/nexus-continue-real-bup-20261025/03-load-screen.png`
+(SHA-256
+`5e20c31980926e599343b25dbdc1bc75b945ee382e9c313439996fc08b633444`)
+shows `B01 0:06 NORMAL`. The 2028 capture
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/authentic-bkr-continue-device.png`
+(SHA-256
+`2b86fe32898e79009ac2cc5cf33f961e0ebcd61489c9f93a9717f9e0c13ea8fb`)
+shows `B01 0:16 NORMAL`. Both reports identify the same 32 KiB BKR SHA-256
+`87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`; the
+2028 run also verified that the source image and profile copy were unchanged
+after loading. The runs used different Ymir versions (0.4.1 and 0.4.2-dev)
+and different boot/input schedules. The available evidence does not determine
+why the displayed time differs. These are capture-specific observations; do
+not treat either time as an established property of the BKR or infer a BKR
+mutation. Resolving the cause requires a controlled replay with the same
+Ymir build, profile initialization, and frame-exact input schedule.
+
+Ymir `0.4.2-dev` was run on TRV2 with the hash-verified Japanese retail disc,
+Japanese IPL and an isolated profile. The profile's internal backup RAM was a
+byte-for-byte copy of
+`nexus-four-champion-retail-written-20260926.bkr` from the authentic Nexus data
+corpus (SHA-256
+`87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`). No
+emulator save state or game save was loaded during the cold boot. After the
+retail title menu appeared, Down and A opened Continue's Load screen, which
+listed the internal-memory entry `B01 0:16 NORMAL`. A second A accepted that
+entry. The next capture shows a dungeon view with four champion HUD panels.
+The BKR source and isolated profile copy retained the same SHA-256 after the
+load.
+
+From the accepted-save emulator state, equal 300-frame replays were captured
+with no input and with Control Pad Up held for 60 frames. The two 640x448
+images differ at 239,180 pixels. This confirms that the loaded retail view
+responds visibly to the scheduled input; it does not identify the complete
+movement mapping or prove Firestaff input parity.
+
+A repeated Load-screen capture at VDP1 frame 559 has 17 command rows and zero
+dropped rows. All three textured VDP1 source starts fall in exact-resident
+Japanese `MENU.BPK` PRS3 surfaces: entries 90, 96, and 97, each 16x16. This
+binds those image bytes to the Load-screen display list, but not their CLUT
+palette, visible role, save-row text, or complete panel composition. A bounded
+SH-2 read trace started from the saved title-menu state recorded zero BUP
+reads; the save list had already been discovered before that state was saved.
+
+A same-run coldboot trace on TRV2 now covers frames 0–11,999 with the authentic
+BKR installed. It records 10,849 one-byte reads in bus range
+`0x180000..0x200000`, 1,328 distinct addresses, and zero dropped rows. The
+trace's most frequent PCs are `0x06003d68` and `0x0600289c` (2,550 reads each),
+`0x060034b0` (2,040), and `0x060028f2`/`0x06002900` (1,770 each). Same-run
+WRAM-HI disassembly shows byte reads and subsequent stores at these sites,
+consistent with early BUP enumeration/copy work. Ymir's trace records no read
+values, so it does not prove payload bytes were consumed as game state or
+identify a Nexus save field.
+
+A later checkpoint at boot frame 14,900 shows the Japanese title logo. A
+replay from that checkpoint with Start, Down and A reaches the authentic Load
+screen row `B01 0:16 NORMAL`, but records zero new BUP-window reads. This
+narrowly places the observed BUP read activity earlier in startup than this
+checkpoint; it does not tie those reads to the later Continue action. The
+BKR loader and its payload-to-runtime mapping remain unbound. Full trace,
+disassembly and checkpoint receipts are recorded in the external evidence
+folder's `coldboot-readtrace-boot12000/` and `coldboot-title-checkpoint/`
+subdirectories.
+
+The accepted-save capture's VDP1 snapshot is frame 2,173 with 83 commands. Its
+complete command trace contains 175,042 rows with zero dropped rows. The
+capture commands, logs, screenshots, memory/VDP dumps, hashes and scope limits
+are recorded at
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/README.md`;
+the Load-screen source-start receipt is in `load-screen-menu-bpk-source-join.md`
+within that evidence folder.
+
+For the same-frame Load-screen VDP2 snapshot (frame 559), a bounded exact-byte
+scan checked 410 verified retail bitmap candidates from `MENU.BPK`,
+`FONT256.S2D`, `TITLE.BIN`/`TITLE.CG`, and `STABG.BIN` against the active NBG0
+bitmap span. It found no exact source span. A separate scan parsed 1,266
+Structure2 palettes from all 16 authenticated DGN levels and found no exact raw
+or word-swapped match in captured CRAM; the `MENU.BPK` palette also had no
+exact match. This leaves NBG0's producer and palette unresolved. The broader
+partial-byte scan exceeded its 10-minute limit, so no negative conclusion is
+drawn from partial matches. The bounded-scan results are recorded in the
+external evidence folder's `load-screen-menu-bpk-source-join.md`.
+
+The bundle contains no BKR payload. This establishes the retail game's
+Continue-to-gameplay behavior in Ymir with the retained corpus save; it does
+not establish that Firestaff loads the BKR, executes Continue, or renders the
+captured viewport and HUD. Those production routes remain gated on their own
+source-bound parsing, composition and input evidence.

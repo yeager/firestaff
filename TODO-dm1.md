@@ -6,6 +6,24 @@ explicit Swedish and the saved Swedish language profile, checking both scan
 task labels, authentic edition selection, and the boot-probe boundary. This
 covers startup localization only, not full DM1/platform parity.
 
+2026-10-29 selected-archive return-to-menu regression: the authentic PC34
+archive now passes direct-file CLI selection through the M12 launch, reaches
+the original first runtime, returns to the launcher, and proves that the
+surrounding collection is rescanned with DM1, CSB, and DM2 available. The
+isolated test stages the original archive under its unchanged retail filename
+and checks the inferred `data` root. This verifies the tested PC34 path only;
+it does not establish native presentation or broader launcher/game parity.
+
+2026-10-29 authentic PC34 selector-Resume test data: an original PC34
+`DMSAVE.DAT` is available in the local Firestaff save corpus outside the Git
+repository. Its adjacent provenance record identifies the original PC34 DOS
+session and records 48,561 bytes with FNV-1a `80a50d66`, matching the file.
+Set `FIRESTAFF_DM1_PC34_AUTHENTIC_SAVE` to this save when running
+`dm1_v1_pc34_native_cli_boot`; the test then compares direct `--save` startup
+with I34E selector Resume and checks that the saved party pose is restored.
+This authentic-save integration branch has not yet been run against a current
+build, so selector-to-original-save runtime parity remains unverified.
+
 2026-10-28 PC34 binary-analysis tooling check: the original DOS 3.4 `DM.EXE`
 is LZEXE 0.91-packed. The `yeager/pcrecomp` tools successfully unpack it with
 `tools/drm/unlzexe.py`; `tools/disasm/decode16.py --resident` decodes its

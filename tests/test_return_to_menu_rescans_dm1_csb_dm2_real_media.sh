@@ -26,7 +26,9 @@ dm2_mac_archive=${FIRESTAFF_DM2_MAC_ARCHIVE:-"$data_root/dm2/Dungeon-Master-II-S
 dm2_amiga_archive=${FIRESTAFF_DM2_AMIGA_ARCHIVE:-"$data_root/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip"}
 
 if [ ! -x "$app" ] ||
-   { [ "$test_mode" != dm2-amiga ] && [ "$test_mode" != dm2-sourcefile ] && [ "$test_mode" != dm2-sourcefile-removed ] &&
+   { [ "$test_mode" != dm2-amiga ] && [ "$test_mode" != dm1-sourcefile ] &&
+     [ "$test_mode" != csb-sourcefile ] && [ "$test_mode" != dm2-sourcefile ] &&
+     [ "$test_mode" != dm2-sourcefile-removed ] &&
      [ "$test_mode" != dm1-atari ] && [ "$test_mode" != dm1-amiga36 ] &&
      [ "$test_mode" != direct-exit ] &&
      [ "$test_mode" != mouse-return ] &&
@@ -41,9 +43,12 @@ if [ ! -x "$app" ] ||
        [ ! -f "$dm2_archive" ]; }; } ||
    { [ "$test_mode" = return-window-close ] &&
      [ ! -f "$dm1_archive" ]; } ||
-   { { [ "$test_mode" = dm2-sourcefile ] || [ "$test_mode" = dm2-sourcefile-removed ]; } &&
+   { { [ "$test_mode" = dm1-sourcefile ] || [ "$test_mode" = csb-sourcefile ] ||
+       [ "$test_mode" = dm2-sourcefile ] || [ "$test_mode" = dm2-sourcefile-removed ]; } &&
      { [ ! -f "$dm1_archive" ] || [ ! -f "$csb_archive" ] ||
-       [ ! -f "$dm2_dos_archive" ]; }; } ||
+       [ ! -f "$dm2_archive" ]; }; } ||
+   { { [ "$test_mode" = dm2-sourcefile ] || [ "$test_mode" = dm2-sourcefile-removed ]; } &&
+     [ ! -f "$dm2_dos_archive" ]; } ||
    { [ "$test_mode" = dm2-amiga ] && [ ! -f "$dm2_amiga_archive" ]; } ||
    { [ "$test_mode" = dm1-atari ] && [ ! -f "$dm1_atari_archive" ]; } ||
    { [ "$test_mode" = dm1-amiga36 ] && [ ! -f "$dm1_amiga36_archive" ]; }; then
@@ -200,7 +205,7 @@ if (probe.get("launchedEver") != 1 or probe.get("active") != 0 or
     raise SystemExit(
         f"FAIL: {game_id} did not finish back at the launcher: {probe}")
 
-if case_label.startswith("dm2-sourcefile"):
+if case_label.endswith("-sourcefile") or case_label.startswith("dm2-sourcefile"):
     expected_root = os.path.dirname(os.path.dirname(data_path))
     root = re.search(r"return-menu rescan-complete data=([^\n]+)", trace)
     if root is None or os.path.normpath(root.group(1)) != os.path.normpath(expected_root):
@@ -216,7 +221,7 @@ inactive_rates = re.findall(
     r"perf game=\S+ active=0[^\n]* game-ticks-per-sec=(\S+)", trace)
 if any(float(rate) != 0.0 for rate in inactive_rates):
     raise SystemExit(f"FAIL: inactive launcher reports gameplay ticks: {inactive_rates}")
-if case_label.startswith("dm2-sourcefile") and not inactive_rates:
+if (case_label.endswith("-sourcefile") or case_label.startswith("dm2-sourcefile")) and not inactive_rates:
     raise SystemExit("FAIL: selected-archive return omitted inactive performance windows")
 
 print(f"PASS: authentic {game_id} gameplay returned to the launcher and "
@@ -391,24 +396,67 @@ stage_dm1_return_data_root() {
 
 # File selection remains exact at launch; returning to the launcher must
 # inventory the surrounding data/<game> collection, not only that file.
-for sourcefile_case in dm2-sourcefile dm2-sourcefile-removed; do
+for sourcefile_case in dm1-sourcefile csb-sourcefile dm2-sourcefile dm2-sourcefile-removed; do
 if { [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
-     [ "$test_mode" = "$sourcefile_case" ]; } && [ -f "$dm2_dos_archive" ]; then
+     [ "$test_mode" = "$sourcefile_case" ]; }; then
     sourcefile_root="$scratch/$sourcefile_case/data"
     mkdir -p "$sourcefile_root/dm1" "$sourcefile_root/csb" "$sourcefile_root/dm2"
-    ln -s "$dm1_archive" "$sourcefile_root/dm1/$(basename "$dm1_archive")"
-    ln -s "$csb_archive" "$sourcefile_root/csb/$(basename "$csb_archive")"
-    ln -s "$dm2_dos_archive" "$sourcefile_root/dm2/Selected-PC.ZIP"
-    sourcefile_script='key:enter,key:enter,key:enter,wait:1800,key:enter,key:enter,wait-game-runtime'
+    case "$sourcefile_case" in
+        dm1-sourcefile)
+            sourcefile_game=dm1
+            sourcefile_platform=pc
+            sourcefile_archive=$dm1_archive
+            sourcefile_path="$sourcefile_root/dm1/$(basename "$dm1_archive")"
+            sourcefile_script='key:enter,key:enter,key:enter,wait-game-runtime'
+            sourcefile_duration=60000
+            sourcefile_runtime='startup-frame game=dm1 .*phase=dm1-runtime .*level-loaded=1 map=0 party=1,3 dir=2'
+            sourcefile_launch='launch phase=game-handoff mode=menu game=dm1 platform=PC edition=pc34-en source=.*/Dungeon-Master_DOS_EN_Version-34[.]zip::DATA/GRAPHICS[.]DAT'
+            ;;
+        csb-sourcefile)
+            sourcefile_game=csb
+            sourcefile_platform=fm-towns
+            sourcefile_archive=$csb_archive
+            sourcefile_path="$sourcefile_root/csb/$(basename "$csb_archive")"
+            sourcefile_script='key:enter,key:enter,key:enter,wait:700,click:52:110,wait:10,click:250:50,wait:240,wait-game-runtime,back,wait:10'
+            sourcefile_duration=90000
+            sourcefile_runtime='startup-frame game=csb .*phase=inactive .*level-loaded=1 map=4 party=22,18 dir=2 champions=1'
+            sourcefile_launch='launch phase=game-handoff mode=menu game=csb platform=FM Towns edition=fmtowns-en source=.*/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN[.]zip::CDATA/GRAPHICS[.]DAT'
+            ;;
+        *)
+            sourcefile_game=dm2
+            sourcefile_platform=pc
+            sourcefile_archive=$dm2_dos_archive
+            sourcefile_path="$sourcefile_root/dm2/Selected-PC.ZIP"
+            sourcefile_script='key:enter,key:enter,key:enter,wait:1800,key:enter,key:enter,wait-game-runtime'
+            sourcefile_duration=55000
+            sourcefile_runtime='startup-frame game=dm2 .*phase=dm2-runtime .*level-loaded=1'
+            sourcefile_launch='launch phase=game-handoff mode=menu game=dm2 platform=PC edition=pc-en source=.*Selected-PC[.]ZIP::data/graphics[.]dat'
+            ;;
+    esac
+
+    if [ "$sourcefile_case" != dm1-sourcefile ]; then
+        ln -s "$dm1_archive" "$sourcefile_root/dm1/$(basename "$dm1_archive")"
+    fi
+    if [ "$sourcefile_case" != csb-sourcefile ]; then
+        ln -s "$csb_archive" "$sourcefile_root/csb/$(basename "$csb_archive")"
+    fi
+    if [ "$sourcefile_game" != dm2 ]; then
+        ln -s "$dm2_archive" "$sourcefile_root/dm2/$(basename "$dm2_archive")"
+    fi
+    ln -s "$sourcefile_archive" "$sourcefile_path"
+
     if [ "$sourcefile_case" = dm2-sourcefile-removed ]; then
         ln -s "$dm2_dos_archive" "$sourcefile_root/dm2/$(basename "$dm2_dos_archive")"
         sourcefile_script="$sourcefile_script,wait:90"
     fi
-    run_return_to_menu_case dm2 pc \
-        "$sourcefile_script,key:escape,key:enter" \
-        55000 'startup-frame game=dm2 .*phase=dm2-runtime .*level-loaded=1' \
-        'launch phase=game-handoff mode=menu game=dm2 platform=PC edition=pc-en source=.*Selected-PC[.]ZIP::data/graphics[.]dat' \
-        "$sourcefile_root/dm2/Selected-PC.ZIP" 320 200 "$sourcefile_case"
+    if [ "$sourcefile_game" = csb ]; then
+        sourcefile_script="$sourcefile_script,enter"
+    else
+        sourcefile_script="$sourcefile_script,key:escape,key:enter"
+    fi
+    run_return_to_menu_case "$sourcefile_game" "$sourcefile_platform" \
+        "$sourcefile_script" "$sourcefile_duration" "$sourcefile_runtime" \
+        "$sourcefile_launch" "$sourcefile_path" 320 200 "$sourcefile_case"
 fi
 done
 

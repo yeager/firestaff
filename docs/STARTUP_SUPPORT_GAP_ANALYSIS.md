@@ -1,11 +1,11 @@
 # Five-game startup support gap analysis
 
-Release metadata checked against GitHub `main` at `1e9ca4ec` on 2026-10-29.
+Release metadata checked against GitHub `main` at `a926fb22` on 2026-10-29.
 The latest published release is v3.0.419 (published on 2026-10-28 from
 `71bf83b2`). Its GitHub Actions run completed all nine jobs successfully.
-The current `main` revision `1e9ca4ec` is later than that tag. Its verification
-Actions run `40784119711` completed successfully across Linux, Windows, and
-macOS; its source is not included in the published packages. The release
+The current `main` revision `a926fb22` is later than that tag. Its verification
+Actions run `40784988000` and Pages run `40784988003` completed successfully;
+its source is not included in the published packages. The release
 workflow verifies packaging, not gameplay startup. The latest update also
 extends real-media Swedish startup-debug localization checks to DM1 PC34, CSB
 FM Towns, and DM2 FM Towns. Those focused tests check explicit and saved
@@ -84,6 +84,24 @@ The repository contains checks
 against authentic media for all five games, but “available,”
 “selected,” “handed off,” and “entered a playable runtime” are separate states.
 The current evidence does not establish complete five-game startup support.
+
+### 2026-10-29 selected-archive return-to-menu checks
+
+The shared real-media return/rescan harness now has a dedicated selected-file
+case for each priority game. On the current local build, CTest passed 3/3:
+DM1 PC34 (`return_to_menu_rescans_dm1_selected_archive_real_media`, 60.20 s),
+CSB FM Towns (`return_to_menu_rescans_csb_selected_archive_real_media`,
+91.72 s), and DM2 DOS English
+(`return_to_menu_rescans_selected_archive_real_media`, 55.36 s). Each case
+starts from the exact archive path in an isolated `data/<game>` collection,
+reaches that edition's first runtime, returns to M12, and verifies that the
+scan infers the collection root and sees DM1, CSB, and DM2. The staged links
+preserve the original archive bytes and, for CSB, the original archive
+filename: an earlier generic alias produced `source=none`, so arbitrary
+renamed CSB-container detection remains unverified. Nexus and Theron are not
+staged in these three focused cases. These receipts prove only the named
+selected-archive startup/return routes and do not establish full platform or
+gameplay parity.
 
 ### 2026-10-28 clean-main DM1/CSB/DM2 menu retest on TRV2
 
