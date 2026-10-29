@@ -53,12 +53,11 @@ these observations.
 
 Next, disassemble the bounded writer windows around `$CCD8`, `$CCDD`, `$CCE2`,
 and `$D39D`, identify whether the candidate bytes belong to a pointer table,
-and reproduce the
-same result in a cold original-media session with authenticated loader
-provenance. Firestaff's native world-click path and state-driven renderer
-remain open.
+and reproduce the same result in a cold original-media session with
+authenticated loader provenance. Firestaff's native world-click path and
+state-driven renderer remain open.
 
-Private traces and save-state remain on TRV2 in the four
-`/home/trv2/firestaff-theron-evidence/capture/theron-jp-pointer-consumer-20261029-r{7,8,9,10}/`
-capture directories. No game media, save-state, firmware, or raw memory
-snapshot was added to Git.
+Private traces and save-state remain on TRV2 in the four capture directories
+whose names end in `r7`, `r8`, `r9`, and `r10` under
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-pointer-consumer-20261029-`.
+No game media, save-state, firmware, or raw memory snapshot was added to Git.
