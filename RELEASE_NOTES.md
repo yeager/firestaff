@@ -1,3 +1,26 @@
+# Firestaff v3.0.421
+
+## User-facing changes
+
+- `DM1 Atari ST media`: admit the authentic nested v1.2 image for launcher selection.
+- `CSB FM Towns media`: admit renamed authentic ZIP packages during startup discovery.
+- `Nexus regional media`: bind supplemental disc resources to the region proved by the extracted game files, avoiding cross-region asset mixing.
+
+## Developer changes
+
+- `Alternate-platform launcher`: verify authentic-media menu selection and handoff paths for DM1, CSB and DM2.
+- `Theron evidence`: verify decoded-buffer copies and Japanese input-poll source provenance; add a bounded PCE Fast position-transfer observer without claiming movement parity.
+- `DM1 X68000`: update the real-media checksum probe while keeping private game data out of the repository.
+- `Nexus startup`: verify regional owner selection and matching supplemental media; preserve the capture-gated title compositor boundary.
+- `Release metadata`: update the project version and reproducible SPDX source SBOM.
+
+## Known limitations
+
+- `Nexus`: a CUE-only source without an authenticated ISO or extracted owner is still rejected by launcher admission. Saturn title composition and the playable game route remain gated.
+- `Theron's Quest`: the JP PCE Fast capture did not record a bounded position-write row; the active map and a positive movement transfer remain unverified.
+- `DM1, CSB and DM2`: platform-wide viewport, HUD, audio and physical-display parity remain incomplete outside individually verified routes.
+- Original game media, saves and firmware are not included in release packages.
+
 # Firestaff v3.0.420
 
 ## User-facing changes
