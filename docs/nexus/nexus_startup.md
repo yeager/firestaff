@@ -2084,6 +2084,11 @@ row copier skips zero pixels. The writer opcode and loaded WorkRAM-HI bytes
 match the retail executable. The pseudocode export used Ghidra 12.2 with the
 `SuperH:BE:32:SH-2` language, importing `DM.BIN` at `0x06010000` and running
 [pcrecomp's `DecompAddrs.java`](https://github.com/yeager/pcrecomp/blob/main/tools/ghidra/DecompAddrs.java).
+The analysis used pcrecomp revision
+`a85ea970f9e0640ab6546d2ca7a01fccb132973d`; its address-based helper resolves
+each supplied address to the containing Ghidra function. Addresses came from
+the frame-bounded SH-2 trace and retail dispatch table, and the decompilation
+was checked against captured code bytes.
 Reproduce the Firestaff trace join with
 `scripts/analyze_nexus_load_nbg0_menu_trace.py`.
 
@@ -2122,11 +2127,10 @@ counters; additional branches update a separate color component and an
 independent scalar animation. The trace's CRAM writes at `0x05f00100` through
 `0x05f00106` therefore belong to this animation routine. No source join ties
 its WRAM table to `MENU.BPK[55]` or to the six observed NBG0 pixel values.
-The routine is useful retail-code context, but it does not identify the retail
-asset that supplied the Load-panel CRAM colors. The Ghidra log and its
-input/runtime provenance are retained in the external Load-panel trace evidence directory;
-the analysis used pcrecomp's `DecompAddrs.java` with SH-2 big-endian code at
-the retail address map.
+The routine is useful retail-code context for animated CRAM entries. Its
+input/runtime provenance is retained in the external Load-panel trace evidence
+directory; the analysis used pcrecomp's `DecompAddrs.java` with SH-2 big-endian
+code at the retail address map.
 
 ### Load-panel NBG0 palette-to-screenshot join (2026-10-29)
 
@@ -2134,9 +2138,18 @@ The frame-659 Ymir screenshot is an exact 2x match for all 43,889 nonzero
 NBG0 pixels in the visible 320x224 viewport after direct 8bpp CRAM lookup and
 the captured 31/32 color-calculation ratio: 175,556 screenshot pixels across
 the four 2x output samples per source pixel. The check covers all 42 distinct
-visible palette indices. It binds the active CRAM color output to the retail
-screenshot, while leaving zero-index pixels, the source asset for the CRAM
-values, and other screen layers outside this join. Reproduce it with
+visible palette indices. Forty-one used indices match the same-index words in
+the authentic `MENU.BPK` PALT palette exactly. The one exception, index
+`0x83`, has PALT value `0x0000`; the retail animation at `0x06038e30` writes
+`0xffff` to CRAM address `0x106` at frame 655, and the frame-659 screenshot
+uses that animated value. The same routine animates all four entries
+`0x80`–`0x83`; only `0x83` appears among the visible indices. Across all 256
+entries, 250 same-index PALT words match captured CRAM; the two other
+differences, at indices `0x0c` and `0x0d`, are not explained by this animation.
+This binds the visible CRAM output and identifies
+the static MENU.BPK palette values for 41 used indices, while leaving direct
+bulk palette-transfer ownership, zero-index pixels, and other screen layers
+outside this join. Reproduce it with
 `scripts/analyze_nexus_load_nbg0_menu_trace.py --screenshot
 /path/to/load-screen.png` against the authenticated Japanese retail data and
 complete trace bundle. The analyzer output is retained as

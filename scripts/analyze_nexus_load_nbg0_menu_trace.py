@@ -105,8 +105,8 @@ def find_surface_crops(surfaces: list[tuple[str, bytes]],
 
 
 def verify_nbg0_screenshot(capture: Path, regions: dict[str, bytes],
-                           screenshot: Path, frame: int
-                           ) -> tuple[int, int, set[int], str]:
+                           screenshot: Path, frame: int, palt: bytes
+                           ) -> tuple[int, int, set[int], int, int, str]:
     """Match every visible nonzero NBG0 pixel to its retail CRAM output."""
     from PIL import Image
 
@@ -134,6 +134,8 @@ def verify_nbg0_screenshot(capture: Path, regions: dict[str, bytes],
         raise ValueError("expected the retained 640x448 2x Ymir screenshot")
     vram = regions["vdp2-vram"]
     cram = regions["vdp2-cram"]
+    if len(palt) != 512:
+        raise ValueError("MENU.BPK PALT must contain 256 words")
     seen_indices: set[int] = set()
     source_pixels = 0
     compared_pixels = 0
@@ -158,8 +160,68 @@ def verify_nbg0_screenshot(capture: Path, regions: dict[str, bytes],
                     compared_pixels += 1
     if source_pixels == 0:
         raise ValueError("visible NBG0 bitmap contains no nonzero pixels")
+    source_palette_indices = {
+        index for index in seen_indices
+        if palt[index * 2:index * 2 + 2] == cram[index * 2:index * 2 + 2]
+    }
+    unmatched_palette_indices = seen_indices - source_palette_indices
+    if unmatched_palette_indices != {0x83}:
+        raise ValueError(
+            "visible MENU.BPK PALT/CRAM differences changed: "
+            f"{sorted(unmatched_palette_indices)}")
+    if palt[0x83 * 2:0x83 * 2 + 2] != b"\0\0" or \
+            cram[0x83 * 2:0x83 * 2 + 2] != b"\xff\xff":
+        raise ValueError("index 0x83 is not the observed animated CRAM override")
+
+    sh2_receipt = read_receipt(
+        capture / "sh2-vdp2-write-trace-bundle.txt",
+        "ymir-sh2-vdp2-write-trace-bundle-v1",
+    )
+    if (sh2_receipt.get("trace_file_complete") != "1" or
+            sh2_receipt.get("master_dropped") != "0" or
+            sh2_receipt.get("slave_dropped") != "0"):
+        raise ValueError("CRAM animation SH-2 trace is incomplete or dropped")
+    animation_writer_found = False
+    trace_path = capture / sh2_receipt.get(
+        "trace_file", "sh2-vdp2-write-trace.csv")
+    with trace_path.open(encoding="ascii", newline="") as stream:
+        for row in csv.DictReader(stream):
+            if (row.get("sh2") == "master" and
+                    row.get("vdp1_frame") == "655" and
+                    row.get("pc") == "0x6038eda" and
+                    row.get("caller_target") == "0x6038e30" and
+                    row.get("address") == "0x5f00106" and
+                    row.get("width") == "2" and row.get("value") == "0xffff"):
+                animation_writer_found = True
+                break
+    if not animation_writer_found:
+        raise ValueError("retail animation writer for CRAM index 0x83 is unbound")
+
+    vdp2_animation_write_found = False
+    with (capture / "vdp2-memory-write-trace.csv").open(
+            encoding="ascii", newline="") as stream:
+        for row in csv.DictReader(stream):
+            if (row.get("memory") == "CRAM" and
+                    row.get("vdp1_frame") == "655" and
+                    row.get("address") == "0x106" and
+                    row.get("width") == "2" and row.get("value") == "0xffff"):
+                vdp2_animation_write_found = True
+                break
+    if not vdp2_animation_write_found:
+        raise ValueError("CRAM bus trace misses the index 0x83 animation write")
+
+    palt_cram_mismatches = {
+        index for index in range(256)
+        if palt[index * 2:index * 2 + 2] != cram[index * 2:index * 2 + 2]
+    }
+    if palt_cram_mismatches != {0x0C, 0x0D, 0x80, 0x81, 0x82, 0x83}:
+        raise ValueError(
+            "MENU.BPK PALT/CRAM difference set changed: "
+            f"{sorted(palt_cram_mismatches)}")
+    palt_cram_exact_entries = 256 - len(palt_cram_mismatches)
     screenshot_hash = hashlib.sha256(screenshot.read_bytes()).hexdigest()
-    return source_pixels, compared_pixels, seen_indices, screenshot_hash
+    return (source_pixels, compared_pixels, seen_indices,
+            len(source_palette_indices), palt_cram_exact_entries, screenshot_hash)
 
 
 def main() -> int:
@@ -372,7 +434,8 @@ def main() -> int:
         palette_receipt = None
         if args.screenshot:
             palette_receipt = verify_nbg0_screenshot(
-                args.capture, regions, args.screenshot, capture_frame)
+                args.capture, regions, args.screenshot, capture_frame,
+                _palette)
     except (KeyError, OSError, TypeError, ValueError, UnicodeError) as error:
         print(f"NEXUS_LOAD_NBG0_MENU_TRACE_INVALID: {error}")
         return 1
@@ -405,10 +468,26 @@ def main() -> int:
     print("opaque_menu_surface_unique_bpk_crop=verified")
     print("opaque_menu_surface_source_to_nbg0=verified")
     if palette_receipt:
-        source_pixels, compared_pixels, indices, screenshot_hash = palette_receipt
+        (source_pixels, compared_pixels, indices,
+         visible_palt_matches, total_palt_matches,
+         screenshot_hash) = palette_receipt
         print(f"visible_nbg0_palette_indices={len(indices)}")
         print(f"visible_nbg0_source_pixels={source_pixels}")
         print(f"screenshot_pixels_matched={compared_pixels}")
+        print(f"visible_menu_palt_exact_indices={visible_palt_matches}/{len(indices)}")
+        palt_unmatched = sorted(indices - {
+            index for index in indices
+            if _palette[index * 2:index * 2 + 2] ==
+            regions["vdp2-cram"][index * 2:index * 2 + 2]
+        })
+        print("visible_menu_palt_unmatched_indices=" +
+              ",".join(f"0x{index:02x}" for index in palt_unmatched))
+        print(f"menu_palt_cram_exact_entries={total_palt_matches}/256")
+        print("menu_palt_cram_mismatch_indices=" +
+              ",".join(f"0x{index:02x}" for index in sorted(
+                  {0x0C, 0x0D, 0x80, 0x81, 0x82, 0x83})))
+        print("animated_palette_override_index=0x83")
+        print("animated_palette_override_writer=0x06038eda@frame655")
         print(f"screenshot_sha256={screenshot_hash}")
         print("visible_nbg0_palette_to_screenshot=verified")
     else:

@@ -61,8 +61,10 @@ is a partial pixel-index transport join. A same-state screenshot comparison
 now verifies direct CRAM output for all 42 visible nonzero NBG0 indices, but
 an additional row-wise trace join binds unique `MENU.BPK[60]` (228x100) to
 22,800 frame-bounded SH-2 writes at NBG0 `(16,112)`. The retail resource that
-supplied the CRAM colors, the remaining bitmap producer, and complete screen
-composition remain unbound. No exact MENU/STABG or DGN
+supplied 41 of the 42 visible palette values is the same-index `MENU.BPK` PALT
+word; the remaining index `0x83` is overwritten by a frame-traced retail
+animation. Direct bulk palette transfer, the remaining bitmap producer, and
+complete screen composition remain unbound. No exact MENU/STABG or DGN
 Structure2 palette asset match was found. Identify the full NBG0 producer,
 palette resource owner, and remaining composition before admitting a Firestaff
 Load-panel renderer. See the frame-bounded evidence and reproduction command in
@@ -544,8 +546,10 @@ before using these materials to render the Configuration scene.
 The authentic Load-panel NBG0 work now binds an 86-byte `MENU.BPK[55]` source
 span and the unique 228x100 `MENU.BPK[60]` panel base to frame-bounded SH-2 and
 VDP2 VRAM writes. The captured CRAM palette output is pixel-exact against the
-Ymir screenshot for 43,889 visible NBG0 pixels; its retail resource owner and
-complete bitmap composition remain unresolved. A separate
+Ymir screenshot for 43,889 visible NBG0 pixels. The PALT table matches the
+captured CRAM at all 41 static used indices; a retail animation supplies
+visible index `0x83`. Direct bulk palette-transfer ownership and complete
+bitmap composition remain unresolved. A separate
 frame-536 CRAM routine at `0x06038e30` is a retail color animation that updates
 a four-row WRAM table; no evidence joins that table to the menu surface or
 NBG0 color-index source. Continue source tracing for the CRAM resource owner,
