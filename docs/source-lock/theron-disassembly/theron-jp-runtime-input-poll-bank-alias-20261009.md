@@ -3,10 +3,10 @@
 ## Scope
 
 This note separates an authentic JP runtime controller-poll address from the
-static Stage-2 bytes at the same HuC6280 logical address. It records a static
-byte-for-byte match between runtime instructions and repeated Track 02 source
-sequences, but does not identify which duplicate sector was loaded by the
-emulator, the runtime source LBA, or a gameplay effect.
+static Stage-2 bytes at the same HuC6280 logical address. A cold-start follow-up
+identifies Track 02 LBA 3,625 as the source of the 21 poll-code bytes copied to
+runtime RAM in that capture. It does not establish what those bytes do or whether
+they caused a gameplay effect.
 
 ## Static Track 02 bytes
 
