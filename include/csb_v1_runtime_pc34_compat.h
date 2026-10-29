@@ -1221,6 +1221,10 @@ typedef struct {
     int new_party_dir;
     int runtime_state_changed;
     int unsupported_runtime_command;
+    /* A source map transition completed, but destination active-group
+     * initialization failed. Keep the transition receipt truthful and let
+     * callers surface the incomplete destination state. */
+    int runtime_transition_failed;
     int movement_command_handled;
     int movement_step_attempted;
     int movement_step_applied;
@@ -2723,6 +2727,12 @@ int csb_v1_runtime_group_record_creature_cell(
  * the current dungeon data cannot be traversed safely. */
 int csb_v1_runtime_f0195_group_add_all_active_groups(
     CSB_V1_RuntimeProfile *profile);
+
+/* Initializes the destination map's active groups and records failures in the
+ * input transition receipt so M11 can report incomplete destination state. */
+int csb_v1_runtime_initialize_destination_groups(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_InputCommandRuntimeResult *result);
 
 int csb_v1_runtime_group_overlay_info(
     const CSB_V1_DungeonData *dungeon,

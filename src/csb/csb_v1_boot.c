@@ -10108,6 +10108,17 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
             profile->default_party_x = (uint32_t)profile->runtime.party_x;
             profile->default_party_y = (uint32_t)profile->runtime.party_y;
             profile->default_party_dir = (uint32_t)profile->runtime.party_dir;
+            /* ReDMCSB MAIN.C F003:200-231 calls F0195 after loading the current
+             * map. Seed CSB's source C04 active-group pool and initial C37
+             * events before the first playable frame. */
+            if (csb_v1_runtime_f0195_group_add_all_active_groups(
+                    &profile->runtime) < 0) {
+                csb_v1_runtime_cleanup(&profile->runtime);
+                profile->state = CSB_V1_BOOT_STATE_ASSETS_READY;
+                csb_v1_engine_version_display_set_csb(0);
+                profile->engine_version_displayed = 0;
+                return -1;
+            }
         } else {
             /* The loader retains its pre-source-lock 16-bit fixture reader
              * for isolated parser tests.  A booted CSB session may own only

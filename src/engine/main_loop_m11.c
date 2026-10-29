@@ -297,6 +297,22 @@ uint32_t M11_GameView_IdleTickIntervalMs(const M11_GameViewState* gameView,
 int M11_GameView_DropsIdleCatchupForStartup(const M11_GameViewState* gameView)
 {
     if (!gameView) return 0;
+    if (gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        gameView->csbState.startup_title_active) {
+        const CSB_V1_BootProfile* profile =
+            (const CSB_V1_BootProfile*)gameView->csbBootProfile;
+        if (profile &&
+            (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+             profile->variant_id == CSB_V1_VARIANT_ST21_EN)) {
+            /* ReDMCSB ANIM.C advances the next script step after the
+             * current drawing work and its VBlank wait. If host rendering
+             * falls behind, replay source frames one at a time instead of
+             * consuming several Atari VBlanks and presenting only the last
+             * frame. The source sequence may take longer on a slow host,
+             * but its animation frames remain visible and in order. */
+            return 1;
+        }
+    }
     if (gameView->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
         gameView->dm2State.startup_menu_active) {
         /* DM2 movie and animation steps advance in Draw against absolute
@@ -789,6 +805,10 @@ typedef struct {
     int dm2MacMovieComplete;
     int dm2MacMovieRejected;
     uint32_t dm2MacMovieFrameIndex;
+    uint32_t csbAtariLastPresentedVbl;
+    uint32_t csbAtariPresentedFrameCount;
+    uint32_t csbAtariSkippedVblCount;
+    int csbAtariPresentationTracked;
 } M11_DebugStartupTrace;
 
 static int m11_game_option_slot(const char *gameId);
@@ -939,6 +959,46 @@ static void m11_debug_trace_startup_frame(M11_DebugStartupTrace* trace,
             gameView->dm2MacMovieDecoder.frame_index;
     }
     trace->valid = 1;
+}
+
+static void m11_debug_trace_csb_atari_present(
+    M11_DebugStartupTrace* trace, const M11_GameViewState* gameView,
+    int presented) {
+    const CSB_V1_BootProfile* profile;
+    if (!trace || !gameView || gameView->sourceKind != M11_GAME_SOURCE_CSB_BOOT)
+        return;
+    profile = (const CSB_V1_BootProfile*)gameView->csbBootProfile;
+    if (!profile || (profile->variant_id != CSB_V1_VARIANT_ST20_EN &&
+                     profile->variant_id != CSB_V1_VARIANT_ST21_EN))
+        return;
+    if (presented && gameView->csbState.startup_title_active) {
+        const uint32_t current = gameView->csbAtariStAnimationVbl;
+        if (trace->csbAtariPresentationTracked &&
+            current > trace->csbAtariLastPresentedVbl + 1u) {
+            const uint32_t skipped = current -
+                trace->csbAtariLastPresentedVbl - 1u;
+            trace->csbAtariSkippedVblCount += skipped;
+            fprintf(stderr,
+                    "firestaff: startup-frame-gap game=csb platform=atari phase=animate-scr previous-vbl=%u presented-vbl=%u skipped-source-frames=%u cumulative-skipped=%u\n",
+                    trace->csbAtariLastPresentedVbl, current, skipped,
+                    trace->csbAtariSkippedVblCount);
+        }
+        trace->csbAtariLastPresentedVbl = current;
+        trace->csbAtariPresentationTracked = 1;
+        ++trace->csbAtariPresentedFrameCount;
+    } else if (trace->csbAtariPresentationTracked &&
+               !gameView->csbState.startup_title_active) {
+        fprintf(stderr,
+                "firestaff: startup-presentation-summary game=csb platform=atari phase=animate-scr tracked-presents=%u last-vbl=%u skipped-source-frames=%u required-vbl=%u\n",
+                trace->csbAtariPresentedFrameCount,
+                trace->csbAtariLastPresentedVbl,
+                trace->csbAtariSkippedVblCount,
+                gameView->csbAtariStAnimationEndVbl);
+        trace->csbAtariPresentationTracked = 0;
+        trace->csbAtariLastPresentedVbl = 0u;
+        trace->csbAtariPresentedFrameCount = 0u;
+        trace->csbAtariSkippedVblCount = 0u;
+    }
 }
 
 static void m11_debug_log_launch_selection(
@@ -2883,15 +2943,44 @@ static void m11_debug_native_game_state(const M11_GameViewState* state,
         const CSB_V1_BootProfile* boot =
             (const CSB_V1_BootProfile*)state->csbBootProfile;
         const CSB_V1_RuntimeProfile* runtime = &boot->runtime;
+        unsigned int active_group_count = 0u;
+        unsigned int pending_group_behavior_events = 0u;
+        uint16_t active_group_limit = runtime->active_group_state_count;
+        int group_index;
+        int event_index;
+        if (active_group_limit > CSB_V1_RUNTIME_ACTIVE_GROUP_CAP)
+            active_group_limit = CSB_V1_RUNTIME_ACTIVE_GROUP_CAP;
+        for (group_index = 0; group_index < (int)active_group_limit;
+             ++group_index) {
+            if (runtime->active_group_state[group_index].valid)
+                ++active_group_count;
+        }
+        for (event_index = 0;
+             event_index < (int)runtime->timeline_queue.eventCount &&
+                 event_index < DM1_EVENT_MAX_COUNT;
+             ++event_index) {
+            uint16_t queued_index =
+                runtime->timeline_queue.timeline[event_index];
+            const struct DM1_Event_V1* event;
+            if (queued_index >= DM1_EVENT_MAX_COUNT) continue;
+            event = &runtime->timeline_queue.events[queued_index];
+            if (event->type == DM1_EVENT_UPDATE_BEHAVIOR_GROUP &&
+                DM1_MAP_TIME_MAP(event->map_time) == runtime->current_level)
+                ++pending_group_behavior_events;
+        }
         if (reportSummary) {
             fprintf(stderr,
                     "firestaff: game-state game=csb source=csb-runtime "
                     "tick=%u level=%d party=%d,%d,%d dir=%d champions=%d "
-                    "leader=%d pending-champion-damage=",
+                    "leader=%d active-monsters=%u "
+                    "pending-monster-behavior-events=%u projectiles=%d "
+                    "explosions=%d pending-champion-damage=",
                     runtime->game_time, runtime->current_level,
                     runtime->party_x, runtime->party_y, runtime->party_z,
                     runtime->party_dir, runtime->champion_count,
-                    runtime->leader_index);
+                    runtime->leader_index, active_group_count,
+                    pending_group_behavior_events,
+                    runtime->projectiles.count, runtime->explosions.count);
             {
                 unsigned int pending = 0;
                 int i;
@@ -2902,10 +2991,49 @@ static void m11_debug_native_game_state(const M11_GameViewState* state,
             fprintf(stderr,
                     "firestaff: game-debug-capabilities game=csb "
                     "source=csb-runtime actions=melee-and-projectile-launch "
+                    "monster-groups=source-active-group-state "
                     "monster-movement=active-group-position "
                     "player-attack=melee-and-projectile-launch "
                     "monster-health=melee-only-receipt "
-                    "champion-health=source-party-state\n");
+                    "champion-health=source-party-state "
+                    "projectiles=source-runtime-list "
+                    "explosions=source-runtime-list\n");
+            for (group_index = 0; group_index < (int)active_group_limit;
+                 ++group_index) {
+                const CSB_V1_RuntimeActiveGroupState* group =
+                    &runtime->active_group_state[group_index];
+                const uint8_t* group_record = NULL;
+                int group_record_type = -1;
+                int group_record_size = 0;
+                int creature_type = -1;
+                int creature_count = 0;
+                if (!group->valid) continue;
+                if (runtime->dungeon_handle) {
+                    group_record = csb_v1_dungeon_get_thing_record(
+                        runtime->dungeon_handle, group->group_thing,
+                        &group_record_type, NULL, &group_record_size);
+                }
+                if (group_record && group_record_type == 4 &&
+                    group_record_size >= 16) {
+                    const unsigned int group_flags =
+                        (unsigned int)group_record[14] |
+                        ((unsigned int)group_record[15] << 8);
+                    creature_type = group_record[4];
+                    creature_count = (int)((group_flags >> 5) & 0x03u) + 1;
+                }
+                fprintf(stderr,
+                        "firestaff: game-entity game=csb tick=%u "
+                        "type=monster-group thing=0x%04x map=%d x=%d y=%d "
+                        "creature-type=%d creature-count=%d cells=0x%02x "
+                        "directions=0x%04x target=%d,%d\n",
+                        runtime->game_time,
+                        (unsigned int)group->group_thing, group->map_index,
+                        group->map_x, group->map_y, creature_type,
+                        creature_count,
+                        (unsigned int)group->cells,
+                        (unsigned int)group->directions,
+                        group->target_map_x, group->target_map_y);
+            }
         }
         if (snapshotLaunchSerial != g_m11_sync_launch_serial) {
             snapshotLaunchSerial = g_m11_sync_launch_serial;
@@ -3402,7 +3530,8 @@ static void m11_debug_game_action(const M11_GameViewState* state,
         state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
         fprintf(stderr,
                 "firestaff: game-action game=%s tick=native input=%s "
-                "result=%d action=\"%s\" outcome=\"%s\" "
+                "result=%d last-ui-action=\"%s\" "
+                "last-ui-outcome=\"%s\" "
                 "compatibility-world=not-authoritative\n",
                 state->sourceId[0] ? state->sourceId : "unknown",
                 m11_debug_input_name(input), (int)result,
@@ -3438,7 +3567,8 @@ static void m11_debug_game_pointer(const M11_GameViewState* state,
         state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
         fprintf(stderr,
                 "firestaff: game-action game=%s tick=native input=%s "
-                "point=%d,%d result=%d action=\"%s\" outcome=\"%s\" "
+                "point=%d,%d result=%d last-ui-action=\"%s\" "
+                "last-ui-outcome=\"%s\" "
                 "compatibility-world=not-authoritative\n",
                 state->sourceId[0] ? state->sourceId : "unknown",
                 eventName ? eventName : "pointer", sourceX, sourceY,
@@ -5969,7 +6099,17 @@ static int m11_play_ftl_swoosh_for_game_if_available(
     memset(&swshAudio, 0, sizeof(swshAudio));
     memset(&csbBoot, 0, sizeof(csbBoot));
     memset(&dm1Media, 0, sizeof(dm1Media));
-    if (gameId && strcmp(gameId, "csb") == 0 && dataDir && dataDir[0]) {
+    if (gameId && strcmp(gameId, "csb") == 0 && dataDir && dataDir[0] &&
+        menuState) {
+        M12_LaunchIntent intent = M12_StartupMenu_GetLaunchIntent(menuState);
+        int optionsSlot = M12_StartupMenu_GetGameOptionsSlot("csb");
+        int versionIndex = intent.valid && intent.options.versionIndex >= 0
+            ? intent.options.versionIndex
+            : (optionsSlot >= 0 && optionsSlot < M12_CONFIG_GAME_COUNT
+                   ? menuState->gameOptions[optionsSlot].versionIndex : -1);
+        const int selectedIsAmiga = versionIndex >= 0 &&
+            M12_AssetStatus_GetVersionArchitecture(
+                "csb", (size_t)versionIndex) == M12_ARCH_AMIGA;
         CSB_V1_BootProfile amigaBoot;
         CSB_V1_AmigaSwshFtlAssets amigaAssets;
         char amigaPath[FSP_PATH_MAX];
@@ -5992,7 +6132,12 @@ static int m11_play_ftl_swoosh_for_game_if_available(
         memset(&amigaAssets, 0, sizeof(amigaAssets));
         memset(&amigaAudio, 0, sizeof(amigaAudio));
         csb_v1_boot_profile_init(&amigaBoot);
-        if (csb_v1_boot_scan_assets(&amigaBoot, dataDir) == 0 &&
+        /* APPA.C's SWSH.FTL prelude belongs to the selected Amiga program.
+         * A shared library may also contain an Amiga package when Atari ST
+         * or FM Towns is selected; discovering that sibling must not prepend
+         * another platform's logo to the selected startup sequence. */
+        if (selectedIsAmiga &&
+            csb_v1_boot_scan_assets(&amigaBoot, dataDir) == 0 &&
             amigaBoot.assets_verified &&
             amigaBoot.variant_id == CSB_V1_VARIANT_AMIGA31_MULTI) {
             amigaProfile = 1;
@@ -15274,6 +15419,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     const uint64_t foodFrameSerial = gameView.v1FoodPresentationSerial;
                     const int presented = m11_present_game_frame_and_publish_startup_capture(
                         &gameView, &menuState);
+                    if (o->debug) {
+                        m11_debug_trace_csb_atari_present(
+                            &debugStartupTrace, &gameView, presented);
+                    }
                     if (o->debug && presented) {
                         ++perfPresentedCount;
                         m11_debug_motion_presented(&gameView, SDL_GetPerformanceCounter());
@@ -15317,20 +15466,35 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
          * wait only for the portion of the target interval spent outside
          * rendering and event handling. */
         {
+            Uint64 loopWaitInterval = interval;
+            if (gameView.sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+                gameView.csbState.startup_title_active) {
+                const CSB_V1_BootProfile* profile =
+                    (const CSB_V1_BootProfile*)gameView.csbBootProfile;
+                if (profile &&
+                    (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+                     profile->variant_id == CSB_V1_VARIANT_ST21_EN)) {
+                    /* Poll the 50 Hz Atari source clock at a short quantum.
+                     * The shared 16 ms UI cadence plus frame presentation
+                     * previously made each animation step arrive only every
+                     * ~32 ms on the software renderer. */
+                    loopWaitInterval = 1u;
+                }
+            }
 #if SDL_VERSION_ATLEAST(3, 2, 0)
             /* SDL_Delay may oversleep by several milliseconds on macOS.
              * Keep the existing host interval, but measure its remainder
              * without millisecond truncation and request a precise wait.
              * Original game clocks and startup VBlank waits are separate. */
-            const Uint64 intervalNs = interval * SDL_NS_PER_MS;
+            const Uint64 intervalNs = loopWaitInterval * SDL_NS_PER_MS;
             const Uint64 elapsedNs = SDL_GetTicksNS() - loopStartNs;
             if (elapsedNs < intervalNs)
                 SDL_DelayPrecise(intervalNs - elapsedNs);
 #else
             const Uint32 elapsedMs =
                 (Uint32)SDL_GetTicks() - loopStartMs;
-            if ((Uint64)elapsedMs < interval)
-                SDL_Delay((Uint32)(interval - (Uint64)elapsedMs));
+            if ((Uint64)elapsedMs < loopWaitInterval)
+                SDL_Delay((Uint32)(loopWaitInterval - (Uint64)elapsedMs));
 #endif
         }
         now = SDL_GetTicks();

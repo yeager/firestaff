@@ -24,6 +24,16 @@ dm2_archive=${FIRESTAFF_DM2_FMTOWNS_ARCHIVE:-"$data_root/dm2/Dungeon-Master-II-S
 dm2_dos_archive=${FIRESTAFF_DM2_DOS_ARCHIVE:-"$data_root/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"}
 dm2_mac_archive=${FIRESTAFF_DM2_MAC_ARCHIVE:-"$data_root/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip"}
 dm2_amiga_archive=${FIRESTAFF_DM2_AMIGA_ARCHIVE:-"$data_root/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip"}
+if [ -z "${FIRESTAFF_DM2_MAC_ARCHIVE:-}" ] && [ ! -f "$dm2_mac_archive" ]; then
+    # Use the user's extracted authentic Macintosh retail files when the
+    # optional ZIP alias is absent. The game scanner accepts DMFiles roots.
+    candidate="$data_root/dm2/mac-en/Dungeon Master II/DMFiles"
+    if [ -f "$candidate/Graphics.dat" ] &&
+       [ -f "$candidate/Dungeon.dat" ] &&
+       [ -f "$candidate/Title.MooV" ]; then
+        dm2_mac_archive=$candidate
+    fi
+fi
 
 if [ ! -x "$app" ] ||
    { [ "$test_mode" != dm2-amiga ] && [ "$test_mode" != dm1-sourcefile ] &&
@@ -588,7 +598,8 @@ if [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
         echo "SKIP: authentic DM2 DOS archive unavailable: $dm2_dos_archive"
     fi
     if { [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
-         [ "$test_mode" = dm2-mac ]; } && [ -f "$dm2_mac_archive" ]; then
+         [ "$test_mode" = dm2-mac ]; } &&
+       { [ -f "$dm2_mac_archive" ] || [ -d "$dm2_mac_archive" ]; }; then
     run_return_to_menu_case dm2 mac \
         'key:enter,key:enter,key:enter,wait:1200,key:enter,wait:30,click:115:65,wait:30,click:112:130,wait:30,key:right,wait:30,key:s,wait:30,key:up,wait:20,key:command+q,key:enter' \
         45000 'startup-frame game=dm2 .*phase=dm2-runtime .*level-loaded=1' \

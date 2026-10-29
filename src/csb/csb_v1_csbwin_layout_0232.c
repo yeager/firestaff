@@ -270,19 +270,11 @@ int csb_v1_csbwin_layout_0232_build_hud_material_plan(
             return 0;
         }
     }
+    /* ReDMCSB DEFS.H:8152 declares F0345_INVENTORY_DrawPanel_FoodWaterPoisoned
+     * as a separate inventory draw. These four rectangles are transient C017
+     * content; composing them in the static plan put the panel over F0128
+     * even while inventory was closed. */
     if (!csb_v1_csbwin_layout_0232_append_hud_material(
-            out_plan, CSB_V1_CSBWIN_HUD_MATERIAL_FOOD_WATER, 20u, 0u,
-            &layout->food_water_box) ||
-        !csb_v1_csbwin_layout_0232_append_hud_material(
-            out_plan, CSB_V1_CSBWIN_HUD_MATERIAL_FOOD_LABEL, 30u, 0u,
-            &layout->food_label_box) ||
-        !csb_v1_csbwin_layout_0232_append_hud_material(
-            out_plan, CSB_V1_CSBWIN_HUD_MATERIAL_WATER_LABEL, 31u, 0u,
-            &layout->water_label_box) ||
-        !csb_v1_csbwin_layout_0232_append_hud_material(
-            out_plan, CSB_V1_CSBWIN_HUD_MATERIAL_POISON, 32u, 0u,
-            &layout->poison_box) ||
-        !csb_v1_csbwin_layout_0232_append_hud_material(
             out_plan, CSB_V1_CSBWIN_HUD_MATERIAL_MOVEMENT, 13u, 0u,
             &layout->movement_box) ||
         !csb_v1_csbwin_layout_0232_append_hud_material(

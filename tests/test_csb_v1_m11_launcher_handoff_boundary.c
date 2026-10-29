@@ -866,8 +866,8 @@ static int native_handoff_find_live_c127_pose(M11_GameViewState *view,
                             view->world.party.mapY = party_y;
                             view->world.party.direction = direction;
                             if (out_ordinal) {
-                                *out_ordinal =
-                                    (int)view->world.things->sensors[sensor_index].sensorData;
+                                *out_ordinal = (int)view->world.things
+                                    ->sensors[sensor_index].sensorData;
                             }
                             return 1;
                         }
@@ -889,7 +889,7 @@ static void expect_atari_first_mirror_from_fresh_start(
     static const M12_MenuInput route[] = {
         M12_MENU_INPUT_UP, M12_MENU_INPUT_UP, M12_MENU_INPUT_UP,
         M12_MENU_INPUT_UP, M12_MENU_INPUT_UP, M12_MENU_INPUT_UP,
-        M12_MENU_INPUT_UP, M12_MENU_INPUT_STRAFE_LEFT,
+        M12_MENU_INPUT_UP, M12_MENU_INPUT_UP, M12_MENU_INPUT_STRAFE_LEFT,
         M12_MENU_INPUT_TURN_RIGHT, M12_MENU_INPUT_TURN_RIGHT
     };
     CSB_V1_BootProfile *profile;
@@ -932,16 +932,19 @@ static void expect_atari_first_mirror_from_fresh_start(
         }
     }
     expect_true(view->world.party.mapIndex == 0 &&
-                    view->world.party.mapX == 10 && view->world.party.mapY == 7 &&
+                    view->world.party.mapX == 10 && view->world.party.mapY == 8 &&
                     (view->world.party.direction & 3) == 0 &&
                     profile->runtime.current_level == 0 &&
-                    profile->runtime.party_x == 10 && profile->runtime.party_y == 7 &&
+                    profile->runtime.party_x == 10 && profile->runtime.party_y == 8 &&
                     (profile->runtime.party_dir & 3) == 0 &&
                     view->world.party.championCount == 0 &&
                     M11_GameView_GetFrontMirrorOrdinal(view) == 4,
                 "authentic Atari input reaches retail C127 ordinal 4 from the new-game spawn");
+    /* ReDMCSB DUNVIEW's Atari source aperture begins at 48,33. The C127
+     * front-wall portrait is projected at 96,35 with size 32x29, so use its
+     * actual on-screen center (160,82), not the old PC34-relative point. */
     expect_true(M11_GameView_HandlePointerButton(
-                    view, 112, 82, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                    view, 160, 82, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
                     M11_GAME_INPUT_REDRAW && view->candidateMirrorPanelActive &&
                     view->candidateMirrorOrdinal == 4 &&
                     view->world.party.championCount == 1 &&
@@ -968,14 +971,14 @@ static void expect_atari_first_mirror_from_fresh_start(
         expect_true(movement_result == M11_GAME_INPUT_REDRAW &&
                         view->world.party.mapIndex == 0 &&
                         view->world.party.mapX == 9 &&
-                        view->world.party.mapY == 7 &&
+                        view->world.party.mapY == 8 &&
                         (view->world.party.direction & 3) == 0 &&
                         profile->runtime.current_level == 0 &&
                         profile->runtime.party_x == 9 &&
-                        profile->runtime.party_y == 7 &&
+                        profile->runtime.party_y == 8 &&
                         (profile->runtime.party_dir & 3) == 0 &&
                         profile->runtime.party_state.PartyMapX == 9 &&
-                        profile->runtime.party_state.PartyMapY == 7 &&
+                        profile->runtime.party_state.PartyMapY == 8 &&
                         profile->runtime.party_state.PartyDirection == 0 &&
                         view->world.party.championCount == 1 &&
                         profile->runtime.party_state.ChampionCount == 1 &&
@@ -989,10 +992,9 @@ static void expect_atari_first_mirror_from_fresh_start(
          * CLIKCHAM.C G0411 leader selected by the first C160. */
         static const M12_MenuInput second_route[] = {
             M12_MENU_INPUT_TURN_RIGHT,
-            M12_MENU_INPUT_UP, M12_MENU_INPUT_UP, M12_MENU_INPUT_UP,
-            M12_MENU_INPUT_TURN_RIGHT, M12_MENU_INPUT_TURN_RIGHT,
-            M12_MENU_INPUT_UP, M12_MENU_INPUT_TURN_LEFT,
-            M12_MENU_INPUT_UP, M12_MENU_INPUT_TURN_LEFT
+            M12_MENU_INPUT_UP, M12_MENU_INPUT_UP,
+            M12_MENU_INPUT_TURN_RIGHT, M12_MENU_INPUT_UP,
+            M12_MENU_INPUT_TURN_LEFT
         };
         size_t step;
         for (step = 0u; step < sizeof(second_route) / sizeof(second_route[0]);
@@ -1007,12 +1009,12 @@ static void expect_atari_first_mirror_from_fresh_start(
                         "Atari second C127 corridor uses production input");
         }
         expect_true(view->world.party.mapX == 11 &&
-                        view->world.party.mapY == 8 &&
+                        view->world.party.mapY == 9 &&
                         (view->world.party.direction & 3) == 1 &&
                         M11_GameView_GetFrontMirrorOrdinal(view) == 5,
                     "Atari corridor reaches the second retail C127 mirror");
         expect_true(M11_GameView_HandlePointerButton(
-                        view, 112, 82, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                        view, 160, 82, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
                         M11_GAME_INPUT_REDRAW &&
                         view->candidateMirrorPanelActive &&
                         view->world.party.championCount == 2,
@@ -2812,8 +2814,9 @@ static void expect_atari_mini_native_d1c_weapon(M11_GameViewState *view,
     int d1_front_matched = 0, d1_front_opaque = 0, d1_front_changed = 0;
 
     if (!view || !data_dir ||
-        snprintf(save_path, sizeof(save_path), "%s/Chaos Strikes Back Utility.stx::MINI.DAT",
-                 data_dir) >= (int)sizeof(save_path) ||
+        snprintf(save_path, sizeof(save_path),
+                 "%s/Chaos Strikes Back Utility.stx::MINI.DAT", data_dir) >=
+                 (int)sizeof(save_path) ||
         !asset_read_virtual_path_alloc(save_path, &save_bytes, &save_size) ||
         !(candidate = (CSB_V1_DungeonData *)calloc(1u, sizeof(*candidate))) ||
         csb_v1_atari_save_load_dungeon_pc34_compat(
@@ -2902,7 +2905,7 @@ static void expect_atari_mini_native_d1c_weapon(M11_GameViewState *view,
      * square immediately south. From (23,11) facing north it occupies
      * D1C front-left. G0209 subtype 29 selects graphic 372 (64x4).
      * Atari F0129 samples x=(85183+104832*x)>>16 and y=1,3;
-     * G0214's Atari palette bytes /10 give the table below. The fixed
+     * G0214's Atari color-index map gives the table below. The fixed
      * MINI and decoded GRAPHICS.DAT hashes bind this original-media pose. */
     front_thing = csb_v1_dungeon_get_first_thing(candidate, 9, 23, 10);
     record = (uint8_t *)csb_v1_dungeon_get_thing_record(
@@ -2935,7 +2938,7 @@ static void expect_atari_mini_native_d1c_weapon(M11_GameViewState *view,
                     const unsigned char pixel = d2_palette[source & 15u];
                     if (pixel != 10u) {
                         ++d1_front_opaque;
-                        if (d1_front_with_weapon[(125 + row) * 320 + 114 + col] == pixel)
+                        if (d1_front_with_weapon[(126 + row) * 320 + 113 + col] == pixel)
                             ++d1_front_matched;
                     }
                 }
@@ -2947,8 +2950,8 @@ static void expect_atari_mini_native_d1c_weapon(M11_GameViewState *view,
             M11_GameView_Draw(view, without_weapon, 320, 200);
             for (int row = 0; row < 2; ++row)
                 for (int col = 0; col < 40; ++col)
-                    if (d1_front_with_weapon[(125 + row) * 320 + 114 + col] !=
-                        without_weapon[(125 + row) * 320 + 114 + col])
+                    if (d1_front_with_weapon[(126 + row) * 320 + 113 + col] !=
+                        without_weapon[(126 + row) * 320 + 113 + col])
                         ++d1_front_changed;
         }
     }
@@ -2997,7 +3000,7 @@ static void expect_atari_mini_native_d1c_weapon(M11_GameViewState *view,
                             chain_graphic->pixels[row * 16 + col];
                         if (pixel != 10u) {
                             ++back_opaque;
-                            if (chain_with[(135 + row) * 320 + 186 + col] == pixel)
+                            if (chain_with[(135 + row) * 320 + 191 + col] == pixel)
                                 ++back_matched;
                         }
                     }
@@ -3011,7 +3014,7 @@ static void expect_atari_mini_native_d1c_weapon(M11_GameViewState *view,
                             d2_palette[chain_graphic->pixels[sy * 16 + sx]];
                         if (pixel != 10u) {
                             ++front_opaque;
-                            if (chain_with[(123 + row) * 320 + 124 + col] == pixel)
+                            if (chain_with[(124 + row) * 320 + 128 + col] == pixel)
                                 ++front_matched;
                         }
                     }
@@ -3026,13 +3029,13 @@ static void expect_atari_mini_native_d1c_weapon(M11_GameViewState *view,
             M11_GameView_Draw(view, chain_without, 320, 200);
             for (int row = 0; row < 7; ++row)
                 for (int col = 0; col < 16; ++col)
-                    if (chain_with[(135 + row) * 320 + 186 + col] !=
-                        chain_without[(135 + row) * 320 + 186 + col])
+                    if (chain_with[(135 + row) * 320 + 191 + col] !=
+                        chain_without[(135 + row) * 320 + 191 + col])
                         ++back_changed;
             for (int row = 0; row < 4; ++row)
                 for (int col = 0; col < 10; ++col)
-                    if (chain_with[(123 + row) * 320 + 124 + col] !=
-                        chain_without[(123 + row) * 320 + 124 + col])
+                    if (chain_with[(124 + row) * 320 + 128 + col] !=
+                        chain_without[(124 + row) * 320 + 128 + col])
                         ++front_changed;
         }
         expect_true(removed && back_opaque > 0 &&
@@ -3090,6 +3093,7 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
         const int requested = requested_modes[mode_index];
         unsigned int tick;
         unsigned int last_vbl = 0u;
+        size_t startup_input_index;
         int animation_pixels_visible = 0;
         int runtime_hud_pixels_visible = 0;
         int runtime_viewport_pixels_visible = 0;
@@ -3191,6 +3195,26 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
             const unsigned int expected_vbl =
                 (unsigned int)(((unsigned long)(tick + 1) * 20u * 50u) /
                                1000u);
+            if (tick == 0u) {
+                static const M12_MenuInput startup_inputs[] = {
+                    M12_MENU_INPUT_UP,
+                    M12_MENU_INPUT_ACCEPT,
+                    M12_MENU_INPUT_ACTION,
+                    M12_MENU_INPUT_BACK
+                };
+                for (startup_input_index = 0u;
+                     startup_input_index < sizeof(startup_inputs) /
+                         sizeof(startup_inputs[0]);
+                     ++startup_input_index) {
+                    expect_true(M11_GameView_HandleInput(
+                                    &view,
+                                    startup_inputs[startup_input_index]) ==
+                                    M11_GAME_INPUT_IGNORED &&
+                                    view.csbState.startup_title_active &&
+                                    view.csbAtariStAnimationVbl == 0u,
+                                "Atari ST ignores host input until the source title handoff");
+                }
+            }
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&view, framebuffer, 320, 200);
             if (count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 0) {

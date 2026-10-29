@@ -83,19 +83,17 @@ failed:
  * variable is exported. */
 static int is_csbwin_graphics_dat(const char *path)
 {
-    FILE *file;
-    unsigned char count_bytes[2];
+    CSB_AtariStLoader loader;
+    int valid;
 
     if (!path || !path[0]) return 0;
-    file = fopen(path, "rb");
-    if (!file) return 0;
-    if (fread(count_bytes, 1, sizeof(count_bytes), file) !=
-        sizeof(count_bytes)) {
-        fclose(file);
-        return 0;
-    }
-    fclose(file);
-    return (((unsigned int)count_bytes[0] << 8) | count_bytes[1]) == 563u;
+    csb_atari_st_graphics_loader_init(&loader);
+    valid = csb_atari_st_graphics_loader_open(&loader, path) &&
+        loader.item_count == 563u &&
+        loader.items[0x232u].decompressed_size ==
+            CSB_V1_CSBWIN_LAYOUT_0232_DECODED_SIZE;
+    csb_atari_st_graphics_loader_close(&loader);
+    return valid;
 }
 
 static void check_real_layout(const char *path)
@@ -288,6 +286,10 @@ static void check_hud_composition(const CSB_V1_CSBWinHudMaterialPlan0232 *plan)
           receipt.source_hash != 0u && receipt.composed_hash != 0u);
     CHECK(frame[30u * 320u + 10u] == 28u + 0x20u);
     CHECK(frame[160u * 320u + 216u] == 9u + 0x20u);
+    /* C232 food/water/poison rectangles are F0345 inventory content, not
+     * static F0128 HUD material. The original viewport at this point stays
+     * untouched in that area. */
+    CHECK(frame[69u * 320u + 110u] == 0xa5u);
     CHECK(frame[0] == 0xa5u);
 
     memcpy(unchanged, frame, sizeof(frame));
@@ -346,8 +348,17 @@ static void check_real_hud_composition(const char *path)
           frame[(size_t)plan.entries[0].destination.y1 * 320u +
                 plan.entries[0].destination.x1] == source.pixels[28][0]);
     CHECK(source.pixels[9] &&
-          frame[(size_t)plan.entries[9].destination.y1 * 320u +
-                plan.entries[9].destination.x1] == source.pixels[9][0]);
+          frame[(size_t)plan.entries[5].destination.y1 * 320u +
+                plan.entries[5].destination.x1] == source.pixels[9][0]);
+    for (index = 0u; index < plan.count; ++index) {
+        CHECK(plan.entries[index].kind !=
+                  CSB_V1_CSBWIN_HUD_MATERIAL_FOOD_WATER &&
+              plan.entries[index].kind !=
+                  CSB_V1_CSBWIN_HUD_MATERIAL_FOOD_LABEL &&
+              plan.entries[index].kind !=
+                  CSB_V1_CSBWIN_HUD_MATERIAL_WATER_LABEL &&
+              plan.entries[index].kind != CSB_V1_CSBWIN_HUD_MATERIAL_POISON);
+    }
     for (index = 0; index < 33u; ++index) free(source.pixels[index]);
 }
 
@@ -1102,10 +1113,19 @@ int main(void)
     CHECK(plan.valid && plan.count == CSB_V1_CSBWIN_LAYOUT_0232_HUD_MATERIAL_COUNT);
     CHECK(plan.entries[0].graphic_index == 28u && plan.entries[0].source_x == 0u);
     CHECK(plan.entries[3].graphic_index == 28u && plan.entries[3].source_x == 57u);
-    CHECK(plan.entries[4].graphic_index == 20u &&
-          plan.entries[4].destination.y1 == 69);
-    CHECK(plan.entries[9].graphic_index == 9u &&
-          plan.entries[9].destination.y1 == 160);
+    CHECK(plan.entries[4].graphic_index == 13u &&
+          plan.entries[4].destination.y1 == 88);
+    CHECK(plan.entries[5].graphic_index == 9u &&
+          plan.entries[5].destination.y1 == 160);
+    for (index = 0; index < (int)plan.count; ++index) {
+        CHECK(plan.entries[index].kind !=
+                  CSB_V1_CSBWIN_HUD_MATERIAL_FOOD_WATER &&
+              plan.entries[index].kind !=
+                  CSB_V1_CSBWIN_HUD_MATERIAL_FOOD_LABEL &&
+              plan.entries[index].kind !=
+                  CSB_V1_CSBWIN_HUD_MATERIAL_WATER_LABEL &&
+              plan.entries[index].kind != CSB_V1_CSBWIN_HUD_MATERIAL_POISON);
+    }
     {
         CSB_V1_CSBWinInventoryIconMaterial0232 material;
         CHECK(csb_v1_csbwin_layout_0232_build_inventory_icon_material(

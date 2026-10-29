@@ -19,7 +19,10 @@ typedef struct {
 #define CSB_V1_CSBWIN_LAYOUT_0232_ICON_COUNT 46u
 #define CSB_V1_CSBWIN_LAYOUT_0232_OBJECT_GRAPHIC_GROUPS 7u
 #define CSB_V1_CSBWIN_LAYOUT_0232_DEFAULT_GRAPHIC_COUNT 70u
-#define CSB_V1_CSBWIN_LAYOUT_0232_HUD_MATERIAL_COUNT 10u
+/* The always-present HUD contains the four direction buttons plus movement
+ * and magic controls. ReDMCSB DEFS.H:8152 declares F0345 as the separate
+ * inventory food/water/poison panel owner. */
+#define CSB_V1_CSBWIN_LAYOUT_0232_HUD_MATERIAL_COUNT 6u
 #define CSB_V1_CSBWIN_LAYOUT_0232_INVENTORY_SLOT_FIRST 8u
 #define CSB_V1_CSBWIN_LAYOUT_0232_INVENTORY_SLOT_COUNT 30u
 #define CSB_V1_CSBWIN_LAYOUT_0232_OBJECT_GRAPHIC_FIRST 42u
@@ -133,8 +136,9 @@ int csb_v1_csbwin_layout_0232_select_light_palette(
 int csb_v1_csbwin_layout_0232_rect_is_screen_valid(
     const CSB_V1_CSBWinRect0232 *rect);
 
-/* Build CSBWin's source-owned HUD material composition. Direction uses a
- * 19-pixel source slice from C028; other entries use their complete graphic. */
+/* Build CSBWin's source-owned always-visible HUD material composition.
+ * Direction uses a 19-pixel slice from C028. ReDMCSB DEFS.H:8152 declares
+ * F0345_INVENTORY_DrawPanel_FoodWaterPoisoned as transient inventory content. */
 int csb_v1_csbwin_layout_0232_build_hud_material_plan(
     const CSB_V1_CSBWinLayout0232 *layout,
     CSB_V1_CSBWinHudMaterialPlan0232 *out_plan);

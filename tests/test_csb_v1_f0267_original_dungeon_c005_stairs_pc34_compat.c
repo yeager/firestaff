@@ -149,6 +149,127 @@ static int find_c005_stairs_route(const CSB_V1_DungeonData *dungeon,
     return 0;
 }
 
+static void dump_original_stairs(const CSB_V1_DungeonData *dungeon)
+{
+    static const char *const directions[4] = { "N", "E", "S", "W" };
+    static const int dx[4] = { 0, 1, 0, -1 };
+    static const int dy[4] = { -1, 0, 1, 0 };
+    int level;
+
+    if (!dungeon || !getenv("FIRESTAFF_CSB_ATARI_DUMP_STAIRS")) return;
+    for (level = 0; level < dungeon->level_count; ++level) {
+        int x;
+        for (x = 0; x < dungeon->level_widths[level]; ++x) {
+            int y;
+            for (y = 0; y < dungeon->level_heights[level]; ++y) {
+                int raw = csb_v1_dungeon_get_raw_square(dungeon, level, x, y);
+                int target_x;
+                int target_y;
+                int target_level;
+                int direction;
+                if (square_type(dungeon, level, x, y) != 3) continue;
+                target_x = x;
+                target_y = y;
+                target_level = csb_v1_dungeon_f0154_get_location_after_level_change_pc34(
+                    dungeon, level, (raw & 0x04) ? -1 : 1,
+                    &target_x, &target_y);
+                printf("Atari source stairs map=%d xy=%d,%d raw=0x%02x exit=%d:%d,%d/%d group=%d C005=%d neighbors=",
+                       level, x, y, raw & 0xff,
+                       csb_v1_dungeon_f0155_get_stairs_exit_direction_pc34(
+                           dungeon, target_level, target_x, target_y),
+                       target_level, target_x, target_y,
+                       has_group(dungeon, level, x, y),
+                       is_remote_c005_only(dungeon, level, x, y));
+                for (direction = 0; direction < 4; ++direction) {
+                    printf("%s%s=%d", direction ? "," : "",
+                           directions[direction],
+                           square_type(dungeon, level, x + dx[direction],
+                                       y + dy[direction]));
+                }
+                putchar('\n');
+            }
+        }
+    }
+}
+
+static void dump_original_campaign_map(const CSB_V1_DungeonData *dungeon)
+{
+    int level = 0;
+    int y;
+
+    if (!dungeon || !getenv("FIRESTAFF_CSB_ATARI_DUMP_MAP") ||
+        level >= dungeon->level_count) {
+        return;
+    }
+    printf("Atari campaign map %d (%d x %d):\n", level,
+           dungeon->level_widths[level], dungeon->level_heights[level]);
+    for (y = 0; y < dungeon->level_heights[level]; ++y) {
+        int x;
+        for (x = 0; x < dungeon->level_widths[level]; ++x) {
+            const int raw = csb_v1_dungeon_get_raw_square(dungeon, level, x, y);
+            printf("%02x ", raw & 0xff);
+        }
+        putchar('\n');
+    }
+}
+
+static void dump_original_door_controls(const CSB_V1_DungeonData *dungeon)
+{
+    int level;
+
+    if (!dungeon || !getenv("FIRESTAFF_CSB_ATARI_DUMP_DOOR_CONTROLS")) return;
+    for (level = 0; level < dungeon->level_count; ++level) {
+        int x;
+        for (x = 0; x < dungeon->level_widths[level]; ++x) {
+            int y;
+            for (y = 0; y < dungeon->level_heights[level]; ++y) {
+                const int square = csb_v1_dungeon_get_raw_square(
+                    dungeon, level, x, y);
+                int thing = csb_v1_dungeon_get_first_thing(
+                    dungeon, level, x, y);
+                int guard;
+
+                if (((square >> 5) & 7) == 4) {
+                    const unsigned char *door = csb_v1_dungeon_get_thing_record(
+                        dungeon, (unsigned short)thing, NULL, NULL, NULL);
+                    if (door) {
+                        const unsigned short flags = read_u16(door + 2);
+                        printf("Atari door map=%d xy=%d,%d raw=0x%02x state=%d type=%d button=%d\n",
+                               level, x, y, square & 0xff, square & 7,
+                               flags & 1u, (flags >> 6) & 1u);
+                    }
+                }
+                for (guard = 0; guard < 128 && thing != 0xfffe &&
+                     thing != 0xffff; ++guard) {
+                    int type;
+                    int size;
+                    const unsigned char *record = csb_v1_dungeon_get_thing_record(
+                        dungeon, (unsigned short)thing, &type, NULL, &size);
+                    if (!record) break;
+                    if (type == 3 && size >= 8) {
+                        const unsigned short type_data = read_u16(record + 2);
+                        const unsigned short flags = read_u16(record + 4);
+                        const unsigned short target = read_u16(record + 6);
+                        const int local_effect = (flags >> 11) & 1u;
+                        const int target_x = (target >> 6) & 0x1fu;
+                        const int target_y = (target >> 11) & 0x1fu;
+                        if (!local_effect && target_x == 18 && target_y == 6) {
+                            printf("Atari door control sensor map=%d xy=%d,%d thing=0x%04x cell=%d type=%d data=%d effect=%d revert=%d target=%d,%d cell=%d flags=0x%04x\n",
+                                   level, x, y, thing, thing & 3,
+                                   type_data & 0x7fu, type_data >> 7,
+                                   (flags >> 3) & 3u, (flags >> 5) & 1u,
+                                   target_x, target_y, (target >> 4) & 3u,
+                                   flags);
+                        }
+                    }
+                    thing = csb_v1_dungeon_f0159_get_next_thing_pc34(
+                        dungeon, (unsigned short)thing);
+                }
+            }
+        }
+    }
+}
+
 int main(void)
 {
     const char *path = getenv("FIRESTAFF_CSB_DUNGEON_DAT");
@@ -167,6 +288,9 @@ int main(void)
         fprintf(stderr, "FAIL: cannot load original PC34 Dungeon.dat: %s\n", path);
         return 1;
     }
+    dump_original_stairs(&dungeon);
+    dump_original_campaign_map(&dungeon);
+    dump_original_door_controls(&dungeon);
     if (!find_c005_stairs_route(&dungeon, &route)) {
         puts("SKIP: original Dungeon.dat has no isolated C005 stairs route");
         csb_v1_dungeon_free(&dungeon);

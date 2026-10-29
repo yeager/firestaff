@@ -3594,6 +3594,7 @@ static void csb_v1_runtime_apply_destination_teleporter(
         return;
     }
     csb_v1_dungeon_set_current_level(profile->current_level);
+    (void)csb_v1_runtime_initialize_destination_groups(profile, result);
     result->new_party_level = profile->current_level;
     result->teleporter_transition_applied = 1;
     if (teleporter.audible) {
@@ -3671,6 +3672,7 @@ static void csb_v1_runtime_apply_destination_stairs(
     profile->party_state.PartyMapY = target_y;
     csb_v1_dungeon_set_current_level(target_level);
     (void)csb_v1_runtime_rotate_party(profile, exit_direction);
+    (void)csb_v1_runtime_initialize_destination_groups(profile, result);
     result->new_party_level = target_level;
     result->stair_transition_applied = 1;
 }
@@ -3739,6 +3741,7 @@ static void csb_v1_runtime_take_current_stairs(
     profile->party_state.PartyMapY = target_y;
     csb_v1_dungeon_set_current_level(target_level);
     (void)csb_v1_runtime_rotate_party(profile, exit_direction);
+    (void)csb_v1_runtime_initialize_destination_groups(profile, result);
     result->new_party_level = target_level;
     result->stair_transition_applied = 1;
 }
@@ -3902,6 +3905,7 @@ static void csb_v1_runtime_apply_destination_pit(
     profile->party_state.PartyMapX = target_x;
     profile->party_state.PartyMapY = target_y;
     csb_v1_dungeon_set_current_level(target_level);
+    (void)csb_v1_runtime_initialize_destination_groups(profile, result);
     result->new_party_level = target_level;
     result->pit_fall_applied = 1;
     (void)csb_v1_runtime_apply_party_fall_damage(
@@ -4281,7 +4285,9 @@ static int csb_v1_runtime_dsa_teleport_party(void *user,
     profile->party_y = y;
     profile->party_state.PartyMapX = x;
     profile->party_state.PartyMapY = y;
-    return csb_v1_runtime_rotate_party(profile, direction) == 0;
+    if (csb_v1_runtime_rotate_party(profile, direction) != 0) return 0;
+    csb_v1_dungeon_set_current_level(level);
+    return csb_v1_runtime_f0195_group_add_all_active_groups(profile) >= 0;
 }
 
 static void csb_v1_runtime_write_u16(uint8_t *p, uint16_t value)
@@ -4855,7 +4861,7 @@ static void csb_v1_runtime_turn_active_group_toward_attack(
     int creature_count,
     int creature_size);
 
-static void csb_v1_runtime_schedule_c37_group_event(
+static int csb_v1_runtime_schedule_c37_group_event(
     CSB_V1_RuntimeProfile *profile,
     int map_index,
     int map_x,
@@ -4866,7 +4872,7 @@ static void csb_v1_runtime_schedule_c37_group_event(
     struct DM1_Event_V1 event;
     int movement_ticks;
 
-    if (!profile || delay_ticks == 0u) return;
+    if (!profile || delay_ticks == 0u) return -1;
     movement_ticks = csb_v1_runtime_creature_movement_ticks(creature_type);
     memset(&event, 0, sizeof(event));
     event.map_time = DM1_MAP_TIME_MAKE(
@@ -4876,7 +4882,7 @@ static void csb_v1_runtime_schedule_c37_group_event(
     event.priority = (uint8_t)(255 - movement_ticks);
     event.b_mapX = (uint8_t)map_x;
     event.b_mapY = (uint8_t)map_y;
-    (void)dm1v1_event_add(&profile->timeline_queue, &event);
+    return dm1v1_event_add(&profile->timeline_queue, &event);
 }
 
 static void csb_v1_runtime_schedule_c38_attack_event(
@@ -9785,7 +9791,7 @@ static void csb_v1_runtime_sync_active_group_state_from_record(
 int csb_v1_runtime_f0195_group_add_all_active_groups(
     CSB_V1_RuntimeProfile *profile)
 {
-    const CSB_V1_DungeonData *dungeon;
+    CSB_V1_DungeonData *dungeon;
     int level;
     int map_x;
     int map_y;
@@ -9800,9 +9806,10 @@ int csb_v1_runtime_f0195_group_add_all_active_groups(
         return -1;
     }
 
-    /* ReDMCSB GROUP.C F0195 walks every square on the party map and adds
-     * each C04 group to ActiveGroups. The dungeon accessors preserve the
-     * native square-first-thing table and compact Next links. */
+    /* ReDMCSB GROUP1.C F0195:788-814 walks each party-map square and handles
+     * only its first C04 in native Next order. It runs F0181 (GROUP1.C:340-
+     * 366), F0183 (GROUP1.C:414-447), then F0180 (GROUP1.C:311-338), which
+     * schedules the initial C37 one tick after the map is loaded. */
     for (map_x = 0; map_x < dungeon->level_widths[level]; ++map_x) {
         for (map_y = 0; map_y < dungeon->level_heights[level]; ++map_y) {
             int thing = csb_v1_dungeon_get_first_thing(
@@ -9818,6 +9825,7 @@ int csb_v1_runtime_f0195_group_add_all_active_groups(
                      thing != THING_ENDOFLIST;
                  ++guard) {
                 const uint8_t *record;
+                uint8_t *mutable_record;
                 int thing_type = -1;
                 int record_size = 0;
                 int was_active;
@@ -9831,6 +9839,19 @@ int csb_v1_runtime_f0195_group_add_all_active_groups(
                     &record_size);
                 if (!record || record_size < 2) return -1;
                 if (thing_type == CSB_V1_THING_TYPE_GROUP) {
+                    /* ReDMCSB GROUP1.C:788-814 stops at the first C04 on a
+                     * square and queues its first C37 at GameTime + 1. */
+                    mutable_record = csb_v1_runtime_mutable_thing_record(
+                        dungeon,
+                        (uint16_t)thing,
+                        &thing_type,
+                        &record_size);
+                    if (!mutable_record || thing_type !=
+                            CSB_V1_THING_TYPE_GROUP || record_size < 16) {
+                        return -1;
+                    }
+                    csb_v1_runtime_delete_group_events_at_square(
+                        profile, level, map_x, map_y);
                     if (!csb_v1_runtime_f0183_active_group_receipt_pc34(
                             profile, (uint16_t)thing, level, map_x, map_y,
                             &active_receipt)) {
@@ -9846,11 +9867,26 @@ int csb_v1_runtime_f0195_group_add_all_active_groups(
                         map_y,
                         0,
                         0);
+                    {
+                        uint16_t flags = csb_v1_runtime_read_u16(
+                            mutable_record + 14);
+                        if ((flags & 0x000fu) >= 4u) {
+                            flags &= (uint16_t)~0x000fu;
+                            csb_v1_runtime_write_u16(
+                                mutable_record + 14, flags);
+                        }
+                    }
+                    if (csb_v1_runtime_schedule_c37_group_event(
+                            profile, level, map_x, map_y,
+                            mutable_record[4], 1u) < 0) {
+                        return -1;
+                    }
                     if (!was_active &&
                         csb_v1_runtime_active_group_state_for_thing(
                             profile, (uint16_t)thing)) {
                         ++added;
                     }
+                    break;
                 }
                 thing = (int)csb_v1_runtime_read_u16(record);
             }
@@ -9861,6 +9897,17 @@ int csb_v1_runtime_f0195_group_add_all_active_groups(
         }
     }
     return added;
+}
+
+int csb_v1_runtime_initialize_destination_groups(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_InputCommandRuntimeResult *result)
+{
+    int initialized;
+    if (!profile || !result) return -1;
+    initialized = csb_v1_runtime_f0195_group_add_all_active_groups(profile);
+    if (initialized < 0) result->runtime_transition_failed = 1;
+    return initialized;
 }
 
 static void csb_v1_runtime_set_active_group_target(
@@ -33038,6 +33085,12 @@ int csb_v1_runtime_boot(CSB_V1_RuntimeProfile *profile,
             csb_v1_dungeon_set_current(dungeon); /* singleton now points to heap */
             csb_v1_dungeon_set_current_level(profile->current_level);
             csb_v1_runtime_sync_map_difficulty(profile);
+            /* ReDMCSB MAIN.C F003:200-231 / GROUP1.C F0195:788-814 seeds the
+             * CSB map's active groups and first C37 behavior events. */
+            if (csb_v1_runtime_f0195_group_add_all_active_groups(profile) < 0) {
+                csb_v1_runtime_cleanup(profile);
+                return -1;
+            }
             /* ReDMCSB LOADSAVE.C F0435 derives a new game's pose from the
              * loaded DUNGEON_HEADER, never from a fixed host coordinate. */
             if (profile->party_state_valid) {

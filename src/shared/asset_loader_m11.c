@@ -23,6 +23,7 @@
 #include "dm1_v1_atari_st_graphics_dat.h"
 #include "csb_v1_amiga_graphics_dat.h"
 #include "csb_v1_fmtowns_graphics_dat.h"
+#include "csb_v1_graphics_atari_st_loader_pc34_compat.h"
 #include "asset_find_by_hash.h"
 
 #include <stdlib.h>
@@ -353,6 +354,28 @@ int M11_AssetLoader_InitDm1AtariStFromFile(M11_AssetLoader* loader,
     return ok;
 }
 
+int M11_AssetLoader_InitCsbAtariStFromFile(M11_AssetLoader* loader,
+                                           const char *graphicsDatPath) {
+    if (!loader || !graphicsDatPath || !graphicsDatPath[0]) return 0;
+    memset(loader, 0, sizeof(*loader));
+    csb_atari_st_graphics_loader_init(&loader->csbAtariStGraphics);
+    if (!csb_atari_st_graphics_loader_open(
+            &loader->csbAtariStGraphics, graphicsDatPath) ||
+        loader->csbAtariStGraphics.item_count != 563u ||
+        !loader->csbAtariStGraphics.dat_bytes ||
+        loader->csbAtariStGraphics.dat_byte_count == 0u) {
+        csb_atari_st_graphics_loader_close(&loader->csbAtariStGraphics);
+        memset(loader, 0, sizeof(*loader));
+        return 0;
+    }
+    loader->csbAtariSt = 1;
+    loader->graphicCount = loader->csbAtariStGraphics.item_count;
+    loader->initialized = 1;
+    snprintf(loader->graphicsDatPath, sizeof(loader->graphicsDatPath), "%s",
+             graphicsDatPath);
+    return 1;
+}
+
 int M11_AssetLoader_InitCsbAmigaFromFile(M11_AssetLoader* loader,
                                          const char *graphicsDatPath) {
     uint8_t *data = NULL;
@@ -449,6 +472,7 @@ void M11_AssetLoader_Shutdown(M11_AssetLoader* loader) {
     free(loader->iigsData);
     free(loader->ownedBuffer);
     free(loader->atariStData);
+    csb_atari_st_graphics_loader_close(&loader->csbAtariStGraphics);
     free(loader->csbAmigaData);
     free(loader->csbFmtownsData);
     for (i = 0; i < M11_ASSET_CACHE_SLOTS; ++i) {
@@ -580,6 +604,31 @@ int M11_AssetLoader_QuerySize(const M11_AssetLoader* loader,
         if (outWidth) *outWidth = (uint16_t)(((uint16_t)item[0] << 8) | item[1]);
         if (outHeight) *outHeight = (uint16_t)(((uint16_t)item[2] << 8) | item[3]);
         free(item);
+        return 1;
+    }
+    if (loader->csbAtariSt) {
+        const CSB_AtariStLoader *dat = &loader->csbAtariStGraphics;
+        uint8_t *item;
+        uint8_t *pixels;
+        uint16_t width = 0u, height = 0u;
+        size_t capacity = 1024u * 1024u;
+        int decoded;
+        if (graphicIndex >= loader->graphicCount) return 0;
+        item = (uint8_t *)malloc(dat->items[graphicIndex].decompressed_size);
+        pixels = (uint8_t *)malloc(capacity);
+        decoded = item && pixels &&
+            csb_atari_st_graphics_loader_read_item(dat,
+                (uint16_t)graphicIndex, item,
+                dat->items[graphicIndex].decompressed_size) ==
+                    (int)dat->items[graphicIndex].decompressed_size &&
+            dm1_v1_legacy_graphics_decode_item(item,
+                dat->items[graphicIndex].decompressed_size, 1, pixels,
+                capacity, &width, &height);
+        free(item);
+        free(pixels);
+        if (!decoded) return 0;
+        if (outWidth) *outWidth = width;
+        if (outHeight) *outHeight = height;
         return 1;
     }
     if (loader->csbAmiga) {
@@ -862,6 +911,35 @@ const M11_AssetSlot* M11_AssetLoader_Load(M11_AssetLoader* loader,
             return NULL;
         }
         free(stPixels);
+        return m11_find_cached(loader, graphicIndex);
+    }
+
+    if (loader->csbAtariSt) {
+        const CSB_AtariStLoader *dat = &loader->csbAtariStGraphics;
+        uint8_t *item = NULL;
+        uint8_t *pixels = NULL;
+        uint16_t width = 0u, height = 0u;
+        size_t capacity = 1024u * 1024u;
+        size_t item_size;
+        int decoded = 0;
+
+        if (graphicIndex >= loader->graphicCount) return NULL;
+        item_size = dat->items[graphicIndex].decompressed_size;
+        item = (uint8_t *)malloc(item_size ? item_size : 1u);
+        pixels = (uint8_t *)malloc(capacity);
+        if (item && pixels &&
+            csb_atari_st_graphics_loader_read_item(dat,
+                (uint16_t)graphicIndex, item, item_size) == (int)item_size) {
+            decoded = dm1_v1_legacy_graphics_decode_item(item, item_size, 1,
+                pixels, capacity, &width, &height);
+        }
+        free(item);
+        if (!decoded || !M11_AssetLoader_InstallDecodedPixels(
+                loader, graphicIndex, pixels, width, height)) {
+            free(pixels);
+            return NULL;
+        }
+        free(pixels);
         return m11_find_cached(loader, graphicIndex);
     }
 
