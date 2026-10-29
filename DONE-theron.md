@@ -9428,3 +9428,26 @@ native rendering, or Theron parity. The private evidence bundle is at
   produced zero rows. These records do not establish that no position write
   occurred outside the traced rows. No movement parity is claimed; the required
   positive capture and map identity remain in `TODO-theron.md`.
+
+## 2026-10-30 — capture accepted UP+II position writes
+
+- Extended the bounded PCE Fast observer to log position writes with the
+  instruction bytes read from `FastPageR`; gated direct zero-page writes on
+  MPR1 `$F8`; corrected the position-copy opcode PC from `$C1FA` to `$C1FC`.
+- With authentic JP Rev. 1 media and a user-created state, replay
+  `ii@470:140,up@471:120` produced command `$2905=$03` at frame 471 and the
+  original `TII` writes `$20B4->$2040=03`, `$20B5->$2041=03` at `$C1FC`
+  (`73b420`). Final RAM changed coordinates `(2,3)->(3,3)`. This is an original
+  movement reference capture; save-state autoload still bypasses cold CD
+  receipts, and no active-map identity, collision proof, Firestaff movement
+  parity, or full gameplay parity is claimed.
+- Patch-only validation and a full instrumented Mednafen build passed on TRV2
+  with `-j1`. The focused capture test passed three consecutive loops; Python
+  syntax validation and `git diff --check` passed. Original media and traces
+  remain private on TRV2. See
+  `docs/source-lock/theron-disassembly/theron-pce-fast-tii-position-observer-20261029.md`.
+- The follow-up capture with the corrected `$C1FC` gate emitted both
+  `tii_position_commit` rows, including source physical addresses, source bytes,
+  destination addresses, opcode MPR and physical PC. These rows are bounded to
+  the observer's hooked `WrMem()` path; they do not establish an exhaustive
+  census of physical RAM writes or gameplay parity.

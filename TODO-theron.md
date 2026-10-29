@@ -9214,3 +9214,27 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   Require both ordered `$C1FA` transfer bytes and the position delta before
   claiming runtime observer validation or movement parity. Details are in
   `docs/source-lock/theron-disassembly/theron-pce-fast-tii-position-observer-20261029.md`.
+
+## 2026-10-30 — identify accepted UP+II position transfer
+
+- A corrected authentic JP Rev. 1 save-state replay used `ii@470:140,up@471:120`.
+  At frame 471 the original accepted `$2905=$03` at `$CC99`, then cleared it
+  at `$D39D` in frame 472. The position-write observer recorded the two actual
+  transfer writes at opcode PC `$C1FC`, bytes `73b420`, `IBM_TII`:
+  `$20B4->$2040=03` and `$20B5->$2041=03`, with physical opcode PC `$0DC1FC`
+  and destination `$1F0040/$1F0041` under MPR1 `$F8`. The final RAM snapshot
+  changed position from `(2,3)` to `(3,3)`.
+- This capture corrected the earlier `$C1FA` opcode-PC assumption. The specific
+  TII observer now keys on `$C1FC`; generic position writes also record code
+  bytes through the PCE Fast `FastPageR` mapping. Direct zero-page observations
+  are gated on MPR1 `$F8` to keep physical-address attribution valid.
+- Patch-only validation and a full Mednafen build passed on TRV2 with `-j1`.
+  The focused live-capture test passed three loops. The runtime capture remains
+  `BLOCKED` for cold CD IRQ/authenticated CD-to-RAM receipts because it loads a
+  save state. Active-map identity, collision evidence, Firestaff runtime
+  comparison, and Theron movement parity remain open; see the source-lock note.
+- A follow-up build with the corrected `$C1FC` TII gate recorded two
+  `tii_position_commit` rows with source `$1F00B4/$1F00B5`, source value `$03`,
+  and matching destinations `$1F0040/$1F0041`. The hooks cover their explicit
+  `WrMem()` and selected zero-page paths, not every possible physical RAM
+  writer; this bounded capture does not establish an exhaustive write census.
