@@ -7,9 +7,9 @@ combat-effect claims. Those values came from diagnostic or shared Firestaff
 code and are not verified retail Nexus behavior.
 
 The current evidence establishes a byte match for a 32-halfword table in the
-Japanese retail `DM.BIN`, a statically observed threshold read during
-four-entry rune acceptance, and the Y input that opens the Magic window. It
-does not establish rune meaning, spell costs, combat targeting, damage,
+Japanese retail `DM.BIN`, six numeric composer choices with their observed
+mana costs, and the Y input that opens the Magic window. It does not establish
+rune meaning, complete-spell acceptance, combat targeting, damage,
 healing, buffs, creature magic, or any post-cast state mutation. Details and
 limits are in [`nexus_spells.md`](nexus_spells.md).
 
