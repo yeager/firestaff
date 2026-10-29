@@ -1,3 +1,22 @@
+## 2026-10-29 — C1DF CPU tracing is opt-in; pointer/action join remains open
+
+- The PCE Fast C1DF instruction/register trace now follows
+  `THERON_CAPTURE_POINTER_C1DF_TRACE`. With the flag off, a capture reports
+  zero `pointer_pc`/`pointer_regs`/`pointer_c1df_*` rows; with it on, it records
+  the requested bounded trace. The ordinary mouse-device and watched pointer
+  RAM accesses remain available independently.
+- The full Mednafen patch chain applied to an isolated TRV2 copy and a serial
+  `-j1` PCE Fast build completed. Three loops of the focused capture regression
+  passed. An A/B run used authentic JP Rev. 1 Track 02, System Card 3.0 and the
+  preserved Ak-Tu-Ba state: zero C1DF rows with tracing off, 16,199 rows with
+  it on. Both runs report `transition=missing` because save-state loading
+  bypasses original loader provenance; this verifies trace gating only.
+- Evidence hashes and limits are in
+  [the C1DF trace-gate note](docs/source-lock/theron-disassembly/theron-pointer-c1df-opt-in-trace-20261029.md).
+- Next: use the opt-in instruction trace in a cold source-bound run to join
+  controlled mouse deltas with game-owned pointer coordinates and the original
+  hover/click command result. Do not infer hitboxes from save-state runs.
+
 ## 2026-10-29 — standard PCE mouse scripts honor bounded repeats; coordinate join remains open
 
 - The Mednafen mouse-script instrumenter now inserts one shared parser into the

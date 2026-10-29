@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-29 — make C1DF instruction tracing opt-in
+
+The capture flag `THERON_CAPTURE_POINTER_C1DF_TRACE` now controls the detailed
+PCE Fast C1DF CPU trace. With the flag off, the authentic JP save-state A/B
+capture emitted zero C1DF CPU rows; with it on, the same state and media
+emitted 16,199 rows. The complete Mednafen patch chain applied on TRV2, and a
+serial PCE Fast build completed. Both captures report `transition=missing`
+because they load a save state and therefore do not prove cold-loader
+provenance or native pointer semantics. See the
+[trace-gate verification](docs/source-lock/theron-disassembly/theron-pointer-c1df-opt-in-trace-20261029.md).
+
 ## 2026-10-29 — honor bounded mouse-script repeats in both Mednafen PCE cores
 
 Fixed the reference-only mouse-script instrumenter so standard PCE expands the

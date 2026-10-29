@@ -119,6 +119,23 @@ static bool TheronNextMouseInput(int16 *delta_x, int16 *delta_y,
 '''
 
 
+def pointer_c1df_trace_gate_source() -> str:
+    """Return the opt-in C1DF trace gate shared with the capture flag."""
+    return r'''static bool TheronPointerC1DFTraceEnabledAttempted;
+static bool TheronPointerC1DFTraceEnabled;
+static bool TheronIsPointerC1DFTraceEnabled(void)
+{
+ if(!TheronPointerC1DFTraceEnabledAttempted)
+ {
+  const char *value = getenv("FIRESTAFF_THERON_POINTER_C1DF_TRACE");
+  TheronPointerC1DFTraceEnabled = value && value[0] == '1' && value[1] == 0;
+  TheronPointerC1DFTraceEnabledAttempted = true;
+ }
+ return TheronPointerC1DFTraceEnabled;
+}
+'''
+
+
 def instrument(root: Path) -> None:
     replace_once(
         root,
@@ -292,7 +309,8 @@ def instrument(root: Path) -> None:
         "static bool TheronPointerTraceAttempted;\n"
         "static unsigned TheronPointerTraceCount;\n"
         "static bool TheronPointerTraceTruncationReported;\n"
-        "static unsigned int TheronPointerC1DFReturnPC;\n"
+        + pointer_c1df_trace_gate_source()
+        + "static unsigned int TheronPointerC1DFReturnPC;\n"
         "static unsigned TheronPointerC1DFStepsRemaining;\n"
         "static bool TheronPointerC1DFActive;\n"
         "static void TheronReportPointerTraceTruncation(void)\n"
@@ -365,6 +383,7 @@ def instrument(root: Path) -> None:
         "}\n"
         "static bool TheronPointerCodePC(unsigned int pc)\n"
         "{\n"
+        " if(!TheronIsPointerC1DFTraceEnabled()) return false;\n"
         " return TheronPointerC1DFActive ||\n"
         "        (pc >= 0xA71E && pc <= 0xA733) ||\n"
         "        (pc >= 0xD120 && pc <= 0xD1FF) ||\n"
@@ -439,16 +458,19 @@ def instrument(root: Path) -> None:
         "                            TheronTraceInstructionPC,\n"
         "                            TheronTraceInstructionPhysicalPC, 0,\n"
         "                            HuCPU.MPR[TheronTraceInstructionPC >> 13]);\n"
-        "  if(RdOp(TheronTraceInstructionPC) == 0x20 &&\n"
+        "  if(TheronIsPointerC1DFTraceEnabled())\n"
+        "  {\n"
+        "   if(RdOp(TheronTraceInstructionPC) == 0x20 &&\n"
         "     RdOp(TheronTraceInstructionPC + 1) == 0xDF &&\n"
         "     RdOp(TheronTraceInstructionPC + 2) == 0xC1)\n"
-        "  {\n"
-        "   TheronPointerC1DFReturnPC = (TheronTraceInstructionPC + 3) & 0xFFFF;\n"
-        "   TheronPointerC1DFStepsRemaining = 4096;\n"
-        "   TheronTracePointerAccess(\"pointer_c1df_begin\",\n"
+        "   {\n"
+        "    TheronPointerC1DFReturnPC = (TheronTraceInstructionPC + 3) & 0xFFFF;\n"
+        "    TheronPointerC1DFStepsRemaining = 4096;\n"
+        "    TheronTracePointerAccess(\"pointer_c1df_begin\",\n"
         "                            TheronTraceInstructionPC,\n"
         "                            TheronTraceInstructionPhysicalPC, 0,\n"
         "                            HuCPU.MPR[TheronTraceInstructionPC >> 13]);\n"
+        "   }\n"
         "  }\n\n"
         "  if(Theron3879FastTargetStepsRemaining ||\n",
     )

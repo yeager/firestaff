@@ -1545,6 +1545,7 @@ launch=(
     FIRESTAFF_THERON_IRQ2_INPUT_TRACE="$input_trace" \
     FIRESTAFF_THERON_MOUSE_TRACE="$mouse_trace" \
     FIRESTAFF_THERON_MOUSE_INPUT_SCRIPT="$mouse_input_script" \
+    FIRESTAFF_THERON_POINTER_C1DF_TRACE="$capture_pointer_c1df_trace" \
     FIRESTAFF_THERON_INPUT_TRACE_LIMIT="$input_trace_limit" \
     FIRESTAFF_THERON_INPUT_TRACE_START_FRAME="$input_trace_start_frame" \
     FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT="$replay_input_script" \

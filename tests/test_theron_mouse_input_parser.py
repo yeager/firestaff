@@ -27,7 +27,10 @@ def main() -> int:
     import sys
 
     sys.path.insert(0, sys_path)
-    from instrument_mednafen_theron_mouse_trace import mouse_input_parser_source
+    from instrument_mednafen_theron_mouse_trace import (
+        mouse_input_parser_source,
+        pointer_c1df_trace_gate_source,
+    )
 
     source = '''#include <stdbool.h>
 #include <stdint.h>
@@ -89,10 +92,35 @@ int main(int argc, char **)
             if result != ["end"]:
                 raise SystemExit(f"FAIL: malformed mouse sample was accepted: {malformed!r}")
 
+        gate_cpp = Path(temporary) / "pointer_gate.cpp"
+        gate_binary = Path(temporary) / "pointer_gate"
+        gate_cpp.write_text(
+            '#include <stdbool.h>\n#include <stdlib.h>\n#include <stdio.h>\n'
+            + pointer_c1df_trace_gate_source()
+            + '\nint main(void) { puts(TheronIsPointerC1DFTraceEnabled() ? "on" : "off"); return 0; }\n'
+        )
+        subprocess.run(
+            command + ["-std=c++11", "-Wall", "-Wextra", "-Werror", str(gate_cpp), "-o", str(gate_binary)],
+            check=True,
+        )
+        for value, expected in (("0", "off"), ("1", "on"), ("true", "off")):
+            environment = os.environ.copy()
+            environment["FIRESTAFF_THERON_POINTER_C1DF_TRACE"] = value
+            result = subprocess.run(
+                [str(gate_binary)], check=True, text=True, capture_output=True, env=environment
+            ).stdout.strip()
+            if result != expected:
+                raise SystemExit(f"FAIL: pointer trace flag {value!r} returned {result!r}")
+
     instrumenter = (ROOT / "scripts/instrument_mednafen_theron_mouse_trace.py").read_text()
     if instrumenter.count("+ mouse_input_parser_source()") != 2:
         raise SystemExit("FAIL: standard PCE and PCE Fast do not share the mouse parser")
-    print("PASS: mouse parser expands bounded repeats, rejects malformed samples, and is shared by both PCE cores")
+    if instrumenter.count("+ pointer_c1df_trace_gate_source()") != 1:
+        raise SystemExit("FAIL: C1DF tracing does not use the tested opt-in gate")
+    capture_script = (ROOT / "scripts/capture_theron_mednafen_live_trace.sh").read_text()
+    if 'FIRESTAFF_THERON_POINTER_C1DF_TRACE=\"$capture_pointer_c1df_trace\"' not in capture_script:
+        raise SystemExit("FAIL: capture flag is not passed to the C1DF trace gate")
+    print("PASS: mouse parser bounds pass and C1DF tracing is opt-in behind the capture flag")
     return 0
 
 
