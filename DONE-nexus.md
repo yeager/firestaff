@@ -12,6 +12,18 @@
   hash-pinned retail saves. The engine still does not apply a complete Saturn
   Continue payload.
 
+## 2026-10-29 — Identify the authentic BKR mana pair
+
+- `FUN_0602eb4c` maps BKR halfwords at `+0x40/+0x42` to runtime `+0x10/+0x14`.
+  The New Game initializer fills those cells from the PLRD mana value at
+  `+0x0a`; `FUN_060361a8` increments the first toward the second. This binds
+  the pair as current and maximum mana.
+- The BKR receipt and authentic-media regression now expose the fields as
+  `champion_mana_current` and `champion_max_mana`. The four authentic saves
+  contain `18/20`; the retained retail update capture shows `19/20`.
+- The complete payload mapping and Firestaff Continue application remain
+  incomplete.
+
 ## Superseded — Initial conservative label for the health pair
 
 - `FUN_0602eb4c` projects signed BKR halfwords at champion offsets `+0x38/+0x3a`
@@ -22,16 +34,15 @@
   media check now use health names. Full BKR application to the engine and
   playable Continue remain open.
 
-## 2026-10-29 — Bound the authentic save value/limit pair
+## Superseded — Initial conservative label for the mana pair
 
 - `FUN_0602eb4c` projects signed source halfwords at champion-record offsets
   `+0x40/+0x42` to runtime longwords `+0x10/+0x14`. `FUN_060361a8` adjusts
   the first value within the second value's ceiling. The retained Ymir trace
   shows retail changing `18/20` to `19/20`.
-- The BKR probe exposes this as a bounded value/limit pair, without guessing
-  whether the field means level, experience, or another game concept. The
-  authentic corpus test verifies `18/20` in every champion record across all
-  four retail-written saves.
+- This pair was initially left as a generic bounded value and limit while its
+  game meaning was unknown. Follow-up evidence above identifies it as current
+  and maximum mana; the receipt and real-media check now use those names.
 - This does not complete the champion schema or apply a Saturn save to the
   Firestaff engine.
 

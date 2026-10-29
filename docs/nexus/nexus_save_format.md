@@ -131,13 +131,15 @@ probe exposes these fields as `champion_health_current` and
 `champion_max_health`. Every present champion in all four authentic saves has
 `47/47`; the leader-index-3 Ymir trace captures those values loading at frame
 12931 but has no later writes to the pair.
-A second pair at source `+0x40/+0x42` projects to runtime `+0x10/+0x14`;
-retail updates keep its first value at or below the second. It is exposed only
-as a bounded value and limit, without an inferred domain label. All four
-authentic saves contain `18/20`, while the captured post-update runtime values
-are `19/20`. Other champion and world fields remain opaque. Original Saturn
-save import remains gated until the complete semantic payload mapping and
-source-owned consumer are identified and exercised against the retail game.
+A second pair at source `+0x40/+0x42` projects to runtime `+0x10/+0x14`.
+`FUN_0603b014` initializes these cells from the PLRD mana value at `+0x0a`,
+identifying the pair as current and maximum mana. `FUN_060361a8` increments
+current mana toward its maximum. The probe exposes these fields as
+`champion_mana_current` and `champion_max_mana`. All four authentic saves
+contain `18/20`, while the captured post-update runtime values are `19/20`.
+Other champion and world fields remain opaque. Original Saturn save import
+remains gated until the complete semantic payload mapping and source-owned
+consumer are identified and exercised against the retail game.
 
 ### Name-byte comparison against the Japanese roster
 

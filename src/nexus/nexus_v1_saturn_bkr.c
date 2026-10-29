@@ -300,9 +300,9 @@ int nexus_v1_saturn_bkr_nexus_payload_probe(
                 read_be_s16(payload + record_offset + 0x3CU);
             receipt.champion_stamina_max[champion] =
                 read_be_s16(payload + record_offset + 0x3EU);
-            receipt.champion_bounded_value[champion] =
+            receipt.champion_mana_current[champion] =
                 read_be_s16(payload + record_offset + 0x40U);
-            receipt.champion_bounded_limit[champion] =
+            receipt.champion_max_mana[champion] =
                 read_be_s16(payload + record_offset + 0x42U);
         }
     }

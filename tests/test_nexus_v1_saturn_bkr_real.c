@@ -15,8 +15,8 @@ typedef struct {
     int32_t champion_max_health;
     int32_t champion_stamina_current;
     int32_t champion_stamina_max;
-    int32_t champion_bounded_value;
-    int32_t champion_bounded_limit;
+    int32_t champion_mana_current;
+    int32_t champion_max_mana;
 } CorpusFile;
 
 static const CorpusFile corpus[] = {
@@ -180,19 +180,19 @@ int main(void)
                         corpus[file_index].champion_stamina_current ||
                     payload_receipt.champion_stamina_max[champion] !=
                         corpus[file_index].champion_stamina_max ||
-                    payload_receipt.champion_bounded_value[champion] !=
-                        corpus[file_index].champion_bounded_value ||
-                    payload_receipt.champion_bounded_limit[champion] !=
-                        corpus[file_index].champion_bounded_limit) {
+                    payload_receipt.champion_mana_current[champion] !=
+                        corpus[file_index].champion_mana_current ||
+                    payload_receipt.champion_max_mana[champion] !=
+                        corpus[file_index].champion_max_mana) {
                     fprintf(stderr,
-                            "FAIL: authentic champion field mismatch: %s champion=%u health=%d/%d stamina=%d/%d bounded=%d/%d\n",
+                            "FAIL: authentic champion field mismatch: %s champion=%u health=%d/%d stamina=%d/%d mana=%d/%d\n",
                             corpus[file_index].filename, champion,
                             payload_receipt.champion_health_current[champion],
                             payload_receipt.champion_max_health[champion],
                             payload_receipt.champion_stamina_current[champion],
                             payload_receipt.champion_stamina_max[champion],
-                            payload_receipt.champion_bounded_value[champion],
-                            payload_receipt.champion_bounded_limit[champion]);
+                            payload_receipt.champion_mana_current[champion],
+                            payload_receipt.champion_max_mana[champion]);
                     failed = 1;
                 }
             }
@@ -285,15 +285,15 @@ int main(void)
         } else {
             payloads[file_index] = payload;
             payload_sizes[file_index] = entries[0].payload_bytes;
-            printf("PASS: %s (%u-byte image, %u-byte payload, %u champions, health %d/%d, stamina %d/%d, bounded %d/%d)\n",
+            printf("PASS: %s (%u-byte image, %u-byte payload, %u champions, health %d/%d, stamina %d/%d, mana %d/%d)\n",
                    corpus[file_index].filename, receipt.image_bytes,
                    entries[0].payload_bytes, payload_receipt.champion_count,
                    payload_receipt.champion_health_current[0],
                    payload_receipt.champion_max_health[0],
                    payload_receipt.champion_stamina_current[0],
                    payload_receipt.champion_stamina_max[0],
-                   payload_receipt.champion_bounded_value[0],
-                   payload_receipt.champion_bounded_limit[0]);
+                   payload_receipt.champion_mana_current[0],
+                   payload_receipt.champion_max_mana[0]);
             payload = NULL;
         }
         free(payload);
