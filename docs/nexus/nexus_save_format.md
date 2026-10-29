@@ -100,3 +100,23 @@ records as opaque bytes and does not assign field meanings or identify the
 count-correlated boundary field. Original Saturn save import remains gated
 until the complete semantic payload mapping and source-owned consumer are
 identified and exercised against the retail game.
+
+### Name-byte comparison against the Japanese roster
+
+The Japanese Track 1 image in the external real-data corpus contains
+`RLOWFIX.BIN` (72,332 bytes, SHA-256
+`f2686bf3d6b971c5eaa613b2619b7e1bb7958a8045876296a83509f137be18b0`). Its
+20-record PLRD roster and 216-entry TABL table were compared in memory with
+the four hash-verified BKR payloads listed above. In all four saves, every
+saved champion record begins with `a3 88 96 80 80 00`. The first three bytes
+match the first three PLRD name-table indices of roster row 2 exactly; that
+row's remaining three PLRD bytes are `00 00 00`. The Japanese TABL table maps
+those first three indices to raw codes `0x88`, `0x65`, and `0x6d`.
+
+This cross-file match identifies row 2 as the source of the saved three-code
+name prefix and is consistent with the authenticated runtime copy of source
+bytes `+0x00..+0x05` to runtime bytes `+0x2c..+0x31`. It does not establish the
+meaning of the saved `0x80 0x80` suffix, whether those bytes are padding or
+editable name state, or the complete Saturn text-rendering path. Firestaff
+therefore keeps the BKR name bytes opaque and does not turn them into visible
+text yet. No Japanese game data was added to the repository.

@@ -56,6 +56,14 @@ PLRD points to `TABL` records. Firestaff retains both the indices and raw
 how they become visible text. Production therefore does not publish names as
 ASCII, Shift-JIS, katakana, or Swedish translations.
 
+The authentic Japanese BKR saves add a partial cross-file join: each saved
+champion row starts with `a3 88 96 80 80 00`, and its first three bytes match
+the first three PLRD name-table indices of roster row 2. The TABL entries
+resolve those three indices to raw codes `0x88`, `0x65`, and `0x6d`. This
+supports the name prefix's roster source, but the remaining BKR bytes differ
+from PLRD and their purpose is unresolved. See
+[`nexus_save_format.md`](nexus_save_format.md#name-byte-comparison-against-the-japanese-roster).
+
 ## What must not be inherited from DM1/DM2
 
 DM1/DM2 sources must not fill in Nexus statistics, class semantics, combat,
