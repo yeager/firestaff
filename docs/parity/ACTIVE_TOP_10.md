@@ -1,6 +1,6 @@
 # Active Top 10 Native-Parity Work Items
 
-Last reviewed: 2026-09-18
+Last reviewed: 2026-10-29
 
 This is the current cross-game priority order. Each item is either actionable
 with the supplied original media or explicitly marked **blocked by missing
@@ -11,7 +11,7 @@ to read supplied game media in memory and run it natively.
 | Priority | Work item | Scope | Acceptance evidence | State |
 |---:|---|---|---|---|
 | 1 | Complete the same-revision Nexus composed title/menu state | Nexus Saturn | A private same-session title capture now verifies Track 1 CD FIFO → Work RAM → instruction reads → VDP2 values, plus 162 contiguous VDP1/VDP2 hardware frames with nonzero VDP1 framebuffer/VRAM and VDP2 VRAM/CRAM/register domains. It still does not bind MAPD transformation to its display consumer and has no corresponding menu, HUD or dungeon capture. | **Partly proven; consumer/menu/HUD/dungeon capture missing** |
-| 2 | Bind decoded Nexus PRS3 output to a real Saturn VDP1 consumer | Nexus Saturn | One original execution capture ties a hash-locked decoded `MENU.BPK` surface to its VDP1 destination, CLUT and command semantics. The Japanese retail Track 1 now proves all 162 PRS3 streams decode in RAM, with aggregate decoded-byte FNV-1a-64 `b60830cf2f601003`; this promotes the byte decoder only, never host rendering. | **Blocked by missing capture** |
+| 2 | Bind decoded Nexus PRS3 output to a real Saturn VDP1 consumer | Nexus Saturn | The Japanese retail Track 1 proves all 162 PRS3 streams decode in RAM, with aggregate decoded-byte FNV-1a-64 `b60830cf2f601003`. In a same-run authentic Magic-window directional capture, nine final-frame VDP1 command source starts join to decoded `MENU.BPK` entries 99–106 and 144; Down/Left/Right change the referenced entries while Up matches the control. Destination pixels, CLUT ownership, full dispatch root and end-to-end admitted rendering remain unbound. | **Partly proven; consumer presentation remains blocked** |
 | 3 | Capture Theron CD-to-RAM level-transition consumers | Theron JP and US | Authentic, revision-specific trace from Track 02 read through RAM consumer for at least one level transition per revision. | **Blocked by missing trace** |
 | 4 | Obtain DM1 original runtime overlay pairs | DM1 PC 3.4 | Hash-locked original and Firestaff captures for movement, HUD and viewport states; pixel/behaviour regression. | **Blocked by missing captures** |
 | 5 | Bind CSB DSA-bearing original saves | CSB Atari, Amiga, FM Towns | Provenance/hash receipts plus native timer, transaction and DSA regressions per admitted edition. | **Blocked by missing saves** |
