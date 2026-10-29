@@ -8613,3 +8613,21 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   save state, an observed startup transition, and zero non-System-Card CD
   reads. The 1,024-byte VCE file is an endpoint palette snapshot, not a write
   stream, and the bundle does not prove a Theron dungeon palette.
+
+## 2026-10-29 — trace authentic-state PCE mouse serial input
+
+- A matched pair of authentic JP dungeon-state `pce_fast` captures shows a
+  scripted +12 X delta changing the controller read at `$44C1` from the
+  zero-delta value `$30` to `$3F` for frames 301–312. This confirms delivery
+  into the original mouse serial-read path.
+- In both runs, `$28B8` followed the same `$00` then `$F0` writes, `$2912` was
+  stored as `$00`, and the instrumented candidate pointer-write stream was
+  identical. VRAM, SAT and VCE snapshots also matched. The RAM snapshots still
+  differ at 17 bytes, and both runs lack authenticated CD-to-RAM provenance
+  and a game transition; do not attribute those RAM differences or claim that
+  mouse movement has no gameplay effect.
+- The evidence and remaining limits are recorded in
+  `docs/source-lock/theron-disassembly/theron-jp-mouse-serial-consumer-capture-20261029.md`.
+  Next, obtain a source-bound runtime capture that joins mouse input to a
+  game-owned cursor/target update before implementing dungeon coordinate
+  mapping. Native Theron mouse parity remains open.

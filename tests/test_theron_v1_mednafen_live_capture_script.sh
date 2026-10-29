@@ -1022,6 +1022,8 @@ if ! grep -Fq -- 'A == 0x21D6 || (A >= 0x28FC && A <= 0x2905)' "$pointer_instrum
    ! grep -Fq -- 'TheronTracePointerCodeWindow' "$pointer_instrumenter" ||
    ! grep -Fq -- 'HuCPU.PCERead[bank](physical)' "$pointer_instrumenter" ||
    ! grep -Fq -- 'code_window=%s' "$pointer_instrumenter" ||
+   ! grep -Fq -- 'A == 0x28B8' "$pointer_instrumenter" ||
+   ! grep -Fq -- 'A == 0x2912' "$pointer_instrumenter" ||
    ! grep -Fq -- 'TheronPointerAddress(A) || TheronPointerCandidateAddress(A) ||' "$pointer_instrumenter" ||
    ! grep -Fq -- 'FIRESTAFF_THERON_POINTER_RAM_WRITE_TRACE' "$pointer_instrumenter" ||
    ! grep -Fq -- 'FIRESTAFF_THERON_POINTER_RAM_WRITE_TRACE="$pce_fast_pointer_ram_write_trace"' "$script" ||
