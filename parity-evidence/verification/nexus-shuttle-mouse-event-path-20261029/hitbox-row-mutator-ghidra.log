@@ -1,0 +1,174 @@
+openjdk version "25.0.5" 2026-10-20 LTS
+OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS)
+OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode)
+INFO  Using log config file: jar:file:/home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Framework/Generic/lib/Generic.jar!/generic.log4j.xml (LoggingInitialization)
+INFO  Using log file: /home/trv2/.config/ghidra/ghidra_12.2_PUBLIC/application.log (LoggingInitialization)
+INFO  Loading user preferences: /home/trv2/.config/ghidra/ghidra_12.2_PUBLIC/preferences (Preferences)
+INFO  Loading previous preferences: /home/trv2/.config/ghidra/ghidra_12.1.4_PUBLIC/preferences (Preferences)
+INFO  Searching for classes... (ClassSearcher)
+INFO  Class search complete (2069 ms) (ClassSearcher)
+INFO  Initializing SSL Context (DefaultSSLContextInitializer)
+INFO  Initializing Random Number Generator... (SecureRandomFactory)
+INFO  Random Number Generator initialization complete: NativePRNGNonBlocking (SecureRandomFactory)
+INFO  Loaded 120 trusted CA certificate(s) from /etc/ssl/certs/ca-certificates.crt (UnixSystemTrustKeyStoreUtil)
+INFO  Loaded 120 trusted CA certificates from the OS trust store. (DefaultTrustManagerFactory)
+INFO  Loaded 118 trusted CA certificates from the Java default trust store. (DefaultTrustManagerFactory)
+INFO  Headless startup complete (4231 ms) (AnalyzeHeadless)
+INFO  Class searcher loaded 60 extension points (19 false positives) (ClassSearcher)
+INFO  HEADLESS Script Paths:
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/Base/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/SystemEmulation/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/PDB/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/FileFormats/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/VersionTracking/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Debug/Debugger-rmi-trace/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/GnuDemangler/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/PyGhidra/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Processors/Atmel/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Processors/DATA/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/WildcardAssembler/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/FunctionID/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Processors/JVM/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Debug/Debugger/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/DecompilerDependent/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/Decompiler/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Processors/8051/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Processors/PIC/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/BytePatterns/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/MicrosoftCodeAnalyzer/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/Swift/ghidra_scripts
+    /home/trv2/pcrecomp-d3d8-c19b3b7-hardening/tools/ghidra
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/BSim/ghidra_scripts (HeadlessAnalyzer)
+INFO  HEADLESS: execution starts (HeadlessAnalyzer)
+INFO  Opening existing project: /dev/shm/ghidra-nexus-pad-events-20261029/NexusPadEvents (HeadlessAnalyzer)
+INFO  Opening project: /dev/shm/ghidra-nexus-pad-events-20261029/NexusPadEvents (HeadlessProject)
+INFO  REPORT: Processing read-only project file: /DM.BIN (HeadlessAnalyzer)
+INFO  REPORT: Execute script: DecompAddrs.java '0x06034b22' '0x06034a7e' '0x06034a86' '0x06034ad0' '0x06034b9c' '0x060349cc'  (HeadlessAnalyzer)
+INFO  SCRIPT: /home/trv2/pcrecomp-d3d8-c19b3b7-hardening/tools/ghidra/DecompAddrs.java (HeadlessAnalyzer)
+INFO  DecompAddrs.java> ##### FUNC 0x6034b22 FUN_06034b22 ##### (GhidraScript)
+INFO  DecompAddrs.java>
+void FUN_06034b22(void)
+
+{
+  if (*(int *)PTR_DAT_06034b98 == 0) {
+    return;
+  }
+  if (*(code **)PTR_DAT_06034bac != (code *)0x0) {
+    (**(code **)PTR_DAT_06034bac)();
+  }
+  *(undefined4 *)PTR_DAT_06034b98 = 0;
+  (*(code *)PTR_FUN_06034ba8)(*(undefined4 *)PTR_DAT_06034ba4);
+  if (*(int *)PTR_DAT_06034b7c != 0) {
+    *(int *)PTR_DAT_06034b7c = *(int *)PTR_DAT_06034b7c + -1;
+    (*(code *)PTR_FUN_06034b88)(PTR_DAT_06034b84,PTR_DAT_06034b80,0x40);
+  }
+  (*(code *)PTR_FUN_06034bb8)(PTR_DAT_06034b84,*PTR_DAT_06034bb4);
+  (*(code *)PTR_FUN_06034bb0)();
+  return;
+}
+
+ (GhidraScript)
+INFO  DecompAddrs.java> ##### end ##### (GhidraScript)
+INFO  DecompAddrs.java> ##### 0x6034a7e: NO FUNCTION ##### (GhidraScript)
+INFO  DecompAddrs.java> ##### 0x6034a86: NO FUNCTION ##### (GhidraScript)
+INFO  DecompAddrs.java> ##### FUNC 0x6034ad0 FUN_06034ad0 ##### (GhidraScript)
+INFO  DecompAddrs.java>
+void FUN_06034ad0(undefined *param_1,undefined4 param_2,int param_3)
+
+{
+  undefined *puVar1;
+  undefined4 uVar2;
+
+  *(undefined4 *)PTR_DAT_06034b8c = 1;
+  if (param_1 == (undefined *)0x0) {
+    param_1 = PTR_DAT_06034b90;
+  }
+  FUN_06034914(param_1);
+  puVar1 = PTR_DAT_06034b98;
+  *(undefined4 *)PTR_DAT_06034b94 = param_2;
+  *(undefined4 *)puVar1 = 1;
+  puVar1 = PTR_FUN_06034ba0;
+  *(undefined4 *)PTR_DAT_06034b9c = 0;
+  uVar2 = (*(code *)puVar1)();
+  puVar1 = PTR_FUN_06034ba8;
+  *(undefined4 *)PTR_DAT_06034ba4 = uVar2;
+  (*(code *)puVar1)(7);
+  if (param_3 == 0) {
+    *(undefined4 *)PTR_DAT_06034bac = 0;
+  }
+  else {
+    *(int *)PTR_DAT_06034bac = param_3;
+  }
+  (*(code *)PTR_FUN_06034bb0)();
+  return;
+}
+
+ (GhidraScript)
+INFO  DecompAddrs.java> ##### end ##### (GhidraScript)
+INFO  DecompAddrs.java> ##### 0x6034b9c: NO FUNCTION ##### (GhidraScript)
+INFO  DecompAddrs.java> ##### FUNC 0x60349cc FUN_060349cc ##### (GhidraScript)
+INFO  DecompAddrs.java>
+void FUN_060349cc(undefined2 param_1,undefined2 param_2)
+
+{
+  undefined *puVar1;
+  int iVar2;
+  undefined2 *puVar3;
+  int *piVar4;
+  undefined1 *local_78 [5];
+  undefined1 *local_64;
+  undefined4 local_60;
+  undefined4 local_5c;
+  undefined1 *local_58 [2];
+  undefined1 auStack_50 [12];
+  undefined1 *local_44;
+  undefined4 local_40;
+  undefined4 local_3c;
+  undefined1 *local_38 [2];
+  undefined1 auStack_30 [12];
+  undefined1 *local_24;
+  undefined4 local_20;
+  undefined4 local_1c;
+  undefined1 *local_18 [2];
+  undefined1 auStack_10 [16];
+
+  local_18[0] = (undefined1 *)local_18;
+  puVar3 = DAT_06034aa4;
+  piVar4 = (int *)PTR_DAT_06034a90;
+  (*(code *)PTR_FUN_06034a94)();
+  local_1c = 0;
+  local_20 = DAT_06034a98;
+  local_24 = auStack_10;
+  (*(code *)PTR_FUN_06034a9c)();
+  iVar2 = (*(code *)PTR_FUN_06034aa0)();
+  *piVar4 = *piVar4 + iVar2;
+  local_38[0] = (undefined1 *)local_38;
+  (*(code *)PTR_FUN_06034a94)();
+  local_3c = 0;
+  local_40 = DAT_06034a98;
+  local_44 = auStack_30;
+  (*(code *)PTR_FUN_06034a9c)();
+  iVar2 = (*(code *)PTR_FUN_06034aa0)();
+  piVar4[1] = piVar4[1] + iVar2;
+  puVar1 = PTR_FUN_06034a94;
+  *puVar3 = param_1;
+  puVar3[1] = param_2;
+  local_58[0] = (undefined1 *)local_58;
+  (*(code *)puVar1)();
+  local_5c = 0;
+  local_60 = DAT_06034a98;
+  local_64 = auStack_50;
+  (*(code *)PTR_FUN_06034a9c)();
+  iVar2 = (*(code *)PTR_FUN_06034aa0)();
+  puVar1 = PTR_FUN_06034a94;
+  *piVar4 = *piVar4 - iVar2;
+  local_78[0] = (undefined1 *)local_78;
+  (*(code *)puVar1)();
+  (*(code *)PTR_FUN_06034a9c)();
+  iVar2 = (*(code *)PTR_FUN_06034aa0)();
+  piVar4[1] = piVar4[1] - iVar2;
+  return;
+}
+
+ (GhidraScript)
+INFO  DecompAddrs.java> ##### end ##### (GhidraScript)

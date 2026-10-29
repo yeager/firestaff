@@ -1,6 +1,6 @@
 # Nexus V1 Save File Format
 
-## Status: Firestaff-native FNXS implemented; Saturn format unresolved
+## Status: Firestaff-native FNXS implemented; Saturn BKR payload structure partially verified, engine loading unresolved
 
 Firestaff has a portable, little-endian native save container named `FNXS`.
 It is used for Firestaff resume, save browsing, and save export/import. It is
@@ -37,14 +37,55 @@ exact filename and SHA-256; other or incomplete corpora cannot be reported as
 authentic-corpus passes. Neither the view nor the test assigns meaning to
 changed bytes, and neither can write or convert a Saturn image.
 
+A separate 2026-10-29 cold-boot Ymir trace now joins the complete authentic
+20,480-byte `DMNEXUS__01` payload address sequence to SH-2 PC `0x06003680`.
+Ghidra caller analysis binds the read to the named-entry lookup, destination
+WRAM-L address `0x00204000`, and a retail checksum check. The captured final
+buffer matches all but four payload bytes (`0x58..0x5b`). A follow-up write
+trace shows PC `0x06003682` copies the file bytes there, then PC `0x0602ec94`
+writes `0x05efbf3c` over them nine frames later. The containing retail
+function resolves fields at structure offsets `+4` and `+8` as offsets from
+the structure base before reading the pointed-to regions. All four authentic
+payloads contain `0x10` and `0xcc` in those fields at payload offset `0x50`,
+pointing to source offsets `0x60` and `0x11c`. After using the second source
+region, the function overwrites its offset field with a stack-derived value.
+This establishes a source-relative offset pair and an in-place pointer/fixup
+operation, but not the pointed-to data schemas or the transformed field's
+later consumer. Firestaff does not yet apply this data to the game engine.
+Details and hashes are recorded in
+[`nexus_sh2_startup_decompilation.md`](nexus_sh2_startup_decompilation.md#continue-payload-transfer-2026-10-29)
+and the operator-managed external evidence bundle's
+`coldboot-continue-write-trace-20261029/` directory.
+
+A further authentic two-champion Ymir run traced SH-2 reads and writes in the
+loaded payload buffer through VDP1 frame 14,121. It recorded 1,777 reads and
+40,964 writes, with complete bundles and zero dropped events. The same-run
+memory projection matches the authentic payload and checks 160 of 166
+source-to-runtime operations; the six bounded final differences are explained
+by retail updater writes already traced in the leader-index-3 run. This
+additional trace does not decode other fields or demonstrate a Firestaff
+Continue route. Its logs, dumps, checksums, and projection report are retained
+in the external `wram-consumer-trace-20261029/` evidence directory.
+
+Firestaff's bounded C reader accepts one caller-selected card path up to 4 MiB,
+requires exactly one `DMNEXUS__01` entry, and validates the card, entry, and
+verified roster metadata. `nexus_v1_saturn_bkr_read_nexus_file` copies the
+authentic payload bytes into a caller-owned buffer only after the complete card
+and payload pass validation. The existing probe wrapper discards those bytes
+after reporting metadata. Neither function searches for a card or applies
+payload fields to runtime state. The title menu does not yet select this file
+or resume the game from it.
+
 The authentic `DM.BIN` does contain save-related diagnostic strings in the
 retail data image: `EV_SAVE`, `EV_SAVELOAD`, `Slot Operation Error`, and the
 `iwa\\loader.c` source label. Their file offsets are recorded as `0x36fec`,
 `0x36ff4`, `0x36c58`, and `0x36980` respectively (SH-2 address base
 `0x06010000`). These are string/provenance observations only. No verified
-pointer chain from those strings to a Saturn backup-RAM record, checksum,
-load destination, or playable level/position has been established, so they do
-not authorize a native Saturn save decoder.
+pointer chain from these strings to a Saturn backup-RAM record has been
+established, so the strings alone do not authorize a native Saturn save
+decoder. The independent BUP runtime trace above does establish a named-entry
+read, WRAM destination, and checksum gate, but still does not identify the
+payload schema or loaded-state consumer.
 
 A read-only Ghidra 12.2 follow-up used the same `DM.BIN` hash
 (`3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124`). The
@@ -66,8 +107,81 @@ payloads differ across the two-, three-, and four-champion samples. Bytes
 three-, and four-champion samples respectively; these values follow
 `0x0274 + champion_count * 0x00e0`. Every byte from the observed value to the
 end of the 20,480-byte payload is zero in these four samples. The independent
-four-champion sample has the same observed value. This is a count-correlated
-payload-boundary observation; it does not identify the boundary field's
-consumer or prove a 224-byte champion record. Original Saturn save import
-remains gated until the payload mapping and source-owned consumer are
-identified and exercised against the retail game.
+four-champion sample has the same observed value. The pcrecomp/Ghidra
+decompilation of `FUN_0602eb4c` verifies a `0xe0` source stride and a `0x13c`
+runtime stride while projecting roster records. The authentic two-, three-,
+and four-champion captures now match 83 decompilation-directed operations
+per record, including repeated tables and byte/word conversions. A wider
+leader-3 capture joins all 16 observed final-value differences across four
+runtime fields to retail writes, with none unresolved in that bounded set.
+The party leader index is now independently identified at payload `+0x61`:
+`FUN_0602eb4c` sign-extends this byte into the
+runtime context at `+0x0c`, and all four authentic payloads match same-run
+WorkRAM at `0x0608009c` (indices `0, 0, 0, 3` for rosters of `2, 3, 4, 4`).
+The bounded BKR probe validates that this index is inside the roster. One
+champion field pair is now semantically bound: signed source halfwords at
+`+0x3c/+0x3e` project to runtime longwords at `+0x08/+0x0c`. The retail
+updater subtracts from the first and clamps it against the second, identifying
+them as current and maximum stamina. The four authentic saves contain `66/67`
+for each champion except the leader-index-3 save, which contains `67/67`.
+A preceding signed pair at source `+0x38/+0x3a` projects to runtime longwords
+`+0/+4`. `FUN_0603b014`, the New Game roster initializer, fills the same
+runtime cells from the source PLRD health value at `+6`, placing the value in
+both current and maximum slots. Combined with the BKR importer projection,
+this identifies the saved pair as current and maximum health. The probe
+exposes these fields as `champion_health_current` and `champion_max_health`.
+Every present champion in all four authentic saves has `47/47`; the
+leader-index-3 Ymir trace captures those values loading at frame 12931 but has
+no later writes to the pair. Health updates after Continue remain untraced.
+A second pair at source `+0x40/+0x42` projects to runtime `+0x10/+0x14`.
+`FUN_0603b014` initializes these cells from the PLRD mana value at `+0x0a`,
+identifying the pair as current and maximum mana. `FUN_060361a8` increments
+current mana toward its maximum. The probe exposes these fields as
+`champion_mana_current` and `champion_max_mana`. All four authentic saves
+contain `18/20`, while the captured post-update runtime values are `19/20`.
+The byte at source `+0x09` is copied to runtime champion offset `+0x35`.
+Follow-up static analysis places `FUN_0603a472`, `FUN_0603a55c`, and
+`FUN_0603a602` on an ITEM.IBS action-selector path that reads or updates
+offsets `+0x35`, `+0x36`, and `+0x38`. This does not establish a Magic sequence
+cursor or connect the field to the composer at `+0x3d/+0x3e`; the payload
+probe therefore exposes it as `champion_byte_09_runtime_35` pending domain
+identification. The selector's eligibility helper also reads runtime `+0x18`
+for some ITEM.IBS records; that saved field's domain meaning and any relation
+to the displayed Magic window remain unproven. All four image-hash-verified
+BKR files have value `2` in every champion record; their extracted payload
+hashes match the four pinned corpus payloads. Other champion and world fields
+remain opaque. Original Saturn save
+import remains gated until the complete semantic payload mapping and
+source-owned consumer are identified and
+exercised against the retail game.
+
+### Name-byte comparison against the Japanese roster
+
+The Japanese Track 1 image in the external real-data corpus contains
+`RLOWFIX.BIN` (72,332 bytes, SHA-256
+`f2686bf3d6b971c5eaa613b2619b7e1bb7958a8045876296a83509f137be18b0`). Its
+20-record PLRD roster and 216-entry TABL table were compared in memory with
+the four hash-verified BKR payloads listed above. In all four saves, every
+saved champion record begins with `a3 88 96 80 80 00`. The first three bytes
+match the first three PLRD name-table indices of roster row 2 exactly; that
+row's remaining three PLRD bytes are `00 00 00`. The Japanese TABL table maps
+those first three indices to raw codes `0x88`, `0x65`, and `0x6d`.
+
+This cross-file match identifies row 2 as the source of the saved three-code
+name prefix and is consistent with the authenticated runtime copy of source
+bytes `+0x00..+0x05` to runtime bytes `+0x2c..+0x31`. It does not establish the
+meaning of the saved `0x80 0x80` suffix, whether those bytes are padding or
+editable name state, or the complete Saturn text-rendering path.
+
+Decompilation of the New Game roster initializer `FUN_0603b014` shows it
+selecting a PLRD-like roster record at `roster_base + 0x40 * roster_index`,
+copying its NUL-terminated name bytes to champion runtime offset `+0x2c`, and
+writing a terminator at `+0x31`. The BKR importer `FUN_0602eb4c` copies the
+six bytes at save-record offset `+0x00` to that same runtime name slot. Thus
+the authentic sample's final `00` terminates the copied six-byte slot. This
+maps the BKR span to the runtime champion-name string, but does not decode its
+glyphs or explain `0x80 0x80`; Firestaff keeps those bytes opaque and does not
+turn them into visible text. A save with a different roster member and a
+trace of the runtime string consumer are still needed before mapping the
+bytes to `name_ascii` or `name_jp`. No Japanese game data was added to the
+repository.

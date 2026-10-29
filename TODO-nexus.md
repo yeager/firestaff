@@ -1,6 +1,6 @@
 # Firestaff TODO — Nexus
 
-Reviewed 2026-10-28. The items below track open work and include completed
+Reviewed 2026-10-29. The items below track open work and include completed
 diagnostics as context. Verified evidence is also recorded in the Nexus capture
 and reverse-engineering records and in [DONE-nexus.md](DONE-nexus.md).
 
@@ -10,11 +10,164 @@ Japanese-region keyboard/mouse state routing is covered by the M11 runtime
 test. The retained Japanese Ymir screenshot captures only the initial settings
 page; Japanese state changes and marker animation still need authentic captures.
 
-The C Saturn BKR container parser is now verified against all four
-hash-pinned samples reported as retail-written; see DONE-nexus.md. Remaining Continue work is the
-source-bound payload schema and retail save-selection/load consumer. Do not
-promote the parser's opaque payload bytes into runtime state without joining
-those bytes to the authentic Saturn save/load implementation.
+The C Saturn BKR container parser is verified against all four hash-pinned
+samples reported as retail-written; see DONE-nexus.md. A bounded C probe now
+validates the retail `DMNEXUS__01` payload offsets, champion count, party
+leader index, current/maximum health, current/maximum stamina, and current/
+maximum mana against decompiled retail code and all four authentic images.
+The health pair at source `+0x38/+0x3a` loads as `47/47`; New Game initializes
+the same runtime cells from PLRD health. Its post-load update behavior remains
+untraced. The mana pair at source `+0x40/+0x42` loads as `18/20` and
+updates to `19/20`; New Game initializes the same runtime cells from PLRD
+mana. Payload byte `+0x09` projects to runtime `+0x35`, which follow-up static
+analysis places on an ITEM.IBS action-selector path; its domain meaning
+remains unresolved. The BKR receipt exposes that byte. It is `2` in every
+champion record across the four hash-verified retail BKR
+images and is not yet connected to Firestaff's spell-input state. Other
+champion-record fields remain opaque.
+Retail Continue's BKR named-entry lookup,
+complete payload transfer,
+and checksum gate are source-bound. The remaining work is to identify the
+rest of the champion field schema and the post-load consumer that applies the
+loaded state.
+Keep unbound payload fields opaque; do not infer game state from FNXS or another
+Dungeon Master version.
+
+The bounded BKR parser remains outside the production Continue route. M11's
+retail title reducer still receives `has_continue = 0`, and
+`SHOW_LOAD_PANEL` currently redraws without entering a Load-panel state. The
+next integration step is explicit real-card selection and a separate BKR
+catalog/load state; do not infer the active card by scanning unrelated
+installation data. Keep final load confirmation gated until the remaining
+champion fields and retail state consumer are mapped. A hash-verified callback
+decompilation and Ymir trace now bind the authentic BKR comment suffix `N` to
+the visible `NORMAL` difficulty label. The selected comment prefix is also
+copied into the callback's text buffer, and enlarged inspection of the
+authentic capture confirms the full row `B01  0:06 NORMAL`. The retail row text
+path is mapped from the selected BKR comment through glyph conversion and
+drawing. The Load-panel capture still lacks complete NBG0/NBG1 composition and
+text/border source joins; see
+`docs/nexus/nexus_startup.md` and the saved Ymir `--debug` captures.
+The callback's EASY-suffix branch is statically identified but has not been
+verified with an authentic EASY BKR card.
+
+The 2026-10-29 authentic Load-panel replay and callback decompilation confirm
+the selected card's `B01  0:06N` comment is copied, its `N` suffix selects the
+visible `NORMAL` label, and the assembled string is glyph-rendered. The
+authentic screenshot shows `B01  0:06 NORMAL`. See the trace and capture
+bundle on the external evidence disk and
+`docs/nexus/nexus_sh2_startup_decompilation.md`.
+
+A separate Ymir cold boot tested the retail Start control in the New Game
+view. Start displayed `PAUSE`; a second Start returned to the byte-identical
+unpaused view. The interval produced zero SH-2 writes to the BUP bus and the
+fresh internal BUP still contains no entries. Save creation and the in-game
+save command remain unresolved; see the authentic input/BUP trace receipt in
+the external evidence folder.
+
+A 2026-10-29 Ymir cold boot with the authentic two-champion BKR installed in
+internal backup RAM reached the native Load panel, displayed `B01  0:06 NORMAL`,
+and accepted the save to reach a dungeon view with two champion HUD panels. The
+BUP image retained its source hash. This verifies the retail reference flow
+but does not identify payload fields or implement Firestaff Continue. See the
+cold-boot receipt in
+[`nexus_startup.md`](docs/nexus/nexus_startup.md#two-champion-bkr-cold-boot-2026-10-29).
+
+The 2026-10-29 Continue trace now binds all 20,480 reads at SH-2 PC
+`0x06003680` to the exact authentic `DMNEXUS__01` BKR payload address
+sequence. Ghidra also binds the caller to the named-entry lookup, WRAM-L
+destination `0x00204000`, and checksum gate. This establishes the retail
+payload transfer, but not its field schema or the later mapping into
+Firestaff's game model. A bounded follow-up write trace identifies the writer
+of the four differing bytes: the copy routine writes `00 00 00 cc` at payload
+offset `0x58`, then PC `0x0602ec94` replaces it with stack-derived
+`05 ef bf 3c` nine frames later. Its meaning and whether this is a required
+runtime relocation remain unresolved. The containing function resolves the
+fields at structure offsets `+4` and `+8` as base-relative source addresses;
+the four authentic payloads contain `0x10` and `0xcc`, pointing from structure
+offset `0x50` to offsets `0x60` and `0x11c`. pcrecomp/Ghidra identifies the
+containing function as `FUN_0602eb4c`; its code bytes and the named-entry copy
+function match the same-run Ymir capture. Identify the substructure schema and
+the transformed field's consumer before implementing payload-to-engine state.
+See
+[`nexus_sh2_startup_decompilation.md`](docs/nexus/nexus_sh2_startup_decompilation.md#continue-payload-transfer-2026-10-29).
+
+The source-record stride (`0xe0`) and runtime-record stride (`0x13c`) are now
+verified from the retail code constants. A reproducible analyzer restores the
+traced four-byte fixup for payload hash verification and checks 83
+decompilation-specified operations per record across authentic two-, three-,
+and four-champion captures (166, 249, and 332 checks). The expanded leader-3
+Ymir trace now explains all 16 final-value differences across four tracked
+fields:
+source `+0x3c` / runtime `+0x08`, source `+0x40` / runtime `+0x10`, source
+`+0x44` / runtime `+0x18`, and source `+0x46` / runtime `+0x1a`, across all
+four records. These offsets remain mechanically verified and unnamed. A
+read-only Ghidra scan found a second runtime `+0x1a` access in
+`FUN_060373d0`, which uses the same champion-row base and `0x13c` stride as
+the BKR importer and updates the halfword on an event path. This narrows the
+next source investigation but does not establish the field's domain meaning.
+`FUN_060295b8` also reads both fields from that same indexed row, adds `0x0400`
+and passes them to `FUN_060236ba`, which selects a clipped/sliced render path
+for positive values. Its caller invokes it in one mode path. This establishes
+a presentation use, but not the fields' interpretation or a coordinate
+system. The complete consumer set and semantics for both fields, the rest of
+the record, the source-owned post-load consumer, and Firestaff runtime
+integration remain open. Follow-up static analysis places `FUN_0603a472` on a
+four-index ITEM.IBS eligibility path; its helper reads runtime `+0x18` for
+some 40-byte records and its related selector state is `+0x35..+0x38`. The
+earlier four-entry Magic-validator interpretation conflated that selector with
+the composer's separate `+0x3d/+0x3e` buffer. No call from the composer or
+connection to a cast has been established. Identify the saved field's meaning
+and any relationship to the displayed Magic window independently.
+Reproduction and retained evidence are documented in
+[`nexus_sh2_startup_decompilation.md`](docs/nexus/nexus_sh2_startup_decompilation.md#continue-payload-transfer-2026-10-29).
+The Ghidra field-consumer scan remains in the external evidence bundle; its
+relevant decompilation and caller logs are preserved in
+`parity-evidence/verification/nexus-bkr-item-action-eligibility-20261029/`.
+
+The four authentic BKR samples all contain `a3 88 96 80 80 00` at the start
+of every champion record. In the authentic Japanese Track 1 `RLOWFIX.BIN`,
+the prefix `a3 88 96` uniquely matches the first three PLRD name-table indices
+of roster row 2; its TABL entries resolve to raw codes `0x88`, `0x65`, and
+`0x6d`. The retail loader copies all six source bytes to runtime offset
+`+0x2c`. This binds a real name prefix to a source roster row but leaves the
+two `0x80` bytes and the text consumer unresolved. All current save samples
+use this same prefix, so they do not establish how other roster names are
+stored. Decompilation now identifies runtime `+0x2c` as the champion-name
+string slot: the New Game initializer copies a NUL-terminated roster name to
+it, and the BKR importer copies the six saved bytes to the same slot. The
+sample's final `00` is its terminator, but the `0x80` suffix and glyph mapping
+remain unresolved. Trace the runtime string consumer and capture a retail save
+with a different roster member before decoding the remaining bytes or loading
+BKR names into Firestaff's `name_ascii` or `name_jp` fields. Details are in
+[`nexus_save_format.md`](docs/nexus/nexus_save_format.md#name-byte-comparison-against-the-japanese-roster).
+
+The 2026-10-29 Load-panel VDP2 trace now joins the retail SH-2 writer at
+`0x06023640` to all 352 VDP2 halfword events on frame 659. The selected NBG1
+name table maps 176 writes to visible cells x=1..16, y=6..16; each PND is
+`0x2000/0x1100`, and the referenced 32-byte character pattern is zero-filled
+in that capture. This establishes NBG1 name-table writes, not rendered menu
+content or source-asset ownership. Identify the active NBG1 consumer and bind
+the displayed panel and text to authentic source data before admitting a
+Firestaff Load-panel renderer. See the Load-panel writer evidence in
+[`nexus_startup.md`](docs/nexus/nexus_startup.md#load-panel-vdp2-longword-writer-join-2026-10-29).
+An exact-source scan of this frame's NBG0 bitmap found no complete match among
+410 decoded authentic menu, font, title, and static-background candidates. A
+separate frame-bounded join now binds 57 nonzero pixels from authentic Japanese
+`MENU.BPK` surface 55 to both the SH-2 writer and VDP2 bus trace at NBG0 offset
+`0xe6f`; Ghidra identifies the caller as the retail menu-image renderer. This
+is a partial pixel-index transport join. A same-state screenshot comparison
+now verifies direct CRAM output for all 42 visible nonzero NBG0 indices, but
+an additional row-wise trace join binds unique `MENU.BPK[60]` (228x100) to
+22,800 frame-bounded SH-2 writes at NBG0 `(16,112)`. The retail resource that
+supplied 41 of the 42 visible palette values is the same-index `MENU.BPK` PALT
+word; the remaining index `0x83` is overwritten by a frame-traced retail
+animation. Direct bulk palette transfer, the remaining bitmap producer, and
+complete screen composition remain unbound. No exact MENU/STABG or DGN
+Structure2 palette asset match was found. Identify the full NBG0 producer,
+palette resource owner, and remaining composition before admitting a Firestaff
+Load-panel renderer. See the frame-bounded evidence and reproduction command in
+[`nexus_startup.md`](docs/nexus/nexus_startup.md#frame-bounded-menu-bpk-to-nbg0-source-span-2026-10-29).
 
 2026-10-28 retail New Game loader route: the M11 retail menu now sends
 keyboard/controller Accept and the retail mouse row to the same source-gated
@@ -244,8 +397,11 @@ not a fix and has not passed this real-media test.
   The shared background and full Configuration page remain unrendered. New
   Game now reaches the authenticated `DM.BIN`/`LEV01.DGN` loader and emits the
   retail level-1 start receipt, but the downstream viewport/HUD gate still
-  blocks a playable handoff. Continue execution does not yet read Saturn BKR
-  save data, and Configuration destination behavior remains unimplemented.
+  blocks a playable handoff. Ymir now proves the retail Continue BKR lookup,
+  payload read, checksum gate, and 24/36/48 selected roster-field
+  projections from authentic two-, three-, and four-champion saves.
+  Firestaff still does not load Saturn BKR state, and Configuration
+  destination behavior remains unimplemented.
   The Japanese New Game
   and Continue captures each verify five `TITLE.BIN` sprites and 1,441
   screenshot texels; the English states each verify 1,451. The Japanese
@@ -394,7 +550,59 @@ not a fix and has not passed this real-media test.
   behavior. Tab cycles the loaded party leader forward and Shift+Tab cycles
   backward in Firestaff's desktop controls. The reverse direction is a host
   keyboard convenience; the native cursor action contract and attack,
-  inventory, and spell semantics remain open.
+  inventory, and spell semantics remain open. An authentic 2026-10-29 Ymir
+  `--debug` replay verified retail Control Pad Y opens the Magic window from a
+  real BKR-loaded gameplay state; Firestaff still does not render or route
+  that panel. A second authentic replay from a saved Y-open state confirms
+  Down/Left/Right change the screenshot and reorder VDP1 references to nine
+  exact `MENU.BPK` surfaces (entries 99–106 and 144); Up matches the no-input
+  control. All nine commands use 8bpp bank mode, and all 31 nonzero palette
+  indices in those joined surfaces match both Japanese `MENU.BPK` PALT and
+  same-run captured CRAM. Rune names, final spell acceptance, full dispatch,
+  and casting remain unverified. Static analysis found generic
+  `MENU.BPK` record/draw helpers but no direct relation from entries 99–106/144
+  to rune names. Decompilation identifies `FUN_0602a234` as a sequence-composer
+  callback: it computes cost, gates on current mana, writes
+  `0xDA + cursor*6 + selection` at `+0x3e+cursor`, then advances the cursor
+  stored at `+0x3d`. The four action slots are `+0x3e..+0x41`.
+  Authentic GUI captures confirm all six cursor-0 values `0xDA..0xDF`, with
+  costs 1..6, using cardinal and simultaneous diagonal input schedules. Four
+  A actions fill the composer buffer as `DA E0 E6 EC`, cursor index 3, and
+  observed mana changes from `0x12` to `0x09` across the four-A capture; this
+  is the total balance change, not a per-action cost claim for cursor positions
+  1–3. The fourth append returns its unchanged cursor value
+  3 before the common UI update; recovered static caller sites discard it. A
+  separate command-8 branch recalculates aggregate mana, but no spell-execution
+  meaning is established. The direction handler maps logical events 0/1/2/3 to
+  Up/Right/Down/Left, and the retail packet's active-high masks are traced
+  through debounce to event `0x28`; physical Saturn electrical signaling is
+  not established. In the authentic Y-open state, menu `+0x24` is null and
+  `FUN_060328c6` performs no mapping; Down changes the generic menu item index
+  0→4 without proving that index 4 is a rune. The Nexus coordinate-to-selection
+  table and glyph meanings,
+  final spell validator, and cast behavior remain open. Follow-up decompilation
+  identifies `FUN_0603a472` as a four-index ITEM.IBS eligibility helper that
+  reads runtime `+0x18` for some records; its selector uses row `+0x35..+0x38`,
+  separate from composer `+0x3d/+0x3e`. Its relationship to the displayed Magic
+  window remains unproven. Paired authentic captures now bind the six values to selected-
+  state Japanese `MENU.BPK` entries 107–112 and command-88 VDP1 source addresses
+  and coordinates, without naming glyphs. Next, recover the retail
+  coordinate-to-index table and trace full-buffer submission to any actual
+  validator or cast consumer.
+  Preserve the capture receipt under
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-magic-down-input-trace-20261029/`.
+  The hash-verified callback decompilation is under
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-magic-input-callback-static-20261029/`.
+  Direction-event decompilation is under
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-dpad-menu-selection-20261029/`.
+  The selected-surface join is at
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-menu-action-surface-bindings-20261029.md`,
+  and the fourth-slot caller audit is at
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/magic-fourth-slot-status-20261029/`.
+  The packet-to-event decompilation is at
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-saturn-pad-event-path-20261029/`.
+  The Y-open null-table trace is at
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/magic-menu-coordinate-map-20261029/`.
   An independent 2026-10-25 Ymir `--debug` comparison loaded a hash-verified
   authentic JP gameplay savestate into a private profile: the no-input reload
   changed 0.00175% of pixels, W-forward changed 3.08408%, and A-left changed
@@ -427,11 +635,15 @@ not a fix and has not passed this real-media test.
   actual retail state owner to the authentic champion/inventory model before
   opening the production equipment-click route. The verified consumer at `0x21c84`
   special-cases only IDs 38, 39, 40, 49, 52, 56, and 57; IDs 13 and 44 reach
-  its generic `bad event data` diagnostic. The separate mouse poller filters
-  for event 46 before it invokes the hit scanner; it does not separately
-  consume event 44. Continue tracing the held-item helper and capture a
-  controlled click's guest RAM and visible result before enabling pointer
-  actions.
+  its generic `bad event data` diagnostic. Static disassembly now verifies
+  relative cursor updates, both mouse descriptor-table alternatives, and the
+  event-46 hit-test dispatch; matching live hitbox rows enqueue their own
+  event/argument pairs afterward. No retained capture supplies a populated
+  runtime table or scheduled ShuttleMouse report, so the physical `0x0400`
+  trigger and live click-to-action binding remain unknown. Continue tracing
+  the held-item helper and capture a controlled click's guest RAM and visible
+  result before enabling pointer actions. See
+  `parity-evidence/verification/nexus-shuttle-mouse-event-path-20261029/README.md`.
   See `parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`.
   See also `parity-evidence/verification/nexus-mouse-callback-dispatch-20261024/README.md`.
   Firestaff now has a host Z toggle, logical pointer motion through keyboard
@@ -468,7 +680,11 @@ and four initial values. Continue with the real 3D/DGN background source and
 composition, then trace setting persistence and prove the audio, difficulty,
 and HUD effects in retail gameplay. Japanese Configuration-page parity
 remains open. The New Game loader receipt is now verified, but its viewport/HUD
-handoff remains blocked; Continue/save execution is still open. See
+handoff remains blocked. Retail Continue payload transfer and a bounded set of
+runtime roster-field projections are verified in Ymir. Firestaff can now probe
+one explicitly selected BKR file with bounded memory and return verified card
+and roster metadata, but the Load UI does not yet select a card or apply its
+payload. Complete state mapping and a playable Continue handoff remain open. See
 `docs/nexus/nexus_startup.md` and `docs/nexus/nexus_title.md`.
 
 The authentic English Ymir Configuration-page frame 119 source scan examined
@@ -488,3 +704,23 @@ textures. Of the matched draws, 105 have candidate Structure3 face-owner rows,
 often with multiple possible owners. Sixteen matched draws have no face-owner
 row. Determine the active owner and transform from the Saturn SH-2 draw setup
 before using these materials to render the Configuration scene.
+
+The authentic Load-panel NBG0 work now binds an 86-byte `MENU.BPK[55]` source
+span and the unique 228x100 `MENU.BPK[60]` panel base to frame-bounded SH-2 and
+VDP2 VRAM writes. The captured CRAM palette output is pixel-exact against the
+Ymir screenshot for 43,889 visible NBG0 pixels. The PALT table matches the
+captured CRAM at all 41 static used indices; a retail animation supplies
+visible index `0x83`. Decompilation and the authentic frame-659 WorkRAM-HI
+snapshot now join the animation's PALT v0 pointer slot to a live `RES*` record;
+its 512-byte payload is an exact match for `RHIFIX.BIN` at offset `0x1140`, and
+the live archive differs from that hash-verified file only at version byte
+`0x0b`. The table contains the `0xffff` value seen in the frame-655 CRAM write;
+nine four-frame-spaced writes match PALT indices 23–31 in order, identifying
+index 31 for frame 655. Direct bulk
+static-palette-transfer ownership and complete
+bitmap composition remain unresolved. Continue source tracing for the CRAM
+static-palette upload, full-screen producer, and transparent-pixel composition before
+admitting a Load-panel renderer. See
+`docs/nexus/nexus_startup.md` and the external trace bundle's
+`nbg0-menu-source-trace.txt`, `nbg0-palette-screenshot-join.txt`, and Ghidra
+decompilation logs.

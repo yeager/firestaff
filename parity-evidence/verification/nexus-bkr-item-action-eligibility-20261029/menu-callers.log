@@ -1,0 +1,71 @@
+openjdk version "25.0.5" 2026-10-20 LTS
+OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS)
+OpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode)
+INFO  Using log config file: jar:file:/home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Framework/Generic/lib/Generic.jar!/generic.log4j.xml (LoggingInitialization)
+INFO  Using log file: /home/trv2/.config/ghidra/ghidra_12.2_PUBLIC/application.log (LoggingInitialization)
+INFO  Loading user preferences: /home/trv2/.config/ghidra/ghidra_12.2_PUBLIC/preferences (Preferences)
+INFO  Loading previous preferences: /home/trv2/.config/ghidra/ghidra_12.1.4_PUBLIC/preferences (Preferences)
+INFO  Searching for classes... (ClassSearcher)
+INFO  Class search complete (2369 ms) (ClassSearcher)
+INFO  Initializing SSL Context (DefaultSSLContextInitializer)
+INFO  Initializing Random Number Generator... (SecureRandomFactory)
+INFO  Random Number Generator initialization complete: NativePRNGNonBlocking (SecureRandomFactory)
+INFO  Loaded 120 trusted CA certificate(s) from /etc/ssl/certs/ca-certificates.crt (UnixSystemTrustKeyStoreUtil)
+INFO  Loaded 120 trusted CA certificates from the OS trust store. (DefaultTrustManagerFactory)
+INFO  Loaded 118 trusted CA certificates from the Java default trust store. (DefaultTrustManagerFactory)
+INFO  Headless startup complete (4797 ms) (AnalyzeHeadless)
+INFO  Class searcher loaded 60 extension points (19 false positives) (ClassSearcher)
+INFO  HEADLESS Script Paths:
+    /dev/shm/nexus-load-slot-detail-trace-20261029/ghidra/scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/Base/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/SystemEmulation/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/PDB/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/FileFormats/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/VersionTracking/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Debug/Debugger-rmi-trace/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/GnuDemangler/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/PyGhidra/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Processors/Atmel/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Processors/DATA/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/WildcardAssembler/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/FunctionID/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Processors/JVM/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Debug/Debugger/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/DecompilerDependent/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/Decompiler/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Processors/8051/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Processors/PIC/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/BytePatterns/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/MicrosoftCodeAnalyzer/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/Swift/ghidra_scripts
+    /home/trv2/.local/ghidra/ghidra_12.2_PUBLIC/Ghidra/Features/BSim/ghidra_scripts (HeadlessAnalyzer)
+INFO  HEADLESS: execution starts (HeadlessAnalyzer)
+INFO  Opening existing project: /dev/shm/nexus-load-slot-detail-trace-20261029/ghidra/project/NexusDM (HeadlessAnalyzer)
+INFO  Opening project: /dev/shm/nexus-load-slot-detail-trace-20261029/ghidra/project/NexusDM (HeadlessProject)
+INFO  REPORT: Processing read-only project file: /DM.BIN (HeadlessAnalyzer)
+INFO  REPORT: Execute script: FindRefs.java '0x060286a4' '0x06028fe2' '0x06029054' '0x0603a472' '--calls'  (HeadlessAnalyzer)
+INFO  SCRIPT: /dev/shm/nexus-load-slot-detail-trace-20261029/ghidra/scripts/FindRefs.java (HeadlessAnalyzer)
+INFO  FindRefs.java> ===== refs to 0x60286a4 (FUN_060286a4) ===== (GhidraScript)
+INFO  FindRefs.java>   COMPUTED_CALL in FUN_06010f44 @0x06010f7c (GhidraScript)
+INFO  FindRefs.java>   (1 unique reference site(s)) (GhidraScript)
+INFO  FindRefs.java> ===== refs to 0x6028fe2 (FUN_06028fe2) ===== (GhidraScript)
+INFO  FindRefs.java>   UNCONDITIONAL_CALL in FUN_060286a4 @0x0602882c (GhidraScript)
+INFO  FindRefs.java>   UNCONDITIONAL_CALL in FUN_060286a4 @0x0602883c (GhidraScript)
+INFO  FindRefs.java>   UNCONDITIONAL_CALL in FUN_060286a4 @0x0602884c (GhidraScript)
+INFO  FindRefs.java>   UNCONDITIONAL_CALL in FUN_060286a4 @0x0602885e (GhidraScript)
+INFO  FindRefs.java>   UNCONDITIONAL_CALL in FUN_06029054 @0x0602908e (GhidraScript)
+INFO  FindRefs.java>   UNCONDITIONAL_CALL in FUN_060292e0 @0x060292e8 (GhidraScript)
+INFO  FindRefs.java>   UNCONDITIONAL_CALL in FUN_06029188 @0x06029192 (GhidraScript)
+INFO  FindRefs.java>   UNCONDITIONAL_CALL in FUN_06028ebc @0x06028eca (GhidraScript)
+INFO  FindRefs.java>   (8 unique reference site(s)) (GhidraScript)
+INFO  FindRefs.java> ===== refs to 0x6029054 (FUN_06029054) ===== (GhidraScript)
+INFO  FindRefs.java>   UNCONDITIONAL_CALL in FUN_060286a4 @0x06028804 (GhidraScript)
+INFO  FindRefs.java>   (1 unique reference site(s)) (GhidraScript)
+INFO  FindRefs.java> ===== refs to 0x603a472 (FUN_0603a472) ===== (GhidraScript)
+INFO  FindRefs.java>   UNCONDITIONAL_CALL in FUN_0603a602 @0x0603a614 (GhidraScript)
+INFO  FindRefs.java>   UNCONDITIONAL_CALL in FUN_0603a55c @0x0603a57c (GhidraScript)
+INFO  FindRefs.java>   UNCONDITIONAL_CALL in FUN_0603a55c @0x0603a5b2 (GhidraScript)
+INFO  FindRefs.java>   COMPUTED_CALL in FUN_060296d8 @0x060298e8 (GhidraScript)
+INFO  FindRefs.java>   COMPUTED_CALL in FUN_0603798e @0x060379aa (GhidraScript)
+INFO  FindRefs.java>   COMPUTED_CALL in FUN_0603d1ae @0x0603d1f8 (GhidraScript)
+INFO  FindRefs.java>   (6 unique reference site(s)) (GhidraScript)

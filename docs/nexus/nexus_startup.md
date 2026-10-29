@@ -1,7 +1,7 @@
 # Dungeon Master Nexus — startup status
 
 This is an evidence report for startup, not a specification for a completed
-Nexus startup screen. Updated 2026-10-27: an authentic Japanese retail cold
+Nexus startup screen. Updated 2026-10-29: an authentic Japanese retail cold
 boot reaches the native `PRESS START BUTTON` title prompt and, with scheduled
 retail controller input, the native three-choice title menu in Ymir. The menu
 was navigated into its Configuration page from a saved diagnostic state.
@@ -12,10 +12,16 @@ Japanese Continue layout and the English New Game and Continue layouts against
 authentic retail source bytes and captured CRAM. Ymir also completed
 Continue-to-gameplay with the corpus-retained BKR image whose SHA-256 is
 `87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`: the
-retail Load screen showed `B01 0:16 NORMAL`, then entered the four-champion
+retail Load screen showed `B01  0:06 NORMAL`, then entered the four-champion
 dungeon view. The isolated BKR copy retained its hash after loading. A paired
 Up-input replay changed the rendered gameplay view. These captures verify the
-retail reference flow in Ymir only. Firestaff now renders authenticated English
+retail reference flow in Ymir only. Separate 2026-10-29 cold boots installed
+the authentic two-champion retail-written BKR before power-on, reached the
+Load panel with `B01  0:06 NORMAL`, accepted that entry, and entered a dungeon
+view with two champion HUD panels. The internal backup-RAM image retained its
+source hash. These runs prove the retail flow for that BKR in Ymir; they do not
+identify payload fields or connect Firestaff's BKR parser to live backup RAM.
+Firestaff now renders authenticated English
 and Japanese New Game/Continue/Configuration foreground sprites from regional
 `TITLE.BIN` data. English Configuration text pixels match its Ymir capture;
 final marker RGB remains background-dependent. The shared background,
@@ -46,7 +52,7 @@ source.
 | `WARNING.BIN`, `GAMEOVER.BIN`, `STABG.BIN` | real surfaces are decoded and receive byte provenance; presentation is missing |
 | `FACE.BIN` | The JP retail member is verified as 45,104 bytes (`bd9ca16ea68043984e2804067b6cd66f`): 20 variable-length, 56×56 PRS3 portraits with source palettes. The PLRD roster-to-portrait ordinal and the VDP1 destination/order are still unobserved. |
 | `FONT256.S2D` | 242 CG tiles are retained in production source; Saturn page/attribute/glyph mapping is missing |
-| `MENU.BPK` | All 162 PRS3 surfaces decode to source-bound bytes. In one complete authentic Japanese menu frame, 86 whole surfaces are byte-resident in VDP1 VRAM, but none of 137 textured command sources starts in those ranges. The capture does not establish that `MENU.BPK` supplies the visible menu. Ownership, ordering, CLUT and VDP1/VDP2 composition remain unbound; see the [menu snapshot join](NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md). |
+| `MENU.BPK` | All 162 PRS3 surfaces decode to source-bound bytes. In the authentic Japanese Load panel, unique surface 60 is joined row by row to the 228x100 NBG0 base at `(16,112)`, surface 55 contributes a traced partial image span, and all 42 visible NBG0 color indices match captured CRAM output against the Ymir screenshot. Five Y-open Magic-window directional captures each join nine 8bpp VDP1 command sources to entries 99–106 and 144; all 31 nonzero indices in those joined surfaces match both PALT and same-run CRAM. Six paired Magic composer captures additionally bind numeric choices `0xDA`–`0xDF` to selected-state entries 107–112 and command-88 VDP1 sources/coordinates; the glyph names and full-menu coordinate/index table remain unknown. Other Load-panel pixels, complete title/menu composition, full VDP1 dispatch ownership and admitted Firestaff rendering remain open. A separate Japanese title-menu frame has 86 whole surfaces byte-resident in VDP1 VRAM, but none of 137 textured command sources starts in those ranges; see the [menu snapshot join](NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md). |
 | Saturn Backup RAM | `nexus_v1_saturn_bkr_parse` reads hash-pinned 32 KiB card directories and block chains, returning exact opaque payload bytes; native save selection, payload interpretation, and runtime loading remain missing |
 | Mednafen visual baseline | A clean J-BIOS capture against authentic retail shows black boot followed by the original intro FMV without input; menu/LEV01 identity remains missing |
 
@@ -462,7 +468,7 @@ Saturn backup image (SHA-256
 `87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`) with the
 same hash-verified Japanese retail disc and BIOS. The title menu showed
 `NEW GAME`, `CONTINUE`, and `CONFIGURATION`. Selecting `CONTINUE` opened the
-retail `LOAD` panel, which listed the internal-memory entry `B01 0:06 NORMAL`.
+retail `LOAD` panel, which listed the internal-memory entry `B01  0:06 NORMAL`.
 Confirming it displayed `Now Loading`, then entered the dungeon with the
 four-champion HUD. The BUP image retained its original SHA-256 after loading.
 
@@ -484,7 +490,7 @@ On 2026-10-26, a fresh TRV2 Ymir profile copied the same hash-verified
 four-champion BKR and replayed the retained Japanese title-prompt state with
 Start at frames `0..59`, Down at `180..189`, and A at `240..249`. At frame 900,
 the authentic framebuffer showed the native Japanese `LOAD` panel and its
-`B01 0:06 NORMAL` internal-memory row (SHA-256
+`B01  0:06 NORMAL` internal-memory row (SHA-256
 `b95cdc24ae30705648533dba1e1a1a304196a8fbb449bd069df513be85c0928b`). A
 saved checkpoint was loaded into a second isolated profile; A at frames
 `0..9` then reached a four-character HUD plus first-person viewport at frame
@@ -1846,24 +1852,29 @@ external evidence storage.
 
 ## Continue reaches gameplay with the retained authentic BKR (2026-10-28)
 
-### Save-slot time discrepancy
+### Save-slot comment and difficulty label
 
-The retained 2025 capture `parity-evidence/verification/nexus-continue-real-bup-20261025/03-load-screen.png`
-(SHA-256
-`5e20c31980926e599343b25dbdc1bc75b945ee382e9c313439996fc08b633444`)
-shows `B01 0:06 NORMAL`. The 2028 capture
-`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/authentic-bkr-continue-device.png`
-(SHA-256
-`2b86fe32898e79009ac2cc5cf33f961e0ebcd61489c9f93a9717f9e0c13ea8fb`)
-shows `B01 0:16 NORMAL`. Both reports identify the same 32 KiB BKR SHA-256
-`87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`; the
-2028 run also verified that the source image and profile copy were unchanged
-after loading. The runs used different Ymir versions (0.4.1 and 0.4.2-dev)
-and different boot/input schedules. The available evidence does not determine
-why the displayed time differs. These are capture-specific observations; do
-not treat either time as an established property of the BKR or infer a BKR
-mutation. Resolving the cause requires a controlled replay with the same
-Ymir build, profile initialization, and frame-exact input schedule.
+Earlier visual readings of the retained Load-panel captures transcribed the
+minute field as `0:16`. Enlarged inspection of the authentic 2025 and 2028
+captures shows `B01  0:06 NORMAL`. The 2025 screenshot SHA-256 is
+`5e20c31980926e599343b25dbdc1bc75b945ee382e9c313439996fc08b633444`; the
+2028 screenshot SHA-256 is
+`2b86fe32898e79009ac2cc5cf33f961e0ebcd61489c9f93a9717f9e0c13ea8fb`. A
+2026-10-29 Ymir replay and SH-2 trace independently confirm the same row: the
+retail slot callback copies the BKR
+comment `B01  0:06N`, strips its final `N`, appends ` NORMAL`, and sends that
+string through the glyph converter and text draw routine. The callback writes
+the original comment bytes at stack address `0x060ffedc`; the authentic BKR
+file and internal BUP image both contain those exact bytes. Thus the BKR
+comment supplies the row prefix and difficulty. Details, trace hashes, and the
+retained replay state are in the external evidence folder's
+`nexus_load_slot_detail_trace_20261029/` directory.
+
+The two- and four-champion real-media cold boots independently establish
+retail Continue-to-gameplay in Ymir; their earlier `0:16` text transcriptions
+were visual misreads, not evidence of different save times or BKR mutation.
+These captures still do not identify the remaining payload fields or connect
+Firestaff's BKR parser to live backup RAM.
 
 Ymir `0.4.2-dev` was run on TRV2 with the hash-verified Japanese retail disc,
 Japanese IPL and an isolated profile. The profile's internal backup RAM was a
@@ -1873,7 +1884,7 @@ corpus (SHA-256
 `87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`). No
 emulator save state or game save was loaded during the cold boot. After the
 retail title menu appeared, Down and A opened Continue's Load screen, which
-listed the internal-memory entry `B01 0:16 NORMAL`. A second A accepted that
+listed the internal-memory entry `B01  0:06 NORMAL`. A second A accepted that
 entry. The next capture shows a dungeon view with four champion HUD panels.
 The BKR source and isolated profile copy retained the same SHA-256 after the
 load.
@@ -1897,20 +1908,72 @@ BKR installed. It records 10,849 one-byte reads in bus range
 `0x180000..0x200000`, 1,328 distinct addresses, and zero dropped rows. The
 trace's most frequent PCs are `0x06003d68` and `0x0600289c` (2,550 reads each),
 `0x060034b0` (2,040), and `0x060028f2`/`0x06002900` (1,770 each). Same-run
-WRAM-HI disassembly shows byte reads and subsequent stores at these sites,
-consistent with early BUP enumeration/copy work. Ymir's trace records no read
-values, so it does not prove payload bytes were consumed as game state or
-identify a Nexus save field.
+WRAM-HI disassembly and `pcrecomp` Ghidra decompilation identify the hot
+`0x060034b0` and `0x06003d68` sites as backup-directory name matching and
+allocation-bitmap counting. Other hot readers inside `FUN_06002672` also walk
+configured records and apply the allocation bitmap, but their exact startup
+role is unresolved. PCs `0x06002a12` and `0x06002a2a` compare against the
+literal `BackUpRam Format` signature. These findings establish format probing
+and directory/space metadata handling, not save-payload parsing. The trace
+records no read values and identifies no Nexus payload field. See the
+[BUP and directory decompilation receipts](nexus_sh2_startup_decompilation.md#bup-directory-scan-routines-2026-10-29)
+and the external evidence folder's
+`coldboot-readtrace-boot12000/pcrecomp-ghidra-analysis-20261029/` directory.
 
 A later checkpoint at boot frame 14,900 shows the Japanese title logo. A
 replay from that checkpoint with Start, Down and A reaches the authentic Load
-screen row `B01 0:16 NORMAL`, but records zero new BUP-window reads. This
-narrowly places the observed BUP read activity earlier in startup than this
-checkpoint; it does not tie those reads to the later Continue action. The
-BKR loader and its payload-to-runtime mapping remain unbound. Full trace,
-disassembly and checkpoint receipts are recorded in the external evidence
-folder's `coldboot-readtrace-boot12000/` and `coldboot-title-checkpoint/`
-subdirectories.
+screen row `B01  0:06 NORMAL`, but records zero new BUP-window reads. This
+narrowly places this boot trace's BUP read activity earlier in startup than
+the checkpoint. A separate cold-boot Continue trace binds the accepted payload
+read to `DMNEXUS__01`, its WRAM-L destination, and checksum gate; it does not
+identify payload fields or the later game-state consumer. See the
+[Continue payload transfer receipt](nexus_sh2_startup_decompilation.md#continue-payload-transfer-2026-10-29).
+Full trace, disassembly and checkpoint receipts are recorded in the external
+evidence folder's `coldboot-readtrace-boot12000/` and
+`coldboot-title-checkpoint/` subdirectories.
+
+A same-run coldboot trace on TRV2 now covers frames 0–11,999 with the authentic
+BKR installed. It records 10,849 one-byte reads in bus range
+`0x180000..0x200000`, 1,328 distinct addresses, and zero dropped rows. The
+trace's most frequent PCs are `0x06003d68` and `0x0600289c` (2,550 reads each),
+`0x060034b0` (2,040), and `0x060028f2`/`0x06002900` (1,770 each). The
+decompiled `0x060034b0` and `0x06003d68` sites process backup-directory names
+and allocation metadata; the other hot sites in `FUN_06002672` walk records
+and apply an allocation bitmap. The exact role of those other sites remains
+unresolved. The trace records no read values and does not identify any Nexus
+save-payload field; see the [decompilation receipts](nexus_sh2_startup_decompilation.md#bup-directory-scan-routines-2026-10-29).
+
+A second coldboot run captured SH-2 writes only to WRAM-HI window
+`0x06002800..0x06004000`, alongside the same BUP-read window. The write
+receipt is complete: 9,761 rows, zero dropped rows on either CPU, spanning
+frames 209–6,096. Every retained write is from the master SH-2. The dominant
+writer PCs are low addresses `0x000002b0` (1,536 rows), `0x00001fe4` and
+`0x00001ffe` (1,644 each), and `0x00002364` (2,844); these are in the
+same-run Japanese Saturn BIOS image (SHA-256
+`dcfef4b99605f872b6c3b6d05c045385cdea3d1b702906a0ed930df7bcb7deac`), not
+WRAM-HI. BIOS disassembly identifies `0x000002b0` as a longword store,
+`0x00001fe4` and `0x00001ffe` as byte stores in a helper path, and
+`0x00002364` as a byte-copy loop (`mov.b @r0+,r1; mov.b r1,@r7`) writing to
+the destination pointer in `r7`. The trace shows these BIOS PCs writing into
+the selected WRAM-HI window, but does not by itself identify the call site's
+purpose or prove that copied bytes are BKR payload. Runtime game PCs in the
+selected window contribute a small tail, including `0x06002f54` (48 rows) and
+four rows each at `0x06002fd6`, `0x06003056`, and `0x0600306a`. Save-payload
+fields remain unidentified. The per-write values, receipt, same-run memory
+image and log are preserved in the external evidence folder's
+`coldboot-targeted-write-trace-20261029/` directory.
+
+A later checkpoint at boot frame 14,900 shows the Japanese title logo. A
+replay from that checkpoint with Start, Down and A reaches the authentic Load
+screen row `B01  0:06 NORMAL`, but records zero new BUP-window reads. This
+narrowly places this trace's BUP read activity earlier in startup than the
+checkpoint. A separate cold-boot Continue trace binds the accepted payload
+read to `DMNEXUS__01`, its WRAM-L destination, and checksum gate; it does not
+identify payload fields or the later game-state consumer. See the
+[Continue payload transfer receipt](nexus_sh2_startup_decompilation.md#continue-payload-transfer-2026-10-29).
+Full trace, disassembly and checkpoint receipts are recorded in the external
+evidence folder's `coldboot-readtrace-boot12000/` and
+`coldboot-title-checkpoint/` subdirectories.
 
 The accepted-save capture's VDP1 snapshot is frame 2,173 with 83 commands. Its
 complete command trace contains 175,042 rows with zero dropped rows. The
@@ -1926,7 +1989,8 @@ scan checked 410 verified retail bitmap candidates from `MENU.BPK`,
 bitmap span. It found no exact source span. A separate scan parsed 1,266
 Structure2 palettes from all 16 authenticated DGN levels and found no exact raw
 or word-swapped match in captured CRAM; the `MENU.BPK` palette also had no
-exact match. This leaves NBG0's producer and palette unresolved. The broader
+exact match. This leaves the retail source owners for NBG0's producer and
+palette unresolved. The broader
 partial-byte scan exceeded its 10-minute limit, so no negative conclusion is
 drawn from partial matches. The bounded-scan results are recorded in the
 external evidence folder's `load-screen-menu-bpk-source-join.md`.
@@ -1936,3 +2000,172 @@ Continue-to-gameplay behavior in Ymir with the retained corpus save; it does
 not establish that Firestaff loads the BKR, executes Continue, or renders the
 captured viewport and HUD. Those production routes remain gated on their own
 source-bound parsing, composition and input evidence.
+
+### Two-champion BKR cold boot (2026-10-29)
+
+A separate Ymir `0.4.2-dev` run on TRV2 started from BIOS power-on with the
+authentic Japanese retail CUE and IPL. Before launch, the isolated profile's
+internal backup RAM was replaced with the authentic two-champion,
+retail-written 32 KiB image from `.firestaff/data/nexus`. The retail flow
+advanced through BIOS date/time and the opening sequence, opened the native
+title menu, selected Continue, and reached the native Load panel. The panel
+displayed `B01  0:06 NORMAL`. The source image and profile's `state/bup-int.bin`
+both retained SHA-256
+`3d60856119df55ffa4937d13b5dc7487157c7c6b131a999a2e61683316679634` after the
+run. A second cold boot accepted the selected row and entered a dungeon view
+with two champion HUD panels; its 640×448 screenshot SHA-256 is
+`5597829327a0a95a60393658289c742a18a5a6beaa7a846fa94728996000d9d5`.
+
+This is a real-media cold-boot observation of the retail save-list row. It
+does not prove the BKR payload schema, which payload bytes the retail game
+consumes, or Firestaff's Continue/loading behavior. An earlier comparison that
+changed the profile BKR and then loaded a title savestate was invalid for
+comparing BKR content: the savestate restored emulated state, and its two
+screenshots were byte-identical. Those captures are retained separately as a
+method check and are not used as BKR evidence. Full command, hashes, log and
+screenshot are in the external evidence folder's
+`coldboot-two-champion-20261029/` directory.
+
+### Load-panel VDP2 longword writer join (2026-10-29)
+
+A replay from the authentic BIOS title-logo checkpoint reached the retail Load
+panel with the real `B01  0:06 NORMAL` row. At VDP1 frame 659, the complete Ymir
+VDP2 trace contains 352 VRAM halfword events. The same-frame SH-2 trace contains
+176 32-bit stores at PC `0x06023640`; expanding each big-endian longword into
+its upper and lower halfwords reproduces all 352 VDP2 events in exact order,
+with identical byte addresses and values. The read-only check is:
+
+```sh
+python3 scripts/analyze_nexus_vdp2_sh2_long_write_join.py \
+  /path/to/load-screen-vdp2-trace-20261029 \
+  --frame 659 --pc 0x06023640 --inspect-nbg1-map
+```
+
+The captured WRAM-HI bytes disassemble at `0x06023640` to `mov.l r13,@r6`,
+followed by a four-byte address increment and a loop branch. The frame register
+snapshot has `BGON=0x0007`, `CHCTLA=0x0013`, `PNCN1=0`, `PLSZ=0`, `MPOFN=0`, and
+`MAP1A/MAP1B=0x1717`; this selects the NBG1 name-table base at `0x5c000` for
+the bounded decoder. All 176 PND writes land in visible cells x=1..16 and
+y=6..16. They contain the same raw pair `0x2000/0x1100`; the corresponding
+32-byte character pattern at VRAM `0x22000` is all zero in the captured
+snapshot. This binds the writer to a visible NBG1 name-table region, but does
+not show that this tile contributes visible pixels or identify any source
+asset, palette, or text consumer. The screenshot, complete zero-drop traces,
+WRAM-HI image, disassembly excerpt, analyzer output and hashes are retained in
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/load-screen-vdp2-trace-20261029/`.
+
+The same frame's 8bpp NBG0 bitmap was checked separately against 410 decoded
+and hash-verified retail candidates from `MENU.BPK`, `FONT256.S2D`,
+`TITLE.BIN`/`TITLE.CG`, and `STABG.BIN`. None is an exact byte span in the
+131,072-byte bitmap. The `TITLE.BIN` palette is present in CRAM at byte offset
+1024, but the `MENU.BPK` and `STABG.BIN` palettes and all 1,266 parsed DGN
+Structure2 palettes have no exact raw or word-swapped CRAM match. This exact
+resource scan does not identify the NBG0 producer or the retail resource that
+supplied its palette. A separate same-state screenshot join verifies the
+captured CRAM output for every visible nonzero NBG0 index. The bounded check
+skips the analyzer's expensive partial-span ranking with `--exact-only`;
+its complete output is retained as `nbg0-bitmap-exact-source-scan.txt` in the
+same external evidence directory.
+
+### Frame-bounded MENU.BPK-to-NBG0 source span (2026-10-29)
+
+The authentic Japanese `MENU.BPK` (SHA-256
+`740ab2a864f04b89cddb172ce2560044fcc8c6a7f98ae2fe50461aa8da886636`) contains
+an 86-byte span in decoded surface 55, beginning at source offset `0x4a`. It
+matches NBG0 VRAM offset `0xe6f` in the frame-659 Load-panel snapshot. All 57
+nonzero source pixels have matching writes in both independent frame-536
+traces: the SH-2 writer at `0x060230e8` and the VDP2 VRAM bus trace. The
+captured writer call stack reaches `FUN_06029188`. Ghidra decompilation of the
+hash-verified Japanese `DM.BIN` shows that this menu-image routine resolves
+the image surface and dispatches through `0x060292c8` to `FUN_060230d2`, whose
+row copier skips zero pixels. The writer opcode and loaded WorkRAM-HI bytes
+match the retail executable. The pseudocode export used Ghidra 12.2 with the
+`SuperH:BE:32:SH-2` language, importing `DM.BIN` at `0x06010000` and running
+[pcrecomp's `DecompAddrs.java`](https://github.com/yeager/pcrecomp/blob/main/tools/ghidra/DecompAddrs.java).
+The analysis used pcrecomp revision
+`a85ea970f9e0640ab6546d2ca7a01fccb132973d`; its address-based helper resolves
+each supplied address to the containing Ghidra function. Addresses came from
+the frame-bounded SH-2 trace and retail dispatch table, and the decompilation
+was checked against captured code bytes.
+Reproduce the Firestaff trace join with
+`scripts/analyze_nexus_load_nbg0_menu_trace.py`.
+
+This binds a small source-pixel span to the active NBG0 bitmap transport. The
+span has six distinct byte values. Its full visible palette join is recorded
+below; the surface's visual role, the remaining retail bitmap source, and
+full-screen composition remain unbound. It does not admit a Firestaff
+Load-panel renderer. The analyzer output
+and Ghidra decompilation are retained in the external trace bundle's
+`nbg0-menu-source-trace.txt` and
+`nbg0-writers-ghidra-decompilation.log` files.
+
+### Load-panel MENU.BPK[60] panel-base join (2026-10-29)
+
+The same Japanese `MENU.BPK` contains a unique 228x100 decoded PRS3 surface
+at entry 60. Its complete row-major pixel plane matches the frame-659 NBG0
+rectangle at `(16,112)` row by row. The frame-536 SH-2 trace records all
+22,800 byte writes from PC `0x06023128`, with the call stack reaching the
+retail menu-image routine at `0x06029188`; every value matches the same source
+pixel. Independent VDP2 bus writes resolve to the same 22,800 source bytes,
+and the final frame-659 VRAM rows remain identical. Ghidra identifies
+`FUN_06023108` as the row copier and `FUN_06023144` as its wrapper, reached
+through the `0x060292cc` dispatch entry. This joins the large lower Load-panel
+base to authentic retail data, while leaving the other NBG0 rectangles,
+generated text and borders, zero-index layers, and full-screen composition
+unresolved. The reproducible analyzer reports
+`opaque_menu_surface_source_to_nbg0=verified`; its receipt and Ghidra
+decompilation are in the external trace bundle.
+
+### Load-panel frame-536 CRAM writer identification (2026-10-29)
+
+Ghidra decompilation of Japanese retail `DM.BIN` at `0x06038e30` identifies
+the frame-536 CRAM-writing routine as a frame-driven color animation. It
+updates one of four 32-color rows from a WRAM table and advances per-row
+counters; additional branches update a separate color component and an
+independent scalar animation. The trace's CRAM writes at `0x05f00100` through
+`0x05f00106` therefore belong to this animation routine. No source join ties
+its WRAM table to `MENU.BPK[55]` or to the six observed NBG0 pixel values.
+The routine is useful retail-code context for animated CRAM entries. Its
+input/runtime provenance is retained in the external Load-panel trace evidence
+directory; the analysis used pcrecomp's `DecompAddrs.java` with SH-2 big-endian
+code at the retail address map.
+
+### Load-panel NBG0 palette-to-screenshot join (2026-10-29)
+
+The frame-659 Ymir screenshot is an exact 2x match for all 43,889 nonzero
+NBG0 pixels in the visible 320x224 viewport after direct 8bpp CRAM lookup and
+the captured 31/32 color-calculation ratio: 175,556 screenshot pixels across
+the four 2x output samples per source pixel. The check covers all 42 distinct
+visible palette indices. Forty-one used indices match the same-index words in
+the authentic `MENU.BPK` PALT palette exactly. The one exception, index
+`0x83`, has PALT value `0x0000`; the retail animation at `0x06038e30` writes
+`0xffff` to CRAM address `0x106` at frame 655, and the frame-659 screenshot
+uses that animated value. The same routine animates all four entries
+`0x80`–`0x83`; only `0x83` appears among the visible indices. Across all 256
+entries, 250 same-index PALT words match captured CRAM; the two other
+differences, at indices `0x0c` and `0x0d`, are not explained by this animation.
+The frame-659 WorkRAM-HI snapshot also contains the live `RES*` menu archive
+at `0x060c6ab8`. It matches hash-verified Japanese `RHIFIX.BIN` byte for byte
+except the version byte at offset `0x0b` (`0` in the file and `1` in runtime
+WRAM). Its PALT version 0 record resolves to `0x060c7bf8`, the pointer held by
+animation table slot `0x06079b08`; Ghidra dataflow shows the frame-driven CRAM
+writer reads through that slot. The 512-byte runtime PALT v0 table has SHA-256
+`1c81908014b51fc25f52a6400048b4449f723a2a807b83842231b09d676bbf5a` and
+matches `RHIFIX.BIN` exactly at offset `0x1140`. It contains `0xffff`, the
+value observed in the frame-655 CRAM write. Nine SH-2 and VDP2 CRAM writes at
+address `0x106`, from frames 623 through 655 at four-frame intervals, match
+PALT v0 indices 23 through 31 in order. The decompiled routine increments its
+table counter modulo 32, so this sequence identifies frame 655's source index
+as 31; index 0 also contains `0xffff`, but does not match the preceding ramp.
+This runtime table is not byte-identical to the trailing `MENU.BPK` PALT. The
+analyzer verifies the archive records, single version-byte change, pointer
+slot, source table bytes, and traced index sequence against the authentic
+capture and file.
+This binds the visible CRAM output and identifies
+the static MENU.BPK palette values for 41 used indices, while leaving direct
+bulk palette-transfer ownership, zero-index pixels, and other screen layers
+outside this join. Reproduce it with
+`scripts/analyze_nexus_load_nbg0_menu_trace.py --screenshot
+/path/to/load-screen.png` against the authenticated Japanese retail data and
+complete trace bundle. The analyzer output is retained as
+`nbg0-palette-screenshot-join.txt` in the external evidence directory.

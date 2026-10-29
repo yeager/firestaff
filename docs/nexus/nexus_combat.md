@@ -41,7 +41,7 @@ living champion can act in turn order, consuming stamina to attack.
 | Creature AI | Full awareness (wary, terrain, pits, teleporters) | Simplified chase/patrol |
 | Hit chance cap | Not confirmed capped | Capped at **95%** (explicit) |
 | Ranged weapon types | Crossbow only | Crossbow only (no gun/bomb in Nexus) |
-| Magic system | Rune words, 10 spells | Same 10 spells + alignment extension stub |
+| Magic system | DM1 reference only | Retail Nexus meaning not established; see `nexus_spells.md` |
 
 ---
 
@@ -53,7 +53,7 @@ living champion can act in turn order, consuming stamina to attack.
 | Tech weapons | Guns, bombs with tech_level | **Absent** — no gun/bomb |
 | Outdoor combat | Isometric top-down outdoors | **Absent** — dungeon only |
 | Creature spell attacks | Fireball, lightning, dispel, push/pull | **Absent** in Nexus creature AI |
-| Scroll/wand items | Full scroll+wand system | **Absent** — inherited from DM1 only |
+| Scroll/wand items | DM2 reference only | Retail Nexus roster and use behavior not established |
 | Steal mechanic | Creatures can steal items | **Absent** |
 | Extended creature AI | Scripted behaviors | **Absent** — hardcoded only |
 

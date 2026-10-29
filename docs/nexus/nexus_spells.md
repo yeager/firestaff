@@ -1,173 +1,163 @@
-# Nexus V1 — Spell System vs DM1/DM2
+# Nexus spell system evidence and implementation status
 
-**Audit date:** 2026-05-25
-**Sources:** `src/nexus/nexus_v1_magic.c`, `include/nexus_v1_magic.h`, `src/nexus/nexus_v1_champions.c`, `include/nexus_v1_champions.h`, `include/firestaff_spell_ui.h`, `docs/shared/spells_system.md` (DM1), `docs/dm2/dm2_magic.md`
+**Updated:** 2026-10-29
 
----
+This page separates verified Nexus retail behavior from older Firestaff design
+notes that reused DM1 spell data. DM1 references, enum names, formulas, and
+fixture behavior do not establish Nexus retail semantics.
 
-## 1. Overview
+## Verified retail evidence
 
-Nexus V1's spell system is **directly derived from Dungeon Master (DM1)**. The rune
-vocabulary, power/element/enumeration, and mana-cost formula are all inherited.
-DM2 took a different path (tech-magic with gems/crystals/power sources). Nexus V1
-stays on the DM1 rune path but does not yet implement full rune combination parsing.
+- The Japanese retail `DM.BIN` is SHA-256
+  `3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124`.
+  Its 32 big-endian halfwords at file offset `0x38368` match the table copied
+  into the diagnostic implementation in `src/nexus/nexus_v1_magic.c`. This
+  byte match verifies the table contents only; it does not establish the
+  meaning of every index or spell effect.
+- Earlier static notes called `FUN_06039f76` / `FUN_0603a472` a four-entry
+  rune validator. The recovered code instead shows a four-index ITEM.IBS
+  eligibility helper. It reads runtime champion `+0x18` when evaluating some
+  records, while related selectors update separate row state at `+0x35..+0x38`.
+  This differs from the observed Magic composer buffer at `+0x3d/+0x3e`; no
+  call from the composer or evidence that this helper validates that buffer
+  has been found. The helper's broader gameplay role and any relationship to
+  the displayed Magic window remain unproven. See
+  `docs/nexus/nexus_sh2_startup_decompilation.md`.
+- The Japanese retail manual documents Control Pad Y as opening the Magic
+  window. A 2026-10-29 authentic Ymir `--debug` capture scheduled Y for one
+  frame from a gameplay checkpoint loaded from the real BKR and showed the
+  native Magic window. This verifies the entry action for that state. It does
+  not verify rune selection, sequence acceptance, casting, or spell effects.
+  See
+  [`nexus_magic_window_y_debug_20261029`](../../parity-evidence/verification/nexus_magic_window_y_debug_20261029/README.md).
+- A second authentic Ymir `--debug` probe replayed one Y-open profile state
+  for 90 frames with no input and with one-frame Up, Down, Left, and Right
+  inputs. Up was pixel-identical to control; Down, Left, and Right changed
+  3,704, 3,740, and 3,664 pixels respectively. Their final-frame VDP1 command
+  lists also differ (7, 9, and 5 rows respectively), while Up's VDP1 trace is
+  identical to control. This confirms direction-sensitive retail output from
+  that checkpoint, but does not identify rune symbols, sequence meaning, or
+  casting. This probe's source savestate is documented separately and is not
+  byte-identical to the state in the Y-entry receipt. Raw evidence is retained
+  at `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/magic-window-dpad-inputs-20261029/`.
+- The frame-89 VDP1 snapshots also join nine command source starts to decoded
+  entries 99–106 and 144 in hash-verified Japanese `MENU.BPK`. Down, Left, and
+  Right reorder references to entries 99–106 at command indices 79–88; Up
+  keeps the control command list. This binds those command source bytes to
+  authentic Japanese MENU.BPK surfaces. All nine commands use VDP1 8bpp bank
+  mode; for all 31 nonzero indices in those joined surfaces, the PALT word
+  matches the same-run CRAM word. This does not establish rune names, surface
+  meaning, full dispatch ownership, complete screen composition, or renderer
+  permission. Reproducible palette-join receipts are in the external capture
+  directory above.
+- A follow-up used the same hash-identified Y-open state with GUI presentation
+  enabled and traced SH-2 reads/writes around the champion rows. Holding Down
+  for 90 frames changed 3,704 screenshot pixels and VDP1 rows 78–82 and 87–88
+  relative to no input. The one-frame A screenshot differs by 4,632 pixels;
+  its trace ends at frame 88 versus control's frame 89, so that count includes
+  a one-frame endpoint offset. At common frame 88, A changes VDP1 rows 25,
+  79–84, and 88. Static decompilation identifies `FUN_0602a234` as the menu
+  sequence-composer callback. It calculates action cost through
+  `FUN_0602d144`, applies the mana delta through `FUN_0602d1ec`, then stores
+  `0xDA + cursor * 6 + action` at row `+0x3e + cursor` and advances the cursor
+  at `+0x3d`. The entry store is skipped if the mana update fails. A-only
+  writes `+0x3e=0xDA`, advances `+0x3d` to 1, and reduces row-0 mana from 18
+  to 17. Cardinal and simultaneous diagonal input schedules confirm all six
+  cursor-0 choices: indices 0–5 write `0xDA`–`0xDF` and cost 1–6 mana in order.
+  Up/A, Up+Right/A, Right/A, Down+Right/A, Down/A, and Down+Left/A reached
+  those values respectively. These commits fill the authentic composer and
+  pay the action costs; they do not prove a complete spell was accepted or
+  cast. Left+A from the initial selection leaves cursor and mana unchanged.
+  Static decompilation maps logical D-pad event values 0/1/2/3 to Up/Right/
+  Down/Left and traces the authentic retail packet's active-high direction
+  masks through debounce, descriptors, event `0x28`, and the menu handler.
+  This proves the internal bit mapping, not physical connector signaling. The
+  menu's current selection index is passed to the composer callback. The
+  Nexus-specific coordinate-to-index table remains unknown. In the authentic
+  Y-open checkpoint, the menu object's `+0x24` table pointer is null, so
+  `FUN_060328c6` exits without lookup or selected-index write. `FUN_060327c8`
+  changes the generic menu item index from 0 to 4 on Down, but this does not
+  establish that index 4 is a rune. The table bytes and closed-to-open
+  transition remain unobserved. Evidence is retained at
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/magic-menu-coordinate-map-20261029/`.
+  A paired-capture source join now binds all six cursor-0 values to
+  selected-state Japanese `MENU.BPK` entries 107–112 and VDP1 command 88's
+  source addresses and coordinates. This identifies the selected retail
+  surfaces, not their rune names. The six-way source join and capture hashes
+  are documented at
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-menu-action-surface-bindings-20261029.md`.
+- These captures also read `FUN_0603a472` and `FUN_0603a55c`, but the static
+  call graph places them on a separate ITEM.IBS action-selector path, not a
+  demonstrated Magic validator. No writes land
+  in row offsets `+0x35..+0x38`; `wram-hi.bin` retains `02 00 78 00` for rows 0
+  and 1 and zero for rows 2 and 3. The composer buffer at `+0x3d/+0x3e` is a
+  distinct state area. The cursor is at `+0x3d`; the four action slots are at
+  `+0x3e..+0x41`. A four-A capture fills all four slots with action 0, leaving
+  row `+0x3d..+0x42` as `03 DA E0 E6 EC 80`. Across that capture the observed
+  mana byte changes from `0x12` to `0x09`; this records the total balance change
+  and does not establish individual costs at cursor positions 1–3. The fourth
+  append returns its unchanged cursor value 3 and
+  skips the common UI update; recovered caller sites discard that value. It
+  proves a full composer buffer, not final spell acceptance. A separate
+  command-8 branch recalculates aggregate mana, but no spell-execution consumer
+  is proven. Capture traces are complete with no dropped VDP1 rows. The
+  callsite audit is at
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/magic-fourth-slot-status-20261029/`.
+  Emulator data and hashes are retained at
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-magic-down-input-trace-20261029/`.
+  Ghidra excerpts and callback analysis are retained at
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-magic-input-callback-static-20261029/`.
+  Direction-handler decompilation is retained at
+  `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-dpad-menu-selection-20261029/`.
+- Static Ghidra analysis of the hash-verified Japanese `DM.BIN` finds the
+  `MENU.BPK` resource string in `FUN_060286a4`, called indirectly by
+  `FUN_06010f44`. Generic draw helpers include `FUN_06029188` and
+  `FUN_060292e0`; the analysis does not connect these or decoded entries
+  99–106/144 to the observed Magic-window command block or D-pad state.
+  Follow-up static analysis identifies `FUN_0603a472`, `FUN_0603a55c`, and
+  `FUN_0603a602` as an ITEM.IBS action-selector path that reads/updates row
+  offsets `+0x35`, `+0x36`, and `+0x38`; no relation to the Magic composer
+  buffer at `+0x3d/+0x3e` or to a cast has been established. The bounded
+  raw-byte scan found no direct table of the matching
+  entry IDs; it cannot rule out indirect encodings. See the [static audit
+  report](</Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/magic-window-menu-bpk-static-semantic-audit-20261029/README.md>).
 
----
+## Firestaff production boundary
 
-## 2. Rune System Comparison
+`src/nexus/nexus_v1_magic.c` is a source-study implementation. The production
+`firestaff_nexus` target excludes it and links
+`src/nexus/nexus_v1_magic_runtime_noop.c`, whose lookup, mana-cost, cast, and
+damage operations fail closed. The diagnostic table, inferred cost formula,
+skill thresholds, magnitude values, and effect examples in that study file
+are not production behavior and are not yet established as retail behavior.
 
-| Feature | DM1 | DM2 | Nexus V1 |
-|---|---|---|---|
-| Rune grid | 6×6×4×6 | No runes | 6×6×4×6 (same as DM1) |
-| Power runes | Lo/Um/On/Ee/Pal/Mon | N/A | Lo/Um/On/Ee/Pal/Mon |
-| Element runes | Ya/Vi/Oh/Ful/Des/Zo | N/A | Ya/Vi/Oh/Ful/Des/Zo |
-| Form runes | Ven/Ew/Kath/Ir/Bro/Gor | N/A | Ven/Ew/Kath/Ir/Bro/Gor |
-| Alignment runes | Ku/Ros/Dain/Neta/Ra/Sar | N/A | Ku/Ros/Dain/Neta/Ra/Sar |
-| Spell combinations | 25 implemented | ~50 tech spells | 25 (same as DM1) |
-| Magic type | Rune words | Gems/crystals/batteries | Rune words |
+Firestaff does not yet open or render the Nexus Magic window from its desktop
+input route. Its rune-selection state, input-to-rune mapping, retail sequence
+acceptance, mana commit, target selection, effect dispatch, random inputs,
+animation, and save-state changes remain unverified. Do not enable the study
+implementation or substitute DM1 tables for these missing retail joins.
 
-DM1 uses a 4-rune composition system: Power + Element + Form(optional) + Alignment(optional).
-Theoretically 864 combinations, but only 25 spells are actually defined in the original MENU.C
-spell table.
+## Next evidence needed
 
-DM2 abandoned runes entirely in favor of a "tech magic" system using physical items:
-power gems, crystals, power sources, and electronic spell triggers.
+The directional probe has a hash-identified Y-open source state reused across
+the same-state runs; that save remains distinct from the separately retained
+Y-entry receipt. Nine VDP1 command sources and their 31 active palette indices
+are bound to authentic `MENU.BPK` surfaces, PALT, and same-run CRAM. Paired
+captures now bind all six numeric action choices at cursor 0 to selected-state
+entries 107–112, their captured VDP1 source addresses, and coordinates. The
+D-pad direction event handler and retail controller-packet-to-event path
+are decompiled, but the Nexus menu's coordinate-to-index table and glyph
+meanings remain open. Physical Saturn electrical signaling is not established.
+In the retained Y-open state, menu `+0x24` is null and Down changes the generic
+menu item index from 0 to 4; that index has no established rune meaning. No
+authentic closed-to-open checkpoint was available for this trace.
+Identify the full-buffer submit path and any actual validator/cast
+consumer, including mana, target/effect state,
+random inputs, animation, save changes, and visible output. Do not assign rune
+names from sprite appearance alone. The `+0x18` consumer remains a separate
+work item.
 
-Nexus V1 keeps the DM1 rune system but marks full rune combination parsing as FUTURE.
-
----
-
-## 3. Nexus V1 Spell Structure
-
-```c
-typedef struct {
-    int power_level;      /* 0-5 (Lo to Mon) */
-    int element;          /* element rune index */
-    int form;             /* form rune (optional) */
-    int alignment;         /* alignment rune (optional) */
-    int mana_cost;
-    int damage;
-    const char *name;
-} Nexus_Spell;
-```
-
-Source: `include/nexus_v1_magic.h`
-
----
-
-## 4. Power Rune Enumeration
-
-```c
-typedef enum {
-    NEXUS_RUNE_LO = 0, NEXUS_RUNE_UM, NEXUS_RUNE_ON,
-    NEXUS_RUNE_EE, NEXUS_RUNE_PAL, NEXUS_RUNE_MON
-} Nexus_PowerRune;
-/* 0=Lo (weakest) ... 5=Mon (strongest) */
-```
-
-Source: `include/nexus_v1_magic.h`
-
----
-
-## 5. Element Rune Enumeration
-
-```c
-typedef enum {
-    NEXUS_ELEM_YA = 0, NEXUS_ELEM_VI, NEXUS_ELEM_OH,
-    NEXUS_ELEM_FUL, NEXUS_ELEM_DES, NEXUS_ELEM_ZO
-} Nexus_ElementRune;
-```
-
-Source: `include/nexus_v1_magic.h`
-
----
-
-## 6. Mana Cost Formula
-
-Nexus V1 uses the DM1 mana cost formula with element multipliers:
-
-```c
-static const int g_elem_cost_mult[] = {2, 3, 2, 4, 3, 3};
-
-int nexus_v1_spell_mana_cost(int power, int elem) {
-    if (power < 0 || power > 5) return 999;
-    if (elem < 0 || elem > 5) return 999;
-    return (power + 1) * (power + 1) * g_elem_cost_mult[elem];
-}
-```
-
-| Power | Cost ×1 (elem 0/2) | ×1.5 (elem 1/4/5) | ×2 (elem 3) |
-|---|---|---|---|
-| 0 (Lo) | 2 | 3 | 4 |
-| 1 (Um) | 8 | 12 | 16 |
-| 2 (On) | 18 | 27 | 36 |
-| 3 (Ee) | 32 | 48 | 64 |
-| 4 (Pal) | 50 | 75 | 100 |
-| 5 (Mon) | 72 | 108 | 144 |
-
-Element multipliers: Ya=2, Vi=3, Oh=2, Ful=4, Des=3, Zo=3.
-
-Source: `src/nexus/nexus_v1_magic.c`
-
----
-
-## 7. Spell List — Same 25 Spells as DM1
-
-Nexus V1 inherits the complete DM1 spell table (from MENU.C:50..77 via
-`spell_reference_m12.h` and `firestaff_spell_ref.h`):
-
-| Spell | Power | Element | Form | Align | School | Kind |
-|---|---|---|---|---|---|---|
-| FIRE WISP | 1 | Ful | — | — | Fire | Projectile |
-| FIRE FLASH | 3 | Ful | Ir | — | Fire | Projectile |
-| FIREBALL | 5 | Ful | Ir | — | Fire | Projectile |
-| GUST | 1 | Oh | — | — | Air | Projectile |
-| ZAP | 3 | Oh | Ir | — | Air | Projectile |
-| LIGHTNING BOLT | 5 | Oh | Ir | — | Air | Projectile |
-| ROCK | 1 | Des | — | — | Earth | Projectile |
-| TREmor | 3 | Des | Ir | — | Earth | Projectile |
-| EARTHQUAKE | 5 | Des | Ir | — | Earth | Projectile |
-| WATER GUSH | 1 | Zo | — | — | Water | Projectile |
-| WATER SPOUT | 3 | Zo | Ir | — | Water | Projectile |
-| TIDAL WAVE | 5 | Zo | Ir | — | Water | Projectile |
-| HEAL | 1 | Ya | Bro | — | Body | Potion |
-| GREATER HEAL | 3 | Ya | Bro | — | Body | Potion |
-| FULL HEAL | 5 | Ya | Bro | — | Body | Potion |
-| CURE POISON | 1 | Vi | Bro | — | Mind | Potion |
-| IDENTIFY | 1 | Vi | — | Dain | Mind | Other |
-| PROTECT | 1 | Ya | — | Neta | Mind | Other |
-| SHIELD | 1 | Ya | Bro | — | Mind | Other |
-| MIND SHIELD | 3 | Vi | — | Neta | Mind | Other |
-| TELEPORT | 1 | Vi | Ir | — | Mind | Other |
-| MAGIC MAP | 1 | Vi | Ir | Dain | Mind | Magic Map |
-| LEVITATE | 1 | Oh | Bro | — | Air | Other |
-| TIME MEASUREMENT | 1 | Des | Bro | Neta | Earth | Other |
-| FLAME PATH | 1 | Ful | Bro | Dain | Fire | Other |
-
-Plus 10 flask-crafting potion spells (Strength, Wisdom, Vitality, Health, Dexterity,
-Mana, Stamina, Poison, Shield, Cure Poison variants — see `docs/nexus/nexus_potions.md`).
-
-Source: `docs/shared/spells_system.md`, `include/spell_reference_m12.h`
-
----
-
-## 8. What's Different from DM1
-
-| Aspect | DM1 | Nexus V1 |
-|---|---|---|
-| Champion names | Western (Jason, Andre...) | Japanese (Syra, Leyla, Nabi...) |
-| Language | English | Japanese |
-| Champion count | 24 | 20 PLRD records (24-slot capacity) |
-| Spell count | 25 + 10 flask | 25 + 10 flask (identical) |
-| Mana formula | (p+1)²×elem_mult | Identical |
-| Rune parsing | Hard-coded in MENU.C | Stubbed (form/align = noop) |
-| Skill check | priest/wizard level | priest/wizard level |
-
----
-
-## Status: PARTIALLY SOURCE-LOCKED
-
-- Rune enumerations: **source-locked** — `nexus_v1_magic.h`
-- Mana cost formula: **source-locked** — `nexus_v1_magic.c`
-- Spell list: **inherited** from DM1 reference data
-- Rune combination parsing for actual spell lookup: **NOT IMPLEMENTED** — form and align params are discarded, cast function takes raw power/elem indices
+Raw emulator states, screenshots, logs, and memory traces remain outside Git
+in `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/nexus-magic-window-input-20261029/`,
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/magic-window-dpad-inputs-20261029/`, and
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus-magic-down-input-trace-20261029/`.

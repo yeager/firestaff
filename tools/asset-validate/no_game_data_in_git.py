@@ -13,7 +13,6 @@ from pathlib import Path
 
 
 ALLOWED_FIXTURES = {
-    "scripts/fixtures/nexus_v1_save_synthetic.dat",
     "tests/fixtures/minimal.DAT",
 }
 

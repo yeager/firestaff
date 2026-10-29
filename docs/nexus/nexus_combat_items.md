@@ -1,104 +1,38 @@
-# Nexus V1 — Weapons and Items in Combat
+# Nexus combat item evidence and implementation status
 
-> **Historical/diagnostic note.** This page is not an authoritative claim
-> that Nexus uses the DM1 item set or that the listed combat routes are
-> playable. The tables and call signatures are diagnostic/fixture material;
-> production item actions remain capture-gated until Saturn dispatch,
-> source records and effect writes are joined. See
-> `docs/nexus/NEXUS_STALE_CLAIM_AUDIT.md`.
+**Updated:** 2026-10-29
 
-## Source
-- `src/nexus/nexus_v1_combat.c` — weapon_power parameter in attack formula
-- `src/nexus/nexus_v1_magic.c` — potion crafting (flask system)
-- No `nexus_v1_items.c` exists — item logic is distributed
+Older versions of this page described a DM1 weapon set, armor formula,
+inventory capacity, and flask system as Nexus behavior. Those descriptions
+were extrapolations and are withdrawn. See
+[`NEXUS_STALE_CLAIM_AUDIT.md`](NEXUS_STALE_CLAIM_AUDIT.md).
 
----
+## Current evidence
 
-## Item System Overview
+- `nexus_v1_combat.c` contains host-side combat calculations. Their presence
+  does not bind them to the Japanese retail executable's item dispatch or
+  combat state.
+- The shared item encyclopedia is presentation data, not an authenticated
+  Nexus item table.
+- The retail spell-table byte match and Magic-window entry capture documented
+  in [`nexus_spells.md`](nexus_spells.md) do not establish item use, weapon
+  damage, armor reduction, or potion effects.
+- Nexus production keeps unsupported spell operations fail-closed. No
+  DM1-derived item action is admitted as retail behavior.
 
-Nexus V1 uses the DM1 item set unchanged. No new weapon or armor types were
-added. Item data for combat purposes is injected at call sites:
+## Unresolved retail behavior
 
-```c
-Nexus_CombatResult r = nexus_v1_attack(attacker, weapon_power, defense);
-```
+The admitted evidence does not establish which items are used in combat, how
+the Saturn executable selects an item or target, how weapon and armor values
+are loaded, how damage is computed, or which state writes and animations
+follow. It also does not establish whether Nexus has the DM1 flask-based
+potion crafting flow. DM1 and DM2 manuals or implementations may inform a
+comparison, but cannot fill these Nexus gaps.
 
-- `weapon_power` is passed from the equipped weapon
-- `defense` is the target's defense stat
+## Promotion evidence required
 
----
-
-## Weapon Types
-
-| Type | Present | Notes |
-|---|---|---|
-| Melee (sword, axe) | Yes | DM1 melee weapons |
-| Thrown (dagger) | Yes | DM1 thrown weapons |
-| Crossbow | Yes | DM1 ranged weapon |
-| Gun | **No** | DM2 tech weapon — not in Nexus |
-| Bomb | **No** | DM2 AoE weapon — not in Nexus |
-| Magic (staff) | Yes | DM1 staff-based magic |
-
----
-
-## Armor and Defense
-
-Champion defense is applied in the damage formula:
-```c
-def_reduce = defense / 2 + rng(defense / 2);
-damage -= def_reduce;
-```
-
-Champion defense likely comes from equipped armor (same as DM1).
-
----
-
-## What's Missing vs DM2
-
-DM2 introduced many item types not present in Nexus:
-
-| Item | DM2 | Nexus V1 |
-|---|---|---|
-| Scrolls | Full spell scroll system | **Absent** |
-| Wands | Limited-use spell devices | **Absent** |
-| Tech items | Battery-powered devices | **Absent** |
-| Gun / bomb | Gunpowder-based weapons | **Absent** |
-| New rings / amulets | Extended accessory roster | **Absent** |
-| Quest items | Unique-effect items | DM1 set only |
-
-Nexus is a DM1 visual remake — it does not incorporate DM2's expanded item roster.
-
----
-
-## Flask-Based Potion Crafting (Inherited from DM1)
-
-The only item-based magic in Nexus V1 is the DM1 flask system:
-- 10 spells, each requiring a specific rune word combination
-- Requires empty flask as reagent
-- Mana cost scales with power level and element (see `nexus_combat_magic.md`)
-
----
-
-## Inventory
-
-- 12-slot inventory per champion (same as DM1)
-- ~400 lb carry limit before movement penalty (same as DM1)
-- Food/water resource tracking (separate from inventory)
-
----
-
-## Item Placement
-
-DM1 had global item spawns. Nexus uses per-level scripts (`SLEV*.BIN`)
-which may control per-level item placement — but no Nexus-specific
-item placement code was examined in this audit.
-
----
-
-## Status: PARTIALLY SOURCE-LOCKED
-
-- Weapon combat integration: **source-locked** — `weapon_power` passed to attack
-- Potion crafting: **source-locked** — `nexus_v1_magic.c`
-- Armor/defense integration: **inferred** — formula uses defense stat
-- DM2 items: **absent** — no gun/bomb/scroll/wand in Nexus code
-- No dedicated items source file — item logic embedded in combat/dungeon/magic
+For each action, retain an authentic pre-action state, capture the exact
+controller input and bounded SH-2 reads/writes, identify the retail source
+record and consumer, then compare post-action memory and rendered output.
+Until those joins exist, keep the Firestaff route inert and do not show
+synthetic combat item effects.

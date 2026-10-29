@@ -14,6 +14,14 @@ changed 5.08610%. The before/after captures and source hashes are recorded in
 This independently confirms retail ControlPad movement from a stable gameplay
 state; it does not establish Firestaff runtime parity or ShuttleMouse actions.
 
+A 2026-10-29 Ymir `--debug` replay loaded a gameplay checkpoint derived from
+the authentic Japanese BKR, then scheduled Control Pad Y for one frame. The
+captured retail screen shows the native Magic window. This verifies the
+manual-documented Y entry action in that state. It does not verify rune input,
+spell casting, or Firestaff's desktop route. The screenshot, states, hashes,
+log, and bounded SH-2 trace are documented in
+[`nexus_magic_window_y_debug_20261029`](../../parity-evidence/verification/nexus_magic_window_y_debug_20261029/README.md).
+
 The isolated Ymir ControlPad profile mapped `W/S/A/D` to Saturn D-pad
 up/down/left/right, `J` to A, `O` to Z, and `F` to Start. In a fresh profile
 with an empty BUP, F opened the title menu and S selected `CONTINUE`; a Right
@@ -174,18 +182,26 @@ desktop movement surface: the upper row maps to turn left, forward, and turn
 right; the lower row maps to strafe left, backward, and strafe right. This
 host mapping uses the retail rectangle but does not claim to reproduce the
 unresolved callback's cell semantics. Clicks elsewhere and hand-pointer clicks
-remain inert. A/B/Y/C actions remain inert until their retail consumers are
-traced. Tab cycles to the next party leader and Shift+Tab cycles to the
+remain inert. Firestaff keeps A/B/C actions inert until their retail consumers
+are traced. Retail Y is verified to open the Magic window, but Firestaff's Y
+route remains inert until the window renderer and rune-input sequence are
+joined to authentic Nexus data. Tab cycles to the next party leader and Shift+Tab cycles to the
 previous party leader in Firestaff's desktop controls. The reverse direction
 is a host keyboard convenience; it does not claim that the retail L/R events
 or an identified guest RAM field have been reproduced. Item use, inventory,
 spells, combat, sensors, doors, and level transitions remain fail-closed.
 
 In a loaded Nexus dungeon, Space toggles Firestaff's host pause. Ymir evidence
-records that the retail Start button displayed the `PAUSE` overlay; whether
-retail gameplay resumes on a second press remains unverified. Firestaff's host
-pause freezes the session tick and host audio until Space is pressed again.
-This does not reproduce the retail `PAUSE` graphic or menu.
+records that retail Start displays the `PAUSE` overlay. A controlled Ymir
+replay from that paused checkpoint pressed Start once more and returned to the
+byte-identical New Game view, verifying retail resume. Pressing A while paused
+did not change the captured image. The isolated internal BUP stayed empty, and
+a complete SH-2 write trace over the BUP bus range recorded zero writes during
+the New Game interval. These captures do not identify the save command or
+prove that Start opens a save menu. Firestaff's host pause freezes the session
+tick and host audio until Space is pressed again; it does not reproduce the
+retail `PAUSE` graphic.
+See the [authentic Ymir input and BUP trace](../../../../firestaff-evidence/nexus/nexus_new_game_save_probe_20261029/README.md).
 
 With pointer mode off, left-click within the authentic Nexus movement-pad
 rectangle parsed from `DM.BIN` to send the corresponding desktop movement
@@ -292,6 +308,20 @@ hit-region scanner; it does not consume event 44 as a second pointer action.
 Event 44 has a hash-verified source-side slot-pair path, but its runtime
 held-item effects and Firestaff state mapping are not verified. Production
 inventory and equipment clicks remain disabled until those joins are captured.
+
+The hash-pinned Japanese retail `DM.BIN` disassembly now traces this poller in
+more detail. Relative mouse deltas update the cursor coordinates; a matched
+`0x2e` descriptor row queues event 46, which is consumed before the current
+coordinates are checked against the live hitbox records. The hitbox scan runs
+only when the runtime hit-test pointer at `0x06035158` is nonzero; only then can
+a matching record queue its own event and argument. Thus an event-44 action can
+be downstream of the guarded event-46 hit test without event 44 being a second
+mouse-poll event. The selected descriptor table depends on runtime state, and
+the available retail captures do not expose a populated live table or a
+scheduled ShuttleMouse report. The report therefore proves the static path but
+does not identify the physical `0x0400` trigger, the live row selected for a
+click, or a visible gameplay action. See the [static trace and preserved
+Ghidra logs](../../parity-evidence/verification/nexus-shuttle-mouse-event-path-20261029/README.md).
 
 For a controlled Ymir run, save a baseline and post-action high-WRAM dump from
 the same retail savestate with Debug > Dump all memory, then compare them with
