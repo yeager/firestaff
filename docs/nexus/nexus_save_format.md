@@ -51,11 +51,17 @@ pointing to source offsets `0x60` and `0x11c`. After using the second source
 region, the function overwrites its offset field with a stack-derived value.
 This establishes a source-relative offset pair and an in-place pointer/fixup
 operation, but not the pointed-to data schemas or the transformed field's
-later consumer. Firestaff does not yet import this format or apply its data to
-the game engine. Details and hashes are recorded in
+later consumer. Firestaff does not yet apply this data to the game engine.
+Details and hashes are recorded in
 [`nexus_sh2_startup_decompilation.md`](nexus_sh2_startup_decompilation.md#continue-payload-transfer-2026-10-29)
 and the operator-managed external evidence bundle's
 `coldboot-continue-write-trace-20261029/` directory.
+
+Firestaff's bounded C reader now accepts one caller-selected card path up to
+4 MiB, requires exactly one `DMNEXUS__01` entry, and returns the card, entry,
+and verified roster metadata. It frees the extracted payload after probing;
+it neither searches for a card nor writes or applies save data. The title menu
+does not yet select this file or resume the game from it.
 
 The authentic `DM.BIN` does contain save-related diagnostic strings in the
 retail data image: `EV_SAVE`, `EV_SAVELOAD`, `Slot Operation Error`, and the
@@ -92,11 +98,11 @@ four-champion sample has the same observed value. The pcrecomp/Ghidra
 decompilation of `FUN_0602eb4c` verifies a `0xe0` source stride and a `0x13c`
 runtime stride while projecting roster records. The authentic two-, three-,
 and four-champion captures now match 83 decompilation-directed operations
-per record, including repeated tables and byte/word conversions. Several
-fields are updated after loading; the leader-3 trace joins 13 of 16
-final-value differences to the retail updater, with three record-3 fields
-outside its address window. The party leader index is now independently
-identified at payload `+0x61`: `FUN_0602eb4c` sign-extends this byte into the
+per record, including repeated tables and byte/word conversions. A wider
+leader-3 capture joins all 16 observed final-value differences across four
+runtime fields to retail writes, with none unresolved in that bounded set.
+The party leader index is now independently identified at payload `+0x61`:
+`FUN_0602eb4c` sign-extends this byte into the
 runtime context at `+0x0c`, and all four authentic payloads match same-run
 WorkRAM at `0x0608009c` (indices `0, 0, 0, 3` for rosters of `2, 3, 4, 4`).
 The bounded BKR probe validates that this index is inside the roster. One

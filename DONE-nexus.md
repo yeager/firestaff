@@ -59,15 +59,17 @@
   captures. The checks cover byte spans, byte-to-halfword conversions,
   sentinel handling, repeated tables, and signed/unsigned halfword fields.
 - Added validation of the retained leader-3 write trace for post-load changes
-  to runtime offsets `+0x18` and `+0x1a`. The trace now explains 13 of 16
-  final-value differences across four fields; the three record-3 values fall
-  outside the captured address window.
+  to runtime offsets `+0x18` and `+0x1a`. The expanded capture now includes all
+  four runtime records and explains all 16 final-value differences across
+  offsets `+0x08`, `+0x10`, `+0x18`, and `+0x1a`.
 - Kept save-field semantics unassigned and champion records opaque in
   Firestaff. This evidence advances the mechanical roster projection only; it
   does not implement Saturn BKR loading or playable Continue.
 - Re-ran the analyzer against all four authentic captured payloads and the
   complete leader-3 trace. The two-, three-, four-, and leader-3 runs report
-  166, 249, 332, and 332 checks, respectively.
+  166, 249, 332, and 332 checks, respectively. The full leader-3 update
+  capture explains all 16 final-value differences, with none unresolved in
+  the four tracked runtime fields.
 
 ## 2026-10-28 — Source-bind Japanese Configuration foreground and mouse route
 

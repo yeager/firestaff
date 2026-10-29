@@ -65,17 +65,30 @@ def verify_leader3_update_trace(
     ]:
         raise ValueError("unexpected SH-2 write-trace columns")
     bundle = dict(line.split("=", 1) for line in bundle_lines if "=" in line)
+    address_begin = int(bundle.get("address_begin", "0"), 16)
+    address_end = int(bundle.get("address_end_exclusive", "0"), 16)
     if (bundle.get("format") != "ymir-sh2-memory-write-trace-bundle-v1" or
             bundle.get("trace_file_complete") != "1" or
             bundle.get("bundle_complete") != "1" or
             bundle.get("master_dropped") != "0" or
             bundle.get("slave_dropped") != "0" or
-            int(bundle.get("trace_rows", "-1")) != len(rows)):
+            int(bundle.get("trace_rows", "-1")) != len(rows) or
+            address_begin > 0x0607FBA0 or address_end <= 0x0607FF6E):
         raise ValueError("SH-2 write-trace bundle is incomplete or inconsistent")
 
     targets = (0x0607FBA8, 0x0607FCE4, 0x0607FE20, 0x0607FF5C)
+    trace_rows_observed = 0
+
+    def framed_rows(address: int) -> list[dict[str, str]]:
+        return [
+            row for row in rows
+            if int(row["address"], 16) == address and
+            row["vdp1_frame"] != "unknown" and
+            int(row["vdp1_frame"]) >= 12931
+        ]
+
     target_rows = {
-        address: [row for row in rows if int(row["address"], 16) == address]
+        address: framed_rows(address)
         for address in targets
     }
     expected = [
@@ -88,6 +101,7 @@ def verify_leader3_update_trace(
     ]
     for index, address in enumerate(targets):
         target = target_rows[address]
+        trace_rows_observed += len(target)
         observed = [
             (int(row["vdp1_frame"]), int(row["value"], 16), int(row["pc"], 16))
             for row in target
@@ -102,9 +116,9 @@ def verify_leader3_update_trace(
         if any("0x60360fc" not in row["caller_stack_targets"] for row in target[2:]):
             raise ValueError(f"leader-3 record {index} post-load writes do not join to FUN_060360fc")
 
-    # Source +0x40 ends at runtime +0x10. The retained window reaches only
-    # the first three of those four fields; do not claim the fourth was traced.
-    plus10_targets = (0x0607FBB0, 0x0607FCEC, 0x0607FE28)
+    # Source +0x40 ends at runtime +0x10. The extended leader-3 capture now
+    # includes all four destination records.
+    plus10_targets = (0x0607FBB0, 0x0607FCEC, 0x0607FE28, 0x0607FF64)
     plus10_expected = [
         (12931, 0x00, 0x06041FBC),
         (12931, 0x12, 0x0602EE94),
@@ -112,7 +126,8 @@ def verify_leader3_update_trace(
     ]
     traced_fields = {(index, 0x3C) for index in range(4)}
     for index, address in enumerate(plus10_targets):
-        target = [row for row in rows if int(row["address"], 16) == address]
+        target = framed_rows(address)
+        trace_rows_observed += len(target)
         observed = [
             (int(row["vdp1_frame"]), int(row["value"], 16), int(row["pc"], 16))
             for row in target
@@ -128,7 +143,7 @@ def verify_leader3_update_trace(
         traced_fields.add((index, 0x40))
 
     # FUN_060361a8 also updates the unsigned source halfwords +0x44/+0x46 at
-    # runtime +0x18/+0x1a. These addresses are in range for records 0-2 only.
+    # runtime +0x18/+0x1a. The extended trace covers all four records.
     for source_field, target_field, load_value, update_values, update_pc in (
         (0x44, 0x18, 0x674, (0x672, 0x670, 0x66E), 0x060363EC),
         (0x46, 0x1A, 0x6CF, (0x6CE, 0x6CD, 0x6CC), 0x06036462),
@@ -141,9 +156,10 @@ def verify_leader3_update_trace(
             (13951, update_values[1], update_pc),
             (13951, update_values[2], update_pc),
         ]
-        for index in range(3):
+        for index in range(4):
             address = 0x0607FBA0 + index * 0x13C + target_field
-            target = [row for row in rows if int(row["address"], 16) == address]
+            target = framed_rows(address)
+            trace_rows_observed += len(target)
             observed = [
                 (int(row["vdp1_frame"]), int(row["value"], 16), int(row["pc"], 16))
                 for row in target
@@ -164,10 +180,10 @@ def verify_leader3_update_trace(
                 )
             traced_fields.add((index, source_field))
     return [
-        f"leader3_target_trace_rows={sum(map(len, target_rows.values())) + 39}",
+        f"leader3_target_trace_rows={trace_rows_observed}",
         "leader3_records_traced=4",
-        "leader3_source40_runtime10_records_traced=3",
-        "leader3_source40_runtime10_record3_in_trace=0",
+        "leader3_source40_runtime10_records_traced=4",
+        "leader3_source40_runtime10_record3_in_trace=1",
         "leader3_target_clear=frame12931:value0:pc0x06041fbc",
         "leader3_load_write=frame12931:value67:pc0x0602ee88",
         "leader3_postload_writes=frame13055:68,67;frame13951:64,66",
@@ -175,8 +191,10 @@ def verify_leader3_update_trace(
         "leader3_source40_runtime10_postload=frame13951:value19:pc0x06036272:caller_FUN_060361a8",
         "leader3_source44_runtime18_postload=frame13055:0x672;frame13951:0x670,0x66e:caller_FUN_060361a8",
         "leader3_source46_runtime1a_postload=frame13055:0x6ce;frame13951:0x6cd,0x6cc:caller_FUN_060361a8",
-        "leader3_source44_runtime18_record3_in_trace=0",
-        "leader3_source46_runtime1a_record3_in_trace=0",
+        "leader3_source44_runtime18_records_traced=4",
+        "leader3_source44_runtime18_record3_in_trace=1",
+        "leader3_source46_runtime1a_records_traced=4",
+        "leader3_source46_runtime1a_record3_in_trace=1",
     ], traced_fields
 
 

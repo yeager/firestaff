@@ -210,9 +210,11 @@ source `+0x46` / runtime `+0x1a`. In the leader-index-3 run, the loader writes
 the source values `0x0674` and `0x06cf` to all four records at frame 12931.
 The captured updater sequence reaches `0x066e` and `0x06cc` for the first
 three records. These rows join to `FUN_060361a8` through PCs `0x060363ec` and
-`0x06036462`; the fourth record's addresses are outside the trace window.
-The analyzer verifies these exact write sequences and leaves the three
-record-3 final values outside that window explicitly unresolved.
+`0x06036462`. An expanded Ymir trace now covers the fourth record as well and
+observes the same `0x0674 -> 0x0672 -> 0x0670 -> 0x066e` and
+`0x06cf -> 0x06ce -> 0x06cd -> 0x06cc` sequences at runtime offsets `+0x18`
+and `+0x1a`. The writes join to `FUN_060361a8`; they do not give these fields
+domain names.
 
 The leader-index-3 save also has four differences at source `+0x3c` / runtime
 `+0x08`: 67 in the save and 66 in final WRAM. The all-record write trace
@@ -220,16 +222,18 @@ captures loader value 67 at frame 12931, updater writes 68 and 67 at frame
 13055, then 64 and 66 at frame 13951 for all four champions. Each post-load
 write joins to `FUN_060360fc`; decompilation shows it subtracting a
 caller-provided value from the runtime `+8` longword and clamping it. These
-traces explain seven of the eight leader-index-3 final-value differences.
-They do not assign semantic names to the fields or the caller's values.
+traces originally explained seven of the eight stamina and bounded-value
+differences; the expanded window also captures the fourth record's `+0x10`
+update. They do not assign semantic names to the fields or caller values.
 
-For the leader-index-3 capture, 13 of the 16 final-value differences across
-the four tracked fields are explained by the retained write trace. Three
-record-3 values (`+0x10`, `+0x18`, and `+0x1a`) remain outside its address
-window. Other roster captures verify the same 83 mechanical projections per
-record, but do not carry write traces for their post-load changes. These
-checks still assign no field names, do not decode any remaining record bytes,
-and do not prove that Firestaff maps or renders the resulting state.
+For the leader-index-3 capture, the expanded write trace covers all four
+records and explains all 16 final-value differences across offsets `+0x08`,
+`+0x10`, `+0x18`, and `+0x1a`; the analyzer reports zero unresolved
+differences in this bounded set. Other roster captures verify the same 83
+mechanical projections per record, but do not carry write traces for their
+post-load changes. These checks still assign no domain names to `+0x18/+0x1a`,
+do not decode any remaining record bytes, and do not prove that Firestaff maps
+or renders the resulting state.
 Re-run against retained authentic captures with:
 
 ```sh
@@ -242,20 +246,25 @@ For the leader-3 update sequence, pass the all-record trace and its bundle:
 
 ```sh
 python3 scripts/analyze_nexus_bkr_runtime_projection.py \
-  /path/to/nexus_bkr_projection_matrix_20261029/leader-3-all-record-wram-hi.bin \
-  /path/to/nexus_bkr_projection_matrix_20261029/leader-3-all-record-wram-lo.bin \
-  --leader3-write-trace /path/to/nexus_bkr_projection_matrix_20261029/leader-3-all-record-write-trace.csv \
-  --leader3-write-trace-bundle /path/to/nexus_bkr_projection_matrix_20261029/leader-3-all-record-write-trace-bundle.txt
+  /path/to/leader3-expanded-write-trace-20261029/wram-hi.bin \
+  /path/to/leader3-expanded-write-trace-20261029/wram-lo.bin \
+  --leader3-write-trace /path/to/leader3-expanded-write-trace-20261029/sh2-memory-write-trace.csv \
+  --leader3-write-trace-bundle /path/to/leader3-expanded-write-trace-20261029/sh2-memory-write-trace-bundle.txt
 ```
 
-The trace covers 8,619 writes with no dropped rows. It contains 24 writes to
-the four `+0x08` fields, nine writes to the first three `+0x10` fields, and 15
-writes each to the first three `+0x18` and `+0x1a` fields. The fourth record's
-three addresses are outside its bounded range. Captures, logs, trace,
-decompilation output, and SHA-256
-manifest are in the external evidence folder
-`nexus_bkr_projection_matrix_20261029/`. The separate pointer fixup's
-consumer and the payload schema remain open.
+The original bounded trace covers 8,619 writes with no dropped rows. A
+follow-up cold boot uses the authentic four-champion leader-index-3 card and
+expands the range to `[0x0607fba0,0x06080000)`. Its complete trace contains
+26,053 rows with no dropped writes and records all four destination records.
+After the loader starts at frame 12931, the analyzer verifies the
+clear/load/update sequence at all four `+0x08` fields, all four `+0x10` fields,
+and each `+0x18/+0x1a` field. It compares final WRAM to the SHA-256-pinned
+authentic payload and explains all 16 observed changes; game-domain meanings
+for `+0x18/+0x1a` remain unassigned. Captures, logs, trace, and SHA-256
+manifest for this run are in the external evidence folder
+`leader3-expanded-write-trace-20261029/`; the previous matrix artifacts remain
+in `nexus_bkr_projection_matrix_20261029/`. The separate pointer fixup's
+consumer and the rest of the payload schema remain open.
 
 ## Rejected startup candidate
 
