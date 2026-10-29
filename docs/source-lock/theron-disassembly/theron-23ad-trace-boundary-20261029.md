@@ -137,18 +137,31 @@ its SHA-256 is
 `a4bdc26eb82d6982490a717f873ee92fa3510818df941c67313c39592087e08d`. It
 contains 1,121,429 sequenced events, one terminal decoder `RTS`, and one
 post-return-window start. The window reached its 200,000-event cap. The
-observed post-return PCs include `$F406`, `$F423`, and `$F425`; these are
-execution observations only and do not identify their data as decoder output
-or prove a gameplay consumer.
+observed post-return PCs include `$F406`, `$F423`, and `$F425`. A 26-byte
+runtime-fetched window at `$F423–$F43C` matched the authentic System Card 3.0
+bytes at file offset `$1623` (MD5 `ff1a674273fe3540ccef576376407d1d`); its
+SHA-256 is
+`c3a3bfda4d655483489787bc79aacf282d3cfd2957e11a899bdcb28111516820`. The
+source-bound listing is
+[`theron-system-card3-adpcm-buffer-copy-f425.asm`](theron-system-card3-adpcm-buffer-copy-f425.asm).
+It shows the System Card calling `$F3FE`, storing the returned byte through
+`($FA)`, advancing that pointer, and decrementing the count in `$F8/$F9`.
+Mednafen 1.32.1 maps `$180A` to `ADPCM.ReadBuffer` in `PCECD_Read()`
+(`src/pce_fast/pcecd.cpp`, lines 461–478). In the runtime trace, 2,706 reads
+at `$F403` were paired with 2,706 subsequent stores at `$F425`; every paired
+byte matched. Two additional reads had no following store in the bounded
+window.
 
 In this capture, the decoder wrote each physical address from `$0D0000`
 through `$0D13C7` exactly once. The 5,064 ordered bytes hash to
 `9adf13522e818ee49de16ac1020a7697c3416877e6bc6baa918840d7e963f8ee`, matching
 the output hash from the earlier source/output differential. After the matched
-return, the first observed write to the immediately following physical address
-`$0D13C8` came from PC `$F425`. This adjacency is a useful candidate for the
-next runtime handoff to investigate, but does not prove the write continues
-the decoded stream or that the destination is consumed as a level asset.
+return, the System Card's `$F425` loop wrote 2,706 bytes to consecutive physical
+addresses `$0D13C8–$0D1E59`, immediately following that decoder output. These
+bytes came from the System Card's ADPCM read-buffer port, not from a proven
+continuation of the `$23AD` output. Their source LBAs and use by the game remain
+unverified; the buffer may carry audio or other CD-stream data, so this does
+not establish a level-asset consumer.
 
 The joined source-graphics chronology was generated on TRV2 and validated by
 the merger. It contains 1,738,051 events from CD data reads, CD RAM-target

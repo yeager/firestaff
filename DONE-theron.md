@@ -9272,6 +9272,12 @@ native rendering, or Theron parity. The private evidence bundle is at
 - The joined file contains 1,738,051 events and reports possible truncation
   because bounded VWR, VCE, and `$23AD` streams reached their limits. Shared
   sequence establishes temporal ordering only.
+- Runtime-fetched instructions at `$F423–$F43C` matched authentic System Card
+  3.0 bytes. They reveal the post-return writes as an ADPCM read-buffer to RAM
+  transfer: 2,706 `$180A` reads match 2,706 stores at `$F425` byte for byte.
+  The writes fill `$0D13C8–$0D1E59`, following the `$23AD` output buffer, but
+  are not decoder continuation evidence. Their source LBAs and game consumer
+  remain unknown.
 - This completes one authentic capture and chronology validation. Causal
   loader provenance, gameplay handoff, other editions, and complete native
   Theron parity remain open.

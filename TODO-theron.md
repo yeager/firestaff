@@ -8769,12 +8769,15 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   for hashes and evidence limits.
 - The decoder reproduced the same 5,064-byte output hash as the earlier
   authentic source/output differential and wrote `$0D0000–$0D13C7` exactly
-  once. After return, PC `$F425` first wrote `$0D13C8`, the immediately
-  following physical address. This is a candidate handoff boundary to trace;
-  address adjacency alone does not prove stream continuation or asset use.
-- Next: bind candidate writes to source LBAs, establish CD-to-RAM causality,
-  and trace a proven consumer before pursuing world-square, BAT, tile-index,
-  and palette mappings.
+  once. Runtime disassembly bound the post-return `$F423–$F43C` copy loop to
+  authentic System Card 3.0 bytes. It reads the ADPCM read-buffer port at
+  `$180A` and stores to RAM through `($FA)` at PC `$F425`. The 2,706 observed
+  reads matched the following 2,706 stores byte for byte, which filled
+  `$0D13C8–$0D1E59`. This contiguous write is an ADPCM-buffer transfer, not
+  evidence that `$23AD` continued decoding the same asset.
+- Next: instrument PCE Fast ADPCM RAM/FIFO origins to bind these buffer reads
+  to authenticated source LBAs, then trace a game-owned consumer before
+  pursuing world-square, BAT, tile-index, and palette mappings.
 - A separate cold Japanese Rev. 1 boot/title-menu capture produced an
   authentic 11,592-row VCE write stream and 1,024-byte endpoint snapshot. It
   used the canonical headerless System Card 3.0 ROM body (MD5
