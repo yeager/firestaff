@@ -40,6 +40,14 @@ same-frame authentic Ymir Load capture before implementing the row. The Load-
 panel capture also lacks complete NBG0/NBG1 composition and text/border source
 joins; see `docs/nexus/nexus_startup.md` and the saved Ymir `--debug` captures.
 
+The 2026-10-29 authentic Load-panel replay confirms the slot-detail callback
+copies the selected card's `B01  0:06N` comment into a stack buffer. Two retail
+consumers read it: one appends a NUL-terminated string, and one translates
+ASCII to glyph IDs for text rendering. The visible row still reads
+`B01 0:16 NORMAL`, so the displayed time/mode source remains unresolved. See
+the trace and capture bundle on the external evidence disk and
+`docs/nexus/nexus_sh2_startup_decompilation.md`.
+
 A separate Ymir cold boot tested the retail Start control in the New Game
 view. Start displayed `PAUSE`; a second Start returned to the byte-identical
 unpaused view. The interval produced zero SH-2 writes to the BUP bus and the

@@ -100,8 +100,31 @@ directory comment. The authentic card comment remains `B01  0:06N`; its relation
 to the displayed row is unresolved. `scripts/verify_nexus_bkr_slot_detail_static.py`
 checks the pointer, instruction, literal, and callback-byte anchors against the
 hash-verified Japanese `DM.BIN` without copying game data into the repository.
-A runtime trace joining the selected slot, helper inputs, formatted buffer, and
-same-frame Load-panel capture remains the next proof step.
+A replayed authentic Load-panel state now closes part of that gap. In Ymir's
+`--debug` trace, `FUN_06027132` runs at VDP1 frames 6 and 31 after Down/Up
+selection inputs. At PC `0x060271f8` it writes the ten bytes `B01  0:06N` to
+stack address `0x060ffedc` on both updates. Those bytes match the directory
+comment at offset `0x90` in the authentic two-champion card, and the visible
+Load row remains `B01 0:16 NORMAL`. Thus the callback copies the card comment
+into a stack buffer, but that comment is not the displayed row verbatim.
+
+A same-run read trace records consumers of that exact stack buffer. The call
+target `0x0604265c` is a NUL-terminated string append routine: it advances to
+the end of the destination string and copies the source including its NUL.
+The call target `0x06039ab8` maps ASCII character classes through glyph-index
+bases and writes the resulting one- or two-byte glyph identifiers to its
+destination; its caller then consumes those bytes as text rendering input.
+This establishes comment-buffer use by string-building and text-rendering
+paths, but does not identify which visible panel text each caller produces or
+how the displayed `0:16 NORMAL` values are derived.
+
+The external evidence at
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_load_slot_detail_trace_20261029/`
+contains the complete selection write/read traces, Ymir logs, frame capture,
+and saved replay state. The broad cold-boot write trace in that folder used a
+frame window that did not include the actual Load-panel frame and must not be
+used for frame-specific conclusions. A runtime trace joining all formatter
+arguments and the rendered text to its source fields remains open.
 
 Reproduce with:
 
