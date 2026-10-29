@@ -548,13 +548,14 @@ span and the unique 228x100 `MENU.BPK[60]` panel base to frame-bounded SH-2 and
 VDP2 VRAM writes. The captured CRAM palette output is pixel-exact against the
 Ymir screenshot for 43,889 visible NBG0 pixels. The PALT table matches the
 captured CRAM at all 41 static used indices; a retail animation supplies
-visible index `0x83`. Direct bulk palette-transfer ownership and complete
-bitmap composition remain unresolved. A separate
-frame-536 CRAM routine at `0x06038e30` is a retail color animation that updates
-a four-row WRAM table; no evidence joins that table to the menu surface or
-NBG0 color-index source. Continue source tracing for the CRAM resource owner,
-full-screen producer, and transparent-pixel composition before admitting a
-Load-panel renderer. See
+visible index `0x83`. Decompilation and the authentic frame-659 WorkRAM-HI
+snapshot now join the animation's PALT v0 pointer slot to a live `RES*` record;
+its 512-byte payload contains the `0xffff` value seen in the frame-655 CRAM
+write. The exact source index at frame 655 and the archive's original file
+owner remain unbound. Direct bulk palette-transfer ownership and complete
+bitmap composition remain unresolved. Continue source tracing for the CRAM
+resource owner, full-screen producer, and transparent-pixel composition before
+admitting a Load-panel renderer. See
 `docs/nexus/nexus_startup.md` and the external trace bundle's
 `nbg0-menu-source-trace.txt`, `nbg0-palette-screenshot-join.txt`, and Ghidra
 decompilation logs.

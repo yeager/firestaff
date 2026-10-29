@@ -2146,6 +2146,17 @@ uses that animated value. The same routine animates all four entries
 `0x80`–`0x83`; only `0x83` appears among the visible indices. Across all 256
 entries, 250 same-index PALT words match captured CRAM; the two other
 differences, at indices `0x0c` and `0x0d`, are not explained by this animation.
+The frame-659 WorkRAM-HI snapshot also contains the live `RES*` menu archive
+at `0x060c6ab8`. Its PALT version 0 record resolves to `0x060c7bf8`, the
+pointer held by animation table slot `0x06079b08`; Ghidra dataflow shows the
+frame-driven CRAM writer reads through that slot. The 512-byte runtime PALT v0
+table has SHA-256
+`1c81908014b51fc25f52a6400048b4449f723a2a807b83842231b09d676bbf5a` and
+contains `0xffff`, the value observed in the frame-655 CRAM write. The
+frame-659 capture does not establish which table index supplied that frame-655
+value. This runtime table is not byte-identical to the trailing `MENU.BPK`
+PALT; its original file owner remains unbound. The analyzer verifies the
+archive records, pointer slot, and table bytes against the authentic capture.
 This binds the visible CRAM output and identifies
 the static MENU.BPK palette values for 41 used indices, while leaving direct
 bulk palette-transfer ownership, zero-index pixels, and other screen layers

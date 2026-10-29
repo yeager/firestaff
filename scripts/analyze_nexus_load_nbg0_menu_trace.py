@@ -40,6 +40,12 @@ NBG0_OFFSET = 0xE6F
 SH2_BASE = 0x06010000
 SH2_RAM_BASE = 0x06000000
 VDP2_VRAM_BASE = 0x05E00000
+RESOURCE_GROUP_POINTER = 0x060798C4
+ANIMATION_PALT0_POINTER = 0x06079B08
+ANIMATION_PALT1_POINTER = 0x06080C7C
+RESOURCE_ARCHIVE_SIZE = 0x1548
+RESOURCE_ARCHIVE_SHA256 = "0ad2b7abd34674015d7f32ee36dbd5be155b1654e14273ca00fe0e0161928a4d"
+ANIMATION_PALT0_SHA256 = "1c81908014b51fc25f52a6400048b4449f723a2a807b83842231b09d676bbf5a"
 
 
 def read_receipt(path: Path, expected_format: str,
@@ -62,6 +68,58 @@ def be_value_bytes(value: int, width: int) -> bytes:
     if width not in (1, 2, 4) or value < 0 or value >= 1 << (8 * width):
         raise ValueError("invalid SH-2 VDP2 trace value")
     return bytes((value,)) if width == 1 else value.to_bytes(width, "big")
+
+
+def verify_runtime_animation_palt(wram_hi: bytes) -> tuple[int, int, str]:
+    """Join the captured menu's animation-table pointer to its runtime RES* entry."""
+    def read_wram_u32(address: int) -> int:
+        offset = address - SH2_RAM_BASE
+        if offset < 0 or offset + 4 > len(wram_hi):
+            raise ValueError(f"WRAM pointer {address:#x} is outside the captured image")
+        return int.from_bytes(wram_hi[offset:offset + 4], "big")
+
+    archive_address = read_wram_u32(RESOURCE_GROUP_POINTER)
+    archive_offset = archive_address - SH2_RAM_BASE
+    archive_end = archive_offset + RESOURCE_ARCHIVE_SIZE
+    if archive_offset < 0 or archive_end > len(wram_hi):
+        raise ValueError("runtime RES* archive is outside captured WorkRAM-HI")
+    archive = wram_hi[archive_offset:archive_end]
+    if (archive[:4] != b"RES*" or
+            int.from_bytes(archive[4:8], "big") != RESOURCE_ARCHIVE_SIZE or
+            int.from_bytes(archive[8:12], "big") != 0x00050001 or
+            hashlib.sha256(archive).hexdigest() != RESOURCE_ARCHIVE_SHA256):
+        raise ValueError("runtime RES* archive header or bytes differ")
+
+    entries: dict[tuple[bytes, int], int] = {}
+    for index in range(5):
+        entry_offset = 12 + index * 12
+        tag = archive[entry_offset:entry_offset + 4]
+        version = int.from_bytes(archive[entry_offset + 4:entry_offset + 8], "big")
+        data_offset = int.from_bytes(archive[entry_offset + 8:entry_offset + 12], "big")
+        entries[tag, version] = data_offset
+    expected = {
+        (b"DYNA", 0): 0x54,
+        (b"CRET", 0): 0x20C,
+        (b"SPLL", 0): 0xE74,
+        (b"PALT", 0): 0x1138,
+        (b"PALT", 1): 0x1340,
+    }
+    if entries != expected:
+        raise ValueError("runtime RES* resource records differ from the captured menu")
+
+    palt0_address = archive_address + entries[b"PALT", 0] + 8
+    palt1_address = archive_address + entries[b"PALT", 1] + 8
+    if (read_wram_u32(ANIMATION_PALT0_POINTER) != palt0_address or
+            read_wram_u32(ANIMATION_PALT1_POINTER) != palt1_address):
+        raise ValueError("animation PALT pointer slots do not resolve to runtime RES* records")
+    palt0_offset = palt0_address - SH2_RAM_BASE
+    palt0 = wram_hi[palt0_offset:palt0_offset + 512]
+    palt0_words = [palt0[index:index + 2] for index in range(0, len(palt0), 2)]
+    if (len(palt0) != 512 or
+            hashlib.sha256(palt0).hexdigest() != ANIMATION_PALT0_SHA256 or
+            b"\xff\xff" not in palt0_words):
+        raise ValueError("runtime PALT version 0 payload differs")
+    return archive_address, palt0_address, hashlib.sha256(palt0).hexdigest()
 
 
 def menu_surface_dimensions(data: bytes) -> dict[str, tuple[int, int]]:
@@ -293,6 +351,8 @@ def main() -> int:
         # The raw Ymir WorkRAM-HI image is addressed from 0x06000000. Check the
         # observed store opcode against the authenticated DM.BIN code mapping.
         wram_hi = (args.capture / "wram-hi.bin").read_bytes()
+        runtime_archive, runtime_palt0, runtime_palt0_hash = \
+            verify_runtime_animation_palt(wram_hi)
         code_offset = WRITER_PC - SH2_BASE
         ram_offset = WRITER_PC - SH2_RAM_BASE
         code = dm_bin[code_offset:code_offset + 32]
@@ -467,6 +527,12 @@ def main() -> int:
     print(f"opaque_menu_surface_vdp2_bus_pixels={len(panel_bus_values)}")
     print("opaque_menu_surface_unique_bpk_crop=verified")
     print("opaque_menu_surface_source_to_nbg0=verified")
+    print("runtime_resource_archive=RES*")
+    print(f"runtime_resource_archive_address=0x{runtime_archive:08x}")
+    print(f"runtime_animation_palt0_address=0x{runtime_palt0:08x}")
+    print(f"runtime_animation_palt0_sha256={runtime_palt0_hash}")
+    print("runtime_animation_palt0_to_res_record=verified")
+    print("animation_cram_value_membership=0xffff-present-in-runtime-palt0")
     if palette_receipt:
         (source_pixels, compared_pixels, indices,
          visible_palt_matches, total_palt_matches,
@@ -488,6 +554,7 @@ def main() -> int:
                   {0x0C, 0x0D, 0x80, 0x81, 0x82, 0x83})))
         print("animated_palette_override_index=0x83")
         print("animated_palette_override_writer=0x06038eda@frame655")
+        print("animated_palette_override_source_index=not-captured")
         print(f"screenshot_sha256={screenshot_hash}")
         print("visible_nbg0_palette_to_screenshot=verified")
     else:
