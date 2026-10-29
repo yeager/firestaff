@@ -5,6 +5,12 @@ return-scan mutation test passed both directions. Removing the staged original
 CSB archive while DM1 was running made CSB unavailable after returning to the
 launcher while DM1 and DM2 remained available; adding the original CSB archive
 during the same DM1 runtime made all three priority games available on return.
+The DM2 DOS selected-archive test also passed after its staged archive was
+removed during gameplay: DM2 returned to the launcher and the scan reported
+the availability of the remaining original game media. A direct default-start
+check with authentic data under the standard data root reported
+`startup game=none mode=menu`, completed the scan for all five games, and
+performed no game handoff.
 The shared-collection M12 session also passed: it launched DM1 from an explicit
 per-game data directory, rescanned the collection, launched CSB, returned and
 rescanned again, while retaining authentic DM1 and CSB edition identities and
