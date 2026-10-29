@@ -339,6 +339,9 @@ static int record_game_leaf_search_root(const M12_AssetScanProgress* progress,
     return 1;
 }
 
+/** Verify persisted-root M12 selection hands authenticated DM1, CSB, and DM2
+ * editions to their native runtime owners.
+ */
 int main(void)
 {
     static const char* const games[] = {"dm1", "csb", "dm2"};
