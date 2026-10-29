@@ -94,37 +94,42 @@ resolves to `0x0607952c`, it references helper `0x060232b4`, and its literals
 include `" save comment %s\n"`, `" EASY"`, and `" NORMAL"`. These facts make
 `FUN_06027132` a plausible slot-detail formatter.
 
-This static path does not show that the callback runs on the retail Load panel,
-that it formats the visible `B01 0:16 NORMAL` row, or that `%s` reads the BKR
-directory comment. The authentic card comment remains `B01  0:06N`; its relation
-to the displayed row is unresolved. `scripts/verify_nexus_bkr_slot_detail_static.py`
-checks the pointer, instruction, literal, and callback-byte anchors against the
+These static anchors alone do not show that the callback runs on the retail
+Load panel, that `%s` reads the BKR directory comment, or how it constructs the
+displayed row. `scripts/verify_nexus_bkr_slot_detail_static.py` checks the
+pointer, instruction, literal, and callback-byte anchors against the
 hash-verified Japanese `DM.BIN` without copying game data into the repository.
-A replayed authentic Load-panel state now closes part of that gap. In Ymir's
+A replayed authentic Load-panel state and forced Ghidra function analysis now
+close most of that gap. In Ymir's
 `--debug` trace, `FUN_06027132` runs at VDP1 frames 6 and 31 after Down/Up
 selection inputs. At PC `0x060271f8` it writes the ten bytes `B01  0:06N` to
 stack address `0x060ffedc` on both updates. Those bytes match the directory
 comment at offset `0x90` in the authentic two-champion card, and the visible
-Load row remains `B01 0:16 NORMAL`. Thus the callback copies the card comment
-into a stack buffer, but that comment is not the displayed row verbatim.
+Load row reads `B01 0:06 NORMAL`. Ghidra decompilation of this same retail
+callback shows it selects a 12-byte slot record, copies the comment at
+`record + 0x10 + 12 * slot`, removes a final `E` or `N`, and appends the
+corresponding `" EASY"` or `" NORMAL"` label. It then passes the assembled
+string through the glyph converter and the callback's text draw routine. The
+runtime bytes and control flow therefore bind the displayed difficulty label
+to the authentic BKR comment suffix. The traced card comment says `0:06`, and
+enlarged inspection of the authentic screenshot confirms the visible row also
+says `0:06`.
 
 A same-run read trace records consumers of that exact stack buffer. The call
 target `0x0604265c` is a NUL-terminated string append routine: it advances to
 the end of the destination string and copies the source including its NUL.
 The call target `0x06039ab8` maps ASCII character classes through glyph-index
 bases and writes the resulting one- or two-byte glyph identifiers to its
-destination; its caller then consumes those bytes as text rendering input.
-This establishes comment-buffer use by string-building and text-rendering
-paths, but does not identify which visible panel text each caller produces or
-how the displayed `0:16 NORMAL` values are derived.
+destination. In this callback, that output is passed to the text draw routine.
+The string append helper at `0x0604265c` adds the difficulty label after the
+comment prefix.
 
 The external evidence at
 `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_load_slot_detail_trace_20261029/`
 contains the complete selection write/read traces, Ymir logs, frame capture,
 and saved replay state. The broad cold-boot write trace in that folder used a
 frame window that did not include the actual Load-panel frame and must not be
-used for frame-specific conclusions. A runtime trace joining all formatter
-arguments and the rendered text to its source fields remains open.
+used for frame-specific conclusions.
 
 Reproduce with:
 

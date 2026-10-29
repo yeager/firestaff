@@ -12,12 +12,12 @@ Japanese Continue layout and the English New Game and Continue layouts against
 authentic retail source bytes and captured CRAM. Ymir also completed
 Continue-to-gameplay with the corpus-retained BKR image whose SHA-256 is
 `87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`: the
-retail Load screen showed `B01 0:16 NORMAL`, then entered the four-champion
+retail Load screen showed `B01 0:06 NORMAL`, then entered the four-champion
 dungeon view. The isolated BKR copy retained its hash after loading. A paired
 Up-input replay changed the rendered gameplay view. These captures verify the
 retail reference flow in Ymir only. Separate 2026-10-29 cold boots installed
 the authentic two-champion retail-written BKR before power-on, reached the
-Load panel with `B01 0:16 NORMAL`, accepted that entry, and entered a dungeon
+Load panel with `B01 0:06 NORMAL`, accepted that entry, and entered a dungeon
 view with two champion HUD panels. The internal backup-RAM image retained its
 source hash. These runs prove the retail flow for that BKR in Ymir; they do not
 identify payload fields or connect Firestaff's BKR parser to live backup RAM.
@@ -1852,31 +1852,25 @@ external evidence storage.
 
 ## Continue reaches gameplay with the retained authentic BKR (2026-10-28)
 
-### Save-slot time discrepancy
+### Save-slot comment and difficulty label
 
-The retained 2025 capture `parity-evidence/verification/nexus-continue-real-bup-20261025/03-load-screen.png`
-(SHA-256
-`5e20c31980926e599343b25dbdc1bc75b945ee382e9c313439996fc08b633444`)
-shows `B01 0:06 NORMAL`. The 2028 capture
-`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/authentic-bkr-continue-device.png`
-(SHA-256
-`2b86fe32898e79009ac2cc5cf33f961e0ebcd61489c9f93a9717f9e0c13ea8fb`)
-shows `B01 0:16 NORMAL`. Both reports identify the same 32 KiB BKR SHA-256
-`87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`; the
-2028 run also verified that the source image and profile copy were unchanged
-after loading. The runs used different Ymir versions (0.4.1 and 0.4.2-dev)
-and different boot/input schedules. The available evidence does not determine
-why the displayed time differs. These are capture-specific observations; do
-not treat either time as an established property of the BKR or infer a BKR
-mutation. Resolving the cause requires a controlled replay with the same
-Ymir build, profile initialization, and frame-exact input schedule.
+Earlier visual readings of the retained Load-panel captures transcribed the
+minute field as `0:16`. Enlarged inspection of the authentic 2025 and 2028
+captures shows `B01 0:06 NORMAL`. A 2026-10-29 Ymir replay and SH-2 trace
+independently confirm the same row: the retail slot callback copies the BKR
+comment `B01  0:06N`, strips its final `N`, appends ` NORMAL`, and sends that
+string through the glyph converter and text draw routine. The callback writes
+the original comment bytes at stack address `0x060ffedc`; the authentic BKR
+file and internal BUP image both contain those exact bytes. Thus the BKR
+comment supplies the row prefix and difficulty. Details, trace hashes, and the
+retained replay state are in the external evidence folder's
+`nexus_load_slot_detail_trace_20261029/` directory.
 
-The authentic two-champion cold boot below reproduces the UI string
-`B01 0:16 NORMAL` with a different 32 KiB BKR. The directory comment bytes
-extracted by the BKR parser are `B01  0:06N` in each of the four hash-pinned
-retail-written corpus images. The available evidence does not establish that
-the retail Load panel copies or formats that directory comment; do not use it
-as a decoded save-time or mode field.
+The two- and four-champion real-media cold boots independently establish
+retail Continue-to-gameplay in Ymir; their earlier `0:16` text transcriptions
+were visual misreads, not evidence of different save times or BKR mutation.
+These captures still do not identify the remaining payload fields or connect
+Firestaff's BKR parser to live backup RAM.
 
 Ymir `0.4.2-dev` was run on TRV2 with the hash-verified Japanese retail disc,
 Japanese IPL and an isolated profile. The profile's internal backup RAM was a
@@ -1886,7 +1880,7 @@ corpus (SHA-256
 `87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035`). No
 emulator save state or game save was loaded during the cold boot. After the
 retail title menu appeared, Down and A opened Continue's Load screen, which
-listed the internal-memory entry `B01 0:16 NORMAL`. A second A accepted that
+listed the internal-memory entry `B01 0:06 NORMAL`. A second A accepted that
 entry. The next capture shows a dungeon view with four champion HUD panels.
 The BKR source and isolated profile copy retained the same SHA-256 after the
 load.
@@ -1924,7 +1918,7 @@ and the external evidence folder's
 
 A later checkpoint at boot frame 14,900 shows the Japanese title logo. A
 replay from that checkpoint with Start, Down and A reaches the authentic Load
-screen row `B01 0:16 NORMAL`, but records zero new BUP-window reads. This
+screen row `B01 0:06 NORMAL`, but records zero new BUP-window reads. This
 narrowly places this boot trace's BUP read activity earlier in startup than
 the checkpoint. A separate cold-boot Continue trace binds the accepted payload
 read to `DMNEXUS__01`, its WRAM-L destination, and checksum gate; it does not
@@ -1967,7 +1961,7 @@ image and log are preserved in the external evidence folder's
 
 A later checkpoint at boot frame 14,900 shows the Japanese title logo. A
 replay from that checkpoint with Start, Down and A reaches the authentic Load
-screen row `B01 0:16 NORMAL`, but records zero new BUP-window reads. This
+screen row `B01 0:06 NORMAL`, but records zero new BUP-window reads. This
 narrowly places this trace's BUP read activity earlier in startup than the
 checkpoint. A separate cold-boot Continue trace binds the accepted payload
 read to `DMNEXUS__01`, its WRAM-L destination, and checksum gate; it does not
@@ -2011,7 +2005,7 @@ internal backup RAM was replaced with the authentic two-champion,
 retail-written 32 KiB image from `.firestaff/data/nexus`. The retail flow
 advanced through BIOS date/time and the opening sequence, opened the native
 title menu, selected Continue, and reached the native Load panel. The panel
-displayed `B01 0:16 NORMAL`. The source image and profile's `state/bup-int.bin`
+displayed `B01 0:06 NORMAL`. The source image and profile's `state/bup-int.bin`
 both retained SHA-256
 `3d60856119df55ffa4937d13b5dc7487157c7c6b131a999a2e61683316679634` after the
 run. A second cold boot accepted the selected row and entered a dungeon view
@@ -2031,7 +2025,7 @@ screenshot are in the external evidence folder's
 ### Load-panel VDP2 longword writer join (2026-10-29)
 
 A replay from the authentic BIOS title-logo checkpoint reached the retail Load
-panel with the real `B01 0:16 NORMAL` row. At VDP1 frame 659, the complete Ymir
+panel with the real `B01 0:06 NORMAL` row. At VDP1 frame 659, the complete Ymir
 VDP2 trace contains 352 VRAM halfword events. The same-frame SH-2 trace contains
 176 32-bit stores at PC `0x06023640`; expanding each big-endian longword into
 its upper and lower halfwords reproduces all 352 VDP2 events in exact order,
