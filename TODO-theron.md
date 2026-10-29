@@ -1,3 +1,28 @@
+# Firestaff TODO — Theron's Quest
+
+## 2026-10-29 — generalize authentic CD-read-to-RAM source joins
+
+- Added `scripts/verify_theron_cd_ram_source_join.py`, which validates a paired
+  read/write trace against hash-authenticated JP Track 02, then requires each
+  selected RAM write to be the immediately following shared event, byte-equal
+  to a System Card `$EA99` CD-port read, and mapped to the requested physical
+  range. Mixed-track rows are excluded unless their receipt identifies this
+  exact JP Track 02 layout. The bounded CD trace verifier now accepts up to
+  the capture wrapper's documented 1,048,576-row maximum.
+- The seven parser regressions passed in three local loops. On TRV2, the
+  verifier also passed against the retained authentic JP cold capture
+  `theron-jp-cold-joined-20261029-r2`: 30 exact source-read-to-RAM-write joins
+  across 15 physical bank `$80` addresses, from source LBAs 4521 and 4589.
+  It passed three consecutive runs. The verifier prints no media byte values
+  and reads the authentic Track 02 only on TRV2.
+- This validates a reusable source-provenance tool and its existing bank-$80
+  capture. It does not establish the source of the 21 bank-$68 poll-code writes
+  from the later poll-window run; that capture's raw traces were removed during
+  the preceding disk cleanup. Next rerun a bounded authentic JP cold capture
+  with the poll target enabled, apply this verifier to `$0D04D2–$0D04E6`, and
+  capture a game-owned poll overlapping the scripted input before claiming
+  an action or visible effect. Native Theron parity remains open.
+
 ## 2026-10-29 — authenticated Stage-2 colors are available; screen binding remains open
 
 - `theron_v1_track02_load_stage2_vce_palette()` copies the authentic regional

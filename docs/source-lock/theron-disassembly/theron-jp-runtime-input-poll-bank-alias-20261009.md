@@ -597,3 +597,11 @@ authenticated CD-to-RAM receipt, `$E009` dispatch, or gameplay transition.
 This result neither links the scripted input to the bank-`$68` writes nor
 establishes a visible gameplay effect. Continue with a targeted trace of the
 `$EA9C` writer's source and an input replay that overlaps a witnessed game poll.
+
+The reusable `scripts/verify_theron_cd_ram_source_join.py` now performs this
+same-event source check for any selected physical RAM window and validates
+Track 02 reads against the authenticated JP BIN. It passed on a separate
+retained JP cold capture in three consecutive runs, verifying 30 immediate
+`$EA99` read to `$EA9C` store joins across 15 bank-`$80` addresses from LBAs
+4521 and 4589. That capture does not include writes to the
+`$0D04D2–$0D04E6` poll window, so the poll code's source remains unresolved.

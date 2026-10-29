@@ -1,5 +1,22 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-29 — verify bounded authentic CD-to-RAM source joins
+
+Added a reusable verifier that joins shared event sequences from a PCE Fast CD
+data-port trace and the CD RAM target-write trace. It checks the authentic JP
+Track 02 media hash and raw-byte locations, requires the System Card `$EA99` to
+`$EA9C` instruction pair, and can scope verification to a physical destination
+window. Seven parser regressions passed in three loops. On TRV2, it validated
+30 immediate byte-equal source/read-to-write pairs across 15 bank-$80
+destination addresses in retained authentic JP capture
+`theron-jp-cold-joined-20261029-r2`, with source LBAs 4521 and 4589. The real
+capture verification also passed three consecutive loops. Source data remained
+on TRV2.
+
+This is a verified evidence tool and a narrow existing loader receipt. It does
+not establish the bank-$68 poll-code source, game-owned loading, or gameplay
+behavior; complete native Theron parity remains open.
+
 ## 2026-10-29 — capture the complete authentic `$23AD` invocation
 
 An original US disc, System Card 3.0 and authentic Ak-Tu-Ba Backup RAM run
