@@ -65,7 +65,8 @@ class DecoderOutputReadCandidatesTest(unittest.TestCase):
             )
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn("post_decode_reads_in_output_range=2", result.stdout)
-            self.assertIn("unique_output_addresses_read=1", result.stdout)
+            self.assertIn("unique_output_addresses_read=2", result.stdout)
+            self.assertIn("unique_byte_equal_output_addresses=1", result.stdout)
             self.assertIn("physical_pc=001425", result.stdout)
             self.assertIn("ownership and gameplay use unproven", result.stdout)
 

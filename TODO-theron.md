@@ -9085,12 +9085,18 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   reads before any selected `$0D0000–$0D13C7` consumer reads were captured.
   The independent-limit correction passed patch-only application and a PCE
   Fast `-j1` build on TRV2. A cold authentic USA capture recorded exactly
-  4,096 reads in each class and separate truncation markers. The bounded
-  `$23AD` trace verified one ordered 5,064-byte output against the expected
-  digest, but the 4,096 selected `$0D0000–$0D13C7` reads all occurred before
-  the decoder's final output write. The verifier therefore found zero
-  post-decode byte-equal reads. The input driver also missed a scripted poll;
-  the capture recorded no gameplay transition. Next, narrow the selected
-  physical range or adjust the cold input schedule to sample after decode, then
-  trace any read candidates into a source-bound game-state or rendering effect.
-  Current evidence proves neither consumer ownership nor gameplay use.
+  4,096 reads in each class with separate truncation markers. In a follow-up
+  cold run, an earlier aggregate-cap binary recorded 53,790 reads in the
+  selected `$0D0000–$0D13C7` range and 11,746 in default `$1F0000–$1F7FFF` RAM.
+  The `$23AD` trace again verified one ordered 5,064-byte output against the
+  expected digest. After its final write, the consumer trace read all 5,064
+  output addresses 29,618 times; 6,111 reads matched decoded bytes at 3,130
+  addresses. Prominent reader PCs include `$104287`, `$1042AB`, and `$1F1C3E`.
+  This is byte-equal read-candidate evidence only; it does not establish the
+  routines' source ownership, the downstream write effect, or gameplay use.
+  The scripted input still missed a controller poll, and the capture recorded
+  no CD IRQ, `$E009` dispatch, or gameplay transition. Next disassemble the
+  candidate readers, trace their bounded destination writes, and join those
+  writes to an authentic game-state or rendering effect. The follow-up used an
+  earlier aggregate-cap binary without sample-class fields; its stream counts
+  were re-derived from the physical address fields.

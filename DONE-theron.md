@@ -9322,5 +9322,12 @@ native rendering, or Theron parity. The private evidence bundle is at
   the expected SHA-256, but all sampled `$0D` reads preceded its final write;
   the verifier found zero post-decode output-range reads. The capture also
   missed the requested scripted-input polls and recorded no gameplay
-  transition. This validates sampling and one decoder output only; it does not
-  establish consumer ownership, gameplay use, or Theron parity.
+  transition. A follow-up cold capture with a 65,536-record aggregate cap
+  verified 29,618 output-range reads after the decoder's final write. Those
+  reads covered all 5,064 output addresses; 6,111 were byte-equal to decoded
+  output across 3,130 addresses. The follow-up used an earlier aggregate-cap
+  binary, so its range/default counts were re-derived from physical addresses;
+  the split-cap behavior is established by the preceding capture and build.
+  Both runs missed the final scripted-input poll and recorded no gameplay
+  transition. The read PCs remain candidates; no ownership, gameplay use, or
+  Theron parity is claimed.
