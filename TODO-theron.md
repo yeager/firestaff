@@ -8466,3 +8466,8 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   trace has been produced. Chronology alone is not causal byte provenance.
   The production renderer still lacks an authenticated source-to-world-cell
   and tile-bank mapping, so this tooling does not establish visual parity.
+- Audited the existing operator-local `theron-spawn-search-r26` bundle: its
+  receipt records authentic US Track 02 and System Card identities, no loaded
+  save state, an observed startup transition, and zero non-System-Card CD
+  reads. The 1,024-byte VCE file is an endpoint palette snapshot, not a write
+  stream, and the bundle does not prove a Theron dungeon palette.

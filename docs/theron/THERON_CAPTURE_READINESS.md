@@ -280,7 +280,10 @@ address, old/new 9-bit value and guest instruction address. The chronology
 establishes temporal order only; it does not prove causal CD-to-palette data
 flow, DMA writes, tile use, or world-cell mapping. No authentic VCE write
 stream has been captured yet, so this instrumentation does not establish
-palette or gameplay parity.
+palette or gameplay parity. An older operator-local
+`theron-spawn-search-r26` bundle contains a 1,024-byte VCE endpoint snapshot,
+but its receipt records zero non-System-Card CD reads. Treat it as a palette
+snapshot only, not a Theron dungeon palette or source-to-tile mapping.
 
 Theron capture uses user-supplied System Card firmware, CUE/BIN and other
 original media selected from operator-local storage. None of those payloads
