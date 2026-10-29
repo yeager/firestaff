@@ -11,6 +11,7 @@
 - `Alternate-platform launcher`: verify authentic-media menu selection and handoff paths for DM1, CSB and DM2.
 - `Theron evidence`: verify decoded-buffer copies and Japanese input-poll source provenance; add a bounded PCE Fast position-transfer observer without claiming movement parity.
 - `Startup documentation`: update the five-game evidence boundary and correct the superseded CSB Amiga inscription-gap entry.
+- `DM2 Macintosh media evidence`: rename the French-named SIT check to report its actual identity; its extracted application, resource forks and DMFiles match the English SIT, so a distinct French edition remains unverified.
 - `DM1 X68000`: update the real-media checksum probe while keeping private game data out of the repository.
 - `Nexus startup`: verify regional owner selection and matching supplemental media; document the production title-compositor receipt gate and retain it until source-bound display evidence exists.
 - `Release metadata`: update the project version and reproducible SPDX source SBOM.
@@ -20,6 +21,7 @@
 - `Nexus`: a CUE-only source without an authenticated ISO or extracted owner is still rejected by launcher admission. Saturn title composition and the playable game route remain gated.
 - `Theron's Quest`: the JP PCE Fast capture did not record a bounded position-write row; the active map and a positive movement transfer remain unverified.
 - `DM1, CSB and DM2`: platform-wide viewport, HUD, audio and physical-display parity remain incomplete outside individually verified routes.
+- `DM2 Macintosh French`: the French-named SIT has not been verified as a distinct French edition or as French-edition runtime support.
 - Original game media, saves and firmware are not included in release packages.
 
 # Firestaff v3.0.420
