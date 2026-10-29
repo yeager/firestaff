@@ -629,11 +629,15 @@ not a fix and has not passed this real-media test.
   actual retail state owner to the authentic champion/inventory model before
   opening the production equipment-click route. The verified consumer at `0x21c84`
   special-cases only IDs 38, 39, 40, 49, 52, 56, and 57; IDs 13 and 44 reach
-  its generic `bad event data` diagnostic. The separate mouse poller filters
-  for event 46 before it invokes the hit scanner; it does not separately
-  consume event 44. Continue tracing the held-item helper and capture a
-  controlled click's guest RAM and visible result before enabling pointer
-  actions.
+  its generic `bad event data` diagnostic. Static disassembly now verifies
+  relative cursor updates, both mouse descriptor-table alternatives, and the
+  event-46 hit-test dispatch; matching live hitbox rows enqueue their own
+  event/argument pairs afterward. No retained capture supplies a populated
+  runtime table or scheduled ShuttleMouse report, so the physical `0x0400`
+  trigger and live click-to-action binding remain unknown. Continue tracing
+  the held-item helper and capture a controlled click's guest RAM and visible
+  result before enabling pointer actions. See
+  `parity-evidence/verification/nexus-shuttle-mouse-event-path-20261029/README.md`.
   See `parity-evidence/verification/keyboard-mouse-debug-20261024/README.md`.
   See also `parity-evidence/verification/nexus-mouse-callback-dispatch-20261024/README.md`.
   Firestaff now has a host Z toggle, logical pointer motion through keyboard
