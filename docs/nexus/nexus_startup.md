@@ -52,7 +52,7 @@ source.
 | `WARNING.BIN`, `GAMEOVER.BIN`, `STABG.BIN` | real surfaces are decoded and receive byte provenance; presentation is missing |
 | `FACE.BIN` | The JP retail member is verified as 45,104 bytes (`bd9ca16ea68043984e2804067b6cd66f`): 20 variable-length, 56×56 PRS3 portraits with source palettes. The PLRD roster-to-portrait ordinal and the VDP1 destination/order are still unobserved. |
 | `FONT256.S2D` | 242 CG tiles are retained in production source; Saturn page/attribute/glyph mapping is missing |
-| `MENU.BPK` | All 162 PRS3 surfaces decode to source-bound bytes. In the authentic Japanese Load panel, unique surface 60 is joined row by row to the 228x100 NBG0 base at `(16,112)`, surface 55 contributes a traced partial image span, and all 42 visible NBG0 color indices match captured CRAM output against the Ymir screenshot. Other Load-panel pixels, palette resource ownership and complete composition remain open. A separate Japanese title-menu frame has 86 whole surfaces byte-resident in VDP1 VRAM, but none of 137 textured command sources starts in those ranges; see the [menu snapshot join](NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md). |
+| `MENU.BPK` | All 162 PRS3 surfaces decode to source-bound bytes. In the authentic Japanese Load panel, unique surface 60 is joined row by row to the 228x100 NBG0 base at `(16,112)`, surface 55 contributes a traced partial image span, and all 42 visible NBG0 color indices match captured CRAM output against the Ymir screenshot. Other Load-panel pixels, static palette upload ownership and complete composition remain open. A separate Japanese title-menu frame has 86 whole surfaces byte-resident in VDP1 VRAM, but none of 137 textured command sources starts in those ranges; see the [menu snapshot join](NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md). |
 | Saturn Backup RAM | `nexus_v1_saturn_bkr_parse` reads hash-pinned 32 KiB card directories and block chains, returning exact opaque payload bytes; native save selection, payload interpretation, and runtime loading remain missing |
 | Mednafen visual baseline | A clean J-BIOS capture against authentic retail shows black boot followed by the original intro FMV without input; menu/LEV01 identity remains missing |
 
@@ -2147,16 +2147,18 @@ uses that animated value. The same routine animates all four entries
 entries, 250 same-index PALT words match captured CRAM; the two other
 differences, at indices `0x0c` and `0x0d`, are not explained by this animation.
 The frame-659 WorkRAM-HI snapshot also contains the live `RES*` menu archive
-at `0x060c6ab8`. Its PALT version 0 record resolves to `0x060c7bf8`, the
-pointer held by animation table slot `0x06079b08`; Ghidra dataflow shows the
-frame-driven CRAM writer reads through that slot. The 512-byte runtime PALT v0
-table has SHA-256
+at `0x060c6ab8`. It matches hash-verified Japanese `RHIFIX.BIN` byte for byte
+except the version byte at offset `0x0b` (`0` in the file and `1` in runtime
+WRAM). Its PALT version 0 record resolves to `0x060c7bf8`, the pointer held by
+animation table slot `0x06079b08`; Ghidra dataflow shows the frame-driven CRAM
+writer reads through that slot. The 512-byte runtime PALT v0 table has SHA-256
 `1c81908014b51fc25f52a6400048b4449f723a2a807b83842231b09d676bbf5a` and
-contains `0xffff`, the value observed in the frame-655 CRAM write. The
-frame-659 capture does not establish which table index supplied that frame-655
-value. This runtime table is not byte-identical to the trailing `MENU.BPK`
-PALT; its original file owner remains unbound. The analyzer verifies the
-archive records, pointer slot, and table bytes against the authentic capture.
+matches `RHIFIX.BIN` exactly at offset `0x1140`. It contains `0xffff`, the
+value observed in the frame-655 CRAM write. The frame-659 capture does not
+establish which table index supplied that frame-655 value. This runtime table
+is not byte-identical to the trailing `MENU.BPK` PALT. The analyzer verifies
+the archive records, single version-byte change, pointer slot, and source
+table bytes against the authentic capture and file.
 This binds the visible CRAM output and identifies
 the static MENU.BPK palette values for 41 used indices, while leaving direct
 bulk palette-transfer ownership, zero-index pixels, and other screen layers

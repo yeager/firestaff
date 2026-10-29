@@ -21,6 +21,7 @@ from nexus_vdp2_registers import read_u16
 
 
 DM_BIN_SHA256 = "3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124"
+RHIFIX_BIN_SHA256 = "472cfeb21b9023dde9d4857c6faad90b4794ee2a3195b2e100f4aedd007235e3"
 WRITER_PC = 0x060230E8
 WRITER_CALLER = 0x06029188
 BLITTER_TARGET = 0x060230D2
@@ -46,6 +47,7 @@ ANIMATION_PALT1_POINTER = 0x06080C7C
 RESOURCE_ARCHIVE_SIZE = 0x1548
 RESOURCE_ARCHIVE_SHA256 = "0ad2b7abd34674015d7f32ee36dbd5be155b1654e14273ca00fe0e0161928a4d"
 ANIMATION_PALT0_SHA256 = "1c81908014b51fc25f52a6400048b4449f723a2a807b83842231b09d676bbf5a"
+RHIFIX_PALT0_OFFSET = 0x1140
 
 
 def read_receipt(path: Path, expected_format: str,
@@ -70,8 +72,9 @@ def be_value_bytes(value: int, width: int) -> bytes:
     return bytes((value,)) if width == 1 else value.to_bytes(width, "big")
 
 
-def verify_runtime_animation_palt(wram_hi: bytes) -> tuple[int, int, str]:
-    """Join the captured menu's animation-table pointer to its runtime RES* entry."""
+def verify_runtime_animation_palt(wram_hi: bytes, rhifix: bytes
+                                  ) -> tuple[int, int, str]:
+    """Join the animation table to its exact source bytes in RHIFIX.BIN."""
     def read_wram_u32(address: int) -> int:
         offset = address - SH2_RAM_BASE
         if offset < 0 or offset + 4 > len(wram_hi):
@@ -89,6 +92,14 @@ def verify_runtime_animation_palt(wram_hi: bytes) -> tuple[int, int, str]:
             int.from_bytes(archive[8:12], "big") != 0x00050001 or
             hashlib.sha256(archive).hexdigest() != RESOURCE_ARCHIVE_SHA256):
         raise ValueError("runtime RES* archive header or bytes differ")
+    if (len(rhifix) != RESOURCE_ARCHIVE_SIZE or
+            hashlib.sha256(rhifix).hexdigest() != RHIFIX_BIN_SHA256):
+        raise ValueError("RHIFIX.BIN is not the authenticated Japanese retail resource")
+    archive_differences = [index for index, (actual, source) in
+                           enumerate(zip(archive, rhifix)) if actual != source]
+    if (archive_differences != [0x0B] or rhifix[0x0B] != 0 or
+            archive[0x0B] != 1):
+        raise ValueError("runtime RES* bytes do not match RHIFIX.BIN's single version-byte update")
 
     entries: dict[tuple[bytes, int], int] = {}
     for index in range(5):
@@ -119,6 +130,8 @@ def verify_runtime_animation_palt(wram_hi: bytes) -> tuple[int, int, str]:
             hashlib.sha256(palt0).hexdigest() != ANIMATION_PALT0_SHA256 or
             b"\xff\xff" not in palt0_words):
         raise ValueError("runtime PALT version 0 payload differs")
+    if rhifix[RHIFIX_PALT0_OFFSET:RHIFIX_PALT0_OFFSET + len(palt0)] != palt0:
+        raise ValueError("runtime PALT version 0 is not byte-identical to RHIFIX.BIN")
     return archive_address, palt0_address, hashlib.sha256(palt0).hexdigest()
 
 
@@ -306,9 +319,11 @@ def main() -> int:
                 (chctla & 0x000C) != 0 or (chctla & 0x0070) != 0x0010:
             raise ValueError("frame 659 does not have the captured NBG0 8bpp bitmap mode")
 
-        assets = read_assets(args.data_dir, args.cue, {"DM.BIN", "MENU.BPK"})
+        assets = read_assets(args.data_dir, args.cue,
+                             {"DM.BIN", "MENU.BPK", "RHIFIX.BIN"})
         dm_bin = assets["DM.BIN"]
         menu_bpk = assets["MENU.BPK"]
+        rhifix = assets["RHIFIX.BIN"]
         if hashlib.sha256(dm_bin).hexdigest() != DM_BIN_SHA256:
             raise ValueError("DM.BIN is not the authenticated Japanese retail executable")
         surfaces, _palette = menu_surfaces(menu_bpk)
@@ -352,7 +367,7 @@ def main() -> int:
         # observed store opcode against the authenticated DM.BIN code mapping.
         wram_hi = (args.capture / "wram-hi.bin").read_bytes()
         runtime_archive, runtime_palt0, runtime_palt0_hash = \
-            verify_runtime_animation_palt(wram_hi)
+            verify_runtime_animation_palt(wram_hi, rhifix)
         code_offset = WRITER_PC - SH2_BASE
         ram_offset = WRITER_PC - SH2_RAM_BASE
         code = dm_bin[code_offset:code_offset + 32]
@@ -529,6 +544,10 @@ def main() -> int:
     print("opaque_menu_surface_source_to_nbg0=verified")
     print("runtime_resource_archive=RES*")
     print(f"runtime_resource_archive_address=0x{runtime_archive:08x}")
+    print("runtime_resource_archive_source=RHIFIX.BIN")
+    print("runtime_archive_to_source=exact_except_byte_0x0b_0_to_1")
+    print(f"runtime_animation_palt0_source=RHIFIX.BIN@0x{RHIFIX_PALT0_OFFSET:x}")
+    print("runtime_animation_palt0_source_bytes=exact")
     print(f"runtime_animation_palt0_address=0x{runtime_palt0:08x}")
     print(f"runtime_animation_palt0_sha256={runtime_palt0_hash}")
     print("runtime_animation_palt0_to_res_record=verified")

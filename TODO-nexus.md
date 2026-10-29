@@ -550,11 +550,13 @@ Ymir screenshot for 43,889 visible NBG0 pixels. The PALT table matches the
 captured CRAM at all 41 static used indices; a retail animation supplies
 visible index `0x83`. Decompilation and the authentic frame-659 WorkRAM-HI
 snapshot now join the animation's PALT v0 pointer slot to a live `RES*` record;
-its 512-byte payload contains the `0xffff` value seen in the frame-655 CRAM
-write. The exact source index at frame 655 and the archive's original file
-owner remain unbound. Direct bulk palette-transfer ownership and complete
+its 512-byte payload is an exact match for `RHIFIX.BIN` at offset `0x1140`, and
+the live archive differs from that hash-verified file only at version byte
+`0x0b`. The table contains the `0xffff` value seen in the frame-655 CRAM write;
+the exact source index at frame 655 remains unbound. Direct bulk
+static-palette-transfer ownership and complete
 bitmap composition remain unresolved. Continue source tracing for the CRAM
-resource owner, full-screen producer, and transparent-pixel composition before
+static-palette upload, full-screen producer, and transparent-pixel composition before
 admitting a Load-panel renderer. See
 `docs/nexus/nexus_startup.md` and the external trace bundle's
 `nbg0-menu-source-trace.txt`, `nbg0-palette-screenshot-join.txt`, and Ghidra

@@ -50,7 +50,12 @@ DEATH.BIN (4 KB): death sequence data.
 STONE.BIN (4 KB): stone/wall texture base.
 NBG3.BIN (7 KB): VDP2 background layer.
 POTEFT.BIN (3 KB): potion effects.
-RHIFIX.BIN (5 KB): unknown fix data.
+RHIFIX.BIN (5 KB): the source for the Japanese startup menu's runtime `RES*`
+animation palette archive. In an authentic Ymir Load-panel capture, the live
+archive matches this hash-verified file except the version byte at offset
+`0x0b` (`0` in the file and `1` in WRAM); the 512-byte PALT v0 animation table
+matches file offset `0x1140` exactly. The animation writes CRAM values, while
+the exact table index for the captured frame-655 write remains unresolved.
 RLOWFIX.BIN (71 KB): RES* archive with source-bound champion PLRD, creature
 CRET, and text/TABL resources; Japanese, English, and French identities are
 recorded separately where verified. Runtime semantics remain gated by their
