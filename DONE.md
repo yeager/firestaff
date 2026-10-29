@@ -9,7 +9,10 @@ CSB version-selection menu could not use its keyboard edition control. The
 settings key-routing test and authentic CSB Amiga 3.5 menu-selection CTest
 passed. A full-app SDL dummy run with the original CSB Amiga 3.1 media also
 used one Right key in Game Options and handed off `amiga31-multi`. The full
-real-media picker regression now includes that route. Active-game input and
+real-media picker regression now includes that route. On 2026-10-29, its
+platform-only matrix completed with exit code 0 against the installed
+originals: DM1 PC/Atari/Amiga, CSB Amiga (including the Right-key edition
+change)/Atari, and DM2 PC/Amiga (eight handoffs). Active-game input and
 text-edit arrows remain routed to their existing handlers; native physical
 keyboard behavior and full CSB gameplay parity are not claimed.
 
