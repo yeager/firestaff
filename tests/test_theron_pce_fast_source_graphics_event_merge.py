@@ -4,18 +4,21 @@
 from __future__ import annotations
 
 import json
-import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Optional
 
 
 repo = Path(__file__).resolve().parents[1]
 merger = repo / "scripts/merge_theron_pce_fast_source_graphics_events.py"
-root = Path(sys.argv[1])
-shutil.rmtree(root, ignore_errors=True)
-root.mkdir(parents=True, exist_ok=True)
+scratch_root = Path(sys.argv[1])
+scratch_root.mkdir(parents=True, exist_ok=True)
+temporary_root = tempfile.TemporaryDirectory(
+    prefix="theron-source-graphics-event-merge-", dir=scratch_root
+)
+root = Path(temporary_root.name)
 
 
 def run_case(
@@ -202,4 +205,3 @@ failed = subprocess.run(
 if failed.returncode == 0 or protected.read_text(encoding="ascii") != "preserve me\n":
     raise AssertionError("existing output was not preserved on refusal")
 
-shutil.rmtree(root)
