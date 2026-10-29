@@ -206,6 +206,18 @@ payload written at VCE index `$E0`. The command stream's screen association
 and matching graphics/pixel route remain unproven; see the
 [palette source note](../source-lock/theron-stage2-static-vce-palette-20261024.md).
 
+An opt-in PCE Fast write trace is available for the source-bound routine window
+`$1F1C00–$1F1CFF` and physical RAM `$0D0000–$0D1FFF`. Enable it with
+`FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE_SUPPORT=1` when building the
+instrumented reference binary, then `THERON_CAPTURE_PCE_FAST_CODE_RAM_WRITE_TRACE=1`
+on a PCE Fast capture. It records the CPU logical and physical write addresses,
+active MPR values, instruction PC, registers, and a shared event sequence,
+capped at 65,536 records. The hook reports open/write errors and capture validation
+rejects missing or invalid trace receipts. This instrumentation is for reference captures only;
+output remains untrusted for native rendering until matched to authentic code,
+source bytes, and a later gameplay/render transition. See the
+[decoded-buffer bit-reader note](../source-lock/theron-disassembly/theron-us-decoded-buffer-bit-reader-20261029.md).
+
 ## Earlier 2026-10-24 — TRV2 headless native full-loop presentation check
 
 Firestaff was built from source commit `d43df8905e22a207696f4439bde7afb02b808b53`

@@ -9035,15 +9035,36 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   `$2E/$2F` pointer, stores the refill count in `$0F`, and updates `$12/$13`
   before returning to the adjacent `$1F1C34` loop. That loop rotates `$0E`,
   `$10`, and `$11` while extracting bits. The observed `$0D` reads therefore
-  enter a bit-reading path; no subsequent decoded-output destination or
-  gameplay structure has yet been traced. The bounded follow-up should capture
-  writes from this routine and its caller, with physical addresses and the
-  active MPR mapping, before assigning the data a game meaning.
+  enter a bit-reading path. Its output destination is now observed below, but
+  its gameplay structure and meaning remain unknown.
+- The opt-in PCE Fast code-bank write trace is now integrated into the
+  instrumented reference build. It records writes from physical PC
+  `$1F1C00–$1F1CFF` into physical `$0D0000–$0D1FFF`, including logical and
+  physical addresses, MPRs, registers, and the shared event sequence, with a
+  65,536-record cap. The complete Mednafen patch set applied on TRV2 and its
+  PCE Fast `-j1` build completed; the capture-script regression passed three
+  consecutive loops. A cold authentic USA run with this trace wrote 5,520
+  records to `$0D0000–$0D13C7`; its writer PCs were `$1F1C8D` (2,711 writes)
+  and `$1F1CE6` (2,809 writes). MPR3 was `$68`, mapping logical `$6000` to
+  physical `$0D0000`. All recorded logical/physical pairs matched the active
+  MPR translation, and the shared event sequence increased monotonically.
+- The same run's bounded `$23AD` trace contains 3,272 exact
+  address/value/PC matches for writes at logical PCs `$3C8D` and `$3CE6`; each
+  write-trace event sequence follows the corresponding `$23AD` event by one.
+  The remaining 2,248 write-trace records have no matching `$23AD` memory-write
+  record in the captured window and remain unattributed. The existing
+  post-decode read verifier reproduced the authentic 5,064-byte output digest
+  and found 6,219 byte-equal read candidates across 3,182 addresses; that is
+  candidate evidence only, not proof of semantic or gameplay use.
+- The capture remained `BLOCKED`: the final scripted button event had no
+  controller-poll witness during its hold and the receipt says
+  `transition=missing`. No gameplay or render transition is claimed.
 - Next: repair the capture plan so every scripted event is followed by a
-  controller poll while its hold is active. Then trace the observed reader
-  routines and destination effects through a coherent gameplay/render
-  transition. Keep the adjacent `$F425` ADPCM-buffer copy separate unless its
-  own source and consumer are independently established.
+  controller poll while its hold is active. Then separate the unmatched
+  `$1F1Cxx` writes from the `$23AD` decoder output and trace the confirmed
+  destination through a coherent gameplay/render transition. Keep the
+  adjacent `$F425` ADPCM-buffer copy separate unless its own source and
+  consumer are independently established.
 
 - A follow-up cold US run on 2026-10-29 shortened the replay to ten events.
   It still returned `BLOCKED`: the final Button I event had no controller-port

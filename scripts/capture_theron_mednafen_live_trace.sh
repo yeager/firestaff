@@ -128,6 +128,17 @@ rng_consumer_sample_limit=${THERON_CAPTURE_RNG_CONSUMER_SAMPLE_LIMIT:-512}
 rng_consumer_window_limit=${THERON_CAPTURE_RNG_CONSUMER_WINDOW_LIMIT:-32}
 main_ram_consumer_sample_limit=${THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT:-65536}
 pce_fast_main_ram_consumer_range=${THERON_CAPTURE_PCE_FAST_MAIN_RAM_CONSUMER_RANGE:-}
+pce_fast_code_ram_write_trace_enabled=${THERON_CAPTURE_PCE_FAST_CODE_RAM_WRITE_TRACE:-0}
+if [[ "$pce_fast_code_ram_write_trace_enabled" != 0 &&
+      "$pce_fast_code_ram_write_trace_enabled" != 1 ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_CODE_RAM_WRITE_TRACE must be 0 or 1' >&2
+    exit 1
+fi
+if [[ "$pce_fast_code_ram_write_trace_enabled" == 1 &&
+      "$capture_mednafen_module" != pce_fast ]]; then
+    printf '%s\n' 'FAIL: code-bank RAM-write tracing requires the pce_fast module' >&2
+    exit 1
+fi
 movement_data_read_sample_limit=${THERON_CAPTURE_MOVEMENT_DATA_READ_SAMPLE_LIMIT:-128}
 vdc_io_trace_limit=${THERON_CAPTURE_VDC_IO_TRACE_LIMIT:-65536}
 capture_pce_fast_vram_commit_trace=${THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE:-0}
@@ -1190,6 +1201,11 @@ require_instrumented_mednafen_binary() {
         printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the HuC6280 $23AD hook; enable FIRESTAFF_THERON_HUC6280_23AD_TRACE_SUPPORT when building it' >&2
         return 1
     fi
+    if [[ "$pce_fast_code_ram_write_trace_enabled" == 1 ]] &&
+       ! grep -aFq 'FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE' "$binary" 2>/dev/null; then
+        printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the PCE Fast code-bank RAM-write hook; rebuild it with scripts/build_mednafen_theron_irq2_trace.sh' >&2
+        return 1
+    fi
     if [[ "$capture_pointer_c1df_trace" == 1 ]] &&
        ! grep -aFq 'pointer_c1df_begin' "$binary" 2>/dev/null; then
         printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the C1DF pointer hook; enable FIRESTAFF_THERON_PCE_FAST_POINTER_TRACE_SUPPORT when building it' >&2
@@ -1293,6 +1309,10 @@ cd_ram_target_write_trace="${trace}.cd-ram-target-write"
 cd_data_port_read_trace="${trace}.cd-data-port-read"
 profile_sram_manifest="${trace}.profile-sram"
 main_ram_consumer_trace="${trace}.main-ram-consumer"
+pce_fast_code_ram_write_trace=
+if [[ "$pce_fast_code_ram_write_trace_enabled" == 1 ]]; then
+    pce_fast_code_ram_write_trace="${trace}.pce-fast-code-ram-write"
+fi
 selected_record_trace="${trace}.selected-record"
 main_ram_target_trace="${trace}.main-ram-target"
 ram_provenance_trace="${trace}.ram-provenance"
@@ -1400,6 +1420,9 @@ rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_comman
     "$command_ram_trace" "$command_code_snapshot" "$command_ram_before_snapshot" \
     "$command_ram_after_snapshot" "$transition_receipt" \
     "$scripted_input_consumption_receipt" "$stage2_system_card_receipt"
+if [[ -n "$pce_fast_code_ram_write_trace" ]]; then
+    rm -f -- "$pce_fast_code_ram_write_trace"
+fi
 home_dir=$(mktemp -d "$capture_scratch_root/firestaff-theron-mednafen.XXXXXX")
 cleanup_home=1
 if [[ "$capture_clonecd_track02" == 1 ]]; then
@@ -1629,6 +1652,7 @@ launch=(
     FIRESTAFF_THERON_PCE_FAST_TRACK02_SECTOR_BYTES="$track02_sector_bytes" \
     FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE="$main_ram_consumer_trace" \
     FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE="$pce_fast_main_ram_consumer_range" \
+    FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE="$pce_fast_code_ram_write_trace" \
     FIRESTAFF_THERON_SELECTED_RECORD_TRACE="$selected_record_trace" \
     FIRESTAFF_THERON_MAIN_RAM_CONSUMER_SAMPLE_LIMIT="$main_ram_consumer_sample_limit" \
     FIRESTAFF_THERON_MAIN_RAM_TARGET_TRACE="$main_ram_target_trace" \
@@ -1968,11 +1992,24 @@ wait "$mednafen_pid"
 status=$?
 set -e
 
+if [[ "$pce_fast_code_ram_write_trace_enabled" == 1 ]]; then
+    if grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE_ERROR' "$stderr_file"; then
+        printf '%s\n' 'FAIL: Mednafen reported an error while writing the PCE Fast code-bank RAM trace' >&2
+        exit 1
+    fi
+    if [[ ! -s "$pce_fast_code_ram_write_trace" ]] ||
+       ! grep -Fqx 'source=mednafen-pce-fast-code-ram-write event_sequence_source=TheronTraceCDSharedEventSequence' \
+           "$pce_fast_code_ram_write_trace"; then
+        printf '%s\n' 'FAIL: Mednafen did not produce a valid PCE Fast code-bank RAM-write trace' >&2
+        exit 1
+    fi
+fi
+
 if [[ ! -s "$trace" ]] || ! grep -Fqx 'source=mednafen-pce-instrumented' "$trace"; then
     printf '%s\n' 'FAIL: Mednafen did not produce a provenance-marked live trace' >&2
     exit 1
 fi
-if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$cd_data_port_read_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" "$pce_fast_a1b7_bmt_write_trace" "$pce_fast_a1a9_init_trace" "$pce_fast_pointer_ram_write_trace" "$pce_fast_movement_context_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace" ${huc6280_23ad_trace:+"$huc6280_23ad_trace"}; then
+if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$cd_data_port_read_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" ${pce_fast_code_ram_write_trace:+"$pce_fast_code_ram_write_trace"} "$pce_fast_a1b7_bmt_write_trace" "$pce_fast_a1a9_init_trace" "$pce_fast_pointer_ram_write_trace" "$pce_fast_movement_context_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace" ${huc6280_23ad_trace:+"$huc6280_23ad_trace"}; then
     printf '%s\n' 'FAIL: Mednafen emitted a literal backslash-n in a trace record' >&2
     exit 1
 fi
@@ -2425,6 +2462,7 @@ transition_main_ram_e009_data_read_count=$(trace_count '^main_ram_e009_data_read
 transition_main_ram_e009_return_count=$(trace_count '^main_ram_e009_return ' "$cd_trace")
 transition_main_ram_e009_register_write_count=$(trace_count '^main_ram_e009_register_write ' "$cd_trace")
 transition_main_ram_consumer_read_count=$(trace_count '^main_ram_consumer_read ' "$main_ram_consumer_trace")
+transition_pce_fast_code_ram_write_count=$(trace_count '^pce_fast_code_ram_write ' "$pce_fast_code_ram_write_trace")
 transition_main_ram_target_read_count=$(trace_count '^main_ram_target_read ' "$main_ram_target_trace")
 transition_main_ram_target_write_count=$(trace_count '^main_ram_target_write ' "$main_ram_target_trace")
 transition_ram_provenance_seed_count=$(trace_count '^theron_ram_provenance_seed ' "$ram_provenance_trace")
@@ -2570,6 +2608,8 @@ fi
     printf 'main_ram_e009_returns=%s\n' "$transition_main_ram_e009_return_count"
     printf 'main_ram_e009_register_writes=%s\n' "$transition_main_ram_e009_register_write_count"
     printf 'main_ram_consumer_reads=%s\n' "$transition_main_ram_consumer_read_count"
+    printf 'pce_fast_code_ram_writes=%s\n' "$transition_pce_fast_code_ram_write_count"
+    printf 'pce_fast_code_ram_write_trace_enabled=%s\n' "$pce_fast_code_ram_write_trace_enabled"
     printf 'main_ram_target_reads=%s\n' "$transition_main_ram_target_read_count"
     printf 'ram_provenance_seeds=%s\n' "$transition_ram_provenance_seed_count"
     printf 'ram_provenance_copies=%s\n' "$transition_ram_provenance_copy_count"

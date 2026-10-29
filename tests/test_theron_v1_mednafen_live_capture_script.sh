@@ -152,6 +152,37 @@ if [[ "$vram_commit_max_output" != *'SKIP: MEDNAFEN_BIN'* ]]; then
     printf '%s\n' 'FAIL: maximum PCE Fast VRAM commit limit did not reach the missing-media gate' >&2
     exit 1
 fi
+code_ram_write_invalid_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_PCE_FAST_CODE_RAM_WRITE_TRACE=2 \
+    "$script" 2>&1) && {
+    printf '%s\n' 'FAIL: PCE Fast code-bank RAM-write trace accepted a value other than 0 or 1' >&2
+    exit 1
+}
+if [[ "$code_ram_write_invalid_output" != *'THERON_CAPTURE_PCE_FAST_CODE_RAM_WRITE_TRACE must be 0 or 1'* ]]; then
+    printf '%s\n' 'FAIL: invalid code-bank RAM-write option lacked a precise diagnostic' >&2
+    exit 1
+fi
+code_ram_write_wrong_core_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_PCE_FAST_CODE_RAM_WRITE_TRACE=1 \
+    "$script" 2>&1) && {
+    printf '%s\n' 'FAIL: PCE Fast code-bank RAM-write trace accepted the standard PCE module' >&2
+    exit 1
+}
+if [[ "$code_ram_write_wrong_core_output" != *'code-bank RAM-write tracing requires the pce_fast module'* ]]; then
+    printf '%s\n' 'FAIL: wrong core for code-bank RAM-write trace lacked a precise diagnostic' >&2
+    exit 1
+fi
+code_ram_write_enabled_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast \
+    THERON_CAPTURE_PCE_FAST_CODE_RAM_WRITE_TRACE=1 \
+    "$script" 2>&1) || {
+    printf '%s\n' 'FAIL: enabled code-bank RAM-write option was rejected' >&2
+    exit 1
+}
+if [[ "$code_ram_write_enabled_output" != *'SKIP: MEDNAFEN_BIN'* ]]; then
+    printf '%s\n' 'FAIL: enabled code-bank RAM-write option did not reach the missing-media gate' >&2
+    exit 1
+fi
 python3 "$repo/tests/test_theron_scripted_input_patch_parser.py"
 python3 "$repo/tests/test_theron_mouse_input_parser.py"
 bash "$repo/tests/test_theron_authentic_bram.sh"
@@ -1523,9 +1554,46 @@ if ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace"' 
    ! grep -Fq 'main_ram_loader_bra_target_jsrs=%s' "$script" ||
    ! grep -Fq 'main_ram_loader_e009_dispatches=%s' "$script" ||
    ! grep -Fq 'main_ram_consumer_reads=%s' "$script" ||
+   ! grep -Fq 'pce_fast_code_ram_writes=%s' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE="$pce_fast_code_ram_write_trace"' "$script" ||
+   ! grep -Fq 'pce_fast_code_ram_write_trace_enabled=${THERON_CAPTURE_PCE_FAST_CODE_RAM_WRITE_TRACE:-0}' "$script" ||
    ! grep -Fq 'main_ram_target_reads=%s' "$script" ||
    ! grep -Fq 'main_ram_target_writes=%s' "$script"; then
     printf 'FAIL: capture script must retain the post-$3800 TII producer receipt\n' >&2
+    exit 1
+fi
+code_ram_write_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_code_ram_write_trace.patch"
+if [[ ! -f "$code_ram_write_patch" ]] ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE' "$code_ram_write_patch" ||
+   ! grep -Fq 'TheronTraceInstructionPhysicalPC < 0x1F1C00' "$code_ram_write_patch" ||
+   ! grep -Fq 'physical_address < 0x0D0000 || physical_address >= 0x0D2000' "$code_ram_write_patch" ||
+   ! grep -Fq 'mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x' "$code_ram_write_patch" ||
+   ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_code_ram_write_trace.patch' "$build_script"; then
+    printf '%s\n' 'FAIL: PCE Fast code-window RAM-write trace must retain source PC, mapping and bounded destination writes' >&2
+    exit 1
+fi
+if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE_SUPPORT' "$build_script" ||
+   ! grep -Fq 'if [[ "$pce_fast_code_ram_write_trace" == 1 ]]' "$build_script" ||
+   ! grep -Fq 'configure_pce_fast=(--enable-pce-fast)' "$build_script"; then
+    printf '%s\n' 'FAIL: the code-bank RAM-write build option must enable PCE Fast' >&2
+    exit 1
+fi
+if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE_ERROR' "$code_ram_write_patch" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE_ERROR' "$script" ||
+   ! grep -Fq '[[ ! -s "$pce_fast_code_ram_write_trace" ]]' "$script" ||
+   ! grep -Fq 'source=mednafen-pce-fast-code-ram-write event_sequence_source=TheronTraceCDSharedEventSequence' "$script"; then
+    printf '%s\n' 'FAIL: PCE Fast code-bank RAM-write trace failures and missing receipts must be rejected' >&2
+    exit 1
+fi
+code_ram_write_build_invalid_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    FIRESTAFF_MEDNAFEN_SOURCE_ROOT="$repo" \
+    FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE_SUPPORT=2 \
+    "$build_script" 2>&1) && {
+    printf '%s\n' 'FAIL: PCE Fast code-bank RAM-write build support accepted a value other than 0 or 1' >&2
+    exit 1
+}
+if [[ "$code_ram_write_build_invalid_output" != *'FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE_SUPPORT must be 0 or 1'* ]]; then
+    printf '%s\n' 'FAIL: invalid code-bank RAM-write build support lacked a precise diagnostic' >&2
     exit 1
 fi
 if [[ ! -f "$consumer_read_patch" ]] ||
