@@ -79,8 +79,10 @@ FM Towns Japanese; all three logged a direct game handoff. This verifies the
 default data-root and platform-auto routes on this host only. It does not
 replace per-platform testing or establish that a game is playable.
 
-The three isolated no-game M12 checks also passed for DM1, CSB and DM2. Five
-additional authentic-media M12 routes passed: DM1 PC34 and Atari ST, CSB Atari
+The three isolated no-game M12 checks also passed for DM1, CSB and DM2. The
+CSB Amiga no-game M12 test passed separately. The DM1 Amiga 2.0 archive M12/CLI
+test and the DM2 Macintosh extracted-file M12/direct-runtime test also passed.
+Five additional authentic-media M12 routes passed: DM1 PC34 and Atari ST, CSB Atari
 ST, and DM2 PC and Amiga. These verify game-card/platform selection and the
 reported runtime handoff for those routes under SDL's dummy video driver; they
 do not prove native presentation or full gameplay. The broader
