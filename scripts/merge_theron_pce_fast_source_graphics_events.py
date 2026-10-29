@@ -69,7 +69,7 @@ def records(path: Path, event_type: str) -> Iterator[tuple[int, str, str]]:
                 previous = sequence
                 count += 1
                 if line.startswith("seq="):
-                    kinds = re.findall(r"(?:^| )kind=([a-z_]+)(?: |$)", line)
+                    kinds = re.findall(r"(?:^| )kind=([a-z0-9_]+)(?: |$)", line)
                     if len(kinds) != 1:
                         raise TraceError(f"{path}:{line_number}: expected one event kind")
                     event_name = kinds[0]

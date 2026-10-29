@@ -120,6 +120,48 @@ reported as possible truncation in the merged metadata.
 
 The merger test passed three loops on TRV2. The complete instrumented Mednafen
 1.32.1 PCE Fast build, with both the VWR and `$23AD` hooks enabled, completed
-there with `-j1`. This verifies patch application and compilation only. No new
-authentic capture using the post-return window has been made, and the evidence
-above still records the gameplay handoff and loader provenance gaps.
+there with `-j1`. At that point this verified patch application and
+compilation only; a later authentic capture is recorded below. The earlier
+evidence still records the gameplay handoff and loader provenance gaps.
+
+## Authentic post-return capture
+
+A subsequent cold US run used the original USA CUE, System Card 3.0, and
+authentic Ak-Tu-Ba Backup RAM. The scripted Drator research route reached its
+generator start on level `$02`, logged a left event, and logged re-entry at
+level `$03`. On that same run, the signature-gated `$23AD` probe recorded the
+matched BSR and return and continued into its bounded post-return window. The
+capture trace remains on TRV2 at
+`/home/trv2/firestaff-theron-evidence/capture/theron-23ad-post-return-20261029-r1/live.trace.23ad`;
+its SHA-256 is
+`a4bdc26eb82d6982490a717f873ee92fa3510818df941c67313c39592087e08d`. It
+contains 1,121,429 sequenced events, one terminal decoder `RTS`, and one
+post-return-window start. The window reached its 200,000-event cap. The
+observed post-return PCs include `$F406`, `$F423`, and `$F425`; these are
+execution observations only and do not identify their data as decoder output
+or prove a gameplay consumer.
+
+In this capture, the decoder wrote each physical address from `$0D0000`
+through `$0D13C7` exactly once. The 5,064 ordered bytes hash to
+`9adf13522e818ee49de16ac1020a7697c3416877e6bc6baa918840d7e963f8ee`, matching
+the output hash from the earlier source/output differential. After the matched
+return, the first observed write to the immediately following physical address
+`$0D13C8` came from PC `$F425`. This adjacency is a useful candidate for the
+next runtime handoff to investigate, but does not prove the write continues
+the decoded stream or that the destination is consumed as a level asset.
+
+The joined source-graphics chronology was generated on TRV2 and validated by
+the merger. It contains 1,738,051 events from CD data reads, CD RAM-target
+writes, VWR commits, VCE writes, and `$23AD`. Its metadata reports
+`possible_truncation_at_event_limit` because VWR, VCE, and `$23AD` streams
+reached their configured bounds. Its SHA-256 is
+`ef8545f27b76c23936e19391eb1ec0c12b9cfbda0ae86708a760354a2c7264a4`.
+The ordering is temporal, not causal. Raw traces and the joined timeline remain
+on TRV2; no game media or BIOS was added to the repository.
+
+This capture exposed a merger parser defect: valid event kinds such as
+`page1_read` contain digits and were rejected by the previous name pattern.
+The parser now accepts digits in event kinds, and the regression fixture covers
+`page1_read`. The fixture passes locally, and the corrected merger processed
+the full authentic chronology on TRV2. This verifies capture and join tooling,
+not CD-to-RAM causal provenance, gameplay handoff, or full Theron parity.

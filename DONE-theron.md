@@ -9255,6 +9255,23 @@ native rendering, or Theron parity. The private evidence bundle is at
 - The focused merger regression passed three loops on TRV2. The complete
   instrumented Mednafen 1.32.1 PCE Fast build passed there with the VWR and
   `$23AD` trace options enabled and `-j1`.
-- No new authentic post-return capture was made. This completes trace-tool
-  support only; causal CD-to-RAM provenance, gameplay handoff, and full
+- At the time this trace-tool implementation was completed, only build and
+  merger-fixture verification had been performed. The subsequent authentic
+  capture and chronology validation are recorded below; causal CD-to-RAM
+  provenance, gameplay handoff, and full Theron parity remain open.
+
+## 2026-10-29 — validate the authentic `$23AD` post-return join
+
+- A cold US capture with original media, System Card 3.0, and authentic
+  Ak-Tu-Ba Backup RAM recorded the signature-matched `$23AD` call, its return,
+  and the bounded post-return window while the Drator research route reached
+  its level-03 re-entry event. Capture evidence remains on TRV2.
+- The joined chronology passed the merger after correcting a parser pattern
+  that rejected valid event kinds containing digits, including `page1_read`.
+  The regression fixture now covers that event kind and passes locally.
+- The joined file contains 1,738,051 events and reports possible truncation
+  because bounded VWR, VCE, and `$23AD` streams reached their limits. Shared
+  sequence establishes temporal ordering only.
+- This completes one authentic capture and chronology validation. Causal
+  loader provenance, gameplay handoff, other editions, and complete native
   Theron parity remain open.

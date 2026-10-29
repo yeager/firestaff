@@ -8747,7 +8747,7 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   the game-owned handoff, and decoder semantics open; do not use this BIOS
   polling trace as `$23AD` or gameplay evidence.
 
-## 2026-10-29 — source-to-VRAM event join: gameplay capture pending
+## 2026-10-29 — source-to-VRAM event join: world mapping pending
 
 - The opt-in PCE Fast VWR commit trace now consumes the shared event sequence
   also used by the CD data-port read and CD RAM target-write traces. The live
@@ -8759,9 +8759,22 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   complete Mednafen patch set applied to an isolated copy of pristine 1.32.1
   on TRV2 and built with `-j1`; `pce_fast/vdc.o` compiled and the binary
   contains the V3 schema and `event_sequence` format marker.
-- Next: capture authentic Theron gameplay with CD, RAM-target and VWR traces
-  in one session. Bind any candidate bytes to a source LBA before pursuing the
-  world-square, BAT, tile-index and palette joins.
+- A later authentic US Drator route capture now joins CD data reads, CD
+  RAM-target writes, VWR commits, VCE writes, and the `$23AD` decoder/post-return
+  trace in one chronology. The decoder returned and the bounded post-return
+  window was captured; the route reached its level-03 re-entry event. The
+  merged chronology validated on TRV2, with truncation explicitly reported
+  because the VWR, VCE, and `$23AD` streams reached their limits. See
+  `docs/source-lock/theron-disassembly/theron-23ad-trace-boundary-20261029.md`
+  for hashes and evidence limits.
+- The decoder reproduced the same 5,064-byte output hash as the earlier
+  authentic source/output differential and wrote `$0D0000–$0D13C7` exactly
+  once. After return, PC `$F425` first wrote `$0D13C8`, the immediately
+  following physical address. This is a candidate handoff boundary to trace;
+  address adjacency alone does not prove stream continuation or asset use.
+- Next: bind candidate writes to source LBAs, establish CD-to-RAM causality,
+  and trace a proven consumer before pursuing world-square, BAT, tile-index,
+  and palette mappings.
 - A separate cold Japanese Rev. 1 boot/title-menu capture produced an
   authentic 11,592-row VCE write stream and 1,024-byte endpoint snapshot. It
   used the canonical headerless System Card 3.0 ROM body (MD5
@@ -8955,7 +8968,15 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   recording the effective source and destination windows, pointer-table bytes
   before and during `$23AD`, and the downstream consumer. Then compare that
   invocation byte for byte before extending native support to more spans.
-- The trace tooling now provides a bounded 200,000-event post-return window
-  and merges `$23AD` events into the existing CD/VWR/VCE chronology by shared
-  sequence. The instrumentation builds, but has not yet been used for a new
-  authentic capture; the next capture must record and verify this full join.
+- A cold authentic US capture now records a complete `$23AD` invocation and
+  the bounded post-return window while reaching the Drator generator route and
+  its level-03 re-entry event. The joined chronology was generated and
+  validated on TRV2. It contains 1,121,429 `$23AD` events, including one
+  matched return and one post-return-window start; the post-return window
+  reached its 200,000-event cap. The merged file correctly reports possible
+  truncation because the VWR, VCE, and `$23AD` streams reached their bounds.
+  Ordering is temporal evidence only and does not establish CD-to-RAM causality
+  or gameplay parity. The merger initially rejected valid event names such as
+  `page1_read`; the parser and regression fixture now accept digits in event
+  kinds. Continue by tracing the relevant post-return RAM effects to a proven
+  loader/gameplay consumer, then cover other authentic editions.

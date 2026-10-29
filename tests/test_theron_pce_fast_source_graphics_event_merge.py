@@ -247,16 +247,18 @@ run_case(
         "format=firestaff-huc6280-23ad-raw-trace-v2 shared_event_sequence=TheronTraceCDSharedEventSequence\n"
         "caller_signature fnv1a=699e8da1 event_sequence=3\n"
         "call=BSR caller=1234 event_sequence=4\n"
-        "seq=1 event_sequence=6 phase=decoder kind=mem_read pc=2345\n"
-        "seq=2 event_sequence=7 phase=post_return kind=post_return_window_begin pc=3456\n"
+        "seq=1 event_sequence=6 phase=decoder kind=page1_read pc=2345\n"
+        "seq=2 event_sequence=7 phase=decoder kind=mem_read pc=2345\n"
+        "seq=3 event_sequence=8 phase=post_return kind=post_return_window_begin pc=3456\n"
         "post_return_truncated=event_limit\n"
     ),
-    expected_sequences=[2, 3, 4, 5, 6, 7, 9],
+    expected_sequences=[2, 3, 4, 5, 6, 7, 8, 9],
     expected_events=[
         "cd_data_port_read",
         "caller_signature",
         "call_BSR",
         "cd_ram_target_write",
+        "page1_read",
         "mem_read",
         "post_return_window_begin",
         "vram_commit",
