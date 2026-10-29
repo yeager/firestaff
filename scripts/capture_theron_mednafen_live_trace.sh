@@ -283,8 +283,8 @@ if [[ ! "$pce_fast_44d2_follow_limit" =~ ^[0-9]+$ ]] ||
     exit 1
 fi
 if [[ ! "$input_trace_limit" =~ ^[0-9]+$ ]] ||
-   (( input_trace_limit < 65536 || input_trace_limit > 1048576 )); then
-    printf '%s\n' 'FAIL: THERON_CAPTURE_INPUT_TRACE_LIMIT must be an integer from 65536 through 1048576' >&2
+   (( input_trace_limit < 65536 || input_trace_limit > 2097152 )); then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_INPUT_TRACE_LIMIT must be an integer from 65536 through 2097152' >&2
     exit 1
 fi
 if [[ ! "$input_trace_start_frame" =~ ^[0-9]+$ ]] ||

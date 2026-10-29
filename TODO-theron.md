@@ -152,6 +152,28 @@
   dungeon gameplay was confirmed. Continue with bounded input/capture work;
   do not treat this as native Theron parity.
 
+## 2026-10-29 — cold replay confirms controller reads; BIOS handoff remains open
+
+- The bounded input trace and its verifier now allow up to 2,097,152 records.
+  Three focused capture-script regression loops passed. The previous one
+  million-record ceiling truncated before the last scheduled cold-route input.
+- A new no-save-state PCE Fast capture used authentic Japanese Rev. 1 Track 02
+  and the headerless System Card 3.0 body. It followed the visually recorded
+  route: a four-second Run hold, four four-second Button I holds, then six
+  longer Button I presses to tolerate the BIOS poll gaps. All eleven scripted
+  masks have apply and controller-read witnesses; the last witness is at
+  System Card PC `$E4C5`, sequence 1,737,370. This verifies delivery to the
+  BIOS poll only.
+- The first source-valid Track 02 read is LBA 3590 at shared event 24,768,120;
+  the first VWR commit is sequence 0 at event 24,779,401. The merged stream
+  marks the VWR prefix as filtered and reports the 1,048,576-record VWR cap.
+  Event order is temporal evidence only, not graphics causality.
+- The run still reports zero CD IRQ callbacks, zero authenticated CD-to-RAM
+  receipts, no non-System-Card controller poll, and `transition=missing`.
+  It did not confirm dungeon gameplay. Next reproduce the visual route through
+  the same host-key path while tracing controller reads and BIOS handoff; do
+  not infer gameplay from button delivery or claim native Theron parity.
+
 ## 2026-10-29 — authenticate stage-message advancement; gameplay still not reached
 
 - A cold Mednafen reference run used authentic Japanese Rev. 1 Track 02 and

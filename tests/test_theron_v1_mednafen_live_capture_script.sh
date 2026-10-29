@@ -861,7 +861,8 @@ if ! grep -Fq 'THERON_CAPTURE_INPUT_TRACE_LIMIT' "$script" ||
    ! grep -Fq 'input_trace_limit_default=65536' "$script" ||
    ! grep -Fq 'input_trace_limit_default=1048576' "$script" ||
    ! grep -Fq '|| -n "$host_key" || -n "$host_key_sequence"' "$script" ||
-   ! grep -Fq 'input_trace_limit < 65536 || input_trace_limit > 1048576' "$script" ||
+   ! grep -Fq 'input_trace_limit < 65536 || input_trace_limit > 2097152' "$script" ||
+   ! grep -Fq 'read_limit > 2097152' "$scripted_input_consumption_verifier" ||
    ! grep -Fq 'verify_theron_scripted_input_consumption.sh' "$script" ||
    ! grep -Fq 'event_frames_followed_by_controller_read' "$scripted_input_consumption_verifier" ||
    ! grep -Fq 'event_frames_with_scripted_mask_read' "$scripted_input_consumption_verifier" ||
