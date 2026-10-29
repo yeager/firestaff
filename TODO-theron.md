@@ -8790,3 +8790,25 @@ this is distinct from the authenticated combined-RAR title-audio path above.
 - Next: reduce pre-game trace volume or add a bounded start condition so VWR
   coverage continues through source-bound reads, then repeat a cold capture
   with all scheduled inputs and a real screenshot verified.
+
+## 2026-10-29 — raise the cold input trace bound and retry JP startup
+
+- Raised the bounded live/scripted input-read ceiling from 2,097,152 to
+  8,388,608 so long cold-start routes can retain later input evidence. The
+  verifier now has direct boundary coverage for accepting the maximum and
+  rejecting maximum plus one. Three test loops passed; the staged Gitleaks
+  scan found no leaks. The change is on PR #185 at `0684b1030`, whose GitHub
+  Actions runs completed successfully.
+- A fresh TRV2 Mednafen 1.32.1 build with the current VRAM, VCE, C1DF and
+  HuC6280 `$23AD` instrumentation accepted 12 scripted Run/Button I events
+  from the authentic JP Rev. 1 CUE and System Card. The verifier confirmed
+  all 12 masks were applied and read, but every scheduled poll was classified
+  as System Card code; it observed no non-System-Card controller poll. The
+  wrapper rejected the run because it lacked one complete `$23AD` invocation.
+  The 65,536-row CD data-port and 1,048,576-row VWR streams also reached their
+  configured caps. See
+  `docs/source-lock/theron-disassembly/theron-jp-cold-input-trace-20261029.md`.
+- Next: establish the actual cold menu-to-game handoff before scheduling
+  gameplay input, then capture the required longer CD/RAM/VWR join without
+  exhausting pre-game trace budgets. Do not infer a menu action, dungeon
+  scene, or rendering mapping from this failed capture.
