@@ -1,6 +1,6 @@
 # Nexus V1 Save File Format
 
-## Status: Firestaff-native FNXS implemented; Saturn format unresolved
+## Status: Firestaff-native FNXS implemented; Saturn payload transfer verified, schema unresolved
 
 Firestaff has a portable, little-endian native save container named `FNXS`.
 It is used for Firestaff resume, save browsing, and save export/import. It is
@@ -36,6 +36,18 @@ previews for two images. Its self-test admits only the four captured files by
 exact filename and SHA-256; other or incomplete corpora cannot be reported as
 authentic-corpus passes. Neither the view nor the test assigns meaning to
 changed bytes, and neither can write or convert a Saturn image.
+
+A separate 2026-10-29 cold-boot Ymir trace now joins the complete authentic
+20,480-byte `DMNEXUS__01` payload address sequence to SH-2 PC `0x06003680`.
+Ghidra caller analysis binds the read to the named-entry lookup, destination
+WRAM-L address `0x00204000`, and a retail checksum check. The captured final
+buffer matches all but four payload bytes (`0x58..0x5b`); the write timing and
+cause are unknown. This identifies the retail container-to-buffer transfer,
+not the payload's game-state schema or its post-load consumer. Firestaff does
+not yet import this format or apply its data to the game engine. Details and
+hashes are recorded in
+[`nexus_sh2_startup_decompilation.md`](nexus_sh2_startup_decompilation.md#continue-payload-transfer-2026-10-29)
+and the operator-managed external evidence bundle.
 
 The authentic `DM.BIN` does contain save-related diagnostic strings in the
 retail data image: `EV_SAVE`, `EV_SAVELOAD`, `Slot Operation Error`, and the

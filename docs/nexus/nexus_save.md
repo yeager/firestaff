@@ -30,5 +30,14 @@ memory-card storage. Four authentic Mednafen BKR images with the
 savegame editor reads their block chains and displays the exact 20,480-byte
 payload as read-only hex. Read-only container inspection also shows the raw
 language and timestamp fields and exact allocated block IDs; it assigns no
-meaning to those fields. The game-state schema and source-owned load consumer
-remain unverified, so original Saturn save import remains capture-gated.
+meaning to those fields.
+
+A 2026-10-29 Ymir cold-boot trace with an authentic two-champion BKR now
+source-binds the retail Continue payload transfer: the retail game reads the
+complete `DMNEXUS__01` entry and copies it to WRAM-L at `0x00204000`, then
+checks its checksum. The final memory snapshot differs from the BKR at four
+payload bytes; the cause is unknown. This establishes container-to-runtime
+transfer, but not payload fields, the later consumer that applies the loaded
+state, or a Firestaff engine-state mapping. Firestaff's Saturn import and
+Continue handoff therefore remain unimplemented. See
+[`nexus_sh2_startup_decompilation.md`](nexus_sh2_startup_decompilation.md#continue-payload-transfer-2026-10-29).
