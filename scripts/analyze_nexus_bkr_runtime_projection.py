@@ -100,9 +100,8 @@ def verify_leader3_update_trace(
         if any("0x60360fc" not in row["caller_stack_targets"] for row in target[2:]):
             raise ValueError(f"leader-3 record {index} post-load writes do not join to FUN_060360fc")
 
-    # A separate loaded field at source +0x40 ends at runtime +0x10. The
-    # retained address window reaches only the first three of those four
-    # fields; do not claim the fourth record was traced.
+    # Source +0x40 ends at runtime +0x10. The retained window reaches only
+    # the first three of those four fields; do not claim the fourth was traced.
     plus10_targets = (0x0607FBB0, 0x0607FCEC, 0x0607FE28)
     plus10_expected = [
         (12931, 0x00, 0x06041FBC),
@@ -125,8 +124,45 @@ def verify_leader3_update_trace(
         if "0x60361a8" not in target[2]["caller_stack_targets"]:
             raise ValueError(f"leader-3 record {index} +0x10 update does not join to FUN_060361a8")
         traced_fields.add((index, 0x40))
+
+    # FUN_060361a8 also updates the unsigned source halfwords +0x44/+0x46 at
+    # runtime +0x18/+0x1a. These addresses are in range for records 0-2 only.
+    for source_field, target_field, load_value, update_values, update_pc in (
+        (0x44, 0x18, 0x674, (0x672, 0x670, 0x66E), 0x060363EC),
+        (0x46, 0x1A, 0x6CF, (0x6CE, 0x6CD, 0x6CC), 0x06036462),
+    ):
+        load_pc = 0x0602EE9E if source_field == 0x44 else 0x0602EEA4
+        expected_sequence = [
+            (12931, 0x00, 0x06041FBC),
+            (12931, load_value, load_pc),
+            (13055, update_values[0], update_pc),
+            (13951, update_values[1], update_pc),
+            (13951, update_values[2], update_pc),
+        ]
+        for index in range(3):
+            address = 0x0607FBA0 + index * 0x13C + target_field
+            target = [row for row in rows if int(row["address"], 16) == address]
+            observed = [
+                (int(row["vdp1_frame"]), int(row["value"], 16), int(row["pc"], 16))
+                for row in target
+            ]
+            if observed != expected_sequence:
+                raise ValueError(
+                    f"leader-3 record {index} +0x{source_field:x} write sequence "
+                    "differs from the retained retail trace"
+                )
+            if target[0]["width"] != "1" or any(row["width"] != "2" for row in target[1:]):
+                raise ValueError(
+                    f"leader-3 record {index} +0x{source_field:x} trace has an unexpected write width"
+                )
+            if any("0x60361a8" not in row["caller_stack_targets"] for row in target[2:]):
+                raise ValueError(
+                    f"leader-3 record {index} +0x{source_field:x} update "
+                    "does not join to FUN_060361a8"
+                )
+            traced_fields.add((index, source_field))
     return [
-        f"leader3_target_trace_rows={sum(map(len, target_rows.values())) + 9}",
+        f"leader3_target_trace_rows={sum(map(len, target_rows.values())) + 39}",
         "leader3_records_traced=4",
         "leader3_source40_runtime10_records_traced=3",
         "leader3_source40_runtime10_record3_in_trace=0",
@@ -135,6 +171,10 @@ def verify_leader3_update_trace(
         "leader3_postload_writes=frame13055:68,67;frame13951:64,66",
         "leader3_postload_writer=FUN_060360fc",
         "leader3_source40_runtime10_postload=frame13951:value19:pc0x06036272:caller_FUN_060361a8",
+        "leader3_source44_runtime18_postload=frame13055:0x672;frame13951:0x670,0x66e:caller_FUN_060361a8",
+        "leader3_source46_runtime1a_postload=frame13055:0x6ce;frame13951:0x6cd,0x6cc:caller_FUN_060361a8",
+        "leader3_source44_runtime18_record3_in_trace=0",
+        "leader3_source46_runtime1a_record3_in_trace=0",
     ], traced_fields
 
 
@@ -182,9 +222,9 @@ def verify(
     differences: list[str] = []
     traced_differences: list[str] = []
     unresolved_differences: list[str] = []
-    # FUN_0602eb4c copies these byte spans and sign-extends the listed source
-    # halfwords into destination longwords. Keep the checked offsets explicit
-    # so the receipt remains reviewable against the decompilation.
+    # Keep each operation explicit against FUN_0602eb4c's decompilation. The
+    # offsets prove mechanical projection only; they do not assign meanings
+    # to the source or runtime fields.
     byte_copies = (
         (0x00, 0x2C, 6),
         (0x06, 0x32, 1),
@@ -192,6 +232,14 @@ def verify(
         (0x08, 0x1D, 1),
         (0x09, 0x35, 1),
         (0x32, 0x3E, 6),
+        (0x2F, 0x4C, 1),
+        (0x30, 0x3C, 2),
+        (0xD0, 0x34, 1),
+        (0xD1, 0x12C, 6),
+    )
+    byte_to_halfword_copies = (
+        (0x0A, 0x36),
+        (0x0B, 0x38),
     )
     signed_halfword_copies = (
         (0x38, 0x00),
@@ -200,6 +248,19 @@ def verify(
         (0x3E, 0x0C),
         (0x40, 0x10),
         (0x42, 0x14),
+        (0x48, 0x20),
+        (0x4A, 0x24),
+    )
+    unsigned_halfword_copies = (
+        (0x44, 0x18),
+        (0x46, 0x1A),
+        (0x4C, 0x28),
+        (0x4E, 0x2A),
+        (0x50, 0x44),
+        (0x52, 0x48),
+        (0x54, 0x4A),
+        (0x56, 0x58),
+        (0xD8, 0x46),
     )
     for index in range(champion_count):
         source = SOURCE_RECORD_OFFSET + index * source_stride
@@ -213,6 +274,51 @@ def verify(
                     f" -> +0x{target_field:x} does not match"
                 )
             matches.append(f"record{index}:bytes+0x{source_field:x}->+0x{target_field:x}")
+        for source_field, target_field in byte_to_halfword_copies:
+            expected = payload[source + source_field]
+            actual = struct.unpack_from(">H", hi, target + target_field)[0]
+            if actual != expected:
+                raise ValueError(
+                    f"champion record {index}, byte-to-halfword +0x{source_field:x}"
+                    f" -> +0x{target_field:x} does not match"
+                )
+            matches.append(
+                f"record{index}:u8+0x{source_field:x}->u16+0x{target_field:x}"
+            )
+        for item_index in range(14):
+            source_field = 0x21 + item_index
+            target_field = 0x110 + item_index * 2
+            source_value = payload[source + source_field]
+            expected = (
+                0xFFFF if item_index % 2 == 0 and source_value == 0xFF
+                else source_value
+            )
+            actual = struct.unpack_from(">H", hi, target + target_field)[0]
+            if actual != expected:
+                raise ValueError(
+                    f"champion record {index}, byte table +0x{source_field:x}"
+                    f" -> halfword table +0x{target_field:x} does not match"
+                )
+            matches.append(
+                f"record{index}:table_u8+0x{source_field:x}->u16+0x{target_field:x}"
+            )
+        for item_index in range(10):
+            for source_field, target_field, width in (
+                (0x58 + item_index * 4, 0x70 + item_index * 0x10, 2),
+                (0x5A + item_index * 4, 0x78 + item_index * 0x10, 2),
+                (0x80 + item_index * 8, 0x74 + item_index * 0x10, 4),
+                (0x84 + item_index * 8, 0x7C + item_index * 0x10, 4),
+            ):
+                expected = payload[source + source_field:source + source_field + width]
+                actual = hi[target + target_field:target + target_field + width]
+                if actual != expected:
+                    raise ValueError(
+                        f"champion record {index}, table projection +0x{source_field:x}"
+                        f" -> +0x{target_field:x} does not match"
+                    )
+                matches.append(
+                    f"record{index}:table+0x{source_field:x}->+0x{target_field:x}"
+                )
         for source_field, target_field in signed_halfword_copies:
             expected = struct.unpack_from(">h", payload, source + source_field)[0]
             actual = struct.unpack_from(">i", hi, target + target_field)[0]
@@ -243,6 +349,34 @@ def verify(
             else:
                 matches.append(
                     f"record{index}:s16+0x{source_field:x}->s32+0x{target_field:x}"
+                )
+        for source_field, target_field in unsigned_halfword_copies:
+            expected = struct.unpack_from(">H", payload, source + source_field)[0]
+            actual = struct.unpack_from(">H", hi, target + target_field)[0]
+            if actual != expected:
+                known_runtime_decrement = (
+                    (source_field == 0x44 and target_field == 0x18 and
+                     expected >= 6 and actual == expected - 6) or
+                    (source_field == 0x46 and target_field == 0x1A and
+                     expected >= 3 and actual == expected - 3)
+                )
+                if not known_runtime_decrement:
+                    raise ValueError(
+                        f"champion record {index}, unsigned halfword +0x{source_field:x}"
+                        f" -> +0x{target_field:x} does not match"
+                    )
+                difference = (
+                    f"record{index}:source_u16+0x{source_field:x}={expected}:"
+                    f"final_runtime_u16+0x{target_field:02x}={actual}"
+                )
+                differences.append(difference)
+                if traced_fields and (index, source_field) in traced_fields:
+                    traced_differences.append(difference)
+                else:
+                    unresolved_differences.append(difference)
+            else:
+                matches.append(
+                    f"record{index}:u16+0x{source_field:x}->+0x{target_field:x}"
                 )
 
     return [

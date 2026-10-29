@@ -1,6 +1,6 @@
 # Firestaff TODO — Nexus
 
-Reviewed 2026-10-28. The items below track open work and include completed
+Reviewed 2026-10-29. The items below track open work and include completed
 diagnostics as context. Verified evidence is also recorded in the Nexus capture
 and reverse-engineering records and in [DONE-nexus.md](DONE-nexus.md).
 
@@ -49,14 +49,16 @@ See
 
 The source-record stride (`0xe0`) and runtime-record stride (`0x13c`) are now
 verified from the retail code constants. A reproducible analyzer restores the
-traced four-byte fixup for payload hash verification and compares the
-decompilation-specified projections across authentic two-, three-, and
-four-champion captures (24, 36, and 48 projection checks). The leader-3 Ymir
-trace follows the `+0x08` field in all four records from load 67 to retail
-updates ending at 66. It also captures the `+0x10` field for three records,
-from load 18 to a later write of 19; the fourth address was outside the trace
-window. Field semantics, the rest of the record, and Firestaff's runtime
-integration remain open.
+traced four-byte fixup for payload hash verification and checks 83
+decompilation-specified operations per record across authentic two-, three-,
+and four-champion captures (166, 249, and 332 checks). The leader-3 Ymir
+trace explains 13 of 16 final-value differences across four tracked fields:
+source `+0x3c` / runtime `+0x08`, source `+0x40` / runtime `+0x10`, source
+`+0x44` / runtime `+0x18`, and source `+0x46` / runtime `+0x1a`. The final
+three record-3 fields are beyond the captured address window. These offsets
+remain mechanically verified and unnamed; the rest of the record, field
+semantics, source-owned post-load consumer, and Firestaff runtime integration
+remain open.
 Reproduction and retained evidence are documented in
 [`nexus_sh2_startup_decompilation.md`](docs/nexus/nexus_sh2_startup_decompilation.md#continue-payload-transfer-2026-10-29).
 

@@ -151,18 +151,21 @@ reference outputs are in
 `coldboot-continue-readtrace-20261029/pcrecomp-ghidra-payload-followup-20261029/`
 within the operator-managed external evidence bundle.
 
-The same-run WorkRAM snapshots also verify a bounded part of the loader's
-runtime projection. `scripts/analyze_nexus_bkr_runtime_projection.py` restores
-the four bytes changed by the observed pointer fixup solely to hash the
-captured 20,480-byte source against the authentic `DMNEXUS__01` payload. The
-hash matches. The decompiled constants give a source-record stride of `0xe0`
-and a runtime-record stride of `0x13c`; the captured world context reports two
-records. Across both records, the analyzer verifies six byte-copy spans and
-six signed-halfword-to-longword conversions per record between payload
-offset `0x11c` and the runtime array at `0x0607fba0`. This yields 12
-projection checks per record (24, 36, and 48 for the captured two-, three-,
-and four-champion saves). The field offsets are checked directly against
-`FUN_0602eb4c` and the same-run WorkRAM dumps.
+The same-run WorkRAM snapshots verify a broader mechanical projection of the
+loader. `scripts/analyze_nexus_bkr_runtime_projection.py` restores the four
+bytes changed by the observed pointer fixup solely to hash the captured
+20,480-byte source against the authentic `DMNEXUS__01` payload. The hash
+matches. The decompiled constants give a source-record stride of `0xe0` and a
+runtime-record stride of `0x13c`; the captured world context reports the same
+record count as the payload. For each record, the analyzer checks 83 explicit
+operations from `FUN_0602eb4c`: byte spans, byte-to-halfword conversions,
+the 14-entry byte table including its `0xff` sentinel conversion, ten paired
+table rows, signed-halfword extensions, and unsigned-halfword copies. This
+produces 166, 249, and 332 projection checks for the authentic two-, three-,
+and four-champion captures. Source offsets and destination offsets are kept
+explicit in the analyzer so each check can be reviewed against the
+decompilation and same-run WorkRAM dumps. These offsets remain mechanically
+verified fields; they do not supply semantic names.
 
 Firestaff's Saturn BKR parser now has a bounded `DMNEXUS__01` payload probe.
 It checks the two source-relative offsets (`0x10` and `0xcc`), the retail
@@ -172,14 +175,21 @@ test applies this probe to all four hash-pinned retail-written images. It
 returns the record bounds while keeping every champion field opaque; it does
 not yet load a champion into the Firestaff engine.
 
-The source `+0x40` to runtime `+0x10` projection differs in all three roster
-snapshots: the save contains 18 and final WRAM has 19. In the leader-index-3
-run, the complete retained trace covers this field
-for three champions and records the loader write of 18 at frame 12931 followed
+Several mechanically copied fields change after the initial loader writes.
+The source `+0x40` to runtime `+0x10` field is 18 in the save and 19 in all
+three final roster snapshots. In the leader-index-3 run, the trace covers this
+field for three champions and records the load write at frame 12931 followed
 by a write of 19 at frame 13951, PC `0x06036272`, inside `FUN_060361a8`. The
-decompilation shows this routine increasing the runtime `+0x10` value toward
-the paired `+0x14` maximum. The trace's address range ends before the fourth
-champion's `+0x10` field, so that one update remains untraced.
+trace's address range ends before the fourth champion's `+0x10` field.
+
+The same retail updater also changes source `+0x44` / runtime `+0x18` and
+source `+0x46` / runtime `+0x1a`. In the leader-index-3 run, the loader writes
+the source values `0x0674` and `0x06cf` to all four records at frame 12931.
+The captured updater sequence reaches `0x066e` and `0x06cc` for the first
+three records. These rows join to `FUN_060361a8` through PCs `0x060363ec` and
+`0x06036462`; the fourth record's addresses are outside the trace window.
+The analyzer verifies these exact write sequences and leaves the three
+record-3 final values outside that window explicitly unresolved.
 
 The leader-index-3 save also has four differences at source `+0x3c` / runtime
 `+0x08`: 67 in the save and 66 in final WRAM. The all-record write trace
@@ -190,9 +200,13 @@ caller-provided value from the runtime `+8` longword and clamping it. These
 traces explain seven of the eight leader-index-3 final-value differences.
 They do not assign semantic names to the fields or the caller's values.
 
-These checks establish only the listed mechanical projections and the traced
-post-load updates. They assign no field names, do not decode the rest of each
-record, and do not prove that Firestaff maps or renders the resulting state.
+For the leader-index-3 capture, 13 of the 16 final-value differences across
+the four tracked fields are explained by the retained write trace. Three
+record-3 values (`+0x10`, `+0x18`, and `+0x1a`) remain outside its address
+window. Other roster captures verify the same 83 mechanical projections per
+record, but do not carry write traces for their post-load changes. These
+checks still assign no field names, do not decode any remaining record bytes,
+and do not prove that Firestaff maps or renders the resulting state.
 Re-run against retained authentic captures with:
 
 ```sh
@@ -212,8 +226,9 @@ python3 scripts/analyze_nexus_bkr_runtime_projection.py \
 ```
 
 The trace covers 8,619 writes with no dropped rows. It contains 24 writes to
-the four `+0x08` fields and nine writes to the first three `+0x10` fields; the
-fourth `+0x10` address is outside its bounded range. Captures, logs, trace,
+the four `+0x08` fields, nine writes to the first three `+0x10` fields, and 15
+writes each to the first three `+0x18` and `+0x1a` fields. The fourth record's
+three addresses are outside its bounded range. Captures, logs, trace,
 decompilation output, and SHA-256
 manifest are in the external evidence folder
 `nexus_bkr_projection_matrix_20261029/`. The separate pointer fixup's

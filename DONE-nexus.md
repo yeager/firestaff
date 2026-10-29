@@ -1,5 +1,22 @@
 # Firestaff DONE — Nexus
 
+## 2026-10-29 — Expand authentic BKR roster projection checks
+
+- Extended the pcrecomp/Ghidra-directed analyzer to verify 83 loader
+  operations per champion across authentic two-, three-, and four-champion
+  captures. The checks cover byte spans, byte-to-halfword conversions,
+  sentinel handling, repeated tables, and signed/unsigned halfword fields.
+- Added validation of the retained leader-3 write trace for post-load changes
+  to runtime offsets `+0x18` and `+0x1a`. The trace now explains 13 of 16
+  final-value differences across four fields; the three record-3 values fall
+  outside the captured address window.
+- Kept save-field semantics unassigned and champion records opaque in
+  Firestaff. This evidence advances the mechanical roster projection only; it
+  does not implement Saturn BKR loading or playable Continue.
+- Re-ran the analyzer against all four authentic captured payloads and the
+  complete leader-3 trace. The two-, three-, four-, and leader-3 runs report
+  166, 249, 332, and 332 checks, respectively.
+
 ## 2026-10-28 — Source-bind Japanese Configuration foreground and mouse route
 
 - Enabled the Configuration foreground for the hash-verified Japanese retail

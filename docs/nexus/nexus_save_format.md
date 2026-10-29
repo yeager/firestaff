@@ -89,10 +89,14 @@ three-, and four-champion samples respectively; these values follow
 `0x0274 + champion_count * 0x00e0`. Every byte from the observed value to the
 end of the 20,480-byte payload is zero in these four samples. The independent
 four-champion sample has the same observed value. The pcrecomp/Ghidra
-decompilation of `FUN_0602eb4c` verifies a `0xe0` source stride while copying
-the roster records, and the real-data probe exposes their bounded table at
-payload offset `0x11c`. The probe preserves each record as opaque bytes; it
-does not identify the individual field meanings or prove the meaning of the
+decompilation of `FUN_0602eb4c` verifies a `0xe0` source stride and a `0x13c`
+runtime stride while projecting roster records. The authentic two-, three-,
+and four-champion captures now match 83 decompilation-directed operations
+per record, including repeated tables and byte/word conversions. Several
+fields are updated after loading; the leader-3 trace joins 13 of 16
+final-value differences to the retail updater, with three record-3 fields
+outside its address window. The bounded BKR probe still preserves champion
+records as opaque bytes and does not assign field meanings or identify the
 count-correlated boundary field. Original Saturn save import remains gated
-until the payload mapping and source-owned consumer are identified and
-exercised against the retail game.
+until the complete semantic payload mapping and source-owned consumer are
+identified and exercised against the retail game.
