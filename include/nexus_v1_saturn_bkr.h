@@ -74,9 +74,8 @@ int nexus_v1_saturn_bkr_parse(
 
 /* Validate the source-relative offsets, roster count, leader index, record
  * stride, and bounded span observed in hash-verified retail payloads. Extract
- * only pairs whose source and runtime operations are bound by retail SH-2
- * decompilation. Recovery domain semantics beyond the bounded update remain
- * unassigned. Other champion fields stay opaque. */
+ * health, stamina, and mana pairs whose payload/runtime mappings are bound by
+ * retail SH-2 decompilation. Other champion fields stay opaque. */
 int nexus_v1_saturn_bkr_nexus_payload_probe(
     const Nexus_V1_SaturnBkrEntry *entry,
     const uint8_t *payload, size_t payload_size,
