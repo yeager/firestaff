@@ -106,10 +106,15 @@ read-only Ghidra scan found a second runtime `+0x1a` access in
 the BKR importer and updates the halfword on an event path. This narrows the
 next source investigation but does not establish the field's domain meaning.
 `FUN_060295b8` also reads both fields from that same indexed row, adds `0x0400`
-and passes them to a resource helper; its caller invokes it in one mode path.
-The helper's coordinate system is unresolved. The complete consumer set and
-semantics for both fields, the rest of the record, the source-owned post-load
-consumer, and Firestaff runtime integration remain open.
+and passes them to `FUN_060236ba`, which selects a clipped/sliced render path
+for positive values. Its caller invokes it in one mode path. This establishes
+a presentation use, but not the fields' interpretation or a coordinate
+system. The complete consumer set and semantics for both fields, the rest of
+the record, the source-owned post-load consumer, and Firestaff runtime
+integration remain open. `FUN_06039f76` also reads runtime `+0x18` to adjust a
+threshold used by `FUN_0603a472` when accepting the next rune in a champion's
+spell sequence. Trace this access during authentic spell input and identify
+the saved field's full semantics before implementing its Firestaff equivalent.
 Reproduction and retained evidence are documented in
 [`nexus_sh2_startup_decompilation.md`](docs/nexus/nexus_sh2_startup_decompilation.md#continue-payload-transfer-2026-10-29).
 The Ghidra field-consumer scan is retained in the external

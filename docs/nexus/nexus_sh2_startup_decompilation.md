@@ -325,9 +325,21 @@ identify its game-domain meaning. `FUN_060366b8` is the direct caller of
 set and source meanings of both fields remain open. Another routine,
 `FUN_060295b8`, selects the same indexed row, reads both `+0x18` and `+0x1a`,
 adds `0x0400` to each, and passes them separately to a resource helper with
-different two-byte descriptors. Its caller `FUN_060296d8` invokes it in one
-of its mode paths. This links the fields to retail presentation work, but the
-helper's coordinate system and the fields' domain meanings are still unknown.
+different two-byte descriptors. `PTR_FUN_060296b4` resolves to
+`FUN_060236ba`, which writes clipped rectangle segments through
+`FUN_06023232`; its first integer parameter selects a full-rectangle path or
+a nonzero sliced path. The authentic adjusted values enter that nonzero path.
+Its caller `FUN_060296d8` invokes `FUN_060295b8` in one mode path. This links
+the fields to retail presentation work, but their helper-level interpretation
+and domain meanings are still unknown. `FUN_06039f76` independently reads
+row `+0x18` while computing a threshold used by `FUN_0603a472`; for selected
+rune categories it compares the saved value with category-specific constants
+and increases the threshold on a match. `FUN_0603a472` uses that result to
+accept or reject the next rune in a champion's four-entry spell sequence.
+Thus source `+0x44` / runtime `+0x18` affects retail rune-sequence validation,
+although its domain name and complete Firestaff-side requirements remain
+unknown. The authentic dynamic read path during spell input has not yet been
+traced.
 The disassembly scan and complete decompilation are retained in the operator-
 managed external evidence bundle's `field-consumer-scan-20261029/` directory.
 
