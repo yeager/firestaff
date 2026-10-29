@@ -21,8 +21,20 @@ session and records 48,561 bytes with FNV-1a `80a50d66`, matching the file.
 Set `FIRESTAFF_DM1_PC34_AUTHENTIC_SAVE` to this save when running
 `dm1_v1_pc34_native_cli_boot`; the test then compares direct `--save` startup
 with I34E selector Resume and checks that the saved party pose is restored.
-This authentic-save integration branch has not yet been run against a current
-build, so selector-to-original-save runtime parity remains unverified.
+On current `main` `4a121981`, the trv2 build passed
+`ctest --test-dir <build> -R '^dm1_v1_pc34_native_cli_boot$'` 1/1 in 774.15
+seconds with the authentic save enabled. Direct `--save` and I34E selector
+Resume restored the same party pose and bounded game tick, and the test
+verified that the save bytes were unchanged. This proves the tested DOS PC34
+CLI and selector Resume paths; it does not establish Resume parity for other
+DM1 platforms or physical mouse/keyboard delivery.
+
+The same current build passed `test_m12_main_menu_game_selection_real_media.sh`
+with an isolated data root containing only the original DM1, CSB and DM2 FM
+Towns archives. Keyboard, keyboard-leaf and mouse selection reached each
+game's authentic runtime, and default `.firestaff/data` discovery launched
+each game. Nexus and Theron were intentionally absent from this test root;
+their platform paths remain outside this DM1/CSB/DM2 verification.
 
 2026-10-28 PC34 binary-analysis tooling check: the original DOS 3.4 `DM.EXE`
 is LZEXE 0.91-packed. The `yeager/pcrecomp` tools successfully unpack it with
