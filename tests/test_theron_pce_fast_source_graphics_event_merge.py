@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from typing import Optional
 
 
 repo = Path(__file__).resolve().parents[1]
@@ -17,21 +18,37 @@ shutil.rmtree(root, ignore_errors=True)
 root.mkdir(parents=True, exist_ok=True)
 
 
-def run_case(name: str, cd: str, ram: str, vram: str, expected: int) -> None:
+def run_case(
+    name: str,
+    cd: str,
+    ram: str,
+    vram: str,
+    expected: int,
+    vce: Optional[str] = None,
+    expected_sequences: Optional[list[int]] = None,
+    expected_events: Optional[list[str]] = None,
+) -> None:
     case = root / name
     case.mkdir()
-    paths = [case / "cd", case / "ram", case / "vram", case / "merged"]
-    for path, contents in zip(paths[:3], (cd, ram, vram)):
+    trace_data = [cd, ram, vram]
+    if vce is not None:
+        trace_data.append(vce)
+    trace_paths = [case / f"trace-{index}" for index in range(len(trace_data))]
+    merged_path = case / "merged"
+    for path, contents in zip(trace_paths, trace_data):
         path.write_text(contents, encoding="ascii")
+    command = [
+        sys.executable,
+        str(merger),
+        "--cd-data-port", str(trace_paths[0]),
+        "--cd-ram-target", str(trace_paths[1]),
+        "--vram-commit", str(trace_paths[2]),
+    ]
+    if vce is not None:
+        command.extend(("--vce-write", str(trace_paths[3])))
+    command.extend(("--output", str(merged_path)))
     result = subprocess.run(
-        [
-            sys.executable,
-            str(merger),
-            "--cd-data-port", str(paths[0]),
-            "--cd-ram-target", str(paths[1]),
-            "--vram-commit", str(paths[2]),
-            "--output", str(paths[3]),
-        ],
+        command,
         check=False,
         capture_output=True,
         text=True,
@@ -39,21 +56,31 @@ def run_case(name: str, cd: str, ram: str, vram: str, expected: int) -> None:
     if expected == 0:
         if result.returncode != 0:
             raise AssertionError(result.stderr)
-        rows = [json.loads(line) for line in paths[3].read_text(encoding="ascii").splitlines()]
+        rows = [json.loads(line) for line in merged_path.read_text(encoding="ascii").splitlines()]
+        expected_streams = ["cd_data_port_read", "cd_ram_target_write", "vram_commit"]
+        if vce is not None:
+            expected_streams.append("vce_write")
         if rows[0] != {
             "format": "firestaff-theron-source-graphics-order-v1",
             "ordering": "shared_event_sequence",
             "interpretation": "temporal_order_only_not_causal_dataflow",
+            "streams": expected_streams,
         }:
             raise AssertionError(f"wrong merged chronology metadata: {rows[0]!r}")
-        if [row["event_sequence"] for row in rows[1:]] != [2, 5, 9]:
+        if [row["event_sequence"] for row in rows[1:]] != (
+            expected_sequences if expected_sequences is not None else [2, 5, 9]
+        ):
             raise AssertionError(f"wrong merged chronology: {rows!r}")
-        if [row["event"] for row in rows[1:]] != ["cd_data_port_read", "cd_ram_target_write", "vram_commit"]:
+        if [row["event"] for row in rows[1:]] != (
+            expected_events
+            if expected_events is not None
+            else ["cd_data_port_read", "cd_ram_target_write", "vram_commit"]
+        ):
             raise AssertionError(f"wrong merged event types: {rows!r}")
     else:
         if result.returncode == 0:
             raise AssertionError("invalid chronology was accepted")
-        if paths[3].exists():
+        if merged_path.exists():
             raise AssertionError("failed merge left a partial output")
 
 
@@ -63,6 +90,16 @@ run_case(
     "source=mednafen-pce-fast-cd-ram-target-write\ncd_ram_target_write sequence=0 event_sequence=5\n",
     "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3\nsource=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window\nscope=cpu-port-vwr-commits-only;dma-writes-excluded\nvram_commit sequence=0 event_sequence=9\n",
     0,
+)
+run_case(
+    "ordered-with-vce",
+    "source=mednafen-pce-fast-cd-data-port-read\ncd_data_port_read sequence=0 event_sequence=2\n",
+    "source=mednafen-pce-fast-cd-ram-target-write\ncd_ram_target_write sequence=0 event_sequence=5\n",
+    "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3\nsource=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window\nscope=cpu-port-vwr-commits-only;dma-writes-excluded\nvram_commit sequence=0 event_sequence=9\n",
+    0,
+    vce="FIRESTAFF_THERON_PCE_FAST_VCE_WRITE_TRACE_V1\nsource=mednafen-1.32.1-pce-fast-vdc-vce-write\nscope=color-table-data-writes-only;address-port-writes-excluded\nvce_write sequence=0 event_sequence=4 reg=4 address=012 input=34 old=000 value=034 logical_pc=1234 physical_pc=000000 mpr_slot=0 mpr_bank=00\n",
+    expected_sequences=[2, 4, 5, 9],
+    expected_events=["cd_data_port_read", "vce_write", "cd_ram_target_write", "vram_commit"],
 )
 run_case(
     "duplicate",

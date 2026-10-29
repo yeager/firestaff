@@ -21,6 +21,11 @@ TRACE_HEADERS = {
         "source=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window",
         "scope=cpu-port-vwr-commits-only;dma-writes-excluded",
     ),
+    "vce_write": (
+        "FIRESTAFF_THERON_PCE_FAST_VCE_WRITE_TRACE_V1",
+        "source=mednafen-1.32.1-pce-fast-vdc-vce-write",
+        "scope=color-table-data-writes-only;address-port-writes-excluded",
+    ),
 }
 
 
@@ -84,6 +89,7 @@ def main() -> int:
     parser.add_argument("--cd-data-port", required=True, type=Path)
     parser.add_argument("--cd-ram-target", required=True, type=Path)
     parser.add_argument("--vram-commit", required=True, type=Path)
+    parser.add_argument("--vce-write", type=Path)
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
 
@@ -92,6 +98,8 @@ def main() -> int:
         ("cd_ram_target_write", args.cd_ram_target),
         ("vram_commit", args.vram_commit),
     ]
+    if args.vce_write is not None:
+        inputs.append(("vce_write", args.vce_write))
     created_output = False
     try:
         with args.output.open("x", encoding="ascii", newline="\n") as output:
@@ -100,6 +108,7 @@ def main() -> int:
                 "format": "firestaff-theron-source-graphics-order-v1",
                 "ordering": "shared_event_sequence",
                 "interpretation": "temporal_order_only_not_causal_dataflow",
+                "streams": [event_type for event_type, _ in inputs],
             }, separators=(",", ":")) + "\n")
             for record in merge(inputs):
                 output.write(json.dumps(record, separators=(",", ":")) + "\n")

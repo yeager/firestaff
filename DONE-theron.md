@@ -9047,3 +9047,20 @@ T900/original inventory semantics. No synthetic media was used.
 - This completes the ordering tool only. It does not prove CD-byte causality,
   VCE palette provenance, DMA writes, tile mapping, renderer correctness or
   Theron parity.
+
+## 2026-10-29 — add optional VCE color-write event capture
+
+- Extended the opt-in Mednafen PCE Fast instrumentation to record HuC6260
+  color-table data writes at VCE registers 4 and 5, including palette address,
+  old/new 9-bit color, input byte, and executing CPU address. These records
+  consume the same shared sequence as CD reads, bank-$80 writes, and VWR
+  commits. The Firestaff capture wrapper validates and hashes the bounded
+  stream and includes it in the merged chronology when writes are observed.
+- Three local tooling loops passed. On TRV2, the complete patch set applied to
+  an isolated copy of pristine Mednafen 1.32.1 and the full instrumented build
+  completed with `-j1`; `pce_fast/vdc.cpp` compiled. The binary SHA-256 is
+  `79d4a2cab77e219983723f2f61e7be54f16dbe58f0dfc49fa1cdd5e24cf5d605` and
+  contains the VCE trace schema and shared event record format.
+- No authentic VCE trace was captured in this work. This verifies capture-tool
+  instrumentation only; it does not prove palette provenance, tile mapping,
+  native renderer behavior, or Theron gameplay parity.

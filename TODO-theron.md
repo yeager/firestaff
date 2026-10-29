@@ -8461,7 +8461,8 @@ this is distinct from the authenticated combined-RAR title-audio path above.
 - Next: capture authentic Theron gameplay with CD, RAM-target and VWR traces
   in one session. Bind any candidate bytes to a source LBA before pursuing the
   world-square, BAT, tile-index and palette joins.
-- Open limits: the VWR hook excludes DMA; no VCE palette-write trace is yet
-  joined to this sequence; chronology alone is not causal byte provenance.
+- Open limits: the VWR hook excludes DMA; VCE color-table data writes can now
+  be captured and optionally joined to this chronology, but no authentic VCE
+  trace has been produced. Chronology alone is not causal byte provenance.
   The production renderer still lacks an authenticated source-to-world-cell
   and tile-bank mapping, so this tooling does not establish visual parity.

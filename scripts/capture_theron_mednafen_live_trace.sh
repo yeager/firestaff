@@ -115,6 +115,7 @@ movement_data_read_sample_limit=${THERON_CAPTURE_MOVEMENT_DATA_READ_SAMPLE_LIMIT
 vdc_io_trace_limit=${THERON_CAPTURE_VDC_IO_TRACE_LIMIT:-65536}
 capture_pce_fast_vram_commit_trace=${THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE:-0}
 pce_fast_vram_commit_trace_limit=${THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT:-65536}
+pce_fast_vce_write_trace_limit=${THERON_CAPTURE_PCE_FAST_VCE_WRITE_TRACE_LIMIT:-65536}
 pce_fast_44d2_follow_limit=${THERON_CAPTURE_PCE_FAST_44D2_FOLLOW_LIMIT:-128}
 input_trace_limit_default=65536
 if [[ -n "$replay_input_script" || -n "$host_key" || -n "$host_key_sequence" ]]; then
@@ -247,6 +248,11 @@ if [[ ! "$pce_fast_vram_commit_trace_limit" =~ ^[0-9]+$ ]] ||
    (( pce_fast_vram_commit_trace_limit < 1 ||
       pce_fast_vram_commit_trace_limit > 1048576 )); then
     printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT must be an integer from 1 through 1048576' >&2
+    exit 1
+fi
+if [[ ! "$pce_fast_vce_write_trace_limit" =~ ^[0-9]+$ ]] ||
+   (( pce_fast_vce_write_trace_limit < 1 || pce_fast_vce_write_trace_limit > 1048576 )); then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_VCE_WRITE_TRACE_LIMIT must be an integer from 1 through 1048576' >&2
     exit 1
 fi
 if [[ ! "$pce_fast_44d2_follow_limit" =~ ^[0-9]+$ ]] ||
@@ -1242,6 +1248,7 @@ pce_fast_vce_snapshot="${trace}.pce-fast.vce"
 pce_fast_vdc_sat_snapshot="${trace}.pce-fast.sat"
 pce_fast_vdc_state_snapshot="${trace}.pce-fast.vdc-state"
 pce_fast_vram_commit_trace="${trace}.pce-fast.vram-commit"
+pce_fast_vce_write_trace="${trace}.pce-fast.vce-write"
 pce_fast_source_graphics_event_order="${trace}.pce-fast.source-graphics-events.jsonl"
 if [[ "$capture_mednafen_module" == pce_fast &&
       "$capture_pce_fast_vram_commit_trace" == 1 &&
@@ -1251,11 +1258,18 @@ if [[ "$capture_mednafen_module" == pce_fast &&
     exit 1
 fi
 pce_fast_vram_commit_trace_env=
+pce_fast_vce_write_trace_env=
 if [[ "$capture_pce_fast_vram_commit_trace" == 1 ]]; then
     pce_fast_vram_commit_trace_env=$pce_fast_vram_commit_trace
+    pce_fast_vce_write_trace_env=$pce_fast_vce_write_trace
     if [[ -e "$pce_fast_vram_commit_trace" || -L "$pce_fast_vram_commit_trace" ]]; then
         printf 'FAIL: refusing to overwrite existing PCE Fast VRAM commit trace: %s\n' \
             "$pce_fast_vram_commit_trace" >&2
+        exit 1
+    fi
+    if [[ -e "$pce_fast_vce_write_trace" || -L "$pce_fast_vce_write_trace" ]]; then
+        printf 'FAIL: refusing to overwrite existing PCE Fast VCE write trace: %s\n' \
+            "$pce_fast_vce_write_trace" >&2
         exit 1
     fi
 fi
@@ -1570,6 +1584,8 @@ launch=(
     FIRESTAFF_THERON_PCE_FAST_VDC_STATE_SNAPSHOT="$pce_fast_vdc_state_snapshot" \
     FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE="$pce_fast_vram_commit_trace_env" \
     FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT="$pce_fast_vram_commit_trace_limit" \
+    FIRESTAFF_THERON_PCE_FAST_VCE_WRITE_TRACE="$pce_fast_vce_write_trace_env" \
+    FIRESTAFF_THERON_PCE_FAST_VCE_WRITE_TRACE_LIMIT="$pce_fast_vce_write_trace_limit" \
     FIRESTAFF_THERON_PCE_FAST_A1B7_BMT_WRITE_TRACE="$pce_fast_a1b7_bmt_write_trace" \
     FIRESTAFF_THERON_PCE_FAST_A1A9_INIT_TRACE="$pce_fast_a1a9_init_trace" \
     FIRESTAFF_THERON_PCE_FAST_PARTY_RAM_TRACE="$pce_fast_party_ram_trace" \
@@ -2098,13 +2114,72 @@ if [[ "$capture_mednafen_module" == pce_fast ]]; then
     if [[ "$capture_pce_fast_vram_commit_trace" == 1 ]]; then
         pce_fast_source_graphics_event_order_status=unavailable_missing_cd_stream
     fi
+    pce_fast_vce_write_trace_count=unavailable
+    pce_fast_vce_write_trace_sha256=unavailable
+    pce_fast_vce_write_trace_status=not_requested
+    if [[ "$capture_pce_fast_vram_commit_trace" == 1 ]]; then
+        pce_fast_vce_write_trace_status=unavailable_no_color_writes
+        if [[ -s "$pce_fast_vce_write_trace" ]] &&
+           awk -v limit="$pce_fast_vce_write_trace_limit" '
+               function is_hex(value, expected) { return length(value) == expected && value !~ /[^0-9a-f]/ }
+               function hex_value(value, result, position, digit) {
+                   result = 0
+                   for (position = 1; position <= length(value); position++) {
+                       digit = index("0123456789abcdef", substr(value, position, 1)) - 1
+                       result = result * 16 + digit
+                   }
+                   return result
+               }
+               NR == 1 { if ($0 != "FIRESTAFF_THERON_PCE_FAST_VCE_WRITE_TRACE_V1") exit 1; next }
+               NR == 2 { if ($0 != "source=mednafen-1.32.1-pce-fast-vdc-vce-write") exit 1; next }
+               NR == 3 { if ($0 != "scope=color-table-data-writes-only;address-port-writes-excluded") exit 1; next }
+               /^vce_write / {
+                   if (NF != 12) exit 1
+                   split($2, seq, "="); split($3, event, "="); split($4, reg, "=")
+                   split($5, address, "="); split($6, input, "="); split($7, old, "=")
+                   split($8, value, "="); split($9, logical, "="); split($10, physical, "=")
+                   split($11, slot, "="); split($12, bank, "=")
+                   if (seq[1] != "sequence" || seq[2] != count || event[1] != "event_sequence" || event[2] !~ /^[0-9]+$/ ||
+                       (count > 0 && event[2] <= previous) || reg[1] != "reg" || reg[2] !~ /^(4|5)$/ ||
+                       address[1] != "address" || !is_hex(address[2], 3) || hex_value(address[2]) > 511 ||
+                       input[1] != "input" || !is_hex(input[2], 2) || old[1] != "old" || !is_hex(old[2], 3) ||
+                       value[1] != "value" || !is_hex(value[2], 3) || logical[1] != "logical_pc" || !is_hex(logical[2], 4) ||
+                       physical[1] != "physical_pc" || !is_hex(physical[2], 6) || slot[1] != "mpr_slot" || slot[2] !~ /^[0-7]$/ ||
+                       bank[1] != "mpr_bank" || !is_hex(bank[2], 2) || slot[2] != int(hex_value(logical[2]) / 8192) ||
+                       physical[2] != sprintf("%06x", hex_value(bank[2]) * 8192 + hex_value(logical[2]) % 8192)) exit 1
+                   old_color = hex_value(old[2]); input_byte = hex_value(input[2])
+                   expected_color = reg[2] == 4 ? int(old_color / 256) * 256 + input_byte :
+                       old_color % 256 + int(input_byte / 2) % 2 * 256
+                   if (hex_value(value[2]) != expected_color) exit 1
+                   previous = event[2]; count++; if (count > limit) exit 1; next
+               }
+               { exit 1 }
+               END { if (NR < 4 || count == 0 || count > limit) exit 1 }
+           ' "$pce_fast_vce_write_trace"; then
+            pce_fast_vce_write_trace_count=$(awk '/^vce_write / { count++ } END { print count }' "$pce_fast_vce_write_trace") || exit 1
+            pce_fast_vce_write_trace_sha256=$(sha256_file "$pce_fast_vce_write_trace") || exit 1
+            pce_fast_vce_write_trace_status=captured
+        elif [[ -e "$pce_fast_vce_write_trace" || -L "$pce_fast_vce_write_trace" ]]; then
+            printf '%s\n' 'BLOCKED: PCE Fast VCE write trace failed schema validation' >&2
+            exit 1
+        fi
+    elif [[ -e "$pce_fast_vce_write_trace" || -L "$pce_fast_vce_write_trace" ]]; then
+        printf '%s\n' 'FAIL: PCE Fast capture emitted an unrequested VCE write trace' >&2
+        exit 1
+    fi
     if [[ "$capture_pce_fast_vram_commit_trace" == 1 &&
           -s "$cd_data_port_read_trace" && -s "$cd_ram_target_write_trace" ]]; then
-        python3 "$script_dir/merge_theron_pce_fast_source_graphics_events.py" \
+        merge_source_graphics_args=(
             --cd-data-port "$cd_data_port_read_trace" \
             --cd-ram-target "$cd_ram_target_write_trace" \
             --vram-commit "$pce_fast_vram_commit_trace" \
-            --output "$pce_fast_source_graphics_event_order" || exit 1
+        )
+        if [[ "$pce_fast_vce_write_trace_status" == captured ]]; then
+            merge_source_graphics_args+=(--vce-write "$pce_fast_vce_write_trace")
+        fi
+        merge_source_graphics_args+=(--output "$pce_fast_source_graphics_event_order")
+        python3 "$script_dir/merge_theron_pce_fast_source_graphics_events.py" \
+            "${merge_source_graphics_args[@]}" || exit 1
         if ! trace_files_are_line_delimited "$pce_fast_source_graphics_event_order"; then
             printf '%s\n' 'FAIL: merged source-to-VRAM event order is not line-delimited' >&2
             exit 1
@@ -2429,6 +2504,9 @@ fi
         printf 'pce_fast_vram_commit_trace_limit=%s\n' "$pce_fast_vram_commit_trace_limit"
         printf 'pce_fast_vram_commit_trace_count=%s\n' "$pce_fast_vram_commit_trace_count"
         printf 'pce_fast_vram_commit_trace_sha256=%s\n' "$pce_fast_vram_commit_trace_sha256"
+        printf 'pce_fast_vce_write_trace_status=%s\n' "$pce_fast_vce_write_trace_status"
+        printf 'pce_fast_vce_write_trace_count=%s\n' "$pce_fast_vce_write_trace_count"
+        printf 'pce_fast_vce_write_trace_sha256=%s\n' "$pce_fast_vce_write_trace_sha256"
         printf 'pce_fast_source_graphics_event_order_count=%s\n' \
             "$pce_fast_source_graphics_event_order_count"
         printf 'pce_fast_source_graphics_event_order_status=%s\n' \
