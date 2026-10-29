@@ -1329,6 +1329,16 @@ int dm2_v1_asset_load_fmtowns_lighting_palette(
     int field,
     int light_level,
     DM2_V1_InterfacePalette *out_palette);
+/* Load one active physical 16-colour dungeon light stripe. Accepts the
+ * authenticated FM Towns and Amiga source layouts; other palette models are
+ * rejected. */
+int dm2_v1_asset_load_physical_lighting_palette(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    int light_level,
+    DM2_V1_InterfacePalette *out_palette);
 /* True when an authenticated big-endian V5 interface palette has only the
  * original physical 16-color bank; Macintosh V5 uses a 256-color bank. */
 int dm2_v1_asset_loader_uses_physical_16_color_palette(

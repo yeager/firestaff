@@ -64222,13 +64222,13 @@ static uint32_t m11_dm2_startup_frame_hash(const unsigned char *framebuffer,
     return hash;
 }
 
-/* FM Towns changes the physical 16-colour display palette with the active
- * GRAPHICSSET. Its IMG2/IMG6 pixels are logical nibbles, so leaving the
- * INTERFACE_GENERAL palette latched makes an otherwise source-backed dungeon
- * appear cyan/orange even though the decoded planes are correct. This is a
- * display transaction only: the HUD and scene share the machine palette in
- * the original, and no image bytes are altered. */
-static int m11_dm2_apply_fmtowns_runtime_palette(
+/* FM Towns and Amiga use a physical 16-colour display palette for the active
+ * GRAPHICSSET. Their image planes contain logical nibbles, so leaving the
+ * INTERFACE_GENERAL palette latched applies the wrong colours to a valid
+ * source-backed dungeon frame. DMWeb documents the Amiga scene palettes at
+ * GRAPHICSSET/<style>/PAL_IRGB field 00, with six 16-colour light stripes.
+ * This changes only the shared display palette; it does not rewrite assets. */
+static int m11_dm2_apply_physical_runtime_palette(
     const M11_GameViewState *state)
 {
     const DM2_V1_BootProfile *profile;
@@ -64239,7 +64239,9 @@ static int m11_dm2_apply_fmtowns_runtime_palette(
 
     profile = state
         ? (const DM2_V1_BootProfile *)state->dm2BootProfile : NULL;
-    if (!profile || profile->platform != DM2_PLATFORM_FMTOWNS_JA ||
+    if (!profile ||
+        (profile->platform != DM2_PLATFORM_FMTOWNS_JA &&
+         profile->platform != DM2_PLATFORM_AMIGA_EN) ||
         !(loader = dm2_v1_boot_asset_loader(profile))) {
         return 0;
     }
@@ -64249,7 +64251,7 @@ static int m11_dm2_apply_fmtowns_runtime_palette(
     if (!dm2_v1_runtime_graphicsset_scene_receipt(&scene) || !scene.ready ||
         !dm2_v1_runtime_last_m11_frame_receipt(&frame) || !frame.valid ||
         frame.c_light_receipt_hash == 0u || frame.c_light_level > 5u ||
-        !dm2_v1_asset_load_fmtowns_lighting_palette(
+        !dm2_v1_asset_load_physical_lighting_palette(
             loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
             (int)scene.map_graphics_style, DM2_GDAT_GFXSET_FLOOR,
             (int)frame.c_light_level, &palette) || palette.hash == 0u) {
@@ -75229,7 +75231,7 @@ static void m11_game_view_draw_source(M11_GameViewState* state,
                               M11_COLOR_BLACK);
                 rendered = -1;
             } else {
-                (void)m11_dm2_apply_fmtowns_runtime_palette(
+                (void)m11_dm2_apply_physical_runtime_palette(
                     state);
             }
         }

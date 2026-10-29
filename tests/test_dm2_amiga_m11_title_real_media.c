@@ -8,6 +8,8 @@
 #include "m11_game_view.h"
 #include "render_sdl_m11.h"
 #include "dm2_v1_boot.h"
+#include "dm2_v1_asset_loader.h"
+#include "dm2_v1_runtime.h"
 #include "dm2_v1_startup_menu.h"
 #include "asset_status_m12.h"
 
@@ -189,6 +191,59 @@ int main(void)
                    view.world.party.championCount > 0 &&
                    view.dm2State.leader_hand_object == 0xffffu,
                 "Amiga title New Game hands off to the source runtime without a synthetic party");
+        {
+            const DM2_V1_BootProfile *profile =
+                (const DM2_V1_BootProfile *)view.dm2BootProfile;
+            const DM2_V1_AssetLoader *loader =
+                dm2_v1_boot_asset_loader(profile);
+            DM2_V1_RuntimeGraphicsSetSceneReceipt scene;
+            DM2_V1_ViewportM11FrameReceipt frame;
+            DM2_V1_InterfacePalette expected;
+            uint8_t actual[256][3];
+            const uint8_t *source;
+            size_t source_size = 0u;
+            int palette_ready;
+            memset(&scene, 0, sizeof(scene));
+            memset(&frame, 0, sizeof(frame));
+            memset(&expected, 0, sizeof(expected));
+            memset(actual, 0, sizeof(actual));
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(&view, framebuffer,
+                              M11_FB_WIDTH, M11_FB_HEIGHT);
+            palette_ready = loader &&
+                dm2_v1_runtime_graphicsset_scene_receipt(&scene) &&
+                scene.ready && scene.map_graphics_style >= 0 &&
+                scene.map_graphics_style <= 5 &&
+                dm2_v1_runtime_last_m11_frame_receipt(&frame) &&
+                frame.valid && frame.c_light_receipt_hash != 0u &&
+                frame.c_light_level <= 5u;
+            source = palette_ready ? dm2_v1_asset_load_typed_sized(
+                loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
+                scene.map_graphics_style, DM2_GDAT_ENTRY_TYPE_PAL_IRGB,
+                DM2_GDAT_GFXSET_FLOOR, &source_size) : NULL;
+            palette_ready = palette_ready && source &&
+                source_size == 6u * 16u * 4u &&
+                dm2_v1_asset_load_physical_lighting_palette(
+                    loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
+                    scene.map_graphics_style, DM2_GDAT_GFXSET_FLOOR,
+                    (int)frame.c_light_level, &expected) &&
+                expected.hash != 0u;
+            for (int color = 0; palette_ready && color < 16; ++color) {
+                const uint8_t *row = source +
+                    (size_t)frame.c_light_level * 16u * 4u +
+                    (size_t)color * 4u;
+                for (int channel = 0; channel < 3; ++channel) {
+                    if (expected.rgb6[color][channel] !=
+                        (uint8_t)(row[channel + 1] >> 2u))
+                        palette_ready = 0;
+                }
+            }
+            palette_ready = palette_ready &&
+                M11_Render_CopyIndexedPaletteRgb6(actual) == 1 &&
+                memcmp(actual, expected.rgb6, sizeof(expected.rgb6)) == 0;
+            expect(palette_ready,
+                  "Amiga M11 presents the active authentic GRAPHICSSET light palette");
+        }
         {
             M11_GameInputResult inventory_result = M11_GameView_HandleInput(
                 &view, M12_MENU_INPUT_INVENTORY_TOGGLE);

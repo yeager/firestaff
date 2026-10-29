@@ -4572,6 +4572,20 @@ int dm2_v1_asset_load_fmtowns_lighting_palette(
     int light_level,
     DM2_V1_InterfacePalette *out_palette)
 {
+    if (!loader || loader->gdat_version != DM2_FMTOWNS_GDAT_VERSION)
+        return 0;
+    return dm2_v1_asset_load_physical_lighting_palette(
+        loader, category, index, field, light_level, out_palette);
+}
+
+int dm2_v1_asset_load_physical_lighting_palette(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    int light_level,
+    DM2_V1_InterfacePalette *out_palette)
+{
     const uint8_t *irgb;
     size_t irgb_size = 0u;
     size_t row_offset = 0u;
@@ -4580,8 +4594,17 @@ int dm2_v1_asset_load_fmtowns_lighting_palette(
 
     if (!out_palette) return 0;
     memset(out_palette, 0, sizeof(*out_palette));
-    if (!loader || loader->gdat_version != DM2_FMTOWNS_GDAT_VERSION ||
-        light_level < 0 || light_level > 5) return 0;
+    if (!loader || light_level < 0 || light_level > 5) return 0;
+    /* DMWeb's DM2 Amiga format notes identify scene palettes at
+     * GRAPHICSSET/<style>/PAL_IRGB field 00 as six 16-colour light stripes.
+     * Restrict this path to the authenticated big-endian V5 physical Amiga
+     * palette layout; Macintosh also uses V5 but its 256-colour palette is
+     * not this format. */
+    if (loader->gdat_version != DM2_FMTOWNS_GDAT_VERSION &&
+        !(loader->big_endian && loader->gdat_version == 5u &&
+          dm2_v1_asset_loader_uses_physical_16_color_palette(loader))) {
+        return 0;
+    }
     irgb = dm2_v1_asset_load_typed_sized(
         loader, category, index, DM2_GDAT_ENTRY_TYPE_PAL_IRGB, field,
         &irgb_size);

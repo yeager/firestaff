@@ -840,10 +840,21 @@ M12 startup coverage gap; native M5 Retina/input verification remains open.
   directly as indices into its authenticated 16-color `PalIRGB` bank produced
   a black viewport: the source palette tail contains values above 15 (for
   example 167, 201, 169, 155 and 199). That attempt was reverted. Resolve the
-  Amiga C4-to-display palette mapping against GreatStone's extracted Amiga
-  assets and the DMWeb graphics-format notes before changing this path again;
-  add per-platform visual checks that detect the observed corruption instead
-  of accepting nonblack pixel counts alone. Capture:
+  Amiga C4-to-display mapping against GreatStone's extracted Amiga assets.
+  DMWeb's DM2 format notes identify scene-dependent palettes in
+  `GRAPHICSSET/<style>/PAL_IRGB` field 00, with six 16-color light stripes;
+  they say the image-local palettes appear unused on Amiga. The runtime now
+  selects that authentic physical stripe for Amiga as well as FM Towns, gated
+  by the authenticated big-endian V5 physical 16-color palette signature.
+  The authentic Amiga M11 title/NEW GAME test now draws the runtime frame and
+  verifies that the indexed display palette equals the active
+  `GRAPHICSSET/<style>/PAL_IRGB` stripe selected by the source c_light level;
+  it independently compares all 16 decoded RGB entries against the original
+  archive bytes. The test passes on TRV2 with the authentic Amiga archive.
+  This establishes source palette consumption, not full visual parity: capture
+  and compare the corrected presented frame against
+  GreatStone or an original Amiga runtime, and separately map the Amiga source
+  HUD panels before claiming HUD correction. Capture:
   `.codex-scratch/dm2-amiga-debug/frame.png`.
 
 - Verify bare `--game dm2` on the reported MacBook Pro M5 Retina display with
