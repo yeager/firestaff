@@ -1,5 +1,18 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-29 current-main DM1/CSB/DM2 launcher audit at `5b65ec09`: the
+authentic-media no-game M12 menu tests passed separately for DM1 FM Towns,
+CSB FM Towns, and DM2 FM Towns, including each game's first-runtime receipt
+and Back/reselect route (3/3). The mixed game/platform picker test passed its
+seven available alternate-edition routes: DM1 PC, Atari ST, and Amiga; CSB
+Amiga and Atari ST; DM2 PC and Amiga. The unsupported-platform fail-fast
+matrix and CLI option-form test also passed (2/2). The tested app binary was
+built before `5b65ec09`, whose only change is the DM1 Atari STX test source;
+the runtime code therefore matches this checkout. These SDL dummy runs verify
+only the named launcher selections and runtime handoffs, not native display,
+audio, physical input, untested editions, or complete game parity. No source
+behavior change was needed and no release was created.
+
 The current five-game startup evidence matrix and remaining Nexus/Theron
 runtime-entry gaps are consolidated in
 [`docs/STARTUP_SUPPORT_GAP_ANALYSIS.md`](docs/STARTUP_SUPPORT_GAP_ANALYSIS.md).
