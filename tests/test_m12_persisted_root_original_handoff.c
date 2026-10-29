@@ -602,10 +602,10 @@ int main(void)
     if (!failures) run_dm2_m12_dos_or_mac_handoff(
         menu, "mac-en-retail", M12_ARCH_MAC, DM2_PLATFORM_MAC_EN);
 
-    /* The authentic v1.2 preservation ZIP contains its STX disk directly,
-     * unlike the ZIP -> ZIP -> STX v1.1 archive exercised by the nested
-     * archive boot test. Reopening the collection root must discover it and
-     * preserve the Atari source through the normal M12 -> M11 handoff. */
+    /* The authentic v1.2 preservation ZIP contains an inner ZIP, with the
+     * STX disk under "Floppy Disks STX/". Reopening the collection root must
+     * discover that nested path and preserve the Atari source through the
+     * normal M12 -> M11 handoff. */
     if (!failures) {
         const char* versionId = "st12-en";
         int versionIndex = M12_AssetStatus_FindVersionIndex("dm1", versionId);
