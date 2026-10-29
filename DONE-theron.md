@@ -1,5 +1,19 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-29 — capture an authentic Japanese stage-message transition
+
+A cold Mednafen run with authentic Japanese Rev. 1 Track 02, the canonical
+headerless System Card 3.0 body, and its SBI sidecar captured the Ak-Tu-Ba
+stage card, the first story page, and the next story page after a short Button
+I press. The instrumented controller trace records Button I at the System
+Card poll as active-low `$3E`. This verifies delivery and one visible
+stage-message transition. The run did not reach hero selection or a dungeon,
+and it does not establish Firestaff parity. The private evidence bundle and
+SHA-256 manifest are at
+`/home/trv2/firestaff-theron-evidence/capture/theron-menu-progression-20261029-r1/`.
+The full headered card image was unavailable; no save-state, game media, or
+BIOS image is included in the bundle.
+
 ## 2026-10-29 — preserve Theron mouse and touch coordinate semantics
 
 The Theron host mouse-panel adapter now inverse-maps each presented pixel with

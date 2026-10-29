@@ -1,3 +1,24 @@
+## 2026-10-29 — authenticate stage-message advancement; gameplay still not reached
+
+- A cold Mednafen reference run used authentic Japanese Rev. 1 Track 02 and
+  the canonical headerless System Card 3.0 body, with the original Japanese
+  SBI sidecar and no save-state. Real runtime screenshots show the Ak-Tu-Ba
+  stage card, its first story page after Button I, and a later story page after
+  another short Button I press.
+- The input trace records Button I at the System Card poll (`raw=0001`,
+  active-low value `$3E`). The successive screenshots confirm that the short
+  press advanced the displayed story page. The run stopped at the story text;
+  it did not reach hero selection or first-person dungeon gameplay.
+- The full headered System Card image was unavailable. The private evidence
+  bundle, containing screenshots and compressed traces but no source media or
+  BIOS, is `/home/trv2/firestaff-theron-evidence/capture/theron-menu-progression-20261029-r1/`.
+  Its manifest pins the three screenshots and both traces. This establishes
+  one original menu transition only; it does not establish page-advance
+  semantics, dungeon admission, or native Theron parity.
+- Next: continue from the authentic stage-message sequence through the Soul
+  Room and into a first-person dungeon, retaining the original-media and
+  controller receipts at each transition.
+
 ## 2026-10-29 — scripted mouse deltas still do not bind guest pointer targets
 
 - Four isolated reference captures used the authentic USA Ak-Tu-Ba state

@@ -5,6 +5,19 @@ only as an external reference instrument for authentic original-game behavior
 and data capture; it is never part of the shipped runtime or a substitute for
 native Firestaff gameplay.
 
+## 2026-10-29 — authentic Japanese stage-message advancement captured
+
+A cold Japanese Rev. 1 reference run used original Track 02, the canonical
+headerless System Card 3.0 body, and the original SBI sidecar without loading
+a save-state. Three real screenshots capture the Ak-Tu-Ba stage card, its
+first story page after Button I, and a later page after another short Button I
+press. The active-low Button I poll value `$3E` is present in the controller
+trace. This proves one visible story-page transition after controller input.
+It does not show hero selection or a dungeon, and it does not establish native
+parity. The full headered card image was unavailable. Private evidence,
+including hashes, is retained at
+`/home/trv2/firestaff-theron-evidence/capture/theron-menu-progression-20261029-r1/`.
+
 ## 2026-10-26 — PCE Fast captures default to a close-time snapshot signal
 
 The reference capture launcher now defaults PCE Fast to `TERM` unless the
