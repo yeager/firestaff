@@ -1,5 +1,108 @@
 # Firestaff DONE — Nexus
 
+## 2026-10-29 — Identify the authentic BKR health pair
+
+- The BKR source halfwords at champion offsets `+0x38/+0x3a` map to runtime
+  `+0/+4`. `FUN_0603b014` initializes those same runtime cells from the PLRD
+  health value. The pair is therefore current/maximum health, not an unnamed
+  recovery pair. Health updates after Continue have not yet been bound.
+- The BKR receipt and authentic-media regression now expose and check the
+  values as `champion_health_current` and `champion_max_health` across all four
+  hash-pinned retail saves. The engine still does not apply a complete Saturn
+  Continue payload.
+
+## 2026-10-29 — Identify the authentic BKR mana pair
+
+- `FUN_0602eb4c` maps BKR halfwords at `+0x40/+0x42` to runtime `+0x10/+0x14`.
+  The New Game initializer fills those cells from the PLRD mana value at
+  `+0x0a`; `FUN_060361a8` increments the first toward the second. This binds
+  the pair as current and maximum mana.
+- The BKR receipt and authentic-media regression now expose the fields as
+  `champion_mana_current` and `champion_max_mana`. The four authentic saves
+  contain `18/20`; the retained retail update capture shows `19/20`.
+- The complete payload mapping and Firestaff Continue application remain
+  incomplete.
+
+## Superseded — Initial conservative label for the health pair
+
+- `FUN_0602eb4c` projects signed BKR halfwords at champion offsets `+0x38/+0x3a`
+  to runtime longwords `+0/+4`. `FUN_060361a8` caps increases at the gap
+  between the two values. These were initially described as recovery fields
+  because the domain had not yet been identified. Follow-up evidence in the
+  section above maps them to current and maximum health; the receipt and real
+  media check now use health names. Full BKR application to the engine and
+  playable Continue remain open.
+
+## Superseded — Initial conservative label for the mana pair
+
+- `FUN_0602eb4c` projects signed source halfwords at champion-record offsets
+  `+0x40/+0x42` to runtime longwords `+0x10/+0x14`. `FUN_060361a8` adjusts
+  the first value within the second value's ceiling. The retained Ymir trace
+  shows retail changing `18/20` to `19/20`.
+- This pair was initially left as a generic bounded value and limit while its
+  game meaning was unknown. Follow-up evidence above identifies it as current
+  and maximum mana; the receipt and real-media check now use those names.
+- This does not complete the champion schema or apply a Saturn save to the
+  Firestaff engine.
+
+## 2026-10-29 — Bind the authentic BKR stamina pair
+
+- `FUN_0602eb4c` projects signed save halfwords at champion-record offsets
+  `+0x3c/+0x3e` to runtime longwords `+0x08/+0x0c`. The retail updater
+  `FUN_060360fc` subtracts from `+0x08`, handles values below one as damage,
+  and clamps against `+0x0c`, identifying current and maximum stamina.
+- The bounded BKR probe returns this pair for each champion. The regression
+  checks all four hash-pinned authentic saves: `66/67` for each champion in
+  the two-, three-, and ordinary four-champion samples, and `67/67` in the
+  leader-index-3 sample. No synthetic game data was added.
+- All remaining champion fields stay opaque, and applying Saturn Continue
+  state to Firestaff's engine remains open.
+
+## 2026-10-29 — Bind the authentic BKR party leader index
+
+- pcrecomp/Ghidra decompilation of `FUN_0602eb4c` shows payload byte `+0x61`
+  sign-extended into runtime context `+0x0c`. All four authentic BKR payloads
+  match same-run Ymir WorkRAM at `0x0608009c`, including the leader-index-3
+  save (`0, 0, 0, 3` across the two-, three-, and four-champion samples).
+- The bounded BKR probe now returns this index and rejects negative or
+  out-of-roster values. The real-data test uses all four hash-pinned saves and
+  derives malformed cases from authentic payload bytes; it introduces no
+  synthetic save fixture.
+- This identifies one context field only. Complete payload mapping, engine
+  state application, and playable Continue remain open.
+
+## 2026-10-29 — Join authentic BKR name prefix to Japanese PLRD roster
+
+- Extracted the Japanese `RLOWFIX.BIN` from the authentic Track 1 image in
+  memory and verified its 72,332-byte SHA-256 against the pinned retail
+  identity. Compared its PLRD/TABL entries against all four hash-verified BKR
+  payloads without adding original media to Git.
+- Every champion record in these saves starts with `a3 88 96 80 80 00`.
+  The first three bytes uniquely match PLRD roster row 2 and TABL codes
+  `0x88`, `0x65`, `0x6d`; the loader copies six bytes to runtime `+0x2c`.
+- Documented the unresolved two-byte suffix, the missing runtime text
+  consumer, and the need for an authentic save with a different roster member.
+  This is a partial source join, not a BKR import or text-rendering feature.
+
+## 2026-10-29 — Expand authentic BKR roster projection checks
+
+- Extended the pcrecomp/Ghidra-directed analyzer to verify 83 loader
+  operations per champion across authentic two-, three-, and four-champion
+  captures. The checks cover byte spans, byte-to-halfword conversions,
+  sentinel handling, repeated tables, and signed/unsigned halfword fields.
+- Added validation of the retained leader-3 write trace for post-load changes
+  to runtime offsets `+0x18` and `+0x1a`. The expanded capture now includes all
+  four runtime records and explains all 16 final-value differences across
+  offsets `+0x08`, `+0x10`, `+0x18`, and `+0x1a`.
+- Kept save-field semantics unassigned and champion records opaque in
+  Firestaff. This evidence advances the mechanical roster projection only; it
+  does not implement Saturn BKR loading or playable Continue.
+- Re-ran the analyzer against all four authentic captured payloads and the
+  complete leader-3 trace. The two-, three-, four-, and leader-3 runs report
+  166, 249, 332, and 332 checks, respectively. The full leader-3 update
+  capture explains all 16 final-value differences, with none unresolved in
+  the four tracked runtime fields.
+
 ## 2026-10-28 — Source-bind Japanese Configuration foreground and mouse route
 
 - Enabled the Configuration foreground for the hash-verified Japanese retail
@@ -152,6 +255,30 @@ Nexus menu/gameplay parity or full Theron parity.
   incomplete. The retail provenance of the BUP used in the Ymir run was not
   independently established because its original transfer chain was not
   retained.
+
+## 2026-10-29 — Bound the authentic Nexus Continue payload roster
+
+- Added a C probe for the decompilation-bound `DMNEXUS__01` source-relative
+  pointers, roster count, `0x11c` source table, `0xe0` stride, and
+  count-dependent payload span. Champion record contents remain opaque.
+- Extended the real-data regression across all four SHA-256-pinned retail BKR
+  images and verified that mutations to the source pointer or roster count are
+  rejected. The CTest uses the private authentic corpus and is labeled
+  `real_data;no_synthetic`.
+- The probe does not map these records into Firestaff's champion structure or
+  implement Continue; the engine handoff remains open.
+
+## 2026-10-29 — Probe one explicitly selected Saturn card file
+
+- Added a path-based, read-only BKR file probe with a 4 MiB input bound. It
+  requires exactly one `DMNEXUS__01` entry and the existing verified payload
+  receipt, then returns only card and roster metadata; payload bytes are freed
+  and no gameplay state is applied.
+- Exercised the path probe against all four authentic, hash-pinned retail card
+  images. It does not scan the game-data directory or decide which card the
+  player selected.
+- The launcher and Load-panel flow still need explicit card-selection state,
+  full save mapping, and a verified engine handoff before Continue is playable.
 
 ## 2026-10-24 — Verified title and media diagnostics
 

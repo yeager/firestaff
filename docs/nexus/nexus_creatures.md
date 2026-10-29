@@ -139,13 +139,16 @@ DMDF (Dungeon Master Data Format) stores:
 
 ---
 
-## What's the Same as DM1
+## DM1 comparison status
 
-- Same creature types (Scorpion, Mummy, Dragon, etc.)
-- Same dungeon placement (Nexus reuses DM1 dungeon layout)
-- Same experience values and gold drops (inherited from DM1)
-- Same combat formula (attack vs defense, damage = ATK + RNG)
-- Same spell effects on creatures (fireball, lightning, etc.)
+The earlier statements that Nexus shares DM1 creature types, dungeon
+placement, experience values, gold drops, combat formula, or spell effects
+were not joined to the Japanese retail consumers and are withdrawn. The
+Firestaff creature tables and host combat model are diagnostic data, not proof
+of retail behavior. Compare DM1 only where an explicit retail byte/source and
+runtime join supports the specific claim; otherwise leave the Nexus behavior
+unknown. See `NEXUS_STALE_CLAIM_AUDIT.md` and
+`NEXUS_STRICT_FIDELITY_INVENTORY.md`.
 
 ---
 

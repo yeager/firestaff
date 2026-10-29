@@ -312,7 +312,7 @@ h_before == h_after → PASS
 |--------|---------|
 | `scripts/verify_nexus_v1_asset_manifest.py` | Python: verify file sizes, check DGN/DMDF headers, report missing files |
 | `scripts/verify_nexus_v1_input_script.py` | Python: parse and validate input script JSON schema |
-| `scripts/generate_nexus_v1_fixtures.py` | Python: generate deterministic synthetic DGN/DMDF blobs |
+| Retired 2026-10-29: `scripts/generate_nexus_v1_fixtures.py` | Removed; generated synthetic Nexus assets and an unused FNXS sample |
 
 All scripts: Python 3, no external dependencies, exit 0 on pass, exit 1 on fail.
 
@@ -331,7 +331,7 @@ All scripts: Python 3, no external dependencies, exit 0 on pass, exit 1 on fail.
 | `tests/nexus_v1_world_probe.c` | World model: init, objects, events, timers, hash | No (synthetic) |
 | `scripts/verify_nexus_v1_asset_manifest.py` | File manifest validation | Yes |
 | `scripts/verify_nexus_v1_input_script.py` | Input script JSON schema | No |
-| `scripts/generate_nexus_v1_fixtures.py` | Generate synthetic DGN/DMDF blobs | No |
+| Retired 2026-10-29: `scripts/generate_nexus_v1_fixtures.py` | No longer shipped; authentic Nexus data now supplies positive asset checks |
 
 ---
 

@@ -1,5 +1,6 @@
 #include "nexus_v1_saturn_bkr.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -28,6 +29,12 @@ static uint32_t read_be32(const uint8_t *bytes)
     return ((uint32_t)bytes[0] << 24) |
         ((uint32_t)bytes[1] << 16) |
         ((uint32_t)bytes[2] << 8) | bytes[3];
+}
+
+static int32_t read_be_s16(const uint8_t *bytes)
+{
+    uint32_t value = read_be16(bytes);
+    return (value & 0x8000U) != 0U ? (int32_t)value - 0x10000 : (int32_t)value;
 }
 
 static int block_range_valid(uint32_t block, uint32_t block_count)
@@ -235,4 +242,178 @@ done:
     free(claimed);
     *out_receipt = receipt;
     return ok;
+}
+
+int nexus_v1_saturn_bkr_nexus_payload_probe(
+    const Nexus_V1_SaturnBkrEntry *entry,
+    const uint8_t *payload, size_t payload_size,
+    Nexus_V1_SaturnBkrNexusPayloadReceipt *out_receipt)
+{
+    Nexus_V1_SaturnBkrNexusPayloadReceipt receipt;
+    uint32_t champion_count;
+    int32_t party_leader_index;
+    uint32_t records_offset = 0x0CCU + 0x50U;
+    uint32_t records_stride = 0x0E0U;
+    uint32_t declared_span;
+    uint32_t records_bytes;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (out_receipt) *out_receipt = receipt;
+    if (!entry || !payload || !out_receipt ||
+        memcmp(entry->name, "DMNEXUS__01", sizeof("DMNEXUS__01")) != 0 ||
+        entry->payload_bytes != 20480U || payload_size != entry->payload_bytes ||
+        read_be32(payload + 0x54U) != 0x10U ||
+        read_be32(payload + 0x58U) != 0xCCU) {
+        return 0;
+    }
+
+    champion_count = payload[0x62U];
+    party_leader_index = (int8_t)payload[0x61U];
+    declared_span = read_be16(payload + 0x0AU);
+    if (champion_count == 0U || champion_count > 4U ||
+        party_leader_index < 0 ||
+        (uint32_t)party_leader_index >= champion_count ||
+        declared_span != 0x274U + champion_count * records_stride) {
+        return 0;
+    }
+    records_bytes = champion_count * records_stride;
+    if (records_offset > payload_size ||
+        records_bytes > payload_size - records_offset ||
+        records_offset + records_bytes > declared_span ||
+        declared_span > payload_size) {
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.payload_bytes = (uint32_t)payload_size;
+    receipt.champion_count = champion_count;
+    receipt.party_leader_index = (uint32_t)party_leader_index;
+    {
+        uint32_t champion;
+        for (champion = 0U; champion < champion_count; ++champion) {
+            uint32_t record_offset = records_offset + champion * records_stride;
+            receipt.champion_rune_sequence_cursor[champion] =
+                payload[record_offset + 0x09U];
+            receipt.champion_health_current[champion] =
+                read_be_s16(payload + record_offset + 0x38U);
+            receipt.champion_max_health[champion] =
+                read_be_s16(payload + record_offset + 0x3AU);
+            receipt.champion_stamina_current[champion] =
+                read_be_s16(payload + record_offset + 0x3CU);
+            receipt.champion_stamina_max[champion] =
+                read_be_s16(payload + record_offset + 0x3EU);
+            receipt.champion_mana_current[champion] =
+                read_be_s16(payload + record_offset + 0x40U);
+            receipt.champion_max_mana[champion] =
+                read_be_s16(payload + record_offset + 0x42U);
+        }
+    }
+    receipt.champion_records_offset = records_offset;
+    receipt.champion_record_stride = records_stride;
+    receipt.champion_records_bytes = records_bytes;
+    receipt.declared_payload_span = declared_span;
+    *out_receipt = receipt;
+    return 1;
+}
+
+static int saturn_bkr_read_nexus_file_internal(
+    const char *path,
+    uint8_t *payload_out, size_t payload_capacity,
+    Nexus_V1_SaturnBkrNexusFileReceipt *out_receipt)
+{
+    Nexus_V1_SaturnBkrNexusFileReceipt receipt;
+    Nexus_V1_SaturnBkrEntry entries[NEXUS_V1_SATURN_BKR_MAX_ENTRIES];
+    FILE *file = NULL;
+    uint8_t *image = NULL;
+    uint8_t *payload_storage = NULL;
+    long file_bytes;
+    size_t image_size;
+    uint32_t nexus_entry_index = 0U;
+    uint32_t nexus_entry_count = 0U;
+    int ok = 0;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (out_receipt) *out_receipt = receipt;
+    if (!path || !path[0] || !out_receipt ||
+        ((payload_out == NULL) != (payload_capacity == 0U)) ||
+        !(file = fopen(path, "rb")))
+        goto done;
+    if (fseek(file, 0L, SEEK_END) != 0 ||
+        (file_bytes = ftell(file)) <= 0 ||
+        (unsigned long)file_bytes > NEXUS_V1_SATURN_BKR_MAX_IMAGE_BYTES ||
+        fseek(file, 0L, SEEK_SET) != 0) {
+        goto done;
+    }
+    image_size = (size_t)file_bytes;
+    image = (uint8_t *)malloc(image_size);
+    payload_storage = (uint8_t *)malloc(image_size);
+    if (!image || !payload_storage ||
+        fread(image, 1U, image_size, file) != image_size ||
+        fgetc(file) != EOF || ferror(file)) {
+        goto done;
+    }
+    if (!nexus_v1_saturn_bkr_parse(
+            image, image_size, entries, NEXUS_V1_SATURN_BKR_MAX_ENTRIES,
+            payload_storage, image_size, &receipt.card) ||
+        !receipt.card.valid) {
+        goto done;
+    }
+    {
+        uint32_t i;
+        for (i = 0U; i < receipt.card.entry_count; ++i) {
+            if (memcmp(entries[i].name, "DMNEXUS__01",
+                       sizeof("DMNEXUS__01")) == 0) {
+                nexus_entry_index = i;
+                ++nexus_entry_count;
+            }
+        }
+    }
+    if (nexus_entry_count != 1U) goto done;
+    receipt.entry = entries[nexus_entry_index];
+    if (receipt.entry.payload_offset > receipt.card.payload_bytes ||
+        receipt.entry.payload_bytes >
+            receipt.card.payload_bytes - receipt.entry.payload_offset ||
+        !nexus_v1_saturn_bkr_nexus_payload_probe(
+            &receipt.entry,
+            payload_storage + receipt.entry.payload_offset,
+            receipt.entry.payload_bytes, &receipt.nexus_payload) ||
+        (payload_out && receipt.entry.payload_bytes > payload_capacity)) {
+        goto done;
+    }
+    if (payload_out) {
+        memcpy(payload_out,
+               payload_storage + receipt.entry.payload_offset,
+               receipt.entry.payload_bytes);
+    }
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    ok = 1;
+
+done:
+    if (file) fclose(file);
+    free(payload_storage);
+    free(image);
+    if (!ok && out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    return ok;
+}
+
+int nexus_v1_saturn_bkr_read_nexus_file(
+    const char *path,
+    uint8_t *payload_out, size_t payload_capacity,
+    Nexus_V1_SaturnBkrNexusFileReceipt *out_receipt)
+{
+    if (!payload_out || !payload_capacity || !out_receipt) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    return saturn_bkr_read_nexus_file_internal(
+        path, payload_out, payload_capacity, out_receipt);
+}
+
+int nexus_v1_saturn_bkr_probe_nexus_file(
+    const char *path,
+    Nexus_V1_SaturnBkrNexusFileReceipt *out_receipt)
+{
+    return saturn_bkr_read_nexus_file_internal(
+        path, NULL, 0U, out_receipt);
 }

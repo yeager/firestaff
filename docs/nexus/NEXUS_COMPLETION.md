@@ -606,6 +606,12 @@ identity, start pose, HUD/viewport consumer, or SLEV/SAL dispatch is verified.
 Saturn BIOS, disc, and capture bytes remain outside the repository and must not
 be treated as a Firestaff distribution.
 
+**Historical snapshot (2026-08-13; superseded).** The gate counts and
+readiness figures below describe only the evidence available on that date.
+They are not the current Nexus status. For current source and runtime gates,
+see the [strict source-fidelity inventory](NEXUS_STRICT_FIDELITY_INVENTORY.md)
+and the [startup/menu evidence log](nexus_startup.md).
+
 | Area | Verified gates | Implementation coverage | Production readiness | Primary blocker |
 |---|---:|---:|---:|---|
 | Startup | 3/6 | 50.0 % | 0 % | The J-BIOS/media pair is now available and a reset frame is validated, but no valid startup→menu witness exists |
@@ -616,16 +622,17 @@ be treated as a Firestaff distribution.
 | SLEV/SAL/SDDRVS | 2/8 | 25.0 % | 0 % | Corpus, driver, and write traces exist; selector, codec, MAP binding, event dispatch, and actual playback are unproven |
 
 The arithmetic mean of implementation coverage is
-`(50,0 + 37,5 + 57,1 + 75,0 + 14,3 + 25,0) / 6 = 44,0 %`.
+`(50,0 + 37,5 + 57,1 + 75,0 + 14,3 + 25,0) / 6 = 43,2 %`.
 As a checksum, the named gates are `22/48 = 45,8 %`; that figure does not
 replace the area mean, because an area would otherwise weigh more merely for
 having more sub-gates. For the prioritized startup → menu → HUD/viewport chain,
 with weights 30/35/35, implementation coverage is
 `50,0 × 0,30 + 37,5 × 0,35 + 14,3 × 0,35 = 33,1 %`.
-Production readiness is currently 0% for both measures: the validated J
-capture is a reset/transport witness without startup→menu identity, and the
-existing E-BIOS/French capture likewise opens no semantic runtime consumer.
-The figures must not be averaged across models.
+In this 2026-08-13 snapshot, production readiness was 0% for both measures:
+the validated J capture was a reset/transport witness without startup→menu
+identity, and the existing E-BIOS/French capture likewise opened no semantic
+runtime consumer. These historical figures must not be averaged across models
+or presented as the current gate counts.
 
 ## External retail corpus
 
@@ -880,3 +887,26 @@ asset and CLUT owner remain unidentified, so this reference does not open
 Firestaff's production menu or renderer gate. It also does not establish
 playable-level entry, save loading, HUD or gameplay parity. Details and hashes
 are in [the English cold-boot receipt](nexus_startup.md#english-cold-boot-reaches-the-native-title-menu-2026-10-27).
+
+## Authentic BKR Continue reference (2026-10-28–29)
+
+Ymir `0.4.2-dev` on TRV2 cold-booted the authentic Japanese retail disc with
+the corpus-retained four-champion BKR in internal backup RAM. The native
+Continue route displayed `B01  0:06 NORMAL`, accepted the save, and reached a
+dungeon view with four champion HUD panels. A separate 2026-10-29 cold boot
+with the authentic two-champion BKR also reached the native Load panel and
+displayed `B01  0:06 NORMAL`, accepted the save, and reached a dungeon view with
+two champion HUD panels; the profile's BUP image retained the BKR hash. These
+are retail-reference results in Ymir. The two-champion capture does not
+identify payload fields, and neither result wires Firestaff's BKR parser to
+live backup RAM or the engine load path. Firestaff Continue, complete menu
+composition, and production gameplay remain unverified. Reproduction commands,
+hashes, captures and the savestate-method correction are recorded in
+[`nexus_startup.md`](nexus_startup.md#two-champion-bkr-cold-boot-2026-10-29)
+and the operator-managed evidence bundle linked there.
+
+A source-window join using pcrecomp's generic Ghidra scripts identifies a
+subset of the early BUP reads as the retail `BackUpRam Format` signature
+check. The rest of the 10,849-row trace, the save payload schema, and the
+Continue-to-engine state mapping remain unresolved; see
+[`nexus_sh2_startup_decompilation.md`](nexus_sh2_startup_decompilation.md#bup-format-signature-check-2026-10-29).

@@ -136,9 +136,9 @@ real CSB records.
 
 ### Findings
 
-- `scripts/generate_nexus_v1_fixtures.py` creates synthetic DGN, DMDF, and
-  FNXS-save files. `scripts/fixtures/nexus_v1_save_synthetic.dat` is therefore
-  never a real Nexus save.
+- The unused `scripts/generate_nexus_v1_fixtures.py` generator and its tracked
+  synthetic FNXS sample have been removed. Authentic DGN, DMDF, BKR, and
+  `DMNEXUS__01` files are available in the Nexus data directory.
 - `docs/source-lock/nexus_v1_phase7_verification_suite_H0357.md` documents
   these fixtures and an older synthetic fallback for parser/round-trip probes.
 - `tests/fixtures/` and `*_fixture` targets are for deterministic testing, not
@@ -152,10 +152,11 @@ Japanese retail CUE/BIN source, `LEV*.DGN`, `SLEV*.BIN`, `SNDLEV*.SAL`, and
 
 ### Decision
 
-Keep synthetic DGN/DMDF/save data for parser and negative tests, but never
-present it as a playable original. Real-data probes must use hash- and
-format-verified files from the Nexus directory. Saturn pixel and runtime
-capture gates remain open until an authentic capture exists.
+Use hash- and format-verified files from the Nexus directory for positive
+asset and save-format checks. Derive malformed parser inputs in memory from
+authentic bytes when a negative case is needed. Do not check in synthetic
+Nexus game assets. Saturn pixel and runtime capture gates remain open until
+the corresponding authentic capture exists.
 
 ## Theron
 

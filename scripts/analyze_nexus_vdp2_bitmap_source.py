@@ -394,6 +394,11 @@ def main() -> int:
                         help="retail CUE; ISO members are retained in memory")
     parser.add_argument("--frame", type=int, default=0)
     parser.add_argument(
+        "--exact-only",
+        action="store_true",
+        help="skip sampled partial-span ranking and report only exact source matches",
+    )
+    parser.add_argument(
         "--capture-frames",
         type=int,
         default=None,
@@ -491,12 +496,13 @@ def main() -> int:
                 exact += 1
                 layer_exact += 1
                 print(f"exact_match={layer}:{name} bitmap_offset=0x{full:06x} bytes={len(source)}")
-            run, source_offset, target_offset = longest_nonzero_match(source, bitmap)
-            if run:
-                ranked.append((run, name, source_offset, target_offset))
+            if not args.exact_only:
+                run, source_offset, target_offset = longest_nonzero_match(source, bitmap)
+                if run:
+                    ranked.append((run, name, source_offset, target_offset))
         for run, name, source_offset, target_offset in sorted(ranked, reverse=True)[:8]:
             print(f"{layer}_partial_match={name} bytes={run} source_offset=0x{source_offset:x} bitmap_offset=0x{target_offset:x}")
-        if layer == "NBG0" and title_bin:
+        if layer == "NBG0" and title_bin and not args.exact_only:
             run, source_offset, target_offset = longest_nonzero_match(
                 title_bin, bitmap)
             if run:

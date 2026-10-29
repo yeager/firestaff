@@ -22,9 +22,10 @@ shared background and full-screen composition remain unbound. New Game Accept
 now reaches the authenticated `DM.BIN`/`LEV01.DGN` loader and records the
 retail level-1 start pose for keyboard/controller and mouse input, but the
 viewport/HUD handoff still restores the title. Continue/save loading and
-Configuration destination behavior are not integrated. Continue availability
-deliberately does not use Firestaff save files; the Saturn BKR intake and
-payload-to-engine route are not integrated here.
+Configuration destination behavior are not integrated. The host Continue
+route does not substitute Firestaff save files for Saturn backup RAM. The
+authenticated Saturn BKR parser is not connected to live backup RAM, the retail
+save-list state, or the engine load path.
 The `verify_nexus_title_sprite_screenshot.py` verifier checks the Japanese and
 English New Game/Continue layouts, including retail `TITLE.BIN` offsets, VDP1
 placement, CRAM color, priority, English 16-color palettes against exact

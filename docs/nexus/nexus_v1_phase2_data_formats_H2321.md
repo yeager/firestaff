@@ -318,7 +318,9 @@ and presentation consumers are captured. Representative labels include:
 | Keys | Gold Key, Silver Key, Skeleton Key |
 | Misc | Torch, Compass, Rabbit Foot, Corn, Water Flask |
 
-**Champion inventory:** 30 slots (`uint8_t inventory[30]` in `Nexus_V1_Champion`), vs DM1's 12 slots.
+**Firestaff host structure only:** `Nexus_V1_Champion` currently declares
+`uint8_t inventory[30]`. This is not evidence of Nexus retail inventory
+capacity or slot semantics; see `nexus_items.md`.
 
 ### 3.5 Object Variants
 
@@ -326,9 +328,9 @@ and presentation consumers are captured. Representative labels include:
 |--------|-----|-------|
 | Object storage | Thing list in DUNGEON.DAT | Embedded in DGN (unknown format) |
 | Object types | ~20 types | **14 types** (NEXUS_OBJECT_0 through NEXUS_OBJECT_TELEPORTER_LINK) |
-| Inventory slots | 12 per champion | **30 per champion** |
-| Flask system | Yes | Yes (inherited) |
-| Scroll system | No | Yes (from CSB/DM2) |
+| Inventory slots | DM1 reference | Retail Nexus capacity and slot semantics unknown |
+| Flask system | DM1 reference | Retail Nexus behavior unknown |
+| Scroll system | DM1 reference | Retail Nexus roster and use behavior unknown |
 | Teleporter links | Hard-coded square pairs | NEXUS_OBJECT_TELEPORTER_LINK with `linked_id` |
 
 ### 3.6 Firestaff Conversion
