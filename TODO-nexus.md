@@ -16,6 +16,13 @@ source-bound payload schema and retail save-selection/load consumer. Do not
 promote the parser's opaque payload bytes into runtime state without joining
 those bytes to the authentic Saturn save/load implementation.
 
+A 2026-10-29 Ymir cold boot with the authentic two-champion BKR installed in
+internal backup RAM reached the native Load panel and displayed `B01 0:16
+NORMAL`; the BUP image retained its source hash. This authenticates the
+reference startup/list path for this capture but does not identify payload
+fields or implement Firestaff Continue. See the cold-boot receipt in
+[`nexus_startup.md`](docs/nexus/nexus_startup.md#two-champion-bkr-cold-boot-2026-10-29).
+
 2026-10-28 retail New Game loader route: the M11 retail menu now sends
 keyboard/controller Accept and the retail mouse row to the same source-gated
 New Game path. Against authentic Japanese retail media, the regression
