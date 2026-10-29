@@ -15,12 +15,13 @@ Continue-to-gameplay with the corpus-retained BKR image whose SHA-256 is
 retail Load screen showed `B01 0:16 NORMAL`, then entered the four-champion
 dungeon view. The isolated BKR copy retained its hash after loading. A paired
 Up-input replay changed the rendered gameplay view. These captures verify the
-retail reference flow in Ymir only. A separate 2026-10-29 cold boot installed
-the authentic two-champion retail-written BKR before power-on and also reached
-the Load panel with `B01 0:16 NORMAL`. Its internal backup-RAM image retained
-the source hash. This proves the retail startup enumerates that BKR in this
-capture; it does not identify payload fields or connect Firestaff's BKR parser
-to live backup RAM. Firestaff now renders authenticated English
+retail reference flow in Ymir only. Separate 2026-10-29 cold boots installed
+the authentic two-champion retail-written BKR before power-on, reached the
+Load panel with `B01 0:16 NORMAL`, accepted that entry, and entered a dungeon
+view with two champion HUD panels. The internal backup-RAM image retained its
+source hash. These runs prove the retail flow for that BKR in Ymir; they do not
+identify payload fields or connect Firestaff's BKR parser to live backup RAM.
+Firestaff now renders authenticated English
 and Japanese New Game/Continue/Configuration foreground sprites from regional
 `TITLE.BIN` data. English Configuration text pixels match its Ymir capture;
 final marker RGB remains background-dependent. The shared background,
@@ -2000,8 +2001,9 @@ title menu, selected Continue, and reached the native Load panel. The panel
 displayed `B01 0:16 NORMAL`. The source image and profile's `state/bup-int.bin`
 both retained SHA-256
 `3d60856119df55ffa4937d13b5dc7487157c7c6b131a999a2e61683316679634` after the
-run. The screenshot SHA-256 is
-`60dc4114dd0e78586bf652d16f204c8c9f19e200f8bf2336a009085ed055c811`.
+run. A second cold boot accepted the selected row and entered a dungeon view
+with two champion HUD panels; its 640×448 screenshot SHA-256 is
+`5597829327a0a95a60393658289c742a18a5a6beaa7a846fa94728996000d9d5`.
 
 This is a real-media cold-boot observation of the retail save-list row. It
 does not prove the BKR payload schema, which payload bytes the retail game

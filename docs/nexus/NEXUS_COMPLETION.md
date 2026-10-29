@@ -895,8 +895,9 @@ the corpus-retained four-champion BKR in internal backup RAM. The native
 Continue route displayed `B01 0:16 NORMAL`, accepted the save, and reached a
 dungeon view with four champion HUD panels. A separate 2026-10-29 cold boot
 with the authentic two-champion BKR also reached the native Load panel and
-displayed `B01 0:16 NORMAL`; the profile's BUP image retained the BKR hash.
-These are retail-reference results in Ymir. The two-champion capture does not
+displayed `B01 0:16 NORMAL`, accepted the save, and reached a dungeon view with
+two champion HUD panels; the profile's BUP image retained the BKR hash. These
+are retail-reference results in Ymir. The two-champion capture does not
 identify payload fields, and neither result wires Firestaff's BKR parser to
 live backup RAM or the engine load path. Firestaff Continue, complete menu
 composition, and production gameplay remain unverified. Reproduction commands,

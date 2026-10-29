@@ -17,10 +17,11 @@ promote the parser's opaque payload bytes into runtime state without joining
 those bytes to the authentic Saturn save/load implementation.
 
 A 2026-10-29 Ymir cold boot with the authentic two-champion BKR installed in
-internal backup RAM reached the native Load panel and displayed `B01 0:16
-NORMAL`; the BUP image retained its source hash. This authenticates the
-reference startup/list path for this capture but does not identify payload
-fields or implement Firestaff Continue. See the cold-boot receipt in
+internal backup RAM reached the native Load panel, displayed `B01 0:16 NORMAL`,
+and accepted the save to reach a dungeon view with two champion HUD panels. The
+BUP image retained its source hash. This verifies the retail reference flow
+but does not identify payload fields or implement Firestaff Continue. See the
+cold-boot receipt in
 [`nexus_startup.md`](docs/nexus/nexus_startup.md#two-champion-bkr-cold-boot-2026-10-29).
 
 2026-10-28 retail New Game loader route: the M11 retail menu now sends
