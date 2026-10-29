@@ -1,5 +1,22 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-29 — verify bounded authentic CD-to-RAM source joins
+
+Added a reusable verifier that joins shared event sequences from a PCE Fast CD
+data-port trace and the CD RAM target-write trace. It checks the authentic JP
+Track 02 media hash and raw-byte locations, requires the System Card `$EA99` to
+`$EA9C` instruction pair, and can scope verification to a physical destination
+window. Seven parser regressions passed in three loops. On TRV2, it validated
+30 immediate byte-equal source/read-to-write pairs across 15 bank-$80
+destination addresses in retained authentic JP capture
+`theron-jp-cold-joined-20261029-r2`, with source LBAs 4521 and 4589. The real
+capture verification also passed three consecutive loops. Source data remained
+on TRV2.
+
+This is a verified evidence tool and a narrow existing loader receipt. It does
+not establish the bank-$68 poll-code source, game-owned loading, or gameplay
+behavior; complete native Theron parity remains open.
+
 ## 2026-10-29 — capture the complete authentic `$23AD` invocation
 
 An original US disc, System Card 3.0 and authentic Ak-Tu-Ba Backup RAM run
@@ -9303,6 +9320,31 @@ native rendering, or Theron parity. The private evidence bundle is at
   render parity is claimed; semantic attribution and full native Theron
   support remain open.
 
+## 2026-10-29 — verify decoded-buffer writes and byte-copy loop
+
+- The PCE Fast code-bank writer filter now extends through physical PC
+  `$1F1DFF`; the former `$1F1CFF` end omitted writes at `$1F1D1D`. The new
+  `verify_theron_decoder_write_trace.py` joins code-window records to ordered
+  `$23AD` writes by physical address, byte, and shared event sequence. On a
+  cold authentic USA capture it matched all 5,064 decoder output writes, one
+  shared-sequence step later: 1,840 from `$1F1C8D`, 1,432 from `$1F1CE6`, and
+  1,792 from `$1F1D1D`. The capture had 10,128 code-window write rows; the
+  remaining 5,064 occurred after decoder return and are still unattributed.
+- The opt-in PCE Fast main-RAM target-write trace records bounded effective
+  logical/physical destinations, MPRs, fetched writer bytes, and shared event
+  sequence. The `verify_theron_decoded_buffer_copy.py` verifier joins it to
+  `$1042AB` reads and `$1042AD` stores. In an authentic cold USA capture, 1,972
+  of 2,012 byte-equal reads were immediately followed by an equal-byte store
+  at the next shared sequence. The destination rows verify MPR2=`$82`, with
+  64 unique physical destinations from `$1047E0` through `$10485E`; 1,052
+  unique decoded-buffer source addresses were observed. This proves a byte-copy
+  operation only, not the copied structure's meaning or a rendered effect.
+- The focused verifier tests passed three loops. Both authentic capture
+  verifiers passed against the TRV2 traces. The capture still returned
+  `BLOCKED` because the final scripted input mask had no controller-poll
+  witness; it recorded no CD IRQ, `$E009` dispatch, or gameplay transition.
+  Semantic use, rendered effects, and full native Theron parity remain open.
+
 ## 2026-10-29 — honor the configured PCE Fast consumer trace limit
 
 - The PCE Fast main-RAM consumer hook now uses the validated
@@ -9332,3 +9374,21 @@ native rendering, or Theron parity. The private evidence bundle is at
   Both runs missed the final scripted-input poll and recorded no gameplay
   transition. The read PCs remain candidates; no ownership, gameplay use, or
   Theron parity is claimed.
+## 2026-10-29 — extend bounded runtime poll-code write tracing
+
+- Extended the capture-only PCE Fast CD RAM writer trace to include physical
+  bank `$68` offsets `$04D2–$04E6`, the 21-byte runtime poll sequence. The
+  isolated patch chain applied cleanly and the instrumented PCE Fast build
+  completed on TRV2 with `-j1`. Focused decoder, capture-verifier, and script
+  checks passed three consecutive loops; shell syntax and `git diff --check`
+  passed.
+- A cold authentic JP Rev. 1 capture recorded 21 ordered writes of the
+  expected poll-code bytes to bank `$68`, all at writer PC `$EA9C`. It also
+  recorded 60 exact physical-PC `$0D04D2` runtime windows among 64 hits.
+  The trace contained 483,328 source-bound Track 02 reads, but none came from
+  the seven known duplicate static candidates. The runtime write's source
+  therefore remains unproven. Scripted input consumption was observed only
+  at System Card PC `$E4C5`; no in-hold game-poll witness, CD IRQ,
+  authenticated CD-to-RAM receipt, `$E009` dispatch, or gameplay transition
+  was observed. This completes a diagnostic instrumentation task only; it
+  establishes no player-visible behavior or Theron parity.

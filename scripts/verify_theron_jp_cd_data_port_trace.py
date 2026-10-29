@@ -18,7 +18,7 @@ TRACK02_INDEX1_FILE_OFFSET = 526_848
 SECTOR_BYTES = 2_352
 USER_DATA_OFFSET = 16
 USER_DATA_BYTES = 2_048
-MAX_OBSERVED_BYTES = 65_536
+MAX_OBSERVED_BYTES = 1_048_576
 TRACE_HEADER = "source=mednafen-pce-fast-cd-data-port-read"
 TRACE_HEADER_WITH_READER_PC = "source=mednafen-pce-fast-cd-data-port-read-with-reader-pc"
 TRACE_HEADER_WITH_READER_MPR_CONTEXT = "source=mednafen-pce-fast-cd-data-port-read-with-reader-mpr-context"
@@ -72,7 +72,11 @@ def parse_row(line: str, line_number: int) -> dict[str, int]:
     return row
 
 
-def verify(trace_path: Path, track02_path: Path) -> tuple[bytes, list[dict[str, int]]]:
+def verify(
+    trace_path: Path,
+    track02_path: Path,
+    allow_other_sources: bool = False,
+) -> tuple[bytes, list[dict[str, int]]]:
     raw = track02_path.read_bytes()
     if len(raw) != EXPECTED_TRACK02_BYTES:
         raise ValueError("Track 02 has the wrong authenticated JP Rev. 1 size")
@@ -132,14 +136,28 @@ def verify(trace_path: Path, track02_path: Path) -> tuple[bytes, list[dict[str, 
                     f"reader-PC fields require the reader-PC trace header at row {sequence}"
                 )
 
-    # Pass 2 independently recomputes each row's sector and raw-file offsets.
+    # Pass 2 independently recomputes each JP Track 02 row's sector and
+    # raw-file offsets. Mixed-disc captures may contain other authentic
+    # tracks; callers joining against this JP BIN can opt to skip those rows.
     # Long instrumented captures can read non-adjacent sectors; validate each
     # observed byte against its own CD source receipt instead of assuming the
     # entire trace is one contiguous 4096-byte bootstrap read.
     for sequence, row in enumerate(rows):
+        media_metadata_matches = (
+            row["track02_start_lba"] == TRACK02_START_LBA
+            and row["track02_end_lba"] == TRACK02_END_LBA
+            and row["track02_index1_file_offset"] == TRACK02_INDEX1_FILE_OFFSET
+            and row["track02_sector_bytes"] == SECTOR_BYTES
+        )
+        if not media_metadata_matches:
+            if allow_other_sources:
+                continue
+            raise ValueError(f"unexpected source span at row {sequence}")
         sector_index = row["source_lba"] - TRACK02_START_LBA
         user_offset = row["source_user_offset"]
         if not 0 <= sector_index < TRACK02_END_LBA - TRACK02_START_LBA:
+            if allow_other_sources:
+                continue
             raise ValueError(f"source LBA is outside JP Track 02 at row {sequence}")
         if not 0 <= user_offset < USER_DATA_BYTES:
             raise ValueError(f"source user offset is outside its sector at row {sequence}")
@@ -162,6 +180,16 @@ def verify(trace_path: Path, track02_path: Path) -> tuple[bytes, list[dict[str, 
     # Pass 3 compares every observed byte with the hash-authenticated raw BIN.
     observed = bytearray()
     for sequence, row in enumerate(rows):
+        metadata_matches = (
+            row["track02_start_lba"] == TRACK02_START_LBA
+            and row["track02_end_lba"] == TRACK02_END_LBA
+            and row["track02_index1_file_offset"] == TRACK02_INDEX1_FILE_OFFSET
+            and row["track02_sector_bytes"] == SECTOR_BYTES
+        )
+        if not metadata_matches:
+            continue
+        if not TRACK02_START_LBA <= row["source_lba"] < TRACK02_END_LBA:
+            continue
         source_offset = row["track02_raw_file_offset"]
         if source_offset >= len(raw) or raw[source_offset] != row["value"]:
             raise ValueError(f"data-port byte differs from authentic media at row {sequence}")

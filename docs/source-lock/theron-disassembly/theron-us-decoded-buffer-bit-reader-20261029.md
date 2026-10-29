@@ -59,25 +59,39 @@ map, tile, palette, or other resource. The r3 cold run also ended with
 
 ## Next evidence
 
-Capture writes from the refill routine and its callers with logical and
-physical destinations, active MPR values, instruction bytes, and bounded
-register state. Join those writes to the decoded `$0D0000–$0D13C7` input and a
-later authentic game state before assigning semantics or enabling a native
-renderer route. Keep the capture gate explicit: the subsequent r4 attempt did
-not witness the final scripted Button I mask, and its raw traces were removed
-during TRV2 cleanup.
+Follow the verified byte-copy destination from `$47E0` through the bit-reader's
+later consumers and join it to an authentic game-state or rendering effect
+before assigning structure semantics or enabling a native renderer route. The
+cold capture still did not witness its final scripted Button I mask and
+reported `transition=missing`.
 
-## Follow-up authentic read-candidate capture
+## Shared-sequence read candidates
 
-A later cold USA capture used the same authentic Track 02, System Card, and
-Backup RAM, with no autoloaded state. The bounded `$23AD` trace again verified
-the ordered 5,064-byte output and SHA-256 above. An earlier aggregate-cap
-consumer-trace binary recorded 29,618 reads from the output span after its
-final decoder write. Those reads touched all 5,064 output addresses; 6,111
-reads matched the decoded byte at 3,130 addresses. The strongest reader groups
-were physical PCs `$1042AB` and `$1042B2` (2,012 byte-equal reads each),
-`$104287` and `$10428C` (928 each), and `$1F1C3E` (130). These are
-byte-equality candidates only. The runtime receipt reported no CD IRQ, game
-`$E009` dispatch, or gameplay transition, and the scripted input plan missed
-its final controller-poll witness. The raw trace remains private on TRV2;
-neither downstream write effects nor semantic ownership are established.
+The bounded shared-sequence consumer trace recorded 29,618 reads from the
+decoded output span after its final write. The reads touched all 5,064 output
+addresses; 6,111 matched the decoded byte across 3,130 addresses. The strongest
+byte-equal reader groups were physical PCs `$1042AB` and `$1042B2` (2,012
+reads each), `$104287` and `$10428C` (928 each), and `$1F1C3E` (130).
+`$1042AB` executes `LDA ($00),Y; STA $47E0,X; INY; INX`; its source bytes match
+authentic Track 02 LBA 4,241, user offset 683. The earlier consumer-only
+capture did not show the store destination. A follow-up added an opt-in
+physical-write hook and narrowed it to `$1047E0–$1048DF` after the broad
+two-bank window filled its 65,536-row cap. The narrow cold capture recorded
+12,928 writes without truncation. Of 2,012 byte-equal post-decode reads at
+`$1042AB`, 1,972 were followed by a `$1042AD` write of the same byte at the
+next shared event sequence. That write's fetched code bytes are `9D E0 47`,
+and MPR2=`$82` maps its observed logical destinations to physical
+`$1047E0–$10485E` (64 unique addresses). This proves the observed copy
+operation from the decoded buffer; it does not prove what the copied bytes
+represent or that they affect rendering or gameplay.
+
+The expanded code-window write trace now covers `$1F1C00–$1F1DFF`. A separate
+verifier matched all 5,064 ordered `$23AD` output writes to exact address and
+value records one shared-sequence step later: 1,840 at `$1F1C8D`, 1,432 at
+`$1F1CE6`, and 1,792 at `$1F1D1D`. The previous filter ended at `$1F1CFF` and
+missed the last group. The capture contained 10,128 code-window writes in all;
+the remaining 5,064 occurred after decoder return and are not attributed. The
+capture receipt reports no CD IRQ, game `$E009` dispatch, or gameplay
+transition, and its final scripted input still lacked a poll witness. Raw
+traces remain private on TRV2 until their verifier summaries are recorded; no
+rendered effect or full gameplay parity is claimed.

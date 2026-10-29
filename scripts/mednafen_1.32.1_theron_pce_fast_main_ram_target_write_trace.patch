@@ -1,0 +1,134 @@
+--- a/src/pce_fast/huc6280.cpp
++++ b/src/pce_fast/huc6280.cpp
+@@ -611,1 +611,3 @@
++extern void TheronTracePCEFastMainRAMTargetWrite(uint32 logical_address,
++                                                 uint32 physical_address, uint8 value);
+ static INLINE void WrMem(unsigned int A, uint8 V)
+@@ -618,2 +620,3 @@
+  TheronTracePCEFastCodeRAMWrite(A, physical, V);
++ TheronTracePCEFastMainRAMTargetWrite(A, physical, V);
+  HuCPU.PCEWrite[wmpr](physical, V);
+--- a/src/pce_fast/pce.cpp
++++ b/src/pce_fast/pce.cpp
+@@ -541,1 +541,121 @@
++void TheronTracePCEFastMainRAMTargetWrite(uint32 logical_address,
++                                         uint32 physical_address, uint8 value)
++{
++ static FILE *trace = NULL;
++ static bool trace_attempted = false;
++ static bool truncated_reported = false;
++ static bool range_initialized = false;
++ static bool range_enabled = false;
++ static bool trace_failed = false;
++ static uint32 range_first = 0;
++ static uint32 range_last = 0;
++ static uint32 count = 0;
++ static uint32 sample_limit = 65536;
++ extern uint32 TheronTraceCDSharedEventSequence;
++ if(!range_initialized)
++ {
++  range_initialized = true;
++  const char *range_text = getenv("FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_TARGET_WRITE_RANGE");
++  if(range_text && *range_text)
++  {
++   char *separator = NULL;
++   char *end = NULL;
++   unsigned long first = strtoul(range_text, &separator, 16);
++   unsigned long last = 0;
++   if(separator && *separator == '-')
++    last = strtoul(separator + 1, &end, 16);
++   if(separator && *separator == '-' && end && end != separator + 1 && !*end &&
++      first <= last && last <= 0x1FFFFF)
++   {
++    range_first = first;
++    range_last = last;
++    range_enabled = true;
++   }
++  }
++ }
++ if(trace_failed || !range_enabled)
++  return;
++ if(!trace_attempted)
++ {
++  trace_attempted = true;
++  const char *limit_text = getenv("FIRESTAFF_THERON_MAIN_RAM_TARGET_WRITE_SAMPLE_LIMIT");
++  if(limit_text && *limit_text)
++  {
++   char *end = NULL;
++   unsigned long parsed = strtoul(limit_text, &end, 10);
++   if(end && !*end && parsed >= 4096 && parsed <= 1048576)
++    sample_limit = parsed;
++  }
++  const char *path = getenv("FIRESTAFF_THERON_MAIN_RAM_TARGET_WRITE_TRACE");
++  if(path && *path)
++   trace = fopen(path, "w");
++  if(!trace)
++  {
++   trace_failed = true;
++   fputs("FIRESTAFF_THERON_MAIN_RAM_TARGET_WRITE_TRACE_ERROR error=open\n", stderr);
++   fflush(stderr);
++   return;
++  }
++  if(fputs("source=mednafen-pce-fast-main-ram-target-write event_sequence_source=TheronTraceCDSharedEventSequence\n", trace) < 0 || fflush(trace) != 0)
++  {
++   trace_failed = true;
++   fputs("FIRESTAFF_THERON_MAIN_RAM_TARGET_WRITE_TRACE_ERROR error=header\n", stderr);
++   fflush(stderr);
++   return;
++  }
++ }
++ if(!trace)
++  return;
++ if(physical_address < range_first || physical_address > range_last)
++  return;
++ if(count >= sample_limit)
++ {
++  if(!truncated_reported)
++  {
++   if(fprintf(trace, "main_ram_target_write_truncated=sample_limit limit=%u\n", sample_limit) < 0 || fflush(trace) != 0)
++   {
++    trace_failed = true;
++    fputs("FIRESTAFF_THERON_MAIN_RAM_TARGET_WRITE_TRACE_ERROR error=truncation\n", stderr);
++    fflush(stderr);
++    return;
++   }
++   truncated_reported = true;
++  }
++  return;
++ }
++ char writer_code_bytes[17] = "unavailable";
++ if((TheronTraceInstructionPC & 0x1FFF) <= 0x1FF8)
++ {
++  const uint8 *writer_code = (const uint8 *)(HuCPU.FastPageR[
++   TheronTraceInstructionPC >> 13] + TheronTraceInstructionPC);
++  for(unsigned i = 0; i < 8; i++)
++   snprintf(writer_code_bytes + i * 2, 3, "%02x", writer_code[i]);
++ }
++ const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
++ const int write_result = fprintf(trace, "main_ram_target_write sequence=%u event_sequence=%u logical_address=%04x physical_address=%06x value=%02x writer_pc=%04x writer_physical_pc=%06x writer_code_bytes=%s mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x\n",
++         count++, event_sequence, logical_address & 0xFFFF, physical_address,
++         value, TheronTraceInstructionPC, TheronTraceInstructionPhysicalPC,
++         writer_code_bytes, HuCPU.MPR[0], HuCPU.MPR[1], HuCPU.MPR[2],
++         HuCPU.MPR[3], HuCPU.MPR[4], HuCPU.MPR[5], HuCPU.MPR[6],
++         HuCPU.MPR[7]);
++ const int flush_result = fflush(trace);
++ if(write_result < 0 || flush_result != 0)
++ {
++  trace_failed = true;
++  fputs("FIRESTAFF_THERON_MAIN_RAM_TARGET_WRITE_TRACE_ERROR error=write\n", stderr);
++  fflush(stderr);
++  return;
++ }
++ if(count >= sample_limit && !truncated_reported)
++ {
++  if(fprintf(trace, "main_ram_target_write_truncated=sample_limit limit=%u\n", sample_limit) < 0 || fflush(trace) != 0)
++  {
++   trace_failed = true;
++   fputs("FIRESTAFF_THERON_MAIN_RAM_TARGET_WRITE_TRACE_ERROR error=truncation\n", stderr);
++   fflush(stderr);
++   return;
++  }
++  truncated_reported = true;
++ }
++}
+ static void TheronTraceA1B7BMTWrite(uint32 physical_destination,
