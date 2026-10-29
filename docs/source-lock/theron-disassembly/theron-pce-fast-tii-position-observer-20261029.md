@@ -1,11 +1,12 @@
-# Theron PCE Fast Position Write Observer — 2026-10-30
+# Theron PCE Fast Candidate Movement-State Write Observer — 2026-10-30
 
 ## Purpose and scope
 
-The capture-only Mednafen observer records writes to party position bytes
-`$2040/$2041`, including instruction bytes and physical PC mapping. It does not
-change Firestaff's game runtime or establish Theron movement parity. An
-authentic JP capture identifies the accepted transfer at logical PC `$C1FC`:
+The capture-only Mednafen observer records writes to candidate movement-state
+bytes `$2040/$2041`, including instruction bytes and physical PC mapping. Their
+gameplay meaning is not source-confirmed. The observer does not change
+Firestaff's game runtime or establish Theron movement parity. An authentic JP
+capture identifies an accepted transfer to these bytes at logical PC `$C1FC`:
 
 ```asm
 tii $20B4,$2040,$0002
@@ -13,11 +14,12 @@ tii $20B4,$2040,$0002
 
 The hook is in `scripts/instrument_mednafen_theron_pce_fast_movement_context_trace.py`.
 For ordinary `WrMem()` writes it requires MPR1 `$F8` and destination
-`$2040/$2041`. Direct zero-page writes are recorded only when MPR1 is `$F8`,
+`$2040/$2041`, logging them as `movement_state_write`. Direct zero-page writes
+are recorded only when MPR1 is `$F8`,
 the mapping used to derive their physical addresses. Instruction bytes are read
 from PCE Fast's `FastPageR`, resolving the MPR slot separately for each byte.
 A specific TII row additionally requires opcode PC `$C1FC`, `IBM_TII`, MPR1
-`$F8`, and the position destination.
+`$F8`, and a destination in the candidate state range.
 These hooks cover their instrumented `WrMem()` and selected direct zero-page
 store/RMW paths; they are not a census of every possible physical RAM writer.
 
@@ -32,7 +34,7 @@ the reference build:
   byte for the transfer currently being committed.
 - `src/pce_fast/huc6280.cpp`, `WrMem` (lines 767–787), resolves the destination
   with `MPR[A >> 13]` and calls the mapped writer after the observer. The
-  position addresses use MPR1 `$F8`.
+  observed candidate state destinations use MPR1 `$F8`.
 - The CPU latches `TheronTraceInstructionPC` before decode (lines 1481–1482).
   A yielded TII resumes at `continue_the_TII` (line 1424), before the next
   opcode can replace that latch. The post-operand live PC is `$C203`; it must
@@ -41,7 +43,7 @@ the reference build:
   the passed byte at the mapped BaseRAM offset.
 
 These source facts validate the hook's observation point and address
-calculation. The runtime capture below supplies a positive position-write
+calculation. The runtime capture below supplies a positive movement-state write
 observation; cold CD handoff and active map identity remain unresolved.
 
 ## Authentic reference capture
@@ -57,28 +59,29 @@ at logical `$C1FC`: `code_bytes=73b420`, block move `IBM_TII`, with
 `$1F0040/$1F0041` under MPR1 `$F8`; opcode physical PC was `$0DC1FC` under MPR6
 `$6E`. The TII-specific rows independently record source bytes `$03` at
 `$1F00B4/$1F00B5` and matching destination commits. The final PCE Fast RAM
-snapshot has `$2040/$2041=03/03`, while the
-loaded state had `02/03`, so accepted UP+II changed the captured coordinate
-from `(2,3)` to `(3,3)`.
+snapshot has `$2040/$2041=03/03`, while the loaded state had `02/03`. A
+save-state reader interprets this pair as coordinates changing from `(2,3)` to
+`(3,3)`, but this capture does not source-confirm that semantic interpretation.
 
 The capture ended `BLOCKED` because save-state autoload bypassed the cold CD
 IRQ and authenticated CD-to-RAM receipts. This is a positive emulator
-reference capture of the original position transfer, not a cold Track 02
+reference capture of the original movement-state transfer, not a cold Track 02
 handoff, active-map identification, collision result, or Firestaff parity
 proof. Private trace SHA-256 values: input
 `230b92771f5fa2201621a4721a2109ee86758e6dd0163af84ee6b4862c0643cd`, final
 RAM `4f8cf26de11bd330524509f9d8ea8c52a24d0f4685d5eec31bbc6bd7dfd493f7`,
 movement context
-`e6ad6aa62eee0290615e68010381c2c0aafa5af452bb63409dc5db1862f0d079`, and
+`738f6df0ea8ef0b2d513723d15c0446f3d679d497c41282a2a80500faf56242c`, and
 transition receipt
-`5c6033bd227656b0fc92ed695f7b37a490893e427b780e906049fca5582b7287`.
+`3ebe932324e4706a7f69cbe26bf4af2f2df14b81f488699bccb634319aa4dbd5`.
 
-The save state reports position `(2,3)` and bank bytes `$20DA/$20DB=01/00`,
-but the active JP dungeon map is
+The save-state reader reports `(2,3)` and bank bytes `$20DA/$20DB=01/00`, but
+the meaning of the candidate fields and the active JP dungeon map are
 unresolved. As documented in
-`../theron-pce-fast-akutuba-ram-capture-2026-10-03.md`, the same coordinate can
-have different passability across candidate maps. The capture does not identify
-which map or prove collision behavior.
+`../theron-pce-fast-akutuba-ram-capture-2026-10-03.md`, the same
+save-state-interpreted coordinate can have different passability across
+candidate maps. The capture does not identify which map or prove collision
+behavior.
 
 The instrumented binary was rebuilt on TRV2 with `-j1`. The focused
 live-capture test passed three consecutive loops, as did Python syntax
@@ -90,5 +93,6 @@ TRV2 and are not committed.
 Identify the active dungeon map and adjacent tile for this JP state, then
 correlate the accepted step with a cold-start authenticated Track 02 capture
 and verify the same control against the exact Firestaff implementation. This
-observer is verified reference tooling and a positive original movement
-capture; it does not establish full movement parity.
+observer is verified reference tooling and a positive original
+movement-state transfer capture; it does not establish the fields' gameplay
+meaning or full movement parity.

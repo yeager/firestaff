@@ -9437,10 +9437,12 @@ native rendering, or Theron parity. The private evidence bundle is at
 - With authentic JP Rev. 1 media and a user-created state, replay
   `ii@470:140,up@471:120` produced command `$2905=$03` at frame 471 and the
   original `TII` writes `$20B4->$2040=03`, `$20B5->$2041=03` at `$C1FC`
-  (`73b420`). Final RAM changed coordinates `(2,3)->(3,3)`. This is an original
-  movement reference capture; save-state autoload still bypasses cold CD
-  receipts, and no active-map identity, collision proof, Firestaff movement
-  parity, or full gameplay parity is claimed.
+  (`73b420`). Final RAM changed `$2040/$2041` from `02/03` to `03/03`; a
+  save-state reader interprets the pair as `(2,3)->(3,3)`, but its meaning is
+  not source-bound. This is an original movement-state reference capture;
+  save-state autoload still bypasses cold CD receipts, and no active-map
+  identity, collision proof, Firestaff movement parity, or full gameplay
+  parity is claimed.
 - Patch-only validation and a full instrumented Mednafen build passed on TRV2
   with `-j1`. The focused capture test passed three consecutive loops; Python
   syntax validation and `git diff --check` passed. Original media and traces
@@ -9451,3 +9453,15 @@ native rendering, or Theron parity. The private evidence bundle is at
   destination addresses, opcode MPR and physical PC. These rows are bounded to
   the observer's hooked `WrMem()` path; they do not establish an exhaustive
   census of physical RAM writes or gameplay parity.
+
+## 2026-10-30 — verify native JP Button II vertical chords
+
+- Extended the native JP SDL input test with Button II+Up and Button II+Down
+  routes. Each starts from the authentic initial pose, steps into the verified
+  open south corridor, then checks the resulting Firestaff party state.
+- Built Firestaff on TRV2 with `-j1` and ran the test in `--debug` mode against
+  authentic Japanese Rev. 1 Track 02 (MD5
+  `b7afb338ad31be1025b53f9aff12d73a`). Both new routes and the existing native
+  keyboard/mouse/touch routes passed three consecutive loops. This verifies
+  Firestaff's native input routing on real game data; it does not by itself
+  establish chord parity against the original hardware or full Theron parity.

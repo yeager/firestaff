@@ -45,7 +45,7 @@ static unsigned TheronPCEFastMovementCommandWriteCount;
 static unsigned TheronPCEFastInputLatchWriteCount;
 static unsigned TheronPCEFastRuntimeStateWriteCount;
 static unsigned TheronPCEFastMainRAMWriteCount;
-static unsigned TheronPCEFastMovementPositionWriteCount;
+static unsigned TheronPCEFastMovementStateWriteCount;
 static unsigned TheronPCEFastTIIPositionCommitCount;
 static unsigned TheronPCEFastMovementContextLimit(void)
 {
@@ -137,7 +137,7 @@ static void TheronPCEFastMovementContext(const char *kind, unsigned int logical_
   fflush(TheronPCEFastMovementContextTrace);
  }
 }
-static void TheronPCEFastMovementPositionWrite(const char *write_path,
+static void TheronPCEFastMovementStateWrite(const char *write_path,
                                                unsigned int logical_address,
                                                unsigned int physical_address,
                                                uint8 value);
@@ -150,7 +150,7 @@ static void TheronPCEFastMovementRuntimeStateWrite(uint8 zero_page_address,
  const unsigned int physical_address = (0xF8u << 13) | zero_page_address;
  if(HuCPU.MPR[1] == 0xF8 &&
     (zero_page_address == 0x40 || zero_page_address == 0x41))
-  TheronPCEFastMovementPositionWrite("direct-zp", logical_address,
+  TheronPCEFastMovementStateWrite("direct-zp", logical_address,
                                      physical_address, value);
  if(TheronPCEFastMovementContextMainRAMRangeContains(physical_address))
   TheronPCEFastMovementContext("main_ram_write", logical_address,
@@ -197,12 +197,12 @@ static void TheronPCEFastMovementTIIPositionCommit(unsigned int logical_address,
   fflush(TheronPCEFastMovementContextTrace);
  }
 }
-static void TheronPCEFastMovementPositionWrite(const char *write_path,
+static void TheronPCEFastMovementStateWrite(const char *write_path,
                                                unsigned int logical_address,
                                                unsigned int physical_address,
                                                uint8 value)
 {
- if(TheronPCEFastMovementPositionWriteCount >= TheronPCEFastMovementContextLimit() ||
+ if(TheronPCEFastMovementStateWriteCount >= TheronPCEFastMovementContextLimit() ||
     TheronPCEFastScriptFrame < TheronPCEFastMovementContextStartFrame())
   return;
  if(!TheronPCEFastMovementContextTrace)
@@ -228,8 +228,8 @@ static void TheronPCEFastMovementPositionWrite(const char *write_path,
    code_bytes[index] = *(const uint8 *)(HuCPU.FastPageR[slot] + address);
   }
   fprintf(TheronPCEFastMovementContextTrace,
-          "position_write sequence=%u frame=%u path=%s logical_address=%04x physical_address=%06x value=%02x opcode_pc=%04x opcode_physical_pc=%06x code_bytes=%02x%02x%02x code_mpr=%02x%02x%02x block_move=%u bmt_src=%04x bmt_dest=%04x bmt_length=%04x mpr1=%02x\n",
-          TheronPCEFastMovementPositionWriteCount++, TheronPCEFastScriptFrame,
+          "movement_state_write sequence=%u frame=%u path=%s logical_address=%04x physical_address=%06x value=%02x opcode_pc=%04x opcode_physical_pc=%06x code_bytes=%02x%02x%02x code_mpr=%02x%02x%02x block_move=%u bmt_src=%04x bmt_dest=%04x bmt_length=%04x mpr1=%02x\n",
+          TheronPCEFastMovementStateWriteCount++, TheronPCEFastScriptFrame,
           write_path, logical_address, physical_address, value, pc,
           TheronTraceInstructionPhysicalPC, code_bytes[0], code_bytes[1],
           code_bytes[2], code_mpr[0], code_mpr[1], code_mpr[2],
@@ -247,7 +247,7 @@ static void TheronPCEFastMovementPositionWrite(const char *write_path,
     replace_once(
         huc,
         " if(A == 0x2905)\n  TheronPCEFastMovementContext(\"movement_command_write\", A, physical, V);\n if(TheronTraceInstructionPC == 0xC1FC",
-        " if(A == 0x2905)\n  TheronPCEFastMovementContext(\"movement_command_write\", A, physical, V);\n if(HuCPU.MPR[1] == 0xF8 && (A == 0x2040 || A == 0x2041))\n  TheronPCEFastMovementPositionWrite(\"WrMem\", A, physical, V);\n if(TheronTraceInstructionPC == 0xC1FC",
+        " if(A == 0x2905)\n  TheronPCEFastMovementContext(\"movement_command_write\", A, physical, V);\n if(HuCPU.MPR[1] == 0xF8 && (A == 0x2040 || A == 0x2041))\n  TheronPCEFastMovementStateWrite(\"WrMem\", A, physical, V);\n if(TheronTraceInstructionPC == 0xC1FC",
     )
 
     direct_write_hook = "TheronPCEFastMovementRuntimeStateWrite(EA, {value}); "

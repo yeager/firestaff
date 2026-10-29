@@ -9211,11 +9211,11 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   JP map for that state is still unresolved.
 - Next bind the active map and destination tile from authentic Track 02/runtime
   evidence, then run an accepted command plus an identical no-input control.
-  Require both ordered `$C1FA` transfer bytes and the position delta before
-  claiming runtime observer validation or movement parity. Details are in
+  The initial observer gate used `$C1FA`; the follow-up below corrects it to
+  `$C1FC` and records both ordered bytes. Details are in
   `docs/source-lock/theron-disassembly/theron-pce-fast-tii-position-observer-20261029.md`.
 
-## 2026-10-30 — identify accepted UP+II position transfer
+## 2026-10-30 — identify accepted UP+II movement-state transfer
 
 - A corrected authentic JP Rev. 1 save-state replay used `ii@470:140,up@471:120`.
   At frame 471 the original accepted `$2905=$03` at `$CC99`, then cleared it
@@ -9223,7 +9223,9 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   transfer writes at opcode PC `$C1FC`, bytes `73b420`, `IBM_TII`:
   `$20B4->$2040=03` and `$20B5->$2041=03`, with physical opcode PC `$0DC1FC`
   and destination `$1F0040/$1F0041` under MPR1 `$F8`. The final RAM snapshot
-  changed position from `(2,3)` to `(3,3)`.
+  changed `$2040/$2041` from `02/03` to `03/03`. A save-state reader interprets
+  these as coordinates `(2,3)->(3,3)`, but the fields' meaning is not yet
+  source-bound.
 - This capture corrected the earlier `$C1FA` opcode-PC assumption. The specific
   TII observer now keys on `$C1FC`; generic position writes also record code
   bytes through the PCE Fast `FastPageR` mapping. Direct zero-page observations
@@ -9238,3 +9240,10 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   and matching destinations `$1F0040/$1F0041`. The hooks cover their explicit
   `WrMem()` and selected zero-page paths, not every possible physical RAM
   writer; this bounded capture does not establish an exhaustive write census.
+- Do not change movement mechanics based only on this trace: it proves the
+  original accepted UP+II command and changed candidate bytes, but not the
+  bytes' gameplay meaning or active map. The native mapper implements the
+  manual's Button II+direction contract, and authentic-data native `--debug`
+  coverage for Button II+Up and Button II+Down now passes three loops. Bind the
+  `$2040/$2041` consumer and JP map before claiming the emulator bytes represent
+  coordinates or asserting full original movement parity.

@@ -1097,8 +1097,8 @@ if [[ ! -f "$pce_fast_movement_context_instrumenter" ]] ||
    ! grep -Fq 'source_physical_address=%06x' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'source_mpr=%02x' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'opcode_pc=%04x opcode_mpr=%02x opcode_physical_pc=%06x bmt_remaining=%04x source_logical_address=%04x' "$pce_fast_movement_context_instrumenter" ||
-   ! grep -Fq 'TheronPCEFastMovementPositionWrite' "$pce_fast_movement_context_instrumenter" ||
-   ! grep -Fq 'position_write sequence=%u frame=%u path=%s' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'TheronPCEFastMovementStateWrite' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'movement_state_write sequence=%u frame=%u path=%s' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'code_bytes=%02x%02x%02x code_mpr=%02x%02x%02x' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'HuCPU.FastPageR[slot] + address' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'A == 0x2040 || A == 0x2041' "$pce_fast_movement_context_instrumenter" ||
