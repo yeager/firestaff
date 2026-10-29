@@ -3,6 +3,7 @@ set -eu
 
 firestaff_cli=${1:?Firestaff executable is required}
 mac_archive=${FIRESTAFF_DM2_MAC_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip"}
+mac_diagnostics_source=$mac_archive
 towns_archive=${FIRESTAFF_DM2_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"}
 dos_archive=${FIRESTAFF_DM2_DOS_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"}
 amiga_archive=${FIRESTAFF_DM2_AMIGA_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip"}
@@ -21,20 +22,34 @@ is_media_source() {
     [ -f "$1" ] || [ -d "$1" ]
 }
 
+# A retail Macintosh installation can be present as the original StuffIt
+# archive plus its already extracted, authentic DMFiles tree.  The archive
+# reader does not accept .sit directly, so use the extracted originals for
+# this source-selection diagnostic when the optional ZIP is absent.
+if [ "${FIRESTAFF_DM2_MAC_ARCHIVE+x}" != x ] &&
+   ! is_media_source "$mac_diagnostics_source"; then
+    extracted_mac="$HOME/.firestaff/data/dm2/mac-en/Dungeon Master II/DMFiles"
+    if [ -f "$extracted_mac/Graphics.dat" ] &&
+       [ -f "$extracted_mac/Dungeon.dat" ] &&
+       [ -f "$extracted_mac/Title.MooV" ]; then
+        mac_diagnostics_source=$extracted_mac
+    fi
+fi
+
 if [ ! -x "$firestaff_cli" ] || [ ! -f "$towns_archive" ]; then
     echo "SKIP: Firestaff executable and original DM2 FM Towns archive are required"
     exit 77
 fi
 
-if is_media_source "$mac_archive"; then
+if is_media_source "$mac_diagnostics_source"; then
     mac_debug=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
-        --game dm2 --platform auto --data-dir "$mac_archive" \
+        --game dm2 --platform auto --data-dir "$mac_diagnostics_source" \
         --debug --boot-probe --boot-probe-frames 0 2>&1) || {
         printf '%s\n' "$mac_debug" >&2
         exit 1
     }
     if ! printf '%s\n' "$mac_debug" | \
-            grep -F 'task=search root' | grep -F "path=$mac_archive" >/dev/null; then
+            grep -F 'task=search root' | grep -F "path=$mac_diagnostics_source" >/dev/null; then
         echo "FAIL: Mac debug trace omitted the searched archive path on its task record" >&2
         exit 1
     fi
