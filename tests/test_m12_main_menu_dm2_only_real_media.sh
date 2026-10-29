@@ -32,8 +32,9 @@ log="$scratch/firestaff.log"
 
 # With only authentic DM2 media in the documented data tree and no --game,
 # the startup menu must discover DM2, allow selection, and reach its FM Towns
-# runtime without silently falling back to another game's data. Reserve time
-# for the source's 2,400-frame title wait after the full archive scan.
+# runtime without silently falling back to another game's data. Wait for the
+# actual FM Towns title-complete receipt before sending the New Game clicks;
+# host loop speed must not decide whether those clicks arrive during the title.
 (
     unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
     FIRESTAFF_CONFIG_PATH="$home/config.toml" \
@@ -42,8 +43,8 @@ log="$scratch/firestaff.log"
     HOME="$home" XDG_CONFIG_HOME="$home" APPDATA="$home" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
         "$app" --debug --width 320 --height 200 \
-        --script 'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait:2400,click:115:65,click:100:60' \
-        --duration 65000
+        --script 'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait-dm2-title,click:115:65,click:100:60' \
+        --duration 75000
 ) >"$log" 2>&1 || {
     cat "$log" >&2
     exit 1
@@ -111,8 +112,8 @@ back_log="$scratch/back-firestaff.log"
     HOME="$back_home" XDG_CONFIG_HOME="$back_home" APPDATA="$back_home" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
         "$app" --debug --width 320 --height 200 \
-        --script 'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:escape,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait:2400,click:115:65,click:100:60' \
-        --duration 65000
+        --script 'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:escape,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait-dm2-title,click:115:65,click:100:60' \
+        --duration 85000
 ) >"$back_log" 2>&1 || {
     cat "$back_log" >&2
     exit 1
