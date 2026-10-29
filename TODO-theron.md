@@ -1,3 +1,23 @@
+## 2026-10-29 — standard PCE mouse scripts honor bounded repeats; coordinate join remains open
+
+- The Mednafen mouse-script instrumenter now inserts one shared parser into the
+  standard PCE and PCE Fast input paths. It expands `*repeat`, rejects
+  malformed samples, and caps expanded scripted updates at 20,000.
+- The compiled parser regression and live-capture script passed three loops.
+  The complete Theron Mednafen patch set applied to three isolated TRV2 source
+  copies, and a serial `-j1` build compiled both PCE cores.
+- A reference run with authentic USA Track 02, System Card 3.0 and the
+  preserved Ak-Tu-Ba save state sent `1,0,0*3;0,0,1;0,0,0`. Its device trace
+  records three horizontal input units across two latches and the Button I
+  mask. This verifies script expansion and device delivery only. The save-state
+  run has no authenticated CD-to-RAM receipt and reports `transition=missing`;
+  it does not establish guest pointer coordinates, click targets, or native
+  Theron parity. Evidence and hashes are in
+  [the mouse repeat parser note](docs/source-lock/theron-disassembly/theron-mouse-input-repeat-parser-20261029.md).
+- Next: join controlled mouse deltas to game-owned pointer state and the
+  original command/result path in a source-bound session before implementing
+  direct viewport clicks.
+
 ## 2026-10-29 — authentic mouse motion moves the Theron hand cursor; click semantics remain open
 
 - A cold Mednafen PCE Fast run used authentic Japanese Rev. 1 media and the

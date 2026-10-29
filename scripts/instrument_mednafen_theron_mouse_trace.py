@@ -16,6 +16,109 @@ def replace_once(root: Path, relative_path: str, old: str, new: str) -> None:
     path.write_text(source.replace(old, new, 1), encoding="utf-8")
 
 
+def mouse_input_parser_source() -> str:
+    """Return the shared bounded mouse-script parser inserted into both PCE cores."""
+    return r'''static char TheronMouseInputScriptBuffer[8192];
+static char *TheronMouseInputScriptCursor;
+static bool TheronMouseInputScriptInitialized;
+static unsigned TheronMouseInputUpdateCount;
+static unsigned TheronMouseInputScriptUpdateCount;
+static unsigned TheronMouseInputRepeatRemaining;
+static int16 TheronMouseInputRepeatDeltaX, TheronMouseInputRepeatDeltaY;
+static uint8 TheronMouseInputRepeatButtons;
+static bool TheronParseMouseNumber(const char **cursor, bool allow_negative,
+                                   int *result)
+{
+ int sign = 1;
+ if(**cursor == '-')
+ {
+  if(!allow_negative) return false;
+  sign = -1;
+  (*cursor)++;
+ }
+ if(**cursor < '0' || **cursor > '9') return false;
+ int value = 0;
+ do
+ {
+  if(value > 10000) return false;
+  value = value * 10 + (**cursor - '0');
+  (*cursor)++;
+ }
+ while(**cursor >= '0' && **cursor <= '9');
+ *result = sign * value;
+ return true;
+}
+static bool TheronNextMouseInput(int16 *delta_x, int16 *delta_y,
+                                 uint8 *buttons)
+{
+ TheronMouseInputUpdateCount++;
+ if(!TheronMouseInputScriptInitialized)
+ {
+  const char *value = getenv("FIRESTAFF_THERON_MOUSE_INPUT_SCRIPT");
+  TheronMouseInputScriptInitialized = true;
+  if(value && strlen(value) < sizeof(TheronMouseInputScriptBuffer))
+  {
+   strcpy(TheronMouseInputScriptBuffer, value);
+   TheronMouseInputScriptCursor = TheronMouseInputScriptBuffer;
+  }
+ }
+ if(TheronMouseInputRepeatRemaining)
+ {
+  TheronMouseInputRepeatRemaining--;
+  TheronMouseInputScriptUpdateCount++;
+  *delta_x = TheronMouseInputRepeatDeltaX;
+  *delta_y = TheronMouseInputRepeatDeltaY;
+  *buttons = TheronMouseInputRepeatButtons;
+  return true;
+ }
+ if(!TheronMouseInputScriptCursor || !*TheronMouseInputScriptCursor ||
+    TheronMouseInputScriptUpdateCount >= 20000)
+  return false;
+ char *token = TheronMouseInputScriptCursor;
+ char *separator = strchr(token, ';');
+ if(separator)
+ {
+  *separator = 0;
+  TheronMouseInputScriptCursor = separator + 1;
+ }
+ else TheronMouseInputScriptCursor = NULL;
+ char *repeat_marker = strchr(token, '*');
+ unsigned repeat = 1;
+ if(repeat_marker)
+ {
+  *repeat_marker = 0;
+  const char *repeat_text = repeat_marker + 1;
+  if(!*repeat_text) return false;
+  repeat = 0;
+  for(const char *digit = repeat_text; *digit; digit++)
+  {
+   if(*digit < '0' || *digit > '9' || repeat > 2000) return false;
+   repeat = repeat * 10 + (unsigned)(*digit - '0');
+  }
+  if(!repeat || repeat > 20000) return false;
+ }
+ if(repeat > 20000 - TheronMouseInputScriptUpdateCount) return false;
+ const char *cursor = token;
+ int dx, dy, button;
+ if(!TheronParseMouseNumber(&cursor, true, &dx) || *cursor++ != ',' ||
+    !TheronParseMouseNumber(&cursor, true, &dy) || *cursor++ != ',' ||
+    !TheronParseMouseNumber(&cursor, false, &button) || *cursor ||
+    dx < -127 || dx > 127 || dy < -127 || dy > 127 ||
+    button < 0 || button > 15)
+  return false;
+ TheronMouseInputScriptUpdateCount++;
+ TheronMouseInputRepeatRemaining = repeat - 1;
+ TheronMouseInputRepeatDeltaX = (int16)dx;
+ TheronMouseInputRepeatDeltaY = (int16)dy;
+ TheronMouseInputRepeatButtons = (uint8)button;
+ *delta_x = (int16)dx;
+ *delta_y = (int16)dy;
+ *buttons = (uint8)button;
+ return true;
+}
+'''
+
+
 def instrument(root: Path) -> None:
     replace_once(
         root,
@@ -127,42 +230,8 @@ def instrument(root: Path) -> None:
         "static FILE *TheronMouseDeviceTrace;\n"
         "static bool TheronMouseDeviceTraceAttempted;\n"
         "static unsigned int TheronMouseDeviceTraceCount;\n"
-        "static char TheronMouseInputScriptBuffer[8192];\n"
-        "static char *TheronMouseInputScriptCursor;\n"
-        "static bool TheronMouseInputScriptInitialized;\n"
-        "static bool TheronNextMouseInput(int16 *delta_x, int16 *delta_y,\n"
-        "                                uint8 *buttons)\n"
-        "{\n"
-        " if(!TheronMouseInputScriptInitialized)\n"
-        " {\n"
-        "  const char *value = getenv(\"FIRESTAFF_THERON_MOUSE_INPUT_SCRIPT\");\n"
-        "  TheronMouseInputScriptInitialized = true;\n"
-        "  if(value && strlen(value) < sizeof(TheronMouseInputScriptBuffer))\n"
-        "  {\n"
-        "   strcpy(TheronMouseInputScriptBuffer, value);\n"
-        "   TheronMouseInputScriptCursor = TheronMouseInputScriptBuffer;\n"
-        "  }\n"
-        " }\n"
-        " if(!TheronMouseInputScriptCursor || !*TheronMouseInputScriptCursor)\n"
-        "  return false;\n"
-        " char *token = TheronMouseInputScriptCursor;\n"
-        " char *separator = strchr(token, ';');\n"
-        " if(separator)\n"
-        " {\n"
-        "  *separator = 0;\n"
-        "  TheronMouseInputScriptCursor = separator + 1;\n"
-        " }\n"
-        " else TheronMouseInputScriptCursor = NULL;\n"
-        " int dx = 0, dy = 0, button = 0;\n"
-        " if(sscanf(token, \"%d,%d,%d\", &dx, &dy, &button) != 3 ||\n"
-        "    dx < -127 || dx > 127 || dy < -127 || dy > 127 ||\n"
-        "    button < 0 || button > 15)\n"
-        "  return false;\n"
-        " *delta_x = (int16)dx; *delta_y = (int16)dy;\n"
-        " *buttons = (uint8)button;\n"
-        " return true;\n"
-        "}\n"
-        "static void TheronTraceMouseDevice(const char *event, int x, int y,\n"
+        + mouse_input_parser_source()
+        + "static void TheronTraceMouseDevice(const char *event, int x, int y,\n"
         "                                   unsigned int buttons)\n"
         "{\n"
         " if(!TheronMouseDeviceTrace)\n"
@@ -397,74 +466,8 @@ def instrument(root: Path) -> None:
         "static FILE *TheronMouseDeviceTrace;\n"
         "static bool TheronMouseDeviceTraceAttempted;\n"
         "static unsigned TheronMouseDeviceTraceCount;\n"
-        "static char TheronMouseInputScriptBuffer[8192];\n"
-        "static char *TheronMouseInputScriptCursor;\n"
-        "static bool TheronMouseInputScriptInitialized;\n"
-        "static unsigned TheronMouseInputUpdateCount;\n"
-        "static unsigned TheronMouseInputRepeatRemaining;\n"
-        "static int16 TheronMouseInputRepeatDeltaX, TheronMouseInputRepeatDeltaY;\n"
-        "static uint8 TheronMouseInputRepeatButtons;\n"
-        "static bool TheronNextMouseInput(int16 *delta_x, int16 *delta_y,\n"
-        "                                uint8 *buttons)\n"
-        "{\n"
-        " if(!TheronMouseInputScriptInitialized)\n"
-        " {\n"
-        "  const char *value = getenv(\"FIRESTAFF_THERON_MOUSE_INPUT_SCRIPT\");\n"
-        "  TheronMouseInputScriptInitialized = true;\n"
-        "  if(value && strlen(value) < sizeof(TheronMouseInputScriptBuffer))\n"
-        "  {\n"
-        "   strcpy(TheronMouseInputScriptBuffer, value);\n"
-        "   TheronMouseInputScriptCursor = TheronMouseInputScriptBuffer;\n"
-        "  }\n"
-        " }\n"
-        " TheronMouseInputUpdateCount++;\n"
-        " if(TheronMouseInputRepeatRemaining)\n"
-        " {\n"
-        "  TheronMouseInputRepeatRemaining--;\n"
-        "  *delta_x = TheronMouseInputRepeatDeltaX;\n"
-        "  *delta_y = TheronMouseInputRepeatDeltaY;\n"
-        "  *buttons = TheronMouseInputRepeatButtons;\n"
-        "  return true;\n"
-        " }\n"
-        " if(!TheronMouseInputScriptCursor || !*TheronMouseInputScriptCursor)\n"
-        "  return false;\n"
-        " char *token = TheronMouseInputScriptCursor;\n"
-        " char *separator = strchr(token, ';');\n"
-        " if(separator)\n"
-        " {\n"
-        "  *separator = 0;\n"
-        "  TheronMouseInputScriptCursor = separator + 1;\n"
-        " }\n"
-        " else TheronMouseInputScriptCursor = NULL;\n"
-        " int dx = 0, dy = 0, button = 0;\n"
-        " char *repeat_marker = strchr(token, '*');\n"
-        " unsigned long repeat = 1;\n"
-        " if(repeat_marker)\n"
-        " {\n"
-        "  char *repeat_end = NULL;\n"
-        "  *repeat_marker = 0;\n"
-        "  repeat = strtoul(repeat_marker + 1, &repeat_end, 10);\n"
-        "  if(repeat < 1 || repeat > 20000 || !repeat_end || *repeat_end)\n"
-        "   return false;\n"
-        " }\n"
-        " int parsed = 0;\n"
-        " if(sscanf(token, \"%d,%d,%d%n\", &dx, &dy, &button, &parsed) != 3 ||\n"
-        "    parsed <= 0 || token[parsed] != 0 ||\n"
-        "    dx < -127 || dx > 127 || dy < -127 || dy > 127 ||\n"
-        "    button < 0 || button > 15)\n"
-        "  return false;\n"
-        " *delta_x = (int16)dx; *delta_y = (int16)dy;\n"
-        " *buttons = (uint8)button;\n"
-        " if(repeat > 1)\n"
-        " {\n"
-        "  TheronMouseInputRepeatRemaining = (unsigned)(repeat - 1);\n"
-        "  TheronMouseInputRepeatDeltaX = (int16)dx;\n"
-        "  TheronMouseInputRepeatDeltaY = (int16)dy;\n"
-        "  TheronMouseInputRepeatButtons = (uint8)button;\n"
-        " }\n"
-        " return true;\n"
-        "}\n"
-        "static void TheronTraceMouseDevice(const char *event, int x, int y,\n"
+        + mouse_input_parser_source()
+        + "static void TheronTraceMouseDevice(const char *event, int x, int y,\n"
         "                                   unsigned int buttons)\n"
         "{\n"
         " if(!TheronMouseDeviceTrace)\n"

@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-29 — honor bounded mouse-script repeats in both Mednafen PCE cores
+
+Fixed the reference-only mouse-script instrumenter so standard PCE expands the
+same bounded `dx,dy,button-mask*repeat` grammar as PCE Fast. The compiled parser
+regression and capture-script test passed three loops, the full patch set
+applied to three isolated TRV2 source copies, and a serial `-j1` build compiled
+both PCE cores. A fresh reference run from authentic USA Track 02, System Card
+3.0, and the preserved Ak-Tu-Ba state observed all three scripted motion units
+and Button I. That state replay had no CD-to-RAM source receipt and does not
+prove guest pointer coordinates or click semantics. See the
+[verification note](docs/source-lock/theron-disassembly/theron-mouse-input-repeat-parser-20261029.md).
+
 ## 2026-10-29 — verify original Theron cursor response to PCE mouse motion
 
 A cold Mednafen PCE Fast run using authentic Japanese Rev. 1 media switched

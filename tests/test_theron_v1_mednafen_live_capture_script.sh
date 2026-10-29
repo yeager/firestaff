@@ -64,6 +64,7 @@ if bash -c 'source "$1"; wait_for_host_key_scancode_presses "$2" 91 2 1' _ \
 fi
 mkdir -p "$repo/build"
 python3 "$repo/tests/test_theron_scripted_input_patch_parser.py"
+python3 "$repo/tests/test_theron_mouse_input_parser.py"
 bash "$repo/tests/test_theron_authentic_bram.sh"
 input_test_dir=$(mktemp -d "$repo/build/theron-input-consumption.XXXXXX")
 swift_module_cache=
