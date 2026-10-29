@@ -1,5 +1,31 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-29 — bound merged source-graphics chronology completeness
+
+The PCE Fast source-graphics merger now records the configured VRAM/VCE
+limits and the number of rows in each bounded stream. Reaching a limit marks
+the merged chronology `possible_truncation_at_event_limit`; the capture receipt
+reports `merged_limit_reached`. Below-limit and unchecked cases are explicit.
+Three loops of the focused merger regression and static Mednafen patch
+contract passed. Patch application/build skipped because no Mednafen source
+tree was supplied.
+
+## 2026-10-29 — reach first-person Theron dungeon in a cold reference run
+
+A fresh Mednafen 1.32.1 `pce_fast` run from authentic Japanese Rev. 1 media
+visually reached the first-person dungeon after the story pages. The input
+sequence and limits are documented in the private bundle at
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-story-to-dungeon-20261029-r2/`.
+This was reference-emulator evidence only: the run did not produce guest-input
+or loader provenance traces and does not prove gameplay or mouse semantics.
+The screenshot includes the original hand cursor; the [retail manual,
+pp. 4–6](https://www.tg-16.com/contributors/bernie/Dungeon_Master/Dungeon_Master.pdf)
+describes D-pad cursor movement and Button I actions, not physical mouse input.
+Mednafen reported that the SBI sidecar was missing; the full headered System
+Card image was unavailable. The screenshots and log hashes are recorded in
+that private bundle; no game media, firmware, save-state, or RAM image is
+included.
+
 ## 2026-10-29 — capture an authentic Japanese stage-message transition
 
 A cold Mednafen run with authentic Japanese Rev. 1 Track 02, the canonical

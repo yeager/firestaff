@@ -27,6 +27,9 @@ def run_case(
     vce: Optional[str] = None,
     expected_sequences: Optional[list[int]] = None,
     expected_events: Optional[list[str]] = None,
+    vram_limit: Optional[int] = None,
+    vce_limit: Optional[int] = None,
+    expected_completeness: str = "not_checked",
 ) -> None:
     case = root / name
     case.mkdir()
@@ -44,8 +47,12 @@ def run_case(
         "--cd-ram-target", str(trace_paths[1]),
         "--vram-commit", str(trace_paths[2]),
     ]
+    if vram_limit is not None:
+        command.extend(("--vram-commit-limit", str(vram_limit)))
     if vce is not None:
         command.extend(("--vce-write", str(trace_paths[3])))
+    if vce_limit is not None:
+        command.extend(("--vce-write-limit", str(vce_limit)))
     command.extend(("--output", str(merged_path)))
     result = subprocess.run(
         command,
@@ -60,13 +67,34 @@ def run_case(
         expected_streams = ["cd_data_port_read", "cd_ram_target_write", "vram_commit"]
         if vce is not None:
             expected_streams.append("vce_write")
-        if rows[0] != {
-            "format": "firestaff-theron-source-graphics-order-v1",
-            "ordering": "shared_event_sequence",
-            "interpretation": "temporal_order_only_not_causal_dataflow",
-            "streams": expected_streams,
-        }:
+        if rows[0].get("format") != "firestaff-theron-source-graphics-order-v1" or rows[0].get(
+            "ordering"
+        ) != "shared_event_sequence" or rows[0].get(
+            "interpretation"
+        ) != "temporal_order_only_not_causal_dataflow" or rows[0].get(
+            "streams"
+        ) != expected_streams:
             raise AssertionError(f"wrong merged chronology metadata: {rows[0]!r}")
+        if rows[0].get("completeness") != expected_completeness:
+            raise AssertionError(f"wrong merged completeness metadata: {rows[0]!r}")
+        expected_bounded_streams = {}
+        if vram_limit is not None:
+            count = sum(line.startswith("vram_commit ") for line in trace_data[2].splitlines())
+            expected_bounded_streams["vram_commit"] = {
+                "limit": vram_limit,
+                "records": count,
+                "limit_reached": count >= vram_limit,
+            }
+        if vce_limit is not None:
+            assert vce is not None
+            count = sum(line.startswith("vce_write ") for line in vce.splitlines())
+            expected_bounded_streams["vce_write"] = {
+                "limit": vce_limit,
+                "records": count,
+                "limit_reached": count >= vce_limit,
+            }
+        if rows[0].get("bounded_streams") != expected_bounded_streams:
+            raise AssertionError(f"wrong bounded-stream metadata: {rows[0]!r}")
         if [row["event_sequence"] for row in rows[1:]] != (
             expected_sequences if expected_sequences is not None else [2, 5, 9]
         ):
@@ -100,6 +128,18 @@ run_case(
     vce="FIRESTAFF_THERON_PCE_FAST_VCE_WRITE_TRACE_V1\nsource=mednafen-1.32.1-pce-fast-vdc-vce-write\nscope=color-table-data-writes-only;address-port-writes-excluded\nvce_write sequence=0 event_sequence=4 reg=4 address=012 input=34 old=000 value=034 logical_pc=1234 physical_pc=000000 mpr_slot=0 mpr_bank=00\n",
     expected_sequences=[2, 4, 5, 9],
     expected_events=["cd_data_port_read", "vce_write", "cd_ram_target_write", "vram_commit"],
+    vram_limit=2,
+    vce_limit=1,
+    expected_completeness="possible_truncation_at_event_limit",
+)
+run_case(
+    "below-event-limits",
+    "source=mednafen-pce-fast-cd-data-port-read\ncd_data_port_read sequence=0 event_sequence=2\n",
+    "source=mednafen-pce-fast-cd-ram-target-write\ncd_ram_target_write sequence=0 event_sequence=5\n",
+    "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3\nsource=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window\nscope=cpu-port-vwr-commits-only;dma-writes-excluded\nvram_commit sequence=0 event_sequence=9\n",
+    0,
+    vram_limit=2,
+    expected_completeness="below_configured_event_limits",
 )
 run_case(
     "duplicate",

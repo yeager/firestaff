@@ -89,7 +89,9 @@ def main() -> int:
     parser.add_argument("--cd-data-port", required=True, type=Path)
     parser.add_argument("--cd-ram-target", required=True, type=Path)
     parser.add_argument("--vram-commit", required=True, type=Path)
+    parser.add_argument("--vram-commit-limit", type=int)
     parser.add_argument("--vce-write", type=Path)
+    parser.add_argument("--vce-write-limit", type=int)
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
 
@@ -100,8 +102,33 @@ def main() -> int:
     ]
     if args.vce_write is not None:
         inputs.append(("vce_write", args.vce_write))
+    if args.vram_commit_limit is not None and args.vram_commit_limit < 1:
+        parser.error("--vram-commit-limit must be positive")
+    if args.vce_write_limit is not None and args.vce_write_limit < 1:
+        parser.error("--vce-write-limit must be positive")
+    if args.vce_write_limit is not None and args.vce_write is None:
+        parser.error("--vce-write-limit requires --vce-write")
+    limits: dict[str, int] = {}
+    if args.vram_commit_limit is not None:
+        limits["vram_commit"] = args.vram_commit_limit
+    if args.vce_write_limit is not None:
+        limits["vce_write"] = args.vce_write_limit
     created_output = False
     try:
+        stream_counts = {
+            event_type: sum(1 for _ in records(path, event_type))
+            for event_type, path in inputs
+        }
+        for event_type, limit in limits.items():
+            if stream_counts[event_type] > limit:
+                raise TraceError(
+                    f"{event_type} trace has {stream_counts[event_type]} records, "
+                    f"exceeding configured limit {limit}"
+                )
+        limit_reached = any(
+            stream_counts[event_type] >= limit
+            for event_type, limit in limits.items()
+        )
         with args.output.open("x", encoding="ascii", newline="\n") as output:
             created_output = True
             output.write(json.dumps({
@@ -109,6 +136,18 @@ def main() -> int:
                 "ordering": "shared_event_sequence",
                 "interpretation": "temporal_order_only_not_causal_dataflow",
                 "streams": [event_type for event_type, _ in inputs],
+                "completeness": (
+                    "possible_truncation_at_event_limit" if limit_reached else
+                    "below_configured_event_limits" if limits else "not_checked"
+                ),
+                "bounded_streams": {
+                    event_type: {
+                        "limit": limit,
+                        "records": stream_counts[event_type],
+                        "limit_reached": stream_counts[event_type] >= limit,
+                    }
+                    for event_type, limit in limits.items()
+                },
             }, separators=(",", ":")) + "\n")
             for record in merge(inputs):
                 output.write(json.dumps(record, separators=(",", ":")) + "\n")

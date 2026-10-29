@@ -2173,9 +2173,13 @@ if [[ "$capture_mednafen_module" == pce_fast ]]; then
             --cd-data-port "$cd_data_port_read_trace" \
             --cd-ram-target "$cd_ram_target_write_trace" \
             --vram-commit "$pce_fast_vram_commit_trace" \
+            --vram-commit-limit "$pce_fast_vram_commit_trace_limit" \
         )
         if [[ "$pce_fast_vce_write_trace_status" == captured ]]; then
-            merge_source_graphics_args+=(--vce-write "$pce_fast_vce_write_trace")
+            merge_source_graphics_args+=(
+                --vce-write "$pce_fast_vce_write_trace"
+                --vce-write-limit "$pce_fast_vce_write_trace_limit"
+            )
         fi
         merge_source_graphics_args+=(--output "$pce_fast_source_graphics_event_order")
         python3 "$script_dir/merge_theron_pce_fast_source_graphics_events.py" \
@@ -2191,7 +2195,12 @@ if [[ "$capture_mednafen_module" == pce_fast ]]; then
             printf '%s\n' 'FAIL: could not hash merged source-to-VRAM event order' >&2
             exit 1
         }
-        pce_fast_source_graphics_event_order_status=merged
+        if grep -Fq '"completeness":"possible_truncation_at_event_limit"' \
+            "$pce_fast_source_graphics_event_order"; then
+            pce_fast_source_graphics_event_order_status=merged_limit_reached
+        else
+            pce_fast_source_graphics_event_order_status=merged
+        fi
     elif [[ -e "$pce_fast_source_graphics_event_order" || -L "$pce_fast_source_graphics_event_order" ]]; then
         printf '%s\n' 'FAIL: capture emitted an unrequested source-to-VRAM event-order trace' >&2
         exit 1

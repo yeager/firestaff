@@ -1,3 +1,37 @@
+## 2026-10-29 — cold Japanese route reaches the first-person dungeon; input provenance remains open
+
+- A fresh Mednafen 1.32.1 `pce_fast` run opened authentic Japanese Rev. 1 media
+  and a canonical headerless System Card 3.0 body, with `autosave 0` and no
+  loaded state. Four-second Button I holds advanced the cold route through
+  new-game, file, stage and story steps; six separate 250 ms Button I presses
+  advanced the story and the final screenshot shows a first-person dungeon.
+- The screenshots are real emulator output, but this run produced no
+  instrumented guest-input, CD-to-RAM, or gameplay-command receipt. Mednafen
+  also reported the Japanese SBI sidecar missing. The full headered System
+  Card image was unavailable. This establishes a visual route to the dungeon
+  only, not source-bound transition semantics, mouse behavior, or Firestaff
+  parity. The screenshot also shows the original hand cursor. The retail
+  [TurboGrafx-16 manual, pp. 4–6](https://www.tg-16.com/contributors/bernie/Dungeon_Master/Dungeon_Master.pdf)
+  documents D-pad cursor movement and Button I actions; it does not document
+  physical mouse input. The private bundle, without media, firmware, save-state
+  or raw RAM, is
+  `/home/trv2/firestaff-theron-evidence/capture/theron-jp-story-to-dungeon-20261029-r2/`.
+- Next: reproduce the route with bounded input and CD-to-RAM provenance, then
+  bind original pointer deltas to guest pointer coordinates and the command
+  consumer before changing direct dungeon-view mouse behavior.
+
+## 2026-10-29 — source graphics chronology marks bounded-stream limits
+
+- The source-graphics event merger now receives the configured VWR and VCE
+  limits and records per-stream counts. If a stream reaches its limit, its
+  merged chronology says `possible_truncation_at_event_limit`, and the capture
+  receipt reports `merged_limit_reached`; it no longer looks unqualifiedly
+  complete. A stream below its limit is marked accordingly, while calls that
+  supply no bounds say `not_checked`.
+- Focused merger cases and the static patch contract passed three consecutive
+  loops. The mednafen patch-application portion skipped because its source
+  tree was not supplied; no build or original-media capture was run.
+
 ## 2026-10-29 — authenticate stage-message advancement; gameplay still not reached
 
 - A cold Mednafen reference run used authentic Japanese Rev. 1 Track 02 and

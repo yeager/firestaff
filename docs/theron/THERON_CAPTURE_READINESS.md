@@ -5,6 +5,23 @@ only as an external reference instrument for authentic original-game behavior
 and data capture; it is never part of the shipped runtime or a substitute for
 native Firestaff gameplay.
 
+## 2026-10-29 — cold Japanese reference route reaches dungeon view
+
+A fresh Mednafen 1.32.1 `pce_fast` run opened the authentic Japanese Rev. 1
+disc without loading a save-state. It showed story pages, a fade and then a
+first-person dungeon after six separate 250 ms Button I presses. This
+supersedes the earlier r1 capture's stopping point: a dungeon screenshot is
+now available, but the r2 run did not include an instrumented guest-input,
+CD-to-RAM, or command receipt. Mednafen reported the SBI sidecar missing, and
+the full headered System Card image was unavailable. The screenshot shows the
+original hand cursor, but does not prove mouse input can move it. The retail
+manual documents D-pad cursor movement and Button I actions; it does not
+document physical mouse input. This capture does not prove the transition's
+source provenance, gameplay behavior, or Firestaff parity. Private screenshots,
+log and hash manifest
+are at
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-story-to-dungeon-20261029-r2/`.
+
 ## 2026-10-29 — authentic Japanese stage-message advancement captured
 
 A cold Japanese Rev. 1 reference run used original Track 02, the canonical

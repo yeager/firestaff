@@ -21,17 +21,23 @@ are research instruments only and do not run or replace the game in Firestaff.
 | Run           | Return            |                |
 | Select        | —                 |                |
 
-The original PC Engine release has no mouse interface. Firestaff adds desktop
-mouse controls as a host-side convenience. During
+The PC Engine retail manual documents the D-pad moving an on-screen cursor,
+Button I acting on items and controls, and Button II cancelling. It does not
+document a physical mouse device. The hand visible in the dungeon screenshot
+is the original game's cursor; its presence does not prove that emulated mouse
+input can move it. See the [TurboGrafx-16 instruction manual, pp. 4–6](https://www.tg-16.com/contributors/bernie/Dungeon_Master/Dungeon_Master.pdf).
+
+Firestaff adds desktop mouse controls as a host-side convenience. During
 startup, left-click selects and right-click goes back. During dungeon play,
 left-click activates one of the twelve visible control-panel actions. Holding
 right mouse while pressing a direction key applies the manual's Button II
 simplified-movement modifier; a right click by itself does not advance a tick.
 Middle-click is inert. Moving the pointer highlights a panel control. Clicks
-outside the panel currently do not trigger a game action. Direct clicks in the
-dungeon view require a state-driven renderer and a Firestaff screen-to-world
-mapping; they are not original Theron hit regions. Short and long touch
-gestures send Button I and Button II, respectively.
+outside the panel currently do not trigger a game action. Mapping desktop
+coordinates to the original in-game cursor and its action consumer remains
+open; the renderer must also update from native game state for world clicks to
+show their result. Short and long touch gestures send Button I and Button II,
+respectively.
 
 ## Startup menu
 
