@@ -3883,7 +3883,8 @@ static int m11_delay_ms_with_intro_event_pump(unsigned int delayMs);
 static M12_MenuInput m11_next_script_input(const char** cursor,
                                           int* outWaitFrames,
                                           int* outWaitForRuntime,
-                                          int* outWaitForScan);
+                                          int* outWaitForScan,
+                                          int* outWaitForDm2Title);
 static M12_MenuInput m11_map_script_token(const char* token, size_t len);
 static int m11_push_script_event_token(const char* token, size_t len);
 static int m11_script_event_token_is_valid(const char* token, size_t len);
@@ -11700,7 +11701,8 @@ static M12_MenuInput m11_held_motion_input_from_keyboard(M11_GameViewState* game
 static M12_MenuInput m11_next_script_input(const char** cursor,
                                           int* outWaitFrames,
                                           int* outWaitForRuntime,
-                                          int* outWaitForScan) {
+                                          int* outWaitForScan,
+                                          int* outWaitForDm2Title) {
     const char* start;
     const char* end;
     if (outWaitFrames) {
@@ -11711,6 +11713,9 @@ static M12_MenuInput m11_next_script_input(const char** cursor,
     }
     if (outWaitForScan) {
         *outWaitForScan = 0;
+    }
+    if (outWaitForDm2Title) {
+        *outWaitForDm2Title = 0;
     }
     if (!cursor || !*cursor) {
         return M12_MENU_INPUT_NONE;
@@ -11732,6 +11737,13 @@ static M12_MenuInput m11_next_script_input(const char** cursor,
         strncmp(start, "wait-game-runtime", sizeof("wait-game-runtime") - 1U) == 0) {
         if (outWaitForRuntime) {
             *outWaitForRuntime = 1;
+        }
+        return M12_MENU_INPUT_NONE;
+    }
+    if ((size_t)(end - start) == sizeof("wait-dm2-title") - 1U &&
+        strncmp(start, "wait-dm2-title", sizeof("wait-dm2-title") - 1U) == 0) {
+        if (outWaitForDm2Title) {
+            *outWaitForDm2Title = 1;
         }
         return M12_MENU_INPUT_NONE;
     }
@@ -13600,6 +13612,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     int scriptWaitFramesRemaining = 0;
     int scriptWaitForRuntime = 0;
     int scriptWaitForScan = 0;
+    int scriptWaitForDm2Title = 0;
     unsigned char* launcherFramebuffer = NULL;
     unsigned char* modernRgba = NULL;
     int useModern = 0;
@@ -14751,6 +14764,12 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 idleAccumulatorMs += loopDeltaMs;
             /* DM1 V1: feed elapsed time to VBlank simulation */
             DM1_V1_VBlankTiming_Update(&gameView.vblankTiming, loopDeltaMs);
+            if (M11_GameView_AdvanceDm1Pc34EndgameClockMs(
+                    &gameView, loopDeltaMs) == M11_GAME_INPUT_REDRAW) {
+                m11_draw_game_frame_for_loop(&gameView, o->debug,
+                    &perfLoopDrawMs, &perfLoopDrawCount);
+                gameFrameNeedsPresent = 1;
+            }
             /* Preserve subsecond frame time; ordinary frames are much shorter
              * than one second. The view resets the remainder per session. */
             (void)M11_GameView_TickSessionTimerMs(&gameView, loopDeltaMs);
@@ -14776,6 +14795,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         if (scriptWaitForScan && !menuState.deferredScanActive) {
             scriptWaitForScan = 0;
         }
+        if (scriptWaitForDm2Title && gameView.dm2FmtownsTitleFinished) {
+            scriptWaitForDm2Title = 0;
+        }
         if (scriptWaitForRuntime) {
             M11_BootProbeReceipt runtimeReceipt;
             memset(&runtimeReceipt, 0, sizeof(runtimeReceipt));
@@ -14788,19 +14810,24 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             input = M12_MENU_INPUT_NONE;
         } else if (scriptWaitForScan) {
             input = M12_MENU_INPUT_NONE;
+        } else if (scriptWaitForDm2Title) {
+            input = M12_MENU_INPUT_NONE;
         } else if (scriptWaitFramesRemaining > 0) {
             --scriptWaitFramesRemaining;
         } else if (scriptCursor && *scriptCursor != '\0') {
             int waitFrames = 0;
             int waitForRuntime = 0;
             int waitForScan = 0;
+            int waitForDm2Title = 0;
             input = m11_next_script_input(&scriptCursor,
                                           &waitFrames,
                                           &waitForRuntime,
-                                          &waitForScan);
+                                          &waitForScan,
+                                          &waitForDm2Title);
             scriptWaitFramesRemaining = waitFrames;
             scriptWaitForRuntime = waitForRuntime;
             scriptWaitForScan = waitForScan;
+            scriptWaitForDm2Title = waitForDm2Title;
         }
         int menuPointerChanged = 0;
         if (!autotestMotionEventInjected && input == M12_MENU_INPUT_NONE &&

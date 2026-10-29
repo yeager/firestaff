@@ -1,3 +1,13 @@
+- 2026-10-29: The authentic DM2 FM Towns no-game menu regression now waits for
+  the runtime's title-finished receipt before sending New Game clicks. A fixed
+  main-loop-frame delay was host-speed-dependent and intermittently delivered
+  those clicks before title completion. The direct card-selection and
+  Escape/reselect routes both passed against the original FM Towns archive on
+  TRV2; the test also verified that the archive stayed unchanged. DM1 and CSB
+  no-game menu-to-runtime tests passed after the shared script-wait change.
+  This verifies the tested M12 startup routes, not physical input or full
+  platform parity.
+
 - 2026-10-27: Extracted authentic DM2 Amiga installs now bind their adjacent
   `SWSH.DAT`, `TITL.DAT`, and `ENDA.DAT` streams to the M11 title owner. Each
   stream must match the original installer MD5, fit the bounded read, and

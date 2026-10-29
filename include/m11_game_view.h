@@ -1107,6 +1107,12 @@ typedef struct {
      * 2 = C3 THE END/300-tick hold, 3 = credits/wait input. */
     int endgameF0444PresentationPhase;
     int endgameTheEndDelayRemainingTicks;
+    /* ReDMCSB ENDGAME.C F0444 pre-decrements a 900-count loop before each
+     * queue/delay pass, so restart/quit owns 899 source ticks after THE END. */
+    int endgameRestartWaitRemainingTicks;
+    /* PC34 ENDGAME Delay() is a BIOS/VGA VBlank wait (70 Hz), not a
+     * 200 ms gameplay idle tick. Keep a rational millisecond phase here. */
+    uint64_t endgameVblankPhase;
     int endgameBuzzRequestCount;
 
     /* Dialog box overlay for text-plaque inspection.
@@ -2295,6 +2301,8 @@ int M11_GameView_RenderDm1FmtownsMenu(
     uint8_t            label_fg,
     uint8_t            label_bg);
 M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state);
+M11_GameInputResult M11_GameView_AdvanceDm1Pc34EndgameClockMs(
+    M11_GameViewState* state, uint32_t elapsedMs);
 M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                              M12_MenuInput input);
 int M11_GameView_InputConsumesDm1V1SourceTick(const M11_GameViewState* state,

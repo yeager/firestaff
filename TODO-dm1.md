@@ -1,5 +1,11 @@
 # Firestaff TODO — DM1
 
+2026-10-29 original-media regression recheck: `m11_dm1_pc34_first_monster_combat_real`
+passed (1.83 seconds) against the authentic PC34 archive. It verifies the
+covered HoC-to-first-monster route, repeated PUNCH action and creature damage;
+it does not prove every attack type, encounter or DM1 platform. The broader
+gameplay parity work remains open.
+
 2026-10-28: The real-media localized startup-debug regression now has a
 parameterized test shared by DM1, CSB, and DM2. Its DM1 PC34 case passes for
 explicit Swedish and the saved Swedish language profile, checking both scan
@@ -21,8 +27,20 @@ session and records 48,561 bytes with FNV-1a `80a50d66`, matching the file.
 Set `FIRESTAFF_DM1_PC34_AUTHENTIC_SAVE` to this save when running
 `dm1_v1_pc34_native_cli_boot`; the test then compares direct `--save` startup
 with I34E selector Resume and checks that the saved party pose is restored.
-This authentic-save integration branch has not yet been run against a current
-build, so selector-to-original-save runtime parity remains unverified.
+On current `main` `4a121981`, the trv2 build passed
+`ctest --test-dir <build> -R '^dm1_v1_pc34_native_cli_boot$'` 1/1 in 774.15
+seconds with the authentic save enabled. Direct `--save` and I34E selector
+Resume restored the same party pose and bounded game tick, and the test
+verified that the save bytes were unchanged. This proves the tested DOS PC34
+CLI and selector Resume paths; it does not establish Resume parity for other
+DM1 platforms or physical mouse/keyboard delivery.
+
+The same current build passed `test_m12_main_menu_game_selection_real_media.sh`
+with an isolated data root containing only the original DM1, CSB and DM2 FM
+Towns archives. Keyboard, keyboard-leaf and mouse selection reached each
+game's authentic runtime, and default `.firestaff/data` discovery launched
+each game. Nexus and Theron were intentionally absent from this test root;
+their platform paths remain outside this DM1/CSB/DM2 verification.
 
 2026-10-28 PC34 binary-analysis tooling check: the original DOS 3.4 `DM.EXE`
 is LZEXE 0.91-packed. The `yeager/pcrecomp` tools successfully unpack it with
@@ -2471,6 +2489,12 @@ Reviewed 2026-08-29. Only open work is listed here.
   equivalent coverage gates. Decode selected retail bytes first and retain
   them as the stable msgid/fallback; key ambiguous dungeon text by media
   identity plus text index. Never modify or replace original data.
+- Preserve the PC3.4 endgame's source clock end to end. ReDMCSB's VGA
+  `M526_WaitVerticalBlank` is ~70 Hz; F0446 `Delay(780)`, the final
+  `Delay(600)`, F0444 `Delay(300)`, and the 899-pass restart window now
+  advance on a rational 70 Hz host clock rather than the 200 ms gameplay
+  idle tick. Confirm sequence timing and presentation against an original
+  executable capture; cross-platform endgame cadence remains unverified.
 - Validate the completed F0128 source-order executor against authenticated
   same-state original captures. HoC sensor/material-plan checks pass with
   French DOS original data (24 directional portraits), but do not render
@@ -2629,9 +2653,12 @@ Reviewed 2026-08-29. Only open work is listed here.
 - Capture original PC 3.4 overlays and cadence for the now implemented F0444
   champion-screen input transition into C3 `THE END` and C005 credits. The
   separate non-victory F0435 restart success/failure branches are now wired
-  without host relaunch, but still require an original runtime capture using
-  an authentic loadable save and a rejected/corrupt save before pixel/cadence
-  parity can be promoted. The live victory path correctly disables restart.
+  without host relaunch. The authentic `FIRES` executable statically confirms
+  the 900-count pre-decremented input loop; Firestaff now models its 899
+  queue/delay passes and falls through to C005 on timeout. Runtime parity still
+  requires an authentic loadable save and a rejected/corrupt save in DOSBox,
+  including restart success, restart failure restoration, and timeout cadence.
+  The live victory path correctly disables restart.
 
 The missing C13 save/capture corpus is deferred rather than a release blocker
 for the native media paths currently under active work. When an
@@ -2698,7 +2725,7 @@ routes as parity.
 
 2026-10-18 PC34 selector controls: ReDMCSB `SELECTOR.C` maps `R` and its Resume hitbox to command 3, independently of Enter's door animation. Firestaff now routes keyboard `R` and the authenticated selector Resume hitbox through its existing DM1 Quick Resume intent when a DM1 save is available; the source switch sound plays and the FIRES door sequence is skipped. The Quit button hitbox exits like the source `Q` command. The Credits hitbox loads original GRAPHICS.DAT item 5 with the source C06 palette, waits for a key or mouse event as F8327 does, then restores the closed selector. The extended `dm1_v1_pc34_native_cli_boot` test checks Resume selection and a Credits-return-then-Enter sequence against original PC34 media. Original-frame visual comparison remains open.
 
-2026-10-19 PC34 Resume evidence boundary: `dm1_v1_pc34_native_cli_boot` passes against the original English PC34 archive and exercises both keyboard `R` and the Resume hitbox, but supplies a deliberately missing `no-save.DAT` and only asserts that the selector chooses the Quick Resume route. It does not prove an authentic PC34 save is loaded or that its saved pose is restored. `dm1_v1_dos_fr_original_save_cli_resume` separately checks a real French PC34 save through direct CLI and the M12 Quick Resume row, not through the I34E selector. The configured `~/.firestaff/data/dm1` tree currently has no PC34 `DMSAVE.DAT`; selector-to-authentic-save restoration therefore remains unverified until an original PC34 save is available.
+2026-10-19 PC34 Resume evidence boundary (historical; superseded by the 2026-10-29 test above): at that time `dm1_v1_pc34_native_cli_boot` used a deliberately missing `no-save.DAT` and only proved that keyboard `R` and the Resume hitbox selected Quick Resume. Authentic PC34 save loading and restored-pose parity were not yet tested. The 2026-10-29 rerun uses the original PC34 `DMSAVE.DAT` and verifies that direct `--save` and selector Resume restore the same party pose and bounded game tick without changing the save bytes. This closes that evidence gap for the tested DOS PC34 paths; other DM1 platforms and physical input remain unverified.
 
 2026-10-15 I34E TITLE lifecycle correction: IBMIO G8102 (`IBMIO.C:2411-2418`) selects `title -ah -as`: ANIM's S flag erases before TITLE, E erases afterwards, and H retains the final palette (`ANIM.C:1880-1898,1974-1976,2127-2135`). The previous terminal wipe was incorrect. Frame timing remains open: PC34 uses raw EN/DL attributes, while the min-five branch at `ANIM.C:2044-2048` is PC98 and F2275 is FM Towns. IBMIO F8114 returns callback decrement 3; F8091 polling and the PIT interrupt path can invoke that callback (`IBMIO.C:671-672,1280-1290,1649-1650`). The TITLE scheduler now uses raw counters, callback decrement 3 and the default BIOS/PIT period (65536/1193182 seconds), resetting before decode and consuming callback boundaries during decode/presentation. Counter debt does not carry across EN/DL assignments. Its host phase starts at title-handler entry; the historical initial BIOS phase and original CPU decode duration remain unmeasured. The 64-chunk pre-erase is still a host presentation approximation. Calibrate against the authentic executable before claiming measured timing parity. There is no source-specified extra final hold or fade in this route.
 

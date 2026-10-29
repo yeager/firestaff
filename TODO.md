@@ -4,6 +4,28 @@ The current five-game startup evidence matrix and remaining Nexus/Theron
 runtime-entry gaps are consolidated in
 [`docs/STARTUP_SUPPORT_GAP_ANALYSIS.md`](docs/STARTUP_SUPPORT_GAP_ANALYSIS.md).
 
+2026-10-29 current-main startup regression check at `45ab34c5`: the
+real-media M12 game-selection matrix passed (419.13 seconds) for keyboard and
+mouse selection across the five game cards, per-game collection roots, and
+the default `.firestaff/data` root. The real-media CLI startup-diagnostics
+matrix also passed (133.59 seconds) for all five games, including FM Towns
+defaults and invalid/unsupported platform handling. The existing v3.0.419
+binary was built from the same runtime code; `45ab34c5` only changes a DM2
+Macintosh test-media fallback. These checks prove the covered media-selection
+and startup routes, not complete playable support, native display/input
+parity, or every edition/platform combination. DM1 PC34's focused original-
+media first-monster combat test passed in 1.83 seconds; it proves only the
+tested encounter and PUNCH damage path. No release was created.
+
+2026-10-29 main-menu-to-runtime follow-up at `f8b62ea1`: the four in-scope
+real-media cases in `m12_main_menu_runtime_real_media` completed, and their
+probe verifiers passed for DM1 FM Towns, CSB FM Towns, DM2 FM Towns, and DM2
+Amiga, each with `levelLoaded=1`. The harness's own per-case source-hash checks
+also completed for those cases. The combined process was stopped before its
+out-of-scope Theron case; these four results are the only ones claimed here.
+This confirms first-runtime entry for the named authentic routes, not full
+campaign or platform parity.
+
 2026-10-28 authentic-media status correction: the DM1 Amiga demo ZIP, the CSB
 Amiga `Chaos Strikes Back (FTL).zip`, and the DM2 Macintosh English StuffIt
 archive plus its extracted original files are present under the configured

@@ -1683,6 +1683,7 @@ static int m12_dm1_default_dungeon_owner(const char* graphics, const char* graph
 static void m12_publish_dm1_required_owner(M12_AssetStatus* status, int gameIndex,
                                             int finalValidation) {
     const M12_AssetVersionStatus* version;
+    int selectedVersionIndex;
     const char* separator;
     const char* dungeonHash;
     char dungeon[M12_ASSET_DATA_DIR_CAPACITY];
@@ -1691,7 +1692,12 @@ static void m12_publish_dm1_required_owner(M12_AssetStatus* status, int gameInde
     size_t i;
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
         strcmp(g_games[gameIndex].gameId, "dm1") != 0) return;
-    version = m12_first_matched_version(status, gameIndex);
+    selectedVersionIndex = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+        status, "dm1", M12_ARCH_AUTO);
+    version = selectedVersionIndex >= 0
+        ? M12_AssetStatus_GetVersion(status, "dm1",
+                                     (size_t)selectedVersionIndex)
+        : NULL;
     if (!version || !version->versionId) return;
     for (i = 0U; i < status->requiredFileCounts[gameIndex]; ++i) {
         M12_AssetRequiredFileStatus* required = &status->requiredFiles[gameIndex][i];
