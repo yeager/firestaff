@@ -24,9 +24,17 @@ DM_BIN_SHA256 = "3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad12
 WRITER_PC = 0x060230E8
 WRITER_CALLER = 0x06029188
 BLITTER_TARGET = 0x060230D2
+OPAQUE_WRITER_PC = 0x06023128
+OPAQUE_WRITER_CALLER = 0x06023108
+OPAQUE_DISPATCH_TARGET = 0x06023144
 MENU_SURFACE = "MENU.BPK[55]"
 SOURCE_OFFSET = 0x4A
 SOURCE_BYTES = 86
+PANEL_SURFACE_INDEX = 60
+PANEL_X = 16
+PANEL_Y = 112
+PANEL_WIDTH = 228
+PANEL_HEIGHT = 100
 WRITER_FRAME = 536
 NBG0_OFFSET = 0xE6F
 SH2_BASE = 0x06010000
@@ -54,6 +62,46 @@ def be_value_bytes(value: int, width: int) -> bytes:
     if width not in (1, 2, 4) or value < 0 or value >= 1 << (8 * width):
         raise ValueError("invalid SH-2 VDP2 trace value")
     return bytes((value,)) if width == 1 else value.to_bytes(width, "big")
+
+
+def menu_surface_dimensions(data: bytes) -> dict[str, tuple[int, int]]:
+    count = int.from_bytes(data[20:24], "big")
+    dimensions: dict[str, tuple[int, int]] = {}
+    for index in range(count):
+        offset = int.from_bytes(data[24 + index * 4:28 + index * 4], "big")
+        if data[offset + 20:offset + 24] != b"PRS3":
+            continue
+        width = int.from_bytes(data[offset + 12:offset + 14], "big")
+        height = data[offset + 15]
+        dimensions[f"MENU.BPK[{index}]"] = (width, height)
+    return dimensions
+
+
+def find_surface_crops(surfaces: list[tuple[str, bytes]],
+                       dimensions: dict[str, tuple[int, int]],
+                       target: bytes, width: int, height: int
+                       ) -> list[tuple[str, int, int]]:
+    """Find exact row-wise occurrences of one raster in decoded BPK surfaces."""
+    first_row = target[:width]
+    matches: list[tuple[str, int, int]] = []
+    for name, pixels in surfaces:
+        surface_width, surface_height = dimensions[name]
+        if surface_width < width or surface_height < height:
+            continue
+        start = 0
+        while True:
+            offset = pixels.find(first_row, start)
+            if offset < 0:
+                break
+            x, y = offset % surface_width, offset // surface_width
+            if (x + width <= surface_width and y + height <= surface_height and
+                    all(pixels[(y + row) * surface_width + x:
+                               (y + row) * surface_width + x + width] ==
+                        target[row * width:(row + 1) * width]
+                        for row in range(height))):
+                matches.append((name, x, y))
+            start = offset + 1
+    return matches
 
 
 def verify_nbg0_screenshot(capture: Path, regions: dict[str, bytes],
@@ -154,6 +202,32 @@ def main() -> int:
         if bitmap.find(span) != NBG0_OFFSET or bitmap.count(span) != 1:
             raise ValueError("MENU.BPK span is not unique at the expected NBG0 offset")
 
+        menu_count = int.from_bytes(menu_bpk[20:24], "big")
+        if PANEL_SURFACE_INDEX >= menu_count:
+            raise ValueError("authentic MENU.BPK is missing panel surface 60")
+        panel_offset = int.from_bytes(
+            menu_bpk[24 + PANEL_SURFACE_INDEX * 4:
+                     28 + PANEL_SURFACE_INDEX * 4], "big")
+        panel_width = int.from_bytes(menu_bpk[panel_offset + 12:
+                                               panel_offset + 14], "big")
+        panel_height = menu_bpk[panel_offset + 15]
+        panel = dict(surfaces).get(f"MENU.BPK[{PANEL_SURFACE_INDEX}]")
+        if ((panel_width, panel_height) != (PANEL_WIDTH, PANEL_HEIGHT) or
+                panel is None or len(panel) != PANEL_WIDTH * PANEL_HEIGHT):
+            raise ValueError("authentic MENU.BPK[60] dimensions or pixels differ")
+        panel_matches = find_surface_crops(
+            surfaces, menu_surface_dimensions(menu_bpk), panel,
+            PANEL_WIDTH, PANEL_HEIGHT)
+        if panel_matches != [(f"MENU.BPK[{PANEL_SURFACE_INDEX}]", 0, 0)]:
+            raise ValueError(
+                f"NBG0 panel rectangle is not unique in MENU.BPK: {panel_matches}")
+        for y in range(PANEL_HEIGHT):
+            source_row = panel[y * PANEL_WIDTH:(y + 1) * PANEL_WIDTH]
+            dest_start = (PANEL_Y + y) * 512 + PANEL_X
+            if bitmap[dest_start:dest_start + PANEL_WIDTH] != source_row:
+                raise ValueError(
+                    f"MENU.BPK[60] row {y} does not match the captured NBG0 bitmap")
+
         # The raw Ymir WorkRAM-HI image is addressed from 0x06000000. Check the
         # observed store opcode against the authenticated DM.BIN code mapping.
         wram_hi = (args.capture / "wram-hi.bin").read_bytes()
@@ -167,6 +241,16 @@ def main() -> int:
         dispatch_offset = 0x060292C8 - SH2_BASE
         if int.from_bytes(dm_bin[dispatch_offset:dispatch_offset + 4], "big") != BLITTER_TARGET:
             raise ValueError("DM.BIN menu blitter dispatch pointer differs")
+        copy_dispatch_offset = 0x060292CC - SH2_BASE
+        if (int.from_bytes(dm_bin[copy_dispatch_offset:copy_dispatch_offset + 4],
+                           "big") != OPAQUE_DISPATCH_TARGET):
+            raise ValueError("DM.BIN opaque menu-copy dispatch pointer differs")
+        opaque_code_offset = OPAQUE_WRITER_PC - SH2_BASE
+        opaque_ram_offset = OPAQUE_WRITER_PC - SH2_RAM_BASE
+        opaque_code = dm_bin[opaque_code_offset:opaque_code_offset + 32]
+        if (len(opaque_code) != 32 or
+                wram_hi[opaque_ram_offset:opaque_ram_offset + 32] != opaque_code):
+            raise ValueError("frame opaque-copy writer is not bound to retail DM.BIN")
 
         sh2_receipt = read_receipt(
             args.capture / "sh2-vdp2-write-trace-bundle.txt",
@@ -178,22 +262,46 @@ def main() -> int:
             raise ValueError("SH-2 VDP2 trace is incomplete or dropped events")
         expected_rows = int(sh2_receipt["trace_rows"])
         matched_sh2: set[int] = set()
+        matched_panel_writer: set[int] = set()
         eligible_events = 0
+        eligible_panel_events = 0
         trace_path = args.capture / sh2_receipt.get("trace_file", "sh2-vdp2-write-trace.csv")
         with trace_path.open(encoding="ascii", newline="") as stream:
             rows = csv.DictReader(stream)
             for row in rows:
                 if row.get("sh2") != "master":
                     continue
-                if int(row["vdp1_frame"]) != WRITER_FRAME or \
-                        int(row["pc"], 16) != WRITER_PC:
+                if int(row["vdp1_frame"]) != WRITER_FRAME:
+                    continue
+                pc = int(row["pc"], 16)
+                address = int(row["address"], 16)
+                if pc == OPAQUE_WRITER_PC:
+                    stack = {int(value, 16) for value in
+                             row["caller_stack_targets"].split("|")}
+                    if (int(row["caller_target"], 16) == OPAQUE_WRITER_CALLER and
+                            WRITER_CALLER in stack):
+                        row_data = be_value_bytes(int(row["value"], 16),
+                                                  int(row["width"]))
+                        for index, value in enumerate(row_data):
+                            destination = address + index - VDP2_VRAM_BASE
+                            y_offset, x_offset = divmod(destination, 512)
+                            panel_y = y_offset - PANEL_Y
+                            panel_x = x_offset - PANEL_X
+                            if (0 <= panel_y < PANEL_HEIGHT and
+                                    0 <= panel_x < PANEL_WIDTH):
+                                eligible_panel_events += 1
+                                source_offset = panel_y * PANEL_WIDTH + panel_x
+                                if value != panel[source_offset]:
+                                    raise ValueError(
+                                        "retail opaque-copy trace differs from MENU.BPK[60]")
+                                matched_panel_writer.add(source_offset)
+                if pc != WRITER_PC:
                     continue
                 if int(row["caller_target"], 16) != BLITTER_TARGET:
                     continue
                 stack = {int(value, 16) for value in row["caller_stack_targets"].split("|")}
                 if WRITER_CALLER not in stack:
                     continue
-                address = int(row["address"], 16)
                 if not (VDP2_VRAM_BASE + NBG0_OFFSET <= address <
                         VDP2_VRAM_BASE + NBG0_OFFSET + SOURCE_BYTES):
                     continue
@@ -207,6 +315,32 @@ def main() -> int:
             actual_rows = rows.line_num - 1
         if actual_rows != expected_rows:
             raise ValueError("SH-2 trace row count differs from its receipt")
+        if (eligible_panel_events != PANEL_WIDTH * PANEL_HEIGHT or
+                matched_panel_writer != set(range(PANEL_WIDTH * PANEL_HEIGHT))):
+            raise ValueError(
+                "retail opaque-copy trace did not bind every MENU.BPK[60] pixel: "
+                f"{len(matched_panel_writer)}/{PANEL_WIDTH * PANEL_HEIGHT}")
+        panel_bus_values: dict[int, int] = {}
+        with (args.capture / "vdp2-memory-write-trace.csv").open(
+                encoding="ascii", newline="") as stream:
+            for row in csv.DictReader(stream):
+                if row.get("memory") != "VRAM" or \
+                        int(row["vdp1_frame"]) != WRITER_FRAME:
+                    continue
+                address = int(row["address"], 16)
+                data = be_value_bytes(int(row["value"], 16), int(row["width"]))
+                for index, value in enumerate(data):
+                    destination = address + index
+                    y, x = divmod(destination, 512)
+                    if (PANEL_Y <= y < PANEL_Y + PANEL_HEIGHT and
+                            PANEL_X <= x < PANEL_X + PANEL_WIDTH):
+                        panel_bus_values[(y - PANEL_Y) * PANEL_WIDTH +
+                                         (x - PANEL_X)] = value
+        if (len(panel_bus_values) != PANEL_WIDTH * PANEL_HEIGHT or
+                any(panel_bus_values[index] != panel[index]
+                    for index in range(PANEL_WIDTH * PANEL_HEIGHT))):
+            raise ValueError(
+                "frame-bounded VDP2 bus writes do not preserve all MENU.BPK[60] pixels")
         expected_nonzero = {i for i, value in enumerate(span) if value != 0}
         if not expected_nonzero or matched_sh2 != expected_nonzero:
             raise ValueError(
@@ -262,6 +396,14 @@ def main() -> int:
     print(f"vdp2_bus_events_in_span={vdp2_events}")
     print(f"matched_nonzero_vdp2_bus_pixels={len(matched_vdp2)}/{len(expected_nonzero)}")
     print("source_to_nbg0_transport=verified")
+    print(f"opaque_menu_surface=MENU.BPK[{PANEL_SURFACE_INDEX}]")
+    print(f"opaque_menu_surface_dimensions={PANEL_WIDTH}x{PANEL_HEIGHT}")
+    print(f"opaque_menu_surface_destination={PANEL_X},{PANEL_Y}")
+    print(f"opaque_menu_surface_pixels={len(matched_panel_writer)}")
+    print(f"opaque_menu_surface_writer_events={eligible_panel_events}")
+    print(f"opaque_menu_surface_vdp2_bus_pixels={len(panel_bus_values)}")
+    print("opaque_menu_surface_unique_bpk_crop=verified")
+    print("opaque_menu_surface_source_to_nbg0=verified")
     if palette_receipt:
         source_pixels, compared_pixels, indices, screenshot_hash = palette_receipt
         print(f"visible_nbg0_palette_indices={len(indices)}")

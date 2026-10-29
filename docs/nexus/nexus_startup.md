@@ -52,7 +52,7 @@ source.
 | `WARNING.BIN`, `GAMEOVER.BIN`, `STABG.BIN` | real surfaces are decoded and receive byte provenance; presentation is missing |
 | `FACE.BIN` | The JP retail member is verified as 45,104 bytes (`bd9ca16ea68043984e2804067b6cd66f`): 20 variable-length, 56×56 PRS3 portraits with source palettes. The PLRD roster-to-portrait ordinal and the VDP1 destination/order are still unobserved. |
 | `FONT256.S2D` | 242 CG tiles are retained in production source; Saturn page/attribute/glyph mapping is missing |
-| `MENU.BPK` | All 162 PRS3 surfaces decode to source-bound bytes. In one complete authentic Japanese menu frame, 86 whole surfaces are byte-resident in VDP1 VRAM, but none of 137 textured command sources starts in those ranges. The capture does not establish that `MENU.BPK` supplies the visible menu. Ownership, ordering, CLUT and VDP1/VDP2 composition remain unbound; see the [menu snapshot join](NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md). |
+| `MENU.BPK` | All 162 PRS3 surfaces decode to source-bound bytes. In the authentic Japanese Load panel, unique surface 60 is joined row by row to the 228x100 NBG0 base at `(16,112)`, surface 55 contributes a traced partial image span, and all 42 visible NBG0 color indices match captured CRAM output against the Ymir screenshot. Other Load-panel pixels, palette resource ownership and complete composition remain open. A separate Japanese title-menu frame has 86 whole surfaces byte-resident in VDP1 VRAM, but none of 137 textured command sources starts in those ranges; see the [menu snapshot join](NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md). |
 | Saturn Backup RAM | `nexus_v1_saturn_bkr_parse` reads hash-pinned 32 KiB card directories and block chains, returning exact opaque payload bytes; native save selection, payload interpretation, and runtime loading remain missing |
 | Mednafen visual baseline | A clean J-BIOS capture against authentic retail shows black boot followed by the original intro FMV without input; menu/LEV01 identity remains missing |
 
@@ -2095,6 +2095,23 @@ Load-panel renderer. The analyzer output
 and Ghidra decompilation are retained in the external trace bundle's
 `nbg0-menu-source-trace.txt` and
 `nbg0-writers-ghidra-decompilation.log` files.
+
+### Load-panel MENU.BPK[60] panel-base join (2026-10-29)
+
+The same Japanese `MENU.BPK` contains a unique 228x100 decoded PRS3 surface
+at entry 60. Its complete row-major pixel plane matches the frame-659 NBG0
+rectangle at `(16,112)` row by row. The frame-536 SH-2 trace records all
+22,800 byte writes from PC `0x06023128`, with the call stack reaching the
+retail menu-image routine at `0x06029188`; every value matches the same source
+pixel. Independent VDP2 bus writes resolve to the same 22,800 source bytes,
+and the final frame-659 VRAM rows remain identical. Ghidra identifies
+`FUN_06023108` as the row copier and `FUN_06023144` as its wrapper, reached
+through the `0x060292cc` dispatch entry. This joins the large lower Load-panel
+base to authentic retail data, while leaving the other NBG0 rectangles,
+generated text and borders, zero-index layers, and full-screen composition
+unresolved. The reproducible analyzer reports
+`opaque_menu_surface_source_to_nbg0=verified`; its receipt and Ghidra
+decompilation are in the external trace bundle.
 
 ### Load-panel frame-536 CRAM writer identification (2026-10-29)
 

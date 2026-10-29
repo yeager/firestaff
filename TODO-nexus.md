@@ -59,8 +59,10 @@ separate frame-bounded join now binds 57 nonzero pixels from authentic Japanese
 `0xe6f`; Ghidra identifies the caller as the retail menu-image renderer. This
 is a partial pixel-index transport join. A same-state screenshot comparison
 now verifies direct CRAM output for all 42 visible nonzero NBG0 indices, but
-the retail resource that supplied those colors, the remaining bitmap producer,
-and complete screen composition remain unbound. No exact MENU/STABG or DGN
+an additional row-wise trace join binds unique `MENU.BPK[60]` (228x100) to
+22,800 frame-bounded SH-2 writes at NBG0 `(16,112)`. The retail resource that
+supplied the CRAM colors, the remaining bitmap producer, and complete screen
+composition remain unbound. No exact MENU/STABG or DGN
 Structure2 palette asset match was found. Identify the full NBG0 producer,
 palette resource owner, and remaining composition before admitting a Firestaff
 Load-panel renderer. See the frame-bounded evidence and reproduction command in
@@ -540,10 +542,10 @@ row. Determine the active owner and transform from the Saturn SH-2 draw setup
 before using these materials to render the Configuration scene.
 
 The authentic Load-panel NBG0 work now binds an 86-byte `MENU.BPK[55]` source
-span to its frame-bounded SH-2 and VDP2 VRAM writes. The captured CRAM palette
-output is pixel-exact against the Ymir screenshot for 43,889 visible NBG0
-pixels; its retail resource owner and complete bitmap composition remain
-unresolved. A separate
+span and the unique 228x100 `MENU.BPK[60]` panel base to frame-bounded SH-2 and
+VDP2 VRAM writes. The captured CRAM palette output is pixel-exact against the
+Ymir screenshot for 43,889 visible NBG0 pixels; its retail resource owner and
+complete bitmap composition remain unresolved. A separate
 frame-536 CRAM routine at `0x06038e30` is a retail color animation that updates
 a four-row WRAM table; no evidence joins that table to the menu surface or
 NBG0 color-index source. Continue source tracing for the CRAM resource owner,
