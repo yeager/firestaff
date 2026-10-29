@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-29 — load authenticated Stage-2 VCE colors into native palette state
+
+Added `theron_v1_track02_load_stage2_vce_palette()`. It reuses the exact
+US/JP Track 02 hash, dispatch, routine and payload checks, then copies the
+verified 32 little-endian HuC6260 words into native palette entries `$E0-$FF`
+and computes their RGBA values. Authentic US and JP raw BIN coverage passed
+three consecutive loops on TRV2, including rejection of a truncated buffer
+without modifying the destination state. This makes real colors available to
+native consumers; it does not bind them to a screen or mark a renderer route
+verified. Dungeon palette ownership and dynamic rendering remain open.
+
 ## 2026-10-29 — verify native keyboard and mouse routes against JP and US data
 
 A clean CMake Debug build of PR #185 completed on TRV2 with one job. The

@@ -1,3 +1,16 @@
+## 2026-10-29 — authenticated Stage-2 colors are available; screen binding remains open
+
+- `theron_v1_track02_load_stage2_vce_palette()` copies the authentic regional
+  Stage-2 palette words into entries `$E0-$FF` of a native palette state after
+  checking Track 02 identity, dispatch entry, routine bytes and payload bounds.
+- Real JP and US BIN tests passed three loops on TRV2. The helper does not
+  establish which screen or dungeon layer uses these colors. No viewport route
+  is admitted by this data, and it must not clear the synthetic-rendering
+  guard or set `palette_route_verified`.
+- Next: capture a cold, source-bound execution of the palette loader and join
+  its selected data to the game-owned VDC/BAT/tile state before using it for
+  any screen rendering.
+
 ## 2026-10-29 — bound cold CD source tracing to Track 02
 
 - The Mednafen PCE Fast CD data-port trace keeps its default 65,536-row

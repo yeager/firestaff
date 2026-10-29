@@ -2300,6 +2300,33 @@ Theron_Track02SignalStatus theron_v1_track02_read_stage2_vce_palette(
     return THERON_TRACK02_SIGNAL_OK;
 }
 
+Theron_Track02SignalStatus theron_v1_track02_load_stage2_vce_palette(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    TQR_PaletteState *out_state,
+    Theron_Track02Stage2VcePalette *out_receipt) {
+    Theron_Track02Stage2VcePalette receipt;
+    Theron_Track02SignalStatus status;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!track02_data || track02_size == 0u || !md5_hex || !out_state) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+    status = theron_v1_track02_read_stage2_vce_palette(
+        track02_data, track02_size, md5_hex, &receipt);
+    if (status != THERON_TRACK02_SIGNAL_OK) return status;
+    if (tqr_palette_load_group(
+            out_state, receipt.payload,
+            (int)receipt.vce_palette_start_index,
+            (int)receipt.vce_palette_entry_count) !=
+        (int)receipt.vce_palette_entry_count) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+    if (out_receipt) *out_receipt = receipt;
+    return THERON_TRACK02_SIGNAL_OK;
+}
+
 Theron_Track02SignalStatus theron_v1_track02_inspect_4bpp_palette_window(
     const uint8_t *track02_data,
     size_t track02_size,
