@@ -1,5 +1,20 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-29 launcher data-root follow-up at `8a04294f`: the authentic-media
+return-scan mutation test passed both directions. Removing the staged original
+CSB archive while DM1 was running made CSB unavailable after returning to the
+launcher while DM1 and DM2 remained available; adding the original CSB archive
+during the same DM1 runtime made all three priority games available on return.
+The shared-collection M12 session also passed: it launched DM1 from an explicit
+per-game data directory, rescanned the collection, launched CSB, returned and
+rescanned again, while retaining authentic DM1 and CSB edition identities and
+discovering DM2 from the same collection. The tests used the existing
+2026-10-29 05:49 local app build, which includes the current runtime changes;
+subsequent `main` commits are test or documentation changes. These SDL-dummy
+receipts cover dynamic discovery and the named shared-root handoffs only. They
+do not establish native display/input or complete gameplay parity. No launcher
+behavior defect was reproduced in these cases.
+
 2026-10-29 current-main DM1/CSB/DM2 launcher audit at `5b65ec09`: the
 authentic-media no-game M12 menu tests passed separately for DM1 FM Towns,
 CSB FM Towns, and DM2 FM Towns, including each game's first-runtime receipt
