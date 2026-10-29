@@ -545,7 +545,11 @@ if ! grep -Fq 'theron_pce_fast_cd_ram_target_write_trace.patch' "$build_script" 
    ! grep -Fq 'reader_mpr7=%02x source_valid=%u' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'reader_physical_pc = ((uint32)reader_mpr << 13) | (cpu_pc & 0x1fff)' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'TheronTraceCDDataPortRead(TheronTraceInstructionPC, source_lba' "$cd_ram_target_write_patch_file" ||
-   ! grep -Fq 'if(count >= 65536)' "$cd_ram_target_write_patch_file" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_TRACE_LIMIT' "$cd_ram_target_write_patch_file" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_START_AT_TRACK02' "$cd_ram_target_write_patch_file" ||
+   ! grep -Fq 'parsed <= 1048576UL' "$cd_ram_target_write_patch_file" ||
+   ! grep -Fq 'if(count >= trace_limit)' "$cd_ram_target_write_patch_file" ||
+   ! grep -Fq 'if(start_at_track02 && (!source_valid || source_lba < track02_start_lba' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'TheronTraceInstructionPC >= 0xEA80' "$pce_fast_main_ram_consumer_patch_file" ||
    ! grep -Fq 'per_offset[offset] >= 16 && !target_writer_read' "$pce_fast_main_ram_consumer_patch_file" ||
    ! grep -Fq 'PCECD_Drive_GetREQ() && !PCECD_Drive_GetACK() && !PCECD_Drive_GetCD() && PCECD_Drive_GetIO()' "$cd_ram_target_write_patch_file" ||
@@ -556,6 +560,10 @@ if ! grep -Fq 'theron_pce_fast_cd_ram_target_write_trace.patch' "$build_script" 
    ! grep -Fq 'static void TheronTraceCDDataPortRead(uint16 cpu_pc, uint32 source_lba' "$cd_ram_target_write_patch_file" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE' "$capture_script" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_TRACE="$cd_data_port_read_trace"' "$capture_script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_TRACE_LIMIT="$cd_data_read_trace_limit"' "$capture_script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_START_AT_TRACK02="$cd_data_read_start_at_track02"' "$capture_script" ||
+   ! grep -Fq 'THERON_CAPTURE_PCE_FAST_CD_DATA_READ_TRACE_LIMIT' "$capture_script" ||
+   ! grep -Fq 'THERON_CAPTURE_PCE_FAST_CD_DATA_READ_START_AT_TRACK02' "$capture_script" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_TRACK02_INDEX1_FILE_OFFSET="$track02_index1_file_offset"' "$capture_script" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_TRACK02_SECTOR_BYTES="$track02_sector_bytes"' "$capture_script" ||
    ! grep -Fq 'track02_index1_file_offset=$((track02_index1_sector * track02_sector_bytes))' "$capture_script" ||

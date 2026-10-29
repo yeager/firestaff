@@ -129,6 +129,8 @@ pce_fast_vram_commit_trace_limit=${THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE_LIM
 pce_fast_vram_commit_start_at_track02=${THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_START_AT_TRACK02:-0}
 pce_fast_vce_write_trace_limit=${THERON_CAPTURE_PCE_FAST_VCE_WRITE_TRACE_LIMIT:-65536}
 pce_fast_44d2_follow_limit=${THERON_CAPTURE_PCE_FAST_44D2_FOLLOW_LIMIT:-128}
+cd_data_read_trace_limit=${THERON_CAPTURE_PCE_FAST_CD_DATA_READ_TRACE_LIMIT:-65536}
+cd_data_read_start_at_track02=${THERON_CAPTURE_PCE_FAST_CD_DATA_READ_START_AT_TRACK02:-0}
 input_trace_limit_default=65536
 if [[ -n "$replay_input_script" || -n "$host_key" || -n "$host_key_sequence" ]]; then
     # Long boot/replay plans can reach the old 65,536-read ceiling before the
@@ -187,6 +189,22 @@ if [[ -n "$host_key" || -n "$host_key_sequence" ]]; then
 fi
 quartz_keypair_script="$script_dir/send_theron_macos_quartz_keypair.swift"
 quartz_grab_script="$script_dir/send_theron_macos_quartz_chord.swift"
+
+if [[ ! "$cd_data_read_trace_limit" =~ ^[0-9]+$ ]] ||
+   (( cd_data_read_trace_limit < 65536 || cd_data_read_trace_limit > 1048576 )); then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_CD_DATA_READ_TRACE_LIMIT must be an integer from 65536 through 1048576' >&2
+    exit 1
+fi
+if [[ "$cd_data_read_start_at_track02" != 0 &&
+      "$cd_data_read_start_at_track02" != 1 ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_CD_DATA_READ_START_AT_TRACK02 must be 0 or 1' >&2
+    exit 1
+fi
+if [[ "$cd_data_read_start_at_track02" == 1 &&
+      "$capture_mednafen_module" != pce_fast ]]; then
+    printf '%s\n' 'FAIL: Track 02 CD data-read filtering requires the PCE Fast module' >&2
+    exit 1
+fi
 
 # The research generator route clocks its controller pulses from
 # TheronScriptInputFrame(); without replay input that frame counter stays at
@@ -1571,6 +1589,8 @@ launch=(
     FIRESTAFF_THERON_44D2_FOLLOW_LIMIT="$pce_fast_44d2_follow_limit" \
     FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE="$cd_ram_target_write_trace" \
     FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_TRACE="$cd_data_port_read_trace" \
+    FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_TRACE_LIMIT="$cd_data_read_trace_limit" \
+    FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_START_AT_TRACK02="$cd_data_read_start_at_track02" \
     FIRESTAFF_THERON_PCE_FAST_TRACK02_INDEX1_FILE_OFFSET="$track02_index1_file_offset" \
     FIRESTAFF_THERON_PCE_FAST_TRACK02_SECTOR_BYTES="$track02_sector_bytes" \
     FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE="$main_ram_consumer_trace" \
@@ -2481,6 +2501,8 @@ fi
     printf 'authenticated_cd_ram_receipts=%s\n' "$transition_authenticated_cd_ram_count"
     printf 'cd_ram_target_writes=%s\n' "$transition_cd_ram_target_write_count"
     printf 'cd_data_port_reads=%s\n' "$transition_cd_data_port_read_count"
+    printf 'cd_data_port_read_trace_limit=%s\n' "$cd_data_read_trace_limit"
+    printf 'cd_data_port_read_start_at_track02=%s\n' "$cd_data_read_start_at_track02"
     printf 'source_bound_cd_data_port_reads=%s\n' "$transition_cd_data_port_source_bound_count"
     printf 'source_unbound_cd_data_port_reads=%s\n' "$transition_cd_data_port_source_unbound_count"
     printf 'game_main_ram_e009_dispatches=%s\n' "$transition_game_main_ram_e009_count"

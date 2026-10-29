@@ -1,3 +1,27 @@
+## 2026-10-29 — bound cold CD source tracing to Track 02
+
+- The Mednafen PCE Fast CD data-port trace keeps its default 65,536-row
+  all-source cap. For source joins it can now select source-valid reads inside
+  Track 02 and raise the explicit cap up to 1,048,576 rows. The capture wrapper
+  validates the options and records both settings in the transition receipt;
+  filtering does not change emulated CD behavior or the independent RAM/VDC
+  traces.
+- The cold authentic JP run exercised the new filter and recorded 483,328
+  source-valid reads from Track 02 (LBA 3,590–5,259). The `$D515` candidate at
+  raw offset 643,413 was read by the System Card at `$EA99`; this is not proof
+  of a copy into the game bank or execution.
+- All 11 scheduled input events reached active-low controller reads at System
+  Card PC `$E4C5`; no scheduled mask reached a non-System-Card poll during its
+  hold. No complete bounded HuC6280 `$23AD` call or authenticated CD-to-game-RAM
+  receipt was captured, and the VWR trace reached its cap. The Japanese SBI
+  sidecar was absent, but this run does not prove that it caused the missing
+  handoff. Native gameplay input and dungeon projection therefore remain open.
+- Full trace counts, hashes, setup and limits are recorded in
+  [the cold filtered capture note](docs/source-lock/theron-disassembly/theron-jp-cold-track02-filtered-input-20261029.md).
+- Next: obtain a cold run that reaches the game-owned controller poll, then
+  join loaded `$D515/$D588` code and pointer descriptors to the Button-I result
+  and VDC destination before enabling native world clicks or projection.
+
 ## 2026-10-29 — C1DF CPU tracing is opt-in; pointer/action join remains open
 
 - The PCE Fast C1DF instruction/register trace now follows

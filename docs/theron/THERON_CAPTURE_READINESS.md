@@ -96,8 +96,22 @@ span, SCSI command, authenticated CD-to-RAM origin receipt, CD IRQ, or game
 `$E009` dispatch. The capture helper therefore rejected it as
 `transition=missing`. This proves delivery of the requested long RUN hold to
 the original controller path only. It does not prove a Theron title/menu
-action, game launch, dungeon admission, or native runtime parity. The raw
-capture remains operator-local and is discarded after the summary is recorded.
+action, game launch, dungeon admission, or native runtime parity. Raw capture
+artifacts are discarded after the summary is recorded.
+
+## Bounded cold CD-read trace options
+
+The PCE Fast reference wrapper leaves the CD data-port trace at its historical
+65,536-row all-source cap by default. A cold source-join capture may set
+`THERON_CAPTURE_PCE_FAST_CD_DATA_READ_START_AT_TRACK02=1` to record only
+source-valid data-port reads whose LBA falls inside the selected Track 02, and
+`THERON_CAPTURE_PCE_FAST_CD_DATA_READ_TRACE_LIMIT` to choose a cap from 65,536
+through 1,048,576 rows. The wrapper records both values in its transition
+receipt. This filter applies only to that diagnostic sidecar; separate
+CD-to-RAM, CPU, VDC and VCE traces keep their own bounds and meanings. It does
+not prove a CD-to-RAM consumer or screen mapping until those receipts are
+joined in the same cold session. The 2026-10-29 Japanese cold capture and its
+limits are summarized in the [filtered Track 02 capture note](../source-lock/theron-disassembly/theron-jp-cold-track02-filtered-input-20261029.md).
 
 ## 2026-10-24 — authentic runtime input comparison remains inconclusive
 

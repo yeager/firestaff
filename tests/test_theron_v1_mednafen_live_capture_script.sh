@@ -63,6 +63,39 @@ if bash -c 'source "$1"; wait_for_host_key_scancode_presses "$2" 91 2 1' _ \
     exit 1
 fi
 mkdir -p "$repo/build"
+cd_limit_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_PCE_FAST_CD_DATA_READ_TRACE_LIMIT=65535 \
+    "$script" 2>&1) && {
+    printf '%s\n' 'FAIL: CD data-read trace accepted a limit below its bounded minimum' >&2
+    exit 1
+}
+if [[ "$cd_limit_output" != *'THERON_CAPTURE_PCE_FAST_CD_DATA_READ_TRACE_LIMIT must be an integer from 65536 through 1048576'* ]]; then
+    printf '%s\n' 'FAIL: invalid CD data-read limit lacked a precise diagnostic' >&2
+    exit 1
+fi
+cd_filter_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_MEDNAFEN_MODULE=pce \
+    THERON_CAPTURE_PCE_FAST_CD_DATA_READ_START_AT_TRACK02=1 \
+    "$script" 2>&1) && {
+    printf '%s\n' 'FAIL: Track 02 CD data-read filtering accepted the standard PCE module' >&2
+    exit 1
+}
+if [[ "$cd_filter_output" != *'Track 02 CD data-read filtering requires the PCE Fast module'* ]]; then
+    printf '%s\n' 'FAIL: invalid CD data-read module lacked a precise diagnostic' >&2
+    exit 1
+fi
+cd_filter_valid_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast \
+    THERON_CAPTURE_PCE_FAST_CD_DATA_READ_TRACE_LIMIT=262144 \
+    THERON_CAPTURE_PCE_FAST_CD_DATA_READ_START_AT_TRACK02=1 \
+    "$script" 2>&1) || {
+    printf '%s\n' 'FAIL: valid bounded Track 02 CD data-read settings were rejected' >&2
+    exit 1
+}
+if [[ "$cd_filter_valid_output" != *'SKIP:'* ]]; then
+    printf '%s\n' 'FAIL: valid CD data-read settings did not reach the missing-media gate' >&2
+    exit 1
+fi
 python3 "$repo/tests/test_theron_scripted_input_patch_parser.py"
 python3 "$repo/tests/test_theron_mouse_input_parser.py"
 bash "$repo/tests/test_theron_authentic_bram.sh"
