@@ -251,6 +251,27 @@ if [[ "$mirrored_port_receipt" != *'event_frames_with_scripted_mask_read=1'* ||
         "$mirrored_port_receipt" >&2
     exit 1
 fi
+cat >"$input_test_dir/mirrored-slot-four.trace" <<'THERON_MIRRORED_SLOT_FOUR_INPUT'
+scripted_pce_input_event frame=74 key=run mask=0008 hold=60 port=4
+scripted_pce_input_apply frame=74 physical=0000 scripted=0008 port=4
+pce_input_read frame=74 cpu_pc=42ab register=1394 raw=0008 sel=0 clr=0 index=4 value=37
+THERON_MIRRORED_SLOT_FOUR_INPUT
+slot_four_receipt=$("$scripted_input_consumption_verifier" \
+    "$input_test_dir/mirrored-slot-four.trace" run@74:60 8 4)
+if [[ "$slot_four_receipt" != *'scripted_input_port_index=4'* ||
+      "$slot_four_receipt" != *'event_frames_with_scripted_mask_read=1'* ||
+      "$slot_four_receipt" != *'controller_read_witness_pc=42ab'* ]]; then
+    printf 'FAIL: selected PCE input slot 4 did not produce an attributed read:\n%s\n' \
+        "$slot_four_receipt" >&2
+    exit 1
+fi
+if "$scripted_input_consumption_verifier" \
+    "$input_test_dir/mirrored-slot-four.trace" run@74:60 8 \
+    >"$input_test_dir/mirrored-slot-four-default.stdout" \
+    2>"$input_test_dir/mirrored-slot-four-default.stderr"; then
+    printf '%s\n' 'FAIL: selected PCE input slot 4 was accepted under default slot 0' >&2
+    exit 1
+fi
 cat >"$input_test_dir/mirrored-wrong-index.trace" <<'THERON_MIRRORED_WRONG_INPUT_INDEX'
 scripted_pce_input_event frame=73 key=run mask=0008 hold=60
 scripted_pce_input_apply frame=73 physical=0000 scripted=0008 combined=0008
@@ -544,6 +565,15 @@ if route_output=$(THERON_CAPTURE_MENU_ROUTE=drator-generator \
 fi
 if [[ "$route_output" != *'RUN replay event at frame 9600'* ]]; then
     printf 'FAIL: cold-start drator-generator did not enforce the authentic RUN handoff frame\n' >&2
+    exit 1
+fi
+if route_output=$(THERON_CAPTURE_REPLAY_INPUT_PORT=5 bash "$script" 2>&1); then
+    printf '%s\n' 'FAIL: capture accepted PCE input slot 5 outside the supported range' >&2
+    exit 1
+fi
+if [[ "$route_output" != *'THERON_CAPTURE_REPLAY_INPUT_PORT must be an integer from 0 through 4'* ]]; then
+    printf 'FAIL: invalid scripted PCE input slot lacked a precise diagnostic:\n%s\n' \
+        "$route_output" >&2
     exit 1
 fi
 route_output=$(THERON_CAPTURE_MENU_ROUTE=drator-generator \
@@ -1356,9 +1386,12 @@ if ! awk '
 fi
 if ! grep -Fq 'mednafen_1.32.1_theron_scripted_pce_fast_input.patch' "$repo/scripts/build_mednafen_theron_irq2_trace.sh" ||
    ! grep -Fq 'FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT' "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_fast_input.patch" ||
-   ! grep -Fq 'scripted_pce_input_event frame=%u key=%s mask=%04x hold=%u' "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_fast_input.patch" ||
-   ! grep -Fq 'if(x == 0) new_data |= scripted_port0' "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_fast_input.patch"; then
-    printf '%s\n' 'FAIL: pce_fast replay input must be bounded, traced, and applied only to controller port 0' >&2
+   ! grep -Fq 'FIRESTAFF_THERON_REPLAY_INPUT_PORT' "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_fast_input.patch" ||
+   ! grep -Fq 'scripted_pce_input_event frame=%u key=%s mask=%04x hold=%u port=%u' "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_fast_input.patch" ||
+   ! grep -Fq 'if(x == (int)scripted_port) new_data |= scripted_mask' "$repo/scripts/mednafen_1.32.1_theron_scripted_pce_fast_input.patch" ||
+   ! grep -Fq 'FIRESTAFF_THERON_REPLAY_INPUT_PORT="$replay_input_port"' "$script" ||
+   ! grep -Fq 'scripted_pce_input_port=%s' "$script"; then
+    printf '%s\n' 'FAIL: pce_fast replay input must expose and report the configured controller slot' >&2
     exit 1
 fi
 if ! grep -Fq 'if [[ "$capture_mednafen_module" == pce ]]; then' "$script" ||

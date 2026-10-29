@@ -112,6 +112,11 @@ host_key_sequence=${THERON_CAPTURE_HOST_KEY_SEQUENCE:-}
 host_key_holds=${THERON_CAPTURE_HOST_KEY_HOLDS:-}
 capture_input_grab_delay=${THERON_CAPTURE_INPUT_GRAB_DELAY:-2}
 replay_input_script=${THERON_CAPTURE_REPLAY_INPUT_SCRIPT:-}
+replay_input_port=${THERON_CAPTURE_REPLAY_INPUT_PORT:-0}
+if [[ ! "$replay_input_port" =~ ^[0-4]$ ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_REPLAY_INPUT_PORT must be an integer from 0 through 4' >&2
+    exit 1
+fi
 autoload_state=${THERON_CAPTURE_AUTOLOAD_STATE:-}
 autoload_movie=${THERON_CAPTURE_AUTOLOAD_MOVIE:-}
 capture_authentic_bram=${THERON_CAPTURE_AUTHENTIC_BRAM:-}
@@ -1585,6 +1590,7 @@ launch=(
     FIRESTAFF_THERON_INPUT_TRACE_LIMIT="$input_trace_limit" \
     FIRESTAFF_THERON_INPUT_TRACE_START_FRAME="$input_trace_start_frame" \
     FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT="$replay_input_script" \
+    FIRESTAFF_THERON_REPLAY_INPUT_PORT="$replay_input_port" \
     FIRESTAFF_THERON_AUTOLOAD_STATE="$autoload_state" \
     FIRESTAFF_THERON_AUTOLOAD_MOVIE="$autoload_movie" \
     FIRESTAFF_THERON_POST_DUNGEON_ORDINAL="$post_dungeon_ordinal" \
@@ -2647,6 +2653,7 @@ fi
     if [[ -n "$replay_input_script" ]]; then
         printf 'input_delivery=scripted_pce_replay\n'
         printf 'scripted_pce_input_plan=%s\n' "$replay_input_script"
+        printf 'scripted_pce_input_port=%s\n' "$replay_input_port"
     fi
     if [[ "$transition_input_count" -gt 0 && "$transition_irq_count" -gt 0 &&
           "$transition_authenticated_cd_ram_count" -gt 0 && "$transition_sector_count" -gt 0 &&
@@ -2662,6 +2669,7 @@ fi
 if [[ -n "$replay_input_script" ]]; then
     if ! "$scripted_input_consumption_verifier" \
         "$input_trace" "$replay_input_script" "$input_trace_limit" \
+        "$replay_input_port" \
         >"$scripted_input_consumption_receipt"; then
         cat "$scripted_input_consumption_receipt" >&2
         exit 1

@@ -96,3 +96,31 @@ CD-to-VRAM flow, DMA graphics writes, or native Firestaff parity. The next
 capture needs an authenticated game-owned handoff trigger and a bounded VWR
 window that does not begin at the first Track 02 read; do not infer a code or
 rendering map from the current time-ordered trace.
+
+## TRV2 trace deduplication
+
+After R5, the R4 and R5 artifact pairs were compared byte-for-byte on TRV2.
+The identical R4 copies of the CD data-port, CD-RAM target, main-RAM consumer,
+VCE, VWR, SAT/VDC state, pointer/movement, mouse, and SRAM traces were removed
+from the tmpfs capture directory; their R5 counterparts remain there. The
+R4-specific screenshot, input trace, and `3879-indirect-target` trace remain,
+as do all R5 artifacts. This removes duplicate storage without discarding
+unique observations.
+
+## Save-state input-slot probe
+
+On 2026-10-29, a separately built Mednafen 1.32.1 PCE Fast reference binary
+replayed Button I at frame 120 for 30 frames against the Japanese Rev. 1
+original CUE and an emulator-created Akutuba dungeon state. The slot-0 and
+slot-4 input traces contain 2,390 and 2,392 `pce_input_read` rows respectively;
+both report index 0 for every row, and neither records an input read at index 4.
+Both transition receipts report `transition=missing`. Slot 4 therefore did
+not produce a guest-poll witness; slot 0 also did not establish a game handoff.
+This save-state probe does not establish cold-start provenance or native
+Firestaff input parity, and no product input mapping was inferred from it.
+
+The input traces were kept only in a task-specific `/dev/shm` build directory
+on TRV2 and removed after recording the result. Their SHA-256 values were
+`04a9ec93f39422d36cffb0b62045cb7e037643cf8cebc8b5e228541bd679495c` (slot 0)
+and `081982846c23a513bb2cc91f06fe398a584fc5305e006898334fc0d94e4be573`
+(slot 4).
