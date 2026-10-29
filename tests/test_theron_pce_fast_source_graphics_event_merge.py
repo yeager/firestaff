@@ -133,6 +133,13 @@ run_case(
     expected_completeness="possible_truncation_at_event_limit",
 )
 run_case(
+    "reader-mpr-context-header",
+    "source=mednafen-pce-fast-cd-data-port-read-with-reader-mpr-context\ncd_data_port_read sequence=0 event_sequence=2\n",
+    "source=mednafen-pce-fast-cd-ram-target-write\ncd_ram_target_write sequence=0 event_sequence=5\n",
+    "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3\nsource=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window\nscope=cpu-port-vwr-commits-only;dma-writes-excluded\nvram_commit sequence=0 event_sequence=9\n",
+    0,
+)
+run_case(
     "below-event-limits",
     "source=mednafen-pce-fast-cd-data-port-read\ncd_data_port_read sequence=0 event_sequence=2\n",
     "source=mednafen-pce-fast-cd-ram-target-write\ncd_ram_target_write sequence=0 event_sequence=5\n",

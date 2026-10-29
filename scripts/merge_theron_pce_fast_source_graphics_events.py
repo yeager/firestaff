@@ -14,17 +14,20 @@ from typing import Iterator
 
 EVENT_FIELD = re.compile(r"(?:^| )event_sequence=([0-9]+)(?: |$)")
 TRACE_HEADERS = {
-    "cd_data_port_read": ("source=mednafen-pce-fast-cd-data-port-read",),
-    "cd_ram_target_write": ("source=mednafen-pce-fast-cd-ram-target-write",),
+    "cd_data_port_read": ((
+        "source=mednafen-pce-fast-cd-data-port-read",
+        "source=mednafen-pce-fast-cd-data-port-read-with-reader-mpr-context",
+    ),),
+    "cd_ram_target_write": (("source=mednafen-pce-fast-cd-ram-target-write",),),
     "vram_commit": (
-        "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3",
-        "source=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window",
-        "scope=cpu-port-vwr-commits-only;dma-writes-excluded",
+        ("FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3",),
+        ("source=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window",),
+        ("scope=cpu-port-vwr-commits-only;dma-writes-excluded",),
     ),
     "vce_write": (
-        "FIRESTAFF_THERON_PCE_FAST_VCE_WRITE_TRACE_V1",
-        "source=mednafen-1.32.1-pce-fast-vdc-vce-write",
-        "scope=color-table-data-writes-only;address-port-writes-excluded",
+        ("FIRESTAFF_THERON_PCE_FAST_VCE_WRITE_TRACE_V1",),
+        ("source=mednafen-1.32.1-pce-fast-vdc-vce-write",),
+        ("scope=color-table-data-writes-only;address-port-writes-excluded",),
     ),
 }
 
@@ -43,7 +46,7 @@ def records(path: Path, event_type: str) -> Iterator[tuple[int, str]]:
             if not line:
                 continue
             if header_index < len(headers):
-                if line != headers[header_index]:
+                if line not in headers[header_index]:
                     raise TraceError(f"{path}:{line_number}: unexpected trace header")
                 header_index += 1
                 continue

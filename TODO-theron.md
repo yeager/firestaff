@@ -8713,3 +8713,19 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   source-graphics chronology validation. Source-bound handoff and complete
   renderer evidence remain open; the earlier rejected wrapper run is not a
   complete capture.
+
+## 2026-10-29 — accept the CD reader-MPR trace header
+
+- A cold JP capture emitted the newer CD data-port header with reader MPR
+  context, while the source-graphics merger accepted only the earlier header.
+  The merger now accepts both exact headers, and the new header is covered by
+  a test fixture. Three merger regression loops passed.
+- The preserved partial capture contains 47 adjacent, byte-equal CD-read/RAM-
+  write pairs. The observed bytes and BIOS instructions support a direct copy
+  of those specific bytes; the trace does not cover subsequent VWR events.
+  The VWR and CD streams hit limits, two scheduled input masks were unseen,
+  and the dungeon scene was not independently confirmed. See the
+  [cold loader byte-copy capture](docs/source-lock/theron-disassembly/theron-jp-cold-loader-byte-copy-capture-20261029.md).
+- Next: reduce pre-game trace volume or add a bounded start condition so VWR
+  coverage continues through source-bound reads, then repeat a cold capture
+  with all scheduled inputs and a real screenshot verified.
