@@ -278,11 +278,13 @@ static int theron_huc6280_emit_token(
         return 1;
     }
 
-    /* $2496: (token - 1) << 1 indexes the output-address table rooted at
-     * $32/$33.  The table is passed separately because the stage-2 MPR
-     * projection is not equivalent to a host pointer. */
+    /* $2496 subtracts one from each token byte, then doubles the result to
+     * address the table bytes rooted at $32/$33. This 16-bit-entry array
+     * therefore uses index token - $0101. See
+     * theron-us-bank1f-consumer.asm, L2496-L24A4. The table is passed
+     * separately because the stage-2 MPR projection is not a host pointer. */
     {
-        size_t index = (size_t)token - 1u;
+        size_t index = (size_t)token - 0x0101u;
         uint16_t source_address;
         uint16_t next_address;
         uint16_t length;

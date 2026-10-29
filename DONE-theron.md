@@ -1,5 +1,33 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-29 — capture the complete authentic `$23AD` invocation
+
+An original US disc, System Card 3.0 and authentic Ak-Tu-Ba Backup RAM run
+matched the retail `$2386` caller and 382-byte `$23AD` routine by runtime byte
+hash, recorded the active MPR mapping, and reached the caller's terminal RTS
+with its dynamic return word intact. The complete bounded trace has 921,436
+lines and SHA-256
+`3668f340372938c2a366237d11dd63158eb8c312e8372d0716f684eb968465bb`.
+The capture verifier still reports no authenticated CD-to-game-RAM receipts
+and `transition=missing`; this closes only the dynamic routine boundary, not
+decoder input/output parity, loader provenance, or gameplay parity. The raw
+trace was removed after recording its digest. See
+`docs/source-lock/theron-disassembly/theron-23ad-trace-boundary-20261029.md`.
+
+## 2026-10-29 — match one authentic `$23AD` decode byte for byte
+
+A subsequent run read all 2,614 compressed bytes from the original US Track 02
+resource frame at normalized LBA 1871, offset 6, and captured every one of the
+5,064 destination writes. The native decoder now follows the retail L2496
+bytewise subtraction (`$0101`) when selecting the pointer-table pair. Its
+output matched the runtime byte for byte (source SHA-256
+`5f6f6aa4a9e175c3016cac22e6967350fb72cb3ea2a091f5ca1fa8867d5e333b`, output
+SHA-256 `9adf13522e818ee49de16ac1020a7697c3416877e6bc6baa918840d7e963f8ee`;
+2,125 tokens, 1,840 literals, 285 backreferences, 2 width markers). A focused
+codec boundary test covers token `$0105`. This proves one authentic US
+resource decode only; full-level completion, disc-to-RAM provenance, gameplay
+handoff, and other editions remain open.
+
 ## 2026-10-29 — bound cold-start graphics trace tooling
 
 The reference-only Mednafen capture now accepts an explicit CD-RAM target

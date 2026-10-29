@@ -388,6 +388,42 @@ static void verify_huc6280_decoder_lift(void) {
         assert(rejected.status == THERON_HUC6280_DECODE_TRUNCATED);
     }
     puts("PASS: HuC6280 $23AD bounded source-boundary receipt");
+
+    /* Codec boundary vector only, not a game asset. It checks the retail
+     * L2496 bytewise token subtraction with token $0105, whose source pair
+     * is pointer-table entries 4 and 5. */
+    {
+        const uint16_t tokens[12] = {
+            0x0041u, 0x0042u, 0x0043u, 0x0044u, 0x0045u,
+            0x0046u, 0x0047u, 0x0048u, 0x0049u, 0x004Au,
+            0x0105u, 0x004Bu
+        };
+        uint8_t encoded[15] = {0};
+        uint8_t framed[21] = {0x0Au, 0x82u, 0x14u, 0x00u, 0u, 0u};
+        uint8_t decoded[16] = {0};
+        uint16_t table[8] = {0};
+        Theron_Huc6280DecodeReceipt token_receipt;
+        size_t bit = 0u;
+
+        for (size_t token_index = 0u; token_index < 12u; ++token_index) {
+            for (unsigned int token_bit = 0u; token_bit < 9u; ++token_bit) {
+                unsigned int shift = 8u - token_bit;
+                if ((tokens[token_index] >> shift) & 1u)
+                    encoded[bit / 8u] |=
+                        (uint8_t)(1u << (7u - (bit % 8u)));
+                ++bit;
+            }
+        }
+        memcpy(framed + 6u, encoded, sizeof(encoded));
+        assert(theron_v1_huc6280_decode_resource(
+            framed, sizeof(framed), decoded, sizeof(decoded), 0x6000u,
+            table, 8u, 0u, &token_receipt));
+        assert(token_receipt.output_bytes == 13u);
+        assert(token_receipt.backreference_tokens == 1u);
+        assert(token_receipt.pointer_entries >= 6u);
+        assert(memcmp(decoded, "ABCDEFGHIJIJK", 13u) == 0);
+    }
+    puts("PASS: HuC6280 bytewise backreference-token index");
 }
 
 int main(int argc, char **argv) {

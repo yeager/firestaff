@@ -358,6 +358,8 @@ if ! awk '
     printf '%s\n' 'FAIL: A1A9 trace must sample the fetched opcode after existing trace calls and before dispatch' >&2
     exit 1
 fi
+python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_drator_route.py" \
+    "$build_root/source"
 
 if [[ "$patch_only" == 1 ]]; then
     # Tests use the exact production patch order without paying for a rebuild.
