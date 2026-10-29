@@ -28,12 +28,14 @@ def run_case(
     vram: str,
     expected: int,
     vce: Optional[str] = None,
+    huc6280_23ad: Optional[str] = None,
     expected_sequences: Optional[list[int]] = None,
     expected_events: Optional[list[str]] = None,
     cd_data_port_limit: Optional[int] = None,
     cd_ram_target_limit: Optional[int] = None,
     vram_limit: Optional[int] = None,
     vce_limit: Optional[int] = None,
+    huc6280_23ad_limit: Optional[int] = None,
     expected_completeness: str = "not_checked",
     expected_filtered_prefix_streams: Optional[list[str]] = None,
 ) -> None:
@@ -42,6 +44,8 @@ def run_case(
     trace_data = [cd, ram, vram]
     if vce is not None:
         trace_data.append(vce)
+    if huc6280_23ad is not None:
+        trace_data.append(huc6280_23ad)
     trace_paths = [case / f"trace-{index}" for index in range(len(trace_data))]
     merged_path = case / "merged"
     for path, contents in zip(trace_paths, trace_data):
@@ -61,8 +65,12 @@ def run_case(
         command.extend(("--vram-commit-limit", str(vram_limit)))
     if vce is not None:
         command.extend(("--vce-write", str(trace_paths[3])))
+    if huc6280_23ad is not None:
+        command.extend(("--huc6280-23ad", str(trace_paths[-1])))
     if vce_limit is not None:
         command.extend(("--vce-write-limit", str(vce_limit)))
+    if huc6280_23ad_limit is not None:
+        command.extend(("--huc6280-23ad-limit", str(huc6280_23ad_limit)))
     command.extend(("--output", str(merged_path)))
     result = subprocess.run(
         command,
@@ -77,6 +85,8 @@ def run_case(
         expected_streams = ["cd_data_port_read", "cd_ram_target_write", "vram_commit"]
         if vce is not None:
             expected_streams.append("vce_write")
+        if huc6280_23ad is not None:
+            expected_streams.append("huc6280_23ad")
         if rows[0].get("format") != "firestaff-theron-source-graphics-order-v1" or rows[0].get(
             "ordering"
         ) != "shared_event_sequence" or rows[0].get(
@@ -126,6 +136,20 @@ def run_case(
                 "limit": vce_limit,
                 "records": count,
                 "limit_reached": count >= vce_limit,
+            }
+        if huc6280_23ad_limit is not None:
+            assert huc6280_23ad is not None
+            count = sum(
+                line.startswith(("seq=", "caller_signature ", "call=BSR "))
+                for line in huc6280_23ad.splitlines()
+            )
+            expected_bounded_streams["huc6280_23ad"] = {
+                "limit": huc6280_23ad_limit,
+                "records": count,
+                "limit_reached": (
+                    count >= huc6280_23ad_limit or
+                    "post_return_truncated=event_limit" in huc6280_23ad
+                ),
             }
         if rows[0].get("bounded_streams") != expected_bounded_streams:
             raise AssertionError(f"wrong bounded-stream metadata: {rows[0]!r}")
@@ -211,6 +235,35 @@ run_case(
     cd_ram_target_limit=10,
     vram_limit=2,
     vce_limit=1,
+    expected_completeness="possible_truncation_at_event_limit",
+)
+run_case(
+    "joined-huc6280-post-return",
+    "source=mednafen-pce-fast-cd-data-port-read\ncd_data_port_read sequence=0 event_sequence=2\n",
+    "source=mednafen-pce-fast-cd-ram-target-write\ncd_ram_target_write sequence=0 event_sequence=5\n",
+    "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3\nsource=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window\nscope=cpu-port-vwr-commits-only;dma-writes-excluded\nvram_commit sequence=0 event_sequence=9\n",
+    0,
+    huc6280_23ad=(
+        "format=firestaff-huc6280-23ad-raw-trace-v2 shared_event_sequence=TheronTraceCDSharedEventSequence\n"
+        "caller_signature fnv1a=699e8da1 event_sequence=3\n"
+        "call=BSR caller=1234 event_sequence=4\n"
+        "seq=1 event_sequence=6 phase=decoder kind=page1_read pc=2345\n"
+        "seq=2 event_sequence=7 phase=decoder kind=mem_read pc=2345\n"
+        "seq=3 event_sequence=8 phase=post_return kind=post_return_window_begin pc=3456\n"
+        "post_return_truncated=event_limit\n"
+    ),
+    expected_sequences=[2, 3, 4, 5, 6, 7, 8, 9],
+    expected_events=[
+        "cd_data_port_read",
+        "caller_signature",
+        "call_BSR",
+        "cd_ram_target_write",
+        "page1_read",
+        "mem_read",
+        "post_return_window_begin",
+        "vram_commit",
+    ],
+    huc6280_23ad_limit=10,
     expected_completeness="possible_truncation_at_event_limit",
 )
 run_case(

@@ -8747,7 +8747,7 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   the game-owned handoff, and decoder semantics open; do not use this BIOS
   polling trace as `$23AD` or gameplay evidence.
 
-## 2026-10-29 — source-to-VRAM event join: gameplay capture pending
+## 2026-10-29 — source-to-VRAM event join: world mapping pending
 
 - The opt-in PCE Fast VWR commit trace now consumes the shared event sequence
   also used by the CD data-port read and CD RAM target-write traces. The live
@@ -8759,9 +8759,25 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   complete Mednafen patch set applied to an isolated copy of pristine 1.32.1
   on TRV2 and built with `-j1`; `pce_fast/vdc.o` compiled and the binary
   contains the V3 schema and `event_sequence` format marker.
-- Next: capture authentic Theron gameplay with CD, RAM-target and VWR traces
-  in one session. Bind any candidate bytes to a source LBA before pursuing the
-  world-square, BAT, tile-index and palette joins.
+- A later authentic US Drator route capture now joins CD data reads, CD
+  RAM-target writes, VWR commits, VCE writes, and the `$23AD` decoder/post-return
+  trace in one chronology. The decoder returned and the bounded post-return
+  window was captured; the route reached its level-03 re-entry event. The
+  merged chronology validated on TRV2, with truncation explicitly reported
+  because the VWR, VCE, and `$23AD` streams reached their limits. See
+  `docs/source-lock/theron-disassembly/theron-23ad-trace-boundary-20261029.md`
+  for hashes and evidence limits.
+- The decoder reproduced the same 5,064-byte output hash as the earlier
+  authentic source/output differential and wrote `$0D0000–$0D13C7` exactly
+  once. Runtime disassembly bound the post-return `$F423–$F43C` copy loop to
+  authentic System Card 3.0 bytes. It reads the ADPCM read-buffer port at
+  `$180A` and stores to RAM through `($FA)` at PC `$F425`. The 2,706 observed
+  reads matched the following 2,706 stores byte for byte, which filled
+  `$0D13C8–$0D1E59`. This contiguous write is an ADPCM-buffer transfer, not
+  evidence that `$23AD` continued decoding the same asset.
+- Next: instrument PCE Fast ADPCM RAM/FIFO origins to bind these buffer reads
+  to authenticated source LBAs, then trace a game-owned consumer before
+  pursuing world-square, BAT, tile-index, and palette mappings.
 - A separate cold Japanese Rev. 1 boot/title-menu capture produced an
   authentic 11,592-row VCE write stream and 1,024-byte endpoint snapshot. It
   used the canonical headerless System Card 3.0 ROM body (MD5
@@ -8881,3 +8897,124 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   code and source reads, then use it to bound a smaller post-handoff VWR trace.
   Preserve the parity target; do not infer a causal source-to-render mapping
   from the time-ordered chronology.
+
+## 2026-10-29 — correct the `$23AD` trace return boundary
+
+- Static inspection of the hash-locked US/JP bank-$1f listing found that the
+  `$2390` caller's return boundary is `$2429 RTS`; `$252A` belongs to the
+  following helper code. Corrected the opt-in Mednafen probe to stop only at
+  `$2429` with the dynamically mapped logical operand address still on the
+  stack.
+- A subsequent probe compared derived physical addresses with `$1F2390` and
+  `$1F2429`, implicitly assuming the hash-locked ISO projection was live at
+  MPR `$F9`. The projection does not establish that runtime mapping. A fresh
+  600-second authentic US run emitted no trace, which remains inconclusive.
+- Replaced that mapping assumption with exact retail byte signatures: a
+  five-opcode prefix gates the caller's 30-byte FNV-1a `$699E8DA1`, followed
+  by the 382-byte routine's FNV-1a `$3056F96C`. The opt-in probe records the
+  observed logical PC and MPR
+  map, validates the caller-relative BSR and its pushed operand-address word,
+  and recognizes the terminal RTS at offset `$7C` from the matched routine
+  entry. A full TRV2 rebuild and fresh original-media run are pending. No
+  decoder or gameplay parity is established. See
+  [the `$23AD` trace-boundary record](docs/source-lock/theron-disassembly/theron-23ad-trace-boundary-20261029.md).
+- A fourth cold-start run reached the research generator's start receipt, but
+  its experimental detector used `$AD` rather than the authentic `$A5` opcode
+  for `LDA $30`; that run was stopped before interpreting a missing trace. The
+  detector now searches the source-bound `$A5/$8D/$A5/$8D/$44` prefix and
+  applies the full caller hash only at the candidate BSR.
+- A correctly configured cold USA run used the original CUE, System Card 3.0
+  and authenticated Ak-Tu-Ba Backup RAM. It reached the generator start and
+  level-03 re-entry. The live caller matched at logical `$3B86` with MPR slot
+  1=`$F8`, and the routine entry at `$3BAD` matched the 382-byte retail hash.
+  The 20,000- and 250,000-event bounds ended before the caller return. At
+  250,000 events the compressed input count had fallen from `$0A36` to `$076A`,
+  leaving 1,898 bytes. A 2,000,000-event capture then recorded one full
+  invocation: 921,436 lines, no truncation, the terminal RTS at logical
+  `$3C29`, and trace SHA-256
+  `3668f340372938c2a366237d11dd63158eb8c312e8372d0716f684eb968465bb`.
+  This proves dynamic routine control flow and fetched retail bytes. The
+  enclosing capture was still rejected with `transition=missing` and zero
+  authenticated CD-to-game-RAM receipts, so loader provenance and gameplay
+  handoff remain open. The raw trace was deleted after recording its hash and
+  summary; see the [trace-boundary evidence](docs/source-lock/theron-disassembly/theron-23ad-trace-boundary-20261029.md).
+- [x] Compare the authentic `$23AD` source and destination streams against the
+  native decoder for the captured US resource. The original Track 02 resource
+  at normalized LBA 1871, offset 6, supplied 2,614 bytes; its 5,064 runtime
+  writes match the native output byte for byte. This exposed and fixed the
+  pointer-table index arithmetic at `L2496`: the retail routine subtracts one
+  from each token byte before indexing. A focused `$0105` boundary vector
+  covers the arithmetic. Source and output hashes and exact decode counts are
+  recorded in `DONE-theron.md` and the trace-boundary evidence document.
+- [ ] Establish causal disc-to-game-RAM provenance and a gameplay handoff.
+  The current trace proves a complete `$23AD` invocation and exact source and
+  output parity for one authentic US resource, but the enclosing cold-run
+  verifier still reports `transition=missing` and zero authenticated
+  CD-to-game-RAM receipts. Full-level completion and other editions remain
+  unproven.
+
+## 2026-10-29 — authentic later-level decoder context remains unresolved
+
+- Probed all seven hash-admitted US and JP Track 02 later-level spans with the
+  current native `$23AD` lift in three loops. With an empty pointer-table seed,
+  all 42 edition/level attempts stopped at `POINTER_TABLE`. As a diagnostic
+  only, seeding the table by interpreting the compressed frame bytes as
+  little-endian pointers still stopped at `DESTINATION` in 39 attempts and
+  `POINTER_TABLE` in three. The probe used destination base `$6000`, which is
+  established for the one separately captured invocation but not for these
+  later-level spans; those failures do not prove the retail decoder fails.
+- No guessed seed or generated game payload was retained. The spans pass their
+  authentic media admission hashes, but the source-bound MPR map, destination
+  base, pointer-table contents at call entry, and frame-chain relationship for
+  these later-level calls are still unknown.
+- Next: capture one of these exact admitted source spans in a cold retail run,
+  recording the effective source and destination windows, pointer-table bytes
+  before and during `$23AD`, and the downstream consumer. Then compare that
+  invocation byte for byte before extending native support to more spans.
+- A cold authentic US capture now records a complete `$23AD` invocation and
+  the bounded post-return window while reaching the Drator generator route and
+  its level-03 re-entry event. The joined chronology was generated and
+  validated on TRV2. It contains 1,121,429 `$23AD` events, including one
+  matched return and one post-return-window start; the post-return window
+  reached its 200,000-event cap. The merged file correctly reports possible
+  truncation because the VWR, VCE, and `$23AD` streams reached their bounds.
+  Ordering is temporal evidence only and does not establish CD-to-RAM causality
+  or gameplay parity. The merger initially rejected valid event names such as
+  `page1_read`; the parser and regression fixture now accept digits in event
+  kinds. Continue by tracing the relevant post-return RAM effects to a proven
+  loader/gameplay consumer, then cover other authentic editions.
+
+## 2026-10-29 — observe reads from the decoded output window
+
+- The authentic `$23AD` trace writes physical `$0D0000–$0D13C7`, but the
+  existing PCE Fast main-RAM consumer probe only records `$1F0000–$1F7FFF`.
+  Therefore the current consumer capture cannot show whether game-owned code
+  reads the decoded output; its lack of `$0D` reads is unobserved, not evidence
+  that no consumer exists.
+- The byte-join verifier was run against the authentic TRV2 capture. It
+  confirmed the single decoder return and all 5,064 ordered destination bytes
+  with SHA-256
+  `9adf13522e818ee49de16ac1020a7697c3416877e6bc6baa918840d7e963f8ee`; the
+  existing filtered consumer trace reports zero reads in that range. This is
+  still not evidence of a missing consumer because that trace did not observe
+  the `$0D` destination.
+- A second verifier now joins post-write reads using the shared PCE Fast event
+  sequence and reports equal-byte read candidates with physical PC and captured
+  code bytes. It deliberately does not label candidates as game-owned or claim
+  semantic use. Its synthetic boundary tests pass in three loops, and it parses
+  the authentic decoder stream with the expected output digest. It now rejects
+  legacy consumer traces without the shared-sequence header instead of treating
+  an unobserved destination as an empty read result.
+- An opt-in range is being added to the PCE Fast consumer probe:
+  `FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE=0d0000-0d13c7`. It must
+  remain disabled by default, reject malformed/out-of-bounds ranges, and keep
+  the existing 65,536-event cap. The patch applies after the existing PCE Fast
+  consumer instrumentation in an isolated TRV2 source copy. Compilation and
+  an authentic capture remain unverified.
+- Next: validate the shared-sequence patch application and compilation on TRV2,
+  then make a fresh authentic cold US capture with range
+  `0d0000-0d13c7`. Authenticate the reader's executing bytes and map before
+  identifying code ownership, then establish a coherent consumer and a later
+  gameplay/render transition. Keep the adjacent `$F425` ADPCM-buffer copy
+  separate unless its own source and game consumer are independently
+  established.

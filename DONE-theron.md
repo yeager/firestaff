@@ -1,5 +1,33 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-29 — capture the complete authentic `$23AD` invocation
+
+An original US disc, System Card 3.0 and authentic Ak-Tu-Ba Backup RAM run
+matched the retail `$2386` caller and 382-byte `$23AD` routine by runtime byte
+hash, recorded the active MPR mapping, and reached the caller's terminal RTS
+with its dynamic return word intact. The complete bounded trace has 921,436
+lines and SHA-256
+`3668f340372938c2a366237d11dd63158eb8c312e8372d0716f684eb968465bb`.
+The capture verifier still reports no authenticated CD-to-game-RAM receipts
+and `transition=missing`; this closes only the dynamic routine boundary, not
+decoder input/output parity, loader provenance, or gameplay parity. The raw
+trace was removed after recording its digest. See
+`docs/source-lock/theron-disassembly/theron-23ad-trace-boundary-20261029.md`.
+
+## 2026-10-29 — match one authentic `$23AD` decode byte for byte
+
+A subsequent run read all 2,614 compressed bytes from the original US Track 02
+resource frame at normalized LBA 1871, offset 6, and captured every one of the
+5,064 destination writes. The native decoder now follows the retail L2496
+bytewise subtraction (`$0101`) when selecting the pointer-table pair. Its
+output matched the runtime byte for byte (source SHA-256
+`5f6f6aa4a9e175c3016cac22e6967350fb72cb3ea2a091f5ca1fa8867d5e333b`, output
+SHA-256 `9adf13522e818ee49de16ac1020a7697c3416877e6bc6baa918840d7e963f8ee`;
+2,125 tokens, 1,840 literals, 285 backreferences, 2 width markers). A focused
+codec boundary test covers token `$0105`. This proves one authentic US
+resource decode only; full-level completion, disc-to-RAM provenance, gameplay
+handoff, and other editions remain open.
+
 ## 2026-10-29 — bound cold-start graphics trace tooling
 
 The reference-only Mednafen capture now accepts an explicit CD-RAM target
@@ -9216,3 +9244,40 @@ native rendering, or Theron parity. The private evidence bundle is at
 - This strengthens capture completeness reporting and malformed-input cleanup;
   it adds no new emulator capture or evidence of Theron graphics/gameplay
   parity.
+
+## 2026-10-29 — extend the `$23AD` trace through the caller return
+
+- The opt-in `$23AD` trace now continues after the matched `$2429` RTS for at
+  most 200,000 events. It shares the CD/VWR/VCE chronology counter, and the
+  streaming merger retains caller-signature, BSR, decoder, and post-return
+  event types. A post-return event-limit footer marks the joined timeline as
+  possibly truncated.
+- The focused merger regression passed three loops on TRV2. The complete
+  instrumented Mednafen 1.32.1 PCE Fast build passed there with the VWR and
+  `$23AD` trace options enabled and `-j1`.
+- At the time this trace-tool implementation was completed, only build and
+  merger-fixture verification had been performed. The subsequent authentic
+  capture and chronology validation are recorded below; causal CD-to-RAM
+  provenance, gameplay handoff, and full Theron parity remain open.
+
+## 2026-10-29 — validate the authentic `$23AD` post-return join
+
+- A cold US capture with original media, System Card 3.0, and authentic
+  Ak-Tu-Ba Backup RAM recorded the signature-matched `$23AD` call, its return,
+  and the bounded post-return window while the Drator research route reached
+  its level-03 re-entry event. Capture evidence remains on TRV2.
+- The joined chronology passed the merger after correcting a parser pattern
+  that rejected valid event kinds containing digits, including `page1_read`.
+  The regression fixture now covers that event kind and passes locally.
+- The joined file contains 1,738,051 events and reports possible truncation
+  because bounded VWR, VCE, and `$23AD` streams reached their limits. Shared
+  sequence establishes temporal ordering only.
+- Runtime-fetched instructions at `$F423–$F43C` matched authentic System Card
+  3.0 bytes. They reveal the post-return writes as an ADPCM read-buffer to RAM
+  transfer: 2,706 `$180A` reads match 2,706 stores at `$F425` byte for byte.
+  The writes fill `$0D13C8–$0D1E59`, following the `$23AD` output buffer, but
+  are not decoder continuation evidence. Their source LBAs and game consumer
+  remain unknown.
+- This completes one authentic capture and chronology validation. Causal
+  loader provenance, gameplay handoff, other editions, and complete native
+  Theron parity remain open.

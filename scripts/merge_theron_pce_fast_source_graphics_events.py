@@ -45,8 +45,45 @@ class TraceError(ValueError):
     pass
 
 
-def records(path: Path, event_type: str) -> Iterator[tuple[int, str]]:
+def records(path: Path, event_type: str) -> Iterator[tuple[int, str, str]]:
     previous = -1
+    if event_type == "huc6280_23ad":
+        with path.open("r", encoding="ascii") as stream:
+            header = stream.readline().rstrip("\n")
+            if (not header.startswith("format=firestaff-huc6280-23ad-raw-trace-v2 ") or
+                    "shared_event_sequence=TheronTraceCDSharedEventSequence" not in header):
+                raise TraceError(f"{path}: unexpected $23AD trace header")
+            count = 0
+            for line_number, raw in enumerate(stream, 2):
+                line = raw.rstrip("\n")
+                if not line:
+                    continue
+                if line.startswith(("truncated=", "post_return_truncated=")):
+                    continue
+                matches = list(EVENT_FIELD.finditer(line))
+                if len(matches) != 1:
+                    raise TraceError(f"{path}:{line_number}: expected one event_sequence field")
+                sequence = int(matches[0].group(1))
+                if sequence <= previous:
+                    raise TraceError(f"{path}:{line_number}: event_sequence is not strictly increasing")
+                previous = sequence
+                count += 1
+                if line.startswith("seq="):
+                    kinds = re.findall(r"(?:^| )kind=([a-z0-9_]+)(?: |$)", line)
+                    if len(kinds) != 1:
+                        raise TraceError(f"{path}:{line_number}: expected one event kind")
+                    event_name = kinds[0]
+                elif line.startswith("caller_signature "):
+                    event_name = "caller_signature"
+                elif line.startswith("call=BSR "):
+                    event_name = "call_BSR"
+                else:
+                    raise TraceError(f"{path}:{line_number}: unexpected $23AD record")
+                yield sequence, line, event_name
+            if count == 0:
+                raise TraceError(f"{path}: missing sequenced $23AD records")
+        return
+
     header_variants = TRACE_HEADERS[event_type]
     header_count = len(header_variants[0])
     candidates = list(header_variants)
@@ -74,32 +111,42 @@ def records(path: Path, event_type: str) -> Iterator[tuple[int, str]]:
             if sequence <= previous:
                 raise TraceError(f"{path}:{line_number}: event_sequence is not strictly increasing")
             previous = sequence
-            yield sequence, line
+            yield sequence, line, event_type
     if header_index != header_count:
         raise TraceError(f"{path}: missing trace header")
 
 
 def merge(inputs: list[tuple[str, Path]]) -> Iterator[dict[str, object]]:
     iterators = [records(path, event_type) for event_type, path in inputs]
-    heap: list[tuple[int, int, str]] = []
+    heap: list[tuple[int, int, str, str]] = []
     for index, iterator in enumerate(iterators):
         try:
-            sequence, line = next(iterator)
+            sequence, line, event_name = next(iterator)
         except StopIteration:
             continue
-        heapq.heappush(heap, (sequence, index, line))
+        heapq.heappush(heap, (sequence, index, line, event_name))
     previous = -1
     while heap:
-        sequence, index, line = heapq.heappop(heap)
+        sequence, index, line, event_name = heapq.heappop(heap)
         if sequence <= previous:
             raise TraceError(f"duplicate or unordered shared event_sequence={sequence}")
         previous = sequence
-        yield {"event_sequence": sequence, "event": line.split(" ", 1)[0], "record": line}
+        yield {"event_sequence": sequence, "event": event_name, "record": line}
         try:
-            next_sequence, next_line = next(iterators[index])
+            next_sequence, next_line, next_event_name = next(iterators[index])
         except StopIteration:
             continue
-        heapq.heappush(heap, (next_sequence, index, next_line))
+        heapq.heappush(heap, (next_sequence, index, next_line, next_event_name))
+
+
+def reached_internal_event_limit(path: Path, event_type: str) -> bool:
+    if event_type != "huc6280_23ad":
+        return False
+    with path.open("r", encoding="ascii") as stream:
+        return any(
+            line.rstrip("\n") in {"truncated=event_limit", "post_return_truncated=event_limit"}
+            for line in stream
+        )
 
 
 def main() -> int:
@@ -112,6 +159,8 @@ def main() -> int:
     parser.add_argument("--vram-commit-limit", type=int)
     parser.add_argument("--vce-write", type=Path)
     parser.add_argument("--vce-write-limit", type=int)
+    parser.add_argument("--huc6280-23ad", type=Path)
+    parser.add_argument("--huc6280-23ad-limit", type=int)
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
 
@@ -122,17 +171,22 @@ def main() -> int:
     ]
     if args.vce_write is not None:
         inputs.append(("vce_write", args.vce_write))
+    if args.huc6280_23ad is not None:
+        inputs.append(("huc6280_23ad", args.huc6280_23ad))
     limit_arguments = (
         ("--cd-data-port-limit", args.cd_data_port_limit),
         ("--cd-ram-target-limit", args.cd_ram_target_limit),
         ("--vram-commit-limit", args.vram_commit_limit),
         ("--vce-write-limit", args.vce_write_limit),
+        ("--huc6280-23ad-limit", args.huc6280_23ad_limit),
     )
     for option, limit in limit_arguments:
         if limit is not None and limit < 1:
             parser.error(f"{option} must be positive")
     if args.vce_write_limit is not None and args.vce_write is None:
         parser.error("--vce-write-limit requires --vce-write")
+    if args.huc6280_23ad_limit is not None and args.huc6280_23ad is None:
+        parser.error("--huc6280-23ad-limit requires --huc6280-23ad")
     limits: dict[str, int] = {}
     if args.cd_data_port_limit is not None:
         limits["cd_data_port_read"] = args.cd_data_port_limit
@@ -142,6 +196,8 @@ def main() -> int:
         limits["vram_commit"] = args.vram_commit_limit
     if args.vce_write_limit is not None:
         limits["vce_write"] = args.vce_write_limit
+    if args.huc6280_23ad_limit is not None:
+        limits["huc6280_23ad"] = args.huc6280_23ad_limit
     created_output = False
     try:
         stream_counts = {
@@ -154,7 +210,11 @@ def main() -> int:
                     f"{event_type} trace has {stream_counts[event_type]} records, "
                     f"exceeding configured limit {limit}"
                 )
-        limit_reached = any(
+        internal_limit_streams = [
+            event_type for event_type, path in inputs
+            if reached_internal_event_limit(path, event_type)
+        ]
+        limit_reached = bool(internal_limit_streams) or any(
             stream_counts[event_type] >= limit
             for event_type, limit in limits.items()
         )
@@ -178,7 +238,10 @@ def main() -> int:
                     event_type: {
                         "limit": limit,
                         "records": stream_counts[event_type],
-                        "limit_reached": stream_counts[event_type] >= limit,
+                        "limit_reached": (
+                            stream_counts[event_type] >= limit or
+                            event_type in internal_limit_streams
+                        ),
                     }
                     for event_type, limit in limits.items()
                 },

@@ -57,15 +57,24 @@ def main() -> None:
     helper = r'''#define HU_Page1		Page1_local
 // Firestaff's opt-in raw execution trace.  The source release identity is
 // asserted by the caller, but the runtime trace cannot prove ROM byte identity.
+extern uint32 TheronTraceCDSharedEventSequence;
 static FILE *FirestaffTheron23ADFile;
 static bool FirestaffTheron23ADActive;
 static bool FirestaffTheron23ADStarted;
 static bool FirestaffTheron23ADComplete;
-static bool FirestaffTheron23ADCandidate;
 static bool FirestaffTheron23ADReturnPending;
+static bool FirestaffTheron23ADPostReturn;
+static unsigned FirestaffTheron23ADPostReturnEvents;
+static uint16 FirestaffTheron23ADCallerCandidatePC;
+static unsigned FirestaffTheron23ADCallerCandidateStage;
+static uint16 FirestaffTheron23ADCallerPC;
+static uint16 FirestaffTheron23ADRoutinePC;
+static uint16 FirestaffTheron23ADReturnPC;
+static uint16 FirestaffTheron23ADStackPC;
 static bool FirestaffTheron23ADEXpectsOpcode = true;
 static unsigned FirestaffTheron23ADEvents;
-static const unsigned FirestaffTheron23ADEventLimit = 20000;
+static const unsigned FirestaffTheron23ADEventLimit = 2000000;
+static const unsigned FirestaffTheron23ADPostReturnEventLimit = 200000;
 static uint32 FirestaffTheron23ADPC;
 static uint8 FirestaffTheron23DA, FirestaffTheron23DX, FirestaffTheron23DY;
 static uint8 FirestaffTheron23DSP, FirestaffTheron23DP;
@@ -78,7 +87,7 @@ static void FirestaffTheron23ADOpen(void)
  if(!path || !*path || FirestaffTheron23ADFile) return;
  FirestaffTheron23ADFile = fopen(path, "w");
  if(FirestaffTheron23ADFile)
-  fputs("format=firestaff-huc6280-23ad-raw-trace-v1 SOURCE_IDENTITY_PLACEHOLDER trace_state=events-only comparable=not-yet cd_causality=not-established game_disc_identity=unverified\n", FirestaffTheron23ADFile);
+  fputs("format=firestaff-huc6280-23ad-raw-trace-v2 SOURCE_IDENTITY_PLACEHOLDER trace_state=bounded-post-return-events comparable=not-yet cd_causality=not-established game_disc_identity=unverified shared_event_sequence=TheronTraceCDSharedEventSequence\n", FirestaffTheron23ADFile);
 }
 
 static void FirestaffTheron23ADEmit(const char *kind, uint32 pc,
@@ -88,10 +97,24 @@ static void FirestaffTheron23ADEmit(const char *kind, uint32 pc,
   return;
  const uint8 slot = logical >> 13;
  const uint8 bank = HuCPU.MPR[slot];
+ const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
  fprintf(FirestaffTheron23ADFile,
-  "seq=%u kind=%s pc=%08x logical=%08x slot=%u mpr=%02x physical=%06x value=%02x a=%02x x=%02x y=%02x s=%02x p=%02x\n",
-  FirestaffTheron23ADEvents++, kind, pc, logical, slot, bank,
+  "seq=%u event_sequence=%u phase=%s kind=%s pc=%08x logical=%08x slot=%u mpr=%02x physical=%06x value=%02x a=%02x x=%02x y=%02x s=%02x p=%02x\n",
+  FirestaffTheron23ADEvents++, event_sequence,
+  FirestaffTheron23ADPostReturn ? "post_return" : "decoder", kind,
+  pc, logical, slot, bank,
   ((uint32)bank << 13) | (logical & 0x1fff), value, a, x, y, s, p);
+ if(FirestaffTheron23ADPostReturn)
+ {
+  FirestaffTheron23ADPostReturnEvents++;
+  if(FirestaffTheron23ADPostReturnEvents >= FirestaffTheron23ADPostReturnEventLimit)
+  {
+   fputs("post_return_truncated=event_limit\n", FirestaffTheron23ADFile);
+   FirestaffTheron23ADPostReturn = false;
+   FirestaffTheron23ADActive = false;
+   fflush(FirestaffTheron23ADFile);
+  }
+ }
  if(FirestaffTheron23ADEvents == FirestaffTheron23ADEventLimit)
   fputs("truncated=event_limit\n", FirestaffTheron23ADFile);
 }
@@ -173,7 +196,7 @@ static void FirestaffTheron23ADPage1Write(uint16 offset, uint8 value)
     if mpr_anchor is None or not cpu_lines[mpr_anchor].rstrip().endswith("\\"):
         raise SystemExit("FAIL: SET_MPR macro anchor mismatch")
     cpu_lines.insert(mpr_anchor + 1,
-        ' if(FirestaffTheron23ADActive && FirestaffTheron23ADEvents < FirestaffTheron23ADEventLimit) fprintf(FirestaffTheron23ADFile, "seq=%u kind=mpr_change pc=%04x slot=%u old=%02x new=%02x\\n", FirestaffTheron23ADEvents++, FirestaffTheron23ADPC, wmpr, HuCPU.MPR[wmpr], wbank); ' + chr(92))
+        ' if(FirestaffTheron23ADActive && FirestaffTheron23ADEvents < FirestaffTheron23ADEventLimit) { const uint32 event_sequence = TheronTraceCDSharedEventSequence++; fprintf(FirestaffTheron23ADFile, "seq=%u event_sequence=%u phase=%s kind=mpr_change pc=%04x slot=%u old=%02x new=%02x\\n", FirestaffTheron23ADEvents++, event_sequence, FirestaffTheron23ADPostReturn ? "post_return" : "decoder", FirestaffTheron23ADPC, wmpr, HuCPU.MPR[wmpr], wbank); if(FirestaffTheron23ADPostReturn && ++FirestaffTheron23ADPostReturnEvents >= FirestaffTheron23ADPostReturnEventLimit) { fputs("post_return_truncated=event_limit\\n", FirestaffTheron23ADFile); FirestaffTheron23ADPostReturn = false; FirestaffTheron23ADActive = false; fflush(FirestaffTheron23ADFile); } } ' + chr(92))
     cpu = "\n".join(cpu_lines) + "\n"
 
     # Route stack, indirect pointer, zero-page reads and writes through page-1
@@ -266,23 +289,88 @@ static uint8 FirestaffTheron23ADFetch(uintptr_t raw_pc, uint8 a, uint8 x,
 #endif
  const uint8 slot = pc >> 13;
  const uint8 bank = HuCPU.MPR[slot];
- if(!FirestaffTheron23ADStarted && !FirestaffTheron23ADComplete &&
-    FirestaffTheron23ADEXpectsOpcode && pc == 0x2390 && value == 0x44)
-  FirestaffTheron23ADCandidate = true;
- else if(FirestaffTheron23ADCandidate && pc == 0x2391)
+ const uint32 physical_pc = ((uint32)bank << 13) | (pc & 0x1fff);
+ /* The static source projection does not prove a live MPR mapping. First
+  * match the caller's cheap five-opcode prefix, then hash all 30 retail bytes
+  * only at its BSR candidate. */
+ if(!FirestaffTheron23ADStarted && !FirestaffTheron23ADCallerPC &&
+    FirestaffTheron23ADEXpectsOpcode)
  {
-  FirestaffTheron23ADCandidate = false;
-  if(((pc + 1 + (int8)value) & 0xffff) == 0x23ad)
+  static const uint8 expected_opcodes[4] = { 0x8d, 0xa5, 0x8d, 0x44 };
+  static const uint8 expected_offsets[4] = { 2, 5, 7, 10 };
+  if(FirestaffTheron23ADCallerCandidateStage)
   {
-   FirestaffTheron23ADOpen();
+   const unsigned index = FirestaffTheron23ADCallerCandidateStage - 1;
+   if(pc == FirestaffTheron23ADCallerCandidatePC + expected_offsets[index] &&
+      value == expected_opcodes[index])
+   {
+    if(FirestaffTheron23ADCallerCandidateStage < 4)
+     FirestaffTheron23ADCallerCandidateStage++;
+    else
+    {
+     const uint16 caller_pc = FirestaffTheron23ADCallerCandidatePC;
+     const uint16 call_pc = caller_pc + 10;
+     uint32 caller_hash = 0x811c9dc5;
+     for(unsigned i = 0; i < 30; i++)
+      caller_hash = (caller_hash ^ RdOp(caller_pc + i)) * 0x01000193;
+     const uint8 call_operand = RdOp(call_pc + 1);
+     const uint16 target_pc = (call_pc + 2 + (int8)call_operand) & 0xffff;
+     if(caller_hash == 0x699e8da1 && target_pc == (uint16)(caller_pc + 0x27))
+     {
+      FirestaffTheron23ADOpen();
+      if(FirestaffTheron23ADFile)
+      {
+       FirestaffTheron23ADCallerPC = caller_pc;
+       FirestaffTheron23ADRoutinePC = target_pc;
+       FirestaffTheron23ADReturnPC = call_pc + 2;
+       FirestaffTheron23ADStackPC = call_pc + 1;
+       const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
+       fprintf(FirestaffTheron23ADFile,
+        "caller_signature fnv1a=699e8da1 event_sequence=%u logical=%04x call=%04x target=%04x return=%04x stack_return=%04x mpr=",
+        event_sequence, caller_pc, call_pc, target_pc, FirestaffTheron23ADReturnPC,
+        FirestaffTheron23ADStackPC);
+       for(unsigned i = 0; i < 8; i++)
+        fprintf(FirestaffTheron23ADFile, "%s%02x", i ? "," : "", HuCPU.MPR[i]);
+       const uint8 caller_slot = caller_pc >> 13;
+       fprintf(FirestaffTheron23ADFile, " physical=%06x\\n",
+        ((uint32)HuCPU.MPR[caller_slot] << 13) | (caller_pc & 0x1fff));
+      }
+     }
+     FirestaffTheron23ADCallerCandidateStage = 0;
+    }
+   }
+   else
+    FirestaffTheron23ADCallerCandidateStage = 0;
+  }
+  if(!FirestaffTheron23ADCallerCandidateStage && value == 0xa5 &&
+     pc <= 0xffd8)
+  {
+   FirestaffTheron23ADCallerCandidatePC = pc;
+   FirestaffTheron23ADCallerCandidateStage = 1;
+  }
+ }
+ if(FirestaffTheron23ADCallerPC && !FirestaffTheron23ADStarted &&
+    FirestaffTheron23ADEXpectsOpcode && pc == FirestaffTheron23ADRoutinePC &&
+    value == 0xa5 && pc <= 0xfe81 &&
+    HuCPU.Page1[0x100 + (uint8)(s + 1)] ==
+        (uint8)FirestaffTheron23ADStackPC &&
+    HuCPU.Page1[0x100 + (uint8)(s + 2)] ==
+        (uint8)(FirestaffTheron23ADStackPC >> 8))
+ {
+  uint32 routine_hash = 0x811c9dc5;
+  for(unsigned i = 0; i < 382; i++)
+   routine_hash = (routine_hash ^ RdOp(pc + i)) * 0x01000193;
+  if(routine_hash == 0x3056f96c)
+  {
    if(FirestaffTheron23ADFile)
    {
     FirestaffTheron23ADActive = true;
     FirestaffTheron23ADStarted = true;
+    const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
     fprintf(FirestaffTheron23ADFile,
-     "call=BSR pc=2390 caller_mpr=%02x caller_physical=%06x opcode=44 operand=%02x target=23ad target_mpr=%02x target_physical=%06x return=2392\\n",
-     HuCPU.MPR[1], ((uint32)HuCPU.MPR[1] << 13) | 0x190, value,
-     HuCPU.MPR[1], ((uint32)HuCPU.MPR[1] << 13) | 0x3ad);
+     "call=BSR caller=%04x event_sequence=%u target=%04x routine_fnv1a=3056f96c return=%04x target_mpr=%02x target_physical=%06x\\n",
+     FirestaffTheron23ADCallerPC, event_sequence, pc, FirestaffTheron23ADReturnPC,
+     HuCPU.MPR[slot], physical_pc);
    }
   }
  }
@@ -293,9 +381,14 @@ static uint8 FirestaffTheron23ADFetch(uintptr_t raw_pc, uint8 a, uint8 x,
   FirestaffTheron23DY = y; FirestaffTheron23DSP = s; FirestaffTheron23DP = p;
   FirestaffTheron23ADEmit(FirestaffTheron23ADEXpectsOpcode ? "instruction" : "instruction_byte",
    pc, pc, value, a, x, y, s, p);
-  if(FirestaffTheron23ADEXpectsOpcode && pc == 0x252a && value == 0x60 &&
-     HuCPU.Page1[0x100 + (uint8)(s + 1)] == 0x91 &&
-     HuCPU.Page1[0x100 + (uint8)(s + 2)] == 0x23)
+  /* $2429 is offset $7c within the byte-backed routine. */
+  if(FirestaffTheron23ADEXpectsOpcode &&
+     pc == (uint32)FirestaffTheron23ADRoutinePC + 0x7cu &&
+     value == 0x60 &&
+     HuCPU.Page1[0x100 + (uint8)(s + 1)] ==
+         (uint8)FirestaffTheron23ADStackPC &&
+     HuCPU.Page1[0x100 + (uint8)(s + 2)] ==
+         (uint8)(FirestaffTheron23ADStackPC >> 8))
   {
    FirestaffTheron23ADEmit("return_rts", pc, pc, value, a, x, y, s, p);
    FirestaffTheron23ADReturnPending = true;
@@ -311,9 +404,14 @@ static void FirestaffTheron23ADEndInstruction(void)
  FirestaffTheron23ADEXpectsOpcode = true;
  if(FirestaffTheron23ADReturnPending)
  {
-  FirestaffTheron23ADActive = false;
   FirestaffTheron23ADComplete = true;
   FirestaffTheron23ADReturnPending = false;
+  FirestaffTheron23ADPostReturn = true;
+  FirestaffTheron23ADPostReturnEvents = 0;
+  FirestaffTheron23ADEmit("post_return_window_begin",
+   FirestaffTheron23ADReturnPC, FirestaffTheron23ADReturnPC, 0,
+   FirestaffTheron23DA, FirestaffTheron23DX, FirestaffTheron23DY,
+   FirestaffTheron23DSP, FirestaffTheron23DP);
   if(FirestaffTheron23ADFile) fflush(FirestaffTheron23ADFile);
  }
 }''', "RdOp function")

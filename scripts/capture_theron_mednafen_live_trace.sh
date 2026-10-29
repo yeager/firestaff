@@ -127,6 +127,7 @@ replay_post_dungeon_overlay=${THERON_CAPTURE_REPLAY_POST_DUNGEON_OVERLAY:-0}
 rng_consumer_sample_limit=${THERON_CAPTURE_RNG_CONSUMER_SAMPLE_LIMIT:-512}
 rng_consumer_window_limit=${THERON_CAPTURE_RNG_CONSUMER_WINDOW_LIMIT:-32}
 main_ram_consumer_sample_limit=${THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT:-65536}
+pce_fast_main_ram_consumer_range=${THERON_CAPTURE_PCE_FAST_MAIN_RAM_CONSUMER_RANGE:-}
 movement_data_read_sample_limit=${THERON_CAPTURE_MOVEMENT_DATA_READ_SAMPLE_LIMIT:-128}
 vdc_io_trace_limit=${THERON_CAPTURE_VDC_IO_TRACE_LIMIT:-65536}
 capture_pce_fast_vram_commit_trace=${THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE:-0}
@@ -242,6 +243,10 @@ if [[ "$menu_route" == drator-generator ]]; then
         printf '%s\n' 'FAIL: cold-start drator-generator requires a RUN replay event at frame 9600' >&2
         exit 1
     fi
+    if [[ "$replay_input_port" != 0 ]]; then
+        printf '%s\n' 'FAIL: drator-generator research input is source-bound to PCE controller port 0' >&2
+        exit 1
+    fi
 fi
 
 if [[ -z "$mednafen_bin" || -z "$cue" || -z "$system_card" || -z "$trace" ]]; then
@@ -266,6 +271,21 @@ if [[ ! "$main_ram_consumer_sample_limit" =~ ^[0-9]+$ ]] ||
    (( main_ram_consumer_sample_limit < 4096 || main_ram_consumer_sample_limit > 1048576 )); then
     printf '%s\n' 'FAIL: THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT must be an integer from 4096 through 1048576' >&2
     exit 1
+fi
+if [[ -n "$pce_fast_main_ram_consumer_range" ]]; then
+    if [[ "$capture_mednafen_module" != pce_fast ]] ||
+       [[ ! "$pce_fast_main_ram_consumer_range" =~ ^[[:xdigit:]]{1,6}-[[:xdigit:]]{1,6}$ ]]; then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_MAIN_RAM_CONSUMER_RANGE requires the pce_fast module and two hexadecimal addresses' >&2
+        exit 1
+    fi
+    range_first_text=${pce_fast_main_ram_consumer_range%%-*}
+    range_last_text=${pce_fast_main_ram_consumer_range#*-}
+    range_first=$((16#$range_first_text))
+    range_last=$((16#$range_last_text))
+    if (( range_first > range_last || range_last > 0x1FFFFF )); then
+        printf '%s\n' 'FAIL: PCE Fast consumer range must be ordered and end at or below 1fffff' >&2
+        exit 1
+    fi
 fi
 if [[ ! "$movement_data_read_sample_limit" =~ ^[0-9]+$ ]] ||
    (( movement_data_read_sample_limit < 1 || movement_data_read_sample_limit > 256 )); then
@@ -1608,6 +1628,7 @@ launch=(
     FIRESTAFF_THERON_PCE_FAST_TRACK02_INDEX1_FILE_OFFSET="$track02_index1_file_offset" \
     FIRESTAFF_THERON_PCE_FAST_TRACK02_SECTOR_BYTES="$track02_sector_bytes" \
     FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE="$main_ram_consumer_trace" \
+    FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE="$pce_fast_main_ram_consumer_range" \
     FIRESTAFF_THERON_SELECTED_RECORD_TRACE="$selected_record_trace" \
     FIRESTAFF_THERON_MAIN_RAM_CONSUMER_SAMPLE_LIMIT="$main_ram_consumer_sample_limit" \
     FIRESTAFF_THERON_MAIN_RAM_TARGET_TRACE="$main_ram_target_trace" \
@@ -1957,10 +1978,14 @@ if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace"
 fi
 if [[ -n "$huc6280_23ad_trace" ]]; then
     if [[ ! -s "$huc6280_23ad_trace" ]] ||
-       ! grep -Fq 'format=firestaff-huc6280-23ad-raw-trace-v1' "$huc6280_23ad_trace" ||
-       ! grep -Fq 'call=BSR pc=2390' "$huc6280_23ad_trace" ||
+       ! grep -Fq 'format=firestaff-huc6280-23ad-raw-trace-v2' "$huc6280_23ad_trace" ||
+       ! grep -Fq 'caller_signature fnv1a=699e8da1' "$huc6280_23ad_trace" ||
+       ! grep -Fq 'call=BSR caller=' "$huc6280_23ad_trace" ||
+       ! grep -Fq 'routine_fnv1a=3056f96c' "$huc6280_23ad_trace" ||
        ! grep -Fq 'kind=return_rts' "$huc6280_23ad_trace" ||
-       grep -Fq 'truncated=event_limit' "$huc6280_23ad_trace"; then
+       ! grep -Fq 'kind=post_return_window_begin' "$huc6280_23ad_trace" ||
+       ! grep -Fq 'shared_event_sequence=TheronTraceCDSharedEventSequence' "$huc6280_23ad_trace" ||
+       grep -Fqx 'truncated=event_limit' "$huc6280_23ad_trace"; then
         printf 'FAIL: requested HuC6280 capture did not produce one complete bounded $23AD invocation: %s\n' \
             "$huc6280_23ad_trace" >&2
         exit 1
@@ -2251,6 +2276,12 @@ if [[ "$capture_mednafen_module" == pce_fast ]]; then
             merge_source_graphics_args+=(
                 --vce-write "$pce_fast_vce_write_trace"
                 --vce-write-limit "$pce_fast_vce_write_trace_limit"
+            )
+        fi
+        if [[ -n "$huc6280_23ad_trace" ]]; then
+            merge_source_graphics_args+=(
+                --huc6280-23ad "$huc6280_23ad_trace"
+                --huc6280-23ad-limit 2000000
             )
         fi
         merge_source_graphics_args+=(--output "$pce_fast_source_graphics_event_order")

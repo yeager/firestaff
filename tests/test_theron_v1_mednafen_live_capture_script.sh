@@ -7,6 +7,7 @@ quartz_helper=$repo/scripts/send_theron_macos_quartz_keypair.swift
 quartz_grab_helper=$repo/scripts/send_theron_macos_quartz_chord.swift
 runtime_verifier=$repo/scripts/verify_theron_mednafen_sdl2_runtime.sh
 build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
+huc6280_23ad_probe=$repo/scripts/apply_mednafen_theron_huc6280_23ad_trace.py
 pointer_instrumenter=$repo/scripts/instrument_mednafen_theron_mouse_trace.py
 bram_helper=$repo/scripts/prepare_theron_authentic_bram.sh
 adpcm_context_patch=$repo/scripts/mednafen_1.32.1_theron_adpcm_fifo_ram_trace_context.patch
@@ -567,6 +568,16 @@ if [[ "$route_output" != *'RUN replay event at frame 9600'* ]]; then
     printf 'FAIL: cold-start drator-generator did not enforce the authentic RUN handoff frame\n' >&2
     exit 1
 fi
+if route_output=$(THERON_CAPTURE_MENU_ROUTE=drator-generator \
+    THERON_CAPTURE_REPLAY_INPUT_SCRIPT=run@9600:90 \
+    THERON_CAPTURE_REPLAY_INPUT_PORT=1 bash "$script" 2>&1); then
+    printf '%s\n' 'FAIL: drator-generator accepted research input on a non-source-bound port' >&2
+    exit 1
+fi
+if [[ "$route_output" != *'source-bound to PCE controller port 0'* ]]; then
+    printf '%s\n' 'FAIL: invalid Drator research port lacked a precise diagnostic' >&2
+    exit 1
+fi
 if route_output=$(THERON_CAPTURE_REPLAY_INPUT_PORT=5 bash "$script" 2>&1); then
     printf '%s\n' 'FAIL: capture accepted PCE input slot 5 outside the supported range' >&2
     exit 1
@@ -616,6 +627,65 @@ if ! grep -Fq 'FIRESTAFF_THERON_MENU_ROUTE="$menu_route"' "$script" ||
    ! grep -Fq 'PC == 0x6dbd' "$drator_menu_patch" ||
    ! grep -Fq 'WrMem(0x2228, 0x01)' "$drator_menu_patch"; then
     printf '%s\n' 'FAIL: Drator research route is not signature-bound and wired into capture' >&2
+    exit 1
+fi
+if ! grep -Fq 'instrument_mednafen_theron_pce_fast_drator_route.py' "$build_script" ||
+   ! grep -Fq 'TheronPCEFastDratorMenuRouteStep(TheronTraceInstructionPC)' \
+       "$repo/scripts/instrument_mednafen_theron_pce_fast_drator_route.py" ||
+   ! grep -Fq 'RdMem(0x6e44) == 0xad' \
+       "$repo/scripts/instrument_mednafen_theron_pce_fast_drator_route.py" ||
+   ! grep -Fq 'if(x == 0) new_data |= TheronPCEFastDratorGeneratorInputMask()' \
+       "$repo/scripts/instrument_mednafen_theron_pce_fast_drator_route.py"; then
+    printf '%s\n' 'FAIL: PCE Fast Drator route must be signature-gated and wired to controller port 0' >&2
+    exit 1
+fi
+drator_route_instrumenter="$repo/scripts/instrument_mednafen_theron_pce_fast_drator_route.py"
+if ! grep -Fq 'extern unsigned TheronPCEFastScriptFrame;' "$drator_route_instrumenter" ||
+   ! grep -Fq 'static int TheronPCEFastDratorMenuRouteMode(void)' "$drator_route_instrumenter" ||
+   [[ $(grep -c 'getenv("FIRESTAFF_THERON_MENU_ROUTE")' "$drator_route_instrumenter") != 1 ]]; then
+    printf '%s\n' 'FAIL: injected route helper must declare the frame counter and cache the environment mode per emulator process' >&2
+    exit 1
+fi
+if ! grep -Fq "grep -Fqx 'truncated=event_limit' \"\$huc6280_23ad_trace\"" "$script"; then
+    printf '%s\n' 'FAIL: bounded post-return capture must not be rejected as a truncated decoder trace' >&2
+    exit 1
+fi
+cat >"$host_key_gate_dir/huc6280.trace" <<'HUC6280_TRUNCATION_MARKERS'
+post_return_truncated=event_limit
+HUC6280_TRUNCATION_MARKERS
+if grep -Fqx 'truncated=event_limit' "$host_key_gate_dir/huc6280.trace"; then
+    printf '%s\n' 'FAIL: post-return window truncation was mistaken for an incomplete decoder trace' >&2
+    exit 1
+fi
+printf '%s\n' 'truncated=event_limit' >>"$host_key_gate_dir/huc6280.trace"
+if ! grep -Fqx 'truncated=event_limit' "$host_key_gate_dir/huc6280.trace"; then
+    printf '%s\n' 'FAIL: incomplete decoder trace marker was not recognized' >&2
+    exit 1
+fi
+if ! grep -Fq 'caller_hash == 0x699e8da1' "$huc6280_23ad_probe" ||
+   ! grep -Fq 'routine_hash == 0x3056f96c' "$huc6280_23ad_probe" ||
+   ! grep -Fq 'expected_opcodes[4] = { 0x8d, 0xa5, 0x8d, 0x44 }' "$huc6280_23ad_probe" ||
+   ! grep -Fq 'expected_offsets[4] = { 2, 5, 7, 10 }' "$huc6280_23ad_probe" ||
+   ! grep -Fq 'FirestaffTheron23ADCallerCandidateStage < 4' "$huc6280_23ad_probe" ||
+   ! grep -Fq 'FirestaffTheron23ADEventLimit = 2000000' "$huc6280_23ad_probe" ||
+   ! grep -Fq 'FirestaffTheron23ADPostReturnEventLimit = 200000' "$huc6280_23ad_probe" ||
+   ! grep -Fq 'TheronTraceCDSharedEventSequence++' "$huc6280_23ad_probe" ||
+   ! grep -Fq 'FirestaffTheron23ADPostReturn ? "post_return" : "decoder"' "$huc6280_23ad_probe" ||
+   ! grep -Fq 'FirestaffTheron23ADPostReturn = true' "$huc6280_23ad_probe" ||
+   ! grep -Fq 'value == 0xa5 && pc <= 0xfe81' "$huc6280_23ad_probe" ||
+   ! grep -Fq 'FirestaffTheron23ADStackPC = call_pc + 1' "$huc6280_23ad_probe" ||
+   ! grep -Fq 'pc == (uint32)FirestaffTheron23ADRoutinePC + 0x7cu' "$huc6280_23ad_probe" ||
+   ! grep -Fq 'caller_signature fnv1a=699e8da1' "$huc6280_23ad_probe" ||
+   grep -Fq 'physical_pc == 0x1f2429' "$huc6280_23ad_probe" ||
+   grep -Fq 'physical_pc >= 0x1f2386' "$huc6280_23ad_probe" ||
+   ! grep -Fq 'return=%04x stack_return=%04x mpr=' "$huc6280_23ad_probe" ||
+   ! grep -Fq 'call=BSR caller=' "$script" ||
+   ! grep -Fq -- '--huc6280-23ad "$huc6280_23ad_trace"' "$script" ||
+   ! grep -Fq -- '--huc6280-23ad-limit 2000000' "$script" ||
+   ! grep -Fq 'routine_fnv1a=3056f96c' "$script" ||
+   ! grep -Fq 'L2429:  rts' \
+       "$repo/docs/source-lock/theron-disassembly/theron-us-bank1f-consumer.asm"; then
+    printf '%s\n' 'FAIL: $23AD probe must identify authentic caller and routine bytes without assuming a live MPR mapping' >&2
     exit 1
 fi
 if ! grep -Fq '!strcmp(route, "drator-generator")' "$drator_menu_patch" ||
@@ -1437,6 +1507,9 @@ if ! grep -Fq 'capture_pce_fast_vram_commit_trace" == 1' "$script" ||
 fi
 if ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace"' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE="$main_ram_consumer_trace"' "$script" ||
+   ! grep -Fq 'pce_fast_main_ram_consumer_range=${THERON_CAPTURE_PCE_FAST_MAIN_RAM_CONSUMER_RANGE:-}' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE="$pce_fast_main_ram_consumer_range"' "$script" ||
+   ! grep -Fq 'range_last > 0x1FFFFF' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_CONSUMER_SAMPLE_LIMIT="$main_ram_consumer_sample_limit"' "$script" ||
    ! grep -Fq 'main_ram_loader_tii_transfers=%s' "$script" ||
    ! grep -Fq 'continuation_tii_source_3c80=%s' "$script" ||
@@ -1672,7 +1745,12 @@ if [[ ! -f "$party_ram_consumer_read_patch" ]] ||
    ! grep -Fq 'TheronTraceMainRAMConsumerRead(A, physical_address, value)' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'static unsigned per_offset[8192] = {};' "$party_ram_consumer_read_patch" ||
-   ! grep -Fq 'count >= 65536 || (per_offset[offset] >= 16 && !target_writer_read)' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'count >= 65536 || (per_offset[offset] >= 16 && !target_writer_read &&' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_RANGE' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'target_range_enabled = true' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq '!target_range_enabled || physical_address < target_range_first' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'const bool target_range_read = target_range_enabled' "$party_ram_consumer_read_patch" ||
+   ! grep -Fq 'main_ram_consumer_read sequence=%u event_sequence=%u' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'const bool target_writer_read = TheronTraceInstructionPC >= 0xEA80' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'physical_address < 0x1F0000 || physical_address >= 0x1F8000' "$party_ram_consumer_read_patch" ||
    ! grep -Fq 'offset = physical_address & 0x1FFF' "$party_ram_consumer_read_patch" ||
