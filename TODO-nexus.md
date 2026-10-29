@@ -19,7 +19,10 @@ The health pair at source `+0x38/+0x3a` loads as `47/47`; New Game initializes
 the same runtime cells from PLRD health. Its post-load update behavior remains
 untraced. The mana pair at source `+0x40/+0x42` loads as `18/20` and
 updates to `19/20`; New Game initializes the same runtime cells from PLRD
-mana. Other champion-record fields remain opaque.
+mana. Payload byte `+0x09` projects to runtime `+0x35`, which the retail spell
+rune-sequence routines use as a cursor; the BKR receipt now exposes that byte.
+It is not yet connected to Firestaff's spell-input state. Other
+champion-record fields remain opaque.
 Retail Continue's BKR named-entry lookup,
 complete payload transfer,
 and checksum gate are source-bound. The remaining work is to identify the

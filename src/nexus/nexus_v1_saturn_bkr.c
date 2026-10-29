@@ -292,6 +292,8 @@ int nexus_v1_saturn_bkr_nexus_payload_probe(
         uint32_t champion;
         for (champion = 0U; champion < champion_count; ++champion) {
             uint32_t record_offset = records_offset + champion * records_stride;
+            receipt.champion_rune_sequence_cursor[champion] =
+                payload[record_offset + 0x09U];
             receipt.champion_health_current[champion] =
                 read_be_s16(payload + record_offset + 0x38U);
             receipt.champion_max_health[champion] =
@@ -314,7 +316,7 @@ int nexus_v1_saturn_bkr_nexus_payload_probe(
     return 1;
 }
 
-int nexus_v1_saturn_bkr_read_nexus_file(
+static int saturn_bkr_read_nexus_file_internal(
     const char *path,
     uint8_t *payload_out, size_t payload_capacity,
     Nexus_V1_SaturnBkrNexusFileReceipt *out_receipt)
@@ -332,8 +334,9 @@ int nexus_v1_saturn_bkr_read_nexus_file(
 
     memset(&receipt, 0, sizeof(receipt));
     if (out_receipt) *out_receipt = receipt;
-    if (!path || !path[0] || !payload_out || !payload_capacity ||
-        !out_receipt || !(file = fopen(path, "rb")))
+    if (!path || !path[0] || !out_receipt ||
+        ((payload_out == NULL) != (payload_capacity == 0U)) ||
+        !(file = fopen(path, "rb")))
         goto done;
     if (fseek(file, 0L, SEEK_END) != 0 ||
         (file_bytes = ftell(file)) <= 0 ||
@@ -374,12 +377,14 @@ int nexus_v1_saturn_bkr_read_nexus_file(
             &receipt.entry,
             payload_storage + receipt.entry.payload_offset,
             receipt.entry.payload_bytes, &receipt.nexus_payload) ||
-        receipt.entry.payload_bytes > payload_capacity) {
+        (payload_out && receipt.entry.payload_bytes > payload_capacity)) {
         goto done;
     }
-    memcpy(payload_out,
-           payload_storage + receipt.entry.payload_offset,
-           receipt.entry.payload_bytes);
+    if (payload_out) {
+        memcpy(payload_out,
+               payload_storage + receipt.entry.payload_offset,
+               receipt.entry.payload_bytes);
+    }
     receipt.valid = 1;
     *out_receipt = receipt;
     ok = 1;
@@ -392,26 +397,23 @@ done:
     return ok;
 }
 
+int nexus_v1_saturn_bkr_read_nexus_file(
+    const char *path,
+    uint8_t *payload_out, size_t payload_capacity,
+    Nexus_V1_SaturnBkrNexusFileReceipt *out_receipt)
+{
+    if (!payload_out || !payload_capacity || !out_receipt) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    return saturn_bkr_read_nexus_file_internal(
+        path, payload_out, payload_capacity, out_receipt);
+}
+
 int nexus_v1_saturn_bkr_probe_nexus_file(
     const char *path,
     Nexus_V1_SaturnBkrNexusFileReceipt *out_receipt)
 {
-    Nexus_V1_SaturnBkrNexusFileReceipt receipt;
-    uint8_t *payload = NULL;
-    int ok;
-
-    memset(&receipt, 0, sizeof(receipt));
-    if (out_receipt) *out_receipt = receipt;
-    if (!out_receipt) return 0;
-    payload = (uint8_t *)malloc(NEXUS_V1_SATURN_BKR_MAX_IMAGE_BYTES);
-    if (!payload) return 0;
-    ok = nexus_v1_saturn_bkr_read_nexus_file(
-        path, payload, NEXUS_V1_SATURN_BKR_MAX_IMAGE_BYTES, &receipt);
-    free(payload);
-    if (ok) {
-        *out_receipt = receipt;
-    } else {
-        memset(out_receipt, 0, sizeof(*out_receipt));
-    }
-    return ok;
+    return saturn_bkr_read_nexus_file_internal(
+        path, NULL, 0U, out_receipt);
 }

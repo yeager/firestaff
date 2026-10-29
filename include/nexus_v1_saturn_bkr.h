@@ -40,6 +40,9 @@ typedef struct {
     uint32_t payload_bytes;
     uint32_t champion_count;
     uint32_t party_leader_index;
+    /* Retail BKR byte +0x09 maps to the four-entry rune-sequence position
+     * at champion runtime +0x35; the raw byte preserves the inactive value. */
+    uint8_t champion_rune_sequence_cursor[NEXUS_V1_SATURN_BKR_MAX_PARTY];
     int32_t champion_health_current[NEXUS_V1_SATURN_BKR_MAX_PARTY];
     int32_t champion_max_health[NEXUS_V1_SATURN_BKR_MAX_PARTY];
     int32_t champion_stamina_current[NEXUS_V1_SATURN_BKR_MAX_PARTY];
