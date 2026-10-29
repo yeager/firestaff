@@ -26,6 +26,16 @@ fixture behavior do not establish Nexus retail semantics.
   not verify rune selection, sequence acceptance, casting, or spell effects.
   See
   [`nexus_magic_window_y_debug_20261029`](../../parity-evidence/verification/nexus_magic_window_y_debug_20261029/README.md).
+- A second authentic Ymir `--debug` probe replayed one Y-open profile state
+  for 90 frames with no input and with one-frame Up, Down, Left, and Right
+  inputs. Up was pixel-identical to control; Down, Left, and Right changed
+  3,704, 3,740, and 3,664 pixels respectively. Their final-frame VDP1 command
+  lists also differ (7, 9, and 5 rows respectively), while Up's VDP1 trace is
+  identical to control. This confirms direction-sensitive retail output from
+  that checkpoint, but does not identify rune symbols, sequence meaning, or
+  casting. This probe's source savestate is documented separately and is not
+  byte-identical to the state in the Y-entry receipt. Raw evidence is retained
+  at `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/magic-window-dpad-inputs-20261029/`.
 
 ## Firestaff production boundary
 
@@ -44,12 +54,15 @@ implementation or substitute DM1 tables for these missing retail joins.
 
 ## Next evidence needed
 
-Continue from the retained authentic gameplay checkpoint in the receipt above.
-Capture Y to open Magic, then vary one Control Pad input at a time while
-recording the on-screen result and bounded SH-2 reads/writes. Join the accepted
-rune sequence to its retail state updates and the `+0x18` consumer before
-assigning field names or implementing the Firestaff route. Only then trace the
-retail cast path through mana changes, target/effect state, and visible output.
+Continue from a reproducible authentic Magic-window checkpoint. The first
+directional replay is retained, but its exact source savestate differs from
+the Y-entry receipt. Establish one checkpoint's provenance, repeat the
+directional inputs while joining changed VDP1 commands to retail menu
+surfaces, then trace rune acceptance and the `+0x18` consumer before assigning
+field names or implementing the Firestaff route. Only then trace casting
+through mana changes, target/effect state, random inputs, animation, and
+visible output.
 
 Raw emulator states, screenshots, logs, and memory traces remain outside Git
-under `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/nexus-magic-window-input-20261029/`.
+in `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/nexus-magic-window-input-20261029/` and
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/magic-window-dpad-inputs-20261029/`.
