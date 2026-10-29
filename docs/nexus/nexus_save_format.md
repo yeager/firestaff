@@ -57,6 +57,16 @@ Details and hashes are recorded in
 and the operator-managed external evidence bundle's
 `coldboot-continue-write-trace-20261029/` directory.
 
+A further authentic two-champion Ymir run traced SH-2 reads and writes in the
+loaded payload buffer through VDP1 frame 14,121. It recorded 1,777 reads and
+40,964 writes, with complete bundles and zero dropped events. The same-run
+memory projection matches the authentic payload and checks 160 of 166
+source-to-runtime operations; the six bounded final differences are explained
+by retail updater writes already traced in the leader-index-3 run. This
+additional trace does not decode other fields or demonstrate a Firestaff
+Continue route. Its logs, dumps, checksums, and projection report are retained
+in the external `wram-consumer-trace-20261029/` evidence directory.
+
 Firestaff's bounded C reader now accepts one caller-selected card path up to
 4 MiB, requires exactly one `DMNEXUS__01` entry, and returns the card, entry,
 and verified roster metadata. It frees the extracted payload after probing;

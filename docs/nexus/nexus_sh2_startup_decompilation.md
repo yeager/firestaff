@@ -167,6 +167,20 @@ explicit in the analyzer so each check can be reviewed against the
 decompilation and same-run WorkRAM dumps. These offsets remain mechanically
 verified fields; they do not supply semantic names.
 
+A further `--debug` Ymir cold boot on TRV2 traced reads and writes to the
+payload buffer `[0x00204000,0x00209000)` for the authentic two-champion card.
+The complete read trace contains 1,777 rows and the write trace 40,964 rows;
+both report zero dropped events. The capture reached VDP1 frame 14,121. The
+same-run analyzer matches 160 of 166 projection checks and identifies six
+final differences at champion offsets `+0x10`, `+0x18`, and `+0x1a`; the
+retained leader-index-3 retail write trace accounts for all six, leaving zero
+unresolved differences in this bounded set. The observed access PCs include
+payload checksum and importer routines, but do not provide semantic labels
+for other save fields or prove Firestaff applies the Saturn state. The BKR
+hash was unchanged before and after the run. Selected traces, memory dumps,
+the analyzer output, and a SHA-256 manifest are retained outside Git in
+`/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_authentic_bkr_continue_20261028/wram-consumer-trace-20261029/`.
+
 One context field has a semantic cross-check beyond the champion table. The
 decompilation assigns payload byte `+0x61` (the signed byte at source context
 `+1`) to the runtime context's signed 32-bit field at `+0x0c`. The roster count
