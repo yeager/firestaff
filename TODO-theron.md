@@ -8445,3 +8445,23 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   not establish that the manual's menu sequence failed. Keep menu visibility,
   the game-owned handoff, and decoder semantics open; do not use this BIOS
   polling trace as `$23AD` or gameplay evidence.
+
+## 2026-10-29 — source-to-VRAM event join: tooling ready, capture pending
+
+- The opt-in PCE Fast VWR commit trace now consumes the shared event sequence
+  also used by the CD data-port read and CD RAM target-write traces. The live
+  capture script can merge these streams into a JSONL chronology and records
+  its status, row count and SHA-256. The merger rejects incorrect trace
+  headers, malformed records, duplicate cross-stream IDs and non-increasing
+  per-stream IDs.
+- Three local test loops passed for the merger and capture shell syntax. The
+  complete Mednafen patch set applied to an isolated copy of pristine 1.32.1
+  on TRV2 and built with `-j1`; `pce_fast/vdc.o` compiled and the binary
+  contains the V3 schema and `event_sequence` format marker.
+- Next: capture authentic Theron gameplay with CD, RAM-target and VWR traces
+  in one session. Bind any candidate bytes to a source LBA before pursuing the
+  world-square, BAT, tile-index and palette joins.
+- Open limits: the VWR hook excludes DMA; no VCE palette-write trace is yet
+  joined to this sequence; chronology alone is not causal byte provenance.
+  The production renderer still lacks an authenticated source-to-world-cell
+  and tile-bank mapping, so this tooling does not establish visual parity.

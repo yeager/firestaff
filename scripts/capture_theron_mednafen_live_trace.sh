@@ -1242,6 +1242,14 @@ pce_fast_vce_snapshot="${trace}.pce-fast.vce"
 pce_fast_vdc_sat_snapshot="${trace}.pce-fast.sat"
 pce_fast_vdc_state_snapshot="${trace}.pce-fast.vdc-state"
 pce_fast_vram_commit_trace="${trace}.pce-fast.vram-commit"
+pce_fast_source_graphics_event_order="${trace}.pce-fast.source-graphics-events.jsonl"
+if [[ "$capture_mednafen_module" == pce_fast &&
+      "$capture_pce_fast_vram_commit_trace" == 1 &&
+      ( -e "$pce_fast_source_graphics_event_order" || -L "$pce_fast_source_graphics_event_order" ) ]]; then
+    printf 'FAIL: refusing to overwrite existing source-to-VRAM event order: %s\n' \
+        "$pce_fast_source_graphics_event_order" >&2
+    exit 1
+fi
 pce_fast_vram_commit_trace_env=
 if [[ "$capture_pce_fast_vram_commit_trace" == 1 ]]; then
     pce_fast_vram_commit_trace_env=$pce_fast_vram_commit_trace
@@ -2020,11 +2028,11 @@ else
                    }
                    return result
                }
-               NR == 1 { if ($0 != "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V2") exit 1; next }
+               NR == 1 { if ($0 != "FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3") exit 1; next }
                NR == 2 { if ($0 != "source=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window") exit 1; next }
                NR == 3 { if ($0 != "scope=cpu-port-vwr-commits-only;dma-writes-excluded") exit 1; next }
                /^vram_commit / {
-                   if (NF != 14 || $1 != "vram_commit") exit 1
+                   if (NF != 15 || $1 != "vram_commit") exit 1
                    split($2, sequence_field, "=")
                    split($3, chip_field, "=")
                    split($4, display_counter_field, "=")
@@ -2038,6 +2046,7 @@ else
                    split($12, value_field, "=")
                    split($13, low_field, "=")
                    split($14, high_field, "=")
+                   split($15, event_sequence_field, "=")
                    if (sequence_field[1] != "sequence" || sequence_field[2] != count ||
                        chip_field[1] != "chip" || chip_field[2] != 0 ||
                        display_counter_field[1] != "display_counter" || display_counter_field[2] !~ /^[0-9]+$/ ||
@@ -2050,7 +2059,10 @@ else
                        address_field[1] != "address" || !is_hex(address_field[2], 4) ||
                        value_field[1] != "value" || !is_hex(value_field[2], 4) ||
                        low_field[1] != "low" || low_field[2] != substr(value_field[2], 3, 2) ||
-                       high_field[1] != "high" || high_field[2] != substr(value_field[2], 1, 2)) exit 1
+                       high_field[1] != "high" || high_field[2] != substr(value_field[2], 1, 2) ||
+                       event_sequence_field[1] != "event_sequence" || event_sequence_field[2] !~ /^[0-9]+$/) exit 1
+                   if (count > 0 && event_sequence_field[2] <= previous_event_sequence) exit 1
+                   previous_event_sequence = event_sequence_field[2]
                    logical_pc_value = hex_value(logical_pc_field[2])
                    mpr_bank_value = hex_value(mpr_bank_field[2])
                    if (mpr_slot_field[2] != int(logical_pc_value / 8192) ||
@@ -2076,6 +2088,37 @@ else
         fi
     elif [[ -e "$pce_fast_vram_commit_trace" || -L "$pce_fast_vram_commit_trace" ]]; then
         printf '%s\n' 'FAIL: PCE Fast capture emitted an unrequested VRAM commit trace' >&2
+        exit 1
+    fi
+fi
+if [[ "$capture_mednafen_module" == pce_fast ]]; then
+    pce_fast_source_graphics_event_order_status=not_requested
+    pce_fast_source_graphics_event_order_count=unavailable
+    pce_fast_source_graphics_event_order_sha256=unavailable
+    if [[ "$capture_pce_fast_vram_commit_trace" == 1 ]]; then
+        pce_fast_source_graphics_event_order_status=unavailable_missing_cd_stream
+    fi
+    if [[ "$capture_pce_fast_vram_commit_trace" == 1 &&
+          -s "$cd_data_port_read_trace" && -s "$cd_ram_target_write_trace" ]]; then
+        python3 "$script_dir/merge_theron_pce_fast_source_graphics_events.py" \
+            --cd-data-port "$cd_data_port_read_trace" \
+            --cd-ram-target "$cd_ram_target_write_trace" \
+            --vram-commit "$pce_fast_vram_commit_trace" \
+            --output "$pce_fast_source_graphics_event_order" || exit 1
+        if ! trace_files_are_line_delimited "$pce_fast_source_graphics_event_order"; then
+            printf '%s\n' 'FAIL: merged source-to-VRAM event order is not line-delimited' >&2
+            exit 1
+        fi
+        pce_fast_source_graphics_event_order_count=$(awk 'END { if (NR > 0) print NR - 1; else print 0 }' \
+            "$pce_fast_source_graphics_event_order")
+        pce_fast_source_graphics_event_order_sha256=$(sha256_file \
+            "$pce_fast_source_graphics_event_order") || {
+            printf '%s\n' 'FAIL: could not hash merged source-to-VRAM event order' >&2
+            exit 1
+        }
+        pce_fast_source_graphics_event_order_status=merged
+    elif [[ -e "$pce_fast_source_graphics_event_order" || -L "$pce_fast_source_graphics_event_order" ]]; then
+        printf '%s\n' 'FAIL: capture emitted an unrequested source-to-VRAM event-order trace' >&2
         exit 1
     fi
 fi
@@ -2386,6 +2429,12 @@ fi
         printf 'pce_fast_vram_commit_trace_limit=%s\n' "$pce_fast_vram_commit_trace_limit"
         printf 'pce_fast_vram_commit_trace_count=%s\n' "$pce_fast_vram_commit_trace_count"
         printf 'pce_fast_vram_commit_trace_sha256=%s\n' "$pce_fast_vram_commit_trace_sha256"
+        printf 'pce_fast_source_graphics_event_order_count=%s\n' \
+            "$pce_fast_source_graphics_event_order_count"
+        printf 'pce_fast_source_graphics_event_order_status=%s\n' \
+            "$pce_fast_source_graphics_event_order_status"
+        printf 'pce_fast_source_graphics_event_order_sha256=%s\n' \
+            "$pce_fast_source_graphics_event_order_sha256"
     fi
     if [[ "$capture_mednafen_module" == pce ]]; then
         printf 'vdc_io_writes=%s\n' "$transition_vdc_io_write_count"

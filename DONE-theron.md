@@ -9030,3 +9030,20 @@ T900/original inventory semantics. No synthetic media was used.
 - This proves the direct CD-port-to-bank-$80 store for these two windows. It
   does not prove complete Theron parity, the `$23AD` decoder path, or gameplay;
   the capture had no CD IRQ or gameplay transition.
+
+## 2026-10-29 — add shared ordering to source-to-VRAM trace tooling
+
+- Extended the opt-in Mednafen PCE Fast VWR-commit hook to consume the shared
+  event sequence already used by CD data-port reads and CD RAM-target writes.
+  Added a streaming JSONL merger that rejects duplicate sequence IDs,
+  malformed records and per-stream reordering; capture summaries include the
+  merged row count and digest when both CD streams are present.
+- Three local development loops passed the focused merger cases and shell
+  syntax checks. The complete Theron patch set applied to a disposable copy
+  of pristine Mednafen 1.32.1 on TRV2, then compiled with `-j1`. The PCE Fast
+  VDC object built; the resulting binary contains the V3 header and shared
+  `event_sequence` record format. No authentic trace was produced in this
+  pass.
+- This completes the ordering tool only. It does not prove CD-byte causality,
+  VCE palette provenance, DMA writes, tile mapping, renderer correctness or
+  Theron parity.

@@ -5,9 +5,11 @@ repo=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 build_script="$repo/scripts/build_mednafen_theron_irq2_trace.sh"
 capture_script="$repo/scripts/capture_theron_mednafen_live_trace.sh"
 patch_file="$repo/scripts/mednafen_1.32.1_theron_pce_fast_vram_commit_trace.patch"
+shared_event_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_shared_event_sequence.patch"
+event_merger="$repo/scripts/merge_theron_pce_fast_source_graphics_events.py"
 cmake_file="$repo/CMakeLists.txt"
 
-if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V2' "$patch_file" ||
+if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3' "$patch_file" ||
    ! grep -Fq 'source=mednafen-1.32.1-pce-fast-vdc-vwr-commit-mpr-code-window' "$patch_file" ||
    ! grep -Fq 'scope=cpu-port-vwr-commits-only;dma-writes-excluded' "$patch_file" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_LIMIT' "$patch_file" ||
@@ -16,13 +18,21 @@ if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V2' "$patch_file" ||
    ! grep -Fq 'TheronTraceInstructionPC' "$patch_file" ||
    ! grep -Fq 'TheronTraceInstructionPhysicalPC' "$patch_file" ||
    ! grep -Fq 'HuCPU.MPR[mpr_slot]' "$patch_file" ||
+   ! grep -Fq 'event_sequence=%u' "$shared_event_patch" ||
+   ! grep -Fq 'extern uint32 TheronTraceCDSharedEventSequence;' "$shared_event_patch" ||
    ! grep -Fq 'TheronPCEFastReadCodeWindow(logical_pc, code_bytes, code_mpr_banks);' "$patch_file" ||
    ! grep -Fq 'HuCPU.FastPageR[slot] + address' "$patch_file" ||
-   ! grep -Fq 'vram_commit sequence=%u chip=%d display_counter=%u logical_pc=%04x physical_pc=%06x mpr_slot=%u mpr_bank=%02x code_mpr_banks=%02x%02x%02x%02x%02x%02x%02x%02x code_bytes=%02x%02x%02x%02x%02x%02x%02x%02x address=%04x value=%04x low=%02x high=%02x' "$patch_file" ||
+   ! grep -Fq 'extern uint32 TheronTraceCDSharedEventSequence;' "$patch_file" ||
+   ! grep -Fq 'const uint32 event_sequence = TheronTraceCDSharedEventSequence++;' "$patch_file" ||
+   ! grep -Fq 'vram_commit sequence=%u chip=%d display_counter=%u logical_pc=%04x physical_pc=%06x mpr_slot=%u mpr_bank=%02x code_mpr_banks=%02x%02x%02x%02x%02x%02x%02x%02x code_bytes=%02x%02x%02x%02x%02x%02x%02x%02x address=%04x value=%04x low=%02x high=%02x event_sequence=%u' "$patch_file" ||
    ! grep -Fq 'TheronTracePCEFastVRAMCommit(chip, vdc->display_counter, vdc->MAWR, (V << 8) | vdc->write_latch);' "$patch_file" ||
    ! grep -Fq 'THERON_CAPTURE_PCE_FAST_VRAM_COMMIT_TRACE' "$capture_script" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE="$pce_fast_vram_commit_trace_env"' "$capture_script" ||
-   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V2' "$capture_script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V3' "$capture_script" ||
+   ! grep -Fq 'merge_theron_pce_fast_source_graphics_events.py' "$capture_script" ||
+   ! grep -Fq 'refusing to overwrite existing source-to-VRAM event order' "$capture_script" ||
+   ! grep -Fq 'pce_fast_source_graphics_event_order_sha256=%s' "$capture_script" ||
+   ! grep -Fq 'pce_fast_source_graphics_event_order_status=%s' "$capture_script" ||
    ! grep -Fq 'code_bytes_field[1] != "code_bytes" || !is_hex(code_bytes_field[2], 16)' "$capture_script" ||
    ! grep -Fq 'code_mpr_banks_field[1] != "code_mpr_banks" || !is_hex(code_mpr_banks_field[2], 16)' "$capture_script" ||
    ! grep -Fq 'mpr_slot_field[2] != int(logical_pc_value / 8192)' "$capture_script" ||
@@ -31,10 +41,13 @@ if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_V2' "$patch_file" ||
    ! grep -Fq 'pce_fast_vram_commit_trace_requested=%s' "$capture_script" ||
    ! grep -Fq 'pce_fast_vram_commit_trace_limit=%s' "$capture_script" ||
    ! grep -Fq 'pce_fast_vram_commit_trace_sha256=%s' "$capture_script" ||
+   ! grep -Fq 'event_sequence_field[1] != "event_sequence"' "$capture_script" ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_VRAM_COMMIT_TRACE_SUPPORT' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_vram_commit_trace.patch' "$build_script" ||
    ! grep -Fq 'NAME theron_v1_mednafen_pce_fast_vram_commit_patch' "$cmake_file" ||
    ! grep -Fq 'tests/test_theron_v1_mednafen_pce_fast_vram_commit_patch.sh' "$cmake_file" ||
+   ! grep -Fq 'NAME theron_pce_fast_source_graphics_event_merge' "$cmake_file" ||
+   ! test -f "$event_merger" ||
    ! grep -Fq 'pce_fast_snapshot" == 1 || "$pce_fast_vram_commit_trace" == 1' "$build_script"; then
     printf '%s\n' 'FAIL: PCE Fast VWR commit trace must be bounded, opt-in, and tied to instruction PCs' >&2
     exit 1
