@@ -850,11 +850,15 @@ M12 startup coverage gap; native M5 Retina/input verification remains open.
   verifies that the indexed display palette equals the active
   `GRAPHICSSET/<style>/PAL_IRGB` stripe selected by the source c_light level;
   it independently compares all 16 decoded RGB entries against the original
-  archive bytes. The test passes on TRV2 with the authentic Amiga archive.
-  This establishes source palette consumption, not full visual parity: capture
-  and compare the corrected presented frame against
+  archive bytes. The test passes on TRV2 with authentic archive SHA-256
+  `fb3bdcb19039f449389c5872aedcf08e53a1765ebd57fd72e60a1e50dbe74768`.
+  A runtime PPM capture at
+  `.codex-scratch/dm2-amiga-palette-20261029.ppm` confirms the previous cyan
+  and orange dungeon corruption is replaced by the archive's brown cave scene
+  colors. This verifies palette consumption and resolves that color-mapping
+  regression, not full visual parity: compare the corrected frame against
   GreatStone or an original Amiga runtime, and separately map the Amiga source
-  HUD panels before claiming HUD correction. Capture:
+  HUD panels before claiming HUD correction. The earlier capture remains at
   `.codex-scratch/dm2-amiga-debug/frame.png`.
 
 - Verify bare `--game dm2` on the reported MacBook Pro M5 Retina display with

@@ -41,6 +41,26 @@ static unsigned int nonzero_pixels(const unsigned char *pixels, size_t size)
     return count;
 }
 
+static int write_indexed_frame_ppm(
+    const char *path, const unsigned char *pixels,
+    const uint8_t palette[256][3])
+{
+    FILE *file;
+    if (!path || !path[0] || !pixels || !palette ||
+        !(file = fopen(path, "wb"))) return 0;
+    if (fprintf(file, "P6\n%d %d\n255\n", M11_FB_WIDTH, M11_FB_HEIGHT) < 0) {
+        fclose(file);
+        return 0;
+    }
+    for (int i = 0; i < M11_FB_BYTES; ++i) {
+        if (fwrite(palette[pixels[i]], 1u, 3u, file) != 3u) {
+            fclose(file);
+            return 0;
+        }
+    }
+    return fclose(file) == 0;
+}
+
 int main(void)
 {
     const char *loose_root = getenv("FIRESTAFF_DM2_AMIGA_LOOSE_ROOT");
@@ -200,6 +220,7 @@ int main(void)
             DM2_V1_ViewportM11FrameReceipt frame;
             DM2_V1_InterfacePalette expected;
             uint8_t actual[256][3];
+            uint8_t actual_rgb8[256][3];
             const uint8_t *source;
             size_t source_size = 0u;
             int palette_ready;
@@ -207,6 +228,7 @@ int main(void)
             memset(&frame, 0, sizeof(frame));
             memset(&expected, 0, sizeof(expected));
             memset(actual, 0, sizeof(actual));
+            memset(actual_rgb8, 0, sizeof(actual_rgb8));
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&view, framebuffer,
                               M11_FB_WIDTH, M11_FB_HEIGHT);
@@ -243,6 +265,16 @@ int main(void)
                 memcmp(actual, expected.rgb6, sizeof(expected.rgb6)) == 0;
             expect(palette_ready,
                   "Amiga M11 presents the active authentic GRAPHICSSET light palette");
+            {
+                const char *capture_path =
+                    getenv("FIRESTAFF_DM2_AMIGA_CAPTURE_PPM");
+                if (capture_path && capture_path[0]) {
+                    expect(M11_Render_CopyIndexedPaletteRgb8(actual_rgb8) == 1 &&
+                               write_indexed_frame_ppm(
+                                   capture_path, framebuffer, actual_rgb8),
+                           "optional Amiga runtime frame capture is written");
+                }
+            }
         }
         {
             M11_GameInputResult inventory_result = M11_GameView_HandleInput(
