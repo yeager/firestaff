@@ -193,6 +193,26 @@ static uint32_t bgr555_to_rgba(uint16_t word)
         (uint32_t)expand5(word, 10U);
 }
 
+static uint32_t apply_uniform_gouraud_rgba(uint32_t rgba, uint16_t shade)
+{
+    uint16_t base = (uint16_t)(
+        ((((rgba >> 16U) & 0xffU) >> 3U) & 0x1fU) |
+        (((((rgba >> 8U) & 0xffU) >> 3U) & 0x1fU) << 5U) |
+        ((((rgba & 0xffU) >> 3U) & 0x1fU) << 10U) |
+        UINT16_C(0x8000));
+    uint16_t corrected = 0U;
+    unsigned int shift;
+
+    for (shift = 0U; shift <= 10U; shift += 5U) {
+        int value = (int)((base >> shift) & 0x1fU) +
+            (int)((shade >> shift) & 0x1fU) - 16;
+        if (value < 0) value = 0;
+        if (value > 31) value = 31;
+        corrected |= (uint16_t)((unsigned int)value << shift);
+    }
+    return bgr555_to_rgba(corrected);
+}
+
 static int direct_color_triangle(
     Nexus_V1_Vdp1DirectColorFramebuffer *fb, float xy[4][2],
     int ia, int ib, int ic, const uint8_t *tex, int width, int height,
@@ -802,6 +822,7 @@ int nexus_v1_vdp1_capture_composite_mode1_rgba_sequence(
         Nexus_V1_Vdp1CaptureCompositeReceipt command_receipt;
         uint32_t trace_index = input->command_trace_indices[i];
         size_t pixel;
+        uint16_t gouraud_shade = 0U;
 
         if (!input->command_origin_verified[i] ||
             trace_index >= (uint32_t)input->trace_row_count ||
@@ -829,8 +850,21 @@ int nexus_v1_vdp1_capture_composite_mode1_rgba_sequence(
             (parsed.draw_mode & UINT16_C(0x0400)) == 0U) goto cleanup;
         if ((parsed.draw_mode & UINT16_C(0x0400)) != 0U)
             ++receipt.user_clip_commands_verified;
-        if ((parsed.draw_mode & UINT16_C(0x0004)) != 0U)
-            ++receipt.gouraud_commands_unrendered;
+        if ((parsed.draw_mode & UINT16_C(0x0004)) != 0U) {
+            uint32_t table_offset = (uint32_t)parsed.gouraud_table_word << 3U;
+            uint16_t shade[4];
+            int corner;
+            if (!input->vdp1_vram_hash_verified || !input->vdp1_vram ||
+                input->vdp1_vram_size < 8 ||
+                table_offset > (uint32_t)input->vdp1_vram_size - 8U)
+                goto cleanup;
+            for (corner = 0; corner < 4; ++corner)
+                shade[corner] = read_le16(input->vdp1_vram + table_offset +
+                    (uint32_t)corner * 2U);
+            if (shade[0] != shade[1] || shade[0] != shade[2] ||
+                shade[0] != shade[3]) goto cleanup;
+            gouraud_shade = shade[0];
+        }
         /* The per-command palette is resolved immediately after drawing, so
          * every command can use slot zero without invalidating older pixels. */
         command.palette_slot_base = 0;
@@ -856,10 +890,14 @@ int nexus_v1_vdp1_capture_composite_mode1_rgba_sequence(
         for (pixel = 0U; pixel < NEXUS_FB_W * NEXUS_FB_H; ++pixel) {
             uint8_t palette_index = command_framebuffer->color_buffer[pixel];
             if (command_framebuffer->z_buffer[pixel] != 1e30f) {
-                working->rgba_buffer[pixel] =
-                    command_framebuffer->palette[palette_index];
+                uint32_t rgba = command_framebuffer->palette[palette_index];
+                if ((parsed.draw_mode & UINT16_C(0x0004)) != 0U)
+                    rgba = apply_uniform_gouraud_rgba(rgba, gouraud_shade);
+                working->rgba_buffer[pixel] = rgba;
             }
         }
+        if ((parsed.draw_mode & UINT16_C(0x0004)) != 0U)
+            ++receipt.gouraud_commands_applied;
     }
     if (receipt.source_joins_verified != input->command_count ||
         receipt.palette_joins_verified != input->command_count) goto cleanup;

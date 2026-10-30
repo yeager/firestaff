@@ -318,6 +318,7 @@ int main(void)
     uint8_t rgba_dgn_palette[3][32];
     uint8_t rgba_zero_texture[32] = {0};
     uint8_t rgba_zero_dgn_image[32] = {0};
+    uint8_t rgba_vdp1_vram[64] = {0};
     uint32_t rgba_trace_indices[3] = {4U, 8U, 9U};
     int rgba_origin_x[3] = {160, 160, 160};
     int rgba_origin_y[3] = {112, 112, 112};
@@ -405,6 +406,13 @@ int main(void)
      * must not recolor pixels from the earlier command. */
     memcpy(rgba_command_bytes[0], command, sizeof(command));
     memcpy(rgba_command_bytes[1], command, sizeof(command));
+    for (i = 0; i < 3; ++i) {
+        wl16(rgba_command_bytes[i] + 4,
+            (1U << 2) | (1U << 3));
+        wl16(rgba_command_bytes[i] + 28, 4U);
+        wl16(rgba_vdp1_vram + 32 + i * 2, 0x7fffU);
+    }
+    wl16(rgba_vdp1_vram + 38, 0x7fffU);
     for (i = 0; i < 32; i += 2) {
         wl16(rgba_palette_state[0] + i, i == 2 ? 0x8001U : 0x8000U);
         wl16(rgba_palette_state[1] + i, i == 2 ? 0x801fU : 0x8000U);
@@ -427,7 +435,9 @@ int main(void)
     memcpy(rgba_command_bytes[2], command, sizeof(command));
     /* TPD disables transparent-texel handling, so source index zero must
      * still write the CLUT's zero entry. */
-    wl16(rgba_command_bytes[2] + 4, (1U << 3) | (1U << 6));
+    wl16(rgba_command_bytes[2] + 4,
+        (1U << 2) | (1U << 3) | (1U << 6));
+    wl16(rgba_command_bytes[2] + 28, 4U);
     memset(rgba_palette_state[2], 0, sizeof(rgba_palette_state[2]));
     wl16(rgba_palette_state[2], 0xfc00U);
     for (i = 0; i < 32; i += 2) {
@@ -451,6 +461,9 @@ int main(void)
     memset(&rgba_framebuffer, 0, sizeof(rgba_framebuffer));
     memset(&rgba_sequence_input, 0, sizeof(rgba_sequence_input));
     rgba_sequence_input.commands = rgba_commands;
+    rgba_sequence_input.vdp1_vram = rgba_vdp1_vram;
+    rgba_sequence_input.vdp1_vram_size = sizeof(rgba_vdp1_vram);
+    rgba_sequence_input.vdp1_vram_hash_verified = 1;
     rgba_sequence_input.command_trace_indices = rgba_trace_indices;
     rgba_sequence_input.command_origin_x = rgba_origin_x;
     rgba_sequence_input.command_origin_y = rgba_origin_y;
@@ -476,10 +489,11 @@ int main(void)
         rgba_sequence_receipt.source_joins_verified != 3 ||
         rgba_sequence_receipt.palette_joins_verified != 3 ||
         rgba_sequence_receipt.capture_gap_commands != 1 ||
+        rgba_sequence_receipt.gouraud_commands_applied != 3 ||
         rgba_sequence_receipt.gouraud_commands_unrendered != 0 ||
         rgba_sequence_receipt.renderer_permitted ||
         rgba_framebuffer.rgba_buffer[112 * NEXUS_FB_W + 160] !=
-            UINT32_C(0xff0000ff)) {
+            UINT32_C(0xff7b7bff)) {
         fprintf(stderr, "FAIL: per-command palette RGBA sequence (valid=%d source=%d palette=%d gaps=%d clip=%d written=%d rgba=%08x)\n",
             rgba_sequence_receipt.valid, rgba_sequence_receipt.source_joins_verified,
             rgba_sequence_receipt.palette_joins_verified,
@@ -490,17 +504,37 @@ int main(void)
         return 1;
     }
     if (rgba_framebuffer.rgba_buffer[112 * NEXUS_FB_W + 161] !=
-            UINT32_C(0xff0000ff)) {
+            UINT32_C(0xff7b7bff)) {
         fprintf(stderr, "FAIL: command-local palette preservation\n");
         return 1;
     }
+    wl16(rgba_vdp1_vram + 38, 0x7ffeU);
+    if (nexus_v1_vdp1_capture_composite_mode1_rgba_sequence(
+            &rgba_framebuffer, &rgba_sequence_input,
+            &rgba_sequence_receipt) || rgba_sequence_receipt.valid ||
+        rgba_framebuffer.rgba_buffer[112 * NEXUS_FB_W + 160] !=
+            UINT32_C(0xff7b7bff)) {
+        fprintf(stderr, "FAIL: non-uniform Gouraud table must reject atomically\n");
+        return 1;
+    }
+    wl16(rgba_vdp1_vram + 38, 0x7fffU);
+    rgba_sequence_input.vdp1_vram_hash_verified = 0;
+    if (nexus_v1_vdp1_capture_composite_mode1_rgba_sequence(
+            &rgba_framebuffer, &rgba_sequence_input,
+            &rgba_sequence_receipt) || rgba_sequence_receipt.valid ||
+        rgba_framebuffer.rgba_buffer[112 * NEXUS_FB_W + 160] !=
+            UINT32_C(0xff7b7bff)) {
+        fprintf(stderr, "FAIL: unauthenticated Gouraud VRAM must reject atomically\n");
+        return 1;
+    }
+    rgba_sequence_input.vdp1_vram_hash_verified = 1;
     rgba_origin_verified[2] = 0U;
     if (nexus_v1_vdp1_capture_composite_mode1_rgba_sequence(
             &rgba_framebuffer, &rgba_sequence_input,
             &rgba_sequence_receipt) || rgba_sequence_receipt.valid ||
         rgba_sequence_receipt.renderer_permitted ||
         rgba_framebuffer.rgba_buffer[112 * NEXUS_FB_W + 160] !=
-            UINT32_C(0xff0000ff)) {
+            UINT32_C(0xff7b7bff)) {
         fprintf(stderr, "FAIL: RGBA sequence must reject unverified local state atomically\n");
         return 1;
     }
@@ -512,7 +546,7 @@ int main(void)
             &rgba_framebuffer, &rgba_sequence_input,
             &rgba_sequence_receipt) || rgba_sequence_receipt.valid ||
         rgba_framebuffer.rgba_buffer[112 * NEXUS_FB_W + 160] !=
-            UINT32_C(0xff0000ff)) {
+            UINT32_C(0xff7b7bff)) {
         fprintf(stderr, "FAIL: unsupported VDP1 user-clip mode must reject atomically\n");
         return 1;
     }

@@ -317,6 +317,9 @@ static int verify_window(const Blob *trace, const Blob *vram,
             ok = 0;
         } else {
             rgba_sequence_input.commands = rgba_commands;
+            rgba_sequence_input.vdp1_vram = vram->data;
+            rgba_sequence_input.vdp1_vram_size = (int)vram->size;
+            rgba_sequence_input.vdp1_vram_hash_verified = 1;
             rgba_sequence_input.command_trace_indices = rgba_trace_indices;
             rgba_sequence_input.command_origin_x = rgba_origin_x;
             rgba_sequence_input.command_origin_y = rgba_origin_y;
@@ -349,8 +352,9 @@ static int verify_window(const Blob *trace, const Blob *vram,
                     (int)rgba_command_count &&
                 rgba_sequence_receipt.capture_gap_commands ==
                     (int)(LAST_COMMAND - FIRST_COMMAND + 1U - rgba_command_count) &&
-                rgba_sequence_receipt.gouraud_commands_unrendered ==
+                rgba_sequence_receipt.gouraud_commands_applied ==
                     (int)rgba_command_count &&
+                rgba_sequence_receipt.gouraud_commands_unrendered == 0 &&
                 rgba_sequence_receipt.user_clip_commands_verified ==
                     (int)rgba_command_count &&
                 !rgba_sequence_receipt.renderer_permitted;
@@ -361,10 +365,10 @@ static int verify_window(const Blob *trace, const Blob *vram,
                     !write_rgba_capture(rgba_output, rgba_framebuffer))
                     ok = 0;
                 if (ok) printf("RGBA CAPTURE: mode1=%u gaps=%d "
-                    "gouraud_unrendered=%d pixels_written=%d "
+                    "gouraud_applied=%d pixels_written=%d "
                     "renderer_permitted=false\n", rgba_command_count,
                     rgba_sequence_receipt.capture_gap_commands,
-                    rgba_sequence_receipt.gouraud_commands_unrendered,
+                    rgba_sequence_receipt.gouraud_commands_applied,
                     rgba_sequence_receipt.written_pixels);
             }
         }

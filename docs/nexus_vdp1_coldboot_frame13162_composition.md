@@ -37,14 +37,18 @@ palette joins, 9,088 written pixels, and 8 command gaps in this trace window.
 The eight mode-5 draws are separately verified as transparent capture data;
 they are not rendered by this sequence.
 
-All 25 replayed commands enable Gouraud shading. The current capture decoder
-does not apply Gouraud shading, which the receipt counts explicitly. This
-replay therefore checks authentic command order, origins, clipping state,
-source spans, per-command palettes, and pixel writes; it has not passed an
-image comparison against Ymir and does not establish frame parity. Its
-`renderer_permitted` value remains false. The tested 174-row authentic trace
-slice is retained in `tests/fixtures/nexus_v1_vdp1_frame13162_trace.csv`; the
-full raw Ymir trace remains in the external capture archive.
+All 25 replayed commands enable Gouraud shading. Their hash-verified captured
+VRAM tables contain four identical corner values per command, so the capture
+decoder applies the constant RGB555 correction used by Ymir:
+`clamp(base_channel + shade_channel - 16, 0, 31)`. Non-uniform Gouraud tables
+are rejected. The decoder still rasterizes textured quads with a different
+algorithm than Ymir and has not passed an image comparison against Ymir, so
+this does not establish frame parity. Its `renderer_permitted` value remains
+false. The tested 174-row authentic trace slice is retained in
+`tests/fixtures/nexus_v1_vdp1_frame13162_trace.csv`; the full raw Ymir trace
+remains in the external capture archive. The reference behavior is in Ymir's
+[`VDP1PlotTexturedQuad`](https://github.com/ymir-emu/Ymir/blob/main/libs/ymir-core/src/ymir/hw/vdp/renderer/vdp_renderer_sw.cpp)
+and [`GouraudChannelStepper`](https://github.com/ymir-emu/Ymir/blob/main/libs/ymir-core/include/ymir/hw/vdp/renderer/common/vdp1_steppers.hpp).
 
 ## Reproduction
 
