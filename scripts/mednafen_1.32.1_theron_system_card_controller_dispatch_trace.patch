@@ -1,8 +1,8 @@
 --- a/src/pce_fast/huc6280.cpp
 +++ b/src/pce_fast/huc6280.cpp
-@@ -1542,3 +1542,72 @@
-  TheronTraceInstructionPC = GetRealPC();
-  TheronTraceInstructionPhysicalPC = (HuCPU.MPR[TheronTraceInstructionPC >> 13] << 13) | (TheronTraceInstructionPC & 0x1FFF);
+@@ -1536,3 +1536,106 @@
+   TheronTraceInstructionPC = GetRealPC();
+   TheronTraceInstructionPhysicalPC = (HuCPU.MPR[TheronTraceInstructionPC >> 13] << 13) | (TheronTraceInstructionPC & 0x1FFF);
 + {
 +  static FILE *trace = NULL;
 +  static bool attempted = false;
@@ -71,5 +71,39 @@
 +     entry_trace_count++;
 +   }
 +  }
++  if(trace)
++  {
++   static unsigned int code_fetch_trace_count = 0;
++   const unsigned int pc = TheronTraceInstructionPC;
++   if(pc >= 0x4000 && pc <= 0x5FFF && code_fetch_trace_count < 262144)
++   {
++    extern uint32 TheronTraceCDSharedEventSequence;
++    uint8 opcode_bytes[3] = {0, 0, 0};
++    uint32 physical_bytes[3] = {0, 0, 0};
++    unsigned int valid_mask = 0;
++    unsigned int i;
++    for(i = 0; i < 3; i++)
++    {
++     const uint16 logical = (uint16)(pc + i);
++     const unsigned int slot = (logical >> 13) & 7;
++     const uintptr_t mapping = HuCPU.FastPageR[slot];
++     if(mapping)
++     {
++      opcode_bytes[i] = *(const uint8 *)(mapping + logical);
++      physical_bytes[i] = ((uint32)HuCPU.MPR[slot] << 13) | (logical & 0x1FFF);
++      valid_mask |= 1U << i;
++     }
++    }
++    const unsigned int event_sequence = TheronTraceCDSharedEventSequence++;
++    fprintf(trace, "code_fetch event_sequence=%u logical_pc=%04x physical_pc=%06x bytes=%02x%02x%02x physical_bytes=%06x,%06x,%06x valid_mask=%x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x\n",
++            event_sequence, pc, TheronTraceInstructionPhysicalPC,
++            opcode_bytes[0], opcode_bytes[1], opcode_bytes[2],
++            physical_bytes[0], physical_bytes[1], physical_bytes[2], valid_mask,
++            HuCPU.MPR[0], HuCPU.MPR[1], HuCPU.MPR[2], HuCPU.MPR[3],
++            HuCPU.MPR[4], HuCPU.MPR[5], HuCPU.MPR[6], HuCPU.MPR[7]);
++    fflush(trace);
++    code_fetch_trace_count++;
++   }
++  }
 + }
-  TheronPCEFastDratorMenuRouteStep(TheronTraceInstructionPC);
+   TheronPCEFastDratorMenuRouteStep(TheronTraceInstructionPC);

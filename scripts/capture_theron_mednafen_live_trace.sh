@@ -151,6 +151,7 @@ pce_fast_44d2_follow_limit=${THERON_CAPTURE_PCE_FAST_44D2_FOLLOW_LIMIT:-128}
 cd_data_read_trace_limit=${THERON_CAPTURE_PCE_FAST_CD_DATA_READ_TRACE_LIMIT:-65536}
 cd_data_read_start_at_track02=${THERON_CAPTURE_PCE_FAST_CD_DATA_READ_START_AT_TRACK02:-0}
 cd_ram_target_write_trace_limit=${THERON_CAPTURE_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT:-8192}
+cd_ram_writer_pc_trace_limit=${THERON_CAPTURE_PCE_FAST_CD_RAM_WRITER_PC_TRACE_LIMIT:-131072}
 input_trace_limit_default=65536
 if [[ -n "$replay_input_script" || -n "$host_key" || -n "$host_key_sequence" ]]; then
     # Long boot/replay plans can reach the old 65,536-read ceiling before the
@@ -229,6 +230,12 @@ if [[ ! "$cd_ram_target_write_trace_limit" =~ ^[0-9]+$ ]] ||
    (( cd_ram_target_write_trace_limit < 1 ||
       cd_ram_target_write_trace_limit > 1048576 )); then
     printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT must be an integer from 1 through 1048576' >&2
+    exit 1
+fi
+if [[ ! "$cd_ram_writer_pc_trace_limit" =~ ^[0-9]+$ ]] ||
+   (( cd_ram_writer_pc_trace_limit < 1 ||
+      cd_ram_writer_pc_trace_limit > 1048576 )); then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_CD_RAM_WRITER_PC_TRACE_LIMIT must be an integer from 1 through 1048576' >&2
     exit 1
 fi
 if [[ ! "$pce_fast_vram_commit_trace_limit" =~ ^[0-9]+$ ]] ||
@@ -1349,7 +1356,9 @@ mouse_trace="${trace}.mouse"
 main_ram_loader_trace="${trace}.main-ram-loader"
 indirect_target_trace="${trace}.3879-indirect-target"
 cd_ram_target_write_trace="${trace}.cd-ram-target-write"
+cd_ram_writer_pc_trace="${trace}.cd-ram-writer-pc"
 cd_data_port_read_trace="${trace}.cd-data-port-read"
+system_card_dispatch_trace="${trace}.system-card-dispatch"
 profile_sram_manifest="${trace}.profile-sram"
 main_ram_consumer_trace="${trace}.main-ram-consumer"
 pce_fast_code_ram_write_trace=
@@ -1452,7 +1461,7 @@ for pce_fast_snapshot in "$pce_fast_vram_snapshot" "$pce_fast_vce_snapshot" \
 done
 rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" \
     "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" \
-    "$cd_ram_target_write_trace" "$cd_data_port_read_trace" \
+    "$cd_ram_target_write_trace" "$cd_ram_writer_pc_trace" "$cd_data_port_read_trace" "$system_card_dispatch_trace" \
     "$profile_sram_manifest" "$main_ram_consumer_trace" "$selected_record_trace" \
     "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" \
     "$movement_data_read_trace" \
@@ -1695,9 +1704,12 @@ launch=(
     FIRESTAFF_THERON_44D2_FOLLOW_LIMIT="$pce_fast_44d2_follow_limit" \
     FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE="$cd_ram_target_write_trace" \
     FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT="$cd_ram_target_write_trace_limit" \
+    FIRESTAFF_THERON_PCE_FAST_CD_RAM_WRITER_PC_TRACE="$cd_ram_writer_pc_trace" \
+    FIRESTAFF_THERON_PCE_FAST_CD_RAM_WRITER_PC_TRACE_LIMIT="$cd_ram_writer_pc_trace_limit" \
     FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_TRACE="$cd_data_port_read_trace" \
     FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_TRACE_LIMIT="$cd_data_read_trace_limit" \
     FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_START_AT_TRACK02="$cd_data_read_start_at_track02" \
+    FIRESTAFF_THERON_SYSTEM_CARD_DISPATCH_TRACE="$system_card_dispatch_trace" \
     FIRESTAFF_THERON_PCE_FAST_TRACK02_INDEX1_FILE_OFFSET="$track02_index1_file_offset" \
     FIRESTAFF_THERON_PCE_FAST_TRACK02_SECTOR_BYTES="$track02_sector_bytes" \
     FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE="$main_ram_consumer_trace" \
@@ -2086,7 +2098,7 @@ if [[ ! -s "$trace" ]] || ! grep -Fqx 'source=mednafen-pce-instrumented' "$trace
     printf '%s\n' 'FAIL: Mednafen did not produce a provenance-marked live trace' >&2
     exit 1
 fi
-if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$cd_data_port_read_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" ${pce_fast_code_ram_write_trace:+"$pce_fast_code_ram_write_trace"} ${pce_fast_main_ram_target_write_trace:+"$pce_fast_main_ram_target_write_trace"} "$pce_fast_a1b7_bmt_write_trace" "$pce_fast_a1a9_init_trace" "$pce_fast_pointer_ram_write_trace" "$pce_fast_movement_context_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace" ${huc6280_23ad_trace:+"$huc6280_23ad_trace"}; then
+if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$cd_ram_writer_pc_trace" "$cd_data_port_read_trace" "$system_card_dispatch_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" ${pce_fast_code_ram_write_trace:+"$pce_fast_code_ram_write_trace"} ${pce_fast_main_ram_target_write_trace:+"$pce_fast_main_ram_target_write_trace"} "$pce_fast_a1b7_bmt_write_trace" "$pce_fast_a1a9_init_trace" "$pce_fast_pointer_ram_write_trace" "$pce_fast_movement_context_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace" ${huc6280_23ad_trace:+"$huc6280_23ad_trace"}; then
     printf '%s\n' 'FAIL: Mednafen emitted a literal backslash-n in a trace record' >&2
     exit 1
 fi
@@ -2519,6 +2531,7 @@ transition_adpcm_cpu_read_count=$(trace_count '^pce_cd_adpcm_cpu_read ' "$cd_tra
 transition_origin_ram_receipt_count=$(trace_count '^pce_cd_origin_ram_receipt ' "$cd_trace")
 transition_authenticated_cd_ram_count=$(trace_count '^pce_cd_(origin_ram_receipt|fifo_origin_ram_receipt|origin_main_ram_receipt|fifo_origin_main_ram_receipt) ' "$cd_trace")
 transition_cd_ram_target_write_count=$(trace_count '^cd_ram_target_write ' "$cd_ram_target_write_trace")
+transition_cd_ram_writer_pc_write_count=$(trace_count '^cd_ram_writer_pc_write ' "$cd_ram_writer_pc_trace")
 transition_cd_data_port_read_count=$(trace_count '^cd_data_port_read ' "$cd_data_port_read_trace")
 transition_cd_data_port_source_bound_count=$(trace_count '^cd_data_port_read .* source_valid=1 ' "$cd_data_port_read_trace")
 transition_cd_data_port_source_unbound_count=$(trace_count '^cd_data_port_read .* source_valid=0 ' "$cd_data_port_read_trace")
@@ -2670,6 +2683,8 @@ fi
     printf 'authenticated_cd_ram_receipts=%s\n' "$transition_authenticated_cd_ram_count"
     printf 'cd_ram_target_writes=%s\n' "$transition_cd_ram_target_write_count"
     printf 'cd_ram_target_write_trace_limit=%s\n' "$cd_ram_target_write_trace_limit"
+    printf 'cd_ram_writer_pc_writes=%s\n' "$transition_cd_ram_writer_pc_write_count"
+    printf 'cd_ram_writer_pc_trace_limit=%s\n' "$cd_ram_writer_pc_trace_limit"
     printf 'cd_data_port_reads=%s\n' "$transition_cd_data_port_read_count"
     printf 'cd_data_port_read_trace_limit=%s\n' "$cd_data_read_trace_limit"
     printf 'cd_data_port_read_start_at_track02=%s\n' "$cd_data_read_start_at_track02"

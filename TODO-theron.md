@@ -36,6 +36,28 @@ assets, mechanics, or parity.
    and save/resume. Compare both authentic regional editions against the
    [Theron parity definition matrix](parity-evidence/theron_v1_parity_definition_matrix.md).
 
+## 2026-10-30 — bind the JP System Card transfer to executed code
+
+- Extended the PCE Fast reference trace with PC $EA9C CD-RAM writer records
+  and instruction-byte snapshots for execution in $4000-$5FFF. The verifier
+  checks the source bytes against hash-verified Japanese Rev. 1 Track 02, joins
+  reads and writes by event order and value, and compares executed bytes with
+  the latest traced write to each physical address.
+- On a fresh cold run@480:300 capture, all 63,488 CD data-port reads were
+  source-bound to authentic Track 02. All 53,248 $EA9C writes had an
+  ordered/value candidate match to a recent $EA99 source read. Repeated bytes
+  can make these joins ambiguous; they do not prove unique read-to-write
+  causality. Of 262,144 code-fetch rows, 262,121 were fully backed by prior
+  traced writes; 46 fetched bytes differed from the latest
+  traced write. These mismatches remain unresolved and the result is not a
+  complete transfer proof.
+- The run remains blocked before the game-owned IRQ, authenticated CD transfer
+  receipt, game input poll, and gameplay transition. Treat this as loader and
+  execution provenance only; it does not establish game launch or parity.
+- Capture files remain private on TRV2 under
+  /home/trv2/firestaff-theron-evidence/capture/theron-jp-run-writer-opcode-cold-20261030/.
+  The emulator remains reference-only.
+
 ## 2026-10-30 — trace the JP System Card Run path from authentic media
 
 - Added an opt-in Mednafen trace for the System Card controller condition and
@@ -679,20 +701,6 @@ assets, mechanics, or parity.
   The initial observer gate used `$C1FA`; the follow-up below corrects it to
   `$C1FC` and records both ordered bytes. Details are in
   `docs/source-lock/theron-disassembly/theron-pce-fast-tii-position-observer-20261029.md`.
-
-## 2026-10-30 — resolve stair-hosted actuator target consumers
-
-- An authentic-media census now records the decoded fields and target tile for
-  all eight stair-hosted `FLOOR_PARTY` actuators in each retail edition. Their
-  actuator records, decoded fields, coordinates, and target tile bytes match
-  across JP and USA. Seven target locations have equal source-record streams;
-  the SARMON target `(1,9)` has one category-2 record (`ref=0x0803`) whose raw
-  bytes differ by edition (`feff3106` JP, `feff0902` USA).
-- Do not infer mutation semantics from these data records. Bind the target
-  category and each regional raw record to the original actuator consumer,
-  then capture a positive original-runtime event and an equivalent no-input
-  control before enabling the stair-hosted target in
-  `theron_v1_world_dispatch_source_actuator()`.
 
 ## 2026-10-30 — identify accepted UP+II movement-state transfer
 

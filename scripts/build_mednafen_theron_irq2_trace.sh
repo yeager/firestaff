@@ -228,8 +228,6 @@ pce_fast_snapshot_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_
 pce_fast_snapshot_rendered="$build_root/theron-pce-fast-main-ram-snapshot.rendered.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_instruction_pc_trace.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_system_card_controller_dispatch_trace.patch"
 if [[ "$pce_fast_vram_commit_trace" == 1 ]]; then
     pce_fast_vram_commit_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_vram_commit_trace.patch"
     pce_fast_vram_commit_rendered="$build_root/theron-pce-fast-vram-commit.rendered.patch"
@@ -293,6 +291,12 @@ sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$shared_event_patch" \
     > "$shared_event_rendered"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$shared_event_rendered"
+writer_pc_trace_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_ram_writer_pc_trace.patch"
+writer_pc_trace_rendered="$build_root/theron-pce-fast-cd-ram-writer-pc.rendered.patch"
+sed 's/^ FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$writer_pc_trace_patch" \
+    > "$writer_pc_trace_rendered"
+git -C "$build_root/source" apply --recount --whitespace=nowarn \
+    "$writer_pc_trace_rendered"
 fast_vdc_snapshot_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_vdc_snapshot.patch"
 fast_vdc_snapshot_rendered="$build_root/theron-pce-fast-vdc-snapshot.rendered.patch"
 sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$fast_vdc_snapshot_patch" \
@@ -366,6 +370,8 @@ if ! awk '
     exit 1
 fi
 python3 "$repo/scripts/instrument_mednafen_theron_pce_fast_drator_route.py" \
+    "$build_root/source"
+python3 "$repo/scripts/instrument_mednafen_theron_system_card_dispatch_trace.py" \
     "$build_root/source"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_code_ram_write_trace.patch"

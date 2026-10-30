@@ -63,6 +63,38 @@ this BIOS/code-loader trace.
 - Transition receipt SHA-256:
   `c8b3091d885cfb8627be2df01f0463361fba3be40560388799f8ba3294e05306`.
 
+## Follow-up transfer and code-fetch capture
+
+A second cold PCE Fast reference capture used the same hash-verified Japanese
+Rev. 1 Track 02 and System Card 3.0, with run@480:300 and no save state. The
+instrumented Mednafen build included bounded PC $EA9C writer records and
+instruction-byte snapshots for execution in $4000-$5FFF. The new verifier
+checked all source reads against the authentic Track 02 bytes and joined
+writer events by the shared diagnostic sequence.
+
+The verifier reported 63,488 source-bound CD data-port reads and zero
+unbound reads. All 53,248 PC $EA9C CD-RAM writes had an ordered/value
+candidate match to a recent PC $EA99 source read. Repeated bytes can make
+these joins ambiguous; they do not prove unique read-to-write causality. It
+recorded 262,144 code-fetch rows; 262,121 rows were fully backed by prior
+traced writes, with 786,386 matching bytes and 46 bytes differing from the
+latest traced write to their address.
+Those mismatches are unresolved, so the result is not a complete transfer
+proof. The capture was blocked with exit 124 and still had no game IRQ,
+authenticated CD transfer receipt, game-owned input poll, or gameplay
+transition. It provides loader and execution provenance only, not parity.
+
+Private capture directory on TRV2:
+/home/trv2/firestaff-theron-evidence/capture/theron-jp-run-writer-opcode-cold-20261030/.
+Trace SHA-256 values:
+
+- CD writer trace: efc717b6842e4a7c5d28717c339878cc0b258ce6e2ac207b05768f0d5d50e0ef.
+- CD data-port reads: e5d4506ad3e9cb1b1fa5ffafe7670f6566132ea4ec9f98f82aebbada2258218f.
+- System Card dispatch and code fetches: cd8d07bf81c47beac46e2a314bb169e8cc0c0fe1ddf4a1c115ab158e82a80651.
+- Transition receipt: 35c1dfc18874283cc96dc1994ce1eeb4f89621b90cb12e08c92ba3abdee110b6.
+
+The raw media and trace files remain private and are not part of the repository.
+
 ## Remaining evidence needed
 
 Continue from the authenticated bank `$80` writes: bind the following source
