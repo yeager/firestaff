@@ -16,6 +16,28 @@ captured NBG1 layer, not an asset owner, text-page map, menu composition, HUD,
 viewport, or production rendering. The Menu gate stays
 at 3/8 and production readiness stays at 0%.
 
+## Capture-only VDP source/composition receipts — 2026-10-30
+
+Additional hash-verified Ymir captures now support three bounded visual
+checks. At Japanese menu frame 119, five VDP1 marker/label commands bind to
+unique `TITLE.BIN` DGT2/PP source records and matching CRAM palettes; the
+captured VDP1 FBS + NBG0 + five commands reproduce all 286,720 doubled
+screenshot samples within eight RGB levels. The C capture-only compositor
+matches the independent 215,040-byte native RGB reference exactly. This does
+not bind the full NBG0 bitmap, `MENU.BPK`, menu transitions, or input hitboxes.
+
+At Japanese cold-boot title-prompt frame 13162, command 171 binds to
+`TITLE.BIN` DGT2/PP record 21 and a 921-byte NBG0 span binds to TITL record 2.
+The selected VDP1 FBS + NBG0 + command reconstruction matches all 286,720
+doubled samples within eight levels. At gameplay frame 239, the captured
+VDP1/VDP2 priority stack matches all 286,720 doubled screenshot samples
+exactly. Each result covers only its selected layers and frame; arbitrary
+VDP states, full title/menu composition, and production renderer admission
+remain unverified. See the linked frame-specific evidence notes in
+`docs/nexus_vdp1_menu_frame119_source_join.md`,
+`docs/nexus_vdp1_coldboot_frame13162_composition.md`, and
+`docs/nexus_vdp2_frame239_composition.md`.
+
 ## Japanese date/time setup VDP2 trace — 2026-10-24
 
 Ymir `--debug` captures from a session configured with the hash-verified
