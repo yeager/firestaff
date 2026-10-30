@@ -101,6 +101,15 @@ the tested startup/menu contracts only. Nexus remains capture-gated before a
 playable runtime, and these SDL dummy tests do not establish native display,
 physical input, or complete game functionality.
 
+The French DOS edition of DM2 is also covered through a new isolated no-game
+M12 route. `dm2_v1_dos_fr_native_cli_boot` passed in 79.14 seconds: the menu
+started with no game preselected, scanned a data root containing only the
+authentic French DOS ZIP, selected `PC / pc-fr`, and reached the source runtime
+with a complete original HUD receipt. The same regression separately checks
+direct CLI boot and movement; the original ZIP hash remained unchanged. This
+closes the French-edition no-game-picker coverage gap only. It does not verify
+physical display/input or full DM2 parity.
+
 The same build then passed `m12_main_menu_runtime_real_media` (726.80 s)
 against the installed original-media collection, including DM1, CSB, DM2,
 DM1 Amiga, DM2 Amiga, and Theron runtime routes. It also passed the three
