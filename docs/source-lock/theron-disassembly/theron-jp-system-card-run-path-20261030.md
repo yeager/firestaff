@@ -337,6 +337,40 @@ prove that the dispatched path entered the native game loop. Next, bind the
 `$410D` table target and its caller to authenticated loader writes, then follow
 the resulting state into a game-owned input poll.
 
+## Correlate the `$410D,X` target with executed code
+
+The optional PCE Fast observer instruments the existing low/high `RdMem`
+results in the HuC6280 opcode `$7C` handler, then records the resolved target
+before `SetPC`. It is restricted to `$40E1`, where the v8 trace fetched
+`7C 0D 41`; it performs no extra emulated memory reads. The observer stores the
+table base, X index, effective logical address, both physical mappings, bytes,
+MPR snapshot, and shared event sequence. The verifier only treats rows whose
+sequence falls within the bounded 256-row `$6148` code-follow window as
+correlatable.
+
+On authentic Japanese Rev. 1 Track 02 (MD5
+`b7afb338ad31be1025b53f9aff12d73a`) and System Card 3.0 (MD5
+`ff1a674273fe3540ccef576376407d1d`), the `run@480:300` cold capture emitted 40
+dispatch rows. Exactly one occurred within the code-follow window. At event
+102677, PC `$40E1` used base `$410D` and X=`$24`, read `$19/$43` from logical
+`$4131/$4132`, mapped through MPR2=`$80` to physical `$100131/$100132`, and
+resolved `$4319`. The next code-follow fetch, event 102678, was logical
+`$4319` at physical `$100319`, matching the computed destination. Three
+consecutive verifier runs reported one in-window match and 39 dispatch rows
+outside the follow window; those later rows were not used to infer targets.
+
+The transition receipt still reports zero CD IRQ callbacks, zero authenticated
+CD-to-RAM receipts, and no non-System-Card input poll. The dispatch values are
+observed guest memory, not authenticated Track 02 provenance. This narrows the
+bootstrap route but does not establish a complete loader, native handoff, or
+gameplay parity. Raw media and traces remain private on TRV2 at
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-indirect-jump-v8-cold-20261030/`.
+
+- Indexed indirect-jump trace SHA-256: `f4d5775622ac1b71aca7a222c3b742a160ed1ce7239a81fb7135444d062a0050`.
+- System Card code-follow trace SHA-256: `de1866c771e40f3c8dc0029b61c7142b5f47585618d6d2ba7629cb7f8baca5e9`.
+- TIA trace SHA-256: `1e9c420ec9dda89e8db75ed3169c36c3fb32fb560b7d5e292ded127129490b7c`.
+- Transition receipt SHA-256: `b1c282cd31302ec407894ca6818e21d996bef0900c53f99cb5da69b23759c01b`.
+
 ## Targeted v3 code-fetch rerun
 
 A further cold PCE Fast capture used the authentic JP Rev. 1 Track 02 and

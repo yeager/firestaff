@@ -1,0 +1,95 @@
+--- a/src/pce_fast/huc6280.cpp
++++ b/src/pce_fast/huc6280.cpp
+@@ -1095,1 +1095,67 @@
+ #define BMT_PREHONK(pork) HuCPU.in_block_move = IBM_##pork;
++/* Reference-only observer for HuC6280_Fast::Run()'s opcode $7C handler in
++ * src/pce_fast/huc6280_ops.inc:125-137. It records the handler's existing
++ * table-byte reads and does not issue additional guest-memory reads. */
++static FILE *TheronIndirectJumpTraceFile;
++static bool TheronIndirectJumpTraceAttempted;
++static unsigned TheronIndirectJumpTraceCount;
++static unsigned TheronIndirectJumpTraceLimit;
++static bool TheronIndirectJumpTraceTruncationReported;
++static void TheronTraceIndirectJump(unsigned int base, unsigned int index,
++                                    uint8 low, uint8 high, unsigned int target)
++{
++ if(TheronTraceInstructionPC != 0x40E1)
++  return;
++ if(!TheronIndirectJumpTraceAttempted)
++ {
++  const char *path = getenv("FIRESTAFF_THERON_INDIRECT_JUMP_TRACE");
++  const char *limit_text = getenv("FIRESTAFF_THERON_INDIRECT_JUMP_TRACE_LIMIT");
++  char *end = NULL;
++  const unsigned long parsed = limit_text && *limit_text ? strtoul(limit_text, &end, 10) : 64UL;
++  TheronIndirectJumpTraceLimit = end && *end == 0 && parsed >= 1UL && parsed <= 4096UL ?
++      (unsigned)parsed : 64U;
++  TheronIndirectJumpTraceAttempted = true;
++  if(path && *path)
++  {
++   TheronIndirectJumpTraceFile = fopen(path, "w");
++   if(TheronIndirectJumpTraceFile)
++   {
++    fprintf(TheronIndirectJumpTraceFile,
++            "source=mednafen-pce-fast-indirect-jump-trace-v1 event_sequence_source=TheronTraceCDSharedEventSequence target_pcs=40e1 limit=%u\n",
++            TheronIndirectJumpTraceLimit);
++    fflush(TheronIndirectJumpTraceFile);
++   }
++  }
++ }
++ if(!TheronIndirectJumpTraceFile)
++  return;
++ if(TheronIndirectJumpTraceCount >= TheronIndirectJumpTraceLimit)
++ {
++  if(!TheronIndirectJumpTraceTruncationReported)
++  {
++   fprintf(TheronIndirectJumpTraceFile, "indirect_jump_truncated after_rows=%u limit=%u\n",
++           TheronIndirectJumpTraceCount, TheronIndirectJumpTraceLimit);
++   fflush(TheronIndirectJumpTraceFile);
++   TheronIndirectJumpTraceTruncationReported = true;
++  }
++  return;
++ }
++ const unsigned int table = base + index;
++ const unsigned int low_slot = table >> 13;
++ const unsigned int high_address = table + 1;
++ const unsigned int high_slot = high_address >> 13;
++ const uint8 low_mpr = HuCPU.MPR[low_slot];
++ const uint8 high_mpr = HuCPU.MPR[high_slot];
++ const uint32 low_physical = ((uint32)low_mpr << 13) | (table & 0x1FFF);
++ const uint32 high_physical = ((uint32)high_mpr << 13) | (high_address & 0x1FFF);
++ const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
++ fprintf(TheronIndirectJumpTraceFile,
++         "indirect_jump event_sequence=%u row=%u instruction_pc=%04x instruction_physical_pc=%06x base=%04x index=%02x table_address=%04x low=%02x high=%02x low_slot=%u low_mpr=%02x low_physical=%06x high_slot=%u high_mpr=%02x high_physical=%06x target=%04x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x\n",
++         event_sequence, TheronIndirectJumpTraceCount++, TheronTraceInstructionPC,
++         TheronTraceInstructionPhysicalPC, base & 0xFFFF, index & 0xFF,
++         table & 0xFFFF, low, high, low_slot, low_mpr, low_physical,
++         high_slot, high_mpr, high_physical, target & 0xFFFF,
++         HuCPU.MPR[0], HuCPU.MPR[1], HuCPU.MPR[2], HuCPU.MPR[3],
++         HuCPU.MPR[4], HuCPU.MPR[5], HuCPU.MPR[6], HuCPU.MPR[7]);
++ fflush(TheronIndirectJumpTraceFile);
++}
+--- a/src/pce_fast/huc6280_ops.inc
++++ b/src/pce_fast/huc6280_ops.inc
+@@ -130,9 +130,13 @@
+-	    unsigned int npc;
+-
+-            GetAB(tmp);
+-	    tmp += HU_X;
+-
+-            npc=RdMem(tmp);
+-            npc|=RdMem(tmp + 1)<<8;
+-
+-	    SetPC(npc);
++            unsigned int npc;
++
++            GetAB(tmp);
++            const unsigned int dispatch_base = tmp;
++            tmp += HU_X;
++
++            const uint8 dispatch_low = RdMem(tmp);
++            const uint8 dispatch_high = RdMem(tmp + 1);
++            npc = dispatch_low | (dispatch_high << 8);
++            TheronTraceIndirectJump(dispatch_base, HU_X, dispatch_low,
++                                    dispatch_high, npc);
++
++            SetPC(npc);

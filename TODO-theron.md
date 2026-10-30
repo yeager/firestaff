@@ -24,12 +24,13 @@ assets, mechanics, or parity.
    explicit code-fetch overflow markers show that both current windows exceed
    their caps; narrow or rotate the traced windows before using another bounded
    capture for source or consumer conclusions.
-   The v6 cold capture completes a bounded 256-instruction follow from
-   `$6148`, tracing an indirect dispatch before execution returns to the
-   System Card input loop; it restores validated TIA zero-page mapping through
-   MPR1. Resolve the `$410D` dispatch target against authenticated loader
-   writes, then continue to game-owned execution. There is still no game IRQ,
-   authenticated CD-to-RAM receipt, or non-System-Card poll.
+   The v8 cold capture resolves the `$410D,X` table reads at `$40E1` to the
+   next instruction fetch within the bounded `$6148` follow. Its first
+   in-window lookup targets `$4319`; the table bytes still lack an authenticated
+   Track 02 source join, and the path returns to the System Card input loop.
+   Bind the target/table bytes to loader writes, then continue to game-owned
+   execution. There is still no game IRQ, authenticated CD-to-RAM receipt, or
+   non-System-Card poll.
 2. **Verify quest progression and original-format save transactions.** Bind
    authentic quest artifacts and their pickup, exit, chapter transition, and
    completion consumers. Keep the campaign-completion bit distinct from
@@ -920,6 +921,31 @@ assets, mechanics, or parity.
   Trace SHA-256: code-follow `32dc1fde9e78dd6f3c21a61a5a7f5117d80fb2393f1bab26ec2643773048e1d4`,
   TIA `98d75b1f9ef1771a42d8fb661be0f19b8ecb24b9a77b5349df887cbae1bcefe7`,
   and transition receipt `5e53a6a9243d2556fba3414b7dc48cd6286a70b5446a849b87c750a493e94bc0`.
+
+## 2026-10-30 — correlate the `$410D,X` dispatch with the next fetch
+
+- Added an optional reference-only opcode `$7C` observer for PCE Fast at the
+  two-byte table reads executed by the `$40E1` System Card code. It records the
+  values returned by the existing `RdMem` calls, logical and physical table
+  addresses, MPR state, resolved target, and shared event sequence; it makes no
+  additional guest-memory reads. Its verifier joins dispatch events to the
+  preceding `$40E1` fetch and the next recorded instruction fetch inside the
+  bounded `$6148` code-follow window. Rows outside that window remain explicit
+  but are not promoted to code-follow matches.
+- A cold `run@480:300` capture on authentic JP Rev. 1 media and System Card 3.0
+  recorded 40 indexed dispatch rows. One row fell within the 256-instruction
+  follow window and matched on three consecutive verifier runs: event 102677
+  at `$40E1`, base `$410D`, X=`$24`, effective table address `$4131` mapped by
+  MPR2=`$80` to `$100131/$100132`, bytes `$19/$43`, resolved target `$4319`,
+  followed by fetch event 102678 at `$4319` / physical `$100319`. The other 39
+  dispatch rows occurred outside the bounded code-follow window and were not
+  correlated to a later fetch by this verifier.
+- This establishes the live indirect target and next executed fetch for one
+  cold System Card path. It does not establish which authenticated disc bytes
+  supplied the table entries, a game-owned input poll, loader completion, or
+  gameplay parity. The receipt reports zero CD IRQ callbacks and zero
+  authenticated CD-to-RAM receipts; scripted input remains at the System Card
+  poll. See the source-lock note for exact hashes and capture limits.
 
 - A targeted v3 PCE Fast capture now records cold code fetches at `$40D9` and
   `$6138/$613A/$613D/$613F/$6142/$6144` without a code-fetch overflow marker.

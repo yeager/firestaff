@@ -1772,6 +1772,19 @@ if ! grep -Fq 'pce_fast_tia_trace_enabled=${THERON_CAPTURE_PCE_FAST_TIA_TRACE:-0
     printf '%s\n' 'FAIL: optional TIA byte tracing must require its hook, validate its bounded trace, and record it' >&2
     exit 1
 fi
+indirect_jump_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_indirect_jump_trace.patch"
+if [[ ! -f "$indirect_jump_patch" ]] ||
+   ! grep -Fq 'TheronTraceIndirectJump(dispatch_base, HU_X, dispatch_low' "$indirect_jump_patch" ||
+   ! grep -Fq 'TheronTraceCDSharedEventSequence++' "$indirect_jump_patch" ||
+   ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_indirect_jump_trace.patch' "$build_script" ||
+   ! grep -Fq 'THERON_CAPTURE_PCE_FAST_INDIRECT_JUMP_TRACE' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_INDIRECT_JUMP_TRACE="$pce_fast_indirect_jump_trace"' "$script" ||
+   ! grep -Fq 'verify_theron_indirect_jump_trace.py' "$script" ||
+   ! grep -Fq 'recorded instruction fetch' "$repo/scripts/verify_theron_indirect_jump_trace.py" ||
+   ! grep -Fq 'next captured fetch' "$repo/scripts/verify_theron_indirect_jump_trace.py"; then
+    printf '%s\n' 'FAIL: indexed indirect-jump evidence must preserve actual reads and match their next fetched target' >&2
+    exit 1
+fi
 main_ram_target_write_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_target_write_trace.patch"
 if [[ ! -f "$main_ram_target_write_patch" ]] ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_TARGET_WRITE_RANGE' "$main_ram_target_write_patch" ||
