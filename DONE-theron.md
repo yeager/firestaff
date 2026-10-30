@@ -9754,3 +9754,25 @@ native rendering, or Theron parity. The private evidence bundle is at
 - Focused verifier tests passed in three loops; capture-wrapper and shell
   validation passed. See the source-lock report for private trace hashes and
   exact event IDs.
+
+## 2026-10-30 — validate launch-branch bytes and capture System Card status reads
+
+- Tightened the JP System Card launch-branch verifier to require every opcode
+  and operand byte to be marked valid for the two-byte branch/call instructions
+  and three-byte jump. Added negative regressions for truncated byte masks.
+- Added an opt-in reference-core hook and bounded verifier for actual
+  `$1800` SCSI-status reads at PC `$E95E`. The receipt binds status bits to
+  named BSY/REQ/MSG/CD/IO signals, event order, timestamp, and BIOS address.
+  Instrumentation and parser regression tests cover placement, idempotence,
+  invalid status composition, ordering, and address scope.
+- Built the instrumented PCE Fast reference core on TRV2 with `-j1`. An
+  authentic JP Rev. 1 cold capture passed receipt verification for 50,932
+  reads. The two `$D8` reads occurred before the traced callback; later status
+  reads had no `$D8`. The bounded bootstrap trace entered `$E14C/$EFF1` and
+  repeated `$F30D-$F313` without returning to `$E11D` before the cap.
+- Focused parser/instrumentation tests and source-chain regressions passed in
+  repeated local loops; the capture wrapper and shell syntax checks passed.
+  See the source-lock report for media identity, counts, limitations, and
+  private trace hashes. This reference evidence proves no BIOS handoff,
+  gameplay, or native Theron parity; the unsourced runtime bytes and callback
+  return condition remain open in `TODO-theron.md`.

@@ -143,6 +143,12 @@ def verify_launch_branch(
     branch_rows: list[dict[str, str]], target_rows: list[dict[str, str]]
 ) -> dict[str, int]:
     """Require a contiguous trace from the BIOS carry branch through mapped $4000."""
+    def require_instruction_bytes(row: dict[str, str], length: int, name: str) -> None:
+        required_mask = (1 << length) - 1
+        valid_mask = int(row["valid_mask"], 16)
+        if valid_mask & required_mask != required_mask:
+            raise ValueError(f"{name} instruction snapshot has invalid opcode or operand bytes")
+
     if not branch_rows:
         raise ValueError("bootstrap trace did not observe the $E11D BIOS carry branch")
     segments: list[list[dict[str, str]]] = []
@@ -166,6 +172,7 @@ def verify_launch_branch(
     for path in segments:
         branch = path[0]
         branch_event = int(branch["event_sequence"])
+        require_instruction_bytes(branch, 2, "$E11D BCC")
         if int(branch["bytes"][:4], 16) != 0x900D:
             raise ValueError("$E11D does not contain the authentic BCC $E12C instruction")
         if len(path) < 2:
@@ -178,11 +185,13 @@ def verify_launch_branch(
         if int(path[1]["logical_pc"], 16) != 0xE12C:
             raise ValueError("clear-carry $E11D branch was not immediately followed by $E12C")
         load = path[1]
+        require_instruction_bytes(load, 2, "$E12C LDA")
         if int(load["bytes"][:4], 16) != 0xA904:
             raise ValueError("$E12C does not contain authentic LDA #$04 bytes")
         if len(path) < 4 or int(path[2]["logical_pc"], 16) != 0xE12E:
             raise ValueError("$E12C was not immediately followed by the $E12E MPR setup call")
         setup = path[2]
+        require_instruction_bytes(setup, 2, "$E12E BSR")
         if int(setup["bytes"][:4], 16) != 0x440D:
             raise ValueError("$E12E does not contain authentic BSR $E13D bytes")
         if int(path[3]["logical_pc"], 16) != 0xE13D:
@@ -195,6 +204,7 @@ def verify_launch_branch(
         if jump_index is None:
             raise ValueError("$E13D setup did not return to the $E130 launch jump")
         jump = path[jump_index]
+        require_instruction_bytes(jump, 3, "$E130 JMP")
         if int(jump["bytes"][:6], 16) != 0x4C0040:
             raise ValueError("$E130 does not contain authentic JMP $4000 bytes")
         if jump_index + 1 >= len(path) or int(path[jump_index + 1]["logical_pc"], 16) != 0x4000:

@@ -385,6 +385,8 @@ python3 "$repo/scripts/instrument_mednafen_theron_system_card_dispatch_trace.py"
     "$build_root/source"
 python3 "$repo/scripts/instrument_mednafen_theron_syscard_bootstrap_follow.py" \
     "$build_root/source"
+python3 "$repo/scripts/instrument_mednafen_theron_syscard_status_trace.py" \
+    "$build_root/source"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_code_ram_write_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \

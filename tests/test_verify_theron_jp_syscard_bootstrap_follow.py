@@ -95,6 +95,24 @@ def test_v4_uses_contiguous_branch_follow_after_independent_window() -> None:
     else:
         raise AssertionError("an independent earlier $4000 window was accepted as the BIOS jump target")
 
+    for row_index, valid_mask, message in (
+        (3, "1", "$E11D BCC"),
+        (4, "1", "$E12C LDA"),
+        (5, "1", "$E12E BSR"),
+        (7, "3", "$E130 JMP"),
+    ):
+        missing_operand = rows.copy()
+        missing_operand[row_index] = missing_operand[row_index].replace(
+            "valid_mask=f", f"valid_mask={valid_mask}"
+        )
+        try:
+            verifier.verify_lines(missing_operand)
+        except ValueError as error:
+            if f"{message} instruction snapshot has invalid" not in str(error):
+                raise
+        else:
+            raise AssertionError(f"{message} was accepted without all encoded instruction bytes")
+
 
 def main() -> None:
     test_v4_uses_contiguous_branch_follow_after_independent_window()

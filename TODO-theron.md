@@ -237,12 +237,36 @@ game-owned poll and visible state change.
   CD-to-RAM receipts, game `$E009` dispatches, and non-System-Card poll reads.
   This remains a blocked reference capture and establishes no gameplay,
   native handoff, or parity. TRV2 became unreachable during follow-up, so its
-  private capture files and redundant build cache were not inspected or
-  removed in this pass.
-- Next: determine from the reference core's `$1800` CD-status implementation
-  and authentic System Card flow why the JP bootstrap remains in `$E95E`, then
-  collect a new cold capture that proves the contiguous `$E11D` to `$4000`
-  route. Do not infer status meaning from the sampled accumulator values.
+  private capture files were initially inaccessible. After reconnecting by
+  IP, the v19 receipt and source were inspected; the redundant inactive v9
+  reference build cache (96 MiB) was removed, while v10 and captures v18/v19
+  were preserved.
+- The v10 reference core's `pce_fast/pcecd.cpp::PCECD_Read()` identifies
+  `$1800` status bits as BSY/REQ/MSG/CD/IO (`$80/$40/$20/$10/$08`). Of the 529
+  instruction-start snapshots after `$E95E LDA $1800`, 501 were `$90`
+  (BSY+CD), 26 were `$D0` (BSY+REQ+CD), and two were `$C8` (BSY+REQ+IO). These
+  are A-register snapshots, not direct bus-read captures or proof of
+  original-hardware signal semantics.
+- Runtime instruction-start bytes at `$E966-$E972` differ from the immutable
+  System Card 3.0 dump. The runtime bytes test `$D0`, then mask `$B8` and
+  compare `$98`/`$88`; both observed `$C8` samples reached runtime `$E98A`,
+  where the bytes begin `AD A4 22`. Static disassembly instead compares
+  `$C8`/`$D8` and places an instruction at `$E98B`. The reason for the runtime
+  byte difference is unknown, and the instruction-start snapshots are not
+  actual opcode-bus receipts. Keep this discrepancy explicit.
+- v20 added the opt-in direct `$1800` SCSI-status receipt. Its verifier accepted
+  50,932 authentic-media reads: `$90` 50,828 times, `$D0` 92 times, `$C8` 10
+  times, and `$D8` twice. Both `$D8` events preceded the bootstrap-follow
+  window; none appeared in its later status reads. The bootstrap trace entered
+  `$E14C`, called `$EFF1`, and repeated `$F30D-$F313` through the row cap
+  without returning to `$E11D`. It still observed no game handoff or gameplay.
+- The runtime bytes at `$E966-$E972` remain unsourced, and the v20 `$E14C/$EFF1`
+  callback state and return condition remain unknown. Next trace the callback
+  state inputs and source the runtime bytes, then follow a verified return
+  through `$E11D` and the mapped `$4000` target. Preserve the distinction
+  between emulator-reference receipts and original-hardware evidence; do not
+  force a bus phase or synthesize status data. Full findings and trace hashes
+  are in the [source-lock report](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md).
 
 ## 2026-10-29 — generalize authentic CD-read-to-RAM source joins
 

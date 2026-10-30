@@ -912,14 +912,31 @@ target to physical `$100000`. The separate `$4000` observation window is not
 accepted as proof of that branch.
 
 The v18 and v19 authentic JP cold traces filled their 8,192-row bootstrap
-window and stopped at `$E966`, in the disassembled `$E95E` status-poll loop.
-Neither trace reached `$E11D`; v19 also did not observe `$E98B` or the `$D8`
-comparison. Its 4,096-row branch window remained empty, and strict launch
-verification failed as expected. In the first 529 `$E95E` samples in v19,
-the A register on the next `$E961` instruction-start snapshot was `$90` 501
-times, `$D0` 26 times, and `$C8` twice. These are post-load CPU snapshots,
-not directly instrumented `$1800` bus-read values, and their meaning is not
-established here.
+window and stopped at `$E966`, in the `$E95E` status-poll loop. Neither trace
+reached `$E11D`. The instruction-start bytes observed in v19 at `$E966-$E972`
+do not match the immutable System Card dump: runtime rows contain
+`C9 D0 F0 10 29 B8 C9 98 F0 1A C9 88 F0 16`, while the dump disassembles as
+`CMP #$C8; BEQ $E970; CMP #$D8; BEQ $E98B; BRA $E95E`. The capture therefore
+must be described from its runtime bytes rather than by applying that static
+branch sequence to it. The v19 runtime path tests `$D0`, then masks with
+`$B8` and compares `$98`/`$88`; the two observed `$C8` snapshots take the
+runtime `$E972` branch to `$E98A`, where the next instruction snapshot starts
+with `AD A4 22` (`LDA $22A4`). The runtime trace observed `$E98A` twice, no
+instruction start at `$E98B`, and no `$E11D`; its independent branch window
+remained empty, so strict BIOS-to-`$4000` verification failed as expected.
+
+In the v10 reference source,
+`pce_fast/pcecd.cpp::PCECD_Read()` maps reads of `$1800` to a status byte
+whose bits are BSY=`$80`, REQ=`$40`, MSG=`$20`, CD=`$10`, and IO=`$08`, from
+`PCECD_Drive_GetBSY/REQ/MSG/CD/IO()`. The 529 instruction-start snapshots at
+`$E961`, immediately after `$E95E LDA $1800`, held `$90` 501 times, `$D0` 26
+times, and `$C8` twice. These values therefore correspond in that reference
+core to BSY+CD, BSY+REQ+CD, and BSY+REQ+IO signal combinations respectively.
+They are CPU-register snapshots rather than separately instrumented bus-read
+receipts. v19 did not sample `$D8`; however, its observed runtime code also
+matched the `$C8` path to `$E98A`. This is a reference-core signal
+interpretation, not proof of original-hardware bus semantics or of what the
+runtime `$22A4` value means.
 
 The v19 transition receipt reports no transition, CD IRQ callback,
 authenticated CD-to-RAM receipt, game `$E009` dispatch, non-System-Card poll,
@@ -933,9 +950,60 @@ v19 SHA-256 values: bootstrap trace
 `acd6117066e936723f08366032e157bc0ca7f6b2e61c6faf5a9842f1cd59a765`, input
 trace `7989230bac3caac712d9958fabb40498bd037598b606bdfb7b4af3aa61ed8454`,
 scripted-input receipt
-`8127070cf2079e934100dc41f56e2b46c7b18b517f2276cba491d1380c9f67d2`.
-The transition receipt hash should be copied from the retained v19 file after
-TRV2 access is restored; it is intentionally omitted here rather than
-recorded from an incomplete local recollection.
+`8127070cf2079e934100dc41f56e2b46c7b18b517f2276cba491d1380c9f67d2`, and
+transition receipt
+`7e2c8224183a1f228d4ed0ab4c1c2d9c146612bd24883e1d651baed6e19473e0`.
+
+## v20 direct `$1800` SCSI-status read receipt
+
+The v20 cold reference capture used authentic Japanese Rev. 1 Track 02
+(`b7afb338ad31be1025b53f9aff12d73a`) and System Card 3.0
+(`ff1a674273fe3540ccef576376407d1d`) with the same bounded RUN/SELECT replay;
+no save state was loaded. The new opt-in PCE Fast hook records actual
+`PCECD_Read()` results for CPU PC `$E95E` and address `$1800`, plus the named
+BSY/REQ/MSG/CD/IO signals, DB, timestamp, and shared event sequence. The
+receipt verifier passed for 50,932 status reads with no truncation:
+
+- `$90` (BSY+CD): 50,828 reads.
+- `$D0` (BSY+REQ+CD): 92 reads.
+- `$C8` (BSY+REQ+IO): 10 reads.
+- `$D8` (BSY+REQ+CD+IO): 2 reads.
+
+The two `$D8` reads were events 8330 and 8349, both before the independent
+bootstrap-follow trace started at event 8430 / PC `$E11B`. No later `$D8`
+occurred in the remaining status reads. The bootstrap trace begins with the
+runtime snapshot `$E11B BSR $E14C`, enters `$E14C`, calls `$EFF1`, then repeats
+the runtime `$F30D-$F313` callback path through its 8,192-row cap at `$E966`.
+It does not record a return to `$E11D`; the separate `$E11D` branch-follow
+trace remains empty. The v20 replay receipt records two scripted inputs read
+only by the System Card, zero non-System-Card polls, no CD IRQ, no authenticated
+CD-to-RAM receipt, no game `$E009` dispatch, and `transition=missing`; capture
+ended at its 60-second timeout.
+
+The v19 runtime bytes at `$E966-$E972` and the authenticated static System
+Card disassembly remain distinct evidence. The CD-RAM target-write and
+CD-RAM writer-PC sidecars have no rows at physical `$000966-$000972`; those
+sidecars cover CD-RAM writers and do not provide complete physical-write
+coverage for this range. The source of the runtime bytes remains unresolved.
+The v20 status and instruction snapshots provide emulator-reference evidence,
+not original-hardware bus proof, BIOS handoff, gameplay, or native parity.
+Do not force a bus phase or assign game-level meaning to `$22A4`.
+
+Raw v20 files and authentic media remain private on TRV2 at
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-bootstrap-follow-v20-20261030/`.
+SHA-256 values: status trace
+`9e06f652d11fc8aab55aa934447b517bc997f97bcab11688b3c1503df3e1bcda`,
+bootstrap-follow trace
+`3484f13b52fe117db61d6f868e28141b2fa2f0cbb42e8859a64d4f676c40a9bf`,
+transition receipt
+`bcb28041c7ebe38c7bc1601b5dc09f98933448b4311f98bceaee6b48ea877786`, and
+scripted-input receipt
+`ee73a88bdbb7e860f2f83ac97ad7030065077a76b4c2a7ee5631a33a0484b791`.
+
+Next: source the runtime `$E966-$E972` bytes, trace the `$E14C/$EFF1`
+callback's state inputs and return condition with shared event ordering, and
+then capture its return through `$E11D` and the mapped `$4000` target using
+authentic media. The source-lock note does not yet explain the two early `$D8`
+reads or the later callback loop.
 
 The raw media and traces are not included in Git.

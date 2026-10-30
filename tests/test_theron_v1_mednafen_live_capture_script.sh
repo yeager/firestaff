@@ -75,6 +75,8 @@ mkdir -p "$repo/build"
 python3 "$repo/tests/test_theron_pce_fast_consumer_trace_patch.py"
 python3 "$repo/tests/test_theron_jp_code_fetch_truncation_verifier.py"
 python3 "$repo/tests/test_verify_theron_jp_ram_loop_source_candidates.py"
+python3 "$repo/tests/test_verify_theron_syscard_status_trace.py"
+python3 "$repo/tests/test_instrument_mednafen_theron_syscard_status_trace.py"
 cd_limit_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
     THERON_CAPTURE_PCE_FAST_CD_DATA_READ_TRACE_LIMIT=65535 \
     "$script" 2>&1) && {
@@ -1773,6 +1775,10 @@ if ! grep -Fq 'code_fetch_scope=targeted-consumer-boundaries' "$system_card_disp
    ! grep -Fq 'MEDNAFEN_BIN lacks the PCE Fast System Card bootstrap-follow hook' "$script" ||
    ! grep -Fq 'verify_theron_jp_syscard_bootstrap_follow.py' "$script" ||
    ! grep -Fq 'instrument_mednafen_theron_syscard_bootstrap_follow.py' "$build_script" ||
+   ! grep -Fq 'instrument_mednafen_theron_syscard_status_trace.py' "$build_script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_STATUS_TRACE' "$script" ||
+   ! grep -Fq 'verify_theron_syscard_status_trace.py' "$script" ||
+   ! grep -Fq 'source=mednafen-pce-fast-system-card-status-read-v1' "$repo/scripts/instrument_mednafen_theron_syscard_status_trace.py" ||
    ! grep -Fq 'pce_fast_system_card_bootstrap_follow_status=%s' "$script" ||
    ! grep -Fq 'code_follow_complete event_sequence=%u count=%u' "$system_card_dispatch_patch" ||
    ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_CODE_FOLLOW_TRACE="$system_card_code_follow_trace"' "$script" ||
