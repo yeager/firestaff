@@ -9,15 +9,18 @@ Use authentic original media whenever available. Synthetic traces may test
 parsers or help derive authentic evidence, but must not stand in for game
 assets, mechanics, or parity.
 
-2026-10-30 indexed-dispatch follow-trace verification remains open: the
-offline verifier now binds each follow row or terminal marker to the latest
-preceding dispatch, rejects duplicate skip markers, and permits an absent
-window only when capture ends at the final dispatch before its first fetch.
-Focused validator tests and capture-script regressions pass. The new
-per-dispatch trace still needs an authentic cold capture from JP Track 02 and
-System Card media on TRV2; use those real instruction windows to guide the
-native loader/handoff investigation. This reference evidence cannot establish
-native gameplay or parity.
+2026-10-30 v9 indexed-dispatch follow trace: authentic JP Rev. 1/Track 02 and
+System Card 3.0 produced 40 dispatch windows and 2,560 runtime fetch rows; all
+40 windows reached the 64-instruction cap. Track 02 read validation found
+63,488 source-bound CD reads; the `$EA9C`-only writer comparison matched 4,064
+fetched bytes, mismatched one, and had no earlier observed `$EA9C` write for
+3,615. Those limits leave other writer paths and unique read-to-write
+causality unproven. Disassembly exposes a `$1C/$1D` byte-stream cursor loop,
+but no game-owned input poll or transition was observed. Continue through the
+remaining guest writers and source/consumer chain to a game-owned poll and
+resulting state change; the v9 capture does not establish native gameplay or
+parity. Evidence and hashes are recorded in the
+[JP System Card Run source-lock note](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md).
 
 1. **Bind the cold loader to game-owned consumers in both regions.** Continue
    from the authentic System Card Run path and the verified Track 02 byte

@@ -7,10 +7,12 @@ reference build and integrated its sidecar into the authentic capture path.
 The offline verifier checks event ordering, latest-dispatch ownership,
 address mapping, duplicate markers, capture-end windows, and configured caps.
 Five focused validator cases and three capture-script regression runs passed;
-the instrumented reference build also compiled on TRV2 with `-j1`. This
-verifies the trace tooling only. The new sidecar has not yet been collected
-against authentic media, and it does not establish native loader handoff or
-gameplay parity.
+the instrumented reference build compiled on TRV2 with `-j1`. A new authentic
+v9 capture yielded 40 dispatch windows and 2,560 fetched instruction rows;
+MAME `unidasm` decoded actual fetch bytes from the `$41C5` window as a
+`$1C/$1D` cursor loop. This is trace-tool and code-fetch evidence only. All
+windows hit their caps, and the run still had no game-owned poll or transition;
+native loader handoff and gameplay parity remain open in `TODO-theron.md`.
 
 ## 2026-10-30 — correlate the JP indexed System Card dispatch with Track 02
 

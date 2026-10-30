@@ -489,3 +489,59 @@ Git.
   `679ac83c4334b21e9f5e4a7ee3b7fe610daa1d640df5f9515253eaf1fd79ff79`.
 
 The raw media and traces remain private and are not included in Git.
+
+## 2026-10-30 — authentic v9 indexed-dispatch follow capture
+
+A cold PCE Fast reference run used the authentic Japanese Rev. 1 Track 02
+(MD5 `b7afb338ad31be1025b53f9aff12d73a`) and System Card 3.0 (MD5
+`ff1a674273fe3540ccef576376407d1d`), with scripted `run@480:300` on input
+port 0 and no save state. The bounded follow observer recorded up to 64
+instruction fetches per `$40E1` indexed dispatch, with a 64-window and
+4,096-row limit. The instrumented Mednafen 1.32.1 build compiled on TRV2 with
+PCE Fast enabled and `-j1`; capture output and trace data stayed on TRV2.
+
+The direct verifier accepted 40 dispatch rows and matched one target to the
+earlier bounded `$6148` code-follow. The new sidecar contained 2,560 rows in
+40 windows; every window reached its 64-instruction cap, with no open or
+skipped windows. The direct, follow, and source-chain verifiers each passed
+three runs against the authentic capture and Track 02. A cap is not a return
+or handoff marker.
+
+MAME `unidasm -arch h6280 -basepc <fetch-PC> -count 1` decoded each actual
+fetch row independently. The first `$41C5` window executes `BSR $41B9`, then
+`INY`/`LDA ($1C),Y` operations that update the `$1C/$1D` cursor, followed by a
+`JMP $40E4` path that advances that cursor and branches back to `$40CC`.
+Another observed target at `$4214` reads through `($1C),Y` and stores values
+at `$4EC1`, `$4D7B`, and `$3009`. This is consistent with a record or byte
+stream walk; that purpose is an inference, not a source- or game-ownership
+claim. The bounded runtime excerpt is
+[`theron-jp-indirect-jump-follow-v9.asm`](theron-jp-indirect-jump-follow-v9.asm).
+
+Track 02 source verification accepted 63,488 CD data-port reads with zero
+unbound reads. The `$EA9C` observer recorded 53,248 writes. Comparing fetched
+bytes to the latest observed `$EA9C` write at each physical address found
+4,064 matching bytes, one mismatch, and 3,615 bytes with no prior observed
+`$EA9C` write. Each of the 4,064 matches had an ordered same-value `$EA99`
+Track 02 read candidate within 16 shared events, but repeated values and
+unobserved writer paths prevent a unique read-to-write causal claim. The
+`$EA9C` observer is not an exhaustive guest-writer census.
+
+The transition receipt remains `missing`: the run ended at its 45-second
+bound after 22,308 PCE input transactions; the single scripted event was read
+at `$E4C5`, with no non-System-Card poll, zero game IRQ callbacks, and zero
+aggregate authenticated CD-to-RAM receipts. This capture adds authentic loader-path
+and instruction evidence only; it does not establish the native handoff,
+playable Theron gameplay, or parity.
+
+Private TRV2 capture directory:
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-indirect-jump-follow-v9-cold-20261030/`.
+Raw media and traces remain private and are not part of the repository.
+
+- Main trace SHA-256: `2ee7799214c3c15d6eb0caaf9ae46833b1b0b0eb76f899ebbe8c5cf52b4c9636`.
+- Indexed-dispatch trace SHA-256: `2e3c39a584751292faf3b0c3dfefae4333adc76fff314edc2f0546902101c631`.
+- Per-dispatch follow trace SHA-256: `40a42cd12a895e57af4279951d1b48599683cee6cf182b75f9e9631e0e58fd47`.
+- System Card code-follow trace SHA-256: `b1d15e2a79e427d9cc04cf1a065ddfe4fd6ccd9ada1eca5fab43645d111c17e6`.
+- CD data-port read trace SHA-256: `a7767564ce8fca1bf8127ecea5d1602a758f44fbc5172c77e4b259e3467ab438`.
+- CD-RAM writer-PC trace SHA-256: `fbaa2ceb03f20a993accb01fa317e7081429883eab73cc71a9f39ac9c2ff3de2`.
+- Scripted-input receipt SHA-256: `3eb8673b3772f19acf27296a258c8e6379a0d921d8d659c0ddec88ae1b346871`.
+- Transition receipt SHA-256: `b9665870a377bdb090442091f8f5a7036285e9e119eea4cba897e303d83d9a5d`.
