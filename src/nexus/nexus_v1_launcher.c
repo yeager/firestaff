@@ -125,8 +125,13 @@ static int nexus_v1_launcher_has_real_dgn_admission(
 /* ── Public API ─────────────────────────────────────────────────────── */
 
 int nexus_v1_launcher_init(const char *data_dir) {
+    return nexus_v1_launcher_init_with_debug(data_dir, 0);
+}
+
+int nexus_v1_launcher_init_with_debug(const char *data_dir,
+                                      int debug_enabled) {
     if (!data_dir) {
-        printf("Nexus launcher: NULL data_dir\n");
+        if (debug_enabled) printf("Nexus launcher: NULL data_dir\n");
         return -1;
     }
 
@@ -136,11 +141,20 @@ int nexus_v1_launcher_init(const char *data_dir) {
      * that case silently serves the previous game's files and state. */
     if (s_initialized) {
         if (strcmp(s_engine.data_dir, data_dir) == 0) {
-            printf("Nexus launcher: already initialized\n");
+            s_engine.debug_enabled = debug_enabled != 0;
+            s_engine.game.debug_enabled = s_engine.debug_enabled;
+            s_engine.ui.debug_enabled = s_engine.debug_enabled;
+            s_engine.audio.debug_enabled = s_engine.debug_enabled;
+            s_engine.font.debug_enabled = s_engine.debug_enabled;
+            s_engine.script_vm.debug_enabled = s_engine.debug_enabled;
+            if (s_engine.debug_enabled) printf("Nexus launcher: already initialized\n");
             return 0;
         }
-        printf("Nexus launcher: switching data root from '%s' to '%s'\n",
+        if (debug_enabled) printf("Nexus launcher: switching data root from '%s' to '%s'\n",
                s_engine.data_dir, data_dir);
+        /* The replacement request owns this startup's logging policy,
+         * including diagnostics emitted while tearing down the old root. */
+        s_engine.debug_enabled = debug_enabled != 0;
         nexus_v1_launcher_shutdown();
     }
 
@@ -149,27 +163,27 @@ int nexus_v1_launcher_init(const char *data_dir) {
      * populates the full engine: ISO reader, game state, mechanics,
      * champions, creatures, sound, and font.
      * Source: nexus_v1_engine.c nexus_v1_init() */
-    int rc = nexus_v1_init(&s_engine, data_dir);
+    int rc = nexus_v1_init_with_debug(&s_engine, data_dir, debug_enabled);
     if (rc != 0) {
-        printf("Nexus launcher: nexus_v1_init failed for '%s'\n", data_dir);
+        if (s_engine.debug_enabled) printf("Nexus launcher: nexus_v1_init failed for '%s'\n", data_dir);
         return -1;
     }
 
     s_initialized = 1;
-    printf("Nexus launcher: initialized (data_dir='%s')\n", data_dir);
+    if (s_engine.debug_enabled) printf("Nexus launcher: initialized (data_dir='%s')\n", data_dir);
     return 0;
 }
 
 int nexus_v1_launcher_load_level(int level) {
     if (!s_initialized) {
-        printf("Nexus launcher: not initialized — call nexus_v1_launcher_init first\n");
+        if (s_engine.debug_enabled) printf("Nexus launcher: not initialized — call nexus_v1_launcher_init first\n");
         return -1;
     }
     /* LEV00 is the retail title/entrance image, not a playable dungeon.
      * A native resume must never route a saved session back into it; the
      * source-owned playable handoff starts at LEV01. */
     if (level < NEXUS_V1_FIRST_PLAYABLE_LEVEL || level > 15) {
-        printf("Nexus launcher: invalid level %d (must be 1-15)\n", level);
+        if (s_engine.debug_enabled) printf("Nexus launcher: invalid level %d (must be 1-15)\n", level);
         return -1;
     }
     /* The loader is also used by native resume.  Never install a playable
@@ -177,13 +191,13 @@ int nexus_v1_launcher_load_level(int level) {
     if (s_engine.game.party_x < 0 || s_engine.game.party_x >= NEXUS_MAX_MAP_SIZE ||
         s_engine.game.party_y < 0 || s_engine.game.party_y >= NEXUS_MAX_MAP_SIZE ||
         s_engine.game.party_dir < 0 || s_engine.game.party_dir > 3) {
-        printf("Nexus launcher: playable level %d requires a validated pose\n",
+        if (s_engine.debug_enabled) printf("Nexus launcher: playable level %d requires a validated pose\n",
                level);
         return -1;
     }
     int rc = nexus_v1_load_level(&s_engine, level);
     if (rc != 0) {
-        printf("Nexus launcher: failed to load level %d\n", level);
+        if (s_engine.debug_enabled) printf("Nexus launcher: failed to load level %d\n", level);
         return -1;
     }
     /* Bounds are not enough to establish a playable runtime position.  The
@@ -195,12 +209,12 @@ int nexus_v1_launcher_load_level(int level) {
                                      s_engine.game.party_y,
                                      s_engine.game.party_x,
                                      s_engine.game.party_y)) {
-        printf("Nexus launcher: pose %d,%d is not playable on level %d\n",
+        if (s_engine.debug_enabled) printf("Nexus launcher: pose %d,%d is not playable on level %d\n",
                s_engine.game.party_x, s_engine.game.party_y, level);
         nexus_v1_launcher_clear_failed_level_state(&s_engine);
         return -1;
     }
-    printf("Nexus launcher: loaded level %d\n", level);
+    if (s_engine.debug_enabled) printf("Nexus launcher: loaded level %d\n", level);
     return 0;
 }
 
@@ -9222,6 +9236,16 @@ int nexus_v1_launcher_boot_level0_startup(
     Nexus_TitleScreen *title,
     Nexus_V1_LauncherBootReceipt *out_receipt)
 {
+    return nexus_v1_launcher_boot_level0_startup_with_debug(
+        data_dir, title, out_receipt, 0);
+}
+
+int nexus_v1_launcher_boot_level0_startup_with_debug(
+    const char *data_dir,
+    Nexus_TitleScreen *title,
+    Nexus_V1_LauncherBootReceipt *out_receipt,
+    int debug_enabled)
+{
     Nexus_V1_StartupHostFacts facts;
     Nexus_V1_Engine *engine;
     int title_loaded = 0;
@@ -9232,7 +9256,7 @@ int nexus_v1_launcher_boot_level0_startup(
     if (!data_dir || !out_receipt) {
         return 0;
     }
-    if (nexus_v1_launcher_init(data_dir) != 0) {
+    if (nexus_v1_launcher_init_with_debug(data_dir, debug_enabled) != 0) {
         (void)nexus_v1_startup_boot_status_host_receipt(
             NEXUS_V1_STARTUP_BOOT_STATUS_DATA_ERROR,
             &out_receipt->startup_receipt.host_receipt);
@@ -9254,7 +9278,8 @@ int nexus_v1_launcher_boot_level0_startup(
 
     /* New selected-entry boots always start from Nexus defaults; save
      * resume applies persisted party/tick state in the M11 resume path. */
-    nexus_v1_game_init(&engine->game, engine->data_dir);
+    nexus_v1_game_init_with_debug(&engine->game, engine->data_dir,
+                                  engine->debug_enabled);
     /* No DGN runtime state is installed by the title boot. The first
      * playable route must load hash-verified LEV01 and apply a source-bound
      * Saturn coordinate/facing before it may become runtime state. */
@@ -9308,6 +9333,16 @@ int nexus_v1_launcher_boot_level0_runtime_startup(
     Nexus_TitleScreen *title,
     Nexus_V1_LauncherRuntimeReceipt *out_receipt)
 {
+    return nexus_v1_launcher_boot_level0_runtime_startup_with_debug(
+        data_dir, title, out_receipt, 0);
+}
+
+int nexus_v1_launcher_boot_level0_runtime_startup_with_debug(
+    const char *data_dir,
+    Nexus_TitleScreen *title,
+    Nexus_V1_LauncherRuntimeReceipt *out_receipt,
+    int debug_enabled)
+{
     Nexus_V1_LauncherBootReceipt boot_receipt;
     Nexus_V1_StartupBootStatus boot_status;
 
@@ -9324,9 +9359,8 @@ int nexus_v1_launcher_boot_level0_runtime_startup(
              sizeof(out_receipt->source_id),
              "%s",
              NEXUS_V1_GAME_ID);
-    if (!nexus_v1_launcher_boot_level0_startup(data_dir,
-                                               title,
-                                               &boot_receipt)) {
+    if (!nexus_v1_launcher_boot_level0_startup_with_debug(
+            data_dir, title, &boot_receipt, debug_enabled)) {
         out_receipt->startup_receipt = boot_receipt.startup_receipt;
         return 0;
     }
@@ -9535,10 +9569,12 @@ int nexus_v1_launcher_resume_from_save_path(
 }
 
 void nexus_v1_launcher_shutdown(void) {
+    int debug_enabled;
     if (!s_initialized) {
         return;
     }
+    debug_enabled = s_engine.debug_enabled;
     nexus_v1_shutdown(&s_engine);
     s_initialized = 0;
-    printf("Nexus launcher: shut down\n");
+    if (debug_enabled) printf("Nexus launcher: shut down\n");
 }

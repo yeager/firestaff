@@ -633,8 +633,13 @@ static void parse_sal_profile(Nexus_SoundEngine *eng) {
  * ═══════════════════════════════════════════════════════════════════ */
 
 int nexus_sound_init(Nexus_SoundEngine *eng) {
+    return nexus_sound_init_with_debug(eng, 0);
+}
+
+int nexus_sound_init_with_debug(Nexus_SoundEngine *eng, int debug_enabled) {
     if (!eng) return -1;
     memset(eng, 0, sizeof(*eng));
+    eng->debug_enabled = debug_enabled != 0;
     eng->initialized = 1;
     eng->sfx_enabled = 1;
     eng->music_enabled = 1;
@@ -647,7 +652,7 @@ int nexus_sound_init(Nexus_SoundEngine *eng) {
     ensure_event_selector_init(eng);
     clear_map_route(eng);
     clear_sal_profile(eng);
-    printf("Nexus sound: initialized (event dispatch capture-gated, "
+    if (eng->debug_enabled) printf("Nexus sound: initialized (event dispatch capture-gated, "
            "SAL PCM diagnostic decode enabled, playback capture-gated)\n");
     return 0;
 }
@@ -736,7 +741,7 @@ int nexus_sound_load_canonical_level(Nexus_SoundEngine *eng, int level_index,
     parse_sal_tone_bank_directory(eng);
     nexus_sound_decode_sal(eng);
 
-    printf("Nexus sound: loaded level %d SFX metadata (SAL=%d bytes, "
+    if (eng->debug_enabled) printf("Nexus sound: loaded level %d SFX metadata (SAL=%d bytes, "
            "MAP=%d bytes, diagnostic_candidates=%d)\n",
         level_index, sal_size, map_size, eng->sal_decoded_tone_count);
     return 0;
@@ -1107,7 +1112,7 @@ void nexus_sound_play(Nexus_SoundEngine *eng, Nexus_SoundEvent event) {
     }
 
     if (looked_up) {
-        printf("Nexus SFX dispatch: host_event=%d selector=%d sal_offset=%d sal_size=%d "
+        if (eng->debug_enabled) printf("Nexus SFX dispatch: host_event=%d selector=%d sal_offset=%d sal_size=%d "
                "(no decoded tone)\n",
                event, selector, window.sal_offset, window.sal_size);
         return;
@@ -1151,7 +1156,7 @@ void nexus_sound_play_idx(Nexus_SoundEngine *eng, int sample_index) {
      * event→MAP-selector trace. */
     (void)receipt;
     if (looked_up) {
-        printf("Nexus SFX dispatch: sample_idx=%d sal_offset=%d sal_size=%d "
+        if (eng->debug_enabled) printf("Nexus SFX dispatch: sample_idx=%d sal_offset=%d sal_size=%d "
                "(no decoded tone)\n",
                sample_index, window.sal_offset, window.sal_size);
     }
@@ -1200,11 +1205,11 @@ int nexus_sound_cd_track(Nexus_SoundEngine *eng, int track_number) {
         if (result == 0) {
             eng->cd_playing = 1;
             eng->cd_paused = 0;
-            printf("Nexus music: CD track %d playing\n", track_number);
+            if (eng->debug_enabled) printf("Nexus music: CD track %d playing\n", track_number);
             return 0;
         }
     }
-    printf("Nexus music: CD track %d retained as selection-only; "
+    if (eng->debug_enabled) printf("Nexus music: CD track %d retained as selection-only; "
            "native CDDA playback remains unadmitted\n", track_number);
     return 0;
 }

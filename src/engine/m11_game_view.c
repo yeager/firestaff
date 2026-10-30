@@ -544,7 +544,9 @@ static int m11_csb_bind_fmtowns_font_rom(void)
 #endif
 
 /* Forward declarations for functions defined later in this file. */
-int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir);
+int M11_GameView_StartNexus(M11_GameViewState* state,
+                            const char* dataDir,
+                            int debugEnabled);
 static int M11_GameView_StartTheron(M11_GameViewState* state,
                                     const char* dataDir,
                                     const char* launcherSourceId,
@@ -27593,7 +27595,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             return 0;
         }
         {
-            int ok = M11_GameView_StartNexus(state, dd);
+            int ok = M11_GameView_StartNexus(state, dd, spec->debugStartup);
             if (ok) {
                 m11_apply_launcher_options_handoff(state, spec);
                 snprintf(state->bootAssetMd5,
@@ -28537,7 +28539,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
          * This is emitted after both DUNGEON.DAT and GRAPHICS.DAT are bound,
          * so a start-menu launch cannot be mistaken for a generic successful
          * process start. FM Towns has its stronger TMENU/EDM receipt below. */
-        if (!spec->dm1Fmtowns) {
+        if (spec->debugStartup && !spec->dm1Fmtowns) {
             const char *handoff = state->assetLoader.atariStDm1
                 ? "atari-st-dmcsb1"
                 : state->assetLoader.dm1Amiga36
@@ -28753,6 +28755,7 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     spec.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
     spec.title = entry->title;
     spec.gameId = entry->gameId;
+    spec.debugStartup = menuState->debugStartup ? 1 : 0;
     spec.sourceId = entry->gameId;
     spec.dataDir = M12_AssetStatus_GetRuntimeDataDir(&menuState->assetStatus,
                                                      entry->gameId);
@@ -30284,7 +30287,9 @@ static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
     return 1;
 }
 
-int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
+int M11_GameView_StartNexus(M11_GameViewState* state,
+                            const char* dataDir,
+                            int debugEnabled) {
     Nexus_V1_LauncherRuntimeReceipt runtime_receipt;
     Nexus_TitleScreen* title;
     if (!state || !dataDir) return 0;
@@ -30299,9 +30304,8 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
     snprintf(state->sourceId, sizeof(state->sourceId), "nexus");
 
     title = (Nexus_TitleScreen*)calloc(1u, sizeof(Nexus_TitleScreen));
-    if (!nexus_v1_launcher_boot_level0_runtime_startup(dataDir,
-                                                       title,
-                                                       &runtime_receipt)) {
+    if (!nexus_v1_launcher_boot_level0_runtime_startup_with_debug(
+            dataDir, title, &runtime_receipt, debugEnabled)) {
         char dm_bin_path[M11_GAME_VIEW_PATH_CAPACITY];
         char segadata_path[M11_GAME_VIEW_PATH_CAPACITY];
         int bootstrap_data_observed;
@@ -30366,15 +30370,17 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
             : (assets->real_menu_surface_route_blocked
                    ? "menu-surface"
                    : "none");
-        fprintf(stderr,
-                "NEXUS STARTUP RECEIPT: status=%s gameId=nexus dataDir=%s "
-                "title=%d levelLoaded=%d menu=%d blocker=%s\n",
-                status,
-                dataDir,
-                runtime_receipt.title_loaded,
-                runtime_receipt.level_loaded,
-                assets->real_menu_surface_route_ready,
-                blocker);
+        if (debugEnabled) {
+            fprintf(stderr,
+                    "NEXUS STARTUP RECEIPT: status=%s gameId=nexus dataDir=%s "
+                    "title=%d levelLoaded=%d menu=%d blocker=%s\n",
+                    status,
+                    dataDir,
+                    runtime_receipt.title_loaded,
+                    runtime_receipt.level_loaded,
+                    assets->real_menu_surface_route_ready,
+                    blocker);
+        }
     }
     return 1;
 }

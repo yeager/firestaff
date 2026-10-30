@@ -31,6 +31,7 @@
 #define NEXUS_V1_FONT_SCR_SECTION_TABLE_MAX 32u         /* 32 entries observed in FONT256.S2D */
 
 typedef struct {
+    int debug_enabled;
     int char_count;
     int char_width;
     int char_height;
@@ -56,9 +57,14 @@ typedef struct {
 } Nexus_V1_FontSections;
 
 int nexus_v1_font_load(Nexus_V1_Font *font, const uint8_t *data, int size);
+int nexus_v1_font_load_with_debug(Nexus_V1_Font *font, const uint8_t *data,
+                                  int size, int debug_enabled);
 int nexus_v1_font_load_from_s2d(Nexus_V1_Font *font,
                                 const uint8_t *data, int data_size,
                                 const Nexus_V1_FontS2dDecodeResult *decoded);
+int nexus_v1_font_load_from_s2d_with_debug(
+    Nexus_V1_Font *font, const uint8_t *data, int data_size,
+    const Nexus_V1_FontS2dDecodeResult *decoded, int debug_enabled);
 void nexus_v1_font_free(Nexus_V1_Font *font);
 const uint8_t *nexus_v1_font_get_glyph(const Nexus_V1_Font *font, int char_index);
 int nexus_v1_font_get_glyph_pixel(const Nexus_V1_Font *font,

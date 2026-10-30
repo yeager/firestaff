@@ -875,7 +875,7 @@ rm -f "$auto_cli_probe_json"
 
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
     FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_probe_json" \
-    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 --platform pc \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --debug --menu --game dm1 --platform pc \
     --data-dir "$archive" --script "$menu_original" --duration 30000 2>&1)" || {
     printf '%s\n' "$menu_output" >&2
     exit 1
@@ -901,6 +901,26 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
     raise SystemExit(f"FAIL: authentic DM1 menu did not reach its first runtime frame: {probe}")
 print("PASS: authentic DM1 PC-34 start menu reached the source-owned runtime frame")
 PY
+
+# --debug controls the M11 handoff receipt. Keep a fresh config for this
+# negative check so a saved launcher preference cannot enable diagnostics.
+quiet_home="$test_scratch/dm1-pc34-quiet-home-$$"
+mkdir -p "$quiet_home"
+quiet_output="$(HOME="$quiet_home" XDG_CONFIG_HOME="$quiet_home" \
+    APPDATA="$quiet_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --menu --game dm1 --platform pc --data-dir "$archive" \
+    --script "$menu_original" --duration 30000 2>&1)" || {
+    printf '%s\n' "$quiet_output" >&2
+    exit 1
+}
+if grep -Fq 'DM1 READY:' <<<"$quiet_output"; then
+    printf '%s\n' "$quiet_output" >&2
+    printf '%s\n' 'FAIL: DM1 startup diagnostics were emitted without --debug' >&2
+    exit 1
+fi
+echo 'PASS: authentic DM1 PC-34 menu launch keeps its startup receipt quiet without --debug'
 
 # Verify the PC fallback of the ordinary AUTO route in a clean config. Keep
 # only this authenticated PC archive in an installed dm1/ data-root layout:
@@ -1500,7 +1520,7 @@ perf_output=$(HOME="$perf_home" XDG_CONFIG_HOME="$perf_home" \
     APPDATA="$perf_home" FIRESTAFF_CONFIG_PATH="$perf_home/config.toml" \
     FIRESTAFF_AUTOTEST=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --game dm1 --platform pc --data-dir "$archive" --debug-full-redraw \
+    --game dm1 --platform pc --data-dir "$archive" --debug --debug-full-redraw \
     --duration 30000 \
     2>&1) || {
         printf '%s\n' "$perf_output" >&2

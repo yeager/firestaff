@@ -18,8 +18,15 @@ int nexus_v1_dmdf_is_valid(const uint8_t *data, int size) {
 }
 
 int nexus_v1_dmdf_load(Nexus_V1_Model *model, const uint8_t *data, int size, const char *name) {
+    return nexus_v1_dmdf_load_with_debug(model, data, size, name, 0);
+}
+
+int nexus_v1_dmdf_load_with_debug(Nexus_V1_Model *model, const uint8_t *data,
+                                  int size, const char *name,
+                                  int debug_enabled) {
     if (!model || !data || size < 32) return -1;
     memset(model, 0, sizeof(*model));
+    model->debug_enabled = debug_enabled != 0;
 
     if (!nexus_v1_dmdf_is_valid(data, size)) return -1;
 
@@ -30,7 +37,7 @@ int nexus_v1_dmdf_load(Nexus_V1_Model *model, const uint8_t *data, int size, con
     model->header.data_offset = rb32(data + 28);
     model->name = name;
 
-    printf("DMDF %s: size=%u sections=%u data_offset=%u\n",
+    if (model->debug_enabled) printf("DMDF %s: size=%u sections=%u data_offset=%u\n",
         name ? name : "?",
         model->header.file_size,
         model->header.section_count,
@@ -73,7 +80,7 @@ int nexus_v1_dmdf_load(Nexus_V1_Model *model, const uint8_t *data, int size, con
                             model->faces[i] = rb16(data + face_off + i * 2);
                     }
                 }
-                printf("  vertices=%d faces=%d\n", vc, fc);
+                if (model->debug_enabled) printf("  vertices=%d faces=%d\n", vc, fc);
             }
         }
     }

@@ -30,8 +30,15 @@ static uint16_t nexus_v1_game_read_be16(const uint8_t *bytes) {
 }
 
 void nexus_v1_game_init(Nexus_V1_GameState *state, const char *data_dir) {
+    nexus_v1_game_init_with_debug(state, data_dir, 0);
+}
+
+void nexus_v1_game_init_with_debug(Nexus_V1_GameState *state,
+                                   const char *data_dir,
+                                   int debug_enabled) {
     if (!state) return;
     memset(state, 0, sizeof(*state));
+    state->debug_enabled = debug_enabled != 0;
     state->data_dir = data_dir;
     state->party_x = -1;
     state->party_y = -1;
@@ -212,7 +219,7 @@ int nexus_v1_game_load_level(Nexus_V1_GameState *state, int level) {
                           8)) {
         snprintf(state->level_path, sizeof(state->level_path), "%s", path);
         state->current_level = level;
-        printf("Nexus: loading level %d from %s\n", level, state->level_path);
+        if (state->debug_enabled) printf("Nexus: loading level %d from %s\n", level, state->level_path);
         return 0;
     }
 

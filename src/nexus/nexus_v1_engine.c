@@ -2856,7 +2856,8 @@ static void nexus_v1_try_open_supplemental_iso(Nexus_V1_Engine *engine) {
         !(region_md5 = nexus_v1_extracted_rlowfix_md5(engine)) ||
         !find_iso(engine->data_dir, disc_path, sizeof(disc_path), engine,
                   region_md5)) {
-        if (engine && engine->source == NEXUS_SRC_EXTRACTED) {
+        if (engine && engine->debug_enabled &&
+            engine->source == NEXUS_SRC_EXTRACTED) {
             printf("Nexus: no verified supplemental ISO matches the "
                    "extracted localized resources\n");
         }
@@ -2869,7 +2870,7 @@ static void nexus_v1_try_open_supplemental_iso(Nexus_V1_Engine *engine) {
     }
     if (n > 0 && nexus_iso_is_nexus(&engine->supplemental_iso)) {
         engine->supplemental_iso_valid = 1;
-        printf("Nexus: supplemental retail ISO %s with %d files "
+        if (engine->debug_enabled) printf("Nexus: supplemental retail ISO %s with %d files "
                "(localized resources verified)\n",
                disc_path, n);
         return;
@@ -2883,7 +2884,7 @@ static int nexus_try_open_disc_path(Nexus_V1_Engine *engine, const char *path) {
     n = nexus_open_disc_reader(&engine->iso, path);
     if (n > 0 && nexus_iso_is_nexus(&engine->iso)) {
         engine->source = NEXUS_SRC_ISO;
-        printf("Nexus: opened disc image %s with %d files\n", path, n);
+        if (engine->debug_enabled) printf("Nexus: opened disc image %s with %d files\n", path, n);
         return 1;
     }
     nexus_iso_close(&engine->iso);
@@ -3392,9 +3393,15 @@ static void nexus_engine_script_handler(const Nexus_ScriptAction *action,
 }
 
 int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
+    return nexus_v1_init_with_debug(engine, data_dir, 0);
+}
+
+int nexus_v1_init_with_debug(Nexus_V1_Engine *engine, const char *data_dir,
+                             int debug_enabled) {
     char disc_path[512];
     if (!engine || !data_dir) return -1;
     memset(engine, 0, sizeof(*engine));
+    engine->debug_enabled = debug_enabled != 0;
     strncpy(engine->data_dir, data_dir, sizeof(engine->data_dir) - 1);
 
     /* Prefer a complete hash-verified extracted corpus when present. This
@@ -3405,7 +3412,7 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     if (has_extracted(data_dir)) {
         engine->source = NEXUS_SRC_EXTRACTED;
         nexus_v1_try_open_supplemental_iso(engine);
-        printf("Nexus: using extracted files from %s\n", data_dir);
+        if (engine->debug_enabled) printf("Nexus: using extracted files from %s\n", data_dir);
     }
 
     if (engine->source == NEXUS_SRC_NONE && nexus_path_is_file(data_dir)) {
@@ -3416,12 +3423,13 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     }
 
     if (engine->source == NEXUS_SRC_NONE) {
-        printf("Nexus: no game data found in %s\n", data_dir);
+        if (engine->debug_enabled) printf("Nexus: no game data found in %s\n", data_dir);
         return -1;
     }
 
     /* Init game state */
-    nexus_v1_game_init(&engine->game, data_dir);
+    nexus_v1_game_init_with_debug(&engine->game, data_dir,
+                                  engine->debug_enabled);
     engine->audio_enabled = 1;
 
     /* DGN Structure1B references resolve through the retail environment
@@ -3544,7 +3552,7 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     }
 
     /* Init startup UI surfaces after source selection and champion roster. */
-    nexus_ui_manager_init(&engine->ui);
+    nexus_ui_manager_init_with_debug(&engine->ui, engine->debug_enabled);
     nexus_v1_load_startup_surfaces(engine);
     nexus_v1_load_startup_faces(engine);
     nexus_v1_load_champion_panel_geometry(engine);
@@ -3616,7 +3624,7 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     if (engine->viewport)
         nexus_viewport_init(engine->viewport);
     /* Init sound engine */
-    nexus_sound_init(&engine->audio);
+    nexus_sound_init_with_debug(&engine->audio, engine->debug_enabled);
     nexus_sound_set_data_root(&engine->audio, data_dir);
     if (nexus_path_is_file(data_dir) &&
         (nexus_path_has_ext(data_dir, ".cue") || nexus_path_has_ext(data_dir, ".zip"))) {
@@ -3649,7 +3657,7 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
         engine->sound_driver_source.canonical_hash_verified);
     (void)nexus_sound_level_runtime_receipt(&engine->audio,
                                             &engine->sfx_runtime_receipt);
-    nexus_script_vm_init(&engine->script_vm);
+    nexus_script_vm_init_with_debug(&engine->script_vm, engine->debug_enabled);
     nexus_script_vm_set_handler(&engine->script_vm,
                                 nexus_engine_script_handler, engine);
     (void)nexus_script_vm_runtime_receipt(&engine->script_vm,
@@ -3662,8 +3670,9 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
         if (font_data) {
             Nexus_V1_FontS2dDecodeResult font_regions;
             if (nexus_v1_font_s2d_decode(font_data, font_size, &font_regions) == 1) {
-                if (nexus_v1_font_load_from_s2d(&engine->font, font_data,
-                                                 font_size, &font_regions) > 0) {
+                if (nexus_v1_font_load_from_s2d_with_debug(
+                        &engine->font, font_data, font_size, &font_regions,
+                        engine->debug_enabled) > 0) {
                     (void)nexus_v1_font_s2d_retain_source_words(
                         font_data, font_size, &font_regions,
                         &engine->font_s2d_source_words);
@@ -3672,11 +3681,11 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
                      * consumer: Saturn page/PND attributes, code mapping,
                      * placement and VDP2 ownership remain unproven. */
                     engine->font_loaded = 0;
-                    printf("Nexus font: FONT256.S2D CG source retained "
+                    if (engine->debug_enabled) printf("Nexus font: FONT256.S2D CG source retained "
                            "(%d tiles); text consumer gated\n",
                            engine->font.char_count);
                 } else {
-                    printf("Nexus font: FONT256.S2D regions admitted\n");
+                    if (engine->debug_enabled) printf("Nexus font: FONT256.S2D regions admitted\n");
                     engine->font_loaded = 0;
                 }
             }
@@ -3695,7 +3704,7 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     }
 
     engine->initialized = 1;
-    printf("Nexus V1 engine initialized (source: %s)\n",
+    if (engine->debug_enabled) printf("Nexus V1 engine initialized (source: %s)\n",
         engine->source == NEXUS_SRC_ISO ? "ISO" : "extracted");
     return 0;
 }
@@ -5012,7 +5021,7 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
 
     data = nexus_v1_read_file(engine, name, &size);
     if (!data) {
-        printf("Nexus: failed to load %s\n", name);
+        if (engine->debug_enabled) printf("Nexus: failed to load %s\n", name);
         return -1;
     }
 
@@ -5022,7 +5031,7 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     if (!loaded_bytes_canonical) {
         /* This is intentionally before nexus_v1_level_load(): that call
          * performs the Structure3 face/material identifier joins. */
-        printf("Nexus: canonical byte hash mismatch for %s\n", name);
+        if (engine->debug_enabled) printf("Nexus: canonical byte hash mismatch for %s\n", name);
         free(data);
         return -1;
     }
@@ -5072,7 +5081,9 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     engine->current_level_dgn_identity_data = NULL;
     engine->current_level_dgn_size = 0;
     nexus_v1_clear_structure3_runtime_source(engine);
-    int r = nexus_v1_level_load(&engine->current_level, data, size, level);
+    int r = nexus_v1_level_load_with_debug(&engine->current_level, data,
+                                            size, level,
+                                            engine->debug_enabled);
     if (r < 0) {
         free(data);
         nexus_v1_clear_failed_level_load(engine);
@@ -5102,7 +5113,7 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     if (!engine->current_level_structure2_source.canonical_hash_verified ||
         !engine->current_level_structure2_source.materialization_bound ||
         !engine->current_level_structure2_source.loaded_bytes_bound) {
-        printf("Nexus: refusing unverified DGN source for %s\n", name);
+        if (engine->debug_enabled) printf("Nexus: refusing unverified DGN source for %s\n", name);
         free(data);
         free(engine->current_level_dgn_identity_data);
         engine->current_level_dgn_data = NULL;
@@ -5122,7 +5133,7 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
      * compatibility path and retail gameplay fail-closed until that exact
      * level/x/y/direction chain is captured. */
     if (level == NEXUS_V1_TITLE_LEVEL && !engine->game.game_started) {
-        fprintf(stderr, "nexus: LEV00 is title-only; Saturn start pose is not source-bound\n");
+        if (engine->debug_enabled) fprintf(stderr, "nexus: LEV00 is title-only; Saturn start pose is not source-bound\n");
         /* A blocked entrance must not leave a parsed but unusable level in
          * the runtime.  This is the same fail-closed boundary as the pose
          * receipt: dimensions, source bytes, and level ownership all reset. */
@@ -5215,7 +5226,7 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
         engine->audio_enabled) {
         engine->current_cd_track = new_track;
         (void)nexus_sound_cd_track(&engine->audio, new_track);
-        printf("Nexus: CD track %d for level %d\n", new_track, level);
+        if (engine->debug_enabled) printf("Nexus: CD track %d for level %d\n", new_track, level);
         /* FUTURE: CD audio playback via SDL_mixer.
          * DM Nexus (Saturn) uses CD-DA tracks for music. */
     }
@@ -10941,7 +10952,8 @@ int nexus_v1_load_model(Nexus_V1_Engine *engine, const char *name) {
     }
 
     int idx = engine->model_count;
-    int r = nexus_v1_dmdf_load(&engine->models[idx], data, size, name);
+    int r = nexus_v1_dmdf_load_with_debug(&engine->models[idx], data, size,
+                                           name, engine->debug_enabled);
     free(data);
     if (r < 0) return -1;
 
@@ -11017,7 +11029,8 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
         engine->mechanics->pending_level_change >= 0) {
         int new_level = -1;
         if (nexus_v1_engine_level_change(engine, &new_level) == 0) {
-            printf("Nexus: party moved to level %d\n", new_level);
+            if (engine->debug_enabled)
+                printf("Nexus: party moved to level %d\n", new_level);
         }
         redraw = 1;
     }
@@ -11031,7 +11044,7 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
          nexus_v1_action_semantics_proven()) &&
         engine->mechanics->pending_teleport) {
         /* Teleport committed in mechanics_tick — just log it here */
-        printf("Nexus: party teleported to (%d,%d) level %d\n",
+        if (engine->debug_enabled) printf("Nexus: party teleported to (%d,%d) level %d\n",
                engine->mechanics->party_x, engine->mechanics->party_y,
                engine->mechanics->teleport_target_level);
         redraw = 1;
@@ -11305,8 +11318,11 @@ void nexus_v1_shutdown(Nexus_V1_Engine *engine) {
         nexus_iso_close(&engine->iso);
     if (engine->supplemental_iso_valid)
         nexus_iso_close(&engine->supplemental_iso);
-    memset(engine, 0, sizeof(*engine));
-    printf("Nexus V1 engine shut down\n");
+    {
+        int debug_enabled = engine->debug_enabled;
+        memset(engine, 0, sizeof(*engine));
+        if (debug_enabled) printf("Nexus V1 engine shut down\n");
+    }
 }
 
 int nexus_v1_startup_faces_loaded_count(const Nexus_V1_Engine *engine) {

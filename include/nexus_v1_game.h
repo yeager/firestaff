@@ -53,6 +53,7 @@ typedef struct {
 } Nexus_V1_DungeonStartReceipt;
 
 typedef struct {
+    int debug_enabled;
     int current_level;
     int party_x, party_y, party_dir;
     int champion_count;
@@ -65,6 +66,8 @@ typedef struct {
 } Nexus_V1_GameState;
 
 void nexus_v1_game_init(Nexus_V1_GameState *state, const char *data_dir);
+void nexus_v1_game_init_with_debug(Nexus_V1_GameState *state,
+                                  const char *data_dir, int debug_enabled);
 int nexus_v1_game_load_level(Nexus_V1_GameState *state, int level);
 /* Parse one entry from the authentic DM.BIN start table. The caller must
  * authenticate DM.BIN before passing its bytes. Direction is resolved only

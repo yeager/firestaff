@@ -610,6 +610,8 @@ typedef struct {
      * view keeps its zero/default options. */
     M12_LauncherRuntimeOptions launcherOptions;
     int launcherOptionsBound;
+    /* CLI --debug bit preserved across the M12 to M11 launch handoff. */
+    int debugStartup;
     int hudLaunchMode;    /* Theron V2 HUD launch-mode selector (M11-side).
                            * Maps onto Theron_V2_HudLaunchMode via
                            * theron_v2_hud_launch_mode_from_m11().

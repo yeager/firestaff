@@ -2,6 +2,7 @@
 
 ## User-facing changes
 
+- `DM1 and Nexus startup diagnostics`: change logging to emit game handoff, title, resource and engine details only when `--debug` is set.
 - `DM1 Atari ST media`: admit the authentic nested v1.2 image for launcher selection.
 - `CSB FM Towns media`: admit renamed authentic ZIP packages during startup discovery.
 - `Nexus regional media`: bind supplemental disc resources to the region proved by the extracted game files, avoiding cross-region asset mixing.

@@ -515,14 +515,15 @@ the final VDP2 VRAM still contains the same 921 source bytes. The zero-drop
 VDP2 write trace covers frames 7600–8099 and records no writes after frame
 7716. Its NBG0 row trace contains two identical 224-row main-field sequences
 for frame 8037 and is explicitly marked incomplete. Those duplicated samples
-do not establish complete NBG0 render-state coverage. A follow-up authentic
-trace adds VDP2 frame serials and line-call ordinals for rows 100–111 of VDP1
-frame 7716: each row appears once under VDP2 serial 8476 and once under serial
-8477, with each ordinal matching its row. This proves two distinct VDP2 passes
-sharing the VDP1 frame label in that capture; it does not by itself attribute
-the separate frame-8037 sequences. Preserve the samples and their incomplete
-receipt; do not deduplicate them or treat them as one complete image. The
-diagnostic capture, receipt and reproduction notes are at
+are retained as evidence but do not establish complete NBG0 render-state
+coverage. A follow-up authentic trace adds VDP2 frame serials and line-call
+ordinals for rows 100–111 of VDP1 frame 7716: each row appears once under VDP2
+serial 8476 and once under serial 8477, with each ordinal matching its row.
+This proves two distinct VDP2 passes sharing the VDP1 frame label in that
+capture; it does not by itself explain the separate duplicated sequences at
+frame 8037. Preserve the incomplete receipts and samples; do not deduplicate
+them or interpret them as one complete image. The diagnostic capture, receipt
+and reproduction notes are at
 `/Volumes/Extern-disk/firestaff-evidence/nexus/ymir_nbg0_frame_serial_diagnostic_20261030/README.md`.
 The complete frame-8037 external evidence package and reproduction notes are
 at `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_title_menu_sameframe_20261030/README.md`.

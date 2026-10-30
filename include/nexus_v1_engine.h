@@ -2476,6 +2476,9 @@ typedef struct {
 
 /* ── Main engine struct ─────────────────────────────────────────────── */
 struct Nexus_V1_Engine {
+    /* Per-engine opt-in for developer diagnostics. Normal API wrappers leave
+     * this disabled; it is never stored in process-global state. */
+    int debug_enabled;
     /* Data source */
     Nexus_DataSource source;
     Nexus_ISOReader iso;
@@ -2727,6 +2730,9 @@ struct Nexus_V1_Engine {
 /* Initialize from data directory (auto-detects ISO vs extracted).
  * Returns 0 on success, -1 on no data found. */
 int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir);
+/* Explicit diagnostic variant used by the CLI's --debug launch path. */
+int nexus_v1_init_with_debug(Nexus_V1_Engine *engine, const char *data_dir,
+                             int debug_enabled);
 
 /* Load a dungeon level (0-15). Calls nexus_v1_level_load().
  * Returns 0 on success, -1 on failure. */

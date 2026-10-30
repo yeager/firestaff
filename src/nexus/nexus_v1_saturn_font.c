@@ -12,8 +12,14 @@ static uint32_t rb32(const uint8_t *p) {
 #ifndef FIRESTAFF_NEXUS_PRODUCTION
 
 int nexus_v1_font_load(Nexus_V1_Font *font, const uint8_t *data, int size) {
+    return nexus_v1_font_load_with_debug(font, data, size, 0);
+}
+
+int nexus_v1_font_load_with_debug(Nexus_V1_Font *font, const uint8_t *data,
+                                  int size, int debug_enabled) {
     if (!font || !data || size < 48) return -1;
     memset(font, 0, sizeof(*font));
+    font->debug_enabled = debug_enabled != 0;
 
     /* Verify SEGA SATURN SCR header */
     if (memcmp(data, "SEGA SATURN SCR", 15) != 0) return -1;
@@ -36,7 +42,7 @@ int nexus_v1_font_load(Nexus_V1_Font *font, const uint8_t *data, int size) {
         font->bitmap_size = glyph_data_size;
     }
 
-    printf("Saturn font: %d chars, %dx%d, %d bytes\n",
+    if (font->debug_enabled) printf("Saturn font: %d chars, %dx%d, %d bytes\n",
         font->char_count, font->char_width, font->char_height, glyph_data_size);
     return font->char_count;
 }
@@ -44,11 +50,19 @@ int nexus_v1_font_load(Nexus_V1_Font *font, const uint8_t *data, int size) {
 int nexus_v1_font_load_from_s2d(Nexus_V1_Font *font,
                                 const uint8_t *data, int data_size,
                                 const Nexus_V1_FontS2dDecodeResult *decoded) {
+    return nexus_v1_font_load_from_s2d_with_debug(font, data, data_size,
+                                                   decoded, 0);
+}
+
+int nexus_v1_font_load_from_s2d_with_debug(
+    Nexus_V1_Font *font, const uint8_t *data, int data_size,
+    const Nexus_V1_FontS2dDecodeResult *decoded, int debug_enabled) {
     int i, tile_count;
     if (!font || !data || data_size <= 0 || !decoded || !decoded->valid)
         return -1;
 
     memset(font, 0, sizeof(*font));
+    font->debug_enabled = debug_enabled != 0;
 
     /* `tile_count` in the DMWeb decoder is the 16x256 page tilemap
      * capacity, not the number of character-generator tiles. Derive the
@@ -77,7 +91,7 @@ int nexus_v1_font_load_from_s2d(Nexus_V1_Font *font,
             data, data_size, decoded, i, font->bitmap_data + i * 64);
     }
 
-    printf("Saturn font: %d chars (8x8 8bpp from SCR character generator, %d tiles)\n",
+    if (font->debug_enabled) printf("Saturn font: %d chars (8x8 8bpp from SCR character generator, %d tiles)\n",
         font->char_count, tile_count);
     return font->char_count;
 }

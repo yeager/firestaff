@@ -176,6 +176,7 @@ typedef struct {
 #define NEXUS_MAX_LEVELS 16
 
 typedef struct {
+    int debug_enabled;
     /* Dungeon map data per level */
     Nexus_V1_Level levels[NEXUS_MAX_LEVELS];
     int level_loaded[NEXUS_MAX_LEVELS];  /* bool: level N parsed */
@@ -215,6 +216,8 @@ typedef struct {
 /* ------------------------------------------------------------------ */
 
 void    nexus_v1_world_init(Nexus_V1_World *world);
+void    nexus_v1_world_init_with_debug(Nexus_V1_World *world,
+                                      int debug_enabled);
 void    nexus_v1_world_reset(Nexus_V1_World *world);
 
 /* Placement */
