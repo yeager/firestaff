@@ -12,10 +12,9 @@
  * Source: MOVESENS.C, DEFS.H from the original DM/CSB source.
  *
  * v1 coverage (this phase):
- *   - Type 0  TELEPORT      (WALK_ON)  -> EFFECT_TELEPORT
- *   - Type 13 TEXT_MESSAGE  (WALK_ON)  -> EFFECT_SHOW_TEXT (text-id = data)
- *   All other sensor types return EFFECT_UNSUPPORTED so the caller can
- *   distinguish "nothing happened" from "not yet implemented".
+ *   - Floor sensor types 1-5 and 7-9 produce bounded remote-toggle effects.
+ *   - Type 0 is the source-defined disabled sensor and produces no effect.
+ *   - Other types return EFFECT_UNSUPPORTED; wall C013 is not text.
  *   WALK_OFF, ITEM_ON, ITEM_OFF, CHAMPION_ACTION return an empty list
  *   for every implemented type in v1 (conservative — will expand as
  *   timeline/combat land).

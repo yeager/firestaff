@@ -66,32 +66,9 @@ int F0710_SENSOR_Execute_Compat(
     }
 
     switch (sensor->sensorType) {
-    case 0: {
-        /* TELEPORT — destination from sensor's remote target fields. */
-        struct SensorEffect_Compat* e = &outList->effects[0];
-        e->kind = SENSOR_EFFECT_TELEPORT;
-        e->sensorType = sensor->sensorType;
-        e->destMapIndex = -1; /* Same-map teleport in v1 — caller keeps current mapIndex. */
-        e->destMapX = sensor->targetMapX;
-        e->destMapY = sensor->targetMapY;
-        e->destCell = sensor->targetCell;
-        e->textIndex = 0;
-        outList->count = 1;
+    case 0:
+        /* ReDMCSB DEFS.H:1256 and MOVESENS.C F0276 skip C000_DISABLED. */
         return 1;
-    }
-    case 13: {
-        /* TEXT / MESSAGE — sensor->sensorData carries the text index. */
-        struct SensorEffect_Compat* e = &outList->effects[0];
-        e->kind = SENSOR_EFFECT_SHOW_TEXT;
-        e->sensorType = sensor->sensorType;
-        e->destMapIndex = 0;
-        e->destMapX = 0;
-        e->destMapY = 0;
-        e->destCell = 0;
-        e->textIndex = (int)sensor->sensorData;
-        outList->count = 1;
-        return 1;
-    }
     case 1:  /* DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT */
     case 2:  /* DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE */
     case 3:  /* DM1_SENSOR_FLOOR_PARTY — pressure plates */
@@ -139,7 +116,9 @@ int F0710_SENSOR_Execute_Compat(
         return 1;
     case 9: {
         /* DM1_SENSOR_FLOOR_VERSION_CHECKER — version gate.
-         * Always triggers in our implementation (we emulate latest version). */
+         * ReDMCSB MOVESENS.C F0276:1715-1716 admits C009 only when the
+         * sensor data is <= 20 for the DM1 V2.0 engine profile. */
+        if (sensor->sensorData > 20u) return 1;
         struct SensorEffect_Compat* e = &outList->effects[0];
         e->kind = SENSOR_EFFECT_TOGGLE_REMOTE;
         e->sensorType = sensor->sensorType;
@@ -152,6 +131,10 @@ int F0710_SENSOR_Execute_Compat(
         outList->count = 1;
         return 1;
     }
+    case 13:
+        /* C013 is a wall storage sensor, not a text sensor. It is outside
+         * F0710's floor-sensor contract and is handled by the wall route. */
+        /* fall through */
     default: {
         /* UNSUPPORTED — explicit marker so callers distinguish from
          * "no effect".  Remaining types will be implemented as

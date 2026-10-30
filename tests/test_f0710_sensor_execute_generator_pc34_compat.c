@@ -57,10 +57,54 @@ static void test_generator_null_safety(void) {
     CHECK(ok == 0, "null: returns 0");
 }
 
+static void test_version_checker_uses_dm1_v20_gate(void) {
+    struct SensorOnSquare_Compat sensor;
+    struct SensorEffectList_Compat effects;
+
+    memset(&sensor, 0, sizeof(sensor));
+    sensor.found = 1;
+    sensor.sensorType = DM1_SENSOR_FLOOR_VERSION_CHECKER;
+    sensor.targetMapX = 3;
+    sensor.targetMapY = 5;
+
+    sensor.sensorData = 20u;
+    CHECK(F0710_SENSOR_Execute_Compat(NULL, NULL, &sensor,
+              SENSOR_EVENT_WALK_ON, &effects) == 1 && effects.count == 1 &&
+              effects.effects[0].kind == SENSOR_EFFECT_TOGGLE_REMOTE,
+          "C009 data 20 triggers for DM1 V2.0");
+
+    sensor.sensorData = 21u;
+    CHECK(F0710_SENSOR_Execute_Compat(NULL, NULL, &sensor,
+              SENSOR_EVENT_WALK_ON, &effects) == 1 && effects.count == 0,
+          "C009 data above 20 does not trigger for DM1 V2.0");
+}
+
+static void test_source_sensor_type_meanings(void) {
+    struct SensorOnSquare_Compat sensor;
+    struct SensorEffectList_Compat effects;
+
+    memset(&sensor, 0, sizeof(sensor));
+    sensor.found = 1;
+
+    sensor.sensorType = 0;
+    CHECK(F0710_SENSOR_Execute_Compat(NULL, NULL, &sensor,
+              SENSOR_EVENT_WALK_ON, &effects) == 1 && effects.count == 0,
+          "C000 disabled sensor does not teleport");
+
+    sensor.sensorType = 13;
+    sensor.sensorData = 7u;
+    CHECK(F0710_SENSOR_Execute_Compat(NULL, NULL, &sensor,
+              SENSOR_EVENT_WALK_ON, &effects) == 1 && effects.count == 1 &&
+              effects.effects[0].kind == SENSOR_EFFECT_UNSUPPORTED,
+          "wall C013 is not dispatched as a text sensor");
+}
+
 int main(void) {
     test_generator_sensor_does_not_fire_on_party_walk_on();
     test_generator_sensor_not_found();
     test_generator_null_safety();
+    test_version_checker_uses_dm1_v20_gate();
+    test_source_sensor_type_meanings();
     printf("test_f0710_sensor_execute_generator: %d passed, %d failed\n",
            g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;
