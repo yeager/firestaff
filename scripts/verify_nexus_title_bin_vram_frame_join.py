@@ -13,7 +13,7 @@ SOURCE_ADDRESS = 0x060B5622
 READ_PC = "0x6023124"
 CALLER_TARGET = "0x6023108"
 CALLER_RETURN = "0x6023176"
-TARGET_FRAME = 7716
+DEFAULT_TARGET_FRAME = 7716
 
 
 def digest(data: bytes) -> str:
@@ -28,9 +28,13 @@ def ensure(condition: bool, message: str) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture", type=Path, help="Ymir capture root or dumps directory")
+    parser.add_argument("--target-frame", type=int, default=DEFAULT_TARGET_FRAME,
+                        help=f"VDP1 frame containing the observed copy (default: {DEFAULT_TARGET_FRAME})")
     parser.add_argument("--data-dir", required=True, type=Path,
                         help="real Nexus data directory containing TITLE.BIN")
     args = parser.parse_args()
+    target_frame = args.target_frame
+    ensure(target_frame >= 0, "target frame must be non-negative")
     dumps = args.capture / "dumps" if (args.capture / "dumps").is_dir() else args.capture
     title = (args.data_dir / "TITLE.BIN").read_bytes()
     ensure(digest(title) == TITLE_SHA256,
@@ -78,11 +82,11 @@ def main() -> int:
 
     # The matching read pass is one contiguous 921-byte operation in frame 7716.
     selected = [i for i, r in enumerate(trace)
-                if r["sh2"] == "master" and r["vdp1_frame"] == str(TARGET_FRAME)
+                if r["sh2"] == "master" and r["vdp1_frame"] == str(target_frame)
                 and int(r["address"], 16) >= SOURCE_ADDRESS
                 and int(r["address"], 16) < SOURCE_ADDRESS + SPAN_BYTES]
     ensure(len(selected) == SPAN_BYTES,
-           "expected exactly 921 source-span read rows in frame 7716")
+           f"expected exactly 921 source-span read rows in frame {target_frame}")
     indices = list(range(selected[0], selected[0] + SPAN_BYTES))
     ensure(selected == indices,
            "source span rows are not contiguous in the global trace")
@@ -98,7 +102,7 @@ def main() -> int:
                "source read caller target differs from the retail copy helper")
         ensure(r["caller_return_address"].lower() == CALLER_RETURN,
                "source read caller return differs from the retail copy helper")
-        ensure(s["vdp1_frame"] == str(TARGET_FRAME),
+        ensure(s["vdp1_frame"] == str(target_frame),
                "register snapshot frame differs from source-read frame")
         ensure(s["pc"].lower() == READ_PC,
                "register snapshot PC differs from source-read PC")
@@ -136,9 +140,9 @@ def main() -> int:
            "VDP2 write trace dropped rows")
     ensure(vdp2_receipt["trace_vdp1_frame_range_enabled"] == "1",
            "VDP2 write trace has no frame-range filter")
-    ensure(int(vdp2_receipt["trace_vdp1_frame_begin"]) <= TARGET_FRAME,
+    ensure(int(vdp2_receipt["trace_vdp1_frame_begin"]) <= target_frame,
            "VDP2 write trace begins after the target frame")
-    ensure(TARGET_FRAME <= int(vdp2_receipt["trace_vdp1_frame_end_exclusive"]) - 1,
+    ensure(target_frame <= int(vdp2_receipt["trace_vdp1_frame_end_exclusive"]) - 1,
            "VDP2 write trace ends before the target frame")
     with (dumps / "vdp2-memory-write-trace.csv").open(newline="") as f:
         vdp2_rows = list(csv.DictReader(f))
@@ -146,7 +150,7 @@ def main() -> int:
            "VDP2 write rows differ from the receipt count")
     destination_offset_set = set(vdp2_offsets)
     frame_write_rows = [r for r in vdp2_rows
-                        if r["vdp1_frame"] == str(TARGET_FRAME) and r["memory"] == "VRAM"
+                        if r["vdp1_frame"] == str(target_frame) and r["memory"] == "VRAM"
                         and int(r["address"], 16) in destination_offset_set]
     ensure(len(frame_write_rows) == SPAN_BYTES,
            "same-frame VDP2 write coverage has missing or duplicate rows")
@@ -165,7 +169,7 @@ def main() -> int:
     print(f"title_bin_span_sha256={digest(source)}")
     print(f"source_address=0x{SOURCE_ADDRESS:08x}")
     print(f"destination_address=0x{destination_base:08x}")
-    print(f"capture_frame={TARGET_FRAME}")
+    print(f"capture_frame={target_frame}")
     print(f"ordered_source_read_rows={len(rows)}")
     print("r5_matches_each_source_byte=1")
     print(f"r4_destination_snapshot_min=0x{min(destination_addresses):08x}")
@@ -178,7 +182,7 @@ def main() -> int:
     print(f"final_vdp2_vram_bytes_match_source={len(mapped_vram_bytes)}/{SPAN_BYTES}")
     print(f"final_vdp2_vram_mapped_span_sha256={digest(mapped_vram_bytes)}")
     print(f"same_frame_vdp2_write_rows={len(frame_writes)}")
-    print(f"same_frame_vdp2_write_frame={TARGET_FRAME}")
+    print(f"same_frame_vdp2_write_frame={target_frame}")
     print("same_frame_vdp2_write_values_match_source=1")
     print("same_frame_vdp2_write_dropped_rows=0")
     print(f"all_pc_filtered_rows={len(trace)}")

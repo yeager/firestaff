@@ -508,6 +508,24 @@ bytes match the 921 retail source bytes. The SH-2 trace does not capture values
 at read time, and the source comparison uses the final WorkRAMH span; it does
 not independently prove that those bytes were present when each read occurred.
 
+A second authentic run used Ymir `--debug --capture-no-render` and stopped at
+the same observed source-copy interval. In its VDP1 frame 7715, the verifier
+joins the same 921 ordered source addresses, register snapshots, and same-frame
+VDP2 byte writes to the authentic Japanese `TITLE.BIN`. The run recorded
+2,195,059 VDP2 writes across the configured frame range with zero dropped rows.
+Its endpoint frame index is 8036; the final VDP2 VRAM SHA-256 is
+`de1a77427dc62457eb4b59fa0424fd25e9768ce229505445311929d3bdae405c`, matching
+the retained frame-8037 capture's final VDP2 VRAM hash. This no-render run
+has no screenshot and establishes no visual parity. Reproduce it with
+`scripts/verify_nexus_title_bin_vram_frame_join.py --target-frame 7715` and
+the raw dumps plus authentic Japanese game data in
+`firestaff-evidence/nexus/nexus_title_source_trace_20261030` on the external
+evidence disk. The register snapshots are not SH-2 store events, and the trace
+does not capture source values at read time. Both runs establish the same
+bounded source-to-VDP2 transport observation while leaving full-screen source
+ownership and the production title gate unresolved.
+
+
 A separate deterministic endpoint capture stops at VDP1 frame 8037 and saves
 the authentic Japanese three-choice title menu with New Game selected. Its
 final VDP1/VDP2 registers, VRAM, CRAM and screenshot are indexed at frame 8037;
