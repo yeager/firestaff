@@ -3554,3 +3554,14 @@ original 18x18 frame graphics 33/34/35, and the original Apple icon atlas
 region for both English F20E and Japanese F20J. Its pixel composition check
 does not capture the live M11 framebuffer or compare it with an original-game
 frame. Hand-widget parity and full F20 HUD parity therefore remain open.
+
+2026-10-30 Apple IIGS CLI and M12 startup retest: the authentic-media
+`firestaff_iigs_cli_real_media` CTest passes for original G20 (2.0) and G21
+(2.1) data. Its direct `--game dm1 --platform apple-iigs` boot probes reach
+the active native dungeon runtime; the no-game launcher independently scans
+and selects each original edition, runs its title and mouse-controlled
+entrance, and reaches the same active runtime. The test also verifies the
+source graphics digest and leaves the original PO payload unchanged. This
+supersedes the 2026-10-16 notes that CLI/M12 IIGS startup integration was
+still pending. SDL's dummy driver does not verify physical IIGS hardware,
+native audio output, first active Hall movement, or visual parity.
