@@ -9278,7 +9278,8 @@ int nexus_v1_launcher_boot_level0_startup_with_debug(
 
     /* New selected-entry boots always start from Nexus defaults; save
      * resume applies persisted party/tick state in the M11 resume path. */
-    nexus_v1_game_init(&engine->game, engine->data_dir);
+    nexus_v1_game_init_with_debug(&engine->game, engine->data_dir,
+                                  engine->debug_enabled);
     /* No DGN runtime state is installed by the title boot. The first
      * playable route must load hash-verified LEV01 and apply a source-bound
      * Saturn coordinate/facing before it may become runtime state. */
