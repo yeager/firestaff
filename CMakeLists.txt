@@ -41191,6 +41191,22 @@ if(BUILD_TESTING)
         COMMAND test_firestaff_img5_decode
     )
 
+    # ── DM1 SNES ROMIMG3 tile graphics decoder unit test ──────
+    add_executable(test_firestaff_snes_romimg3
+        tests/test_firestaff_snes_romimg3.c
+        src/shared/firestaff_snes_romimg3.c
+    )
+    target_include_directories(test_firestaff_snes_romimg3 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_snes_romimg3 PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME firestaff_snes_romimg3_unit
+        COMMAND test_firestaff_snes_romimg3
+    )
+
     # ── CSB Utility Disk Sound/*.AMG container metadata ─────────
     add_executable(test_csb_v1_amg_sound
         tests/test_csb_v1_amg_sound.c
