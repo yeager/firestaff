@@ -1,5 +1,30 @@
 # Firestaff TODO — DM2
 
+2026-10-30 DM2 runtime render diagnostics and cross-platform HUD gap: added
+`--debug`-only `dm2-render-debug` output at the M11 frame handoff. It reports
+the selected platform, pose, render acceptance, source-asset/fallback state,
+blocked-material count, palette and scene identities, HUD plan identity and
+consumption, portrait counts, and HUD frame hash. It emits only when the
+reported frame state changes. The product target builds successfully. Using
+installed original media, direct runtime probes accepted real frames with no
+core fallbacks on DOS, FM Towns, Amiga, and Macintosh; Towns and Amiga probes
+also remained silent for this trace when run without `--debug`. The authentic
+DOS `sksave0.dat` and all three other installed DOS save slots report four
+champions while the current DOS HUD renderer draws three portrait assets.
+That count still needs source-state explanation (dead/mirror-hidden slots
+must not be mistaken for missing portraits). Towns reports a five-command
+squad plan, and Amiga a five-command HUD plan; both report zero decoded HUD
+core pixels and no top/status panel commands. Macintosh completed its
+authentic 210-frame title movie, entered runtime, and moved twice; its frame
+reports one portrait for the one-member new party. The DOS and Towns runtime
+captures still show large dark HUD areas. These receipts make the gap
+measurable but do not prove pixel parity. Complete live HUD composition,
+source-owned panel/text/hand-state coverage, and same-pose original captures
+remain open for each platform; the current smoke thresholds are not a visual
+parity gate. Current source reference: SKProject
+`SKWINSPX/src/v4/skguidrw.cpp::DRAW_SQUAD_POS_INTERFACE` and
+`SKWINSPX/src/v5/skguidrw.cpp::DM2_UPDATE_RIGHT_PANEL`.
+
 2026-10-30 static startup-menu timing regression: re-enabled
 `dm2_v1_startup_static_menu_timing` by linking the focused test against the
 existing `firestaff_dm2` library. The receipt is checked at source ticks 0,

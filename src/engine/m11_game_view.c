@@ -66309,6 +66309,113 @@ static uint32_t m11_dm2_startup_frame_hash(const unsigned char *framebuffer,
     return hash;
 }
 
+static uint32_t m11_dm2_debug_mix_u32(uint32_t hash, uint32_t value)
+{
+    hash ^= value;
+    return hash * 16777619u;
+}
+
+static const char *m11_dm2_debug_platform_label(int platform)
+{
+    switch (platform) {
+    case DM2_PLATFORM_PC_EN: return "pc-en";
+    case DM2_PLATFORM_PC_FR: return "pc-fr";
+    case DM2_PLATFORM_PC_JEWEL: return "pc-jewel";
+    case DM2_PLATFORM_FMTOWNS_JA: return "fmtowns-ja";
+    case DM2_PLATFORM_MAC_EN: return "mac-en";
+    case DM2_PLATFORM_MAC_FR: return "mac-fr";
+    case DM2_PLATFORM_AMIGA_EN: return "amiga-en";
+    case DM2_PLATFORM_MEGACD_JA: return "mega-cd-ja";
+    default: return "unknown";
+    }
+}
+
+/* --debug must expose the source receipt that decided whether the DM2 frame
+ * was drawn, not just the earlier startup handoff. Log only when a receipt
+ * field or party pose changes so animation frames do not flood stderr. */
+static void m11_debug_trace_dm2_runtime_frame(
+    const M11_GameViewState *state,
+    int render_result,
+    int frame_accepted,
+    const DM2_V1_BootRuntimeRenderReceipt *render,
+    const DM2_V1_ViewportM11FrameReceipt *frame)
+{
+    static const M11_GameViewState *previous_state;
+    static uint32_t previous_signature;
+    const DM2_V1_BootProfile *profile;
+    uint32_t signature = 2166136261u;
+    int platform;
+
+    if (!state || !state->debugMovementTraceEnabled || !render || !frame) {
+        previous_state = NULL;
+        previous_signature = 0u;
+        return;
+    }
+    profile = (const DM2_V1_BootProfile *)state->dm2BootProfile;
+    platform = profile ? (int)profile->platform : -1;
+#define M11_DM2_DEBUG_MIX(value) \
+    (signature = m11_dm2_debug_mix_u32(signature, (uint32_t)(value)))
+    M11_DM2_DEBUG_MIX(render_result);
+    M11_DM2_DEBUG_MIX(frame_accepted);
+    M11_DM2_DEBUG_MIX(platform);
+    M11_DM2_DEBUG_MIX(state->dm2State.party_x);
+    M11_DM2_DEBUG_MIX(state->dm2State.party_y);
+    M11_DM2_DEBUG_MIX(state->dm2State.party_dir);
+    M11_DM2_DEBUG_MIX(render->runtime_render_real_asset_ready);
+    M11_DM2_DEBUG_MIX(render->runtime_render_no_core_fallbacks);
+    M11_DM2_DEBUG_MIX(render->runtime_render_blocked_material_draw_count);
+    M11_DM2_DEBUG_MIX(render->runtime_hud_real_asset_ready);
+    M11_DM2_DEBUG_MIX(render->runtime_hud_asset_portrait_count);
+    M11_DM2_DEBUG_MIX(render->runtime_hud_fallback_portrait_count);
+    M11_DM2_DEBUG_MIX(render->runtime_hud_decoded_core_hash);
+    M11_DM2_DEBUG_MIX(render->runtime_hud_decoded_core_pixel_count);
+    M11_DM2_DEBUG_MIX(render->runtime_hud_frame_hash);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_map_load_token);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_scene_control_hash);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_presentation_state_hash);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_palette_hash);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_hud_material_plan_required);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_hud_material_plan_hash);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_hud_material_plan_command_count);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_hud_material_plan_consumed);
+    M11_DM2_DEBUG_MIX(frame->composition.hud_presentation_stage);
+    M11_DM2_DEBUG_MIX(frame->composition.hud_top_bar_command_consumed);
+    M11_DM2_DEBUG_MIX(frame->composition.hud_status_panel_command_consumed);
+#undef M11_DM2_DEBUG_MIX
+    if (previous_state == state && previous_signature == signature) return;
+
+    fprintf(stderr,
+        "firestaff: dm2-render-debug game=%s platform=%s pose=%d,%d dir=%d result=%d accepted=%d real-assets=%d no-core-fallbacks=%d blocked-materials=%d palette=%08x map-token=%u scene=%08x presentation=%08x hud={required:%d hash:%08x commands:%d consumed:%d stage:%d portraits:%d fallback-portraits:%d decoded-core-pixels:%u frame-pixels:%u frame-hash:%08x top-consumed:%d status-consumed:%d}\n",
+        state->sourceId[0] ? state->sourceId : "dm2",
+        m11_dm2_debug_platform_label(platform),
+        state->dm2State.party_x,
+        state->dm2State.party_y,
+        state->dm2State.party_dir,
+        render_result,
+        frame_accepted,
+        render->runtime_render_real_asset_ready,
+        render->runtime_render_no_core_fallbacks,
+        render->runtime_render_blocked_material_draw_count,
+        render->runtime_m11_frame_palette_hash,
+        render->runtime_m11_frame_map_load_token,
+        render->runtime_m11_frame_scene_control_hash,
+        render->runtime_m11_frame_presentation_state_hash,
+        render->runtime_m11_frame_hud_material_plan_required,
+        render->runtime_m11_frame_hud_material_plan_hash,
+        render->runtime_m11_frame_hud_material_plan_command_count,
+        render->runtime_m11_frame_hud_material_plan_consumed,
+        frame->composition.hud_presentation_stage,
+        render->runtime_hud_asset_portrait_count,
+        render->runtime_hud_fallback_portrait_count,
+        render->runtime_hud_decoded_core_pixel_count,
+        render->runtime_hud_frame_pixel_count,
+        render->runtime_hud_frame_hash,
+        frame->composition.hud_top_bar_command_consumed,
+        frame->composition.hud_status_panel_command_consumed);
+    previous_state = state;
+    previous_signature = signature;
+}
+
 /* FM Towns and Amiga use a physical 16-colour display palette for the active
  * GRAPHICSSET. Their image planes contain logical nibbles, so leaving the
  * INTERFACE_GENERAL palette latched applies the wrong colours to a valid
@@ -77382,6 +77489,9 @@ static void m11_game_view_draw_source(M11_GameViewState* state,
                     state);
             }
         }
+        m11_debug_trace_dm2_runtime_frame(
+            state, rendered, runtime_frame_accepted,
+            &runtime_render_receipt, &runtime_frame_receipt);
         if (rendered == -1) {
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           0, 0, framebufferWidth, framebufferHeight,
