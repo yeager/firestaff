@@ -4514,6 +4514,19 @@ if(BUILD_TESTING)
         TIMEOUT 1800
     )
     add_test(
+        NAME return_to_menu_rescans_csb_atari_only_real_media
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh"
+            "$<TARGET_FILE:firestaff>"
+            "${FIRESTAFF_WORKSPACE_DATA_DIR}"
+            csb-atari-only
+    )
+    set_tests_properties(return_to_menu_rescans_csb_atari_only_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;csb;atari;startup;launcher;return-to-menu;real-media;skip-safe"
+        ENVIRONMENT "FIRESTAFF_CSB_ATARI_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        TIMEOUT 240
+    )
+    add_test(
         NAME return_to_menu_rescans_selected_archive_real_media
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh"
             "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}" dm2-sourcefile

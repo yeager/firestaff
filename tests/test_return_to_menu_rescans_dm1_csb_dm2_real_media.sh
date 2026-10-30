@@ -39,6 +39,7 @@ if [ ! -x "$app" ] ||
    { [ "$test_mode" != dm2-amiga ] && [ "$test_mode" != dm1-sourcefile ] &&
      [ "$test_mode" != csb-sourcefile ] && [ "$test_mode" != dm2-sourcefile ] &&
      [ "$test_mode" != dm2-sourcefile-removed ] &&
+     [ "$test_mode" != csb-atari-only ] &&
      [ "$test_mode" != dm1-atari ] && [ "$test_mode" != dm1-amiga36 ] &&
      [ "$test_mode" != direct-exit ] &&
      [ "$test_mode" != mouse-return ] &&
@@ -61,6 +62,7 @@ if [ ! -x "$app" ] ||
      [ ! -f "$dm2_dos_archive" ]; } ||
    { [ "$test_mode" = dm2-amiga ] && [ ! -f "$dm2_amiga_archive" ]; } ||
    { [ "$test_mode" = dm1-atari ] && [ ! -f "$dm1_atari_archive" ]; } ||
+   { [ "$test_mode" = csb-atari-only ] && [ ! -f "$csb_atari_archive" ]; } ||
    { [ "$test_mode" = dm1-amiga36 ] && [ ! -f "$dm1_amiga36_archive" ]; }; then
     echo 'SKIP: authentic DM1, CSB, and DM2 archives are required'
     exit 77
@@ -189,9 +191,9 @@ if not os.path.isdir(scan_root):
     scan_root = os.path.dirname(os.path.dirname(scan_root))
 
 expected_available = {
-    "dm1": 1,
+    "dm1": 0 if case_label == "csb-atari-only" else 1,
     "csb": 1,
-    "dm2": 1,
+    "dm2": 0 if case_label == "csb-atari-only" else 1,
     "nexus": int(
         os.path.isfile(os.path.join(scan_root, "nexus", "DM.BIN")) and
         os.path.isfile(os.path.join(scan_root, "nexus", "MENU.BPK"))),
@@ -381,6 +383,13 @@ stage_csb_return_data_root() {
     ln -s "$csb_atari_archive" "$stage_root/csb/$(basename "$csb_atari_archive")"
     ln -s "$csb_amiga_archive" "$stage_root/csb/$(basename "$csb_amiga_archive")"
     ln -s "$dm2_archive" "$stage_root/dm2/$(basename "$dm2_archive")"
+}
+
+stage_csb_atari_only_data_root() {
+    stage_root=$1
+    mkdir -p "$stage_root/csb"
+    ln -s "$csb_atari_archive" \
+        "$stage_root/csb/$(basename "$csb_atari_archive")"
 }
 
 stage_dm2_amiga_return_data_root() {
@@ -630,6 +639,44 @@ if [ "$test_mode" = all ] || [ "$test_mode" = returns ] ||
         'launch phase=game-handoff mode=menu game=dm2 platform=FM Towns edition=fmtowns-ja source=.*/data/dm2/' \
         "$data_root" 320 200 dm2-mouse-return
     fi
+fi
+
+if [ "$test_mode" = csb-atari-only ]; then
+    atari_only_root="$scratch/csb-atari-only-data"
+    stage_csb_atari_only_data_root "$atari_only_root"
+    archive_hash_before=$(python3 - "$csb_atari_archive" <<'PYHASH'
+import hashlib
+import sys
+
+digest = hashlib.sha256()
+with open(sys.argv[1], "rb") as source:
+    for block in iter(lambda: source.read(1024 * 1024), b""):
+        digest.update(block)
+print(digest.hexdigest())
+PYHASH
+)
+    run_return_to_menu_case csb auto \
+        'wait20,click:586:131,wait20,click:729:202,wait20,click:225:202,wait:3600,click:813:156,wait-game-runtime,back,enter' \
+        150000 \
+        'startup-frame game=csb .*phase=(csb-entrance-4|inactive) .*level-loaded=1 map=0 party=9,0 dir=2 champions=0' \
+        'CSB READY: gameId=csb dataDir=.*variant=csb-st20-21-en .*handoff=atari-st-animate-ftlcode' \
+        "$atari_only_root" 960 600 csb-atari-only
+    archive_hash_after=$(python3 - "$csb_atari_archive" <<'PYHASH'
+import hashlib
+import sys
+
+digest = hashlib.sha256()
+with open(sys.argv[1], "rb") as source:
+    for block in iter(lambda: source.read(1024 * 1024), b""):
+        digest.update(block)
+print(digest.hexdigest())
+PYHASH
+)
+    if [ "$archive_hash_before" != "$archive_hash_after" ]; then
+        echo 'FAIL: original CSB Atari archive changed during return-to-menu rescan' >&2
+        exit 1
+    fi
+    echo 'PASS: authentic CSB Atari-only launch returned to the menu, rescanned availability and preserved the source archive'
 fi
 
 # Prove the return scan refreshes availability after the player changes the

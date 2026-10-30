@@ -1,5 +1,12 @@
 # Firestaff TODO — CSB
 
+2026-10-30 CSB Atari-only return/rescan regression: the shared return-to-menu
+test now has an isolated mode that stages only the authentic Atari ST archive.
+The local original-media run reached the Atari runtime, returned to M12, and
+reported CSB available while DM1/DM2 remained unavailable; the original
+archive's SHA-256 stayed unchanged. This verifies only the exercised startup,
+return and rescan path, not gameplay or presentation parity.
+
 2026-10-30 CSB Atari F0115 selectors: source-backed C14 selectors now load
 from the selected original GRAPHICS.DAT C559 item. F0141/G0237 object classes
 and F0158/G0238 M066 weapon ordinals are decoded from the Atari v2.1 layout

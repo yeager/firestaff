@@ -1,3 +1,11 @@
+- 2026-10-30: Added `return_to_menu_rescans_csb_atari_only_real_media` to
+  cover the case where authentic Atari ST is the only CSB edition installed.
+  The test reached the original Atari runtime, returned to M12, and verified
+  that the isolated scan reports CSB available while DM1 and DM2 remain
+  unavailable. SHA-256 of the original archive was unchanged. This closes a
+  return/rescan test-coverage gap only; it does not prove additional gameplay
+  or presentation parity.
+
 - 2026-10-30: Added and ran `csb_v1_atari_only_auto_start` against the
   authentic Atari ST software archive. With an isolated data root containing
   only that archive, bare `--game csb` AUTO startup and the no-game M12 picker
