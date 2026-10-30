@@ -1,5 +1,18 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-30 — report source-adjacent stair capture candidates
+
+Extended the authentic Track 02 stair census to print a N/E/S/W bit mask for
+neighboring `OPEN` source tiles and a per-region count. Built the focused target
+on TRV2 and ran the US and JP real-media CTests three consecutive times each;
+all six runs passed against the hash-verified Track 02 files. The census found
+39 US and 42 JP stair cells with at least one adjacent `OPEN` tile. Akutuba map
+1 `(17,8)` is present in both editions and has an adjacent open tile to its
+south. The mask helps select capture targets only; it proves neither
+reachability nor active runtime map identity, stair direction, destination,
+or native transition behavior. The transition remains fail-closed and the
+original traversal capture remains open in `TODO-theron.md`.
+
 ## 2026-10-30 — sequence cold PCE Fast movement trace rows
 
 The capture-only movement-context observer now emits v3 rows with the shared

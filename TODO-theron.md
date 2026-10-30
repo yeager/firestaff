@@ -747,13 +747,21 @@ assets, mechanics, or parity.
   target. Locate the current enablement site at
   `theron_v1_world_dispatch_source_actuator_events()` before implementing.
 
-## 2026-11-02 — available Akutuba state does not reach a stair tile
+## 2026-10-30 — available Akutuba state does not reach a stair tile
 
 - Built and ran `test_theron_v1_track02_dungeon_loader` from the current source
   on TRV2 against the installed authentic US and JP Track 02 data. The test
   passed. A temporary US source-map census found no stair-class tile on
   Akutuba map 0; the first US Akutuba stairs are on map 1 at `(8,1)` and
   `(17,8)`, with five more on map 2 and eighteen on map 3.
+- Extended `test_theron_v1_track02_dungeon_map` to print a cardinal N/E/S/W
+  bit mask for adjacent `OPEN` source tiles at each authenticated stair cell.
+  On TRV2, the updated target built and the US and JP real-media CTests each
+  passed three consecutive runs. The census found 39 US and 42 JP stair cells
+  with at least one adjacent `OPEN` source tile. Akutuba map 1 `(17,8)` is a
+  shared US/JP capture candidate with an adjacent `OPEN` tile to its south
+  (mask bit 2). This mask reports source adjacency only; it does not establish
+  a reachable route, active runtime map identity, stair direction, or target.
 - The retained authentic post-Akutuba reference state
   (`f17f377df210b4a3ae904a13fb85a7f0`) is position-bound at `(2,3)` in the
   existing command captures, but it is not bound to a stair-bearing source
