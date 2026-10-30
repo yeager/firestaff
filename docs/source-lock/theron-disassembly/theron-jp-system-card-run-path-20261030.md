@@ -315,6 +315,28 @@ does not establish a complete loader, native handoff, or gameplay parity.
 Raw traces and media remain private on TRV2 under
 `/home/trv2/firestaff-theron-evidence/capture/theron-jp-code-follow-v6-cold-20261030/`.
 
+### Observed control flow in the 256-row follow
+
+The first recorded instruction at `$6148` is `JSR $6109`. The observed
+subroutine executes `LDA #$EA` and three `STA` instructions to `$40D9-$40DB`,
+then returns. The caller executes `SEI`, initializes the stack with
+`LDX #$FF` / `TXS`, enables interrupts with `CLI`, writes `$40` and `$60` to
+`$1C/$1D` (pointer `$6040`), and jumps to `$40DC`. The following bytes decode
+as `CLY; LDA ($1C); ASL A; TAX; JMP ($410D,X)`. The captured path later visits
+`$4319`, calls `$41B9`, and executes indirect dispatch through `$410D` again.
+These opcode names and modes match the Mednafen 1.32.1 HuC6280 table in
+`src/pce/dis6280.cpp`: `JMP` at line 123, `TAX` at 130, `CLY` at 242,
+`LDA` at 195, and `STA` at 208.
+
+The trace subsequently enters the low physical `$04xx` window at logical
+`$E4xx` with MPR7=`$00`, and the transition log records the controller poll at
+`$E4E1`; scripted input is read at `$E4C5`. This confirms return to the System
+Card input loop after the observed indirect dispatch. It does not resolve the
+indexed target bytes, show a game IRQ or authenticated CD-to-RAM transfer, or
+prove that the dispatched path entered the native game loop. Next, bind the
+`$410D` table target and its caller to authenticated loader writes, then follow
+the resulting state into a game-owned input poll.
+
 ## Targeted v3 code-fetch rerun
 
 A further cold PCE Fast capture used the authentic JP Rev. 1 Track 02 and

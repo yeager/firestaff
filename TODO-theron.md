@@ -24,9 +24,12 @@ assets, mechanics, or parity.
    explicit code-fetch overflow markers show that both current windows exceed
    their caps; narrow or rotate the traced windows before using another bounded
    capture for source or consumer conclusions.
-   The v5 cold capture now completes a bounded 256-instruction follow from
-   `$6148` and restores validated TIA zero-page mapping through MPR1. It still
-   has no game IRQ, authenticated CD-to-RAM receipt, or non-System-Card poll.
+   The v6 cold capture completes a bounded 256-instruction follow from
+   `$6148`, tracing an indirect dispatch before execution returns to the
+   System Card input loop; it restores validated TIA zero-page mapping through
+   MPR1. Resolve the `$410D` dispatch target against authenticated loader
+   writes, then continue to game-owned execution. There is still no game IRQ,
+   authenticated CD-to-RAM receipt, or non-System-Card poll.
 2. **Verify quest progression and original-format save transactions.** Bind
    authentic quest artifacts and their pickup, exit, chapter transition, and
    completion consumers. Keep the campaign-completion bit distinct from
