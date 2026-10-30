@@ -127,6 +127,34 @@ int nexus_v1_vdp2_capture_decode_ymir_nbg0_bitmap_plane(
     int original_ymir_capture_verified,
     Nexus_V1_Vdp2Nbg0CapturePlaneReceipt *out_receipt);
 
+typedef struct {
+    int valid;
+    int capture_only;
+    int renderer_permitted;
+    int registers_verified;
+    int original_ymir_capture_verified;
+    int nbg1_tilemap_mode;
+    int pnd_size_two_words;
+    int colour_code_256;
+    int name_table_vram_offset;
+    int map_page_columns;
+    int map_page_rows;
+    int visible_columns;
+    int visible_rows;
+    int tiles_decoded;
+    int written_pixels;
+    int transparent_pixels;
+} Nexus_V1_Vdp2Nbg1CapturePlaneReceipt;
+
+int nexus_v1_vdp2_capture_decode_ymir_nbg1_tilemap_plane(
+    Nexus_V1_Vdp2CapturePlane *plane,
+    const uint8_t *vdp2_vram, size_t vdp2_vram_size,
+    const uint8_t *vdp2_cram, size_t vdp2_cram_size,
+    const uint8_t *vdp2_registers, size_t vdp2_registers_size,
+    Nexus_V1_SaturnVdp2RegisterByteOrder register_byte_order,
+    int original_ymir_capture_verified,
+    Nexus_V1_Vdp2Nbg1CapturePlaneReceipt *out_receipt);
+
 /* Explicit source/VRAM binding for one raw Saturn frame. The caller supplies
  * canonical source bytes and the already-proven VDP2-VRAM offsets; this
  * adapter never infers a menu map, FONT256 owner, or crop from register data. */

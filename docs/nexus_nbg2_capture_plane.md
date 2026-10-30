@@ -34,8 +34,12 @@ python3 scripts/verify_nexus_bitmap_capture_plane.py \
   "/path/to/DUNGEON MASTER NEXUS [T-9111G]-20261030T091953.253.png"
 ```
 
-The same run also decodes the NBG0 8bpp bitmap at byte offset zero. Set
-`FIRESTAFF_NEXUS_YMIR_NBG0_CAPTURE_OUT` to retain its index/RGB plane, then
-run the verifier with `--layer nbg0`; 3,954 of its 3,968 nontransparent
-samples match within eight channel levels. This remains a per-layer capture
-check and does not establish cross-layer ordering or color calculation.
+The same run also decodes the NBG0 8bpp bitmap at byte offset zero and the NBG1
+tilemap at byte offset `0x5c000`. Set the NBG0 or NBG1 capture output
+environment variables to retain those index/RGB planes, then run the verifier
+with `--layer nbg0` or `--layer nbg1`; NBG0 has 3,954/3,968 matching visible
+samples (maximum error 232), and NBG1 has 148/148 (maximum error 7). These
+remain per-layer capture checks and do not establish cross-layer ordering or
+color calculation. Set
+`FIRESTAFF_NEXUS_YMIR_NBG0_CAPTURE_OUT` for NBG0 or
+`FIRESTAFF_NEXUS_YMIR_NBG1_CAPTURE_OUT` for NBG1.

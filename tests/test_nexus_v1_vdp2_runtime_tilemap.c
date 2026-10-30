@@ -82,12 +82,14 @@ static int run_external_ymir_capture_planes(void)
     const char *registers_path = getenv("FIRESTAFF_NEXUS_YMIR_NBG2_REGS");
     const char *output_path = getenv("FIRESTAFF_NEXUS_YMIR_NBG2_CAPTURE_OUT");
     const char *nbg0_output_path = getenv("FIRESTAFF_NEXUS_YMIR_NBG0_CAPTURE_OUT");
+    const char *nbg1_output_path = getenv("FIRESTAFF_NEXUS_YMIR_NBG1_CAPTURE_OUT");
     uint8_t *vram = NULL;
     uint8_t *cram = NULL;
     uint8_t *registers = NULL;
     Nexus_V1_Vdp2CapturePlane *plane = NULL;
     Nexus_V1_Vdp2Nbg2CapturePlaneReceipt receipt;
     Nexus_V1_Vdp2Nbg0CapturePlaneReceipt nbg0_receipt;
+    Nexus_V1_Vdp2Nbg1CapturePlaneReceipt nbg1_receipt;
     size_t pixel;
     int ok = 0;
 
@@ -141,6 +143,22 @@ static int run_external_ymir_capture_planes(void)
             (plane->rgba_buffer[pixel] == 0U)) goto cleanup;
     }
     if (!write_capture_plane(nbg0_output_path, plane)) goto cleanup;
+    if (!nexus_v1_vdp2_capture_decode_ymir_nbg1_tilemap_plane(
+            plane, vram, NEXUS_V1_SATURN_VDP2_VRAM_BYTES,
+            cram, NEXUS_V1_SATURN_VDP2_CRAM_BYTES,
+            registers, 512U, NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG,
+            1, &nbg1_receipt) || !nbg1_receipt.valid ||
+        !nbg1_receipt.capture_only || nbg1_receipt.renderer_permitted ||
+        !nbg1_receipt.registers_verified ||
+        !nbg1_receipt.original_ymir_capture_verified ||
+        !nbg1_receipt.nbg1_tilemap_mode || !nbg1_receipt.pnd_size_two_words ||
+        !nbg1_receipt.colour_code_256 ||
+        nbg1_receipt.name_table_vram_offset != 0x5c000 ||
+        nbg1_receipt.map_page_columns != 64 || nbg1_receipt.map_page_rows != 64 ||
+        nbg1_receipt.visible_columns != 40 || nbg1_receipt.visible_rows != 28 ||
+        nbg1_receipt.tiles_decoded != 1120 || nbg1_receipt.written_pixels != 148 ||
+        nbg1_receipt.transparent_pixels != 71532) goto cleanup;
+    if (!write_capture_plane(nbg1_output_path, plane)) goto cleanup;
     ok = 1;
 cleanup:
     free(plane);

@@ -165,8 +165,11 @@ requirements above.
 - **Structure1F/VDP1:** several material, texture/palette, and replay gates
   remain capture- or host-route-dependent.
 - **VDP2 NBG1 tilemap:** corrected Saturn word/byte address and character-stride
-  math was merged in PR #19; the capture-only test does not provide a retail
-  asset owner, text/page mapping, placement or production rendering.
+  math was merged in PR #19. A frame-239 capture-only plane decoder now records
+  the 40×28 visible 8bpp page. The authentic raw-snapshot test decodes 148
+  nontransparent samples, all within eight RGB levels of the retained Ymir
+  screenshot (maximum error seven). Retail asset ownership, text/page mapping,
+  placement and production rendering remain unresolved.
 - **VDP2 NBG2 tilemap:** a bounded frame-239 decoder now measures the 40×28
   visible 8bpp capture plane and matches 9,258 of 11,232 nontransparent CRAM
   samples to the Ymir screenshot within eight RGB levels. Layer priority,

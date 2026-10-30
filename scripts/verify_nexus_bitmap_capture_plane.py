@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare a raw NBG2 capture plane with its authenticated Ymir screenshot."""
+"""Compare a raw Nexus VDP2 capture plane with its authenticated Ymir screenshot."""
 
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ def main() -> int:
     parser.add_argument("screenshot", type=Path,
                         help="authentic 640x448 Ymir gameplay screenshot")
     parser.add_argument("--tolerance", type=int, default=8)
-    parser.add_argument("--layer", choices=("nbg0", "nbg2"), default="nbg2")
+    parser.add_argument("--layer", choices=("nbg0", "nbg1", "nbg2"), default="nbg2")
     args = parser.parse_args()
     if not 0 <= args.tolerance <= 255:
         parser.error("tolerance must be 0..255")
@@ -59,6 +59,7 @@ def main() -> int:
                     matched += error <= args.tolerance
         expected_visible, expected_matched = {
             "nbg0": (3968, 3954),
+            "nbg1": (148, 148),
             "nbg2": (11232, 9258),
         }[args.layer]
         if visible != expected_visible or matched != expected_matched:
