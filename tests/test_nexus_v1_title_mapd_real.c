@@ -246,10 +246,13 @@ int main(void)
         check(memcmp(n_frame.color_buffer,
                      title.decoded_map_pixels[0],
                      NEXUS_FB_W) == 0 &&
+                  memcmp(e_frame.color_buffer,
+                         title.decoded_map_pixels[1],
+                         NEXUS_FB_W) == 0 &&
                   memcmp(s_frame.color_buffer,
                          title.decoded_map_pixels[4],
                          NEXUS_FB_W) == 0,
-              "native title renderer preserves N,E,X,U,S source scheduling");
+              "boot-global frames 48 and 88 render authentic N and E maps");
         check(n_frame.palette[1] != 0U && s_frame.palette[15] != 0U,
               "native title renderer uses the real MAPD BGR555 palette");
     }
