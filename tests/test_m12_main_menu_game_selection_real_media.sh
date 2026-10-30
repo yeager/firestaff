@@ -35,15 +35,21 @@ if [[ ! -x "$app" ]]; then
     echo 'SKIP: Firestaff executable is unavailable'
     exit 77
 fi
-if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 && ( ! -f "$dm1_archive" || ! -f "$csb_archive" || ! -f "$dm2_archive" ) ]]; then
+if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 &&
+      ${FIRESTAFF_PICKER_PRIORITY_POINTER_ONLY:-0} != 1 &&
+      ( ! -f "$dm1_archive" || ! -f "$csb_archive" || ! -f "$dm2_archive" ) ]]; then
     echo 'SKIP: authentic DM1, CSB and DM2 FM Towns archives are required'
     exit 77
 fi
-if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 && ( ! -f "$nexus_dm" && ! -f "$nexus_cue" || ! -f "$theron_track" ) ]]; then
+if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 &&
+      ${FIRESTAFF_PICKER_PRIORITY_POINTER_ONLY:-0} != 1 &&
+      ( ( ! -f "$nexus_dm" && ! -f "$nexus_cue" ) || ! -f "$theron_track" ) ]]; then
     echo 'SKIP: authentic Nexus DM.BIN or Japanese CUE/BIN media and Theron TQUS02.bin are required for the five-game selector test'
     exit 77
 fi
-if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 && ! -f "$nexus_dm" ]] && ! has_authentic_nexus_cue; then
+if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 &&
+      ${FIRESTAFF_PICKER_PRIORITY_POINTER_ONLY:-0} != 1 &&
+      ! -f "$nexus_dm" ]] && ! has_authentic_nexus_cue; then
     echo 'SKIP: authentic Japanese Nexus CUE payloads are incomplete'
     exit 77
 fi
@@ -287,13 +293,40 @@ run_alternate_platform_picker_case() {
 
 alternate_platform_cases=0
 
-if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 ]]; then
+if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 &&
+      ${FIRESTAFF_PICKER_PRIORITY_POINTER_ONLY:-0} != 1 ]]; then
     run_game_picker_case dm1 "$dm1_archive" \
         'wait-scan-complete,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en
     run_game_picker_case csb "$csb_archive" \
         'wait-scan-complete,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en
     run_game_picker_case dm2 "$dm2_archive" \
         'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-ja
+fi
+
+# Keep authentic pointer routes for DM1, CSB, and DM2 independently
+# runnable. The full five-game selector test reaches Nexus/Theron before its
+# pointer cases, so a failure owned by either game must not hide these routes.
+# Each route clicks the game, platform, and Original-presentation cards.
+if [[ ${FIRESTAFF_PICKER_PRIORITY_POINTER_ONLY:-0} == 1 ]]; then
+    dm1_pc_archive="$archive_data_root/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+    csb_atari_archive="$archive_data_root/csb/chaos_strikes_back_ftl.zip"
+    dm2_amiga_archive="$archive_data_root/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip"
+    if [[ ! -f "$dm1_pc_archive" || ! -f "$csb_atari_archive" ||
+          ! -f "$dm2_amiga_archive" ]]; then
+        echo 'SKIP: authentic DM1 PC, CSB Atari ST, and DM2 Amiga archives are required for priority pointer selection'
+        exit 77
+    fi
+    run_game_picker_case dm1 "$dm1_pc_archive" \
+        'wait-scan-complete,wait20,click:700:262,wait20,click:934:405,wait20,click:450:405' \
+        pc34-en mouse PC "$archive_data_root" dm1-pc-pointer resolved
+    run_game_picker_case csb "$csb_atari_archive" \
+        'wait-scan-complete,wait20,click:1190:262,wait20,click:1458:405,wait20,click:450:405' \
+        st20-21-en mouse 'Atari ST' "$archive_data_root" \
+        csb-atari-pointer resolved
+    run_game_picker_case dm2 "$dm2_amiga_archive" \
+        'wait-scan-complete,wait20,click:1680:262,wait20,click:1458:405,wait20,click:450:405' \
+        amiga-en mouse Amiga "$archive_data_root" dm2-amiga-pointer resolved
+    exit 0
 fi
 
 # Exercise alternate-platform selection from the no-game main menu for DM1,
@@ -614,10 +647,3 @@ if [[ -f "$theron_source" ]]; then
         'wait-scan-complete,wait20,click:1190:728,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
         pce-en mouse 'PC Engine'
 fi
-
-run_game_picker_case dm1 "$dm1_archive" \
-    'wait-scan-complete,wait20,click:700:262,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en mouse
-run_game_picker_case csb "$csb_archive" \
-    'wait-scan-complete,wait20,click:1190:262,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en mouse
-run_game_picker_case dm2 "$dm2_archive" \
-    'wait-scan-complete,wait20,click:1680:262,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-ja mouse

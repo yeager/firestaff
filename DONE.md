@@ -1,5 +1,16 @@
 # Firestaff DONE — cross-game completed work
 
+## 2026-10-30 — Authentic pointer selection for priority games
+
+Added an independently runnable real-media M12 selector check for DM1 PC,
+CSB Atari ST, and DM2 Amiga. Each route clicks the game, platform, and Original
+presentation cards and verifies that the selected authentic archive reaches
+the matching launch handoff. The check snapshots the source archive hashes,
+and skips as a whole when any required original archive is unavailable. All
+three routes passed against the installed game data using the SDL dummy video
+driver. This verifies the scripted menu pointer path and media handoff; it does
+not establish native mouse behavior or complete platform/gameplay parity.
+
 ## 2026-10-29 — Launcher horizontal keys in Game Options
 
 The SDL keyboard path now routes Left and Right to Game Options, where the
