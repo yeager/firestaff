@@ -1,3 +1,8 @@
+- 2026-10-30: `dm1_v1_fmtowns_archive_cli_boot` passed on the current M4
+  build in 202.56 seconds against the installed authentic Japanese/English
+  FM Towns archive. This covers the tested menu and CLI startup routes only;
+  it does not establish physical-display or complete DM1 platform parity.
+
 - 2026-10-30: Rechecked the two reported DM1 PC 3.4 combat/object symptoms on
   current `main`. `m11_dm1_pc34_first_monster_combat_real` passed against the
   installed original archive and recorded creature damage on the covered
