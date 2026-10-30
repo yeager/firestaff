@@ -522,8 +522,13 @@ serial 8476 and once under serial 8477, with each ordinal matching its row.
 This proves two distinct VDP2 passes sharing the VDP1 frame label in that
 capture; it does not by itself explain the separate duplicated sequences at
 frame 8037. Preserve the incomplete receipts and samples; do not deduplicate
-them or interpret them as one complete image. The diagnostic capture, receipt
-and reproduction notes are at
+them or interpret them as one complete image. A second full-row capture
+sampled rows 0–223: each VDP2 serial contains exactly 224 main-field samples
+with ordinals 0–223. The receipt remains incomplete under the VDP1 frame-row
+contract (448 samples for 224 VDP1 pairs), while the per-serial row sets are
+complete. This verifies two full render-state line passes, not separate pixel
+images or frame-8037 pass attribution. The diagnostic captures, receipts and
+reproduction notes are at
 `/Volumes/Extern-disk/firestaff-evidence/nexus/ymir_nbg0_frame_serial_diagnostic_20261030/README.md`.
 The complete frame-8037 external evidence package and reproduction notes are
 at `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_title_menu_sameframe_20261030/README.md`.
