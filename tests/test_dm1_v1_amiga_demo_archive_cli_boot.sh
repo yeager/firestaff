@@ -43,6 +43,11 @@ grep -Fq "FIRESTAFF BOOT PROBE READY: gameId=dm1 sourceKind=0 sourceId=dm1 asset
 grep -Fq 'phase=dm1-runtime' <<<"$direct_output"
 grep -Fq 'levelLoaded=1' <<<"$direct_output"
 
+scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
+mkdir -p "$scratch_root"
+scratch=$(mktemp -d "$scratch_root/amiga-demo-loose.XXXXXX")
+trap 'rm -rf "$scratch"' EXIT
+
 menu_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm1 --platform amiga --data-dir "$archive" --debug --verbose \
@@ -54,13 +59,59 @@ grep -Fq 'edition=amiga-demo-en' <<<"$menu_output"
 grep -Fq "DM1 READY: gameId=dm1 dataDir=$archive" <<<"$menu_output"
 grep -Fq "graphicsPath=$archive::graphics.dat" <<<"$menu_output"
 
+mkdir -p "$scratch/home"
+menu_runtime_log="$scratch/menu-runtime.log"
+menu_runtime_probe="$scratch/menu-runtime.json"
+(
+    unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR FIRESTAFF_EXIT_AFTER_LAUNCH
+    FIRESTAFF_CONFIG_PATH="$scratch/menu-runtime.toml" \
+    FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_runtime_probe" \
+    HOME="$scratch/home" XDG_CONFIG_HOME="$scratch/home" APPDATA="$scratch/home" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        "$app" --debug --menu --game dm1 --platform amiga --data-dir "$archive" \
+        --script 'wait-scan-complete,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait-game-runtime' \
+        --duration 60000
+) >"$menu_runtime_log" 2>&1 || {
+    cat "$menu_runtime_log" >&2
+    exit 1
+}
+if ! grep -Fq "launch phase=game-handoff mode=menu game=dm1 platform=Amiga edition=amiga-demo-en source=$archive::graphics.dat" "$menu_runtime_log" ||
+   ! grep -Fq 'DM1 READY: gameId=dm1' "$menu_runtime_log"; then
+    echo 'FAIL: authentic DM1 Amiga demo M12 route did not retain its selected media owner' >&2
+    cat "$menu_runtime_log" >&2
+    exit 1
+fi
+python3 - "$menu_runtime_probe" "$expected_graphics_md5" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+party = probe["party"]
+if (probe.get("launchedEver") != 1 or probe.get("active") != 1 or
+        probe.get("sourceId") != "dm1" or
+        probe.get("bootAssetMd5") != sys.argv[2] or
+        startup.get("receiptReady") != 1 or
+        startup.get("phase") != "dm1-runtime" or
+        startup.get("active") != 1 or startup.get("startupActive") != 0 or
+        startup.get("levelLoaded") != 1 or
+        startup.get("dm1StartupHandoffExecuted") != 1 or
+        startup.get("dm1StartupSwshConsumed") != 1 or
+        startup.get("dm1StartupTitleConsumed") != 1 or
+        startup.get("dm1StartupEntranceConsumed") != 1 or
+        startup.get("dm1StartupFullGraphicsConsumed") != 1 or
+        startup.get("dm1StartupHoCFirstFrameReady") != 1 or
+        (party.get("mapIndex"), party.get("mapX"), party.get("mapY"),
+         party.get("direction"), party.get("championCount")) != (0, 7, 1, 2, 0)):
+    raise SystemExit(f"FAIL: authentic DM1 Amiga demo M12 route missed its first runtime: {probe}")
+print("PASS: authentic DM1 Amiga demo M12 reaches its first Hall runtime frame")
+PY
+
 # The scanner also admits these original files in an ordinary directory.
 # Exercise the same bytes without archive transport: compressed Motorola
 # dungeon intake and startup companion reads must not depend on "::".
-scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
-mkdir -p "$scratch_root"
-scratch=$(mktemp -d "$scratch_root/amiga-demo-loose.XXXXXX")
-trap 'rm -rf "$scratch"' EXIT
 python3 - "$archive" "$scratch" <<'PY'
 import pathlib
 import sys
