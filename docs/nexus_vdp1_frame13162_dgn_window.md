@@ -23,6 +23,23 @@ identical for that command. This makes constant shading a useful diagnostic
 for this particular window; it does not validate Gouraud interpolation for
 general quads.
 
+The Ymir and Mednafen software renderers agree on the Gouraud color rule:
+each 5-bit RGB channel is offset by its 5-bit table value minus 16, clamped
+to `0..31`; the source pixel's bit 15 is retained. The renderer applies this
+after fetching the texel color. Their polygon paths interpolate the four
+vertex corrections along the A-D and B-C edges, then across each scanline
+using integer error steppers. Clipping skips advance those steppers too. A
+two-triangle barycentric approximation therefore cannot establish Ymir pixel
+parity even when the four Gouraud values happen to be uniform. This gives the
+first bounded implementation target: apply the exact channel lookup to
+manifest-verified uniform-table draws in an RGBA capture lane, then verify
+coverage and pixel output against the retained emulator image before expanding
+to varying tables or enabling renderer admission. The source references are
+Ymir `vdp_renderer_sw.cpp::VDP1PlotTexturedLine` and
+`VDP1PlotTexturedQuad`, plus `vdp1_steppers.hpp::GouraudChannelStepper`; and
+Mednafen `vdp1_common.h::GourauderTheTerrible` and
+`vdp1_poly.cpp::CMD_PolygonG_T`.
+
 The companion palette-pressure analysis shows why applying these Gouraud
 colors by replacing entries in Firestaff's shared 256-entry indexed palette
 cannot preserve the lower layer. In the authenticated visible `320x224` area,
