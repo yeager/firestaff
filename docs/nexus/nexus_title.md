@@ -660,15 +660,15 @@ both buffers across all 71,680 pixels. The image shows the retail Nexus title
 and its three menu choices. This verifies Ymir's capture against its own
 frontend output; it is not a Firestaff or hardware parity result.
 
-Firestaff's capture-only replay diagnostic rejected this authentic state
-before writing an image: `BGON=0x0001` enables NBG0 alone while the narrow gate
-requires `0x0003`, and `CCRR=0x1000` differs from the gate's `0x1010`. The VDP1
-frame contains 99,410 direct-color pixels, 94,208 transparent pixels, and
-2,990 palette/special pixels. The replay path still lacks a complete
-per-pixel CLUT/CRAM provenance join for those palette/special pixels. Keep the
-production title gate closed. Next, support this observed register state in
-the capture-only diagnostic and resolve every palette/special pixel from
-authentic command and palette data; require an exact comparison to this
-same-run screenshot before considering any production consumer. Evidence is
+Firestaff's bounded capture-only replay accepts this register state, including
+`BGON=0x0001` and the captured ratio register at `0x100=0x1000`. Against the
+authentic frame-8037 dump, its output matches both same-run Ymir VDP2 pass
+buffers exactly across all 71,680 RGB pixels. This is capture composition
+evidence, not hardware parity or retail source ownership. The VDP1 frame
+contains 99,410 direct-color pixels, 94,208 transparent pixels, and 2,990
+palette/special pixels. Those palette/special pixels still lack a complete
+per-command CLUT/CRAM provenance join to retail source data. Keep the
+production title gate closed until source ownership and the live display
+consumer are verified. The authentic capture and comparison evidence is
 retained outside the repository under
 `firestaff-evidence/nexus/ymir_nbg0_frame_serial_diagnostic_20261030/`.
