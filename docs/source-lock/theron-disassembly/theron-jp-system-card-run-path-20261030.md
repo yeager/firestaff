@@ -331,11 +331,11 @@ These opcode names and modes match the Mednafen 1.32.1 HuC6280 table in
 The trace subsequently enters the low physical `$04xx` window at logical
 `$E4xx` with MPR7=`$00`, and the transition log records the controller poll at
 `$E4E1`; scripted input is read at `$E4C5`. This confirms return to the System
-Card input loop after the observed indirect dispatch. It does not resolve the
-indexed target bytes, show a game IRQ or authenticated CD-to-RAM transfer, or
-prove that the dispatched path entered the native game loop. Next, bind the
-`$410D` table target and its caller to authenticated loader writes, then follow
-the resulting state into a game-owned input poll.
+Card input loop after the observed indirect dispatch. The targeted source-chain
+verifier below binds the two indexed table bytes and the three fetched `$4319`
+bytes to authentic Track 02 reads and their RAM writes. It does not establish a
+game IRQ, complete loader transfer, or entry into the native game loop. Continue
+from these verified bytes into a game-owned input poll.
 
 ## Correlate the `$410D,X` target with executed code
 
@@ -359,11 +359,23 @@ resolved `$4319`. The next code-follow fetch, event 102678, was logical
 consecutive verifier runs reported one in-window match and 39 dispatch rows
 outside the follow window; those later rows were not used to infer targets.
 
-The transition receipt still reports zero CD IRQ callbacks, zero authenticated
-CD-to-RAM receipts, and no non-System-Card input poll. The dispatch values are
-observed guest memory, not authenticated Track 02 provenance. This narrows the
-bootstrap route but does not establish a complete loader, native handoff, or
-gameplay parity. Raw media and traces remain private on TRV2 at
+The transition receipt still reports zero CD IRQ callbacks, zero aggregate
+authenticated CD-to-RAM receipts, and no non-System-Card input poll. The
+separate offline verifier `scripts/verify_theron_jp_indirect_jump_source_chain.py`
+checks the authentic Track 02 file by size and MD5, verifies each source offset
+and byte, joins each shared read event to its immediately following byte-equal
+`$EA9C` RAM write, and requires that write to be the latest traced `$EA9C` store
+at the destination before the consumer. On this capture it verified:
+
+| Source read / RAM write events | Track 02 raw file offsets | Guest physical bytes |
+| --- | --- | --- |
+| 31301 / 31302, 31303 / 31304 | 2,876,817–2,876,818 | `$100131-$100132`: `19 43` |
+| 32277 / 32278, 32279 / 32280, 32281 / 32282 | 2,877,305–2,877,307 | `$100319-$10031B`: `A5 1C 48` |
+
+The computed `$4319` destination and its first three fetched bytes are therefore
+source-bound for this capture. This does not establish a complete loader,
+native handoff, or gameplay parity. Raw media and traces remain private on TRV2
+at
 `/home/trv2/firestaff-theron-evidence/capture/theron-jp-indirect-jump-v8-cold-20261030/`.
 
 - Indexed indirect-jump trace SHA-256: `f4d5775622ac1b71aca7a222c3b742a160ed1ce7239a81fb7135444d062a0050`.

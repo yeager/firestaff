@@ -1772,6 +1772,15 @@ if ! grep -Fq 'pce_fast_tia_trace_enabled=${THERON_CAPTURE_PCE_FAST_TIA_TRACE:-0
     printf '%s\n' 'FAIL: optional TIA byte tracing must require its hook, validate its bounded trace, and record it' >&2
     exit 1
 fi
+source_chain_verifier="$repo/scripts/verify_theron_jp_indirect_jump_source_chain.py"
+if [[ ! -f "$source_chain_verifier" ]] ||
+   ! grep -Fq 'verify_read_rows(read_path, track02)' "$source_chain_verifier" ||
+   ! grep -Fq 'verify_writer_rows(write_path)' "$source_chain_verifier" ||
+   ! grep -Fq 'reads_by_event.get(write_event - 1)' "$source_chain_verifier" ||
+   ! grep -Fq 'max(prior, key=lambda row: int(row["event_sequence"]))' "$source_chain_verifier"; then
+    printf '%s\n' 'FAIL: JP dispatch source-chain verifier must authenticate CD reads and latest RAM writes' >&2
+    exit 1
+fi
 indirect_jump_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_indirect_jump_trace.patch"
 if [[ ! -f "$indirect_jump_patch" ]] ||
    ! grep -Fq 'TheronTraceIndirectJump(dispatch_base, HU_X, dispatch_low' "$indirect_jump_patch" ||

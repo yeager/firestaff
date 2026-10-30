@@ -25,12 +25,13 @@ assets, mechanics, or parity.
    their caps; narrow or rotate the traced windows before using another bounded
    capture for source or consumer conclusions.
    The v8 cold capture resolves the `$410D,X` table reads at `$40E1` to the
-   next instruction fetch within the bounded `$6148` follow. Its first
-   in-window lookup targets `$4319`; the table bytes still lack an authenticated
-   Track 02 source join, and the path returns to the System Card input loop.
-   Bind the target/table bytes to loader writes, then continue to game-owned
-   execution. There is still no game IRQ, authenticated CD-to-RAM receipt, or
-   non-System-Card poll.
+   next instruction fetch within the bounded `$6148` follow. An offline verifier
+   now authenticates the two table bytes and three `$4319` instruction bytes
+   against Japanese Rev. 1 Track 02, joining each source read to its latest
+   traced System Card RAM write. The path still returns to the System Card
+   input loop; continue tracing the loader into a game-owned consumer. There is
+   no game IRQ, aggregate authenticated CD-to-RAM receipt, or non-System-Card
+   poll.
 2. **Verify quest progression and original-format save transactions.** Bind
    authentic quest artifacts and their pickup, exit, chapter transition, and
    completion consumers. Keep the campaign-completion bit distinct from
@@ -922,6 +923,22 @@ assets, mechanics, or parity.
   TIA `98d75b1f9ef1771a42d8fb661be0f19b8ecb24b9a77b5349df887cbae1bcefe7`,
   and transition receipt `5e53a6a9243d2556fba3414b7dc48cd6286a70b5446a849b87c750a493e94bc0`.
 
+## 2026-10-30 — bind the `$410D,X` dispatch bytes to authentic disc data
+
+- Added `verify_theron_jp_indirect_jump_source_chain.py`. It reuses the strict
+  JP Track 02 source and writer-PC validators, validates the complete code-follow
+  window and indexed dispatch, then requires the latest traced System Card
+  writer-PC store before each consumer to match an immediately preceding
+  source-bound CD read.
+- Against the authentic Japanese Rev. 1 capture, three consecutive runs joined
+  the two `$4131/$4132` table bytes and the three bytes fetched at `$4319` to
+  raw Track 02 offsets `2,876,817–2,876,818` and `2,877,305–2,877,307`. Each
+  Track 02 read is followed by its byte-equal RAM write in the shared event
+  sequence, and those writes are the latest logged `$EA9C` stores before the
+  dispatch/fetch. This verifies five specific bytes only; the aggregate
+  authenticated CD-to-RAM receipt remains zero and game-owned execution is
+  still unproven. See the source-lock note for exact event IDs and hashes.
+
 ## 2026-10-30 — correlate the `$410D,X` dispatch with the next fetch
 
 - Added an optional reference-only opcode `$7C` observer for PCE Fast at the
@@ -940,12 +957,17 @@ assets, mechanics, or parity.
   followed by fetch event 102678 at `$4319` / physical `$100319`. The other 39
   dispatch rows occurred outside the bounded code-follow window and were not
   correlated to a later fetch by this verifier.
-- This establishes the live indirect target and next executed fetch for one
-  cold System Card path. It does not establish which authenticated disc bytes
-  supplied the table entries, a game-owned input poll, loader completion, or
-  gameplay parity. The receipt reports zero CD IRQ callbacks and zero
-  authenticated CD-to-RAM receipts; scripted input remains at the System Card
-  poll. See the source-lock note for exact hashes and capture limits.
+- The separate offline source-chain verifier authenticates these five bytes
+  against Japanese Rev. 1 Track 02. It binds shared events 31301/31302 and
+  31303/31304 to table writes at physical `$100131/$100132`, then events
+  32277/32278, 32279/32280, and 32281/32282 to the three bytes fetched from
+  `$100319-$10031B`. Every source read matches the authentic raw Track 02 byte;
+  each write is the latest traced `$EA9C` store at that physical address before
+  its dispatch or fetch. This targeted evidence does not complete the loader or
+  establish a game-owned input poll or gameplay parity. The aggregate receipt
+  still reports zero CD IRQ callbacks and zero authenticated CD-to-RAM receipts;
+  scripted input remains at the System Card poll. See the source-lock note for
+  trace hashes and capture limits.
 
 - A targeted v3 PCE Fast capture now records cold code fetches at `$40D9` and
   `$6138/$613A/$613D/$613F/$6142/$6144` without a code-fetch overflow marker.

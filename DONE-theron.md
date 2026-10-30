@@ -1,5 +1,22 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-30 — bind the JP indexed System Card dispatch to Track 02
+
+Added `verify_theron_jp_indirect_jump_source_chain.py` to combine the bounded
+indexed-jump/code-follow verifiers with the existing authentic Track 02 read
+and System Card writer-PC checks. Against the real JP Rev. 1 media and v8 cold
+capture on TRV2, three runs each joined source events 31301/31302 and
+31303/31304 to table bytes `$19/$43` at `$100131/$100132`, and events
+32277/32278 through 32281/32282 to `$A5/$1C/$48` at `$100319-$10031B`. The
+verifier checks the raw BIN size and MD5 and each byte's raw-file offset; no
+game media or raw capture was copied into the repository.
+
+This closes source provenance for five observed bytes on one JP System Card
+path. The aggregate CD-to-RAM receipt remains absent, input still reaches only
+the System Card poll, and native loader completion and gameplay parity remain
+open in `TODO-theron.md`. Exact evidence is in
+`docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md`.
+
 ## 2026-10-30 — report source-adjacent stair capture candidates
 
 Extended the authentic Track 02 stair census to print a N/E/S/W bit mask for
