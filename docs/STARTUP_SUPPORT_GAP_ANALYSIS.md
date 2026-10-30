@@ -1,11 +1,10 @@
 # Five-game startup support gap analysis
 
-Evidence metadata refreshed on 2026-10-30 for the v3.0.421 candidate, based on
-`main` at `38ebdb04c85a207eafa32bbd6f281cff7dc2434` plus the candidate's
-unpublished Nexus CUE-only admission change from `76ffafc5c`. The latest published release
-remains v3.0.420 (published 2026-10-29 from tag commit
-`8224d5c8`); the candidate contains later source changes that are not in that
-package. The v3.0.420 workflow verifies packaging, not gameplay startup. The
+Evidence metadata refreshed on 2026-10-30 for `main` at
+`9f4bb4df53313173cdb23e1e85250f944c77697c`. The latest published release
+remains v3.0.420 (published 2026-10-29 from tag commit `8224d5c8`); current
+`main` contains later source changes that are not in that package. The v3.0.420
+workflow verifies packaging, not gameplay startup. The
 route records below are individually dated and establish only the named
 checks, not every edition or complete game parity. Real-media Swedish
 startup-debug localization checks cover DM1 PC34,
@@ -61,6 +60,37 @@ filled spans are excluded. The source join remains partial, with menu
 background, full palette/display ownership, and destination execution
 unproven. Runtime receipts cited below remain tied to their stated revisions
 unless noted otherwise.
+
+### 2026-10-30 DM1/CSB/DM2 menu return, rescan, and cache retest
+
+On `main` at `9f4bb4df`, the local app was rebuilt after the shared media
+scanner changes. Authentic-media M12 coverage passed for the DM1, CSB, and DM2
+game cards; DM1 PC and Atari ST, CSB Atari ST, and DM2 PC and Amiga platform
+routes; DM1 mixed-platform AUTO; and the CSB Atari handoff and mixed FM Towns
+media matrix. The two small DM2 FM Towns and Amiga media tests initially had no
+local executable, so their targets were built and both tests were rerun and
+passed. The five direct DM2 CLI tests also passed with original DOS English,
+DOS French, extracted Macintosh English, Amiga English, and FM Towns Japanese
+media.
+
+The real-media return-to-menu harness passed separately for DM1 PC34, CSB FM
+Towns, DM2 DOS, and DM2 Amiga. Each route reached gameplay, returned to M12,
+and reported current availability for all five games. The DM1 PC34 keyboard
+and mouse window-close cases both cancelled during the return scan without
+publishing a completed scan. Mutation checks removed the authentic CSB archive
+while DM1 was running and confirmed CSB became unavailable after return; a
+second run added authentic CSB media during DM1 gameplay and confirmed the
+return scan discovered it. The original media were linked into isolated test
+roots and were not modified.
+
+The authentic CSB FM Towns cold/warm scan test passed: the cold scan
+authenticated both original editions and the warm scan reused the verified
+receipt. The DM2 DOS original-media directory-cancellation test passed for
+scoped and unscoped scans; cancellation rolled back the partial publication
+and preserved the archive hash. No new CLI, M12 return, scan-cancellation, or
+cache-invalidation defect was reproduced in these checks. They use SDL's dummy
+video driver and do not establish native display, physical input, full
+animation playback, or playable-game parity.
 
 ### 2026-10-30 Nexus Japanese CUE-only CLI and menu admission
 
