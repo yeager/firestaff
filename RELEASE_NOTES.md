@@ -4,24 +4,29 @@
 
 - `DM1 and Nexus startup diagnostics`: change logging to emit game handoff, title, resource and engine details only when `--debug` is set.
 - `DM1 Atari ST media`: admit the authentic nested v1.2 image for launcher selection.
+- `CSB Atari ST items`: use the authenticated source item aspects and C559 projectile selectors for the corrected native rendering path.
 - `CSB FM Towns media`: admit renamed authentic ZIP packages during startup discovery.
 - `Nexus regional media`: bind supplemental disc resources to the region proved by the extracted game files, avoiding cross-region asset mixing.
+- `Nexus Saturn CUE/BIN`: admit an authentic CUE-only Japanese disc through direct CLI and menu selection while keeping its exact CUE as runtime media.
 
 ## Developer changes
 
 - `Alternate-platform launcher`: verify authentic-media menu selection and handoff paths for DM1, CSB and DM2.
 - `Theron evidence`: verify decoded-buffer copies and Japanese input-poll source provenance; add a bounded PCE Fast position-transfer observer without claiming movement parity.
-- `Theron PCE Fast diagnostics`: sequence v3 movement-context rows with CD/memory hooks, record MPR0–MPR7 snapshots, and preserve authenticated CD-to-RAM joins when a matching movement-write row intervenes; unsequenced input-poll records, active-map identity, collision, visible movement and native parity remain unverified.
+- `Theron PCE Fast diagnostics`: sequence v3 movement-context rows with CD/memory hooks, record MPR0–MPR7 snapshots, and preserve authenticated CD-to-RAM joins when a matching movement-write row intervenes. The authentic JP cold start follows the System Card Run branch and binds two Track 02 byte windows to bank `$80`; this does not establish a game-owned handoff, movement, active-map identity, collision, visible movement or native parity.
 - `Startup documentation`: update the five-game evidence boundary and correct the superseded CSB Amiga inscription-gap entry.
 - `DM2 Macintosh media evidence`: rename the French-named SIT check to report its actual identity; its extracted application, resource forks and DMFiles match the English SIT, so a distinct French edition remains unverified.
 - `DM1 X68000`: update the real-media checksum probe while keeping private game data out of the repository.
 - `Nexus startup`: verify regional owner selection and matching supplemental media; document the production title-compositor receipt gate and retain it until source-bound display evidence exists.
+- `Nexus CUE-only startup`: verify direct CLI and pointer-menu handoff from authentic CUE/BIN tracks, and reject a selected non-Nexus CUE beside a valid Nexus disc.
+- `Nexus title evidence`: update the evidence record with complete 224-row samples for two VDP2 serials sharing one VDP1 frame label; the VDP1 receipt remains incomplete and no separate pixel images or renderer parity are claimed.
+- `Nexus frame-join verifier`: replace assert-only checks with explicit failures so validation stays active under optimized Python.
 - `Release metadata`: update the project version and reproducible SPDX source SBOM.
 
 ## Known limitations
 
-- `Nexus`: a CUE-only source without an authenticated ISO or extracted owner is still rejected by launcher admission. Saturn title composition and the playable game route remain gated.
-- `Theron's Quest`: the JP PCE Fast capture did not record a bounded position-write row; the active map and a positive movement transfer remain unverified.
+- `Nexus`: Saturn title composition and the playable game route remain gated; CUE-only admission verifies the media source but does not establish a playable viewport or HUD.
+- `Theron's Quest`: the JP PCE Fast captures do not establish active-map loading or a positive movement transfer; the bounded RAM-write capture does not establish candidate-byte meaning or native parity.
 - `DM1, CSB and DM2`: platform-wide viewport, HUD, audio and physical-display parity remain incomplete outside individually verified routes.
 - `DM2 Macintosh French`: the French-named SIT has not been verified as a distinct French edition or as French-edition runtime support.
 - Original game media, saves and firmware are not included in release packages.

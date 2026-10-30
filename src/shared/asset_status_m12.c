@@ -30,6 +30,7 @@
 #include "theron_v1_track02_raw_media_intake.h"
 
 #include <stdint.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -465,7 +466,10 @@ static const M12_VersionSpec g_nexusVersions[] = {
     {"nexus", "nexus-saturn-en-fan-v2", "Nexus Sega Saturn English fan translation v2", "Saturn EN v2", g_nexusEnglishIsoNames, "cf158b32f342c168fc570d36a0f1c637", M12_ARCH_SATURN},
     {"nexus", "nexus-saturn-fr-fan", "Nexus Sega Saturn French fan translation", "Saturn FR", g_nexusFrenchIsoNames, "2efb0e8c41f01dea3faa41328ce87f46", M12_ARCH_SATURN},
     {"nexus", "nexus-saturn-en-extracted", "Nexus Sega Saturn English (extracted resources)", "Saturn EN extracted", g_nexusArchiveNames, "", M12_ARCH_SATURN},
-    {"nexus", "nexus-saturn-fr-extracted", "Nexus Sega Saturn French (extracted resources)", "Saturn FR extracted", g_nexusArchiveNames, "", M12_ARCH_SATURN}
+    {"nexus", "nexus-saturn-fr-extracted", "Nexus Sega Saturn French (extracted resources)", "Saturn FR extracted", g_nexusArchiveNames, "", M12_ARCH_SATURN},
+    {"nexus", "nexus-saturn-jp-cue", "Nexus Sega Saturn Japanese CUE/BIN", "Saturn JP CUE", g_nexusArchiveNames, "", M12_ARCH_SATURN},
+    {"nexus", "nexus-saturn-en-cue", "Nexus Sega Saturn English CUE/BIN", "Saturn EN CUE", g_nexusEnglishIsoNames, "", M12_ARCH_SATURN},
+    {"nexus", "nexus-saturn-fr-cue", "Nexus Sega Saturn French CUE/BIN", "Saturn FR CUE", g_nexusFrenchIsoNames, "", M12_ARCH_SATURN}
 };
 
 typedef struct {
@@ -3612,11 +3616,18 @@ static int m12_dm2_virtual_path_has_native_owner(
 static int m12_source_runtime_root(const char* matchedPath,
                                    char* outPath, size_t outPathSize) {
     const char* separator;
+    const char* extension;
     size_t length;
     if (!matchedPath || !matchedPath[0] || !outPath || outPathSize == 0U) {
         return 0;
     }
     outPath[0] = '\0';
+    extension = strrchr(matchedPath, '.');
+    if (!strstr(matchedPath, "::") && extension &&
+        m12_ascii_equals_ignore_case(extension, ".cue")) {
+        m12_copy_string(outPath, outPathSize, matchedPath);
+        return 1;
+    }
     separator = strstr(matchedPath, "::");
     if (separator) {
         length = (size_t)(separator - matchedPath);
@@ -5488,6 +5499,359 @@ static int m12_nexus_find_extracted_owner_root(
     return 0;
 }
 
+#define M12_NEXUS_CUE_CANDIDATE_MAX 64U
+
+static int m12_nexus_path_has_cue_extension(const char* path) {
+    const char* extension = path ? strrchr(path, '.') : NULL;
+    return extension && m12_ascii_equals_ignore_case(extension, ".cue");
+}
+
+static int m12_nexus_collect_cue_paths(
+    const char* directory,
+    char paths[M12_NEXUS_CUE_CANDIDATE_MAX][M12_ASSET_DATA_DIR_CAPACITY],
+    size_t* outCount) {
+    size_t count = 0U;
+    if (outCount) *outCount = 0U;
+    if (!directory || !FSP_DirExists(directory) || !outCount) return 0;
+#ifdef _WIN32
+    {
+        WIN32_FIND_DATAA entry;
+        char pattern[M12_ASSET_DATA_DIR_CAPACITY];
+        HANDLE search;
+        if (!FSP_JoinPath(pattern, sizeof(pattern), directory, "*")) return 0;
+        search = FindFirstFileA(pattern, &entry);
+        if (search == INVALID_HANDLE_VALUE) {
+            DWORD error = GetLastError();
+            return error == ERROR_FILE_NOT_FOUND || error == ERROR_PATH_NOT_FOUND;
+        }
+        do {
+            char path[M12_ASSET_DATA_DIR_CAPACITY];
+            if ((entry.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0U ||
+                !m12_nexus_path_has_cue_extension(entry.cFileName)) continue;
+            if (count >= M12_NEXUS_CUE_CANDIDATE_MAX ||
+                !FSP_JoinPath(path, sizeof(path), directory, entry.cFileName) ||
+                !FSP_FileExists(path)) {
+                FindClose(search);
+                return 0;
+            }
+            m12_copy_string(paths[count++], M12_ASSET_DATA_DIR_CAPACITY, path);
+        } while (FindNextFileA(search, &entry));
+        if (GetLastError() != ERROR_NO_MORE_FILES) {
+            FindClose(search);
+            return 0;
+        }
+        FindClose(search);
+    }
+#else
+    {
+        DIR* dir = opendir(directory);
+        struct dirent* entry;
+        if (!dir) return 0;
+        for (;;) {
+            char path[M12_ASSET_DATA_DIR_CAPACITY];
+            errno = 0;
+            entry = readdir(dir);
+            if (!entry) {
+                int readError = errno;
+                if (closedir(dir) != 0 || readError != 0) return 0;
+                break;
+            }
+            if (!m12_nexus_path_has_cue_extension(entry->d_name)) continue;
+            if (!FSP_JoinPath(path, sizeof(path), directory, entry->d_name) ||
+                FSP_DirExists(path) || !FSP_FileExists(path) ||
+                count >= M12_NEXUS_CUE_CANDIDATE_MAX) {
+                closedir(dir);
+                return 0;
+            }
+            m12_copy_string(paths[count++], M12_ASSET_DATA_DIR_CAPACITY, path);
+        }
+    }
+#endif
+    {
+        size_t i;
+        for (i = 0U; i < count; ++i) {
+            size_t j = i;
+            while (j > 0U && strcmp(paths[j], paths[j - 1U]) < 0) {
+                char swap[M12_ASSET_DATA_DIR_CAPACITY];
+                memcpy(swap, paths[j], sizeof(swap));
+                memcpy(paths[j], paths[j - 1U], sizeof(swap));
+                memcpy(paths[j - 1U], swap, sizeof(swap));
+                --j;
+            }
+        }
+    }
+    *outCount = count;
+    return 1;
+}
+
+static int m12_nexus_iso_member_md5(Nexus_ISOReader* reader,
+                                    const char* memberName,
+                                    char outMd5[M12_ASSET_MD5_CAPACITY]) {
+    const Nexus_ISOFile* member;
+    uint8_t* bytes;
+    int readSize;
+    int result;
+    if (!reader || !memberName || !outMd5 ||
+        !(member = nexus_iso_find(reader, memberName)) || member->is_dir ||
+        member->size == 0U || member->size > 64U * 1024U * 1024U ||
+        member->size > (uint32_t)INT_MAX) return 0;
+    bytes = (uint8_t*)malloc((size_t)member->size);
+    if (!bytes) return 0;
+    readSize = nexus_iso_read_file(reader, member, bytes, (int)member->size);
+    result = readSize == (int)member->size &&
+        m12_bytes_md5_hex(bytes, (size_t)readSize, outMd5);
+    free(bytes);
+    return result;
+}
+
+static int m12_nexus_cue_version_index_for_region(
+    const M12_NexusExtractedRegionSpec* region) {
+    const char* cueVersionId;
+    if (!region || !region->versionId) return -1;
+    if (strcmp(region->versionId, "nexus-saturn-jp") == 0) {
+        cueVersionId = "nexus-saturn-jp-cue";
+    } else if (strcmp(region->versionId, "nexus-saturn-en-extracted") == 0) {
+        cueVersionId = "nexus-saturn-en-cue";
+    } else if (strcmp(region->versionId, "nexus-saturn-fr-extracted") == 0) {
+        cueVersionId = "nexus-saturn-fr-cue";
+    } else {
+        return -1;
+    }
+    return m12_nexus_extracted_profile_index(cueVersionId);
+}
+
+/* Region identity comes from the opened CUE data track, never its filename or
+ * neighboring files. The receipt proves that every declared payload exists;
+ * it does not authenticate the contents of CDDA tracks. */
+static int m12_nexus_resolve_cue_profile(
+    const char* cuePath,
+    int* outVersionIndex,
+    char outCueMd5[M12_ASSET_MD5_CAPACITY]) {
+    Nexus_ISOReader reader;
+    Nexus_ISO_CueMediaReceipt mediaReceipt;
+    char actualMd5[M12_ASSET_MD5_CAPACITY];
+    size_t regionIndex;
+    int opened;
+    if (outVersionIndex) *outVersionIndex = -1;
+    if (outCueMd5) outCueMd5[0] = '\0';
+    if (!cuePath || !m12_nexus_path_has_cue_extension(cuePath) ||
+        !FSP_FileExists(cuePath) || !outVersionIndex || !outCueMd5) return 0;
+    memset(&reader, 0, sizeof(reader));
+    opened = nexus_iso_open_cue(&reader, cuePath);
+    if (opened <= 0 || !nexus_iso_is_nexus(&reader) ||
+        nexus_iso_cue_media_receipt(cuePath, &mediaReceipt) != 0 ||
+        !mediaReceipt.valid || mediaReceipt.declared_file_count == 0 ||
+        !m12_nexus_iso_member_md5(&reader, "DM.BIN", actualMd5) ||
+        strcmp(actualMd5, "e88d60859f65f08fa622e1992b02280f") != 0 ||
+        !m12_nexus_iso_member_md5(&reader, "RLOWFIX.BIN", actualMd5)) {
+        nexus_iso_close(&reader);
+        return 0;
+    }
+    for (regionIndex = 0U;
+         g_nexusExtractedRegions[regionIndex].versionId;
+         ++regionIndex) {
+        static const char* const memberNames[] = {
+            "TITLE.BIN", "MENU.BPK", "FONT256.S2D", NULL
+        };
+        const M12_NexusExtractedRegionSpec* region =
+            &g_nexusExtractedRegions[regionIndex];
+        const char* expectedMd5;
+        int matchedMembers = 0;
+        size_t memberIndex;
+        int versionIndex;
+        if (strcmp(actualMd5, region->rlowfixMd5) != 0) continue;
+        for (memberIndex = 0U; memberNames[memberIndex]; ++memberIndex) {
+            const Nexus_ISOFile* member =
+                nexus_iso_find(&reader, memberNames[memberIndex]);
+            if (!member) continue;
+            expectedMd5 = memberIndex == 0U ? region->titleMd5
+                         : memberIndex == 1U ? region->menuMd5
+                                            : region->fontMd5;
+            if (!m12_nexus_iso_member_md5(&reader, memberNames[memberIndex],
+                                          actualMd5) ||
+                strcmp(actualMd5, expectedMd5) != 0) {
+                nexus_iso_close(&reader);
+                return 0;
+            }
+            ++matchedMembers;
+        }
+        versionIndex = matchedMembers >= 2
+            ? m12_nexus_cue_version_index_for_region(region) : -1;
+        if (versionIndex < 0 || !m12_file_md5_hex(cuePath, outCueMd5)) {
+            nexus_iso_close(&reader);
+            return 0;
+        }
+        *outVersionIndex = versionIndex;
+        nexus_iso_close(&reader);
+        return 1;
+    }
+    nexus_iso_close(&reader);
+    return 0;
+}
+
+static int m12_nexus_unique_cue_source_in_directory(
+    const char* directory,
+    char outCuePath[M12_ASSET_DATA_DIR_CAPACITY],
+    char outCueMd5[M12_ASSET_MD5_CAPACITY],
+    int* outVersionIndex) {
+    char paths[M12_NEXUS_CUE_CANDIDATE_MAX][M12_ASSET_DATA_DIR_CAPACITY];
+    char matchedPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char matchedMd5[M12_ASSET_MD5_CAPACITY];
+    size_t count = 0U;
+    size_t i;
+    int matched = 0;
+    if (outCuePath) outCuePath[0] = '\0';
+    if (outCueMd5) outCueMd5[0] = '\0';
+    if (outVersionIndex) *outVersionIndex = -1;
+    if (!outCuePath || !outCueMd5 || !outVersionIndex ||
+        !m12_nexus_collect_cue_paths(directory, paths, &count)) return 0;
+    for (i = 0U; i < count; ++i) {
+        int versionIndex = -1;
+        if (!m12_nexus_resolve_cue_profile(paths[i], &versionIndex,
+                                            matchedMd5)) continue;
+        if (matched++) return 0;
+        m12_copy_string(matchedPath, sizeof(matchedPath), paths[i]);
+        m12_copy_string(outCueMd5, M12_ASSET_MD5_CAPACITY, matchedMd5);
+        *outVersionIndex = versionIndex;
+    }
+    if (matched != 1) return 0;
+    m12_copy_string(outCuePath, M12_ASSET_DATA_DIR_CAPACITY, matchedPath);
+    return 1;
+}
+
+static int m12_nexus_cue_has_game_tree(const char* cuePath) {
+    Nexus_ISOReader reader;
+    int opened;
+    int isNexus;
+    if (!cuePath || !m12_nexus_path_has_cue_extension(cuePath)) return 0;
+    memset(&reader, 0, sizeof(reader));
+    opened = nexus_iso_open_cue(&reader, cuePath);
+    isNexus = opened > 0 && nexus_iso_is_nexus(&reader);
+    nexus_iso_close(&reader);
+    return isNexus;
+}
+
+static int m12_admit_nexus_cue_directory_sources(
+    M12_AssetStatus* status,
+    int gameIndex,
+    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
+    size_t rootCount) {
+    char directories[M12_SEARCH_ROOT_COUNT * 2U][M12_ASSET_DATA_DIR_CAPACITY];
+    char cuePaths[M12_ASSET_MAX_VERSIONS_PER_GAME]
+                 [M12_ASSET_DATA_DIR_CAPACITY];
+    char cueMd5s[M12_ASSET_MAX_VERSIONS_PER_GAME][M12_ASSET_MD5_CAPACITY];
+    unsigned int cueCounts[M12_ASSET_MAX_VERSIONS_PER_GAME] = {0U};
+    size_t directoryCount = 0U;
+    size_t rootIndex;
+    size_t directoryIndex;
+    size_t versionIndex;
+    int admitted = 0;
+    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
+        strcmp(g_games[gameIndex].gameId, "nexus") != 0) return 0;
+    /* Keep existing extracted, full-image, and archive owners authoritative.
+     * The menu selects its first matched catalogue row, so publishing CUE
+     * role data beside an earlier owner would split the visible receipt from
+     * the runtime source. CUE admission is the fallback when no such owner
+     * was found. */
+    for (versionIndex = 0U; versionIndex < g_games[gameIndex].versionCount;
+         ++versionIndex) {
+        if (status->versions[gameIndex][versionIndex].matched) return 0;
+    }
+    memset(directories, 0, sizeof(directories));
+    memset(cuePaths, 0, sizeof(cuePaths));
+    memset(cueMd5s, 0, sizeof(cueMd5s));
+    for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
+        char candidates[2][M12_ASSET_DATA_DIR_CAPACITY];
+        size_t candidateCount = 1U;
+        size_t candidateIndex;
+        char child[M12_ASSET_DATA_DIR_CAPACITY];
+        m12_copy_string(candidates[0], sizeof(candidates[0]), roots[rootIndex]);
+        if (FSP_JoinPath(child, sizeof(child), roots[rootIndex], "nexus") &&
+            FSP_DirExists(child)) {
+            m12_copy_string(candidates[candidateCount++],
+                            sizeof(candidates[0]), child);
+        }
+        for (candidateIndex = 0U; candidateIndex < candidateCount;
+             ++candidateIndex) {
+            size_t prior;
+            int duplicate = 0;
+            if (!FSP_DirExists(candidates[candidateIndex]) ||
+                m12_nexus_has_extracted_owner(candidates[candidateIndex])) continue;
+            for (prior = 0U; prior < directoryCount; ++prior) {
+                if (m12_same_path(directories[prior], candidates[candidateIndex])) {
+                    duplicate = 1;
+                    break;
+                }
+            }
+            if (!duplicate && directoryCount < M12_SEARCH_ROOT_COUNT * 2U) {
+                m12_copy_string(directories[directoryCount++],
+                                sizeof(directories[0]), candidates[candidateIndex]);
+            }
+        }
+    }
+    for (directoryIndex = 0U; directoryIndex < directoryCount; ++directoryIndex) {
+        char paths[M12_NEXUS_CUE_CANDIDATE_MAX]
+                  [M12_ASSET_DATA_DIR_CAPACITY];
+        size_t pathCount = 0U;
+        size_t pathIndex;
+        if (!m12_nexus_collect_cue_paths(directories[directoryIndex], paths,
+                                          &pathCount)) continue;
+        for (pathIndex = 0U; pathIndex < pathCount; ++pathIndex) {
+            int cueVersionIndex = -1;
+            char cueMd5[M12_ASSET_MD5_CAPACITY];
+            if (!m12_nexus_resolve_cue_profile(paths[pathIndex],
+                                                &cueVersionIndex, cueMd5) ||
+                cueVersionIndex < 0 ||
+                cueVersionIndex >= (int)g_games[gameIndex].versionCount) continue;
+            if (cueCounts[cueVersionIndex]++ == 0U) {
+                m12_copy_string(cuePaths[cueVersionIndex],
+                                sizeof(cuePaths[cueVersionIndex]), paths[pathIndex]);
+                m12_copy_string(cueMd5s[cueVersionIndex],
+                                sizeof(cueMd5s[cueVersionIndex]), cueMd5);
+            }
+        }
+    }
+    for (versionIndex = 0U; versionIndex < g_games[gameIndex].versionCount;
+         ++versionIndex) {
+        M12_AssetVersionStatus* version;
+        size_t requiredIndex;
+        if (cueCounts[versionIndex] != 1U) continue;
+        version = &status->versions[gameIndex][versionIndex];
+        version->matched = 1;
+        m12_copy_string(version->matchedPath, sizeof(version->matchedPath),
+                        cuePaths[versionIndex]);
+        m12_copy_string(version->matchedMd5, sizeof(version->matchedMd5),
+                        cueMd5s[versionIndex]);
+        m12_copy_string(status->runtimeDataDirs[gameIndex],
+                        sizeof(status->runtimeDataDirs[gameIndex]),
+                        cuePaths[versionIndex]);
+        status->originalFileCandidateFound = 1;
+        if (!admitted) {
+            for (requiredIndex = 0U;
+                 requiredIndex < status->requiredFileCounts[gameIndex];
+                 ++requiredIndex) {
+                M12_AssetRequiredFileStatus* required =
+                    &status->requiredFiles[gameIndex][requiredIndex];
+                if (!required->roleId || strcmp(required->roleId, "data") != 0) {
+                    continue;
+                }
+                required->matched = 1;
+                m12_copy_string(required->matchedPath,
+                                sizeof(required->matchedPath),
+                                cuePaths[versionIndex]);
+                m12_copy_string(required->sourcePath,
+                                sizeof(required->sourcePath),
+                                cuePaths[versionIndex]);
+                m12_copy_string(required->matchedHash,
+                                sizeof(required->matchedHash),
+                                cueMd5s[versionIndex]);
+            }
+        }
+        admitted = 1;
+    }
+    return admitted;
+}
+
 static int m12_nexus_path_is_fan_translation_container(const char* path) {
     char container[ASSET_PATH_MAX];
     char md5[M12_ASSET_MD5_CAPACITY];
@@ -5771,6 +6135,20 @@ static int m12_try_match_direct_nexus_request(
         m12_ascii_equals_ignore_case(requestedExtension, ".cue");
     explicitIsoRequest = FSP_FileExists(requestedDataDir) &&
         m12_ascii_equals_ignore_case(requestedExtension, ".iso");
+    if (explicitCueRequest) {
+        int versionIndex = -1;
+        if (!m12_nexus_resolve_cue_profile(requestedDataDir, &versionIndex,
+                                            matchedMd5) ||
+            versionIndex < 0) {
+            return 0;
+        }
+        m12_copy_string(matchedPath, M12_ASSET_DATA_DIR_CAPACITY,
+                        requestedDataDir);
+        m12_copy_string(runtimeRoot, M12_ASSET_DATA_DIR_CAPACITY,
+                        requestedDataDir);
+        if (outVersionIndex) *outVersionIndex = versionIndex;
+        return 1;
+    }
     if (FSP_FileExists(requestedDataDir)) {
         char md5[M12_ASSET_MD5_CAPACITY];
         int versionIndex = -1;
@@ -5821,7 +6199,7 @@ static int m12_try_match_direct_nexus_request(
      * if the owner exists but its region is incomplete or contradictory,
      * leave the direct request unresolved instead of relabeling it from a
      * neighboring ISO. Explicit CUE requests retain their existing path. */
-    if (!explicitCueRequest && m12_nexus_has_extracted_owner(scanRoot)) {
+    if (m12_nexus_has_extracted_owner(scanRoot)) {
         int versionIndex = -1;
         if (!m12_nexus_resolve_extracted_profile(
                 scanRoot, &versionIndex, matchedPath, matchedMd5)) {
@@ -5891,6 +6269,22 @@ static int m12_try_match_direct_nexus_request(
             if (outVersionIndex) {
                 *outVersionIndex = (int)i;
             }
+            return 1;
+        }
+    }
+    /* Preserve the existing source precedence when a complete ISO or
+     * extracted owner shares a directory with a CUE/BIN set. The menu scan
+     * also keeps the earlier ISO catalogue row as its selected source. */
+    {
+        int cueVersionIndex = -1;
+        char cuePath[M12_ASSET_DATA_DIR_CAPACITY];
+        char cueMd5[M12_ASSET_MD5_CAPACITY];
+        if (m12_nexus_unique_cue_source_in_directory(
+                scanRoot, cuePath, cueMd5, &cueVersionIndex)) {
+            m12_copy_string(matchedPath, M12_ASSET_DATA_DIR_CAPACITY, cuePath);
+            m12_copy_string(matchedMd5, M12_ASSET_MD5_CAPACITY, cueMd5);
+            m12_copy_string(runtimeRoot, M12_ASSET_DATA_DIR_CAPACITY, cuePath);
+            if (outVersionIndex) *outVersionIndex = cueVersionIndex;
             return 1;
         }
     }
@@ -8684,6 +9078,28 @@ static int m12_scan_direct_nexus_request(M12_AssetStatus* status,
     return 1;
 }
 
+static void m12_publish_rejected_direct_nexus_cue(
+    M12_AssetStatus* status,
+    const char* cuePath) {
+    int nexusIndex = m12_game_index_from_id("nexus");
+    int gameIndex;
+    if (!status || nexusIndex < 0) return;
+    memset(status, 0, sizeof(*status));
+    FirestaffTheronMedia_Init(&status->theronMedia);
+    m12_scan_progress_init(&status->scanProgress);
+    m12_copy_string(status->dataDir, sizeof(status->dataDir), cuePath);
+    for (gameIndex = 0; gameIndex < M12_ASSET_GAME_COUNT; ++gameIndex) {
+        m12_copy_string(status->runtimeDataDirs[gameIndex],
+                        sizeof(status->runtimeDataDirs[gameIndex]), cuePath);
+    }
+    m12_init_version_metadata(status);
+    for (gameIndex = 0; gameIndex < M12_ASSET_GAME_COUNT; ++gameIndex) {
+        m12_init_required_file_metadata(status, gameIndex);
+    }
+    m12_apply_required_game_availability(status, nexusIndex, 0);
+    m12_scan_progress_finish(status, 1, 0);
+}
+
 static int m12_scan_explicit_file_request(M12_AssetStatus* status,
                                           const char* requestedDataDir,
                                           const M12_AssetStatusScanOptions* options) {
@@ -9064,6 +9480,12 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
         m12_scan_progress_finish(status, 1, 0);
         return 1;
     }
+    if (m12_nexus_cue_has_game_tree(requestedDataDir)) {
+        /* A structurally recognized but region-unverified Nexus CUE must not
+         * fall through to a sibling full image or unrelated extracted tree. */
+        m12_publish_rejected_direct_nexus_cue(status, requestedDataDir);
+        return 1;
+    }
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING
     if (requestedDataDir &&
         (m12_ascii_equals_ignore_case(strrchr(requestedDataDir, '.'), ".zip") ||
@@ -9270,6 +9692,8 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
                                                skipNestedArchiveScan);
         int nexusArchiveAdmitted = strcmp(g_games[i].gameId, "nexus") == 0 &&
             m12_admit_nexus_7z_directory_source(status, i, roots, rootCount);
+        int nexusCueAdmitted = strcmp(g_games[i].gameId, "nexus") == 0 &&
+            m12_admit_nexus_cue_directory_sources(status, i, roots, rootCount);
         if (nexusArchiveAdmitted) {
             size_t requiredIndex;
             reqMatch = 1;
@@ -9293,6 +9717,7 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
                 }
             }
         }
+        if (nexusCueAdmitted) reqMatch = 1;
         if (strcmp(g_games[i].gameId, "dm1") == 0) {
             size_t requiredIndex;
             m12_publish_dm1_required_owner(status, i, 0);
@@ -9535,6 +9960,7 @@ void M12_AssetStatus_ScanGameWithOptions(
                "Dungeon-Master-II-Skullkeep_PC-9821_JA.zip") != NULL &&
         FSP_FileExists(requestedDataDir) && !FSP_DirExists(requestedDataDir);
     int nexusArchiveAdmitted = 0;
+    int nexusCueAdmitted = 0;
     int reqMatch;
     M12_ScanProgressContext progressCtx;
     int i;
@@ -9568,6 +9994,14 @@ void M12_AssetStatus_ScanGameWithOptions(
         }
         if (m12_scan_direct_nexus_request(status, nexusRequestedDir,
                                           requestedDataDir)) {
+            return;
+        }
+        if (FSP_FileExists(nexusRequestedDir) &&
+            m12_nexus_path_has_cue_extension(nexusRequestedDir)) {
+            /* An explicitly selected CUE is terminal media selection. If its
+             * own data track does not authenticate as Nexus, do not scan its
+             * parent and silently launch a sibling disc or extracted tree. */
+            m12_publish_rejected_direct_nexus_cue(status, nexusRequestedDir);
             return;
         }
     }
@@ -9780,6 +10214,11 @@ void M12_AssetStatus_ScanGameWithOptions(
                                 "cf158b32f342c168fc570d36a0f1c637");
             }
         }
+    }
+    if (strcmp(g_games[gameIndex].gameId, "nexus") == 0) {
+        nexusCueAdmitted = m12_admit_nexus_cue_directory_sources(
+            status, gameIndex, roots, rootCount);
+        if (nexusCueAdmitted) reqMatch = 1;
     }
     if (strcmp(g_games[gameIndex].gameId, "dm1") == 0) {
         size_t requiredIndex;

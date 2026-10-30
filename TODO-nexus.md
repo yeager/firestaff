@@ -393,11 +393,22 @@ extraction.
 These checks do not establish a playable title/menu or open the compositor
 gate.
 
-One CLI admission gap remains: a directory containing only an authentic CUE
-and its referenced tracks, with no canonical full ISO or extracted Nexus
-members, is still rejected by M12 before the Nexus engine can open the CUE.
-The engine's CUE reader is not sufficient to claim launcher support. Add
-source-bound CUE admission before documenting this layout as launchable.
+## 2026-10-30 — Admit source-bound Saturn CUE/BIN media
+
+Resolved the CUE-only CLI/menu admission gap. M12 now authenticates the opened
+CUE's data track as Nexus from canonical `DM.BIN`, regional `RLOWFIX.BIN`, and
+at least two agreeing localized `TITLE.BIN`, `MENU.BPK`, and `FONT256.S2D`
+fingerprints. It checks that every payload declared by the CUE exists and
+keeps the exact CUE path as the runtime owner. Existing extracted and full
+image owners retain precedence; an explicitly selected unverified CUE fails
+closed instead of selecting a sibling disc.
+
+On TRV2, `nexus_v1_native_menu_mouse_title` passed with authentic Japanese
+retail media. The regression isolated the CUE and its original tracks by
+symlink and verified both direct CLI and mouse-menu handoff, then selected an
+authentic DM2 CUE beside the valid Nexus disc and verified that Nexus refused
+the mismatched selection. Both valid routes still stop at the existing
+capture-gated Nexus title; this change does not make the game playable.
 
 - Implement the observed retail title-menu input flow in Firestaff and identify
   the display consumer that places menu and face material.

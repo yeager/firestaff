@@ -1,5 +1,21 @@
 # Firestaff DONE — Nexus
 
+## 2026-10-30 — Admit authentic CUE-only Nexus media
+
+- M12 now binds a Saturn CUE/BIN source to its own ISO data track and admits
+  its region only when canonical `DM.BIN`, regional `RLOWFIX.BIN`, and at
+  least two localized title/menu/font hashes agree. Every CUE-declared media
+  file must be present.
+- Existing extracted or recognized full-image owners keep precedence. A
+  directly selected unverified CUE is terminal and cannot fall through to a
+  sibling Nexus disc.
+- The authentic-media `nexus_v1_native_menu_mouse_title` regression passed
+  on TRV2 for direct CLI and pointer-menu routes from an isolated Japanese
+  CUE/BIN set and for rejection of an authentic non-Nexus CUE beside a valid
+  Nexus sibling.
+- The engine reaches the established title compositor gate. Nexus still
+  does not have a verified playable viewport/HUD path.
+
 ## 2026-10-29 — Verify regional ownership for extracted Saturn resources
 
 - M12 now distinguishes extracted Japanese, English, and French Nexus data by
@@ -15,8 +31,8 @@
   extracted region and supplemental CUE; the canonical EN ISO menu route
   retained its full-image edition. No game-media bytes were modified.
 - This does not open the native title/menu compositor gate. A standalone CUE
-  with its referenced tracks but without a recognized ISO or extracted owner
-  is still rejected by M12; direct CUE-only launcher admission remains open.
+  with its referenced tracks is now recognized, but the game still does not
+  have a verified playable viewport/HUD path.
 
 ## 2026-10-29 — Identify the authentic BKR health pair
 

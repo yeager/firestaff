@@ -41,10 +41,21 @@ case "$extracted_region" in
         regional_cue="$data_root/Dungeon Master Nexus (French).cue"
         regional_iso="$data_root/Dungeon Master Nexus (French).iso"
         ;;
-    *) expected_edition=; regional_cue=; regional_iso= ;;
+    *)
+        regional_cue="$data_root/Dungeon Master Nexus (Japan).cue"
+        regional_iso=
+        if [ -f "$regional_cue" ]; then
+            expected_edition=nexus-saturn-jp-cue
+        else
+            expected_edition=; regional_cue=; regional_iso=
+        fi
+        ;;
 esac
 expected_source=extracted
 expected_iso_edition=
+case "$expected_edition" in
+    *-cue) expected_source=ISO ;;
+esac
 if [ -f "$regional_iso" ]; then
     expected_iso_edition="$(python3 - "$regional_iso" <<'PY'
 import hashlib
@@ -98,7 +109,7 @@ output="$(HOME="$test_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 }
 
 expected_handoff_edition=$expected_edition
-if [ "$expected_source" = ISO ]; then
+if [ "$expected_source" = ISO ] && [ -n "$expected_iso_edition" ]; then
     expected_handoff_edition=$expected_iso_edition
 fi
 if ! grep -Fq 'NEXUS STARTUP RECEIPT: status=blocked gameId=nexus' <<< "$output" ||
@@ -183,6 +194,139 @@ if grep -Fq 'launch failed' <<< "$quiet_output" ||
     exit 1
 fi
 echo 'PASS: authentic Nexus menu launch keeps startup receipt quiet without --debug'
+
+# Retain the authentic Japanese retail disc in its original CUE/BIN layout.
+# This isolated owner must not borrow the extracted tree or neighboring discs
+# from the user's full Nexus corpus.
+japan_cue="$data_root/Dungeon Master Nexus (Japan).cue"
+if [ -f "$japan_cue" ]; then
+    cue_only_root="$test_home/japan-cue-only"
+    cue_only_home="$test_home/japan-cue-only-home"
+    mkdir -p "$cue_only_root" "$cue_only_home"
+    python3 - "$japan_cue" "$cue_only_root" <<'PY'
+import pathlib
+import re
+import sys
+
+cue = pathlib.Path(sys.argv[1])
+destination = pathlib.Path(sys.argv[2])
+for line in cue.read_text(errors="strict").splitlines():
+    match = re.match(r'\s*FILE\s+(?:"([^"]+)"|([^\s]+))', line, re.IGNORECASE)
+    if not match:
+        continue
+    source = cue.parent / (match.group(1) or match.group(2))
+    if not source.is_file():
+        raise SystemExit(f"Missing authentic Nexus CUE payload: {source}")
+    target = destination / source.name
+    if not target.exists():
+        target.symlink_to(source)
+target = destination / cue.name
+if not target.exists():
+    target.symlink_to(cue)
+PY
+
+    direct_cue_output="$(HOME="$cue_only_home" \
+        FIRESTAFF_CONFIG_PATH="$cue_only_home/config.toml" \
+        FIRESTAFF_DATA="$cue_only_root" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        "$firestaff_cli" --debug --game nexus --platform saturn \
+        --data-dir "$cue_only_root/Dungeon Master Nexus (Japan).cue" \
+        --boot-probe --boot-probe-frames 0 2>&1)" || {
+        printf '%s\n' "$direct_cue_output" >&2
+        exit 1
+    }
+    if ! grep -Fq 'Nexus V1 engine initialized (source: ISO)' <<< "$direct_cue_output" ||
+       ! grep -Fq 'selected game=nexus platform=Saturn edition=nexus-saturn-jp-cue' <<< "$direct_cue_output" ||
+       ! grep -Fq 'blocker=title-vdp-owner-compositor-capture-required' <<< "$direct_cue_output" ||
+       grep -Fq 'launch phase=runtime-entered game=nexus' <<< "$direct_cue_output"; then
+        echo "FAIL: direct authentic CUE launch did not retain the source-bound title gate" >&2
+        printf '%s\n' "$direct_cue_output" >&2
+        exit 1
+    fi
+
+    menu_cue_output="$(HOME="$cue_only_home" \
+        FIRESTAFF_CONFIG_PATH="$cue_only_home/menu-config.toml" \
+        FIRESTAFF_DATA="$cue_only_root" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+        FIRESTAFF_EXIT_AFTER_LAUNCH=1 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        "$firestaff_cli" --debug --width 1920 --height 1080 --menu --game nexus \
+        --platform saturn --data-dir "$cue_only_root" \
+        --script 'wait20,click:700:728,wait20,click:410:405,wait20,click:450:405,wait20' \
+        --duration 12000 2>&1)" || {
+        printf '%s\n' "$menu_cue_output" >&2
+        exit 1
+    }
+    if ! grep -Fq 'NEXUS STARTUP RECEIPT: status=blocked gameId=nexus' <<< "$menu_cue_output" ||
+       ! grep -Fq 'blocker=title-vdp-owner-compositor-capture-required' <<< "$menu_cue_output" ||
+       ! grep -Fq 'launch phase=game-handoff mode=menu game=nexus platform=Saturn edition=nexus-saturn-jp-cue' <<< "$menu_cue_output" ||
+       ! grep -Fq 'Nexus V1 engine initialized (source: ISO)' <<< "$menu_cue_output" ||
+       grep -Fq 'launch phase=runtime-entered game=nexus' <<< "$menu_cue_output"; then
+        echo "FAIL: CUE-only real-media menu route did not reach the authentic capture-gated title" >&2
+        printf '%s\n' "$menu_cue_output" >&2
+        exit 1
+    fi
+    echo "PASS: direct CLI and menu routes admit the authentic Nexus CUE/BIN-only owner"
+else
+    echo "SKIP: authentic Japanese Nexus CUE/BIN-only route is unavailable"
+fi
+
+# Selecting an authentic CUE for a different game must remain terminal even
+# if a valid Nexus disc is next to it. This catches fallback that would launch
+# the sibling instead of rejecting the selected owner.
+game_data_root="${FIRESTAFF_DATA:-$(dirname "$data_root")}"
+wrong_game_cue=
+for candidate in "$game_data_root"/dm2/*/*.cue "$game_data_root"/dm2/*.cue; do
+    [ -f "$candidate" ] || continue
+    wrong_game_cue=$candidate
+    break
+done
+if [ -n "$wrong_game_cue" ] && [ -f "$japan_cue" ]; then
+    wrong_cue_root="$test_home/wrong-game-cue-with-nexus-sibling"
+    wrong_cue_home="$test_home/wrong-game-cue-home"
+    mkdir -p "$wrong_cue_root" "$wrong_cue_home"
+    python3 - "$wrong_game_cue" "$japan_cue" "$wrong_cue_root" <<'PY'
+import pathlib
+import re
+import sys
+
+destination = pathlib.Path(sys.argv[3])
+for cue_name in sys.argv[1:3]:
+    cue = pathlib.Path(cue_name)
+    for line in cue.read_text(errors="strict").splitlines():
+        match = re.match(r'\s*FILE\s+(?:"([^"]+)"|([^\s]+))', line, re.IGNORECASE)
+        if not match:
+            continue
+        source = cue.parent / (match.group(1) or match.group(2))
+        if not source.is_file():
+            raise SystemExit(f"Missing authentic CUE payload: {source}")
+        target = destination / source.name
+        if not target.exists():
+            target.symlink_to(source)
+    target = destination / cue.name
+    if not target.exists():
+        target.symlink_to(cue)
+PY
+    wrong_game_output=
+    if wrong_game_output="$(HOME="$wrong_cue_home" \
+        FIRESTAFF_CONFIG_PATH="$wrong_cue_home/config.toml" \
+        FIRESTAFF_DATA="$wrong_cue_root" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+        "$firestaff_cli" --debug --game nexus --platform saturn \
+        --data-dir "$wrong_cue_root/$(basename "$wrong_game_cue")" \
+        --boot-probe --boot-probe-frames 0 2>&1)"; then
+        echo "FAIL: Nexus launch accepted a selected non-Nexus CUE beside valid Nexus media" >&2
+        printf '%s\n' "$wrong_game_output" >&2
+        exit 1
+    fi
+    if grep -Fq 'Nexus V1 engine initialized' <<< "$wrong_game_output" ||
+       grep -Fq 'launch phase=runtime-entered game=nexus' <<< "$wrong_game_output"; then
+        echo "FAIL: invalid selected CUE silently fell back to its Nexus sibling" >&2
+        printf '%s\n' "$wrong_game_output" >&2
+        exit 1
+    fi
+    echo "PASS: explicit authentic non-Nexus CUE does not fall back to a sibling Nexus disc"
+else
+    echo "SKIP: authentic DM2 CUE is unavailable for explicit-source rejection"
+fi
 
 # Explicit DM.BIN selection can resolve through the extracted tree while
 # several regional discs sit beside it. Bind any supplemental disc to the

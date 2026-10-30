@@ -1,13 +1,14 @@
 # Five-game startup support gap analysis
 
 Evidence metadata refreshed on 2026-10-30 for the v3.0.421 candidate, based on
-the successful PR #202 merge to `main` at `9de6898a1` plus the local Nexus
-regional-owner fix. The latest published release remains v3.0.420 (published
-2026-10-29 from tag commit `8224d5c8`); the candidate contains later source
-changes that are not in that package. The v3.0.420 workflow verifies
-packaging, not gameplay startup. The route records below are individually
-dated and establish only the named checks, not every edition or complete game
-parity. Real-media Swedish startup-debug localization checks cover DM1 PC34,
+`main` at `705c9b1a429680a8586fce2e5ca16414c1cf7afe` plus the candidate's
+unpublished Nexus CUE-only admission change from `76ffafc5c`. The latest published release
+remains v3.0.420 (published 2026-10-29 from tag commit
+`8224d5c8`); the candidate contains later source changes that are not in that
+package. The v3.0.420 workflow verifies packaging, not gameplay startup. The
+route records below are individually dated and establish only the named
+checks, not every edition or complete game parity. Real-media Swedish
+startup-debug localization checks cover DM1 PC34,
 CSB FM Towns, and DM2 FM Towns; these test explicit and saved preferences,
 localized scan labels, edition selection, and the boot-probe boundary, not full
 gameplay parity.
@@ -60,6 +61,20 @@ filled spans are excluded. The source join remains partial, with menu
 background, full palette/display ownership, and destination execution
 unproven. Runtime receipts cited below remain tied to their stated revisions
 unless noted otherwise.
+
+### 2026-10-30 Nexus Japanese CUE-only CLI and menu admission
+
+On TRV2, the updated native menu regression built against authentic original
+media and passed `nexus_v1_native_menu_mouse_title` (CTest 1/1). It verifies
+direct CLI launch and M12 selection for a Japanese Nexus disc supplied only
+as its authentic CUE/BIN files; both preserve the exact selected CUE as the
+runtime media owner. The regression also selects an authentic non-Nexus DM2
+CUE while valid Nexus media is present and verifies that admission fails
+closed instead of silently switching discs. The resulting Nexus receipt still
+stops at `title-vdp-owner-compositor-capture-required`: this closes a media
+admission and menu-handoff gap, not the title compositor, viewport/HUD, or
+playable-game gaps. No synthetic game image or trace data is used by these
+cases.
 
 ### 2026-10-30 DM1/CSB/DM2 real-media startup sweep
 
@@ -354,7 +369,7 @@ HUD, audio, physical-input, or full-gameplay gaps.
 | CSB | Current-source authentic-media CLI routes pass for Atari STX, original Atari, nested Atari ZIP, Atari Utility Disk 7z/Hint Oracle, Amiga A31E/A33M/A35E/CTRaw, and FM Towns English/Japanese. The Atari French archive is absent. | The picker test covers keyboard and mouse handoff; the runtime test checks the authentic starting party and viewport receipt. | First runtime is verified on bounded routes. In Amiga CSB, F0107 now uses source MEDIA720 scales and authentic Amiga C696 anchors for M615 ornaments; matched-frame, palette/light, trapdoor and platform-wide viewport parity remain open ([evidence and remaining gap](../TODO-csb.md)). Native physical input remains open. |
 | DM2 | Current-source direct CLI routes pass for the original DOS English archive and the French DOS ZIP, Macintosh English extracted files, FM Towns Japanese, and Amiga English ZIP. The French-named Macintosh SIT also reaches runtime, but its extracted app, resource forks and DMFiles match the English SIT byte-for-byte; do not count it as French-edition evidence. | The picker test covers keyboard and mouse handoff for PC and FM Towns Japanese; Amiga has a no-game M12 runtime test; the Macintosh English regression covers extracted-file M12 launch. | First runtime is verified on bounded routes, including DOS English/French, Macintosh English, FM Towns Japanese, and Amiga English. Macintosh French identity and runtime remain unverified; physical input, native presentation and full edition parity remain open ([`TODO-dm2.md`](../TODO-dm2.md)). |
 | Theron | Authentic Japanese Rev. 1 Track 02 reaches the native title → stage → Soul Room → Akutuba runtime route. The US Continue path restores an authentic save and reaches dungeon 2, level 0; all seven dungeon sources load from authentic regional media. | The picker test covers keyboard and mouse handoff; the runtime test checks a loaded authentic Track 02 state. The US no-game M12 route and Japanese Track 02 SDL test exercise authentic startup/input paths. Tab champion cycling and Z/X/Space exercise keyboard actions on authentic USA Track 02; the Japanese Track 02 SDL test covers swipe-up movement and swipe-left turning. The authentic US raw-bin regression checks backward followed by KP8 forward to the source-backed starting square. An authentic USA Ak-Tu-Ba save-state replay under standard PCE confirmed Button I queues `$50` at `$2905` and the guest consumes it; Button II did not. The save-state capture has no CD-to-RAM provenance and does not bind that dispatch to a world-state change, so it proves command-queue dispatch only. Separate bounded US reference cold starts reached only the System Card; they do not establish a game-owned menu transition. | Runtime state, native frames and bounded input routes are reached, but the native dungeon image is not yet driven by the authenticated world/graphics state. A recent nonblack Firestaff capture has not been paired with an original-emulator capture. Later progression, full save semantics, audio and end-to-end parity remain open. |
-| Nexus | Direct `--game nexus` reaches the title with `levelLoaded=0`. From the M11 retail menu, authentic New Game input now parses hash-verified `DM.BIN`, loads hash-verified `LEV01.DGN`, validates `(29,47,North)`, and emits a level-start receipt. The viewport/HUD handoff still fails closed and restores the title, so this is not a playable runtime. Firestaff renders source-bound English and Japanese New Game/Continue foreground sprites and selected Configuration sprites from authentic `TITLE.BIN`; Japanese Configuration mouse selection is verified. The shared title background and full-screen composition remain unbound. | Authentic Ymir cold boots reach the Japanese and English three-choice menu; a separate Japanese retail replay reaches the native 3D corridor after New Game. These are reference captures, not Firestaff gameplay. Firestaff's M11 New Game route is verified to the loader receipt, but not to a presented viewport. Continue/save loading and Configuration destination behavior remain open. | **Not startable as a playable game yet.** Source-bound menu foregrounds and the retail level-start loader are present; no Firestaff Nexus viewport, HUD, or playable gameplay route is verified. See [`TODO-nexus.md`](../TODO-nexus.md) and [`NEXUS_STRICT_FIDELITY_INVENTORY.md`](nexus/NEXUS_STRICT_FIDELITY_INVENTORY.md#startup). |
+| Nexus | Direct `--game nexus` reaches the title with `levelLoaded=0`. Authentic CUE-only JP retail media now reaches the same capture-gated title through direct CLI and pointer-menu handoff. From the M11 retail menu, authentic New Game input parses hash-verified `DM.BIN`, loads hash-verified `LEV01.DGN`, validates `(29,47,North)`, and emits a level-start receipt. The viewport/HUD handoff still fails closed and restores the title, so this is not a playable runtime. Firestaff renders source-bound English and Japanese New Game/Continue foreground sprites and selected Configuration sprites from authentic `TITLE.BIN`; Japanese Configuration mouse selection is verified. The shared title background and full-screen composition remain unbound. | Authentic Ymir cold boots reach the Japanese and English three-choice menu; a separate Japanese retail replay reaches the native 3D corridor after New Game. These are reference captures, not Firestaff gameplay. Firestaff's M11 New Game route is verified to the loader receipt, but not to a presented viewport. Continue/save loading and Configuration destination behavior remain open. | **Not playable yet.** CLI and menu now admit the authentic CUE-only layout, but no Firestaff Nexus viewport, HUD, or playable gameplay route is verified. See [`TODO-nexus.md`](../TODO-nexus.md) and [`NEXUS_STRICT_FIDELITY_INVENTORY.md`](nexus/NEXUS_STRICT_FIDELITY_INVENTORY.md#startup). |
 
 ## What the existing checks prove
 
@@ -672,9 +687,10 @@ resource hashes, and the engine admits only supplemental media with the
 canonical shared `DM.BIN` and matching regional members. The authentic JP and
 staged EN menu tests passed on TRV2; the EN case also rejected the authentic
 Japanese CUE as supplemental media.
-The title compositor gate remains closed. A CUE-only data root without a
-recognized full ISO or extracted owner is still rejected by M12 before the
-engine can open it. See [Nexus TODO](../TODO-nexus.md#2026-10-29--keep-extracted-nexus-resources-and-supplemental-media-in-one-region).
+The title compositor gate remains closed. A source-bound CUE-only route is
+now verified for direct CLI and pointer-menu handoff using authentic Japanese
+retail media. A selected authentic DM2 CUE beside that Nexus disc is rejected
+instead of falling back to the sibling. See [Nexus TODO](../TODO-nexus.md#2026-10-30--admit-source-bound-saturn-cuebin-media).
 
 These results update the earlier isolated rerun above, which did not include
 Nexus or Theron. They do not establish native window presentation, audible
