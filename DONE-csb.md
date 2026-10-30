@@ -1,3 +1,12 @@
+- 2026-10-30: The authentic CSB Amiga 3.5 menu test now covers both keyboard
+  and pointer selection. Its pointer session clicks the CSB cover, the Amiga
+  platform card, and Custom, cycles the rendered version tile to the matched
+  Amiga 3.5 English edition, then clicks Launch and verifies the exact launch
+  intent. `m12_csb_amiga_version_menu_real_media` passes against the installed
+  original archive. This exercises M12's production pointer handler and real
+  media scan; it does not test OS-delivered physical mouse events or gameplay
+  parity.
+
 - 2026-10-24: CSB startup title and Entrance now retain elapsed source-VBlank
   debt across a blocking host presentation. The loop advances all due source
   ticks and composes the newest state once, allowing intermediate frames to
