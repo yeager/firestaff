@@ -1,3 +1,11 @@
+- 2026-10-30: Added and ran `csb_v1_atari_only_auto_start` against the
+  authentic Atari ST software archive. With an isolated data root containing
+  only that archive, bare `--game csb` AUTO startup and the no-game M12 picker
+  both selected `st20-21-en` and handed off to `atari-st-animate-ftlcode`.
+  The test verifies the source archive hash is unchanged. This closes the
+  Atari-only AUTO selection and menu-handoff coverage gap; it does not verify
+  further runtime or gameplay parity.
+
 - 2026-10-30: Added and ran an authentic no-game M12 runtime regression for
   CSB Amiga 3.1/3.3 multilingual. It selects the Amiga multilingual edition
   from the original software archive, chooses English in the source language
