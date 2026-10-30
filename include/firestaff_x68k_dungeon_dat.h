@@ -53,6 +53,13 @@ typedef struct {
     uint16_t trailing_checksum;
 } FirestaffX68kDungeonDat;
 
+typedef enum {
+    FIRESTAFF_X68K_DUNGEON_MAP_CREATURE_TYPE = 0,
+    FIRESTAFF_X68K_DUNGEON_MAP_WALL_ORNAMENT = 1,
+    FIRESTAFF_X68K_DUNGEON_MAP_FLOOR_ORNAMENT = 2,
+    FIRESTAFF_X68K_DUNGEON_MAP_DOOR_ORNAMENT = 3
+} FirestaffX68kDungeonDatMapMetadataKind;
+
 /*
  * Opens only the raw, uncompressed X30J file. An optional 0x8104 compressed
  * envelope is rejected; callers must not pass it to a different-platform
@@ -62,6 +69,34 @@ typedef struct {
 int FirestaffX68kDungeonDat_OpenRaw(const uint8_t *bytes,
                                     size_t size,
                                     FirestaffX68kDungeonDat *out);
+
+/*
+ * Read the native column-major square byte. ReDMCSB LOADSAVE.C:2161-2163
+ * advances each column by Height+1; DUNGEON.C F0151 returns that byte for
+ * in-bounds coordinates.
+ */
+int FirestaffX68kDungeonDat_GetSquare(const FirestaffX68kDungeonDat *dungeon,
+                                      uint8_t map_index,
+                                      uint8_t map_x,
+                                      uint8_t map_y,
+                                      uint8_t *out_square);
+
+/* Read map-local trailing metadata in ReDMCSB F0174 order: creature types,
+ * wall ornaments, floor ornaments, then door ornaments (DUNGEON.C:2755-2760).
+ */
+int FirestaffX68kDungeonDat_GetMapMetadata(
+    const FirestaffX68kDungeonDat *dungeon,
+    uint8_t map_index,
+    FirestaffX68kDungeonDatMapMetadataKind kind,
+    uint8_t item_index,
+    uint8_t *out_value);
+
+/* Decode the X30J DUNGEON_HEADER.InitialPartyLocation bit fields. */
+int FirestaffX68kDungeonDat_GetInitialPartyLocation(
+    const FirestaffX68kDungeonDat *dungeon,
+    uint8_t *out_map_x,
+    uint8_t *out_map_y,
+    uint8_t *out_direction);
 
 #ifdef __cplusplus
 }

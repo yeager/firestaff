@@ -1,5 +1,17 @@
 # Firestaff TODO — DM1
 
+2026-10-30 X68000 raw map access step: ReDMCSB `LOADSAVE.C:2161-2163`
+constructs each map as column pointers advanced by `Height+1`, while
+`DUNGEON.C F0151` returns the byte at an in-bounds `(MapX, MapY)` coordinate.
+The authentic X30J parser now exposes bounded accessors for column-major
+square bytes, the four trailing map metadata arrays in `F0174` order, and the
+initial party location bit fields documented by `DEFS.H:998`. The original
+cracked HDM real-media test checks every square and metadata item across all 14
+maps and confirms start `(1,3)`, facing south. This is source-layout/import
+coverage only; no X68000 runtime, rendering, input, or M12 launch path is
+provided. Remaining work includes source-typed square/thing decoding and the
+runtime/resource launch route; do not advertise X68000 support yet.
+
 2026-10-30 startup/platform audit: the local original-media inventory includes
 `Game,Dungeon_Master,JP,X68000,Software.7z` (X68000 Japanese v3.0 cracked HDM,
 the separately labeled non-working original HDM, and a save-disk HDM) and

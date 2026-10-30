@@ -177,3 +177,134 @@ int FirestaffX68kDungeonDat_OpenRaw(const uint8_t *bytes,
     *out = parsed;
     return 0;
 }
+
+int FirestaffX68kDungeonDat_GetSquare(const FirestaffX68kDungeonDat *dungeon,
+                                      uint8_t map_index,
+                                      uint8_t map_x,
+                                      uint8_t map_y,
+                                      uint8_t *out_square) {
+    const FirestaffX68kDungeonDatMap *map;
+    size_t grid_size;
+    size_t index;
+    size_t raw_end;
+
+    if (!dungeon || !out_square || !dungeon->bytes ||
+        map_index >= dungeon->map_count ||
+        map_index >= FIRESTAFF_X68K_DUNGEON_MAX_MAPS) {
+        return -1;
+    }
+    map = &dungeon->maps[map_index];
+    if (map_x >= map->width || map_y >= map->height ||
+        map->width == 0u || map->height == 0u ||
+        dungeon->raw_map_data.offset > dungeon->size ||
+        dungeon->raw_map_data.size > dungeon->size -
+                                             dungeon->raw_map_data.offset ||
+        map->raw_map_offset > dungeon->raw_map_data.size) {
+        return -1;
+    }
+    grid_size = (size_t)map->width * (size_t)map->height;
+    if (grid_size > map->raw_map_span_size ||
+        grid_size > dungeon->raw_map_data.size ||
+        (size_t)map->raw_map_offset >
+            dungeon->raw_map_data.size - grid_size ||
+        map->raw_map_span_size > dungeon->raw_map_data.size -
+                                     (size_t)map->raw_map_offset) {
+        return -1;
+    }
+    /* X30J stores one complete column at a time, then advances by height. */
+    index = (size_t)map->raw_map_offset +
+            (size_t)map_x * (size_t)map->height + (size_t)map_y;
+    raw_end = dungeon->raw_map_data.offset +
+              dungeon->raw_map_data.size;
+    if (index >= (size_t)map->raw_map_offset + grid_size ||
+        dungeon->raw_map_data.offset + index >= raw_end) {
+        return -1;
+    }
+    *out_square = dungeon->bytes[dungeon->raw_map_data.offset + index];
+    return 0;
+}
+
+int FirestaffX68kDungeonDat_GetMapMetadata(
+    const FirestaffX68kDungeonDat *dungeon,
+    uint8_t map_index,
+    FirestaffX68kDungeonDatMapMetadataKind kind,
+    uint8_t item_index,
+    uint8_t *out_value) {
+    const FirestaffX68kDungeonDatMap *map;
+    size_t offset;
+    size_t count;
+
+    if (!dungeon || !out_value || !dungeon->bytes ||
+        map_index >= dungeon->map_count ||
+        map_index >= FIRESTAFF_X68K_DUNGEON_MAX_MAPS) {
+        return -1;
+    }
+    map = &dungeon->maps[map_index];
+    if (dungeon->raw_map_data.offset > dungeon->size ||
+        dungeon->raw_map_data.size > dungeon->size -
+                                             dungeon->raw_map_data.offset ||
+        (size_t)map->raw_map_offset > dungeon->raw_map_data.size ||
+        map->raw_map_span_size > dungeon->raw_map_data.size -
+                                     (size_t)map->raw_map_offset) {
+        return -1;
+    }
+    offset = (size_t)map->raw_map_offset +
+             (size_t)map->width * (size_t)map->height;
+    switch (kind) {
+        case FIRESTAFF_X68K_DUNGEON_MAP_CREATURE_TYPE:
+            count = map->allowed_creature_type_count;
+            break;
+        case FIRESTAFF_X68K_DUNGEON_MAP_WALL_ORNAMENT:
+            offset += map->allowed_creature_type_count;
+            count = map->wall_ornament_count;
+            break;
+        case FIRESTAFF_X68K_DUNGEON_MAP_FLOOR_ORNAMENT:
+            offset += (size_t)map->allowed_creature_type_count +
+                      map->wall_ornament_count;
+            count = map->floor_ornament_count;
+            break;
+        case FIRESTAFF_X68K_DUNGEON_MAP_DOOR_ORNAMENT:
+            offset += (size_t)map->allowed_creature_type_count +
+                      map->wall_ornament_count +
+                      map->floor_ornament_count;
+            count = map->door_ornament_count;
+            break;
+        default:
+            return -1;
+    }
+    if (item_index >= count ||
+        offset > dungeon->raw_map_data.size ||
+        count > dungeon->raw_map_data.size - offset ||
+        (size_t)map->raw_map_offset > dungeon->raw_map_data.size ||
+        map->raw_map_span_size > dungeon->raw_map_data.size -
+                                     (size_t)map->raw_map_offset ||
+        offset + item_index >= (size_t)map->raw_map_offset +
+                                   map->raw_map_span_size) {
+        return -1;
+    }
+    *out_value = dungeon->bytes[dungeon->raw_map_data.offset + offset +
+                                item_index];
+    return 0;
+}
+
+int FirestaffX68kDungeonDat_GetInitialPartyLocation(
+    const FirestaffX68kDungeonDat *dungeon,
+    uint8_t *out_map_x,
+    uint8_t *out_map_y,
+    uint8_t *out_direction) {
+    if (!dungeon || !out_map_x || !out_map_y || !out_direction ||
+        !dungeon->bytes || dungeon->map_count == 0u ||
+        dungeon->map_count > FIRESTAFF_X68K_DUNGEON_MAX_MAPS) {
+        return -1;
+    }
+    /* ReDMCSB DEFS.H:998 documents X[4:0], Y[9:5], Dir[11:10]. */
+    *out_map_x = (uint8_t)(dungeon->initial_party_location & 0x1fu);
+    *out_map_y = (uint8_t)((dungeon->initial_party_location >> 5) & 0x1fu);
+    *out_direction =
+        (uint8_t)((dungeon->initial_party_location >> 10) & 0x03u);
+    if (*out_map_x >= dungeon->maps[0].width ||
+        *out_map_y >= dungeon->maps[0].height) {
+        return -1;
+    }
+    return 0;
+}

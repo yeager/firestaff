@@ -375,6 +375,110 @@ int main(void) {
             goto done;
         }
     }
+    {
+        uint8_t map_x = 0u;
+        uint8_t map_y = 0u;
+        uint8_t direction = 0u;
+        uint8_t start_square = 0u;
+        uint16_t map_index;
+        if (FirestaffX68kDungeonDat_GetInitialPartyLocation(
+                &dungeon_dat, &map_x, &map_y, &direction) != 0 ||
+            map_x != 1u || map_y != 3u || direction != 2u ||
+            FirestaffX68kDungeonDat_GetSquare(
+                &dungeon_dat, 0u, map_x, map_y, &start_square) != 0) {
+            fputs("FAIL: X68000 initial party location did not resolve to the source map grid\n",
+                  stderr);
+            goto done;
+        }
+        for (map_index = 0u; map_index < dungeon_dat.map_count; ++map_index) {
+            const FirestaffX68kDungeonDatMap *map =
+                &dungeon_dat.maps[map_index];
+            uint8_t map_x_index;
+            uint8_t map_y_index;
+            for (map_x_index = 0u; map_x_index < map->width; ++map_x_index) {
+                for (map_y_index = 0u; map_y_index < map->height;
+                     ++map_y_index) {
+                    uint8_t square = 0u;
+                    const size_t source_index =
+                        dungeon_dat.raw_map_data.offset +
+                        map->raw_map_offset +
+                        (size_t)map_x_index * map->height + map_y_index;
+                    if (FirestaffX68kDungeonDat_GetSquare(
+                            &dungeon_dat, (uint8_t)map_index,
+                            map_x_index, map_y_index, &square) != 0 ||
+                        square != dungeon[source_index]) {
+                        fprintf(stderr,
+                                "FAIL: X68000 map %u square (%u,%u) did not follow ReDMCSB column-major layout\n",
+                                (unsigned)map_index, (unsigned)map_x_index,
+                                (unsigned)map_y_index);
+                        goto done;
+                    }
+                }
+            }
+        }
+        if (FirestaffX68kDungeonDat_GetSquare(
+                &dungeon_dat, 0u, dungeon_dat.maps[0].width, 0u,
+                &start_square) == 0 ||
+            FirestaffX68kDungeonDat_GetSquare(
+                &dungeon_dat, 0u, 0u, dungeon_dat.maps[0].height,
+                &start_square) == 0) {
+            fputs("FAIL: X68000 dungeon reader accepted an out-of-map coordinate\n",
+                  stderr);
+            goto done;
+        }
+        {
+            static const FirestaffX68kDungeonDatMapMetadataKind kinds[] = {
+                FIRESTAFF_X68K_DUNGEON_MAP_CREATURE_TYPE,
+                FIRESTAFF_X68K_DUNGEON_MAP_WALL_ORNAMENT,
+                FIRESTAFF_X68K_DUNGEON_MAP_FLOOR_ORNAMENT,
+                FIRESTAFF_X68K_DUNGEON_MAP_DOOR_ORNAMENT
+            };
+            for (map_index = 0u; map_index < dungeon_dat.map_count;
+                 ++map_index) {
+                const FirestaffX68kDungeonDatMap *map =
+                    &dungeon_dat.maps[map_index];
+                const uint8_t counts[] = {
+                    map->allowed_creature_type_count,
+                    map->wall_ornament_count,
+                    map->floor_ornament_count,
+                    map->door_ornament_count
+                };
+                size_t kind_index;
+                size_t metadata_offset = dungeon_dat.raw_map_data.offset +
+                    map->raw_map_offset +
+                    (size_t)map->width * map->height;
+                for (kind_index = 0u; kind_index < 4u; ++kind_index) {
+                    uint8_t item_index;
+                    for (item_index = 0u; item_index < counts[kind_index];
+                         ++item_index) {
+                        uint8_t value = 0u;
+                        if (FirestaffX68kDungeonDat_GetMapMetadata(
+                                &dungeon_dat, (uint8_t)map_index,
+                                kinds[kind_index], item_index, &value) != 0 ||
+                            value != dungeon[metadata_offset + item_index]) {
+                            fprintf(stderr,
+                                    "FAIL: X68000 map %u metadata kind %u item %u changed source order\n",
+                                    (unsigned)map_index, (unsigned)kind_index,
+                                    (unsigned)item_index);
+                            goto done;
+                        }
+                    }
+                    metadata_offset += counts[kind_index];
+                }
+                if (FirestaffX68kDungeonDat_GetMapMetadata(
+                        &dungeon_dat, (uint8_t)map_index,
+                        FIRESTAFF_X68K_DUNGEON_MAP_DOOR_ORNAMENT,
+                        map->door_ornament_count, &start_square) == 0) {
+                    fputs("FAIL: X68000 dungeon reader accepted out-of-range map metadata\n",
+                          stderr);
+                    goto done;
+                }
+            }
+        }
+        printf("PASS: X68000 start location map=0 (%u,%u) dir=%u square=0x%02x; all map grid cells and metadata follow source layout\n",
+               (unsigned)map_x, (unsigned)map_y, (unsigned)direction,
+               (unsigned)start_square);
+    }
     printf("PASS: read-only X68000 HDM import authenticated %lu root entries; "
            "SWOOSH matches ReDMCSB; all 562 X30J graphics spans and the "
            "complete raw dungeon metadata layout match ReDMCSB\n",
