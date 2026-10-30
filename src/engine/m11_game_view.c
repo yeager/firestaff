@@ -61,6 +61,7 @@
 #include "csb_v1_atari_st_animation_assets.h"
 #include "csb_v1_atari_f0115_creature_plan.h"
 #include "csb_v1_atari_f0115_projectile_plan.h"
+#include "csb_v1_atari_f0115_explosion_plan.h"
 #include "csb_v1_atari_f0128_cell_schedule.h"
 #include "csb_v1_atari_st_wall_ornament_data.h"
 #include "csb_v1_atari_f0132_clip.h"
@@ -6132,6 +6133,200 @@ static int m11_csb_atari_st_draw_projectiles_for_cell(
     return 0;
 }
 
+static int m11_csb_atari_st_draw_explosions_for_square(
+    M11_GameViewState *state, const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_RuntimeProfile *runtime, uint8_t *framebuffer,
+    int framebuffer_width, int framebuffer_height,
+    int forward, int side, int view_square, int door_pass)
+{
+    static const uint8_t smoke_palette[16] = {
+        0,1,2,3,4,5,12,1,8,9,10,11,12,13,14,15
+    };
+    CSB_V1_BootProfile *boot;
+    CSB_V1_RuntimeProfile *mutable_runtime;
+    int map_x;
+    int map_y;
+    int thing;
+    int links;
+    int drawn = 0;
+
+    /* ReDMCSB F0115 draws ordinary explosions during the selected door
+     * ordering pass too; only its separate Fluxcage field pass is deferred. */
+    (void)door_pass;
+
+    if (!state || !dungeon || !runtime || !framebuffer ||
+        framebuffer_width < 320 || framebuffer_height < 200 ||
+        view_square < 0 || view_square > 11 || forward < 0 || forward > 3 ||
+        side < -1 || side > 1 ||
+        !state->csbAtariStRuntimeHandoffComplete ||
+        !m11_dm1_media009_metadata(state)) return -1;
+
+    map_x = runtime->party_x +
+        (int[]){0,1,0,-1}[runtime->party_dir & 3] * forward +
+        (int[]){1,0,-1,0}[runtime->party_dir & 3] * side;
+    map_y = runtime->party_y +
+        (int[]){-1,0,1,0}[runtime->party_dir & 3] * forward +
+        (int[]){0,1,0,-1}[runtime->party_dir & 3] * side;
+
+    /* ReDMCSB F0115 restarts the exact map SFT after all per-cell content and
+     * consumes C15 Things in source chain order. Do not use host list order as
+     * a substitute for that order. */
+    thing = csb_v1_dungeon_get_first_thing(
+        dungeon, runtime->current_level, map_x, map_y);
+    if (thing < 0) return 0;
+    boot = (CSB_V1_BootProfile *)state->csbBootProfile;
+    mutable_runtime = boot ? &boot->runtime : NULL;
+    if (!mutable_runtime || mutable_runtime != runtime) return -1;
+    for (links = 0; links < 4096 && thing != CSB_THING_ENDOFLIST &&
+         thing != CSB_THING_PARTY; ++links) {
+        const uint16_t source_thing = (uint16_t)thing;
+        const uint16_t source_slot = source_thing & 0x03ffu;
+        const uint8_t *record;
+        int type = -1;
+        int record_size = 0;
+        int next;
+
+        record = csb_v1_dungeon_get_thing_record(
+            dungeon, source_thing, &type, NULL, &record_size);
+        if (!record) return -1;
+        if (type == 15 && record_size >= 4) {
+            const struct ExplosionInstance_Compat *explosion = NULL;
+            CSB_V1_AtariF0115ExplosionInput input;
+            CSB_V1_AtariF0115ExplosionPlan plan;
+            const M11_AssetSlot *asset;
+            int list_index;
+            int plan_result;
+
+            for (list_index = 0u;
+                 list_index < runtime->explosions.count &&
+                 list_index < EXPLOSION_LIST_CAPACITY; ++list_index) {
+                const struct ExplosionInstance_Compat *candidate =
+                    &runtime->explosions.entries[list_index];
+                if (candidate->slotIndex == (int)source_slot &&
+                    candidate->mapIndex == runtime->current_level &&
+                    candidate->mapX == map_x && candidate->mapY == map_y) {
+                    explosion = candidate;
+                    break;
+                }
+            }
+            /* A stale decoded C15 mirror cannot authorize an effect draw. */
+            if (explosion &&
+                (record[2] & 0x7fu) == (uint8_t)explosion->explosionType &&
+                ((record[2] >> 7) & 1u) == (explosion->centered != 0) &&
+                record[3] == (uint8_t)explosion->attack) {
+                memset(&input, 0, sizeof(input));
+                input.explosion_type = explosion->explosionType;
+                input.attack = explosion->attack;
+                input.centered = explosion->centered;
+                input.cell = explosion->cell == 0xff
+                    ? ((source_thing >> 14) & 3u) : explosion->cell;
+                input.party_direction = runtime->party_dir & 3;
+                input.view_square = view_square;
+                if (explosion->explosionType != 50 &&
+                    view_square != 9) {
+                    input.flip_vertical =
+                        csb_v1_runtime_main_random_bit(mutable_runtime);
+                    input.flip_horizontal =
+                        csb_v1_runtime_main_random_bit(mutable_runtime);
+                    if (input.flip_vertical < 0 || input.flip_horizontal < 0)
+                        return -1;
+                }
+                plan_result = csb_v1_atari_f0115_plan_explosion(
+                    &input, &plan);
+                if (plan_result < 0) return -1;
+                if (plan_result == CSB_V1_ATARI_F0115_EXPLOSION_SPRITE) {
+                    const int source_width = plan.source_byte_width * 2;
+                    const int draw_width = plan.draw_byte_width * 2;
+                    const int left = 48 + plan.center_x -
+                        plan.draw_byte_width + 1;
+                    const int top = 33 + plan.center_y -
+                        (plan.draw_height >> 1) +
+                        ((plan.draw_height & 1) == 0);
+                    unsigned int pixels = 0u;
+                    int y;
+
+                    if (draw_width <= 0 || plan.draw_height <= 0 ||
+                        !m11_csb_install_runtime_source_graphic(
+                            state, (unsigned int)plan.graphic_index)) {
+                        return -1;
+                    }
+                    asset = M11_AssetLoader_Load(
+                        &state->assetLoader, (unsigned int)plan.graphic_index);
+                    if (!asset || !asset->loaded || !asset->pixels ||
+                        asset->width != (unsigned int)source_width ||
+                        asset->height != (unsigned int)plan.source_height) {
+                        return -1;
+                    }
+                    for (y = 0; y < plan.draw_height; ++y) {
+                        const int dy = top + y;
+                        const int sample_y = plan.flip_vertical
+                            ? plan.draw_height - 1 - y : y;
+                        const uint64_t y_ratio =
+                            ((uint64_t)asset->height << 16) /
+                            (unsigned int)plan.draw_height;
+                        const unsigned int sy = (unsigned int)(
+                            y_ratio / 2u + 32767u +
+                            (uint64_t)sample_y * y_ratio) >> 16;
+                        int x;
+                        if (dy < 33 || dy >= 169 || dy >= framebuffer_height ||
+                            sy >= asset->height) continue;
+                        for (x = 0; x < draw_width; ++x) {
+                            const int dx = left + x;
+                            const int sample_x = plan.flip_horizontal
+                                ? draw_width - 1 - x : x;
+                            const uint64_t x_ratio =
+                                ((uint64_t)asset->width << 16) /
+                                (unsigned int)draw_width;
+                            const unsigned int sx = (unsigned int)(
+                                x_ratio / 2u + 32767u +
+                                (uint64_t)sample_x * x_ratio) >> 16;
+                            unsigned char color;
+                            if (dx < 48 || dx >= 272 ||
+                                dx >= framebuffer_width || sx >= asset->width)
+                                continue;
+                            color = asset->pixels[(size_t)sy * asset->width + sx];
+                            if (plan.smoke_palette) color = smoke_palette[color & 15u];
+                            if (color == plan.transparent_color) continue;
+                            framebuffer[(size_t)dy * framebuffer_width + dx] =
+                                color & 15u;
+                            ++pixels;
+                        }
+                    }
+                    drawn += pixels != 0u;
+                    if (state->debugMovementTraceEnabled) {
+                        fprintf(stderr,
+                            "firestaff: viewport game=csb platform=atari "
+                            "pass=f0115-explosion status=%s slot=%d type=%d "
+                            "map=%d:%d,%d square=%d graphic=%d scale=%d "
+                            "center=%d,%d rect=%d,%d,%d,%d flip=%d%d pixels=%u\n",
+                            pixels ? "drawn" : "clipped-or-transparent",
+                            explosion->slotIndex, explosion->explosionType,
+                            runtime->current_level, map_x, map_y, view_square,
+                            plan.graphic_index, plan.scale_32, plan.center_x,
+                            plan.center_y, left, top, draw_width,
+                            plan.draw_height, plan.flip_horizontal,
+                            plan.flip_vertical, pixels);
+                    }
+                } else if (state->debugMovementTraceEnabled &&
+                           plan_result == CSB_V1_ATARI_F0115_EXPLOSION_D0C_PATTERN) {
+                    fprintf(stderr,
+                        "firestaff: viewport game=csb platform=atari "
+                        "pass=f0115-explosion status=d0c-pattern-unbound "
+                        "slot=%d graphic=%d size=%d\n",
+                        explosion->slotIndex, plan.graphic_index,
+                        plan.d0c_pattern_size);
+                }
+            }
+        }
+        next = csb_v1_dungeon_f0159_get_next_thing_pc34(dungeon,
+                                                        source_thing);
+        if (next == CSB_THING_ENDOFLIST || next == CSB_THING_PARTY) break;
+        if (next < 0) return -1;
+        thing = next;
+    }
+    return drawn;
+}
+
 static int m11_csb_atari_st_draw_f0115_pass(
     M11_GameViewState *state, const CSB_V1_DungeonData *dungeon,
     const CSB_V1_RuntimeProfile *runtime, uint8_t *framebuffer,
@@ -6165,9 +6360,13 @@ static int m11_csb_atari_st_draw_f0115_pass(
             result = m11_csb_atari_st_draw_projectiles_for_cell(
                 state, dungeon, runtime, framebuffer, 320, 200,
                 forward, side, view_square, view_cell);
+        } else if (event->layer == CSB_V1_ATARI_F0115_EXPLOSION_LAYER) {
+            result = m11_csb_atari_st_draw_explosions_for_square(
+                state, dungeon, runtime, framebuffer, 320, 200,
+                forward, side, view_square, event->door_front_view_pass);
         } else {
-            /* Explosion/Fluxcage are separate source owners and remain
-             * unbound; do not fold their materials into the projectile pass. */
+            /* Fluxcage remains an F0113 field pass; do not fold it into the
+             * ordinary explosion/projectile blitters. */
             continue;
         }
         if (result < 0) return result;

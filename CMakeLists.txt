@@ -7957,6 +7957,7 @@ set(M11_SOURCES
     src/csb/csb_v1_atari_st_animation_assets.c
     src/csb/csb_v1_atari_f0115_creature_plan.c
     src/csb/csb_v1_atari_f0115_projectile_plan.c
+    src/csb/csb_v1_atari_f0115_explosion_plan.c
     src/csb/csb_v1_atari_f0128_cell_schedule.c
     src/csb/csb_v1_atari_f0132_clip.c
     src/csb/csb_v1_audio_runtime_pc34_compat.c
@@ -56021,6 +56022,23 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_f0115_projectile_
         ENVIRONMENT "FIRESTAFF_CSB_ATARI_GRAPHICS=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back.stx/Chaos Strikes Back for Atari ST Game Disk v2.1 (English).stx::GRAPHICS.DAT"
         SKIP_RETURN_CODE 77
         LABELS "csb;atari;f0115;projectiles;real-media;skip-safe")
+endif()
+
+# ReDMCSB DUNVIEW.C MEDIA020 F0115 G0211/G0216/G0225/G0226 explosion
+# source tables and F0114/F0115 source bitmap selection.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_f0115_explosion_plan.c")
+    add_executable(test_csb_v1_atari_f0115_explosion_plan
+        tests/test_csb_v1_atari_f0115_explosion_plan.c
+        src/csb/csb_v1_atari_f0115_explosion_plan.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_atari_f0115_explosion_plan PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_atari_f0115_explosion_source_plan
+        COMMAND test_csb_v1_atari_f0115_explosion_plan)
+    set_tests_properties(csb_v1_atari_f0115_explosion_source_plan PROPERTIES
+        LABELS "csb;atari;f0115;explosions;source-plan;unit;skip-safe")
 endif()
 
 # Source-locked ReDMCSB F0128 traversal schedule; no game media required.

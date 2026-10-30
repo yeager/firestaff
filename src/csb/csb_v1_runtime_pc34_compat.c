@@ -5918,9 +5918,16 @@ static uint16_t csb_v1_runtime_main_random16(
     return (uint16_t)(profile->csbwin_random_seed >> 8);
 }
 
+int csb_v1_runtime_main_random_bit(CSB_V1_RuntimeProfile *profile)
+{
+    if (!profile || !profile->csbwin_random_seed_valid) return -1;
+    return (int)(csb_v1_runtime_main_random16(profile) & 0x0001u);
+}
+
 static int csb_v1_runtime_main_random1(CSB_V1_RuntimeProfile *profile)
 {
-    return (int)(csb_v1_runtime_main_random16(profile) & 0x0001u);
+    const int bit = csb_v1_runtime_main_random_bit(profile);
+    return bit < 0 ? 0 : bit;
 }
 
 static int csb_v1_runtime_main_random2(CSB_V1_RuntimeProfile *profile)

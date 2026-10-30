@@ -1283,6 +1283,9 @@ typedef struct {
  * Sets source-unbound map difficulty, start position, and NULL paths.
  * Does NOT boot the dungeon or initialize Chaos Magic. */
 void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir);
+/* ReDMCSB BASE.C F0028 consumes one bit from the shared G0349 random
+ * stream. Returns -1 when the original runtime stream is unavailable. */
+int csb_v1_runtime_main_random_bit(CSB_V1_RuntimeProfile *profile);
 
 /* Clean up runtime resources.
  * Unloads the dungeon data loaded by csb_v1_runtime_boot().

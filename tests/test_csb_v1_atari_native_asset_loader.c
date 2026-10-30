@@ -24,6 +24,37 @@ int main(int argc, char **argv)
         M11_AssetLoader_Shutdown(&loader);
         return 2;
     }
+    {
+        /* ReDMCSB DUNVIEW.C MEDIA020 G0211 dimensions and M614 mapping:
+         * fire/spell/poison native explosion bitmaps at indices 348..350.
+         * Smoke (G0211 aspect 3) reuses poison pixels with G0212 colors. */
+        static const unsigned short dimensions[3][2] = {
+            {160u,111u}, {128u,97u}, {160u,91u}
+        };
+        for (index = 0u; index < 3u; ++index) {
+            const unsigned int graphic = 348u + index;
+            unsigned short width = 0u, height = 0u;
+            const M11_AssetSlot *asset;
+            if (!M11_AssetLoader_QuerySize(&loader, graphic, &width, &height) ||
+                width != dimensions[index][0] ||
+                height != dimensions[index][1]) {
+                fprintf(stderr,
+                        "CSB Atari MEDIA020 G0211 explosion %u has unexpected dimensions\n",
+                        graphic);
+                M11_AssetLoader_Shutdown(&loader);
+                return 17;
+            }
+            asset = M11_AssetLoader_Load(&loader, graphic);
+            if (!asset || !asset->loaded || !asset->pixels ||
+                asset->width != width || asset->height != height) {
+                fprintf(stderr,
+                        "CSB Atari MEDIA020 M614 explosion %u did not decode from original media\n",
+                        graphic);
+                M11_AssetLoader_Shutdown(&loader);
+                return 18;
+            }
+        }
+    }
     csb_atari_st_graphics_loader_init(&native);
     if (!csb_atari_st_graphics_loader_open(&native, path) ||
         native.items[558u].decompressed_size != 4720u) {
