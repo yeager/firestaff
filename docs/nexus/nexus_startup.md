@@ -15,7 +15,15 @@ Continue-to-gameplay with the corpus-retained BKR image whose SHA-256 is
 retail Load screen showed `B01  0:06 NORMAL`, then entered the four-champion
 dungeon view. The isolated BKR copy retained its hash after loading. A paired
 Up-input replay changed the rendered gameplay view. These captures verify the
-retail reference flow in Ymir only. Separate 2026-10-29 cold boots installed
+retail reference flow in Ymir only. A 2026-10-30 Ymir `--debug` loader trace
+now identifies one exact Continue payload transfer: the authentic two-champion BKR tuple (level 1, heading
+`0x4000`, X 20, Y 26) is copied into Saturn WRAM-HI at `0x06064544` before
+level initialization. The retained SH-2 write trace records the two copy
+instructions and the final WRAM dump matches the BKR tuple bytes. This narrows
+the earlier unknown payload interpretation; native backup selection, full
+runtime loading, and Firestaff engine handoff remain unimplemented or
+unverified. See the Continue loader tuple evidence note below.
+Separate 2026-10-29 cold boots installed
 the authentic two-champion retail-written BKR before power-on, reached the
 Load panel with `B01  0:06 NORMAL`, accepted that entry, and entered a dungeon
 view with two champion HUD panels. The internal backup-RAM image retained its
@@ -59,8 +67,28 @@ source.
 | `FACE.BIN` | The JP retail member is verified as 45,104 bytes (`bd9ca16ea68043984e2804067b6cd66f`): 20 variable-length, 56×56 PRS3 portraits with source palettes. The PLRD roster-to-portrait ordinal and the VDP1 destination/order are still unobserved. |
 | `FONT256.S2D` | 242 CG tiles are retained in production source; Saturn page/attribute/glyph mapping is missing |
 | `MENU.BPK` | All 162 PRS3 surfaces decode to source-bound bytes. In the authentic Japanese Load panel, unique surface 60 is joined row by row to the 228x100 NBG0 base at `(16,112)`, surface 55 contributes a traced partial image span, and all 42 visible NBG0 color indices match captured CRAM output against the Ymir screenshot. Five Y-open Magic-window directional captures each join nine 8bpp VDP1 command sources to entries 99–106 and 144; all 31 nonzero indices in those joined surfaces match both PALT and same-run CRAM. Six paired Magic composer captures additionally bind numeric choices `0xDA`–`0xDF` to selected-state entries 107–112 and command-88 VDP1 sources/coordinates; the glyph names and full-menu coordinate/index table remain unknown. Other Load-panel pixels, complete title/menu composition, full VDP1 dispatch ownership and admitted Firestaff rendering remain open. A separate Japanese title-menu frame has 86 whole surfaces byte-resident in VDP1 VRAM, but none of 137 textured command sources starts in those ranges; see the [menu snapshot join](NEXUS_MENU_BPK_VDP1_SNAPSHOT_JOIN.md). |
-| Saturn Backup RAM | `nexus_v1_saturn_bkr_parse` reads hash-pinned 32 KiB card directories and block chains, returning exact opaque payload bytes; native save selection, payload interpretation, and runtime loading remain missing |
+| Saturn Backup RAM | `nexus_v1_saturn_bkr_parse` reads hash-pinned 32 KiB card directories and block chains, returning exact opaque payload bytes. Retail Continue copies the level/heading/X/Y tuple at payload offsets `+0x10..+0x17` to WRAM-HI `0x06064544`; selecting saves in Firestaff and binding the tuple to the engine remain missing |
 | Mednafen visual baseline | A clean J-BIOS capture against authentic retail shows black boot followed by the original intro FMV without input; menu/LEV01 identity remains missing |
+
+## Continue payload to loader tuple (2026-10-30)
+
+A 17,000-frame Ymir `--debug` run used the authentic Japanese retail disc and
+hash-verified two-champion backup RAM. At frame 12931, the master SH-2 executed
+stores at PCs `0x0602254a` and `0x0602254e`, writing `0x00014000` and
+`0x0014001a` to `0x06064544` and `0x06064548`. The final WRAM-HI bytes at
+`0x06064544..0x0606454b` are `00 01 40 00 00 14 00 1a`: level 1, heading
+`0x4000`, X 20, Y 26. The BKR used in that profile has SHA-256
+`3d60856119df55ffa4937d13b5dc7487157c7c6b131a999a2e61683316679634`.
+
+Static SH-2 disassembly maps the source loads at payload offsets `+0x10` and
+`+0x14` to those two stores. The dynamic read tracer was configured for
+`0x002040b0..0x00204120`, so it did not capture reads of `0x00204010..0x00204017`;
+the source mapping is therefore static evidence, while the write trace and
+final WRAM bytes are dynamic evidence. The retained external evidence package
+is `firestaff-evidence/nexus/nexus-bkr-continue-loader-tuple-20261030` on
+`Extern-disk`. This verifies the tuple transfer into the Saturn loader, not
+Firestaff's save selection, coordinate conversion, game entry, or gameplay
+parity.
 
 ## Deterministic title-state replay (2026-10-26)
 
