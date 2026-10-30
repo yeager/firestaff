@@ -225,14 +225,17 @@ game-owned poll and visible state change.
   instruction-start rows beginning at `$E11D`. The launch verifier requires
   clear carry at the authentic `BCC $E12C`, the `$E12C/$E12E` MPR setup call,
   `$E130 JMP $4000`, and the immediately following `$4000` row mapped through
-  MPR2=`$80` to physical `$100000`.
+  MPR2=`$04` to physical `$008000`, as derived from authentic `$E13D` code.
 - The v18 and v19 authentic JP cold captures did not reach `$E11D` within the
   bounded observation. Their bootstrap rows stopped at `$E966` in the System
   Card's `$E95E` status-poll loop. v19's strict launch verifier correctly
   rejected the missing branch. Its separately armed `$4000` rows cannot be
-  treated as a causal BIOS jump. A later audit found that the earlier static
-  comparison used the wrong System Card file offset; corrected MPR/file offset
-  mapping and disassembly are in the source-lock report.
+  treated as a causal BIOS jump. Authentic `$E13D` disassembly shows the
+  `$E12C` route maps MPR2=`$04` and `$4000` to physical `$008000`; MPR2=`$80`/
+  physical `$100000` belongs to an independent loaded-code observation. A
+  later audit found that the earlier static comparison used the wrong System
+  Card file offset; corrected MPR/file offset mapping and disassembly are in
+  the source-lock report.
 - In v19, scripted RUN/SELECT inputs were consumed only at System Card polls;
   the receipt reports zero host-key events, CD IRQ callbacks, authenticated
   CD-to-RAM receipts, game `$E009` dispatches, and non-System-Card poll reads.
@@ -262,11 +265,16 @@ game-owned poll and visible state change.
   without returning to `$E11D`. It still observed no game handoff or gameplay.
 - v21's authentic callback-state trace recorded 255 reads/writes and observed
   the `$2259=$04` System Card action take `$E166->$E176`, store `$02` to
-  `$2269`, and call `$CC17`. The 8,192-row bootstrap window filled before
-  `$E11D` or `$4000`; no game-owned poll or gameplay transition was observed.
-  Next follow the post-`$CC17/$E17C` route and source later CD status/command
-  traffic. Preserve the distinction between reference evidence and native
-  parity. Full findings and trace hashes are in the
+  `$2269`, and call `$CC17`; it returns at `$CC96`, proceeds through `$E17C`
+  and `$EC05`, then the 8,192-row window ends at `$E966` while polling
+  `$1800`. It did not reach `$E209` or `$E11D`. A separate target window did
+  execute `$4000` under MPR2=`$80`/physical `$100000`; its first four code
+  bytes match source-bound Track 02 reads and `$EA9C` stores, but this does not
+  prove the causal `$E130` jump. Authentic `$E13D` makes the strict launch
+  target MPR2=`$04`/physical `$008000`, and the verifier/tests now require
+  that mapping. Next trace the `$EC05/$E900` command/status exchange through
+  `$E209` and `$E11D`. Preserve the distinction between reference evidence and
+  native parity. Full findings and trace hashes are in the
   [source-lock report](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md).
 
 ## 2026-10-29 — generalize authentic CD-read-to-RAM source joins

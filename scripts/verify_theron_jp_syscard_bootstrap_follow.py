@@ -210,8 +210,8 @@ def verify_launch_branch(
         if jump_index + 1 >= len(path) or int(path[jump_index + 1]["logical_pc"], 16) != 0x4000:
             raise ValueError("$E130 JMP was not immediately followed by the $4000 instruction")
         target = path[jump_index + 1]
-        if int(target["physical_pc"], 16) != 0x100000 or int(target["mpr2"], 16) != 0x80:
-            raise ValueError("$4000 launch target did not map through MPR2=$80 to physical $100000")
+        if int(target["physical_pc"], 16) != 0x008000 or int(target["mpr2"], 16) != 0x04:
+            raise ValueError("$4000 launch target did not map through MPR2=$04 to physical $008000")
         return {
             "branch_event": branch_event,
             "mpr_setup_event": int(setup["event_sequence"]),

@@ -9792,8 +9792,14 @@ native rendering, or Theron parity. The private evidence bundle is at
   `$CC17`.
 - PCE Fast reference build succeeded on TRV2 with `-j1`; patch-only validation,
   focused parser/instrumentation tests in three loops, capture-wrapper
-  contract, shell syntax, and `git diff --check` passed. Capture still ended
-  without `$E11D/$4000`, a game-owned poll, authenticated game transfer, or
-  gameplay. This narrows the BIOS gap but does not establish native parity.
-  See the source-lock report for disassembly provenance and private trace
-  hashes.
+  contract, shell syntax, and `git diff --check` passed. A later audit of the
+  same private trace confirmed `$CC17` returns at `$CC96`, `$E17C` enters
+  `$EC05`, and the bootstrap window ends at `$E966` before `$E209/$E11D`. Its
+  independent `$4000` window starts at event 55109 under MPR2=`$80`/physical
+  `$100000`; four fetched bytes are source-bound to Track 02 LBA 4521 reads and
+  `$EA9C` writes, but do not prove the BIOS branch. Authentic `$E13D`
+  disassembly corrects the strict `$E130` target mapping to MPR2=`$04`/physical
+  `$008000`; the launch verifier and negative mapping test enforce that map.
+  There is still no game-owned poll or gameplay evidence. Follow
+  `$EC05/$E900` through `$E209` and the carry decision at `$E11D`. See the
+  source-lock report for disassembly provenance and private trace hashes.

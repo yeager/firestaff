@@ -8,9 +8,12 @@
 ;
 ; The bootstrap calls $C860, handles its nonzero result through $CF78, then
 ; invokes $F0A9 and an internal controller/CD-status routine. A clear carry
-; configures MPR6 and jumps to $4000; a set carry invokes $CB03/$CB54 and
-; retries $C860. This excerpt does not establish what code is at $4000 or
-; whether it is Theron gameplay.
+; maps MPR2-MPR6 and jumps to $4000; a set carry invokes $CB03/$CB54 and
+; retries $C860. The clear route enters $E13D with A=$04, so MPR2 becomes
+; $04 and logical $4000 maps to physical $008000. This differs from the
+; independent v21 $4000 observation (MPR2=$80, physical $100000), which is
+; not evidence for this branch. This excerpt does not establish what code at
+; either mapping does or whether it is Theron gameplay.
 
 e0f3: 78        sei
 e0f4: d4        csh
@@ -46,6 +49,21 @@ e130: 4c 00 40  jmp $4000
 e133: a9 17     lda #$17
 e135: 44 06     bsr $E13D
 e137: 4c 00 40  jmp $4000
+
+; $E13A is also called from the earlier bootstrap path. $E12E enters at
+; $E13D, where the caller's accumulator is the first MPR value in TAM #$04.
+; The five TAM instructions set MPR2-MPR6 to consecutive values.
+e13a: ad f5 ff  lda $FFF5
+e13d: 53 04     tam #$04
+e13f: 1a        ina
+e140: 53 08     tam #$08
+e142: 1a        ina
+e143: 53 10     tam #$10
+e145: 1a        ina
+e146: 53 20     tam #$20
+e148: 1a        ina
+e149: 53 40     tam #$40
+e14b: 60        rts
 
 ; $E14C loads a reference value from $226A, scans $2256 onward through the
 ; $EFF1 callback while comparing $2259/$226B control data, then either updates

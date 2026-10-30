@@ -45,7 +45,7 @@ def test_v4_uses_contiguous_branch_follow_after_independent_window() -> None:
         row("bootstrap_branch_follow", 2, 0xE12E, 104, "440d0000"),
         row("bootstrap_branch_follow", 3, 0xE13D, 105, "00000000"),
         row("bootstrap_branch_follow", 4, 0xE130, 106, "4c004000"),
-        row("bootstrap_branch_follow", 5, 0x4000, 107, "64007300", mpr2=0x80),
+        row("bootstrap_branch_follow", 5, 0x4000, 107, "64007300", mpr2=0x04),
     ]
     counts = verifier.verify_lines(rows)
     if counts != {"bootstrap_follow": 1, "target_follow": 1}:
@@ -94,6 +94,18 @@ def test_v4_uses_contiguous_branch_follow_after_independent_window() -> None:
             raise
     else:
         raise AssertionError("an independent earlier $4000 window was accepted as the BIOS jump target")
+
+    wrong_target_mapping = rows.copy()
+    wrong_target_mapping[8] = row(
+        "bootstrap_branch_follow", 5, 0x4000, 107, "64007300", mpr2=0x80
+    )
+    try:
+        verifier.verify_lines(wrong_target_mapping)
+    except ValueError as error:
+        if "MPR2=$04 to physical $008000" not in str(error):
+            raise
+    else:
+        raise AssertionError("the unrelated MPR2=$80 mapping was accepted as the BIOS launch target")
 
     for row_index, valid_mask, message in (
         (3, "1", "$E11D BCC"),

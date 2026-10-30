@@ -907,9 +907,11 @@ The v4 reference-only bootstrap trace adds an 8,192-row general instruction
 window and a separately armed 4,096-row contiguous follow beginning at
 `$E11D`. The launch verifier requires the authentic clear-carry route
 `$E11D BCC $E12C` → `$E12C LDA #$04` → `$E12E BSR $E13D` → `$E130 JMP $4000`
-→ the immediately following `$4000` instruction, with MPR2=`$80` mapping the
-target to physical `$100000`. The separate `$4000` observation window is not
-accepted as proof of that branch.
+→ the immediately following `$4000` instruction. Authentic System Card 3.0
+disassembly at `$E13D` is `TAM #$04; INA; TAM #$08; INA; TAM #$10; INA;
+TAM #$20; INA; TAM #$40; RTS`; the clear route enters with A=`$04`, so MPR2
+is `$04` and `$4000` maps to physical `$008000`. The separate `$4000`
+observation window is not accepted as proof of that branch.
 
 The v18 and v19 authentic JP cold traces filled their 8,192-row bootstrap
 window and stopped at `$E966`, in the `$E95E` status-poll loop. Neither trace
@@ -1003,7 +1005,7 @@ transition receipt
 scripted-input receipt
 `ee73a88bdbb7e860f2f83ac97ad7030065077a76b4c2a7ee5631a33a0484b791`.
 
-## v21 authentic callback-state receipt
+## v21 authentic callback-state and source-bound target receipt
 
 The v21 cold reference capture used the same hash-verified JP Rev. 1 Track 02
 and System Card 3.0, with no state autoload. The bounded `RdMem()`/`WrMem()`
@@ -1015,12 +1017,36 @@ coverage of direct page-pointer accesses or every CPU bus cycle.
 
 The trace shows `$E14C` read `$226A=$01`; after scripted SELECT was consumed at
 the System Card poll, BIOS code wrote `$2259=$04`. `$E14C` then branched from
-`$E166` to `$E176`, stored `$02` at `$2269`, and called `$CC17`. The contiguous
-bootstrap window captured `$E176/$E179` and subsequent `$CC17` execution, but
-filled its 8,192-row cap before `$E11D` or `$4000`. The transition receipt
-still reports no CD IRQ, authenticated CD-to-RAM receipt, game `$E009`
-dispatch, or non-System-Card input poll. This establishes the System Card
-callback branch only, not a game handoff or playable Theron.
+`$E166` to `$E176`, stored `$02` at `$2269`, and called `$CC17`. The trace
+records `$CC17` returning at event 10054 / PC `$CC96`, then `$E17C` at event
+10055 and `$EC05` at event 10076. The 8,192-row bootstrap window ended at
+event 17377 / PC `$E966`, in the `$E95E` status loop; it contains no `$E209`,
+`$E11D`, `$E12C`, or `$E130` fetch.
+
+The independent target window did later observe `$4000` at event 55109 with
+MPR2=`$80` and physical PC `$100000`. This is not the `$E130` route: that
+route must set MPR2=`$04` and fetch physical `$008000`. The first four bytes
+in the independent window (`64 00 73 00`) were written to physical
+`$100000-$100003` by System Card PC `$EA9C`; their preceding `$EA99` data-port
+reads were source-bound to authentic Track 02 LBA 4521 user offsets 0-3 at
+events 42782/42785/42788/42791, followed by writes at 42784/42787/42790/42793.
+The full data-port verifier accepted all 51,200 reads against the hash-verified
+disc, and the writer verifier found 40,960 ordered value candidates. These
+four joined bytes establish only a narrow source-to-RAM-to-fetch chain, not
+the causal BIOS branch or a gameplay consumer.
+
+Static control flow explains the current `$2259=$04` branch: `$E176` calls
+`$CC17`, then runs `$E17C` and `$EC05`; after that, the table checks return
+through `$E209 SEC; RTS`. That arm therefore returns carry set and cannot
+take `$E11D BCC $E12C`. The clear-carry launch requires the other `$E14C`
+return path at `$E174`, when the `$2259` bit test does not select `$E176` and
+the compare reaches its clear-carry return. This is a static control-flow
+result; v21 does not capture the launch path.
+
+The transition receipt still reports no CD IRQ, game `$E009` dispatch, or
+non-System-Card input poll. This establishes a System Card callback, CD
+traffic, and a small source-bound code prefix only, not a game handoff or
+playable Theron.
 
 v21 status receipt: 50,932 reads (`$90` 50,828, `$D0` 92, `$C8` 10, `$D8` 2);
 the two `$D8` reads remain before the callback window's initial status poll.
@@ -1032,13 +1058,16 @@ callback state
 `06f61d3020800b15f41f3b96bdf58c0e6e0282e44cd1cee7649ab2e0e73b3502`,
 bootstrap follow
 `e12f9bfa13fa131b89333c4c3a0507e257e9f9d630e054be3611132073b2ab3d`,
+CD data-port `d45448fe3f32fcc94716665008e248d233139ea37176f5a5948dd8776bf78a8b`,
+CD RAM writer `92272266d09312dc019813cac28f5f031bbce21df88f1ced9e70b533c5f93193`,
 transition `b6a859f5af248a46712c06ba4713a97c4aaa26685b20e20f2188a4af4f2ab49a`,
 and scripted-input consumption
 `467d1102c64fbb6e92ec47b35ca9b7560205a0d339ff7d200098b531a7102e80`.
 
-Next trace the post-`$CC17`/`$E17C` route beyond the bounded window and source
-the later CD-status/command sequence before attempting the `$E11D` launch
-branch again. Keep BIOS execution separate from game-owned consumers and
-native parity claims.
+Next trace the `$EC05/$E900` command and status exchange through its return,
+the `$E1C0-$E209` checks, and carry at `$E11D`. Include `$1800-$1803`,
+`$224C-$2255`, `$2273-$2280`, and `$22A4` accesses with shared sequence and
+PC context. Keep the independent `$4000` observation separate from the BIOS
+branch and from game-owned consumers/native parity claims.
 
 The raw media and traces are not included in Git.
