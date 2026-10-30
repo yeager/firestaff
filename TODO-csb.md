@@ -1,5 +1,22 @@
 # Firestaff TODO — CSB
 
+2026-10-30 CSB Atari S21E Fluxcage capture route audit: ReDMCSB identifies
+the installed edition as Atari ST 2.1 English (S21E). Its authentic Utility
+`MINI.DAT` starts on map 4 at (22,18). A generous static reachability graph
+that treats every door as passable reaches 54 cells but no stair or open pit;
+reachable teleporter records return to their own map/coordinates, and no
+reachable sensor changes the map. The map-2 Firestaff at (13,7) is therefore
+not reachable from this save without crossing a closed fakewall. Do not use
+ReDMCSB `CLIKVIEW.C` F0664's held-click fakewall behavior as S21E evidence:
+the entire routine is guarded by MEDIA720, which excludes S21E, and the older
+S21E F0372 route only triggers an existing wall sensor. Source review used
+`Documentation/Readme.htm:21-22`, `COMPILE.H:602-603`, `DEFS.H:1025-1034`,
+`CLIKMENU.C:124-169`, `DUNGEON.C:1534-1581`, `MOVESENS.C:475-493,564-575`,
+`CLIKVIEW.C:4-27,29-76,403-448`, and `MEDIA81.H:258`. This is a limit of the
+available authentic save route, not evidence that the live F0113 Fluxcage
+renderer is correct; the renderer and an authentic C050 gameplay capture
+remain open.
+
 2026-10-30 CSB Atari-only return/rescan regression: the shared return-to-menu
 test now has an isolated mode that stages only the authentic Atari ST archive.
 The local original-media run reached the Atari runtime, returned to M12, and

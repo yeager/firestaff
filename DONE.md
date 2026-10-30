@@ -2430,4 +2430,9 @@ only. Active work is in `TODO.md` and `TODO-<game>.md`.
   this local data environment (DM1 FM Towns selection, Nexus title, launcher
   media selection, and Theron Japanese handoff); it reported 218 passed and 3
   skipped. This adds input-test capability only; it does not claim that any
-  game's hold interaction is implemented or verified.
+  game's hold interaction is implemented or verified. A separate probe using
+  the authentic CSB Atari ST 2.1 archive completed `enter`, a 20-frame hold,
+  `leftdown:480:300`, another wait, and `leftup:480:300`; debug recorded both
+  pointer events at source coordinates 160,100 and retained the real CSB
+  runtime receipt. This verifies scripted pointer-event delivery only, not a
+  specific wall interaction.
