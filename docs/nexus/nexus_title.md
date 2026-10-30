@@ -500,10 +500,14 @@ Ymir's PC-filtered SH-2 read/register tracer was added on
 capture bundle and reproduction instructions are under
 `firestaff-evidence/nexus/nexus_vdp2_frame_join_20261030`.
 
-This closes the same-frame source/register/VRAM-write value join for this
-921-byte span. It does not identify the full title background or prove which
-pixels survive VDP1/VDP2 composition on the screen. Full native title
-presentation and Firestaff renderer parity remain unproven.
+This establishes that, in VDP1 frame 7716, the recorded source addresses and
+register snapshots map to same-frame VDP2 writes whose values and final VRAM
+bytes match the 921 retail source bytes. The SH-2 trace does not capture values
+at read time, and the source comparison uses the final WorkRAMH span; it does
+not independently prove that those bytes were present when each read occurred.
+It does not identify the full title background or prove which pixels survive
+VDP1/VDP2 composition on the screen. Full native title presentation and
+Firestaff renderer parity remain unproven.
 
 The complete 190-record VDP1 chain contains 177 non-empty texture spans,
 including the bounded type-0 windows at VDP1 VRAM `0x4fba0` (448 bytes) and
