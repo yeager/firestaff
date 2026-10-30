@@ -65625,20 +65625,44 @@ static int m11_draw_v1_status_hand_slot(const M11_GameViewState* state,
     if (!state->assetsAvailable) return 0;
     box = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                (unsigned int)boxGfx);
-    if (!box ||
-        !DM1_ChampionPanel_AssetSurfaceAccepted(
-            boxGfx, boxGfx, box->loaded, box->pixels != NULL,
-            box->width, box->height, 18, 18)) {
-        if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          dstX, dstY, 18, 18,
-                          (unsigned char)
-                              dm1_v1_champion_status_box_fill_color_pc34());
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        state->csbAtariStRuntimeHandoffComplete) {
+        /* The authenticated Atari IMAGE1 records declare a 32x18 storage
+         * row, while CHAMDRAW.C F0291 draws only the 18x18 C211..C218
+         * source window. Keep the padded record intact in the shared cache
+         * and apply the crop/transparency at its presentation boundary. The
+         * original-media C017 compositor regression verifies this same
+         * (0,0)-(17,17) crop with palette index 12 transparent. */
+        if (!box || !box->loaded || !box->pixels ||
+            box->width != 32u || box->height != 18u) {
+            if (state->debugMovementTraceEnabled) {
+                fprintf(stderr,
+                    "firestaff: csb-atari-f0291 rejected stage=slot-surface "
+                    "graphic=%d size=%ux%u\n", boxGfx,
+                    box ? (unsigned)box->width : 0u,
+                    box ? (unsigned)box->height : 0u);
+            }
+            return 0;
         }
-        return 0;
+        M11_AssetLoader_BlitRegion(box, 0, 0, 18, 18,
+                                   framebuffer, framebufferWidth,
+                                   framebufferHeight, dstX, dstY, 12);
+    } else {
+        if (!box ||
+            !DM1_ChampionPanel_AssetSurfaceAccepted(
+                boxGfx, boxGfx, box->loaded, box->pixels != NULL,
+                box->width, box->height, 18, 18)) {
+            if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              dstX, dstY, 18, 18,
+                              (unsigned char)
+                                  dm1_v1_champion_status_box_fill_color_pc34());
+            }
+            return 0;
+        }
+        M11_AssetLoader_Blit(box, framebuffer, framebufferWidth,
+                             framebufferHeight, dstX, dstY, 0);
     }
-    M11_AssetLoader_Blit(box, framebuffer, framebufferWidth,
-                         framebufferHeight, dstX, dstY, 0);
 
     iconIndex = m11_v1_status_hand_icon_index(state, championSlot, handIndex);
     if (iconIndex < 0) return 1;

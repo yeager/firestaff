@@ -5,6 +5,7 @@
 - `DM1 and Nexus startup diagnostics`: change logging to emit game handoff, title, resource and engine details only when `--debug` is set.
 - `DM1 Atari ST media`: admit the authentic nested v1.2 image for launcher selection.
 - `CSB Atari ST items`: use the authenticated source item aspects and C559 projectile selectors for the corrected native rendering path.
+- `CSB Atari ST champion HUD`: change native gameplay to render champion names, hand slots, and live status bars.
 - `CSB FM Towns media`: admit renamed authentic ZIP packages during startup discovery.
 - `Nexus regional media`: bind supplemental disc resources to the region proved by the extracted game files, avoiding cross-region asset mixing.
 - `Nexus Saturn CUE/BIN`: admit an authentic CUE-only Japanese disc through direct CLI and menu selection while keeping its exact CUE as runtime media.
@@ -26,6 +27,8 @@
 - `CSB Atari viewport diagnostics`: report the first rejected runtime stage when debug movement tracing is enabled; include and protect the authentic Atari utility archive in the mixed-media regression.
 - `CSB CLI mode validation`: reject conflicting Utility Disk and Hint Oracle options, including a game ID that conflicts with either mode.
 - `DM2 startup timing`: enable the source-level startup-menu timing regression against the shared DM2 library; native presentation timing remains unverified.
+- `CSB Atari HUD regression`: change screenshot validation to check each recruited champion's visible name, hand-slot frame, and live status bars separately.
+- `Main-menu runtime regression`: change DM2 startup tests to wait for the authentic title-completion receipt instead of a fixed 2,400-frame delay, allow Theron 120 seconds for authentic collection scans, and set the CTest timeout to 900 seconds.
 - `Release metadata`: update the project version and reproducible SPDX source SBOM.
 
 ## Known limitations
