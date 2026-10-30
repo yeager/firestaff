@@ -542,6 +542,14 @@ static int sensor_process_party_enter_leave(
             floorContext.partyChampionCount = party ? party->championCount : 0;
             floorContext.partyHasObjectType = hasObject;
             floorContext.partyOnSquare = partyOnSquare != 0;
+            floorContext.editionPolicyBound =
+                dungeon->dm1SensorEditionPolicyBound;
+            floorContext.floorC005PartyTypeFix =
+                dungeon->dm1SensorFloorC005PartyTypeFix;
+            floorContext.floorC009Supported =
+                dungeon->dm1SensorFloorC009Supported;
+            floorContext.floorC009VersionLimit =
+                dungeon->dm1SensorFloorC009VersionLimit;
             floorContext.squareHasObject = squareHasExistingObject;
             floorContext.squareHasGroup = squareHasExistingGroup;
             floorContext.squareHasSameTypeObj = 0;

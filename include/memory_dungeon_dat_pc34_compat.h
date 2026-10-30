@@ -109,6 +109,13 @@ struct DungeonDatState_Compat {
     long                          rawMapDataFileOffset;
     int                           loaded;
     int                           tilesLoaded;
+    /* Transient ReDMCSB edition policy for DM1 floor sensors. These fields
+     * are set only after the selected original GRAPHICS.DAT is authenticated
+     * and are never serialized into DUNGEON.DAT/save data. */
+    int                           dm1SensorEditionPolicyBound;
+    int                           dm1SensorFloorC005PartyTypeFix;
+    int                           dm1SensorFloorC009Supported;
+    int                           dm1SensorFloorC009VersionLimit;
     /* A PC34 save tail is already checksum-validated by F0435. Retain the
      * exact source bytes until a live world serializer explicitly replaces
      * them, so F0433 can round-trip an original save without lossy decode /

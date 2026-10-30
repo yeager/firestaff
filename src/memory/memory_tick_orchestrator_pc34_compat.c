@@ -10480,6 +10480,10 @@ static int orch_f0267_sensor_pass_count_compat(
         world->party.mapX == mapX && world->party.mapY == mapY);
     context.partyChampionCount = world->party.championCount;
     context.isAddition = isAddition ? 1 : 0;
+    context.editionPolicyBound = world->dungeon->dm1SensorEditionPolicyBound;
+    context.floorC005PartyTypeFix = world->dungeon->dm1SensorFloorC005PartyTypeFix;
+    context.floorC009Supported = world->dungeon->dm1SensorFloorC009Supported;
+    context.floorC009VersionLimit = world->dungeon->dm1SensorFloorC009VersionLimit;
     sensorCount = F0717_SENSOR_EnumerateOnSquare_Compat(
         world->dungeon, world->things, mapIndex, mapX, mapY, sensors);
     if (sensorCount <= 0) return 0;
@@ -10626,6 +10630,10 @@ static int orch_f0267_sensor_pass_dispatch_compat(
         world->party.mapX == mapX && world->party.mapY == mapY);
     context.partyChampionCount = world->party.championCount;
     context.isAddition = isAddition ? 1 : 0;
+    context.editionPolicyBound = world->dungeon->dm1SensorEditionPolicyBound;
+    context.floorC005PartyTypeFix = world->dungeon->dm1SensorFloorC005PartyTypeFix;
+    context.floorC009Supported = world->dungeon->dm1SensorFloorC009Supported;
+    context.floorC009VersionLimit = world->dungeon->dm1SensorFloorC009VersionLimit;
     sensorCount = F0717_SENSOR_EnumerateOnSquare_Compat(
         world->dungeon, world->things, mapIndex, mapX, mapY, sensors);
     if (sensorCount <= 0) return 0;

@@ -2042,6 +2042,8 @@ static void test_floor_version_checker(void) {
     struct DungeonSensor_Compat sensor;
     struct FloorSensorContext_Compat ctx;
     struct SensorTriggerResult_Compat result;
+    static const int limits[] = {14, 20, 21, 30, 31, 33, 34, 35, 36};
+    size_t i;
 
     /* data=20 -> version <= 20 -> triggers for DM1 V1 */
     sensor = make_sensor(9, 20, DM1_EFFECT_SET, 0, 0, 0, 0, 0, 1, 1, 0);
@@ -2059,6 +2061,95 @@ static void test_floor_version_checker(void) {
     memset(&result, 0, sizeof(result));
     F0722_SENSOR_EvaluateFloor_Compat(&sensor, &ctx, &result);
     CHECK(result.triggered == 0, "Version checker: data=21 does NOT trigger for V1");
+
+    ctx.editionPolicyBound = 1;
+    ctx.floorC009Supported = 1;
+    for (i = 0; i < sizeof(limits) / sizeof(limits[0]); ++i) {
+        ctx.floorC009VersionLimit = limits[i];
+        sensor.sensorData = (unsigned short)limits[i];
+        F0722_SENSOR_EvaluateFloor_Compat(&sensor, &ctx, &result);
+        CHECK(result.triggered == 1, "Version checker: admitted edition threshold triggers");
+        sensor.sensorData = (unsigned short)(limits[i] + 1);
+        F0722_SENSOR_EvaluateFloor_Compat(&sensor, &ctx, &result);
+        CHECK(result.triggered == 0, "Version checker: above edition threshold is rejected");
+    }
+    ctx.floorC009Supported = 0;
+    F0722_SENSOR_EvaluateFloor_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 0, "Version checker: editions without MEDIA278 skip C009");
+}
+
+static void test_floor_sensor_edition_policy(void) {
+    struct Dm1SensorEditionPolicy_Compat policy;
+    struct DungeonSensor_Compat sensor;
+    struct FloorSensorContext_Compat ctx;
+    struct SensorTriggerResult_Compat result;
+    static const char* const admittedGraphics[] = {
+        "c10c512f63461ebe79b5ac365115b61b",
+        "edf47d7da5de8184604d6d80477ef01f",
+        "fa6b1aa29e191418713bf2cda93d962e",
+        "f934d97e43e1ba6e5159839acbcd0611",
+        "b3cfd84e44cdf07ce2eeba47e87f772b",
+        "7eee396993745e8af212f44d75ff6c1a",
+        "5095a13692702235d2e74f6b2b1367a9",
+        "9ce2eaf7a9e78620e3f17594437caffa",
+        "2bdc5f431f84c0ece738f54dbd787c3b",
+        "0d7af44dd14f383464288abdcec76afc",
+        "6a2f135b53c2220f0251fa103e2a6e7e",
+        "dd373954b3fb127db7387946131ea322",
+        "0679e39da9dcc2e855cb33c6c64ddcb5",
+        "b35931b55db649a1bd2d415b61b29801",
+        "7f9458e4a3972d06e649a6fa85a7f34b",
+        "491ca939f9abb33ceeb26619b841fe91",
+        "1045a36952e64eb2bc7b4c7b2965b112"
+    };
+    size_t editionIndex;
+
+    CHECK(DM1_V1_SensorEditionPolicy_ResolveGraphicsMd5_Compat(
+              "b3cfd84e44cdf07ce2eeba47e87f772b", &policy) == 1 &&
+              policy.floorC009Supported == 0 &&
+              policy.floorC005PartyTypeFix == 0,
+          "Edition policy: Atari ST 1.x excludes C009 and retains old C005 path");
+    CHECK(DM1_V1_SensorEditionPolicy_ResolveGraphicsMd5_Compat(
+              "b35931b55db649a1bd2d415b61b29801", &policy) == 1 &&
+              policy.floorC009Supported == 1 &&
+              policy.floorC009VersionLimit == 21 &&
+              policy.floorC005PartyTypeFix == 0,
+          "Edition policy: Amiga 2.1 uses MEDIA342 limit and legacy C005");
+    CHECK(DM1_V1_SensorEditionPolicy_ResolveGraphicsMd5_Compat(
+              "7f9458e4a3972d06e649a6fa85a7f34b", &policy) == 1 &&
+              policy.floorC009Supported == 1 &&
+              policy.floorC009VersionLimit == 36 &&
+              policy.floorC005PartyTypeFix == 1,
+          "Edition policy: Amiga 3.6 uses MEDIA744 limit and fixed C005");
+    CHECK(DM1_V1_SensorEditionPolicy_ResolveGraphicsMd5_Compat(
+              "1045a36952e64eb2bc7b4c7b2965b112", &policy) == 1 &&
+              policy.floorC009VersionLimit == 34 &&
+              policy.floorC005PartyTypeFix == 1,
+          "Edition policy: IIGS uses MEDIA707 limit and fixed C005");
+    CHECK(DM1_V1_SensorEditionPolicy_ResolveGraphicsMd5_Compat(
+              "not-an-admitted-edition", &policy) == 0,
+          "Edition policy: unknown graphics identity does not resolve");
+    for (editionIndex = 0;
+         editionIndex < sizeof(admittedGraphics) / sizeof(admittedGraphics[0]);
+         ++editionIndex) {
+        CHECK(DM1_V1_SensorEditionPolicy_ResolveGraphicsMd5_Compat(
+                  admittedGraphics[editionIndex], &policy) == 1,
+              "Edition policy: every M12-supported DM1 graphics identity resolves");
+    }
+
+    sensor = make_sensor(DM1_SENSOR_FLOOR_PARTY_ON_STAIRS, 0,
+                         DM1_EFFECT_SET, 0, 0, 0, 0, 0, 1, 1, 0);
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.thingType = DM1_TRIGGER_SOURCE_PARTY;
+    ctx.squareType = DM1_SQUARE_STAIRS;
+    ctx.isAddition = 1;
+    ctx.editionPolicyBound = 1;
+    ctx.floorC005PartyTypeFix = 0;
+    F0722_SENSOR_EvaluateFloor_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 0, "C005: legacy wrong-variable edition does not trigger");
+    ctx.floorC005PartyTypeFix = 1;
+    F0722_SENSOR_EvaluateFloor_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 1, "C005: corrected edition tests the party and stairs square");
 }
 
 /* ----------------------------------------------------------------
@@ -2148,6 +2239,7 @@ int main(void) {
     test_process_wall_click();
     test_process_wall_click_rotation_per_cell_deferred();
     test_floor_version_checker();
+    test_floor_sensor_edition_policy();
     test_floor_disabled();
     test_floor_group_generator_skipped();
 

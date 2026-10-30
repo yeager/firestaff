@@ -10067,6 +10067,32 @@ static int m11_apply_dm1_startup_launch_path_receipt(
     return 1;
 }
 
+static void m11_bind_dm1_sensor_edition_policy(
+    M11_GameViewState* state,
+    const char* graphicsMd5) {
+    struct Dm1SensorEditionPolicy_Compat policy;
+    struct DungeonDatState_Compat* dungeon;
+
+    if (!state || !state->world.dungeon) return;
+    dungeon = state->world.dungeon;
+    memset(&policy, 0, sizeof(policy));
+    dungeon->dm1SensorEditionPolicyBound = 0;
+    dungeon->dm1SensorFloorC005PartyTypeFix = 0;
+    dungeon->dm1SensorFloorC009Supported = 0;
+    dungeon->dm1SensorFloorC009VersionLimit = 0;
+    /* A live runtime with no matched source profile fails closed for these
+     * edition-sensitive floor sensors. Zero-bound policy is reserved for
+     * isolated legacy callers and explicit PC34 compatibility tests. */
+    dungeon->dm1SensorEditionPolicyBound = 1;
+    if (!DM1_V1_SensorEditionPolicy_ResolveGraphicsMd5_Compat(
+            graphicsMd5, &policy)) {
+        return;
+    }
+    dungeon->dm1SensorFloorC005PartyTypeFix = policy.floorC005PartyTypeFix;
+    dungeon->dm1SensorFloorC009Supported = policy.floorC009Supported;
+    dungeon->dm1SensorFloorC009VersionLimit = policy.floorC009VersionLimit;
+}
+
 static int m11_apply_dm1_startup_runtime_start_receipt(
     M11_GameViewState* state,
     const DM1_V1_StartupRuntimeStartReceipt_PC34* receipt) {
@@ -10083,6 +10109,7 @@ static int m11_apply_dm1_startup_runtime_start_receipt(
         state->assetLoader.graphicsDatPath[0]) {
         (void)asset_file_md5_hex(state->assetLoader.graphicsDatPath, skillEditionMd5);
     }
+    m11_bind_dm1_sensor_edition_policy(state, skillEditionMd5);
     state->active = receipt->active;
     state->startedFromLauncher = receipt->started_from_launcher;
     state->sourceKind = (M11_GameSourceKind)receipt->source_kind;
@@ -29865,6 +29892,11 @@ int M11_GameView_StartIigs(M11_GameViewState* state,
     if (!F0882G_WORLD_InitFromIigsDungeonDatBuffer_Compat(expanded,
             (int)expandedSize, 0xF1A5U, metadata.creature_info, 27U,
             &state->world)) goto cleanup;
+    /* Both IIGS source revisions share the authenticated graphics bank. The
+     * source MEDIA278/346 policy is shared too: C009 has no later numeric
+     * override and C005 uses the corrected party-type operand. */
+    m11_bind_dm1_sensor_edition_policy(
+        state, "1045a36952e64eb2bc7b4c7b2965b112");
     state->active = 1;
     failureStage = "font-bind";
     if (!F0506_DUNGEON_ReserveFreshPc34Pools_Compat(state->world.dungeon,
