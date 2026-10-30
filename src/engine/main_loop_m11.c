@@ -14311,13 +14311,15 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         /* Credentials are intentionally never included in diagnostics.  Even
          * a suffix from a redacted API token is unnecessary information in a
          * log that may be shared with a bug report. */
-        fprintf(stderr,
-                "RetroAchievements: %s user=%s credentials=%s hardcore=%d\n",
-                firestaff_ra_status_label(firestaff_ra_status(&raRuntime)),
-                raConfig.username[0] ? raConfig.username : "(none)",
-                (raConfig.username[0] && raConfig.api_token[0])
-                    ? "configured" : "missing",
-                raConfig.hardcore);
+        if (o->debug) {
+            fprintf(stderr,
+                    "RetroAchievements: %s user=%s credentials=%s hardcore=%d\n",
+                    firestaff_ra_status_label(firestaff_ra_status(&raRuntime)),
+                    raConfig.username[0] ? raConfig.username : "(none)",
+                    (raConfig.username[0] && raConfig.api_token[0])
+                        ? "configured" : "missing",
+                    raConfig.hardcore);
+        }
         (void)m11_drain_retroachievements_events(&raRuntime, &gameView);
     }
     {

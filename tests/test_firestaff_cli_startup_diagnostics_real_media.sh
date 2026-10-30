@@ -93,6 +93,34 @@ cache_replacement_root=
 quick_home=
 trap 'rm -rf "$combined_root" "$csb_mixed_root" "$csb_combined_root" "$dm1_combined_root" "$default_home" "$quick_home" "$uppercase_game_root" "$offline_home" "$cache_replacement_root"' EXIT
 
+if [ -f "$nexus_cue" ]; then
+    nexus_quiet_output=$(FIRESTAFF_CONFIG_PATH="$combined_root/nexus-quiet.toml" \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --game nexus --data-dir "$nexus_cue" --retroachievements \
+        --boot-probe --boot-probe-frames 0 --duration 0 2>&1) || {
+        printf '%s\n' "$nexus_quiet_output" >&2
+        exit 1
+    }
+    case "$nexus_quiet_output" in
+        *'RetroAchievements:'*|*'Nexus UI:'*|*'Nexus sound:'*|*'Nexus font:'*|*'Nexus launcher:'*|*'Nexus V1 engine initialized'*|*'NEXUS STARTUP RECEIPT:'*)
+            printf '%s\n' "$nexus_quiet_output" >&2
+            printf '%s\n' 'FAIL: authentic Nexus startup diagnostics were emitted without --debug' >&2
+            exit 1
+            ;;
+    esac
+    case "$nexus_quiet_output" in
+        *'FIRESTAFF BOOT PROBE READY: gameId=nexus '*"dataDir=$nexus_cue"*'phase=nexus-title '*"levelLoaded=0"*) ;;
+        *)
+            printf '%s\n' "$nexus_quiet_output" >&2
+            printf '%s\n' 'FAIL: quiet Nexus check did not reach the authentic title startup receipt' >&2
+            exit 1
+            ;;
+    esac
+    echo 'PASS: authentic Nexus CUE startup keeps debug and RetroAchievements diagnostics quiet without --debug'
+else
+    echo 'SKIP: Nexus quiet-startup diagnostic check (authentic Japanese CUE unavailable)'
+fi
+
 # A cached physical-file hash must not survive replacing an authentic game
 # file with another original edition of the same size while preserving its
 # modification timestamp. CSB's Towns and Amiga 3.3 DUNGEON.DAT files are both

@@ -9,8 +9,19 @@ if [ ! -x "$app" ]; then
     exit 77
 fi
 
-output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+quiet_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
     "$app" --retroachievements --ra-user release-test-user \
+    --ra-token "$sentinel" --duration 0 2>&1)
+case "$quiet_output" in
+    *'RetroAchievements:'*)
+        printf '%s\n' "$quiet_output" >&2
+        printf '%s\n' 'FAIL: RetroAchievements diagnostics were emitted without --debug' >&2
+        exit 1
+        ;;
+esac
+
+output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+    "$app" --debug --retroachievements --ra-user release-test-user \
     --ra-token "$sentinel" --duration 0 2>&1)
 
 case "$output" in

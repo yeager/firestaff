@@ -1,5 +1,17 @@
 # Firestaff DONE — cross-game completed work
 
+
+## 2026-10-30 — Keep RetroAchievements startup diagnostics behind `--debug`
+
+The CLI emitted RetroAchievements credential status whenever the feature was
+enabled, even without `--debug`. The status line is now debug-only, while the
+runtime still applies its configuration and processes events normally. The
+regression runs an enabled no-debug launch and requires silence, then runs with
+`--debug` and confirms status output while ensuring the API token is never
+printed. The focused test passed against the current build. This is a logging
+change; it does not alter achievement authentication or game startup.
+
+
 ## 2026-10-30 — Authentic pointer selection for priority games
 
 Added an independently runnable real-media M12 selector check for DM1 PC,
