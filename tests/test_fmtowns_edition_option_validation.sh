@@ -48,5 +48,23 @@ expect_rejected \
 expect_rejected \
     'firestaff: --csb-utility-disk requires --platform fm-towns' \
     --amiga --csb-utility-disk
+expect_rejected \
+    'firestaff: --csb-utility-disk requires CSB FM Towns media' \
+    --game dm1 --csb-utility-disk
+expect_rejected \
+    'firestaff: --csb-utility-disk requires CSB FM Towns media' \
+    --csb-utility-disk --game dm1
+expect_rejected \
+    'firestaff: --csb-hint-oracle requires --game csb' \
+    --game dm1 --csb-hint-oracle --data-dir unused
+expect_rejected \
+    'firestaff: --csb-hint-oracle requires --game csb' \
+    --csb-hint-oracle --game dm1 --data-dir unused
+expect_rejected \
+    'firestaff: --csb-hint-oracle and --csb-utility-disk cannot be combined' \
+    --csb-hint-oracle --csb-utility-disk --data-dir unused
+expect_rejected \
+    'firestaff: --csb-hint-oracle and --csb-utility-disk cannot be combined' \
+    --csb-utility-disk --csb-hint-oracle --data-dir unused
 
-echo 'PASS: mismatched FM Towns edition and utility options are rejected before media scanning'
+echo 'PASS: mismatched edition options and conflicting CSB modes are rejected before media scanning'

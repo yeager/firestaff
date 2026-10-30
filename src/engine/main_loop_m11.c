@@ -13683,6 +13683,17 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         fprintf(stderr, "firestaff: --csb-hint-oracle requires --data-dir\n");
         return 2;
     }
+    if (runtimeOptions.csbHintOracle && runtimeOptions.gameId &&
+        strcmp(runtimeOptions.gameId, "csb") != 0) {
+        fprintf(stderr, "firestaff: --csb-hint-oracle requires --game csb\n");
+        return 2;
+    }
+    if (runtimeOptions.csbHintOracle &&
+        runtimeOptions.csbFmtownsUtilityDisk) {
+        fprintf(stderr,
+                "firestaff: --csb-hint-oracle and --csb-utility-disk cannot be combined\n");
+        return 2;
+    }
     if (runtimeOptions.csbFmtownsUtilityDisk &&
         (!runtimeOptions.gameId ||
          strcmp(runtimeOptions.gameId, "csb") != 0)) {
