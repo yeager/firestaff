@@ -48716,6 +48716,16 @@ if(BUILD_TESTING AND THERON_SOURCES)
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_mednafen_live_capture_script.sh
     )
     add_test(
+        NAME theron_jp_syscard_bootstrap_follow_verifier
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_verify_theron_jp_syscard_bootstrap_follow.py
+    )
+    add_test(
+        NAME theron_jp_stage2_instruction_snapshot_source_verifier
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_verify_theron_jp_stage2_instruction_snapshot_source.py
+    )
+    add_test(
         NAME theron_v1_mednafen_pce_fast_vram_commit_patch
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_mednafen_pce_fast_vram_commit_patch.sh
     )

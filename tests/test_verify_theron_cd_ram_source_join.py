@@ -11,7 +11,9 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from verify_theron_cd_ram_source_join import (
     READ_HEADER,
+    READ_HEADER_SHARED_SEQUENCE,
     WRITE_HEADER,
+    WRITE_HEADER_SHARED_SEQUENCE,
     join_rows,
     verify,
 )
@@ -152,6 +154,30 @@ class CDToRAMSourceJoinTests(unittest.TestCase):
         verify_data_port_trace.assert_called_once_with(
             read_path, track02_path, allow_other_sources=True
         )
+
+    def test_accepts_shared_sequence_headers(self) -> None:
+        scratch_root = Path(__file__).resolve().parents[1] / ".codex-scratch"
+        scratch_root.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix="theron-shared-header-", dir=scratch_root) as scratch_dir:
+            capture = Path(scratch_dir)
+            read_path = capture / "capture.cd-data-port-read"
+            write_path = capture / "capture.cd-ram-target-write"
+            track02_path = capture / "unused-track02.bin"
+            read_path.write_text(READ_HEADER_SHARED_SEQUENCE + "\n", encoding="ascii")
+            write_path.write_text(
+                WRITE_HEADER_SHARED_SEQUENCE
+                + "\ncd_ram_target_write sequence=0 event_sequence=41 physical_address=0d04d2 "
+                + "value=ad writer_pc=ea9c writer_physical_pc=000a9c mpr2=68\n",
+                encoding="ascii",
+            )
+            with mock.patch(
+                "verify_theron_cd_ram_source_join.verify_data_port_trace",
+                return_value=(b"unused", self.reads),
+            ):
+                self.assertEqual(
+                    len(verify(write_path, read_path, track02_path, 0x0D04D2, 0x0D04E6, 0x68, 0xEA9C)),
+                    1,
+                )
 
     def test_rejects_value_mismatch(self) -> None:
         self.writes[0]["value"] = "00"

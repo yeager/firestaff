@@ -22,6 +22,10 @@ MAX_OBSERVED_BYTES = 1_048_576
 TRACE_HEADER = "source=mednafen-pce-fast-cd-data-port-read"
 TRACE_HEADER_WITH_READER_PC = "source=mednafen-pce-fast-cd-data-port-read-with-reader-pc"
 TRACE_HEADER_WITH_READER_MPR_CONTEXT = "source=mednafen-pce-fast-cd-data-port-read-with-reader-mpr-context"
+TRACE_HEADER_WITH_READER_MPR_SHARED_SEQUENCE = (
+    TRACE_HEADER_WITH_READER_MPR_CONTEXT
+    + " event_sequence_source=TheronTraceCDSharedEventSequence"
+)
 
 
 def parse_row(line: str, line_number: int) -> dict[str, int]:
@@ -85,11 +89,16 @@ def verify(
 
     lines = trace_path.read_text(encoding="ascii").splitlines()
     reader_pc_trace = bool(lines and lines[0] == TRACE_HEADER_WITH_READER_PC)
-    reader_mpr_trace = bool(lines and lines[0] == TRACE_HEADER_WITH_READER_MPR_CONTEXT)
+    reader_mpr_trace = bool(lines and lines[0] in (
+        TRACE_HEADER_WITH_READER_MPR_CONTEXT,
+        TRACE_HEADER_WITH_READER_MPR_SHARED_SEQUENCE,
+    ))
+    shared_sequence_trace = bool(lines and lines[0] == TRACE_HEADER_WITH_READER_MPR_SHARED_SEQUENCE)
     if not lines or lines[0] not in (
         TRACE_HEADER,
         TRACE_HEADER_WITH_READER_PC,
         TRACE_HEADER_WITH_READER_MPR_CONTEXT,
+        TRACE_HEADER_WITH_READER_MPR_SHARED_SEQUENCE,
     ):
         raise ValueError("unexpected CD data-port trace header")
     rows = [parse_row(line, index + 2) for index, line in enumerate(lines[1:])]
@@ -102,6 +111,8 @@ def verify(
 
     # Pass 1 checks the trace's ordered sequence and source metadata.
     event_sequences = [row["event_sequence"] for row in rows if "event_sequence" in row]
+    if shared_sequence_trace and len(event_sequences) != len(rows):
+        raise ValueError("shared-sequence header requires an event ID on every CD read")
     if event_sequences and (len(event_sequences) != len(rows) or any(
         current <= previous for previous, current in zip(event_sequences, event_sequences[1:])
     )):

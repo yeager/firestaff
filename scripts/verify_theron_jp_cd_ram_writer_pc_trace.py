@@ -25,6 +25,7 @@ READ_SUFFIX = ".cd-data-port-read"
 WRITE_SUFFIX = ".cd-ram-writer-pc"
 DISPATCH_SUFFIX = ".system-card-dispatch"
 READ_HEADER = "source=mednafen-pce-fast-cd-data-port-read-with-reader-mpr-context"
+READ_HEADER_SHARED_SEQUENCE = READ_HEADER + " event_sequence_source=TheronTraceCDSharedEventSequence"
 
 
 def parse_fields(line: str, prefix: str, line_number: int) -> dict[str, str]:
@@ -54,7 +55,7 @@ def ensure_capture_pair(paths: list[Path]) -> None:
 
 def verify_read_rows(path: Path, track02: bytes) -> tuple[list[dict[str, str]], int]:
     lines = path.read_text(encoding="ascii").splitlines()
-    if not lines or lines[0] != READ_HEADER:
+    if not lines or lines[0] not in (READ_HEADER, READ_HEADER_SHARED_SEQUENCE):
         raise ValueError("unexpected CD data-port trace header")
     rows: list[dict[str, str]] = []
     previous_event = -1
@@ -119,6 +120,8 @@ def verify_writer_rows(path: Path) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
     previous_event = -1
     for line_no, line in enumerate(lines[1:], 2):
+        if line.startswith("cd_ram_writer_pc_truncated "):
+            raise ValueError(f"writer-PC trace reached its sample cap at line {line_no}")
         row = parse_fields(line, "cd_ram_writer_pc_write", line_no)
         if int(row["sequence"]) != len(rows):
             raise ValueError(f"non-contiguous writer sequence at line {line_no}")
