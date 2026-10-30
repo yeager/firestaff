@@ -1,6 +1,6 @@
 --- a/src/pce_fast/huc.cpp
 +++ b/src/pce_fast/huc.cpp
-@@ -73,15 +73,61 @@
+@@ -73,15 +73,70 @@
  static DECLFR(HuCRead)
  {
   return ROMSpace[A];
@@ -24,10 +24,19 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 + const uint32 poll_last = 0x68 * 8192 + 0x04e6;
 + const uint32 stage2_first = 0x80 * 8192;
 + const uint32 stage2_last = stage2_first + 0x10;
++ /* These five CD-RAM bytes were fetched from banks $80/$82 but did not
++  * match the earlier PC $EA9C-only writer trace. */
++ const uint32 fetch_mismatch_80_first = 0x80 * 8192 + 0x00d9;
++ const uint32 fetch_mismatch_80_last = 0x80 * 8192 + 0x00db;
++ const uint32 fetch_mismatch_82_first = 0x82 * 8192 + 0x068d;
++ const uint32 fetch_mismatch_82_last = 0x82 * 8192 + 0x068e;
 + const bool stage2_target = address >= stage2_first && address <= stage2_last;
 + const bool poll_target = address >= poll_first && address <= poll_last;
 + const bool existing_target = address >= first && address <= last;
-+ if((!stage2_target && !poll_target && !existing_target) || count >= trace_limit)
++ const bool fetch_mismatch_target =
++  (address >= fetch_mismatch_80_first && address <= fetch_mismatch_80_last) ||
++  (address >= fetch_mismatch_82_first && address <= fetch_mismatch_82_last);
++ if((!stage2_target && !poll_target && !existing_target && !fetch_mismatch_target) || count >= trace_limit)
 +  return;
 + if(!trace)
 + {

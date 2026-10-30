@@ -36,6 +36,27 @@ assets, mechanics, or parity.
    and save/resume. Compare both authentic regional editions against the
    [Theron parity definition matrix](parity-evidence/theron_v1_parity_definition_matrix.md).
 
+## 2026-10-30 — trace all guest writes at the five fetched-code addresses
+
+- Extended the reference-only PCE Fast target-write observer to record guest
+  CPU and block-move writes at $1000D9-$1000DB and $10468D-$10468E, the five
+  addresses that differed from the earlier $EA9C-only trace.
+- In a second authentic JP cold run@480:300 capture, 76 writes to these
+  addresses came from PCs other than $EA9C. All 228 fetched bytes at the five
+  addresses had an earlier observed write with the same latest value. The new
+  verifier reports zero missing writes and zero value mismatches.
+- The writes at $10468D/$10468E came from STA $468D at $4684 and
+  STA $468E at $4689, with accumulator values $E0/$47. The subsequent
+  fetch at $468C was E3 E0 47, a TIA opcode and the start of its source
+  operand. At $1000D9-$1000DB, a TII block move at $4055 had source and
+  destination mappings that alias the same physical bytes; later writes
+  changed the fetched bytes to $4C 48 61 and back to $EA bytes. These are
+  runtime code writes, not evidence of a native gameplay handoff.
+- This closes the specific writer-observer gap for the five addresses in this
+  capture. The run still had no game IRQ, authenticated CD transfer receipt,
+  or gameplay transition, and it does not establish loader completion or
+  parity. Full remaining work is tracked in the JP source-lock note.
+
 ## 2026-10-30 — bind the JP System Card transfer to executed code
 
 - Extended the PCE Fast reference trace with PC $EA9C CD-RAM writer records
@@ -57,7 +78,7 @@ assets, mechanics, or parity.
   $1000DA (1), $1000DB (1), $10468D (21), and $10468E (21); logical PCs
   were $40D7 (1), $40D9 (3), and $468C (42). Slot-2 MPR was $80 at the
   first three addresses and $82 at the last two, with no observed mapping
-  change. Broader CD-RAM and DMA write tracing is needed.
+  change. The follow-up trace now observes guest writes at these five addresses; it does not prove a full CD-to-game transfer.
 - The run remains blocked before the game-owned IRQ, authenticated CD transfer
   receipt, game input poll, and gameplay transition. Treat this as loader and
   execution provenance only; it does not establish game launch or parity.

@@ -87,8 +87,7 @@ capture cannot distinguish them. The physical addresses were $1000D9 (2
 bytes), $1000DA (1), $1000DB (1), $10468D (21), and $10468E (21); logical
 PCs were $40D7 (1), $40D9 (3), and $468C (42). Slot-2 MPR was $80 at the
 first three addresses and $82 at the last two, with no observed mapping
-change. Broader CD-RAM and DMA write tracing is needed. These mismatches
-are unresolved, so the result is not a complete transfer proof. The capture was blocked with exit 124 and still had no game IRQ,
+change. The PC $EA9C-only writer observer did not capture other guest writers. The follow-up below traces guest writes at these five addresses; neither capture proves a complete transfer. The capture was blocked with exit 124 and still had no game IRQ,
 authenticated CD transfer receipt, game-owned input poll, or gameplay
 transition. It provides loader and execution provenance only, not parity.
 
@@ -102,6 +101,58 @@ Trace SHA-256 values:
 - Transition receipt: 35c1dfc18874283cc96dc1994ce1eeb4f89621b90cb12e08c92ba3abdee110b6.
 
 The raw media and trace files remain private and are not part of the repository.
+
+## Follow-up guest-write and instruction capture
+
+A second cold capture used the same authenticated Japanese Rev. 1 Track 02
+(MD5 b7afb338ad31be1025b53f9aff12d73a) and System Card 3.0, again with
+run@480:300 on input slot 0 and no save state. It ran for 45 seconds and
+remained blocked before the game IRQ, authenticated CD transfer receipt, and
+gameplay transition.
+
+The target-write observer was extended to include the five previously
+mismatching physical bytes in banks $80 and $82, using the existing PCE Fast
+HuCRAMWrite/HuCRAMWriteCDSpecial guest-write path. This includes HuC6280
+block-move writes routed through PCEWrite; it is not a claim that every
+hardware-side DMA path is observed. The trace recorded 6 writes at each of
+$1000D9-$1000DB and 33 at each of $10468D/$10468E. Of those, 76 writes came
+from PCs other than $EA9C. The bounded target-write trace contained 170
+records total.
+
+The new verifier scripts/verify_theron_jp_fetch_target_writes.py correlated
+the shared event sequence of target writes and instruction-byte fetches. It
+found 228 fetched bytes at the five addresses: all 228 had a prior observed
+write whose latest value matched; there were zero bytes without a prior
+observed write and zero latest-value mismatches. The observed code also
+explains why the earlier $EA9C-only comparison was incomplete:
+
+- At $1000D9-$1000DB, a TII block move at $4055 used source $40D9 and
+  destination $60D9 while both windows mapped to bank $80, so those writes
+  aliased the same physical bytes. Later writes placed $4C 48 61 there and
+  rewrote them to $EA before subsequent fetches.
+- At $104684, the fetched instruction bytes were 8D 8D 46 (STA $468D); at
+  $104689, they were 8D 8E 46 (STA $468E). Those instructions wrote $E0 and
+  $47 to $10468D/$10468E. The later fetch at $10468C was E3 E0 47,
+  identifying $E3 as the HuC6280 TIA opcode and the two observed bytes as the
+  start of its $47E0 source operand. The opcode name and block-move behavior
+  are cross-checked against Mednafen 1.32.1 src/pce/dis6280.cpp and
+  src/pce/huc6280.cpp.
+- The target observer only establishes guest writes and their event ordering
+  at these five addresses. It does not bind each write causally to a unique
+  disc byte, establish the full loader, or prove that the resulting transfer
+  entered gameplay. The original source-bound reader/writer verifier still
+  reports 46 differences when only $EA9C writes are considered.
+
+Private capture directory on TRV2:
+/home/trv2/firestaff-theron-evidence/capture/theron-jp-run-writer-all-cdram-writes-cold-20261030/.
+
+Trace SHA-256 values:
+
+- CD-RAM target writes: 774be364738016734385dac9420afa95ebf01d2ffb3aa9f71dca067b1c821157.
+- System Card dispatch and code fetch: 994b62a14607981414287200c9fffcad5cfc41602118db5380e543c44875a918.
+- Transition receipt: c11a40eb017f43c2df869458167680fc32fc5a9f03e053de9a6bb6ae9d068ae6.
+
+The raw media and traces remain private and are not included in Git.
 
 ## Remaining evidence needed
 
