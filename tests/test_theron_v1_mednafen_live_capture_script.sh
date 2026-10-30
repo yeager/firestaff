@@ -1091,15 +1091,21 @@ if [[ ! -f "$pce_fast_movement_context_instrumenter" ]] ||
    ! grep -Fq 'frame=%u' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'mpr0=%02x' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'mpr7=%02x' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'extern uint32 TheronTraceCDSharedEventSequence;' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'event_sequence_source=TheronTraceCDSharedEventSequence' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'event_sequence=%u frame=%u' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'TheronPCEFastMovementTIICandidateStateTransfer' "$pce_fast_movement_context_instrumenter" ||
-   ! grep -Fq 'tii_candidate_state_transfer sequence=%u' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'tii_candidate_state_transfer sequence=%u event_sequence=%u frame=%u' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'destination_mpr=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'TheronTraceInstructionPC == 0xC1FC' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'HuCPU.in_block_move == IBM_TII' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'source_physical_address=%06x' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'source_mpr=%02x' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'opcode_pc=%04x opcode_mpr=%02x opcode_physical_pc=%06x bmt_remaining=%04x source_logical_address=%04x' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'TheronPCEFastMovementStateWrite' "$pce_fast_movement_context_instrumenter" ||
-   ! grep -Fq 'movement_state_write sequence=%u frame=%u path=%s' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'movement_state_write sequence=%u event_sequence=%u frame=%u path=%s' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'opcode_mpr=%02x opcode_physical_pc=%06x' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'bmt_length=%04x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'code_bytes=%02x%02x%02x code_mpr=%02x%02x%02x' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'HuCPU.FastPageR[slot] + address' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'A == 0x2040 || A == 0x2041' "$pce_fast_movement_context_instrumenter" ||

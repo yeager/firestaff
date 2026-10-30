@@ -1,5 +1,26 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-30 — sequence cold PCE Fast movement trace rows
+
+The capture-only movement-context observer now emits v3 rows with the shared
+`TheronTraceCDSharedEventSequence` and complete MPR0–MPR7 mappings, including
+opcode MPR and physical PC. A full instrumented Mednafen build completed on
+TRV2 with `-j1`; the focused capture-script test passed three consecutive
+loops, Python syntax validation passed, and `git diff --check` passed. A cold
+authentic JP Rev. 1 replay witnessed all 13 scripted inputs at the port-0
+controller poll and recorded the two original `$C1FC` TII writes from
+`$20B4/$20B5` to `$2040/$2041` at frame 13601. The separate `WrMem` and TII
+rows have adjacent event-sequence numbers because each diagnostic hook emits
+its own row.
+
+The run remained blocked without a CD IRQ, authenticated CD-to-RAM receipt, or
+`$E009` dispatch; its broad physical RAM write trace hit the 1,048,576-row
+limit. The capture does not establish the active map, candidate-byte meaning,
+collision, visible movement, or native parity. Raw traces and media stayed on
+TRV2. Details and hashes are in
+`docs/source-lock/theron-disassembly/theron-pce-fast-tii-position-observer-20261029.md`.
+The active-map and consumer join remain open in `TODO-theron.md`.
+
 ## 2026-10-29 — verify bounded authentic CD-to-RAM source joins
 
 Added a reusable verifier that joins shared event sequences from a PCE Fast CD

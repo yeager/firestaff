@@ -9211,6 +9211,14 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   JP map for that state is still unresolved.
 - Next bind the active map and destination tile from authentic Track 02/runtime
   evidence, then run an accepted command plus an identical no-input control.
+  The 2026-10-30 cold scripted replay reached a game-owned controller poll and
+  recorded the same `$C1FC` TII writes to `$2040/$2041`, but the capture still
+  lacked CD IRQ, authenticated CD-to-RAM, and `$E009` handoff receipts. This
+  does not prove that the verified story route or an active map was loaded in
+  that run. The shared diagnostic event sequence and full MPR snapshots make
+  hook ordering and physical mappings inspectable; they do not identify the
+  candidate bytes' consumer or establish collision semantics. See
+  `docs/source-lock/theron-disassembly/theron-pce-fast-tii-position-observer-20261029.md`.
   The initial observer gate used `$C1FA`; the follow-up below corrects it to
   `$C1FC` and records both ordered bytes. Details are in
   `docs/source-lock/theron-disassembly/theron-pce-fast-tii-position-observer-20261029.md`.
