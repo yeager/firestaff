@@ -63,7 +63,7 @@ trap cleanup EXIT HUP INT TERM
 print_diagnostics() {
     local log_file=$1
     local matched
-    matched=$(grep -E '(^| )(FAIL:|CSB READY:|DM1 READY:|DM2 READY:|firestaff: launch phase=|firestaff: csb-atari-animation|FIRESTAFF BOOT PROBE READY:)' "$log_file" | tail -25 || true)
+    matched=$(grep -E '(^| )(FAIL:|CSB READY:|DM1 READY:|DM2 READY:|firestaff: launch phase=|firestaff: csb-atari-animation|firestaff: dm2-render-debug|firestaff: dm2-render-item|FIRESTAFF BOOT PROBE READY:)' "$log_file" | tail -25 || true)
     if [[ -n "$matched" ]]; then
         printf '%s\n' "$matched" >&2
     else
@@ -158,6 +158,14 @@ fi
 if ! python3 "$(dirname "$0")/verify_m12_alternate_platform_runtime.py" "$route" "$probe"; then
     cat "$log" >&2
     exit 1
+fi
+if [[ "$route" == dm2-pc ]]; then
+    if ! grep -Eq '^firestaff: dm2-render-debug .*item-traces:[1-9][0-9]*([[:space:]]|$)' "$log" ||
+       ! grep -Eq '^firestaff: dm2-render-item game=dm2 platform=pc-en .* gdat=[0-9a-f]+ .* rect=-?[0-9]+,-?[0-9]+,[1-9][0-9]*,[1-9][0-9]*$' "$log"; then
+        printf 'FAIL: authentic DM2 PC startup did not produce a populated source item render trace\n' >&2
+        print_diagnostics "$log"
+        exit 1
+    fi
 fi
 if [[ $(firestaff_sha256_file "$selected_archive") != "$archive_hash" ]]; then
     printf 'FAIL: original %s source changed during M12 runtime selection\n' "$route" >&2

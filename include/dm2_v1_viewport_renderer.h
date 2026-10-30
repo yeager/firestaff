@@ -1630,6 +1630,22 @@ typedef struct {
     int draw_order;
 } DM2_V1_ItemAssetBlit;
 
+/* Bounded per-frame item draw receipt used by --debug to identify source
+ * assets and their final placement without retaining decoded pixels. */
+typedef struct {
+    int source_kind;
+    int gdat_index;
+    int item_index;
+    uint16_t object_id;
+    int item_category;
+    int item_type;
+    int frame_index;
+    int depth;
+    int source_width;
+    int source_height;
+    DM2_V1_ViewportRect destination;
+} DM2_V1_ViewportItemMaterialTrace;
+
 typedef struct {
     uint8_t  projectile_category; /* source-owned GDAT category; 0 = unavailable */
     uint8_t  projectile_type; /* spell/arrow/bolt type */
@@ -2104,6 +2120,9 @@ typedef struct {
     int item_material_drawn_count;
     int item_material_gdat_indices[DM2_MAX_PRESENTED_ITEM_MATERIALS];
     uint8_t item_material_source_kinds[DM2_MAX_PRESENTED_ITEM_MATERIALS];
+    int item_material_trace_count;
+    DM2_V1_ViewportItemMaterialTrace item_material_traces[
+        DM2_MAX_PRESENTED_ITEM_MATERIALS];
     int last_item_render_valid;
     int last_item_asset_blit_valid;
     int last_item_source_kind;

@@ -761,6 +761,33 @@ typedef struct DM2_V1_RuntimeItemRenderReceipt {
 } DM2_V1_RuntimeItemRenderReceipt;
 int dm2_v1_runtime_last_item_render_receipt(
     DM2_V1_RuntimeItemRenderReceipt *out_receipt);
+int dm2_v1_runtime_last_item_material_trace_count(void);
+int dm2_v1_runtime_last_item_material_trace(
+    int index, DM2_V1_ViewportItemMaterialTrace *out_trace);
+/* Metadata-only copy of the last frame's source HUD plan for --debug.
+ * Pixel buffers and source archive pointers are deliberately not retained. */
+typedef struct {
+    int kind;
+    int gdat_category;
+    int gdat_index;
+    int gdat_field;
+    int viewport_gdat_index;
+    int width;
+    int height;
+    uint16_t destination_rect_id;
+    uint8_t source_state_flags;
+    uint8_t source_transparency_key;
+    uint8_t animation_direction;
+    uint8_t animation_frame;
+    DM2_V1_ViewportRect destination;
+    uint32_t destination_table_hash;
+    uint32_t raw_hash;
+    uint32_t decoded_hash;
+    uint32_t palette_hash;
+} DM2_V1_RuntimeHudMaterialTrace;
+int dm2_v1_runtime_last_hud_material_trace_count(void);
+int dm2_v1_runtime_last_hud_material_trace(
+    int index, DM2_V1_RuntimeHudMaterialTrace *out_trace);
 typedef struct DM2_V1_RuntimeCreatureRenderReceipt {
     int valid;
     int instance_id;

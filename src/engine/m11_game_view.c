@@ -66315,6 +66315,19 @@ static uint32_t m11_dm2_debug_mix_u32(uint32_t hash, uint32_t value)
     return hash * 16777619u;
 }
 
+static uint32_t m11_dm2_debug_mix_text(uint32_t hash, const char *text)
+{
+    const unsigned char *cursor = (const unsigned char *)text;
+
+    if (cursor) {
+        while (*cursor) {
+            hash = m11_dm2_debug_mix_u32(hash, (uint32_t)*cursor);
+            ++cursor;
+        }
+    }
+    return m11_dm2_debug_mix_u32(hash, 0u);
+}
+
 static const char *m11_dm2_debug_platform_label(int platform)
 {
     switch (platform) {
@@ -66343,6 +66356,12 @@ static void m11_debug_trace_dm2_runtime_frame(
     static const M11_GameViewState *previous_state;
     static uint32_t previous_signature;
     const DM2_V1_BootProfile *profile;
+    DM2_V1_ViewportItemMaterialTrace item_trace;
+    DM2_V1_RuntimeHudMaterialTrace hud_trace;
+    int item_trace_count;
+    int item_trace_index;
+    int hud_trace_count;
+    int hud_trace_index;
     uint32_t signature = 2166136261u;
     int platform;
 
@@ -66353,6 +66372,8 @@ static void m11_debug_trace_dm2_runtime_frame(
     }
     profile = (const DM2_V1_BootProfile *)state->dm2BootProfile;
     platform = profile ? (int)profile->platform : -1;
+    item_trace_count = dm2_v1_runtime_last_item_material_trace_count();
+    hud_trace_count = dm2_v1_runtime_last_hud_material_trace_count();
 #define M11_DM2_DEBUG_MIX(value) \
     (signature = m11_dm2_debug_mix_u32(signature, (uint32_t)(value)))
     M11_DM2_DEBUG_MIX(render_result);
@@ -66372,6 +66393,55 @@ static void m11_debug_trace_dm2_runtime_frame(
     M11_DM2_DEBUG_MIX(render->runtime_render_asset_door_button_count);
     M11_DM2_DEBUG_MIX(render->runtime_render_asset_creature_count);
     M11_DM2_DEBUG_MIX(render->runtime_render_asset_item_count);
+    signature = m11_dm2_debug_mix_text(
+        signature, state->sourceId[0] ? state->sourceId : "dm2");
+    M11_DM2_DEBUG_MIX(item_trace_count);
+    for (item_trace_index = 0; item_trace_index < item_trace_count;
+         ++item_trace_index) {
+        if (!dm2_v1_runtime_last_item_material_trace(
+                item_trace_index, &item_trace)) continue;
+        M11_DM2_DEBUG_MIX(item_trace_index);
+        M11_DM2_DEBUG_MIX(item_trace.source_kind);
+        M11_DM2_DEBUG_MIX(item_trace.gdat_index);
+        M11_DM2_DEBUG_MIX(item_trace.item_index);
+        M11_DM2_DEBUG_MIX(item_trace.object_id);
+        M11_DM2_DEBUG_MIX(item_trace.item_category);
+        M11_DM2_DEBUG_MIX(item_trace.item_type);
+        M11_DM2_DEBUG_MIX(item_trace.frame_index);
+        M11_DM2_DEBUG_MIX(item_trace.depth);
+        M11_DM2_DEBUG_MIX(item_trace.source_width);
+        M11_DM2_DEBUG_MIX(item_trace.source_height);
+        M11_DM2_DEBUG_MIX(item_trace.destination.x);
+        M11_DM2_DEBUG_MIX(item_trace.destination.y);
+        M11_DM2_DEBUG_MIX(item_trace.destination.w);
+        M11_DM2_DEBUG_MIX(item_trace.destination.h);
+    }
+    M11_DM2_DEBUG_MIX(hud_trace_count);
+    for (hud_trace_index = 0; hud_trace_index < hud_trace_count;
+         ++hud_trace_index) {
+        if (!dm2_v1_runtime_last_hud_material_trace(
+                hud_trace_index, &hud_trace)) continue;
+        M11_DM2_DEBUG_MIX(hud_trace_index);
+        M11_DM2_DEBUG_MIX(hud_trace.kind);
+        M11_DM2_DEBUG_MIX(hud_trace.gdat_category);
+        M11_DM2_DEBUG_MIX(hud_trace.gdat_index);
+        M11_DM2_DEBUG_MIX(hud_trace.gdat_field);
+        M11_DM2_DEBUG_MIX(hud_trace.destination_rect_id);
+        M11_DM2_DEBUG_MIX(hud_trace.destination.x);
+        M11_DM2_DEBUG_MIX(hud_trace.destination.y);
+        M11_DM2_DEBUG_MIX(hud_trace.destination.w);
+        M11_DM2_DEBUG_MIX(hud_trace.destination.h);
+        M11_DM2_DEBUG_MIX(hud_trace.width);
+        M11_DM2_DEBUG_MIX(hud_trace.height);
+        M11_DM2_DEBUG_MIX(hud_trace.source_state_flags);
+        M11_DM2_DEBUG_MIX(hud_trace.source_transparency_key);
+        M11_DM2_DEBUG_MIX(hud_trace.animation_direction);
+        M11_DM2_DEBUG_MIX(hud_trace.animation_frame);
+        M11_DM2_DEBUG_MIX(hud_trace.decoded_hash);
+        M11_DM2_DEBUG_MIX(hud_trace.palette_hash);
+        M11_DM2_DEBUG_MIX(hud_trace.raw_hash);
+        M11_DM2_DEBUG_MIX(hud_trace.destination_table_hash);
+    }
     M11_DM2_DEBUG_MIX(render->runtime_hud_real_asset_ready);
     M11_DM2_DEBUG_MIX(render->runtime_hud_asset_portrait_count);
     M11_DM2_DEBUG_MIX(render->runtime_hud_fallback_portrait_count);
@@ -66398,6 +66468,7 @@ static void m11_debug_trace_dm2_runtime_frame(
     M11_DM2_DEBUG_MIX(render->runtime_m11_frame_hud_material_plan_consumed);
     M11_DM2_DEBUG_MIX(render->runtime_m11_frame_creature_material_plan_command_count);
     M11_DM2_DEBUG_MIX(render->runtime_m11_frame_item_material_plan_command_count);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_item_material_plan_hash);
     M11_DM2_DEBUG_MIX(frame->composition.hud_presentation_stage);
     M11_DM2_DEBUG_MIX(frame->composition.hud_top_bar_command_consumed);
     M11_DM2_DEBUG_MIX(frame->composition.hud_status_panel_command_consumed);
@@ -66405,7 +66476,7 @@ static void m11_debug_trace_dm2_runtime_frame(
     if (previous_state == state && previous_signature == signature) return;
 
     fprintf(stderr,
-        "firestaff: dm2-render-debug game=%s platform=%s pose=%d,%d dir=%d result=%d accepted=%d real-assets=%d no-core-fallbacks=%d blocked-materials=%d map-token=%u scene={control:%08x light:%08x ambient:%u presentation:%08x} palette=%08x viewport={floor-ceiling:%d walls:%d door-panel-overlay-frame-button:%d,%d,%d,%d creatures:%d items:%d floor:%08x ceiling:%08x wall-plan:%d door-plan:%d/%d/%d creature-plan:%d item-plan:%d} hud={required:%d hash:%08x commands:%d consumed:%d stage:%d asset-events:%d fallback-events:%d audit-core-pixels:%u audit-interface-assets:%d raw-interface-assets:%d frame-hash-pixels:%u frame-hash:%08x generic-top-command:%d generic-status-command:%d}\n",
+        "firestaff: dm2-render-debug game=%s platform=%s pose=%d,%d dir=%d result=%d accepted=%d real-assets=%d no-core-fallbacks=%d blocked-materials=%d map-token=%u scene={control:%08x light:%08x ambient:%u presentation:%08x} palette=%08x viewport={floor-ceiling:%d walls:%d door-panel-overlay-frame-button:%d,%d,%d,%d creatures:%d items:%d item-traces:%d floor:%08x ceiling:%08x wall-plan:%d door-plan:%d/%d/%d creature-plan:%d item-plan:%d/%08x} hud={required:%d hash:%08x commands:%d complete:%d stage:%d portraits:%d fallback-portraits:%d audit-core-pixels:%u audit-interface-assets:%d raw-interface-assets:%d frame-hash-pixels:%u frame-hash:%08x generic-top-command:%d generic-status-command:%d}\n",
         state->sourceId[0] ? state->sourceId : "dm2",
         m11_dm2_debug_platform_label(platform),
         state->dm2State.party_x,
@@ -66430,6 +66501,7 @@ static void m11_debug_trace_dm2_runtime_frame(
         render->runtime_render_asset_door_button_count,
         render->runtime_render_asset_creature_count,
         render->runtime_render_asset_item_count,
+        item_trace_count,
         render->runtime_m11_frame_floor_material_hash,
         render->runtime_m11_frame_ceiling_material_hash,
         render->runtime_m11_frame_wall_material_plan_command_count,
@@ -66438,6 +66510,7 @@ static void m11_debug_trace_dm2_runtime_frame(
         render->runtime_m11_frame_door_material_plan_consumed,
         render->runtime_m11_frame_creature_material_plan_command_count,
         render->runtime_m11_frame_item_material_plan_command_count,
+        render->runtime_m11_frame_item_material_plan_hash,
         render->runtime_m11_frame_hud_material_plan_required,
         render->runtime_m11_frame_hud_material_plan_hash,
         render->runtime_m11_frame_hud_material_plan_command_count,
@@ -66452,6 +66525,41 @@ static void m11_debug_trace_dm2_runtime_frame(
         render->runtime_hud_frame_hash,
         frame->composition.hud_top_bar_command_consumed,
         frame->composition.hud_status_panel_command_consumed);
+    for (item_trace_index = 0; item_trace_index < item_trace_count;
+         ++item_trace_index) {
+        if (!dm2_v1_runtime_last_item_material_trace(
+                item_trace_index, &item_trace)) continue;
+        fprintf(stderr,
+            "firestaff: dm2-render-item game=%s platform=%s index=%d source=%d object=%04x item=%d category=%d type=%d frame=%d gdat=%08x depth=%d source-size=%dx%d rect=%d,%d,%d,%d\n",
+            state->sourceId[0] ? state->sourceId : "dm2",
+            m11_dm2_debug_platform_label(platform), item_trace_index,
+            item_trace.source_kind, item_trace.object_id,
+            item_trace.item_index, item_trace.item_category,
+            item_trace.item_type, item_trace.frame_index,
+            (unsigned int)item_trace.gdat_index, item_trace.depth,
+            item_trace.source_width, item_trace.source_height,
+            item_trace.destination.x, item_trace.destination.y,
+            item_trace.destination.w, item_trace.destination.h);
+    }
+    for (hud_trace_index = 0; hud_trace_index < hud_trace_count;
+         ++hud_trace_index) {
+        if (!dm2_v1_runtime_last_hud_material_trace(
+                hud_trace_index, &hud_trace)) continue;
+        fprintf(stderr,
+            "firestaff: dm2-render-hud game=%s platform=%s index=%d kind=%d viewport=%04x gdat=%d/%d/%d rect-id=%03x rect=%d,%d,%d,%d size=%dx%d flags=%02x key=%d anim=%d/%d hashes=%08x/%08x/%08x table=%08x\n",
+            state->sourceId[0] ? state->sourceId : "dm2",
+            m11_dm2_debug_platform_label(platform), hud_trace_index,
+            hud_trace.kind, hud_trace.viewport_gdat_index,
+            hud_trace.gdat_category, hud_trace.gdat_index,
+            hud_trace.gdat_field, hud_trace.destination_rect_id,
+            hud_trace.destination.x, hud_trace.destination.y,
+            hud_trace.destination.w, hud_trace.destination.h,
+            hud_trace.width, hud_trace.height, hud_trace.source_state_flags,
+            hud_trace.source_transparency_key,
+            hud_trace.animation_direction, hud_trace.animation_frame,
+            hud_trace.decoded_hash, hud_trace.palette_hash,
+            hud_trace.raw_hash, hud_trace.destination_table_hash);
+    }
     previous_state = state;
     previous_signature = signature;
 }

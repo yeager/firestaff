@@ -8194,7 +8194,33 @@ static void dm2_v1_viewport_note_item_material(DM2_V1_ViewportState *s,
     if (i < 0 || i >= DM2_MAX_PRESENTED_ITEM_MATERIALS) return;
     s->item_material_gdat_indices[i] = gdat_index;
     s->item_material_source_kinds[i] = (uint8_t)source_kind;
+    s->item_material_traces[i].source_kind = source_kind;
+    s->item_material_traces[i].gdat_index = gdat_index;
+    if (s->last_item_render_valid &&
+        s->last_item_render.gdat_index == gdat_index) {
+        s->item_material_traces[i].item_index =
+            s->last_item_render.item_index;
+        s->item_material_traces[i].object_id =
+            s->last_item_render.object_id;
+        s->item_material_traces[i].item_category =
+            s->last_item_render.item_category;
+        s->item_material_traces[i].item_type =
+            s->last_item_render.item_type;
+        s->item_material_traces[i].frame_index =
+            s->last_item_render.frame_index;
+        s->item_material_traces[i].depth = s->last_item_render.depth;
+    }
+    if (s->last_item_asset_blit_valid &&
+        s->last_item_asset_blit.gdat_index == gdat_index) {
+        s->item_material_traces[i].source_width =
+            s->last_item_asset_src_w;
+        s->item_material_traces[i].source_height =
+            s->last_item_asset_src_h;
+        s->item_material_traces[i].destination =
+            s->last_item_asset_blit.dst_rect;
+    }
     s->item_material_drawn_count = i + 1;
+    s->item_material_trace_count = i + 1;
 }
 
 static void dm2_v1_render_item_row(DM2_V1_ViewportState *s,
@@ -8356,7 +8382,6 @@ static void dm2_v1_render_item_row(DM2_V1_ViewportState *s,
                     dm2_v1_viewport_append_source_floor_item_target(
                         s, it, &blit, pixels);
                     ++s->asset_item_drawn_count;
-                    dm2_v1_viewport_note_item_material(s, 1, it->gdat_index);
                     s->last_item_asset_blit_valid = 1;
                     s->last_item_asset_blit = blit;
                     s->last_item_asset_blit.draw_order = i;
@@ -8364,6 +8389,7 @@ static void dm2_v1_render_item_row(DM2_V1_ViewportState *s,
                     s->last_item_asset_src_h = src_h;
                     s->last_item_asset_src_stride =
                         src_stride > 0 ? src_stride : src_w;
+                    dm2_v1_viewport_note_item_material(s, 1, it->gdat_index);
                     if (direct_g1_scene_material) {
                         if (direct_static_material) {
                             ++s->g1_scene_static_item_material_consumed_count;
@@ -8546,7 +8572,6 @@ void dm2_v1_render_creature_possession_items(DM2_V1_ViewportState *s)
                         blit.flip_mirror,
                         &s->gdat_sprite_palette_consumed_count);
                     ++s->asset_creature_possession_item_drawn_count;
-                    dm2_v1_viewport_note_item_material(s, 2, it->gdat_index);
                     s->last_item_asset_blit_valid = 1;
                     s->last_item_asset_blit = blit;
                     s->last_item_asset_blit.draw_order = i;
@@ -8554,6 +8579,7 @@ void dm2_v1_render_creature_possession_items(DM2_V1_ViewportState *s)
                     s->last_item_asset_src_h = src_h;
                     s->last_item_asset_src_stride =
                         src_stride > 0 ? src_stride : src_w;
+                    dm2_v1_viewport_note_item_material(s, 2, it->gdat_index);
                     drawn_asset = 1;
                 }
             }
@@ -8639,7 +8665,6 @@ void dm2_v1_render_carried_item(DM2_V1_ViewportState *s)
                     blit.flip_mirror,
                     &s->gdat_sprite_palette_consumed_count);
                 ++s->asset_carried_item_drawn_count;
-                dm2_v1_viewport_note_item_material(s, 3, it->gdat_index);
                 s->last_item_asset_blit_valid = 1;
                 s->last_item_asset_blit = blit;
                 s->last_item_asset_blit.draw_order = 0;
@@ -8647,6 +8672,7 @@ void dm2_v1_render_carried_item(DM2_V1_ViewportState *s)
                 s->last_item_asset_src_h = src_h;
                 s->last_item_asset_src_stride =
                     src_stride > 0 ? src_stride : src_w;
+                dm2_v1_viewport_note_item_material(s, 3, it->gdat_index);
                 drawn_asset = 1;
             }
         }
@@ -9248,8 +9274,9 @@ static int dm2_v1_render_hud_hand_action_asset(
                 item_dst_w, item_dst_h, item_pixels, item_width, item_height,
                 item_stride, DM2_COLOR_TRANSPARENT,
                 &s->gdat_sprite_palette_consumed_count);
-            dm2_v1_viewport_note_item_material(
-                s, 3, source->item_gdat_index);
+            /* This is a HUD hand-action icon pass, not a viewport item draw.
+             * Keep it out of the item material identity transaction; its
+             * presentation is reported by the HUD command receipt. */
         }
     }
     if (source->gray_overlay_required) {
@@ -10667,10 +10694,13 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     s->asset_carried_item_drawn_count = 0;
     s->fallback_carried_item_drawn_count = 0;
     s->item_material_drawn_count = 0;
+    s->item_material_trace_count = 0;
     memset(s->item_material_gdat_indices, 0,
            sizeof(s->item_material_gdat_indices));
     memset(s->item_material_source_kinds, 0,
            sizeof(s->item_material_source_kinds));
+    memset(s->item_material_traces, 0,
+           sizeof(s->item_material_traces));
     s->last_item_render_valid = 0;
     s->last_item_asset_blit_valid = 0;
     s->last_item_source_kind = 0;

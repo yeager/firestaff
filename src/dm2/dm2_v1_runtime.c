@@ -669,6 +669,12 @@ static int g_dm2_last_asset_creature_count = 0;
 static int g_dm2_last_fallback_creature_count = 0;
 static DM2_V1_RuntimeCreatureRenderReceipt g_dm2_last_creature_render;
 static DM2_V1_RuntimeItemRenderReceipt g_dm2_last_item_render;
+static DM2_V1_ViewportItemMaterialTrace
+    g_dm2_last_item_material_traces[DM2_MAX_PRESENTED_ITEM_MATERIALS];
+static int g_dm2_last_item_material_trace_count;
+static DM2_V1_RuntimeHudMaterialTrace
+    g_dm2_last_hud_material_traces[DM2_V1_GDAT_HUD_M11_COMMAND_MAX];
+static int g_dm2_last_hud_material_trace_count;
 static int g_dm2_last_asset_item_count = 0;
 static int g_dm2_last_fallback_item_count = 0;
 static int g_dm2_last_asset_creature_possession_item_count = 0;
@@ -12956,6 +12962,12 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
 
     memset(&g_dm2_last_creature_render, 0, sizeof(g_dm2_last_creature_render));
     memset(&g_dm2_last_item_render, 0, sizeof(g_dm2_last_item_render));
+    memset(g_dm2_last_item_material_traces, 0,
+           sizeof(g_dm2_last_item_material_traces));
+    g_dm2_last_item_material_trace_count = 0;
+    memset(g_dm2_last_hud_material_traces, 0,
+           sizeof(g_dm2_last_hud_material_traces));
+    g_dm2_last_hud_material_trace_count = 0;
     memset(&g_dm2_last_projectile_render, 0,
            sizeof(g_dm2_last_projectile_render));
     memset(&g_dm2_last_door_render, 0, sizeof(g_dm2_last_door_render));
@@ -13451,6 +13463,38 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         ? hud_material_plan.command_hash : 0u;
     hud_material_plan_command_count = hud_material_plan_consumed
         ? hud_material_plan.command_count : 0;
+    if (hud_material_plan_consumed) {
+        int trace_count = hud_material_plan.command_count;
+        if (trace_count > DM2_V1_GDAT_HUD_M11_COMMAND_MAX) {
+            trace_count = DM2_V1_GDAT_HUD_M11_COMMAND_MAX;
+        }
+        for (int i = 0; i < trace_count; ++i) {
+            const DM2_V1_GdatHudM11Command *command =
+                &hud_material_plan.commands[i];
+            DM2_V1_RuntimeHudMaterialTrace *trace =
+                &g_dm2_last_hud_material_traces[i];
+            trace->kind = command->kind;
+            trace->gdat_category = command->gdat_category;
+            trace->gdat_index = command->gdat_index;
+            trace->gdat_field = command->gdat_field;
+            trace->viewport_gdat_index = command->viewport_gdat_index;
+            trace->width = command->width;
+            trace->height = command->height;
+            trace->destination_rect_id = command->destination_rect_id;
+            trace->source_state_flags = command->source_state_flags;
+            trace->source_transparency_key =
+                command->source_transparency_key;
+            trace->animation_direction = command->animation_direction;
+            trace->animation_frame = command->animation_frame;
+            trace->destination = command->destination;
+            trace->destination_table_hash =
+                command->destination_table_hash;
+            trace->raw_hash = command->raw_hash;
+            trace->decoded_hash = command->decoded_hash;
+            trace->palette_hash = command->palette_hash;
+        }
+        g_dm2_last_hud_material_trace_count = trace_count;
+    }
     dm2_v1_gdat_hud_m11_command_plan_free(&hud_material_plan);
     dm2_runtime_finish_door_render_receipt(&viewport);
     dm2_runtime_finish_creature_render_receipt(&viewport);
@@ -13502,6 +13546,15 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     if (!item_material_plan_consumed) {
         item_drawn_material_hash = 0u;
         item_drawn_material_count = 0;
+    } else if (viewport.item_material_trace_count == item_drawn_material_count &&
+               viewport.item_material_trace_count <=
+                   DM2_MAX_PRESENTED_ITEM_MATERIALS) {
+        memcpy(g_dm2_last_item_material_traces,
+               viewport.item_material_traces,
+               (size_t)viewport.item_material_trace_count *
+                   sizeof(g_dm2_last_item_material_traces[0]));
+        g_dm2_last_item_material_trace_count =
+            viewport.item_material_trace_count;
     }
     if (viewport.asset_wall_drawn_count > 0 &&
         viewport.source_materials_required &&
@@ -15232,6 +15285,34 @@ int dm2_v1_runtime_last_item_render_receipt(
         return 0;
     }
     *out_receipt = g_dm2_last_item_render;
+    return 1;
+}
+
+int dm2_v1_runtime_last_item_material_trace_count(void) {
+    return g_dm2_last_item_material_trace_count;
+}
+
+int dm2_v1_runtime_last_item_material_trace(
+    int index, DM2_V1_ViewportItemMaterialTrace *out_trace) {
+    if (!out_trace || index < 0 ||
+        index >= g_dm2_last_item_material_trace_count) {
+        if (out_trace) memset(out_trace, 0, sizeof(*out_trace));
+        return 0;
+    }
+    *out_trace = g_dm2_last_item_material_traces[index];
+    return 1;
+}
+
+int dm2_v1_runtime_last_hud_material_trace_count(void) {
+    return g_dm2_last_hud_material_trace_count;
+}
+
+int dm2_v1_runtime_last_hud_material_trace(
+    int index, DM2_V1_RuntimeHudMaterialTrace *out_trace) {
+    if (!out_trace || index < 0 || index >= g_dm2_last_hud_material_trace_count) {
+        return 0;
+    }
+    *out_trace = g_dm2_last_hud_material_traces[index];
     return 1;
 }
 
