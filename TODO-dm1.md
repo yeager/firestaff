@@ -29,7 +29,15 @@ and confirmed the original `GRAPHICS.DAT` header plus the known `SWOOSH` and
 `FTLCODE` disk offsets. The same real-media test now parses all 562 X30J
 `GRAPHICS.DAT` format-1 metadata spans using the big-endian header/tables and
 ReDMCSB offset rule. It writes no game data to disk. Graphic item
-decoding/rendering, audio, input, and M12/runtime launch support remain open.
+decoding now has an X30J-specific IMG1 route: Greatstone SCK 1.5.1's bundled
+`dm_x68k_gd.map` classifies 539 of the 562 records as images (IDs 0-532, 538,
+548, 558-561); 21 are SND4, one TXT2, and one FNT1. The Firestaff decoder's
+indexed pixels match all 539 SCK BMP outputs exactly. The real-media CTest
+checks the complete indexed-pixel fingerprint and rejects non-image records.
+This map differs from an older DMWeb note that reports 536 IMG1 plus three
+COD2 records; keep the map/version provenance explicit and resolve that
+discrepancy before generalizing to other X68000 revisions. Palette composition,
+rendering, audio, input, and M12/runtime launch support remain open.
 The new read-only X30J dungeon metadata parser validates the raw 44-byte
 header, 14 map descriptors, typed-data section spans, and raw map extent from
 the original HDM. All 14 per-map grid and metadata spans fit and meet their

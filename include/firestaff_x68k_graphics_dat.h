@@ -36,6 +36,17 @@ int FirestaffX68kGraphicsDat_GetItem(const FirestaffX68kGraphicsDat *dat,
                                      uint16_t index,
                                      FirestaffX68kGraphicsDatItem *out);
 
+/* Decode a source-typed IMG1 record from the verified X30J map. Returns 0
+ * for an image and -1 for non-image records, malformed metadata, or decode
+ * failure. The returned pixels are indexed 4-bit colors expanded to bytes. */
+int FirestaffX68kGraphicsDat_DecodeImageItem(
+    const FirestaffX68kGraphicsDat *dat,
+    uint16_t index,
+    uint8_t *indexed_pixels,
+    size_t pixel_capacity,
+    uint16_t *out_width,
+    uint16_t *out_height);
+
 #ifdef __cplusplus
 }
 #endif

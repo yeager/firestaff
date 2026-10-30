@@ -1,4 +1,5 @@
 #include "firestaff_x68k_graphics_dat.h"
+#include "dm1_v1_legacy_graphics_dat.h"
 
 #include <string.h>
 
@@ -107,5 +108,45 @@ int FirestaffX68kGraphicsDat_GetItem(const FirestaffX68kGraphicsDat *dat,
                             (size_t)index * X68K_GDAT_GRATTR_BYTES + 2u);
     if (out->compressed_size > dat->size - payload_offset) return -1;
     out->payload_offset = payload_offset;
+    return 0;
+}
+
+/* Greatstone SCK 1.5.1 db/map/dm_x68k_gd.map classifies these IDs as IMG1:
+ * 0..532, 538, 548, and 558..561. Keep this X30J classification separate
+ * from the different FM Towns/Amiga legacy bitmap index map. */
+static int x68k_x30j_item_is_img1(uint16_t index) {
+    return index <= 532u || index == 538u || index == 548u ||
+           (index >= 558u && index <= 561u);
+}
+
+int FirestaffX68kGraphicsDat_DecodeImageItem(
+    const FirestaffX68kGraphicsDat *dat,
+    uint16_t index,
+    uint8_t *indexed_pixels,
+    size_t pixel_capacity,
+    uint16_t *out_width,
+    uint16_t *out_height) {
+    FirestaffX68kGraphicsDatItem item;
+    uint16_t width;
+    uint16_t height;
+    size_t pixel_count;
+
+    if (!dat || !indexed_pixels || !x68k_x30j_item_is_img1(index) ||
+        FirestaffX68kGraphicsDat_GetItem(dat, index, &item) != 0 ||
+        item.compressed_size != item.decompressed_size ||
+        item.width == 0u || item.height == 0u || item.width > 640u ||
+        item.height > 400u) {
+        return -1;
+    }
+    pixel_count = (size_t)item.width * (size_t)item.height;
+    if (pixel_count > 1024u * 1024u || pixel_count > pixel_capacity ||
+        dm1_v1_legacy_graphics_decode_item(
+            dat->bytes + item.payload_offset, item.compressed_size, 1,
+            indexed_pixels, pixel_capacity, &width, &height) != 1 ||
+        width != item.width || height != item.height) {
+        return -1;
+    }
+    if (out_width) *out_width = width;
+    if (out_height) *out_height = height;
     return 0;
 }

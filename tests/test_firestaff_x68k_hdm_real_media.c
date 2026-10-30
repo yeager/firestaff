@@ -217,6 +217,52 @@ int main(void) {
             goto done;
         }
     }
+    {
+        /* FNV-1a of IMG1 indexes, dimensions, and decoded palette indices,
+         * computed from Greatstone SCK's extracted dm_x68k_gd.map BMP set. */
+        const uint64_t fnv_offset = UINT64_C(14695981039346656037);
+        const uint64_t fnv_prime = UINT64_C(1099511628211);
+        const uint64_t expected_pixels_hash = UINT64_C(0x8c1193b353972be5);
+        uint64_t pixels_hash = fnv_offset;
+        uint8_t *pixels = (uint8_t *)malloc(640u * 400u);
+        unsigned image_count = 0u;
+        unsigned non_image_count = 0u;
+        uint16_t index;
+        if (!pixels) {
+            fputs("FAIL: could not allocate X68000 indexed graphics buffer\n",
+                  stderr);
+            goto done;
+        }
+        for (index = 0u; index < graphics_dat.count; ++index) {
+            uint16_t width = 0u;
+            uint16_t height = 0u;
+            size_t pixel_index;
+            if (FirestaffX68kGraphicsDat_DecodeImageItem(
+                    &graphics_dat, index, pixels, 640u * 400u,
+                    &width, &height) != 0) {
+                ++non_image_count;
+                continue;
+            }
+            ++image_count;
+            pixels_hash = (pixels_hash ^ (uint8_t)index) * fnv_prime;
+            pixels_hash = (pixels_hash ^ (uint8_t)width) * fnv_prime;
+            pixels_hash = (pixels_hash ^ (uint8_t)height) * fnv_prime;
+            for (pixel_index = 0u;
+                 pixel_index < (size_t)width * (size_t)height;
+                 ++pixel_index) {
+                pixels_hash = (pixels_hash ^ pixels[pixel_index]) * fnv_prime;
+            }
+        }
+        free(pixels);
+        if (image_count != 539u || non_image_count != 23u ||
+            pixels_hash != expected_pixels_hash) {
+            fprintf(stderr,
+                    "FAIL: X68000 IMG1 decode corpus changed (images=%u non-images=%u hash=%016llx)\n",
+                    image_count, non_image_count,
+                    (unsigned long long)pixels_hash);
+            goto done;
+        }
+    }
     if (FirestaffX68kDungeonDat_OpenRaw(dungeon, 33990u, &dungeon_dat) != 0 ||
         dungeon_dat.size != 33990u ||
         dungeon_dat.ornament_random_seed != 99u ||

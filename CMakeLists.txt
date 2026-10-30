@@ -43199,6 +43199,7 @@ add_executable(test_nexus_v1_dgn_material_raster
         src/shared/firestaff_x68k_hdm.c
         src/shared/firestaff_x68k_graphics_dat.c
         src/shared/firestaff_x68k_dungeon_dat.c
+        src/dm1/dm1_v1_legacy_graphics_dat.c
     )
     target_include_directories(test_firestaff_x68k_hdm_real_media PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
