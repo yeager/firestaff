@@ -9,8 +9,14 @@ initial party location bit fields documented by `DEFS.H:998`. The original
 cracked HDM real-media test checks every square and metadata item across all 14
 maps and confirms start `(1,3)`, facing south. This is source-layout/import
 coverage only; no X68000 runtime, rendering, input, or M12 launch path is
-provided. Remaining work includes source-typed square/thing decoding and the
+provided. Remaining work includes source-typed thing-list decoding and the
 runtime/resource launch route; do not advertise X68000 support yet.
+`FirestaffX68kDungeonDat_DecodeSquare` exposes the source-defined upper-three-bit
+square type and lower-five-bit flags (`DEFS.H:1001-1036`); the authentic-media
+test checks that split on every square in all 14 maps. The SFT/THING-head
+accessor remains open: an attempted F0160 reproduction did not agree with the
+X30J media and was removed rather than treating an unverified table offset as
+correct. No THING list or runtime semantics are claimed by the square decoder.
 
 2026-10-30 startup/platform audit: the local original-media inventory includes
 `Game,Dungeon_Master,JP,X68000,Software.7z` (X68000 Japanese v3.0 cracked HDM,

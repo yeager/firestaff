@@ -224,6 +224,18 @@ int FirestaffX68kDungeonDat_GetSquare(const FirestaffX68kDungeonDat *dungeon,
     return 0;
 }
 
+int FirestaffX68kDungeonDat_DecodeSquare(
+    uint8_t raw_square,
+    FirestaffX68kDungeonSquare *out_square) {
+    /* ReDMCSB DEFS.H:1001: M034_SQUARE_TYPE(square) is square >> 5;
+     * DEFS.H:1020-1036 assigns the lower flag bits by square type.
+     */
+    if (!out_square) return -1;
+    out_square->type = (uint8_t)(raw_square >> 5);
+    out_square->flags = (uint8_t)(raw_square & 0x1fu);
+    return 0;
+}
+
 int FirestaffX68kDungeonDat_GetMapMetadata(
     const FirestaffX68kDungeonDat *dungeon,
     uint8_t map_index,

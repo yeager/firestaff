@@ -385,7 +385,8 @@ int main(void) {
                 &dungeon_dat, &map_x, &map_y, &direction) != 0 ||
             map_x != 1u || map_y != 3u || direction != 2u ||
             FirestaffX68kDungeonDat_GetSquare(
-                &dungeon_dat, 0u, map_x, map_y, &start_square) != 0) {
+                &dungeon_dat, 0u, map_x, map_y, &start_square) != 0 ||
+            start_square != 0xb0u) {
             fputs("FAIL: X68000 initial party location did not resolve to the source map grid\n",
                   stderr);
             goto done;
@@ -399,6 +400,7 @@ int main(void) {
                 for (map_y_index = 0u; map_y_index < map->height;
                      ++map_y_index) {
                     uint8_t square = 0u;
+                    FirestaffX68kDungeonSquare decoded_square;
                     const size_t source_index =
                         dungeon_dat.raw_map_data.offset +
                         map->raw_map_offset +
@@ -406,6 +408,10 @@ int main(void) {
                     if (FirestaffX68kDungeonDat_GetSquare(
                             &dungeon_dat, (uint8_t)map_index,
                             map_x_index, map_y_index, &square) != 0 ||
+                        FirestaffX68kDungeonDat_DecodeSquare(
+                            square, &decoded_square) != 0 ||
+                        decoded_square.type != (uint8_t)(square >> 5) ||
+                        decoded_square.flags != (uint8_t)(square & 0x1fu) ||
                         square != dungeon[source_index]) {
                         fprintf(stderr,
                                 "FAIL: X68000 map %u square (%u,%u) did not follow ReDMCSB column-major layout\n",

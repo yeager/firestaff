@@ -13,6 +13,11 @@ extern "C" {
 #define FIRESTAFF_X68K_DUNGEON_THING_TYPES 16u
 
 typedef struct {
+    uint8_t type;
+    uint8_t flags;
+} FirestaffX68kDungeonSquare;
+
+typedef struct {
     size_t offset;
     size_t size;
 } FirestaffX68kDungeonDatSpan;
@@ -80,6 +85,12 @@ int FirestaffX68kDungeonDat_GetSquare(const FirestaffX68kDungeonDat *dungeon,
                                       uint8_t map_x,
                                       uint8_t map_y,
                                       uint8_t *out_square);
+
+/* Decode the source's upper-three-bit square type and lower five-bit flags.
+ * Flag meanings depend on the square type (ReDMCSB DEFS.H:1001-1036).
+ */
+int FirestaffX68kDungeonDat_DecodeSquare(uint8_t raw_square,
+                                         FirestaffX68kDungeonSquare *out_square);
 
 /* Read map-local trailing metadata in ReDMCSB F0174 order: creature types,
  * wall ornaments, floor ornaments, then door ornaments (DUNGEON.C:2755-2760).
