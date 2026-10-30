@@ -1,5 +1,20 @@
 # Firestaff TODO — DM2
 
+2026-10-30 Amiga v5 palette and squad-panel correction: authenticated Amiga
+`GRAPHICS.DAT` images now use physical 16-color indices instead of reading
+the final compressed-image bytes as a second palette map. The runtime replaces
+the generic stretched portrait-panel guess with the current map style's
+`GRAPHICSSET/<style>/0xF5` image at authenticated `RECT_47`, matching
+SKProject's squad-panel source route. The real-media Amiga test verifies the
+43x43 IMG3 source, four-bit pixels, physical palette and RECT_47 coordinates.
+The no-game M12 menu test also requires the F5 plan at RECT_47 and a complete
+consumed HUD plan; it passed against the original Amiga archive.
+The Amiga native CLI test passed and its 320x200 presented capture no longer
+shows the oversized starburst. DOS native CLI also passed after the shared
+palette-path change. Macintosh and FM Towns native CLI tests were skipped by
+this build's media selection; full cross-platform pixel parity and native
+display behavior remain unverified.
+
 2026-10-30 DM2 runtime render diagnostics and cross-platform HUD gap: added
 `--debug`-only `dm2-render-debug` output at the M11 frame handoff. It reports
 the selected platform, pose, render acceptance, source-asset/fallback state,

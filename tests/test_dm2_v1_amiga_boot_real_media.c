@@ -173,6 +173,56 @@ int main(void)
            "boot retains the selected outer archive as the runtime media owner");
     expect(dm2_v1_boot_enter_game(&profile) == 0,
            "the admitted original Amiga buffers complete DM2 boot");
+    memset(&graphics_loader, 0, sizeof(graphics_loader));
+    expect(dm2_v1_asset_loader_init(&graphics_loader, profile.graphics_mem,
+                                    profile.graphics_mem_size) == 0,
+           "the authenticated Amiga GRAPHICS.DAT remains available after boot");
+    {
+        DM2_V1_GdatImageMetadata squad_panel_metadata;
+        DM2_V1_BootExpandedRectReceipt squad_panel_rect;
+        int panel_width = 0;
+        int panel_height = 0;
+        DM2_ImageFormat panel_format = DM2_IMG_FMT_UNKNOWN;
+        uint8_t panel_palette[16];
+        uint8_t *panel_pixels;
+        uint32_t panel_palette_hash = 0u;
+        memset(&squad_panel_metadata, 0, sizeof(squad_panel_metadata));
+        memset(&squad_panel_rect, 0, sizeof(squad_panel_rect));
+        expect(dm2_v1_asset_loader_uses_physical_16_color_palette(
+                   &graphics_loader),
+               "the authenticated Amiga GDAT selects its physical 16-color palette");
+        expect(dm2_v1_asset_load_image_metadata(
+                   &graphics_loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 2u,
+                   0xf5u, &squad_panel_metadata) &&
+                   squad_panel_metadata.width == 43u &&
+                   squad_panel_metadata.height == 43u &&
+                   squad_panel_metadata.bits_per_pixel == 4u,
+               "the authentic Amiga four-member squad panel is a 43x43 C4 image");
+        expect(dm2_v1_boot_query_expanded_rect_receipt(
+                   &profile, 47u, &squad_panel_rect) &&
+                   squad_panel_rect.valid && squad_panel_rect.receipt_hash &&
+                   squad_panel_rect.rect.x == 506 &&
+                   squad_panel_rect.rect.y == 124 &&
+                   squad_panel_rect.rect.w == 43 &&
+                   squad_panel_rect.rect.h == 43,
+               "Amiga squad-panel placement comes from authenticated RECT_47");
+        panel_pixels = dm2_v1_asset_load_image_field(
+            &graphics_loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 2u, 0xf5u,
+            &panel_width, &panel_height, &panel_format);
+        expect(panel_pixels && panel_width == 43 && panel_height == 43 &&
+                   panel_format == DM2_IMG_FMT_IMG3,
+               "the Amiga squad panel decodes from authentic IMG3 source data");
+        expect(dm2_v1_asset_load_image_local_palette(
+                   &graphics_loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 2u,
+                   0xf5u, panel_palette, &panel_palette_hash) &&
+                   panel_palette_hash != 0u,
+               "the Amiga squad image resolves a source palette receipt");
+        for (int color = 0; color < 16; ++color) {
+            expect(panel_palette[color] == (uint8_t)color,
+                   "Amiga C4 colors index the physical palette without tail remapping");
+        }
+        dm2_v1_asset_free_pixels(panel_pixels);
+    }
     expect(dm2_v1_boot_interface_hud_layout(&profile, &hud_layout) &&
                hud_layout.valid && hud_layout.table_hash != 0u &&
                hud_layout.portrait_valid_mask == 0x0fu &&

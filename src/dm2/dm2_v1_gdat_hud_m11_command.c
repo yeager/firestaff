@@ -652,6 +652,53 @@ int dm2_v1_gdat_hud_m11_command_plan_build_for_party(
     return 1;
 }
 
+int dm2_v1_gdat_hud_m11_command_plan_replace_asset(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_GdatHudM11CommandPlan *plan,
+    int kind,
+    int category,
+    int index,
+    int field,
+    const DM2_V1_ViewportRect *destination,
+    uint16_t destination_rect_id,
+    uint32_t destination_table_hash)
+{
+    if (!loader || !plan || !plan->valid || !plan->command_hash ||
+        plan->command_hash != dm2_v1_gdat_hud_command_hash(plan) ||
+        !destination || destination->w <= 0 || destination->h <= 0 ||
+        destination_rect_id == 0u || destination_table_hash == 0u) {
+        return 0;
+    }
+    for (int i = 0; i < plan->command_count; ++i) {
+        DM2_V1_GdatHudM11CommandPlan replacement;
+        DM2_V1_GdatHudM11Command *old_command = &plan->commands[i];
+        int viewport_gdat_index;
+        if (old_command->kind != kind) continue;
+        viewport_gdat_index = old_command->viewport_gdat_index;
+        memset(&replacement, 0, sizeof(replacement));
+        if (!dm2_v1_gdat_hud_add_command(
+                loader, &replacement, kind, viewport_gdat_index, destination,
+                category, index, field) || replacement.command_count != 1) {
+            dm2_v1_gdat_hud_m11_command_plan_free(&replacement);
+            return 0;
+        }
+        replacement.commands[0].destination_rect_id = destination_rect_id;
+        replacement.commands[0].destination_table_hash =
+            destination_table_hash;
+        if (category == DM2_GDAT_CATEGORY_GRAPHICSSET && field == 0xf5) {
+            /* SKProject DRAW_ICON_PICT_ENTRY passes -1: the Amiga IMG3 F5
+             * source has no color key after its tracked underlay is composed. */
+            replacement.commands[0].source_transparency_key = UINT8_MAX;
+        }
+        dm2_v1_asset_free_pixels(old_command->pixels);
+        *old_command = replacement.commands[0];
+        replacement.commands[0].pixels = NULL;
+        plan->command_hash = dm2_v1_gdat_hud_command_hash(plan);
+        return plan->command_hash != 0u;
+    }
+    return 0;
+}
+
 int dm2_v1_gdat_hud_m11_command_plan_build_fmtowns_squad(
     const DM2_V1_AssetLoader *loader,
     const DM2_V1_HudPartyState *party,

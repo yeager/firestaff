@@ -183,6 +183,16 @@ int dm2_v1_gdat_hud_m11_command_plan_build_for_party(
     const DM2_V1_AssetLoader *loader,
     const DM2_V1_HudPartyState *party,
     DM2_V1_GdatHudM11CommandPlan *out_plan);
+int dm2_v1_gdat_hud_m11_command_plan_replace_asset(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_GdatHudM11CommandPlan *plan,
+    int kind,
+    int category,
+    int index,
+    int field,
+    const DM2_V1_ViewportRect *destination,
+    uint16_t destination_rect_id,
+    uint32_t destination_table_hash);
 int dm2_v1_gdat_hud_m11_command_plan_build_fmtowns_squad(
     const DM2_V1_AssetLoader *loader,
     const DM2_V1_HudPartyState *party,

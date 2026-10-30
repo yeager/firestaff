@@ -8975,7 +8975,12 @@ static const DM2_V1_GdatHudM11Command *dm2_v1_hud_plan_command(
     }
     for (int i = 0; i < plan->command_count; ++i) {
         const DM2_V1_GdatHudM11Command *command = &plan->commands[i];
+        const int amiga_squad_panel =
+            kind == DM2_V1_GDAT_HUD_M11_COMMAND_PORTRAIT_PANEL &&
+            command->gdat_category == DM2_GDAT_CATEGORY_GRAPHICSSET &&
+            command->gdat_field == 0xf5;
         int dest_match = kind == DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT ||
+            amiga_squad_panel ||
             (command->destination.x == rect->x && command->destination.y == rect->y &&
              command->destination.w == rect->w && command->destination.h == rect->h);
         int pixel_ok = command->pixels && command->width > 0 && command->height > 0 &&
@@ -9002,11 +9007,55 @@ static int dm2_v1_render_hud_plan_command(DM2_V1_ViewportState *s,
 {
     const DM2_V1_GdatHudM11Command *command =
         dm2_v1_hud_plan_command(s, gdat_index, rect, kind);
+    int amiga_squad_panel;
     if (!command) return 0;
+    amiga_squad_panel = kind ==
+            DM2_V1_GDAT_HUD_M11_COMMAND_PORTRAIT_PANEL &&
+        command->gdat_category == DM2_GDAT_CATEGORY_GRAPHICSSET &&
+        command->gdat_field == 0xf5;
     memcpy(s->active_asset_palette16, command->palette16,
            sizeof(s->active_asset_palette16));
     s->active_asset_palette_hash = command->palette_hash;
     s->active_asset_palette_ready = 1;
+    if (amiga_squad_panel) {
+        const DM2_V1_GdatSceneM11CommandPlan *scene =
+            s->gdat_scene_material_plan;
+        const DM2_V1_ViewportRect *destination = &command->destination;
+        if (!s->asset_loader || s->asset_loader->gdat_version != 5u ||
+            !s->asset_loader->big_endian ||
+            !dm2_v1_asset_loader_uses_physical_16_color_palette(
+                s->asset_loader) || !scene || !scene->valid ||
+            command->gdat_index != scene->graphicsset ||
+            command->destination_rect_id != 47u ||
+            command->destination_table_hash == 0u ||
+            command->format != DM2_IMG_FMT_IMG3 ||
+            command->width != destination->w ||
+            command->height != destination->h ||
+            destination->x < 0 || destination->y < 0 ||
+            destination->w <= 0 || destination->h <= 0 ||
+            destination->x + destination->w > dm2_v1_viewport_draw_width(s) ||
+            destination->y + destination->h > dm2_v1_viewport_draw_height(s)) {
+            return 0;
+        }
+        for (int color = 0; color < 16; ++color) {
+            if (command->palette16[color] != (uint8_t)color) return 0;
+        }
+        /* SKProject DRAW_ICON_PICT_ENTRY uses color key -1 for F5. The
+         * loader has already composed its IMG3 runs with the tracked image
+         * underlay, so paint the exact RECT_47-sized result without scaling
+         * or dropping physical palette index zero. */
+        for (int y = 0; y < destination->h; ++y) {
+            for (int x = 0; x < destination->w; ++x) {
+                uint8_t pixel = command->pixels[y * command->width + x];
+                s->framebuffer[(destination->y + y) * s->fb_stride +
+                               destination->x + x] =
+                    dm2_v1_material_palette_color(
+                        s, pixel, &s->gdat_interface_palette_consumed_count);
+            }
+        }
+        ++s->gdat_hud_material_plan_consumed_count;
+        return 1;
+    }
     dm2_v1_blit_scaled_material_bitmap(s, s->framebuffer, s->fb_stride,
         rect->x, rect->y, rect->w, rect->h, command->pixels,
         command->width, command->height, command->width,
@@ -9028,6 +9077,7 @@ static int dm2_v1_render_hud_core_asset(DM2_V1_ViewportState *s,
     int stride = 0;
     int field;
     int command_kind;
+    int amiga_squad_panel = 0;
     if (!s || !s->framebuffer || !rect || rect->w <= 0 || rect->h <= 0 ||
         gdat_index == 0) return 0;
     command_kind =
@@ -9057,6 +9107,10 @@ static int dm2_v1_render_hud_core_asset(DM2_V1_ViewportState *s,
         w = plan_command->width;
         h = plan_command->height;
         stride = plan_command->width;
+        amiga_squad_panel = command_kind ==
+                DM2_V1_GDAT_HUD_M11_COMMAND_PORTRAIT_PANEL &&
+            plan_command->gdat_category == DM2_GDAT_CATEGORY_GRAPHICSSET &&
+            plan_command->gdat_field == 0xf5;
     } else if (
         dm2_v1_fetch_viewport_asset(s,
                                     gdat_index,
@@ -9098,7 +9152,9 @@ static int dm2_v1_render_hud_core_asset(DM2_V1_ViewportState *s,
                                         gdat_index,
                                         w,
                                         h);
-    s->last_hud_core_pixel_count += (uint32_t)(rect->w * rect->h);
+    s->last_hud_core_pixel_count += (uint32_t)(amiga_squad_panel
+        ? plan_command->destination.w * plan_command->destination.h
+        : rect->w * rect->h);
     field = DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_BASE - gdat_index;
     if (s->source_materials_required &&
         (field == DM2_V1_VIEWPORT_GFX_HUD_CORE_TOP_BAR ||
@@ -9114,10 +9170,14 @@ static int dm2_v1_render_hud_core_asset(DM2_V1_ViewportState *s,
         request.valid = source_palette_hash != 0u &&
             field >= 0 && field <= DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_MASK;
         request.gdat_index = gdat_index;
-        request.gdat_category = DM2_GDAT_CATEGORY_INTERFACE_GENERAL;
-        request.gdat_subcategory = 0u;
-        request.gdat_entry = (uint8_t)field;
-        request.field = (uint8_t)field;
+        request.gdat_category = amiga_squad_panel
+            ? plan_command->gdat_category
+            : DM2_GDAT_CATEGORY_INTERFACE_GENERAL;
+        request.gdat_subcategory = amiga_squad_panel
+            ? (uint8_t)plan_command->gdat_index : 0u;
+        request.gdat_entry = amiga_squad_panel
+            ? (uint8_t)plan_command->gdat_field : (uint8_t)field;
+        request.field = request.gdat_entry;
         request.indexed_pixels = pixels;
         request.palette16 = source_palette;
         request.palette_hash = source_palette_hash;
@@ -9125,11 +9185,14 @@ static int dm2_v1_render_hud_core_asset(DM2_V1_ViewportState *s,
         request.width = w;
         request.height = h;
         request.stride = stride > 0 ? stride : w;
-        request.transparent_color = DM2_COLOR_TRANSPARENT;
-        request.colorkey_palette_index =
-            request.palette16[request.transparent_color];
+        request.transparent_color = amiga_squad_panel &&
+                plan_command->source_transparency_key == UINT8_MAX
+            ? -1 : DM2_COLOR_TRANSPARENT;
+        request.colorkey_palette_index = request.transparent_color < 0
+            ? UINT8_MAX : request.palette16[request.transparent_color];
         request.source_rect = (DM2_V1_ViewportRect){ 0, 0, w, h };
-        request.destination_rect = *rect;
+        request.destination_rect = amiga_squad_panel
+            ? plan_command->destination : *rect;
         memset(&command, 0, sizeof(command));
         command.valid = request.valid && request.indexed_pixels &&
             request.palette16 && request.width > 0 && request.height > 0 &&

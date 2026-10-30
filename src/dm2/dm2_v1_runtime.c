@@ -13362,6 +13362,43 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         (void)dm2_v1_boot_gdat_hud_static_m11_command_plan(
             rt->boot, rt->outdoor, &hud_material_plan);
     }
+    if (rt->boot && rt->boot->platform == DM2_PLATFORM_AMIGA_EN &&
+        viewport.hud_party_valid && !rt->outdoor) {
+        DM2_V1_BootExpandedRectReceipt squad_panel_rect;
+        DM2_V1_ViewportRect destination;
+        const DM2_V1_AssetLoader *loader =
+            dm2_v1_boot_asset_loader(rt->boot);
+        memset(&squad_panel_rect, 0, sizeof(squad_panel_rect));
+        if (!loader || loader->gdat_version != 5u || !loader->big_endian ||
+            !dm2_v1_asset_loader_uses_physical_16_color_palette(loader) ||
+            !rt->gdat_scene_material_plan.valid ||
+            !dm2_v1_boot_query_expanded_rect_receipt(
+                rt->boot, 47u, &squad_panel_rect) ||
+            !squad_panel_rect.valid || !squad_panel_rect.receipt_hash ||
+            (squad_panel_rect.rect.x & 1) != 0 ||
+            (squad_panel_rect.rect.y & 1) != 0 ||
+            squad_panel_rect.rect.w <= 0 || squad_panel_rect.rect.h <= 0) {
+            dm2_v1_gdat_hud_m11_command_plan_free(&hud_material_plan);
+        } else {
+            /* SKProject SKWINSPX/src/v4/skguidrw.cpp::DRAW_SQUAD_POS_INTERFACE
+             * draws GRAPHICSSET/<current style>/0xF5 at RECT_47 before the
+             * dynamic squad icons. Replace the generic portrait-panel guess
+             * with that authenticated Amiga image and placement. */
+            destination = (DM2_V1_ViewportRect){
+                squad_panel_rect.rect.x / 2,
+                squad_panel_rect.rect.y / 2,
+                squad_panel_rect.rect.w,
+                squad_panel_rect.rect.h };
+            if (!dm2_v1_gdat_hud_m11_command_plan_replace_asset(
+                    loader, &hud_material_plan,
+                    DM2_V1_GDAT_HUD_M11_COMMAND_PORTRAIT_PANEL,
+                    DM2_GDAT_CATEGORY_GRAPHICSSET,
+                    rt->gdat_scene_material_plan.graphicsset, 0xf5,
+                    &destination, 47u, squad_panel_rect.raw4_hash)) {
+                dm2_v1_gdat_hud_m11_command_plan_free(&hud_material_plan);
+            }
+        }
+    }
     dm2_v1_viewport_set_gdat_hud_material_plan(
         &viewport, &hud_material_plan);
     if (rt->boot && rt->boot->graphics_dat &&
@@ -13463,7 +13500,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         ? hud_material_plan.command_hash : 0u;
     hud_material_plan_command_count = hud_material_plan_consumed
         ? hud_material_plan.command_count : 0;
-    if (hud_material_plan_consumed) {
+    if (hud_material_plan.valid && hud_material_plan.command_count > 0) {
         int trace_count = hud_material_plan.command_count;
         if (trace_count > DM2_V1_GDAT_HUD_M11_COMMAND_MAX) {
             trace_count = DM2_V1_GDAT_HUD_M11_COMMAND_MAX;

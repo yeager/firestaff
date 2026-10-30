@@ -278,6 +278,19 @@ int dm2_v1_asset_load_image_local_palette(
         if (out_hash) *out_hash = hash;
         return hash != 0u;
     }
+    /* Authentic Amiga v5 images decode their six in-stream colors to the
+     * physical 16-color display palette. Their final 16 source bytes are
+     * not a second index translation table. Keep this in sync with the
+     * Amiga-aware loader palette path; interpreting the tail as indices can
+     * produce values above 15 and corrupt otherwise valid HUD/scene art. */
+    if (dm2_v1_asset_loader_uses_physical_16_color_palette(loader)) {
+        for (int i = 0; i < 16; ++i) {
+            out_palette16[i] = (uint8_t)i;
+            hash = dm2_weather_hash_step(hash, out_palette16[i]);
+        }
+        if (out_hash) *out_hash = hash;
+        return hash != 0u;
+    }
     raw = dm2_v1_asset_load_typed_sized(loader, category, index,
                                          DM2_GDAT_ENTRY_TYPE_IMAGE, field,
                                          &raw_size);
