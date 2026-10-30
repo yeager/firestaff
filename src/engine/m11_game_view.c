@@ -46765,6 +46765,10 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                         int ri;
                         int anyAudible = 0;
                         int objectMutation = 0;
+                        int rotationPending = trigResults.rotationPending;
+                        int rotationMapX = trigResults.rotationMapX;
+                        int rotationMapY = trigResults.rotationMapY;
+                        int rotationCell = trigResults.rotationCell;
                         memset(&effects, 0, sizeof(effects));
                         for (ri = 0; ri < trigResults.count &&
                              effects.count < SENSOR_EFFECT_LIST_MAX_COUNT; ++ri) {
@@ -46841,6 +46845,17 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                             }
                         }
                         m11_apply_sensor_effects(state, &effects);
+                        /* ReDMCSB F0275 defers the last local wall-sensor
+                         * rotation until every matching sensor has run. */
+                        if (rotationPending &&
+                            F0271_SENSOR_ProcessRotation_Compat(
+                                &state->world,
+                                state->world.party.mapIndex,
+                                rotationMapX, rotationMapY,
+                                rotationCell,
+                                trigResults.rotationEffect)) {
+                            m11_refresh_hash(state);
+                        }
                         if (objectMutation) {
                             m11_refresh_hash(state);
                         }
