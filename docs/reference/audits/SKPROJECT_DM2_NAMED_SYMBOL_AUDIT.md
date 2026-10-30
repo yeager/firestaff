@@ -30,17 +30,19 @@ playable game route or parity on every supported platform.
 | `NOT_APPLICABLE_ARCH` | 560 |
 | `NONAPPLICABLE` | 73 |
 | `UNOWNED_SOURCE_MUTATION` | 2 |
-| `PARTIAL` | 1 |
-| `STATIC_INPUT_ONLY` | 1 |
+| `PARTIAL` | 2 |
+| `STATIC_INPUT_ONLY` | 0 |
 | `PARTIAL_SOURCE_OWNER` | 1 |
 | **Total** | **1,751** |
 
 Open source-owned behavior includes `DM2_ALLOC_NEW_RECORD` and
 `DM2_DEALLOC_RECORD`, whose map-chain, recycler, record-pool, CAII, and timer
 ownership is not implemented as a complete transaction. `DM2_ARRANGE_DUNGEON`
-is represented by static-input evidence only. `DM2_ADD_BACKGROUND_LIGHT_FROM_TILE`
-and `DM2_RECYCLE_A_RECORD_FROM_THE_WORLD` remain partial. See each TSV row's
-notes before treating a mapping as a parity result.
+has a bounded source-owned mutation path integrated into new-game loading, but
+still lacks source-by-source mutation and all-edition/platform parity proof.
+`DM2_ADD_BACKGROUND_LIGHT_FROM_TILE` and
+`DM2_RECYCLE_A_RECORD_FROM_THE_WORLD` remain partial. See each TSV row's notes
+before treating a mapping as a parity result.
 
 `NOT_APPLICABLE_ARCH` and `NONAPPLICABLE` are separate dispositions: neither
 claims that a supported DM2 game feature is implemented. The inventory also
