@@ -140,6 +140,7 @@
 #include "dm1_v1_fountain_interaction_pc34_compat.h"
 #include "firestaff/dm1/v1/G0202_pc34_compat.h"
 #include "firestaff/dm1/v1/G0193_pc34_compat.h"
+#include "firestaff/dm1/v1/f0035_object_clear_leader_hand_object_name_isolated_c91f_pc34_compat.h"
 #include "dm1_v1_dungeon_weapon_info_pc34_compat.h"
 #include "dm1_v1_chest_admission_f0333_f0334_pc34_compat.h"
 #include "dm1_v1_leader_hand_throw_admission_f0329_pc34_compat.h"
@@ -1198,6 +1199,28 @@ static void m11_draw_v1_action_area_overlay(const M11_GameViewState* state,
                                             unsigned char* framebuffer,
                                             int framebufferWidth,
                                             int framebufferHeight);
+typedef struct M11_DM1F0035ZoneFillContext {
+    unsigned char *framebuffer;
+    int framebuffer_width;
+    int framebuffer_height;
+} M11_DM1F0035ZoneFillContext;
+
+static void m11_dm1_f0035_fill_zone(void *context, int zone_index, int color)
+{
+    M11_DM1F0035ZoneFillContext *fill =
+        (M11_DM1F0035ZoneFillContext *)context;
+    DM1_V1_LayoutZoneRectPc34 rect;
+
+    if (!fill || zone_index != dm1_v1_leader_hand_object_name_zone_id_pc34() ||
+        color != M11_COLOR_BLACK) {
+        return;
+    }
+    rect = dm1_v1_leader_hand_object_name_rect_pc34();
+    m11_fill_rect(fill->framebuffer, fill->framebuffer_width,
+                  fill->framebuffer_height, rect.x, rect.y, rect.w, rect.h,
+                  (unsigned char)color);
+}
+
 static void m11_draw_v1_leader_hand_object_name(const M11_GameViewState* state,
                                                 unsigned char* framebuffer,
                                                 int framebufferWidth,
@@ -66200,7 +66223,7 @@ static void m11_draw_v1_leader_hand_object_name(const M11_GameViewState* state,
                                                 unsigned char* framebuffer,
                                                 int framebufferWidth,
                                                 int framebufferHeight) {
-    int nameX, nameY, nameW, nameH;
+    int nameX, nameY;
     char objectName[16];
     DM1_V1_LayoutZoneRectPc34 nameRect;
     if (!state || !framebuffer || state->showDebugHUD ||
@@ -66222,10 +66245,17 @@ static void m11_draw_v1_leader_hand_object_name(const M11_GameViewState* state,
     nameRect = dm1_v1_leader_hand_object_name_rect_pc34();
     nameX = nameRect.x;
     nameY = nameRect.y;
-    nameW = nameRect.w;
-    nameH = nameRect.h;
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  nameX, nameY, nameW, nameH, M11_COLOR_BLACK);
+    {
+        M11_DM1F0035ZoneFillContext fill_context;
+        DM1_V1_F0035ZoneBackendIsolatedC91fPc34 backend;
+        fill_context.framebuffer = framebuffer;
+        fill_context.framebuffer_width = framebufferWidth;
+        fill_context.framebuffer_height = framebufferHeight;
+        backend.context = &fill_context;
+        backend.fill_zone_by_index = m11_dm1_f0035_fill_zone;
+        DM1_V1_F0035_OBJECT_ClearLeaderHandObjectNameIsolatedC91fPc34Compat(
+            &backend);
+    }
     /* OBJECT.C F0034 owns C017's cleared source field and its M653 text
      * geometry.  A generic host font changes the name's advance and makes
      * this narrow HUD lane overlap the action surface, so absent PC34 font

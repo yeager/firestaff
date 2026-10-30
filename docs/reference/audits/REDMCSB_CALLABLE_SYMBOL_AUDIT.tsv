@@ -57,7 +57,7 @@ F	0033	F0033_OBJECT_GetIconIndex	PANEL.C;ATARIST.H;FMTOWNS.H;OBJECT.C;CLIKVIEW.C
 F	033	F033_aaaz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0034	F0034_OBJECT_DrawLeaderHandObjectName	PANEL.C;ATARIST.H;FMTOWNS.H;OBJECT.C;IIGS.H;CHAMDRAW.C;DEFS.H;CHAMPION.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	034	F034_aaau_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0035	F0035_OBJECT_ClearLeaderHandObjectName	PANEL.C;ATARIST.H;FMTOWNS.H;OBJECT.C;IIGS.H;DEFS.H;CHAMPION.C;ENDGAME.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0035	F0035_OBJECT_ClearLeaderHandObjectName	PANEL.C;ATARIST.H;FMTOWNS.H;OBJECT.C;IIGS.H;DEFS.H;CHAMPION.C;ENDGAME.C	implemented-narrow	implemented_narrow	OBJECT.C source C017 black-zone adapter is consumed by the M11 DM1 leader-hand name renderer; focused adapter CTest, real-asset/edition parity remains open
 F	035	F035_aaaw_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0036	F0036_OBJECT_ExtractIconFromBitmap	PANEL.C;ATARIST.H;FMTOWNS.H;OBJECT.C;IIGS.H;CHAMDRAW.C;DEFS.H;ACTIDRAW.C;CHAMPION.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	036	F036_aA19_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
