@@ -1,3 +1,13 @@
+- 2026-10-30: Added and ran an authentic no-game M12 startup regression for
+  DM1 Amiga 2.0. An isolated data root containing only the original nested
+  ZIP → ZIP → ADF preservation package was scanned and selected from the game
+  and Amiga platform menus. The log identified `amiga20-en`, authenticated
+  `Graphics.DAT` MD5 `6a2f135b53c2220f0251fa103e2a6e7e`, and completed the
+  original SWSH, F0437 title, F0441 Entrance, and first HoC runtime frame. The
+  runtime receipt matched map 0 at `(1,3)`, and the archive hash was unchanged.
+  CTest: `m12_main_menu_dm1_amiga20_runtime_real_media`. This verifies local
+  macOS arm64 startup only; visual/audio and other-host parity remain open.
+
 - 2026-10-30: Added an authentic-media M12 pointer regression for selecting
   DM1 PC34 while the deferred startup scan is running. The first platform
   click is recorded as safely deferred in `--debug`; after scan publication,

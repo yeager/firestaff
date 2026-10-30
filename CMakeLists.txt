@@ -341,6 +341,14 @@ if(BUILD_TESTING)
         ENVIRONMENT "FIRESTAFF_MAIN_MENU_GAME=dm1-amiga;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         LABELS "m12;dm1;amiga;main-menu;game-selection;runtime;real-media;skip-safe")
 
+    add_test(NAME m12_main_menu_dm1_amiga20_runtime_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_dm1_amiga20_runtime_real_media.sh"
+            "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
+    set_tests_properties(m12_main_menu_dm1_amiga20_runtime_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 180
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        LABELS "m12;dm1;amiga;amiga20;main-menu;game-selection;startup;runtime;real-media;skip-safe")
+
     add_test(NAME firestaff_iigs_cli_real_media
         COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_iigs_cli_real_media.sh"
             $<TARGET_FILE:firestaff>)
