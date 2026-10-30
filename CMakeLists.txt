@@ -316,6 +316,14 @@ if(BUILD_TESTING)
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         LABELS "m12;csb;amiga;amiga-multilingual;main-menu;game-selection;runtime;real-media;skip-safe")
 
+    add_test(NAME m12_main_menu_csb_amiga33_runtime_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_csb_amiga33_runtime_real_media.sh"
+            "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
+    set_tests_properties(m12_main_menu_csb_amiga33_runtime_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 180
+        ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        LABELS "m12;csb;amiga;amiga33;main-menu;game-selection;runtime;real-media;skip-safe")
+
     foreach(route IN ITEMS dm1-pc dm1-atari-st dm1-atari-st-12 dm1-atari-st-13 csb-atari-st dm2-pc)
         if(route MATCHES "^dm1-")
             set(route_game_label "dm1")

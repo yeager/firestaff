@@ -71,7 +71,7 @@ menu_runtime_probe="$scratch/menu-runtime.json"
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
         "$app" --debug --menu --game dm1 --platform amiga --data-dir "$archive" \
         --script 'wait-scan-complete,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait-game-runtime' \
-        --duration 60000
+        --duration 10000
 ) >"$menu_runtime_log" 2>&1 || {
     cat "$menu_runtime_log" >&2
     exit 1
