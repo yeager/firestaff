@@ -79,8 +79,16 @@ these joins ambiguous; they do not prove unique read-to-write causality. It
 recorded 262,144 code-fetch rows; 262,121 rows were fully backed by prior
 traced writes, with 786,386 matching bytes and 46 bytes differing from the
 latest traced write to their address.
-Those mismatches are unresolved, so the result is not a complete transfer
-proof. The capture was blocked with exit 124 and still had no game IRQ,
+The 46 mismatching bytes span 23 fetch rows, five physical addresses in banks
+$80 and $82, and three logical PCs. Each address has a prior $EA9C write,
+but no earlier traced $EA9C write at that address has the fetched value.
+An untraced later writer or mapping/trace semantics could explain this; the
+capture cannot distinguish them. The physical addresses were $1000D9 (2
+bytes), $1000DA (1), $1000DB (1), $10468D (21), and $10468E (21); logical
+PCs were $40D7 (1), $40D9 (3), and $468C (42). Slot-2 MPR was $80 at the
+first three addresses and $82 at the last two, with no observed mapping
+change. Broader CD-RAM and DMA write tracing is needed. These mismatches
+are unresolved, so the result is not a complete transfer proof. The capture was blocked with exit 124 and still had no game IRQ,
 authenticated CD transfer receipt, game-owned input poll, or gameplay
 transition. It provides loader and execution provenance only, not parity.
 

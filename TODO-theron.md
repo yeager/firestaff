@@ -48,9 +48,16 @@ assets, mechanics, or parity.
   ordered/value candidate match to a recent $EA99 source read. Repeated bytes
   can make these joins ambiguous; they do not prove unique read-to-write
   causality. Of 262,144 code-fetch rows, 262,121 were fully backed by prior
-  traced writes; 46 fetched bytes differed from the latest
-  traced write. These mismatches remain unresolved and the result is not a
-  complete transfer proof.
+  traced writes; 46 fetched bytes differed from the latest traced write.
+  Those bytes span 23 fetch rows, five physical addresses in banks $80 and
+  $82, and three logical PCs. Each address had a prior $EA9C write, but no
+  earlier traced write matched the fetched value. A later untraced writer
+  or mapping/trace semantics could explain this; the capture cannot
+  distinguish them. The affected physical addresses were $1000D9 (2 bytes),
+  $1000DA (1), $1000DB (1), $10468D (21), and $10468E (21); logical PCs
+  were $40D7 (1), $40D9 (3), and $468C (42). Slot-2 MPR was $80 at the
+  first three addresses and $82 at the last two, with no observed mapping
+  change. Broader CD-RAM and DMA write tracing is needed.
 - The run remains blocked before the game-owned IRQ, authenticated CD transfer
   receipt, game input poll, and gameplay transition. Treat this as loader and
   execution provenance only; it does not establish game launch or parity.
