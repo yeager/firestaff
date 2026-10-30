@@ -7047,6 +7047,10 @@ int main(void) {
                        jp.target_sources[0].source_ref == 0x0803u &&
                        us.target_sources[0].source_index == 3u &&
                        jp.target_sources[0].source_index == 3u &&
+                       us.target_sources[0].next_ref ==
+                       jp.target_sources[0].next_ref &&
+                       us.target_sources[0].position ==
+                       jp.target_sources[0].position &&
                        us.target_sources[0].raw_size == 4u &&
                        jp.target_sources[0].raw_size == 4u &&
                        memcmp(us.target_sources[0].raw,
