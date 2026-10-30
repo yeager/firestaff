@@ -56,8 +56,9 @@ logs the selected bitmap, unit range, and written pixel count in debug mode.
 The compositor has a synthetic contract test, and the real-media Atari asset
 test decodes all nine selectable M636 patterns. The source check used
 ReDMCSB `VIDEO.C` F133 around lines 839–1006 and `DUNVIEW.C` around lines
-1860–1877. D0C Fluxcage F0113 rendering and an end-to-end live explosion
-capture remain open; this work alone does not establish full viewport parity.
+1860–1877. F0113 rendering now has a source-derived implementation and
+authentic asset-composition checks; an end-to-end live explosion capture
+remains open. This work alone does not establish full viewport parity.
 
 2026-10-30 CSB Atari F0115 ordinary explosion work in progress: the new
 planner encodes ReDMCSB `DUNVIEW.C` G0211/G0212/G0216/G0225/G0226/G0228 and native
@@ -109,10 +110,10 @@ bitmaps, G0075 palette changes, flips and C10 transparency. Its item/weapon
 C14 selectors now consume original C559 G0237/G0238 data; positive selectors
 use the native G0209 object-as-projectile route. The stock campaign does not
 contain a live C14 scenario, so rendered projectile pixels still lack an
-end-to-end gameplay assertion. Explosion/Fluxcage and F0113 teleporter/field
-composition remain absent, and the Atari HUD lacks ReDMCSB's complete dynamic
-champion presentation. Add source-derived projectile, explosion and field
-regressions before claiming functional parity.
+end-to-end gameplay assertion. Explosion/Fluxcage gameplay still lacks an
+end-to-end runtime assertion; F0113 source and authentic-asset composition
+are implemented. The Atari HUD also lacks ReDMCSB's complete dynamic champion
+presentation. Add live gameplay regressions before claiming functional parity.
 
 2026-10-29 CSB Atari alcove-order correction: the order-zero F0115 object
 pass is now dispatched only for the D1C front-wall view square. ReDMCSB
