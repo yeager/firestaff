@@ -11288,18 +11288,22 @@ static int m11_push_script_event_token(const char* token, size_t len) {
         SDL_PushEvent(&ev);
         return 1;
     }
-    if (sscanf(buffer, "rightdown:%d:%d", &x, &y) == 2 ||
+    if (sscanf(buffer, "leftdown:%d:%d", &x, &y) == 2 ||
+        sscanf(buffer, "leftup:%d:%d", &x, &y) == 2 ||
+        sscanf(buffer, "rightdown:%d:%d", &x, &y) == 2 ||
         sscanf(buffer, "rightup:%d:%d", &x, &y) == 2) {
-        const int isDown = strncmp(buffer, "rightdown:", 10) == 0;
+        const int isLeft = strncmp(buffer, "left", 4) == 0;
+        const int isDown = strncmp(buffer, "leftdown:", 9) == 0 ||
+                           strncmp(buffer, "rightdown:", 10) == 0;
 #if SDL_VERSION_ATLEAST(3, 0, 0)
         ev.type = isDown ? SDL_EVENT_MOUSE_BUTTON_DOWN
                          : SDL_EVENT_MOUSE_BUTTON_UP;
-        ev.button.button = SDL_BUTTON_RIGHT;
+        ev.button.button = isLeft ? SDL_BUTTON_LEFT : SDL_BUTTON_RIGHT;
         ev.button.x = (float)x;
         ev.button.y = (float)y;
 #else
         ev.type = isDown ? SDL_MOUSEBUTTONDOWN : SDL_MOUSEBUTTONUP;
-        ev.button.button = SDL_BUTTON_RIGHT;
+        ev.button.button = isLeft ? SDL_BUTTON_LEFT : SDL_BUTTON_RIGHT;
         ev.button.x = x;
         ev.button.y = y;
 #endif
@@ -11362,7 +11366,11 @@ static int m11_script_event_token_is_valid(const char* token, size_t len) {
         return keyName[0] != '\0' &&
                m11_script_keycode_from_name(keyName) != 0x7fffffff;
     }
-    if (sscanf(buffer, "click:%d:%d", &x, &y) == 2) {
+    if (sscanf(buffer, "leftdown:%d:%d", &x, &y) == 2 ||
+        sscanf(buffer, "leftup:%d:%d", &x, &y) == 2 ||
+        sscanf(buffer, "rightdown:%d:%d", &x, &y) == 2 ||
+        sscanf(buffer, "rightup:%d:%d", &x, &y) == 2 ||
+        sscanf(buffer, "click:%d:%d", &x, &y) == 2) {
         return 1;
     }
     if (sscanf(buffer, "move:%d:%d", &x, &y) == 2) {
@@ -11504,6 +11512,29 @@ static int m11_apply_boot_probe_event_token(M11_GameViewState* gameView,
             gameView, "pointer-click", x, y,
             release_result != M11_GAME_INPUT_IGNORED
                 ? release_result : press_result);
+        return 1;
+    }
+    if (sscanf(buffer, "leftdown:%d:%d", &x, &y) == 2 ||
+        sscanf(buffer, "leftup:%d:%d", &x, &y) == 2 ||
+        sscanf(buffer, "rightdown:%d:%d", &x, &y) == 2 ||
+        sscanf(buffer, "rightup:%d:%d", &x, &y) == 2) {
+        const int isLeft = strncmp(buffer, "left", 4) == 0;
+        const int isDown = strncmp(buffer, "leftdown:", 9) == 0 ||
+                           strncmp(buffer, "rightdown:", 10) == 0;
+        const int buttonMask = isLeft ? DM1_V1_MOUSE_MASK_LEFT_PC34 :
+                                        DM1_V1_MOUSE_MASK_RIGHT_PC34;
+        M11_GameInputResult inputResult;
+        if (!m11_present_game_frame(gameView, NULL) ||
+            !m11_map_window_pointer_to_game_source(gameView, x, y, &x, &y)) {
+            return 1;
+        }
+        inputResult = isDown
+            ? M11_GameView_HandlePointerButton(gameView, x, y, buttonMask)
+            : M11_GameView_HandlePointerButtonRelease(
+                  gameView, x, y, buttonMask);
+        if (outResult) *outResult = inputResult;
+        m11_debug_game_pointer(gameView, isDown ? "pointer-down" : "pointer-up",
+                               x, y, inputResult);
         return 1;
     }
     if (sscanf(buffer, "move:%d:%d", &x, &y) == 2) {

@@ -2422,3 +2422,12 @@ only. Active work is in `TODO.md` and `TODO-<game>.md`.
   authentic loose-media ownership regression and broader PC34 startup CLI
   test both pass against original data. This verifies startup ownership, not
   complete visual parity.
+- 2026-10-30: Scripted CLI input and `--boot-probe` now accept separate
+  `leftdown:x:y` / `leftup:x:y` tokens, alongside the existing right-button
+  tokens, so a test can preserve a mouse-button hold across waits. The CLI help
+  describes the syntax, and `m11_direct_launch_prepare_all_games` accepted the
+  new token sequence. That broader test still had seven unrelated failures in
+  this local data environment (DM1 FM Towns selection, Nexus title, launcher
+  media selection, and Theron Japanese handoff); it reported 218 passed and 3
+  skipped. This adds input-test capability only; it does not claim that any
+  game's hold interaction is implemented or verified.

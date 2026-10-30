@@ -39,7 +39,7 @@ static void usage(const char* prog) {
             "  --scale-mode <mode> Window scaling: 0..5 or 1x, 2x, 3x, 4x, fit, stretch\n"
             "  --presentation-mode <v1|v20|v21|v22> Select game presentation without changing saved settings\n"
             "  --lang <code>      Set launcher/game UI language (en, sv, fr, de, ja, zh, cs, da, es, fi, hu, it, ko, nl, no, pl, pt, ru, tr, id)\n"
-            "  --script <cmds>     Comma-separated inputs; click:x:y presses and releases, waitN delays inputs\n"
+            "  --script <cmds>     Comma-separated inputs; click:x:y presses and releases, left/right down/up tokens hold buttons, waitN delays inputs\n"
             "                      wait-scan-complete waits for deferred media discovery\n"
             "  --data-dir <path>   Asset directory (default: FIRESTAFF_DATA env var)\n"
             "  --enable-external-archive-tools  Allow installed host tools to read external archives\n"

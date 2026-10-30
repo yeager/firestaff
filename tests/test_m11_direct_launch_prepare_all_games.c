@@ -255,6 +255,10 @@ static void run_boot_probe_empty_data_rejection(void) {
                                              firstInvalid,
                                              sizeof(firstInvalid)) == 0,
                 "boot-probe script validator accepts wait/input/event tokens");
+    expect_true(M11_BootProbeScript_Validate(
+                    "leftdown:1:2,wait20,leftup:1:2,rightdown:3:4,wait20,rightup:3:4",
+                    firstInvalid, sizeof(firstInvalid)) == 0,
+                "boot-probe script validator accepts held mouse-button events");
     expect_true(M11_BootProbeScript_Validate("enter,bogus,waitx,key:not-a-key",
                                              firstInvalid,
                                              sizeof(firstInvalid)) == 3 &&
