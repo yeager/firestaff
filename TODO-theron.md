@@ -9247,3 +9247,27 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   coverage for Button II+Up and Button II+Down now passes three loops. Bind the
   `$2040/$2041` consumer and JP map before claiming the emulator bytes represent
   coordinates or asserting full original movement parity.
+
+## 2026-10-30 — retained BaseRAM snapshots do not identify the active JP map
+
+- Reprojected hash-verified JP Rev. 1 Track 02 raw sectors to 2,048-byte user
+  data by dropping each 16-byte sector header, then decoded Akutuba's four map
+  arrays using `theron_v1_track02_dungeon_map_load_for_variant()` and the
+  source offsets in `theron_v1_track02_dungeon_map.c`. This reproduces the
+  discriminating source cells locked by
+  `tests/test_theron_v1_track02_dungeon_map.c`: map 0 has `0x20` at `(2,3)`;
+  map 2 has `0x00` there.
+- Scanned all 106 retained, exactly 8 KiB `pce-fast.ram` snapshots against
+  each map's exact contiguous tile bytes. There were no matches. Source map
+  dimensions and SHA-256 values were: map 0, 6x8,
+  `a7e0707986d898ecd397d92d9312d87f88e1acab8ced97bfaa1b7b0c34dc4b20`; map 1,
+  19x13, `d09fcb98e731e6bb1e5ad62e523637c898ec9d0784d1cbf72672ba04c528837a`;
+  map 2, 19x17,
+  `12f2745d5e0baa3cadaca61d41a564df9569efe9d1556dd1b141e4a6e93ec5b2`; map 3,
+  13x12, `19a50d0d5e0baa3cadaca61d41a564df9569efe9d1556dd1b141e4a6e93ec5b2`.
+- This negative scan covers only contiguous copies in 8 KiB BaseRAM snapshots.
+  It does not cover full physical RAM, VRAM, packed/decoded forms, or the live
+  consumer, and does not prove that no map was loaded. The active-map identity
+  and movement parity remain open. Next capture a confirmed cold JP gameplay
+  route and follow authenticated Track 02 reads through their runtime
+  destinations to the active selector and a discriminating tile consumer.
