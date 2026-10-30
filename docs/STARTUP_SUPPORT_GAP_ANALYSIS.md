@@ -1,20 +1,25 @@
 # Five-game startup support gap analysis
 
 Evidence metadata refreshed on 2026-10-30 for `main` at
-`f7da133d973e5b98c436a7775dc5e1273c5bced7`. The latest published release is
+`73e193d47756e41eb302f474dd5291e4f57cb7bb`. The latest published release is
 v3.0.421 (published 2026-10-30 from tag commit
-`6e4b9a5a86fb12624305be0e1d91d256d0b64141`); current `main` contains three
-later test-only commits that are not in that package. The v3.0.421 workflow
-verifies packaging, not gameplay startup. The
-route records below are individually dated and establish only the named
-checks, not every edition or complete game parity. Real-media Swedish
+`6e4b9a5a86fb12624305be0e1d91d256d0b64141`); current `main` contains later
+menu-test, documentation and CLI diagnostic changes that are not in that
+package. The v3.0.421 workflow verifies packaging, not gameplay startup. The current
+main also adds an authentic CSB Amiga 3.5 no-game M12 route; the local original
+CTRaw archive test passed through the first runtime with an unchanged source
+hash. The route records below are individually dated and establish only the
+named checks, not every edition or complete game parity. Real-media Swedish
 startup-debug localization checks cover DM1 PC34,
 CSB FM Towns, and DM2 FM Towns; these test explicit and saved preferences,
 localized scan labels, edition selection, and the boot-probe boundary, not full
 gameplay parity.
 The latest `main` also adds read-only X68000 HDM, GRAPHICS.DAT IMG1, and X30J
 dungeon-metadata readers verified against authentic Japanese media; these
-parsers do not add an X68000 startup, rendering, audio, or input route.
+parsers do not add an X68000 startup, rendering, audio, or input route. Its
+RetroAchievements startup status is now silent unless `--debug` is supplied;
+authentic DM1 Amiga and Nexus Japanese CUE boot probes verified quiet default
+logging, and the debug-enabled Nexus probe retained its diagnostics.
 It rejects conflicting CSB utility-disk and hint-oracle launch modes and
 enables the DM2 source-level startup-menu timing regression. The latter checks
 source tick sequencing; it does not measure native presentation timing.
