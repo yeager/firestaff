@@ -161,3 +161,11 @@ bytes and transfer into the active game loader, capture the first game-owned
 controller poll and its resulting state change, then compare native Firestaff
 input and rendering against that authenticated route. Keep save-state captures
 separate from cold-boot loader evidence.
+
+## TIA byte transfers at PC `$468C`
+
+A third cold reference capture used the authentic Japanese Rev. 1 Track 02 (MD5 `b7afb338ad31be1025b53f9aff12d73a`), System Card 3.0 (MD5 `ff1a674273fe3540ccef576376407d1d`), and scripted `run@480:300` input without a save state. A bounded observer at the PCE Fast `BMT_TIA` macro records the decoded block operands and each actual `RdMem` then `WrMem` pair. The source reference is `src/pce_fast/huc6280_ops.inc:544` (`LD_BMT(BMT_TIA)`) and `src/pce_fast/huc6280.cpp:1316` (`BMT_TIA`).
+
+The capture recorded 32 complete executions with identical decoded operands: source `$47E0`, destination `$0002`, encoded length `$0040`. Each copied 64 bytes from logical `$47E0-$481F`; source MPR slot 2 was `$82` (mapped `$1047E0-$10481F`). Writes alternated between logical `$0002` and `$0003`; destination MPR slot 0 was `$FF` (mapped `$1FE002/$1FE003`). The 2,048-row verifier passed, including source increments, destination alternation, remaining lengths, MPR slots, and mapped addresses. These are observed bus/memory values and mappings; they do not identify the destination's game-level meaning.
+
+The run still ended before a game IRQ, an authenticated CD-to-RAM receipt, a game-owned input poll, or a gameplay transition. No TIA read in this capture is joined to an authenticated CD source receipt. This is emulator/disassembly evidence only; it does not establish a complete loader or native gameplay parity.

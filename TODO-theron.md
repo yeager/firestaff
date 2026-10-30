@@ -794,3 +794,9 @@ assets, mechanics, or parity.
   and movement parity remain open. Next capture a confirmed cold JP gameplay
   route and follow authenticated Track 02 reads through their runtime
   destinations to the active selector and a discriminating tile consumer.
+
+## 2026-10-30 — trace TIA byte transfers at `$468C`
+
+- Added a bounded, reference-only PCE Fast observer for the authentic `TIA` instruction at `$468C`. It records decoded source, destination, encoded length, each read value and write address, MPR mappings, and shared event sequence numbers.
+- A cold Japanese Rev. 1 capture recorded 32 complete transfers of the same 64-byte source range (`$47E0-$481F`) to alternating logical destinations `$0002/$0003`: 2,048 byte rows in total. The trace verifier passed with no truncation or incomplete transfer.
+- This remains emulator evidence. The run still lacks a game IRQ, authenticated CD-to-RAM receipt, game-owned controller poll, and gameplay transition. Continue binding the transfer to its source provenance and eventual game consumers; do not treat the trace as native parity.
