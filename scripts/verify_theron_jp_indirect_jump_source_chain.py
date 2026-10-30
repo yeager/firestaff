@@ -126,8 +126,14 @@ def verify_source_chain(
         read = reads_by_event.get(write_event - 1)
         if read is None:
             raise ValueError(f"store at event {write_event} lacks an immediately preceding CD read")
-        if read.get("source_valid") != "1" or int(read["value"], 16) != value:
-            raise ValueError(f"CD read at event {write_event - 1} is not source-bound to the store value")
+        if (
+            read.get("source_valid") != "1"
+            or read.get("reader_pc") != "ea99"
+            or int(read["value"], 16) != value
+        ):
+            raise ValueError(
+                f"CD read at event {write_event - 1} is not a source-valid $EA99 read of the store value"
+            )
         return (
             write_event - 1,
             write_event,
@@ -177,14 +183,14 @@ def main() -> int:
     except (OSError, UnicodeError, ValueError, KeyError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1
-    print(f"PASS: authentic Track 02 source reads bind to {len(joins)} dispatch/fetch bytes")
+    print(f"PASS: {len(joins)} observed bytes match authentic Track 02 reads and latest traced $EA9C writes")
     print(f"out_of_window_dispatch_rows={out_of_window}")
     for read_event, write_event, file_offset, address, value in joins:
         print(
             f"source_read_event={read_event} ram_write_event={write_event} "
             f"track02_raw_file_offset={file_offset} physical_address={address:06x} value={value:02x}"
         )
-    print("LIMIT: this verifies observed bytes only; loader completion and gameplay remain unproven")
+    print("LIMIT: other guest writers are not covered by the $EA9C trace; exclusive provenance, loader completion, and gameplay remain unproven")
     return 0
 
 

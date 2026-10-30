@@ -1777,6 +1777,7 @@ if [[ ! -f "$source_chain_verifier" ]] ||
    ! grep -Fq 'verify_read_rows(read_path, track02)' "$source_chain_verifier" ||
    ! grep -Fq 'verify_writer_rows(write_path)' "$source_chain_verifier" ||
    ! grep -Fq 'reads_by_event.get(write_event - 1)' "$source_chain_verifier" ||
+   ! grep -Fq 'read.get("reader_pc") != "ea99"' "$source_chain_verifier" ||
    ! grep -Fq 'max(prior, key=lambda row: int(row["event_sequence"]))' "$source_chain_verifier"; then
     printf '%s\n' 'FAIL: JP dispatch source-chain verifier must authenticate CD reads and latest RAM writes' >&2
     exit 1

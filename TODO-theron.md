@@ -923,21 +923,22 @@ assets, mechanics, or parity.
   TIA `98d75b1f9ef1771a42d8fb661be0f19b8ecb24b9a77b5349df887cbae1bcefe7`,
   and transition receipt `5e53a6a9243d2556fba3414b7dc48cd6286a70b5446a849b87c750a493e94bc0`.
 
-## 2026-10-30 — bind the `$410D,X` dispatch bytes to authentic disc data
+## 2026-10-30 — correlate the `$410D,X` dispatch bytes with disc reads
 
 - Added `verify_theron_jp_indirect_jump_source_chain.py`. It reuses the strict
   JP Track 02 source and writer-PC validators, validates the complete code-follow
   window and indexed dispatch, then requires the latest traced System Card
   writer-PC store before each consumer to match an immediately preceding
   source-bound CD read.
-- Against the authentic Japanese Rev. 1 capture, three consecutive runs joined
+- Against the authentic Japanese Rev. 1 capture, three consecutive runs matched
   the two `$4131/$4132` table bytes and the three bytes fetched at `$4319` to
-  raw Track 02 offsets `2,876,817–2,876,818` and `2,877,305–2,877,307`. Each
-  Track 02 read is followed by its byte-equal RAM write in the shared event
-  sequence, and those writes are the latest logged `$EA9C` stores before the
-  dispatch/fetch. This verifies five specific bytes only; the aggregate
-  authenticated CD-to-RAM receipt remains zero and game-owned execution is
-  still unproven. See the source-lock note for exact event IDs and hashes.
+  Track 02 offsets `2,876,817–2,876,818` and `2,877,305–2,877,307`. Each
+  source-valid `$EA99` read is followed by a byte-equal `$EA9C` write in the
+  shared event sequence, and each write is the latest `$EA9C` record before the
+  dispatch/fetch. Other guest-PC writes are not included in that trace, so this
+  is not exclusive memory provenance. The aggregate authenticated CD-to-RAM
+  receipt remains zero and game-owned execution is still unproven. See the
+  source-lock note for exact event IDs and hashes.
 
 ## 2026-10-30 — correlate the `$410D,X` dispatch with the next fetch
 
@@ -957,14 +958,17 @@ assets, mechanics, or parity.
   followed by fetch event 102678 at `$4319` / physical `$100319`. The other 39
   dispatch rows occurred outside the bounded code-follow window and were not
   correlated to a later fetch by this verifier.
-- The separate offline source-chain verifier authenticates these five bytes
-  against Japanese Rev. 1 Track 02. It binds shared events 31301/31302 and
+- The separate offline source-chain verifier authenticates the corresponding
+  five Track 02 source bytes and matches them to the captured dispatch/fetch
+  values and adjacent `$EA99` read / `$EA9C` write events 31301/31302 and
   31303/31304 to table writes at physical `$100131/$100132`, then events
   32277/32278, 32279/32280, and 32281/32282 to the three bytes fetched from
   `$100319-$10031B`. Every source read matches the authentic raw Track 02 byte;
   each write is the latest traced `$EA9C` store at that physical address before
-  its dispatch or fetch. This targeted evidence does not complete the loader or
-  establish a game-owned input poll or gameplay parity. The aggregate receipt
+  its dispatch or fetch. This writer trace does not cover writes from all guest
+  PCs, so the chain does not establish exclusive memory provenance. The evidence
+  does not complete the loader or establish a game-owned input poll or gameplay
+  parity. The aggregate receipt
   still reports zero CD IRQ callbacks and zero authenticated CD-to-RAM receipts;
   scripted input remains at the System Card poll. See the source-lock note for
   trace hashes and capture limits.

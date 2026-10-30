@@ -332,10 +332,12 @@ The trace subsequently enters the low physical `$04xx` window at logical
 `$E4xx` with MPR7=`$00`, and the transition log records the controller poll at
 `$E4E1`; scripted input is read at `$E4C5`. This confirms return to the System
 Card input loop after the observed indirect dispatch. The targeted source-chain
-verifier below binds the two indexed table bytes and the three fetched `$4319`
-bytes to authentic Track 02 reads and their RAM writes. It does not establish a
-game IRQ, complete loader transfer, or entry into the native game loop. Continue
-from these verified bytes into a game-owned input poll.
+verifier below matches the two indexed table bytes and the three fetched `$4319`
+bytes to authentic Track 02 reads and their immediately following `$EA9C`
+writer-PC records. It does not observe guest writes from every PC and therefore
+does not prove exclusive memory provenance. It also does not establish a game
+IRQ, complete loader transfer, or entry into the native game loop. Continue
+from these byte matches into a game-owned input poll.
 
 ## Correlate the `$410D,X` target with executed code
 
@@ -365,16 +367,20 @@ separate offline verifier `scripts/verify_theron_jp_indirect_jump_source_chain.p
 checks the authentic Track 02 file by size and MD5, verifies each source offset
 and byte, joins each shared read event to its immediately following byte-equal
 `$EA9C` RAM write, and requires that write to be the latest traced `$EA9C` store
-at the destination before the consumer. On this capture it verified:
+at the destination before the consumer. `verify_read_rows` confirms the read PC
+is `$EA99`. The writer trace only records writes from `$EA9C`, so unobserved
+writes from other guest PCs can still affect the destination; the match is not
+exclusive causal provenance. On this capture it verified:
 
 | Source read / RAM write events | Track 02 raw file offsets | Guest physical bytes |
 | --- | --- | --- |
 | 31301 / 31302, 31303 / 31304 | 2,876,817–2,876,818 | `$100131-$100132`: `19 43` |
 | 32277 / 32278, 32279 / 32280, 32281 / 32282 | 2,877,305–2,877,307 | `$100319-$10031B`: `A5 1C 48` |
 
-The computed `$4319` destination and its first three fetched bytes are therefore
-source-bound for this capture. This does not establish a complete loader,
-native handoff, or gameplay parity. Raw media and traces remain private on TRV2
+The computed `$4319` destination and its first three fetched bytes match these
+source reads and latest logged `$EA9C` writes in this capture. This does not
+establish exclusive provenance, a complete loader, native handoff, or gameplay
+parity. Raw media and traces remain private on TRV2
 at
 `/home/trv2/firestaff-theron-evidence/capture/theron-jp-indirect-jump-v8-cold-20261030/`.
 
