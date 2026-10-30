@@ -136,16 +136,17 @@ test and the DM2 Macintosh extracted-file M12/direct-runtime test also passed.
 Five additional authentic-media M12 routes passed: DM1 PC34 and Atari ST, CSB Atari
 ST, and DM2 PC and Amiga. These verify game-card/platform selection and the
 reported runtime handoff for those routes under SDL's dummy video driver; they
-do not prove native presentation or full gameplay. On 2026-10-30, the broader
-`m12_main_menu_game_selection_real_media` run reached 544.85 seconds before
-failing its default-root Nexus assertion. Its 13 preceding DM1, CSB and DM2
-routes passed. The assertion expected `DM.BIN`, while the authentic extracted
-Japanese Nexus route handed off `RLOWFIX.BIN`; the test now selects that actual
-source and requires the documented capture-gated title receipt. The test
-timeout is 1200 seconds to cover the full authentic-media scan and route set.
-The corrected run is pending, so the broader test is not yet counted as a pass.
-The no-media `unsupported_game_platforms_cli_rejected_before_renderer` test
-also passed, confirming invalid game/platform pairs fail before the renderer.
+do not prove native presentation or full gameplay. On 2026-10-30, the full
+`m12_main_menu_game_selection_real_media` run passed against the current
+candidate in 880.32 seconds. It covers authentic DM1, CSB, DM2, Nexus and
+Theron routes, including the standard data root, an isolated Nexus CUE/BIN-only
+root, keyboard and mouse selection, and alternate DM1/CSB/DM2 platforms. Nexus
+is asserted to hand off to its capture-gated title receipt, not to a playable
+runtime. The test timeout is 1200 seconds to cover the full authentic-media
+scan and route set. An earlier run exposed and fixed the Nexus source and
+isolated-root test assertions; it is not counted as a pass. The no-media
+`unsupported_game_platforms_cli_rejected_before_renderer` test also passed,
+confirming invalid game/platform pairs fail before the renderer.
 
 The latest Nexus evidence separates raw Japanese `DM.BIN` placement at
 `0x06010000` from the older trace-specific static code mapping at
