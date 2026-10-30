@@ -1,5 +1,19 @@
 # Firestaff TODO — DM1
 
+2026-10-30 startup/platform audit: the local original-media inventory includes
+`Game,Dungeon_Master,JP,X68000,Software.7z` (X68000 Japanese v3.0 cracked HDM,
+the separately labeled non-working original HDM, and a save-disk HDM) and
+`Game,Dungeon_Master,Super_NES,Software.7z` (EU v1.0, JP v1.0/v1.1, and US
+v1.0 ROMs). These files remain in the external user-data directory and are not
+tracked by Git. Firestaff has no SNES architecture/asset route; X68000 is
+classified as unsupported and deliberately omitted from the M12 platform
+picker. Direct CLI and `--menu` requests for `--platform x68000` and `snes`
+both fail before scanning, as expected for the current implementation. The
+existing X68000 classifier and FTL handoff unit tests pass, but they only prove
+media-boundary parsing, not resource import or startup. Complete platform
+support still needs authentic X68000 resource/runtime integration and a SNES
+ROM/resource-owner route; do not infer support from the archive contents.
+
 2026-10-29 X68000 real-media FTL checksum receipt: the cracked usable
 X68000 HDM staged under ignored `build/test-scratch/x68k-fresh/` parses as
 two embedded FTL modules at byte offsets 73,728 (`0x12000`) and 460,800
