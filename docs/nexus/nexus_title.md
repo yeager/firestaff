@@ -660,15 +660,19 @@ both buffers across all 71,680 pixels. The image shows the retail Nexus title
 and its three menu choices. This verifies Ymir's capture against its own
 frontend output; it is not a Firestaff or hardware parity result.
 
-Firestaff's capture-only replay diagnostic rejected this authentic state
-before writing an image: `BGON=0x0001` enables NBG0 alone while the narrow gate
-requires `0x0003`, and `CCRR=0x1000` differs from the gate's `0x1010`. The VDP1
-frame contains 99,410 direct-color pixels, 94,208 transparent pixels, and
-2,990 palette/special pixels. The replay path still lacks a complete
-per-pixel CLUT/CRAM provenance join for those palette/special pixels. Keep the
-production title gate closed. Next, support this observed register state in
-the capture-only diagnostic and resolve every palette/special pixel from
-authentic command and palette data; require an exact comparison to this
-same-run screenshot before considering any production consumer. Evidence is
+Firestaff's capture-only replay now accepts this exact register state and
+reconstructs the frame from hash-verified VDP1 display FBS, VDP2 VRAM, CRAM,
+and registers. Its real-data test matches all 71,680 RGB pixels against each
+of the two same-run Ymir VDP2 pass buffers with zero differences. The 640×448
+frontend screenshot also matches those buffers after 2× nearest-neighbor
+downscaling. This verifies Firestaff's bounded capture compositor against
+Ymir's output for this frame; it does not prove hardware parity, retail asset
+ownership for every displayed pixel, or production-renderer admission. The
+production title gate remains closed. The VDP1 frame contains direct-color,
+transparent, and palette/special pixels; the replay resolves the captured
+palette/special values through the exact frame's CRAM and layer registers, but
+does not join each value to its retail command or source asset. Evidence is
 retained outside the repository under
 `firestaff-evidence/nexus/ymir_nbg0_frame_serial_diagnostic_20261030/`.
+The replay and real-data CTest are documented in
+[`nexus_vdp1_frame8037_ymir_composition.md`](../nexus_vdp1_frame8037_ymir_composition.md).

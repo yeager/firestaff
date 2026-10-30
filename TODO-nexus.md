@@ -47,17 +47,16 @@ not production rendering or complete Nexus VDP1 parity. See
 ## 2026-10-30 — Japanese title capture follow-up
 
 Authentic TRV2/Ymir VDP1 frame 8037 now has two complete VDP2 pass buffers
-that agree pixel-for-pixel with the same-run frontend screenshot after 2×
-downscaling. The image contains the retail title and three menu choices. This
-is emulator-internal capture validation, not Firestaff or hardware parity.
-The Firestaff capture-only replay still rejects the observed `BGON=0x0001` and
-`CCRR=0x1000`, and 2,990 VDP1 palette/special pixels lack a complete
-per-command CLUT/CRAM provenance join. Next, extend only the capture-only
-replay to accept this observed NBG0-only state and resolve those pixels from
-authentic source data; require exact screenshot comparison. Keep the
-production title gate closed until the complete composition and producer
-ownership are verified. Evidence details are in
+that agree pixel-for-pixel with both Firestaff's capture-only replay and the
+same-run frontend screenshot after 2× downscaling. A hash-pinned real-data
+CTest verifies all 71,680 native RGB pixels in both passes. This is
+emulator-internal frame composition, not original-Saturn or production-renderer
+parity. The replay consumes the captured FBS, NBG0 bitmap, CRAM, and registers;
+pixel-to-retail-command/source ownership remains incomplete. Keep the
+production title gate closed. Evidence details are in
 [`docs/nexus/nexus_title.md`](docs/nexus/nexus_title.md#2026-10-30--authentic-japanese-title-frame-capture).
+The test and its external-data reproduction instructions are in
+[`docs/nexus_vdp1_frame8037_ymir_composition.md`](docs/nexus_vdp1_frame8037_ymir_composition.md).
 
 The Japanese and English retail Configuration foregrounds now render from
 hash-verified `TITLE.BIN` files and share byte-identical UI text/palette spans.
