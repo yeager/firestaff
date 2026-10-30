@@ -44,6 +44,7 @@ def join_rows(
     physical_last: int,
     expected_mpr2: int | None,
     expected_writer_pc: int,
+    movement_rows: list[dict[str, str]] | None = None,
 ) -> list[tuple[dict[str, int], dict[str, str]]]:
     """Require each selected store to immediately follow an equal authentic read."""
     reads_by_event: dict[int, dict[str, int]] = {}
@@ -54,6 +55,16 @@ def join_rows(
         if event in reads_by_event:
             raise ValueError("duplicate CD data-port event sequence")
         reads_by_event[event] = row
+
+    movement_by_event: dict[int, dict[str, str]] = {}
+    for row in movement_rows or []:
+        try:
+            event = int(row["event_sequence"])
+        except (KeyError, ValueError) as error:
+            raise ValueError("movement-context row lacks a valid event sequence") from error
+        if event in movement_by_event:
+            raise ValueError("duplicate movement-context event sequence")
+        movement_by_event[event] = row
 
     joined: list[tuple[dict[str, int], dict[str, str]]] = []
     previous_event = -1
@@ -83,7 +94,21 @@ def join_rows(
 
         read = reads_by_event.get(event - 1)
         if read is None:
-            raise ValueError(f"target write has no immediately preceding CD read at row {line_number - 1}")
+            intervening = movement_by_event.get(event - 1)
+            read = reads_by_event.get(event - 2)
+            try:
+                movement_matches_write = (
+                    intervening is not None
+                    and int(intervening["physical_address"], 16) == physical
+                    and int(intervening["value"], 16) == int(write["value"], 16)
+                    and int(intervening["pc"], 16) == int(write["writer_pc"], 16)
+                )
+            except (KeyError, ValueError):
+                movement_matches_write = False
+            if read is None or not movement_matches_write:
+                raise ValueError(
+                    f"target write has no immediately preceding CD read or verified movement row at row {line_number - 1}"
+                )
         source_lba = read.get("source_lba", -1)
         source_offset = read.get("source_user_offset", -1)
         expected_raw_offset = (
@@ -122,6 +147,7 @@ def verify(
     physical_last: int,
     expected_mpr2: int | None = None,
     expected_writer_pc: int = 0xEA9C,
+    movement_context_path: Path | None = None,
 ) -> list[tuple[dict[str, int], dict[str, str]]]:
     if physical_first < 0 or physical_last < physical_first:
         raise ValueError("invalid physical target range")
@@ -151,6 +177,28 @@ def verify(
     for sequence, row in enumerate(write_rows):
         if row.get("sequence") != str(sequence):
             raise ValueError(f"non-contiguous RAM target-write sequence at row {sequence}")
+    movement_rows: list[dict[str, str]] | None = None
+    if movement_context_path is not None:
+        movement_suffix = ".pce-fast-movement-context"
+        if (
+            movement_context_path.parent.resolve() != read_path.parent.resolve()
+            or not movement_context_path.name.endswith(movement_suffix)
+            or movement_context_path.name[: -len(movement_suffix)]
+            != read_path.name[: -len(READ_SUFFIX)]
+        ):
+            raise ValueError("movement-context trace is not paired with the CD read/write capture")
+        movement_lines = movement_context_path.read_text(encoding="ascii").splitlines()
+        if not movement_lines or movement_lines[0] != (
+            "source=mednafen-pce-fast-theron-movement-context-v3 "
+            "event_sequence_source=TheronTraceCDSharedEventSequence"
+        ):
+            raise ValueError("unexpected movement-context trace header")
+        movement_rows = []
+        for number, line in enumerate(movement_lines[1:], 2):
+            if line.startswith("main_ram_write "):
+                row = parse_fields(line, "main_ram_write", number)
+                movement_rows.append(row)
+
     return join_rows(
         read_rows,
         write_rows,
@@ -158,6 +206,7 @@ def verify(
         physical_last,
         expected_mpr2,
         expected_writer_pc,
+        movement_rows,
     )
 
 
@@ -170,6 +219,7 @@ def main() -> int:
     parser.add_argument("--physical-last", required=True, type=lambda value: int(value, 0))
     parser.add_argument("--mpr2", type=lambda value: int(value, 0))
     parser.add_argument("--writer-pc", type=lambda value: int(value, 0), default=0xEA9C)
+    parser.add_argument("--movement-context-trace", type=Path)
     args = parser.parse_args()
     try:
         joined = verify(
@@ -180,6 +230,7 @@ def main() -> int:
             args.physical_last,
             args.mpr2,
             args.writer_pc,
+            args.movement_context_trace,
         )
     except (OSError, UnicodeError, ValueError, KeyError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
@@ -187,7 +238,7 @@ def main() -> int:
 
     lbas = sorted({read["source_lba"] for read, _ in joined})
     offsets = sorted({int(write["physical_address"], 16) for _, write in joined})
-    print(f"PASS: {len(joined)} immediate CD-read-to-RAM-write joins match authentic JP Track 02")
+    print(f"PASS: {len(joined)} source-validated CD-read-to-RAM-write joins match authentic JP Track 02")
     print(f"source_lbas={lbas[0]}-{lbas[-1]} distinct_lbas={len(lbas)}")
     print(f"target_physical_addresses={len(offsets)} span=0x{offsets[0]:06x}-0x{offsets[-1]:06x}")
     print("reader_pc=0xea99 writer_pc=0xea9c; source byte values omitted")

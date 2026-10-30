@@ -11,6 +11,7 @@
 
 - `Alternate-platform launcher`: verify authentic-media menu selection and handoff paths for DM1, CSB and DM2.
 - `Theron evidence`: verify decoded-buffer copies and Japanese input-poll source provenance; add a bounded PCE Fast position-transfer observer without claiming movement parity.
+- `Theron PCE Fast diagnostics`: sequence v3 movement-context rows with CD/memory hooks, record MPR0–MPR7 snapshots, and preserve authenticated CD-to-RAM joins when a matching movement-write row intervenes; unsequenced input-poll records, active-map identity, collision, visible movement and native parity remain unverified.
 - `Startup documentation`: update the five-game evidence boundary and correct the superseded CSB Amiga inscription-gap entry.
 - `DM2 Macintosh media evidence`: rename the French-named SIT check to report its actual identity; its extracted application, resource forks and DMFiles match the English SIT, so a distinct French edition remains unverified.
 - `DM1 X68000`: update the real-media checksum probe while keeping private game data out of the repository.

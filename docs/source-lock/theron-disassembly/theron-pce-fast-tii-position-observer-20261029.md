@@ -88,6 +88,59 @@ live-capture test passed three consecutive loops, as did Python syntax
 validation and `git diff --check`. Private traces and original media remain on
 TRV2 and are not committed.
 
+## Cold-start scripted input replay (2026-10-30)
+
+A separate PCE Fast capture cold-started the same authentic Japanese Rev. 1
+CUE and headered System Card 3.0 with no state autoload. The CUE's Track 02
+matched MD5 `b7afb338ad31be1025b53f9aff12d73a`; the runtime System Card body
+matched `38179df8f4ac870017db21ebcbf53114`. A scripted Run hold and the input
+plan based on the previously verified new-game/story route, followed by
+`ii@13600:140,up@13601:120`, produced 13 apply receipts, each followed by a
+port-0 controller read containing its scripted mask. The verifier saw two game/non-System-Card poll boundaries.
+
+At frame 13601, the movement-context trace recorded the same two `$C1FC`
+`TII $20B4,$2040,$0002` commits: source `$1F00B4/$1F00B5` contained `$03`, and
+the writes reached `$1F0040/$1F0041` under MPR1 `$F8`. The new shared
+`event_sequence` places the general `WrMem` rows at 1,555,276 and 1,555,278,
+and their TII-specific observations at 1,555,277 and 1,555,279. These are
+separate diagnostic rows for the same two physical stores, not one identifier
+per CPU event. The counter only advances at enabled trace hooks; it is not a
+complete CPU instruction or bus-event clock. The rows now retain all MPR0–MPR7
+values, opcode MPR, and physical PC mapping.
+
+The capture process ended with `BLOCKED: dynamic receipts absent`; it recorded
+no CD IRQ, authenticated CD-to-RAM receipt, or `$E009` dispatch. Scripted masks
+and the two movement-state transfer rows therefore do not establish the
+verified story-to-dungeon route for this instrumented run, active map, tile
+collision, visible movement, coordinate semantics, or native Firestaff parity.
+The broad physical RAM write trace reached its 1,048,576-row limit and was
+truncated. Private traces remain on TRV2 under
+`/dev/shm/firestaff-theron-event-seq-20261030/capture/`; no media or raw trace
+was copied into the repository. Movement-context trace SHA-256:
+`7287556c22aaea642cd30ec9734a17c591620a59ca9d9cdc73ce93e6c68c223f`;
+transition receipt SHA-256:
+`f98ca3d8f12143661af792278cb75fbee8dc4297d2256da60bf2ccc6938b67a6`.
+
+## Shared diagnostic event sequence
+
+Movement-context v3 rows read and increment
+`TheronTraceCDSharedEventSequence`, a counter shared with the PCE Fast CD and
+memory trace hooks in the instrumented Mednafen build. The PCE Fast
+`pce_input_read` and `scripted_pce_input_apply` records do not include
+`event_sequence` and cannot be ordered against movement-context rows by this
+counter. The selected `input_latch_write` rows emitted by this movement-context
+observer do carry the shared sequence. The
+`build_mednafen_theron_irq2_trace.sh` build pipeline applies
+`mednafen_1.32.1_theron_pce_fast_cd_shared_event_sequence.patch` before this
+instrumenter. Source audit points to `src/pce_fast/huc6280.cpp`, `WrMem`
+(instrumented lines 767–787), `BMT_TII` (line 1256), and
+`continue_the_TII` (line 1424): `BMT_TII` reads the source then commits through
+`WrMem`, while the latched instruction PC remains the issuing TII across
+yield/resume. The counter orders observed hook rows only; disabled hooks,
+untraced instructions, DMA, and other uninstrumented events do not receive
+sequence values. Two hook rows may describe one store and consume adjacent
+values.
+
 ## Remaining proof
 
 Identify the active dungeon map and adjacent tile for this JP state, then

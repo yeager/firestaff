@@ -3,11 +3,18 @@
 from __future__ import annotations
 
 import sys
+import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from verify_theron_cd_ram_source_join import join_rows
+from verify_theron_cd_ram_source_join import (
+    READ_HEADER,
+    WRITE_HEADER,
+    join_rows,
+    verify,
+)
 
 
 class CDToRAMSourceJoinTests(unittest.TestCase):
@@ -42,13 +49,109 @@ class CDToRAMSourceJoinTests(unittest.TestCase):
             }
         ]
 
-    def join(self):
-        return join_rows(self.reads, self.writes, 0x0D04D2, 0x0D04E6, 0x68, 0xEA9C)
+    def join(self, movement_rows=None):
+        return join_rows(
+            self.reads, self.writes, 0x0D04D2, 0x0D04E6, 0x68, 0xEA9C, movement_rows
+        )
 
     def test_joins_authentic_shape_of_immediate_equal_read_and_write(self) -> None:
         joined = self.join()
         self.assertEqual(len(joined), 1)
         self.assertEqual(joined[0][0]["source_lba"], 3849)
+
+    def test_joins_when_verified_movement_hook_observes_same_store(self) -> None:
+        self.writes[0]["event_sequence"] = "42"
+        movement = [{
+            "event_sequence": "41",
+            "physical_address": "0d04d2",
+            "value": "ad",
+            "pc": "ea9c",
+        }]
+
+        joined = self.join(movement)
+
+        self.assertEqual(len(joined), 1)
+        self.assertEqual(joined[0][0]["event_sequence"], 40)
+
+    def test_rejects_intervening_movement_row_for_different_store(self) -> None:
+        self.writes[0]["event_sequence"] = "42"
+        movement = [{
+            "event_sequence": "41",
+            "physical_address": "0d04d3",
+            "value": "ad",
+            "pc": "ea9c",
+        }]
+        with self.assertRaisesRegex(ValueError, "verified movement row"):
+            self.join(movement)
+
+    def test_rejects_same_movement_store_from_different_writer_pc(self) -> None:
+        self.writes[0]["event_sequence"] = "42"
+        movement = [{
+            "event_sequence": "41",
+            "physical_address": "0d04d2",
+            "value": "ad",
+            "pc": "ea9b",
+        }]
+        with self.assertRaisesRegex(ValueError, "verified movement row"):
+            self.join(movement)
+
+    def test_rejects_same_movement_store_with_different_value(self) -> None:
+        self.writes[0]["event_sequence"] = "42"
+        movement = [{
+            "event_sequence": "41",
+            "physical_address": "0d04d2",
+            "value": "00",
+            "pc": "ea9c",
+        }]
+        with self.assertRaisesRegex(ValueError, "verified movement row"):
+            self.join(movement)
+
+    def test_verify_reads_and_forwards_paired_movement_context_trace(self) -> None:
+        scratch_root = Path(__file__).resolve().parents[1] / ".codex-scratch"
+        scratch_root.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(
+            prefix="theron-cd-ram-join-", dir=scratch_root
+        ) as scratch_dir:
+            capture = Path(scratch_dir)
+            read_path = capture / "capture.cd-data-port-read"
+            write_path = capture / "capture.cd-ram-target-write"
+            movement_path = capture / "capture.pce-fast-movement-context"
+            track02_path = capture / "unused-track02.bin"
+            read_path.write_text(READ_HEADER + "\n", encoding="ascii")
+            write_path.write_text(
+                WRITE_HEADER
+                + "\ncd_ram_target_write sequence=0 event_sequence=42 "
+                + "physical_address=0d04d2 value=ad writer_pc=ea9c "
+                + "writer_physical_pc=000a9c mpr2=68\n",
+                encoding="ascii",
+            )
+            movement_path.write_text(
+                "source=mednafen-pce-fast-theron-movement-context-v3 "
+                "event_sequence_source=TheronTraceCDSharedEventSequence\n"
+                "main_ram_write event_sequence=41 physical_address=0d04d2 "
+                "value=ad pc=ea9c\n",
+                encoding="ascii",
+            )
+            with mock.patch(
+                "verify_theron_cd_ram_source_join.verify_data_port_trace",
+                return_value=(b"unused", self.reads),
+            ) as verify_data_port_trace:
+                joined = verify(
+                    write_path,
+                    read_path,
+                    track02_path,
+                    0x0D04D2,
+                    0x0D04E6,
+                    0x68,
+                    0xEA9C,
+                    movement_path,
+                )
+
+        self.assertEqual(len(joined), 1)
+        self.assertEqual(joined[0][0]["event_sequence"], 40)
+        verify_data_port_trace.assert_called_once_with(
+            read_path, track02_path, allow_other_sources=True
+        )
 
     def test_rejects_value_mismatch(self) -> None:
         self.writes[0]["value"] = "00"
