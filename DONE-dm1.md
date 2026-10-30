@@ -1,3 +1,13 @@
+- 2026-10-30: Rechecked the two reported DM1 PC 3.4 combat/object symptoms on
+  current `main`. `m11_dm1_pc34_first_monster_combat_real` passed against the
+  installed original archive and recorded creature damage on the covered
+  HoC-to-group-169 route. Built the missing
+  `m11_dm1_real_object_names` executable and ran it against the authentic PC34
+  dungeon and graphics data; it passed all 605 valid item-cursor pixel cases.
+  These results verify the exercised Firestaff paths only. Exact damage/RNG
+  matching to the original executable and other-edition cursor parity remain
+  open.
+
 - 2026-10-30: Added and ran an authentic no-game M12 startup regression for
   DM1 Amiga 2.0. An isolated data root containing only the original nested
   ZIP → ZIP → ADF preservation package was scanned and selected from the game
