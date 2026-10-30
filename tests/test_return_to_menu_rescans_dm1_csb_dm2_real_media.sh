@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
 set -eu
+. "$(dirname "$0")/lib/portable_sha256.sh"
 
 app=${1:?usage: test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh <firestaff> <data-root>}
 data_root=${2:?usage: test_return_to_menu_rescans_dm1_csb_dm2_real_media.sh <firestaff> <data-root>}
@@ -644,34 +645,14 @@ fi
 if [ "$test_mode" = csb-atari-only ]; then
     atari_only_root="$scratch/csb-atari-only-data"
     stage_csb_atari_only_data_root "$atari_only_root"
-    archive_hash_before=$(python3 - "$csb_atari_archive" <<'PYHASH'
-import hashlib
-import sys
-
-digest = hashlib.sha256()
-with open(sys.argv[1], "rb") as source:
-    for block in iter(lambda: source.read(1024 * 1024), b""):
-        digest.update(block)
-print(digest.hexdigest())
-PYHASH
-)
+    archive_hash_before=$(firestaff_sha256_file "$csb_atari_archive")
     run_return_to_menu_case csb auto \
         'wait20,click:586:131,wait20,click:729:202,wait20,click:225:202,wait:3600,click:813:156,wait-game-runtime,back,enter' \
         150000 \
         'startup-frame game=csb .*phase=(csb-entrance-4|inactive) .*level-loaded=1 map=0 party=9,0 dir=2 champions=0' \
         'CSB READY: gameId=csb dataDir=.*variant=csb-st20-21-en .*handoff=atari-st-animate-ftlcode' \
         "$atari_only_root" 960 600 csb-atari-only
-    archive_hash_after=$(python3 - "$csb_atari_archive" <<'PYHASH'
-import hashlib
-import sys
-
-digest = hashlib.sha256()
-with open(sys.argv[1], "rb") as source:
-    for block in iter(lambda: source.read(1024 * 1024), b""):
-        digest.update(block)
-print(digest.hexdigest())
-PYHASH
-)
+    archive_hash_after=$(firestaff_sha256_file "$csb_atari_archive")
     if [ "$archive_hash_before" != "$archive_hash_after" ]; then
         echo 'FAIL: original CSB Atari archive changed during return-to-menu rescan' >&2
         exit 1
