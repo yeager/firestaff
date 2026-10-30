@@ -1,7 +1,7 @@
 # Five-game startup support gap analysis
 
 Evidence metadata refreshed on 2026-10-30 for `main` at
-`3be79dd49ff17cea606f52f8f5af1ae0bc7862a8`. The latest published release
+`4eb71ffc07cb9bb8330b98bf6fa9a8c37920c313`. The latest published release
 remains v3.0.420 (published 2026-10-29 from tag commit `8224d5c8`); current
 `main` contains later source changes that are not in that package. The v3.0.420
 workflow verifies packaging, not gameplay startup. The
@@ -11,6 +11,9 @@ startup-debug localization checks cover DM1 PC34,
 CSB FM Towns, and DM2 FM Towns; these test explicit and saved preferences,
 localized scan labels, edition selection, and the boot-probe boundary, not full
 gameplay parity.
+The latest `main` also adds read-only X68000 HDM, GRAPHICS.DAT IMG1, and X30J
+dungeon-metadata readers verified against authentic Japanese media; these
+parsers do not add an X68000 startup, rendering, audio, or input route.
 Current authentic-media CLI routes
 include DM1 PC34, DOS, Atari ST, Amiga and FM Towns; CSB Atari, Amiga and FM
 Towns; DM2 DOS English/French, Macintosh English, FM Towns Japanese and Amiga
