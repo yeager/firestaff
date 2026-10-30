@@ -9214,3 +9214,17 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   Require both ordered `$C1FA` transfer bytes and the position delta before
   claiming runtime observer validation or movement parity. Details are in
   `docs/source-lock/theron-disassembly/theron-pce-fast-tii-position-observer-20261029.md`.
+
+## 2026-10-30 — resolve stair-hosted actuator target consumers
+
+- An authentic-media census now records the decoded fields and target tile for
+  all eight stair-hosted `FLOOR_PARTY` actuators in each retail edition. Their
+  actuator records, decoded fields, coordinates, and target tile bytes match
+  across JP and USA. Seven target locations have equal source-record streams;
+  the SARMON target `(1,9)` has one category-2 record (`ref=0x0803`) whose raw
+  bytes differ by edition (`feff3106` JP, `feff0902` USA).
+- Do not infer mutation semantics from these data records. Bind the target
+  category and each regional raw record to the original actuator consumer,
+  then capture a positive original-runtime event and an equivalent no-input
+  control before enabling the stair-hosted target in
+  `theron_v1_world_dispatch_source_actuator()`.

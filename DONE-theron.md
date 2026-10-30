@@ -9428,3 +9428,20 @@ native rendering, or Theron parity. The private evidence bundle is at
   produced zero rows. These records do not establish that no position write
   occurred outside the traced rows. No movement parity is claimed; the required
   positive capture and map identity remain in `TODO-theron.md`.
+
+## 2026-10-30 — bind authentic stair-actuator targets in the source census
+
+- Extended the authentic Track 02 stair-hosted `FLOOR_PARTY` census to retain
+  decoded actuator fields, the exact target tile byte, and complete source
+  records found at each target coordinate. This adds evidence only; it does
+  not dispatch or mutate stair-hosted actuators.
+- Three consecutive TRV2 runs passed against the real JP Rev. 1 and USA Track
+  02 media. All eight actuator records, decoded fields, target coordinates,
+  and target tile bytes match between editions. One target source-record set
+  differs at SARMON dungeon 4, level 1, target `(1,9)`: the same category-2
+  source record (`ref=0x0803`) contains raw bytes `feff3106` in JP and
+  `feff0902` in USA. The other target locations had identical source-record
+  streams in this census.
+- The target records do not bind a runtime consumer or establish what these
+  actuators do when encountered. That gameplay gap remains open in
+  `TODO-theron.md`.

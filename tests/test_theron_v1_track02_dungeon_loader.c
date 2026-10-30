@@ -3102,6 +3102,17 @@ static unsigned int census_real_carryable_not_first(
 }
 
 #define THERON_AUTHENTIC_STAIR_PARTY_ACTUATOR_COUNT 8u
+#define THERON_STAIR_PARTY_TARGET_SOURCE_MAX 4u
+
+typedef struct {
+    uint16_t source_ref;
+    uint16_t next_ref;
+    uint16_t source_index;
+    uint8_t category;
+    uint8_t position;
+    uint8_t raw_size;
+    uint8_t raw[16];
+} Theron_StairPartyTargetSource;
 
 typedef struct {
     uint8_t dungeon;
@@ -3113,6 +3124,23 @@ typedef struct {
     uint16_t source_ref;
     uint16_t next_ref;
     uint16_t source_index;
+    uint8_t actuator_type;
+    uint8_t effect;
+    uint8_t revert_effect;
+    uint8_t delay;
+    uint8_t once;
+    uint8_t local_effect;
+    uint8_t sound;
+    uint8_t graphism;
+    uint16_t value;
+    uint8_t target_x;
+    uint8_t target_y;
+    uint8_t target_facing;
+    uint8_t target_in_bounds;
+    uint8_t target_tile;
+    uint8_t target_source_count;
+    Theron_StairPartyTargetSource
+        target_sources[THERON_STAIR_PARTY_TARGET_SOURCE_MAX];
     uint8_t raw[8];
 } Theron_StairPartyActuatorOccurrence;
 
@@ -3166,14 +3194,74 @@ static unsigned int print_real_stair_party_actuator_census(
         out[count - 1u].source_ref = source->source_ref;
         out[count - 1u].next_ref = source->next_ref;
         out[count - 1u].source_index = source->source_index;
+        out[count - 1u].actuator_type = actuator.type;
+        out[count - 1u].effect = actuator.effect;
+        out[count - 1u].revert_effect = actuator.revert_effect;
+        out[count - 1u].delay = actuator.delay;
+        out[count - 1u].once = actuator.once;
+        out[count - 1u].local_effect = actuator.local_effect;
+        out[count - 1u].sound = actuator.sound;
+        out[count - 1u].graphism = actuator.graphism;
+        out[count - 1u].value = actuator.value;
+        out[count - 1u].target_x = actuator.target_x;
+        out[count - 1u].target_y = actuator.target_y;
+        out[count - 1u].target_facing = actuator.target_facing;
+        out[count - 1u].target_in_bounds =
+            actuator.target_x < level->width &&
+            actuator.target_y < level->height;
+        out[count - 1u].target_tile = out[count - 1u].target_in_bounds
+            ? level->source_tiles[actuator.target_y][actuator.target_x]
+            : 0xffu;
+        if (out[count - 1u].target_in_bounds) {
+            for (unsigned int j = 0u; j < world->source_object_count; ++j) {
+                const Theron_V1_SourceObjectRecord *target =
+                    &world->source_objects[j];
+                Theron_StairPartyTargetSource *target_copy;
+                if (target->dungeon_id != source->dungeon_id ||
+                    target->level != source->level ||
+                    target->x != actuator.target_x ||
+                    target->y != actuator.target_y)
+                    continue;
+                assert(target->raw_size <= sizeof(target->raw));
+                assert(out[count - 1u].target_source_count <
+                       THERON_STAIR_PARTY_TARGET_SOURCE_MAX);
+                target_copy = &out[count - 1u].target_sources[
+                    out[count - 1u].target_source_count++];
+                target_copy->source_ref = target->source_ref;
+                target_copy->next_ref = target->next_ref;
+                target_copy->source_index = target->source_index;
+                target_copy->category = target->category;
+                target_copy->position = target->position;
+                target_copy->raw_size = target->raw_size;
+                memcpy(target_copy->raw, target->raw, target->raw_size);
+                printf("    authentic %s stair-actuator target source: "
+                       "category=%u ref=%04x index=%u next=%04x "
+                       "position=%u raw=",
+                       region, target->category, target->source_ref,
+                       target->source_index, target->next_ref,
+                       target->position);
+                for (size_t byte = 0u; byte < target->raw_size; ++byte)
+                    printf("%02x", target->raw[byte]);
+                printf("\n");
+            }
+        }
         memcpy(out[count - 1u].raw, source->raw, sizeof(out[count - 1u].raw));
         printf("  authentic %s stair-hosted party actuator: dungeon=%d "
                "level=%d xy=(%d,%d) stair=%02x ref=%04x index=%u "
-               "next=%04x position=%u target=(%u,%u,%u) raw=",
+               "next=%04x position=%u type=%u effect=%u revert=%u "
+               "delay=%u once=%u local=%u sound=%u graphism=%u value=%u "
+               "target=(%u,%u,%u) target-in-bounds=%u target-tile=%02x "
+               "target-sources=%u raw=",
                region, source->dungeon_id, source->level, source->x, source->y,
                out[count - 1u].stair_tile, source->source_ref,
                source->source_index, source->next_ref, source->position,
-               actuator.target_x, actuator.target_y, actuator.target_facing);
+               actuator.type, actuator.effect, actuator.revert_effect,
+               actuator.delay, actuator.once, actuator.local_effect,
+               actuator.sound, actuator.graphism, actuator.value,
+               actuator.target_x, actuator.target_y, actuator.target_facing,
+               out[count - 1u].target_in_bounds,
+               out[count - 1u].target_tile,
+               out[count - 1u].target_source_count);
         for (unsigned int byte = 0u; byte < source->raw_size; ++byte)
             printf("%02x", source->raw[byte]);
         printf("\n");
@@ -6936,17 +7024,47 @@ int main(void) {
     test_authentic_coordinate_teleporter_movement_corpus(
         ud, ud_size, raw, raw_size, 2);
     if (g_jp_stair_party_actuator_census_valid) {
+        unsigned int target_source_record_differences = 0u;
         assert(g_us_stair_party_actuator_census_valid);
         assert(g_jp_stair_party_actuator_count ==
                g_us_stair_party_actuator_count);
-        for (unsigned int i = 0u; i < g_us_stair_party_actuator_count; ++i)
-            assert(memcmp(&g_us_stair_party_actuators[i],
-                          &g_jp_stair_party_actuators[i],
-                          sizeof(g_us_stair_party_actuators[i])) == 0);
+        for (unsigned int i = 0u; i < g_us_stair_party_actuator_count; ++i) {
+            Theron_StairPartyActuatorOccurrence us =
+                g_us_stair_party_actuators[i];
+            Theron_StairPartyActuatorOccurrence jp =
+                g_jp_stair_party_actuators[i];
+            assert(us.target_source_count == jp.target_source_count);
+            if (memcmp(us.target_sources, jp.target_sources,
+                       sizeof(us.target_sources)) != 0) {
+                ++target_source_record_differences;
+                assert(us.dungeon == 4u && us.level == 1u && us.x == 6u &&
+                       us.y == 11u && us.target_x == 1u &&
+                       us.target_y == 9u && us.target_source_count == 1u &&
+                       jp.target_source_count == 1u &&
+                       us.target_sources[0].category == 2u &&
+                       jp.target_sources[0].category == 2u &&
+                       us.target_sources[0].source_ref == 0x0803u &&
+                       jp.target_sources[0].source_ref == 0x0803u &&
+                       us.target_sources[0].source_index == 3u &&
+                       jp.target_sources[0].source_index == 3u &&
+                       us.target_sources[0].raw_size == 4u &&
+                       jp.target_sources[0].raw_size == 4u &&
+                       memcmp(us.target_sources[0].raw,
+                              (const uint8_t[]){0xfe, 0xff, 0x09, 0x02},
+                              4u) == 0 &&
+                       memcmp(jp.target_sources[0].raw,
+                              (const uint8_t[]){0xfe, 0xff, 0x31, 0x06},
+                              4u) == 0);
+            }
+            memset(us.target_sources, 0, sizeof(us.target_sources));
+            memset(jp.target_sources, 0, sizeof(jp.target_sources));
+            assert(memcmp(&us, &jp, sizeof(us)) == 0);
+        }
+        assert(target_source_record_differences == 1u);
         printf("  authentic US/JP stair-hosted party actuator source "
-               "occurrences match byte-for-byte (%u records); semantics "
-               "remain unbound\n",
-               g_us_stair_party_actuator_count);
+               "records and decoded fields match (%u records); one target "
+               "source raw record is region-specific; semantics remain "
+               "unbound\n", g_us_stair_party_actuator_count);
     }
     test_real_us_iso_dungeons_against_raw(ud, ud_size);
     test_real_item_name_sources(ud, ud_size, 2);
