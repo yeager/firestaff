@@ -108,6 +108,7 @@ static int verify_window(const Blob *trace, const Blob *vram,
     Nexus_V1_Vdp1DirectColorFramebuffer direct_framebuffer;
     Nexus_V1_Vdp1DirectColorCaptureReceipt direct_receipt;
     unsigned int mode1_joined = 0U, mode5_joined = 0U;
+    unsigned int mode5_empty_decoded = 0U;
     unsigned int mode1_seen = 0U, mode5_seen = 0U;
     int ok = 1;
 
@@ -178,7 +179,8 @@ static int verify_window(const Blob *trace, const Blob *vram,
                 material.dgn_direct_image_size != (int)parsed.texture_byte_count) {
                 ok = 0; break;
             }
-            if (index == 13U) {
+            if (index == 13U || index == 14U || index == 28U ||
+                index == 29U || index == 33U || index == 34U) {
                 material.command = command;
                 material.command_size = COMMAND_BYTES;
                 material.texture_span = vram->data +
@@ -204,11 +206,12 @@ static int verify_window(const Blob *trace, const Blob *vram,
                     !direct_receipt.source_join_verified ||
                     direct_receipt.written_pixels != 0 ||
                     direct_receipt.transparent_pixels == 0) {
-                    fprintf(stderr, "frame-13162 row 13 must decode as an "
-                        "authenticated all-transparent mode-5 draw\n");
+                    fprintf(stderr, "frame-13162 mode-5 row %lu must decode "
+                        "as an authenticated all-transparent draw\n", index);
                     ok = 0;
                     break;
                 }
+                ++mode5_empty_decoded;
             }
             ++mode5_joined;
         }
@@ -216,7 +219,8 @@ static int verify_window(const Blob *trace, const Blob *vram,
     }
     free(copy);
     for (size_t i = 0U; i < sizeof(found); ++i)
-        if (!found[i]) ok = 0;
+    if (!found[i]) ok = 0;
+    if (mode5_empty_decoded != 6U) ok = 0;
     *out_mode1 = mode1_joined;
     *out_mode5 = mode5_joined;
     return ok && mode1_seen == mode1_joined && mode5_seen == mode5_joined;
@@ -405,6 +409,8 @@ int main(int argc, char **argv)
         fprintf(stderr, "frame-13162 verified composition reference failed its manifest/hash\n");
         goto done;
     }
+    printf("MODE-5 PROOF: six authenticated direct-color draws have an "
+           "all-transparent 0x000f source and decode to zero opaque writes\n");
     printf("PASS: frame-13162 rows 10..40 joined to authentic LEV00.DGN "
            "(mode1=%u mode5=%u) with their active user-clip and local-origin "
            "state verified; the retained "
