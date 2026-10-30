@@ -1,5 +1,22 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-30 — classify authentic RAM-loop fetch/write/source candidates
+
+Added `verify_theron_jp_ram_loop_source_candidates.py` and a focused regression
+for the bounded `$40D2-$40E3` instruction window. The verifier validates the
+authentic Japanese Rev. 1 Track 02 bytes and the dispatch/follow trace structure,
+then compares each loop fetch byte with the latest prior `$EA9C` writer-PC
+record and its immediately preceding `$EA99` read. Three repeated runs against
+the cold v11 capture consistently observed all 18 physical bytes across 165
+fetch rows: 491/495 byte slots matched the latest traced write, 386 had an
+immediately prior source-valid read, four differed, and 105 matching writes
+had no immediately prior source-valid read. The test passed three local loops.
+
+This is bounded provenance analysis, not proof of exclusive memory ownership:
+the writer sidecar records `$EA9C` only. The capture still has no game-owned
+poll or gameplay transition, so native Theron handoff and parity remain open in
+`TODO-theron.md`.
+
 ## 2026-10-30 — validate bounded indexed-dispatch follow traces
 
 Added a bounded per-dispatch instruction-follow observer to the Mednafen

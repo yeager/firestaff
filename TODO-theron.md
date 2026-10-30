@@ -28,6 +28,19 @@ independent `$EA9C` writer comparison remains historical evidence. Results and
 hashes are recorded in the
 [JP System Card Run source-lock note](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md).
 
+2026-10-30 v11 RAM-loop source-candidate analysis: the bounded fetch trace
+contains 165 snapshots and covers all 18 physical bytes at `$1000D2-$1000E3`.
+Across 495 observed byte slots, 491 match the latest prior `$EA9C` writer-PC
+record; 386 of those also have an immediately preceding source-valid `$EA99`
+Track 02 read with the same value. Four bytes differ from the latest recorded
+`$EA9C` write, and 105 matching writes lack that immediately preceding read.
+The writer trace is not an all-PC memory-write trace, so these counts are
+bounded candidates, not exclusive provenance. Keep following the 18-byte loop
+through complete writers and its caller until a game-owned consumer and
+input/state transition are demonstrated. The offline candidate verifier
+repeats these exact counts in three TRV2 runs; details and trace hashes are in
+the source-lock note.
+
 1. **Bind the cold loader to game-owned consumers in both regions.** Continue
    from the authentic System Card Run path and the verified Track 02 byte
    writes through the full loader, game-owned RAM, executing consumer, source
@@ -35,22 +48,16 @@ hashes are recorded in the
    `$E009` dispatch, or partial byte join alone does not establish a game
    handoff or playable runtime. Current trace limits are recorded in the
    [JP System Card Run source-lock note](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md)
-   and the dated trace entries below.
-   A bounded cold capture now records the `$613A/$613F/$6144` writers and the
-   temporary `$40D9` jump bytes, but it does not bind them uniquely to Track 02
-   source bytes or a game-owned consumer. Trace that source path next, then
-   continue through the first game-owned poll and resulting state change. The
-   explicit code-fetch overflow markers show that both current windows exceed
-   their caps; narrow or rotate the traced windows before using another bounded
-   capture for source or consumer conclusions.
-   The v8 cold capture resolves the `$410D,X` table reads at `$40E1` to the
-   next instruction fetch within the bounded `$6148` follow. An offline verifier
-   now authenticates the two table bytes and three `$4319` instruction bytes
-   against Japanese Rev. 1 Track 02, joining each source read to its latest
-   traced System Card RAM write. The path still returns to the System Card
-   input loop; continue tracing the loader into a game-owned consumer. There is
-   no game IRQ, aggregate authenticated CD-to-RAM receipt, or non-System-Card
-   poll.
+   and the dated trace entries below. The latest v11 trace follows 40 indexed
+   dispatches; 28 windows reach their 256-fetch cap. The first observed path
+   returns from the System Card controller poll to its own dispatcher. The
+   new 18-byte `$40D2-$40E3` RAM-loop report has four fetch/write mismatches and
+   105 matching writes without an immediately preceding source read, and the
+   `$EA9C` observer does not cover every guest writer. The earlier `$613A`,
+   `$613F`, `$6144`, and temporary `$40D9` bytes also remain unbound to a
+   game-owned consumer. Continue tracing complete writers and callers until a
+   game-owned poll and resulting state change are observed; there is still no
+   game IRQ, aggregate authenticated CD-to-RAM receipt, or non-System-Card poll.
 2. **Verify quest progression and original-format save transactions.** Bind
    authentic quest artifacts and their pickup, exit, chapter transition, and
    completion consumers. Keep the campaign-completion bit distinct from

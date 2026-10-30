@@ -66,6 +66,7 @@ fi
 mkdir -p "$repo/build"
 python3 "$repo/tests/test_theron_pce_fast_consumer_trace_patch.py"
 python3 "$repo/tests/test_theron_jp_code_fetch_truncation_verifier.py"
+python3 "$repo/tests/test_verify_theron_jp_ram_loop_source_candidates.py"
 cd_limit_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
     THERON_CAPTURE_PCE_FAST_CD_DATA_READ_TRACE_LIMIT=65535 \
     "$script" 2>&1) && {

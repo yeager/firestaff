@@ -630,3 +630,40 @@ Private TRV2 capture directory:
 - Transition receipt SHA-256: `0a565deb86da810f9e3418a842a1c799b491ee6da1a87e1e595f38b9a1b246fe`.
 
 Raw traces and original media remain private and are not included in Git.
+
+## 2026-10-30 — v11 bounded RAM-loop source candidates
+
+The authentic v11 trace also captures 165 instruction-fetch snapshots whose
+valid bytes overlap logical `$40D2-$40E3`, mapped to physical `$1000D2-$1000E3`.
+`verify_theron_jp_ram_loop_source_candidates.py` first validates the complete
+indexed-dispatch/code-follow sidecars, authenticates all source-valid CD reads
+against the Japanese Rev. 1 Track 02 image, validates the `$EA9C` writer rows,
+then compares each fetched byte with the latest earlier write recorded for its
+physical address. For matching values it checks whether the immediately prior
+shared event is a source-valid `$EA99` read of that byte.
+
+Three repeated runs against the private TRV2 capture reported the same
+classification:
+
+- All 18 physical addresses were observed in 495 valid byte slots over 165
+  fetch rows.
+- 491 byte slots matched the latest earlier `$EA9C` writer-PC record; four
+  differed, and no byte lacked a prior `$EA9C` record.
+- Of the 491 matches, 386 had an immediately preceding source-valid `$EA99`
+  Track 02 read. The other 105 had no such immediately preceding read.
+- 103 fetch rows had all their in-range bytes joined to matching writer and
+  read records.
+
+The tool reports observations and does not promote mismatches or missing joins
+into success claims. `$EA9C` is only one observed guest writer PC; other writes
+can be absent from the sidecar. This does not establish exclusive RAM
+provenance, game ownership, gameplay handoff, or parity. Raw captures and
+original media remain private on TRV2.
+
+The additional trace hashes are:
+
+- Indexed-jump dispatch trace: `94ab5079cd00b290fcb0668731d0314005a6eb77977d6629af2efe0d10e638d3`.
+- System Card dispatch trace: `accfaa21d89efa1567731ad07ac8d41aabef50058e3505f40d2a48a79887afdf`.
+
+The code-follow, bounded-follow, CD read, and `$EA9C` writer hashes are the
+v11 values recorded above.
