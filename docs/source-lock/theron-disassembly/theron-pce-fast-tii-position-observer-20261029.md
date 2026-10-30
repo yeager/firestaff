@@ -93,10 +93,10 @@ TRV2 and are not committed.
 A separate PCE Fast capture cold-started the same authentic Japanese Rev. 1
 CUE and headered System Card 3.0 with no state autoload. The CUE's Track 02
 matched MD5 `b7afb338ad31be1025b53f9aff12d73a`; the runtime System Card body
-matched `38179df8f4ac870017db21ebcbf53114`. A scripted Run hold, the previously
-verified new-game/story route, and `ii@13600:140,up@13601:120` produced 13
-apply receipts, each followed by a port-0 controller read containing its
-scripted mask. The verifier saw two game/non-System-Card poll boundaries.
+matched `38179df8f4ac870017db21ebcbf53114`. A scripted Run hold and the input
+plan based on the previously verified new-game/story route, followed by
+`ii@13600:140,up@13601:120`, produced 13 apply receipts, each followed by a
+port-0 controller read containing its scripted mask. The verifier saw two game/non-System-Card poll boundaries.
 
 At frame 13601, the movement-context trace recorded the same two `$C1FC`
 `TII $20B4,$2040,$0002` commits: source `$1F00B4/$1F00B5` contained `$03`, and
