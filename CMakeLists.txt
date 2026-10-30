@@ -102,6 +102,15 @@ set_source_files_properties(third_party/lzma_sdk/7zDec.c PROPERTIES
     COMPILE_DEFINITIONS Z7_NO_METHODS_FILTERS)
 
 if(BUILD_TESTING)
+    add_executable(test_dm1_snes_h03
+        tests/test_dm1_snes_h03.c
+        src/dm1/dm1_snes_h03.c)
+    target_include_directories(test_dm1_snes_h03 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    add_test(NAME dm1_snes_h03 COMMAND test_dm1_snes_h03)
+    set_tests_properties(dm1_snes_h03 PROPERTIES
+        LABELS "dm1;snes;codec;bounds;tier1")
+
     foreach(_candidate IN LISTS _firestaff_dm2_mac_candidates)
         if(EXISTS "${_candidate}")
             file(SHA256 "${_candidate}" _candidate_sha256)
@@ -7100,6 +7109,9 @@ list(REMOVE_ITEM M10_SOURCES
 
 add_library(firestaff_m10 STATIC
     ${M10_SOURCES}
+    # Bounds-checked decoder for the DM1 SNES ROMDUNGEON H03 slots. SNES
+    # runtime selection remains gated until its full data adapter is ready.
+    src/dm1/dm1_snes_h03.c
     src/shared/lzexe_unpack_v091.c
     # Native game presentation domains share one process-wide catalog owner.
     # DM2_QUERY_GDAT_TEXT lives in M10, so the loader must live here rather
