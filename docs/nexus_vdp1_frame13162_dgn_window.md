@@ -31,12 +31,21 @@ after fetching the texel color. Their polygon paths interpolate the four
 vertex corrections along the A-D and B-C edges, then across each scanline
 using integer error steppers. Clipping skips advance those steppers too. A
 two-triangle barycentric approximation therefore cannot establish Ymir pixel
-parity even when the four Gouraud values happen to be uniform. This gives the
-first bounded implementation target: apply the exact channel lookup to
-manifest-verified uniform-table draws in an RGBA capture lane, then verify
-coverage and pixel output against the retained emulator image before expanding
-to varying tables or enabling renderer admission. The source references are
-Ymir `vdp_renderer_sw.cpp::VDP1PlotTexturedLine` and
+parity even when the four Gouraud values happen to be uniform. Firestaff's
+source-joined RGBA compositor still uses that approximation and remains
+capture-only. A separate `nexus_v1_vdp1_ymir_stepper_capture` module now ports
+Ymir's integer quad, line, texture, and Gouraud stepping for authenticated
+mode-1 distorted sprites. It requires verified command, source, palette,
+VRAM, coordinate, clipping, and single-density state; unsupported states are
+rejected, and it never grants renderer admission. For indexed mode-1 draws,
+the compositor verifies that the captured texture span is the word-normalized
+form of the retail DGN image, then reads texels from the original DGN byte
+order so nibble selection follows the actual Saturn texture stream.
+
+The capture stepper is a separate diagnostic path; its existence does not
+make the barycentric compositor pixel-exact or enable the production
+renderer. The source references are Ymir
+`vdp_renderer_sw.cpp::VDP1PlotTexturedLine` and
 `VDP1PlotTexturedQuad`, plus `vdp1_steppers.hpp::GouraudChannelStepper`; and
 Mednafen `vdp1_common.h::GourauderTheTerrible` and
 `vdp1_poly.cpp::CMD_PolygonG_T`.
