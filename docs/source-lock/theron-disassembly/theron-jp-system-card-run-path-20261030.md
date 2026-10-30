@@ -545,3 +545,88 @@ Raw media and traces remain private and are not part of the repository.
 - CD-RAM writer-PC trace SHA-256: `fbaa2ceb03f20a993accb01fa317e7081429883eab73cc71a9f39ac9c2ff3de2`.
 - Scripted-input receipt SHA-256: `3eb8673b3772f19acf27296a258c8e6379a0d921d8d659c0ddec88ae1b346871`.
 - Transition receipt SHA-256: `b9665870a377bdb090442091f8f5a7036285e9e119eea4cba897e303d83d9a5d`.
+
+## 2026-10-30 — authentic v10 128-fetch dispatch follow
+
+A cold PCE Fast reference capture repeated the authentic JP Rev. 1 Track 02
+(MD5 `b7afb338ad31be1025b53f9aff12d73a`) and System Card 3.0 (MD5
+`ff1a674273fe3540ccef576376407d1d`) run with `run@480:300` on input port 0
+and no save state. The follow observer raised its per-dispatch limit from 64
+to 128 fetches (64 windows, 8,192 total rows). The PCE Fast instrumented
+binary was built on TRV2 with `-j1`; raw media and traces remain on that host.
+
+The direct-dispatch, bounded-follow, and authenticated Track 02 source-chain
+verifiers each passed three consecutive runs. The direct trace has 40 rows,
+one in-window next-fetch match, and 39 out-of-window rows. The follow trace has
+5,120 rows across 40 windows: all 40 hit the 128-row instruction cap, none
+remain open, none were skipped, and no window completed. The five source-chain
+joins bind the two dispatched table bytes and three target-fetch bytes to
+authentic Track 02 reads and their latest observed `$EA9C` writes. They do not
+establish exclusive provenance or cover other guest writer paths.
+
+Disassembly of the actual fetch rows for the `$41C5` target shows the pointer
+cursor path entering System Card controller polling at `$E4A5-$E4DE`; the
+scripted input is read at `$E4C5`. This confirms System Card polling only. The
+45-second receipt reports 22,348 input transactions, zero host key events, one
+scripted event read at `$E4C5`, zero non-System-Card polls, zero CD IRQ
+callbacks, zero authenticated aggregate CD-to-RAM receipts, zero game
+main-RAM `$E009` dispatches, and `transition=missing`. The capture therefore
+does not establish game ownership, a native gameplay handoff, or playable
+parity.
+
+Private TRV2 capture directory:
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-indirect-jump-follow-v10-cold-20261030/`.
+
+- Indexed-dispatch trace SHA-256: `449d1ec9fbac23ae12d4dd375f93dbadafe11b5eacd1b0b4665bd8aac5d5235e`.
+- Per-dispatch follow trace SHA-256: `994cebab24840df76f8efb66c4f9d00e1ec11acfdff681cd2bc1bfb7d292cab1`.
+- System Card code-follow trace SHA-256: `5f80ab6f9b3bc61ecb1e1a42981411363333b46c5d1106bbc65b3a8454e53ba5`.
+- CD data-port read trace SHA-256: `01c6c6b1854ce89fab4874dc3e786f00b582f194a652fbc82d74c7d8f8e3b07c`.
+- CD-RAM writer-PC trace SHA-256: `30c3645c50e05078a80ab7ad20572d0617dd61e0ee4bf0bb7e90c0b9a28175fe`.
+- Scripted-input receipt SHA-256: `256e04200c239c15443ccfc87aaa2a977ded1d30961918b63f730a413c28b917`.
+- Transition receipt SHA-256: `d2613970df2cbf32952a728827bd08596abc5006eab4b2f860dd788e87e2c5f7`.
+
+All raw traces and original media remain private and are not included in Git.
+
+## 2026-10-30 — authentic v11 256-fetch dispatch follow
+
+A further cold PCE Fast reference capture used the same authentic Japanese Rev.
+1 Track 02 and System Card 3.0, `run@480:300` on input port 0, and no save
+state. The follow observer now allows up to 256 fetches per window and 16,384
+total rows across 64 windows. The TRV2 build applied the complete instrumented
+patch set to an isolated Mednafen 1.32.1 source copy, enabled PCE Fast, and
+compiled with `-j1`.
+
+The direct-dispatch, bounded-follow, and authenticated source-chain verifiers
+each passed three consecutive runs. The direct trace contains 40 rows, one
+match inside the bounded `$6148` code-follow, and 39 out-of-window rows. The
+follow sidecar has 10,030 rows across 40 windows: 12 windows ended at the next
+`$40E1` dispatch after 235–248 fetches, 28 reached the 256-fetch cap, and no
+window remained open or was skipped. In the first window, the actual fetches
+pass from `$41C5` through System Card polling at `$E4A5-$E4DE`, read the single
+scripted event at `$E4C5`, and return to the `$40E1` dispatcher. The next
+dispatch targets vary among the observed windows. This confirms the traced
+control-flow return to the indexed dispatcher, not a game-owned handoff.
+
+The five source-chain joins remain limited to the initial two dispatch-table
+bytes and three `$41C5` instruction bytes; they match authentic Track 02 reads
+and the latest observed `$EA9C` writes. They do not bind every fetched byte or
+exclude other guest writers. Track 02 validation accepted 63,488 source-bound
+CD data-port reads and zero unbound reads; the `$EA9C` observer recorded 53,248
+writes. The transition receipt reports 22,348 input transactions, zero host
+key events, one scripted event read at `$E4C5`, zero non-System-Card polls,
+zero CD IRQ callbacks, zero authenticated aggregate CD-to-RAM receipts, zero
+game main-RAM `$E009` dispatches, and `transition=missing`. Thus the run still
+does not establish game ownership, native gameplay handoff, or parity.
+
+Private TRV2 capture directory:
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-indirect-jump-follow-v11-cold-20261030/`.
+
+- Indexed-dispatch trace SHA-256: `94ab5079cd00b290fcb0668731d0314005a6eb77977d6629af2efe0d10e638d3`.
+- Per-dispatch follow trace SHA-256: `366224e3cb6b70c9190c84be5f1283da40cb99a21d4d90f58f109894147369d0`.
+- System Card code-follow trace SHA-256: `b95b064c8f48985b5ab62ab93a4c2bf4088729772f8c21c56a6ee1fd2db8e9d0`.
+- CD data-port read trace SHA-256: `4f20ea110a67c3334d9322d88a07b540f37f812cbc567966cdbf94bb0e038381`.
+- CD-RAM writer-PC trace SHA-256: `c23643c27b9b53ae0211ca572644a3fb1eaaf1f05551aa1f22f4ac624f349334`.
+- Scripted-input receipt SHA-256: `256e04200c239c15443ccfc87aaa2a977ded1d30961918b63f730a413c28b917`.
+- Transition receipt SHA-256: `0a565deb86da810f9e3418a842a1c799b491ee6da1a87e1e595f38b9a1b246fe`.
+
+Raw traces and original media remain private and are not included in Git.

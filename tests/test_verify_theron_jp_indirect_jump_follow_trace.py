@@ -67,6 +67,16 @@ class FollowTraceVerifierTest(unittest.TestCase):
         self.write_traces([10], [])
         self.assertEqual(self.verify(), (0, 0, 0, 0, 0))
 
+    def test_accepts_256_row_instruction_cap(self) -> None:
+        rows = [follow_row(10, event).replace(" index=0 ", f" index={index} ")
+                for index, event in enumerate(range(11, 267))]
+        rows.append(
+            "indirect_jump_follow_truncated dispatch_event=10 event_sequence=267 "
+            "after_rows=256 limit=256 reason=instruction-cap"
+        )
+        self.write_traces([10], rows)
+        self.assertEqual(self.verify(), (256, 1, 0, 1, 0))
+
     def test_rejects_duplicate_skipped_dispatch_marker(self) -> None:
         self.write_traces(
             [10, 20],

@@ -9,17 +9,23 @@ Use authentic original media whenever available. Synthetic traces may test
 parsers or help derive authentic evidence, but must not stand in for game
 assets, mechanics, or parity.
 
-2026-10-30 v9 indexed-dispatch follow trace: authentic JP Rev. 1/Track 02 and
-System Card 3.0 produced 40 dispatch windows and 2,560 runtime fetch rows; all
-40 windows reached the 64-instruction cap. Track 02 read validation found
-63,488 source-bound CD reads; the `$EA9C`-only writer comparison matched 4,064
-fetched bytes, mismatched one, and had no earlier observed `$EA9C` write for
-3,615. Those limits leave other writer paths and unique read-to-write
-causality unproven. Disassembly exposes a `$1C/$1D` byte-stream cursor loop,
-but no game-owned input poll or transition was observed. Continue through the
-remaining guest writers and source/consumer chain to a game-owned poll and
-resulting state change; the v9 capture does not establish native gameplay or
-parity. Evidence and hashes are recorded in the
+2026-10-30 v11 indexed-dispatch follow trace: authentic JP Rev. 1/Track 02 and
+System Card 3.0 produced 40 dispatch windows and 10,030 runtime fetch rows at
+the 256-instruction cap. Twelve windows ended at the next `$40E1` dispatch
+after 235-248 fetched instructions; 28 hit the cap. In the first window the
+actual fetches enter System Card controller polling at `$E4A5-$E4DE`, read the
+single scripted event at `$E4C5`, and return to the indexed dispatcher. The
+next observed targets vary, and this does not prove game ownership. Direct-
+dispatch, follow, and source-chain verifiers each passed three loops. Five
+source-chain joins bind the initial dispatched table and target opcode bytes
+to authentic Track 02 reads and latest observed `$EA9C` writes. Thirty-nine
+dispatches remain outside the bounded `$6148` code-follow. There were no
+non-System-Card polls, CD IRQ callbacks, authenticated aggregate CD-to-RAM
+receipts, or game main-RAM dispatches; the 45-second capture ended with
+`transition=missing`. Continue through complete guest writers and
+source/consumer chains to a game-owned poll and resulting state change. v9's
+independent `$EA9C` writer comparison remains historical evidence. Results and
+hashes are recorded in the
 [JP System Card Run source-lock note](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md).
 
 1. **Bind the cold loader to game-owned consumers in both regions.** Continue

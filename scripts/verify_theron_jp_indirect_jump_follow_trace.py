@@ -15,7 +15,7 @@ from verify_theron_indirect_jump_trace import verify as verify_indirect_jump
 HEADER = (
     "source=mednafen-pce-fast-indirect-jump-follow-v1 "
     "event_sequence_source=TheronTraceCDSharedEventSequence "
-    "window_limit=64 per_window_limit=64 total_limit=4096"
+    "window_limit=64 per_window_limit=256 total_limit=16384"
 )
 FOLLOW_ROW = re.compile(
     r"^indirect_jump_follow dispatch_event=(\d+) target_pc=([0-9a-f]{4}) "
@@ -32,7 +32,7 @@ COMPLETE = re.compile(
 )
 TRUNCATED = re.compile(
     r"^indirect_jump_follow_truncated dispatch_event=(\d+) event_sequence=(\d+) "
-    r"after_rows=(\d+) limit=(64|4096) reason=(instruction-cap|target-fetch-mismatch|total-limit)$"
+    r"after_rows=(\d+) limit=(256|16384) reason=(instruction-cap|target-fetch-mismatch|total-limit)$"
 )
 SKIPPED = re.compile(
     r"^indirect_jump_follow_skipped dispatch_event=(\d+) event_sequence=(\d+) "
@@ -111,8 +111,8 @@ def verify(dispatch_path: Path, code_follow_path: Path, follow_path: Path) -> tu
             if window["closed"]:
                 raise ValueError(f"follow data resumes after a terminal record at line {line_number}")
             expected_index = int(window["count"])
-            if index != expected_index or index >= 64:
-                raise ValueError(f"follow row index is discontinuous or exceeds 64 at line {line_number}")
+            if index != expected_index or index >= 256:
+                raise ValueError(f"follow row index is discontinuous or exceeds 256 at line {line_number}")
             if index == 0 and (logical_pc != target_pc or event <= dispatch_event):
                 raise ValueError(f"first follow fetch does not match dispatch target at line {line_number}")
             slot = logical_pc >> 13
@@ -129,8 +129,8 @@ def verify(dispatch_path: Path, code_follow_path: Path, follow_path: Path) -> tu
                     raise ValueError(f"invalid follow opcode bytes are not zeroed at line {line_number}")
             window["count"] = expected_index + 1
             total_rows += 1
-            if total_rows > 4096:
-                raise ValueError("follow trace exceeds its 4096-row total cap")
+            if total_rows > 16384:
+                raise ValueError("follow trace exceeds its 16384-row total cap")
             continue
 
         complete = COMPLETE.fullmatch(line)
@@ -142,7 +142,7 @@ def verify(dispatch_path: Path, code_follow_path: Path, follow_path: Path) -> tu
             marker_window = windows.get(dispatch_event)
             if event <= last_event or marker_window is None or marker_window["closed"]:
                 raise ValueError(f"invalid completion marker at line {line_number}")
-            if count != marker_window["count"] or not 1 <= count <= 64:
+            if count != marker_window["count"] or not 1 <= count <= 256:
                 raise ValueError(f"completion count mismatch at line {line_number}")
             last_event = event
             marker_window["closed"] = True
@@ -156,11 +156,11 @@ def verify(dispatch_path: Path, code_follow_path: Path, follow_path: Path) -> tu
                 raise ValueError(f"invalid truncation marker at line {line_number}")
             if count != marker_window["count"] or count < 1:
                 raise ValueError(f"truncation count mismatch at line {line_number}")
-            if reason == "instruction-cap" and (limit != 64 or count != 64):
-                raise ValueError(f"instruction-cap marker does not match 64 rows at line {line_number}")
-            if reason == "total-limit" and (limit != 4096 or total_rows != 4096):
-                raise ValueError(f"total-limit marker does not match 4096 rows at line {line_number}")
-            if reason == "target-fetch-mismatch" and limit != 64:
+            if reason == "instruction-cap" and (limit != 256 or count != 256):
+                raise ValueError(f"instruction-cap marker does not match 256 rows at line {line_number}")
+            if reason == "total-limit" and (limit != 16384 or total_rows != 16384):
+                raise ValueError(f"total-limit marker does not match 16384 rows at line {line_number}")
+            if reason == "target-fetch-mismatch" and limit != 256:
                 raise ValueError(f"target mismatch marker has an invalid limit at line {line_number}")
             last_event = event
             marker_window["closed"] = True

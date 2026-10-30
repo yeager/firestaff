@@ -33,7 +33,7 @@
 + TheronIndirectJumpFollowTraceFile = fopen(path, "w");
 + if(TheronIndirectJumpFollowTraceFile)
 + {
-+  fputs("source=mednafen-pce-fast-indirect-jump-follow-v1 event_sequence_source=TheronTraceCDSharedEventSequence window_limit=64 per_window_limit=64 total_limit=4096\n",
++  fputs("source=mednafen-pce-fast-indirect-jump-follow-v1 event_sequence_source=TheronTraceCDSharedEventSequence window_limit=64 per_window_limit=256 total_limit=16384\n",
 +        TheronIndirectJumpFollowTraceFile);
 +  fflush(TheronIndirectJumpFollowTraceFile);
 + }
@@ -63,7 +63,7 @@
 + const uint32 event = TheronTraceCDSharedEventSequence++;
 + if(truncated)
 +  fprintf(TheronIndirectJumpFollowTraceFile,
-+          "indirect_jump_follow_truncated dispatch_event=%u event_sequence=%u after_rows=%u limit=64 reason=%s\n",
++          "indirect_jump_follow_truncated dispatch_event=%u event_sequence=%u after_rows=%u limit=256 reason=%s\n",
 +          TheronIndirectJumpFollowActiveEvent, event, TheronIndirectJumpFollowCount, terminal);
 + else
 +  fprintf(TheronIndirectJumpFollowTraceFile,
@@ -88,11 +88,11 @@
 + }
 + if(!TheronIndirectJumpFollowActive)
 +  return;
-+ if(TheronIndirectJumpFollowTotalRows >= 4096)
++ if(TheronIndirectJumpFollowTotalRows >= 16384)
 + {
 +  const uint32 event = TheronTraceCDSharedEventSequence++;
 +  fprintf(TheronIndirectJumpFollowTraceFile,
-+          "indirect_jump_follow_truncated dispatch_event=%u event_sequence=%u after_rows=%u limit=4096 reason=total-limit\n",
++          "indirect_jump_follow_truncated dispatch_event=%u event_sequence=%u after_rows=%u limit=16384 reason=total-limit\n",
 +          TheronIndirectJumpFollowActiveEvent, event, TheronIndirectJumpFollowCount);
 +  fflush(TheronIndirectJumpFollowTraceFile);
 +  TheronIndirectJumpFollowActive = 0;
@@ -131,7 +131,7 @@
 +  TheronTraceIndirectJumpFollowFinish("target-fetch-mismatch", true);
 + else if(pc == 0x40E1)
 +  TheronTraceIndirectJumpFollowFinish("next-indirect-dispatch", false);
-+ else if(TheronIndirectJumpFollowCount >= 64)
++ else if(TheronIndirectJumpFollowCount >= 256)
 +  TheronTraceIndirectJumpFollowFinish("instruction-cap", true);
 +}
 +

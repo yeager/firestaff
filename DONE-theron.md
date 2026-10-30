@@ -9590,3 +9590,41 @@ native rendering, or Theron parity. The private evidence bundle is at
   was observed. This is reference instrumentation and evidence only, not
   native Theron parity. Remaining ownership and gameplay gaps are in
   `TODO-theron.md`.
+## 2026-10-30 — extend authentic Theron dispatch follow to 128 rows
+
+- Raised the bounded per-dispatch reference trace cap to 128 fetches and the
+  total trace cap to 8,192 rows, retaining 64 windows. Updated the verifier and
+  focused regression to enforce the new bounds.
+- Applied the patch set in an isolated TRV2 source copy, built the PCE Fast
+  reference binary with `-j1`, and captured a cold run using authentic JP Rev.
+  1 Track 02 and System Card 3.0.
+- Direct-dispatch, bounded-follow, and authenticated source-chain verifiers
+  each passed three loops. All 40 follow windows hit the cap. Five observed
+  bytes joined to authentic Track 02 reads and the latest traced `$EA9C`
+  writes; other writer paths and exclusive provenance remain unproven.
+- Disassembly reached System Card input polling at `$E4C5`. The run observed no
+  game-owned poll, CD IRQ, aggregate authenticated CD-to-RAM receipt, game
+  main-RAM dispatch, or gameplay transition. Native gameplay and parity remain
+  open in `TODO-theron.md`.
+- `git diff --check`, shell syntax, Python syntax, six focused verifier tests,
+  and three capture-wrapper regression loops passed.
+- Full v10 trace metrics and hashes are recorded in
+  `docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md`.
+
+## 2026-10-30 — follow authentic Theron dispatch windows through 256 fetches
+
+- Raised the bounded follow limit to 256 instructions per window and 16,384
+  rows total; the 64-window bound remains. The verifier and capture regression
+  now enforce those limits.
+- The complete Mednafen patch set applied to an isolated original source tree;
+  the PCE Fast reference binary built on TRV2 with `-j1`.
+- An authentic JP Rev. 1 cold capture passed the direct-dispatch, follow, and
+  source-chain verifiers in three loops. Twelve of 40 windows reached the next
+  indexed dispatch after 235–248 fetches; the other 28 hit the cap.
+- Actual fetches in the first window confirm System Card controller polling
+  and return to `$40E1`. No game-owned input poll, CD IRQ, aggregate
+  authenticated CD-to-RAM receipt, game main-RAM dispatch, or gameplay
+  transition was observed. Native handoff and Theron parity remain open.
+- Focused verifier tests and capture-script regression passed in repeated
+  loops. v11 metrics and hashes are in
+  `docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md`.

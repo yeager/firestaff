@@ -1801,8 +1801,8 @@ if [[ ! -f "$indirect_jump_follow_patch" || ! -f "$indirect_jump_follow_verifier
    ! grep -Fq 'mednafen_1.32.1_theron_pce_fast_indirect_jump_follow_trace.patch' "$build_script" ||
    ! grep -Fq 'FIRESTAFF_THERON_INDIRECT_JUMP_FOLLOW_TRACE="$pce_fast_indirect_jump_follow_trace"' "$script" ||
    ! grep -Fq 'verify_theron_jp_indirect_jump_follow_trace.py' "$script" ||
-   ! grep -Fq 'per_window_limit=64 total_limit=4096' "$indirect_jump_follow_patch" ||
-   ! grep -Fq 'TheronIndirectJumpFollowTotalRows >= 4096' "$indirect_jump_follow_patch"; then
+   ! grep -Fq 'per_window_limit=256 total_limit=16384' "$indirect_jump_follow_patch" ||
+   ! grep -Fq 'TheronIndirectJumpFollowTotalRows >= 16384' "$indirect_jump_follow_patch"; then
     printf '%s\n' 'FAIL: per-dispatch code follows must use bounded windows and validate the trace' >&2
     exit 1
 fi
