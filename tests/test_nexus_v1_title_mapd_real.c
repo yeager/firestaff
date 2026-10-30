@@ -218,6 +218,7 @@ int main(void)
     {
         Nexus_V1_TitleRenderPlan plan;
         Nexus_Framebuffer n_frame;
+        Nexus_Framebuffer e_frame;
         Nexus_Framebuffer s_frame;
         size_t pixel;
         size_t nonzero = 0U;
