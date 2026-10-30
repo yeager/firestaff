@@ -22,6 +22,8 @@
 - `Nexus title evidence`: update the evidence record with complete 224-row samples for two VDP2 serials sharing one VDP1 frame label; the VDP1 receipt remains incomplete and no separate pixel images or renderer parity are claimed.
 - `Nexus frame-join verifier`: replace assert-only checks with explicit failures so validation stays active under optimized Python.
 - `CSB Atari viewport diagnostics`: report the first rejected runtime stage when debug movement tracing is enabled; include and protect the authentic Atari utility archive in the mixed-media regression.
+- `CSB CLI mode validation`: reject conflicting Utility Disk and Hint Oracle options, including a game ID that conflicts with either mode.
+- `DM2 startup timing`: enable the source-level startup-menu timing regression against the shared DM2 library; native presentation timing remains unverified.
 - `Release metadata`: update the project version and reproducible SPDX source SBOM.
 
 ## Known limitations

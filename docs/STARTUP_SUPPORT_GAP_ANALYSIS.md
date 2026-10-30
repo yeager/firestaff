@@ -1,7 +1,7 @@
 # Five-game startup support gap analysis
 
 Evidence metadata refreshed on 2026-10-30 for `main` at
-`4eb71ffc07cb9bb8330b98bf6fa9a8c37920c313`. The latest published release
+`44b0729b2231834f0b1f207a4fc86ba3cbdb57c4`. The latest published release
 remains v3.0.420 (published 2026-10-29 from tag commit `8224d5c8`); current
 `main` contains later source changes that are not in that package. The v3.0.420
 workflow verifies packaging, not gameplay startup. The
@@ -14,6 +14,9 @@ gameplay parity.
 The latest `main` also adds read-only X68000 HDM, GRAPHICS.DAT IMG1, and X30J
 dungeon-metadata readers verified against authentic Japanese media; these
 parsers do not add an X68000 startup, rendering, audio, or input route.
+It rejects conflicting CSB utility-disk and hint-oracle launch modes and
+enables the DM2 source-level startup-menu timing regression. The latter checks
+source tick sequencing; it does not measure native presentation timing.
 Current authentic-media CLI routes
 include DM1 PC34, DOS, Atari ST, Amiga and FM Towns; CSB Atari, Amiga and FM
 Towns; DM2 DOS English/French, Macintosh English, FM Towns Japanese and Amiga
