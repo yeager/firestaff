@@ -325,12 +325,12 @@ static void test_private_db0_recycler_candidate(void)
               candidate.static_possession_descents == 1u,
           "private DB0 recycler descends only retained static creature possessions");
 
-    /* DB0's source direct-return path is now committed only inside a cloned
-     * private owner: the selected record is cleared and the source cursor is
-     * advanced, while Resume remains blocked. */
-    /* Keep the selected DB0 behind a retained static DB4 predecessor. This
-     * is the case that catches publishing an uncut pool clone: the live
-     * c_map cut must be committed with the same pool graph. */
+    /* DB0's source direct-return path is committed only inside a cloned
+     * private owner: the selected record is cleared in place and the source
+     * cursor is advanced, while Resume remains blocked. */
+    /* Keep DB0 behind a retained static DB4 predecessor. The source direct
+     * return does not cut this link; after ALLOC_NEW_RECORD clears DB0, the
+     * predecessor still points to the reused DB0 slot. */
     ground[0] = (uint16_t)mk_handle(4, 0);
     ground[2] = (uint16_t)DM2_V1_RECORD_HANDLE_END;
     wr16(game_owner.record_pools.pools[4].bytes, mk_handle(0, 0));
@@ -350,10 +350,10 @@ static void test_private_db0_recycler_candidate(void)
                   (uint16_t)mk_handle(4, 0) &&
               ((uint16_t)game_owner.record_pools.pools[4].bytes[0] |
                ((uint16_t)game_owner.record_pools.pools[4].bytes[1] << 8)) ==
-                  (uint16_t)DM2_V1_RECORD_HANDLE_END &&
+                  (uint16_t)mk_handle(0, 0) &&
               game_owner.recycler_context.map_cursors[0] == 0u &&
               !game_owner.source_game_load_session_ready,
-          "private DB0 recycler commit unlinks and clears the selected source record atomically");
+          "private DB0 recycler commit clears the selected record in place and preserves its source chain link");
     ground = game_owner.map_owner.ground_stack_links;
 
     /* c_record.cpp:1427 DELETE_MISSILE_RECORD first queries the creature at

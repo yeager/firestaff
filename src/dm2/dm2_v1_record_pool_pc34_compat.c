@@ -1072,9 +1072,9 @@ int dm2_v1_sksave_apply_direct_roots_to_heroes(
 
 /* Bridge the source recycler to READ_RECORD_CHECKCODE's allocator while the
  * complete private GAME_LOAD transaction is still local to this module. The
- * public owner walker supplies the source map-ring and Text-barrier rules;
- * DB0 and admitted no-creature DB14 additionally cut the selected tile link,
- * while the source allocator clears the returned record. */
+ * public owner walker supplies the source map-ring and Text-barrier rules.
+ * Direct-return DB0/DB2/DB3/DB7/DB9 records retain their source link; the
+ * DB5/6/8/10 relocation and admitted no-creature DB14 delete paths cut it. */
 static uint16_t dm2_v1_sksave_pool_recycle_direct(
     DM2_V1_SksavePoolRestoreContext *ctx, uint8_t requested_db)
 {
@@ -1133,7 +1133,7 @@ static uint16_t dm2_v1_sksave_pool_recycle_direct(
                                              (int16_t)candidate.selected_link);
     if (!record || dm2_v1_record_handle_pool(
                        (int16_t)candidate.selected_link) != (int)requested_db ||
-        ((requested_db == 0u || requested_db == 5u || requested_db == 6u ||
+        ((requested_db == 5u || requested_db == 6u ||
           requested_db == 8u || requested_db == 10u || requested_db == 14u) &&
          !dm2_v1_sksave_map_owner_cut_tile_record(
              ctx->map_owner, ctx->set, candidate.selected_map,

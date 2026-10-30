@@ -493,11 +493,12 @@ int dm2_v1_sksave_game_load_owner_missile_timer_candidate(
 int dm2_v1_sksave_game_load_owner_commit_db14_missile_delete(
     DM2_V1_SksaveGameLoadOwner *owner, uint16_t *out_record);
 
-/* Commit the source's DB0 direct-return path through a private owner.  This
+/* Commit the source's DB0 direct-return path through a private owner. This
  * clones the mutable record pools, applies ALLOC_NEW_RECORD's zero-and-mark
- * operation to the selected DB0 record, and advances ddat.v1e0426[0] only
- * after all steps succeed.  The owner remains inspection-only and the
- * operation never makes Resume or a runtime session playable.
+ * operation to the selected DB0 record in place (without cutting its map
+ * link), and advances ddat.v1e0426[0] only after all steps succeed. The owner
+ * remains inspection-only and the operation never makes Resume or a runtime
+ * session playable.
  *
  * Source: SKULLWIN/c_record.cpp:DB88-DBA5 and :1076-1139. */
 int dm2_v1_sksave_game_load_owner_commit_db0_recycler(
