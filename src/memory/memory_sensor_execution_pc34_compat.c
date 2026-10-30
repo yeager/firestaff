@@ -465,6 +465,7 @@ static int sensor_process_party_enter_leave(
     int mapX,
     int mapY,
     int triggerEvent,
+    int partyOnSquare,
     const struct PartyState_Compat* party,
     unsigned short leaderHandThing,
     struct SensorEffectList_Compat* outList)
@@ -540,7 +541,7 @@ static int sensor_process_party_enter_leave(
             floorContext.partyDirection = party ? party->direction : 0;
             floorContext.partyChampionCount = party ? party->championCount : 0;
             floorContext.partyHasObjectType = hasObject;
-            floorContext.partyOnSquare = 0;
+            floorContext.partyOnSquare = partyOnSquare != 0;
             floorContext.squareHasObject = squareHasExistingObject;
             floorContext.squareHasGroup = squareHasExistingGroup;
             floorContext.squareHasSameTypeObj = 0;
@@ -595,7 +596,7 @@ int F0718_SENSOR_ProcessPartyEnterLeave_Compat(
     struct SensorEffectList_Compat* outList)
 {
     return sensor_process_party_enter_leave(
-        dungeon, things, mapIndex, mapX, mapY, triggerEvent, NULL,
+        dungeon, things, mapIndex, mapX, mapY, triggerEvent, 0, NULL,
         THING_NONE, outList);
 }
 
@@ -606,12 +607,13 @@ int F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
     int mapX,
     int mapY,
     int triggerEvent,
+    int partyOnSquare,
     const struct PartyState_Compat* party,
     unsigned short leaderHandThing,
     struct SensorEffectList_Compat* outList)
 {
     return sensor_process_party_enter_leave(
-        dungeon, things, mapIndex, mapX, mapY, triggerEvent, party,
+        dungeon, things, mapIndex, mapX, mapY, triggerEvent, partyOnSquare, party,
         leaderHandThing, outList);
 }
 

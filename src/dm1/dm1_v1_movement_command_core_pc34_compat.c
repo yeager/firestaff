@@ -399,7 +399,7 @@ static int dm1_v1_process_stair_walk_off_append(
     memset(&tmp, 0, sizeof(tmp));
     if (!F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
             dungeon, things, mapIndex, mapX, mapY,
-            SENSOR_EVENT_WALK_OFF, party, THING_NONE, &tmp)) {
+            SENSOR_EVENT_WALK_OFF, 0, party, THING_NONE, &tmp)) {
         return 0;
     }
     for (i = 0; i < tmp.count && outEffects->count < SENSOR_EFFECT_LIST_MAX_COUNT; ++i) {
@@ -470,14 +470,14 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
 
         (void)F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
             dungeon, things, party->mapIndex, party->mapX, party->mapY,
-            SENSOR_EVENT_WALK_OFF, party, THING_NONE, &outResult->leaveEffects);
+            SENSOR_EVENT_WALK_OFF, 1, party, THING_NONE, &outResult->leaveEffects);
         m11_v1_turning_apply_party_original_presentation_pc34_compat(
             party,
             outResult->queue.command,
             outResult);
         (void)F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
             dungeon, things, party->mapIndex, party->mapX, party->mapY,
-            SENSOR_EVENT_WALK_ON, party, THING_NONE, &outResult->enterEffects);
+            SENSOR_EVENT_WALK_ON, 1, party, THING_NONE, &outResult->enterEffects);
         outResult->movement.resultCode = MOVE_TURN_ONLY;
         outResult->movement.newMapX = party->mapX;
         outResult->movement.newMapY = party->mapY;
@@ -512,7 +512,7 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
         if (dm1_v1_dungeon_resolve_stairs_transition_pc34(dungeon, party, &stairs) && stairs.transitioned) {
             struct Dm1V1MovementStairsApplyPlanPc34Compat stairsPlan;
             if (dm1_v1_process_stair_walk_off_append(
-                    dungeon, things, party->mapIndex, party->mapX, party->mapY,
+                    dungeon, things, party, party->mapIndex, party->mapX, party->mapY,
                     &outResult->leaveEffects)) {
                 outResult->stairSourceLeaveProcessed = 1;
             }
@@ -550,12 +550,12 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
         if (dm1_v1_dungeon_resolve_stairs_transition_pc34(dungeon, &targetParty, &stairs) && stairs.transitioned) {
             struct Dm1V1MovementStairsApplyPlanPc34Compat stairsPlan;
             if (dm1_v1_process_stair_walk_off_append(
-                    dungeon, things, party->mapIndex, party->mapX, party->mapY,
+                    dungeon, things, party, party->mapIndex, party->mapX, party->mapY,
                     &outResult->leaveEffects)) {
                 outResult->stairSourceLeaveProcessed = 1;
             }
             if (dm1_v1_process_stair_walk_off_append(
-                    dungeon, things, targetParty.mapIndex, targetParty.mapX, targetParty.mapY,
+                    dungeon, things, &targetParty, targetParty.mapIndex, targetParty.mapX, targetParty.mapY,
                     &outResult->leaveEffects)) {
                 outResult->stairTargetLeaveProcessed = 1;
             }
@@ -585,7 +585,7 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
     } else {
         (void)F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
             dungeon, things, party->mapIndex, party->mapX, party->mapY,
-            SENSOR_EVENT_WALK_OFF, party, THING_NONE, &outResult->leaveEffects);
+            SENSOR_EVENT_WALK_OFF, 0, party, THING_NONE, &outResult->leaveEffects);
     }
 
     {
@@ -601,7 +601,7 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
 
     (void)F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
         dungeon, things, party->mapIndex, party->mapX, party->mapY,
-        SENSOR_EVENT_WALK_ON, party, THING_NONE, &outResult->enterEffects);
+        SENSOR_EVENT_WALK_ON, 0, party, THING_NONE, &outResult->enterEffects);
 
     outResult->timing = DM1_V1_MovementTiming_ApplySuccessfulStepPc34Compat(
         party,

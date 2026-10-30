@@ -916,13 +916,13 @@ static void test_floor_party_possession_runtime_uses_party_context(void) {
           "Runtime C008: context-free wrapper fails closed");
     CHECK(F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
               &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
-              &party, THING_NONE, &effects) == 1 && effects.count == 0,
+              0, &party, THING_NONE, &effects) == 1 && effects.count == 0,
           "Runtime C008: missing icon does not trigger TOGGLE");
 
     party.champions[0].inventory[CHAMPION_SLOT_BACKPACK_1] = carried;
     CHECK(F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
               &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
-              &party, THING_NONE, &effects) == 1 && effects.count == 1,
+              0, &party, THING_NONE, &effects) == 1 && effects.count == 1,
           "Runtime C008: carried icon triggers remote effect");
     CHECK(effects.effects[0].textIndex == DM1_EFFECT_TOGGLE &&
               effects.effects[0].destMapX == 1 &&
@@ -933,12 +933,12 @@ static void test_floor_party_possession_runtime_uses_party_context(void) {
     sensors[0].effect = DM1_EFFECT_HOLD;
     CHECK(F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
               &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
-              &party, THING_NONE, &effects) == 1 && effects.count == 1 &&
+              0, &party, THING_NONE, &effects) == 1 && effects.count == 1 &&
               effects.effects[0].textIndex == DM1_EFFECT_CLEAR,
           "Runtime C008: HOLD clears when icon is absent");
     CHECK(F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
               &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
-              &party, carried, &effects) == 1 && effects.count == 1 &&
+              0, &party, carried, &effects) == 1 && effects.count == 1 &&
               effects.effects[0].textIndex == DM1_EFFECT_SET,
           "Runtime C008: G4055 leader-hand icon resolves HOLD as SET");
 }
@@ -1166,7 +1166,7 @@ static void test_floor_party_plate_runtime_door_event_gate(void) {
           "Runtime C003: context-free party passage cannot guess champion count");
     F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
         &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
-        &party, THING_NONE, &effects);
+        0, &party, THING_NONE, &effects);
     CHECK(effects.count == 1, "Runtime C003: party plate emits one remote effect");
     CHECK(effects.effects[0].kind == SENSOR_EFFECT_TOGGLE_REMOTE,
           "Runtime C003: party plate emits remote toggle");
@@ -1176,15 +1176,35 @@ static void test_floor_party_plate_runtime_door_event_gate(void) {
     sensors[0].sensorData = 2u;
     F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
         &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
-        &party, THING_NONE, &effects);
+        0, &party, THING_NONE, &effects);
     CHECK(effects.count == 0,
           "Runtime C003: direction-coded plate rejects the wrong party direction");
     sensors[0].sensorData = 1u;
     F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
         &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
-        &party, THING_NONE, &effects);
+        0, &party, THING_NONE, &effects);
     CHECK(effects.count == 1,
           "Runtime C003: direction-coded plate accepts ordinal party direction");
+
+    sensors[0].sensorType = DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT;
+    sensors[0].sensorData = 0u;
+    F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+        &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
+        0, &party, THING_NONE, &effects);
+    CHECK(effects.count == 1,
+          "Runtime C001: floor pad triggers on a fresh party entry");
+    F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+        &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
+        1, &party, THING_NONE, &effects);
+    CHECK(effects.count == 0,
+          "Runtime C001: floor pad does not retrigger when party remains on square");
+
+    sensors[0].sensorType = DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE;
+    F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+        &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
+        1, &party, THING_NONE, &effects);
+    CHECK(effects.count == 0,
+          "Runtime C002: partySquare suppresses floor party/creature sensor");
 
     memset(&dispatch, 0, sizeof(dispatch));
     F0724_SENSOR_ResolveEffectDispatch_Compat(&sensors[0], DM1_EFFECT_TOGGLE,

@@ -167,8 +167,9 @@ int F0718_SENSOR_ProcessPartyEnterLeave_Compat(
     struct SensorEffectList_Compat* outList);
 
 /* Party-context version used by live DM1 routes. Supplies party direction and
- * champion count for C003 and the champion inventory/G4055 leader-hand object
- * for C008. Both routes share F0276's party-square occupancy and effect rules. */
+ * champion count for C003, inventory/G4055 leader-hand object for C008, and
+ * ReDMCSB F0276's P0591_B_PartySquare value (true when the party remains on
+ * this square, as on an in-place turn). */
 int F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
     const struct DungeonDatState_Compat* dungeon,
     const struct DungeonThings_Compat* things,
@@ -176,6 +177,7 @@ int F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
     int mapX,
     int mapY,
     int triggerEvent,
+    int partyOnSquare,
     const struct PartyState_Compat* party,
     unsigned short leaderHandThing,
     struct SensorEffectList_Compat* outList);

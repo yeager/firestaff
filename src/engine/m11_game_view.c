@@ -35393,6 +35393,7 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
                 state->world.dungeon, state->world.things,
                 state->world.party.mapIndex, state->world.party.mapX,
                 state->world.party.mapY, SENSOR_EVENT_WALK_ON,
+                0,
                 &state->world.party,
                 state->leaderHandObjectPresent ? state->leaderHandThing : THING_NONE,
                 &possessionEffects)) {
@@ -80767,6 +80768,7 @@ int M11_GameView_ApplyDm1StartupF0267PartyPlacement(
         if (!F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
                 world->dungeon, world->things, placedParty.mapIndex,
                 placedParty.mapX, placedParty.mapY, SENSOR_EVENT_WALK_ON,
+                0,
                 &placedParty,
                 state->leaderHandObjectPresent ? state->leaderHandThing : THING_NONE,
                 &enterEffects)) {

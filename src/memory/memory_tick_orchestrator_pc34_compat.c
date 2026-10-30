@@ -14307,7 +14307,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                     (void)F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
                         world->dungeon, world->things,
                         oldMapIndex, oldMapX, oldMapY,
-                        SENSOR_EVENT_WALK_OFF, &world->party,
+                        SENSOR_EVENT_WALK_OFF, 0, &world->party,
                         THING_NONE, &walkOff);
                     for (s = 0; s < walkOff.count; ++s) {
                         const struct SensorEffect_Compat* ef = &walkOff.effects[s];
@@ -14323,7 +14323,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                         world->dungeon, world->things,
                         world->party.mapIndex,
                         world->party.mapX, world->party.mapY,
-                        SENSOR_EVENT_WALK_ON, &world->party,
+                        SENSOR_EVENT_WALK_ON, 0, &world->party,
                         THING_NONE, &walkOn);
                     for (s = 0; s < walkOn.count; ++s) {
                         const struct SensorEffect_Compat* ef = &walkOn.effects[s];
