@@ -1,5 +1,6 @@
 #include "firestaff_7z_extract.h"
 #include "firestaff_x68k_hdm.h"
+#include "firestaff_x68k_graphics_dat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -97,6 +98,7 @@ int main(void) {
     uint8_t *ftlcode = NULL;
     uint8_t *graphics = NULL;
     FirestaffX68kHdm hdm;
+    FirestaffX68kGraphicsDat graphics_dat;
     uint16_t cursor = 0u;
     size_t entries = 0u;
     size_t i;
@@ -181,8 +183,39 @@ int main(void) {
               stderr);
         goto done;
     }
+    if (FirestaffX68kGraphicsDat_Open(graphics, 332785u,
+                                      &graphics_dat) != 0 ||
+        graphics_dat.count != 562u ||
+        graphics_dat.payload_offset != 4500u) {
+        fputs("FAIL: X68000 GRAPHICS.DAT did not match ReDMCSB format-1 header\n",
+              stderr);
+        goto done;
+    }
+    {
+        size_t expected_offset = graphics_dat.payload_offset;
+        uint16_t index;
+        for (index = 0u; index < graphics_dat.count; ++index) {
+            FirestaffX68kGraphicsDatItem item;
+            if (FirestaffX68kGraphicsDat_GetItem(&graphics_dat, index,
+                                                 &item) != 0 ||
+                item.payload_offset != expected_offset ||
+                item.compressed_size > graphics_dat.size - expected_offset) {
+                fprintf(stderr,
+                        "FAIL: X68000 GRAPHICS.DAT item %u has invalid metadata span\n",
+                        (unsigned)index);
+                goto done;
+            }
+            expected_offset += item.compressed_size;
+        }
+        if (expected_offset != graphics_dat.size) {
+            fputs("FAIL: X68000 GRAPHICS.DAT payload table did not consume the file\n",
+                  stderr);
+            goto done;
+        }
+    }
     printf("PASS: read-only X68000 HDM import authenticated %lu root entries; "
-           "SWOOSH matches ReDMCSB and FTL offsets are preserved\n",
+           "SWOOSH matches ReDMCSB, FTL offsets are preserved, and all 562 "
+           "X30J graphics spans match format 1\n",
            (unsigned long)entries);
     result = 0;
 

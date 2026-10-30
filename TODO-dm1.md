@@ -26,9 +26,12 @@ the original HDM in memory. `firestaff_x68k_hdm_real_media` passed against the
 cracked original archive, validated all ten root entries and regular-file
 chains, matched extracted `SWOOSH` byte-for-byte with ReDMCSB `X30J/SWOOSH`,
 and confirmed the original `GRAPHICS.DAT` header plus the known `SWOOSH` and
-`FTLCODE` disk offsets. It writes no game data to disk. This is only the
-archive-to-file boundary; X68000 graphics/dungeon interpretation, audio,
-input, and M12/runtime handoff remain unsupported.
+`FTLCODE` disk offsets. The same real-media test now parses all 562 X30J
+`GRAPHICS.DAT` format-1 metadata spans using the big-endian header/tables and
+ReDMCSB offset rule. It writes no game data to disk. Graphic item
+decoding/rendering, an X68000 `DUNGEON.DAT` parser, audio, input, and M12/runtime
+launch support remain open; the bounded parser is not connected to a platform
+launch route.
 
 The four local SNES ROMs were also streamed directly from the original 7z
 archive without saving their contents. Each has a valid `DUNGEON MASTER`
