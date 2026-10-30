@@ -1162,6 +1162,81 @@ int dm2_v1_gdat_hud_m11_command_plan_build_source_move_arrows(
     return 1;
 }
 
+int dm2_v1_gdat_hud_m11_command_plan_append_amiga_squad_figure(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_GdatHudM11CommandPlan *plan,
+    int hero_index,
+    int relative_position,
+    int figure_direction,
+    int invisible,
+    const DM2_V1_ViewportRect *destination,
+    uint32_t destination_table_hash)
+{
+    DM2_V1_GdatImageMetadata metadata;
+    DM2_V1_GdatHudM11Command *command;
+    uint8_t *cropped;
+    int frame;
+
+    if (!loader || loader->gdat_version != 5u || !loader->big_endian ||
+        !dm2_v1_asset_loader_uses_physical_16_color_palette(loader) ||
+        !plan || !plan->valid || !destination || hero_index < 0 ||
+        hero_index >= DM2_V1_HUD_CHAMPION_SLOT_COUNT ||
+        relative_position < 0 || relative_position > 3 ||
+        figure_direction < 0 || figure_direction > 3 ||
+        destination->x < 0 || destination->y < 0 || destination->w != 17 ||
+        destination->h != 17 ||
+        destination->x + destination->w > DM2_VP_WIDTH ||
+        destination->y + destination->h > DM2_VP_HEIGHT ||
+        !destination_table_hash ||
+        plan->command_count >= DM2_V1_GDAT_HUD_M11_COMMAND_MAX ||
+        !dm2_v1_asset_load_image_metadata(
+            loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 6, hero_index,
+            &metadata) || metadata.bits_per_pixel != 4u ||
+        metadata.width != 136u || metadata.height != 17u) return 0;
+
+    if (!dm2_v1_gdat_hud_add_command(
+            loader, plan, DM2_V1_GDAT_HUD_M11_COMMAND_AMIGA_SQUAD_FIGURE,
+            -0x7100 - hero_index, destination,
+            DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 6, hero_index)) return 0;
+    command = &plan->commands[plan->command_count - 1];
+    if (command->format != DM2_IMG_FMT_IMG3 || command->width != 136 ||
+        command->height != 17 || command->destination.w != 17 ||
+        command->destination.h != 17) {
+        dm2_v1_gdat_hud_m11_command_plan_free(plan);
+        return 0;
+    }
+    frame = figure_direction + (invisible ? 4 : 0);
+    cropped = (uint8_t *)malloc(17u * 17u);
+    if (!cropped) {
+        dm2_v1_gdat_hud_m11_command_plan_free(plan);
+        return 0;
+    }
+    for (int y = 0; y < 17; ++y) {
+        memcpy(cropped + y * 17,
+            command->pixels + y * 136 + frame * 17, 17u);
+    }
+    dm2_v1_asset_free_pixels(command->pixels);
+    command->pixels = cropped;
+    command->width = 17;
+    command->height = 17;
+    command->source_transparency_key = 12u;
+    command->source_state_flags = (uint8_t)(
+        (figure_direction << DM2_V1_GDAT_HUD_M11_TOWNS_DIRECTION_SHIFT) |
+        (invisible ? DM2_V1_GDAT_HUD_M11_TOWNS_INVISIBLE_FIGURE : 0u));
+    command->destination_rect_id = (uint16_t)(0x53 + relative_position);
+    command->destination_table_hash = destination_table_hash;
+    command->animation_direction = (uint8_t)figure_direction;
+    command->animation_frame = (uint8_t)(invisible ? 1u : 0u);
+    command->decoded_hash = dm2_v1_gdat_hud_m11_command_pixel_hash(command);
+    if (!command->decoded_hash) {
+        dm2_v1_gdat_hud_m11_command_plan_free(plan);
+        return 0;
+    }
+    plan->command_hash = dm2_v1_gdat_hud_command_hash(plan);
+    plan->valid = plan->command_hash != 0u;
+    return plan->valid;
+}
+
 int dm2_v1_gdat_hud_m11_command_plan_build_mac_move_arrows(
     const DM2_V1_AssetLoader *loader,
     const DM2_V1_ViewportRect destinations[6],

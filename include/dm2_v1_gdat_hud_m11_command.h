@@ -24,7 +24,8 @@ enum {
     DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_SELECTED_HERO_ICON,
     DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_ENCHANTMENT_AURA,
     DM2_V1_GDAT_HUD_M11_COMMAND_FMTOWNS_STATUS_PANE,
-    DM2_V1_GDAT_HUD_M11_COMMAND_MAC_STATUS_PANE
+    DM2_V1_GDAT_HUD_M11_COMMAND_MAC_STATUS_PANE,
+    DM2_V1_GDAT_HUD_M11_COMMAND_AMIGA_SQUAD_FIGURE
 };
 
 enum {
@@ -209,6 +210,15 @@ int dm2_v1_gdat_hud_m11_command_plan_build_source_move_arrows(
     const DM2_V1_AssetLoader *loader,
     const DM2_V1_ViewportRect destinations[6],
     DM2_V1_GdatHudM11CommandPlan *out_plan);
+int dm2_v1_gdat_hud_m11_command_plan_append_amiga_squad_figure(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_GdatHudM11CommandPlan *plan,
+    int hero_index,
+    int relative_position,
+    int figure_direction,
+    int invisible,
+    const DM2_V1_ViewportRect *destination,
+    uint32_t destination_table_hash);
 int dm2_v1_gdat_hud_m11_command_plan_build_mac_native(
     const DM2_V1_AssetLoader *loader,
     const DM2_V1_ViewportRect arrow_destinations[6],

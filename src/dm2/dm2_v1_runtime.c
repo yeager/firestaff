@@ -12335,6 +12335,17 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
         rt->source_party.heros_in_party <= DM2_V1_HUD_CHAMPION_SLOT_COUNT &&
         rt->session_snapshot.leader_index < hud.champion_count &&
         party_direction >= 0 && party_direction <= 3;
+    hud.amiga_squad_route_valid =
+        rt->boot && rt->boot->platform == DM2_PLATFORM_AMIGA_EN &&
+        !rt->outdoor && rt->source_party_valid &&
+        rt->source_curacthero == 0 &&
+        rt->source_party.heros_in_party == hud.champion_count &&
+        rt->source_party.heros_in_party > 0 &&
+        rt->source_party.heros_in_party <= DM2_V1_HUD_CHAMPION_SLOT_COUNT &&
+        party_direction >= 0 && party_direction <= 3;
+    hud.amiga_party_direction = (uint8_t)(party_direction & 3);
+    hud.amiga_invisibility_source_bound = hud.amiga_squad_route_valid;
+    hud.amiga_invisibility = rt->source_savegames1[2];
     hud.towns_selected_hero_source_bound =
         hud.towns_squad_route_valid && rt->source_curacthero > 0 &&
         rt->source_curacthero <= rt->source_party.heros_in_party;
@@ -12450,6 +12461,19 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
                 source_hero->herotype <= 15) {
                 dst->portrait_index = (uint8_t)source_hero->herotype;
                 dst->portrait_type_source_bound = 1;
+            }
+        }
+        if (hud.amiga_squad_route_valid &&
+            slot < rt->source_party.heros_in_party) {
+            const DM2_V1_Hero *source_hero = &rt->source_party.hero[slot];
+            dst->occupied = 1;
+            if (source_hero->partypos >= 0 && source_hero->partypos <= 3) {
+                dst->amiga_party_position = (uint8_t)source_hero->partypos;
+                dst->amiga_party_position_source_bound = 1;
+            }
+            if (source_hero->absdir >= 0 && source_hero->absdir <= 3) {
+                dst->amiga_absdir = (uint8_t)source_hero->absdir;
+                dst->amiga_absdir_source_bound = 1;
             }
         }
         if (rt->source_party_valid &&

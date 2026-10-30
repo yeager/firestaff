@@ -10068,6 +10068,122 @@ static int dm2_v1_render_fmtowns_squad_backdrop(
     return 1;
 }
 
+static int dm2_v1_render_amiga_squad_figures(
+    DM2_V1_ViewportState *s, uint8_t *target, int stride,
+    const DM2_V1_GdatHudM11CommandPlan *plan)
+{
+    uint8_t seen_positions = 0u;
+    if (!s || !target || stride < DM2_VP_WIDTH || !plan || !plan->valid ||
+        !s->asset_loader || s->asset_loader->gdat_version != 5u ||
+        !s->asset_loader->big_endian || !s->asset_profile ||
+        !s->hud_party_valid || !s->hud_party.amiga_squad_route_valid ||
+        !s->hud_party.amiga_invisibility_source_bound ||
+        s->hud_party.amiga_party_direction > 3u) return 0;
+    for (int i = 0; i < plan->command_count; ++i) {
+        const DM2_V1_GdatHudM11Command *command = &plan->commands[i];
+        DM2_V1_GdatImageMetadata metadata;
+        DM2_V1_BootExpandedRectReceipt formation;
+        DM2_V1_InterfaceRect figure_rect;
+        uint8_t palette16[16];
+        uint32_t palette_hash = 0u;
+        int hero_slot;
+        int relative;
+        int direction;
+        uint8_t flags;
+        if (command->kind !=
+                DM2_V1_GDAT_HUD_M11_COMMAND_AMIGA_SQUAD_FIGURE) continue;
+        hero_slot = -0x7100 - command->viewport_gdat_index;
+        if (hero_slot < 0 || hero_slot >= s->hud_party.champion_count ||
+            hero_slot >= DM2_V1_HUD_CHAMPION_SLOT_COUNT) return 0;
+        const DM2_V1_HudChampionState *hero =
+            &s->hud_party.champions[hero_slot];
+        if (!hero->occupied || !hero->current_hp_source_bound ||
+            hero->current_hp == 0 ||
+            !hero->amiga_party_position_source_bound ||
+            !hero->amiga_absdir_source_bound ||
+            hero->amiga_party_position > 3u || hero->amiga_absdir > 3u)
+            return 0;
+        relative = (hero->amiga_party_position + 4 -
+            s->hud_party.amiga_party_direction) & 3;
+        direction = (hero->amiga_absdir + 4 -
+            s->hud_party.amiga_party_direction) & 3;
+        flags = (uint8_t)((direction <<
+            DM2_V1_GDAT_HUD_M11_TOWNS_DIRECTION_SHIFT) |
+            (s->hud_party.amiga_invisibility
+                ? DM2_V1_GDAT_HUD_M11_TOWNS_INVISIBLE_FIGURE : 0u));
+        if ((seen_positions & (uint8_t)(1u << relative)) ||
+            command->gdat_category != DM2_GDAT_CATEGORY_INTERFACE_GENERAL ||
+            command->gdat_index != 6 || command->gdat_field != hero_slot ||
+            command->destination_rect_id != (uint16_t)(0x53 + relative) ||
+            command->source_state_flags != flags ||
+            command->source_transparency_key != 12u ||
+            command->animation_direction != (uint8_t)direction ||
+            command->animation_frame !=
+                (uint8_t)(s->hud_party.amiga_invisibility ? 1u : 0u) ||
+            command->destination.w != 17 || command->destination.h != 17 ||
+            command->width != 17 || command->height != 17 ||
+            command->format != DM2_IMG_FMT_IMG3 || !command->pixels ||
+            !command->raw_hash || !command->raw_byte_count ||
+            !command->material_source_bytes ||
+            !command->material_source_byte_count ||
+            !command->material_receipt_hash ||
+            !command->destination_table_hash || !command->palette_hash ||
+            command->decoded_hash !=
+                dm2_v1_gdat_hud_m11_command_pixel_hash(command) ||
+            !dm2_v1_asset_load_image_metadata(
+                s->asset_loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
+                6, hero_slot, &metadata) ||
+            metadata.bits_per_pixel != 4u || metadata.width != 136u ||
+            metadata.height != 17u ||
+            !dm2_v1_asset_load_image_local_palette(
+                s->asset_loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL,
+                6, hero_slot, palette16, &palette_hash) ||
+            !palette_hash || palette_hash != command->palette_hash ||
+            memcmp(palette16, command->palette16, sizeof(palette16)) != 0 ||
+            !dm2_v1_boot_query_expanded_rect_receipt(
+                (const DM2_V1_BootProfile *)s->asset_profile,
+                (uint16_t)(0x4f + relative), &formation) ||
+            !formation.valid ||
+            formation.raw4_hash != command->destination_table_hash ||
+            !dm2_v1_boot_query_blit_rect_for_dimensions(
+                (const DM2_V1_BootProfile *)s->asset_profile,
+                (uint16_t)(0x53 + relative), 17, 17, &figure_rect) ||
+            figure_rect.x != command->destination.x ||
+            figure_rect.y != command->destination.y ||
+            figure_rect.w != command->destination.w ||
+            figure_rect.h != command->destination.h) return 0;
+
+        memcpy(s->active_asset_palette16, command->palette16,
+               sizeof(s->active_asset_palette16));
+        s->active_asset_palette_hash = command->palette_hash;
+        s->active_asset_palette_ready = 1;
+        for (int y = 0; y < 17; ++y) {
+            int fy = command->destination.y + y;
+            if ((unsigned)fy >=
+                (unsigned)dm2_v1_viewport_draw_height(s)) continue;
+            for (int x = 0; x < 17; ++x) {
+                int fx = command->destination.x + x;
+                uint8_t pixel = command->pixels[y * 17 + x];
+                if (pixel == command->source_transparency_key ||
+                    (unsigned)fx >=
+                        (unsigned)dm2_v1_viewport_draw_width(s)) continue;
+                target[fy * stride + fx] = dm2_v1_material_palette_color(
+                    s, pixel,
+                    &s->gdat_interface_palette_consumed_count);
+            }
+        }
+        seen_positions |= (uint8_t)(1u << relative);
+        ++s->gdat_hud_material_plan_consumed_count;
+        ++s->asset_hud_portrait_drawn_count;
+        ++s->asset_hud_core_drawn_count;
+        s->last_hud_core_gdat_hash = dm2_v1_viewport_hash_gdat_asset(
+            s->last_hud_core_gdat_hash, command->viewport_gdat_index,
+            command->width, command->height);
+        s->last_hud_core_pixel_count += 17u * 17u;
+    }
+    return 1;
+}
+
 void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
 {
     DM2_V1_HudChromeRenderPlan plan;
@@ -10449,6 +10565,14 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                                           plan.portrait_panel_gdat_index)) {
             dm2_v1_block_source_material(
                 s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+        }
+        if (amiga_move_arrow_hud && s->hud_party_valid &&
+            s->hud_party.amiga_squad_route_valid &&
+            !dm2_v1_render_amiga_squad_figures(
+                s, vp, stride, s->gdat_hud_material_plan)) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+            return;
         }
         for (int slot = 0; slot < plan.champion_slot_count; ++slot) {
             if (plan.champion_slots[slot].occupied) {

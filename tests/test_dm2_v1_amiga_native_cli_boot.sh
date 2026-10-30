@@ -116,6 +116,12 @@ for arrow, (x0, y0, arrow_width, arrow_height) in enumerate(arrow_rects):
     if sum(pixel != b"\0\0\0" for pixel in arrow_pixels) < 100:
         raise SystemExit(
             f"FAIL: authentic DM2 Amiga movement arrow {arrow} is missing")
+amiga_squad_figure = [pixels[y * width + x]
+                      for y in range(62, 79)
+                      for x in range(236, 253)]
+if sum(pixel != b"\0\0\0" for pixel in amiga_squad_figure) < 50:
+    raise SystemExit(
+        "FAIL: authentic DM2 Amiga squad figure is missing from RECT_53")
 right_panel_pixels = [pixels[y * width + x]
                       for y in range(height) for x in range(224, width)]
 if sum(pixel != b"\0\0\0" for pixel in right_panel_pixels) < 5000:
