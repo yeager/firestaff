@@ -1,5 +1,13 @@
 # Firestaff TODO — DM1
 
+2026-10-30 ReDMCSB F0035 leader-hand name clear: M11's DM1 leader-hand
+name renderer now invokes the source-mapped F0035 C017 black-fill adapter
+before the F0034 name draw. ReDMCSB `OBJECT.C:274-286` clears the same
+source-owned region; the focused adapter regression covers C017 and black
+dispatch, while original-asset capture and edition-specific rendering remain
+open. This is one narrow runtime integration, not proof of complete DM1 or
+CSB function/platform parity.
+
 2026-10-30 PC34 M12 startup route recheck: the authentic
 `m12_main_menu_dm1-pc_runtime_real_media` test passed. Selecting DM1 → PC from
 the no-game menu reached the PC34 first runtime, and the test confirmed that
