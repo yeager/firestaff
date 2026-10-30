@@ -111,7 +111,7 @@ This is the single richest authoritative reference for DM/CSB mechanics. ALL pag
 ### C2. skproject (for DM2/Skullkeep)
 
 **GitHub:** `https://github.com/gbsphenx/skproject`
-**Locked HEAD:** `585ef61aea1e9b33261cfd8a9712cadbb40604b9`
+**Locked HEAD:** `2c59a2c5a7978923ff5c822c15c3479e4d448493`
 **N2 mirror:** `~/.firestaff/data/firestaff-dm2-sources/skproject.git`
 **Sphenx SKWin:** `https://dmbuilder.sphenxmusics.fr/skwin.php`
 **Sphenx package:** `https://dmbuilder.sphenxmusics.fr/skwin/SkWinCurrent.zip`
