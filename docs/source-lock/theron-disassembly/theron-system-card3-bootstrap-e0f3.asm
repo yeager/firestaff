@@ -64,9 +64,9 @@ e15c: 85 fb     sta $FB
 e15e: 20 f1 ef  jsr $EFF1
 e161: 68        pla
 e162: 93 04 59 22 tst #$04 $2259
-e166: d0 0e     bne $E176
+e166: d0 0e     bne $E172
 e168: cd 6b 22  cmp $226B
-e16b: b0 07     bcs $E174
+e16b: b0 07     bcs $E170
 e16d: f8        sed
 e16e: 18        clc
 e16f: 69 01     adc #$01
