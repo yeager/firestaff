@@ -276,14 +276,32 @@ static void test_private_db0_recycler_candidate(void)
               !game_owner.source_game_load_session_ready,
           "private DB0 recycler candidate leaves c_map, cursor and session untouched");
 
-    /* c_record.cpp:DAF9-DB2A only applies DB2's TextMode barrier.  A DB2
-     * request then follows DACC to the next link; it must never be exposed
-     * as a direct-return candidate at DB88. */
+    /* c_record.cpp:DAF9-DB2A only applies DB2's TextMode barrier. Protected
+     * text and ordinary DB2 records both follow DACC to the next link; DB2
+     * itself must never be exposed as a direct-return candidate at DB88. */
+    ground[0] = (uint16_t)mk_handle(2, 0);
+    wr16(game_owner.record_pools.pools[2].bytes,
+         (int16_t)DM2_V1_RECORD_HANDLE_END);
+    wr16(game_owner.record_pools.pools[2].bytes + 2u,
+         (int16_t)(0x0002u | (4u << 11)));
     memset(&candidate, 0, sizeof(candidate));
     CHECK(!dm2_v1_sksave_game_load_owner_recycler_candidate(
               &game_owner, 2u, &candidate) && !candidate.valid &&
               !candidate.found,
           "private recycler rejects DB2 because source never returns Text at DB88");
+    wr16(game_owner.record_pools.pools[2].bytes + 2u, 0u);
+    memset(&candidate, 0, sizeof(candidate));
+    CHECK(!dm2_v1_sksave_game_load_owner_recycler_candidate(
+              &game_owner, 2u, &candidate) && !candidate.valid &&
+              !candidate.found,
+          "private recycler also skips ordinary DB2 records instead of returning them");
+    ground[0] = (uint16_t)mk_handle(2, 0);
+    wr16(game_owner.record_pools.pools[2].bytes, mk_handle(0, 1));
+    memset(&candidate, 0, sizeof(candidate));
+    CHECK(dm2_v1_sksave_game_load_owner_db0_recycler_candidate(
+              &game_owner, &candidate) && candidate.found &&
+              candidate.selected_link == (uint16_t)mk_handle(0, 1),
+          "private recycler advances past ordinary DB2 records to a later DB0 candidate");
 
     /* DB3 table1d324c stops the tile chain before its following DB0 link. */
     ground[0] = (uint16_t)mk_handle(3, 0);

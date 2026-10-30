@@ -466,12 +466,12 @@ int dm2_v1_sksave_game_load_owner_db0_recycler_candidate(
     const DM2_V1_SksaveGameLoadOwner *owner,
     DM2_V1_SksaveDb0RecyclerCandidate *out_candidate);
 
-/* The source's non-mutating recycler candidate audit. DB0, DB2, DB3, DB7 and
- * DB9 may produce direct-return candidates; DB5/DB6/DB8/DB10 may produce a
- * source cut-only candidate after their byte guards. DB2/Text protected
- * records are never returned or mutated. DB4, creature-bearing DB14 tiles,
- * DB13, DB15 and malformed pools remain fail-closed until their source owners
- * are complete. */
+/* The source's non-mutating recycler candidate audit. DB0, DB3, DB7 and DB9
+ * may produce direct-return candidates; DB2 applies its TextMode barrier and
+ * continues the chain without becoming a candidate. DB5/DB6/DB8/DB10 may
+ * produce source cut/relocation candidates after their byte guards. DB4,
+ * creature-bearing DB14 tiles, DB13, DB15 and malformed pools remain
+ * fail-closed until their source owners are complete. */
 int dm2_v1_sksave_game_load_owner_recycler_candidate(
     const DM2_V1_SksaveGameLoadOwner *owner, uint8_t requested_db,
     DM2_V1_SksaveRecyclerCandidate *out_candidate);
