@@ -11,9 +11,8 @@ exact register tuple. It fetches the visible 40×28 cells, applies captured
 PND flips, uses Saturn's 32-byte character-number base and 8bpp pixel rows,
 and returns an index plane plus CRAM colors. The result is marked
 capture-only; the plane decoder does not assign it a named retail asset, host
-presentation crop, or production renderer permission. Frame-239 layer priority
-and color selection are verified by the separate full-stack capture check in
-[`nexus_vdp2_frame239_composition.md`](nexus_vdp2_frame239_composition.md).
+presentation crop, or production renderer permission. Layer priority and color selection at frames 239 and 397 are verified by the separate full-stack capture check in
+[`nexus_ymir_vdp_priority_composition.md`](nexus_ymir_vdp_priority_composition.md).
 
 The hash-pinned real-data test decodes 1,120 tiles with 11,232 nonzero and
 60,448 transparent pixels. Comparing each nontransparent native pixel's

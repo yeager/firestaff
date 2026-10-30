@@ -747,7 +747,7 @@ static uint8_t ymir_sprite_priority(const uint8_t *registers,
 }
 
 static void ymir_stack_consider(
-    Nexus_V1_Vdp2YmirFrame239StackPlane *plane, size_t pixel,
+    Nexus_V1_Vdp2YmirPriorityStackPlane *plane, size_t pixel,
     uint8_t priority, uint8_t ymir_layer, uint8_t output_layer,
     uint32_t rgba)
 {
@@ -765,8 +765,8 @@ static void ymir_stack_consider(
     plane->rgba_buffer[pixel] = rgba;
 }
 
-int nexus_v1_vdp2_capture_compose_ymir_frame239_priority_stack(
-    Nexus_V1_Vdp2YmirFrame239StackPlane *plane,
+int nexus_v1_vdp2_capture_compose_ymir_priority_stack(
+    Nexus_V1_Vdp2YmirPriorityStackPlane *plane,
     const uint8_t *vdp1_framebuffer, size_t vdp1_framebuffer_size,
     const uint8_t *vdp2_vram, size_t vdp2_vram_size,
     const uint8_t *vdp2_cram, size_t vdp2_cram_size,
@@ -774,9 +774,9 @@ int nexus_v1_vdp2_capture_compose_ymir_frame239_priority_stack(
     Nexus_V1_SaturnVdp2RegisterByteOrder register_byte_order,
     int original_ymir_capture_verified,
     int vdp1_framebuffer_verified,
-    Nexus_V1_Vdp2YmirFrame239StackReceipt *out_receipt)
+    Nexus_V1_Vdp2YmirPriorityStackReceipt *out_receipt)
 {
-    Nexus_V1_Vdp2YmirFrame239StackReceipt receipt;
+    Nexus_V1_Vdp2YmirPriorityStackReceipt receipt;
     Nexus_V1_Vdp2CapturePlane *nbg0 = NULL, *nbg1 = NULL, *nbg2 = NULL;
     Nexus_V1_Vdp2Nbg0CapturePlaneReceipt r0;
     Nexus_V1_Vdp2Nbg1CapturePlaneReceipt r1;

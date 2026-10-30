@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare the capture-only frame-239 stack against its hash-pinned Ymir screenshot."""
+"""Compare an authentic Ymir gameplay priority stack with its screenshot."""
 
 from __future__ import annotations
 
@@ -10,20 +10,32 @@ from pathlib import Path
 from PIL import Image
 
 
-SCREENSHOT_SHA256 = "ffd622503bafd437e4f20513e13b7ea3983f1240c930b755ae4b24986e5c90bf"
 WIDTH = 320
 HEIGHT = 224
 EXPECTED_LAYERS = {0: 60_375, 1: 3_954, 2: 148, 3: 7_203}
+CAPTURE_EXPECTATIONS = {
+    239: {
+        "screenshot_sha256": "ffd622503bafd437e4f20513e13b7ea3983f1240c930b755ae4b24986e5c90bf",
+        "stack_sha256": "1fcf190a75bc137f312160e92dfb4d5d0d0b2e1fa84144a035bac15ba974199b",
+    },
+    397: {
+        "screenshot_sha256": "b03843d943bfade7b68d19c8f195896b59f8aa254c7a8bc549abe3b702d510cc",
+        "stack_sha256": "402ca6d5d295214f68d574097753ee04c6194f42d82bb832bd902052bbbe97e3",
+    },
+}
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("stack", type=Path, help="Raw layer,R,G,B stack capture")
     parser.add_argument("screenshot", type=Path, help="640x448 Ymir screenshot")
+    parser.add_argument("--capture-frame", type=int, choices=CAPTURE_EXPECTATIONS,
+                        required=True)
     args = parser.parse_args()
     screenshot_bytes = args.screenshot.read_bytes()
     digest = hashlib.sha256(screenshot_bytes).hexdigest()
-    if digest != SCREENSHOT_SHA256:
+    expected = CAPTURE_EXPECTATIONS[args.capture_frame]
+    if digest != expected["screenshot_sha256"]:
         raise SystemExit(f"screenshot SHA-256 mismatch: {digest}")
     image = Image.open(args.screenshot).convert("RGB")
     if image.size != (WIDTH * 2, HEIGHT * 2):
@@ -31,6 +43,9 @@ def main() -> int:
     stack = args.stack.read_bytes()
     if len(stack) != WIDTH * HEIGHT * 4:
         raise SystemExit(f"unexpected stack byte count: {len(stack)}")
+    stack_digest = hashlib.sha256(stack).hexdigest()
+    if stack_digest != expected["stack_sha256"]:
+        raise SystemExit(f"priority stack SHA-256 mismatch: {stack_digest}")
 
     counts = {layer: 0 for layer in EXPECTED_LAYERS}
     max_error = 0
@@ -51,7 +66,7 @@ def main() -> int:
                     differing_samples += error != 0
     if counts != EXPECTED_LAYERS:
         raise SystemExit(f"layer counts mismatch: {counts}")
-    print(f"pixels={WIDTH * HEIGHT}; doubled_samples={WIDTH * HEIGHT * 4}")
+    print(f"frame={args.capture_frame}; pixels={WIDTH * HEIGHT}; doubled_samples={WIDTH * HEIGHT * 4}")
     print(f"layer_counts={counts}; max_channel_error={max_error}; differing_samples={differing_samples}")
     return 0 if max_error == 0 and differing_samples == 0 else 1
 

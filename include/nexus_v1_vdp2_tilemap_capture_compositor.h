@@ -162,7 +162,7 @@ int nexus_v1_vdp2_capture_decode_ymir_nbg1_tilemap_plane(
     int original_ymir_capture_verified,
     Nexus_V1_Vdp2Nbg1CapturePlaneReceipt *out_receipt);
 
-/* Capture-only pixel-priority stack for the hash-pinned Ymir frame 239.
+/* Capture-only pixel-priority stack for a hash-verified Ymir gameplay frame.
  * The VDP1 framebuffer is RGB555 when bit 15 is set and palette/type-6 data
  * otherwise. This lane rejects unsupported color-calculation and shadow
  * cases; it does not grant production renderer permission. */
@@ -170,7 +170,7 @@ typedef struct {
     uint32_t rgba_buffer[NEXUS_V1_VDP2_CAPTURE_PIXELS];
     uint8_t top_layer_buffer[NEXUS_V1_VDP2_CAPTURE_PIXELS];
     uint8_t priority_buffer[NEXUS_V1_VDP2_CAPTURE_PIXELS];
-} Nexus_V1_Vdp2YmirFrame239StackPlane;
+} Nexus_V1_Vdp2YmirPriorityStackPlane;
 
 typedef struct {
     int valid;
@@ -188,10 +188,10 @@ typedef struct {
     int nbg1_pixels;
     int nbg2_pixels;
     int empty_pixels;
-} Nexus_V1_Vdp2YmirFrame239StackReceipt;
+} Nexus_V1_Vdp2YmirPriorityStackReceipt;
 
-int nexus_v1_vdp2_capture_compose_ymir_frame239_priority_stack(
-    Nexus_V1_Vdp2YmirFrame239StackPlane *plane,
+int nexus_v1_vdp2_capture_compose_ymir_priority_stack(
+    Nexus_V1_Vdp2YmirPriorityStackPlane *plane,
     const uint8_t *vdp1_framebuffer, size_t vdp1_framebuffer_size,
     const uint8_t *vdp2_vram, size_t vdp2_vram_size,
     const uint8_t *vdp2_cram, size_t vdp2_cram_size,
@@ -199,7 +199,7 @@ int nexus_v1_vdp2_capture_compose_ymir_frame239_priority_stack(
     Nexus_V1_SaturnVdp2RegisterByteOrder register_byte_order,
     int original_ymir_capture_verified,
     int vdp1_framebuffer_verified,
-    Nexus_V1_Vdp2YmirFrame239StackReceipt *out_receipt);
+    Nexus_V1_Vdp2YmirPriorityStackReceipt *out_receipt);
 
 /* Explicit source/VRAM binding for one raw Saturn frame. The caller supplies
  * canonical source bytes and the already-proven VDP2-VRAM offsets; this

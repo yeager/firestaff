@@ -11,14 +11,14 @@ register tuple. It applies PND flips, Saturn's 32-byte character-number base,
 8bpp pixel rows, and the captured CRAM palette. The plane output is marked
 capture-only; it does not claim a retail asset owner, presentation crop, or
 renderer permission. Full-stack layer priority and color selection are
-separately verified for frame 239 in
-[`nexus_vdp2_frame239_composition.md`](nexus_vdp2_frame239_composition.md).
+separately verified for gameplay frames 239 and 397 in
+[`nexus_ymir_vdp_priority_composition.md`](nexus_ymir_vdp_priority_composition.md).
 
 The real-data test decodes 1,120 cells, with 148 nonzero and 71,532
 transparent pixels. All 148 nontransparent pixel colors match the upper-left
 sample of the authentic 2× Ymir screenshot within eight RGB channel levels.
 The measured maximum RGB channel error is seven. This verifies the captured
-NBG1 fetch plane. The separately documented frame-239 stack comparison checks
+NBG1 fetch plane. The separately documented frame-239 and frame-397 stack comparisons check
 all four screenshot samples per native pixel and matches exactly.
 
 Set `FIRESTAFF_NEXUS_YMIR_NBG2_VRAM`, `FIRESTAFF_NEXUS_YMIR_NBG2_CRAM`, and
