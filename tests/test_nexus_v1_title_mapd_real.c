@@ -231,6 +231,13 @@ int main(void)
         nexus_fb_init(&s_frame);
         nexus_render_title(&title, &n_frame, 0);
         nexus_render_title(&title, &s_frame, 161);
+        check(nexus_render_boot_title_frame(
+                  &title, &n_frame, nexus_title_boot_warning_frames()) == 1,
+              "boot warning handoff accepts title-local frame zero");
+        check(nexus_render_boot_title_frame(
+                  &title, &e_frame,
+                  nexus_title_boot_warning_frames() + 40) == 1,
+              "boot-global frame 88 selects the retail E map");
         for (pixel = 0U; pixel < sizeof(n_frame.color_buffer); ++pixel) {
             if (n_frame.color_buffer[pixel] != 0U) ++nonzero;
         }
