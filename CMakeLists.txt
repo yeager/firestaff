@@ -45260,6 +45260,26 @@ add_test(NAME nexus_v1_title_dgt2_pp_payload_admission_real
 set_tests_properties(nexus_v1_title_dgt2_pp_payload_admission_real PROPERTIES
     ENVIRONMENT "FIRESTAFF_NEXUS_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (Japan).cue"
     SKIP_RETURN_CODE 77 LABELS "nexus;saturn;title;real_data;skip_safe")
+add_executable(test_nexus_v1_vdp1_frame13162_dgn_window
+    tests/test_nexus_v1_vdp1_frame13162_dgn_window.c
+    src/shared/firestaff_x68k_media_receipt.c
+    src/shared/firestaff_x68k_media_classify.c)
+target_include_directories(test_nexus_v1_vdp1_frame13162_dgn_window PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_vdp1_frame13162_dgn_window PRIVATE
+    firestaff_nexus)
+if(NOT MSVC)
+    target_compile_options(test_nexus_v1_vdp1_frame13162_dgn_window PRIVATE
+        -std=c99 -Wall -Wextra -pedantic -O2)
+endif()
+add_test(NAME nexus_v1_vdp1_frame13162_dgn_window
+    COMMAND test_nexus_v1_vdp1_frame13162_dgn_window
+        ${CMAKE_CURRENT_SOURCE_DIR}/parity-evidence/verification/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030
+        ${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/LEV00.DGN)
+set_tests_properties(nexus_v1_vdp1_frame13162_dgn_window PROPERTIES
+    SKIP_RETURN_CODE 77
+    LABELS "nexus;saturn;vdp1;dgn;frame13162;real-data;skip-safe")
+
 add_executable(test_nexus_v1_title_mapd_tibg_admission
     tests/test_nexus_v1_title_mapd_tibg_admission.c)
 target_sources(test_nexus_v1_title_mapd_tibg_admission PRIVATE
