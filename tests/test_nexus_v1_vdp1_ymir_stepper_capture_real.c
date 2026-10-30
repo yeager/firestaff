@@ -112,11 +112,11 @@ static int read_trace_fields(char *line, char *fields[22])
     while (count < 22) {
         fields[count++] = p;
         p = strchr(p, ',');
-        if (!p) break;
+        if (!p) return count == 22;
         *p++ = '\0';
     }
-    if (count != 22) return 0;
-    return 1;
+    /* Reject extra columns rather than silently ignoring unpinned fields. */
+    return strchr(p, ',') == NULL;
 }
 
 static int parse_long_field(const char *field, long *out)
