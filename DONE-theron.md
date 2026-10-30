@@ -15,10 +15,9 @@ Added `verify_theron_jp_ram_loop_source_candidates.py` and a focused regression
 for the bounded `$40D2-$40E3` instruction window. The verifier validates the
 authentic Japanese Rev. 1 Track 02 bytes and the dispatch/follow trace structure,
 then compares each loop fetch byte with the latest address-scoped write, with
-ordered `$EA99` read candidates within 16 shared events for `$EA9C` writes
-for `$EA9C` writes. Three repeated runs against the cold v11 capture observed
-all 18
-physical bytes across 165 fetch rows: all 495 byte slots matched the latest
+ordered `$EA99` read candidates within 16 shared events for `$EA9C` writes.
+Three repeated runs against the cold v11 capture observed
+all 18 physical bytes across 165 fetch rows: all 495 byte slots matched the latest
 address-scoped writer record. The v11 target-write trace covered
 `$1000D9-$1000DB`; the v12 target-write trace records writes across all 18
 addresses. Ninety-five slots
