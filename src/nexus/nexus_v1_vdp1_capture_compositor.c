@@ -602,7 +602,7 @@ int nexus_v1_vdp1_capture_composite_mode1(
             int codes_seen = 0;
             for (column = 0; column < command.texture_width; ++column) {
                 int pixel = row * command.texture_width + column;
-                uint8_t packed = input->texture_span[pixel >> 1];
+                uint8_t packed = source_image[pixel >> 1];
                 uint8_t texel = (pixel & 1) ? packed & 15U : packed >> 4U;
                 if (texel == 15U) {
                     source_has_end_code = 1;
@@ -627,7 +627,7 @@ int nexus_v1_vdp1_capture_composite_mode1(
         return 0;
     }
     (void)composite_triangle(working, xy, 0, 1, 2,
-        input->texture_span, command.texture_width, command.texture_height,
+        source_image, command.texture_width, command.texture_height,
         input->palette_slot_base, input->system_clip_state_verified,
         input->system_clip_x, input->system_clip_y,
         input->user_clip_state_verified, input->user_clip_x0,
@@ -636,7 +636,7 @@ int nexus_v1_vdp1_capture_composite_mode1(
         &receipt.written_pixels, &receipt.transparent_pixels,
         &receipt.end_code_pixels, end_after);
     (void)composite_triangle(working, xy, 0, 2, 3,
-        input->texture_span, command.texture_width, command.texture_height,
+        source_image, command.texture_width, command.texture_height,
         input->palette_slot_base, input->system_clip_state_verified,
         input->system_clip_x, input->system_clip_y,
         input->user_clip_state_verified, input->user_clip_x0,
