@@ -747,6 +747,23 @@ assets, mechanics, or parity.
   target. Locate the current enablement site at
   `theron_v1_world_dispatch_source_actuator_events()` before implementing.
 
+## 2026-11-02 — available Akutuba state does not reach a stair tile
+
+- Built and ran `test_theron_v1_track02_dungeon_loader` from the current source
+  on TRV2 against the installed authentic US and JP Track 02 data. The test
+  passed. A temporary US source-map census found no stair-class tile on
+  Akutuba map 0; the first US Akutuba stairs are on map 1 at `(8,1)` and
+  `(17,8)`, with five more on map 2 and eighteen on map 3.
+- The retained authentic post-Akutuba reference state
+  (`f17f377df210b4a3ae904a13fb85a7f0`) is position-bound at `(2,3)` in the
+  existing command captures, but it is not bound to a stair-bearing source
+  tile. Do not use it to claim a stair transition or infer a destination from
+  neighboring levels.
+- Next obtain an authentic original-runtime state with its active Track 02
+  level and a reachable stair tile bound in the same capture, then record a
+  positive stair traversal and no-input control before implementing that
+  specific transition. Keep all other stair routes blocked.
+
 ## 2026-10-30 — identify accepted UP+II movement-state transfer
 
 - A corrected authentic JP Rev. 1 save-state replay used `ii@470:140,up@471:120`.

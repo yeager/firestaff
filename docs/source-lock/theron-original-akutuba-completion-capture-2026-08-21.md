@@ -1,5 +1,16 @@
 # Theron original Akutuba completion capture — 2026-08-21
 
+## 2026-11-02 — stair-capture state eligibility
+
+The current authentic US Track 02 source-map census contains no stair-class
+tile on Akutuba map 0. The first Akutuba stairs occur on map 1 at `(8,1)` and
+`(17,8)`; maps 2 and 3 contain five and eighteen more. The retained post-
+Akutuba state used by existing movement captures is bound to position `(2,3)`
+but not to a source stair square or active source map in the same capture.
+Consequently, that state cannot support a claim about original stair
+traversal. Obtain a state whose active map, party position, and reachable
+stair tile are all source-bound before recording a positive transition.
+
 This source lock records a research-only original-engine transition against
 the authenticated US CUE.  It does not authorize synthetic gameplay state.
 
