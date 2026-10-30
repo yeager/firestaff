@@ -1,18 +1,18 @@
 {
-  "branch": "main",
+  "branch": "codex/all-games-platform-parity-20261030",
   "closedGap": "movement-triggered local sensor rotation is deferred: F0270 records the latest local rotation request, F0276/F0275 finish the whole sensor iteration, then F0271 rotates the sensor list once and clears the pending global",
   "firestaffAudit": {
     "focusedCTests": "dm1_v1_sensor_trigger_pc34_compat and dm1_v1_command_movement_sensor_timing_pc34_compat",
-    "movementCore": "successful steps call party leave/enter sensors before successful-step timing; blocked steps return before this path",
+    "movementCore": "same-square turns pass partyOnSquare=true; successful steps pass false before/after position change; blocked steps return before this sensor path",
     "sensorTrigger": "F0725/F0726 expose deferred rotationPending metadata instead of mutating sensor lists in-place"
   },
-  "head": "12264d3700912e66fc25f86645ffec7567645898",
+  "head": "4afce26e52b0c35076f74b49babda78478be58b1",
   "notClaimed": [
     "new runtime sensor-list mutation implementation",
     "original DOS breakpoint trace",
     "unsupported sensor effect materialization beyond the existing source-locked trigger metadata"
   ],
-  "redmcsbRoot": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "operator-provided ReDMCSB Common/Source checkout",
   "redmcsbSha256": {
     "MOVESENS.C": "35cfd3ba0a4e33bd5f8731eb52184271cd22093e95ff98b639f240b3afb508da"
   },
