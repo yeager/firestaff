@@ -4434,5 +4434,8 @@ not used as its final verification.
   focused F0514/F0515 test and `m11_dm1_iigs_startup_real_media` passed. The
   authentic-media test checks that the original torch drops to the current
   floor square, is picked up again, and returns to the same champion hand
-  without losing or duplicating its Thing. This is a gameplay transaction
-  fix, not a claim of complete IIGS parity.
+  without losing or duplicating its Thing. `--debug` also reports a single
+  action-scoped floor-drop receipt (source, map square, Thing ID, compact SFT
+  row, list flag, and chain head before/after); it is gated so ordinary play
+  stays quiet. This is a gameplay transaction fix, not a claim of complete
+  IIGS parity.

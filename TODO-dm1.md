@@ -10,7 +10,10 @@ to the existing validated row and leaves column counts unchanged. The focused
 F0514/F0515 test and `m11_dm1_iigs_startup_real_media` both pass; the latter
 verifies the original torch drops, is recovered from the floor, and returns to
 its champion hand with one owner. This closes that interaction gap only; other
-IIGS gameplay and visual parity remain open.
+IIGS gameplay and visual parity remain open. `--debug` now reports one
+action-scoped floor-drop receipt with the source, map square, Thing ID, compact
+SFT row, list flag, and head before/after; the trace is gated by the CLI debug
+flag and emits nothing during ordinary play.
 
 2026-10-30 PC34 multilingual Save Browser admission: ReDMCSB
 `FILENAME.C` MEDIA733_I34M/F0745 resolves `DMSAVE~.DAT/.BAK` to `DMSAVEF`
