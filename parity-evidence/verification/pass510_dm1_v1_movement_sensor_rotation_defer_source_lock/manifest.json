@@ -6,7 +6,7 @@
     "movementCore": "same-square turns pass partyOnSquare=true; successful steps pass false before/after position change; blocked steps return before this sensor path",
     "sensorTrigger": "F0725/F0726 expose deferred rotationPending metadata instead of mutating sensor lists in-place"
   },
-  "head": "4afce26e52b0c35076f74b49babda78478be58b1",
+  "head": "2cca13d328e729ac09982157880c4405c064bffe",
   "notClaimed": [
     "new runtime sensor-list mutation implementation",
     "original DOS breakpoint trace",
