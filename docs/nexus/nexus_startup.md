@@ -80,15 +80,26 @@ stores at PCs `0x0602254a` and `0x0602254e`, writing `0x00014000` and
 `0x4000`, X 20, Y 26. The BKR used in that profile has SHA-256
 `3d60856119df55ffa4937d13b5dc7487157c7c6b131a999a2e61683316679634`.
 
-Static SH-2 disassembly maps the source loads at payload offsets `+0x10` and
-`+0x14` to those two stores. The dynamic read tracer was configured for
-`0x002040b0..0x00204120`, so it did not capture reads of `0x00204010..0x00204017`;
-the source mapping is therefore static evidence, while the write trace and
-final WRAM bytes are dynamic evidence. The retained external evidence package
-is `firestaff-evidence/nexus/nexus-bkr-continue-loader-tuple-20261030` on
-`Extern-disk`. This verifies the tuple transfer into the Saturn loader, not
-Firestaff's save selection, coordinate conversion, game entry, or gameplay
-parity.
+The first trace did not include source reads. A follow-up 17,500-frame Ymir
+`--debug` capture retained both the source-read register snapshots and the
+destination writes. The master SH-2 read four bytes at `0x00204010` from PC
+`0x06022548`, then four bytes at `0x00204014` from PC `0x0602254c`. The same
+run's WRAM-HI instruction bytes are `52 e4 20 22 52 e5 10 21`: opcode
+`0x52e4` is `MOV.L @(4,R14),R2`, `0x2022` is `MOV.L R2,@R0`, `0x52e5` is
+`MOV.L @(5,R14),R2`, and `0x1021` is `MOV.L R2,@(1,R0)`. The aligned
+snapshots show `R14=0x00204000` and `R0=0x06064544`; before the second load,
+`R2=0x00014000`. At frame 12931, the two following stores write
+`0x00014000` to `0x06064544` and `0x0014001a` to `0x06064548`. The final
+WRAM-HI bytes match the authentic BKR payload tuple exactly. Both trace bundles
+are complete with zero dropped rows. Run the external evidence verifier with
+`python3 scripts/verify_nexus_bkr_source_read_join.py <evidence-directory>`;
+the evidence package is
+`firestaff-evidence/nexus/nexus_bkr_continue_source_read_20261031` on
+`Extern-disk`.
+
+This closes the source-read-to-loader-tuple transfer with dynamic reads,
+instruction bytes, stores and final memory. It does not establish Firestaff's
+save selection, coordinate conversion, game entry, or gameplay parity.
 
 ## Deterministic title-state replay (2026-10-26)
 
