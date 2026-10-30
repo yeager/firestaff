@@ -58,6 +58,41 @@ python3 scripts/analyze_nexus_vdp1_gouraud_palette_pressure.py \
   --frame 13162 --first 10 --last 40
 ```
 
+The bounded Ymir title capture compositor can now add one source-bound VDP1
+mode-0 sprite after constructing the captured FBS+NBG0 RGBA base. Its frame
+13162 check binds command bytes at VDP1 VRAM `0x1560`, preserves the captured
+4bpp texture byte order, and verifies the 1,008-byte span at `TITLE.BIN`
+offset `0x1f26` against an accepted retail file hash. The sprite is 168x12 at
+`(79,164)` and contributes 963 opaque pixels. The C capture output is checked
+against the retained independent RGB reconstruction at every pixel (maximum
+channel difference 8); a separate comparison against the authentic 640x448
+Ymir screenshot checks all 286,720 doubled samples within 7 channel levels.
+The receipt remains capture-only with `renderer_permitted=false`; this is not
+a general title/menu or gameplay compositor.
+
+Run the extended C capture check with the local evidence files and authentic
+retail data:
+
+```sh
+export FIRESTAFF_NEXUS_YMIR_FBS="$PWD/parity-evidence/verification/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030/dumps/vdp1-fbs.bin"
+export FIRESTAFF_NEXUS_YMIR_VDP2_VRAM="$PWD/parity-evidence/verification/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030/dumps/vdp2-vram.bin"
+export FIRESTAFF_NEXUS_YMIR_CRAM="$PWD/parity-evidence/verification/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030/dumps/vdp2-cram.bin"
+export FIRESTAFF_NEXUS_YMIR_REGS="$PWD/parity-evidence/verification/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030/dumps/vdp2-registers.bin"
+export FIRESTAFF_NEXUS_YMIR_VDP1_VRAM="$PWD/parity-evidence/verification/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030/dumps/vdp1-vram.bin"
+export FIRESTAFF_NEXUS_YMIR_VDP1_RECONSTRUCTED_VRAM="$PWD/parity-evidence/verification/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030/vdp1-vram-command-trace-reconstructed-le.bin"
+export FIRESTAFF_NEXUS_YMIR_COMMAND171_TITLE="$HOME/.firestaff/data/nexus/TITLE.BIN"
+export FIRESTAFF_NEXUS_YMIR_COMMAND171_EXPECTED_RGB="$PWD/parity-evidence/verification/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030/vdp12-frame13162-command171.rgb"
+export FIRESTAFF_NEXUS_YMIR_CAPTURE_ATTESTED=1
+export FIRESTAFF_NEXUS_YMIR_TRACE_ATTESTED=1
+export FIRESTAFF_NEXUS_YMIR_REPLAY_OUT=/tmp/nexus-frame13162-command171.rgb
+cmake --build build --target test_nexus_v1_vdp2_capture_compositor
+build/test_nexus_v1_vdp2_capture_compositor
+python3 scripts/verify_nexus_capture_rgb_screenshot.py \
+  "$FIRESTAFF_NEXUS_YMIR_REPLAY_OUT" \
+  "$PWD/parity-evidence/verification/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030/screenshots/DUNGEON MASTER NEXUS [T-9111G]-20261030T131353.620.png" \
+  --manifest-root "$PWD/parity-evidence/verification/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030"
+```
+
 All six authentic mode-5 draws (rows 13, 14, 28, 29, 33, and 34) are replayed
 through Firestaff's direct-colour capture decoder after their exact
 `LEV00.DGN` source joins are verified. Each 1,024-word source consists entirely
