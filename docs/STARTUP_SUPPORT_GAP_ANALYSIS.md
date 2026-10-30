@@ -1,11 +1,14 @@
 # Five-game startup support gap analysis
 
 Evidence metadata refreshed on 2026-10-30 for `main` at
-`73e193d47756e41eb302f474dd5291e4f57cb7bb`. The latest published release is
+`79568c536b3a4e766d8a2359f63257cdc74b7a53`. The latest published release is
 v3.0.421 (published 2026-10-30 from tag commit
 `6e4b9a5a86fb12624305be0e1d91d256d0b64141`); current `main` contains later
 menu-test, documentation and CLI diagnostic changes that are not in that
-package. The v3.0.421 workflow verifies packaging, not gameplay startup. The current
+package. GitHub Actions run
+[`41058003318`](https://github.com/yeager/firestaff/actions/runs/41058003318)
+completed successfully for commit `79568c53`. The v3.0.421 workflow verifies
+packaging, not gameplay startup. The current
 main also adds an authentic CSB Amiga 3.5 no-game M12 route; the local original
 CTRaw archive test passed through the first runtime with an unchanged source
 hash. The route records below are individually dated and establish only the
@@ -80,6 +83,23 @@ filled spans are excluded. The source join remains partial, with menu
 background, full palette/display ownership, and destination execution
 unproven. Runtime receipts cited below remain tied to their stated revisions
 unless noted otherwise.
+
+### 2026-10-30 current-main startup and menu retest
+
+On `main` at `79568c53`, the combined real-media CTest selection passed 4/4:
+`m12_main_menu_game_selection_real_media` (585.16 s),
+`firestaff_cli_startup_diagnostics_real_media` (254.61 s),
+`dm2_unsupported_platform_cli` (1.54 s), and
+`unsupported_game_platforms_cli_rejected_before_renderer` (0.51 s). The
+menu test exercises original-media no-game selection and launch routes for all
+five games, including keyboard/mouse choices and alternate DM1/CSB/DM2
+platforms. The CLI diagnostic test verifies direct startup source selection,
+default platform behavior, mixed-media roots, and per-game data roots; the
+platform tests reject unsupported pairs before startup. The full Actions run
+for this commit also passed on Linux, macOS, and Windows. These results verify
+the tested startup/menu contracts only. Nexus remains capture-gated before a
+playable runtime, and these SDL dummy tests do not establish native display,
+physical input, or complete game functionality.
 
 ### 2026-10-30 DM1/CSB/DM2 menu return, rescan, and cache retest
 
