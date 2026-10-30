@@ -528,10 +528,12 @@ with ordinals 0–223. The receipt remains incomplete under the VDP1 frame-row
 contract (448 samples for 224 VDP1 pairs), while the per-serial row sets are
 complete. This verifies two full render-state line passes, not separate pixel
 images or frame-8037 pass attribution. The diagnostic captures, receipts and
-reproduction notes are at
-`/Volumes/Extern-disk/firestaff-evidence/nexus/ymir_nbg0_frame_serial_diagnostic_20261030/README.md`.
-The complete frame-8037 external evidence package and reproduction notes are
-at `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_title_menu_sameframe_20261030/README.md`.
+reproduction instructions are in the external evidence bundle at
+`firestaff-evidence/nexus/ymir_nbg0_frame_serial_diagnostic_20261030/README.md`.
+The frame-8037 evidence and reproduction instructions are in
+`firestaff-evidence/nexus/nexus_title_menu_sameframe_20261030/README.md`.
+Both bundles are stored outside this repository. To inspect them, mount the
+external evidence volume and open the listed paths relative to its root.
 
 It does not identify the full title background or prove which pixels survive
 VDP1/VDP2 composition on the screen. Full native title presentation and
