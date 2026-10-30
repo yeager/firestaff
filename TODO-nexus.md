@@ -14,6 +14,15 @@ character-address rule. This fixes the byte fetch for that layer path; NBG1
 retail source ownership and whole-screen VDP2/HUD composition remain open. See
 [`docs/nexus_vdp2_nbg1_8bpp_stride.md`](docs/nexus_vdp2_nbg1_8bpp_stride.md).
 
+## 2026-10-30 — NBG2 capture plane
+
+A hash-pinned Ymir frame-239 test now decodes the authentic NBG2 8bpp map page
+at byte offset `0x60000`, covering 40×28 visible cells. It yields 11,232
+nonzero pixels; 9,258 CRAM colors match the native screenshot sample within
+eight levels. This remains a capture-only layer measurement; full VDP2 layer
+priority/color calculation and named retail source ownership are unresolved.
+See [`docs/nexus_nbg2_capture_plane.md`](docs/nexus_nbg2_capture_plane.md).
+
 ## 2026-10-30 — Japanese title capture follow-up
 
 Authentic TRV2/Ymir VDP1 frame 8037 now has two complete VDP2 pass buffers

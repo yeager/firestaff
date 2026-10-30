@@ -1,6 +1,8 @@
 #include "nexus_v1_vdp2_tilemap_capture_compositor.h"
+#include "firestaff_x68k_media_receipt.h"
 
 #include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,6 +17,110 @@ static void be16(uint8_t *p, unsigned int value)
 {
     p[0] = (uint8_t)(value >> 8U);
     p[1] = (uint8_t)value;
+}
+
+static uint8_t *read_exact_bytes(const char *path, size_t expected_size)
+{
+    FILE *file;
+    uint8_t *bytes;
+    long size;
+    if (!path || !*path) return NULL;
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0, SEEK_END) != 0 ||
+        (size = ftell(file)) < 0 || (size_t)size != expected_size ||
+        fseek(file, 0, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        return NULL;
+    }
+    bytes = (uint8_t *)malloc(expected_size);
+    if (!bytes || fread(bytes, 1U, expected_size, file) != expected_size) {
+        free(bytes);
+        fclose(file);
+        return NULL;
+    }
+    fclose(file);
+    return bytes;
+}
+
+static int bytes_have_sha256(const uint8_t *bytes, size_t size,
+                             const char *expected)
+{
+    char actual[65];
+    return bytes && expected &&
+        firestaff_x68k_media_receipt_sha256_hex(
+            bytes, size, actual, sizeof(actual)) == 0 &&
+        strcmp(actual, expected) == 0;
+}
+
+static int run_external_ymir_nbg2_capture(void)
+{
+    const char *vram_path = getenv("FIRESTAFF_NEXUS_YMIR_NBG2_VRAM");
+    const char *cram_path = getenv("FIRESTAFF_NEXUS_YMIR_NBG2_CRAM");
+    const char *registers_path = getenv("FIRESTAFF_NEXUS_YMIR_NBG2_REGS");
+    const char *output_path = getenv("FIRESTAFF_NEXUS_YMIR_NBG2_CAPTURE_OUT");
+    uint8_t *vram = NULL;
+    uint8_t *cram = NULL;
+    uint8_t *registers = NULL;
+    Nexus_V1_Vdp2Nbg2CapturePlane *plane = NULL;
+    Nexus_V1_Vdp2Nbg2CapturePlaneReceipt receipt;
+    size_t pixel;
+    int ok = 0;
+
+    if (!vram_path && !cram_path && !registers_path) return 1;
+    vram = read_exact_bytes(vram_path, NEXUS_V1_SATURN_VDP2_VRAM_BYTES);
+    cram = read_exact_bytes(cram_path, NEXUS_V1_SATURN_VDP2_CRAM_BYTES);
+    registers = read_exact_bytes(registers_path, 512U);
+    plane = (Nexus_V1_Vdp2Nbg2CapturePlane *)malloc(sizeof(*plane));
+    if (!vram || !cram || !registers || !plane ||
+        !bytes_have_sha256(vram, NEXUS_V1_SATURN_VDP2_VRAM_BYTES,
+            "148eebc95b80465a278b7f6d9c1025ee378ec6d288563de3e52ba8af986d94cc") ||
+        !bytes_have_sha256(cram, NEXUS_V1_SATURN_VDP2_CRAM_BYTES,
+            "f97f5ebf7bcfab263514895097ec40e6c5dca6dd91fe878f1691e9f204d8515d") ||
+        !bytes_have_sha256(registers, 512U,
+            "308b3c23bb1db102d3833801a836f0141540fe0870069abb37d2041e57f9b555"))
+        goto cleanup;
+    if (!nexus_v1_vdp2_capture_decode_ymir_nbg2_tilemap_plane(
+            plane, vram, NEXUS_V1_SATURN_VDP2_VRAM_BYTES,
+            cram, NEXUS_V1_SATURN_VDP2_CRAM_BYTES,
+            registers, 512U, NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG,
+            1, &receipt) || !receipt.valid || !receipt.capture_only ||
+        receipt.renderer_permitted || !receipt.registers_verified ||
+        !receipt.original_ymir_capture_verified || !receipt.nbg2_tilemap_mode ||
+        !receipt.pnd_size_two_words || !receipt.colour_code_256 ||
+        receipt.name_table_vram_offset != 0x60000 ||
+        receipt.map_page_columns != 64 || receipt.map_page_rows != 64 ||
+        receipt.visible_columns != 40 || receipt.visible_rows != 28 ||
+        receipt.tiles_decoded != 1120 || receipt.written_pixels != 11232 ||
+        receipt.transparent_pixels != 60448) goto cleanup;
+    for (pixel = 0U; pixel < NEXUS_V1_VDP2_NBG2_CAPTURE_WIDTH *
+                            NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT; ++pixel) {
+        if ((plane->index_buffer[pixel] == 0U) !=
+            (plane->rgba_buffer[pixel] == 0U)) goto cleanup;
+    }
+    if (output_path && *output_path) {
+        FILE *output = fopen(output_path, "wb");
+        if (!output) goto cleanup;
+        for (pixel = 0U; pixel < NEXUS_V1_VDP2_NBG2_CAPTURE_WIDTH *
+                                NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT; ++pixel) {
+            uint32_t rgba = plane->rgba_buffer[pixel];
+            uint8_t encoded[4] = {
+                plane->index_buffer[pixel], (uint8_t)(rgba >> 16U),
+                (uint8_t)(rgba >> 8U), (uint8_t)rgba
+            };
+            if (fwrite(encoded, 1U, sizeof(encoded), output) != sizeof(encoded)) {
+                fclose(output);
+                goto cleanup;
+            }
+        }
+        if (fclose(output) != 0) goto cleanup;
+    }
+    ok = 1;
+cleanup:
+    free(plane);
+    free(registers);
+    free(cram);
+    free(vram);
+    return ok;
 }
 
 static int run_external_tilemap_capture(void)
@@ -306,6 +412,13 @@ int main(void)
         getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE_FRAME") &&
         !run_external_tilemap_capture()) {
         fprintf(stderr, "FAIL: external VDP2 NBG1 tilemap capture decode\n");
+        return 1;
+    }
+    if ((getenv("FIRESTAFF_NEXUS_YMIR_NBG2_VRAM") ||
+         getenv("FIRESTAFF_NEXUS_YMIR_NBG2_CRAM") ||
+         getenv("FIRESTAFF_NEXUS_YMIR_NBG2_REGS")) &&
+        !run_external_ymir_nbg2_capture()) {
+        fprintf(stderr, "FAIL: authentic Ymir NBG2 capture decode\n");
         return 1;
     }
     puts("test_nexus_v1_vdp2_runtime_tilemap: PASS");

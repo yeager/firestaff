@@ -167,6 +167,11 @@ requirements above.
 - **VDP2 NBG1 tilemap:** corrected Saturn word/byte address and character-stride
   math was merged in PR #19; the capture-only test does not provide a retail
   asset owner, text/page mapping, placement or production rendering.
+- **VDP2 NBG2 tilemap:** a bounded frame-239 decoder now measures the 40×28
+  visible 8bpp capture plane and matches 9,258 of 11,232 nontransparent CRAM
+  samples to the Ymir screenshot within eight RGB levels. Layer priority,
+  complete color calculation, retail source ownership and production rendering
+  remain unresolved.
 
 ### Missing Original Data or Verification
 

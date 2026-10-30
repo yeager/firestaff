@@ -469,3 +469,114 @@ int nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
     if (out_receipt) *out_receipt = receipt;
     return 1;
 }
+
+int nexus_v1_vdp2_capture_decode_ymir_nbg2_tilemap_plane(
+    Nexus_V1_Vdp2Nbg2CapturePlane *plane,
+    const uint8_t *vdp2_vram, size_t vdp2_vram_size,
+    const uint8_t *vdp2_cram, size_t vdp2_cram_size,
+    const uint8_t *vdp2_registers, size_t vdp2_registers_size,
+    Nexus_V1_SaturnVdp2RegisterByteOrder register_byte_order,
+    int original_ymir_capture_verified,
+    Nexus_V1_Vdp2Nbg2CapturePlaneReceipt *out_receipt)
+{
+    Nexus_V1_Vdp2Nbg2CapturePlaneReceipt receipt;
+    uint16_t bgon;
+    uint16_t chctlb;
+    uint16_t pncnc;
+    uint16_t plsz;
+    uint16_t mpofn;
+    uint16_t mapa;
+    uint16_t mapb;
+    uint16_t craofa;
+    uint32_t map_base;
+    unsigned int y;
+    unsigned int x;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.capture_only = 1;
+    receipt.name_table_vram_offset = -1;
+    if (out_receipt) *out_receipt = receipt;
+    if (!plane || !vdp2_vram || !vdp2_cram || !vdp2_registers ||
+        vdp2_vram_size != NEXUS_V1_SATURN_VDP2_VRAM_BYTES ||
+        vdp2_cram_size != NEXUS_V1_SATURN_VDP2_CRAM_BYTES ||
+        vdp2_registers_size < 0x100U ||
+        register_byte_order == NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_UNKNOWN ||
+        !original_ymir_capture_verified) return 0;
+#define NBG2_REG(offset) read_register16_ordered( \
+        vdp2_registers, (offset), register_byte_order)
+    bgon = NBG2_REG(0x20U);
+    chctlb = NBG2_REG(0x2aU);
+    pncnc = NBG2_REG(0x34U);
+    plsz = NBG2_REG(0x3aU);
+    mpofn = NBG2_REG(0x3cU);
+    mapa = NBG2_REG(0x48U) & 0x3fU;
+    mapb = NBG2_REG(0x4aU) & 0x3fU;
+    craofa = NBG2_REG(NEXUS_V1_VDP2_TILEMAP_CRAOFA_OFFSET);
+    if (NBG2_REG(0x00U) != 0x8000U || bgon != 0x0007U ||
+        chctlb != 0x0002U || pncnc != 0x0000U ||
+        (plsz & 0x0030U) != 0U || (mpofn & 0x0700U) != 0U ||
+        mapa != 0x18U || mapb != 0x18U ||
+        NBG2_REG(0x80U) != 0U || NBG2_REG(0x82U) != 0U ||
+        ((craofa >> 8U) & 7U) != 0U ||
+        (NBG2_REG(0xfaU) & 7U) != 4U) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    /* NBG2 map A/B are both 0x18 in this frame. The name-table word base is
+     * ((MPOFN_NBG2 << 6) + MAP) << 13; convert wrapped Saturn word addresses
+     * to bytes only after the 18-bit word-address wrap. */
+    map_base = (((uint32_t)((mpofn >> 8U) & 7U) << 6U) + mapa) << 13U;
+    map_base = (map_base & 0x3ffffU) * 2U;
+    if (map_base != 0x60000U || map_base > vdp2_vram_size - 64U * 64U * 4U) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    memset(plane, 0, sizeof(*plane));
+    receipt.registers_verified = 1;
+    receipt.original_ymir_capture_verified = 1;
+    receipt.nbg2_tilemap_mode = 1;
+    receipt.pnd_size_two_words = 1;
+    receipt.colour_code_256 = 1;
+    receipt.name_table_vram_offset = (int)map_base;
+    receipt.map_page_columns = 64;
+    receipt.map_page_rows = 64;
+    receipt.visible_columns = (int)(NEXUS_V1_VDP2_NBG2_CAPTURE_WIDTH / 8U);
+    receipt.visible_rows = (int)(NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT / 8U);
+    for (y = 0U; y < NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT; ++y) {
+        for (x = 0U; x < NEXUS_V1_VDP2_NBG2_CAPTURE_WIDTH; ++x) {
+            unsigned int tile_x = x >> 3U;
+            unsigned int tile_y = y >> 3U;
+            uint32_t map_offset = (tile_y * 64U + tile_x) * 4U;
+            uint16_t attr = read_vram16_ordered(
+                vdp2_vram + map_base + map_offset, register_byte_order);
+            uint16_t charno = read_vram16_ordered(
+                vdp2_vram + map_base + map_offset + 2U, register_byte_order);
+            uint32_t char_base = ((uint32_t)(charno & 0x7fffU) << 5U) &
+                UINT32_C(0x7ffff);
+            unsigned int px = x & 7U;
+            unsigned int py = y & 7U;
+            uint32_t pixel_offset;
+            uint8_t index;
+            size_t destination = (size_t)y *
+                NEXUS_V1_VDP2_NBG2_CAPTURE_WIDTH + x;
+            if ((attr & 0x4000U) != 0U) px = 7U - px;
+            if ((attr & 0x8000U) != 0U) py = 7U - py;
+            pixel_offset = (char_base + py * 8U + px) & UINT32_C(0x7ffff);
+            index = vdp2_vram[pixel_offset];
+            plane->index_buffer[destination] = index;
+            if (index == 0U) {
+                ++receipt.transparent_pixels;
+            } else {
+                plane->rgba_buffer[destination] = cram_to_rgba_ordered(
+                    vdp2_cram + (size_t)index * 2U, register_byte_order);
+                ++receipt.written_pixels;
+            }
+        }
+    }
+    receipt.tiles_decoded = receipt.visible_columns * receipt.visible_rows;
+    receipt.valid = 1;
+    receipt.renderer_permitted = 0;
+    if (out_receipt) *out_receipt = receipt;
+#undef NBG2_REG
+    return 1;
+}

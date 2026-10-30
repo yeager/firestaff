@@ -41936,6 +41936,8 @@ add_executable(test_nexus_v1_dgn_material_raster
 
     add_executable(test_nexus_v1_vdp2_runtime_tilemap
         tests/test_nexus_v1_vdp2_runtime_tilemap.c
+        src/shared/firestaff_x68k_media_classify.c
+        src/shared/firestaff_x68k_media_receipt.c
         src/nexus/nexus_v1_vdp2_tilemap_capture_compositor.c
     )
     target_include_directories(test_nexus_v1_vdp2_runtime_tilemap PRIVATE

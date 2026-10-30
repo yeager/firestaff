@@ -11,6 +11,8 @@
 #define NEXUS_V1_VDP2_TILEMAP_CHCTLA_OFFSET 0x28U
 #define NEXUS_V1_VDP2_TILEMAP_PNCN1_OFFSET 0x32U
 #define NEXUS_V1_VDP2_TILEMAP_CRAOFA_OFFSET 0xe4U
+#define NEXUS_V1_VDP2_NBG2_CAPTURE_WIDTH 320U
+#define NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT 224U
 
 typedef struct {
     const uint8_t *capture_name_table;
@@ -65,6 +67,43 @@ typedef struct {
     int map_columns;
     int map_rows;
 } Nexus_V1_Vdp2TilemapCaptureReceipt;
+
+/* Raw visible NBG2 palette-index plane for the exact zero-scroll 8bpp Ymir
+ * frame lane. It is a capture measurement and carries no retail asset owner. */
+typedef struct {
+    uint8_t index_buffer[NEXUS_V1_VDP2_NBG2_CAPTURE_WIDTH *
+                         NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT];
+    uint32_t rgba_buffer[NEXUS_V1_VDP2_NBG2_CAPTURE_WIDTH *
+                         NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT];
+} Nexus_V1_Vdp2Nbg2CapturePlane;
+
+typedef struct {
+    int valid;
+    int capture_only;
+    int renderer_permitted;
+    int registers_verified;
+    int original_ymir_capture_verified;
+    int nbg2_tilemap_mode;
+    int pnd_size_two_words;
+    int colour_code_256;
+    int name_table_vram_offset;
+    int map_page_columns;
+    int map_page_rows;
+    int visible_columns;
+    int visible_rows;
+    int tiles_decoded;
+    int written_pixels;
+    int transparent_pixels;
+} Nexus_V1_Vdp2Nbg2CapturePlaneReceipt;
+
+int nexus_v1_vdp2_capture_decode_ymir_nbg2_tilemap_plane(
+    Nexus_V1_Vdp2Nbg2CapturePlane *plane,
+    const uint8_t *vdp2_vram, size_t vdp2_vram_size,
+    const uint8_t *vdp2_cram, size_t vdp2_cram_size,
+    const uint8_t *vdp2_registers, size_t vdp2_registers_size,
+    Nexus_V1_SaturnVdp2RegisterByteOrder register_byte_order,
+    int original_ymir_capture_verified,
+    Nexus_V1_Vdp2Nbg2CapturePlaneReceipt *out_receipt);
 
 /* Explicit source/VRAM binding for one raw Saturn frame. The caller supplies
  * canonical source bytes and the already-proven VDP2-VRAM offsets; this
