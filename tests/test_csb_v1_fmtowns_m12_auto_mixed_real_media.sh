@@ -8,10 +8,12 @@ collection_root=${2:?usage: test_csb_v1_fmtowns_m12_auto_mixed_real_media.sh <fi
 towns_archive="$collection_root/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"
 amiga_archive="$collection_root/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip"
 atari_archive="$collection_root/chaos_strikes_back_ftl.zip"
+atari_utility_archive="$collection_root/Game,Chaos_Strikes_Back,Atari_ST,Software.7z"
 
 if [ ! -x "$app" ] || [ ! -f "$towns_archive" ] ||
-   [ ! -f "$amiga_archive" ] || [ ! -f "$atari_archive" ]; then
-    echo 'SKIP: authentic CSB FM Towns, Amiga, and Atari ST archives are required'
+   [ ! -f "$amiga_archive" ] || [ ! -f "$atari_archive" ] ||
+   [ ! -f "$atari_utility_archive" ]; then
+    echo 'SKIP: authentic CSB FM Towns, Amiga, Atari ST game, and Atari ST utility archives are required'
     exit 77
 fi
 
@@ -19,6 +21,7 @@ scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$scratch_root"
 scratch=$(mktemp -d "$scratch_root/csb-fmtowns-auto-mixed.XXXXXX")
 trap 'find "$scratch" -depth -delete' EXIT HUP INT TERM
+atari_utility_sha_before=$(firestaff_sha256_file "$atari_utility_archive")
 
 # Run the normal M12 path against a mixed collection. Deliberately omit
 # --platform so the production scanner and AUTO edition ranking choose the
@@ -151,7 +154,11 @@ PY
 amiga_media_root="$scratch/amiga-platform-selection"
 amiga_home="$scratch/amiga-home"
 mkdir -p "$amiga_media_root" "$amiga_home"
-for archive in "$towns_archive" "$amiga_archive" "$atari_archive"; do
+# Atari ANIMATE.SCR/DAT lives on the original ST utility disk, separate from
+# the game disk. Keep both original Atari archives in this isolated install so
+# platform selection tests exercise the complete source-owned startup chain.
+for archive in "$towns_archive" "$amiga_archive" "$atari_archive" \
+               "$atari_utility_archive"; do
     ln -s "$archive" "$amiga_media_root/$(basename "$archive")"
 done
 
@@ -534,6 +541,11 @@ PY
 archive_sha_after=$(firestaff_sha256_file "$towns_archive")
 if [ "$archive_sha_before" != "$archive_sha_after" ]; then
     echo 'FAIL: CSB direct CLI modified the original FM Towns archive' >&2
+    exit 1
+fi
+atari_utility_sha_after=$(firestaff_sha256_file "$atari_utility_archive")
+if [ "$atari_utility_sha_before" != "$atari_utility_sha_after" ]; then
+    echo 'FAIL: CSB runtime modified the original Atari ST utility archive' >&2
     exit 1
 fi
 echo 'PASS: CSB default-root direct CLI left original game data unchanged'
