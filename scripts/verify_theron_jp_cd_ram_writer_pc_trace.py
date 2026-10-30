@@ -83,6 +83,8 @@ def verify_read_rows(path: Path, track02: bytes) -> tuple[list[dict[str, str]], 
         user_offset = int(row["source_user_offset"])
         raw_offset = int(row["source_raw_offset"])
         if (
+            lba < TRACK02_START_LBA
+            or
             int(row["track02_start_lba"]) != TRACK02_START_LBA
             or int(row["track02_index1_file_offset"]) != TRACK02_INDEX1_OFFSET
             or int(row["track02_sector_bytes"]) != TRACK02_SECTOR_BYTES
@@ -145,7 +147,9 @@ def verify_code_fetch_rows(path: Path) -> list[dict[str, str]]:
     previous_event = -1
     for line_no, line in enumerate(lines[1:], 2):
         if not line.startswith("code_fetch "):
-            continue
+            if line.startswith(("system_card_controller ", "system_card_path ")):
+                continue
+            raise ValueError(f"unexpected System Card dispatch row at line {line_no}")
         row = parse_fields(line, "code_fetch", line_no)
         event = int(row["event_sequence"])
         if event <= previous_event:
@@ -163,6 +167,11 @@ def verify_code_fetch_rows(path: Path) -> list[dict[str, str]]:
             raise ValueError(f"incomplete opcode-byte snapshot at line {line_no}")
         if len(row["bytes"]) != 6 or len(row["physical_bytes"].split(",")) != 3:
             raise ValueError(f"invalid opcode-byte encoding at line {line_no}")
+        for offset, physical_byte in enumerate(row["physical_bytes"].split(",")):
+            logical = pc + offset
+            expected_byte = (mpr[(logical >> 13) & 7] << 13) | (logical & 0x1FFF)
+            if int(physical_byte, 16) != expected_byte:
+                raise ValueError(f"invalid code-fetch physical byte address at line {line_no}")
         rows.append(row)
     return rows
 

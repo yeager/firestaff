@@ -148,6 +148,48 @@ if [[ "$cd_ram_write_limit_output" != *'THERON_CAPTURE_PCE_FAST_CD_RAM_TARGET_WR
     printf '%s\n' 'FAIL: invalid CD RAM target-write limit lacked a precise diagnostic' >&2
     exit 1
 fi
+cd_ram_write_octal_limit_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT=001234567 \
+    "$script" 2>&1) && {
+    printf '%s\n' 'FAIL: decimal CD RAM target-write limit above its maximum was accepted through octal parsing' >&2
+    exit 1
+}
+if [[ "$cd_ram_write_octal_limit_output" != *'THERON_CAPTURE_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT must be an integer from 1 through 1048576'* ]]; then
+    printf '%s\n' 'FAIL: out-of-range leading-zero CD RAM target-write limit lacked a precise diagnostic' >&2
+    exit 1
+fi
+cd_ram_write_zero_padded_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast \
+    THERON_CAPTURE_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT=00008192 \
+    "$script" 2>&1) || {
+    printf '%s\n' 'FAIL: valid zero-padded CD RAM target-write limit was rejected' >&2
+    exit 1
+}
+if [[ "$cd_ram_write_zero_padded_output" != *'SKIP:'* ]]; then
+    printf '%s\n' 'FAIL: valid zero-padded CD RAM target-write limit did not reach the missing-media gate' >&2
+    exit 1
+fi
+cd_ram_writer_pc_octal_limit_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_PCE_FAST_CD_RAM_WRITER_PC_TRACE_LIMIT=001234567 \
+    "$script" 2>&1) && {
+    printf '%s\n' 'FAIL: decimal CD RAM writer-PC limit above its maximum was accepted through octal parsing' >&2
+    exit 1
+}
+if [[ "$cd_ram_writer_pc_octal_limit_output" != *'THERON_CAPTURE_PCE_FAST_CD_RAM_WRITER_PC_TRACE_LIMIT must be an integer from 1 through 1048576'* ]]; then
+    printf '%s\n' 'FAIL: out-of-range leading-zero CD RAM writer-PC limit lacked a precise diagnostic' >&2
+    exit 1
+fi
+cd_ram_writer_pc_zero_padded_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
+    THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast \
+    THERON_CAPTURE_PCE_FAST_CD_RAM_WRITER_PC_TRACE_LIMIT=00008192 \
+    "$script" 2>&1) || {
+    printf '%s\n' 'FAIL: valid zero-padded CD RAM writer-PC limit was rejected' >&2
+    exit 1
+}
+if [[ "$cd_ram_writer_pc_zero_padded_output" != *'SKIP:'* ]]; then
+    printf '%s\n' 'FAIL: valid zero-padded CD RAM writer-PC limit did not reach the missing-media gate' >&2
+    exit 1
+fi
 cd_ram_write_valid_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
     THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast \
     THERON_CAPTURE_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT=262144 \
@@ -162,10 +204,12 @@ fi
 cd_ram_write_patch=$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_ram_target_write_trace.patch
 if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT' "$cd_ram_write_patch" ||
    ! grep -Fq 'count >= trace_limit' "$cd_ram_write_patch" ||
+   ! grep -Fq 'cd_ram_target_write_truncated' "$cd_ram_write_patch" ||
+   ! grep -Fq 'if(trace && !truncated)' "$cd_ram_write_patch" ||
    grep -Fq 'count >= 8192' "$cd_ram_write_patch" ||
    ! grep -Fq 'poll_first = 0x68 * 8192 + 0x04d2' "$cd_ram_write_patch" ||
    ! grep -Fq 'poll_last = 0x68 * 8192 + 0x04e6' "$cd_ram_write_patch" ||
-   ! grep -Fq '(!stage2_target && !poll_target && !existing_target)' "$cd_ram_write_patch" ||
+   ! grep -Fq '!stage2_target && !poll_target && !existing_target && !fetch_mismatch_target' "$cd_ram_write_patch" ||
    ! grep -Fq 'cd_ram_target_write_trace_limit=%s' "$script"; then
     printf '%s\n' 'FAIL: bounded CD RAM target-write trace must include the source-locked poll-code window' >&2
     exit 1
@@ -1670,7 +1714,7 @@ if [[ ! -f "$code_ram_write_patch" ]] ||
     exit 1
 fi
 if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE_SUPPORT' "$build_script" ||
-   ! grep -Fq 'if [[ "$pce_fast_code_ram_write_trace" == 1 ]]' "$build_script" ||
+   ! grep -Fq 'if [[ "$pce_fast_code_ram_write_trace" == 1 || "$pce_fast_tia_trace" == 1 ]]' "$build_script" ||
    ! grep -Fq 'configure_pce_fast=(--enable-pce-fast)' "$build_script"; then
     printf '%s\n' 'FAIL: the code-bank RAM-write build option must enable PCE Fast' >&2
     exit 1

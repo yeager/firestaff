@@ -15,6 +15,13 @@ import sys
 from pathlib import Path
 
 TARGET_ADDRESSES = (0x1000D9, 0x1000DA, 0x1000DB, 0x10468D, 0x10468E)
+CAPTURED_ADDRESS_RANGES = (
+    (0x0D04D2, 0x0D04E6),
+    (0x0D089F, 0x0D08AB),
+    (0x100000, 0x100010),
+    (0x1000D9, 0x1000DB),
+    (0x10468D, 0x10468E),
+)
 TARGET_SUFFIX = ".cd-ram-target-write"
 FETCH_SUFFIX = ".system-card-dispatch"
 TARGET_HEADER = "source=mednafen-pce-fast-cd-ram-target-write"
@@ -51,6 +58,8 @@ def read_target_writes(path: Path) -> dict[int, list[tuple[int, int, int]]]:
     writes: dict[int, list[tuple[int, int, int]]] = defaultdict(list)
     previous_event = -1
     for line_number, line in enumerate(lines[1:], 2):
+        if line.startswith("cd_ram_target_write_truncated "):
+            raise ValueError(f"target-write trace exhausted at line {line_number}")
         row = parse_fields(line, "cd_ram_target_write", line_number)
         if int(row["sequence"]) != line_number - 2:
             raise ValueError(f"non-contiguous target-write sequence at line {line_number}")
@@ -63,6 +72,10 @@ def read_target_writes(path: Path) -> dict[int, list[tuple[int, int, int]]]:
         mprs = [int(row[f"mpr{i}"], 16) for i in range(8)]
         if int(row["writer_physical_pc"], 16) != (mprs[(pc >> 13) & 7] << 13) | (pc & 0x1FFF):
             raise ValueError(f"invalid writer physical PC at line {line_number}")
+        if not any(first <= address <= last for first, last in CAPTURED_ADDRESS_RANGES):
+            raise ValueError(f"unexpected target-write address at line {line_number}")
+        if not 0 <= int(row["value"], 16) <= 0xFF:
+            raise ValueError(f"invalid target-write byte value at line {line_number}")
         if address in TARGET_ADDRESSES:
             writes[address].append((event, int(row["value"], 16), pc))
     return writes
@@ -85,18 +98,32 @@ def reconcile(target_path: Path, fetch_path: Path) -> tuple[dict[int, int], dict
     target_rows: dict[int, list[bool]] = {}
     for line_number, line in enumerate(lines[1:], 2):
         if not line.startswith("code_fetch "):
-            continue
+            if line.startswith(("system_card_controller ", "system_card_path ")):
+                continue
+            raise ValueError(f"unexpected dispatch trace row at line {line_number}")
         row = parse_fields(line, "code_fetch", line_number)
         event = int(row["event_sequence"])
         if event <= previous_event:
             raise ValueError(f"non-increasing code-fetch event sequence at line {line_number}")
         previous_event = event
+        pc = int(row["logical_pc"], 16)
+        mprs = [int(row[f"mpr{i}"], 16) for i in range(8)]
+        if not 0x4000 <= pc <= 0x5FFF:
+            raise ValueError(f"code-fetch PC outside traced window at line {line_number}")
+        expected_pc = (mprs[(pc >> 13) & 7] << 13) | (pc & 0x1FFF)
+        if int(row["physical_pc"], 16) != expected_pc:
+            raise ValueError(f"invalid code-fetch physical PC at line {line_number}")
         if int(row["valid_mask"], 16) != 7 or len(row["bytes"]) != 6:
             raise ValueError(f"incomplete code-fetch snapshot at line {line_number}")
         addresses = [int(value, 16) for value in row["physical_bytes"].split(",")]
         values = bytes.fromhex(row["bytes"])
         if len(addresses) != 3:
             raise ValueError(f"invalid physical-byte list at line {line_number}")
+        for offset, address in enumerate(addresses):
+            logical = pc + offset
+            expected_address = (mprs[(logical >> 13) & 7] << 13) | (logical & 0x1FFF)
+            if address != expected_address:
+                raise ValueError(f"invalid code-fetch physical byte address at line {line_number}")
         row_checks: list[bool] = []
         for address, value in zip(addresses, values, strict=True):
             if address not in TARGET_ADDRESSES:

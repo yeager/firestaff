@@ -226,18 +226,34 @@ if [[ "$cd_data_read_start_at_track02" == 1 &&
     printf '%s\n' 'FAIL: Track 02 CD data-read filtering requires the PCE Fast module' >&2
     exit 1
 fi
-if [[ ! "$cd_ram_target_write_trace_limit" =~ ^[0-9]+$ ]] ||
-   (( cd_ram_target_write_trace_limit < 1 ||
-      cd_ram_target_write_trace_limit > 1048576 )); then
+normalize_decimal_limit() {
+    local value=$1
+    [[ "$value" =~ ^[0-9]+$ ]] || return 1
+    value="${value#"${value%%[!0]*}"}"
+    printf '%s' "${value:-0}"
+}
+cd_ram_target_write_trace_limit_normalized=$(normalize_decimal_limit "$cd_ram_target_write_trace_limit") || {
+    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT must be an integer from 1 through 1048576' >&2
+    exit 1
+}
+if (( ${#cd_ram_target_write_trace_limit_normalized} > 7 )) ||
+   (( 10#$cd_ram_target_write_trace_limit_normalized < 1 ||
+      10#$cd_ram_target_write_trace_limit_normalized > 1048576 )); then
     printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT must be an integer from 1 through 1048576' >&2
     exit 1
 fi
-if [[ ! "$cd_ram_writer_pc_trace_limit" =~ ^[0-9]+$ ]] ||
-   (( cd_ram_writer_pc_trace_limit < 1 ||
-      cd_ram_writer_pc_trace_limit > 1048576 )); then
+cd_ram_target_write_trace_limit=$cd_ram_target_write_trace_limit_normalized
+cd_ram_writer_pc_trace_limit_normalized=$(normalize_decimal_limit "$cd_ram_writer_pc_trace_limit") || {
+    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_CD_RAM_WRITER_PC_TRACE_LIMIT must be an integer from 1 through 1048576' >&2
+    exit 1
+}
+if (( ${#cd_ram_writer_pc_trace_limit_normalized} > 7 )) ||
+   (( 10#$cd_ram_writer_pc_trace_limit_normalized < 1 ||
+      10#$cd_ram_writer_pc_trace_limit_normalized > 1048576 )); then
     printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_CD_RAM_WRITER_PC_TRACE_LIMIT must be an integer from 1 through 1048576' >&2
     exit 1
 fi
+cd_ram_writer_pc_trace_limit=$cd_ram_writer_pc_trace_limit_normalized
 if [[ ! "$pce_fast_vram_commit_trace_limit" =~ ^[0-9]+$ ]] ||
    (( pce_fast_vram_commit_trace_limit < 1 ||
       pce_fast_vram_commit_trace_limit > 4194304 )); then

@@ -730,6 +730,16 @@ assets, mechanics, or parity.
   `$C1FC` and records both ordered bytes. Details are in
   `docs/source-lock/theron-disassembly/theron-pce-fast-tii-position-observer-20261029.md`.
 
+## 2026-10-30 — resolve stair-hosted actuator target consumers
+
+- Bind each stair-hosted `FLOOR_PARTY` target category and regional raw record
+  to the original actuator consumer, including SARMON `(1,9)` category 2
+  (`ref=0x0803`; `feff3106` JP, `feff0902` USA).
+- Do not infer mutation semantics from the data records. Capture a positive
+  original-runtime event and an equivalent no-input control before enabling the
+  target. Locate the current enablement site at
+  `theron_v1_world_dispatch_source_actuator_events()` before implementing.
+
 ## 2026-10-30 — identify accepted UP+II movement-state transfer
 
 - A corrected authentic JP Rev. 1 save-state replay used `ii@470:140,up@471:120`.

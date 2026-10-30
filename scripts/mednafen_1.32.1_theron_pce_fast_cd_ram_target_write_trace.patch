@@ -1,6 +1,6 @@
 --- a/src/pce_fast/huc.cpp
 +++ b/src/pce_fast/huc.cpp
-@@ -73,15 +73,70 @@
+@@ -73,15 +73,82 @@
  static DECLFR(HuCRead)
  {
   return ROMSpace[A];
@@ -11,6 +11,7 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 + static FILE *trace = NULL;
 + static unsigned count = 0;
 + static unsigned trace_limit = 0;
++ static bool truncated = false;
 + if(!trace_limit)
 + {
 +  const char *limit_text = getenv("FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE_LIMIT");
@@ -36,8 +37,19 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 + const bool fetch_mismatch_target =
 +  (address >= fetch_mismatch_80_first && address <= fetch_mismatch_80_last) ||
 +  (address >= fetch_mismatch_82_first && address <= fetch_mismatch_82_last);
-+ if((!stage2_target && !poll_target && !existing_target && !fetch_mismatch_target) || count >= trace_limit)
++ if(!stage2_target && !poll_target && !existing_target && !fetch_mismatch_target)
 +  return;
++ if(count >= trace_limit)
++ {
++  if(trace && !truncated)
++  {
++   fprintf(trace, "cd_ram_target_write_truncated sequence=%u limit=%u physical_address=%06x writer_pc=%04x\n",
++           count, trace_limit, address, TheronTraceInstructionPC);
++   fflush(trace);
++   truncated = true;
++  }
++  return;
++ }
 + if(!trace)
 + {
 +  const char *path = getenv("FIRESTAFF_THERON_PCE_FAST_CD_RAM_TARGET_WRITE_TRACE");
