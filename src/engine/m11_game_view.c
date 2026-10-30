@@ -7504,6 +7504,114 @@ static int m11_csb_v1_install_runtime_champion_materials(
     return 1;
 }
 
+/* ReDMCSB CHAMDRAW.C F0292/F0293 draws the Atari F20 champion row after the
+ * dungeon page. The Atari ST 2.0 (S20E) path uses CHAMDRAW.C's fixed
+ * 67x29 status boxes at a 69px stride, name origins x+1/y=5, and C028/C033-
+ * C035 materials. Keep this pass separate from C232: C232 owns the CSBWin
+ * control surfaces, while F0292 owns each champion's live state. */
+static int m11_csb_present_atari_st_runtime_champion_panel(
+    M11_GameViewState *state, unsigned char *framebuffer,
+    int framebuffer_width, int framebuffer_height)
+{
+    M11_GameViewState source_party_state;
+    const M11_GameViewState *party_state;
+    CSB_V1_AtariHudChampionBars champion_bars[4];
+    unsigned char candidate[320 * 200];
+    int previous_assets_available;
+    int row;
+    int index;
+
+    if (!state || !framebuffer || framebuffer_width < 320 ||
+        framebuffer_height < 200 ||
+        !state->csbAtariStRuntimeHandoffComplete ||
+        state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
+        if (state && state->debugMovementTraceEnabled) {
+            fprintf(stderr,
+                "firestaff: csb-atari-f0292 rejected stage=runtime-gate "
+                "handoff=%d source=%d framebuffer=%dx%d\n",
+                state->csbAtariStRuntimeHandoffComplete, state->sourceKind,
+                framebuffer_width, framebuffer_height);
+        }
+        return 0;
+    }
+    party_state = m11_csb_v1_party_hud_source_state(state,
+                                                     &source_party_state);
+    if (!party_state) {
+        if (state->debugMovementTraceEnabled) {
+            fprintf(stderr,
+                "firestaff: csb-atari-f0292 rejected stage=party-receipt\n");
+        }
+        return 0;
+    }
+    /* m11_csb_install_runtime_source_graphic gates its decoder through
+     * assetsAvailable, although this Atari F20 runtime owns an authenticated
+     * GRAPHICS.DAT receipt independent of the shared DM1 cache. Temporarily
+     * admit that verified source package while populating its bound cache. */
+    previous_assets_available = state->assetsAvailable;
+    state->assetsAvailable = 1;
+    if (!m11_csb_v1_install_runtime_champion_materials(state)) {
+        state->assetsAvailable = previous_assets_available;
+        if (state->debugMovementTraceEnabled) {
+            fprintf(stderr,
+                "firestaff: csb-atari-f0292 rejected stage=material-install\n");
+        }
+        return 0;
+    }
+    state->assetsAvailable = previous_assets_available;
+    /* These source materials were decoded and installed from the active
+     * authenticated Atari GRAPHICS.DAT above. The generic `assetsAvailable`
+     * flag describes the shared DM1 cache and is false on this runtime path;
+     * set it only on the temporary presentation copy so F0292/F0291 consume
+     * the verified CSB surfaces without changing runtime ownership. */
+    source_party_state.assetsAvailable = 1;
+    party_state = &source_party_state;
+    if (state->debugMovementTraceEnabled) {
+        const M11_AssetSlot *slot_box = M11_AssetLoader_Load(
+            (M11_AssetLoader *)&state->assetLoader, 33u);
+        fprintf(stderr,
+            "firestaff: csb-atari-f0292 admitted champions=%d font=%d "
+            "slot33=%d pixels=%d size=%ux%u\n",
+            party_state->world.party.championCount,
+            M11_Font_IsLoaded(&party_state->originalFont),
+            slot_box ? slot_box->loaded : 0,
+            slot_box ? slot_box->pixels != NULL : 0,
+            slot_box ? (unsigned)slot_box->width : 0u,
+            slot_box ? (unsigned)slot_box->height : 0u);
+    }
+    for (row = 0; row < 200; ++row) {
+        memcpy(candidate + (size_t)row * 320u,
+               framebuffer + (size_t)row * (size_t)framebuffer_width, 320u);
+    }
+    m11_draw_v1_champion_icons(party_state, candidate, 320, 200);
+    m11_draw_party_panel(party_state, candidate, 320, 200);
+    /* ReDMCSB F0292 establishes boxes/names/hand slots before its F0287
+     * bar pass. The shared panel painter can clear those pixels while
+     * updating a champion, so repaint the source Atari bars last. */
+    memset(champion_bars, 0, sizeof(champion_bars));
+    for (index = 0; index < party_state->world.party.championCount &&
+                    index < 4; ++index) {
+        const struct ChampionState_Compat *champion =
+            &party_state->world.party.champions[index];
+        champion_bars[index].present = champion->present;
+        champion_bars[index].statistics_enabled = champion->present;
+        champion_bars[index].current[0] = champion->hp.current;
+        champion_bars[index].maximum[0] = champion->hp.maximum;
+        champion_bars[index].current[1] = champion->stamina.current;
+        champion_bars[index].maximum[1] = champion->stamina.maximum;
+        champion_bars[index].current[2] = champion->mana.current;
+        champion_bars[index].maximum[2] = champion->mana.maximum;
+    }
+    if (!csb_v1_atari_hud_draw_bar_graphs(candidate, sizeof(candidate),
+                                          champion_bars)) {
+        return 0;
+    }
+    for (row = 0; row < 200; ++row) {
+        memcpy(framebuffer + (size_t)row * (size_t)framebuffer_width,
+               candidate + (size_t)row * 320u, 320u);
+    }
+    return 1;
+}
+
 static void m11_draw_csb_v1_runtime_hud(const M11_GameViewState *state,
                                         unsigned char *framebuffer,
                                         int framebufferWidth,
@@ -76348,6 +76456,11 @@ static void m11_game_view_draw_source(M11_GameViewState* state,
              * the HUD admission remains fail-closed: this neither invents a
              * panel nor reuses the Entrance raster. */
             (void)m11_csb_present_atari_st_runtime_hud(
+                csb_state, framebuffer, framebufferWidth, framebufferHeight);
+            /* The C232 compositor does not replace F0292's champion-state
+             * pass. Draw the source-owned Atari champion boxes, names,
+             * direction icons, and hand slots over that independent layer. */
+            (void)m11_csb_present_atari_st_runtime_champion_panel(
                 csb_state, framebuffer, framebufferWidth, framebufferHeight);
             m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
                                 framebufferHeight);
