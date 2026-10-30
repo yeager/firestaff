@@ -7641,6 +7641,9 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_screen_text\\.c$")
 # order, CLUT/VRAM destination, or DGN/MNS ownership.  Production links the
 # lifecycle-safe no-op adapter; material probes add the fixture explicitly.
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_rasterizer\\.c$")
+# This Ymir stepper port is an authenticated-capture comparison tool only.
+# Compile it into its dedicated real-data test, never the retail Nexus library.
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_vdp1_ymir_stepper_capture\\.c$")
 # ITEM.IBS and TITLE.CG decoders retain source-format bytes, but their RGBA
 # writers are host presentation helpers without authenticated Saturn VDP1/VDP2
 # ownership. Keep both sources in their explicit receipt probes only.
@@ -45286,6 +45289,25 @@ add_test(NAME nexus_v1_vdp1_frame13162_dgn_window
 set_tests_properties(nexus_v1_vdp1_frame13162_dgn_window PROPERTIES
     SKIP_RETURN_CODE 77
     LABELS "nexus;saturn;vdp1;dgn;frame13162;real-data;skip-safe")
+
+add_executable(test_nexus_v1_vdp1_ymir_stepper_capture_real
+    tests/test_nexus_v1_vdp1_ymir_stepper_capture_real.c
+    src/nexus/nexus_v1_vdp1_ymir_stepper_capture.c
+    src/shared/firestaff_x68k_media_classify.c
+    src/shared/firestaff_x68k_media_receipt.c)
+target_include_directories(test_nexus_v1_vdp1_ymir_stepper_capture_real PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_vdp1_ymir_stepper_capture_real PRIVATE
+    firestaff_nexus)
+if(NOT MSVC)
+    target_compile_options(test_nexus_v1_vdp1_ymir_stepper_capture_real PRIVATE
+        -std=c99 -Wall -Wextra -pedantic -O2)
+endif()
+add_test(NAME nexus_v1_vdp1_ymir_stepper_capture_real
+    COMMAND test_nexus_v1_vdp1_ymir_stepper_capture_real)
+set_tests_properties(nexus_v1_vdp1_ymir_stepper_capture_real PROPERTIES
+    SKIP_RETURN_CODE 77
+    LABELS "nexus;saturn;vdp1;ymir;frame13162;real-data;capture-only;skip-safe")
 
 add_executable(test_nexus_v1_title_mapd_tibg_admission
     tests/test_nexus_v1_title_mapd_tibg_admission.c)

@@ -29,6 +29,19 @@ levels. This remains capture-only and does not establish cross-layer ordering
 or color calculation. See
 [`docs/nexus_nbg0_capture_plane.md`](docs/nexus_nbg0_capture_plane.md).
 
+## 2026-10-30 — Ymir VDP1 stepper diagnostic
+
+A capture-only integer stepper now rasterizes the 124 indexed mode-1 distorted
+sprites in the authenticated frame-13162 Ymir command window. The focused real-
+data CTest pins the complete 168-row trace, captured VDP1 VRAM/FBS/registers,
+VDP2 registers, and frame receipt. It compares its 320x224 output with the first
+Ymir VDP1 draw buffer: 70,470 of 70,970 opaque pixels match exactly (99.295%),
+with 500 pixels still differing. The other 36 draw commands in the window,
+including direct-color and polygon draws, are not handled by this stepper. It
+claims no DGN ownership and always returns `renderer_permitted=false`; this is
+not production rendering or complete Nexus VDP1 parity. See
+[`docs/nexus_vdp1_frame13162_dgn_window.md`](docs/nexus_vdp1_frame13162_dgn_window.md).
+
 ## 2026-10-30 — Japanese title capture follow-up
 
 Authentic TRV2/Ymir VDP1 frame 8037 now has two complete VDP2 pass buffers

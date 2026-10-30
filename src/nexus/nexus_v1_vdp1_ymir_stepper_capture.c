@@ -293,17 +293,22 @@ static uint32_t color_calc(uint32_t src,uint32_t dst,int calc)
 
 typedef struct { uint32_t u; uint8_t texel; uint16_t word; int transparent, end_code; } Texel;
 
-static Texel read_texel(const TextureStepper *us,int32_t v,int width,
-                        const uint8_t *texture,const uint8_t *palette,
-                        uint16_t draw_mode)
+static int read_texel(const TextureStepper *us,int32_t v,int width,int height,
+                      const uint8_t *texture,size_t texture_size,
+                      const uint8_t *palette,uint16_t draw_mode,Texel *out)
 {
-    Texel t; uint32_t u=(uint32_t)us->value; uint32_t index=u+(uint32_t)v*(uint32_t)width;
+    Texel t; uint32_t u=(uint32_t)us->value; uint32_t index;
+    if (!out || us->value < 0 || v < 0 || us->value >= width || v >= height)
+        return 0;
+    index=u+(uint32_t)v*(uint32_t)width;
+    if ((size_t)(index >> 1U) >= texture_size) return 0;
     uint8_t packed=texture[index>>1U];
     t.u=u; t.texel=(uint8_t)((packed>>((~u&1U)*4U))&15U);
     t.end_code=t.texel==15U && !(draw_mode&0x80U);
     t.transparent=t.texel==0U && !(draw_mode&0x40U);
     t.word=le16(palette+(size_t)t.texel*2U);
-    return t;
+    *out=t;
+    return 1;
 }
 
 static int paint_pixel(Nexus_V1_Vdp1YmirCaptureSurface *working,
@@ -409,12 +414,16 @@ int nexus_v1_vdp1_ymir_capture_rasterize_mode1_distorted(
                 gouraud_skip(&gs,line_clip);
             }
             /* Initial texel fetch precedes the first line.Step() in Ymir. */
-            tex=read_texel(&us,vs.value,(int)cmd.texture_width,in->texture_bytes,in->palette_bytes,cmd.draw_mode);
+            if(!read_texel(&us,vs.value,(int)cmd.texture_width,(int)cmd.texture_height,
+                           in->texture_bytes,(size_t)in->texture_size,in->palette_bytes,
+                           cmd.draw_mode,&tex)) goto cleanup;
             if(tex.end_code) ++end_count;
             for((void)line_step(&line);line_can_step(&line);aa=line_step(&line)) {
                 while(texture_should_step(&us)) {
                     texture_step_texel(&us);
-                    tex=read_texel(&us,vs.value,(int)cmd.texture_width,in->texture_bytes,in->palette_bytes,cmd.draw_mode);
+                    if(!read_texel(&us,vs.value,(int)cmd.texture_width,(int)cmd.texture_height,
+                                   in->texture_bytes,(size_t)in->texture_size,in->palette_bytes,
+                                   cmd.draw_mode,&tex)) goto cleanup;
                     if(tex.end_code) ++end_count;
                     if(end_count==2U) { stop=1; break; }
                 }
@@ -442,5 +451,9 @@ int nexus_v1_vdp1_ymir_capture_rasterize_mode1_distorted(
         }
     }
     rec.valid=1; rec.renderer_permitted=0; *surface=*tmp; ok=1;
-    free(tmp); *out=rec; return ok;
+cleanup:
+    free(tmp);
+    if(!ok) { rec.valid=0; rec.renderer_permitted=0; }
+    *out=rec;
+    return ok;
 }

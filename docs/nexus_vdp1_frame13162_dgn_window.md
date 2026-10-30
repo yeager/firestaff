@@ -42,6 +42,22 @@ the compositor verifies that the captured texture span is the word-normalized
 form of the retail DGN image, then reads texels from the original DGN byte
 order so nibble selection follows the actual Saturn texture stream.
 
+A separate real-data CTest now runs the stepper against the complete
+frame-13162 Ymir VDP1 capture. It verifies the hash-pinned 168-row trace,
+command bytes, captured VRAM spans, clip/local-coordinate state, single-density
+register tuple, and capture receipt. The first 512x256 FBS draw buffer is
+compared at native 320x224 coordinates: 70,470 of 70,970 opaque stepper pixels
+match exactly (99.295%). The 500 remaining pixels are still under investigation.
+The test renders only 124 mode-1 commands; 36 other draw commands in the window
+are not part of this comparison. It asserts the exact count for this capture,
+claims no DGN ownership, and keeps `renderer_permitted=false`. The capture data
+stays outside Git. Set `FIRESTAFF_NEXUS_YMIR_FRAME13162_CAPTURE_DIR` to its
+profile directory (or `dumps/`) and run:
+
+```sh
+ctest --test-dir build -R '^nexus_v1_vdp1_ymir_stepper_capture_real$' --output-on-failure
+```
+
 The capture stepper is a separate diagnostic path; its existence does not
 make the barycentric compositor pixel-exact or enable the production
 renderer. The source references are Ymir
