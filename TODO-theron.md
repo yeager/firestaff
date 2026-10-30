@@ -9256,6 +9256,14 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   `$2040/$2041` consumer and JP map before claiming the emulator bytes represent
   coordinates or asserting full original movement parity.
 
+
+- Follow-up capture: an authentic cold JP RUN hold (`run@480:300`) on PCE
+  input index 4 reached the System Card poll at `$E4C5`, but no game-owned poll,
+  CD IRQ, authenticated CD-to-RAM receipt, or `$E009` dispatch followed. This
+  does not bind the observed `$42AB/$42B2` game scan to the cold launch and
+  does not identify an active map. See
+  `docs/source-lock/theron-disassembly/theron-jp-index4-cold-run-trace-20261030.md`.
+
 ## 2026-10-30 — retained BaseRAM snapshots do not identify the active JP map
 
 - Reprojected hash-verified JP Rev. 1 Track 02 raw sectors to 2,048-byte user
