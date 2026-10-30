@@ -65,9 +65,12 @@ format validation only and does not authorize Saturn presentation.
 
 Decoding the five authenticated 512×224 indexed maps from the external
 English-version corpus produces five distinct source images whose visible
-letterforms are `N`, `E`, `X`, `U`, and `S`, respectively. This identifies the
-content of the five MAPD planes; it does not establish their Saturn display
-order, frame timing, VDP2 layer assignment, or executable title-state owner.
+letterforms are `N`, `E`, `X`, `U`, and `S`, respectively. An authenticated
+Japanese retail trace later establishes that the animation scheduler selects
+and transfers them in that order (`N`, `E`, `X`, `U`, `S`) at frames 13294,
+13334, 13375, 13415, and 13455. This proves the source-plane sequence and
+transfer timing; it does not by itself establish the final visible composition,
+screen placement, or executable title-state owner.
 
 The decoded pixel-plane SHA-256 receipts are:
 
@@ -80,9 +83,11 @@ The decoded pixel-plane SHA-256 receipts are:
 | 4 | S | `6dbb2f3bea87a8b79219f0a73c0b2f49d12a572829c8913b501fbce58f74647` |
 
 These are preservation receipts derived from the real `TITLE.BIN` and
-`TITLE.CG`; no generated image is used. The Saturn capture corpus currently
-contains no exact MAPD plane span in VDP2 VRAM, so the production title route
-remains capture-gated.
+`TITLE.CG`; no generated image is used. An earlier title-frame snapshot did
+not contain an exact MAPD plane span. A later authenticated r33 capture binds
+all five real planes to the retail transfer into VDP2 VRAM, as documented
+below. The display consumer and final composition remain unresolved, so this
+source transfer alone does not admit the production title route.
 
 ### Japanese retail title VDP2 receipt
 
