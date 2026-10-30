@@ -1,5 +1,28 @@
 # Firestaff TODO — active cross-game work
 
+2026-10-30 authentic-media no-game menu retest at `20fe91e3`: the full
+`test_m12_main_menu_game_selection_real_media.sh` run passed against the
+installed `.firestaff/data` collection. It selected and handed off all five
+games through the keyboard menu, including default-root launches for DM1,
+CSB, DM2, Nexus Saturn, and Theron PC Engine; Nexus and Theron also passed
+mouse selection. The Nexus collection contains multiple authentic regional
+owners, so the test now validates that the selected edition is authenticated
+and its source remains inside the real Nexus data root instead of assuming
+Japanese `DM.BIN` always wins. These SDL dummy receipts prove menu selection
+and original-media handoff only. Nexus still has no admitted playable level,
+and native presentation/input parity is not established.
+
+2026-10-30 DM1 Amiga 3.6 menu-runtime follow-up at `a59a4f03`: the new
+focused CTest first selected the real Amiga 2.0 edition from the complete
+collection, although the test expected Amiga 3.6. The menu did reach
+`dm1-runtime`; the failure was the test's source/edition assumption. The
+case now links only the authentic Amiga 3.6 ZIP into an isolated data root.
+It passes through the no-game M12 menu, verifies the `amiga36-multi`
+handoff and first runtime receipt, and leaves the original archive
+unchanged. Full-collection automatic selection continues to prefer the
+authenticated Amiga 2.0 edition in this installation; this result does not
+claim an interactive 3.6 edition-selection route from that mixed collection.
+
 2026-10-30 current-main scanner/rescan regression retest at `9f4bb4df`: after
 rebuilding the shared scanner, the original-media M12 menu routes passed for
 DM1, CSB, and DM2. Alternate routes passed for DM1 PC and Atari ST, CSB Atari

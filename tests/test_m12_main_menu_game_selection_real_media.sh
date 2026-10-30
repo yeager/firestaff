@@ -237,6 +237,36 @@ PY
             cat "$log" >&2
             return 1
         fi
+    elif [[ "$source_mode" == nexus-root ]]; then
+        local launch_line
+        local logged_source
+        local logged_media
+        launch_line=$(grep -E '^firestaff: launch phase=game-handoff mode=menu game=nexus platform=Saturn edition=(nexus|nexus2|nexus-saturn-(jp|jp-cue|en-extracted|en-fan-v2|en-cue|fr-extracted|fr-fan|fr-cue))[[:space:]]+source=.+' "$log" | head -n 1 || true)
+        if [[ -z "$launch_line" ]]; then
+            printf 'FAIL: no-game main menu did not hand off an authenticated Nexus Saturn edition\n' >&2
+            cat "$log" >&2
+            return 1
+        fi
+        logged_source=${launch_line##* source=}
+        logged_media=${logged_source%%::*}
+        if ! python3 - "$menu_data_root/nexus" "$logged_media" <<'PY'
+import pathlib
+import sys
+
+root = pathlib.Path(sys.argv[1]).resolve()
+media = pathlib.Path(sys.argv[2]).resolve()
+try:
+    media.relative_to(root)
+except ValueError:
+    raise SystemExit("selected Nexus media is outside the selected authentic data root")
+if not media.is_file():
+    raise SystemExit("selected Nexus media is not an existing original file")
+PY
+        then
+            printf 'FAIL: Nexus menu handoff did not use original media from the selected data root\n' >&2
+            cat "$log" >&2
+            return 1
+        fi
     else
         printf 'FAIL: unsupported source assertion mode: %s\n' "$source_mode" >&2
         return 2
@@ -539,6 +569,9 @@ run_default_root_game_picker_case() {
     local source_member=''
     local source_path
     local source_hash
+    local launch_line
+    local logged_source
+    local logged_media
 
     case "$game_id" in
         dm1|dm2) source_member='::DATA/GRAPHICS.DAT' ;;
@@ -565,8 +598,44 @@ run_default_root_game_picker_case() {
         cat "$log" >&2
         return 1
     }
-    if ! grep -Fq 'startup game=none mode=menu' "$log" ||
-       ! grep -Fq "launch phase=game-handoff mode=menu game=$game_id platform=$platform edition=$edition source=$source_path" "$log"; then
+    if ! grep -Fq 'startup game=none mode=menu' "$log"; then
+        printf 'FAIL: default .firestaff/data menu did not launch authentic %s %s media\n' "$game_id" "$platform" >&2
+        cat "$log" >&2
+        return 1
+    fi
+    if [[ "$game_id" == nexus ]]; then
+        # A complete Nexus data folder can contain extracted Japanese retail
+        # resources alongside English/French translated ISOs and CUE/BIN
+        # media. The authenticated menu chooses the selected owner's best
+        # complete disc; do not hard-code Japanese RLOWFIX.BIN as the launch
+        # source when a different real edition wins the source-priority pass.
+        launch_line=$(grep -E '^firestaff: launch phase=game-handoff mode=menu game=nexus platform=Saturn edition=(nexus|nexus2|nexus-saturn-(jp|jp-cue|en-extracted|en-fan-v2|en-cue|fr-extracted|fr-fan|fr-cue))[[:space:]]+source=.+' "$log" | head -n 1 || true)
+        if [[ -z "$launch_line" ]]; then
+            printf 'FAIL: default .firestaff/data menu did not hand off an authenticated Nexus Saturn edition\n' >&2
+            cat "$log" >&2
+            return 1
+        fi
+        logged_source=${launch_line##* source=}
+        logged_media=${logged_source%%::*}
+        if ! python3 - "$data_home/.firestaff/data/nexus" "$logged_media" <<'PY'
+import pathlib
+import sys
+
+root = pathlib.Path(sys.argv[1])
+media = pathlib.Path(sys.argv[2])
+try:
+    media.relative_to(root)
+except ValueError:
+    raise SystemExit("selected Nexus media is outside the authentic default data root")
+if not media.is_file():
+    raise SystemExit("selected Nexus media is not an existing original file")
+PY
+        then
+            printf 'FAIL: default-root Nexus launch did not use original media from its authentic game-data folder\n' >&2
+            cat "$log" >&2
+            return 1
+        fi
+    elif ! grep -Fq "launch phase=game-handoff mode=menu game=$game_id platform=$platform edition=$edition source=$source_path" "$log"; then
         printf 'FAIL: default .firestaff/data menu did not launch authentic %s %s media\n' "$game_id" "$platform" >&2
         cat "$log" >&2
         return 1
@@ -600,15 +669,16 @@ run_default_root_game_picker_case dm2 "$dm2_archive" \
     'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-ja
 
 # The other two games must resolve from the same documented default root.
-# Their retail startup media is a loose binary rather than a platform archive.
+# Their authentic launch owners may be loose binaries, CUE/BIN sets or full
+# disc images depending on the user's real collection and selected profile.
 if [[ -f "$nexus_source" ]]; then
     run_default_root_game_picker_case nexus "$nexus_source" \
         'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
-        nexus-saturn-jp Saturn
+        authenticated-saturn-edition Saturn
 elif has_authentic_nexus_cue; then
     run_default_root_game_picker_case nexus "$nexus_cue" \
         'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
-        nexus-saturn-jp-cue Saturn
+        authenticated-saturn-edition Saturn
 else
     echo 'SKIP: authentic Nexus Saturn media is unavailable for default-root startup'
 fi
@@ -657,14 +727,16 @@ PY
         nexus-saturn-jp-cue Saturn "$nexus_cue_only_root" nexus-jp-cue-only-default-root
 fi
 
-# Nexus and Theron use their original loose media in this data root. These
-# cases exercise the same five-game launcher selector without requiring the
-# user's separate archive tools or extracting/copying game data.
+# Nexus and Theron use original media in this data root. The Nexus selector
+# may choose any authenticated regional ISO/CUE or extracted owner present;
+# these cases exercise the same five-game launcher selector without requiring
+# external archive tools or extracting/copying game data.
 theron_source="$theron_track"
 if [[ -f "$nexus_source" ]]; then
     run_game_picker_case nexus "$nexus_source" \
         'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
-        nexus-saturn-jp keyboard Saturn
+        authenticated-saturn-edition keyboard Saturn "$data_root" \
+        nexus-keyboard-authenticated-owner nexus-root
 else
     echo 'SKIP: authentic Nexus Saturn DM.BIN is unavailable'
 fi
@@ -683,7 +755,8 @@ fi
 if [[ -f "$nexus_source" ]]; then
     run_game_picker_case nexus "$nexus_source" \
         'wait-scan-complete,wait20,click:700:728,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
-        nexus-saturn-jp mouse Saturn
+        authenticated-saturn-edition mouse Saturn "$data_root" \
+        nexus-mouse-authenticated-owner nexus-root
 fi
 if [[ -f "$theron_source" ]]; then
     run_game_picker_case theron "$theron_source" \

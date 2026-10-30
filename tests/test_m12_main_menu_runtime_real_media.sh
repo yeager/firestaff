@@ -48,6 +48,7 @@ run_main_menu_runtime_case() {
     local duration_ms=$5
     local platform=${6:-FM Towns}
     local probe_route=${7:-$game_id}
+    local menu_data_root=${8:-$data_root}
     local home="$scratch/$probe_route-home"
     local log="$scratch/$probe_route.log"
     local probe="$scratch/$probe_route-runtime.json"
@@ -57,12 +58,12 @@ run_main_menu_runtime_case() {
     archive_hash=$(firestaff_sha256_file "$archive")
     env -u FIRESTAFF_EXIT_AFTER_LAUNCH \
         FIRESTAFF_CONFIG_PATH="$home/config.toml" \
-        FIRESTAFF_DATA="$data_root" \
+        FIRESTAFF_DATA="$menu_data_root" \
         FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
         FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$probe" \
         HOME="$home" XDG_CONFIG_HOME="$home" APPDATA="$home" \
         SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
-        "$app" --debug --width 320 --height 200 --data-dir "$data_root" \
+        "$app" --debug --width 320 --height 200 --data-dir "$menu_data_root" \
             --script "$navigation" --duration "$duration_ms" >"$log" 2>&1 || {
                 cat "$log" >&2
                 return 1
@@ -151,9 +152,13 @@ run_selected_main_menu_runtime_case dm2 "$dm2_archive" fmtowns-ja \
 # authentic Amiga 3.6 runtime receipt, not just a direct --game boot.
 if [[ "$selected_game" == all || "$selected_game" == dm1-amiga ]]; then
   if [[ -f "$dm1_amiga_archive" ]]; then
+    dm1_amiga_menu_root="$scratch/dm1-amiga-menu-data"
+    mkdir -p "$dm1_amiga_menu_root/dm1"
+    ln -s "$dm1_amiga_archive" \
+        "$dm1_amiga_menu_root/dm1/$(basename "$dm1_amiga_archive")"
     run_main_menu_runtime_case dm1 "$dm1_amiga_archive" amiga36-multi \
         'wait-scan-complete,wait20,key:enter,wait20,key:enter,wait20,key:enter,wait-game-runtime,key:return' \
-        90000 Amiga dm1-amiga
+        90000 Amiga dm1-amiga "$dm1_amiga_menu_root"
   elif [[ "$selected_game" == dm1-amiga ]]; then
     echo 'SKIP: authentic DM1 Amiga 3.6 archive is unavailable'
     exit 77
