@@ -53,6 +53,7 @@
 #include "fmtowns_bios_host.h"
 #include "fmtowns_tbios_shim.h"
 #include "csb_v1_csbwin_layout_0232.h"
+#include "csb_v1_csbwin_objdesc_022f.h"
 #include "csb_v1_atari_hud_bar_graphs.h"
 #include "csb_v1_csbwin_planar_bitmap.h"
 #include "csb_v1_graphics_atari_st_loader_pc34_compat.h"
@@ -5862,6 +5863,8 @@ static int m11_csb_atari_st_draw_projectiles_for_cell(
         int record_size = 0;
         int source_slot;
         int selector = 0;
+        int selector_resolved = 0;
+        int object_aspect_index = -1;
         CSB_V1_AtariF0115ProjectileInput input;
         CSB_V1_AtariF0115ProjectilePlan plan;
         int plan_result;
@@ -5934,16 +5937,57 @@ static int m11_csb_atari_st_draw_projectiles_for_cell(
                     (uint16_t)source_slot, 0, 0, &selector)) {
                 continue;
             }
+            selector_resolved = 1;
         } else {
-            if (state->debugMovementTraceEnabled) {
-                fprintf(stderr,
-                    "firestaff: viewport game=csb platform=atari "
-                    "pass=f0115-projectile status=selector-unavailable "
-                    "slot=%d source-slot=0x%04x associated=0x%04x\n",
-                    projectile->slotIndex, (unsigned)source_slot,
-                    (unsigned)(uint16_t)projectile->reserved1);
+            const unsigned source_type =
+                ((unsigned)(uint16_t)source_slot >> 10) & 0x0fu;
+            if (source_type >= 5u && source_type <= 10u &&
+                state->csbAtariStObjectAspectsValid) {
+                CSB_V1_F0141G0209ObjectInfoReceiptPc34 object_info;
+                const uint16_t source_thing = (uint16_t)source_slot;
+                if (csb_v1_runtime_f0141_g0209_object_info_receipt_pc34(
+                        dungeon, source_thing, &object_info) &&
+                    object_info.valid && object_info.object_info_index >= 0 &&
+                    object_info.object_info_index < 180) {
+                    const int object_aspect =
+                        state->csbAtariStObjectAspects[
+                            object_info.object_info_index];
+                    int weapon_ordinal = 0;
+                    int source_tables_valid = 1;
+                    if (source_type == 5u) {
+                        if (object_info.subtype < 0 ||
+                            object_info.subtype >=
+                                (int)CSB_V1_CSBWIN_OBJDESC_022F_G0238_COUNT ||
+                            !state->csbAtariStWeaponAspectsValid) {
+                            source_tables_valid = 0;
+                        } else {
+                            weapon_ordinal = state->csbAtariStWeaponAspects[
+                                object_info.subtype];
+                        }
+                    }
+                    if (source_tables_valid &&
+                        csb_v1_atari_f0115_resolve_f0142_selector(
+                            source_thing, weapon_ordinal, object_aspect,
+                            &selector)) {
+                        /* F0141/G0237 selector derived from this run's
+                         * authenticated Atari C559; C05 weapons use the
+                         * same media's G0238 M066 ordinal when nonzero. */
+                        selector_resolved = 1;
+                        object_aspect_index = object_aspect;
+                    }
+                }
             }
-            continue;
+            if (!selector_resolved) {
+                if (state->debugMovementTraceEnabled) {
+                    fprintf(stderr,
+                        "firestaff: viewport game=csb platform=atari "
+                        "pass=f0115-projectile status=selector-unavailable "
+                        "slot=%d source-slot=0x%04x associated=0x%04x\n",
+                        projectile->slotIndex, (unsigned)source_slot,
+                        (unsigned)(uint16_t)projectile->reserved1);
+                }
+                continue;
+            }
         }
 
         memset(&input, 0, sizeof(input));
@@ -5959,6 +6003,23 @@ static int m11_csb_atari_st_draw_projectiles_for_cell(
         input.kinetic_energy = record[4];
         plan_result = csb_v1_atari_f0115_plan_projectile(&input, &plan);
         if (plan_result == CSB_V1_ATARI_F0115_PROJECTILE_NOT_VISIBLE) {
+            continue;
+        }
+        if (plan_result == CSB_V1_ATARI_F0115_PROJECTILE_DRAW_OBJECT &&
+            object_aspect_index >= 0) {
+            const int drawn = m11_draw_dm1_media009_object(
+                state, framebuffer, framebuffer_width, framebuffer_height,
+                -1, -1, view_cell, 0, forward, side, 0,
+                object_aspect_index);
+            if (state->debugMovementTraceEnabled) {
+                fprintf(stderr,
+                    "firestaff: viewport game=csb platform=atari "
+                    "pass=f0115-projectile status=object-aspect "
+                    "slot=%d selector=%d aspect=%d square=%d cell=%d "
+                    "drawn=%d\n",
+                    projectile->slotIndex, selector, object_aspect_index,
+                    view_square, view_cell, drawn);
+            }
             continue;
         }
         if (plan_result != CSB_V1_ATARI_F0115_PROJECTILE_DRAW_PROJECTILE) {
@@ -52962,11 +53023,55 @@ static int m11_dm1_media009_metadata(M11_GameViewState* state)
     state->dm1NativeObjectMetadataSource = source;
     state->dm1NativeObjectMetadataSourceSize = sourceSize;
     state->dm1NativeObjectMetadataValid = 0;
+    state->csbAtariStObjectAspectsValid = 0;
+    state->csbAtariStWeaponAspectsValid = 0;
     if (csbAtari) {
         int count = csb_atari_st_graphics_loader_read_item(
             &state->assetLoader.csbAtariStGraphics, 558u, raw, sizeof(raw));
         if (count != (int)sizeof(raw)) return 0;
         length = (size_t)count;
+        {
+            unsigned char object_raw[
+                CSB_V1_CSBWIN_OBJDESC_022F_DECODED_SIZE];
+            CSB_V1_CSBWinObjectDescriptionTable022f object_table;
+            int object_count = csb_atari_st_graphics_loader_read_item(
+                &state->assetLoader.csbAtariStGraphics,
+                CSB_V1_CSBWIN_OBJDESC_022F_ITEM_INDEX,
+                object_raw, sizeof(object_raw));
+            if (object_count == (int)sizeof(object_raw) &&
+                csb_v1_csbwin_objdesc_022f_decode(
+                    object_raw, sizeof(object_raw), &object_table)) {
+                int object_index;
+                int valid = 1;
+                for (object_index = 0;
+                     object_index < (int)CSB_V1_CSBWIN_OBJDESC_022F_COUNT;
+                     ++object_index) {
+                    if (object_table.entries[object_index].graphic_class >= 85u) {
+                        valid = 0;
+                        break;
+                    }
+                    state->csbAtariStObjectAspects[object_index] =
+                        object_table.entries[object_index].graphic_class;
+                }
+                state->csbAtariStObjectAspectsValid = valid;
+                valid = 1;
+                for (object_index = 0;
+                     object_index <
+                         (int)CSB_V1_CSBWIN_OBJDESC_022F_G0238_COUNT;
+                     ++object_index) {
+                    unsigned int ordinal = 0u;
+                    if (!csb_v1_csbwin_objdesc_022f_weapon_m066(
+                            object_raw, sizeof(object_raw),
+                            (unsigned int)object_index, &ordinal)) {
+                        valid = 0;
+                        break;
+                    }
+                    state->csbAtariStWeaponAspects[object_index] =
+                        (unsigned char)ordinal;
+                }
+                state->csbAtariStWeaponAspectsValid = valid;
+            }
+        }
     } else if (state->assetLoader.atariStDm1) {
         DM1_V1_AtariStGraphicsDat dat;
         int count;

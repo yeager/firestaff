@@ -1,5 +1,17 @@
 # Firestaff TODO — CSB
 
+2026-10-30 CSB Atari F0115 selectors: source-backed C14 selectors now load
+from the selected original GRAPHICS.DAT C559 item. F0141/G0237 object classes
+and F0158/G0238 M066 weapon ordinals are decoded from the Atari v2.1 layout
+confirmed in ReDMCSB `STARTUP2.C` and the matching `csb.s` disassembly. The
+renderer uses the native G0209 projectile-object pass for positive selectors;
+weapon ordinals outside the 14 aspects supported by the projectile planner
+remain safely rejected. Build, C559 unit checks, the real-media Atari C559
+cache comparison, and the real-media projectile-plan test pass. The stock
+campaign has no live C14 scenario, so the rendered projectile path still lacks
+an end-to-end gameplay assertion. Explosion/Fluxcage and F0113 field
+composition and full viewport parity remain open.
+
 2026-10-29 CSB FM Towns renamed-ZIP discovery: the scanner previously
 admitted only two hard-coded ZIP basenames, so an authentic archive selected
 under a neutral name was reported unavailable. It now enumerates ZIP files in
@@ -25,11 +37,11 @@ source animation handoff) pass. This verifies ordering contracts and startup
 against original media, not viewport pixel parity. A standalone projectile
 planner decodes authentic C558 G0210/G0215/G0218 data; the live renderer now
 uses it for source-matched C14 projectiles with C15 selectors, original M613
-bitmaps, G0075 palette changes, flips and C10 transparency. The full Atari
-STX campaign and real-media projectile-plan test pass, but the stock campaign
-does not contain a live C14 scenario, so the rendered projectile pixels still
-lack an end-to-end assertion. Item/weapon C14 selectors fail closed until
-Atari G0237/G0238 is admitted. Explosion/Fluxcage and F0113 teleporter/field
+bitmaps, G0075 palette changes, flips and C10 transparency. Its item/weapon
+C14 selectors now consume original C559 G0237/G0238 data; positive selectors
+use the native G0209 object-as-projectile route. The stock campaign does not
+contain a live C14 scenario, so rendered projectile pixels still lack an
+end-to-end gameplay assertion. Explosion/Fluxcage and F0113 teleporter/field
 composition remain absent, and the Atari HUD lacks ReDMCSB's complete dynamic
 champion presentation. Add source-derived projectile, explosion and field
 regressions before claiming functional parity.

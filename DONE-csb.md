@@ -163,6 +163,23 @@
 
 # Firestaff DONE — CSB
 
+## 2026-10-30 — Atari C14 projectile selectors from original C559
+
+- Decoded F0141/G0237 object graphic classes and F0158/G0238 M066 weapon
+  ordinals from the selected original Atari GRAPHICS.DAT C559 item. ReDMCSB
+  `STARTUP2.C` loads C559 into the global-variable block; Atari v2.1 `csb.s`
+  F0142/F0158 offsets establish G0238 at decoded offset `0x690`, before G0237
+  at `0x7a6`.
+- The live F0115 projectile pass resolves each source C14 slot against the
+  runtime Thing and uses its authenticated C559 row. Negative weapon selectors
+  go through the projectile planner; positive object selectors use the native
+  G0209 projectile-object renderer. No PC34 table values are substituted.
+- Verified with the C559 decoder unit test, the real-media Atari C559 cache
+  comparison, the real-media F0115 projectile-plan test, and the app/M11 build.
+  The installed stock campaign contains no live C14 scenario, so this does not
+  establish end-to-end projectile pixel parity. M066 ordinals above the 14
+  projectile aspects currently supported by the planner remain fail-closed.
+
 - 2026-10-13: M12 now verifies edition-specific, same-package Amiga startup
   media before enabling A31E or A31M/A33M. A31M/A33M requires the original
   `TITL.DAT`, `APPA.FTL` → `ANIM.FTL` → `APPB.FTL` → versioned `KAOS.FTL`

@@ -35,6 +35,23 @@ int csb_v1_csbwin_objdesc_022f_decode(
     return 1;
 }
 
+int csb_v1_csbwin_objdesc_022f_weapon_m066(
+    const uint8_t *decoded_graphic, size_t decoded_size,
+    unsigned int weapon_type, unsigned int *out_ordinal)
+{
+    const uint8_t *record;
+    uint16_t attributes;
+
+    if (!decoded_graphic || decoded_size !=
+            CSB_V1_CSBWIN_OBJDESC_022F_DECODED_SIZE || !out_ordinal ||
+        weapon_type >= CSB_V1_CSBWIN_OBJDESC_022F_G0238_COUNT) return 0;
+    record = decoded_graphic + CSB_V1_CSBWIN_OBJDESC_022F_G0238_OFFSET +
+             weapon_type * CSB_V1_CSBWIN_OBJDESC_022F_RECORD_SIZE;
+    attributes = csb_v1_csbwin_objdesc_022f_read_u16be(record + 4u);
+    *out_ordinal = (unsigned int)((attributes >> 8) & 0x1fu);
+    return 1;
+}
+
 int csb_v1_csbwin_objdesc_022f_read_graphics_dat(
     const char *graphics_dat_path,
     CSB_V1_CSBWinObjectDescriptionTable022f *out_table)

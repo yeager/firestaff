@@ -958,6 +958,12 @@ typedef struct {
     /* Selected original Atari CSB C558 record, needed by the live F0115
      * creature pass for both G0219 poses and G0224 coordinates. */
     unsigned char csbAtariStCreatureC558[4720];
+    /* Original Atari CSB C559/G0237 graphic classes, indexed by F0141
+     * ObjectInfo, and G0238 M066 weapon projectile ordinals. */
+    unsigned char csbAtariStObjectAspects[180];
+    int csbAtariStObjectAspectsValid;
+    unsigned char csbAtariStWeaponAspects[46];
+    int csbAtariStWeaponAspectsValid;
     unsigned char dm1NativeFloorCoordinateSets[9];
     unsigned char dm1NativeFloorBitmapIncrements[9];
     unsigned char dm1NativeWallCoordinateSets[60];

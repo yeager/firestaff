@@ -17,6 +17,10 @@
 #define CSB_V1_CSBWIN_OBJDESC_022F_TABLE_OFFSET 0x07a6u
 #define CSB_V1_CSBWIN_OBJDESC_022F_COUNT 180u
 #define CSB_V1_CSBWIN_OBJDESC_022F_RECORD_SIZE 6u
+/* Atari STARTUP2 anchors G0238 immediately before G0237. The matching
+ * v2.1 disassembly resolves its base as C559+0x690 (46 six-byte rows). */
+#define CSB_V1_CSBWIN_OBJDESC_022F_G0238_OFFSET 0x0690u
+#define CSB_V1_CSBWIN_OBJDESC_022F_G0238_COUNT 46u
 
 typedef struct {
     int16_t object_type;
@@ -35,6 +39,11 @@ typedef struct {
 int csb_v1_csbwin_objdesc_022f_decode(
     const uint8_t *decoded_graphic, size_t decoded_size,
     CSB_V1_CSBWinObjectDescriptionTable022f *out_table);
+
+/* Read G0238::Attributes.M066 from an already expanded C559 item. */
+int csb_v1_csbwin_objdesc_022f_weapon_m066(
+    const uint8_t *decoded_graphic, size_t decoded_size,
+    unsigned int weapon_type, unsigned int *out_ordinal);
 
 /* Read the original 563-item Atari ST / CSBWin GRAPHICS.DAT catalog,
  * decompress item 0x22f and decode its 180 OBJDESC records. */

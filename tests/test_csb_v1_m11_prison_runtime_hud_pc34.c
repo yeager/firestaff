@@ -10,6 +10,7 @@
 #include "asset_loader_m11.h"
 #include "csb_v1_boot.h"
 #include "csb_v1_csbwin_layout_0232.h"
+#include "csb_v1_csbwin_objdesc_022f.h"
 #include "csb_v1_graphics_atari_st_loader_pc34_compat.h"
 #include "csb_v1_runtime_pc34_compat.h"
 #include "font_m11.h"
@@ -918,6 +919,41 @@ int main(void)
                               objectBytes, sizeof(objectBytes)) == (int)sizeof(objectBytes),
                       "original Atari C559 object-info bytes are available");
                 csb_atari_st_graphics_loader_close(&objectLoader);
+                if (failures == 0) {
+                    CSB_V1_CSBWinObjectDescriptionTable022f objectTable;
+                    int aspects_match = view.csbAtariStObjectAspectsValid &&
+                        csb_v1_csbwin_objdesc_022f_decode(
+                            objectBytes, sizeof(objectBytes), &objectTable);
+                    int weapons_match = view.csbAtariStWeaponAspectsValid;
+                    if (aspects_match) {
+                        for (int aspect = 0;
+                             aspect < (int)CSB_V1_CSBWIN_OBJDESC_022F_COUNT;
+                             ++aspect) {
+                            if (objectTable.entries[aspect].graphic_class >= 85u ||
+                                view.csbAtariStObjectAspects[aspect] !=
+                                    objectTable.entries[aspect].graphic_class) {
+                                aspects_match = 0;
+                                break;
+                            }
+                        }
+                    }
+                    for (int weapon = 0;
+                         weapons_match && weapon <
+                             (int)CSB_V1_CSBWIN_OBJDESC_022F_G0238_COUNT;
+                         ++weapon) {
+                        unsigned int ordinal = 0u;
+                        if (!csb_v1_csbwin_objdesc_022f_weapon_m066(
+                                objectBytes, sizeof(objectBytes),
+                                (unsigned int)weapon, &ordinal) ||
+                            view.csbAtariStWeaponAspects[weapon] != ordinal) {
+                            weapons_match = 0;
+                        }
+                    }
+                    CHECK(aspects_match,
+                          "live Atari projectile selectors use authentic C559/G0237 aspects");
+                    CHECK(weapons_match,
+                          "live Atari weapon selectors use authentic C559/G0238 M066 ordinals");
+                }
                 if (failures) { M11_GameView_Shutdown(&view); return 1; }
                 CHECK(csb_v1_csbwin_layout_0232_read_graphics_dat(
                           profile->graphics_path, &layout) && layout.valid,

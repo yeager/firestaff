@@ -884,8 +884,11 @@ int main(void)
     put_be16(objdesc, CSB_V1_CSBWIN_OBJDESC_022F_TABLE_OFFSET + 4u, 0x0401);
     put_be16(objdesc, CSB_V1_CSBWIN_OBJDESC_022F_TABLE_OFFSET +
              179u * CSB_V1_CSBWIN_OBJDESC_022F_RECORD_SIZE, 0x007fu);
+    put_be16(objdesc, CSB_V1_CSBWIN_OBJDESC_022F_G0238_OFFSET + 45u * 6u + 4u,
+             0x1f00u);
     {
         CSB_V1_CSBWinObjectDescriptionTable022f table;
+        unsigned int weapon_ordinal = 0u;
         CHECK(csb_v1_csbwin_objdesc_022f_decode(objdesc, sizeof(objdesc),
                                                  &table));
         CHECK(table.valid && table.entries[0].object_type == 0x1234 &&
@@ -899,6 +902,18 @@ int main(void)
                                                   &table));
         CHECK(!csb_v1_csbwin_objdesc_022f_decode(objdesc, sizeof(objdesc),
                                                   NULL));
+        CHECK(csb_v1_csbwin_objdesc_022f_weapon_m066(
+                  objdesc, sizeof(objdesc), 45u, &weapon_ordinal) &&
+              weapon_ordinal == 31u);
+        CHECK(csb_v1_csbwin_objdesc_022f_weapon_m066(
+                  objdesc, sizeof(objdesc), 0u, &weapon_ordinal) &&
+              weapon_ordinal == 0u);
+        CHECK(!csb_v1_csbwin_objdesc_022f_weapon_m066(
+                  objdesc, sizeof(objdesc),
+                  CSB_V1_CSBWIN_OBJDESC_022F_G0238_COUNT,
+                  &weapon_ordinal));
+        CHECK(!csb_v1_csbwin_objdesc_022f_weapon_m066(
+                  objdesc, sizeof(objdesc) - 1u, 0u, &weapon_ordinal));
     }
 
     {
