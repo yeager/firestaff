@@ -45,7 +45,7 @@ def join_rows(
     expected_mpr2: int | None,
     expected_writer_pc: int,
     movement_rows: list[dict[str, str]] | None = None,
-) -> list[tuple[dict[str, int], dict[str, str]]]: 
+) -> list[tuple[dict[str, int], dict[str, str]]]:
     """Require each selected store to immediately follow an equal authentic read."""
     reads_by_event: dict[int, dict[str, int]] = {}
     for row in read_rows:
@@ -147,7 +147,7 @@ def verify(
     expected_mpr2: int | None = None,
     expected_writer_pc: int = 0xEA9C,
     movement_context_path: Path | None = None,
-) -> list[tuple[dict[str, int], dict[str, str]]]: 
+) -> list[tuple[dict[str, int], dict[str, str]]]:
     if physical_first < 0 or physical_last < physical_first:
         raise ValueError("invalid physical target range")
     if (
@@ -237,7 +237,7 @@ def main() -> int:
 
     lbas = sorted({read["source_lba"] for read, _ in joined})
     offsets = sorted({int(write["physical_address"], 16) for _, write in joined})
-    print(f"PASS: {len(joined)} immediate CD-read-to-RAM-write joins match authentic JP Track 02")
+    print(f"PASS: {len(joined)} source-validated CD-read-to-RAM-write joins match authentic JP Track 02")
     print(f"source_lbas={lbas[0]}-{lbas[-1]} distinct_lbas={len(lbas)}")
     print(f"target_physical_addresses={len(offsets)} span=0x{offsets[0]:06x}-0x{offsets[-1]:06x}")
     print("reader_pc=0xea99 writer_pc=0xea9c; source byte values omitted")
