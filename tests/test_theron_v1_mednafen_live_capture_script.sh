@@ -65,6 +65,7 @@ if bash -c 'source "$1"; wait_for_host_key_scancode_presses "$2" 91 2 1' _ \
 fi
 mkdir -p "$repo/build"
 python3 "$repo/tests/test_theron_pce_fast_consumer_trace_patch.py"
+python3 "$repo/tests/test_theron_jp_code_fetch_truncation_verifier.py"
 cd_limit_output=$(env -i "PATH=${PATH:-/usr/bin:/bin}" "HOME=${HOME:-.}" \
     THERON_CAPTURE_PCE_FAST_CD_DATA_READ_TRACE_LIMIT=65535 \
     "$script" 2>&1) && {
@@ -1724,6 +1725,20 @@ if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE_ERROR' "$code_ram_
    ! grep -Fq '[[ ! -s "$pce_fast_code_ram_write_trace" ]]' "$script" ||
    ! grep -Fq 'source=mednafen-pce-fast-code-ram-write event_sequence_source=TheronTraceCDSharedEventSequence' "$script"; then
     printf '%s\n' 'FAIL: PCE Fast code-bank RAM-write trace failures and missing receipts must be rejected' >&2
+    exit 1
+fi
+system_card_dispatch_patch=$repo/scripts/mednafen_1.32.1_theron_system_card_controller_dispatch_trace.patch
+if ! grep -Fq 'pc >= 0x6000 && pc <= 0x7FFF' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'code_fetch_extended event_sequence=%u logical_pc=%04x' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'code_fetch_truncated event_sequence=%u window=4000-5fff cap=262144' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'code_fetch_truncated event_sequence=%u window=6000-7fff cap=262144' "$system_card_dispatch_patch" ||
+   ! grep -Fq '!code_fetch_truncation_marker_emitted' "$system_card_dispatch_patch" ||
+   ! grep -Fq '!extended_code_fetch_truncation_marker_emitted' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'line.startswith("code_fetch_extended ")' "$repo/scripts/verify_theron_jp_cd_ram_writer_pc_trace.py" ||
+   ! grep -Fq 'line.startswith("code_fetch_truncated ")' "$repo/scripts/verify_theron_jp_cd_ram_writer_pc_trace.py" ||
+   ! grep -Fq 'line.startswith("code_fetch_extended ")' "$repo/scripts/verify_theron_jp_fetch_target_writes.py" ||
+   ! grep -Fq 'line.startswith("code_fetch_truncated ")' "$repo/scripts/verify_theron_jp_fetch_target_writes.py"; then
+    printf '%s\n' 'FAIL: the extended System Card code window must be traced and physically validated' >&2
     exit 1
 fi
 main_ram_target_write_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_target_write_trace.patch"

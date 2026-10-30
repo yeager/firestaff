@@ -146,17 +146,25 @@ def verify_code_fetch_rows(path: Path) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
     previous_event = -1
     for line_no, line in enumerate(lines[1:], 2):
-        if not line.startswith("code_fetch "):
+        if line.startswith("code_fetch_truncated "):
+            raise ValueError(f"incomplete code-fetch trace at line {line_no}")
+        if line.startswith("code_fetch_extended "):
+            prefix = "code_fetch_extended"
+        elif line.startswith("code_fetch "):
+            prefix = "code_fetch"
+        else:
             if line.startswith(("system_card_controller ", "system_card_path ")):
                 continue
             raise ValueError(f"unexpected System Card dispatch row at line {line_no}")
-        row = parse_fields(line, "code_fetch", line_no)
+        row = parse_fields(line, prefix, line_no)
+        row["fetch_kind"] = prefix
         event = int(row["event_sequence"])
         if event <= previous_event:
             raise ValueError(f"non-increasing code-fetch event sequence at line {line_no}")
         previous_event = event
         pc = int(row["logical_pc"], 16)
-        if not 0x4000 <= pc <= 0x5FFF:
+        pc_range = (0x6000, 0x7FFF) if prefix == "code_fetch_extended" else (0x4000, 0x5FFF)
+        if not pc_range[0] <= pc <= pc_range[1]:
             raise ValueError(f"code-fetch PC outside traced window at line {line_no}")
         mpr = [int(row[f"mpr{i}"], 16) for i in range(8)]
         slot = (pc >> 13) & 7
@@ -260,6 +268,7 @@ def main() -> int:
         print(f"ordered_value_read_write_candidate_matches={read_write_matches}")
         print(f"writer_pc_writes_without_ordered_value_candidate={unmatched_writes}")
         print(f"runtime_code_fetch_rows={len(code_rows)}")
+        print(f"runtime_extended_code_fetch_rows={sum(row['fetch_kind'] == 'code_fetch_extended' for row in code_rows)}")
         print(f"runtime_code_fetch_bytes_matching_prior_writer={code_matches}")
         print(f"runtime_code_fetch_bytes_mismatching_latest_writer={code_mismatches}")
         print(f"runtime_code_fetch_rows_fully_backed_by_prior_writes={fully_backed}")

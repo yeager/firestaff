@@ -17,6 +17,13 @@ assets, mechanics, or parity.
    handoff or playable runtime. Current trace limits are recorded in the
    [JP System Card Run source-lock note](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md)
    and the dated trace entries below.
+   A bounded cold capture now records the `$613A/$613F/$6144` writers and the
+   temporary `$40D9` jump bytes, but it does not bind them uniquely to Track 02
+   source bytes or a game-owned consumer. Trace that source path next, then
+   continue through the first game-owned poll and resulting state change. The
+   explicit code-fetch overflow markers show that both current windows exceed
+   their caps; narrow or rotate the traced windows before using another bounded
+   capture for source or consumer conclusions.
 2. **Verify quest progression and original-format save transactions.** Bind
    authentic quest artifacts and their pickup, exit, chapter transition, and
    completion consumers. Keep the campaign-completion bit distinct from

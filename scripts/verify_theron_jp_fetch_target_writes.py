@@ -97,18 +97,25 @@ def reconcile(target_path: Path, fetch_path: Path) -> tuple[dict[int, int], dict
     matched = mismatched = missing = 0
     target_rows: dict[int, list[bool]] = {}
     for line_number, line in enumerate(lines[1:], 2):
-        if not line.startswith("code_fetch "):
+        if line.startswith("code_fetch_truncated "):
+            raise ValueError(f"incomplete code-fetch trace at line {line_number}")
+        if line.startswith("code_fetch_extended "):
+            prefix = "code_fetch_extended"
+        elif line.startswith("code_fetch "):
+            prefix = "code_fetch"
+        else:
             if line.startswith(("system_card_controller ", "system_card_path ")):
                 continue
             raise ValueError(f"unexpected dispatch trace row at line {line_number}")
-        row = parse_fields(line, "code_fetch", line_number)
+        row = parse_fields(line, prefix, line_number)
         event = int(row["event_sequence"])
         if event <= previous_event:
             raise ValueError(f"non-increasing code-fetch event sequence at line {line_number}")
         previous_event = event
         pc = int(row["logical_pc"], 16)
         mprs = [int(row[f"mpr{i}"], 16) for i in range(8)]
-        if not 0x4000 <= pc <= 0x5FFF:
+        pc_range = (0x6000, 0x7FFF) if prefix == "code_fetch_extended" else (0x4000, 0x5FFF)
+        if not pc_range[0] <= pc <= pc_range[1]:
             raise ValueError(f"code-fetch PC outside traced window at line {line_number}")
         expected_pc = (mprs[(pc >> 13) & 7] << 13) | (pc & 0x1FFF)
         if int(row["physical_pc"], 16) != expected_pc:

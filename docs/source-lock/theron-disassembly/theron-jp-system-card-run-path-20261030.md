@@ -143,6 +143,14 @@ explains why the earlier $EA9C-only comparison was incomplete:
   entered gameplay. The original source-bound reader/writer verifier still
   reports 46 differences when only $EA9C writes are considered.
 
+A read-only latest-writer comparison across the same capture resolves all 46
+bytes against later observed guest writes: PCs $613A, $613F, and $6144 wrote
+the three bytes at $1000D9-$1000DB, while PCs $4684 and $4689 wrote the two
+bytes at $10468D/$10468E. The existing opcode-fetch trace covers logical
+$4000-$5FFF, so it does not show the instructions at $613A/$613F/$6144. This
+accounts for the earlier mismatch without establishing which authenticated
+disc bytes supplied those stores or what the resulting code does.
+
 Private capture directory on TRV2:
 /home/trv2/firestaff-theron-evidence/capture/theron-jp-run-writer-all-cdram-writes-cold-20261030/.
 
@@ -156,9 +164,13 @@ The raw media and traces remain private and are not included in Git.
 
 ## Remaining evidence needed
 
-Continue from the authenticated bank `$80` writes: bind the following source
-bytes and transfer into the active game loader, capture the first game-owned
-controller poll and its resulting state change, then compare native Firestaff
+The extended cold capture below records the writer instructions around
+$613A/$613F/$6144, but it reaches its bounded code-fetch cap and does not bind
+those stores uniquely to authenticated Track 02 bytes. Trace a bounded repeat
+that retains this writer path and its source reads, then establish the source
+and caller before assigning game-level meaning. Continue from the authenticated
+bank $80 writes into the active game loader, capture the first game-owned
+controller poll and its resulting state change, and compare native Firestaff
 input and rendering against that authenticated route. Keep save-state captures
 separate from cold-boot loader evidence.
 
@@ -201,3 +213,74 @@ The receipt reports `cd_irq_callbacks=0`,
 `transition=missing`. This is System Card loader instrumentation evidence;
 it does not establish game launch, gameplay, or native parity. Raw traces,
 game media, and firmware remain private and are not included in Git.
+
+## 2026-10-30 — capture later JP loader writers through `$7FFF`
+
+A fifth 45-second cold reference capture used the authentic Japanese Rev. 1
+Track 02 (MD5 `b7afb338ad31be1025b53f9aff12d73a`), System Card 3.0 (MD5
+`ff1a674273fe3540ccef576376407d1d`), and `run@480:300` without a save state.
+The reference-only code-fetch observer now keeps a separate bounded stream for
+logical `$6000-$7FFF`, independent of the existing `$4000-$5FFF` stream.
+
+The authenticated CD reader verifier reported 63,488 Track 02-backed reads
+and zero unbound reads. All 53,248 `$EA9C` writer values had preceding `$EA99`
+read candidates, with zero writer values lacking a candidate; repeated byte
+values make those read/write candidates non-unique. The combined code-fetch
+trace contains 262,144 rows from each logical window. Both streams reached
+their configured row caps. The original capture instrumentation did not mark
+dropped rows, so completeness past either cap is unknown. A later observer
+revision adds explicit one-shot truncation markers and the verifiers reject
+traces containing them. The `$EA9C`-only latest-writer comparison retains 46
+mismatching fetched bytes, as recorded for the preceding capture.
+
+The new window records instructions in physical bank `$81` around the later
+stores. At `$6138`, bytes `A9 4C` load `$4C`; `$613A` contains `8D D9 40`
+(`STA $40D9`). The same pattern at `$613D/$613F` stores `$48` at `$40DA`, and
+at `$6142/$6144` stores `$61` at `$40DB`. With MPR2=`$80`, these stores map to
+physical `$1000D9-$1000DB`. The guest-write verifier confirms that all 228
+fetched bytes at the five tracked addresses have a prior observed write with
+the latest fetched value, with zero mismatches or missing bytes.
+
+After those stores, the fetch at `$40D9` records `4C 48 61`, a `JMP $6148`
+through the newly written bytes; a later fetch at `$40D9` sees `EA EA EA`.
+The HuC6280 opcode mapping is checked against Mednafen 1.32.1
+`src/pce/dis6280.cpp:111` (`RTS`), `:123` (`JMP`/`JSR`), `:195` (`LDA`), and
+`:208` (`STA`). This establishes a short-lived code write and fetch, not the
+disc-byte source, loader purpose, or a gameplay consumer.
+
+The capture again ended with no CD IRQ callback, authenticated CD-to-RAM
+receipt, or game-owned input poll (`transition=missing`). It is emulator and
+disassembly evidence only; it does not prove game launch or native parity.
+Raw traces, game media, and firmware remain private on TRV2 at
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-code-fetch-6000-window-cold-20261030/`.
+
+- CD data-port reads SHA-256: `27f420ec0232b425b38d43975e16fe9c1f536281585672656aa4906b0e233641`.
+- CD-RAM target writes SHA-256: `0d52667a9376624099a87f4036b7e8384c681674253150b2ca7710f2ffb36228`.
+- CD-RAM writer-PC trace SHA-256: `03105bd07dadc5c781411adcf3b8ec70417a5a51c8fedc36875da6bd72a54487`.
+- System Card dispatch and code fetches SHA-256: `841f76db4cc9b6911edde3380048bde1b2f19c9f7e8b902cdd15908b2f815fc8`.
+- Transition receipt SHA-256: `65b7b35d440243940299616d04f530c947727b31df839b38d3d386ca5252ef5c`.
+
+## 2026-10-30 — verify code-fetch truncation markers
+
+A repeat 45-second cold capture used the same authentic JP Rev. 1 Track 02
+(MD5 `b7afb338ad31be1025b53f9aff12d73a`) and System Card 3.0 (MD5
+`ff1a674273fe3540ccef576376407d1d`), with no save state and the observer
+revision that emits one-shot overflow markers. Each logical code window
+recorded 262,144 rows, then emitted exactly one marker on the first subsequent
+fetch: `$4000-$5FFF` at event 389,967 and `$6000-$7FFF` at event 652,194.
+Both source-bound and target-fetch verifiers rejected the trace as incomplete.
+The earlier capture's exact-cap row counts alone could not distinguish a full
+trace from dropped rows; this run confirms both windows continue beyond their
+caps under the same cold route.
+
+The receipt again reports zero CD IRQ callbacks, zero authenticated CD-to-RAM
+receipts, zero game-main-RAM `$E009` dispatches, zero loader TII transfers, and
+`transition=missing`. The marker behavior improves capture completeness
+reporting; it adds no evidence of game launch or gameplay and does not prove
+native parity. Raw traces, game media, and firmware remain private on TRV2 at
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-code-fetch-cap-marker-cold-20261030/`.
+
+- System Card dispatch and code-fetch trace SHA-256: `4badfc34dfddf0786cc6021712d726f084810ad0e92179ff7cc33ce159e89437`.
+- CD data-port read trace SHA-256: `27f420ec0232b425b38d43975e16fe9c1f536281585672656aa4906b0e233641`.
+- CD-RAM target-write trace SHA-256: `2d6c2df36a271a654605bd3cbf133baa0849017925caa486f39a29596c6a4461`.
+- Transition receipt SHA-256: `c8fe028fb07f052c2e64217c071fcb188baa62f5aa6d096ce32664f85c4e2b84`.
