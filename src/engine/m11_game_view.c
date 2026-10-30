@@ -62,6 +62,7 @@
 #include "csb_v1_atari_f0115_creature_plan.h"
 #include "csb_v1_atari_f0115_projectile_plan.h"
 #include "csb_v1_atari_f0115_explosion_plan.h"
+#include "csb_v1_atari_f0133_indexed_blit.h"
 #include "csb_v1_atari_f0128_cell_schedule.h"
 #include "csb_v1_atari_st_wall_ornament_data.h"
 #include "csb_v1_atari_f0132_clip.h"
@@ -6237,7 +6238,19 @@ static int m11_csb_atari_st_draw_explosions_for_square(
                 /* ReDMCSB rejects invisible rebirth records before consuming
                  * the ordinary sprite flip bits. Plan once before RNG, then
                  * attach the source flips only to a visible bitmap route. */
-                if (plan_result != CSB_V1_ATARI_F0115_EXPLOSION_NOT_DRAWN) {
+                if (plan_result ==
+                    CSB_V1_ATARI_F0115_EXPLOSION_D0C_PATTERN) {
+                    input.d0c_last_unit = 87 +
+                        csb_v1_runtime_main_random_mod(mutable_runtime, 4);
+                    input.d0c_first_unit =
+                        csb_v1_runtime_main_random_mask(mutable_runtime, 63);
+                    if (input.d0c_last_unit < 87 ||
+                        input.d0c_first_unit < 0) return -1;
+                    plan_result = csb_v1_atari_f0115_plan_explosion(
+                        &input, &plan);
+                    if (plan_result < 0) return -1;
+                } else if (plan_result !=
+                           CSB_V1_ATARI_F0115_EXPLOSION_NOT_DRAWN) {
                     if (explosion->explosionType != 50 && view_square != 9) {
                         input.flip_vertical =
                             csb_v1_runtime_main_random_bit(mutable_runtime);
@@ -6323,14 +6336,46 @@ static int m11_csb_atari_st_draw_explosions_for_square(
                             plan.draw_height, plan.flip_horizontal,
                             plan.flip_vertical, pixels);
                     }
-                } else if (state->debugMovementTraceEnabled &&
-                           plan_result == CSB_V1_ATARI_F0115_EXPLOSION_D0C_PATTERN) {
-                    fprintf(stderr,
-                        "firestaff: viewport game=csb platform=atari "
-                        "pass=f0115-explosion status=d0c-pattern-unbound "
-                        "slot=%d graphic=%d size=%d\n",
-                        explosion->slotIndex, plan.graphic_index,
-                        plan.d0c_pattern_size);
+                } else if (plan_result ==
+                           CSB_V1_ATARI_F0115_EXPLOSION_D0C_PATTERN) {
+                    unsigned int pixels = 0u;
+                    if (!m11_csb_install_runtime_source_graphic(
+                            state, (unsigned int)plan.graphic_index))
+                        return -1;
+                    asset = M11_AssetLoader_Load(
+                        &state->assetLoader, (unsigned int)plan.graphic_index);
+                    if (!asset || !asset->loaded || !asset->pixels ||
+                        asset->width == 0u || asset->height == 0u ||
+                        asset->width % 16u != 0u ||
+                        plan.d0c_last_unit < plan.d0c_first_unit + 1 ||
+                        (unsigned int)plan.d0c_last_unit >
+                            asset->width / 16u * asset->height)
+                        return -1;
+                    {
+                        const int result = csb_v1_atari_f0133_fill_indexed_box(
+                            asset->pixels, (int)asset->width,
+                            (int)asset->height, plan.d0c_last_unit,
+                            plan.d0c_first_unit, framebuffer,
+                            framebuffer_width, 48, 33, 224, 136,
+                            plan.transparent_color,
+                            plan.smoke_palette ? smoke_palette : NULL);
+                        if (result < 0) return -1;
+                        pixels = (unsigned int)result;
+                    }
+                    drawn += pixels != 0u;
+                    if (state->debugMovementTraceEnabled) {
+                        fprintf(stderr,
+                            "firestaff: viewport game=csb platform=atari "
+                            "pass=f0115-explosion status=%s slot=%d type=%d "
+                            "square=%d graphic=%d pattern=%d first=%d last=%d "
+                            "size=%ux%u pixels=%u\n",
+                            pixels ? "drawn" : "transparent",
+                            explosion->slotIndex, explosion->explosionType,
+                            view_square, plan.graphic_index,
+                            plan.d0c_pattern_size, plan.d0c_first_unit,
+                            plan.d0c_last_unit, asset->width, asset->height,
+                            pixels);
+                    }
                 }
             }
         }

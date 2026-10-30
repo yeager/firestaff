@@ -24,6 +24,8 @@ typedef struct CSB_V1_AtariF0115ExplosionInput {
     int view_square; /* MEDIA020 M600..M611: D3C through D0R */
     int flip_horizontal; /* M005_RANDOM(2), source-owned G0349 draw */
     int flip_vertical;   /* M005_RANDOM(2), source-owned G0349 draw */
+    int d0c_last_unit;  /* F0133 source restart unit (exclusive). */
+    int d0c_first_unit; /* F0133 initial source unit. */
 } CSB_V1_AtariF0115ExplosionInput;
 
 typedef struct CSB_V1_AtariF0115ExplosionPlan {
@@ -44,6 +46,8 @@ typedef struct CSB_V1_AtariF0115ExplosionPlan {
     int transparent_color;
     int smoke_palette;
     int d0c_pattern_size;
+    int d0c_last_unit;
+    int d0c_first_unit;
     int uses_projectile_bitmap;
 } CSB_V1_AtariF0115ExplosionPlan;
 

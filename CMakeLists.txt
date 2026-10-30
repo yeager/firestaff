@@ -7958,6 +7958,7 @@ set(M11_SOURCES
     src/csb/csb_v1_atari_f0115_creature_plan.c
     src/csb/csb_v1_atari_f0115_projectile_plan.c
     src/csb/csb_v1_atari_f0115_explosion_plan.c
+    src/csb/csb_v1_atari_f0133_indexed_blit.c
     src/csb/csb_v1_atari_f0128_cell_schedule.c
     src/csb/csb_v1_atari_f0132_clip.c
     src/csb/csb_v1_audio_runtime_pc34_compat.c
@@ -8095,6 +8096,22 @@ if(DM2_SOURCES)
     # M11_GameView_StartDm2 in m11_game_view.c). Links the DM2 V1 boot
     # profile + runtime so --game dm2 reaches dm2_v1_boot_enter_game.
     target_link_libraries(firestaff_m11 PUBLIC firestaff_dm2)
+endif()
+
+# ReDMCSB VIDEO.C F0133 bounded indexed-bitmap unit compositor.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_f0133_indexed_blit.c")
+    add_executable(test_csb_v1_atari_f0133_indexed_blit
+        tests/test_csb_v1_atari_f0133_indexed_blit.c
+        src/csb/csb_v1_atari_f0133_indexed_blit.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_atari_f0133_indexed_blit PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_atari_f0133_indexed_blit
+        COMMAND test_csb_v1_atari_f0133_indexed_blit)
+    set_tests_properties(csb_v1_atari_f0133_indexed_blit PROPERTIES
+        LABELS "csb;atari;f0133;unit;skip-safe")
 endif()
 
 if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_audio_sdl_lifecycle.c")

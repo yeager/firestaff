@@ -5935,16 +5935,21 @@ static int csb_v1_runtime_main_random2(CSB_V1_RuntimeProfile *profile)
     return (int)(csb_v1_runtime_main_random16(profile) & 0x0003u);
 }
 
-static int csb_v1_runtime_main_random_mod(CSB_V1_RuntimeProfile *profile,
-                                          int modulus)
+int csb_v1_runtime_main_random_mod(CSB_V1_RuntimeProfile *profile,
+                                    int modulus)
 {
-    if (modulus <= 0) return 0;
+    if (!profile || !profile->csbwin_random_seed_valid || modulus <= 0) {
+        return -1;
+    }
     return (int)(csb_v1_runtime_main_random16(profile) % (uint16_t)modulus);
 }
 
-static int csb_v1_runtime_main_random_mask(CSB_V1_RuntimeProfile *profile,
-                                           int mask)
+int csb_v1_runtime_main_random_mask(CSB_V1_RuntimeProfile *profile,
+                                     int mask)
 {
+    if (!profile || !profile->csbwin_random_seed_valid || mask < 0) {
+        return -1;
+    }
     return (int)(csb_v1_runtime_main_random16(profile) & (uint16_t)mask);
 }
 

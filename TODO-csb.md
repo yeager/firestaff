@@ -12,6 +12,18 @@ campaign has no live C14 scenario, so the rendered projectile path still lacks
 an end-to-end gameplay assertion. Explosion/Fluxcage and F0113 field
 composition and full viewport parity remain open.
 
+2026-10-30 CSB Atari D0C F133 pattern pass: the live F0115 route now selects
+the original M636 graphics 351–359 and tiles their indexed 8-byte units into
+the full D0C viewport. It consumes M004_RANDOM(4) then M003_RANDOM(64) from
+the shared G0349 stream, wraps the source unit index at the exclusive
+`lastUnit`, applies the source smoke palette and color-10 transparency, and
+logs the selected bitmap, unit range, and written pixel count in debug mode.
+The compositor has a synthetic contract test, and the real-media Atari asset
+test decodes all nine selectable M636 patterns. The source check used
+ReDMCSB `VIDEO.C` F133 around lines 839–1006 and `DUNVIEW.C` around lines
+1860–1877. D0C Fluxcage F0113 rendering and an end-to-end live explosion
+capture remain open; this work alone does not establish full viewport parity.
+
 2026-10-30 CSB Atari F0115 ordinary explosion work in progress: the new
 planner encodes ReDMCSB `DUNVIEW.C` G0211/G0212/G0216/G0225/G0226/G0228 and native
 M614 mapping. The live Atari route reads C15 records in SFT order, validates
@@ -27,11 +39,11 @@ comparison used
 F0114 around lines 4490-4545; F0115 explosion dispatch around lines
 6025-6215; tables around lines 1319, 1533, 1565, and 1871-1905. Build and
 eight focused Atari plan, asset and viewport tests pass, including the
-original-media native-asset test. This is not full rendering parity: D0C
-pattern compositing and Fluxcage F0113 field rendering,
-and an end-to-end live explosion capture still need implementation and
-verification. Do not claim the CSB Atari viewport or explosion behavior is
-complete based on these checks.
+original-media native-asset test. D0C pattern compositing is now implemented
+and source-asset checked, but Fluxcage F0113 field rendering and an end-to-end
+live explosion capture still need implementation and verification. Do not
+claim the CSB Atari viewport or explosion behavior is complete based on these
+checks.
 
 2026-10-29 CSB FM Towns renamed-ZIP discovery: the scanner previously
 admitted only two hard-coded ZIP basenames, so an authentic archive selected

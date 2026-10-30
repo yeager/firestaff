@@ -1286,6 +1286,12 @@ void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir);
 /* ReDMCSB BASE.C F0028 consumes one bit from the shared G0349 random
  * stream. Returns -1 when the original runtime stream is unavailable. */
 int csb_v1_runtime_main_random_bit(CSB_V1_RuntimeProfile *profile);
+/* ReDMCSB BASE.C M003_RANDOM/M004_RANDOM consume exactly one G0349 value.
+ * These return -1 when the stream is unavailable or the argument is invalid. */
+int csb_v1_runtime_main_random_mod(CSB_V1_RuntimeProfile *profile,
+                                   int modulus);
+int csb_v1_runtime_main_random_mask(CSB_V1_RuntimeProfile *profile,
+                                    int mask);
 
 /* Clean up runtime resources.
  * Unloads the dungeon data loaded by csb_v1_runtime_boot().

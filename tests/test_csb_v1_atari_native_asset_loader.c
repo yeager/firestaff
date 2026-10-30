@@ -70,6 +70,27 @@ int main(int argc, char **argv)
             return 19;
         }
     }
+    {
+        /* ReDMCSB DUNVIEW.C D0C uses M636's nine indexed patterns through
+         * F0133. Its randomized exclusive restart unit reaches 90, so every
+         * source graphic must expose at least 90 complete 16-pixel units. */
+        for (index = 351u; index <= 359u; ++index) {
+            unsigned short width = 0u, height = 0u;
+            const M11_AssetSlot *asset;
+            if (!M11_AssetLoader_QuerySize(&loader, index, &width, &height) ||
+                width == 0u || width % 16u != 0u || height == 0u ||
+                (unsigned int)(width / 16u) * height < 90u ||
+                !(asset = M11_AssetLoader_Load(&loader, index)) ||
+                !asset->loaded || !asset->pixels || asset->width != width ||
+                asset->height != height) {
+                fprintf(stderr,
+                        "CSB Atari M636 D0C pattern %u failed F0133 source validation (%ux%u)\n",
+                        index, width, height);
+                M11_AssetLoader_Shutdown(&loader);
+                return 20;
+            }
+        }
+    }
     csb_atari_st_graphics_loader_init(&native);
     if (!csb_atari_st_graphics_loader_open(&native, path) ||
         native.items[558u].decompressed_size != 4720u) {

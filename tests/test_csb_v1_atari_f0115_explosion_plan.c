@@ -134,9 +134,12 @@ int main(void)
     input.attack = 0;
     input.centered = 1;
     input.view_square = 9; /* M609 D0C uses M636 pattern graphics. */
+    input.d0c_last_unit = 89;
+    input.d0c_first_unit = 12;
     failures += expect(csb_v1_atari_f0115_plan_explosion(&input, &plan) ==
                        CSB_V1_ATARI_F0115_EXPLOSION_D0C_PATTERN &&
-                       plan.graphic_index == 357 && plan.d0c_pattern_size == 0,
+                       plan.graphic_index == 357 && plan.d0c_pattern_size == 0 &&
+                       plan.d0c_last_unit == 89 && plan.d0c_first_unit == 12,
                        "D0C poison pattern small graphic");
     input.attack = 128;
     failures += expect(csb_v1_atari_f0115_plan_explosion(&input, &plan) ==

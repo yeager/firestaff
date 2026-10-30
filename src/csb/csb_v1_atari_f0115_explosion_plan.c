@@ -202,6 +202,8 @@ int csb_v1_atari_f0115_plan_explosion(
         if (out_plan->d0c_pattern_size > 3) {
             out_plan->d0c_pattern_size = 3;
         }
+        out_plan->d0c_last_unit = input->d0c_last_unit;
+        out_plan->d0c_first_unit = input->d0c_first_unit;
         return out_plan->kind;
     }
     cell_index = input->centered ? -1 :

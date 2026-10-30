@@ -1,5 +1,6 @@
 #include "csb_v1_atari_f0115_projectile_plan.h"
 #include "csb_v1_atari_f0115_explosion_plan.h"
+#include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_graphics_atari_st_loader_pc34_compat.h"
 
 #include <stdio.h>
@@ -60,6 +61,35 @@ static int check_selector_resolution(void)
             fprintf(stderr, "F0142 accepted unavailable/invalid source state\n");
             return 0;
         }
+    }
+    return 1;
+}
+
+static int check_shared_g0349_random_mod_and_mask(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    uint32_t state1;
+    uint32_t state2;
+    int expected_mod;
+    int expected_mask;
+    memset(&profile, 0, sizeof(profile));
+    profile.csbwin_random_seed_valid = 1;
+    profile.csbwin_random_seed = 0x12345678u;
+    state1 = 0x12345678u * UINT32_C(0xbb40e62d) + UINT32_C(11);
+    state2 = state1 * UINT32_C(0xbb40e62d) + UINT32_C(11);
+    expected_mod = (int)((state1 >> 8) % 4u);
+    expected_mask = (int)((state2 >> 8) & 63u);
+    if (csb_v1_runtime_main_random_mod(&profile, 4) != expected_mod ||
+        csb_v1_runtime_main_random_mask(&profile, 63) != expected_mask ||
+        profile.csbwin_random_seed != state2) {
+        fprintf(stderr, "M004/M003 did not consume exactly two shared G0349 draws\n");
+        return 0;
+    }
+    profile.csbwin_random_seed_valid = 0;
+    if (csb_v1_runtime_main_random_mod(&profile, 4) != -1 ||
+        csb_v1_runtime_main_random_mask(&profile, 63) != -1) {
+        fprintf(stderr, "M004/M003 accepted an unavailable G0349 stream\n");
+        return 0;
     }
     return 1;
 }
@@ -144,7 +174,8 @@ int main(void)
         fprintf(stderr, "C100 rebirth drew beyond D1C\n");
         return 12;
     }
-    if (!check_selector_resolution()) return 4;
+    if (!check_selector_resolution() ||
+        !check_shared_g0349_random_mod_and_mask()) return 4;
 
     memset(&input, 0, sizeof(input));
     input.c558 = c558;
