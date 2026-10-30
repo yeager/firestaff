@@ -48,7 +48,7 @@ language_explicit = 1
 EOF
     fi
 
-    local lang_args=()
+    local -a lang_args=()
     if [[ "$mode" == explicit-language ]]; then
         lang_args=(--lang sv)
     fi
@@ -103,7 +103,7 @@ language_explicit = 1
 EOF
     fi
 
-    local lang_args=()
+    local -a lang_args=()
     if [[ "$mode" == explicit-language ]]; then
         lang_args=(--lang sv)
     fi

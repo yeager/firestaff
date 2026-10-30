@@ -101,6 +101,17 @@ the tested startup/menu contracts only. Nexus remains capture-gated before a
 playable runtime, and these SDL dummy tests do not establish native display,
 physical input, or complete game functionality.
 
+The same build then passed `m12_main_menu_runtime_real_media` (726.80 s)
+against the installed original-media collection, including DM1, CSB, DM2,
+DM1 Amiga, DM2 Amiga, and Theron runtime routes. It also passed the three
+real-media Swedish scan-localization tests for DM1 PC, CSB FM Towns, and DM2
+FM Towns (0.52 s, 5.05 s, and 1.54 s). Those cover explicit and saved
+language preferences, the no-game menu scan, localized labels, and authentic
+edition selection. A Bash `set -u` warning in the localization test's empty
+optional-argument array was fixed and the three cases rerun cleanly. All tests
+use SDL dummy video/audio; they verify bounded startup/runtime receipts, not
+native presentation, physical input, sound output, or complete game parity.
+
 ### 2026-10-30 DM1/CSB/DM2 menu return, rescan, and cache retest
 
 On `main` at `9f4bb4df`, the local app was rebuilt after the shared media
