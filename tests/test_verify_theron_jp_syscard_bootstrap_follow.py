@@ -10,7 +10,9 @@ sys.path.insert(0, str(repo / "scripts"))
 import verify_theron_jp_syscard_bootstrap_follow as verifier
 
 
-def instruction_row(kind: str, index: int, pc: int, mpr2: int = 0) -> str:
+def instruction_row(
+    kind: str, index: int, pc: int, mpr2: int = 0, event_sequence: int = 1
+) -> str:
     mprs = [0] * 8
     mprs[2] = mpr2
     physical_pc = (mprs[(pc >> 13) & 7] << 13) | (pc & 0x1FFF)
@@ -19,7 +21,8 @@ def instruction_row(kind: str, index: int, pc: int, mpr2: int = 0) -> str:
         for i in range(4)
     ]
     return (
-        f"{kind} index={index} logical_pc={pc:04x} physical_pc={physical_pc:06x} "
+        f"{kind} index={index} event_sequence={event_sequence} "
+        f"logical_pc={pc:04x} physical_pc={physical_pc:06x} "
         f"bytes=00000000 physical_bytes={','.join(f'{value:06x}' for value in physical_bytes)} "
         f"valid_mask=f a=00 x=00 y=00 sp=00 p=00 "
         + " ".join(f"mpr{i}={value:02x}" for i, value in enumerate(mprs))
@@ -29,17 +32,17 @@ def instruction_row(kind: str, index: int, pc: int, mpr2: int = 0) -> str:
 def main() -> None:
     rows = [
         verifier.HEADER,
-        instruction_row("bootstrap_follow", 0, 0xE11B),
-        instruction_row("bootstrap_follow", 1, 0xE11D),
-        instruction_row("target_follow", 0, 0x4000, 0x80),
+        instruction_row("bootstrap_follow", 0, 0xE11B, event_sequence=100),
+        instruction_row("bootstrap_follow", 1, 0xE11D, event_sequence=101),
+        instruction_row("target_follow", 0, 0x4000, 0x80, event_sequence=102),
     ]
     counts = verifier.verify_lines(rows)
     if counts != {"bootstrap_follow": 2, "target_follow": 1}:
         raise AssertionError("valid bounded bootstrap trace counts were not retained")
     target_first_rows = [
         verifier.HEADER,
-        instruction_row("target_follow", 0, 0x4000, 0x80),
-        instruction_row("bootstrap_follow", 0, 0xE11B),
+        instruction_row("target_follow", 0, 0x4000, 0x80, event_sequence=200),
+        instruction_row("bootstrap_follow", 0, 0xE11B, event_sequence=201),
     ]
     if verifier.verify_lines(target_first_rows) != {"bootstrap_follow": 1, "target_follow": 1}:
         raise AssertionError("independently armed target-before-bootstrap windows were rejected")
@@ -60,7 +63,9 @@ def main() -> None:
     else:
         raise AssertionError("an empty capture was accepted as a verified handoff trace")
     invalid_pc = rows.copy()
-    invalid_pc[-1] = instruction_row("target_follow", 0, 0x14000, 0x80)
+    invalid_pc[-1] = instruction_row(
+        "target_follow", 0, 0x14000, 0x80, event_sequence=102
+    )
     try:
         verifier.verify_lines(invalid_pc)
     except ValueError as error:
@@ -68,6 +73,28 @@ def main() -> None:
             raise
     else:
         raise AssertionError("an out-of-range logical PC was accepted")
+    unordered = rows.copy()
+    unordered[-1] = instruction_row(
+        "target_follow", 0, 0x4000, 0x80, event_sequence=99
+    )
+    try:
+        verifier.verify_lines(unordered)
+    except ValueError as error:
+        if "non-increasing shared event sequence" not in str(error):
+            raise
+    else:
+        raise AssertionError("a reordered shared event sequence was accepted")
+    malformed_event = rows.copy()
+    malformed_event[1] = malformed_event[1].replace(
+        "event_sequence=100", "event_sequence=+100"
+    )
+    try:
+        verifier.verify_lines(malformed_event)
+    except ValueError as error:
+        if "malformed shared event sequence" not in str(error):
+            raise
+    else:
+        raise AssertionError("a noncanonical shared event sequence was accepted")
     print("test_verify_theron_jp_syscard_bootstrap_follow: PASS")
 
 

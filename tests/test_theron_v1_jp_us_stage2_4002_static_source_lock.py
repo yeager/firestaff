@@ -222,8 +222,9 @@ def main() -> int:
     print("PASS: JP/US $40e3 alternate-entry listings match their distinct authentic spans")
     print("PASS: JP/US $40d5/$40dc indexed parameter tuples are source-locked")
     print(
-        "LIMIT: static media/listing correspondence only; runtime source binding, "
-        "execution, and semantics remain unproven"
+        "LIMIT: this test locks the 211-byte static candidate; v16 only "
+        "source-correlates the first 11 instruction-start snapshot bytes, "
+        "without shared-header provenance or proven gameplay semantics"
     )
     return 0
 

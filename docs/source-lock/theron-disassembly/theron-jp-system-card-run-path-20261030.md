@@ -819,3 +819,86 @@ gameplay. Raw traces and original media remain private on TRV2 at
 
 Bootstrap-follow trace SHA-256:
 `b05d637423d927c66318d38c8534e058dcb76fdeaec282c134a93415740a24aa`.
+
+## 2026-10-30 — v16 instruction-start snapshots at `$4002/$4009`
+
+A second cold reference capture used the v2 bootstrap-follow patch, which adds
+`TheronTraceCDSharedEventSequence` to every row in both independently armed
+instruction windows. The authentic Japanese Rev. 1 cue and Track 02 were
+used with System Card 3.0; Track 02 MD5 was
+`b7afb338ad31be1025b53f9aff12d73a`, System Card MD5 was
+`ff1a674273fe3540ccef576376407d1d`, and no save state was loaded. Replay input
+was `run@480:300,select@600:1`.
+
+The v2 bootstrap-follow verifier accepted 512 bootstrap rows and 128 target
+rows. The sidecars record `$4002` instruction-start bytes
+`$73 $00 $20 $01` at event 26830, and `$4009` bytes `$73 $00 $20 $00` at
+event 26846. The latest writes recorded before those samples had IDs
+14509/14512/14515/14518 and 14530/14533/14536/14539. The read sidecar
+independently authenticates Track 02 LBA 4521, user offsets 2–12 (raw-file
+offsets 2,716,578–2,716,588); the write sidecar records matching values at
+physical `$100002-$10000c`. However, v16's read/write headers do not identify
+the shared event-sequence source. The former cross-sidecar verifier therefore
+could not establish that these IDs came from one counter; its source-join
+result is withdrawn as cross-stream proof. In addition, the bootstrap hook
+samples mapped instruction bytes before the CPU opcode read, so these are
+instruction-start snapshots, not CPU fetch receipts. The captured values
+remain bounded evidence, but their source-to-write chronology needs a fresh
+capture with explicit shared-sequence header markers.
+
+The scripted-input receipt still records both events only at System Card
+poll `$E4C5`, with zero non-System-Card polls. The transition receipt records
+zero CD IRQ callbacks, zero authenticated aggregate CD-to-RAM receipts, zero
+game `$E009` dispatches, zero target-range main-RAM consumer reads, and
+`transition=missing`. The 60-second capture exited at its bounded timeout
+with 32,280 input reads. The gameplay gap remains unresolved.
+
+Raw capture files and original media remain private on TRV2 at
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-bootstrap-follow-v16-20261030/`.
+The capture summary, bootstrap-follow, CD-RAM target-write, CD data-port-read,
+transition, and scripted-input SHA-256 values are:
+
+- `trace.log`: `6153913f1be2adf6d35220e8e76198e5b3ac8d541b1db90120d80325a130a982`
+- Bootstrap-follow: `9c04ba4590f6b7243c5c3420fc2d802df6f5e8858b9618ed8110a7f438e8c032`
+- CD-RAM target-write: `57682ec0f4c0b8c2278d31dcb78661efa8ccb84b839f2461efb93741afe47e11`
+- CD data-port-read: `25ecd7a59f0e1047ee00044c6da25dceea5258f76898f686446c2636d43eef1c`
+- Transition: `595e7e056872be5f2c54f5edde75e2e0089dbc3b1ba0525d46825ad53a2a342e`
+- Scripted input: `90e0e8ddea0f9951d4ad5cb408fbf03f10af0c146814a37bf642fe60e5d48eb9`
+
+## v17 shared-sequence instruction-start snapshot check
+
+A follow-up cold reference capture used authentic Japanese Rev. 1 Track 02
+(`TQJP02.bin`, MD5 `b7afb338ad31be1025b53f9aff12d73a`) and System Card 3.0
+(MD5 `ff1a674273fe3540ccef576376407d1d`) with `run@480:300,select@600:1`;
+no save state was loaded. The capture used the patched Mednafen 1.32.1 PCE
+Fast reference core. Its CD data-port-read and CD-RAM target-write sidecar
+headers explicitly name `TheronTraceCDSharedEventSequence`, allowing the
+verifier to compare their shared sequence numbers to the bootstrap-follow
+trace rather than assuming two independent counters are comparable.
+
+`verify_theron_jp_stage2_instruction_snapshot_source.py` passed. It bound all
+11 bytes at physical `$100002-$10000C` to authentic Track 02 bytes, required
+an immediate shared-sequence CD read then equal CD-RAM write for each selected
+byte, and confirmed those values were still the latest observed writes at
+instruction-start snapshots for `$4002` (event 26830) and `$4009` (event
+26846). The corresponding latest write events were 14509/14512/14515/14518
+and 14530/14533/14536/14539. This is bounded sidecar evidence for the captured
+instruction-start memory snapshots. The hook samples before the opcode fetch;
+it does not record the actual opcode bus read, exclusive physical-memory
+provenance, or a completed loader handoff.
+
+The capture timed out with exit 124. Its transition receipt reports zero CD
+IRQ callbacks, zero authenticated CD-to-RAM receipts, zero game `$E009`
+dispatches, and no non-System-Card controller poll. Thus v17 does not prove
+gameplay or native parity. The raw game media and capture files remain private
+on TRV2 at
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-bootstrap-follow-v17-20261030/`.
+
+Private trace SHA-256 values:
+
+- System Card bootstrap-follow: `9c04ba4590f6b7243c5c3420fc2d802df6f5e8858b9618ed8110a7f438e8c032`.
+- CD-RAM target writes: `bbe32a4aa7f56f5fd7336053cac723a0ff6d18b6139b6f4b1d9b49a724ec8cf8`.
+- CD data-port reads: `cf05804075b6a35e69ad823b9c6d3be661a936386c995397477df28f035a2506`.
+- Transition receipt: `8a41d252fdb74c7ac2831a752f46e2588a8c5a1dac959e07d74d98a2a6b313ff`.
+
+The raw media and traces are not included in Git.

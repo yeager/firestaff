@@ -26,6 +26,7 @@ CAPTURED_ADDRESS_RANGES = (
 TARGET_SUFFIX = ".cd-ram-target-write"
 FETCH_SUFFIX = ".system-card-dispatch"
 TARGET_HEADER = "source=mednafen-pce-fast-cd-ram-target-write"
+TARGET_HEADER_SHARED_SEQUENCE = TARGET_HEADER + " event_sequence_source=TheronTraceCDSharedEventSequence"
 FETCH_HEADERS = {
     "source=mednafen-pce-fast-system-card-controller-dispatch-v2",
     "source=mednafen-pce-fast-system-card-controller-dispatch-v3 code_fetch_scope=targeted",
@@ -58,7 +59,7 @@ def ensure_capture_pair(target_path: Path, fetch_path: Path) -> None:
 
 def read_target_writes(path: Path) -> dict[int, list[tuple[int, int, int]]]:
     lines = path.read_text(encoding="ascii").splitlines()
-    if not lines or lines[0] != TARGET_HEADER:
+    if not lines or lines[0] not in (TARGET_HEADER, TARGET_HEADER_SHARED_SEQUENCE):
         raise ValueError("unexpected CD-RAM target-write trace header")
     writes: dict[int, list[tuple[int, int, int]]] = defaultdict(list)
     previous_event = -1

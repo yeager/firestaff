@@ -13,7 +13,8 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
   static FILE *trace = NULL;
 @@ -96,14 +98,17 @@ static void TheronTraceCDRAMTargetWrite(uint32 address, uint8 value)
     return;
-   fputs("source=mednafen-pce-fast-cd-ram-target-write\n", trace);
+-  fputs("source=mednafen-pce-fast-cd-ram-target-write\n", trace);
++  fputs("source=mednafen-pce-fast-cd-ram-target-write event_sequence_source=TheronTraceCDSharedEventSequence\n", trace);
   }
 - fprintf(trace, "cd_ram_target_write sequence=%u physical_address=%06x logical_window_offset=%04x old=%02x value=%02x writer_pc=%04x writer_physical_pc=%06x mpr2=%02x block_move=%u bmt_src=%04x bmt_source_physical=%06x bmt_dest=%04x bmt_length=%04x a=%02x x=%02x y=%02x s=%02x p=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x\n",
 + const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
@@ -55,6 +56,16 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
           count++, cpu_pc, value, cpu_pc, reader_physical_pc, reader_mpr_slot,
           HuCPU.MPR[0], HuCPU.MPR[1], HuCPU.MPR[2], HuCPU.MPR[3],
           HuCPU.MPR[4], HuCPU.MPR[5], HuCPU.MPR[6], HuCPU.MPR[7],
+@@ -277,8 +277,8 @@ static void TheronTraceCDDataPortRead(uint16 cpu_pc, uint32 source_lba, uint16 user_data_offset,
+   const char *path = getenv("FIRESTAFF_THERON_PCE_FAST_CD_DATA_READ_TRACE");
+   if(!path || !*path)
+    return;
+   trace = fopen(path, "w");
+   if(!trace)
+    return;
+-  fputs("source=mednafen-pce-fast-cd-data-port-read-with-reader-mpr-context\n", trace);
++  fputs("source=mednafen-pce-fast-cd-data-port-read-with-reader-mpr-context event_sequence_source=TheronTraceCDSharedEventSequence\n", trace);
+  }
 @@ -291,7 +294,8 @@ static void TheronTraceCDDataPortRead(uint16 cpu_pc, uint32 source_lba, uint16 u
           source_valid && source_lba >= track02_start_lba && source_lba < track02_end_lba ?
            (unsigned long long)track02_index1_file_offset +

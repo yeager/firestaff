@@ -7,6 +7,14 @@ quartz_helper=$repo/scripts/send_theron_macos_quartz_keypair.swift
 quartz_grab_helper=$repo/scripts/send_theron_macos_quartz_chord.swift
 runtime_verifier=$repo/scripts/verify_theron_mednafen_sdl2_runtime.sh
 build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
+if invalid_build_output=$(env FIRESTAFF_MEDNAFEN_ENABLE_PCE_FAST=invalid "$build_script" 2>&1); then
+    printf '%s\n' 'FAIL: Mednafen build accepted an invalid PCE Fast enable value' >&2
+    exit 1
+fi
+if ! grep -Fq 'FIRESTAFF_MEDNAFEN_ENABLE_PCE_FAST must be 0 or 1' <<<"$invalid_build_output"; then
+    printf '%s\n' 'FAIL: Mednafen build did not validate the PCE Fast enable option' >&2
+    exit 1
+fi
 huc6280_23ad_probe=$repo/scripts/apply_mednafen_theron_huc6280_23ad_trace.py
 pointer_instrumenter=$repo/scripts/instrument_mednafen_theron_mouse_trace.py
 bram_helper=$repo/scripts/prepare_theron_authentic_bram.sh
@@ -1662,7 +1670,9 @@ if ! grep -Fq 'TheronIrq2TraceCriticalSamples[critical_slot] < 4096' "$repo/scri
     printf 'FAIL: IRQ evidence must remain bounded during System Card polling loops\n' >&2
     exit 1
 fi
-if ! grep -Fq 'require_instrumented_mednafen_binary()' "$script" ||
+if ! grep -Fq 'pce_fast_enabled=${FIRESTAFF_MEDNAFEN_ENABLE_PCE_FAST:-0}' "$build_script" ||
+   ! grep -Fq 'pce_fast_enabled" == 1' "$build_script" ||
+   ! grep -Fq 'require_instrumented_mednafen_binary()' "$script" ||
    ! grep -Fq 'for marker in FIRESTAFF_THERON_IRQ2_TRACE FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE' "$script" ||
    ! grep -Fq 'grep -aFq "$marker" "$binary"' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE' "$script" ||
@@ -1732,6 +1742,7 @@ if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE_ERROR' "$code_ram_
 fi
 system_card_dispatch_patch=$repo/scripts/mednafen_1.32.1_theron_system_card_controller_dispatch_trace.patch
 system_card_bootstrap_follow_patch=$repo/scripts/mednafen_1.32.1_theron_system_card_bootstrap_follow.patch
+cd_shared_event_sequence_patch=$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_shared_event_sequence.patch
 if ! grep -Fq 'code_fetch_scope=targeted-consumer-boundaries' "$system_card_dispatch_patch" ||
    ! grep -Fq 'pc == 0x40D9 || pc == 0x42AB || pc == 0x42B2' "$system_card_dispatch_patch" ||
    ! grep -Fq 'pc == 0x44C1 || pc == 0x44D2' "$system_card_dispatch_patch" ||
@@ -1745,8 +1756,13 @@ if ! grep -Fq 'code_fetch_scope=targeted-consumer-boundaries' "$system_card_disp
    ! grep -Fq 'source=mednafen-pce-fast-system-card-controller-dispatch-v4 code_fetch_scope=targeted-consumer-boundaries' "$system_card_dispatch_patch" ||
    ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_CODE_FOLLOW_TRACE' "$system_card_dispatch_patch" ||
    ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_BOOTSTRAP_FOLLOW_TRACE' "$system_card_bootstrap_follow_patch" ||
-   ! grep -Fq 'bootstrap_follow index=%u logical_pc=%04x' "$system_card_bootstrap_follow_patch" ||
-   ! grep -Fq 'target_follow index=%u logical_pc=%04x' "$system_card_bootstrap_follow_patch" ||
+   ! grep -Fq 'bootstrap_follow index=%u event_sequence=%u logical_pc=%04x' "$system_card_bootstrap_follow_patch" ||
+   ! grep -Fq 'target_follow index=%u event_sequence=%u logical_pc=%04x' "$system_card_bootstrap_follow_patch" ||
+   ! grep -Fq 'event_sequence=%u logical_pc=%04x' "$system_card_bootstrap_follow_patch" ||
+   ! grep -Fq 'TheronTraceCDSharedEventSequence++' "$system_card_bootstrap_follow_patch" ||
+   ! grep -Fq 'system-card-bootstrap-follow-v2 event_sequence_source=TheronTraceCDSharedEventSequence' "$system_card_bootstrap_follow_patch" ||
+   ! grep -Fq 'source=mednafen-pce-fast-cd-ram-target-write event_sequence_source=TheronTraceCDSharedEventSequence' "$cd_shared_event_sequence_patch" ||
+   ! grep -Fq 'source=mednafen-pce-fast-cd-data-port-read-with-reader-mpr-context event_sequence_source=TheronTraceCDSharedEventSequence' "$cd_shared_event_sequence_patch" ||
    ! grep -Fq 'static unsigned int bootstrap_started = 0' "$system_card_bootstrap_follow_patch" ||
    ! grep -Fq 'if(!target_armed && pc == 0x4000)' "$system_card_bootstrap_follow_patch" ||
    ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_BOOTSTRAP_FOLLOW_TRACE="$system_card_bootstrap_follow_trace"' "$script" ||

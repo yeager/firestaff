@@ -2231,7 +2231,7 @@ if [[ "$capture_mednafen_module" == pce_fast ]]; then
     system_card_code_follow_status=${system_card_code_follow_status_field#status=}
     system_card_code_follow_rows=${system_card_code_follow_rows_field#rows=}
     if [[ ! -s "$system_card_bootstrap_follow_trace" ]] ||
-       ! grep -Fqx 'source=mednafen-pce-fast-system-card-bootstrap-follow-v1 arm_pc=e11b bootstrap_limit=512 target_pc=4000 target_limit=128' \
+       ! grep -Fqx 'source=mednafen-pce-fast-system-card-bootstrap-follow-v2 event_sequence_source=TheronTraceCDSharedEventSequence arm_pc=e11b bootstrap_limit=512 target_pc=4000 target_limit=128' \
            "$system_card_bootstrap_follow_trace"; then
         printf '%s\n' 'FAIL: Mednafen did not produce a valid PCE Fast System Card bootstrap-follow trace' >&2
         exit 1

@@ -9,7 +9,8 @@ from pathlib import Path
 
 
 HEADER = (
-    "source=mednafen-pce-fast-system-card-bootstrap-follow-v1 "
+    "source=mednafen-pce-fast-system-card-bootstrap-follow-v2 "
+    "event_sequence_source=TheronTraceCDSharedEventSequence "
     "arm_pc=e11b bootstrap_limit=512 target_pc=4000 target_limit=128"
 )
 ROW = re.compile(r"^(bootstrap_follow|target_follow) (.+)$")
@@ -33,6 +34,7 @@ def verify_lines(lines: list[str]) -> dict[str, int]:
     counts = {"bootstrap_follow": 0, "target_follow": 0}
     first_pc: dict[str, int] = {}
     truncation_seen = {"bootstrap_follow": False, "target_follow": False}
+    previous_event_sequence = -1
     for line_number, line in enumerate(lines[1:], start=2):
         if line == "bootstrap_follow_truncated cap=512":
             if truncation_seen["bootstrap_follow"] or counts["bootstrap_follow"] != 512:
@@ -52,6 +54,13 @@ def verify_lines(lines: list[str]) -> dict[str, int]:
             raise ValueError(f"non-contiguous {kind} index at line {line_number}")
         if expected_index >= (512 if kind == "bootstrap_follow" else 128):
             raise ValueError(f"{kind} exceeds its configured cap")
+        event_sequence_text = row["event_sequence"]
+        if not re.fullmatch(r"(?:0|[1-9][0-9]*)", event_sequence_text):
+            raise ValueError(f"malformed shared event sequence at line {line_number}")
+        event_sequence = int(event_sequence_text, 10)
+        if event_sequence <= previous_event_sequence:
+            raise ValueError(f"non-increasing shared event sequence at line {line_number}")
+        previous_event_sequence = event_sequence
         pc = int(row["logical_pc"], 16)
         if not 0 <= pc <= 0xFFFF:
             raise ValueError(f"logical PC is out of range at line {line_number}")

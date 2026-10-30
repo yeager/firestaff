@@ -1,6 +1,6 @@
 --- a/src/pce_fast/huc6280.cpp
 +++ b/src/pce_fast/huc6280.cpp
-@@ -1536,1 +1536,107 @@
+@@ -1536,1 +1536,109 @@
 + static FILE *bootstrap_follow_trace = NULL;
 + static bool bootstrap_follow_attempted = false;
 + if(!bootstrap_follow_attempted)
@@ -12,7 +12,7 @@
 +   bootstrap_follow_trace = fopen(path, "w");
 +   if(bootstrap_follow_trace)
 +   {
-+    fprintf(bootstrap_follow_trace, "source=mednafen-pce-fast-system-card-bootstrap-follow-v1 arm_pc=e11b bootstrap_limit=512 target_pc=4000 target_limit=128\n");
++    fprintf(bootstrap_follow_trace, "source=mednafen-pce-fast-system-card-bootstrap-follow-v2 event_sequence_source=TheronTraceCDSharedEventSequence arm_pc=e11b bootstrap_limit=512 target_pc=4000 target_limit=128\n");
 +    fflush(bootstrap_follow_trace);
 +   }
 +  }
@@ -24,6 +24,7 @@
 +   static unsigned int bootstrap_count = 0;
 +   static unsigned int target_armed = 0;
 +   static unsigned int target_count = 0;
++   extern uint32 TheronTraceCDSharedEventSequence;
 +   const unsigned int pc = TheronTraceInstructionPC;
 +   if(!bootstrap_started && pc == 0xE11B)
 +   {
@@ -34,6 +35,7 @@
 +    target_armed = 1;
 +   if(bootstrap_armed && bootstrap_count < 512)
 +   {
++    const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
 +    uint8 opcode_bytes[4] = {0, 0, 0, 0};
 +    uint32 physical_bytes[4] = {0, 0, 0, 0};
 +    unsigned int valid_mask = 0;
@@ -50,8 +52,8 @@
 +      valid_mask |= 1U << i;
 +     }
 +    }
-+    fprintf(bootstrap_follow_trace, "bootstrap_follow index=%u logical_pc=%04x physical_pc=%06x bytes=%02x%02x%02x%02x physical_bytes=%06x,%06x,%06x,%06x valid_mask=%x a=%02x x=%02x y=%02x sp=%02x p=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x\n",
-+            bootstrap_count, pc, TheronTraceInstructionPhysicalPC,
++    fprintf(bootstrap_follow_trace, "bootstrap_follow index=%u event_sequence=%u logical_pc=%04x physical_pc=%06x bytes=%02x%02x%02x%02x physical_bytes=%06x,%06x,%06x,%06x valid_mask=%x a=%02x x=%02x y=%02x sp=%02x p=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x\n",
++            bootstrap_count, event_sequence, pc, TheronTraceInstructionPhysicalPC,
 +            opcode_bytes[0], opcode_bytes[1], opcode_bytes[2], opcode_bytes[3],
 +            physical_bytes[0], physical_bytes[1], physical_bytes[2], physical_bytes[3], valid_mask,
 +            HU_A, HU_X, HU_Y, HuCPU.S, HU_P, HuCPU.MPR[0], HuCPU.MPR[1],
@@ -74,6 +76,7 @@
 +   }
 +   if(target_armed && target_count < 128)
 +   {
++    const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
 +    uint8 opcode_bytes[4] = {0, 0, 0, 0};
 +    uint32 physical_bytes[4] = {0, 0, 0, 0};
 +    unsigned int valid_mask = 0;
@@ -90,8 +93,8 @@
 +      valid_mask |= 1U << i;
 +     }
 +    }
-+    fprintf(bootstrap_follow_trace, "target_follow index=%u logical_pc=%04x physical_pc=%06x bytes=%02x%02x%02x%02x physical_bytes=%06x,%06x,%06x,%06x valid_mask=%x a=%02x x=%02x y=%02x sp=%02x p=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x\n",
-+            target_count, pc, TheronTraceInstructionPhysicalPC,
++    fprintf(bootstrap_follow_trace, "target_follow index=%u event_sequence=%u logical_pc=%04x physical_pc=%06x bytes=%02x%02x%02x%02x physical_bytes=%06x,%06x,%06x,%06x valid_mask=%x a=%02x x=%02x y=%02x sp=%02x p=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x\n",
++            target_count, event_sequence, pc, TheronTraceInstructionPhysicalPC,
 +            opcode_bytes[0], opcode_bytes[1], opcode_bytes[2], opcode_bytes[3],
 +            physical_bytes[0], physical_bytes[1], physical_bytes[2], physical_bytes[3], valid_mask,
 +            HU_A, HU_X, HU_Y, HuCPU.S, HU_P, HuCPU.MPR[0], HuCPU.MPR[1],

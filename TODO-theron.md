@@ -99,6 +99,18 @@ or a passing trace verifier as proof of a game handoff. Continue by joining
 these mapped fetches to complete source-authenticated writes and a game-owned
 consumer. Details and the trace hash are in the source-lock note.
 
+2026-10-30 v16 instruction-start snapshots at `$4002/$4009`: the captured
+bytes and the initial 11-byte authentic JP Track 02 span were source-correlated,
+but the v16 CD sidecar headers do not identify the shared event-sequence
+source. The old verifier's cross-file event join is therefore not sufficient
+evidence of common counter provenance. Its hook also samples mapped bytes
+before the CPU opcode read, so describe these as instruction-start snapshots,
+not CPU fetches. A revised verifier now requires shared-sequence header
+markers and immediate read-to-write adjacency; an authentic capture with
+those markers remains to be collected. The original run had no CD IRQ,
+non-System-Card poll, or gameplay transition. Continue tracing toward a
+game-owned poll and visible state change.
+
 1. **Bind the cold loader to game-owned consumers in both regions.** Continue
    from the authentic System Card Run path and the verified Track 02 byte
    writes through the full loader, game-owned RAM, executing consumer, source
@@ -1089,3 +1101,14 @@ consumer. Details and the trace hash are in the source-lock note.
   source-authenticated transfer to a game-owned poll and visible gameplay
   state. Do not infer gameplay parity from the BIOS poll or loader bytes. See
   `docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md`.
+
+## Continue from the v17 instruction-start snapshot check
+
+The v17 source-join verifier now requires explicit shared-sequence provenance
+and immediate source-read/CD-RAM-write adjacency; its 11 authentic JP bytes
+match the latest observed values at two instruction-start snapshots. This does
+not show the actual opcode bus fetch, complete loader provenance, or a game
+handoff. Continue tracing from the System Card/bootstrap boundary until an
+authenticated transfer reaches game-owned code and input polling, then compare
+that route against native Firestaff. Preserve this evidence boundary in
+`docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md`.

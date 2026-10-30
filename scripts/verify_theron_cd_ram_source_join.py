@@ -21,6 +21,8 @@ READ_SUFFIX = ".cd-data-port-read"
 WRITE_SUFFIX = ".cd-ram-target-write"
 READ_HEADER = "source=mednafen-pce-fast-cd-data-port-read-with-reader-mpr-context"
 WRITE_HEADER = "source=mednafen-pce-fast-cd-ram-target-write"
+READ_HEADER_SHARED_SEQUENCE = READ_HEADER + " event_sequence_source=TheronTraceCDSharedEventSequence"
+WRITE_HEADER_SHARED_SEQUENCE = WRITE_HEADER + " event_sequence_source=TheronTraceCDSharedEventSequence"
 
 
 def parse_fields(line: str, prefix: str, line_number: int) -> dict[str, str]:
@@ -164,11 +166,11 @@ def verify(
         read_path, track02_path, allow_other_sources=True
     )
     read_header = read_path.read_text(encoding="ascii").splitlines()[0]
-    if read_header != READ_HEADER:
+    if read_header not in (READ_HEADER, READ_HEADER_SHARED_SEQUENCE):
         raise ValueError("reader MPR context is required for a source-bound join")
 
     lines = write_path.read_text(encoding="ascii").splitlines()
-    if not lines or lines[0] != WRITE_HEADER:
+    if not lines or lines[0] not in (WRITE_HEADER, WRITE_HEADER_SHARED_SEQUENCE):
         raise ValueError("unexpected CD RAM target-write trace header")
     write_rows = [
         parse_fields(line, "cd_ram_target_write", number)

@@ -1,5 +1,21 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-30 — source-correlate `$4000` instruction-start snapshots
+
+The v16 authentic cold capture associates the first complete instruction-start
+snapshots at `$4002` and `$4009` with their latest recorded writes and the
+first 11 bytes with a contiguous authentic JP Track 02 span. The original v16
+sidecar headers do not identify the shared event-sequence source, and the
+hook samples mapped bytes at instruction start before the CPU opcode read.
+Therefore this is historical bounded evidence, not independently verifiable
+cross-sidecar sequence provenance or proof of CPU fetches. A strict verifier
+now requires explicit shared-sequence header markers and immediate
+read-to-write adjacency for the selected source span. An authentic capture
+with those markers remains to be collected. The observed run had no CD IRQ,
+non-System-Card input poll, or gameplay transition; game ownership, handoff,
+exclusive physical-memory provenance, and Theron parity remain open in
+`TODO-theron.md`.
+
 ## 2026-10-30 — verify bounded System Card bootstrap instruction windows
 
 Added independently armed PCE Fast instruction windows at `$E11B` and
@@ -9721,3 +9737,20 @@ native rendering, or Theron parity. The private evidence bundle is at
 - Focused verifier tests and capture-script regression passed in repeated
   loops. v11 metrics and hashes are in
   `docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md`.
+
+## 2026-10-30 — verify shared-sequence source joins at instruction snapshots
+
+- Added an explicitly named instruction-start snapshot verifier. It requires
+  shared `TheronTraceCDSharedEventSequence` provenance in CD read/write
+  headers, validates all 11 selected bytes against authentic JP Track 02, and
+  requires each source read to be immediately followed by its equal CD-RAM
+  write in the shared event sequence.
+- A fresh v17 PCE Fast reference capture passed: both `$4002` and `$4009`
+  snapshots matched their latest preceding writes. The hook samples at
+  instruction start, before the opcode bus read.
+- The run timed out before a game handoff. It observed no CD IRQ, authenticated
+  aggregate CD-to-RAM receipt, game `$E009` dispatch, or game-owned input poll.
+  This is bounded reference evidence, not gameplay or native parity.
+- Focused verifier tests passed in three loops; capture-wrapper and shell
+  validation passed. See the source-lock report for private trace hashes and
+  exact event IDs.
