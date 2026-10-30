@@ -130,6 +130,8 @@ main_ram_consumer_sample_limit=${THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT:-
 pce_fast_main_ram_consumer_range=${THERON_CAPTURE_PCE_FAST_MAIN_RAM_CONSUMER_RANGE:-}
 pce_fast_main_ram_target_write_range=${THERON_CAPTURE_PCE_FAST_MAIN_RAM_TARGET_WRITE_RANGE:-}
 pce_fast_main_ram_target_write_sample_limit=${THERON_CAPTURE_PCE_FAST_MAIN_RAM_TARGET_WRITE_SAMPLE_LIMIT:-65536}
+pce_fast_tia_trace_enabled=${THERON_CAPTURE_PCE_FAST_TIA_TRACE:-0}
+pce_fast_tia_trace_limit=${THERON_CAPTURE_PCE_FAST_TIA_TRACE_LIMIT:-65536}
 pce_fast_code_ram_write_trace_enabled=${THERON_CAPTURE_PCE_FAST_CODE_RAM_WRITE_TRACE:-0}
 if [[ "$pce_fast_code_ram_write_trace_enabled" != 0 &&
       "$pce_fast_code_ram_write_trace_enabled" != 1 ]]; then
@@ -139,6 +141,16 @@ fi
 if [[ "$pce_fast_code_ram_write_trace_enabled" == 1 &&
       "$capture_mednafen_module" != pce_fast ]]; then
     printf '%s\n' 'FAIL: code-bank RAM-write tracing requires the pce_fast module' >&2
+    exit 1
+fi
+if [[ "$pce_fast_tia_trace_enabled" != 0 &&
+      "$pce_fast_tia_trace_enabled" != 1 ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_TIA_TRACE must be 0 or 1' >&2
+    exit 1
+fi
+if [[ "$pce_fast_tia_trace_enabled" == 1 &&
+      "$capture_mednafen_module" != pce_fast ]]; then
+    printf '%s\n' 'FAIL: TIA byte tracing requires the pce_fast module' >&2
     exit 1
 fi
 movement_data_read_sample_limit=${THERON_CAPTURE_MOVEMENT_DATA_READ_SAMPLE_LIMIT:-128}
@@ -309,6 +321,22 @@ target_write_sample_limit_digits=${BASH_REMATCH[1]}
 target_write_sample_limit=$((10#$target_write_sample_limit_digits))
 if (( target_write_sample_limit < 4096 || target_write_sample_limit > 1048576 )); then
     printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_MAIN_RAM_TARGET_WRITE_SAMPLE_LIMIT must be an integer from 4096 through 1048576' >&2
+    exit 1
+fi
+if [[ ! "$pce_fast_tia_trace_limit" =~ ^[0-9]+$ ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_TIA_TRACE_LIMIT must be an integer from 1 through 1048576' >&2
+    exit 1
+fi
+while [[ "$pce_fast_tia_trace_limit" == 0* && "$pce_fast_tia_trace_limit" != 0 ]]; do
+    pce_fast_tia_trace_limit=${pce_fast_tia_trace_limit#0}
+done
+if (( ${#pce_fast_tia_trace_limit} > 7 )); then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_TIA_TRACE_LIMIT must be an integer from 1 through 1048576' >&2
+    exit 1
+fi
+pce_fast_tia_trace_limit=$((10#$pce_fast_tia_trace_limit))
+if (( pce_fast_tia_trace_limit < 1 || pce_fast_tia_trace_limit > 1048576 )); then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_PCE_FAST_TIA_TRACE_LIMIT must be an integer from 1 through 1048576' >&2
     exit 1
 fi
 if [[ -z "$mednafen_bin" || -z "$cue" || -z "$system_card" || -z "$trace" ]]; then
@@ -1272,6 +1300,11 @@ require_instrumented_mednafen_binary() {
         printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the PCE Fast main-RAM target-write hook; rebuild it with scripts/build_mednafen_theron_irq2_trace.sh' >&2
         return 1
     fi
+    if [[ "$pce_fast_tia_trace_enabled" == 1 ]] &&
+       ! grep -aFq 'tia_start event_sequence=' "$binary" 2>/dev/null; then
+        printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the PCE Fast TIA byte-trace hook; enable FIRESTAFF_THERON_PCE_FAST_TIA_TRACE_SUPPORT when building it' >&2
+        return 1
+    fi
     if [[ "$capture_pointer_c1df_trace" == 1 ]] &&
        ! grep -aFq 'pointer_c1df_begin' "$binary" 2>/dev/null; then
         printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the C1DF pointer hook; enable FIRESTAFF_THERON_PCE_FAST_POINTER_TRACE_SUPPORT when building it' >&2
@@ -1385,6 +1418,10 @@ pce_fast_main_ram_target_write_trace=
 if [[ -n "$pce_fast_main_ram_target_write_range" ]]; then
     pce_fast_main_ram_target_write_trace="${trace}.pce-fast-main-ram-target-write"
 fi
+pce_fast_tia_trace=
+if [[ "$pce_fast_tia_trace_enabled" == 1 ]]; then
+    pce_fast_tia_trace="${trace}.tia"
+fi
 selected_record_trace="${trace}.selected-record"
 main_ram_target_trace="${trace}.main-ram-target"
 ram_provenance_trace="${trace}.ram-provenance"
@@ -1492,6 +1529,9 @@ rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_comman
     "$command_ram_trace" "$command_code_snapshot" "$command_ram_before_snapshot" \
     "$command_ram_after_snapshot" "$transition_receipt" \
     "$scripted_input_consumption_receipt" "$stage2_system_card_receipt"
+if [[ -n "$pce_fast_tia_trace" ]]; then
+    rm -f -- "$pce_fast_tia_trace"
+fi
 if [[ -n "$pce_fast_code_ram_write_trace" ]]; then
     rm -f -- "$pce_fast_code_ram_write_trace"
 fi
@@ -1733,6 +1773,8 @@ launch=(
     FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_TARGET_WRITE_RANGE="$pce_fast_main_ram_target_write_range" \
     FIRESTAFF_THERON_MAIN_RAM_TARGET_WRITE_SAMPLE_LIMIT="$pce_fast_main_ram_target_write_sample_limit" \
     FIRESTAFF_THERON_MAIN_RAM_TARGET_WRITE_TRACE="$pce_fast_main_ram_target_write_trace" \
+    FIRESTAFF_THERON_TIA_TRACE="$pce_fast_tia_trace" \
+    FIRESTAFF_THERON_TIA_TRACE_LIMIT="$pce_fast_tia_trace_limit" \
     FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE="$pce_fast_code_ram_write_trace" \
     FIRESTAFF_THERON_SELECTED_RECORD_TRACE="$selected_record_trace" \
     FIRESTAFF_THERON_MAIN_RAM_CONSUMER_SAMPLE_LIMIT="$main_ram_consumer_sample_limit" \
@@ -2097,6 +2139,18 @@ if [[ -n "$pce_fast_main_ram_target_write_trace" ]]; then
         exit 1
     fi
 fi
+if [[ "$pce_fast_tia_trace_enabled" == 1 ]]; then
+    tia_trace_header='source=mednafen-pce-fast-theron-tia-byte-trace-v1 event_sequence_source=TheronTraceCDSharedEventSequence target_pc_range=4600-46ff'
+    if [[ ! -s "$pce_fast_tia_trace" ]] ||
+       ! grep -Fqx "$tia_trace_header" "$pce_fast_tia_trace"; then
+        printf '%s\n' 'FAIL: Mednafen did not produce a valid PCE Fast TIA byte trace' >&2
+        exit 1
+    fi
+    if grep -Eq '^tia(_zero_page)?_truncated ' "$pce_fast_tia_trace"; then
+        printf '%s\n' 'FAIL: PCE Fast TIA trace reached its configured output limit' >&2
+        exit 1
+    fi
+fi
 
 if [[ "$capture_mednafen_module" == pce_fast ]] &&
    grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_CONSUMER_TRACE_ERROR' "$stderr_file"; then
@@ -2114,7 +2168,7 @@ if [[ ! -s "$trace" ]] || ! grep -Fqx 'source=mednafen-pce-instrumented' "$trace
     printf '%s\n' 'FAIL: Mednafen did not produce a provenance-marked live trace' >&2
     exit 1
 fi
-if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$cd_ram_writer_pc_trace" "$cd_data_port_read_trace" "$system_card_dispatch_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" ${pce_fast_code_ram_write_trace:+"$pce_fast_code_ram_write_trace"} ${pce_fast_main_ram_target_write_trace:+"$pce_fast_main_ram_target_write_trace"} "$pce_fast_a1b7_bmt_write_trace" "$pce_fast_a1a9_init_trace" "$pce_fast_pointer_ram_write_trace" "$pce_fast_movement_context_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace" ${huc6280_23ad_trace:+"$huc6280_23ad_trace"}; then
+if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$mouse_trace" "$main_ram_loader_trace" "$indirect_target_trace" "$cd_ram_target_write_trace" "$cd_ram_writer_pc_trace" "$cd_data_port_read_trace" "$system_card_dispatch_trace" "$profile_sram_manifest" "$main_ram_consumer_trace" ${pce_fast_code_ram_write_trace:+"$pce_fast_code_ram_write_trace"} ${pce_fast_main_ram_target_write_trace:+"$pce_fast_main_ram_target_write_trace"} ${pce_fast_tia_trace:+"$pce_fast_tia_trace"} "$pce_fast_a1b7_bmt_write_trace" "$pce_fast_a1a9_init_trace" "$pce_fast_pointer_ram_write_trace" "$pce_fast_movement_context_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace" ${huc6280_23ad_trace:+"$huc6280_23ad_trace"}; then
     printf '%s\n' 'FAIL: Mednafen emitted a literal backslash-n in a trace record' >&2
     exit 1
 fi
@@ -2604,6 +2658,16 @@ transition_vdc_io_write_count=$(trace_count '^vdc_io_write ' "$vdc_io_trace")
 transition_command_ram_write_count=$(trace_count '^command_ram_write ' "$command_ram_trace")
 transition_command_input_write_count=$(trace_count '^input_buffer_write ' "$command_ram_trace")
 transition_command_consumer_read_count=$(trace_count '^command_consumer_read ' "$command_consumer_trace")
+transition_tia_start_count=0
+transition_tia_byte_count=0
+transition_tia_zero_page_access_count=0
+transition_tia_truncated_count=0
+if [[ -n "$pce_fast_tia_trace" ]]; then
+    transition_tia_start_count=$(trace_count '^tia_start ' "$pce_fast_tia_trace")
+    transition_tia_byte_count=$(trace_count '^tia_byte ' "$pce_fast_tia_trace")
+    transition_tia_zero_page_access_count=$(trace_count '^tia_zero_page_access ' "$pce_fast_tia_trace")
+    transition_tia_truncated_count=$(trace_count '^tia(_zero_page)?_truncated ' "$pce_fast_tia_trace")
+fi
 transition_command_consumer_source_read_count=$(if [[ -s "$command_consumer_trace" ]]; then awk '
     /^command_consumer_read / {
         for (i = 1; i <= NF; i++) {
@@ -2735,6 +2799,12 @@ fi
     printf 'pce_fast_main_ram_target_write_truncated=%s\n' "$transition_pce_fast_main_ram_target_write_truncated_count"
     printf 'pce_fast_main_ram_target_write_range=%s\n' "$pce_fast_main_ram_target_write_range"
     printf 'pce_fast_main_ram_target_write_sample_limit=%s\n' "$pce_fast_main_ram_target_write_sample_limit"
+    printf 'pce_fast_tia_trace_enabled=%s\n' "$pce_fast_tia_trace_enabled"
+    printf 'pce_fast_tia_trace_rows=%s\n' "$transition_tia_byte_count"
+    printf 'pce_fast_tia_starts=%s\n' "$transition_tia_start_count"
+    printf 'pce_fast_tia_zero_page_accesses=%s\n' "$transition_tia_zero_page_access_count"
+    printf 'pce_fast_tia_trace_truncated=%s\n' "$transition_tia_truncated_count"
+    printf 'pce_fast_tia_trace_limit=%s\n' "$pce_fast_tia_trace_limit"
     printf 'main_ram_target_reads=%s\n' "$transition_main_ram_target_read_count"
     printf 'ram_provenance_seeds=%s\n' "$transition_ram_provenance_seed_count"
     printf 'ram_provenance_copies=%s\n' "$transition_ram_provenance_copy_count"

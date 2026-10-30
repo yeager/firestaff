@@ -1741,6 +1741,15 @@ if ! grep -Fq 'pc >= 0x6000 && pc <= 0x7FFF' "$system_card_dispatch_patch" ||
     printf '%s\n' 'FAIL: the extended System Card code window must be traced and physically validated' >&2
     exit 1
 fi
+if ! grep -Fq 'pce_fast_tia_trace_enabled=${THERON_CAPTURE_PCE_FAST_TIA_TRACE:-0}' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_TIA_TRACE="$pce_fast_tia_trace"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_TIA_TRACE_LIMIT="$pce_fast_tia_trace_limit"' "$script" ||
+   ! grep -Fq 'target_pc_range=4600-46ff' "$script" ||
+   ! grep -Fq "grep -Eq '^tia(_zero_page)?_truncated '" "$script" ||
+   ! grep -Fq "grep -aFq 'tia_start event_sequence='" "$script"; then
+    printf '%s\n' 'FAIL: optional TIA byte tracing must require its hook, validate its bounded trace, and record it' >&2
+    exit 1
+fi
 main_ram_target_write_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_target_write_trace.patch"
 if [[ ! -f "$main_ram_target_write_patch" ]] ||
    ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_MAIN_RAM_TARGET_WRITE_RANGE' "$main_ram_target_write_patch" ||

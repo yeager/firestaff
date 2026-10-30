@@ -812,6 +812,23 @@ assets, mechanics, or parity.
   route and follow authenticated Track 02 reads through their runtime
   destinations to the active selector and a discriminating tile consumer.
 
+## 2026-10-30 — retry combined TIA and RAM-writer capture
+
+- Added an optional bounded PCE Fast TIA trace output to the live-capture
+  wrapper. It is disabled by default, requires the PCE Fast hook, validates the
+  trace header, rejects truncation, and adds row counts to the capture receipt.
+- A cold JP Rev. 1 run with authentic Track 02 and System Card 3.0 produced
+  32 complete TIA transfers (2,048 byte rows), 2,240 zero-page rows, and 2,176
+  writes covering the observed `$1047E0-$10481F` range. The existing TIA and
+  authentic Track 02 verifiers passed. The RAM write trace was not truncated.
+- The wrapper still ended `BLOCKED`: it observed no IRQ or authenticated
+  CD-to-RAM receipt, so the run cannot establish a source-to-TIA provenance
+  chain. The partial first attempt was also interrupted with SIGINT and lacked
+  the required close-time VRAM snapshot; the corrected retry used SIGTERM and
+  emitted the snapshots. The partial captures are retained privately on TRV2.
+- The TIA hook is System Card execution evidence only. Game launch, native
+  parity, and the complete Theron gameplay route remain unproven.
+
 ## 2026-10-30 — trace TIA byte transfers at `$468C`
 
 - Added a bounded, reference-only PCE Fast observer for the authentic `TIA` instruction at `$468C`. It records decoded source, destination, encoded length, each read value and write address, MPR mappings, and shared event sequence numbers.
