@@ -1122,6 +1122,7 @@ static void test_floor_party_plate_runtime_door_event_gate(void) {
     struct DungeonSensor_Compat sensors[1];
     struct SensorEffectList_Compat effects;
     struct SensorTriggerResult_Compat dispatch;
+    struct PartyState_Compat party;
     int i;
 
     memset(&dungeon, 0, sizeof(dungeon));
@@ -1129,6 +1130,7 @@ static void test_floor_party_plate_runtime_door_event_gate(void) {
     memset(&tiles, 0, sizeof(tiles));
     memset(&things, 0, sizeof(things));
     memset(sensors, 0, sizeof(sensors));
+    memset(&party, 0, sizeof(party));
     for (i = 0; i < 4; ++i) {
         squares[i] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
         squareFirstThings[i] = THING_ENDOFLIST;
@@ -1155,14 +1157,34 @@ static void test_floor_party_plate_runtime_door_event_gate(void) {
     things.sensors = sensors;
     things.sensorCount = 1;
     things.loaded = 1;
+    party.championCount = 1;
+    party.direction = 0;
 
-    F0718_SENSOR_ProcessPartyEnterLeave_Compat(&dungeon, &things, 0, 1, 0,
-                                               SENSOR_EVENT_WALK_ON, &effects);
+    CHECK(F0718_SENSOR_ProcessPartyEnterLeave_Compat(
+              &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
+              &effects) == 1 && effects.count == 0,
+          "Runtime C003: context-free party passage cannot guess champion count");
+    F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+        &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
+        &party, THING_NONE, &effects);
     CHECK(effects.count == 1, "Runtime C003: party plate emits one remote effect");
     CHECK(effects.effects[0].kind == SENSOR_EFFECT_TOGGLE_REMOTE,
           "Runtime C003: party plate emits remote toggle");
     CHECK(effects.effects[0].destMapX == 1 && effects.effects[0].destMapY == 1,
           "Runtime C003: party plate targets door square (1,1)");
+
+    sensors[0].sensorData = 2u;
+    F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+        &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
+        &party, THING_NONE, &effects);
+    CHECK(effects.count == 0,
+          "Runtime C003: direction-coded plate rejects the wrong party direction");
+    sensors[0].sensorData = 1u;
+    F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+        &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
+        &party, THING_NONE, &effects);
+    CHECK(effects.count == 1,
+          "Runtime C003: direction-coded plate accepts ordinal party direction");
 
     memset(&dispatch, 0, sizeof(dispatch));
     F0724_SENSOR_ResolveEffectDispatch_Compat(&sensors[0], DM1_EFFECT_TOGGLE,

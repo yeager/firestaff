@@ -325,17 +325,19 @@ int DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
              */
             memset(&outResult->core.leaveEffects, 0, sizeof(outResult->core.leaveEffects));
             memset(&outResult->core.enterEffects, 0, sizeof(outResult->core.enterEffects));
-            (void)F0718_SENSOR_ProcessPartyEnterLeave_Compat(
+            (void)F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
                 dungeon, things, outResult->core.sourceMapIndex,
                 outResult->core.sourceMapX, outResult->core.sourceMapY,
-                SENSOR_EVENT_WALK_OFF, &outResult->core.leaveEffects);
+                SENSOR_EVENT_WALK_OFF, party, THING_NONE,
+                &outResult->core.leaveEffects);
             outResult->postMoveDestinationGroupDeleted =
                 pipeline_delete_group_on_square_before_enter_sensors(
                     dungeon, things, party->mapIndex, party->mapX, party->mapY,
                     &outResult->postMoveDeletedGroupThing);
-            (void)F0718_SENSOR_ProcessPartyEnterLeave_Compat(
+            (void)F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
                 dungeon, things, party->mapIndex, party->mapX, party->mapY,
-                SENSOR_EVENT_WALK_ON, &outResult->core.enterEffects);
+                SENSOR_EVENT_WALK_ON, party, THING_NONE,
+                &outResult->core.enterEffects);
         } else {
             /* Source lock: MOVESENS.C:810-818 deletes a group already on
              * the final party destination before firing destination enter
@@ -350,9 +352,10 @@ int DM1_V1_MovementPipeline_ProcessOneTickPc34Compat(
                     &outResult->postMoveDeletedGroupThing);
             if (outResult->postMoveDestinationGroupDeleted) {
                 memset(&outResult->core.enterEffects, 0, sizeof(outResult->core.enterEffects));
-                (void)F0718_SENSOR_ProcessPartyEnterLeave_Compat(
+                (void)F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
                     dungeon, things, party->mapIndex, party->mapX, party->mapY,
-                    SENSOR_EVENT_WALK_ON, &outResult->core.enterEffects);
+                    SENSOR_EVENT_WALK_ON, party, THING_NONE,
+                    &outResult->core.enterEffects);
             }
         }
 

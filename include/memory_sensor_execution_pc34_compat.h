@@ -144,15 +144,11 @@ int F0717_SENSOR_EnumerateOnSquare_Compat(
     struct SensorOnSquare_Compat outSensors[SENSOR_ENUM_CAPACITY]);
 
 /*
- * Process a party enter/leave event on a square.  Walks every sensor
- * on the square in source order, runs F0710_SENSOR_Execute_Compat for
- * the given event, and appends each produced effect onto outList (up
- * to SENSOR_EFFECT_LIST_MAX_COUNT).  Pure: does not mutate world.
- *
- * v1 coverage note: for WALK_ON, teleport (type 0) and text (type 13)
- * are fully modeled; other sensor types still produce SENSOR_EFFECT_UNSUPPORTED
- * markers through F0710.  WALK_OFF currently surfaces no effects for any
- * sensor type — matching the conservative policy in F0710.
+ * Process a party enter/leave event on a square. Walks sensors in source
+ * order and applies the F0276 floor-sensor admission rules available from
+ * the supplied context. The context-free wrapper skips C003 and C008 because
+ * they require party direction/champion or inventory state. Pure: it does not
+ * mutate the world.
  *
  * triggerEvent must be one of SENSOR_EVENT_WALK_ON or SENSOR_EVENT_WALK_OFF.
  * Other events (ITEM_ON/OFF, CHAMPION_ACTION) are accepted but produce
@@ -170,10 +166,9 @@ int F0718_SENSOR_ProcessPartyEnterLeave_Compat(
     int triggerEvent,
     struct SensorEffectList_Compat* outList);
 
-/* Party-context version used by live DM1 routes. F0276 C008 requires the
- * actual champion inventory and G4055 leader-hand object; without that
- * context the legacy F0718 wrapper safely skips C008 instead of firing it
- * unconditionally. */
+/* Party-context version used by live DM1 routes. Supplies party direction and
+ * champion count for C003 and the champion inventory/G4055 leader-hand object
+ * for C008. Both routes share F0276's party-square occupancy and effect rules. */
 int F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
     const struct DungeonDatState_Compat* dungeon,
     const struct DungeonThings_Compat* things,

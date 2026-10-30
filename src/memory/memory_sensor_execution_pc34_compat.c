@@ -474,7 +474,9 @@ static int sensor_process_party_enter_leave(
     int possessionContextValid;
     int sensorCount, i;
     int squareType = -1;
-    int squareHasExistingFloorWeight = 0;
+    int squareHasExistingFloorWeight;
+    int squareHasExistingGroup;
+    int squareHasExistingObject;
 
     if (!outList) return 0;
     memset(outList, 0, sizeof(*outList));
@@ -483,16 +485,20 @@ static int sensor_process_party_enter_leave(
     /* Only WALK_ON / WALK_OFF are meaningful for party enter/leave in
      * v1.  Other events are accepted but produce no effects. */
     if (triggerEvent < 0 || triggerEvent >= SENSOR_EVENT_COUNT) return 0;
+    if (triggerEvent != SENSOR_EVENT_WALK_ON &&
+        triggerEvent != SENSOR_EVENT_WALK_OFF) return 1;
 
     possessionContextValid = sensor_build_party_possession_context(
         things, party, leaderHandThing, &possessionContext);
 
     sensorCount = F0717_SENSOR_EnumerateOnSquare_Compat(
         dungeon, things, mapIndex, mapX, mapY, sensors);
-    if (triggerEvent == SENSOR_EVENT_WALK_ON) {
-        squareHasExistingFloorWeight = sensor_square_has_existing_floor_weight(
-            dungeon, things, mapIndex, mapX, mapY);
-    }
+    squareHasExistingFloorWeight = sensor_square_has_existing_floor_weight(
+        dungeon, things, mapIndex, mapX, mapY);
+    squareHasExistingGroup = sensor_square_has_existing_group(
+        dungeon, things, mapIndex, mapX, mapY);
+    squareHasExistingObject = squareHasExistingFloorWeight &&
+        !squareHasExistingGroup;
 
     if (mapIndex >= 0 && mapIndex < (int)dungeon->header.mapCount) {
         const struct DungeonMapDesc_Compat* map = &dungeon->maps[mapIndex];
@@ -505,6 +511,10 @@ static int sensor_process_party_enter_leave(
     for (i = 0; i < sensorCount && i < SENSOR_ENUM_CAPACITY; ++i) {
         struct SensorEffectList_Compat tmp;
         memset(&tmp, 0, sizeof(tmp));
+        /* ReDMCSB MOVESENS.C F0276 lines 1658-1720: the switch applies
+         * C001-C009 admission/revert rules before F0272 dispatches the
+         * selected effect. The context below models the party addition or
+         * removal without mutating the linked list. */
         /* ReDMCSB MOVESENS.C F0276 lines 1695-1702: floor C005 only
          * survives the switch when the party is the triggering thing and
          * M034_SQUARE_TYPE(current square) == C03_ELEMENT_STAIRS.  This
@@ -513,38 +523,43 @@ static int sensor_process_party_enter_leave(
         if (sensors[i].sensorType == 5 && squareType != DUNGEON_ELEMENT_STAIRS) {
             continue;
         }
-        if (sensors[i].sensorType == 1 && squareHasExistingFloorWeight) {
-            continue;
-        }
         /* ReDMCSB MOVESENS.C F0276:1695-1702, case C007 at 1703-1705:
          * floor-creature sensors do not fire for the party. This wrapper
          * only processes party enter/leave, so C007 is never applicable. */
         if (sensors[i].sensorType == 7) {
             continue;
         }
-        if (sensors[i].sensorType == DM1_SENSOR_FLOOR_PARTY_POSSESSION) {
+        if (sensors[i].sensorType >= 1 && sensors[i].sensorType <= 9) {
             struct FloorSensorContext_Compat floorContext;
             struct SensorTriggerResult_Compat triggerResult;
             const struct DungeonSensor_Compat* sourceSensor;
-            int hasObject;
-            if (triggerEvent != SENSOR_EVENT_WALK_ON ||
-                !possessionContextValid || !things->sensors ||
+            int hasObject = 0;
+            if (!things->sensors ||
                 sensors[i].sensorIndex < 0 ||
                 sensors[i].sensorIndex >= things->sensorCount) {
                 continue;
             }
             sourceSensor = &things->sensors[sensors[i].sensorIndex];
-            hasObject = F0274_SENSOR_IsObjectInPartyPossession_Compat(
-                sourceSensor->sensorData, &possessionContext);
+            if (sensors[i].sensorType == DM1_SENSOR_FLOOR_PARTY_POSSESSION) {
+                if (!possessionContextValid) continue;
+                hasObject = F0274_SENSOR_IsObjectInPartyPossession_Compat(
+                    sourceSensor->sensorData, &possessionContext);
+            }
             memset(&floorContext, 0, sizeof(floorContext));
             floorContext.mapX = mapX;
             floorContext.mapY = mapY;
             floorContext.thingType = DM1_TRIGGER_SOURCE_PARTY;
             floorContext.objectType = -1;
-            floorContext.partyDirection = party->direction;
-            floorContext.partyChampionCount = party->championCount;
+            floorContext.partyDirection = party ? party->direction : 0;
+            floorContext.partyChampionCount = party ? party->championCount : 0;
             floorContext.partyHasObjectType = hasObject;
-            floorContext.isAddition = 1;
+            floorContext.partyOnSquare = 0;
+            floorContext.squareHasObject = squareHasExistingObject;
+            floorContext.squareHasGroup = squareHasExistingGroup;
+            floorContext.squareHasSameTypeObj = 0;
+            floorContext.squareHasDiffTypeObj = 0;
+            floorContext.squareType = squareType;
+            floorContext.isAddition = triggerEvent == SENSOR_EVENT_WALK_ON;
             if (!F0722_SENSOR_EvaluateFloor_Compat(
                     sourceSensor, &floorContext, &triggerResult) ||
                 !triggerResult.triggered) {
@@ -553,9 +568,11 @@ static int sensor_process_party_enter_leave(
             if (outList->count < SENSOR_EFFECT_LIST_MAX_COUNT) {
                 struct SensorEffect_Compat* effect =
                     &outList->effects[outList->count++];
-                effect->kind = SENSOR_EFFECT_TOGGLE_REMOTE;
+                effect->kind = sourceSensor->localEffect
+                    ? SENSOR_EFFECT_UNSUPPORTED
+                    : SENSOR_EFFECT_TOGGLE_REMOTE;
                 effect->sensorType = sensors[i].sensorType;
-                effect->destMapIndex = -1;
+                effect->destMapIndex = sourceSensor->localEffect ? 0 : -1;
                 effect->destMapX = sensors[i].targetMapX;
                 effect->destMapY = sensors[i].targetMapY;
                 effect->destCell = sensors[i].targetCell;
@@ -564,6 +581,13 @@ static int sensor_process_party_enter_leave(
             }
             continue;
         }
+        /* ReDMCSB MOVESENS.C F0276 C004 compares SensorData with the
+         * moving Thing's object type. A party enter/leave event has the
+         * special party Thing (not an object), so C004 cannot trigger. */
+        if (sensors[i].sensorType == 4) continue;
+        /* The source text object is Thing type C02 and is printed while
+         * walking the square chain; no floor sensor has type 13. */
+        if (sensors[i].sensorType == 13) continue;
         if (!F0710_SENSOR_Execute_Compat(dungeon, things, &sensors[i],
                                          triggerEvent, &tmp)) {
             continue;
