@@ -492,8 +492,10 @@ VRAM offsets `0xd334` through `0xda0c`.
 The same capture's complete, zero-drop VDP2 write trace records one byte
 write for every mapped address in the same VDP1 frame. All 921 write values
 match the corresponding bytes from the authentic file in source-read order.
-The final WorkRAMH span and mapped VDP2 VRAM bytes also match the retail
-source span. `scripts/verify_nexus_title_bin_vram_frame_join.py` reproduces
+The final WorkRAMH span and mapped VDP2 VRAM snapshots also match the retail
+source span, but those final snapshots and the screenshot are from frame 8037,
+not frame 7716. They do not establish full frame-7716 memory or display state.
+`scripts/verify_nexus_title_bin_vram_frame_join.py` reproduces
 these checks against the raw Ymir capture and the real Japanese game data.
 Ymir's PC-filtered SH-2 read/register tracer was added on
 [the Yeager fork PR](https://github.com/yeager/Ymir/pull/3); the external
