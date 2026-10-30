@@ -193,10 +193,17 @@ int nexus_v1_vdp2_capture_composite_nbg1_tilemap(
             int vflip = (attr & 0x8000U) != 0U;
             int pcco = bpp == 4 ? palno * 16 : (palno * 16) & ~255;
             int tile_bytes = bpp == 4 ? 32 : 64;
-            int cg_offset = (int)charno * tile_bytes;
+            /* Saturn/Ymir character numbers advance in 32-byte units in
+             * both color modes; an 8bpp tile reads 64 bytes from that base
+             * and can overlap the next character number. */
+            uint32_t cg_offset = ((uint32_t)(charno & 0x7fffU) << 5U) &
+                UINT32_C(0x7ffff);
             int py;
-            if (cg_offset < 0 || cg_offset + tile_bytes >
-                input->source_character_generator_size || pcco + ((1 << bpp) - 1) >= 256) {
+            if ((input->source_character_generator_size <
+                    (int)NEXUS_V1_SATURN_VDP2_VRAM_BYTES &&
+                 cg_offset + (uint32_t)tile_bytes >
+                    (uint32_t)input->source_character_generator_size) ||
+                pcco + ((1 << bpp) - 1) >= 256) {
                 *out_receipt = (Nexus_V1_Vdp2TilemapCaptureReceipt){0};
                 return 0;
             }
@@ -208,11 +215,17 @@ int nexus_v1_vdp2_capture_composite_nbg1_tilemap(
                     int sx = hflip ? 7 - px : px;
                     uint8_t index;
                     if (bpp == 4) {
+                        uint32_t pixel_offset = (cg_offset +
+                            (uint32_t)sy * 4U + (uint32_t)(sx / 2)) &
+                            UINT32_C(0x7ffff);
                         uint8_t packed = input->source_character_generator[
-                            cg_offset + sy * 4 + sx / 2];
+                            pixel_offset];
                         index = (uint8_t)((sx & 1) == 0 ? packed >> 4 : packed & 0xf);
                     } else {
-                        index = input->source_character_generator[cg_offset + sy * 8 + sx];
+                        uint32_t pixel_offset = (cg_offset +
+                            (uint32_t)sy * 8U + (uint32_t)sx) &
+                            UINT32_C(0x7ffff);
+                        index = input->source_character_generator[pixel_offset];
                     }
                     if (index == 0U) {
                         ++receipt.transparent_pixels;

@@ -4,6 +4,16 @@ Reviewed 2026-10-29. The items below track open work and include completed
 diagnostics as context. Verified evidence is also recorded in the Nexus capture
 and reverse-engineering records and in [DONE-nexus.md](DONE-nexus.md).
 
+## 2026-10-30 — NBG1 8bpp character stride
+
+The generic source-bound NBG1 compositor now follows Saturn's 32-byte PND
+character-number stride in 8bpp mode and wraps full 512 KiB VRAM reads. A
+hash-pinned Ymir gameplay capture at frame 239 checks the 320x200 NBG1 index
+plane's opaque/transparent counts and a known pixel using Ymir's 32-byte
+character-address rule. This fixes the byte fetch for that layer path; NBG1
+retail source ownership and whole-screen VDP2/HUD composition remain open. See
+[`docs/nexus_vdp2_nbg1_8bpp_stride.md`](docs/nexus_vdp2_nbg1_8bpp_stride.md).
+
 ## 2026-10-30 — Japanese title capture follow-up
 
 Authentic TRV2/Ymir VDP1 frame 8037 now has two complete VDP2 pass buffers
