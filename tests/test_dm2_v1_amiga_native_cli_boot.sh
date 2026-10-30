@@ -104,10 +104,18 @@ if sum(pixel != b"\0\0\0" for pixel in floor_pixels) < 5000:
     raise SystemExit(
         "FAIL: authentic DM2 Amiga floor is missing from the lower "
         "RECT_7 aperture")
-top_hud_pixels = [pixels[y * width + x]
-                  for y in range(40) for x in range(224)]
-if sum(pixel != b"\0\0\0" for pixel in top_hud_pixels) < 2000:
-    raise SystemExit("FAIL: authentic DM2 Amiga top HUD is missing")
+# SKProject DRAW_ARROW_PANEL draws the six INTERFACE_GENERAL/3 move arrows
+# into Amiga's original expanded RECT_040..RECT_045. Their admitted 320x200
+# destinations are these rectangles in the authentic Amiga profile.
+arrow_rects = ((229, 129, 29, 23), (291, 129, 29, 23), (260, 129, 29, 23),
+               (291, 153, 29, 23), (260, 153, 29, 23), (229, 153, 29, 23))
+for arrow, (x0, y0, arrow_width, arrow_height) in enumerate(arrow_rects):
+    arrow_pixels = [pixels[y * width + x]
+                    for y in range(y0, y0 + arrow_height)
+                    for x in range(x0, x0 + arrow_width)]
+    if sum(pixel != b"\0\0\0" for pixel in arrow_pixels) < 100:
+        raise SystemExit(
+            f"FAIL: authentic DM2 Amiga movement arrow {arrow} is missing")
 right_panel_pixels = [pixels[y * width + x]
                       for y in range(height) for x in range(224, width)]
 if sum(pixel != b"\0\0\0" for pixel in right_panel_pixels) < 5000:

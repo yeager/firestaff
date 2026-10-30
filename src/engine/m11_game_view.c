@@ -66358,10 +66358,14 @@ static void m11_debug_trace_dm2_runtime_frame(
     const DM2_V1_BootProfile *profile;
     DM2_V1_ViewportItemMaterialTrace item_trace;
     DM2_V1_RuntimeHudMaterialTrace hud_trace;
+    DM2_V1_HudPartyState hud_party;
     int item_trace_count;
     int item_trace_index;
     int hud_trace_count;
     int hud_trace_index;
+    int hud_party_valid;
+    unsigned int hud_occupied_mask = 0u;
+    unsigned int hud_portrait_bound_mask = 0u;
     uint32_t signature = 2166136261u;
     int platform;
 
@@ -66374,6 +66378,20 @@ static void m11_debug_trace_dm2_runtime_frame(
     platform = profile ? (int)profile->platform : -1;
     item_trace_count = dm2_v1_runtime_last_item_material_trace_count();
     hud_trace_count = dm2_v1_runtime_last_hud_material_trace_count();
+    hud_party_valid = dm2_v1_runtime_last_hud_party_state(&hud_party);
+    if (hud_party_valid) {
+        int slot;
+        for (slot = 0; slot < DM2_V1_HUD_CHAMPION_SLOT_COUNT; ++slot) {
+            const DM2_V1_HudChampionState *champion =
+                &hud_party.champions[slot];
+            if (champion->occupied) hud_occupied_mask |= 1u << slot;
+            if (champion->portrait_type_source_bound) {
+                hud_portrait_bound_mask |= 1u << slot;
+            }
+        }
+    } else {
+        memset(&hud_party, 0, sizeof(hud_party));
+    }
 #define M11_DM2_DEBUG_MIX(value) \
     (signature = m11_dm2_debug_mix_u32(signature, (uint32_t)(value)))
     M11_DM2_DEBUG_MIX(render_result);
@@ -66417,6 +66435,26 @@ static void m11_debug_trace_dm2_runtime_frame(
         M11_DM2_DEBUG_MIX(item_trace.destination.h);
     }
     M11_DM2_DEBUG_MIX(hud_trace_count);
+    M11_DM2_DEBUG_MIX(hud_party_valid);
+    M11_DM2_DEBUG_MIX(hud_party.champion_count);
+    M11_DM2_DEBUG_MIX(hud_party.leader_index);
+    M11_DM2_DEBUG_MIX(hud_occupied_mask);
+    M11_DM2_DEBUG_MIX(hud_portrait_bound_mask);
+    for (hud_trace_index = 0;
+         hud_party_valid && hud_trace_index < DM2_V1_HUD_CHAMPION_SLOT_COUNT;
+         ++hud_trace_index) {
+        const DM2_V1_HudChampionState *champion =
+            &hud_party.champions[hud_trace_index];
+        M11_DM2_DEBUG_MIX(champion->occupied);
+        M11_DM2_DEBUG_MIX(champion->leader);
+        M11_DM2_DEBUG_MIX(champion->portrait_index);
+        M11_DM2_DEBUG_MIX(champion->portrait_type_source_bound);
+        M11_DM2_DEBUG_MIX(champion->state_source_bound);
+        M11_DM2_DEBUG_MIX(champion->current_hp_source_bound);
+        M11_DM2_DEBUG_MIX(champion->current_hp);
+        M11_DM2_DEBUG_MIX(champion->hp_pct);
+        signature = m11_dm2_debug_mix_text(signature, champion->name);
+    }
     for (hud_trace_index = 0; hud_trace_index < hud_trace_count;
          ++hud_trace_index) {
         if (!dm2_v1_runtime_last_hud_material_trace(
@@ -66476,7 +66514,7 @@ static void m11_debug_trace_dm2_runtime_frame(
     if (previous_state == state && previous_signature == signature) return;
 
     fprintf(stderr,
-        "firestaff: dm2-render-debug game=%s platform=%s pose=%d,%d dir=%d result=%d accepted=%d real-assets=%d no-core-fallbacks=%d blocked-materials=%d map-token=%u scene={control:%08x light:%08x ambient:%u presentation:%08x} palette=%08x viewport={floor-ceiling:%d walls:%d door-panel-overlay-frame-button:%d,%d,%d,%d creatures:%d items:%d item-traces:%d floor:%08x ceiling:%08x wall-plan:%d door-plan:%d/%d/%d creature-plan:%d item-plan:%d/%08x} hud={required:%d hash:%08x commands:%d complete:%d stage:%d portraits:%d fallback-portraits:%d audit-core-pixels:%u audit-interface-assets:%d raw-interface-assets:%d frame-hash-pixels:%u frame-hash:%08x generic-top-command:%d generic-status-command:%d}\n",
+        "firestaff: dm2-render-debug game=%s platform=%s pose=%d,%d dir=%d result=%d accepted=%d real-assets=%d no-core-fallbacks=%d blocked-materials=%d map-token=%u scene={control:%08x light:%08x ambient:%u presentation:%08x} palette=%08x viewport={floor-ceiling:%d walls:%d door-panel-overlay-frame-button:%d,%d,%d,%d creatures:%d items:%d item-traces:%d floor:%08x ceiling:%08x wall-plan:%d door-plan:%d/%d/%d creature-plan:%d item-plan:%d/%08x} hud={required:%d hash:%08x commands:%d complete:%d stage:%d portraits:%d fallback-portraits:%d party-valid:%d party-count:%d leader:%d occupied-mask:%x portrait-bound-mask:%x audit-core-pixels:%u audit-interface-assets:%d raw-interface-assets:%d frame-hash-pixels:%u frame-hash:%08x generic-top-command:%d generic-status-command:%d}\n",
         state->sourceId[0] ? state->sourceId : "dm2",
         m11_dm2_debug_platform_label(platform),
         state->dm2State.party_x,
@@ -66518,6 +66556,11 @@ static void m11_debug_trace_dm2_runtime_frame(
         frame->composition.hud_presentation_stage,
         render->runtime_hud_asset_portrait_count,
         render->runtime_hud_fallback_portrait_count,
+        hud_party_valid,
+        hud_party.champion_count,
+        hud_party.leader_index,
+        hud_occupied_mask,
+        hud_portrait_bound_mask,
         render->runtime_hud_decoded_core_pixel_count,
         render->runtime_hud_decoded_interface_count,
         render->runtime_hud_raw_interface_count,
@@ -66559,6 +66602,24 @@ static void m11_debug_trace_dm2_runtime_frame(
             hud_trace.animation_direction, hud_trace.animation_frame,
             hud_trace.decoded_hash, hud_trace.palette_hash,
             hud_trace.raw_hash, hud_trace.destination_table_hash);
+    }
+    if (hud_party_valid) {
+        int slot;
+        for (slot = 0; slot < DM2_V1_HUD_CHAMPION_SLOT_COUNT; ++slot) {
+            const DM2_V1_HudChampionState *champion =
+                &hud_party.champions[slot];
+            fprintf(stderr,
+                "firestaff: dm2-render-hero game=%s platform=%s slot=%d occupied=%d leader=%d name=%s hp-bound=%d hp=%d hp-percent=%u portrait-type-bound=%d portrait-type=%u state-bound=%d\n",
+                state->sourceId[0] ? state->sourceId : "dm2",
+                m11_dm2_debug_platform_label(platform), slot,
+                champion->occupied, champion->leader,
+                champion->name[0] ? champion->name : "-",
+                champion->current_hp_source_bound,
+                champion->current_hp, (unsigned int)champion->hp_pct,
+                champion->portrait_type_source_bound,
+                (unsigned int)champion->portrait_index,
+                champion->state_source_bound);
+        }
     }
     previous_state = state;
     previous_signature = signature;

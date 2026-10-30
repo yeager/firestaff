@@ -9059,8 +9059,50 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
             source_portraits[slot].x / 2, source_portraits[slot].y / 2,
             source_portraits[slot].w / 2, source_portraits[slot].h / 2 };
     }
-    return dm2_v1_gdat_hud_m11_command_plan_bind_portrait_destinations(
-        out_plan, party, portrait_destinations, table_hash);
+    if (!dm2_v1_gdat_hud_m11_command_plan_bind_portrait_destinations(
+            out_plan, party, portrait_destinations, table_hash)) return 0;
+    if (profile->platform == DM2_PLATFORM_AMIGA_EN) {
+        DM2_V1_GdatHudM11CommandPlan arrows;
+        memset(&arrows, 0, sizeof(arrows));
+        /* SKProject's right-panel path uses RECT_47 for the squad panel.
+         * Generic top/action/gold strip guesses are PC chrome and visibly
+         * corrupt the Amiga HUD, so discard those three static commands. */
+        if (out_plan->command_count < 4 ||
+            out_plan->commands[3].kind !=
+                DM2_V1_GDAT_HUD_M11_COMMAND_PORTRAIT_PANEL ||
+            !dm2_v1_boot_gdat_hud_source_move_arrow_plan(profile, &arrows) ||
+            out_plan->command_count + arrows.command_count >
+                DM2_V1_GDAT_HUD_M11_COMMAND_MAX) {
+            dm2_v1_gdat_hud_m11_command_plan_free(&arrows);
+            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+            return 0;
+        }
+        for (int i = 0; i < 3; ++i) {
+            dm2_v1_asset_free_pixels(out_plan->commands[i].pixels);
+            memset(&out_plan->commands[i], 0,
+                   sizeof(out_plan->commands[i]));
+        }
+        memmove(&out_plan->commands[0], &out_plan->commands[3],
+            (size_t)(out_plan->command_count - 3) *
+                sizeof(out_plan->commands[0]));
+        out_plan->command_count -= 3;
+        memset(&out_plan->commands[out_plan->command_count], 0,
+            (size_t)3 * sizeof(out_plan->commands[0]));
+        for (int i = 0; i < arrows.command_count; ++i) {
+            out_plan->commands[out_plan->command_count++] = arrows.commands[i];
+            arrows.commands[i].pixels = NULL;
+        }
+        dm2_v1_gdat_hud_m11_command_plan_free(&arrows);
+        out_plan->amiga_native_move_arrows = 1;
+        out_plan->command_hash =
+            dm2_v1_gdat_hud_m11_command_plan_hash(out_plan);
+        out_plan->valid = out_plan->command_hash != 0u;
+        if (!out_plan->valid) {
+            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+            return 0;
+        }
+    }
+    return 1;
 }
 
 int dm2_v1_boot_gdat_hud_static_m11_command_plan(

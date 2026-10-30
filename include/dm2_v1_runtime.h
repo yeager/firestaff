@@ -788,6 +788,9 @@ typedef struct {
 int dm2_v1_runtime_last_hud_material_trace_count(void);
 int dm2_v1_runtime_last_hud_material_trace(
     int index, DM2_V1_RuntimeHudMaterialTrace *out_trace);
+/* Snapshot of the party data bound to the most recently rendered HUD frame. */
+int dm2_v1_runtime_last_hud_party_state(
+    DM2_V1_HudPartyState *out_party);
 typedef struct DM2_V1_RuntimeCreatureRenderReceipt {
     int valid;
     int instance_id;

@@ -136,6 +136,9 @@ static uint32_t dm2_v1_gdat_hud_command_hash(
     hash = dm2_v1_gdat_hud_hash_bytes(hash,
         (const uint8_t *)&plan->mac_native_layout,
         sizeof(plan->mac_native_layout));
+    hash = dm2_v1_gdat_hud_hash_bytes(hash,
+        (const uint8_t *)&plan->amiga_native_move_arrows,
+        sizeof(plan->amiga_native_move_arrows));
     for (i = 0; i < plan->command_count; ++i) {
         const DM2_V1_GdatHudM11Command *command = &plan->commands[i];
         hash = dm2_v1_gdat_hud_hash_bytes(hash, (const uint8_t *)&command->kind,

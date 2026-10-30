@@ -82,6 +82,9 @@ typedef struct DM2_V1_GdatHudM11CommandPlan {
     int valid;
     int source_native_layout;
     int mac_native_layout;
+    /* Amiga keeps the shared champion presentation, but draws movement
+     * arrows from the native RECT_040..RECT_045 panel. */
+    int amiga_native_move_arrows;
     int command_count;
     uint32_t command_hash;
     DM2_V1_GdatHudM11Command commands[DM2_V1_GDAT_HUD_M11_COMMAND_MAX];

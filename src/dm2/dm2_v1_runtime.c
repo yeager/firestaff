@@ -697,6 +697,8 @@ static DM2_V1_RuntimeCreatureDamageReceipt g_dm2_last_creature_damage;
 static DM2_V1_RuntimeWieldAttackReceipt g_dm2_last_wield_attack;
 static int g_dm2_last_asset_hud_portrait_count = 0;
 static int g_dm2_last_fallback_hud_portrait_count = 0;
+static DM2_V1_HudPartyState g_dm2_last_hud_party;
+static int g_dm2_last_hud_party_valid;
 static DM2_V1_PerformMoveReceipt g_dm2_last_perform_move;
 static DM2_V1_RuntimeFrameOwnershipReceipt g_dm2_frame_ownership;
 static DM2_V1_ViewportM11FrameReceipt g_dm2_last_m11_frame;
@@ -12304,7 +12306,11 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
 {
     DM2_V1_HudPartyState hud;
 
-    if (!rt || !viewport || !rt->session_snapshot_valid) return;
+    if (!rt || !viewport || !rt->session_snapshot_valid) {
+        memset(&g_dm2_last_hud_party, 0, sizeof(g_dm2_last_hud_party));
+        g_dm2_last_hud_party_valid = 0;
+        return;
+    }
 
     /* skproject/SKWIN keeps HP, stamina, mana, leader, and champion names in
      * glbChampionSquad plus the selected leader field before the T560 HUD
@@ -12470,6 +12476,8 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
 
     }
     dm2_v1_viewport_set_hud_party(viewport, &hud);
+    g_dm2_last_hud_party = hud;
+    g_dm2_last_hud_party_valid = 1;
 }
 
 /* ReDMCSB/skproject SkWinCore.cpp::UPDATE_RIGHT_PANEL redraws both hand
@@ -13409,6 +13417,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
            rt->boot->platform == DM2_PLATFORM_MAC_FR) &&
           viewport.hud_party_valid && hud_material_plan.valid &&
           hud_material_plan.mac_native_layout) ||
+         (rt->boot->platform == DM2_PLATFORM_AMIGA_EN &&
+          viewport.hud_party_valid && hud_material_plan.valid &&
+          hud_material_plan.amiga_native_move_arrows) ||
          (viewport.hud_party_valid && hud_material_plan.valid &&
           hud_material_plan.source_native_layout))) {
         dm2_v1_viewport_set_asset_loader(
@@ -15350,6 +15361,16 @@ int dm2_v1_runtime_last_hud_material_trace(
         return 0;
     }
     *out_trace = g_dm2_last_hud_material_traces[index];
+    return 1;
+}
+
+int dm2_v1_runtime_last_hud_party_state(
+    DM2_V1_HudPartyState *out_party) {
+    if (!out_party || !g_dm2_last_hud_party_valid) {
+        if (out_party) memset(out_party, 0, sizeof(*out_party));
+        return 0;
+    }
+    *out_party = g_dm2_last_hud_party;
     return 1;
 }
 

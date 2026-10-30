@@ -10146,6 +10146,54 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
         return;
     }
     if (s->source_materials_required && s->gdat_hud_material_plan &&
+        s->gdat_hud_material_plan->amiga_native_move_arrows) {
+        const DM2_V1_GdatHudM11CommandPlan *amiga_plan =
+            s->gdat_hud_material_plan;
+        if (!s->asset_loader || s->asset_loader->gdat_version != 5u ||
+            !s->asset_loader->big_endian || !amiga_plan->valid ||
+            amiga_plan->command_count < 7 ||
+            amiga_plan->command_hash == 0u ||
+            amiga_plan->command_hash !=
+                dm2_v1_gdat_hud_m11_command_plan_hash(amiga_plan)) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+            return;
+        }
+        for (int arrow = 0; arrow < 6; ++arrow) {
+            const DM2_V1_GdatHudM11Command *command = NULL;
+            for (int i = 0; i < amiga_plan->command_count; ++i) {
+                const DM2_V1_GdatHudM11Command *candidate =
+                    &amiga_plan->commands[i];
+                if (candidate->kind ==
+                        DM2_V1_GDAT_HUD_M11_COMMAND_MOVE_ARROW &&
+                    candidate->destination_rect_id ==
+                        (uint16_t)(40 + arrow)) {
+                    command = candidate;
+                    break;
+                }
+            }
+            if (!command || command->gdat_category !=
+                    DM2_GDAT_CATEGORY_INTERFACE_GENERAL ||
+                command->gdat_index != 3 ||
+                command->gdat_field != 2 + arrow * 2 ||
+                !dm2_v1_render_hud_plan_command(
+                    s, command->viewport_gdat_index,
+                    &command->destination,
+                    DM2_V1_GDAT_HUD_M11_COMMAND_MOVE_ARROW)) {
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
+                return;
+            }
+            ++s->asset_hud_core_drawn_count;
+            s->last_hud_core_gdat_hash = dm2_v1_viewport_hash_gdat_asset(
+                s->last_hud_core_gdat_hash, command->viewport_gdat_index,
+                command->width, command->height);
+            s->last_hud_core_pixel_count += (uint32_t)(
+                command->destination.w * command->destination.h);
+        }
+    }
+
+    if (s->source_materials_required && s->gdat_hud_material_plan &&
         s->gdat_hud_material_plan->source_native_layout) {
         const DM2_V1_GdatHudM11CommandPlan *source_plan =
             s->gdat_hud_material_plan;
@@ -10354,9 +10402,13 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
         }
     }
 
+    const int amiga_move_arrow_hud = s->source_materials_required &&
+        s->gdat_hud_material_plan &&
+        s->gdat_hud_material_plan->amiga_native_move_arrows;
     const int source_native_hud = s->source_materials_required &&
         s->gdat_hud_material_plan &&
-        s->gdat_hud_material_plan->source_native_layout;
+        (s->gdat_hud_material_plan->source_native_layout ||
+         amiga_move_arrow_hud);
     /* SKProject c_gui_draw.cpp:390-411 crops INTERFACE_GENERAL/6/heroIndex
      * by the hero's relative direction for RECT 0x5e. Its field zero is
      * therefore not a full-width top bar. c_gui_draw.cpp:1732-1768 uses
@@ -10390,7 +10442,9 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
      * route below owns that draw; never substitute its old generic icon row. */
 
     if (!plan.outdoor) {
-        if (!fmtowns_unmapped_chrome && !source_native_hud && !dm2_v1_render_hud_core_asset(s,
+        if (!fmtowns_unmapped_chrome &&
+            (!source_native_hud || amiga_move_arrow_hud) &&
+            !dm2_v1_render_hud_core_asset(s,
                                           &plan.portrait_panel_rect,
                                           plan.portrait_panel_gdat_index)) {
             dm2_v1_block_source_material(
