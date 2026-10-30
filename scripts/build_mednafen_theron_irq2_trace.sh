@@ -228,6 +228,8 @@ pce_fast_snapshot_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_main_ram_
 pce_fast_snapshot_rendered="$build_root/theron-pce-fast-main-ram-snapshot.rendered.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_pce_fast_instruction_pc_trace.patch"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_system_card_controller_dispatch_trace.patch"
 if [[ "$pce_fast_vram_commit_trace" == 1 ]]; then
     pce_fast_vram_commit_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_vram_commit_trace.patch"
     pce_fast_vram_commit_rendered="$build_root/theron-pce-fast-vram-commit.rendered.patch"

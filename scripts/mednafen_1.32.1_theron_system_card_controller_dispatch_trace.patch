@@ -1,0 +1,75 @@
+--- a/src/pce_fast/huc6280.cpp
++++ b/src/pce_fast/huc6280.cpp
+@@ -1542,3 +1542,72 @@
+  TheronTraceInstructionPC = GetRealPC();
+  TheronTraceInstructionPhysicalPC = (HuCPU.MPR[TheronTraceInstructionPC >> 13] << 13) | (TheronTraceInstructionPC & 0x1FFF);
++ {
++  static FILE *trace = NULL;
++  static bool attempted = false;
++  if(!attempted)
++  {
++   const char *path = getenv("FIRESTAFF_THERON_SYSTEM_CARD_DISPATCH_TRACE");
++   attempted = true;
++   if(path && *path)
++   {
++    trace = fopen(path, "w");
++    if(trace)
++    {
++     fprintf(trace, "source=mednafen-pce-fast-system-card-controller-dispatch-v2\n");
++     fflush(trace);
++    }
++   }
++  }
++  if(trace && (TheronTraceInstructionPC == 0xE4E1 || TheronTraceInstructionPC == 0xE4FB))
++  {
++   const unsigned int y = HU_Y;
++   if(y < 5)
++   {
++    const uintptr_t ram_mapping = HuCPU.FastPageR[0x2227 >> 13];
++    const uintptr_t bios_mapping = HuCPU.FastPageR[0xE504 >> 13];
++    if(ram_mapping && bios_mapping && HU_Page1)
++    {
++     const uint8 pad_mask = *(const uint8 *)(ram_mapping + 0x2227);
++     const uint8 enabled_mask = *(const uint8 *)(bios_mapping + 0xE504 + y);
++     const uint8 state = *(const uint8 *)(ram_mapping + 0x2228 + y);
++     const uint8 delta = *(const uint8 *)(ram_mapping + 0x222D + y);
++     if(TheronTraceInstructionPC == 0xE4FB || state || delta)
++     {
++      const uint8 e7 = HU_Page1[0x00E7];
++      const uint16 vector = *(const uint8 *)(ram_mapping + 0x2284) |
++                            ((uint16)*(const uint8 *)(ram_mapping + 0x2285) << 8);
++      fprintf(trace, "system_card_controller pc=%04x physical_pc=%08x mpr1=%02x mpr7=%02x y=%u pad_mask=%02x enabled_mask=%02x state=%02x delta=%02x e7=%02x vector=%04x\n",
++              TheronTraceInstructionPC, TheronTraceInstructionPhysicalPC, HuCPU.MPR[1], HuCPU.MPR[7], y, pad_mask, enabled_mask, state, delta, e7, vector);
++      fflush(trace);
++     }
++    }
++   }
++  }
++  if(trace)
++  {
++   static unsigned int path_trace_count = 0;
++   static unsigned int entry_trace_count = 0;
++   const unsigned int pc = TheronTraceInstructionPC;
++   const bool choice_pc = pc == 0xC8C7 || pc == 0xC8C9 || pc == 0xC8CB ||
++                          pc == 0xC8CD || pc == 0xC8CF || pc == 0xC8D2;
++   const bool path_pc = pc == 0xE0F3 || pc == 0xE109 || pc == 0xE10C ||
++                        pc == 0xE10D || pc == 0xE118 || pc == 0xE11B ||
++                        pc == 0xE11D || pc == 0xE11F || pc == 0xE123 ||
++                        pc == 0xE126 || pc == 0xE129 || pc == 0xE12C ||
++                        pc == 0xE133 || pc == 0xCF78 || pc == 0xC860 ||
++                        (choice_pc && HU_A != 0);
++   const bool entry_pc = pc == 0x4000 && entry_trace_count < 4;
++   if((path_pc || entry_pc) && path_trace_count < 128)
++   {
++    const uint8 e7 = HU_Page1 ? HU_Page1[0x00E7] : 0;
++    fprintf(trace, "system_card_path pc=%04x physical_pc=%08x a=%02x x=%02x y=%02x p=%02x e7=%02x mpr1=%02x mpr6=%02x mpr7=%02x\n",
++            pc, TheronTraceInstructionPhysicalPC, HU_A, HU_X, HU_Y, HU_P, e7,
++            HuCPU.MPR[1], HuCPU.MPR[6], HuCPU.MPR[7]);
++    fflush(trace);
++    path_trace_count++;
++    if(entry_pc)
++     entry_trace_count++;
++   }
++  }
++ }
+  TheronPCEFastDratorMenuRouteStep(TheronTraceInstructionPC);
