@@ -242,6 +242,7 @@ static int verify_window_user_clip_accepts_viewport(const Blob *trace,
     char *line, *line_save = NULL;
     unsigned int seen = 0U;
     unsigned int gouraud_uniform = 0U;
+    unsigned int gouraud_non_neutral = 0U;
     unsigned long current_index = 0U;
     int clip_found = 0, local_found = 0, unexpected_state = 0;
     int ok = 0;
@@ -313,19 +314,22 @@ static int verify_window_user_clip_accepts_viewport(const Blob *trace,
             for (i = 0U; i < 4U; ++i)
                 gouraud[i] = read_le16(vram->data + table_offset + i * 2U);
             if (gouraud[0] == gouraud[1] && gouraud[0] == gouraud[2] &&
-                gouraud[0] == gouraud[3]) ++gouraud_uniform;
+                gouraud[0] == gouraud[3]) {
+                ++gouraud_uniform;
+                if (gouraud[0] != UINT16_C(0x4210)) ++gouraud_non_neutral;
+            }
             ++seen;
         }
     }
     if (seen != LAST_COMMAND - FIRST_COMMAND + 1U ||
-        gouraud_uniform != seen || !clip_found ||
+        gouraud_uniform != seen || gouraud_non_neutral != seen || !clip_found ||
         !local_found || unexpected_state) goto done;
     printf("CLIP PROOF: rows %u..%u use inside clipping against the captured "
            "viewport rectangle 0,0..320,224; no viewport pixel is user-clipped\n",
            FIRST_COMMAND, LAST_COMMAND);
-    printf("GOURAUD PROOF: all %u draws enable Gouraud and point to four "
-           "identical captured vertex colors (diagnostic simplification only)\n",
-           gouraud_uniform);
+    printf("GOURAUD PROOF: all %u draws enable non-neutral Gouraud shading "
+           "with four identical captured vertex colors (diagnostic "
+           "simplification only)\n", gouraud_non_neutral);
     ok = 1;
 done:
     if (!ok) {

@@ -16,7 +16,7 @@ There is no intervening user-clip or local-coordinate command in the checked
 window. Consequently, user clipping rejects no pixel in the captured
 `320x224` viewport for these rows. This proves the captured clip/local state;
 it does not prove complete VDP1 clipping, polygon coverage, or pixel output.
-All 31 draws also enable Gouraud shading. The verifier follows each command's
+All 31 draws also enable non-neutral Gouraud shading. The verifier follows each command's
 captured Gouraud pointer (`word_address * 8` bytes), bounds-checks the table in
 the reconstructed VDP1 VRAM, and confirms that its four vertex colors are
 identical for that command. This makes constant shading a useful diagnostic
