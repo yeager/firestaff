@@ -13,10 +13,16 @@ provided. Remaining work includes source-typed thing-list decoding and the
 runtime/resource launch route; do not advertise X68000 support yet.
 `FirestaffX68kDungeonDat_DecodeSquare` exposes the source-defined upper-three-bit
 square type and lower-five-bit flags (`DEFS.H:1001-1036`); the authentic-media
-test checks that split on every square in all 14 maps. The SFT/THING-head
-accessor remains open: an attempted F0160 reproduction did not agree with the
-X30J media and was removed rather than treating an unverified table offset as
-correct. No THING list or runtime semantics are claimed by the square decoder.
+test checks that split on every square in all 14 maps. The bounded
+`FirestaffX68kDungeonDat_GetSquareFirstThing` now follows ReDMCSB F0160/F0161:
+the stored per-column SFT count plus earlier list-present squares in the same
+column, with BE16 decoding. The original-media test independently recomputes
+every head across all 14 maps, compares every head word to the raw table, and
+checks non-sentinel type/index references against the authentic typed-record
+counts. ReDMCSB's `MAP.A.Width` is a stored `cell_count-1`; the parser's width
+is already a cell count, so the serialized column base is the sum of parser
+widths. This proves bounded source-data access only, not linked-list traversal,
+typed payload decoding, runtime behavior, or X68000 launch support.
 
 2026-10-30 startup/platform audit: the local original-media inventory includes
 `Game,Dungeon_Master,JP,X68000,Software.7z` (X68000 Japanese v3.0 cracked HDM,

@@ -32,6 +32,22 @@ static uint16_t x68k_read_be16(const uint8_t *bytes) {
     return (uint16_t)(((uint16_t)bytes[0] << 8) | (uint16_t)bytes[1]);
 }
 
+static int x68k_read_span_be16(const FirestaffX68kDungeonDat *dungeon,
+                               FirestaffX68kDungeonDatSpan span,
+                               size_t index,
+                               uint16_t *out_value) {
+    size_t byte_offset;
+    if (!dungeon || !dungeon->bytes || !out_value ||
+        span.offset > dungeon->size || span.size > dungeon->size - span.offset ||
+        index > SIZE_MAX / 2u) {
+        return -1;
+    }
+    byte_offset = index * 2u;
+    if (byte_offset > span.size || 2u > span.size - byte_offset) return -1;
+    *out_value = x68k_read_be16(dungeon->bytes + span.offset + byte_offset);
+    return 0;
+}
+
 static int x68k_advance_span(size_t *cursor,
                              size_t count,
                              size_t record_bytes,
@@ -233,6 +249,70 @@ int FirestaffX68kDungeonDat_DecodeSquare(
     if (!out_square) return -1;
     out_square->type = (uint8_t)(raw_square >> 5);
     out_square->flags = (uint8_t)(raw_square & 0x1fu);
+    return 0;
+}
+
+int FirestaffX68kDungeonDat_GetSquareFirstThing(
+    const FirestaffX68kDungeonDat *dungeon,
+    uint8_t map_index,
+    uint8_t map_x,
+    uint8_t map_y,
+    uint16_t *out_thing) {
+    size_t map_column_base = 0u;
+    size_t column_index;
+    size_t sft_index;
+    uint16_t cumulative;
+    uint8_t square;
+    uint8_t y;
+    uint8_t current_map;
+    const FirestaffX68kDungeonDatMap *map;
+
+    if (!dungeon || !out_thing || !dungeon->bytes ||
+        map_index >= dungeon->map_count ||
+        map_index >= FIRESTAFF_X68K_DUNGEON_MAX_MAPS) {
+        return -1;
+    }
+    map = &dungeon->maps[map_index];
+    if (map_x >= map->width || map_y >= map->height ||
+        FirestaffX68kDungeonDat_GetSquare(
+            dungeon, map_index, map_x, map_y, &square) != 0) {
+        return -1;
+    }
+    if ((square & 0x10u) == 0u) {
+        *out_thing = FIRESTAFF_X68K_DUNGEON_THING_END_OF_LIST;
+        return 0;
+    }
+
+    /* MAP.A.Width is stored as cell_count-1; this parser stores cell_count.
+     * ReDMCSB LOADSAVE.C adds source Width+1, therefore sum parser widths.
+     */
+    for (current_map = 0u; current_map < map_index; ++current_map) {
+        if (map_column_base > SIZE_MAX - dungeon->maps[current_map].width) {
+            return -1;
+        }
+        map_column_base += dungeon->maps[current_map].width;
+    }
+    if (map_column_base > SIZE_MAX - map_x) return -1;
+    column_index = map_column_base + map_x;
+    if (column_index >= dungeon->column_count ||
+        x68k_read_span_be16(dungeon, dungeon->column_sft_counts,
+                            column_index, &cumulative) != 0) {
+        return -1;
+    }
+    sft_index = cumulative;
+    /* ReDMCSB DUNGEON.C F0160 counts flagged squares in y < MapY. */
+    for (y = 0u; y < map_y; ++y) {
+        if (FirestaffX68kDungeonDat_GetSquare(
+                dungeon, map_index, map_x, y, &square) != 0) {
+            return -1;
+        }
+        if ((square & 0x10u) != 0u) ++sft_index;
+    }
+    if (sft_index >= dungeon->square_first_thing_count ||
+        x68k_read_span_be16(dungeon, dungeon->square_first_things,
+                            sft_index, out_thing) != 0) {
+        return -1;
+    }
     return 0;
 }
 

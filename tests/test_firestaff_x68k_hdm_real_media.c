@@ -380,13 +380,17 @@ int main(void) {
         uint8_t map_y = 0u;
         uint8_t direction = 0u;
         uint8_t start_square = 0u;
+        uint16_t start_thing = 0u;
+        size_t expected_column_base = 0u;
         uint16_t map_index;
         if (FirestaffX68kDungeonDat_GetInitialPartyLocation(
                 &dungeon_dat, &map_x, &map_y, &direction) != 0 ||
             map_x != 1u || map_y != 3u || direction != 2u ||
             FirestaffX68kDungeonDat_GetSquare(
                 &dungeon_dat, 0u, map_x, map_y, &start_square) != 0 ||
-            start_square != 0xb0u) {
+            start_square != 0xb0u ||
+            FirestaffX68kDungeonDat_GetSquareFirstThing(
+                &dungeon_dat, 0u, map_x, map_y, &start_thing) != 0) {
             fputs("FAIL: X68000 initial party location did not resolve to the source map grid\n",
                   stderr);
             goto done;
@@ -401,6 +405,7 @@ int main(void) {
                      ++map_y_index) {
                     uint8_t square = 0u;
                     FirestaffX68kDungeonSquare decoded_square;
+                    uint8_t prior_y;
                     const size_t source_index =
                         dungeon_dat.raw_map_data.offset +
                         map->raw_map_offset +
@@ -419,8 +424,105 @@ int main(void) {
                                 (unsigned)map_y_index);
                         goto done;
                     }
+                    {
+                        uint16_t first_thing = 0u;
+                        const int has_list = (square & 0x10u) != 0u;
+                        if (FirestaffX68kDungeonDat_GetSquareFirstThing(
+                                &dungeon_dat, (uint8_t)map_index,
+                                map_x_index, map_y_index, &first_thing) != 0) {
+                            fprintf(stderr,
+                                    "FAIL: X68000 map %u square (%u,%u) SFT accessor rejected authentic data\n",
+                                    (unsigned)map_index, (unsigned)map_x_index,
+                                    (unsigned)map_y_index);
+                            goto done;
+                        }
+                        if (!has_list) {
+                            if (first_thing !=
+                                    FIRESTAFF_X68K_DUNGEON_THING_END_OF_LIST) {
+                                fprintf(stderr,
+                                        "FAIL: X68000 empty square (%u,%u) did not return end-of-list\n",
+                                        (unsigned)map_x_index,
+                                        (unsigned)map_y_index);
+                                goto done;
+                            }
+                        } else {
+                            size_t raw_column_index = expected_column_base +
+                                                      map_x_index;
+                            size_t expected_sft =
+                                ((size_t)dungeon[dungeon_dat.column_sft_counts.offset +
+                                                raw_column_index * 2u] << 8) |
+                                dungeon[dungeon_dat.column_sft_counts.offset +
+                                        raw_column_index * 2u + 1u];
+                            size_t raw_sft_offset;
+                            uint16_t expected_thing;
+                            for (prior_y = 0u; prior_y < map_y_index; ++prior_y) {
+                                const size_t prior_square_offset =
+                                    dungeon_dat.raw_map_data.offset +
+                                    map->raw_map_offset +
+                                    (size_t)map_x_index * map->height + prior_y;
+                                if ((dungeon[prior_square_offset] & 0x10u) != 0u) {
+                                    ++expected_sft;
+                                }
+                            }
+                            raw_sft_offset = dungeon_dat.square_first_things.offset +
+                                             expected_sft * 2u;
+                            if (expected_sft >= dungeon_dat.square_first_thing_count ||
+                                raw_sft_offset + 2u >
+                                    dungeon_dat.square_first_things.offset +
+                                    dungeon_dat.square_first_things.size) {
+                                fprintf(stderr,
+                                        "FAIL: X68000 map %u square (%u,%u) expected SFT index is out of range\n",
+                                        (unsigned)map_index, (unsigned)map_x_index,
+                                        (unsigned)map_y_index);
+                                goto done;
+                            }
+                            expected_thing =
+                                (uint16_t)(((uint16_t)dungeon[raw_sft_offset] << 8) |
+                                           dungeon[raw_sft_offset + 1u]);
+                            if (first_thing != expected_thing) {
+                                size_t found_index;
+                                for (found_index = 0u;
+                                     found_index < dungeon_dat.square_first_thing_count;
+                                     ++found_index) {
+                                    size_t found_offset =
+                                        dungeon_dat.square_first_things.offset +
+                                        found_index * 2u;
+                                    if ((((uint16_t)dungeon[found_offset] << 8) |
+                                         dungeon[found_offset + 1u]) == first_thing) {
+                                        break;
+                                    }
+                                }
+                                fprintf(stderr,
+                                        "FAIL: X68000 map %u square (%u,%u) F0160/F0161 THING mismatch (got=0x%04x expected=0x%04x index=%lu found=%lu)\n",
+                                        (unsigned)map_index, (unsigned)map_x_index,
+                                        (unsigned)map_y_index, (unsigned)first_thing,
+                                        (unsigned)expected_thing,
+                                        (unsigned long)expected_sft,
+                                        (unsigned long)found_index);
+                                goto done;
+                            }
+                            if (first_thing != 0xfffeu &&
+                                first_thing != 0xffffu) {
+                                const uint8_t thing_type =
+                                    (uint8_t)((first_thing & 0x3c00u) >> 10);
+                                const uint16_t thing_index =
+                                    (uint16_t)(first_thing & 0x03ffu);
+                                if (thing_type >= FIRESTAFF_X68K_DUNGEON_THING_TYPES ||
+                                    thing_index >= dungeon_dat.thing_count[thing_type]) {
+                                    fprintf(stderr,
+                                            "FAIL: X68000 map %u square (%u,%u) has out-of-range THING ref 0x%04x\n",
+                                            (unsigned)map_index,
+                                            (unsigned)map_x_index,
+                                            (unsigned)map_y_index,
+                                            (unsigned)first_thing);
+                                    goto done;
+                                }
+                            }
+                        }
+                    }
                 }
             }
+            expected_column_base += map->width;
         }
         if (FirestaffX68kDungeonDat_GetSquare(
                 &dungeon_dat, 0u, dungeon_dat.maps[0].width, 0u,
@@ -481,9 +583,9 @@ int main(void) {
                 }
             }
         }
-        printf("PASS: X68000 start location map=0 (%u,%u) dir=%u square=0x%02x; all map grid cells and metadata follow source layout\n",
+        printf("PASS: X68000 start location map=0 (%u,%u) dir=%u square=0x%02x first-thing=0x%04x; all map cells, SFT indexes, THING heads and metadata follow source layout\n",
                (unsigned)map_x, (unsigned)map_y, (unsigned)direction,
-               (unsigned)start_square);
+               (unsigned)start_square, (unsigned)start_thing);
     }
     printf("PASS: read-only X68000 HDM import authenticated %lu root entries; "
            "SWOOSH matches ReDMCSB; all 562 X30J graphics spans and the "

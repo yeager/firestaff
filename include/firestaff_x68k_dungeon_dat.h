@@ -11,6 +11,7 @@ extern "C" {
 
 #define FIRESTAFF_X68K_DUNGEON_MAX_MAPS 16u
 #define FIRESTAFF_X68K_DUNGEON_THING_TYPES 16u
+#define FIRESTAFF_X68K_DUNGEON_THING_END_OF_LIST 0xfffeu
 
 typedef struct {
     uint8_t type;
@@ -91,6 +92,17 @@ int FirestaffX68kDungeonDat_GetSquare(const FirestaffX68kDungeonDat *dungeon,
  */
 int FirestaffX68kDungeonDat_DecodeSquare(uint8_t raw_square,
                                          FirestaffX68kDungeonSquare *out_square);
+
+/* Resolve the first THING word for a map square. Returns 0 on success,
+ * including empty squares (0xfffe); returns -1 for invalid coordinates/data.
+ * ReDMCSB DUNGEON.C F0160/F0161 and LOADSAVE.C column-count setup.
+ */
+int FirestaffX68kDungeonDat_GetSquareFirstThing(
+    const FirestaffX68kDungeonDat *dungeon,
+    uint8_t map_index,
+    uint8_t map_x,
+    uint8_t map_y,
+    uint16_t *out_thing);
 
 /* Read map-local trailing metadata in ReDMCSB F0174 order: creature types,
  * wall ornaments, floor ornaments, then door ornaments (DUNGEON.C:2755-2760).
