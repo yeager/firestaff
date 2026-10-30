@@ -516,8 +516,24 @@ VDP2 write trace covers frames 7600–8099 and records no writes after frame
 7716. Its NBG0 row trace contains two identical 224-row main-field sequences
 for frame 8037 and is explicitly marked incomplete. Those duplicated samples
 are retained as evidence but do not establish complete NBG0 render-state
-coverage. The complete external evidence package and reproduction notes are
-at `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_title_menu_sameframe_20261030/README.md`.
+coverage. A follow-up authentic trace adds VDP2 frame serials and line-call
+ordinals for rows 100–111 of VDP1 frame 7716: each row appears once under VDP2
+serial 8476 and once under serial 8477, with each ordinal matching its row.
+This proves two distinct VDP2 passes sharing the VDP1 frame label in that
+capture; it does not by itself explain the separate duplicated sequences at
+frame 8037. Preserve the incomplete receipts and samples; do not deduplicate
+them or interpret them as one complete image. A second full-row capture
+sampled rows 0–223: each VDP2 serial contains exactly 224 main-field samples
+with ordinals 0–223. The receipt remains incomplete under the VDP1 frame-row
+contract (448 samples for 224 VDP1 pairs), while the per-serial row sets are
+complete. This verifies two full render-state line passes, not separate pixel
+images or frame-8037 pass attribution. The diagnostic captures, receipts and
+reproduction instructions are in the external evidence bundle at
+`firestaff-evidence/nexus/ymir_nbg0_frame_serial_diagnostic_20261030/README.md`.
+The frame-8037 evidence and reproduction instructions are in
+`firestaff-evidence/nexus/nexus_title_menu_sameframe_20261030/README.md`.
+Both bundles are stored outside this repository. To inspect them, mount the
+external evidence volume and open the listed paths relative to its root.
 
 It does not identify the full title background or prove which pixels survive
 VDP1/VDP2 composition on the screen. Full native title presentation and
