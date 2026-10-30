@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Classify source-bound $EA9C write candidates for the observed JP RAM loop.
+"""Classify bounded writer and source candidates for the observed JP RAM loop.
 
-The report joins bounded instruction-fetch snapshots at physical $1000D2-$1000E3
-to the latest prior write in the $EA9C-only trace, then reports matching
-source-valid $EA99 CD-read candidates within 16 shared events. It does not
-observe writes from every guest PC and cannot establish exclusive RAM provenance
-or gameplay handoff.
+The report joins instruction-fetch snapshots at physical $1000D2-$1000E3 to
+the latest prior all-PC target write at $1000D9-$1000DB and to the latest prior
+$EA9C-only write at other addresses. For $EA9C writes it reports matching
+source-valid $EA99 CD-read candidates within 16 shared events. The available
+writer traces do not establish exclusive RAM provenance or gameplay handoff.
 """
 
 from __future__ import annotations
@@ -32,6 +32,10 @@ from verify_theron_jp_indirect_jump_follow_trace import (
     FOLLOW_ROW,
     verify as verify_indirect_jump_follow,
 )
+from verify_theron_jp_fetch_target_writes import (
+    TARGET_SUFFIX,
+    read_target_writes,
+)
 
 
 FOLLOW_SUFFIX = ".indirect-jump-follow"
@@ -49,6 +53,7 @@ def ensure_capture(paths: list[Path]) -> None:
         CODE_FOLLOW_SUFFIX,
         FOLLOW_SUFFIX,
         ".system-card-dispatch",
+        TARGET_SUFFIX,
         READ_SUFFIX,
         WRITE_SUFFIX,
     )
@@ -87,6 +92,7 @@ def classify(
     fetch_rows: list[dict[str, str]],
     reads: list[dict[str, str]],
     writes: list[dict[str, str]],
+    target_writes: dict[int, list[tuple[int, int, int]]],
 ) -> dict[str, int]:
     read_events_by_value: dict[int, list[int]] = defaultdict(list)
     for row in reads:
@@ -102,7 +108,9 @@ def classify(
     ambiguous_source_read_matches = source_read_candidates_total = 0
     max_source_read_candidate_gap = 0
     mismatching_writes = missing_writes = missing_source_reads = 0
+    non_ea9c_latest_writer_bytes = 0
     fully_backed_fetch_rows = 0
+    fully_source_candidate_backed_fetch_rows = 0
     loop_fetch_rows = 0
 
     for row in fetch_rows:
@@ -112,6 +120,7 @@ def classify(
         valid_mask = int(row["valid_mask"])
         event = int(row["event_sequence"])
         byte_results: list[bool] = []
+        source_results: list[bool] = []
         for offset, (address, value) in enumerate(zip(addresses, values, strict=True)):
             if not LOOP_PHYSICAL_RANGE[0] <= address <= LOOP_PHYSICAL_RANGE[1]:
                 continue
@@ -121,51 +130,68 @@ def classify(
                 continue
             observed_bytes += 1
             observed_addresses.add(address)
-            prior = [item for item in writes_by_address.get(address, ())
-                     if int(item["event_sequence"]) < event]
+            if address in target_writes:
+                prior = [item for item in target_writes[address] if item[0] < event]
+            else:
+                prior = [
+                    (int(item["event_sequence"]), int(item["value"], 16), 0xEA9C)
+                    for item in writes_by_address.get(address, ())
+                    if int(item["event_sequence"]) < event
+                ]
             if not prior:
                 missing_writes += 1
                 byte_results.append(False)
+                source_results.append(False)
                 continue
-            latest = prior[-1]
-            write_event = int(latest["event_sequence"])
-            if int(latest["value"], 16) != value:
+            write_event, write_value, writer_pc = max(prior, key=lambda item: item[0])
+            if write_value != value:
                 mismatching_writes += 1
                 byte_results.append(False)
+                source_results.append(False)
                 continue
             matching_writes += 1
-            candidate_events = read_events_by_value.get(value, [])
-            candidate_end = bisect_left(candidate_events, write_event)
-            candidate_start = bisect_left(candidate_events, write_event - 16)
-            candidates = candidate_events[candidate_start:candidate_end]
-            if not candidates:
-                missing_source_reads += 1
-                byte_results.append(False)
-                continue
-            source_read_matches += 1
-            source_read_candidates_total += len(candidates)
-            if len(candidates) == 1:
-                unique_source_read_matches += 1
+            if writer_pc != 0xEA9C:
+                non_ea9c_latest_writer_bytes += 1
+                byte_results.append(True)
+                source_results.append(False)
             else:
-                ambiguous_source_read_matches += 1
-            nearest_gap = write_event - candidates[-1]
-            max_source_read_candidate_gap = max(max_source_read_candidate_gap, nearest_gap)
-            if nearest_gap == 1:
-                immediate_source_read_matches += 1
-            byte_results.append(True)
+                candidate_events = read_events_by_value.get(value, [])
+                candidate_end = bisect_left(candidate_events, write_event)
+                candidate_start = bisect_left(candidate_events, write_event - 16)
+                candidates = candidate_events[candidate_start:candidate_end]
+                if not candidates:
+                    missing_source_reads += 1
+                    byte_results.append(False)
+                    source_results.append(False)
+                    continue
+                source_read_matches += 1
+                source_read_candidates_total += len(candidates)
+                if len(candidates) == 1:
+                    unique_source_read_matches += 1
+                else:
+                    ambiguous_source_read_matches += 1
+                nearest_gap = write_event - candidates[-1]
+                max_source_read_candidate_gap = max(max_source_read_candidate_gap, nearest_gap)
+                if nearest_gap == 1:
+                    immediate_source_read_matches += 1
+                byte_results.append(True)
+                source_results.append(True)
         if byte_results:
             loop_fetch_rows += 1
             if all(byte_results):
                 fully_backed_fetch_rows += 1
+            if all(source_results):
+                fully_source_candidate_backed_fetch_rows += 1
 
     return {
         "loop_fetch_rows": loop_fetch_rows,
         "observed_fetch_bytes": observed_bytes,
         "observed_unique_physical_bytes": len(observed_addresses),
         "expected_unique_physical_bytes": LOOP_PHYSICAL_RANGE[1] - LOOP_PHYSICAL_RANGE[0] + 1,
-        "matching_latest_prior_ea9c_writes": matching_writes,
-        "mismatching_latest_prior_ea9c_writes": mismatching_writes,
-        "fetch_bytes_without_prior_ea9c_write": missing_writes,
+        "matching_latest_address_scoped_writes": matching_writes,
+        "mismatching_latest_address_scoped_writes": mismatching_writes,
+        "fetch_bytes_without_prior_address_scoped_write": missing_writes,
+        "latest_non_ea9c_writer_byte_slots": non_ea9c_latest_writer_bytes,
         "matching_writes_with_source_valid_ea99_read_candidate_within_16_events": source_read_matches,
         "matching_writes_without_source_read_candidate_within_16_events": missing_source_reads,
         "unique_source_read_candidate_byte_slots": unique_source_read_matches,
@@ -174,6 +200,7 @@ def classify(
         "nearest_source_read_candidate_gap_1": immediate_source_read_matches,
         "max_source_read_candidate_gap": max_source_read_candidate_gap,
         "fetch_rows_fully_candidate_backed": fully_backed_fetch_rows,
+        "fetch_rows_fully_source_candidate_backed": fully_source_candidate_backed_fetch_rows,
     }
 
 
@@ -182,6 +209,7 @@ def verify(
     code_follow_path: Path,
     follow_path: Path,
     system_card_dispatch_path: Path,
+    target_write_path: Path,
     read_path: Path,
     write_path: Path,
     track02_path: Path,
@@ -191,6 +219,7 @@ def verify(
         code_follow_path,
         follow_path,
         system_card_dispatch_path,
+        target_write_path,
         read_path,
         write_path,
     ])
@@ -207,8 +236,12 @@ def verify(
     if unbound_reads:
         raise ValueError(f"CD trace contains {unbound_reads} source-unbound reads")
     writes = verify_writer_rows(write_path)
+    target_writes = read_target_writes(target_write_path)
+    all_pc_addresses = (0x1000D9, 0x1000DA, 0x1000DB)
+    if any(not target_writes.get(address) for address in all_pc_addresses):
+        raise ValueError("all-PC target-write trace does not cover $1000D9-$1000DB")
     fetch_rows = parse_follow_rows(follow_path)
-    report = classify(fetch_rows, reads, writes)
+    report = classify(fetch_rows, reads, writes, target_writes)
     if report["observed_unique_physical_bytes"] != report["expected_unique_physical_bytes"]:
         raise ValueError("follow trace does not cover all 18 physical RAM-loop bytes")
     if not report["loop_fetch_rows"]:
@@ -228,6 +261,7 @@ def main() -> int:
             root / "trace.log.system-card-code-follow",
             root / "trace.log.indirect-jump-follow",
             root / "trace.log.system-card-dispatch",
+            root / "trace.log.cd-ram-target-write",
             root / "trace.log.cd-data-port-read",
             root / "trace.log.cd-ram-writer-pc",
             args.track02,
@@ -237,7 +271,7 @@ def main() -> int:
         return 1
     for key, value in report.items():
         print(f"{key}={value}")
-    print("LIMIT: $EA9C is a bounded writer-PC trace; these candidate joins do not prove exclusive RAM provenance or gameplay handoff")
+    print("LIMIT: all-PC target writes cover $1000D9-$1000DB only; the other loop bytes use the $EA9C-only trace; CD read matches are candidates and do not prove exclusive provenance or gameplay handoff")
     return 0
 
 

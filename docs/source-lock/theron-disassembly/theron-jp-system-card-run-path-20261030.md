@@ -637,38 +637,49 @@ The authentic v11 trace also captures 165 instruction-fetch snapshots whose
 valid bytes overlap logical `$40D2-$40E3`, mapped to physical `$1000D2-$1000E3`.
 `verify_theron_jp_ram_loop_source_candidates.py` first validates the complete
 indexed-dispatch/code-follow sidecars, authenticates all source-valid CD reads
-against the Japanese Rev. 1 Track 02 image, validates the `$EA9C` writer rows,
-then compares each fetched byte with the latest earlier write recorded for its
-physical address. For matching values it checks whether a source-valid
-`$EA99` read of the same value occurred in the prior 16 shared events, using
-the candidate window from the existing writer verifier.
+against the Japanese Rev. 1 Track 02 image, validates the all-PC target-write
+rows and `$EA9C` writer rows, then compares each fetched byte with the latest
+earlier address-scoped write. For `$EA9C` writes, it checks whether a source-
+valid `$EA99` read of the same value occurred in the prior 16 shared events,
+using the candidate window from the existing writer verifier.
 
 Three repeated runs against the private TRV2 capture reported the same
 classification:
 
 - All 18 physical addresses were observed in 495 valid byte slots over 165
   fetch rows.
-- 491 byte slots matched the latest earlier `$EA9C` writer-PC record; four
-  differed, and no byte lacked a prior `$EA9C` record.
-- All 491 matches had an ordered, same-value source-valid `$EA99` Track 02
-  read within 16 shared events. The nearest candidate was one event earlier
-  for 386 slots and two events earlier for 105. There was one same-value
-  candidate for 416 slots and more than one for 75, yielding 611 candidate
-  read matches across the repeated fetch slots.
-- 163 fetch rows had all their in-range bytes joined to matching writer and
-  read candidates.
+- All 495 byte slots matched the latest address-scoped writer record, with no
+  missing writes or byte mismatches. The all-PC target-write trace covers
+  `$1000D9-$1000DB`; the other 15 bytes use the `$EA9C`-only writer trace.
+- 95 slots matched non-`$EA9C` writers at `$1000D9-$1000DB`. The other 400
+  matched `$EA9C` writes and had same-value, source-valid `$EA99` Track 02 read
+  candidates within 16 shared events. There were 390 unique and 10 ambiguous
+  candidates across those fetch slots.
+- All 165 fetch rows matched their address-scoped latest writes; 111 rows had
+  all in-range bytes joined to CD-read candidates.
 
-The tool reports observations and does not promote mismatches or missing joins
-into success claims. Repeated values can leave multiple reads as candidates.
-`$EA9C` is only one observed guest writer PC; other writes can be absent from
-the sidecar. This does not establish exclusive RAM provenance, game ownership,
-gameplay handoff, or parity. Raw captures and original media remain private on
-TRV2.
+The all-PC trace resolves the earlier `$EA9C`-only mismatches at `$1000D9-$1000DB`.
+In the same follow window, the fetched bytes at `$6109` are `A9 EA` (`LDA #$EA`),
+then `$610B/$610E/$6111` fetch `8D D9 40`, `8D DA 40`, and `8D DB 40`, which
+decode as stores to `$40D9`, `$40DA`, and `$40DB`. The target-write trace records
+these stores at shared events 103466, 103469, and 103472, all writing `$EA`
+through MPR2=`$80` to physical `$1000D9-$1000DB`. `$6114` fetches `RTS` and
+execution returns to `$432B`. This confirms the observed runtime writes and
+control flow; it does not establish the routine's owner or connect it to
+gameplay.
+
+The all-PC target-write trace covers only three of the 18 addresses; the
+`$EA9C` writer trace is not exhaustive for the other 15. Candidate read matches
+use the same 16-event window as the existing writer verifier, and repeated
+values can leave multiple reads as candidates. This does not establish
+exclusive RAM provenance, game ownership, gameplay handoff, or parity. Raw
+captures and original media remain private on TRV2.
 
 The additional trace hashes are:
 
 - Indexed-jump dispatch trace: `94ab5079cd00b290fcb0668731d0314005a6eb77977d6629af2efe0d10e638d3`.
 - System Card dispatch trace: `accfaa21d89efa1567731ad07ac8d41aabef50058e3505f40d2a48a79887afdf`.
+- All-PC CD-RAM target-write trace: `819c48b493c75194f9e356c85a156718994091aa24c15f61ec1d1f775e51425d`.
 
 The code-follow, bounded-follow, CD read, and `$EA9C` writer hashes are the
 v11 values recorded above.

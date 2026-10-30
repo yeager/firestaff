@@ -5,19 +5,28 @@
 Added `verify_theron_jp_ram_loop_source_candidates.py` and a focused regression
 for the bounded `$40D2-$40E3` instruction window. The verifier validates the
 authentic Japanese Rev. 1 Track 02 bytes and the dispatch/follow trace structure,
-then compares each loop fetch byte with the latest prior `$EA9C` writer-PC
-record and its ordered `$EA99` read candidate within 16 shared events. Three
-repeated runs against the cold v11 capture consistently observed all 18
-physical bytes across 165 fetch rows: 491/495 byte slots matched the latest
-traced write, and all 491 had a same-value source-valid read candidate. The
-nearest read was one event earlier for 386 slots and two events earlier for
-105; 416 slots had one candidate and 75 had multiple candidates. Four bytes
-differed from the latest traced write. The test passed three local loops.
+then compares each loop fetch byte with the latest address-scoped write: it
+uses the all-PC target-write trace at `$1000D9-$1000DB` and the `$EA9C` writer
+trace elsewhere, with ordered `$EA99` read candidates within 16 shared events
+for `$EA9C` writes. Three repeated runs against the cold v11 capture observed
+all 18
+physical bytes across 165 fetch rows: all 495 byte slots matched the latest
+address-scoped writer record. The all-PC target-write trace covers
+`$1000D9-$1000DB`; the other 15 bytes use the `$EA9C` trace. Ninety-five slots
+matched non-`$EA9C` writes, while the other 400 matched `$EA9C` writes and had
+a source-valid `$EA99` read candidate within 16 events. Those 400 slots had
+390 unique and 10 ambiguous read candidates. All 165 rows matched their
+address-scoped writer, and 111 rows were fully joined to CD-read candidates.
+The follow trace also decodes `$6109` as `LDA #$EA`, followed by stores to
+`$40D9-$40DB` at `$610B/$610E/$6111` and a return at `$6114`. The all-PC trace
+records the resulting writes; their caller ownership is still unknown. The
+test passed three local loops.
 
 This is bounded provenance analysis, not proof of exclusive memory ownership:
-the writer sidecar records `$EA9C` only. The capture still has no game-owned
-poll or gameplay transition, so native Theron handoff and parity remain open in
-`TODO-theron.md`.
+the all-PC trace covers only three addresses, and the `$EA9C` sidecar is not an
+exhaustive writer census for the other 15. The capture still has no game-owned
+poll or gameplay transition, so native Theron handoff and parity remain open
+in `TODO-theron.md`.
 
 ## 2026-10-30 — validate bounded indexed-dispatch follow traces
 

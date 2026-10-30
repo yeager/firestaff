@@ -30,17 +30,22 @@ hashes are recorded in the
 
 2026-10-30 v11 RAM-loop source-candidate analysis: the bounded fetch trace
 contains 165 snapshots and covers all 18 physical bytes at `$1000D2-$1000E3`.
-Across 495 observed byte slots, 491 match the latest prior `$EA9C` writer-PC
-record, and all 491 have an ordered source-valid `$EA99` read of the same value
-within the existing 16-event candidate window. The nearest read is one event
-earlier for 386 byte slots and two events earlier for 105; 416 slots have one
-candidate and 75 have multiple same-value candidates. Four bytes differ from
-the latest recorded `$EA9C` write. The writer trace is not an all-PC
-memory-write trace, so these counts are bounded candidates, not exclusive
-provenance. Keep following the 18-byte loop through complete writers and its
-caller until a game-owned consumer and input/state transition are demonstrated.
-The offline candidate verifier repeats these exact counts in three TRV2 runs;
-details and trace hashes are in the source-lock note.
+Across 495 observed byte slots, all match the latest address-scoped writer
+record, using the all-PC trace for `$1000D9-$1000DB` and the `$EA9C` trace for
+the other 15 bytes. Ninety-five slots use non-`$EA9C` writes; 400 match an
+`$EA9C` write and have a source-valid `$EA99` read candidate within 16 events.
+Those 400 slots have 390 unique and 10 ambiguous read candidates; 165 fetch
+rows match their address-scoped latest writes, and 111 rows are fully joined
+to CD-read candidates. The `$EA9C` trace remains incomplete for the other 15
+addresses, so these counts are bounded candidates, not exclusive provenance.
+In the same v11 window, code at `$6109` executes `LDA #$EA`, then stores `$EA`
+to `$40D9-$40DB` from `$610B/$610E/$6111` before returning. The all-PC trace
+records those writes; this explains the observed NOP writes but does not
+identify the caller as game-owned.
+Keep following the 18-byte loop through complete writers and its caller until
+a game-owned consumer and input/state transition are demonstrated. The offline
+candidate verifier repeats these exact counts in three TRV2 runs; details and
+trace hashes are in the source-lock note.
 
 1. **Bind the cold loader to game-owned consumers in both regions.** Continue
    from the authentic System Card Run path and the verified Track 02 byte
