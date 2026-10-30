@@ -1,10 +1,11 @@
 # Five-game startup support gap analysis
 
 Evidence metadata refreshed on 2026-10-30 for `main` at
-`bde413fc7e860b23f9570c539f0f7849422d31b0`. The latest published release
-remains v3.0.420 (published 2026-10-29 from tag commit `8224d5c8`); current
-`main` contains later source changes that are not in that package. The v3.0.420
-workflow verifies packaging, not gameplay startup. The
+`f7da133d973e5b98c436a7775dc5e1273c5bced7`. The latest published release is
+v3.0.421 (published 2026-10-30 from tag commit
+`6e4b9a5a86fb12624305be0e1d91d256d0b64141`); current `main` contains three
+later test-only commits that are not in that package. The v3.0.421 workflow
+verifies packaging, not gameplay startup. The
 route records below are individually dated and establish only the named
 checks, not every edition or complete game parity. Real-media Swedish
 startup-debug localization checks cover DM1 PC34,
@@ -58,6 +59,14 @@ Japanese Configuration row. The shared background/full-screen menu composition
 is still unbound. The New Game path reaches the authenticated level loader and
 emits the retail level-1 start receipt, but the viewport/HUD handoff remains
 fail-closed.
+On 2026-10-30, an authentic Japanese retail cold boot captured VDP1 frame
+8037 with two complete VDP2 passes whose output matches the same-run Ymir
+frontend screenshot pixel-for-pixel after 2× downscaling. The capture proves
+the emulator's own output path only. Firestaff's capture-only replay still
+rejects the observed NBG0-only register state and lacks CLUT/CRAM provenance
+for 2,990 palette/special pixels; the production title gate remains closed.
+See [the Nexus title capture record](nexus/nexus_title.md#2026-10-30--authentic-japanese-title-frame-capture).
+
 Continue/save loading and Configuration destination behavior also remain
 open, so Firestaff has not entered a Nexus playable level. Replaying the English
 screenshot from its captured frame is pixel-exact. Its complete VDP1 command

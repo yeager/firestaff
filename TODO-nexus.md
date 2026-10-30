@@ -4,6 +4,21 @@ Reviewed 2026-10-29. The items below track open work and include completed
 diagnostics as context. Verified evidence is also recorded in the Nexus capture
 and reverse-engineering records and in [DONE-nexus.md](DONE-nexus.md).
 
+## 2026-10-30 — Japanese title capture follow-up
+
+Authentic TRV2/Ymir VDP1 frame 8037 now has two complete VDP2 pass buffers
+that agree pixel-for-pixel with the same-run frontend screenshot after 2×
+downscaling. The image contains the retail title and three menu choices. This
+is emulator-internal capture validation, not Firestaff or hardware parity.
+The Firestaff capture-only replay still rejects the observed `BGON=0x0001` and
+`CCRR=0x1000`, and 2,990 VDP1 palette/special pixels lack a complete
+per-command CLUT/CRAM provenance join. Next, extend only the capture-only
+replay to accept this observed NBG0-only state and resolve those pixels from
+authentic source data; require exact screenshot comparison. Keep the
+production title gate closed until the complete composition and producer
+ownership are verified. Evidence details are in
+[`docs/nexus/nexus_title.md`](docs/nexus/nexus_title.md#2026-10-30--authentic-japanese-title-frame-capture).
+
 The Japanese and English retail Configuration foregrounds now render from
 hash-verified `TITLE.BIN` files and share byte-identical UI text/palette spans.
 Japanese-region keyboard/mouse state routing is covered by the M11 runtime

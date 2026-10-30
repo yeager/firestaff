@@ -647,3 +647,28 @@ renderer output is checked against authentic Ymir `--debug` captures by
 Only the foreground and menu input behavior are established. The page's 3D/DGN
 background, settings persistence and actual audio/difficulty/HUD effects are
 not yet bound; Japanese page parity and full startup composition remain open.
+
+### 2026-10-30 — Authentic Japanese title-frame capture
+
+An authentic Japanese retail cold boot on TRV2 captured VDP1 frame 8037 with
+two complete VDP2 passes (serials 9118 and 9119). Each pass sampled all 224
+rows once, had NBG0 enabled on every row, and produced the same 320×224 RGBX
+buffer (SHA-256
+`0a37fe5d4c31821001f0b6973e8c768150df3a35429b581ebd8131fa34802602`). The
+same-run 640×448 frontend screenshot is an exact 2× nearest-neighbor match to
+both buffers across all 71,680 pixels. The image shows the retail Nexus title
+and its three menu choices. This verifies Ymir's capture against its own
+frontend output; it is not a Firestaff or hardware parity result.
+
+Firestaff's capture-only replay diagnostic rejected this authentic state
+before writing an image: `BGON=0x0001` enables NBG0 alone while the narrow gate
+requires `0x0003`, and `CCRR=0x1000` differs from the gate's `0x1010`. The VDP1
+frame contains 99,410 direct-color pixels, 94,208 transparent pixels, and
+2,990 palette/special pixels. The replay path still lacks a complete
+per-pixel CLUT/CRAM provenance join for those palette/special pixels. Keep the
+production title gate closed. Next, support this observed register state in
+the capture-only diagnostic and resolve every palette/special pixel from
+authentic command and palette data; require an exact comparison to this
+same-run screenshot before considering any production consumer. Evidence is
+retained outside the repository under
+`firestaff-evidence/nexus/ymir_nbg0_frame_serial_diagnostic_20261030/`.
