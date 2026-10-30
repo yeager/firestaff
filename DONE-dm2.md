@@ -1,3 +1,10 @@
+- 2026-10-30: Added an authentic-media M12 pointer regression for selecting
+  DM2 Amiga while the deferred startup scan is running. The first platform
+  click is recorded as safely deferred in `--debug`; after scan publication,
+  retrying the same card reaches the original Amiga launch handoff. The test
+  verifies the source archive is unchanged. This verifies a bounded menu
+  route, not automatic click resumption or complete DM2 parity.
+
 - 2026-10-29: The authentic DM2 FM Towns no-game menu regression now waits for
   the runtime's title-finished receipt before sending New Game clicks. A fixed
   main-loop-frame delay was host-speed-dependent and intermittently delivered

@@ -1,3 +1,10 @@
+- 2026-10-30: Added an authentic-media M12 pointer regression for selecting
+  DM1 PC34 while the deferred startup scan is running. The first platform
+  click is recorded as safely deferred in `--debug`; after scan publication,
+  retrying the same card reaches the original PC34 launch handoff. The test
+  verifies the source archive is unchanged. This verifies a bounded menu
+  route, not automatic click resumption or complete DM1 parity.
+
 - 2026-10-29: Fixed a DM1 Atari ST preservation-archive receipt mismatch. The
   launcher selected the authentic ST 1.1 member from the original multi-edition
   7z, but the shared required-file rows still described the earlier ST 1.0

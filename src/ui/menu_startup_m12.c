@@ -2213,6 +2213,12 @@ static void m12_show_missing_game_data_file_popup(M12_StartupMenuState* state,
     if ((state->deferredScanPending || state->deferredScanActive) &&
         !(state->deferredScanCompletedGameMask &
           m12_deferred_game_bit(gameId))) {
+        if (state->debugStartup) {
+            fprintf(stderr,
+                    "firestaff: launch gate game=%s result=deferred reason=startup-scan-incomplete completed-mask=0x%08x\n",
+                    gameId ? gameId : "(none)",
+                    state->deferredScanCompletedGameMask);
+        }
         return;
     }
     gameIndex = m12_entry_index_for_game_id(state, gameId);

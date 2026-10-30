@@ -284,6 +284,14 @@ if(BUILD_TESTING)
         ENVIRONMENT "FIRESTAFF_PICKER_PRIORITY_POINTER_ONLY=1;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
         LABELS "m12;dm1;csb;dm2;main-menu;game-selection;pointer;platform-selection;presentation;real-media;skip-safe")
 
+    add_test(NAME m12_main_menu_priority_scan_early_selection_real_media
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_game_selection_real_media.sh"
+            "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")
+    set_tests_properties(m12_main_menu_priority_scan_early_selection_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 TIMEOUT 600
+        ENVIRONMENT "FIRESTAFF_PICKER_PRIORITY_SCAN_EARLY_ONLY=1;SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        LABELS "m12;dm1;csb;dm2;main-menu;game-selection;pointer;platform-selection;scan;real-media;skip-safe")
+
     add_test(NAME m12_main_menu_runtime_real_media
         COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_main_menu_runtime_real_media.sh"
             "$<TARGET_FILE:firestaff>" "${FIRESTAFF_WORKSPACE_DATA_DIR}")

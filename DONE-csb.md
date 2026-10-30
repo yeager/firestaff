@@ -1,3 +1,10 @@
+- 2026-10-30: Added an authentic-media M12 pointer regression for selecting
+  CSB Atari ST v2.1 while the deferred startup scan is running. The first
+  platform click is recorded as safely deferred in `--debug`; after scan
+  publication, retrying the same card reaches the original Atari ST launch
+  handoff. The test verifies the source archive is unchanged. This verifies a
+  bounded menu route, not automatic click resumption or complete CSB parity.
+
 - 2026-10-30: The authentic CSB Amiga 3.5 menu test now covers both keyboard
   and pointer selection. Its pointer session clicks the CSB cover, the Amiga
   platform card, and Custom, cycles the rendered version tile to the matched

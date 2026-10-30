@@ -36,18 +36,21 @@ if [[ ! -x "$app" ]]; then
     exit 77
 fi
 if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 &&
+      ${FIRESTAFF_PICKER_PRIORITY_SCAN_EARLY_ONLY:-0} != 1 &&
       ${FIRESTAFF_PICKER_PRIORITY_POINTER_ONLY:-0} != 1 &&
       ( ! -f "$dm1_archive" || ! -f "$csb_archive" || ! -f "$dm2_archive" ) ]]; then
     echo 'SKIP: authentic DM1, CSB and DM2 FM Towns archives are required'
     exit 77
 fi
 if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 &&
+      ${FIRESTAFF_PICKER_PRIORITY_SCAN_EARLY_ONLY:-0} != 1 &&
       ${FIRESTAFF_PICKER_PRIORITY_POINTER_ONLY:-0} != 1 &&
       ( ( ! -f "$nexus_dm" && ! -f "$nexus_cue" ) || ! -f "$theron_track" ) ]]; then
     echo 'SKIP: authentic Nexus DM.BIN or Japanese CUE/BIN media and Theron TQUS02.bin are required for the five-game selector test'
     exit 77
 fi
 if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 &&
+      ${FIRESTAFF_PICKER_PRIORITY_SCAN_EARLY_ONLY:-0} != 1 &&
       ${FIRESTAFF_PICKER_PRIORITY_POINTER_ONLY:-0} != 1 &&
       ! -f "$nexus_dm" ]] && ! has_authentic_nexus_cue; then
     echo 'SKIP: authentic Japanese Nexus CUE payloads are incomplete'
@@ -294,6 +297,7 @@ run_alternate_platform_picker_case() {
 alternate_platform_cases=0
 
 if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 &&
+      ${FIRESTAFF_PICKER_PRIORITY_SCAN_EARLY_ONLY:-0} != 1 &&
       ${FIRESTAFF_PICKER_PRIORITY_POINTER_ONLY:-0} != 1 ]]; then
     run_game_picker_case dm1 "$dm1_archive" \
         'wait-scan-complete,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en
@@ -326,6 +330,45 @@ if [[ ${FIRESTAFF_PICKER_PRIORITY_POINTER_ONLY:-0} == 1 ]]; then
     run_game_picker_case dm2 "$dm2_amiga_archive" \
         'wait-scan-complete,wait20,click:1680:262,wait20,click:1458:405,wait20,click:450:405' \
         amiga-en mouse Amiga "$archive_data_root" dm2-amiga-pointer resolved
+    exit 0
+fi
+
+# Exercise early pointer selection while the authentic game-data scan is
+# still running. The first platform click must be safely deferred, and a
+# retry after publication must complete the same Original-presentation route.
+if [[ ${FIRESTAFF_PICKER_PRIORITY_SCAN_EARLY_ONLY:-0} == 1 ]]; then
+    dm1_pc_archive="$archive_data_root/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+    csb_atari_archive="$archive_data_root/csb/chaos_strikes_back_ftl.zip"
+    dm2_amiga_archive="$archive_data_root/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip"
+    if [[ ! -f "$dm1_pc_archive" || ! -f "$csb_atari_archive" ||
+          ! -f "$dm2_amiga_archive" ]]; then
+        echo 'SKIP: authentic DM1 PC, CSB Atari ST, and DM2 Amiga archives are required for priority scan-time selection'
+        exit 77
+    fi
+    run_early_scan_case() {
+        local game_id=$1 archive=$2 navigation=$3 edition=$4 platform=$5 case_id=$6
+        run_game_picker_case "$game_id" "$archive" "$navigation" "$edition" \
+            mouse "$platform" "$archive_data_root" "$case_id" resolved
+        local log="$scratch/$case_id.log"
+        local gate_line scan_line
+        gate_line=$(grep -n -F "launch gate game=$game_id result=deferred reason=startup-scan-incomplete" "$log" | head -n1 | cut -d: -f1 || true)
+        scan_line=$(grep -n -F 'firestaff: scan complete' "$log" | head -n1 | cut -d: -f1 || true)
+        if [[ -z "$gate_line" || -z "$scan_line" || "$gate_line" -ge "$scan_line" ]]; then
+            printf 'FAIL: %s pointer route did not record an early scan gate before scan completion\n' "$game_id" >&2
+            cat "$log" >&2
+            return 1
+        fi
+        printf 'PASS: %s early platform selection was safely gated during scan and succeeded after retry\n' "$game_id"
+    }
+    run_early_scan_case dm1 "$dm1_pc_archive" \
+        'click:700:262,click:934:405,wait-scan-complete,wait20,click:934:405,wait20,click:450:405' \
+        pc34-en PC dm1-pc-scan-early
+    run_early_scan_case csb "$csb_atari_archive" \
+        'click:1190:262,click:1458:405,wait-scan-complete,wait20,click:1458:405,wait20,click:450:405' \
+        st20-21-en 'Atari ST' csb-atari-scan-early
+    run_early_scan_case dm2 "$dm2_amiga_archive" \
+        'click:1680:262,click:1458:405,wait-scan-complete,wait20,click:1458:405,wait20,click:450:405' \
+        amiga-en Amiga dm2-amiga-scan-early
     exit 0
 fi
 
