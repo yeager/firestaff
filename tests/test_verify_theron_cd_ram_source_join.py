@@ -95,6 +95,17 @@ class CDToRAMSourceJoinTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "verified movement row"):
             self.join(movement)
 
+    def test_rejects_same_movement_store_with_different_value(self) -> None:
+        self.writes[0]["event_sequence"] = "42"
+        movement = [{
+            "event_sequence": "41",
+            "physical_address": "0d04d2",
+            "value": "00",
+            "pc": "ea9c",
+        }]
+        with self.assertRaisesRegex(ValueError, "verified movement row"):
+            self.join(movement)
+
     def test_verify_reads_and_forwards_paired_movement_context_trace(self) -> None:
         scratch_root = Path(__file__).resolve().parents[1] / ".codex-scratch"
         scratch_root.mkdir(exist_ok=True)
