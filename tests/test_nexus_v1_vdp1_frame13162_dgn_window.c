@@ -63,6 +63,26 @@ static int manifest_has(const Blob *manifest, const char *relative,
     return 0;
 }
 
+static int write_rgba_capture(const char *path,
+    const Nexus_V1_Vdp1RgbaCaptureFramebuffer *framebuffer)
+{
+    FILE *file;
+    size_t pixel;
+    if (!path || !*path || !framebuffer) return 0;
+    file = fopen(path, "wb");
+    if (!file) return 0;
+    for (pixel = 0U; pixel < NEXUS_FB_W * NEXUS_FB_H; ++pixel) {
+        uint32_t argb = framebuffer->rgba_buffer[pixel];
+        uint8_t rgba[4] = {(uint8_t)(argb >> 16U), (uint8_t)(argb >> 8U),
+            (uint8_t)argb, (uint8_t)(argb >> 24U)};
+        if (fwrite(rgba, 1U, sizeof(rgba), file) != sizeof(rgba)) {
+            fclose(file);
+            return 0;
+        }
+    }
+    return fclose(file) == 0;
+}
+
 static int execution_receipt_contains_window(const Blob *receipt)
 {
     const char *cursor = strstr((const char *)receipt->data,
@@ -107,6 +127,19 @@ static int verify_window(const Blob *trace, const Blob *vram,
     Nexus_V1_Vdp1DgnMaterialResolverInput resolver_input;
     Nexus_V1_Vdp1DirectColorFramebuffer direct_framebuffer;
     Nexus_V1_Vdp1DirectColorCaptureReceipt direct_receipt;
+    Nexus_V1_Vdp1CaptureCompositeInput rgba_commands[
+        LAST_COMMAND - FIRST_COMMAND + 1U];
+    uint8_t rgba_command_bytes[
+        LAST_COMMAND - FIRST_COMMAND + 1U][COMMAND_BYTES];
+    uint32_t rgba_trace_indices[LAST_COMMAND - FIRST_COMMAND + 1U];
+    int rgba_origin_x[LAST_COMMAND - FIRST_COMMAND + 1U];
+    int rgba_origin_y[LAST_COMMAND - FIRST_COMMAND + 1U];
+    uint8_t rgba_origin_verified[
+        LAST_COMMAND - FIRST_COMMAND + 1U];
+    Nexus_V1_Vdp1RgbaCaptureFramebuffer *rgba_framebuffer = NULL;
+    Nexus_V1_Vdp1RgbaCaptureSequenceInput rgba_sequence_input;
+    Nexus_V1_Vdp1RgbaCaptureSequenceReceipt rgba_sequence_receipt;
+    unsigned int rgba_command_count = 0U;
     unsigned int mode1_joined = 0U, mode5_joined = 0U;
     unsigned int mode5_empty_decoded = 0U;
     unsigned int mode1_seen = 0U, mode5_seen = 0U;
@@ -172,6 +205,49 @@ static int verify_window(const Blob *trace, const Blob *vram,
                 !material.dgn_image || !material.dgn_palette ||
                 material.dgn_image_size != (int)parsed.texture_byte_count ||
                 material.dgn_palette_size != 32) { ok = 0; break; }
+            if (rgba_command_count >=
+                    LAST_COMMAND - FIRST_COMMAND + 1U) { ok = 0; break; }
+            {
+                uint32_t palette_offset =
+                    (((uint32_t)parsed.colour_control & ~UINT32_C(3)) << 3U);
+                Nexus_V1_Vdp1CaptureCompositeInput *rgba_command =
+                    &rgba_commands[rgba_command_count];
+                if (palette_offset > vram->size - 32U) { ok = 0; break; }
+                memcpy(rgba_command_bytes[rgba_command_count], command,
+                       COMMAND_BYTES);
+                *rgba_command = material;
+                rgba_command->command =
+                    rgba_command_bytes[rgba_command_count];
+                rgba_command->command_size = COMMAND_BYTES;
+                rgba_command->texture_span = vram->data +
+                    parsed.texture_source_byte_offset;
+                rgba_command->texture_span_size =
+                    (int)parsed.texture_byte_count;
+                rgba_command->palette_state = vram->data + palette_offset;
+                rgba_command->palette_state_size = 32;
+                rgba_command->original_saturn_capture_verified = 1;
+                rgba_command->screen_origin_x =
+                    (int)strtol(fields[20], NULL, 0);
+                rgba_command->screen_origin_y =
+                    (int)strtol(fields[21], NULL, 0);
+                rgba_command->system_clip_state_verified = 1;
+                rgba_command->system_clip_x = 320;
+                rgba_command->system_clip_y = 224;
+                if ((parsed.draw_mode & UINT16_C(0x0400)) != 0U) {
+                    rgba_command->user_clip_state_verified = 1;
+                    rgba_command->user_clip_x0 = 0;
+                    rgba_command->user_clip_y0 = 0;
+                    rgba_command->user_clip_x1 = 320;
+                    rgba_command->user_clip_y1 = 224;
+                }
+                rgba_trace_indices[rgba_command_count] = (uint32_t)index;
+                rgba_origin_x[rgba_command_count] =
+                    rgba_command->screen_origin_x;
+                rgba_origin_y[rgba_command_count] =
+                    rgba_command->screen_origin_y;
+                rgba_origin_verified[rgba_command_count] = 1U;
+                ++rgba_command_count;
+            }
             ++mode1_joined;
         } else {
             int exact_dgn_join = index != 8U && index != 9U;
@@ -232,6 +308,68 @@ static int verify_window(const Blob *trace, const Blob *vram,
     for (size_t i = 0U; i < sizeof(found); ++i)
     if (!found[i]) ok = 0;
     if (mode5_empty_decoded != 8U) ok = 0;
+    if (ok && mode1_joined > 0U) {
+        rgba_framebuffer = (Nexus_V1_Vdp1RgbaCaptureFramebuffer *)
+            calloc(1U, sizeof(*rgba_framebuffer));
+        memset(&rgba_sequence_input, 0, sizeof(rgba_sequence_input));
+        memset(&rgba_sequence_receipt, 0, sizeof(rgba_sequence_receipt));
+        if (!rgba_framebuffer || rgba_command_count != mode1_joined) {
+            ok = 0;
+        } else {
+            rgba_sequence_input.commands = rgba_commands;
+            rgba_sequence_input.command_trace_indices = rgba_trace_indices;
+            rgba_sequence_input.command_origin_x = rgba_origin_x;
+            rgba_sequence_input.command_origin_y = rgba_origin_y;
+            rgba_sequence_input.command_origin_verified =
+                rgba_origin_verified;
+            rgba_sequence_input.command_count = (int)rgba_command_count;
+            rgba_sequence_input.trace_draw_command_count =
+                LAST_COMMAND - FIRST_COMMAND + 1U;
+            rgba_sequence_input.trace_row_count = 174;
+            rgba_sequence_input.trace_complete_verified = 1;
+            rgba_sequence_input.command_order_verified = 1;
+            rgba_sequence_input.local_coordinate_state_verified = 1;
+            rgba_sequence_input.end_record_verified = 1;
+            rgba_sequence_input.system_clip_state_verified = 1;
+            rgba_sequence_input.system_clip_x = 320;
+            rgba_sequence_input.system_clip_y = 224;
+            ok = nexus_v1_vdp1_capture_composite_mode1_rgba_sequence(
+                rgba_framebuffer, &rgba_sequence_input,
+                &rgba_sequence_receipt) && rgba_sequence_receipt.valid &&
+                rgba_sequence_receipt.capture_only &&
+                rgba_sequence_receipt.command_order_verified &&
+                rgba_sequence_receipt.trace_complete_verified &&
+                rgba_sequence_receipt.end_record_verified &&
+                rgba_sequence_receipt.local_coordinate_state_verified &&
+                rgba_sequence_receipt.system_clip_state_verified &&
+                rgba_sequence_receipt.command_count == (int)rgba_command_count &&
+                rgba_sequence_receipt.source_joins_verified ==
+                    (int)rgba_command_count &&
+                rgba_sequence_receipt.palette_joins_verified ==
+                    (int)rgba_command_count &&
+                rgba_sequence_receipt.capture_gap_commands ==
+                    (int)(LAST_COMMAND - FIRST_COMMAND + 1U - rgba_command_count) &&
+                rgba_sequence_receipt.gouraud_commands_unrendered ==
+                    (int)rgba_command_count &&
+                rgba_sequence_receipt.user_clip_commands_verified ==
+                    (int)rgba_command_count &&
+                !rgba_sequence_receipt.renderer_permitted;
+            if (ok) {
+                const char *rgba_output = getenv(
+                    "FIRESTAFF_NEXUS_FRAME13162_MODE1_RGBA_OUT");
+                if (rgba_output && *rgba_output &&
+                    !write_rgba_capture(rgba_output, rgba_framebuffer))
+                    ok = 0;
+                if (ok) printf("RGBA CAPTURE: mode1=%u gaps=%d "
+                    "gouraud_unrendered=%d pixels_written=%d "
+                    "renderer_permitted=false\n", rgba_command_count,
+                    rgba_sequence_receipt.capture_gap_commands,
+                    rgba_sequence_receipt.gouraud_commands_unrendered,
+                    rgba_sequence_receipt.written_pixels);
+            }
+        }
+        free(rgba_framebuffer);
+    }
     *out_mode1 = mode1_joined;
     *out_mode5 = mode5_joined;
     return ok && mode1_seen == mode1_joined &&
@@ -365,8 +503,8 @@ int main(int argc, char **argv)
         {"./vdp1-command-execution-frame13162.json", "2417d30d651f385ef384881d3b14524576069c22ac1f2fe53f71f9938e3355b4"},
         {"./vdp1-vram-command-trace-reconstructed-le.bin", "90b85d0358c7605c8186828d2e42ab46412f504f12c40348197a46db8f770913"}
     };
-    if (argc != 3) {
-        fprintf(stderr, "usage: %s <frame-13162-capture-root> <LEV00.DGN>\n", argv[0]);
+    if (argc != 4) {
+        fprintf(stderr, "usage: %s <frame-13162-capture-root> <LEV00.DGN> <frame-trace.csv>\n", argv[0]);
         return 2;
     }
     root = argv[1];
@@ -376,7 +514,12 @@ int main(int argc, char **argv)
         if (!var.data) { fprintf(stderr, "SKIP: missing local Ymir evidence %s\n", path); result = 77; goto done; } \
     } while (0)
     LOAD(manifest, "SHA256SUMS.txt");
-    LOAD(trace, "dumps/vdp1-command-trace.csv");
+    trace = read_blob(argv[3]);
+    if (!trace.data || !blob_hash_is(&trace,
+            "aa0cd750413a4c6618f91bbeb5953703c65cbc5d8481499135167f858421aebb")) {
+        fprintf(stderr, "frame-13162 trace fixture missing or hash mismatch\n");
+        goto done;
+    }
     LOAD(vram, "vdp1-vram-command-trace-reconstructed-le.bin");
     LOAD(execution, "vdp1-command-execution-frame13162.json");
     LOAD(composition_rgb, "vdp12-frame13162-command171.rgb");
@@ -394,8 +537,8 @@ int main(int argc, char **argv)
         goto done;
     }
     for (size_t i = 0U; i < sizeof(inputs) / sizeof(inputs[0]); ++i) {
-        Blob *blob = i == 0U ? &trace : (i == 1U ? &execution : &vram);
-        if (!blob_hash_is(blob, inputs[i].sha) ||
+        Blob *blob = i == 0U ? NULL : (i == 1U ? &execution : &vram);
+        if ((blob && !blob_hash_is(blob, inputs[i].sha)) ||
             !manifest_has(&manifest, inputs[i].name, inputs[i].sha)) {
             fprintf(stderr, "capture manifest/hash mismatch: %s\n", inputs[i].name);
             goto done;

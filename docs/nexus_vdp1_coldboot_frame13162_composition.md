@@ -27,6 +27,25 @@ rows marked skipped are rejected even if their command words are present in
 the captured VRAM. The selected commands must also pass the hash-checked
 frame execution receipt.
 
+## Partial mode-1 command replay
+
+The capture-only VDP1 RGBA sequence also replays the source-bound mode-1
+distorted sprites from authentic trace rows 8–40. It resolves each command's
+own joined palette before drawing the next command, preserving the different
+CLUTs in the RGBA output. The real-data test verifies 25 exact DGN image and
+palette joins, 9,088 written pixels, and 8 command gaps in this trace window.
+The eight mode-5 draws are separately verified as transparent capture data;
+they are not rendered by this sequence.
+
+All 25 replayed commands enable Gouraud shading. The current capture decoder
+does not apply Gouraud shading, which the receipt counts explicitly. This
+replay therefore checks authentic command order, origins, clipping state,
+source spans, per-command palettes, and pixel writes; it has not passed an
+image comparison against Ymir and does not establish frame parity. Its
+`renderer_permitted` value remains false. The tested 174-row authentic trace
+slice is retained in `tests/fixtures/nexus_v1_vdp1_frame13162_trace.csv`; the
+full raw Ymir trace remains in the external capture archive.
+
 ## Reproduction
 
 Build the real-data evidence folder following its `README.md`, then run:

@@ -45281,7 +45281,8 @@ endif()
 add_test(NAME nexus_v1_vdp1_frame13162_dgn_window
     COMMAND test_nexus_v1_vdp1_frame13162_dgn_window
         ${CMAKE_CURRENT_SOURCE_DIR}/parity-evidence/verification/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030
-        ${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/LEV00.DGN)
+        ${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/LEV00.DGN
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/nexus_v1_vdp1_frame13162_trace.csv)
 set_tests_properties(nexus_v1_vdp1_frame13162_dgn_window PROPERTIES
     SKIP_RETURN_CODE 77
     LABELS "nexus;saturn;vdp1;dgn;frame13162;real-data;skip-safe")

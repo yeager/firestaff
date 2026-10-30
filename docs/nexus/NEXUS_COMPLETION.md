@@ -38,6 +38,14 @@ remain unverified. See the linked capture-specific evidence notes in
 `docs/nexus_vdp1_coldboot_frame13162_composition.md`, and
 `docs/nexus_ymir_vdp_priority_composition.md`.
 
+The frame-13162 VDP1 capture lane now also replays 25 source-bound mode-1
+distorted sprites from authentic trace rows 8–40 into an RGBA surface, with
+8 mode-5 draws recorded as gaps. Each mode-1 command uses its own exact
+Structure2 image and CLUT joins. All 25 enable Gouraud shading, which is not
+yet applied; this output is not pixel-parity evidence and remains
+capture-only. The source-join, palette, command-order, origin, and clip checks
+do not change Nexus production readiness.
+
 ## Japanese date/time setup VDP2 trace — 2026-10-24
 
 Ymir `--debug` captures from a session configured with the hash-verified

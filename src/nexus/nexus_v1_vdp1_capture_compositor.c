@@ -371,6 +371,9 @@ static int composite_triangle(Nexus_Framebuffer *fb,
                               int palette_base,
                               int system_clip_state_verified,
                               int system_clip_x, int system_clip_y,
+                              int user_clip_state_verified,
+                              int user_clip_x0, int user_clip_y0,
+                              int user_clip_x1, int user_clip_y1,
                               uint16_t draw_mode, int *written,
                               int *transparent, int *end_code,
                               const uint16_t end_after[256])
@@ -422,6 +425,18 @@ static int composite_triangle(Nexus_Framebuffer *fb,
             if (w0 < 0.0f || w1 < 0.0f || w2 < 0.0f) continue;
             if (system_clip_state_verified &&
                 (x > system_clip_x || y > system_clip_y)) continue;
+            if ((draw_mode & UINT16_C(0x0400)) != 0U) {
+                int inside_user_clip;
+                if (user_clip_state_verified) {
+                    inside_user_clip = x >= user_clip_x0 &&
+                        x <= user_clip_x1 && y >= user_clip_y0 &&
+                        y <= user_clip_y1;
+                    if (((draw_mode & UINT16_C(0x0200)) == 0U &&
+                         !inside_user_clip) ||
+                        ((draw_mode & UINT16_C(0x0200)) != 0U &&
+                         inside_user_clip)) continue;
+                }
+            }
             u = w0 * quad_u(ia) + w1 * quad_u(ib) + w2 * quad_u(ic);
             v = w0 * quad_v(ia) + w1 * quad_v(ib) + w2 * quad_v(ic);
             tx = (int)(u * (float)width);
@@ -492,6 +507,10 @@ int nexus_v1_vdp1_capture_composite_mode1(
         input->screen_origin_x < 0 || input->screen_origin_x >= NEXUS_FB_W ||
         input->screen_origin_y < 0 || input->screen_origin_y >= NEXUS_FB_H ||
         input->palette_slot_base < 0 || input->palette_slot_base > 240 ||
+        (input->user_clip_state_verified &&
+         (input->user_clip_x0 < 0 || input->user_clip_y0 < 0 ||
+          input->user_clip_x1 < input->user_clip_x0 ||
+          input->user_clip_y1 < input->user_clip_y0)) ||
         (!input->transparent_capture_noop_verified &&
          (!input->dgn_source_hash_verified && !item_source)) ||
         (item_source && input->dgn_source_hash_verified) ||
@@ -590,13 +609,19 @@ int nexus_v1_vdp1_capture_composite_mode1(
     (void)composite_triangle(working, xy, 0, 1, 2,
         input->texture_span, command.texture_width, command.texture_height,
         input->palette_slot_base, input->system_clip_state_verified,
-        input->system_clip_x, input->system_clip_y, command.draw_mode,
+        input->system_clip_x, input->system_clip_y,
+        input->user_clip_state_verified, input->user_clip_x0,
+        input->user_clip_y0, input->user_clip_x1, input->user_clip_y1,
+        command.draw_mode,
         &receipt.written_pixels, &receipt.transparent_pixels,
         &receipt.end_code_pixels, end_after);
     (void)composite_triangle(working, xy, 0, 2, 3,
         input->texture_span, command.texture_width, command.texture_height,
         input->palette_slot_base, input->system_clip_state_verified,
-        input->system_clip_x, input->system_clip_y, command.draw_mode,
+        input->system_clip_x, input->system_clip_y,
+        input->user_clip_state_verified, input->user_clip_x0,
+        input->user_clip_y0, input->user_clip_x1, input->user_clip_y1,
+        command.draw_mode,
         &receipt.written_pixels, &receipt.transparent_pixels,
         &receipt.end_code_pixels, end_after);
     receipt.valid = receipt.written_pixels > 0 ||
@@ -724,6 +749,134 @@ int nexus_v1_vdp1_capture_composite_mode1_sequence(
         receipt.renderer_permitted = 0;
     *out_receipt = receipt;
     return receipt.valid;
+}
+
+int nexus_v1_vdp1_capture_composite_mode1_rgba_sequence(
+    Nexus_V1_Vdp1RgbaCaptureFramebuffer *framebuffer,
+    const Nexus_V1_Vdp1RgbaCaptureSequenceInput *input,
+    Nexus_V1_Vdp1RgbaCaptureSequenceReceipt *out_receipt)
+{
+    Nexus_V1_Vdp1RgbaCaptureSequenceReceipt receipt;
+    Nexus_V1_Vdp1RgbaCaptureFramebuffer *working = NULL;
+    Nexus_Framebuffer *command_framebuffer = NULL;
+    uint32_t previous_trace_index = 0U;
+    int i;
+    int ok = 0;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.capture_only = 1;
+    if (!out_receipt) return 0;
+    *out_receipt = receipt;
+    if (!framebuffer || !input || !input->commands ||
+        !input->command_trace_indices || !input->command_origin_x ||
+        !input->command_origin_y || !input->command_origin_verified ||
+        input->command_count <= 0 ||
+        input->command_count > NEXUS_V1_VDP1_SEQUENCE_MAX_COMMANDS ||
+        input->trace_draw_command_count < input->command_count ||
+        input->trace_row_count < input->trace_draw_command_count ||
+        input->trace_row_count <= 0 || !input->trace_complete_verified ||
+        !input->command_order_verified ||
+        !input->local_coordinate_state_verified ||
+        !input->end_record_verified || !input->system_clip_state_verified ||
+        input->system_clip_x < 0 || input->system_clip_y < 0) return 0;
+
+    working = (Nexus_V1_Vdp1RgbaCaptureFramebuffer *)malloc(sizeof(*working));
+    command_framebuffer = (Nexus_Framebuffer *)malloc(
+        sizeof(*command_framebuffer));
+    if (!working || !command_framebuffer) goto cleanup;
+    *working = *framebuffer;
+    receipt.command_order_verified = 1;
+    receipt.trace_complete_verified = 1;
+    receipt.end_record_verified = 1;
+    receipt.local_coordinate_state_verified = 1;
+    receipt.system_clip_state_verified = 1;
+    receipt.command_count = input->command_count;
+    receipt.capture_gap_commands = input->trace_draw_command_count -
+        input->command_count;
+
+    for (i = 0; i < input->command_count; ++i) {
+        const Nexus_V1_Vdp1CaptureCompositeInput *provided =
+            &input->commands[i];
+        Nexus_V1_Vdp1CaptureCompositeInput command = *provided;
+        Nexus_V1_Vdp1TextureCommand parsed;
+        Nexus_V1_Vdp1CaptureCompositeReceipt command_receipt;
+        uint32_t trace_index = input->command_trace_indices[i];
+        size_t pixel;
+
+        if (!input->command_origin_verified[i] ||
+            trace_index >= (uint32_t)input->trace_row_count ||
+            (i > 0 && trace_index <= previous_trace_index) ||
+            command.screen_origin_x != input->command_origin_x[i] ||
+            command.screen_origin_y != input->command_origin_y[i] ||
+            !command.system_clip_state_verified ||
+            command.system_clip_x != input->system_clip_x ||
+            command.system_clip_y != input->system_clip_y ||
+            !command.original_saturn_capture_verified ||
+            !command.command || command.command_size !=
+                NEXUS_V1_VDP1_COMMAND_BYTES ||
+            nexus_v1_vdp1_texture_command_parse(command.command,
+                command.command_size, &parsed) != 0 ||
+            !parsed.texture_command || parsed.command_type != 2U ||
+            parsed.colour_mode != 1U ||
+            ((parsed.draw_mode & UINT16_C(0x0400)) != 0U &&
+             (!command.user_clip_state_verified ||
+              command.user_clip_x0 < 0 || command.user_clip_y0 < 0 ||
+              command.user_clip_x1 < command.user_clip_x0 ||
+              command.user_clip_y1 < command.user_clip_y0))) goto cleanup;
+
+        previous_trace_index = trace_index;
+        if ((parsed.draw_mode & UINT16_C(0x0200)) != 0U &&
+            (parsed.draw_mode & UINT16_C(0x0400)) == 0U) goto cleanup;
+        if ((parsed.draw_mode & UINT16_C(0x0400)) != 0U)
+            ++receipt.user_clip_commands_verified;
+        if ((parsed.draw_mode & UINT16_C(0x0004)) != 0U)
+            ++receipt.gouraud_commands_unrendered;
+        /* The per-command palette is resolved immediately after drawing, so
+         * every command can use slot zero without invalidating older pixels. */
+        command.palette_slot_base = 0;
+        command.capture_allow_zero_pixel_command = 1;
+        nexus_fb_init(command_framebuffer);
+        nexus_fb_clear(command_framebuffer);
+        memset(&command_receipt, 0, sizeof(command_receipt));
+        if (!nexus_v1_vdp1_capture_composite_mode1(
+                command_framebuffer, &command, &command_receipt) ||
+            !command_receipt.valid || !command_receipt.source_join_verified ||
+            !command_receipt.palette_join_verified) {
+            receipt.source_joins_verified +=
+                command_receipt.source_join_verified;
+            receipt.palette_joins_verified +=
+                command_receipt.palette_join_verified;
+            receipt.transparent_pixels += command_receipt.transparent_pixels;
+            goto cleanup;
+        }
+        receipt.source_joins_verified += command_receipt.source_join_verified;
+        receipt.palette_joins_verified += command_receipt.palette_join_verified;
+        receipt.written_pixels += command_receipt.written_pixels;
+        receipt.transparent_pixels += command_receipt.transparent_pixels;
+        for (pixel = 0U; pixel < NEXUS_FB_W * NEXUS_FB_H; ++pixel) {
+            uint8_t palette_index = command_framebuffer->color_buffer[pixel];
+            if (command_framebuffer->z_buffer[pixel] != 1e30f) {
+                working->rgba_buffer[pixel] =
+                    command_framebuffer->palette[palette_index];
+            }
+        }
+    }
+    if (receipt.source_joins_verified != input->command_count ||
+        receipt.palette_joins_verified != input->command_count) goto cleanup;
+    receipt.valid = 1;
+    receipt.renderer_permitted = 0;
+    *framebuffer = *working;
+    ok = 1;
+
+cleanup:
+    free(command_framebuffer);
+    free(working);
+    if (!ok) {
+        receipt.valid = 0;
+        receipt.renderer_permitted = 0;
+    }
+    *out_receipt = receipt;
+    return ok;
 }
 
 int nexus_v1_vdp1_capture_replay_vram_sequence(
