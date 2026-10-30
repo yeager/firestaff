@@ -93,12 +93,14 @@ python3 scripts/verify_nexus_capture_rgb_screenshot.py \
   --manifest-root "$PWD/parity-evidence/verification/nexus_v1_ymir_coldboot_title_span_visible_capture_20261030"
 ```
 
-All six authentic mode-5 draws (rows 13, 14, 28, 29, 33, and 34) are replayed
-through Firestaff's direct-colour capture decoder after their exact
-`LEV00.DGN` source joins are verified. Each 1,024-word source consists entirely
-of `0x000f`; the decoder reports valid commands with zero opaque writes,
-matching Ymir's bit-15 transparency rule. The compositor unit test separately
-checks bit-15 transparency and the independent ECD and TPD controls.
+All eight authentic mode-5 draws (rows 8, 9, 13, 14, 28, 29, 33, and 34) are
+replayed through Firestaff's direct-colour capture decoder. Rows 13, 14, 28,
+29, 33, and 34 have exact `LEV00.DGN` source joins. Rows 8 and 9 use the same
+captured all-`0x000f` texture bytes, but their retail-fill source ownership is
+ambiguous; those two are decoded from the hash-attested Saturn capture without
+claiming a DGN source join. Every draw reports zero opaque writes, matching
+Ymir's bit-15 transparency rule. The compositor unit test separately checks
+bit-15 transparency and the independent ECD and TPD controls.
 
 Pinned local capture inputs (the VRAM and trace files are generated evidence
 and must be kept outside the Git history):
@@ -125,10 +127,10 @@ ctest --test-dir build -R '^nexus_v1_vdp1_frame13162_dgn_window$' --output-on-fa
 
 The focused check verifies source joins, executed-command membership, the
 captured user-clip/local-coordinate state, and the hash of the retained
-FBS+NBG0+row-171 composition reference. It does not rasterize rows 10–40 or
+FBS+NBG0+row-171 composition reference. It does not rasterize rows 8–40 or
 compare their output pixels to the screenshot. A rasterization experiment
 failed that comparison; therefore these DGN draws are not admitted to a parity
-renderer. The six mode-5 empty masks verify the captured direct-colour
+renderer. The eight mode-5 empty masks verify the captured direct-colour
 transparency behavior, not full geometry or scene parity. Gouraud table data
 is attested, but the compositor does not yet apply Ymir's per-pixel Gouraud
 interpolation. Exact polygon coverage, command-to-face ownership, and overlap

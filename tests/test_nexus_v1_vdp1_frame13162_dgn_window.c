@@ -7,7 +7,7 @@
 #include <string.h>
 
 #define FRAME_INDEX 13162U
-#define FIRST_COMMAND 10U
+#define FIRST_COMMAND 8U
 #define LAST_COMMAND 40U
 #define VDP1_VRAM_BYTES 0x80000U
 #define COMMAND_BYTES 32U
@@ -174,13 +174,21 @@ static int verify_window(const Blob *trace, const Blob *vram,
                 material.dgn_palette_size != 32) { ok = 0; break; }
             ++mode1_joined;
         } else {
-            if (!resolved || !material.dgn_direct_source_hash_verified ||
-                !material.dgn_direct_image ||
-                material.dgn_direct_image_size != (int)parsed.texture_byte_count) {
+            int exact_dgn_join = index != 8U && index != 9U;
+            if (exact_dgn_join &&
+                (!resolved || !material.dgn_direct_source_hash_verified ||
+                 !material.dgn_direct_image ||
+                 material.dgn_direct_image_size !=
+                    (int)parsed.texture_byte_count)) {
                 ok = 0; break;
             }
-            if (index == 13U || index == 14U || index == 28U ||
-                index == 29U || index == 33U || index == 34U) {
+            if (index == 8U || index == 9U || index == 13U ||
+                index == 14U || index == 28U || index == 29U ||
+                index == 33U || index == 34U) {
+                /* Rows 8 and 9 have authentic captured bytes but an
+                 * ambiguous retail-fill source match. Decode them from the
+                 * attested Saturn capture only; do not claim DGN ownership. */
+                if (!exact_dgn_join) memset(&material, 0, sizeof(material));
                 material.command = command;
                 material.command_size = COMMAND_BYTES;
                 material.texture_span = vram->data +
@@ -203,7 +211,10 @@ static int verify_window(const Blob *trace, const Blob *vram,
                 if (!ok || !nexus_v1_vdp1_capture_decode_direct_color(
                         &direct_framebuffer, &material, &direct_receipt) ||
                     !direct_receipt.valid ||
-                    !direct_receipt.source_join_verified ||
+                    (exact_dgn_join &&
+                     !direct_receipt.source_join_verified) ||
+                    (!exact_dgn_join &&
+                     direct_receipt.source_join_verified) ||
                     direct_receipt.written_pixels != 0 ||
                     direct_receipt.transparent_pixels == 0) {
                     fprintf(stderr, "frame-13162 mode-5 row %lu must decode "
@@ -213,20 +224,21 @@ static int verify_window(const Blob *trace, const Blob *vram,
                 }
                 ++mode5_empty_decoded;
             }
-            ++mode5_joined;
+            if (index != 8U && index != 9U) ++mode5_joined;
         }
         found[i] = 1;
     }
     free(copy);
     for (size_t i = 0U; i < sizeof(found); ++i)
     if (!found[i]) ok = 0;
-    if (mode5_empty_decoded != 6U) ok = 0;
+    if (mode5_empty_decoded != 8U) ok = 0;
     *out_mode1 = mode1_joined;
     *out_mode5 = mode5_joined;
-    return ok && mode1_seen == mode1_joined && mode5_seen == mode5_joined;
+    return ok && mode1_seen == mode1_joined &&
+           mode5_seen == mode5_joined + 2U;
 }
 
-/* Resolve the state at the start of rows 10..40 against Ymir's VDP1 rules.
+/* Resolve the state at the start of rows 8..40 against Ymir's VDP1 rules.
  * The active inclusive user rectangle is [0,0]..[320,224]; all target draws
  * enable inside clipping, so every pixel in the captured 320x224 viewport is
  * accepted by user clipping. */
