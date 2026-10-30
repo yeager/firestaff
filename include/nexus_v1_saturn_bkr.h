@@ -32,6 +32,14 @@ typedef struct {
     uint32_t payload_bytes;
 } Nexus_V1_SaturnBkrReceipt;
 
+typedef struct {
+    int valid;
+    uint16_t level;
+    uint16_t heading;
+    uint16_t x;
+    uint16_t y;
+} Nexus_V1_SaturnBkrLoaderTupleReceipt;
+
 /* Bounded receipt for the retail DMNEXUS__01 payload. Champion records stay
  * opaque apart from fields supported by retail decompilation and authentic
  * payload/WorkRAM captures. */
@@ -58,6 +66,10 @@ typedef struct {
     uint32_t champion_record_stride;
     uint32_t champion_records_bytes;
     uint32_t declared_payload_span;
+    /* Retail Continue copies the two payload dwords at +0x10/+0x14 into an
+     * eight-byte loader tuple. This receipt preserves those decoded halves;
+     * it does not apply them to the Firestaff engine. */
+    Nexus_V1_SaturnBkrLoaderTupleReceipt loader_tuple;
 } Nexus_V1_SaturnBkrNexusPayloadReceipt;
 
 /* Receipt for one explicitly selected card file. This only validates the
