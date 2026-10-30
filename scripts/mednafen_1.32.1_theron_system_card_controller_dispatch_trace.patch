@@ -1,6 +1,6 @@
 --- a/src/pce_fast/huc6280.cpp
 +++ b/src/pce_fast/huc6280.cpp
-@@ -1536,3 +1536,154 @@
+@@ -1536,3 +1536,222 @@
    TheronTraceInstructionPC = GetRealPC();
    TheronTraceInstructionPhysicalPC = (HuCPU.MPR[TheronTraceInstructionPC >> 13] << 13) | (TheronTraceInstructionPC & 0x1FFF);
 + {
@@ -20,6 +20,22 @@
 +    }
 +   }
 +  }
++ static FILE *code_follow_trace = NULL;
++ static bool code_follow_attempted = false;
++ if(!code_follow_attempted)
++ {
++  const char *path = getenv("FIRESTAFF_THERON_SYSTEM_CARD_CODE_FOLLOW_TRACE");
++  code_follow_attempted = true;
++  if(path && *path)
++  {
++   code_follow_trace = fopen(path, "w");
++   if(code_follow_trace)
++   {
++    fprintf(code_follow_trace, "source=mednafen-pce-fast-system-card-code-follow-v1 start_pc=6148 limit=256 terminal=next-instruction-fetch event_sequence_source=TheronTraceCDSharedEventSequence\n");
++    fflush(code_follow_trace);
++   }
++  }
++ }
 +  if(trace && (TheronTraceInstructionPC == 0xE4E1 || TheronTraceInstructionPC == 0xE4FB))
 +  {
 +   const unsigned int y = HU_Y;
@@ -43,6 +59,52 @@
 +      fflush(trace);
 +     }
 +    }
++   }
++  }
++  if(code_follow_trace)
++  {
++   static unsigned int follow_armed = 0;
++   static unsigned int follow_complete = 0;
++   static unsigned int follow_count = 0;
++   const unsigned int pc = TheronTraceInstructionPC;
++   if(!follow_armed && pc == 0x6148)
++    follow_armed = 1;
++   if(follow_armed && !follow_complete && follow_count == 256)
++   {
++    extern uint32 TheronTraceCDSharedEventSequence;
++    fprintf(code_follow_trace, "code_follow_complete event_sequence=%u count=%u\n",
++            TheronTraceCDSharedEventSequence++, follow_count);
++    fflush(code_follow_trace);
++    follow_complete = 1;
++   }
++   if(follow_armed && !follow_complete)
++   {
++    extern uint32 TheronTraceCDSharedEventSequence;
++    uint8 opcode_bytes[3] = {0, 0, 0};
++    uint32 physical_bytes[3] = {0, 0, 0};
++    unsigned int valid_mask = 0;
++    unsigned int i;
++    for(i = 0; i < 3; i++)
++    {
++     const uint16 logical = (uint16)(pc + i);
++     const unsigned int slot = (logical >> 13) & 7;
++     const uintptr_t mapping = HuCPU.FastPageR[slot];
++     if(mapping)
++     {
++      opcode_bytes[i] = *(const uint8 *)(mapping + logical);
++      physical_bytes[i] = ((uint32)HuCPU.MPR[slot] << 13) | (logical & 0x1FFF);
++      valid_mask |= 1U << i;
++     }
++    }
++    const unsigned int event_sequence = TheronTraceCDSharedEventSequence++;
++    fprintf(code_follow_trace, "code_follow event_sequence=%u index=%u logical_pc=%04x physical_pc=%06x bytes=%02x%02x%02x physical_bytes=%06x,%06x,%06x valid_mask=%x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x\n",
++            event_sequence, follow_count, pc, TheronTraceInstructionPhysicalPC,
++            opcode_bytes[0], opcode_bytes[1], opcode_bytes[2],
++            physical_bytes[0], physical_bytes[1], physical_bytes[2], valid_mask,
++            HuCPU.MPR[0], HuCPU.MPR[1], HuCPU.MPR[2], HuCPU.MPR[3],
++            HuCPU.MPR[4], HuCPU.MPR[5], HuCPU.MPR[6], HuCPU.MPR[7]);
++    follow_count++;
++    fflush(code_follow_trace);
 +   }
 +  }
 +  if(trace)

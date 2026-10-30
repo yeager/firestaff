@@ -1739,19 +1739,34 @@ if ! grep -Fq 'code_fetch_scope=targeted-consumer-boundaries' "$system_card_disp
    ! grep -Fq 'code_fetch_truncated event_sequence=%u window=40d9,42ab,42b2,44c1,44d2 cap=262144' "$system_card_dispatch_patch" ||
    ! grep -Fq 'code_fetch_truncated event_sequence=%u window=6138-6148 cap=262144' "$system_card_dispatch_patch" ||
    ! grep -Fq 'source=mednafen-pce-fast-system-card-controller-dispatch-v4 code_fetch_scope=targeted-consumer-boundaries' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_CODE_FOLLOW_TRACE' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'code_follow_complete event_sequence=%u count=%u' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_CODE_FOLLOW_TRACE="$system_card_code_follow_trace"' "$script" ||
+   ! grep -Fq 'system_card_code_follow_trace="${trace}.system-card-code-follow"' "$script" ||
+   ! grep -Fq 'verify_theron_jp_code_follow_trace.py' "$script" ||
+   ! grep -Fq 'pce_fast_system_card_code_follow_status=%s' "$script" ||
+   ! grep -Fq '[[ "$capture_mednafen_module" == pce_fast ]] &&' "$script" ||
+   ! grep -Fq "FIRESTAFF_THERON_SYSTEM_CARD_CODE_FOLLOW_TRACE' \"\$binary\"" "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_SYSTEM_CARD_CODE_FOLLOW_TRACE' "$repo/scripts/instrument_mednafen_theron_system_card_dispatch_trace.py" ||
+   ! grep -Fq 'source=mednafen-pce-fast-system-card-code-follow-v1' "$repo/scripts/verify_theron_jp_code_follow_trace.py" ||
+   ! grep -Fq 'start_pc=6148 limit=256 terminal=next-instruction-fetch' "$repo/scripts/verify_theron_jp_code_follow_trace.py" ||
    ! grep -Fq '!code_fetch_truncation_marker_emitted' "$system_card_dispatch_patch" ||
    ! grep -Fq '!extended_code_fetch_truncation_marker_emitted' "$system_card_dispatch_patch" ||
    ! grep -Fq 'line.startswith("code_fetch_extended ")' "$repo/scripts/verify_theron_jp_cd_ram_writer_pc_trace.py" ||
    ! grep -Fq 'line.startswith("code_fetch_truncated ")' "$repo/scripts/verify_theron_jp_cd_ram_writer_pc_trace.py" ||
    ! grep -Fq 'line.startswith("code_fetch_extended ")' "$repo/scripts/verify_theron_jp_fetch_target_writes.py" ||
    ! grep -Fq 'line.startswith("code_fetch_truncated ")' "$repo/scripts/verify_theron_jp_fetch_target_writes.py"; then
-    printf '%s\n' 'FAIL: bounded target System Card code fetches must be traced and physically validated' >&2
+    printf '%s\n' 'FAIL: bounded System Card code fetches and the 6148 instruction follow must be traced and physically validated' >&2
     exit 1
 fi
 if ! grep -Fq 'pce_fast_tia_trace_enabled=${THERON_CAPTURE_PCE_FAST_TIA_TRACE:-0}' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_TIA_TRACE="$pce_fast_tia_trace"' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_TIA_TRACE_LIMIT="$pce_fast_tia_trace_limit"' "$script" ||
-   ! grep -Fq 'target_pc_range=4600-46ff' "$script" ||
+   ! grep -Fq 'source=mednafen-pce-fast-theron-tia-byte-trace-v2 event_sequence_source=TheronTraceCDSharedEventSequence target_pc_range=4600-46ff' "$script" ||
+   ! grep -Fq 'TheronTIAZeroPageAccess("read", 0x2000 | tmp,' "$repo/scripts/mednafen_1.32.1_theron_pce_fast_tia_zero_page_trace.patch" ||
+   ! grep -Fq 'access=%s space=zp instruction_pc=%04x' "$repo/scripts/mednafen_1.32.1_theron_pce_fast_tia_zero_page_trace.patch" ||
+   ! grep -Fq 'logical != 0x2002 && logical != 0x2003' "$repo/scripts/mednafen_1.32.1_theron_pce_fast_tia_zero_page_trace.patch" ||
+   ! grep -Fq 'if slot != 1' "$repo/scripts/verify_theron_tia_transfer_trace.py" ||
    ! grep -Fq "grep -Eq '^tia(_zero_page)?_truncated '" "$script" ||
    ! grep -Fq "grep -aFq 'tia_start event_sequence='" "$script"; then
     printf '%s\n' 'FAIL: optional TIA byte tracing must require its hook, validate its bounded trace, and record it' >&2

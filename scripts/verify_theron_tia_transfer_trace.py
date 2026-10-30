@@ -11,6 +11,7 @@ from pathlib import Path
 HEX_FIELDS = {
     "instruction_pc", "physical_pc", "logical", "mpr", "physical",
     "bmt_src", "bmt_dest", "bmt_length", "source", "destination",
+    "zero_page_offset",
     "encoded_length", "source_mpr", "source_physical",
     "destination_mpr", "destination_physical", "value",
     "mpr0", "mpr1", "mpr2", "mpr3", "mpr4", "mpr5", "mpr6", "mpr7",
@@ -58,15 +59,20 @@ def main() -> int:
     try:
         lines = args.trace.read_text(encoding="utf-8").splitlines()
         expected_header = (
-            "source=mednafen-pce-fast-theron-tia-byte-trace-v1 "
+            "source=mednafen-pce-fast-theron-tia-byte-trace-v2 "
             "event_sequence_source=TheronTraceCDSharedEventSequence "
             "target_pc_range=4600-46ff"
         )
-        legacy_header = (
+        legacy_headers = {
             "source=mednafen-pce-fast-theron-tia-byte-trace-v1 "
-            "event_sequence_source=TheronTraceCDSharedEventSequence target_pc=468c"
-        )
-        if not lines or lines[0] not in {expected_header, legacy_header}:
+            "event_sequence_source=TheronTraceCDSharedEventSequence "
+            "target_pc_range=4600-46ff",
+            "source=mednafen-pce-fast-theron-tia-byte-trace-v1 "
+            "event_sequence_source=TheronTraceCDSharedEventSequence target_pc=468c",
+        }
+        if not lines or (
+            lines[0] != expected_header and lines[0] not in legacy_headers
+        ):
             raise ValueError("unexpected or missing TIA trace header")
         has_zero_page = lines[0] == expected_header
 
@@ -97,17 +103,21 @@ def main() -> int:
             if kind == "tia_zero_page_access":
                 if not has_zero_page:
                     raise ValueError(f"line {line_number}: zero-page record uses legacy header")
+                if record.get("space") != "zp":
+                    raise ValueError(f"line {line_number}: zero-page record lacks space=zp")
                 if not 0x4600 <= pc <= 0x46FF:
                     raise ValueError(f"line {line_number}: zero-page access outside PC range")
                 logical = bounded(record, "logical", 0xFFFF)
-                if logical not in {0x0002, 0x0003}:
-                    raise ValueError(f"line {line_number}: unexpected logical address")
+                if logical not in {0x2002, 0x2003}:
+                    raise ValueError(f"line {line_number}: unexpected MPR1 logical address")
+                if bounded(record, "zero_page_offset", 0xFF) != (logical & 0xFF):
+                    raise ValueError(f"line {line_number}: zero-page offset mismatch")
                 if record.get("access") not in {"read", "write"}:
                     raise ValueError(f"line {line_number}: invalid access kind")
                 slot = bounded(record, "mpr_slot", 7)
                 mpr = bounded(record, "mpr", 0xFF)
                 physical = bounded(record, "physical", 0x1FFFFF)
-                if slot != 0 or physical != (mpr << 13) | (logical & 0x1FFF):
+                if slot != 1 or physical != (mpr << 13) | (logical & 0x1FFF):
                     raise ValueError(f"line {line_number}: zero-page MPR mapping mismatch")
                 bounded(record, "value", 0xFF)
                 if bounded(record, "row", 0xFFFFFFFF) != expected_zero_page_row:
@@ -200,7 +210,7 @@ def main() -> int:
                     raise ValueError(f"move {move} row {index}: destination mapping mismatch")
 
         if has_zero_page:
-            required_reads = {(0x466F, 0x0002), (0x4674, 0x0003)}
+            required_reads = {(0x466F, 0x2002), (0x4674, 0x2003)}
             observed_reads = {
                 (bounded(row, "instruction_pc", 0xFFFF), bounded(row, "logical", 0xFFFF))
                 for row in zero_page

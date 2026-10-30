@@ -24,6 +24,9 @@ assets, mechanics, or parity.
    explicit code-fetch overflow markers show that both current windows exceed
    their caps; narrow or rotate the traced windows before using another bounded
    capture for source or consumer conclusions.
+   The v5 cold capture now completes a bounded 256-instruction follow from
+   `$6148` and restores validated TIA zero-page mapping through MPR1. It still
+   has no game IRQ, authenticated CD-to-RAM receipt, or non-System-Card poll.
 2. **Verify quest progression and original-format save transactions.** Bind
    authentic quest artifacts and their pickup, exit, chapter transition, and
    completion consumers. Keep the campaign-completion bit distinct from
@@ -868,6 +871,16 @@ assets, mechanics, or parity.
   spans, zero CD IRQ callbacks, and zero authenticated CD-to-RAM receipts.
   Gameplay transition and native parity remain open.
 
+- Follow-up review found that the v1 zero-page observer recorded direct
+  `HU_Page1` offsets `$02/$03` as logical `$0002/$0003` and derived MPR slot 0.
+  `HU_Page1` is the MPR1 window, so those rows do not prove the physical
+  addresses previously reported. The historical row counts and instruction
+  PCs remain observations, but discard the v1 zero-page MPR/physical mappings
+  and the old zero-page verifier pass. The independent `tia_byte` mappings
+  above are unaffected. The v2 observer now records `$2002/$2003`, an explicit
+  zero-page offset, and derives the physical address from MPR1; a new authentic
+  capture is still required to restore that evidence.
+
 ## 2026-10-30 — trace TIA byte transfers at `$468C`
 
 - Added a bounded, reference-only PCE Fast observer for the authentic `TIA` instruction at `$468C`. It records decoded source, destination, encoded length, each read value and write address, MPR mappings, and shared event sequence numbers.
@@ -876,9 +889,34 @@ assets, mechanics, or parity.
 
 ## 2026-10-30 — observe TIA zero-page transfers
 
-- Extended the reference-only PCE Fast trace to record reads and writes of logical $02/$03 while the authentic JP System Card routine executes in $4600-$46FF. The observer covers direct zero-page reads/writes, read-modify-write paths, and indirect pointer bytes in the HuC6280 interpreter.
-- A cold capture with authentic Japanese Rev. 1 Track 02 and System Card 3.0 recorded 32 complete TIA transfers (2,048 byte rows) and 2,240 zero-page rows, including direct operand reads at $466F/$02 and $4674/$03. The combined trace passed the bounded verifier without truncation.
+- The original v1 observer recorded 2,240 reads and writes of offsets $02/$03 while the authentic JP System Card routine executed in $4600-$46FF. Later review found its physical mapping was wrong: direct `HU_Page1` accesses use MPR1, but v1 labeled the offsets as logical $0002/$0003 and selected MPR slot 0. Do not use those v1 rows or their verifier pass as physical-address evidence.
+- The v2 trace encodes the corresponding bus addresses as $2002/$2003, retains the zero-page offsets explicitly, and resolves physical addresses through MPR1. The authentic v5 cold capture below validates this mapping.
 - This remains reference trace evidence, not game-level semantics or native parity. The run has no game IRQ, authenticated CD-to-RAM receipt, game-owned input poll, or transition into gameplay. Continue tracing authentic source bytes through game-owned consumers.
+
+## 2026-10-30 — follow the JP cold Run path into the next 256 instructions
+
+- Added a bounded PCE Fast code-follow sidecar that starts at the authentic
+  System Card fetch of `$6148`, records 256 instruction fetches with bytes and
+  MPR mappings, and emits completion only when the next instruction-fetch
+  hook confirms execution advanced beyond the 256th row.
+- On authentic Japanese Rev. 1 media and System Card 3.0, the cold
+  `run@480:300` capture produced 256 rows and the terminal completion record.
+  `verify_theron_jp_code_follow_trace.py` reported `status=complete rows=256`.
+  The same run produced 32 complete TIA transfers (2,048 byte rows) and 128
+  v2 zero-page rows; the TIA verifier passed and confirmed the corrected MPR1
+  mapping. In particular, direct `$02/$03` accesses carry the explicit
+  `space=zp` tag, are represented in the `$2002/$2003` window, and use
+  `mpr_slot=1` with MPR1=`$F8`.
+- Scripted input was consumed only by the System Card poll (`$E4C5`); there
+  were no non-System-Card polls. The transition receipt reports zero CD IRQ
+  callbacks, zero authenticated CD-to-RAM receipts, and no gameplay transition.
+  This is reference-only cold-loader evidence and does not establish a native
+  handoff or gameplay parity.
+- Raw capture files remain private on TRV2 under
+  `/home/trv2/firestaff-theron-evidence/capture/theron-jp-code-follow-v6-cold-20261030/`.
+  Trace SHA-256: code-follow `32dc1fde9e78dd6f3c21a61a5a7f5117d80fb2393f1bab26ec2643773048e1d4`,
+  TIA `98d75b1f9ef1771a42d8fb661be0f19b8ecb24b9a77b5349df887cbae1bcefe7`,
+  and transition receipt `5e53a6a9243d2556fba3414b7dc48cd6286a70b5446a849b87c750a493e94bc0`.
 
 - A targeted v3 PCE Fast capture now records cold code fetches at `$40D9` and
   `$6138/$613A/$613D/$613F/$6142/$6144` without a code-fetch overflow marker.

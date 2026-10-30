@@ -1,10 +1,11 @@
 --- a/src/pce_fast/huc6280.cpp
 +++ b/src/pce_fast/huc6280.cpp
-@@ -586,11 +586,17 @@
+@@ -586,11 +586,18 @@
          (pc >= 0xD2B0 && pc <= 0xD2FF) ||
          (pc >= 0xD515 && pc <= 0xD5A6);
  }
 +/* Reference-only $02/$03 trace follows RdMem/WrMem in src/pce_fast/huc6280.cpp:145/161.
++ * SET_MPR at :123 binds HU_Page1 to MPR1; its logical address is $2000 | offset.
 + * GetIND/GetIX/GetIY at :393/:405/:417 read pointer bytes from HU_Page1 directly. */
 +extern uint32 TheronTraceCDSharedEventSequence;
 +static void TheronTIAZeroPageAccess(const char *access, unsigned int logical, uint8 value);
@@ -31,10 +32,10 @@
   tmp=RdAtPC();			\
   IncPC();			\
 - target=HU_Page1[tmp];		\
-+ target=HU_Page1[tmp]; TheronTIAZeroPageAccess("read", tmp, (uint8)target);		\
++ target=HU_Page1[tmp]; TheronTIAZeroPageAccess("read", 0x2000 | tmp, (uint8)target);		\
   tmp++;				\
 - target|=HU_Page1[tmp]<<8;       	\
-+ { uint8 value=HU_Page1[tmp]; TheronTIAZeroPageAccess("read", tmp, value); target|=value<<8; }       	\
++ { uint8 value=HU_Page1[tmp]; TheronTIAZeroPageAccess("read", 0x2000 | tmp, value); target|=value<<8; }       	\
  }
 
 
@@ -43,10 +44,10 @@
   IncPC();			\
   tmp+=HU_X;			\
 - target=HU_Page1[tmp];		\
-+ target=HU_Page1[tmp]; TheronTIAZeroPageAccess("read", tmp, (uint8)target);		\
++ target=HU_Page1[tmp]; TheronTIAZeroPageAccess("read", 0x2000 | tmp, (uint8)target);		\
   tmp++;				\
 - target|=HU_Page1[tmp] <<8;	\
-+ { uint8 value=HU_Page1[tmp]; TheronTIAZeroPageAccess("read", tmp, value); target|=value<<8; }	\
++ { uint8 value=HU_Page1[tmp]; TheronTIAZeroPageAccess("read", 0x2000 | tmp, value); target|=value<<8; }	\
  }
 
  /* Indirect Indexed(for reads) */
@@ -55,10 +56,10 @@
   uint8 tmp;		\
   tmp=RdAtPC();		\
 - rt=HU_Page1[tmp];	\
-+ rt=HU_Page1[tmp]; TheronTIAZeroPageAccess("read", tmp, (uint8)rt);	\
++ rt=HU_Page1[tmp]; TheronTIAZeroPageAccess("read", 0x2000 | tmp, (uint8)rt);	\
   tmp++;			\
 - rt|=HU_Page1[tmp]<<8;	\
-+ { uint8 value=HU_Page1[tmp]; TheronTIAZeroPageAccess("read", tmp, value); rt|=value<<8; }	\
++ { uint8 value=HU_Page1[tmp]; TheronTIAZeroPageAccess("read", 0x2000 | tmp, value); rt|=value<<8; }	\
   target = (rt + HU_Y);	\
   IncPC();		\
  }
@@ -68,16 +69,16 @@
  #define RMW_IY(op)  { unsigned int EA; uint8 x; GetIY(EA); x=RdMem(EA); op; WrMem(EA,x); break; }
 -#define RMW_ZP(op)  { uint8 EA; uint8 x; GetZP(EA); x=HU_Page1[EA]; uint8 old=x; op; if(HuCPU.MPR[1] == 0xF8) TheronTraceDirectMainRAMWrite(EA, old, x); HU_Page1[EA] = x; break; }
 -#define RMW_ZPX(op) { uint8 EA; uint8 x; GetZPI(EA,HU_X); x=HU_Page1[EA]; uint8 old=x; op; if(HuCPU.MPR[1] == 0xF8) TheronTraceDirectMainRAMWrite(EA, old, x); HU_Page1[EA] = x; break;}
-+#define RMW_ZP(op)  { uint8 EA; uint8 x; GetZP(EA); x=HU_Page1[EA]; TheronTIAZeroPageAccess("read", EA, x); uint8 old=x; op; if(HuCPU.MPR[1] == 0xF8) TheronTraceDirectMainRAMWrite(EA, old, x); HU_Page1[EA] = x; TheronTIAZeroPageAccess("write", EA, x); break; }
-+#define RMW_ZPX(op) { uint8 EA; uint8 x; GetZPI(EA,HU_X); x=HU_Page1[EA]; TheronTIAZeroPageAccess("read", EA, x); uint8 old=x; op; if(HuCPU.MPR[1] == 0xF8) TheronTraceDirectMainRAMWrite(EA, old, x); HU_Page1[EA] = x; TheronTIAZeroPageAccess("write", EA, x); break;}
++#define RMW_ZP(op)  { uint8 EA; uint8 x; GetZP(EA); x=HU_Page1[EA]; TheronTIAZeroPageAccess("read", 0x2000 | EA, x); uint8 old=x; op; if(HuCPU.MPR[1] == 0xF8) TheronTraceDirectMainRAMWrite(EA, old, x); HU_Page1[EA] = x; TheronTIAZeroPageAccess("write", 0x2000 | EA, x); break; }
++#define RMW_ZPX(op) { uint8 EA; uint8 x; GetZPI(EA,HU_X); x=HU_Page1[EA]; TheronTIAZeroPageAccess("read", 0x2000 | EA, x); uint8 old=x; op; if(HuCPU.MPR[1] == 0xF8) TheronTraceDirectMainRAMWrite(EA, old, x); HU_Page1[EA] = x; TheronTIAZeroPageAccess("write", 0x2000 | EA, x); break;}
 
  #define LD_IM(op)	{ uint8 x; x=RdAtPC(); IncPC(); op; break; }
 -#define LD_ZP(op)	{ uint8 EA; uint8 x; GetZP(EA); x=HU_Page1[EA]; op; break; }
 -#define LD_ZPX(op) 	{ uint8 EA; uint8 x; GetZPI(EA,HU_X); x=HU_Page1[EA]; op; break; }
 -#define LD_ZPY(op)  	{ uint8 EA; uint8 x; GetZPI(EA,HU_Y); x=HU_Page1[EA]; op; break; }
-+#define LD_ZP(op)	{ uint8 EA; uint8 x; GetZP(EA); x=HU_Page1[EA]; TheronTIAZeroPageAccess("read", EA, x); op; break; }
-+#define LD_ZPX(op) 	{ uint8 EA; uint8 x; GetZPI(EA,HU_X); x=HU_Page1[EA]; TheronTIAZeroPageAccess("read", EA, x); op; break; }
-+#define LD_ZPY(op)  	{ uint8 EA; uint8 x; GetZPI(EA,HU_Y); x=HU_Page1[EA]; TheronTIAZeroPageAccess("read", EA, x); op; break; }
++#define LD_ZP(op)	{ uint8 EA; uint8 x; GetZP(EA); x=HU_Page1[EA]; TheronTIAZeroPageAccess("read", 0x2000 | EA, x); op; break; }
++#define LD_ZPX(op) 	{ uint8 EA; uint8 x; GetZPI(EA,HU_X); x=HU_Page1[EA]; TheronTIAZeroPageAccess("read", 0x2000 | EA, x); op; break; }
++#define LD_ZPY(op)  	{ uint8 EA; uint8 x; GetZPI(EA,HU_Y); x=HU_Page1[EA]; TheronTIAZeroPageAccess("read", 0x2000 | EA, x); op; break; }
  #define LD_AB(op)	{ unsigned int EA; uint8 x; GetAB(EA); x=RdMem(EA); op; break; }
  #define LD_ABI(reg,op)  { unsigned int EA; uint8 x; GetABI(EA,reg); x=RdMem(EA); op; break; }
  #define LD_ABX(op)	LD_ABI(HU_X,op)
@@ -86,7 +87,7 @@
     {
      fprintf(TheronTIAByteTraceFile,
 -            "source=mednafen-pce-fast-theron-tia-byte-trace-v1 event_sequence_source=TheronTraceCDSharedEventSequence target_pc=468c\n");
-+            "source=mednafen-pce-fast-theron-tia-byte-trace-v1 event_sequence_source=TheronTraceCDSharedEventSequence target_pc_range=4600-46ff\n");
++            "source=mednafen-pce-fast-theron-tia-byte-trace-v2 event_sequence_source=TheronTraceCDSharedEventSequence target_pc_range=4600-46ff\n");
      fflush(TheronTIAByteTraceFile);
     }
    }
@@ -97,7 +98,7 @@
 +{
 + static unsigned count;
 + static bool truncation_reported;
-+ if((logical != 0x0002 && logical != 0x0003) ||
++ if((logical != 0x2002 && logical != 0x2003) ||
 +    TheronTraceInstructionPC < 0x4600 || TheronTraceInstructionPC > 0x46FF)
 +  return;
 + FILE *trace = TheronTIAByteTraceOpen();
@@ -119,9 +120,9 @@
 + const uint32 physical = ((uint32)mpr << 13) | (logical & 0x1FFF);
 + const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
 + fprintf(trace,
-+         "tia_zero_page_access event_sequence=%u row=%u access=%s instruction_pc=%04x logical=%04x mpr_slot=%u mpr=%02x physical=%06x value=%02x block_move=%u bmt_src=%04x bmt_dest=%04x bmt_length=%04x alternate=%u\n",
++         "tia_zero_page_access event_sequence=%u row=%u access=%s space=zp instruction_pc=%04x logical=%04x zero_page_offset=%02x mpr_slot=%u mpr=%02x physical=%06x value=%02x block_move=%u bmt_src=%04x bmt_dest=%04x bmt_length=%04x alternate=%u\n",
 +         event_sequence, count++, access, TheronTraceInstructionPC, logical,
-+         slot, mpr, physical, value, HuCPU.in_block_move, HuCPU.bmt_src,
++         logical & 0xFF, slot, mpr, physical, value, HuCPU.in_block_move, HuCPU.bmt_src,
 +         HuCPU.bmt_dest, HuCPU.bmt_length, HuCPU.bmt_alternate);
 + fflush(trace);
 +}
@@ -135,9 +136,9 @@
 -#define ST_ZP(r)	{uint8 EA; GetZP(EA); if(HuCPU.MPR[1] == 0xF8) TheronTraceDirectMainRAMWrite(EA, HU_Page1[EA], r); HU_Page1[EA] = r; break;}
 -#define ST_ZPX(r)	{uint8 EA; GetZPI(EA,HU_X); if(HuCPU.MPR[1] == 0xF8) TheronTraceDirectMainRAMWrite(EA, HU_Page1[EA], r); HU_Page1[EA] = r; break;}
 -#define ST_ZPY(r)	{uint8 EA; GetZPI(EA,HU_Y); if(HuCPU.MPR[1] == 0xF8) TheronTraceDirectMainRAMWrite(EA, HU_Page1[EA], r); HU_Page1[EA] = r; break;}
-+#define ST_ZP(r)	{uint8 EA; GetZP(EA); if(HuCPU.MPR[1] == 0xF8) TheronTraceDirectMainRAMWrite(EA, HU_Page1[EA], r); HU_Page1[EA] = r; TheronTIAZeroPageAccess("write", EA, HU_Page1[EA]); break;}
-+#define ST_ZPX(r)	{uint8 EA; GetZPI(EA,HU_X); if(HuCPU.MPR[1] == 0xF8) TheronTraceDirectMainRAMWrite(EA, HU_Page1[EA], r); HU_Page1[EA] = r; TheronTIAZeroPageAccess("write", EA, HU_Page1[EA]); break;}
-+#define ST_ZPY(r)	{uint8 EA; GetZPI(EA,HU_Y); if(HuCPU.MPR[1] == 0xF8) TheronTraceDirectMainRAMWrite(EA, HU_Page1[EA], r); HU_Page1[EA] = r; TheronTIAZeroPageAccess("write", EA, HU_Page1[EA]); break;}
++#define ST_ZP(r)	{uint8 EA; GetZP(EA); if(HuCPU.MPR[1] == 0xF8) TheronTraceDirectMainRAMWrite(EA, HU_Page1[EA], r); HU_Page1[EA] = r; TheronTIAZeroPageAccess("write", 0x2000 | EA, HU_Page1[EA]); break;}
++#define ST_ZPX(r)	{uint8 EA; GetZPI(EA,HU_X); if(HuCPU.MPR[1] == 0xF8) TheronTraceDirectMainRAMWrite(EA, HU_Page1[EA], r); HU_Page1[EA] = r; TheronTIAZeroPageAccess("write", 0x2000 | EA, HU_Page1[EA]); break;}
++#define ST_ZPY(r)	{uint8 EA; GetZPI(EA,HU_Y); if(HuCPU.MPR[1] == 0xF8) TheronTraceDirectMainRAMWrite(EA, HU_Page1[EA], r); HU_Page1[EA] = r; TheronTIAZeroPageAccess("write", 0x2000 | EA, HU_Page1[EA]); break;}
  #define ST_AB(r)	{unsigned int EA; GetAB(EA); WrMem(EA, r); break;}
  #define ST_ABI(reg,r)	{unsigned int EA; GetABI(EA,reg); WrMem(EA,r); break; }
  #define ST_ABX(r)	ST_ABI(HU_X,r)

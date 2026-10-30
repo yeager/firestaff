@@ -285,6 +285,36 @@ native parity. Raw traces, game media, and firmware remain private on TRV2 at
 - CD-RAM target-write trace SHA-256: `2d6c2df36a271a654605bd3cbf133baa0849017925caa486f39a29596c6a4461`.
 - Transition receipt SHA-256: `c8fe028fb07f052c2e64217c071fcb188baa62f5aa6d096ce32664f85c4e2b84`.
 
+## Bounded follow from the authentic `$6148` fetch
+
+A further cold PCE Fast reference capture used authentic Japanese Rev. 1
+Track 02 (MD5 `b7afb338ad31be1025b53f9aff12d73a`) and System Card 3.0
+(MD5 `ff1a674273fe3540ccef576376407d1d`), with scripted `run@480:300` input
+and no save state. The optional code-follow trace begins at logical PC `$6148`
+and records instruction bytes, physical fetch addresses, MPR registers, and a
+shared event sequence for up to 256 rows. The completion marker is emitted on
+the subsequent instruction-fetch hook, so it confirms that execution advanced
+beyond the final recorded instruction. The verifier reported
+`status=complete rows=256`; the trace contains no cap or truncation marker.
+
+The same run captured 32 complete TIA transfers (2,048 byte rows) and 128
+v2 zero-page accesses. The TIA transfer verifier passed three consecutive
+runs. It requires an explicit `space=zp` field and validates that logical
+`$2002/$2003` accesses resolve through MPR slot 1 (MPR1=`$F8`) while
+preserving offsets `$02/$03`. The trace SHA-256 values are:
+
+- Code-follow trace: `32dc1fde9e78dd6f3c21a61a5a7f5117d80fb2393f1bab26ec2643773048e1d4`.
+- TIA trace: `98d75b1f9ef1771a42d8fb661be0f19b8ecb24b9a77b5349df887cbae1bcefe7`.
+- Transition receipt: `5e53a6a9243d2556fba3414b7dc48cd6286a70b5446a849b87c750a493e94bc0`.
+
+The scripted event was observed by the System Card poll at `$E4C5`; there was
+no non-System-Card poll. The receipt reports zero CD IRQ callbacks, zero
+authenticated CD-to-RAM receipts, and no gameplay transition. Thus this capture
+validates code-follow completion and the corrected MPR1 trace encoding, but
+does not establish a complete loader, native handoff, or gameplay parity.
+Raw traces and media remain private on TRV2 under
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-code-follow-v6-cold-20261030/`.
+
 ## Targeted v3 code-fetch rerun
 
 A further cold PCE Fast capture used the authentic JP Rev. 1 Track 02 and

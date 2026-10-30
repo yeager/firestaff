@@ -13,7 +13,8 @@ if text.count(marker) != 1:
     raise SystemExit("FAIL: expected one exact Drator route marker")
 if "source=mednafen-pce-fast-system-card-controller-dispatch-v2" in text or \
    "source=mednafen-pce-fast-system-card-controller-dispatch-v3" in text or \
-   "source=mednafen-pce-fast-system-card-controller-dispatch-v4" in text:
+   "source=mednafen-pce-fast-system-card-controller-dispatch-v4" in text or \
+   "FIRESTAFF_THERON_SYSTEM_CARD_CODE_FOLLOW_TRACE" in text:
     raise SystemExit("FAIL: System Card dispatch trace already instrumented")
 
 added = []

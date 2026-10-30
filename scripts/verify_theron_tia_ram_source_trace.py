@@ -10,11 +10,14 @@ import sys
 from pathlib import Path
 
 
-TIA_HEADER = (
+TIA_HEADERS = {
     "source=mednafen-pce-fast-theron-tia-byte-trace-v1 "
     "event_sequence_source=TheronTraceCDSharedEventSequence "
-    "target_pc_range=4600-46ff"
-)
+    "target_pc_range=4600-46ff",
+    "source=mednafen-pce-fast-theron-tia-byte-trace-v2 "
+    "event_sequence_source=TheronTraceCDSharedEventSequence "
+    "target_pc_range=4600-46ff",
+}
 WRITER_HEADER = (
     "source=mednafen-pce-fast-main-ram-target-write "
     "event_sequence_source=TheronTraceCDSharedEventSequence"
@@ -46,7 +49,7 @@ def read_lines(path: Path) -> list[str]:
 def verify(tia_path: Path, writes_path: Path) -> tuple[int, dict[str, int]]:
     tia_lines = read_lines(tia_path)
     write_lines = read_lines(writes_path)
-    if not tia_lines or tia_lines[0] != TIA_HEADER:
+    if not tia_lines or tia_lines[0] not in TIA_HEADERS:
         raise ValueError("unexpected TIA trace header")
     if not write_lines or write_lines[0] != WRITER_HEADER:
         raise ValueError("unexpected RAM writer trace header")
