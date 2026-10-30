@@ -94,6 +94,8 @@ static void make_capture_path(char *out, size_t capacity,
     (void)snprintf(out, capacity, "%s/%s", root, relative);
 }
 
+static uint16_t read_le16(const uint8_t *p);
+
 static int verify_window(const Blob *trace, const Blob *vram,
                         const Blob *dgn, unsigned int *out_mode1,
                         unsigned int *out_mode5)
@@ -103,6 +105,8 @@ static int verify_window(const Blob *trace, const Blob *vram,
     char *line_save = NULL;
     uint8_t found[LAST_COMMAND - FIRST_COMMAND + 1U] = {0};
     Nexus_V1_Vdp1DgnMaterialResolverInput resolver_input;
+    Nexus_V1_Vdp1DirectColorFramebuffer direct_framebuffer;
+    Nexus_V1_Vdp1DirectColorCaptureReceipt direct_receipt;
     unsigned int mode1_joined = 0U, mode5_joined = 0U;
     unsigned int mode1_seen = 0U, mode5_seen = 0U;
     int ok = 1;
@@ -173,6 +177,38 @@ static int verify_window(const Blob *trace, const Blob *vram,
                 !material.dgn_direct_image ||
                 material.dgn_direct_image_size != (int)parsed.texture_byte_count) {
                 ok = 0; break;
+            }
+            if (index == 13U) {
+                material.command = command;
+                material.command_size = COMMAND_BYTES;
+                material.texture_span = vram->data +
+                    parsed.texture_source_byte_offset;
+                material.texture_span_size = (int)parsed.texture_byte_count;
+                material.original_saturn_capture_verified = 1;
+                material.screen_origin_x = (int)strtol(fields[20], NULL, 0);
+                material.screen_origin_y = (int)strtol(fields[21], NULL, 0);
+                material.system_clip_state_verified = 1;
+                material.system_clip_x = 320;
+                material.system_clip_y = 224;
+                for (size_t byte = 0U; byte < parsed.texture_byte_count;
+                     byte += 2U) {
+                    if (read_le16(material.texture_span + byte) != 0x000fU) {
+                        ok = 0;
+                        break;
+                    }
+                }
+                memset(&direct_framebuffer, 0, sizeof(direct_framebuffer));
+                if (!ok || !nexus_v1_vdp1_capture_decode_direct_color(
+                        &direct_framebuffer, &material, &direct_receipt) ||
+                    !direct_receipt.valid ||
+                    !direct_receipt.source_join_verified ||
+                    direct_receipt.written_pixels != 0 ||
+                    direct_receipt.transparent_pixels == 0) {
+                    fprintf(stderr, "frame-13162 row 13 must decode as an "
+                        "authenticated all-transparent mode-5 draw\n");
+                    ok = 0;
+                    break;
+                }
             }
             ++mode5_joined;
         }

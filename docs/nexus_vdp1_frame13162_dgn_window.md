@@ -23,6 +23,13 @@ identical for that command. This makes constant shading a useful diagnostic
 for this particular window; it does not validate Gouraud interpolation for
 general quads.
 
+The authentic mode-5 row 13 is also replayed through Firestaff's direct-colour
+capture decoder after its exact `LEV00.DGN` source join is verified. Its 1,024
+captured words are all `0x000f`; the decoder now reports a valid command with
+zero opaque writes, matching Ymir's bit-15 transparency rule. The compositor
+unit test separately checks bit-15 transparency and the independent ECD and
+TPD controls.
+
 Pinned local capture inputs (the VRAM and trace files are generated evidence
 and must be kept outside the Git history):
 
@@ -51,10 +58,11 @@ captured user-clip/local-coordinate state, and the hash of the retained
 FBS+NBG0+row-171 composition reference. It does not rasterize rows 10–40 or
 compare their output pixels to the screenshot. A rasterization experiment
 failed that comparison; therefore these DGN draws are not admitted to a parity
-renderer. Gouraud table data is attested, but the compositor does not yet
-apply Ymir's per-pixel Gouraud interpolation. Exact polygon coverage,
-command-to-face ownership, and overlap ownership are also unresolved. The
-harness draws nothing and keeps `renderer_permitted=false`.
+renderer. Row 13's empty mask verifies one direct-colour transparency case,
+not full geometry or scene parity. Gouraud table data is attested, but the
+compositor does not yet apply Ymir's per-pixel Gouraud interpolation. Exact
+polygon coverage, command-to-face ownership, and overlap ownership are also
+unresolved. The harness keeps `renderer_permitted=false`.
 
 When the local capture files or `LEV00.DGN` are unavailable, CTest reports the
 case as skipped (`77`). No captured VRAM or commercial game data is stored in

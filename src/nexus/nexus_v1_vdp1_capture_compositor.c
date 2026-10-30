@@ -256,9 +256,17 @@ static int direct_color_triangle(
             if (ty >= height) ty = height - 1;
             pixel = ty * width + tx;
             word = read_le16(tex + pixel * 2);
-            /* Mednafen src/ss/vdp1.cpp::TexFetch, colour mode 5. */
-            if ((draw_mode & 0x0080U) == 0U &&
-                (word & UINT16_C(0xc000)) == UINT16_C(0x4000)) {
+            /* Ymir VDP1PlotTexturedLine: in RGB mode bit 15 controls
+             * transparency, while ECD independently recognizes exactly
+             * 0x7fff as an end code. TPD disables transparent-pixel
+             * handling; disabling ECD makes 0x7fff an opaque RGB value. */
+            if ((draw_mode & UINT16_C(0x0080)) == 0U &&
+                word == UINT16_C(0x7fff)) {
+                ++*transparent;
+                continue;
+            }
+            if ((draw_mode & UINT16_C(0x0040)) == 0U &&
+                (word & UINT16_C(0x8000)) == 0U) {
                 ++*transparent;
                 continue;
             }
@@ -345,7 +353,9 @@ int nexus_v1_vdp1_capture_decode_direct_color(
         input->system_clip_state_verified, input->system_clip_x,
         input->system_clip_y, command.draw_mode,
         &receipt.written_pixels, &receipt.transparent_pixels);
-    receipt.valid = receipt.written_pixels > 0;
+    /* A completely transparent, source-authenticated command is still a
+     * valid capture decode; zero writes are meaningful VDP1 behavior. */
+    receipt.valid = 1;
     /* No DGN owner/material receipt is accepted by this API. */
     receipt.renderer_permitted = 0;
     if (receipt.valid) *framebuffer = *working;

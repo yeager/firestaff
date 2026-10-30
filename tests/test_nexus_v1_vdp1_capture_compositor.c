@@ -391,7 +391,7 @@ int main(void)
      * capture decoder must preserve the word semantics but remain capture-
      * only until a DGN owner/material receipt exists. */
     for (i = 0; i < (int)sizeof(direct_texture); i += 2)
-        wl16(direct_texture + i, (i < 32) ? 0x4000U : 0x001fU);
+        wl16(direct_texture + i, (i < 32) ? 0x000fU : 0x801fU);
     for (i = 0; i < (int)sizeof(direct_texture); i += 2) {
         dgn_direct_image[i] = direct_texture[i + 1];
         dgn_direct_image[i + 1] = direct_texture[i];
@@ -415,6 +415,66 @@ int main(void)
         direct_receipt.transparent_pixels <= 0) {
         fprintf(stderr, "FAIL: authenticated direct-color capture decode\n");
         return 1;
+    }
+    /* In mode 5, bit 15 is the transparent flag. Exact word 7fff is the
+     * ECD marker only when ECD is enabled; TPD makes bit-15-clear pixels
+     * visible. Exercise all three controls independently. */
+    for (i = 0; i < (int)sizeof(direct_texture); i += 2)
+        wl16(direct_texture + i, 0x000fU);
+    for (i = 0; i < (int)sizeof(direct_texture); i += 2) {
+        dgn_direct_image[i] = direct_texture[i + 1];
+        dgn_direct_image[i + 1] = direct_texture[i];
+    }
+    wl16(command + 4, (5U << 3U));
+    memset(&direct_framebuffer, 0, sizeof(direct_framebuffer));
+    if (!nexus_v1_vdp1_capture_decode_direct_color(
+            &direct_framebuffer, &input, &direct_receipt) ||
+        !direct_receipt.valid || direct_receipt.written_pixels != 0 ||
+        direct_receipt.transparent_pixels == 0) {
+        fprintf(stderr, "FAIL: mode-5 bit-15 transparency\n");
+        return 1;
+    }
+    for (i = 0; i < (int)sizeof(direct_texture); i += 2)
+        wl16(direct_texture + i, 0x7fffU);
+    for (i = 0; i < (int)sizeof(direct_texture); i += 2) {
+        dgn_direct_image[i] = direct_texture[i + 1];
+        dgn_direct_image[i + 1] = direct_texture[i];
+    }
+    memset(&direct_framebuffer, 0, sizeof(direct_framebuffer));
+    if (!nexus_v1_vdp1_capture_decode_direct_color(
+            &direct_framebuffer, &input, &direct_receipt) ||
+        direct_receipt.written_pixels != 0) {
+        fprintf(stderr, "FAIL: mode-5 ECD marker\n");
+        return 1;
+    }
+    wl16(command + 4, (5U << 3U) | 0x00c0U);
+    memset(&direct_framebuffer, 0, sizeof(direct_framebuffer));
+    if (!nexus_v1_vdp1_capture_decode_direct_color(
+            &direct_framebuffer, &input, &direct_receipt) ||
+        direct_receipt.written_pixels == 0) {
+        fprintf(stderr, "FAIL: mode-5 ECD disable\n");
+        return 1;
+    }
+    for (i = 0; i < (int)sizeof(direct_texture); i += 2)
+        wl16(direct_texture + i, 0x000fU);
+    for (i = 0; i < (int)sizeof(direct_texture); i += 2) {
+        dgn_direct_image[i] = direct_texture[i + 1];
+        dgn_direct_image[i + 1] = direct_texture[i];
+    }
+    wl16(command + 4, (5U << 3U) | 0x0040U);
+    memset(&direct_framebuffer, 0, sizeof(direct_framebuffer));
+    if (!nexus_v1_vdp1_capture_decode_direct_color(
+            &direct_framebuffer, &input, &direct_receipt) ||
+        direct_receipt.written_pixels == 0) {
+        fprintf(stderr, "FAIL: mode-5 TPD disable\n");
+        return 1;
+    }
+    wl16(command + 4, 5U << 3U);
+    for (i = 0; i < (int)sizeof(direct_texture); i += 2)
+        wl16(direct_texture + i, (i < 32) ? 0x000fU : 0x801fU);
+    for (i = 0; i < (int)sizeof(direct_texture); i += 2) {
+        dgn_direct_image[i] = direct_texture[i + 1];
+        dgn_direct_image[i + 1] = direct_texture[i];
     }
     input.original_saturn_capture_verified = 0;
     if (nexus_v1_vdp1_capture_decode_direct_color(
