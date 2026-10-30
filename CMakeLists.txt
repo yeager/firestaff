@@ -4164,6 +4164,20 @@ if(BUILD_TESTING)
     set_tests_properties(unsupported_game_platforms_cli_rejected_before_renderer PROPERTIES
         LABELS "dm2;csb;startup;cli;fail-fast;no-media-required"
         TIMEOUT 10)
+
+    add_executable(test_dm1_snes_romdungeon_real_media
+        tests/test_dm1_snes_romdungeon_real_media.c
+        src/dm1/dm1_snes_h03.c
+        src/engine/firestaff_dungeon_state.c)
+    target_link_libraries(test_dm1_snes_romdungeon_real_media PRIVATE firestaff_m12)
+    add_test(NAME dm1_snes_romdungeon_real_media
+        COMMAND test_dm1_snes_romdungeon_real_media)
+    set_tests_properties(dm1_snes_romdungeon_real_media PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM1_SNES_7Z=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Game,Dungeon_Master,Super_NES,Software.7z"
+        SKIP_RETURN_CODE 77
+        TIMEOUT 120
+        LABELS "dm1;snes;romdungeon;real-media;archive;decoder;skip-safe")
+
     add_test(
         NAME csb_v1_hint_oracle_native_7z_cli_boot
         COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_hint_oracle_native_7z_cli_boot.sh
