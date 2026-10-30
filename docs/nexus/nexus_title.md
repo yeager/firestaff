@@ -65,9 +65,12 @@ format validation only and does not authorize Saturn presentation.
 
 Decoding the five authenticated 512×224 indexed maps from the external
 English-version corpus produces five distinct source images whose visible
-letterforms are `N`, `E`, `X`, `U`, and `S`, respectively. This identifies the
-content of the five MAPD planes; it does not establish their Saturn display
-order, frame timing, VDP2 layer assignment, or executable title-state owner.
+letterforms are `N`, `E`, `X`, `U`, and `S`, respectively. An authenticated
+Japanese retail trace later establishes that the animation scheduler selects
+and transfers them in that order (`N`, `E`, `X`, `U`, `S`) at frames 13294,
+13334, 13375, 13415, and 13455. This proves the source-plane sequence and
+transfer timing; it does not by itself establish the final visible composition,
+screen placement, or executable title-state owner.
 
 The decoded pixel-plane SHA-256 receipts are:
 
@@ -80,9 +83,11 @@ The decoded pixel-plane SHA-256 receipts are:
 | 4 | S | `6dbb2f3bea87a8b79219f0a73c0b2f49d12a572829c8913b501fbce58f74647` |
 
 These are preservation receipts derived from the real `TITLE.BIN` and
-`TITLE.CG`; no generated image is used. The Saturn capture corpus currently
-contains no exact MAPD plane span in VDP2 VRAM, so the production title route
-remains capture-gated.
+`TITLE.CG`; no generated image is used. An earlier title-frame snapshot did
+not contain an exact MAPD plane span. A later authenticated r33 capture binds
+all five real planes to the retail transfer into VDP2 VRAM, as documented
+below. The display consumer and final composition remain unresolved, so this
+source transfer alone does not admit the production title route.
 
 ### Japanese retail title VDP2 receipt
 
@@ -508,6 +513,24 @@ bytes match the 921 retail source bytes. The SH-2 trace does not capture values
 at read time, and the source comparison uses the final WorkRAMH span; it does
 not independently prove that those bytes were present when each read occurred.
 
+A second authentic run used Ymir `--debug --capture-no-render` and stopped at
+the same observed source-copy interval. In its VDP1 frame 7715, the verifier
+joins the same 921 ordered source addresses, register snapshots, and same-frame
+VDP2 byte writes to the authentic Japanese `TITLE.BIN`. The run recorded
+2,195,059 VDP2 writes across the configured frame range with zero dropped rows.
+Its endpoint frame index is 8036; the final VDP2 VRAM SHA-256 is
+`de1a77427dc62457eb4b59fa0424fd25e9768ce229505445311929d3bdae405c`, matching
+the retained frame-8037 capture's final VDP2 VRAM hash. This no-render run
+has no screenshot and establishes no visual parity. Reproduce it with
+`scripts/verify_nexus_title_bin_vram_frame_join.py --target-frame 7715` and
+the raw dumps plus authentic Japanese game data in
+`firestaff-evidence/nexus/nexus_title_source_trace_20261030` on the external
+evidence disk. The register snapshots are not SH-2 store events, and the trace
+does not capture source values at read time. Both runs establish the same
+bounded source-to-VDP2 transport observation while leaving full-screen source
+ownership and the production title gate unresolved.
+
+
 A separate deterministic endpoint capture stops at VDP1 frame 8037 and saves
 the authentic Japanese three-choice title menu with New Game selected. Its
 final VDP1/VDP2 registers, VRAM, CRAM and screenshot are indexed at frame 8037;
@@ -660,15 +683,15 @@ both buffers across all 71,680 pixels. The image shows the retail Nexus title
 and its three menu choices. This verifies Ymir's capture against its own
 frontend output; it is not a Firestaff or hardware parity result.
 
-Firestaff's capture-only replay diagnostic rejected this authentic state
-before writing an image: `BGON=0x0001` enables NBG0 alone while the narrow gate
-requires `0x0003`, and `CCRR=0x1000` differs from the gate's `0x1010`. The VDP1
-frame contains 99,410 direct-color pixels, 94,208 transparent pixels, and
-2,990 palette/special pixels. The replay path still lacks a complete
-per-pixel CLUT/CRAM provenance join for those palette/special pixels. Keep the
-production title gate closed. Next, support this observed register state in
-the capture-only diagnostic and resolve every palette/special pixel from
-authentic command and palette data; require an exact comparison to this
-same-run screenshot before considering any production consumer. Evidence is
+Firestaff's bounded capture-only replay accepts this register state, including
+`BGON=0x0001` and the captured ratio register at `0x100=0x1000`. Against the
+authentic frame-8037 dump, its output matches both same-run Ymir VDP2 pass
+buffers exactly across all 71,680 RGB pixels. This is capture composition
+evidence, not hardware parity or retail source ownership. The VDP1 frame
+contains 99,410 direct-color pixels, 94,208 transparent pixels, and 2,990
+palette/special pixels. Those palette/special pixels still lack a complete
+per-command CLUT/CRAM provenance join to retail source data. Keep the
+production title gate closed until source ownership and the live display
+consumer are verified. The authentic capture and comparison evidence is
 retained outside the repository under
 `firestaff-evidence/nexus/ymir_nbg0_frame_serial_diagnostic_20261030/`.
