@@ -29,7 +29,75 @@ def instruction_row(
     )
 
 
+def test_v4_uses_contiguous_branch_follow_after_independent_window() -> None:
+    def row(kind: str, index: int, pc: int, event: int, bytes_value: str, p: int = 0, mpr2: int = 0) -> str:
+        base = instruction_row(kind, index, pc, mpr2, event)
+        return base.replace("bytes=00000000", f"bytes={bytes_value}").replace(
+            "p=00", f"p={p:02x}"
+        )
+
+    rows = [
+        verifier.HEADER_V4,
+        instruction_row("bootstrap_follow", 0, 0xE11B, event_sequence=100),
+        instruction_row("target_follow", 0, 0x4000, 0x80, event_sequence=101),
+        row("bootstrap_branch_follow", 0, 0xE11D, 102, "900d0000"),
+        row("bootstrap_branch_follow", 1, 0xE12C, 103, "a9040000"),
+        row("bootstrap_branch_follow", 2, 0xE12E, 104, "440d0000"),
+        row("bootstrap_branch_follow", 3, 0xE13D, 105, "00000000"),
+        row("bootstrap_branch_follow", 4, 0xE130, 106, "4c004000"),
+        row("bootstrap_branch_follow", 5, 0x4000, 107, "64007300", mpr2=0x80),
+    ]
+    counts = verifier.verify_lines(rows)
+    if counts != {"bootstrap_follow": 1, "target_follow": 1}:
+        raise AssertionError("v4 did not validate the contiguous BIOS-to-$4000 branch")
+
+    no_branch = [
+        verifier.HEADER_V4,
+        instruction_row("bootstrap_follow", 0, 0xE11B, event_sequence=100),
+        instruction_row("target_follow", 0, 0x4000, 0x80, event_sequence=101),
+    ]
+    verifier.verify_lines(no_branch, require_launch=False)
+    try:
+        verifier.verify_lines(no_branch)
+    except ValueError as error:
+        if "did not observe the $E11D BIOS carry branch" not in str(error):
+            raise
+    else:
+        raise AssertionError("a missing BIOS branch was accepted in strict verification mode")
+
+    set_carry = rows.copy()
+    set_carry[3] = set_carry[3].replace("p=00", "p=01")
+    set_carry[4] = row("bootstrap_branch_follow", 1, 0xE11F, 103, "a9015300")
+    try:
+        verifier.verify_lines(set_carry)
+    except ValueError as error:
+        if "set-carry" not in str(error):
+            raise
+    else:
+        raise AssertionError("the authentic set-carry alternate path was accepted as a launch")
+
+    skipped_next_pc = rows.copy()
+    skipped_next_pc[4] = row("bootstrap_branch_follow", 1, 0xE11F, 103, "a9015300")
+    try:
+        verifier.verify_lines(skipped_next_pc)
+    except ValueError as error:
+        if "not immediately followed by $E12C" not in str(error):
+            raise
+    else:
+        raise AssertionError("non-contiguous branch-follow rows were accepted")
+
+    earlier_target_only = rows[:-1]
+    try:
+        verifier.verify_lines(earlier_target_only)
+    except ValueError as error:
+        if "$E130 JMP was not immediately followed" not in str(error):
+            raise
+    else:
+        raise AssertionError("an independent earlier $4000 window was accepted as the BIOS jump target")
+
+
 def main() -> None:
+    test_v4_uses_contiguous_branch_follow_after_independent_window()
     rows = [
         verifier.HEADER,
         instruction_row("bootstrap_follow", 0, 0xE11B, event_sequence=100),

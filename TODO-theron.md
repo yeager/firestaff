@@ -218,6 +218,32 @@ game-owned poll and visible state change.
   loader, then capture a game-owned controller poll and its resulting state
   change. Keep the native parity target open.
 
+## 2026-10-30 — follow the BIOS carry branch to `$4000`
+
+- Extended the reference-only PCE Fast trace to retain up to 8,192 bootstrap
+  instruction-start rows and independently follow up to 4,096 contiguous
+  instruction-start rows beginning at `$E11D`. The launch verifier requires
+  clear carry at the authentic `BCC $E12C`, the `$E12C/$E12E` MPR setup call,
+  `$E130 JMP $4000`, and the immediately following `$4000` row mapped through
+  MPR2=`$80` to physical `$100000`.
+- The v18 and v19 authentic JP cold captures did not reach `$E11D` within the
+  bounded observation. Their bootstrap rows stopped at `$E966` in the System
+  Card's `$E95E` status-poll loop; v19 did not observe `$E98B`, the `$D8`
+  comparison, or the BIOS launch branch. v19's strict launch verifier
+  correctly rejected the missing branch. Its separately armed `$4000` rows
+  cannot be treated as a causal BIOS jump.
+- In v19, scripted RUN/SELECT inputs were consumed only at System Card polls;
+  the receipt reports zero host-key events, CD IRQ callbacks, authenticated
+  CD-to-RAM receipts, game `$E009` dispatches, and non-System-Card poll reads.
+  This remains a blocked reference capture and establishes no gameplay,
+  native handoff, or parity. TRV2 became unreachable during follow-up, so its
+  private capture files and redundant build cache were not inspected or
+  removed in this pass.
+- Next: determine from the reference core's `$1800` CD-status implementation
+  and authentic System Card flow why the JP bootstrap remains in `$E95E`, then
+  collect a new cold capture that proves the contiguous `$E11D` to `$4000`
+  route. Do not infer status meaning from the sampled accumulator values.
+
 ## 2026-10-29 — generalize authentic CD-read-to-RAM source joins
 
 - Added `scripts/verify_theron_cd_ram_source_join.py`, which validates a paired

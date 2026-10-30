@@ -12,7 +12,7 @@
 +   bootstrap_follow_trace = fopen(path, "w");
 +   if(bootstrap_follow_trace)
 +   {
-+    fprintf(bootstrap_follow_trace, "source=mednafen-pce-fast-system-card-bootstrap-follow-v2 event_sequence_source=TheronTraceCDSharedEventSequence arm_pc=e11b bootstrap_limit=512 target_pc=4000 target_limit=128\n");
++    fprintf(bootstrap_follow_trace, "source=mednafen-pce-fast-system-card-bootstrap-follow-v4 event_sequence_source=TheronTraceCDSharedEventSequence arm_pc=e11b bootstrap_limit=8192 branch_follow_limit=4096 target_pc=4000 target_limit=128\n");
 +    fflush(bootstrap_follow_trace);
 +   }
 +  }
@@ -24,6 +24,9 @@
 +   static unsigned int bootstrap_count = 0;
 +   static unsigned int target_armed = 0;
 +   static unsigned int target_count = 0;
++   static unsigned int branch_follow_armed = 0;
++   static unsigned int branch_follow_count = 0;
++   static unsigned int branch_follow_truncated = 0;
 +   extern uint32 TheronTraceCDSharedEventSequence;
 +   const unsigned int pc = TheronTraceInstructionPC;
 +   if(!bootstrap_started && pc == 0xE11B)
@@ -33,7 +36,7 @@
 +   }
 +   if(!target_armed && pc == 0x4000)
 +    target_armed = 1;
-+   if(bootstrap_armed && bootstrap_count < 512)
++   if(bootstrap_armed && bootstrap_count < 8192)
 +   {
 +    const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
 +    uint8 opcode_bytes[4] = {0, 0, 0, 0};
@@ -68,11 +71,51 @@
 +    else if(pc == 0xE109 && bootstrap_count > 1)
 +     bootstrap_armed = 0;
 +   }
-+   if(bootstrap_armed && bootstrap_count == 512)
++   if(bootstrap_armed && bootstrap_count == 8192)
 +   {
-+    fprintf(bootstrap_follow_trace, "bootstrap_follow_truncated cap=512\n");
++    fprintf(bootstrap_follow_trace, "bootstrap_follow_truncated cap=8192\n");
 +    fflush(bootstrap_follow_trace);
 +    bootstrap_armed = 0;
++   }
++   if(bootstrap_started && !branch_follow_armed && !branch_follow_truncated && pc == 0xE11D)
++    branch_follow_armed = 1;
++   if(branch_follow_armed && branch_follow_count < 4096)
++   {
++    const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
++    uint8 opcode_bytes[4] = {0, 0, 0, 0};
++    uint32 physical_bytes[4] = {0, 0, 0, 0};
++    unsigned int valid_mask = 0;
++    unsigned int i;
++    for(i = 0; i < 4; i++)
++    {
++     const uint16 logical = (uint16)(pc + i);
++     const unsigned int slot = (logical >> 13) & 7;
++     const uintptr_t mapping = HuCPU.FastPageR[slot];
++     if(mapping)
++     {
++      opcode_bytes[i] = *(const uint8 *)(mapping + logical);
++      physical_bytes[i] = ((uint32)HuCPU.MPR[slot] << 13) | (logical & 0x1FFF);
++      valid_mask |= 1U << i;
++     }
++    }
++    fprintf(bootstrap_follow_trace, "bootstrap_branch_follow index=%u event_sequence=%u logical_pc=%04x physical_pc=%06x bytes=%02x%02x%02x%02x physical_bytes=%06x,%06x,%06x,%06x valid_mask=%x a=%02x x=%02x y=%02x sp=%02x p=%02x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x\n",
++            branch_follow_count, event_sequence, pc, TheronTraceInstructionPhysicalPC,
++            opcode_bytes[0], opcode_bytes[1], opcode_bytes[2], opcode_bytes[3],
++            physical_bytes[0], physical_bytes[1], physical_bytes[2], physical_bytes[3], valid_mask,
++            HU_A, HU_X, HU_Y, HuCPU.S, HU_P, HuCPU.MPR[0], HuCPU.MPR[1],
++            HuCPU.MPR[2], HuCPU.MPR[3], HuCPU.MPR[4], HuCPU.MPR[5],
++            HuCPU.MPR[6], HuCPU.MPR[7]);
++    fflush(bootstrap_follow_trace);
++    branch_follow_count++;
++    if(pc == 0xE129 || pc == 0x4000)
++     branch_follow_armed = 0;
++   }
++   if(branch_follow_armed && branch_follow_count == 4096 && !branch_follow_truncated)
++   {
++    fprintf(bootstrap_follow_trace, "bootstrap_branch_follow_truncated cap=4096\n");
++    fflush(bootstrap_follow_trace);
++    branch_follow_truncated = 1;
++    branch_follow_armed = 0;
 +   }
 +   if(target_armed && target_count < 128)
 +   {

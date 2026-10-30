@@ -1760,7 +1760,11 @@ if ! grep -Fq 'code_fetch_scope=targeted-consumer-boundaries' "$system_card_disp
    ! grep -Fq 'target_follow index=%u event_sequence=%u logical_pc=%04x' "$system_card_bootstrap_follow_patch" ||
    ! grep -Fq 'event_sequence=%u logical_pc=%04x' "$system_card_bootstrap_follow_patch" ||
    ! grep -Fq 'TheronTraceCDSharedEventSequence++' "$system_card_bootstrap_follow_patch" ||
-   ! grep -Fq 'system-card-bootstrap-follow-v2 event_sequence_source=TheronTraceCDSharedEventSequence' "$system_card_bootstrap_follow_patch" ||
+   ! grep -Fq 'bootstrap_branch_follow index=%u event_sequence=%u logical_pc=%04x' "$system_card_bootstrap_follow_patch" ||
+   ! grep -Fq 'bootstrap_branch_follow_truncated cap=4096' "$system_card_bootstrap_follow_patch" ||
+   ! grep -Fq -- '--allow-missing-launch' "$script" ||
+   ! grep -Fq 'BLOCKED: BIOS-to-$4000 launch branch was not observed' "$script" ||
+   ! grep -Fq 'system-card-bootstrap-follow-v4 event_sequence_source=TheronTraceCDSharedEventSequence' "$system_card_bootstrap_follow_patch" ||
    ! grep -Fq 'source=mednafen-pce-fast-cd-ram-target-write event_sequence_source=TheronTraceCDSharedEventSequence' "$cd_shared_event_sequence_patch" ||
    ! grep -Fq 'source=mednafen-pce-fast-cd-data-port-read-with-reader-mpr-context event_sequence_source=TheronTraceCDSharedEventSequence' "$cd_shared_event_sequence_patch" ||
    ! grep -Fq 'static unsigned int bootstrap_started = 0' "$system_card_bootstrap_follow_patch" ||

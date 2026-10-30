@@ -901,4 +901,41 @@ Private trace SHA-256 values:
 - CD data-port reads: `cf05804075b6a35e69ad823b9c6d3be661a936386c995397477df28f035a2506`.
 - Transition receipt: `8a41d252fdb74c7ac2831a752f46e2588a8c5a1dac959e07d74d98a2a6b313ff`.
 
+## v18/v19 bounded BIOS branch follow — blocked before `$E11D`
+
+The v4 reference-only bootstrap trace adds an 8,192-row general instruction
+window and a separately armed 4,096-row contiguous follow beginning at
+`$E11D`. The launch verifier requires the authentic clear-carry route
+`$E11D BCC $E12C` → `$E12C LDA #$04` → `$E12E BSR $E13D` → `$E130 JMP $4000`
+→ the immediately following `$4000` instruction, with MPR2=`$80` mapping the
+target to physical `$100000`. The separate `$4000` observation window is not
+accepted as proof of that branch.
+
+The v18 and v19 authentic JP cold traces filled their 8,192-row bootstrap
+window and stopped at `$E966`, in the disassembled `$E95E` status-poll loop.
+Neither trace reached `$E11D`; v19 also did not observe `$E98B` or the `$D8`
+comparison. Its 4,096-row branch window remained empty, and strict launch
+verification failed as expected. In the first 529 `$E95E` samples in v19,
+the A register on the next `$E961` instruction-start snapshot was `$90` 501
+times, `$D0` 26 times, and `$C8` twice. These are post-load CPU snapshots,
+not directly instrumented `$1800` bus-read values, and their meaning is not
+established here.
+
+The v19 transition receipt reports no transition, CD IRQ callback,
+authenticated CD-to-RAM receipt, game `$E009` dispatch, non-System-Card poll,
+or host-key event. Scripted PCE inputs were consumed only by the System Card
+poll. The capture exited at its 60-second timeout. This is reference BIOS
+polling evidence only; it proves neither a BIOS handoff nor gameplay/native
+parity. Raw media and capture traces remain private on TRV2 under
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-bootstrap-follow-v19-20261030/`.
+
+v19 SHA-256 values: bootstrap trace
+`acd6117066e936723f08366032e157bc0ca7f6b2e61c6faf5a9842f1cd59a765`, input
+trace `7989230bac3caac712d9958fabb40498bd037598b606bdfb7b4af3aa61ed8454`,
+scripted-input receipt
+`8127070cf2079e934100dc41f56e2b46c7b18b517f2276cba491d1380c9f67d2`.
+The transition receipt hash should be copied from the retained v19 file after
+TRV2 access is restored; it is intentionally omitted here rather than
+recorded from an incomplete local recollection.
+
 The raw media and traces are not included in Git.

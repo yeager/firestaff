@@ -2231,13 +2231,28 @@ if [[ "$capture_mednafen_module" == pce_fast ]]; then
     system_card_code_follow_status=${system_card_code_follow_status_field#status=}
     system_card_code_follow_rows=${system_card_code_follow_rows_field#rows=}
     if [[ ! -s "$system_card_bootstrap_follow_trace" ]] ||
-       ! grep -Fqx 'source=mednafen-pce-fast-system-card-bootstrap-follow-v2 event_sequence_source=TheronTraceCDSharedEventSequence arm_pc=e11b bootstrap_limit=512 target_pc=4000 target_limit=128' \
+       ! grep -Fqx 'source=mednafen-pce-fast-system-card-bootstrap-follow-v4 event_sequence_source=TheronTraceCDSharedEventSequence arm_pc=e11b bootstrap_limit=8192 branch_follow_limit=4096 target_pc=4000 target_limit=128' \
            "$system_card_bootstrap_follow_trace"; then
         printf '%s\n' 'FAIL: Mednafen did not produce a valid PCE Fast System Card bootstrap-follow trace' >&2
         exit 1
     fi
     system_card_bootstrap_follow_receipt=$(python3 "$script_dir/verify_theron_jp_syscard_bootstrap_follow.py" \
-        "$system_card_bootstrap_follow_trace") || exit 1
+        --allow-missing-launch "$system_card_bootstrap_follow_trace") || exit 1
+    if ! system_card_bootstrap_launch_receipt=$(python3 \
+        "$script_dir/verify_theron_jp_syscard_bootstrap_follow.py" \
+        "$system_card_bootstrap_follow_trace" 2>&1); then
+        case "$system_card_bootstrap_launch_receipt" in
+            *'did not observe the $E11D BIOS carry branch'*|\
+            *'$E11D only selected the authentic set-carry alternate route'*)
+                printf 'BLOCKED: BIOS-to-$4000 launch branch was not observed (%s)\n' \
+                    "${system_card_bootstrap_launch_receipt#FAIL: }"
+                ;;
+            *)
+                printf '%s\n' "$system_card_bootstrap_launch_receipt" >&2
+                exit 1
+                ;;
+        esac
+    fi
     read -r system_card_bootstrap_follow_status_field system_card_bootstrap_follow_rows_field \
         system_card_target_follow_rows_field <<<"$system_card_bootstrap_follow_receipt"
     system_card_bootstrap_follow_status=${system_card_bootstrap_follow_status_field#status=}
