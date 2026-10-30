@@ -4412,8 +4412,8 @@ if(BUILD_TESTING)
     set_tests_properties(firestaff_cli_startup_diagnostics_real_media PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm1;csb;dm2;nexus;theron;startup;cli;real-media;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip;FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_FM-Towns_JA-EN.zip;FIRESTAFF_DM1_PC_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN.zip;FIRESTAFF_DM1_PC98_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_PC-98_EN.zip;FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_AMIGA_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip;FIRESTAFF_NEXUS_ISO=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (English).iso;FIRESTAFF_THERON_TRACK02=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQUS02.bin"
-        TIMEOUT 300
+        ENVIRONMENT "FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip;FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_FM-Towns_JA-EN.zip;FIRESTAFF_DM1_PC_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_DM1_PC98_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_PC-98_EN.zip;FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_AMIGA_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip;FIRESTAFF_NEXUS_ISO=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (English).iso;FIRESTAFF_NEXUS_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (Japan).cue;FIRESTAFF_THERON_TRACK02=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQUS02.bin"
+        TIMEOUT 600
     )
     add_test(
         NAME dm2_v1_fmtowns_debug_source_frame_trace_real_media

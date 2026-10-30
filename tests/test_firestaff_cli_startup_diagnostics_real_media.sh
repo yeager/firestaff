@@ -16,6 +16,7 @@ csb_atari_archive=${FIRESTAFF_CSB_ATARI_ARCHIVE:-"$HOME/.firestaff/data/csb/chao
 csb_towns_loose_root=${FIRESTAFF_CSB_FMTOWNS_LOOSE_ROOT:-"$HOME/.firestaff/data/csb/fmtowns_iso"}
 csb_amiga33_loose_root=${FIRESTAFF_CSB_AMIGA33_LOOSE_ROOT:-"$HOME/.firestaff/data/csb/amiga33-original"}
 nexus_iso=${FIRESTAFF_NEXUS_ISO:-"$HOME/.firestaff/data/nexus/Dungeon Master Nexus (English).iso"}
+nexus_cue=${FIRESTAFF_NEXUS_CUE:-"$HOME/.firestaff/data/nexus/Dungeon Master Nexus (Japan).cue"}
 theron_track02=${FIRESTAFF_THERON_TRACK02:-"$HOME/.firestaff/data/theron/TQUS02.bin"}
 
 is_media_source() {
@@ -89,7 +90,8 @@ default_home=
 uppercase_game_root=
 offline_home=
 cache_replacement_root=
-trap 'rm -rf "$combined_root" "$csb_mixed_root" "$csb_combined_root" "$dm1_combined_root" "$default_home" "$uppercase_game_root" "$offline_home" "$cache_replacement_root"' EXIT
+quick_home=
+trap 'rm -rf "$combined_root" "$csb_mixed_root" "$csb_combined_root" "$dm1_combined_root" "$default_home" "$quick_home" "$uppercase_game_root" "$offline_home" "$cache_replacement_root"' EXIT
 
 # A cached physical-file hash must not survive replacing an authentic game
 # file with another original edition of the same size while preserving its
@@ -176,18 +178,96 @@ default_data_root="$default_home/.firestaff/data"
 link_default_game_media() {
     game_id=$1
     archive_path=$2
+    media_root=${3:-$default_data_root}
     if is_media_source "$archive_path"; then
-        mkdir -p "$default_data_root/$game_id"
+        mkdir -p "$media_root/$game_id"
         ln -s "$archive_path" \
-            "$default_data_root/$game_id/$(basename "$archive_path")"
+            "$media_root/$game_id/$(basename "$archive_path")"
     fi
+}
+link_nexus_cue_media() {
+    cue_file=$1
+    media_root=$2
+    python3 - "$cue_file" "$media_root/nexus" <<'PY'
+import pathlib
+import re
+import sys
+
+cue = pathlib.Path(sys.argv[1])
+destination = pathlib.Path(sys.argv[2])
+destination.mkdir(parents=True, exist_ok=True)
+for line in cue.read_text(errors="strict").splitlines():
+    match = re.match(r'\s*FILE\s+(?:"([^"]+)"|([^\s]+))', line, re.IGNORECASE)
+    if not match:
+        continue
+    source = cue.parent / (match.group(1) or match.group(2))
+    if not source.is_file():
+        raise SystemExit(f"Missing authentic Nexus CUE payload: {source}")
+    target = destination / source.name
+    if not target.exists():
+        target.symlink_to(source)
+target = destination / cue.name
+if not target.exists():
+    target.symlink_to(cue)
+PY
 }
 link_default_game_media dm2 "$mac_archive"
 link_default_game_media dm2 "$towns_archive"
 link_default_game_media dm1 "$dm1_towns_archive"
 link_default_game_media csb "$csb_towns_archive"
-link_default_game_media nexus "$nexus_iso"
+if is_media_source "$nexus_iso"; then
+    link_default_game_media nexus "$nexus_iso"
+    nexus_expected=yes
+    nexus_source=iso
+elif [ -f "$nexus_cue" ]; then
+    # If the English ISO is absent, exercise the installed Japanese retail
+    # disc in its authentic CUE/BIN layout. Link the original cue members into
+    # this isolated default root; do not extract or synthesize game data.
+    link_nexus_cue_media "$nexus_cue" "$default_data_root"
+    nexus_expected=yes
+    nexus_source=cue
+else
+    nexus_expected=no
+    nexus_source=missing
+fi
 link_default_game_media theron "$theron_track02"
+
+# Use smaller authentic originals for the all-game default-root CLI checks.
+# The preceding scan-cancellation cases intentionally retain the larger Towns
+# images, but repeating those archives for every direct launch adds minutes and
+# obscures whether each game resolves from ~/.firestaff/data/<game>.
+quick_home=$(mktemp -d "${PWD}/.firestaff-quick-default-home.XXXXXX")
+quick_data_root="$quick_home/.firestaff/data"
+if is_media_source "$dm1_pc_archive"; then
+    quick_dm1_media=$dm1_pc_archive
+    quick_dm1_platform=PC
+else
+    quick_dm1_media=$dm1_towns_archive
+    quick_dm1_platform='FM Towns'
+fi
+if is_media_source "$csb_amiga_archive"; then
+    quick_csb_media=$csb_amiga_archive
+    quick_csb_platform=Amiga
+else
+    quick_csb_media=$csb_towns_archive
+    quick_csb_platform='FM Towns'
+fi
+if is_media_source "$dos_archive"; then
+    quick_dm2_media=$dos_archive
+    quick_dm2_platform=PC
+else
+    quick_dm2_media=$towns_archive
+    quick_dm2_platform='FM Towns'
+fi
+link_default_game_media dm1 "$quick_dm1_media" "$quick_data_root"
+link_default_game_media csb "$quick_csb_media" "$quick_data_root"
+link_default_game_media dm2 "$quick_dm2_media" "$quick_data_root"
+if is_media_source "$nexus_iso"; then
+    link_default_game_media nexus "$nexus_iso" "$quick_data_root"
+elif [ "$nexus_expected" = yes ]; then
+    link_nexus_cue_media "$nexus_cue" "$quick_data_root"
+fi
+link_default_game_media theron "$theron_track02" "$quick_data_root"
 
 # The default no-game start now overlaps collection discovery with the branded
 # intro. Close during the real scan to prove that the window remains responsive
@@ -301,13 +381,13 @@ fi
 if [ -f "$dm1_towns_archive" ] && [ -f "$csb_towns_archive" ] &&
    [ -f "$towns_archive" ]; then
     set +e
-    no_game_output=$(HOME="$default_home" USERPROFILE="$default_home" \
-        XDG_CONFIG_HOME="$default_home/.config" \
-        APPDATA="$default_home/AppData" \
-        FIRESTAFF_CONFIG_PATH="$default_home/no-game-config.toml" \
+    no_game_output=$(HOME="$quick_home" USERPROFILE="$quick_home" \
+        XDG_CONFIG_HOME="$quick_home/.config" \
+        APPDATA="$quick_home/AppData" \
+        FIRESTAFF_CONFIG_PATH="$quick_home/no-game-config.toml" \
         FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
         SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
-        --verbose --debug --duration 1000 2>&1) || {
+        --verbose --debug --script wait-scan-complete,escape --duration 120000 2>&1) || {
         no_game_status=$?
     }
     set -e
@@ -340,7 +420,7 @@ if [ -f "$dm1_towns_archive" ] && [ -f "$csb_towns_archive" ] &&
             "$no_game_output" >&2
         exit 1
     }
-    if [ -f "$nexus_iso" ] && [ -f "$theron_track02" ]; then
+    if [ "$nexus_expected" = yes ] && [ -f "$theron_track02" ]; then
         printf '%s\n' "$no_game_output" | \
             grep -Fq 'firestaff: scan partial-ready games=dm1:yes,csb:yes,dm2:yes,nexus:yes,theron:no' || {
             printf 'FAIL: deferred scan did not publish authentic Nexus before the final Theron scan\n%s\n' \
@@ -348,32 +428,41 @@ if [ -f "$dm1_towns_archive" ] && [ -f "$csb_towns_archive" ] &&
             exit 1
         }
     fi
-    expected_scan_games='dm1:yes,csb:yes,dm2:yes'
-    if [ -f "$nexus_iso" ]; then
-        expected_scan_games="$expected_scan_games,nexus:yes"
-    fi
+    expected_scan_games="dm1:yes,csb:yes,dm2:yes,nexus:$nexus_expected"
     if [ -f "$theron_track02" ]; then
-        expected_scan_games="$expected_scan_games,theron:yes"
+        theron_expected=yes
+    else
+        theron_expected=no
     fi
+    expected_scan_games="$expected_scan_games,theron:$theron_expected"
     printf '%s\n' "$no_game_output" | \
         grep -Fq "result=completed games=$expected_scan_games" || {
         printf 'FAIL: deferred startup scan summary did not report original game availability\n%s\n' \
             "$no_game_output" >&2
         exit 1
     }
-    if [ -f "$nexus_iso" ]; then
-        printf '%s\n' "$no_game_output" | grep -Fq 'firestaff: nexus available=yes' || {
-            printf 'FAIL: no-game startup did not discover authentic Nexus media\n%s\n' \
-                "$no_game_output" >&2
+    for game_id in nexus theron; do
+        expected_available=$nexus_expected
+        if [ "$game_id" = theron ]; then
+            expected_available=$theron_expected
+        fi
+        printf '%s\n' "$no_game_output" | \
+            grep -Fq "firestaff: $game_id available=$expected_available" || {
+            printf 'FAIL: no-game startup reported the wrong authentic %s availability\n%s\n' \
+                "$game_id" "$no_game_output" >&2
             exit 1
         }
+    done
+    if [ "$nexus_source" = cue ]; then
+        expected_nexus_scan_owner="$quick_data_root/nexus/$(basename "$nexus_cue")"
+    else
+        expected_nexus_scan_owner=
     fi
-    if [ -f "$theron_track02" ]; then
-        printf '%s\n' "$no_game_output" | grep -Fq 'firestaff: theron available=yes' || {
-            printf 'FAIL: no-game startup did not discover authentic Theron media\n%s\n' \
-                "$no_game_output" >&2
-            exit 1
-        }
+    if [ -n "$expected_nexus_scan_owner" ] && ! printf '%s\n' "$no_game_output" | \
+        grep -Fq "firestaff: nexus available=yes scan-owner=$expected_nexus_scan_owner"; then
+        printf 'FAIL: no-game startup did not retain the authentic Japanese Nexus CUE as scan owner\n%s\n' \
+            "$no_game_output" >&2
+        exit 1
     fi
     if printf '%s\n' "$no_game_output" | grep -Fq 'launch phase=game-handoff'; then
         printf 'FAIL: no-game startup entered a game handoff\n%s\n' \
@@ -391,16 +480,16 @@ if [ -f "$dm1_towns_archive" ] && [ -f "$csb_towns_archive" ] &&
     # A single-file preference must be promoted to its shared collection root
     # by the ordinary no-game launcher. This uses an actual original archive;
     # explicit --data-dir file requests remain scoped to their selected source.
-    single_file_config="$default_home/single-file-menu-config.toml"
-    printf 'data_dir = "%s"\n' "$dm1_towns_archive" > "$single_file_config"
+    single_file_config="$quick_home/single-file-menu-config.toml"
+    printf 'data_dir = "%s"\n' "$quick_dm1_media" > "$single_file_config"
     set +e
-    single_file_output=$(HOME="$default_home" USERPROFILE="$default_home" \
-        XDG_CONFIG_HOME="$default_home/.config" \
-        APPDATA="$default_home/AppData" \
+    single_file_output=$(HOME="$quick_home" USERPROFILE="$quick_home" \
+        XDG_CONFIG_HOME="$quick_home/.config" \
+        APPDATA="$quick_home/AppData" \
         FIRESTAFF_CONFIG_PATH="$single_file_config" \
         FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
         SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
-        --verbose --debug --duration 1000 2>&1) || {
+        --verbose --debug --script wait-scan-complete,escape --duration 120000 2>&1) || {
         single_file_status=$?
     }
     set -e
@@ -422,6 +511,12 @@ if [ -f "$dm1_towns_archive" ] && [ -f "$csb_towns_archive" ] &&
             exit 1
         }
     done
+    printf '%s\n' "$single_file_output" | \
+        grep -Fq "result=completed games=$expected_scan_games" || {
+        printf 'FAIL: persisted single-file startup did not complete authentic five-game discovery\n%s\n' \
+            "$single_file_output" >&2
+        exit 1
+    }
     if printf '%s\n' "$single_file_output" | \
         grep -Fq 'launch phase=game-handoff'; then
         printf 'FAIL: persisted single-file startup entered a game handoff\n%s\n' \
@@ -432,20 +527,22 @@ if [ -f "$dm1_towns_archive" ] && [ -f "$csb_towns_archive" ] &&
 fi
 
 for game_id in dm1 csb dm2 nexus theron; do
-    if [ -d "$default_data_root/$game_id" ]; then
+    if [ -d "$quick_data_root/$game_id" ]; then
         expected_launch_phase='runtime-entered'
         case "$game_id" in
-            dm1|csb|dm2) expected_platform='FM Towns' ;;
+            dm1) expected_platform=$quick_dm1_platform ;;
+            csb) expected_platform=$quick_csb_platform ;;
+            dm2) expected_platform=$quick_dm2_platform ;;
             nexus)
                 expected_platform='Saturn'
                 expected_launch_phase='title-entered'
                 ;;
             theron) expected_platform='PC Engine' ;;
         esac
-        default_output=$(HOME="$default_home" USERPROFILE="$default_home" \
-            XDG_CONFIG_HOME="$default_home/.config" \
-            APPDATA="$default_home/AppData" \
-            FIRESTAFF_CONFIG_PATH="$default_home/config.toml" \
+        default_output=$(HOME="$quick_home" USERPROFILE="$quick_home" \
+            XDG_CONFIG_HOME="$quick_home/.config" \
+            APPDATA="$quick_home/AppData" \
+            FIRESTAFF_CONFIG_PATH="$quick_home/config.toml" \
             SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
             --game "$game_id" --verbose --debug --boot-probe \
             --boot-probe-frames 0 2>&1) || {
@@ -457,7 +554,7 @@ for game_id in dm1 csb dm2 nexus theron; do
            ! printf '%s\n' "$default_output" | \
                 grep -Fq "launch phase=game-handoff mode=direct game=$game_id platform=$expected_platform edition=" ||
            ! printf '%s\n' "$default_output" | \
-                grep -Fq "$default_data_root/$game_id/" ||
+                grep -Fq "$quick_data_root/$game_id/" ||
            ! printf '%s\n' "$default_output" | \
                 grep -Fq "launch phase=$expected_launch_phase game=$game_id" ||
            ! printf '%s\n' "$default_output" | \
@@ -467,6 +564,16 @@ for game_id in dm1 csb dm2 nexus theron; do
             printf '%s\n' "$default_output" >&2
             printf 'FAIL: bare --game %s did not report the selected original media and reach its runtime handoff from the default per-game data directory\n' \
                 "$game_id" >&2
+            exit 1
+        fi
+        if [ "$game_id" = nexus ] && [ "$nexus_source" = cue ] && {
+            ! printf '%s\n' "$default_output" | \
+                grep -Fq 'Nexus V1 engine initialized (source: ISO)' ||
+            ! printf '%s\n' "$default_output" | \
+                grep -Fq 'edition=nexus-saturn-jp-cue';
+        }; then
+            printf 'FAIL: direct default-root Nexus launch did not bind the authentic Japanese CUE owner\n%s\n' \
+                "$default_output" >&2
             exit 1
         fi
         if [ "$game_id" = nexus ] && {
@@ -584,7 +691,7 @@ if [ -f "$dm1_towns_archive" ]; then
     esac
     dm1_natural_debug=$(FIRESTAFF_CONFIG_PATH="$combined_root/dm1-towns-debug.toml" \
         SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
-        --game dm1 --data-dir "$dm1_towns_archive" --debug --duration 8000 2>&1) || {
+        --game dm1 --data-dir "$dm1_towns_archive" --debug --duration 30000 2>&1) || {
         printf '%s\n' "$dm1_natural_debug" >&2
         exit 1
     }

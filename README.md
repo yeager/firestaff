@@ -34,9 +34,10 @@ establish complete game parity.
 Firestaff detects real media and exposes paths only after their handoff gates
 pass. Edition ownership is checked per route. Extracted Nexus JP/EN/FR owners
 now use regional identity hashes, and supplemental discs must match the owner;
-authentic JP and EN menu checks passed. A CUE-only root without a recognized
-ISO or extracted owner remains rejected, and the title compositor gate stays
-closed. The detailed status is kept in
+authentic JP and EN menu checks passed. The authentic Japanese retail CUE/BIN
+layout is admitted through direct CLI and start-menu routes while retaining
+the selected CUE as its media owner. Nexus still stops at the title compositor
+gate and is not playable. The detailed status is kept in
 [project status](docs/PROJECT_STATUS.md). The published documentation is
 available at [yeager.github.io/firestaff](https://yeager.github.io/firestaff/).
 The [preservation status](docs/PRESERVATION_STATUS_2026-08-11.md) is a dated
