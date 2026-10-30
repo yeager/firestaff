@@ -61,6 +61,17 @@ The bounded `MAPD/TIBG` receipt also requires the complete section: five
 the MAPD start). A shorter block is rejected before palette reads; this is
 format validation only and does not authorize Saturn presentation.
 
+### Native startup letter timing
+
+The native M11 startup renderer now converts boot-global frames to the
+title-local timeline after the 48-frame warning lead-in. This fixes the
+previous off-by-origin error that made the first visible MAPD letter `E` and
+skipped `N`. With the authentic title maps, boot-global frames 48, 88, 129,
+169, and 209 render `N`, `E`, `X`, `U`, and `S`, respectively. The retail-data
+test checks each full 320×224 plane at its transition frames. This verifies
+Firestaff's source-plane schedule; it does not prove the Saturn's final layer
+composition or placement.
+
 ### Retail MAPD preservation observation
 
 Decoding the five authenticated 512×224 indexed maps from the external

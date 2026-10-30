@@ -86,10 +86,12 @@ original raw BIN bindings for CD tracks 2–9.
 This is a media and native-launch result only. It does **not** promote CDDA
 playback or a playable start. Later New Game tracing and static table analysis
 bound the retail LEV01 start level and coordinates `(29,47)`. Paired input and
-fixed-point pose evidence now map the level-1 heading `0x8000` to Firestaff
-North. Full title/menu handoff, gameplay ownership, and the real CDDA consumer
-remain unbound. `LEV00` remains title-only, and runtime start is still
-fail-closed until gameplay ownership is complete.
+fixed-point pose evidence map heading `0x8000` to Firestaff North. A paired
+authentic Continue movement trace also maps heading `0x4000` to East; headings
+`0x0000` and `0xc000` remain uncalibrated. Full title/menu handoff, BKR-to-engine
+Continue integration, gameplay ownership, and the real CDDA consumer remain
+unbound. `LEV00` remains title-only, and runtime start is still fail-closed
+until gameplay ownership is complete.
 
 ## Japanese held-START SMPC witness — 2026-08-27
 
@@ -322,8 +324,12 @@ capture reads its 16.16 position fields: `(29,47)` maps exactly to
 `0x8000` remains unchanged. Thus this level-1 start faces Firestaff North,
 where Up movement decreases DGN Y. One-frame left/right inputs change the
 angle by `+100`/`-100`, consistent with this orientation. This proves the
-level-1 direction mapping only; other table headings and the complete gameplay
-ownership path remain unverified. The native start path now authenticates
+`0x8000`-to-North mapping. A paired Continue replay from the authentic
+two-champion BKR separately holds Up after loading heading `0x4000`: body cell
+`(20,26)` advances to `(21,26)`, while the same no-up control retains
+`(20,26)`. This maps `0x4000` to Firestaff East. Headings `0x0000` and `0xc000`
+remain unmapped, and the complete gameplay ownership path remains unverified.
+The native start path now authenticates
 `DM.BIN`, parses that level-1 entry, loads canonical `LEV01.DGN`, validates the
 start cell, and emits a dungeon-start receipt before continuing the runtime
 handoff. Viewport, material, and HUD routes still have separate evidence gates,
