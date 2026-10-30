@@ -172,6 +172,10 @@ requirements above.
   samples to the Ymir screenshot within eight RGB levels. Layer priority,
   complete color calculation, retail source ownership and production rendering
   remain unresolved.
+- **VDP2 NBG0 bitmap:** frame 239's existing bounded 8bpp decoder matches
+  3,954 of 3,968 nontransparent CRAM samples within eight levels. This does not
+  establish NBG0/NBG1/NBG2 ordering, full-screen color calculation or an asset
+  owner.
 
 ### Missing Original Data or Verification
 

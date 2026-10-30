@@ -471,7 +471,7 @@ int nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
 }
 
 int nexus_v1_vdp2_capture_decode_ymir_nbg2_tilemap_plane(
-    Nexus_V1_Vdp2Nbg2CapturePlane *plane,
+    Nexus_V1_Vdp2CapturePlane *plane,
     const uint8_t *vdp2_vram, size_t vdp2_vram_size,
     const uint8_t *vdp2_cram, size_t vdp2_cram_size,
     const uint8_t *vdp2_registers, size_t vdp2_registers_size,
@@ -516,7 +516,7 @@ int nexus_v1_vdp2_capture_decode_ymir_nbg2_tilemap_plane(
         chctlb != 0x0002U || pncnc != 0x0000U ||
         (plsz & 0x0030U) != 0U || (mpofn & 0x0700U) != 0U ||
         mapa != 0x18U || mapb != 0x18U ||
-        NBG2_REG(0x80U) != 0U || NBG2_REG(0x82U) != 0U ||
+        NBG2_REG(0x90U) != 0U || NBG2_REG(0x92U) != 0U ||
         ((craofa >> 8U) & 7U) != 0U ||
         (NBG2_REG(0xfaU) & 7U) != 4U) {
         if (out_receipt) *out_receipt = receipt;
@@ -578,5 +578,79 @@ int nexus_v1_vdp2_capture_decode_ymir_nbg2_tilemap_plane(
     receipt.renderer_permitted = 0;
     if (out_receipt) *out_receipt = receipt;
 #undef NBG2_REG
+    return 1;
+}
+
+int nexus_v1_vdp2_capture_decode_ymir_nbg0_bitmap_plane(
+    Nexus_V1_Vdp2CapturePlane *plane,
+    const uint8_t *vdp2_vram, size_t vdp2_vram_size,
+    const uint8_t *vdp2_cram, size_t vdp2_cram_size,
+    const uint8_t *vdp2_registers, size_t vdp2_registers_size,
+    Nexus_V1_SaturnVdp2RegisterByteOrder register_byte_order,
+    int original_ymir_capture_verified,
+    Nexus_V1_Vdp2Nbg0CapturePlaneReceipt *out_receipt)
+{
+    Nexus_V1_Vdp2Nbg0CapturePlaneReceipt receipt;
+    uint16_t bgon;
+    uint16_t chctla;
+    uint16_t bmpna;
+    uint16_t mpofn;
+    uint16_t craofa;
+    unsigned int y;
+    unsigned int x;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.capture_only = 1;
+    receipt.bitmap_vram_offset = -1;
+    if (out_receipt) *out_receipt = receipt;
+    if (!plane || !vdp2_vram || !vdp2_cram || !vdp2_registers ||
+        vdp2_vram_size != NEXUS_V1_SATURN_VDP2_VRAM_BYTES ||
+        vdp2_cram_size != NEXUS_V1_SATURN_VDP2_CRAM_BYTES ||
+        vdp2_registers_size < 0x100U ||
+        register_byte_order == NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_UNKNOWN ||
+        !original_ymir_capture_verified) return 0;
+#define NBG0_REG(offset) read_register16_ordered( \
+        vdp2_registers, (offset), register_byte_order)
+    bgon = NBG0_REG(0x20U);
+    chctla = NBG0_REG(0x28U);
+    bmpna = NBG0_REG(0x2cU);
+    mpofn = NBG0_REG(0x3cU);
+    craofa = NBG0_REG(NEXUS_V1_VDP2_TILEMAP_CRAOFA_OFFSET);
+    if (NBG0_REG(0x00U) != 0x8000U || bgon != 0x0007U ||
+        chctla != 0x1013U || (bmpna & 7U) != 0U || mpofn != 0U ||
+        (craofa & 7U) != 0U || (NBG0_REG(0xf8U) & 7U) != 4U ||
+        NBG0_REG(0x70U) != 0U || NBG0_REG(0x72U) != 0U ||
+        NBG0_REG(0x74U) != 0U || NBG0_REG(0x76U) != 0U ||
+        NBG0_REG(0x78U) != 1U || NBG0_REG(0x7aU) != 0U ||
+        NBG0_REG(0x7cU) != 1U || NBG0_REG(0x7eU) != 0U) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    memset(plane, 0, sizeof(*plane));
+    receipt.registers_verified = 1;
+    receipt.original_ymir_capture_verified = 1;
+    receipt.nbg0_bitmap_mode = 1;
+    receipt.colour_code_256 = 1;
+    receipt.bitmap_vram_offset = 0;
+    for (y = 0U; y < NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT; ++y) {
+        for (x = 0U; x < NEXUS_V1_VDP2_NBG2_CAPTURE_WIDTH; ++x) {
+            size_t source = (size_t)y * 512U + x;
+            size_t destination = (size_t)y *
+                NEXUS_V1_VDP2_NBG2_CAPTURE_WIDTH + x;
+            uint8_t index = vdp2_vram[source];
+            plane->index_buffer[destination] = index;
+            if (index == 0U) {
+                ++receipt.transparent_pixels;
+            } else {
+                plane->rgba_buffer[destination] = cram_to_rgba_ordered(
+                    vdp2_cram + (size_t)index * 2U, register_byte_order);
+                ++receipt.written_pixels;
+            }
+        }
+    }
+    receipt.valid = 1;
+    receipt.renderer_permitted = 0;
+    if (out_receipt) *out_receipt = receipt;
+#undef NBG0_REG
     return 1;
 }

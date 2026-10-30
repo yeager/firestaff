@@ -29,7 +29,13 @@ plane as four bytes per pixel (`index,R,G,B`). Then run
 Ymir screenshot with:
 
 ```sh
-python3 scripts/verify_nexus_nbg2_capture_plane.py \
+python3 scripts/verify_nexus_bitmap_capture_plane.py \
   "$FIRESTAFF_NEXUS_YMIR_NBG2_CAPTURE_OUT" \
   "/path/to/DUNGEON MASTER NEXUS [T-9111G]-20261030T091953.253.png"
 ```
+
+The same run also decodes the NBG0 8bpp bitmap at byte offset zero. Set
+`FIRESTAFF_NEXUS_YMIR_NBG0_CAPTURE_OUT` to retain its index/RGB plane, then
+run the verifier with `--layer nbg0`; 3,954 of its 3,968 nontransparent
+samples match within eight channel levels. This remains a per-layer capture
+check and does not establish cross-layer ordering or color calculation.

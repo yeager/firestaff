@@ -75,7 +75,7 @@ typedef struct {
                          NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT];
     uint32_t rgba_buffer[NEXUS_V1_VDP2_NBG2_CAPTURE_WIDTH *
                          NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT];
-} Nexus_V1_Vdp2Nbg2CapturePlane;
+} Nexus_V1_Vdp2CapturePlane;
 
 typedef struct {
     int valid;
@@ -97,13 +97,35 @@ typedef struct {
 } Nexus_V1_Vdp2Nbg2CapturePlaneReceipt;
 
 int nexus_v1_vdp2_capture_decode_ymir_nbg2_tilemap_plane(
-    Nexus_V1_Vdp2Nbg2CapturePlane *plane,
+    Nexus_V1_Vdp2CapturePlane *plane,
     const uint8_t *vdp2_vram, size_t vdp2_vram_size,
     const uint8_t *vdp2_cram, size_t vdp2_cram_size,
     const uint8_t *vdp2_registers, size_t vdp2_registers_size,
     Nexus_V1_SaturnVdp2RegisterByteOrder register_byte_order,
     int original_ymir_capture_verified,
     Nexus_V1_Vdp2Nbg2CapturePlaneReceipt *out_receipt);
+
+typedef struct {
+    int valid;
+    int capture_only;
+    int renderer_permitted;
+    int registers_verified;
+    int original_ymir_capture_verified;
+    int nbg0_bitmap_mode;
+    int colour_code_256;
+    int bitmap_vram_offset;
+    int written_pixels;
+    int transparent_pixels;
+} Nexus_V1_Vdp2Nbg0CapturePlaneReceipt;
+
+int nexus_v1_vdp2_capture_decode_ymir_nbg0_bitmap_plane(
+    Nexus_V1_Vdp2CapturePlane *plane,
+    const uint8_t *vdp2_vram, size_t vdp2_vram_size,
+    const uint8_t *vdp2_cram, size_t vdp2_cram_size,
+    const uint8_t *vdp2_registers, size_t vdp2_registers_size,
+    Nexus_V1_SaturnVdp2RegisterByteOrder register_byte_order,
+    int original_ymir_capture_verified,
+    Nexus_V1_Vdp2Nbg0CapturePlaneReceipt *out_receipt);
 
 /* Explicit source/VRAM binding for one raw Saturn frame. The caller supplies
  * canonical source bytes and the already-proven VDP2-VRAM offsets; this

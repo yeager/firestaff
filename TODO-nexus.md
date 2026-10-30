@@ -23,6 +23,12 @@ eight levels. This remains a capture-only layer measurement; full VDP2 layer
 priority/color calculation and named retail source ownership are unresolved.
 See [`docs/nexus_nbg2_capture_plane.md`](docs/nexus_nbg2_capture_plane.md).
 
+The same frame also verifies the existing NBG0 8bpp bitmap lane at VRAM byte
+offset zero: 3,954 of 3,968 nontransparent CRAM samples match within eight
+levels. This remains capture-only and does not establish cross-layer ordering
+or color calculation. See
+[`docs/nexus_nbg0_capture_plane.md`](docs/nexus_nbg0_capture_plane.md).
+
 ## 2026-10-30 — Japanese title capture follow-up
 
 Authentic TRV2/Ymir VDP1 frame 8037 now has two complete VDP2 pass buffers

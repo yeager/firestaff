@@ -52,17 +52,42 @@ static int bytes_have_sha256(const uint8_t *bytes, size_t size,
         strcmp(actual, expected) == 0;
 }
 
-static int run_external_ymir_nbg2_capture(void)
+static int write_capture_plane(const char *path,
+                               const Nexus_V1_Vdp2CapturePlane *plane)
+{
+    FILE *output;
+    size_t pixel;
+    if (!path || !*path) return 1;
+    output = fopen(path, "wb");
+    if (!output) return 0;
+    for (pixel = 0U; pixel < NEXUS_V1_VDP2_NBG2_CAPTURE_WIDTH *
+                            NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT; ++pixel) {
+        uint32_t rgba = plane->rgba_buffer[pixel];
+        uint8_t encoded[4] = {
+            plane->index_buffer[pixel], (uint8_t)(rgba >> 16U),
+            (uint8_t)(rgba >> 8U), (uint8_t)rgba
+        };
+        if (fwrite(encoded, 1U, sizeof(encoded), output) != sizeof(encoded)) {
+            fclose(output);
+            return 0;
+        }
+    }
+    return fclose(output) == 0;
+}
+
+static int run_external_ymir_capture_planes(void)
 {
     const char *vram_path = getenv("FIRESTAFF_NEXUS_YMIR_NBG2_VRAM");
     const char *cram_path = getenv("FIRESTAFF_NEXUS_YMIR_NBG2_CRAM");
     const char *registers_path = getenv("FIRESTAFF_NEXUS_YMIR_NBG2_REGS");
     const char *output_path = getenv("FIRESTAFF_NEXUS_YMIR_NBG2_CAPTURE_OUT");
+    const char *nbg0_output_path = getenv("FIRESTAFF_NEXUS_YMIR_NBG0_CAPTURE_OUT");
     uint8_t *vram = NULL;
     uint8_t *cram = NULL;
     uint8_t *registers = NULL;
-    Nexus_V1_Vdp2Nbg2CapturePlane *plane = NULL;
+    Nexus_V1_Vdp2CapturePlane *plane = NULL;
     Nexus_V1_Vdp2Nbg2CapturePlaneReceipt receipt;
+    Nexus_V1_Vdp2Nbg0CapturePlaneReceipt nbg0_receipt;
     size_t pixel;
     int ok = 0;
 
@@ -70,7 +95,7 @@ static int run_external_ymir_nbg2_capture(void)
     vram = read_exact_bytes(vram_path, NEXUS_V1_SATURN_VDP2_VRAM_BYTES);
     cram = read_exact_bytes(cram_path, NEXUS_V1_SATURN_VDP2_CRAM_BYTES);
     registers = read_exact_bytes(registers_path, 512U);
-    plane = (Nexus_V1_Vdp2Nbg2CapturePlane *)malloc(sizeof(*plane));
+    plane = (Nexus_V1_Vdp2CapturePlane *)malloc(sizeof(*plane));
     if (!vram || !cram || !registers || !plane ||
         !bytes_have_sha256(vram, NEXUS_V1_SATURN_VDP2_VRAM_BYTES,
             "148eebc95b80465a278b7f6d9c1025ee378ec6d288563de3e52ba8af986d94cc") ||
@@ -97,23 +122,25 @@ static int run_external_ymir_nbg2_capture(void)
         if ((plane->index_buffer[pixel] == 0U) !=
             (plane->rgba_buffer[pixel] == 0U)) goto cleanup;
     }
-    if (output_path && *output_path) {
-        FILE *output = fopen(output_path, "wb");
-        if (!output) goto cleanup;
-        for (pixel = 0U; pixel < NEXUS_V1_VDP2_NBG2_CAPTURE_WIDTH *
-                                NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT; ++pixel) {
-            uint32_t rgba = plane->rgba_buffer[pixel];
-            uint8_t encoded[4] = {
-                plane->index_buffer[pixel], (uint8_t)(rgba >> 16U),
-                (uint8_t)(rgba >> 8U), (uint8_t)rgba
-            };
-            if (fwrite(encoded, 1U, sizeof(encoded), output) != sizeof(encoded)) {
-                fclose(output);
-                goto cleanup;
-            }
-        }
-        if (fclose(output) != 0) goto cleanup;
+    if (!write_capture_plane(output_path, plane)) goto cleanup;
+    if (!nexus_v1_vdp2_capture_decode_ymir_nbg0_bitmap_plane(
+            plane, vram, NEXUS_V1_SATURN_VDP2_VRAM_BYTES,
+            cram, NEXUS_V1_SATURN_VDP2_CRAM_BYTES,
+            registers, 512U, NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG,
+            1, &nbg0_receipt) || !nbg0_receipt.valid ||
+        !nbg0_receipt.capture_only || nbg0_receipt.renderer_permitted ||
+        !nbg0_receipt.registers_verified ||
+        !nbg0_receipt.original_ymir_capture_verified ||
+        !nbg0_receipt.nbg0_bitmap_mode || !nbg0_receipt.colour_code_256 ||
+        nbg0_receipt.bitmap_vram_offset != 0 ||
+        nbg0_receipt.written_pixels != 3968 ||
+        nbg0_receipt.transparent_pixels != 67712) goto cleanup;
+    for (pixel = 0U; pixel < NEXUS_V1_VDP2_NBG2_CAPTURE_WIDTH *
+                            NEXUS_V1_VDP2_NBG2_CAPTURE_HEIGHT; ++pixel) {
+        if ((plane->index_buffer[pixel] == 0U) !=
+            (plane->rgba_buffer[pixel] == 0U)) goto cleanup;
     }
+    if (!write_capture_plane(nbg0_output_path, plane)) goto cleanup;
     ok = 1;
 cleanup:
     free(plane);
@@ -417,8 +444,8 @@ int main(void)
     if ((getenv("FIRESTAFF_NEXUS_YMIR_NBG2_VRAM") ||
          getenv("FIRESTAFF_NEXUS_YMIR_NBG2_CRAM") ||
          getenv("FIRESTAFF_NEXUS_YMIR_NBG2_REGS")) &&
-        !run_external_ymir_nbg2_capture()) {
-        fprintf(stderr, "FAIL: authentic Ymir NBG2 capture decode\n");
+        !run_external_ymir_capture_planes()) {
+        fprintf(stderr, "FAIL: authentic Ymir NBG0/NBG2 capture decode\n");
         return 1;
     }
     puts("test_nexus_v1_vdp2_runtime_tilemap: PASS");

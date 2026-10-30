@@ -20,10 +20,11 @@ SCREENSHOT_SHA256 = (
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("plane", type=Path,
-                        help="NBG2 capture plane: index,R,G,B bytes per pixel")
+                        help="capture plane: index,R,G,B bytes per pixel")
     parser.add_argument("screenshot", type=Path,
                         help="authentic 640x448 Ymir gameplay screenshot")
     parser.add_argument("--tolerance", type=int, default=8)
+    parser.add_argument("--layer", choices=("nbg0", "nbg2"), default="nbg2")
     args = parser.parse_args()
     if not 0 <= args.tolerance <= 255:
         parser.error("tolerance must be 0..255")
@@ -56,14 +57,19 @@ def main() -> int:
                                 abs(blue - reference[2]))
                     max_error = max(max_error, error)
                     matched += error <= args.tolerance
-        if visible != 11232 or matched != 9258:
+        expected_visible, expected_matched = {
+            "nbg0": (3968, 3954),
+            "nbg2": (11232, 9258),
+        }[args.layer]
+        if visible != expected_visible or matched != expected_matched:
             raise ValueError(
-                f"NBG2 screenshot evidence changed: {matched}/{visible} "
-                f"nontransparent samples within {args.tolerance}; expected "
-                "9258/11232 for this retained capture"
+                f"{args.layer.upper()} screenshot evidence changed: "
+                f"{matched}/{visible} nontransparent samples within "
+                f"{args.tolerance}; expected "
+                f"{expected_matched}/{expected_visible} for this capture"
             )
         print(
-            f"PASS: {matched}/{visible} NBG2 samples within "
+            f"PASS: {matched}/{visible} {args.layer.upper()} samples within "
             f"{args.tolerance} RGB levels; maximum error {max_error}"
         )
     except (OSError, ValueError) as error:
