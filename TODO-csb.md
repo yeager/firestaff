@@ -1,5 +1,13 @@
 # Firestaff TODO — CSB
 
+2026-10-30 CSB Amiga M12 startup recheck: both
+`m12_main_menu_csb_amiga35_runtime_real_media` and
+`m12_main_menu_csb_amiga_multi_runtime_real_media` passed against the installed
+original archives. Each test selects CSB through the no-game M12 menu and
+checks the authentic first runtime and unchanged source archive. These
+headless SDL routes verify menu selection and media handoff; native display,
+audio output and physical input remain unverified.
+
 2026-10-30 CSB Atari S21E Fluxcage capture route audit: ReDMCSB identifies
 the installed edition as Atari ST 2.1 English (S21E). Its authentic Utility
 `MINI.DAT` starts on map 4 at (22,18). A generous static reachability graph
