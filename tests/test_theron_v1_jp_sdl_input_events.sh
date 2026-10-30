@@ -140,6 +140,17 @@ if (probes["touch-turn"].get("lastAction") != "TURN" or
     raise SystemExit("FAIL: Japanese Theron swipe-left did not turn west")
 PY
 
+# The Button II+Up route starts and ends at the initial pose, so require
+# both movement actions while preserving the route's expected pose above.
+grep -Eq 'game-action game=theron tick=[0-9]+ input=backward result=1 action="MOVE"' "$button_ii_up_output"
+grep -Eq 'game-action game=theron tick=[0-9]+ input=forward result=1 action="MOVE"' "$button_ii_up_output"
+# In this route the second downward input occurs while Button II is held.
+button_ii_down_moves=$(grep -Ec 'game-action game=theron tick=[0-9]+ input=backward result=1 action="MOVE"' "$button_ii_down_output" || true)
+if (( button_ii_down_moves < 2 )); then
+    printf 'FAIL: Button II+Down route did not record both backward movement actions\n' >&2
+    exit 1
+fi
+
 grep -Eq 'game-action game=theron tick=[0-9]+ input=backward result=1 action="MOVE" outcome="THERON STEPPED BACK"' "$keyboard_output"
 grep -Eq 'game-action game=theron tick=[0-9]+ input=turn-right result=1 action="TURN" outcome="RIGHT"' "$button_ii_output"
 grep -Eq 'game-action game=theron tick=[0-9]+ input=pointer-left point=292,151 result=1 action="MOVE" outcome="THERON STEPPED RIGHT"' "$side_output"
