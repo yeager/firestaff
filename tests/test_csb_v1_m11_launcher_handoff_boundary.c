@@ -2962,7 +2962,9 @@ static void expect_atari_mini_native_d1c_weapon(M11_GameViewState *view,
     /* Original MINI map 3 (14,11) is a mixed F0159 chain: DB3 0x0dd1,
      * DB5 0x5427 in absolute cell 1, then DB5 0xd428 in cell 3. From
      * (15,11) facing west both weapons occupy different D1C cells. F0115
-     * restarts at 0x0dd1 for each cell and must reach both DB5 records. */
+     * restarts at 0x0dd1 for each cell and must reach both DB5 records. The
+     * Atari G0217/G0223 pile shift moves their source boxes left by 5 and 3
+     * pixels, respectively; these are included in the expected blit origins. */
     {
         const int head = csb_v1_dungeon_get_first_thing(candidate, 3, 14, 11);
         const int first = head >= 0 ?
@@ -3000,7 +3002,7 @@ static void expect_atari_mini_native_d1c_weapon(M11_GameViewState *view,
                             chain_graphic->pixels[row * 16 + col];
                         if (pixel != 10u) {
                             ++back_opaque;
-                            if (chain_with[(135 + row) * 320 + 191 + col] == pixel)
+                            if (chain_with[(135 + row) * 320 + 186 + col] == pixel)
                                 ++back_matched;
                         }
                     }
@@ -3014,7 +3016,7 @@ static void expect_atari_mini_native_d1c_weapon(M11_GameViewState *view,
                             d2_palette[chain_graphic->pixels[sy * 16 + sx]];
                         if (pixel != 10u) {
                             ++front_opaque;
-                            if (chain_with[(124 + row) * 320 + 128 + col] == pixel)
+                            if (chain_with[(124 + row) * 320 + 125 + col] == pixel)
                                 ++front_matched;
                         }
                     }
@@ -3029,13 +3031,13 @@ static void expect_atari_mini_native_d1c_weapon(M11_GameViewState *view,
             M11_GameView_Draw(view, chain_without, 320, 200);
             for (int row = 0; row < 7; ++row)
                 for (int col = 0; col < 16; ++col)
-                    if (chain_with[(135 + row) * 320 + 191 + col] !=
-                        chain_without[(135 + row) * 320 + 191 + col])
+                    if (chain_with[(135 + row) * 320 + 186 + col] !=
+                        chain_without[(135 + row) * 320 + 186 + col])
                         ++back_changed;
             for (int row = 0; row < 4; ++row)
                 for (int col = 0; col < 10; ++col)
-                    if (chain_with[(124 + row) * 320 + 128 + col] !=
-                        chain_without[(124 + row) * 320 + 128 + col])
+                    if (chain_with[(124 + row) * 320 + 125 + col] !=
+                        chain_without[(124 + row) * 320 + 125 + col])
                         ++front_changed;
         }
         expect_true(removed && back_opaque > 0 &&

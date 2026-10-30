@@ -1048,7 +1048,8 @@ static int m11_dm1_media009_square(int forward, int side);
 static int m11_draw_dm1_media009_object(
     const M11_GameViewState* state, unsigned char* framebuffer, int fbW, int fbH,
     int thingType, int subtype, int relativeCell, int pileIndex,
-    int forward, int side, int alcove, int projectileAspect);
+    int forward, int side, int alcove, int projectileAspect,
+    int sourceObjectAspect);
 static int m11_draw_dm1_media009_wall_ornament(
     const M11_GameViewState* state, unsigned char* framebuffer, int fbW, int fbH,
     int globalIndex, int viewWallIndex, int unreadableLineCount);
@@ -1060,7 +1061,8 @@ static int m11_dm1_media009_projectile_visible(const M11_GameViewState* state,
 static int m11_draw_dm1_media009_object(
     const M11_GameViewState* state, unsigned char* framebuffer, int fbW, int fbH,
     int thingType, int subtype, int relativeCell, int pileIndex,
-    int forward, int side, int alcove, int projectileAspect);
+    int forward, int side, int alcove, int projectileAspect,
+    int sourceObjectAspect);
 
 static int m11_draw_item_sprite(const M11_GameViewState* state,
                                 unsigned char* framebuffer,
@@ -5799,7 +5801,14 @@ static int m11_csb_atari_st_draw_objects_for_square(
                         state, framebuffer, framebuffer_width,
                         framebuffer_height, object_info.thing_type,
                         object_info.subtype, view_cell, (int)shift_index,
-                        forward, side, 0, -1);
+                        forward, side, 0, -1,
+                        state->csbAtariStObjectAspectsValid &&
+                            object_info.object_info_index >= 0 &&
+                            object_info.object_info_index <
+                                (int)CSB_V1_CSBWIN_OBJDESC_022F_COUNT
+                            ? state->csbAtariStObjectAspects[
+                                object_info.object_info_index]
+                            : -1);
                     if (state->debugMovementTraceEnabled) {
                         fprintf(stderr,
                                 "firestaff: viewport game=csb platform=atari "
@@ -6012,7 +6021,7 @@ static int m11_csb_atari_st_draw_projectiles_for_cell(
             const int drawn = m11_draw_dm1_media009_object(
                 state, framebuffer, framebuffer_width, framebuffer_height,
                 -1, -1, view_cell, 0, forward, side, 0,
-                object_aspect_index);
+                object_aspect_index, -1);
             if (state->debugMovementTraceEnabled) {
                 fprintf(stderr,
                     "firestaff: viewport game=csb platform=atari "
@@ -6210,7 +6219,14 @@ static int m11_csb_atari_st_draw_alcove_objects(
                 const int drawn = m11_draw_dm1_media009_object(
                     state, framebuffer, framebuffer_width, framebuffer_height,
                     object_info.thing_type, object_info.subtype, 0,
-                    (int)shift_index, forward, side, 1, -1);
+                    (int)shift_index, forward, side, 1, -1,
+                    state->csbAtariStObjectAspectsValid &&
+                        object_info.object_info_index >= 0 &&
+                        object_info.object_info_index <
+                            (int)CSB_V1_CSBWIN_OBJDESC_022F_COUNT
+                        ? state->csbAtariStObjectAspects[
+                            object_info.object_info_index]
+                        : -1);
                 if (state->debugMovementTraceEnabled) {
                     fprintf(stderr,
                             "firestaff: viewport game=csb platform=atari "
@@ -43672,7 +43688,7 @@ static int m11_draw_viewport_projectile_sprite(
         rendered = m11_draw_dm1_media009_object(state, framebuffer,
             framebufferWidth, framebufferHeight, -1, -1,
             cell->firstProjectileCell, 0, cell->relForward, cell->relSide, 0,
-            cell->firstProjectileObjectAspectIndex);
+            cell->firstProjectileObjectAspectIndex, -1);
     } else if (cell->firstProjectileUsesObjectMaterial) {
         rendered = m11_draw_thrown_object_projectile_sprite(
             state, framebuffer, framebufferWidth, framebufferHeight,
@@ -49760,7 +49776,7 @@ static void m11_draw_dm1_alcove_wall_items(const M11_GameViewState* state,
                     ++pile;
             (void)m11_draw_dm1_media009_object(state, framebuffer, fbW, fbH,
                 cell->floorItemTypes[ii], sourceSubtype, alcoveCellRelativeToParty,
-                pile, cell->relForward, cell->relSide, 1, -1);
+                pile, cell->relForward, cell->relSide, 1, -1, -1);
             continue;
         }
         if (!dm1_v1_f0115_alcove_item_material_plan_pc34(
@@ -53196,7 +53212,8 @@ static int m11_dm1_media009_projectile_visible(const M11_GameViewState* state,
 static int m11_draw_dm1_media009_object(
     const M11_GameViewState* state, unsigned char* framebuffer, int fbW, int fbH,
     int thingType, int subtype, int relativeCell, int pileIndex,
-    int forward, int side, int alcove, int projectileAspect)
+    int forward, int side, int alcove, int projectileAspect,
+    int sourceObjectAspect)
 {
     const int projectile = projectileAspect >= 0;
     M11_Dm1FloorItemHostPresentationReceipt* receipt = projectile ? NULL : alcove
@@ -53207,12 +53224,22 @@ static int m11_draw_dm1_media009_object(
     unsigned int xstep, ystep;
     int aspectIndex, square, lane, viewCell, graphic, flip, byteWidth, height;
     int shiftSet = 0, shiftX, shiftY, center, bottom, left, right, top;
-    int padding = 0, sourceX, drawn = 0;
+    int padding = 0, sourceX, drawn = 0, viewportOriginX;
     if (!state || !framebuffer || forward < 0 || forward > 3 ||
         side < -1 || side > 1 || (!forward && side) || relativeCell < 0 ||
         relativeCell > 3 || !m11_dm1_media009_metadata((M11_GameViewState*)state))
         return 0;
-    aspectIndex = projectile ? projectileAspect : dm1_item_aspect_index(thingType, subtype);
+    /* CSB Atari's 224x136 native viewport begins at screen X=48. The G0218
+     * object coordinates are viewport-relative, as in the adjacent C2900
+     * projectile path; DM1 Atari keeps its full-width X origin at zero. */
+    viewportOriginX = state->assetLoader.csbAtariSt ? 48 : M11_VIEWPORT_X;
+    aspectIndex = projectile ? projectileAspect :
+        sourceObjectAspect >= 0 ? sourceObjectAspect :
+        dm1_item_aspect_index(thingType, subtype);
+    /* CSB Atari floor/alcove objects own a G0237 aspect index per F0141
+     * ObjectInfo row. Never fall back to DM1's fixed item-aspect table. */
+    if (!projectile && state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        state->assetLoader.csbAtariSt && sourceObjectAspect < 0) return 0;
     if (aspectIndex < 0 || aspectIndex >= 85) return 0;
     square = m11_dm1_media009_square(forward, side);
     lane = (square+3)%3;
@@ -53268,7 +53295,7 @@ static int m11_draw_dm1_media009_object(
         /* MEDIA009 calls F0132 directly, not PC34 F0791/C2500. */
         receipt->sourceZone = -1;
         receipt->sourceZoneRow = square;
-        receipt->destinationX = M11_VIEWPORT_X+left;
+        receipt->destinationX = viewportOriginX+left;
         receipt->destinationY = M11_VIEWPORT_Y+top;
         receipt->destinationW = right-left+1;
         receipt->destinationH = bottom-top+1;
@@ -53286,7 +53313,7 @@ static int m11_draw_dm1_media009_object(
         if (y < 0 || dy < 0 || dy >= fbH || sy >= slot->height) continue;
         for (int x = left; x <= right; ++x) {
             int nativeX = sourceX+x-left;
-            const int dx = M11_VIEWPORT_X+x;
+            const int dx = viewportOriginX+x;
             unsigned sx;
             unsigned char color;
             if (flip) nativeX = ((byteWidth+7)&~7)*2-1-nativeX;
@@ -53615,7 +53642,7 @@ static int m11_draw_dm1_f0115_floor_item_sprite(
         }
         drawn = cursor == thing && m11_draw_dm1_media009_object(state,
             framebuffer, fbW, fbH, thingType, subtype, relativeCell, pile,
-            forward, side, 0, -1);
+            forward, side, 0, -1, -1);
     } else {
         drawn = m11_draw_item_sprite_material(
             state, framebuffer, fbW, fbH, x, y, w, h,
@@ -78362,7 +78389,7 @@ int M11_GameView_ProbeDrawDm1Media009Projectile(
     int aspectIndex, int relativeCell, int forward, int side)
 {
     return m11_draw_dm1_media009_object(state, framebuffer, width, height,
-        -1, -1, relativeCell, 0, forward, side, 0, aspectIndex);
+        -1, -1, relativeCell, 0, forward, side, 0, aspectIndex, -1);
 }
 
 int M11_GameView_ProbeDrawDm1Media009Object(
@@ -78371,7 +78398,7 @@ int M11_GameView_ProbeDrawDm1Media009Object(
     int forward, int side, int alcove)
 {
     return m11_draw_dm1_media009_object(state, framebuffer, width, height,
-        thingType, subtype, relativeCell, pileIndex, forward, side, alcove, -1);
+        thingType, subtype, relativeCell, pileIndex, forward, side, alcove, -1, -1);
 }
 
 int M11_GameView_ProbeDrawDm1FloorItemHostReceipt(
