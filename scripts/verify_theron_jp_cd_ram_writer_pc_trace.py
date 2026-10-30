@@ -120,6 +120,8 @@ def verify_writer_rows(path: Path) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
     previous_event = -1
     for line_no, line in enumerate(lines[1:], 2):
+        if line.startswith("cd_ram_writer_pc_truncated "):
+            raise ValueError(f"writer-PC trace reached its sample cap at line {line_no}")
         row = parse_fields(line, "cd_ram_writer_pc_write", line_no)
         if int(row["sequence"]) != len(rows):
             raise ValueError(f"non-contiguous writer sequence at line {line_no}")

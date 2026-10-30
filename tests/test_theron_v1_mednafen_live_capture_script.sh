@@ -73,6 +73,7 @@ if bash -c 'source "$1"; wait_for_host_key_scancode_presses "$2" 91 2 1' _ \
 fi
 mkdir -p "$repo/build"
 python3 "$repo/tests/test_theron_pce_fast_consumer_trace_patch.py"
+python3 "$repo/tests/test_theron_pce_fast_cd_ram_writer_pc_trace_patch.py"
 python3 "$repo/tests/test_theron_jp_code_fetch_truncation_verifier.py"
 python3 "$repo/tests/test_verify_theron_jp_ram_loop_source_candidates.py"
 python3 "$repo/tests/test_verify_theron_syscard_status_trace.py"
@@ -1818,6 +1819,13 @@ if ! grep -Fq 'pce_fast_tia_trace_enabled=${THERON_CAPTURE_PCE_FAST_TIA_TRACE:-0
     exit 1
 fi
 source_chain_verifier="$repo/scripts/verify_theron_jp_indirect_jump_source_chain.py"
+writer_pc_trace_patch="$repo/scripts/mednafen_1.32.1_theron_pce_fast_cd_ram_writer_pc_trace.patch"
+if [[ ! -f "$writer_pc_trace_patch" ]] ||
+   ! grep -Fq 'cd_ram_writer_pc_truncated sequence=%u limit=%u reason=sample-cap' "$writer_pc_trace_patch" ||
+   ! grep -Fq 'line.startswith("cd_ram_writer_pc_truncated ")' "$repo/scripts/verify_theron_jp_cd_ram_writer_pc_trace.py"; then
+    printf '%s\n' 'FAIL: writer-PC trace cap must be explicit and rejected by the source verifier' >&2
+    exit 1
+fi
 if [[ ! -f "$source_chain_verifier" ]] ||
    ! grep -Fq 'verify_read_rows(read_path, track02)' "$source_chain_verifier" ||
    ! grep -Fq 'verify_writer_rows(write_path)' "$source_chain_verifier" ||

@@ -28,6 +28,21 @@ def main() -> None:
     repo_build.mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="theron-code-fetch-truncation-", dir=repo_build) as tmp:
         root = Path(tmp)
+        writer_path = root / "capture.cd-ram-writer-pc"
+        writer_path.write_text(
+            "source=mednafen-pce-fast-cd-ram-writer-pc-write-v1 "
+            "event_sequence_source=TheronTraceCDSharedEventSequence\n"
+            "cd_ram_writer_pc_truncated sequence=131072 limit=131072 reason=sample-cap\n",
+            encoding="ascii",
+        )
+        try:
+            source_bound.verify_writer_rows(writer_path)
+        except ValueError as error:
+            if "writer-PC trace reached its sample cap" not in str(error):
+                raise AssertionError(f"writer-PC cap rejected for the wrong reason: {error}") from error
+        else:
+            raise AssertionError("writer-PC verifier accepted a trace that reached its sample cap")
+
         target_path = root / "capture.cd-ram-target-write"
         target_path.write_text("source=mednafen-pce-fast-cd-ram-target-write\n", encoding="ascii")
         fetch_path = root / "capture.system-card-dispatch"

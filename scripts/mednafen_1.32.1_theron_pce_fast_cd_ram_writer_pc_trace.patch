@@ -1,6 +1,6 @@
 --- a/src/pce_fast/huc.cpp
 +++ b/src/pce_fast/huc.cpp
-@@ -125,12 +125,55 @@
+@@ -125,12 +125,61 @@
 +static void TheronTraceCDRAMWriterPCWrite(uint32 address, uint8 value)
 +{
 + static FILE *trace = NULL;
@@ -33,13 +33,19 @@
 + }
 + const uint32 event_sequence = TheronTraceCDSharedEventSequence++;
 + if(fprintf(trace, "cd_ram_writer_pc_write sequence=%u event_sequence=%u physical_address=%06x target_bank=%02x target_offset=%04x old=%02x value=%02x writer_pc=%04x writer_physical_pc=%06x mpr0=%02x mpr1=%02x mpr2=%02x mpr3=%02x mpr4=%02x mpr5=%02x mpr6=%02x mpr7=%02x a=%02x x=%02x y=%02x s=%02x p=%02x\n",
-+            count++, event_sequence, address, address >> 13, address & 0x1fff,
++            count, event_sequence, address, address >> 13, address & 0x1fff,
 +            ROMSpace[address], value, TheronTraceInstructionPC,
 +            TheronTraceInstructionPhysicalPC, HuCPU.MPR[0], HuCPU.MPR[1],
 +            HuCPU.MPR[2], HuCPU.MPR[3], HuCPU.MPR[4], HuCPU.MPR[5],
 +            HuCPU.MPR[6], HuCPU.MPR[7], HuCPU.A, HuCPU.X, HuCPU.Y,
 +            HuCPU.S, HuCPU.P) < 0 || fflush(trace) != 0)
 +  fputs("FIRESTAFF_THERON_PCE_FAST_CD_WRITER_PC_TRACE_ERROR error=write\n", stderr);
++ count++;
++ if(count == trace_limit)
++ {
++  if(fprintf(trace, "cd_ram_writer_pc_truncated sequence=%u limit=%u reason=sample-cap\n", count, trace_limit) < 0 || fflush(trace) != 0)
++   fputs("FIRESTAFF_THERON_PCE_FAST_CD_WRITER_PC_TRACE_ERROR error=truncation-marker\n", stderr);
++ }
 +}
 +
  static DECLFW(HuCRAMWrite)

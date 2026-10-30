@@ -55,6 +55,10 @@ def main() -> None:
     report = verifier.classify([fetch], wrong_reader, writes, {})
     if report["matching_writes_without_source_read_candidate_within_16_events"] != 1:
         raise AssertionError("non-EA99 read was accepted as a source candidate")
+    if report["fetch_rows_fully_candidate_backed"] != 1:
+        raise AssertionError("matching writes were conflated with missing source candidates")
+    if report["fetch_rows_fully_source_candidate_backed"] != 0:
+        raise AssertionError("row without all source candidates was fully source-backed")
 
     delayed_and_repeated = [*reads[:-1],
                             {**reads[-1], "event_sequence": "27"},

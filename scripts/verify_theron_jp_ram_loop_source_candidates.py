@@ -171,7 +171,7 @@ def classify(
                 candidates = candidate_events[candidate_start:candidate_end]
                 if not candidates:
                     missing_source_reads += 1
-                    byte_results.append(False)
+                    byte_results.append(True)
                     source_results.append(False)
                     continue
                 source_read_matches += 1
