@@ -144,8 +144,10 @@ def verify_code_fetch_rows(path: Path) -> list[dict[str, str]]:
     if not lines or lines[0] not in {
         "source=mednafen-pce-fast-system-card-controller-dispatch-v2",
         "source=mednafen-pce-fast-system-card-controller-dispatch-v3 code_fetch_scope=targeted",
+        "source=mednafen-pce-fast-system-card-controller-dispatch-v4 code_fetch_scope=targeted-consumer-boundaries",
     }:
         raise ValueError("unexpected System Card dispatch trace header")
+    is_v4 = lines[0].endswith("code_fetch_scope=targeted-consumer-boundaries")
     rows: list[dict[str, str]] = []
     previous_event = -1
     for line_no, line in enumerate(lines[1:], 2):
@@ -166,6 +168,14 @@ def verify_code_fetch_rows(path: Path) -> list[dict[str, str]]:
             raise ValueError(f"non-increasing code-fetch event sequence at line {line_no}")
         previous_event = event
         pc = int(row["logical_pc"], 16)
+        if is_v4:
+            allowed_pcs = (
+                {0x40D9, 0x42AB, 0x42B2, 0x44C1, 0x44D2}
+                if prefix == "code_fetch"
+                else {0x6138, 0x613A, 0x613D, 0x613F, 0x6142, 0x6144, 0x6148}
+            )
+            if pc not in allowed_pcs:
+                raise ValueError(f"code-fetch PC outside v4 target set at line {line_no}")
         pc_range = (0x6000, 0x7FFF) if prefix == "code_fetch_extended" else (0x4000, 0x5FFF)
         if not pc_range[0] <= pc <= pc_range[1]:
             raise ValueError(f"code-fetch PC outside traced window at line {line_no}")

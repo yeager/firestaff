@@ -15,7 +15,7 @@
 +    trace = fopen(path, "w");
 +    if(trace)
 +    {
-+     fprintf(trace, "source=mednafen-pce-fast-system-card-controller-dispatch-v3 code_fetch_scope=targeted\n");
++     fprintf(trace, "source=mednafen-pce-fast-system-card-controller-dispatch-v4 code_fetch_scope=targeted-consumer-boundaries\n");
 +     fflush(trace);
 +    }
 +   }
@@ -76,7 +76,8 @@
 +   static unsigned int code_fetch_trace_count = 0;
 +   static unsigned int code_fetch_truncation_marker_emitted = 0;
 +   const unsigned int pc = TheronTraceInstructionPC;
-+   if(pc == 0x40D9 && code_fetch_trace_count < 262144)
++   if((pc == 0x40D9 || pc == 0x42AB || pc == 0x42B2 ||
++       pc == 0x44C1 || pc == 0x44D2) && code_fetch_trace_count < 262144)
 +   {
 +    extern uint32 TheronTraceCDSharedEventSequence;
 +    uint8 opcode_bytes[3] = {0, 0, 0};
@@ -105,10 +106,11 @@
 +    fflush(trace);
 +    code_fetch_trace_count++;
 +   }
-+   else if(pc == 0x40D9 && !code_fetch_truncation_marker_emitted)
++   else if((pc == 0x40D9 || pc == 0x42AB || pc == 0x42B2 ||
++            pc == 0x44C1 || pc == 0x44D2) && !code_fetch_truncation_marker_emitted)
 +   {
 +    extern uint32 TheronTraceCDSharedEventSequence;
-+    fprintf(trace, "code_fetch_truncated event_sequence=%u window=40d9 cap=262144\n",
++    fprintf(trace, "code_fetch_truncated event_sequence=%u window=40d9,42ab,42b2,44c1,44d2 cap=262144\n",
 +            TheronTraceCDSharedEventSequence++);
 +    fflush(trace);
 +    code_fetch_truncation_marker_emitted = 1;
@@ -116,7 +118,7 @@
 +   static unsigned int extended_code_fetch_trace_count = 0;
 +   static unsigned int extended_code_fetch_truncation_marker_emitted = 0;
 +   if((pc == 0x6138 || pc == 0x613A || pc == 0x613D ||
-+       pc == 0x613F || pc == 0x6142 || pc == 0x6144) &&
++       pc == 0x613F || pc == 0x6142 || pc == 0x6144 || pc == 0x6148) &&
 +      extended_code_fetch_trace_count < 262144)
 +   {
 +    extern uint32 TheronTraceCDSharedEventSequence;
@@ -147,11 +149,11 @@
 +    extended_code_fetch_trace_count++;
 +   }
 +   else if((pc == 0x6138 || pc == 0x613A || pc == 0x613D ||
-+            pc == 0x613F || pc == 0x6142 || pc == 0x6144) &&
++            pc == 0x613F || pc == 0x6142 || pc == 0x6144 || pc == 0x6148) &&
 +           !extended_code_fetch_truncation_marker_emitted)
 +   {
 +    extern uint32 TheronTraceCDSharedEventSequence;
-+    fprintf(trace, "code_fetch_truncated event_sequence=%u window=6138-6144 cap=262144\n",
++    fprintf(trace, "code_fetch_truncated event_sequence=%u window=6138-6148 cap=262144\n",
 +            TheronTraceCDSharedEventSequence++);
 +    fflush(trace);
 +    extended_code_fetch_truncation_marker_emitted = 1;

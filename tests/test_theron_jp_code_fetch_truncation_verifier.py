@@ -36,6 +36,14 @@ def main() -> None:
             ("6000-7fff", "source=mednafen-pce-fast-system-card-controller-dispatch-v2"),
             ("40d9", "source=mednafen-pce-fast-system-card-controller-dispatch-v3 code_fetch_scope=targeted"),
             ("6138-6144", "source=mednafen-pce-fast-system-card-controller-dispatch-v3 code_fetch_scope=targeted"),
+            (
+                "40d9,42ab,42b2,44c1,44d2",
+                "source=mednafen-pce-fast-system-card-controller-dispatch-v4 code_fetch_scope=targeted-consumer-boundaries",
+            ),
+            (
+                "6138-6148",
+                "source=mednafen-pce-fast-system-card-controller-dispatch-v4 code_fetch_scope=targeted-consumer-boundaries",
+            ),
         )
         for window, header in cases:
             marker = f"code_fetch_truncated event_sequence=1 window={window} cap=262144\n"
@@ -52,7 +60,7 @@ def main() -> None:
                 lambda: target_fetch.reconcile(target_path, fetch_path),
             )
 
-        valid_target = root / "valid-v3.cd-ram-target-write"
+        valid_target = root / "valid-v4.cd-ram-target-write"
         target_addresses = (0x1000D9, 0x1000DA, 0x1000DB, 0x10468D, 0x10468E)
         target_values = (0xA9, 0x4C, 0x8D, 0x60, 0xEA)
         target_rows = ["source=mednafen-pce-fast-cd-ram-target-write"]
@@ -66,35 +74,54 @@ def main() -> None:
             )
         valid_target.write_text("\n".join(target_rows) + "\n", encoding="ascii")
 
-        valid_v3 = root / "valid-v3.system-card-dispatch"
-        valid_v3.write_text(
-            "source=mednafen-pce-fast-system-card-controller-dispatch-v3 code_fetch_scope=targeted\n"
+        valid_v4 = root / "valid-v4.system-card-dispatch"
+        valid_v4.write_text(
+            "source=mednafen-pce-fast-system-card-controller-dispatch-v4 code_fetch_scope=targeted-consumer-boundaries\n"
             "code_fetch event_sequence=5 logical_pc=40d9 physical_pc=1000d9 "
             "mpr0=00 mpr1=00 mpr2=80 mpr3=00 mpr4=00 mpr5=00 mpr6=00 mpr7=00 "
-            "bytes=a94c8d physical_bytes=1000d9,1000da,1000db valid_mask=7\n",
+            "bytes=a94c8d physical_bytes=1000d9,1000da,1000db valid_mask=7\n"
+            "code_fetch_extended event_sequence=6 logical_pc=6148 physical_pc=102148 "
+            "mpr0=00 mpr1=00 mpr2=00 mpr3=81 mpr4=00 mpr5=00 mpr6=00 mpr7=00 "
+            "bytes=4c0040 physical_bytes=102148,102149,10214a valid_mask=7\n",
             encoding="ascii",
         )
-        rows = source_bound.verify_code_fetch_rows(valid_v3)
-        if len(rows) != 1 or rows[0]["logical_pc"] != "40d9":
-            raise AssertionError("source-bound verifier did not accept a complete targeted v3 fetch")
-        counts = target_fetch.reconcile(valid_target, valid_v3)
+        rows = source_bound.verify_code_fetch_rows(valid_v4)
+        if len(rows) != 2 or rows[0]["logical_pc"] != "40d9" or rows[1]["logical_pc"] != "6148":
+            raise AssertionError("source-bound verifier did not accept complete targeted v4 fetch rows")
+        counts = target_fetch.reconcile(valid_target, valid_v4)
         if counts[3] != 3 or counts[4] != 0 or counts[5] != 0:
-            raise AssertionError("target-fetch verifier did not reconcile complete targeted v3 rows")
+            raise AssertionError("target-fetch verifier did not reconcile complete targeted v4 rows")
+        invalid_v4 = root / "invalid-v4.system-card-dispatch"
+        invalid_v4.write_text(
+            valid_v4.read_text(encoding="ascii").replace("logical_pc=6148", "logical_pc=6149"),
+            encoding="ascii",
+        )
+        for label, callback in (
+            ("source-bound verifier", lambda: source_bound.verify_code_fetch_rows(invalid_v4)),
+            ("target-fetch verifier", lambda: target_fetch.reconcile(valid_target, invalid_v4)),
+        ):
+            try:
+                callback()
+            except ValueError as error:
+                if "outside v4 target set" not in str(error):
+                    raise AssertionError(f"{label} rejected an unlisted PC for the wrong reason: {error}") from error
+            else:
+                raise AssertionError(f"{label} accepted a v4 code-fetch PC outside its target set")
         result = subprocess.run(
             [
                 sys.executable,
                 str(repo / "scripts/verify_theron_jp_fetch_target_writes.py"),
                 str(valid_target),
-                str(valid_v3),
+                str(valid_v4),
             ],
             check=False,
             capture_output=True,
             text=True,
         )
         if result.returncode != 0 or "address_10468d_fetch_bytes=0" not in result.stdout:
-            raise AssertionError("target-fetch CLI did not report unobserved v3 addresses as zero")
+            raise AssertionError("target-fetch CLI did not report unobserved candidate addresses as zero")
 
-    print("PASS: both JP code-fetch verifiers reject v2/v3 truncation and source verifier accepts complete v3 rows")
+    print("PASS: both JP code-fetch verifiers reject v2/v3/v4 truncation and reconcile complete v4 rows")
 
 
 if __name__ == "__main__":

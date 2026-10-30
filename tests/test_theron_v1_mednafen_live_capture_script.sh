@@ -1728,16 +1728,17 @@ if ! grep -Fq 'FIRESTAFF_THERON_PCE_FAST_CODE_RAM_WRITE_TRACE_ERROR' "$code_ram_
     exit 1
 fi
 system_card_dispatch_patch=$repo/scripts/mednafen_1.32.1_theron_system_card_controller_dispatch_trace.patch
-if ! grep -Fq 'code_fetch_scope=targeted' "$system_card_dispatch_patch" ||
-   ! grep -Fq 'pc == 0x40D9 && code_fetch_trace_count < 262144' "$system_card_dispatch_patch" ||
+if ! grep -Fq 'code_fetch_scope=targeted-consumer-boundaries' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'pc == 0x40D9 || pc == 0x42AB || pc == 0x42B2' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'pc == 0x44C1 || pc == 0x44D2' "$system_card_dispatch_patch" ||
    ! grep -Fq 'pc == 0x6138 || pc == 0x613A || pc == 0x613D' "$system_card_dispatch_patch" ||
-   ! grep -Fq 'pc == 0x613F || pc == 0x6142 || pc == 0x6144' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'pc == 0x613F || pc == 0x6142 || pc == 0x6144 || pc == 0x6148' "$system_card_dispatch_patch" ||
    grep -Fq 'pc >= 0x4000 && pc <= 0x5FFF' "$system_card_dispatch_patch" ||
    grep -Fq 'pc >= 0x6000 && pc <= 0x7FFF' "$system_card_dispatch_patch" ||
    ! grep -Fq 'code_fetch_extended event_sequence=%u logical_pc=%04x' "$system_card_dispatch_patch" ||
-   ! grep -Fq 'code_fetch_truncated event_sequence=%u window=40d9 cap=262144' "$system_card_dispatch_patch" ||
-   ! grep -Fq 'code_fetch_truncated event_sequence=%u window=6138-6144 cap=262144' "$system_card_dispatch_patch" ||
-   ! grep -Fq 'source=mednafen-pce-fast-system-card-controller-dispatch-v3 code_fetch_scope=targeted' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'code_fetch_truncated event_sequence=%u window=40d9,42ab,42b2,44c1,44d2 cap=262144' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'code_fetch_truncated event_sequence=%u window=6138-6148 cap=262144' "$system_card_dispatch_patch" ||
+   ! grep -Fq 'source=mednafen-pce-fast-system-card-controller-dispatch-v4 code_fetch_scope=targeted-consumer-boundaries' "$system_card_dispatch_patch" ||
    ! grep -Fq '!code_fetch_truncation_marker_emitted' "$system_card_dispatch_patch" ||
    ! grep -Fq '!extended_code_fetch_truncation_marker_emitted' "$system_card_dispatch_patch" ||
    ! grep -Fq 'line.startswith("code_fetch_extended ")' "$repo/scripts/verify_theron_jp_cd_ram_writer_pc_trace.py" ||

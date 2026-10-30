@@ -884,9 +884,26 @@ assets, mechanics, or parity.
   `$6138/$613A/$613D/$613F/$6142/$6144` without a code-fetch overflow marker.
   Authentic Track 02 reads and guest writes back the 37 observed `$40D9` rows
   at `$1000D9-$1000DB`; this remains loader/firmware provenance, not a game
-  handoff. The wrapper hit its default input-trace cap before the final replay
-  event had a matching controller read, and the source-read/writer traces also
-  hit their row limits. Repeat with larger limits to establish complete input
-  and source chronology, then bind the fetched bytes to a game-owned consumer
-  before enabling further Theron gameplay behavior. See
+  handoff. A v4 replay with larger input and source/writer limits later
+  established all scheduled events at the System Card poll and authenticated
+  the observed Track 02 reads; its separate main-RAM consumer trace still hit
+  its sample limit. Bind the fetched bytes to a game-owned consumer before
+  enabling further Theron gameplay behavior. See
+  `docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md`.
+
+## 2026-10-30 — v4 input and consumer evidence remains firmware bounded
+
+- The v4 cold replay removed the input-trace cap as a blocker: all 11 scheduled
+  events were followed by a System Card poll at `$E4C5`. It still observed no
+  non-System-Card poll, CD IRQ, authenticated CD-to-RAM receipt, `$E009`
+  dispatch, or gameplay transition. Treat `$42AB/$42B2` and the extended
+  writer fetches as candidate boundaries until their caller and ownership are
+  source-bound.
+- The source-read verifier matched 483,328 authentic Track 02 reads with no
+  unbound reads; the `$EA9C` writer rows had ordered value candidates. The
+  main-RAM consumer trace hit its independent sample limit, and three bytes
+  differ from the latest observed writer in the broader fetch comparison.
+- Next, identify the caller and ownership of the candidate PCs and follow a
+  source-authenticated transfer to a game-owned poll and visible gameplay
+  state. Do not infer gameplay parity from the BIOS poll or loader bytes. See
   `docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md`.

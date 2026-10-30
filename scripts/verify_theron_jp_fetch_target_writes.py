@@ -28,6 +28,7 @@ TARGET_HEADER = "source=mednafen-pce-fast-cd-ram-target-write"
 FETCH_HEADERS = {
     "source=mednafen-pce-fast-system-card-controller-dispatch-v2",
     "source=mednafen-pce-fast-system-card-controller-dispatch-v3 code_fetch_scope=targeted",
+    "source=mednafen-pce-fast-system-card-controller-dispatch-v4 code_fetch_scope=targeted-consumer-boundaries",
 }
 
 
@@ -90,6 +91,7 @@ def reconcile(target_path: Path, fetch_path: Path) -> tuple[dict[int, int], dict
     lines = fetch_path.read_text(encoding="ascii").splitlines()
     if not lines or lines[0] not in FETCH_HEADERS:
         raise ValueError("unexpected System Card dispatch trace header")
+    is_v4 = lines[0].endswith("code_fetch_scope=targeted-consumer-boundaries")
     previous_event = -1
     fetch_bytes = defaultdict(int)
     write_counts = {address: len(writes.get(address, ())) for address in TARGET_ADDRESSES}
@@ -116,6 +118,14 @@ def reconcile(target_path: Path, fetch_path: Path) -> tuple[dict[int, int], dict
             raise ValueError(f"non-increasing code-fetch event sequence at line {line_number}")
         previous_event = event
         pc = int(row["logical_pc"], 16)
+        if is_v4:
+            allowed_pcs = (
+                {0x40D9, 0x42AB, 0x42B2, 0x44C1, 0x44D2}
+                if prefix == "code_fetch"
+                else {0x6138, 0x613A, 0x613D, 0x613F, 0x6142, 0x6144, 0x6148}
+            )
+            if pc not in allowed_pcs:
+                raise ValueError(f"code-fetch PC outside v4 target set at line {line_number}")
         mprs = [int(row[f"mpr{i}"], 16) for i in range(8)]
         pc_range = (0x6000, 0x7FFF) if prefix == "code_fetch_extended" else (0x4000, 0x5FFF)
         if not pc_range[0] <= pc <= pc_range[1]:

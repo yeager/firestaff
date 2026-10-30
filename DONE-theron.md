@@ -9536,3 +9536,24 @@ native rendering, or Theron parity. The private evidence bundle is at
   diagnostic evidence only. It proves no game-owned input, gameplay handoff,
   or Theron parity; see `TODO-theron.md` for the remaining capture and consumer
   work.
+
+## 2026-10-30 — v4 cold input and consumer trace
+
+- Narrowed the reference-only Mednafen PCE Fast dispatch trace to five
+  candidate consumer PCs and seven extended writer PCs. Both verifier scripts
+  now enforce that exact v4 PC allowlist while retaining v2/v3 compatibility;
+  the regression rejects unlisted v4 addresses.
+- On TRV2, the complete instrumented Mednafen patch set applied and built with
+  PCE Fast enabled using `-j1`. The focused Python verifier passed three
+  consecutive loops, and the live-capture wrapper test passed.
+- A cold capture with authentic JP Rev. 1 Track 02 and System Card 3.0
+  recorded 15,351 consumer-boundary fetches and seven extended writer fetches
+  (15,358 total) and 11/11 scripted events followed by the System Card
+  `$E4C5` poll. Source
+  verification matched 483,328 authentic data reads with no unbound reads;
+  all five targeted guest-write addresses had 111 prior matching fetch bytes.
+- The run ended `BLOCKED` at its time limit. No game-owned poll, CD IRQ,
+  authenticated CD-to-RAM receipt, `$E009` dispatch, or gameplay transition
+  was observed. This is reference instrumentation and evidence only, not
+  native Theron parity. Remaining ownership and gameplay gaps are in
+  `TODO-theron.md`.

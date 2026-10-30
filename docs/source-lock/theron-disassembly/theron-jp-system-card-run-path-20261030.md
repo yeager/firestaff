@@ -329,3 +329,59 @@ guest target writes:
 
 The original media and raw traces remain private on TRV2; they were not
 copied into the repository.
+
+## 2026-10-30 — targeted cold consumer and poll trace v4
+
+A further cold PCE Fast reference capture used the same hash-verified Japanese
+Rev. 1 Track 02 (MD5 `b7afb338ad31be1025b53f9aff12d73a`) and System Card 3.0
+(MD5 `ff1a674273fe3540ccef576376407d1d`). No save state was loaded. The
+instrumentation narrowed code fetches to the five candidate boundaries
+`$40D9`, `$42AB`, `$42B2`, `$44C1`, `$44D2` and the seven writer PCs
+`$6138/$613A/$613D/$613F/$6142/$6144/$6148`. The input trace budget was raised
+to 8,388,608 reads; the CD read, CD-RAM target-write and writer-PC limits were
+each raised to 1,048,576.
+
+The trace contains 15,351 consumer-boundary fetch rows plus seven extended
+writer fetches (15,358 total), with no code-fetch truncation marker. Counts
+were 37 at `$40D9`, 6,144 each at `$42AB/$42B2`, 1,511 at `$44C1`, and 1,515
+at `$44D2`; each extended writer PC occurred once. The source-bound verifier
+accepted 483,328 reads from authentic Track 02 with zero unbound reads. All 327,680
+observed `$EA9C` writer bytes had ordered, value-matching read candidates.
+Across the five previously tracked target addresses, 111 fetched bytes had a
+preceding matching observed guest write, with zero missing or mismatching
+latest writes. The broader fetch/write comparison found 46,071 matching bytes,
+three bytes differing from the latest observed writer, and 15,357 fully backed
+fetch rows. The guest-write observer is bounded to the hooked write paths; it
+is not an exhaustive bus-writer census.
+
+All 11 scripted input events were followed by a System Card poll read at
+`$E4C5`; no non-System-Card poll was observed. The capture ended at its 250
+second timeout and the transition receipt remains `missing`: zero CD IRQs,
+zero authenticated CD-to-RAM receipts, zero `$E009` dispatches, and no gameplay
+transition. The main-RAM consumer observer reached its own 65,536-sample cap.
+This closes the input-delivery timing gap for the scripted cold replay and
+extends bounded writer/fetch evidence. It does not prove that `$42AB/$42B2` or
+the extended writer code is game-owned, establish a complete CD transfer, or
+demonstrate native Theron's Quest parity.
+
+The temporary capture directory on TRV2 was
+`/dev/shm/theron-system-card-targeted-v4-cold-20261030/`; it was removed after
+verification and recording these hashes. Raw media and trace files are not in
+Git.
+
+- Dispatch/code-fetch trace SHA-256:
+  `8ec140737bd07dab0e0da005d5469b998b4c141117aec75ecccbd46bcdbe63d7`.
+- Scripted input receipt SHA-256:
+  `0db985e4c82ae234134f74655e53e98756c9da6d990a5b01a87fe08927eb8068`.
+- Transition receipt SHA-256:
+  `5bb329081e17d14defb4d2fa6e31c5c550e47005367afa34d23eeba7003a59e4`.
+- Source-bound CD read trace SHA-256:
+  `d0758a82fb9bd02668116e5b339b84f18834307413e32ad5c8a3f8022e35262f`.
+- CD-RAM writer-PC trace SHA-256:
+  `61e9addccbed7772c1c9b6d756ebcd79864fad0c02fab174e63bc0b5382a6335`.
+- CD-RAM target-write trace SHA-256:
+  `ab1edc5fb6456e243857c727b6cef04f64c3c287997e9b6269cf57829d2fc123`.
+- Input trace SHA-256:
+  `679ac83c4334b21e9f5e4a7ee3b7fe610daa1d640df5f9515253eaf1fd79ff79`.
+
+The raw media and traces remain private and are not included in Git.
