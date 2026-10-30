@@ -1091,7 +1091,8 @@ if [[ ! -f "$pce_fast_movement_context_instrumenter" ]] ||
    ! grep -Fq 'frame=%u' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'mpr0=%02x' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'mpr7=%02x' "$pce_fast_movement_context_instrumenter" ||
-   ! grep -Fq 'TheronPCEFastMovementTIIPositionCommit' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'TheronPCEFastMovementTIICandidateStateTransfer' "$pce_fast_movement_context_instrumenter" ||
+   ! grep -Fq 'tii_candidate_state_transfer sequence=%u' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'TheronTraceInstructionPC == 0xC1FC' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'HuCPU.in_block_move == IBM_TII' "$pce_fast_movement_context_instrumenter" ||
    ! grep -Fq 'source_physical_address=%06x' "$pce_fast_movement_context_instrumenter" ||

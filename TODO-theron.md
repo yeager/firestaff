@@ -9236,7 +9236,7 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   save state. Active-map identity, collision evidence, Firestaff runtime
   comparison, and Theron movement parity remain open; see the source-lock note.
 - A follow-up build with the corrected `$C1FC` TII gate recorded two
-  `tii_position_commit` rows with source `$1F00B4/$1F00B5`, source value `$03`,
+  `tii_candidate_state_transfer` rows with source `$1F00B4/$1F00B5`, source value `$03`,
   and matching destinations `$1F0040/$1F0041`. The hooks cover their explicit
   `WrMem()` and selected zero-page paths, not every possible physical RAM
   writer; this bounded capture does not establish an exhaustive write census.

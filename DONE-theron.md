@@ -9449,7 +9449,7 @@ native rendering, or Theron parity. The private evidence bundle is at
   remain private on TRV2. See
   `docs/source-lock/theron-disassembly/theron-pce-fast-tii-position-observer-20261029.md`.
 - The follow-up capture with the corrected `$C1FC` gate emitted both
-  `tii_position_commit` rows, including source physical addresses, source bytes,
+  `tii_candidate_state_transfer` rows, including source physical addresses, source bytes,
   destination addresses, opcode MPR and physical PC. These rows are bounded to
   the observer's hooked `WrMem()` path; they do not establish an exhaustive
   census of physical RAM writes or gameplay parity.

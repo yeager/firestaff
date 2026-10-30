@@ -46,7 +46,7 @@ static unsigned TheronPCEFastInputLatchWriteCount;
 static unsigned TheronPCEFastRuntimeStateWriteCount;
 static unsigned TheronPCEFastMainRAMWriteCount;
 static unsigned TheronPCEFastMovementStateWriteCount;
-static unsigned TheronPCEFastTIIPositionCommitCount;
+static unsigned TheronPCEFastTIICandidateStateTransferCount;
 static unsigned TheronPCEFastMovementContextLimit(void)
 {
  static unsigned limit;
@@ -161,11 +161,11 @@ static void TheronPCEFastMovementRuntimeStateWrite(uint8 zero_page_address,
  TheronPCEFastMovementContext("runtime_state_write", logical_address,
                               physical_address, value);
 }
-static void TheronPCEFastMovementTIIPositionCommit(unsigned int logical_address,
+static void TheronPCEFastMovementTIICandidateStateTransfer(unsigned int logical_address,
                                                     unsigned int physical_address,
                                                     uint8 value)
 {
- if(TheronPCEFastTIIPositionCommitCount >= TheronPCEFastMovementContextLimit() ||
+ if(TheronPCEFastTIICandidateStateTransferCount >= TheronPCEFastMovementContextLimit() ||
     TheronPCEFastScriptFrame < TheronPCEFastMovementContextStartFrame())
   return;
  if(!TheronPCEFastMovementContextTrace)
@@ -187,8 +187,8 @@ static void TheronPCEFastMovementTIIPositionCommit(unsigned int logical_address,
   const uint8 pc_mpr = HuCPU.MPR[pc >> 13];
   const unsigned int bmt_remaining = HuCPU.bmt_length;
   fprintf(TheronPCEFastMovementContextTrace,
-          "tii_position_commit sequence=%u frame=%u logical_address=%04x physical_address=%06x value=%02x opcode_pc=%04x opcode_mpr=%02x opcode_physical_pc=%06x bmt_remaining=%04x source_logical_address=%04x source_physical_address=%06x source_value=%02x source_mpr=%02x destination_logical_address=%04x destination_physical_address=%06x destination_mpr=%02x mpr1=%02x\n",
-          TheronPCEFastTIIPositionCommitCount++, TheronPCEFastScriptFrame,
+          "tii_candidate_state_transfer sequence=%u frame=%u logical_address=%04x physical_address=%06x value=%02x opcode_pc=%04x opcode_mpr=%02x opcode_physical_pc=%06x bmt_remaining=%04x source_logical_address=%04x source_physical_address=%06x source_value=%02x source_mpr=%02x destination_logical_address=%04x destination_physical_address=%06x destination_mpr=%02x mpr1=%02x\n",
+          TheronPCEFastTIICandidateStateTransferCount++, TheronPCEFastScriptFrame,
           logical_address, physical_address, value, pc, pc_mpr,
           (pc_mpr << 13) | (pc & 0x1FFF), bmt_remaining, source_logical,
           source_physical, value, source_mpr,
@@ -242,7 +242,7 @@ static void TheronPCEFastMovementStateWrite(const char *write_path,
     replace_once(huc, "static INLINE uint8 RdMem(unsigned int A)\n{\n uint8 wmpr = HuCPU.MPR[A >> 13];\n uint32 physical_address = (wmpr << 13) | (A & 0x1FFF);\n uint8 value = HuCPU.PCERead[wmpr](physical_address);\n if(TheronPointerAddress(A) ||\n    TheronPointerCodePC(TheronTraceInstructionPC))\n  TheronTracePointerAccess(\"guest_read\", A, physical_address, value, wmpr);\n TheronTraceMainRAMConsumerRead(A, physical_address, value);\n return(value);\n}\n",
                  helpers + "\nstatic INLINE uint8 RdMem(unsigned int A)\n{\n uint8 wmpr = HuCPU.MPR[A >> 13];\n uint32 physical_address = (wmpr << 13) | (A & 0x1FFF);\n uint8 value = HuCPU.PCERead[wmpr](physical_address);\n if(TheronPointerAddress(A) ||\n    TheronPointerCodePC(TheronTraceInstructionPC))\n  TheronTracePointerAccess(\"guest_read\", A, physical_address, value, wmpr);\n TheronTraceMainRAMConsumerRead(A, physical_address, value);\n if(physical_address >= 0x0e8a00 && physical_address <= 0x0e8aff)\n  TheronPCEFastMovementContext(\"movement_data_read\", A, physical_address, value);\n return(value);\n}\n")
     replace_once(huc, "static INLINE void WrMem(unsigned int A, uint8 V)\n{\n uint8 wmpr = HuCPU.MPR[A >> 13];\n uint32 physical = (wmpr << 13) | (A & 0x1FFF);\n if(TheronPointerAddress(A) || TheronPointerCandidateAddress(A) ||\n    TheronPointerCodePC(TheronTraceInstructionPC))\n  TheronTracePointerAccess(\"guest_write\", A, physical, V, wmpr);\n HuCPU.PCEWrite[wmpr](physical, V);\n}\n",
-                 "static INLINE void WrMem(unsigned int A, uint8 V)\n{\n uint8 wmpr = HuCPU.MPR[A >> 13];\n uint32 physical = (wmpr << 13) | (A & 0x1FFF);\n if(TheronPointerAddress(A) || TheronPointerCandidateAddress(A) ||\n    TheronPointerCodePC(TheronTraceInstructionPC))\n  TheronTracePointerAccess(\"guest_write\", A, physical, V, wmpr);\n if(A == 0x2905)\n  TheronPCEFastMovementContext(\"movement_command_write\", A, physical, V);\n if(TheronTraceInstructionPC == 0xC1FC && HuCPU.in_block_move == IBM_TII &&\n    HuCPU.MPR[1] == 0xF8 && A >= 0x2040 && A <= 0x2041)\n  TheronPCEFastMovementTIIPositionCommit(A, physical, V);\n if(A == 0x2911 || A == 0x2912 || A == 0x2920)\n  TheronPCEFastMovementContext(\"input_latch_write\", A, physical, V);\n if(TheronPCEFastMovementContextMainRAMRangeContains(physical))\n  TheronPCEFastMovementContext(\"main_ram_write\", A, physical, V);\n if(A == 0x2031 || (A >= 0x203f && A <= 0x2041))\n  TheronPCEFastMovementContext(\"runtime_state_write\", A, physical, V);\n HuCPU.PCEWrite[wmpr](physical, V);\n}\n")
+                 "static INLINE void WrMem(unsigned int A, uint8 V)\n{\n uint8 wmpr = HuCPU.MPR[A >> 13];\n uint32 physical = (wmpr << 13) | (A & 0x1FFF);\n if(TheronPointerAddress(A) || TheronPointerCandidateAddress(A) ||\n    TheronPointerCodePC(TheronTraceInstructionPC))\n  TheronTracePointerAccess(\"guest_write\", A, physical, V, wmpr);\n if(A == 0x2905)\n  TheronPCEFastMovementContext(\"movement_command_write\", A, physical, V);\n if(TheronTraceInstructionPC == 0xC1FC && HuCPU.in_block_move == IBM_TII &&\n    HuCPU.MPR[1] == 0xF8 && A >= 0x2040 && A <= 0x2041)\n  TheronPCEFastMovementTIICandidateStateTransfer(A, physical, V);\n if(A == 0x2911 || A == 0x2912 || A == 0x2920)\n  TheronPCEFastMovementContext(\"input_latch_write\", A, physical, V);\n if(TheronPCEFastMovementContextMainRAMRangeContains(physical))\n  TheronPCEFastMovementContext(\"main_ram_write\", A, physical, V);\n if(A == 0x2031 || (A >= 0x203f && A <= 0x2041))\n  TheronPCEFastMovementContext(\"runtime_state_write\", A, physical, V);\n HuCPU.PCEWrite[wmpr](physical, V);\n}\n")
 
     replace_once(
         huc,
