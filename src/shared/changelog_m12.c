@@ -19,6 +19,7 @@ static const char* const g_changelogLines[] = {
     "V" FIRESTAFF_VERSION_NUMBER "  (2026-10-30)",
     "  - Change DM1 and Nexus startup logging to require the --debug option.",
     "  - The launcher discovers authentic nested DM1 Atari ST v1.2 media and renamed CSB FM Towns ZIP packages; CSB Atari ST item rendering uses source item aspects and authentic C559 projectile selectors.",
+    "  - CSB Atari ST viewport diagnostics report the first rejected runtime stage when debug movement tracing is enabled; the mixed-media regression also protects the authentic Atari utility archive.",
     "  - Nexus supplemental disc resources are bound to the authentic region identified by extracted game files.",
     "  - Real-media alternate-platform launcher handoffs receive expanded coverage for DM1, CSB, and DM2.",
     "  - Theron decoded-buffer copies and JP input-poll provenance are source-checked; PCE Fast traces sequence movement events, bind CD-to-RAM joins to the target writer, and follow the JP System Card Run path without establishing a game handoff or parity.",

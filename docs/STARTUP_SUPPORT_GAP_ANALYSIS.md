@@ -1,7 +1,7 @@
 # Five-game startup support gap analysis
 
 Evidence metadata refreshed on 2026-10-30 for the v3.0.421 candidate, based on
-`main` at `705c9b1a429680a8586fce2e5ca16414c1cf7afe` plus the candidate's
+`main` at `38ebdb04c85a207eafa32bbd6f281cff7dc2434` plus the candidate's
 unpublished Nexus CUE-only admission change from `76ffafc5c`. The latest published release
 remains v3.0.420 (published 2026-10-29 from tag commit
 `8224d5c8`); the candidate contains later source changes that are not in that

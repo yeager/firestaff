@@ -21,6 +21,7 @@
 - `Nexus CUE-only startup`: verify direct CLI and pointer-menu handoff from authentic CUE/BIN tracks, and reject a selected non-Nexus CUE beside a valid Nexus disc.
 - `Nexus title evidence`: update the evidence record with complete 224-row samples for two VDP2 serials sharing one VDP1 frame label; the VDP1 receipt remains incomplete and no separate pixel images or renderer parity are claimed.
 - `Nexus frame-join verifier`: replace assert-only checks with explicit failures so validation stays active under optimized Python.
+- `CSB Atari viewport diagnostics`: report the first rejected runtime stage when debug movement tracing is enabled; include and protect the authentic Atari utility archive in the mixed-media regression.
 - `Release metadata`: update the project version and reproducible SPDX source SBOM.
 
 ## Known limitations
