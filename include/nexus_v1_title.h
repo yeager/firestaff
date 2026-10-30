@@ -108,5 +108,9 @@ int nexus_v1_title_build_render_plan(const Nexus_TitleScreen *title,
 void nexus_render_title(const Nexus_TitleScreen *title,
                         Nexus_Framebuffer *fb,
                         int frame);
+/* Render the title portion of the boot timeline using boot-global frames. */
+int nexus_render_boot_title_frame(const Nexus_TitleScreen *title,
+                                  Nexus_Framebuffer *fb,
+                                  int boot_frame);
 
 #endif

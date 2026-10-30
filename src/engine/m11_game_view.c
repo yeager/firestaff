@@ -67229,13 +67229,10 @@ static void m11_nexus_startup_exec_boot_title_frame(
     nexus_fb_init(&nexusFb);
     if (!context->state ||
         !context->state->nexusState.retail_title_menu.configuration_active) {
-        nexus_render_title((const Nexus_TitleScreen*)(
-                               context->state
-                                   ? context->state->nexusTitleScreen
-                                   : NULL),
-                           &nexusFb,
-                           command->title_frame +
-                               nexus_title_boot_warning_frames());
+        (void)nexus_render_boot_title_frame(
+            (const Nexus_TitleScreen*)context->state->nexusTitleScreen,
+            &nexusFb,
+            context->state->nexusState.title_frame);
     }
     if (context->state && context->state->nexusState.retail_title_menu.menu_active) {
         (void)nexus_v1_retail_title_menu_render(
