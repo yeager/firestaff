@@ -232,6 +232,15 @@ PY
         printf 'FAIL: unsupported source assertion mode: %s\n' "$source_mode" >&2
         return 2
     fi
+    if [[ "$game_id" == nexus ]] && {
+        ! grep -Fq 'NEXUS STARTUP RECEIPT: status=blocked gameId=nexus' "$log" ||
+        ! grep -Fq 'blocker=title-vdp-owner-compositor-capture-required' "$log" ||
+        grep -Fq 'launch phase=runtime-entered game=nexus' "$log"
+    }; then
+        printf 'FAIL: Nexus menu route did not stop at its documented capture-gated title state\n' >&2
+        cat "$log" >&2
+        return 1
+    fi
     if [[ $(firestaff_sha256_file "$game_archive") != "$source_hash" ]]; then
         printf 'FAIL: original %s source changed during menu launch\n' "$game_id" >&2
         return 1
@@ -303,14 +312,17 @@ elif [[ -f "$data_root/dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip" ]]; then
     run_alternate_platform_picker_case dm1 \
         "$data_root/dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip" 2 Atari\ ST st12-en
 fi
-if [[ -f "$data_root/dm1/Dungeon-Master_Amiga_EN_Version-20.zip" ]]; then
+if [[ -f "$data_root/dm1/Dungeon-Master_Amiga_EN.zip" ]]; then
+    # This authentic HD archive contains the launchable nested Amiga image.
+    # Keep other Amiga archives out so the selector must use this source.
+    dm1_amiga_picker_root="$scratch/dm1-amiga-picker-data"
+    mkdir -p "$dm1_amiga_picker_root/dm1"
+    ln -s "$data_root/dm1/Dungeon-Master_Amiga_EN.zip" \
+        "$dm1_amiga_picker_root/dm1/Dungeon-Master_Amiga_EN.zip"
     run_alternate_platform_picker_case dm1 \
-        "$data_root/dm1/Dungeon-Master_Amiga_EN_Version-20.zip" 3 Amiga \
-        're:amiga(20-en|20-fr|20-de|21-en|36-multi|demo-en)'
-elif [[ -f "$data_root/dm1/Dungeon-Master_Amiga_EN.zip" ]]; then
-    run_alternate_platform_picker_case dm1 \
-        "$data_root/dm1/Dungeon-Master_Amiga_EN.zip" 3 Amiga \
-        're:amiga20-en'
+        "$data_root/dm1/Dungeon-Master_Amiga_EN.zip" 0 Amiga \
+        're:amiga20-en' \
+        "$dm1_amiga_picker_root"
 fi
 csb_amiga_archive="$data_root/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip"
 if [[ -f "$data_root/csb/Chaos Strikes Back (FTL).zip" ]]; then
@@ -443,9 +455,11 @@ run_default_root_game_picker_case() {
     local navigation=$3
     local edition=$4
     local platform=${5:-FM Towns}
-    local home="$scratch/default-root-$game_id-home"
-    local data_home="$scratch/default-data-$game_id-home"
-    local log="$scratch/default-root-$game_id.log"
+    local picker_data_root=${6:-$data_root}
+    local case_id=${7:-$game_id}
+    local home="$scratch/default-root-$case_id-home"
+    local data_home="$scratch/default-data-$case_id-home"
+    local log="$scratch/default-root-$case_id.log"
     local source_member=''
     local source_path
     local source_hash
@@ -460,7 +474,7 @@ run_default_root_game_picker_case() {
     source_hash=$(firestaff_sha256_file "$game_archive")
     mkdir -p "$home" "$data_home/.firestaff"
     if [[ ! -e "$data_home/.firestaff/data" ]]; then
-        ln -s "$data_root" "$data_home/.firestaff/data"
+        ln -s "$picker_data_root" "$data_home/.firestaff/data"
     fi
     (
         unset FIRESTAFF_DATA FIRESTAFF_ORIGINALS_DIR
@@ -485,8 +499,22 @@ run_default_root_game_picker_case() {
         printf 'FAIL: default .firestaff/data menu changed the original %s archive\n' "$game_id" >&2
         return 1
     fi
+    if [[ "$game_id" == nexus ]] && {
+        ! grep -Fq 'NEXUS STARTUP RECEIPT: status=blocked gameId=nexus' "$log" ||
+        ! grep -Fq 'blocker=title-vdp-owner-compositor-capture-required' "$log" ||
+        grep -Fq 'launch phase=runtime-entered game=nexus' "$log"
+    }; then
+        printf 'FAIL: default-root Nexus route did not stop at its documented capture-gated title state\n' >&2
+        cat "$log" >&2
+        return 1
+    fi
     printf 'PASS: default .firestaff/data menu launched authentic %s %s\n' "$game_id" "$platform"
 }
+
+nexus_source="$data_root/nexus/RLOWFIX.BIN"
+if [[ ! -f "$nexus_source" ]]; then
+    nexus_source="$nexus_dm"
+fi
 
 run_default_root_game_picker_case dm1 "$dm1_archive" \
     'wait-scan-complete,wait20,key:enter,wait20,key:enter,wait20,key:enter' fmtowns-en
@@ -497,8 +525,8 @@ run_default_root_game_picker_case dm2 "$dm2_archive" \
 
 # The other two games must resolve from the same documented default root.
 # Their retail startup media is a loose binary rather than a platform archive.
-if [[ -f "$nexus_dm" ]]; then
-    run_default_root_game_picker_case nexus "$nexus_dm" \
+if [[ -f "$nexus_source" ]]; then
+    run_default_root_game_picker_case nexus "$nexus_source" \
         'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
         nexus-saturn-jp Saturn
 elif has_authentic_nexus_cue; then
@@ -556,7 +584,6 @@ fi
 # Nexus and Theron use their original loose media in this data root. These
 # cases exercise the same five-game launcher selector without requiring the
 # user's separate archive tools or extracting/copying game data.
-nexus_source="$nexus_dm"
 theron_source="$theron_track"
 if [[ -f "$nexus_source" ]]; then
     run_game_picker_case nexus "$nexus_source" \
