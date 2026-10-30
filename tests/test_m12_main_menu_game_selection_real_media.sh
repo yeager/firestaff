@@ -9,12 +9,42 @@ data_root=$(CDPATH= cd -- "$data_root" && pwd -P)
 dm1_archive="$data_root/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"
 csb_archive="$data_root/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"
 dm2_archive="$data_root/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"
+nexus_dm="$data_root/nexus/DM.BIN"
+nexus_cue="$data_root/nexus/Dungeon Master Nexus (Japan).cue"
+theron_track="$data_root/theron/TQUS02.bin"
+
+has_authentic_nexus_cue() {
+    [[ -f "$nexus_cue" ]] || return 1
+    python3 - "$nexus_cue" <<'PY'
+import pathlib
+import re
+import sys
+
+cue = pathlib.Path(sys.argv[1])
+payloads = []
+for line in cue.read_text(errors="strict").splitlines():
+    match = re.match(r'\s*FILE\s+(?:"([^"]+)"|([^\s]+))', line, re.IGNORECASE)
+    if match:
+        payloads.append(cue.parent / (match.group(1) or match.group(2)))
+if not payloads or not all(path.is_file() for path in payloads):
+    raise SystemExit(1)
+PY
+}
+
 if [[ ! -x "$app" ]]; then
     echo 'SKIP: Firestaff executable is unavailable'
     exit 77
 fi
 if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 && ( ! -f "$dm1_archive" || ! -f "$csb_archive" || ! -f "$dm2_archive" ) ]]; then
     echo 'SKIP: authentic DM1, CSB and DM2 FM Towns archives are required'
+    exit 77
+fi
+if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 && ( ! -f "$nexus_dm" && ! -f "$nexus_cue" || ! -f "$theron_track" ) ]]; then
+    echo 'SKIP: authentic Nexus DM.BIN or Japanese CUE/BIN media and Theron TQUS02.bin are required for the five-game selector test'
+    exit 77
+fi
+if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 && ! -f "$nexus_dm" ]] && ! has_authentic_nexus_cue; then
+    echo 'SKIP: authentic Japanese Nexus CUE payloads are incomplete'
     exit 77
 fi
 
@@ -83,6 +113,30 @@ PY
     done < <(find "$source_game_dir" -maxdepth 1 \( -type f -o -type l \) \
         \( -iname '*.zip' -o -iname '*.stx' \) -print0)
 done
+
+if has_authentic_nexus_cue; then
+    original_sources+=("$nexus_cue")
+    original_source_hashes+=("$(firestaff_sha256_file "$nexus_cue")")
+    while IFS= read -r cue_payload; do
+        original_sources+=("$cue_payload")
+        original_source_hashes+=("$(firestaff_sha256_file "$cue_payload")")
+    done < <(python3 - "$nexus_cue" <<'PY'
+import pathlib
+import re
+import sys
+
+cue = pathlib.Path(sys.argv[1])
+for line in cue.read_text(errors="strict").splitlines():
+    match = re.match(r'\s*FILE\s+(?:"([^"]+)"|([^\s]+))', line, re.IGNORECASE)
+    if match:
+        print(cue.parent / (match.group(1) or match.group(2)))
+PY
+    )
+fi
+if [[ -f "$theron_track" ]]; then
+    original_sources+=("$theron_track")
+    original_source_hashes+=("$(firestaff_sha256_file "$theron_track")")
+fi
 
 if [[ ${#original_sources[@]} == 0 ]]; then
     echo 'SKIP: no authentic top-level ZIP archives are available for DM1, CSB or DM2'
@@ -443,26 +497,67 @@ run_default_root_game_picker_case dm2 "$dm2_archive" \
 
 # The other two games must resolve from the same documented default root.
 # Their retail startup media is a loose binary rather than a platform archive.
-if [[ -f "$data_root/nexus/DM.BIN" ]]; then
-    run_default_root_game_picker_case nexus "$data_root/nexus/DM.BIN" \
+if [[ -f "$nexus_dm" ]]; then
+    run_default_root_game_picker_case nexus "$nexus_dm" \
         'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
         nexus-saturn-jp Saturn
+elif has_authentic_nexus_cue; then
+    run_default_root_game_picker_case nexus "$nexus_cue" \
+        'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
+        nexus-saturn-jp-cue Saturn
 else
-    echo 'SKIP: authentic Nexus Saturn DM.BIN is unavailable for default-root startup'
+    echo 'SKIP: authentic Nexus Saturn media is unavailable for default-root startup'
 fi
-if [[ -f "$data_root/theron/TQUS02.bin" ]]; then
-    run_default_root_game_picker_case theron "$data_root/theron/TQUS02.bin" \
+if [[ -f "$theron_track" ]]; then
+    run_default_root_game_picker_case theron "$theron_track" \
         'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
         pce-en 'PC Engine'
 else
     echo 'SKIP: authentic Theron PC Engine TQUS02.bin is unavailable for default-root startup'
 fi
 
+# Also exercise the default-root selector with the authentic Japanese Saturn
+# CUE/BIN as the only Nexus owner. Keep the other four authentic game sources
+# available so the menu still selects Nexus from the normal five-card list.
+if [[ ${FIRESTAFF_PICKER_PLATFORM_ONLY:-0} != 1 ]] && has_authentic_nexus_cue; then
+    nexus_cue_only_root="$scratch/nexus-cue-only-five-game-root"
+    mkdir -p "$nexus_cue_only_root"/{dm1,csb,dm2,nexus,theron}
+    ln -s "$dm1_archive" "$nexus_cue_only_root/dm1/$(basename "$dm1_archive")"
+    ln -s "$csb_archive" "$nexus_cue_only_root/csb/$(basename "$csb_archive")"
+    ln -s "$dm2_archive" "$nexus_cue_only_root/dm2/$(basename "$dm2_archive")"
+    ln -s "$theron_track" "$nexus_cue_only_root/theron/$(basename "$theron_track")"
+    python3 - "$nexus_cue" "$nexus_cue_only_root/nexus" <<'PY'
+import pathlib
+import re
+import sys
+
+cue = pathlib.Path(sys.argv[1])
+destination = pathlib.Path(sys.argv[2])
+for line in cue.read_text(errors="strict").splitlines():
+    match = re.match(r'\s*FILE\s+(?:"([^"]+)"|([^\s]+))', line, re.IGNORECASE)
+    if not match:
+        continue
+    source = cue.parent / (match.group(1) or match.group(2))
+    if not source.is_file():
+        raise SystemExit(f"Missing authentic Nexus CUE payload: {source}")
+    target = destination / source.name
+    if not target.exists():
+        target.symlink_to(source)
+target = destination / cue.name
+if not target.exists():
+    target.symlink_to(cue)
+PY
+    run_default_root_game_picker_case nexus \
+        "$nexus_cue_only_root/nexus/$(basename "$nexus_cue")" \
+        'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
+        nexus-saturn-jp-cue Saturn "$nexus_cue_only_root" nexus-jp-cue-only-default-root
+fi
+
 # Nexus and Theron use their original loose media in this data root. These
 # cases exercise the same five-game launcher selector without requiring the
 # user's separate archive tools or extracting/copying game data.
-nexus_source="$data_root/nexus/DM.BIN"
-theron_source="$data_root/theron/TQUS02.bin"
+nexus_source="$nexus_dm"
+theron_source="$theron_track"
 if [[ -f "$nexus_source" ]]; then
     run_game_picker_case nexus "$nexus_source" \
         'wait-scan-complete,wait20,key:down,wait20,key:down,wait20,key:down,wait20,key:enter,wait20,key:enter,wait20,key:enter' \
