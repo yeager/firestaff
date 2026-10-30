@@ -37,6 +37,12 @@ source offsets for items 999460, 999470, 999472, and 999477 match SCK's
 resmap for US 1.0, EU 1.0, JP 1.0, and JP 1.1. The real-media test also
 decodes H03 item 999477 in all four revisions. US 1.0's 8,192-byte H03
 output and its 128x128 tile-decoded pixel indexes match SCK's output hashes.
+The same gate pins the distinct Japanese 1.0/1.1 decoded-byte hash
+(`b51c0f15ca691e5d3380876e193b9b5c039090b5c93c568b0f37401ae744ea16`)
+and tile-index hash
+(`843236d3e640d414b2a8f8299842eff7c9d45457d67408f30e9b576e567ef96a`).
+These Japanese hashes are regression receipts for the authenticated ROMs,
+not an independent SCK comparison.
 
 SCK's byte-array H03 decoder clips an overlong final backward-copy command
 to the declared output length. DM1 SNES graphics item 999477 uses that case;

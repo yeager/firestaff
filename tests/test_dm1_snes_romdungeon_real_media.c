@@ -27,6 +27,10 @@ static const char g_sck_us10_interface_romimg3_sha256[] =
     "c8322c353f73c233f8ef4050145eabae8dfd3f4b31c341ea2c02edeedd29356c";
 static const char g_sck_us10_interface_pixels_sha256[] =
     "583cdd5d1e35098057018140cdda25dbceb41febe004671dbccbe8e6d9dfd1e9";
+static const char g_jp10_interface_romimg3_sha256[] =
+    "b51c0f15ca691e5d3380876e193b9b5c039090b5c93c568b0f37401ae744ea16";
+static const char g_jp10_interface_pixels_sha256[] =
+    "843236d3e640d414b2a8f8299842eff7c9d45457d67408f30e9b576e567ef96a";
 
 static const SnesRomIdentity g_snes_roms[] = {
     {"DungeonMasterSNESEU10.smc",
@@ -146,6 +150,10 @@ static int audit_member(const char *name, const uint8_t *bytes,
 
         {
             uint8_t decoded_graphics[8192];
+            uint8_t indexed_pixels[128u * 128u];
+            const int is_japanese =
+                strcmp(name, "DungeonMasterSNESJP10.smc") == 0 ||
+                strcmp(name, "DungeonMasterSNESJP11.smc") == 0;
             size_t graphics_size = 0u, graphics_consumed = 0u;
             if (!dm1_snes_h03_decode_slot(bytes + interface_asset.source_offset,
                                           interface_asset.source_size,
@@ -158,23 +166,28 @@ static int audit_member(const char *name, const uint8_t *bytes,
                 return -1;
             }
 
-            if (strcmp(name, "DungeonMasterSNESUS10.smc") == 0) {
-                uint8_t indexed_pixels[128u * 128u];
-                if (firestaff_x68k_media_receipt_sha256_hex(
-                        decoded_graphics, graphics_size, digest, sizeof(digest)) != 0 ||
-                    strcmp(digest, g_sck_us10_interface_romimg3_sha256) != 0 ||
-                    FirestaffSnesRomimg3_DecodeTiles(
-                        decoded_graphics, sizeof(decoded_graphics), 16u, 16u,
-                        indexed_pixels, sizeof(indexed_pixels)) != 0 ||
-                    firestaff_x68k_media_receipt_sha256_hex(
-                        indexed_pixels, sizeof(indexed_pixels), digest,
-                        sizeof(digest)) != 0 ||
-                    strcmp(digest, g_sck_us10_interface_pixels_sha256) != 0) {
-                    fprintf(stderr, "FAIL: DM1 SNES ROMIMG3 999477 differs from SCK\n");
-                    audit->failure = 1u;
-                    return -1;
-                }
+            if (firestaff_x68k_media_receipt_sha256_hex(
+                    decoded_graphics, graphics_size, digest, sizeof(digest)) != 0 ||
+                strcmp(digest, is_japanese ? g_jp10_interface_romimg3_sha256 :
+                                              g_sck_us10_interface_romimg3_sha256) != 0 ||
+                FirestaffSnesRomimg3_DecodeTiles(
+                    decoded_graphics, sizeof(decoded_graphics), 16u, 16u,
+                    indexed_pixels, sizeof(indexed_pixels)) != 0 ||
+                firestaff_x68k_media_receipt_sha256_hex(
+                    indexed_pixels, sizeof(indexed_pixels), digest,
+                    sizeof(digest)) != 0 ||
+                strcmp(digest, is_japanese ? g_jp10_interface_pixels_sha256 :
+                                              g_sck_us10_interface_pixels_sha256) != 0) {
+                fprintf(stderr, "FAIL: DM1 SNES ROMIMG3 999477 decoded hash differs: %s\n",
+                        name);
+                audit->failure = 1u;
+                return -1;
+            }
+
+            if (!is_japanese) {
                 puts("PASS: authenticated DM1 SNES US10 ROMIMG3 999477 matches SCK");
+            } else {
+                puts("PASS: authenticated DM1 SNES JP ROMIMG3 999477 matches pinned decode");
             }
         }
     }
