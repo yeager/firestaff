@@ -20404,6 +20404,7 @@ static int m11_apply_dm1_square_actuator(
 
 static void m11_apply_sensor_effects(M11_GameViewState* state,
                                      const struct SensorEffectList_Compat* effects) {
+    const struct SensorEffect_Compat* lastLocalEffect = NULL;
     int i;
     if (!state || !effects || effects->count <= 0) return;
 
@@ -20579,9 +20580,25 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
             break;
         }
 
+        case SENSOR_EFFECT_LOCAL_DEFERRED:
+            /* ReDMCSB F0270 stores the last non-C10 local effect in
+             * G0403-G0406; F0271 consumes it after the whole F0276 pass. */
+            lastLocalEffect = e;
+            break;
+
         default:
             break;
         }
+    }
+
+    if (lastLocalEffect &&
+        (lastLocalEffect->textIndex == DM1_EFFECT_CLEAR ||
+         lastLocalEffect->textIndex == DM1_EFFECT_TOGGLE) &&
+        F0271_SENSOR_ProcessRotation_Compat(
+            &state->world, lastLocalEffect->destMapIndex,
+            lastLocalEffect->destMapX, lastLocalEffect->destMapY,
+            lastLocalEffect->destCell, lastLocalEffect->textIndex)) {
+        m11_refresh_hash(state);
     }
 }
 

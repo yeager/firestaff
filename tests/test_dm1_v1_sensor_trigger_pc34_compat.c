@@ -1275,6 +1275,18 @@ static void test_floor_c10_local_steal_xp_effect(void) {
               effects.effects[0].textIndex == DM1_EFFECT_ADD_300XP_STEAL_SKILL &&
               effects.effects[0].destCell == -1,
           "Runtime C003 C10: preserves source effect and CELL_ANY split mode");
+
+    sensors[0].localMultiple = DM1_EFFECT_CLEAR;
+    CHECK(F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+              &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
+              0, &party, THING_NONE, &effects) == 1 && effects.count == 1 &&
+              effects.effects[0].kind == SENSOR_EFFECT_LOCAL_DEFERRED &&
+              effects.effects[0].textIndex == DM1_EFFECT_CLEAR &&
+              effects.effects[0].destMapIndex == 0 &&
+              effects.effects[0].destMapX == 1 &&
+              effects.effects[0].destMapY == 0 &&
+              effects.effects[0].destCell == -1,
+          "Runtime C003 local rotation: keeps the source F0270/F0271 receipt");
 }
 
 /* ----------------------------------------------------------------

@@ -4,23 +4,25 @@
 /*
  * Sensor execution layer for ReDMCSB PC 3.4 — Phase 11 of M10.
  *
- * Pure functions that convert a sensor hit + trigger event into a
- * structured list of effects.  NO UI, NO rendering, NO mutation of
- * the input dungeon/things/party state.  The caller decides what to
- * do with the returned effect list (apply, log, queue for timeline).
+ * F0710/F0718/F0719 convert a sensor hit + trigger event into a
+ * structured list of effects without mutating their inputs. The caller
+ * applies the returned effects. F0271 is the source-shaped, stateful
+ * batch-final sensor-chain mutation used by the live runtime.
  *
  * Source: MOVESENS.C, DEFS.H from the original DM/CSB source.
  *
- * v1 coverage (this phase):
- *   - Floor sensor types 1-5 and 7-9 produce bounded remote-toggle effects.
- *   - Type 0 is the source-defined disabled sensor and produces no effect.
- *   - Other types return EFFECT_UNSUPPORTED; wall C013 is not text.
- *   WALK_OFF, ITEM_ON, ITEM_OFF, CHAMPION_ACTION return an empty list
- *   for every implemented type in v1 (conservative — will expand as
- *   timeline/combat land).
+ * Current bounded coverage:
+ *   - The F0710 probe API covers teleport/text plus selected remote sensors.
+ *   - F0718/F0719 party passes apply C001-C009 gates and emit remote, C10
+ *     split-XP, and deferred local-rotation receipts.
+ *   - F0271 applies the final CLEAR/TOGGLE rotation for a sensor batch.
+ *   - Other local effects, once-only mutation, wall C013 and non-party
+ *     event paths remain incomplete.
  */
 
 #include "memory_movement_pc34_compat.h"
+
+struct GameWorld_Compat;
 
 /* ---- Trigger events ---- */
 #define SENSOR_EVENT_WALK_ON         0
@@ -40,6 +42,7 @@
 #define SENSOR_EFFECT_OBJECT_GEN     6  /* Generate object at sensor location */
 #define SENSOR_EFFECT_END_GAME_V2   7  /* Trigger endgame sequence */
 #define SENSOR_EFFECT_LOCAL_STEAL_XP 8 /* F0270 C10: local 300 Steal XP */
+#define SENSOR_EFFECT_LOCAL_DEFERRED 9 /* F0270/F0271 batch-local effect */
 #define SENSOR_EXEC_EFFECT_GENERATOR 14 /* Generator: spawn creature (textIndex = sensorIndex) */
 
 /* ---- Bounds ---- */
@@ -182,6 +185,17 @@ int F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
     const struct PartyState_Compat* party,
     unsigned short leaderHandThing,
     struct SensorEffectList_Compat* outList);
+
+/* ReDMCSB MOVESENS.C F0271: apply the final CLEAR/TOGGLE rotation receipt
+ * after a complete F0276 sensor pass. Mutates the loaded Thing chain and
+ * matching raw Next bytes only. */
+int F0271_SENSOR_ProcessRotation_Compat(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int cell,
+    int effect);
 
 /* Read-only F0276 sound receipt for a party square pass. The caller retains
  * the triggering coordinates and requests C01 once per audible trigger. */

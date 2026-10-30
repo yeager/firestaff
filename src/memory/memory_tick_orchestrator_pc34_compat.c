@@ -5086,7 +5086,7 @@ static int orch_f0248_target_square_type_compat(
 /* ReDMCSB MOVESENS.C F0271: the last local rotation effect from a
  * processed sensor batch moves the first matching sensor behind the last
  * matching sensor in the contiguous sensor run. */
-static int orch_f0271_rotate_sensor_chain_compat(
+int F0271_SENSOR_ProcessRotation_Compat(
     struct GameWorld_Compat* world,
     int mapIndex,
     int mapX,
@@ -5944,7 +5944,7 @@ static int orch_dispatch_wall_event_f0248_compat(
     }
 
     if (rotationEffect != DM1_EFFECT_NONE) {
-        applied |= orch_f0271_rotate_sensor_chain_compat(
+        applied |= F0271_SENSOR_ProcessRotation_Compat(
             world, ev->mapIndex, ev->mapX, ev->mapY, ev->cell,
             rotationEffect);
     }
@@ -10648,7 +10648,7 @@ static int orch_f0267_sensor_pass_dispatch_compat(
     if (results.rotationPending &&
         (results.rotationEffect == DM1_EFFECT_CLEAR ||
          results.rotationEffect == DM1_EFFECT_TOGGLE) &&
-        orch_f0271_rotate_sensor_chain_compat(
+        F0271_SENSOR_ProcessRotation_Compat(
             world, mapIndex, results.rotationMapX, results.rotationMapY,
             results.rotationCell, results.rotationEffect)) {
         moveResult->localSensorRotations++;

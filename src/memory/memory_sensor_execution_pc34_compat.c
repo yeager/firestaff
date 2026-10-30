@@ -571,10 +571,10 @@ static int sensor_process_party_enter_leave(
                 effect->kind = sourceSensor->localEffect
                     ? (sourceSensor->localMultiple == DM1_EFFECT_ADD_300XP_STEAL_SKILL
                            ? SENSOR_EFFECT_LOCAL_STEAL_XP
-                           : SENSOR_EFFECT_UNSUPPORTED)
+                           : SENSOR_EFFECT_LOCAL_DEFERRED)
                     : SENSOR_EFFECT_TOGGLE_REMOTE;
                 effect->sensorType = sensors[i].sensorType;
-                effect->destMapIndex = sourceSensor->localEffect ? 0 : -1;
+                effect->destMapIndex = sourceSensor->localEffect ? mapIndex : -1;
                 effect->destMapX = sensors[i].targetMapX;
                 effect->destMapY = sensors[i].targetMapY;
                 effect->destCell = sourceSensor->localEffect
