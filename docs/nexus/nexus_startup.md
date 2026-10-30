@@ -22,7 +22,12 @@ level initialization. The retained SH-2 write trace records the two copy
 instructions and the final WRAM dump matches the BKR tuple bytes. This narrows
 the earlier unknown payload interpretation; native backup selection, full
 runtime loading, and Firestaff engine handoff remain unimplemented or
-unverified. See the Continue loader tuple evidence note below.
+unverified. A paired Continue movement trace now also maps heading `0x4000`
+to Firestaff East: Up moves the authentic start cell from X 20 to X 21, while
+the same cold-boot/menu schedule without Up retains X 20. Together with the
+New Game `0x8000` North capture, these calibrate two retail headings; `0x0000`
+and `0xc000` remain unmapped. See the Continue loader and movement evidence
+notes below.
 Separate 2026-10-29 cold boots installed
 the authentic two-champion retail-written BKR before power-on, reached the
 Load panel with `B01  0:06 NORMAL`, accepted that entry, and entered a dungeon
@@ -89,6 +94,35 @@ is `firestaff-evidence/nexus/nexus-bkr-continue-loader-tuple-20261030` on
 `Extern-disk`. This verifies the tuple transfer into the Saturn loader, not
 Firestaff's save selection, coordinate conversion, game entry, or gameplay
 parity.
+
+## Continue heading from retail movement (2026-10-30)
+
+Two isolated Ymir `--debug` cold boots used the same hash-verified Japanese
+retail CUE, `DM.BIN`, Japanese IPL, and two-champion BKR. Both ran the same
+scheduled menu inputs and a complete filtered SH-2 write trace over
+`[0x060746c0,0x06074740)`. One run added only 30 frames of Up at capture frame
+17000; the other was the no-up control. Both trace bundles are complete with
+zero dropped rows, and the control exited with status 0.
+
+At VDP1 frame 12931, the Continue loader copied the BKR tuple to WRAM-HI
+`0x06064544..0x0606454b`: level 1, heading `0x4000`, X 20, Y 26. The body-cell
+writer at PC `0x0601896a` initialized `0x060746e8` to `0x0014001a` (X 20, Y 26).
+After the scheduled Up hold, PC `0x0601942c` wrote `0x0015001a` (X 21, Y 26)
+at VDP1 frame 14145. The no-up control's final WRAM-HI retains X 20, Y 26 and
+its complete filtered trace has no later body-cell write. The BKR input hash
+is `3d60856119df55ffa4937d13b5dc7487157c7c6b131a999a2e61683316679634`.
+
+The earlier New Game Up/control pair establishes that level-1 heading
+`0x8000` moves toward decreasing DGN Y, Firestaff North. The independent
+Continue pair establishes that heading `0x4000` moves toward increasing DGN
+X, Firestaff East. `nexus_v1_game_parse_retail_start_entry` now resolves those
+two headings and continues to leave `0x0000` and `0xc000` unknown. The
+authentic Japanese table contains all four angle values, but the other two
+still need matching retail movement captures. This does not yet connect BKR
+save selection or the Continue tuple to the Firestaff engine. Raw logs,
+complete bounded traces, final WRAM-HI images, and hashes are retained in
+`firestaff-evidence/nexus/nexus_bkr_continue_heading_move_20261030/` on
+`Extern-disk`.
 
 ## Deterministic title-state replay (2026-10-26)
 
@@ -1724,11 +1758,10 @@ trace and are not substituted for the selected table entry.
 
 Enabled table entries use angle words `0x0000`, `0x4000`, `0x8000`, and
 `0xc000`, consistent with quarter-turns in a 16-bit angle field.
-`FUN_0601f584` stores the value in an object field, but its analyzed caller
-chain does not bind `0x8000` to a world axis or Firestaff's
-north/east/south/west enum. The native runtime therefore still blocks starting
-gameplay until that mapping is established. Raw Ymir traces and Ghidra exports
-are retained externally in
+`FUN_0601f584` stores the value in an object field. Static analysis alone does
+not name its axis. Paired retail input captures now map `0x8000` to North and
+`0x4000` to East; the `0x0000` and `0xc000` rows remain unmapped and rejected.
+Raw Ymir traces and Ghidra exports are retained externally in
 `nexus_new_game_capture_20261028/config-struct-sh2-trace-1800/` with the
 no-input control beside it.
 
@@ -1754,18 +1787,23 @@ coordinates: the retail table cell center `(29,47)` maps exactly to
 input moves only Y by `-0x400`, with angle unchanged. In this captured level-1
 start, Up therefore moves toward decreasing DGN Y, which is Firestaff North;
 the retail heading `0x8000` maps to North. The one-frame left/right angle
-changes (`+100`/`-100`) are consistent with that mapping. This binds the
-level-1 retail start heading, but does not establish mappings for every angle
-word or the complete gameplay ownership path.
+changes (`+100`/`-100`) are consistent with that mapping. A later paired
+Continue capture separately maps `0x4000` to East by observing an Up-driven
+cell change from `(20,26)` to `(21,26)` with an unchanged no-up control. The
+other two source headings and the complete gameplay ownership path remain
+unverified.
 
 The launcher now parses the selected eight-byte record from hash-verified
 `DM.BIN` and admits only this calibrated level-1 heading to a New Game start.
 It loads the hash-verified `LEV01.DGN`, checks `(29,47)` against the loaded
 cell geometry, and creates the dungeon-start receipt before producing the
-runtime handoff. Other raw headings remain unmapped and are rejected. The
-viewport, material, and HUD routes retain their independent evidence gates;
-this loader change does not establish complete playability. The `firestaff`
-target compiled successfully on TRV2. The real-data
+runtime handoff. The New Game table uses heading `0x8000`, which resolves to
+North. The independently calibrated `0x4000` heading resolves to East, but
+the BKR Continue flow is not wired to this start parser. Headings `0x0000`
+and `0xc000` remain unmapped and rejected. The viewport, material, and HUD
+routes retain their independent evidence gates; this loader change does not
+establish complete playability. The `firestaff` target compiled successfully
+on TRV2. The real-data
 `nexus_v1_launch_smoke_probe` passed 22/22 checks, including this launcher
 start receipt. It does not exercise the interactive M11 route or provide a
 Ymir capture of that handoff.
