@@ -18878,6 +18878,17 @@ endif()
         TIMEOUT 900
     )
     add_test(
+        NAME csb_v1_atari_only_auto_start
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_only_auto_start.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(csb_v1_atari_only_auto_start PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "csb;atari-st;real-media;cli;menu;auto-platform;startup;skip-safe"
+        ENVIRONMENT "FIRESTAFF_CSB_ATARI_ST_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z;FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
+        TIMEOUT 120
+    )
+    add_test(
         NAME csb_v1_atari_utility_mini_cli_resume
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_utility_mini_cli_resume.sh"
             "$<TARGET_FILE:firestaff>"

@@ -118,6 +118,15 @@ off to `st12-en` or `st13-fr` respectively. Both original ZIPs remained
 unchanged. These checks cover the isolated selection routes, not campaign
 depth or native display/input parity.
 
+At the current `main` checkout (`93192295`), the new
+`csb_v1_atari_only_auto_start` real-media CTest passed (5.94 s). Its isolated
+CSB data root contains only the authentic Atari ST archive. Both bare
+`--game csb` AUTO startup and the no-game M12 picker selected the Atari ST
+v2.0/v2.1 English edition and handed off to its Atari startup route; the test
+also verifies the original archive hash is unchanged. This covers AUTO
+selection and menu handoff for Atari-only CSB installations, not complete
+runtime or gameplay parity.
+
 The same build then passed `m12_main_menu_runtime_real_media` (726.80 s)
 against the installed original-media collection, including DM1, CSB, DM2,
 DM1 Amiga, DM2 Amiga, and Theron runtime routes. It also passed the three

@@ -22,6 +22,16 @@ firestaff_dm1_pc34_corpus_*/
 *.iso
 *.mdf
 *.mds
+*.adf
+*.d64
+*.dsk
+*.hdf
+*.hdm
+*.st
+*.stx
+*.7z
+*.rar
+*.zip
 /bios/
 /firmware/
 
