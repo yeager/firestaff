@@ -70,7 +70,7 @@ In the original ownership model, **movement and environment behavior are not UI 
 | `memory_movement_pc34_compat.c:F0703_MOVEMENT_IdentifySensorsOnSquare_Compat` | find first sensor on square | small probe subset of `MOVESENS.C` sensor traversal | retained (still first-sensor-only) |
 | `memory_sensor_execution_pc34_compat.c:F0710_SENSOR_Execute_Compat` | probe API for teleport/text `WALK_ON` effects | tiny subset of `F0276` sensor result path | probe-grade retained; production party route uses F0718/F0719 |
 | `memory_sensor_execution_pc34_compat.c:F0717_SENSOR_EnumerateOnSquare_Compat` | enumerate ALL sensors on a square (pass 32) | thing-list walker inside `F0276_SENSOR_ProcessThingAdditionOrRemoval` | **compat-owned** (post pass 32) |
-| `memory_sensor_execution_pc34_compat.c:F0718/F0719_SENSOR_ProcessPartyEnterLeave*_Compat` | process party enter/leave events over sensors on a square, including C001-C009 gates and local C10/deferred rotation receipts | `F0276_SENSOR_ProcessThingAdditionOrRemoval` | **compat-owned AND runtime-owned (partial)**; movement routes produce effects in source order, and M11 dispatches C10 XP plus final F0271 CLEAR/TOGGLE rotation per effect batch. Once-only mutation, leader-only C10, other local effects and original-media evidence remain open. |
+| `memory_sensor_execution_pc34_compat.c:F0718/F0719_SENSOR_ProcessPartyEnterLeave*_Compat` | process party enter/leave events over sensors on a square, including C001-C009 gates and local C10/deferred rotation receipts | `F0276_SENSOR_ProcessThingAdditionOrRemoval` | **compat-owned AND runtime-owned (partial)**; movement routes produce effects in source order, and M11 applies F0272 OnceOnly disabling, dispatches C10 XP and applies final F0271 CLEAR/TOGGLE rotation per effect batch. Party-route OnceOnly disabling is source-shaped; leader-only C10, once-only behavior on other event routes, other local effects and original-media evidence remain open. |
 | `memory_door_action_pc34_compat.c:F0715_DOOR_ResolveToggleAction_Compat` | decide OPEN/CLOSE/DESTROYED target state (pass 31) | door actuator branch inside `MOVESENS.C` / `DUNGEON.C` | **compat-owned** (post pass 31) |
 | `memory_door_action_pc34_compat.c:F0716_DOOR_RouteFrontCellClick_Compat` | categorise click on front cell (pass 31) | `F0275_SENSOR_IsTriggeredByClickOnWall` | **compat-owned** (post pass 31) |
 | `memory_door_action_pc34_compat.c:F0714_DOOR_ResolveAnimationEffect_Compat` | resolve SET/CLEAR/TOGGLE vs current door state (pass 38) | TOGGLE branch inside `F0244_TIMELINE_ProcessEvent10_Square_Door` | **compat-owned** (post pass 38) |
@@ -173,10 +173,10 @@ Observed limits:
 
 - the older F0710 probe API still surfaces a bounded effect result; production party movement uses F0718/F0719 and enumerates sensors in source order
 - the party route handles C001-C009 admission, remote effects, text/teleport and C10 group-split Steal XP; CLEAR/TOGGLE local rotation is deferred until the end of each sensor batch
-- once-only sensor mutation, leader-only C10 and other F0270 local effects remain unsupported
+- OnceOnly disabling is implemented for party effects; its other event routes, leader-only C10 and other F0270 local effects remain unsupported
 - full thing add/remove event coverage comparable to `F0276_SENSOR_ProcessThingAdditionOrRemoval` is incomplete
 - no click-on-wall routing comparable to `F0275_SENSOR_IsTriggeredByClickOnWall`
-- remaining F0270 local-effect cases and once-only mutation are not source-complete; F0271 CLEAR/TOGGLE batching is wired for party WALK_ON
+- remaining F0270 local-effect cases and non-party once-only routes are not source-complete; F0271 CLEAR/TOGGLE batching is wired for party WALK_ON
 
 ### ReDMCSB baseline
 Sensor/environment interaction ownership is broad and event-driven, not a single-square single-sensor single-event adapter.
@@ -246,7 +246,7 @@ Square semantics are source-owned in `CLIKMENU.C:F0366_COMMAND_ProcessTypes3To6_
 - **Unclear/mixed**
   - multi-sensor ordering
   - sensor enter/leave/add/remove semantics
-  - remaining local effect kinds and once-only sensor mutation
+  - remaining local effect kinds and once-only mutation on non-party routes
   - click-on-wall actuator semantics
 
 ---

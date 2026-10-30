@@ -20411,6 +20411,13 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
     for (i = 0; i < effects->count && i < SENSOR_EFFECT_LIST_MAX_COUNT; ++i) {
         const struct SensorEffect_Compat* e = &effects->effects[i];
 
+        /* ReDMCSB MOVESENS.C F0272 disables a OnceOnly sensor before
+         * dispatching either its local effect or F0268 remote event. */
+        if (e->sourceOnceOnly && F0272_SENSOR_DisableOnceOnly_Compat(
+                &state->world, e->sourceSensorIndex)) {
+            m11_refresh_hash(state);
+        }
+
         switch (e->kind) {
         case SENSOR_EFFECT_TELEPORT:
             /* Teleport party to destination */

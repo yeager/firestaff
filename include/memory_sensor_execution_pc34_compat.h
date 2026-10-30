@@ -7,7 +7,7 @@
  * F0710/F0718/F0719 convert a sensor hit + trigger event into a
  * structured list of effects without mutating their inputs. The caller
  * applies the returned effects. F0271 is the source-shaped, stateful
- * batch-final sensor-chain mutation used by the live runtime.
+ * batch-final sensor-chain mutation; F0272 applies the OnceOnly mutation.
  *
  * Source: MOVESENS.C, DEFS.H from the original DM/CSB source.
  *
@@ -16,8 +16,9 @@
  *   - F0718/F0719 party passes apply C001-C009 gates and emit remote, C10
  *     split-XP, and deferred local-rotation receipts.
  *   - F0271 applies the final CLEAR/TOGGLE rotation for a sensor batch.
- *   - Other local effects, once-only mutation, wall C013 and non-party
- *     event paths remain incomplete.
+ *   - F0272 disables triggered OnceOnly sensors on party passes.
+ *   - Other local effects, once-only behavior outside party passes, wall
+ *     C013 and non-party event paths remain incomplete.
  */
 
 #include "memory_movement_pc34_compat.h"
@@ -58,6 +59,8 @@ struct SensorEffect_Compat {
     int destCell;            /* TELEPORT: destination cell */
     int textIndex;           /* SHOW_TEXT: text-table index */
     int delayTicks;          /* F0268: sensor->value delay before event fires */
+    int sourceSensorIndex;   /* Transient F0272 owner; not serialized */
+    int sourceOnceOnly;      /* Transient F0272 mutation receipt; not serialized */
 };
 
 struct SensorEffectList_Compat {
@@ -66,7 +69,7 @@ struct SensorEffectList_Compat {
 };
 
 /* ---- Serialized sizes (bit-identical round-trip) ---- */
-#define SENSOR_EFFECT_SERIALIZED_SIZE      28  /* 7 ints * 4 bytes LE (delayTicks is transient) */
+#define SENSOR_EFFECT_SERIALIZED_SIZE      28  /* 7 ints; runtime receipts are transient */
 #define SENSOR_EFFECT_LIST_SERIALIZED_SIZE (4 + (SENSOR_EFFECT_LIST_MAX_COUNT * SENSOR_EFFECT_SERIALIZED_SIZE))
 
 /*
@@ -196,6 +199,12 @@ int F0271_SENSOR_ProcessRotation_Compat(
     int mapY,
     int cell,
     int effect);
+
+/* ReDMCSB MOVESENS.C F0272: disable a triggered OnceOnly sensor before its
+ * effect. Updates decoded state and raw Type_Data bytes. */
+int F0272_SENSOR_DisableOnceOnly_Compat(
+    struct GameWorld_Compat* world,
+    int sensorIndex);
 
 /* Read-only F0276 sound receipt for a party square pass. The caller retains
  * the triggering coordinates and requests C01 once per audible trigger. */

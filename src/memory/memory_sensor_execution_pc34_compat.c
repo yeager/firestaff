@@ -189,6 +189,8 @@ int F0712_SENSOR_EffectDeserialize_Compat(
     effect->destCell     = read_i32_le(buf + 20);
     effect->textIndex    = read_i32_le(buf + 24);
     effect->delayTicks   = 0;
+    effect->sourceSensorIndex = -1;
+    effect->sourceOnceOnly = 0;
     return 1;
 }
 
@@ -584,6 +586,8 @@ static int sensor_process_party_enter_leave(
                     ? sourceSensor->localMultiple
                     : triggerResult.resolvedEffect;
                 effect->delayTicks = sensors[i].value;
+                effect->sourceSensorIndex = sensors[i].sensorIndex;
+                effect->sourceOnceOnly = sourceSensor->onceOnly ? 1 : 0;
             }
             continue;
         }

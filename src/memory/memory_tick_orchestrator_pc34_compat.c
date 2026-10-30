@@ -5155,6 +5155,32 @@ int F0271_SENSOR_ProcessRotation_Compat(
     return 1;
 }
 
+int F0272_SENSOR_DisableOnceOnly_Compat(
+    struct GameWorld_Compat* world,
+    int sensorIndex)
+{
+    struct DungeonThings_Compat* things;
+    struct DungeonSensor_Compat* sensor;
+    int stride;
+    if (!world || !world->things || sensorIndex < 0) return 0;
+    things = world->things;
+    if (!things->sensors || sensorIndex >= things->sensorCount) return 0;
+    sensor = &things->sensors[sensorIndex];
+    if (!sensor->onceOnly) return 0;
+
+    /* ReDMCSB MOVESENS.C:F0272 calls M044_SET_TYPE_DISABLED, which clears
+     * only M039_TYPE and preserves the sensor's nine data bits and flags. */
+    sensor->sensorType = DM1_SENSOR_DISABLED;
+    stride = s_orch_thing_data_byte_count[THING_TYPE_SENSOR];
+    if (things->rawThingData[THING_TYPE_SENSOR] && stride >= 4 &&
+        sensorIndex < things->thingCounts[THING_TYPE_SENSOR]) {
+        unsigned char* raw = things->rawThingData[THING_TYPE_SENSOR] +
+            sensorIndex * stride + 2;
+        raw[0] &= 0x80u;
+    }
+    return 1;
+}
+
 static int orch_f0248_schedule_remote_effect_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* source,

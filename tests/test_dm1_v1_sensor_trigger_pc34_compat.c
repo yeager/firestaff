@@ -1259,6 +1259,7 @@ static void test_floor_c10_local_steal_xp_effect(void) {
     sensors[0] = make_sensor(DM1_SENSOR_FLOOR_PARTY, 0, DM1_EFFECT_SET,
                              0, 0, 0, 0, 1, 0, 0, 0);
     sensors[0].localMultiple = DM1_EFFECT_ADD_300XP_STEAL_SKILL;
+    sensors[0].onceOnly = 1;
     sensors[0].next = THING_ENDOFLIST;
     things.squareFirstThings = squareFirstThings;
     things.squareFirstThingCount = 4;
@@ -1273,8 +1274,10 @@ static void test_floor_c10_local_steal_xp_effect(void) {
           "Runtime C003 C10: party walk-on emits local XP effect");
     CHECK(effects.effects[0].kind == SENSOR_EFFECT_LOCAL_STEAL_XP &&
               effects.effects[0].textIndex == DM1_EFFECT_ADD_300XP_STEAL_SKILL &&
-              effects.effects[0].destCell == -1,
-          "Runtime C003 C10: preserves source effect and CELL_ANY split mode");
+              effects.effects[0].destCell == -1 &&
+              effects.effects[0].sourceSensorIndex == 0 &&
+              effects.effects[0].sourceOnceOnly == 1,
+          "Runtime C003 C10: preserves CELL_ANY and F0272 owner receipts");
 
     sensors[0].localMultiple = DM1_EFFECT_CLEAR;
     CHECK(F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
