@@ -507,6 +507,18 @@ register snapshots map to same-frame VDP2 writes whose values and final VRAM
 bytes match the 921 retail source bytes. The SH-2 trace does not capture values
 at read time, and the source comparison uses the final WorkRAMH span; it does
 not independently prove that those bytes were present when each read occurred.
+
+A separate deterministic endpoint capture stops at VDP1 frame 8037 and saves
+the authentic Japanese three-choice title menu with New Game selected. Its
+final VDP1/VDP2 registers, VRAM, CRAM and screenshot are indexed at frame 8037;
+the final VDP2 VRAM still contains the same 921 source bytes. The zero-drop
+VDP2 write trace covers frames 7600–8099 and records no writes after frame
+7716. Its NBG0 row trace contains two identical 224-row main-field sequences
+for frame 8037 and is explicitly marked incomplete. Those duplicated samples
+are retained as evidence but do not establish complete NBG0 render-state
+coverage. The complete external evidence package and reproduction notes are
+at `/Volumes/Extern-disk/firestaff-evidence/nexus/nexus_title_menu_sameframe_20261030/README.md`.
+
 It does not identify the full title background or prove which pixels survive
 VDP1/VDP2 composition on the screen. Full native title presentation and
 Firestaff renderer parity remain unproven.
