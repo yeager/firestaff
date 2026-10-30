@@ -124,8 +124,12 @@ transition receipt SHA-256:
 ## Shared diagnostic event sequence
 
 Movement-context v3 rows read and increment
-`TheronTraceCDSharedEventSequence`, a counter shared with the PCE Fast CD,
-memory, and input trace hooks in the instrumented Mednafen build. The
+`TheronTraceCDSharedEventSequence`, a counter shared with the PCE Fast CD and
+memory trace hooks in the instrumented Mednafen build. The PCE Fast
+`pce_input_read` and `scripted_pce_input_apply` records do not include
+`event_sequence` and cannot be ordered against movement-context rows by this
+counter. The selected `input_latch_write` rows emitted by this movement-context
+observer do carry the shared sequence. The
 `build_mednafen_theron_irq2_trace.sh` build pipeline applies
 `mednafen_1.32.1_theron_pce_fast_cd_shared_event_sequence.patch` before this
 instrumenter. Source audit points to `src/pce_fast/huc6280.cpp`, `WrMem`
