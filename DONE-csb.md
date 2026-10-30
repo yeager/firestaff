@@ -1,3 +1,12 @@
+- 2026-10-30: Added and ran an authentic no-game M12 runtime regression for
+  CSB Amiga 3.1/3.3 multilingual. It selects the Amiga multilingual edition
+  from the original software archive, chooses English in the source language
+  screen, and verifies the A31 English runtime reaches its first loaded level
+  and viewport receipt at `(9,0)`. The original archive hash remains
+  unchanged. CTest: `m12_main_menu_csb_amiga_multi_runtime_real_media`.
+  This verifies local macOS arm64 startup only; other hosts and full visual,
+  audio and gameplay parity remain open.
+
 - 2026-10-30: Added and ran an authentic no-game M12 startup regression for
   CSB Amiga 3.5 English. An isolated data root containing only the original
   `Chaos Strikes Back for Amiga 3.5 CTRaw.7z` was scanned and selected from
