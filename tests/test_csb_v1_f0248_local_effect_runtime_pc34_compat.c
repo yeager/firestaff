@@ -52,6 +52,9 @@ static void make_dungeon(CSB_V1_DungeonData *dungeon,
                    DM1_EFFECT_SET);
     put_local_c006(raw, 84, 0xfffeu,
                    DM1_EFFECT_ADD_300XP_STEAL_SKILL);
+    /* ReDMCSB MOVESENS.C:F0272 disables a triggered OnceOnly sensor after
+     * applying its local C10 effect. OnceOnly is the common bit 2 in flags. */
+    put_le16(raw, 88, (unsigned short)((1u << 11) | (1u << 2)));
 }
 
 static int test_receipt(void)
@@ -104,6 +107,7 @@ static int test_runtime(void)
         profile.party_state.Champions[1].SkillExperience[8] != 0u ||
         get_le16(raw, 68) != (unsigned short)((3u << 10) | 1u) ||
         get_le16(raw, 76) != (unsigned short)((3u << 10) | 2u) ||
+        get_le16(raw, 86) != 0u ||
         get_le16(raw, 84) != 0xfffeu) {
         fputs("FAIL: C006 F0270/F0271 local effects lost source ordering\n",
               stderr);
