@@ -9,19 +9,22 @@ reported frame state changes. The product target builds successfully. Using
 installed original media, direct runtime probes accepted real frames with no
 core fallbacks on DOS, FM Towns, Amiga, and Macintosh; Towns and Amiga probes
 also remained silent for this trace when run without `--debug`. The authentic
-DOS `sksave0.dat` and all three other installed DOS save slots report four
-champions while the current DOS HUD renderer draws three portrait assets.
-That count still needs source-state explanation (dead/mirror-hidden slots
-must not be mistaken for missing portraits). Towns reports a five-command
-squad plan, and Amiga a five-command HUD plan; both report zero decoded HUD
-core pixels and no top/status panel commands. Macintosh completed its
-authentic 210-frame title movie, entered runtime, and moved twice; its frame
-reports one portrait for the one-member new party. The DOS and Towns runtime
-captures still show large dark HUD areas. These receipts make the gap
-measurable but do not prove pixel parity. Complete live HUD composition,
-source-owned panel/text/hand-state coverage, and same-pose original captures
-remain open for each platform; the current smoke thresholds are not a visual
-parity gate. Current source reference: SKProject
+DOS `sksave0.dat` and the other three installed DOS save slots report four
+champions while the DOS renderer's portrait counter reports three. Determine
+whether the remaining slot is dead or mirror-hidden before classifying this
+as an omission. Towns reports a five-command native HUD plan; its command
+builder includes `FMTOWNS_STATUS_PANE`, so the generic composition receipt's
+zero `hud_top_bar_command_consumed` and `hud_status_panel_command_consumed`
+fields do not mean that Towns top panes were skipped. The `asset-events`
+counter is platform-specific: Towns increments it for spell/status icons,
+figures, auras, and portrait-like elements, so it must not be interpreted as
+a portrait count. Likewise, `audit-core-pixels` and the interface-asset audit
+describe decoded source assets, not pixels actually drawn in that frame.
+Macintosh completed its authentic 210-frame title movie, entered runtime,
+and moved twice. The DOS and Towns runtime captures still appear dark across
+large HUD areas; exact viewport and HUD parity remain unproven. Add per-command
+runtime draw receipts and compare same-pose original captures before changing
+the platform-specific composition. Current source reference: SKProject
 `SKWINSPX/src/v4/skguidrw.cpp::DRAW_SQUAD_POS_INTERFACE` and
 `SKWINSPX/src/v5/skguidrw.cpp::DM2_UPDATE_RIGHT_PANEL`.
 

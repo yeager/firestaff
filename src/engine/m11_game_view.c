@@ -66364,20 +66364,40 @@ static void m11_debug_trace_dm2_runtime_frame(
     M11_DM2_DEBUG_MIX(render->runtime_render_real_asset_ready);
     M11_DM2_DEBUG_MIX(render->runtime_render_no_core_fallbacks);
     M11_DM2_DEBUG_MIX(render->runtime_render_blocked_material_draw_count);
+    M11_DM2_DEBUG_MIX(render->runtime_render_asset_floor_ceiling_count);
+    M11_DM2_DEBUG_MIX(render->runtime_render_asset_wall_count);
+    M11_DM2_DEBUG_MIX(render->runtime_render_asset_door_panel_count);
+    M11_DM2_DEBUG_MIX(render->runtime_render_asset_door_overlay_count);
+    M11_DM2_DEBUG_MIX(render->runtime_render_asset_door_frame_count);
+    M11_DM2_DEBUG_MIX(render->runtime_render_asset_door_button_count);
+    M11_DM2_DEBUG_MIX(render->runtime_render_asset_creature_count);
+    M11_DM2_DEBUG_MIX(render->runtime_render_asset_item_count);
     M11_DM2_DEBUG_MIX(render->runtime_hud_real_asset_ready);
     M11_DM2_DEBUG_MIX(render->runtime_hud_asset_portrait_count);
     M11_DM2_DEBUG_MIX(render->runtime_hud_fallback_portrait_count);
     M11_DM2_DEBUG_MIX(render->runtime_hud_decoded_core_hash);
     M11_DM2_DEBUG_MIX(render->runtime_hud_decoded_core_pixel_count);
+    M11_DM2_DEBUG_MIX(render->runtime_hud_decoded_interface_count);
+    M11_DM2_DEBUG_MIX(render->runtime_hud_raw_interface_count);
     M11_DM2_DEBUG_MIX(render->runtime_hud_frame_hash);
     M11_DM2_DEBUG_MIX(render->runtime_m11_frame_map_load_token);
     M11_DM2_DEBUG_MIX(render->runtime_m11_frame_scene_control_hash);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_scene_light_hash);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_scene_ambient_light);
     M11_DM2_DEBUG_MIX(render->runtime_m11_frame_presentation_state_hash);
     M11_DM2_DEBUG_MIX(render->runtime_m11_frame_palette_hash);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_floor_material_hash);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_ceiling_material_hash);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_wall_material_plan_command_count);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_door_material_plan_required);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_door_material_plan_command_count);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_door_material_plan_consumed);
     M11_DM2_DEBUG_MIX(render->runtime_m11_frame_hud_material_plan_required);
     M11_DM2_DEBUG_MIX(render->runtime_m11_frame_hud_material_plan_hash);
     M11_DM2_DEBUG_MIX(render->runtime_m11_frame_hud_material_plan_command_count);
     M11_DM2_DEBUG_MIX(render->runtime_m11_frame_hud_material_plan_consumed);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_creature_material_plan_command_count);
+    M11_DM2_DEBUG_MIX(render->runtime_m11_frame_item_material_plan_command_count);
     M11_DM2_DEBUG_MIX(frame->composition.hud_presentation_stage);
     M11_DM2_DEBUG_MIX(frame->composition.hud_top_bar_command_consumed);
     M11_DM2_DEBUG_MIX(frame->composition.hud_status_panel_command_consumed);
@@ -66385,7 +66405,7 @@ static void m11_debug_trace_dm2_runtime_frame(
     if (previous_state == state && previous_signature == signature) return;
 
     fprintf(stderr,
-        "firestaff: dm2-render-debug game=%s platform=%s pose=%d,%d dir=%d result=%d accepted=%d real-assets=%d no-core-fallbacks=%d blocked-materials=%d palette=%08x map-token=%u scene=%08x presentation=%08x hud={required:%d hash:%08x commands:%d consumed:%d stage:%d portraits:%d fallback-portraits:%d decoded-core-pixels:%u frame-pixels:%u frame-hash:%08x top-consumed:%d status-consumed:%d}\n",
+        "firestaff: dm2-render-debug game=%s platform=%s pose=%d,%d dir=%d result=%d accepted=%d real-assets=%d no-core-fallbacks=%d blocked-materials=%d map-token=%u scene={control:%08x light:%08x ambient:%u presentation:%08x} palette=%08x viewport={floor-ceiling:%d walls:%d door-panel-overlay-frame-button:%d,%d,%d,%d creatures:%d items:%d floor:%08x ceiling:%08x wall-plan:%d door-plan:%d/%d/%d creature-plan:%d item-plan:%d} hud={required:%d hash:%08x commands:%d consumed:%d stage:%d asset-events:%d fallback-events:%d audit-core-pixels:%u audit-interface-assets:%d raw-interface-assets:%d frame-hash-pixels:%u frame-hash:%08x generic-top-command:%d generic-status-command:%d}\n",
         state->sourceId[0] ? state->sourceId : "dm2",
         m11_dm2_debug_platform_label(platform),
         state->dm2State.party_x,
@@ -66396,10 +66416,28 @@ static void m11_debug_trace_dm2_runtime_frame(
         render->runtime_render_real_asset_ready,
         render->runtime_render_no_core_fallbacks,
         render->runtime_render_blocked_material_draw_count,
-        render->runtime_m11_frame_palette_hash,
         render->runtime_m11_frame_map_load_token,
         render->runtime_m11_frame_scene_control_hash,
+        render->runtime_m11_frame_scene_light_hash,
+        render->runtime_m11_frame_scene_ambient_light,
         render->runtime_m11_frame_presentation_state_hash,
+        render->runtime_m11_frame_palette_hash,
+        render->runtime_render_asset_floor_ceiling_count,
+        render->runtime_render_asset_wall_count,
+        render->runtime_render_asset_door_panel_count,
+        render->runtime_render_asset_door_overlay_count,
+        render->runtime_render_asset_door_frame_count,
+        render->runtime_render_asset_door_button_count,
+        render->runtime_render_asset_creature_count,
+        render->runtime_render_asset_item_count,
+        render->runtime_m11_frame_floor_material_hash,
+        render->runtime_m11_frame_ceiling_material_hash,
+        render->runtime_m11_frame_wall_material_plan_command_count,
+        render->runtime_m11_frame_door_material_plan_required,
+        render->runtime_m11_frame_door_material_plan_command_count,
+        render->runtime_m11_frame_door_material_plan_consumed,
+        render->runtime_m11_frame_creature_material_plan_command_count,
+        render->runtime_m11_frame_item_material_plan_command_count,
         render->runtime_m11_frame_hud_material_plan_required,
         render->runtime_m11_frame_hud_material_plan_hash,
         render->runtime_m11_frame_hud_material_plan_command_count,
@@ -66408,6 +66446,8 @@ static void m11_debug_trace_dm2_runtime_frame(
         render->runtime_hud_asset_portrait_count,
         render->runtime_hud_fallback_portrait_count,
         render->runtime_hud_decoded_core_pixel_count,
+        render->runtime_hud_decoded_interface_count,
+        render->runtime_hud_raw_interface_count,
         render->runtime_hud_frame_pixel_count,
         render->runtime_hud_frame_hash,
         frame->composition.hud_top_bar_command_consumed,
