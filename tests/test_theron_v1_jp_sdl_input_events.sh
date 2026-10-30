@@ -27,6 +27,8 @@ fi
 mkdir -p "$scratch_root"
 keyboard_probe=$(mktemp "$scratch_root/firestaff-theron-jp-sdl-keyboard.XXXXXX")
 button_ii_probe=$(mktemp "$scratch_root/firestaff-theron-jp-sdl-button-ii.XXXXXX")
+button_ii_up_probe=$(mktemp "$scratch_root/firestaff-theron-jp-sdl-button-ii-up.XXXXXX")
+button_ii_down_probe=$(mktemp "$scratch_root/firestaff-theron-jp-sdl-button-ii-down.XXXXXX")
 side_probe=$(mktemp "$scratch_root/firestaff-theron-jp-sdl-side-steps.XXXXXX")
 movement_probe=$(mktemp "$scratch_root/firestaff-theron-jp-sdl-panel-movement.XXXXXX")
 action_probe=$(mktemp "$scratch_root/firestaff-theron-jp-sdl-panel-actions.XXXXXX")
@@ -34,6 +36,8 @@ touch_forward_probe=$(mktemp "$scratch_root/firestaff-theron-jp-sdl-touch-forwar
 touch_turn_probe=$(mktemp "$scratch_root/firestaff-theron-jp-sdl-touch-turn.XXXXXX")
 keyboard_output=$(mktemp "$scratch_root/firestaff-theron-jp-sdl-keyboard-output.XXXXXX")
 button_ii_output=$(mktemp "$scratch_root/firestaff-theron-jp-sdl-button-ii-output.XXXXXX")
+button_ii_up_output=$(mktemp "$scratch_root/firestaff-theron-jp-sdl-button-ii-up-output.XXXXXX")
+button_ii_down_output=$(mktemp "$scratch_root/firestaff-theron-jp-sdl-button-ii-down-output.XXXXXX")
 side_output=$(mktemp "$scratch_root/firestaff-theron-jp-sdl-side-steps-output.XXXXXX")
 movement_output=$(mktemp "$scratch_root/firestaff-theron-jp-sdl-panel-movement-output.XXXXXX")
 action_output=$(mktemp "$scratch_root/firestaff-theron-jp-sdl-panel-actions-output.XXXXXX")
@@ -41,7 +45,7 @@ touch_forward_output=$(mktemp "$scratch_root/firestaff-theron-jp-sdl-touch-forwa
 touch_turn_output=$(mktemp "$scratch_root/firestaff-theron-jp-sdl-touch-turn-output.XXXXXX")
 touch_config=$(mktemp "$scratch_root/firestaff-theron-jp-sdl-touch-config.XXXXXX")
 printf 'touch_controls_index = 1\ninput_mode_index = 0\n' >"$touch_config"
-trap 'rm -f "$keyboard_probe" "$button_ii_probe" "$side_probe" "$movement_probe" "$action_probe" "$touch_forward_probe" "$touch_turn_probe" "$keyboard_output" "$button_ii_output" "$side_output" "$movement_output" "$action_output" "$touch_forward_output" "$touch_turn_output" "$touch_config"' EXIT
+trap 'rm -f "$keyboard_probe" "$button_ii_probe" "$button_ii_up_probe" "$button_ii_down_probe" "$side_probe" "$movement_probe" "$action_probe" "$touch_forward_probe" "$touch_turn_probe" "$keyboard_output" "$button_ii_output" "$button_ii_up_output" "$button_ii_down_output" "$side_output" "$movement_output" "$action_output" "$touch_forward_output" "$touch_turn_output" "$touch_config"' EXIT
 
 startup_script='enter,enter,enter,action,tab'
 run_event_route() {
@@ -68,6 +72,12 @@ run_event_route "$keyboard_probe" "$keyboard_output" \
     'key:down,wait:32'
 run_event_route "$button_ii_probe" "$button_ii_output" \
     'rightdown:40:40,key:right,rightup:40:40,wait:32'
+# Pair the Button II modifier with forward and backward input on the verified
+# open south corridor, starting each route from the authentic initial pose.
+run_event_route "$button_ii_up_probe" "$button_ii_up_output" \
+    'key:down,rightdown:40:40,key:up,rightup:40:40,wait:32'
+run_event_route "$button_ii_down_probe" "$button_ii_down_output" \
+    'key:down,rightdown:40:40,key:down,rightup:40:40,wait:32'
 # Start from the source-backed open route, sidestep right, then return left.
 run_event_route "$side_probe" "$side_output" \
     'key:down,click:292:163,click:204:163,wait:32'
@@ -80,16 +90,20 @@ run_event_route "$touch_forward_probe" "$touch_forward_output" \
 run_event_route "$touch_turn_probe" "$touch_turn_output" \
     'touch-swipe-left,wait:32'
 
-python3 - "$keyboard_probe" "$button_ii_probe" "$side_probe" \
+python3 - "$keyboard_probe" "$button_ii_probe" "$button_ii_up_probe" \
+    "$button_ii_down_probe" "$side_probe" \
     "$movement_probe" "$action_probe" "$touch_forward_probe" \
     "$touch_turn_probe" "$expected_md5" <<'PY'
 import json
 import sys
 
-keyboard_path, button_ii_path, side_path, movement_path, action_path, \
+keyboard_path, button_ii_path, button_ii_up_path, button_ii_down_path, \
+    side_path, movement_path, action_path, \
     touch_forward_path, touch_turn_path, expected_md5 = sys.argv[1:]
 probes = {}
 for label, path in (("keyboard", keyboard_path), ("button-ii", button_ii_path),
+                    ("button-ii-up", button_ii_up_path),
+                    ("button-ii-down", button_ii_down_path),
                     ("side-steps", side_path), ("movement", movement_path),
                     ("actions", action_path), ("touch-forward", touch_forward_path),
                     ("touch-turn", touch_turn_path)):
@@ -106,6 +120,8 @@ for label, path in (("keyboard", keyboard_path), ("button-ii", button_ii_path),
 expected_poses = {
     "keyboard": (1, 1, 0),
     "button-ii": (1, 0, 1),
+    "button-ii-up": (1, 0, 0),
+    "button-ii-down": (1, 2, 0),
     "side-steps": (1, 1, 0),
     "movement": (2, 3, 3),
 }
@@ -123,6 +139,17 @@ if (probes["touch-turn"].get("lastAction") != "TURN" or
         probes["touch-turn"]["party"]["direction"] != 3):
     raise SystemExit("FAIL: Japanese Theron swipe-left did not turn west")
 PY
+
+# The Button II+Up route starts and ends at the initial pose, so require
+# both movement actions while preserving the route's expected pose above.
+grep -Eq 'game-action game=theron tick=[0-9]+ input=backward result=1 action="MOVE"' "$button_ii_up_output"
+grep -Eq 'game-action game=theron tick=[0-9]+ input=forward result=1 action="MOVE"' "$button_ii_up_output"
+# In this route the second downward input occurs while Button II is held.
+button_ii_down_moves=$(grep -Ec 'game-action game=theron tick=[0-9]+ input=backward result=1 action="MOVE"' "$button_ii_down_output" || true)
+if (( button_ii_down_moves < 2 )); then
+    printf 'FAIL: Button II+Down route did not record both backward movement actions\n' >&2
+    exit 1
+fi
 
 grep -Eq 'game-action game=theron tick=[0-9]+ input=backward result=1 action="MOVE" outcome="THERON STEPPED BACK"' "$keyboard_output"
 grep -Eq 'game-action game=theron tick=[0-9]+ input=turn-right result=1 action="TURN" outcome="RIGHT"' "$button_ii_output"
