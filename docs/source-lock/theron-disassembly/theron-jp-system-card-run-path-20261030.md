@@ -913,17 +913,23 @@ accepted as proof of that branch.
 
 The v18 and v19 authentic JP cold traces filled their 8,192-row bootstrap
 window and stopped at `$E966`, in the `$E95E` status-poll loop. Neither trace
-reached `$E11D`. The instruction-start bytes observed in v19 at `$E966-$E972`
-do not match the immutable System Card dump: runtime rows contain
-`C9 D0 F0 10 29 B8 C9 98 F0 1A C9 88 F0 16`, while the dump disassembles as
-`CMP #$C8; BEQ $E970; CMP #$D8; BEQ $E98B; BRA $E95E`. The capture therefore
-must be described from its runtime bytes rather than by applying that static
-branch sequence to it. The v19 runtime path tests `$D0`, then masks with
-`$B8` and compares `$98`/`$88`; the two observed `$C8` snapshots take the
-runtime `$E972` branch to `$E98A`, where the next instruction snapshot starts
-with `AD A4 22` (`LDA $22A4`). The runtime trace observed `$E98A` twice, no
-instruction start at `$E98B`, and no `$E11D`; its independent branch window
-remained empty, so strict BIOS-to-`$4000` verification failed as expected.
+reached `$E11D`. An earlier static comparison was wrong: it disassembled the
+System Card at file offset 3422 instead of 2910. Mednafen's
+`pce_fast/huc.cpp::HuC_LoadCD()` strips the 512-byte `.pce` header before
+loading the BIOS payload into `ROMSpace`. With MPR7=`$00`, logical `$E95E`
+maps to payload offset `$095E`, so the correct file offset is
+`512 + $095E = 2910`. At that offset, MAME 0.285 `unidasm` decodes bytes
+identical to v19's runtime snapshots at `$E966-$E972`. The corrected listing
+is in [`theron-system-card3-cd-status-e95e.asm`](theron-system-card3-cd-status-e95e.asm).
+
+The authentic routine compares `$D0` and branches to `$E97A`; otherwise it
+masks status with `$B8` and accepts `$98`, `$88`, or `$80` at `$E98A`, looping
+to `$E95E` for other values. Thus `$C8` masks to `$88` and follows the
+`$E98A` path, whose first instruction is `LDA $22A4`. The v19 trace observed
+`$E98A` twice and no `$E11D`; its independent branch window remained empty,
+so strict BIOS-to-`$4000` verification failed as expected. This corrects the
+earlier claimed runtime/BIOS mismatch; it does not change the handoff or
+gameplay gap.
 
 In the v10 reference source,
 `pce_fast/pcecd.cpp::PCECD_Read()` maps reads of `$1800` to a status byte
@@ -933,10 +939,9 @@ whose bits are BSY=`$80`, REQ=`$40`, MSG=`$20`, CD=`$10`, and IO=`$08`, from
 times, and `$C8` twice. These values therefore correspond in that reference
 core to BSY+CD, BSY+REQ+CD, and BSY+REQ+IO signal combinations respectively.
 They are CPU-register snapshots rather than separately instrumented bus-read
-receipts. v19 did not sample `$D8`; however, its observed runtime code also
-matched the `$C8` path to `$E98A`. This is a reference-core signal
-interpretation, not proof of original-hardware bus semantics or of what the
-runtime `$22A4` value means.
+receipts. The corrected listing also explains that `$C8` masks to `$88` and
+uses the `$E98A` branch. This is a reference-core signal interpretation, not
+proof of original-hardware bus semantics or of what runtime `$22A4` means.
 
 The v19 transition receipt reports no transition, CD IRQ callback,
 authenticated CD-to-RAM receipt, game `$E009` dispatch, non-System-Card poll,
@@ -980,14 +985,12 @@ only by the System Card, zero non-System-Card polls, no CD IRQ, no authenticated
 CD-to-RAM receipt, no game `$E009` dispatch, and `transition=missing`; capture
 ended at its 60-second timeout.
 
-The v19 runtime bytes at `$E966-$E972` and the authenticated static System
-Card disassembly remain distinct evidence. The CD-RAM target-write and
-CD-RAM writer-PC sidecars have no rows at physical `$000966-$000972`; those
-sidecars cover CD-RAM writers and do not provide complete physical-write
-coverage for this range. The source of the runtime bytes remains unresolved.
-The v20 status and instruction snapshots provide emulator-reference evidence,
-not original-hardware bus proof, BIOS handoff, gameplay, or native parity.
-Do not force a bus phase or assign game-level meaning to `$22A4`.
+The v19 runtime bytes at `$E966-$E972` match the authenticated System Card
+payload when decoded from the correct file offset. The earlier claim that the
+runtime bytes were unsourced is withdrawn. The v20 status and instruction
+snapshots provide emulator-reference evidence, not original-hardware bus
+proof, BIOS handoff, gameplay, or native parity. Do not assign game-level
+meaning to `$22A4`.
 
 Raw v20 files and authentic media remain private on TRV2 at
 `/home/trv2/firestaff-theron-evidence/capture/theron-jp-bootstrap-follow-v20-20261030/`.
@@ -1000,10 +1003,42 @@ transition receipt
 scripted-input receipt
 `ee73a88bdbb7e860f2f83ac97ad7030065077a76b4c2a7ee5631a33a0484b791`.
 
-Next: source the runtime `$E966-$E972` bytes, trace the `$E14C/$EFF1`
-callback's state inputs and return condition with shared event ordering, and
-then capture its return through `$E11D` and the mapped `$4000` target using
-authentic media. The source-lock note does not yet explain the two early `$D8`
-reads or the later callback loop.
+## v21 authentic callback-state receipt
+
+The v21 cold reference capture used the same hash-verified JP Rev. 1 Track 02
+and System Card 3.0, with no state autoload. The bounded `RdMem()`/`WrMem()`
+accessor hook recorded 255 reads/writes of `$F8-$FB` and `$2256-$226B` with
+logical and physical addresses, MPR snapshots, caller instruction-start PC,
+values, and the shared event sequence. The verifier accepted 105 reads and
+150 writes with no truncation or mapping/order errors. It does not claim
+coverage of direct page-pointer accesses or every CPU bus cycle.
+
+The trace shows `$E14C` read `$226A=$01`; after scripted SELECT was consumed at
+the System Card poll, BIOS code wrote `$2259=$04`. `$E14C` then branched from
+`$E166` to `$E176`, stored `$02` at `$2269`, and called `$CC17`. The contiguous
+bootstrap window captured `$E176/$E179` and subsequent `$CC17` execution, but
+filled its 8,192-row cap before `$E11D` or `$4000`. The transition receipt
+still reports no CD IRQ, authenticated CD-to-RAM receipt, game `$E009`
+dispatch, or non-System-Card input poll. This establishes the System Card
+callback branch only, not a game handoff or playable Theron.
+
+v21 status receipt: 50,932 reads (`$90` 50,828, `$D0` 92, `$C8` 10, `$D8` 2);
+the two `$D8` reads remain before the callback window's initial status poll.
+Private raw traces remain on TRV2 at
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-bootstrap-callback-v21-20261030/`.
+SHA-256 values: status
+`742282a5b2a2fbae21206fa3bc27eb201944cc08a49f34a5501f8512eedae84f`,
+callback state
+`06f61d3020800b15f41f3b96bdf58c0e6e0282e44cd1cee7649ab2e0e73b3502`,
+bootstrap follow
+`e12f9bfa13fa131b89333c4c3a0507e257e9f9d630e054be3611132073b2ab3d`,
+transition `b6a859f5af248a46712c06ba4713a97c4aaa26685b20e20f2188a4af4f2ab49a`,
+and scripted-input consumption
+`467d1102c64fbb6e92ec47b35ca9b7560205a0d339ff7d200098b531a7102e80`.
+
+Next trace the post-`$CC17`/`$E17C` route beyond the bounded window and source
+the later CD-status/command sequence before attempting the `$E11D` launch
+branch again. Keep BIOS execution separate from game-owned consumers and
+native parity claims.
 
 The raw media and traces are not included in Git.

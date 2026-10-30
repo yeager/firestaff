@@ -228,10 +228,11 @@ game-owned poll and visible state change.
   MPR2=`$80` to physical `$100000`.
 - The v18 and v19 authentic JP cold captures did not reach `$E11D` within the
   bounded observation. Their bootstrap rows stopped at `$E966` in the System
-  Card's `$E95E` status-poll loop; v19 did not observe `$E98B`, the `$D8`
-  comparison, or the BIOS launch branch. v19's strict launch verifier
-  correctly rejected the missing branch. Its separately armed `$4000` rows
-  cannot be treated as a causal BIOS jump.
+  Card's `$E95E` status-poll loop. v19's strict launch verifier correctly
+  rejected the missing branch. Its separately armed `$4000` rows cannot be
+  treated as a causal BIOS jump. A later audit found that the earlier static
+  comparison used the wrong System Card file offset; corrected MPR/file offset
+  mapping and disassembly are in the source-lock report.
 - In v19, scripted RUN/SELECT inputs were consumed only at System Card polls;
   the receipt reports zero host-key events, CD IRQ callbacks, authenticated
   CD-to-RAM receipts, game `$E009` dispatches, and non-System-Card poll reads.
@@ -247,26 +248,26 @@ game-owned poll and visible state change.
   (BSY+CD), 26 were `$D0` (BSY+REQ+CD), and two were `$C8` (BSY+REQ+IO). These
   are A-register snapshots, not direct bus-read captures or proof of
   original-hardware signal semantics.
-- Runtime instruction-start bytes at `$E966-$E972` differ from the immutable
-  System Card 3.0 dump. The runtime bytes test `$D0`, then mask `$B8` and
-  compare `$98`/`$88`; both observed `$C8` samples reached runtime `$E98A`,
-  where the bytes begin `AD A4 22`. Static disassembly instead compares
-  `$C8`/`$D8` and places an instruction at `$E98B`. The reason for the runtime
-  byte difference is unknown, and the instruction-start snapshots are not
-  actual opcode-bus receipts. Keep this discrepancy explicit.
+- The previous claim that runtime bytes at `$E966-$E972` differed from the
+  System Card was incorrect: the disassembly command used a file offset 512
+  bytes past the proper payload offset. The corrected BIOS listing matches
+  runtime snapshots and confirms `$D0` handling plus `$B8`-masked `$98/$88/$80`
+  branches to `$E98A`. Runtime instruction-start snapshots still are not
+  separate opcode-bus receipts.
 - v20 added the opt-in direct `$1800` SCSI-status receipt. Its verifier accepted
   50,932 authentic-media reads: `$90` 50,828 times, `$D0` 92 times, `$C8` 10
   times, and `$D8` twice. Both `$D8` events preceded the bootstrap-follow
   window; none appeared in its later status reads. The bootstrap trace entered
   `$E14C`, called `$EFF1`, and repeated `$F30D-$F313` through the row cap
   without returning to `$E11D`. It still observed no game handoff or gameplay.
-- The runtime bytes at `$E966-$E972` remain unsourced, and the v20 `$E14C/$EFF1`
-  callback state and return condition remain unknown. Next trace the callback
-  state inputs and source the runtime bytes, then follow a verified return
-  through `$E11D` and the mapped `$4000` target. Preserve the distinction
-  between emulator-reference receipts and original-hardware evidence; do not
-  force a bus phase or synthesize status data. Full findings and trace hashes
-  are in the [source-lock report](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md).
+- v21's authentic callback-state trace recorded 255 reads/writes and observed
+  the `$2259=$04` System Card action take `$E166->$E176`, store `$02` to
+  `$2269`, and call `$CC17`. The 8,192-row bootstrap window filled before
+  `$E11D` or `$4000`; no game-owned poll or gameplay transition was observed.
+  Next follow the post-`$CC17/$E17C` route and source later CD status/command
+  traffic. Preserve the distinction between reference evidence and native
+  parity. Full findings and trace hashes are in the
+  [source-lock report](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md).
 
 ## 2026-10-29 — generalize authentic CD-read-to-RAM source joins
 

@@ -64,9 +64,9 @@ e15c: 85 fb     sta $FB
 e15e: 20 f1 ef  jsr $EFF1
 e161: 68        pla
 e162: 93 04 59 22 tst #$04 $2259
-e166: d0 0e     bne $E172
+e166: d0 0e     bne $E176
 e168: cd 6b 22  cmp $226B
-e16b: b0 07     bcs $E170
+e16b: b0 07     bcs $E174
 e16d: f8        sed
 e16e: 18        clc
 e16f: 69 01     adc #$01
@@ -76,3 +76,14 @@ e174: 18        clc
 e175: 60        rts
 e176: 8d 69 22  sta $2269
 e179: 20 17 cc  jsr $CC17
+e17c: 73 f8 20 74 22 03 00  tii $20F8 $2274 $0003
+e183: 73 f8 20 77 22 03 00  tii $20F8 $2277 $0003
+e18a: 64 fc     stz $FC
+e18c: 64 fd     stz $FD
+e18e: 64 fe     stz $FE
+e190: a9 00     lda #$00
+e192: 85 fa     sta $FA
+e194: a9 28     lda #$28
+e196: 85 fb     sta $FB
+e198: a9 01     lda #$01
+e19a: 85 ff     sta $FF

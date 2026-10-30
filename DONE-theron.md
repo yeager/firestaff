@@ -9774,5 +9774,26 @@ native rendering, or Theron parity. The private evidence bundle is at
   repeated local loops; the capture wrapper and shell syntax checks passed.
   See the source-lock report for media identity, counts, limitations, and
   private trace hashes. This reference evidence proves no BIOS handoff,
-  gameplay, or native Theron parity; the unsourced runtime bytes and callback
-  return condition remain open in `TODO-theron.md`.
+  gameplay, or native Theron parity; follow the post-`$CC17` route in
+  `TODO-theron.md`.
+
+## 2026-10-30 — correct System Card status disassembly and trace callback state
+
+- Rechecked the v19 runtime bytes against authentic System Card 3.0 using the
+  actual loader mapping: `HuC_LoadCD()` strips a 512-byte `.pce` header, and
+  MPR7=`$00` maps `$E95E` to payload offset `$095E` (file offset 2910). The
+  prior disassembly had used file offset 3422. Corrected MAME disassembly now
+  matches the observed runtime bytes at `$E966-$E972`; the earlier mismatch
+  claim is withdrawn.
+- Captured a v21 authentic JP Rev. 1 cold run with a bounded shared-sequence
+  CPU-memory observer for `$F8-$FB` and `$2256-$226B`. Its verifier accepted
+  255 rows (105 reads, 150 writes), including the System Card action writing
+  `$2259=$04`, branching `$E166->$E176`, storing `$02` at `$2269`, and calling
+  `$CC17`.
+- PCE Fast reference build succeeded on TRV2 with `-j1`; patch-only validation,
+  focused parser/instrumentation tests in three loops, capture-wrapper
+  contract, shell syntax, and `git diff --check` passed. Capture still ended
+  without `$E11D/$4000`, a game-owned poll, authenticated game transfer, or
+  gameplay. This narrows the BIOS gap but does not establish native parity.
+  See the source-lock report for disassembly provenance and private trace
+  hashes.
