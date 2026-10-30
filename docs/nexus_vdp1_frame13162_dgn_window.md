@@ -47,7 +47,11 @@ frame-13162 Ymir VDP1 capture. It verifies the hash-pinned 168-row trace,
 command bytes, captured VRAM spans, clip/local-coordinate state, single-density
 register tuple, and capture receipt. The first 512x256 FBS draw buffer is
 compared at native 320x224 coordinates: 70,470 of 70,970 opaque stepper pixels
-match exactly (99.295%). The 500 remaining pixels are still under investigation.
+match exactly (99.295%). The 500 remaining pixels are still under investigation. A local diagnostic
+compared the same output with FBS buffer 1 and found 69,507 exact pixels, so the
+test retains buffer 0 as the better-supported reference. The capture does not
+record a dedicated active-buffer receipt; this comparison is not a complete
+Ymir/Firestaff framebuffer contract.
 The test renders only 124 mode-1 commands; 36 other draw commands in the window
 are not part of this comparison. It asserts the exact count for this capture,
 claims no DGN ownership, and keeps `renderer_permitted=false`. The capture data

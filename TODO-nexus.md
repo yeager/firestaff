@@ -36,7 +36,9 @@ sprites in the authenticated frame-13162 Ymir command window. The focused real-
 data CTest pins the complete 168-row trace, captured VDP1 VRAM/FBS/registers,
 VDP2 registers, and frame receipt. It compares its 320x224 output with the first
 Ymir VDP1 draw buffer: 70,470 of 70,970 opaque pixels match exactly (99.295%),
-with 500 pixels still differing. The other 36 draw commands in the window,
+with 500 pixels still differing. A diagnostic comparison with FBS buffer 1
+found 69,507 exact pixels; the capture lacks a dedicated active-buffer receipt.
+The other 36 draw commands in the window,
 including direct-color and polygon draws, are not handled by this stepper. It
 claims no DGN ownership and always returns `renderer_permitted=false`; this is
 not production rendering or complete Nexus VDP1 parity. See
