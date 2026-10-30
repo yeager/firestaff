@@ -57,10 +57,26 @@ trace hashes are in the source-lock note.
 180-second capture still recorded no non-System-Card poll, CD IRQ, authenticated
 CD-to-RAM receipt, game `$E009` dispatch, or gameplay transition. Its 63,488
 source-bound CD data-port reads were byte-identical to v12 despite the longer
-capture; no `$C860/$C897` wait-window witness was emitted. This narrows the next
-disassembly target to the System Card poll/return path and the first BIOS loader
-branch after `$E4C5/$E4E1`; do not infer game startup from input consumption.
+capture. The System Card sidecar records `$C860` once and `$C8C7/$C8C9/$C8D2`
+after the input, plus 207 `$E4E1` polls, but no `$C897` row or instruction-level
+`$C8C4` CD-status wait witness; the dedicated wait verifier therefore remains
+unsatisfied. Continue disassembling the post-poll branch and its CD status
+checks; do not infer game startup from input consumption.
 Details and trace hashes are in the source-lock note.
+
+2026-10-30 v14 source-guided input trace: the authentic System Card 3.0
+disassembly at `$E4E1-$E4FB` dispatches only when `delta=$04` and state=`$0C`.
+The cold replay held RUN (`$08`) for 300 frames, then pressed SELECT (`$04`)
+for one frame while RUN remained held. The trace observed state=`$0C`, delta=`$04`
+at `$E4FB` and vector=`$E000`, then returned to BIOS bootstrap `$E0F3` and
+re-entered `$E109/$C860`. This confirms the System Card action branch, not a
+game launch: there were still no game-owned polls, CD IRQs, authenticated
+CD-to-RAM receipts, `$E009` dispatches, or gameplay transition. The next
+disassembly target is the `$E000` callback/vector and its bootstrap's CD launch
+condition. The bounded RAM-loop verifier also passes on v14: all 234 fetched
+byte slots across 78 rows match the latest writes for all 18 addresses, with
+56 rows fully joined to source-read candidates. See the source-lock note for
+trace hashes and limits.
 
 1. **Bind the cold loader to game-owned consumers in both regions.** Continue
    from the authentic System Card Run path and the verified Track 02 byte

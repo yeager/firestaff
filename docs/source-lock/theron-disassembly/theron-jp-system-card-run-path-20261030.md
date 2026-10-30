@@ -721,11 +721,13 @@ The longer capture still had 0 CD IRQ callbacks, 0 non-System-Card polls, 0
 authenticated CD-RAM receipts, 0 game `$E009` dispatches, and
 `transition=missing`. It recorded 63,488 source-bound CD data-port reads, the
 same sequence as v12, so increasing the capture duration did not yield further
-observed CD data-port activity. No `$C860/$C897` wait-window witness appeared
-in the capture summary. The available code-follow still contains 256 rows;
-this run does not establish that execution left the System Card or entered
-gameplay. The next source target is the BIOS poll/return path at `$E4C5/$E4E1`
-and the loader branch following it. The raw capture and original media remain
+observed CD data-port activity. The System Card sidecar records `$C860` once and
+`$C8C7/$C8C9/$C8D2` after input, plus 207 controller polls at `$E4E1`, but has
+no `$C897` row or instruction-level `$C8C4` CD-status wait witness. The
+dedicated wait verifier therefore remains unsatisfied. The available code-
+follow still contains 256 rows; this run does not establish that execution left
+the System Card or entered gameplay. The next source target is the BIOS
+post-poll branch and its CD-status checks. The raw capture and original media remain
 private on TRV2 at
 `/home/trv2/firestaff-theron-evidence/capture/theron-jp-post-bios-wait-v13-180s-cold-20261030/`.
 
@@ -737,6 +739,39 @@ The v13 trace hashes are:
 - Indirect-jump follow: `6ffd5a41c196ead9fcc272ec91014df6ec1d147f0f8289d5d5b694b4700a55e5`.
 - CD-RAM target writes: `cbf1878c6c8b2506e4d4fa07c67d0045cc3dbeffff4cca1a5708b45b2e0573ce`.
 - CD data-port reads: `5e0aa54c08ab68abce1703b3b98a78dccc1363af493bc50b7b59135163767c31`.
+
+## 2026-10-30 — v14 source-guided RUN/SELECT dispatch
+
+The authentic System Card 3.0 code in
+`theron-system-card3-controller-poll-e4b0.asm` shows the `$E4E1-$E4FB`
+callback condition: input delta `$04` and current state `$0C`, followed by
+`JMP ($2284)`. A new cold replay held RUN at mask `$08` for 300 frames, then
+pressed SELECT at mask `$04` for one frame while RUN remained held:
+`run@480:300,select@600:1`. The scripted-input receipt confirms both events
+were applied and read at `$E4C5`. The runtime trace records `$E4FB` with
+state=`$0C`, delta=`$04`, vector `$E000`, then BIOS bootstrap PCs `$E0F3`,
+`$E109`, and `$C860`. The scripted-input receipt and bounded RAM-loop source
+verifier both passed. The RAM-loop report covers 78 fetch rows and 234 byte
+slots across all 18 physical addresses; every slot matches its latest prior
+address-scoped write, and 56 rows are fully joined to source-read candidates.
+This is direct evidence that the System Card dispatch condition and vector
+were reached, plus bounded loader-write evidence.
+
+The 60-second capture still reports 0 CD IRQ callbacks, 0 non-System-Card
+polls, 0 authenticated CD-RAM receipts, 0 game `$E009` dispatches, and
+`transition=missing`. It records 51,200 source-bound CD data-port reads. The
+post-vector trace re-enters the BIOS bootstrap; it does not prove that control
+reached the game or that Theron gameplay began. The next source target is the
+`$E000` callback/vector and its CD launch condition. Raw media and trace files
+remain private on TRV2 at
+`/home/trv2/firestaff-theron-evidence/capture/theron-jp-run-select-edge-v14-60s-cold-20261030/`.
+
+The v14 trace hashes are:
+
+- Transition receipt: `4693272b8b5bd3f846a8da98ad613d1d95033f3215861dec15ae72d371374b95`.
+- Scripted-input receipt: `1f6be64bc4807d8b77c998f2dcc7891e7fe0db748900924f4fbdac5a5a31d25f`.
+- System Card dispatch: `5159154afc81d4925a6284a092198a98fd22ddd27da7618da67554c8eab24b41`.
+- Scripted PCE input: `c1e61dcaaf90bc616f21a70267303f1279acfea710e7f87b05cb1f96b63cff67`.
 
 The additional trace hashes are:
 

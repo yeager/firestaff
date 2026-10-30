@@ -1,5 +1,20 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-10-30 — verify the authentic System Card RUN/SELECT branch
+
+The authentic System Card 3.0 disassembly at `$E4E1-$E4FB` requires a SELECT
+edge (`delta=$04`) while RUN is held (state `$0C`). A cold reference replay
+applied `run@480:300,select@600:1`; both events were read at `$E4C5`. The trace
+then recorded the matching `$E4FB` condition and vector `$E000`, followed by
+BIOS bootstrap PCs `$E0F3/$E109/$C860`. This verifies System Card dispatch and
+re-entry only. It still produced no game-owned poll, CD IRQ, authenticated
+CD-to-RAM receipt, `$E009` dispatch, or gameplay transition. The bounded
+RAM-loop verifier also passed on this capture: all 234 fetched bytes across 78
+rows matched prior address-scoped writes at all 18 addresses, and 56 rows were
+fully joined to source-read candidates. The next source target is the `$E000`
+callback and its CD launch condition; full Theron parity remains open in
+`TODO-theron.md`.
+
 ## 2026-10-30 — extend the authentic cold RUN trace to 180 seconds
 
 Captured authentic Japanese Rev. 1 media and System Card 3.0 with no save state,
@@ -7,11 +22,13 @@ replaying the verified five-second `run@480:300` input. The controller mask
 `0008` was applied and read at the System Card poll `$E4C5`. The longer trace
 still showed no non-System-Card poll, CD IRQ, authenticated CD-to-RAM receipt,
 game `$E009` dispatch, or gameplay transition. Its 63,488 source-bound CD
-data-port reads were byte-identical to v12, and no `$C860/$C897` wait-window
-witness appeared. This is BIOS-only reference evidence, not proof that the
-game started or reached gameplay. The next disassembly target is the System
-Card poll/return path and the loader branch after `$E4C5/$E4E1`; full Theron
-parity remains open in `TODO-theron.md`.
+data-port reads were byte-identical to v12. The System Card sidecar records
+`$C860` once and `$C8C7/$C8C9/$C8D2` after input, plus 207 `$E4E1` polls, but
+no `$C897` row or instruction-level `$C8C4` CD-status wait witness; the
+dedicated wait verifier remains unsatisfied. This is BIOS-only reference
+evidence, not proof that the game started or reached gameplay. The next
+disassembly target is the post-poll branch and its CD-status checks; full
+Theron parity remains open in `TODO-theron.md`.
 
 ## 2026-10-30 — classify authentic RAM-loop fetch/write/source candidates
 
