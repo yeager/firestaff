@@ -1,7 +1,40 @@
-Warning: truncated output (original token count: 152031)
-Total output lines: 9305
-
 # Firestaff TODO — Theron's Quest
+
+## Remaining end-to-end work, ordered by dependency
+
+The dated entries below retain current capture results and limits. This short
+plan is the canonical completion order; historical capture notes were trimmed
+from this file, while their source-lock files remain in the repository.
+Use authentic original media whenever available. Synthetic traces may test
+parsers or help derive authentic evidence, but must not stand in for game
+assets, mechanics, or parity.
+
+1. **Bind the cold loader to game-owned consumers in both regions.** Continue
+   from the authentic System Card Run path and the verified Track 02 byte
+   writes through the full loader, game-owned RAM, executing consumer, source
+   record, and a reproducible input/state transaction. A System Card poll,
+   `$E009` dispatch, or partial byte join alone does not establish a game
+   handoff or playable runtime. Current trace limits are recorded in the
+   [JP System Card Run source-lock note](docs/source-lock/theron-disassembly/theron-jp-system-card-run-path-20261030.md)
+   and the dated trace entries below.
+2. **Verify quest progression and original-format save transactions.** Bind
+   authentic quest artifacts and their pickup, exit, chapter transition, and
+   completion consumers. Keep the campaign-completion bit distinct from
+   quest-item collection. Connect the source-gated writer only to proven
+   progress, then reopen the changed save in the original runtime. The
+   [Backup RAM layout note](docs/source-lock/theron-original-backup-ram-body-layout-2026-09-23.md)
+   records the currently authenticated structure and limits.
+3. **Complete source-bound presentation and event output.** Bind gameplay
+   VDC/VCE/BAT state to the active map, objects, text, portraits, HUD, CDDA,
+   and ADPCM/SFX consumers before implementing their production rendering or
+   audio paths. Keep the screen-space capture route distinct from the live
+   dungeon renderer, and do not use synthetic room fallbacks as gameplay
+   evidence.
+4. **Verify the complete game loop against original media.** After those
+   consumers are bound, cover all seven dungeons, stairs, objects, doors and
+   actuators, creatures and combat, spells, inventory, chapter progression,
+   and save/resume. Compare both authentic regional editions against the
+   [Theron parity definition matrix](parity-evidence/theron_v1_parity_definition_matrix.md).
 
 ## 2026-10-30 — trace the JP System Card Run path from authentic media
 
