@@ -7842,6 +7842,7 @@ set(M11_SOURCES
     src/engine/main_loop_m11.c
     src/engine/hardware_debug_m11.c
     src/shared/firestaff_nexus_mednafen.c
+    src/shared/firestaff_x68k_hdm.c
     src/engine/fs_gesture_navigation_gate.c
     src/engine/firestaff_accessibility.c
     src/engine/m11_game_view.c
@@ -43186,6 +43187,32 @@ add_executable(test_nexus_v1_dgn_material_raster
     add_test(
         NAME firestaff_x68k_media_classify_unit
         COMMAND test_firestaff_x68k_media_classify
+    )
+
+    # Read authentic X68000 files from the operator's original HDM archive
+    # without writing ROM/game bytes to disk. The ReDMCSB SWOOSH comparison
+    # is an import-boundary check; it does not claim an X68000 runtime.
+    add_executable(test_firestaff_x68k_hdm_real_media
+        tests/test_firestaff_x68k_hdm_real_media.c
+        src/shared/firestaff_x68k_hdm.c
+    )
+    target_include_directories(test_firestaff_x68k_hdm_real_media PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_firestaff_x68k_hdm_real_media PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_x68k_hdm_real_media
+            PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME firestaff_x68k_hdm_real_media
+        COMMAND test_firestaff_x68k_hdm_real_media
+    )
+    set_tests_properties(firestaff_x68k_hdm_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "dm1;x68k;startup;import;real-media;skip-safe"
+        ENVIRONMENT "FIRESTAFF_X68K_HDM_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Game,Dungeon_Master,JP,X68000,Software.7z;FIRESTAFF_X68K_SWOOSH_REFERENCE=$ENV{HOME}/ReDMCSB/Reference/Original/X30J/SWOOSH"
+        TIMEOUT 120
     )
 
     # -- X68000 HDM <-> FTL container handoff boundary test --

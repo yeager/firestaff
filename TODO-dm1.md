@@ -20,6 +20,24 @@ Complete platform support still needs authentic X68000 resource/runtime
 integration and a SNES ROM/resource-owner route; do not infer support from the
 archive contents.
 
+2026-10-30 X68000 media import step: `firestaff_x68k_hdm` now reads the
+documented DM1 2DHD FAT12-like root directory and bounded cluster chains from
+the original HDM in memory. `firestaff_x68k_hdm_real_media` passed against the
+cracked original archive, validated all ten root entries and regular-file
+chains, matched extracted `SWOOSH` byte-for-byte with ReDMCSB `X30J/SWOOSH`,
+and confirmed the original `GRAPHICS.DAT` header plus the known `SWOOSH` and
+`FTLCODE` disk offsets. It writes no game data to disk. This is only the
+archive-to-file boundary; X68000 graphics/dungeon interpretation, audio,
+input, and M12/runtime handoff remain unsupported.
+
+The four local SNES ROMs were also streamed directly from the original 7z
+archive without saving their contents. Each has a valid `DUNGEON MASTER`
+LoROM header and checksum/complement pair; the four distinct SHA-256 values were verified by an in-memory audit and remain outside Git. Greatstone's SCK
+supports extracting original SNES ROMs and their dungeon resource; obtaining
+the extractor/mapfile or the real exported resource is the next data-boundary
+step. No current Firestaff reader is proven compatible with that SNES
+`dungeon.dat`, and the PC34 reader must not be assumed compatible.
+
 2026-10-29 X68000 real-media FTL checksum receipt: the cracked usable
 X68000 HDM staged under ignored `build/test-scratch/x68k-fresh/` parses as
 two embedded FTL modules at byte offsets 73,728 (`0x12000`) and 460,800
