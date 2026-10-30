@@ -4330,9 +4330,9 @@ if(BUILD_TESTING)
     )
     set_tests_properties(dm2_v1_mac_extracted_native_cli_boot PROPERTIES
         SKIP_RETURN_CODE 77
-        LABELS "tier2;dm2;macintosh;startup;cli;real-media;extracted;native;skip-safe"
+        LABELS "tier2;dm2;macintosh;startup;cli;main-menu;game-selection;real-media;extracted;native;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM2_MAC_EXTRACTED_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/mac-en/Dungeon Master II/DMFiles;FIRESTAFF_DATA=${FIRESTAFF_WORKSPACE_DATA_DIR};FIRESTAFF_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/test-scratch"
-        TIMEOUT 180
+        TIMEOUT 300
     )
     add_test(
         NAME dm2_v1_mac_fr_named_sit_identity_real_media

@@ -23,7 +23,21 @@ probe="$scratch/dm2-mac-extracted-$$.json"
 output="$scratch/dm2-mac-extracted-$$.log"
 menu_probe="$scratch/dm2-mac-extracted-menu-$$.json"
 menu_output="$scratch/dm2-mac-extracted-menu-$$.log"
-cleanup() { rm -f "$probe" "$output" "$menu_probe" "$menu_output"; }
+no_game_data_root="$scratch/dm2-mac-no-game-data-$$"
+no_game_home="$scratch/dm2-mac-no-game-home-$$"
+no_game_probe="$scratch/dm2-mac-no-game-$$.json"
+no_game_output="$scratch/dm2-mac-no-game-$$.log"
+no_game_hashes="$scratch/dm2-mac-no-game-hashes-$$.txt"
+cleanup() {
+    rm -f "$probe" "$output" "$menu_probe" "$menu_output" \
+        "$no_game_probe" "$no_game_output" "$no_game_hashes"
+    if [ -d "$no_game_data_root" ]; then
+        rm -rf "$no_game_data_root"
+    fi
+    if [ -d "$no_game_home" ]; then
+        rm -rf "$no_game_home"
+    fi
+}
 trap cleanup EXIT
 trap 'exit 129' HUP
 trap 'exit 130' INT
@@ -129,7 +143,84 @@ if (
     raise SystemExit(f"FAIL: extracted original DM2 Macintosh menu route: {probe}")
 PY
 
+# Exercise the first-run collection picker with no selected game. The staged
+# tree contains only symlinks to the user's authentic extracted Macintosh
+# files, so the menu must discover the retail edition and reach its native
+# movie, New Game, mirror-selection, and dungeon paths without CLI hints.
+mkdir -p "$no_game_data_root/dm2" "$no_game_home"
+for name in Graphics.dat Dungeon.dat Title.MooV Credits.MooV Swoosh.MooV \
+    Ending.MooV md.dat qstrat.dat; do
+    ln -s "$data_dir/$name" "$no_game_data_root/dm2/$name"
+done
+for name in Graphics.dat Dungeon.dat Title.MooV Credits.MooV Swoosh.MooV \
+    Ending.MooV md.dat qstrat.dat; do
+    printf '%s %s\n' "$name" \
+        "$(firestaff_sha256_file "$data_dir/$name")" >>"$no_game_hashes"
+done
+if ! FIRESTAFF_CONFIG_PATH="$no_game_home/config.toml" \
+    FIRESTAFF_DATA="$no_game_data_root" \
+    FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$no_game_probe" \
+    HOME="$no_game_home" XDG_CONFIG_HOME="$no_game_home" \
+    APPDATA="$no_game_home" SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+    "$app" --debug --width 1920 --height 1080 \
+    --data-dir "$no_game_data_root" \
+    --script 'wait-scan-complete,wait20,click:1680:262,wait20,click:410:679,wait20,click:450:405,wait:1200,key:enter,click:900:500,wait:20,click:1074:580,wait:30,key:up,wait:30,key:right,wait:30,key:up,wait:30,key:up' \
+    --duration 70000 >"$no_game_output" 2>&1; then
+    cat "$no_game_output" >&2
+    exit 1
+fi
+if ! grep -Fq 'startup game=none mode=menu' "$no_game_output" ||
+   ! grep -Fq 'launch phase=game-handoff mode=menu game=dm2 platform=Macintosh edition=mac-en-retail source=' "$no_game_output"; then
+    echo 'FAIL: no-game M12 picker did not select authentic DM2 Macintosh media' >&2
+    cat "$no_game_output" >&2
+    exit 1
+fi
+python3 - "$no_game_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+
+startup = probe.get("startup", {})
+movie = probe.get("dm2Startup", {})
+party = probe.get("party", {})
+frame = probe.get("dm2RuntimeFrame", {})
+script = probe.get("script", {})
+output = probe.get("outputSize", {})
+if (
+    probe.get("sourceId") != "dm2"
+    or probe.get("bootAssetMd5") != "5cab25f6b975957eae4a203174e7f2a6"
+    or probe.get("launchedEver") != 1
+    or probe.get("active") != 1
+    or movie != {"platform": 4, "movieActive": 0, "movieComplete": 1,
+                 "movieRejected": 0, "movieFrame": 0}
+    or startup.get("phase") != "dm2-runtime"
+    or startup.get("startupActive") != 0
+    or startup.get("levelLoaded") != 1
+    or frame != {"accepted": 1, "realAssets": 1,
+                 "noCoreFallbacks": 1, "fallbackDraws": 0}
+    or (party.get("mapIndex"), party.get("mapX"), party.get("mapY"),
+        party.get("direction"), party.get("championCount")) != (0, 1, 7, 1, 1)
+    or script != {"waitFramesRemaining": 0, "pending": 0}
+    or output.get("valid") != 1
+    or (output.get("windowWidth"), output.get("windowHeight"),
+        output.get("drawableWidth"), output.get("drawableHeight")) !=
+       (1920, 1080, 1920, 1080)
+):
+    raise SystemExit(f"FAIL: DM2 Macintosh no-game picker missed authentic runtime: {probe}")
+print("PASS: no-game M12 picker reached the authentic DM2 Macintosh dungeon runtime")
+PY
+while read -r name expected_hash; do
+    if [ "$expected_hash" != "$(firestaff_sha256_file "$data_dir/$name")" ]; then
+        printf 'FAIL: original DM2 Macintosh file changed during no-game launch: %s\n' \
+            "$name" >&2
+        exit 1
+    fi
+done <"$no_game_hashes"
+
 [ "$graphics_before" = "$(firestaff_sha256_file "$data_dir/Graphics.dat")" ]
 [ "$dungeon_before" = "$(firestaff_sha256_file "$data_dir/Dungeon.dat")" ]
 [ "$movie_before" = "$(firestaff_sha256_file "$data_dir/Title.MooV")" ]
-echo 'PASS: extracted original DM2 Macintosh CLI and start menu complete title, New Game, mirror selection and movement'
+echo 'PASS: extracted original DM2 Macintosh CLI, selected-game menu, and no-game collection picker reach runtime'
