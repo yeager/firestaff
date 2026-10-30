@@ -39,9 +39,11 @@ rows match their address-scoped latest writes, and 111 rows are fully joined
 to CD-read candidates. The `$EA9C` trace remains incomplete for the other 15
 addresses, so these counts are bounded candidates, not exclusive provenance.
 In the same v11 window, code at `$6109` executes `LDA #$EA`, then stores `$EA`
-to `$40D9-$40DB` from `$610B/$610E/$6111` before returning. The all-PC trace
-records those writes; this explains the observed NOP writes but does not
-identify the caller as game-owned.
+to `$40D9-$40DB` from `$610B/$610E/$6111` before returning to `$432B`. All 12
+executed helper bytes match earlier `$EA9C` writes and have source-valid CD-read
+candidates; eight byte slots have one matching read and four have multiple
+same-value candidates. The all-PC trace confirms all three stores. The `$4328`
+indirect jump and return are observed, but caller ownership remains unproven.
 Keep following the 18-byte loop through complete writers and its caller until
 a game-owned consumer and input/state transition are demonstrated. The offline
 candidate verifier repeats these exact counts in three TRV2 runs; details and

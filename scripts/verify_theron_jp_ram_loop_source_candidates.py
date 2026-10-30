@@ -43,6 +43,14 @@ DISPATCH_SUFFIX = ".indirect-jump"
 CODE_FOLLOW_SUFFIX = ".system-card-code-follow"
 LOOP_PHYSICAL_RANGE = (0x1000D2, 0x1000E3)
 LOOP_LOGICAL_RANGE = (0x40D2, 0x40E3)
+HELPER_INSTRUCTIONS = {
+    0x6109: bytes.fromhex("a9ea"),
+    0x610B: bytes.fromhex("8dd940"),
+    0x610E: bytes.fromhex("8dda40"),
+    0x6111: bytes.fromhex("8ddb40"),
+    0x6114: bytes.fromhex("60"),
+}
+HELPER_RETURN_PC = 0x432B
 
 
 def ensure_capture(paths: list[Path]) -> None:
@@ -79,6 +87,8 @@ def parse_follow_rows(path: Path) -> list[dict[str, str]]:
             raise ValueError(f"malformed follow row at line {line_number}")
         fields = match.groups()
         rows.append({
+            "dispatch_event": fields[0],
+            "index": fields[3],
             "event_sequence": fields[2],
             "logical_pc": fields[4],
             "bytes": fields[6],
@@ -204,6 +214,99 @@ def classify(
     }
 
 
+def classify_patch_helper(
+    fetch_rows: list[dict[str, str]],
+    reads: list[dict[str, str]],
+    writes: list[dict[str, str]],
+    target_writes: dict[int, list[tuple[int, int, int]]],
+) -> dict[str, int]:
+    rows_by_dispatch: dict[int, list[dict[str, str]]] = defaultdict(list)
+    for row in fetch_rows:
+        rows_by_dispatch[int(row["dispatch_event"])].append(row)
+
+    read_events_by_value: dict[int, list[int]] = defaultdict(list)
+    for row in reads:
+        if row.get("source_valid") == "1" and row.get("reader_pc") == "ea99":
+            read_events_by_value[int(row["value"], 16)].append(int(row["event_sequence"]))
+    writes_by_address: dict[int, list[dict[str, str]]] = defaultdict(list)
+    for row in writes:
+        writes_by_address[int(row["physical_address"], 16)].append(row)
+
+    calls = 0
+    fetch_byte_slots = writer_matches = source_read_matches = 0
+    unique_source_reads = ambiguous_source_reads = source_read_records = 0
+    target_store_matches = 0
+    for rows in rows_by_dispatch.values():
+        rows.sort(key=lambda row: int(row["index"]))
+        for start in range(len(rows) - len(HELPER_INSTRUCTIONS)):
+            window = rows[start : start + len(HELPER_INSTRUCTIONS) + 1]
+            expected_pcs = [*HELPER_INSTRUCTIONS, HELPER_RETURN_PC]
+            if [int(row["logical_pc"], 16) for row in window] != expected_pcs:
+                continue
+            if [int(row["index"]) for row in window] != list(
+                range(int(window[0]["index"]), int(window[0]["index"]) + len(window))
+            ):
+                continue
+            calls += 1
+            call_stores: list[tuple[int, int, int]] = []
+            for row, (pc, expected) in zip(window[:-1], HELPER_INSTRUCTIONS.items(), strict=True):
+                values = bytes.fromhex(row["bytes"])
+                addresses = [int(value, 16) for value in row["physical_bytes"].split(",")]
+                if values[:len(expected)] != expected:
+                    raise ValueError(f"unexpected patch-helper instruction bytes at ${pc:04X}")
+                event = int(row["event_sequence"])
+                for address, value in zip(addresses[:len(expected)], values[:len(expected)], strict=True):
+                    fetch_byte_slots += 1
+                    prior = [item for item in writes_by_address.get(address, ())
+                             if int(item["event_sequence"]) < event]
+                    if not prior:
+                        continue
+                    latest = max(prior, key=lambda item: int(item["event_sequence"]))
+                    write_event = int(latest["event_sequence"])
+                    if int(latest["value"], 16) != value:
+                        continue
+                    writer_matches += 1
+                    candidates = read_events_by_value.get(value, [])
+                    end = bisect_left(candidates, write_event)
+                    begin = bisect_left(candidates, write_event - 16)
+                    matching_candidates = candidates[begin:end]
+                    if matching_candidates:
+                        source_read_matches += 1
+                        source_read_records += len(matching_candidates)
+                        if len(matching_candidates) == 1:
+                            unique_source_reads += 1
+                        else:
+                            ambiguous_source_reads += 1
+
+                if pc in (0x610B, 0x610E, 0x6111):
+                    next_event = int(window[list(HELPER_INSTRUCTIONS).index(pc) + 1]["event_sequence"])
+                    destination = 0x1000D9 + (pc - 0x610B) // 3
+                    store_rows = [
+                        (target_event, value, writer_pc)
+                        for target_event, value, writer_pc in target_writes.get(destination, ())
+                        if event < target_event < next_event
+                        and writer_pc == pc
+                        and value == 0xEA
+                    ]
+                    if len(store_rows) != 1:
+                        raise ValueError(f"patch-helper STA at ${pc:04X} lacks one matching target write")
+                    call_stores.extend(store_rows)
+            target_store_matches += len(call_stores)
+
+    if not calls:
+        raise ValueError("follow trace contains no complete $6109-$6114 patch-helper call")
+    return {
+        "complete_source_patch_helper_calls": calls,
+        "patch_helper_executed_fetch_bytes": fetch_byte_slots,
+        "patch_helper_bytes_matching_latest_ea9c_write": writer_matches,
+        "patch_helper_bytes_with_source_read_candidate_within_16_events": source_read_matches,
+        "patch_helper_unique_source_read_candidate_bytes": unique_source_reads,
+        "patch_helper_ambiguous_source_read_candidate_bytes": ambiguous_source_reads,
+        "patch_helper_source_read_candidate_records": source_read_records,
+        "patch_helper_target_writes_verified": target_store_matches,
+    }
+
+
 def verify(
     dispatch_path: Path,
     code_follow_path: Path,
@@ -242,6 +345,7 @@ def verify(
         raise ValueError("all-PC target-write trace does not cover $1000D9-$1000DB")
     fetch_rows = parse_follow_rows(follow_path)
     report = classify(fetch_rows, reads, writes, target_writes)
+    report.update(classify_patch_helper(fetch_rows, reads, writes, target_writes))
     if report["observed_unique_physical_bytes"] != report["expected_unique_physical_bytes"]:
         raise ValueError("follow trace does not cover all 18 physical RAM-loop bytes")
     if not report["loop_fetch_rows"]:

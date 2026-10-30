@@ -77,6 +77,73 @@ def main() -> None:
     if report["fetch_rows_fully_source_candidate_backed"] != 0:
         raise AssertionError("non-$EA9C writer was promoted to a CD source join")
 
+    instruction_rows = []
+    helper_reads = []
+    helper_writes = []
+    helper_event_by_pc = {}
+    physical_start = 0x102109
+    unique_addresses = sorted({
+        physical_start + pc - 0x6109 + offset
+        for pc, instruction in verifier.HELPER_INSTRUCTIONS.items()
+        for offset in range(len(instruction))
+    })
+    value_by_address = {}
+    for address_index, address in enumerate(unique_addresses):
+        value = 0x60 if address == 0x102114 else next(
+            instruction[offset]
+            for pc, instruction in verifier.HELPER_INSTRUCTIONS.items()
+            for offset in range(len(instruction))
+            if physical_start + pc - 0x6109 + offset == address
+        )
+        value_by_address[address] = value
+        write_event = 10 + address_index * 20
+        helper_writes.append({
+            "event_sequence": str(write_event),
+            "physical_address": f"{address:06x}",
+            "value": f"{value:02x}",
+        })
+        helper_reads.append({
+            "event_sequence": str(write_event - 1),
+            "value": f"{value:02x}",
+            "source_valid": "1",
+            "reader_pc": "ea99",
+        })
+
+    for index, (pc, instruction) in enumerate(verifier.HELPER_INSTRUCTIONS.items()):
+        event = 1000 + index * 2
+        helper_event_by_pc[pc] = event
+        addresses = [physical_start + pc - 0x6109 + offset for offset in range(3)]
+        values = bytes(value_by_address.get(address, 0xEA) for address in addresses)
+        instruction_rows.append({
+            "dispatch_event": "1",
+            "index": str(index),
+            "event_sequence": str(event),
+            "logical_pc": f"{pc:04x}",
+            "bytes": values.hex(),
+            "physical_bytes": ",".join(f"{address:06x}" for address in addresses),
+        })
+    instruction_rows.append({
+        "dispatch_event": "1",
+        "index": str(len(instruction_rows)),
+        "event_sequence": str(1010),
+        "logical_pc": f"{verifier.HELPER_RETURN_PC:04x}",
+        "bytes": "000000",
+        "physical_bytes": "10032b,10032c,10032d",
+    })
+    helper_target_writes = {
+        0x1000D9 + index: [(helper_event_by_pc[pc] + 1, 0xEA, pc)]
+        for index, pc in enumerate((0x610B, 0x610E, 0x6111))
+    }
+    helper_report = verifier.classify_patch_helper(
+        instruction_rows, helper_reads, helper_writes, helper_target_writes
+    )
+    if helper_report["complete_source_patch_helper_calls"] != 1:
+        raise AssertionError("complete source patch-helper sequence was not recognized")
+    if helper_report["patch_helper_bytes_matching_latest_ea9c_write"] != 12:
+        raise AssertionError("patch-helper instruction bytes did not match source writes")
+    if helper_report["patch_helper_target_writes_verified"] != 3:
+        raise AssertionError("patch-helper stores were not joined to target writes")
+
     print("PASS: RAM-loop verifier distinguishes matching, mismatching, and non-EA99 candidates")
 
 

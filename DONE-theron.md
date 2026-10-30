@@ -18,9 +18,10 @@ a source-valid `$EA99` read candidate within 16 events. Those 400 slots had
 390 unique and 10 ambiguous read candidates. All 165 rows matched their
 address-scoped writer, and 111 rows were fully joined to CD-read candidates.
 The follow trace also decodes `$6109` as `LDA #$EA`, followed by stores to
-`$40D9-$40DB` at `$610B/$610E/$6111` and a return at `$6114`. The all-PC trace
-records the resulting writes; their caller ownership is still unknown. The
-test passed three local loops.
+`$40D9-$40DB` at `$610B/$610E/$6111` and a return at `$6114`. All 12 executed
+helper bytes match prior `$EA9C` writes and have authentic read candidates
+(eight unique and four ambiguous); the all-PC trace confirms all three stores.
+The caller's ownership remains unknown. The test passed three local loops.
 
 This is bounded provenance analysis, not proof of exclusive memory ownership:
 the all-PC trace covers only three addresses, and the `$EA9C` sidecar is not an

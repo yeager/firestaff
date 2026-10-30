@@ -668,6 +668,15 @@ execution returns to `$432B`. This confirms the observed runtime writes and
 control flow; it does not establish the routine's owner or connect it to
 gameplay.
 
+The offline verifier identifies one complete execution of this helper in the
+v11 capture. Its 12 executed instruction bytes all match earlier `$EA9C`
+writer-PC stores and each has a source-valid Track 02 `$EA99` read candidate
+within 16 shared events. Eight byte slots have one candidate and four have
+multiple same-value candidates. The three helper stores are independently
+confirmed by the all-PC target-write trace. This binds executed bytes to
+authentic disc-read candidates while keeping repeated-value ambiguity and
+caller ownership explicit.
+
 The all-PC target-write trace covers only three of the 18 addresses; the
 `$EA9C` writer trace is not exhaustive for the other 15. Candidate read matches
 use the same 16-event window as the existing writer verifier, and repeated
